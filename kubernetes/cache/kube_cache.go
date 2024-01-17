@@ -1467,12 +1467,27 @@ func (c *kubeCache) GetTelemetries(namespace, labelSelector string) ([]*v1alpha1
 }
 
 func (c *kubeCache) isK8sGatewayListerInit(namespace string) bool {
-	// K8s GW has several cache listers, those can be namespace or cluster based
-	// if one of them is not initialized, then all others are not init as well
-	// this can happen when CRDs are created after Kiali start
-	if c.getCacheLister(namespace).k8sgatewayLister == nil {
-		log.Info(K8sGatewayAPIMessage)
-		return false
+	// potential issue can happen when CRDs are created after Kiali start
+	if namespace == metav1.NamespaceAll {
+		if c.clusterScoped {
+			if c.clusterCacheLister.k8sgatewayLister == nil {
+				log.Info(K8sGatewayAPIMessage)
+				return false
+			}
+		} else {
+			for _, nsCacheLister := range c.nsCacheLister {
+				if nsCacheLister.k8sgatewayLister == nil {
+					log.Info(K8sGatewayAPIMessage)
+					return false
+				}
+			}
+		}
+	} else {
+		if c.getCacheLister(namespace).k8sgatewayLister == nil {
+			log.Info(K8sGatewayAPIMessage)
+			return false
+		}
+
 	}
 	return true
 }
