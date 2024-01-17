@@ -3,6 +3,7 @@ import { history } from '../../app/History';
 import { serverConfig } from '../../config';
 import { NEW_ISTIO_RESOURCE } from '../../pages/IstioConfigNew/IstioConfigNewPage';
 import { K8SGATEWAY } from '../../pages/IstioConfigNew/K8sGatewayForm';
+import { K8S_REFERENCE_GRANT } from '../../pages/IstioConfigNew/K8sReferenceGrantForm';
 import { groupMenuStyle } from 'styles/DropdownStyles';
 import {
   Dropdown,
@@ -18,19 +19,19 @@ type ActionItem = {
   name: string;
 };
 
-export const IstioActionsNamespaceDropdown: React.FC = () => {
+export const IstioActionsNamespaceDropdown: React.FC = (): void => {
   const [dropdownOpen, setDropdownOpen] = React.useState<boolean>(false);
 
-  const onSelect = () => {
+  const onSelect = (): void => {
     setDropdownOpen(!dropdownOpen);
   };
 
-  const onToggle = (dropdownState: boolean) => {
+  const onToggle = (dropdownState: boolean): void => {
     setDropdownOpen(dropdownState);
   };
 
-  const onClickCreate = (type: string) => {
-    history.push('/istio/new/' + type);
+  const onClickCreate = (type: string): void => {
+    history.push(`/istio/new/${type}`);
   };
 
   const dropdownItemsRaw = NEW_ISTIO_RESOURCE.map(
@@ -38,10 +39,12 @@ export const IstioActionsNamespaceDropdown: React.FC = () => {
       name: r.value,
       action: (
         <DropdownItem
-          key={'createIstioConfig_' + r.value}
-          isDisabled={r.value === K8SGATEWAY ? !serverConfig.gatewayAPIEnabled : r.disabled}
+          key={`createIstioConfig_${r.value}`}
+          isDisabled={
+            r.value === K8SGATEWAY || r.value === K8S_REFERENCE_GRANT ? !serverConfig.gatewayAPIEnabled : r.disabled
+          }
           onClick={() => onClickCreate(r.value)}
-          data-test={'create_' + r.label}
+          data-test={`create_${r.label}`}
         >
           {r.label}
         </DropdownItem>
