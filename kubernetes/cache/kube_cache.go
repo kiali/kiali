@@ -160,8 +160,11 @@ type kubeCache struct {
 	client             kubernetes.ClientInterface
 	clusterCacheLister *cacheLister
 	clusterScoped      bool
-	nsCacheLister      map[string]*cacheLister
-	refreshDuration    time.Duration
+	// used in methods before calling Gateway API listers
+	// added because of potential nil issue when CRDs are applied after Kiali pod starts
+	hasGatewayAPIStarted bool
+	nsCacheLister        map[string]*cacheLister
+	refreshDuration      time.Duration
 	// Stops the cluster scoped informers when a refresh is necessary.
 	// Close this channel to stop the cluster-scoped informers.
 	stopClusterScopedChan chan struct{}
@@ -405,6 +408,7 @@ func (c *kubeCache) createGatewayInformers(namespace string) gateway.SharedInfor
 
 		lister.k8sreferencegrantLister = sharedInformers.Gateway().V1beta1().ReferenceGrants().Lister()
 		lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Gateway().V1beta1().ReferenceGrants().Informer().HasSynced)
+		c.hasGatewayAPIStarted = true
 	}
 	return sharedInformers
 }
@@ -1467,10 +1471,8 @@ func (c *kubeCache) GetTelemetries(namespace, labelSelector string) ([]*v1alpha1
 }
 
 func (c *kubeCache) isK8sGatewayListerInit(namespace string) bool {
-	// K8s GW has several cache listers, those can be namespace or cluster based
-	// if one of them is not initialized, then all others are not init as well
-	// this can happen when CRDs are created after Kiali start
-	if c.getCacheLister(namespace).k8sgatewayLister == nil {
+	// potential issue can happen when CRDs are created after Kiali start
+	if !c.hasGatewayAPIStarted {
 		log.Info(K8sGatewayAPIMessage)
 		return false
 	}
