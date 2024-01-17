@@ -239,12 +239,6 @@ jobs:
 
         make -e DOCKER_CLI_EXPERIMENTAL=enabled build-linux-multi-arch container-multi-arch-all-push-kiali-quay
 
-    - name: Configure git
-      run: |
-        git config user.email 'kiali-dev@googlegroups.com'
-
-        git config user.name 'kiali-bot'
-
     - name: Create tag
       run: |
         git add Makefile

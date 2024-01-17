@@ -68,11 +68,6 @@ jobs:
           print('.'.join(['v' + str(major), str(minor), str(patch)]))
           EOF
 
-      - name: Configure git backend
-        run: |
-          git config user.email 'kiali-dev@googlegroups.com'
-
-          git config user.name 'kiali-bot'
       - name: Create Tag in kiali/kiali
         id: tag_kiali
         env:
@@ -105,12 +100,7 @@ jobs:
           token: ${{ secrets.KIALI_TOKEN || github.token}}
           repository: kiali/kiali-ui
           ref: ${{matrix.branch}}
-      - name: Configure git UI
-        if: ${{ matrix.branch == 'v1.24' || matrix.branch == 'v1.36'}}
-        run: |
-          git config user.email 'kiali-dev@googlegroups.com'
-
-          git config user.name 'kiali-bot'
+    
       - name: Check if need old UI
         id: check_ui_tag
         env:

@@ -29,8 +29,7 @@ In case of errors in any of these steps, the log should be inspected to
 check what was the last action the pipeline executed. The pipelines are not idempotent so to retry them if there was a failure in the release step, manual amends should be done to prepare the next run:
 
 * Delete the tags and the release on GitHub (if exists)
-* Revert the commits made by the pipeline on the version branch (if there are commits made by kiali-bot on the same time around the pipeline run)
-* Delete the PR generated if exists
+
 
 ## Helm charts
 
@@ -39,7 +38,7 @@ The Helm charts pipeline has a "release" job that in case of errors, the log sho
 The manual actions to do in case of a failure are:
 
 * Delete the $RELEASE_VERSION-main branch (if exists)
-* Revert the last commit in the $RELEASE_VERSION branch (if there is one made by kiali-bot on the same time around the pipeline run)
+
 * Delete the tags $RELEASE_VERSION and $RELEASE_VERSION-master (if exist)
 * Delete the PR generated (if exists)
 
@@ -50,5 +49,5 @@ The Kiali.io pipeline has a "release" job that in case of errors, the log should
 The manual actions to do in case of a failure are:
 
 * Delete the $RELEASE_VERSION branch (if exists)
-* Revert the last commits made by kiali-bot on the staging branch
+
 
