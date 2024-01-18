@@ -399,7 +399,6 @@ export interface GraphNodeData {
   isOutside?: boolean;
   isRoot?: boolean;
   isServiceEntry?: SEInfo;
-  // true if is an Ambient Istio waypoint
   isWaypoint?: boolean;
   labels?: { [key: string]: string };
   namespace: string;
