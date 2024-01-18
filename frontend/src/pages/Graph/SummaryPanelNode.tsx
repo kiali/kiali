@@ -129,7 +129,7 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
     const shouldRenderDestsList = destsList && destsList.length > 0;
     const shouldRenderSvcList = servicesList && servicesList.length > 0;
     const shouldRenderService = service && ![NodeType.SERVICE, NodeType.UNKNOWN].includes(nodeType);
-    const shouldRenderApp = app && ![NodeType.APP, NodeType.UNKNOWN].includes(nodeType);
+    const shouldRenderApp = app && ![NodeType.APP, NodeType.UNKNOWN].includes(nodeType) && !nodeData.isWaypoint;
     const shouldRenderWorkload = workload && ![NodeType.WORKLOAD, NodeType.UNKNOWN].includes(nodeType);
     const shouldRenderTraces =
       !isServiceEntry &&
