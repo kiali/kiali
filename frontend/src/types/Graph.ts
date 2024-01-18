@@ -399,6 +399,7 @@ export interface GraphNodeData {
   isOutside?: boolean;
   isRoot?: boolean;
   isServiceEntry?: SEInfo;
+  isWaypoint?: boolean;
   labels?: { [key: string]: string };
   namespace: string;
   nodeType: NodeType;
@@ -588,6 +589,7 @@ export const NodeAttr = {
   isOutside: 'isOutside',
   isRoot: 'isRoot',
   isServiceEntry: 'isServiceEntry',
+  isWaypoint: 'isWaypoint',
   namespace: 'namespace',
   nodeType: 'nodeType',
   rank: 'rank',

@@ -33,12 +33,10 @@ func (a AmbientAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *gr
 
 	log.Trace("Running ambient appender")
 
-	if !a.Waypoints {
-		a.removeWaypointEntries(trafficMap, globalInfo, namespaceInfo)
-	}
+	a.handleWaypoints(trafficMap, globalInfo, !a.Waypoints)
 }
 
-func (a AmbientAppender) removeWaypointEntries(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
+func (a AmbientAppender) handleWaypoints(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, remove bool) {
 
 	for name, n := range trafficMap {
 
@@ -57,8 +55,14 @@ func (a AmbientAppender) removeWaypointEntries(trafficMap graph.TrafficMap, glob
 			}
 			for k, l := range workload.Labels {
 				if k == config.WaypointLabel && l == config.WaypointLabelValue {
-					delete(trafficMap, n.ID)
-					break
+					if remove {
+						delete(trafficMap, n.ID)
+						break
+					} else {
+						n.Metadata[graph.IsWaypoint] = true
+						n.Metadata[graph.IsOutOfMesh] = false
+						break
+					}
 				}
 			}
 		}

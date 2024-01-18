@@ -39,6 +39,7 @@ import { useKialiSelector } from '../../hooks/redux';
 import { groupMenuStyle, kebabToggleStyle } from 'styles/DropdownStyles';
 import { isMultiCluster, serverConfig } from '../../config';
 import { panelBodyStyle, panelHeadingStyle, panelStyle } from './SummaryPanelStyle';
+import { renderWaypoint } from '../../components/DetailDescription/DetailDescription';
 
 type SummaryPanelNodeState = {
   isActionOpen: boolean;
@@ -129,7 +130,7 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
     const shouldRenderDestsList = destsList && destsList.length > 0;
     const shouldRenderSvcList = servicesList && servicesList.length > 0;
     const shouldRenderService = service && ![NodeType.SERVICE, NodeType.UNKNOWN].includes(nodeType);
-    const shouldRenderApp = app && ![NodeType.APP, NodeType.UNKNOWN].includes(nodeType);
+    const shouldRenderApp = app && ![NodeType.APP, NodeType.UNKNOWN].includes(nodeType) && !nodeData.isWaypoint;
     const shouldRenderWorkload = workload && ![NodeType.WORKLOAD, NodeType.UNKNOWN].includes(nodeType);
     const shouldRenderTraces =
       !isServiceEntry &&
@@ -224,16 +225,18 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
               )}
 
               {secondBadge}
-
-              <div className={nodeInfoStyle}>
-                {renderBadgedLink(nodeData)}
-                {renderHealth(nodeData.health)}
-              </div>
+              {!nodeData.isWaypoint && (
+                <div className={nodeInfoStyle}>
+                  {renderBadgedLink(nodeData)}
+                  {renderHealth(nodeData.health)}
+                </div>
+              )}
             </span>
           </div>
 
           <div>
             {this.renderBadgeSummary(nodeData)}
+            {nodeData.isWaypoint && renderWaypoint('sm')}
             {shouldRenderDestsList && <div>{destsList}</div>}
             {shouldRenderSvcList && <div>{servicesList}</div>}
             {shouldRenderService && <div>{renderBadgedLink(nodeData, NodeType.SERVICE)}</div>}
