@@ -399,6 +399,8 @@ export interface GraphNodeData {
   isOutside?: boolean;
   isRoot?: boolean;
   isServiceEntry?: SEInfo;
+  // true if is an Ambient Istio waypoint
+  isWaypoint?: boolean;
   labels?: { [key: string]: string };
   namespace: string;
   nodeType: NodeType;
@@ -474,8 +476,6 @@ export interface DecoratedGraphNodeData extends GraphNodeData {
   httpOut: number;
   // true if has istio namespace
   isIstio?: boolean;
-  // true if is an Ambient Istio waypoint
-  isWaypoint?: boolean;
   // assigned when node ranking is enabled. relative importance from most to least important [1..100]. Multiple nodes can have same rank.
   rank?: number;
   tcpIn: number;
@@ -590,6 +590,7 @@ export const NodeAttr = {
   isOutside: 'isOutside',
   isRoot: 'isRoot',
   isServiceEntry: 'isServiceEntry',
+  isWaypoint: 'isWaypoint',
   namespace: 'namespace',
   nodeType: 'nodeType',
   rank: 'rank',
