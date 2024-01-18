@@ -237,8 +237,8 @@ func (in *K8SClient) IsExpGatewayAPI() bool {
 			K8sActualTCPRouteType:  K8sActualTCPRoutes,
 			K8sActualTLSRouteType:  K8sActualTLSRoutes,
 		}
-		isGatewayAPIV1Beta1 := checkGatewayAPIs(in, K8sNetworkingGroupVersionV1Alpha2.String(), v1alpha2Types)
-		in.isExpGatewayAPI = &isGatewayAPIV1Beta1
+		isGatewayAPIV1Alpha2 := checkGatewayAPIs(in, K8sNetworkingGroupVersionV1Alpha2.String(), v1alpha2Types)
+		in.isExpGatewayAPI = &isGatewayAPIV1Alpha2
 	}
 	return *in.isExpGatewayAPI
 }

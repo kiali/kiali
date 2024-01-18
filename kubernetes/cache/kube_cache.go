@@ -49,6 +49,8 @@ func checkIstioAPIsExist(client kubernetes.ClientInterface) error {
 	return nil
 }
 
+const K8sExpGatewayAPIMessage = "k8s experimental Gateway API CRD is needed to be installed"
+
 const K8sGatewayAPIMessage = "k8s Gateway API CRDs are installed, Kiali needs to be restarted to apply"
 
 type KubeCache interface {
@@ -1588,7 +1590,7 @@ func (c *kubeCache) GetK8sGRPCRoute(namespace, name string) (*gatewayapi_v1alpha
 	defer c.cacheLock.RUnlock()
 	c.cacheLock.RLock()
 	if !c.isK8sExpGatewayListerInit(namespace) {
-		return nil, errors.New(K8sGatewayAPIMessage)
+		return nil, errors.New(K8sExpGatewayAPIMessage)
 	}
 	g, err := c.getCacheLister(namespace).k8sgrpcrouteLister.GRPCRoutes(namespace).Get(name)
 	if err != nil {
@@ -1798,7 +1800,7 @@ func (c *kubeCache) GetK8sTCPRoute(namespace, name string) (*gatewayapi_v1alpha2
 	defer c.cacheLock.RUnlock()
 	c.cacheLock.RLock()
 	if !c.isK8sExpGatewayListerInit(namespace) {
-		return nil, errors.New(K8sGatewayAPIMessage)
+		return nil, errors.New(K8sExpGatewayAPIMessage)
 	}
 	g, err := c.getCacheLister(namespace).k8stcprouteLister.TCPRoutes(namespace).Get(name)
 	if err != nil {
@@ -1868,7 +1870,7 @@ func (c *kubeCache) GetK8sTLSRoute(namespace, name string) (*gatewayapi_v1alpha2
 	defer c.cacheLock.RUnlock()
 	c.cacheLock.RLock()
 	if !c.isK8sExpGatewayListerInit(namespace) {
-		return nil, errors.New(K8sGatewayAPIMessage)
+		return nil, errors.New(K8sExpGatewayAPIMessage)
 	}
 	g, err := c.getCacheLister(namespace).k8stlsrouteLister.TLSRoutes(namespace).Get(name)
 	if err != nil {

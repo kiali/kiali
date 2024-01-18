@@ -1245,11 +1245,11 @@ func ParseIstioConfigCriteria(cluster, namespace, objects, labelSelector, worklo
 	if checkType(types, kubernetes.K8sReferenceGrants) {
 		criteria.IncludeK8sReferenceGrants = true
 	}
-	if checkType(types, kubernetes.K8sTLSRoutes) {
-		criteria.IncludeK8sTLSRoutes = true
-	}
 	if checkType(types, kubernetes.K8sTCPRoutes) {
 		criteria.IncludeK8sTCPRoutes = true
+	}
+	if checkType(types, kubernetes.K8sTLSRoutes) {
+		criteria.IncludeK8sTLSRoutes = true
 	}
 	if checkType(types, kubernetes.VirtualServices) {
 		criteria.IncludeVirtualServices = true
