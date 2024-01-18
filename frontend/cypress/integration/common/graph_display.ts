@@ -403,7 +403,7 @@ Then(
     cy.get('#graph-side-panel')
       .find(`#ns-${namespace}`)
       .within($ns => {
-        // rightClick simiulates 'hover' since support for this is wonky in cypress: https://github.com/cypress-io/cypress/issues/10.
+        // rightClick simiulates 'hover' since support for this is wonky in cypress: https://github.com/cypress-io/cypress/issues/10
         cy.getBySel('icon-correct-validation').rightclick();
       });
 
