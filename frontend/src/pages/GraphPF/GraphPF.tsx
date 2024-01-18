@@ -96,21 +96,21 @@ export const TopologyContent: React.FC<{
   edgeLabels: EdgeLabelMode[];
   edgeMode: EdgeMode;
   graphData: GraphData;
-  setEdgeMode: (edgeMode: EdgeMode) => void;
   highlighter: GraphHighlighterPF;
   isMiniGraph: boolean;
   layoutName: LayoutName;
   onEdgeTap?: (edge: Edge<EdgeModel>) => void;
   onNodeTap?: (node: Node<NodeModel>) => void;
   onReady: (controller: any) => void;
+  setEdgeMode: (edgeMode: EdgeMode) => void;
   setLayout: (val: LayoutName) => void;
   setUpdateTime: (val: TimeInMilliseconds) => void;
   showOutOfMesh: boolean;
   showSecurity: boolean;
   showTrafficAnimation: boolean;
   showVirtualServices: boolean;
-  trace?: JaegerTrace;
   toggleLegend?: () => void;
+  trace?: JaegerTrace;
   updateSummary: (graphEvent: GraphEvent) => void;
 }> = ({
   controller,
@@ -272,7 +272,7 @@ export const TopologyContent: React.FC<{
     //
     // Reset [new] graph with initial model
     //
-    const resetGraph = () => {
+    const resetGraph = (): void => {
       if (controller) {
         const defaultModel: Model = {
           graph: {
@@ -289,11 +289,11 @@ export const TopologyContent: React.FC<{
     //
     // Manage the GraphData / DataModel
     //
-    const generateDataModel = () => {
+    const generateDataModel = (): { edges: EdgeModel[]; nodes: NodeModel[] } => {
       let nodeMap: Map<string, NodeModel> = new Map<string, NodeModel>();
       const edges: EdgeModel[] = [];
 
-      const onHover = (element: GraphElement, isMouseIn: boolean) => {
+      const onHover = (element: GraphElement, isMouseIn: boolean): void => {
         if (isMouseIn) {
           highlighter.onMouseIn(element);
         } else {
@@ -391,7 +391,7 @@ export const TopologyContent: React.FC<{
     //
     // update model merging existing nodes / edges
     //
-    const updateModel = (controller: Controller) => {
+    const updateModel = (controller: Controller): void => {
       if (!controller) {
         return;
       }
@@ -437,7 +437,10 @@ export const TopologyContent: React.FC<{
       if (focusNodeId) {
         const focusNode = nodes.find(n => n.getId() === focusNodeId);
         if (focusNode) {
-          focusNode.setData({ ...(focusNode.getData() as NodeData), isFocused: true });
+          const data = focusNode.getData() as NodeData;
+          data.isSelected = true;
+          setSelectedIds([focusNode.getId()]);
+          focusNode.setData({ ...(focusNode.getData() as NodeData) });
         }
         unsetFocusSelector();
       }
@@ -773,8 +776,8 @@ export const GraphPF: React.FC<{
   showSecurity: boolean;
   showTrafficAnimation: boolean;
   showVirtualServices: boolean;
-  trace?: JaegerTrace;
   toggleLegend?: () => void;
+  trace?: JaegerTrace;
   updateSummary: (graphEvent: GraphEvent) => void;
 }> = ({
   edgeLabels,
@@ -792,8 +795,8 @@ export const GraphPF: React.FC<{
   showSecurity,
   showTrafficAnimation,
   showVirtualServices,
-  trace,
   toggleLegend,
+  trace,
   updateSummary
 }) => {
   //create controller on startup and register factories
@@ -824,7 +827,7 @@ export const GraphPF: React.FC<{
     }
   };
 
-  const setLayoutByName = (layoutName: LayoutName) => {
+  const setLayoutByName = (layoutName: LayoutName): void => {
     let layout: Layout;
     // TODO, handle namespaceLayout
     switch (layoutName) {

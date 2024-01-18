@@ -1,8 +1,18 @@
-import { Node, NodeShape, observer, ScaleDetailsLevel, useHover, WithSelectionProps } from '@patternfly/react-topology';
+import {
+  DefaultNode,
+  getShapeComponent,
+  Node,
+  NodeShape,
+  observer,
+  ScaleDetailsLevel,
+  useHover,
+  WithSelectionProps
+} from '@patternfly/react-topology';
 import useDetailsLevel from '@patternfly/react-topology/dist/esm/hooks/useDetailsLevel';
 import * as React from 'react';
 import { KeyIcon, TopologyIcon } from '@patternfly/react-icons';
-import { BaseNode } from '../components/node';
+import { PFColors } from 'components/Pf/PfColors';
+import { kialiStyle } from 'styles/StyleUtils';
 
 // This is the registered Node component override that utilizes our customized Node.tsx component.
 
@@ -45,6 +55,38 @@ const StyleNodeComponent: React.FC<StyleNodeProps> = ({ element, ...rest }) => {
   const data = element.getData();
   const detailsLevel = useDetailsLevel();
   const [hover, hoverRef] = useHover();
+  const ShapeComponent = getShapeComponent(element);
+
+  const ColorFind = PFColors.Gold400;
+  const ColorSpan = PFColors.Purple200;
+  const OverlayOpacity = 0.3;
+  const OverlayWidth = 40;
+
+  const traceOverlayStyle = kialiStyle({
+    strokeWidth: OverlayWidth,
+    stroke: ColorSpan,
+    strokeOpacity: OverlayOpacity
+  });
+
+  const findOverlayStyle = kialiStyle({
+    strokeWidth: OverlayWidth,
+    stroke: ColorFind,
+    strokeOpacity: OverlayOpacity
+  });
+
+  // Set the path style when unhighlighted (opacity)
+  let opacity = 1;
+  if (data.isUnhighlighted) {
+    opacity = 0.1;
+  }
+
+  const onMouseEnter = (): void => {
+    data.onHover(element, true);
+  };
+
+  const onMouseLeave = (): void => {
+    data.onHover(element, false);
+  };
 
   const passedData = React.useMemo(() => {
     const newData = { ...data };
@@ -59,13 +101,15 @@ const StyleNodeComponent: React.FC<StyleNodeProps> = ({ element, ...rest }) => {
     return newData;
   }, [data, detailsLevel]);
 
-  if (data.isFocused) {
-    element.setData({ ...data, isFocused: false });
-  }
+  const { width, height } = element.getDimensions();
 
   return (
-    <g ref={hoverRef as any}>
-      <BaseNode
+    <g style={{ opacity: opacity }} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} ref={hoverRef as any}>
+      {data.hasSpans && (
+        <ShapeComponent className={traceOverlayStyle} width={width} height={height} element={element} />
+      )}
+      {data.isFind && <ShapeComponent className={findOverlayStyle} width={width} height={height} element={element} />}
+      <DefaultNode
         element={element}
         {...rest}
         {...passedData}
@@ -76,7 +120,7 @@ const StyleNodeComponent: React.FC<StyleNodeProps> = ({ element, ...rest }) => {
         showStatusBackground={detailsLevel === ScaleDetailsLevel.low}
       >
         {(hover || detailsLevel !== ScaleDetailsLevel.low) && renderIcon(element)}
-      </BaseNode>
+      </DefaultNode>
     </g>
   );
 };
