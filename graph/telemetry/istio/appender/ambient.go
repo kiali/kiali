@@ -33,10 +33,10 @@ func (a AmbientAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *gr
 
 	log.Trace("Running ambient appender")
 
-	a.isWaypoint(trafficMap, globalInfo, !a.Waypoints)
+	a.handleWaypoints(trafficMap, globalInfo, !a.Waypoints)
 }
 
-func (a AmbientAppender) isWaypoint(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, remove bool) {
+func (a AmbientAppender) handleWaypoints(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, remove bool) {
 
 	for name, n := range trafficMap {
 
