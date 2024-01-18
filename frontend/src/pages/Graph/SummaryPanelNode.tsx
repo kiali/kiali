@@ -39,6 +39,7 @@ import { useKialiSelector } from '../../hooks/redux';
 import { groupMenuStyle, kebabToggleStyle } from 'styles/DropdownStyles';
 import { isMultiCluster, serverConfig } from '../../config';
 import { panelBodyStyle, panelHeadingStyle, panelStyle } from './SummaryPanelStyle';
+import { renderWaypoint } from '../../components/DetailDescription/DetailDescription';
 
 type SummaryPanelNodeState = {
   isActionOpen: boolean;
@@ -235,6 +236,7 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
 
           <div>
             {this.renderBadgeSummary(nodeData)}
+            {nodeData.isWaypoint && renderWaypoint('sm')}
             {shouldRenderDestsList && <div>{destsList}</div>}
             {shouldRenderSvcList && <div>{servicesList}</div>}
             {shouldRenderService && <div>{renderBadgedLink(nodeData, NodeType.SERVICE)}</div>}

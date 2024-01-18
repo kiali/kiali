@@ -60,6 +60,24 @@ const infoStyle = kialiStyle({
   marginLeft: '0.5rem'
 });
 
+export const renderWaypoint = (bgsize?: string): React.ReactNode => {
+  const badgeSize = bgsize === 'global' || bgsize === 'sm' ? bgsize : 'global';
+  return [
+    <>
+      <div key="waypoint-workloads-title">
+        <PFBadge badge={PFBadges.Waypoint} position={TooltipPosition.top} size={badgeSize} />
+        Waypoint proxy
+        <Tooltip
+          position={TooltipPosition.right}
+          content="This workload is identified as a waypoint proxy, as part of Istio Ambient"
+        >
+          <KialiIcon.Info className={infoStyle} />
+        </Tooltip>
+      </div>
+    </>
+  ];
+};
+
 const DetailDescriptionComponent: React.FC<Props> = (props: Props) => {
   const renderAppItem = (namespace: string, appName: string): React.ReactNode => {
     let href = `/namespaces/${namespace}/applications/${appName}`;
@@ -364,23 +382,6 @@ const DetailDescriptionComponent: React.FC<Props> = (props: Props) => {
           {serviceList}
         </ul>
       </div>
-    ];
-  };
-
-  const renderWaypoint = (): React.ReactNode => {
-    return [
-      <>
-        <div key="waypoint-workloads-title">
-          <PFBadge badge={PFBadges.Waypoint} position={TooltipPosition.top} />
-          Waypoint proxy
-          <Tooltip
-            position={TooltipPosition.right}
-            content="This workload is identified as a waypoint proxy, as part of Istio Ambient"
-          >
-            <KialiIcon.Info className={infoStyle} />
-          </Tooltip>
-        </div>
-      </>
     ];
   };
 
