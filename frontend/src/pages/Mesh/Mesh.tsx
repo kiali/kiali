@@ -25,10 +25,11 @@ import {
   Edge
 } from '@patternfly/react-topology';
 import * as React from 'react';
-import { Layout } from 'types/Graph';
+import { BoxByType, Layout } from 'types/Graph';
 import { elementFactory } from './elements/elementFactory';
 import { layoutFactory } from './layouts/layoutFactory';
 import { TimeInMilliseconds } from 'types/Common';
+import { KialiColaGraph } from 'components/CytoscapeGraph/graphs/KialiColaGraph';
 import { KialiDagreGraph } from 'components/CytoscapeGraph/graphs/KialiDagreGraph';
 import { KialiGridGraph } from 'components/CytoscapeGraph/graphs/KialiGridGraph';
 import { HistoryManager, URLParam } from 'app/History';
@@ -61,10 +62,9 @@ const ZOOM_OUT = 3 / 4;
 export const FIT_PADDING = 80;
 
 export enum LayoutName {
-  BreadthFirst = 'BreadthFirst',
-  Concentric = 'Concentric',
-  Dagre = 'Dagre',
-  Grid = 'Grid'
+  Cola = 'kiali-cola',
+  Dagre = 'kiali-dagre',
+  Grid = 'kiali-grid'
 }
 
 // TODO: Implement some sort of focus when provided
@@ -222,10 +222,12 @@ const TopologyContent: React.FC<{
       };
 
       function addGroup(data: NodeData): NodeModel {
+        const collapsed = data.isBox === BoxByType.OTHER; // always collapse non-infra to start
+        data.collapsible = collapsed;
         data.onHover = onHover;
         const group: NodeModel = {
           children: [],
-          collapsed: false,
+          collapsed: collapsed,
           data: data,
           group: true,
           id: data.id,
@@ -465,6 +467,16 @@ const TopologyContent: React.FC<{
                 zoomOut: false,
                 customButtons: [
                   {
+                    ariaLabel: 'Layout - Cola',
+                    id: 'toolbar_layout_cola',
+                    disabled: LayoutName.Cola === layoutName,
+                    icon: <TopologyIcon />,
+                    tooltip: 'Layout - cola',
+                    callback: () => {
+                      setLayoutName(LayoutName.Cola);
+                    }
+                  },
+                  {
                     ariaLabel: 'Layout - Dagre',
                     id: 'toolbar_layout_dagre',
                     disabled: LayoutName.Dagre === layoutName,
@@ -472,16 +484,6 @@ const TopologyContent: React.FC<{
                     tooltip: 'Layout - dagre',
                     callback: () => {
                       setLayoutName(LayoutName.Dagre);
-                    }
-                  },
-                  {
-                    ariaLabel: 'Layout - Grid',
-                    id: 'toolbar_layout_grid',
-                    disabled: LayoutName.Grid === layoutName,
-                    icon: <TopologyIcon />,
-                    tooltip: 'Layout - grid',
-                    callback: () => {
-                      setLayoutName(LayoutName.Grid);
                     }
                   }
                 ],
@@ -558,25 +560,26 @@ export const Mesh: React.FC<{
 
   const getLayoutName = (layout: Layout): LayoutName => {
     switch (layout.name) {
-      case 'kiali-breadthfirst':
-        return LayoutName.BreadthFirst;
-      case 'kiali-concentric':
-        return LayoutName.Concentric;
+      case 'kiali-dagre':
+        return LayoutName.Dagre;
       case 'kiali-grid':
         return LayoutName.Grid;
       default:
-        return LayoutName.Dagre;
+        return LayoutName.Cola;
     }
   };
 
   const setLayoutByName = (layoutName: LayoutName) => {
     let layout: Layout;
     switch (layoutName) {
+      case LayoutName.Dagre:
+        layout = KialiDagreGraph.getLayout();
+        break;
       case LayoutName.Grid:
         layout = KialiGridGraph.getLayout();
         break;
       default:
-        layout = KialiDagreGraph.getLayout();
+        layout = KialiColaGraph.getLayout();
     }
 
     HistoryManager.setParam(URLParam.MESH_LAYOUT, layout.name);

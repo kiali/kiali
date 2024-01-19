@@ -259,7 +259,7 @@ func generateBoxCompoundNodes(box map[string][]*NodeData, nodes *[]*NodeWrapper,
 			num := len(members)
 			namespace = "1 Other Namespace"
 			if num > 1 {
-				namespace = fmt.Sprintf("%v Other Namespaces", num)
+				namespace = fmt.Sprintf("Non-Infra Namespaces")
 			}
 		}
 		nd := NodeData{

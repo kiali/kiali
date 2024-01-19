@@ -36,9 +36,11 @@ export type NodeData = DecoratedMeshNodeData & {
   badgeColor?: string;
   badgeLocation?: BadgeLocation;
   badgeTextColor?: string;
+  collapsible?: boolean; // for groups
   column?: number;
   component?: React.ReactNode;
   icon?: React.ReactNode;
+  isCollapsed?: boolean; // for groups
   isFind?: boolean;
   isFocused?: boolean;
   isHighlighted?: boolean;

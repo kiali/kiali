@@ -1,4 +1,4 @@
-import { Graph, Layout, DagreLayout, LayoutFactory, ColaLayout } from '@patternfly/react-topology';
+import { Graph, Layout, DagreLayout, LayoutFactory, ColaGroupsLayout } from '@patternfly/react-topology';
 import { LayoutName } from '../Mesh';
 
 /*
@@ -17,12 +17,9 @@ export const LAYOUT_DEFAULTS: LayoutOptions = {
 */
 
 export const layoutFactory: LayoutFactory = (type: string, graph: Graph): Layout | undefined => {
+  console.log(`type=${type}`);
   switch (type) {
-    case LayoutName.Grid:
-      return new ColaLayout(graph, {
-        nodeDistance: 50
-      });
-    default:
+    case LayoutName.Dagre:
       return new DagreLayout(graph, {
         linkDistance: 40,
         nodeDistance: 25,
@@ -30,6 +27,12 @@ export const layoutFactory: LayoutFactory = (type: string, graph: Graph): Layout
         marginy: undefined,
         ranker: 'network-simplex',
         rankdir: 'LR'
+      });
+    default:
+      return new ColaGroupsLayout(graph, {
+        // layoutOnDrag: false,
+        maxTicks: 0,
+        nodeDistance: 50
       });
   }
 };
