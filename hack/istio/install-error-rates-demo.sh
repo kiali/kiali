@@ -96,7 +96,7 @@ echo NAMESPACE_GAMMA=${NAMESPACE_GAMMA}
 echo SOURCE=${SOURCE}
 
 # check arch values
-if [ "${ARCH}" != "ppc64le" ] && [ "${ARCH}" != "s390x" ] && [ "${ARCH}" != "amd64" ]; then
+if [ "${ARCH}" != "ppc64le" ] && [ "${ARCH}" != "s390x" ] && [ "${ARCH}" != "amd64" ] && [ "${ARCH}" != "arm64" ]; then
   echo "${ARCH} is not supported. Exiting."
   exit 1
 fi

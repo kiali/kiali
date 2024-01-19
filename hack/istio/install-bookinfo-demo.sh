@@ -102,7 +102,7 @@ while [[ $# -gt 0 ]]; do
     -h|--help)
       cat <<HELPMSG
 Valid command line arguments:
-  -a|--arch <amd64|ppc64le|s390x>: Images for given arch will be used (default: amd64). Custom bookinfo yaml file provided via '-b' argument is ignored when using different arch than the default.
+  -a|--arch <amd64|ppc64le|s390x|arm64>: Images for given arch will be used (default: amd64). Custom bookinfo yaml file provided via '-b' argument is ignored when using different arch than the default.
   -ai|--auto-injection <true|false>: If you want sidecars to be auto-injected (default: true).
   -db|--delete-bookinfo <true|false>: If true, uninstall bookinfo. If false, install bookinfo. (default: false).
   -id|--istio-dir <dir>: Where Istio has already been downloaded. If not found, this script aborts.
@@ -204,7 +204,7 @@ elif [ "${ARCH}" == "s390x" ]; then
   cp ${HACK_SCRIPT_DIR}/kustomization/bookinfo-s390x.yaml ${ISTIO_DIR}/samples/bookinfo/platform/kube/kustomization.yaml
   ${CLIENT_EXE} kustomize ${ISTIO_DIR}/samples/bookinfo/platform/kube --reorder=none > ${ISTIO_DIR}/samples/bookinfo/platform/kube/bookinfo-s390x.yaml
   BOOKINFO_YAML="${ISTIO_DIR}/samples/bookinfo/platform/kube/bookinfo-s390x.yaml"
-elif [ "${ARCH}" != "amd64" ]; then
+elif [ "${ARCH}" != "amd64" && "${ARCH}" != "arm64" ]; then
   echo "${ARCH} is not supported. Exiting."
   exit 1
 fi
