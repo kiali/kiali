@@ -67,6 +67,11 @@ const (
 	K8sGatewayClassType     = "GatewayClass"
 	K8sActualGatewayClasses = "gatewayclasses"
 
+	K8sGRPCRoutes          = "k8sgrpcroutes"
+	K8sGRPCRouteType       = "K8sGRPCRoute"
+	K8sActualGRPCRouteType = "GRPCRoute"
+	K8sActualGRPCRoutes    = "grpcroutes"
+
 	K8sHTTPRoutes    = "k8shttproutes"
 	K8sHTTPRouteType = "K8sHTTPRoute"
 	// K8sActualHTTPRouteType There is a naming conflict between Istio and K8s Gateways, keeping here an actual type to show in YAML editor
@@ -77,6 +82,16 @@ const (
 	K8sReferenceGrantType       = "K8sReferenceGrant"
 	K8sActualReferenceGrantType = "ReferenceGrant"
 	K8sActualReferenceGrants    = "referencegrants"
+
+	K8sTCPRoutes          = "k8stcproutes"
+	K8sTCPRouteType       = "K8sTCPRoute"
+	K8sActualTCPRouteType = "TCPRoute"
+	K8sActualTCPRoutes    = "tcproutes"
+
+	K8sTLSRoutes          = "k8stlsroutes"
+	K8sTLSRouteType       = "K8sTLSRoute"
+	K8sActualTLSRouteType = "TLSRoute"
+	K8sActualTLSRoutes    = "tlsroutes"
 
 	// Authorization PeerAuthentications
 	AuthorizationPolicies     = "authorizationpolicies"
@@ -97,6 +112,12 @@ var (
 		Version: "v1alpha3",
 	}
 	ApiNetworkingVersionV1Alpha3 = NetworkingGroupVersionV1Alpha3.Group + "/" + NetworkingGroupVersionV1Alpha3.Version
+
+	K8sNetworkingGroupVersionV1Alpha2 = schema.GroupVersion{
+		Group:   "gateway.networking.k8s.io",
+		Version: "v1alpha2",
+	}
+	K8sApiNetworkingVersionV1Alpha2 = K8sNetworkingGroupVersionV1Alpha2.Group + "/" + K8sNetworkingGroupVersionV1Alpha2.Version
 
 	K8sNetworkingGroupVersionV1Beta1 = schema.GroupVersion{
 		Group:   "gateway.networking.k8s.io",
@@ -149,8 +170,11 @@ var (
 
 		// K8s Networking Gateways
 		K8sGateways:        K8sGatewayType,
+		K8sGRPCRoutes:      K8sGRPCRouteType,
 		K8sHTTPRoutes:      K8sHTTPRouteType,
 		K8sReferenceGrants: K8sReferenceGrantType,
+		K8sTCPRoutes:       K8sTCPRouteType,
+		K8sTLSRoutes:       K8sTLSRouteType,
 
 		// Security
 		AuthorizationPolicies:  AuthorizationPoliciesType,
@@ -171,8 +195,11 @@ var (
 		Telemetries:      TelemetryGroupV1Alpha1.Group,
 
 		K8sGateways:        K8sNetworkingGroupVersionV1.Group,
+		K8sGRPCRoutes:      K8sNetworkingGroupVersionV1Alpha2.Group,
 		K8sHTTPRoutes:      K8sNetworkingGroupVersionV1.Group,
 		K8sReferenceGrants: K8sNetworkingGroupVersionV1.Group,
+		K8sTCPRoutes:       K8sNetworkingGroupVersionV1Alpha2.Group,
+		K8sTLSRoutes:       K8sNetworkingGroupVersionV1Alpha2.Group,
 
 		AuthorizationPolicies:  SecurityGroupVersion.Group,
 		PeerAuthentications:    SecurityGroupVersion.Group,

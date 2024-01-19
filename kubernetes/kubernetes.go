@@ -225,6 +225,24 @@ func (in *K8SClient) IsGatewayAPI() bool {
 	return *in.isGatewayAPI
 }
 
+func (in *K8SClient) IsExpGatewayAPI() bool {
+	in.rwMutex.Lock()
+	defer in.rwMutex.Unlock()
+	if in.GatewayAPI() == nil {
+		return false
+	}
+	if in.isExpGatewayAPI == nil {
+		v1alpha2Types := map[string]string{
+			K8sActualGRPCRouteType: K8sActualGRPCRoutes,
+			K8sActualTCPRouteType:  K8sActualTCPRoutes,
+			K8sActualTLSRouteType:  K8sActualTLSRoutes,
+		}
+		isGatewayAPIV1Alpha2 := checkGatewayAPIs(in, K8sNetworkingGroupVersionV1Alpha2.String(), v1alpha2Types)
+		in.isExpGatewayAPI = &isGatewayAPIV1Alpha2
+	}
+	return *in.isExpGatewayAPI
+}
+
 func checkGatewayAPIs(in *K8SClient, version string, types map[string]string) bool {
 	found := 0
 	res, err := in.k8s.Discovery().ServerResourcesForGroupVersion(version)

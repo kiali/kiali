@@ -117,12 +117,24 @@ export const istioTypeFilter: FilterType = {
       title: 'K8sGateway'
     },
     {
+      id: 'K8sGRPCRoute',
+      title: 'K8sGRPCRoute'
+    },
+    {
       id: 'K8sHTTPRoute',
       title: 'K8sHTTPRoute'
     },
     {
       id: 'K8sReferenceGrant',
       title: 'K8sReferenceGrant'
+    },
+    {
+      id: 'K8sTCPRoute',
+      title: 'K8sTCPRoute'
+    },
+    {
+      id: 'K8sTLSRoute',
+      title: 'K8sTLSRoute'
     },
     {
       id: 'PeerAuthentication',

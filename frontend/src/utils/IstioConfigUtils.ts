@@ -34,10 +34,16 @@ export const getIstioObject = (istioObjectDetails?: IstioConfigDetails | IstioCo
       istioObject = istioObjectDetails.gateway;
     } else if (istioObjectDetails.k8sGateway) {
       istioObject = istioObjectDetails.k8sGateway;
+    } else if (istioObjectDetails.k8sGRPCRoute) {
+      istioObject = istioObjectDetails.k8sGRPCRoute;
     } else if (istioObjectDetails.k8sHTTPRoute) {
       istioObject = istioObjectDetails.k8sHTTPRoute;
     } else if (istioObjectDetails.k8sReferenceGrant) {
       istioObject = istioObjectDetails.k8sReferenceGrant;
+    } else if (istioObjectDetails.k8sTCPRoute) {
+      istioObject = istioObjectDetails.k8sTCPRoute;
+    } else if (istioObjectDetails.k8sTLSRoute) {
+      istioObject = istioObjectDetails.k8sTLSRoute;
     } else if (istioObjectDetails.virtualService) {
       istioObject = istioObjectDetails.virtualService;
     } else if (istioObjectDetails.destinationRule) {

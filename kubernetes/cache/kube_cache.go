@@ -28,9 +28,11 @@ import (
 	core_v1_listers "k8s.io/client-go/listers/core/v1"
 	"k8s.io/client-go/tools/cache"
 	gatewayapi_v1 "sigs.k8s.io/gateway-api/apis/v1"
+	gatewayapi_v1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 	gatewayapi_v1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 	gateway "sigs.k8s.io/gateway-api/pkg/client/informers/externalversions"
 	k8s_v1_listers "sigs.k8s.io/gateway-api/pkg/client/listers/apis/v1"
+	k8s_v1alpha2_listers "sigs.k8s.io/gateway-api/pkg/client/listers/apis/v1alpha2"
 	k8s_v1beta1_listers "sigs.k8s.io/gateway-api/pkg/client/listers/apis/v1beta1"
 
 	"github.com/kiali/kiali/config"
@@ -46,6 +48,8 @@ func checkIstioAPIsExist(client kubernetes.ClientInterface) error {
 	}
 	return nil
 }
+
+const K8sExpGatewayAPIMessage = "k8s experimental Gateway API CRD is needed to be installed"
 
 const K8sGatewayAPIMessage = "k8s Gateway API CRDs are installed, Kiali needs to be restarted to apply"
 
@@ -105,10 +109,16 @@ type KubeCache interface {
 
 	GetK8sGateway(namespace, name string) (*gatewayapi_v1.Gateway, error)
 	GetK8sGateways(namespace, labelSelector string) ([]*gatewayapi_v1.Gateway, error)
+	GetK8sGRPCRoute(namespace, name string) (*gatewayapi_v1alpha2.GRPCRoute, error)
+	GetK8sGRPCRoutes(namespace, labelSelector string) ([]*gatewayapi_v1alpha2.GRPCRoute, error)
 	GetK8sHTTPRoute(namespace, name string) (*gatewayapi_v1.HTTPRoute, error)
 	GetK8sHTTPRoutes(namespace, labelSelector string) ([]*gatewayapi_v1.HTTPRoute, error)
 	GetK8sReferenceGrant(namespace, name string) (*gatewayapi_v1beta1.ReferenceGrant, error)
 	GetK8sReferenceGrants(namespace, labelSelector string) ([]*gatewayapi_v1beta1.ReferenceGrant, error)
+	GetK8sTCPRoute(namespace, name string) (*gatewayapi_v1alpha2.TCPRoute, error)
+	GetK8sTCPRoutes(namespace, labelSelector string) ([]*gatewayapi_v1alpha2.TCPRoute, error)
+	GetK8sTLSRoute(namespace, name string) (*gatewayapi_v1alpha2.TLSRoute, error)
+	GetK8sTLSRoutes(namespace, labelSelector string) ([]*gatewayapi_v1alpha2.TLSRoute, error)
 
 	GetAuthorizationPolicy(namespace, name string) (*security_v1beta1.AuthorizationPolicy, error)
 	GetAuthorizationPolicies(namespace, labelSelector string) ([]*security_v1beta1.AuthorizationPolicy, error)
@@ -140,8 +150,11 @@ type cacheLister struct {
 	envoyFilterLister       istionet_v1alpha3_listers.EnvoyFilterLister
 	gatewayLister           istionet_v1beta1_listers.GatewayLister
 	k8sgatewayLister        k8s_v1_listers.GatewayLister
+	k8sgrpcrouteLister      k8s_v1alpha2_listers.GRPCRouteLister
 	k8shttprouteLister      k8s_v1_listers.HTTPRouteLister
 	k8sreferencegrantLister k8s_v1beta1_listers.ReferenceGrantLister
+	k8stcprouteLister       k8s_v1alpha2_listers.TCPRouteLister
+	k8stlsrouteLister       k8s_v1alpha2_listers.TLSRouteLister
 	peerAuthnLister         istiosec_v1beta1_listers.PeerAuthenticationLister
 	requestAuthnLister      istiosec_v1beta1_listers.RequestAuthenticationLister
 	serviceEntryLister      istionet_v1beta1_listers.ServiceEntryLister
@@ -162,9 +175,10 @@ type kubeCache struct {
 	clusterScoped      bool
 	// used in methods before calling Gateway API listers
 	// added because of potential nil issue when CRDs are applied after Kiali pod starts
-	hasGatewayAPIStarted bool
-	nsCacheLister        map[string]*cacheLister
-	refreshDuration      time.Duration
+	hasExpGatewayAPIStarted bool
+	hasGatewayAPIStarted    bool
+	nsCacheLister           map[string]*cacheLister
+	refreshDuration         time.Duration
 	// Stops the cluster scoped informers when a refresh is necessary.
 	// Close this channel to stop the cluster-scoped informers.
 	stopClusterScopedChan chan struct{}
@@ -409,6 +423,18 @@ func (c *kubeCache) createGatewayInformers(namespace string) gateway.SharedInfor
 		lister.k8sreferencegrantLister = sharedInformers.Gateway().V1beta1().ReferenceGrants().Lister()
 		lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Gateway().V1beta1().ReferenceGrants().Informer().HasSynced)
 		c.hasGatewayAPIStarted = true
+
+		if c.client.IsExpGatewayAPI() {
+			lister.k8sgrpcrouteLister = sharedInformers.Gateway().V1alpha2().GRPCRoutes().Lister()
+			lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Gateway().V1alpha2().GRPCRoutes().Informer().HasSynced)
+
+			lister.k8stcprouteLister = sharedInformers.Gateway().V1alpha2().TCPRoutes().Lister()
+			lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Gateway().V1alpha2().TCPRoutes().Informer().HasSynced)
+
+			lister.k8stlsrouteLister = sharedInformers.Gateway().V1alpha2().TLSRoutes().Lister()
+			lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Gateway().V1alpha2().TLSRoutes().Informer().HasSynced)
+			c.hasExpGatewayAPIStarted = true
+		}
 	}
 	return sharedInformers
 }
@@ -1479,6 +1505,11 @@ func (c *kubeCache) isK8sGatewayListerInit(namespace string) bool {
 	return true
 }
 
+func (c *kubeCache) isK8sExpGatewayListerInit(namespace string) bool {
+	// GW API Experimental features are optional and CRDs can be not created
+	return c.hasExpGatewayAPIStarted
+}
+
 func (c *kubeCache) GetK8sGateway(namespace, name string) (*gatewayapi_v1.Gateway, error) {
 	if err := checkIstioAPIsExist(c.client); err != nil {
 		return nil, err
@@ -1547,6 +1578,76 @@ func (c *kubeCache) GetK8sGateways(namespace, labelSelector string) ([]*gatewaya
 		retK8sGateways = append(retK8sGateways, ggw)
 	}
 	return retK8sGateways, nil
+}
+
+func (c *kubeCache) GetK8sGRPCRoute(namespace, name string) (*gatewayapi_v1alpha2.GRPCRoute, error) {
+	if err := checkIstioAPIsExist(c.client); err != nil {
+		return nil, err
+	}
+
+	// Read lock will prevent the cache from being refreshed while we are reading from the lister
+	// but it won't prevent other routines from reading from the lister.
+	defer c.cacheLock.RUnlock()
+	c.cacheLock.RLock()
+	if !c.isK8sExpGatewayListerInit(namespace) {
+		return nil, errors.New(K8sExpGatewayAPIMessage)
+	}
+	g, err := c.getCacheLister(namespace).k8sgrpcrouteLister.GRPCRoutes(namespace).Get(name)
+	if err != nil {
+		return nil, err
+	}
+
+	retG := g.DeepCopy()
+	retG.Kind = kubernetes.K8sGRPCRouteType
+	return retG, nil
+}
+
+func (c *kubeCache) GetK8sGRPCRoutes(namespace, labelSelector string) ([]*gatewayapi_v1alpha2.GRPCRoute, error) {
+	if err := checkIstioAPIsExist(c.client); err != nil {
+		return nil, err
+	}
+
+	selector, err := labels.Parse(labelSelector)
+	if err != nil {
+		return nil, err
+	}
+	k8sGRPCRoutes := []*gatewayapi_v1alpha2.GRPCRoute{}
+	// Read lock will prevent the cache from being refreshed while we are reading from the lister
+	// but it won't prevent other routines from reading from the lister.
+	defer c.cacheLock.RUnlock()
+	c.cacheLock.RLock()
+	if !c.isK8sExpGatewayListerInit(namespace) {
+		return k8sGRPCRoutes, nil
+	}
+	if namespace == metav1.NamespaceAll {
+		if c.clusterScoped {
+			k8sGRPCRoutes, err = c.clusterCacheLister.k8sgrpcrouteLister.List(selector)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			for _, nsCacheLister := range c.nsCacheLister {
+				grpcRoutesNamespaced, err := nsCacheLister.k8sgrpcrouteLister.List(selector)
+				if err != nil {
+					return nil, err
+				}
+				k8sGRPCRoutes = append(k8sGRPCRoutes, grpcRoutesNamespaced...)
+			}
+		}
+	} else {
+		k8sGRPCRoutes, err = c.getCacheLister(namespace).k8sgrpcrouteLister.GRPCRoutes(namespace).List(selector)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	var retK8sGRPCRoutes []*gatewayapi_v1alpha2.GRPCRoute
+	for _, hr := range k8sGRPCRoutes {
+		hrCopy := hr.DeepCopy()
+		hrCopy.Kind = kubernetes.K8sGRPCRouteType
+		retK8sGRPCRoutes = append(retK8sGRPCRoutes, hrCopy)
+	}
+	return retK8sGRPCRoutes, nil
 }
 
 func (c *kubeCache) GetK8sHTTPRoute(namespace, name string) (*gatewayapi_v1.HTTPRoute, error) {
@@ -1687,6 +1788,146 @@ func (c *kubeCache) GetK8sReferenceGrants(namespace, labelSelector string) ([]*g
 		retK8sReferenceGrants = append(retK8sReferenceGrants, hrCopy)
 	}
 	return retK8sReferenceGrants, nil
+}
+
+func (c *kubeCache) GetK8sTCPRoute(namespace, name string) (*gatewayapi_v1alpha2.TCPRoute, error) {
+	if err := checkIstioAPIsExist(c.client); err != nil {
+		return nil, err
+	}
+
+	// Read lock will prevent the cache from being refreshed while we are reading from the lister
+	// but it won't prevent other routines from reading from the lister.
+	defer c.cacheLock.RUnlock()
+	c.cacheLock.RLock()
+	if !c.isK8sExpGatewayListerInit(namespace) {
+		return nil, errors.New(K8sExpGatewayAPIMessage)
+	}
+	g, err := c.getCacheLister(namespace).k8stcprouteLister.TCPRoutes(namespace).Get(name)
+	if err != nil {
+		return nil, err
+	}
+
+	retG := g.DeepCopy()
+	retG.Kind = kubernetes.K8sTCPRouteType
+	return retG, nil
+}
+
+func (c *kubeCache) GetK8sTCPRoutes(namespace, labelSelector string) ([]*gatewayapi_v1alpha2.TCPRoute, error) {
+	if err := checkIstioAPIsExist(c.client); err != nil {
+		return nil, err
+	}
+
+	selector, err := labels.Parse(labelSelector)
+	if err != nil {
+		return nil, err
+	}
+	k8sTCPRoutes := []*gatewayapi_v1alpha2.TCPRoute{}
+	// Read lock will prevent the cache from being refreshed while we are reading from the lister
+	// but it won't prevent other routines from reading from the lister.
+	defer c.cacheLock.RUnlock()
+	c.cacheLock.RLock()
+	if !c.isK8sExpGatewayListerInit(namespace) {
+		return k8sTCPRoutes, nil
+	}
+	if namespace == metav1.NamespaceAll {
+		if c.clusterScoped {
+			k8sTCPRoutes, err = c.clusterCacheLister.k8stcprouteLister.List(selector)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			for _, nsCacheLister := range c.nsCacheLister {
+				tcpRoutesNamespaced, err := nsCacheLister.k8stcprouteLister.List(selector)
+				if err != nil {
+					return nil, err
+				}
+				k8sTCPRoutes = append(k8sTCPRoutes, tcpRoutesNamespaced...)
+			}
+		}
+	} else {
+		k8sTCPRoutes, err = c.getCacheLister(namespace).k8stcprouteLister.TCPRoutes(namespace).List(selector)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	var retK8sTCPRoutes []*gatewayapi_v1alpha2.TCPRoute
+	for _, hr := range k8sTCPRoutes {
+		hrCopy := hr.DeepCopy()
+		hrCopy.Kind = kubernetes.K8sTCPRouteType
+		retK8sTCPRoutes = append(retK8sTCPRoutes, hrCopy)
+	}
+	return retK8sTCPRoutes, nil
+}
+
+func (c *kubeCache) GetK8sTLSRoute(namespace, name string) (*gatewayapi_v1alpha2.TLSRoute, error) {
+	if err := checkIstioAPIsExist(c.client); err != nil {
+		return nil, err
+	}
+
+	// Read lock will prevent the cache from being refreshed while we are reading from the lister
+	// but it won't prevent other routines from reading from the lister.
+	defer c.cacheLock.RUnlock()
+	c.cacheLock.RLock()
+	if !c.isK8sExpGatewayListerInit(namespace) {
+		return nil, errors.New(K8sExpGatewayAPIMessage)
+	}
+	g, err := c.getCacheLister(namespace).k8stlsrouteLister.TLSRoutes(namespace).Get(name)
+	if err != nil {
+		return nil, err
+	}
+
+	retG := g.DeepCopy()
+	retG.Kind = kubernetes.K8sTLSRouteType
+	return retG, nil
+}
+
+func (c *kubeCache) GetK8sTLSRoutes(namespace, labelSelector string) ([]*gatewayapi_v1alpha2.TLSRoute, error) {
+	if err := checkIstioAPIsExist(c.client); err != nil {
+		return nil, err
+	}
+
+	selector, err := labels.Parse(labelSelector)
+	if err != nil {
+		return nil, err
+	}
+	k8sTLSRoutes := []*gatewayapi_v1alpha2.TLSRoute{}
+	// Read lock will prevent the cache from being refreshed while we are reading from the lister
+	// but it won't prevent other routines from reading from the lister.
+	defer c.cacheLock.RUnlock()
+	c.cacheLock.RLock()
+	if !c.isK8sExpGatewayListerInit(namespace) {
+		return k8sTLSRoutes, nil
+	}
+	if namespace == metav1.NamespaceAll {
+		if c.clusterScoped {
+			k8sTLSRoutes, err = c.clusterCacheLister.k8stlsrouteLister.List(selector)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			for _, nsCacheLister := range c.nsCacheLister {
+				grpcRoutesNamespaced, err := nsCacheLister.k8stlsrouteLister.List(selector)
+				if err != nil {
+					return nil, err
+				}
+				k8sTLSRoutes = append(k8sTLSRoutes, grpcRoutesNamespaced...)
+			}
+		}
+	} else {
+		k8sTLSRoutes, err = c.getCacheLister(namespace).k8stlsrouteLister.TLSRoutes(namespace).List(selector)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	var retK8sTLSRoutes []*gatewayapi_v1alpha2.TLSRoute
+	for _, hr := range k8sTLSRoutes {
+		hrCopy := hr.DeepCopy()
+		hrCopy.Kind = kubernetes.K8sTLSRouteType
+		retK8sTLSRoutes = append(retK8sTLSRoutes, hrCopy)
+	}
+	return retK8sTLSRoutes, nil
 }
 
 func (c *kubeCache) GetAuthorizationPolicy(namespace, name string) (*security_v1beta1.AuthorizationPolicy, error) {

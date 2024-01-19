@@ -116,8 +116,11 @@ var ObjectTypeSingular = map[string]string{
 	"wasmplugins":            "wasmpluin",
 	"telemetries":            "telemetry",
 	"k8sgateways":            "k8sgateway",
+	"k8sgrpcroutes":          "k8sgrpcroute",
 	"k8shttproutes":          "k8shttproute",
 	"k8sreferencegrants":     "k8sreferencegrant",
+	"k8stcproutes":           "k8stcproute",
+	"k8stlsroutes":           "k8stlsroute",
 }
 
 var checkDescriptors = map[string]IstioCheck{

@@ -261,6 +261,8 @@ func (in *IstioValidationsService) GetIstioObjectValidations(ctx context.Context
 			checkers.K8sGatewayChecker{K8sGateways: istioConfigList.K8sGateways, GatewayClasses: in.businessLayer.IstioConfig.GatewayAPIClasses()},
 		}
 		referenceChecker = references.K8sGatewayReferences{K8sGateways: istioConfigList.K8sGateways, K8sHTTPRoutes: istioConfigList.K8sHTTPRoutes}
+	case kubernetes.K8sGRPCRoutes:
+		// Validation on K8sGRPCRoutes is not expected
 	case kubernetes.K8sHTTPRoutes:
 		httpRouteChecker := checkers.K8sHTTPRouteChecker{K8sHTTPRoutes: istioConfigList.K8sHTTPRoutes, K8sGateways: istioConfigList.K8sGateways, K8sReferenceGrants: istioConfigList.K8sReferenceGrants, Namespaces: namespaces, RegistryServices: registryServices}
 		objectCheckers = []ObjectChecker{noServiceChecker, httpRouteChecker}
@@ -269,6 +271,10 @@ func (in *IstioValidationsService) GetIstioObjectValidations(ctx context.Context
 		objectCheckers = []ObjectChecker{
 			checkers.K8sReferenceGrantChecker{K8sReferenceGrants: istioConfigList.K8sReferenceGrants, Namespaces: namespaces},
 		}
+	case kubernetes.K8sTCPRoutes:
+		// Validation on K8sTCPRoutes is not expected
+	case kubernetes.K8sTLSRoutes:
+		// Validation on K8sTLSRoutes is not expected
 	default:
 		err = fmt.Errorf("object type not found: %v", objectType)
 	}

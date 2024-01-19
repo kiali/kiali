@@ -11,13 +11,13 @@ import {
   ConnectionPoolSettings,
   DestinationRule,
   Gateway,
-  HTTPMatch,
   HTTPMatchRequest,
   HTTPRoute,
   HTTPRouteDestination,
   IstioObject,
   K8sGateway,
   K8sHTTPHeaderFilter,
+  K8sHTTPMatch,
   K8sHTTPRequestMirrorFilter,
   K8sHTTPRoute,
   K8sHTTPRouteFilter,
@@ -233,8 +233,8 @@ const buildHTTPMatchRequest = (matches: string[]): HTTPMatchRequest[] => {
 
 const buildK8sHTTPRouteMatch = (matches: string[]): K8sHTTPRouteMatch => {
   const matchRoute: K8sHTTPRouteMatch = {};
-  const matchHeaders: HTTPMatch[] = [];
-  const matchQueries: HTTPMatch[] = [];
+  const matchHeaders: K8sHTTPMatch[] = [];
+  const matchQueries: K8sHTTPMatch[] = [];
   let matchPath = {};
   let matchMethod = '';
 

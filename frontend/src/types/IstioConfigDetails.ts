@@ -5,8 +5,11 @@ import {
   DestinationRule,
   Gateway,
   K8sGateway,
+  K8sGRPCRoute,
   K8sHTTPRoute,
   K8sReferenceGrant,
+  K8sTCPRoute,
+  K8sTLSRoute,
   ServiceEntry,
   VirtualService,
   ObjectValidation,
@@ -37,9 +40,12 @@ export interface IstioConfigDetails {
   envoyFilter: EnvoyFilter;
   gateway: Gateway;
   help?: HelpMessage[];
+  k8sGRPCRoute: K8sGRPCRoute;
   k8sGateway: K8sGateway;
   k8sHTTPRoute: K8sHTTPRoute;
   k8sReferenceGrant: K8sReferenceGrant;
+  k8sTCPRoute: K8sTCPRoute;
+  k8sTLSRoute: K8sTLSRoute;
   namespace: Namespace;
   peerAuthentication: PeerAuthentication;
   permissions: ResourcePermissions;

@@ -136,6 +136,7 @@ type FakeK8sClient struct {
 }
 
 func (c *FakeK8sClient) IsOpenShift() bool                  { return c.OpenShift }
+func (c *FakeK8sClient) IsExpGatewayAPI() bool              { return c.GatewayAPIEnabled }
 func (c *FakeK8sClient) IsGatewayAPI() bool                 { return c.GatewayAPIEnabled }
 func (c *FakeK8sClient) IsIstioAPI() bool                   { return c.IstioAPIEnabled }
 func (c *FakeK8sClient) GetToken() string                   { return c.Token }

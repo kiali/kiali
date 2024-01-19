@@ -5,8 +5,11 @@ import {
   EnvoyFilter,
   Gateway,
   K8sGateway,
+  K8sGRPCRoute,
   K8sHTTPRoute,
   K8sReferenceGrant,
+  K8sTCPRoute,
+  K8sTLSRoute,
   ObjectValidation,
   PeerAuthentication,
   RequestAuthentication,
@@ -29,9 +32,12 @@ export interface IstioConfigItem {
   destinationRule?: DestinationRule;
   envoyFilter?: EnvoyFilter;
   gateway?: Gateway;
+  k8sGRPCRoute?: K8sGRPCRoute;
   k8sGateway?: K8sGateway;
   k8sHTTPRoute?: K8sHTTPRoute;
   k8sReferenceGrant?: K8sReferenceGrant;
+  k8sTCPRoute?: K8sTCPRoute;
+  k8sTLSRoute?: K8sTLSRoute;
   name: string;
   namespace: string;
   peerAuthentication?: PeerAuthentication;
@@ -53,9 +59,12 @@ export interface IstioConfigList {
   destinationRules: DestinationRule[];
   envoyFilters: EnvoyFilter[];
   gateways: Gateway[];
+  k8sGRPCRoutes: K8sGRPCRoute[];
   k8sGateways: K8sGateway[];
   k8sHTTPRoutes: K8sHTTPRoute[];
   k8sReferenceGrants: K8sReferenceGrant[];
+  k8sTCPRoutes: K8sTCPRoute[];
+  k8sTLSRoutes: K8sTLSRoute[];
   namespace: Namespace;
   peerAuthentications: PeerAuthentication[];
   permissions: { [key: string]: ResourcePermissions };
@@ -89,8 +98,11 @@ export const dicIstioType = {
   EnvoyFilter: 'envoyfilters',
   Gateway: 'gateways',
   K8sGateway: 'k8sgateways',
+  K8sGRPCRoute: 'k8sgrpcroutes',
   K8sHTTPRoute: 'k8shttproutes',
   K8sReferenceGrant: 'k8sreferencegrants',
+  K8sTCPRoute: 'k8stcproutes',
+  K8sTLSRoute: 'k8stlsroutes',
   PeerAuthentication: 'peerauthentications',
   RequestAuthentication: 'requestauthentications',
   ServiceEntry: 'serviceentries',
@@ -106,8 +118,11 @@ export const dicIstioType = {
   envoyfilters: 'EnvoyFilter',
   gateways: 'Gateway',
   k8sgateways: 'K8sGateway',
+  k8sgrpcroutes: 'K8sGRPCRoute',
   k8shttproutes: 'K8sHTTPRoute',
   k8sreferencegrants: 'K8sReferenceGrant',
+  k8stcproutes: 'K8sTCPRoute',
+  k8stlsroutes: 'K8sTLSRoute',
   peerauthentications: 'PeerAuthentication',
   requestauthentications: 'RequestAuthentication',
   serviceentries: 'ServiceEntry',
@@ -123,8 +138,11 @@ export const dicIstioType = {
   envoyfilter: 'EnvoyFilter',
   gateway: 'Gateway',
   k8sgateway: 'K8sGateway',
+  k8sgrpcroute: 'K8sGRPCRoute',
   k8shttproute: 'K8sHTTPRoute',
   k8sreferencegrant: 'K8sReferenceGrant',
+  k8stcproute: 'K8sTCPRoute',
+  k8stlsroute: 'K8sTLSRoute',
   peerauthentication: 'PeerAuthentication',
   requestauthentication: 'RequestAuthentication',
   serviceentry: 'ServiceEntry',
@@ -162,8 +180,11 @@ export const filterByName = (unfiltered: IstioConfigList, names: string[]): Isti
     namespace: unfiltered.namespace,
     gateways: unfiltered.gateways.filter(gw => includeName(gw.metadata.name, names)),
     k8sGateways: unfiltered.k8sGateways.filter(gw => includeName(gw.metadata.name, names)),
+    k8sGRPCRoutes: unfiltered.k8sGRPCRoutes.filter(route => includeName(route.metadata.name, names)),
     k8sHTTPRoutes: unfiltered.k8sHTTPRoutes.filter(route => includeName(route.metadata.name, names)),
     k8sReferenceGrants: unfiltered.k8sReferenceGrants.filter(rg => includeName(rg.metadata.name, names)),
+    k8sTCPRoutes: unfiltered.k8sTCPRoutes.filter(route => includeName(route.metadata.name, names)),
+    k8sTLSRoutes: unfiltered.k8sTLSRoutes.filter(route => includeName(route.metadata.name, names)),
     virtualServices: unfiltered.virtualServices.filter(vs => includeName(vs.metadata.name, names)),
     destinationRules: unfiltered.destinationRules.filter(dr => includeName(dr.metadata.name, names)),
     serviceEntries: unfiltered.serviceEntries.filter(se => includeName(se.metadata.name, names)),

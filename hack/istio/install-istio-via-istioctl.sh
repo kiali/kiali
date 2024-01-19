@@ -559,7 +559,7 @@ else
       K8S_GATEWAY_API_VERSION=`curl --head --silent "https://github.com/kubernetes-sigs/gateway-api/releases/latest" | grep "location: " | awk '{print $2}' | sed "s/.*tag\///g" | cat -v | sed "s/\^M//g"`
     fi
     echo "Installing Gateway API version ${K8S_GATEWAY_API_VERSION}"
-    ${CLIENT_EXE} apply -k "github.com/kubernetes-sigs/gateway-api/config/crd?ref=${K8S_GATEWAY_API_VERSION}"
+    ${CLIENT_EXE} apply -k "github.com/kubernetes-sigs/gateway-api/config/crd/experimental?ref=${K8S_GATEWAY_API_VERSION}"
   fi
 
   # Do some OpenShift specific things
