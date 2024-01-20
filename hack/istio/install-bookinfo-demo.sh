@@ -204,7 +204,7 @@ elif [ "${ARCH}" == "s390x" ]; then
   cp ${HACK_SCRIPT_DIR}/kustomization/bookinfo-s390x.yaml ${ISTIO_DIR}/samples/bookinfo/platform/kube/kustomization.yaml
   ${CLIENT_EXE} kustomize ${ISTIO_DIR}/samples/bookinfo/platform/kube --reorder=none > ${ISTIO_DIR}/samples/bookinfo/platform/kube/bookinfo-s390x.yaml
   BOOKINFO_YAML="${ISTIO_DIR}/samples/bookinfo/platform/kube/bookinfo-s390x.yaml"
-elif [ "${ARCH}" != "amd64" && "${ARCH}" != "arm64" ]; then
+elif [ "${ARCH}" != "amd64" ] && [ "${ARCH}" != "arm64" ]; then
   echo "${ARCH} is not supported. Exiting."
   exit 1
 fi
