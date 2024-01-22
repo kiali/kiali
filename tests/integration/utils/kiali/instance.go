@@ -11,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/apimachinery/pkg/util/yaml"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/util/retry"
@@ -144,9 +145,14 @@ func (in *Instance) UpdateConfig(ctx context.Context, conf *config.Config) error
 			return err
 		}
 
-		log.Debugf("Diff between old config and new config: %s\n", cmp.Diff(cm.Data["config.yaml"], string(newConfig)))
+		log.Debugf("Diff between old config and new config: %s\n", cmp.Diff(cm.Data["config.yaml"], newConfig))
 
-		mergePatch := []byte(fmt.Sprintf(`{"spec": %s}`, string(newConfig)))
+		jsonConfig, err := yaml.ToJSON([]byte(newConfig))
+		if err != nil {
+			return err
+		}
+
+		mergePatch := []byte(fmt.Sprintf(`{"spec": %s}`, string(jsonConfig)))
 		_, err = in.dynamicClient.Resource(kialiGroupVersionResource).Namespace(in.Namespace).Patch(ctx, in.Name, types.MergePatchType, mergePatch, metav1.PatchOptions{})
 		if err != nil {
 			return err
@@ -164,7 +170,7 @@ func (in *Instance) UpdateConfig(ctx context.Context, conf *config.Config) error
 				return false, err
 			}
 
-			return currentConfigMap.Generation > cm.Generation, nil
+			return currentConfigMap.ResourceVersion != cm.ResourceVersion, nil
 		})
 	} else {
 		// Update the configmap directly. It's important to use yaml.Marshal because the config struct
@@ -179,9 +185,9 @@ func (in *Instance) UpdateConfig(ctx context.Context, conf *config.Config) error
 			return err
 		}
 
-		log.Debugf("Diff between old config and new config: %s\n", cmp.Diff(cm.Data["config.yaml"], string(newConfig)))
+		log.Debugf("Diff between old config and new config: %s\n", cmp.Diff(cm.Data["config.yaml"], newConfig))
 
-		cm.Data["config.yaml"] = string(newConfig)
+		cm.Data["config.yaml"] = newConfig
 
 		_, err = in.kubeClient.CoreV1().ConfigMaps(in.ResourceNamespace).Update(ctx, cm, metav1.UpdateOptions{})
 		if err != nil {

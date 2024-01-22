@@ -513,8 +513,8 @@ type Clustering struct {
 	// Clusters is a list of clusters that cannot be autodetected by the Kiali Server.
 	// Remote clusters are specified here if ‘autodetect_secrets.enabled’ is false or
 	// if the Kiali Server does not have access to the remote cluster’s secret.
-	Clusters  []Cluster  `yaml:"clusters,omitempty" json:"clusters,omitempty"`
-	KialiURLs []KialiURL `yaml:"kiali_urls,omitempty" json:"kiali_urls,omitempty"`
+	Clusters  []Cluster  `yaml:"clusters" json:"clusters"`
+	KialiURLs []KialiURL `yaml:"kiali_urls" json:"kiali_urls"`
 }
 
 type FeatureFlagClustering struct {
@@ -570,7 +570,7 @@ type Config struct {
 	AdditionalDisplayDetails []AdditionalDisplayItem             `yaml:"additional_display_details,omitempty"`
 	API                      ApiConfig                           `yaml:"api,omitempty"`
 	Auth                     AuthConfig                          `yaml:"auth,omitempty"`
-	Clustering               Clustering                          `yaml:"clustering,omitempty"`
+	Clustering               Clustering                          `yaml:"clustering"`
 	CustomDashboards         dashboards.MonitoringDashboardsList `yaml:"custom_dashboards,omitempty"`
 	Deployment               DeploymentConfig                    `yaml:"deployment,omitempty"`
 	ExternalServices         ExternalServices                    `yaml:"external_services,omitempty"`
