@@ -42,7 +42,6 @@ export type NodeData = DecoratedMeshNodeData & {
   icon?: React.ReactNode;
   isCollapsed?: boolean; // for groups
   isFind?: boolean;
-  isFocused?: boolean;
   isHighlighted?: boolean;
   isSelected?: boolean;
   isUnhighlighted?: boolean;
@@ -205,7 +204,7 @@ const getPathStyleStroke = (data: EdgeData): PFColors => {
 const getPathStyle = (data: EdgeData): React.CSSProperties => {
   return {
     stroke: getPathStyleStroke(data),
-    strokeWidth: 5
+    strokeWidth: 3
   } as React.CSSProperties;
 };
 

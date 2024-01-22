@@ -232,7 +232,7 @@ const TopologyContent: React.FC<{
           group: true,
           id: data.id,
           status: getNodeStatus(data),
-          style: { padding: 10 },
+          style: { padding: [35, 35, 35, 35] },
           type: 'group'
         };
         setNodeLabel(group, nodeMap);
@@ -360,10 +360,10 @@ const TopologyContent: React.FC<{
       if (focusNodeId) {
         const focusNode = nodes.find(n => n.getId() === focusNodeId);
         if (focusNode) {
-          focusNode.setData({
-            ...(focusNode.getData() as NodeData),
-            isFocused: true
-          });
+          const data = focusNode.getData() as NodeData;
+          data.isSelected = true;
+          setSelectedIds([focusNode.getId()]);
+          focusNode.setData({ ...(focusNode.getData() as NodeData) });
         }
         unsetFocusSelector();
       }
