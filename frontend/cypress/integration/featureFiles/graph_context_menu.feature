@@ -9,12 +9,14 @@ Feature: Kiali Graph page - Context menu actions
     Given user is at administrator perspective
     When user graphs "bookinfo" namespaces
 
+  @bookinfo-app
   Scenario: Actions in context menu for service node with existing traffic routing
     And user opens the context menu of the "productpage" service node
     And user should see "no" cluster parameter in links in the context menu
     And user clicks the "delete-traffic-routing" item of the context menu
     Then user should see the confirmation dialog to delete all traffic routing
 
+  @bookinfo-app
   Scenario Outline: Ability to launch <action> wizard from graph context menu
     And user opens the context menu of the "reviews" service node
     And user clicks the "<action>" action of the context menu
@@ -57,14 +59,19 @@ Feature: Kiali Graph page - Context menu actions
 
   @multi-primary
   @multi-cluster 
-  @istio-config-cleanup
   Scenario: Actions in context menu for a remote service node with existing traffic routing
     And there is no traffic routing for the "ratings" service in the "bookinfo" namespace and in the "west" cluster
+    And there is no traffic routing for the "ratings" service in the "bookinfo" namespace and in the "east" cluster
     And user opens the context menu of the "ratings" service node on the "west" cluster
     And user clicks the "request_routing" action of the context menu
     Then user should see the "request_routing" wizard
     And user adds a route
     And user previews the configuration
     And user creates the configuration
+    # This is a bit of a hack to ensure that traffic stays healthy on the traffic graph.
+    # In multi-primary, istio configuration for cross cluster services needs to
+    # be duplicated across clusters but the wizards only create the istio config
+    # on a single cluster.
+    And configuration is duplicated to the "east" cluster
     And user is at the "istio" list page
     Then user sees traffic routing objects for the "ratings" service in the "bookinfo" namespace in the "west" cluster

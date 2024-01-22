@@ -1,4 +1,4 @@
-import { After, Then, When } from '@badeball/cypress-cucumber-preprocessor';
+import { Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import { clusterParameterExists } from './navigation';
 import { ensureKialiFinishedLoading } from './transition';
 
@@ -94,35 +94,27 @@ Then(
   }
 );
 
-// @istio-config-cleanup
-After({ tags: '@istio-config-cleanup' }, () => {
-  [
-    { name: 'ratings', cluster: 'east' },
-    { name: 'ratings', cluster: 'west' },
-    { name: 'details', cluster: 'east' },
-    { name: 'details', cluster: 'west' }
-  ].forEach(svc => {
-    const namespace = 'bookinfo';
-    cy.log(`Deleting traffic routing for ${svc.name} service in namespace ${namespace}, cluster: ${svc.cluster}`);
-    cy.request({
-      url: `api/namespaces/${namespace}/istio/virtualservices/${svc.name}`,
-      method: 'DELETE',
-      qs: { clusterName: svc.cluster },
-      failOnStatusCode: false
-    }).then(response => {
-      if (response.status !== 404 && response.status !== 200) {
-        throw new Error(`Failed to delete virtual service: ${response.body}`);
-      }
+Then('configuration is duplicated to the {string} cluster', (cluster: string) => {
+  cy.get('@contextNode').then((node: any) => {
+    const namespace = node.data('namespace');
+    const service = node.data('service');
+
+    cy.fixture(`${service}-virtualservice.json`).then(virtualService => {
+      cy.request({
+        url: `api/namespaces/${namespace}/istio/virtualservices`,
+        method: 'POST',
+        qs: { clusterName: cluster },
+        body: virtualService
+      });
     });
-    cy.request({
-      url: `api/namespaces/${namespace}/istio/destinationrules/${svc.name}`,
-      method: 'DELETE',
-      qs: { clusterName: svc.cluster },
-      failOnStatusCode: false
-    }).then(response => {
-      if (response.status !== 404 && response.status !== 200) {
-        throw new Error(`Failed to delete destination rule: ${response.body}`);
-      }
+
+    cy.fixture(`${service}-destinationrule.json`).then(destinationRule => {
+      cy.request({
+        url: `api/namespaces/${namespace}/istio/destinationrules`,
+        method: 'POST',
+        qs: { clusterName: cluster },
+        body: destinationRule
+      });
     });
   });
 });
