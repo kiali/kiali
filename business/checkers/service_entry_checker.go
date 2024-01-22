@@ -33,8 +33,10 @@ func (s ServiceEntryChecker) runSingleChecks(se *networking_v1beta1.ServiceEntry
 	key, validations := EmptyValidValidation(se.Name, se.Namespace, ServiceEntryCheckerType, s.Cluster)
 
 	enabledCheckers := []Checker{
-		common.ExportToNamespaceChecker{ExportTo: se.Spec.ExportTo, Namespaces: s.Namespaces},
 		serviceentries.HasMatchingWorkloadEntryAddress{ServiceEntry: se, WorkloadEntries: workloadEntriesMap},
+	}
+	if !s.Namespaces.IsNamespaceAmbient(se.Namespace, s.Cluster) {
+		enabledCheckers = append(enabledCheckers, common.ExportToNamespaceChecker{ExportTo: se.Spec.ExportTo, Namespaces: s.Namespaces})
 	}
 
 	for _, checker := range enabledCheckers {

@@ -64,7 +64,9 @@ func (in VirtualServiceChecker) runChecks(virtualService *networking_v1beta1.Vir
 	enabledCheckers := []Checker{
 		virtualservices.RouteChecker{VirtualService: virtualService, Namespaces: in.Namespaces.GetNames()},
 		virtualservices.SubsetPresenceChecker{Namespaces: in.Namespaces.GetNames(), VirtualService: virtualService, DestinationRules: in.DestinationRules},
-		common.ExportToNamespaceChecker{ExportTo: virtualService.Spec.ExportTo, Namespaces: in.Namespaces},
+	}
+	if !in.Namespaces.IsNamespaceAmbient(virtualService.Namespace, in.Cluster) {
+		enabledCheckers = append(enabledCheckers, common.ExportToNamespaceChecker{ExportTo: virtualService.Spec.ExportTo, Namespaces: in.Namespaces})
 	}
 
 	for _, checker := range enabledCheckers {

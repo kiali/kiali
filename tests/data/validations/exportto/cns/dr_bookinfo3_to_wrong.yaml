@@ -1,0 +1,9 @@
+apiVersion: "networking.istio.io/v1beta1"
+kind: "DestinationRule"
+metadata:
+  name: dr_bookinfo3_to_wrong
+  namespace: bookinfo3
+spec:
+  host: "*.local"
+  exportTo:
+    - 'wrong'

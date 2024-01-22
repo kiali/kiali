@@ -15,7 +15,7 @@ type DestinationRulesChecker struct {
 	DestinationRules []*networking_v1beta1.DestinationRule
 	MTLSDetails      kubernetes.MTLSDetails
 	ServiceEntries   []*networking_v1beta1.ServiceEntry
-	Namespaces       []models.Namespace
+	Namespaces       models.Namespaces
 	Cluster          string
 }
 
@@ -63,7 +63,9 @@ func (in DestinationRulesChecker) runChecks(destinationRule *networking_v1beta1.
 	enabledCheckers := []Checker{
 		destinationrules.DisabledNamespaceWideMTLSChecker{DestinationRule: destinationRule, MTLSDetails: in.MTLSDetails},
 		destinationrules.DisabledMeshWideMTLSChecker{DestinationRule: destinationRule, MeshPeerAuthns: in.MTLSDetails.MeshPeerAuthentications},
-		common.ExportToNamespaceChecker{ExportTo: destinationRule.Spec.ExportTo, Namespaces: in.Namespaces},
+	}
+	if !in.Namespaces.IsNamespaceAmbient(destinationRule.Namespace, in.Cluster) {
+		enabledCheckers = append(enabledCheckers, common.ExportToNamespaceChecker{ExportTo: destinationRule.Spec.ExportTo, Namespaces: in.Namespaces})
 	}
 
 	enabledCheckers = append(enabledCheckers, destinationrules.NamespaceWideMTLSChecker{DestinationRule: destinationRule, MTLSDetails: in.MTLSDetails})

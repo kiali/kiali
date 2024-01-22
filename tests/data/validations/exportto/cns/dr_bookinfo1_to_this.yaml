@@ -1,0 +1,9 @@
+apiVersion: "networking.istio.io/v1beta1"
+kind: "DestinationRule"
+metadata:
+  name: "dr_bookinfo1_to_this"
+  namespace: "bookinfo"
+spec:
+  host: "*.local"
+  exportTo:
+    - .

@@ -1,0 +1,10 @@
+apiVersion: networking.istio.io/v1beta1
+kind: ServiceEntry
+metadata:
+  name: se_bookinfo1_to_this
+  namespace: bookinfo
+spec:
+  hosts:
+    - www.googleapis.com
+  exportTo:
+    - .
