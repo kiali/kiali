@@ -77,6 +77,7 @@ const StyleGroupComponent: React.FC<StyleGroupProps> = ({
         element={element}
         collapsedWidth={collapsedWidth}
         collapsedHeight={collapsedHeight}
+        hulledOutline={false}
         showLabel={detailsLevel === ScaleDetailsLevel.high}
         {...rest}
         {...passedData}

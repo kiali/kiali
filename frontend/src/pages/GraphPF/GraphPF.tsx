@@ -310,7 +310,7 @@ export const TopologyContent: React.FC<{
           group: true,
           id: data.id,
           status: getNodeStatus(data),
-          style: { padding: 10 },
+          style: { padding: [35, 35, 35, 35] },
           type: 'group'
         };
         setNodeLabel(group, nodeMap, graphSettings);
