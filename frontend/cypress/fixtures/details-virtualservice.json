@@ -1,0 +1,28 @@
+{
+  "kind": "VirtualService",
+  "apiVersion": "networking.istio.io/v1beta1",
+  "metadata": {
+    "name": "details",
+    "namespace": "bookinfo",
+    "labels": {
+      "kiali_wizard": "request_routing"
+    }
+  },
+  "spec": {
+    "hosts": ["details.bookinfo.svc.cluster.local"],
+    "http": [
+      {
+        "route": [
+          {
+            "destination": {
+              "host": "details.bookinfo.svc.cluster.local",
+              "subset": "v1"
+            },
+            "weight": 33
+          }
+        ]
+      }
+    ],
+    "gateways": null
+  }
+}

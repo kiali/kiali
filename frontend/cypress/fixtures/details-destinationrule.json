@@ -1,0 +1,24 @@
+{
+  "kind": "DestinationRule",
+  "apiVersion": "networking.istio.io/v1beta1",
+  "metadata": {
+    "name": "details",
+    "namespace": "bookinfo",
+    "labels": {
+      "kiali_wizard": "request_routing"
+    },
+    "annotations": null
+  },
+  "spec": {
+    "host": "details",
+    "subsets": [
+      {
+        "name": "v1",
+        "labels": {
+          "version": "v1"
+        }
+      }
+    ],
+    "trafficPolicy": null
+  }
+}
