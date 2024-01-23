@@ -76,8 +76,8 @@ Feature: Service Details Wizard: Request Routing
 
   @multi-cluster
   Scenario: Create a Request Routing scenario in a local cluster
-    When user deletes Request Routing named "ratings" and the resource is no longer available in any cluster
-    When user opens the namespace "bookinfo" and the "east" "ratings" service details page
+    When user deletes Request Routing named "details" and the resource is no longer available in any cluster
+    When user opens the namespace "bookinfo" and the "east" "details" service details page
     And user clicks in the "Request Routing" actions
     And user sees the "Create Request Routing" wizard
     And user clicks in the "Request Matching" tab
@@ -86,7 +86,7 @@ Feature: Service Details Wizard: Request Routing
     And user creates the configuration
     And user is at the "istio" list page
     And user selects the "bookinfo" namespace
-    Then user sees the generated "ratings" objects located in the "east" cluster
+    Then user sees the generated "details" objects located in the "east" cluster
 
   @multi-cluster
   Scenario: Update a Request Routing scenario in a local cluster
@@ -112,12 +112,27 @@ Feature: Service Details Wizard: Request Routing
     And user confirms delete the configuration
     Then user sees the "Istio Config" table with empty message
 
+  @multi-cluster
+  Scenario: Try to create a Request Routing scenario in a remote cluster in the Primary-Remote deployment
+    When user deletes Request Routing named "ratings" and the resource is no longer available in any cluster
+    When user opens the namespace "bookinfo" and the "west" "ratings" service details page
+    And user clicks in the "Request Routing" actions
+    And user sees the "Create Request Routing" wizard
+    And user clicks in the "Request Matching" tab
+    And user adds a route
+    And user previews the configuration
+    And user creates the configuration
+    Then an error message "Could not create Istio config objects." is displayed
+    And user is at the "istio" list page
+    And user selects the "bookinfo" namespace
+    Then user does not see the generated "ratings" objects located in the "west" cluster
+    And user does not see the generated "ratings" objects located in the "east" cluster
 
   @multi-cluster
   @multi-primary
   Scenario: Create a Request Routing scenario in a remote cluster
     When user deletes Request Routing named "ratings" and the resource is no longer available in any cluster
-    When user opens the namespace "bookinfo" and the remote "ratings" service details page
+    When user opens the namespace "bookinfo" and the "west" "ratings" service details page
     And user clicks in the "Request Routing" actions
     And user sees the "Create Request Routing" wizard
     And user clicks in the "Request Matching" tab
@@ -127,6 +142,7 @@ Feature: Service Details Wizard: Request Routing
     And user is at the "istio" list page
     And user selects the "bookinfo" namespace
     Then user sees the generated "ratings" objects located in the "west" cluster
+    And user does not see the generated "ratings" objects located in the "east" cluster
 
   @multi-cluster
   @multi-primary
