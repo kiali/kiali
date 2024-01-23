@@ -56,7 +56,7 @@ while [ $# -gt 0 ]; do
     -h|--help)
       cat <<HELPMSG
 Valid command line arguments:
-  -a|--arch <amd64|ppc64le|s390x>: Images for given arch will be used (default: amd64).
+  -a|--arch <amd64|ppc64le|s390x|arm64>: Images for given arch will be used (default: amd64).
   -c|--client: either 'oc' or 'kubectl'
   -d|--delete: if 'true' demos will be deleted; otherwise, they will be installed
   -g|--gateway-host: host to use for the ingress gateway
@@ -74,7 +74,7 @@ HELPMSG
 done
 
 # check arch values
-if [ "${ARCH}" != "ppc64le" ] && [ "${ARCH}" != "s390x" ] && [ "${ARCH}" != "amd64" ]; then
+if [ "${ARCH}" != "ppc64le" ] && [ "${ARCH}" != "s390x" ] && [ "${ARCH}" != "amd64" ] && [ "${ARCH}" != "arm64" ]; then
   echo "${ARCH} is not supported. Exiting."
   exit 1
 fi
