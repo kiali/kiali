@@ -31,9 +31,9 @@ Given('user opens the namespace {string} and {string} service details page', (na
 });
 
 Given(
-  'user opens the namespace {string} and the remote {string} service details page',
-  (namespace: string, service: string) => {
-    cy.visit(`${url}/namespaces/${namespace}/services/${service}?refresh=0&clusterName=west`);
+  'user opens the namespace {string} and the {string} {string} service details page',
+  (namespace: string, cluster:string, service: string) => {
+    cy.visit(`${url}/namespaces/${namespace}/services/${service}?refresh=0&clusterName=${cluster}`);
   }
 );
 

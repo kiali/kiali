@@ -192,6 +192,33 @@ Feature: Kiali Overview page
     Then user sees the "Control plane" label in the "west" "istio-system" namespace card
 
   @multi-cluster
+  Scenario: Create a Traffic Policy in a local cluster
+    When user deletes a Traffic Policy and the resource is no longer available in any cluster
+    And user decides to create a Traffic Policy in the "east" "bookinfo"
+    And user previews the configuration
+    And user creates the configuration
+    And user is at the "istio" list page
+    And user selects the "bookinfo" namespace
+    Then user sees the generated Traffic policy objects located in the "east" cluster
+    And user should not see the generated Traffic policy objects located in the "west" cluster
+
+  @multi-cluster
+  Scenario: Update a Traffic Policy scenario in a local cluster
+    When user decides to update an Authorization Policy in the "east" "bookinfo"
+    And user previews the configuration
+    And user updates the configuration
+    And user is at the "istio" list page
+    And user selects the "bookinfo" namespace
+    Then user sees the generated Traffic policy objects located in the "east" cluster
+    And user should not see the generated Traffic policy objects located in the "west" cluster
+
+  @multi-cluster
+  Scenario: Delete the Traffic Policy scenario in a remote cluster
+    And user decides to delete a Traffic Policy in the "east" "bookinfo"
+    And user confirms delete the configuration
+    Then user should not see the generated Traffic policy objects located in the "east" cluster
+
+  @multi-cluster
   @multi-primary
   Scenario: Create a Traffic Policy in a remote cluster
     When user deletes a Traffic Policy and the resource is no longer available in any cluster
