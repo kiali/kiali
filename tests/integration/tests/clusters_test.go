@@ -30,6 +30,11 @@ func TestRemoteKialiShownInClustersResponse(t *testing.T) {
 	conf, err := instance.GetConfig(ctx)
 	require.NoError(err)
 	originalConf := *conf
+	// Set this to something so that the patch isn't omitted for being empty.
+	originalConf.Clustering = config.Clustering{
+		Clusters:  []config.Cluster{},
+		KialiURLs: []config.KialiURL{},
+	}
 
 	conf.Clustering.Clusters = []config.Cluster{{Name: "inaccessible"}}
 	conf.Clustering.KialiURLs = []config.KialiURL{{ClusterName: "inaccessible", URL: "http://inaccessible:20001", InstanceName: "kiali", Namespace: "istio-system"}}

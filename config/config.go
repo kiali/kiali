@@ -517,6 +517,13 @@ type Clustering struct {
 	KialiURLs []KialiURL `yaml:"kiali_urls" json:"kiali_urls"`
 }
 
+// IsZero implements: https://pkg.go.dev/gopkg.in/yaml.v2#IsZeroer so that
+// tests can patch the Clustering struct and have it be recognized as non-zero
+// while keeping the omitempty yaml tag.
+func (c Clustering) IsZero() bool {
+	return c.Clusters == nil && c.KialiURLs == nil
+}
+
 type FeatureFlagClustering struct {
 	// TODO: Deprecate this in favor of Clustering.Clusters.
 	Clustering         `yaml:",inline"`
@@ -570,7 +577,7 @@ type Config struct {
 	AdditionalDisplayDetails []AdditionalDisplayItem             `yaml:"additional_display_details,omitempty"`
 	API                      ApiConfig                           `yaml:"api,omitempty"`
 	Auth                     AuthConfig                          `yaml:"auth,omitempty"`
-	Clustering               Clustering                          `yaml:"clustering"`
+	Clustering               Clustering                          `yaml:"clustering,omitempty"`
 	CustomDashboards         dashboards.MonitoringDashboardsList `yaml:"custom_dashboards,omitempty"`
 	Deployment               DeploymentConfig                    `yaml:"deployment,omitempty"`
 	ExternalServices         ExternalServices                    `yaml:"external_services,omitempty"`
