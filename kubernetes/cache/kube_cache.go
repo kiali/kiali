@@ -66,11 +66,6 @@ type KubeCache interface {
 	// using the Kiali Service Account client.
 	Client() kubernetes.ClientInterface
 
-	// UpdateClient will update the client used by the cache.
-	// Useful for when the token is refreshed for the client.
-	// This causes a full refresh of the cache.
-	UpdateClient(client kubernetes.ClientInterface) error
-
 	GetConfigMap(namespace, name string) (*core_v1.ConfigMap, error)
 	GetDaemonSets(namespace string) ([]apps_v1.DaemonSet, error)
 	GetDaemonSet(namespace, name string) (*apps_v1.DaemonSet, error)

@@ -4,8 +4,6 @@ import (
 	"net/url"
 	"strings"
 
-	"k8s.io/client-go/tools/clientcmd/api"
-
 	"github.com/kiali/kiali/appstate"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
@@ -15,11 +13,6 @@ import (
 var clientFactory kubernetes.ClientFactory
 
 func getClient() (kubernetes.ClientInterface, error) {
-	saToken, err := kubernetes.GetKialiTokenForHomeCluster()
-	if err != nil {
-		return nil, err
-	}
-
 	if clientFactory == nil {
 		userClientFactory, err := kubernetes.GetClientFactory()
 		if err != nil {
@@ -28,11 +21,7 @@ func getClient() (kubernetes.ClientInterface, error) {
 		clientFactory = userClientFactory
 	}
 
-	client, err := clientFactory.GetClient(&api.AuthInfo{Token: saToken})
-	if err != nil {
-		return nil, err
-	}
-
+	client := clientFactory.GetSAHomeClusterClient()
 	return client, nil
 }
 

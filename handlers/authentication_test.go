@@ -252,6 +252,7 @@ func (r *rejectClient) GetProjects(labelSelector string) ([]osproject_v1.Project
 
 func mockK8s(t *testing.T, reject bool) {
 	kubernetes.KialiTokenForHomeCluster = "notrealtoken"
+	kubernetes.KialiTokenFileForHomeCluster = "notrealtokenpath"
 	k8s := kubetest.NewFakeK8sClient(&osproject_v1.Project{ObjectMeta: meta_v1.ObjectMeta{Name: "tutorial"}})
 	k8s.OpenShift = true
 	var kubeClient kubernetes.ClientInterface = k8s

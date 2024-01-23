@@ -35,7 +35,7 @@ type sessionInfo struct {
 
 func NewAuthenticationHandler() (AuthenticationHandler, error) {
 	// Read token from the filesystem
-	saToken, err := kubernetes.GetKialiTokenForHomeCluster()
+	saToken, _, err := kubernetes.GetKialiTokenForHomeCluster()
 	if err != nil {
 		return AuthenticationHandler{}, err
 	}
@@ -62,7 +62,7 @@ func (aHandler AuthenticationHandler) Handle(next http.Handler) http.Handler {
 			}
 		case config.AuthStrategyAnonymous:
 			log.Tracef("Access to the server endpoint is not secured with credentials - letting request come in. Url: [%s]", r.URL.String())
-			token, err := kubernetes.GetKialiTokenForHomeCluster()
+			token, _, err := kubernetes.GetKialiTokenForHomeCluster()
 			if err != nil {
 				token = ""
 			}
@@ -133,7 +133,7 @@ func AuthenticationInfo(w http.ResponseWriter, r *http.Request) {
 
 	switch conf.Auth.Strategy {
 	case config.AuthStrategyOpenshift:
-		token, err := kubernetes.GetKialiTokenForHomeCluster()
+		token, _, err := kubernetes.GetKialiTokenForHomeCluster()
 		if err != nil {
 			RespondWithDetailedError(w, http.StatusInternalServerError, "Error obtaining Kiali SA token", err.Error())
 			return

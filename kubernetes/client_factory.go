@@ -160,11 +160,12 @@ func newClientFactory(restConfig *rest.Config) (*clientFactory, error) {
 	return f, nil
 }
 
-// newClient creates a new ClientInterface based on a users k8s token
+// newClient creates a new ClientInterface based on a users k8s token. It is assumed users do not have a token file in authInfo.
 func (cf *clientFactory) newClient(authInfo *api.AuthInfo, expirationTime time.Duration, cluster string) (ClientInterface, error) {
 	config := *cf.baseRestConfig
 
 	config.BearerToken = authInfo.Token
+	config.BearerTokenFile = ""
 
 	// There is a feature when using OpenID strategy to allow using a proxy
 	// for the cluster API.  People may want to place a proxy in
@@ -185,7 +186,7 @@ func (cf *clientFactory) newClient(authInfo *api.AuthInfo, expirationTime time.D
 		var err error
 
 		if cluster == cf.homeCluster {
-			kialiToken, err = GetKialiTokenForHomeCluster()
+			kialiToken, _, err = GetKialiTokenForHomeCluster()
 		} else {
 			kialiToken, err = cf.GetSAClient(cluster).GetToken(), nil
 		}
@@ -250,6 +251,7 @@ func (cf *clientFactory) newClient(authInfo *api.AuthInfo, expirationTime time.D
 		if !(cfg.Auth.Strategy == kialiConfig.AuthStrategyAnonymous) &&
 			!(cfg.Auth.Strategy == kialiConfig.AuthStrategyOpenId && cfg.Auth.OpenId.DisableRBAC) {
 			remoteConfig.BearerToken = authInfo.Token
+			remoteConfig.BearerTokenFile = ""
 		}
 
 		newClient, err = newClientWithRemoteClusterInfo(remoteConfig, &clusterInfo)
@@ -417,64 +419,9 @@ func getTokenHash(authInfo *api.AuthInfo) string {
 
 // KialiSAClients returns all clients associated with the Kiali service account across clusters.
 func (cf *clientFactory) GetSAClient(cluster string) ClientInterface {
-	// while we are here, refresh the client
-	if err := cf.refreshClientIfTokenChanged(cluster); err != nil {
-		log.Errorf("Unable to refresh Kiali SA client for cluster [%s]: %v", cluster, err)
-	}
-
 	cf.mutex.RLock()
 	defer cf.mutex.RUnlock()
 	return cf.saClientEntries[cluster]
-}
-
-// Check for kiali token changes and refresh the client when it does.
-func (cf *clientFactory) refreshClientIfTokenChanged(cluster string) error {
-	var refreshTheClient bool // will be true if the client needs to be refreshed
-	var rci *RemoteClusterInfo
-
-	if cluster == cf.homeCluster {
-		// LOCAL CLUSTER
-		if newTokenToCheck, err := GetKialiTokenForHomeCluster(); err != nil {
-			return err
-		} else {
-			cf.mutex.RLock()
-			client, ok := cf.saClientEntries[cluster]
-			cf.mutex.RUnlock()
-			if !ok {
-				return errors.New("there is no home cluster SA client to refresh")
-			}
-			refreshTheClient = client.GetToken() != newTokenToCheck
-			rci = nil
-		}
-	} else {
-		// REMOTE CLUSTER
-		cf.mutex.RLock()
-		remoteRci, ok := cf.remoteClusterInfos[cluster]
-		cf.mutex.RUnlock()
-		if !ok {
-			return fmt.Errorf("cannot refresh token for unknown cluster [%s]", cluster)
-		} else {
-			if reloadedRci, err := reloadRemoteClusterInfoFromFile(remoteRci); err != nil {
-				return err
-			} else {
-				refreshTheClient = (reloadedRci != nil) // note that anything (not just the token) that changed will trigger the client to be refreshed
-				rci = reloadedRci
-			}
-		}
-	}
-
-	if refreshTheClient {
-		log.Debugf("Kiali SA token has changed for cluster [%s], refreshing the client", cluster)
-		newClient, err := cf.newSAClient(rci)
-		if err != nil {
-			return err
-		}
-		cf.mutex.Lock()
-		cf.saClientEntries[cluster] = newClient
-		cf.mutex.Unlock()
-	}
-
-	return nil
 }
 
 // KialiSAHomeClusterClient returns the Kiali service account client for the cluster where Kiali is running.
@@ -498,13 +445,14 @@ func (cf *clientFactory) getConfig(clusterInfo *RemoteClusterInfo) (*rest.Config
 	} else {
 		// Just read the token and then use the base config.
 		// We're an in cluster client. Read the kiali service account token.
-		kialiToken, err := GetKialiTokenForHomeCluster()
+		kialiToken, kialiTokenFile, err := GetKialiTokenForHomeCluster()
 		if err != nil {
 			return nil, fmt.Errorf("unable to get Kiali service account token: %s", err)
 		}
 
 		// Copy over the base rest config and the token
 		clientConfig.BearerToken = kialiToken
+		clientConfig.BearerTokenFile = kialiTokenFile
 	}
 
 	if !kialiConfig.KialiFeatureFlags.Clustering.EnableExecProvider {

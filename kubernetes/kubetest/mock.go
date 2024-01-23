@@ -96,7 +96,7 @@ func NewK8SClientMock() *K8SClientMock {
 	k8s.On("IsExpGatewayAPI").Return(false)
 	k8s.On("IsGatewayAPI").Return(false)
 	k8s.On("IsIstioAPI").Return(true)
-	k8s.On("GetKialiTokenForHomeCluster").Return("")
+	k8s.On("GetKialiTokenForHomeCluster").Return("", "")
 	return k8s
 }
 
