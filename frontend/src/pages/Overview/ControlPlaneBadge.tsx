@@ -12,6 +12,8 @@ type Props = {
 };
 
 export const ControlPlaneBadge: React.FC<Props> = (props: Props) => {
+  // Remote clusters do not have istio status because istio is not running there
+  // so don't display istio status badge for those.
   return (
     <>
       <Label style={{ marginLeft: '0.5rem' }} color="green" isCompact>
@@ -24,7 +26,7 @@ export const ControlPlaneBadge: React.FC<Props> = (props: Props) => {
         <AmbientBadge tooltip="Istio Ambient ztunnel detected in the Control plane"></AmbientBadge>
       )}
 
-      <IstioStatusInline cluster={props.cluster} />
+      {!isRemoteCluster(props.annotations) && <IstioStatusInline cluster={props.cluster} />}
     </>
   );
 };
