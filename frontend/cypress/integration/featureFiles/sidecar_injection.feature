@@ -51,6 +51,7 @@ Feature: Controlling sidecar injection
 		Given a workload without a sidecar
 		And the workload does not have override configuration for automatic sidecar injection
 		When I override the default policy for automatic sidecar injection in the workload to "enable" it
+		And the user refreshes the page
 		Then the workload should get a sidecar
 
 	@sleep-app
@@ -58,6 +59,7 @@ Feature: Controlling sidecar injection
 		Given a workload with a sidecar
 		And the workload does not have override configuration for automatic sidecar injection
 		When I override the default policy for automatic sidecar injection in the workload to "disable" it
+		And the user refreshes the page
 		Then the sidecar of the workload should vanish
 
 	@sleep-app
@@ -65,6 +67,7 @@ Feature: Controlling sidecar injection
 		Given a workload with a sidecar
 		And the workload has override configuration for automatic sidecar injection
 		When I change the override configuration for automatic sidecar injection in the workload to "disable" it
+		And the user refreshes the page
 		Then the sidecar of the workload should vanish
 
 	@sleep-app
@@ -72,6 +75,7 @@ Feature: Controlling sidecar injection
 		Given a workload without a sidecar
 		And the workload has override configuration for automatic sidecar injection
 		When I change the override configuration for automatic sidecar injection in the workload to "enable" it
+		And the user refreshes the page
 		Then the workload should get a sidecar
 
 	@sleep-app
