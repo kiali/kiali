@@ -10,9 +10,9 @@ import {
   withSelection
 } from '@patternfly/react-topology';
 import * as React from 'react';
-import { StyleEdge } from '../styles/MeshEdge';
-import { StyleGroup } from '../styles/MeshGroup';
-import { StyleNode } from '../styles/MeshNode';
+import { MeshEdge } from '../styles/MeshEdge';
+import { MeshNode } from '../styles/MeshNode';
+import { MeshGroup } from '../styles/MeshGroup';
 
 // There are currently no actions to take on a mesh node, so these placeholders are just commented out
 
@@ -44,13 +44,13 @@ export const meshComponentFactory: ComponentFactory = (
 ): React.FunctionComponent<any> | undefined => {
   switch (kind) {
     case ModelKind.edge:
-      return withSelection({ multiSelect: false, controlled: false })(StyleEdge as any);
+      return withSelection({ multiSelect: false, controlled: false })(MeshEdge as any);
     case ModelKind.graph:
       return withPanZoom()(GraphComponent);
     case ModelKind.node: {
       return withDragNode(nodeDragSourceSpec('node', true, true))(
         withContextMenu(e => nodeContextMenu(e))(
-          withSelection({ multiSelect: false, controlled: false })((type === 'group' ? StyleGroup : StyleNode) as any)
+          withSelection({ multiSelect: false, controlled: false })((type === 'group' ? MeshGroup : MeshNode) as any)
         )
       );
     }

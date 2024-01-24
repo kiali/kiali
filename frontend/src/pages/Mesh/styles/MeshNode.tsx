@@ -2,7 +2,6 @@ import {
   DefaultNode,
   getShapeComponent,
   Node,
-  NodeShape,
   observer,
   ScaleDetailsLevel,
   useHover,
@@ -10,48 +9,42 @@ import {
 } from '@patternfly/react-topology';
 import useDetailsLevel from '@patternfly/react-topology/dist/esm/hooks/useDetailsLevel';
 import * as React from 'react';
-import { KeyIcon, TopologyIcon } from '@patternfly/react-icons';
 import { PFColors } from 'components/Pf/PfColors';
 import { kialiStyle } from 'styles/StyleUtils';
+import { MeshInfraType, MeshNodeData } from 'types/Mesh';
+import { IstioLogo, IstioLogoStyle, KialiLogo, KialiLogoStyle } from '../MeshLegendData';
 
 // This is the registered Node component override that utilizes our customized Node.tsx component.
 
-type StyleNodeProps = {
+type MeshNodeProps = {
   element: Node;
 } & WithSelectionProps;
 
 const renderIcon = (element: Node): React.ReactNode => {
   let Component: React.ComponentClass<React.ComponentProps<any>> | undefined;
-  const data = element.getData();
-  const isInaccessible = data.isInaccessible;
-  const isServiceEntry = data.isServiceEntry;
-  const isBox = data.isBox;
-  if (isInaccessible && !isServiceEntry && !isBox) {
-    Component = KeyIcon;
-  }
-  const isOutside = data.isOutside;
-  if (isOutside && !isBox) {
-    Component = TopologyIcon;
+  let componentStyle: React.CSSProperties | undefined;
+  const data = element.getData() as MeshNodeData;
+  if (data.infraType === MeshInfraType.ISTIOD) {
+    Component = IstioLogo;
+    componentStyle = IstioLogoStyle;
+  } else if (data.infraType === MeshInfraType.KIALI) {
+    Component = KialiLogo;
+    componentStyle = KialiLogoStyle;
   }
 
-  // this blurb taken from PFT demo StyleNode.tsx, not sure if it's required
-  // vv
   const { width, height } = element.getDimensions();
-  const shape = element.getNodeShape();
-  const iconSize =
-    (shape === NodeShape.trapezoid ? width : Math.min(width, height)) - (shape === NodeShape.stadium ? 5 : 20) * 2;
-  // ^^
+  const iconSize = Math.min(width, height) * 0.7;
 
   return Component ? (
     <g transform={`translate(${(width - iconSize) / 2}, ${(height - iconSize) / 2})`}>
-      <Component width={iconSize} height={iconSize} />
+      <Component style={componentStyle} width={iconSize} height={iconSize} />
     </g>
   ) : (
     <></>
   );
 };
 
-const StyleNodeComponent: React.FC<StyleNodeProps> = ({ element, ...rest }) => {
+const MeshNodeComponent: React.FC<MeshNodeProps> = ({ element, ...rest }) => {
   const data = element.getData();
   const detailsLevel = useDetailsLevel();
   const [hover, hoverRef] = useHover();
@@ -125,4 +118,4 @@ const StyleNodeComponent: React.FC<StyleNodeProps> = ({ element, ...rest }) => {
   );
 };
 
-export const StyleNode = observer(StyleNodeComponent);
+export const MeshNode = observer(MeshNodeComponent);

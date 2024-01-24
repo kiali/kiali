@@ -25,6 +25,7 @@ export type MeshClusters = MeshCluster[];
 
 export enum MeshInfraType {
   CLUSTER = 'cluster',
+  GRAFANA = 'grafana',
   ISTIOD = 'istiod',
   KIALI = 'kiali',
   METRIC_STORE = 'metricStore',

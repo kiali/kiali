@@ -142,6 +142,9 @@ export const setNodeLabel = (node: NodeModel, _nodeMap: NodeMap): void => {
       case MeshInfraType.CLUSTER:
         pfBadge = PFBadges.Cluster;
         break;
+      case MeshInfraType.GRAFANA:
+        pfBadge = PFBadges.Grafana;
+        break;
       case MeshInfraType.ISTIOD:
         pfBadge = PFBadges.Istio;
         break;

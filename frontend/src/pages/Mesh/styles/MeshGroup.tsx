@@ -17,7 +17,7 @@ export enum DataTypes {
   Default
 }
 
-type StyleGroupProps = {
+type MeshGroupProps = {
   collapsedHeight?: number;
   collapsedShadowOffset?: number; // defaults to 10
   collapsedWidth?: number;
@@ -27,7 +27,7 @@ type StyleGroupProps = {
   onCollapseChange?: (group: Node, collapsed: boolean) => void;
 } & WithSelectionProps;
 
-const StyleGroupComponent: React.FC<StyleGroupProps> = ({
+const MeshGroupComponent: React.FC<MeshGroupProps> = ({
   collapsedHeight = 75,
   collapsedWidth = 75,
   element,
@@ -88,4 +88,4 @@ const StyleGroupComponent: React.FC<StyleGroupProps> = ({
   );
 };
 
-export const StyleGroup = observer(StyleGroupComponent);
+export const MeshGroup = observer(MeshGroupComponent);

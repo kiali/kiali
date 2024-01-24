@@ -18,7 +18,7 @@ const ColorSpan = PFColors.Purple200;
 const OverlayOpacity = 0.3;
 const OverlayWidth = 30;
 
-type StyleEdgeProps = {
+type MeshEdgeProps = {
   element: Edge;
 } & WithSelectionProps;
 
@@ -26,7 +26,7 @@ const tagClass = kialiStyle({
   fontFamily: 'Verdana,Arial,Helvetica,sans-serif,pficon'
 });
 
-const StyleEdgeComponent: React.FC<StyleEdgeProps> = ({ element, ...rest }) => {
+const MeshEdgeComponent: React.FC<MeshEdgeProps> = ({ element, ...rest }) => {
   const data = element.getData();
   const detailsLevel = useDetailsLevel();
 
@@ -148,4 +148,4 @@ const StyleEdgeComponent: React.FC<StyleEdgeProps> = ({ element, ...rest }) => {
   );
 };
 
-export const StyleEdge = observer(StyleEdgeComponent);
+export const MeshEdge = observer(MeshEdgeComponent);
