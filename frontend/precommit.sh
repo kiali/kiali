@@ -1,6 +1,15 @@
 #!/usr/bin/env bash
 cd ..
 
+if ! which yamlfmt &> /dev/null; then
+  echo "You do not have yamlfmt - installing it now."
+  if ! which go &> /dev/null; then
+    echo "You do not have 'go' in your PATH - please install it. Aborting."
+    exit 1
+  fi
+  go install github.com/google/yamlfmt/cmd/yamlfmt@latest
+fi
+
 #### GO Formatting ####
 go_files=$(git diff --staged --name-only --diff-filter=AM | grep '\.go$' | grep -v '^vendor')
 
