@@ -1,9 +1,6 @@
-doublestar: true
 continue_on_error: true
 formatter:
   type: basic
   retain_line_breaks: true
   indentless_arrays: true
   scan_folded_as_literal: true
-  disallow_anchors: true
-  drop_merge_tag: true
