@@ -59,9 +59,10 @@
     "start:kiali": "REACT_APP_VERSION=$npm_package_version REACT_APP_NAME=$npm_package_name REACT_APP_GIT_HASH=$(git rev-parse HEAD) react-scripts start",
     "start:prod": "sh -ac '. ./.env.downstream; npm run start:kiali'",
     "test": "tsc -p . && TEST_RUNNER=1 react-scripts test --env=jsdom __tests__ --transformIgnorePatterns 'node_modules/(?!my-library-dir)/'",
-    "prettier": "prettier --write \"{src/**/*.{ts,tsx,json,yml,scss},*.json}\"",
+    "prettier": "prettier --write \"{src/**/*.{ts,tsx,scss},**/*.json}\"",
     "prepare": "cd .. && husky install frontend/.husky",
-    "pre-commit": "yarn run pretty-quick --staged --pattern \"{frontend/src/**/*.{ts,tsx,scss},**/*.{json,yml,yaml}}\" && npm run lint:precommit"
+    "pre-commit": "yarn run pretty-quick --staged --pattern \"{frontend/src/**/*.{ts,tsx,scss},**/*.{json}}\" && npm run lint:precommit && npm run format:precommit",
+    "format:precommit": "./precommit.sh"
   },
   "dependencies": {
     "@patternfly/patternfly": "^5.1.0",
