@@ -91,7 +91,7 @@ Feature: Kiali Istio Config page
   Scenario: KIA0101 validation
     Given a "foo" AuthorizationPolicy in the "bookinfo" namespace
     And the AuthorizationPolicy has a from-source rule for "bar" namespace
-    When the user refreshes the list page
+    When the user refreshes the page
     And user selects the "bookinfo" namespace
     Then the AuthorizationPolicy should have a "warning"
 
@@ -100,7 +100,7 @@ Feature: Kiali Istio Config page
   Scenario: KIA0102 validation
     Given a "foo" AuthorizationPolicy in the "bookinfo" namespace
     And the AuthorizationPolicy has a to-operation rule with "non-fully-qualified-grpc" method
-    When the user refreshes the list page
+    When the user refreshes the page
     And user selects the "bookinfo" namespace
     Then the AuthorizationPolicy should have a "warning"
 
@@ -110,7 +110,7 @@ Feature: Kiali Istio Config page
     Given there is not a "bookinfo" VirtualService in the "bookinfo" namespace
     Given a "foo" AuthorizationPolicy in the "bookinfo" namespace
     And the AuthorizationPolicy has a to-operation rule with "missing.hostname" host
-    When the user refreshes the list page
+    When the user refreshes the page
     And user selects the "bookinfo" namespace
     Then the AuthorizationPolicy should have a "warning"
 
@@ -119,7 +119,7 @@ Feature: Kiali Istio Config page
   Scenario: KIA0106 validation
     Given a "foo" AuthorizationPolicy in the "bookinfo" namespace
     And the AuthorizationPolicy has a from-source rule for "cluster.local/ns/bookinfo/sa/sleep" principal
-    When the user refreshes the list page
+    When the user refreshes the page
     And user selects the "bookinfo" namespace
     Then the AuthorizationPolicy should have a "danger"
 
@@ -131,7 +131,7 @@ Feature: Kiali Istio Config page
     And the DestinationRule has a "mysubset" subset for "version=v1" labels
     And a "bar" DestinationRule in the "sleep" namespace for "sleep" host
     And the DestinationRule has a "mysubset" subset for "version=v1" labels
-    When the user refreshes the list page
+    When the user refreshes the page
     And user selects the "sleep" namespace
     Then the "foo" "DestinationRule" of the "sleep" namespace should have a "warning"
     And the "bar" "DestinationRule" of the "sleep" namespace should have a "warning"
@@ -141,7 +141,7 @@ Feature: Kiali Istio Config page
   @sleep-app
   Scenario: KIA0202 validation
     Given a "foo" DestinationRule in the "sleep" namespace for "nonexistent" host
-    When the user refreshes the list page
+    When the user refreshes the page
     And user selects the "sleep" namespace
     Then the "foo" "DestinationRule" of the "sleep" namespace should have a "warning"
 
@@ -344,5 +344,5 @@ Feature: Kiali Istio Config page
 #    Given there is a "foo" VirtualService in the "bookinfo" namespace with a "foo-route" http-route to host "reviews"
 #    And the VirtualService applies to "reviews" hosts
 #    And the VirtualService references "bookinfo-gateway.bookinfo.svc.cluster.local" gateways
-#    When the user refreshes the list page
+#    When the user refreshes the page
 #    Then the "foo" "VirtualService" of the "bookinfo" namespace should have a "warning"
