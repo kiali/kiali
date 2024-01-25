@@ -315,7 +315,7 @@ Given(
   }
 );
 
-When('the user refreshes the list page', () => {
+When('the user refreshes the page', () => {
   cy.get('[data-test="refresh-button"]').click();
 
   ensureKialiFinishedLoading();
