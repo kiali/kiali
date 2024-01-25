@@ -214,11 +214,6 @@ help: Makefile
 	@sed -n 's/^##//p' $< | column -t -s ':' |  sed -e 's/^/ /'
 	@echo
 
-## git-init: Set the hooks under ./git/hooks
-git-init:
-	@echo Setting Git Hooks
-	cp hack/hooks/* .git/hooks
-
 .ensure-oc-exists:
 	@if [ ! -x "${OC}" ]; then \
 	  echo "Missing 'oc' or 'kubectl'"; exit 1; \
