@@ -5,6 +5,7 @@ import { MeshTarget } from 'types/Mesh';
 import { TimeInMilliseconds } from 'types/Common';
 
 export interface TargetPanelCommonProps {
+  istioAPIEnabled: boolean;
   kiosk: string;
   target: MeshTarget;
   updateTime: TimeInMilliseconds;

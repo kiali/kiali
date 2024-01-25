@@ -112,20 +112,45 @@ class TargetPanelComponent extends React.Component<TargetPanelProps, TargetPanel
         switch (boxType) {
           case 'cluster':
             return (
-              <TargetPanelClusterBox kiosk={this.props.kiosk} target={target} updateTime={this.props.updateTime} />
+              <TargetPanelClusterBox
+                istioAPIEnabled={this.props.istioAPIEnabled}
+                kiosk={this.props.kiosk}
+                target={target}
+                updateTime={this.props.updateTime}
+              />
             );
           case 'namespace':
             return (
-              <TargetPanelNamespaceBox kiosk={this.props.kiosk} target={target} updateTime={this.props.updateTime} />
+              <TargetPanelNamespaceBox
+                cluster={elem.getData()[NodeAttr.cluster]}
+                istioAPIEnabled={this.props.istioAPIEnabled}
+                kiosk={this.props.kiosk}
+                target={target}
+                updateTime={this.props.updateTime}
+              />
             );
           default:
             return <></>;
         }
       }
       case 'mesh':
-        return <TargetPanelMesh kiosk={this.props.kiosk} target={target} updateTime={this.props.updateTime} />;
+        return (
+          <TargetPanelMesh
+            istioAPIEnabled={this.props.istioAPIEnabled}
+            kiosk={this.props.kiosk}
+            target={target}
+            updateTime={this.props.updateTime}
+          />
+        );
       case 'node':
-        return <TargetPanelNode kiosk={this.props.kiosk} target={target} updateTime={this.props.updateTime} />;
+        return (
+          <TargetPanelNode
+            istioAPIEnabled={this.props.istioAPIEnabled}
+            kiosk={this.props.kiosk}
+            target={target}
+            updateTime={this.props.updateTime}
+          />
+        );
       default:
         return <></>;
     }
