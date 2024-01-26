@@ -233,6 +233,16 @@ func waitForDeploymentReady(ctx context.Context, clientset kubernetes.Interface,
 			return false, nil
 		}
 
+		if deployment.Status.Replicas != *deployment.Spec.Replicas {
+			log.Debugf("Waiting for deployment to be fully rolled out (%d/%d replicas)", deployment.Status.Replicas, *deployment.Spec.Replicas)
+			return false, nil
+		}
+
+		if deployment.Status.UpdatedReplicas != *deployment.Spec.Replicas {
+			log.Debugf("Waiting for deployment to be updated (%d/%d replicas)", deployment.Status.UpdatedReplicas, *deployment.Spec.Replicas)
+			return false, nil
+		}
+
 		if deployment.Status.ReadyReplicas != *deployment.Spec.Replicas {
 			log.Debugf("Waiting for deployment to be ready (%d/%d replicas)", deployment.Status.ReadyReplicas, *deployment.Spec.Replicas)
 			return false, nil
