@@ -157,13 +157,15 @@ Given('a {string} AuthorizationPolicy in the {string} namespace', function (name
 });
 
 Given('a {string} AuthorizationPolicy in the {string} namespace in the {string} cluster', function (name: string, namespace: string, cluster:string) {
+  let cluster_context;
   if (cluster === 'west'){
-    let context = CLUSTER2_CONTEXT;
+    cluster_context = CLUSTER2_CONTEXT;
   } else {
-    let context = CLUSTER1_CONTEXT;
+    cluster_context = CLUSTER1_CONTEXT;
   }
-  cy.exec(`kubectl delete AuthorizationPolicy ${name} -n ${namespace} --context ${context}`, { failOnNonZeroExit: false });
-  cy.exec(`echo '${minimalAuthorizationPolicy(name, namespace)}' | kubectl apply -f - --context ${context}`);
+
+  cy.exec(`kubectl delete AuthorizationPolicy ${name} -n ${namespace} --context ${cluster_context}`, { failOnNonZeroExit: false });
+  cy.exec(`echo '${minimalAuthorizationPolicy(name, namespace)}' | kubectl apply --context ${cluster_context} -f  -`);
 
   this.targetNamespace = namespace;
   this.targetAuthorizationPolicy = name;

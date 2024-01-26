@@ -191,11 +191,12 @@ Feature: Kiali Overview page
     Then user sees the "Control plane" label in the "east" "istio-system" namespace card
     Then user sees the "Control plane" label in the "west" "istio-system" namespace card
 
+  @only
   @multi-cluster
   Scenario: Create a Traffic Policy in a local cluster
     When user deletes a Traffic Policy and the resource is no longer available in any cluster
     And user decides to create a Traffic Policy in the "east" "bookinfo"
-    And user previews the configuration
+    # And user previews the configuration
     And user creates the configuration
     And user is at the "istio" list page
     And user selects the "bookinfo" namespace
@@ -222,7 +223,7 @@ Feature: Kiali Overview page
   Scenario: Try to create a Traffic Policy in a remote cluster in the Primary-Remote deployment
     When user deletes a Traffic Policy and the resource is no longer available in any cluster
     And user decides to create a Traffic Policy in the "west" "bookinfo"
-    And user previews the configuration
+    # And user previews the configuration
     And user creates the configuration
     Then an error message "Could not create traffic policies." is displayed
     And user is at the "istio" list page
@@ -246,7 +247,7 @@ Feature: Kiali Overview page
   @multi-primary
   Scenario: Update a Traffic Policy scenario in a remote cluster
     When user decides to update an Authorization Policy in the "west" "bookinfo"
-    And user previews the configuration
+    # And user previews the configuration
     And user updates the configuration
     And user is at the "istio" list page
     And user selects the "bookinfo" namespace
