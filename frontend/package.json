@@ -62,7 +62,7 @@
     "prettier": "prettier --write \"{src/**/*.{ts,tsx,scss},**/*.json}\"",
     "prepare": "cd .. && husky install frontend/.husky",
     "pre-commit": "yarn run pretty-quick --staged --pattern \"{frontend/src/**/*.{ts,tsx,scss},**/*.{json}}\" && npm run lint:precommit && npm run format:precommit",
-    "format:precommit": "./precommit.sh"
+    "format:precommit": "../hack/hooks/pre-commit.sh"
   },
   "dependencies": {
     "@patternfly/patternfly": "^5.1.0",
