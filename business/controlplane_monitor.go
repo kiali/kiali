@@ -308,7 +308,7 @@ func (p *controlPlaneMonitor) getIstiodDebugStatus(client kubernetes.ClientInter
 // configured with a remote url. An error does not indicate that istiod
 // cannot be reached. The kubernetes.IstioComponentStatus must be checked.
 func (p *controlPlaneMonitor) CanConnectToIstiodForRevision(client kubernetes.ClientInterface, revision string) (kubernetes.IstioComponentStatus, error) {
-	if p.conf.ExternalServices.Istio.Registry != nil {
+	if p.conf.ExternalServices.Istio.Registry != nil && p.conf.ExternalServices.Istio.Registry.IstiodURL != "" {
 		istiodURL := p.conf.ExternalServices.Istio.Registry.IstiodURL
 		// Being able to hit /debug doesn't necessarily mean we are authorized to hit the others.
 		url := joinURL(istiodURL, "/debug")
@@ -386,7 +386,7 @@ func (p *controlPlaneMonitor) CanConnectToIstiodForRevision(client kubernetes.Cl
 }
 
 func (p *controlPlaneMonitor) CanConnectToIstiod(client kubernetes.ClientInterface) (kubernetes.IstioComponentStatus, error) {
-	if p.conf.ExternalServices.Istio.Registry != nil {
+	if p.conf.ExternalServices.Istio.Registry != nil && p.conf.ExternalServices.Istio.Registry.IstiodURL != "" {
 		istiodURL := p.conf.ExternalServices.Istio.Registry.IstiodURL
 		// Being able to hit /debug doesn't necessarily mean we are authorized to hit the others.
 		url := joinURL(istiodURL, "/debug")
@@ -431,7 +431,7 @@ func (p *controlPlaneMonitor) getProxyStatus(client kubernetes.ClientInterface, 
 	const synczPath = "/debug/syncz"
 	var result map[string][]byte
 
-	if externalConf := p.conf.ExternalServices.Istio.Registry; externalConf != nil {
+	if externalConf := p.conf.ExternalServices.Istio.Registry; externalConf != nil && externalConf.IstiodURL != "" {
 		url := joinURL(externalConf.IstiodURL, synczPath)
 		r, err := getRequest(url)
 		if err != nil {
@@ -454,7 +454,7 @@ func (p *controlPlaneMonitor) getRegistryServices(client kubernetes.ClientInterf
 	const registryzPath = "/debug/registryz"
 	var result map[string][]byte
 
-	if externalConf := p.conf.ExternalServices.Istio.Registry; externalConf != nil {
+	if externalConf := p.conf.ExternalServices.Istio.Registry; externalConf != nil && externalConf.IstiodURL != "" {
 		url := joinURL(externalConf.IstiodURL, registryzPath)
 		r, err := getRequest(url)
 		if err != nil {
