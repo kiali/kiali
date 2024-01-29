@@ -61,7 +61,7 @@
     "test": "tsc -p . && TEST_RUNNER=1 react-scripts test --env=jsdom __tests__ --transformIgnorePatterns 'node_modules/(?!my-library-dir)/'",
     "prettier": "prettier --write \"{src/**/*.{ts,tsx,scss},**/*.json}\"",
     "prepare": "cd .. && husky install frontend/.husky",
-    "pre-commit": "yarn run pretty-quick --staged --no-restage --bail --pattern \"{frontend/src/**/*.{ts,tsx,scss},**/*.{json}}\" && npm run lint:precommit && npm run format:precommit",
+    "pre-commit": "yarn run pretty-quick --staged --no-restage --bail --pattern \"**/*.{ts,tsx,scss,json}\" && npm run lint:precommit && npm run format:precommit",
     "format:precommit": "../hack/hooks/pre-commit.sh"
   },
   "dependencies": {
