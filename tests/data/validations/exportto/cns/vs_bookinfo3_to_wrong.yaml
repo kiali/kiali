@@ -1,0 +1,10 @@
+kind: VirtualService
+apiVersion: networking.istio.io/v1beta1
+metadata:
+  name: vs_bookinfo3_to_wrong
+  namespace: bookinfo3
+spec:
+  hosts:
+    - '*'
+  exportTo:
+    - 'wrong'
