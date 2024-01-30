@@ -115,6 +115,11 @@ Then('user sees the generated {string} objects located in the {string} cluster',
     .contains(cluster);
 });
 
+Then('user does not see the generated {string} objects located in the {string} cluster', (svc: string, cluster: string) => {
+  cy.getBySel(`VirtualItem_Cluster${cluster}_Nsbookinfo_destinationrule_${svc}`).should('not.exist');
+  cy.getBySel(`VirtualItem_Cluster${cluster}_Nsbookinfo_virtualservice_${svc}`).should('not.exist');
+});
+
 Then(
   'the {string} {string} should be listed in {string} {string} namespace',
   (type: string, svc: string, cluster: string, ns: string) => {

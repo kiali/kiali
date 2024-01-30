@@ -29,7 +29,14 @@ When('user decides to {string} a Traffic Policy in the {string} {string}',(actio
   cy.get(`[data-test="CardItem_${ns}_${cluster}"]`).find('[aria-label="Actions"]').click();
   cy.get('button').contains(`${action[0].toUpperCase() + action.slice(1)} Traffic Policies`).should('be.visible');
   cy.get('button').contains(`${action[0].toUpperCase() + action.slice(1)} Traffic Policies`).click();
+  ensureKialiFinishedLoading();
+});
 
+When('user confirms to {string} the Traffic Policy',(action:string) => {
+  if (action === 'create' || action === 'update'){
+    cy.get(`button[data-test="${action}"]`).click();
+  }
+  cy.get('button[data-test="confirm-create"]').click();
   ensureKialiFinishedLoading();
 });
 

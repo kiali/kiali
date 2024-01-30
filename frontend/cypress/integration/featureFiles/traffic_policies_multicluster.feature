@@ -12,36 +12,34 @@ Feature: Manipulate Traffic Policies in the Primary-Remote and Multi-Primary set
   Scenario: Create a Traffic Policy in a local cluster
     When user deletes a Traffic Policy and the resource is no longer available in any cluster
     And user is at the "overview" page
-    And user decides to create a Traffic Policy in the "east" "bookinfo"
-    And user creates the configuration
+    And user decides to "create" a Traffic Policy in the "east" "bookinfo"
+    And user confirms to "create" the Traffic Policy
     Then an info message "Traffic policies created for bookinfo namespace." is displayed
-    And user is at the "istio" list page
+    When user is at the "istio" list page
     And user selects the "bookinfo" namespace
     Then user sees the generated Traffic policy objects located in the "east" cluster
     And user should not see the generated Traffic policy objects located in the "west" cluster
 
   Scenario: Update a Traffic Policy scenario in a local cluster
     When user is at the "overview" page
-    And user decides to update an Authorization Policy in the "east" "bookinfo"
-    And user previews the configuration
-    And user updates the configuration
-    And user is at the "istio" list page
-    And user selects the "bookinfo" namespace
-    Then user sees the generated Traffic policy objects located in the "east" cluster
-    And user should not see the generated Traffic policy objects located in the "west" cluster
+    And user decides to "update" a Traffic Policy in the "east" "bookinfo"
+    And user confirms to "update" the Traffic Policy
+    Then an info message "Traffic policies updated for bookinfo namespace." is displayed
 
-  Scenario: Delete the Traffic Policy scenario in a remote cluster
+  Scenario: Delete the Traffic Policy scenario in a local cluster
     When user is at the "overview" page
-    And user decides to delete a Traffic Policy in the "east" "bookinfo"
-    And user confirms delete the configuration
+    And user decides to "delete" a Traffic Policy in the "east" "bookinfo"
+    And user confirms to "delete" the Traffic Policy
+    Then an info message "Traffic policies deleted for bookinfo namespace." is displayed
+    When user is at the "istio" list page
+    And user selects the "bookinfo" namespace
     Then user should not see the generated Traffic policy objects located in the "east" cluster
 
   Scenario: Try to create a Traffic Policy in a remote cluster in the Primary-Remote deployment
     When user deletes a Traffic Policy and the resource is no longer available in any cluster
     And user is at the "overview" page
-    And user decides to create a Traffic Policy in the "west" "bookinfo"
-    # And user previews the configuration
-    And user creates the configuration
+    And user decides to "create" a Traffic Policy in the "west" "bookinfo"
+    And user confirms to "create" the Traffic Policy
     Then an error message "Could not create traffic policies." is displayed
     And user is at the "istio" list page
     And user selects the "bookinfo" namespace
@@ -53,24 +51,26 @@ Feature: Manipulate Traffic Policies in the Primary-Remote and Multi-Primary set
     When user deletes a Traffic Policy and the resource is no longer available in any cluster
     And user is at the "overview" page
     And user decides to "create" a Traffic Policy in the "west" "bookinfo"
-    And user creates the configuration
+    And user confirms to "create" the Traffic Policy
     Then an info message "Traffic policies created for bookinfo namespace." is displayed
-    And user is at the "istio" list page
+    When user is at the "istio" list page
     And user selects the "bookinfo" namespace
     Then user sees the generated Traffic policy objects located in the "west" cluster
     And user should not see the generated Traffic policy objects located in the "east" cluster
 
-  @only
   @multi-primary
   Scenario: Update a Traffic Policy scenario in a remote cluster
     When user is at the "overview" page
     And user decides to "update" a Traffic Policy in the "west" "bookinfo"
-    And user creates the configuration
+    And user confirms to "update" the Traffic Policy
     Then an info message "Traffic policies updated for bookinfo namespace." is displayed
 
   @multi-primary
   Scenario: Delete the Traffic Policy scenario in a remote cluster
     When user is at the "overview" page
     And user decides to "delete" a Traffic Policy in the "west" "bookinfo"
-    And user confirms delete the configuration
+    And user confirms to "delete" the Traffic Policy
+    Then an info message "Traffic policies deleted for bookinfo namespace." is displayed
+    When user is at the "istio" list page
+    And user selects the "bookinfo" namespace
     Then user should not see the generated Traffic policy objects located in the "west" cluster
