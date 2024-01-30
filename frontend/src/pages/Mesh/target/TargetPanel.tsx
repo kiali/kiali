@@ -8,23 +8,30 @@ import { FocusNode } from 'pages/GraphPF/GraphPF';
 import { classes } from 'typestyle';
 import { PFColors } from 'components/Pf/PfColors';
 import { MeshTarget } from 'types/Mesh';
-import { TargetPanelCommonProps, targetPanelStyle } from './TargetPanelCommon';
+import { TargetPanelCommonProps, targetPanel } from './TargetPanelCommon';
 import { MeshTourStops } from '../MeshHelpTour';
 import { BoxByType, NodeAttr } from 'types/Graph';
 import { ElementModel, GraphElement } from '@patternfly/react-topology';
 import { TargetPanelClusterBox } from './TargetPanelClusterBox';
-import { TargetPanelNamespaceBox } from './TargetPanelNamespaceBox';
+import { TargetPanelNamespace } from './TargetPanelNamespace';
 import { TargetPanelNode } from './TargetPanelNode';
 import { TargetPanelMesh } from './TargetPanelMesh';
+import { meshWideMTLSStatusSelector, minTLSVersionSelector } from 'store/Selectors';
 
 type TargetPanelState = {
   isVisible: boolean;
 };
 
-type TargetPanelProps = TargetPanelCommonProps & {
-  isPageVisible: boolean;
-  onFocus?: (focusNode: FocusNode) => void;
+type ReduxProps = {
+  meshStatus: string;
+  minTLS: string;
 };
+
+type TargetPanelProps = ReduxProps &
+  TargetPanelCommonProps & {
+    isPageVisible: boolean;
+    onFocus?: (focusNode: FocusNode) => void;
+  };
 
 const mainStyle = kialiStyle({
   fontSize: 'var(--graph-side-panel--font-size)',
@@ -37,7 +44,7 @@ const expandedStyle = kialiStyle({ height: '100%' });
 
 const collapsedStyle = kialiStyle({
   $nest: {
-    ['& > .' + targetPanelStyle]: {
+    ['& > .' + targetPanel]: {
       display: 'none'
     }
   }
@@ -77,7 +84,6 @@ class TargetPanelComponent extends React.Component<TargetPanelProps, TargetPanel
     }
 
     const mainTopStyle = this.state.isVisible ? expandedStyle : collapsedStyle;
-
     const target: MeshTarget = this.props.target;
 
     return (
@@ -115,16 +121,19 @@ class TargetPanelComponent extends React.Component<TargetPanelProps, TargetPanel
               <TargetPanelClusterBox
                 istioAPIEnabled={this.props.istioAPIEnabled}
                 kiosk={this.props.kiosk}
+                refreshInterval={this.props.refreshInterval}
                 target={target}
                 updateTime={this.props.updateTime}
               />
             );
           case 'namespace':
             return (
-              <TargetPanelNamespaceBox
-                cluster={elem.getData()[NodeAttr.cluster]}
+              <TargetPanelNamespace
                 istioAPIEnabled={this.props.istioAPIEnabled}
                 kiosk={this.props.kiosk}
+                meshStatus={this.props.meshStatus}
+                minTLS={this.props.minTLS}
+                refreshInterval={this.props.refreshInterval}
                 target={target}
                 updateTime={this.props.updateTime}
               />
@@ -138,6 +147,7 @@ class TargetPanelComponent extends React.Component<TargetPanelProps, TargetPanel
           <TargetPanelMesh
             istioAPIEnabled={this.props.istioAPIEnabled}
             kiosk={this.props.kiosk}
+            refreshInterval={this.props.refreshInterval}
             target={target}
             updateTime={this.props.updateTime}
           />
@@ -147,6 +157,7 @@ class TargetPanelComponent extends React.Component<TargetPanelProps, TargetPanel
           <TargetPanelNode
             istioAPIEnabled={this.props.istioAPIEnabled}
             kiosk={this.props.kiosk}
+            refreshInterval={this.props.refreshInterval}
             target={target}
             updateTime={this.props.updateTime}
           />
@@ -164,7 +175,9 @@ class TargetPanelComponent extends React.Component<TargetPanelProps, TargetPanel
 }
 
 const mapStateToProps = (state: KialiAppState) => ({
-  kiosk: state.globalState.kiosk
+  kiosk: state.globalState.kiosk,
+  meshStatus: meshWideMTLSStatusSelector(state),
+  minTLS: minTLSVersionSelector(state)
 });
 
 export const TargetPanel = connect(mapStateToProps)(TargetPanelComponent);

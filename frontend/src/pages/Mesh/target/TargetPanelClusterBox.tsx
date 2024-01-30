@@ -5,9 +5,14 @@ import { PFColors } from 'components/Pf/PfColors';
 import { NodeAttr } from 'types/Graph';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { getKialiTheme } from 'utils/ThemeUtils';
-import { TargetPanelCommonProps, getTitle, targetPanelStyle, targetPanelWidth } from './TargetPanelCommon';
+import {
+  TargetPanelCommonProps,
+  getTitle,
+  targetPanel,
+  targetPanelHeading,
+  targetPanelWidth
+} from './TargetPanelCommon';
 import { kialiIconDark, kialiIconLight, serverConfig } from 'config';
-import { targetPanelHeadingStyle } from './TargetPanelStyle';
 import { KialiInstance } from 'types/Mesh';
 import { Theme } from 'types/Common';
 
@@ -56,8 +61,8 @@ export class TargetPanelClusterBox extends React.Component<TargetPanelCommonProp
     const kialiInstances = serverConfig.clusters[cluster] ? serverConfig.clusters[cluster].kialiInstances : [];
 
     return (
-      <div className={targetPanelStyle} style={TargetPanelClusterBox.panelStyle}>
-        <div className={targetPanelHeadingStyle}>
+      <div className={targetPanel} style={TargetPanelClusterBox.panelStyle}>
+        <div className={targetPanelHeading}>
           {getTitle('Cluster')}
           {this.renderCluster(cluster, kialiInstances)}
         </div>

@@ -1,7 +1,12 @@
 import * as React from 'react';
 import { Visualization } from '@patternfly/react-topology';
-import { TargetPanelCommonProps, getTitle, targetPanelStyle, targetPanelWidth } from './TargetPanelCommon';
-import { targetPanelHeadingStyle } from './TargetPanelStyle';
+import {
+  TargetPanelCommonProps,
+  getTitle,
+  targetPanel,
+  targetPanelHeading,
+  targetPanelWidth
+} from './TargetPanelCommon';
 
 type TargetPanelMeshState = {
   loading: boolean;
@@ -48,8 +53,8 @@ export class TargetPanelMesh extends React.Component<TargetPanelCommonProps, Tar
     }
 
     return (
-      <div id="target-panel-mesh" className={targetPanelStyle} style={TargetPanelMesh.panelStyle}>
-        <div id="summary-panel-graph-heading" className={targetPanelHeadingStyle}>
+      <div id="target-panel-mesh" className={targetPanel} style={TargetPanelMesh.panelStyle}>
+        <div id="summary-panel-graph-heading" className={targetPanelHeading}>
           {getTitle('Current Mesh')}
         </div>
       </div>

@@ -241,6 +241,7 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
                 isPageVisible={this.props.isPageVisible}
                 istioAPIEnabled={this.props.istioAPIEnabled}
                 onFocus={this.onFocus}
+                refreshInterval={this.props.refreshInterval}
                 target={this.props.target}
                 updateTime={this.state.meshData.timestamp / 1000}
               />
