@@ -1,8 +1,6 @@
 import { Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import { ensureKialiFinishedLoading } from './transition';
 
-const CLUSTER1_CONTEXT = Cypress.env('CLUSTER1_CONTEXT');
-const CLUSTER2_CONTEXT = Cypress.env('CLUSTER2_CONTEXT');
 const authorizationPolicies: string[] = ['deny-all-bookinfo', 'details-v1', 'productpage-v1','ratings-v1','reviews-v1','reviews-v2','reviews-v3'];
 const sidecars: string[] = ['kiali-traffic-generator', 'details-v1', 'productpage-v1','ratings-v1','reviews-v1','reviews-v2','reviews-v3'];
 

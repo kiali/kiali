@@ -45,7 +45,6 @@ Feature: Kiali Istio Config page
   @multi-primary
   Scenario: Create a Gateway in both clusters in the Multi-Primary deployment
     When user deletes gateway named "bookinfo-gateway-mc" and the resource is no longer available in any cluster
-    And Istio CRDs are "" present in the "west" cluster
     And user selects the "bookinfo" namespace
     And user clicks in the "Gateway" Istio config actions
     And user sees the "Create Gateway" config wizard
@@ -53,9 +52,9 @@ Feature: Kiali Istio Config page
     And user types "bookinfo-gateway-mc" in the "name" input
     And user adds a server to a server list
     Then the preview button should be disabled
-    And user types "website.com" in the "hosts0" input
-    And user types "8080" in the "addPortNumber0" input
-    And user types "foobar" in the "addPortName0" input
+    And user types "website.com" in the "hosts_0" input
+    And user types "8080" in the "addPortNumber_0" input
+    And user types "foobar" in the "addPortName_0" input
     And user previews the configuration
     And user creates the istio config
     And the "Gateway" "bookinfo-gateway-mc" should be listed in "east" "bookinfo" namespace 
