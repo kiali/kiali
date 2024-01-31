@@ -3,7 +3,7 @@ import { getAuthStrategy } from './cypress/plugins/setup';
 
 /* eslint-disable import/no-default-export*/
 export default defineConfig({
-  fixturesFolder: 'cypress/fixtures',
+  fixturesFolder: 'cypress/fixtures/perf',
   env: {
     timeout: 10000,
     threshold: 100000
