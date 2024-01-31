@@ -87,7 +87,7 @@ func IstioConfigList(w http.ResponseWriter, r *http.Request) {
 			// when namespace is empty, validaions should be done per all namespaces to apply object filters
 			if namespace == "" && len(nss) > 0 {
 				for _, ns := range nss {
-					nsValidations, nsErr := business.Validations.GetValidations(context.TODO(), cluster, ns, "", "")
+					nsValidations, nsErr := business.Validations.GetValidations(r.Context(), cluster, ns, "", "")
 					if nsErr == nil {
 						istioConfigValidationResults = istioConfigValidationResults.MergeValidations(nsValidations)
 					} else {
@@ -95,7 +95,7 @@ func IstioConfigList(w http.ResponseWriter, r *http.Request) {
 					}
 				}
 			} else {
-				istioConfigValidationResults, errValidations = business.Validations.GetValidations(context.TODO(), cluster, namespace, "", "")
+				istioConfigValidationResults, errValidations = business.Validations.GetValidations(r.Context(), cluster, namespace, "", "")
 			}
 			if errValidations != nil && *err == nil {
 				*err = errValidations
