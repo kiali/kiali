@@ -15,29 +15,29 @@ jobs:
     name: Build and unit test frontend
     runs-on: ubuntu-20.04
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ inputs.build_branch }}
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ inputs.build_branch }}
 
-      - name: Setup node
-        uses: actions/setup-node@v4
-        with:
-          node-version: "18"
-          cache: yarn
-          cache-dependency-path: frontend/yarn.lock
+    - name: Setup node
+      uses: actions/setup-node@v4
+      with:
+        node-version: "18"
+        cache: yarn
+        cache-dependency-path: frontend/yarn.lock
 
-      - name: Build
-        run: make clean-all build-ui
+    - name: Build
+      run: make clean-all build-ui
 
-      - name: Test frontend
-        run: |
-          cd frontend
-          yarn pretty-quick --check --verbose --branch ${{ inputs.target_branch }}
-          yarn test
+    - name: Test frontend
+      run: |
+        cd frontend
+        yarn pretty-quick --check --verbose --branch ${{ inputs.target_branch }}
+        yarn test
 
-      - name: Upload frontend build
-        uses: actions/upload-artifact@v3
-        with:
-          name: build
-          path: frontend/build/
+    - name: Upload frontend build
+      uses: actions/upload-artifact@v4
+      with:
+        name: build
+        path: frontend/build/

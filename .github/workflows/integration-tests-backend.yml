@@ -22,47 +22,47 @@ jobs:
     name: Backend API integration tests
     runs-on: ubuntu-20.04
     steps:
-      - name: Check out code
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ inputs.build_branch }}
+    - name: Check out code
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ inputs.build_branch }}
 
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version-file: go.mod
-          # The builtin cache feature ensures that installing golangci-lint
-          # is consistently fast.
-          cache: true
-          cache-dependency-path: go.sum
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version-file: go.mod
+        # The builtin cache feature ensures that installing golangci-lint
+        # is consistently fast.
+        cache: true
+        cache-dependency-path: go.sum
 
-      - name: Download go binary
-        uses: actions/download-artifact@v3
-        with:
-          name: kiali
-          path: ~/go/bin/
+    - name: Download go binary
+      uses: actions/download-artifact@v4
+      with:
+        name: kiali
+        path: ~/go/bin/
 
-      - name: Ensure kiali binary is executable
-        run: chmod +x ~/go/bin/kiali
+    - name: Ensure kiali binary is executable
+      run: chmod +x ~/go/bin/kiali
 
-      - name: Download frontend build
-        uses: actions/download-artifact@v3
-        with:
-          name: build
-          path: frontend/build
+    - name: Download frontend build
+      uses: actions/download-artifact@v4
+      with:
+        name: build
+        path: frontend/build
 
-      - name: Run backend integration tests
-        run: hack/run-integration-tests.sh --test-suite backend $(if [ -n "${{ inputs.istio_version }}" ]; then echo "--istio-version ${{ inputs.istio_version }}"; fi)
+    - name: Run backend integration tests
+      run: hack/run-integration-tests.sh --test-suite backend $(if [ -n "${{ inputs.istio_version }}" ]; then echo "--istio-version ${{ inputs.istio_version }}"; fi)
 
-      - name: Get debug info when integration tests fail
-        if: failure()
-        run: |
-          mkdir debug-output
-          hack/ci-get-debug-info.sh --output-directory debug-output
+    - name: Get debug info when integration tests fail
+      if: failure()
+      run: |
+        mkdir debug-output
+        hack/ci-get-debug-info.sh --output-directory debug-output
 
-      - name: Upload debug info artifact
-        if: failure()
-        uses: actions/upload-artifact@v3
-        with:
-          name: debug-info
-          path: debug-output
+    - name: Upload debug info artifact
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: debug-info
+        path: debug-output

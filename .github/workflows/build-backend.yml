@@ -11,47 +11,47 @@ jobs:
     name: Build and unit test backend
     runs-on: ubuntu-20.04
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ inputs.build_branch }}
-    
-      - name: Determine go version
-        id: go_version
-        run: |
-          GO_VERSION=$(sed -rn 's/^GO_VERSION_KIALI \= (.*)/\1/p' Makefile)
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ inputs.build_branch }}
 
-          # Remove any pre release identifier (ie: "-SNAPSHOT")
-          GO_VERSION=${GO_VERSION%-*}
-          echo $GO_VERSION
-          echo "go_version=$GO_VERSION" >> $GITHUB_ENV 
+    - name: Determine go version
+      id: go_version
+      run: |
+        GO_VERSION=$(sed -rn 's/^GO_VERSION_KIALI \= (.*)/\1/p' Makefile)
 
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: ${{ env.go_version }}
-          cache: true
-          cache-dependency-path: go.sum
-      - name: Lint Install
-        run: make lint-install
+        # Remove any pre release identifier (ie: "-SNAPSHOT")
+        GO_VERSION=${GO_VERSION%-*}
+        echo $GO_VERSION
+        echo "go_version=$GO_VERSION" >> $GITHUB_ENV
 
-      - name: Verify code linting
-        run: make lint
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ env.go_version }}
+        cache: true
+        cache-dependency-path: go.sum
+    - name: Lint Install
+      run: make lint-install
 
-      - name: Build
-        run: make -e GO_BUILD_FLAGS=${{ env.GO_BUILD_FLAGS }} -e CGO_ENABLED=${{ env.CGO_ENABLED }} clean-all build
-        env:
-          # Build with -race flag if this is a PR, otherwise it is a release and
-          # we don't want to build with race detection because of the perf penalty.
-          GO_BUILD_FLAGS: ${{ github.base_ref && '-race' }}
-          # The -race flag requires CGO_ENABLED
-          CGO_ENABLED: ${{ github.base_ref && '1' }}
+    - name: Verify code linting
+      run: make lint
 
-      - name: Test backend
-        run: make -e GO_TEST_FLAGS="-race" test
+    - name: Build
+      run: make -e GO_BUILD_FLAGS=${{ env.GO_BUILD_FLAGS }} -e CGO_ENABLED=${{ env.CGO_ENABLED }} clean-all build
+      env:
+        # Build with -race flag if this is a PR, otherwise it is a release and
+        # we don't want to build with race detection because of the perf penalty.
+        GO_BUILD_FLAGS: ${{ github.base_ref && '-race' }}
+        # The -race flag requires CGO_ENABLED
+        CGO_ENABLED: ${{ github.base_ref && '1' }}
 
-      - name: Upload go binary
-        uses: actions/upload-artifact@v3
-        with:
-          name: kiali
-          path: ~/go/bin/kiali
+    - name: Test backend
+      run: make -e GO_TEST_FLAGS="-race" test
+
+    - name: Upload go binary
+      uses: actions/upload-artifact@v4
+      with:
+        name: kiali
+        path: ~/go/bin/kiali

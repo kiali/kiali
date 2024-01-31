@@ -3,7 +3,7 @@ name: Nightly Build
 on:
   schedule:
   # Every night at 04:00 (UTC)
-  - cron: '0 4 * * *'
+  - cron: "0 4 * * *"
   workflow_dispatch:
     inputs:
       release_branch:
@@ -41,7 +41,7 @@ jobs:
         fi
 
         QUAY_TAG="$QUAY_REPO:latest"
-        
+
         echo "quay_tag=$QUAY_TAG" >> $GITHUB_ENV
 
     - name: Log information
@@ -89,7 +89,7 @@ jobs:
         cache-dependency-path: go.sum
 
     - name: Download frontend build
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: build
         path: frontend/build

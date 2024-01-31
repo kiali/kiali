@@ -28,57 +28,57 @@ jobs:
       # avoid warnings like "tput: No value for $TERM and no -T specified"
       TERM: xterm
     steps:
-      - name: Check out code
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ inputs.build_branch }}
+    - name: Check out code
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ inputs.build_branch }}
 
-      - name: Setup node
-        uses: actions/setup-node@v4
-        with:
-          node-version: "18"
-          cache: yarn
-          cache-dependency-path: frontend/yarn.lock
+    - name: Setup node
+      uses: actions/setup-node@v4
+      with:
+        node-version: "18"
+        cache: yarn
+        cache-dependency-path: frontend/yarn.lock
 
-      - name: Download go binary
-        uses: actions/download-artifact@v3
-        with:
-          name: kiali
-          path: ~/go/bin/
+    - name: Download go binary
+      uses: actions/download-artifact@v4
+      with:
+        name: kiali
+        path: ~/go/bin/
 
-      - name: Ensure kiali binary is executable
-        run: chmod +x ~/go/bin/kiali
+    - name: Ensure kiali binary is executable
+      run: chmod +x ~/go/bin/kiali
 
-      - name: Download frontend build
-        uses: actions/download-artifact@v3
-        with:
-          name: build
-          path: frontend/build
+    - name: Download frontend build
+      uses: actions/download-artifact@v4
+      with:
+        name: build
+        path: frontend/build
 
-      # Need to install frontend dependencies to run cypress tests.
-      - name: Install frontend dependencies
-        working-directory: ./frontend
-        run: yarn install --frozen-lockfile
+    # Need to install frontend dependencies to run cypress tests.
+    - name: Install frontend dependencies
+      working-directory: ./frontend
+      run: yarn install --frozen-lockfile
 
-      - name: Run frontend multi-cluster integration tests
-        run: hack/run-integration-tests.sh --test-suite frontend-primary-remote $(if [ -n "${{ inputs.istio_version }}" ]; then echo "--istio-version ${{ inputs.istio_version }}"; fi)
+    - name: Run frontend multi-cluster integration tests
+      run: hack/run-integration-tests.sh --test-suite frontend-primary-remote $(if [ -n "${{ inputs.istio_version }}" ]; then echo "--istio-version ${{ inputs.istio_version }}"; fi)
 
-      - name: Get debug info when integration tests fail
-        if: failure()
-        run: |
-          mkdir debug-output
-          hack/ci-get-debug-info.sh --output-directory debug-output --kubectl-context kind-east
+    - name: Get debug info when integration tests fail
+      if: failure()
+      run: |
+        mkdir debug-output
+        hack/ci-get-debug-info.sh --output-directory debug-output --kubectl-context kind-east
 
-      - name: Upload debug info artifact
-        if: failure()
-        uses: actions/upload-artifact@v3
-        with:
-          name: debug-info
-          path: debug-output
+    - name: Upload debug info artifact
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: debug-info
+        path: debug-output
 
-      - name: Upload cypress screenshots when tests fail
-        uses: actions/upload-artifact@v3
-        if: failure()
-        with:
-          name: cypress-screenshots
-          path: frontend/cypress/screenshots
+    - name: Upload cypress screenshots when tests fail
+      uses: actions/upload-artifact@v4
+      if: failure()
+      with:
+        name: cypress-screenshots
+        path: frontend/cypress/screenshots
