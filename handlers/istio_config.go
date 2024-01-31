@@ -81,8 +81,22 @@ func IstioConfigList(w http.ResponseWriter, r *http.Request) {
 		wg.Add(1)
 		go func(namespace string, istioConfigValidations *models.IstioValidations, err *error) {
 			defer wg.Done()
-			// We don't filter by objects when calling validations, because certain validations require fetching all types to get the correct errors
-			istioConfigValidationResults, errValidations := business.Validations.GetValidations(context.TODO(), cluster, namespace, "", "")
+			istioConfigValidationResults := models.IstioValidations{}
+			var errValidations error
+			// We don't filter by service and workload when calling validations, because certain validations require fetching all types to get the correct errors
+			// when namespace is empty, validaions should be done per all namespaces to apply object filters
+			if namespace == "" && len(nss) > 0 {
+				for _, ns := range nss {
+					nsValidations, nsErr := business.Validations.GetValidations(r.Context(), cluster, ns, "", "")
+					if nsErr == nil {
+						istioConfigValidationResults = istioConfigValidationResults.MergeValidations(nsValidations)
+					} else {
+						errValidations = nsErr
+					}
+				}
+			} else {
+				istioConfigValidationResults, errValidations = business.Validations.GetValidations(r.Context(), cluster, namespace, "", "")
+			}
 			if errValidations != nil && *err == nil {
 				*err = errValidations
 			} else {

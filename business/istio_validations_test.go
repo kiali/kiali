@@ -174,12 +174,15 @@ func TestFilterExportToNamespacesVS(t *testing.T) {
 	currentIstioObjects = append(currentIstioObjects, vs3to2)
 	vs3toall := loadVirtualService("vs_bookinfo3_to_all.yaml", t)
 	currentIstioObjects = append(currentIstioObjects, vs3toall)
+	vs3towrong := loadVirtualService("vs_bookinfo3_to_wrong.yaml", t)
+	currentIstioObjects = append(currentIstioObjects, vs3towrong)
 	v := mockEmptyValidationService()
-	filteredVSs := v.filterVSExportToNamespaces("bookinfo", currentIstioObjects)
+	filteredVSs := v.filterVSExportToNamespaces(models.Namespaces{models.Namespace{Name: "bookinfo"}, models.Namespace{Name: "bookinfo2"}, models.Namespace{Name: "bookinfo3"}, models.Namespace{Name: "default"}}, "bookinfo", currentIstioObjects)
 	var expectedVS []*networking_v1beta1.VirtualService
 	expectedVS = append(expectedVS, vs1tothis)
 	expectedVS = append(expectedVS, vs2to1)
 	expectedVS = append(expectedVS, vs3toall)
+	expectedVS = append(expectedVS, vs3towrong)
 	filteredKeys := []string{}
 	for _, vs := range filteredVSs {
 		filteredKeys = append(filteredKeys, fmt.Sprintf("%s/%s", vs.Name, vs.Namespace))
