@@ -104,6 +104,15 @@ func (nss Namespaces) Includes(namespace string) bool {
 	return false
 }
 
+func (nss Namespaces) IsNamespaceAmbient(namespace, cluster string) bool {
+	for _, ns := range nss {
+		if ns.Name == namespace && ns.Cluster == cluster {
+			return ns.IsAmbient
+		}
+	}
+	return false
+}
+
 func (nss Namespaces) GetNames() []string {
 	names := make([]string, len(nss))
 	for _, ns := range nss {
