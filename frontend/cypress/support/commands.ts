@@ -143,7 +143,7 @@ Cypress.Commands.add('login', (username: string, password: string) => {
       return;
     }
 
-    if (haveCookie === false || haveCookie === undefined) {
+    // if (haveCookie === false || haveCookie === undefined) {
       cy.log(
         `provider: ${provider},
 					username: ${username},
@@ -222,7 +222,7 @@ Cypress.Commands.add('login', (username: string, password: string) => {
             });
           });
 
-          preserveKialiToken();
+          // preserveKialiToken();
         }
       } else if (auth_strategy === 'token') {
         cy.exec('kubectl -n istio-system create token citest').then(result => {
@@ -235,13 +235,13 @@ Cypress.Commands.add('login', (username: string, password: string) => {
             }
           });
 
-          preserveKialiToken();
+          // preserveKialiToken();
         });
       }
-    } else {
-      cy.log('got an auth cookie, skipping login');
-      cy.setCookie('kiali-token-aes', kialiToken);
-    }
+    // } else {
+    //   cy.log('got an auth cookie, skipping login');
+    //   cy.setCookie('kiali-token-aes', kialiToken);
+    // }
   });
 });
 
