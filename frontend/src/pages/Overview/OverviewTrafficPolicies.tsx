@@ -56,7 +56,7 @@ export class OverviewTrafficPolicies extends React.Component<OverviewTrafficPoli
     return this.props.kind === 'canary' || this.props.kind === 'injection';
   };
 
-  componentDidUpdate(prevProps: OverviewTrafficPoliciesProps) {
+  componentDidUpdate(prevProps: OverviewTrafficPoliciesProps): void {
     if (prevProps.nsTarget !== this.props.nsTarget || prevProps.opTarget !== this.props.opTarget) {
       switch (this.props.kind) {
         case 'injection':
@@ -94,7 +94,7 @@ export class OverviewTrafficPolicies extends React.Component<OverviewTrafficPoli
   }
 
   fetchPermission = (
-    confirmationModal: boolean = false,
+    confirmationModal = false,
     loaded: boolean = this.props.opTarget === 'update' || this.props.opTarget === 'create'
   ): void => {
     this.promises
@@ -208,7 +208,7 @@ export class OverviewTrafficPolicies extends React.Component<OverviewTrafficPoli
     duration: DurationInSeconds,
     aps: AuthorizationPolicy[],
     sds: Sidecar[],
-    op: string = 'create',
+    op = 'create',
     cluster?: string
   ): void => {
     const graphDataSource = new GraphDataSource();
@@ -283,7 +283,7 @@ export class OverviewTrafficPolicies extends React.Component<OverviewTrafficPoli
     );
   };
 
-  render() {
+  render(): React.ReactNode {
     const canaryVersion = this.props.kind === 'canary' ? serverConfig.istioCanaryRevision[this.props.opTarget] : '';
 
     const modalAction =
@@ -329,7 +329,7 @@ export class OverviewTrafficPolicies extends React.Component<OverviewTrafficPoli
           onClose={this.onHideConfirmModal}
           actions={[
             <Button
-              data-test="confirm-traffic-policies"
+              data-test="confirm-create"
               key="confirm"
               isDisabled={this.state.disableOp}
               variant={colorAction}

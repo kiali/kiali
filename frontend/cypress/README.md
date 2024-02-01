@@ -37,16 +37,11 @@ or in headless mode:
 yarn cypress:run
 ```
 \
-Multi-cluster related tests can be run using:
-
+In order to run the Cypress suite for a different setup (Multicluster, Tempo, etc.), add a specific suffix to your command above. The list of suffixes is available here. Only one can be used at a time. 
 ```bash
-yarn cypress:mc
-```
-
-or in headless mode:
-
-```bash
-yarn cypress:run:multi-cluster
+:multi-cluster      #for the Primary-Remote tests
+:multi-primary      #for the Multi-Primary tests
+:tracing            #for tests related to Tempo
 ```
 
 ### Running tests in a container

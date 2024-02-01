@@ -24,7 +24,7 @@ Feature: Kiali Istio Config page
     And user types "foobar" in the "addPortName_0" input
     Then the preview button should be disabled
 
-  Scenario: Try to Create a Gateway in both clusters without Istio CRDs present in the remote cluster 
+  Scenario: Try to Create a Gateway in both clusters in the Primary-Remote deployment
     When user deletes gateway named "bookinfo-gateway-mc" and the resource is no longer available in any cluster
     And user selects the "bookinfo" namespace
     And user clicks in the "Gateway" Istio config actions
@@ -42,14 +42,9 @@ Feature: Kiali Istio Config page
     And the "Gateway" "bookinfo-gateway-mc" should be listed in "east" "bookinfo" namespace 
     And the "Gateway" "bookinfo-gateway-mc" should not be listed in "west" "bookinfo" namespace 
 
-  @skip
-  @remote-istio-crds
-  # We can test for both the CRDs being and not being present in the remote cluster, but some order of execution
-  # using the Gherkin tags is necessary. We don't want the suite to install/remove the CRDs and restart the 
-  # Kiali pod multiple times during a single run.
-  Scenario: Try to Create a Gateway in both clusters with Istio CRDs present in the remote cluster 
+  @multi-primary
+  Scenario: Create a Gateway in both clusters in the Multi-Primary deployment
     When user deletes gateway named "bookinfo-gateway-mc" and the resource is no longer available in any cluster
-    And Istio CRDs are "" present in the "west" cluster
     And user selects the "bookinfo" namespace
     And user clicks in the "Gateway" Istio config actions
     And user sees the "Create Gateway" config wizard
@@ -57,9 +52,9 @@ Feature: Kiali Istio Config page
     And user types "bookinfo-gateway-mc" in the "name" input
     And user adds a server to a server list
     Then the preview button should be disabled
-    And user types "website.com" in the "hosts0" input
-    And user types "8080" in the "addPortNumber0" input
-    And user types "foobar" in the "addPortName0" input
+    And user types "website.com" in the "hosts_0" input
+    And user types "8080" in the "addPortNumber_0" input
+    And user types "foobar" in the "addPortName_0" input
     And user previews the configuration
     And user creates the istio config
     And the "Gateway" "bookinfo-gateway-mc" should be listed in "east" "bookinfo" namespace 

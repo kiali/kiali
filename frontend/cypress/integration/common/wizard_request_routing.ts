@@ -31,9 +31,9 @@ Given('user opens the namespace {string} and {string} service details page', (na
 });
 
 Given(
-  'user opens the namespace {string} and the remote {string} service details page',
-  (namespace: string, service: string) => {
-    cy.visit(`${url}/namespaces/${namespace}/services/${service}?refresh=0&clusterName=west`);
+  'user opens the namespace {string} and the {string} {string} service details page',
+  (namespace: string, cluster:string, service: string) => {
+    cy.visit(`${url}/namespaces/${namespace}/services/${service}?refresh=0&clusterName=${cluster}`);
   }
 );
 
@@ -113,6 +113,11 @@ Then('user sees the generated {string} objects located in the {string} cluster',
   cy.getBySel(`VirtualItem_Cluster${cluster}_Nsbookinfo_virtualservice_${svc}`)
     .find('[data-label="Cluster"]')
     .contains(cluster);
+});
+
+Then('user does not see the generated {string} objects located in the {string} cluster', (svc: string, cluster: string) => {
+  cy.getBySel(`VirtualItem_Cluster${cluster}_Nsbookinfo_destinationrule_${svc}`).should('not.exist');
+  cy.getBySel(`VirtualItem_Cluster${cluster}_Nsbookinfo_virtualservice_${svc}`).should('not.exist');
 });
 
 Then(

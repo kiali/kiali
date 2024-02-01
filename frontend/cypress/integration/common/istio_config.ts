@@ -2,6 +2,9 @@ import { After, Given, Then, When } from '@badeball/cypress-cucumber-preprocesso
 import { colExists, getColWithRowText } from './table';
 import { ensureKialiFinishedLoading } from './transition';
 
+const CLUSTER1_CONTEXT = Cypress.env('CLUSTER1_CONTEXT');
+const CLUSTER2_CONTEXT = Cypress.env('CLUSTER2_CONTEXT');
+
 const labelsStringToJson = (labelsString: string): string => {
   let labelsJson = '';
 
@@ -148,6 +151,21 @@ const minimalSidecar = (name: string, namespace: string, hosts: string): string 
 Given('a {string} AuthorizationPolicy in the {string} namespace', function (name: string, namespace: string) {
   cy.exec(`kubectl delete AuthorizationPolicy ${name} -n ${namespace}`, { failOnNonZeroExit: false });
   cy.exec(`echo '${minimalAuthorizationPolicy(name, namespace)}' | kubectl apply -f -`);
+
+  this.targetNamespace = namespace;
+  this.targetAuthorizationPolicy = name;
+});
+
+Given('a {string} AuthorizationPolicy in the {string} namespace in the {string} cluster', function (name: string, namespace: string, cluster:string) {
+  let cluster_context;
+  if (cluster === 'west'){
+    cluster_context = CLUSTER2_CONTEXT;
+  } else {
+    cluster_context = CLUSTER1_CONTEXT;
+  }
+
+  cy.exec(`kubectl delete AuthorizationPolicy ${name} -n ${namespace} --context ${cluster_context}`, { failOnNonZeroExit: false });
+  cy.exec(`echo '${minimalAuthorizationPolicy(name, namespace)}' | kubectl apply --context ${cluster_context} -f  -`);
 
   this.targetNamespace = namespace;
   this.targetAuthorizationPolicy = name;

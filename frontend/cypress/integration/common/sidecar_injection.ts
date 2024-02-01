@@ -260,7 +260,7 @@ When('I override the default automatic sidecar injection policy in the namespace
         .click();
 
       cy.getBySel(`enable-${this.targetNamespace}-namespace-sidecar-injection`).should('be.visible').click();
-      cy.getBySel('confirm-traffic-policies').should('be.visible').click();
+      cy.getBySel('confirm-create').should('be.visible').click();
     });
 
     ensureKialiFinishedLoading();
@@ -289,7 +289,7 @@ When(
           .should('be.visible')
           .click();
 
-        cy.getBySel('confirm-traffic-policies').should('be.visible').click();
+        cy.getBySel('confirm-create').should('be.visible').click();
         ensureKialiFinishedLoading();
       });
     });
@@ -313,7 +313,7 @@ When('I remove override configuration for sidecar injection in the namespace', f
         .click();
 
       cy.getBySel(`remove-${this.targetNamespace}-namespace-sidecar-injection`).should('be.visible').click();
-      cy.getBySel('confirm-traffic-policies').should('be.visible').click();
+      cy.getBySel('confirm-create').should('be.visible').click();
 
       ensureKialiFinishedLoading();
     });
