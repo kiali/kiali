@@ -130,6 +130,11 @@ MINIKUBE_CPU=""
 MINIKUBE_DISK=""
 MINIKUBE_MEMORY=""
 
+# Keycloak settings. Openshift only.
+KEYCLOAK_DB_PASSWORD="${KEYCLOAK_DB_PASSWORD:-keycloak-password}"
+KEYCLOAK_KUBE_CLIENT_SECRET="${KEYCLOAK_KUBE_CLIENT_SECRET:-kube-client-secret}"
+KIALI_USER_PASSWORD="${KIALI_USER_PASSWORD:-kiali}"
+
 # Some settings that can be configured when helm installing the two Kiali instances.
 KIALI1_WEB_FQDN=""
 KIALI1_WEB_SCHEMA=""
@@ -256,6 +261,18 @@ while [[ $# -gt 0 ]]; do
       KIALI2_WEB_SCHEMA="$2"
       shift;shift
       ;;
+    -kdp|--keycloak-db-password)
+      KEYCLOAK_DB_PASSWORD="$2"
+      shift;shift
+      ;;
+    -kcs|--keycloak-client-secret)
+      KEYCLOAK_KUBE_CLIENT_SECRET="$2"
+      shift;shift
+      ;;
+    -kup|--kiali-user-password)
+      KIALI_USER_PASSWORD="$2"
+      shift;shift
+      ;;
     -mcpu|--minikube-cpu)
       MINIKUBE_CPU="$2"
       shift;shift
@@ -343,6 +360,9 @@ Valid command line arguments:
   -k1ws|--kiali1-web-schema <schema>: If specified, this will be the #1 Kaili setting for spec.server.web_schema.
   -k2wf|--kiali2-web-fqdn <fqdn>: If specified, this will be the #2 Kaili setting for spec.server.web_fqdn.
   -k2ws|--kiali2-web-schema <schema>: If specified, this will be the #2 Kaili setting for spec.server.web_schema.
+  -kcs|--keycloak-client-secret <password>: Client secret for the openshift kube client in keycloak.
+  -kdp|--keycloak-db-password <password>: Password for the keycloak database.
+  -kup|--kiali-user-password <password>: Password for the kiali user in keycloak.
   -mcpu|--minikube-cpu <cpu count>: Number of CPUs to give to each minikube cluster
   -md|--minikube-driver <name>: The driver used by minikube (e.g. virtualbox, kvm2) (Default: kvm2)
   -mdisk|--minikube-disk <space>: Amount of disk space to give to each minikube cluster
