@@ -129,27 +129,31 @@ const TopologyContent: React.FC<{
       return;
     }
 
-    highlighter.setSelectedId(selectedIds.length > 0 ? selectedIds[0] : undefined);
-
     if (selectedIds.length > 0) {
       const elem = controller.getElementById(selectedIds[0]);
       switch (elem?.getKind()) {
         case ModelKind.edge: {
+          highlighter.setSelectedId(selectedIds[0]);
           setTarget({ elem: elem, type: 'edge' } as MeshTarget);
           return;
         }
         case ModelKind.node: {
+          highlighter.setSelectedId(selectedIds[0]);
           const isBox = (elem.getData() as MeshNodeData).isBox;
           setTarget({ type: isBox ? 'box' : 'node', elem: elem } as MeshTarget);
           return;
         }
+        case ModelKind.graph:
         default:
+          highlighter.setSelectedId(undefined);
+          setSelectedIds([]);
           setTarget({ elem: controller, type: 'mesh' } as MeshTarget);
       }
     } else {
+      highlighter.setSelectedId(undefined);
       setTarget({ elem: controller, type: 'mesh' } as MeshTarget);
     }
-  }, [setTarget, selectedIds, highlighter, controller, isMiniMesh, onEdgeTap, onNodeTap]);
+  }, [setTarget, selectedIds, highlighter, controller, isMiniMesh, onEdgeTap, onNodeTap, setSelectedIds]);
 
   //
   // fitView handling
@@ -594,8 +598,7 @@ export const Mesh: React.FC<{
     );
   }
 
-  // TODO: change back to debug
-  console.info(`Render Mesh! hasGraph=${controller?.hasGraph()}`);
+  console.debug(`Render Mesh! hasGraph=${controller?.hasGraph()}`);
   return (
     <VisualizationProvider data-test="visualization-provider" controller={controller}>
       <TopologyContent

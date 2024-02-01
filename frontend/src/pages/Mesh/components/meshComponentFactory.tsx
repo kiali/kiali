@@ -46,7 +46,7 @@ export const meshComponentFactory: ComponentFactory = (
     case ModelKind.edge:
       return withSelection({ multiSelect: false, controlled: false })(MeshEdge as any);
     case ModelKind.graph:
-      return withPanZoom()(GraphComponent);
+      return withSelection({ multiSelect: false, controlled: false })(withPanZoom()(GraphComponent));
     case ModelKind.node: {
       return withDragNode(nodeDragSourceSpec('node', true, true))(
         withContextMenu(e => nodeContextMenu(e))(

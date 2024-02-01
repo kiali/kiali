@@ -239,7 +239,9 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
                   {this.props.istioAPIEnabled ? this.renderIstioConfigStatus(nsInfo) : 'N/A'}
                 </div>
 
-                {nsInfo.status && <NamespaceStatuses key={ns} name={ns} status={nsInfo.status} type={healthType} />}
+                {this.state.status && (
+                  <NamespaceStatuses key={ns} name={ns} status={this.state.status} type={healthType} />
+                )}
 
                 <ControlPlaneNamespaceStatus
                   outboundTrafficPolicy={this.state.outboundPolicyMode}
@@ -269,7 +271,7 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
             )}
 
             {isControlPlane && isRemoteCluster(nsInfo.annotations) && (
-              <div>
+              <div className={targetPanelBody}>
                 {this.renderLabels(nsInfo)}
 
                 <div style={{ textAlign: 'left' }}>
@@ -298,7 +300,7 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
             )}
 
             {!isControlPlane && (
-              <div>
+              <div className={targetPanelBody}>
                 {this.renderLabels(nsInfo)}
 
                 <div style={{ textAlign: 'left' }}>
@@ -314,6 +316,7 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
 
                 {this.renderStatus()}
 
+                {targetPanelHR()}
                 {this.renderCharts()}
               </div>
             )}

@@ -7,16 +7,17 @@ import { TourStop } from 'components/Tour/TourStop';
 import { FocusNode } from 'pages/GraphPF/GraphPF';
 import { classes } from 'typestyle';
 import { PFColors } from 'components/Pf/PfColors';
-import { MeshTarget } from 'types/Mesh';
+import { MeshInfraType, MeshTarget } from 'types/Mesh';
 import { TargetPanelCommonProps, targetPanel } from './TargetPanelCommon';
 import { MeshTourStops } from '../MeshHelpTour';
-import { BoxByType, NodeAttr } from 'types/Graph';
+import { BoxByType } from 'types/Graph';
 import { ElementModel, GraphElement } from '@patternfly/react-topology';
 import { TargetPanelClusterBox } from './TargetPanelClusterBox';
 import { TargetPanelNamespace } from './TargetPanelNamespace';
 import { TargetPanelNode } from './TargetPanelNode';
 import { TargetPanelMesh } from './TargetPanelMesh';
 import { meshWideMTLSStatusSelector, minTLSVersionSelector } from 'store/Selectors';
+import { NodeData } from '../MeshElems';
 
 type TargetPanelState = {
   isVisible: boolean;
@@ -114,7 +115,8 @@ class TargetPanelComponent extends React.Component<TargetPanelProps, TargetPanel
     switch (targetType) {
       case 'box': {
         const elem = target.elem as GraphElement<ElementModel, any>;
-        const boxType: BoxByType = elem.getData()[NodeAttr.isBox];
+        const data = elem.getData() as NodeData;
+        const boxType: BoxByType = data.isBox as BoxByType;
         switch (boxType) {
           case 'cluster':
             return (
@@ -153,6 +155,21 @@ class TargetPanelComponent extends React.Component<TargetPanelProps, TargetPanel
           />
         );
       case 'node':
+        const elem = target.elem as GraphElement<ElementModel, any>;
+        const data = elem.getData() as NodeData;
+        if (data.infraType === MeshInfraType.NAMESPACE) {
+          return (
+            <TargetPanelNamespace
+              istioAPIEnabled={this.props.istioAPIEnabled}
+              kiosk={this.props.kiosk}
+              meshStatus={this.props.meshStatus}
+              minTLS={this.props.minTLS}
+              refreshInterval={this.props.refreshInterval}
+              target={target}
+              updateTime={this.props.updateTime}
+            />
+          );
+        }
         return (
           <TargetPanelNode
             istioAPIEnabled={this.props.istioAPIEnabled}
