@@ -5,6 +5,7 @@ const allNamespaces: NamespaceInfo[] = [
   {
     name: 'alpha',
     validations: {
+      namespace: 'alpha',
       objectCount: 0,
       errors: 0,
       warnings: 0
@@ -13,6 +14,7 @@ const allNamespaces: NamespaceInfo[] = [
   {
     name: 'beta',
     validations: {
+      namespace: 'beta',
       objectCount: 0,
       errors: 0,
       warnings: 0
@@ -21,6 +23,7 @@ const allNamespaces: NamespaceInfo[] = [
   {
     name: 'default',
     validations: {
+      namespace: 'default',
       objectCount: 2,
       errors: 0,
       warnings: 0
@@ -29,6 +32,7 @@ const allNamespaces: NamespaceInfo[] = [
   {
     name: 'electronic-shop',
     validations: {
+      namespace: 'electronic-shop',
       objectCount: 2,
       errors: 0,
       warnings: 0
@@ -37,6 +41,7 @@ const allNamespaces: NamespaceInfo[] = [
   {
     name: 'fraud-detection',
     validations: {
+      namespace: 'fraud-detection',
       objectCount: 0,
       errors: 0,
       warnings: 0
@@ -45,6 +50,7 @@ const allNamespaces: NamespaceInfo[] = [
   {
     name: 'istio-system',
     validations: {
+      namespace: 'istio-system',
       objectCount: 0,
       errors: 0,
       warnings: 0
@@ -53,6 +59,7 @@ const allNamespaces: NamespaceInfo[] = [
   {
     name: 'travel-agency',
     validations: {
+      namespace: 'travel-agency',
       objectCount: 0,
       errors: 0,
       warnings: 0
@@ -61,6 +68,7 @@ const allNamespaces: NamespaceInfo[] = [
   {
     name: 'travel-control',
     validations: {
+      namespace: 'travel-control',
       objectCount: 0,
       errors: 0,
       warnings: 0
@@ -69,6 +77,7 @@ const allNamespaces: NamespaceInfo[] = [
   {
     name: 'travel-portal',
     validations: {
+      namespace: 'travel-portal',
       objectCount: 0,
       errors: 0,
       warnings: 0

@@ -30,7 +30,6 @@ import { Datapoint, IstioMetricsMap, Labels } from '../../types/Metrics';
 import { CancelablePromise, makeCancelablePromise, PromisesRegistry } from '../../utils/CancelablePromises';
 import { KialiIcon } from 'config/KialiIcon';
 import { ValidationStatus } from 'types/IstioObjects';
-import { Namespace } from 'types/Namespace';
 import { ValidationSummary } from 'components/Validations/ValidationSummary';
 import { ValidationSummaryLink } from '../../components/Link/ValidationSummaryLink';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
@@ -496,10 +495,11 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
   };
 
   private renderValidations = (ns: string): React.ReactNode => {
-    const validation: ValidationStatus = this.state.validationsMap[ns];
-    if (!validation) {
+    const validation = this.state.validationsMap.get(ns);
+    if (validation === undefined) {
       return undefined;
     }
+
     return (
       <div style={{ marginLeft: '0.25rem' }}>
         <ValidationSummaryLink
@@ -778,49 +778,44 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
   };
 
   private updateValidations = (): void => {
-    const newValidationsMap = new Map<string, ValidationStatus>();
-    _.chunk(this.props.namespaces, 10).forEach(chunk => {
-      this.validationSummaryPromises
-        .registerChained('validationSummaryChunks', undefined, () =>
-          this.fetchValidationsChunk(chunk, newValidationsMap)
-        )
-        .then(() => {
-          this.setState({ validationsMap: newValidationsMap });
-        })
-        .catch(err => {
-          if (!err.isCanceled) {
-            console.log('SummaryPanelGraph: Error fetching Ignore fetch validations error (canceled).');
-            return;
-          }
-        });
-    });
-  };
-
-  private async fetchValidationsChunk(chunk: Namespace[], validationsMap: ValidationsMap): Promise<void> {
-    return Promise.all(
-      chunk.map(async (ns: Namespace) => {
-        return API.getNamespaceValidations(ns.name)
-          .then(rs => ({ validation: rs.data, ns: ns }))
-          .catch(err => {
-            if (!err.isCanceled) {
-              console.log(`SummaryPanelGraph: Error fetching validation chunk: ${API.getErrorString(err)}`);
+    // TODO: Is there a better way to get clusters? Probably...
+    const clusters = Array.from(new Set(this.props.namespaces.map(ns => ns.cluster)));
+    const namespacesAsString = this.props.namespaces.map(ns => ns.name).join(',');
+    const promises = clusters.map(cluster => API.getConfigValidations(namespacesAsString, cluster));
+    this.validationSummaryPromises
+      .registerAll('validationSummary', promises)
+      .then(responses => {
+        const validationsMap = new Map<string, ValidationStatus>();
+        responses.forEach((response: ApiResponse<ValidationStatus[]>) => {
+          response.data.forEach(validationSummary => {
+            // Merge validations across clusters for the same namespace.
+            if (!validationSummary.namespace) {
+              return;
             }
 
-            return { validation: undefined, ns: undefined };
+            if (validationsMap.has(validationSummary.namespace!)) {
+              const currentValidation = validationsMap.get(validationSummary.namespace!);
+              if (currentValidation) {
+                currentValidation.errors += validationSummary.errors;
+                currentValidation.warnings += validationSummary.warnings;
+                if (currentValidation.objectCount !== undefined && validationSummary.objectCount !== undefined) {
+                  currentValidation.objectCount += validationSummary.objectCount;
+                } else if (validationSummary.objectCount !== undefined) {
+                  currentValidation.objectCount = validationSummary.objectCount;
+                }
+              }
+            }
+
+            validationsMap.set(validationSummary.namespace!, validationSummary);
           });
-      })
-    )
-      .then(results => {
-        results.forEach(result => {
-          if (result.ns) {
-            validationsMap[result.ns.name] = result.validation;
-          }
         });
+        this.setState({ validationsMap });
       })
+
       .catch(err => {
         if (!err.isCanceled) {
           console.log(`SummaryPanelGraph: Error fetching validation status: ${API.getErrorString(err)}`);
         }
       });
-  }
+  };
 }

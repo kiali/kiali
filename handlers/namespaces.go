@@ -67,7 +67,7 @@ func NamespaceValidationSummary(w http.ResponseWriter, r *http.Request) {
 		log.Error(errValidations)
 		RespondWithError(w, http.StatusInternalServerError, errValidations.Error())
 	} else {
-		validationSummary = *istioConfigValidationResults.SummarizeValidation(namespace)
+		validationSummary = *istioConfigValidationResults.SummarizeValidation(namespace, cluster)
 	}
 
 	RespondWithJSON(w, http.StatusOK, validationSummary)
@@ -98,15 +98,16 @@ func ConfigValidationSummary(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	validationSummaries := models.ValidationSummaries{cluster: {}}
 	istioConfigValidationResults, errValidations := business.Validations.GetValidations(r.Context(), cluster, "", "", "")
 	if errValidations != nil {
 		log.Error(errValidations)
 		RespondWithError(w, http.StatusInternalServerError, errValidations.Error())
-	} else {
-		for _, ns := range nss {
-			validationSummaries[cluster][ns] = istioConfigValidationResults.SummarizeValidation(ns)
-		}
+		return
+	}
+
+	validationSummaries := []models.IstioValidationSummary{}
+	for _, ns := range nss {
+		validationSummaries = append(validationSummaries, *istioConfigValidationResults.SummarizeValidation(ns, cluster))
 	}
 
 	RespondWithJSON(w, http.StatusOK, validationSummaries)

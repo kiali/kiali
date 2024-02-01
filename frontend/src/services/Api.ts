@@ -73,6 +73,10 @@ type LoginRequest = BasicAuth & {
   token: Password;
 };
 
+interface Namespaces {
+  namespaces: string;
+}
+
 type QueryParams<T> = T & ClusterParam;
 
 /**
@@ -401,14 +405,20 @@ export const createIstioConfigDetail = (
   return newRequest(HTTP_VERBS.POST, urls.istioConfigCreate(namespace, objectType), queryParams, json);
 };
 
-export const getConfigValidations = (cluster?: string): Promise<ApiResponse<ValidationStatus>> => {
-  const queryParams: ClusterParam = {};
+// comma separated list of namespaces
+export const getConfigValidations = (
+  namespaces: string,
+  cluster?: string
+): Promise<ApiResponse<[ValidationStatus]>> => {
+  const queryParams: QueryParams<Namespaces> = {
+    namespaces: namespaces
+  };
 
   if (cluster) {
     queryParams.clusterName = cluster;
   }
 
-  return newRequest<ValidationStatus>(HTTP_VERBS.GET, urls.configValidations(), queryParams, {});
+  return newRequest<[ValidationStatus]>(HTTP_VERBS.GET, urls.configValidations(), queryParams, {});
 };
 
 export const getServices = (namespace: string, params?: ServiceListQuery): Promise<ApiResponse<ServiceList>> => {

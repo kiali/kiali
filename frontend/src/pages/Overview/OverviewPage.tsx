@@ -536,13 +536,25 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
   async fetchValidationResultForCluster(namespaces: NamespaceInfo[], cluster: string): Promise<void> {
     return Promise.all([API.getConfigValidations(cluster), API.getAllIstioConfigs([], [], false, '', '', cluster)])
       .then(results => {
+        const validations = results[0].data;
+        const istioConfig = results[1].data;
+        const validationsByClusterAndNamespace = new Map<string, Map<string, ValidationStatus>>();
+        validations.forEach(validation => {
+          if (validation.cluster && !validationsByClusterAndNamespace.has(validation.cluster)) {
+            validationsByClusterAndNamespace.set(validation.cluster, new Map<string, ValidationStatus>());
+          }
+          if (validation.cluster && validation.namespace) {
+            validationsByClusterAndNamespace.get(validation.cluster)!.set(validation.namespace, validation);
+          }
+        });
+
         namespaces.forEach(nsInfo => {
-          if (nsInfo.cluster && nsInfo.cluster === cluster && results[0].data[nsInfo.cluster]) {
-            nsInfo.validations = results[0].data[nsInfo.cluster][nsInfo.name];
+          if (nsInfo.cluster && nsInfo.cluster === cluster && validationsByClusterAndNamespace.get(cluster)) {
+            nsInfo.validations = validationsByClusterAndNamespace.get(cluster)!.get(nsInfo.name);
           }
 
           if (nsInfo.cluster && nsInfo.cluster === cluster) {
-            nsInfo.istioConfig = results[1].data[nsInfo.name];
+            nsInfo.istioConfig = istioConfig[nsInfo.name];
           }
         });
       })
@@ -1257,7 +1269,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
   }
 
   renderIstioConfigStatus(ns: NamespaceInfo): JSX.Element {
-    let validations: ValidationStatus = { objectCount: 0, errors: 0, warnings: 0 };
+    let validations: ValidationStatus = { namespace: ns.name, objectCount: 0, errors: 0, warnings: 0 };
 
     if (!!ns.validations) {
       validations = ns.validations;
@@ -1265,7 +1277,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
 
     return (
       <ValidationSummaryLink
-        namespace={ns.name}
+        namespace={validations.namespace}
         objectCount={validations.objectCount}
         errors={validations.errors}
         warnings={validations.warnings}

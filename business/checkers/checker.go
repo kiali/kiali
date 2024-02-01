@@ -19,7 +19,9 @@ func EmptyValidValidations(name, namespace, objectType, cluster string) models.I
 func EmptyValidValidation(name, namespace, objectType, cluster string) (models.IstioValidationKey, *models.IstioValidation) {
 	key := models.IstioValidationKey{Name: name, Namespace: namespace, ObjectType: objectType, Cluster: cluster}
 	emptyValidation := &models.IstioValidation{
+		Cluster:    key.Cluster,
 		Name:       key.Name,
+		Namespace:  key.Namespace,
 		ObjectType: key.ObjectType,
 		Valid:      true,
 		Checks:     []*models.IstioCheck{},

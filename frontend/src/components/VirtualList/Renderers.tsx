@@ -170,7 +170,7 @@ export const tls: Renderer<NamespaceInfo> = (ns: NamespaceInfo) => {
 };
 
 export const istioConfig: Renderer<NamespaceInfo> = (ns: NamespaceInfo) => {
-  let validations: ValidationStatus = { objectCount: 0, errors: 0, warnings: 0 };
+  let validations: ValidationStatus = { namespace: ns.name, objectCount: 0, errors: 0, warnings: 0 };
 
   if (!!ns.validations) {
     validations = ns.validations;

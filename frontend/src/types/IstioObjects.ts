@@ -130,7 +130,9 @@ export interface ServiceReference {
 }
 
 export interface ValidationStatus {
+  cluster?: string;
   errors: number;
+  namespace: string;
   objectCount?: number;
   warnings: number;
 }

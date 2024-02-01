@@ -32,6 +32,14 @@ type IstioValidationSummary struct {
 	// required: true
 	// example: 4
 	Warnings int `json:"warnings"`
+	// Namespace of the Istio Objects.
+	// required: true
+	// example: bookinfo
+	Namespace string `json:"namespace"`
+	// Cluster of the Istio Objects.
+	// required: true
+	// example: east
+	Cluster string `json:"cluster"`
 }
 
 // ValidationSummaries holds a map of IstioValidationSummary per cluster and namespace
@@ -47,6 +55,16 @@ type IstioValidation struct {
 	// required: true
 	// example: reviews
 	Name string `json:"name"`
+
+	// Namespace of the object
+	// required: true
+	// example: bookinfo
+	Namespace string `json:"namespace"`
+
+	// Cluster of the object
+	// required: true
+	// example: east
+	Cluster string `json:"cluster"`
 
 	// Type of the object
 	// required: true
@@ -467,10 +485,13 @@ func (iv IstioValidations) MergeReferences(validations IstioValidations) IstioVa
 	return iv
 }
 
-func (iv IstioValidations) SummarizeValidation(ns string) *IstioValidationSummary {
-	ivs := IstioValidationSummary{}
+func (iv IstioValidations) SummarizeValidation(ns string, cluster string) *IstioValidationSummary {
+	ivs := IstioValidationSummary{
+		Namespace: ns,
+		Cluster:   cluster,
+	}
 	for k, v := range iv {
-		if k.Namespace == ns && k.ObjectType != "workload" {
+		if k.Namespace == ns && k.Cluster == cluster && k.ObjectType != "workload" {
 			ivs.mergeSummaries(v.Checks)
 		}
 	}
