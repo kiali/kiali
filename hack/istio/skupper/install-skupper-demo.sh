@@ -195,6 +195,14 @@ install_skupper() {
   ${CLIENT_EXE} --context istio -n ${MONGOSKUPPERNS} patch svc skupper-prometheus --type=merge --patch '{"spec":{"type":"LoadBalancer"}}'
 }
 
+confirm_cluster_is_up() {
+  local cluster_name="${1}"
+  if ! ${CLIENT_EXE} --context ${cluster_name} get ns &>/dev/null ; then
+    errormsg "Cluster [${cluster_name}] is not up"
+    exit 1
+  fi
+}
+
 # Process the command
 
 if [ "$_CMD" == "install" ]; then
@@ -212,33 +220,40 @@ elif [ "$_CMD" == "delete" ]; then
 
 elif [ "$_CMD" == "iprom" ]; then
 
+  confirm_cluster_is_up "istio"
   infomsg "Opening browser tab to the Istio Prometheus UI"
   xdg-open http://$(${CLIENT_EXE} --context istio -n istio-system get svc prometheus -ojsonpath='{.status.loadBalancer.ingress[0].ip}'):9090
 
 elif [ "$_CMD" == "kui" ]; then
 
+  confirm_cluster_is_up "istio"
   infomsg "Opening browser tab to the Kiali UI"
   xdg-open http://$(${CLIENT_EXE} --context istio -n istio-system get svc kiali -ojsonpath='{.status.loadBalancer.ingress[0].ip}'):20001
 
 elif [ "$_CMD" == "smetrics" ]; then
 
+  confirm_cluster_is_up "istio"
   infomsg "Dumping live metrics from the Skupper service controller"
   ${CLIENT_EXE} --context istio exec -it -n ${MONGOSKUPPERNS} -c service-controller deploy/skupper-service-controller -- curl -k https://localhost:8010/api/v1alpha1/metrics/
 
 elif [ "$_CMD" == "sprom" ]; then
 
+  confirm_cluster_is_up "istio"
   infomsg "Opening browser tab to the Skupper Prometheus UI"
   xdg-open http://$(${CLIENT_EXE} --context istio -n ${MONGOSKUPPERNS} get svc skupper-prometheus -ojsonpath='{.status.loadBalancer.ingress[0].ip}'):9090
 
 elif [ "$_CMD" == "sstatus" ]; then
 
+  confirm_cluster_is_up "db"
   infomsg "Status of Skupper link on db cluster:"
   ${SKUPPER_EXE} --context db -n ${MONGONS} link status
+  confirm_cluster_is_up "istio"
   infomsg "Status of Skupper link on istio cluster:"
   ${SKUPPER_EXE} --context istio -n ${MONGOSKUPPERNS} link status
 
 elif [ "$_CMD" == "sui" ]; then
 
+  confirm_cluster_is_up "istio"
   USERNAME="admin"
   PASSWORD="$(${CLIENT_EXE} --context istio get secret -n ${MONGOSKUPPERNS} skupper-console-users -ojsonpath={.data.${USERNAME}} | base64 -d)"
   infomsg "Log into the Skupper UI with these credentials: USERNAME=[${USERNAME}], PASSWORD=[${PASSWORD}]"
