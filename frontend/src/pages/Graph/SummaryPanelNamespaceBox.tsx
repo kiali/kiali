@@ -753,7 +753,7 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
       })
       .catch(err => {
         if (!err.isCanceled) {
-          console.log(`SummaryPanelNamespaceBox: Error fetching validation status: ${API.getErrorString(err)}`);
+          console.info(`SummaryPanelNamespaceBox: Error fetching validation status: ${API.getErrorString(err)}`);
         }
       });
   };

@@ -169,7 +169,7 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
         });
       })
       .catch(istioError => {
-        console.log(istioError);
+        console.info(istioError);
         if (!istioError.isCanceled) {
           this.handleApiError('Could not fetch Istio objects list', istioError);
         }

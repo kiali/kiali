@@ -807,7 +807,7 @@ export const buildIstioConfig = (wProps: ServiceWizardProps, wState: ServiceWiza
         break;
       }
       default:
-        console.log('Unrecognized type');
+        console.warn(`WizardActions: Unrecognized type [${wProps.type}]`);
     }
 
     wizardVS.spec.hosts =

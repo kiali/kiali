@@ -127,7 +127,6 @@ export const AccessLogModal: React.FC<AccessLogModalProps> = (props: AccessLogMo
   };
 
   const getDescription = (alFieldName: string): React.ReactNode => {
-    console.log(`fetch docs(${alFieldName})`);
     switch (alFieldName) {
       case 'authority':
         return (

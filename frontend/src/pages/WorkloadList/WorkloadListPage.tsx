@@ -170,7 +170,7 @@ class WorkloadListPageComponent extends FilterComponent.Component<
       })
       .catch(err => {
         if (!err.isCanceled) {
-          console.log(`error: ${err}`);
+          console.info(`error: ${err}`);
           this.handleApiError('Could not fetch workloads list', err);
         }
       });

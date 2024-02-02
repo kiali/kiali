@@ -675,7 +675,7 @@ export class GraphStyles {
       return num;
     }
     if (typeof num === 'string' || num instanceof String) {
-      console.log(`Expected number but received string: |${num}|`);
+      console.warn(`GraphStyles: Expected number but received string: |${num}|`);
     }
     // this will return NaN if the string is 'NaN' or any other non-number
     return Number(num);
