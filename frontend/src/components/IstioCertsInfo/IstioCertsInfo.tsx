@@ -28,16 +28,20 @@ import { infoStyle } from 'styles/DropdownStyles';
 import { connectRefresh } from '../Refresh/connectRefresh';
 import { kialiStyle } from 'styles/StyleUtils';
 
-type ReduxProps = {
+type ReduxStateProps = {
   certsInfo: CertsInfo[];
+};
+
+type ReduxDispatchProps = {
   setIstioCertsInfo: (istioCertsInfo: CertsInfo[]) => void;
 };
 
-type IstioCertsInfoProps = ReduxProps & {
-  isOpen: boolean;
-  lastRefreshAt: TimeInMilliseconds;
-  onClose: () => void;
-};
+type IstioCertsInfoProps = ReduxStateProps &
+  ReduxDispatchProps & {
+    isOpen: boolean;
+    lastRefreshAt: TimeInMilliseconds;
+    onClose: () => void;
+  };
 
 const cardStyle = kialiStyle({
   border: `1px solid ${PFColors.BorderColor100}`
@@ -98,7 +102,7 @@ const IstioCertsInfoComponent: React.FC<IstioCertsInfoProps> = (props: IstioCert
       isOpen={props.isOpen}
       onClose={props.onClose}
       title="Certificates information"
-      actions={[<Button onClick={close}>Close</Button>]}
+      actions={[<Button onClick={props.onClose}>Close</Button>]}
     >
       {certsError && <p style={{ color: PFColors.Danger }}>An error occurred getting certificates information</p>}
       <ul>
@@ -150,11 +154,11 @@ const IstioCertsInfoComponent: React.FC<IstioCertsInfoProps> = (props: IstioCert
   );
 };
 
-const mapStateToProps = (state: KialiAppState) => ({
+const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
   certsInfo: istioCertsInfoSelector(state)
 });
 
-const mapDispatchToProps = (dispatch: KialiDispatch) => ({
+const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => ({
   setIstioCertsInfo: bindActionCreators(IstioCertsInfoActions.setinfo, dispatch)
 });
 
