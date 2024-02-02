@@ -199,3 +199,4 @@ source ${SCRIPT_DIR}/setup-tracing.sh
 
 # Install bookinfo across cluster if enabled
 source ${SCRIPT_DIR}/split-bookinfo.sh
+source ${SCRIPT_DIR}/../install-sleep-demo.sh -c ${CLIENT_EXE} 
