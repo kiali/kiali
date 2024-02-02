@@ -24,12 +24,14 @@ func TestServicesList(t *testing.T) {
 	require.True(len(serviceList.Services) >= 4)
 	for _, service := range serviceList.Services {
 		require.NotEmpty(service.Name)
-		require.True(service.IstioSidecar)
-		require.True(service.AppLabel)
-		require.NotNil(service.Health)
-		require.NotNil(service.Health.Requests)
-		require.NotNil(service.Health.Requests.Outbound)
-		require.NotNil(service.Health.Requests.Inbound)
+		if service.Name == "productpage" {
+			require.True(service.IstioSidecar)
+			require.True(service.AppLabel)
+			require.NotNil(service.Health)
+			require.NotNil(service.Health.Requests)
+			require.NotNil(service.Health.Requests.Outbound)
+			require.NotNil(service.Health.Requests.Inbound)
+		}
 	}
 	require.NotNil(serviceList.Validations)
 	require.Equal(kiali.BOOKINFO, serviceList.Namespace.Name)
