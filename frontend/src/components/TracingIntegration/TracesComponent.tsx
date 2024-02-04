@@ -13,9 +13,15 @@ import { TraceDetails } from './TracingResults/TraceDetails';
 import { TracingScatter } from './TracingScatter';
 import { FetchOptions, TracesFetcher } from './TracesFetcher';
 import { SpanDetails } from './TracingResults/SpanDetails';
-import { isEqualTimeRange, TargetKind, TimeInMilliseconds, TimeRange } from 'types/Common';
+import {
+  durationToBounds,
+  guardTimeRange,
+  isEqualTimeRange,
+  TargetKind,
+  TimeInMilliseconds,
+  TimeRange
+} from 'types/Common';
 import { timeRangeSelector } from 'store/Selectors';
-import { getTimeRangeMicros } from 'utils/tracing/TracingHelper';
 import { DisplaySettings, percentilesOptions, QuerySettings, TracesDisplayOptions } from './TracesDisplayOptions';
 import { Direction, genStatsKey, MetricsStatsQuery } from 'types/MetricsOptions';
 import { MetricsStatsResult } from 'types/Metrics';
@@ -25,6 +31,7 @@ import { subTabStyle } from 'styles/TabStyles';
 import { TracingUrlProvider } from 'types/Tracing';
 import { GetTracingUrlProvider } from 'utils/tracing/UrlProviders';
 import { ExternalServiceInfo } from 'types/StatusState';
+import { retrieveTimeRange } from '../Time/TimeRangeHelper';
 
 type ReduxProps = {
   externalServices: ExternalServiceInfo[];
@@ -221,9 +228,16 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
     if (!this.urlProvider || !this.state.targetApp) {
       return undefined;
     }
-    const range = getTimeRangeMicros();
+    const range = retrieveTimeRange();
+    // Convert any time range (like duration) to bounded from/to
+    const boundsMillis = guardTimeRange(range, durationToBounds, b => b);
 
-    return this.urlProvider.AppSearchUrl(this.state.targetApp, range, this.getTags(), this.state.querySettings.limit);
+    return this.urlProvider.AppSearchUrl(
+      this.state.targetApp,
+      boundsMillis,
+      this.getTags(),
+      this.state.querySettings.limit
+    );
   };
 
   private onQuerySettingsChanged = (settings: QuerySettings): void => {

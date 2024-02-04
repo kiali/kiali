@@ -1,6 +1,7 @@
 import { ConcreteService, TracingUrlProvider } from 'types/Tracing';
 import { ExternalServiceInfo } from 'types/StatusState';
 import { BoundsInMilliseconds } from 'types/Common';
+import { SpanData, TraceData } from '../../../types/TracingInfo';
 
 interface JaegerExternalService extends ConcreteService {
   name: 'jaeger';
@@ -19,12 +20,12 @@ export class JaegerUrlProvider implements TracingUrlProvider {
     this.service = service;
   }
 
-  TraceUrl(traceID: string): string {
-    return `${this.service.url}/trace/${traceID}`;
+  TraceUrl(trace: TraceData<any>): string {
+    return `${this.service.url}/trace/${trace.traceID}`;
   }
 
-  SpanUrl(traceID: string, spanID: string): string {
-    return `${this.service.url}/trace/${traceID}?uiFind=${spanID}`;
+  SpanUrl(span: SpanData): string {
+    return `${this.service.url}/trace/${span.traceID}?uiFind=${span.spanID}`;
   }
 
   ComparisonUrl(traceID: string, ...traces: string[]): string {

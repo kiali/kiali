@@ -1,4 +1,5 @@
 import { TracingUrlProvider } from 'types/Tracing';
+import { SpanData, TraceData } from '../../../types/TracingInfo';
 
 export class GrafanaLegacyUrlProvider implements TracingUrlProvider {
   private readonly grafanaUrl: string | undefined;
@@ -8,12 +9,12 @@ export class GrafanaLegacyUrlProvider implements TracingUrlProvider {
     this.grafanaUrl = grafanaUrl;
   }
 
-  TraceUrl(traceID: string): string {
-    return `${this.grafanaUrl}/explore?left={"queries":[{"datasource":{"type":"tempo"},"queryType":"traceql","query":"${traceID}"}]}`;
+  TraceUrl(trace: TraceData<any> | SpanData): string {
+    return `${this.grafanaUrl}/explore?left={"queries":[{"datasource":{"type":"tempo"},"queryType":"traceql","query":"${trace.traceID}"}]}`;
   }
 
-  SpanUrl(traceID: string): string {
-    return this.TraceUrl(traceID);
+  SpanUrl(span: SpanData): string {
+    return this.TraceUrl(span);
   }
 
   ComparisonUrl(): undefined {

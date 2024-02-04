@@ -1,4 +1,5 @@
 import { BoundsInMilliseconds } from 'types/Common';
+import { SpanData, TraceData } from './TracingInfo';
 
 export type TracingQuery = {
   endMicros?: number;
@@ -26,19 +27,22 @@ export type Tag = {
 };
 
 export interface TracingUrlProvider {
+  // Get a URL for all traces for a specific service in a time period
   AppSearchUrl: (service: string, bounds: BoundsInMilliseconds, tags: Record<string, string>, limit: number) => string;
+  // Get a URL for comparing traces
   ComparisonUrl: (traceID: string, ...traceIDs: string[]) => string | undefined;
+  // Get a URL to the home page of the tracing frontend
   HomeUrl: () => string;
-  SpanUrl: (traceID: string, spanID: string) => string;
-  TraceUrl: (traceID: string) => string;
+  // Get a URL to a specific span in a specific trace
+  SpanUrl: (span: SpanData) => string;
+  // Get a URL to a specific trace
+  TraceUrl: (trace: TraceData<any>) => string;
 
   readonly valid: boolean;
 }
 
 // Require that all properties are required and not null/undefined
 export type ConcreteService = {
-  frontendProvider: string;
-  frontendProviderConfig: Record<string, string>;
   name: string;
 };
 

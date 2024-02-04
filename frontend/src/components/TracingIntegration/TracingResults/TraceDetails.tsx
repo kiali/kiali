@@ -204,7 +204,7 @@ class TraceDetailsComponent extends React.Component<Props, State> {
       <Card isCompact>
         <TracingTraceTitle
           formattedTrace={formattedTrace}
-          externalURL={this.props.tracingURLProvider?.TraceUrl(trace.traceID)}
+          externalURL={this.props.tracingURLProvider?.TraceUrl(trace)}
           graphURL={this.getGraphURL(trace.traceID)}
           comparisonURL={comparisonLink}
         />

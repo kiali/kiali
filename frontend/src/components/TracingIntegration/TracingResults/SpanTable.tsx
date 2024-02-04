@@ -295,7 +295,7 @@ class SpanTableComponent extends React.Component<Props, State> {
     let tracingActions: IAction[] = [];
 
     if (this.props.externalURLProvider) {
-      const spanLink = this.props.externalURLProvider?.SpanUrl(this.props.traceID, item.spanID);
+      const spanLink = this.props.externalURLProvider?.SpanUrl(item);
       tracingActions = [
         {
           isDisabled: true,

@@ -11,9 +11,11 @@ export enum StatusKey {
 export type Status = { [K in StatusKey]?: string };
 
 export interface ExternalServiceInfo {
+  frontendProvider?: string;
+  frontendProviderConfig?: Record<string, string>;
   name: string;
-  version?: string;
   url?: string;
+  version?: string;
 }
 
 export interface IstioEnvironment {
@@ -21,8 +23,8 @@ export interface IstioEnvironment {
 }
 
 export interface StatusState {
-  status: Status;
   externalServices: ExternalServiceInfo[];
-  warningMessages: string[];
   istioEnvironment: IstioEnvironment;
+  status: Status;
+  warningMessages: string[];
 }

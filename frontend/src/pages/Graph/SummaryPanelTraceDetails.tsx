@@ -122,7 +122,7 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
 
     const tracingURLProvider = GetTracingUrlProvider(this.props.externalServices, this.props.provider);
 
-    const traceUrl = tracingURLProvider?.TraceUrl(this.props.trace.traceID);
+    const traceUrl = tracingURLProvider?.TraceUrl(this.props.trace);
 
     const info = new FormattedTraceInfo(this.props.trace);
 

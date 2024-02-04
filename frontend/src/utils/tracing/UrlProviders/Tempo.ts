@@ -2,13 +2,17 @@ import { ConcreteService, TracingUrlProvider } from 'types/Tracing';
 import { ExternalServiceInfo } from 'types/StatusState';
 import { BoundsInMilliseconds } from 'types/Common';
 import { GrafanaLegacyUrlProvider } from './GrafanaLegacy';
+import { GrafanaUrlProvider } from './Grafana';
+import { SpanData, TraceData } from '../../../types/TracingInfo';
 
 interface TempoExternalService extends ConcreteService {
+  frontendProvider: string;
+  frontendProviderConfig?: Record<string, string>;
   name: 'tempo';
 }
 
 export function isTempoService(svc: ExternalServiceInfo): svc is TempoExternalService {
-  return svc.name === 'tempo';
+  return svc.name === 'tempo' && svc.frontendProvider === 'grafana';
 }
 
 class nullProvider implements TracingUrlProvider {
@@ -34,11 +38,20 @@ export class TempoUrlProvider implements TracingUrlProvider {
   private readonly frontendProvider: TracingUrlProvider;
   readonly valid: boolean;
 
-  constructor(externalServices: ExternalServiceInfo[]) {
+  constructor(service: TempoExternalService, externalServices: ExternalServiceInfo[]) {
     let frontendProvider: TracingUrlProvider | undefined = undefined;
     const svc = externalServices.find(s => ['grafana', 'jaeger'].includes(s.name.toLowerCase()));
     if (svc && svc.name.toLowerCase() === 'grafana' && svc.url !== undefined) {
-      frontendProvider = new GrafanaLegacyUrlProvider(svc.url);
+      if (service.frontendProviderConfig?.['datasource_uid'] !== undefined) {
+        // Grafana 10+
+        frontendProvider = new GrafanaUrlProvider(svc.url, {
+          datasource_uid: service.frontendProviderConfig['datasource_uid'],
+          orgID: service.frontendProviderConfig['org_id']
+        });
+      } else {
+        // Fallback to older Grafana URL schema
+        frontendProvider = new GrafanaLegacyUrlProvider(svc.url);
+      }
     }
 
     if (frontendProvider) {
@@ -54,12 +67,12 @@ export class TempoUrlProvider implements TracingUrlProvider {
     return this.frontendProvider.HomeUrl();
   }
 
-  TraceUrl(traceID: string): string {
-    return this.frontendProvider.TraceUrl(traceID);
+  TraceUrl(trace: TraceData<any>): string {
+    return this.frontendProvider.TraceUrl(trace);
   }
 
-  SpanUrl(traceID: string, spanID: string): string {
-    return this.frontendProvider.SpanUrl(traceID, spanID);
+  SpanUrl(span: SpanData): string {
+    return this.frontendProvider.SpanUrl(span);
   }
 
   ComparisonUrl(traceId: string, ...traces: string[]): string | undefined {
