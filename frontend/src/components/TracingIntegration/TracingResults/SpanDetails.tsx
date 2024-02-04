@@ -2,6 +2,7 @@ import * as React from 'react';
 import { Card, CardBody } from '@patternfly/react-core';
 
 import { RichSpanData } from 'types/TracingInfo';
+import { TracingUrlProvider } from 'types/Tracing';
 import { SpanTable } from './SpanTable';
 import { FilterSelected, StatefulFilters } from 'components/Filters/StatefulFilters';
 import { spanFilters } from './Filters';
@@ -11,7 +12,7 @@ import { TraceLabels } from './TraceLabels';
 
 interface SpanDetailsProps {
   cluster?: string;
-  externalURL?: string;
+  externalURLProvider?: TracingUrlProvider;
   items: RichSpanData[];
   namespace: string;
   target: string;
@@ -39,7 +40,7 @@ export const SpanDetails: React.FC<SpanDetailsProps> = (props: SpanDetailsProps)
           <SpanTable
             items={filteredItems}
             namespace={props.namespace}
-            externalURL={props.externalURL}
+            externalURLProvider={props.externalURLProvider}
             cluster={props.cluster}
             traceID={props.traceID}
           />

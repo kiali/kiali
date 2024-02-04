@@ -7,9 +7,9 @@ import { history } from '../../app/History';
 import { navMenuItems } from '../../routes';
 import { homeCluster, serverConfig } from '../../config';
 import { kialiStyle } from 'styles/StyleUtils';
-import { GetTracingURL } from '../TracingIntegration/TracesComponent';
 import { ExternalServiceInfo } from '../../types/StatusState';
 import { KialiIcon } from 'config/KialiIcon';
+import { GetTracingUrlProvider } from '../../utils/tracing/UrlProviders';
 
 const externalLinkStyle = kialiStyle({
   $nest: {
@@ -52,7 +52,7 @@ type MenuState = {
 
 export class Menu extends React.Component<MenuProps, MenuState> {
   static contextTypes = {
-    router: () => null
+    router: (): null => null
   };
 
   constructor(props: MenuProps) {
@@ -62,7 +62,7 @@ export class Menu extends React.Component<MenuProps, MenuState> {
     };
   }
 
-  componentDidUpdate(prevProps: Readonly<MenuProps>) {
+  componentDidUpdate(prevProps: Readonly<MenuProps>): void {
     if (prevProps.isNavOpen !== this.props.isNavOpen) {
       // Dispatch an extra "resize" event when side menu toggle to force that metrics charts resize
       setTimeout(() => {
@@ -89,7 +89,7 @@ export class Menu extends React.Component<MenuProps, MenuState> {
       return isRoute;
     });
 
-    const tracingUrl = GetTracingURL(this.props.externalServices);
+    const tracingUrl = GetTracingUrlProvider(this.props.externalServices)?.HomeUrl();
 
     return allNavMenuItems
       .filter(item => {
@@ -153,7 +153,7 @@ export class Menu extends React.Component<MenuProps, MenuState> {
       });
   };
 
-  render() {
+  render(): JSX.Element {
     return (
       <Nav aria-label="Nav" theme="dark">
         <NavList className={navListStyle}>{this.renderMenuItems()}</NavList>

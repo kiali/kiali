@@ -25,10 +25,10 @@ import { Visualization, Node } from '@patternfly/react-topology';
 import { elems, selectAnd } from 'pages/GraphPF/GraphPFElems';
 import { FocusNode } from 'pages/GraphPF/GraphPF';
 import { GraphSelectorBuilder } from './GraphSelector';
-import { GetTraceDetailURL } from '../../components/TracingIntegration/TracesComponent';
 import { ExternalServiceInfo } from '../../types/StatusState';
 import { isMultiCluster } from '../../config';
 import { KialiIcon } from 'config/KialiIcon';
+import { GetTracingUrlProvider } from '../../utils/tracing/UrlProviders';
 
 type ReduxStateProps = {
   externalServices: ExternalServiceInfo[];
@@ -120,11 +120,9 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
         }`
       : undefined;
 
-    const jaegerTraceURL = GetTraceDetailURL(
-      this.props.provider,
-      this.props.tracingURL,
-      this.props.externalServices
-    )?.replace('TRACEID', this.props.trace.traceID);
+    const tracingURLProvider = GetTracingUrlProvider(this.props.externalServices, this.props.provider);
+
+    const traceUrl = tracingURLProvider?.TraceUrl(this.props.trace.traceID);
 
     const info = new FormattedTraceInfo(this.props.trace);
 
@@ -223,9 +221,9 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
 
           {currentSpan && <div className={pStyle}>{this.renderSpan(currentSpan)}</div>}
 
-          {jaegerTraceURL && (
+          {traceUrl && (
             <div style={{ marginTop: '0.25rem' }}>
-              <a href={jaegerTraceURL} target="_blank" rel="noopener noreferrer">
+              <a href={traceUrl} target="_blank" rel="noopener noreferrer">
                 Show in Tracing
                 <KialiIcon.ExternalLink className={iconStyle} />
               </a>
