@@ -12,12 +12,8 @@ describe('Istio Configs performance tests', () => {
     before(() => {
       cy.fixture('commonParams.json')
         .then(data => {
-          configsUrl = encodeURI(
-            `/console/istio/namespaces?&namespaces=${data.namespaces}`
-          );
-          configsUrlAllNamespaces = encodeURI(
-            `/console/istio/namespaces?&namespaces=${data.allNamespaces}`
-          );
+          configsUrl = encodeURI(`/console/istio?namespaces=${data.namespaces}`);
+          configsUrlAllNamespaces = encodeURI(`/console/istio?namespaces=${data.allNamespaces}`);
         })
         .as('data');
 
