@@ -29,6 +29,7 @@ import {
 import { Datapoint, IstioMetricsMap, Labels } from '../../types/Metrics';
 import { CancelablePromise, makeCancelablePromise, PromisesRegistry } from '../../utils/CancelablePromises';
 import { KialiIcon } from 'config/KialiIcon';
+import { serverConfig } from '../../config/ServerConfig';
 import { ValidationStatus } from 'types/IstioObjects';
 import { ValidationSummary } from 'components/Validations/ValidationSummary';
 import { ValidationSummaryLink } from '../../components/Link/ValidationSummaryLink';
@@ -778,10 +779,10 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
   };
 
   private updateValidations = (): void => {
-    // TODO: Is there a better way to get clusters? Probably...
-    const clusters = Array.from(new Set(this.props.namespaces.map(ns => ns.cluster)));
     const namespacesAsString = this.props.namespaces.map(ns => ns.name).join(',');
-    const promises = clusters.map(cluster => API.getConfigValidations(namespacesAsString, cluster));
+    const promises = Object.keys(serverConfig.clusters).map(cluster =>
+      API.getConfigValidations(namespacesAsString, cluster)
+    );
     this.validationSummaryPromises
       .registerAll('validationSummary', promises)
       .then(responses => {
@@ -793,20 +794,18 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
               return;
             }
 
-            if (validationsMap.has(validationSummary.namespace!)) {
-              const currentValidation = validationsMap.get(validationSummary.namespace!);
-              if (currentValidation) {
-                currentValidation.errors += validationSummary.errors;
-                currentValidation.warnings += validationSummary.warnings;
-                if (currentValidation.objectCount !== undefined && validationSummary.objectCount !== undefined) {
-                  currentValidation.objectCount += validationSummary.objectCount;
-                } else if (validationSummary.objectCount !== undefined) {
-                  currentValidation.objectCount = validationSummary.objectCount;
-                }
+            const currentValidation = validationsMap.get(validationSummary.namespace);
+            if (currentValidation) {
+              validationSummary.errors += currentValidation.errors;
+              validationSummary.warnings += currentValidation.warnings;
+              if (currentValidation.objectCount !== undefined && validationSummary.objectCount !== undefined) {
+                validationSummary.objectCount += currentValidation.objectCount;
+              } else if (validationSummary.objectCount !== undefined) {
+                validationSummary.objectCount = currentValidation.objectCount;
               }
             }
 
-            validationsMap.set(validationSummary.namespace!, validationSummary);
+            validationsMap.set(validationSummary.namespace, validationSummary);
           });
         });
         this.setState({ validationsMap });
