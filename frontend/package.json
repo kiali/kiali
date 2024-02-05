@@ -69,7 +69,7 @@
     "@patternfly/react-charts": "^7.1.0",
     "@patternfly/react-core": "^5.1.0",
     "@patternfly/react-table": "^5.1.0",
-    "@patternfly/react-topology": "^5.2.0-prerelease.3",
+    "@patternfly/react-topology": "^5.2.0",
     "axios": "^1.6.2",
     "bootstrap-slider-without-jquery": "10.0.0",
     "cy-node-html-label": "2.0.0",
