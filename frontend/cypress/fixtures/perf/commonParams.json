@@ -1,0 +1,6 @@
+{
+  "namespaces": "bookinfo,default,istio-system",
+  "allNamespaces": "bookinfo,alpha,beta,sleep,default,istio-system",
+  "duration": "300",
+  "refresh": "15000"
+}

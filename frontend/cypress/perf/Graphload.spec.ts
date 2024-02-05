@@ -1,4 +1,4 @@
-import { reportFilePath } from './constants';
+import { reportFilePath } from './common';
 
 describe('Graph performance tests', () => {
   beforeEach(() => {
@@ -43,9 +43,7 @@ describe('Graph performance tests', () => {
 
               assert.isAtMost(duration, Cypress.env('threshold'));
 
-              const contents = `Graph load time for ${graphUrl}: ${(duration / 1000).toPrecision(5)} seconds
-
-  `;
+              const contents = `Graph load time for ${graphUrl}: ${(duration / 1000).toPrecision(5)} seconds\n`;
               cy.writeFile(reportFilePath, contents, { flag: 'a+' });
             });
         });

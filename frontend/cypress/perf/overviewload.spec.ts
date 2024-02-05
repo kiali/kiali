@@ -1,5 +1,5 @@
 import overviewCases from '../fixtures/perf/overviewPage.json';
-import { reportFilePath } from './constants';
+import { reportFilePath } from './common';
 
 const createNamespaces = (count: number): void => {
   cy.log(`Creating ${count} namespaces...`);
@@ -36,7 +36,7 @@ describe('Overview performance tests', () => {
   // Testing empty namespaces to understand the impact of adding namespaces alone.
   describe('Overview page with empty namespaces', () => {
     before(() => {
-      cy.writeFile(reportFilePath, '[Empty Namespaces]\n\n', { flag: 'a+' });
+      cy.writeFile(reportFilePath, '\n[Empty Namespaces]\n\n', { flag: 'a+' });
     });
 
     (overviewCases as OverviewCase[]).forEach(testCase => {
@@ -84,10 +84,9 @@ describe('Overview performance tests', () => {
             .then(() => {
               sum = sum / visits.length;
 
-              const contents = `Namespaces: ${testCase.namespaces}
-  Init page load time: ${(sum / 1000).toPrecision(5)} seconds
-
-`;
+              const contents = `Namespaces: ${testCase.namespaces}\nInit page load time: ${(sum / 1000).toPrecision(
+                5
+              )} seconds\n`;
               cy.writeFile(reportFilePath, contents, { flag: 'a+' });
             });
         });
