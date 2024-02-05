@@ -176,27 +176,32 @@ export const TopologyContent: React.FC<{
       return;
     }
 
-    highlighter.setSelectedId(selectedIds.length > 0 ? selectedIds[0] : undefined);
-
     if (selectedIds.length > 0) {
       const elem = controller.getElementById(selectedIds[0]);
       switch (elem?.getKind()) {
         case ModelKind.edge: {
+          highlighter.setSelectedId(selectedIds[0]);
           updateSummary({ isPF: true, summaryType: 'edge', summaryTarget: elem } as GraphEvent);
           return;
         }
         case ModelKind.node: {
+          highlighter.setSelectedId(selectedIds[0]);
           const isBox = (elem.getData() as NodeData).isBox;
           updateSummary({ isPF: true, summaryType: isBox ? 'box' : 'node', summaryTarget: elem } as GraphEvent);
           return;
         }
+        case ModelKind.graph:
         default:
+          highlighter.setSelectedId(undefined);
+          setSelectedIds([]);
           updateSummary({ isPF: true, summaryType: 'graph', summaryTarget: controller } as GraphEvent);
+          return;
       }
     } else {
+      highlighter.setSelectedId(undefined);
       updateSummary({ isPF: true, summaryType: 'graph', summaryTarget: controller } as GraphEvent);
     }
-  }, [updateSummary, selectedIds, highlighter, controller, isMiniGraph, onEdgeTap, onNodeTap]);
+  }, [updateSummary, selectedIds, highlighter, controller, isMiniGraph, onEdgeTap, onNodeTap, setSelectedIds]);
 
   //
   // TraceOverlay State
