@@ -3,9 +3,20 @@
 ##############################################################################
 # install-skupper-demo.sh
 #
-# This installs two minikube clusters - one with MySQL and Mongo databases
-# and one with Istio, Kiali and Bookinfo demo. The Mongo database will
-# be accessed over a Skupper virtual application network.
+# This installs a Istio-Skupper demo. The demo will consist of 2 clusters
+# (either minikube or OpenShift). In cluster #1 (the "istio" cluster),
+# this script will install an Istio control plane, Kiali, and Bookinfo demo.
+# In cluster #2 (the "db" cluster), this script will install
+# two databases - MySQL and Mongo. Finally, the script will prepare
+# a Skupper virtual application network (what we will call a "pipe") between
+# the two clusters allowing the "istio" cluster to communicate with the
+# Mongo database over that pipe. The MySQL database will be exposed externally
+# using a LoadBalancer (if on minikube) and the NodePort (if on OpenShift).
+#
+# If you are using minikube, this script will start 2 minikube clusters.
+# If you are using OpenShift, you are responsible for starting the two
+# clusters and telling this script how to connect to those clusters
+# (see the --openshift1-X and --openshift2-X command line options).
 #
 ##############################################################################
 
