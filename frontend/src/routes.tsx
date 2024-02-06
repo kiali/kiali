@@ -28,12 +28,12 @@ const navMenuItems: MenuItem[] = [
     pathsActive: [/^\/overview\/(.*)/]
   },
   {
-    title: 'Graph [Cy]',
+    title: 'Traffic Graph [Cy]',
     to: '/graph/namespaces/',
     pathsActive: [/^\/graph\/(.*)/]
   },
   {
-    title: 'Graph [PF]',
+    title: 'Traffic Graph [PF]',
     to: '/graphpf/namespaces/',
     pathsActive: [/^\/graphpf\/(.*)/]
   },
@@ -62,7 +62,7 @@ const navMenuItems: MenuItem[] = [
     to: '/tracing'
   },
   {
-    title: 'Mesh',
+    title: 'Mesh [graph]',
     to: '/mesh'
   },
   {

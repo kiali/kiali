@@ -76,6 +76,9 @@ export class Menu extends React.Component<MenuProps, MenuState> {
     const allNavMenuItems = navMenuItems;
     const graphEnableCytoscape = serverConfig.kialiFeatureFlags.uiDefaults.graph.impl !== 'pf';
     const graphEnablePatternfly = serverConfig.kialiFeatureFlags.uiDefaults.graph.impl !== 'cy';
+    const graphEnableMeshClassic = serverConfig.kialiFeatureFlags.uiDefaults.mesh.impl === 'classic';
+    const graphEnableMeshGraph = serverConfig.kialiFeatureFlags.uiDefaults.mesh.impl !== 'classic';
+    const graphEnableMeshOverview = serverConfig.kialiFeatureFlags.uiDefaults.mesh.impl === 'topo-as-overview';
     const activeMenuItem = allNavMenuItems.find(item => {
       let isRoute = matchPath(location.pathname, { path: item.to, exact: true, strict: false }) ? true : false;
 
@@ -90,19 +93,32 @@ export class Menu extends React.Component<MenuProps, MenuState> {
 
     return allNavMenuItems
       .filter(item => {
-        if (item.title === 'Mesh') {
-          return homeCluster?.name !== undefined;
+        if (item.title === 'Mesh [classic]') {
+          return graphEnableMeshClassic && homeCluster?.name !== undefined;
         }
 
-        if (item.title === 'Graph [Cy]') {
+        if (item.title === 'Mesh [graph]') {
+          return graphEnableMeshGraph;
+        }
+
+        if (item.title === 'Overview') {
+          return !graphEnableMeshOverview;
+        }
+
+        if (item.title === 'Traffic Graph [Cy]') {
           return graphEnableCytoscape;
         }
 
-        if (item.title === 'Graph [PF]') {
+        if (item.title === 'Traffic Graph [PF]') {
           return graphEnablePatternfly;
         }
 
         return true;
+      })
+      .sort((a, b): number => {
+        if (graphEnableMeshOverview && a.title === 'Mesh [graph]') return -1;
+        if (graphEnableMeshOverview && b.title === 'Mesh [graph]') return 1;
+        return 0;
       })
       .map(item => {
         if (item.title === 'Distributed Tracing') {
@@ -111,12 +127,20 @@ export class Menu extends React.Component<MenuProps, MenuState> {
 
         let title = item.title;
 
-        if (title === 'Graph [Cy]' && !graphEnablePatternfly) {
-          title = 'Graph';
+        if (title === 'Traffic Graph [Cy]' && !graphEnablePatternfly) {
+          title = 'Traffic Graph';
         }
 
-        if (title === 'Graph [PF]' && !graphEnableCytoscape) {
-          title = 'Graph';
+        if (title === 'Traffic Graph [PF]' && !graphEnableCytoscape) {
+          title = 'Traffic Graph';
+        }
+
+        if (title === 'Mesh [classic]') {
+          title = 'Mesh';
+        }
+
+        if (title === 'Mesh [graph]') {
+          title = 'Mesh';
         }
 
         return (
