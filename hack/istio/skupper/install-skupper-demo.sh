@@ -428,6 +428,10 @@ if [ "${VALIDATE_ENVIRONMENT}" == "true" ]; then
   fi
 
   if [ "${CLUSTER_TYPE}" == "openshift" ]; then
+    if [ "${OPENSHIFT1_API}" == "" -o "${OPENSHIFT2_API}" == "" ]; then
+      errormsg "You did not provide the OpenShift API URL for both cluster #1 [${OPENSHIFT1_API}] and cluster #2 [${OPENSHIFT2_API}]".
+      exit 1
+    fi
     confirm_cluster_is_up "${CLUSTER1_ISTIO}"
     confirm_cluster_is_up "${CLUSTER2_DB}"
   elif [ "${CLUSTER_TYPE}" == "minikube" ]; then
