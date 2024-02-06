@@ -14,6 +14,7 @@ func NewMetadata() Metadata {
 // Metadata keys to be used instead of literal strings
 const (
 	HealthData     MetadataKey = "healthData"
+	InfraData      MetadataKey = "infraData"
 	IsInaccessible MetadataKey = "isInaccessible"
 	IsMTLS         MetadataKey = "isMTLS"
 	IsOutOfMesh    MetadataKey = "isOutOfMesh"

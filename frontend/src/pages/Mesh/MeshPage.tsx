@@ -266,7 +266,6 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
     elements: DecoratedMeshElements,
     fetchParams: MeshFetchParams
   ) => {
-    console.log('success');
     const prevElements = this.state.meshData.elements;
     this.setState({
       meshData: {
@@ -281,7 +280,6 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
   };
 
   private handleMeshDataSourceError = (errorMessage: string | null, fetchParams: MeshFetchParams) => {
-    console.log('error');
     const prevElements = this.state.meshData.elements;
     this.setState({
       meshData: {
@@ -297,7 +295,6 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
   };
 
   private handleMeshDataSourceStart = (isPreviousDataInvalid: boolean, fetchParams: MeshFetchParams) => {
-    console.log(`mesh isPreviousDataInvalid=${isPreviousDataInvalid}`);
     this.setState({
       meshData: {
         elements: isPreviousDataInvalid ? EMPTY_MESH_DATA : this.state.meshData.elements,

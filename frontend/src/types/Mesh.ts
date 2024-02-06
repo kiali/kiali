@@ -53,6 +53,7 @@ export interface MeshNodeData {
 
   // optional
   healthData?: MeshNodeHealthData;
+  infraData?: MeshCluster; // add other type options as the case arises
   isAmbient?: boolean;
   isBox?: string;
   isInaccessible?: boolean;
@@ -137,6 +138,7 @@ export const MeshAttr = {
   // node attrs
   cluster: 'cluster',
   health: 'health',
+  infraData: 'infraData',
   infraName: 'infraName',
   infraType: 'infraType',
   isInaccessible: 'isInaccessible',

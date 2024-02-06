@@ -101,7 +101,8 @@ export const serverRateConfig = {
       },
       mesh: {
         findOptions: [],
-        hideOptions: []
+        hideOptions: [],
+        impl: 'classic'
       },
       list: {
         includeHealth: true,

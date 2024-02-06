@@ -475,10 +475,11 @@ type ListUIDefaults struct {
 	ShowIncludeToggles    bool `yaml:"show_include_toggles,omitempty" json:"showIncludeToggles"`
 }
 
-// NeshUIDefaults defines UI Defaults specific to the UI Mesh page
+// MeshUIDefaults defines UI Defaults specific to the UI Mesh page
 type MeshUIDefaults struct {
 	FindOptions []GraphFindOption `yaml:"find_options,omitempty" json:"findOptions,omitempty"`
 	HideOptions []GraphFindOption `yaml:"hide_options,omitempty" json:"hideOptions,omitempty"`
+	Impl        string            `yaml:"impl,omitempty" json:"impl,omitempty"` // classic | topo | topo-no-overview
 }
 
 // Aggregation represents label's allowed aggregations, transformed from aggregation in MonitoringDashboard config resource

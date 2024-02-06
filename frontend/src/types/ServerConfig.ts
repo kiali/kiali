@@ -56,6 +56,7 @@ interface ListUIDefaults {
 interface MeshUIDefaults {
   findOptions: GraphFindOption[];
   hideOptions: GraphFindOption[];
+  impl: string; // classic | topo | topo-no-overview
 }
 
 interface UIDefaults {

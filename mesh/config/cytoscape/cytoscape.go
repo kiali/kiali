@@ -21,6 +21,7 @@ import (
 	"sort"
 	"time"
 
+	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/mesh"
 )
 
@@ -36,7 +37,9 @@ type NodeData struct {
 	Namespace string `json:"namespace"`
 	NodeType  string `json:"nodeType"`
 	// Other Fields
+	HasInfra       bool        `json:"-"`                        // for local when generating boxes
 	HealthData     interface{} `json:"healthData"`               // data to calculate health status from configurations
+	InfraData      interface{} `json:"infraData,omitEmpty"`      // infraType-dependent data
 	IsAmbient      bool        `json:"isAmbient,omitempty"`      // true if configured for ambient
 	IsBox          string      `json:"isBox,omitempty"`          // set for NodeTypeBox, current values: [ 'cluster', 'namespace', 'other' ]
 	IsInaccessible bool        `json:"isInaccessible,omitempty"` // true if the node exists in an inaccessible namespace
@@ -81,23 +84,23 @@ func edgeHash(from, to string) string {
 
 // NewConfig is required by the mesh/ConfigVendor interface
 func NewConfig(meshMap mesh.MeshMap, o mesh.ConfigOptions) (result Config) {
-	unfilteredNodes := []*NodeWrapper{}
+	nodes := []*NodeWrapper{}
 	edges := []*EdgeWrapper{}
 
-	buildConfig(meshMap, &unfilteredNodes, &edges, o)
+	buildConfig(meshMap, &nodes, &edges, o)
 
-	// Remove namespace nodes for namespaces that contain infra, these will become namespace boxes
+	// Mark namespace nodes that contain infra, these will become namespace boxes
 	namespaceWithInfraMap := make(map[string]bool)
 	var node *NodeWrapper
-	for _, node = range unfilteredNodes {
-		if node.Data.NodeType == mesh.NodeTypeInfra && node.Data.InfraType != mesh.InfraTypeNamespace {
-			namespaceWithInfraMap[node.Data.Namespace] = true
+	for _, node = range nodes {
+		if node.Data.InfraType == mesh.InfraTypeCluster || node.Data.InfraType == mesh.InfraTypeNamespace {
+			continue
 		}
+		namespaceWithInfraMap[node.Data.Namespace] = true
 	}
-	nodes := []*NodeWrapper{}
-	for _, node = range unfilteredNodes {
-		if node.Data.InfraType != mesh.InfraTypeNamespace || namespaceWithInfraMap[node.Data.InfraName] != true {
-			nodes = append(nodes, node)
+	for _, node = range nodes {
+		if node.Data.InfraType == mesh.InfraTypeNamespace && namespaceWithInfraMap[node.Data.InfraName] == true {
+			node.Data.HasInfra = true
 		}
 	}
 
@@ -167,6 +170,10 @@ func buildConfig(meshMap mesh.MeshMap, nodes *[]*NodeWrapper, edges *[]*EdgeWrap
 			nd.HealthData = val
 		}
 
+		if val, ok := n.Metadata[mesh.InfraData]; ok {
+			nd.InfraData = val
+		}
+
 		// node is not accessible to the current user
 		if val, ok := n.Metadata[mesh.IsInaccessible]; ok {
 			nd.IsInaccessible = val.(bool)
@@ -201,67 +208,38 @@ func buildConfig(meshMap mesh.MeshMap, nodes *[]*NodeWrapper, edges *[]*EdgeWrap
 	}
 }
 
-// boxByNonInfraNamespaces adds compound nodes to box non-infra namespace nodes in the same cluster
+// boxByNonInfraNamespaces boxes non-infra namespace nodes in the same cluster
 func boxByNonInfraNamespaces(nodes *[]*NodeWrapper) {
 	box := make(map[string][]*NodeData)
 
 	for _, nw := range *nodes {
-		// box app namespace nodes
-		if nw.Data.Parent != "" || nw.Data.InfraType != mesh.InfraTypeNamespace {
+		if nw.Data.Parent != "" || nw.Data.InfraType != mesh.InfraTypeNamespace || nw.Data.HasInfra {
 			continue
 		}
 
 		k := fmt.Sprintf("box_%s_non_infra_namespaces", nw.Data.Cluster)
 		box[k] = append(box[k], nw.Data)
 	}
-	generateBoxCompoundNodes(box, nodes, mesh.BoxByOther)
+	generateBoxNodes(box, nodes, mesh.BoxByOther)
 }
 
-// boxByNamespace adds compound nodes to box nodes in the same namespace
-func boxByNamespace(nodes *[]*NodeWrapper) {
-	box := make(map[string][]*NodeData)
-
-	for _, nw := range *nodes {
-		// don't namespace box a namespace node
-		if nw.Data.Parent != "" || nw.Data.InfraType == mesh.InfraTypeNamespace || nw.Data.IsBox == mesh.BoxByOther {
-			continue
-		}
-
-		k := fmt.Sprintf("box_%s_%s", nw.Data.Cluster, nw.Data.Namespace)
-		box[k] = append(box[k], nw.Data)
-	}
-	generateBoxCompoundNodes(box, nodes, mesh.BoxByNamespace)
-}
-
-// boxByCluster adds compound nodes to box nodes in the same cluster
-func boxByCluster(nodes *[]*NodeWrapper) {
-	box := make(map[string][]*NodeData)
-
-	for _, nw := range *nodes {
-		// never box unknown
-		if nw.Data.Parent == "" && nw.Data.Cluster != mesh.Unknown {
-			k := fmt.Sprintf("box_%s", nw.Data.Cluster)
-			box[k] = append(box[k], nw.Data)
-		}
-	}
-	generateBoxCompoundNodes(box, nodes, mesh.BoxByCluster)
-}
-
-func generateBoxCompoundNodes(box map[string][]*NodeData, nodes *[]*NodeWrapper, boxBy string) {
+func generateBoxNodes(box map[string][]*NodeData, nodes *[]*NodeWrapper, boxBy string) {
 	for k, members := range box {
 		// create the compound (parent) node for the member nodes
 		nodeID := nodeHash(k)
 		namespace := ""
 		switch boxBy {
-		case mesh.BoxByNamespace:
-			namespace = members[0].Namespace
 		case mesh.BoxByOther:
 			num := len(members)
 			namespace = "1 Other Namespace"
 			if num > 1 {
 				namespace = fmt.Sprintf("Non-Infra Namespaces")
 			}
+		default:
+			log.Errorf("Unsupported boxBy type [%s]", boxBy)
+			return
 		}
+
 		nd := NodeData{
 			ID:        nodeID,
 			NodeType:  mesh.NodeTypeBox,
@@ -284,5 +262,41 @@ func generateBoxCompoundNodes(box map[string][]*NodeData, nodes *[]*NodeWrapper,
 
 		// add the compound node to the list of nodes
 		*nodes = append(*nodes, &nw)
+	}
+}
+
+// boxByNamespace boxes nodes in the same namespace, within a cluster
+func boxByNamespace(nodes *[]*NodeWrapper) {
+	for _, box := range *nodes {
+		if box.Data.InfraType != mesh.InfraTypeNamespace || !box.Data.HasInfra {
+			continue
+		}
+		box.Data.IsBox = mesh.BoxByNamespace
+		for _, member := range *nodes {
+			if member.Data.Parent != "" || member.Data.InfraType == mesh.InfraTypeCluster || member.Data.InfraType == mesh.InfraTypeNamespace {
+				continue
+			}
+			if member.Data.Cluster == box.Data.Cluster && member.Data.Namespace == box.Data.Namespace {
+				member.Data.Parent = box.Data.ID
+			}
+		}
+	}
+}
+
+// boxByNamespace boxes nodes in the same namespace, within a cluster
+func boxByCluster(nodes *[]*NodeWrapper) {
+	for _, box := range *nodes {
+		if box.Data.InfraType != mesh.InfraTypeCluster {
+			continue
+		}
+		box.Data.IsBox = mesh.BoxByCluster
+		for _, member := range *nodes {
+			if member.Data.Parent != "" || member.Data.InfraType != mesh.InfraTypeNamespace {
+				continue
+			}
+			if member.Data.Cluster == box.Data.Cluster {
+				member.Data.Parent = box.Data.ID
+			}
+		}
 	}
 }

@@ -12,7 +12,7 @@ import { TargetPanelCommonProps, targetPanel } from './TargetPanelCommon';
 import { MeshTourStops } from '../MeshHelpTour';
 import { BoxByType } from 'types/Graph';
 import { ElementModel, GraphElement } from '@patternfly/react-topology';
-import { TargetPanelClusterBox } from './TargetPanelClusterBox';
+import { TargetPanelCluster } from './TargetPanelCluster';
 import { TargetPanelNamespace } from './TargetPanelNamespace';
 import { TargetPanelNode } from './TargetPanelNode';
 import { TargetPanelMesh } from './TargetPanelMesh';
@@ -120,7 +120,7 @@ class TargetPanelComponent extends React.Component<TargetPanelProps, TargetPanel
         switch (boxType) {
           case 'cluster':
             return (
-              <TargetPanelClusterBox
+              <TargetPanelCluster
                 istioAPIEnabled={this.props.istioAPIEnabled}
                 kiosk={this.props.kiosk}
                 refreshInterval={this.props.refreshInterval}

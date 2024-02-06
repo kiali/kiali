@@ -145,15 +145,19 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
 
     this.state = {
       ...defaultState,
-      loading: false,
       namespaceNode: namespaceNode
     };
   }
 
-  static getDerivedStateFromProps(props: TargetPanelCommonProps, state: TargetPanelNamespaceState) {
+  static getDerivedStateFromProps(
+    props: TargetPanelCommonProps,
+    state: TargetPanelNamespaceState
+  ): TargetPanelNamespaceState | null {
     // if the target (e.g. namespaceBox) has changed, then init the state and set to loading. The loading
     // will actually be kicked off after the render (in componentDidMount/Update).
-    return props.target.elem !== state.namespaceNode ? { namespaceNode: props.target.elem, loading: true } : null;
+    return props.target.elem !== state.namespaceNode
+      ? ({ namespaceNode: props.target.elem, loading: true } as TargetPanelNamespaceState)
+      : null;
   }
 
   componentDidMount() {

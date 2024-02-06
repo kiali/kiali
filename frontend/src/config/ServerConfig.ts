@@ -121,7 +121,8 @@ const defaultServerConfig: ComputedServerConfig = {
       },
       mesh: {
         findOptions: [],
-        hideOptions: []
+        hideOptions: [],
+        impl: 'classic'
       }
     }
   },
