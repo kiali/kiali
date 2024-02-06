@@ -1,4 +1,4 @@
-export const reportFilePath = 'logs/performance.txt';
+export const reportFilePath = 'cypress/results/performance.txt';
 
 export const visits = 5;
 
@@ -18,6 +18,11 @@ export function measureListsLoadTime(name: string, visits: number, listUrl: stri
       })
         .its('performance')
         .then(performance => {
+          // when namespace does not exist in system, the unhandled promise rejection is thrown
+          cy.on('uncaught:exception', (err, runnable) => {
+            return false;
+          });
+
           cy.get('.pf-v5-c-toolbar').should('be.visible');
 
           cy.get('#loading_kiali_spinner', { timeout: 300000 })

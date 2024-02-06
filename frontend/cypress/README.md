@@ -130,7 +130,11 @@ make perf-tests-gui
 
 yarn from current dir
 ```
-yarn cypress --config-file cypress-perf.json
+yarn cypress:perf
+```
+or in the headless mode:
+```bash
+yarn cypress:run:perf
 ```
 
 ### Parameterizing tests
@@ -155,7 +159,7 @@ With the addition of the `.only`, only the "loads the overview page" test will b
 
 ### Results
 
-Results are logged here: `logs/performance.txt`.
+Results are logged here: `cypress/results/performance.txt`.
 
 ### Cleanup
 
