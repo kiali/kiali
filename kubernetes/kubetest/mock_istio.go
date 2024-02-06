@@ -67,11 +67,6 @@ func (o *K8SClientMock) GetRegistryServices() ([]*kubernetes.RegistryService, er
 	return args.Get(0).([]*kubernetes.RegistryService), args.Error(1)
 }
 
-func (o *K8SClientMock) GetRegistryEndpoints() ([]*kubernetes.RegistryEndpoint, error) {
-	args := o.Called()
-	return args.Get(0).([]*kubernetes.RegistryEndpoint), args.Error(1)
-}
-
 func (o *K8SClientMock) SetProxyLogLevel(namespace, podName, level string) error {
 	args := o.Called()
 	return args.Error(0)

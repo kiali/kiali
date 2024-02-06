@@ -37,18 +37,6 @@ func (in *RegistryStatusService) GetRegistryConfiguration(criteria RegistryCrite
 	return registryConfiguration, nil
 }
 
-func (in *RegistryStatusService) GetRegistryEndpoints(criteria RegistryCriteria) ([]*kubernetes.RegistryEndpoint, error) {
-	if kialiCache == nil {
-		return nil, nil
-	}
-	if err := in.checkAndRefresh(); err != nil {
-		return nil, err
-	}
-	registryStatus := kialiCache.GetRegistryStatus()
-	registryEndpoints := filterRegistryEndpoints(registryStatus, criteria)
-	return registryEndpoints, nil
-}
-
 func (in *RegistryStatusService) GetRegistryServices(criteria RegistryCriteria) ([]*kubernetes.RegistryService, error) {
 	if kialiCache == nil {
 		return nil, nil
@@ -163,29 +151,6 @@ func filterRegistryConfiguration(registryStatus *kubernetes.RegistryStatus, crit
 	return &filtered
 }
 
-func filterRegistryEndpoints(registryStatus *kubernetes.RegistryStatus, criteria RegistryCriteria) []*kubernetes.RegistryEndpoint {
-	var filteredRegistryEndpoints []*kubernetes.RegistryEndpoint
-	if registryStatus == nil {
-		return filteredRegistryEndpoints
-	}
-	if criteria.AllNamespaces {
-		return registryStatus.Endpoints
-	}
-	if criteria.Namespace != "" && criteria.ServiceName != "" {
-		for _, rEndpoint := range registryStatus.Endpoints {
-			// External ServiceEntries don't have endpoints in the Istio Registry
-			if rEndpoint.Endpoints != nil {
-				for _, innerEndpoint := range rEndpoint.Endpoints {
-					if innerEndpoint.Service.Attributes.Namespace == criteria.Namespace && innerEndpoint.Service.Attributes.Name == criteria.ServiceName {
-						filteredRegistryEndpoints = append(filteredRegistryEndpoints, rEndpoint)
-					}
-				}
-			}
-		}
-	}
-	return filteredRegistryEndpoints
-}
-
 func filterRegistryServices(registryStatus *kubernetes.RegistryStatus, criteria RegistryCriteria) []*kubernetes.RegistryService {
 	var filteredRegistryServices []*kubernetes.RegistryService
 	if registryStatus == nil {
@@ -239,25 +204,17 @@ func (in *RegistryStatusService) checkAndRefresh() error {
 
 func (in *RegistryStatusService) refreshRegistryStatus() (*kubernetes.RegistryStatus, error) {
 	var registryConfiguration *kubernetes.RegistryConfiguration
-	var registryEndpoints []*kubernetes.RegistryEndpoint
 	var registryServices []*kubernetes.RegistryService
 
 	var rConfErr, rEndErr, rSvcErr error
 
 	wg := sync.WaitGroup{}
-	wg.Add(3)
+	wg.Add(2)
 
 	go func() {
 		defer wg.Done()
 		if registryConfiguration, rConfErr = in.k8s.GetRegistryConfiguration(); rConfErr != nil {
 			registryConfiguration, rConfErr = in.getRegistryConfigurationUsingKialiSA()
-		}
-	}()
-
-	go func() {
-		defer wg.Done()
-		if registryEndpoints, rEndErr = in.k8s.GetRegistryEndpoints(); rEndErr != nil {
-			registryEndpoints, rEndErr = in.getRegistryEndpointsUsingKialiSA()
 		}
 	}()
 
@@ -282,7 +239,6 @@ func (in *RegistryStatusService) refreshRegistryStatus() (*kubernetes.RegistrySt
 
 	registryStatus := kubernetes.RegistryStatus{
 		Configuration: registryConfiguration,
-		Endpoints:     registryEndpoints,
 		Services:      registryServices,
 	}
 
@@ -296,15 +252,6 @@ func getSAClient() (kubernetes.ClientInterface, error) {
 	}
 
 	return clientFactory.GetSAHomeClusterClient(), nil
-}
-
-func (in *RegistryStatusService) getRegistryEndpointsUsingKialiSA() ([]*kubernetes.RegistryEndpoint, error) {
-	k8s, err := getSAClient()
-	if err != nil {
-		return nil, err
-	}
-
-	return k8s.GetRegistryEndpoints()
 }
 
 func (in *RegistryStatusService) getRegistryServicesUsingKialiSA() ([]*kubernetes.RegistryService, error) {

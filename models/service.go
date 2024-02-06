@@ -172,16 +172,6 @@ func (s *ServiceDetails) SetEndpoints(eps *core_v1.Endpoints) {
 	(&s.Endpoints).Parse(eps)
 }
 
-func (s *ServiceDetails) SetRegistryEndpoints(rEps []*kubernetes.RegistryEndpoint) {
-	for i, p := range s.Service.Ports {
-		istioProtocol, istioMtls := filterRegistryEndpointTLSName(rEps, p.Name, uint32(p.Port))
-		if istioProtocol != "" && istioMtls != "" {
-			s.Service.Ports[i].IstioProtocol = istioProtocol
-			s.Service.Ports[i].TLSMode = istioMtls
-		}
-	}
-}
-
 func (s *ServiceDetails) SetPods(pods []core_v1.Pod) {
 	mPods := Pods{}
 	mPods.Parse(pods)
