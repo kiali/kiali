@@ -250,10 +250,10 @@ openshift_install_basic_demo() {
   ${HACK_SCRIPTS_DIR}/istio/install-bookinfo-demo.sh -c ${CLIENT_EXE} --traffic-generator --wait-timeout 5m
 
   infomsg "Logging into the image registry..."
-  eval $(make --directory "${ROOT_DIR}" -e OC="$(which ${CLIENT_EXE})" -e CLUSTER_TYPE=${CLUSTER_TYPE} cluster-status | grep "Image Registry login:" | sed 's/Image Registry login: \(.*\)$/\1/')
+  eval $(make --directory "${ROOT_DIR}" -e OC="$(which ${CLIENT_EXE})" -e CLUSTER_TYPE=openshift cluster-status | grep "Image Registry login:" | sed 's/Image Registry login: \(.*\)$/\1/')
 
   infomsg "Building and Installing Kiali ..."
-  make --directory "${ROOT_DIR}" -e OC="$(which ${CLIENT_EXE})" -e CLUSTER_TYPE=${CLUSTER_TYPE} ACCESSIBLE_NAMESPACES=bookinfo build build-ui cluster-push operator-create kiali-create
+  make --directory "${ROOT_DIR}" -e OC="$(which ${CLIENT_EXE})" -e CLUSTER_TYPE=openshift ACCESSIBLE_NAMESPACES=bookinfo build build-ui cluster-push operator-create kiali-create
 
   infomsg "Exposing Prometheus UI via Route ..."
   ${CLIENT_EXE} -n istio-system expose svc prometheus
@@ -484,6 +484,9 @@ elif [ "$_CMD" == "delete" ]; then
     openshift)
       # LOGIN TO CLUSTER 1
       openshift_login ${CLUSTER1_ISTIO}
+
+      infomsg "Uninstalling Kiali ..."
+      make --directory "${ROOT_DIR}" -e OC="$(which ${CLIENT_EXE})" -e CLUSTER_TYPE=openshift operator-delete
 
       infomsg "Uninstalling Bookinfo demo ..."
       ${CLIENT_EXE} get namespace bookinfo && ${HACK_SCRIPTS_DIR}/istio/install-bookinfo-demo.sh -c ${CLIENT_EXE} --delete-bookinfo true
