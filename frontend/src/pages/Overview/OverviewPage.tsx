@@ -534,7 +534,10 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
   }
 
   async fetchValidationResultForCluster(namespaces: NamespaceInfo[], cluster: string): Promise<void> {
-    return Promise.all([API.getConfigValidations(cluster), API.getAllIstioConfigs([], [], false, '', '', cluster)])
+    return Promise.all([
+      API.getConfigValidations(namespaces.map(ns => ns.name).join(','), cluster),
+      API.getAllIstioConfigs([], [], false, '', '', cluster)
+    ])
       .then(results => {
         const validations = results[0].data;
         const istioConfig = results[1].data;
