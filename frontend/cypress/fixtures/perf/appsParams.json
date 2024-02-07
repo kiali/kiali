@@ -1,5 +1,0 @@
-{
-  "namespaces": "bookinfo,alpha,beta,sleep",
-  "duration": "300",
-  "refresh": "15000"
-}

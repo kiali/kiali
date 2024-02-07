@@ -1,0 +1,6 @@
+{
+  "namespaces": "bookinfo",
+  "allNamespaces": "bookinfo,alpha,beta,gamma,sleep",
+  "duration": "300",
+  "refresh": "15000"
+}
