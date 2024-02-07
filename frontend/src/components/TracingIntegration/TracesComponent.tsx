@@ -58,7 +58,7 @@ interface TracesState {
 const traceDetailsTab = 0;
 const spansDetailsTab = 1;
 
-function GetGrafanaUrl(externalServices: ExternalServiceInfo[]) {
+function GetGrafanaUrl(externalServices: ExternalServiceInfo[]): ExternalServiceInfo | undefined {
   return externalServices.find(service => service.name === 'Grafana');
 }
 
@@ -66,7 +66,7 @@ function GetBaseTracingUrl(
   provider: string | undefined,
   urlTracing: string | undefined,
   externalServices: ExternalServiceInfo[]
-) {
+): string | undefined {
   if (provider === TEMPO) {
     return GetGrafanaUrl(externalServices)?.url;
   } else {
@@ -78,7 +78,7 @@ export function GetTraceDetailURL(
   provider: string | undefined,
   urlTracing: string | undefined,
   externalServices: ExternalServiceInfo[]
-) {
+): string | undefined {
   const tracingUrl = GetBaseTracingUrl(provider, urlTracing, externalServices);
   if (!tracingUrl) {
     return undefined;
@@ -90,7 +90,7 @@ export function GetTraceDetailURL(
   }
 }
 
-export function GetTracingURL(externalServices: ExternalServiceInfo[]) {
+export function GetTracingURL(externalServices: ExternalServiceInfo[]): string | undefined {
   const tempoService = externalServices.find(service => service.name === TEMPO);
   const jaegerService = externalServices.find(service => service.name === 'jaeger');
   const grafanaService = externalServices.find(service => service.name === 'Grafana');
@@ -115,7 +115,7 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
     super(props);
     let targetApp: string | undefined = undefined;
     if (this.props.targetKind === 'app') {
-      targetApp = this.props.namespaceSelector ? this.props.target + '.' + this.props.namespace : this.props.target;
+      targetApp = this.props.namespaceSelector ? `${this.props.target}.${this.props.namespace}` : this.props.target;
     }
     this.state = {
       isTimeOptionsOpen: false,
@@ -141,11 +141,11 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
     this.percentilesPromise = this.fetchPercentiles();
   }
 
-  componentDidMount() {
+  componentDidMount(): void {
     this.fetchTraces();
   }
 
-  componentDidUpdate(prevProps: TracesProps) {
+  componentDidUpdate(prevProps: TracesProps): void {
     // Selected trace (coming from redux) might have been reloaded and needs to be updated within the traces list
     // Check reference of selected trace
     if (this.props.selectedTrace && prevProps.selectedTrace !== this.props.selectedTrace) {
@@ -167,11 +167,11 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
     }
   }
 
-  private getTags = () => {
+  private getTags = (): string => {
     return this.state.querySettings.errorsOnly ? '{"error":"true"}' : '';
   };
 
-  private fetchTraces = async () => {
+  private fetchTraces = async (): Promise<void> => {
     const options: FetchOptions = {
       namespace: this.props.namespace,
       cluster: this.props.cluster,
@@ -251,7 +251,7 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
     return minDurations;
   };
 
-  private onTracesUpdated = (traces: JaegerTrace[], tracingServiceName: string) => {
+  private onTracesUpdated = (traces: JaegerTrace[], tracingServiceName: string): void => {
     const newState: Partial<TracesState> = { traces: traces, tracingErrors: undefined, toolbarDisabled: false };
     if (this.state.targetApp === undefined && tracingServiceName) {
       newState.targetApp = tracingServiceName;
@@ -259,7 +259,7 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
     this.setState(newState as TracesState);
   };
 
-  private getTracingUrl = () => {
+  private getTracingUrl = (): undefined | string => {
     const tracingUrl = GetBaseTracingUrl(this.props.provider, this.props.urlTracing, this.props.externalServices);
 
     if (tracingUrl === '' || !tracingUrl || !this.state.targetApp) {
@@ -282,20 +282,20 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
     return url;
   };
 
-  private onQuerySettingsChanged = (settings: QuerySettings) => {
+  private onQuerySettingsChanged = (settings: QuerySettings): void => {
     this.fetcher.resetLastFetchTime();
     this.setState({ querySettings: settings }, this.fetchTraces);
   };
 
-  private onDisplaySettingsChanged = (settings: DisplaySettings) => {
+  private onDisplaySettingsChanged = (settings: DisplaySettings): void => {
     this.setState({ displaySettings: settings });
   };
 
-  private toggleTimeOptionsVisibility = () => {
+  private toggleTimeOptionsVisibility = (): void => {
     this.setState(prevState => ({ isTimeOptionsOpen: !prevState.isTimeOptionsOpen }));
   };
 
-  render() {
+  render(): React.ReactElement {
     const tracingURL = this.getTracingUrl();
     return (
       <>
@@ -318,7 +318,13 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
                   {tracingURL && (
                     <ToolbarItem>
                       <Tooltip content={<>Open Chart in {this.props.provider} UI</>}>
-                        <a href={tracingURL} target="_blank" rel="noopener noreferrer" style={{ marginLeft: '10px' }}>
+                        <a
+                          href={tracingURL}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{ marginLeft: '10px' }}
+                          data-test="view-in-tracing"
+                        >
                           View in Tracing <ExternalLinkAltIcon />
                         </a>
                       </Tooltip>
@@ -397,7 +403,7 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
   }
 }
 
-const mapStateToProps = (state: KialiAppState) => {
+const mapStateToProps = (state: KialiAppState): ReduxProps => {
   return {
     externalServices: state.statusState.externalServices,
     namespaceSelector: state.tracingState.info ? state.tracingState.info.namespaceSelector : true,

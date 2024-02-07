@@ -157,3 +157,27 @@ Then('the user sees the metrics tab', () => {
       cy.wrap(state.dashboard).should('not.be.empty');
     });
 });
+
+Then('the user can see the {string} link', (link: string) => {
+  cy.getBySel('view-in-tracing').contains(link);
+});
+
+Then('the user can see the {string} trace link', (link: string) => {
+  cy.getBySel('trace-details-tabs').should('be.visible');
+  cy.getBySel('trace-details-kebab').click();
+  cy.getBySel('trace-details-dropdown').contains(link);
+});
+
+Then('the user can see the {string} span link', (link: string) => {
+  cy.get('table')
+    .should('be.visible')
+    .find('tbody tr') // ignore thead rows
+    .should('have.length.above', 1) // retries above cy.find() until we have a non head-row
+    .eq(1) // take 1st  row
+    .find('td')
+    .eq(4) // take 5th cell (Kebab)
+    .find('button')
+    .click();
+
+  cy.get('ul[role=menu]').contains(link);
+});
