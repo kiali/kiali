@@ -207,6 +207,7 @@ func TestSecureComm(t *testing.T) {
 	conf.Server.StaticContentRootDirectory = tmpDir
 	conf.Server.Observability.Metrics.Enabled = true
 	conf.Server.Observability.Metrics.Port = testMetricsPort
+	conf.Server.Profiler.Enabled = true
 	conf.Auth.Strategy = "anonymous"
 	util.Clock = util.RealClock{}
 
@@ -214,7 +215,7 @@ func TestSecureComm(t *testing.T) {
 	apiURLWithAuthentication := serverURL + "/api/authenticate"
 	apiURL := serverURL + "/api"
 	metricsURL := fmt.Sprintf("http://%v:%v/", testHostname, testMetricsPort)
-
+	profilerURL := serverURL + "/debug/pprof/"
 	assert.True(t, conf.IsServerHTTPS())
 
 	config.Set(conf)
@@ -269,6 +270,10 @@ func TestSecureComm(t *testing.T) {
 		if !strings.Contains(s, "HELP go_") || !strings.Contains(s, "TYPE go_") {
 			t.Fatalf("Failed: Metrics URL returned bad results - there are no kial metrics:\n%s", s)
 		}
+	}
+
+	if _, err = getRequestResults(t, httpClient, profilerURL, noCredentials); err != nil {
+		t.Fatalf("Failed: Profiler URL shouldn't have failed with no credentials: %v", err)
 	}
 
 	// Make sure the server rejects anything trying to use TLS 1.1 or under

@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	rpprof "runtime/pprof"
 	"testing"
 
 	"github.com/gorilla/mux"
@@ -76,6 +77,69 @@ func TestSimpleRoute(t *testing.T) {
 
 	body, _ := io.ReadAll(resp.Body)
 	assert.Equal(t, "", string(body), "Response should be empty")
+}
+
+func TestProfilerRoute(t *testing.T) {
+	conf := new(config.Config)
+	conf.Server.Profiler.Enabled = true
+
+	router := NewRouter(conf, nil, nil, nil, nil, nil)
+	ts := httptest.NewServer(router)
+	defer ts.Close()
+
+	resp, err := http.Get(ts.URL + "/debug/pprof/")
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, 200, resp.StatusCode, "Response to index pprof page should be ok")
+
+	for _, p := range rpprof.Profiles() {
+		resp, err = http.Get(ts.URL + "/debug/pprof/" + p.Name())
+		if err != nil {
+			t.Fatalf("Failed to get profile [%v]: %v", p, err)
+		}
+		body, _ := io.ReadAll(resp.Body)
+		assert.Equal(t, 200, resp.StatusCode, "Response should be ok for profile [%v]: %v", p.Name(), string(body))
+	}
+	// note we can't test "profile" endpoint - puts the system into a deadlock
+	for _, p := range []string{"symbol", "trace"} {
+		resp, err = http.Get(ts.URL + "/debug/pprof/" + p)
+		if err != nil {
+			t.Fatalf("Failed to get profile [%v]: %v", p, err)
+		}
+		body, _ := io.ReadAll(resp.Body)
+		assert.Equal(t, 200, resp.StatusCode, "Response should be ok for profiler endpoint [%v]: %v", p, string(body))
+	}
+}
+
+func TestDisabledProfilerRoute(t *testing.T) {
+	conf := new(config.Config)
+	conf.Server.Profiler.Enabled = false
+
+	router := NewRouter(conf, nil, nil, nil, nil, nil)
+	ts := httptest.NewServer(router)
+	defer ts.Close()
+
+	resp, err := http.Get(ts.URL + "/debug/pprof/")
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, 404, resp.StatusCode, "pprof should have been disabled")
+
+	for _, p := range rpprof.Profiles() {
+		resp, err = http.Get(ts.URL + "/debug/pprof/" + p.Name())
+		if err != nil {
+			t.Fatal(err)
+		}
+		assert.Equal(t, 404, resp.StatusCode, "pprof should have been disabled [%v]", p.Name())
+	}
+	for _, p := range []string{"symbol", "trace", "profile"} {
+		resp, err = http.Get(ts.URL + "/debug/pprof/" + p)
+		if err != nil {
+			t.Fatal(err)
+		}
+		assert.Equal(t, 404, resp.StatusCode, "pprof should have been disabled [%v]", p)
+	}
 }
 
 func TestRedirectWithSetWebRootKeepsParams(t *testing.T) {
