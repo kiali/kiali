@@ -49,6 +49,16 @@ Feature: Kiali Workload Details page
     And user can filter spans by workload
 
   @bookinfo-app
+  @tracing
+  Scenario: See tracing links
+    And user sees trace information
+    Then the user can see the "View in Tracing" link
+    When user selects a trace
+    Then the user can see the "View in Tracing" trace link
+    And user sees span details
+    Then the user can see the "More span details" span link
+
+  @bookinfo-app
   Scenario: See Envoy clusters configuration for a workload
     When the user filters by "Port" with value "9080" on the "Clusters" tab
     Then the user sees clusters expected information
