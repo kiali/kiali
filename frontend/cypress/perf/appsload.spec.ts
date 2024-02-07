@@ -1,4 +1,4 @@
-import { reportFilePath, measureListsLoadTime, visits } from './common';
+import { reportFilePath, measureListsLoadTime, visits, measureDetailsLoadTime } from './common';
 
 describe('Apps performance tests', () => {
   beforeEach(() => {
@@ -29,6 +29,33 @@ describe('Apps performance tests', () => {
     });
     it('Measures Apps load time', { defaultCommandTimeout: Cypress.env('timeout') }, () => {
       measureListsLoadTime('Selected Namespaces Apps', visits, appsUrl);
+    });
+  });
+
+  describe('App details page', () => {
+    let appUrls = new Map<string, string>();
+
+    before(() => {
+      cy.fixture('commonParams.json')
+        .then(data => {
+          const overviewUrl = encodeURI(
+            `/console/namespaces/${data.detailsNs}/applications/${data.applicationName}?duration=${data.duration}&refresh=${data.refresh}&rangeDuration=${data.rangeDuration}`
+          );
+          appUrls.set("App Overview", overviewUrl)
+          appUrls.set("App Traffic", `${overviewUrl}&tab=traffic`)
+          appUrls.set("App Inbound Metrics", `${overviewUrl}&tab=in_metrics`)
+          appUrls.set("App Outbound Metrics", `${overviewUrl}&tab=out_metrics`)
+          appUrls.set("App Traces", `${overviewUrl}&tab=traces`)
+        })
+        .as('data');
+
+      cy.writeFile(reportFilePath, '\n[App details page]\n', { flag: 'a+' });
+    });
+
+    it('App details load time', { defaultCommandTimeout: Cypress.env('timeout') }, () => {
+      appUrls.forEach((url, name) => {
+        measureDetailsLoadTime(name, visits, url);
+      });
     });
   });
 });
