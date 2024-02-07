@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	hpprof "net/http/pprof"
 	"os"
 	"path/filepath"
+	rpprof "runtime/pprof"
 	"strings"
 
 	"github.com/gorilla/mux"
@@ -107,6 +109,18 @@ func NewRouter(conf *config.Config, kialiCache cache.KialiCache, clientFactory k
 			authCallback := ac.GetAuthCallbackHandler(http.HandlerFunc(fileServerHandler))
 			rootRouter.Methods("GET").Path(webRootWithSlash).Handler(authCallback)
 		}
+	}
+
+	if conf.Server.Profiler.Enabled {
+		log.Infof("Profiler is enabled")
+		appRouter.Path("/debug/pprof/").HandlerFunc(hpprof.Index) // the ending slash is important
+		for _, p := range rpprof.Profiles() {
+			appRouter.Path("/debug/pprof/" + p.Name()).Handler(hpprof.Handler(p.Name()))
+		}
+		appRouter.Path("/debug/pprof/cmdline").HandlerFunc(hpprof.Cmdline)
+		appRouter.Path("/debug/pprof/profile").HandlerFunc(hpprof.Profile)
+		appRouter.Path("/debug/pprof/symbol").HandlerFunc(hpprof.Symbol)
+		appRouter.Path("/debug/pprof/trace").HandlerFunc(hpprof.Trace)
 	}
 
 	rootRouter.PathPrefix(webRootWithSlash).HandlerFunc(fileServerHandler)

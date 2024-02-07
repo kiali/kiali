@@ -159,6 +159,7 @@ type Server struct {
 	GzipEnabled                bool          `yaml:"gzip_enabled,omitempty"`
 	Observability              Observability `yaml:"observability,omitempty"`
 	Port                       int           `yaml:",omitempty"`
+	Profiler                   Profiler      `yaml:"profiler,omitempty"`
 	StaticContentRootDirectory string        `yaml:"static_content_root_directory,omitempty"`
 	WebFQDN                    string        `yaml:"web_fqdn,omitempty"`
 	WebPort                    string        `yaml:"web_port,omitempty"`
@@ -570,6 +571,11 @@ type Rate struct {
 // HealthConfig rates
 type HealthConfig struct {
 	Rate []Rate `yaml:"rate,omitempty" json:"rate,omitempty"`
+}
+
+// Profiler provides settings about the profiler that can be used to debug the Kiali server internals.
+type Profiler struct {
+	Enabled bool `yaml:"enabled,omitempty"`
 }
 
 // Config defines full YAML configuration.
