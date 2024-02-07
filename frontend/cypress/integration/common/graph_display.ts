@@ -1,4 +1,4 @@
-import { Before, Then, When, And } from '@badeball/cypress-cucumber-preprocessor';
+import { Before, Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import { ensureKialiFinishedLoading } from './transition';
 
 const url = '/console';
@@ -321,7 +321,7 @@ Then('{string} option {string} in the graph', (option: string, action: string) =
   validateInput(option, action);
 });
 
-And('the {string} option should {string} and {string}', (option:string, optionState:string, checkState:string) => {
+Then('the {string} option should {string} and {string}', (option: string, optionState: string, checkState: string) => {
   switch (option) {
     case 'operation nodes':
       option = 'filterOperationNodes';
@@ -332,7 +332,10 @@ And('the {string} option should {string} and {string}', (option:string, optionSt
     default:
       option = 'xxx';
   }
-  cy.get('div#graph-display-menu').find(`input#${option}`).should(optionState.replaceAll(' ','.')).and(`be.${checkState}`);
+  cy.get('div#graph-display-menu')
+    .find(`input#${option}`)
+    .should(optionState.replaceAll(' ', '.'))
+    .and(`be.${checkState}`);
 });
 
 function validateInput(option: string, action: string) {

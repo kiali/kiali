@@ -1,4 +1,4 @@
-import { Before, Given, Then, When, And } from '@badeball/cypress-cucumber-preprocessor';
+import { Before, Given, Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import { ensureKialiFinishedLoading } from './transition';
 
 Before(() => {
@@ -171,7 +171,7 @@ Then('user sees the memory chart', () => {
   cy.get('div[data-test="memory-chart"]').should('exist');
 });
 
-And('user sees the cpu chart', () => {
+Then('user sees the cpu chart', () => {
   cy.get('div[data-test="cpu-chart"]').should('exist');
 });
 
@@ -226,7 +226,7 @@ Then('the user sees information related to canary upgrades', view => {
   cy.get('[data-test="canary-upgrade"]').should('exist');
 });
 
-And('user sees the {string} label in the {string} namespace card', (label: string, ns: string) => {
+Then('user sees the {string} label in the {string} namespace card', (label: string, ns: string) => {
   cy.log(label);
   cy.get('article[data-test^="' + ns + '"]')
     .contains(label)

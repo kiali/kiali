@@ -4,7 +4,7 @@
   pages since these are all similar.
 */
 
-import { And, Then, When } from '@badeball/cypress-cucumber-preprocessor';
+import { Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import {
   getColWithRowText,
   ensureObjectsInTable,
@@ -37,7 +37,7 @@ When('user selects a trace', () => {
   cy.getBySel('jaeger-scatterplot').find(`path${tracingDotQuery}`).first().should('be.visible').click({ force: true });
 });
 
-And('user sees span details', () => {
+Then('user sees span details', () => {
   cy.getBySel('trace-details-tabs').should('be.visible').contains('Span Details').click({ scrollBehavior: false });
   cy.get('table')
     .should('be.visible')
@@ -62,7 +62,7 @@ When('I fetch the list of applications', function () {
   cy.visit('/console/applications?refresh=0');
 });
 
-And('user sees Health information for Apps', () => {
+Then('user sees Health information for Apps', () => {
   getColWithRowText(APP, 'Health').find(
     'svg[class=icon-healthy], svg[class=icon-unhealthy], svg[class=icon-degraded], svg[class=icon-na]'
   );
@@ -72,31 +72,31 @@ Then('user sees all the Apps in the bookinfo namespace', () => {
   ensureObjectsInTable('details', 'kiali-traffic-generator', 'productpage', 'ratings', 'reviews');
 });
 
-And('user sees Name information for Apps', () => {
+Then('user sees Name information for Apps', () => {
   // There should be a table with a heading for each piece of information.
   getColWithRowText(APP, 'Name').within(() => {
     cy.get(`a[href*="/namespaces/bookinfo/applications/${APP}"]`).should('be.visible');
   });
 });
 
-And('user sees Namespace information for Apps', () => {
+Then('user sees Namespace information for Apps', () => {
   getColWithRowText(APP, 'Namespace').contains('bookinfo');
 });
 
-And('user sees Labels information for Apps', () => {
+Then('user sees Labels information for Apps', () => {
   getColWithRowText(APP, 'Labels').contains('app=details');
   getColWithRowText(APP, 'Labels').contains('service=details');
   getColWithRowText(APP, 'Labels').contains('version=v1');
 });
 
-And('user sees Details information for Apps', () => {
+Then('user sees Details information for Apps', () => {
   getColWithRowText(APP, 'Details').within(() => {
     cy.contains('bookinfo-gateway');
     cy.get(`a[href*="/namespaces/bookinfo/istio/gateways/bookinfo-gateway"]`).should('be.visible');
   });
 });
 
-And('user only sees the apps with the {string} name in the {string} namespace', (name: string, ns: string) => {
+Then('user only sees the apps with the {string} name in the {string} namespace', (name: string, ns: string) => {
   let count: number;
   cy.request('GET', `/api/namespaces/${ns}/apps`).should(response => {
     count = response.body.applications.filter(item => item.name.includes(name)).length;
@@ -154,4 +154,3 @@ Then('user may only see {string}', (sees: string) => {
     });
   });
 });
-

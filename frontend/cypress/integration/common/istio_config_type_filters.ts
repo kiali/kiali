@@ -1,4 +1,4 @@
-import { And, Then, When } from '@badeball/cypress-cucumber-preprocessor';
+import { Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import { activeFilters, showMore } from './label_check';
 
 function optionCheck(name: string) {
@@ -13,7 +13,7 @@ Then('the {string} phrase is displayed', (phrase: string) => {
   cy.get('#filter-selection').contains(phrase).should('be.visible');
 });
 
-And('user filters by {string}', (filterCategory: string) => {
+When('user filters by {string}', (filterCategory: string) => {
   cy.intercept({
     pathname: '**/api/istio/config',
     query: {
@@ -23,7 +23,7 @@ And('user filters by {string}', (filterCategory: string) => {
   cy.get('select[aria-label="filter_select_type"]').select(filterCategory);
 });
 
-And('no filters are active', () => {
+Then('no filters are active', () => {
   cy.get('#filter-selection > :nth-child(2)').should('be.hidden');
 });
 
@@ -32,7 +32,7 @@ When('user expands the {string} dropdown', (placeholder: string) => {
 });
 
 Then('user can see the filter options', () => {
-  var filters: string[] = [
+  const filters: string[] = [
     'AuthorizationPolicy',
     'DestinationRule',
     'EnvoyFilter',
@@ -87,7 +87,7 @@ When('a type filter {string} is applied', (category: string) => {
   cy.get(`button[label="${category}"]`).should('be.visible').click();
 });
 
-And('user clicks the cross next to the {string}', (category: string) => {
+When('user clicks the cross next to the {string}', (category: string) => {
   cy.get('#filter-selection > :nth-child(2)').contains(category).parent().find('[aria-label="close"]').click();
 });
 
@@ -114,7 +114,7 @@ When('user chooses {int} type filters', (count: number) => {
   }
 });
 
-And('user clicks the cross on one of them', () => {
+When('user clicks the cross on one of them', () => {
   cy.get('#filter-selection > :nth-child(2)').find('[aria-label="close"]').first().click();
 });
 
@@ -126,7 +126,7 @@ Then('he can only see {int} right away', (count: number) => {
   activeFilters(count);
 });
 
-And('clicks on the button next to them', () => {
+When('clicks on the button next to them', () => {
   showMore();
 });
 
@@ -134,7 +134,7 @@ Then('he can see the remaining filter', () => {
   activeFilters(4);
 });
 
-And('makes them all visible', () => {
+When('makes them all visible', () => {
   showMore();
   activeFilters(4);
 });

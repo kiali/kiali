@@ -1,4 +1,4 @@
-import { When, Then, And, DataTable } from '@badeball/cypress-cucumber-preprocessor';
+import { When, Then, DataTable } from '@badeball/cypress-cucumber-preprocessor';
 
 Then('user can see all of the Help dropdown options', (options: DataTable) => {
   const names = options.raw()[0];
@@ -7,7 +7,7 @@ Then('user can see all of the Help dropdown options', (options: DataTable) => {
   });
 });
 
-And('the {string} button has a link', (title: string) => {
+Then('the {string} button has a link', (title: string) => {
   cy.get('li[role="none"]').contains(title).should('have.attr', 'href');
 });
 

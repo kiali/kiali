@@ -131,7 +131,7 @@ Then(`user does not see any traffic`, () => {
 Then('user sees graph duration menu', () => {
   cy.get('button#time_range_duration-toggle').invoke('attr', 'aria-expanded').should('eq', 'true');
   cy.get('ul#time_range_duration').within(() => {
-    cy.request('GET', '/api/config').should(response => {
+    cy.request('GET', '/api/config').then(response => {
       expect(response.status).to.equal(200);
       const scrapeInterval = response.body.prometheus.globalScrapeInterval;
       const retention = response.body.prometheus.storageTsdbRetention;

@@ -1,11 +1,11 @@
-import { And, Then } from '@badeball/cypress-cucumber-preprocessor';
+import { Then } from '@badeball/cypress-cucumber-preprocessor';
 import { getCellsForCol } from './table';
 import { openTab } from './transition';
 
 const APP = 'details';
 const NAMESPACE = 'bookinfo';
 
-Then('user sees details information for the {string} app', (name:string) => {
+Then('user sees details information for the {string} app', (name: string) => {
   cy.getBySel('app-description-card').within(() => {
     cy.get('#pfbadge-A').parent().parent().contains(`${name}`); // App
     cy.get('#pfbadge-W').parent().parent().contains(`${name}-v1`); // Workload
@@ -53,7 +53,7 @@ Then('user sees outbound metrics information', () => {
     });
 });
 
-And('user can filter spans by app', () => {
+Then('user can filter spans by app', () => {
   cy.get('select[aria-label="filter_select_type"]').select('App');
   cy.get('input[placeholder="Filter by App"]').type('productpage{enter}');
   cy.get('button[label="productpage"]').should('be.visible').click();

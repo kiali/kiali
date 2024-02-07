@@ -1,4 +1,4 @@
-import { And, Given, Then } from '@badeball/cypress-cucumber-preprocessor';
+import { Given, Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import { checkHealthIndicatorInTable, checkHealthStatusInTable, colExists } from './table';
 
 function activateFilter(state: string) {
@@ -37,7 +37,7 @@ Given('a degraded workload in the mesh', function () {
   this.targetWorkload = 'b-client';
 });
 
-And('user filters for workload type {string}', (workloadType: string) => {
+When('user filters for workload type {string}', (workloadType: string) => {
   cy.get('select[aria-label="filter_select_type"]')
     .parent()
     .within(() => {
@@ -58,14 +58,14 @@ Then('user sees {string} in workloads table', (workload: string) => {
   });
 });
 
-And('user should only see healthy workloads in workloads table', () => {
+Then('user should only see healthy workloads in workloads table', () => {
   cy.get('tbody').within(() => {
     cy.get('svg[class=icon-healthy]').should('be.visible');
     cy.get('svg[class=icon-unhealthy], svg[class=icon-degraded], svg[class=icon-na]').should('not.exist');
   });
 });
 
-And('user should only see workloads with the {string} label', (label: string) => {
+Then('user should only see workloads with the {string} label', (label: string) => {
   cy.wait('@refresh');
   cy.get('tbody').within(() => {
     const regex = new RegExp('\\b' + label + '=');
@@ -80,11 +80,11 @@ And('user should only see workloads with the {string} label', (label: string) =>
   });
 });
 
-And('user filters for version {string}', (state: string) => {
+When('user filters for version {string}', (state: string) => {
   activateFilter(state);
 });
 
-And('user filters for app label {string}', (state: string) => {
+When('user filters for app label {string}', (state: string) => {
   activateFilter(state);
 });
 

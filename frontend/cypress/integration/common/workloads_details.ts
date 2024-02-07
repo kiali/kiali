@@ -1,4 +1,4 @@
-import { When, And, Then } from '@badeball/cypress-cucumber-preprocessor';
+import { When, Then } from '@badeball/cypress-cucumber-preprocessor';
 import { getCellsForCol } from './table';
 
 function openTab(tab: string) {
@@ -60,7 +60,7 @@ Then('user sees workload outbound metrics information', () => {
     });
 });
 
-And('user can filter spans by workload', () => {
+Then('user can filter spans by workload', () => {
   cy.get('select[aria-label="filter_select_type"]').select('Workload');
   cy.get('input[placeholder="Filter by Workload"]').type('details-v1{enter}');
   cy.get('button[label="details-v1"]').should('be.visible').click();

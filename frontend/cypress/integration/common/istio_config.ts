@@ -1,4 +1,4 @@
-import { After, And, Given, Then, When } from '@badeball/cypress-cucumber-preprocessor';
+import { After, Given, Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import { colExists, getColWithRowText } from './table';
 import { ensureKialiFinishedLoading } from './transition';
 
@@ -311,7 +311,7 @@ When('the user refreshes the page', () => {
   ensureKialiFinishedLoading();
 });
 
-And('user filters for config {string}', (configName: string) => {
+When('user filters for config {string}', (configName: string) => {
   cy.get('select[aria-label="filter_select_value"]').select(configName);
 });
 
@@ -326,7 +326,7 @@ Then('user sees all the Istio Config objects in the bookinfo namespace', () => {
   });
 });
 
-And('user sees Name information for Istio objects', () => {
+Then('user sees Name information for Istio objects', () => {
   const object = 'bookinfo-gateway';
   // There should be a table with a heading for each piece of information.
   getColWithRowText(object, 'Name').within(() => {
@@ -334,19 +334,19 @@ And('user sees Name information for Istio objects', () => {
   });
 });
 
-And('user sees Namespace information for Istio objects', () => {
+Then('user sees Namespace information for Istio objects', () => {
   const object = 'bookinfo-gateway';
 
   getColWithRowText(object, 'Namespace').contains('bookinfo');
 });
 
-And('user sees Type information for Istio objects', () => {
+Then('user sees Type information for Istio objects', () => {
   const object = 'bookinfo-gateway';
 
   getColWithRowText(object, 'Type').contains('Gateway');
 });
 
-And('user sees Configuration information for Istio objects', () => {
+Then('user sees Configuration information for Istio objects', () => {
   const object = 'bookinfo-gateway';
   // There should be a table with a heading for each piece of information.
   getColWithRowText(object, 'Configuration').within(() => {
@@ -354,7 +354,7 @@ And('user sees Configuration information for Istio objects', () => {
   });
 });
 
-And('the user filters by {string} for {string}', (filter: string, filterValue: string) => {
+Then('the user filters by {string} for {string}', (filter: string, filterValue: string) => {
   if (filter === 'Istio Name') {
     cy.get('select[aria-label="filter_select_type"]').select(filter);
     cy.get('input[aria-label="filter_input_value"]').type(`${filterValue}{enter}`);
@@ -394,7 +394,7 @@ Then('user only sees {string}', (sees: string) => {
 Then('only {string} are visible in the {string} namespace', (sees: string, ns: string) => {
   let lowercaseSees: string = sees.charAt(0).toLowerCase() + sees.slice(1);
   let count: number;
-  cy.request('GET', `/api/istio/config?objects=${lowercaseSees}&validate=true`).should(response => {
+  cy.request('GET', `/api/istio/config?objects=${lowercaseSees}&validate=true`).then(response => {
     count = response.body[ns][lowercaseSees].length;
   });
   cy.get('tbody').contains('tr', singularize(sees));
@@ -417,7 +417,7 @@ Then('the user can create a {string} Istio object', (object: string) => {
 });
 
 Then('the user can create a {string} K8s Istio object', (object: string) => {
-  cy.request('GET', '/api/config').should(response => {
+  cy.request('GET', '/api/config').then(response => {
     expect(response.status).to.equal(200);
     const gatewayAPIEnabled = response.body.gatewayAPIEnabled;
 
