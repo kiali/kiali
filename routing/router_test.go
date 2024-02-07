@@ -81,6 +81,7 @@ func TestSimpleRoute(t *testing.T) {
 
 func TestProfilerRoute(t *testing.T) {
 	conf := new(config.Config)
+	conf.Auth.Strategy = "anonymous"
 	conf.Server.Profiler.Enabled = true
 
 	router := NewRouter(conf, nil, nil, nil, nil, nil)
@@ -114,6 +115,7 @@ func TestProfilerRoute(t *testing.T) {
 
 func TestDisabledProfilerRoute(t *testing.T) {
 	conf := new(config.Config)
+	conf.Auth.Strategy = "anonymous"
 	conf.Server.Profiler.Enabled = false
 
 	router := NewRouter(conf, nil, nil, nil, nil, nil)
