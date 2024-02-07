@@ -50,22 +50,11 @@ Feature: Kiali Workload Details page
 
   @bookinfo-app
   @tracing
-  Scenario: See View in Tracing link
+  Scenario: See tracing links
     And user sees trace information
     Then the user can see the "View in Tracing" link
-
-  @bookinfo-app
-  @tracing
-  Scenario: See View in Tracing link for a trace
-    And user sees trace information
     When user selects a trace
     Then the user can see the "View in Tracing" trace link
-
-  @bookinfo-app
-  @tracing
-  Scenario: See More Span Details link for a Span
-    And user sees trace information
-    When user selects a trace
     And user sees span details
     Then the user can see the "More span details" span link
 
