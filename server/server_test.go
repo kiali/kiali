@@ -14,6 +14,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	rpprof "runtime/pprof"
 	"strings"
 	"testing"
 	"time"
@@ -272,8 +273,22 @@ func TestSecureComm(t *testing.T) {
 		}
 	}
 
+	// check profiler endpoints
+
 	if _, err = getRequestResults(t, httpClient, profilerURL, noCredentials); err != nil {
 		t.Fatalf("Failed: Profiler URL shouldn't have failed with no credentials: %v", err)
+	}
+
+	for _, p := range rpprof.Profiles() {
+		if _, err = getRequestResults(t, httpClient, profilerURL+p.Name(), noCredentials); err != nil {
+			t.Fatalf("Failed to get profile [%v]: %v", p, err)
+		}
+	}
+	// note we do not test "profile" endpoint - it takes too long and besides that the test framework eventually times out
+	for _, p := range []string{"symbol", "trace"} {
+		if _, err = getRequestResults(t, httpClient, profilerURL+p, noCredentials); err != nil {
+			t.Fatalf("Failed to get profile [%v]: %v", p, err)
+		}
 	}
 
 	// Make sure the server rejects anything trying to use TLS 1.1 or under
