@@ -79,12 +79,18 @@ func NewServer(controlPlaneMonitor business.ControlPlaneMonitor,
 		NextProtos: []string{"h2", "http/1.1"},
 	}
 
+	// The /debug/pprof/profiler needs a longer write timeout. We only increate the timeout this if the profiler is enabled.
+	writeTimeout := 30 * time.Second
+	if conf.Server.Profiler.Enabled {
+		writeTimeout = 5 * time.Minute
+	}
+
 	// create the server definition that will handle both console and api server traffic
 	httpServer := &http.Server{
 		Addr:         fmt.Sprintf("%v:%v", conf.Server.Address, conf.Server.Port),
 		TLSConfig:    tlsConfig,
 		ReadTimeout:  30 * time.Second,
-		WriteTimeout: 30 * time.Second,
+		WriteTimeout: writeTimeout,
 	}
 
 	// return our new Server

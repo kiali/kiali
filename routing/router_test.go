@@ -101,7 +101,7 @@ func TestProfilerRoute(t *testing.T) {
 		body, _ := io.ReadAll(resp.Body)
 		assert.Equal(t, 200, resp.StatusCode, "Response should be ok for profile [%v]: %v", p.Name(), string(body))
 	}
-	// note we can't test "profile" endpoint - puts the system into a deadlock
+	// note we do not test "profile" endpoint - it takes too long and besides that the test framework eventually times out
 	for _, p := range []string{"symbol", "trace"} {
 		resp, err = http.Get(ts.URL + "/debug/pprof/" + p)
 		if err != nil {
