@@ -589,9 +589,6 @@ func TestIstiodResourceThresholds(t *testing.T) {
 }
 
 func TestGetMesh(t *testing.T) {
-	require := require.New(t)
-	conf := config.NewConfig()
-
 	istiodDeployment := &apps_v1.Deployment{
 		ObjectMeta: v1.ObjectMeta{
 			Name:      "istiod",
@@ -611,6 +608,10 @@ trustDomain: cluster.local
 		},
 		Data: map[string]string{"mesh": configMapData},
 	}
+
+	require := require.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
 	k8s := kubetest.NewFakeK8sClient(
 		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
 		istiodDeployment,
