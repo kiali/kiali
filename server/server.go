@@ -79,10 +79,13 @@ func NewServer(controlPlaneMonitor business.ControlPlaneMonitor,
 		NextProtos: []string{"h2", "http/1.1"},
 	}
 
-	// The /debug/pprof/profiler needs a longer write timeout. We only increate the timeout this if the profiler is enabled.
+	// The /debug/pprof/profiler by default needs a write timeout larger than 30s. But also, you can pass in &seconds=XY on the pprof URL
+	// and ask for any profile to extend to those number of seconds you specify, which could be larger than 30s.
+	// To limit the damage this may cause with large write timeouts, we only increase the timeout to 1 minute.
+	// TODO: We could make this configurable in the future. See: https://github.com/kiali/kiali/pull/7108#issuecomment-1932982697
 	writeTimeout := 30 * time.Second
 	if conf.Server.Profiler.Enabled {
-		writeTimeout = 5 * time.Minute
+		writeTimeout = 1 * time.Minute
 	}
 
 	// create the server definition that will handle both console and api server traffic

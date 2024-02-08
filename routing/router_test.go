@@ -91,15 +91,14 @@ func TestProfilerRoute(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	assert.Equal(t, 200, resp.StatusCode, "Response to index pprof page should be ok")
+	assert.Equal(t, 400, resp.StatusCode, "pprof index should exist but needed credentials")
 
 	for _, p := range rpprof.Profiles() {
 		resp, err = http.Get(ts.URL + "/debug/pprof/" + p.Name())
 		if err != nil {
 			t.Fatalf("Failed to get profile [%v]: %v", p, err)
 		}
-		body, _ := io.ReadAll(resp.Body)
-		assert.Equal(t, 200, resp.StatusCode, "Response should be ok for profile [%v]: %v", p.Name(), string(body))
+		assert.Equal(t, 400, resp.StatusCode, "pprof profile [%v] should exist but needed credentials", p.Name())
 	}
 	// note we do not test "profile" endpoint - it takes too long and besides that the test framework eventually times out
 	for _, p := range []string{"symbol", "trace"} {
@@ -107,8 +106,7 @@ func TestProfilerRoute(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Failed to get profile [%v]: %v", p, err)
 		}
-		body, _ := io.ReadAll(resp.Body)
-		assert.Equal(t, 200, resp.StatusCode, "Response should be ok for profiler endpoint [%v]: %v", p, string(body))
+		assert.Equal(t, 400, resp.StatusCode, "pprof endpoint [%v] should exist but needed credentials", p)
 	}
 }
 

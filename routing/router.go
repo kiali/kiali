@@ -78,7 +78,63 @@ func NewRouter(conf *config.Config, kialiCache cache.KialiCache, clientFactory k
 	// Build our API server routes and install them.
 	apiRoutes := NewRoutes(conf, kialiCache, clientFactory, prom, traceClientLoader, cpm)
 	authenticationHandler, _ := handlers.NewAuthenticationHandler()
-	for _, route := range apiRoutes.Routes {
+
+	allRoutes := apiRoutes.Routes
+
+	// Add the Profiler handlers if enabled
+	if conf.Server.Profiler.Enabled {
+		log.Infof("Profiler is enabled")
+		allRoutes = append(allRoutes,
+			Route{
+				Method:        "GET",
+				Name:          "PProf Index",
+				Pattern:       "/debug/pprof/", // the ending slash is important
+				HandlerFunc:   hpprof.Index,
+				Authenticated: true,
+			},
+			Route{
+				Method:        "GET",
+				Name:          "PProf Cmdline",
+				Pattern:       "/debug/pprof/cmdline",
+				HandlerFunc:   hpprof.Cmdline,
+				Authenticated: true,
+			},
+			Route{
+				Method:        "GET",
+				Name:          "PProf Profile",
+				Pattern:       "/debug/pprof/profile",
+				HandlerFunc:   hpprof.Profile,
+				Authenticated: true,
+			},
+			Route{
+				Method:        "GET",
+				Name:          "PProf Symbol",
+				Pattern:       "/debug/pprof/symbol",
+				HandlerFunc:   hpprof.Symbol,
+				Authenticated: true,
+			},
+			Route{
+				Method:        "GET",
+				Name:          "PProf Trace",
+				Pattern:       "/debug/pprof/trace",
+				HandlerFunc:   hpprof.Trace,
+				Authenticated: true,
+			},
+		)
+		for _, p := range rpprof.Profiles() {
+			allRoutes = append(allRoutes,
+				Route{
+					Method:        "GET",
+					Name:          "PProf " + p.Name(),
+					Pattern:       "/debug/pprof/" + p.Name(),
+					HandlerFunc:   hpprof.Handler(p.Name()).ServeHTTP,
+					Authenticated: true,
+				},
+			)
+		}
+	}
+
+	for _, route := range allRoutes {
 		handlerFunction := metricHandler(route.HandlerFunc, route)
 		if route.Authenticated {
 			handlerFunction = authenticationHandler.Handle(handlerFunction)
@@ -109,18 +165,6 @@ func NewRouter(conf *config.Config, kialiCache cache.KialiCache, clientFactory k
 			authCallback := ac.GetAuthCallbackHandler(http.HandlerFunc(fileServerHandler))
 			rootRouter.Methods("GET").Path(webRootWithSlash).Handler(authCallback)
 		}
-	}
-
-	if conf.Server.Profiler.Enabled {
-		log.Infof("Profiler is enabled")
-		appRouter.Path("/debug/pprof/").HandlerFunc(hpprof.Index) // the ending slash is important
-		for _, p := range rpprof.Profiles() {
-			appRouter.Path("/debug/pprof/" + p.Name()).Handler(hpprof.Handler(p.Name()))
-		}
-		appRouter.Path("/debug/pprof/cmdline").HandlerFunc(hpprof.Cmdline)
-		appRouter.Path("/debug/pprof/profile").HandlerFunc(hpprof.Profile)
-		appRouter.Path("/debug/pprof/symbol").HandlerFunc(hpprof.Symbol)
-		appRouter.Path("/debug/pprof/trace").HandlerFunc(hpprof.Trace)
 	}
 
 	rootRouter.PathPrefix(webRootWithSlash).HandlerFunc(fileServerHandler)
