@@ -17,6 +17,17 @@ import { openTab } from './transition';
 // Choosing a random bookinfo app to test with.
 const APP = 'details';
 
+const getTableCell = (row: number, cell: number) => {
+  const rowTable = cy
+    .get('table')
+    .should('be.visible')
+    .find('tbody tr') // ignore thead rows
+    .should('have.length.above', 1) // retries above cy.find() until we have a non head-row
+    .eq(row);
+
+  return rowTable.find('td').eq(cell - 1);
+};
+
 Then('user sees trace information', () => {
   openTab('Traces');
   cy.getBySel('jaeger-scatterplot');
@@ -39,23 +50,14 @@ When('user selects a trace', () => {
 
 Then('user sees span details', () => {
   cy.getBySel('trace-details-tabs').should('be.visible').contains('Span Details').click({ scrollBehavior: false });
-  cy.get('table')
-    .should('be.visible')
-    .find('tbody tr') // ignore thead rows
-    .should('have.length.above', 1) // retries above cy.find() until we have a non head-row
-    .eq(1) // take 1st  row
-    .find('td')
-    .eq(4) // take 5th cell (kebab)
-    .should('be.visible');
-  cy.get('table')
-    .should('be.visible')
-    .find('tbody tr') // ignore thead rows
-    .should('have.length.above', 1) // retries above cy.find() until we have a non head-row
-    .eq(1) // take 1st  row
-    .find('td')
-    .eq(3) // take 4th cell (Statistics)
-    .children('button')
-    .should('not.exist'); // Load Statistics button should not exist when metrics are loaded
+
+  // take 5th cell (kebab)
+  const kebabCell = getTableCell(1, 5);
+  kebabCell.should('be.visible');
+
+  // take 4th cell (Statistics)
+  const statisticsCell = getTableCell(1, 4);
+  statisticsCell.children('button').should('not.exist'); // Load Statistics button should not exist when metrics are loaded
 });
 
 When('I fetch the list of applications', function () {
