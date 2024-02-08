@@ -3,42 +3,136 @@
     "nodes": [
       {
         "data": {
-          "id": "ce7e655c7e6c5c648d786a31f2f7f698",
+          "id": "a020e49831af01e1d51016dec6171dfd",
           "cluster": "East",
-          "infraName": "",
-          "infraType": "",
-          "namespace": "",
-          "nodeType": "box",
+          "infraName": "East",
+          "infraType": "cluster",
+          "namespace": "unknown",
+          "nodeType": "infra",
           "healthData": null,
+          "infraData": {
+            "apiEndpoint": "http://127.0.0.2:9443",
+            "isKialiHome": true,
+            "kialiInstances": [
+              {
+                "namespace": "istio-system",
+                "operatorResource": "",
+                "serviceName": "kiali",
+                "url": "",
+                "version": ""
+              }
+            ],
+            "name": "East",
+            "network": "kialiNetwork",
+            "secretName": "",
+            "accessible": true
+          },
           "isBox": "cluster"
         }
       },
       {
         "data": {
-          "id": "dd5bb4b1d1e909ab11bddd702eb3412c",
-          "parent": "ce7e655c7e6c5c648d786a31f2f7f698",
+          "id": "a7784c32ca8454299b1c0d174df2034d",
+          "parent": "a020e49831af01e1d51016dec6171dfd",
           "cluster": "East",
-          "infraName": "",
-          "infraType": "",
+          "infraName": "istio-system",
+          "infraType": "namespace",
           "namespace": "istio-system",
-          "nodeType": "box",
+          "nodeType": "infra",
           "healthData": null,
+          "infraData": null,
           "isBox": "namespace"
         }
       },
       {
         "data": {
-          "id": "81603db8ce06b9f19fd7096de8200176",
-          "parent": "dd5bb4b1d1e909ab11bddd702eb3412c",
+          "id": "1c965c180910c6bfaddf3412b0fa1340",
+          "parent": "a7784c32ca8454299b1c0d174df2034d",
           "cluster": "East",
-          "infraName": "kiali-service",
+          "infraName": "Grafana",
+          "infraType": "grafana",
+          "namespace": "istio-system",
+          "nodeType": "infra",
+          "healthData": null,
+          "infraData": null
+        }
+      },
+      {
+        "data": {
+          "id": "413e90c727367c3e1aa06e973fb49e78",
+          "parent": "a7784c32ca8454299b1c0d174df2034d",
+          "cluster": "East",
+          "infraName": "jaeger",
+          "infraType": "traceStore",
+          "namespace": "istio-system",
+          "nodeType": "infra",
+          "healthData": null,
+          "infraData": null
+        }
+      },
+      {
+        "data": {
+          "id": "46d95dbc7d76eaba80100dfa480dea56",
+          "parent": "a7784c32ca8454299b1c0d174df2034d",
+          "cluster": "East",
+          "infraName": "istiod",
+          "infraType": "istiod",
+          "namespace": "istio-system",
+          "nodeType": "infra",
+          "healthData": null,
+          "infraData": null
+        }
+      },
+      {
+        "data": {
+          "id": "7b74d3459937f2d07ade2827bc6d3aac",
+          "parent": "a7784c32ca8454299b1c0d174df2034d",
+          "cluster": "East",
+          "infraName": "kiali",
           "infraType": "kiali",
           "namespace": "istio-system",
           "nodeType": "infra",
-          "healthData": null
+          "healthData": null,
+          "infraData": null
+        }
+      },
+      {
+        "data": {
+          "id": "d8ccb185b136b99873aa01aba45f69ac",
+          "parent": "a7784c32ca8454299b1c0d174df2034d",
+          "cluster": "East",
+          "infraName": "Prometheus",
+          "infraType": "metricStore",
+          "namespace": "istio-system",
+          "nodeType": "infra",
+          "healthData": null,
+          "infraData": null
         }
       }
     ],
-    "edges": []
-  }
+    "edges": [
+      {
+        "data": {
+          "id": "b1929d9ffa8db86db30bd1126633f4d0",
+          "source": "7b74d3459937f2d07ade2827bc6d3aac",
+          "target": "1c965c180910c6bfaddf3412b0fa1340"
+        }
+      },
+      {
+        "data": {
+          "id": "1773f43324632fa848d35dc5ef135bdc",
+          "source": "7b74d3459937f2d07ade2827bc6d3aac",
+          "target": "413e90c727367c3e1aa06e973fb49e78"
+        }
+      },
+      {
+        "data": {
+          "id": "e4ae6616003e43dc6b43e276fd9ee99b",
+          "source": "7b74d3459937f2d07ade2827bc6d3aac",
+          "target": "d8ccb185b136b99873aa01aba45f69ac"
+        }
+      }
+    ]
+  },
+  "timestamp": 1523364075
 }

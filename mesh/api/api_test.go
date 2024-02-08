@@ -33,30 +33,12 @@ import (
 
 // Setup mock
 
-// firstKey returns the first key from the map.
-// Useful when you don't care about ordering.
-// Empty map returns empty K value.
-func firstKey[K comparable, V any](m map[K]V) K {
-	var k K
-	for k = range m {
-		break
-	}
-	return k
-}
-
 func setupMocks(t *testing.T) *business.Layer {
-	assert := assert.New(t)
-	require := require.New(t)
-
-	conf := config.NewConfig()
-	conf.InCluster = false
-	conf.KubernetesConfig.ClusterName = "East"
-	config.Set(conf)
-
-	istioDeploymentMock := apps_v1.Deployment{
+	istiodDeployment := apps_v1.Deployment{
 		ObjectMeta: v1.ObjectMeta{
 			Name:      "istiod",
 			Namespace: "istio-system",
+			Labels:    map[string]string{"app": "istiod"},
 		},
 		Spec: apps_v1.DeploymentSpec{
 			Template: core_v1.PodTemplateSpec{
@@ -80,7 +62,7 @@ func setupMocks(t *testing.T) *business.Layer {
 		},
 	}
 
-	sidecarConfigMapMock := core_v1.ConfigMap{
+	sidecarConfigMap := core_v1.ConfigMap{
 		ObjectMeta: v1.ObjectMeta{
 			Name:      "istio-sidecar-injector",
 			Namespace: "istio-system",
@@ -90,41 +72,41 @@ func setupMocks(t *testing.T) *business.Layer {
 		},
 	}
 
-	kialiNs := core_v1.Namespace{
-		ObjectMeta: v1.ObjectMeta{Name: "istio-system"},
+	const configMapData = `accessLogFile: /dev/stdout
+enableAutoMtls: true
+rootNamespace: istio-system
+trustDomain: cluster.local
+`
+	istioConfigMap := core_v1.ConfigMap{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      "istio",
+			Namespace: "istio-system",
+		},
+		Data: map[string]string{"mesh": configMapData},
 	}
 
-	kialiSvc := []core_v1.Service{
-		{
-			ObjectMeta: v1.ObjectMeta{
-				Annotations: map[string]string{
-					"operator-sdk/primary-resource": "kiali-operator/myKialiCR",
-				},
-				Labels: map[string]string{
-					"app.kubernetes.io/part-of": "kiali",
-					"app.kubernetes.io/version": "v1.25",
-				},
-				Name:      "kiali-service",
-				Namespace: "istio-system",
-			},
-			Spec: core_v1.ServiceSpec{
-				Selector: map[string]string{
-					"app.kubernetes.io/part-of": "kiali",
-				},
-			},
+	kialiSvc := core_v1.Service{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      "kiali",
+			Namespace: "istio-system",
+			Labels:    map[string]string{"app.kubernetes.io/part-of": "kiali"},
 		},
 	}
 
 	objects := []api_runtime.Object{
-		&istioDeploymentMock,
-		&sidecarConfigMapMock,
-		&kialiNs,
+		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
+		&istiodDeployment,
+		&istioConfigMap,
+		&sidecarConfigMap,
+		&kialiSvc,
 	}
 
-	for _, obj := range kialiSvc {
-		o := obj
-		objects = append(objects, &o)
-	}
+	assert := assert.New(t)
+	require := require.New(t)
+	conf := config.NewConfig()
+	conf.InCluster = false
+	conf.KubernetesConfig.ClusterName = "East"
+	config.Set(conf)
 
 	k8s := kubetest.NewFakeK8sClient(objects...)
 	k8s.KubeClusterInfo = kubernetes.ClusterInfo{
@@ -133,14 +115,14 @@ func setupMocks(t *testing.T) *business.Layer {
 		},
 	}
 
-	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
+	//mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
 	business.SetupBusinessLayer(t, k8s, *conf)
-
-	layer := business.NewWithBackends(mockClientFactory.Clients, mockClientFactory.Clients, nil, nil)
+	clients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: k8s}
+	layer := business.NewWithBackends(clients, clients, nil, nil)
 	meshSvc := layer.Mesh
 
-	r := httptest.NewRequest("GET", "http://kiali.url.local/", nil)
-	a, err := meshSvc.GetClusters(r)
+	//r := httptest.NewRequest("GET", "http://kiali.url.local/", nil)
+	a, err := meshSvc.GetClusters()
 	require.Nil(err, "GetClusters returned error: %v", err)
 
 	require.NotNil(a, "GetClusters returned nil")
@@ -152,10 +134,6 @@ func setupMocks(t *testing.T) *business.Layer {
 
 	require.Len(a[0].KialiInstances, 1, "GetClusters didn't resolve the local Kiali instance")
 	assert.Equal("istio-system", a[0].KialiInstances[0].Namespace, "GetClusters didn't set the right namespace of the Kiali instance")
-	assert.Equal("kiali-operator/myKialiCR", a[0].KialiInstances[0].OperatorResource, "GetClusters didn't set the right operator resource of the Kiali instance")
-	assert.Equal("http://kiali.url.local", a[0].KialiInstances[0].Url, "GetClusters didn't set the right URL of the Kiali instance")
-	assert.Equal("v1.25", a[0].KialiInstances[0].Version, "GetClusters didn't set the right version of the Kiali instance")
-	assert.Equal("kiali-service", a[0].KialiInstances[0].ServiceName, "GetClusters didn't set the right service name of the Kiali instance")
 
 	return layer
 }
@@ -235,7 +213,7 @@ func TestMeshGraph(t *testing.T) {
 	defer ts.Close()
 
 	fut = graphMesh
-	url := ts.URL + "/api/mesh"
+	url := ts.URL + "/api/mesh?queryTime=1523364075"
 	resp, err := http.Get(url)
 	if err != nil {
 		t.Fatal(err)

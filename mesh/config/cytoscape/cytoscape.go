@@ -19,7 +19,6 @@ import (
 	"crypto/md5"
 	"fmt"
 	"sort"
-	"time"
 
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/mesh"
@@ -148,7 +147,7 @@ func NewConfig(meshMap mesh.MeshMap, o mesh.ConfigOptions) (result Config) {
 	elements := Elements{nodes, edges}
 	result = Config{
 		Elements:  elements,
-		Timestamp: time.Now().Unix(),
+		Timestamp: o.QueryTime,
 	}
 	return result
 }

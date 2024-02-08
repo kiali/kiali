@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 
@@ -30,7 +31,8 @@ const (
 
 // CommonOptions are those supplied to Vendors
 type CommonOptions struct {
-	Params url.Values // make available the raw query params for vendor-specific handling
+	Params    url.Values // make available the raw query params for vendor-specific handling
+	QueryTime int64      // unix time in seconds
 }
 
 // ConfigOptions are those supplied to Config Vendors
@@ -76,8 +78,10 @@ func NewOptions(r *http.Request) Options {
 
 	// query params
 	params := r.URL.Query()
+	var queryTime int64
 	appenders := RequestedAppenders{All: true}
 	configVendor := params.Get("configVendor")
+	queryTimeString := params.Get("queryTime")
 
 	if _, ok := params["appenders"]; ok {
 		appenderNames := strings.Split(params.Get("appenders"), ",")
@@ -90,6 +94,15 @@ func NewOptions(r *http.Request) Options {
 		configVendor = defaultConfigVendor
 	} else if configVendor != VendorCytoscape {
 		BadRequest(fmt.Sprintf("Invalid configVendor [%s]", configVendor))
+	}
+	if queryTimeString == "" {
+		queryTime = time.Now().Unix()
+	} else {
+		var queryTimeErr error
+		queryTime, queryTimeErr = strconv.ParseInt(queryTimeString, 10, 64)
+		if queryTimeErr != nil {
+			BadRequest(fmt.Sprintf("Invalid queryTime [%s]", queryTimeString))
+		}
 	}
 
 	// Process namespaces options:
@@ -117,7 +130,8 @@ func NewOptions(r *http.Request) Options {
 		ConfigVendor:         configVendor,
 		ConfigOptions: ConfigOptions{
 			CommonOptions: CommonOptions{
-				Params: params,
+				Params:    params,
+				QueryTime: queryTime,
 			},
 		},
 	}
