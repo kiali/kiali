@@ -696,7 +696,7 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
   }
 
   renderIstioConfigStatus(ns: NamespaceInfo): JSX.Element {
-    let validations: ValidationStatus = { objectCount: 0, errors: 0, warnings: 0 };
+    let validations: ValidationStatus = { errors: 0, namespace: ns.name, objectCount: 0, warnings: 0 };
 
     if (!!ns.validations) {
       validations = ns.validations;
@@ -704,13 +704,13 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
 
     return (
       <ValidationSummaryLink
-        namespace={ns.name}
+        namespace={validations.namespace}
         objectCount={validations.objectCount}
         errors={validations.errors}
         warnings={validations.warnings}
       >
         <ValidationSummary
-          id={`ns-val-${ns.name}`}
+          id={`ns-val-${validations.namespace}`}
           errors={validations.errors}
           warnings={validations.warnings}
           objectCount={validations.objectCount}
