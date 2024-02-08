@@ -50,8 +50,10 @@ Then('sd::user sees inbound and outbound traffic information', () => {
   cy.get('.pf-c-card__body').within(() => {
     cy.contains('Inbound Traffic');
     cy.contains('No Inbound Traffic').should('not.exist');
+
     cy.contains('Outbound Traffic');
-    cy.contains('No Inbound Traffic').should('not.exist');
+    cy.contains('No Outbound Traffic').should('not.exist');
+
     cy.get('table.pf-c-table.pf-m-grid-md').should('exist');
     cy.contains('istio-ingressgateway');
   });
