@@ -39,7 +39,8 @@ Then('user sees trace information', () => {
 
 Then('user sees trace details', () => {
   cy.getBySel('trace-details-tabs').should('be.visible');
-  cy.getBySel('trace-details-kebab').click().contains('View on Graph');
+  cy.getBySel('trace-details-kebab').click();
+  cy.getBySel('trace-details-kebab').contains('View on Graph');
 });
 
 When('user selects a trace', () => {
@@ -49,7 +50,10 @@ When('user selects a trace', () => {
 });
 
 Then('user sees span details', () => {
-  cy.getBySel('trace-details-tabs').should('be.visible').contains('Span Details').click({ scrollBehavior: false });
+  cy.getBySel('trace-details-tabs')
+    .should('be.visible')
+    .contains('Span Details')
+    .click({ scrollBehavior: false, force: true });
 
   // take 5th cell (kebab)
   const kebabCell = getTableCell(1, 5);
