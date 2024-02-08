@@ -8,7 +8,8 @@ import {
   ChartTooltipProps,
   ChartLabel,
   ChartLegend,
-  ChartLine
+  ChartLine,
+  createContainer
 } from '@patternfly/react-charts';
 import { VictoryPortal } from 'victory-core';
 import { VictoryBoxPlot } from 'victory-box-plot';
@@ -16,7 +17,7 @@ import { format as d3Format } from 'd3-format';
 import { getFormatter, getUnit } from 'utils/Formatter';
 import { VCLines, LegendItem, LineInfo, RichDataPoint, RawOrBucket, VCDataPoint } from 'types/VictoryChartInfo';
 import { Overlay } from 'types/Overlay';
-import { newBrushVoronoiContainer, BrushHandlers } from './Container';
+import { BrushHandlers, getVoronoiContainerProps } from './Container';
 import { toBuckets } from 'utils/VictoryChartsUtils';
 import { VCEvent, addLegendEvent } from 'utils/VictoryEvents';
 import { XAxisType } from 'types/Dashboards';
@@ -27,6 +28,7 @@ import { Button, ButtonVariant, Tooltip, TooltipPosition } from '@patternfly/rea
 import regression from 'regression';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from 'components/Pf/PfColors';
+import { VictoryVoronoiContainer } from 'victory-voronoi-container';
 
 type Props<T extends RichDataPoint, O extends LineInfo> = {
   brushHandlers?: BrushHandlers;
@@ -40,8 +42,8 @@ type Props<T extends RichDataPoint, O extends LineInfo> = {
   onClick?: (datum: RawOrBucket<O>) => void;
   onTooltipClose?: (datum: RawOrBucket<O>) => void;
   onTooltipOpen?: (datum: RawOrBucket<O>) => void;
-  overrideSeriesComponentStyle?: boolean;
   overlay?: Overlay<O>;
+  overrideSeriesComponentStyle?: boolean;
   // The TracingScatter component needs a flag to indicate that the trace datapoint needs a mouse pointer
   // It could be detected indirectly, but it's complicated and less clear, a new optional flag simplifies this logic
   pointer?: boolean;
@@ -61,7 +63,9 @@ type State = {
   width: number;
 };
 
-type Padding = { top: number; left: number; right: number; bottom: number };
+type Padding = { bottom: number; left: number; right: number; top: number };
+
+type ScaleInfo = { count: number; format: string };
 
 const overlayName = 'overlay';
 
@@ -127,14 +131,14 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
     };
   }
 
-  componentDidMount() {
+  componentDidMount(): void {
     setTimeout(() => {
       this.handleResize();
       window.addEventListener('resize', this.handleResize);
     });
   }
 
-  componentWillUnmount() {
+  componentWillUnmount(): void {
     window.removeEventListener('resize', this.handleResize);
   }
 
@@ -166,7 +170,7 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
     });
   };
 
-  render() {
+  render(): React.ReactNode {
     const scaleInfo = this.scaledAxisInfo(this.props.data);
     const fullLegendData = this.buildFullLegendData();
     const filteredLegendData = this.buildFilteredLegendData(fullLegendData);
@@ -249,6 +253,29 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
 
     const filteredData = this.props.data.filter(s => !this.state.hiddenSeries.has(s.legendItem.name));
 
+    const voronoiProps = getVoronoiContainerProps(labelComponent, () => this.mouseOnLegend);
+
+    let containerComponent: React.ReactElement;
+
+    if (this.props.brushHandlers) {
+      const VoronoiBrushContainer = createContainer('brush', 'voronoi');
+
+      containerComponent = (
+        <VoronoiBrushContainer
+          brushDimension={'x'}
+          brushDomain={{ x: [0, 0] }}
+          brushStyle={{ stroke: 'transparent', fill: 'blue', fillOpacity: 0.1 }}
+          defaultBrushArea={'none'}
+          onBrushCleared={this.props.brushHandlers.onCleared}
+          onBrushDomainChange={this.props.brushHandlers.onDomainChange}
+          onBrushDomainChangeEnd={this.props.brushHandlers.onDomainChangeEnd}
+          {...voronoiProps}
+        />
+      );
+    } else {
+      containerComponent = <VictoryVoronoiContainer {...voronoiProps} />;
+    }
+
     const chart = (
       <div ref={this.containerRef} style={{ marginTop: 0, height: chartHeight }}>
         <Chart
@@ -256,12 +283,8 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
           padding={padding}
           events={events as any[]}
           height={chartHeight}
-          containerComponent={newBrushVoronoiContainer(
-            labelComponent,
-            this.props.brushHandlers,
-            () => this.mouseOnLegend
-          )}
-          scale={{ x: this.props.xAxis === 'series' ? 'linear' : 'time' }}
+          containerComponent={containerComponent}
+          scale={{ x: this.props.xAxis === 'series' ? 'linear' : 'time', y: 'linear' }}
           // Hack: Need at least 1 pxl on Y domain padding to prevent harsh clipping (https://github.com/kiali/kiali/issues/2069)
           // Hack: Chart points on the very edges are not clickable due to extra padding and the chart
           // not resizing correctly for some reason. The additional domain padding squeezes the elements
@@ -537,7 +560,11 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
     });
   };
 
-  private withStyle = (props: { [key: string]: unknown }, color?: string, strokeDasharray?: boolean) => {
+  private withStyle = (
+    props: { [key: string]: unknown },
+    color?: string,
+    strokeDasharray?: boolean
+  ): { [key: string]: unknown } => {
     return this.props.overrideSeriesComponentStyle === false
       ? props
       : {
@@ -612,7 +639,7 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
     });
   };
 
-  private scaledAxisInfo = (data: VCLines<VCDataPoint & T>) => {
+  private scaledAxisInfo = (data: VCLines<VCDataPoint & T>): ScaleInfo => {
     const ticks = Math.max(...data.map(s => s.datapoints.length));
 
     if (this.state.width < 500) {
