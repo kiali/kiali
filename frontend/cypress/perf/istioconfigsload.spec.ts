@@ -37,7 +37,7 @@ describe('Istio Configs performance tests', () => {
           const overviewUrl = encodeURI(
             `/console/namespaces/${data.detailsNs}/istio/${data.configType}/${data.configName}`
           );
-          configUrls.set("Istio Config Overview", overviewUrl)
+          configUrls.set('Istio Config Overview', overviewUrl);
         })
         .as('data');
 

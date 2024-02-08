@@ -41,10 +41,10 @@ describe('Services performance tests', () => {
           const overviewUrl = encodeURI(
             `/console/namespaces/${data.detailsNs}/services/${data.serviceName}?duration=${data.duration}&refresh=${data.refresh}&rangeDuration=${data.rangeDuration}`
           );
-          serviceUrls.set("Service Overview", overviewUrl)
-          serviceUrls.set("Service Traffic", `${overviewUrl}&tab=traffic`)
-          serviceUrls.set("Service Inbound Metrics", `${overviewUrl}&tab=in_metrics`)
-          serviceUrls.set("Service Traces", `${overviewUrl}&tab=traces`)
+          serviceUrls.set('Service Overview', overviewUrl);
+          serviceUrls.set('Service Traffic', `${overviewUrl}&tab=traffic`);
+          serviceUrls.set('Service Inbound Metrics', `${overviewUrl}&tab=in_metrics`);
+          serviceUrls.set('Service Traces', `${overviewUrl}&tab=traces`);
         })
         .as('data');
 

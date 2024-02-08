@@ -41,11 +41,11 @@ describe('Apps performance tests', () => {
           const overviewUrl = encodeURI(
             `/console/namespaces/${data.detailsNs}/applications/${data.applicationName}?duration=${data.duration}&refresh=${data.refresh}&rangeDuration=${data.rangeDuration}`
           );
-          appUrls.set("App Overview", overviewUrl)
-          appUrls.set("App Traffic", `${overviewUrl}&tab=traffic`)
-          appUrls.set("App Inbound Metrics", `${overviewUrl}&tab=in_metrics`)
-          appUrls.set("App Outbound Metrics", `${overviewUrl}&tab=out_metrics`)
-          appUrls.set("App Traces", `${overviewUrl}&tab=traces`)
+          appUrls.set('App Overview', overviewUrl);
+          appUrls.set('App Traffic', `${overviewUrl}&tab=traffic`);
+          appUrls.set('App Inbound Metrics', `${overviewUrl}&tab=in_metrics`);
+          appUrls.set('App Outbound Metrics', `${overviewUrl}&tab=out_metrics`);
+          appUrls.set('App Traces', `${overviewUrl}&tab=traces`);
         })
         .as('data');
 

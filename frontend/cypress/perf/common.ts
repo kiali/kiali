@@ -82,4 +82,3 @@ export function measureDetailsLoadTime(name: string, visits: number, detailsUrl:
       cy.writeFile(reportFilePath, contents, { flag: 'a+' });
     });
 }
-
