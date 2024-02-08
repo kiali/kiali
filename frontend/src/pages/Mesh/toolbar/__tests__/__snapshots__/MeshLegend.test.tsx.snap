@@ -4,14 +4,9 @@ exports[`GraphLegend test should render correctly 1`] = `
 <div
   className="kiali_fwvte8h"
   data-test="graph-legend"
-  style={
-    Object {
-      "fontSize": "var(--graph-side-panel--font-size)",
-    }
-  }
 >
   <div
-    className="kiali_fxa4sy7 kiali_finnrli"
+    className="kiali_fxa4sy7"
   >
     <span>
       Legend
@@ -142,20 +137,20 @@ exports[`GraphLegend test should render correctly 1`] = `
           Node Colors
           <div
             className="kiali_fasfm8t"
-            key="node-color-normal.svg"
+            key="node-color-healthy.svg"
           >
             <span
               className="kiali_fzoxfwf"
             >
               <img
-                alt="Normal"
-                src="node-color-normal.svg"
+                alt="Healthy"
+                src="node-color-healthy.svg"
               />
             </span>
             <span
               className="kiali_f7pgfh0"
             >
-              Normal
+              Healthy
             </span>
           </div>
           <div
@@ -376,20 +371,20 @@ exports[`GraphLegend test should render correctly 1`] = `
           Traffic Animation
           <div
             className="kiali_fasfm8t"
-            key="traffic-normal-request.svg"
+            key="traffic-healthy-request.svg"
           >
             <span
               className="kiali_fzoxfwf"
             >
               <img
-                alt="Normal Request"
-                src="traffic-normal-request.svg"
+                alt="Healthy Request"
+                src="traffic-healthy-request.svg"
               />
             </span>
             <span
               className="kiali_f7pgfh0"
             >
-              Normal Request
+              Healthy Request
             </span>
           </div>
           <div

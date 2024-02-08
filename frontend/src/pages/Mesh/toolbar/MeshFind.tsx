@@ -58,7 +58,7 @@ type ReduxProps = {
 };
 
 type MeshFindProps = ReduxProps & {
-  controller: Controller;
+  controller?: Controller;
   elementsChanged: boolean;
 };
 
@@ -101,9 +101,9 @@ const meshFindStyle = kialiStyle({
   }
 });
 
-const operands: string[] = ['cluster', 'healthy', 'label:', 'mtls', 'name', 'namespace', 'node', 'outside'];
+const operands: string[] = ['cluster', 'healthy', 'inaccessible', 'name', 'node', 'namespace', 'infratype'];
 
-class MeshFindComponent extends React.Component<MeshFindProps, MeshFindState> {
+export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindState> {
   static contextTypes = {
     router: () => null
   };
