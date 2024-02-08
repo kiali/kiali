@@ -43,12 +43,11 @@ Feature: Kiali Graph page - Side panel menu actions
     And the side panel links should contain a "clusterName=west" parameter
     And "west" cluster badge for the graph side panel should be visible
     And user opens the kebab menu of the graph side panel
-    # TODO: Uncomment when https://github.com/kiali/kiali/issues/7024 is fixed
-    #And user clicks the "delete_traffic_routing" item of the kebab menu of the graph side panel
-    #Then user should see the confirmation dialog to delete all traffic routing
-    #When user chooses to delete the routing
-    #And user is at the "istio" list page
-    #Then user does not see traffic routing objects for the "reviews" service in the "bookinfo" namespace in the "west" cluster
+    And user clicks the "delete_traffic_routing" item of the kebab menu of the graph side panel
+    Then user should see the confirmation dialog to delete all traffic routing
+    When user chooses to delete the routing
+    And user is at the "istio" list page
+    Then user does not see traffic routing objects for the "reviews" service in the "bookinfo" namespace in the "west" cluster
 
   @multi-cluster
   Scenario Outline: Ability to launch <action> wizard from graph side panel

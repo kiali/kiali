@@ -45,7 +45,12 @@ import { IstioMetricsMap, MetricsStatsResult } from '../types/Metrics';
 import { Namespace } from '../types/Namespace';
 import { KialiCrippledFeatures, ServerConfig } from '../types/ServerConfig';
 import { StatusState } from '../types/StatusState';
-import { ServiceDetailsInfo, ServiceDetailsQuery, ServiceUpdateQuery } from '../types/ServiceInfo';
+import {
+  ServiceDetailsInfo,
+  ServiceDetailsQuery,
+  ServiceUpdateQuery,
+  isServiceDetailsInfo
+} from '../types/ServiceInfo';
 import { ServiceList, ServiceListQuery } from '../types/ServiceList';
 import { Span, TracingQuery } from 'types/Tracing';
 import { TLSStatus } from '../types/TLSStatus';
@@ -1110,6 +1115,12 @@ export function deleteServiceTrafficRouting(
   let drList: DestinationRuleC[];
   let routeList: K8sHTTPRoute[];
   const deletePromises: Promise<ApiResponse<string>>[] = [];
+
+  if (isServiceDetailsInfo(vsOrSvc)) {
+    if (!cluster) {
+      cluster = vsOrSvc.cluster;
+    }
+  }
 
   if ('virtualServices' in vsOrSvc) {
     vsList = vsOrSvc.virtualServices;
