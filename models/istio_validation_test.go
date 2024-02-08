@@ -26,7 +26,7 @@ func TestIstioValidationsMarshal(t *testing.T) {
 	}
 	b, err := json.Marshal(validations)
 	assert.NoError(err)
-	assert.Equal(string(b), `{"virtualservice":{"bar.test2":{"name":"bar","objectType":"virtualservice","valid":false,"checks":null,"references":null},"foo.test":{"name":"foo","objectType":"virtualservice","valid":true,"checks":null,"references":null}}}`)
+	assert.Equal(string(b), `{"virtualservice":{"bar.test2":{"name":"bar","namespace":"","cluster":"","objectType":"virtualservice","valid":false,"checks":null,"references":null},"foo.test":{"name":"foo","namespace":"","cluster":"","objectType":"virtualservice","valid":true,"checks":null,"references":null}}}`)
 }
 
 func TestIstioValidationKeyMarshal(t *testing.T) {
@@ -44,8 +44,8 @@ func TestIstioValidationKeyMarshal(t *testing.T) {
 func TestSummarizeValidations(t *testing.T) {
 	assert := assert.New(t)
 
-	key1 := IstioValidationKey{ObjectType: "virtualservice", Name: "foo", Namespace: "bookinfo"}
-	key2 := IstioValidationKey{ObjectType: "virtualservice", Name: "bar", Namespace: "bookinfo"}
+	key1 := IstioValidationKey{ObjectType: "virtualservice", Name: "foo", Namespace: "bookinfo", Cluster: "east"}
+	key2 := IstioValidationKey{ObjectType: "virtualservice", Name: "bar", Namespace: "bookinfo", Cluster: "east"}
 
 	validations := IstioValidations{
 		key1: &IstioValidation{
@@ -68,7 +68,7 @@ func TestSummarizeValidations(t *testing.T) {
 		},
 	}
 
-	summary := validations.SummarizeValidation("bookinfo")
+	summary := validations.SummarizeValidation("bookinfo", "east")
 
 	assert.Equal(2, summary.Warnings)
 	assert.Equal(2, summary.Errors)
@@ -80,7 +80,7 @@ func TestSummarizeValidations(t *testing.T) {
 	validations.StripIgnoredChecks()
 	assert.Equal(1, len(validations[key1].Checks))
 	assert.Equal(1, len(validations[key2].Checks))
-	summary = validations.SummarizeValidation("bookinfo")
+	summary = validations.SummarizeValidation("bookinfo", "east")
 	assert.Equal(1, summary.Warnings)
 	assert.Equal(1, summary.Errors)
 }
