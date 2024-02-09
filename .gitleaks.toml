@@ -2,4 +2,6 @@
   description = "Allowlist"
   paths = [
     '''business/authentication/openid_auth_controller_test\.go''',
+    '''hack/istio/multicluster/env\.sh''',
+    '''hack/istio/multicluster/setup-keycloak\.sh''',
   ]
