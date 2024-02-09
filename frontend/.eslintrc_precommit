@@ -19,6 +19,13 @@
     }],
     "@typescript-eslint/no-inferrable-types": "error",
     "@typescript-eslint/explicit-function-return-type": ["error", { "allowExpressions": true }],
-    "@typescript-eslint/explicit-module-boundary-types": ["error", { "allowArgumentsExplicitlyTypedAsAny": true }]
+    "@typescript-eslint/explicit-module-boundary-types": ["error", { "allowArgumentsExplicitlyTypedAsAny": true }],
+    "no-restricted-syntax": [
+      "error",
+      {
+        "selector": "FunctionDeclaration[generator=false]:not(:has(ThisExpression))",
+        "message": "FunctionDeclaration: Function syntax is illegal. Only arrow functions are allowed"
+      }
+    ]
   }
 }
