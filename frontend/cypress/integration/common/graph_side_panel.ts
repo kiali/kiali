@@ -129,6 +129,7 @@ When(
           // element will get unmounted and disappear when
           // the context changes but the graph-side-panel does not.
           cy.get('#graph-side-panel').contains(service);
+          cy.wrap(serviceNode).as('contextNode');
         });
       });
   }
@@ -148,23 +149,19 @@ Then('{string} cluster badge for the graph side panel should be visible', (clust
 
 When('user chooses to delete the routing', () => {
   cy.get('@contextNode').then(node => {
-    // const cluster = node.data('cluster');
+    const cluster = node.data('cluster');
     const service = node.data('service');
     const namespace = node.data('namespace');
     cy.log(`Deleting traffic routing for ${service} service in namespace ${namespace}, data: ${node.data()}`);
     cy.intercept({
       pathname: `**/api/namespaces/${namespace}/istio/virtualservices/${service}`,
-      method: 'DELETE'
-      // TODO: This should include cluster name.
-      // include when https://github.com/kiali/kiali/issues/7024 is fixed.
-      // query: { clusterName: cluster }
+      method: 'DELETE',
+      query: { clusterName: cluster }
     }).as('delete-vs');
     cy.intercept({
       pathname: `**/api/namespaces/${namespace}/istio/destinationrules/${service}`,
-      method: 'DELETE'
-      // TODO: This should include cluster name.
-      // include when https://github.com/kiali/kiali/issues/7024 is fixed.
-      // query: { clusterName: cluster }
+      method: 'DELETE',
+      query: { clusterName: cluster }
     }).as('delete-dr');
 
     cy.getBySel('confirm-delete').click();

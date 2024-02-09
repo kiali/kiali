@@ -82,6 +82,16 @@ export interface ServiceDetailsInfo {
   workloads?: WorkloadOverview[];
 }
 
+// Type guard to distinguish between ServiceDetailsInfo and VirtualService[].
+// Only use it for that otherwise you'll likely to get false positives.
+export function isServiceDetailsInfo(obj: any): obj is ServiceDetailsInfo {
+  if (Array.isArray(obj)) {
+    return false;
+  }
+
+  return true;
+}
+
 export interface ServiceDetailsQuery {
   rateInterval?: string;
   validate?: boolean;
