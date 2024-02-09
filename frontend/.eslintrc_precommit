@@ -24,7 +24,7 @@
       "error",
       {
         "selector": "FunctionDeclaration[generator=false]:not(:has(ThisExpression))",
-        "message": "FunctionDeclaration: Function syntax is illegal. Only arrow functions are allowed"
+        "message": "Function declarations are not allowed. Please use arrow functions instead"
       }
     ]
   }
