@@ -44,7 +44,7 @@ const measureLoadTime = (name: string, visits: number, loadUrl: string, loadElem
     });
 }
 
-export function measureListsLoadTime(name: string, visits: number, listUrl: string): void {
+export const measureListsLoadTime = (name: string, visits: number, listUrl: string): void => {
   measureLoadTime(name, visits, listUrl, '.pf-v5-c-toolbar');
 }
 
