@@ -1,0 +1,288 @@
+
+[Apps List page]
+All Namespaces Apps list load time: 2.4591 seconds
+Selected Namespaces Apps list load time: 1.0649 seconds
+[Graph page With workloads]
+
+Graph load time for /console/graph/namespaces?traffic=grpc,grpcRequest,http,httpRequest,tcp,tcpSent&graphType=versionedApp&namespaces=bookinfo,alpha,beta,sleep&duration=300&refresh=15000&layout=kiali-dagre&namespaceLayout=kiali-dagre: 9.7311 seconds
+
+[Istio Configs List page]
+All Namespaces Istio Configs list load time: 1.6449 seconds
+Selected Namespaces Istio Configs list load time: 0.96728 seconds
+
+[Empty Namespaces]
+
+
+[Services List page]
+All Namespaces Services list load time: 3.0056 seconds
+Selected Namespaces Services list load time: 1.1466 seconds
+
+[Workloads List page]
+All Namespaces Workloads list load time: 4.1746 seconds
+Selected Namespaces Workloads list load time: 1.0637 seconds
+
+[Apps List page]
+All Namespaces Apps list load time: 1.8393 seconds
+Selected Namespaces Apps list load time: 0.96512 seconds
+[Graph page With workloads]
+
+Graph load time for /console/graph/namespaces?traffic=grpc,grpcRequest,http,httpRequest,tcp,tcpSent&graphType=versionedApp&namespaces=bookinfo,alpha,beta,sleep&duration=300&refresh=15000&layout=kiali-dagre&namespaceLayout=kiali-dagre: 5.2019 seconds
+
+[Istio Configs List page]
+Selected Namespaces Istio Configs list load time: 0.84246 seconds
+
+[Empty Namespaces]
+
+
+[Services List page]
+All Namespaces Services list load time: 1.8406 seconds
+Selected Namespaces Services list load time: 0.87520 seconds
+
+[Workloads List page]
+All Namespaces Workloads list load time: 2.9456 seconds
+Selected Namespaces Workloads list load time: 1.0984 seconds
+
+[Istio Configs List page]
+All Namespaces Istio Configs list load time: 2.2450 seconds
+Selected Namespaces Istio Configs list load time: 0.88336 seconds
+
+[Workloads List page]
+All Namespaces Workloads list load time: 2.2405 seconds
+Selected Namespaces Workloads list load time: 0.98990 seconds
+
+[Workload details page]
+Workload Overview details load time: 1.2577 seconds
+Workload Traffic details load time: 1.0235 seconds
+Workload Logs details load time: 1.1956 seconds
+Workload Inbound Metrics details load time: 1.0451 seconds
+Workload Outbound Metrics details load time: 2.3343 seconds
+
+[Workloads List page]
+All Namespaces Workloads list load time: 2.3293 seconds
+Selected Namespaces Workloads list load time: 1.0752 seconds
+
+[Workload details page]
+Workload Overview details load time: 1.2477 seconds
+Workload Traffic details load time: 0.97994 seconds
+Workload Logs details load time: 1.1694 seconds
+Workload Inbound Metrics details load time: 1.1384 seconds
+Workload Outbound Metrics details load time: 2.5422 seconds
+Workload Traces details load time: 1.1528 seconds
+Workload Envoy Clusters details load time: 1.3949 seconds
+Workload Envoy Listeners details load time: 1.4366 seconds
+Workload Envoy Routes details load time: 1.4872 seconds
+Workload Envoy Bootstrap details load time: 1.4528 seconds
+Workload Envoy Config details load time: 2.2994 seconds
+Workload Envoy Metrics details load time: 3.1664 seconds
+
+[Apps List page]
+All Namespaces Apps list load time: 3.6328 seconds
+Selected Namespaces Apps list load time: 0.90542 seconds
+
+[App details page]
+
+[Apps List page]
+All Namespaces Apps list load time: 2.5675 seconds
+Selected Namespaces Apps list load time: 0.88468 seconds
+
+[App details page]
+App Overview load time: 1.1658 seconds
+App Traffic load time: 0.97924 seconds
+App Inbound Metrics load time: 1.0447 seconds
+App Outbound Metrics load time: 0.94178 seconds
+App Traces load time: 1.0301 seconds
+
+[Services List page]
+All Namespaces Services list load time: 1.8921 seconds
+Selected Namespaces Services list load time: 0.83992 seconds
+
+[Service details page]
+Service Overview load time: 1.0016 seconds
+Service Traffic load time: 0.91762 seconds
+Service Inbound Metrics load time: 0.95174 seconds
+Service Traces load time: 0.99110 seconds
+
+[Istio Configs List page]
+All Namespaces Istio Configs list load time: 2.8855 seconds
+Selected Namespaces Istio Configs list load time: 0.87682 seconds
+
+[Istio Config details page]
+Istio Config Overview load time: 0.84414 seconds
+
+[Apps List page]
+All Namespaces Apps list load time: 2.3641 seconds
+Selected Namespaces Apps list load time: 1.1002 seconds
+
+[App details page]
+App Overview load time: 1.2046 seconds
+App Traffic load time: 0.97292 seconds
+App Inbound Metrics load time: 1.0557 seconds
+App Outbound Metrics load time: 1.0487 seconds
+App Traces load time: 1.0233 seconds
+[Graph page With workloads]
+
+Graph load time for /console/graph/namespaces?traffic=grpc,grpcRequest,http,httpRequest,tcp,tcpSent&graphType=versionedApp&namespaces=bookinfo,alpha,beta,sleep&duration=300&refresh=15000&layout=kiali-dagre&namespaceLayout=kiali-dagre: 3.1762 seconds
+
+[Istio Configs List page]
+All Namespaces Istio Configs list load time: 1.9781 seconds
+Selected Namespaces Istio Configs list load time: 0.92630 seconds
+
+[Istio Config details page]
+Istio Config Overview load time: 0.97590 seconds
+
+[Empty Namespaces]
+
+
+[Services List page]
+All Namespaces Services list load time: 1.7741 seconds
+Selected Namespaces Services list load time: 0.89572 seconds
+
+[Service details page]
+Service Overview load time: 0.99182 seconds
+Service Traffic load time: 1.0097 seconds
+Service Inbound Metrics load time: 1.0605 seconds
+Service Traces load time: 0.99916 seconds
+
+[Workloads List page]
+All Namespaces Workloads list load time: 4.0093 seconds
+Selected Namespaces Workloads list load time: 1.0637 seconds
+
+[Workload details page]
+Workload Overview load time: 1.2574 seconds
+Workload Traffic load time: 1.0059 seconds
+Workload Logs load time: 1.2809 seconds
+Workload Inbound Metrics load time: 1.0287 seconds
+Workload Outbound Metrics load time: 1.0299 seconds
+Workload Traces load time: 1.0156 seconds
+Workload Envoy Clusters load time: 1.3961 seconds
+Workload Envoy Listeners load time: 1.4393 seconds
+Workload Envoy Routes load time: 1.3551 seconds
+Workload Envoy Bootstrap load time: 1.4666 seconds
+Workload Envoy Config load time: 2.2221 seconds
+Workload Envoy Metrics load time: 1.8224 seconds
+
+[Empty Namespaces]
+
+Namespaces: 10
+Init page load time: 2.4792 seconds
+
+[Empty Namespaces]
+
+Namespaces: 10
+Init page load time: 1.8580 seconds
+Namespaces: 50
+Init page load time: 1.7649 seconds
+
+[Apps List page]
+All Namespaces Apps load time: 2.7564 seconds
+Selected Namespaces Apps load time: 0.97420 seconds
+
+[App details page]
+App Overview load time: 1.1627 seconds
+App Traffic load time: 0.94628 seconds
+App Inbound Metrics load time: 1.0018 seconds
+App Outbound Metrics load time: 1.0408 seconds
+App Traces load time: 0.90430 seconds
+
+[Graph page With workloads]
+Graph load time for /console/graph/namespaces?traffic=grpc,grpcRequest,http,httpRequest,tcp,tcpSent&graphType=versionedApp&namespaces=bookinfo,alpha,beta,sleep&duration=300&refresh=15000&layout=kiali-dagre&namespaceLayout=kiali-dagre: 4.4215 seconds
+
+[Istio Configs List page]
+Selected Namespaces Istio Configs load time: 0.85362 seconds
+
+[Istio Config details page]
+Istio Config Overview load time: 0.85644 seconds
+
+[Empty Namespaces]
+
+Namespaces: 10
+Init page load time: 3.6732 seconds
+Namespaces: 50
+Init page load time: 1.6965 seconds
+Namespaces: 300
+Init page load time: 1.8611 seconds
+
+[Services List page]
+All Namespaces Services load time: 2.8044 seconds
+Selected Namespaces Services load time: 0.83326 seconds
+
+[Service details page]
+Service Overview load time: 1.0310 seconds
+Service Traffic load time: 0.95392 seconds
+Service Inbound Metrics load time: 0.96398 seconds
+Service Traces load time: 0.96390 seconds
+
+[Workloads List page]
+All Namespaces Workloads load time: 2.4234 seconds
+Selected Namespaces Workloads load time: 0.88322 seconds
+
+[Workload details page]
+Workload Overview load time: 1.1163 seconds
+Workload Traffic load time: 0.95476 seconds
+Workload Logs load time: 1.2778 seconds
+Workload Inbound Metrics load time: 0.99806 seconds
+Workload Outbound Metrics load time: 1.0786 seconds
+Workload Traces load time: 1.3394 seconds
+Workload Envoy Clusters load time: 1.4741 seconds
+Workload Envoy Listeners load time: 1.6128 seconds
+Workload Envoy Routes load time: 1.8188 seconds
+Workload Envoy Bootstrap load time: 1.7436 seconds
+Workload Envoy Config load time: 3.0633 seconds
+
+[Apps List page]
+All Namespaces Apps load time: 3.7684 seconds
+Selected Namespaces Apps load time: 0.87496 seconds
+
+[App details page]
+App Overview load time: 1.1912 seconds
+App Traffic load time: 1.0045 seconds
+App Inbound Metrics load time: 1.1110 seconds
+App Outbound Metrics load time: 1.0735 seconds
+App Traces load time: 0.98770 seconds
+
+[Graph page With workloads]
+Graph load time for /console/graph/namespaces?traffic=grpc,grpcRequest,http,httpRequest,tcp,tcpSent&graphType=versionedApp&namespaces=bookinfo,alpha,beta,sleep&duration=300&refresh=15000&layout=kiali-dagre&namespaceLayout=kiali-dagre: 18.031 seconds
+
+[Istio Configs List page]
+All Namespaces Istio Configs load time: 1.8113 seconds
+Selected Namespaces Istio Configs load time: 0.83954 seconds
+
+[Istio Config details page]
+Istio Config Overview load time: 1.1506 seconds
+
+[Empty Namespaces]
+
+Namespaces: 10
+Init page load time: 4.4414 seconds
+Namespaces: 50
+Init page load time: 2.2173 seconds
+Namespaces: 300
+Init page load time: 1.8717 seconds
+
+[Services List page]
+All Namespaces Services load time: 2.1014 seconds
+Selected Namespaces Services load time: 0.87950 seconds
+
+[Service details page]
+Service Overview load time: 1.0051 seconds
+Service Traffic load time: 0.92610 seconds
+Service Inbound Metrics load time: 0.94824 seconds
+Service Traces load time: 0.99438 seconds
+
+[Workloads List page]
+All Namespaces Workloads load time: 3.2347 seconds
+Selected Namespaces Workloads load time: 0.94670 seconds
+
+[Workload details page]
+Workload Overview load time: 1.2236 seconds
+Workload Traffic load time: 0.97484 seconds
+Workload Logs load time: 1.1928 seconds
+Workload Inbound Metrics load time: 1.1649 seconds
+Workload Outbound Metrics load time: 1.1724 seconds
+Workload Traces load time: 1.2073 seconds
+Workload Envoy Clusters load time: 1.5798 seconds
+Workload Envoy Listeners load time: 1.6257 seconds
+Workload Envoy Routes load time: 1.6393 seconds
+Workload Envoy Bootstrap load time: 1.8405 seconds
+Workload Envoy Config load time: 2.3854 seconds
+Workload Envoy Metrics load time: 2.0820 seconds

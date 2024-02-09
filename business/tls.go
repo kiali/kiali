@@ -45,7 +45,6 @@ func (in *TLSService) MeshWidemTLSStatus(ctx context.Context, namespaces []strin
 	}
 	conf := config.Get()
 
-	// @TODO hardcoded HomeClusterName
 	istioConfigList, err := in.businessLayer.IstioConfig.GetIstioConfigList(ctx, criteria)
 	if err != nil {
 		return models.MTLSStatus{}, err
@@ -115,7 +114,60 @@ func (in *TLSService) NamespaceWidemTLSStatus(ctx context.Context, namespace, cl
 	return models.MTLSStatus{
 		Status:          mtlsStatus.NamespaceMtlsStatus(namespace).OverallStatus,
 		AutoMTLSEnabled: mtlsStatus.AutoMtlsEnabled,
+		Cluster:         cluster,
+		Namespace:       namespace,
 	}, nil
+}
+
+func (in *TLSService) ClusterWideNSmTLSStatus(ctx context.Context, nss []string, cluster string) ([]models.MTLSStatus, error) {
+	var end observability.EndFunc
+	ctx, end = observability.StartSpan(ctx, "ClusterWideNSmTLSStatus",
+		observability.Attribute("package", "business"),
+		observability.Attribute("cluster", cluster),
+	)
+	defer end()
+
+	result := []models.MTLSStatus{}
+
+	allNamespaces, err := in.getNamespaces(ctx, cluster)
+	if err != nil {
+		return result, nil
+	}
+
+	criteria := IstioConfigCriteria{
+		AllNamespaces:              true,
+		Cluster:                    cluster,
+		IncludeDestinationRules:    true,
+		IncludePeerAuthentications: true,
+	}
+
+	istioConfigList, err2 := in.businessLayer.IstioConfig.GetIstioConfigList(ctx, criteria)
+	if err2 != nil {
+		return result, err2
+	}
+
+	for _, namespace := range nss {
+		pas := kubernetes.FilterPeerAuthenticationByNamespace(namespace, istioConfigList.PeerAuthentications)
+		if config.IsRootNamespace(namespace) {
+			pas = []*security_v1beta1.PeerAuthentication{}
+		}
+		drs := kubernetes.FilterDestinationRulesByNamespaces(allNamespaces, istioConfigList.DestinationRules)
+
+		mtlsStatus := mtls.MtlsStatus{
+			PeerAuthentications: pas,
+			DestinationRules:    drs,
+			AutoMtlsEnabled:     in.hasAutoMTLSEnabled(cluster),
+			AllowPermissive:     false,
+		}
+
+		result = append(result, models.MTLSStatus{
+			Status:          mtlsStatus.NamespaceMtlsStatus(namespace).OverallStatus,
+			AutoMTLSEnabled: mtlsStatus.AutoMtlsEnabled,
+			Cluster:         cluster,
+			Namespace:       namespace,
+		})
+	}
+	return result, nil
 }
 
 func (in *TLSService) getNamespaces(ctx context.Context, cluster string) ([]string, error) {

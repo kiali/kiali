@@ -421,6 +421,19 @@ export const getConfigValidations = (
   return newRequest<[ValidationStatus]>(HTTP_VERBS.GET, urls.configValidations(), queryParams, {});
 };
 
+// comma separated list of namespaces
+export const getClusterTls = (namespaces: string, cluster?: string): Promise<ApiResponse<[TLSStatus]>> => {
+  const queryParams: QueryParams<Namespaces> = {
+    namespaces: namespaces
+  };
+
+  if (cluster) {
+    queryParams.clusterName = cluster;
+  }
+
+  return newRequest<[TLSStatus]>(HTTP_VERBS.GET, urls.clusterTls(), queryParams, {});
+};
+
 export const getServices = (namespace: string, params?: ServiceListQuery): Promise<ApiResponse<ServiceList>> => {
   return newRequest<ServiceList>(HTTP_VERBS.GET, urls.services(namespace), params, {});
 };

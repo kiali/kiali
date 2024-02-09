@@ -48,7 +48,7 @@ import {
   minTLSVersionSelector,
   refreshIntervalSelector
 } from '../../store/Selectors';
-import { nsWideMTLSStatus } from '../../types/TLSStatus';
+import { nsWideMTLSStatus, TLSStatus } from '../../types/TLSStatus';
 import { switchType } from './OverviewHelper';
 import * as Sorts from './Sorts';
 import * as Filters from './Filters';
@@ -470,9 +470,17 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
   }
 
   fetchTLS(isAscending: boolean, sortField: SortField<NamespaceInfo>): void {
-    _.chunk(this.state.namespaces, 10).forEach(chunk => {
+    const uniqueClusters = new Set<string>();
+
+    this.state.namespaces.forEach(namespace => {
+      if (namespace.cluster) {
+        uniqueClusters.add(namespace.cluster);
+      }
+    });
+
+    uniqueClusters.forEach(cluster => {
       this.promises
-        .registerChained('tlschunks', undefined, () => this.fetchTLSChunk(chunk))
+        .registerChained('tls', undefined, () => this.fetchTLSForCluster(this.state.namespaces, cluster))
         .then(() => {
           this.setState(prevState => {
             let newNamespaces = prevState.namespaces.slice();
@@ -487,19 +495,28 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
     });
   }
 
-  async fetchTLSChunk(chunk: NamespaceInfo[]): Promise<void> {
-    return Promise.all(
-      chunk.map(async (nsInfo: NamespaceInfo) => {
-        return API.getNamespaceTls(nsInfo.name, nsInfo.cluster).then(rs => ({ status: rs.data, nsInfo: nsInfo }));
-      })
-    )
+  async fetchTLSForCluster(namespaces: NamespaceInfo[], cluster: string): Promise<void> {
+    API.getClusterTls(namespaces.map(ns => ns.name).join(','), cluster)
       .then(results => {
-        results.forEach(result => {
-          result.nsInfo.tlsStatus = {
-            status: nsWideMTLSStatus(result.status.status, this.props.meshStatus),
-            autoMTLSEnabled: result.status.autoMTLSEnabled,
-            minTLS: result.status.minTLS
-          };
+        const tlsByClusterAndNamespace = new Map<string, Map<string, TLSStatus>>();
+        results.data.forEach(tls => {
+          if (tls.cluster && !tlsByClusterAndNamespace.has(tls.cluster)) {
+            tlsByClusterAndNamespace.set(tls.cluster, new Map<string, TLSStatus>());
+          }
+          if (tls.cluster && tls.namespace) {
+            tlsByClusterAndNamespace.get(tls.cluster)!.set(tls.namespace, tls);
+          }
+        });
+
+        namespaces.forEach(nsInfo => {
+          if (nsInfo.cluster && nsInfo.cluster === cluster && tlsByClusterAndNamespace.get(cluster)) {
+            const tlsStatus = tlsByClusterAndNamespace.get(cluster)!.get(nsInfo.name);
+            nsInfo.tlsStatus = {
+              status: nsWideMTLSStatus(tlsStatus!.status, this.props.meshStatus),
+              autoMTLSEnabled: tlsStatus!.autoMTLSEnabled,
+              minTLS: tlsStatus!.minTLS
+            };
+          }
         });
       })
       .catch(err => this.handleApiError('Could not fetch TLS status', err));
