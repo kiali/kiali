@@ -2,7 +2,7 @@ export const reportFilePath = 'cypress/results/performance.txt';
 
 export const visits = 5;
 
-function measureLoadTime(name: string, visits: number, loadUrl: string, loadElementToCheck: string): void {
+const measureLoadTime = (name: string, visits: number, loadUrl: string, loadElementToCheck: string): void => {
   // Getting an average to smooth out the results.
   let sum = 0;
   const visitsArray = Array.from({ length: visits });
