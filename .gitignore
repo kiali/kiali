@@ -95,3 +95,4 @@ frontend/logs
 # Cypress
 frontend/cypress/videos
 frontend/cypress/screenshots
+frontend/cypress/results
