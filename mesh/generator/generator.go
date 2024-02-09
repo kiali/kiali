@@ -72,15 +72,21 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalIn
 		// add the Kiali external services...  How to do this?
 		var node *mesh.Node
 		node, _, err = addInfra(meshMap, mesh.InfraTypeMetricStore, conf.KubernetesConfig.ClusterName, conf.Deployment.Namespace, "Prometheus", nil)
+		mesh.CheckError(err)
+
 		kiali.AddEdge(node)
 
 		if conf.ExternalServices.Tracing.Enabled {
 			node, _, err = addInfra(meshMap, mesh.InfraTypeTraceStore, conf.KubernetesConfig.ClusterName, conf.Deployment.Namespace, string(conf.ExternalServices.Tracing.Provider), nil)
+			mesh.CheckError(err)
+
 			kiali.AddEdge(node)
 		}
 
 		if conf.ExternalServices.Grafana.Enabled {
 			node, _, err = addInfra(meshMap, mesh.InfraTypeGrafana, conf.KubernetesConfig.ClusterName, conf.Deployment.Namespace, "Grafana", nil)
+			mesh.CheckError(err)
+
 			kiali.AddEdge(node)
 		}
 	}

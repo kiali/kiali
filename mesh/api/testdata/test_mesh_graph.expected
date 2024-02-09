@@ -40,7 +40,6 @@
           "namespace": "istio-system",
           "nodeType": "infra",
           "healthData": null,
-          "infraData": null,
           "isBox": "namespace"
         }
       },
@@ -53,8 +52,7 @@
           "infraType": "grafana",
           "namespace": "istio-system",
           "nodeType": "infra",
-          "healthData": null,
-          "infraData": null
+          "healthData": null
         }
       },
       {
@@ -66,8 +64,7 @@
           "infraType": "traceStore",
           "namespace": "istio-system",
           "nodeType": "infra",
-          "healthData": null,
-          "infraData": null
+          "healthData": null
         }
       },
       {
@@ -79,8 +76,7 @@
           "infraType": "istiod",
           "namespace": "istio-system",
           "nodeType": "infra",
-          "healthData": null,
-          "infraData": null
+          "healthData": null
         }
       },
       {
@@ -92,8 +88,7 @@
           "infraType": "kiali",
           "namespace": "istio-system",
           "nodeType": "infra",
-          "healthData": null,
-          "infraData": null
+          "healthData": null
         }
       },
       {
@@ -105,8 +100,7 @@
           "infraType": "metricStore",
           "namespace": "istio-system",
           "nodeType": "infra",
-          "healthData": null,
-          "infraData": null
+          "healthData": null
         }
       }
     ],

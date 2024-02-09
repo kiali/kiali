@@ -38,7 +38,7 @@ type NodeData struct {
 	// Other Fields
 	HasInfra       bool        `json:"-"`                        // for local when generating boxes
 	HealthData     interface{} `json:"healthData"`               // data to calculate health status from configurations
-	InfraData      interface{} `json:"infraData,omitEmpty"`      // infraType-dependent data
+	InfraData      interface{} `json:"infraData,omitempty"`      // infraType-dependent data
 	IsAmbient      bool        `json:"isAmbient,omitempty"`      // true if configured for ambient
 	IsBox          string      `json:"isBox,omitempty"`          // set for NodeTypeBox, current values: [ 'cluster', 'namespace', 'other' ]
 	IsInaccessible bool        `json:"isInaccessible,omitempty"` // true if the node exists in an inaccessible namespace
@@ -98,7 +98,7 @@ func NewConfig(meshMap mesh.MeshMap, o mesh.ConfigOptions) (result Config) {
 		namespaceWithInfraMap[node.Data.Namespace] = true
 	}
 	for _, node = range nodes {
-		if node.Data.InfraType == mesh.InfraTypeNamespace && namespaceWithInfraMap[node.Data.InfraName] == true {
+		if node.Data.InfraType == mesh.InfraTypeNamespace && namespaceWithInfraMap[node.Data.InfraName] {
 			node.Data.HasInfra = true
 		}
 	}
@@ -232,7 +232,7 @@ func generateBoxNodes(box map[string][]*NodeData, nodes *[]*NodeWrapper, boxBy s
 			num := len(members)
 			namespace = "1 Other Namespace"
 			if num > 1 {
-				namespace = fmt.Sprintf("Non-Infra Namespaces")
+				namespace = "Non-Infra Namespaces"
 			}
 		default:
 			log.Errorf("Unsupported boxBy type [%s]", boxBy)
