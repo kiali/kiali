@@ -1100,6 +1100,7 @@ export function deleteServiceTrafficRouting(
 
 export function deleteServiceTrafficRouting(serviceDetail: ServiceDetailsInfo): Promise<ApiResponse<string>[]>;
 
+//eslint-disable-next-line no-restricted-syntax
 export function deleteServiceTrafficRouting(
   vsOrSvc: VirtualService[] | ServiceDetailsInfo,
   destinationRules?: DestinationRuleC[],
