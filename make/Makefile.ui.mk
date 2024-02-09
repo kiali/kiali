@@ -27,8 +27,8 @@ cypress-gui:
 
 ## perf-tests-run: Runs the frontend perf tests locally without the GUI.
 perf-tests-run:
-	@cd ${ROOTDIR}/frontend && ${ROOTDIR}/frontend/node_modules/cypress/bin/cypress run --headless --config numTestsKeptInMemory=0,video=false --config-file cypress-perf.config.ts
+	@cd ${ROOTDIR}/frontend && yarn cypress:run:perf --headless --config numTestsKeptInMemory=0,video=false
 
 ## perf-tests-gui: Runs the frontend perf tests locally with the GUI.
 perf-tests-gui:
-	@cd ${ROOTDIR}/frontend && yarn cypress --config-file cypress-perf.config.ts
+	@cd ${ROOTDIR}/frontend && yarn cypress:perf

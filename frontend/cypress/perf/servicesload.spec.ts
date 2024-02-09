@@ -1,4 +1,4 @@
-import { reportFilePath, measureListsLoadTime, visits } from './common';
+import { reportFilePath, measureListsLoadTime, visits, measureDetailsLoadTime } from './common';
 
 describe('Services performance tests', () => {
   beforeEach(() => {
@@ -29,6 +29,32 @@ describe('Services performance tests', () => {
     });
     it('Measures Services load time', { defaultCommandTimeout: Cypress.env('timeout') }, () => {
       measureListsLoadTime('Selected Namespaces Services', visits, servicesUrl);
+    });
+  });
+
+  describe('Service details page', () => {
+    let serviceUrls = new Map<string, string>();
+
+    before(() => {
+      cy.fixture('commonParams.json')
+        .then(data => {
+          const overviewUrl = encodeURI(
+            `/console/namespaces/${data.detailsNs}/services/${data.serviceName}?duration=${data.duration}&refresh=${data.refresh}&rangeDuration=${data.rangeDuration}`
+          );
+          serviceUrls.set('Service Overview', overviewUrl);
+          serviceUrls.set('Service Traffic', `${overviewUrl}&tab=traffic`);
+          serviceUrls.set('Service Inbound Metrics', `${overviewUrl}&tab=in_metrics`);
+          serviceUrls.set('Service Traces', `${overviewUrl}&tab=traces`);
+        })
+        .as('data');
+
+      cy.writeFile(reportFilePath, '\n[Service details page]\n', { flag: 'a+' });
+    });
+
+    it('Service details load time', { defaultCommandTimeout: Cypress.env('timeout') }, () => {
+      serviceUrls.forEach((url, name) => {
+        measureDetailsLoadTime(name, visits, url);
+      });
     });
   });
 });

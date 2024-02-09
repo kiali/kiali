@@ -1,4 +1,4 @@
-import { reportFilePath, measureListsLoadTime, visits } from './common';
+import { reportFilePath, measureListsLoadTime, visits, measureDetailsLoadTime } from './common';
 
 describe('Istio Configs performance tests', () => {
   beforeEach(() => {
@@ -25,6 +25,29 @@ describe('Istio Configs performance tests', () => {
     });
     it('Measures Istio Configs load time', { defaultCommandTimeout: Cypress.env('timeout') }, () => {
       measureListsLoadTime('Selected Namespaces Istio Configs', visits, configsUrl);
+    });
+  });
+
+  describe('Istio Config details page', () => {
+    let configUrls = new Map<string, string>();
+
+    before(() => {
+      cy.fixture('commonParams.json')
+        .then(data => {
+          const overviewUrl = encodeURI(
+            `/console/namespaces/${data.detailsNs}/istio/${data.configType}/${data.configName}`
+          );
+          configUrls.set('Istio Config Overview', overviewUrl);
+        })
+        .as('data');
+
+      cy.writeFile(reportFilePath, '\n[Istio Config details page]\n', { flag: 'a+' });
+    });
+
+    it('Istio Config details load time', { defaultCommandTimeout: Cypress.env('timeout') }, () => {
+      configUrls.forEach((url, name) => {
+        measureDetailsLoadTime(name, visits, url);
+      });
     });
   });
 });

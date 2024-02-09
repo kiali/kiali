@@ -17,7 +17,7 @@ describe('Graph performance tests', () => {
         })
         .as('data');
 
-      cy.writeFile(reportFilePath, '[Graph page With workloads]\n\n', { flag: 'a+' });
+      cy.writeFile(reportFilePath, '\n[Graph page With workloads]\n', { flag: 'a+' });
     });
 
     it('Measures Graph load time', { defaultCommandTimeout: Cypress.env('timeout') }, () => {
