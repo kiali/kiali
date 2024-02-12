@@ -43,8 +43,7 @@ Then('user sees span details', () => {
   cy.get('table')
     .should('be.visible')
     .find('tbody tr') // ignore thead rows
-    .should('have.length.above', 1) // retries above cy.find() until we have a non head-row
-    .eq(1) // take 1st  row
+    .eq(0) // take 1st  row
     .find('td')
     .eq(4) // take 5th cell (kebab)
     .should('be.visible');
@@ -52,8 +51,7 @@ Then('user sees span details', () => {
   cy.get('table')
     .should('be.visible')
     .find('tbody tr') // ignore thead rows
-    .should('have.length.above', 1) // retries above cy.find() until we have a non head-row
-    .eq(1) // take 1st  row
+    .eq(0) // take 1st  row
     .find('td')
     .eq(3) // take 4th cell (Statistics)
     .children('button')
