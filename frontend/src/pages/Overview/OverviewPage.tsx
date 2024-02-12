@@ -496,7 +496,13 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
   }
 
   async fetchTLSForCluster(namespaces: NamespaceInfo[], cluster: string): Promise<void> {
-    API.getClusterTls(namespaces.map(ns => ns.name).join(','), cluster)
+    API.getClusterTls(
+      namespaces
+        .filter(ns => ns.cluster === cluster)
+        .map(ns => ns.name)
+        .join(','),
+      cluster
+    )
       .then(results => {
         const tlsByClusterAndNamespace = new Map<string, Map<string, TLSStatus>>();
         results.data.forEach(tls => {
@@ -552,7 +558,13 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
 
   async fetchValidationResultForCluster(namespaces: NamespaceInfo[], cluster: string): Promise<void> {
     return Promise.all([
-      API.getConfigValidations(namespaces.map(ns => ns.name).join(','), cluster),
+      API.getConfigValidations(
+        namespaces
+          .filter(ns => ns.cluster === cluster)
+          .map(ns => ns.name)
+          .join(','),
+        cluster
+      ),
       API.getAllIstioConfigs([], [], false, '', '', cluster)
     ])
       .then(results => {
