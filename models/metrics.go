@@ -139,6 +139,9 @@ type Datapoint struct {
 	Value     float64
 }
 
+// MetricsPerNamespace map for MetricsMap per namespace
+type MetricsPerNamespace = map[string]MetricsMap
+
 // MetricsMap contains all simple metrics and histograms data for standard timeseries queries
 type MetricsMap = map[string][]Metric
 

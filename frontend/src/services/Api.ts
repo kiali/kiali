@@ -41,7 +41,7 @@ import { ComponentStatus, IstiodResourceThresholds } from '../types/IstioStatus'
 import { TracingInfo, TracingResponse, TracingSingleResponse } from '../types/TracingInfo';
 import { MeshClusters } from '../types/Mesh';
 import { DashboardQuery, IstioMetricsOptions, MetricsStatsQuery } from '../types/MetricsOptions';
-import { IstioMetricsMap, MetricsStatsResult } from '../types/Metrics';
+import { IstioMetricsMap, MetricsPerNamespace, MetricsStatsResult } from '../types/Metrics';
 import { Namespace } from '../types/Namespace';
 import { KialiCrippledFeatures, ServerConfig } from '../types/ServerConfig';
 import { StatusState } from '../types/StatusState';
@@ -197,6 +197,21 @@ export const getNamespaceMetrics = (
   }
 
   return newRequest<Readonly<IstioMetricsMap>>(HTTP_VERBS.GET, urls.namespaceMetrics(namespace), queryParams, {});
+};
+
+// comma separated list of namespaces
+export const getClustersMetrics = (
+  namespaces: string,
+  params: IstioMetricsOptions,
+  cluster?: string
+): Promise<ApiResponse<MetricsPerNamespace>> => {
+  const queryParams: QueryParams<IstioMetricsOptions & Namespaces> = { ...params, namespaces };
+
+  if (cluster) {
+    queryParams.clusterName = cluster;
+  }
+
+  return newRequest<MetricsPerNamespace>(HTTP_VERBS.GET, urls.clustersMetrics(), queryParams, {});
 };
 
 export const getMeshTls = (cluster?: string): Promise<ApiResponse<TLSStatus>> => {

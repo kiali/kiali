@@ -149,6 +149,7 @@ const conf = {
       namespaceTls: (namespace: string) => `api/namespaces/${namespace}/tls`,
       namespaceValidations: (namespace: string) => `api/namespaces/${namespace}/validations`,
       configValidations: () => `api/istio/validations`,
+      clustersMetrics: () => `api/clusters/metrics`,
       clustersTls: () => `api/clusters/tls`,
       meshTls: () => 'api/mesh/tls',
       outboundTrafficPolicyMode: () => 'api/mesh/outbound_traffic_policy/mode',
