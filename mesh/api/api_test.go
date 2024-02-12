@@ -95,6 +95,8 @@ trustDomain: cluster.local
 
 	objects := []api_runtime.Object{
 		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
+		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "data-plane-1"}},
+		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "data-plane-2"}},
 		&istiodDeployment,
 		&istioConfigMap,
 		&sidecarConfigMap,
