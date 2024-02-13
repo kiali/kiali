@@ -4,64 +4,88 @@ import (
 	"context"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/util"
 )
 
 const defaultHealthRateInterval = "10m"
 
-// NamespaceHealth is the API handler to get app-based health of every services in the given namespace
-func NamespaceHealth(w http.ResponseWriter, r *http.Request) {
-	// Get business layer
+// ClustersHealth is the API handler to get app-based health of every services from namespaces in the given cluster
+func ClustersHealth(w http.ResponseWriter, r *http.Request) {
+	params := r.URL.Query()
+	namespaces := params.Get("namespaces") // csl of namespaces
+	nss := []string{}
+	if len(namespaces) > 0 {
+		nss = strings.Split(namespaces, ",")
+	}
+	cluster := clusterNameFromQuery(params)
+
 	businessLayer, err := getBusiness(r)
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
+		log.Error(err)
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	p := namespaceHealthParams{}
-	if ok, err := p.extract(r); !ok {
-		// Bad request
-		RespondWithError(w, http.StatusBadRequest, err)
-		return
+	if len(nss) == 0 {
+		loadedNamespaces, _ := businessLayer.Namespace.GetClusterNamespaces(r.Context(), cluster)
+		for _, ns := range loadedNamespaces {
+			nss = append(nss, ns.Name)
+		}
 	}
+	result := models.ClustersNamespaceHealth{
+		AppHealth:      map[string]*models.NamespaceAppHealth{},
+		WorkloadHealth: map[string]*models.NamespaceWorkloadHealth{},
+		ServiceHealth:  map[string]*models.NamespaceServiceHealth{},
+	}
+	for _, ns := range nss {
+		p := namespaceHealthParams{}
+		if ok, err := p.extract(r, ns); !ok {
+			// Bad request
+			RespondWithError(w, http.StatusBadRequest, err)
+			return
+		}
 
-	// Adjust rate interval
-	rateInterval, err := adjustRateInterval(r.Context(), businessLayer, p.Namespace, p.RateInterval, p.QueryTime, p.ClusterName)
-	if err != nil {
-		handleErrorResponse(w, err, "Adjust rate interval error: "+err.Error())
-		return
-	}
+		// Adjust rate interval
+		rateInterval, err := adjustRateInterval(r.Context(), businessLayer, p.Namespace, p.RateInterval, p.QueryTime, p.ClusterName)
+		if err != nil {
+			handleErrorResponse(w, err, "Adjust rate interval error: "+err.Error())
+			return
+		}
 
-	healthCriteria := business.NamespaceHealthCriteria{Namespace: p.Namespace, Cluster: p.ClusterName, RateInterval: rateInterval, QueryTime: p.QueryTime, IncludeMetrics: true}
-	switch p.Type {
-	case "app":
-		health, err := businessLayer.Health.GetNamespaceAppHealth(r.Context(), healthCriteria)
-		if err != nil {
-			handleErrorResponse(w, err, "Error while fetching app health: "+err.Error())
-			return
+		healthCriteria := business.NamespaceHealthCriteria{Namespace: p.Namespace, Cluster: p.ClusterName, RateInterval: rateInterval, QueryTime: p.QueryTime, IncludeMetrics: true}
+		switch p.Type {
+		case "app":
+			health, err := businessLayer.Health.GetNamespaceAppHealth(r.Context(), healthCriteria)
+			if err != nil {
+				handleErrorResponse(w, err, "Error while fetching app health: "+err.Error())
+				return
+			}
+			result.AppHealth[ns] = &health
+		case "service":
+			health, err := businessLayer.Health.GetNamespaceServiceHealth(r.Context(), healthCriteria)
+			if err != nil {
+				handleErrorResponse(w, err, "Error while fetching service health: "+err.Error())
+				return
+			}
+			result.ServiceHealth[ns] = &health
+		case "workload":
+			health, err := businessLayer.Health.GetNamespaceWorkloadHealth(r.Context(), healthCriteria)
+			if err != nil {
+				handleErrorResponse(w, err, "Error while fetching workload health: "+err.Error())
+				return
+			}
+			result.WorkloadHealth[ns] = &health
 		}
-		RespondWithJSON(w, http.StatusOK, health)
-	case "service":
-		health, err := businessLayer.Health.GetNamespaceServiceHealth(r.Context(), healthCriteria)
-		if err != nil {
-			handleErrorResponse(w, err, "Error while fetching service health: "+err.Error())
-			return
-		}
-		RespondWithJSON(w, http.StatusOK, health)
-	case "workload":
-		health, err := businessLayer.Health.GetNamespaceWorkloadHealth(r.Context(), healthCriteria)
-		if err != nil {
-			handleErrorResponse(w, err, "Error while fetching workload health: "+err.Error())
-			return
-		}
-		RespondWithJSON(w, http.StatusOK, health)
 	}
+	RespondWithJSON(w, http.StatusOK, result)
 }
 
 type baseHealthParams struct {
@@ -94,7 +118,6 @@ func (p *baseHealthParams) baseExtract(r *http.Request, vars map[string]string) 
 			p.QueryTime = time.Unix(unix, 0)
 		}
 	}
-	p.Namespace = vars["namespace"]
 }
 
 // namespaceHealthParams holds the path and query parameters for NamespaceHealth
@@ -110,10 +133,11 @@ type namespaceHealthParams struct {
 	Type string `json:"type"`
 }
 
-func (p *namespaceHealthParams) extract(r *http.Request) (bool, string) {
+func (p *namespaceHealthParams) extract(r *http.Request, namespace string) (bool, string) {
 	vars := mux.Vars(r)
 	p.baseExtract(r, vars)
 	p.Type = "app"
+	p.Namespace = namespace
 	queryParams := r.URL.Query()
 	if healthType := queryParams.Get("type"); healthType != "" {
 		if healthType != "app" && healthType != "service" && healthType != "workload" {

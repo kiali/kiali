@@ -54,7 +54,7 @@ func fakeService(namespace, name string) *core_v1.Service {
 }
 
 // TestNamespaceAppHealth is unit test (testing request handling, not the prometheus client behaviour)
-func TestNamespaceAppHealth(t *testing.T) {
+func TestClustersHealth(t *testing.T) {
 	kubeObjects := []runtime.Object{fakeService("ns", "reviews"), fakeService("ns", "httpbin"), setupMockData()}
 	for _, obj := range kubetest.FakePodList() {
 		o := obj
@@ -62,9 +62,9 @@ func TestNamespaceAppHealth(t *testing.T) {
 	}
 	k8s := kubetest.NewFakeK8sClient(kubeObjects...)
 	k8s.OpenShift = true
-	ts, prom := setupNamespaceHealthEndpoint(t, k8s)
+	ts, prom := setupClustersHealthEndpoint(t, k8s)
 
-	url := ts.URL + "/api/namespaces/ns/health"
+	url := ts.URL + "/api/clusters/health"
 	mockClock()
 
 	conf := config.NewConfig()
@@ -84,7 +84,7 @@ func TestNamespaceAppHealth(t *testing.T) {
 	prom.AssertNumberOfCalls(t, "GetAllRequestRates", 1)
 }
 
-func setupNamespaceHealthEndpoint(t *testing.T, k8s *kubetest.FakeK8sClient) (*httptest.Server, *prometheustest.PromClientMock) {
+func setupClustersHealthEndpoint(t *testing.T, k8s *kubetest.FakeK8sClient) (*httptest.Server, *prometheustest.PromClientMock) {
 	conf := config.NewConfig()
 	conf.ExternalServices.Istio.IstioAPIEnabled = false
 	config.Set(conf)
@@ -95,10 +95,10 @@ func setupNamespaceHealthEndpoint(t *testing.T, k8s *kubetest.FakeK8sClient) (*h
 
 	mr := mux.NewRouter()
 
-	mr.HandleFunc("/api/namespaces/{namespace}/health", http.HandlerFunc(
+	mr.HandleFunc("/api/clusters/health", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
 			context := authentication.SetAuthInfoContext(r.Context(), &api.AuthInfo{Token: "test"})
-			NamespaceHealth(w, r.WithContext(context))
+			ClustersHealth(w, r.WithContext(context))
 		}))
 
 	ts := httptest.NewServer(mr)

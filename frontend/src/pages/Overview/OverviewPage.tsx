@@ -66,7 +66,6 @@ import { GrafanaInfo, ISTIO_DASHBOARDS } from '../../types/GrafanaInfo';
 import { ExternalLink } from '../../types/Dashboards';
 import { isParentKiosk, kioskOverviewAction } from '../../components/Kiosk/KioskActions';
 import { ValidationSummaryLink } from '../../components/Link/ValidationSummaryLink';
-import _ from 'lodash';
 import { ControlPlaneBadge } from './ControlPlaneBadge';
 import { OverviewStatus } from './OverviewStatus';
 import { ControlPlaneNamespaceStatus } from './ControlPlaneNamespaceStatus';
@@ -302,11 +301,19 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
 
   fetchHealth(isAscending: boolean, sortField: SortField<NamespaceInfo>, type: OverviewType): void {
     const duration = FilterHelper.currentDuration();
+    const uniqueClusters = new Set<string>();
 
-    // debounce async for back-pressure, ten by ten
-    _.chunk(this.state.namespaces, 10).forEach(chunk => {
+    this.state.namespaces.forEach(namespace => {
+      if (namespace.cluster) {
+        uniqueClusters.add(namespace.cluster);
+      }
+    });
+
+    uniqueClusters.forEach(cluster => {
       this.promises
-        .registerChained('healthchunks', undefined, () => this.fetchHealthChunk(chunk, duration, type))
+        .registerChained('health', undefined, () =>
+          this.fetchHealthForCluster(this.state.namespaces, cluster, duration, type)
+        )
         .then(() => {
           this.setState(prevState => {
             let newNamespaces = prevState.namespaces.slice();
@@ -317,70 +324,37 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
 
             return { namespaces: newNamespaces };
           });
-        })
-        .catch(error => {
-          if (error.isCanceled) {
-            return;
-          }
-
-          this.handleApiError('Could not fetch health', error);
         });
     });
   }
 
-  fetchGrafanaInfo(): void {
-    if (!OverviewPageComponent.grafanaInfoPromise) {
-      OverviewPageComponent.grafanaInfoPromise = API.getGrafanaInfo().then(response => {
-        if (response.status === 204) {
-          return undefined;
-        }
-
-        return response.data;
-      });
-    }
-
-    OverviewPageComponent.grafanaInfoPromise
-      .then(grafanaInfo => {
-        if (grafanaInfo) {
-          // For Overview Page only Performance and Wasm Extension dashboard are interesting
-          this.setState({
-            grafanaLinks: grafanaInfo.externalLinks.filter(link => ISTIO_DASHBOARDS.indexOf(link.name) > -1)
-          });
-        } else {
-          this.setState({ grafanaLinks: [] });
-        }
-      })
-      .catch(err => {
-        AlertUtils.addMessage({
-          ...AlertUtils.extractApiError('Could not fetch Grafana info. Turning off links to Grafana.', err),
-          group: 'default',
-          type: MessageType.INFO,
-          showNotification: false
-        });
-      });
-  }
-
-  async fetchHealthChunk(chunk: NamespaceInfo[], duration: DurationInSeconds, type: OverviewType): Promise<void> {
+  async fetchHealthForCluster(
+    namespaces: NamespaceInfo[],
+    cluster: string,
+    duration: DurationInSeconds,
+    type: OverviewType
+  ): Promise<void> {
     const apiFunc = switchType(
       type,
-      API.getNamespaceAppHealth,
-      API.getNamespaceServiceHealth,
-      API.getNamespaceWorkloadHealth
+      API.getClustersAppHealth,
+      API.getClustersServiceHealth,
+      API.getClustersWorkloadHealth
     );
 
-    return Promise.all(
-      chunk.map(async nsInfo => {
-        const healthPromise: Promise<NamespaceAppHealth | NamespaceWorkloadHealth | NamespaceServiceHealth> = apiFunc(
-          nsInfo.name,
-          duration,
-          nsInfo.cluster
-        );
+    const healthPromise: Promise<
+      Map<string, NamespaceAppHealth> | Map<string, NamespaceWorkloadHealth> | Map<string, NamespaceServiceHealth>
+    > = apiFunc(
+      namespaces
+        .filter(ns => ns.cluster === cluster)
+        .map(ns => ns.name)
+        .join(','),
+      duration,
+      cluster
+    );
 
-        return healthPromise.then(rs => ({ health: rs, nsInfo: nsInfo }));
-      })
-    )
+    return healthPromise
       .then(results => {
-        results.forEach(result => {
+        namespaces.forEach(nsInfo => {
           const nsStatus: NamespaceStatus = {
             inNotReady: [],
             inError: [],
@@ -389,24 +363,25 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
             notAvailable: []
           };
 
-          Object.keys(result.health).forEach(item => {
-            const health: Health = result.health[item];
-            const status = health.getGlobalStatus();
+          if (((nsInfo.cluster && nsInfo.cluster === cluster) || !nsInfo.cluster) && results[nsInfo.name]) {
+            Object.keys(results[nsInfo.name]).forEach(k => {
+              const health: Health = results[nsInfo.name][k];
+              const status = health.getGlobalStatus();
 
-            if (status === FAILURE) {
-              nsStatus.inError.push(item);
-            } else if (status === DEGRADED) {
-              nsStatus.inWarning.push(item);
-            } else if (status === HEALTHY) {
-              nsStatus.inSuccess.push(item);
-            } else if (status === NOT_READY) {
-              nsStatus.inNotReady.push(item);
-            } else {
-              nsStatus.notAvailable.push(item);
-            }
-          });
-
-          result.nsInfo.status = nsStatus;
+              if (status === FAILURE) {
+                nsStatus.inError.push(k);
+              } else if (status === DEGRADED) {
+                nsStatus.inWarning.push(k);
+              } else if (status === HEALTHY) {
+                nsStatus.inSuccess.push(k);
+              } else if (status === NOT_READY) {
+                nsStatus.inNotReady.push(k);
+              } else {
+                nsStatus.notAvailable.push(k);
+              }
+            });
+            nsInfo.status = nsStatus;
+          }
         });
       })
       .catch(err => this.handleApiError('Could not fetch health', err));
@@ -477,7 +452,6 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
               };
             }
           }
-          return nsInfo;
         });
       })
       .catch(err => this.handleApiError('Could not fetch metrics', err));
@@ -605,6 +579,38 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
         });
       })
       .catch(err => this.handleApiError('Could not fetch validations status', err));
+  }
+
+  fetchGrafanaInfo(): void {
+    if (!OverviewPageComponent.grafanaInfoPromise) {
+      OverviewPageComponent.grafanaInfoPromise = API.getGrafanaInfo().then(response => {
+        if (response.status === 204) {
+          return undefined;
+        }
+
+        return response.data;
+      });
+    }
+
+    OverviewPageComponent.grafanaInfoPromise
+      .then(grafanaInfo => {
+        if (grafanaInfo) {
+          // For Overview Page only Performance and Wasm Extension dashboard are interesting
+          this.setState({
+            grafanaLinks: grafanaInfo.externalLinks.filter(link => ISTIO_DASHBOARDS.indexOf(link.name) > -1)
+          });
+        } else {
+          this.setState({ grafanaLinks: [] });
+        }
+      })
+      .catch(err => {
+        AlertUtils.addMessage({
+          ...AlertUtils.extractApiError('Could not fetch Grafana info. Turning off links to Grafana.', err),
+          group: 'default',
+          type: MessageType.INFO,
+          showNotification: false
+        });
+      });
   }
 
   fetchOutboundTrafficPolicyMode(): void {
