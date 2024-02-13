@@ -1,5 +1,5 @@
-import { Graph, Layout, DagreLayout, LayoutFactory, ColaGroupsLayout } from '@patternfly/react-topology';
-import { LayoutName } from '../Mesh';
+import { Graph, Layout, LayoutFactory } from '@patternfly/react-topology';
+import { MeshLayout } from './MeshLayout';
 
 /*
 This is just for reference, a copy of PFT defaults, so we can compare any tweaks we've made below...
@@ -18,6 +18,7 @@ export const LAYOUT_DEFAULTS: LayoutOptions = {
 
 export const layoutFactory: LayoutFactory = (type: string, graph: Graph): Layout | undefined => {
   switch (type) {
+    /*
     case LayoutName.Dagre:
       return new DagreLayout(graph, {
         linkDistance: 40,
@@ -27,11 +28,18 @@ export const layoutFactory: LayoutFactory = (type: string, graph: Graph): Layout
         ranker: 'network-simplex',
         rankdir: 'LR'
       });
-    default:
+    case LayoutName.Cola:
       return new ColaGroupsLayout(graph, {
         // layoutOnDrag: false,
         maxTicks: 0,
-        nodeDistance: 50
+        nodeDistance: 35
+      });
+    */
+    default:
+      return new MeshLayout(graph, {
+        // layoutOnDrag: false,
+        maxTicks: 0,
+        nodeDistance: 35
       });
   }
 };

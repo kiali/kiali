@@ -3,11 +3,16 @@ import { bindActionCreators } from 'redux';
 import { connect } from 'react-redux';
 import FlexView from 'react-flexview';
 import { kialiStyle } from 'styles/StyleUtils';
-import { IntervalInMilliseconds, TimeInMilliseconds, TimeInSeconds } from '../../types/Common';
+import { DurationInSeconds, IntervalInMilliseconds, TimeInMilliseconds, TimeInSeconds } from '../../types/Common';
 import { Layout } from '../../types/Graph';
 import * as AlertUtils from '../../utils/AlertUtils';
 import { ErrorBoundary } from '../../components/ErrorBoundary/ErrorBoundary';
-import { meshFindValueSelector, meshHideValueSelector, refreshIntervalSelector } from '../../store/Selectors';
+import {
+  durationSelector,
+  meshFindValueSelector,
+  meshHideValueSelector,
+  refreshIntervalSelector
+} from '../../store/Selectors';
 import { KialiAppState } from '../../store/Store';
 import { PFColors } from 'components/Pf/PfColors';
 import { TourActions } from 'actions/TourActions';
@@ -37,6 +42,7 @@ import { MeshThunkActions } from 'actions/MeshThunkActions';
 
 type ReduxProps = {
   activeTour?: TourInfo;
+  duration: DurationInSeconds;
   endTour: () => void;
   findValue: string;
   hideValue: string;
@@ -58,7 +64,7 @@ type ReduxProps = {
   toggleLegend: () => void;
 };
 
-export type MeshPageProps = ReduxProps & {
+type MeshPageProps = ReduxProps & {
   lastRefreshAt: TimeInMilliseconds; // redux by way of ConnectRefresh
 };
 
@@ -163,6 +169,7 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
 
     if (
       isInitialLoad ||
+      prev.duration !== curr.duration ||
       (prev.findValue !== curr.findValue && curr.findValue.includes('label:')) ||
       (prev.hideValue !== curr.hideValue && curr.hideValue.includes('label:')) ||
       prev.lastRefreshAt !== curr.lastRefreshAt
@@ -196,7 +203,7 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
         <FlexView className={conStyle} column={true}>
           <div>
             <MeshToolbar
-              controller={this.controller!}
+              controller={this.controller}
               disabled={this.state.meshData.isLoading}
               elementsChanged={this.state.meshData.elementsChanged}
               onToggleHelp={this.toggleHelp}
@@ -231,6 +238,7 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
             </ErrorBoundary>
             {this.props.target && (
               <TargetPanel
+                duration={this.props.duration}
                 isPageVisible={this.props.isPageVisible}
                 istioAPIEnabled={this.props.istioAPIEnabled}
                 onFocus={this.onFocus}
@@ -345,10 +353,10 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
       return true;
     }
 
-    return !(
+    const sameIds =
       this.nodeOrEdgeArrayHasSameIds(nextElements.nodes, prevElements.nodes) &&
-      this.nodeOrEdgeArrayHasSameIds(nextElements.edges, prevElements.edges)
-    );
+      this.nodeOrEdgeArrayHasSameIds(nextElements.edges, prevElements.edges);
+    return !sameIds;
   };
 
   private nodeOrEdgeArrayHasSameIds = <T extends DecoratedMeshNodeWrapper | DecoratedMeshEdgeWrapper>(
@@ -365,6 +373,7 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
 
 const mapStateToProps = (state: KialiAppState) => ({
   activeTour: state.tourState.activeTour,
+  duration: durationSelector(state),
   findValue: meshFindValueSelector(state),
   hideValue: meshHideValueSelector(state),
   istioAPIEnabled: state.statusState.istioEnvironment.istioAPIEnabled,
@@ -378,7 +387,7 @@ const mapStateToProps = (state: KialiAppState) => ({
 
 const mapDispatchToProps = (dispatch: KialiDispatch) => ({
   endTour: bindActionCreators(TourActions.endTour, dispatch),
-  onReady: (controller: any) => dispatch(MeshThunkActions.meshReady(controller)),
+  onReady: (controller: Controller) => dispatch(MeshThunkActions.meshReady(controller)),
   setDefinition: bindActionCreators(MeshActions.setDefinition, dispatch),
   setLayout: bindActionCreators(MeshActions.setLayout, dispatch),
   setTarget: bindActionCreators(MeshActions.setTarget, dispatch),

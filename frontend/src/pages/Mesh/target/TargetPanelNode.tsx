@@ -1,15 +1,11 @@
 import * as React from 'react';
 import { Node, NodeModel } from '@patternfly/react-topology';
 import { kialiStyle } from 'styles/StyleUtils';
-import {
-  TargetPanelCommonProps,
-  getTitle,
-  targetPanel,
-  targetPanelHeading,
-  targetPanelWidth
-} from './TargetPanelCommon';
+import { TargetPanelCommonProps, targetPanel, targetPanelHeading, targetPanelWidth } from './TargetPanelCommon';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
-import { MeshAttr, MeshInfraType } from 'types/Mesh';
+import { MeshInfraType, MeshNodeData } from 'types/Mesh';
+import { classes } from 'typestyle';
+import { panelStyle } from 'pages/Graph/SummaryPanelStyle';
 
 type TargetPanelNodeState = {
   loading: boolean;
@@ -55,22 +51,19 @@ export class TargetPanelNode extends React.Component<TargetPanelCommonProps, Tar
 
   render() {
     const node = this.props.target.elem as Node<NodeModel, any>;
-    const data = node.getData();
-    const name = data[MeshAttr.infraName];
-    const type = data[MeshAttr.infraType];
+    const data = node.getData() as MeshNodeData;
 
     return (
-      <div className={targetPanel} style={TargetPanelNode.panelStyle}>
-        <div className={targetPanelHeading}>{getTitle('Infra')}</div>
-        {this.renderNode(name, type)}
+      <div className={classes(panelStyle, targetPanel)}>
+        <div className={targetPanelHeading}>{this.renderNode(data)}</div>
       </div>
     );
   }
 
-  private renderNode = (infraName: string, infraType: MeshInfraType): React.ReactNode => {
+  private renderNode = (data: MeshNodeData): React.ReactNode => {
     let pfBadge;
 
-    switch (infraType) {
+    switch (data.infraType) {
       case MeshInfraType.CLUSTER:
         pfBadge = PFBadges.Cluster;
         break;
@@ -93,16 +86,23 @@ export class TargetPanelNode extends React.Component<TargetPanelCommonProps, Tar
         pfBadge = PFBadges.TraceStore;
         break;
       default:
-        console.warn(`MeshElems: Unexpected infraType [${infraType}] `);
+        console.warn(`MeshElems: Unexpected infraType [${data.infraType}] `);
     }
 
     return (
-      <React.Fragment key={infraName}>
+      <React.Fragment key={data.infraName}>
         <span className={nodeStyle}>
-          <PFBadge badge={pfBadge} size="sm" style={{ marginBottom: '0.125rem' }} />
-          {infraName}{' '}
+          <PFBadge badge={PFBadges.Cluster} size="sm" />
+          {data.cluster}
         </span>
-        <br />
+        <span className={nodeStyle}>
+          <PFBadge badge={PFBadges.Namespace} size="sm" />
+          {data.namespace}
+        </span>
+        <span className={nodeStyle}>
+          <PFBadge badge={pfBadge} size="sm" />
+          {data.infraName}
+        </span>
       </React.Fragment>
     );
   };

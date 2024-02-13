@@ -16,8 +16,6 @@ import {
 } from '@patternfly/react-topology';
 import { PFBadges, PFBadgeType } from 'components/Pf/PfBadges';
 import { DEGRADED, FAILURE } from 'types/Health';
-import { PFColors } from 'components/Pf/PfColors';
-import { Span } from 'types/TracingInfo';
 import { DecoratedMeshEdgeData, DecoratedMeshEdgeWrapper, DecoratedMeshNodeData, MeshInfraType } from 'types/Mesh';
 import { BoxByType } from 'types/Graph';
 
@@ -63,8 +61,8 @@ export type NodeData = DecoratedMeshNodeData & {
 };
 
 export type EdgeData = DecoratedMeshEdgeData & {
+  endTerminalStatus: NodeStatus;
   endTerminalType: EdgeTerminalType;
-  hasSpans?: Span[];
   isFind?: boolean;
   isHighlighted?: boolean;
   isSelected?: boolean;
@@ -74,10 +72,6 @@ export type EdgeData = DecoratedMeshEdgeData & {
   tag?: string;
   tagStatus?: NodeStatus;
 };
-
-const EdgeColor = PFColors.Success;
-const EdgeColorDegraded = PFColors.Warning;
-const EdgeColorFailure = PFColors.Danger;
 
 export const getNodeStatus = (data: NodeData): NodeStatus => {
   if (data.isBox) {
@@ -191,35 +185,25 @@ const getEdgeStatus = (data: EdgeData): NodeStatus => {
     case DEGRADED.name:
       return NodeStatus.warning;
     default:
-      return NodeStatus.success;
+      return NodeStatus.default;
   }
 };
 
-const getPathStyleStroke = (data: EdgeData): PFColors => {
-  switch (data.healthStatus) {
-    case FAILURE.name:
-      return EdgeColorFailure;
-    case DEGRADED.name:
-      return EdgeColorDegraded;
-    default:
-      return EdgeColor;
-  }
-};
-
-const getPathStyle = (data: EdgeData): React.CSSProperties => {
+const getPathStyle = (_data: EdgeData): React.CSSProperties => {
   return {
-    stroke: getPathStyleStroke(data),
     strokeWidth: 3
   } as React.CSSProperties;
 };
 
 export const setEdgeOptions = (edge: EdgeModel, nodeMap: NodeMap): void => {
   const data = edge.data as EdgeData;
+  const status = getEdgeStatus(data);
 
-  data.endTerminalType = EdgeTerminalType.directional;
+  data.endTerminalStatus = status;
+  data.endTerminalType = EdgeTerminalType.none;
   data.pathStyle = getPathStyle(data);
   data.tag = getEdgeLabel(edge, nodeMap);
-  data.tagStatus = getEdgeStatus(data);
+  data.tagStatus = status;
 };
 
 export const assignEdgeHealth = (_edges: DecoratedMeshEdgeWrapper[], _nodeMap: NodeMap) => {

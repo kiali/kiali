@@ -26,7 +26,6 @@ import { TLSInfo } from 'components/Overview/TLSInfo';
 import { CanaryUpgradeProgress } from 'pages/Overview/CanaryUpgradeProgress';
 import { isParentKiosk, kioskOverviewAction } from 'components/Kiosk/KioskActions';
 import { Show } from 'pages/Overview/OverviewPage';
-import { DurationInSeconds } from 'types/Common';
 import { ControlPlaneBadge } from 'pages/Overview/ControlPlaneBadge';
 import { ControlPlaneVersionBadge } from 'pages/Overview/ControlPlaneVersionBadge';
 import { AmbientBadge } from 'components/Ambient/AmbientBadge';
@@ -88,7 +87,6 @@ const defaultState: TargetPanelNamespaceState = {
 // TODO: Should these remain fixed values?
 const healthType: OverviewType = 'app';
 const direction: DirectionType = 'outbound';
-const duration: DurationInSeconds = 60;
 
 /*
 const namespaceStyle = kialiStyle({
@@ -353,13 +351,15 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
                 isGroup: true,
                 isSeparator: false,
                 title: 'Graph',
-                action: (ns: string) => kioskOverviewAction(Show.GRAPH, ns, duration, this.props.refreshInterval)
+                action: (ns: string) =>
+                  kioskOverviewAction(Show.GRAPH, ns, this.props.duration, this.props.refreshInterval)
               },
               {
                 isGroup: true,
                 isSeparator: false,
                 title: 'Istio Config',
-                action: (ns: string) => kioskOverviewAction(Show.ISTIO_CONFIG, ns, duration, this.props.refreshInterval)
+                action: (ns: string) =>
+                  kioskOverviewAction(Show.ISTIO_CONFIG, ns, this.props.duration, this.props.refreshInterval)
               }
             ]
           }
@@ -788,7 +788,7 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
   }
 
   private fetchHealthStatus(): Promise<void> {
-    return API.getNamespaceAppHealth(this.namespace, duration, this.cluster)
+    return API.getNamespaceAppHealth(this.namespace, this.props.duration, this.cluster)
       .then(rs => {
         const nsStatus: NamespaceStatus = {
           inNotReady: [],
@@ -834,10 +834,10 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
   }
 
   private fetchMetrics(): Promise<void> {
-    const rateParams = computePrometheusRateParams(duration, 10);
+    const rateParams = computePrometheusRateParams(this.props.duration, 10);
     const options: IstioMetricsOptions = {
       filters: ['request_count', 'request_error_count'],
-      duration: duration,
+      duration: this.props.duration,
       step: rateParams.step,
       rateInterval: rateParams.rateInterval,
       direction: direction,
@@ -919,7 +919,7 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
           key={this.namespace}
           name={this.namespace}
           annotations={this.state.nsInfo!.annotations}
-          duration={duration}
+          duration={this.props.duration}
           direction={direction}
           metrics={this.state.metrics}
           errorMetrics={this.state.errorMetrics}

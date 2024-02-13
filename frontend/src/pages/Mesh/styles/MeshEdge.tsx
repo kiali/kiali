@@ -9,12 +9,10 @@ import { classes } from 'typestyle';
 //   data.pathStyle?: React.CSSProperties // additional CSS stylings for the edge/path (not the endpoint).
 //   data.isFind?: boolean                // adds graph-find overlay
 //   data.isUnhighlighted?: boolean       // adds unhighlight effects
-//   data.hasSpans?: Span[]               // adds trace overlay
 //   add showTag prop and show scaled tag on hover (when showTag is false)
 //   support [lock] icons on edge tags
 
 const ColorFind = PFColors.Gold400;
-const ColorSpan = PFColors.Purple200;
 const OverlayOpacity = 0.3;
 const OverlayWidth = 30;
 
@@ -84,20 +82,7 @@ const MeshEdgeComponent: React.FC<MeshEdgeProps> = ({ element, ...rest }) => {
   });
   cssClasses.push(edgeConnectorArrowHoverStyles);
 
-  // If has spans, add the span overlay
-  if (data.hasSpans) {
-    const spansClass = kialiStyle({
-      $nest: {
-        '& .pf-topology__edge__background': {
-          strokeWidth: OverlayWidth,
-          stroke: ColorSpan,
-          strokeOpacity: OverlayOpacity
-        }
-      }
-    });
-    cssClasses.push(spansClass);
-    // If isHighlighted, add the highlight overlay
-  } else if (data.isFind) {
+  if (data.isFind) {
     const findClass = kialiStyle({
       $nest: {
         '& .pf-topology__edge__background': {

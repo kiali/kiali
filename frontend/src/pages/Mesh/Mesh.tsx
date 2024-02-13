@@ -1,5 +1,5 @@
 import { Bullseye, Spinner } from '@patternfly/react-core';
-import { TopologyIcon, MapIcon } from '@patternfly/react-icons';
+import { MapIcon } from '@patternfly/react-icons';
 import {
   Controller,
   createTopologyControlButtons,
@@ -29,9 +29,6 @@ import { BoxByType, Layout } from 'types/Graph';
 import { elementFactory } from './elements/elementFactory';
 import { layoutFactory } from './layouts/layoutFactory';
 import { TimeInMilliseconds } from 'types/Common';
-import { KialiColaGraph } from 'components/CytoscapeGraph/graphs/KialiColaGraph';
-import { KialiDagreGraph } from 'components/CytoscapeGraph/graphs/KialiDagreGraph';
-import { KialiGridGraph } from 'components/CytoscapeGraph/graphs/KialiGridGraph';
 import { HistoryManager, URLParam } from 'app/History';
 import { TourStop } from 'components/Tour/TourStop';
 import { getFocusSelector, unsetFocusSelector } from 'utils/SearchParamUtils';
@@ -51,11 +48,12 @@ import {
   setNodeLabel
 } from './MeshElems';
 import { MeshTourStops } from './MeshHelpTour';
+import { KialiMeshGraph } from 'components/CytoscapeGraph/graphs/KialiMeshGraph';
 
 let initialLayout = false;
 let requestFit = false;
 
-const DEFAULT_NODE_SIZE = 150;
+const DEFAULT_NODE_SIZE = 100;
 const NAMESPACE_NODE_SIZE = 70;
 const ZOOM_IN = 4 / 3;
 const ZOOM_OUT = 3 / 4;
@@ -63,9 +61,10 @@ const ZOOM_OUT = 3 / 4;
 export const FIT_PADDING = 80;
 
 export enum LayoutName {
-  Cola = 'kiali-cola',
-  Dagre = 'kiali-dagre',
-  Grid = 'kiali-grid'
+  // Cola = 'kiali-cola',
+  // Dagre = 'kiali-dagre',
+  // Grid = 'kiali-grid',
+  Mesh = 'kiali-mesh'
 }
 
 // TODO: Implement some sort of focus when provided
@@ -97,7 +96,7 @@ const TopologyContent: React.FC<{
   onEdgeTap,
   onNodeTap,
   onReady,
-  setLayout: setLayoutName,
+  setLayout: _setLayoutName,
   setTarget,
   setUpdateTime,
   toggleLegend
@@ -270,7 +269,7 @@ const TopologyContent: React.FC<{
         const edge: EdgeModel = {
           animationSpeed: EdgeAnimationSpeed.none,
           data: data,
-          edgeStyle: EdgeStyle.solid,
+          edgeStyle: EdgeStyle.default,
           id: data.id,
           source: data.source,
           target: data.target,
@@ -471,7 +470,18 @@ const TopologyContent: React.FC<{
                 fitToScreen: false,
                 zoomIn: false,
                 zoomOut: false,
+                /*
                 customButtons: [
+                  {
+                    ariaLabel: 'Layout - Mesh',
+                    id: 'toolbar_layout_mesh',
+                    disabled: LayoutName.Mesh === layoutName,
+                    icon: <TopologyIcon />,
+                    tooltip: 'Layout - mesh',
+                    callback: () => {
+                      setLayoutName(LayoutName.Mesh);
+                    }
+                  },
                   {
                     ariaLabel: 'Layout - Cola',
                     id: 'toolbar_layout_cola',
@@ -493,6 +503,7 @@ const TopologyContent: React.FC<{
                     }
                   }
                 ],
+                */
                 // currently unused
                 zoomInCallback: () => {
                   controller && controller.getGraph().scaleBy(ZOOM_IN);
@@ -566,26 +577,35 @@ export const Mesh: React.FC<{
 
   const getLayoutName = (layout: Layout): LayoutName => {
     switch (layout.name) {
+      /*
+      case 'kiali-cola':
+        return LayoutName.Cola;
       case 'kiali-dagre':
         return LayoutName.Dagre;
       case 'kiali-grid':
         return LayoutName.Grid;
+     */
       default:
-        return LayoutName.Cola;
+        return LayoutName.Mesh;
     }
   };
 
   const setLayoutByName = (layoutName: LayoutName) => {
     let layout: Layout;
     switch (layoutName) {
+      /*
+      case LayoutName.Cola:
+        layout = KialiColaGraph.getLayout();
+        break;
       case LayoutName.Dagre:
         layout = KialiDagreGraph.getLayout();
         break;
       case LayoutName.Grid:
         layout = KialiGridGraph.getLayout();
         break;
+      */
       default:
-        layout = KialiColaGraph.getLayout();
+        layout = KialiMeshGraph.getLayout();
     }
 
     HistoryManager.setParam(URLParam.MESH_LAYOUT, layout.name);

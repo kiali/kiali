@@ -12,7 +12,18 @@ import * as React from 'react';
 import { PFColors } from 'components/Pf/PfColors';
 import { kialiStyle } from 'styles/StyleUtils';
 import { MeshInfraType, MeshNodeData } from 'types/Mesh';
-import { IstioLogo, IstioLogoStyle, KialiLogo, KialiLogoStyle } from '../MeshLegendData';
+import {
+  GrafanaLogo,
+  GrafanaLogoStyle,
+  IstioLogo,
+  IstioLogoStyle,
+  JaegerLogo,
+  JaegerLogoStyle,
+  KialiLogo,
+  KialiLogoStyle,
+  PrometheusLogo,
+  PrometheusLogoStyle
+} from '../MeshLegendData';
 
 // This is the registered Node component override that utilizes our customized Node.tsx component.
 
@@ -24,12 +35,23 @@ const renderIcon = (element: Node): React.ReactNode => {
   let Component: React.ComponentClass<React.ComponentProps<any>> | undefined;
   let componentStyle: React.CSSProperties | undefined;
   const data = element.getData() as MeshNodeData;
-  if (data.infraType === MeshInfraType.ISTIOD) {
+  if (data.infraType === MeshInfraType.GRAFANA) {
+    Component = GrafanaLogo;
+    componentStyle = GrafanaLogoStyle;
+  } else if (data.infraType === MeshInfraType.ISTIOD) {
     Component = IstioLogo;
     componentStyle = IstioLogoStyle;
+  } else if (data.infraType === MeshInfraType.TRACE_STORE) {
+    // TODO: don't assume Jaeger
+    Component = JaegerLogo;
+    componentStyle = JaegerLogoStyle;
   } else if (data.infraType === MeshInfraType.KIALI) {
     Component = KialiLogo;
     componentStyle = KialiLogoStyle;
+  } else if (data.infraType === MeshInfraType.METRIC_STORE) {
+    // TODO: don't assume Prom
+    Component = PrometheusLogo;
+    componentStyle = PrometheusLogoStyle;
   }
 
   const { width, height } = element.getDimensions();
@@ -51,15 +73,8 @@ const MeshNodeComponent: React.FC<MeshNodeProps> = ({ element, ...rest }) => {
   const ShapeComponent = getShapeComponent(element);
 
   const ColorFind = PFColors.Gold400;
-  const ColorSpan = PFColors.Purple200;
   const OverlayOpacity = 0.3;
   const OverlayWidth = 40;
-
-  const traceOverlayStyle = kialiStyle({
-    strokeWidth: OverlayWidth,
-    stroke: ColorSpan,
-    strokeOpacity: OverlayOpacity
-  });
 
   const findOverlayStyle = kialiStyle({
     strokeWidth: OverlayWidth,
@@ -98,9 +113,6 @@ const MeshNodeComponent: React.FC<MeshNodeProps> = ({ element, ...rest }) => {
 
   return (
     <g style={{ opacity: opacity }} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} ref={hoverRef as any}>
-      {data.hasSpans && (
-        <ShapeComponent className={traceOverlayStyle} width={width} height={height} element={element} />
-      )}
       {data.isFind && <ShapeComponent className={findOverlayStyle} width={width} height={height} element={element} />}
       <DefaultNode
         element={element}

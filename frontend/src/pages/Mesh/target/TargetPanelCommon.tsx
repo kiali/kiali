@@ -2,9 +2,10 @@ import * as React from 'react';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from 'components/Pf/PfColors';
 import { MeshTarget } from 'types/Mesh';
-import { IntervalInMilliseconds, TimeInMilliseconds } from 'types/Common';
+import { DurationInSeconds, IntervalInMilliseconds, TimeInMilliseconds } from 'types/Common';
 
 export interface TargetPanelCommonProps {
+  duration: DurationInSeconds;
   istioAPIEnabled: boolean;
   kiosk: string;
   refreshInterval: IntervalInMilliseconds;
