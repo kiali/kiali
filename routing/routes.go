@@ -1049,7 +1049,7 @@ func NewRoutes(conf *config.Config, kialiCache cache.KialiCache, clientFactory k
 			handlers.NamespaceTls,
 			true,
 		},
-		// swagger:route GET /cluster/tls tls ClusterTls
+		// swagger:route GET /clusters/tls tls ClustersTls
 		// ---
 		// Get TLS statuses for given namespaces of the given cluster
 		//
@@ -1066,8 +1066,8 @@ func NewRoutes(conf *config.Config, kialiCache cache.KialiCache, clientFactory k
 		{
 			"ClusterTls",
 			"GET",
-			"/api/cluster/tls",
-			handlers.ClusterTls,
+			"/api/clusters/tls",
+			handlers.ClustersTls,
 			true,
 		},
 		// swagger:route GET /istio/status status istioStatus

@@ -569,11 +569,11 @@ func MeshTls() (*models.MTLSStatus, int, error) {
 	}
 }
 
-func NamespaceTls(namespace string) (*models.MTLSStatus, int, error) {
-	url := fmt.Sprintf("%s/api/namespaces/%s/tls", client.kialiURL, namespace)
+func ClustersTls(namespace string) (*[]models.MTLSStatus, int, error) {
+	url := fmt.Sprintf("%s/api/clusters/tls?namespaces=%s", client.kialiURL, namespace)
 	body, code, _, err := httpGETWithRetry(url, client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
 	if err == nil {
-		status := new(models.MTLSStatus)
+		status := new([]models.MTLSStatus)
 		err = json.Unmarshal(body, &status)
 		if err == nil {
 			return status, code, nil

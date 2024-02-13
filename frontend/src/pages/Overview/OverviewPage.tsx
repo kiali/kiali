@@ -496,7 +496,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
   }
 
   async fetchTLSForCluster(namespaces: NamespaceInfo[], cluster: string): Promise<void> {
-    API.getClusterTls(
+    API.getClustersTls(
       namespaces
         .filter(ns => ns.cluster === cluster)
         .map(ns => ns.name)

@@ -32,8 +32,8 @@ func NamespaceTls(w http.ResponseWriter, r *http.Request) {
 	RespondWithJSON(w, http.StatusOK, status)
 }
 
-// ClusterTls is the API to get mTLS status for given namespaces within a single cluster
-func ClusterTls(w http.ResponseWriter, r *http.Request) {
+// ClustersTls is the API to get mTLS status for given namespaces within a single cluster
+func ClustersTls(w http.ResponseWriter, r *http.Request) {
 	params := r.URL.Query()
 	namespaces := params.Get("namespaces") // csl of namespaces
 	nss := []string{}
