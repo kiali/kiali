@@ -439,7 +439,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
     cluster: string,
     duration: number,
     direction: DirectionType
-  ): Promise<void> {
+  ): Promise<NamespaceInfo[] | void> {
     const rateParams = computePrometheusRateParams(duration, 10);
 
     const options: IstioMetricsOptions = {
@@ -451,7 +451,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
       reporter: direction === 'inbound' ? 'destination' : 'source'
     };
 
-    API.getClustersMetrics(
+    return API.getClustersMetrics(
       namespaces
         .filter(ns => ns.cluster === cluster)
         .map(ns => ns.name)
@@ -476,6 +476,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
               };
             }
           }
+          return nsInfo;
         });
       })
       .catch(err => this.handleApiError('Could not fetch metrics', err));
