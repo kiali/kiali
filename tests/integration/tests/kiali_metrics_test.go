@@ -25,6 +25,17 @@ func TestNamespaceMetrics(t *testing.T) {
 	require.Nil(pollErr, "Metrics should be returned")
 }
 
+func TestClusterMetrics(t *testing.T) {
+	require := require.New(t)
+	ctx := context.TODO()
+
+	pollErr := wait.PollUntilContextTimeout(ctx, time.Second, time.Minute, false, func(ctx context.Context) (bool, error) {
+		metrics, err := kiali.ClustersMetrics(kiali.BOOKINFO, METRICS_PARAMS)
+		return CheckMetrics((*metrics)[kiali.BOOKINFO].ResponseSize, (*metrics)[kiali.BOOKINFO].RequestSize), err
+	})
+	require.Nil(pollErr, "Metrics should be returned")
+}
+
 func TestServiceMetrics(t *testing.T) {
 	require := require.New(t)
 	name := "ratings"

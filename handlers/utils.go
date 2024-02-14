@@ -60,6 +60,39 @@ func createMetricsServiceForNamespaceMC(w http.ResponseWriter, r *http.Request, 
 	return metrics, nsInfo
 }
 
+// createMetricsServiceForClusterMC is used when the service will query across provided namespaces of given cluster.
+// It will return an error if the user does not have access to the namespace the given the cluster.
+func createMetricsServiceForClusterMC(w http.ResponseWriter, r *http.Request, promSupplier promClientSupplier, cluster string, nss []string) (*business.MetricsService, []models.Namespace) {
+	layer, err := getBusiness(r)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return nil, nil
+	}
+	prom, err := promSupplier()
+	if err != nil {
+		log.Error(err)
+		RespondWithError(w, http.StatusServiceUnavailable, "Prometheus client error: "+err.Error())
+		return nil, nil
+	}
+	var nsInfo []models.Namespace
+
+	for _, nsName := range nss {
+		ns, err2 := checkNamespaceAccess(r.Context(), layer.Namespace, nsName, cluster)
+		if err2 != nil {
+			if strings.Contains(err2.Error(), "not found") {
+				continue
+			}
+			RespondWithError(w, http.StatusForbidden, "Cannot access namespace data: "+err2.Error())
+			return nil, nil
+		}
+		nsInfo = append(nsInfo, *ns)
+	}
+
+	metrics := business.NewMetricsService(prom)
+
+	return metrics, nsInfo
+}
+
 // GetOldestNamespace is a convenience function that takes a list of Namespaces and returns the
 // Namespace with the oldest CreationTimestamp.  In a tie, preference is towards the head of the list.
 func GetOldestNamespace(namespaces []models.Namespace) *models.Namespace {

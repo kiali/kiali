@@ -1407,7 +1407,27 @@ func NewRoutes(conf *config.Config, kialiCache cache.KialiCache, clientFactory k
 			handlers.LoggingUpdate,
 			true,
 		},
-
+		// swagger:route GET /clusters/metrics clusterName namespaces clustersMetrics
+		// ---
+		// Endpoint to fetch metrics to be displayed, related to all provided namespaces of provided cluster
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      400: badRequestError
+		//      503: serviceUnavailableError
+		//      200: metricsResponse
+		//
+		{
+			"ClustersMetrics",
+			"GET",
+			"/api/clusters/metrics",
+			handlers.ClustersMetrics,
+			true,
+		},
 		// swagger:route POST /stats/metrics stats metricsStats
 		// ---
 		// Produces metrics statistics

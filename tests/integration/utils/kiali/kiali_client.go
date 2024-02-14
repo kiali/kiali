@@ -74,6 +74,9 @@ type MetricJson struct {
 	Name       string            `json:"name"`
 }
 
+// MetricsJsonMap contains map to namespace and MetricsJson
+type MetricsJsonMap map[string]*MetricsJson
+
 // MetricsJson contains all simple metrics and histograms data for standard timeseries queries
 type MetricsJson struct {
 	GrpcReceived          []MetricJson `json:"grpc_received,omitempty"`
@@ -504,6 +507,22 @@ func AppVersionGraph(graphType, name, version, namespace string) (*cytoscape.Con
 		}
 	} else {
 		return nil, code, err
+	}
+}
+
+func ClustersMetrics(namespace string, params map[string]string) (*MetricsJsonMap, error) {
+	url := fmt.Sprintf("%s/api/clusters/metrics?%s&namespaces=%s", client.kialiURL, ParamsAsString(params), namespace)
+	body, _, _, err := httpGETWithRetry(url, client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
+	if err == nil {
+		metrics := new(MetricsJsonMap)
+		err = json.Unmarshal(body, &metrics)
+		if err == nil {
+			return metrics, nil
+		} else {
+			return nil, err
+		}
+	} else {
+		return nil, err
 	}
 }
 

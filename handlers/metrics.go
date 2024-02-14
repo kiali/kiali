@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -221,6 +222,79 @@ func getNamespaceMetrics(w http.ResponseWriter, r *http.Request, promSupplier pr
 	}
 
 	RespondWithJSON(w, http.StatusOK, metrics)
+}
+
+// ClustersMetrics is the API handler to fetch metrics to be displayed, related to all
+// services in provided namespaces of given cluster
+func ClustersMetrics(w http.ResponseWriter, r *http.Request) {
+	getClustersMetrics(w, r, defaultPromClientSupplier)
+}
+
+// getClustersMetrics (mock-friendly version)
+func getClustersMetrics(w http.ResponseWriter, r *http.Request, promSupplier promClientSupplier) {
+	query := r.URL.Query()
+	namespaces := query.Get("namespaces") // csl of namespaces
+	nss := []string{}
+	if len(namespaces) > 0 {
+		nss = strings.Split(namespaces, ",")
+	}
+	cluster := clusterNameFromQuery(query)
+
+	business, err := getBusiness(r)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	if len(nss) == 0 {
+		loadedNamespaces, _ := business.Namespace.GetClusterNamespaces(r.Context(), cluster)
+		for _, ns := range loadedNamespaces {
+			nss = append(nss, ns.Name)
+		}
+	}
+
+	metricsService, namespaceInfo := createMetricsServiceForClusterMC(w, r, promSupplier, cluster, nss)
+	if metricsService == nil {
+		// any returned value nil means error & response already written
+		return
+	}
+	oldestNs := GetOldestNamespace(namespaceInfo)
+
+	result := models.MetricsPerNamespace{}
+	for _, namespace := range nss {
+		params := models.IstioMetricsQuery{Cluster: cluster, Namespace: namespace}
+
+		err = extractIstioMetricsQueryParams(r, &params, oldestNs)
+		if err != nil {
+			RespondWithError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		metrics, err := metricsService.GetMetrics(params, nil)
+		if err != nil {
+			RespondWithError(w, http.StatusServiceUnavailable, err.Error())
+			return
+		}
+
+		if isRemoteCluster, _ := business.Mesh.IsRemoteCluster(cluster); !isRemoteCluster && namespace == config.Get().IstioNamespace {
+			controlPlaneMetrics, err := metricsService.GetControlPlaneMetrics(params, nil)
+			if err != nil {
+				RespondWithError(w, http.StatusServiceUnavailable, err.Error())
+				return
+			}
+
+			for k, v := range controlPlaneMetrics {
+				metrics[k] = v
+			}
+		}
+
+		if err != nil {
+			RespondWithError(w, http.StatusServiceUnavailable, err.Error())
+			return
+		}
+		result[namespace] = metrics
+	}
+
+	RespondWithJSON(w, http.StatusOK, result)
 }
 
 func extractIstioMetricsQueryParams(r *http.Request, q *models.IstioMetricsQuery, namespaceInfo *models.Namespace) error {

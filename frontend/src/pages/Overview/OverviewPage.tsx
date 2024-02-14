@@ -413,10 +413,19 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
 
   fetchMetrics(direction: DirectionType): void {
     const duration = FilterHelper.currentDuration();
-    // debounce async for back-pressure, ten by ten
-    _.chunk(this.state.namespaces, 10).forEach(chunk => {
+    const uniqueClusters = new Set<string>();
+
+    this.state.namespaces.forEach(namespace => {
+      if (namespace.cluster) {
+        uniqueClusters.add(namespace.cluster);
+      }
+    });
+
+    uniqueClusters.forEach(cluster => {
       this.promises
-        .registerChained('metricschunks', undefined, () => this.fetchMetricsChunk(chunk, duration, direction))
+        .registerChained('metrics', undefined, () =>
+          this.fetchMetricsForCluster(this.state.namespaces, cluster, duration, direction)
+        )
         .then(() => {
           this.setState(prevState => {
             return { namespaces: prevState.namespaces.slice() };
@@ -425,8 +434,9 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
     });
   }
 
-  async fetchMetricsChunk(
-    chunk: NamespaceInfo[],
+  async fetchMetricsForCluster(
+    namespaces: NamespaceInfo[],
+    cluster: string,
     duration: number,
     direction: DirectionType
   ): Promise<NamespaceInfo[] | void> {
@@ -441,32 +451,35 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
       reporter: direction === 'inbound' ? 'destination' : 'source'
     };
 
-    return Promise.all(
-      chunk.map(async nsInfo => {
-        let clusterParam: string | undefined;
+    return API.getClustersMetrics(
+      namespaces
+        .filter(ns => ns.cluster === cluster)
+        .map(ns => ns.name)
+        .join(','),
+      options,
+      cluster
+    )
+      .then(results => {
+        namespaces.forEach(nsInfo => {
+          if (((nsInfo.cluster && nsInfo.cluster === cluster) || !nsInfo.cluster) && results.data[nsInfo.name]) {
+            const rs = results.data[nsInfo.name];
+            nsInfo.metrics = rs.request_count;
+            nsInfo.errorMetrics = rs.request_error_count;
 
-        if (nsInfo.cluster && isMultiCluster) {
-          clusterParam = nsInfo.cluster;
-        }
-
-        return API.getNamespaceMetrics(nsInfo.name, options, clusterParam).then(rs => {
-          nsInfo.metrics = rs.data.request_count;
-          nsInfo.errorMetrics = rs.data.request_error_count;
-
-          if (nsInfo.name === serverConfig.istioNamespace) {
-            nsInfo.controlPlaneMetrics = {
-              istiod_proxy_time: rs.data.pilot_proxy_convergence_time,
-              istiod_container_cpu: rs.data.container_cpu_usage_seconds_total,
-              istiod_container_mem: rs.data.container_memory_working_set_bytes,
-              istiod_process_cpu: rs.data.process_cpu_seconds_total,
-              istiod_process_mem: rs.data.process_resident_memory_bytes
-            };
+            if (nsInfo.name === serverConfig.istioNamespace) {
+              nsInfo.controlPlaneMetrics = {
+                istiod_proxy_time: rs.pilot_proxy_convergence_time,
+                istiod_container_cpu: rs.container_cpu_usage_seconds_total,
+                istiod_container_mem: rs.container_memory_working_set_bytes,
+                istiod_process_cpu: rs.process_cpu_seconds_total,
+                istiod_process_mem: rs.process_resident_memory_bytes
+              };
+            }
           }
-
           return nsInfo;
         });
       })
-    ).catch(err => this.handleApiError('Could not fetch metrics', err));
+      .catch(err => this.handleApiError('Could not fetch metrics', err));
   }
 
   fetchTLS(isAscending: boolean, sortField: SortField<NamespaceInfo>): void {
