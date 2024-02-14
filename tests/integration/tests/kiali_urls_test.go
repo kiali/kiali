@@ -80,15 +80,17 @@ func TestMeshTls(t *testing.T) {
 	require.True(MTLSCorrect(response.Status))
 }
 
-func TestNamespaceTls(t *testing.T) {
+func TestClusterNamespaceTls(t *testing.T) {
 	require := require.New(t)
-	response, statusCode, err := kiali.NamespaceTls(kiali.BOOKINFO)
+	response, statusCode, err := kiali.ClustersTls(kiali.BOOKINFO)
 
 	require.NoError(err)
 	require.Equal(200, statusCode)
 	require.NotNil(response)
-	require.NotNil(response.Status)
-	require.True(MTLSCorrect(response.Status))
+	require.NotEmpty(response)
+	require.NotNil((*response)[0])
+	require.NotNil((*response)[0].Status)
+	require.True(MTLSCorrect((*response)[0].Status))
 }
 
 func MTLSCorrect(status string) bool {

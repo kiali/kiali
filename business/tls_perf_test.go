@@ -64,7 +64,7 @@ func preparePerfScenario(numNs, numDr int) ([]core_v1.Namespace, []*security_v1b
 	return nss, pss, drs
 }
 
-func testPerfScenario(exStatus string, nss []core_v1.Namespace, drs []*networking_v1beta1.DestinationRule, ps []*security_v1beta1.PeerAuthentication, autoMtls bool, t *testing.T) {
+func testPerfScenario(exStatus string, namespaces []core_v1.Namespace, drs []*networking_v1beta1.DestinationRule, ps []*security_v1beta1.PeerAuthentication, autoMtls bool, t *testing.T) {
 	assert := assert.New(t)
 
 	conf := config.NewConfig()
@@ -72,7 +72,7 @@ func testPerfScenario(exStatus string, nss []core_v1.Namespace, drs []*networkin
 	kubernetes.SetConfig(t, *conf)
 
 	var objs []runtime.Object
-	for _, obj := range nss {
+	for _, obj := range namespaces {
 		o := obj
 		objs = append(objs, &o)
 	}
@@ -88,9 +88,14 @@ func testPerfScenario(exStatus string, nss []core_v1.Namespace, drs []*networkin
 	tlsService := NewWithBackends(k8sclients, k8sclients, nil, nil).TLS
 	tlsService.enabledAutoMtls = &autoMtls
 
-	for _, ns := range nss {
-		status, err := tlsService.NamespaceWidemTLSStatus(context.TODO(), ns.Name, conf.KubernetesConfig.ClusterName)
-		assert.NoError(err)
+	nss := []string{}
+	for _, ns := range namespaces {
+		nss = append(nss, ns.Name)
+	}
+	statuses, err := tlsService.ClusterWideNSmTLSStatus(context.TODO(), nss, conf.KubernetesConfig.ClusterName)
+	assert.NoError(err)
+	assert.NotEmpty(statuses)
+	for _, status := range statuses {
 		assert.Equal(exStatus, status.Status)
 	}
 }

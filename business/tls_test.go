@@ -334,6 +334,13 @@ func TestNamespaceHasDestinationRuleEnabledDifferentNs(t *testing.T) {
 
 	assert.NoError(err)
 	assert.Equal(MTLSEnabled, status.Status)
+
+	statuses, err := tlsService.ClusterWideNSmTLSStatus(context.TODO(), []string{"bookinfo"}, conf.KubernetesConfig.ClusterName)
+	assert.NoError(err)
+	assert.NotEmpty(statuses)
+	for _, status := range statuses {
+		assert.Equal(MTLSEnabled, status.Status)
+	}
 }
 
 func testNamespaceScenario(exStatus string, drs []*networking_v1beta1.DestinationRule, ps []*security_v1beta1.PeerAuthentication, autoMtls bool, t *testing.T) {
@@ -358,6 +365,13 @@ func testNamespaceScenario(exStatus string, drs []*networking_v1beta1.Destinatio
 
 	assert.NoError(err)
 	assert.Equal(exStatus, status.Status)
+
+	statuses, err := tlsService.ClusterWideNSmTLSStatus(context.TODO(), []string{"bookinfo"}, conf.KubernetesConfig.ClusterName)
+	assert.NoError(err)
+	assert.NotEmpty(statuses)
+	for _, status := range statuses {
+		assert.Equal(exStatus, status.Status)
+	}
 }
 
 func fakeProjects() []*osproject_v1.Project {
