@@ -15,15 +15,22 @@ set -e
 CLUSTER1_OPENSHIFT_OAUTH_ROUTE=https://$(kubectl get routes --context "${CLUSTER1_CONTEXT}" -n openshift-authentication oauth-openshift -o jsonpath='{.spec.host}')
 CLUSTER2_OPENSHIFT_OAUTH_ROUTE=https://$(kubectl get routes --context "${CLUSTER2_CONTEXT}" -n openshift-authentication oauth-openshift -o jsonpath='{.spec.host}')
 
+# Need to create the namespace first so we can apply the openshift scc magic numbers.
+kubectl --context "${CLUSTER1_CONTEXT}" get ns keycloak || kubectl --context "${CLUSTER1_CONTEXT}" create ns keycloak
+SE_LINUX_LEVEL="$(kubectl --context "${CLUSTER1_CONTEXT}" get ns keycloak -o jsonpath='{.metadata.annotations.openshift\.io/sa\.scc\.mcs}')"
+
 # Postgres is required for keycloak and it's easiest to set it up separately.
-helm upgrade --kube-context "${CLUSTER1_CONTEXT}" --create-namespace --install --wait keycloak-postgresql oci://registry-1.docker.io/bitnamicharts/postgresql -n keycloak --reuse-values --values - <<EOF
+echo "Creating postgres deployment"
+helm upgrade --kube-context "${CLUSTER1_CONTEXT}" --install --wait \
+  --repo https://charts.bitnami.com/bitnami postgresql postgresql \
+  -n keycloak --reuse-values --values - <<EOF
 primary:
   persistence:
     enabled: false
   containerSecurityContext:
     runAsUser: null
     seLinuxOptions:
-      level: "s0:c26,c15"
+      level: "${SE_LINUX_LEVEL}"
   podSecurityContext:
     fsGroup: null 
 auth:
@@ -35,8 +42,9 @@ EOF
 APPS_DOMAIN=$(echo "${CLUSTER1_OPENSHIFT_OAUTH_ROUTE}" | cut -d '.' -f2-)
 KEYCLOAK_HOSTNAME="keycloak-keycloak.${APPS_DOMAIN}"
 
+echo "Creating keycloak deployment"
 helm upgrade --kube-context "${CLUSTER1_CONTEXT}" --install --wait --timeout 15m \
-  --namespace keycloak --create-namespace \
+  --namespace keycloak \
   --repo https://charts.bitnami.com/bitnami keycloak keycloak \
   --reuse-values --values - <<EOF
 auth:
@@ -50,12 +58,12 @@ image:
 proxyAddressForwarding: true
 containerSecurityContext:
   seLinuxOptions:
-    level: s0:c26,c15
+    level: "${SE_LINUX_LEVEL}"
   runAsUser: null
 podSecurityContext:
   fsGroup: null
 externalDatabase:
-  host: keycloak-postgresql
+  host: postgresql
   database: keycloak
   user: keycloak
   password: "${KEYCLOAK_DB_PASSWORD}"
@@ -64,6 +72,7 @@ postgresql:
 EOF
 
 # Create keycloak route.
+echo "Creating keycloak route"
 kubectl --context "${CLUSTER1_CONTEXT}" apply -f - <<EOF
 apiVersion: route.openshift.io/v1
 kind: Route
@@ -129,13 +138,60 @@ EOF
 
 KEYCLOAK_ISSUER_URI="https://keycloak-keycloak.${APPS_DOMAIN}"
 
-# Create the configmap with the CA in it for the east cluster.
-kubectl --context "${CLUSTER1_CONTEXT}" create configmap keycloak-oidc-client-ca-cert --from-file=ca.crt="${INGRESS_ROUTER_CA_FILE}" -n openshift-config
-# Patch the OAuth config with the keycloak idp for the east cluster.
-kubectl --context "${CLUSTER1_CONTEXT}" patch oauth cluster --type=json -p="[{\"op\": \"replace\", \"path\": \"/spec/identityProviders\", \"value\": [{\"mappingMethod\": \"claim\", \"name\": \"openid\", \"openID\": {\"ca\": {\"name\": \"keycloak-oidc-client-ca-cert\"}, \"claims\": {\"email\": [\"email\"], \"name\": [\"name\"], \"preferredUsername\": [\"preferred_username\"]}, \"clientID\": \"kube\", \"clientSecret\": {\"name\": \"openid-client-secret\"}, \"extraScopes\": [], \"issuer\": \"${KEYCLOAK_ISSUER_URI}/realms/kube\"}, \"type\": \"OpenID\"}]}]"
-
 # Create the configmap with the CA in it for the west cluster.
 kubectl --context "${CLUSTER2_CONTEXT}" create configmap keycloak-oidc-client-ca-cert --from-file=ca.crt="${INGRESS_ROUTER_CA_FILE}" -n openshift-config
 
-# Patch the OAuth config with the keycloak idp for the west cluster.
-kubectl --context "${CLUSTER2_CONTEXT}" patch oauth cluster --type=json -p="[{\"op\": \"replace\", \"path\": \"/spec/identityProviders\", \"value\": [{\"mappingMethod\": \"claim\", \"name\": \"openid\", \"openID\": {\"ca\": {\"name\": \"keycloak-oidc-client-ca-cert\"}, \"claims\": {\"email\": [\"email\"], \"name\": [\"name\"], \"preferredUsername\": [\"preferred_username\"]}, \"clientID\": \"kube\", \"clientSecret\": {\"name\": \"openid-client-secret\"}, \"extraScopes\": [], \"issuer\": \"${KEYCLOAK_ISSUER_URI}/realms/kube\"}, \"type\": \"OpenID\"}]}]"
+function update_cluster_idp {
+  local cluster_context=$1
+  # Patch the OAuth config with the keycloak idp for the west cluster.
+  if [ -z "$(kubectl --context "${cluster_context}" get oauths cluster -o jsonpath='{.spec.identityProviders[?(@.name == "openid")]}')" ]; then
+    echo "openid provider doesn't exist on the cluster's oauth config. Adding it..."
+    # Need to check if the spec.identityProviders exists and if it doesn't then ensure it does
+    # before attempting to add an item to it with the patch below otherwise the patch will fail.
+    if [ -z "$(kubectl --context "${cluster_context}" get oauths cluster -o jsonpath='{.spec.identityProviders}' --context west)" ]; then
+      kubectl --context "${cluster_context}" patch oauth cluster --type=json -p "$(cat <<EOF
+[{
+  "op": "add", 
+  "path": "/spec/identityProviders", 
+  "value": []
+}]
+EOF
+)"
+    fi
+    kubectl --context "${cluster_context}" patch oauth cluster --type=json -p "$(cat <<EOF
+[{
+  "op": "add", 
+  "path": "/spec/identityProviders/-", 
+  "value": {
+    "mappingMethod": "add", 
+    "name": "openid", 
+    "openID": {
+      "ca": {
+        "name": "keycloak-oidc-client-ca-cert"
+      },
+      "claims": {
+        "email": ["email"], 
+        "name": ["name"], 
+        "preferredUsername": ["preferred_username"]
+      }, 
+      "clientID": "kube", 
+      "clientSecret": {
+        "name": "openid-client-secret"
+      }, 
+      "extraScopes": [], 
+      "issuer": "${KEYCLOAK_ISSUER_URI}/realms/kube"
+    }, 
+    "type": "OpenID"
+  }
+}]
+EOF
+)"
+  fi
+}
+
+update_cluster_idp "${CLUSTER1_CONTEXT}"
+update_cluster_idp "${CLUSTER2_CONTEXT}"
+
+# Wait for the auth changes to rollout.
+kubectl --context "${CLUSTER1_CONTEXT}" wait --for=condition=Progressing=false clusteroperators/authentication
+kubectl --context "${CLUSTER2_CONTEXT}" wait --for=condition=Progressing=false clusteroperators/authentication
