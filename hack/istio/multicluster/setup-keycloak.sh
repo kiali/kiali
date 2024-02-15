@@ -10,6 +10,36 @@
 SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
 source ${SCRIPT_DIR}/env.sh $*
 
+# backdoor delete functionality - set "DELETE_KEYCLOAK" to "true" to have this script delete things rather than install them
+if [ "${DELETE_KEYCLOAK:-}" == "true" ]; then
+  echo "DELETING KEYCLOAK / OIDC FROM CLUSTER 1"
+  helm uninstall --kube-context "${CLUSTER1_CONTEXT}" -n keycloak postgresql
+  kubectl --context "${CLUSTER1_CONTEXT}" delete --ignore-not-found=true namespace keycloak
+  kubectl --context "${CLUSTER1_CONTEXT}" delete --ignore-not-found=true -n openshift-config secret openid-client-secret
+  kubectl --context "${CLUSTER1_CONTEXT}" delete --ignore-not-found=true -n openshift-config cm keycloak-oidc-client-ca-cert
+  OPENID_PROVIDER_INDEX=$(kubectl --context "${CLUSTER1_CONTEXT}" get oauth cluster -o json  | jq '.spec.identityProviders | map(.name == "openid") | index(true)')
+  if [ "${OPENID_PROVIDER_INDEX}" != "null" -a "${OPENID_PROVIDER_INDEX}" != "" ]; then
+    kubectl --context "${CLUSTER1_CONTEXT}" patch oauth cluster --type=json -p '[{"op": "remove", "path": "/spec/identityProviders/'${OPENID_PROVIDER_INDEX}'"}]'
+    echo "Identity Provider removed from cluster 1"
+  else
+    echo "Identity Provider already gone from cluster 1"
+  fi
+
+  echo "DELETING KEYCLOAK / OIDC FROM CLUSTER 2"
+  kubectl --context "${CLUSTER2_CONTEXT}" delete --ignore-not-found=true -n openshift-config secret openid-client-secret
+  kubectl --context "${CLUSTER2_CONTEXT}" delete --ignore-not-found=true -n openshift-config cm keycloak-oidc-client-ca-cert
+  OPENID_PROVIDER_INDEX=$(kubectl --context "${CLUSTER2_CONTEXT}" get oauth cluster -o json  | jq '.spec.identityProviders | map(.name == "openid") | index(true)')
+  if [ "${OPENID_PROVIDER_INDEX}" != "null" -a "${OPENID_PROVIDER_INDEX}" != "" ]; then
+    kubectl --context "${CLUSTER2_CONTEXT}" patch oauth cluster --type=json -p '[{"op": "remove", "path": "/spec/identityProviders/'${OPENID_PROVIDER_INDEX}'"}]'
+    echo "Identity Provider removed from cluster 2"
+  else
+    echo "Identity Provider already gone from cluster 2"
+  fi
+
+  echo "KEYCLOAD / OIDC HAS BEEN DELETED"
+  exit 0
+fi
+
 set -e
 
 CLUSTER1_OPENSHIFT_OAUTH_ROUTE=https://$(kubectl get routes --context "${CLUSTER1_CONTEXT}" -n openshift-authentication oauth-openshift -o jsonpath='{.spec.host}')
@@ -138,7 +168,10 @@ EOF
 
 KEYCLOAK_ISSUER_URI="https://keycloak-keycloak.${APPS_DOMAIN}"
 
-# Create the configmap with the CA in it for the west cluster.
+# Create the configmap with the CA in it for cluster 1.
+kubectl --context "${CLUSTER1_CONTEXT}" create configmap keycloak-oidc-client-ca-cert --from-file=ca.crt="${INGRESS_ROUTER_CA_FILE}" -n openshift-config
+
+# Create the configmap with the CA in it for cluster 2.
 kubectl --context "${CLUSTER2_CONTEXT}" create configmap keycloak-oidc-client-ca-cert --from-file=ca.crt="${INGRESS_ROUTER_CA_FILE}" -n openshift-config
 
 function update_cluster_idp {
@@ -148,7 +181,7 @@ function update_cluster_idp {
     echo "openid provider doesn't exist on the cluster's oauth config. Adding it..."
     # Need to check if the spec.identityProviders exists and if it doesn't then ensure it does
     # before attempting to add an item to it with the patch below otherwise the patch will fail.
-    if [ -z "$(kubectl --context "${cluster_context}" get oauths cluster -o jsonpath='{.spec.identityProviders}' --context west)" ]; then
+    if [ -z "$(kubectl --context "${cluster_context}" get oauths cluster -o jsonpath='{.spec.identityProviders}')" ]; then
       kubectl --context "${cluster_context}" patch oauth cluster --type=json -p "$(cat <<EOF
 [{
   "op": "add", 
