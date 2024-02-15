@@ -222,9 +222,21 @@ EOF
   fi
 }
 
+# There's not a great way to wait for the idp rollout to happen so we're going to get the current
+# generation of the oauth deployment and make sure that it has been incremented indicating that
+# the operator has picked up the change. From then we can use kubectl wait on the clusteroperators.
+current_generation_cluster1="$(kubectl --context "${CLUSTER1_CONTEXT}" get deployments -n openshift-authentication -o jsonpath='{.metadata.generation}' oauth-openshift)"
+current_generation_cluster2="$(kubectl --context "${CLUSTER2_CONTEXT}" get deployments -n openshift-authentication -o jsonpath='{.metadata.generation}' oauth-openshift)"
+expected_generation_cluster1=$((current_generation_cluster1 + 1))
+expected_generation_cluster2=$((current_generation_cluster2 + 1))
+
 update_cluster_idp "${CLUSTER1_CONTEXT}"
 update_cluster_idp "${CLUSTER2_CONTEXT}"
 
-# Wait for the auth changes to rollout.
-kubectl --context "${CLUSTER1_CONTEXT}" wait --for=condition=Progressing=false clusteroperators/authentication
-kubectl --context "${CLUSTER2_CONTEXT}" wait --for=condition=Progressing=false clusteroperators/authentication
+echo "Waiting for oauth deployments to be updated to the latest config change."
+kubectl --context "${CLUSTER1_CONTEXT}" wait --for=jsonpath='{.metadata.generation}'="${expected_generation_cluster1}" -n openshift-authentication deployment/oauth-openshift --timeout=10m
+kubectl --context "${CLUSTER2_CONTEXT}" wait --for=jsonpath='{.metadata.generation}'="${expected_generation_cluster2}" -n openshift-authentication deployment/oauth-openshift --timeout=10m
+
+echo "Waiting for oauth config change to finish rolling out."
+kubectl --context "${CLUSTER1_CONTEXT}" wait --for=condition=Progressing=false clusteroperators/authentication --timeout=5m
+kubectl --context "${CLUSTER2_CONTEXT}" wait --for=condition=Progressing=false clusteroperators/authentication --timeout=5m
