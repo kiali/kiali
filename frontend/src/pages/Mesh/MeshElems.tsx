@@ -80,7 +80,7 @@ const EdgeColorDegraded = PFColors.Warning;
 const EdgeColorFailure = PFColors.Danger;
 
 export const getNodeStatus = (data: NodeData): NodeStatus => {
-  if (data.isBox && data.isBox) {
+  if (data.isBox) {
     return NodeStatus.default;
   }
 
