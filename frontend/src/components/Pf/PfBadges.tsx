@@ -35,7 +35,7 @@ export const PFBadges: { [key: string]: PFBadgeType } = Object.freeze({
   FederatedService: { badge: 'FS', tt: 'Federated Service' } as PFBadgeType,
   GRPCRoute: { badge: 'gRPC', tt: 'GRPCRoute' } as PFBadgeType,
   Gateway: { badge: 'G', tt: 'Gateway' } as PFBadgeType,
-  Grafana: { badge: 'GR', tt: 'Grafana' },
+  Grafana: { badge: 'GR', tt: 'Grafana' } as PFBadgeType,
   HTTPRoute: { badge: 'HTTP', tt: 'HTTPRoute' } as PFBadgeType,
   K8sGateway: { badge: 'G', tt: 'Gateway (K8s)' } as PFBadgeType,
   K8sGRPCRoute: { badge: 'gRPC', tt: 'GRPCRoute (K8s)' } as PFBadgeType,
