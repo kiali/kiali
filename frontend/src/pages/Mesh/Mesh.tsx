@@ -360,7 +360,7 @@ const TopologyContent: React.FC<{
       // set decorators
       nodes.forEach(n => setNodeAttachments(n));
 
-      let focusNodeId = getFocusSelector();
+      const focusNodeId = getFocusSelector();
       if (focusNodeId) {
         const focusNode = nodes.find(n => n.getId() === focusNodeId);
         if (focusNode) {
