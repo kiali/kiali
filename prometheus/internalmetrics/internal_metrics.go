@@ -248,7 +248,7 @@ func GetGraphMarshalTimePrometheusTimer(graphKind string, graphType string, with
 	return timer
 }
 
-// GetMesgGraphGenerationTimePrometheusTimer returns a timer that can be used to store
+// GetMeshGraphGenerationTimePrometheusTimer returns a timer that can be used to store
 // a value for the mesh graph generation time metric. The timer is ticking immediately
 // when this function returns.
 // Typical usage is as follows:
