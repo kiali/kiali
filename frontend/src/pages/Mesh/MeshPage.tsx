@@ -191,10 +191,7 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
   }
 
   render() {
-    let conStyle = containerStyle;
-    if (isKioskMode()) {
-      conStyle = kioskContainerStyle;
-    }
+    const conStyle = isKioskMode() ? kioskContainerStyle : containerStyle;
     const isEmpty = !(this.state.meshData.elements.nodes && Object.keys(this.state.meshData.elements.nodes).length > 0);
     const isReady = !(isEmpty || this.state.meshData.isError);
 
