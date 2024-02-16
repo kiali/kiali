@@ -74,6 +74,9 @@ export class TargetPanelNode extends React.Component<TargetPanelCommonProps, Tar
       case MeshInfraType.CLUSTER:
         pfBadge = PFBadges.Cluster;
         break;
+      case MeshInfraType.GRAFANA:
+        pfBadge = PFBadges.Grafana;
+        break;
       case MeshInfraType.ISTIOD:
         pfBadge = PFBadges.Istio;
         break;
