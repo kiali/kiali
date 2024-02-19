@@ -813,7 +813,7 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
 
       .catch(err => {
         if (!err.isCanceled) {
-          console.log(`SummaryPanelGraph: Error fetching validation status: ${API.getErrorString(err)}`);
+          console.info(`SummaryPanelGraph: Error fetching validation status: ${API.getErrorString(err)}`);
         }
       });
   };

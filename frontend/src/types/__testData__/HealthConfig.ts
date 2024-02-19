@@ -33,6 +33,11 @@ export const healthConfig = {
           tcp: 'sent'
         }
       },
+      mesh: {
+        findOptions: [],
+        hideOptions: [],
+        impl: 'classic'
+      },
       list: {
         includeHealth: true,
         includeIstioResources: true,

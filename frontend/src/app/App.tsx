@@ -60,7 +60,7 @@ axios.interceptors.request.use(
     return request;
   },
   error => {
-    console.log(error);
+    console.info(error);
     return Promise.reject(error);
   }
 );

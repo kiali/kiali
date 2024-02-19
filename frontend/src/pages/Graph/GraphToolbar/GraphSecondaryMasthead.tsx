@@ -14,8 +14,6 @@ type GraphSecondaryMastheadProps = {
   disabled: boolean;
   graphType: GraphType;
   isNodeGraph: boolean;
-
-  onToggleHelp: () => void;
   onGraphTypeChange: (graphType: GraphType) => void;
 };
 

@@ -39,7 +39,7 @@ import {
 } from '../types/IstioObjects';
 import { ComponentStatus, IstiodResourceThresholds } from '../types/IstioStatus';
 import { TracingInfo, TracingResponse, TracingSingleResponse } from '../types/TracingInfo';
-import { MeshClusters } from '../types/Mesh';
+import { MeshClusters, MeshDefinition, MeshQuery } from '../types/Mesh';
 import { DashboardQuery, IstioMetricsOptions, MetricsStatsQuery } from '../types/MetricsOptions';
 import { IstioMetricsMap, MetricsPerNamespace, MetricsStatsResult } from '../types/Metrics';
 import { Namespace } from '../types/Namespace';
@@ -1192,4 +1192,8 @@ export const getCrippledFeatures = (): Promise<ApiResponse<KialiCrippledFeatures
 
 export const getCanaryUpgradeStatus = (): Promise<ApiResponse<CanaryUpgradeStatus>> => {
   return newRequest<CanaryUpgradeStatus>(HTTP_VERBS.GET, urls.canaryUpgradeStatus(), {}, {});
+};
+
+export const getMeshGraph = (params: MeshQuery) => {
+  return newRequest<MeshDefinition>(HTTP_VERBS.GET, urls.meshGraph, params, {});
 };

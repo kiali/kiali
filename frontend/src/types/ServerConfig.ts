@@ -53,9 +53,16 @@ interface ListUIDefaults {
   showIncludeToggles: boolean;
 }
 
+interface MeshUIDefaults {
+  findOptions: GraphFindOption[];
+  hideOptions: GraphFindOption[];
+  impl: string; // classic | topo | topo-no-overview
+}
+
 interface UIDefaults {
   graph: GraphUIDefaults;
   list: ListUIDefaults;
+  mesh: MeshUIDefaults;
   metricsPerRefresh?: string;
   namespaces?: string[];
   refreshInterval?: string;

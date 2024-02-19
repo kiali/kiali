@@ -68,6 +68,14 @@ const hideValue = (state: KialiAppState): string => state.graph.toolbarState.hid
 
 export const hideValueSelector = createIdentitySelector(hideValue);
 
+const meshFindValue = (state: KialiAppState) => state.mesh.toolbarState.findValue;
+
+export const meshFindValueSelector = createIdentitySelector(meshFindValue);
+
+const meshHideValue = (state: KialiAppState) => state.mesh.toolbarState.hideValue;
+
+export const meshHideValueSelector = createIdentitySelector(meshHideValue);
+
 const namespaceItems = (state: KialiAppState): Namespace[] | undefined => state.namespaces.items;
 
 export const namespaceItemsSelector = createIdentitySelector(namespaceItems);

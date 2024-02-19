@@ -35,6 +35,7 @@ export const PFBadges: { [key: string]: PFBadgeType } = Object.freeze({
   FederatedService: { badge: 'FS', tt: 'Federated Service' } as PFBadgeType,
   GRPCRoute: { badge: 'gRPC', tt: 'GRPCRoute' } as PFBadgeType,
   Gateway: { badge: 'G', tt: 'Gateway' } as PFBadgeType,
+  Grafana: { badge: 'GR', tt: 'Grafana' } as PFBadgeType,
   HTTPRoute: { badge: 'HTTP', tt: 'HTTPRoute' } as PFBadgeType,
   K8sGateway: { badge: 'G', tt: 'Gateway (K8s)' } as PFBadgeType,
   K8sGRPCRoute: { badge: 'gRPC', tt: 'GRPCRoute (K8s)' } as PFBadgeType,
@@ -42,10 +43,13 @@ export const PFBadges: { [key: string]: PFBadgeType } = Object.freeze({
   K8sReferenceGrant: { badge: 'RG', tt: 'ReferenceGrant (K8s)' } as PFBadgeType,
   K8sTCPRoute: { badge: 'TCP', tt: 'TCPRoute (K8s)' } as PFBadgeType,
   K8sTLSRoute: { badge: 'TLS', tt: 'TLSRoute (K8s)' } as PFBadgeType,
+  Kiali: { badge: 'KI', tt: 'Kiali' } as PFBadgeType,
   Handler: { badge: 'H', tt: 'Handler' },
   Host: { badge: 'H', tt: 'Host' },
   Instance: { badge: 'I', tt: 'Instance' },
+  Istio: { badge: 'IS', tt: 'Istio' } as PFBadgeType,
   MeshPolicy: { badge: 'MP', tt: 'Mesh Policy' } as PFBadgeType,
+  MetricStore: { badge: 'MS', tt: 'Metric Store' } as PFBadgeType,
   MirroredWorkload: {
     badge: 'MI',
     tt: 'Mirrored Workload',
@@ -58,8 +62,16 @@ export const PFBadges: { [key: string]: PFBadgeType } = Object.freeze({
   Policy: { badge: 'P', tt: 'Policy' } as PFBadgeType,
   RBACConfig: { badge: 'RC', tt: 'RBAC Configuration' } as PFBadgeType,
   RequestAuthentication: { badge: 'RA', tt: 'Request Authentication' } as PFBadgeType,
-  RequestRetry: { badge: 'RR', tt: 'Request Retry', style: { backgroundColor: PFColors.Purple500 } } as PFBadgeType,
-  RequestTimeout: { badge: 'RT', tt: 'Request Timeout', style: { backgroundColor: PFColors.Purple500 } } as PFBadgeType,
+  RequestRetry: {
+    badge: 'RR',
+    tt: 'Request Retry',
+    style: { backgroundColor: PFColors.Purple500 }
+  } as PFBadgeType,
+  RequestTimeout: {
+    badge: 'RT',
+    tt: 'Request Timeout',
+    style: { backgroundColor: PFColors.Purple500 }
+  } as PFBadgeType,
   Rule: { badge: 'R', tt: 'Rule' } as PFBadgeType,
   Service: { badge: 'S', tt: 'Service', style: { backgroundColor: PFColors.LightGreen500 } } as PFBadgeType,
   ServiceEntry: { badge: 'SE', tt: 'Service Entry' } as PFBadgeType,
@@ -71,6 +83,7 @@ export const PFBadges: { [key: string]: PFBadgeType } = Object.freeze({
   Template: { badge: 'T', tt: 'Template' } as PFBadgeType,
   TCPRoute: { badge: 'TCP', tt: 'TCPRoute' } as PFBadgeType,
   TLSRoute: { badge: 'TLS', tt: 'TLSRoute' } as PFBadgeType,
+  TraceStore: { badge: 'TS', tt: 'Trace Store' } as PFBadgeType,
   Unknown: { badge: 'U', tt: 'Unknown' } as PFBadgeType,
   VirtualService: { badge: 'VS', tt: 'Virtual Service' } as PFBadgeType,
   Waypoint: { badge: 'WP', tt: 'Waypoint proxy' } as PFBadgeType,

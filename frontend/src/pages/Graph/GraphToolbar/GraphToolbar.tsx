@@ -212,7 +212,6 @@ class GraphToolbarComponent extends React.PureComponent<GraphToolbarProps> {
           disabled={this.props.disabled}
           graphType={this.props.graphType}
           isNodeGraph={!!this.props.node}
-          onToggleHelp={this.props.onToggleHelp}
           onGraphTypeChange={this.props.setGraphType}
         />
         <Toolbar style={{ width: '100%' }}>

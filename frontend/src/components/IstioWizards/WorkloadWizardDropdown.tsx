@@ -69,7 +69,7 @@ export const WorkloadWizardDropdown: React.FC<Props> = (props: Props) => {
           });
         break;
       default:
-        console.log('key ' + key + ' not supported');
+        console.warn(`WorkloadWizardDropdown: key ${key} not supported`);
     }
   };
 

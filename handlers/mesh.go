@@ -8,6 +8,8 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/cache"
+	"github.com/kiali/kiali/mesh"
+	"github.com/kiali/kiali/mesh/api"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/tracing"
 )
@@ -95,4 +97,17 @@ func GetMesh(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	RespondWithJSON(w, http.StatusOK, mesh)
+}
+
+// MeshGraph is a REST http.HandlerFunc handling graph generation for the mesh
+func MeshGraph(w http.ResponseWriter, r *http.Request) {
+	defer handlePanic(w)
+
+	o := mesh.NewOptions(r)
+
+	business, err := getBusiness(r)
+	mesh.CheckError(err)
+
+	code, payload := api.GraphMesh(r.Context(), business, o)
+	respond(w, code, payload)
 }

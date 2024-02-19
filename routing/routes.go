@@ -1258,6 +1258,27 @@ func NewRoutes(conf *config.Config, kialiCache cache.KialiCache, clientFactory k
 			handlers.GraphNode,
 			true,
 		},
+		// swagger:route GET /mesh/graph meshGraph
+		// ---
+		// The backing JSON for a mesh graph
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      400: badRequestError
+		//      500: internalError
+		//      200: graphResponse
+		//
+		{
+			"MeshGraph",
+			"GET",
+			"/api/mesh/graph",
+			handlers.MeshGraph,
+			true,
+		},
 		// swagger:route GET /grafana integrations grafanaInfo
 		// ---
 		// Get the grafana URL and other descriptors
