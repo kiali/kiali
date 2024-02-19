@@ -12,22 +12,24 @@ export interface GraphHelpFindProps {
   className?: string;
   onClose: () => void;
 }
-
-const width = '600px';
-const maxWidth = '604px';
-const contentWidth = '540px';
+const height = 'auto';
+const maxHeight = '34rem';
+const maxWidth = '37rem';
+const width = maxWidth;
+const contentWidth = '34.5rem';
 
 const tabFont: React.CSSProperties = {
   fontSize: 'var(--kiali-global--font-size)'
 };
 
 const popoverStyle = kialiStyle({
-  width: width,
+  height: height,
+  maxHeight: maxHeight,
   maxWidth: maxWidth,
-  height: '550px',
   overflow: 'hidden',
   overflowX: 'auto',
-  overflowY: 'auto'
+  overflowY: 'auto',
+  width: width
 });
 
 const prefaceStyle = kialiStyle({
@@ -35,7 +37,7 @@ const prefaceStyle = kialiStyle({
   color: PFColors.ColorLight100,
   backgroundColor: PFColors.Blue600,
   width: contentWidth,
-  height: '80px',
+  height: '4rem',
   padding: '0.25rem',
   resize: 'none',
   overflowY: 'hidden'
