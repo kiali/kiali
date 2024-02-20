@@ -44,6 +44,7 @@ OUTPUT_DIR="${ROOT_DIR}/_output"
 CLIENT_EXE="kubectl"
 CLUSTER_TYPE="minikube"
 HACK_SCRIPTS_DIR="${ROOT_DIR}/hack"
+KIALI_VERSION="dev"
 MONGONS="mongons"
 MONGOSKUPPERNS="mongoskupperns"
 MYSQLNS="mysqlns"
@@ -73,6 +74,7 @@ while [ $# -gt 0 ]; do
     sui)                      _CMD="sui"                           ;shift ;;
     -c|--client)              CLIENT_EXE="$2"                ;shift;shift ;;
     -ct|--cluster-type)       CLUSTER_TYPE="$2"              ;shift;shift ;;
+    -kv|--kiali-version)      KIALI_VERSION="$2"             ;shift;shift ;;
     -os1a|--openshift1-api)   OPENSHIFT1_API="$2"            ;shift;shift ;;
     -os1u|--openshift1-user)  OPENSHIFT1_USERNAME="$2"       ;shift;shift ;;
     -os1p|--openshift1-pass)  OPENSHIFT1_PASSWORD="$2"       ;shift;shift ;;
@@ -88,6 +90,10 @@ Valid command line arguments:
                                            If "minikube", this script creates its own clusters.
                                            If "openshift", the clusters must be started already.
                                            Default: "minikube"
+  -kv|--kiali-version <version>: The version of Kiali Server to install. If "dev", then a local build
+                                 will be performed and that dev build will be installed. Otherwise,
+                                 helm will be used to install that version of Kiali.
+                                 Default: "dev"
   -os1a|--openshift1-api <api URL>: The URL to the first OpenShift API server.
   -os1u|--openshift1-user <username>: The username of the user for the first OpenShift cluster. (default: kiali)
   -os1p|--openshift1-pass <password>: The password of the user for the first OpenShift cluster. (default: kiali)
@@ -162,8 +168,16 @@ minikube_install_basic_demo() {
   infomsg "Installing Bookinfo demo ..."
   ${HACK_SCRIPTS_DIR}/istio/install-bookinfo-demo.sh -c ${CLIENT_EXE} --minikube-profile ${CLUSTER1_ISTIO} --traffic-generator --wait-timeout 5m
 
-  infomsg "Building and Installing Kiali ..."
-  make --directory "${ROOT_DIR}" -e OC="$(which ${CLIENT_EXE})" -e CLUSTER_TYPE=minikube -e MINIKUBE_PROFILE=${CLUSTER1_ISTIO} ACCESSIBLE_NAMESPACES=bookinfo SERVICE_TYPE=LoadBalancer build build-ui cluster-push operator-create kiali-create
+  if [ "${KIALI_VERSION}" == "dev" ]; then
+    infomsg "Building and Installing Kiali ..."
+    make --directory "${ROOT_DIR}" -e OC="$(which ${CLIENT_EXE})" -e CLUSTER_TYPE=minikube -e MINIKUBE_PROFILE=${CLUSTER1_ISTIO} ACCESSIBLE_NAMESPACES=bookinfo SERVICE_TYPE=LoadBalancer build build-ui cluster-push operator-create kiali-create
+  else
+    infomsg "Installing Kiali [${KIALI_VERSION}] via Helm ..."
+    if ! helm repo update kiali 2> /dev/null; then
+      helm repo add kiali https://kiali.org/helm-charts
+    fi
+    helm --kube-context ${CLUSTER1_ISTIO} upgrade --install --namespace istio-system --version ${KIALI_VERSION} --set auth.strategy=anonymous kiali-server kiali/kiali-server
+  fi
 
   infomsg "Exposing Prometheus UI via LoadBalancer ..."
   ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} -n istio-system patch svc prometheus --type=merge --patch '{"spec":{"type":"LoadBalancer"}}'
@@ -252,8 +266,17 @@ openshift_install_basic_demo() {
   infomsg "Logging into the image registry..."
   eval $(make --directory "${ROOT_DIR}" -e OC="$(which ${CLIENT_EXE})" -e CLUSTER_TYPE=openshift cluster-status | grep "Image Registry login:" | sed 's/Image Registry login: \(.*\)$/\1/')
 
-  infomsg "Building and Installing Kiali ..."
-  make --directory "${ROOT_DIR}" -e OC="$(which ${CLIENT_EXE})" -e CLUSTER_TYPE=openshift ACCESSIBLE_NAMESPACES=bookinfo build build-ui cluster-push operator-create kiali-create
+  if [ "${KIALI_VERSION}" == "dev" ]; then
+    infomsg "Building and Installing Kiali ..."
+    make --directory "${ROOT_DIR}" -e OC="$(which ${CLIENT_EXE})" -e CLUSTER_TYPE=openshift ACCESSIBLE_NAMESPACES=bookinfo build build-ui cluster-push operator-create kiali-create
+  else
+    infomsg "Installing Kiali [${KIALI_VERSION}] via Helm ..."
+    if ! helm repo update kiali 2> /dev/null; then
+      helm repo add kiali https://kiali.org/helm-charts
+    fi
+    helm upgrade --install --namespace istio-system --version ${KIALI_VERSION} --set auth.strategy=anonymous kiali-server kiali/kiali-server
+  fi
+
 
   infomsg "Exposing Prometheus UI via Route ..."
   ${CLIENT_EXE} -n istio-system expose svc prometheus
