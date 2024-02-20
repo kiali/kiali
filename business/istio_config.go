@@ -686,10 +686,8 @@ func (in *IstioConfigService) DeleteIstioConfigDetail(ctx context.Context, clust
 	// We need to refresh the kube cache though at least until waiting for the object to be updated is implemented.
 	kubeCache.Refresh(namespace)
 
-	_, _, err = in.businessLayer.Validations.GetIstioObjectValidations(ctx, cluster, namespace, resourceType, name)
-	if err != nil {
-		return err
-	}
+	// Remove validations for the object to refresh the validation cache.
+	in.kialiCache.Validations().Delete(models.IstioValidationKey{Name: name, Namespace: namespace, ObjectType: resourceType, Cluster: cluster})
 
 	return nil
 }
@@ -783,9 +781,12 @@ func (in *IstioConfigService) UpdateIstioConfigDetail(ctx context.Context, clust
 	kubeCache.Refresh(namespace)
 
 	// Re-run validations for that object to refresh the validation cache.
-	_, _, err = in.businessLayer.Validations.GetIstioObjectValidations(ctx, cluster, namespace, resourceType, name)
+	if _, _, err := in.businessLayer.Validations.GetIstioObjectValidations(ctx, cluster, namespace, resourceType, name); err != nil {
+		// Logging the error and swallowing it since the object was updated successfully.
+		log.Errorf("Error while validating Istio object: %s", err)
+	}
 
-	return istioConfigDetail, err
+	return istioConfigDetail, nil
 }
 
 func (in *IstioConfigService) CreateIstioConfigDetail(ctx context.Context, cluster, namespace string, resourceType schema.GroupVersionKind, body []byte) (models.IstioConfigDetails, error) {
@@ -942,9 +943,12 @@ func (in *IstioConfigService) CreateIstioConfigDetail(ctx context.Context, clust
 	kubeCache.Refresh(namespace)
 
 	// Re-run validations for that object to refresh the validation cache.
-	_, _, err = in.businessLayer.Validations.GetIstioObjectValidations(ctx, cluster, namespace, resourceType, name)
+	if _, _, err := in.businessLayer.Validations.GetIstioObjectValidations(ctx, cluster, namespace, resourceType, name); err != nil {
+		// Logging the error and swallowing it since the object was created successfully.
+		log.Errorf("Error while validating Istio object: %s", err)
+	}
 
-	return istioConfigDetail, err
+	return istioConfigDetail, nil
 }
 
 func (in *IstioConfigService) IsGatewayAPI(cluster string) bool {

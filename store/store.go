@@ -21,6 +21,16 @@ type Store[K comparable, V any] interface {
 	// Set associates the given value with the given key. It will overwrite any existing value
 	// or create a new entry if the key does not exist.
 	Set(key K, value V)
+
+	// Items returns a copy of the store's contents.
+	Items() map[K]V
+	// Replace replaces the contents of the store with the given map.
+	Replace(map[K]V)
+	// Version returns the current version of the store. The version is incremented every time the store is modified.
+	// It can be used to detect changes to the store.
+	Version() uint
+	// Delete removes the key from the store. noop if the key doesn't exist.
+	Delete(key K)
 }
 
 // New returns a new store safe for concurrent use.
