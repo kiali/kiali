@@ -186,6 +186,35 @@ func TestParsePodWithoutLabelsToWorkload(t *testing.T) {
 	assert.Equal(map[string]string{}, w.Labels)
 }
 
+func TestIsGatewayLabelsToWorkload(t *testing.T) {
+	assert := assert.New(t)
+	config.Set(config.NewConfig())
+
+	w := Workload{}
+	w.Type = "Deployment"
+	w.Labels = map[string]string{
+		"istio":   "ingressgateway",
+		"version": "v1",
+	}
+	assert.True(w.IsGateway())
+
+	w = Workload{}
+	w.Type = "Deployment"
+	w.Labels = map[string]string{
+		"operator.istio.io/component": "EgressGateways",
+		"version":                     "v1",
+	}
+	assert.True(w.IsGateway())
+
+	w = Workload{}
+	w.Type = "Deployment"
+	w.Labels = map[string]string{
+		"operator.istio.io/component": "EgressGateway",
+		"istio-system":                "ingressgateway",
+	}
+	assert.False(w.IsGateway())
+}
+
 func fakeDeployment() *apps_v1.Deployment {
 	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
 	replicas := int32(1)
