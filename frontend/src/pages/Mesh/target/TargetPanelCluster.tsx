@@ -8,7 +8,7 @@ import {
   TargetPanelCommonProps,
   getTitle,
   shouldRefreshData,
-  targetPanel,
+  targetPanelStyle,
   targetPanelHR,
   targetPanelHeading,
   targetPanelWidth
@@ -61,40 +61,40 @@ export class TargetPanelCluster extends React.Component<TargetPanelCommonProps, 
     this.state = { ...defaultState, clusterNode };
   }
 
-  static getDerivedStateFromProps(
+  static getDerivedStateFromProps = (
     props: TargetPanelCommonProps,
     state: TargetPanelClusterState
-  ): TargetPanelClusterState | null {
+  ): TargetPanelClusterState | null => {
     // if the target (i.e. clusterBox) has changed, then init the state
     return props.target.elem !== state.clusterNode
       ? ({ clusterNode: props.target.elem, loading: true } as TargetPanelClusterState)
       : null;
-  }
+  };
 
-  componentDidMount() {
+  componentDidMount = (): void => {
     this.load();
-  }
+  };
 
-  componentDidUpdate(prevProps: TargetPanelCommonProps) {
+  componentDidUpdate = (prevProps: TargetPanelCommonProps): void => {
     if (shouldRefreshData(prevProps, this.props)) {
       this.load();
     }
-  }
+  };
 
-  componentWillUnmount() {
+  componentWillUnmount = (): void => {
     this.promises.cancelAll();
-  }
+  };
 
-  render() {
+  render = (): React.ReactNode => {
     return (
-      <div className={targetPanel} style={TargetPanelCluster.panelStyle}>
+      <div className={targetPanelStyle} style={TargetPanelCluster.panelStyle}>
         <div className={targetPanelHeading}>
           {getTitle('Cluster')}
           {this.renderCluster(this.meshCluster)}
         </div>
       </div>
     );
-  }
+  };
 
   private load = (): void => {
     this.promises.cancelAll();
@@ -117,9 +117,9 @@ export class TargetPanelCluster extends React.Component<TargetPanelCommonProps, 
     this.setState({ loading: true });
   };
 
-  private handleApiError(message: string, error: ApiError): void {
+  private handleApiError = (message: string, error: ApiError): void => {
     FilterHelper.handleError(`${message}: ${API.getErrorString(error)}`);
-  }
+  };
 
   private renderCluster = (meshCluster: MeshCluster): React.ReactNode => {
     return (
