@@ -44,6 +44,7 @@ OUTPUT_DIR="${ROOT_DIR}/_output"
 CLIENT_EXE="kubectl"
 CLUSTER_TYPE="minikube"
 HACK_SCRIPTS_DIR="${ROOT_DIR}/hack"
+KIALI_DEV_BUILD="true"
 KIALI_VERSION="dev"
 MONGONS="mongons"
 MONGOSKUPPERNS="mongoskupperns"
@@ -74,6 +75,7 @@ while [ $# -gt 0 ]; do
     sui)                      _CMD="sui"                           ;shift ;;
     -c|--client)              CLIENT_EXE="$2"                ;shift;shift ;;
     -ct|--cluster-type)       CLUSTER_TYPE="$2"              ;shift;shift ;;
+    -kdb|--kiali-dev-build)   KIALI_DEV_BUILD="$2"           ;shift;shift ;;
     -kv|--kiali-version)      KIALI_VERSION="$2"             ;shift;shift ;;
     -os1a|--openshift1-api)   OPENSHIFT1_API="$2"            ;shift;shift ;;
     -os1u|--openshift1-user)  OPENSHIFT1_USERNAME="$2"       ;shift;shift ;;
@@ -90,9 +92,16 @@ Valid command line arguments:
                                            If "minikube", this script creates its own clusters.
                                            If "openshift", the clusters must be started already.
                                            Default: "minikube"
-  -kv|--kiali-version <version>: The version of Kiali Server to install. If "dev", then a local build
-                                 will be performed and that dev build will be installed. Otherwise,
-                                 helm will be used to install that version of Kiali.
+  -kdb|--kiali-dev-build [true|false]: If "true" and --kiali-version is "dev", a dev image will be
+                                       built. If "false" and --kiali-version is "dev", you must
+                                       have previously built a dev image prior to running this script.
+                                       This option is ignored if --kiali-version is not "dev".
+                                       Default: "true"
+  -kv|--kiali-version <version>: The version of Kiali Server to install. If "dev", then the locally
+                                 built dev image will be pushed and installed. The dev image will be
+                                 locally built via make unless --kiali-dev-build is "false".
+                                 If this value is not "dev" then helm will be used to install that
+                                 version of Kiali (e.g. "v1.79.0").
                                  Default: "dev"
   -os1a|--openshift1-api <api URL>: The URL to the first OpenShift API server.
   -os1u|--openshift1-user <username>: The username of the user for the first OpenShift cluster. (default: kiali)
@@ -169,8 +178,11 @@ minikube_install_basic_demo() {
   ${HACK_SCRIPTS_DIR}/istio/install-bookinfo-demo.sh -c ${CLIENT_EXE} --minikube-profile ${CLUSTER1_ISTIO} --traffic-generator --wait-timeout 5m
 
   if [ "${KIALI_VERSION}" == "dev" ]; then
-    infomsg "Building and Installing Kiali ..."
-    make --directory "${ROOT_DIR}" -e OC="$(which ${CLIENT_EXE})" -e CLUSTER_TYPE=minikube -e MINIKUBE_PROFILE=${CLUSTER1_ISTIO} ACCESSIBLE_NAMESPACES=bookinfo SERVICE_TYPE=LoadBalancer build build-ui cluster-push operator-create kiali-create
+    infomsg "Installing Kiali ..."
+    if [ "${KIALI_DEV_BUILD}" == "true" ]; then
+      local make_build_targets="build build-ui"
+    fi
+    make --directory "${ROOT_DIR}" -e OC="$(which ${CLIENT_EXE})" -e CLUSTER_TYPE=minikube -e MINIKUBE_PROFILE=${CLUSTER1_ISTIO} ACCESSIBLE_NAMESPACES=bookinfo SERVICE_TYPE=LoadBalancer ${make_build_targets:-} cluster-push operator-create kiali-create
   else
     infomsg "Installing Kiali [${KIALI_VERSION}] via Helm ..."
     if ! helm repo update kiali 2> /dev/null; then
@@ -267,8 +279,11 @@ openshift_install_basic_demo() {
   eval $(make --directory "${ROOT_DIR}" -e OC="$(which ${CLIENT_EXE})" -e CLUSTER_TYPE=openshift cluster-status | grep "Image Registry login:" | sed 's/Image Registry login: \(.*\)$/\1/')
 
   if [ "${KIALI_VERSION}" == "dev" ]; then
-    infomsg "Building and Installing Kiali ..."
-    make --directory "${ROOT_DIR}" -e OC="$(which ${CLIENT_EXE})" -e CLUSTER_TYPE=openshift ACCESSIBLE_NAMESPACES=bookinfo build build-ui cluster-push operator-create kiali-create
+    infomsg "Installing Kiali ..."
+    if [ "${KIALI_DEV_BUILD}" == "true" ]; then
+      local make_build_targets="build build-ui"
+    fi
+    make --directory "${ROOT_DIR}" -e OC="$(which ${CLIENT_EXE})" -e CLUSTER_TYPE=openshift ACCESSIBLE_NAMESPACES=bookinfo ${make_build_targets:-} cluster-push operator-create kiali-create
   else
     infomsg "Installing Kiali [${KIALI_VERSION}] via Helm ..."
     if ! helm repo update kiali 2> /dev/null; then
