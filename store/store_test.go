@@ -121,3 +121,18 @@ func TestItemsReturnsWholeMap(t *testing.T) {
 	require.Equal(42, contents["key1"])
 	require.Equal(99, contents["key2"])
 }
+
+func TestDeleteKey(t *testing.T) {
+	require := require.New(t)
+
+	testStore := store.New[string, int]()
+	testStore.Replace(map[string]int{"key1": 42, "key2": 99})
+	require.Equal(uint(1), testStore.Version())
+
+	testStore.Delete("key1")
+	_, err := testStore.Get("key1")
+	require.Error(err)
+	require.Equal(uint(2), testStore.Version())
+
+	testStore.Delete("nonexistent")
+}

@@ -28,6 +28,8 @@ type Store[K comparable, V any] interface {
 	// Version returns the current version of the store. The version is incremented every time the store is modified.
 	// It can be used to detect changes to the store.
 	Version() uint
+	// Delete removes the key from the store. noop if the key doesn't exist.
+	Delete(key K)
 }
 
 // New returns a new store safe for concurrent use.

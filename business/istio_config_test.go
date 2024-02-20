@@ -525,13 +525,18 @@ func TestHasCircuitBreaker(t *testing.T) {
 
 func TestDeleteIstioConfigDetails(t *testing.T) {
 	assert := assert.New(t)
-	k8s := kubetest.NewFakeK8sClient(data.CreateEmptyVirtualService("reviews-to-delete", "test", []string{"reviews"}))
+	k8s := kubetest.NewFakeK8sClient(
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "test"}},
+		data.CreateEmptyVirtualService("reviews-to-delete", "test", []string{"reviews"}),
+	)
 	cache := SetupBusinessLayer(t, k8s, *config.NewConfig())
 	conf := config.Get()
 
 	k8sclients := make(map[string]kubernetes.ClientInterface)
 	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
-	configService := IstioConfigService{userClients: k8sclients, kialiCache: cache, controlPlaneMonitor: poller}
+
+	layer := NewWithBackends(k8sclients, k8sclients, nil, nil)
+	configService := IstioConfigService{userClients: k8sclients, kialiCache: cache, controlPlaneMonitor: poller, businessLayer: layer}
 
 	err := configService.DeleteIstioConfigDetail(context.Background(), conf.KubernetesConfig.ClusterName, "test", "virtualservices", "reviews-to-delete")
 	assert.Nil(err)
@@ -540,13 +545,17 @@ func TestDeleteIstioConfigDetails(t *testing.T) {
 func TestUpdateIstioConfigDetails(t *testing.T) {
 	assert := assert.New(t)
 	require := require.New(t)
-	k8s := kubetest.NewFakeK8sClient(data.CreateEmptyVirtualService("reviews-to-update", "test", []string{"reviews"}))
+	k8s := kubetest.NewFakeK8sClient(
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "test"}},
+		data.CreateEmptyVirtualService("reviews-to-update", "test", []string{"reviews"}),
+	)
 	cache := SetupBusinessLayer(t, k8s, *config.NewConfig())
 	conf := config.Get()
 
 	k8sclients := make(map[string]kubernetes.ClientInterface)
 	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
-	configService := IstioConfigService{userClients: k8sclients, kialiCache: cache, controlPlaneMonitor: poller}
+	layer := NewWithBackends(k8sclients, k8sclients, nil, nil)
+	configService := IstioConfigService{userClients: k8sclients, kialiCache: cache, controlPlaneMonitor: poller, businessLayer: layer}
 
 	updatedVirtualService, err := configService.UpdateIstioConfigDetail(context.Background(), conf.KubernetesConfig.ClusterName, "test", "virtualservices", "reviews-to-update", "{}")
 	require.NoError(err)
@@ -557,13 +566,16 @@ func TestUpdateIstioConfigDetails(t *testing.T) {
 
 func TestCreateIstioConfigDetails(t *testing.T) {
 	assert := assert.New(t)
-	k8s := kubetest.NewFakeK8sClient()
+	k8s := kubetest.NewFakeK8sClient(
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "test"}},
+	)
 	cache := SetupBusinessLayer(t, k8s, *config.NewConfig())
 	conf := config.Get()
 
 	k8sclients := make(map[string]kubernetes.ClientInterface)
 	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
-	configService := IstioConfigService{userClients: k8sclients, kialiCache: cache, controlPlaneMonitor: poller}
+	layer := NewWithBackends(k8sclients, k8sclients, nil, nil)
+	configService := IstioConfigService{userClients: k8sclients, kialiCache: cache, controlPlaneMonitor: poller, businessLayer: layer}
 
 	createVirtualService, err := configService.CreateIstioConfigDetail(context.Background(), conf.KubernetesConfig.ClusterName, "test", "virtualservices", []byte("{}"))
 	assert.Equal("test", createVirtualService.Namespace.Name)

@@ -47,6 +47,13 @@ func (s *threadSafeStore[K, V]) Set(key K, value V) {
 	s.version++
 }
 
+func (s *threadSafeStore[K, V]) Delete(key K) {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+	delete(s.data, key)
+	s.version++
+}
+
 func (s *threadSafeStore[K, V]) Version() uint {
 	return s.version
 }
