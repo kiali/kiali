@@ -16,7 +16,7 @@ limitations under the License.
 Adapted from: https://github.com/kubernetes-sigs/kubebuilder/blob/8afeb403549fa87bf55a00e10a819a34719eec53/docs/book/src/cronjob-tutorial/testdata/project/internal/controller/suite_test.go
 */
 
-package controller_test
+package controller
 
 import (
 	"context"
