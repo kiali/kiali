@@ -37,12 +37,7 @@ func NewValidationsController(
 		reconcileInterval = util.AsPtr(defaultReconcileInterval)
 	}
 
-	reconciler := &ValidationsReconciler{
-		clusters:           clusters,
-		kialiCache:         kialiCache,
-		reconcileInterval:  *reconcileInterval,
-		validationsService: validationsService,
-	}
+	reconciler := NewValidationsReconciler(clusters, kialiCache, validationsService, *reconcileInterval)
 
 	validationsController, err := controller.New("validations-controller", mgr, controller.Options{
 		Reconciler: reconciler,
@@ -83,6 +78,20 @@ func NewValidationsController(
 	}
 
 	return nil
+}
+
+func NewValidationsReconciler(
+	clusters []string,
+	kialiCache cache.KialiCache,
+	validationsService *business.IstioValidationsService,
+	reconcileInterval time.Duration,
+) *ValidationsReconciler {
+	return &ValidationsReconciler{
+		clusters:           clusters,
+		kialiCache:         kialiCache,
+		reconcileInterval:  reconcileInterval,
+		validationsService: validationsService,
+	}
 }
 
 // validationsReconciler fetches Istio VirtualService objects and prints their names

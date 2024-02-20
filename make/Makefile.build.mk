@@ -80,10 +80,16 @@ test-integration-setup:
 	go install github.com/jstemmer/go-junit-report@latest
 
 ## test-integration: Run Integration test suite
-test-integration: test-integration-setup
+test-integration: test-integration-setup .ensure-envtest-bin-dir-exists
 	@echo Running Integration tests
 	cd tests/integration/tests && ${GO} test ${GO_TEST_FLAGS} -v -timeout 30m 2>&1 | tee >(go-junit-report > ../junit-rest-report.xml) ../int-test.log
 	@echo Test results can be found here: $$(ls -1 ${ROOTDIR}/tests/integration/junit-rest-report.xml)
+	@echo Running controller integration tests
+	@cd tests/integration/controller && ${GO} test -v
+
+test-integration-controller: .ensure-envtest-bin-dir-exists
+	@echo Running controller integration tests
+	cd tests/integration/controller && ${GO} test -v
 
 #
 # Lint targets
