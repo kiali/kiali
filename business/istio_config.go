@@ -686,6 +686,11 @@ func (in *IstioConfigService) DeleteIstioConfigDetail(ctx context.Context, clust
 	// We need to refresh the kube cache though at least until waiting for the object to be updated is implemented.
 	kubeCache.Refresh(namespace)
 
+	_, _, err = in.businessLayer.Validations.GetIstioObjectValidations(ctx, cluster, namespace, resourceType, name)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -776,6 +781,9 @@ func (in *IstioConfigService) UpdateIstioConfigDetail(ctx context.Context, clust
 
 	// We need to refresh the kube cache though at least until waiting for the object to be updated is implemented.
 	kubeCache.Refresh(namespace)
+
+	// Re-run validations for that object to refresh the validation cache.
+	_, _, err = in.businessLayer.Validations.GetIstioObjectValidations(ctx, cluster, namespace, resourceType, name)
 
 	return istioConfigDetail, err
 }
@@ -920,6 +928,9 @@ func (in *IstioConfigService) CreateIstioConfigDetail(ctx context.Context, clust
 	default:
 		err = fmt.Errorf("object type not found: %v", resourceType)
 	}
+	if err != nil {
+		return istioConfigDetail, err
+	}
 
 	if in.config.ExternalServices.Istio.IstioAPIEnabled {
 		// Refreshing the istio cache in case something has changed with the registry services. Not sure if this is really needed.
@@ -929,6 +940,9 @@ func (in *IstioConfigService) CreateIstioConfigDetail(ctx context.Context, clust
 	}
 	// We need to refresh the kube cache though at least until waiting for the object to be updated is implemented.
 	kubeCache.Refresh(namespace)
+
+	// Re-run validations for that object to refresh the validation cache.
+	_, _, err = in.businessLayer.Validations.GetIstioObjectValidations(ctx, cluster, namespace, resourceType, name)
 
 	return istioConfigDetail, err
 }

@@ -256,6 +256,7 @@ Feature: Kiali Graph page - Display menu
     Given there are Istio objects in the "bookinfo" namespace for "east" cluster
     And there are Istio objects in the "bookinfo" namespace for "west" cluster
     When user graphs "bookinfo" namespaces
+    And autorefresh is enabled
     Then the Istio objects for the "bookinfo" namespace for both clusters should be grouped together in the panel
 
   @ambient

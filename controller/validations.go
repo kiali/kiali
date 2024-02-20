@@ -20,7 +20,7 @@ import (
 	"github.com/kiali/kiali/util"
 )
 
-const defaultReconcileInterval = time.Second * 30
+const defaultReconcileInterval = time.Second * 10
 
 // newValidationsController creates and starts a new controller for the validations.
 // It stops when the ctx is cancelled. It creates a single controller for all clusters.
