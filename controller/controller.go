@@ -16,7 +16,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/cluster"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
@@ -57,7 +56,6 @@ func Start(ctx context.Context, cf kubernetes.ClientFactory, kialiCache cache.Ki
 	// In the future this could be any cluster and not just home cluster.
 	homeClusterInfo := cf.GetSAHomeClusterClient().ClusterInfo()
 
-	clusters := []string{homeClusterInfo.Name}
 	// Create a new controller manager
 	mgr, err := ctrl.NewManager(homeClusterInfo.ClientConfig, ctrl.Options{
 		// Disable metrics server since Kiali has its own metrics server.
@@ -68,22 +66,9 @@ func Start(ctx context.Context, cf kubernetes.ClientFactory, kialiCache cache.Ki
 		return fmt.Errorf("error setting up ValidationsController when creating manager: %s", err)
 	}
 
+	var clusters []string
 	// We want one manager/reconciler for all clusters.
 	for _, client := range cf.GetSAClients() {
-		// We've already added home cluster.
-		if client.ClusterInfo().Name != homeClusterInfo.Name {
-			continue
-		}
-
-		cluster, err := cluster.New(client.ClusterInfo().ClientConfig)
-		if err != nil {
-			return fmt.Errorf("error setting up ValidationsController when creating cluster [%s]: %s", client.ClusterInfo().Name, err)
-		}
-
-		if err := mgr.Add(cluster); err != nil {
-			return fmt.Errorf("error setting up ValidationsController when adding cluster [%s]: %s", client.ClusterInfo().Name, err)
-		}
-
 		clusters = append(clusters, client.ClusterInfo().Name)
 	}
 

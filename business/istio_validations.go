@@ -53,8 +53,18 @@ type ReferenceChecker interface {
 	References() models.IstioReferencesMap
 }
 
+func validationsForCluster(validations models.IstioValidations, cluster string) models.IstioValidations {
+	clusterValidations := models.IstioValidations{}
+	for validationKey, validation := range validations {
+		if validationKey.Cluster == cluster {
+			clusterValidations[validationKey] = validation
+		}
+	}
+	return clusterValidations
+}
+
 func (in *IstioValidationsService) GetValidations(ctx context.Context, cluster string) (models.IstioValidations, error) {
-	return in.kialiCache.Validations().Items(), nil
+	return validationsForCluster(in.kialiCache.Validations().Items(), cluster), nil
 }
 
 func (in *IstioValidationsService) GetValidationsForNamespace(ctx context.Context, cluster, namespace string) (models.IstioValidations, error) {
@@ -89,7 +99,7 @@ func (in *IstioValidationsService) GetValidationsForService(ctx context.Context,
 		return nil, fmt.Errorf("Service [namespace: %s] [name: %s] doesn't exist for Validations.", namespace, service)
 	}
 
-	return models.IstioValidations(in.kialiCache.Validations().Items()).FilterBySingleType("service", service), nil
+	return models.IstioValidations(validationsForCluster(in.kialiCache.Validations().Items(), cluster)).FilterBySingleType("service", service), nil
 }
 
 func (in *IstioValidationsService) GetValidationsForWorkload(ctx context.Context, cluster, namespace, workload string) (models.IstioValidations, error) {
@@ -101,7 +111,7 @@ func (in *IstioValidationsService) GetValidationsForWorkload(ctx context.Context
 		}
 	}
 
-	return models.IstioValidations(in.kialiCache.Validations().Items()).FilterBySingleType("workload", workload), nil
+	return models.IstioValidations(validationsForCluster(in.kialiCache.Validations().Items(), cluster)).FilterBySingleType("workload", workload), nil
 }
 
 // CreateValidations returns an IstioValidations object with all the checks found when running
