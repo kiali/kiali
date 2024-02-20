@@ -193,7 +193,15 @@ func ParseAppenders(o graph.TelemetryOptions) (appenders []graph.Appender, final
 
 	// The finalizer order is important
 
-	// always run the outsider finalizer first, this allows other finalizers to
+	// always run the extensions finalizer first, it can add additional nodes and edges
+	finalizers = append(finalizers, &ExtensionsAppender{
+		Duration:         o.Duration,
+		GraphType:        o.GraphType,
+		IncludeIdleEdges: o.IncludeIdleEdges,
+		QueryTime:        o.QueryTime,
+	})
+
+	// always run the outsider finalizer next, this allows other finalizers to
 	// utilize graph.isInaccessible and graph.isOutside metatdata values.
 	finalizers = append(finalizers, &OutsiderAppender{
 		AccessibleNamespaces: o.AccessibleNamespaces,
