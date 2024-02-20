@@ -1,105 +1,146 @@
 package appender
 
 import (
-	"github.com/kiali/kiali/config"
+	"fmt"
+	"math"
+	"strings"
+	"time"
+
+	"github.com/prometheus/common/model"
+
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/log"
-	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/prometheus"
 )
 
-const IdleNodeAppenderName = "idleNode"
+const ExtensionsAppenderName = "extensions"
 
-// IdleNodeAppender looks for services that have never seen request traffic.  It adds nodes to represent the
-// idle/unused definitions.  The added node types depend on the graph type and/or labeling on the definition.
-// Name: idleNode
-type IdleNodeAppender struct {
-	GraphType          string
-	InjectServiceNodes bool // This appender adds idle services only when service nodes are injected or graphType=service
-	IsNodeGraph        bool // This appender does not operate on node detail graphs because we want to focus on the specific node.
+// ExtensionsAppender looks for configured extensions and adds extension traffic to the graph, as needed.  This is
+// a Finalizer appender, designed to be run after the full Istio graph is generated.
+// Name: extensions
+type ExtensionsAppender struct {
+	Duration         time.Duration
+	GraphType        string
+	IncludeIdleEdges bool
+	QueryTime        int64 // unix time in seconds
 }
 
 // Name implements Appender
-func (a IdleNodeAppender) Name() string {
-	return IdleNodeAppenderName
+func (a ExtensionsAppender) Name() string {
+	return ExtensionsAppenderName
 }
 
 // IsFinalizer implements Appender
-func (a IdleNodeAppender) IsFinalizer() bool {
-	return false
+func (a ExtensionsAppender) IsFinalizer() bool {
+	return true
+}
+
+type Extension struct {
+	Name                  string // extension name: "skupper"
+	Source_node_app       string // app name for request source node: "skupper-router"
+	Source_node_cluster   string // cluster name for request source node: "Kubernetes"
+	Source_node_namespace string //  namespace name for request souce node: "mongoskupperns"
 }
 
 // AppendGraph implements Appender
-func (a IdleNodeAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
-	if a.IsNodeGraph {
+func (a ExtensionsAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
+	log.Info("In Extensions")
+	if globalInfo.PromClient == nil {
+		var err error
+		globalInfo.PromClient, err = prometheus.NewClient()
+		graph.CheckError(err)
+	}
+
+	// Run through configured extensions
+	// extensions := config.Get().ExternalServices.Extensions // TBD, some config to define extensions
+	extensions := []Extension{{
+		Name:                  "skupper",
+		Source_node_app:       "skupper-router",
+		Source_node_cluster:   "Kubernetes",
+		Source_node_namespace: "mongoskupperns",
+	}}
+
+	// Process the extensions defined in the config
+	for _, extension := range extensions {
+		switch extension.Name {
+		case "skupper":
+			log.Info("Found Skupper Extension")
+			a.appendSkupperTraffic(trafficMap, extension, globalInfo.PromClient)
+
+		default:
+			log.Warningf("Extension appender encountered unknown extension [%s]", extension.Name)
+		}
+	}
+}
+
+func (a ExtensionsAppender) appendSkupperTraffic(trafficMap graph.TrafficMap, ext Extension, client *prometheus.Client) {
+	// Look for the extenstion source node (aka the skupper-router for the defined site).  If found, use
+	// it as the source node for request traffic to the defined address (i.e. requested service)
+	sourceID, _, _ := graph.Id(ext.Source_node_cluster, "", "", ext.Source_node_namespace, ext.Source_node_app, ext.Source_node_app, "", a.GraphType)
+	sourceNode, found := trafficMap[sourceID]
+	if !found {
+		// TODO: Debug
+		log.Infof("Skupper Extension did not find source node in traffic map [%+v]", ext)
 		return
 	}
+	log.Infof("Skupper Extension found source node [%+v]", sourceNode)
 
-	serviceLists := map[string]*models.ServiceList{}
-	workloadLists := map[string]*models.WorkloadList{}
-
-	if a.GraphType != graph.GraphTypeService {
-		workloadLists = getWorkloadLists(nil, namespaceInfo.Namespace, globalInfo)
+	// query skupper metrics looking for request traffic
+	metric := "flows_total"
+	groupBy := "address, destSite, protocol"
+	idleCondition := "> 0"
+	if a.IncludeIdleEdges {
+		idleCondition = ""
 	}
 
-	if a.GraphType == graph.GraphTypeService || a.InjectServiceNodes {
-		serviceLists = getServiceLists(nil, namespaceInfo.Namespace, globalInfo)
-	}
-
-	a.addIdleNodes(trafficMap, namespaceInfo.Namespace, serviceLists, workloadLists)
+	// 0) Incoming: query source telemetry to capture unserviced namespace services' incoming traffic
+	query := fmt.Sprintf(`sum(rate(%s{direction="incoming",sourceSite=~"^%s@.*$"} [%vs])) by (%s) %s`,
+		metric,
+		ext.Source_node_namespace,
+		int(a.Duration.Seconds()), // range duration for the query
+		groupBy,
+		idleCondition)
+	log.Infof("Skupper Extension query [%s]", query)
+	vector := promQuery(query, time.Unix(a.QueryTime, 0), client.GetContext(), client.API(), a)
+	a.appendTrafficMap(trafficMap, sourceNode, ext, &vector)
 }
 
-func (a IdleNodeAppender) addIdleNodes(trafficMap graph.TrafficMap, namespace string, serviceLists map[string]*models.ServiceList, workloadLists map[string]*models.WorkloadList) {
-	idleNodeTrafficMap := a.buildIdleNodeTrafficMap(trafficMap, namespace, serviceLists, workloadLists)
+func (a ExtensionsAppender) appendTrafficMap(trafficMap graph.TrafficMap, sourceNode *graph.Node, ext Extension, vector *model.Vector) {
+	for _, s := range *vector {
+		m := s.Metric
+		lAddress, addressOk := m["address"]
+		lDestSite, destSiteOk := m["destSite"]
+		lProtocol, protocolOk := m["protocol"]
 
-	// Integrate the idle nodes into the existing traffic map
-	for id, idleNode := range idleNodeTrafficMap {
-		trafficMap[id] = idleNode
-	}
-}
-
-func (a IdleNodeAppender) buildIdleNodeTrafficMap(trafficMap graph.TrafficMap, namespace string, serviceLists map[string]*models.ServiceList, workloadLists map[string]*models.WorkloadList) graph.TrafficMap {
-	idleNodeTrafficMap := graph.NewTrafficMap()
-
-	for cluster, serviceList := range serviceLists {
-		for _, s := range serviceList.Services {
-			id, nodeType, _ := graph.Id(cluster, namespace, s.Name, "", "", "", "", a.GraphType)
-			if _, found := trafficMap[id]; !found {
-				if _, found = idleNodeTrafficMap[id]; !found {
-					log.Tracef("Adding idle node for service [%s]", s.Name)
-					node := graph.NewNodeExplicit(id, cluster, namespace, "", "", "", s.Name, nodeType, a.GraphType)
-					// note: we don't know what the protocol really should be, http is most common, it's a dead edge anyway
-					node.Metadata = graph.Metadata{"httpIn": 0.0, "httpOut": 0.0, graph.IsIdle: true}
-					idleNodeTrafficMap[id] = node
-				}
-			}
+		log.Info("Found Flow %s", m.String)
+		if !addressOk || !destSiteOk || !protocolOk {
+			log.Warningf("Extensions appender appendTrafficMap: Skipping %s, missing expected labels", m.String())
+			continue
 		}
 
-		cfg := config.Get()
-		appLabel := cfg.IstioLabels.AppLabelName
-		versionLabel := cfg.IstioLabels.VersionLabelName
-		if workloadList, ok := workloadLists[cluster]; ok {
-			for _, w := range workloadList.Workloads {
-				labels := w.Labels
-				app := graph.Unknown
-				version := graph.Unknown
-				if v, ok := labels[appLabel]; ok {
-					app = v
-				}
-				if v, ok := labels[versionLabel]; ok {
-					version = v
-				}
-				id, nodeType, _ := graph.Id(cluster, "", "", namespace, w.Name, app, version, a.GraphType)
-				if _, found := trafficMap[id]; !found {
-					if _, found = idleNodeTrafficMap[id]; !found {
-						log.Tracef("Adding idle node for workload [%s] with labels [%v]", w.Name, labels)
-						node := graph.NewNodeExplicit(id, cluster, namespace, w.Name, app, version, "", nodeType, a.GraphType)
-						// note: we don't know what the protocol really should be, http is most common, it's a dead edge anyway
-						node.Metadata = graph.Metadata{"httpIn": 0.0, "httpOut": 0.0, graph.IsIdle: true}
-						idleNodeTrafficMap[id] = node
-					}
-				}
-			}
+		val := float64(s.Value)
+
+		// Should not happen but if NaN for any reason, Just skip it
+		if math.IsNaN(val) {
+			continue
 		}
+
+		address := string(lAddress)
+		destSite := string(lDestSite)
+		protocol := string(lProtocol)
+
+		destSvc := strings.Split(address, `:`)[0]
+		destSvcNamespace := strings.Split(destSite, `@`)[0]
+
+		destNodeID, destNodeType, _ := graph.Id(ext.Source_node_cluster, destSvcNamespace, destSvc, "", "", "", "", a.GraphType)
+		destNode, found := trafficMap[destNodeID]
+		if !found {
+			log.Info("Added Dest Node %s", destNodeID)
+			destNode = graph.NewNodeExplicit(destNodeID, ext.Source_node_cluster, destSvcNamespace, "", "", "", destSvc, destNodeType, a.GraphType)
+			trafficMap[destNodeID] = destNode
+		}
+		edge := sourceNode.AddEdge(destNode)
+		edge.Metadata[graph.ProtocolKey] = protocol
+		graph.AddToMetadata(protocol, val, "", "", "skupper", sourceNode.Metadata, destNode.Metadata, edge.Metadata)
 	}
-	return idleNodeTrafficMap
 }
