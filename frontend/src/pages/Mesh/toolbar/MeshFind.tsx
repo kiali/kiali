@@ -16,7 +16,7 @@ import { Controller, Graph, GraphElement } from '@patternfly/react-topology';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { KialiAppState } from '../../../store/Store';
-import { findValueSelector, hideValueSelector } from '../../../store/Selectors';
+import { meshFindValueSelector, meshHideValueSelector } from '../../../store/Selectors';
 import * as CytoscapeGraphUtils from '../../../components/CytoscapeGraph/CytoscapeGraphUtils';
 import { KialiIcon } from 'config/KialiIcon';
 import { kialiStyle } from 'styles/StyleUtils';
@@ -28,19 +28,10 @@ import { AutoComplete } from 'utils/AutoComplete';
 import { HEALTHY, NA, NOT_READY } from 'types/Health';
 import { history, HistoryManager, URLParam } from '../../../app/History';
 import { isValid } from 'utils/Common';
-import {
-  descendents,
-  EdgeData,
-  elems,
-  NodeData,
-  SelectAnd,
-  SelectExp,
-  selectOr,
-  SelectOr
-} from 'pages/GraphPF/GraphPFElems';
+import { descendents, elems, SelectAnd, SelectExp, selectOr, SelectOr } from 'pages/GraphPF/GraphPFElems';
 import { FIT_PADDING } from 'pages/GraphPF/GraphPF';
 import { isArray } from 'lodash';
-import { MeshAttr, MeshInfraType, MeshNodeType } from 'types/Mesh';
+import { MeshAttr, MeshEdgeData, MeshInfraType, MeshNodeData, MeshNodeType } from 'types/Mesh';
 import { Layout } from 'types/Graph';
 import { MeshToolbarActions } from 'actions/MeshToolbarActions';
 import { MeshFindOptions } from './MeshFindOptions';
@@ -473,7 +464,7 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
     const mesh = controller.getGraph();
     let needLayout = false;
 
-    console.debug(`Hide selector=[${JSON.stringify(selector)}]`);
+    console.debug(`Mesh Hide selector=[${JSON.stringify(selector)}]`);
 
     // unhide hidden elements when we are dealing with the same mesh. Either way,release for garbage collection
     if (!!this.hiddenElements && !meshChanged) {
@@ -546,11 +537,11 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
 
   private handleFind = (controller: Controller) => {
     const selector = this.parseValue(this.props.findValue, true);
-    console.debug(`Find selector=[${JSON.stringify(selector)}]`);
+    console.debug(`Mesh Find selector=[${JSON.stringify(selector)}]`);
 
     // unhighlight old find-hits
     this.findElements?.forEach(e => {
-      const data = e.getData() as NodeData | EdgeData;
+      const data = e.getData() as MeshNodeData | MeshEdgeData;
       e.setData({ ...data, isFind: false });
     });
     this.findElements = undefined;
@@ -568,7 +559,7 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
       }
       this.findElements = findNodes.concat(findEdges);
       this.findElements.forEach(e => {
-        const data = e.getData() as NodeData | EdgeData;
+        const data = e.getData() as MeshNodeData | MeshEdgeData;
         e.setData({ ...data, isFind: true });
       });
     }
@@ -868,8 +859,8 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
 }
 
 const mapStateToProps = (state: KialiAppState) => ({
-  findValue: findValueSelector(state),
-  hideValue: hideValueSelector(state),
+  findValue: meshFindValueSelector(state),
+  hideValue: meshHideValueSelector(state),
   layout: state.mesh.layout,
   showFindHelp: state.mesh.toolbarState.showFindHelp,
   updateTime: state.mesh.updateTime
