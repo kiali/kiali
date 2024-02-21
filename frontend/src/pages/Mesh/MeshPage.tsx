@@ -156,7 +156,6 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
     // the toolbar can render and ensure all redux props are updated with URL
     // settings. That in turn ensures the initial fetchParams are correct.
     const isInitialLoad = !this.state.meshData.timestamp;
-    console.log(`mesh isInitialLoad=${isInitialLoad}`);
 
     if (curr.target?.type === 'mesh') {
       this.controller = curr.target.elem as Controller;
@@ -168,9 +167,6 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
       (prev.hideValue !== curr.hideValue && curr.hideValue.includes('label:')) ||
       prev.lastRefreshAt !== curr.lastRefreshAt
     ) {
-      console.log(
-        `componentDidUpdate: ${isInitialLoad} ${this.state.meshData.timestamp} ${prev.lastRefreshAt} ${curr.lastRefreshAt}`
-      );
       this.loadMeshFromBackend();
     }
 

@@ -248,7 +248,6 @@ const TopologyContent: React.FC<{
 
       function addNode(data: NodeData): NodeModel {
         data.onHover = onHover;
-        console.log(`infraType=${data.infraType}`);
         const size = data.infraType === MeshInfraType.NAMESPACE ? NAMESPACE_NODE_SIZE : DEFAULT_NODE_SIZE;
         const node: NodeModel = {
           data: data,
