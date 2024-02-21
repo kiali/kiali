@@ -43,7 +43,6 @@ const OverviewCardSparklineChartsComponent: React.FC<Props> = (props: Props) => 
           istiodContainerCpu={props.controlPlaneMetrics?.istiod_container_cpu}
           istiodProcessMemory={props.controlPlaneMetrics?.istiod_process_mem}
           istiodProcessCpu={props.controlPlaneMetrics?.istiod_process_cpu}
-          duration={props.duration}
           istiodResourceThresholds={props.istiodResourceThresholds}
         />
       )}
