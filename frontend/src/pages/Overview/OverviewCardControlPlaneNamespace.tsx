@@ -4,8 +4,6 @@ import { SparklineChart } from 'components/Charts/SparklineChart';
 import { VCLine, RichDataPoint } from 'types/VictoryChartInfo';
 import { PFColors } from 'components/Pf/PfColors';
 import { toVCLine } from 'utils/VictoryChartsUtils';
-import { DurationInSeconds } from 'types/Common';
-import { getName } from 'utils/RateIntervals';
 import { Card, CardBody, Flex, FlexItem, Grid, GridItem, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { KialiIcon } from 'config/KialiIcon';
 import { kialiStyle } from 'styles/StyleUtils';
@@ -18,7 +16,6 @@ export const infoStyle = kialiStyle({
 const controlPlaneAnnotation = 'topology.istio.io/controlPlaneClusters';
 
 type ControlPlaneProps = {
-  duration: DurationInSeconds;
   istiodContainerMemory?: Metric[];
   istiodContainerCpu?: Metric[];
   istiodProcessMemory?: Metric[];
@@ -141,15 +138,11 @@ export const OverviewCardControlPlaneNamespace: React.FC<ControlPlaneProps> = (p
                   >
                     <FlexItem>
                       <b>Memory</b>
-                    </FlexItem>
-
-                    <FlexItem>
-                      {getName(props.duration).toLowerCase()}
                       <Tooltip
                         position={TooltipPosition.right}
                         content={
                           <div style={{ textAlign: 'left' }}>
-                            This values represents the memory of the istiod {memoryMetricSource}
+                            This chart shows memory consumption for the istiod {memoryMetricSource}
                           </div>
                         }
                       >
@@ -190,15 +183,11 @@ export const OverviewCardControlPlaneNamespace: React.FC<ControlPlaneProps> = (p
                   >
                     <FlexItem>
                       <b>CPU</b>
-                    </FlexItem>
-
-                    <FlexItem>
-                      {getName(props.duration).toLowerCase()}
                       <Tooltip
                         position={TooltipPosition.right}
                         content={
                           <div style={{ textAlign: 'left' }}>
-                            This values represents cpu of the istiod {cpuMetricSource}
+                            This chart shows cpu consumption for the istiod {cpuMetricSource}
                           </div>
                         }
                       >
