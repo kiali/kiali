@@ -45,6 +45,43 @@
       },
       {
         "data": {
+          "id": "454b7f21d8606d21091fd1c20ac21249",
+          "parent": "a020e49831af01e1d51016dec6171dfd",
+          "cluster": "East",
+          "infraName": "",
+          "infraType": "",
+          "namespace": "Data Plane Namespaces",
+          "nodeType": "box",
+          "healthData": null,
+          "isBox": "dataplanes"
+        }
+      },
+      {
+        "data": {
+          "id": "6f5f68dba350e8facdca4582344ee74c",
+          "parent": "454b7f21d8606d21091fd1c20ac21249",
+          "cluster": "East",
+          "infraName": "data-plane-1",
+          "infraType": "namespace",
+          "namespace": "data-plane-1",
+          "nodeType": "infra",
+          "healthData": null
+        }
+      },
+      {
+        "data": {
+          "id": "e351c7bbefbd8305a74e5916b3bc570b",
+          "parent": "454b7f21d8606d21091fd1c20ac21249",
+          "cluster": "East",
+          "infraName": "data-plane-2",
+          "infraType": "namespace",
+          "namespace": "data-plane-2",
+          "nodeType": "infra",
+          "healthData": null
+        }
+      },
+      {
+        "data": {
           "id": "1c965c180910c6bfaddf3412b0fa1340",
           "parent": "a7784c32ca8454299b1c0d174df2034d",
           "cluster": "East",

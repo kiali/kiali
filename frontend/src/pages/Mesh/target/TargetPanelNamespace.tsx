@@ -175,11 +175,6 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
     nextState: Readonly<TargetPanelNamespaceState>,
     _nextContext: any
   ): boolean {
-    if (nextState.loading) {
-      console.log(`Loading...: ${JSON.stringify(this.state.nsInfo)}`);
-    } else {
-      console.log(`Done Loading: ${JSON.stringify(this.state.nsInfo)}`);
-    }
     return nextState.loading === false;
   }
 
@@ -795,7 +790,6 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
   private fetchHealthStatus(): Promise<void> {
     return API.getNamespaceAppHealth(this.namespace, duration, this.cluster)
       .then(rs => {
-        console.log('In HealthStatus');
         const nsStatus: NamespaceStatus = {
           inNotReady: [],
           inError: [],
@@ -804,10 +798,7 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
           notAvailable: []
         };
 
-        console.log(`rs=${JSON.stringify(rs)}`);
-
         Object.keys(rs).forEach(item => {
-          console.log(`In Key ${item}`);
           const health: Health = rs[item];
           const status = health.getGlobalStatus();
 
@@ -822,11 +813,8 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
           } else {
             nsStatus.notAvailable.push(item);
           }
-          console.log(`Out Key ${item}`);
         });
-        console.log('In SetState');
         this.setState({ status: nsStatus });
-        console.log('Out HealthStatus');
       })
       .catch(err => this.handleApiError('Could not fetch namespace health', err));
   }

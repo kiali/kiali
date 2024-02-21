@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/mesh"
 )
 
@@ -40,7 +39,7 @@ type NodeData struct {
 	HealthData     interface{} `json:"healthData"`               // data to calculate health status from configurations
 	InfraData      interface{} `json:"infraData,omitempty"`      // infraType-dependent data
 	IsAmbient      bool        `json:"isAmbient,omitempty"`      // true if configured for ambient
-	IsBox          string      `json:"isBox,omitempty"`          // set for NodeTypeBox, current values: [ 'cluster', 'namespace', 'other' ]
+	IsBox          string      `json:"isBox,omitempty"`          // set for NodeTypeBox, current values: [ 'cluster', 'dataplanes', 'namespace' ]
 	IsInaccessible bool        `json:"isInaccessible,omitempty"` // true if the node exists in an inaccessible namespace
 	IsMTLS         bool        `json:"isMTLS,omitempty"`         // true if mesh-wide mTLS is enabled
 	IsOutOfMesh    bool        `json:"isOutOfMesh,omitempty"`    // true (has missing sidecar) | false
@@ -104,7 +103,7 @@ func NewConfig(meshMap mesh.MeshMap, o mesh.ConfigOptions) (result Config) {
 	}
 
 	// Add compound nodes as needed, inner boxes first
-	boxByNonInfraNamespaces(&nodes)
+	boxByDataPlaneNamespaces(&nodes)
 	boxByNamespace(&nodes)
 	boxByCluster(&nodes)
 
@@ -119,7 +118,7 @@ func NewConfig(meshMap mesh.MeshMap, o mesh.ConfigOptions) (result Config) {
 					return 0
 				case mesh.BoxByNamespace:
 					return 1
-				case mesh.BoxByOther:
+				case mesh.BoxByDataPlanes:
 					return 2
 				default:
 					return 3
@@ -207,8 +206,8 @@ func buildConfig(meshMap mesh.MeshMap, nodes *[]*NodeWrapper, edges *[]*EdgeWrap
 	}
 }
 
-// boxByNonInfraNamespaces boxes non-infra namespace nodes in the same cluster
-func boxByNonInfraNamespaces(nodes *[]*NodeWrapper) {
+// boxByDataPlaneNamespaces boxes data plane (non-infra) namespace nodes in the same cluster
+func boxByDataPlaneNamespaces(nodes *[]*NodeWrapper) {
 	box := make(map[string][]*NodeData)
 
 	for _, nw := range *nodes {
@@ -219,24 +218,15 @@ func boxByNonInfraNamespaces(nodes *[]*NodeWrapper) {
 		k := fmt.Sprintf("box_%s_non_infra_namespaces", nw.Data.Cluster)
 		box[k] = append(box[k], nw.Data)
 	}
-	generateBoxNodes(box, nodes, mesh.BoxByOther)
-}
 
-func generateBoxNodes(box map[string][]*NodeData, nodes *[]*NodeWrapper, boxBy string) {
 	for k, members := range box {
 		// create the compound (parent) node for the member nodes
 		nodeID := nodeHash(k)
 		namespace := ""
-		switch boxBy {
-		case mesh.BoxByOther:
-			num := len(members)
-			namespace = "1 Other Namespace"
-			if num > 1 {
-				namespace = "Non-Infra Namespaces"
-			}
-		default:
-			log.Errorf("Unsupported boxBy type [%s]", boxBy)
-			return
+		num := len(members)
+		namespace = "1 Data Plane Namespace"
+		if num > 1 {
+			namespace = "Data Plane Namespaces"
 		}
 
 		nd := NodeData{
@@ -244,7 +234,7 @@ func generateBoxNodes(box map[string][]*NodeData, nodes *[]*NodeWrapper, boxBy s
 			NodeType:  mesh.NodeTypeBox,
 			Cluster:   members[0].Cluster,
 			Namespace: namespace,
-			IsBox:     boxBy,
+			IsBox:     mesh.BoxByDataPlanes,
 		}
 
 		nw := NodeWrapper{
@@ -290,7 +280,7 @@ func boxByCluster(nodes *[]*NodeWrapper) {
 		}
 		box.Data.IsBox = mesh.BoxByCluster
 		for _, member := range *nodes {
-			if member.Data.Parent != "" || member.Data.InfraType != mesh.InfraTypeNamespace {
+			if member.Data.Parent != "" || (member.Data.InfraType != mesh.InfraTypeNamespace && member.Data.IsBox != mesh.BoxByDataPlanes) {
 				continue
 			}
 			if member.Data.Cluster == box.Data.Cluster {

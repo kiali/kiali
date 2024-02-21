@@ -37,7 +37,7 @@ import { TourStop } from 'components/Tour/TourStop';
 import { getFocusSelector, unsetFocusSelector } from 'utils/SearchParamUtils';
 import { meshComponentFactory } from './components/meshComponentFactory';
 import { MeshData } from './MeshPage';
-import { MeshNodeData, MeshTarget } from 'types/Mesh';
+import { MeshInfraType, MeshTarget } from 'types/Mesh';
 import { MeshHighlighter } from './MeshHighlighter';
 import {
   EdgeData,
@@ -55,7 +55,8 @@ import { MeshTourStops } from './MeshHelpTour';
 let initialLayout = false;
 let requestFit = false;
 
-const DEFAULT_NODE_SIZE = 40;
+const DEFAULT_NODE_SIZE = 150;
+const NAMESPACE_NODE_SIZE = 70;
 const ZOOM_IN = 4 / 3;
 const ZOOM_OUT = 3 / 4;
 
@@ -139,7 +140,7 @@ const TopologyContent: React.FC<{
         }
         case ModelKind.node: {
           highlighter.setSelectedId(selectedIds[0]);
-          const isBox = (elem.getData() as MeshNodeData).isBox;
+          const isBox = (elem.getData() as NodeData).isBox;
           setTarget({ type: isBox ? 'box' : 'node', elem: elem } as MeshTarget);
           return;
         }
@@ -226,7 +227,7 @@ const TopologyContent: React.FC<{
       };
 
       function addGroup(data: NodeData): NodeModel {
-        const collapsed = data.isBox === BoxByType.OTHER; // always collapse non-infra to start
+        const collapsed = data.isBox === BoxByType.DATAPLANES; // always collapse data-planes to start
         data.collapsible = collapsed;
         data.onHover = onHover;
         const group: NodeModel = {
@@ -247,15 +248,16 @@ const TopologyContent: React.FC<{
 
       function addNode(data: NodeData): NodeModel {
         data.onHover = onHover;
+        const size = data.infraType === MeshInfraType.NAMESPACE ? NAMESPACE_NODE_SIZE : DEFAULT_NODE_SIZE;
         const node: NodeModel = {
           data: data,
-          height: DEFAULT_NODE_SIZE,
+          height: size,
           id: data.id,
           shape: getNodeShape(data),
           status: getNodeStatus(data),
           style: { padding: 50 },
           type: 'node',
-          width: DEFAULT_NODE_SIZE
+          width: size
         };
         setNodeLabel(node, nodeMap);
         nodeMap.set(data.id, node);

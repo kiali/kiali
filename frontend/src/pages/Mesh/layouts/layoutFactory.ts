@@ -17,7 +17,6 @@ export const LAYOUT_DEFAULTS: LayoutOptions = {
 */
 
 export const layoutFactory: LayoutFactory = (type: string, graph: Graph): Layout | undefined => {
-  console.log(`type=${type}`);
   switch (type) {
     case LayoutName.Dagre:
       return new DagreLayout(graph, {

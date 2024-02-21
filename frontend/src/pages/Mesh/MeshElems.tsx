@@ -95,9 +95,11 @@ export const getNodeStatus = (data: NodeData): NodeStatus => {
 };
 
 export const getNodeShape = (data: NodeData): NodeShape => {
-  switch (data.nodeType) {
+  switch (data.infraType) {
+    case MeshInfraType.NAMESPACE:
+      return NodeShape.rect;
     default:
-      return NodeShape.circle;
+      return NodeShape.hexagon;
   }
 };
 
@@ -130,7 +132,7 @@ export const setNodeLabel = (node: NodeModel, _nodeMap: NodeMap): void => {
         pfBadge = PFBadges.Cluster;
         break;
       case BoxByType.NAMESPACE:
-      case BoxByType.OTHER:
+      case BoxByType.DATAPLANES:
         content.push(data.namespace);
         pfBadge = PFBadges.Namespace;
         break;
