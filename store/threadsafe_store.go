@@ -32,5 +32,13 @@ func (s *threadSafeStore[T]) Replace(items map[string]T) {
 	s.data = items
 }
 
+// Set associates the given value with the given key. It will overwrite any existing value
+// or create a new entry if the key does not exist.
+func (s *threadSafeStore[T]) Set(key string, value T) {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+	s.data[key] = value
+}
+
 // Interface guard to ensure threadSafeStore implements the Store.
 var _ Store[any] = &threadSafeStore[any]{}

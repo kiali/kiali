@@ -21,6 +21,9 @@ type Store[T any] interface {
 	Get(key string) (T, error)
 	// Replace replaces the contents of the store with the given map.
 	Replace(map[string]T)
+	// Set associates the given value with the given key. It will overwrite any existing value
+	// or create a new entry if the key does not exist.
+	Set(key string, value T)
 }
 
 // New returns a new store safe for concurrent use.

@@ -15,6 +15,8 @@ import (
 	"github.com/kiali/kiali/store"
 )
 
+const ambientCheckExpirationTime = 1 * time.Minute
+
 // Istio uses caches for pods and controllers.
 // Kiali will use caches for specific namespaces and types
 // https://github.com/istio/istio/blob/master/mixer/adapter/kubernetesenv/cache.go
@@ -56,11 +58,14 @@ type namespaceCache struct {
 	clusterNamespace map[string]map[string]models.Namespace // By cluster, by namespace name
 }
 
-type kialiCacheImpl struct {
-	ambientEnabled        *bool
-	ambientLastUpdateTime *time.Time
-	conf                  config.Config
+type ambientCheck struct {
+	ambientEnabled        bool
+	ambientLastUpdateTime time.Time
+}
 
+type kialiCacheImpl struct {
+	ambientChecksPerCluster store.Store[ambientCheck]
+	conf                    config.Config
 	// Embedded for backward compatibility for business methods that just use one cluster.
 	// All business methods should eventually use the multi-cluster cache.
 	// TODO: Get rid of embedding.
@@ -85,14 +90,15 @@ type kialiCacheImpl struct {
 
 func NewKialiCache(clientFactory kubernetes.ClientFactory, cfg config.Config) (KialiCache, error) {
 	kialiCacheImpl := kialiCacheImpl{
-		clientFactory:          clientFactory,
-		conf:                   cfg,
-		kubeCache:              make(map[string]KubeCache),
-		refreshDuration:        time.Duration(cfg.KubernetesConfig.CacheDuration) * time.Second,
-		tokenNamespaces:        make(map[string]namespaceCache),
-		tokenNamespaceDuration: time.Duration(cfg.KubernetesConfig.CacheTokenNamespaceDuration) * time.Second,
-		proxyStatusStore:       store.New[*kubernetes.ProxyStatus](),
-		registryStatusStore:    store.New[*kubernetes.RegistryStatus](),
+		ambientChecksPerCluster: store.New[ambientCheck](),
+		clientFactory:           clientFactory,
+		conf:                    cfg,
+		kubeCache:               make(map[string]KubeCache),
+		refreshDuration:         time.Duration(cfg.KubernetesConfig.CacheDuration) * time.Second,
+		tokenNamespaces:         make(map[string]namespaceCache),
+		tokenNamespaceDuration:  time.Duration(cfg.KubernetesConfig.CacheTokenNamespaceDuration) * time.Second,
+		proxyStatusStore:        store.New[*kubernetes.ProxyStatus](),
+		registryStatusStore:     store.New[*kubernetes.RegistryStatus](),
 	}
 
 	for cluster, client := range clientFactory.GetSAClients() {
@@ -165,13 +171,15 @@ func (c *kialiCacheImpl) SetClusters(clusters []kubernetes.Cluster) {
 // ATM it is defined in the istio-cni-config configmap
 func (in *kialiCacheImpl) IsAmbientEnabled(cluster string) bool {
 	currentTime := time.Now()
-	if in.ambientLastUpdateTime == nil {
-		in.ambientLastUpdateTime = new(time.Time)
-		in.ambientLastUpdateTime = &currentTime
-	}
 
-	if in.ambientEnabled == nil || currentTime.Sub(*in.ambientLastUpdateTime) > time.Minute {
-		in.ambientEnabled = new(bool)
+	check, _ := in.ambientChecksPerCluster.Get(cluster)
+	defer func() {
+		in.ambientChecksPerCluster.Set(cluster, check)
+	}()
+
+	if currentTime.Sub(check.ambientLastUpdateTime) > ambientCheckExpirationTime {
+		// Time has expired. Check again.
+		check.ambientLastUpdateTime = currentTime
 		kubeCache, err := in.GetKubeCache(cluster)
 		if err != nil {
 			log.Debugf("Unable to get kube cache when checking for ambient profile: %s", err)
@@ -188,11 +196,10 @@ func (in *kialiCacheImpl) IsAmbientEnabled(cluster string) bool {
 			return false
 		}
 
-		*in.ambientEnabled = true
-		in.ambientLastUpdateTime = &currentTime
+		check.ambientEnabled = true
 	}
 
-	return *in.ambientEnabled
+	return check.ambientEnabled
 }
 
 // Interface guard for kiali cache impl

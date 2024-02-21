@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -63,4 +64,60 @@ func TestKubeCacheCreatedPerClient(t *testing.T) {
 
 	_, err = kialiCache.GetKubeCache("cluster3")
 	require.Error(err)
+}
+
+func TestIsAmbientEnabled(t *testing.T) {
+	require := require.New(t)
+	conf := config.NewConfig()
+	client := kubetest.NewFakeK8sClient(
+		&core_v1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "istio-system"}},
+		&apps_v1.DaemonSet{ObjectMeta: metav1.ObjectMeta{Name: "ztunnel", Namespace: "istio-system"}},
+	)
+	cache := NewTestingCache(t, client, *conf)
+
+	require.True(cache.IsAmbientEnabled(conf.KubernetesConfig.ClusterName))
+	// Call multiple times to ensure results are consistent.
+	require.True(cache.IsAmbientEnabled(conf.KubernetesConfig.ClusterName))
+}
+
+func TestIsAmbientMultiCluster(t *testing.T) {
+	require := require.New(t)
+	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = "east"
+	east := kubetest.NewFakeK8sClient(
+		&core_v1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "istio-system"}},
+		&apps_v1.DaemonSet{ObjectMeta: metav1.ObjectMeta{Name: "ztunnel", Namespace: "istio-system"}},
+	)
+	west := kubetest.NewFakeK8sClient(
+		&core_v1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "istio-system"}},
+	)
+	clientFactory := kubetest.NewK8SClientFactoryMock(nil)
+	clientFactory.SetClients(map[string]kubernetes.ClientInterface{
+		"east": east,
+		"west": west,
+	})
+	cache := NewTestingCacheWithFactory(t, clientFactory, *conf)
+
+	require.True(cache.IsAmbientEnabled("east"))
+	require.False(cache.IsAmbientEnabled("west"))
+}
+
+// This test only tests anything when the '-race' flag is passed to 'go test'.
+func TestIsAmbientIsThreadSafe(t *testing.T) {
+	conf := config.NewConfig()
+	client := kubetest.NewFakeK8sClient(
+		&core_v1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "istio-system"}},
+		&apps_v1.DaemonSet{ObjectMeta: metav1.ObjectMeta{Name: "ztunnel", Namespace: "istio-system"}},
+	)
+	cache := NewTestingCache(t, client, *conf)
+
+	wg := sync.WaitGroup{}
+	for i := 0; i < 10; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			cache.IsAmbientEnabled(conf.KubernetesConfig.ClusterName)
+		}()
+	}
+	wg.Wait()
 }

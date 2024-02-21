@@ -66,3 +66,33 @@ func TestReplaceWithEmptyKey(t *testing.T) {
 	require.NoError(err)
 	require.Equal(1, val)
 }
+
+func TestSetNewKey(t *testing.T) {
+	require := require.New(t)
+
+	testStore := store.New[int]()
+	_, err := testStore.Get("key1")
+	require.Error(err)
+
+	testStore.Set("key1", 42)
+	val, err := testStore.Get("key1")
+	require.NoError(err)
+	require.Equal(42, val)
+}
+
+func TestSetExistingKey(t *testing.T) {
+	require := require.New(t)
+
+	testStore := store.New[int]()
+	_, err := testStore.Get("key1")
+	require.Error(err)
+
+	testStore.Set("key1", 42)
+	_, err = testStore.Get("key1")
+	require.NoError(err)
+
+	testStore.Set("key1", 43)
+	val, err := testStore.Get("key1")
+	require.NoError(err)
+	require.Equal(43, val)
+}
