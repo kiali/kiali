@@ -4,7 +4,7 @@ import { kialiStyle } from 'styles/StyleUtils';
 import {
   TargetPanelCommonProps,
   shouldRefreshData,
-  targetPanel,
+  targetPanelStyle,
   targetPanelBodyStyle as targetPanelBody,
   targetPanelBorder,
   targetPanelHR,
@@ -65,8 +65,8 @@ type TargetPanelNamespaceState = {
   istiodResourceThresholds?: IstiodResourceThresholds;
   loading: boolean;
   metrics?: Metric[];
-  nsInfo?: NamespaceInfo;
   namespaceNode?: Node<NodeModel, any>;
+  nsInfo?: NamespaceInfo;
   outboundPolicyMode?: OutboundTrafficPolicy;
   status?: NamespaceStatus;
   tlsStatus?: TLSStatus;
@@ -149,45 +149,45 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
     };
   }
 
-  static getDerivedStateFromProps(
+  static getDerivedStateFromProps = (
     props: TargetPanelCommonProps,
     state: TargetPanelNamespaceState
-  ): TargetPanelNamespaceState | null {
+  ): TargetPanelNamespaceState | null => {
     // if the target (e.g. namespaceBox) has changed, then init the state and set to loading. The loading
     // will actually be kicked off after the render (in componentDidMount/Update).
     return props.target.elem !== state.namespaceNode
       ? ({ namespaceNode: props.target.elem, loading: true } as TargetPanelNamespaceState)
       : null;
-  }
+  };
 
-  componentDidMount() {
+  componentDidMount = (): void => {
     this.load();
-  }
+  };
 
-  componentDidUpdate(prevProps: TargetPanelCommonProps) {
+  componentDidUpdate = (prevProps: TargetPanelCommonProps): void => {
     if (shouldRefreshData(prevProps, this.props)) {
       this.load();
     }
-  }
+  };
 
-  shouldComponentUpdate(
+  shouldComponentUpdate = (
     _nextProps: Readonly<TargetPanelNamespaceProps>,
     nextState: Readonly<TargetPanelNamespaceState>,
     _nextContext: any
-  ): boolean {
+  ): boolean => {
     if (nextState.loading) {
       console.log(`Loading...: ${JSON.stringify(this.state.nsInfo)}`);
     } else {
       console.log(`Done Loading: ${JSON.stringify(this.state.nsInfo)}`);
     }
     return nextState.loading === false;
-  }
+  };
 
-  componentWillUnmount() {
+  componentWillUnmount = (): void => {
     this.promises.cancelAll();
-  }
+  };
 
-  render() {
+  render = (): React.ReactNode => {
     if (this.state.loading || !this.state.nsInfo) {
       return null;
     }
@@ -201,7 +201,7 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
     );
 
     return (
-      <div className={classes(targetPanelBorder, targetPanel)}>
+      <div className={classes(targetPanelBorder, targetPanelStyle)}>
         <Card
           isCompact={true}
           className={cardGridStyle}
@@ -226,6 +226,7 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
               {nsInfo.cluster}
             </div>
           </CardHeader>
+
           <CardBody>
             {isControlPlane && !isRemoteCluster(nsInfo.annotations) && (
               <div className={targetPanelBody}>
@@ -328,7 +329,7 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
         </Card>
       </div>
     );
-  }
+  };
 
   hasCanaryUpgradeConfigured = (): boolean => {
     if (this.state.canaryUpgradeStatus) {
@@ -626,7 +627,7 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
     return namespaceActions;
   };
 
-  renderNamespaceBadges(ns: NamespaceInfo, tooltip: boolean): JSX.Element {
+  renderNamespaceBadges(ns: NamespaceInfo, tooltip: boolean): React.ReactNode {
     const isControlPlane = this.isControlPlane();
     return (
       <>
@@ -663,7 +664,7 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
     );
   }
 
-  renderLabels(ns: NamespaceInfo): JSX.Element {
+  renderLabels(ns: NamespaceInfo): React.ReactNode {
     const labelsLength = ns.labels ? `${Object.entries(ns.labels).length}` : 'No';
 
     const labelContent = ns.labels ? (
@@ -695,7 +696,7 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
     return labelContent;
   }
 
-  renderIstioConfigStatus(ns: NamespaceInfo): JSX.Element {
+  renderIstioConfigStatus(ns: NamespaceInfo): React.ReactNode {
     let validations: ValidationStatus = { errors: 0, namespace: ns.name, objectCount: 0, warnings: 0 };
 
     if (!!ns.validations) {
@@ -771,7 +772,7 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
     this.setState({ loading: true });
   };
 
-  private fetchCanariesStatus(): Promise<void> {
+  private fetchCanariesStatus = async (): Promise<void> => {
     if (!this.isControlPlane()) {
       return Promise.resolve();
     }
@@ -790,9 +791,9 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
       .catch(error => {
         AlertUtils.addError('Error fetching namespace canary upgrade status.', error, 'default', MessageType.ERROR);
       });
-  }
+  };
 
-  private fetchHealthStatus(): Promise<void> {
+  private fetchHealthStatus = async (): Promise<void> => {
     return API.getNamespaceAppHealth(this.namespace, duration, this.cluster)
       .then(rs => {
         console.log('In HealthStatus');
@@ -829,9 +830,9 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
         console.log('Out HealthStatus');
       })
       .catch(err => this.handleApiError('Could not fetch namespace health', err));
-  }
+  };
 
-  private fetchIstiodResourceThresholds(): Promise<void> {
+  private fetchIstiodResourceThresholds = async (): Promise<void> => {
     if (!this.isControlPlane()) {
       return Promise.resolve();
     }
@@ -843,9 +844,9 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
       .catch(error => {
         AlertUtils.addError('Error fetching Istiod resource thresholds.', error, 'default', MessageType.ERROR);
       });
-  }
+  };
 
-  private fetchMetrics(): Promise<void> {
+  private fetchMetrics = async (): Promise<void> => {
     const rateParams = computePrometheusRateParams(duration, 10);
     const options: IstioMetricsOptions = {
       filters: ['request_count', 'request_error_count'],
@@ -882,9 +883,9 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
         }
       })
       .catch(err => this.handleApiError('Could not fetch namespace metrics', err));
-  }
+  };
 
-  private fetchTLS(): Promise<void> {
+  private fetchTLS = async (): Promise<void> => {
     if (!this.isControlPlane()) {
       return Promise.resolve();
     }
@@ -900,9 +901,9 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
         });
       })
       .catch(err => this.handleApiError('Could not fetch namespace TLS status', err));
-  }
+  };
 
-  private fetchOutboundTrafficPolicyMode(): Promise<void> {
+  private fetchOutboundTrafficPolicyMode = async (): Promise<void> => {
     if (!this.isControlPlane()) {
       return Promise.resolve();
     }
@@ -914,17 +915,17 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
       .catch(error => {
         AlertUtils.addError('Error fetching Mesh OutboundTrafficPolicy.Mode.', error, 'default', MessageType.ERROR);
       });
-  }
+  };
 
-  private isControlPlane = () => {
+  private isControlPlane = (): boolean => {
     return this.namespace === serverConfig.istioNamespace;
   };
 
-  private handleApiError(message: string, error: ApiError): void {
+  private handleApiError = (message: string, error: ApiError): void => {
     FilterHelper.handleError(`${message}: ${API.getErrorString(error)}`);
-  }
+  };
 
-  private renderCharts(): JSX.Element {
+  private renderCharts = (): React.ReactNode => {
     if (this.state.status) {
       return (
         <OverviewCardSparklineCharts
@@ -942,9 +943,9 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
     }
 
     return <div style={{ height: '70px' }} />;
-  }
+  };
 
-  private renderStatus(): JSX.Element {
+  private renderStatus = (): React.ReactNode => {
     const targetPage = switchType(healthType, Paths.APPLICATIONS, Paths.SERVICES, Paths.WORKLOADS);
     const name = this.namespace;
     const status = this.state.status;
@@ -1037,7 +1038,7 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
         </span>
       </div>
     );
-  }
+  };
 
   private show = (showType: Show, namespace: string, graphType: string): void => {
     let destination = '';

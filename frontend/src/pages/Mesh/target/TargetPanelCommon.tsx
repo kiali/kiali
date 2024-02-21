@@ -1,8 +1,9 @@
 import * as React from 'react';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from 'components/Pf/PfColors';
-import { MeshTarget } from 'types/Mesh';
+import { MeshInfraType, MeshTarget } from 'types/Mesh';
 import { IntervalInMilliseconds, TimeInMilliseconds } from 'types/Common';
+import { PFBadge, PFBadgeType, PFBadges } from 'components/Pf/PfBadges';
 
 export interface TargetPanelCommonProps {
   istioAPIEnabled: boolean;
@@ -14,7 +15,7 @@ export interface TargetPanelCommonProps {
 
 export const targetPanelWidth = '35rem';
 
-export const targetPanel = kialiStyle({
+export const panelStyle = kialiStyle({
   fontSize: 'var(--graph-side-panel--font-size)',
   height: '100%',
   margin: 0,
@@ -23,6 +24,22 @@ export const targetPanel = kialiStyle({
   padding: 0,
   position: 'relative',
   width: targetPanelWidth
+});
+
+export const targetPanelStyle = kialiStyle({
+  marginBottom: '1.5rem',
+  border: `1px solid ${PFColors.BorderColor100}`,
+  borderRadius: '1px',
+  '-webkit-box-shadow': '0 1px 1px rgba(0, 0, 0, 0.05)',
+  boxShadow: '0 1px 1px rgba(0, 0, 0, 0.05)'
+});
+
+export const targetPanelHeading = kialiStyle({
+  padding: '0.5rem 1rem',
+  borderBottom: '1px solid transparent',
+  borderTopLeftRadius: 0,
+  borderTopRightRadius: 0,
+  borderColor: PFColors.BorderColor100
 });
 
 export const targetPanelBodyStyle = kialiStyle({
@@ -40,7 +57,7 @@ export const targetPanelBodyStyle = kialiStyle({
 });
 
 export const targetPanelBorder = kialiStyle({
-  marginBottom: '23px',
+  marginBottom: '1.5rem',
   border: `1px solid ${PFColors.BorderColor100}`,
   borderRadius: '1px',
   '-webkit-box-shadow': '0 1px 1px rgba(0, 0, 0, 0.05)',
@@ -50,14 +67,6 @@ export const targetPanelBorder = kialiStyle({
 export const targetPanelFont: React.CSSProperties = {
   fontSize: 'var(--graph-side-panel--font-size)'
 };
-
-export const targetPanelHeading = kialiStyle({
-  padding: '10px 15px',
-  borderBottom: '1px solid transparent',
-  borderTopLeftRadius: 0,
-  borderTopRightRadius: 0,
-  borderColor: PFColors.BorderColor100
-});
 
 export const TargetPanelTabs = kialiStyle({
   padding: '0.5rem 1rem 0 1rem'
@@ -73,10 +82,10 @@ export const targetPanelTitle = kialiStyle({
 const hrStyle = kialiStyle({
   border: 0,
   borderTop: `1px solid ${PFColors.BorderColor100}`,
-  margin: '1.0rem 0'
+  margin: '1rem 0'
 });
 
-export const targetPanelHR = () => {
+export const targetPanelHR = (): React.ReactNode => {
   return <hr className={hrStyle} />;
 };
 
@@ -97,5 +106,50 @@ export const getTitle = (title: string): React.ReactNode => {
       {title}
       <br />
     </div>
+  );
+};
+
+const nodeStyle = kialiStyle({
+  alignItems: 'center',
+  display: 'flex'
+});
+
+export const renderNode = (infraName: string, infraType: MeshInfraType): React.ReactNode => {
+  let pfBadge: PFBadgeType;
+
+  switch (infraType) {
+    case MeshInfraType.CLUSTER:
+      pfBadge = PFBadges.Cluster;
+      break;
+    case MeshInfraType.GRAFANA:
+      pfBadge = PFBadges.Grafana;
+      break;
+    case MeshInfraType.ISTIOD:
+      pfBadge = PFBadges.Istio;
+      break;
+    case MeshInfraType.KIALI:
+      pfBadge = PFBadges.Kiali;
+      break;
+    case MeshInfraType.METRIC_STORE:
+      pfBadge = PFBadges.MetricStore;
+      break;
+    case MeshInfraType.NAMESPACE:
+      pfBadge = PFBadges.Namespace;
+      break;
+    case MeshInfraType.TRACE_STORE:
+      pfBadge = PFBadges.TraceStore;
+      break;
+    default:
+      pfBadge = PFBadges.Unknown;
+      console.warn(`MeshElems: Unexpected infraType [${infraType}] `);
+  }
+
+  return (
+    <React.Fragment key={infraName}>
+      <span className={nodeStyle}>
+        <PFBadge badge={pfBadge} size="sm" />
+        {infraName}{' '}
+      </span>
+    </React.Fragment>
   );
 };

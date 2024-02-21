@@ -8,7 +8,7 @@ import { FocusNode } from 'pages/GraphPF/GraphPF';
 import { classes } from 'typestyle';
 import { PFColors } from 'components/Pf/PfColors';
 import { MeshInfraType, MeshTarget } from 'types/Mesh';
-import { TargetPanelCommonProps, targetPanel } from './TargetPanelCommon';
+import { TargetPanelCommonProps, targetPanelStyle } from './TargetPanelCommon';
 import { MeshTourStops } from '../MeshHelpTour';
 import { BoxByType } from 'types/Graph';
 import { ElementModel, GraphElement } from '@patternfly/react-topology';
@@ -24,6 +24,7 @@ type TargetPanelState = {
 };
 
 type ReduxProps = {
+  kiosk: string;
   meshStatus: string;
   minTLS: string;
 };
@@ -45,7 +46,7 @@ const expandedStyle = kialiStyle({ height: '100%' });
 
 const collapsedStyle = kialiStyle({
   $nest: {
-    ['& > .' + targetPanel]: {
+    [`& > .${targetPanelStyle}`]: {
       display: 'none'
     }
   }
@@ -73,13 +74,13 @@ class TargetPanelComponent extends React.Component<TargetPanelProps, TargetPanel
     };
   }
 
-  componentDidUpdate(prevProps: Readonly<TargetPanelProps>): void {
+  componentDidUpdate = (prevProps: Readonly<TargetPanelProps>): void => {
     if (prevProps.target.elem !== this.props.target.elem) {
       this.setState({ isVisible: true });
     }
-  }
+  };
 
-  render() {
+  render = (): React.ReactNode => {
     if (!this.props.isPageVisible || !this.props.target.elem) {
       return null;
     }
@@ -107,7 +108,7 @@ class TargetPanelComponent extends React.Component<TargetPanelProps, TargetPanel
         </div>
       </TourStop>
     );
-  }
+  };
 
   private getTargetPanel = (target: MeshTarget): React.ReactFragment => {
     const targetType = target.type as string;
@@ -117,6 +118,7 @@ class TargetPanelComponent extends React.Component<TargetPanelProps, TargetPanel
         const elem = target.elem as GraphElement<ElementModel, any>;
         const data = elem.getData() as NodeData;
         const boxType: BoxByType = data.isBox as BoxByType;
+
         switch (boxType) {
           case 'cluster':
             return (
@@ -157,6 +159,7 @@ class TargetPanelComponent extends React.Component<TargetPanelProps, TargetPanel
       case 'node':
         const elem = target.elem as GraphElement<ElementModel, any>;
         const data = elem.getData() as NodeData;
+
         if (data.infraType === MeshInfraType.NAMESPACE) {
           return (
             <TargetPanelNamespace
@@ -170,6 +173,7 @@ class TargetPanelComponent extends React.Component<TargetPanelProps, TargetPanel
             />
           );
         }
+
         return (
           <TargetPanelNode
             istioAPIEnabled={this.props.istioAPIEnabled}
@@ -184,14 +188,14 @@ class TargetPanelComponent extends React.Component<TargetPanelProps, TargetPanel
     }
   };
 
-  private togglePanel = () => {
+  private togglePanel = (): void => {
     this.setState((state: TargetPanelState) => ({
       isVisible: !state.isVisible
     }));
   };
 }
 
-const mapStateToProps = (state: KialiAppState) => ({
+const mapStateToProps = (state: KialiAppState): ReduxProps => ({
   kiosk: state.globalState.kiosk,
   meshStatus: meshWideMTLSStatusSelector(state),
   minTLS: minTLSVersionSelector(state)
