@@ -195,9 +195,6 @@ func TestFilterExportToNamespacesVS(t *testing.T) {
 }
 
 func TestAmbientFilterExportToNamespacesVS(t *testing.T) {
-	// skip as businessLayer.IstioConfigService state is not reset from test to test
-	// this test pass when running alone
-	t.SkipNow()
 	assert := assert.New(t)
 	conf := config.NewConfig()
 	config.Set(conf)
@@ -274,9 +271,6 @@ func TestFilterExportToNamespacesDR(t *testing.T) {
 }
 
 func TestAmbientFilterExportToNamespacesDR(t *testing.T) {
-	// skip as businessLayer.IstioConfigService state is not reset from test to test
-	// this test pass when running alone
-	t.SkipNow()
 	assert := assert.New(t)
 	conf := config.NewConfig()
 	config.Set(conf)
@@ -353,9 +347,6 @@ func TestFilterExportToNamespacesSE(t *testing.T) {
 }
 
 func TestAmbientFilterExportToNamespacesSE(t *testing.T) {
-	// skip as businessLayer.IstioConfigService state is not reset from test to test
-	// this test pass when running alone
-	t.SkipNow()
 	assert := assert.New(t)
 	conf := config.NewConfig()
 	config.Set(conf)

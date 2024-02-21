@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"strings"
 	"sync"
-	"time"
 
 	extentions_v1alpha1 "istio.io/client-go/pkg/apis/extensions/v1alpha1"
 	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
@@ -30,9 +29,6 @@ import (
 )
 
 const allResources string = "*"
-
-var ambientEnabled *bool
-var lastUpdateTime *time.Time
 
 type IstioConfigService struct {
 	userClients         map[string]kubernetes.ClientInterface
@@ -1005,40 +1001,12 @@ func (in *IstioConfigService) IsGatewayAPI(cluster string) bool {
 	return in.userClients[cluster].IsGatewayAPI()
 }
 
-func (in *IstioConfigService) GatewayAPIClasses() []config.GatewayAPIClass {
-	return kubernetes.GatewayAPIClasses(in.IsAmbientEnabled())
-
+func (in *IstioConfigService) GatewayAPIClasses(cluster string) []config.GatewayAPIClass {
+	return kubernetes.GatewayAPIClasses(in.IsAmbientEnabled(cluster))
 }
 
-// Check if istio Ambient profile was enabled
-// ATM it will look for app=ztunnel selector from a configmap
-func (in *IstioConfigService) IsAmbientEnabled() bool {
-	currentTime := time.Now()
-	if lastUpdateTime == nil {
-		lastUpdateTime = new(time.Time)
-		lastUpdateTime = &currentTime
-	}
-	if ambientEnabled == nil || currentTime.Sub(*lastUpdateTime) > (10*time.Minute) {
-		ambientEnabled = new(bool)
-		selector := map[string]string{
-			"app": "ztunnel",
-		}
-		daemonset, err := in.kialiCache.GetDaemonSetsWithSelector(meta_v1.NamespaceAll, selector)
-		if err != nil {
-			log.Debugf("No ztunnel daemonset found in Kiali accessible namespaces: %s ", err.Error())
-		} else {
-			if len(daemonset) > 0 {
-				*ambientEnabled = true
-				return true
-			} else {
-				*ambientEnabled = false
-			}
-		}
-		lastUpdateTime = &currentTime
-	} else {
-		return *ambientEnabled
-	}
-	return false
+func (in *IstioConfigService) IsAmbientEnabled(cluster string) bool {
+	return in.kialiCache.IsAmbientEnabled(cluster)
 }
 
 func (in *IstioConfigService) GetIstioConfigPermissions(ctx context.Context, namespaces []string, cluster string) models.IstioConfigPermissions {

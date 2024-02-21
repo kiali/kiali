@@ -113,7 +113,7 @@ func IstioConfigList(w http.ResponseWriter, r *http.Request) {
 	// This can result on an error when IstioAPI is disabled, so filter here
 	// Even if all namespaces are not accessible, but the IstioAPI is enabled, still use the Istio Registry by AllNamespaces=true
 	// In Ambient mode ExportTo is ignored, so proceed per namespace
-	if criteria.AllNamespaces && !config.Get().AllNamespacesAccessible() && !config.Get().ExternalServices.Istio.IstioAPIEnabled || (business.IstioConfig.IsAmbientEnabled() && len(nss) > 0) {
+	if criteria.AllNamespaces && !config.Get().AllNamespacesAccessible() && !config.Get().ExternalServices.Istio.IstioAPIEnabled || (business.IstioConfig.IsAmbientEnabled(cluster) && len(nss) > 0) {
 		criteria.AllNamespaces = false
 		for _, ns := range nss {
 			criteria.Namespace = ns
