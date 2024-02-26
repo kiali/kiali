@@ -84,8 +84,8 @@
     "dagre": "0.8.5",
     "deep-freeze": "0.0.1",
     "eventemitter3": "4.0.7",
-    "i18next": "^21.8.14",
-    "i18next-http-backend": "^1.0.21",
+    "i18next": "^23.10.0",
+    "i18next-http-backend": "^2.5.0",
     "js-yaml": "^3.13.1",
     "json-beautify": "1.0.1",
     "lodash-es": "^4.17.21",
@@ -97,7 +97,7 @@
     "react-datepicker": "3.8.0",
     "react-dom": "^17.0.1",
     "react-flexview": "4.0.3",
-    "react-i18next": "^11.7.3",
+    "react-i18next": "^14.0.5",
     "react-redux": "7.2.2",
     "react-resize-detector": "3.4.0",
     "react-router": "5.2.0",
@@ -139,7 +139,7 @@
     "enzyme": "3.11.0",
     "enzyme-to-json": "3.4.4",
     "husky": "^8.0.3",
-    "i18next-parser": "^8.9.0",
+    "i18next-parser": "^8.12.0",
     "jest-canvas-mock": "2.2.0",
     "jest-localstorage-mock": "2.4.2",
     "junit-report-merger": "^3.0.5",
@@ -150,7 +150,7 @@
     "redux-mock-store": "1.5.4",
     "sass": "^1.63.6",
     "seedrandom": "3.0.1",
-    "typescript": "4.6.4"
+    "typescript": "^4.9.5"
   },
   "resolutions": {
     "@babel/core": "^7.22.15",

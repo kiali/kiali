@@ -16,7 +16,7 @@ import { IstioConfigNewRoute } from 'routes/IstioConfigNewRoute';
 import { GraphRoutePF } from 'routes/GraphRoutePF';
 import { GraphPagePF } from 'pages/GraphPF/GraphPagePF';
 import { OldMeshPage } from 'pages/Mesh/old/OldMeshPage';
-import { TFunction } from 'react-i18next';
+import { TFunction } from 'i18next';
 
 /**
  * Return array of objects that describe vertical menu
@@ -37,7 +37,7 @@ const navMenuItems = (t: TFunction): MenuItem[] => {
       pathsActive: [/^\/graph\/(.*)/]
     },
     {
-      id: 'graph_pf',
+      id: 'traffic_graph_pf',
       title: t('routes.traffic_graph_pf', 'Graph [PF]'),
       to: '/graphpf/namespaces/',
       pathsActive: [/^\/graphpf\/(.*)/]
@@ -45,29 +45,26 @@ const navMenuItems = (t: TFunction): MenuItem[] => {
     {
       id: 'applications',
       title: t('routes.applications', 'Applications'),
-      to: '/' + Paths.APPLICATIONS,
-      pathsActive: [new RegExp('^/namespaces/(.*)/' + Paths.APPLICATIONS + '/(.*)')]
+      to: `/${Paths.APPLICATIONS}`,
+      pathsActive: [new RegExp(`^/namespaces/(.*)/${Paths.APPLICATIONS}/(.*)`)]
     },
     {
       id: 'workloads',
       title: t('routes.workloads', 'Workloads'),
-      to: '/' + Paths.WORKLOADS,
-      pathsActive: [new RegExp('^/namespaces/(.*)/' + Paths.WORKLOADS + '/(.*)')]
+      to: `/${Paths.WORKLOADS}`,
+      pathsActive: [new RegExp(`^/namespaces/(.*)/${Paths.WORKLOADS}/(.*)`)]
     },
     {
       id: 'services',
       title: t('routes.services', 'Services'),
-      to: '/' + Paths.SERVICES,
-      pathsActive: [new RegExp('^/namespaces/(.*)/' + Paths.SERVICES + '/(.*)')]
+      to: `/${Paths.SERVICES}`,
+      pathsActive: [new RegExp(`^/namespaces/(.*)/${Paths.SERVICES}/(.*)`)]
     },
     {
       id: 'istio',
       title: t('routes.istio_config', 'Istio Config'),
-      to: '/' + Paths.ISTIO,
-      pathsActive: [
-        new RegExp('^/namespaces/(.*)/' + Paths.ISTIO + '/(.*)'),
-        new RegExp('/' + Paths.ISTIO + '/new/(.*)')
-      ]
+      to: `/${Paths.ISTIO}`,
+      pathsActive: [new RegExp(`^/namespaces/(.*)/${Paths.ISTIO}/(.*)`), new RegExp(`/${Paths.ISTIO}/new/(.*)`)]
     },
     {
       id: 'tracing',
@@ -111,7 +108,7 @@ const pathRoutes: Path[] = [
     component: GraphRoute
   },
   {
-    path: '/graph/node/namespaces/:namespace/' + Paths.WORKLOADS + '/:workload',
+    path: `/graph/node/namespaces/:namespace/${Paths.WORKLOADS}/:workload`,
     component: GraphRoute
   },
   {
@@ -171,7 +168,7 @@ const pathRoutes: Path[] = [
     component: WorkloadDetailsRoute
   },
   {
-    path: '/' + Paths.ISTIO + '/new/:objectType',
+    path: `/${Paths.ISTIO}/new/:objectType`,
     component: IstioConfigNewRoute
   },
   {
