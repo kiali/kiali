@@ -4,11 +4,12 @@ import (
 	"context"
 	"strings"
 
+	"istio.io/client-go/pkg/apis/networking/v1beta1"
+
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/log"
-	"istio.io/client-go/pkg/apis/networking/v1beta1"
 )
 
 const ServiceEntryAppenderName = "serviceEntry"
