@@ -467,6 +467,12 @@ type GraphUIDefaults struct {
 	Traffic     GraphTraffic      `yaml:"traffic,omitempty" json:"traffic,omitempty"`
 }
 
+// I18nUIDefaults defines UI Defaults specific to the I18n settings
+type I18nUIDefaults struct {
+	Default string   `yaml:"default,omitempty" json:"default,omitempty"`
+	Locales []string `yaml:"locales,omitempty" json:"locales,omitempty"`
+}
+
 // ListUIDefaults defines UI Defaults specific to the UI List pages
 type ListUIDefaults struct {
 	IncludeHealth         bool `yaml:"include_health,omitempty" json:"includeHealth"`
@@ -496,6 +502,7 @@ type MetricsDefaults struct {
 // UIDefaults defines default settings configured for the UI
 type UIDefaults struct {
 	Graph             GraphUIDefaults `yaml:"graph,omitempty" json:"graph,omitempty"`
+	I18n              I18nUIDefaults  `yaml:"i18n,omitempty" json:"i18n,omitempty"`
 	List              ListUIDefaults  `yaml:"list,omitempty" json:"list,omitempty"`
 	Mesh              MeshUIDefaults  `yaml:"mesh,omitempty" json:"mesh,omitempty"`
 	MetricsPerRefresh string          `yaml:"metrics_per_refresh,omitempty" json:"metricsPerRefresh,omitempty"`
@@ -816,6 +823,10 @@ func NewConfig() (c *Config) {
 						Http: "requests",
 						Tcp:  "sent",
 					},
+				},
+				I18n: I18nUIDefaults{
+					Default: "en",
+					Locales: []string{"en"},
 				},
 				List: ListUIDefaults{
 					IncludeHealth:         true,

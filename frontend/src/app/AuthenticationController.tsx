@@ -21,7 +21,7 @@ import { history } from './History';
 import { NamespaceActions } from 'actions/NamespaceAction';
 import { Namespace } from 'types/Namespace';
 import { UserSettingsActions } from 'actions/UserSettingsActions';
-import { DurationInSeconds, IntervalInMilliseconds, PF_THEME_DARK, Theme } from 'types/Common';
+import { DurationInSeconds, IntervalInMilliseconds, Locale, PF_THEME_DARK, Theme } from 'types/Common';
 import { config } from 'config';
 import { store } from 'store/ConfigStore';
 import { toGrpcRate, toHttpRate, toTcpRate, TrafficRate } from 'types/Graph';
@@ -30,22 +30,28 @@ import { StatusState, StatusKey } from 'types/StatusState';
 import { PromisesRegistry } from '../utils/CancelablePromises';
 import { GlobalActions } from '../actions/GlobalActions';
 import { getKialiTheme } from 'utils/ThemeUtils';
+import i18next from 'i18next';
 
-interface AuthenticationControllerReduxProps {
-  addMessage: (content: string, detail: string, groupId?: string, msgType?: MessageType, showNotif?: boolean) => void;
+interface ReduxStateProps {
   authenticated: boolean;
-  checkCredentials: () => void;
   isLoginError: boolean;
   landingRoute?: string;
+}
+
+interface ReduxDispatchProps {
+  addMessage: (content: string, detail: string, groupId?: string, msgType?: MessageType, showNotif?: boolean) => void;
+  checkCredentials: () => void;
   setActiveNamespaces: (namespaces: Namespace[]) => void;
   setDuration: (duration: DurationInSeconds) => void;
-  setTracingInfo: (tracingInfo: TracingInfo | null) => void;
   setLandingRoute: (route: string | undefined) => void;
   setNamespaces: (namespaces: Namespace[], receivedAt: Date) => void;
   setRefreshInterval: (interval: IntervalInMilliseconds) => void;
+  setTracingInfo: (tracingInfo: TracingInfo | null) => void;
   setTrafficRates: (rates: TrafficRate[]) => void;
   statusRefresh: (statusState: StatusState) => void;
 }
+
+type AuthenticationControllerReduxProps = ReduxStateProps & ReduxDispatchProps;
 
 type AuthenticationControllerProps = AuthenticationControllerReduxProps & {
   protectedAreaComponent: React.ReactNode;
@@ -60,8 +66,8 @@ enum LoginStage {
 }
 
 interface AuthenticationControllerState {
-  stage: LoginStage;
   isPostLoginError: boolean;
+  stage: LoginStage;
 }
 
 class AuthenticationControllerComponent extends React.Component<
@@ -79,8 +85,8 @@ class AuthenticationControllerComponent extends React.Component<
   constructor(props: AuthenticationControllerProps) {
     super(props);
     this.state = {
-      stage: this.props.authenticated ? LoginStage.LOGGED_IN_AT_LOAD : LoginStage.LOGIN,
-      isPostLoginError: false
+      isPostLoginError: false,
+      stage: this.props.authenticated ? LoginStage.LOGGED_IN_AT_LOAD : LoginStage.LOGIN
     };
   }
 
@@ -142,11 +148,11 @@ class AuthenticationControllerComponent extends React.Component<
     this.setDocLayout();
   }
 
-  componentWillUnmount() {
+  componentWillUnmount(): void {
     this.promises.cancelAll();
   }
 
-  render() {
+  render(): React.ReactNode {
     if (this.state.stage === LoginStage.LOGGED_IN) {
       return this.props.protectedAreaComponent;
     } else if (this.state.stage === LoginStage.LOGGED_IN_AT_LOAD) {
@@ -170,18 +176,22 @@ class AuthenticationControllerComponent extends React.Component<
     }
   }
 
-  private doPostLoginActions = async () => {
+  private doPostLoginActions = async (): Promise<void> => {
     const postLoginTimer = setTimeout(() => {
       this.setState({ stage: LoginStage.LOGGED_IN_AT_LOAD });
     }, this.postLoginMSTillTransition);
 
     try {
+      const getNamespaces = this.promises.register('getNamespaces', API.getNamespaces());
+      const getServerConfig = this.promises.register('getServerConfig', API.getServerConfig());
+
       const getStatusPromise = this.promises
         .register('getStatus', API.getStatus())
         .then(response => this.processServerStatus(response.data))
         .catch(error => {
           AlertUtils.addError('Error fetching server status.', error, 'default', MessageType.WARNING);
         });
+
       const getTracingInfoPromise = this.promises
         .register('getTracingInfo', API.getTracingInfo())
         .then(response => this.props.setTracingInfo(response.data))
@@ -194,8 +204,6 @@ class AuthenticationControllerComponent extends React.Component<
             MessageType.INFO
           );
         });
-      const getNamespaces = this.promises.register('getNamespaces', API.getNamespaces());
-      const getServerConfig = this.promises.register('getServerConfig', API.getServerConfig());
 
       const configs = await Promise.all([getNamespaces, getServerConfig, getStatusPromise, getTracingInfoPromise]);
 
@@ -207,9 +215,11 @@ class AuthenticationControllerComponent extends React.Component<
         history.replace(this.props.landingRoute);
         this.props.setLandingRoute(undefined);
       }
+
       this.setState({ stage: LoginStage.LOGGED_IN });
     } catch (err) {
       console.error('Error on post-login actions.', err);
+
       // Transitioning to LOGGED_IN_AT_LOAD so that the user will see the "Loading..."
       // screen instead of being stuck at the "login" page after a post-login error.
       this.setState({ isPostLoginError: true, stage: LoginStage.LOGGED_IN_AT_LOAD });
@@ -218,19 +228,33 @@ class AuthenticationControllerComponent extends React.Component<
     }
   };
 
-  private applyUIDefaults() {
+  private applyUIDefaults = (): void => {
     const uiDefaults = serverConfig.kialiFeatureFlags.uiDefaults;
+
     if (uiDefaults) {
+      // Set I18n locale
+      let locale = store.getState().globalState.locale;
+
+      // If locale in redux store is empty or not supported, set to default language
+      if (!uiDefaults.i18n.locales.includes(locale)) {
+        locale = uiDefaults.i18n.default ?? Locale.ENGLISH;
+      }
+
+      i18next.changeLanguage(locale);
+      store.dispatch(GlobalActions.setLocale(locale));
+
       // Duration (aka metricsPerRefresh)
       if (uiDefaults.metricsPerRefresh) {
         const validDurations = humanDurations(serverConfig, '', '');
         let metricsPerRefresh = 0;
+
         for (const [key, value] of Object.entries(validDurations)) {
           if (value === uiDefaults.metricsPerRefresh) {
             metricsPerRefresh = Number(key);
             break;
           }
         }
+
         if (metricsPerRefresh > 0) {
           this.props.setDuration(metricsPerRefresh);
           console.debug(
@@ -250,6 +274,7 @@ class AuthenticationControllerComponent extends React.Component<
             break;
           }
         }
+
         if (refreshInterval >= 0) {
           this.props.setRefreshInterval(refreshInterval);
           console.debug(`Setting UI Default: refreshInterval [${uiDefaults.refreshInterval}=${refreshInterval}ms]`);
@@ -272,6 +297,7 @@ class AuthenticationControllerComponent extends React.Component<
             console.debug(`Ignoring invalid UI Default: namespace [${name}]`);
           }
         }
+
         if (activeNamespaces.length > 0) {
           this.props.setActiveNamespaces(activeNamespaces);
           console.debug(`Setting UI Default: namespaces ${JSON.stringify(activeNamespaces.map(ns => ns.name))}`);
@@ -283,21 +309,25 @@ class AuthenticationControllerComponent extends React.Component<
       const httpRate = toHttpRate(uiDefaults.graph.traffic.http);
       const tcpRate = toTcpRate(uiDefaults.graph.traffic.tcp);
       const rates: TrafficRate[] = [];
+
       if (grpcRate) {
         rates.push(TrafficRate.GRPC_GROUP, grpcRate);
       }
+
       if (httpRate) {
         rates.push(TrafficRate.HTTP_GROUP, httpRate);
       }
+
       if (tcpRate) {
         rates.push(TrafficRate.TCP_GROUP, tcpRate);
       }
+
       this.props.setTrafficRates(rates);
     }
-  }
+  };
 
-  private setDocLayout = () => {
-    // Set theme from browser cache
+  private setDocLayout = (): void => {
+    // Set theme
     const theme = getKialiTheme();
     if (theme === Theme.DARK) {
       document.documentElement.classList.add(PF_THEME_DARK);
@@ -312,12 +342,12 @@ class AuthenticationControllerComponent extends React.Component<
     store.dispatch(GlobalActions.setKiosk(getKioskMode()));
   };
 
-  private processServerStatus = (status: StatusState) => {
+  private processServerStatus = (status: StatusState): void => {
     this.props.statusRefresh(status);
 
     if (status.status[StatusKey.DISABLED_FEATURES]) {
       this.props.addMessage(
-        'The following features are disabled: ' + status.status[StatusKey.DISABLED_FEATURES],
+        `The following features are disabled: ${status.status[StatusKey.DISABLED_FEATURES]}`,
         '',
         'default',
         MessageType.INFO,
@@ -327,13 +357,13 @@ class AuthenticationControllerComponent extends React.Component<
   };
 }
 
-const mapStateToProps = (state: KialiAppState) => ({
+const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
   authenticated: state.authentication.status === LoginStatus.loggedIn,
   isLoginError: state.authentication.status === LoginStatus.error,
   landingRoute: state.authentication.landingRoute
 });
 
-const mapDispatchToProps = (dispatch: KialiDispatch) => ({
+const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => ({
   addMessage: bindActionCreators(MessageCenterActions.addMessage, dispatch),
   checkCredentials: () => dispatch(LoginThunkActions.checkCredentials()),
   setActiveNamespaces: bindActionCreators(NamespaceActions.setActiveNamespaces, dispatch),

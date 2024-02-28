@@ -1,13 +1,14 @@
 import { GlobalStateReducer } from '../GlobalState';
 import { GlobalActions } from '../../actions/GlobalActions';
-import { Theme } from 'types/Common';
+import { Locale, Theme } from 'types/Common';
 
 describe('GlobalStateReducer reducer', () => {
   const RealDate = Date.now;
   const currentDate = Date.now();
 
-  const mockDate = date => {
-    global.Date.now = jest.fn(() => date) as any;
+  const mockDate = (date: number): number => {
+    global.Date.now = jest.fn(() => date);
+
     return date;
   };
 
@@ -24,6 +25,7 @@ describe('GlobalStateReducer reducer', () => {
       loadingCounter: 0,
       isPageVisible: true,
       kiosk: '',
+      locale: '',
       theme: ''
     });
   });
@@ -35,6 +37,7 @@ describe('GlobalStateReducer reducer', () => {
           loadingCounter: 0,
           isPageVisible: true,
           kiosk: '',
+          locale: '',
           theme: Theme.LIGHT
         },
         GlobalActions.incrementLoadingCounter()
@@ -43,6 +46,7 @@ describe('GlobalStateReducer reducer', () => {
       loadingCounter: 1,
       isPageVisible: true,
       kiosk: '',
+      locale: '',
       theme: Theme.LIGHT
     });
   });
@@ -54,6 +58,7 @@ describe('GlobalStateReducer reducer', () => {
           loadingCounter: 1,
           isPageVisible: true,
           kiosk: '',
+          locale: '',
           theme: Theme.LIGHT
         },
         GlobalActions.decrementLoadingCounter()
@@ -62,6 +67,7 @@ describe('GlobalStateReducer reducer', () => {
       loadingCounter: 0,
       isPageVisible: true,
       kiosk: '',
+      locale: '',
       theme: Theme.LIGHT
     });
   });
@@ -73,6 +79,7 @@ describe('GlobalStateReducer reducer', () => {
           loadingCounter: 1,
           isPageVisible: true,
           kiosk: '',
+          locale: '',
           theme: Theme.LIGHT
         },
         GlobalActions.incrementLoadingCounter()
@@ -81,6 +88,7 @@ describe('GlobalStateReducer reducer', () => {
       loadingCounter: 2,
       isPageVisible: true,
       kiosk: '',
+      locale: '',
       theme: Theme.LIGHT
     });
   });
@@ -92,6 +100,7 @@ describe('GlobalStateReducer reducer', () => {
           loadingCounter: 2,
           isPageVisible: true,
           kiosk: '',
+          locale: '',
           theme: Theme.LIGHT
         },
         GlobalActions.decrementLoadingCounter()
@@ -100,9 +109,11 @@ describe('GlobalStateReducer reducer', () => {
       loadingCounter: 1,
       isPageVisible: true,
       kiosk: '',
+      locale: '',
       theme: Theme.LIGHT
     });
   });
+
   it('should turn on page visibility status', () => {
     expect(
       GlobalStateReducer(
@@ -110,6 +121,7 @@ describe('GlobalStateReducer reducer', () => {
           loadingCounter: 0,
           isPageVisible: false,
           kiosk: '',
+          locale: '',
           theme: Theme.LIGHT
         },
         GlobalActions.setPageVisibilityVisible()
@@ -118,9 +130,11 @@ describe('GlobalStateReducer reducer', () => {
       loadingCounter: 0,
       isPageVisible: true,
       kiosk: '',
+      locale: '',
       theme: Theme.LIGHT
     });
   });
+
   it('should turn off page visibility status', () => {
     expect(
       GlobalStateReducer(
@@ -128,6 +142,7 @@ describe('GlobalStateReducer reducer', () => {
           loadingCounter: 0,
           isPageVisible: true,
           kiosk: '',
+          locale: '',
           theme: Theme.LIGHT
         },
         GlobalActions.setPageVisibilityHidden()
@@ -136,9 +151,11 @@ describe('GlobalStateReducer reducer', () => {
       loadingCounter: 0,
       isPageVisible: false,
       kiosk: '',
+      locale: '',
       theme: Theme.LIGHT
     });
   });
+
   it('should turn on kiosk status', () => {
     expect(
       GlobalStateReducer(
@@ -146,6 +163,7 @@ describe('GlobalStateReducer reducer', () => {
           loadingCounter: 0,
           isPageVisible: true,
           kiosk: '',
+          locale: '',
           theme: Theme.LIGHT
         },
         GlobalActions.setKiosk('test')
@@ -154,7 +172,50 @@ describe('GlobalStateReducer reducer', () => {
       loadingCounter: 0,
       isPageVisible: true,
       kiosk: 'test',
+      locale: '',
       theme: Theme.LIGHT
+    });
+  });
+
+  it('should switch to english language', () => {
+    expect(
+      GlobalStateReducer(
+        {
+          loadingCounter: 0,
+          isPageVisible: true,
+          kiosk: '',
+          locale: '',
+          theme: Theme.LIGHT
+        },
+        GlobalActions.setLocale(Locale.ENGLISH)
+      )
+    ).toEqual({
+      loadingCounter: 0,
+      isPageVisible: true,
+      kiosk: '',
+      locale: Locale.ENGLISH,
+      theme: Theme.LIGHT
+    });
+  });
+
+  it('should turn on dark theme', () => {
+    expect(
+      GlobalStateReducer(
+        {
+          loadingCounter: 0,
+          isPageVisible: true,
+          kiosk: '',
+          locale: '',
+          theme: Theme.LIGHT
+        },
+        GlobalActions.setTheme(Theme.DARK)
+      )
+    ).toEqual({
+      loadingCounter: 0,
+      isPageVisible: true,
+      kiosk: '',
+      locale: '',
+      theme: Theme.DARK
     });
   });
 });

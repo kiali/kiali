@@ -1,0 +1,18 @@
+{
+  "{{count}} label_one": "{{count}} label",
+  "{{count}} label_other": "{{count}} labels",
+  "Applications": "Applications",
+  "Distributed Tracing": "Distributed Tracing",
+  "Istio Config": "Istio Config",
+  "Kiali home cluster: {{name}}": "Kiali home cluster: {{name}}",
+  "Mesh": "Mesh",
+  "Mesh [classic]": "Mesh [classic]",
+  "Mesh [graph]": "Mesh [graph]",
+  "No labels": "No labels",
+  "Overview": "Overview",
+  "Services": "Services",
+  "Traffic Graph": "Traffic Graph",
+  "Traffic Graph [Cy]": "Traffic Graph [Cy]",
+  "Traffic Graph [PF]": "Traffic Graph [PF]",
+  "Workloads": "Workloads"
+}

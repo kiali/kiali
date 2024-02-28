@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Label, Flex, FlexItem, Tooltip, Toolbar, ToolbarItem } from '@patternfly/react-core';
 
-import { homeCluster } from '../../../config';
+import { homeCluster, serverConfig } from '../../../config';
 import { MeshMTLSStatus } from '../../../components/MTls/MeshMTLSStatus';
 import { IstioStatus } from '../../IstioStatus/IstioStatus';
 import { PfSpinner } from '../../PfSpinner';
@@ -12,9 +12,10 @@ import { ThemeSwitch } from './ThemeSwitch';
 import { LanguageSwitch } from './LanguageSwitch';
 import { KialiIcon } from 'config/KialiIcon';
 import { useTranslation } from 'react-i18next';
+import { I18N_NAMESPACE } from 'types/Common';
 
 export const MastheadItems: React.FC = () => {
-  const { t } = useTranslation();
+  const { t } = useTranslation(I18N_NAMESPACE);
 
   return (
     <>
@@ -27,11 +28,7 @@ export const MastheadItems: React.FC = () => {
                 <Tooltip
                   entryDelay={0}
                   position="bottom"
-                  content={
-                    <div>
-                      {t('nav.home_cluster.tooltip', 'Kiali home cluster: {{name}}', { name: homeCluster?.name })}
-                    </div>
-                  }
+                  content={<div>{t('Kiali home cluster: {{name}}', { name: homeCluster?.name })}</div>}
                 >
                   <Label data-test="cluster-icon" color="blue" icon={<KialiIcon.Cluster />}>
                     {homeCluster?.name}
@@ -54,9 +51,11 @@ export const MastheadItems: React.FC = () => {
             <FlexItem style={{ marginRight: '0.75rem' }}>
               <HelpDropdown />
             </FlexItem>
-            <FlexItem>
-              <LanguageSwitch />
-            </FlexItem>
+            {serverConfig.kialiFeatureFlags.uiDefaults?.i18n?.locales?.length > 1 && (
+              <FlexItem>
+                <LanguageSwitch />
+              </FlexItem>
+            )}
             <FlexItem>
               <UserDropdown />
             </FlexItem>

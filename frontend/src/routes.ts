@@ -26,59 +26,59 @@ const navMenuItems = (t: TFunction): MenuItem[] => {
   return [
     {
       id: 'overview',
-      title: t('routes.overview', 'Overview'),
+      title: t('Overview'),
       to: '/overview',
       pathsActive: [/^\/overview\/(.*)/]
     },
     {
       id: 'traffic_graph_cy',
-      title: t('routes.traffic_graph_cy', 'Graph [Cy]'),
+      title: t('Traffic Graph [Cy]'),
       to: '/graph/namespaces/',
       pathsActive: [/^\/graph\/(.*)/]
     },
     {
       id: 'traffic_graph_pf',
-      title: t('routes.traffic_graph_pf', 'Graph [PF]'),
+      title: t('Traffic Graph [PF]'),
       to: '/graphpf/namespaces/',
       pathsActive: [/^\/graphpf\/(.*)/]
     },
     {
       id: 'applications',
-      title: t('routes.applications', 'Applications'),
+      title: t('Applications'),
       to: `/${Paths.APPLICATIONS}`,
       pathsActive: [new RegExp(`^/namespaces/(.*)/${Paths.APPLICATIONS}/(.*)`)]
     },
     {
       id: 'workloads',
-      title: t('routes.workloads', 'Workloads'),
+      title: t('Workloads'),
       to: `/${Paths.WORKLOADS}`,
       pathsActive: [new RegExp(`^/namespaces/(.*)/${Paths.WORKLOADS}/(.*)`)]
     },
     {
       id: 'services',
-      title: t('routes.services', 'Services'),
+      title: t('Services'),
       to: `/${Paths.SERVICES}`,
       pathsActive: [new RegExp(`^/namespaces/(.*)/${Paths.SERVICES}/(.*)`)]
     },
     {
       id: 'istio',
-      title: t('routes.istio_config', 'Istio Config'),
+      title: t('Istio Config'),
       to: `/${Paths.ISTIO}`,
       pathsActive: [new RegExp(`^/namespaces/(.*)/${Paths.ISTIO}/(.*)`), new RegExp(`/${Paths.ISTIO}/new/(.*)`)]
     },
     {
       id: 'tracing',
-      title: t('routes.tracing', 'Distributed Tracing'),
+      title: t('Distributed Tracing'),
       to: '/tracing'
     },
     {
       id: 'mesh_graph',
-      title: t('routes.mesh_graph', 'Mesh [graph]'),
+      title: t('Mesh [graph]'),
       to: '/mesh'
     },
     {
       id: 'mesh_classic',
-      title: t('routes.mesh_classic', 'Mesh [classic]'),
+      title: t('Mesh [classic]'),
       to: '/oldmesh'
     }
   ];

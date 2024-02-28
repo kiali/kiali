@@ -3,6 +3,10 @@ import { kialiStyle } from 'styles/StyleUtils';
 import { Dropdown, DropdownItem, DropdownList, MenuToggle, MenuToggleElement } from '@patternfly/react-core';
 import { KialiIcon } from 'config/KialiIcon';
 import i18n from 'i18next';
+import { GlobalActions } from 'actions/GlobalActions';
+import { store } from 'store/ConfigStore';
+import { serverConfig } from 'config';
+import { Locale } from 'types/Common';
 
 const menuToggleStyle = kialiStyle({
   marginTop: '0.25rem',
@@ -19,21 +23,32 @@ const iconStyle = kialiStyle({
   }
 });
 
-export const LanguageSwitch = () => {
+export const LanguageSwitch: React.FC = () => {
   const [isDropdownOpen, setIsDropdownOpen] = React.useState<boolean>(false);
 
-  const items: React.ReactNode[] = [
-    <DropdownItem key="English" onClick={() => switchLanguage('en')}>
-      <span>English</span>
-    </DropdownItem>,
-    <DropdownItem key="Chinese" onClick={() => switchLanguage('zh')}>
-      <span>中文</span>
-    </DropdownItem>
-  ];
+  const supportedLocales = serverConfig.kialiFeatureFlags.uiDefaults.i18n.locales;
 
-  const switchLanguage = (languageType: string): void => {
-    i18n.changeLanguage(languageType);
-    localStorage.setItem('locale', languageType);
+  const items: React.ReactNode[] = [];
+
+  if (supportedLocales.includes(Locale.ENGLISH)) {
+    items.push(
+      <DropdownItem key="English" onClick={() => switchLanguage(Locale.ENGLISH)}>
+        <span>English</span>
+      </DropdownItem>
+    );
+  }
+
+  if (supportedLocales.includes(Locale.CHINESE)) {
+    items.push(
+      <DropdownItem key="Chinese" onClick={() => switchLanguage(Locale.CHINESE)}>
+        <span>中文</span>
+      </DropdownItem>
+    );
+  }
+
+  const switchLanguage = (locale: string): void => {
+    i18n.changeLanguage(locale);
+    store.dispatch(GlobalActions.setLocale(locale));
   };
 
   const onDropdownSelect = (): void => {

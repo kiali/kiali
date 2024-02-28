@@ -35,6 +35,7 @@ export interface GlobalState {
   readonly isPageVisible: boolean;
   readonly kiosk: string;
   readonly loadingCounter: number;
+  readonly locale: string;
   readonly theme: string;
 }
 
@@ -136,11 +137,11 @@ export interface MeshState {
 }
 
 export interface MessageCenterState {
-  nextId: number; // This likely will go away once we have persistence
-  groups: NotificationGroup[];
-  hidden: boolean;
   expanded: boolean;
   expandedGroupId?: string;
+  groups: NotificationGroup[];
+  hidden: boolean;
+  nextId: number; // This likely will go away once we have persistence
 }
 
 export interface InterfaceSettings {

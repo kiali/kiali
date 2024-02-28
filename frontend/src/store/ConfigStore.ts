@@ -1,6 +1,6 @@
 import { createStore, applyMiddleware, compose, Store } from 'redux';
 import { KialiAppState } from './Store';
-import { persistStore, persistReducer } from 'redux-persist';
+import { persistStore, persistReducer, Transform } from 'redux-persist';
 import { persistFilter } from 'redux-persist-transform-filter';
 import { createTransform } from 'redux-persist';
 
@@ -29,10 +29,14 @@ import { INITIAL_MESH_STATE } from 'reducers/MeshDataState';
 declare const window;
 
 const webRoot = (window as any).WEB_ROOT ? (window as any).WEB_ROOT : undefined;
-const persistKey = 'kiali-' + (webRoot && webRoot !== '/' ? webRoot.substring(1) : 'root');
+const persistKey = `kiali-${webRoot && webRoot !== '/' ? webRoot.substring(1) : 'root'}`;
 
 // Needed to be able to whitelist fields but allowing to keep an initialState
-const whitelistInputWithInitialState = (reducerName: string, inboundPaths: string[], initialState: any) =>
+const whitelistInputWithInitialState = (
+  reducerName: string,
+  inboundPaths: string[],
+  initialState: any
+): Transform<unknown, Transform<unknown, unknown>> =>
   createTransform(
     inboundState => persistFilter(inboundState, inboundPaths, 'whitelist'),
     outboundState => ({ ...initialState, ...outboundState }),
@@ -51,6 +55,8 @@ const namespacePersistFilter = whitelistInputWithInitialState(
   INITIAL_NAMESPACE_STATE
 );
 
+const globalStateFilter = whitelistInputWithInitialState('globalState', ['locale', 'theme'], INITIAL_GLOBAL_STATE);
+
 const graphPersistFilter = whitelistInputWithInitialState('graph', ['filterState', 'layout'], INITIAL_GRAPH_STATE);
 
 const userSettingsPersitFilter = whitelistInputWithInitialState(
@@ -62,8 +68,14 @@ const userSettingsPersitFilter = whitelistInputWithInitialState(
 const persistConfig = {
   key: persistKey,
   storage: storage,
-  whitelist: ['authentication', 'graph', 'tracingState', 'namespaces', 'statusState', 'userSettings'],
-  transforms: [authenticationPersistFilter, graphPersistFilter, namespacePersistFilter, userSettingsPersitFilter]
+  whitelist: ['authentication', 'globalState', 'graph', 'namespaces', 'statusState', 'tracingState', 'userSettings'],
+  transforms: [
+    authenticationPersistFilter,
+    graphPersistFilter,
+    globalStateFilter,
+    namespacePersistFilter,
+    userSettingsPersitFilter
+  ]
 };
 
 const composeEnhancers =

@@ -17,11 +17,17 @@ export enum HTTP_VERBS {
 }
 
 export const PF_THEME_DARK = 'pf-v5-theme-dark';
-export const KIALI_THEME = 'kiali-theme';
 
 export const enum Theme {
   LIGHT = 'Light',
   DARK = 'Dark'
+}
+
+export const I18N_NAMESPACE = process.env.I18N_NAMESPACE;
+
+export const enum Locale {
+  ENGLISH = 'en',
+  CHINESE = 'zh'
 }
 
 export type TargetKind = 'app' | 'service' | 'workload';
@@ -49,8 +55,8 @@ export type BoundsInMilliseconds = {
 // Redux doesn't work well with type composition
 export type TimeRange = {
   from?: TimeInMilliseconds;
-  to?: TimeInMilliseconds;
   rangeDuration?: DurationInSeconds;
+  to?: TimeInMilliseconds;
 };
 
 // Type-guarding TimeRange: executes first callback when range is a duration, or second callback when it's a bounded range, mapping to a value

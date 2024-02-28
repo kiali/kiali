@@ -53,7 +53,7 @@ import { switchType } from './OverviewHelper';
 import * as Sorts from './Sorts';
 import * as Filters from './Filters';
 import { ValidationSummary } from '../../components/Validations/ValidationSummary';
-import { DurationInSeconds, IntervalInMilliseconds } from 'types/Common';
+import { DurationInSeconds, I18N_NAMESPACE, IntervalInMilliseconds } from 'types/Common';
 import { Paths, isMultiCluster, serverConfig } from '../../config';
 import { PFColors } from '../../components/Pf/PfColors';
 import { VirtualList } from '../../components/VirtualList/VirtualList';
@@ -1256,18 +1256,18 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
     );
   }
 
-  renderLabels(ns: NamespaceInfo): JSX.Element {
+  renderLabels(ns: NamespaceInfo): React.ReactNode {
     let labelsInfo: string;
 
     if (ns.labels) {
       const labelsLength = Object.entries(ns.labels).length;
-      labelsInfo = this.props.t('overview.labels', {
+      labelsInfo = this.props.t('{{count}} label', {
         count: labelsLength,
-        defaultValue_one: '1 label',
+        defaultValue_one: '{{count}} label',
         defaultValue_other: '{{count}} labels'
       });
     } else {
-      labelsInfo = this.props.t('overview.no_labels', 'No labels');
+      labelsInfo = this.props.t('No labels');
     }
 
     const labelContent = ns.labels ? (
@@ -1302,7 +1302,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
     return labelContent;
   }
 
-  renderCharts(ns: NamespaceInfo): JSX.Element {
+  renderCharts(ns: NamespaceInfo): React.ReactNode {
     if (ns.status) {
       if (this.state.displayMode === OverviewDisplayMode.COMPACT) {
         return <NamespaceStatuses key={ns.name} name={ns.name} status={ns.status} type={this.state.type} />;
@@ -1325,7 +1325,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
     return <div style={{ height: '70px' }} />;
   }
 
-  renderIstioConfigStatus(ns: NamespaceInfo): JSX.Element {
+  renderIstioConfigStatus(ns: NamespaceInfo): React.ReactNode {
     let validations: ValidationStatus = { namespace: ns.name, objectCount: 0, errors: 0, warnings: 0 };
 
     if (!!ns.validations) {
@@ -1350,7 +1350,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
     );
   }
 
-  renderStatus(ns: NamespaceInfo): JSX.Element {
+  renderStatus(ns: NamespaceInfo): React.ReactNode {
     const targetPage = switchType(this.state.type, Paths.APPLICATIONS, Paths.SERVICES, Paths.WORKLOADS);
     const name = ns.name;
     let nbItems = 0;
@@ -1444,7 +1444,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
     );
   }
 
-  renderNamespaceBadges(ns: NamespaceInfo, tooltip: boolean): JSX.Element {
+  renderNamespaceBadges(ns: NamespaceInfo, tooltip: boolean): React.ReactNode {
     return (
       <>
         {ns.name === serverConfig.istioNamespace && (
@@ -1493,4 +1493,4 @@ const mapStateToProps = (state: KialiAppState): ReduxProps => ({
   refreshInterval: refreshIntervalSelector(state)
 });
 
-export const OverviewPage = connect(mapStateToProps)(withTranslation()(OverviewPageComponent));
+export const OverviewPage = connect(mapStateToProps)(withTranslation(I18N_NAMESPACE)(OverviewPageComponent));

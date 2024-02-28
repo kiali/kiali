@@ -1,7 +1,8 @@
-import { KIALI_THEME, Theme } from 'types/Common';
+import { store } from 'store/ConfigStore';
+import { Theme } from 'types/Common';
 
 export const getKialiTheme = (): Theme => {
-  return (localStorage.getItem(KIALI_THEME) as Theme) ?? getDefaultTheme();
+  return (store.getState().globalState.theme as Theme) || getDefaultTheme();
 };
 
 // Get default theme from system settings

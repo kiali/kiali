@@ -1,0 +1,36 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Language switch renders correctly 1`] = `
+<div>
+  <Dropdown
+    isOpen={false}
+    onOpenChange={[Function]}
+    onSelect={[Function]}
+    popperProps={
+      Object {
+        "position": "right",
+      }
+    }
+    toggle={[Function]}
+  >
+    <DropdownList>
+      <DropdownItem
+        key="English"
+        onClick={[Function]}
+      >
+        <span>
+          English
+        </span>
+      </DropdownItem>
+      <DropdownItem
+        key="Chinese"
+        onClick={[Function]}
+      >
+        <span>
+          中文
+        </span>
+      </DropdownItem>
+    </DropdownList>
+  </Dropdown>
+</div>
+`;

@@ -11,6 +11,7 @@ import { GetTracingURL } from '../TracingIntegration/TracesComponent';
 import { ExternalServiceInfo } from '../../types/StatusState';
 import { KialiIcon } from 'config/KialiIcon';
 import { WithTranslation, withTranslation } from 'react-i18next';
+import { I18N_NAMESPACE } from 'types/Common';
 
 const externalLinkStyle = kialiStyle({
   $nest: {
@@ -63,7 +64,7 @@ class MenuComponent extends React.Component<MenuProps, MenuState> {
     };
   }
 
-  componentDidUpdate(prevProps: Readonly<MenuProps>) {
+  componentDidUpdate(prevProps: Readonly<MenuProps>): void {
     if (prevProps.isNavOpen !== this.props.isNavOpen) {
       // Dispatch an extra "resize" event when side menu toggle to force that metrics charts resize
       setTimeout(() => {
@@ -80,6 +81,7 @@ class MenuComponent extends React.Component<MenuProps, MenuState> {
     const graphEnableMeshClassic = serverConfig.kialiFeatureFlags.uiDefaults.mesh.impl === 'classic';
     const graphEnableMeshGraph = serverConfig.kialiFeatureFlags.uiDefaults.mesh.impl !== 'classic';
     const graphEnableMeshOverview = serverConfig.kialiFeatureFlags.uiDefaults.mesh.impl === 'topo-as-overview';
+
     const activeMenuItem = allNavMenuItems.find(item => {
       let isRoute = matchPath(location.pathname, { path: item.to, exact: true, strict: false }) ? true : false;
 
@@ -128,20 +130,15 @@ class MenuComponent extends React.Component<MenuProps, MenuState> {
           return tracingUrl && <ExternalLink key={item.to} href={tracingUrl} name={title} />;
         }
 
-        if (item.id === 'traffic_graph_cy' && !graphEnablePatternfly) {
-          title = this.props.t('routes.traffic_graph', 'Traffic Graph');
+        if (
+          (item.id === 'traffic_graph_cy' && !graphEnablePatternfly) ||
+          (item.id === 'traffic_graph_pf' && !graphEnableCytoscape)
+        ) {
+          title = this.props.t('Traffic Graph');
         }
 
-        if (item.id === 'traffic_graph_pf' && !graphEnableCytoscape) {
-          title = this.props.t('routes.traffic_graph', 'Traffic Graph');
-        }
-
-        if (item.id === 'mesh_classic') {
-          title = this.props.t('routes.mesh', 'Mesh');
-        }
-
-        if (item.id === 'mesh_graph') {
-          title = this.props.t('routes.mesh', 'Mesh');
+        if (item.id === 'mesh_classic' || item.id === 'mesh_graph') {
+          title = this.props.t('Mesh');
         }
 
         return (
@@ -154,7 +151,7 @@ class MenuComponent extends React.Component<MenuProps, MenuState> {
       });
   };
 
-  render() {
+  render(): React.ReactNode {
     return (
       <Nav aria-label="Nav" theme="dark">
         <NavList className={navListStyle}>{this.renderMenuItems()}</NavList>
@@ -163,4 +160,4 @@ class MenuComponent extends React.Component<MenuProps, MenuState> {
   }
 }
 
-export const Menu = withTranslation()(MenuComponent);
+export const Menu = withTranslation(I18N_NAMESPACE)(MenuComponent);

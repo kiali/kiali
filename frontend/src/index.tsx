@@ -17,7 +17,7 @@ import 'ace-builds/src-noconflict/theme-twilight';
 import 'ace-builds/src-noconflict/ext-searchbox';
 
 // i18n
-import './locales/i18n';
+import './i18n';
 
 declare global {
   interface Date {
