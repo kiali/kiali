@@ -194,8 +194,8 @@ export const AccessLogModal: React.FC<AccessLogModalProps> = (props: AccessLogMo
                 port. If the original connection was redirected by iptables REDIRECT, this represents the original
                 destination address restored by the{' '}
                 <a
-                  className="reference internal"
-                  href="/docs/envoy/latest/configuration/listeners/listener_filters/original_dst_filter#config-listener-filters-original-dst"
+                  className="reference external"
+                  href="https://www.envoyproxy.io/docs/envoy/latest/configuration/listeners/listener_filters/original_dst_filter"
                 >
                   <span className="std std-ref">Original Destination Filter</span>
                 </a>{' '}
@@ -220,15 +220,15 @@ export const AccessLogModal: React.FC<AccessLogModalProps> = (props: AccessLogMo
                 <p>
                   This may not be the physical remote address of the peer if the address has been inferred from{' '}
                   <a
-                    className="reference internal"
-                    href="/docs/envoy/latest/configuration/listeners/listener_filters/proxy_protocol#config-listener-filters-proxy-protocol"
+                    className="reference external"
+                    href="https://www.envoyproxy.io/docs/envoy/latest/configuration/listeners/listener_filters/proxy_protocol"
                   >
                     <span className="std std-ref">Proxy Protocol filter</span>
                   </a>{' '}
                   or{' '}
                   <a
-                    className="reference internal"
-                    href="/docs/envoy/latest/configuration/http/http_conn_man/headers#config-http-conn-man-headers-x-forwarded-for"
+                    className="reference external"
+                    href="https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_conn_man/headers#config-http-conn-man-headers-x-forwarded-for"
                   >
                     <span className="std std-ref">x-forwarded-for</span>
                   </a>
@@ -384,8 +384,8 @@ export const AccessLogModal: React.FC<AccessLogModalProps> = (props: AccessLogMo
                       <p>
                         <strong>UO</strong>: Upstream overflow (
                         <a
-                          className="reference internal"
-                          href="/docs/envoy/latest/intro/arch_overview/upstream/circuit_breaking#arch-overview-circuit-break"
+                          className="reference external"
+                          href="https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/circuit_breaking"
                         >
                           <span className="std std-ref">circuit breaking</span>
                         </a>
@@ -396,8 +396,8 @@ export const AccessLogModal: React.FC<AccessLogModalProps> = (props: AccessLogMo
                       <p>
                         <strong>NR</strong>: No{' '}
                         <a
-                          className="reference internal"
-                          href="/docs/envoy/latest/intro/arch_overview/http/http_routing#arch-overview-http-routing"
+                          className="reference external"
+                          href="https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/http/http_routing"
                         >
                           <span className="std std-ref">route configured</span>
                         </a>{' '}
@@ -409,15 +409,15 @@ export const AccessLogModal: React.FC<AccessLogModalProps> = (props: AccessLogMo
                       <p>
                         <strong>URX</strong>: The request was rejected because the{' '}
                         <a
-                          className="reference internal"
-                          href="/docs/envoy/latest/api-v3/config/route/v3/route_components.proto#envoy-v3-api-field-config-route-v3-retrypolicy-num-retries"
+                          className="reference external"
+                          href="https://www.envoyproxy.io/docs/envoy/latest/api-v3/config/route/v3/route_components.proto#envoy-v3-api-field-config-route-v3-retrypolicy-num-retries"
                         >
                           <span className="std std-ref">upstream retry limit (HTTP)</span>
                         </a>{' '}
                         or{' '}
                         <a
-                          className="reference internal"
-                          href="/docs/envoy/latest/api-v3/extensions/filters/network/tcp_proxy/v3/tcp_proxy.proto#envoy-v3-api-field-extensions-filters-network-tcp-proxy-v3-tcpproxy-max-connect-attempts"
+                          className="reference external"
+                          href="https://www.envoyproxy.io/docs/envoy/latest/api-v3/extensions/filters/network/tcp_proxy/v3/tcp_proxy.proto#envoy-v3-api-field-extensions-filters-network-tcp-proxy-v3-tcpproxy-max-connect-attempts"
                         >
                           <span className="std std-ref">maximum connect attempts (TCP)</span>
                         </a>{' '}
@@ -443,8 +443,8 @@ export const AccessLogModal: React.FC<AccessLogModalProps> = (props: AccessLogMo
                       <p>
                         <strong>LH</strong>: Local service failed{' '}
                         <a
-                          className="reference internal"
-                          href="/docs/envoy/latest/intro/arch_overview/upstream/health_checking#arch-overview-health-checking"
+                          className="reference external"
+                          href="https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/health_checking"
                         >
                           <span className="std std-ref">health check request</span>
                         </a>{' '}
@@ -475,8 +475,8 @@ export const AccessLogModal: React.FC<AccessLogModalProps> = (props: AccessLogMo
                       <p>
                         <strong>DI</strong>: The request processing was delayed for a period specified via{' '}
                         <a
-                          className="reference internal"
-                          href="/docs/envoy/latest/configuration/http/http_filters/fault_filter#config-http-filters-fault-injection"
+                          className="reference external"
+                          href="https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/fault_filter"
                         >
                           <span className="std std-ref">fault injection</span>
                         </a>
@@ -487,8 +487,8 @@ export const AccessLogModal: React.FC<AccessLogModalProps> = (props: AccessLogMo
                       <p>
                         <strong>FI</strong>: The request was aborted with a response code specified via{' '}
                         <a
-                          className="reference internal"
-                          href="/docs/envoy/latest/configuration/http/http_filters/fault_filter#config-http-filters-fault-injection"
+                          className="reference external"
+                          href="https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/fault_filter"
                         >
                           <span className="std std-ref">fault injection</span>
                         </a>
@@ -499,8 +499,8 @@ export const AccessLogModal: React.FC<AccessLogModalProps> = (props: AccessLogMo
                       <p>
                         <strong>RL</strong>: The request was ratelimited locally by the{' '}
                         <a
-                          className="reference internal"
-                          href="/docs/envoy/latest/configuration/http/http_filters/rate_limit_filter#config-http-filters-rate-limit"
+                          className="reference external"
+                          href="https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/rate_limit_filter"
                         >
                           <span className="std std-ref">HTTP rate limit filter</span>
                         </a>{' '}
@@ -522,8 +522,8 @@ export const AccessLogModal: React.FC<AccessLogModalProps> = (props: AccessLogMo
                       <p>
                         <strong>IH</strong>: The request was rejected because it set an invalid value for a{' '}
                         <a
-                          className="reference internal"
-                          href="/docs/envoy/latest/api-v3/extensions/filters/http/router/v3/router.proto#envoy-v3-api-field-extensions-filters-http-router-v3-router-strict-check-headers"
+                          className="reference external"
+                          href="https://www.envoyproxy.io/docs/envoy/latest/api-v3/extensions/filters/http/router/v3/router.proto#envoy-v3-api-field-extensions-filters-http-router-v3-router-strict-check-headers"
                         >
                           <span className="std std-ref">strictly-checked header</span>
                         </a>{' '}
@@ -728,8 +728,8 @@ export const AccessLogModal: React.FC<AccessLogModalProps> = (props: AccessLogMo
                 Upstream cluster to which the upstream host belongs to. If runtime feature
                 <cite>envoy.reloadable_features.use_observable_cluster_name</cite> is enabled, then{' '}
                 <a
-                  className="reference internal"
-                  href="/docs/envoy/latest/api-v3/config/cluster/v3/cluster.proto#envoy-v3-api-field-config-cluster-v3-cluster-alt-stat-name"
+                  className="reference external"
+                  href="https://www.envoyproxy.io/docs/envoy/latest/api-v3/config/cluster/v3/cluster.proto#envoy-v3-api-field-config-cluster-v3-cluster-alt-stat-name"
                 >
                   <span className="std std-ref">alt_stat_name</span>
                 </a>{' '}
@@ -751,8 +751,8 @@ export const AccessLogModal: React.FC<AccessLogModalProps> = (props: AccessLogMo
                     reason from the transport socket. The format of this field depends on the configured upstream
                     transport socket. Common TLS failures are in{' '}
                     <a
-                      className="reference internal"
-                      href="/docs/envoy/latest/intro/arch_overview/security/ssl#arch-overview-ssl-trouble-shooting"
+                      className="reference external"
+                      href="https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/security/ssl#trouble-shooting"
                     >
                       <span className="std std-ref">TLS trouble shooting</span>
                     </a>
