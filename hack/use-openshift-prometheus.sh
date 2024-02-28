@@ -68,6 +68,7 @@ echo "=== SETTINGS ==="
 # * Istio installed in ISTIO_NAMESPACE
 # * Kial Operator installed
 # * A Kiali CR installed
+# * A Kiali Server installed (we need the service account for it)
 #
 if ! ${OC} whoami &> /dev/null; then
   echo "Either you are not logged into OpenShift or [${OC}] is not a valid client executable"
@@ -111,14 +112,30 @@ if [ -z "${KIALI_CR_NAME}" ]; then
   exit 1
 fi
 
+KIALI_SA_NAMESPACE=""
+KIALI_SA_NAME=""
+for sa in $(${OC} get sa --all-namespaces -l "app.kubernetes.io/name=kiali" -o custom-columns=NS:.metadata.namespace,N:.metadata.name --no-headers | sed 's/  */:/g'); do
+  if [ -n "${KIALI_SA_NAME}" ]; then
+    echo "There is more than one Kiali Server installed in the cluster - ignoring service account [${sa}] and will use [${KIALI_SA_NAMESPACE}:${KIALI_SA_NAME}]"
+  else
+    KIALI_SA_NAMESPACE="$(echo $sa | cut -d: -f1)"
+    KIALI_SA_NAME="$(echo $sa | cut -d: -f2)"
+  fi
+done
+
+if [ -z "${KIALI_SA_NAME}" ]; then
+  echo "There are no Kiali Servers installed in the cluster."
+  exit 1
+fi
+
 ########## DELETE
 
 delete_resources() {
   echo "Disabling user workload monitoring"
   ${OC} delete cm -l ${RESOURCE_LABEL_EQUALS} --ignore-not-found=true -n openshift-monitoring
 
-  echo "Deleting Kiali secret"
-  ${OC} delete secret -l ${RESOURCE_LABEL_EQUALS} --ignore-not-found=true --all-namespaces
+  echo "Deleting Kiali ClusterRoleBinding"
+  ${OC} delete clusterrolebinding -l ${RESOURCE_LABEL_EQUALS} --ignore-not-found=true
 
   echo "Deleting NetworkPolicy resources"
   ${OC} delete NetworkPolicy -l ${RESOURCE_LABEL_EQUALS} --ignore-not-found=true --all-namespaces
@@ -153,29 +170,26 @@ data:
     enableUserWorkload: true
 EOM
 
-  local kiali_secret_name="thanos-querier-web-token"
-  local openshift_secret_name="openshift-user-workload-monitoring"
-  if ${OC} get secret ${kiali_secret_name} -n ${ISTIO_NAMESPACE} &> /dev/null; then
-    echo "Secret for Kiali to use to talk to Prometheus already exists. It will be re-used."
+  if [ "$(${OC} get clusterrolebinding -l ${RESOURCE_LABEL_EQUALS} -o name 2>/dev/null)" == "1" ]; then
+    echo "Kiali Cluster Role Binding for OpenShift Prometheus access already exists. It will be re-used."
   else
-    echo -n "Generating secret for Kiali to use to talk to Prometheus"
-    until (${OC} get secret -n ${openshift_secret_name} 2> /dev/null | grep -q prometheus-user-workload-token); do
-      echo -n "."
-      sleep 1
-    done
-    echo
-    local secret="$(${OC} get secret -n ${openshift_secret_name} | grep prometheus-user-workload-token | head -n 1 | awk '{print $1 }')"
-    if [ -z "${secret}" ]; then
-      echo "Cannot find secret '${openshift_secret_name} - is cluster monitoring enabled?"
-      exit 1
-    fi
-    local token="$(${OC} get secret ${secret} -n ${openshift_secret_name} -o jsonpath='{.data.token}' | base64 -d)"
-    if [ -z "${token}" ]; then
-      echo "Cannot find data.token in secret '${openshift_secret_name} - something is wrong with cluster monitoring setup"
-      exit 1
-    fi
-    ${OC} create secret generic ${kiali_secret_name} -n ${ISTIO_NAMESPACE} --from-literal=token=${token}
-    ${OC} label --overwrite secret ${kiali_secret_name} -n ${ISTIO_NAMESPACE} ${RESOURCE_LABEL_EQUALS}
+    echo "Generating Kiali Cluster Role Binding for OpenShift Prometheus access"
+    cat <<CRB | ${OC} apply -f -
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kiali-openshift-user-workload-monitoring
+  labels:
+    ${RESOURCE_LABEL_COLON}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-monitoring-view
+subjects:
+- kind: ServiceAccount
+  name: ${KIALI_SA_NAME}
+  namespace: ${KIALI_SA_NAMESPACE}
+CRB
   fi
 
   if [ "${NETWORK_POLICIES}" == "true" ]; then
@@ -294,9 +308,8 @@ spec:
   external_services:
     prometheus:
       auth:
-        token: secret:${kiali_secret_name}:token
         type: bearer
-        use_kiali_token: false
+        use_kiali_token: true
       query_scope:
         mesh_id: "${MESH_LABEL}"
       thanos_proxy:
@@ -304,7 +317,7 @@ spec:
       url: https://thanos-querier.openshift-monitoring.svc.cluster.local:9091
 EOM
   echo "..."
-  ${OC} patch kiali ${KIALI_CR_NAME} -n ${KIALI_CR_NAMESPACE} --type=merge --patch '{"spec":{"external_services":{"prometheus":{"auth":{"token":"secret:'${kiali_secret_name}':token","type":"bearer","use_kiali_token": false},"query_scope":{"mesh_id": "'${MESH_LABEL}'"},"thanos_proxy":{"enabled": true},"url":"https://thanos-querier.openshift-monitoring.svc.cluster.local:9091"}}}}'
+  ${OC} patch kiali ${KIALI_CR_NAME} -n ${KIALI_CR_NAMESPACE} --type=merge --patch '{"spec":{"external_services":{"prometheus":{"auth":{"type":"bearer","use_kiali_token": true},"query_scope":{"mesh_id": "'${MESH_LABEL}'"},"thanos_proxy":{"enabled": true},"url":"https://thanos-querier.openshift-monitoring.svc.cluster.local:9091"}}}}'
 }
 
 ########## MAIN
