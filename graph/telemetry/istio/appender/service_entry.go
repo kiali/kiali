@@ -4,6 +4,8 @@ import (
 	"context"
 	"strings"
 
+	"istio.io/client-go/pkg/apis/networking/v1beta1"
+
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
@@ -17,19 +19,19 @@ const ServiceEntryAppenderName = "serviceEntry"
 // map to different hosts of a single serviceEntry. We'll call these "se-service" nodes.  The appender
 // handles this in the following way:
 //
-//	For Each "se-service" node
-//	   if necessary, create an aggregate serviceEntry node ("se-aggregate")
-//	     -- an "se-aggregate" is a service node with isServiceEntry set in the metadata
-//	     -- an "se-aggregate" is namespace-specific and so one service entry definition can result in multiple
-//	        service entry nodes in the graph. An Istio service entry is defined in a particular namespace, but
-//	        it can be "exported" to many (all namespaces by default).  So, think as if the service entry
-//	        definition is duplicated in each exported namespace, and therefore you can get an se-aggregate in each.
-//	   aggregate the "se-service" node into the "se-aggregate" node
-//	     -- incoming edges
-//	     -- outgoing edges (unusual but can have outgoing edge to egress gateway)
-//	     -- per-host traffic (in the metadata)
-//	   remove the "se-service" node from the trafficMap
-//	   add any new "se-aggregate" node to the trafficMap
+//		For Each "se-service" node
+//		   1. if necessary, create a "service-entry" node to aggregate this, and possibly other, "se-service" nodes
+//		     -- a "service-entry" node is a service node-type with isServiceEntry set in the metadata
+//		     -- a "service-entry" is namespace-specific; An Istio service entry is defined in a particular
+//	         namespace, but it can be "exported" to many (all namespaces by default).  So, think as if the
+//	         service entry definition is duplicated in each exported namespace, and therefore you can get a
+//	         "service-entry" node in each.
+//		   2. aggregate the "se-service" node into the appropriate, new or existing, "service-entry" node
+//		     -- incoming edges
+//		     -- outgoing edges (unusual but can have outgoing edge to egress gateway)
+//		     -- per-host traffic (in the metadata)
+//		   3. remove the "se-service" node from the trafficMap
+//		   4. add any new "service-entry" node to the trafficMap
 //
 // Doc Links
 // - https://istio.io/docs/reference/config/networking/v1alpha3/service-entry/#ServiceEntry
@@ -60,36 +62,36 @@ func (a ServiceEntryAppender) AppendGraph(trafficMap graph.TrafficMap, globalInf
 		return
 	}
 
-	// First, load all of the relevant ServiceEntry definition information.
-	candidates := []*graph.Node{}
+	// First, identify the candidate "se-service" nodes (i.e. the service nodes that are candidates for conversion to a "service-entry" node)
+	candidates := make(map[string]*graph.Node)
 	for _, n := range trafficMap {
 		// a non-injected service node may represent a mesh_internal ServiceEntry, if it has cluster and namespace set
 		if n.NodeType == graph.NodeTypeService {
 			isInjected := n.Metadata[graph.IsInjected] == true
 			if !isInjected && graph.IsOK(n.Cluster) && graph.IsOK(n.Namespace) {
-				candidates = append(candidates, n)
+				candidates[n.ID] = n
 			}
 			continue
 		}
 
 		// for non-service nodes, look for edges to non-injected service nodes that may represent a mesh_external ServicEntry.
 		// It probably will not have cluster and namespace set, either way, we need to get this information from the source node
-		// because it is the requesting service that needs access to the ServieEntry.
+		// because it is the requesting service that needs access to the ServiceEntry.
 		for _, e := range n.Edges {
 			isService := e.Dest.NodeType == graph.NodeTypeService
 			isInjected := e.Dest.Metadata[graph.IsInjected] == true
 			if isService && !isInjected {
-				candidates = append(candidates, n)
+				candidates[n.ID] = n
 				break
 			}
 		}
 	}
-	// If there are no SE candidates then we can return immediately.
+	// If there are no "se-service" node candidates then we can return immediately.
 	if len(candidates) == 0 {
 		return
 	}
 
-	// Otherwise, load accessible ServiceEntry information into globalInfo
+	// Otherwise, if there are SE hosts defined for the cluster:namespace, check to see if they apply to the node
 	nodesToCheck := []*graph.Node{}
 	for _, n := range candidates {
 		if a.loadServiceEntryHosts(n.Cluster, n.Namespace, globalInfo) {
@@ -102,30 +104,22 @@ func (a ServiceEntryAppender) AppendGraph(trafficMap graph.TrafficMap, globalInf
 	}
 }
 
-// loadServiceEntryHosts loads SEs for the provided cluster and namespace. Returns true if any are found, otherwise false.
+// loadServiceEntryHosts loads serviceEntry hosts for the provided cluster and namespace. Returns true if any are found, otherwise false.
 func (a ServiceEntryAppender) loadServiceEntryHosts(cluster, namespace string, globalInfo *graph.AppenderGlobalInfo) bool {
-	isAccessible := false
-	for _, ns := range a.AccessibleNamespaces {
-		isAccessible = cluster == ns.Cluster && namespace == ns.Name
-		if isAccessible {
-			break
-		}
-	}
-	if !isAccessible {
-		return false
-	}
-
+	// get the cached hosts for this cluster:namespace, otherwise add to the cache
 	serviceEntryHosts, found := getServiceEntryHosts(cluster, namespace, globalInfo)
 	if !found {
+		// retrieve all of the serviceEntry definitions for accessible namespaces on the cluster...
 		istioCfg, err := globalInfo.Business.IstioConfig.GetIstioConfigList(context.TODO(), business.IstioConfigCriteria{
 			Cluster:               cluster,
 			IncludeServiceEntries: true,
-			Namespace:             namespace,
+			AllNamespaces:         true,
 		})
 		graph.CheckError(err)
 
+		// ... and then use ExportTo to decide whether the hosts are accessible to the namespace
 		for _, entry := range istioCfg.ServiceEntries {
-			if entry.Spec.Hosts != nil {
+			if entry.Spec.Hosts != nil && isExportedToNamespace(entry, namespace) {
 				location := "MESH_EXTERNAL"
 				if entry.Spec.Location.String() == "MESH_INTERNAL" {
 					location = "MESH_INTERNAL"
@@ -135,7 +129,7 @@ func (a ServiceEntryAppender) loadServiceEntryHosts(cluster, namespace string, g
 					exportTo:  entry.Spec.ExportTo,
 					location:  location,
 					name:      entry.Name,
-					namespace: entry.Namespace,
+					namespace: namespace,
 				}
 				for _, host := range entry.Spec.Hosts {
 					serviceEntryHosts.addHost(host, &se)
@@ -147,7 +141,7 @@ func (a ServiceEntryAppender) loadServiceEntryHosts(cluster, namespace string, g
 }
 
 func (a ServiceEntryAppender) applyServiceEntries(trafficMap graph.TrafficMap, nodesToCheck []*graph.Node, globalInfo *graph.AppenderGlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
-	// a map of "se-service" nodes to the "se-aggregate" information
+	// a map of "se-service" nodes to the "service-entry" information
 	seMap := make(map[*serviceEntry][]*graph.Node)
 
 	for _, n := range nodesToCheck {
@@ -188,7 +182,7 @@ func (a ServiceEntryAppender) applyServiceEntries(trafficMap graph.TrafficMap, n
 		}
 	}
 
-	// Replace "se-service" nodes with an "se-aggregate" serviceEntry node
+	// Replace "se-service" nodes with a "service-entry" node
 	for se, seServiceNodes := range seMap {
 		serviceEntryNode, err := graph.NewNode(se.cluster, namespaceInfo.Namespace, se.name, "", "", "", "", a.GraphType)
 		if err != nil {
@@ -253,10 +247,6 @@ func (a ServiceEntryAppender) getServiceEntry(cluster, namespace, serviceName st
 
 	for host, serviceEntriesForHost := range serviceEntryHosts {
 		for _, se := range serviceEntriesForHost {
-			if !isExportedToNamespace(se, namespace) {
-				continue
-			}
-
 			// handle exact match
 			// note: this also handles wildcard-prefix cases because the destination_service_name set by istio
 			// is the matching host (e.g. *.wikipedia.com), not the rested service (e.g. de.wikipedia.com)
@@ -286,18 +276,18 @@ func (a ServiceEntryAppender) getServiceEntry(cluster, namespace, serviceName st
 	return nil, false
 }
 
-func isExportedToNamespace(se *serviceEntry, namespace string) bool {
-	if se.exportTo == nil {
+func isExportedToNamespace(se *v1beta1.ServiceEntry, namespace string) bool {
+	if se.Spec.ExportTo == nil {
 		return true
 	}
-	for _, export := range se.exportTo {
+	for _, export := range se.Spec.ExportTo {
 		if export == "*" {
 			return true
 		}
-		if export == "." && se.namespace == namespace {
+		if export == "." && se.Namespace == namespace {
 			return true
 		}
-		if export == se.namespace {
+		if export == se.Namespace {
 			return true
 		}
 	}
