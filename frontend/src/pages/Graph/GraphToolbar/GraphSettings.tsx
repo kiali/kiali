@@ -673,10 +673,10 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
         tooltip: (
           <div style={{ textAlign: 'left' }}>
             <div>
-              Show closed or open lock icons on edges with traffic that differs from the global mTLS policy. The
-              percentage of mTLS traffic can be seen in the side-panel when selecting the edge. Note that the global
-              masthead will show a lock icon when global mTLS is enabled. The side-panel will also display source and
-              destination principals, if available. mTLS status is not offered for gRPC-message traffic.
+              Show lock icons on edges with mTLS traffic. The percentage of mTLS traffic can be seen in the side-panel
+              when selecting the edge. Note that the global masthead will show a lock icon when global mTLS is enabled.
+              The side-panel will also display source and destination principals, if available. mTLS status is not
+              offered for gRPC-message traffic.
             </div>
           </div>
         )
