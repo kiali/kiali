@@ -7,6 +7,8 @@ import { GlobalActions } from 'actions/GlobalActions';
 import { store } from 'store/ConfigStore';
 import { serverConfig } from 'config';
 import { Locale } from 'types/Common';
+import { KialiAppState } from 'store/Store';
+import { connect } from 'react-redux';
 
 const menuToggleStyle = kialiStyle({
   marginTop: '0.25rem',
@@ -23,7 +25,15 @@ const iconStyle = kialiStyle({
   }
 });
 
-export const LanguageSwitch: React.FC = () => {
+const checkStyle = kialiStyle({
+  marginLeft: '0.5rem'
+});
+
+type LanguageSwitchProps = {
+  locale: string;
+};
+
+export const LanguageSwitchComponent: React.FC<LanguageSwitchProps> = props => {
   const [isDropdownOpen, setIsDropdownOpen] = React.useState<boolean>(false);
 
   const supportedLocales = serverConfig.kialiFeatureFlags.uiDefaults.i18n.locales;
@@ -34,6 +44,7 @@ export const LanguageSwitch: React.FC = () => {
     items.push(
       <DropdownItem key="English" onClick={() => switchLanguage(Locale.ENGLISH)}>
         <span>English</span>
+        {props.locale === Locale.ENGLISH && <KialiIcon.Check className={checkStyle} />}
       </DropdownItem>
     );
   }
@@ -42,6 +53,7 @@ export const LanguageSwitch: React.FC = () => {
     items.push(
       <DropdownItem key="Chinese" onClick={() => switchLanguage(Locale.CHINESE)}>
         <span>中文</span>
+        {props.locale === Locale.CHINESE && <KialiIcon.Check className={checkStyle} />}
       </DropdownItem>
     );
   }
@@ -72,7 +84,7 @@ export const LanguageSwitch: React.FC = () => {
           </MenuToggle>
         )}
         isOpen={isDropdownOpen}
-        popperProps={{ position: 'right' }}
+        popperProps={{ position: 'center' }}
         onOpenChange={(isOpen: boolean) => setIsDropdownOpen(isOpen)}
         onSelect={onDropdownSelect}
       >
@@ -81,3 +93,11 @@ export const LanguageSwitch: React.FC = () => {
     </div>
   );
 };
+
+const mapStateToProps = (state: KialiAppState): LanguageSwitchProps => {
+  return {
+    locale: state.globalState.locale
+  };
+};
+
+export const LanguageSwitch = connect(mapStateToProps)(LanguageSwitchComponent);

@@ -235,9 +235,11 @@ class AuthenticationControllerComponent extends React.Component<
       // Set I18n locale
       let locale = store.getState().globalState.locale;
 
-      // If locale in redux store is empty or not supported, set to default language
+      // If locale in redux store is empty or not supported, set to default value
       if (!uiDefaults.i18n.locales.includes(locale)) {
         locale = uiDefaults.i18n.default ?? Locale.ENGLISH;
+
+        console.warn(`No locale found in local storage, switching to default value ${locale}`);
       }
 
       i18next.changeLanguage(locale);

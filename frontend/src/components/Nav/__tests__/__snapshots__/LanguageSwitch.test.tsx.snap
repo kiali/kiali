@@ -8,7 +8,7 @@ exports[`Language switch renders correctly 1`] = `
     onSelect={[Function]}
     popperProps={
       Object {
-        "position": "right",
+        "position": "center",
       }
     }
     toggle={[Function]}
@@ -21,6 +21,9 @@ exports[`Language switch renders correctly 1`] = `
         <span>
           English
         </span>
+        <Check
+          className="kiali_fm5q8n4"
+        />
       </DropdownItem>
       <DropdownItem
         key="Chinese"

@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { shallowToJson } from 'enzyme-to-json';
 import { mount, shallow } from 'enzyme';
-import { LanguageSwitch } from '../Masthead/LanguageSwitch';
+import { LanguageSwitchComponent } from '../Masthead/LanguageSwitch';
 import { MenuToggle } from '@patternfly/react-core';
 import { store } from 'store/ConfigStore';
 import { Locale } from 'types/Common';
@@ -24,14 +24,14 @@ describe('Language switch', () => {
     setServerConfig(i18nServerConfig);
   });
   it('renders correctly', () => {
-    const wrapper = shallow(<LanguageSwitch />);
+    const wrapper = shallow(<LanguageSwitchComponent locale={Locale.ENGLISH} />);
 
     expect(shallowToJson(wrapper)).toBeDefined();
     expect(shallowToJson(wrapper)).toMatchSnapshot();
   });
 
   it('changes to english language', () => {
-    const wrapper = mount(<LanguageSwitch />);
+    const wrapper = mount(<LanguageSwitchComponent locale={Locale.CHINESE} />);
 
     // click menu toggle
     wrapper.find(MenuToggle).simulate('click');
@@ -46,7 +46,7 @@ describe('Language switch', () => {
   });
 
   it('changes to chinese language', () => {
-    const wrapper = mount(<LanguageSwitch />);
+    const wrapper = mount(<LanguageSwitchComponent locale={Locale.ENGLISH} />);
 
     // click menu toggle
     wrapper.find(MenuToggle).simulate('click');
