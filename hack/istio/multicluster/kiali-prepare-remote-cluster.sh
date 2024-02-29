@@ -251,6 +251,7 @@ create_kiali_remote_cluster_secret() {
   AWS_EKS_ARN_REGEX="^arn:aws:eks:${AWS_REGION_REGEX}:\d{12}:cluster\/[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*$"
   if echo "${REMOTE_CLUSTER_NAME}" | grep -Eq "${AWS_EKS_ARN_REGEX}"; then
       REMOTE_CLUSTER_NAME=$(echo "${REMOTE_CLUSTER_NAME}" | sed 's/^.*:cluster\/\(.*\)$/\1/')
+  fi
   # a Secret stringData key must conform to Kubernetes naming rules. Othewise, this kind of error will result:
   #    a valid config key must consist of alphanumeric characters, '-', '_' or '.'
   #    (e.g. 'key.name',  or 'KEY_NAME',  or 'key-name', regex used for validation is '[-._a-zA-Z0-9]+')
