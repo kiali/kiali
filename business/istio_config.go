@@ -1020,9 +1020,9 @@ func (in *IstioConfigService) IsAmbientEnabled() bool {
 	}
 	if ambientEnabled == nil || currentTime.Sub(*lastUpdateTime) > time.Minute {
 		ambientEnabled = new(bool)
-		daemonset, err := in.kialiCache.GetDaemonSet(in.config.IstioNamespace, "ztunnel")
+		daemonset, err := in.kialiCache.GetDaemonSet(in.config.ExternalServices.Istio.IstioAmbientNamespace, "ztunnel")
 		if err != nil {
-			log.Debugf("No ztunnel found in istio namespace: %s ", err.Error())
+			log.Debugf("No ztunnel found in Istio Ambient namespace (%s): %s ", in.config.ExternalServices.Istio.IstioAmbientNamespace, err.Error())
 		} else {
 			if daemonset != nil {
 				*ambientEnabled = true
