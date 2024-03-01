@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"testing"
 
+	v1 "github.com/openshift/api/project/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	core_v1 "k8s.io/api/core/v1"
@@ -62,6 +63,27 @@ func setupAmbientNamespaceServiceWithNs() kubernetes.ClientInterface {
 	}
 	k8s := kubetest.NewFakeK8sClient(objects...)
 	k8s.OpenShift = false
+	return k8s
+}
+
+// Project service setup
+func setupAmbientProjectWithNs() kubernetes.ClientInterface {
+	c := config.NewConfig()
+	labels := map[string]string{
+		c.IstioLabels.AmbientNamespaceLabel: c.IstioLabels.AmbientNamespaceLabelValue,
+	}
+	// config needs to be set by other services since those rely on the global.
+	objects := []runtime.Object{
+		&v1.Project{ObjectMeta: meta_v1.ObjectMeta{Name: "bookinfo", Labels: labels}},
+		&v1.Project{ObjectMeta: meta_v1.ObjectMeta{Name: "alpha"}},
+		&v1.Project{ObjectMeta: meta_v1.ObjectMeta{Name: "beta"}},
+	}
+	for _, obj := range fakeNamespaces() {
+		o := obj
+		objects = append(objects, &o)
+	}
+	k8s := kubetest.NewFakeK8sClient(objects...)
+	k8s.OpenShift = true
 	return k8s
 }
 
@@ -126,6 +148,31 @@ func TestAmbientNamespace(t *testing.T) {
 	config.Set(conf)
 
 	k8s := setupAmbientNamespaceServiceWithNs()
+
+	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
+	SetWithBackends(mockClientFactory, nil)
+
+	nsservice := setupNamespaceService(t, k8s, conf)
+
+	ns, _ := nsservice.GetClusterNamespace(context.TODO(), "bookinfo", config.Get().KubernetesConfig.ClusterName)
+
+	assert.NotNil(t, ns)
+	assert.Equal(t, ns.Name, "bookinfo")
+	assert.True(t, ns.IsAmbient)
+
+	ns2, _ := nsservice.GetClusterNamespace(context.TODO(), "alpha", config.Get().KubernetesConfig.ClusterName)
+
+	assert.NotNil(t, ns2)
+	assert.Equal(t, ns2.Name, "alpha")
+	assert.False(t, ns2.IsAmbient)
+}
+
+// Get Ambient namespace
+func TestAmbientProject(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	k8s := setupAmbientProjectWithNs()
 
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
 	SetWithBackends(mockClientFactory, nil)
