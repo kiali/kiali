@@ -85,13 +85,16 @@ func CastProjectCollection(ps []osproject_v1.Project, cluster string) []Namespac
 }
 
 func CastProject(p osproject_v1.Project, cluster string) Namespace {
+	istioLabels := config.Get().IstioLabels
 	namespace := Namespace{}
 	namespace.Name = p.Name
 	namespace.Cluster = cluster
 	namespace.CreationTimestamp = p.CreationTimestamp.Time
 	namespace.Labels = p.Labels
 	namespace.Annotations = p.Annotations
-
+	if p.Labels[istioLabels.AmbientNamespaceLabel] == istioLabels.AmbientNamespaceLabelValue {
+		namespace.IsAmbient = true
+	}
 	return namespace
 }
 
