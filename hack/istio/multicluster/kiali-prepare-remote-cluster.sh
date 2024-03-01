@@ -247,8 +247,8 @@ create_kiali_remote_cluster_secret() {
 
   # Check if the REMOTE_CLUSTER_NAME matches the AWS EKS ARN regex pattern.
   # If it does, extract the cluster name from the ARN and assign it back to REMOTE_CLUSTER_NAME.
-  AWS_REGION_REGEX='(us|eu|ap|sa|ca|me)-(north|south|east|west|central)-\d'
-  AWS_EKS_ARN_REGEX="^arn:aws:eks:${AWS_REGION_REGEX}:\d{12}:cluster\/[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*$"
+  AWS_REGION_REGEX='(us|eu|ap|sa|ca|me)-(north|south|east|west|central)-[0-9]'
+  AWS_EKS_ARN_REGEX="^arn:aws:eks:${AWS_REGION_REGEX}:[0-9]{12}:cluster/([A-Za-z0-9\-]+)$"
   if echo "${REMOTE_CLUSTER_NAME}" | grep -Eq "${AWS_EKS_ARN_REGEX}"; then
       REMOTE_CLUSTER_NAME=$(echo "${REMOTE_CLUSTER_NAME}" | sed 's/^.*:cluster\/\(.*\)$/\1/')
   fi
