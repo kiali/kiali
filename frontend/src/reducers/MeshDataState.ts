@@ -2,13 +2,13 @@ import { getType } from 'typesafe-actions';
 import { KialiAppAction } from '../actions/KialiAppAction';
 import { MeshState } from '../store/Store';
 import { updateState } from '../utils/Reducer';
-import { KialiDagreGraph } from '../components/CytoscapeGraph/graphs/KialiDagreGraph';
 import { MeshActions } from 'actions/MeshActions';
 import { MeshToolbarActions } from 'actions/MeshToolbarActions';
+import { KialiMeshGraph } from 'components/CytoscapeGraph/graphs/KialiMeshGraph';
 
 export const INITIAL_MESH_STATE: MeshState = {
   definition: null,
-  layout: KialiDagreGraph.getLayout(),
+  layout: KialiMeshGraph.getLayout(),
   target: null,
   toolbarState: {
     findValue: '',

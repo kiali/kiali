@@ -6,7 +6,6 @@ import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { getKialiTheme } from 'utils/ThemeUtils';
 import {
   TargetPanelCommonProps,
-  getTitle,
   shouldRefreshData,
   targetPanel,
   targetPanelHR,
@@ -88,10 +87,7 @@ export class TargetPanelCluster extends React.Component<TargetPanelCommonProps, 
   render() {
     return (
       <div className={targetPanel} style={TargetPanelCluster.panelStyle}>
-        <div className={targetPanelHeading}>
-          {getTitle('Cluster')}
-          {this.renderCluster(this.meshCluster)}
-        </div>
+        <div className={targetPanelHeading}>{this.renderCluster(this.meshCluster)}</div>
       </div>
     );
   }

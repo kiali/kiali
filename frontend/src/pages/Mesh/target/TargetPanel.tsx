@@ -121,6 +121,7 @@ class TargetPanelComponent extends React.Component<TargetPanelProps, TargetPanel
           case 'cluster':
             return (
               <TargetPanelCluster
+                duration={this.props.duration}
                 istioAPIEnabled={this.props.istioAPIEnabled}
                 kiosk={this.props.kiosk}
                 refreshInterval={this.props.refreshInterval}
@@ -131,6 +132,7 @@ class TargetPanelComponent extends React.Component<TargetPanelProps, TargetPanel
           case 'namespace':
             return (
               <TargetPanelNamespace
+                duration={this.props.duration}
                 istioAPIEnabled={this.props.istioAPIEnabled}
                 kiosk={this.props.kiosk}
                 meshStatus={this.props.meshStatus}
@@ -147,6 +149,7 @@ class TargetPanelComponent extends React.Component<TargetPanelProps, TargetPanel
       case 'mesh':
         return (
           <TargetPanelMesh
+            duration={this.props.duration}
             istioAPIEnabled={this.props.istioAPIEnabled}
             kiosk={this.props.kiosk}
             refreshInterval={this.props.refreshInterval}
@@ -160,6 +163,7 @@ class TargetPanelComponent extends React.Component<TargetPanelProps, TargetPanel
         if (data.infraType === MeshInfraType.NAMESPACE) {
           return (
             <TargetPanelNamespace
+              duration={this.props.duration}
               istioAPIEnabled={this.props.istioAPIEnabled}
               kiosk={this.props.kiosk}
               meshStatus={this.props.meshStatus}
@@ -172,6 +176,7 @@ class TargetPanelComponent extends React.Component<TargetPanelProps, TargetPanel
         }
         return (
           <TargetPanelNode
+            duration={this.props.duration}
             istioAPIEnabled={this.props.istioAPIEnabled}
             kiosk={this.props.kiosk}
             refreshInterval={this.props.refreshInterval}

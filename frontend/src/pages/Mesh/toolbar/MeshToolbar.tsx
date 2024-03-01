@@ -19,14 +19,14 @@ import { Controller } from '@patternfly/react-topology';
 import { MeshFind } from './MeshFind';
 import { MeshTourStops } from '../MeshHelpTour';
 import { MeshReset } from './MeshReset';
-import { Refresh } from 'components/Refresh/Refresh';
+import { TimeDurationComponent } from 'components/Time/TimeDurationComponent';
 
 type ReduxProps = {
   target: MeshTarget | null;
 };
 
 type MeshToolbarProps = ReduxProps & {
-  controller: Controller;
+  controller?: Controller;
   disabled: boolean;
   elementsChanged: boolean;
   onToggleHelp: () => void;
@@ -69,7 +69,7 @@ class MeshToolbarComponent extends React.PureComponent<MeshToolbarProps> {
               <MeshReset />
             </ToolbarItem>
             <ToolbarItem>
-              <Refresh id="time_range_refresh" disabled={this.props.disabled} hideLabel={true} manageURL={true} />
+              <TimeDurationComponent id="mesh_time_range" disabled={this.props.disabled} supportsReplay={false} />
             </ToolbarItem>
           </ToolbarGroup>
         </Toolbar>
