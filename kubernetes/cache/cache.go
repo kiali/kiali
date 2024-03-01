@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"sync"
@@ -13,6 +14,7 @@ import (
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/store"
+	"github.com/kiali/kiali/util"
 )
 
 const ambientCheckExpirationTime = 1 * time.Minute
@@ -47,7 +49,8 @@ type KialiCache interface {
 	ProxyStatusCache
 	NamespacesCache
 
-	// IsAmbientEnabled determines if ambient is enabled in the cluster.
+	// IsAmbientEnabled checks if the istio Ambient profile was enabled
+	// by checking if the ztunnel daemonset exists on the cluster.
 	IsAmbientEnabled(cluster string) bool
 }
 
@@ -58,13 +61,9 @@ type namespaceCache struct {
 	clusterNamespace map[string]map[string]models.Namespace // By cluster, by namespace name
 }
 
-type ambientCheck struct {
-	ambientEnabled        bool
-	ambientLastUpdateTime time.Time
-}
-
 type kialiCacheImpl struct {
-	ambientChecksPerCluster store.Store[ambientCheck]
+	ambientChecksPerCluster store.Store[bool]
+	cleanup                 func()
 	conf                    config.Config
 	// Embedded for backward compatibility for business methods that just use one cluster.
 	// All business methods should eventually use the multi-cluster cache.
@@ -89,8 +88,10 @@ type kialiCacheImpl struct {
 }
 
 func NewKialiCache(clientFactory kubernetes.ClientFactory, cfg config.Config) (KialiCache, error) {
+	ctx, cancel := context.WithCancel(context.Background())
 	kialiCacheImpl := kialiCacheImpl{
-		ambientChecksPerCluster: store.New[ambientCheck](),
+		ambientChecksPerCluster: store.NewExpirationStore(ctx, store.New[bool](), util.AsPtr(ambientCheckExpirationTime), nil),
+		cleanup:                 cancel,
 		clientFactory:           clientFactory,
 		conf:                    cfg,
 		kubeCache:               make(map[string]KubeCache),
@@ -167,19 +168,11 @@ func (c *kialiCacheImpl) SetClusters(clusters []kubernetes.Cluster) {
 	c.clusters = clusters
 }
 
-// Check if istio Ambient profile was enabled
-// ATM it is defined in the istio-cni-config configmap
+// IsAmbientEnabled checks if the istio Ambient profile was enabled
+// by checking if the ztunnel daemonset exists on the cluster.
 func (in *kialiCacheImpl) IsAmbientEnabled(cluster string) bool {
-	currentTime := time.Now()
-
-	check, _ := in.ambientChecksPerCluster.Get(cluster)
-	defer func() {
-		in.ambientChecksPerCluster.Set(cluster, check)
-	}()
-
-	if currentTime.Sub(check.ambientLastUpdateTime) > ambientCheckExpirationTime {
-		// Time has expired. Check again.
-		check.ambientLastUpdateTime = currentTime
+	check, found := in.ambientChecksPerCluster.Get(cluster)
+	if !found {
 		kubeCache, err := in.GetKubeCache(cluster)
 		if err != nil {
 			log.Debugf("Unable to get kube cache when checking for ambient profile: %s", err)
@@ -190,16 +183,20 @@ func (in *kialiCacheImpl) IsAmbientEnabled(cluster string) bool {
 		if err != nil {
 			if k8serrors.IsNotFound(err) {
 				log.Debugf("No ztunnel found in istio namespace: %s ", err.Error())
+				in.ambientChecksPerCluster.Set(cluster, false)
+				return false
 			} else {
 				log.Debugf("Error checking for ztunnel in istio namespace: %s", err.Error())
+				// Don't set the check so we will check again the next time since this error may be transient.
+				return false
 			}
-			return false
 		}
 
-		check.ambientEnabled = true
+		in.ambientChecksPerCluster.Set(cluster, true)
+		return true
 	}
 
-	return check.ambientEnabled
+	return check
 }
 
 // Interface guard for kiali cache impl
