@@ -44,6 +44,27 @@ func setupNamespaceServiceWithNs() kubernetes.ClientInterface {
 	return k8s
 }
 
+// Namespace service setup
+func setupAmbientNamespaceServiceWithNs() kubernetes.ClientInterface {
+	c := config.NewConfig()
+	labels := map[string]string{
+		c.IstioLabels.AmbientNamespaceLabel: c.IstioLabels.AmbientNamespaceLabelValue,
+	}
+	// config needs to be set by other services since those rely on the global.
+	objects := []runtime.Object{
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "bookinfo", Labels: labels}},
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "alpha"}},
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "beta"}},
+	}
+	for _, obj := range fakeNamespaces() {
+		o := obj
+		objects = append(objects, &o)
+	}
+	k8s := kubetest.NewFakeK8sClient(objects...)
+	k8s.OpenShift = false
+	return k8s
+}
+
 // Get namespaces
 func TestGetNamespaces(t *testing.T) {
 	conf := config.NewConfig()
@@ -97,6 +118,31 @@ func TestGetNamespaceWithError(t *testing.T) {
 
 	assert.NotNil(t, err)
 	assert.Nil(t, ns2)
+}
+
+// Get Ambient namespace
+func TestAmbientNamespace(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	k8s := setupAmbientNamespaceServiceWithNs()
+
+	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
+	SetWithBackends(mockClientFactory, nil)
+
+	nsservice := setupNamespaceService(t, k8s, conf)
+
+	ns, _ := nsservice.GetClusterNamespace(context.TODO(), "bookinfo", config.Get().KubernetesConfig.ClusterName)
+
+	assert.NotNil(t, ns)
+	assert.Equal(t, ns.Name, "bookinfo")
+	assert.True(t, ns.IsAmbient)
+
+	ns2, _ := nsservice.GetClusterNamespace(context.TODO(), "alpha", config.Get().KubernetesConfig.ClusterName)
+
+	assert.NotNil(t, ns2)
+	assert.Equal(t, ns2.Name, "alpha")
+	assert.False(t, ns2.IsAmbient)
 }
 
 // Update namespaces
