@@ -250,7 +250,6 @@ create_kiali_remote_cluster_secret() {
   AWS_REGION_REGEX='(us|eu|ap|sa|ca|me|af|il|us-gov)-(north|south|east|west|central|southeast|northeast)-[0-9]'
   AWS_EKS_ARN_REGEX="arn:aws:eks:${AWS_REGION_REGEX}:[0-9]{12}:cluster/([0-9A-Za-z][_A-Za-z0-9\-]{0,99})$"
   if echo "${REMOTE_CLUSTER_NAME}" | grep -Eq "${AWS_EKS_ARN_REGEX}"; then
-      echo "The remote cluster name [${REMOTE_CLUSTER_NAME}] matches the AWS EKS ARN regex pattern."
       REMOTE_CLUSTER_NAME=$(echo "${REMOTE_CLUSTER_NAME}" | sed 's/^.*:cluster\/\(.*\)$/\1/')
   fi
   # a Secret stringData key must conform to Kubernetes naming rules. Othewise, this kind of error will result:
