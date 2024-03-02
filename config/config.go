@@ -243,18 +243,20 @@ type GrafanaVariablesConfig struct {
 
 // TracingConfig describes configuration used for tracing links
 type TracingConfig struct {
-	Auth                 Auth              `yaml:"auth"`
-	Enabled              bool              `yaml:"enabled"` // Enable Tracing in Kiali
-	GrpcPort             int               `yaml:"grpc_port,omitempty"`
-	InClusterURL         string            `yaml:"in_cluster_url"`
-	IsCore               bool              `yaml:"is_core,omitempty"`
-	Provider             TracingProvider   `yaml:"provider"` // jaeger | tempo
-	NamespaceSelector    bool              `yaml:"namespace_selector"`
-	QueryScope           map[string]string `yaml:"query_scope,omitempty"`
-	QueryTimeout         int               `yaml:"query_timeout,omitempty"`
-	URL                  string            `yaml:"url"`
-	UseGRPC              bool              `yaml:"use_grpc"`
-	WhiteListIstioSystem []string          `yaml:"whitelist_istio_system"`
+	Auth                   Auth              `yaml:"auth"`
+	Enabled                bool              `yaml:"enabled"` // Enable Tracing in Kiali
+	GrpcPort               int               `yaml:"grpc_port,omitempty"`
+	InClusterURL           string            `yaml:"in_cluster_url"`
+	IsCore                 bool              `yaml:"is_core,omitempty"`
+	Provider               TracingProvider   `yaml:"provider"`          // jaeger | tempo
+	FrontendProvider       string            `yaml:"frontend_provider"` // jaeger | grafana
+	FrontendProviderConfig map[string]string `yaml:"frontend_provider_config"`
+	NamespaceSelector      bool              `yaml:"namespace_selector"`
+	QueryScope             map[string]string `yaml:"query_scope,omitempty"`
+	QueryTimeout           int               `yaml:"query_timeout,omitempty"`
+	URL                    string            `yaml:"url"`
+	UseGRPC                bool              `yaml:"use_grpc"`
+	WhiteListIstioSystem   []string          `yaml:"whitelist_istio_system"`
 }
 
 // RegistryConfig contains configuration for connecting to an external istiod.
@@ -736,17 +738,19 @@ func NewConfig() (c *Config) {
 				Auth: Auth{
 					Type: AuthTypeNone,
 				},
-				Enabled:              true,
-				GrpcPort:             9095,
-				InClusterURL:         "http://tracing.istio-system:16685/jaeger",
-				IsCore:               false,
-				Provider:             JaegerProvider,
-				NamespaceSelector:    true,
-				QueryScope:           map[string]string{},
-				QueryTimeout:         5,
-				URL:                  "",
-				UseGRPC:              true,
-				WhiteListIstioSystem: []string{"jaeger-query", "istio-ingressgateway"},
+				Enabled:                true,
+				GrpcPort:               9095,
+				InClusterURL:           "http://tracing.istio-system:16685/jaeger",
+				IsCore:                 false,
+				Provider:               JaegerProvider,
+				FrontendProvider:       string(JaegerProvider),
+				FrontendProviderConfig: map[string]string{},
+				NamespaceSelector:      true,
+				QueryScope:             map[string]string{},
+				QueryTimeout:           5,
+				URL:                    "",
+				UseGRPC:                true,
+				WhiteListIstioSystem:   []string{"jaeger-query", "istio-ingressgateway"},
 			},
 		},
 		IstioLabels: IstioLabels{
