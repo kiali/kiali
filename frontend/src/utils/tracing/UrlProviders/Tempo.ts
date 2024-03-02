@@ -1,18 +1,18 @@
-import { ConcreteService, TracingUrlProvider } from 'types/Tracing';
+import { ConcreteService, TracingUrlProvider, TEMPO, GRAFANA, JAEGER } from 'types/Tracing';
 import { ExternalServiceInfo } from 'types/StatusState';
 import { BoundsInMilliseconds } from 'types/Common';
 import { GrafanaLegacyUrlProvider } from './GrafanaLegacy';
 import { GrafanaUrlProvider } from './Grafana';
-import { SpanData, TraceData } from '../../../types/TracingInfo';
+import { SpanData, TraceData } from 'types/TracingInfo';
 
 interface TempoExternalService extends ConcreteService {
   frontendProvider: string;
   frontendProviderConfig?: Record<string, string>;
-  name: 'tempo';
+  name: typeof TEMPO;
 }
 
 export function isTempoService(svc: ExternalServiceInfo): svc is TempoExternalService {
-  return svc.name === 'tempo' && svc.frontendProvider === 'grafana';
+  return svc.name === TEMPO && svc.frontendProvider === GRAFANA;
 }
 
 class nullProvider implements TracingUrlProvider {
@@ -40,8 +40,8 @@ export class TempoUrlProvider implements TracingUrlProvider {
 
   constructor(service: TempoExternalService, externalServices: ExternalServiceInfo[]) {
     let frontendProvider: TracingUrlProvider | undefined = undefined;
-    const svc = externalServices.find(s => ['grafana', 'jaeger'].includes(s.name.toLowerCase()));
-    if (svc && svc.name.toLowerCase() === 'grafana' && svc.url !== undefined) {
+    const svc = externalServices.find(s => [GRAFANA, JAEGER].includes(s.name.toLowerCase()));
+    if (svc && svc.name.toLowerCase() === GRAFANA && svc.url !== undefined) {
       if (service.frontendProviderConfig?.['datasource_uid'] !== undefined) {
         // Grafana 10+
         frontendProvider = new GrafanaUrlProvider(svc.url, {

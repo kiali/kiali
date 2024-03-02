@@ -1,7 +1,7 @@
 import { isTempoService, TempoUrlProvider } from './Tempo';
 import { isJaegerService, JaegerUrlProvider } from './Jaeger';
-import { ExternalServiceInfo } from '../../../types/StatusState';
-import { TracingUrlProvider } from '../../../types/Tracing';
+import { ExternalServiceInfo } from 'types/StatusState';
+import { JAEGER, TEMPO, TracingUrlProvider } from 'types/Tracing';
 
 // Get a tracing url provider, assuming some is configured
 export function GetTracingUrlProvider(
@@ -13,7 +13,7 @@ export function GetTracingUrlProvider(
   // a tracing url without explicitly passing a provider.
   const svc = provider
     ? externalServices.find(service => service.name === provider)
-    : externalServices.find(service => ['tempo', 'jaeger'].includes(service.name.toLowerCase()));
+    : externalServices.find(service => [TEMPO, JAEGER].includes(service.name.toLowerCase()));
   if (!svc) {
     return undefined;
   }

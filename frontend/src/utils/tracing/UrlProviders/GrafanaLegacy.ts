@@ -1,5 +1,5 @@
 import { TracingUrlProvider } from 'types/Tracing';
-import { SpanData, TraceData } from '../../../types/TracingInfo';
+import { SpanData, TraceData } from 'types/TracingInfo';
 
 export class GrafanaLegacyUrlProvider implements TracingUrlProvider {
   private readonly grafanaUrl: string | undefined;

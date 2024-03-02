@@ -47,3 +47,5 @@ export type ConcreteService = {
 };
 
 export const TEMPO = 'tempo';
+export const GRAFANA = 'grafana';
+export const JAEGER = 'jaeger';

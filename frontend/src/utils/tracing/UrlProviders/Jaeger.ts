@@ -1,15 +1,15 @@
-import { ConcreteService, TracingUrlProvider } from 'types/Tracing';
+import { ConcreteService, TracingUrlProvider, JAEGER } from 'types/Tracing';
 import { ExternalServiceInfo } from 'types/StatusState';
 import { BoundsInMilliseconds } from 'types/Common';
 import { SpanData, TraceData } from '../../../types/TracingInfo';
 
 interface JaegerExternalService extends ConcreteService {
-  name: 'jaeger';
+  name: typeof JAEGER;
   url: string;
 }
 
 export function isJaegerService(svc: ExternalServiceInfo): svc is JaegerExternalService {
-  return svc.name === 'jaeger';
+  return svc.name === JAEGER;
 }
 
 export class JaegerUrlProvider implements TracingUrlProvider {

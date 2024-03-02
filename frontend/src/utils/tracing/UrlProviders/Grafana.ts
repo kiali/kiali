@@ -1,7 +1,7 @@
 import * as _ from 'lodash';
-import { TracingUrlProvider } from 'types/Tracing';
+import { TracingUrlProvider, TEMPO } from 'types/Tracing';
 import { BoundsInMilliseconds } from 'types/Common';
-import { SpanData, TraceData } from '../../../types/TracingInfo';
+import { SpanData, TraceData } from 'types/TracingInfo';
 
 function dec2hex(dec: number): string {
   return dec.toString(16).padStart(2, '0');
@@ -49,7 +49,7 @@ export class GrafanaUrlProvider implements TracingUrlProvider {
           refId: 'A',
           datasource: {
             uid: this.datasourceUID,
-            type: 'tempo'
+            type: TEMPO
           },
           queryType: 'traceqlSearch',
           limit: 20,
@@ -71,7 +71,7 @@ export class GrafanaUrlProvider implements TracingUrlProvider {
           refId: 'A',
           datasource: {
             uid: this.datasourceUID,
-            type: 'tempo'
+            type: TEMPO
           },
           queryType: 'traceql',
           query: trace.traceID
@@ -95,7 +95,7 @@ export class GrafanaUrlProvider implements TracingUrlProvider {
           refId: 'A',
           limit: 20,
           tableType: 'traces',
-          datasource: { type: 'tempo', uid: this.datasourceUID }
+          datasource: { type: TEMPO, uid: this.datasourceUID }
         }
       ],
       panelsState: { trace: { spanId: base64ToHex(span.spanID) } }
@@ -130,7 +130,7 @@ export class GrafanaUrlProvider implements TracingUrlProvider {
           refId: 'A',
           datasource: {
             uid: this.datasourceUID,
-            type: 'tempo'
+            type: TEMPO
           },
           queryType: 'traceqlSearch',
           // limit: limit,
