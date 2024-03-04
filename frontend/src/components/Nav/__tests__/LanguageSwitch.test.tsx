@@ -4,13 +4,13 @@ import { mount, shallow } from 'enzyme';
 import { LanguageSwitchComponent } from '../Masthead/LanguageSwitch';
 import { MenuToggle } from '@patternfly/react-core';
 import { store } from 'store/ConfigStore';
-import { Locale } from 'types/Common';
+import { Language } from 'types/Common';
 import { serverConfig, setServerConfig } from 'config/ServerConfig';
 
 const i18nServerConfig = Object.assign({}, serverConfig);
 
 i18nServerConfig.kialiFeatureFlags.uiDefaults.i18n = {
-  locales: ['en', 'zh'],
+  languages: ['en', 'zh'],
   default: 'en'
 };
 
@@ -24,14 +24,14 @@ describe('Language switch', () => {
     setServerConfig(i18nServerConfig);
   });
   it('renders correctly', () => {
-    const wrapper = shallow(<LanguageSwitchComponent locale={Locale.ENGLISH} />);
+    const wrapper = shallow(<LanguageSwitchComponent language={Language.ENGLISH} />);
 
     expect(shallowToJson(wrapper)).toBeDefined();
     expect(shallowToJson(wrapper)).toMatchSnapshot();
   });
 
   it('changes to english language', () => {
-    const wrapper = mount(<LanguageSwitchComponent locale={Locale.CHINESE} />);
+    const wrapper = mount(<LanguageSwitchComponent language={Language.CHINESE} />);
 
     // click menu toggle
     wrapper.find(MenuToggle).simulate('click');
@@ -42,11 +42,11 @@ describe('Language switch', () => {
       .findWhere(node => node.type() === 'button')
       .simulate('click');
 
-    expect(store.getState().globalState.locale).toBe(Locale.ENGLISH);
+    expect(store.getState().globalState.language).toBe(Language.ENGLISH);
   });
 
   it('changes to chinese language', () => {
-    const wrapper = mount(<LanguageSwitchComponent locale={Locale.ENGLISH} />);
+    const wrapper = mount(<LanguageSwitchComponent language={Language.ENGLISH} />);
 
     // click menu toggle
     wrapper.find(MenuToggle).simulate('click');
@@ -57,6 +57,6 @@ describe('Language switch', () => {
       .findWhere(node => node.type() === 'button')
       .simulate('click');
 
-    expect(store.getState().globalState.locale).toBe(Locale.CHINESE);
+    expect(store.getState().globalState.language).toBe(Language.CHINESE);
   });
 });

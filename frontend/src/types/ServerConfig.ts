@@ -48,7 +48,7 @@ interface GraphUIDefaults {
 
 interface I18nUIDefaults {
   default: string;
-  locales: string[];
+  languages: string[];
 }
 
 interface ListUIDefaults {

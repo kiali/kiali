@@ -115,7 +115,7 @@ const defaultServerConfig: ComputedServerConfig = {
       },
       i18n: {
         default: 'en',
-        locales: ['en']
+        languages: ['en']
       },
       list: {
         includeHealth: true,

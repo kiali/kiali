@@ -25,7 +25,7 @@ export const enum Theme {
 
 export const I18N_NAMESPACE = process.env.I18N_NAMESPACE;
 
-export const enum Locale {
+export const enum Language {
   ENGLISH = 'en',
   CHINESE = 'zh'
 }

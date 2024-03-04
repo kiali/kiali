@@ -34,8 +34,8 @@ import { MeshCluster, MeshDefinition, MeshTarget } from '../types/Mesh';
 export interface GlobalState {
   readonly isPageVisible: boolean;
   readonly kiosk: string;
+  readonly language: string;
   readonly loadingCounter: number;
-  readonly locale: string;
   readonly theme: string;
 }
 

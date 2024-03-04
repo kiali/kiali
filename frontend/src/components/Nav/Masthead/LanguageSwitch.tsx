@@ -6,7 +6,7 @@ import i18n from 'i18next';
 import { GlobalActions } from 'actions/GlobalActions';
 import { store } from 'store/ConfigStore';
 import { serverConfig } from 'config';
-import { Locale } from 'types/Common';
+import { Language } from 'types/Common';
 import { KialiAppState } from 'store/Store';
 import { connect } from 'react-redux';
 
@@ -30,37 +30,37 @@ const checkStyle = kialiStyle({
 });
 
 type LanguageSwitchProps = {
-  locale: string;
+  language: string;
 };
 
 export const LanguageSwitchComponent: React.FC<LanguageSwitchProps> = props => {
   const [isDropdownOpen, setIsDropdownOpen] = React.useState<boolean>(false);
 
-  const supportedLocales = serverConfig.kialiFeatureFlags.uiDefaults.i18n.locales;
+  const supportedLocales = serverConfig.kialiFeatureFlags.uiDefaults.i18n.languages;
 
   const items: React.ReactNode[] = [];
 
-  if (supportedLocales.includes(Locale.ENGLISH)) {
+  if (supportedLocales.includes(Language.ENGLISH)) {
     items.push(
-      <DropdownItem key="English" onClick={() => switchLanguage(Locale.ENGLISH)}>
+      <DropdownItem key="English" onClick={() => switchLanguage(Language.ENGLISH)}>
         <span>English</span>
-        {props.locale === Locale.ENGLISH && <KialiIcon.Check className={checkStyle} />}
+        {props.language === Language.ENGLISH && <KialiIcon.Check className={checkStyle} />}
       </DropdownItem>
     );
   }
 
-  if (supportedLocales.includes(Locale.CHINESE)) {
+  if (supportedLocales.includes(Language.CHINESE)) {
     items.push(
-      <DropdownItem key="Chinese" onClick={() => switchLanguage(Locale.CHINESE)}>
+      <DropdownItem key="Chinese" onClick={() => switchLanguage(Language.CHINESE)}>
         <span>中文</span>
-        {props.locale === Locale.CHINESE && <KialiIcon.Check className={checkStyle} />}
+        {props.language === Language.CHINESE && <KialiIcon.Check className={checkStyle} />}
       </DropdownItem>
     );
   }
 
-  const switchLanguage = (locale: string): void => {
-    i18n.changeLanguage(locale);
-    store.dispatch(GlobalActions.setLocale(locale));
+  const switchLanguage = (language: string): void => {
+    i18n.changeLanguage(language);
+    store.dispatch(GlobalActions.setLanguage(language));
   };
 
   const onDropdownSelect = (): void => {
@@ -96,7 +96,7 @@ export const LanguageSwitchComponent: React.FC<LanguageSwitchProps> = props => {
 
 const mapStateToProps = (state: KialiAppState): LanguageSwitchProps => {
   return {
-    locale: state.globalState.locale
+    language: state.globalState.language
   };
 };
 

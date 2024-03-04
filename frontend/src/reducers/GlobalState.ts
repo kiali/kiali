@@ -8,7 +8,7 @@ export const INITIAL_GLOBAL_STATE: GlobalState = {
   loadingCounter: 0,
   isPageVisible: true,
   kiosk: '',
-  locale: '',
+  language: '',
   theme: ''
 };
 
@@ -26,9 +26,9 @@ export const GlobalStateReducer = (state: GlobalState = INITIAL_GLOBAL_STATE, ac
     case getType(GlobalActions.setKiosk):
       const kiosk = action.payload;
       return updateState(state, { kiosk: kiosk });
-    case getType(GlobalActions.setLocale):
-      const locale = action.payload;
-      return updateState(state, { locale: locale });
+    case getType(GlobalActions.setLanguage):
+      const language = action.payload;
+      return updateState(state, { language: language });
     case getType(GlobalActions.setTheme):
       const theme = action.payload;
       return updateState(state, { theme: theme });

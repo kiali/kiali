@@ -21,7 +21,7 @@ import { history } from './History';
 import { NamespaceActions } from 'actions/NamespaceAction';
 import { Namespace } from 'types/Namespace';
 import { UserSettingsActions } from 'actions/UserSettingsActions';
-import { DurationInSeconds, IntervalInMilliseconds, Locale, PF_THEME_DARK, Theme } from 'types/Common';
+import { DurationInSeconds, IntervalInMilliseconds, Language, PF_THEME_DARK, Theme } from 'types/Common';
 import { config } from 'config';
 import { store } from 'store/ConfigStore';
 import { toGrpcRate, toHttpRate, toTcpRate, TrafficRate } from 'types/Graph';
@@ -232,18 +232,18 @@ class AuthenticationControllerComponent extends React.Component<
     const uiDefaults = serverConfig.kialiFeatureFlags.uiDefaults;
 
     if (uiDefaults) {
-      // Set I18n locale
-      let locale = store.getState().globalState.locale;
+      // Set I18n language
+      let language = store.getState().globalState.language;
 
-      // If locale in redux store is empty or not supported, set to default value
-      if (!uiDefaults.i18n.locales.includes(locale)) {
-        locale = uiDefaults.i18n.default ?? Locale.ENGLISH;
+      // If language in redux store is empty or not supported, set to default language
+      if (!uiDefaults.i18n.languages.includes(language)) {
+        language = uiDefaults.i18n.default ?? Language.ENGLISH;
 
-        console.warn(`No locale found in local storage, switching to default value ${locale}`);
+        console.warn(`No language found in local storage, switching to default language ${language}`);
       }
 
-      i18next.changeLanguage(locale);
-      store.dispatch(GlobalActions.setLocale(locale));
+      i18next.changeLanguage(language);
+      store.dispatch(GlobalActions.setLanguage(language));
 
       // Duration (aka metricsPerRefresh)
       if (uiDefaults.metricsPerRefresh) {
