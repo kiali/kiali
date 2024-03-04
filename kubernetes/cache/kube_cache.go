@@ -559,8 +559,7 @@ func (c *kubeCache) GetDaemonSetsWithSelector(namespace string, selectorLabels m
 		labelSet := labels.Set(labelMap)
 
 		svcSelector := labelSet.AsSelector()
-		// selector match is done after listing all services, similar to registry reading
-		// empty selector is loading all services, or match the service selector
+		// selector match is done after listing all daemonSets, similar to registry reading
 		if selector.AsSelector().Empty() || (!svcSelector.Empty() && svcSelector.Matches(selector)) {
 			// Do not modify what is returned by the lister since that is shared and will cause data races.
 			svc := ds.DeepCopy()
