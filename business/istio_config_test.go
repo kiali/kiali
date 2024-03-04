@@ -24,98 +24,76 @@ import (
 )
 
 func TestParseListParams(t *testing.T) {
-	cluster := "Kubernetes"
-	namespace := "bookinfo"
 	objects := ""
 	labelSelector := ""
-	criteria := ParseIstioConfigCriteria(cluster, namespace, objects, labelSelector, "", false)
+	criteria := ParseIstioConfigCriteria(objects, labelSelector, "")
 
-	assert.Equal(t, cluster, criteria.Cluster)
-	assert.Equal(t, namespace, criteria.Namespace)
 	assert.True(t, criteria.IncludeVirtualServices)
 	assert.True(t, criteria.IncludeDestinationRules)
 	assert.True(t, criteria.IncludeServiceEntries)
-	assert.False(t, criteria.AllNamespaces)
 
 	objects = "gateways"
-	criteria = ParseIstioConfigCriteria("", namespace, objects, labelSelector, "", false)
-
-	assert.Equal(t, "", criteria.Cluster)
-	assert.True(t, criteria.IncludeGateways)
-	assert.False(t, criteria.IncludeVirtualServices)
-	assert.False(t, criteria.IncludeDestinationRules)
-	assert.False(t, criteria.IncludeServiceEntries)
-	assert.False(t, criteria.AllNamespaces)
-	assert.Equal(t, namespace, criteria.Namespace)
-
-	criteria = ParseIstioConfigCriteria("", "", objects, labelSelector, "", true)
+	criteria = ParseIstioConfigCriteria(objects, labelSelector, "")
 
 	assert.True(t, criteria.IncludeGateways)
 	assert.False(t, criteria.IncludeVirtualServices)
 	assert.False(t, criteria.IncludeDestinationRules)
 	assert.False(t, criteria.IncludeServiceEntries)
-	assert.True(t, criteria.AllNamespaces)
-	assert.Equal(t, "", criteria.Namespace)
+
+	criteria = ParseIstioConfigCriteria(objects, labelSelector, "")
+
+	assert.True(t, criteria.IncludeGateways)
+	assert.False(t, criteria.IncludeVirtualServices)
+	assert.False(t, criteria.IncludeDestinationRules)
+	assert.False(t, criteria.IncludeServiceEntries)
 
 	objects = "virtualservices"
-	criteria = ParseIstioConfigCriteria("", namespace, objects, labelSelector, "", false)
+	criteria = ParseIstioConfigCriteria(objects, labelSelector, "")
 
 	assert.False(t, criteria.IncludeGateways)
 	assert.True(t, criteria.IncludeVirtualServices)
 	assert.False(t, criteria.IncludeDestinationRules)
 	assert.False(t, criteria.IncludeServiceEntries)
-	assert.False(t, criteria.AllNamespaces)
-	assert.Equal(t, namespace, criteria.Namespace)
 
 	objects = "destinationrules"
-	criteria = ParseIstioConfigCriteria("", namespace, objects, labelSelector, "", false)
+	criteria = ParseIstioConfigCriteria(objects, labelSelector, "")
 
 	assert.False(t, criteria.IncludeGateways)
 	assert.False(t, criteria.IncludeVirtualServices)
 	assert.True(t, criteria.IncludeDestinationRules)
 	assert.False(t, criteria.IncludeServiceEntries)
-	assert.False(t, criteria.AllNamespaces)
-	assert.Equal(t, namespace, criteria.Namespace)
 
 	objects = "serviceentries"
-	criteria = ParseIstioConfigCriteria("", namespace, objects, labelSelector, "", false)
+	criteria = ParseIstioConfigCriteria(objects, labelSelector, "")
 
 	assert.False(t, criteria.IncludeGateways)
 	assert.False(t, criteria.IncludeVirtualServices)
 	assert.False(t, criteria.IncludeDestinationRules)
 	assert.True(t, criteria.IncludeServiceEntries)
-	assert.False(t, criteria.AllNamespaces)
-	assert.Equal(t, namespace, criteria.Namespace)
 
 	objects = "virtualservices"
-	criteria = ParseIstioConfigCriteria("", namespace, objects, labelSelector, "", false)
+	criteria = ParseIstioConfigCriteria(objects, labelSelector, "")
 
 	assert.False(t, criteria.IncludeGateways)
 	assert.True(t, criteria.IncludeVirtualServices)
 	assert.False(t, criteria.IncludeDestinationRules)
 	assert.False(t, criteria.IncludeServiceEntries)
-	assert.False(t, criteria.AllNamespaces)
-	assert.Equal(t, namespace, criteria.Namespace)
 
 	objects = "destinationrules,virtualservices"
-	criteria = ParseIstioConfigCriteria("", namespace, objects, labelSelector, "", false)
+	criteria = ParseIstioConfigCriteria(objects, labelSelector, "")
 
 	assert.False(t, criteria.IncludeGateways)
 	assert.True(t, criteria.IncludeVirtualServices)
 	assert.True(t, criteria.IncludeDestinationRules)
 	assert.False(t, criteria.IncludeServiceEntries)
-	assert.False(t, criteria.AllNamespaces)
-	assert.Equal(t, namespace, criteria.Namespace)
 
 	objects = "notsupported"
-	criteria = ParseIstioConfigCriteria("", namespace, objects, labelSelector, "", false)
+	criteria = ParseIstioConfigCriteria(objects, labelSelector, "")
 
 	assert.False(t, criteria.IncludeGateways)
 	assert.False(t, criteria.IncludeVirtualServices)
 	assert.False(t, criteria.IncludeDestinationRules)
 	assert.False(t, criteria.IncludeServiceEntries)
-	assert.False(t, criteria.AllNamespaces)
-	assert.Equal(t, namespace, criteria.Namespace)
 }
 
 func TestGetIstioConfigList(t *testing.T) {
@@ -124,16 +102,16 @@ func TestGetIstioConfigList(t *testing.T) {
 	config.Set(conf)
 
 	criteria := IstioConfigCriteria{
-		Namespace:               "test",
 		IncludeGateways:         false,
 		IncludeVirtualServices:  false,
 		IncludeDestinationRules: false,
 		IncludeServiceEntries:   false,
 	}
+	cluster := conf.KubernetesConfig.ClusterName
 
 	configService := mockGetIstioConfigList(t)
 
-	istioconfigList, err := configService.GetIstioConfigList(context.TODO(), criteria)
+	istioconfigList, err := configService.GetIstioConfigList(context.TODO(), cluster, criteria)
 
 	assert.Equal(0, len(istioconfigList.Gateways))
 	assert.Equal(0, len(istioconfigList.VirtualServices))
@@ -143,7 +121,7 @@ func TestGetIstioConfigList(t *testing.T) {
 
 	criteria.IncludeGateways = true
 
-	istioconfigList, err = configService.GetIstioConfigList(context.TODO(), criteria)
+	istioconfigList, err = configService.GetIstioConfigList(context.TODO(), cluster, criteria)
 
 	assert.Equal(2, len(istioconfigList.Gateways))
 	assert.Equal(0, len(istioconfigList.VirtualServices))
@@ -153,7 +131,7 @@ func TestGetIstioConfigList(t *testing.T) {
 
 	criteria.IncludeVirtualServices = true
 
-	istioconfigList, err = configService.GetIstioConfigList(context.TODO(), criteria)
+	istioconfigList, err = configService.GetIstioConfigList(context.TODO(), cluster, criteria)
 
 	assert.Equal(2, len(istioconfigList.Gateways))
 	assert.Equal(2, len(istioconfigList.VirtualServices))
@@ -163,7 +141,7 @@ func TestGetIstioConfigList(t *testing.T) {
 
 	criteria.IncludeDestinationRules = true
 
-	istioconfigList, err = configService.GetIstioConfigList(context.TODO(), criteria)
+	istioconfigList, err = configService.GetIstioConfigList(context.TODO(), cluster, criteria)
 
 	assert.Equal(2, len(istioconfigList.Gateways))
 	assert.Equal(2, len(istioconfigList.VirtualServices))
@@ -173,7 +151,7 @@ func TestGetIstioConfigList(t *testing.T) {
 
 	criteria.IncludeServiceEntries = true
 
-	istioconfigList, err = configService.GetIstioConfigList(context.TODO(), criteria)
+	istioconfigList, err = configService.GetIstioConfigList(context.TODO(), cluster, criteria)
 
 	assert.Equal(2, len(istioconfigList.Gateways))
 	assert.Equal(2, len(istioconfigList.VirtualServices))
@@ -638,12 +616,10 @@ func TestListWithAllNamespacesButNoAccessReturnsEmpty(t *testing.T) {
 	configService := NewWithBackends(k8sclients, k8sclients, nil, nil).IstioConfig
 
 	criteria := IstioConfigCriteria{
-		Namespace:       "",
 		IncludeGateways: true,
-		AllNamespaces:   true,
 	}
 
-	istioConfigList, err := configService.GetIstioConfigList(context.Background(), criteria)
+	istioConfigList, err := configService.GetIstioConfigList(context.Background(), conf.KubernetesConfig.ClusterName, criteria)
 	require.NoError(err)
 
 	assert.Len(istioConfigList.Gateways, 0)
@@ -684,12 +660,10 @@ func TestListNamespaceScopedReturnsAllAccessibleNamespaces(t *testing.T) {
 	configService := NewWithBackends(k8sclients, k8sclients, nil, nil).IstioConfig
 
 	criteria := IstioConfigCriteria{
-		Namespace:       "",
 		IncludeGateways: true,
-		AllNamespaces:   true,
 	}
 
-	istioConfigList, err := configService.GetIstioConfigList(context.Background(), criteria)
+	istioConfigList, err := configService.GetIstioConfigList(context.Background(), conf.KubernetesConfig.ClusterName, criteria)
 	require.NoError(err)
 
 	assert.Len(istioConfigList.Gateways, 4)

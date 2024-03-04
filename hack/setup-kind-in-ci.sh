@@ -6,6 +6,7 @@
 
 PRIMARY_REMOTE="primary-remote"
 MULTI_PRIMARY="multi-primary"
+EXTERNAL_CONTROLPLANE="external-controlplane"
 
 infomsg() {
   echo "[INFO] ${1}"
@@ -27,7 +28,7 @@ Options:
     This option is ignored if -ii is false.
     If not specified, the latest version of Istio is installed.
     Default: <the latest release>
--mc|--multicluster <${MULTI_PRIMARY}|${PRIMARY_REMOTE}>
+-mc|--multicluster <${MULTI_PRIMARY}|${PRIMARY_REMOTE}|${EXTERNAL_CONTROLPLANE}>
     Whether to set up a multicluster environment
     and which kind of multicluster environment to setup.
     Default: <none>
@@ -47,8 +48,8 @@ while [[ $# -gt 0 ]]; do
     -iv|--istio-version)          ISTIO_VERSION="$2";         shift;shift; ;;
     -mc|--multicluster)
       MULTICLUSTER="${2}"
-      if [ "${MULTICLUSTER}" != "${PRIMARY_REMOTE}" -a "${MULTICLUSTER}" != "${MULTI_PRIMARY}" ]; then
-        echo "--multicluster option must be one of '${PRIMARY_REMOTE}' or '${MULTI_PRIMARY}'"
+      if [ "${MULTICLUSTER}" != "${PRIMARY_REMOTE}" -a "${MULTICLUSTER}" != "${MULTI_PRIMARY}" -a "${MULTICLUSTER}" != "${EXTERNAL_CONTROLPLANE}" ]; then
+        echo "--multicluster option must be one of '${PRIMARY_REMOTE}' or '${MULTI_PRIMARY}' or '${EXTERNAL_CONTROLPLANE}'"
         exit 1
       fi
       shift;shift
@@ -129,37 +130,11 @@ setup_kind_singlecluster() {
   if [[ "${ISTIO_VERSION}" == *-dev ]]; then
     local hub_arg="--image-hub default"
   fi
-  # Apparently you can't set the requests to zero for the proxy so just setting them to some really low number.
+  
   "${SCRIPT_DIR}"/istio/install-istio-via-istioctl.sh --reduce-resources true --client-exe-path "$(which kubectl)" -cn "cluster-default" -mid "mesh-default" -net "network-default" -gae "true" ${hub_arg:-}
 
   infomsg "Pushing the images into the cluster..."
   make -e DORP="${DORP}" -e CLUSTER_TYPE="kind" -e KIND_NAME="ci" cluster-push-kiali
-
-  local istio_ingress_gateway_ip
-  istio_ingress_gateway_ip="$(kubectl get svc istio-ingressgateway -n istio-system -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')"
-
-  # Re-use bookinfo gateway but have a separate VirtualService for Kiali
-  kubectl apply -f - <<EOF
-apiVersion: networking.istio.io/v1alpha3
-kind: VirtualService
-metadata:
-  name: kiali
-  namespace: istio-system
-spec:
-  gateways:
-  - bookinfo/bookinfo-gateway
-  hosts:
-  - "${istio_ingress_gateway_ip}"
-  http:
-  - match:
-    - uri:
-        prefix: /kiali
-    route:
-    - destination:
-        host: kiali
-        port:
-          number: 20001
-EOF
 
   infomsg "Cloning kiali helm-charts..."
   git clone --single-branch --branch "${TARGET_BRANCH}" https://github.com/kiali/helm-charts.git "${HELM_CHARTS_DIR}"
@@ -183,6 +158,7 @@ EOF
     --set deployment.image_name=localhost/kiali/kiali \
     --set deployment.image_version=dev \
     --set deployment.image_pull_policy="Never" \
+    --set deployment.service_type="LoadBalancer" \
     --set external_services.grafana.url="http://grafana.istio-system:3000" \
     --set external_services.grafana.dashboards[0].name="Istio Mesh Dashboard" \
     --set external_services.tracing.url="http://tracing.istio-system:16685/jaeger" \
@@ -194,6 +170,10 @@ EOF
     --set health_config.rate[0].tolerance[0].failure=100 \
     kiali-server \
     "${HELM_CHARTS_DIR}"/_output/charts/kiali-server-*.tgz
+  
+  # Helm chart doesn't support passing in service opts so patch them after the helm deploy.
+  kubectl patch service kiali -n istio-system --type=json -p='[{"op": "replace", "path": "/spec/ports/0/port", "value":80}]'
+  kubectl wait --for=jsonpath='{.status.loadBalancer.ingress}' -n istio-system service/kiali
 }
 
 setup_kind_tempo() {
@@ -208,37 +188,11 @@ setup_kind_tempo() {
   if [[ "${ISTIO_VERSION}" == *-dev ]]; then
     local hub_arg="--image-hub default"
   fi
-  # Apparently you can't set the requests to zero for the proxy so just setting them to some really low number.
+  
   "${SCRIPT_DIR}"/istio/install-istio-via-istioctl.sh --reduce-resources true --client-exe-path "$(which kubectl)" -cn "cluster-default" -mid "mesh-default" -net "network-default" -gae "true" ${hub_arg:-} -a "prometheus grafana" -s values.meshConfig.defaultConfig.tracing.zipkin.address="tempo-cr-distributor.tempo:9411"
 
   infomsg "Pushing the images into the cluster..."
   make -e DORP="${DORP}" -e CLUSTER_TYPE="kind" -e KIND_NAME="ci" cluster-push-kiali
-
-  local istio_ingress_gateway_ip
-  istio_ingress_gateway_ip="$(kubectl get svc istio-ingressgateway -n istio-system -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')"
-
-  # Re-use bookinfo gateway but have a separate VirtualService for Kiali
-  kubectl apply -f - <<EOF
-apiVersion: networking.istio.io/v1alpha3
-kind: VirtualService
-metadata:
-  name: kiali
-  namespace: istio-system
-spec:
-  gateways:
-  - bookinfo/bookinfo-gateway
-  hosts:
-  - "${istio_ingress_gateway_ip}"
-  http:
-  - match:
-    - uri:
-        prefix: /kiali
-    route:
-    - destination:
-        host: kiali
-        port:
-          number: 20001
-EOF
 
   infomsg "Cloning kiali helm-charts..."
   git clone --single-branch --branch "${TARGET_BRANCH}" https://github.com/kiali/helm-charts.git "${HELM_CHARTS_DIR}"
@@ -262,6 +216,7 @@ EOF
     --set deployment.image_name=localhost/kiali/kiali \
     --set deployment.image_version=dev \
     --set deployment.image_pull_policy="Never" \
+    --set deployment.service_type="LoadBalancer" \
     --set external_services.grafana.url="http://grafana.istio-system:3000" \
     --set external_services.grafana.dashboards[0].name="Istio Mesh Dashboard" \
     --set external_services.tracing.provider="tempo" \
@@ -276,6 +231,10 @@ EOF
     --set health_config.rate[0].tolerance[0].failure=100 \
     kiali-server \
     "${HELM_CHARTS_DIR}"/_output/charts/kiali-server-*.tgz
+  
+  # Helm chart doesn't support passing in service opts so patch them after the helm deploy.
+  kubectl patch service kiali -n istio-system --type=json -p='[{"op": "replace", "path": "/spec/ports/0/port", "value":80}]'
+  kubectl wait --for=jsonpath='{.status.loadBalancer.ingress}' -n istio-system service/kiali
 }
 
 setup_kind_multicluster() {
@@ -305,14 +264,47 @@ setup_kind_multicluster() {
   if [[ "${ISTIO_VERSION}" == *-dev ]]; then
     local hub_arg="--istio-hub default"
   fi
+
+  local cluster1_context
+  local cluster2_context
+  local cluster1_name
+  local cluster2_name
   if [ "${MULTICLUSTER}" == "${MULTI_PRIMARY}" ]; then
     "${SCRIPT_DIR}"/istio/multicluster/install-multi-primary.sh --manage-kind true -dorp docker --istio-dir "${istio_dir}" ${hub_arg:-}
+    cluster1_context="kind-east"
+    cluster2_context="kind-west"
+    cluster1_name="east"
+    cluster2_name="west"
+    kubectl rollout status deployment prometheus -n istio-system --context kind-east
+    kubectl rollout status deployment prometheus -n istio-system --context kind-west
   elif [ "${MULTICLUSTER}" == "${PRIMARY_REMOTE}" ]; then 
     "${SCRIPT_DIR}"/istio/multicluster/install-primary-remote.sh --manage-kind true -dorp docker --istio-dir "${istio_dir}" ${hub_arg:-}
+    cluster1_context="kind-east"
+    cluster2_context="kind-west"
+    cluster1_name="east"
+    cluster2_name="west"
+    kubectl rollout status deployment prometheus -n istio-system --context kind-east
+    kubectl rollout status deployment prometheus -n istio-system --context kind-west
+  elif [ "${MULTICLUSTER}" == "${EXTERNAL_CONTROLPLANE}" ]; then
+    "${SCRIPT_DIR}"/istio/multicluster/setup-external-controlplane.sh
+    cluster1_context="kind-controlplane"
+    cluster2_context="kind-dataplane"
+    cluster1_name="controlplane"
+    cluster2_name="dataplane"
+    kubectl rollout status deployment prometheus -n istio-system --context kind-controlplane
+    kubectl rollout status deployment prometheus -n external-istiod --context kind-dataplane
   fi
-  "${SCRIPT_DIR}"/istio/multicluster/deploy-kiali.sh --manage-kind true -dorp docker -kas anonymous -kudi true -kshc "${HELM_CHARTS_DIR}"/_output/charts/kiali-server-*.tgz
-  kubectl rollout status deployment prometheus -n istio-system --context kind-east
-  kubectl rollout status deployment prometheus -n istio-system --context kind-west
+  
+  "${SCRIPT_DIR}"/istio/multicluster/deploy-kiali.sh \
+    --cluster1-context ${cluster1_context} \
+    --cluster2-context ${cluster2_context} \
+    --cluster1-name ${cluster1_name} \
+    --cluster2-name ${cluster2_name} \
+    --manage-kind true \
+    -dorp docker \
+    -kas anonymous \
+    -kudi true \
+    -kshc "${HELM_CHARTS_DIR}"/_output/charts/kiali-server-*.tgz
 }
 
 if [ -n "${MULTICLUSTER}" ]; then
@@ -343,31 +335,6 @@ do
   sleep 5
 done
 
-# Checking pod status in a loop gives us more debug info on the state of the pod.
-TIMEOUT="True"
-for (( i=1; i<=30; i++ ))
-do
-  READY=$(kubectl get pods -l app=kiali -n istio-system -o jsonpath='{.items[0].status.conditions[?(@.type=="Ready")].status}')
-  if [ "${READY}" == "True" ]; then
-    infomsg "Kiali finished rolling out successfully"
-    TIMEOUT="False"
-    break
-  fi
-
-  infomsg "Waiting for kiali pod to be ready"
-  infomsg "Kiali pod status:"
-  # Show status info of kiali pod. yq is used to parse out just the status info.
-  if command -v yq &> /dev/null; then
-    kubectl get pods -l app=kiali -n istio-system -o yaml | yq '.items[0].status'
-  else
-    kubectl get pods -l app=kiali -n istio-system -o yaml
-  fi
-  sleep 10
-done
-
-if [ "${TIMEOUT}" == "True" ]; then
-  infomsg "Timed out waiting for kiali pods to be ready"
-  exit 1
-fi
+kubectl rollout status deployment/kiali -n istio-system --timeout=120s || { echo "Timed out waiting for kiali pods to be ready"; kubectl get pods -l app=kiali -n istio-system -o yaml | yq '.items[0].status'; exit 1; }
 
 infomsg "Kiali is ready."

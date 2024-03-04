@@ -28,12 +28,14 @@ type ValidationProps = {
 
 const ErrorValidation: IconProps = {
   color: PFColors.Danger,
-  icon: ExclamationCircleIcon
+  icon: ExclamationCircleIcon,
+  dataTest: 'icon-error-validation'
 };
 
 const WarningValidation: IconProps = {
   color: PFColors.Warning,
-  icon: ExclamationTriangleIcon
+  icon: ExclamationTriangleIcon,
+  dataTest: 'icon-warning-validation'
 };
 
 const InfoValidation: IconProps = {

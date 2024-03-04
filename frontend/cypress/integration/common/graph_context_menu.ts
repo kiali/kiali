@@ -42,6 +42,8 @@ When(
         expect(node.length).to.equal(1);
       })
       .then(state => {
+        // Wait for the last "click" to finish before continuing.
+        ensureKialiFinishedLoading();
         const node = state.cy.nodes(
           `[nodeType="service"][service="${svcName}"][cluster="${cluster}"][namespace="bookinfo"]`
         );

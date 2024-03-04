@@ -184,14 +184,17 @@ Then('{string} should be in preview', (value: string) => {
   cy.get('#ace-editor').contains(value);
 });
 
-Then('user selects {string} from the cluster dropdown',(clusters:string)=>{
-  clusters.split(",").forEach((value:string) =>{
-    cy.getBySel('cluster-dropdown').click();
-    cy.get(`input[type="checkbox"][value="${value}"]`).check();
-    cy.getBySel('cluster-dropdown').click();
-  })
+Then('user selects {string} from the cluster dropdown', (clusters: string) => {
+  cy.getBySel('cluster-dropdown').click();
+  clusters.split(',').forEach(cluster => {
+    cy.get(`input[type="checkbox"][value="${cluster}"]`).check();
+  });
+  cy.getBySel('cluster-dropdown').click();
 });
 
-Then('the {string} {string} should not be listed in {string} {string} namespace', (type:string, svc:string, cluster:string, ns:string) => {
-  cy.get(`[data-test="VirtualItem_Cluster${cluster}_Ns${ns}_${type.toLowerCase()}_${svc}"]`).should('not.exist');
-})
+Then(
+  'the {string} {string} should not be listed in {string} {string} namespace',
+  (type: string, svc: string, cluster: string, ns: string) => {
+    cy.get(`[data-test="VirtualItem_Cluster${cluster}_Ns${ns}_${type.toLowerCase()}_${svc}"]`).should('not.exist');
+  }
+);

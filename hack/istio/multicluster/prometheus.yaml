@@ -15,7 +15,7 @@ data:
     - /etc/config/rules
     - /etc/config/alerts
     scrape_configs:
-    - job_name: 'federate-west'
+    - job_name: 'federate-CLUSTER_NAME'
       scrape_interval: 15s
 
       honor_labels: true
@@ -29,7 +29,7 @@ data:
         - targets:
           - 'WEST_PROMETHEUS_ADDRESS:9090'
           labels:
-            cluster: 'west'
+            cluster: 'CLUSTER_NAME'
     - job_name: prometheus
       static_configs:
       - targets:

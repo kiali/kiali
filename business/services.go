@@ -122,32 +122,20 @@ func (in *SvcService) getServiceListForCluster(ctx context.Context, criteria Ser
 		return nil, err
 	}
 
-	nFetches := 3
-	if criteria.IncludeIstioResources {
-		nFetches = 4
+	var selectorLabels map[string]string
+	if criteria.ServiceSelector != "" {
+		if selector, err := labels.ConvertSelectorToLabelsMap(criteria.ServiceSelector); err == nil {
+			selectorLabels = selector
+		} else {
+			log.Warningf("Services not filtered. Selector %s not valid", criteria.ServiceSelector)
+		}
 	}
 
-	wg := sync.WaitGroup{}
-	wg.Add(nFetches)
-	errChan := make(chan error, nFetches)
-
-	go func() {
-		defer wg.Done()
-		var err2 error
-		var selectorLabels map[string]string
-		if criteria.ServiceSelector != "" {
-			if selector, err3 := labels.ConvertSelectorToLabelsMap(criteria.ServiceSelector); err3 == nil {
-				selectorLabels = selector
-			} else {
-				log.Warningf("Services not filtered. Selector %s not valid", criteria.ServiceSelector)
-			}
-		}
-		svcs, err2 = kubeCache.GetServicesBySelectorLabels(criteria.Namespace, selectorLabels)
-		if err2 != nil {
-			log.Errorf("Error fetching Services per namespace %s: %s", criteria.Namespace, err2)
-			errChan <- err2
-		}
-	}()
+	svcs, err = kubeCache.GetServicesBySelectorLabels(criteria.Namespace, selectorLabels)
+	if err != nil {
+		log.Errorf("Error fetching Services per namespace %s: %s", criteria.Namespace, err)
+		return nil, err
+	}
 
 	if in.config.ExternalServices.Istio.IstioAPIEnabled && cluster == in.config.KubernetesConfig.ClusterName {
 		registryCriteria := RegistryCriteria{
@@ -158,37 +146,26 @@ func (in *SvcService) getServiceListForCluster(ctx context.Context, criteria Ser
 		rSvcs = in.businessLayer.RegistryStatus.GetRegistryServices(registryCriteria)
 	}
 
-	go func() {
-		defer wg.Done()
-		var err2 error
-		if !criteria.IncludeOnlyDefinitions {
-			pods, err2 = kubeCache.GetPods(criteria.Namespace, "")
-			if err2 != nil {
-				log.Errorf("Error fetching Pods per namespace %s: %s", criteria.Namespace, err2)
-				errChan <- err2
-			}
+	if !criteria.IncludeOnlyDefinitions {
+		pods, err = kubeCache.GetPods(criteria.Namespace, "")
+		if err != nil {
+			log.Errorf("Error fetching Pods per namespace %s: %s", criteria.Namespace, err)
+			return nil, err
 		}
-	}()
+	}
 
-	go func() {
-		defer wg.Done()
-		var err2 error
-		if !criteria.IncludeOnlyDefinitions {
-			deployments, err2 = kubeCache.GetDeployments(criteria.Namespace)
-			if err2 != nil {
-				log.Errorf("Error fetching Deployments per namespace %s: %s", criteria.Namespace, err2)
-				errChan <- err2
-			}
+	if !criteria.IncludeOnlyDefinitions {
+		deployments, err = kubeCache.GetDeployments(criteria.Namespace)
+		if err != nil {
+			log.Errorf("Error fetching Deployments per namespace %s: %s", criteria.Namespace, err)
+			return nil, err
 		}
-	}()
+	}
 
 	// Cross-namespace query of all Istio Resources to find references
 	// References MAY have visibility for a user but not access if they are not allowed to access to the namespace
 	if criteria.IncludeIstioResources {
-		criteria := IstioConfigCriteria{
-			AllNamespaces:             true,
-			Cluster:                   cluster,
-			Namespace:                 criteria.Namespace,
+		istioCriteria := IstioConfigCriteria{
 			IncludeDestinationRules:   true,
 			IncludeGateways:           true,
 			IncludeK8sGateways:        true,
@@ -197,21 +174,12 @@ func (in *SvcService) getServiceListForCluster(ctx context.Context, criteria Ser
 			IncludeServiceEntries:     true,
 			IncludeVirtualServices:    true,
 		}
-		go func() {
-			defer wg.Done()
-			var err2 error
-			istioConfigList, err2 = in.businessLayer.IstioConfig.GetIstioConfigList(ctx, criteria)
-			if err2 != nil {
-				log.Errorf("Error fetching IstioConfigList per cluster %s per namespace %s: %s", cluster, criteria.Namespace, err2)
-				errChan <- err2
-			}
-		}()
-	}
-
-	wg.Wait()
-	if len(errChan) != 0 {
-		err = <-errChan
-		return nil, err
+		istioConfigs, err := in.businessLayer.IstioConfig.GetIstioConfigList(ctx, cluster, istioCriteria)
+		if err != nil {
+			log.Errorf("Error fetching IstioConfigList per cluster %s per namespace %s: %s", cluster, criteria.Namespace, err)
+			return nil, err
+		}
+		istioConfigList = *istioConfigs
 	}
 
 	// Convert to Kiali model
@@ -474,7 +442,7 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, cluster, namespace,
 	var eps *core_v1.Endpoints
 	var pods []core_v1.Pod
 	var hth models.ServiceHealth
-	var istioConfigList models.IstioConfigList
+	var istioConfigList *models.IstioConfigList
 	var ws models.Workloads
 	var rSvcs []*kubernetes.RegistryService
 	var nsmtls models.MTLSStatus
@@ -554,9 +522,6 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, cluster, namespace,
 		defer wg.Done()
 		var err2 error
 		criteria := IstioConfigCriteria{
-			AllNamespaces:           true,
-			Cluster:                 cluster,
-			Namespace:               namespace,
 			IncludeDestinationRules: true,
 			// TODO the frontend is merging the Gateways per ServiceDetails but it would be a clean design to locate it here
 			IncludeGateways:           true,
@@ -566,9 +531,9 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, cluster, namespace,
 			IncludeServiceEntries:     true,
 			IncludeVirtualServices:    true,
 		}
-		istioConfigList, err2 = in.businessLayer.IstioConfig.GetIstioConfigList(ctx, criteria)
+		istioConfigList, err2 = in.businessLayer.IstioConfig.GetIstioConfigListForNamespace(ctx, cluster, namespace, criteria)
 		if err2 != nil {
-			log.Errorf("Error fetching IstioConfigList per namespace %s: %s", criteria.Namespace, err2)
+			log.Errorf("Error fetching IstioConfigList per namespace %s: %s", namespace, err2)
 			errChan <- err2
 		}
 	}(ctx)

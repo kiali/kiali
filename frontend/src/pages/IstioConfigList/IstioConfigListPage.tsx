@@ -7,6 +7,7 @@ import {
   dicIstioType,
   filterByConfigValidation,
   filterByName,
+  filterByNamespaces,
   IstioConfigItem,
   toIstioItems
 } from '../../types/IstioConfigList';
@@ -192,16 +193,9 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
 
     // Request all configs from all namespaces, as in backend all configs are always loaded from registry
     return this.promises
-      .register(`configs${cluster}`, API.getAllIstioConfigs(namespaces, typeFilters, validate, '', '', cluster))
+      .register(`configs${cluster}`, API.getAllIstioConfigs(typeFilters, validate, '', '', cluster))
       .then(response => {
-        let istioItems: IstioConfigItem[] = [];
-
-        // filter by selected namespaces
-        namespaces.forEach(ns => {
-          istioItems = istioItems.concat(toIstioItems(filterByName(response.data[ns], istioNameFilters), cluster));
-        });
-
-        return istioItems;
+        return toIstioItems(filterByNamespaces(filterByName(response.data, istioNameFilters), namespaces), cluster);
       });
   }
 

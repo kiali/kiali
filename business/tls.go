@@ -38,20 +38,18 @@ func (in *TLSService) MeshWidemTLSStatus(ctx context.Context, namespaces []strin
 	defer end()
 
 	criteria := IstioConfigCriteria{
-		AllNamespaces:              true,
-		Cluster:                    cluster,
 		IncludeDestinationRules:    true,
 		IncludePeerAuthentications: true,
 	}
 	conf := config.Get()
 
-	istioConfigList, err := in.businessLayer.IstioConfig.GetIstioConfigList(ctx, criteria)
+	istioConfigList, err := in.businessLayer.IstioConfig.GetIstioConfigList(ctx, cluster, criteria)
 	if err != nil {
 		return models.MTLSStatus{}, err
 	}
 
-	pas := kubernetes.FilterPeerAuthenticationByNamespace(conf.ExternalServices.Istio.RootNamespace, istioConfigList.PeerAuthentications)
-	drs := kubernetes.FilterDestinationRulesByNamespaces(namespaces, istioConfigList.DestinationRules)
+	pas := kubernetes.FilterByNamespace(istioConfigList.PeerAuthentications, conf.ExternalServices.Istio.RootNamespace)
+	drs := kubernetes.FilterByNamespaces(istioConfigList.DestinationRules, namespaces)
 
 	mtlsStatus := mtls.MtlsStatus{
 		PeerAuthentications: pas,
@@ -87,22 +85,20 @@ func (in *TLSService) NamespaceWidemTLSStatus(ctx context.Context, namespace, cl
 	}
 
 	criteria := IstioConfigCriteria{
-		AllNamespaces:              true,
-		Cluster:                    cluster,
 		IncludeDestinationRules:    true,
 		IncludePeerAuthentications: true,
 	}
 
-	istioConfigList, err2 := in.businessLayer.IstioConfig.GetIstioConfigList(ctx, criteria)
-	if err2 != nil {
-		return models.MTLSStatus{}, err2
+	istioConfigList, err := in.businessLayer.IstioConfig.GetIstioConfigList(ctx, cluster, criteria)
+	if err != nil {
+		return models.MTLSStatus{}, err
 	}
 
-	pas := kubernetes.FilterPeerAuthenticationByNamespace(namespace, istioConfigList.PeerAuthentications)
+	pas := kubernetes.FilterByNamespace(istioConfigList.PeerAuthentications, namespace)
 	if config.IsRootNamespace(namespace) {
 		pas = []*security_v1beta1.PeerAuthentication{}
 	}
-	drs := kubernetes.FilterDestinationRulesByNamespaces(nss, istioConfigList.DestinationRules)
+	drs := kubernetes.FilterByNamespaces(istioConfigList.DestinationRules, nss)
 
 	mtlsStatus := mtls.MtlsStatus{
 		PeerAuthentications: pas,
@@ -135,23 +131,21 @@ func (in *TLSService) ClusterWideNSmTLSStatus(ctx context.Context, nss []string,
 	}
 
 	criteria := IstioConfigCriteria{
-		AllNamespaces:              true,
-		Cluster:                    cluster,
 		IncludeDestinationRules:    true,
 		IncludePeerAuthentications: true,
 	}
 
-	istioConfigList, err2 := in.businessLayer.IstioConfig.GetIstioConfigList(ctx, criteria)
-	if err2 != nil {
-		return result, err2
+	istioConfigList, err := in.businessLayer.IstioConfig.GetIstioConfigList(ctx, cluster, criteria)
+	if err != nil {
+		return result, err
 	}
 
+	drs := kubernetes.FilterByNamespaces(istioConfigList.DestinationRules, allNamespaces)
 	for _, namespace := range nss {
-		pas := kubernetes.FilterPeerAuthenticationByNamespace(namespace, istioConfigList.PeerAuthentications)
+		pas := kubernetes.FilterByNamespace(istioConfigList.PeerAuthentications, namespace)
 		if config.IsRootNamespace(namespace) {
 			pas = []*security_v1beta1.PeerAuthentication{}
 		}
-		drs := kubernetes.FilterDestinationRulesByNamespaces(allNamespaces, istioConfigList.DestinationRules)
 
 		mtlsStatus := mtls.MtlsStatus{
 			PeerAuthentications: pas,
@@ -167,6 +161,7 @@ func (in *TLSService) ClusterWideNSmTLSStatus(ctx context.Context, nss []string,
 			Namespace:       namespace,
 		})
 	}
+
 	return result, nil
 }
 

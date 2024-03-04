@@ -27,6 +27,7 @@ const (
 func setupBusinessLayer(t *testing.T, istioObjects ...runtime.Object) *business.Layer {
 	k8s := kubetest.NewFakeK8sClient(istioObjects...)
 	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = testCluster
 	conf.ExternalServices.Istio.IstioAPIEnabled = false
 	config.Set(conf)
 

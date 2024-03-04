@@ -109,11 +109,8 @@ func (a ServiceEntryAppender) loadServiceEntryHosts(cluster, namespace string, g
 	// get the cached hosts for this cluster:namespace, otherwise add to the cache
 	serviceEntryHosts, found := getServiceEntryHosts(cluster, namespace, globalInfo)
 	if !found {
-		// retrieve all of the serviceEntry definitions for accessible namespaces on the cluster...
-		istioCfg, err := globalInfo.Business.IstioConfig.GetIstioConfigList(context.TODO(), business.IstioConfigCriteria{
-			Cluster:               cluster,
+		istioCfg, err := globalInfo.Business.IstioConfig.GetIstioConfigList(context.TODO(), cluster, business.IstioConfigCriteria{
 			IncludeServiceEntries: true,
-			AllNamespaces:         true,
 		})
 		graph.CheckError(err)
 

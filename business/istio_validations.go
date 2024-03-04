@@ -406,8 +406,6 @@ func (in *IstioValidationsService) fetchIstioConfigList(ctx context.Context, rVa
 	}
 
 	criteria := IstioConfigCriteria{
-		AllNamespaces:                 true,
-		Cluster:                       cluster,
 		IncludeGateways:               true,
 		IncludeDestinationRules:       true,
 		IncludeServiceEntries:         true,
@@ -421,12 +419,12 @@ func (in *IstioValidationsService) fetchIstioConfigList(ctx context.Context, rVa
 		IncludeK8sGateways:            true,
 		IncludeK8sReferenceGrants:     true,
 	}
-	istioConfigMap, err := in.businessLayer.IstioConfig.GetIstioConfigMap(ctx, criteria)
+	istioConfigMap, err := in.businessLayer.IstioConfig.GetIstioConfigMap(ctx, namespace, criteria)
 	if err != nil {
 		errChan <- err
 		return
 	}
-	istioConfigList := istioConfigMap[criteria.Cluster]
+	istioConfigList := istioConfigMap[cluster]
 
 	// Filter VS
 	filteredVSs := in.filterVSExportToNamespaces(nss, namespace, cluster, istioConfigList.VirtualServices)

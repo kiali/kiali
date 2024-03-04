@@ -15,11 +15,6 @@ import (
 // This type is used for returning a response of IstioConfigList
 // swagger:model IstioConfigList
 type IstioConfigList struct {
-	// The namespace of istioConfiglist
-	//
-	// required: true
-	Namespace Namespace `json:"namespace"`
-
 	DestinationRules []*networking_v1beta1.DestinationRule `json:"destinationRules"`
 	EnvoyFilters     []*networking_v1alpha3.EnvoyFilter    `json:"envoyFilters"`
 	Gateways         []*networking_v1beta1.Gateway         `json:"gateways"`
@@ -42,6 +37,74 @@ type IstioConfigList struct {
 	PeerAuthentications    []*security_v1beta.PeerAuthentication    `json:"peerAuthentications"`
 	RequestAuthentications []*security_v1beta.RequestAuthentication `json:"requestAuthentications"`
 	IstioValidations       IstioValidations                         `json:"validations"`
+}
+
+func (i *IstioConfigList) ConvertToResponse() {
+	// The frontend blows up when you return a nil array so coercing these to
+	// empty before returning them.
+
+	// There's probably a more clever way of doing this but due to typed nils
+	// we can't just put all the slices into a new generic slice as putting
+	// them in that slice would cause them to no longer be nil.
+	if i.DestinationRules == nil {
+		i.DestinationRules = []*networking_v1beta1.DestinationRule{}
+	}
+	if i.EnvoyFilters == nil {
+		i.EnvoyFilters = []*networking_v1alpha3.EnvoyFilter{}
+	}
+	if i.Gateways == nil {
+		i.Gateways = []*networking_v1beta1.Gateway{}
+	}
+	if i.ServiceEntries == nil {
+		i.ServiceEntries = []*networking_v1beta1.ServiceEntry{}
+	}
+	if i.Sidecars == nil {
+		i.Sidecars = []*networking_v1beta1.Sidecar{}
+	}
+	if i.VirtualServices == nil {
+		i.VirtualServices = []*networking_v1beta1.VirtualService{}
+	}
+	if i.WorkloadEntries == nil {
+		i.WorkloadEntries = []*networking_v1beta1.WorkloadEntry{}
+	}
+	if i.WorkloadGroups == nil {
+		i.WorkloadGroups = []*networking_v1beta1.WorkloadGroup{}
+	}
+	if i.WasmPlugins == nil {
+		i.WasmPlugins = []*extentions_v1alpha1.WasmPlugin{}
+	}
+	if i.Telemetries == nil {
+		i.Telemetries = []*v1alpha1.Telemetry{}
+	}
+
+	if i.K8sGateways == nil {
+		i.K8sGateways = []*k8s_networking_v1.Gateway{}
+	}
+	if i.K8sGRPCRoutes == nil {
+		i.K8sGRPCRoutes = []*k8s_networking_v1alpha2.GRPCRoute{}
+	}
+	if i.K8sHTTPRoutes == nil {
+		i.K8sHTTPRoutes = []*k8s_networking_v1.HTTPRoute{}
+	}
+	if i.K8sReferenceGrants == nil {
+		i.K8sReferenceGrants = []*k8s_networking_v1beta1.ReferenceGrant{}
+	}
+	if i.K8sTCPRoutes == nil {
+		i.K8sTCPRoutes = []*k8s_networking_v1alpha2.TCPRoute{}
+	}
+	if i.K8sTLSRoutes == nil {
+		i.K8sTLSRoutes = []*k8s_networking_v1alpha2.TLSRoute{}
+	}
+
+	if i.AuthorizationPolicies == nil {
+		i.AuthorizationPolicies = []*security_v1beta.AuthorizationPolicy{}
+	}
+	if i.PeerAuthentications == nil {
+		i.PeerAuthentications = []*security_v1beta.PeerAuthentication{}
+	}
+	if i.RequestAuthentications == nil {
+		i.RequestAuthentications = []*security_v1beta.RequestAuthentication{}
+	}
 }
 
 // IstioConfigMap holds a map of IstioConfigList per cluster
@@ -225,7 +288,6 @@ func (configList IstioConfigList) FilterIstioConfigs(nss []string) *IstioConfigs
 		if filtered[ns] == nil {
 			filtered[ns] = new(IstioConfigList)
 			filtered[ns].IstioValidations = IstioValidations{}
-			filtered[ns].Namespace = Namespace{Name: ns}
 			filtered[ns].DestinationRules = []*networking_v1beta1.DestinationRule{}
 			filtered[ns].EnvoyFilters = []*networking_v1alpha3.EnvoyFilter{}
 			filtered[ns].Gateways = []*networking_v1beta1.Gateway{}
@@ -389,7 +451,6 @@ func (configList IstioConfigList) MergeConfigs(ns IstioConfigList) IstioConfigLi
 	configList.WasmPlugins = append(configList.WasmPlugins, ns.WasmPlugins...)
 	configList.WorkloadEntries = append(configList.WorkloadEntries, ns.WorkloadEntries...)
 	configList.WorkloadGroups = append(configList.WorkloadGroups, ns.WorkloadGroups...)
-	configList.Namespace = Namespace{}
 
 	return configList
 }

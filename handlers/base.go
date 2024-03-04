@@ -10,6 +10,18 @@ type responseError struct {
 	Detail string `json:"detail,omitempty"`
 }
 
+// ResponseConverter can do some last minute changes to itself before being marshaled to JSON.
+// This is useful for things like converting nil slices to empty slices because the frontend
+// expects an empty array instead of null in the response.
+type ResponseConverter interface {
+	ConvertToResponse()
+}
+
+func RespondWithAPIResponse(w http.ResponseWriter, code int, payload ResponseConverter) {
+	payload.ConvertToResponse()
+	RespondWithJSON(w, code, payload)
+}
+
 func RespondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
 	response, err := json.Marshal(payload)
 	if err != nil {

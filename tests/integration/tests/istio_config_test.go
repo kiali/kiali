@@ -21,7 +21,7 @@ func TestIstioConfigList(t *testing.T) {
 	configList, err := kiali.IstioConfigsList(kiali.BOOKINFO)
 
 	require.NoError(err)
-	assertConfigs(*configList, require)
+	assertConfigs(*configList, kiali.BOOKINFO, require)
 }
 
 func TestIstioConfigs(t *testing.T) {
@@ -29,101 +29,101 @@ func TestIstioConfigs(t *testing.T) {
 	filePath := path.Join(cmd.KialiProjectRoot, kiali.ASSETS+"/bookinfo-k8sgateways.yaml")
 	defer utils.DeleteFile(filePath, kiali.BOOKINFO)
 	require.True(utils.ApplyFile(filePath, kiali.BOOKINFO))
-	configMap, err := kiali.IstioConfigs()
+	configList, err := kiali.IstioConfigs()
 
 	require.NoError(err)
-	require.NotEmpty(configMap)
-	assertConfigs(*configMap["bookinfo"], require)
+	require.NotEmpty(configList)
+	assertConfigs(*configList, kiali.BOOKINFO, require)
 }
 
-func assertConfigs(configList kiali.IstioConfigListJson, require *require.Assertions) {
+func assertConfigs(configList kiali.IstioConfigListJson, namespace string, require *require.Assertions) {
 	require.NotEmpty(configList)
 	require.NotNil(configList.IstioValidations)
-	require.Equal(kiali.BOOKINFO, configList.Namespace.Name)
+	require.Equal(kiali.BOOKINFO, namespace)
 
 	require.NotNil(configList.DestinationRules)
 	for _, dr := range configList.DestinationRules {
-		require.True(dr.Namespace == configList.Namespace.Name)
+		require.True(dr.Namespace == namespace)
 		require.NotNil(dr.Name)
 	}
 	require.NotNil(configList.VirtualServices)
 	for _, vs := range configList.VirtualServices {
-		require.True(vs.Namespace == configList.Namespace.Name)
+		require.True(vs.Namespace == namespace)
 		require.NotNil(vs.Name)
 	}
 	require.NotNil(configList.PeerAuthentications)
 	for _, pa := range configList.PeerAuthentications {
-		require.True(pa.Namespace == configList.Namespace.Name)
+		require.True(pa.Namespace == namespace)
 		require.NotNil(pa.Name)
 	}
 	require.NotNil(configList.ServiceEntries)
 	for _, se := range configList.ServiceEntries {
-		require.True(se.Namespace == configList.Namespace.Name)
+		require.True(se.Namespace == namespace)
 		require.NotNil(se.Name)
 	}
 	require.NotNil(configList.Sidecars)
 	for _, sc := range configList.Sidecars {
-		require.True(sc.Namespace == configList.Namespace.Name)
+		require.True(sc.Namespace == namespace)
 		require.NotNil(sc.Name)
 	}
 	require.NotNil(configList.AuthorizationPolicies)
 	for _, ap := range configList.AuthorizationPolicies {
-		require.True(ap.Namespace == configList.Namespace.Name)
+		require.True(ap.Namespace == namespace)
 		require.NotNil(ap.Name)
 	}
 	require.NotNil(configList.Gateways)
 	for _, gw := range configList.Gateways {
-		require.True(gw.Namespace == configList.Namespace.Name)
+		require.True(gw.Namespace == namespace)
 		require.NotNil(gw.Name)
 	}
 	require.NotNil(configList.K8sGateways)
 	for _, gw := range configList.K8sGateways {
-		require.True(gw.Namespace == configList.Namespace.Name)
+		require.True(gw.Namespace == namespace)
 		require.NotNil(gw.Name)
 	}
 	require.NotNil(configList.K8sGRPCRoutes)
 	for _, gw := range configList.K8sGRPCRoutes {
-		require.True(gw.Namespace == configList.Namespace.Name)
+		require.True(gw.Namespace == namespace)
 		require.NotNil(gw.Name)
 	}
 	require.NotNil(configList.K8sHTTPRoutes)
 	for _, gw := range configList.K8sHTTPRoutes {
-		require.True(gw.Namespace == configList.Namespace.Name)
+		require.True(gw.Namespace == namespace)
 		require.NotNil(gw.Name)
 	}
 	require.NotNil(configList.K8sReferenceGrants)
 	for _, rg := range configList.K8sReferenceGrants {
-		require.True(rg.Namespace == configList.Namespace.Name)
+		require.True(rg.Namespace == namespace)
 		require.NotNil(rg.Name)
 	}
 	require.NotNil(configList.K8sTCPRoutes)
 	for _, route := range configList.K8sTCPRoutes {
-		require.True(route.Namespace == configList.Namespace.Name)
+		require.True(route.Namespace == namespace)
 		require.NotNil(route.Name)
 	}
 	require.NotNil(configList.K8sTLSRoutes)
 	for _, route := range configList.K8sTLSRoutes {
-		require.True(route.Namespace == configList.Namespace.Name)
+		require.True(route.Namespace == namespace)
 		require.NotNil(route.Name)
 	}
 	require.NotNil(configList.RequestAuthentications)
 	for _, ra := range configList.RequestAuthentications {
-		require.True(ra.Namespace == configList.Namespace.Name)
+		require.True(ra.Namespace == namespace)
 		require.NotNil(ra.Name)
 	}
 	require.NotNil(configList.WorkloadEntries)
 	for _, we := range configList.WorkloadEntries {
-		require.True(we.Namespace == configList.Namespace.Name)
+		require.True(we.Namespace == namespace)
 		require.NotNil(we.Name)
 	}
 	require.NotNil(configList.WorkloadGroups)
 	for _, wg := range configList.WorkloadGroups {
-		require.True(wg.Namespace == configList.Namespace.Name)
+		require.True(wg.Namespace == namespace)
 		require.NotNil(wg.Name)
 	}
 	require.NotNil(configList.EnvoyFilters)
 	for _, ef := range configList.EnvoyFilters {
-		require.True(ef.Namespace == configList.Namespace.Name)
+		require.True(ef.Namespace == namespace)
 		require.NotNil(ef.Name)
 	}
 }
