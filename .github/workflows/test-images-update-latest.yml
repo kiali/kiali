@@ -20,7 +20,7 @@ jobs:
       build_mode: ${{ steps.determine.outputs.build_mode }}
     steps:
     - uses: actions/checkout@v4
-    - uses: dorny/paths-filter@v3.0.0
+    - uses: dorny/paths-filter@v3.0.2
       id: filter
       with:
         filters: |
