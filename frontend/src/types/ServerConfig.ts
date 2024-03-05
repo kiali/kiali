@@ -47,8 +47,8 @@ interface GraphUIDefaults {
 }
 
 interface I18nUIDefaults {
-  default: string;
-  languages: string[];
+  language: string;
+  showSelector: boolean;
 }
 
 interface ListUIDefaults {

@@ -9,11 +9,6 @@ import { serverConfig, setServerConfig } from 'config/ServerConfig';
 
 const i18nServerConfig = Object.assign({}, serverConfig);
 
-i18nServerConfig.kialiFeatureFlags.uiDefaults.i18n = {
-  languages: ['en', 'zh'],
-  default: 'en'
-};
-
 jest.mock('i18next', () => ({
   // this mock replaces i18next changeLanguage method
   changeLanguage: () => new Promise(() => {})

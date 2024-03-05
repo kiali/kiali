@@ -21,7 +21,7 @@ import { history } from './History';
 import { NamespaceActions } from 'actions/NamespaceAction';
 import { Namespace } from 'types/Namespace';
 import { UserSettingsActions } from 'actions/UserSettingsActions';
-import { DurationInSeconds, IntervalInMilliseconds, Language, PF_THEME_DARK, Theme } from 'types/Common';
+import { DurationInSeconds, IntervalInMilliseconds, PF_THEME_DARK, Theme } from 'types/Common';
 import { config } from 'config';
 import { store } from 'store/ConfigStore';
 import { toGrpcRate, toHttpRate, toTcpRate, TrafficRate } from 'types/Graph';
@@ -233,15 +233,7 @@ class AuthenticationControllerComponent extends React.Component<
 
     if (uiDefaults) {
       // Set I18n language
-      let language = store.getState().globalState.language;
-
-      // If language in redux store is empty or not supported, set to default language
-      if (!uiDefaults.i18n.languages.includes(language)) {
-        language = uiDefaults.i18n.default ?? Language.ENGLISH;
-
-        console.warn(`No language found in local storage, switching to default language ${language}`);
-      }
-
+      let language = store.getState().globalState.language || uiDefaults.i18n.language;
       i18next.changeLanguage(language);
       store.dispatch(GlobalActions.setLanguage(language));
 

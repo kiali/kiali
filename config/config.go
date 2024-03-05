@@ -469,8 +469,8 @@ type GraphUIDefaults struct {
 
 // I18nUIDefaults defines UI Defaults specific to the I18n settings
 type I18nUIDefaults struct {
-	Default   string   `yaml:"default,omitempty" json:"default,omitempty"`
-	Languages []string `yaml:"languages,omitempty" json:"languages,omitempty"`
+	Language     string `yaml:"language,omitempty" json:"language,omitempty"`
+	ShowSelector bool   `yaml:"show_selector,omitempty" json:"showSelector"`
 }
 
 // ListUIDefaults defines UI Defaults specific to the UI List pages
@@ -825,8 +825,8 @@ func NewConfig() (c *Config) {
 					},
 				},
 				I18n: I18nUIDefaults{
-					Default:   "en",
-					Languages: []string{"en"},
+					Language:     "en",
+					ShowSelector: true,
 				},
 				List: ListUIDefaults{
 					IncludeHealth:         true,

@@ -51,7 +51,7 @@ export const MastheadItems: React.FC = () => {
             <FlexItem style={{ marginRight: '0.75rem' }}>
               <HelpDropdown />
             </FlexItem>
-            {serverConfig.kialiFeatureFlags.uiDefaults?.i18n?.languages?.length > 1 && (
+            {serverConfig.kialiFeatureFlags.uiDefaults?.i18n?.showSelector && (
               <FlexItem>
                 <LanguageSwitch />
               </FlexItem>
