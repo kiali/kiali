@@ -1018,7 +1018,7 @@ func (in *IstioConfigService) IsAmbientEnabled() bool {
 		lastUpdateTime = new(time.Time)
 		lastUpdateTime = &currentTime
 	}
-	if ambientEnabled == nil || currentTime.Sub(*lastUpdateTime) > time.Minute {
+	if ambientEnabled == nil || currentTime.Sub(*lastUpdateTime) > (10*time.Minute) {
 		ambientEnabled = new(bool)
 		selector := map[string]string{
 			"app": "ztunnel",
