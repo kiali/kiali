@@ -35,7 +35,7 @@ export const healthConfig = {
       },
       i18n: {
         language: 'en',
-        showSelector: true
+        showSelector: false
       },
       list: {
         includeHealth: true,

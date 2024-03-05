@@ -101,7 +101,7 @@ export const serverRateConfig = {
       },
       i18n: {
         language: 'en',
-        showSelector: true
+        showSelector: false
       },
       list: {
         includeHealth: true,

@@ -826,7 +826,7 @@ func NewConfig() (c *Config) {
 				},
 				I18n: I18nUIDefaults{
 					Language:     "en",
-					ShowSelector: true,
+					ShowSelector: false,
 				},
 				List: ListUIDefaults{
 					IncludeHealth:         true,
