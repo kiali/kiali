@@ -1,7 +1,14 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`Language switch renders correctly 1`] = `
-<div>
+<Tooltip
+  content={
+    <React.Fragment>
+      Switch language
+    </React.Fragment>
+  }
+  position="left"
+>
   <Dropdown
     isOpen={false}
     onOpenChange={[Function]}
@@ -35,5 +42,5 @@ exports[`Language switch renders correctly 1`] = `
       </DropdownItem>
     </DropdownList>
   </Dropdown>
-</div>
+</Tooltip>
 `;
