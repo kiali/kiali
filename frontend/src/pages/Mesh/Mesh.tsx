@@ -1,5 +1,6 @@
 import { Bullseye, Spinner } from '@patternfly/react-core';
 import { MapIcon } from '@patternfly/react-icons';
+import ReactResizeDetector from 'react-resize-detector';
 import {
   Controller,
   createTopologyControlButtons,
@@ -58,7 +59,7 @@ const NAMESPACE_NODE_SIZE = 70;
 const ZOOM_IN = 4 / 3;
 const ZOOM_OUT = 3 / 4;
 
-export const FIT_PADDING = 80;
+export const FIT_PADDING = 90;
 
 export enum LayoutName {
   // Cola = 'kiali-cola',
@@ -159,10 +160,16 @@ const TopologyContent: React.FC<{
   // fitView handling
   //
   const fitView = React.useCallback(() => {
-    if (controller && controller.hasGraph()) {
-      controller.getGraph().fit(FIT_PADDING);
-    } else {
-      console.error('fitView called before controller graph');
+    const graph = controller?.getGraph();
+    graph?.reset();
+    graph?.fit(FIT_PADDING);
+  }, [controller]);
+
+  // resize handling
+  const onResize = React.useCallback(() => {
+    if (!requestFit) {
+      requestFit = true;
+      controller.getGraph()?.layout();
     }
   }, [controller]);
 
@@ -217,7 +224,14 @@ const TopologyContent: React.FC<{
       let nodeMap: Map<string, NodeModel> = new Map<string, NodeModel>();
       const edges: EdgeModel[] = [];
 
-      const onHover = (element: GraphElement, isMouseIn: boolean) => {
+      const onCollapseChange = (group: Node, collapsed: boolean): void => {
+        requestFit = true;
+        if (collapsed) {
+          group.getGraph()?.layout();
+        }
+      };
+
+      const onHover = (element: GraphElement, isMouseIn: boolean): void => {
         if (isMouseIn) {
           highlighter.onMouseIn(element);
         } else {
@@ -228,6 +242,7 @@ const TopologyContent: React.FC<{
       function addGroup(data: NodeData): NodeModel {
         const collapsed = data.isBox === BoxByType.DATAPLANES; // always collapse data-planes to start
         data.collapsible = collapsed;
+        data.onCollapseChange = onCollapseChange;
         data.onHover = onHover;
         const group: NodeModel = {
           children: [],
@@ -453,24 +468,31 @@ const TopologyContent: React.FC<{
 
   console.debug(`Render Topology hasGraph=${controller.hasGraph()}`);
 
+  // TODO: I expected to find some sort of "onResize" hook in PFT, but after looking at the code
+  // I ended up adding a ReactResizeDetector. It doesn't seem to work perfectly with PFT, but it's
+  // not terrible.  Later I found https://github.com/patternfly/react-topology/issues/62, which
+  // indicates that this is currently the way to go.  I added a suggestion there for some kind
+  // of hook or option, but it would be a future.
   return isMiniMesh ? (
     <TopologyView data-test="mesh-topology-view-pf">
       <VisualizationSurface data-test="mesh-visualization-surface" state={{}} />
     </TopologyView>
   ) : (
-    <TopologyView
-      data-test="mesh-topology-view-pf"
-      controlBar={
-        <TourStop info={MeshTourStops.Layout}>
-          <TourStop info={MeshTourStops.Legend}>
-            <TopologyControlBar
-              data-test="mesh-topology-control-bar"
-              controlButtons={createTopologyControlButtons({
-                ...defaultControlButtonsOptions,
-                fitToScreen: false,
-                zoomIn: false,
-                zoomOut: false,
-                /*
+    <>
+      <ReactResizeDetector handleWidth={true} handleHeight={true} skipOnMount={false} onResize={onResize} />
+      <TopologyView
+        data-test="mesh-topology-view-pf"
+        controlBar={
+          <TourStop info={MeshTourStops.Layout}>
+            <TourStop info={MeshTourStops.Legend}>
+              <TopologyControlBar
+                data-test="mesh-topology-control-bar"
+                controlButtons={createTopologyControlButtons({
+                  ...defaultControlButtonsOptions,
+                  fitToScreen: false,
+                  zoomIn: false,
+                  zoomOut: false,
+                  /*
                 customButtons: [
                   {
                     ariaLabel: 'Layout - Mesh',
@@ -504,35 +526,36 @@ const TopologyContent: React.FC<{
                   }
                 ],
                 */
-                // currently unused
-                zoomInCallback: () => {
-                  controller && controller.getGraph().scaleBy(ZOOM_IN);
-                },
-                // currently unused
-                zoomOutCallback: () => {
-                  controller && controller.getGraph().scaleBy(ZOOM_OUT);
-                },
-                resetViewCallback: () => {
-                  if (controller) {
-                    requestFit = true;
-                    controller.getGraph().reset();
-                    controller.getGraph().layout();
+                  // currently unused
+                  zoomInCallback: () => {
+                    controller && controller.getGraph().scaleBy(ZOOM_IN);
+                  },
+                  // currently unused
+                  zoomOutCallback: () => {
+                    controller && controller.getGraph().scaleBy(ZOOM_OUT);
+                  },
+                  resetViewCallback: () => {
+                    if (controller) {
+                      requestFit = true;
+                      controller.getGraph().reset();
+                      controller.getGraph().layout();
+                    }
+                  },
+                  legend: true,
+                  legendIcon: <MapIcon />,
+                  legendTip: 'Legend',
+                  legendCallback: () => {
+                    if (toggleLegend) toggleLegend();
                   }
-                },
-                legend: true,
-                legendIcon: <MapIcon />,
-                legendTip: 'Legend',
-                legendCallback: () => {
-                  if (toggleLegend) toggleLegend();
-                }
-              })}
-            />
+                })}
+              />
+            </TourStop>
           </TourStop>
-        </TourStop>
-      }
-    >
-      <VisualizationSurface data-test="visualization-surface" state={{}} />
-    </TopologyView>
+        }
+      >
+        <VisualizationSurface data-test="visualization-surface" state={{}} />
+      </TopologyView>
+    </>
   );
 };
 

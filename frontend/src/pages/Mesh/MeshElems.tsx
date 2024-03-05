@@ -48,6 +48,7 @@ export type NodeData = DecoratedMeshNodeData & {
   labelIconPadding?: number;
   labelPosition?: LabelPosition;
   marginX?: number;
+  onCollapseChange?: (group: Node, collapsed: boolean) => void;
   onHover?: (element: GraphElement, isMouseIn: boolean) => void;
   row?: number;
   secondaryLabel?: string;
