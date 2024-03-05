@@ -67,11 +67,7 @@ function GetBaseTracingUrl(
   urlTracing: string | undefined,
   externalServices: ExternalServiceInfo[]
 ): string | undefined {
-  if (provider === TEMPO) {
-    return GetGrafanaUrl(externalServices)?.url;
-  } else {
-    return urlTracing;
-  }
+  return provider === TEMPO ? GetGrafanaUrl(externalServices)?.url : urlTracing;
 }
 
 export function GetTraceDetailURL(
@@ -83,28 +79,24 @@ export function GetTraceDetailURL(
   if (!tracingUrl) {
     return undefined;
   }
-  if (provider === TEMPO) {
-    return `${tracingUrl}/explore?left={"queries":[{"datasource":{"type":"tempo"},"queryType":"traceql","query":"TRACEID"}]}`;
-  } else {
-    return `${tracingUrl}/trace/TRACEID`;
-  }
+  return provider === TEMPO
+    ? `${tracingUrl}/explore?left={"queries":[{"datasource":{"type":"tempo"},"queryType":"traceql","query":"TRACEID"}]}`
+    : `${tracingUrl}/trace/TRACEID`;
 }
 
 export function GetTracingURL(externalServices: ExternalServiceInfo[]): string | undefined {
-  const tempoService = externalServices.find(service => service.name === TEMPO);
-  const jaegerService = externalServices.find(service => service.name === 'jaeger');
   const grafanaService = externalServices.find(service => service.name === 'Grafana');
+  const jaegerService = externalServices.find(service => service.name === 'jaeger');
+  const tempoService = externalServices.find(service => service.name === TEMPO);
 
   if (tempoService) {
     const tracingUrl = grafanaService?.url;
-    if (!tracingUrl) {
-      return undefined;
-    }
-    return `${tracingUrl}/explore?left={"queries":[{"datasource":{"type":"tempo"},"queryType":"nativeSearch"}]}`;
-  } else {
-    const tracingUrl = jaegerService?.url;
-    return `${tracingUrl}`;
+    return tracingUrl
+      ? `${tracingUrl}/explore?left={"queries":[{"datasource":{"type":"tempo"},"queryType":"nativeSearch"}]}`
+      : undefined;
   }
+
+  return jaegerService?.url;
 }
 
 class TracesComp extends React.Component<TracesProps, TracesState> {
