@@ -270,7 +270,6 @@ type IstioConfig struct {
 	ConfigMapName                     string              `yaml:"config_map_name,omitempty"`
 	EnvoyAdminLocalPort               int                 `yaml:"envoy_admin_local_port,omitempty"`
 	GatewayAPIClasses                 []GatewayAPIClass   `yaml:"gateway_api_classes,omitempty"`
-	IstioAmbientNamespace             string              `yaml:"istio_ambient_namespace"`
 	IstioAPIEnabled                   bool                `yaml:"istio_api_enabled"`
 	IstioCanaryRevision               IstioCanaryRevision `yaml:"istio_canary_revision,omitempty"`
 	IstioIdentityDomain               string              `yaml:"istio_identity_domain,omitempty"`
@@ -703,7 +702,6 @@ func NewConfig() (c *Config) {
 				},
 				ConfigMapName:                     "istio",
 				EnvoyAdminLocalPort:               15000,
-				IstioAmbientNamespace:             "istio-system", // Should be kube-system in OpenShift
 				IstioAPIEnabled:                   true,
 				IstioIdentityDomain:               "svc.cluster.local",
 				IstioInjectionAnnotation:          "sidecar.istio.io/inject",

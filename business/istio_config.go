@@ -1025,7 +1025,7 @@ func (in *IstioConfigService) IsAmbientEnabled() bool {
 		}
 		daemonset, err := in.kialiCache.GetDaemonSetsWithSelector(meta_v1.NamespaceAll, selector)
 		if err != nil {
-			log.Debugf("No ztunnel found in Istio Ambient namespace (%s): %s ", in.config.ExternalServices.Istio.IstioAmbientNamespace, err.Error())
+			log.Debugf("No ztunnel daemonset found in Kiali accessible namespaces: %s ", err.Error())
 		} else {
 			if len(daemonset) > 0 {
 				*ambientEnabled = true
