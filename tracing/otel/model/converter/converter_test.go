@@ -32,7 +32,7 @@ func TestConvertSpans(t *testing.T) {
 	id := getId()
 	serviceName := "kiali-traffic-generator.bookinfo"
 
-	jaegerSpans := ConvertSpans(spans, serviceName)
+	jaegerSpans := ConvertSpans(spans, serviceName, id)
 	assert.Equal(jaegerModels.SpanID(id), jaegerSpans[0].SpanID)
 	assert.Equal(serviceName, jaegerSpans[0].Process.ServiceName)
 	assert.Equal("reviews.bookinfo.svc.cluster.local:9080/*", jaegerSpans[0].OperationName)

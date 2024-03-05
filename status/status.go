@@ -80,8 +80,7 @@ type ExternalServiceInfo struct {
 	// example: jaeger-query-istio-system.127.0.0.1.nip.io
 	Url string `json:"url,omitempty"`
 
-	FrontendProvider       string            `json:"frontendProvider,omitempty"`
-	FrontendProviderConfig map[string]string `json:"frontendProviderConfig,omitempty"`
+	TempoConfig config.TempoConfig `json:"tempoConfig,omitempty"`
 }
 
 func init() {

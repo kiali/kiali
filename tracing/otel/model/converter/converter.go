@@ -24,7 +24,7 @@ func convertSpanId(id string) jaegerModels.SpanID {
 
 // ConvertSpans
 // https://opentelemetry.io/docs/specs/otel/trace/sdk_exporters/jaeger
-func ConvertSpans(spans []otelModels.Span, serviceName string) []jaegerModels.Span {
+func ConvertSpans(spans []otelModels.Span, serviceName string, traceID string) []jaegerModels.Span {
 	var toRet []jaegerModels.Span
 	for _, span := range spans {
 
@@ -39,8 +39,7 @@ func ConvertSpans(spans []otelModels.Span, serviceName string) []jaegerModels.Sp
 			log.Errorf("Error converting duration. Skipping trace")
 			continue
 		}
-
-		jaegerTraceId := ConvertId(span.TraceID)
+		jaegerTraceId := ConvertId(traceID) // The traceID from the SpanID doesn't look to match (ex. Q3xfr1lMsbi2OX9CxUbYug==)
 		jaegerSpanId := convertSpanId(span.SpanID)
 		parentSpanId := convertSpanId(span.ParentSpanId)
 

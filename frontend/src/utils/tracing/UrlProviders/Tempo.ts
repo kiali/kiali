@@ -1,18 +1,17 @@
 import { ConcreteService, TracingUrlProvider, TEMPO, GRAFANA, JAEGER } from 'types/Tracing';
-import { ExternalServiceInfo } from 'types/StatusState';
+import { ExternalServiceInfo, TempoConfig } from 'types/StatusState';
 import { BoundsInMilliseconds } from 'types/Common';
 import { GrafanaLegacyUrlProvider } from './GrafanaLegacy';
 import { GrafanaUrlProvider } from './Grafana';
 import { SpanData, TraceData } from 'types/TracingInfo';
 
 interface TempoExternalService extends ConcreteService {
-  frontendProvider: string;
-  frontendProviderConfig?: Record<string, string>;
   name: typeof TEMPO;
+  tempoConfig?: TempoConfig;
 }
 
 export function isTempoService(svc: ExternalServiceInfo): svc is TempoExternalService {
-  return svc.name === TEMPO && svc.frontendProvider === GRAFANA;
+  return svc.name === TEMPO;
 }
 
 class nullProvider implements TracingUrlProvider {
@@ -42,11 +41,11 @@ export class TempoUrlProvider implements TracingUrlProvider {
     let frontendProvider: TracingUrlProvider | undefined = undefined;
     const svc = externalServices.find(s => [GRAFANA, JAEGER].includes(s.name.toLowerCase()));
     if (svc && svc.name.toLowerCase() === GRAFANA && svc.url !== undefined) {
-      if (service.frontendProviderConfig?.['datasource_uid'] !== undefined) {
+      if (service.tempoConfig?.datasource_uid !== undefined) {
         // Grafana 10+
         frontendProvider = new GrafanaUrlProvider(svc.url, {
-          datasource_uid: service.frontendProviderConfig['datasource_uid'],
-          orgID: service.frontendProviderConfig['org_id']
+          datasource_uid: service.tempoConfig.datasource_uid,
+          orgID: service.tempoConfig.org_id
         });
       } else {
         // Fallback to older Grafana URL schema
