@@ -1,14 +1,15 @@
 import * as React from 'react';
 import { kialiStyle } from 'styles/StyleUtils';
-import { Dropdown, DropdownItem, DropdownList, MenuToggle, MenuToggleElement } from '@patternfly/react-core';
+import { Dropdown, DropdownItem, DropdownList, MenuToggle, MenuToggleElement, Tooltip } from '@patternfly/react-core';
 import { KialiIcon } from 'config/KialiIcon';
 import i18n from 'i18next';
 import { GlobalActions } from 'actions/GlobalActions';
 import { store } from 'store/ConfigStore';
 import { serverConfig } from 'config';
-import { Language } from 'types/Common';
+import { I18N_NAMESPACE, Language } from 'types/Common';
 import { KialiAppState } from 'store/Store';
 import { connect } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 
 const menuToggleStyle = kialiStyle({
   marginTop: '0.25rem',
@@ -34,6 +35,8 @@ type LanguageSwitchProps = {
 };
 
 export const LanguageSwitchComponent: React.FC<LanguageSwitchProps> = props => {
+  const { t } = useTranslation(I18N_NAMESPACE);
+
   const [isDropdownOpen, setIsDropdownOpen] = React.useState<boolean>(false);
 
   const supportedLocales = serverConfig.kialiFeatureFlags.uiDefaults.i18n.languages;
@@ -68,7 +71,7 @@ export const LanguageSwitchComponent: React.FC<LanguageSwitchProps> = props => {
   };
 
   return (
-    <div>
+    <Tooltip position="left" content={<>{t('Switch language')}</>}>
       <Dropdown
         toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
           <MenuToggle
@@ -76,7 +79,7 @@ export const LanguageSwitchComponent: React.FC<LanguageSwitchProps> = props => {
             className={menuToggleStyle}
             data-test="switch-language-button"
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-            aria-label="language"
+            aria-label={t('Switch language')}
             variant="plain"
             isExpanded={isDropdownOpen}
           >
@@ -90,7 +93,7 @@ export const LanguageSwitchComponent: React.FC<LanguageSwitchProps> = props => {
       >
         <DropdownList>{items}</DropdownList>
       </Dropdown>
-    </div>
+    </Tooltip>
   );
 };
 
