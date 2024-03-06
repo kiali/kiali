@@ -24,26 +24,17 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalIn
 	_, finalizers := appender.ParseAppenders(o)
 	meshMap := mesh.NewMeshMap()
 
-	// start by creating infra nodes for each accessible namespace
-	// note - namespace infra nodes will be converted, as needed, by namespace boxes at the config-gen stage (e.g. in Cytoscape.go)
-	clusterMap := make(map[string]bool)
-	for _, ns := range o.AccessibleNamespaces {
-		clusterMap[ns.Cluster] = true
-
-		var err error
-		_, _, err = addInfra(meshMap, mesh.InfraTypeNamespace, ns.Cluster, ns.Name, ns.Name, nil)
-		mesh.CheckError(err)
-	}
-
+	// start by adding istio control planes and the mesh clusters
 	meshDef, err := gi.Business.Mesh.GetMesh(ctx)
 	graph.CheckError(err)
 
+	clusterMap := make(map[string]bool)
 	for _, cp := range meshDef.ControlPlanes {
-		// add any cluster that is configured but somehow has no accessible namespace
 		if _, ok := clusterMap[cp.Cluster.Name]; !ok {
 			_, _, err := addInfra(meshMap, mesh.InfraTypeCluster, cp.Cluster.Name, mesh.Unknown, cp.Cluster.Name, cp.Cluster)
 			mesh.CheckError(err)
 		}
+
 		for _, mc := range cp.ManagedClusters {
 			if _, ok := clusterMap[mc.Name]; ok {
 				_, _, err := addInfra(meshMap, mesh.InfraTypeCluster, mc.Name, mesh.Unknown, mc.Name, mc)
@@ -54,41 +45,52 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalIn
 		}
 
 		// add the control plane istiod
-		_, _, err := addInfra(meshMap, mesh.InfraTypeIstiod, cp.Cluster.Name, cp.IstiodNamespace, cp.IstiodName, nil)
+		_, _, err := addInfra(meshMap, mesh.InfraTypeIstiod, cp.Cluster.Name, cp.IstiodNamespace, cp.IstiodName, cp.Config)
 		mesh.CheckError(err)
 
-		// add any Kiali instances (note, this will not include the home Kiali)
-		for _, kiali := range cp.Cluster.KialiInstances {
-			_, _, err = addInfra(meshMap, mesh.InfraTypeKiali, cp.Cluster.Name, kiali.Namespace, kiali.ServiceName, nil)
+		// add any Kiali instances
+		for _, ki := range cp.Cluster.KialiInstances {
+			kiali, _, err := addInfra(meshMap, mesh.InfraTypeKiali, cp.Cluster.Name, ki.Namespace, ki.ServiceName, nil)
 			mesh.CheckError(err)
-		}
 
-		// add the home Kiali
-		var kiali *mesh.Node
-		conf := config.Get()
-		kiali, _, err = addInfra(meshMap, mesh.InfraTypeKiali, conf.KubernetesConfig.ClusterName, conf.Deployment.Namespace, conf.Deployment.InstanceName, nil)
-		mesh.CheckError(err)
+			// TODO HOW DO WE PLACE THE EXTERNAL RESOURCES AND ESTABLISH PROPER LINKS?  FOR NOW JUST ASSUME LOCAL...
+			conf := config.Get().Obfuscate()
+			es := conf.ExternalServices
 
-		// add the Kiali external services...  How to do this?
-		var node *mesh.Node
-		node, _, err = addInfra(meshMap, mesh.InfraTypeMetricStore, conf.KubernetesConfig.ClusterName, conf.Deployment.Namespace, "Prometheus", nil)
-		mesh.CheckError(err)
+			// add the home Kiali
+			// var kiali *mesh.Node
+			// kiali, _, err = addInfra(meshMap, mesh.InfraTypeKiali, conf.KubernetesConfig.ClusterName, conf.Deployment.Namespace, conf.Deployment.InstanceName, nil)
+			// mesh.CheckError(err)
 
-		kiali.AddEdge(node)
-
-		if conf.ExternalServices.Tracing.Enabled {
-			node, _, err = addInfra(meshMap, mesh.InfraTypeTraceStore, conf.KubernetesConfig.ClusterName, conf.Deployment.Namespace, string(conf.ExternalServices.Tracing.Provider), nil)
+			// add the Kiali external services...
+			var node *mesh.Node
+			node, _, err = addInfra(meshMap, mesh.InfraTypeMetricStore, conf.KubernetesConfig.ClusterName, conf.Deployment.Namespace, "Prometheus", es.Prometheus)
 			mesh.CheckError(err)
 
 			kiali.AddEdge(node)
-		}
 
-		if conf.ExternalServices.Grafana.Enabled {
-			node, _, err = addInfra(meshMap, mesh.InfraTypeGrafana, conf.KubernetesConfig.ClusterName, conf.Deployment.Namespace, "Grafana", nil)
-			mesh.CheckError(err)
+			if conf.ExternalServices.Tracing.Enabled {
+				node, _, err = addInfra(meshMap, mesh.InfraTypeTraceStore, conf.KubernetesConfig.ClusterName, conf.Deployment.Namespace, string(es.Tracing.Provider), es.Tracing)
+				mesh.CheckError(err)
 
-			kiali.AddEdge(node)
+				kiali.AddEdge(node)
+			}
+
+			if conf.ExternalServices.Grafana.Enabled {
+				node, _, err = addInfra(meshMap, mesh.InfraTypeGrafana, conf.KubernetesConfig.ClusterName, conf.Deployment.Namespace, "Grafana", nil)
+				mesh.CheckError(err)
+
+				kiali.AddEdge(node)
+			}
 		}
+	}
+
+	// start by creating infra nodes for each accessible namespace
+	// note - namespace infra nodes will be converted, as needed, by namespace boxes at the config-gen stage (e.g. in Cytoscape.go)
+	for _, ns := range o.AccessibleNamespaces {
+		var err error
+		_, _, err = addInfra(meshMap, mesh.InfraTypeNamespace, ns.Cluster, ns.Name, ns.Name, nil)
+		mesh.CheckError(err)
 	}
 
 	// The finalizers can perform final manipulations on the complete graph
