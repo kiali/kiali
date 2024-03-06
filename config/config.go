@@ -245,6 +245,7 @@ type GrafanaVariablesConfig struct {
 type TracingConfig struct {
 	Auth                 Auth              `yaml:"auth"`
 	Enabled              bool              `yaml:"enabled"` // Enable Tracing in Kiali
+	HealthCheckUrl       string            `yaml:"health_check_url,omitempty"`
 	GrpcPort             int               `yaml:"grpc_port,omitempty"`
 	InClusterURL         string            `yaml:"in_cluster_url"`
 	IsCore               bool              `yaml:"is_core,omitempty"`

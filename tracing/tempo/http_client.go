@@ -2,6 +2,7 @@ package tempo
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -10,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tracing/jaeger/model"
@@ -31,7 +33,8 @@ func NewOtelClient(client http.Client, baseURL *url.URL) (otelClient *OtelHTTPCl
 	tags := false
 	r, status, _ := makeRequest(client, url.String(), nil)
 	if status != 200 {
-		log.Debugf("Error getting Tempo tags for tracing. Tags will be disabled.")
+		responseError, _ := unmarshalError(r, baseURL)
+		log.Debugf("Error getting Tempo tags for tracing. Tags will be disabled. %s", responseError.Error)
 	} else {
 		var response otel.TagsResponse
 		if errMarshal := json.Unmarshal(r, &response); errMarshal != nil {
@@ -70,6 +73,11 @@ func (oc OtelHTTPClient) GetTraceDetailHTTP(client http.Client, endpoint *url.UR
 		log.Errorf("API Tempo query error: %s [code: %d, URL: %v]", reqError, code, u)
 		return nil, reqError
 	}
+	if code != 200 {
+		responseError, _ := unmarshalError(resp, endpoint)
+		log.Errorf("Tempo API query error: %s [code: %d, URL: %v]", responseError.Error, code, u)
+		return nil, errors.New(responseError.Error)
+	}
 	// Tempo would return "200 OK" when trace is not found, with an empty response
 	if len(resp) == 0 {
 		return nil, nil
@@ -91,9 +99,20 @@ func (oc OtelHTTPClient) GetTraceDetailHTTP(client http.Client, endpoint *url.UR
 
 // GetServiceStatusHTTP get service status
 func (oc OtelHTTPClient) GetServiceStatusHTTP(client http.Client, baseURL *url.URL) (bool, error) {
-	url := *baseURL
-	url.Path = path.Join(url.Path, "/status/services")
-	_, status, reqError := makeRequest(client, url.String(), nil)
+	var u url.URL
+	healthCheckUrl := config.Get().ExternalServices.Tracing.HealthCheckUrl
+	if healthCheckUrl != "" {
+		url, err := u.Parse(healthCheckUrl)
+		if err != nil {
+			return false, fmt.Errorf("Error %s incorrect healthCheckUrl", err)
+		}
+		u = *url
+	} else {
+		u = *baseURL
+		u.Path = path.Join(u.Path, "/status/services")
+	}
+
+	_, status, reqError := makeRequest(client, u.String(), nil)
 	if status != 200 {
 		return false, fmt.Errorf("Error %d getting status services", status)
 	}
@@ -114,6 +133,15 @@ func (oc OtelHTTPClient) queryTracesHTTP(client http.Client, u *url.URL, error s
 	if reqError != nil {
 		log.Errorf("Tempo API query error: %s [code: %d, URL: %v]", reqError, code, u)
 		return &model.TracingResponse{}, reqError
+	}
+	if code != 200 && code != 404 {
+		responseError, err := unmarshalError(resp, u)
+		if err != nil {
+			log.Errorf("Tempo API query error unmarshalling response: %s ", err)
+			return &model.TracingResponse{}, err
+		}
+		log.Errorf("Tempo API query error: %s [code: %d, URL: %v]", responseError.Error, code, u)
+		return &model.TracingResponse{}, errors.New(responseError.Error)
 	}
 	limit, err := strconv.Atoi(u.Query().Get("limit"))
 	if err != nil {
@@ -155,6 +183,16 @@ func (oc OtelHTTPClient) transformTrace(traces *otel.Traces, error string, limit
 
 func unmarshal(r []byte, u *url.URL) (*otel.Traces, error) {
 	var response otel.Traces
+	if errMarshal := json.Unmarshal(r, &response); errMarshal != nil {
+		log.Errorf("Error unmarshalling Tempo API response: %s [URL: %v]", errMarshal, u)
+		return nil, errMarshal
+	}
+
+	return &response, nil
+}
+
+func unmarshalError(r []byte, u *url.URL) (*otel.TracesError, error) {
+	var response otel.TracesError
 	if errMarshal := json.Unmarshal(r, &response); errMarshal != nil {
 		log.Errorf("Error unmarshalling Tempo API response: %s [URL: %v]", errMarshal, u)
 		return nil, errMarshal
