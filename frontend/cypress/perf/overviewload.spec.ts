@@ -1,5 +1,5 @@
 import overviewCases from '../fixtures/perf/overviewPage.json';
-import { reportFilePath } from './common';
+import { baselines, compareToBaseline, reportFilePath } from './common';
 
 const createNamespaces = (count: number): void => {
   cy.log(`Creating ${count} namespaces...`);
@@ -84,9 +84,10 @@ describe('Overview performance tests', () => {
             .then(() => {
               sum = sum / visits.length;
 
-              const contents = `Namespaces: ${testCase.namespaces}\nInit page load time: ${(sum / 1000).toPrecision(
-                5
-              )} seconds\n`;
+              const contents = `Namespaces: ${testCase.namespaces}\nInit page load time: ${compareToBaseline(
+                sum,
+                Cypress.env(baselines).overview
+              )}\n`;
               cy.writeFile(reportFilePath, contents, { flag: 'a+' });
             });
         });
