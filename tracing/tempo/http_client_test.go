@@ -125,7 +125,7 @@ func TestErrorResponse(t *testing.T) {
 		Cluster:     "",
 	}
 	response, err := tempoClient.GetAppTracesHTTP(httpClient, baseUrl, serviceName, q)
-	assert.Nil(t, err)
+	assert.NotNil(t, err)
 	assert.NotNil(t, response)
 	assert.Nil(t, response.Data)
 	assert.Equal(t, response.TracingServiceName, serviceName)
