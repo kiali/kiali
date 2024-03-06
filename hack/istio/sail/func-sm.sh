@@ -12,9 +12,9 @@ install_servicemesh_operators() {
   # if not OpenShift, install from OperatorHub.io
   # This will create a subscription with the name "my-sail"
   if [ "${IS_OPENSHIFT}" == "false" ]; then
-    echo "ERROR: INSTALLING ON NON-OPENSHIFT CLUSTERS IS NOT YET SUPPORTED."
-    echo "ERROR: THIS WILL BE SUPPORTED WHEN SAIL OPERATOR IS PUBLISHED ON OPERATORHUB.IO."
-    echo "ERROR: WHEN THE FOLLOWING ISSUE IS FIXED, SUPPORT CAN BE ADDED: https://issues.redhat.com/browse/OSSM-4829"
+    errormsg "INSTALLING ON NON-OPENSHIFT CLUSTERS IS NOT YET SUPPORTED."
+    errormsg "THIS WILL BE SUPPORTED WHEN SAIL OPERATOR IS PUBLISHED ON OPERATORHUB.IO."
+    errormsg "WHEN THE FOLLOWING ISSUE IS FIXED, SUPPORT CAN BE ADDED: https://issues.redhat.com/browse/OSSM-4829"
     exit 1
     # TODO: When Sail is published on OperatorHub.io, delete the lines above, uncomment below,
     # and confirm what the name will be of the created subscription - that name should be the same
@@ -37,12 +37,12 @@ install_servicemesh_operators() {
       local servicemesh_subscription_channel="3.0-nightly"
       ;;
     *)
-      echo "Invalid catalog source [${catalog_source}]."
+      errormsg "Invalid catalog source [${catalog_source}]."
       exit 1
       ;;
   esac
 
-  echo "Installing the Service Mesh Operators from the catalog source [${catalog_source}]"
+  infomsg "Installing the Service Mesh Operators from the catalog source [${catalog_source}]"
   cat <<EOM | ${OC} apply -f -
 apiVersion: operators.coreos.com/v1alpha1
 kind: Subscription
@@ -64,7 +64,7 @@ install_istio() {
 
   # Obtained this list of CRDs by "oc get crds -oname | grep istio.io". We can't actually do that here programatically
   # because the CRDs may not even be created yet. That's why there is a while loop in here - to wait for them to be created.
-  echo "Waiting for CRDs to be established."
+  infomsg "Waiting for CRDs to be established."
   for crd in \
      authorizationpolicies.security.istio.io \
      destinationrules.networking.istio.io \
@@ -82,20 +82,23 @@ install_istio() {
      workloadentries.networking.istio.io \
      workloadgroups.networking.istio.io
   do
-    echo -n "Waiting for CRD [${crd}]..."
+    infomsg "Expecting CRD [${crd}] to be established"
+    echo -n "Waiting."
     while ! ${OC} get crd ${crd} >& /dev/null ; do echo -n '.'; sleep 1; done
     ${OC} wait --for condition=established crd/${crd}
   done
 
-  echo -n "Waiting for Service Mesh operator deployment to be created..."
+  infomsg "Expecting Service Mesh operator deployment to be created"
+  echo -n "Waiting."
   while ! ${OC} get deployment -n ${OLM_OPERATORS_NAMESPACE} -o name | grep -E 'sail|istio' >& /dev/null ; do echo -n '.'; sleep 1; done
   echo "done."
   local servicemesh_deployment="$(${OC} get deployment -n ${OLM_OPERATORS_NAMESPACE} -o name | grep -E 'sail|istio')"
 
-  echo "Waiting for operator deployments to start..."
+  infomsg "Waiting for operator deployments to start..."
   for op in ${servicemesh_deployment}
   do
-    echo -n "Waiting for ${op} to be ready..."
+    infomsg "Expecting [${op}] to be ready"
+    echo -n "Waiting."
     local readyReplicas="0"
     while [ "$?" != "0" -o "$readyReplicas" == "0" ]
     do
@@ -106,25 +109,25 @@ install_istio() {
     echo "done."
   done
 
-  echo "Wait for the servicemesh operator to be Ready."
+  infomsg "Wait for the servicemesh operator to be Ready."
   ${OC} wait --for condition=Ready $(${OC} get pod -n ${OLM_OPERATORS_NAMESPACE} -o name | grep -E 'sail|istio') --timeout 300s -n ${OLM_OPERATORS_NAMESPACE}
-  echo "done."
+  infomsg "done."
 
   # TODO: Sail has no webhooks (yet)
-  #echo "Wait for the servicemesh validating webhook to be created."
+  #infomsg "Wait for the servicemesh validating webhook to be created."
   #while [ "$(${OC} get validatingwebhookconfigurations -o name | grep -E 'sail|istio')" == "" ]; do echo -n '.'; sleep 5; done
-  #echo "done."
+  #infomsg "done."
   #
-  #echo "Wait for the servicemesh mutating webhook to be created."
+  #infomsg "Wait for the servicemesh mutating webhook to be created."
   #while [ "$(${OC} get mutatingwebhookconfigurations -o name | grep -E 'sail|istio')" == "" ]; do echo -n '.'; sleep 5; done
-  #echo "done."
+  #infomsg "done."
 
   if ! ${OC} get namespace ${control_plane_namespace} >& /dev/null; then
-    echo "Creating control plane namespace: ${control_plane_namespace}"
+    infomsg "Creating control plane namespace: ${control_plane_namespace}"
     ${OC} create namespace ${control_plane_namespace}
   fi
 
-  echo "Installing Istio CR"
+  infomsg "Installing Istio CR"
   istio_yaml_file="/tmp/istio-cr.yaml"
   cat <<EOM > ${istio_yaml_file}
 apiVersion: operator.istio.io/v1alpha1
@@ -162,10 +165,10 @@ EOM
 
   while ! ${OC} apply -f ${istio_yaml_file}
   do
-    echo "WARNING: Failed to apply [${istio_yaml_file}] to namespace [${control_plane_namespace}] - will retry in 5 seconds to see if the error condition clears up..."
+    errormsg "WARNING: Failed to apply [${istio_yaml_file}] to namespace [${control_plane_namespace}] - will retry in 5 seconds to see if the error condition clears up..."
     sleep 5
   done
-  echo "[${istio_yaml_file}] has been successfully applied to namespace [${control_plane_namespace}]."
+  infomsg "[${istio_yaml_file}] has been successfully applied to namespace [${control_plane_namespace}]."
 }
 
 delete_servicemesh_operators() {
@@ -177,31 +180,31 @@ delete_servicemesh_operators() {
     local res_kind=$(echo ${cr} | cut -d: -f1)
     local res_namespace=$(echo ${cr} | cut -d: -f2)
     local res_name=$(echo ${cr} | cut -d: -f3)
-    echo "A [${res_kind}] resource named [${res_name}] in namespace [${res_namespace}] still exists. You must delete it first."
+    errormsg "A [${res_kind}] resource named [${res_name}] in namespace [${res_namespace}] still exists. You must delete it first."
   done
   if [ "${abort_operation}" == "true" ]; then
-    echo "Aborting"
+    errormsg "Aborting"
     exit 1
   fi
 
-  echo "Unsubscribing from the Sail operator"
+  infomsg "Unsubscribing from the Sail operator"
   ${OC} delete subscription --ignore-not-found=true --namespace ${OLM_OPERATORS_NAMESPACE} my-sail
 
-  echo "Deleting OLM CSVs which uninstalls the operators and their related resources"
+  infomsg "Deleting OLM CSVs which uninstalls the operators and their related resources"
   for csv in $(${OC} get csv --all-namespaces --no-headers -o custom-columns=NS:.metadata.namespace,N:.metadata.name | sed 's/  */:/g' | grep -E 'sail|istio')
   do
     ${OC} delete csv -n $(echo -n $csv | cut -d: -f1) $(echo -n $csv | cut -d: -f2)
   done
 
   # TODO: Sail operator doesn't leave any cluster-scoped resources behind (yet)
-  #echo "Deleting any cluster-scoped resources that are getting left behind"
+  #infomsg "Deleting any cluster-scoped resources that are getting left behind"
   #for r in \
   #  $(${OC} get clusterroles -o name | grep -E 'istio')
   #do
   #  ${OC} delete ${r}
   #done
 
-  echo "Delete any resources that are getting left behind"
+  infomsg "Delete any resources that are getting left behind"
   for r in \
     $(${OC} get secrets -n ${OLM_OPERATORS_NAMESPACE} cacerts --no-headers -o custom-columns=K:kind,NS:.metadata.namespace,N:.metadata.name | sed 's/  */:/g') \
     $(${OC} get configmaps --all-namespaces --no-headers -o custom-columns=K:kind,NS:.metadata.namespace,N:.metadata.name | sed 's/  */:/g' | grep -E 'sail|istio')
@@ -209,16 +212,16 @@ delete_servicemesh_operators() {
     local res_kind=$(echo ${r} | cut -d: -f1)
     local res_namespace=$(echo ${r} | cut -d: -f2)
     local res_name=$(echo ${r} | cut -d: -f3)
-    echo "Deleting resource [${res_name}] of kind [${res_kind}] in namespace [${res_namespace}]"
+    infomsg "Deleting resource [${res_name}] of kind [${res_kind}] in namespace [${res_namespace}]"
     ${OC} delete ${res_kind} -n ${res_namespace} ${res_name}
   done
 
-  echo "Delete the CRDs"
+  infomsg "Delete the CRDs"
   ${OC} get crds -o name | grep '.*\.istio\.io' | xargs -r -n 1 ${OC} delete
 }
 
 delete_istio() {
-  echo "Deleting all Istio CRs (if they exist) which uninstalls all the Service Mesh components"
+  infomsg "Deleting all Istio CRs (if they exist) which uninstalls all the Service Mesh components"
   local doomed_namespaces=""
   for cr in \
     $(${OC} get istio -o custom-columns=K:.kind,NS:.spec.namespace,N:.metadata.name --no-headers | sed 's/  */:/g' )
@@ -230,7 +233,7 @@ delete_istio() {
     doomed_namespaces="$(echo ${res_namespace} ${doomed_namespaces} | tr ' ' '\n' | sort -u)"
   done
 
-  echo "Deleting the control plane namespaces"
+  infomsg "Deleting the control plane namespaces"
   for ns in ${doomed_namespaces}
   do
     ${OC} delete namespace ${ns}
@@ -238,36 +241,36 @@ delete_istio() {
 }
 
 status_servicemesh_operators() {
-  echo
-  echo "===== SERVICEMESH OPERATOR SUBSCRIPTION"
+  infomsg ""
+  infomsg "===== SERVICEMESH OPERATOR SUBSCRIPTION"
   local sub_name="$(${OC} get subscriptions -n ${OLM_OPERATORS_NAMESPACE} -o name my-sail)"
   if [ ! -z "${sub_name}" ]; then
     ${OC} get --namespace ${OLM_OPERATORS_NAMESPACE} ${sub_name}
-    echo
-    echo "===== SERVICEMESH OPERATOR PODS"
+    infomsg ""
+    infomsg "===== SERVICEMESH OPERATOR PODS"
     local all_pods="$(${OC} get pods -n ${OLM_OPERATORS_NAMESPACE} -o name | grep -E 'sail|istio')"
-    [ ! -z "${all_pods}" ] && ${OC} get --namespace ${OLM_OPERATORS_NAMESPACE} ${all_pods} || echo "There are no pods"
+    [ ! -z "${all_pods}" ] && ${OC} get --namespace ${OLM_OPERATORS_NAMESPACE} ${all_pods} || infomsg "There are no pods"
   else
-    echo "There are no Subscriptions for the Service Mesh Operators"
+    infomsg "There are no Subscriptions for the Service Mesh Operators"
   fi
 }
 
 status_istio() {
-  echo
-  echo "===== Istio CRs"
+  infomsg ""
+  infomsg "===== Istio CRs"
   if [ "$(${OC} get istio 2> /dev/null | wc -l)" -gt "0" ] ; then
-    echo "One or more Istio CRs exist in the cluster"
+    infomsg "One or more Istio CRs exist in the cluster"
     ${OC} get istio
-    echo
+    infomsg ""
     for cr in \
       $(${OC} get istio -o custom-columns=NS:.spec.namespace,N:.metadata.name --no-headers | sed 's/  */:/g' )
     do
       local res_namespace=$(echo ${cr} | cut -d: -f1)
       local res_name=$(echo ${cr} | cut -d: -f2)
-      echo "Istio [${res_name}] control plane namespace [${res_namespace}]:"
+      infomsg "Istio [${res_name}] control plane namespace [${res_namespace}]:"
       ${OC} get pods -n ${res_namespace}
     done
   else
-    echo "There are no Istio CRs in the cluster"
+    infomsg "There are no Istio CRs in the cluster"
   fi
 }

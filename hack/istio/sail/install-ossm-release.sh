@@ -13,6 +13,15 @@ set -u
 SCRIPT_ROOT="$( cd "$(dirname "$0")" ; pwd -P )"
 cd ${SCRIPT_ROOT}
 
+# to make our own log messages standout
+errormsg() {
+  echo -e "\U0001F6A8 ERROR: ${1}"
+}
+
+infomsg() {
+  echo -e "\U0001F4C4 ${1}"
+}
+
 # get function definitions
 source ${SCRIPT_ROOT}/func-sm.sh
 source ${SCRIPT_ROOT}/func-kiali.sh
@@ -128,7 +137,7 @@ HELPMSG
       exit 1
       ;;
     *)
-      echo "ERROR: Unknown argument [$key]. Aborting."
+      errormsg "Unknown argument [$key]. Aborting."
       exit 1
       ;;
   esac
@@ -145,21 +154,21 @@ ISTIO_VERSION="${ISTIO_VERSION:-${DEFAULT_ISTIO_VERSION}}"
 KIALI_VERSION="${KIALI_VERSION:-${DEFAULT_KIALI_VERSION}}"
 CATALOG_SOURCE="${CATALOG_SOURCE:-${DEFAULT_CATALOG_SOURCE}}"
 
-echo CONTROL_PLANE_NAMESPACE=$CONTROL_PLANE_NAMESPACE
-echo ENABLE_KIALI=$ENABLE_KIALI
-echo ENABLE_OSSMCONSOLE=$ENABLE_OSSMCONSOLE
-echo ADDONS=$ADDONS
-echo OC=${OC}
-echo ISTIO_VERSION=${ISTIO_VERSION}
-echo KIALI_VERSION=${KIALI_VERSION}
-echo CATALOG_SOURCE=${CATALOG_SOURCE}
+infomsg "CONTROL_PLANE_NAMESPACE=$CONTROL_PLANE_NAMESPACE"
+infomsg "ENABLE_KIALI=$ENABLE_KIALI"
+infomsg "ENABLE_OSSMCONSOLE=$ENABLE_OSSMCONSOLE"
+infomsg "ADDONS=$ADDONS"
+infomsg "OC=$OC"
+infomsg "ISTIO_VERSION=$ISTIO_VERSION"
+infomsg "KIALI_VERSION=$KIALI_VERSION"
+infomsg "CATALOG_SOURCE=$CATALOG_SOURCE"
 
 # Check the type of cluster we are talking to.
 # * If OpenShift, make sure we are logged in.
 # * Define the namespace where the operators are expected to run based on cluster type.
 
 if ! which ${OC} >& /dev/null; then
-  echo "ERROR: The client is not valid [${OC}]. Use --client to specify a valid path to 'oc' or 'kubectl'."
+  errormsg "The client is not valid [${OC}]. Use --client to specify a valid path to 'oc' or 'kubectl'."
   exit 1
 fi
 if [[ "${OC}" = *"oc" ]]; then
@@ -167,7 +176,7 @@ if [[ "${OC}" = *"oc" ]]; then
   IS_OPENSHIFT="true"
   OLM_OPERATORS_NAMESPACE="openshift-operators"
   if ! ${OC} whoami >& /dev/null; then
-    echo "ERROR: You are not logged into the OpenShift cluster. Use '${OC} login' to log into a cluster and then retry."
+    errormsg "You are not logged into the OpenShift cluster. Use '${OC} login' to log into a cluster and then retry."
     exit 1
   fi
 else
@@ -176,7 +185,7 @@ else
 fi
 
 if [ "${IS_OPENSHIFT}" == "true" -a "${CATALOG_SOURCE}" != "redhat" -a "${CATALOG_SOURCE}" != "community" ]; then
-  echo "ERROR: The OpenShift catalog source must be one of 'redhat' or 'community' but was [${CATALOG_SOURCE}]"
+  errormsg "The OpenShift catalog source must be one of 'redhat' or 'community' but was [${CATALOG_SOURCE}]"
   exit 1
 fi
 
@@ -197,17 +206,17 @@ if [ "${_CMD}" == "install-operators" ]; then
 elif [ "${_CMD}" == "install-istio" ]; then
 
   if [ "${ENABLE_KIALI}" == "true" ] && ! ${OC} get crd kialis.kiali.io >& /dev/null; then
-    echo "Cannot install Istio with Kiali enabled because Kiali Operator is either not installed or installation is in progress."
+    errormsg "Cannot install Istio with Kiali enabled because Kiali Operator is either not installed or installation is in progress."
     exit 1
   fi
 
   if ! ${OC} get crd istios.operator.istio.io >& /dev/null; then
-    echo "Cannot install Istio because the Sail Operator is either not installed or installation is in progress."
+    errormsg "Cannot install Istio because the Sail Operator is either not installed or installation is in progress."
     exit 1
   fi
 
   if ! ${OC} get crd tempostacks.tempo.grafana.com >& /dev/null; then
-    echo "Cannot install Istio because the Tempo Operator is either not installed or installation is in progress."
+    errormsg "Cannot install Istio because the Tempo Operator is either not installed or installation is in progress."
     exit 1
   fi
 
@@ -215,12 +224,12 @@ elif [ "${_CMD}" == "install-istio" ]; then
   install_istio "${CONTROL_PLANE_NAMESPACE}" "${ISTIO_VERSION}"
 
   if [ -n "${ADDONS}" ]; then
-    echo "Installing addons: ${ADDONS}"
+    infomsg "Installing addons: ${ADDONS}"
     for addon in ${ADDONS}; do
       install_addon ${addon}
     done
   else
-    echo "No addons will be installed"
+    infomsg "No addons will be installed"
   fi
 
   if [ "${ENABLE_KIALI}" == "true" ]; then
@@ -262,10 +271,10 @@ elif [ "${_CMD}" == "kiali-ui" ]; then
     kiali_url="http://$(${OC} -n ${CONTROL_PLANE_NAMESPACE} get svc kiali -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2> /dev/null):20001"
   fi
 
-  echo "Attempting to open browser to Kiali UI at URL [${kiali_url}]"
+  infomsg "Attempting to open browser to Kiali UI at URL [${kiali_url}]"
   xdg-open ${kiali_url}
 
 else
-  echo "ERROR: Missing or unknown command. See --help for usage."
+  errormsg "Missing or unknown command. See --help for usage."
   exit 1
 fi

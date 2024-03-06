@@ -17,7 +17,7 @@ MINIO_BUCKET_NAME="tempo-data"
 
 install_minio() {
   MINIO_NAMESPACE="${1}"
-  echo "Will install Minio in namespace [${MINIO_NAMESPACE}]"
+  infomsg "Will install Minio in namespace [${MINIO_NAMESPACE}]"
 
   _define_minio_yaml
 
@@ -35,13 +35,13 @@ install_minio() {
     --from-literal=access_key_id="${MINIO_ACCESS_KEY_ID}" \
     --from-literal=access_key_secret="${MINIO_ACCESS_KEY_SECRET}"
 
-  echo "Waiting for the Minio deployment to start"
+  infomsg "Waiting for the Minio deployment to start"
   ${OC} rollout status deployment --timeout=5m --watch=true -l app=minio
 }
 
 delete_minio() {
   MINIO_NAMESPACE="${1}"
-  echo "Will delete Minio found in namespace [${MINIO_NAMESPACE}]"
+  infomsg "Will delete Minio found in namespace [${MINIO_NAMESPACE}]"
 
   _define_minio_yaml
 

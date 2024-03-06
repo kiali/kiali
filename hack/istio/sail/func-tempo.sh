@@ -47,12 +47,12 @@ install_tempo_operator() {
       local tempo_subscription_channel="alpha"
       ;;
     *)
-      echo "ERROR! Invalid catalog source for Tempo operator. Must be 'redhat' or 'community'."
+      errormsg "ERROR! Invalid catalog source for Tempo operator. Must be 'redhat' or 'community'."
       return 1
       ;;
   esac
 
-  echo "Installing the Tempo Operator from the catalog source [${catalog_source}]"
+  infomsg "Installing the Tempo Operator from the catalog source [${catalog_source}]"
   cat <<EOM | ${OC} apply -f -
 ---
 apiVersion: project.openshift.io/v1
@@ -91,24 +91,27 @@ install_tempo() {
 
   # Obtained this list of CRDs by "oc get crds -oname | grep tempo". We can't actually do that here programatically
   # because the CRDs may not even be created yet. That's why there is a while loop in here - to wait for them to be created.
-  echo "Waiting for CRDs to be established."
+  infomsg "Waiting for CRDs to be established."
   for crd in \
      tempostacks.tempo.grafana.com
   do
-    echo -n "Waiting for CRD [${crd}]..."
+    infomsg "Expecting CRD [${crd}] to be established"
+    echo -n "Waiting."
     while ! ${OC} get crd ${crd} >& /dev/null ; do echo -n '.'; sleep 1; done
     ${OC} wait --for condition=established crd/${crd}
   done
 
-  echo -n "Waiting for Tempo operator deployment to be created..."
+  infomsg "Expecting Tempo operator deployment to be created"
+  echo -n "Waiting."
   while ! ${OC} get deployment --namespace ${TEMPO_OPERATOR_NAMESPACE} -o name | grep tempo >& /dev/null ; do echo -n '.'; sleep 1; done
   echo "done."
   local tempo_deployment="$(${OC} get deployment --namespace ${TEMPO_OPERATOR_NAMESPACE} -o name | grep tempo)"
 
-  echo "Waiting for operator deployments to start..."
+  infomsg "Waiting for operator deployments to start..."
   for op in ${tempo_deployment}
   do
-    echo -n "Waiting for ${op} to be ready..."
+    infomsg "Expecting [${op}] to be ready"
+    echo -n "Waiting."
     local readyReplicas="0"
     while [ "$?" != "0" -o "$readyReplicas" == "0" ]
     do
@@ -119,27 +122,27 @@ install_tempo() {
     echo "done."
   done
 
-  echo "Wait for the tempo operator to be Ready."
+  infomsg "Wait for the tempo operator to be Ready."
   ${OC} wait --for condition=Ready $(${OC} get pod --namespace ${TEMPO_OPERATOR_NAMESPACE} -o name | grep tempo) --timeout 300s --namespace ${TEMPO_OPERATOR_NAMESPACE}
-  echo "done."
+  infomsg "done."
 
-  echo "Wait for the tempo validating webhook to be created."
+  infomsg "Wait for the tempo validating webhook to be created."
   while [ "$(${OC} get validatingwebhookconfigurations -o name | grep tempo)" == "" ]; do echo -n '.'; sleep 5; done
-  echo "done."
+  infomsg "done."
 
-  echo "Wait for the tempo mutating webhook to be created."
+  infomsg "Wait for the tempo mutating webhook to be created."
   while [ "$(${OC} get mutatingwebhookconfigurations -o name | grep tempo)" == "" ]; do echo -n '.'; sleep 5; done
-  echo "done."
+  infomsg "done."
 
   if ! ${OC} get namespace ${TEMPO_NAMESPACE} >& /dev/null; then
-    echo "Creating Tempo namespace: ${TEMPO_NAMESPACE}"
+    infomsg "Creating Tempo namespace: ${TEMPO_NAMESPACE}"
     ${OC} create namespace ${TEMPO_NAMESPACE}
   fi
 
-  echo "Installing Minio..."
+  infomsg "Installing Minio..."
   install_minio ${TEMPO_NAMESPACE}
 
-  echo "Installing TempoStack CR"
+  infomsg "Installing TempoStack CR"
   ${OC} apply --namespace ${TEMPO_NAMESPACE} -f - <<EOM
 apiVersion: tempo.grafana.com/v1alpha1
 kind: TempoStack
@@ -169,7 +172,7 @@ spec:
           type: route
 EOM
 
-  echo "Waiting for things to start..."
+  infomsg "Waiting for things to start..."
   sleep 5
   ${OC} wait pod --for condition=Ready --namespace ${TEMPO_NAMESPACE} --all --timeout=5m
 }
@@ -186,37 +189,37 @@ delete_tempo_operator() {
     local res_kind=$(echo ${cr} | cut -d: -f1)
     local res_namespace=$(echo ${cr} | cut -d: -f2)
     local res_name=$(echo ${cr} | cut -d: -f3)
-    echo "A [${res_kind}] resource named [${res_name}] in namespace [${res_namespace}] still exists. You must delete it first."
+    errormsg "A [${res_kind}] resource named [${res_name}] in namespace [${res_namespace}] still exists. You must delete it first."
   done
   if [ "${abort_operation}" == "true" ]; then
-    echo "Aborting"
+    errormsg "Aborting"
     exit 1
   fi
 
-  echo "Unsubscribing from the Tempo operator"
+  infomsg "Unsubscribing from the Tempo operator"
   ${OC} delete subscription --ignore-not-found=true --namespace ${TEMPO_OPERATOR_NAMESPACE} my-tempo-operator
 
-  echo "Deleting OLM CSVs which uninstalls the operators and their related resources"
+  infomsg "Deleting OLM CSVs which uninstalls the operators and their related resources"
   for csv in $(${OC} get csv --all-namespaces --no-headers -o custom-columns=NS:.metadata.namespace,N:.metadata.name | sed 's/  */:/g' | grep -E 'tempo')
   do
     ${OC} delete --ignore-not-found=true csv --namespace $(echo -n $csv | cut -d: -f1) $(echo -n $csv | cut -d: -f2)
   done
 
-  echo "Deleting Tempo OperatorGroup"
+  infomsg "Deleting Tempo OperatorGroup"
   for og in $(${OC} get OperatorGroup --all-namespaces --no-headers -o custom-columns=NS:.metadata.namespace,N:.metadata.name | sed 's/  */:/g' | grep -E 'tempo')
   do
     ${OC} delete --ignore-not-found=true OperatorGroup --namespace $(echo -n $og | cut -d: -f1) $(echo -n $og | cut -d: -f2)
   done
 
-  echo "Deleting Tempo Operator Namespace"
+  infomsg "Deleting Tempo Operator Namespace"
   ${OC} delete project --ignore-not-found=true ${TEMPO_OPERATOR_NAMESPACE}
 
-  echo "Delete the CRDs"
+  infomsg "Delete the CRDs"
   ${OC} get crds -o name | grep 'tempo' | xargs -r -n 1 ${OC} delete
 }
 
 delete_tempo() {
-  echo "Deleting all TempoStack CRs (if they exist) which uninstalls all the Tempo components"
+  infomsg "Deleting all TempoStack CRs (if they exist) which uninstalls all the Tempo components"
   local doomed_namespaces=""
   for cr in \
     $(${OC} get TempoStack --all-namespaces -o custom-columns=K:.kind,NS:.metadata.namespace,N:.metadata.name --no-headers | sed 's/  */:/g' )
@@ -228,10 +231,10 @@ delete_tempo() {
     doomed_namespaces="$(echo ${res_namespace} ${doomed_namespaces} | tr ' ' '\n' | sort -u)"
   done
 
-  echo "Deleting Minio..."
+  infomsg "Deleting Minio..."
   delete_minio ${TEMPO_NAMESPACE}
 
-  echo "Deleting the Tempo namespaces"
+  infomsg "Deleting the Tempo namespaces"
   for ns in ${doomed_namespaces}
   do
     ${OC} delete namespace ${ns}
@@ -242,40 +245,39 @@ status_tempo_operator() {
 
   determine_tempo_namespaces
 
-  echo
-  echo "===== TEMPO OPERATOR SUBSCRIPTIONS"
+  infomsg ""
+  infomsg "===== TEMPO OPERATOR SUBSCRIPTIONS"
   local sub_name="$(${OC} get subscriptions -n ${TEMPO_OPERATOR_NAMESPACE} -o name my-tempo-operator)"
   if [ ! -z "${sub_name}" ]; then
     ${OC} get --namespace ${TEMPO_OPERATOR_NAMESPACE} ${sub_name}
-    echo
-    echo "===== TEMPO OPERATOR PODS"
+    infomsg ""
+    infomsg "===== TEMPO OPERATOR PODS"
     local all_pods="$(${OC} get pods -n ${TEMPO_OPERATOR_NAMESPACE} -o name | grep -E 'tempo')"
-    [ ! -z "${all_pods}" ] && ${OC} get --namespace ${TEMPO_OPERATOR_NAMESPACE} ${all_pods} || echo "There are no pods"
+    [ ! -z "${all_pods}" ] && ${OC} get --namespace ${TEMPO_OPERATOR_NAMESPACE} ${all_pods} || infomsg "There are no pods"
   else
-    echo "There are no Subscriptions for the Tempo Operator"
+    infomsg "There are no Subscriptions for the Tempo Operator"
   fi
 }
 
 status_tempo() {
-  echo
-  echo "===== TempoStack CRs"
+  infomsg ""
+  infomsg "===== TempoStack CRs"
   if [ "$(${OC} get TempoStack --all-namespaces 2> /dev/null | wc -l)" -gt "0" ] ; then
-    echo "One or more TempoStack CRs exist in the cluster"
+    infomsg "One or more TempoStack CRs exist in the cluster"
     ${OC} get TempoStack --all-namespaces
-    echo
+    infomsg ""
     for cr in \
       $(${OC} get TempoStack --all-namespaces -o custom-columns=NS:.metadata.namespace,N:.metadata.name --no-headers | sed 's/  */:/g' )
     do
       local res_namespace=$(echo ${cr} | cut -d: -f1)
       local res_name=$(echo ${cr} | cut -d: -f2)
-      echo "TempoStack [${res_name}] namespace [${res_namespace}]:"
+      infomsg "TempoStack [${res_name}] namespace [${res_namespace}]:"
       ${OC} get pods --namespace ${res_namespace}
-      echo
-      echo -n "Tempo Web Console can be accessed here: "
-      ${OC} get route -n ${res_namespace} -l app.kubernetes.io/name=tempo,app.kubernetes.io/component=query-frontend -o jsonpath='https://{..spec.host}'
-      echo
+      infomsg ""
+      infomsg "Tempo Web Console can be accessed here: "
+      ${OC} get route -n ${res_namespace} -l app.kubernetes.io/name=tempo,app.kubernetes.io/component=query-frontend -o jsonpath='https://{..spec.host}{"\n"}'
     done
   else
-    echo "There are no TempoStack CRs in the cluster"
+    infomsg "There are no TempoStack CRs in the cluster"
   fi
 }

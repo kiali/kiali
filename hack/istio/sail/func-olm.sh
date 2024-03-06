@@ -17,7 +17,7 @@ install_olm() {
     # OpenShift already has OLM installed, nothing to do
     return
   elif ${OC} get deployment olm-operator -n olm > /dev/null 2>&1; then
-      echo "OLM is already installed."
+      infomsg "OLM is already installed."
       return
   fi
 
@@ -25,7 +25,7 @@ install_olm() {
   local olm_download_url="https://github.com/operator-framework/operator-lifecycle-manager/releases/download/${OLM_VERSION}/install.sh"
 
   if ! curl -sL ${olm_download_url} > /tmp/olm-install-script.sh; then
-    echo "ERROR: Unable to download the OLM install script from GitHub"
+    errormsg "ERROR: Unable to download the OLM install script from GitHub"
     exit 1
   else
     chmod +x /tmp/olm-install-script.sh
@@ -40,12 +40,12 @@ install_olm() {
 
   # TODO: sometimes this crashes with segfault when running v0.27 of the OLM install script. Not sure why
   if ! /tmp/olm-install-script.sh "${OLM_VERSION}"; then
-    echo "ERROR: Failed to install OLM"
+    errormsg "ERROR: Failed to install OLM"
     unset -f kubectl
     rm -f /tmp/olm-install-script.sh
     exit 1
   else
-    echo "OLM [${OLM_VERSION}] is installed."
+    infomsg "OLM [${OLM_VERSION}] is installed."
     unset -f kubectl
     rm -f /tmp/olm-install-script.sh
   fi
@@ -58,9 +58,9 @@ get_olm_version_we_want() {
   fi
   OLM_VERSION="$(curl -s https://api.github.com/repos/operator-framework/operator-lifecycle-manager/releases 2> /dev/null | grep "tag_name" | sed -e 's/.*://' -e 's/ *"//' -e 's/",//' | grep -v "snapshot" | sort -t "." -k 1.2g,1 -k 2g,2 -k 3g | tail -n 1)"
 	if [ -z "${OLM_VERSION}" ]; then
-	  echo "Failed to obtain the latest OLM version from GitHub. You will need to specify an explicit version via OLM_VERSION environment variable."
+	  errormsg "Failed to obtain the latest OLM version from GitHub. You will need to specify an explicit version via OLM_VERSION environment variable."
 	  exit 1
   else
-	  echo "GitHub reports the latest OLM version is: ${OLM_VERSION}"
+	  infomsg "GitHub reports the latest OLM version is: ${OLM_VERSION}"
 	fi
 }
