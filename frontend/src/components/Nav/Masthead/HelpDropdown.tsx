@@ -5,17 +5,18 @@ import { DebugInformation } from '../../../components/DebugInformation/DebugInfo
 import { QuestionCircleIcon } from '@patternfly/react-icons/';
 import { connect } from 'react-redux';
 import { isUpstream } from '../../UpstreamDetector/UpstreamDetector';
-import { Status, ExternalServiceInfo, StatusKey } from '../../../types/StatusState';
+import { Status, StatusKey } from '../../../types/StatusState';
 import { config, serverConfig } from '../../../config';
 import { IstioCertsInfo } from 'components/IstioCertsInfo/IstioCertsInfo';
 import { kialiStyle } from 'styles/StyleUtils';
 import { Dropdown, DropdownItem, DropdownList, MenuToggle, MenuToggleElement } from '@patternfly/react-core';
 
-type HelpDropdownProps = {
-  externalServices: ExternalServiceInfo[];
+type HelpDropdownReduxProps = {
   status: Status;
   warningMessages: string[];
 };
+
+type HelpDropdownProps = HelpDropdownReduxProps & {};
 
 const menuToggleStyle = kialiStyle({
   marginTop: '0.25rem',
@@ -77,7 +78,6 @@ const HelpDropdownComponent: React.FC<HelpDropdownProps> = (props: HelpDropdownP
     <>
       <AboutUIModal
         status={props.status}
-        externalServices={props.externalServices}
         warningMessages={props.warningMessages}
         isOpen={isAboutModalOpen}
         onClose={() => setIsAboutModalOpen(false)}
@@ -116,7 +116,6 @@ const HelpDropdownComponent: React.FC<HelpDropdownProps> = (props: HelpDropdownP
 
 const mapStateToProps = (state: KialiAppState) => ({
   status: state.statusState.status,
-  externalServices: state.statusState.externalServices,
   warningMessages: state.statusState.warningMessages
 });
 

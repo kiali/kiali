@@ -68,15 +68,20 @@ const conf = {
   },
   /** About dialog configuration */
   about: {
+    mesh: {
+      url: '/mesh',
+      icon: 'IstioIcon',
+      linkText: 'Visit the Mesh page'
+    },
     project: {
       url: 'https://github.com/kiali',
       icon: 'RepositoryIcon',
-      linkText: i18n.t('Find us on GitHub')
+      linkText: i18n.t('Kiali on GitHub')
     },
     website: {
       url: 'https://www.kiali.io', // Without www, we get an SSL error
       icon: 'HomeIcon',
-      linkText: i18n.t('Visit our web page')
+      linkText: 'kiali.io'
     }
   },
   /** */

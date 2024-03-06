@@ -991,16 +991,21 @@ func Set(conf *Config) {
 	configuration = *conf
 }
 
-// String marshals the given Config into a YAML string
-// WARNING: do NOT use the result of this function to retrieve any configuration: some fields are obfuscated for security reasons.
-func (conf Config) String() (str string) {
-	obf := conf
+func (conf Config) Obfuscate() (obf Config) {
+	obf = conf
 	obf.ExternalServices.Grafana.Auth.Obfuscate()
 	obf.ExternalServices.Prometheus.Auth.Obfuscate()
 	obf.ExternalServices.Tracing.Auth.Obfuscate()
 	obf.Identity.Obfuscate()
 	obf.LoginToken.Obfuscate()
 	obf.Auth.OpenId.ClientSecret = "xxx"
+	return
+}
+
+// String marshals the given Config into a YAML string
+// WARNING: do NOT use the result of this function to retrieve any configuration: some fields are obfuscated for security reasons.
+func (conf Config) String() (str string) {
+	obf := conf.Obfuscate()
 	str, err := Marshal(&obf)
 	if err != nil {
 		str = fmt.Sprintf("Failed to marshal config to string. err=%v", err)
