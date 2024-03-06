@@ -46,7 +46,6 @@ reloads any changes to the browser for rapid development.
 * `src/config`: Configuration
 * `src/fonts`:  Fonts
 * `src/helpers`:  Utility functions and components
-* `src/img`:  Patternfly Images
 * `src/pages`: Top level pages and nested components
 * `src/reducers`: Redux reducers
 * `src/services`: Api services
