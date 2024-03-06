@@ -53,7 +53,7 @@ import { switchType } from './OverviewHelper';
 import * as Sorts from './Sorts';
 import * as Filters from './Filters';
 import { ValidationSummary } from '../../components/Validations/ValidationSummary';
-import { DurationInSeconds, IntervalInMilliseconds } from 'types/Common';
+import { DurationInSeconds, I18N_NAMESPACE, IntervalInMilliseconds } from 'types/Common';
 import { Paths, isMultiCluster, serverConfig } from '../../config';
 import { PFColors } from '../../components/Pf/PfColors';
 import { VirtualList } from '../../components/VirtualList/VirtualList';
@@ -78,6 +78,7 @@ import { AmbientBadge } from '../../components/Ambient/AmbientBadge';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { isRemoteCluster } from './OverviewCardControlPlaneNamespace';
 import { ApiError } from 'types/Api';
+import { WithTranslation, withTranslation } from 'react-i18next';
 
 const gridStyleCompact = kialiStyle({
   backgroundColor: PFColors.BackgroundColor200,
@@ -163,7 +164,7 @@ type ReduxProps = {
   refreshInterval: IntervalInMilliseconds;
 };
 
-type OverviewProps = ReduxProps & {};
+type OverviewProps = WithTranslation & ReduxProps & {};
 
 export class OverviewPageComponent extends React.Component<OverviewProps, State> {
   private sFOverviewToolbar: React.RefObject<StatefulFilters> = React.createRef();
@@ -1255,8 +1256,19 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
     );
   }
 
-  renderLabels(ns: NamespaceInfo): JSX.Element {
-    const labelsLength = ns.labels ? `${Object.entries(ns.labels).length}` : 'No';
+  renderLabels(ns: NamespaceInfo): React.ReactNode {
+    let labelsInfo: string;
+
+    if (ns.labels) {
+      const labelsLength = Object.entries(ns.labels).length;
+      labelsInfo = this.props.t('{{count}} label', {
+        count: labelsLength,
+        defaultValue_one: '{{count}} label',
+        defaultValue_other: '{{count}} labels'
+      });
+    } else {
+      labelsInfo = this.props.t('No labels');
+    }
 
     const labelContent = ns.labels ? (
       <div
@@ -1279,18 +1291,18 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
           }
         >
           <div id="labels_info" style={{ display: 'inline' }}>
-            {labelsLength} label{labelsLength !== '1' ? 's' : ''}
+            {labelsInfo}
           </div>
         </Tooltip>
       </div>
     ) : (
-      <div style={{ textAlign: 'left' }}>No labels</div>
+      <div style={{ textAlign: 'left' }}>{labelsInfo}</div>
     );
 
     return labelContent;
   }
 
-  renderCharts(ns: NamespaceInfo): JSX.Element {
+  renderCharts(ns: NamespaceInfo): React.ReactNode {
     if (ns.status) {
       if (this.state.displayMode === OverviewDisplayMode.COMPACT) {
         return <NamespaceStatuses key={ns.name} name={ns.name} status={ns.status} type={this.state.type} />;
@@ -1313,7 +1325,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
     return <div style={{ height: '70px' }} />;
   }
 
-  renderIstioConfigStatus(ns: NamespaceInfo): JSX.Element {
+  renderIstioConfigStatus(ns: NamespaceInfo): React.ReactNode {
     let validations: ValidationStatus = { namespace: ns.name, objectCount: 0, errors: 0, warnings: 0 };
 
     if (!!ns.validations) {
@@ -1338,7 +1350,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
     );
   }
 
-  renderStatus(ns: NamespaceInfo): JSX.Element {
+  renderStatus(ns: NamespaceInfo): React.ReactNode {
     const targetPage = switchType(this.state.type, Paths.APPLICATIONS, Paths.SERVICES, Paths.WORKLOADS);
     const name = ns.name;
     let nbItems = 0;
@@ -1432,7 +1444,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
     );
   }
 
-  renderNamespaceBadges(ns: NamespaceInfo, tooltip: boolean): JSX.Element {
+  renderNamespaceBadges(ns: NamespaceInfo, tooltip: boolean): React.ReactNode {
     return (
       <>
         {ns.name === serverConfig.istioNamespace && (
@@ -1481,4 +1493,4 @@ const mapStateToProps = (state: KialiAppState): ReduxProps => ({
   refreshInterval: refreshIntervalSelector(state)
 });
 
-export const OverviewPage = connect(mapStateToProps)(OverviewPageComponent);
+export const OverviewPage = connect(mapStateToProps)(withTranslation(I18N_NAMESPACE)(OverviewPageComponent));

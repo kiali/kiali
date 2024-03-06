@@ -113,6 +113,10 @@ const defaultServerConfig: ComputedServerConfig = {
           tcp: 'sent'
         }
       },
+      i18n: {
+        language: 'en',
+        showSelector: false
+      },
       list: {
         includeHealth: true,
         includeIstioResources: true,

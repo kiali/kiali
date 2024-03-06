@@ -10,6 +10,7 @@ export const GlobalActions = {
   setPageVisibilityHidden: createAction(ActionKeys.SET_PAGE_VISIBILITY_HIDDEN),
   setPageVisibilityVisible: createAction(ActionKeys.SET_PAGE_VISIBILITY_VISIBLE),
   setKiosk: createStandardAction(ActionKeys.SET_KIOSK)<KioskMode>(),
+  setLanguage: createStandardAction(ActionKeys.SET_LANGUAGE)<string>(),
   setTheme: createStandardAction(ActionKeys.SET_THEME)<string>()
 };
 

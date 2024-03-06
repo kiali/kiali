@@ -10,6 +10,8 @@ import { kialiStyle } from 'styles/StyleUtils';
 import { GetTracingURL } from '../TracingIntegration/TracesComponent';
 import { ExternalServiceInfo } from '../../types/StatusState';
 import { KialiIcon } from 'config/KialiIcon';
+import { WithTranslation, withTranslation } from 'react-i18next';
+import { I18N_NAMESPACE } from 'types/Common';
 
 const externalLinkStyle = kialiStyle({
   $nest: {
@@ -40,7 +42,7 @@ const ExternalLink = ({ href, name }: { href: string; name: string }): React.Rea
   </NavItem>
 );
 
-type MenuProps = {
+type MenuProps = WithTranslation & {
   externalServices: ExternalServiceInfo[];
   isNavOpen: boolean;
   location: any;
@@ -50,7 +52,7 @@ type MenuState = {
   activeItem: string;
 };
 
-export class Menu extends React.Component<MenuProps, MenuState> {
+class MenuComponent extends React.Component<MenuProps, MenuState> {
   static contextTypes = {
     router: () => null
   };
@@ -62,7 +64,7 @@ export class Menu extends React.Component<MenuProps, MenuState> {
     };
   }
 
-  componentDidUpdate(prevProps: Readonly<MenuProps>) {
+  componentDidUpdate(prevProps: Readonly<MenuProps>): void {
     if (prevProps.isNavOpen !== this.props.isNavOpen) {
       // Dispatch an extra "resize" event when side menu toggle to force that metrics charts resize
       setTimeout(() => {
@@ -73,12 +75,13 @@ export class Menu extends React.Component<MenuProps, MenuState> {
 
   renderMenuItems = (): React.ReactNode => {
     const { location } = this.props;
-    const allNavMenuItems = navMenuItems;
+    const allNavMenuItems = navMenuItems(this.props.t);
     const graphEnableCytoscape = serverConfig.kialiFeatureFlags.uiDefaults.graph.impl !== 'pf';
     const graphEnablePatternfly = serverConfig.kialiFeatureFlags.uiDefaults.graph.impl !== 'cy';
     const graphEnableMeshClassic = serverConfig.kialiFeatureFlags.uiDefaults.mesh.impl === 'classic';
     const graphEnableMeshGraph = serverConfig.kialiFeatureFlags.uiDefaults.mesh.impl !== 'classic';
     const graphEnableMeshOverview = serverConfig.kialiFeatureFlags.uiDefaults.mesh.impl === 'topo-as-overview';
+
     const activeMenuItem = allNavMenuItems.find(item => {
       let isRoute = matchPath(location.pathname, { path: item.to, exact: true, strict: false }) ? true : false;
 
@@ -93,59 +96,54 @@ export class Menu extends React.Component<MenuProps, MenuState> {
 
     return allNavMenuItems
       .filter(item => {
-        if (item.title === 'Mesh [classic]') {
+        if (item.id === 'mesh_classic') {
           return graphEnableMeshClassic && homeCluster?.name !== undefined;
         }
 
-        if (item.title === 'Mesh [graph]') {
+        if (item.id === 'mesh_graph') {
           return graphEnableMeshGraph;
         }
 
-        if (item.title === 'Overview') {
+        if (item.id === 'overview') {
           return !graphEnableMeshOverview;
         }
 
-        if (item.title === 'Traffic Graph [Cy]') {
+        if (item.id === 'traffic_graph_cy') {
           return graphEnableCytoscape;
         }
 
-        if (item.title === 'Traffic Graph [PF]') {
+        if (item.id === 'traffic_graph_pf') {
           return graphEnablePatternfly;
         }
 
         return true;
       })
       .sort((a, b): number => {
-        if (graphEnableMeshOverview && a.title === 'Mesh [graph]') return -1;
-        if (graphEnableMeshOverview && b.title === 'Mesh [graph]') return 1;
+        if (graphEnableMeshOverview && a.id === 'mesh_graph') return -1;
+        if (graphEnableMeshOverview && b.id === 'mesh_graph') return 1;
         return 0;
       })
       .map(item => {
-        if (item.title === 'Distributed Tracing') {
-          return tracingUrl && <ExternalLink key={item.to} href={tracingUrl} name="Distributed Tracing" />;
-        }
-
         let title = item.title;
 
-        if (title === 'Traffic Graph [Cy]' && !graphEnablePatternfly) {
-          title = 'Traffic Graph';
+        if (item.id === 'tracing') {
+          return tracingUrl && <ExternalLink key={item.to} href={tracingUrl} name={title} />;
         }
 
-        if (title === 'Traffic Graph [PF]' && !graphEnableCytoscape) {
-          title = 'Traffic Graph';
+        if (
+          (item.id === 'traffic_graph_cy' && !graphEnablePatternfly) ||
+          (item.id === 'traffic_graph_pf' && !graphEnableCytoscape)
+        ) {
+          title = this.props.t('Traffic Graph');
         }
 
-        if (title === 'Mesh [classic]') {
-          title = 'Mesh';
-        }
-
-        if (title === 'Mesh [graph]') {
-          title = 'Mesh';
+        if (item.id === 'mesh_classic' || item.id === 'mesh_graph') {
+          title = this.props.t('Mesh');
         }
 
         return (
           <NavItem isActive={activeMenuItem === item} key={item.to}>
-            <Link id={title} to={item.to} onClick={() => history.push(item.to)}>
+            <Link id={item.id} to={item.to} onClick={() => history.push(item.to)}>
               {title}
             </Link>
           </NavItem>
@@ -153,7 +151,7 @@ export class Menu extends React.Component<MenuProps, MenuState> {
       });
   };
 
-  render() {
+  render(): React.ReactNode {
     return (
       <Nav aria-label="Nav" theme="dark">
         <NavList className={navListStyle}>{this.renderMenuItems()}</NavList>
@@ -161,3 +159,5 @@ export class Menu extends React.Component<MenuProps, MenuState> {
     );
   }
 }
+
+export const Menu = withTranslation(I18N_NAMESPACE)(MenuComponent);

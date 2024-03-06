@@ -106,20 +106,22 @@ export class App extends React.Component<{}, AppState> {
 
   render() {
     return (
-      <Provider store={store}>
-        <PersistGate loading={<InitializingScreen />} persistor={persistor}>
-          {this.state.isInitialized ? (
-            <AuthenticationController
-              publicAreaComponent={(isPostLoginPerforming: boolean, errorMsg?: string) => (
-                <LoginPage isPostLoginPerforming={isPostLoginPerforming} postLoginErrorMsg={errorMsg} />
-              )}
-              protectedAreaComponent={this.protectedArea}
-            />
-          ) : (
-            <StartupInitializer onInitializationFinished={this.initializationFinishedHandler} />
-          )}
-        </PersistGate>
-      </Provider>
+      <React.Suspense fallback={<InitializingScreen />}>
+        <Provider store={store}>
+          <PersistGate loading={<InitializingScreen />} persistor={persistor}>
+            {this.state.isInitialized ? (
+              <AuthenticationController
+                publicAreaComponent={(isPostLoginPerforming: boolean, errorMsg?: string) => (
+                  <LoginPage isPostLoginPerforming={isPostLoginPerforming} postLoginErrorMsg={errorMsg} />
+                )}
+                protectedAreaComponent={this.protectedArea}
+              />
+            ) : (
+              <StartupInitializer onInitializationFinished={this.initializationFinishedHandler} />
+            )}
+          </PersistGate>
+        </Provider>
+      </React.Suspense>
     );
   }
 
