@@ -1020,10 +1020,8 @@ func (in *IstioConfigService) IsAmbientEnabled() bool {
 	}
 	if ambientEnabled == nil || currentTime.Sub(*lastUpdateTime) > (10*time.Minute) {
 		ambientEnabled = new(bool)
-		selector := map[string]string{
-			"app": "ztunnel",
-		}
-		daemonset, err := in.kialiCache.GetDaemonSetsWithSelector(meta_v1.NamespaceAll, selector)
+
+		daemonset, err := in.kialiCache.GetDaemonSetsWithSelector(meta_v1.NamespaceAll, "app=ztunnel")
 		if err != nil {
 			log.Debugf("No ztunnel daemonset found in Kiali accessible namespaces: %s ", err.Error())
 		} else {
