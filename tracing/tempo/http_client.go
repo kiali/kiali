@@ -33,8 +33,13 @@ func NewOtelClient(client http.Client, baseURL *url.URL) (otelClient *OtelHTTPCl
 	tags := false
 	r, status, _ := makeRequest(client, url.String(), nil)
 	if status != 200 {
-		responseError, _ := unmarshalError(r, baseURL)
-		log.Debugf("Error getting Tempo tags for tracing. Tags will be disabled. %s", responseError.Error)
+		responseError, errUnmarshall := unmarshalError(r, baseURL)
+		// If it is possible to decode the error, show the issue
+		if errUnmarshall != nil {
+			log.Debugf("Error getting Tempo tags for tracing. Tags will be disabled. %s", errUnmarshall.Error())
+		} else {
+			log.Debugf("Error getting Tempo tags for tracing. Tags will be disabled. %s", responseError.Error)
+		}
 	} else {
 		var response otel.TagsResponse
 		if errMarshal := json.Unmarshal(r, &response); errMarshal != nil {
@@ -74,9 +79,13 @@ func (oc OtelHTTPClient) GetTraceDetailHTTP(client http.Client, endpoint *url.UR
 		return nil, reqError
 	}
 	if code != 200 {
-		responseError, _ := unmarshalError(resp, endpoint)
-		log.Errorf("Tempo API query error: %s [code: %d, URL: %v]", responseError.Error, code, u)
-		return nil, errors.New(responseError.Error)
+		responseError, err := unmarshalError(resp, endpoint)
+		if err != nil {
+			log.Errorf("Tempo API query error: %s [code: %d, URL: %v]", responseError.Error, code, u)
+			return nil, errors.New(responseError.Error)
+		}
+		log.Errorf("Error returning traces %d", code)
+		return nil, errors.New("Error returning traces")
 	}
 	// Tempo would return "200 OK" when trace is not found, with an empty response
 	if len(resp) == 0 {
