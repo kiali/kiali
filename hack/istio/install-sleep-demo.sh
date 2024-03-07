@@ -83,6 +83,7 @@ if [ "${DELETE_SLEEP}" == "true" ]; then
     ${CLIENT_EXE} delete -n sleep -f ${ISTIO_DIR}/samples/sleep/sleep.yaml
   else
     ${CLIENT_EXE} delete -n sleep -f ${ISTIO_DIR}/samples/sleep/sleep.yaml
+  fi
 
   if [ "${IS_OPENSHIFT}" == "true" ]; then
     ${CLIENT_EXE} delete network-attachment-definition istio-cni -n sleep
