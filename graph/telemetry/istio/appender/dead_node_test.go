@@ -1,6 +1,7 @@
 package appender
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -127,7 +128,18 @@ func TestDeadNode(t *testing.T) {
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
-	a := DeadNodeAppender{}
+	a := DeadNodeAppender{
+		AccessibleNamespaces: map[string]*graph.AccessibleNamespace{
+			fmt.Sprintf("%s:testNamespace", config.DefaultClusterID): {
+				Cluster: config.DefaultClusterID,
+				Name:    "testNamespace",
+			},
+			fmt.Sprintf("%s:istio-system", config.DefaultClusterID): {
+				Cluster: config.DefaultClusterID,
+				Name:    "istio-system",
+			},
+		},
+	}
 	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
 
 	assert.Equal(10, len(trafficMap))
@@ -280,7 +292,14 @@ func TestDeadNodeIssue2783(t *testing.T) {
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
-	a := DeadNodeAppender{}
+	a := DeadNodeAppender{
+		AccessibleNamespaces: map[string]*graph.AccessibleNamespace{
+			fmt.Sprintf("%s:testNamespace", config.DefaultClusterID): {
+				Cluster: config.DefaultClusterID,
+				Name:    "testNamespace",
+			},
+		},
+	}
 	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
 
 	assert.Equal(0, len(trafficMap))
@@ -332,7 +351,14 @@ func TestDeadNodeIssue2982(t *testing.T) {
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
-	a := DeadNodeAppender{}
+	a := DeadNodeAppender{
+		AccessibleNamespaces: map[string]*graph.AccessibleNamespace{
+			fmt.Sprintf("%s:testNamespace", config.DefaultClusterID): {
+				Cluster: config.DefaultClusterID,
+				Name:    "testNamespace",
+			},
+		},
+	}
 	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
 
 	assert.Equal(1, len(trafficMap))
@@ -357,6 +383,61 @@ func testTrafficMapIssue2982() map[string]*graph.Node {
 
 	n0.AddEdge(n1)
 	n1.AddEdge(n2)
+
+	return trafficMap
+}
+
+func TestDeadNodeIssue7179(t *testing.T) {
+	assert := assert.New(t)
+
+	businessLayer := setupWorkloads(t)
+	trafficMap := testTrafficMapIssue7179()
+
+	assert.Equal(2, len(trafficMap))
+	aID, _, _ := graph.Id(config.DefaultClusterID, "testNamespace", "testPodsWithTraffic", "testNamespace", "testPodsWithTraffic-v1", "a", "v1", graph.GraphTypeVersionedApp)
+	aNode, found := trafficMap[aID]
+	assert.Equal(true, found)
+	assert.Equal(1, len(aNode.Edges))
+
+	bID, _, _ := graph.Id("InaccessibleCluster", "testNamespace", "noTraffic", "testNamespace", "noTraffic-v1", "b", "v1", graph.GraphTypeVersionedApp)
+	bNode, found := trafficMap[bID]
+	assert.Equal(true, found)
+	assert.Equal(0, len(bNode.Edges))
+
+	globalInfo := graph.NewAppenderGlobalInfo()
+	globalInfo.Business = businessLayer
+	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
+
+	a := DeadNodeAppender{
+		AccessibleNamespaces: map[string]*graph.AccessibleNamespace{
+			fmt.Sprintf("%s:testNamespace", config.DefaultClusterID): {
+				Cluster: config.DefaultClusterID,
+				Name:    "testNamespace",
+			},
+		},
+	}
+	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
+
+	assert.Equal(2, len(trafficMap))
+	_, found = trafficMap[aID]
+	assert.Equal(true, found)
+	_, found = trafficMap[bID]
+	assert.Equal(true, found)
+}
+
+// testTrafficMapIssue7179() ensures we assume that innaccessible workloads are not dead.
+func testTrafficMapIssue7179() map[string]*graph.Node {
+	trafficMap := make(map[string]*graph.Node)
+
+	n0, _ := graph.NewNode(config.DefaultClusterID, "testNamespace", "testPodsWithTraffic", "testNamespace", "testPodsWithTraffic-v1", "testPodsWithTraffic", "v1", graph.GraphTypeVersionedApp)
+	n0.Metadata["httpIn"] = 0.8
+
+	n1, _ := graph.NewNode("InaccessibleCluster", "testNamespace", "noTraffic", "testNamespace", "noTraffic-v1", "noTraffic", "v1", graph.GraphTypeVersionedApp)
+
+	trafficMap[n0.ID] = n0
+	trafficMap[n1.ID] = n1
+
+	n0.AddEdge(n1)
 
 	return trafficMap
 }
