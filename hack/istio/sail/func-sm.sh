@@ -61,6 +61,7 @@ EOM
 install_istio() {
   local control_plane_namespace="${1}"
   local istio_version="${2}"
+  local istio_yaml_file="${3:-}"
 
   # Obtained this list of CRDs by "oc get crds -oname | grep istio.io". We can't actually do that here programatically
   # because the CRDs may not even be created yet. That's why there is a while loop in here - to wait for them to be created.
@@ -128,8 +129,9 @@ install_istio() {
   fi
 
   infomsg "Installing Istio CR"
-  istio_yaml_file="/tmp/istio-cr.yaml"
-  cat <<EOM > ${istio_yaml_file}
+  if [ "${istio_yaml_file}" == "" ]; then
+    istio_yaml_file="/tmp/istio-cr.yaml"
+    cat <<EOM > ${istio_yaml_file}
 apiVersion: operator.istio.io/v1alpha1
 kind: Istio
 metadata:
@@ -162,6 +164,7 @@ spec:
           zipkin:
             address: "tempo-tempo-distributor.${TEMPO_NAMESPACE}:9411"
 EOM
+  fi
 
   while ! ${OC} apply -f ${istio_yaml_file}
   do
