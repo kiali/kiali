@@ -13,21 +13,13 @@ set -u
 SCRIPT_ROOT="$( cd "$(dirname "$0")" ; pwd -P )"
 cd ${SCRIPT_ROOT}
 
-# to make our own log messages standout
-errormsg() {
-  echo -e "\U0001F6A8 ERROR: ${1}"
-}
-
-infomsg() {
-  echo -e "\U0001F4C4 ${1}"
-}
-
 # get function definitions
 source ${SCRIPT_ROOT}/func-sm.sh
 source ${SCRIPT_ROOT}/func-kiali.sh
 source ${SCRIPT_ROOT}/func-tempo.sh
 source ${SCRIPT_ROOT}/func-addons.sh
 source ${SCRIPT_ROOT}/func-olm.sh
+source ${SCRIPT_ROOT}/func-log.sh
 
 DEFAULT_CONTROL_PLANE_NAMESPACE="istio-system"
 DEFAULT_ENABLE_KIALI="true"
