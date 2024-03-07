@@ -563,7 +563,9 @@ func (c *kubeCache) GetDaemonSetsWithSelector(namespace string, selectorLabels s
 					return nil, err2
 				}
 				for _, ds := range dsNS {
-					daemonSets = append(daemonSets, *ds)
+					d := ds.DeepCopy()
+					d.Kind = kubernetes.DaemonSetType
+					daemonSets = append(daemonSets, *d)
 				}
 
 			}
@@ -574,7 +576,9 @@ func (c *kubeCache) GetDaemonSetsWithSelector(namespace string, selectorLabels s
 			return nil, errDs
 		}
 		for _, ds := range dsNS {
-			daemonSets = append(daemonSets, *ds)
+			d := ds.DeepCopy()
+			d.Kind = kubernetes.DaemonSetType
+			daemonSets = append(daemonSets, *d)
 		}
 	}
 
