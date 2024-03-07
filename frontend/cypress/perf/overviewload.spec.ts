@@ -1,5 +1,5 @@
 import overviewCases from '../fixtures/perf/overviewPage.json';
-import { baselines, compareToBaseline, reportFilePath } from './common';
+import { baselines, compareToBaseline, reportFilePath, visits } from './common';
 
 const createNamespaces = (count: number): void => {
   cy.log(`Creating ${count} namespaces...`);
@@ -53,9 +53,9 @@ describe('Overview performance tests', () => {
           // Getting an average to smooth out the results.
           let sum = 0;
 
-          const visits = Array.from({ length: 5 });
+          const visitsList = Array.from({ length: visits });
 
-          cy.wrap(visits)
+          cy.wrap(visitsList)
             .each(() => {
               // Disabling refresh so that we can see how long it takes to load the page without additional requests
               // being made due to the refresh.
@@ -82,7 +82,7 @@ describe('Overview performance tests', () => {
                 });
             })
             .then(() => {
-              sum = sum / visits.length;
+              sum = sum / visitsList.length;
 
               const contents = `Namespaces: ${testCase.namespaces}\nInit page load time: ${compareToBaseline(
                 sum,
