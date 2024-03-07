@@ -219,6 +219,9 @@ delete_tempo_operator() {
 }
 
 delete_tempo() {
+
+  determine_tempo_namespaces
+
   infomsg "Deleting all TempoStack CRs (if they exist) which uninstalls all the Tempo components"
   local doomed_namespaces=""
   for cr in \
