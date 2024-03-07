@@ -36,7 +36,7 @@ describe('Overview performance tests', () => {
   // Testing empty namespaces to understand the impact of adding namespaces alone.
   describe('Overview page with empty namespaces', () => {
     before(() => {
-      cy.writeFile(reportFilePath, '\n[Empty Namespaces]\n\n', { flag: 'a+' });
+      cy.writeFile(reportFilePath, '\n[Overview page]\n\n', { flag: 'a+' });
     });
 
     (overviewCases as OverviewCase[]).forEach(testCase => {
@@ -86,7 +86,7 @@ describe('Overview performance tests', () => {
 
               const contents = `Namespaces: ${testCase.namespaces}\nInit page load time: ${compareToBaseline(
                 sum,
-                Cypress.env(baselines).overview
+                Cypress.env(baselines)[`overview${testCase.namespaces}`]
               )}\n`;
               cy.writeFile(reportFilePath, contents, { flag: 'a+' });
             });
