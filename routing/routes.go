@@ -923,9 +923,9 @@ func NewRoutes(conf *config.Config, kialiCache cache.KialiCache, clientFactory k
 			handlers.NamespaceMetrics,
 			true,
 		},
-		// swagger:route GET /namespaces/{namespace}/health namespaces namespaceHealth
+		// swagger:route GET /clusters/health cluster namespaces Health
 		// ---
-		// Get health for all objects in the given namespace
+		// Get health for all objects in namespaces of the given cluster
 		//
 		//     Produces:
 		//     - application/json
@@ -933,15 +933,15 @@ func NewRoutes(conf *config.Config, kialiCache cache.KialiCache, clientFactory k
 		//     Schemes: http, https
 		//
 		// responses:
-		//      200: namespaceAppHealthResponse
+		//      200: clustersNamespaceHealthResponse
 		//      400: badRequestError
 		//      500: internalError
 		//
 		{
-			"NamespaceHealth",
+			"ClustersHealth",
 			"GET",
-			"/api/namespaces/{namespace}/health",
-			handlers.NamespaceHealth,
+			"/api/clusters/health",
+			handlers.ClustersHealth,
 			true,
 		},
 		// swagger:route GET /namespaces/{namespace}/validations namespaces namespaceValidations

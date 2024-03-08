@@ -64,8 +64,8 @@ type TargetPanelNamespaceState = {
   istiodResourceThresholds?: IstiodResourceThresholds;
   loading: boolean;
   metrics?: Metric[];
-  nsInfo?: NamespaceInfo;
   namespaceNode?: Node<NodeModel, any>;
+  nsInfo?: NamespaceInfo;
   outboundPolicyMode?: OutboundTrafficPolicy;
   status?: NamespaceStatus;
   tlsStatus?: TLSStatus;
@@ -158,11 +158,11 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
       : null;
   }
 
-  componentDidMount() {
+  componentDidMount(): void {
     this.load();
   }
 
-  componentDidUpdate(prevProps: TargetPanelCommonProps) {
+  componentDidUpdate(prevProps: TargetPanelCommonProps): void {
     if (shouldRefreshData(prevProps, this.props)) {
       this.load();
     }
@@ -176,11 +176,11 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
     return nextState.loading === false;
   }
 
-  componentWillUnmount() {
+  componentWillUnmount(): void {
     this.promises.cancelAll();
   }
 
-  render() {
+  render(): React.ReactNode {
     if (this.state.loading || !this.state.nsInfo) {
       return null;
     }
@@ -788,8 +788,8 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
   }
 
   private fetchHealthStatus(): Promise<void> {
-    return API.getNamespaceAppHealth(this.namespace, this.props.duration, this.cluster)
-      .then(rs => {
+    return API.getClustersAppHealth(this.namespace, this.props.duration, this.cluster)
+      .then(results => {
         const nsStatus: NamespaceStatus = {
           inNotReady: [],
           inError: [],
@@ -798,6 +798,7 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
           notAvailable: []
         };
 
+        const rs = results[this.namespace];
         Object.keys(rs).forEach(item => {
           const health: Health = rs[item];
           const status = health.getGlobalStatus();
@@ -904,7 +905,7 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
       });
   }
 
-  private isControlPlane = () => {
+  private isControlPlane = (): boolean => {
     return this.namespace === serverConfig.istioNamespace;
   };
 

@@ -14,6 +14,7 @@ import { healthFilter } from 'components/Filters/CommonFilters';
 import { nameFilter } from '../Filters';
 import { DEFAULT_LABEL_OPERATION } from '../../../types/Filters';
 import i18n from 'i18next';
+import { CLUSTER_DEFAULT } from '../../../types/Graph';
 
 const mockAPIToPromise = (func: keyof typeof API, obj: any, encapsData: boolean): Promise<void> => {
   return new Promise((resolve, reject) => {
@@ -39,18 +40,22 @@ const mockAPIToPromise = (func: keyof typeof API, obj: any, encapsData: boolean)
 const mockNamespaces = (names: string[]): Promise<void> => {
   return mockAPIToPromise(
     'getNamespaces',
-    names.map(n => ({ name: n })),
+    names.map(n => ({ name: n, cluster: CLUSTER_DEFAULT })),
     true
   );
 };
 
-const mockNamespaceHealth = (obj: NamespaceAppHealth): Promise<void> => {
-  return mockAPIToPromise('getNamespaceAppHealth', obj, false);
+const mockNamespaceHealth = (namespaces: string[], obj: NamespaceAppHealth): Promise<void> => {
+  const res: Map<string, NamespaceAppHealth> = new Map<string, NamespaceAppHealth>();
+  namespaces.forEach(namespace => {
+    res[namespace] = obj;
+  });
+  return mockAPIToPromise('getClustersAppHealth', res, false);
 };
 
 let mounted: ReactWrapper<any, any> | null;
 
-const mountPage = () => {
+const mountPage = (): void => {
   mounted = mount(
     <Provider store={store}>
       <Router>
@@ -84,6 +89,9 @@ describe('Overview page', () => {
     mounted = null;
 
     // Ignore other calls
+    mockAPIToPromise('getClustersServiceHealth', null, false);
+    mockAPIToPromise('getClustersWorkloadHealth', null, false);
+    mockAPIToPromise('getClustersMetrics', null, false);
     mockAPIToPromise('getNamespaceMetrics', null, false);
     mockAPIToPromise('getNamespaceTls', null, false);
     mockAPIToPromise('getConfigValidations', null, false);
@@ -121,7 +129,7 @@ describe('Overview page', () => {
     FilterSelected.setSelected({ filters: [], op: DEFAULT_LABEL_OPERATION });
     Promise.all([
       mockNamespaces(['a', 'b', 'c']),
-      mockNamespaceHealth({
+      mockNamespaceHealth(['a', 'b', 'c'], {
         app1: {
           getGlobalStatus: () => HEALTHY
         } as AppHealth,
@@ -142,7 +150,7 @@ describe('Overview page', () => {
     FilterSelected.setSelected(genActiveFilters(healthFilter, ['Failure']));
     Promise.all([
       mockNamespaces(['a']),
-      mockNamespaceHealth({
+      mockNamespaceHealth(['a'], {
         app1: {
           getGlobalStatus: () => DEGRADED
         } as AppHealth,
@@ -165,7 +173,7 @@ describe('Overview page', () => {
     FilterSelected.setSelected(genActiveFilters(healthFilter, ['Failure']));
     Promise.all([
       mockNamespaces(['a']),
-      mockNamespaceHealth({
+      mockNamespaceHealth(['a'], {
         app1: {
           getGlobalStatus: () => DEGRADED
         } as AppHealth,
@@ -188,7 +196,7 @@ describe('Overview page', () => {
     FilterSelected.setSelected(genActiveFilters(healthFilter, ['Failure', 'Degraded']));
     Promise.all([
       mockNamespaces(['a']),
-      mockNamespaceHealth({
+      mockNamespaceHealth(['a'], {
         app1: {
           getGlobalStatus: () => DEGRADED
         } as AppHealth,
@@ -208,7 +216,7 @@ describe('Overview page', () => {
     FilterSelected.setSelected(genActiveFilters(healthFilter, ['Failure', 'Degraded']));
     Promise.all([
       mockNamespaces(['a']),
-      mockNamespaceHealth({
+      mockNamespaceHealth(['a'], {
         app1: {
           getGlobalStatus: () => HEALTHY
         } as AppHealth,
@@ -228,7 +236,7 @@ describe('Overview page', () => {
     FilterSelected.setSelected(genActiveFilters(nameFilter, ['bc']));
     Promise.all([
       mockNamespaces(['abc', 'bce', 'ced']),
-      mockNamespaceHealth({
+      mockNamespaceHealth(['abc', 'bce', 'ced'], {
         app1: {
           getGlobalStatus: () => HEALTHY
         } as AppHealth
@@ -257,7 +265,7 @@ describe('Overview page', () => {
     );
     Promise.all([
       mockNamespaces(['abc', 'bce', 'ced']),
-      mockNamespaceHealth({
+      mockNamespaceHealth(['abc', 'bce', 'ced'], {
         app1: {
           getGlobalStatus: () => HEALTHY
         } as AppHealth
@@ -276,7 +284,7 @@ describe('Overview page', () => {
     );
     Promise.all([
       mockNamespaces(['abc', 'bce', 'ced']),
-      mockNamespaceHealth({
+      mockNamespaceHealth(['abc', 'bce', 'ced'], {
         app1: {
           getGlobalStatus: () => DEGRADED
         } as AppHealth
