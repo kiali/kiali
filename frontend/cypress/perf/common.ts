@@ -65,17 +65,17 @@ export const measureDetailsLoadTime = (name: string, baseline: number, detailsUr
 export const compareToBaseline = (resultMS: number, baseline: number): string => {
   // to seconds
   const result = resultMS / 1000;
-  const resultSeconds = result.toPrecision(5);
-  const difference = baseline - result;
+  const resultOutput = result.toPrecision(5);
 
-  return `${resultSeconds} sec, baseline: ${baseline} sec, difference: ${formatNumberWithSign(difference)} sec\n`;
+  return `${resultOutput} sec, baseline: ${baseline} sec, difference: ${getDifference(result, baseline)} sec\n`;
 };
 
-const formatNumberWithSign = (num: number): string => {
-  if (num > 0) {
-    return `+${num.toPrecision(precision)}`;
-  } else if (num < 0) {
-    return `-${Math.abs(num).toPrecision(precision)}`;
+const getDifference = (result, baseline: number): string => {
+  const difference = result - baseline;
+  if (difference > 0) {
+    return `+${difference.toPrecision(precision)}`;
+  } else if (difference < 0) {
+    return `-${Math.abs(difference).toPrecision(precision)}`;
   } else {
     return '0';
   }
