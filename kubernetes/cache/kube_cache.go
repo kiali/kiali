@@ -69,7 +69,7 @@ type KubeCache interface {
 	GetConfigMap(namespace, name string) (*core_v1.ConfigMap, error)
 	GetDaemonSets(namespace string) ([]apps_v1.DaemonSet, error)
 	GetDaemonSet(namespace, name string) (*apps_v1.DaemonSet, error)
-	GetDaemonSetsWithSelector(namespace string, labelSelector map[string]string) ([]apps_v1.DaemonSet, error)
+	GetDaemonSetsWithSelector(namespace string, labelSelector map[string]string) ([]*apps_v1.DaemonSet, error)
 	GetDeployments(namespace string) ([]apps_v1.Deployment, error)
 	GetDeploymentsWithSelector(namespace string, labelSelector string) ([]apps_v1.Deployment, error)
 	GetDeployment(namespace, name string) (*apps_v1.Deployment, error)
@@ -538,44 +538,37 @@ func (c *kubeCache) GetDaemonSet(namespace, name string) (*apps_v1.DaemonSet, er
 	return retDS, nil
 }
 
-func (c *kubeCache) GetDaemonSetsWithSelector(namespace string, selectorLabels map[string]string) ([]apps_v1.DaemonSet, error) {
+func (c *kubeCache) GetDaemonSetsWithSelector(namespace string, selectorLabels map[string]string) ([]*apps_v1.DaemonSet, error) {
 	defer c.cacheLock.RUnlock()
 	c.cacheLock.RLock()
 
-	var daemonSets []apps_v1.DaemonSet
+	var daemonSets []*apps_v1.DaemonSet
 	var err error
 	selector := labels.Set(selectorLabels)
 
 	if namespace == metav1.NamespaceAll {
 		if c.clusterScoped {
-			daemonSets, err = c.GetDaemonSets(namespace)
+			daemonSets, err = c.getCacheLister(namespace).daemonSetLister.DaemonSets(namespace).List(labels.Everything())
 			if err != nil {
 				return nil, err
 			}
 		} else {
 			for _, nsCacheLister := range c.nsCacheLister {
-				dsNS, err2 := nsCacheLister.daemonSetLister.List(labels.Everything())
-				if err2 != nil {
-					return nil, err2
+				daemonSets, err = nsCacheLister.daemonSetLister.List(labels.Everything())
+				if err != nil {
+					return nil, err
 				}
-				for _, ds := range dsNS {
-					daemonSets = append(daemonSets, *ds)
-				}
-
 			}
 		}
 	} else {
-		dsNS, errDs := c.getCacheLister(namespace).daemonSetLister.DaemonSets(namespace).List(labels.Everything())
-		if errDs != nil {
-			return nil, errDs
-		}
-		for _, ds := range dsNS {
-			daemonSets = append(daemonSets, *ds)
+		daemonSets, err = c.getCacheLister(namespace).daemonSetLister.DaemonSets(namespace).List(labels.Everything())
+		if err != nil {
+			return nil, err
 		}
 	}
 
 	// Now, filter by selector
-	retDS := []apps_v1.DaemonSet{}
+	retDS := []*apps_v1.DaemonSet{}
 	for _, ds := range daemonSets {
 
 		labelMap, err := metav1.LabelSelectorAsMap(ds.Spec.Selector)
@@ -590,7 +583,7 @@ func (c *kubeCache) GetDaemonSetsWithSelector(namespace string, selectorLabels m
 			// Do not modify what is returned by the lister since that is shared and will cause data races.
 			svc := ds.DeepCopy()
 			svc.Kind = kubernetes.DaemonSetType
-			retDS = append(retDS, *svc)
+			retDS = append(retDS, svc)
 		}
 	}
 	return retDS, nil
