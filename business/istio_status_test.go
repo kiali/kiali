@@ -842,6 +842,9 @@ func fakeDaemonSetWithStatus(name string, labels map[string]string, status apps_
 		},
 		Status: status,
 		Spec: apps_v1.DaemonSetSpec{
+			Selector: &meta_v1.LabelSelector{
+				MatchLabels: labels,
+			},
 			Template: v1.PodTemplateSpec{
 				ObjectMeta: meta_v1.ObjectMeta{
 					Name:   "",

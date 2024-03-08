@@ -1,4 +1,4 @@
-package cache
+package cache_test
 
 import (
 	"sync"
@@ -11,6 +11,7 @@ import (
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 )
 
@@ -23,7 +24,12 @@ func TestNoHomeClusterReturnsError(t *testing.T) {
 	clientFactory := kubetest.NewK8SClientFactoryMock(client)
 	clientFactory.SetClients(map[string]kubernetes.ClientInterface{"nothomecluster": client})
 
-	_, err := NewKialiCache(clientFactory, *conf)
+	cache, err := cache.NewKialiCache(clientFactory, *conf)
+	defer func() {
+		if cache != nil {
+			cache.Stop()
+		}
+	}()
 	require.Error(err, "no home cluster should return an error")
 }
 
@@ -43,14 +49,12 @@ func TestKubeCacheCreatedPerClient(t *testing.T) {
 		"cluster2":                        client2,
 	})
 
-	kialiCache, err := NewKialiCache(clientFactory, *conf)
-	require.NoError(err)
-	defer kialiCache.Stop()
+	kialiCache := cache.NewTestingCacheWithFactory(t, clientFactory, *conf)
 
 	caches := kialiCache.GetKubeCaches()
 	require.Equal(2, len(caches))
 
-	_, err = caches[conf.KubernetesConfig.ClusterName].GetDeployment("test", "deployment1")
+	_, err := caches[conf.KubernetesConfig.ClusterName].GetDeployment("test", "deployment1")
 	require.NoError(err)
 
 	_, err = caches["cluster2"].GetDeployment("test", "deployment2")
@@ -66,18 +70,61 @@ func TestKubeCacheCreatedPerClient(t *testing.T) {
 	require.Error(err)
 }
 
+func ztunnelDaemonSet() *apps_v1.DaemonSet {
+	return &apps_v1.DaemonSet{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "ztunnel",
+			Namespace: "istio-system",
+		},
+		Spec: apps_v1.DaemonSetSpec{
+			Selector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{"app": "ztunnel"},
+			},
+		},
+	}
+}
+
 func TestIsAmbientEnabled(t *testing.T) {
 	require := require.New(t)
 	conf := config.NewConfig()
 	client := kubetest.NewFakeK8sClient(
 		&core_v1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "istio-system"}},
-		&apps_v1.DaemonSet{ObjectMeta: metav1.ObjectMeta{Name: "ztunnel", Namespace: "istio-system"}},
+		ztunnelDaemonSet(),
 	)
-	cache := NewTestingCache(t, client, *conf)
+	cache := cache.NewTestingCache(t, client, *conf)
 
 	require.True(cache.IsAmbientEnabled(conf.KubernetesConfig.ClusterName))
 	// Call multiple times to ensure results are consistent.
 	require.True(cache.IsAmbientEnabled(conf.KubernetesConfig.ClusterName))
+}
+
+func TestIsAmbientEnabledOutsideIstioSystem(t *testing.T) {
+	require := require.New(t)
+	conf := config.NewConfig()
+	ztunnel := ztunnelDaemonSet()
+	ztunnel.Namespace = "alternate-istio-namespace"
+	client := kubetest.NewFakeK8sClient(
+		&core_v1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "alternate-istio-namespace"}},
+		ztunnel,
+	)
+	cache := cache.NewTestingCache(t, client, *conf)
+
+	require.True(cache.IsAmbientEnabled(conf.KubernetesConfig.ClusterName))
+	// Call multiple times to ensure results are consistent.
+	require.True(cache.IsAmbientEnabled(conf.KubernetesConfig.ClusterName))
+}
+
+func TestIsAmbientDisabled(t *testing.T) {
+	require := require.New(t)
+	conf := config.NewConfig()
+	client := kubetest.NewFakeK8sClient(
+		&core_v1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "istio-system"}},
+	)
+	cache := cache.NewTestingCache(t, client, *conf)
+
+	require.False(cache.IsAmbientEnabled(conf.KubernetesConfig.ClusterName))
+	// Call multiple times to ensure results are consistent.
+	require.False(cache.IsAmbientEnabled(conf.KubernetesConfig.ClusterName))
 }
 
 func TestIsAmbientMultiCluster(t *testing.T) {
@@ -86,7 +133,7 @@ func TestIsAmbientMultiCluster(t *testing.T) {
 	conf.KubernetesConfig.ClusterName = "east"
 	east := kubetest.NewFakeK8sClient(
 		&core_v1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "istio-system"}},
-		&apps_v1.DaemonSet{ObjectMeta: metav1.ObjectMeta{Name: "ztunnel", Namespace: "istio-system"}},
+		ztunnelDaemonSet(),
 	)
 	west := kubetest.NewFakeK8sClient(
 		&core_v1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "istio-system"}},
@@ -96,7 +143,7 @@ func TestIsAmbientMultiCluster(t *testing.T) {
 		"east": east,
 		"west": west,
 	})
-	cache := NewTestingCacheWithFactory(t, clientFactory, *conf)
+	cache := cache.NewTestingCacheWithFactory(t, clientFactory, *conf)
 
 	require.True(cache.IsAmbientEnabled("east"))
 	require.False(cache.IsAmbientEnabled("west"))
@@ -107,9 +154,9 @@ func TestIsAmbientIsThreadSafe(t *testing.T) {
 	conf := config.NewConfig()
 	client := kubetest.NewFakeK8sClient(
 		&core_v1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "istio-system"}},
-		&apps_v1.DaemonSet{ObjectMeta: metav1.ObjectMeta{Name: "ztunnel", Namespace: "istio-system"}},
+		ztunnelDaemonSet(),
 	)
-	cache := NewTestingCache(t, client, *conf)
+	cache := cache.NewTestingCache(t, client, *conf)
 
 	wg := sync.WaitGroup{}
 	for i := 0; i < 10; i++ {

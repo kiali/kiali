@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
@@ -17,7 +17,7 @@ import (
 	"github.com/kiali/kiali/util"
 )
 
-const ambientCheckExpirationTime = 1 * time.Minute
+const ambientCheckExpirationTime = 10 * time.Minute
 
 // Istio uses caches for pods and controllers.
 // Kiali will use caches for specific namespaces and types
@@ -179,17 +179,20 @@ func (in *kialiCacheImpl) IsAmbientEnabled(cluster string) bool {
 			return false
 		}
 
-		_, err = kubeCache.GetDaemonSet(in.conf.IstioNamespace, "ztunnel")
+		selector := map[string]string{
+			"app": "ztunnel",
+		}
+		daemonsets, err := kubeCache.GetDaemonSetsWithSelector(metav1.NamespaceAll, selector)
 		if err != nil {
-			if k8serrors.IsNotFound(err) {
-				log.Debugf("No ztunnel found in istio namespace: %s ", err.Error())
-				in.ambientChecksPerCluster.Set(cluster, false)
-				return false
-			} else {
-				log.Debugf("Error checking for ztunnel in istio namespace: %s", err.Error())
-				// Don't set the check so we will check again the next time since this error may be transient.
-				return false
-			}
+			// Don't set the check so we will check again the next time since this error may be transient.
+			log.Debugf("Error checking for ztunnel in Kiali accessible namespaces in cluster '%s': %s", cluster, err.Error())
+			return false
+		}
+
+		if len(daemonsets) == 0 {
+			log.Debugf("No ztunnel daemonsets found in Kiali accessible namespaces in cluster '%s'", cluster)
+			in.ambientChecksPerCluster.Set(cluster, false)
+			return false
 		}
 
 		in.ambientChecksPerCluster.Set(cluster, true)
