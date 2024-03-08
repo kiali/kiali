@@ -11,12 +11,13 @@ const DeadNodeAppenderName = "deadNode"
 //   - nodes for which there is no traffic reported and a backing workload that can't be found
 //     (presumably removed from K8S). (kiali-621)
 //   - this includes "unknown"
-//   - service nodes that are not service entries (kiali-1526), egress handlers and for which there is no
-//     incoming traffic or outgoing edges
-//     error traffic and no outgoing edges (kiali-1326).
+//   - service nodes that are not service entries (kiali-1526) or egress handlers, and for which
+//     there is no incoming traffic or outgoing edge
 //
 // Name: deadNode
-type DeadNodeAppender struct{}
+type DeadNodeAppender struct {
+	AccessibleNamespaces graph.AccessibleNamespaces
+}
 
 // Name implements Appender
 func (a DeadNodeAppender) Name() string {
@@ -72,10 +73,10 @@ func (a DeadNodeAppender) applyDeadNodes(trafficMap graph.TrafficMap, globalInfo
 
 		switch n.NodeType {
 		case graph.NodeTypeAggregate:
-			// am aggregate node is never dead
+			// an aggregate node is never dead
 			continue
 		case graph.NodeTypeService:
-			// a service node with outgoing edges is never considered dead (or egress)
+			// a service node with outgoing edges is never considered dead
 			if len(n.Edges) > 0 {
 				continue
 			}
@@ -102,7 +103,13 @@ func (a DeadNodeAppender) applyDeadNodes(trafficMap graph.TrafficMap, globalInfo
 				continue
 			}
 
-			// Remove if backing workload is not defined (always true for "unknown"), flag if there are no pods
+			// If the potential workload is not unknown, but is inaccessible, we can't actually check for its existence, so we
+			// need to assume it is valid
+			if n.NodeType != graph.NodeTypeUnknown && !a.nodeOK(n) {
+				continue
+			}
+
+			// Remove if backing workload is not defined (always for "unknown"), flag if there are no pods
 			if workload, found := getWorkload(n.Cluster, namespaceInfo.Namespace, n.Workload, globalInfo); !found {
 				delete(trafficMap, id)
 				numRemoved++
@@ -128,4 +135,11 @@ func (a DeadNodeAppender) applyDeadNodes(trafficMap graph.TrafficMap, globalInfo
 	}
 
 	return numRemoved
+}
+
+// nodeOK returns true if we have access to its workload info
+func (a *DeadNodeAppender) nodeOK(node *graph.Node) bool {
+	key := graph.GetClusterSensitiveKey(node.Cluster, node.Namespace)
+	_, ok := a.AccessibleNamespaces[key]
+	return ok
 }
