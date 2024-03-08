@@ -17,6 +17,7 @@ SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
 # ISTIO_DIR is where the Istio download is installed and thus where the sleep demo files are found.
 # CLIENT_EXE_NAME is going to either be "oc" or "kubectl"
 ISTIO_DIR=
+ARCH="amd64"
 CLIENT_EXE="oc"
 DELETE_SLEEP="false"
 : ${ISTIO_NAMESPACE:=istio-system}
@@ -27,6 +28,7 @@ while [[ $# -gt 0 ]]; do
   key="$1"
   case $key in
     -a|--arch)
+      ARCH="$2"
       shift;shift
       ;;
     -ds|--delete-sleep)
@@ -48,6 +50,7 @@ while [[ $# -gt 0 ]]; do
     -h|--help)
       cat <<HELPMSG
 Valid command line arguments:
+  -a|--arch <amd64|ppc64le|s390x>: Images for given arch will be used (default: amd64).
   -ds|--delete-sleep <true|false>: If true, uninstall sleep. If false, install sleep. (default: false).
   -id|--istio-dir <dir>: Where Istio has already been downloaded. If not found, this script aborts.
   -c|--client-exe <name>: Cluster client executable name - valid values are "kubectl" or "oc"
@@ -77,10 +80,14 @@ if [ "${DELETE_SLEEP}" == "true" ]; then
   set +e
 
   echo "Deleting the 'sleep' app in the 'sleep' namespace..."
-  ${CLIENT_EXE} delete -n sleep -f ${ISTIO_DIR}/samples/sleep/sleep.yaml
-  if [ "${IS_MAISTRA}" == "true" ]; then
-    ${CLIENT_EXE} delete smm default -n "sleep" --ignore-not-found=true
+  # s390x specific images for curl in sleep.yaml (OSSM-6012)
+  if [ "${ARCH}" == "s390x" ]; then
+    sed -i.bak "s;curlimages/curl;curlimages/curl:8.4.0;g" ${ISTIO_DIR}/samples/sleep/sleep.yaml 
+    ${CLIENT_EXE} delete -n sleep -f ${ISTIO_DIR}/samples/sleep/sleep.yaml
+  else
+    ${CLIENT_EXE} delete -n sleep -f ${ISTIO_DIR}/samples/sleep/sleep.yaml
   fi
+
   if [ "${IS_OPENSHIFT}" == "true" ]; then
     ${CLIENT_EXE} delete network-attachment-definition istio-cni -n sleep
     ${CLIENT_EXE} delete scc sleep-scc
