@@ -790,7 +790,6 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
   private fetchHealthStatus(): Promise<void> {
     return API.getClustersAppHealth(this.namespace, this.props.duration, this.cluster)
       .then(results => {
-        console.log('In HealthStatus');
         const nsStatus: NamespaceStatus = {
           inNotReady: [],
           inError: [],
