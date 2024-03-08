@@ -1,5 +1,5 @@
 import overviewCases from '../fixtures/perf/overviewPage.json';
-import { reportFilePath } from './common';
+import { baselines, compareToBaseline, reportFilePath, visits } from './common';
 
 const createNamespaces = (count: number): void => {
   cy.log(`Creating ${count} namespaces...`);
@@ -36,7 +36,7 @@ describe('Overview performance tests', () => {
   // Testing empty namespaces to understand the impact of adding namespaces alone.
   describe('Overview page with empty namespaces', () => {
     before(() => {
-      cy.writeFile(reportFilePath, '\n[Empty Namespaces]\n\n', { flag: 'a+' });
+      cy.writeFile(reportFilePath, '\n[Overview page]\n\n', { flag: 'a+' });
     });
 
     (overviewCases as OverviewCase[]).forEach(testCase => {
@@ -53,9 +53,9 @@ describe('Overview performance tests', () => {
           // Getting an average to smooth out the results.
           let sum = 0;
 
-          const visits = Array.from({ length: 5 });
+          const visitsList = Array.from({ length: visits });
 
-          cy.wrap(visits)
+          cy.wrap(visitsList)
             .each(() => {
               // Disabling refresh so that we can see how long it takes to load the page without additional requests
               // being made due to the refresh.
@@ -82,11 +82,12 @@ describe('Overview performance tests', () => {
                 });
             })
             .then(() => {
-              sum = sum / visits.length;
+              sum = sum / visitsList.length;
 
-              const contents = `Namespaces: ${testCase.namespaces}\nInit page load time: ${(sum / 1000).toPrecision(
-                5
-              )} seconds\n`;
+              const contents = `Namespaces: ${testCase.namespaces}\nInit page load time: ${compareToBaseline(
+                sum,
+                Cypress.env(baselines)[`overview${testCase.namespaces}`]
+              )}\n`;
               cy.writeFile(reportFilePath, contents, { flag: 'a+' });
             });
         });

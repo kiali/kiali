@@ -1,0 +1,17 @@
+{
+  "workloadListAll": "2",
+  "workloadListSelected": "2",
+  "workloadDetails": "1",
+  "serviceListAll": "2",
+  "serviceListSelected": "2",
+  "serviceDetails": "1",
+  "appListAll": "2",
+  "appListSelected": "2",
+  "appDetails": "1",
+  "configListAdd": "2",
+  "configListSelected": "2",
+  "configDetails": "1",
+  "overview10": "2",
+  "overview50": "2",
+  "overview300": "2"
+}

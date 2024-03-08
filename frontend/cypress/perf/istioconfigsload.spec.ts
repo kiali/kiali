@@ -1,4 +1,4 @@
-import { reportFilePath, measureListsLoadTime, visits, measureDetailsLoadTime } from './common';
+import { reportFilePath, measureListsLoadTime, measureDetailsLoadTime, baselines } from './common';
 
 describe('Istio Configs performance tests', () => {
   beforeEach(() => {
@@ -21,10 +21,14 @@ describe('Istio Configs performance tests', () => {
     });
 
     it('Measures All Namespaces Istio Configs load time', { defaultCommandTimeout: Cypress.env('timeout') }, () => {
-      measureListsLoadTime('All Namespaces Istio Configs', visits, configsUrlAllNamespaces);
+      measureListsLoadTime(
+        'All Namespaces Istio Configs',
+        Cypress.env(baselines).configListAdd,
+        configsUrlAllNamespaces
+      );
     });
     it('Measures Istio Configs load time', { defaultCommandTimeout: Cypress.env('timeout') }, () => {
-      measureListsLoadTime('Selected Namespaces Istio Configs', visits, configsUrl);
+      measureListsLoadTime('Selected Namespaces Istio Configs', Cypress.env(baselines).configListSelected, configsUrl);
     });
   });
 
@@ -46,7 +50,7 @@ describe('Istio Configs performance tests', () => {
 
     it('Istio Config details load time', { defaultCommandTimeout: Cypress.env('timeout') }, () => {
       configUrls.forEach((url, name) => {
-        measureDetailsLoadTime(name, visits, url);
+        measureDetailsLoadTime(name, Cypress.env(baselines).configDetails, url);
       });
     });
   });
