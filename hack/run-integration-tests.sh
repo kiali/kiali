@@ -249,7 +249,6 @@ elif [ "${TEST_SUITE}" == "${BACKEND_EXTERNAL_CONTROLPLANE}" ]; then
     # Switch back to controlplane since that is where kiali is installed.
     kubectl config use-context "${CLUSTER1_CONTEXT}"
     ensureKialiServerReady
-    ensureMulticlusterApplicationsAreHealthy
     
     # This envvar is used by the backend tests
     export URL="${KIALI_URL}"
