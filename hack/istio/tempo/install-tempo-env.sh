@@ -169,17 +169,17 @@ spec:
     secret:
       type: s3
       name: tempostack-dev-minio
-  resources:
-    total:
-      limits:
-        memory: 4Gi
-        cpu: 8000m
   template:
     distributor:
       tls:
         enabled: true
         certName: tempo-cert
     queryFrontend:
+      component:
+        resources:
+          limits:
+            cpu: "2"
+            memory: 2Gi
       jaegerQuery:
         enabled: false
 EOF
@@ -197,13 +197,13 @@ spec:
     secret:
       type: s3
       name: tempostack-dev-minio
-  resources:
-    total:
-      limits:
-        memory: 8Gi
-        cpu: 8000m
   template:
     queryFrontend:
+      component:
+        resources:
+          limits:
+            cpu: "2"
+            memory: 2Gi
       jaegerQuery:
         enabled: false
 EOF
