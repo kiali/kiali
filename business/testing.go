@@ -74,8 +74,3 @@ func FindOrFail[T any](t *testing.T, s []T, f func(T) bool) T {
 	}
 	return s[idx]
 }
-
-// asPtr returns a pointer to the argument.
-func asPtr[T any](t T) *T {
-	return &t
-}

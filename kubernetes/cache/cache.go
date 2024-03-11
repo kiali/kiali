@@ -1,17 +1,23 @@
 package cache
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"sync"
 	"time"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/store"
+	"github.com/kiali/kiali/util"
 )
+
+const ambientCheckExpirationTime = 10 * time.Minute
 
 // Istio uses caches for pods and controllers.
 // Kiali will use caches for specific namespaces and types
@@ -42,6 +48,10 @@ type KialiCache interface {
 	RegistryStatusCache
 	ProxyStatusCache
 	NamespacesCache
+
+	// IsAmbientEnabled checks if the istio Ambient profile was enabled
+	// by checking if the ztunnel daemonset exists on the cluster.
+	IsAmbientEnabled(cluster string) bool
 }
 
 // namespaceCache caches namespaces according to their token.
@@ -52,6 +62,9 @@ type namespaceCache struct {
 }
 
 type kialiCacheImpl struct {
+	ambientChecksPerCluster store.Store[bool]
+	cleanup                 func()
+	conf                    config.Config
 	// Embedded for backward compatibility for business methods that just use one cluster.
 	// All business methods should eventually use the multi-cluster cache.
 	// TODO: Get rid of embedding.
@@ -75,14 +88,18 @@ type kialiCacheImpl struct {
 }
 
 func NewKialiCache(clientFactory kubernetes.ClientFactory, cfg config.Config) (KialiCache, error) {
+	ctx, cancel := context.WithCancel(context.Background())
 	kialiCacheImpl := kialiCacheImpl{
-		clientFactory:          clientFactory,
-		kubeCache:              make(map[string]KubeCache),
-		refreshDuration:        time.Duration(cfg.KubernetesConfig.CacheDuration) * time.Second,
-		tokenNamespaces:        make(map[string]namespaceCache),
-		tokenNamespaceDuration: time.Duration(cfg.KubernetesConfig.CacheTokenNamespaceDuration) * time.Second,
-		proxyStatusStore:       store.New[*kubernetes.ProxyStatus](),
-		registryStatusStore:    store.New[*kubernetes.RegistryStatus](),
+		ambientChecksPerCluster: store.NewExpirationStore(ctx, store.New[bool](), util.AsPtr(ambientCheckExpirationTime), nil),
+		cleanup:                 cancel,
+		clientFactory:           clientFactory,
+		conf:                    cfg,
+		kubeCache:               make(map[string]KubeCache),
+		refreshDuration:         time.Duration(cfg.KubernetesConfig.CacheDuration) * time.Second,
+		tokenNamespaces:         make(map[string]namespaceCache),
+		tokenNamespaceDuration:  time.Duration(cfg.KubernetesConfig.CacheTokenNamespaceDuration) * time.Second,
+		proxyStatusStore:        store.New[*kubernetes.ProxyStatus](),
+		registryStatusStore:     store.New[*kubernetes.RegistryStatus](),
 	}
 
 	for cluster, client := range clientFactory.GetSAClients() {
@@ -149,6 +166,40 @@ func (c *kialiCacheImpl) SetClusters(clusters []kubernetes.Cluster) {
 	defer c.clusterLock.Unlock()
 	c.clusterLock.Lock()
 	c.clusters = clusters
+}
+
+// IsAmbientEnabled checks if the istio Ambient profile was enabled
+// by checking if the ztunnel daemonset exists on the cluster.
+func (in *kialiCacheImpl) IsAmbientEnabled(cluster string) bool {
+	check, found := in.ambientChecksPerCluster.Get(cluster)
+	if !found {
+		kubeCache, err := in.GetKubeCache(cluster)
+		if err != nil {
+			log.Debugf("Unable to get kube cache when checking for ambient profile: %s", err)
+			return false
+		}
+
+		selector := map[string]string{
+			"app": "ztunnel",
+		}
+		daemonsets, err := kubeCache.GetDaemonSetsWithSelector(metav1.NamespaceAll, selector)
+		if err != nil {
+			// Don't set the check so we will check again the next time since this error may be transient.
+			log.Debugf("Error checking for ztunnel in Kiali accessible namespaces in cluster '%s': %s", cluster, err.Error())
+			return false
+		}
+
+		if len(daemonsets) == 0 {
+			log.Debugf("No ztunnel daemonsets found in Kiali accessible namespaces in cluster '%s'", cluster)
+			in.ambientChecksPerCluster.Set(cluster, false)
+			return false
+		}
+
+		in.ambientChecksPerCluster.Set(cluster, true)
+		return true
+	}
+
+	return check
 }
 
 // Interface guard for kiali cache impl
