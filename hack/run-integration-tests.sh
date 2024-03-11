@@ -182,7 +182,7 @@ ensureKialiTracesReady() {
   done
 }
 
-ensureApplicationsAreHealthy() {
+ensureMulticlusterApplicationsAreHealthy() {
   local start_time=$(date +%s)
   local timeout=300
   local url="${KIALI_URL}/api/namespaces/bookinfo/apps?health=true&istioResources=true&rateInterval=60s"
@@ -249,6 +249,7 @@ elif [ "${TEST_SUITE}" == "${BACKEND_EXTERNAL_CONTROLPLANE}" ]; then
     # Switch back to controlplane since that is where kiali is installed.
     kubectl config use-context "${CLUSTER1_CONTEXT}"
     ensureKialiServerReady
+    ensureMulticlusterApplicationsAreHealthy
     
     # This envvar is used by the backend tests
     export URL="${KIALI_URL}"
@@ -273,7 +274,6 @@ elif [ "${TEST_SUITE}" == "${FRONTEND}" ]; then
   fi
 
   ensureKialiServerReady
-  ensureApplicationsAreHealthy
 
   export CYPRESS_BASE_URL="${KIALI_URL}"
   export CYPRESS_NUM_TESTS_KEPT_IN_MEMORY=0
@@ -294,7 +294,7 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_PRIMARY_REMOTE}" ]; then
   fi
 
   ensureKialiServerReady
-  ensureApplicationsAreHealthy
+  ensureMulticlusterApplicationsAreHealthy
 
   export CYPRESS_BASE_URL="${KIALI_URL}"
   export CYPRESS_CLUSTER1_CONTEXT="kind-east"
@@ -317,7 +317,7 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_MULTI_PRIMARY}" ]; then
   fi
   
   ensureKialiServerReady
-  ensureApplicationsAreHealthy
+  ensureMulticlusterApplicationsAreHealthy
 
   export CYPRESS_BASE_URL="${KIALI_URL}"
   export CYPRESS_CLUSTER1_CONTEXT="kind-east"
