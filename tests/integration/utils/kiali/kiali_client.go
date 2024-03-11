@@ -217,13 +217,13 @@ func Namespaces() (*models.Namespaces, int, error) {
 
 func NamespaceWorkloadHealth(namespace string, params map[string]string) (*models.NamespaceWorkloadHealth, int, error) {
 	params["type"] = "workload"
-	url := fmt.Sprintf("%s/api/namespaces/%s/health?%s", client.kialiURL, namespace, ParamsAsString(params))
+	url := fmt.Sprintf("%s/api/clusters/health?namespaces=%s&%s", client.kialiURL, namespace, ParamsAsString(params))
 	body, code, _, err := httpGETWithRetry(url, client.GetAuth(), 10*time.Second, nil, client.kialiCookies)
 	if err == nil {
-		health := new(models.NamespaceWorkloadHealth)
+		health := new(models.ClustersNamespaceHealth)
 		err = json.Unmarshal(body, &health)
 		if err == nil {
-			return health, code, nil
+			return health.WorkloadHealth[namespace], code, nil
 		} else {
 			return nil, code, err
 		}
@@ -234,13 +234,13 @@ func NamespaceWorkloadHealth(namespace string, params map[string]string) (*model
 
 func NamespaceAppHealth(namespace string, params map[string]string) (*models.NamespaceAppHealth, int, error) {
 	params["type"] = "app"
-	url := fmt.Sprintf("%s/api/namespaces/%s/health?%s", client.kialiURL, namespace, ParamsAsString(params))
+	url := fmt.Sprintf("%s/api/clusters/health?namespaces=%s&%s", client.kialiURL, namespace, ParamsAsString(params))
 	body, code, _, err := httpGETWithRetry(url, client.GetAuth(), 10*time.Second, nil, client.kialiCookies)
 	if err == nil {
-		health := new(models.NamespaceAppHealth)
+		health := new(models.ClustersNamespaceHealth)
 		err = json.Unmarshal(body, &health)
 		if err == nil {
-			return health, code, nil
+			return health.AppHealth[namespace], code, nil
 		} else {
 			return nil, code, err
 		}
@@ -251,13 +251,13 @@ func NamespaceAppHealth(namespace string, params map[string]string) (*models.Nam
 
 func NamespaceServiceHealth(namespace string, params map[string]string) (*models.NamespaceServiceHealth, int, error) {
 	params["type"] = "service"
-	url := fmt.Sprintf("%s/api/namespaces/%s/health?%s", client.kialiURL, namespace, ParamsAsString(params))
+	url := fmt.Sprintf("%s/api/clusters/health?namespaces=%s&%s", client.kialiURL, namespace, ParamsAsString(params))
 	body, code, _, err := httpGETWithRetry(url, client.GetAuth(), 10*time.Second, nil, client.kialiCookies)
 	if err == nil {
-		health := new(models.NamespaceServiceHealth)
+		health := new(models.ClustersNamespaceHealth)
 		err = json.Unmarshal(body, &health)
 		if err == nil {
-			return health, code, nil
+			return health.ServiceHealth[namespace], code, nil
 		} else {
 			return nil, code, err
 		}

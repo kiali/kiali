@@ -36,8 +36,8 @@ func (c *kialiCacheImpl) SetPodProxyStatus(proxyStatus []*kubernetes.ProxyStatus
 
 func (c *kialiCacheImpl) GetPodProxyStatus(cluster, namespace, pod string) *kubernetes.ProxyStatus {
 	key := proxyStatusKey(cluster, namespace, pod)
-	proxyStatus, err := c.proxyStatusStore.Get(key)
-	if err != nil {
+	proxyStatus, found := c.proxyStatusStore.Get(key)
+	if !found {
 		return nil
 	}
 	return proxyStatus

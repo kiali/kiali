@@ -2,7 +2,7 @@ import React from 'react';
 import { Button, Tooltip } from '@patternfly/react-core';
 import { KialiAppState } from 'store/Store';
 import { connect } from 'react-redux';
-import { KIALI_THEME, PF_THEME_DARK, Theme } from 'types/Common';
+import { PF_THEME_DARK, Theme } from 'types/Common';
 import { GlobalActions } from 'actions/GlobalActions';
 import { store } from 'store/ConfigStore';
 import { kialiStyle } from 'styles/StyleUtils';
@@ -62,19 +62,14 @@ type ThemeSwitchProps = {
   theme: string;
 };
 
-export const ThemeSwitchComponent: React.FC<ThemeSwitchProps> = (props: ThemeSwitchProps) => {
+export const ThemeSwitchComponent: React.FC<ThemeSwitchProps> = props => {
   const darkTheme = props.theme === Theme.DARK;
 
-  const handleTheme = () => {
+  const handleTheme = (): void => {
     const theme = darkTheme ? Theme.LIGHT : Theme.DARK;
 
     document.documentElement.classList.toggle(PF_THEME_DARK);
     store.dispatch(GlobalActions.setTheme(theme));
-    localStorage.setItem(KIALI_THEME, theme);
-
-    // Refresh page to load new theme (certain components are not reloaded like cytoscape graph)
-    const refreshTick = new CustomEvent('refreshTick', { detail: Date.now() });
-    document.dispatchEvent(refreshTick);
   };
 
   return (
@@ -99,7 +94,7 @@ export const ThemeSwitchComponent: React.FC<ThemeSwitchProps> = (props: ThemeSwi
   );
 };
 
-const mapStateToProps = (state: KialiAppState) => {
+const mapStateToProps = (state: KialiAppState): ThemeSwitchProps => {
   return {
     theme: state.globalState.theme
   };

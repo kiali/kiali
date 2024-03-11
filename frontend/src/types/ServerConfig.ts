@@ -46,6 +46,11 @@ interface GraphUIDefaults {
   traffic: GraphTraffic;
 }
 
+interface I18nUIDefaults {
+  language: string;
+  showSelector: boolean;
+}
+
 interface ListUIDefaults {
   includeHealth: boolean;
   includeIstioResources: boolean;
@@ -61,6 +66,7 @@ interface MeshUIDefaults {
 
 interface UIDefaults {
   graph: GraphUIDefaults;
+  i18n: I18nUIDefaults;
   list: ListUIDefaults;
   mesh: MeshUIDefaults;
   metricsPerRefresh?: string;
@@ -75,15 +81,15 @@ interface CertificatesInformationIndicators {
 interface KialiFeatureFlags {
   certificatesInformationIndicators: CertificatesInformationIndicators;
   disabledFeatures: string[];
-  istioInjectionAction: boolean;
   istioAnnotationAction: boolean;
+  istioInjectionAction: boolean;
   istioUpgradeAction: boolean;
   uiDefaults: UIDefaults;
 }
 
 export interface GatewayAPIClass {
-  name: string;
   className: string;
+  name: string;
 }
 
 // Not based exactly on Kiali configuration but rather whether things like prometheus config
@@ -116,18 +122,18 @@ export interface HealthConfig {
 
 // rateHealthConfig
 export interface RateHealthConfig {
-  namespace?: RegexConfig;
   kind?: RegexConfig;
   name?: RegexConfig;
+  namespace?: RegexConfig;
   tolerance: ToleranceConfig[];
 }
 // toleranceConfig
 export interface ToleranceConfig {
   code: RegexConfig;
   degraded: number;
+  direction?: RegexConfig;
   failure: number;
   protocol?: RegexConfig;
-  direction?: RegexConfig;
 }
 
 /*
@@ -147,8 +153,8 @@ export interface ServerConfig {
   istioAnnotations: IstioAnnotations;
   istioCanaryRevision: IstioCanaryRevision;
   istioIdentityDomain: string;
-  istioNamespace: string;
   istioLabels: { [key in IstioLabelKey]: string };
+  istioNamespace: string;
   kialiFeatureFlags: KialiFeatureFlags;
   logLevel: string;
   prometheus: {

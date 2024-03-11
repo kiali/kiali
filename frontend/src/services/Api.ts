@@ -596,14 +596,15 @@ export const getCustomDashboard = (
   return newRequest<DashboardModel>(HTTP_VERBS.GET, urls.customDashboard(ns, tpl), queryParams, {});
 };
 
-export const getNamespaceAppHealth = async (
-  namespace: string,
+export const getClustersAppHealth = async (
+  namespaces: string,
   duration: DurationInSeconds,
   cluster?: string,
   queryTime?: TimeInSeconds
-): Promise<NamespaceAppHealth> => {
-  const params: QueryParams<NamespaceHealthQuery> = {
-    type: 'app'
+): Promise<Map<string, NamespaceAppHealth>> => {
+  const params: QueryParams<NamespaceHealthQuery & Namespaces> = {
+    type: 'app',
+    namespaces: namespaces
   };
 
   if (duration) {
@@ -618,68 +619,93 @@ export const getNamespaceAppHealth = async (
     params.clusterName = cluster;
   }
 
-  return newRequest<NamespaceAppHealth>(HTTP_VERBS.GET, urls.namespaceHealth(namespace), params, {}).then(response => {
-    const ret: NamespaceAppHealth = {};
-
-    Object.keys(response.data).forEach(k => {
-      ret[k] = AppHealth.fromJson(namespace, k, response.data[k], {
-        rateInterval: duration,
-        hasSidecar: true,
-        hasAmbient: false
-      });
-    });
-
-    return ret;
-  });
-};
-
-export const getNamespaceServiceHealth = async (
-  namespace: string,
-  duration: DurationInSeconds,
-  cluster?: string,
-  queryTime?: TimeInSeconds
-): Promise<NamespaceServiceHealth> => {
-  const params: QueryParams<NamespaceHealthQuery> = {
-    type: 'service'
-  };
-
-  if (duration) {
-    params.rateInterval = `${String(duration)}s`;
-  }
-
-  if (queryTime) {
-    params.queryTime = String(queryTime);
-  }
-
-  if (cluster) {
-    params.clusterName = cluster;
-  }
-
-  return newRequest<NamespaceServiceHealth>(HTTP_VERBS.GET, urls.namespaceHealth(namespace), params, {}).then(
+  return newRequest<Map<string, NamespaceAppHealth>>(HTTP_VERBS.GET, urls.clustersHealth(), params, {}).then(
     response => {
-      const ret: NamespaceServiceHealth = {};
+      const ret = new Map<string, NamespaceAppHealth>();
+      const namespaceAppHealth = response.data['namespaceAppHealth'];
+      if (namespaceAppHealth) {
+        Object.keys(namespaceAppHealth).forEach(ns => {
+          if (!ret[ns]) {
+            ret[ns] = {};
+          }
+          Object.keys(namespaceAppHealth[ns]).forEach(k => {
+            if (namespaceAppHealth[ns][k]) {
+              const ah = AppHealth.fromJson(namespaces, k, namespaceAppHealth[ns][k], {
+                rateInterval: duration,
+                hasSidecar: true,
+                hasAmbient: false
+              });
 
-      Object.keys(response.data).forEach(k => {
-        ret[k] = ServiceHealth.fromJson(namespace, k, response.data[k], {
-          rateInterval: duration,
-          hasSidecar: true,
-          hasAmbient: false
+              ret[ns][k] = ah;
+            }
+          });
         });
-      });
-
+      }
       return ret;
     }
   );
 };
 
-export const getNamespaceWorkloadHealth = async (
-  namespace: string,
+export const getClustersServiceHealth = async (
+  namespaces: string,
   duration: DurationInSeconds,
   cluster?: string,
   queryTime?: TimeInSeconds
-): Promise<NamespaceWorkloadHealth> => {
-  const params: QueryParams<NamespaceHealthQuery> = {
-    type: 'workload'
+): Promise<Map<string, NamespaceServiceHealth>> => {
+  const params: QueryParams<NamespaceHealthQuery & Namespaces> = {
+    type: 'service',
+    namespaces: namespaces
+  };
+
+  if (duration) {
+    params.rateInterval = `${String(duration)}s`;
+  }
+
+  if (queryTime) {
+    params.queryTime = String(queryTime);
+  }
+
+  if (cluster) {
+    params.clusterName = cluster;
+  }
+
+  return newRequest<Map<string, NamespaceServiceHealth>>(HTTP_VERBS.GET, urls.clustersHealth(), params, {}).then(
+    response => {
+      const ret = new Map<string, NamespaceServiceHealth>();
+
+      const namespaceServiceHealth = response.data['namespaceServiceHealth'];
+      if (namespaceServiceHealth) {
+        Object.keys(namespaceServiceHealth).forEach(ns => {
+          if (!ret[ns]) {
+            ret[ns] = {};
+          }
+          Object.keys(namespaceServiceHealth[ns]).forEach(k => {
+            if (namespaceServiceHealth[ns][k]) {
+              const sh = ServiceHealth.fromJson(namespaces, k, namespaceServiceHealth[ns][k], {
+                rateInterval: duration,
+                hasSidecar: true,
+                hasAmbient: false
+              });
+
+              ret[ns][k] = sh;
+            }
+          });
+        });
+      }
+      return ret;
+    }
+  );
+};
+
+export const getClustersWorkloadHealth = async (
+  namespaces: string,
+  duration: DurationInSeconds,
+  cluster?: string,
+  queryTime?: TimeInSeconds
+): Promise<Map<string, NamespaceWorkloadHealth>> => {
+  const params: QueryParams<NamespaceHealthQuery & Namespaces> = {
+    type: 'workload',
+    namespaces: namespaces
   };
 
   if (duration) {
@@ -692,18 +718,29 @@ export const getNamespaceWorkloadHealth = async (
     params.clusterName = cluster;
   }
 
-  return newRequest<NamespaceWorkloadHealth>(HTTP_VERBS.GET, urls.namespaceHealth(namespace), params, {}).then(
+  return newRequest<Map<string, NamespaceWorkloadHealth>>(HTTP_VERBS.GET, urls.clustersHealth(), params, {}).then(
     response => {
-      const ret: NamespaceWorkloadHealth = {};
+      const ret = new Map<string, NamespaceWorkloadHealth>();
 
-      Object.keys(response.data).forEach(k => {
-        ret[k] = WorkloadHealth.fromJson(namespace, k, response.data[k], {
-          rateInterval: duration,
-          hasSidecar: true,
-          hasAmbient: false
+      const namespaceWorkloadHealth = response.data['namespaceWorkloadHealth'];
+      if (namespaceWorkloadHealth) {
+        Object.keys(namespaceWorkloadHealth).forEach(ns => {
+          if (!ret[ns]) {
+            ret[ns] = {};
+          }
+          Object.keys(namespaceWorkloadHealth[ns]).forEach(k => {
+            if (namespaceWorkloadHealth[ns][k]) {
+              const wh = WorkloadHealth.fromJson(namespaces, k, namespaceWorkloadHealth[ns][k], {
+                rateInterval: duration,
+                hasSidecar: true,
+                hasAmbient: false
+              });
+
+              ret[ns][k] = wh;
+            }
+          });
         });
-      });
-
+      }
       return ret;
     }
   );
@@ -1194,6 +1231,6 @@ export const getCanaryUpgradeStatus = (): Promise<ApiResponse<CanaryUpgradeStatu
   return newRequest<CanaryUpgradeStatus>(HTTP_VERBS.GET, urls.canaryUpgradeStatus(), {}, {});
 };
 
-export const getMeshGraph = (params: MeshQuery) => {
+export const getMeshGraph = (params: MeshQuery): Promise<ApiResponse<MeshDefinition>> => {
   return newRequest<MeshDefinition>(HTTP_VERBS.GET, urls.meshGraph, params, {});
 };

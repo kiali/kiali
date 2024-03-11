@@ -1,0 +1,18 @@
+{
+  "{{count}} label_other": "{{count}} 标签",
+  "Applications": "应用",
+  "Distributed Tracing": "分布式跟踪",
+  "Istio Config": "Istio配置",
+  "Kiali home cluster: {{name}}": "Kiali主集群: {{name}}",
+  "Mesh": "网格",
+  "Mesh [classic]": "网格 [classic]",
+  "Mesh [graph]": "网格 [graph]",
+  "No labels": "没有标签",
+  "Overview": "概述",
+  "Services": "服务",
+  "Switch language": "Switch language",
+  "Traffic Graph": "图",
+  "Traffic Graph [Cy]": "有向图",
+  "Traffic Graph [PF]": "无向图",
+  "Workloads": "工作负载"
+}

@@ -1,4 +1,4 @@
-import { reportFilePath, measureListsLoadTime, visits, measureDetailsLoadTime } from './common';
+import { reportFilePath, measureListsLoadTime, measureDetailsLoadTime, baselines } from './common';
 
 describe('Apps performance tests', () => {
   beforeEach(() => {
@@ -25,10 +25,10 @@ describe('Apps performance tests', () => {
     });
 
     it('Measures All Namespaces Apps load time', { defaultCommandTimeout: Cypress.env('timeout') }, () => {
-      measureListsLoadTime('All Namespaces Apps', visits, appsUrlAllNamespaces);
+      measureListsLoadTime('All Namespaces Apps', Cypress.env(baselines).appListAll, appsUrlAllNamespaces);
     });
     it('Measures Apps load time', { defaultCommandTimeout: Cypress.env('timeout') }, () => {
-      measureListsLoadTime('Selected Namespaces Apps', visits, appsUrl);
+      measureListsLoadTime('Selected Namespaces Apps', Cypress.env(baselines).appListSelected, appsUrl);
     });
   });
 
@@ -54,7 +54,7 @@ describe('Apps performance tests', () => {
 
     it('App details load time', { defaultCommandTimeout: Cypress.env('timeout') }, () => {
       appUrls.forEach((url, name) => {
-        measureDetailsLoadTime(name, visits, url);
+        measureDetailsLoadTime(name, Cypress.env(baselines).appDetails, url);
       });
     });
   });

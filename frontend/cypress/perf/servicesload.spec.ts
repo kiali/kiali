@@ -1,4 +1,4 @@
-import { reportFilePath, measureListsLoadTime, visits, measureDetailsLoadTime } from './common';
+import { reportFilePath, measureListsLoadTime, measureDetailsLoadTime, baselines } from './common';
 
 describe('Services performance tests', () => {
   beforeEach(() => {
@@ -25,10 +25,10 @@ describe('Services performance tests', () => {
     });
 
     it('Measures All Namespaces Services load time', { defaultCommandTimeout: Cypress.env('timeout') }, () => {
-      measureListsLoadTime('All Namespaces Services', visits, servicesUrlAllNamespaces);
+      measureListsLoadTime('All Namespaces Services', Cypress.env(baselines).serviceListAll, servicesUrlAllNamespaces);
     });
     it('Measures Services load time', { defaultCommandTimeout: Cypress.env('timeout') }, () => {
-      measureListsLoadTime('Selected Namespaces Services', visits, servicesUrl);
+      measureListsLoadTime('Selected Namespaces Services', Cypress.env(baselines).serviceListSelected, servicesUrl);
     });
   });
 
@@ -53,7 +53,7 @@ describe('Services performance tests', () => {
 
     it('Service details load time', { defaultCommandTimeout: Cypress.env('timeout') }, () => {
       serviceUrls.forEach((url, name) => {
-        measureDetailsLoadTime(name, visits, url);
+        measureDetailsLoadTime(name, Cypress.env(baselines).serviceDetails, url);
       });
     });
   });

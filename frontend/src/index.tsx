@@ -16,6 +16,9 @@ import 'ace-builds/src-noconflict/theme-twilight';
 // Enables the search box for the ACE editor
 import 'ace-builds/src-noconflict/ext-searchbox';
 
+// i18n
+import './i18n';
+
 declare global {
   interface Date {
     toLocaleStringWithConditionalDate(): string;
