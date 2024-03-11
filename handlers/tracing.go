@@ -18,11 +18,13 @@ import (
 func GetTracingInfo(w http.ResponseWriter, r *http.Request) {
 	tracingConfig := config.Get().ExternalServices.Tracing
 	var info models.TracingInfo
+
 	if tracingConfig.Enabled {
 		info = models.TracingInfo{
 			Enabled:              true,
 			Integration:          tracingConfig.InClusterURL != "",
 			Provider:             string(tracingConfig.Provider),
+			TempoConfig:          tracingConfig.TempoConfig,
 			URL:                  tracingConfig.URL,
 			NamespaceSelector:    tracingConfig.NamespaceSelector,
 			WhiteListIstioSystem: tracingConfig.WhiteListIstioSystem,

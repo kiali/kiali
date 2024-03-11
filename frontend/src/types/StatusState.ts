@@ -10,10 +10,14 @@ export enum StatusKey {
 
 export type Status = { [K in StatusKey]?: string };
 
+export type TempoConfig = {
+  datasource_uid: string;
+  org_id: string;
+};
+
 export interface ExternalServiceInfo {
-  frontendProvider?: string;
-  frontendProviderConfig?: Record<string, string>;
   name: string;
+  tempoConfig?: TempoConfig;
   url?: string;
   version?: string;
 }
