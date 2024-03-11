@@ -145,12 +145,13 @@ ensureKialiServerReady() {
     fi
     local now=$(date +%s)
     if [ "${now}" -gt "${end_time}" ]; then
-      echo "Timed out waiting for Kiali server to respond to health checks"
+      infomsg "Timed out waiting for Kiali server to respond to health checks"
       kubectl logs -l app=kiali -n istio-system
       exit 1
     fi
     sleep 1
   done
+  infomsg "Kiali server is healthy"
 }
 
 ensureKialiTracesReady() {
@@ -178,6 +179,34 @@ ensureKialiTracesReady() {
       break
     fi
 
+  done
+}
+
+ensureApplicationsAreHealthy() {
+  local start_time=$(date +%s)
+  local timeout=300
+  local url="${KIALI_URL}/api/namespaces/bookinfo/apps?health=true&istioResources=true&rateInterval=60s"
+
+  while true; do
+    local current_time=$(date +%s)
+    local elapsed=$((current_time - start_time))
+
+    if [ "$elapsed" -ge "$timeout" ]; then
+      infomsg "Timeout reached without meeting the condition."
+      exit 1
+    fi
+
+    response=$(curl -s "$url")
+    has_http_200=$(echo "$response" | jq '[.applications[] | select(.name=="reviews" and .cluster=="west" and .health.requests.inbound.http."200" > 0)] | length > 0')
+
+    if [ "$has_http_200" = "true" ]; then
+      infomsg "'reviews' app in 'west' cluster is healthy enough."
+      return 0
+    else
+      infomsg "'reviews' app in 'west' cluster is not healthy yet, checking again in 10 seconds..."
+    fi
+
+    sleep 10
   done
 }
 
@@ -244,6 +273,7 @@ elif [ "${TEST_SUITE}" == "${FRONTEND}" ]; then
   fi
 
   ensureKialiServerReady
+  ensureApplicationsAreHealthy
 
   export CYPRESS_BASE_URL="${KIALI_URL}"
   export CYPRESS_NUM_TESTS_KEPT_IN_MEMORY=0
@@ -264,6 +294,7 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_PRIMARY_REMOTE}" ]; then
   fi
 
   ensureKialiServerReady
+  ensureApplicationsAreHealthy
 
   export CYPRESS_BASE_URL="${KIALI_URL}"
   export CYPRESS_CLUSTER1_CONTEXT="kind-east"
@@ -286,6 +317,7 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_MULTI_PRIMARY}" ]; then
   fi
   
   ensureKialiServerReady
+  ensureApplicationsAreHealthy
 
   export CYPRESS_BASE_URL="${KIALI_URL}"
   export CYPRESS_CLUSTER1_CONTEXT="kind-east"

@@ -246,7 +246,8 @@ When(
                       node.data('namespace') === 'bookinfo' &&
                       node.data(type) === name &&
                       node.data('cluster') === cluster &&
-                      node.data('isBox') === isBox
+                      node.data('isBox') === isBox &&
+                      !node.data('isInaccessible')
                     );
                   });
                 node.emit('tap');

@@ -30,8 +30,8 @@ Given(
   'user is at the details page for the {string} {string} located in the {string} cluster',
   (detail: detailType, namespacedNamed: string, cluster: string) => {
     const qs = {
-      // Lower refresh time to get fresher data for the tests.
-      refresh: '10000'
+      // Forcing "Pause" to not cause unhandled promises from the browser when cypress is testing
+      refresh: '0'
     };
     if (cluster !== '') {
       qs['clusterName'] = cluster;
