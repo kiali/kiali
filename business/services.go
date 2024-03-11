@@ -10,6 +10,7 @@ import (
 	apps_v1 "k8s.io/api/apps/v1"
 	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/business/checkers"
@@ -70,22 +71,24 @@ func (in *SvcService) GetServiceList(ctx context.Context, criteria ServiceCriter
 			continue
 		}
 
-		if _, err := in.businessLayer.Namespace.GetClusterNamespace(ctx, criteria.Namespace, cluster); err != nil {
-			// We want to throw an error if we're single vs. multi cluster to be backward compatible
-			// TODO: Probably need this in a few other places as well. It'd be nice to have a
-			// centralized check for this in the config instead of this hacky one.
-			if len(in.userClients) == 1 {
+		if criteria.Namespace != meta_v1.NamespaceAll {
+			if _, err := in.businessLayer.Namespace.GetClusterNamespace(ctx, criteria.Namespace, cluster); err != nil {
+				// We want to throw an error if we're single vs. multi cluster to be backward compatible
+				// TODO: Probably need this in a few other places as well. It'd be nice to have a
+				// centralized check for this in the config instead of this hacky one.
+				if len(in.userClients) == 1 {
+					return nil, err
+				}
+
+				if errors.IsNotFound(err) || errors.IsForbidden(err) {
+					// If a cluster is not found or not accessible, then we skip it
+					log.Debugf("Error while accessing to cluster [%s]: %s", cluster, err.Error())
+					continue
+				}
+
+				// On any other error, abort and return the error.
 				return nil, err
 			}
-
-			if errors.IsNotFound(err) || errors.IsForbidden(err) {
-				// If a cluster is not found or not accessible, then we skip it
-				log.Debugf("Error while accessing to cluster [%s]: %s", cluster, err.Error())
-				continue
-			}
-
-			// On any other error, abort and return the error.
-			return nil, err
 		}
 
 		singleClusterSVCList, err := in.getServiceListForCluster(ctx, criteria, cluster)
@@ -139,6 +142,7 @@ func (in *SvcService) getServiceListForCluster(ctx context.Context, criteria Ser
 
 	if in.config.ExternalServices.Istio.IstioAPIEnabled && cluster == in.config.KubernetesConfig.ClusterName {
 		registryCriteria := RegistryCriteria{
+			AllNamespaces:   criteria.Namespace == meta_v1.NamespaceAll,
 			Namespace:       criteria.Namespace,
 			ServiceSelector: criteria.ServiceSelector,
 			Cluster:         cluster,
@@ -155,7 +159,7 @@ func (in *SvcService) getServiceListForCluster(ctx context.Context, criteria Ser
 	}
 
 	if !criteria.IncludeOnlyDefinitions {
-		deployments, err = kubeCache.GetDeployments(criteria.Namespace)
+		deployments, err = kubeCache.GetDeploymentsWithSelector(criteria.Namespace, "")
 		if err != nil {
 			log.Errorf("Error fetching Deployments per namespace %s: %s", criteria.Namespace, err)
 			return nil, err
@@ -190,7 +194,7 @@ func (in *SvcService) getServiceListForCluster(ctx context.Context, criteria Ser
 	if criteria.IncludeHealth {
 		for i, sv := range services.Services {
 			// TODO: Fix health for multi-cluster
-			services.Services[i].Health, err = in.businessLayer.Health.GetServiceHealth(ctx, criteria.Namespace, sv.Cluster, sv.Name, criteria.RateInterval, criteria.QueryTime, sv.ParseToService())
+			services.Services[i].Health, err = in.businessLayer.Health.GetServiceHealth(ctx, sv.Namespace, sv.Cluster, sv.Name, criteria.RateInterval, criteria.QueryTime, sv.ParseToService())
 			if err != nil {
 				log.Errorf("Error fetching health per service %s: %s", sv.Name, err)
 			}
@@ -232,6 +236,10 @@ func (in *SvcService) buildServiceList(cluster string, namespace models.Namespac
 	// Add cluster to each kube service
 	for i := range services {
 		services[i].Cluster = cluster
+	}
+	// Add cluster to each validation
+	for i := range validations {
+		validations[i].Cluster = cluster
 	}
 
 	// Add Istio Registry Services that are not present in the Kubernetes list
@@ -399,6 +407,7 @@ func (in *SvcService) buildRegistryServices(rSvcs []*kubernetes.RegistryService,
 		svcReferences = FilterUniqueIstioReferences(svcReferences)
 		// External Istio registries may have references to ServiceEntry and/or Federation
 		service := models.ServiceOverview{
+			Cluster:           clusterId,
 			Name:              item.Attributes.Name,
 			Namespace:         item.Attributes.Namespace,
 			IstioSidecar:      hasSidecar,

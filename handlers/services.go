@@ -5,13 +5,18 @@ import (
 	"io"
 	"net/http"
 	"strconv"
+	"strings"
 	"sync"
+
+	"golang.org/x/exp/slices"
 
 	"github.com/gorilla/mux"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/util"
+
+	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // serviceListParams holds the path and query parameters for ServiceList
@@ -50,6 +55,7 @@ func (p *serviceListParams) extract(r *http.Request) {
 }
 
 // ServiceList is the API handler to fetch the list of services in a given namespace
+// @TODO should be removed as ClustersServices is added, left for Backstage plugin integration
 func ServiceList(w http.ResponseWriter, r *http.Request) {
 	p := serviceListParams{}
 	p.extract(r)
@@ -99,6 +105,78 @@ func ServiceList(w http.ResponseWriter, r *http.Request) {
 	}
 
 	RespondWithJSON(w, http.StatusOK, serviceList)
+}
+
+// ClustersServices is the API handler to fetch the list of services from a given cluster
+func ClustersServices(w http.ResponseWriter, r *http.Request) {
+	query := r.URL.Query()
+	namespaces := query.Get("namespaces") // csl of namespaces
+	nss := []string{}
+	if len(namespaces) > 0 {
+		nss = strings.Split(namespaces, ",")
+	}
+	p := serviceListParams{}
+	p.extract(r)
+
+	cluster := clusterNameFromQuery(query)
+
+	criteria := business.ServiceCriteria{
+		Cluster: cluster,
+		// Load services from all namespaces cache for particular cluster, then will filter them
+		Namespace:              meta_v1.NamespaceAll,
+		IncludeHealth:          p.IncludeHealth,
+		IncludeIstioResources:  p.IncludeIstioResources,
+		IncludeOnlyDefinitions: p.IncludeOnlyDefinitions,
+		RateInterval:           "",
+		QueryTime:              p.QueryTime,
+	}
+
+	// Get business layer
+	business, err := getBusiness(r)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
+		return
+	}
+
+	if criteria.IncludeHealth {
+		namespaces, _ := business.Namespace.GetClusterNamespaces(r.Context(), criteria.Cluster)
+		if len(namespaces) == 0 {
+			err = fmt.Errorf("No namespaces found for cluster  [%s]", criteria.Cluster)
+			handleErrorResponse(w, err, "Error looking for namespaces: "+err.Error())
+			return
+		}
+		ns := GetOldestNamespace(namespaces)
+		rateInterval, err := adjustRateInterval(r.Context(), business, ns.Name, p.RateInterval, p.QueryTime, ns.Cluster)
+		if err != nil {
+			handleErrorResponse(w, err, "Adjust rate interval error: "+err.Error())
+			return
+		}
+		criteria.RateInterval = rateInterval
+	}
+
+	// Fetch and build services
+	serviceList, err := business.Svc.GetServiceList(r.Context(), criteria)
+	if err != nil {
+		handleErrorResponse(w, err)
+		return
+	}
+
+	// filter services by provided namespaces before returning
+	if len(nss) != 0 {
+		result := models.ServiceList{
+			Services:    []models.ServiceOverview{},
+			Validations: serviceList.Validations,
+		}
+		for _, service := range serviceList.Services {
+			if slices.Contains(nss, service.Namespace) && service.Cluster == cluster {
+				result.Services = append(result.Services, service)
+			}
+		}
+		RespondWithJSON(w, http.StatusOK, result)
+	} else {
+		// return services from all namespaces
+		RespondWithJSON(w, http.StatusOK, serviceList)
+	}
 }
 
 // ServiceDetails is the API handler to fetch full details of an specific service

@@ -37,6 +37,30 @@ func TestServicesList(t *testing.T) {
 	require.Equal(kiali.BOOKINFO, serviceList.Namespace.Name)
 }
 
+func TestClusterServicesList(t *testing.T) {
+	require := require.New(t)
+	serviceList, err := kiali.ClusterServicesList(kiali.BOOKINFO)
+
+	require.NoError(err)
+	require.NotEmpty(serviceList)
+	require.True(len(serviceList.Services) >= 4)
+	for _, service := range serviceList.Services {
+		require.NotEmpty(service.Name)
+		if service.Name == "productpage" {
+			require.True(service.IstioSidecar)
+			require.True(service.AppLabel)
+			require.NotNil(service.Namespace)
+			require.Equal(kiali.BOOKINFO, service.Namespace)
+			require.NotNil(service.Cluster)
+			require.NotNil(service.Health)
+			require.NotNil(service.Health.Requests)
+			require.NotNil(service.Health.Requests.Outbound)
+			require.NotNil(service.Health.Requests.Inbound)
+		}
+	}
+	require.NotNil(serviceList.Validations)
+}
+
 func TestServiceDetails(t *testing.T) {
 	name := "productpage"
 	require := require.New(t)

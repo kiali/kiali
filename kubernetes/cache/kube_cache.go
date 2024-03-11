@@ -826,9 +826,27 @@ func (c *kubeCache) GetPods(namespace, labelSelector string) ([]core_v1.Pod, err
 		return nil, err
 	}
 
-	pods, err := c.getCacheLister(namespace).podLister.Pods(namespace).List(selector)
-	if err != nil {
-		return nil, err
+	pods := []*core_v1.Pod{}
+	if namespace == metav1.NamespaceAll {
+		if c.clusterScoped {
+			pods, err = c.clusterCacheLister.podLister.List(selector)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			for _, nsCacheLister := range c.nsCacheLister {
+				podsNS, err := nsCacheLister.podLister.List(selector)
+				if err != nil {
+					return nil, err
+				}
+				pods = append(pods, podsNS...)
+			}
+		}
+	} else {
+		pods, err = c.getCacheLister(namespace).podLister.Pods(namespace).List(selector)
+		if err != nil {
+			return nil, err
+		}
 	}
 	log.Tracef("[Kiali Cache] Get [resource: Pod] for [namespace: %s] = %d", namespace, len(pods))
 

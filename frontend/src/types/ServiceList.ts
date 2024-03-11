@@ -19,6 +19,7 @@ export interface ServiceOverview {
   kialiWizard: string;
   labels: { [key: string]: string };
   name: string;
+  namespace: string;
   ports: { [key: string]: number };
   serviceRegistry: string;
 }

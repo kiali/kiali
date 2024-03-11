@@ -57,6 +57,41 @@ func TestServiceListParsing(t *testing.T) {
 	assert.Contains(serviceNames, "httpbin")
 }
 
+func TestClusterServiceListParsing(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+
+	// Setup mocks
+	s1 := kubetest.FakeService("Namespace", "reviews")
+	s2 := kubetest.FakeService("Namespace", "httpbin")
+	objects := []runtime.Object{
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "Namespace"}},
+		&s1,
+		&s2,
+	}
+	conf := config.NewConfig()
+	config.Set(conf)
+	k8s := kubetest.NewFakeK8sClient(objects...)
+	SetupBusinessLayer(t, k8s, *conf)
+	k8sclients := make(map[string]kubernetes.ClientInterface)
+	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
+	svc := NewWithBackends(k8sclients, k8sclients, nil, nil).Svc
+
+	criteria := ServiceCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "", IncludeIstioResources: false, IncludeHealth: false}
+	serviceList, err := svc.GetServiceList(context.TODO(), criteria)
+	require.NoError(err)
+
+	require.Len(serviceList.Services, 2)
+	serviceNames := []string{serviceList.Services[0].Name, serviceList.Services[1].Name}
+
+	assert.Contains(serviceNames, "reviews")
+	assert.Contains(serviceNames, "httpbin")
+
+	clusterNames := []string{serviceList.Services[0].Cluster, serviceList.Services[1].Cluster}
+	assert.Equal(clusterNames[0], conf.KubernetesConfig.ClusterName)
+	assert.Equal(clusterNames[1], conf.KubernetesConfig.ClusterName)
+}
+
 func TestParseRegistryServices(t *testing.T) {
 	assert := assert.New(t)
 	require := require.New(t)
@@ -153,6 +188,38 @@ func TestGetServiceListFromMultipleClusters(t *testing.T) {
 	})
 	assert.Equal(svcs.Services[0].Cluster, conf.KubernetesConfig.ClusterName)
 	assert.Equal(svcs.Services[1].Cluster, "west")
+}
+
+func TestGetClusterServiceListFromMultipleClusters(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+
+	conf := config.NewConfig()
+	conf.ExternalServices.Istio.IstioAPIEnabled = false
+	config.Set(conf)
+
+	clientFactory := kubetest.NewK8SClientFactoryMock(nil)
+	clients := map[string]kubernetes.ClientInterface{
+		conf.KubernetesConfig.ClusterName: kubetest.NewFakeK8sClient(
+			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "bookinfo"}},
+			&core_v1.Service{ObjectMeta: meta_v1.ObjectMeta{Name: "ratings-home-cluster", Namespace: "bookinfo"}},
+		),
+		"west": kubetest.NewFakeK8sClient(
+			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "bookinfo"}},
+			&core_v1.Service{ObjectMeta: meta_v1.ObjectMeta{Name: "ratings-west-cluster", Namespace: "bookinfo"}},
+		),
+	}
+	clientFactory.SetClients(clients)
+	cache := cache.NewTestingCacheWithFactory(t, clientFactory, *conf)
+	kialiCache = cache
+
+	svc := NewWithBackends(clients, clients, nil, nil).Svc
+	svcs, err := svc.GetServiceList(context.TODO(), ServiceCriteria{Cluster: "west", Namespace: ""})
+	require.NoError(err)
+	require.Len(svcs.Services, 1)
+
+	assert.Equal(svcs.Services[0].Name, "ratings-west-cluster")
+	assert.Equal(svcs.Services[0].Cluster, "west")
 }
 
 func TestMultiClusterGetService(t *testing.T) {

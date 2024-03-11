@@ -335,6 +335,9 @@ Then('the list is sorted by column {string} in {string} order', (column: string,
     });
 });
 
-Then("the {string} {string} for {string} cluster {string} namespace should not exist in the table",(name:string,object:string,cluster:string,ns:string) =>{
-  cy.get(`[data-test="VirtualItem_Cluster${cluster}_Ns${ns}_${object.toLowerCase()}_${name}"]`).should('not.exist');
-});
+Then(
+  'the {string} {string} for {string} cluster {string} namespace should not exist in the table',
+  (name: string, object: string, cluster: string, ns: string) => {
+    cy.get(`[data-test="VirtualItem_Cluster${cluster}_Ns${ns}_${object.toLowerCase()}_${name}"]`).should('not.exist');
+  }
+);

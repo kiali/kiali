@@ -311,6 +311,14 @@ func ServicesList(namespace string) (*ServiceListJson, error) {
 	}
 }
 
+func ClusterServicesList(namespace string) (*ServiceListJson, error) {
+	serviceList := new(ServiceListJson)
+	if err := getRequestAndUnmarshalInto(client.kialiURL+"/api/clusters/services?namespaces="+namespace, serviceList); err != nil {
+		return nil, err
+	}
+	return serviceList, nil
+}
+
 func ServiceDetails(name, namespace string) (*ServiceDetailsJson, int, error) {
 	body, code, _, err := httpGETWithRetry(client.kialiURL+"/api/namespaces/"+namespace+"/services/"+name+"?validate=true&health=true", client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
 	if err == nil {

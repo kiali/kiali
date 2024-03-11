@@ -23,7 +23,7 @@ import { sortIstioReferences } from '../AppList/FiltersAndSorts';
 import { validationKey } from '../../types/IstioConfigList';
 import { ServiceHealth } from '../../types/Health';
 import { RefreshNotifier } from '../../components/Refresh/RefreshNotifier';
-import { isMultiCluster } from 'config';
+import { isMultiCluster, serverConfig } from 'config';
 
 type ServiceListPageState = FilterComponent.State<ServiceListItem>;
 
@@ -96,10 +96,15 @@ class ServiceListPageComponent extends FilterComponent.Component<
 
     const activeFilters: ActiveFiltersInfo = FilterSelected.getSelected();
     const activeToggles: ActiveTogglesInfo = Toggles.getToggles();
-    const namespacesSelected = this.props.activeNamespaces.map(item => item.name);
 
-    if (namespacesSelected.length !== 0) {
-      this.fetchServices(namespacesSelected, activeFilters, activeToggles, this.props.duration);
+    const uniqueClusters = new Set<string>();
+
+    Object.keys(serverConfig.clusters).forEach(cluster => {
+      uniqueClusters.add(cluster);
+    });
+
+    if (this.props.activeNamespaces.length !== 0) {
+      this.fetchServices(Array.from(uniqueClusters), activeFilters, activeToggles, this.props.duration);
     } else {
       this.setState({ listItems: [] });
     }
@@ -111,14 +116,14 @@ class ServiceListPageComponent extends FilterComponent.Component<
         name: service.name,
         istioSidecar: service.istioSidecar,
         istioAmbient: service.istioAmbient,
-        namespace: data.namespace.name,
+        namespace: service.namespace,
         cluster: service.cluster,
-        health: ServiceHealth.fromJson(data.namespace.name, service.name, service.health, {
+        health: ServiceHealth.fromJson(service.namespace, service.name, service.health, {
           rateInterval: rateInterval,
           hasSidecar: service.istioSidecar,
           hasAmbient: service.istioAmbient
         }),
-        validation: this.getServiceValidation(service.name, data.namespace.name, data.validations),
+        validation: this.getServiceValidation(service.name, service.namespace, data.validations),
         additionalDetailSample: service.additionalDetailSample,
         labels: service.labels ?? {},
         ports: service.ports ?? {},
@@ -132,7 +137,7 @@ class ServiceListPageComponent extends FilterComponent.Component<
   }
 
   fetchServices(
-    namespaces: string[],
+    clusters: string[],
     filters: ActiveFiltersInfo,
     toggles: ActiveTogglesInfo,
     rateInterval: number
@@ -141,13 +146,17 @@ class ServiceListPageComponent extends FilterComponent.Component<
     const istioResources = toggles.get('istioResources') ? 'true' : 'false';
     const onlyDefinitions = toggles.get('configuration') ? 'false' : 'true'; // !configuration => onlyDefinitions
 
-    const servicesPromises = namespaces.map(ns =>
-      API.getServices(ns, {
-        health: health,
-        istioResources: istioResources,
-        rateInterval: `${String(rateInterval)}s`,
-        onlyDefinitions: onlyDefinitions
-      })
+    const servicesPromises = clusters.map(cluster =>
+      API.getClustersServices(
+        this.props.activeNamespaces.map(ns => ns.name).join(','),
+        {
+          health: health,
+          istioResources: istioResources,
+          rateInterval: `${String(rateInterval)}s`,
+          onlyDefinitions: onlyDefinitions
+        },
+        cluster
+      )
     );
 
     this.promises
