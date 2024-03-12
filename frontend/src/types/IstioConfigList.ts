@@ -1,4 +1,3 @@
-import { Namespace } from './Namespace';
 import {
   AuthorizationPolicy,
   DestinationRule,
@@ -10,6 +9,7 @@ import {
   K8sReferenceGrant,
   K8sTCPRoute,
   K8sTLSRoute,
+  K8sMetadata,
   ObjectValidation,
   PeerAuthentication,
   RequestAuthentication,
@@ -65,7 +65,6 @@ export interface IstioConfigList {
   k8sReferenceGrants: K8sReferenceGrant[];
   k8sTCPRoutes: K8sTCPRoute[];
   k8sTLSRoutes: K8sTLSRoute[];
-  namespace: Namespace;
   peerAuthentications: PeerAuthentication[];
   permissions: { [key: string]: ResourcePermissions };
   requestAuthentications: RequestAuthentication[];
@@ -171,13 +170,47 @@ const includeName = (name: string, names: string[]): boolean => {
   return false;
 };
 
+interface ObjectWithMetadata {
+  metadata: K8sMetadata;
+}
+
+const includesNamespace = (item: ObjectWithMetadata, namespaces: Set<string>): boolean => {
+  return item.metadata.namespace !== undefined && namespaces.has(item.metadata.namespace);
+};
+
+export const filterByNamespaces = (unfiltered: IstioConfigList, namespaces: string[]): IstioConfigList => {
+  const namespaceSet = new Set(namespaces);
+  return {
+    gateways: unfiltered.gateways.filter(gw => includesNamespace(gw, namespaceSet)),
+    k8sGateways: unfiltered.k8sGateways.filter(gw => includesNamespace(gw, namespaceSet)),
+    k8sGRPCRoutes: unfiltered.k8sGRPCRoutes.filter(route => includesNamespace(route, namespaceSet)),
+    k8sHTTPRoutes: unfiltered.k8sHTTPRoutes.filter(route => includesNamespace(route, namespaceSet)),
+    k8sReferenceGrants: unfiltered.k8sReferenceGrants.filter(rg => includesNamespace(rg, namespaceSet)),
+    k8sTCPRoutes: unfiltered.k8sTCPRoutes.filter(route => includesNamespace(route, namespaceSet)),
+    k8sTLSRoutes: unfiltered.k8sTLSRoutes.filter(route => includesNamespace(route, namespaceSet)),
+    virtualServices: unfiltered.virtualServices.filter(vs => includesNamespace(vs, namespaceSet)),
+    destinationRules: unfiltered.destinationRules.filter(dr => includesNamespace(dr, namespaceSet)),
+    serviceEntries: unfiltered.serviceEntries.filter(se => includesNamespace(se, namespaceSet)),
+    authorizationPolicies: unfiltered.authorizationPolicies.filter(rc => includesNamespace(rc, namespaceSet)),
+    sidecars: unfiltered.sidecars.filter(sc => includesNamespace(sc, namespaceSet)),
+    peerAuthentications: unfiltered.peerAuthentications.filter(pa => includesNamespace(pa, namespaceSet)),
+    requestAuthentications: unfiltered.requestAuthentications.filter(ra => includesNamespace(ra, namespaceSet)),
+    workloadEntries: unfiltered.workloadEntries.filter(we => includesNamespace(we, namespaceSet)),
+    workloadGroups: unfiltered.workloadGroups.filter(wg => includesNamespace(wg, namespaceSet)),
+    envoyFilters: unfiltered.envoyFilters.filter(ef => includesNamespace(ef, namespaceSet)),
+    wasmPlugins: unfiltered.wasmPlugins.filter(wp => includesNamespace(wp, namespaceSet)),
+    telemetries: unfiltered.telemetries.filter(tm => includesNamespace(tm, namespaceSet)),
+    validations: unfiltered.validations,
+    permissions: unfiltered.permissions
+  };
+};
+
 export const filterByName = (unfiltered: IstioConfigList, names: string[]): IstioConfigList => {
   if (names && names.length === 0) {
     return unfiltered;
   }
 
   return {
-    namespace: unfiltered.namespace,
     gateways: unfiltered.gateways.filter(gw => includeName(gw.metadata.name, names)),
     k8sGateways: unfiltered.k8sGateways.filter(gw => includeName(gw.metadata.name, names)),
     k8sGRPCRoutes: unfiltered.k8sGRPCRoutes.filter(route => includeName(route.metadata.name, names)),
@@ -266,7 +299,7 @@ export const toIstioItems = (istioConfigList: IstioConfigList, cluster?: string)
 
     entries.forEach((entry: IstioObject) => {
       const item = {
-        namespace: istioConfigList.namespace.name,
+        namespace: entry.metadata.namespace ?? '',
         cluster: cluster,
         type: typeName,
         name: entry.metadata.name,

@@ -78,6 +78,7 @@ import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { isRemoteCluster } from './OverviewCardControlPlaneNamespace';
 import { ApiError } from 'types/Api';
 import { WithTranslation, withTranslation } from 'react-i18next';
+import { IstioConfigList } from 'types/IstioConfigList';
 
 const gridStyleCompact = kialiStyle({
   backgroundColor: PFColors.BackgroundColor200,
@@ -553,7 +554,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
           .join(','),
         cluster
       ),
-      API.getAllIstioConfigs([], [], false, '', '', cluster)
+      API.getAllIstioConfigs([], false, '', '', cluster)
     ])
       .then(results => {
         const validations = results[0].data;
@@ -568,13 +569,48 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
           }
         });
 
+        const istioConfigPerNamespace = new Map<string, IstioConfigList>();
+        Object.entries(istioConfig).forEach(([key, configListField]) => {
+          if (Array.isArray(configListField)) {
+            configListField.forEach(istioObject => {
+              if (!istioConfigPerNamespace.has(istioObject.metadata.namespace)) {
+                const newIstioConfigList: IstioConfigList = {
+                  authorizationPolicies: [],
+                  destinationRules: [],
+                  envoyFilters: [],
+                  gateways: [],
+                  k8sGRPCRoutes: [],
+                  k8sGateways: [],
+                  k8sHTTPRoutes: [],
+                  k8sReferenceGrants: [],
+                  k8sTCPRoutes: [],
+                  k8sTLSRoutes: [],
+                  peerAuthentications: [],
+                  permissions: {},
+                  requestAuthentications: [],
+                  serviceEntries: [],
+                  sidecars: [],
+                  telemetries: [],
+                  validations: {},
+                  virtualServices: [],
+                  wasmPlugins: [],
+                  workloadEntries: [],
+                  workloadGroups: []
+                };
+                istioConfigPerNamespace.set(istioObject.metadata.namespace, newIstioConfigList);
+              }
+              istioConfigPerNamespace.get(istioObject.metadata.namespace)![key].push(istioObject);
+            });
+          }
+        });
+
         namespaces.forEach(nsInfo => {
           if (nsInfo.cluster && nsInfo.cluster === cluster && validationsByClusterAndNamespace.get(cluster)) {
             nsInfo.validations = validationsByClusterAndNamespace.get(cluster)!.get(nsInfo.name);
           }
 
           if (nsInfo.cluster && nsInfo.cluster === cluster) {
-            nsInfo.istioConfig = istioConfig[nsInfo.name];
+            nsInfo.istioConfig = istioConfigPerNamespace.get(nsInfo.name);
           }
         });
       })

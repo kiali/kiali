@@ -156,15 +156,21 @@ Given('a {string} AuthorizationPolicy in the {string} namespace', function (name
   this.targetAuthorizationPolicy = name;
 });
 
-Given('a {string} AuthorizationPolicy in the {string} namespace in the {string} cluster', function (name: string, namespace: string, cluster:string) {
+Given('a {string} AuthorizationPolicy in the {string} namespace in the {string} cluster', function (
+  name: string,
+  namespace: string,
+  cluster: string
+) {
   let cluster_context;
-  if (cluster === 'west'){
+  if (cluster === 'west') {
     cluster_context = CLUSTER2_CONTEXT;
   } else {
     cluster_context = CLUSTER1_CONTEXT;
   }
 
-  cy.exec(`kubectl delete AuthorizationPolicy ${name} -n ${namespace} --context ${cluster_context}`, { failOnNonZeroExit: false });
+  cy.exec(`kubectl delete AuthorizationPolicy ${name} -n ${namespace} --context ${cluster_context}`, {
+    failOnNonZeroExit: false
+  });
   cy.exec(`echo '${minimalAuthorizationPolicy(name, namespace)}' | kubectl apply --context ${cluster_context} -f  -`);
 
   this.targetNamespace = namespace;
@@ -459,8 +465,8 @@ Then('only {string} are visible in the {string} namespace', (sees: string, ns: s
   let lowercaseSees: string = sees.charAt(0).toLowerCase() + sees.slice(1);
   let count: number;
 
-  cy.request('GET', `/api/istio/config?objects=${lowercaseSees}&validate=true`).then(response => {
-    count = response.body[ns][lowercaseSees].length;
+  cy.request('GET', `/api/namespaces/${ns}/istio?objects=${lowercaseSees}&validate=true`).then(response => {
+    count = response.body[lowercaseSees].length;
   });
 
   cy.get('tbody').contains('tr', singularize(sees));

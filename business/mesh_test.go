@@ -878,7 +878,6 @@ func TestGetMeshMultiplePrimaries(t *testing.T) {
 	conf.KubernetesConfig.ClusterName = "east"
 	kubernetes.SetConfig(t, *conf)
 
-	istiodDeployment := fakeIstiodDeployment(conf.KubernetesConfig.ClusterName, false)
 	const configMapData = `accessLogFile: /dev/stdout
 enableAutoMtls: true
 rootNamespace: istio-system
@@ -894,13 +893,13 @@ trustDomain: cluster.local
 	eastClient := kubetest.NewFakeK8sClient(
 		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
 		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo"}},
-		istiodDeployment,
+		fakeIstiodDeployment("east", false),
 		istioConfigMap,
 	)
 	westClient := kubetest.NewFakeK8sClient(
 		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
 		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo"}},
-		istiodDeployment,
+		fakeIstiodDeployment("west", false),
 		istioConfigMap,
 	)
 
@@ -935,7 +934,6 @@ func TestGetMeshMultiplePrimariesWithRemotes(t *testing.T) {
 	conf.KubernetesConfig.ClusterName = "east"
 	kubernetes.SetConfig(t, *conf)
 
-	istiodDeployment := fakeIstiodDeployment(conf.KubernetesConfig.ClusterName, true)
 	const configMapData = `accessLogFile: /dev/stdout
 enableAutoMtls: true
 rootNamespace: istio-system
@@ -951,7 +949,7 @@ trustDomain: cluster.local
 	eastClient := kubetest.NewFakeK8sClient(
 		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
 		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo"}},
-		istiodDeployment,
+		fakeIstiodDeployment("east", true),
 		istioConfigMap,
 	)
 	eastRemoteClient := kubetest.NewFakeK8sClient(
@@ -964,7 +962,7 @@ trustDomain: cluster.local
 	westClient := kubetest.NewFakeK8sClient(
 		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
 		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo"}},
-		istiodDeployment,
+		fakeIstiodDeployment("west", true),
 		istioConfigMap,
 	)
 	westRemoteClient := kubetest.NewFakeK8sClient(
@@ -1010,6 +1008,93 @@ trustDomain: cluster.local
 	require.Equal(eastControlPlane.ManagedClusters[1].Name, "east-remote")
 	require.Equal(westControlPlane.ManagedClusters[0].Name, "west")
 	require.Equal(westControlPlane.ManagedClusters[1].Name, "west-remote")
+}
+
+func TestGetMeshWithExternalControlPlaneAndRemote(t *testing.T) {
+	require := require.New(t)
+	conf := config.NewConfig()
+	// Set to east because the default is "" which causes the check for
+	// cluster name env var to fail even though it is set.
+	conf.KubernetesConfig.ClusterName = "controlplane"
+	kubernetes.SetConfig(t, *conf)
+
+	const configMapData = `accessLogFile: /dev/stdout
+enableAutoMtls: true
+rootNamespace: istio-system
+trustDomain: cluster.local
+`
+	istioConfigMap := &core_v1.ConfigMap{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      "istio",
+			Namespace: "istio-system",
+		},
+		Data: map[string]string{"mesh": configMapData},
+	}
+	istioConfigMapExternalControlPlane := &core_v1.ConfigMap{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      "istio",
+			Namespace: "external-istiod",
+		},
+		Data: map[string]string{"mesh": configMapData},
+	}
+	externalControlPlane := fakeIstiodDeployment("dataplane", true)
+	externalControlPlane.Namespace = "external-istiod"
+	externalControlPlane.Name = "istiod"
+
+	controlPlaneClient := kubetest.NewFakeK8sClient(
+		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
+		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "external-istiod"}},
+		fakeIstiodDeployment("controlplane", false),
+		externalControlPlane,
+		istioConfigMap,
+		istioConfigMapExternalControlPlane,
+	)
+
+	dataPlaneClient := kubetest.NewFakeK8sClient(
+		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "external-istiod"}},
+		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo"}},
+	)
+
+	dataPlaneRemoteClient := kubetest.NewFakeK8sClient(
+		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{
+			Name:        "external-istiod",
+			Annotations: map[string]string{business.IstioControlPlaneClustersLabel: "dataplane"},
+		}},
+		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo"}},
+	)
+
+	clients := map[string]kubernetes.ClientInterface{
+		"controlplane":     controlPlaneClient,
+		"dataplane":        dataPlaneClient,
+		"dataplane-remote": dataPlaneRemoteClient,
+	}
+	factory := kubetest.NewK8SClientFactoryMock(nil)
+	factory.SetClients(clients)
+	business.WithKialiCache(cache.NewTestingCacheWithFactory(t, factory, *conf))
+
+	svc := business.NewWithBackends(clients, clients, nil, nil).Mesh
+	mesh, err := svc.GetMesh(context.TODO())
+	require.NoError(err)
+	require.Len(mesh.ControlPlanes, 2)
+
+	controlPlane := business.FindOrFail(t, mesh.ControlPlanes, func(c business.ControlPlane) bool {
+		return c.Cluster.Name == "controlplane" && c.ID == "controlplane"
+	})
+	extControlPlane := business.FindOrFail(t, mesh.ControlPlanes, func(c business.ControlPlane) bool {
+		return c.Cluster.Name == "controlplane" && c.ID == "dataplane"
+	})
+	require.Len(controlPlane.ManagedClusters, 1)
+	require.Len(extControlPlane.ManagedClusters, 2)
+
+	require.Equal(controlPlane.ManagedClusters[0].Name, "controlplane")
+
+	// Sort to get consistent ordering before doing assertions.
+	sortClustersByName := func(a *kubernetes.Cluster, b *kubernetes.Cluster) int {
+		return strings.Compare(a.Name, b.Name)
+	}
+	slices.SortFunc(extControlPlane.ManagedClusters, sortClustersByName)
+	require.Equal(extControlPlane.ManagedClusters[0].Name, "dataplane")
+	require.Equal(extControlPlane.ManagedClusters[1].Name, "dataplane-remote")
 }
 
 func fakeIstiodDeployment(cluster string, manageExternal bool) *apps_v1.Deployment {
@@ -1214,4 +1299,49 @@ func TestAddingKialiInstanceToExistingClusterDoesntAddNewCluster(t *testing.T) {
 
 	require.NoError(err)
 	require.Len(clusters, 1)
+}
+
+func TestIsRemoteCluster(t *testing.T) {
+	require := require.New(t)
+	conf := config.NewConfig()
+	// Set to east because the default is "" which causes the check for
+	// cluster name env var to fail even though it is set.
+	conf.KubernetesConfig.ClusterName = "east"
+	kubernetes.SetConfig(t, *conf)
+
+	istiodDeployment := fakeIstiodDeployment(conf.KubernetesConfig.ClusterName, true)
+	const configMapData = `accessLogFile: /dev/stdout
+enableAutoMtls: true
+rootNamespace: istio-system
+trustDomain: cluster.local
+`
+	istioConfigMap := &core_v1.ConfigMap{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      "istio",
+			Namespace: "istio-system",
+		},
+		Data: map[string]string{"mesh": configMapData},
+	}
+	k8s := kubetest.NewFakeK8sClient(
+		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
+		istiodDeployment,
+		istioConfigMap,
+	)
+	remoteClient := kubetest.NewFakeK8sClient(
+		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{
+			Name:        "istio-system",
+			Annotations: map[string]string{business.IstioControlPlaneClustersLabel: conf.KubernetesConfig.ClusterName},
+		}},
+		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo"}},
+	)
+
+	clients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: k8s, "remote": remoteClient}
+	factory := kubetest.NewK8SClientFactoryMock(nil)
+	factory.SetClients(clients)
+	business.WithKialiCache(cache.NewTestingCacheWithFactory(t, factory, *conf))
+
+	svc := business.NewWithBackends(clients, clients, nil, nil).Mesh
+	require.True(svc.IsRemoteCluster(context.Background(), "remote"))
+	require.False(svc.IsRemoteCluster(context.Background(), "east"))
+	require.True(svc.IsRemoteCluster(context.Background(), "non-existant"))
 }

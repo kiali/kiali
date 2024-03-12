@@ -204,7 +204,7 @@ func getNamespaceMetrics(w http.ResponseWriter, r *http.Request, promSupplier pr
 		return
 	}
 
-	if isRemoteCluster, _ := business.Mesh.IsRemoteCluster(cluster); !isRemoteCluster && namespace == config.Get().IstioNamespace {
+	if isRemoteCluster := business.Mesh.IsRemoteCluster(r.Context(), cluster); !isRemoteCluster && namespace == config.Get().IstioNamespace {
 		controlPlaneMetrics, err := metricsService.GetControlPlaneMetrics(params, nil)
 		if err != nil {
 			RespondWithError(w, http.StatusServiceUnavailable, err.Error())
@@ -214,11 +214,6 @@ func getNamespaceMetrics(w http.ResponseWriter, r *http.Request, promSupplier pr
 		for k, v := range controlPlaneMetrics {
 			metrics[k] = v
 		}
-	}
-
-	if err != nil {
-		RespondWithError(w, http.StatusServiceUnavailable, err.Error())
-		return
 	}
 
 	RespondWithJSON(w, http.StatusOK, metrics)
@@ -275,7 +270,7 @@ func getClustersMetrics(w http.ResponseWriter, r *http.Request, promSupplier pro
 			return
 		}
 
-		if isRemoteCluster, _ := business.Mesh.IsRemoteCluster(cluster); !isRemoteCluster && namespace == config.Get().IstioNamespace {
+		if isRemoteCluster := business.Mesh.IsRemoteCluster(r.Context(), cluster); !isRemoteCluster && namespace == config.Get().IstioNamespace {
 			controlPlaneMetrics, err := metricsService.GetControlPlaneMetrics(params, nil)
 			if err != nil {
 				RespondWithError(w, http.StatusServiceUnavailable, err.Error())

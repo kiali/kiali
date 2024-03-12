@@ -611,26 +611,42 @@ func (c *kubeCache) GetDeployments(namespace string) ([]apps_v1.Deployment, erro
 }
 
 func (c *kubeCache) GetDeploymentsWithSelector(namespace string, labelSelector string) ([]apps_v1.Deployment, error) {
+	selector, err := labels.Parse(labelSelector)
+	if err != nil {
+		return nil, err
+	}
+
 	// Read lock will prevent the cache from being refreshed while we are reading from the lister
 	// but it won't prevent other routines from reading from the lister.
 	defer c.cacheLock.RUnlock()
 	c.cacheLock.RLock()
 
-	selector, err := labels.ConvertSelectorToLabelsMap(labelSelector)
-	if err != nil {
-		return nil, err
+	deployments := []*apps_v1.Deployment{}
+	if namespace == metav1.NamespaceAll {
+		if c.clusterScoped {
+			deployments, err = c.clusterCacheLister.deploymentLister.List(selector)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			for _, nsCacheLister := range c.nsCacheLister {
+				deploymentsNS, err := nsCacheLister.deploymentLister.List(selector)
+				if err != nil {
+					return nil, err
+				}
+				deployments = append(deployments, deploymentsNS...)
+			}
+		}
+	} else {
+		deployments, err = c.getCacheLister(namespace).deploymentLister.Deployments(namespace).List(selector)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	deployments, err := c.getCacheLister(namespace).deploymentLister.Deployments(namespace).List(selector.AsSelector())
-	if err != nil {
-		return nil, err
-	}
-	log.Tracef("[Kiali Cache] Get [resource: Deployment] for [namespace: %s] = %d", namespace, len(deployments))
-
-	retDeployments := []apps_v1.Deployment{}
-	for _, deployment := range deployments {
-		// Do not modify what is returned by the lister since that is shared and will cause data races.
-		d := deployment.DeepCopy()
+	var retDeployments []apps_v1.Deployment
+	for _, ds := range deployments {
+		d := ds.DeepCopy()
 		d.Kind = kubernetes.DeploymentType
 		retDeployments = append(retDeployments, *d)
 	}

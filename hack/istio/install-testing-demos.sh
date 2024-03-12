@@ -23,7 +23,8 @@ MINIKUBE_PROFILE="minikube"
 : ${ARCH:=amd64}
 : ${DELETE_DEMOS:=false}
 : ${ENABLE_INJECTION:=true}
-: ${GATEWAY_HOST:="")}
+: ${GATEWAY_HOST:=""}
+: ${USE_GATEWAY_API:=false}
 ISTIO_NAMESPACE="istio-system"
 
 while [ $# -gt 0 ]; do
@@ -53,6 +54,10 @@ while [ $# -gt 0 ]; do
       ISTIO_NAMESPACE="$2"
       shift;shift
       ;;
+    -gw|--use-gateway-api)
+      USE_GATEWAY_API="$2"
+      shift;shift
+      ;;
     -h|--help)
       cat <<HELPMSG
 Valid command line arguments:
@@ -60,6 +65,7 @@ Valid command line arguments:
   -c|--client: either 'oc' or 'kubectl'
   -d|--delete: if 'true' demos will be deleted; otherwise, they will be installed
   -g|--gateway-host: host to use for the ingress gateway
+  -gw|--use-gateway-api: if 'true' gateway API CRs will be used instead of istio CRs (default: false).
   -mp|--minikube-profile <name>: If using minikube, this is the minikube profile name (default: minikube).
   -in|--istio-namespace <name>: Where the Istio control plane is installed (default: istio-system).
   -h|--help: this text
@@ -113,7 +119,9 @@ if [ "${DELETE_DEMOS}" != "true" ]; then
 
   else
     gateway_yaml=""
-    if [ -v GATEWAY_HOST ]; then
+    if [ "${USE_GATEWAY_API}" == "true" ]; then
+      gateway_yaml="${ISTIO_DIR}/samples/bookinfo/gateway-api/bookinfo-gateway.yaml"
+    elif [ -v GATEWAY_HOST ]; then
       gateway_yaml=$(mktemp)
       cat << EOF > "${gateway_yaml}"
 apiVersion: networking.istio.io/v1alpha3

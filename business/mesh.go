@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"golang.org/x/exp/maps"
+	"golang.org/x/exp/slices"
 	"gopkg.in/yaml.v2"
 	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -22,6 +23,7 @@ import (
 )
 
 const (
+	IstiodClusterIDEnvKey          = "CLUSTER_ID"
 	IstiodExternalEnvKey           = "EXTERNAL_ISTIOD"
 	IstiodScopeGatewayEnvKey       = "PILOT_SCOPE_GATEWAY_TO_NAMESPACE"
 	IstioInjectionLabel            = "istio-injection"
@@ -46,6 +48,12 @@ type ControlPlane struct {
 
 	// Config
 	Config ControlPlaneConfiguration
+
+	// ExternalControlPlane indicates if the controlplane is managing an external cluster.
+	ExternalControlPlane bool
+
+	// ID is the control plane ID as known by istiod.
+	ID string
 
 	// IstiodName is the control plane name
 	IstiodName string
@@ -100,19 +108,22 @@ func getControlPlaneConfiguration(kubeCache cache.KubeCache, namespace string, n
 }
 
 // IsRemoteCluster determines if the cluster has a controlplane or if it's a remote cluster without one.
-func (in *MeshService) IsRemoteCluster(cluster string) (bool, error) {
-	istioNamespace, err := in.namespaceService.GetClusterNamespace(context.TODO(), in.conf.IstioNamespace, cluster)
+// Clusters that do not exist or are not accessible are considered remote clusters.
+func (in *MeshService) IsRemoteCluster(ctx context.Context, cluster string) bool {
+	mesh, err := in.GetMesh(ctx)
 	if err != nil {
-		return false, err
+		log.Debugf("Unable to get mesh to determine if cluster [%s] is remote. Err: %s", cluster, err)
+		return false
 	}
 
-	// TODO: Is checking for this annotation the only way to tell if something is a remote cluster?
-	// Are there other things we should check like the webhooks?
-	if _, hasAnnotation := istioNamespace.Annotations[IstioControlPlaneClustersLabel]; hasAnnotation {
-		return true, nil
+	// If there's a controlplane for the cluster then it's not a remote cluster.
+	for _, controlPlane := range mesh.ControlPlanes {
+		if controlPlane.Cluster.Name == cluster {
+			return false
+		}
 	}
 
-	return false, nil
+	return true
 }
 
 // GetMesh gathers information about the mesh and controlplanes running in the mesh
@@ -143,81 +154,125 @@ func (in *MeshService) GetMesh(ctx context.Context) (*Mesh, error) {
 			return nil, err
 		}
 
-		isRemoteCluster, err := in.IsRemoteCluster(cluster.Name)
+		// If there's an istiod on it, then it's a controlplane cluster. Otherwise it is a remote cluster.
+		istiods, err := kubeCache.GetDeploymentsWithSelector(metav1.NamespaceAll, "app=istiod")
 		if err != nil {
 			return nil, err
 		}
 
-		if isRemoteCluster {
+		if len(istiods) == 0 {
 			log.Debugf("Cluster [%s] is a remote cluster. Skipping adding a controlplane.", cluster.Name)
 			remoteClusters = append(remoteClusters, &cluster)
-		} else {
-			// Not a remote cluster so add controlplane(s)
-			// It must be a primary.
-			istiods, err := kubeCache.GetDeploymentsWithSelector(in.conf.IstioNamespace, "app=istiod")
+			continue
+		}
+
+		for _, istiod := range istiods {
+			log.Debugf("Found controlplane [%s/%s] on cluster [%s].", istiod.Name, istiod.Namespace, cluster.Name)
+			controlPlane := ControlPlane{
+				Cluster:         &cluster,
+				IstiodName:      istiod.Name,
+				IstiodNamespace: istiod.Namespace,
+				Revision:        istiod.Labels[IstioRevisionLabel],
+			}
+
+			configMapName := IstioConfigMapName(in.conf, controlPlane.Revision)
+
+			controlPlaneConfig, err := getControlPlaneConfiguration(kubeCache, istiod.Namespace, configMapName)
 			if err != nil {
 				return nil, err
 			}
+			controlPlane.Config = *controlPlaneConfig
 
-			for _, istiod := range istiods {
-				log.Debugf("Found controlplane [%s/%s] on cluster [%s].", istiod.Name, istiod.Namespace, cluster.Name)
-				controlPlane := ControlPlane{
-					Cluster:         &cluster,
-					IstiodName:      istiod.Name,
-					IstiodNamespace: istiod.Namespace,
-					Revision:        istiod.Labels[IstioRevisionLabel],
-				}
-
-				configMapName := IstioConfigMapName(in.conf, controlPlane.Revision)
-
-				controlPlaneConfig, err := getControlPlaneConfiguration(kubeCache, istiod.Namespace, configMapName)
-				if err != nil {
-					return nil, err
-				}
-				controlPlane.Config = *controlPlaneConfig
-
-				if containers := istiod.Spec.Template.Spec.Containers; len(containers) > 0 {
-					for _, env := range istiod.Spec.Template.Spec.Containers[0].Env {
-						switch {
-						case envVarIsSet(IstiodExternalEnvKey, env):
-							controlPlane.ManagesExternal = true
-						case envVarIsSet(IstiodScopeGatewayEnvKey, env):
-							controlPlane.Config.IsGatewayToNamespace = true
-						}
+			if containers := istiod.Spec.Template.Spec.Containers; len(containers) > 0 {
+				for _, env := range istiod.Spec.Template.Spec.Containers[0].Env {
+					switch {
+					case envVarIsSet(IstiodExternalEnvKey, env):
+						controlPlane.ManagesExternal = true
+					case envVarIsSet(IstiodScopeGatewayEnvKey, env):
+						controlPlane.Config.IsGatewayToNamespace = true
+					case env.Name == IstiodClusterIDEnvKey:
+						controlPlane.ID = env.Value
 					}
 				}
-
-				// Assume this controlplane also manages the cluster it is deployed on.
-				controlPlane.ManagedClusters = append(controlPlane.ManagedClusters, &cluster)
-				mesh.ControlPlanes = append(mesh.ControlPlanes, controlPlane)
 			}
+
+			// If the cluster id set on the controlplane matches the cluster's id then it manages the cluster it is deployed on.
+			if controlPlane.ID == cluster.Name {
+				controlPlane.ManagedClusters = append(controlPlane.ManagedClusters, &cluster)
+			} else {
+				// It's an "external controlplane".
+				controlPlane.ExternalControlPlane = true
+			}
+			mesh.ControlPlanes = append(mesh.ControlPlanes, controlPlane)
 		}
+	}
+
+	// Convert to Pointers so we can edit them directly later.
+	controlPlanes := make([]*ControlPlane, len(mesh.ControlPlanes))
+	for i := range mesh.ControlPlanes {
+		controlPlanes[i] = &mesh.ControlPlanes[i]
+	}
+	// Convert to map.
+	controlPlanesByClusterName := map[string][]*ControlPlane{}
+	for _, cp := range controlPlanes {
+		// Need the id not the cluster name.
+		controlPlanesByClusterName[cp.ID] = append(controlPlanesByClusterName[cp.ID], cp)
 	}
 
 	// We don't have access to the istio secrets so can't use that to determine what
 	// clusters the primaries are connected to. We may be able to use the '/debug/clusterz' endpoint.
 	for _, cluster := range remoteClusters {
-		namespace, err := in.namespaceService.GetClusterNamespace(ctx, in.conf.IstioNamespace, cluster.Name)
+		cluster := cluster
+		// TODO: There may be a way to know the namespace so that we don't have to iterate over all of them
+		// looking for one with the controlplane annotation.
+		// How does this work with revisions?
+		// Is this managed by an "External Controlplane"? If so then don't look for this label because we know what manages it.
+		hasExternalControlPlane := false
+		for _, controlPlane := range controlPlanes {
+			if controlPlane.ExternalControlPlane && controlPlane.ID == cluster.Name {
+				controlPlane.ManagedClusters = append(controlPlane.ManagedClusters, cluster)
+				hasExternalControlPlane = true
+			}
+		}
+		if hasExternalControlPlane {
+			continue
+		}
+
+		namespaces, err := in.namespaceService.GetClusterNamespaces(ctx, cluster.Name)
 		if err != nil {
 			log.Errorf("unable to process remote clusters for cluster [%s]. Err: %s", cluster.Name, err)
 			continue
 		}
 
+		// There's no control plane annotation for the config clusters that are being managed by an external controlplane.
+		// Find the control plane namespace i.e. the namespace with the controlplane annotation.
+		controlPlaneNamespaceIdx := slices.IndexFunc(namespaces, func(namespace models.Namespace) bool {
+			_, ok := namespace.Annotations[IstioControlPlaneClustersLabel]
+			return ok
+		})
+		if controlPlaneNamespaceIdx == -1 {
+			log.Debugf("No controlplane namespace found for cluster [%s].", cluster.Name)
+			continue
+		}
+
+		namespace := namespaces[controlPlaneNamespaceIdx]
+
 		if controlClusters := namespace.Annotations[IstioControlPlaneClustersLabel]; controlClusters != "" {
 			// First check for '*' which means all controlplane clusters that are part of the mesh
-			// and can managed external controlplanes will be able to manage this remote cluster.
+			// and can manage external controlplanes will be able to manage this remote cluster.
 			if controlClusters == "*" {
-				for idx := range mesh.ControlPlanes {
-					if mesh.ControlPlanes[idx].ManagesExternal {
-						mesh.ControlPlanes[idx].ManagedClusters = append(mesh.ControlPlanes[idx].ManagedClusters, cluster)
+				for _, controlPlane := range controlPlanes {
+					if controlPlane.ManagesExternal {
+						controlPlane.ManagedClusters = append(controlPlane.ManagedClusters, cluster)
 					}
 				}
 			} else {
 				for _, controlPlaneClusterName := range strings.Split(controlClusters, ",") {
-					for idx := range mesh.ControlPlanes {
-						if controlPlane := mesh.ControlPlanes[idx]; controlPlane.ManagesExternal &&
-							controlPlane.Cluster.Name == controlPlaneClusterName {
-							mesh.ControlPlanes[idx].ManagedClusters = append(mesh.ControlPlanes[idx].ManagedClusters, cluster)
+					if controlPlanes, ok := controlPlanesByClusterName[controlPlaneClusterName]; ok {
+						for _, controlPlane := range controlPlanes {
+							if controlPlane.ManagesExternal {
+								controlPlane.ManagedClusters = append(controlPlane.ManagedClusters, cluster)
+							}
 						}
 					}
 				}
@@ -248,6 +303,7 @@ func IstioConfigMapName(conf config.Config, revision string) string {
 	return configMapName
 }
 
+// Only use this when env.Value is a boolean string e.g. "true" or "false".
 func envVarIsSet(key string, env core_v1.EnvVar) bool {
 	return env.Name == key && env.Value == "true"
 }

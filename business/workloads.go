@@ -178,8 +178,6 @@ func (in *WorkloadService) GetWorkloadList(ctx context.Context, criteria Workloa
 	}(ctx)
 
 	istioConfigCriteria := IstioConfigCriteria{
-		Namespace:                     criteria.Namespace,
-		Cluster:                       criteria.Cluster,
 		IncludeAuthorizationPolicies:  true,
 		IncludeEnvoyFilters:           true,
 		IncludeGateways:               true,
@@ -193,7 +191,7 @@ func (in *WorkloadService) GetWorkloadList(ctx context.Context, criteria Workloa
 		go func(ctx context.Context) {
 			defer wg.Done()
 			var err2 error
-			istioConfigMap, err2 = in.businessLayer.IstioConfig.GetIstioConfigMap(ctx, istioConfigCriteria)
+			istioConfigMap, err2 = in.businessLayer.IstioConfig.GetIstioConfigMap(ctx, criteria.Namespace, istioConfigCriteria)
 			if err2 != nil {
 				log.Errorf("Error fetching Istio Config per namespace %s: %s", criteria.Namespace, err2)
 				errChan <- err2

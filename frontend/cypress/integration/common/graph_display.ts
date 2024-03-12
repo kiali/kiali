@@ -386,13 +386,14 @@ Given(
   'there are Istio objects in the {string} namespace for {string} cluster',
   (namespace: string, cluster: string) => {
     // From test setup there should be at least a "bookinfo" VirtualService and a "bookinfo-gateway" Gateway in each cluster.
-    cy.request({ url: 'api/istio/config', qs: { clusterName: cluster, namespaces: namespace } })
+    cy.request({ url: `api/namespaces/${namespace}/istio`, qs: { clusterName: cluster } })
       .as(`istioConfigRequest-${cluster}`)
       .then(response => {
         expect(response.status).to.eq(200);
-        const istioConfigInNamespace = response.body[namespace];
-        expect(istioConfigInNamespace.gateways).to.have.length.gte(1);
-        expect(istioConfigInNamespace.virtualServices).to.have.length.gte(1);
+        expect(response.body).to.have.property('gateways');
+        expect(response.body).to.have.property('virtualServices');
+        expect(response.body.gateways).to.have.length.gte(1);
+        expect(response.body.virtualServices).to.have.length.gte(1);
       });
   }
 );
@@ -404,20 +405,18 @@ Then(
       .find(`#ns-${namespace}`)
       .within($ns => {
         // rightClick simiulates 'hover' since support for this is wonky in cypress: https://github.com/cypress-io/cypress/issues/10
-        cy.getBySel('icon-correct-validation').rightclick();
+        cy.get(
+          ':is([data-test="icon-correct-validation"], [data-test="icon-warning-validation"], [data-test="icon-error-validation"])'
+        ).rightclick();
       });
 
     cy.get('@istioConfigRequest-east').then(resp => {
       // Not going to check all the objects. Just the ones that probably exist while testing.
       const totalObjectsEast =
-        resp.body[namespace].gateways.length +
-        resp.body[namespace].virtualServices.length +
-        resp.body[namespace].destinationRules.length;
+        resp.body.gateways.length + resp.body.virtualServices.length + resp.body.destinationRules.length;
       cy.get('@istioConfigRequest-west').then(resp => {
         const totalObjectsWest =
-          resp.body[namespace].gateways.length +
-          resp.body[namespace].virtualServices.length +
-          resp.body[namespace].destinationRules.length;
+          resp.body.gateways.length + resp.body.virtualServices.length + resp.body.destinationRules.length;
         const totalObjects = totalObjectsEast + totalObjectsWest;
         cy.get('[aria-label="Validations list"]').contains(`Istio config objects analyzed: ${totalObjects}`);
       });

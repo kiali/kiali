@@ -84,23 +84,6 @@ func FilterDestinationRulesByHostname(allDr []*networking_v1beta1.DestinationRul
 	return destinationRules
 }
 
-func FilterDestinationRulesByNamespaces(namespaces []string, allDr []*networking_v1beta1.DestinationRule) []*networking_v1beta1.DestinationRule {
-	destinationRules := []*networking_v1beta1.DestinationRule{}
-	for _, dr := range allDr {
-		found := false
-		for _, ns := range namespaces {
-			if dr.Namespace == ns {
-				found = true
-				break
-			}
-		}
-		if found {
-			destinationRules = append(destinationRules, dr)
-		}
-	}
-	return destinationRules
-}
-
 func FilterDestinationRulesByService(allDr []*networking_v1beta1.DestinationRule, namespace string, serviceName string) []*networking_v1beta1.DestinationRule {
 	destinationRules := []*networking_v1beta1.DestinationRule{}
 	for _, destinationRule := range allDr {
@@ -247,16 +230,6 @@ func FilterPodsByController(controllerName string, controllerType string, allPod
 		}
 	}
 	return pods
-}
-
-func FilterPeerAuthenticationByNamespace(namespace string, peerauthentications []*security_v1beta1.PeerAuthentication) []*security_v1beta1.PeerAuthentication {
-	filtered := []*security_v1beta1.PeerAuthentication{}
-	for _, pa := range peerauthentications {
-		if pa.Namespace == namespace {
-			filtered = append(filtered, pa)
-		}
-	}
-	return filtered
 }
 
 func FilterPeerAuthenticationsBySelector(workloadSelector string, peerauthentications []*security_v1beta1.PeerAuthentication) []*security_v1beta1.PeerAuthentication {
@@ -626,6 +599,26 @@ func FilterByNamespaces[T runtime.Object](objects []T, namespaces []string) []T 
 		}
 
 		if _, ok := namespaceSet[o.GetNamespace()]; ok {
+			filtered = append(filtered, obj)
+		}
+	}
+	return filtered
+}
+
+// FilterByNamespaces filters a list of runtime.Objects by the provided namespaces.
+// If the object's namespace is not in the provided list of namespaces, the object
+// is filtered out.
+func FilterByNamespace[T runtime.Object](objects []T, namespace string) []T {
+	filtered := []T{}
+	for _, obj := range objects {
+		o, err := meta.Accessor(obj)
+		// This shouldn't happen since we are using runtime.Object for T
+		// and all the API objects should implement meta.Object.
+		if err != nil {
+			return filtered
+		}
+
+		if o.GetNamespace() == namespace {
 			filtered = append(filtered, obj)
 		}
 	}

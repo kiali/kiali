@@ -1,4 +1,4 @@
-name: Integration Tests Backend
+name: Integration Tests Backend External Controlplane
 
 on:
   workflow_call:
@@ -52,13 +52,13 @@ jobs:
         path: frontend/build
 
     - name: Run backend integration tests
-      run: hack/run-integration-tests.sh --test-suite backend $(if [ -n "${{ inputs.istio_version }}" ]; then echo "--istio-version ${{ inputs.istio_version }}"; fi)
+      run: hack/run-integration-tests.sh --test-suite backend-external-controlplane $(if [ -n "${{ inputs.istio_version }}" ]; then echo "--istio-version ${{ inputs.istio_version }}"; fi)
 
     - name: Get debug info when integration tests fail
       if: failure()
       run: |
         mkdir debug-output
-        hack/ci-get-debug-info.sh --output-directory debug-output
+        hack/ci-get-debug-info.sh --output-directory debug-output --kubectl-context kind-controlplane
 
     - name: Upload debug info artifact
       if: failure()

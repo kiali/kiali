@@ -387,34 +387,22 @@ func WorkloadDetails(name, namespace string) (*WorkloadJson, int, error) {
 	}
 }
 
-func IstioConfigs() (IstioConfigMapJson, error) {
-	body, _, _, err := httpGETWithRetry(client.kialiURL+"/api/istio/config?validate=true", client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
-	if err == nil {
-		configsMap := new(IstioConfigMapJson)
-		err = json.Unmarshal(body, &configsMap)
-		if err == nil {
-			return *configsMap, nil
-		} else {
-			return nil, err
-		}
-	} else {
+func IstioConfigs() (*IstioConfigListJson, error) {
+	configList := new(IstioConfigListJson)
+	if err := getRequestAndUnmarshalInto(client.kialiURL+"/api/istio/config?validate=true", configList); err != nil {
 		return nil, err
 	}
+
+	return configList, nil
 }
 
 func IstioConfigsList(namespace string) (*IstioConfigListJson, error) {
-	body, _, _, err := httpGETWithRetry(client.kialiURL+"/api/namespaces/"+namespace+"/istio?validate=true", client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
-	if err == nil {
-		configList := new(IstioConfigListJson)
-		err = json.Unmarshal(body, &configList)
-		if err == nil {
-			return configList, nil
-		} else {
-			return nil, err
-		}
-	} else {
+	configList := new(IstioConfigListJson)
+	if err := getRequestAndUnmarshalInto(client.kialiURL+"/api/namespaces/"+namespace+"/istio?validate=true", configList); err != nil {
 		return nil, err
 	}
+
+	return configList, nil
 }
 
 func IstioConfigDetails(namespace, name, configType string) (*models.IstioConfigDetails, int, error) {
@@ -654,6 +642,35 @@ func Clusters() ([]kubernetes.Cluster, error) {
 	}
 
 	return clusters, nil
+}
+
+func getRequestAndUnmarshalInto[T any](url string, response *T) error {
+	body, code, _, err := httpGETWithRetry(url, client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
+	if err != nil {
+		return err
+	}
+
+	if code != http.StatusOK {
+		return fmt.Errorf("non 200 response code: %d from url: %s. Body: %s", code, url, body)
+	}
+
+	err = json.Unmarshal(body, response)
+	if err != nil {
+		return fmt.Errorf("unable to unmarshal body into response: %T. Body: %s", response, body)
+	}
+
+	return nil
+}
+
+func Mesh() (*business.Mesh, error) {
+	url := fmt.Sprintf("%s/api/mesh", client.kialiURL)
+	mesh := new(business.Mesh)
+	err := getRequestAndUnmarshalInto(url, mesh)
+	if err != nil {
+		return nil, err
+	}
+
+	return mesh, nil
 }
 
 func IstioApiEnabled() (bool, error) {

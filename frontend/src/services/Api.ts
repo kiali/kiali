@@ -23,7 +23,7 @@ import {
   IstioPermissions,
   IstioPermissionsQuery
 } from '../types/IstioConfigDetails';
-import { IstioConfigList, IstioConfigListQuery, IstioConfigsMap, IstioConfigsMapQuery } from '../types/IstioConfigList';
+import { IstioConfigList, IstioConfigListQuery, IstioConfigsMapQuery } from '../types/IstioConfigList';
 import {
   Pod,
   PodLogs,
@@ -317,18 +317,13 @@ export const getIstioConfig = (
 };
 
 export const getAllIstioConfigs = (
-  namespaces: string[],
   objects: string[],
   validate: boolean,
   labelSelector: string,
   workloadSelector: string,
   cluster?: string
-): Promise<ApiResponse<IstioConfigsMap>> => {
+): Promise<ApiResponse<IstioConfigList>> => {
   const params: QueryParams<IstioConfigsMapQuery> = {};
-
-  if (namespaces && namespaces.length > 0) {
-    params.namespaces = namespaces.join(',');
-  }
 
   if (objects && objects.length > 0) {
     params.objects = objects.join(',');
@@ -350,7 +345,7 @@ export const getAllIstioConfigs = (
     params.clusterName = cluster;
   }
 
-  return newRequest<IstioConfigsMap>(HTTP_VERBS.GET, urls.allIstioConfigs(), params, {});
+  return newRequest<IstioConfigList>(HTTP_VERBS.GET, urls.allIstioConfigs(), params, {});
 };
 
 export const getIstioConfigDetail = (

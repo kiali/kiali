@@ -6,6 +6,7 @@ infomsg() {
 
 # Suites
 BACKEND="backend"
+BACKEND_EXTERNAL_CONTROLPLANE="backend-external-controlplane"
 FRONTEND="frontend"
 FRONTEND_PRIMARY_REMOTE="frontend-primary-remote"
 FRONTEND_MULTI_PRIMARY="frontend-multi-primary"
@@ -43,8 +44,8 @@ while [[ $# -gt 0 ]]; do
       ;;
     -ts|--test-suite)
       TEST_SUITE="${2}"
-      if [ "${TEST_SUITE}" != "${BACKEND}" -a "${TEST_SUITE}" != "${FRONTEND}" -a "${TEST_SUITE}" != "${FRONTEND_PRIMARY_REMOTE}" -a "${TEST_SUITE}" != "${FRONTEND_MULTI_PRIMARY}" -a "${TEST_SUITE}" != "${FRONTEND_TEMPO}" ]; then
-        echo "--test-suite option must be one of '${BACKEND}', '${FRONTEND}', '${FRONTEND_PRIMARY_REMOTE}', or '${FRONTEND_MULTI_PRIMARY}' or '${FRONTEND_TEMPO}'"
+      if [ "${TEST_SUITE}" != "${BACKEND}" -a "${TEST_SUITE}" != "${BACKEND_EXTERNAL_CONTROLPLANE}" -a "${TEST_SUITE}" != "${FRONTEND}" -a "${TEST_SUITE}" != "${FRONTEND_PRIMARY_REMOTE}" -a "${TEST_SUITE}" != "${FRONTEND_MULTI_PRIMARY}" -a "${TEST_SUITE}" != "${FRONTEND_TEMPO}" ]; then
+        echo "--test-suite option must be one of '${BACKEND}', '${BACKEND_EXTERNAL_CONTROLPLANE}', '${FRONTEND}', '${FRONTEND_PRIMARY_REMOTE}', or '${FRONTEND_MULTI_PRIMARY}' or '${FRONTEND_TEMPO}'"
         exit 1
       fi
       shift;shift
@@ -61,7 +62,7 @@ Valid command line arguments:
   -to|--tests-only <true|false>
     If true, only run the tests and skip the setup.
     Default: false
-  -ts|--test-suite <${BACKEND}|${FRONTEND}|${FRONTEND_PRIMARY_REMOTE}|${FRONTEND_MULTI_PRIMARY}|${FRONTEND_TEMPO}>
+  -ts|--test-suite <${BACKEND}|${BACKEND_EXTERNAL_CONTROLPLANE}|${FRONTEND}|${FRONTEND_PRIMARY_REMOTE}|${FRONTEND_MULTI_PRIMARY}|${FRONTEND_TEMPO}>
     Which test suite to run.
     Default: ${BACKEND}
   -h|--help:
@@ -109,6 +110,15 @@ fi
 # Determine where this script is and make it the cwd
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
 
+# This is used in multiple places and you need to call 'setKialiURL' first.
+KIALI_URL=""
+# Generate the kiali url. Will wait for kiali service's ingress to have an ip so this can timeout.
+setKialiURL() {
+  kubectl wait --for=jsonpath='{.status.loadBalancer.ingress}' -n istio-system service/kiali
+  local ingress_ip="$(kubectl get svc kiali -n istio-system -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')"
+  KIALI_URL="http://${ingress_ip}/kiali"
+}
+
 ensureCypressInstalled() {
   cd "${SCRIPT_DIR}"/../frontend
   if ! yarn cypress --help &> /dev/null; then
@@ -119,15 +129,14 @@ ensureCypressInstalled() {
 }
 
 ensureKialiServerReady() {
-  local KIALI_URL="$1"
-
-  infomsg "Waiting for Kiali server pods to be healthy ${KIALI_URL}"
+  infomsg "Waiting for Kiali server pods to be healthy"
   kubectl rollout status deployment/kiali -n istio-system --timeout=120s
 
   # Ensure the server is responding to health checks externally.
   # It can take a minute for the Kube service and ingress to sync
   # and wire up the endpoints.
-  infomsg "Waiting for Kiali server to respond externally to health checks"
+  setKialiURL
+  infomsg "Waiting for Kiali server to respond externally to health checks at ${KIALI_URL}"
   local start_time=$(date +%s)
   local end_time=$((start_time + 30))
   while true; do
@@ -136,17 +145,16 @@ ensureKialiServerReady() {
     fi
     local now=$(date +%s)
     if [ "${now}" -gt "${end_time}" ]; then
-      echo "Timed out waiting for Kiali server to respond to health checks"
+      infomsg "Timed out waiting for Kiali server to respond to health checks"
       kubectl logs -l app=kiali -n istio-system
       exit 1
     fi
     sleep 1
   done
+  infomsg "Kiali server is healthy"
 }
 
 ensureKialiTracesReady() {
-  local KIALI_URL="$1"
-
   infomsg "Waiting for Kiali to have traces"
   local start_time=$(date +%s)
   local end_time=$((start_time + 60))
@@ -174,6 +182,34 @@ ensureKialiTracesReady() {
   done
 }
 
+ensureMulticlusterApplicationsAreHealthy() {
+  local start_time=$(date +%s)
+  local timeout=300
+  local url="${KIALI_URL}/api/namespaces/bookinfo/apps?health=true&istioResources=true&rateInterval=60s"
+
+  while true; do
+    local current_time=$(date +%s)
+    local elapsed=$((current_time - start_time))
+
+    if [ "$elapsed" -ge "$timeout" ]; then
+      infomsg "Timeout reached without meeting the condition."
+      exit 1
+    fi
+
+    response=$(curl -s "$url")
+    has_http_200=$(echo "$response" | jq '[.applications[] | select(.name=="reviews" and .cluster=="west" and .health.requests.inbound.http."200" > 0)] | length > 0')
+
+    if [ "$has_http_200" = "true" ]; then
+      infomsg "'reviews' app in 'west' cluster is healthy enough."
+      return 0
+    else
+      infomsg "'reviews' app in 'west' cluster is not healthy yet, checking again in 10 seconds..."
+    fi
+
+    sleep 10
+  done
+}
+
 infomsg "Running ${TEST_SUITE} integration tests"
 if [ "${TEST_SUITE}" == "${BACKEND}" ]; then
   if [ "${TESTS_ONLY}" == "false" ]; then
@@ -184,19 +220,46 @@ if [ "${TEST_SUITE}" == "${BACKEND}" ]; then
     # Install demo apps
     "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl" -g "${ISTIO_INGRESS_IP}"
 
-    URL="http://${ISTIO_INGRESS_IP}/kiali"
-    echo "kiali_url=$URL"
-    export URL
-
-    ensureKialiServerReady "${URL}"
+    ensureKialiServerReady
+    
+    # This envvar is used by the backend tests
+    export URL="${KIALI_URL}"
   fi
 
   if [ "${SETUP_ONLY}" == "true" ]; then
     exit 0
   fi
 
-  # Run backend integration tests
+  # Run backend multicluster integration tests
   cd "${SCRIPT_DIR}"/../tests/integration/tests
+  go test -v -failfast
+elif [ "${TEST_SUITE}" == "${BACKEND_EXTERNAL_CONTROLPLANE}" ]; then
+  if [ "${TESTS_ONLY}" == "false" ]; then
+    export CLUSTER1_CONTEXT=kind-controlplane
+    export CLUSTER2_CONTEXT=kind-dataplane
+    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --multicluster "external-controlplane" ${ISTIO_VERSION_ARG}
+
+    ISTIO_INGRESS_IP="$(kubectl get svc istio-ingressgateway -n istio-system -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')"
+
+    # Switch to the dataplane cluster before installing the demo apps because
+    # that's where all the workloads should be in the external controlplane deployment.
+    kubectl config use-context "${CLUSTER2_CONTEXT}"
+    "${SCRIPT_DIR}/istio/install-bookinfo-demo.sh" -c kubectl -tg -in istio-system -g "${ISTIO_DIR}/samples/bookinfo/gateway-api/bookinfo-gateway.yaml"
+
+    # Switch back to controlplane since that is where kiali is installed.
+    kubectl config use-context "${CLUSTER1_CONTEXT}"
+    ensureKialiServerReady
+    
+    # This envvar is used by the backend tests
+    export URL="${KIALI_URL}"
+  fi
+
+  if [ "${SETUP_ONLY}" == "true" ]; then
+    exit 0
+  fi
+
+  # Run backend multicluster integration tests
+  cd "${SCRIPT_DIR}"/../tests/integration/multicluster/
   go test -v -failfast
 elif [ "${TEST_SUITE}" == "${FRONTEND}" ]; then
   ensureCypressInstalled
@@ -209,16 +272,12 @@ elif [ "${TEST_SUITE}" == "${FRONTEND}" ]; then
     "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl" -g "${ISTIO_INGRESS_IP}"
   fi
 
-  # Get Kiali URL
-  ISTIO_INGRESS_IP="$(kubectl get svc istio-ingressgateway -n istio-system -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')"
-  KIALI_URL="http://${ISTIO_INGRESS_IP}/kiali"
+  ensureKialiServerReady
+
   export CYPRESS_BASE_URL="${KIALI_URL}"
   export CYPRESS_NUM_TESTS_KEPT_IN_MEMORY=0
   # Recorded video is unusable due to low resources in CI: https://github.com/cypress-io/cypress/issues/4722
   export CYPRESS_VIDEO=false
-
-  ensureKialiServerReady "${KIALI_URL}"
-  ensureKialiTracesReady "${KIALI_URL}"
 
   if [ "${SETUP_ONLY}" == "true" ]; then
     exit 0
@@ -233,8 +292,9 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_PRIMARY_REMOTE}" ]; then
     "${SCRIPT_DIR}"/setup-kind-in-ci.sh --multicluster "primary-remote" ${ISTIO_VERSION_ARG}
   fi
 
-  # Get Kiali URL
-  KIALI_URL="http://$(kubectl --context kind-east get svc istio-ingressgateway -n istio-system -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')/kiali"
+  ensureKialiServerReady
+  ensureMulticlusterApplicationsAreHealthy
+
   export CYPRESS_BASE_URL="${KIALI_URL}"
   export CYPRESS_CLUSTER1_CONTEXT="kind-east"
   export CYPRESS_CLUSTER2_CONTEXT="kind-west"
@@ -245,8 +305,6 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_PRIMARY_REMOTE}" ]; then
   if [ "${SETUP_ONLY}" == "true" ]; then
     exit 0
   fi
-
-  ensureKialiServerReady "${KIALI_URL}"
 
   cd "${SCRIPT_DIR}"/../frontend
   yarn run cypress:run:multi-cluster
@@ -256,21 +314,19 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_MULTI_PRIMARY}" ]; then
   if [ "${TESTS_ONLY}" == "false" ]; then
     "${SCRIPT_DIR}"/setup-kind-in-ci.sh --multicluster "multi-primary" ${ISTIO_VERSION_ARG}
   fi
+  
+  ensureKialiServerReady
+  ensureMulticlusterApplicationsAreHealthy
 
-  # Get Kiali URL
-  KIALI_URL="http://$(kubectl --context kind-east get svc istio-ingressgateway -n istio-system -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')/kiali"
   export CYPRESS_BASE_URL="${KIALI_URL}"
   export CYPRESS_CLUSTER1_CONTEXT="kind-east"
   export CYPRESS_CLUSTER2_CONTEXT="kind-west"
   export CYPRESS_NUM_TESTS_KEPT_IN_MEMORY=0
-  # Recorded video is unusable due to low resources in CI: https://github.com/cypress-io/cypress/issues/4722
   export CYPRESS_VIDEO=false
 
   if [ "${SETUP_ONLY}" == "true" ]; then
     exit 0
   fi
-
-  ensureKialiServerReady "${KIALI_URL}"
 
   cd "${SCRIPT_DIR}"/../frontend
   yarn run cypress:run:multi-primary
@@ -284,15 +340,12 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_TEMPO}" ]; then
     "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl" -g "${ISTIO_INGRESS_IP}"
   fi
 
-  # Get Kiali URL
-  ISTIO_INGRESS_IP="$(kubectl get svc istio-ingressgateway -n istio-system -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')"
-  KIALI_URL="http://${ISTIO_INGRESS_IP}/kiali"
+  ensureKialiServerReady
+
   export CYPRESS_BASE_URL="${KIALI_URL}"
   export CYPRESS_NUM_TESTS_KEPT_IN_MEMORY=0
   # Recorded video is unusable due to low resources in CI: https://github.com/cypress-io/cypress/issues/4722
   export CYPRESS_VIDEO=false
-
-  ensureKialiServerReady "${KIALI_URL}"
 
   if [ "${SETUP_ONLY}" == "true" ]; then
     exit 0

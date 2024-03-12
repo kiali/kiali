@@ -279,7 +279,6 @@ else
   fi
 fi
 
-
 $CLIENT_EXE apply -n ${NAMESPACE} -f ${GATEWAY_YAML}
 
 if [ "${MONGO_ENABLED}" == "true" ]; then

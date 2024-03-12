@@ -183,6 +183,7 @@ config_metallb() {
 
   infomsg "Wait for MetalLB controller to be ready"
   ${KUBECTL_EXE} rollout status deployment controller -n metallb-system
+  ${KUBECTL_EXE} rollout status daemonset speaker -n metallb-system
 
   local subnet_trimmed
   subnet_trimmed=$(echo ${subnet} | sed -E 's/([0-9]+\.[0-9]+)\.[0-9]+\..*/\1/')

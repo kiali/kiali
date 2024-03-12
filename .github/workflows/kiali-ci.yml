@@ -4,20 +4,20 @@ on:
   # Run on master and release branches
   push:
     branches:
-      - master
-      - v*.*
+    - master
+    - v*.*
     paths-ignore:
-      - "design/**"
-      - "**/*.md"
-      - "**/*.adoc"
+    - "design/**"
+    - "**/*.md"
+    - "**/*.adoc"
   pull_request:
     branches:
-      - master
-      - v*.*
+    - master
+    - v*.*
     paths-ignore:
-      - "design/**"
-      - "**/*.md"
-      - "**/*.adoc"
+    - "design/**"
+    - "**/*.md"
+    - "**/*.adoc"
 
 jobs:
   initialize:
@@ -31,21 +31,21 @@ jobs:
       target-branch: ${{ github.base_ref || github.ref_name }}
       build-branch: ${{ env.branch-master || env.branch-pr }}
     steps:
-      # The initialize job gathers variables for later use in jobs.
-      # We are using this technique rather environment variables because at the moment, they won't work with reusable jobs.
-      # A positive side effect of this is that we can print all variables at start for debugging and troubleshooting.
-      - run: echo "target-branch -> ${{ github.base_ref || github.ref_name }}"
-      # For the building branch, if we are running agains a PR, we need to indicate in the branch that is coming from a PR
-      - run: |
-          echo "branch-version=${{ github.ref_name }}" >> $GITHUB_ENV
-          echo "build-branch -> ${{ github.ref_name }}"
-        id: branch-master
-        if: ${{ !github.base_ref }}
-      - run: |
-          echo "branch-pr=refs/pull/${{ github.ref_name }}" >> $GITHUB_ENV
-          echo "build-branch -> ${{ github.base_ref }}"
-        id: branch-pr
-        if: ${{ github.base_ref }}
+    # The initialize job gathers variables for later use in jobs.
+    # We are using this technique rather environment variables because at the moment, they won't work with reusable jobs.
+    # A positive side effect of this is that we can print all variables at start for debugging and troubleshooting.
+    - run: echo "target-branch -> ${{ github.base_ref || github.ref_name }}"
+    # For the building branch, if we are running agains a PR, we need to indicate in the branch that is coming from a PR
+    - run: |
+        echo "branch-version=${{ github.ref_name }}" >> $GITHUB_ENV
+        echo "build-branch -> ${{ github.ref_name }}"
+      id: branch-master
+      if: ${{ !github.base_ref }}
+    - run: |
+        echo "branch-pr=refs/pull/${{ github.ref_name }}" >> $GITHUB_ENV
+        echo "build-branch -> ${{ github.base_ref }}"
+      id: branch-pr
+      if: ${{ github.base_ref }}
 
   build_backend:
     name: Build backend
@@ -65,6 +65,14 @@ jobs:
   integration_tests_backend:
     name: Run backend integration tests
     uses: ./.github/workflows/integration-tests-backend.yml
+    needs: [initialize, build_backend, build_frontend]
+    with:
+      target_branch: ${{ needs.initialize.outputs.target-branch }}
+      build_branch: ${{ needs.initialize.outputs.build-branch }}
+
+  integration_tests_backend_multicluster_external_controlplane:
+    name: Run backend multicluster external-controlplane integration tests
+    uses: ./.github/workflows/integration-tests-backend-multicluster-external-controlplane.yml
     needs: [initialize, build_backend, build_frontend]
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}

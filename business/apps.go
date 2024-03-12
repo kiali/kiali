@@ -123,8 +123,6 @@ func (in *AppService) GetAppList(ctx context.Context, criteria AppCriteria) (mod
 	}
 
 	icCriteria := IstioConfigCriteria{
-		Namespace:                     criteria.Namespace,
-		Cluster:                       criteria.Cluster,
 		IncludeAuthorizationPolicies:  true,
 		IncludeDestinationRules:       true,
 		IncludeEnvoyFilters:           true,
@@ -138,24 +136,10 @@ func (in *AppService) GetAppList(ctx context.Context, criteria AppCriteria) (mod
 
 	// TODO: MC
 	if criteria.IncludeIstioResources {
-		wg2 := &sync.WaitGroup{}
-		wg2.Add(1)
-		errChan := make(chan error, 1)
-
-		go func(ctx context.Context) {
-			defer wg2.Done()
-			var err2 error
-			istioConfigMap, err2 = in.businessLayer.IstioConfig.GetIstioConfigMap(ctx, icCriteria)
-			if err2 != nil {
-				log.Errorf("Error fetching Istio Config per namespace %s: %s", criteria.Namespace, err2)
-				errChan <- err2
-			}
-		}(ctx)
-
-		wg2.Wait()
-		if len(errChan) != 0 {
-			err = <-errChan
-			return *appList, err
+		istioConfigMap, err = in.businessLayer.IstioConfig.GetIstioConfigMap(ctx, criteria.Namespace, icCriteria)
+		if err != nil {
+			log.Errorf("Error fetching Istio Config per namespace %s: %s", criteria.Namespace, err)
+			return models.AppList{}, err
 		}
 	}
 
@@ -223,7 +207,7 @@ func (in *AppService) GetAppList(ctx context.Context, criteria AppCriteria) (mod
 				}
 			}
 			appItem.Cluster = valueApp.cluster
-			(*appList).Apps = append((*appList).Apps, *appItem)
+			appList.Apps = append(appList.Apps, *appItem)
 		}
 	}
 

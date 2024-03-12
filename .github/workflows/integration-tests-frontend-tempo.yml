@@ -69,18 +69,18 @@ jobs:
       if: failure()
       run: |
         mkdir debug-output
-        hack/ci-get-debug-info.sh --output-directory debug-output --kubectl-context kind-east
+        hack/ci-get-debug-info.sh --output-directory debug-output
 
     - name: Upload debug info artifact
       if: failure()
       uses: actions/upload-artifact@v4
       with:
-        name: debug-info
+        name: debug-info-${{ github.job }}
         path: debug-output
 
     - name: Upload cypress screenshots when tests fail
       uses: actions/upload-artifact@v4
       if: failure()
       with:
-        name: cypress-screenshots
+        name: cypress-screenshots-${{ github.job }}
         path: frontend/cypress/screenshots

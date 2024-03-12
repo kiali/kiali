@@ -38,8 +38,8 @@ Feature: Kiali Graph page - Side panel menu actions
   @multi-primary
   Scenario: Actions in kebab menu of the side panel for a service node with existing traffic routing
     Given user graphs "bookinfo" namespaces
-    And there is traffic routing for the "reviews" service in the "bookinfo" namespace and in the "west" cluster
-    And user clicks the "reviews" service node in the "bookinfo" namespace in the "west" cluster
+    And there is traffic routing for the "ratings" service in the "bookinfo" namespace and in the "west" cluster
+    And user clicks the "ratings" service node in the "bookinfo" namespace in the "west" cluster
     And the side panel links should contain a "clusterName=west" parameter
     And "west" cluster badge for the graph side panel should be visible
     And user opens the kebab menu of the graph side panel
@@ -47,7 +47,7 @@ Feature: Kiali Graph page - Side panel menu actions
     Then user should see the confirmation dialog to delete all traffic routing
     When user chooses to delete the routing
     And user is at the "istio" list page
-    Then user does not see traffic routing objects for the "reviews" service in the "bookinfo" namespace in the "west" cluster
+    Then user does not see traffic routing objects for the "ratings" service in the "bookinfo" namespace in the "west" cluster
 
   @multi-cluster
   Scenario Outline: Ability to launch <action> wizard from graph side panel

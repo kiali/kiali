@@ -29,9 +29,12 @@ Given('user is at the {string} page', (page: string) => {
 Given(
   'user is at the details page for the {string} {string} located in the {string} cluster',
   (detail: detailType, namespacedNamed: string, cluster: string) => {
-    // Forcing "Pause" to not cause unhandled promises from the browser when cypress is testing
+    const qs = {
+      // Forcing "Pause" to not cause unhandled promises from the browser when cypress is testing
+      refresh: '0'
+    };
     if (cluster !== '') {
-      cluster = `&clusterName=${cluster}`;
+      qs['clusterName'] = cluster;
     }
 
     const namespaceAndName = namespacedNamed.split('/');
@@ -48,7 +51,7 @@ Given(
       }).as('waitForCall');
     }
 
-    cy.visit(`${Cypress.config('baseUrl')}/console/namespaces/${namespace}/${pageDetail}/${name}?refresh=0${cluster}`);
+    cy.visit(`${Cypress.config('baseUrl')}/console/namespaces/${namespace}/${pageDetail}/${name}`, { qs });
     ensureKialiFinishedLoading();
   }
 );

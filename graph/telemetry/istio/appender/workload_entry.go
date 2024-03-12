@@ -56,9 +56,8 @@ func (a WorkloadEntryAppender) applyWorkloadEntries(trafficMap graph.TrafficMap,
 			continue
 		}
 
-		istioCfg, err := globalInfo.Business.IstioConfig.GetIstioConfigList(context.TODO(), business.IstioConfigCriteria{
+		istioCfg, err := globalInfo.Business.IstioConfig.GetIstioConfigListForNamespace(context.TODO(), n.Cluster, n.Namespace, business.IstioConfigCriteria{
 			IncludeWorkloadEntries: true,
-			Namespace:              n.Namespace,
 		})
 		graph.CheckError(err)
 

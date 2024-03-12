@@ -47,10 +47,10 @@ func TestGetValidationsPerf(t *testing.T) {
 	}
 
 	vs := mockCombinedValidationService(t, fakeIstioConfigListPerf(numNs, numDr, numVs, numGw),
-		[]string{"details.test.svc.cluster.local", "product.test.svc.cluster.local", "product2.test.svc.cluster.local", "customer.test.svc.cluster.local"}, "test", fakePods())
+		[]string{"details.test.svc.cluster.local", "product.test.svc.cluster.local", "product2.test.svc.cluster.local", "customer.test.svc.cluster.local"})
 
 	now := time.Now()
-	validations, err := vs.GetValidations(context.TODO(), conf.KubernetesConfig.ClusterName, "test", "", "")
+	validations, err := vs.GetValidations(context.TODO(), conf.KubernetesConfig.ClusterName, "", "", "")
 	require.NoError(err)
 	log.Debugf("Validation Performance test took %f seconds for %d namespaces", time.Since(now).Seconds(), numNs)
 	assert.NotEmpty(validations)

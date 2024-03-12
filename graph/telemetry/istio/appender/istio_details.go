@@ -57,21 +57,17 @@ func addBadging(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInf
 
 	for _, cluster := range clusters {
 		// Currently no other appenders use DestinationRules or VirtualServices, so they are not cached in AppenderNamespaceInfo
-		destinationRuleList, err := globalInfo.Business.IstioConfig.GetIstioConfigList(context.TODO(), business.IstioConfigCriteria{
-			Cluster:                 cluster,
+		destinationRuleList, err := globalInfo.Business.IstioConfig.GetIstioConfigListForNamespace(context.TODO(), cluster, namespaceInfo.Namespace, business.IstioConfigCriteria{
 			IncludeDestinationRules: true,
-			Namespace:               namespaceInfo.Namespace,
 		})
 		graph.CheckError(err)
-		destinationRuleLists[cluster] = destinationRuleList
+		destinationRuleLists[cluster] = *destinationRuleList
 
-		virtualServiceList, err := globalInfo.Business.IstioConfig.GetIstioConfigList(context.TODO(), business.IstioConfigCriteria{
-			Cluster:                cluster,
+		virtualServiceList, err := globalInfo.Business.IstioConfig.GetIstioConfigList(context.TODO(), cluster, business.IstioConfigCriteria{
 			IncludeVirtualServices: true,
-			AllNamespaces:          true,
 		})
 		graph.CheckError(err)
-		virtualServiceLists[cluster] = virtualServiceList
+		virtualServiceLists[cluster] = *virtualServiceList
 	}
 
 	applyCircuitBreakers(trafficMap, namespaceInfo.Namespace, destinationRuleLists)
@@ -406,10 +402,8 @@ func (a IstioAppender) getGatewayAPIWorkloads(globalInfo *graph.AppenderGlobalIn
 func (a IstioAppender) getIstioGatewayResources(globalInfo *graph.AppenderGlobalInfo) map[string][]*networking_v1beta1.Gateway {
 	retVal := map[string][]*networking_v1beta1.Gateway{}
 	for key, an := range a.AccessibleNamespaces {
-		istioCfg, err := globalInfo.Business.IstioConfig.GetIstioConfigList(context.TODO(), business.IstioConfigCriteria{
-			Cluster:         an.Cluster,
+		istioCfg, err := globalInfo.Business.IstioConfig.GetIstioConfigListForNamespace(context.TODO(), an.Cluster, an.Name, business.IstioConfigCriteria{
 			IncludeGateways: true,
-			Namespace:       an.Name,
 		})
 		graph.CheckError(err)
 
@@ -422,10 +416,8 @@ func (a IstioAppender) getIstioGatewayResources(globalInfo *graph.AppenderGlobal
 func (a IstioAppender) getGatewayAPIResources(globalInfo *graph.AppenderGlobalInfo) map[string][]*k8s_networking_v1.Gateway {
 	retVal := map[string][]*k8s_networking_v1.Gateway{}
 	for key, an := range a.AccessibleNamespaces {
-		istioCfg, err := globalInfo.Business.IstioConfig.GetIstioConfigList(context.TODO(), business.IstioConfigCriteria{
-			Cluster:            an.Cluster,
+		istioCfg, err := globalInfo.Business.IstioConfig.GetIstioConfigListForNamespace(context.TODO(), an.Cluster, an.Name, business.IstioConfigCriteria{
 			IncludeK8sGateways: true,
-			Namespace:          an.Name,
 		})
 		graph.CheckError(err)
 

@@ -4,9 +4,6 @@ import { SortField } from '../../../types/SortFilters';
 
 const mockIstioConfigList = (names: string[]): IstioConfigList => {
   const testData: IstioConfigList = {
-    namespace: {
-      name: 'test'
-    },
     gateways: [],
     k8sGateways: [],
     k8sGRPCRoutes: [],

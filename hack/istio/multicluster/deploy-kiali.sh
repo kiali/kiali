@@ -76,7 +76,7 @@ deploy_kiali() {
   if [ "${KIALI_USE_DEV_IMAGE}" == "true" ]; then
     if [ "${MANAGE_KIND}" == "true" ]; then
       echo "Pushing the images into the cluster..."
-      make -e DORP="${DORP}" -e CLUSTER_TYPE="kind" -e KIND_NAME="${cluster_name}" cluster-push-kiali
+      make -e DORP="${DORP}" -e CLUSTER_TYPE="kind" -e KIND_NAME="${cluster_name}" CLUSTER_REPO=localhost cluster-push-kiali
       helm_args+=('--set deployment.image_pull_policy="Never"')
     else
       local image_to_tag="quay.io/kiali/kiali:dev"
@@ -111,42 +111,14 @@ deploy_kiali() {
     fi
   fi
 
-  local ingress_enabled_flag
-  if [ "${MANAGE_KIND}" == "true" ]; then
-    # Re-use bookinfo gateway to access Kiali externally.
-    ${CLIENT_EXE} apply -f - <<EOF
-apiVersion: networking.istio.io/v1beta1
-kind: VirtualService
-metadata:
-  name: kiali
-  namespace: istio-system
-spec:
-  gateways:
-  - bookinfo/bookinfo-gateway
-  hosts:
-  - '*'
-  http:
-  - match:
-    - uri:
-        prefix: /kiali
-    route:
-    - destination:
-        host: kiali
-        port:
-          number: 20001
-EOF
-    ingress_enabled_flag=false
-  else
-    ingress_enabled_flag=true
-  fi
-
   local helm_auth_flags="${auth_flags[*]}"
   
   helm_command='helm upgrade --install
     ${helm_args[@]}
     --namespace ${ISTIO_NAMESPACE}
     ${helm_auth_flags}
-    --set deployment.logger.log_level="debug"
+    --set deployment.logger.log_level="debug" 
+    --set deployment.service_type="LoadBalancer"
     --set external_services.grafana.url="http://grafana.istio-system:3000"
     --set external_services.grafana.dashboards[0].name="Istio Mesh Dashboard"
     --set external_services.tracing.url="http://tracing.istio-system:16685/jaeger"
@@ -156,12 +128,15 @@ EOF
     --set health_config.rate[0].tolerance[0].code="5xx"
     --set health_config.rate[0].tolerance[0].degraded=2
     --set health_config.rate[0].tolerance[0].failure=100
-    --set deployment.ingress.enabled="${ingress_enabled_flag}"
+    --set deployment.ingress.enabled="false"
+    --set deployment.service_type="LoadBalancer"
     --repo https://kiali.org/helm-charts
     kiali-server
     ${KIALI_SERVER_HELM_CHARTS}'
 
   eval $helm_command
+  # Helm chart doesn't support passing in service opts so patch them after the helm deploy.
+  kubectl patch service kiali -n "${ISTIO_NAMESPACE}" --type=json -p='[{"op": "replace", "path": "/spec/ports/0/port", "value":80}]'
 }
 
 

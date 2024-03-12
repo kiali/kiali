@@ -38,20 +38,23 @@ import { basicTabStyle } from 'styles/TabStyles';
 type ServiceDetailsState = {
   cluster?: string;
   currentTab: string;
+  error?: ErrorMsg;
   gateways: Gateway[];
   k8sGateways: K8sGateway[];
-  serviceDetails?: ServiceDetailsInfo;
   peerAuthentications: PeerAuthentication[];
+  serviceDetails?: ServiceDetailsInfo;
   validations: Validations;
-  error?: ErrorMsg;
 };
 
-interface ServiceDetailsProps {
-  serviceId: ServiceId;
+interface ReduxProps {
   duration: DurationInSeconds;
   tracingInfo?: TracingInfo;
-  lastRefreshAt: TimeInMilliseconds;
 }
+
+type ServiceDetailsProps = ReduxProps & {
+  lastRefreshAt: TimeInMilliseconds;
+  serviceId: ServiceId;
+};
 
 const tabName = 'tab';
 const defaultTab = 'info';
@@ -85,7 +88,7 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
     this.fetchService();
   }
 
-  componentDidUpdate(prevProps: ServiceDetailsProps, _prevState: ServiceDetailsState) {
+  componentDidUpdate(prevProps: ServiceDetailsProps, _prevState: ServiceDetailsState): void {
     // when linking from one cluster's service to another cluster's service, cluster in state should be changed
     const cluster = HistoryManager.getClusterName() || this.state.cluster;
     const currentTab = activeTab(tabName, defaultTab);
@@ -104,7 +107,7 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
     }
   }
 
-  private fetchService = (cluster?: string) => {
+  private fetchService = (cluster?: string): void => {
     if (!cluster) {
       cluster = this.state.cluster;
     }
@@ -112,17 +115,11 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
     this.promises
       .register(
         'gateways',
-        API.getAllIstioConfigs([this.props.serviceId.namespace], ['gateways', 'k8sgateways'], false, '', '', cluster)
+        API.getIstioConfig(this.props.serviceId.namespace, ['gateways', 'k8sgateways'], false, '', '', cluster)
       )
       .then(response => {
-        const gws: Gateway[] = [];
-        const k8sGws: K8sGateway[] = [];
-        Object.values(response.data).forEach(item => {
-          gws.push(...item.gateways);
-          k8sGws.push(...item.k8sGateways);
-        });
-        this.setState({ gateways: gws });
-        this.setState({ k8sGateways: k8sGws });
+        this.setState({ gateways: response.data.gateways });
+        this.setState({ k8sGateways: response.data.k8sGateways });
       })
       .catch(gwError => {
         AlertUtils.addError('Could not fetch Gateways list.', gwError);
@@ -146,15 +143,15 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
         AlertUtils.addError('Could not fetch Service Details.', error);
         const msg: ErrorMsg = {
           title: 'No Service is selected',
-          description: this.props.serviceId.service + ' is not found in the mesh'
+          description: `${this.props.serviceId.service} is not found in the mesh`
         };
         this.setState({ error: msg });
       });
 
-    API.getAllIstioConfigs([this.props.serviceId.namespace], ['peerauthentications'], false, '', '', cluster)
+    API.getIstioConfig(this.props.serviceId.namespace, ['peerauthentications'], false, '', '', cluster)
       .then(results => {
         this.setState({
-          peerAuthentications: results.data[this.props.serviceId.namespace].peerAuthentications
+          peerAuthentications: results.data.peerAuthentications
         });
       })
       .catch(error => {
@@ -162,7 +159,7 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
       });
   };
 
-  private renderTabs() {
+  private renderTabs(): JSX.Element[] {
     const overTab = (
       <Tab eventKey={0} title="Overview" key="Overview">
         <ServiceInfo
@@ -221,7 +218,7 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
     return tabsArray;
   }
 
-  render() {
+  render(): JSX.Element {
     let useCustomTime = false;
     switch (this.state.currentTab) {
       case 'info':
@@ -285,7 +282,7 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
   }
 }
 
-const mapStateToProps = (state: KialiAppState) => ({
+const mapStateToProps = (state: KialiAppState): ReduxProps => ({
   duration: durationSelector(state),
   tracingInfo: state.tracingState.info
 });
