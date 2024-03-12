@@ -22,7 +22,7 @@ func TestCreateJaegerClient(t *testing.T) {
 	assert.NotNil(t, tracingClient)
 }
 
-func TestCreateTempogRPCClient(t *testing.T) {
+func TestCreateTempogGRPCClient(t *testing.T) {
 	conf := config.NewConfig()
 	conf.ExternalServices.Tracing.Enabled = true
 	conf.ExternalServices.Tracing.Provider = "tempo"

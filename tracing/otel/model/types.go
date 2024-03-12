@@ -48,3 +48,8 @@ type Traces struct {
 	Traces  []Trace  `json:"traces"`
 	Metrics struct{} `json:"metrics"`
 }
+
+type TracesError struct {
+	Status string `json:"status"`
+	Error  string `json:"error"`
+}
