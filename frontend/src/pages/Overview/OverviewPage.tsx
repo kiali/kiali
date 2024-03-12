@@ -16,7 +16,7 @@ import {
   EmptyStateHeader
 } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
-import { FilterSelected, StatefulFilters } from '../../components/Filters/StatefulFilters';
+import { FilterSelected, StatefulFiltersComponent } from '../../components/Filters/StatefulFilters';
 import * as FilterHelper from '../../components/FilterList/FilterHelper';
 import * as API from '../../services/Api';
 import {
@@ -167,7 +167,7 @@ type ReduxProps = {
 type OverviewProps = WithTranslation & ReduxProps & {};
 
 export class OverviewPageComponent extends React.Component<OverviewProps, State> {
-  private sFOverviewToolbar: React.RefObject<StatefulFilters> = React.createRef();
+  private sFOverviewToolbar: React.RefObject<StatefulFiltersComponent> = React.createRef();
   private promises = new PromisesRegistry();
 
   // Grafana promise is only invoked by componentDidMount() no need to repeat it on componentDidUpdate()
@@ -211,9 +211,9 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
     this.promises.cancelAll();
   }
 
-  sortFields(): SortField<NamespaceInfo>[] {
+  sortFields = (): SortField<NamespaceInfo>[] => {
     return Sorts.sortFields;
-  }
+  };
 
   getStartDisplayMode = (isCompact: boolean): number => {
     // Check if there is a displayMode option
@@ -300,7 +300,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
       });
   };
 
-  fetchHealth(isAscending: boolean, sortField: SortField<NamespaceInfo>, type: OverviewType): void {
+  fetchHealth = (isAscending: boolean, sortField: SortField<NamespaceInfo>, type: OverviewType): void => {
     const duration = FilterHelper.currentDuration();
     const uniqueClusters = new Set<string>();
 
@@ -327,14 +327,14 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
           });
         });
     });
-  }
+  };
 
-  async fetchHealthForCluster(
+  fetchHealthForCluster = async (
     namespaces: NamespaceInfo[],
     cluster: string,
     duration: DurationInSeconds,
     type: OverviewType
-  ): Promise<void> {
+  ): Promise<void> => {
     const apiFunc = switchType(
       type,
       API.getClustersAppHealth,
@@ -386,9 +386,9 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
         });
       })
       .catch(err => this.handleApiError('Could not fetch health', err));
-  }
+  };
 
-  fetchMetrics(direction: DirectionType): void {
+  fetchMetrics = (direction: DirectionType): void => {
     const duration = FilterHelper.currentDuration();
     const uniqueClusters = new Set<string>();
 
@@ -409,14 +409,14 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
           });
         });
     });
-  }
+  };
 
-  async fetchMetricsForCluster(
+  fetchMetricsForCluster = async (
     namespaces: NamespaceInfo[],
     cluster: string,
     duration: number,
     direction: DirectionType
-  ): Promise<NamespaceInfo[] | void> {
+  ): Promise<NamespaceInfo[] | void> => {
     const rateParams = computePrometheusRateParams(duration, 10);
 
     const options: IstioMetricsOptions = {
@@ -456,9 +456,9 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
         });
       })
       .catch(err => this.handleApiError('Could not fetch metrics', err));
-  }
+  };
 
-  fetchTLS(isAscending: boolean, sortField: SortField<NamespaceInfo>): void {
+  fetchTLS = (isAscending: boolean, sortField: SortField<NamespaceInfo>): void => {
     const uniqueClusters = new Set<string>();
 
     this.state.namespaces.forEach(namespace => {
@@ -482,9 +482,9 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
           });
         });
     });
-  }
+  };
 
-  async fetchTLSForCluster(namespaces: NamespaceInfo[], cluster: string): Promise<void> {
+  fetchTLSForCluster = async (namespaces: NamespaceInfo[], cluster: string): Promise<void> => {
     API.getClustersTls(
       namespaces
         .filter(ns => ns.cluster === cluster)
@@ -515,9 +515,9 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
         });
       })
       .catch(err => this.handleApiError('Could not fetch TLS status', err));
-  }
+  };
 
-  fetchValidations(isAscending: boolean, sortField: SortField<NamespaceInfo>): void {
+  fetchValidations = (isAscending: boolean, sortField: SortField<NamespaceInfo>): void => {
     const uniqueClusters = new Set<string>();
 
     this.state.namespaces.forEach(namespace => {
@@ -543,9 +543,9 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
           });
         });
     });
-  }
+  };
 
-  async fetchValidationResultForCluster(namespaces: NamespaceInfo[], cluster: string): Promise<void> {
+  fetchValidationResultForCluster = async (namespaces: NamespaceInfo[], cluster: string): Promise<void> => {
     return Promise.all([
       API.getConfigValidations(
         namespaces
@@ -615,9 +615,9 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
         });
       })
       .catch(err => this.handleApiError('Could not fetch validations status', err));
-  }
+  };
 
-  fetchGrafanaInfo(): void {
+  fetchGrafanaInfo = (): void => {
     if (!OverviewPageComponent.grafanaInfoPromise) {
       OverviewPageComponent.grafanaInfoPromise = API.getGrafanaInfo().then(response => {
         if (response.status === 204) {
@@ -647,9 +647,9 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
           showNotification: false
         });
       });
-  }
+  };
 
-  fetchOutboundTrafficPolicyMode(): void {
+  fetchOutboundTrafficPolicyMode = (): void => {
     API.getOutboundTrafficPolicyMode()
       .then(response => {
         this.setState({ outboundPolicyMode: { mode: response.data.mode } });
@@ -657,9 +657,9 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
       .catch(error => {
         AlertUtils.addError('Error fetching Mesh OutboundTrafficPolicy.Mode.', error, 'default', MessageType.ERROR);
       });
-  }
+  };
 
-  fetchCanariesStatus(): void {
+  fetchCanariesStatus = (): void => {
     API.getCanaryUpgradeStatus()
       .then(response => {
         this.setState({
@@ -674,9 +674,9 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
       .catch(error => {
         AlertUtils.addError('Error fetching canary upgrade status.', error, 'default', MessageType.ERROR);
       });
-  }
+  };
 
-  fetchIstiodResourceThresholds(): void {
+  fetchIstiodResourceThresholds = (): void => {
     API.getIstiodResourceThresholds()
       .then(response => {
         this.setState({ istiodResourceThresholds: response.data });
@@ -684,11 +684,11 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
       .catch(error => {
         AlertUtils.addError('Error fetching Istiod resource thresholds.', error, 'default', MessageType.ERROR);
       });
-  }
+  };
 
-  handleApiError(message: string, error: ApiError): void {
+  handleApiError = (message: string, error: ApiError): void => {
     FilterHelper.handleError(`${message}: ${API.getErrorString(error)}`);
-  }
+  };
 
   sort = (sortField: SortField<NamespaceInfo>, isAscending: boolean): void => {
     const sorted = Sorts.sortFunc(this.state.namespaces, sortField, isAscending);
@@ -1149,7 +1149,9 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
                                   {this.renderLabels(ns)}
 
                                   <div style={{ textAlign: 'left' }}>
-                                    <div style={{ display: 'inline-block', width: '125px' }}>Istio config</div>
+                                    <div style={{ display: 'inline-block', width: '125px' }}>
+                                      {this.props.t('Istio config')}
+                                    </div>
 
                                     {ns.tlsStatus && (
                                       <span>
@@ -1213,7 +1215,9 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
                                 {this.renderLabels(ns)}
 
                                 <div style={{ textAlign: 'left' }}>
-                                  <div style={{ display: 'inline-block', width: '125px' }}>Istio config</div>
+                                  <div style={{ display: 'inline-block', width: '125px' }}>
+                                    {this.props.t('Istio config')}
+                                  </div>
 
                                   {ns.tlsStatus && (
                                     <span>
@@ -1248,7 +1252,9 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
                               {this.renderLabels(ns)}
 
                               <div style={{ textAlign: 'left' }}>
-                                <div style={{ display: 'inline-block', width: '125px' }}>Istio config</div>
+                                <div style={{ display: 'inline-block', width: '125px' }}>
+                                  {this.props.t('Istio config')}
+                                </div>
 
                                 {ns.tlsStatus && (
                                   <span>
@@ -1298,7 +1304,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
     );
   }
 
-  renderLabels(ns: NamespaceInfo): React.ReactNode {
+  renderLabels = (ns: NamespaceInfo): React.ReactNode => {
     let labelsInfo: string;
 
     if (ns.labels) {
@@ -1342,9 +1348,9 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
     );
 
     return labelContent;
-  }
+  };
 
-  renderCharts(ns: NamespaceInfo): React.ReactNode {
+  renderCharts = (ns: NamespaceInfo): React.ReactNode => {
     if (ns.status) {
       if (this.state.displayMode === OverviewDisplayMode.COMPACT) {
         return <NamespaceStatuses key={ns.name} name={ns.name} status={ns.status} type={this.state.type} />;
@@ -1365,9 +1371,9 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
     }
 
     return <div style={{ height: '70px' }} />;
-  }
+  };
 
-  renderIstioConfigStatus(ns: NamespaceInfo): React.ReactNode {
+  renderIstioConfigStatus = (ns: NamespaceInfo): React.ReactNode => {
     let validations: ValidationStatus = { namespace: ns.name, objectCount: 0, errors: 0, warnings: 0 };
 
     if (!!ns.validations) {
@@ -1390,9 +1396,9 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
         />
       </ValidationSummaryLink>
     );
-  }
+  };
 
-  renderStatus(ns: NamespaceInfo): React.ReactNode {
+  renderStatus = (ns: NamespaceInfo): React.ReactNode => {
     const targetPage = switchType(this.state.type, Paths.APPLICATIONS, Paths.SERVICES, Paths.WORKLOADS);
     const name = ns.name;
     let nbItems = 0;
@@ -1484,9 +1490,9 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
         </span>
       </div>
     );
-  }
+  };
 
-  renderNamespaceBadges(ns: NamespaceInfo, tooltip: boolean): React.ReactNode {
+  renderNamespaceBadges = (ns: NamespaceInfo, tooltip: boolean): React.ReactNode => {
     return (
       <>
         {ns.name === serverConfig.istioNamespace && (
@@ -1522,7 +1528,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
         )}
       </>
     );
-  }
+  };
 }
 
 const mapStateToProps = (state: KialiAppState): ReduxProps => ({

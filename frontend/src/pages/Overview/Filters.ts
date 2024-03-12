@@ -1,3 +1,4 @@
+import { i18n } from 'i18n';
 import {
   ActiveFiltersInfo,
   FILTER_ACTION_APPEND,
@@ -12,7 +13,7 @@ import { TextInputTypes } from '@patternfly/react-core';
 
 export const nameFilter: RunnableFilter<NamespaceInfo> = {
   category: 'Namespace',
-  placeholder: 'Filter by Namespace',
+  placeholder: i18n.t('Filter by Namespace'),
   filterType: TextInputTypes.text,
   action: FILTER_ACTION_APPEND,
   filterValues: [],
@@ -62,6 +63,14 @@ export const labelFilter: RunnableFilter<NamespaceInfo> = {
   }
 };
 
+interface HealthFilters {
+  noFilter: boolean;
+  showInError: boolean;
+  showInNotReady: boolean;
+  showInSuccess: boolean;
+  showInWarning: boolean;
+}
+
 const healthValues: FilterValue[] = [
   { id: NOT_READY.name, title: NOT_READY.name },
   { id: FAILURE.name, title: FAILURE.name },
@@ -69,7 +78,7 @@ const healthValues: FilterValue[] = [
   { id: HEALTHY.name, title: HEALTHY.name }
 ];
 
-const summarizeHealthFilters = (healthFilters: ActiveFiltersInfo) => {
+const summarizeHealthFilters = (healthFilters: ActiveFiltersInfo): HealthFilters => {
   if (healthFilters.filters.length === 0) {
     return {
       noFilter: true,
@@ -79,10 +88,12 @@ const summarizeHealthFilters = (healthFilters: ActiveFiltersInfo) => {
       showInSuccess: true
     };
   }
+
   let showInNotReady = false,
     showInError = false,
     showInWarning = false,
     showInSuccess = false;
+
   healthFilters.filters.forEach(f => {
     switch (f.value) {
       case NOT_READY.name:
@@ -100,6 +111,7 @@ const summarizeHealthFilters = (healthFilters: ActiveFiltersInfo) => {
       default:
     }
   });
+
   return {
     noFilter: false,
     showInNotReady: showInNotReady,
@@ -117,6 +129,7 @@ export const healthFilter: RunnableFilter<NamespaceInfo> = {
   filterValues: healthValues,
   run: (ns: NamespaceInfo, filters: ActiveFiltersInfo) => {
     const { showInNotReady, showInError, showInWarning, showInSuccess, noFilter } = summarizeHealthFilters(filters);
+
     return noFilter
       ? true
       : ns.status

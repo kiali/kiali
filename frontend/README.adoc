@@ -19,7 +19,7 @@ cd kiali/frontend
 npm install -g yarn
 
 # Install kiali-ui dependencies
-yarn
+yarn install
 
 # Start a development server
 yarn start
@@ -75,11 +75,13 @@ property to `package.json` with the url of kiali.
   "version": "0.2.1",
   "proxy": "http://kiali-istio-system.127.0.0.1.nip.io",
   "bugs": {
-...
+  ...
+  }
+}
 ----
 For a video on getting a Kiali-ui development environment running please see (complete with tips/tricks):
 
-video::v4MN04nQNCU[youtube]
+https://www.youtube.com/watch?v=v4MN04nQNCU
 
 If Kiali is configured with a specific web root, make sure to append it to the URL. On many setups with Kubernetes, the web root will be `/kiali` by default.
 

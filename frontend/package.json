@@ -1,4 +1,5 @@
 {
+  "proxy": "http://localhost:20001",
   "name": "@kiali/kiali-ui",
   "version": "1.82.0",
   "description": "React UI for [Kiali](https://github.com/kiali/kiali).",
@@ -84,6 +85,7 @@
     "dagre": "0.8.5",
     "deep-freeze": "0.0.1",
     "eventemitter3": "4.0.7",
+    "hoist-non-react-statics": "^3.3.2",
     "i18next": "^23.10.0",
     "i18next-http-backend": "^2.5.0",
     "js-yaml": "^3.13.1",

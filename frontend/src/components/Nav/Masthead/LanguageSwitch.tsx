@@ -2,13 +2,13 @@ import * as React from 'react';
 import { kialiStyle } from 'styles/StyleUtils';
 import { Dropdown, DropdownItem, DropdownList, MenuToggle, MenuToggleElement, Tooltip } from '@patternfly/react-core';
 import { KialiIcon } from 'config/KialiIcon';
-import i18n from 'i18next';
 import { GlobalActions } from 'actions/GlobalActions';
 import { store } from 'store/ConfigStore';
 import { I18N_NAMESPACE, Language } from 'types/Common';
 import { KialiAppState } from 'store/Store';
 import { connect } from 'react-redux';
 import { useTranslation } from 'react-i18next';
+import { i18n } from 'i18n';
 
 const menuToggleStyle = kialiStyle({
   marginTop: '0.25rem',
@@ -34,9 +34,9 @@ type LanguageSwitchProps = {
 };
 
 export const LanguageSwitchComponent: React.FC<LanguageSwitchProps> = props => {
-  const { t } = useTranslation(I18N_NAMESPACE);
-
   const [isDropdownOpen, setIsDropdownOpen] = React.useState<boolean>(false);
+
+  const { t } = useTranslation(I18N_NAMESPACE);
 
   const languageItems: React.ReactNode[] = [
     <DropdownItem key="English" onClick={() => switchLanguage(Language.ENGLISH)}>
@@ -68,7 +68,7 @@ export const LanguageSwitchComponent: React.FC<LanguageSwitchProps> = props => {
             className={menuToggleStyle}
             data-test="switch-language-button"
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-            aria-label={t('Switch language')}
+            aria-label="Switch language"
             variant="plain"
             isExpanded={isDropdownOpen}
           >

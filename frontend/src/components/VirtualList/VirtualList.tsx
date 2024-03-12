@@ -26,7 +26,7 @@ import { SortField } from '../../types/SortFilters';
 import { NamespaceInfo } from '../../types/NamespaceInfo';
 import * as FilterHelper from '../FilterList/FilterHelper';
 import * as Sorts from '../../pages/Overview/Sorts';
-import { StatefulFilters } from '../Filters/StatefulFilters';
+import { StatefulFiltersComponent } from '../Filters/StatefulFilters';
 import { kialiStyle } from 'styles/StyleUtils';
 import { SortableTh } from 'components/SimpleTable';
 
@@ -50,28 +50,29 @@ const emptyStyle = kialiStyle({
 
 type Direction = 'asc' | 'desc' | undefined;
 
-type VirtualListProps<R> = {
+type ReduxProps = { activeNamespaces: Namespace[] };
+
+type VirtualListProps<R> = ReduxProps & {
   actions?: JSX.Element[];
-  activeNamespaces: Namespace[];
   children?: React.ReactNode;
   hiddenColumns?: string[];
   rows: R[];
   sort?: (sortField: SortField<NamespaceInfo>, isAscending: boolean) => void;
-  statefulProps?: React.RefObject<StatefulFilters>;
+  statefulProps?: React.RefObject<StatefulFiltersComponent>;
   type: string;
 };
 
 type VirtualListState<R extends RenderResource> = {
-  sortBy: {
-    index: number;
-    direction: Direction;
-  };
   columns: ResourceType<R>[];
   conf: Resource;
+  sortBy: {
+    direction: Direction;
+    index: number;
+  };
 };
 
 class VirtualListComponent<R extends RenderResource> extends React.Component<VirtualListProps<R>, VirtualListState<R>> {
-  private statefulFilters: React.RefObject<StatefulFilters> = React.createRef();
+  private statefulFilters: React.RefObject<StatefulFiltersComponent> = React.createRef();
 
   constructor(props: VirtualListProps<R>) {
     super(props);
@@ -110,7 +111,7 @@ class VirtualListComponent<R extends RenderResource> extends React.Component<Vir
     this.props.sort && this.props.sort(FilterHelper.currentSortField(Sorts.sortFields), direction === 'asc');
   };
 
-  componentDidUpdate() {
+  componentDidUpdate(): void {
     const columns = this.getColumns(this.props.type);
 
     if (columns.length !== this.state.columns.length) {
@@ -154,7 +155,7 @@ class VirtualListComponent<R extends RenderResource> extends React.Component<Vir
       : undefined;
   };
 
-  render() {
+  render(): React.ReactNode {
     const { rows } = this.props;
     const { sortBy, columns, conf } = this.state;
 
@@ -239,7 +240,7 @@ class VirtualListComponent<R extends RenderResource> extends React.Component<Vir
   }
 }
 
-const mapStateToProps = (state: KialiAppState) => ({
+const mapStateToProps = (state: KialiAppState): ReduxProps => ({
   activeNamespaces: activeNamespacesSelector(state)
 });
 

@@ -5,12 +5,12 @@ import { SortAlphaDownIcon, SortAlphaUpIcon } from '@patternfly/react-icons';
 import { connect } from 'react-redux';
 import { UserSettingsActions } from '../../actions/UserSettingsActions';
 import { HistoryManager, URLParam } from '../../app/History';
-import { StatefulFilters } from '../../components/Filters/StatefulFilters';
+import { StatefulFilters, StatefulFiltersComponent } from '../../components/Filters/StatefulFilters';
 import * as FilterHelper from '../../components/FilterList/FilterHelper';
 import { ToolbarDropdown } from '../../components/ToolbarDropdown/ToolbarDropdown';
 import { KialiAppState } from '../../store/Store';
 import { durationSelector, refreshIntervalSelector } from '../../store/Selectors';
-import { IntervalInMilliseconds, DurationInSeconds } from '../../types/Common';
+import { IntervalInMilliseconds, DurationInSeconds, I18N_NAMESPACE } from '../../types/Common';
 import { SortField } from '../../types/SortFilters';
 import { NamespaceInfo } from '../../types/NamespaceInfo';
 import * as Sorts from './Sorts';
@@ -20,21 +20,29 @@ import { TimeDurationComponent } from '../../components/Time/TimeDurationCompone
 import { KialiDispatch } from '../../types/Redux';
 import { RefreshNotifier } from '../../components/Refresh/RefreshNotifier';
 import { PFColors } from 'components/Pf/PfColors';
+import { WithTranslation, withTranslation } from 'react-i18next';
+import hoistNonReactStatics from 'hoist-non-react-statics';
+import { i18n } from 'i18n';
 
-type ReduxProps = {
+type ReduxStateProps = {
   duration: DurationInSeconds;
   refreshInterval: IntervalInMilliseconds;
+};
+
+type ReduxDispatchProps = {
   setRefreshInterval: (refresh: IntervalInMilliseconds) => void;
 };
 
-type Props = ReduxProps & {
-  displayMode: OverviewDisplayMode;
-  onError: (msg: string) => void;
-  onRefresh: () => void;
-  setDisplayMode: (mode: OverviewDisplayMode) => void;
-  sort: (sortField: SortField<NamespaceInfo>, isAscending: boolean) => void;
-  statefulFilterRef: React.RefObject<StatefulFilters>;
-};
+type Props = ReduxStateProps &
+  ReduxDispatchProps &
+  WithTranslation & {
+    displayMode: OverviewDisplayMode;
+    onError: (msg: string) => void;
+    onRefresh: () => void;
+    setDisplayMode: (mode: OverviewDisplayMode) => void;
+    sort: (sortField: SortField<NamespaceInfo>, isAscending: boolean) => void;
+    statefulFilterRef: React.RefObject<StatefulFiltersComponent>;
+  };
 
 export enum OverviewDisplayMode {
   COMPACT,
@@ -43,14 +51,14 @@ export enum OverviewDisplayMode {
 }
 
 const overviewTypes = {
-  app: 'Apps',
-  workload: 'Workloads',
-  service: 'Services'
+  app: i18n.t('Apps'),
+  workload: i18n.t('Workloads'),
+  service: i18n.t('Services')
 };
 
 const directionTypes = {
-  inbound: 'Inbound',
-  outbound: 'Outbound'
+  inbound: i18n.t('Inbound'),
+  outbound: i18n.t('Outbound')
 };
 
 // TODO Use Object.fromEntries when available
@@ -106,22 +114,22 @@ export type OverviewType = keyof typeof overviewTypes;
 export type DirectionType = keyof typeof directionTypes;
 
 type State = {
+  directionType: DirectionType;
   isSortAscending: boolean;
   overviewType: OverviewType;
-  directionType: DirectionType;
   sortField: SortField<NamespaceInfo>;
 };
 
 class OverviewToolbarComponent extends React.Component<Props, State> {
-  static currentOverviewType(): OverviewType {
+  static currentOverviewType = (): OverviewType => {
     const otype = HistoryManager.getParam(URLParam.OVERVIEW_TYPE);
     return (otype as OverviewType) ?? 'app';
-  }
+  };
 
-  static currentDirectionType(): DirectionType {
+  static currentDirectionType = (): DirectionType => {
     const drtype = HistoryManager.getParam(URLParam.DIRECTION_TYPE);
     return (drtype as DirectionType) ?? 'inbound';
-  }
+  };
 
   constructor(props: Props) {
     super(props);
@@ -134,7 +142,7 @@ class OverviewToolbarComponent extends React.Component<Props, State> {
     };
   }
 
-  componentDidUpdate() {
+  componentDidUpdate(): void {
     const urlSortField = FilterHelper.currentSortField(Sorts.sortFields);
     const urlIsSortAscending = FilterHelper.isCurrentSortAscending();
 
@@ -146,9 +154,9 @@ class OverviewToolbarComponent extends React.Component<Props, State> {
     }
   }
 
-  paramsAreSynced(urlSortField: SortField<NamespaceInfo>, urlIsSortAscending: boolean): boolean {
+  paramsAreSynced = (urlSortField: SortField<NamespaceInfo>, urlIsSortAscending: boolean): boolean => {
     return urlIsSortAscending === this.state.isSortAscending && urlSortField.title === this.state.sortField.title;
-  }
+  };
 
   updateSortField = (sortField: SortField<NamespaceInfo>): void => {
     this.props.sort(sortField, this.state.isSortAscending);
@@ -172,7 +180,7 @@ class OverviewToolbarComponent extends React.Component<Props, State> {
       this.setState({ overviewType: otype });
       this.props.onRefresh();
     } else {
-      throw new Error('Overview type is not valid.');
+      throw new Error(this.props.t('Overview type is not valid.'));
     }
   };
 
@@ -184,7 +192,7 @@ class OverviewToolbarComponent extends React.Component<Props, State> {
       this.setState({ directionType: dtype });
       this.props.onRefresh();
     } else {
-      throw new Error('Direction type is not valid.');
+      throw new Error(this.props.t('Direction type is not valid.'));
     }
   };
 
@@ -195,7 +203,7 @@ class OverviewToolbarComponent extends React.Component<Props, State> {
     this.setState({ sortField: sortField });
   };
 
-  render() {
+  render(): React.ReactNode {
     const filterToolbar = (
       <StatefulFilters
         initialFilters={Filters.availableFilters}
@@ -240,9 +248,9 @@ class OverviewToolbarComponent extends React.Component<Props, State> {
           disabled={false}
           className={typeSelectStyle}
           handleSelect={this.updateOverviewType}
-          nameDropdown="Health for"
+          nameDropdown={this.props.t('Health for')}
           value={this.state.overviewType}
-          label={overviewTypes[this.state.overviewType]}
+          label={this.props.t(overviewTypes[this.state.overviewType])}
           options={overviewTypes}
         />
 
@@ -251,14 +259,14 @@ class OverviewToolbarComponent extends React.Component<Props, State> {
             id="direction-type"
             disabled={false}
             handleSelect={this.updateDirectionType}
-            nameDropdown="Traffic"
+            nameDropdown={this.props.t('Traffic')}
             value={this.state.directionType}
             label={directionTypes[this.state.directionType]}
             options={directionTypes}
           />
         )}
 
-        <Tooltip content={<>Expand view</>} position={TooltipPosition.top}>
+        <Tooltip content={<>{this.props.t('Expand view')}</>} position={TooltipPosition.top}>
           <Button
             onClick={() => this.props.setDisplayMode(OverviewDisplayMode.EXPAND)}
             variant={ButtonVariant.plain}
@@ -270,7 +278,7 @@ class OverviewToolbarComponent extends React.Component<Props, State> {
           </Button>
         </Tooltip>
 
-        <Tooltip content={<>Compact view</>} position={TooltipPosition.top}>
+        <Tooltip content={<>{this.props.t('Compact view')}</>} position={TooltipPosition.top}>
           <Button
             onClick={() => this.props.setDisplayMode(OverviewDisplayMode.COMPACT)}
             variant={ButtonVariant.plain}
@@ -282,7 +290,7 @@ class OverviewToolbarComponent extends React.Component<Props, State> {
           </Button>
         </Tooltip>
 
-        <Tooltip content={<>List view</>} position={TooltipPosition.top}>
+        <Tooltip content={<>{this.props.t('List view')}</>} position={TooltipPosition.top}>
           <Button
             onClick={() => this.props.setDisplayMode(OverviewDisplayMode.LIST)}
             variant={ButtonVariant.plain}
@@ -310,12 +318,12 @@ class OverviewToolbarComponent extends React.Component<Props, State> {
   }
 }
 
-const mapStateToProps = (state: KialiAppState) => ({
+const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
   duration: durationSelector(state),
   refreshInterval: refreshIntervalSelector(state)
 });
 
-const mapDispatchToProps = (dispatch: KialiDispatch) => {
+const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => {
   return {
     setRefreshInterval: (refreshInterval: IntervalInMilliseconds) => {
       dispatch(UserSettingsActions.setRefreshInterval(refreshInterval));
@@ -323,4 +331,11 @@ const mapDispatchToProps = (dispatch: KialiDispatch) => {
   };
 };
 
-export const OverviewToolbar = connect(mapStateToProps, mapDispatchToProps)(OverviewToolbarComponent);
+// hoistNonReactStatics is used to copy static methods to translated component
+// (https://react.i18next.com/latest/withtranslation-hoc#hoist-non-react-statics)
+const OverviewToolbarI18n = hoistNonReactStatics(
+  withTranslation(I18N_NAMESPACE)(OverviewToolbarComponent),
+  OverviewToolbarComponent
+);
+
+export const OverviewToolbar = connect(mapStateToProps, mapDispatchToProps)(OverviewToolbarI18n);

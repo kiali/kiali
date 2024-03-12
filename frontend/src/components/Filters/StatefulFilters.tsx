@@ -38,6 +38,8 @@ import { labelFilter } from './CommonFilters';
 import { history, HistoryManager } from 'app/History';
 import { serverConfig } from 'config';
 import { PFColors } from '../Pf/PfColors';
+import { WithTranslation, withTranslation } from 'react-i18next';
+import { I18N_NAMESPACE } from 'types/Common';
 
 const toolbarStyle = kialiStyle({
   padding: 0,
@@ -65,14 +67,14 @@ const filterSelectStyle = kialiStyle({
   overflow: 'auto'
 });
 
-export interface StatefulFiltersProps {
+type StatefulFiltersProps = WithTranslation & {
   childrenFirst?: boolean;
   initialFilters: FilterType[];
   initialToggles?: ToggleType[];
   onFilterChange: (active: ActiveFiltersInfo) => void;
   onToggleChange?: (active: ActiveTogglesInfo) => void;
-  ref?: React.RefObject<StatefulFilters>;
-}
+  ref?: React.RefObject<StatefulFiltersComponent>;
+};
 
 interface StatefulFiltersState {
   activeFilters: ActiveFiltersInfo;
@@ -160,7 +162,7 @@ const dividerStyle = kialiStyle({
 
 const paddingStyle = kialiStyle({ padding: '0 10px 10px 10px' });
 
-export class StatefulFilters extends React.Component<StatefulFiltersProps, StatefulFiltersState> {
+export class StatefulFiltersComponent extends React.Component<StatefulFiltersProps, StatefulFiltersState> {
   private promises = new PromisesRegistry();
 
   constructor(props: StatefulFiltersProps) {
@@ -180,7 +182,7 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
     this.loadDynamicFilters();
   }
 
-  private loadDynamicFilters(): void {
+  private loadDynamicFilters = (): void => {
     // Call all loaders from FilterTypes and set results in state
     const filterTypePromises = this.props.initialFilters.map(ft => {
       if (ft.loader) {
@@ -207,14 +209,14 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
           console.debug(err);
         }
       });
-  }
+  };
 
-  private getCurrentFilterTypes(): FilterType {
+  private getCurrentFilterTypes = (): FilterType => {
     return (
       this.props.initialFilters.find(f => f.category === this.state.currentFilterType.category) ??
       this.props.initialFilters[0]
     );
-  }
+  };
 
   componentDidUpdate(prevProps: StatefulFiltersProps, prevState: StatefulFiltersState): void {
     // If the props filters changed (e.g. different values), some state update is necessary
@@ -261,12 +263,12 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
     this.promises.cancelAll();
   }
 
-  updateActiveFilters(activeFilters: ActiveFiltersInfo): void {
+  updateActiveFilters = (activeFilters: ActiveFiltersInfo): void => {
     const cleanFilters = FilterHelper.setFiltersToURL(this.state.filterTypes, activeFilters);
     FilterSelected.setSelected(cleanFilters);
     this.setState({ activeFilters: cleanFilters, currentValue: '' });
     this.props.onFilterChange(cleanFilters);
-  }
+  };
 
   filterAdded = (field: FilterType, value: string): void => {
     const activeFilters = this.state.activeFilters;
@@ -390,7 +392,7 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
     }
   };
 
-  getMenuToggle() {
+  getMenuToggle = () => {
     return (toggleRef: React.Ref<MenuToggleElement>): React.ReactElement => (
       <MenuToggle
         ref={toggleRef}
@@ -407,7 +409,7 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
             id="typeahead-select-input"
             autoComplete="off"
             onKeyDown={this.onTypeaheadInputKeyDown}
-            placeholder={this.state.currentFilterType.placeholder}
+            placeholder={this.props.t(this.state.currentFilterType.placeholder)}
             role="combobox"
             isExpanded={this.state.isOpen}
             aria-controls="select-typeahead-listbox"
@@ -415,9 +417,9 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
         </TextInputGroup>
       </MenuToggle>
     );
-  }
+  };
 
-  renderInput(): React.ReactNode {
+  renderInput = (): React.ReactNode => {
     const { currentFilterType, currentValue } = this.state;
 
     if (!currentFilterType) {
@@ -489,14 +491,14 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
           type={currentFilterType.filterType as TextInputTypes}
           value={currentValue}
           aria-label="filter_input_value"
-          placeholder={currentFilterType.placeholder}
+          placeholder={this.props.t(currentFilterType.placeholder)}
           onChange={(_event, value) => this.updateCurrentValue(value)}
           onKeyDown={e => this.onValueKeyDown(e)}
           style={{ width: 'auto' }}
         />
       );
     }
-  }
+  };
 
   renderChildren = (): React.ReactNode => {
     return (
@@ -607,3 +609,5 @@ export class StatefulFilters extends React.Component<StatefulFiltersProps, State
     );
   }
 }
+
+export const StatefulFilters = withTranslation(I18N_NAMESPACE)(StatefulFiltersComponent);
