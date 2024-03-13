@@ -14,9 +14,10 @@ When('user clicks on the {string} button', (title: string) => {
 
 Then('user sees the {string} modal', (title: string) => {
   cy.get('h1.pf-v5-c-modal-box__title').contains(title).should('be.visible');
-  if (title === 'Certificates information'){
+});
+
+Then('details about the certificates are displayed without an error', () => {
     cy.contains('An error occurred getting certificates information').should('not.exist');
-  }
 });
 
 Then('user sees information about {int} clusters', (numOfClusters: number) => {
