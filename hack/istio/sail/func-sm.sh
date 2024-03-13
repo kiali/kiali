@@ -28,17 +28,18 @@ install_servicemesh_operators() {
   case ${catalog_source} in
     redhat)
       local servicemesh_subscription_source="redhat-operators"
-      local servicemesh_subscription_name="sailoperator"
-      local servicemesh_subscription_channel="3.0-nightly"
+      local servicemesh_subscription_name="servicemeshoperator3"
+      local servicemesh_subscription_channel="candidates"
       ;;
     community)
       local servicemesh_subscription_source="community-operators"
-      local servicemesh_subscription_name="sailoperator"
-      local servicemesh_subscription_channel="3.0-nightly"
+      local servicemesh_subscription_name="servicemeshoperator3"
+      local servicemesh_subscription_channel="candidates"
       ;;
     *)
-      errormsg "Invalid catalog source [${catalog_source}]."
-      exit 1
+      local servicemesh_subscription_source="${catalog_source}"
+      local servicemesh_subscription_name="servicemeshoperator3"
+      local servicemesh_subscription_channel="candidates"
       ;;
   esac
 

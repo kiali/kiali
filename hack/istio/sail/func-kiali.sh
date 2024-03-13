@@ -28,8 +28,8 @@ install_kiali_operator() {
       local kiali_subscription_name="kiali"
       ;;
     *)
-      errormsg "Invalid catalog source [${catalog_source}]."
-      exit 1
+      local kiali_subscription_source="${catalog_source}"
+      local kiali_subscription_name="kiali-ossm"
       ;;
   esac
 
