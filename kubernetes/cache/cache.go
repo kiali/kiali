@@ -7,6 +7,8 @@ import (
 	"sync"
 	"time"
 
+	"golang.org/x/exp/maps"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/config"
@@ -47,22 +49,30 @@ type KialiCache interface {
 
 	RegistryStatusCache
 	ProxyStatusCache
-	NamespacesCache
+
+	// GetNamespace returns a namespace from the in memory cache if it exists.
+	GetNamespace(cluster string, token string, namespace string) (models.Namespace, bool)
+
+	// GetNamespaces returns all namespaces for the cluster/token from the in memory cache.
+	GetNamespaces(cluster string, token string) ([]models.Namespace, bool)
+
+	// RefreshTokenNamespaces clears the in memory cache of namespaces.
+	RefreshTokenNamespaces()
+
+	// SetNamespaces sets the in memory cache of namespaces.
+	// We cache all namespaces for cluster + token.
+	SetNamespaces(cluster string, token string, namespaces []models.Namespace)
+
+	// SetNamespace caches a specific namespace by cluster + token.
+	SetNamespace(cluster string, token string, namespace models.Namespace)
 
 	// IsAmbientEnabled checks if the istio Ambient profile was enabled
 	// by checking if the ztunnel daemonset exists on the cluster.
 	IsAmbientEnabled(cluster string) bool
 }
 
-// namespaceCache caches namespaces according to their token.
-type namespaceCache struct {
-	created          time.Time
-	namespaces       []models.Namespace                     // Merge namespaces with the same name and cluster
-	clusterNamespace map[string]map[string]models.Namespace // By cluster, by namespace name
-}
-
 type kialiCacheImpl struct {
-	ambientChecksPerCluster store.Store[bool]
+	ambientChecksPerCluster store.Store[string, bool]
 	cleanup                 func()
 	conf                    config.Config
 	// Embedded for backward compatibility for business methods that just use one cluster.
@@ -72,15 +82,17 @@ type kialiCacheImpl struct {
 
 	clientFactory kubernetes.ClientFactory
 	// Maps a cluster name to a KubeCache
-	kubeCache              map[string]KubeCache
-	refreshDuration        time.Duration
-	tokenLock              sync.RWMutex
-	tokenNamespaces        map[string]namespaceCache // TODO: Another option can be define here the namespaces by token/cluster
-	tokenNamespaceDuration time.Duration
+	kubeCache      map[string]KubeCache
+	namespaceStore store.Store[namespacesKey, map[string]models.Namespace]
+	// Only necessary because we want to cache the namespaces per cluster and token as a map
+	// and maps are not thread safe. We need an additional lock on top of the Store to ensure
+	// that the map returned from the store is threadsafe.
+	namespacesLock  sync.RWMutex
+	refreshDuration time.Duration
 	// ProxyStatusStore stores the proxy status and should be key'd off cluster + namespace + pod.
-	proxyStatusStore store.Store[*kubernetes.ProxyStatus]
+	proxyStatusStore store.Store[string, *kubernetes.ProxyStatus]
 	// RegistryStatusStore stores the registry status and should be key'd off of the cluster name.
-	registryStatusStore store.Store[*kubernetes.RegistryStatus]
+	registryStatusStore store.Store[string, *kubernetes.RegistryStatus]
 
 	// Info about the kube clusters that the cache knows about.
 	clusters    []kubernetes.Cluster
@@ -89,17 +101,17 @@ type kialiCacheImpl struct {
 
 func NewKialiCache(clientFactory kubernetes.ClientFactory, cfg config.Config) (KialiCache, error) {
 	ctx, cancel := context.WithCancel(context.Background())
+	namespaceKeyTTL := time.Duration(cfg.KubernetesConfig.CacheTokenNamespaceDuration) * time.Second
 	kialiCacheImpl := kialiCacheImpl{
-		ambientChecksPerCluster: store.NewExpirationStore(ctx, store.New[bool](), util.AsPtr(ambientCheckExpirationTime), nil),
+		ambientChecksPerCluster: store.NewExpirationStore(ctx, store.New[string, bool](), util.AsPtr(ambientCheckExpirationTime), nil),
 		cleanup:                 cancel,
 		clientFactory:           clientFactory,
 		conf:                    cfg,
 		kubeCache:               make(map[string]KubeCache),
+		namespaceStore:          store.NewExpirationStore(ctx, store.New[namespacesKey, map[string]models.Namespace](), &namespaceKeyTTL, nil),
 		refreshDuration:         time.Duration(cfg.KubernetesConfig.CacheDuration) * time.Second,
-		tokenNamespaces:         make(map[string]namespaceCache),
-		tokenNamespaceDuration:  time.Duration(cfg.KubernetesConfig.CacheTokenNamespaceDuration) * time.Second,
-		proxyStatusStore:        store.New[*kubernetes.ProxyStatus](),
-		registryStatusStore:     store.New[*kubernetes.RegistryStatus](),
+		proxyStatusStore:        store.New[string, *kubernetes.ProxyStatus](),
+		registryStatusStore:     store.New[string, *kubernetes.RegistryStatus](),
 	}
 
 	for cluster, client := range clientFactory.GetSAClients() {
@@ -200,6 +212,64 @@ func (in *kialiCacheImpl) IsAmbientEnabled(cluster string) bool {
 	}
 
 	return check
+}
+
+type namespacesKey struct {
+	cluster string
+	token   string
+}
+
+func (c *kialiCacheImpl) GetNamespace(cluster string, token string, namespace string) (models.Namespace, bool) {
+	c.namespacesLock.RLock()
+	defer c.namespacesLock.RUnlock()
+	key := namespacesKey{cluster: cluster, token: token}
+	namespaces, found := c.namespaceStore.Get(key)
+	if !found {
+		return models.Namespace{}, false
+	}
+	ns, found := namespaces[namespace]
+	return ns, found
+}
+
+func (c *kialiCacheImpl) GetNamespaces(cluster string, token string) ([]models.Namespace, bool) {
+	c.namespacesLock.RLock()
+	defer c.namespacesLock.RUnlock()
+	/*
+		store map[string]namespace
+		K would be a string or namespace key and V would be map[string]namespace where string is the namespace name so you can easily deref the namespace in GetNamespace.
+	*/
+	key := namespacesKey{cluster: cluster, token: token}
+	namespaces, found := c.namespaceStore.Get(key)
+	return maps.Values(namespaces), found
+}
+
+func (c *kialiCacheImpl) RefreshTokenNamespaces() {
+	c.namespacesLock.Lock()
+	defer c.namespacesLock.Unlock()
+	c.namespaceStore.Replace(nil)
+}
+
+func (c *kialiCacheImpl) SetNamespaces(cluster string, token string, namespaces []models.Namespace) {
+	c.namespacesLock.Lock()
+	defer c.namespacesLock.Unlock()
+	key := namespacesKey{cluster: cluster, token: token}
+	ns := make(map[string]models.Namespace)
+	for _, namespace := range namespaces {
+		ns[namespace.Name] = namespace
+	}
+	c.namespaceStore.Set(key, ns)
+}
+
+func (c *kialiCacheImpl) SetNamespace(cluster string, token string, namespace models.Namespace) {
+	c.namespacesLock.Lock()
+	defer c.namespacesLock.Unlock()
+	key := namespacesKey{cluster: cluster, token: token}
+	ns, found := c.namespaceStore.Get(key)
+	if !found {
+		ns = make(map[string]models.Namespace)
+	}
+	ns[namespace.Name] = namespace
+	c.namespaceStore.Set(key, ns)
 }
 
 // Interface guard for kiali cache impl

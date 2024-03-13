@@ -13,6 +13,7 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/kubernetes/kubetest"
+	"github.com/kiali/kiali/models"
 )
 
 func TestNoHomeClusterReturnsError(t *testing.T) {
@@ -167,4 +168,76 @@ func TestIsAmbientIsThreadSafe(t *testing.T) {
 		}()
 	}
 	wg.Wait()
+}
+
+func TestSetNamespace(t *testing.T) {
+	require := require.New(t)
+	conf := config.NewConfig()
+	conf.KubernetesConfig.CacheTokenNamespaceDuration = 10000
+	conf.KubernetesConfig.ClusterName = "east"
+	kubernetes.SetConfig(t, *conf)
+	client := kubetest.NewFakeK8sClient()
+	cache := cache.NewTestingCache(t, client, *conf)
+	cache.SetNamespaces("east", "token", []models.Namespace{{Name: "test", Cluster: "east"}})
+	cache.SetNamespace("east", "token", models.Namespace{Name: "test", Cluster: "east", Labels: map[string]string{"app": "test"}})
+	ns, found := cache.GetNamespace("east", "token", "test")
+	require.True(found)
+	require.Equal(map[string]string{"app": "test"}, ns.Labels)
+}
+
+func TestSetNamespaceIsThreadSafe(t *testing.T) {
+	conf := config.NewConfig()
+	conf.KubernetesConfig.CacheTokenNamespaceDuration = 10000
+	conf.KubernetesConfig.ClusterName = "east"
+	kubernetes.SetConfig(t, *conf)
+	client := kubetest.NewFakeK8sClient()
+	cache := cache.NewTestingCache(t, client, *conf)
+	wg := sync.WaitGroup{}
+	for i := 0; i < 10; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			cache.SetNamespace("east", "token", models.Namespace{Name: "test", Cluster: "east", Labels: map[string]string{"app": "test"}})
+		}()
+	}
+	wg.Wait()
+}
+
+func TestGetNamespaces(t *testing.T) {
+	require := require.New(t)
+	conf := config.NewConfig()
+	conf.KubernetesConfig.CacheTokenNamespaceDuration = 10000
+	conf.KubernetesConfig.ClusterName = "east"
+	kubernetes.SetConfig(t, *conf)
+
+	client := kubetest.NewFakeK8sClient()
+	cache := cache.NewTestingCache(t, client, *conf)
+	cache.SetNamespaces("east", "token", []models.Namespace{{Name: "test", Cluster: "east"}})
+
+	namespaces, found := cache.GetNamespaces("east", "token")
+	require.True(found)
+	require.Equal(1, len(namespaces))
+	require.Equal("test", namespaces[0].Name)
+
+	_, found = cache.GetNamespaces("west", "token")
+	require.False(found)
+
+	_, found = cache.GetNamespaces("east", "token2")
+	require.False(found)
+}
+
+func TestRefreshTokenNamespaces(t *testing.T) {
+	require := require.New(t)
+	conf := config.NewConfig()
+	conf.KubernetesConfig.CacheTokenNamespaceDuration = 10000
+	conf.KubernetesConfig.ClusterName = "east"
+	kubernetes.SetConfig(t, *conf)
+
+	client := kubetest.NewFakeK8sClient()
+	cache := cache.NewTestingCache(t, client, *conf)
+	cache.SetNamespaces("east", "token", []models.Namespace{{Name: "test", Cluster: "east"}})
+	cache.RefreshTokenNamespaces()
+
+	_, found := cache.GetNamespaces("east", "token")
+	require.False(found)
 }

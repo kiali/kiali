@@ -134,8 +134,8 @@ type cacheNoPrivileges struct {
 	cache.KialiCache
 }
 
-func (c *cacheNoPrivileges) GetNamespace(token string, namespace string, cluster string) *models.Namespace {
-	return nil
+func (c *cacheNoPrivileges) GetNamespace(token string, namespace string, cluster string) (models.Namespace, bool) {
+	return models.Namespace{}, false
 }
 
 type clientNoPrivileges struct {

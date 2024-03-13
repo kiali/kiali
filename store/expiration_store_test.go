@@ -21,7 +21,7 @@ func TestSetAndGet(t *testing.T) {
 	require := require.New(t)
 	ctx := testingContext(t)
 
-	store := store.NewExpirationStore(ctx, store.New[string](), nil, nil)
+	store := store.NewExpirationStore(ctx, store.New[string, string](), nil, nil)
 
 	key := "testKey"
 	value := "testValue"
@@ -35,7 +35,7 @@ func TestKeyExpiration(t *testing.T) {
 	ctx := testingContext(t)
 
 	ms := 1 * time.Millisecond
-	store := store.NewExpirationStore(ctx, store.New[string](), &ms, &ms)
+	store := store.NewExpirationStore(ctx, store.New[string, string](), &ms, &ms)
 
 	key := "testKey"
 	value := "testValue"
@@ -49,7 +49,7 @@ func TestRemoveKey(t *testing.T) {
 	require := require.New(t)
 	ctx := testingContext(t)
 
-	store := store.NewExpirationStore(ctx, store.New[string](), nil, nil)
+	store := store.NewExpirationStore(ctx, store.New[string, string](), nil, nil)
 
 	key := "testKey"
 	value := "testValue"
@@ -63,7 +63,7 @@ func TestReplace(t *testing.T) {
 	require := require.New(t)
 	ctx := testingContext(t)
 
-	store := store.NewExpirationStore(ctx, store.New[string](), nil, nil)
+	store := store.NewExpirationStore(ctx, store.New[string, string](), nil, nil)
 
 	initialData := map[string]string{"key1": "value1"}
 	newData := map[string]string{"key2": "value2"}
@@ -83,7 +83,7 @@ func TestStoppedReceivesWhenContextCancelled(t *testing.T) {
 	require := require.New(t)
 	ctx, cancel := context.WithCancel(context.Background())
 
-	store := store.NewExpirationStore(ctx, store.New[string](), nil, nil)
+	store := store.NewExpirationStore(ctx, store.New[string, string](), nil, nil)
 
 	cancel()
 	select {

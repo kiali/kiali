@@ -89,8 +89,23 @@ func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Namespa
 	)
 	defer end()
 
-	if ns := in.kialiCache.GetNamespaces(in.homeClusterUserClient.GetToken()); ns != nil {
-		return ns, nil
+	// Needs to be a token per cluster.
+	// Current multicluster will still work since the token will just be the same.
+	// Key will be cluster + token.
+	clustersToCheck := make(map[string]kubernetes.ClientInterface)
+	namespaces := []models.Namespace{}
+	for cluster, client := range in.userClients {
+		cachedNamespaces, found := in.kialiCache.GetNamespaces(cluster, client.GetToken())
+		if !found {
+			clustersToCheck[cluster] = client
+		} else {
+			namespaces = append(namespaces, cachedNamespaces...)
+		}
+	}
+
+	// Cache hit for all namespaces.
+	if len(clustersToCheck) == 0 {
+		return namespaces, nil
 	}
 
 	// determine what the discoverySelectors are by examining the Istio ConfigMap
@@ -162,13 +177,6 @@ func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Namespa
 		labelSelectorExcludeValue = excludeLabelList[1]
 	}
 
-	namespaces := []models.Namespace{}
-
-	var clusterNames []string
-	for c := range in.userClients {
-		clusterNames = append(clusterNames, c)
-	}
-
 	wg := &sync.WaitGroup{}
 	type result struct {
 		cluster string
@@ -179,7 +187,7 @@ func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Namespa
 
 	// TODO: Use a context to define a timeout. The context should be passed to the k8s client
 	go func() {
-		for _, cluster := range clusterNames {
+		for cluster := range clustersToCheck {
 			wg.Add(1)
 			go func(c string) {
 				defer wg.Done()
@@ -273,8 +281,13 @@ func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Namespa
 	}
 
 	// store only the filtered set of namespaces in cache for the token
-	// just get the home cluster token because it is assumed tokens are identical across all clusters
-	in.kialiCache.SetNamespaces(in.homeClusterUserClient.GetToken(), resultns)
+	namespacesPerCluster := make(map[string][]models.Namespace)
+	for _, ns := range resultns {
+		namespacesPerCluster[ns.Cluster] = append(namespacesPerCluster[ns.Cluster], ns)
+	}
+	for cluster, ns := range namespacesPerCluster {
+		in.kialiCache.SetNamespaces(cluster, in.userClients[cluster].GetToken(), ns)
+	}
 
 	return resultns, nil
 }
@@ -537,18 +550,21 @@ func (in *NamespaceService) GetNamespaceClusters(ctx context.Context, namespace 
 // GetClusterNamespace returns the definition of the specified namespace.
 func (in *NamespaceService) GetClusterNamespace(ctx context.Context, namespace string, cluster string) (*models.Namespace, error) {
 	var end observability.EndFunc
-	ctx, end = observability.StartSpan(ctx, "GetClusterNamespace",
+	_, end = observability.StartSpan(ctx, "GetClusterNamespace",
 		observability.Attribute("package", "business"),
 		observability.Attribute("namespace", namespace),
 		observability.Attribute("cluster", cluster),
 	)
 	defer end()
 
-	var err error
+	client, ok := in.userClients[cluster]
+	if !ok {
+		return nil, fmt.Errorf("cluster [%s] is not found or is not accessible for Kiali", cluster)
+	}
 
 	// Cache already has included/excluded namespaces applied
-	if ns := in.kialiCache.GetNamespace(in.homeClusterUserClient.GetToken(), namespace, cluster); ns != nil {
-		return ns, nil
+	if ns, found := in.kialiCache.GetNamespace(cluster, client.GetToken(), namespace); found {
+		return &ns, nil
 	}
 
 	if !in.isAccessibleNamespace(namespace) {
@@ -565,32 +581,21 @@ func (in *NamespaceService) GetClusterNamespace(ctx context.Context, namespace s
 
 	var result models.Namespace
 	if in.hasProjects {
-		var project *osproject_v1.Project
-		if _, ok := in.userClients[cluster]; !ok {
-			return nil, fmt.Errorf("OCP Cluster [%s] is not found or is not accessible for Kiali", cluster)
-		}
-		project, errC := in.userClients[cluster].GetProject(namespace)
-		if errC != nil {
-			return nil, errC
+		project, err := client.GetProject(namespace)
+		if err != nil {
+			return nil, err
 		}
 		result = models.CastProject(*project, cluster)
 	} else {
-		var ns *core_v1.Namespace
-		var errC error
-		if _, ok := in.userClients[cluster]; !ok {
-			return nil, fmt.Errorf("Cluster [%s] is not found or is not accessible for Kiali", cluster)
+		ns, err := client.GetNamespace(namespace)
+		if err != nil {
+			return nil, err
 		}
-		ns, errC = in.userClients[cluster].GetNamespace(namespace)
-		if errC != nil {
-			return nil, errC
-		}
-
 		result = models.CastNamespace(*ns, cluster)
 	}
-	// Refresh cache in case of cache expiration
-	if _, err = in.GetNamespaces(ctx); err != nil {
-		return nil, err
-	}
+
+	// Refresh namespace in cache since we've just fetched it from the API.
+	in.kialiCache.SetNamespace(cluster, client.GetToken(), result)
 	return &result, nil
 }
 

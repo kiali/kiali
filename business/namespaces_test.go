@@ -29,7 +29,7 @@ func setupNamespaceService(t *testing.T, k8s kubernetes.ClientInterface, conf *c
 }
 
 // Namespace service setup
-func setupNamespaceServiceWithNs() kubernetes.ClientInterface {
+func setupNamespaceServiceWithNs() *kubetest.FakeK8sClient {
 	// config needs to be set by other services since those rely on the global.
 	objects := []runtime.Object{
 		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "bookinfo"}},
@@ -286,6 +286,7 @@ func TestGetNamespacesCached(t *testing.T) {
 
 	conf := config.NewConfig()
 	conf.KubernetesConfig.ClusterName = "east"
+	conf.KubernetesConfig.CacheTokenNamespaceDuration = 600000
 	config.Set(conf)
 
 	k8s := setupNamespaceServiceWithNs()
@@ -293,21 +294,29 @@ func TestGetNamespacesCached(t *testing.T) {
 	clientFactory := kubetest.NewK8SClientFactoryMock(nil)
 	clients := map[string]kubernetes.ClientInterface{
 		"east": k8s,
+		"west": kubetest.NewFakeK8sClient(),
 	}
 	clientFactory.SetClients(clients)
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
 	SetWithBackends(mockClientFactory, nil)
 	cache := cache.NewTestingCacheWithFactory(t, clientFactory, *conf)
 	cache.SetNamespaces(
+		"west",
 		k8s.GetToken(),
-		// gamma is only cached.
-		[]models.Namespace{{Name: "bookinfo"}, {Name: "alpha"}, {Name: "beta"}, {Name: "gamma", Cluster: "west"}},
+		// gamma only exists in the cache.
+		[]models.Namespace{{Name: "gamma", Cluster: "west"}},
+	)
+	cache.SetNamespaces(
+		"east",
+		k8s.GetToken(),
+		[]models.Namespace{{Name: "bookinfo", Cluster: "east"}, {Name: "alpha", Cluster: "east"}, {Name: "beta", Cluster: "east"}},
 	)
 
 	nsservice := NewNamespaceService(clients, clients, cache, *conf)
 	namespaces, err := nsservice.GetNamespaces(context.TODO())
 	require.NoError(err)
 
+	// There's actually 6 namespaces with 'test' and 'test1' but only 4 are cached.
 	require.Len(namespaces, 4)
 
 	namespace, err := nsservice.GetClusterNamespace(context.TODO(), "gamma", "west")
@@ -344,6 +353,7 @@ func TestGetNamespacesForbiddenCached(t *testing.T) {
 	SetWithBackends(mockClientFactory, nil)
 	cache := cache.NewTestingCacheWithFactory(t, clientFactory, *conf)
 	cache.SetNamespaces(
+		"west",
 		k8s.GetToken(),
 		// Bookinfo is cached for the west cluster that the user has access to
 		// but NOT for the east cluster that the user doesn't have access to.
