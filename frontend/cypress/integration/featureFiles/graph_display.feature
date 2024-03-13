@@ -269,3 +269,16 @@ Feature: Kiali Graph page - Display menu
     And there are Istio objects in the "bookinfo" namespace for "west" cluster
     When user graphs "bookinfo" namespaces
     Then the Istio objects for the "bookinfo" namespace for both clusters should be grouped together in the panel
+    
+  @multi-cluster
+  Scenario Outline: User double clicks node from specific cluster
+    When user graphs "bookinfo" namespaces
+    And user double-clicks on the "reviews" "<type>" from the "<cluster>" cluster in the main graph
+    Then the browser is at the details page for the "<type>" "bookinfo/reviews" located in the "<cluster>" cluster
+
+    Examples:
+      | type     | cluster |
+      | app      | east    |
+      | app      | west    |
+      | service  | east    |
+      | service  | west    |
