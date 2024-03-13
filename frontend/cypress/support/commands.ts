@@ -102,21 +102,28 @@ const finishLogin = (authEndpoint: string, username: string, password: string, c
   const openshiftLoginEndpointURL = new URL(authEndpoint);
   const openshiftLoginEndpoint = openshiftLoginEndpointURL.origin + openshiftLoginEndpointURL.pathname;
   const loginParams = new URLSearchParams(openshiftLoginEndpointURL.search);
-
+  // cy.log(openshiftLoginEndpoint)
+  cy.log("password: " + password)
   cy.request({
     url: openshiftLoginEndpoint,
     method: 'POST',
     form: true,
+    // timeout:10000,
     body: {
       username: username,
       password: password,
       then: loginParams.get('then'),
       csrf: csrf
-    }
-  }).then(resp => {
-    const kialiURLWithToken = new URL(resp.redirects[1].replace('302: ', ''));
+    },
+  },).then(resp => {
+    // console.log(resp)
+    // let redirects = resp.redirects;
+    // cy.log(redirects[redirects.length-1])
+    console.log(resp)
+    const kialiURLWithToken = new URL(resp.redirects.pop().replace('302: ', ''));
+    console.log(kialiURLWithToken)
     const kialiParams = new URLSearchParams(kialiURLWithToken.hash.slice(1));
-
+    // console.log(kialiParams)
     cy.request({
       url: 'api/authenticate',
       body: {
