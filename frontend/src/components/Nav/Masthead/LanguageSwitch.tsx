@@ -60,7 +60,7 @@ export const LanguageSwitchComponent: React.FC<LanguageSwitchProps> = ({ languag
   };
 
   return (
-    <Tooltip position="left" content={<>{t('Switch language')}</>}>
+    <Tooltip position="bottom" content={<>{t('Switch language')}</>} trigger="mouseenter click" exitDelay={0}>
       <Dropdown
         toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
           <MenuToggle
