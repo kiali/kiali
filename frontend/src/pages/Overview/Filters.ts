@@ -12,7 +12,7 @@ import { MTLSStatuses } from '../../types/TLSStatus';
 import { TextInputTypes } from '@patternfly/react-core';
 
 export const nameFilter: RunnableFilter<NamespaceInfo> = {
-  category: 'Namespace',
+  category: i18n.t('Namespace'),
   placeholder: i18n.t('Filter by Namespace'),
   filterType: TextInputTypes.text,
   action: FILTER_ACTION_APPEND,
@@ -22,21 +22,21 @@ export const nameFilter: RunnableFilter<NamespaceInfo> = {
 };
 
 export const mtlsValues: FilterValue[] = [
-  { id: 'enabled', title: 'Enabled' },
-  { id: 'partiallyEnabled', title: 'Partially Enabled' },
-  { id: 'disabled', title: 'Disabled' }
+  { id: 'enabled', title: i18n.t('Enabled') },
+  { id: 'partiallyEnabled', title: i18n.t('Partially Enabled') },
+  { id: 'disabled', title: i18n.t('Disabled') }
 ];
 
 const statusMap = new Map<string, string>([
-  [MTLSStatuses.ENABLED, 'Enabled'],
-  [MTLSStatuses.PARTIALLY, 'Partially Enabled'],
-  [MTLSStatuses.NOT_ENABLED, 'Disabled'],
-  [MTLSStatuses.DISABLED, 'Disabled']
+  [MTLSStatuses.ENABLED, i18n.t('Enabled')],
+  [MTLSStatuses.PARTIALLY, i18n.t('Partially Enabled')],
+  [MTLSStatuses.NOT_ENABLED, i18n.t('Disabled')],
+  [MTLSStatuses.DISABLED, i18n.t('Disabled')]
 ]);
 
 export const mtlsFilter: RunnableFilter<NamespaceInfo> = {
-  category: 'mTLS',
-  placeholder: 'Filter by mTLS',
+  category: i18n.t('mTLS'),
+  placeholder: i18n.t('Filter by mTLS'),
   filterType: AllFilterTypes.select,
   action: FILTER_ACTION_APPEND,
   filterValues: mtlsValues,
@@ -46,8 +46,8 @@ export const mtlsFilter: RunnableFilter<NamespaceInfo> = {
 };
 
 export const labelFilter: RunnableFilter<NamespaceInfo> = {
-  category: 'Namespace Label',
-  placeholder: 'Filter by Namespace Label',
+  category: i18n.t('Namespace Label'),
+  placeholder: i18n.t('Filter by Namespace Label'),
   filterType: AllFilterTypes.nsLabel,
   action: FILTER_ACTION_APPEND,
   filterValues: [],
@@ -122,8 +122,8 @@ const summarizeHealthFilters = (healthFilters: ActiveFiltersInfo): HealthFilters
 };
 
 export const healthFilter: RunnableFilter<NamespaceInfo> = {
-  category: 'Health',
-  placeholder: 'Filter by Application Health',
+  category: i18n.t('Health'),
+  placeholder: i18n.t('Filter by Application Health'),
   filterType: AllFilterTypes.select,
   action: FILTER_ACTION_APPEND,
   filterValues: healthValues,

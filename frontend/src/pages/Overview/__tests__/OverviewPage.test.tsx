@@ -13,8 +13,8 @@ import { FilterType, ActiveFiltersInfo } from 'types/Filters';
 import { healthFilter } from 'components/Filters/CommonFilters';
 import { nameFilter } from '../Filters';
 import { DEFAULT_LABEL_OPERATION } from '../../../types/Filters';
-import i18n from 'i18next';
 import { CLUSTER_DEFAULT } from '../../../types/Graph';
+import { i18n } from 'i18n';
 
 const mockAPIToPromise = (func: keyof typeof API, obj: any, encapsData: boolean): Promise<void> => {
   return new Promise((resolve, reject) => {
@@ -117,9 +117,9 @@ describe('Overview page', () => {
         kiosk={''}
         minTLS={''}
         istioAPIEnabled={false}
-        t={i18n.t}
-        i18n={i18n}
+        t={(key: string) => key}
         tReady={true}
+        i18n={i18n}
       />
     );
     expect(shallowToJson(wrapper)).toMatchSnapshot();

@@ -12,6 +12,7 @@ import { calculateErrorRate } from './ErrorRate';
 import { ToleranceConfig } from './ServerConfig';
 import { serverConfig } from '../config';
 import { HealthAnnotationType } from './HealthAnnotation';
+import { i18n } from 'i18n';
 
 interface HealthConfig {
   items: HealthItem[];
@@ -57,10 +58,10 @@ export interface WorkloadHealthResponse {
   workloadStatus: WorkloadStatus;
 }
 
-export const TRAFFICSTATUS = 'Traffic Status';
+export const TRAFFICSTATUS = i18n.t('Traffic Status');
 
 const createTrafficTitle = (time: string): string => {
-  return `${TRAFFICSTATUS} (Last ${time})`;
+  return `${TRAFFICSTATUS} (${i18n.t('Last')} ${time})`;
 };
 
 /*
@@ -98,14 +99,14 @@ export const FAILURE: Status = {
   className: 'icon-failure',
   color: PFColors.Danger,
   icon: ExclamationCircleIcon,
-  name: 'Failure',
+  name: i18n.t('Failure'),
   priority: 4
 };
 
 export const DEGRADED: Status = {
   className: 'icon-degraded',
   color: PFColors.Warning,
-  name: 'Degraded',
+  name: i18n.t('Degraded'),
   icon: ExclamationTriangleIcon,
   priority: 3
 };
@@ -114,7 +115,7 @@ export const NOT_READY: Status = {
   className: 'icon-idle',
   color: PFColors.InfoBackground,
   icon: MinusCircleIcon,
-  name: 'Not Ready',
+  name: i18n.t('Not Ready'),
   priority: 2
 };
 
@@ -122,14 +123,14 @@ export const HEALTHY: Status = {
   className: 'icon-healthy',
   color: PFColors.Success,
   icon: CheckCircleIcon,
-  name: 'Healthy',
+  name: i18n.t('Healthy'),
   priority: 1
 };
 
 export const NA: Status = {
   className: 'icon-na',
   color: PFColors.Color200,
-  name: 'No health information',
+  name: i18n.t('No health information'),
   icon: UnknownIcon,
   priority: 0
 };
@@ -146,7 +147,7 @@ export interface ThresholdStatus {
   violation?: string;
 }
 
-export const POD_STATUS = 'Pod Status';
+export const POD_STATUS = i18n.t('Pod Status');
 
 // Use -1 rather than NaN to allow straigthforward comparison
 export const RATIO_NA = -1;

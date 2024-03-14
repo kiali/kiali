@@ -33,7 +33,7 @@ type LanguageSwitchProps = {
   language: string;
 };
 
-export const LanguageSwitchComponent: React.FC<LanguageSwitchProps> = props => {
+export const LanguageSwitchComponent: React.FC<LanguageSwitchProps> = ({ language }) => {
   const [isDropdownOpen, setIsDropdownOpen] = React.useState<boolean>(false);
 
   const { t } = useTranslation(I18N_NAMESPACE);
@@ -41,12 +41,12 @@ export const LanguageSwitchComponent: React.FC<LanguageSwitchProps> = props => {
   const languageItems: React.ReactNode[] = [
     <DropdownItem key="English" onClick={() => switchLanguage(Language.ENGLISH)}>
       <span>English</span>
-      {props.language === Language.ENGLISH && <KialiIcon.Check className={checkStyle} />}
+      {language === Language.ENGLISH && <KialiIcon.Check className={checkStyle} />}
     </DropdownItem>,
 
     <DropdownItem key="Chinese" onClick={() => switchLanguage(Language.CHINESE)}>
       <span>中文</span>
-      {props.language === Language.CHINESE && <KialiIcon.Check className={checkStyle} />}
+      {language === Language.CHINESE && <KialiIcon.Check className={checkStyle} />}
     </DropdownItem>
   ];
 

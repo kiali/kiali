@@ -4,6 +4,8 @@ import * as React from 'react';
 import { OutboundTrafficPolicy } from 'types/IstioObjects';
 import { NamespaceInfo } from '../../types/NamespaceInfo';
 import { infoStyle } from './OverviewCardControlPlaneNamespace';
+import { useTranslation } from 'react-i18next';
+import { I18N_NAMESPACE } from 'types/Common';
 
 type Props = {
   namespace: NamespaceInfo;
@@ -11,6 +13,8 @@ type Props = {
 };
 
 export const ControlPlaneNamespaceStatus: React.FC<Props> = (props: Props) => {
+  const { t } = useTranslation(I18N_NAMESPACE);
+
   let maxProxyPushTime: number | undefined = undefined;
 
   if (props.namespace.controlPlaneMetrics && props.namespace.controlPlaneMetrics.istiod_proxy_time) {
@@ -29,16 +33,16 @@ export const ControlPlaneNamespaceStatus: React.FC<Props> = (props: Props) => {
     <div style={{ textAlign: 'left' }}>
       {props.outboundTrafficPolicy && (
         <div>
-          <div style={{ display: 'inline-block', width: '125px', whiteSpace: 'nowrap' }}>Outbound policy</div>
+          <div style={{ display: 'inline-block', width: '125px', whiteSpace: 'nowrap' }}>{t('Outbound policy')}</div>
           <Tooltip
             position={TooltipPosition.right}
             content={
               <div style={{ textAlign: 'left' }}>
-                This value represents the meshConfig.outboundTrafficPolicy.mode, that configures the sidecar handling of
-                external services, that is, those services that are not defined in Istio’s internal service registry. If
-                this option is set to ALLOW_ANY, the Istio proxy lets calls to unknown services pass through. If the
-                option is set to REGISTRY_ONLY, then the Istio proxy blocks any host without an HTTP service or service
-                entry defined within the mesh
+                {t(`This value represents the meshConfig.outboundTrafficPolicy.mode, that configures the sidecar handling of \
+                external services, that is, those services that are not defined in Istio’s internal service registry. If \
+                this option is set to ALLOW_ANY, the Istio proxy lets calls to unknown services pass through. If the \
+                option is set to REGISTRY_ONLY, then the Istio proxy blocks any host without an HTTP service or service \
+                entry defined within the mesh`)}
               </div>
             }
           >
@@ -51,13 +55,13 @@ export const ControlPlaneNamespaceStatus: React.FC<Props> = (props: Props) => {
       )}
       {showProxyPushTime && (
         <div>
-          <div style={{ display: 'inline-block', width: '125px', whiteSpace: 'nowrap' }}>Proxy push time</div>
+          <div style={{ display: 'inline-block', width: '125px', whiteSpace: 'nowrap' }}>{t('Proxy push time')}</div>
           <Tooltip
             position={TooltipPosition.right}
             content={
               <div style={{ textAlign: 'left' }}>
-                This value represents the delay in seconds between config change and a proxy receiving all required
-                configuration.
+                {t(`This value represents the delay in seconds between config change and a proxy receiving all required \
+                configuration.`)}
               </div>
             }
           >

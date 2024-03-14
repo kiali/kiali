@@ -1414,10 +1414,28 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
 
     let text: string;
 
-    if (nbItems === 1) {
-      text = switchType(this.state.type, '1 application', '1 service', '1 workload');
-    } else {
-      text = `${nbItems}${switchType(this.state.type, ' applications', ' services', ' workloads')}`;
+    switch (targetPage) {
+      case Paths.APPLICATIONS:
+        text = this.props.t('{{count}} application', {
+          count: nbItems,
+          defaultValueOne: '{{count}} application',
+          defaultValueOther: '{{count}} applications'
+        });
+        break;
+      case Paths.SERVICES:
+        text = this.props.t('{{count}} service', {
+          count: nbItems,
+          defaultValueOne: '{{count}} service',
+          defaultValueOther: '{{count}} services'
+        });
+        break;
+      case Paths.WORKLOADS:
+        text = this.props.t('{{count}} workload', {
+          count: nbItems,
+          defaultValueOne: '{{count}} workload',
+          defaultValueOther: '{{count}} workloads'
+        });
+        break;
     }
 
     const mainLink = (
