@@ -8,7 +8,7 @@ First, install a Kubernetes cluster and make sure you do not already have Istio 
 
 Second, if using OpenShift, log into this cluster as a cluster admin user via 'oc'. Otherwise, make sure your current kube context is pointing to your Kubernetes cluster.
 
-Now install the Sail operator:
+Now install the required operators:
 
 ```
 ./install-ossm-release.sh install-operators
