@@ -67,6 +67,14 @@ install_kiali_cr() {
     exit 1
   fi
 
+  if [ -z "${TEMPO_NAMESPACE:-}" ]; then
+    TEMPO_NAMESPACE="$(${OC} get pods -l app.kubernetes.io/name=tempo --all-namespaces --no-headers --ignore-not-found=true 2>/dev/null | head -n1 | awk '{print $1}')"
+    if [ -z "${TEMPO_NAMESPACE:-}" ]; then
+      errormsg "TEMPO_NAMESPACE not defined and cannot be auto-detected. Is Tempo installed?"
+      exit 1
+    fi
+  fi
+
   cat <<EOM | ${OC} apply -f -
 apiVersion: kiali.io/v1alpha1
 kind: Kiali
