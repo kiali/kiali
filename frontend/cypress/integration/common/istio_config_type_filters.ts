@@ -21,7 +21,8 @@ When('user filters by {string}', (filterCategory: string) => {
     }
   }).as('noFilters');
 
-  cy.get('select[aria-label="filter_select_type"]').select(filterCategory);
+  cy.get('button#filter_select_type-toggle').click();
+  cy.get(`button#${filterCategory}`).click();
 });
 
 Then('no filters are active', () => {
@@ -110,7 +111,8 @@ Then('the filter {string} should be visible only once', (category: string) => {
 });
 
 When('user chooses {int} type filters', (count: number) => {
-  cy.get('select[aria-label="filter_select_type"]').select('Type');
+  cy.get('button#filter_select_type-toggle').click();
+  cy.get('button#Type').click();
 
   for (let i = 1; i <= count; i++) {
     cy.get('input[placeholder="Filter by Type"]').click();

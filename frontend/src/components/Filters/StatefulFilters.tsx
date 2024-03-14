@@ -430,6 +430,7 @@ export class StatefulFiltersComponent extends React.Component<StatefulFiltersPro
     if (currentFilterType.filterType === AllFilterTypes.typeAhead) {
       const typeaheadToggle = (toggleRef: React.Ref<MenuToggleElement>): React.ReactElement => (
         <MenuToggle
+          id="filter_select_value-toggle"
           ref={toggleRef}
           variant="typeahead"
           onClick={this.onFilterValueToggle}
@@ -455,11 +456,12 @@ export class StatefulFiltersComponent extends React.Component<StatefulFiltersPro
 
       return (
         <Select
+          id="filter_select_value"
           onSelect={(_event, value) => this.filterValueSelected(value)}
           onOpenChange={isFilterValueOpen => this.setState({ isFilterValueOpen })}
           toggle={typeaheadToggle}
           isOpen={this.state.isFilterValueOpen}
-          aria-label="filter_select_value"
+          aria-label="Filter Select Value"
           className={filterSelectStyle}
         >
           <SelectList data-test="istio-type-dropdown">
@@ -485,6 +487,7 @@ export class StatefulFiltersComponent extends React.Component<StatefulFiltersPro
     } else if (currentFilterType.filterType === AllFilterTypes.select) {
       const selectToggle = (toggleRef: React.Ref<MenuToggleElement>): React.ReactElement => (
         <MenuToggle
+          id="filter_select_value-toggle"
           ref={toggleRef}
           onClick={this.onFilterValueToggle}
           isExpanded={this.state.isFilterValueOpen}
@@ -496,6 +499,7 @@ export class StatefulFiltersComponent extends React.Component<StatefulFiltersPro
 
       return (
         <Select
+          id="filter_select_value"
           onSelect={(_event, value) => {
             this.filterValueSelected(value);
             this.updateCurrentValue(value as string);
@@ -503,7 +507,7 @@ export class StatefulFiltersComponent extends React.Component<StatefulFiltersPro
           onOpenChange={isFilterValueOpen => this.setState({ isFilterValueOpen })}
           toggle={selectToggle}
           isOpen={this.state.isFilterValueOpen}
-          aria-label="filter_select_value"
+          aria-label="Filter Select Value"
           className={filterSelectStyle}
         >
           <SelectList>
@@ -530,9 +534,10 @@ export class StatefulFiltersComponent extends React.Component<StatefulFiltersPro
     } else {
       return (
         <TextInput
+          id="filter_input_value"
           type={currentFilterType.filterType as TextInputTypes}
           value={currentValue}
-          aria-label="filter_input_value"
+          aria-label="Filter Input Value"
           placeholder={this.props.t(currentFilterType.placeholder)}
           onChange={(_event, value) => this.updateCurrentValue(value)}
           onKeyDown={e => this.onValueKeyDown(e)}
@@ -577,6 +582,7 @@ export class StatefulFiltersComponent extends React.Component<StatefulFiltersPro
 
     const toggle = (toggleRef: React.Ref<MenuToggleElement>): React.ReactElement => (
       <MenuToggle
+        id="filter_select_type-toggle"
         className={formSelectStyle}
         ref={toggleRef}
         onClick={this.onFilterTypeToggle}
@@ -608,11 +614,12 @@ export class StatefulFiltersComponent extends React.Component<StatefulFiltersPro
                   >
                     {i === 0 && (
                       <Select
+                        id="filter_select_type"
                         onSelect={(_event, value) => this.selectFilterType(value as string)}
                         onOpenChange={isFilterTypeOpen => this.setState({ isFilterTypeOpen })}
                         toggle={toggle}
                         isOpen={this.state.isFilterTypeOpen}
-                        aria-label="filter_select_type"
+                        aria-label="Filter Select Type"
                       >
                         <SelectList>
                           {this.state.filterTypes.map(option => (
@@ -660,6 +667,7 @@ export class StatefulFiltersComponent extends React.Component<StatefulFiltersPro
                 <ToolbarItem>
                   <div className={paddingStyle}>Label Operation</div>
                   <FormSelect
+                    id="filter_select_value"
                     value={activeFilters.op}
                     onChange={(_event, value) =>
                       this.updateActiveFilters({
@@ -667,7 +675,7 @@ export class StatefulFiltersComponent extends React.Component<StatefulFiltersPro
                         op: value as LabelOperation
                       })
                     }
-                    aria-label="filter_select_value"
+                    aria-label="Filter Select Value"
                     style={{ width: 'auto' }}
                   >
                     <FormSelectOption key="filter_or" value="or" label="or" />

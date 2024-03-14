@@ -65,7 +65,8 @@ When('user clicks in the {string} view', (view: string) => {
 });
 
 When(`user filters {string} namespace`, (ns: string) => {
-  cy.get('select[aria-label="filter_select_type"]').select('Namespace').should('have.value', 'Namespace');
+  cy.get('button#filter_select_type-toggle').click().should('have.value', 'Namespace');
+  cy.get('button#Namespace').should('have.value', 'Namespace').click();
 
   cy.get('input[aria-label="filter_input_value"]')
     .type(ns)
@@ -75,8 +76,12 @@ When(`user filters {string} namespace`, (ns: string) => {
 });
 
 When(`user filters {string} health`, (health: string) => {
-  cy.get('select[aria-label="filter_select_type"]').select('Health').should('have.value', 'Health');
-  cy.get('select[aria-label="filter_select_value"]').select(health).get('#loading_kiali_spinner').should('not.exist');
+  cy.get('button#filter_select_type-toggle').click();
+  cy.get('button#Health').should('have.value', 'Health').click();
+
+  cy.get('button#filter_select_value-toggle').click();
+  cy.get(`button#${health}`).click();
+  cy.get('#loading_kiali_spinner').should('not.exist');
 });
 
 When(`user selects Health for {string}`, (type: string) => {
