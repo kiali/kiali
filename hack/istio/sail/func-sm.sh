@@ -33,8 +33,8 @@ install_servicemesh_operators() {
       ;;
     community)
       local servicemesh_subscription_source="community-operators"
-      local servicemesh_subscription_name="servicemeshoperator3"
-      local servicemesh_subscription_channel="candidates"
+      local servicemesh_subscription_name="sailoperator"
+      local servicemesh_subscription_channel="3.0-nightly"
       ;;
     *)
       local servicemesh_subscription_source="${catalog_source}"
