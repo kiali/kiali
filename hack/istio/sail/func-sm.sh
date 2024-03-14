@@ -92,9 +92,9 @@ install_istio() {
 
   infomsg "Expecting Service Mesh operator deployment to be created"
   echo -n "Waiting."
-  while ! ${OC} get deployment -n ${OLM_OPERATORS_NAMESPACE} -o name | grep -E 'sail|istio' >& /dev/null ; do echo -n '.'; sleep 1; done
+  while ! ${OC} get deployment -n ${OLM_OPERATORS_NAMESPACE} -o name | grep -E 'sail|servicemesh|istio' >& /dev/null ; do echo -n '.'; sleep 1; done
   echo "done."
-  local servicemesh_deployment="$(${OC} get deployment -n ${OLM_OPERATORS_NAMESPACE} -o name | grep -E 'sail|istio')"
+  local servicemesh_deployment="$(${OC} get deployment -n ${OLM_OPERATORS_NAMESPACE} -o name | grep -E 'sail|servicemesh|istio')"
 
   infomsg "Waiting for operator deployments to start..."
   for op in ${servicemesh_deployment}
@@ -112,16 +112,16 @@ install_istio() {
   done
 
   infomsg "Wait for the servicemesh operator to be Ready."
-  ${OC} wait --for condition=Ready $(${OC} get pod -n ${OLM_OPERATORS_NAMESPACE} -o name | grep -E 'sail|istio') --timeout 300s -n ${OLM_OPERATORS_NAMESPACE}
+  ${OC} wait --for condition=Ready $(${OC} get pod -n ${OLM_OPERATORS_NAMESPACE} -o name | grep -E 'sail|servicemesh|istio') --timeout 300s -n ${OLM_OPERATORS_NAMESPACE}
   infomsg "done."
 
   # TODO: Sail has no webhooks (yet)
   #infomsg "Wait for the servicemesh validating webhook to be created."
-  #while [ "$(${OC} get validatingwebhookconfigurations -o name | grep -E 'sail|istio')" == "" ]; do echo -n '.'; sleep 5; done
+  #while [ "$(${OC} get validatingwebhookconfigurations -o name | grep -E 'sail|servicemesh|istio')" == "" ]; do echo -n '.'; sleep 5; done
   #infomsg "done."
   #
   #infomsg "Wait for the servicemesh mutating webhook to be created."
-  #while [ "$(${OC} get mutatingwebhookconfigurations -o name | grep -E 'sail|istio')" == "" ]; do echo -n '.'; sleep 5; done
+  #while [ "$(${OC} get mutatingwebhookconfigurations -o name | grep -E 'sail|servicemesh|istio')" == "" ]; do echo -n '.'; sleep 5; done
   #infomsg "done."
 
   if ! ${OC} get namespace ${control_plane_namespace} >& /dev/null; then
@@ -195,7 +195,7 @@ delete_servicemesh_operators() {
   ${OC} delete subscription --ignore-not-found=true --namespace ${OLM_OPERATORS_NAMESPACE} my-sail
 
   infomsg "Deleting OLM CSVs which uninstalls the operators and their related resources"
-  for csv in $(${OC} get csv --all-namespaces --no-headers -o custom-columns=NS:.metadata.namespace,N:.metadata.name | sed 's/  */:/g' | grep -E 'sail|istio')
+  for csv in $(${OC} get csv --all-namespaces --no-headers -o custom-columns=NS:.metadata.namespace,N:.metadata.name | sed 's/  */:/g' | grep -E 'sail|servicemesh|istio')
   do
     ${OC} delete csv -n $(echo -n $csv | cut -d: -f1) $(echo -n $csv | cut -d: -f2)
   done
@@ -211,7 +211,7 @@ delete_servicemesh_operators() {
   infomsg "Delete any resources that are getting left behind"
   for r in \
     $(${OC} get secrets -n ${OLM_OPERATORS_NAMESPACE} cacerts --no-headers -o custom-columns=K:kind,NS:.metadata.namespace,N:.metadata.name | sed 's/  */:/g') \
-    $(${OC} get configmaps --all-namespaces --no-headers -o custom-columns=K:kind,NS:.metadata.namespace,N:.metadata.name | sed 's/  */:/g' | grep -E 'sail|istio')
+    $(${OC} get configmaps --all-namespaces --no-headers -o custom-columns=K:kind,NS:.metadata.namespace,N:.metadata.name | sed 's/  */:/g' | grep -E 'sail|servicemesh|istio')
   do
     local res_kind=$(echo ${r} | cut -d: -f1)
     local res_namespace=$(echo ${r} | cut -d: -f2)
@@ -252,7 +252,7 @@ status_servicemesh_operators() {
     ${OC} get --namespace ${OLM_OPERATORS_NAMESPACE} ${sub_name}
     infomsg ""
     infomsg "===== SERVICEMESH OPERATOR PODS"
-    local all_pods="$(${OC} get pods -n ${OLM_OPERATORS_NAMESPACE} -o name | grep -E 'sail|istio')"
+    local all_pods="$(${OC} get pods -n ${OLM_OPERATORS_NAMESPACE} -o name | grep -E 'sail|servicemesh|istio')"
     [ ! -z "${all_pods}" ] && ${OC} get --namespace ${OLM_OPERATORS_NAMESPACE} ${all_pods} || infomsg "There are no pods"
   else
     infomsg "There are no Subscriptions for the Service Mesh Operators"
