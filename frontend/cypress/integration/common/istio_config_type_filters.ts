@@ -2,11 +2,7 @@ import { Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import { activeFilters, showMore } from './label_check';
 
 const optionCheck = (name: string): void => {
-  cy.get('button#filter_select_value-toggle').click();
   cy.get(`button[id="${name}"]`).should('exist');
-
-  // close the select
-  cy.get('button#filter_select_value-toggle').click();
 };
 
 When('user types {string} into the input', (input: string) => {

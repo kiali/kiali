@@ -469,6 +469,7 @@ export class StatefulFiltersComponent extends React.Component<StatefulFiltersPro
             {currentFilterType.filterValues.length > 0 ? (
               currentFilterType.filterValues.map((filter, index) => (
                 <SelectOption
+                  id={filter.id}
                   key={`filter_${index}`}
                   value={filter.id}
                   isFocused={this.state.focusedItemIndex === index}
@@ -478,7 +479,7 @@ export class StatefulFiltersComponent extends React.Component<StatefulFiltersPro
                 </SelectOption>
               ))
             ) : (
-              <SelectOption key="filter_no_results" value="no_results" isDisabled={true}>
+              <SelectOption id="filter_no_results" key="filter_no_results" value="no_results" isDisabled={true}>
                 {this.props.t('No results found')}
               </SelectOption>
             )}
