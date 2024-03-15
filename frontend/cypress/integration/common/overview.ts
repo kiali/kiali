@@ -65,14 +65,10 @@ When('user clicks in the {string} view', (view: string) => {
 });
 
 When(`user filters {string} namespace`, (ns: string) => {
-  cy.get('button#filter_select_type-toggle').click().should('have.value', 'Namespace');
+  cy.get('button#filter_select_type-toggle').click();
   cy.get('button#Namespace').should('have.value', 'Namespace').click();
 
-  cy.get('input[aria-label="filter_input_value"]')
-    .type(ns)
-    .type('{enter}')
-    .get('#loading_kiali_spinner')
-    .should('not.exist');
+  cy.get('input#filter_input_value').type(ns).type('{enter}').get('#loading_kiali_spinner').should('not.exist');
 });
 
 When(`user filters {string} health`, (health: string) => {
@@ -80,7 +76,7 @@ When(`user filters {string} health`, (health: string) => {
   cy.get('button#Health').should('have.value', 'Health').click();
 
   cy.get('button#filter_select_value-toggle').click();
-  cy.get(`button#${health}`).click();
+  cy.get(`button[id="${health}"]`).click();
   cy.get('#loading_kiali_spinner').should('not.exist');
 });
 
@@ -100,7 +96,7 @@ When(`user selects Health for {string}`, (type: string) => {
   }
 
   cy.get('button#overview-type-toggle').click().get('#loading_kiali_spinner').should('not.exist');
-  cy.get(`button[id="${innerId}"]`).click().get('#loading_kiali_spinner').should('not.exist');
+  cy.get(`button[id="${innerId}"]]`).click().get('#loading_kiali_spinner').should('not.exist');
 });
 
 When(`user sorts by name desc`, () => {
@@ -117,7 +113,7 @@ When(`user selects {string} time range`, (interval: string) => {
   }
 
   cy.get('button#time_range_duration-toggle').click().get('#loading_kiali_spinner').should('not.exist');
-  cy.get(`button[id="${innerId}"]`).click().get('#loading_kiali_spinner').should('not.exist');
+  cy.get(`button[id="${innerId}"]]`).click().get('#loading_kiali_spinner').should('not.exist');
 });
 
 When(`user selects {string} traffic direction`, (direction: string) => {
@@ -133,7 +129,7 @@ When(`user selects {string} traffic direction`, (direction: string) => {
   }
 
   cy.get('button#direction-type-toggle').click().get('#loading_kiali_spinner').should('not.exist');
-  cy.get(`button[id="${innerId}"]`).click().get('#loading_kiali_spinner').should('not.exist');
+  cy.get(`button[id="${innerId}"]]`).click().get('#loading_kiali_spinner').should('not.exist');
 });
 
 When('I fetch the overview of the cluster', () => {

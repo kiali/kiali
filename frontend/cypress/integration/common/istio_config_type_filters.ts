@@ -2,7 +2,11 @@ import { Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import { activeFilters, showMore } from './label_check';
 
 const optionCheck = (name: string): void => {
-  cy.get('[aria-label="filter_select_value"]').contains(name).should('exist');
+  cy.get('button#filter_select_value-toggle').click();
+  cy.get(`button[id="${name}"]`).should('exist');
+
+  // close the select
+  cy.get('button#filter_select_value-toggle').click();
 };
 
 When('user types {string} into the input', (input: string) => {
@@ -22,7 +26,7 @@ When('user filters by {string}', (filterCategory: string) => {
   }).as('noFilters');
 
   cy.get('button#filter_select_type-toggle').click();
-  cy.get(`button#${filterCategory}`).click();
+  cy.get(`button[id="${filterCategory}"]`).click();
 });
 
 Then('no filters are active', () => {

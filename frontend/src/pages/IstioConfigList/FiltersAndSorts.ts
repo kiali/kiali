@@ -189,19 +189,19 @@ export const configValidationFilter: FilterType = {
   action: FILTER_ACTION_APPEND,
   filterValues: [
     {
-      id: 'valid',
+      id: 'Valid',
       title: 'Valid'
     },
     {
-      id: 'warning',
+      id: 'Warning',
       title: 'Warning'
     },
     {
-      id: 'notvalid',
+      id: 'Not Valid',
       title: 'Not Valid'
     },
     {
-      id: 'notvalidated',
+      id: 'Not Validated',
       title: 'Not Validated'
     }
   ]

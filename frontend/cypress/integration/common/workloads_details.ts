@@ -71,7 +71,9 @@ Then('user sees workload outbound metrics information', () => {
 });
 
 When('user can filter spans by workload', () => {
-  cy.get('select[aria-label="filter_select_type"]').select('Workload');
+  cy.get('button#filter_select_type-toggle').click();
+  cy.get('button#Workload').click();
+
   cy.get('input[placeholder="Filter by Workload"]').type('details-v1{enter}');
   cy.get('li[label="details-v1"]').should('be.visible').find('button').click();
 
@@ -93,8 +95,10 @@ When(
 
     cy.waitForReact(1000, '#root');
 
-    cy.get('select[aria-label="filter_select_type"]').select(filter);
-    cy.get('input[aria-label="filter_input_value"]').type(`${value}{enter}`);
+    cy.get('button#filter_select_type-toggle').click();
+    cy.get(`button[id="${filter}"]`).click();
+
+    cy.get('input#filter_input_value').type(`${value}{enter}`);
   }
 );
 

@@ -511,8 +511,8 @@ export class StatefulFiltersComponent extends React.Component<StatefulFiltersPro
           className={filterSelectStyle}
         >
           <SelectList>
-            {currentFilterType.filterValues.map((filter, index) => (
-              <SelectOption id={`filter_${index}`} key={`filter_${index}`} value={filter.id}>
+            {currentFilterType.filterValues.map(filter => (
+              <SelectOption id={filter.id} key={filter.id} value={filter.id}>
                 {this.props.t(filter.title)}
               </SelectOption>
             ))}

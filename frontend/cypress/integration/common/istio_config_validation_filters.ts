@@ -4,15 +4,20 @@ import { Then, When } from '@badeball/cypress-cucumber-preprocessor';
 // the istio_config_type_filters.ts file. This is because some steps are identical.
 
 const enableFilter = (category: string): void => {
-  cy.get('select[aria-label="filter_select_value"]').select(category);
+  cy.get('button#filter_select_value-toggle').click();
+  cy.get(`button[id="${category}"]`).click();
 };
 
 const optionCheck = (name: string): void => {
-  cy.get('@filterDropdown').contains(name).should('exist');
+  cy.get('@filterDropdown').click();
+  cy.get(`button[id="${name}"]`).should('exist');
+
+  // close the select
+  cy.get('@filterDropdown').click();
 };
 
 Then('user can see the Filter by Config Validation dropdown', () => {
-  cy.get('[aria-label="filter_select_value"]').as('filterDropdown').should('be.visible');
+  cy.get('button#filter_select_value-toggle').as('filterDropdown').should('be.visible');
 });
 
 Then('the dropdown contains all of the filters', () => {
@@ -37,7 +42,9 @@ Then('user can see only the {string}', (category: string) => {
 });
 
 When('a validation filter {string} is applied', (category: string) => {
-  cy.get('select[aria-label="filter_select_value"]').select(category);
+  cy.get('button#filter_select_value-toggle').click();
+  cy.get(`button[id="${category}"]`).click();
+
   cy.get('#filter-selection > :nth-child(2)').contains(category).parent().should('be.visible');
 });
 
@@ -47,11 +54,15 @@ Then('the validation filter {string} is no longer active', (category: string) =>
 });
 
 When('user chooses {int} validation filters', (count: number) => {
-  cy.get('select[aria-label="filter_select_type"]', { timeout: 1000 }).should('be.visible').select('Config');
-  cy.get('select[aria-label="filter_select_value"]', { timeout: 2000 }).should('be.visible');
+  cy.get('button#filter_select_type-toggle', { timeout: 1000 }).should('be.visible').click();
+  cy.get('button#Config').should('be.visible').click();
 
-  for (let i = 1; i <= count; i++) {
-    cy.get('select[aria-label="filter_select_value"]').select(i);
+  cy.get('button#filter_select_value-toggle', { timeout: 2000 }).should('be.visible');
+
+  for (let i = 0; i < count; i++) {
+    cy.get('button#filter_select_value-toggle').click();
+    cy.get('div#filter_select_value').find('button').eq(i).click();
+
     cy.get('#loading_kiali_spinner').should('not.exist');
   }
 });

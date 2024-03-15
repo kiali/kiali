@@ -346,7 +346,8 @@ When('the user refreshes the page', () => {
 });
 
 When('user filters for config {string}', (configName: string) => {
-  cy.get('select[aria-label="filter_select_value"]').select(configName);
+  cy.get('button#filter_select_value-toggle').click();
+  cy.get(`button[id="${configName}"]`).click();
 });
 
 Then('user sees all the Istio Config objects in the bookinfo namespace', () => {
@@ -425,31 +426,50 @@ Then('user sees Configuration information for Istio objects', () => {
 
 Then('the user filters by {string} for {string}', (filter: string, filterValue: string) => {
   if (filter === 'Istio Name') {
-    cy.get('select[aria-label="filter_select_type"]').select(filter);
-    cy.get('input[aria-label="filter_input_value"]').type(`${filterValue}{enter}`);
+    cy.get('button#filter_select_type-toggle').click();
+    cy.get(`button[id="${filter}"]`).click();
+
+    cy.get('input#filter_input_value').type(`${filterValue}{enter}`);
   } else if (filter === 'Type') {
-    cy.get('select[aria-label="filter_select_type"]').select('Type');
+    cy.get('button#filter_select_type-toggle').click();
+    cy.get('button#Type').click();
+
     cy.get('input[placeholder="Filter by Type"]').type(`${filterValue}{enter}`);
     cy.get(`li[label="${filterValue}"]`).should('be.visible').find('button').click();
   } else if (filter === 'Istio Config Type') {
-    cy.get('select[aria-label="filter_select_type"]').select('Istio Config Type');
+    cy.get('button#filter_select_type-toggle').click();
+    cy.get('button[id="Istio Config Type"]').click();
+
     cy.get('input[placeholder="Filter by Istio Config Type"]').type(`${filterValue}{enter}`);
     cy.get(`li[label="${filterValue}"]`).should('be.visible').find('button').click();
   } else if (filter === 'Config') {
-    cy.get('select[aria-label="filter_select_type"]').select(filter);
-    cy.get('select[aria-label="filter_select_value"]').select(filterValue);
+    cy.get('button#filter_select_type-toggle').click();
+    cy.get(`button[id="${filter}"]`).click();
+
+    cy.get('button#filter_select_value-toggle').click();
+    cy.get(`button[id="${filterValue}"]`).click();
   } else if (filter === 'App Name') {
-    cy.get('select[aria-label="filter_select_type"]').select(filter);
-    cy.get('input[aria-label="filter_input_value"]').type(`${filterValue}{enter}`);
+    cy.get('button#filter_select_type-toggle').click();
+    cy.get(`button[id="${filter}"]`).click();
+
+    cy.get('input#filter_input_value').type(`${filterValue}{enter}`);
   } else if (filter === 'Istio Sidecar') {
-    cy.get('select[aria-label="filter_select_type"]').select(filter);
-    cy.get('select[aria-label="filter_select_value"]').select(filterValue);
+    cy.get('button#filter_select_type-toggle').click();
+    cy.get(`button[id="${filter}"]`).click();
+
+    cy.get('button#filter_select_value-toggle').click();
+    cy.get(`button[id="${filterValue}"]`).click();
   } else if (filter === 'Health') {
-    cy.get('select[aria-label="filter_select_type"]').select(filter);
-    cy.get('select[aria-label="filter_select_value"]').select(filterValue);
+    cy.get('button#filter_select_type-toggle').click();
+    cy.get(`button[id="${filter}"]`).click();
+
+    cy.get('button#filter_select_value-toggle').click();
+    cy.get(`button[id="${filterValue}"]`).click();
   } else if (filter === 'Label') {
-    cy.get('select[aria-label="filter_select_type"]').select(filter);
-    cy.get('input[aria-label="filter_input_label_key"]').type(`${filterValue}{enter}`);
+    cy.get('button#filter_select_type-toggle').click();
+    cy.get(`button[id="${filter}"]`).click();
+
+    cy.get('input#filter_input_label').type(`${filterValue}{enter}`);
   }
 });
 

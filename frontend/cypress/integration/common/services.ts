@@ -40,7 +40,7 @@ Then('the health column on the {string} row has a health icon', (row: string) =>
 });
 
 When('user filters for service type {string}', (serviceType: string) => {
-  cy.get('select[aria-label="filter_select_type"]')
+  cy.get('button#filter_select_type-toggle')
     .parent()
     .parent()
     .within(() => {
@@ -50,11 +50,13 @@ When('user filters for service type {string}', (serviceType: string) => {
 });
 
 When('user filters for sidecar {string}', (sidecarState: string) => {
-  cy.get('select[aria-label="filter_select_value"]').select(sidecarState);
+  cy.get('button#filter_select_value-toggle').click();
+  cy.get(`button[id="${sidecarState}"]`).click();
 });
 
 When('user filters for health {string}', (health: string) => {
-  cy.get('select[aria-label="filter_select_value"]').select(health);
+  cy.get('button#filter_select_value-toggle').click();
+  cy.get(`button[id="${health}"]`).click();
 });
 
 Then('user should only see healthy services in the table', () => {
@@ -65,7 +67,7 @@ Then('user should only see healthy services in the table', () => {
 });
 
 When('user filters for label {string}', (label: string) => {
-  cy.get('input[aria-label="filter_input_label_key"]').type(`${label}{enter}`);
+  cy.get('input#filter_input_label').type(`${label}{enter}`);
 });
 
 When('user applies kiali api {string} annotations', (type: string) => {

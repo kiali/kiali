@@ -75,11 +75,12 @@ Then('table length should exceed {int}', (numRows: number) => {
 });
 
 When('user selects filter {string}', (filter: string) => {
-  cy.get('select[aria-label="filter_select_type"]').select(filter);
+  cy.get('button#filter_select_type-toggle').click();
+  cy.get(`button[id="${filter}"]`).click();
 });
 
 When('user filters for name {string}', (name: string) => {
-  cy.get('input[aria-label="filter_input_value"]').type(`${name}{enter}`);
+  cy.get('input#filter_input_value').type(`${name}{enter}`);
 });
 
 When('user filters for istio config type {string}', (istioType: string) => {
@@ -335,6 +336,9 @@ Then('the list is sorted by column {string} in {string} order', (column: string,
     });
 });
 
-Then("the {string} {string} for {string} cluster {string} namespace should not exist in the table",(name:string,object:string,cluster:string,ns:string) =>{
-  cy.get(`[data-test="VirtualItem_Cluster${cluster}_Ns${ns}_${object.toLowerCase()}_${name}"]`).should('not.exist');
-});
+Then(
+  'the {string} {string} for {string} cluster {string} namespace should not exist in the table',
+  (name: string, object: string, cluster: string, ns: string) => {
+    cy.get(`[data-test="VirtualItem_Cluster${cluster}_Ns${ns}_${object.toLowerCase()}_${name}"]`).should('not.exist');
+  }
+);
