@@ -1,8 +1,6 @@
 import * as React from 'react';
 import {
   Checkbox,
-  FormSelect,
-  FormSelectOption,
   TextInput,
   TextInputTypes,
   Toolbar,
@@ -168,7 +166,10 @@ const dividerStyle = kialiStyle({
   display: 'inherit'
 });
 
-const paddingStyle = kialiStyle({ padding: '0 0.5rem 0.5rem 0.5rem' });
+const paddingStyle = kialiStyle({
+  padding: '0 0.5rem 0.5rem 0.5rem',
+  width: '100%'
+});
 
 export class StatefulFiltersComponent extends React.Component<StatefulFiltersProps, StatefulFiltersState> {
   private promises = new PromisesRegistry();
@@ -580,7 +581,7 @@ export class StatefulFiltersComponent extends React.Component<StatefulFiltersPro
       this.state.activeFilters.filters.some(f => f.category === labelFilter.category) ||
       this.state.currentFilterType.filterType === AllFilterTypes.label;
 
-    const toggle = (toggleRef: React.Ref<MenuToggleElement>): React.ReactElement => (
+    const filterTypeToggle = (toggleRef: React.Ref<MenuToggleElement>): React.ReactElement => (
       <MenuToggle
         id="filter_select_type-toggle"
         className={formSelectStyle}
@@ -593,71 +594,79 @@ export class StatefulFiltersComponent extends React.Component<StatefulFiltersPro
       </MenuToggle>
     );
 
+    const filterValueToggle = (toggleRef: React.Ref<MenuToggleElement>): React.ReactElement => (
+      <MenuToggle
+        id="filter_select_value-toggle"
+        ref={toggleRef}
+        onClick={this.onFilterValueToggle}
+        isExpanded={this.state.isFilterValueOpen}
+        isFullWidth
+      >
+        {this.props.t(activeFilters.op)}
+      </MenuToggle>
+    );
+
     return (
       <>
         <Toolbar id="filter-selection" className={toolbarStyle} clearAllFilters={this.clearFilters}>
           {this.props.childrenFirst && this.renderChildren()}
           <ToolbarContent>
             <ToolbarGroup variant="filter-group">
-              {this.state.filterTypes.map((ft, i) => {
-                return (
-                  <ToolbarFilter
-                    key={`toolbar_filter-${ft.category}`}
-                    chips={activeFilters.filters
-                      .filter(af => af.category === ft.category)
-                      .map(af => ({
-                        key: af.value,
-                        node: this.props.t(af.value)
-                      }))}
-                    deleteChip={this.removeFilter}
-                    categoryName={{ key: ft.category, name: this.props.t(ft.category) }}
-                  >
-                    {i === 0 && (
-                      <Select
-                        id="filter_select_type"
-                        onSelect={(_event, value) => this.selectFilterType(value as string)}
-                        onOpenChange={isFilterTypeOpen => this.setState({ isFilterTypeOpen })}
-                        toggle={toggle}
-                        isOpen={this.state.isFilterTypeOpen}
-                        aria-label="Filter Select Type"
-                      >
-                        <SelectList>
-                          {this.state.filterTypes.map(option => (
-                            <SelectOption
-                              id={option.category}
-                              key={option.category}
-                              value={option.category}
-                              isSelected={option.category === currentFilterType.category}
-                            >
-                              {this.props.t(option.category)}
-                            </SelectOption>
-                          ))}
-                        </SelectList>
-                      </Select>
-                    )}
-                    {i === 0 && this.renderInput()}
-                  </ToolbarFilter>
-                );
-              })}
+              {this.state.filterTypes.map((ft, i) => (
+                <ToolbarFilter
+                  key={`toolbar_filter-${ft.category}`}
+                  chips={activeFilters.filters
+                    .filter(af => af.category === ft.category)
+                    .map(af => ({
+                      key: af.value,
+                      node: this.props.t(af.value)
+                    }))}
+                  deleteChip={this.removeFilter}
+                  categoryName={{ key: ft.category, name: this.props.t(ft.category) }}
+                >
+                  {i === 0 && (
+                    <Select
+                      id="filter_select_type"
+                      onSelect={(_event, value) => this.selectFilterType(value as string)}
+                      onOpenChange={isFilterTypeOpen => this.setState({ isFilterTypeOpen })}
+                      toggle={filterTypeToggle}
+                      isOpen={this.state.isFilterTypeOpen}
+                      aria-label="Filter Select Type"
+                    >
+                      <SelectList>
+                        {this.state.filterTypes.map(option => (
+                          <SelectOption
+                            id={option.category}
+                            key={option.category}
+                            value={option.category}
+                            isSelected={option.category === currentFilterType.category}
+                          >
+                            {this.props.t(option.category)}
+                          </SelectOption>
+                        ))}
+                      </SelectList>
+                    </Select>
+                  )}
+                  {i === 0 && this.renderInput()}
+                </ToolbarFilter>
+              ))}
             </ToolbarGroup>
 
             <ToolbarGroup>
               {showIncludeToggles &&
                 this.props.initialToggles &&
-                this.props.initialToggles.map((t, i) => {
-                  return (
-                    <ToolbarItem key={`toggle-${i}`}>
-                      <Checkbox
-                        data-test={`toggle-${t.name}`}
-                        id={t.name}
-                        isChecked={Toggles.checked.get(t.name)}
-                        label={t.label}
-                        name={t.name}
-                        onChange={(event, checked: boolean) => this.onCheckboxChange(checked, event)}
-                      />
-                    </ToolbarItem>
-                  );
-                })}
+                this.props.initialToggles.map((t, i) => (
+                  <ToolbarItem key={`toggle-${i}`}>
+                    <Checkbox
+                      data-test={`toggle-${t.name}`}
+                      id={t.name}
+                      isChecked={Toggles.checked.get(t.name)}
+                      label={t.label}
+                      name={t.name}
+                      onChange={(event, checked: boolean) => this.onCheckboxChange(checked, event)}
+                    />
+                  </ToolbarItem>
+                ))}
             </ToolbarGroup>
 
             {!this.props.childrenFirst && this.renderChildren()}
@@ -666,21 +675,39 @@ export class StatefulFiltersComponent extends React.Component<StatefulFiltersPro
               <ToolbarGroup>
                 <ToolbarItem>
                   <div className={paddingStyle}>Label Operation</div>
-                  <FormSelect
+                  <Select
                     id="filter_select_value"
-                    value={activeFilters.op}
-                    onChange={(_event, value) =>
+                    onSelect={(_event, value) => {
                       this.updateActiveFilters({
                         filters: this.state.activeFilters.filters,
                         op: value as LabelOperation
-                      })
-                    }
+                      });
+                      this.setState({ isFilterValueOpen: false });
+                    }}
+                    onOpenChange={isFilterValueOpen => this.setState({ isFilterValueOpen })}
+                    toggle={filterValueToggle}
+                    isOpen={this.state.isFilterValueOpen}
                     aria-label="Filter Select Value"
-                    style={{ width: 'auto' }}
                   >
-                    <FormSelectOption key="filter_or" value="or" label="or" />
-                    <FormSelectOption key="filter_and" value="and" label="and" />
-                  </FormSelect>
+                    <SelectList>
+                      <SelectOption
+                        id={'filter_or'}
+                        key={'filter_or'}
+                        value={'or'}
+                        isSelected={activeFilters.op === 'or'}
+                      >
+                        {this.props.t('or')}
+                      </SelectOption>
+                      <SelectOption
+                        id={'filter_and'}
+                        key={'filter_and'}
+                        value={'and'}
+                        isSelected={activeFilters.op === 'and'}
+                      >
+                        {this.props.t('and')}
+                      </SelectOption>
+                    </SelectList>
+                  </Select>
                 </ToolbarItem>
               </ToolbarGroup>
             )}
