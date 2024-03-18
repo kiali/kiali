@@ -470,7 +470,7 @@ export class StatefulFiltersComponent extends React.Component<StatefulFiltersPro
               currentFilterType.filterValues.map((filter, index) => (
                 <SelectOption
                   id={filter.id}
-                  key={`filter_${index}`}
+                  key={filter.id}
                   value={filter.id}
                   isFocused={this.state.focusedItemIndex === index}
                   label={this.props.t(filter.title)}

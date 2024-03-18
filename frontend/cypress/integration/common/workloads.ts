@@ -14,7 +14,7 @@ const activateFilter = (state: string): void => {
   }).as('refresh');
 
   cy.get('button#filter_select_value-toggle').click();
-  cy.get(`button[id="${state}"]`).click();
+  cy.contains('div#filter_select_value button', state).click();
 };
 
 Given('a healthy workload in the cluster', function () {

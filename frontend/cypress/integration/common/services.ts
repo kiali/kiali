@@ -51,12 +51,12 @@ When('user filters for service type {string}', (serviceType: string) => {
 
 When('user filters for sidecar {string}', (sidecarState: string) => {
   cy.get('button#filter_select_value-toggle').click();
-  cy.get(`button[id="${sidecarState}"]`).click();
+  cy.contains('div#filter_select_value button', sidecarState).click();
 });
 
 When('user filters for health {string}', (health: string) => {
   cy.get('button#filter_select_value-toggle').click();
-  cy.get(`button[id="${health}"]`).click();
+  cy.contains('div#filter_select_value button', health).click();
 });
 
 Then('user should only see healthy services in the table', () => {

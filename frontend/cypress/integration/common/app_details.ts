@@ -65,7 +65,7 @@ Then('user sees outbound metrics information', () => {
 
 Then('user can filter spans by app', () => {
   cy.get('button#filter_select_type-toggle').click();
-  cy.get(`button#App`).click();
+  cy.contains('div#filter_select_type button', 'App').click();
   cy.get('input[placeholder="Filter by App"]').type('productpage{enter}');
   cy.get('li[label="productpage"]').should('be.visible').find('button').click();
 

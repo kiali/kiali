@@ -5,12 +5,12 @@ import { Then, When } from '@badeball/cypress-cucumber-preprocessor';
 
 const enableFilter = (category: string): void => {
   cy.get('button#filter_select_value-toggle').click();
-  cy.get(`button[id="${category}"]`).click();
+  cy.contains('div#filter_select_value button', category).click();
 };
 
 const optionCheck = (name: string): void => {
   cy.get('@filterDropdown').click();
-  cy.get(`button[id="${name}"]`).should('exist');
+  cy.contains('div#filter_select_value button', name).should('exist');
 
   // close the select
   cy.get('@filterDropdown').click();
@@ -43,7 +43,7 @@ Then('user can see only the {string}', (category: string) => {
 
 When('a validation filter {string} is applied', (category: string) => {
   cy.get('button#filter_select_value-toggle').click();
-  cy.get(`button[id="${category}"]`).click();
+  cy.contains('div#filter_select_value button', category).click();
 
   cy.get('#filter-selection > :nth-child(2)').contains(category).parent().should('be.visible');
 });
@@ -55,7 +55,7 @@ Then('the validation filter {string} is no longer active', (category: string) =>
 
 When('user chooses {int} validation filters', (count: number) => {
   cy.get('button#filter_select_type-toggle', { timeout: 1000 }).should('be.visible').click();
-  cy.get('button#Config').should('be.visible').click();
+  cy.contains('div#filter_select_type button', 'Config').should('be.visible').click();
 
   cy.get('button#filter_select_value-toggle', { timeout: 2000 }).should('be.visible');
 

@@ -76,7 +76,7 @@ Then('table length should exceed {int}', (numRows: number) => {
 
 When('user selects filter {string}', (filter: string) => {
   cy.get('button#filter_select_type-toggle').click();
-  cy.get(`button[id="${filter}"]`).click();
+  cy.contains('div#filter_select_type button', filter).click();
 });
 
 When('user filters for name {string}', (name: string) => {

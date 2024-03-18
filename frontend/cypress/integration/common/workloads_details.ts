@@ -96,7 +96,7 @@ When(
     cy.waitForReact(1000, '#root');
 
     cy.get('button#filter_select_type-toggle').click();
-    cy.get(`button[id="${filter}"]`).click();
+    cy.contains('div#filter_select_type button', filter).click();
 
     cy.get('input#filter_input_value').type(`${value}{enter}`);
   }
