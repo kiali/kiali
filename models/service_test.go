@@ -17,7 +17,7 @@ func TestServiceDetailParsing(t *testing.T) {
 	config.Set(config.NewConfig())
 
 	service := ServiceDetails{}
-	service.SetService(fakeService())
+	service.SetService(config.DefaultClusterID, fakeService())
 	service.SetEndpoints(fakeEndpoints())
 	service.SetPods(fakePods())
 	service.SetIstioSidecar(fakeWorkloads())
@@ -25,6 +25,7 @@ func TestServiceDetailParsing(t *testing.T) {
 	// Kubernetes Details
 
 	assert.Equal(service.Service.Name, "Name")
+	assert.Equal(service.Service.Namespace.Cluster, config.DefaultClusterID)
 	assert.Equal(service.Service.Namespace.Name, "Namespace")
 	assert.Equal(service.Service.CreatedAt, "2018-03-08T14:44:00Z")
 	assert.Equal(service.Service.ResourceVersion, "1234")
@@ -53,9 +54,9 @@ func TestServiceParse(t *testing.T) {
 
 	service := Service{}
 	service.Name = "service"
-	service.Namespace = Namespace{Name: "namespace"}
+	service.Namespace = Namespace{Cluster: config.DefaultClusterID, Name: "namespace"}
 
-	service.Parse(fakeService())
+	service.Parse(config.DefaultClusterID, fakeService())
 	assert.Equal("labelName1", service.Labels["label1"])
 	assert.Equal("labelName2", service.Labels["label2"])
 	assert.Equal("ClusterIP", service.Type)

@@ -622,7 +622,6 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, cluster, namespace,
 		// On ServiceEntries cases the Service name is the hostname
 		s.ServiceEntries = kubernetes.FilterServiceEntriesByHostname(istioConfigList.ServiceEntries, s.Service.Name)
 	}
-	s.Cluster = cluster
 
 	return &s, nil
 }
@@ -698,7 +697,7 @@ func (in *SvcService) GetService(ctx context.Context, cluster, namespace, servic
 		rSvcs := in.businessLayer.RegistryStatus.GetRegistryServices(criteria)
 		for _, rSvc := range rSvcs {
 			if rSvc.Attributes.Name == service {
-				svc.ParseRegistryService(rSvc)
+				svc.ParseRegistryService(cluster, rSvc)
 				break
 			}
 		}
@@ -707,9 +706,10 @@ func (in *SvcService) GetService(ctx context.Context, cluster, namespace, servic
 			return svc, kubernetes.NewNotFound(service, "Kiali", "Service")
 		}
 	} else {
-		svc.Parse(kSvc)
+		svc.Parse(cluster, kSvc)
 	}
 
+	svc.Namespace.Cluster = cluster
 	return svc, nil
 }
 

@@ -1178,7 +1178,7 @@ export function deleteServiceTrafficRouting(
 
   if (isServiceDetailsInfo(vsOrSvc)) {
     if (!cluster) {
-      cluster = vsOrSvc.cluster;
+      cluster = (vsOrSvc as ServiceDetailsInfo).service.cluster;
     }
   }
 

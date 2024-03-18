@@ -73,7 +73,6 @@ type ServiceDefinitionList struct {
 }
 
 type ServiceDetails struct {
-	Cluster            string                                   `json:"cluster"`
 	DestinationRules   []*networking_v1beta1.DestinationRule    `json:"destinationRules"`
 	Endpoints          Endpoints                                `json:"endpoints"`
 	IstioPermissions   ResourcePermissions                      `json:"istioPermissions"`
@@ -119,22 +118,22 @@ func (so *ServiceOverview) ParseToService() *Service {
 	return &svc
 }
 
-func (ss *Services) Parse(services []core_v1.Service) {
+func (ss *Services) Parse(cluster string, services []core_v1.Service) {
 	if ss == nil {
 		return
 	}
 
 	for _, item := range services {
 		service := &Service{}
-		service.Parse(&item)
+		service.Parse(cluster, &item)
 		*ss = append(*ss, service)
 	}
 }
 
-func (s *Service) Parse(service *core_v1.Service) {
+func (s *Service) Parse(cluster string, service *core_v1.Service) {
 	if service != nil {
 		s.Name = service.Name
-		s.Namespace = Namespace{Name: service.Namespace}
+		s.Namespace = Namespace{Cluster: cluster, Name: service.Namespace}
 		s.Labels = service.Labels
 		s.Selectors = service.Spec.Selector
 		s.Type = string(service.Spec.Type)
@@ -153,10 +152,10 @@ func (s *Service) Parse(service *core_v1.Service) {
 	}
 }
 
-func (s *Service) ParseRegistryService(service *kubernetes.RegistryService) {
+func (s *Service) ParseRegistryService(cluster string, service *kubernetes.RegistryService) {
 	if service != nil {
 		s.Name = service.Attributes.Name
-		s.Namespace = Namespace{Name: service.Attributes.Namespace}
+		s.Namespace = Namespace{Cluster: cluster, Name: service.Attributes.Namespace}
 		s.Labels = service.Attributes.Labels
 		s.Selectors = service.Attributes.LabelSelectors
 		s.HealthAnnotations = map[string]string{}
@@ -166,8 +165,8 @@ func (s *Service) ParseRegistryService(service *kubernetes.RegistryService) {
 	}
 }
 
-func (s *ServiceDetails) SetService(svc *core_v1.Service) {
-	s.Service.Parse(svc)
+func (s *ServiceDetails) SetService(cluster string, svc *core_v1.Service) {
+	s.Service.Parse(cluster, svc)
 }
 
 func (s *ServiceDetails) SetEndpoints(eps *core_v1.Endpoints) {
