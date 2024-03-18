@@ -96,7 +96,7 @@ When(`user selects {string} time range`, (interval: string) => {
 
 When(`user selects {string} traffic direction`, (direction: string) => {
   cy.get('button#direction-type-toggle').click().get('#loading_kiali_spinner').should('not.exist');
-  cy.contains('div#filter_select_value button', direction).click().get('#loading_kiali_spinner').should('not.exist');
+  cy.contains('div#direction-type button', direction).click().get('#loading_kiali_spinner').should('not.exist');
 });
 
 When('I fetch the overview of the cluster', () => {
