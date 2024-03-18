@@ -40,7 +40,7 @@ Then('the health column on the {string} row has a health icon', (row: string) =>
 });
 
 When('user filters for service type {string}', (serviceType: string) => {
-  cy.get('button#filter_select_value-toggle').click();
+  cy.get('div#filter_select_value-toggle').find('button').click();
   cy.contains('div#filter_select_value button', serviceType).click();
 });
 

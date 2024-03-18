@@ -58,8 +58,8 @@ const bottomPadding = kialiStyle({
 const formSelectStyle = kialiStyle({
   borderColor: PFColors.BorderColorLight100,
   backgroundColor: PFColors.BackgroundColor200,
-  minWidth: '150px',
-  maxWidth: '150px'
+  minWidth: '170px',
+  maxWidth: '170px'
 });
 
 const filterSelectStyle = kialiStyle({

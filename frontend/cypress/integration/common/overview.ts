@@ -81,22 +81,8 @@ When(`user filters {string} health`, (health: string) => {
 });
 
 When(`user selects Health for {string}`, (type: string) => {
-  let innerId = '';
-
-  switch (type) {
-    case 'Apps':
-      innerId = 'app';
-      break;
-    case 'Workloads':
-      innerId = 'workload';
-      break;
-    case 'Services':
-      innerId = 'service';
-      break;
-  }
-
   cy.get('button#overview-type-toggle').click().get('#loading_kiali_spinner').should('not.exist');
-  cy.contains('div#overview-type button', innerId).click().get('#loading_kiali_spinner').should('not.exist');
+  cy.contains('div#overview-type button', type).click().get('#loading_kiali_spinner').should('not.exist');
 });
 
 When(`user sorts by name desc`, () => {
@@ -104,32 +90,13 @@ When(`user sorts by name desc`, () => {
 });
 
 When(`user selects {string} time range`, (interval: string) => {
-  let innerId = '';
-
-  switch (interval) {
-    case 'Last 10m':
-      innerId = '600';
-      break;
-  }
-
   cy.get('button#time_range_duration-toggle').click().get('#loading_kiali_spinner').should('not.exist');
-  cy.contains('div#time_range_duration button', innerId).click().get('#loading_kiali_spinner').should('not.exist');
+  cy.contains('div#time_range_duration button', interval).click().get('#loading_kiali_spinner').should('not.exist');
 });
 
 When(`user selects {string} traffic direction`, (direction: string) => {
-  let innerId = '';
-
-  switch (direction) {
-    case 'Outbound':
-      innerId = 'outbound';
-      break;
-    case 'Inbound':
-      innerId = 'inbound';
-      break;
-  }
-
   cy.get('button#direction-type-toggle').click().get('#loading_kiali_spinner').should('not.exist');
-  cy.contains('div#filter_select_value button', innerId).click().get('#loading_kiali_spinner').should('not.exist');
+  cy.contains('div#filter_select_value button', direction).click().get('#loading_kiali_spinner').should('not.exist');
 });
 
 When('I fetch the overview of the cluster', () => {

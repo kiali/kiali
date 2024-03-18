@@ -40,8 +40,8 @@ Given('a degraded workload in the mesh', function () {
 });
 
 When('user filters for workload type {string}', (workloadType: string) => {
-  cy.get('button#filter_select_type-toggle').click();
-  cy.contains('div#filter_select_type button', workloadType).click();
+  cy.get('div#filter_select_value-toggle').find('button').click();
+  cy.contains('div#filter_select_value button', workloadType).click();
 });
 
 Then('user sees {string} in workloads table', (workload: string) => {
