@@ -40,13 +40,8 @@ Then('the health column on the {string} row has a health icon', (row: string) =>
 });
 
 When('user filters for service type {string}', (serviceType: string) => {
-  cy.get('button#filter_select_type-toggle')
-    .parent()
-    .parent()
-    .within(() => {
-      cy.get('button').click();
-      cy.get(`li[label="${serviceType}"]`).find('button').click();
-    });
+  cy.get('button#filter_select_value-toggle').click();
+  cy.contains('div#filter_select_value button', serviceType).click();
 });
 
 When('user filters for sidecar {string}', (sidecarState: string) => {

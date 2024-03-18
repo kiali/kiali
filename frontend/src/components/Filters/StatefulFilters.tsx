@@ -194,7 +194,7 @@ export class StatefulFiltersComponent extends React.Component<StatefulFiltersPro
 
   private loadDynamicFilters = (): void => {
     // Call all loaders from FilterTypes and set results in state
-    const filterTypePromises = this.props.initialFilters.map(ft => {
+    const filterTypePromises = this.props.initialFilters.map(async ft => {
       if (ft.loader) {
         return ft.loader().then(values => {
           ft.filterValues = values;
@@ -720,4 +720,4 @@ export class StatefulFiltersComponent extends React.Component<StatefulFiltersPro
   }
 }
 
-export const StatefulFilters = withTranslation(I18N_NAMESPACE)(StatefulFiltersComponent);
+export const StatefulFilters = withTranslation(I18N_NAMESPACE, { withRef: true })(StatefulFiltersComponent);

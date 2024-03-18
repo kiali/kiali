@@ -96,7 +96,7 @@ When(`user selects Health for {string}`, (type: string) => {
   }
 
   cy.get('button#overview-type-toggle').click().get('#loading_kiali_spinner').should('not.exist');
-  cy.contains('div#filter_select_value button', innerId).click().get('#loading_kiali_spinner').should('not.exist');
+  cy.contains('div#overview-type button', innerId).click().get('#loading_kiali_spinner').should('not.exist');
 });
 
 When(`user sorts by name desc`, () => {
@@ -113,7 +113,7 @@ When(`user selects {string} time range`, (interval: string) => {
   }
 
   cy.get('button#time_range_duration-toggle').click().get('#loading_kiali_spinner').should('not.exist');
-  cy.contains('div#filter_select_value button', innerId).click().get('#loading_kiali_spinner').should('not.exist');
+  cy.contains('div#time_range_duration button', innerId).click().get('#loading_kiali_spinner').should('not.exist');
 });
 
 When(`user selects {string} traffic direction`, (direction: string) => {
