@@ -272,7 +272,7 @@ func boxByNamespace(nodes *[]*NodeWrapper) {
 	}
 }
 
-// boxByNamespace boxes nodes in the same namespace, within a cluster
+// boxByCluster boxes nodes in the same namespace, within a cluster
 func boxByCluster(nodes *[]*NodeWrapper) {
 	for _, box := range *nodes {
 		if box.Data.InfraType != mesh.InfraTypeCluster {
@@ -280,7 +280,10 @@ func boxByCluster(nodes *[]*NodeWrapper) {
 		}
 		box.Data.IsBox = mesh.BoxByCluster
 		for _, member := range *nodes {
-			if member.Data.Parent != "" || (member.Data.InfraType != mesh.InfraTypeNamespace && member.Data.IsBox != mesh.BoxByDataPlanes) {
+			if member.Data.Parent != "" || member.Data.InfraType == mesh.InfraTypeCluster {
+				continue
+			}
+			if !(member.Data.InfraType == mesh.InfraTypeNamespace || member.Data.IsBox == mesh.BoxByDataPlanes || member.Data.Cluster == mesh.Unknown) {
 				continue
 			}
 			if member.Data.Cluster == box.Data.Cluster {

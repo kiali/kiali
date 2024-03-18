@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/md5"
 	"fmt"
+	"regexp"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
@@ -23,6 +24,12 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalIn
 
 	_, finalizers := appender.ParseAppenders(o)
 	meshMap := mesh.NewMeshMap()
+
+	// Kiali instances will be configured with the external services with which they communicate. If possible, we want to
+	// show these service nodes in the mesh, positioned in the proper cluster and namespaces.  To do this we look for
+	// the service deployments.  If not found (or not accessible to the user) we assume the services are deployed
+	// externally and we fall back to the configured URLs.  So, start by trying to discover the infra services...
+	//infraServices := discoverInfraServices(gi)
 
 	// start by adding istio control planes and the mesh clusters
 	meshDef, err := gi.Business.Mesh.GetMesh(ctx)
@@ -45,43 +52,54 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalIn
 		}
 
 		// add the control plane istiod
-		_, _, err := addInfra(meshMap, mesh.InfraTypeIstiod, cp.Cluster.Name, cp.IstiodNamespace, cp.IstiodName, cp.Config)
+		istiod, _, err := addInfra(meshMap, mesh.InfraTypeIstiod, cp.Cluster.Name, cp.IstiodNamespace, cp.IstiodName, cp.Config)
 		mesh.CheckError(err)
 
 		// add any Kiali instances
+		conf := config.Get().Obfuscate()
+		es := conf.ExternalServices
+		hasExternalServices := false
+
 		for _, ki := range cp.Cluster.KialiInstances {
-			kiali, _, err := addInfra(meshMap, mesh.InfraTypeKiali, cp.Cluster.Name, ki.Namespace, ki.ServiceName, nil)
+			kiali, _, err := addInfra(meshMap, mesh.InfraTypeKiali, cp.Cluster.Name, ki.Namespace, ki.ServiceName, es.Istio)
 			mesh.CheckError(err)
 
-			// TODO HOW DO WE PLACE THE EXTERNAL RESOURCES AND ESTABLISH PROPER LINKS?  FOR NOW JUST ASSUME LOCAL...
-			conf := config.Get().Obfuscate()
-			es := conf.ExternalServices
-
-			// add the home Kiali
-			// var kiali *mesh.Node
-			// kiali, _, err = addInfra(meshMap, mesh.InfraTypeKiali, conf.KubernetesConfig.ClusterName, conf.Deployment.Namespace, conf.Deployment.InstanceName, nil)
-			// mesh.CheckError(err)
+			if es.Istio.IstioAPIEnabled {
+				kiali.AddEdge(istiod)
+			}
 
 			// add the Kiali external services...
+
+			// metrics/prometheus
+			cluster, namespace, isExternal := discoverInfraService(es.Prometheus.URL, ctx, gi)
 			var node *mesh.Node
-			node, _, err = addInfra(meshMap, mesh.InfraTypeMetricStore, conf.KubernetesConfig.ClusterName, conf.Deployment.Namespace, "Prometheus", es.Prometheus)
+			node, _, err = addInfra(meshMap, mesh.InfraTypeMetricStore, cluster, namespace, "Prometheus", es.Prometheus)
 			mesh.CheckError(err)
 
 			kiali.AddEdge(node)
+			hasExternalServices = hasExternalServices || isExternal
 
 			if conf.ExternalServices.Tracing.Enabled {
-				node, _, err = addInfra(meshMap, mesh.InfraTypeTraceStore, conf.KubernetesConfig.ClusterName, conf.Deployment.Namespace, string(es.Tracing.Provider), es.Tracing)
+				cluster, namespace, isExternal = discoverInfraService(es.Tracing.InClusterURL, ctx, gi)
+				node, _, err = addInfra(meshMap, mesh.InfraTypeTraceStore, cluster, namespace, string(es.Tracing.Provider), es.Tracing)
 				mesh.CheckError(err)
 
 				kiali.AddEdge(node)
+				hasExternalServices = hasExternalServices || isExternal
 			}
 
 			if conf.ExternalServices.Grafana.Enabled {
-				node, _, err = addInfra(meshMap, mesh.InfraTypeGrafana, conf.KubernetesConfig.ClusterName, conf.Deployment.Namespace, "Grafana", nil)
+				cluster, namespace, isExternal = discoverInfraService(es.Grafana.InClusterURL, ctx, gi)
+				node, _, err = addInfra(meshMap, mesh.InfraTypeGrafana, cluster, namespace, "Grafana", es.Grafana)
 				mesh.CheckError(err)
 
 				kiali.AddEdge(node)
+				hasExternalServices = hasExternalServices || isExternal
 			}
+		}
+		if hasExternalServices {
+			_, _, err = addInfra(meshMap, mesh.InfraTypeCluster, mesh.Unknown, mesh.Unknown, "externalCluster", nil)
+			mesh.CheckError(err)
 		}
 	}
 
@@ -119,6 +137,46 @@ func addInfra(meshMap mesh.MeshMap, infraType, cluster, namespace, name string, 
 		node.Metadata[mesh.InfraData] = infraData
 	}
 	return node, found, nil
+}
+
+// inMeshUrlRegexp is an array of regex to be matched, in order (most to least restrictive), against external service [inCluster] URLs
+// if matching it will capture the namespace and service name.
+var inMeshUrlRegexp = []*regexp.Regexp{
+	regexp.MustCompile(`^h.+\/\/(.+?)\.(.+?)\.svc\.cluster\.local.*$`),
+	regexp.MustCompile(`^h.+\/\/(.+?)\.(.+?)[:\/].*$`),
+	regexp.MustCompile(`^h.+\/\/(.+?)\.(.+)$`),
+}
+
+// discoverInfraService tries to determine the cluster and namespace of a service, from its URL. Currently it's only
+// targeting in-cluster URLs on the local cluster.  If it can't resolve the URL, or it can't fetch the resulting service,
+// it assumes the URL is outside the mesh and returns (unknown, unknown, true).
+func discoverInfraService(url string, ctx context.Context, gi *mesh.AppenderGlobalInfo) (cluster, namespace string, isExternal bool) {
+	cluster = mesh.Unknown
+	isExternal = true
+	namespace = mesh.Unknown
+
+	if !graph.IsOK(url) {
+		return
+	}
+
+	var matches []string
+	for _, regexp := range inMeshUrlRegexp {
+		matches = regexp.FindStringSubmatch(url)
+		if matches != nil {
+			break
+		}
+	}
+	if matches == nil {
+		return
+	}
+
+	svc, err := gi.Business.Svc.GetService(ctx, config.Get().KubernetesConfig.ClusterName, matches[2], matches[1])
+	if err != nil {
+		return
+	}
+
+	log.Infof("found svc=%+v", svc)
+	return svc.Cluster, svc.Namespace, false
 }
 
 func timeSeriesHash(cluster, namespace, name string) string {

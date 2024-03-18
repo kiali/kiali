@@ -2,7 +2,6 @@ import * as React from 'react';
 import { Label, Flex, FlexItem, Tooltip, Toolbar, ToolbarItem } from '@patternfly/react-core';
 
 import { homeCluster, serverConfig } from '../../../config';
-import { MeshMTLSStatus } from '../../../components/MTls/MeshMTLSStatus';
 import { IstioStatus } from '../../IstioStatus/IstioStatus';
 import { PfSpinner } from '../../PfSpinner';
 import { UserDropdown } from './UserDropdown';
@@ -41,9 +40,6 @@ export const MastheadItems: React.FC = () => {
             </FlexItem>
             <FlexItem>
               <IstioStatus cluster={homeCluster?.name} />
-            </FlexItem>
-            <FlexItem>
-              <MeshMTLSStatus />
             </FlexItem>
             <FlexItem style={{ marginRight: 0 }}>
               <MessageCenterTrigger />

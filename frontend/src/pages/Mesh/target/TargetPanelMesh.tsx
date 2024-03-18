@@ -4,9 +4,12 @@ import {
   TargetPanelCommonProps,
   getTitle,
   targetPanel,
-  targetPanelHeading,
-  targetPanelWidth
+  targetPanelBody,
+  targetPanelBorder,
+  targetPanelHeading
 } from './TargetPanelCommon';
+import { MeshMTLSStatus } from 'components/MTls/MeshMTLSStatus';
+import { classes } from 'typestyle';
 
 type TargetPanelMeshState = {
   loading: boolean;
@@ -19,14 +22,6 @@ const defaultState: TargetPanelMeshState = {
 };
 
 export class TargetPanelMesh extends React.Component<TargetPanelCommonProps, TargetPanelMeshState> {
-  static readonly panelStyle = {
-    height: '100%',
-    margin: 0,
-    minWidth: targetPanelWidth,
-    overflowY: 'auto' as 'auto',
-    width: targetPanelWidth
-  };
-
   constructor(props: TargetPanelCommonProps) {
     super(props);
 
@@ -53,9 +48,12 @@ export class TargetPanelMesh extends React.Component<TargetPanelCommonProps, Tar
     }
 
     return (
-      <div id="target-panel-mesh" className={targetPanel} style={TargetPanelMesh.panelStyle}>
-        <div id="summary-panel-graph-heading" className={targetPanelHeading}>
-          {getTitle('Current Mesh')}
+      <div id="target-panel-mesh" className={classes(targetPanelBorder, targetPanel)}>
+        <div id="target-panel-mesh-heading" className={targetPanelHeading}>
+          {getTitle('Istio Mesh')}
+        </div>
+        <div className={targetPanelBody}>
+          <MeshMTLSStatus />
         </div>
       </div>
     );

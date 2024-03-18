@@ -26,7 +26,7 @@ export const targetPanel = kialiStyle({
   width: targetPanelWidth
 });
 
-export const targetPanelBodyStyle = kialiStyle({
+export const targetPanelBody = kialiStyle({
   padding: '15px',
   $nest: {
     '&:after, &:before': {
