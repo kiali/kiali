@@ -93,19 +93,20 @@ type ServiceDetails struct {
 type (
 	Services []*Service
 	Service  struct {
-		Name              string            `json:"name"`
+		AdditionalDetails []AdditionalItem  `json:"additionalDetails"`
+		Annotations       map[string]string `json:"annotations"`
+		Cluster           string            `json:"cluster"`
 		CreatedAt         string            `json:"createdAt"`
-		ResourceVersion   string            `json:"resourceVersion"`
-		Namespace         Namespace         `json:"namespace"`
+		ExternalName      string            `json:"externalName"`
+		HealthAnnotations map[string]string `json:"healthAnnotations"`
+		Ip                string            `json:"ip"`
 		Labels            map[string]string `json:"labels"`
+		Name              string            `json:"name"`
+		Namespace         string            `json:"namespace"`
+		Ports             Ports             `json:"ports"`
+		ResourceVersion   string            `json:"resourceVersion"`
 		Selectors         map[string]string `json:"selectors"`
 		Type              string            `json:"type"`
-		Ip                string            `json:"ip"`
-		Ports             Ports             `json:"ports"`
-		ExternalName      string            `json:"externalName"`
-		Annotations       map[string]string `json:"annotations"`
-		HealthAnnotations map[string]string `json:"healthAnnotations"`
-		AdditionalDetails []AdditionalItem  `json:"additionalDetails"`
 	}
 )
 
@@ -132,36 +133,38 @@ func (ss *Services) Parse(cluster string, services []core_v1.Service) {
 
 func (s *Service) Parse(cluster string, service *core_v1.Service) {
 	if service != nil {
-		s.Name = service.Name
-		s.Namespace = Namespace{Cluster: cluster, Name: service.Namespace}
-		s.Labels = service.Labels
-		s.Selectors = service.Spec.Selector
-		s.Type = string(service.Spec.Type)
-		s.Ip = service.Spec.ClusterIP
-		s.ExternalName = service.Spec.ExternalName
-		s.CreatedAt = formatTime(service.CreationTimestamp.Time)
-		s.ResourceVersion = service.ResourceVersion
+		s.AdditionalDetails = GetAdditionalDetails(config.Get(), service.ObjectMeta.Annotations)
 		if len(service.Annotations) > 0 {
 			s.Annotations = service.Annotations
 		} else {
 			s.Annotations = map[string]string{}
 		}
+		s.Cluster = cluster
+		s.CreatedAt = formatTime(service.CreationTimestamp.Time)
+		s.ExternalName = service.Spec.ExternalName
 		s.HealthAnnotations = GetHealthAnnotation(service.Annotations, GetHealthConfigAnnotation())
-		s.AdditionalDetails = GetAdditionalDetails(config.Get(), service.ObjectMeta.Annotations)
+		s.Ip = service.Spec.ClusterIP
+		s.Labels = service.Labels
+		s.Name = service.Name
+		s.Namespace = service.Namespace
 		(&s.Ports).Parse(service.Spec.Ports)
+		s.ResourceVersion = service.ResourceVersion
+		s.Selectors = service.Spec.Selector
+		s.Type = string(service.Spec.Type)
 	}
 }
 
 func (s *Service) ParseRegistryService(cluster string, service *kubernetes.RegistryService) {
 	if service != nil {
-		s.Name = service.Attributes.Name
-		s.Namespace = Namespace{Cluster: cluster, Name: service.Attributes.Namespace}
-		s.Labels = service.Attributes.Labels
-		s.Selectors = service.Attributes.LabelSelectors
+		s.Cluster = cluster
 		s.HealthAnnotations = map[string]string{}
+		s.Labels = service.Attributes.Labels
+		s.Name = service.Attributes.Name
+		s.Namespace = service.Attributes.Namespace
+		s.Ports.ParseServiceRegistryPorts(service)
+		s.Selectors = service.Attributes.LabelSelectors
 		// It will expect "External" or "Federation"
 		s.Type = service.Attributes.ServiceRegistry
-		s.Ports.ParseServiceRegistryPorts(service)
 	}
 }
 

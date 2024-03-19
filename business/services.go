@@ -709,7 +709,6 @@ func (in *SvcService) GetService(ctx context.Context, cluster, namespace, servic
 		svc.Parse(cluster, kSvc)
 	}
 
-	svc.Namespace.Cluster = cluster
 	return svc, nil
 }
 

@@ -15,7 +15,6 @@ import { AdditionalItem } from './Workload';
 import { ResourcePermissions } from './Permissions';
 import { KIALI_WIZARD_LABEL } from '../components/IstioWizards/WizardActions';
 import { ServiceOverview } from './ServiceList';
-import { NamespaceInfo } from './NamespaceInfo';
 
 export interface ServicePort {
   appProtocol?: string;
@@ -53,12 +52,13 @@ export interface WorkloadOverview {
 export interface Service {
   additionalDetails: AdditionalItem[];
   annotations: { [key: string]: string };
+  cluster: string;
   createdAt: string;
   externalName: string;
   ip: string;
   labels?: { [key: string]: string };
   name: string;
-  namespace: NamespaceInfo;
+  namespace: string;
   ports?: ServicePort[];
   resourceVersion: string;
   selectors?: { [key: string]: string };
