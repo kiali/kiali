@@ -52,12 +52,13 @@ export interface WorkloadOverview {
 export interface Service {
   additionalDetails: AdditionalItem[];
   annotations: { [key: string]: string };
-  cluster?: string;
+  cluster: string;
   createdAt: string;
   externalName: string;
   ip: string;
   labels?: { [key: string]: string };
   name: string;
+  namespace: string;
   ports?: ServicePort[];
   resourceVersion: string;
   selectors?: { [key: string]: string };
@@ -65,7 +66,6 @@ export interface Service {
 }
 
 export interface ServiceDetailsInfo {
-  cluster?: string;
   destinationRules: DestinationRule[];
   endpoints?: Endpoints[];
   health?: ServiceHealth;
@@ -85,11 +85,7 @@ export interface ServiceDetailsInfo {
 // Type guard to distinguish between ServiceDetailsInfo and VirtualService[].
 // Only use it for that otherwise you'll likely to get false positives.
 export function isServiceDetailsInfo(obj: any): obj is ServiceDetailsInfo {
-  if (Array.isArray(obj)) {
-    return false;
-  }
-
-  return true;
+  return !Array.isArray(obj);
 }
 
 export interface ServiceDetailsQuery {
