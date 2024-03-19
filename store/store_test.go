@@ -11,7 +11,7 @@ import (
 func TestGetKeyExists(t *testing.T) {
 	require := require.New(t)
 
-	testStore := store.New[int]()
+	testStore := store.New[string, int]()
 	testStore.Replace(map[string]int{"key1": 42})
 	value, found := testStore.Get("key1")
 
@@ -22,7 +22,7 @@ func TestGetKeyExists(t *testing.T) {
 func TestGetNonExistantKeyFails(t *testing.T) {
 	require := require.New(t)
 
-	testStore := store.New[int]()
+	testStore := store.New[string, int]()
 	_, found := testStore.Get("nonexistent")
 	require.False(found)
 }
@@ -30,7 +30,7 @@ func TestGetNonExistantKeyFails(t *testing.T) {
 func TestReplaceStoreContents(t *testing.T) {
 	require := require.New(t)
 
-	testStore := store.New[int]()
+	testStore := store.New[string, int]()
 	testStore.Replace(map[string]int{"key1": 42})
 
 	newData := map[string]int{"key2": 99, "key3": 100}
@@ -51,7 +51,7 @@ func TestReplaceStoreContents(t *testing.T) {
 func TestReplaceWithEmptyKey(t *testing.T) {
 	require := require.New(t)
 
-	testStore := store.New[int]()
+	testStore := store.New[string, int]()
 	testStore.Replace(map[string]int{"": 1})
 
 	val, found := testStore.Get("")
@@ -62,7 +62,7 @@ func TestReplaceWithEmptyKey(t *testing.T) {
 func TestSetNewKey(t *testing.T) {
 	require := require.New(t)
 
-	testStore := store.New[int]()
+	testStore := store.New[string, int]()
 	_, found := testStore.Get("key1")
 	require.False(found)
 
@@ -75,7 +75,7 @@ func TestSetNewKey(t *testing.T) {
 func TestSetExistingKey(t *testing.T) {
 	require := require.New(t)
 
-	testStore := store.New[int]()
+	testStore := store.New[string, int]()
 	_, found := testStore.Get("key1")
 	require.False(found)
 
@@ -92,7 +92,7 @@ func TestSetExistingKey(t *testing.T) {
 func TestKeys(t *testing.T) {
 	require := require.New(t)
 
-	testStore := store.New[int]()
+	testStore := store.New[string, int]()
 
 	testStore.Set("key1", 42)
 	testStore.Set("key2", 43)
@@ -106,7 +106,7 @@ func TestKeys(t *testing.T) {
 func TestRemove(t *testing.T) {
 	require := require.New(t)
 
-	testStore := store.New[int]()
+	testStore := store.New[string, int]()
 
 	testStore.Set("key1", 42)
 	testStore.Remove("key1")

@@ -18,18 +18,18 @@ const (
 
 // ExpirationStore is a generic key value store that expires keys after a certain time.
 // It keeps track of which keys are expired separately from the main store.
-type ExpirationStore[T any] struct {
-	Store[T]
+type ExpirationStore[K comparable, V any] struct {
+	Store[K, V]
 	Stopped <-chan struct{}
 
 	keyExpirationCheckInterval time.Duration
-	keyTTLs                    Store[time.Time]
+	keyTTLs                    Store[K, time.Time]
 	ttl                        time.Duration
 }
 
 // NewExpirationStore returns a new ExpirationStore with the given store and expiration time.
 // TODO: Provide functional options if the arguments list continues to grow.
-func NewExpirationStore[T any](ctx context.Context, store Store[T], keyTTL *time.Duration, keyExpirationCheckInterval *time.Duration) *ExpirationStore[T] {
+func NewExpirationStore[K comparable, V any](ctx context.Context, store Store[K, V], keyTTL *time.Duration, keyExpirationCheckInterval *time.Duration) *ExpirationStore[K, V] {
 	if keyExpirationCheckInterval == nil {
 		keyExpirationCheckInterval = util.AsPtr(defaultKeyExpirationCheckInterval)
 	}
@@ -38,10 +38,10 @@ func NewExpirationStore[T any](ctx context.Context, store Store[T], keyTTL *time
 		keyTTL = util.AsPtr(defaultKeyTTL)
 	}
 
-	s := &ExpirationStore[T]{
+	s := &ExpirationStore[K, V]{
 		Store:                      store,
 		keyExpirationCheckInterval: *keyExpirationCheckInterval,
-		keyTTLs:                    New[time.Time](),
+		keyTTLs:                    New[K, time.Time](),
 		ttl:                        *keyTTL,
 	}
 	s.Stopped = s.checkAndRemoveExpiredKeys(ctx)
@@ -49,20 +49,20 @@ func NewExpirationStore[T any](ctx context.Context, store Store[T], keyTTL *time
 }
 
 // Set associates the given value with the given key and sets the expiration time.
-func (s *ExpirationStore[T]) Set(key string, value T) {
+func (s *ExpirationStore[K, V]) Set(key K, value V) {
 	s.Store.Set(key, value)
 	s.keyTTLs.Set(key, time.Now().Add(s.ttl))
 }
 
 // Remove removes the given key from the store. If the key does not exist, it does nothing.
 // Removes the expiration key as well.
-func (s *ExpirationStore[T]) Remove(key string) {
+func (s *ExpirationStore[K, V]) Remove(key K) {
 	s.Store.Remove(key)
 	s.keyTTLs.Remove(key)
 }
 
 // Replace replaces the contents of the store with the given map and renews key timers.
-func (s *ExpirationStore[T]) Replace(items map[string]T) {
+func (s *ExpirationStore[K, V]) Replace(items map[K]V) {
 	now := time.Now()
 	s.Store.Replace(items)
 	if items == nil {
@@ -75,7 +75,7 @@ func (s *ExpirationStore[T]) Replace(items map[string]T) {
 	}
 }
 
-func (s *ExpirationStore[T]) checkAndRemoveExpiredKeys(ctx context.Context) <-chan struct{} {
+func (s *ExpirationStore[K, V]) checkAndRemoveExpiredKeys(ctx context.Context) <-chan struct{} {
 	stopped := make(chan struct{})
 	go func() {
 		for {
@@ -90,7 +90,7 @@ func (s *ExpirationStore[T]) checkAndRemoveExpiredKeys(ctx context.Context) <-ch
 					}
 
 					if time.Now().After(expiration) {
-						log.Tracef("Key %s expired. Removing from store", key)
+						log.Tracef("Key %v expired. Removing from store", key)
 						s.Remove(key)
 					}
 				}

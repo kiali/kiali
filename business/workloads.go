@@ -765,7 +765,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 
 		var err error
 		if in.isWorkloadIncluded(kubernetes.DaemonSetType) {
-			daeset, err = kialiCache.GetDaemonSets(namespace)
+			daeset, err = kubeCache.GetDaemonSets(namespace)
 			if err != nil {
 				log.Errorf("Error fetching DaemonSets per namespace %s: %s", namespace, err)
 			}

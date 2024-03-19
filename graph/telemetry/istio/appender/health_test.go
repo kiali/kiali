@@ -458,17 +458,22 @@ func TestIdleNodesHaveHealthData(t *testing.T) {
 	assert.NotNil(trafficMap[idleNode.ID].Metadata[graph.HealthData])
 }
 
-type servicesError struct {
+type cacheWithServicesError struct {
 	cache.KialiCache
+	kubeCache cache.KubeCache
+}
+
+func (c *cacheWithServicesError) GetKubeCache(cluster string) (cache.KubeCache, error) {
+	return c.kubeCache, nil
+}
+
+type servicesError struct {
+	cache.KubeCache
 	errorMsg string
 }
 
 func (s *servicesError) GetServicesBySelectorLabels(namespace string, selectorLabels map[string]string) ([]core_v1.Service, error) {
 	return nil, fmt.Errorf(s.errorMsg)
-}
-
-func (s *servicesError) GetKubeCache(cluster string) (cache.KubeCache, error) {
-	return s, nil
 }
 
 func TestErrorCausesPanic(t *testing.T) {
@@ -496,7 +501,7 @@ func TestErrorCausesPanic(t *testing.T) {
 	config.Set(conf)
 	cache := cache.NewTestingCache(t, k8s, *conf)
 	const panicErrMsg = "test error! This should cause a panic"
-	cache = &servicesError{cache, panicErrMsg}
+	cache = &cacheWithServicesError{KialiCache: cache, kubeCache: &servicesError{KubeCache: cache.GetKubeCaches()[conf.KubernetesConfig.ClusterName], errorMsg: panicErrMsg}}
 	business.WithKialiCache(cache)
 
 	prom := new(prometheustest.PromClientMock)
