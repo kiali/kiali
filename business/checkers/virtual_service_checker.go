@@ -73,5 +73,8 @@ func (in VirtualServiceChecker) runChecks(virtualService *networking_v1beta1.Vir
 		rrValidation.Valid = rrValidation.Valid && validChecker
 	}
 
-	return models.IstioValidations{key: rrValidation}
+	iv := make(models.IstioValidations)
+	iv[key] = rrValidation
+	return iv
+
 }

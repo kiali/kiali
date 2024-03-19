@@ -121,7 +121,7 @@ type ControlPlaneMetricsQuery struct {
 // FillDefaults fills the struct with default parameters
 func (q *ControlPlaneMetricsQuery) FillDefaults() {
 	q.RangeQuery.FillDefaults()
-	q.Quantiles = []string{"0.99"}
+	q.RangeQuery.Quantiles = []string{"0.99"}
 }
 
 //////////////////////////////////////////////////////////////////////////////

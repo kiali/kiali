@@ -7,7 +7,6 @@ import (
 
 	api_networking_v1beta1 "istio.io/api/networking/v1beta1"
 	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
-
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/config"
@@ -115,7 +114,9 @@ func createError(gatewayRuleName, namespace, cluster string, serverIndex, hostIn
 		},
 	}
 
-	return models.IstioValidations{key: rrValidation}
+	iv := make(models.IstioValidations)
+	iv[key] = rrValidation
+	return iv
 }
 
 func parsePortAndHostnames(serverDef *api_networking_v1beta1.Server) []Host {

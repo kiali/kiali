@@ -42,5 +42,7 @@ func (w WorkloadChecker) runChecks(workload models.WorkloadListItem, namespace s
 		rrValidation.Valid = rrValidation.Valid && validChecker
 	}
 
-	return models.IstioValidations{key: rrValidation}
+	iv := make(models.IstioValidations)
+	iv[key] = rrValidation
+	return iv
 }

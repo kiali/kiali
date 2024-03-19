@@ -70,7 +70,9 @@ func createError(gatewayRuleName string, ruleCode string, namespace string, path
 		References: references,
 	}
 
-	return models.IstioValidations{key: rrValidation}
+	iv := make(models.IstioValidations)
+	iv[key] = rrValidation
+	return iv
 }
 
 // findMatch uses a linear search with regexp to check for matching gateway host + port combinations. If this becomes a bottleneck for performance, replace with a graph or trie algorithm.

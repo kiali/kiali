@@ -162,9 +162,9 @@ type SuccessOrFailureMetricType struct {
 // (read the docs on 'defer' if you don't get it).
 func (sof *SuccessOrFailureMetricType) ObserveNow(err *error) {
 	if *err == nil {
-		sof.ObserveDuration()
+		sof.Timer.ObserveDuration()
 	} else {
-		sof.Inc()
+		sof.Counter.Inc()
 	}
 }
 

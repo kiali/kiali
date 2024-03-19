@@ -636,8 +636,8 @@ func IstioApiEnabled() (bool, error) {
 func FirstPodName(name, namespace string) (string, error) {
 	workload, _, err := WorkloadDetails(name, namespace)
 	if err == nil {
-		if len(workload.Pods) > 0 {
-			return workload.Pods[0].Name, nil
+		if len(workload.Workload.Pods) > 0 {
+			return workload.Workload.Pods[0].Name, nil
 		} else {
 			return "", nil
 		}

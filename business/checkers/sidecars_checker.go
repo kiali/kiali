@@ -75,5 +75,8 @@ func (s SidecarChecker) runChecks(sidecar *networking_v1beta1.Sidecar) models.Is
 		rrValidation.Valid = rrValidation.Valid && validChecker
 	}
 
-	return models.IstioValidations{key: rrValidation}
+	iv := make(models.IstioValidations)
+	iv[key] = rrValidation
+	return iv
+
 }

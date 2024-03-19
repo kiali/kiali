@@ -75,5 +75,7 @@ func (in DestinationRulesChecker) runChecks(destinationRule *networking_v1beta1.
 		rrValidation.Valid = rrValidation.Valid && validChecker
 	}
 
-	return models.IstioValidations{key: rrValidation}
+	result := make(models.IstioValidations)
+	result[key] = rrValidation
+	return result
 }

@@ -161,7 +161,7 @@ func TestRepeatingSVCNSHost(t *testing.T) {
 	}
 	vals := SingleHostChecker{
 		Namespaces: models.Namespaces{
-			{Name: "bookinfo"},
+			models.Namespace{Name: "bookinfo"},
 		},
 		VirtualServices: vss,
 	}.Check()
@@ -175,7 +175,7 @@ func TestRepeatingSVCNSHost(t *testing.T) {
 	}
 	vals = SingleHostChecker{
 		Namespaces: models.Namespaces{
-			{Name: "bookinfo"},
+			models.Namespace{Name: "bookinfo"},
 		},
 		VirtualServices: vss,
 	}.Check()
@@ -190,7 +190,7 @@ func TestRepeatingSVCNSHost(t *testing.T) {
 	}
 	vals = SingleHostChecker{
 		Namespaces: models.Namespaces{
-			{Name: "bookinfo"},
+			models.Namespace{Name: "bookinfo"},
 		},
 		VirtualServices: vss,
 	}.Check()
@@ -204,7 +204,7 @@ func TestRepeatingSVCNSHost(t *testing.T) {
 	}
 	vals = SingleHostChecker{
 		Namespaces: models.Namespaces{
-			{Name: "bookinfo"},
+			models.Namespace{Name: "bookinfo"},
 		},
 		VirtualServices: vss,
 	}.Check()
@@ -218,7 +218,7 @@ func TestRepeatingSVCNSHost(t *testing.T) {
 	}
 	vals = SingleHostChecker{
 		Namespaces: models.Namespaces{
-			{Name: "bookinfo"},
+			models.Namespace{Name: "bookinfo"},
 		},
 		VirtualServices: vss,
 	}.Check()
@@ -233,7 +233,7 @@ func TestRepeatingSVCNSHost(t *testing.T) {
 	}
 	vals = SingleHostChecker{
 		Namespaces: models.Namespaces{
-			{Name: "bookinfo"},
+			models.Namespace{Name: "bookinfo"},
 		},
 		VirtualServices: vss,
 	}.Check()

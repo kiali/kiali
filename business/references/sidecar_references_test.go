@@ -15,7 +15,7 @@ func prepareTestForSidecar(sc *networking_v1beta1.Sidecar, vs *networking_v1beta
 	drReferences := SidecarReferences{
 		Namespace: "istio-system",
 		Namespaces: models.Namespaces{
-			{Name: "istio-system"},
+			models.Namespace{Name: "istio-system"},
 		},
 		Sidecars:       []*networking_v1beta1.Sidecar{sc},
 		ServiceEntries: []*networking_v1beta1.ServiceEntry{se},

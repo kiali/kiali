@@ -4,7 +4,6 @@ import (
 	"strings"
 
 	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
-
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/kubernetes"
@@ -49,7 +48,9 @@ func (n SidecarReferences) References() models.IstioReferencesMap {
 			}
 		}
 		references.WorkloadReferences = append(references.WorkloadReferences, n.getWorkloadReferences(sc)...)
-		result.MergeReferencesMap(models.IstioReferencesMap{key: references})
+		ir := make(models.IstioReferencesMap)
+		ir[key] = references
+		result.MergeReferencesMap(ir)
 	}
 
 	return result

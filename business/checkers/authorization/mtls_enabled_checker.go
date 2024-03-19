@@ -6,7 +6,6 @@ import (
 	api_security_v1beta "istio.io/api/security/v1beta1"
 	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	security_v1beta "istio.io/client-go/pkg/apis/security/v1beta1"
-
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/kubernetes"
@@ -43,12 +42,14 @@ func (c MtlsEnabledChecker) Check() models.IstioValidations {
 					checks = append(checks, &check)
 				}
 
-				validations.MergeValidations(models.IstioValidations{key: &models.IstioValidation{
+				iv := make(models.IstioValidations)
+				iv[key] = &models.IstioValidation{
 					Name:       ap.Namespace,
 					ObjectType: objectType,
 					Valid:      false,
 					Checks:     checks,
-				}})
+				}
+				validations.MergeValidations(iv)
 			}
 		}
 	}

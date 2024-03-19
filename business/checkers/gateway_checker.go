@@ -48,5 +48,7 @@ func (g GatewayChecker) runSingleChecks(gw *networking_v1beta1.Gateway) models.I
 		validations.Valid = validations.Valid && validChecker
 	}
 
-	return models.IstioValidations{key: validations}
+	result := make(models.IstioValidations)
+	result[key] = validations
+	return result
 }

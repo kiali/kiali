@@ -69,7 +69,9 @@ func (a AuthorizationPolicyChecker) runChecks(authPolicy *security_v1beta.Author
 		rrValidation.Valid = rrValidation.Valid && validChecker
 	}
 
-	return models.IstioValidations{key: rrValidation}
+	result := make(models.IstioValidations)
+	result[key] = rrValidation
+	return result
 }
 
 // ServiceAccountNames returns a list of names of the ServiceAccounts retrieved from Registry Services.

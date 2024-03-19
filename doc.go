@@ -1,11 +1,10 @@
 package main
 
 import (
-	jaegerModels "github.com/kiali/kiali/jaeger/model/json"
-
 	"github.com/kiali/kiali/business/authentication"
 	"github.com/kiali/kiali/graph/config/cytoscape"
 	"github.com/kiali/kiali/jaeger"
+	jaegerModels "github.com/kiali/kiali/jaeger/model/json"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/status"

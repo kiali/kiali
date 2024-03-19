@@ -61,5 +61,7 @@ func (in K8sHTTPRouteChecker) runChecks(rt *k8s_networking_v1beta1.HTTPRoute, ga
 		validations.Valid = validations.Valid && validChecker
 	}
 
-	return models.IstioValidations{key: validations}
+	result := make(models.IstioValidations)
+	result[key] = validations
+	return result
 }

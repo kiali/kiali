@@ -166,9 +166,9 @@ func (in *MeshService) GetMesh(ctx context.Context) (*Mesh, error) {
 				// Kiali only supports a single mesh. All controlplanes should share the same mesh id.
 				// Otherwise this is an error.
 				if mesh.ID == nil {
-					mesh.ID = &controlPlane.Config.DefaultConfig.MeshId
-				} else if *mesh.ID != controlPlane.Config.DefaultConfig.MeshId {
-					return nil, fmt.Errorf("multiple mesh ids found: [%s] and [%s]", *mesh.ID, controlPlane.Config.DefaultConfig.MeshId)
+					mesh.ID = &controlPlane.Config.IstioMeshConfig.DefaultConfig.MeshId
+				} else if *mesh.ID != controlPlane.Config.IstioMeshConfig.DefaultConfig.MeshId {
+					return nil, fmt.Errorf("multiple mesh ids found: [%s] and [%s]", *mesh.ID, controlPlane.Config.IstioMeshConfig.DefaultConfig.MeshId)
 				}
 
 				if containers := istiod.Spec.Template.Spec.Containers; len(containers) > 0 {
