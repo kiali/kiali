@@ -65,10 +65,17 @@ echo "Output Directory: ${OUTPUT_DIR}"
 if [ -z "${ISTIO_VERSION}" ]; then
   if [ -z "${DEV_ISTIO_VERSION}" ]; then
     # get the latest released version
-    VERSION_WE_WANT=$(curl -L -s https://api.github.com/repos/istio/istio/releases | \
-          grep tag_name | sed -e 's/.*://' -e 's/ *"//' -e 's/",//' | \
-          grep -v -E "(snapshot|alpha|beta|rc)\.[0-9]$" | sort -t"." -k 1.2g,1 -k 2g,2 -k 3g | tail -n 1)
-    echo "Will use the latest Istio version: $VERSION_WE_WANT"
+    while [ -z "${VERSION_WE_WANT:-}" ]; do
+      VERSION_WE_WANT=$(curl -L -s https://api.github.com/repos/istio/istio/releases | \
+            grep tag_name | sed -e 's/.*://' -e 's/ *"//' -e 's/",//' | \
+            grep -v -E "(snapshot|alpha|beta|rc)\.[0-9]$" | sort -t"." -k 1.2g,1 -k 2g,2 -k 3g | tail -n 1)
+      if [ -z "${VERSION_WE_WANT:-}" ]; then
+        echo "Cannot get the latest Istio version from github. Will try again"
+        sleep 2
+      else
+        echo "Will use the latest Istio version: [$VERSION_WE_WANT]"
+      fi
+    done
     ISTIO_VERSION="${VERSION_WE_WANT}"
   else
     # See https://github.com/istio/istio/wiki/Dev%20Builds
