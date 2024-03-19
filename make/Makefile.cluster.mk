@@ -9,7 +9,7 @@
 	@if [ "$(shell ${OC} get config.imageregistry.operator.openshift.io/cluster -o jsonpath='{.spec.managementState}')" != "Managed" ]; then echo "Manually patching image registry operator to ensure it is managed"; ${OC} patch configs.imageregistry.operator.openshift.io cluster --type merge --patch '{"spec":{"managementState":"Managed"}}'; sleep 3; fi
 	@if [ "$(shell ${OC} get config.imageregistry.operator.openshift.io/cluster -o jsonpath='{.spec.defaultRoute}')" != "true" ]; then echo "Manually patching image registry operator to expose the cluster internal image registry"; ${OC} patch config.imageregistry.operator.openshift.io/cluster --patch '{"spec":{"defaultRoute":true}}' --type=merge; sleep 3; routehost="$$(${OC} get image.config.openshift.io/cluster -o custom-columns=EXT:.status.externalRegistryHostnames[0] --no-headers 2>/dev/null)"; while [ "$${routehost}" == "<none>" -o "$${routehost}" == "" ]; do echo "Waiting for image registry route to start..."; sleep 3; routehost="$$(${OC} get image.config.openshift.io/cluster -o custom-columns=EXT:.status.externalRegistryHostnames[0] --no-headers 2>/dev/null)"; done; fi
 
-.prepare-ocp: .ensure-oc-exists .prepare-ocp-image-registry
+.prepare-ocp: .prepare-ocp-image-registry
 	@$(eval CLUSTER_REPO_INTERNAL ?= $(shell ${OC} get image.config.openshift.io/cluster -o custom-columns=INT:.status.internalRegistryHostname --no-headers 2>/dev/null))
 	@$(eval CLUSTER_REPO ?= $(shell ${OC} get image.config.openshift.io/cluster -o custom-columns=EXT:.status.externalRegistryHostnames[0] --no-headers 2>/dev/null))
 	@$(eval CLUSTER_KIALI_INTERNAL_NAME ?= ${CLUSTER_REPO_INTERNAL}/${CONTAINER_NAME})
@@ -18,17 +18,20 @@
 	@$(eval CLUSTER_OPERATOR_INTERNAL_NAME ?= ${CLUSTER_REPO_INTERNAL}/${OPERATOR_CONTAINER_NAME})
 	@$(eval CLUSTER_OPERATOR_NAME ?= ${CLUSTER_REPO}/${OPERATOR_CONTAINER_NAME})
 	@$(eval CLUSTER_OPERATOR_TAG ?= ${CLUSTER_OPERATOR_NAME}:${OPERATOR_CONTAINER_VERSION})
-	@$(eval KIALI_IMAGE_NAMESPACE ?= $(shell echo ${CLUSTER_KIALI_NAME} | sed -e 's/.*\/\(.*\)\/.*/\1/'))
-	@$(eval OPERATOR_IMAGE_NAMESPACE ?= $(shell echo ${CLUSTER_OPERATOR_NAME} | sed -e 's/.*\/\(.*\)\/.*/\1/'))
+	@$(eval ALL_IMAGES_NAMESPACE ?= $(shell echo ${CLUSTER_KIALI_NAME} | sed -e 's/.*\/\(.*\)\/.*/\1/'))
+	@$(eval CLUSTER_PLUGIN_INTERNAL_NAME ?= ${CLUSTER_REPO_INTERNAL}/${PLUGIN_CONTAINER_NAME})
 	@if [ "${CLUSTER_REPO_INTERNAL}" == "" -o "${CLUSTER_REPO_INTERNAL}" == "<none>" ]; then echo "Cannot determine OCP internal registry hostname. Make sure you 'oc login' to your cluster."; exit 1; fi
 	@if [ "${CLUSTER_REPO}" == "" -o "${CLUSTER_REPO}" == "<none>" ]; then echo "Cannot determine OCP external registry hostname. The OpenShift image registry has not been made available for external client access"; exit 1; fi
 	@echo "OCP repos: external=[${CLUSTER_REPO}] internal=[${CLUSTER_REPO_INTERNAL}]"
-	@${OC} get namespace ${KIALI_IMAGE_NAMESPACE} &> /dev/null || \
-	  ${OC} create namespace ${KIALI_IMAGE_NAMESPACE} &> /dev/null
-	@${OC} policy add-role-to-group system:image-puller system:serviceaccounts:${NAMESPACE} --namespace=${KIALI_IMAGE_NAMESPACE} &> /dev/null
-	@${OC} get namespace ${OPERATOR_IMAGE_NAMESPACE} &> /dev/null || \
-	  ${OC} create namespace ${OPERATOR_IMAGE_NAMESPACE} &> /dev/null
-	@${OC} policy add-role-to-group system:image-puller system:serviceaccounts:${OPERATOR_NAMESPACE} --namespace=${OPERATOR_IMAGE_NAMESPACE} &> /dev/null
+	@# Make sure the image namespace exists - the image registry will get images from here
+	@${OC} get namespace ${ALL_IMAGES_NAMESPACE} &> /dev/null || \
+	  ${OC} create namespace ${ALL_IMAGES_NAMESPACE} &> /dev/null
+	@# Add image-puller role so the pods can pull the images from the internal image registry
+	@${OC} policy add-role-to-group system:image-puller system:serviceaccounts:${NAMESPACE} --namespace=${ALL_IMAGES_NAMESPACE} &> /dev/null
+	@${OC} policy add-role-to-group system:image-puller system:serviceaccounts:${OPERATOR_NAMESPACE} --namespace=${ALL_IMAGES_NAMESPACE} &> /dev/null
+	@${OC} policy add-role-to-group system:image-puller system:serviceaccounts:${OSSMCONSOLE_NAMESPACE} --namespace=${ALL_IMAGES_NAMESPACE} &> /dev/null
+	@# We need to make sure the 'default' service account is created - we'll need it later for the pull secret
+	@for i in {1..5}; do ${OC} get sa default -n ${ALL_IMAGES_NAMESPACE} &> /dev/null && break || echo -n "." && sleep 1; done; echo
 
 .prepare-minikube: .ensure-oc-exists .ensure-minikube-exists
 	@$(eval CLUSTER_REPO_INTERNAL ?= localhost:5000)
