@@ -47,10 +47,7 @@ else
 fi
 
 # Generate root CA for keycloak/oidc.
-openssl genrsa -out "${KEYCLOAK_CERTS_DIR}"/root-ca-key.pem 2048
-
-openssl req -x509 -new -nodes -key "${KEYCLOAK_CERTS_DIR}"/root-ca-key.pem \
-  -days 3650 -sha256 -out "${KEYCLOAK_CERTS_DIR}"/root-ca.pem -subj "/CN=kube-ca"
+"${SCRIPT_DIR}"/../../keycloak.sh create-ca --keycloak-certs-dir "${KEYCLOAK_CERTS_DIR}"
 
 # First start a minikube cluster without kubernetes to both copy over the certs and get the IP
 echo "==== START MINIKUBE FOR CLUSTER #1 [${CLUSTER1_NAME}] - ${CLUSTER1_CONTEXT} without kubernetes"

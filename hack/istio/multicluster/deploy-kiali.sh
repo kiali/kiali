@@ -39,9 +39,8 @@ deploy_kiali() {
   local cluster_name="${1}"
   local web_fqdn="${2}"
   local web_schema="${3}"
-  local keycloak_cluster_name="${4}"
-  [ ! -z "${web_fqdn}" ] && helm_args+=("--set server.web_fqdn=${web_fqdn}")
-  [ ! -z "${web_schema}" ] && helm_args+=("--set server.web_schema=${web_schema}")
+  [ -n "${web_fqdn}" ] && helm_args+=("--set server.web_fqdn=${web_fqdn}")
+  [ -n "${web_schema}" ] && helm_args+=("--set server.web_schema=${web_schema}")
 
   # Setting this as an array so things expand correctly.
   local auth_flags=()
@@ -54,19 +53,12 @@ deploy_kiali() {
     ${CLIENT_EXE} create secret generic kiali --from-literal="oidc-secret=kube-client-secret" -n istio-system
     ${CLIENT_EXE} create clusterrolebinding kiali-user-viewer --clusterrole=kiali-viewer --user=oidc:kiali
 
-    local minikube_ip
-    minikube_ip=$(minikube ip -p "${cluster_name}")
-
-    # determine where we can find keycloak
-
-    local keycloak_minikube_ip_dashed
-    keycloak_minikube_ip_dashed=$(minikube ip -p "${keycloak_cluster_name}" | sed 's/\./-/g')
-    local keycloak_hostname="keycloak-${keycloak_minikube_ip_dashed}.nip.io"
     auth_flags=(
       "--set auth.strategy=openid"
       "--set auth.openid.client_id=kube"
-      "--set-string auth.openid.issuer_uri=https://${keycloak_hostname}/realms/kube"
+      "--set-string auth.openid.issuer_uri=https://${KEYCLOAK_ADDRESS}/realms/kube"
       "--set auth.openid.insecure_skip_verify_tls=false"
+      "--set auth.openid.username_claim=preferred_username"
     )
   else
     echo "Kiali auth strategy [${KIALI_AUTH_STRATEGY}] is not supported for multi-cluster - will not install Kiali"
@@ -130,6 +122,7 @@ deploy_kiali() {
     --set health_config.rate[0].tolerance[0].failure=100
     --set deployment.ingress.enabled="false"
     --set deployment.service_type="LoadBalancer"
+    --set server.web_port="80"
     --repo https://kiali.org/helm-charts
     kiali-server
     ${KIALI_SERVER_HELM_CHARTS}'
@@ -137,16 +130,72 @@ deploy_kiali() {
   eval $helm_command
   # Helm chart doesn't support passing in service opts so patch them after the helm deploy.
   kubectl patch service kiali -n "${ISTIO_NAMESPACE}" --type=json -p='[{"op": "replace", "path": "/spec/ports/0/port", "value":80}]'
+  kubectl wait --for=jsonpath='{.status.loadBalancer.ingress}' -n istio-system service/kiali
+
+  # If using openid auth strategy, create the keycloak realm and the kiali user.
+
+  if [ "${KIALI_AUTH_STRATEGY}" == "openid" ]; then
+    # Get a token from keycloak to use the admin api
+    TOKEN_KEY=$(curl -k -X POST https://"${KEYCLOAK_ADDRESS}"/realms/master/protocol/openid-connect/token \
+                -d grant_type=password \
+                -d client_id=admin-cli \
+                -d username=admin \
+                -d password=admin \
+                -d scope=openid \
+                -d response_type=id_token | jq -r '.access_token')
+
+    # Replace the redirect URI with the minikube ip. Create the realm.
+    local KIALI_SVC_LB_IP=$(kubectl get svc kiali -o=jsonpath='{.status.loadBalancer.ingress[0].ip}' -n istio-system)
+    jq ".clients[] |= if .clientId == \"kube\" then .redirectUris = [\"http://${KIALI_SVC_LB_IP}/kiali/*\"] else . end" < "${SCRIPT_DIR}"/realm-export-template.json | curl -k -L https://"${KEYCLOAK_ADDRESS}"/admin/realms -H "Authorization: Bearer $TOKEN_KEY" -H "Content-Type: application/json" -X POST -d @-
+
+    # Create the kiali user
+    curl -k -L https://"${KEYCLOAK_ADDRESS}"/admin/realms/kube/users -H "Authorization: Bearer $TOKEN_KEY" -d '{"username": "kiali", "enabled": true, "credentials": [{"type": "password", "value": "kiali"}]}' -H 'Content-Type: application/json'
+  
+    # Create a clusterrolebinding so that the kiali oidc user can view and edit resources in kiali.
+    kubectl apply --context "${CLUSTER1_CONTEXT}" -f - <<EOF
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kiali-testing-user
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kiali
+subjects:
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: oidc:kiali
+EOF
+
+    # Copy the kiali-viewer cluster role to the west cluster
+    kubectl get clusterrole kiali -o yaml --context "${CLUSTER1_CONTEXT}" | kubectl apply --context "${CLUSTER2_CONTEXT}" -f -
+    
+    # Create a clusterrolebinding in the west cluster so that the kiali oidc user can view resources in kiali.
+    kubectl apply --context "${CLUSTER2_CONTEXT}" -f - <<EOF
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kiali-testing-user
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kiali
+subjects:
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: oidc:kiali
+EOF
+  fi
 }
 
 
 echo "==== DEPLOY KIALI TO CLUSTER #1 [${CLUSTER1_NAME}] - ${CLUSTER1_CONTEXT} (keycloak is at ${CLUSTER1_NAME})"
 switch_cluster "${CLUSTER1_CONTEXT}" "${CLUSTER1_USER}" "${CLUSTER1_PASS}"
-deploy_kiali "${CLUSTER1_NAME}" "${KIALI1_WEB_FQDN}" "${KIALI1_WEB_SCHEMA}" "${CLUSTER1_NAME}"
+deploy_kiali "${CLUSTER1_NAME}" "${KIALI1_WEB_FQDN}" "${KIALI1_WEB_SCHEMA}"
 
 if [ "${SINGLE_KIALI}" != "true" ]
 then
   echo "==== DEPLOY KIALI TO CLUSTER #2 [${CLUSTER2_NAME}] - ${CLUSTER2_CONTEXT} (keycloak is at ${CLUSTER1_NAME})"
   switch_cluster "${CLUSTER2_CONTEXT}" "${CLUSTER2_USER}" "${CLUSTER2_PASS}"
-  deploy_kiali "${CLUSTER2_NAME}" "${KIALI2_WEB_FQDN}" "${KIALI2_WEB_SCHEMA}" "${CLUSTER1_NAME}"
+  deploy_kiali "${CLUSTER2_NAME}" "${KIALI2_WEB_FQDN}" "${KIALI2_WEB_SCHEMA}"
 fi

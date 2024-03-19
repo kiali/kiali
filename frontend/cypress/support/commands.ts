@@ -121,7 +121,7 @@ Cypress.Commands.add('login', (username: string, password: string) => {
   const provider = Cypress.env('AUTH_PROVIDER');
 
   cy.window().then((win: any) => {
-    if (auth_strategy !== 'openshift' && auth_strategy !== 'token') {
+    if (auth_strategy === 'anonymous') {
       cy.log('Skipping login, Kiali is running with auth disabled');
       return;
     }
@@ -203,6 +203,29 @@ Cypress.Commands.add('login', (username: string, password: string) => {
           });
         });
       }
+    } else if (auth_strategy === 'openid') {
+      // Only works with keycloak at the moment.
+      cy.request('api/auth/info').then(({ body }) => {
+        let authEndpoint = body.authorizationEndpoint;
+        cy.request({
+          url: authEndpoint,
+          method: 'GET',
+          followRedirect: true
+        }).then(resp => {
+          const $html = Cypress.$(resp.body);
+          const postUrl = $html.find('form[id=kc-form-login]').attr('action');
+          const url = new URL(postUrl);
+          cy.request({
+            url: url.toString(),
+            method: 'POST',
+            form: true,
+            body: {
+              username: username,
+              password: password
+            }
+          });
+        });
+      });
     } else if (auth_strategy === 'token') {
       cy.exec('kubectl -n istio-system create token citest').then(result => {
         cy.request({
