@@ -20,10 +20,6 @@ import (
 
 const ambientCheckExpirationTime = 10 * time.Minute
 
-// Istio uses caches for pods and controllers.
-// Kiali will use caches for specific namespaces and types
-// https://github.com/istio/istio/blob/master/mixer/adapter/kubernetesenv/cache.go
-
 // KialiCache stores both kube objects and non-kube related data such as pods' proxy status.
 // It is exclusively used by the business layer where it's expected to be a singleton.
 // This business layer cache needs access to all the kiali service account has access
@@ -81,6 +77,7 @@ type kialiCacheImpl struct {
 	// so you can easily deref the namespace in GetNamespace and SetNamespace. The downside to this is that
 	// we need an additional lock for the namespace map that gets returned from the store to ensure it is threadsafe.
 	namespaceStore store.Store[namespacesKey, map[string]models.Namespace]
+
 	// Only necessary because we want to cache the namespaces per cluster and token as a map
 	// and maps are not thread safe. We need an additional lock on top of the Store to ensure
 	// that the map returned from the store is threadsafe.
@@ -269,11 +266,13 @@ func (c *kialiCacheImpl) SetNamespaces(token string, namespaces []models.Namespa
 func (c *kialiCacheImpl) SetNamespace(token string, namespace models.Namespace) {
 	c.namespacesLock.Lock()
 	defer c.namespacesLock.Unlock()
+
 	key := namespacesKey{cluster: namespace.Cluster, token: token}
 	ns, found := c.namespaceStore.Get(key)
 	if !found {
 		ns = make(map[string]models.Namespace)
 	}
+
 	ns[namespace.Name] = namespace
 	c.namespaceStore.Set(key, ns)
 }

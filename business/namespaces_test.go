@@ -303,11 +303,7 @@ func TestGetNamespacesCached(t *testing.T) {
 	cache.SetNamespaces(
 		k8s.GetToken(),
 		// gamma only exists in the cache.
-		[]models.Namespace{{Name: "gamma", Cluster: "west"}},
-	)
-	cache.SetNamespaces(
-		k8s.GetToken(),
-		[]models.Namespace{{Name: "bookinfo", Cluster: "east"}, {Name: "alpha", Cluster: "east"}, {Name: "beta", Cluster: "east"}},
+		[]models.Namespace{{Name: "bookinfo", Cluster: "east"}, {Name: "alpha", Cluster: "east"}, {Name: "beta", Cluster: "east"}, {Name: "gamma", Cluster: "west"}},
 	)
 
 	nsservice := NewNamespaceService(clients, clients, cache, *conf)
@@ -321,6 +317,54 @@ func TestGetNamespacesCached(t *testing.T) {
 	require.NoError(err)
 
 	assert.Equal("west", namespace.Cluster)
+}
+
+func TestGetNamespacesDifferentTokens(t *testing.T) {
+	require := require.New(t)
+	assert := assert.New(t)
+
+	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = "east"
+	conf.KubernetesConfig.CacheTokenNamespaceDuration = 600000
+	config.Set(conf)
+
+	east := setupNamespaceServiceWithNs()
+	east.Token = "east-token"
+	west := kubetest.NewFakeK8sClient()
+	west.Token = "west-token"
+
+	clientFactory := kubetest.NewK8SClientFactoryMock(nil)
+	clients := map[string]kubernetes.ClientInterface{
+		"east": east,
+		"west": west,
+	}
+	clientFactory.SetClients(clients)
+	cache := cache.NewTestingCacheWithFactory(t, clientFactory, *conf)
+	cache.SetNamespaces(
+		east.GetToken(),
+		[]models.Namespace{{Name: "bookinfo", Cluster: "east"}, {Name: "alpha", Cluster: "east"}, {Name: "beta", Cluster: "east"}},
+	)
+	cache.SetNamespaces(
+		west.GetToken(),
+		[]models.Namespace{{Name: "gamma", Cluster: "west"}},
+	)
+
+	nsservice := NewNamespaceService(clients, clients, cache, *conf)
+	namespaces, err := nsservice.GetNamespaces(context.TODO())
+	require.NoError(err)
+
+	// There's actually 6 namespaces with 'test' and 'test1' but only 4 are cached.
+	require.Len(namespaces, 4)
+
+	namespace, err := nsservice.GetClusterNamespace(context.TODO(), "gamma", "west")
+	require.NoError(err)
+
+	assert.Equal("west", namespace.Cluster)
+
+	namespace, err = nsservice.GetClusterNamespace(context.TODO(), "bookinfo", "east")
+	require.NoError(err)
+
+	assert.Equal("east", namespace.Cluster)
 }
 
 type forbiddenFake struct{ kubernetes.ClientInterface }
