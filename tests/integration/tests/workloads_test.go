@@ -47,7 +47,8 @@ func TestWorkloadDetails(t *testing.T) {
 	for _, pod := range wl.Pods {
 		require.NotEmpty(pod.Status)
 		require.NotEmpty(pod.Name)
-
+		// @TODO fails on CI
+		//require.NotNil(pod.ProxyStatus)
 	}
 	require.NotEmpty(wl.Services)
 	for _, wl := range wl.Services {
@@ -62,6 +63,23 @@ func TestWorkloadDetails(t *testing.T) {
 	require.NotNil(wl.Workload.Health.Requests)
 	require.NotNil(wl.Workload.Health.Requests.Outbound)
 	require.NotNil(wl.Workload.Health.Requests.Inbound)
+}
+
+func TestWorkloadIstioIngressEmptyProxyStatus(t *testing.T) {
+	name := "istio-ingressgateway"
+	require := require.New(t)
+	wl, _, err := kiali.WorkloadDetails(name, "istio-system")
+
+	require.NoError(err)
+	require.NotNil(wl)
+	require.Equal(name, wl.Name)
+	require.Equal("Deployment", wl.Type)
+	require.NotNil(wl.Pods)
+	for _, pod := range wl.Pods {
+		require.NotEmpty(pod.Status)
+		require.NotEmpty(pod.Name)
+		require.Nil(pod.ProxyStatus)
+	}
 }
 
 func TestWorkloadDetailsInvalidName(t *testing.T) {

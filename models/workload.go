@@ -443,6 +443,9 @@ func (workload *Workload) IsGateway() bool {
 		if labelValue, ok := workload.Labels["operator.istio.io/component"]; ok && (labelValue == "IngressGateways" || labelValue == "EgressGateways") {
 			return true
 		}
+		if labelValue, ok := workload.Labels["istio"]; ok && (labelValue == "ingressgateway" || labelValue == "egressgateway") {
+			return true
+		}
 	}
 	return false
 }
