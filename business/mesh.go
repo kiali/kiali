@@ -579,8 +579,13 @@ func (in *MeshService) resolveNetwork(clusterName string) string {
 }
 
 func (in *MeshService) OutboundTrafficPolicy() (*models.OutboundPolicy, error) {
+	homeClusterCache, err := in.kialiCache.GetKubeCache(in.conf.KubernetesConfig.ClusterName)
+	if err != nil {
+		return nil, err
+	}
+
 	otp := models.OutboundPolicy{Mode: "ALLOW_ANY"}
-	istioConfig, err := in.kialiCache.GetConfigMap(in.conf.IstioNamespace, IstioConfigMapName(in.conf, ""))
+	istioConfig, err := homeClusterCache.GetConfigMap(in.conf.IstioNamespace, IstioConfigMapName(in.conf, ""))
 	if err != nil {
 		return nil, err
 	}
@@ -606,7 +611,12 @@ func (in *MeshService) OutboundTrafficPolicy() (*models.OutboundPolicy, error) {
 
 func (in *MeshService) IstiodResourceThresholds() (*models.IstiodThresholds, error) {
 	istioDeploymentConfig := in.conf.ExternalServices.Istio.IstiodDeploymentName
-	istioDeployment, err := in.kialiCache.GetDeployment(in.conf.IstioNamespace, istioDeploymentConfig)
+	homeClusterCache, err := in.kialiCache.GetKubeCache(in.conf.KubernetesConfig.ClusterName)
+	if err != nil {
+		return nil, err
+	}
+
+	istioDeployment, err := homeClusterCache.GetDeployment(in.conf.IstioNamespace, istioDeploymentConfig)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			log.Debugf("Istiod deployment [%s] not found in namespace [%s]", istioDeploymentConfig, in.conf.IstioNamespace)

@@ -439,6 +439,11 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, cluster, namespace,
 		return nil, err
 	}
 
+	kubeCache, err := in.kialiCache.GetKubeCache(cluster)
+	if err != nil {
+		return nil, err
+	}
+
 	var eps *core_v1.Endpoints
 	var pods []core_v1.Pod
 	var hth models.ServiceHealth
@@ -459,7 +464,7 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, cluster, namespace,
 		go func() {
 			defer wg.Done()
 			var err2 error
-			pods, err2 = in.kialiCache.GetPods(namespace, labelsSelector)
+			pods, err2 = kubeCache.GetPods(namespace, labelsSelector)
 			if err2 != nil {
 				errChan <- err2
 			}
@@ -489,7 +494,7 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, cluster, namespace,
 	go func(ctx context.Context) {
 		defer wg.Done()
 		var err2 error
-		eps, err2 = in.kialiCache.GetEndpoints(namespace, service)
+		eps, err2 = kubeCache.GetEndpoints(namespace, service)
 		if err2 != nil && !errors.IsNotFound(err2) {
 			log.Errorf("Error fetching Endpoints namespace %s and service %s: %s", namespace, service, err2)
 			errChan <- err2
@@ -657,8 +662,14 @@ func (in *SvcService) UpdateService(ctx context.Context, cluster, namespace, ser
 		return nil, err
 	}
 
-	// Cache is stopped after a Create/Update/Delete operation to force a refresh
-	in.kialiCache.Refresh(namespace)
+	// Stop and restart cache here after a Create/Update/Delete operation to force a refresh
+	// so that the next request that reads from the cache will be sure to have the write operation.
+	kubeCache, err := in.kialiCache.GetKubeCache(cluster)
+	if err != nil {
+		return nil, err
+	}
+	kubeCache.Refresh(namespace)
+	in.kialiCache.RefreshTokenNamespaces(cluster)
 
 	// After the update we fetch the whole workload
 	return in.GetServiceDetails(ctx, cluster, namespace, service, interval, queryTime)

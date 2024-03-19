@@ -553,18 +553,14 @@ func (in *IstioValidationsService) fetchNonLocalmTLSConfigs(mtlsDetails *kuberne
 		return
 	}
 
-	kubeCache := kialiCache.GetKubeCaches()[cluster]
-	if kubeCache == nil {
-		return
-	}
-
-	userClient := in.userClients[cluster]
-	if userClient == nil {
-		return
-	}
 	cfg := config.Get()
+	// TODO: Handle multi-primary instead of only using home cluster.
+	kubeCache, err := kialiCache.GetKubeCache(cfg.KubernetesConfig.ClusterName)
+	if err != nil {
+		return
+	}
 
-	istioConfig, err := kialiCache.GetConfigMap(cfg.IstioNamespace, IstioConfigMapName(*cfg, ""))
+	istioConfig, err := kubeCache.GetConfigMap(cfg.IstioNamespace, IstioConfigMapName(*cfg, ""))
 	if err != nil {
 		errChan <- err
 		return

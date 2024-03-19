@@ -89,9 +89,8 @@ func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Namespa
 	)
 	defer end()
 
-	// Needs to be a token per cluster.
-	// Current multicluster will still work since the token will just be the same.
-	// Key will be cluster + token.
+	// kiali cache saves namespaces per token + cluster. The same token can be
+	// used for multiple clusters.
 	clustersToCheck := make(map[string]kubernetes.ClientInterface)
 	namespaces := []models.Namespace{}
 	for cluster, client := range in.userClients {
@@ -108,18 +107,22 @@ func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Namespa
 		return namespaces, nil
 	}
 
-	// determine what the discoverySelectors are by examining the Istio ConfigMap
 	var discoverySelectors []*meta_v1.LabelSelector
-	if icm, err := in.kialiCache.GetConfigMap(in.conf.IstioNamespace, IstioConfigMapName(in.conf, "")); err == nil {
-		if ic, err2 := kubernetes.GetIstioConfigMap(icm); err2 == nil {
-			discoverySelectors = ic.DiscoverySelectors
-		} else {
-			log.Errorf("Will not process discoverySelectors due to a failure to get the Istio ConfigMap: %v", err2)
-		}
+	homeClusterCache, err := in.kialiCache.GetKubeCache(in.conf.KubernetesConfig.ClusterName)
+	if err != nil {
+		log.Errorf("Will not process discoverySelectors due to a failure to get the Kiali cache: %v", err)
 	} else {
-		log.Errorf("Will not process discoverySelectors due to a failure to parse the Istio ConfigMap: %v", err)
+		// determine what the discoverySelectors are by examining the Istio ConfigMap
+		if icm, err := homeClusterCache.GetConfigMap(in.conf.IstioNamespace, IstioConfigMapName(in.conf, "")); err == nil {
+			if ic, err2 := kubernetes.GetIstioConfigMap(icm); err2 == nil {
+				discoverySelectors = ic.DiscoverySelectors
+			} else {
+				log.Errorf("Will not process discoverySelectors due to a failure to get the Istio ConfigMap: %v", err2)
+			}
+		} else {
+			log.Errorf("Will not process discoverySelectors due to a failure to parse the Istio ConfigMap: %v", err)
+		}
 	}
-
 	if len(discoverySelectors) > 0 {
 		log.Tracef("Istio discovery selectors: %+v", discoverySelectors)
 	} else {
@@ -286,7 +289,7 @@ func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Namespa
 		namespacesPerCluster[ns.Cluster] = append(namespacesPerCluster[ns.Cluster], ns)
 	}
 	for cluster, ns := range namespacesPerCluster {
-		in.kialiCache.SetNamespaces(cluster, in.userClients[cluster].GetToken(), ns)
+		in.kialiCache.SetNamespaces(in.userClients[cluster].GetToken(), ns)
 	}
 
 	return resultns, nil
@@ -595,7 +598,7 @@ func (in *NamespaceService) GetClusterNamespace(ctx context.Context, namespace s
 	}
 
 	// Refresh namespace in cache since we've just fetched it from the API.
-	in.kialiCache.SetNamespace(cluster, client.GetToken(), result)
+	in.kialiCache.SetNamespace(client.GetToken(), result)
 	return &result, nil
 }
 
@@ -614,14 +617,22 @@ func (in *NamespaceService) UpdateNamespace(ctx context.Context, namespace strin
 		return nil, err
 	}
 
-	_, err = in.userClients[cluster].UpdateNamespace(namespace, jsonPatch)
-	if err != nil {
+	userClient, found := in.userClients[cluster]
+	if !found {
+		return nil, fmt.Errorf("cluster [%s] is not found or is not accessible for Kiali", cluster)
+	}
+
+	if _, err := userClient.UpdateNamespace(namespace, jsonPatch); err != nil {
 		return nil, err
 	}
 
 	// Cache is stopped after a Create/Update/Delete operation to force a refresh
-	in.kialiCache.Refresh(namespace)
-	in.kialiCache.RefreshTokenNamespaces()
+	kubeCache, err := in.kialiCache.GetKubeCache(cluster)
+	if err != nil {
+		return nil, err
+	}
+	kubeCache.Refresh(namespace)
+	in.kialiCache.RefreshTokenNamespaces(cluster)
 
 	// Call GetNamespace to update the caching
 	return in.GetClusterNamespace(ctx, namespace, cluster)

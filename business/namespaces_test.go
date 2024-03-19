@@ -301,13 +301,11 @@ func TestGetNamespacesCached(t *testing.T) {
 	SetWithBackends(mockClientFactory, nil)
 	cache := cache.NewTestingCacheWithFactory(t, clientFactory, *conf)
 	cache.SetNamespaces(
-		"west",
 		k8s.GetToken(),
 		// gamma only exists in the cache.
 		[]models.Namespace{{Name: "gamma", Cluster: "west"}},
 	)
 	cache.SetNamespaces(
-		"east",
 		k8s.GetToken(),
 		[]models.Namespace{{Name: "bookinfo", Cluster: "east"}, {Name: "alpha", Cluster: "east"}, {Name: "beta", Cluster: "east"}},
 	)
@@ -353,7 +351,6 @@ func TestGetNamespacesForbiddenCached(t *testing.T) {
 	SetWithBackends(mockClientFactory, nil)
 	cache := cache.NewTestingCacheWithFactory(t, clientFactory, *conf)
 	cache.SetNamespaces(
-		"west",
 		k8s.GetToken(),
 		// Bookinfo is cached for the west cluster that the user has access to
 		// but NOT for the east cluster that the user doesn't have access to.

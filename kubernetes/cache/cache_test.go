@@ -178,8 +178,8 @@ func TestSetNamespace(t *testing.T) {
 	kubernetes.SetConfig(t, *conf)
 	client := kubetest.NewFakeK8sClient()
 	cache := cache.NewTestingCache(t, client, *conf)
-	cache.SetNamespaces("east", "token", []models.Namespace{{Name: "test", Cluster: "east"}})
-	cache.SetNamespace("east", "token", models.Namespace{Name: "test", Cluster: "east", Labels: map[string]string{"app": "test"}})
+	cache.SetNamespaces("token", []models.Namespace{{Name: "test", Cluster: "east"}})
+	cache.SetNamespace("token", models.Namespace{Name: "test", Cluster: "east", Labels: map[string]string{"app": "test"}})
 	ns, found := cache.GetNamespace("east", "token", "test")
 	require.True(found)
 	require.Equal(map[string]string{"app": "test"}, ns.Labels)
@@ -197,7 +197,7 @@ func TestSetNamespaceIsThreadSafe(t *testing.T) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			cache.SetNamespace("east", "token", models.Namespace{Name: "test", Cluster: "east", Labels: map[string]string{"app": "test"}})
+			cache.SetNamespace("token", models.Namespace{Name: "test", Cluster: "east", Labels: map[string]string{"app": "test"}})
 		}()
 	}
 	wg.Wait()
@@ -212,7 +212,7 @@ func TestGetNamespaces(t *testing.T) {
 
 	client := kubetest.NewFakeK8sClient()
 	cache := cache.NewTestingCache(t, client, *conf)
-	cache.SetNamespaces("east", "token", []models.Namespace{{Name: "test", Cluster: "east"}})
+	cache.SetNamespaces("token", []models.Namespace{{Name: "test", Cluster: "east"}})
 
 	namespaces, found := cache.GetNamespaces("east", "token")
 	require.True(found)
@@ -235,9 +235,19 @@ func TestRefreshTokenNamespaces(t *testing.T) {
 
 	client := kubetest.NewFakeK8sClient()
 	cache := cache.NewTestingCache(t, client, *conf)
-	cache.SetNamespaces("east", "token", []models.Namespace{{Name: "test", Cluster: "east"}})
-	cache.RefreshTokenNamespaces()
+	cache.SetNamespaces("token", []models.Namespace{{Name: "test", Cluster: "east"}})
+	cache.RefreshTokenNamespaces("east")
 
 	_, found := cache.GetNamespaces("east", "token")
 	require.False(found)
+
+	// Test refresh doesn't affect other clusters.
+	cache.SetNamespaces("token", []models.Namespace{{Name: "test", Cluster: "east"}})
+	cache.SetNamespaces("token", []models.Namespace{{Name: "test", Cluster: "west"}})
+	cache.RefreshTokenNamespaces("east")
+
+	namespaces, found := cache.GetNamespaces("west", "token")
+	require.True(found)
+	require.Equal(1, len(namespaces))
+	require.Equal("test", namespaces[0].Name)
 }
