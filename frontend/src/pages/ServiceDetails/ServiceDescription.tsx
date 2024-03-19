@@ -166,9 +166,10 @@ export const ServiceDescription: React.FC<ServiceInfoDescriptionProps> = (props:
           </span>
         </Title>
 
-        {props.serviceDetails?.service.cluster && isMultiCluster && (
+        {props.serviceDetails?.service.namespace.cluster && isMultiCluster && (
           <div key="cluster-icon" className={iconStyle}>
-            <PFBadge badge={PFBadges.Cluster} position={TooltipPosition.right} /> {props.serviceDetails.service.cluster}
+            <PFBadge badge={PFBadges.Cluster} position={TooltipPosition.right} />{' '}
+            {props.serviceDetails.service.namespace.cluster}
           </div>
         )}
       </CardHeader>
@@ -190,7 +191,7 @@ export const ServiceDescription: React.FC<ServiceInfoDescriptionProps> = (props:
           apps={apps}
           workloads={workloads}
           health={props.serviceDetails?.health}
-          cluster={props.serviceDetails?.service.cluster}
+          cluster={props.serviceDetails?.service.namespace.cluster}
         />
       </CardBody>
     </Card>
