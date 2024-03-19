@@ -241,6 +241,11 @@ type GrafanaVariablesConfig struct {
 	Workload  string `yaml:"workload" json:"workload,omitempty"`
 }
 
+type TempoConfig struct {
+	OrgID         string `yaml:"org_id" json:"org_id,omitempty"`
+	DatasourceUID string `yaml:"datasource_uid" json:"datasource_uid,omitempty"`
+}
+
 // TracingConfig describes configuration used for tracing links
 type TracingConfig struct {
 	Auth                 Auth              `yaml:"auth"`
@@ -249,7 +254,8 @@ type TracingConfig struct {
 	GrpcPort             int               `yaml:"grpc_port,omitempty"`
 	InClusterURL         string            `yaml:"in_cluster_url"`
 	IsCore               bool              `yaml:"is_core,omitempty"`
-	Provider             TracingProvider   `yaml:"provider"` // jaeger | tempo
+	Provider             TracingProvider   `yaml:"provider,omitempty"` // jaeger | tempo
+	TempoConfig          TempoConfig       `yaml:"tempo_config,omitempty"`
 	NamespaceSelector    bool              `yaml:"namespace_selector"`
 	QueryScope           map[string]string `yaml:"query_scope,omitempty"`
 	QueryTimeout         int               `yaml:"query_timeout,omitempty"`
@@ -752,6 +758,7 @@ func NewConfig() (c *Config) {
 				NamespaceSelector:    true,
 				QueryScope:           map[string]string{},
 				QueryTimeout:         5,
+				TempoConfig:          TempoConfig{},
 				URL:                  "",
 				UseGRPC:              true,
 				WhiteListIstioSystem: []string{"jaeger-query", "istio-ingressgateway"},

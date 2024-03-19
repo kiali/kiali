@@ -247,7 +247,7 @@ func convertSingleTrace(traces *otelModels.Data, id string) (*model.TracingRespo
 		tracingServiceName = getServiceName(traces.Batches[0].Resource.Attributes)
 		for _, batch := range traces.Batches {
 			serviceName := getServiceName(batch.Resource.Attributes)
-			jaegerModel.Spans = append(jaegerModel.Spans, converter.ConvertSpans(batch.ScopeSpans[0].Spans, serviceName)...)
+			jaegerModel.Spans = append(jaegerModel.Spans, converter.ConvertSpans(batch.ScopeSpans[0].Spans, serviceName, id)...)
 		}
 		jaegerModel.Matched = len(jaegerModel.Spans)
 		jaegerModel.Processes = map[jaegerModels.ProcessID]jaegerModels.Process{}

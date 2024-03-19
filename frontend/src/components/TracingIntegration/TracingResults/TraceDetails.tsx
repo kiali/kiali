@@ -28,25 +28,30 @@ import { renderTraceHeatMap } from './StatsComparison';
 import { HeatMap, healthColorMap } from 'components/HeatMap/HeatMap';
 import { formatDuration, sameSpans } from 'utils/tracing/TracingHelper';
 import { GraphSelectorBuilder } from 'pages/Graph/GraphSelector';
-import { TEMPO } from '../../../types/Tracing';
+import { TracingUrlProvider } from 'types/Tracing';
+import _ from 'lodash';
 
 type ReduxProps = {
   loadMetricsStats: (queries: MetricsStatsQuery[], isCompact: boolean, cluster?: string) => void;
   setTraceId: (cluster?: string, traceId?: string) => void;
 };
 
-type Props = ReduxProps & {
-  cluster?: string;
+type StateProps = {
   isStatsMatrixComplete: boolean;
-  namespace: string;
-  otherTraces: JaegerTrace[];
-  provider?: string;
   statsMatrix?: StatsMatrix;
-  target: string;
-  targetKind: TargetKind;
   trace?: JaegerTrace;
-  tracingURL?: string;
 };
+
+type Props = ReduxProps &
+  StateProps & {
+    cluster?: string;
+    namespace: string;
+    otherTraces: JaegerTrace[];
+    provider?: string;
+    target: string;
+    targetKind: TargetKind;
+    tracingURLProvider?: TracingUrlProvider;
+  };
 
 interface State {}
 
@@ -65,19 +70,19 @@ class TraceDetailsComponent extends React.Component<Props, State> {
     this.state = { completeMetricsStats: false };
   }
 
-  componentDidMount() {
+  componentDidMount(): void {
     if (this.props.trace) {
       this.fetchComparisonMetrics(this.props.trace.spans);
     }
   }
 
-  componentDidUpdate(prevProps: Readonly<Props>) {
+  componentDidUpdate(prevProps: Readonly<Props>): void {
     if (this.props.trace && !sameSpans(prevProps.trace?.spans || [], this.props.trace.spans)) {
       this.fetchComparisonMetrics(this.props.trace.spans);
     }
   }
 
-  private fetchComparisonMetrics(spans: RichSpanData[]) {
+  private fetchComparisonMetrics(spans: RichSpanData[]): void {
     const queries = buildQueriesFromSpans(spans, false);
     this.props.loadMetricsStats(queries, false, this.props.cluster);
   }
@@ -116,7 +121,8 @@ class TraceDetailsComponent extends React.Component<Props, State> {
       .filter(d => d !== undefined) as number[];
 
     const similarMeanAvgSpanDuration = average(similarSpanDurations, d => d);
-    const genDiff = (a: number | undefined, b: number | undefined) => (a && b ? (a - b) / 1000 : undefined);
+    const genDiff = (a: number | undefined, b: number | undefined): number | undefined =>
+      a && b ? (a - b) / 1000 : undefined;
     const similarTracesToShow = similarTraces.slice(0, 8);
 
     const similarMatrixHeaders = similarTracesToShow
@@ -176,7 +182,7 @@ class TraceDetailsComponent extends React.Component<Props, State> {
     );
   };
 
-  render() {
+  render(): JSX.Element | null {
     const { trace, otherTraces } = this.props;
 
     if (!trace) {
@@ -190,20 +196,15 @@ class TraceDetailsComponent extends React.Component<Props, State> {
     const similarTraces = otherTraces.filter(t => t.traceID !== trace.traceID && isSimilarTrace(t, trace));
 
     const comparisonLink =
-      this.props.tracingURL && this.props.provider !== TEMPO && similarTraces.length > 0
-        ? `${this.props.tracingURL}/trace/${trace.traceID}...${similarTraces[0].traceID}?cohort=${
-            trace.traceID
-          }${similarTraces
-            .slice(0, 10)
-            .map(t => `&cohort=${t.traceID}`)
-            .join('')}`
+      similarTraces.length > 0
+        ? this.props.tracingURLProvider?.ComparisonUrl(trace.traceID, ..._.map(similarTraces, t => t.traceID))
         : undefined;
 
     return (
       <Card isCompact>
         <TracingTraceTitle
           formattedTrace={formattedTrace}
-          externalURL={this.props.tracingURL ? this.props.tracingURL.replace('TRACEID', trace.traceID) : undefined}
+          externalURL={this.props.tracingURLProvider?.TraceUrl(trace)}
           graphURL={this.getGraphURL(trace.traceID)}
           comparisonURL={comparisonLink}
         />
@@ -268,7 +269,7 @@ class TraceDetailsComponent extends React.Component<Props, State> {
   }
 }
 
-const mapStateToProps = (state: KialiAppState) => {
+const mapStateToProps = (state: KialiAppState): StateProps => {
   if (state.tracingState.selectedTrace) {
     const { matrix, isComplete } = reduceMetricsStats(state.tracingState.selectedTrace, state.metricsStats.data, false);
 
@@ -285,7 +286,7 @@ const mapStateToProps = (state: KialiAppState) => {
   };
 };
 
-const mapDispatchToProps = (dispatch: KialiDispatch) => ({
+const mapDispatchToProps = (dispatch: KialiDispatch): ReduxProps => ({
   setTraceId: (cluster?: string, traceId?: string) => dispatch(TracingThunkActions.setTraceId(cluster, traceId)),
   loadMetricsStats: (queries: MetricsStatsQuery[], isCompact: boolean) =>
     dispatch(MetricsStatsThunkActions.load(queries, isCompact))

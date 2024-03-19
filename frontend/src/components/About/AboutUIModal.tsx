@@ -16,7 +16,8 @@ import { config, kialiLogoDark } from '../../config';
 import { kialiStyle } from 'styles/StyleUtils';
 import { KialiIcon } from 'config/KialiIcon';
 import { TEMPO } from '../../types/Tracing';
-import { GetTracingURL } from '../TracingIntegration/TracesComponent';
+
+import { GetTracingUrlProvider } from '../../utils/tracing/UrlProviders';
 
 type AboutUIModalProps = {
   externalServices: ExternalServiceInfo[];
@@ -49,7 +50,7 @@ const textContentStyle = kialiStyle({
 });
 
 export const AboutUIModal: React.FC<AboutUIModalProps> = (props: AboutUIModalProps) => {
-  const additionalComponentInfoContent = (externalService: ExternalServiceInfo) => {
+  const additionalComponentInfoContent = (externalService: ExternalServiceInfo): string | JSX.Element => {
     if (!externalService.version && !externalService.url) {
       return 'N/A';
     }
@@ -70,19 +71,18 @@ export const AboutUIModal: React.FC<AboutUIModalProps> = (props: AboutUIModalPro
     );
   };
 
-  const renderTempo = (externalServices: ExternalServiceInfo[]) => {
+  const renderTempo = (externalServices: ExternalServiceInfo[]): JSX.Element => {
     const tempoService = externalServices.find(service => service.name === TEMPO);
-    const grafanaService = externalServices.find(service => service.name === 'Grafana');
 
-    if (tempoService && grafanaService && grafanaService.url) {
-      tempoService.url = GetTracingURL(externalServices);
+    if (tempoService) {
+      tempoService.url = GetTracingUrlProvider(externalServices)?.HomeUrl();
       return renderComponent(tempoService);
     } else {
       return <></>;
     }
   };
 
-  const renderComponent = (externalService: ExternalServiceInfo) => {
+  const renderComponent = (externalService: ExternalServiceInfo): JSX.Element => {
     const name = externalService.version ? externalService.name : `${externalService.name} URL`;
     const additionalInfo = additionalComponentInfoContent(externalService);
     return (
@@ -93,7 +93,7 @@ export const AboutUIModal: React.FC<AboutUIModalProps> = (props: AboutUIModalPro
     );
   };
 
-  const renderWebsiteLink = () => {
+  const renderWebsiteLink = (): JSX.Element | null => {
     if (config?.about?.website) {
       return (
         <Button
@@ -113,7 +113,7 @@ export const AboutUIModal: React.FC<AboutUIModalProps> = (props: AboutUIModalPro
     return null;
   };
 
-  const renderProjectLink = () => {
+  const renderProjectLink = (): JSX.Element | null => {
     if (config?.about?.project) {
       return (
         <Button component="a" href={config.about.project.url} variant={ButtonVariant.link} target="_blank" isInline>

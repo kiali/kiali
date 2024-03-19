@@ -1,14 +1,19 @@
 package models
 
-import "time"
+import (
+	"time"
+
+	"github.com/kiali/kiali/config"
+)
 
 type TracingInfo struct {
-	Enabled              bool     `json:"enabled"`
-	Integration          bool     `json:"integration"`
-	Provider             string   `json:"provider"`
-	URL                  string   `json:"url"`
-	NamespaceSelector    bool     `json:"namespaceSelector"`
-	WhiteListIstioSystem []string `json:"whiteListIstioSystem"`
+	Enabled              bool               `json:"enabled"`
+	Integration          bool               `json:"integration"`
+	Provider             string             `json:"provider"`
+	TempoConfig          config.TempoConfig `json:"tempoConfig"`
+	URL                  string             `json:"url"`
+	NamespaceSelector    bool               `json:"namespaceSelector"`
+	WhiteListIstioSystem []string           `json:"whiteListIstioSystem"`
 }
 
 type TracingQuery struct {

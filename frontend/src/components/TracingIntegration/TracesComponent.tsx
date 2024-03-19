@@ -8,22 +8,30 @@ import { RenderComponentScroll } from '../Nav/Page';
 import { KioskElement } from '../Kiosk/KioskElement';
 import { TimeDurationModal } from '../Time/TimeDurationModal';
 import { KialiAppState } from 'store/Store';
-import { TracingError, JaegerTrace } from 'types/TracingInfo';
+import { JaegerTrace, TracingError } from 'types/TracingInfo';
 import { TraceDetails } from './TracingResults/TraceDetails';
 import { TracingScatter } from './TracingScatter';
-import { TracesFetcher, FetchOptions } from './TracesFetcher';
+import { FetchOptions, TracesFetcher } from './TracesFetcher';
 import { SpanDetails } from './TracingResults/SpanDetails';
-import { isEqualTimeRange, TargetKind, TimeInMilliseconds, TimeRange } from 'types/Common';
+import {
+  durationToBounds,
+  guardTimeRange,
+  isEqualTimeRange,
+  TargetKind,
+  TimeInMilliseconds,
+  TimeRange
+} from 'types/Common';
 import { timeRangeSelector } from 'store/Selectors';
-import { getTimeRangeMicros } from 'utils/tracing/TracingHelper';
-import { TracesDisplayOptions, QuerySettings, DisplaySettings, percentilesOptions } from './TracesDisplayOptions';
+import { DisplaySettings, percentilesOptions, QuerySettings, TracesDisplayOptions } from './TracesDisplayOptions';
 import { Direction, genStatsKey, MetricsStatsQuery } from 'types/MetricsOptions';
 import { MetricsStatsResult } from 'types/Metrics';
 import { getSpanId } from 'utils/SearchParamUtils';
 import { TimeDurationIndicator } from '../Time/TimeDurationIndicator';
 import { subTabStyle } from 'styles/TabStyles';
-import { TEMPO } from 'types/Tracing';
-import { ExternalServiceInfo } from '../../types/StatusState';
+import { TracingUrlProvider } from 'types/Tracing';
+import { GetTracingUrlProvider } from 'utils/tracing/UrlProviders';
+import { ExternalServiceInfo } from 'types/StatusState';
+import { retrieveTimeRange } from '../Time/TimeRangeHelper';
 
 type ReduxProps = {
   externalServices: ExternalServiceInfo[];
@@ -58,49 +66,9 @@ interface TracesState {
 const traceDetailsTab = 0;
 const spansDetailsTab = 1;
 
-function GetGrafanaUrl(externalServices: ExternalServiceInfo[]): ExternalServiceInfo | undefined {
-  return externalServices.find(service => service.name === 'Grafana');
-}
-
-function GetBaseTracingUrl(
-  provider: string | undefined,
-  urlTracing: string | undefined,
-  externalServices: ExternalServiceInfo[]
-): string | undefined {
-  return provider === TEMPO ? GetGrafanaUrl(externalServices)?.url : urlTracing;
-}
-
-export function GetTraceDetailURL(
-  provider: string | undefined,
-  urlTracing: string | undefined,
-  externalServices: ExternalServiceInfo[]
-): string | undefined {
-  const tracingUrl = GetBaseTracingUrl(provider, urlTracing, externalServices);
-  if (!tracingUrl) {
-    return undefined;
-  }
-  return provider === TEMPO
-    ? `${tracingUrl}/explore?left={"queries":[{"datasource":{"type":"tempo"},"queryType":"traceql","query":"TRACEID"}]}`
-    : `${tracingUrl}/trace/TRACEID`;
-}
-
-export function GetTracingURL(externalServices: ExternalServiceInfo[]): string | undefined {
-  const grafanaService = externalServices.find(service => service.name === 'Grafana');
-  const jaegerService = externalServices.find(service => service.name === 'jaeger');
-  const tempoService = externalServices.find(service => service.name === TEMPO);
-
-  if (tempoService) {
-    const tracingUrl = grafanaService?.url;
-    return tracingUrl
-      ? `${tracingUrl}/explore?left={"queries":[{"datasource":{"type":"tempo"},"queryType":"nativeSearch"}]}`
-      : undefined;
-  }
-
-  return jaegerService?.url;
-}
-
 class TracesComp extends React.Component<TracesProps, TracesState> {
   private fetcher: TracesFetcher;
+  private urlProvider: TracingUrlProvider | undefined;
   private percentilesPromise: Promise<Map<string, number>>;
 
   constructor(props: TracesProps) {
@@ -131,6 +99,8 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
     });
     // This establishes the percentile-based filtering levels
     this.percentilesPromise = this.fetchPercentiles();
+
+    this.urlProvider = this.getUrlProvider();
   }
 
   componentDidMount(): void {
@@ -159,8 +129,8 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
     }
   }
 
-  private getTags = (): string => {
-    return this.state.querySettings.errorsOnly ? '{"error":"true"}' : '';
+  private getTags = (): Record<string, string> => {
+    return this.state.querySettings.errorsOnly ? { error: 'true' } : {};
   };
 
   private fetchTraces = async (): Promise<void> => {
@@ -170,7 +140,7 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
       target: this.props.target,
       targetKind: this.props.targetKind,
       spanLimit: this.state.querySettings.limit,
-      tags: this.getTags()
+      tags: JSON.stringify(this.getTags())
     };
     // If percentil filter is set fetch only traces above the specified percentile
     // Percentiles (99th, 90th, 75th) are pre-computed from metrics bound to this app/workload/service object.
@@ -251,27 +221,23 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
     this.setState(newState as TracesState);
   };
 
-  private getTracingUrl = (): undefined | string => {
-    const tracingUrl = GetBaseTracingUrl(this.props.provider, this.props.urlTracing, this.props.externalServices);
+  private getUrlProvider = (): TracingUrlProvider | undefined =>
+    GetTracingUrlProvider(this.props.externalServices, this.props.provider);
 
-    if (tracingUrl === '' || !tracingUrl || !this.state.targetApp) {
+  private getTracingUrl = (): string | undefined => {
+    if (!this.urlProvider || !this.state.targetApp) {
       return undefined;
     }
-    const range = getTimeRangeMicros();
+    const range = retrieveTimeRange();
+    // Convert any time range (like duration) to bounded from/to
+    const boundsMillis = guardTimeRange(range, durationToBounds, b => b);
 
-    if (this.props.provider === TEMPO) {
-      return `${tracingUrl}/explore?left={"queries":[{"datasource":{"type":"tempo"},"queryType":"nativeSearch","serviceName":"${this.state.targetApp}"}]}`;
-    }
-
-    let url = `${tracingUrl}/search?service=${this.state.targetApp}&start=${range.from}&limit=${this.state.querySettings.limit}`;
-    if (range.to) {
-      url += `&end=${range.to}`;
-    }
-    const tags = this.getTags();
-    if (tags) {
-      url += `&tags=${tags}`;
-    }
-    return url;
+    return this.urlProvider.AppSearchUrl(
+      this.state.targetApp,
+      boundsMillis,
+      this.getTags(),
+      this.state.querySettings.limit
+    );
   };
 
   private onQuerySettingsChanged = (settings: QuerySettings): void => {
@@ -287,7 +253,7 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
     this.setState(prevState => ({ isTimeOptionsOpen: !prevState.isTimeOptionsOpen }));
   };
 
-  render(): React.ReactElement {
+  render(): JSX.Element {
     const tracingURL = this.getTracingUrl();
     return (
       <>
@@ -356,11 +322,7 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
                     namespace={this.props.namespace}
                     target={this.props.target}
                     targetKind={this.props.targetKind}
-                    tracingURL={GetTraceDetailURL(
-                      this.props.provider,
-                      this.props.urlTracing,
-                      this.props.externalServices
-                    )}
+                    tracingURLProvider={this.urlProvider}
                     otherTraces={this.state.traces}
                     cluster={this.props.cluster ? this.props.cluster : ''}
                     provider={this.props.provider}
@@ -370,11 +332,7 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
                   <SpanDetails
                     namespace={this.props.namespace}
                     target={this.props.target}
-                    externalURL={GetTraceDetailURL(
-                      this.props.provider,
-                      this.props.urlTracing,
-                      this.props.externalServices
-                    )}
+                    externalURLProvider={this.urlProvider}
                     items={this.props.selectedTrace.spans}
                     traceID={this.props.selectedTrace.traceID}
                     cluster={this.props.cluster ? this.props.cluster : ''}

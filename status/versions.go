@@ -202,6 +202,7 @@ func tracingVersion() (*ExternalServiceInfo, error) {
 	product := ExternalServiceInfo{}
 	product.Name = string(tracingConfig.Provider)
 	product.Url = tracingConfig.URL
+	product.TempoConfig = tracingConfig.TempoConfig
 
 	return &product, nil
 }

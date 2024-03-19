@@ -26,24 +26,28 @@ import { responseFlags } from 'utils/ResponseFlags';
 import { renderMetricsComparison } from './StatsComparison';
 import { history } from 'app/History';
 import { isParentKiosk, kioskContextMenuAction } from '../../Kiosk/KioskActions';
-import { TEMPO } from '../../../types/Tracing';
+import { TracingUrlProvider } from 'types/Tracing';
 import { KialiIcon } from 'config/KialiIcon';
 import { SimpleTable, SortableTh } from 'components/SimpleTable';
 
 type ReduxProps = {
-  kiosk: string;
   loadMetricsStats: (queries: MetricsStatsQuery[], isCompact: boolean) => void;
+};
+
+type StateProps = {
+  kiosk: string;
   metricsStats: Map<string, MetricsStats>;
   provider?: string;
 };
 
-type Props = ReduxProps & {
-  cluster?: string;
-  externalURL?: string;
-  items: RichSpanData[];
-  namespace: string;
-  traceID: string;
-};
+type Props = ReduxProps &
+  StateProps & {
+    cluster?: string;
+    externalURLProvider?: TracingUrlProvider;
+    items: RichSpanData[];
+    namespace: string;
+    traceID: string;
+  };
 
 interface State {
   expandedSpans: Map<string, boolean>;
@@ -135,17 +139,17 @@ class SpanTableComponent extends React.Component<Props, State> {
     };
   }
 
-  componentDidMount() {
+  componentDidMount(): void {
     this.fetchComparisonMetrics(this.props.items);
   }
 
-  componentDidUpdate(prevProps: Readonly<Props>) {
+  componentDidUpdate(prevProps: Readonly<Props>): void {
     if (!sameSpans(prevProps.items, this.props.items)) {
       this.fetchComparisonMetrics(this.props.items);
     }
   }
 
-  render() {
+  render(): JSX.Element {
     const sortBy: ISortBy = { index: this.state.sortIndex, direction: this.state.sortDirection };
     const onSort: OnSort = (_event: React.MouseEvent, index: number, sortDirection: SortByDirection) =>
       this.setState({ sortIndex: index, sortDirection: sortDirection });
@@ -290,9 +294,8 @@ class SpanTableComponent extends React.Component<Props, State> {
 
     let tracingActions: IAction[] = [];
 
-    if (this.props.externalURL) {
-      const traceURL = this.props.externalURL?.replace('TRACEID', this.props.traceID);
-      const spanLink = this.props.provider === TEMPO ? traceURL : `${traceURL}?uiFind=${item.spanID}`;
+    if (this.props.externalURLProvider) {
+      const spanLink = this.props.externalURLProvider?.SpanUrl(item);
       tracingActions = [
         {
           isDisabled: true,
@@ -575,13 +578,13 @@ class SpanTableComponent extends React.Component<Props, State> {
   };
 }
 
-const mapStateToProps = (state: KialiAppState) => ({
+const mapStateToProps = (state: KialiAppState): StateProps => ({
   kiosk: state.globalState.kiosk,
   metricsStats: state.metricsStats.data,
   provider: state.tracingState.info?.provider
 });
 
-const mapDispatchToProps = (dispatch: KialiDispatch) => ({
+const mapDispatchToProps = (dispatch: KialiDispatch): ReduxProps => ({
   loadMetricsStats: (queries: MetricsStatsQuery[], isCompact: boolean) =>
     dispatch(MetricsStatsThunkActions.load(queries, isCompact))
 });

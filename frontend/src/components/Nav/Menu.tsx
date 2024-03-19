@@ -7,9 +7,9 @@ import { history } from '../../app/History';
 import { navMenuItems } from '../../routes';
 import { homeCluster, serverConfig } from '../../config';
 import { kialiStyle } from 'styles/StyleUtils';
-import { GetTracingURL } from '../TracingIntegration/TracesComponent';
 import { ExternalServiceInfo } from '../../types/StatusState';
 import { KialiIcon } from 'config/KialiIcon';
+import { GetTracingUrlProvider } from '../../utils/tracing/UrlProviders';
 import { WithTranslation, withTranslation } from 'react-i18next';
 import { I18N_NAMESPACE } from 'types/Common';
 
@@ -54,7 +54,7 @@ type MenuState = {
 
 class MenuComponent extends React.Component<MenuProps, MenuState> {
   static contextTypes = {
-    router: () => null
+    router: (): null => null
   };
 
   constructor(props: MenuProps) {
@@ -92,7 +92,7 @@ class MenuComponent extends React.Component<MenuProps, MenuState> {
       return isRoute;
     });
 
-    const tracingUrl = GetTracingURL(this.props.externalServices);
+    const tracingUrl = GetTracingUrlProvider(this.props.externalServices)?.HomeUrl();
 
     return allNavMenuItems
       .filter(item => {
