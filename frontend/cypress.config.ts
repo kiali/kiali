@@ -1,7 +1,8 @@
 import { defineConfig } from 'cypress';
 import { getAuthStrategy } from './cypress/plugins/setup';
 import { addCucumberPreprocessorPlugin } from '@badeball/cypress-cucumber-preprocessor';
-import browserify from '@badeball/cypress-cucumber-preprocessor/browserify';
+import createBundler from '@bahmutov/cypress-esbuild-preprocessor';
+import { createEsbuildPlugin } from '@badeball/cypress-cucumber-preprocessor/esbuild';
 
 export default defineConfig({
   viewportWidth: 1920,
@@ -22,14 +23,17 @@ export default defineConfig({
   },
   e2e: {
     baseUrl: 'http://localhost:3000',
-    async setupNodeEvents(on, config) {
+    async setupNodeEvents(
+      on: Cypress.PluginEvents,
+      config: Cypress.PluginConfigOptions
+    ): Promise<Cypress.PluginConfigOptions> {
       // This is required for the preprocessor to be able to generate JSON reports after each run, and more,
       await addCucumberPreprocessorPlugin(on, config);
 
       on(
         'file:preprocessor',
-        browserify(config, {
-          typescript: require.resolve('typescript')
+        createBundler({
+          plugins: [createEsbuildPlugin(config)]
         })
       );
 
@@ -42,6 +46,7 @@ export default defineConfig({
       return config;
     },
     specPattern: '**/*.feature',
-    supportFile: 'cypress/support/index.ts'
+    supportFile: 'cypress/support/index.ts',
+    testIsolation: false
   }
 });

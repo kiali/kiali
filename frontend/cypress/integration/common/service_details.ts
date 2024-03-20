@@ -1,4 +1,4 @@
-import { Then, And } from '@badeball/cypress-cucumber-preprocessor';
+import { Then, When } from '@badeball/cypress-cucumber-preprocessor';
 
 function openTab(tab: string) {
   cy.get('.pf-c-tabs__list').should('be.visible').contains(tab).click();
@@ -50,8 +50,10 @@ Then('sd::user sees inbound and outbound traffic information', () => {
   cy.get('.pf-c-card__body').within(() => {
     cy.contains('Inbound Traffic');
     cy.contains('No Inbound Traffic').should('not.exist');
+
     cy.contains('Outbound Traffic');
-    cy.contains('No Inbound Traffic').should('not.exist');
+    cy.contains('No Outbound Traffic').should('not.exist');
+
     cy.get('table.pf-c-table.pf-m-grid-md').should('exist');
     cy.contains('istio-ingressgateway');
   });
@@ -72,7 +74,7 @@ Then('sd::user does not see No data message in the {string} graph', (graph: stri
     .should('not.contain', 'No data available');
 });
 
-And('user chooses the {string} option', (title: string) => {
+When('user chooses the {string} option', (title: string) => {
   cy.wait('@waitForCall');
   cy.get('button[aria-label="Actions"]').click();
   cy.contains(title).should('be.visible');

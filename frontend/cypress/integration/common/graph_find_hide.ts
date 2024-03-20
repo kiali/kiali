@@ -1,4 +1,4 @@
-import { And, Then, When } from '@badeball/cypress-cucumber-preprocessor';
+import { Then, When } from '@badeball/cypress-cucumber-preprocessor';
 
 function clearFindAndHide() {
   cy.get('#graph_hide').clear();
@@ -111,7 +111,7 @@ Then('user sees the help menu', () => {
   cy.getBySel('graph-find-hide-help').should('be.visible');
 });
 
-And('the help menu has info on {string}', (helpMenuItem: string) => {
+Then('the help menu has info on {string}', (helpMenuItem: string) => {
   cy.get('#graph_find_help_tabs').contains(helpMenuItem).should('be.visible');
 });
 

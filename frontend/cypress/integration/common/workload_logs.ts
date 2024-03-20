@@ -27,15 +27,17 @@ When('I choose to show 100 lines of logs', () => {
 
 When('I select only the {string} container', containerName => {
   cy.get('[data-test=workload-logs-pod-containers]').within(() => {
-    cy.get('[type=checkbox]:checked').uncheck();
+    cy.get('[type=checkbox]').uncheck();
+
     cy.get(`input#container-${containerName}`).check();
   });
 });
 
 When('I enable visualization of spans', () => {
   cy.get('[data-test=workload-logs-pod-containers]').within(() => {
-    cy.get('[type=checkbox]:checked').uncheck();
+    cy.get('[type=checkbox]').uncheck();
   });
+
   cy.get('input#log-spans').check();
 });
 

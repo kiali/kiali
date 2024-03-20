@@ -1,4 +1,4 @@
-import { And, Given, Then, When } from '@badeball/cypress-cucumber-preprocessor';
+import { Given, Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import { checkHealthIndicatorInTable, checkHealthStatusInTable, colExists, getColWithRowText } from './table';
 import { ensureKialiFinishedLoading } from './transition';
 
@@ -22,17 +22,17 @@ Given('a service in the mesh with a degraded amount of traffic', function () {
   this.targetService = 'y-server';
 });
 
-And('the {string} row is visible', (row: string) => {
+Then('the {string} row is visible', (row: string) => {
   cy.get('table').contains('td', row);
 });
 
-And('the health column on the {string} row has a health icon', (row: string) => {
+Then('the health column on the {string} row has a health icon', (row: string) => {
   getColWithRowText(row, 'Health').find(
     'svg[class=icon-healthy], svg[class=icon-unhealthy], svg[class=icon-degraded], svg[class=icon-na]'
   );
 });
 
-And('user filters for service type {string}', (serviceType: string) => {
+When('user filters for service type {string}', (serviceType: string) => {
   cy.get('select[aria-label="filter_select_type"]')
     .parent()
     .within(() => {
@@ -41,15 +41,15 @@ And('user filters for service type {string}', (serviceType: string) => {
     });
 });
 
-And('user filters for sidecar {string}', (sidecarState: string) => {
+When('user filters for sidecar {string}', (sidecarState: string) => {
   cy.get('select[aria-label="filter_select_value"]').select(sidecarState);
 });
 
-And('user filters for health {string}', (health: string) => {
+When('user filters for health {string}', (health: string) => {
   cy.get('select[aria-label="filter_select_value"]').select(health);
 });
 
-And('user should only see healthy services in the table', () => {
+Then('user should only see healthy services in the table', () => {
   cy.get('tbody').within(() => {
     cy.get('svg[class=icon-healthy]').should('be.visible');
     cy.get('svg[class=icon-unhealthy], svg[class=icon-degraded], svg[class=icon-na]').should('not.exist');
@@ -68,7 +68,7 @@ Then('the health status of the service should be {string}', function (healthStat
   checkHealthStatusInTable(this.targetNamespace, null, this.targetService, healthStatus);
 });
 
-And('user clicks {string} label', (label: string) => {
+When('user clicks {string} label', (label: string) => {
   cy.get('tbody').within(() => {
     cy.get('span').contains(label).click();
   });

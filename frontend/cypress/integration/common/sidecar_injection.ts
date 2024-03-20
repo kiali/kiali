@@ -239,7 +239,7 @@ When('I visit the overview page', function () {
 });
 
 When('I override the default automatic sidecar injection policy in the namespace to enabled', function () {
-  cy.request('GET', '/api/status').should(response => {
+  cy.request('GET', '/api/status').then(response => {
     expect(response.status).to.equal(200);
     const isMaistra = response.body.istioEnvironment.isMaistra;
 
@@ -260,7 +260,7 @@ When('I override the default automatic sidecar injection policy in the namespace
 When(
   'I change the override configuration for automatic sidecar injection policy in the namespace to {string} it',
   function (enabledOrDisabled) {
-    cy.request('GET', '/api/status').should(response => {
+    cy.request('GET', '/api/status').then(response => {
       expect(response.status).to.equal(200);
       const isMaistra = response.body.istioEnvironment.isMaistra;
 
@@ -283,7 +283,7 @@ When(
 );
 
 When('I remove override configuration for sidecar injection in the namespace', function () {
-  cy.request('GET', '/api/status').should(response => {
+  cy.request('GET', '/api/status').then(response => {
     expect(response.status).to.equal(200);
     const isMaistra = response.body.istioEnvironment.isMaistra;
 
@@ -321,7 +321,7 @@ When('I remove override configuration for sidecar injection in the workload', fu
 });
 
 Then('I should see the override annotation for sidecar injection in the namespace as {string}', function (enabled) {
-  cy.request('GET', '/api/status').should(response => {
+  cy.request('GET', '/api/status').then(response => {
     expect(response.status).to.equal(200);
     const isMaistra = response.body.istioEnvironment.isMaistra;
     const expectation = isMaistra ? 'not.exist' : 'exist';
@@ -333,7 +333,7 @@ Then('I should see the override annotation for sidecar injection in the namespac
 });
 
 Then('I should see no override annotation for sidecar injection in the namespace', function () {
-  cy.request('GET', '/api/status').should(response => {
+  cy.request('GET', '/api/status').then(response => {
     expect(response.status).to.equal(200);
     const isMaistra = response.body.istioEnvironment.isMaistra;
 

@@ -63,7 +63,7 @@ function install_demoapp(demoapp: string) {
   });
 }
 
-Before({ tags: '@gateway-api' }, async function () {
+Before({ tags: '@gateway-api' }, function () {
   cy.exec('kubectl get crd gateways.gateway.networking.k8s.io', { failOnNonZeroExit: false }).then(result => {
     if (result.code != 0) {
       cy.log('Gateway API not found. Enabling it now.');
@@ -74,14 +74,14 @@ Before({ tags: '@gateway-api' }, async function () {
   });
 });
 
-Before({ tags: '@bookinfo-app' }, async function () {
+Before({ tags: '@bookinfo-app' }, function () {
   install_demoapp('bookinfo');
 });
 
-Before({ tags: '@error-rates-app' }, async function () {
+Before({ tags: '@error-rates-app' }, function () {
   install_demoapp('error-rates');
 });
 
-Before({ tags: '@sleep-app' }, async function () {
+Before({ tags: '@sleep-app' }, function () {
   install_demoapp('sleep');
 });

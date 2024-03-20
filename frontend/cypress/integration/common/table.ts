@@ -1,4 +1,4 @@
-import { And, Then, When } from '@badeball/cypress-cucumber-preprocessor';
+import { Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import { TableDefinition } from 'cypress-cucumber-preprocessor';
 
 Then(`user sees a table with headings`, (tableHeadings: TableDefinition) => {
@@ -9,7 +9,7 @@ Then(`user sees a table with headings`, (tableHeadings: TableDefinition) => {
   });
 });
 
-And(
+Then(
   'the {string} column on the {string} row has a link ending in {string}',
   (column: string, rowText: string, link: string) => {
     getColWithRowText(rowText, column).within(() => {
@@ -19,18 +19,18 @@ And(
   }
 );
 
-And(
+Then(
   'the {string} column on the {string} row has the text {string}',
   (column: string, rowText: string, text: string) => {
     getColWithRowText(rowText, column).contains(text);
   }
 );
 
-And('the {string} column on the {string} row is empty', (column: string, rowText: string, text: string) => {
+Then('the {string} column on the {string} row is empty', (column: string, rowText: string, text: string) => {
   getColWithRowText(rowText, column).children().should('be.empty');
 });
 
-And('user clicks in {string} column on the {string} text', (column: string, rowText: string) => {
+Then('user clicks in {string} column on the {string} text', (column: string, rowText: string) => {
   getColWithRowText(rowText, column).find('a').click();
 });
 
@@ -46,13 +46,13 @@ Then('user sees {string} in the table', (service: string) => {
   });
 });
 
-And('table length should be {int}', (numRows: number) => {
+Then('table length should be {int}', (numRows: number) => {
   cy.get('tbody').within(() => {
     cy.get('tr').should('have.length', numRows);
   });
 });
 
-And('table length should exceed {int}', (numRows: number) => {
+Then('table length should exceed {int}', (numRows: number) => {
   cy.get('tbody').within(() => {
     cy.get('tr').should('have.length.greaterThan', numRows);
   });
@@ -62,11 +62,11 @@ When('user selects filter {string}', (filter: string) => {
   cy.get('select[aria-label="filter_select_type"]').select(filter);
 });
 
-And('user filters for name {string}', (name: string) => {
+Then('user filters for name {string}', (name: string) => {
   cy.get('input[aria-label="filter_input_value"]').type(`${name}{enter}`);
 });
 
-And('user filters for istio config type {string}', (istioType: string) => {
+Then('user filters for istio config type {string}', (istioType: string) => {
   cy.get('input[placeholder="Filter by Istio Config Type"]').type(`${istioType}{enter}`);
   cy.get(`button[label="${istioType}"]`).should('be.visible').click();
 });

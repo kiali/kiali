@@ -17,7 +17,7 @@ metadata:
 function deleteNamespaces() {
   cy.log('Deleting namespaces...');
   // This can take awhile to delete. Waiting for 10 mins max.
-  cy.exec('kubectl delete --ignore-not-found=true -l kiali.io=perf-testing ns', {timeout: 600000});
+  cy.exec('kubectl delete --ignore-not-found=true -l kiali.io=perf-testing ns', { timeout: 600000 });
 }
 
 type OverviewCase = {
@@ -35,7 +35,7 @@ describe('Performance tests', () => {
   });
 
   beforeEach(() => {
-    Cypress.Cookies.preserveOnce('kiali-token-aes');
+    cy.login(Cypress.env('USERNAME'), Cypress.env('PASSWD'));
   });
 
   // Testing empty namespaces to understand the impact of adding namespaces alone.
