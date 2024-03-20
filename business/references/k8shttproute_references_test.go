@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-
 	k8s_networking_v1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 
 	"github.com/kiali/kiali/config"
@@ -15,9 +14,9 @@ import (
 func prepareTestForK8sHTTPRoute(route *k8s_networking_v1beta1.HTTPRoute) models.IstioReferences {
 	routeReferences := K8sHTTPRouteReferences{
 		Namespaces: models.Namespaces{
-			{Name: "bookinfo"},
-			{Name: "bookinfo2"},
-			{Name: "bookinfo3"},
+			models.Namespace{Name: "bookinfo"},
+			models.Namespace{Name: "bookinfo2"},
+			models.Namespace{Name: "bookinfo3"},
 		},
 		K8sHTTPRoutes: []*k8s_networking_v1beta1.HTTPRoute{route},
 	}

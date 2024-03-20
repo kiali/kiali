@@ -16,9 +16,9 @@ func prepareTestForServiceEntry(ap *security_v1beta.AuthorizationPolicy, dr *net
 	drReferences := ServiceEntryReferences{
 		Namespace: "bookinfo",
 		Namespaces: models.Namespaces{
-			{Name: "bookinfo"},
-			{Name: "bookinfo2"},
-			{Name: "bookinfo3"},
+			models.Namespace{Name: "bookinfo"},
+			models.Namespace{Name: "bookinfo2"},
+			models.Namespace{Name: "bookinfo3"},
 		},
 		AuthorizationPolicies: []*security_v1beta.AuthorizationPolicy{ap},
 		ServiceEntries:        []*networking_v1beta1.ServiceEntry{se},

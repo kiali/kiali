@@ -45,5 +45,7 @@ func (m RequestAuthenticationChecker) runChecks(requestAuthn *security_v1beta.Re
 		rrValidation.Valid = rrValidation.Valid && validChecker
 	}
 
-	return models.IstioValidations{key: rrValidation}
+	iv := make(models.IstioValidations)
+	iv[key] = rrValidation
+	return iv
 }

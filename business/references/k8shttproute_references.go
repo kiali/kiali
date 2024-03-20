@@ -20,7 +20,9 @@ func (n K8sHTTPRouteReferences) References() models.IstioReferencesMap {
 		references := &models.IstioReferences{}
 		references.ServiceReferences = n.getServiceReferences(rt)
 		references.ObjectReferences = n.getConfigReferences(rt)
-		result.MergeReferencesMap(models.IstioReferencesMap{key: references})
+		ir := make(models.IstioReferencesMap)
+		ir[key] = references
+		result.MergeReferencesMap(ir)
 	}
 
 	return result

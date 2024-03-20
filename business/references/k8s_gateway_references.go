@@ -19,7 +19,9 @@ func (g K8sGatewayReferences) References() models.IstioReferencesMap {
 		key := models.IstioReferenceKey{Namespace: gw.Namespace, Name: gw.Name, ObjectType: models.ObjectTypeSingular[kubernetes.K8sGateways]}
 		references := &models.IstioReferences{}
 		references.ObjectReferences = g.getConfigReferences(gw)
-		result.MergeReferencesMap(models.IstioReferencesMap{key: references})
+		ir := make(models.IstioReferencesMap)
+		ir[key] = references
+		result.MergeReferencesMap(ir)
 	}
 
 	return result

@@ -26,7 +26,9 @@ func (n ServiceEntryReferences) References() models.IstioReferencesMap {
 		references := &models.IstioReferences{}
 		references.ObjectReferences = append(references.ObjectReferences, n.getConfigReferences(se)...)
 		references.ServiceReferences = append(references.ServiceReferences, n.getServiceReferences(se)...)
-		result.MergeReferencesMap(models.IstioReferencesMap{key: references})
+		ir := make(models.IstioReferencesMap)
+		ir[key] = references
+		result.MergeReferencesMap(ir)
 	}
 
 	return result

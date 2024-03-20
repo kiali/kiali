@@ -15,9 +15,9 @@ func prepareTestForDestinationRule(dr *networking_v1beta1.DestinationRule, vs *n
 	drReferences := DestinationRuleReferences{
 		Namespace: "bookinfo",
 		Namespaces: models.Namespaces{
-			{Name: "bookinfo"},
-			{Name: "bookinfo2"},
-			{Name: "bookinfo3"},
+			models.Namespace{Name: "bookinfo"},
+			models.Namespace{Name: "bookinfo2"},
+			models.Namespace{Name: "bookinfo3"},
 		},
 		DestinationRules: []*networking_v1beta1.DestinationRule{dr},
 		VirtualServices:  []*networking_v1beta1.VirtualService{vs},

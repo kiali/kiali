@@ -43,5 +43,7 @@ func (g K8sGatewayChecker) runSingleChecks(gw *k8s_networking_v1beta1.Gateway) m
 		validations.Valid = validations.Valid && validChecker
 	}
 
-	return models.IstioValidations{key: validations}
+	result := make(models.IstioValidations)
+	result[key] = validations
+	return result
 }

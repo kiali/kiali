@@ -3,7 +3,6 @@ package references
 import (
 	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	security_v1beta "istio.io/client-go/pkg/apis/security/v1beta1"
-
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/config"
@@ -52,7 +51,9 @@ func (n AuthorizationPolicyReferences) References() models.IstioReferencesMap {
 			}
 		}
 		references.WorkloadReferences = append(references.WorkloadReferences, n.getWorkloadReferences(ap)...)
-		result.MergeReferencesMap(models.IstioReferencesMap{key: references})
+		ir := make(models.IstioReferencesMap)
+		ir[key] = references
+		result.MergeReferencesMap(ir)
 	}
 
 	return result

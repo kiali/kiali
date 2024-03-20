@@ -41,5 +41,8 @@ func (sc ServiceChecker) runSingleChecks(service v1.Service) models.IstioValidat
 		validations.Valid = validations.Valid && validChecker
 	}
 
-	return models.IstioValidations{key: validations}
+	iv := make(models.IstioValidations)
+	iv[key] = validations
+	return iv
+
 }

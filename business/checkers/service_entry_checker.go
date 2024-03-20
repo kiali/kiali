@@ -43,5 +43,7 @@ func (s ServiceEntryChecker) runSingleChecks(se *networking_v1beta1.ServiceEntry
 		validations.Valid = validations.Valid && validChecker
 	}
 
-	return models.IstioValidations{key: validations}
+	iv := make(models.IstioValidations)
+	iv[key] = validations
+	return iv
 }

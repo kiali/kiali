@@ -18,9 +18,9 @@ func prepareTestForVirtualService(vs *networking_v1beta1.VirtualService, dr *net
 	virtualServiceReferences := VirtualServiceReferences{
 		Namespace: "bookinfo",
 		Namespaces: models.Namespaces{
-			{Name: "bookinfo"},
-			{Name: "bookinfo2"},
-			{Name: "bookinfo3"},
+			models.Namespace{Name: "bookinfo"},
+			models.Namespace{Name: "bookinfo2"},
+			models.Namespace{Name: "bookinfo3"},
 		},
 		VirtualServices:       []*networking_v1beta1.VirtualService{vs},
 		DestinationRules:      []*networking_v1beta1.DestinationRule{dr},

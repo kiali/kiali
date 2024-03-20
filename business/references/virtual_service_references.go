@@ -24,7 +24,10 @@ func (n VirtualServiceReferences) References() models.IstioReferencesMap {
 		references := &models.IstioReferences{}
 		references.ServiceReferences = n.getServiceReferences(vs)
 		references.ObjectReferences = n.getConfigReferences(vs)
-		result.MergeReferencesMap(models.IstioReferencesMap{key: references})
+		ir := make(models.IstioReferencesMap)
+		ir[key] = references
+		result.MergeReferencesMap(ir)
+
 	}
 
 	return result

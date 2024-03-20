@@ -2,7 +2,6 @@ package references
 
 import (
 	security_v1beta "istio.io/client-go/pkg/apis/security/v1beta1"
-
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/config"
@@ -23,7 +22,9 @@ func (n PeerAuthReferences) References() models.IstioReferencesMap {
 		references := &models.IstioReferences{}
 		references.ObjectReferences = n.getConfigReferences(pa)
 		references.WorkloadReferences = n.getWorkloadReferences(pa)
-		result.MergeReferencesMap(models.IstioReferencesMap{key: references})
+		ir := make(models.IstioReferencesMap)
+		ir[key] = references
+		result.MergeReferencesMap(ir)
 	}
 
 	return result

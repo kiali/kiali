@@ -56,7 +56,9 @@ func runVirtualServiceCheck(virtualService *networking_v1beta1.VirtualService, s
 	validations.Valid = valid
 	validations.Checks = result
 
-	return models.IstioValidations{key: validations}
+	iv := make(models.IstioValidations)
+	iv[key] = validations
+	return iv
 }
 
 func runGatewayCheck(virtualService *networking_v1beta1.VirtualService, gatewayNames map[string]struct{}, cluster string) models.IstioValidations {
@@ -70,7 +72,9 @@ func runGatewayCheck(virtualService *networking_v1beta1.VirtualService, gatewayN
 	validations.Valid = valid
 	validations.Checks = result
 
-	return models.IstioValidations{key: validations}
+	iv := make(models.IstioValidations)
+	iv[key] = validations
+	return iv
 }
 
 func runDestinationRuleCheck(destinationRule *networking_v1beta1.DestinationRule, workloads map[string]models.WorkloadList,
@@ -91,5 +95,7 @@ func runDestinationRuleCheck(destinationRule *networking_v1beta1.DestinationRule
 	validations.Valid = valid
 	validations.Checks = result
 
-	return models.IstioValidations{key: validations}
+	iv := make(models.IstioValidations)
+	iv[key] = validations
+	return iv
 }

@@ -98,7 +98,8 @@ func ConfigValidationSummary(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	validationSummaries := models.ValidationSummaries{cluster: {}}
+	validationSummaries := make(models.ValidationSummaries)
+	validationSummaries[cluster] = map[string]*models.IstioValidationSummary{}
 	istioConfigValidationResults, errValidations := business.Validations.GetValidations(r.Context(), cluster, "", "", "")
 	if errValidations != nil {
 		log.Error(errValidations)
