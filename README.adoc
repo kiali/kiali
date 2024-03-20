@@ -28,9 +28,6 @@ Read the link:./RELEASING.adoc[RELEASING.adoc] file.
 
 == Developer setup
 
-[NOTE]
-Please, complement the content of this readme document with the link:https://github.com/kiali/kiali/blob/master/frontend/README.adoc[README.adoc document of the front-end repository]. Although this document has some instructions about building the front-end, they are not complete.
-
 Make sure you have the following tools:
 
 * The link:http://golang.org/doc/install[Go Programming Language]
@@ -405,6 +402,10 @@ spec:
 ----
 
 == Additional Notes
+
+=== Frontend development guidelines
+
+Frontend development guidelines (styles, i18n, etc.) can be found link:./frontend/README.adoc#developing[here]
 
 === Upgrading Go
 
