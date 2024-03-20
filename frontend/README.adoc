@@ -128,7 +128,7 @@ const { t } = useTranslation(I18N_NAMESPACE);
 
 - **External variable:**
 
-For string literals that are stored in a variable you have to translate the variable itself within the React component (class or hook). 
+String literals that are stored in a variable defined outside of React component cannot be translated directly. Instead the translation has to be done when the variable is used within the React component (class or hook).
 
 Problem here is that i18n parser can't extract labels from variables, only from literals. To indicate i18n parser to add that kind of string literals to locale file use `ì18n.t` function. Note that `i18n.t` does not perform any translation, it returns the same string literal on runtime (only for development purposes).
 
@@ -155,7 +155,7 @@ const Example: React.FC<Props> = (props: Props) => {
 
 - **External function:**
 
-Include i18n t function as input parameter (must be imported from `react-i18next` library, it will fail if imported from `i18next` library):
+External functions declared outside of React components cannot use `t` function directly. Instead it must be passed as input parameter (`TFunction` type must be imported from `react-i18next` library, it will fail if imported from `i18next` library):
 
 [source, typescript]
 ----
@@ -181,7 +181,7 @@ const Example: React.FC<Props> = (props: Props) => {
 
 ----
 
-Special i18n cases:
+**Special i18n cases:**
 
 - **Interpolation:**
 
@@ -214,7 +214,8 @@ labelsInfo = this.props.t('{{count}} label', {
       });
 ----
 
-Additional i18n notes:
+**Additional i18n notes:**
+
 - Add always namespace variable `I18N_NAMESPACE` to any React component translation configuration (`withTranslation` or `useTranslation`).
 [source, typescript]
 ----
