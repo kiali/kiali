@@ -1,5 +1,11 @@
 package models
 
+type ClusterApps struct {
+	// Applications list for namespaces of a single cluster
+	// required: true
+	Apps []AppListItem `json:"applications"`
+}
+
 type AppList struct {
 	// Namespace where the apps live in
 	// required: true
@@ -23,10 +29,10 @@ type AppListItem struct {
 	// example: reviews
 	Name string `json:"name"`
 
-	// Cluster of the application
+	// Namespace where the apps live in
 	// required: true
-	// example: reviews
-	Cluster string `json:"cluster"`
+	// example: bookinfo
+	Namespace Namespace `json:"namespace"`
 
 	// Define if all Pods related to the Workloads of this app has an IstioSidecar deployed
 	// required: true

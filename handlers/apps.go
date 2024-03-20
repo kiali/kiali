@@ -1,9 +1,9 @@
 package handlers
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gorilla/mux"
 
@@ -44,44 +44,50 @@ func (p *appParams) extract(r *http.Request) {
 	}
 }
 
-// AppList is the API handler to fetch all the apps to be displayed, related to a single namespace
-func AppList(w http.ResponseWriter, r *http.Request) {
+// ClustersApps is the API handler to fetch all the apps to be displayed, related to a single cluster
+func ClustersApps(w http.ResponseWriter, r *http.Request) {
+	query := r.URL.Query()
+	namespaces := query.Get("namespaces") // csl of namespaces
+	nss := []string{}
+	if len(namespaces) > 0 {
+		nss = strings.Split(namespaces, ",")
+	}
 	p := appParams{}
 	p.extract(r)
 
-	criteria := business.AppCriteria{Namespace: p.Namespace, IncludeIstioResources: p.IncludeIstioResources,
-		IncludeHealth: p.IncludeHealth, RateInterval: p.RateInterval, QueryTime: p.QueryTime}
-
 	// Get business layer
-	business, err := getBusiness(r)
+	businessLayer, err := getBusiness(r)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, "Apps initialization error: "+err.Error())
 		return
 	}
-
-	if criteria.IncludeHealth {
-		// When the cluster is not specified, we need to get it. If there are more than one,
-		// get the one for which the namespace creation time is oldest
-		namespaces, _ := business.Namespace.GetNamespaceClusters(r.Context(), p.Namespace)
-		if len(namespaces) == 0 {
-			err = fmt.Errorf("No clusters found for namespace  [%s]", p.Namespace)
-			handleErrorResponse(w, err, err.Error())
-			return
+	if len(nss) == 0 {
+		loadedNamespaces, _ := businessLayer.Namespace.GetClusterNamespaces(r.Context(), p.ClusterName)
+		for _, ns := range loadedNamespaces {
+			nss = append(nss, ns.Name)
 		}
-		ns := GetOldestNamespace(namespaces)
-		rateInterval, err := adjustRateInterval(r.Context(), business, p.Namespace, p.RateInterval, p.QueryTime, ns.Cluster)
-		if err != nil {
-			handleErrorResponse(w, err, "Adjust rate interval error: "+err.Error())
-			return
-		}
-		criteria.RateInterval = rateInterval
 	}
 
-	// Fetch and build apps
-	appList, err := business.App.GetAppList(r.Context(), criteria)
-	if err != nil {
-		handleErrorResponse(w, err)
-		return
+	for _, ns := range nss {
+		criteria := business.AppCriteria{Cluster: p.ClusterName, Namespace: ns, IncludeIstioResources: p.IncludeIstioResources,
+			IncludeHealth: p.IncludeHealth, RateInterval: p.RateInterval, QueryTime: p.QueryTime}
+
+		if p.IncludeHealth {
+			rateInterval, err := adjustRateInterval(r.Context(), businessLayer, ns, p.RateInterval, p.QueryTime, p.ClusterName)
+			if err != nil {
+				handleErrorResponse(w, err, "Adjust rate interval error: "+err.Error())
+				return
+			}
+			criteria.RateInterval = rateInterval
+		}
+
+		// Fetch and build apps
+		appList, err := businessLayer.App.GetAppList(r.Context(), criteria)
+		if err != nil {
+			handleErrorResponse(w, err)
+			return
+		}
+
 	}
 
 	RespondWithJSON(w, http.StatusOK, appList)
