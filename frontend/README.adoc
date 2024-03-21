@@ -106,7 +106,7 @@ type MenuProps = WithTranslation & {
 };
 ----
 
-Then you will be able to use `t` function as any other React class property to translate any label (variable or string literal).
+Then you will be able to use the `t` function, like any other React class property, to translate any label (variable or string literal).
 [source, typescript]
 ----
 <h1>{this.props.t(title)}</h1>
