@@ -47,55 +47,6 @@ const websiteStyle = kialiStyle({
 });
 
 export const AboutUIModal: React.FC<AboutUIModalProps> = (props: AboutUIModalProps) => {
-  /*
-  const additionalComponentInfoContent = (externalService: ExternalServiceInfo) => {
-    if (!externalService.version && !externalService.url) {
-      return 'N/A';
-    }
-
-    const version = externalService.version ?? '';
-    const url = externalService.url ? (
-      <a href={externalService.url} target="_blank" rel="noopener noreferrer">
-        {externalService.url}
-      </a>
-    ) : (
-      ''
-    );
-
-    return (
-      <>
-        {version} {url}
-      </>
-    );
-  };
-  */
-
-  /*
-  const renderTempo = (externalServices: ExternalServiceInfo[]) => {
-    const tempoService = externalServices.find(service => service.name === TEMPO);
-
-    if (tempoService) {
-      tempoService.url = GetTracingUrlProvider(externalServices)?.HomeUrl();
-      return renderComponent(tempoService);
-    } else {
-      return <></>;
-    }
-  };
-  */
-
-  /*
-  const renderComponent = (externalService: ExternalServiceInfo) => {
-    const name = externalService.version ? externalService.name : `${externalService.name} URL`;
-    const additionalInfo = additionalComponentInfoContent(externalService);
-    return (
-      <React.Fragment key={name}>
-        <TextListItem component="dt">{name.charAt(0).toUpperCase() + name.slice(1)}</TextListItem>
-        <TextListItem component="dd">{additionalInfo}</TextListItem>
-      </React.Fragment>
-    );
-  };
-  */
-
   const renderMeshLink = () => {
     if (config?.about?.mesh) {
       return (
@@ -153,10 +104,6 @@ export const AboutUIModal: React.FC<AboutUIModalProps> = (props: AboutUIModalPro
   const meshVersion = props.status[StatusKey.MESH_NAME]
     ? `${props.status[StatusKey.MESH_NAME]} ${props.status[StatusKey.MESH_VERSION] ?? ''}`
     : 'Unknown';
-
-  //const filteredServices = props.externalServices.filter(element => element.name !== TEMPO);
-  //const componentList = filteredServices.map(externalService => renderComponent(externalService));
-  //const tempoComponent = renderTempo(props.externalServices);
 
   return (
     <AboutModal
