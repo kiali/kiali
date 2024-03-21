@@ -115,7 +115,7 @@ Then you will be able to use the `t` function, like any other React class proper
 
 - **React hook:**
 
-Use useTranslation hook to get translation `t` function. More info link:https://react.i18next.com/latest/usetranslation-hook[here]. 
+Use the `useTranslation` hook to get the `t` translation function. More info link:https://react.i18next.com/latest/usetranslation-hook[here]. 
 
 Any label (variable or string literal) can be translated with `t` function within the component.
 
