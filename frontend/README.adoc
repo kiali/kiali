@@ -128,7 +128,7 @@ const { t } = useTranslation(I18N_NAMESPACE);
 
 - **External variable:**
 
-String literals that are stored in a variable defined outside of React component cannot be translated directly. Instead the translation has to be done when the variable is used within the React component (class or hook).
+String literals that are stored in a variable defined outside of a React component cannot be translated directly. Instead, the translation has to be done when the variable is used within the React component (class or hook).
 
 Problem here is that i18n parser can't extract labels from variables, only from literals. To indicate i18n parser to add that kind of string literals to locale file use `ì18n.t` function. Note that `i18n.t` does not perform any translation, it returns the same string literal on runtime (only for development purposes).
 
