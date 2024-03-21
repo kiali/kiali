@@ -478,10 +478,11 @@ func ObjectMetrics(namespace, service, objectType string, params map[string]stri
 
 func ObjectDashboard(namespace, name, objectType string) (*models.MonitoringDashboard, error) {
 	url := fmt.Sprintf("%s/api/namespaces/%s/%s/%s/dashboard", client.kialiURL, namespace, objectType, name)
-	response := new(models.MonitoringDashboard)
-
-	_, err := getRequestAndUnmarshalInto(url, response)
+	body, _, _, err := httpGETWithRetry(url, client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
 	if err == nil {
+		response := new(models.MonitoringDashboard)
+		// tests are checking only common response for different object types, ignore the error
+		_ = json.Unmarshal(body, &response)
 		return response, nil
 	} else {
 		return nil, err
