@@ -192,7 +192,7 @@ You can include any variable value within the translated statement with interpol
 <div>{t('Kiali home cluster: {{clusterName}}', { clusterName: homeCluster?.name })}</div>
 ----
 
-The variables are represented with `{{$variable}}`. You can set any name to the variable, you have just to be sure that matches with json field.
+The variables are represented with `{{$variable}}`. You can set any name to the variable, you have just to be sure that it matches the json field.
 
 This is how it looks like in the translation file:
 
