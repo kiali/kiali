@@ -230,7 +230,7 @@ const { t } = useTranslation(I18N_NAMESPACE);
 import { i18n } from 'i18n';
 ----
 
-- If the React class component contains static methods, you have to use `hoistNonReactStatics` library to copy static methods to translated components
+- If the React class component contains static methods, you have to use the`hoistNonReactStatics` library to copy static methods to translated components
 [source, typescript]
 ----
 const OverviewToolbarI18n = hoistNonReactStatics(
