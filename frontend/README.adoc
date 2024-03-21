@@ -64,7 +64,7 @@ make sure you install them with `yarn` and commit the `yarn.lock` file.
 
 === Running Kiali Frontend
 
-When developing, it is usual to run frontend outside of the kiali server in the cluster.
+When developing, it is typical to run the frontend outside of the kiali server in the cluster.
 
 It is possible to proxy the API requests without having to push the changes to kiali.
 Add the link:https://github.com/facebook/create-react-app/blob/master/packages/react-scripts/template/README.md#proxying-api-requests-in-development[proxy]
