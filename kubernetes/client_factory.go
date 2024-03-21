@@ -28,7 +28,7 @@ const defaultExpirationTime = time.Minute * 15
 
 // ClientFactory interface for the clientFactory object
 type ClientFactory interface {
-	GetClient(authInfo *api.AuthInfo) (ClientInterface, error) // TODO: Make private
+	GetClient(authInfo *api.AuthInfo, cluster string) (ClientInterface, error)
 	GetClients(authInfo *api.AuthInfo) (map[string]ClientInterface, error)
 	GetSAClient(cluster string) ClientInterface
 	GetSAClients() map[string]ClientInterface
@@ -295,8 +295,8 @@ func (cf *clientFactory) GetSAClients() map[string]ClientInterface {
 }
 
 // getClient returns a client for the specified token. Creating one if necessary.
-func (cf *clientFactory) GetClient(authInfo *api.AuthInfo) (ClientInterface, error) {
-	return cf.getRecycleClient(authInfo, defaultExpirationTime, cf.homeCluster)
+func (cf *clientFactory) GetClient(authInfo *api.AuthInfo, cluster string) (ClientInterface, error) {
+	return cf.getRecycleClient(authInfo, defaultExpirationTime, cluster)
 }
 
 // getClient returns a client for the specified token. Creating one if necessary.

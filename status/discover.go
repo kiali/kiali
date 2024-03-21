@@ -1,6 +1,7 @@
 package status
 
 import (
+	"context"
 	"net/url"
 	"strings"
 
@@ -61,7 +62,6 @@ func discoverServiceURL(ns, service string) (url string, err error) {
 	log.Debugf("[%s] URL discovery for service '%s', namespace '%s'...", strings.ToUpper(service), service, ns)
 	url = ""
 	client, err := getClient()
-
 	// If the client is not openshift return and avoid discover
 	if err != nil {
 		log.Debugf("[%s] Discovery failed: %v", strings.ToUpper(service), err)
@@ -74,7 +74,7 @@ func discoverServiceURL(ns, service string) (url string, err error) {
 	}
 
 	// Assuming service name == route name
-	route, err := client.GetRoute(ns, service)
+	route, err := client.GetRoute(context.TODO(), ns, service)
 	if err != nil {
 		log.Debugf("[%s] Discovery failed: %v", strings.ToUpper(service), err)
 		return

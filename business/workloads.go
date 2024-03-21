@@ -717,7 +717,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 		var err error
 		if userClient.IsOpenShift() && in.isWorkloadIncluded(kubernetes.DeploymentConfigType) {
 			// No cache for DeploymentConfigs
-			depcon, err = userClient.GetDeploymentConfigs(namespace)
+			depcon, err = userClient.GetDeploymentConfigs(ctx, namespace)
 			if err != nil {
 				log.Errorf("Error fetching DeploymentConfigs per namespace %s: %s", namespace, err)
 				errChan <- err
@@ -1305,7 +1305,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 		var err error
 		if client.IsOpenShift() && in.isWorkloadIncluded(kubernetes.DeploymentConfigType) {
 			// No cache for deploymentConfigs
-			depcon, err = client.GetDeploymentConfig(criteria.Namespace, criteria.WorkloadName)
+			depcon, err = client.GetDeploymentConfig(ctx, criteria.Namespace, criteria.WorkloadName)
 			if err != nil {
 				depcon = nil
 			}

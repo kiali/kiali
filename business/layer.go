@@ -22,7 +22,6 @@ type Layer struct {
 	Tracing        TracingService
 	Mesh           MeshService
 	Namespace      NamespaceService
-	OpenshiftOAuth OpenshiftOAuthService
 	ProxyLogging   ProxyLoggingService
 	ProxyStatus    ProxyStatusService
 	RegistryStatus RegistryStatusService
@@ -104,7 +103,6 @@ func newLayer(
 	temporaryLayer.IstioCerts = IstioCertsService{k8s: userClients[homeClusterName], businessLayer: temporaryLayer}
 	temporaryLayer.Namespace = NewNamespaceService(userClients, kialiSAClients, cache, conf)
 	temporaryLayer.Mesh = NewMeshService(kialiSAClients, cache, temporaryLayer.Namespace, *conf)
-	temporaryLayer.OpenshiftOAuth = NewOpenshiftOAuthService(conf, kialiSAClients[homeClusterName])
 	temporaryLayer.ProxyStatus = ProxyStatusService{kialiSAClients: kialiSAClients, kialiCache: cache, businessLayer: temporaryLayer}
 	// Out of order because it relies on ProxyStatus
 	temporaryLayer.ProxyLogging = ProxyLoggingService{userClients: userClients, proxyStatus: &temporaryLayer.ProxyStatus}

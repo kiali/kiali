@@ -96,7 +96,7 @@ func (c tokenAuthController) Authenticate(r *http.Request, w http.ResponseWriter
 
 	// Token was valid against the Kubernetes API, and it has privileges to read some namespace.
 	// Accept the token. Create the user session.
-	timeExpire := util.Clock.Now().Add(time.Second * time.Duration(config.Get().LoginToken.ExpirationSeconds))
+	timeExpire := util.Clock.Now().Add(time.Second * time.Duration(c.conf.LoginToken.ExpirationSeconds))
 	err = c.SessionStore.CreateSession(r, w, config.AuthStrategyToken, timeExpire, tokenSessionPayload{Token: token})
 	if err != nil {
 		return nil, err

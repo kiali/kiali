@@ -162,7 +162,10 @@ func main() {
 	}
 
 	// Start listening to requests
-	server := server.NewServer(cpm, clientFactory, cache, cfg, prom, tracingLoader)
+	server, err := server.NewServer(cpm, clientFactory, cache, cfg, prom, tracingLoader)
+	if err != nil {
+		log.Fatal(err)
+	}
 	server.Start()
 
 	// wait forever, or at least until we are told to exit

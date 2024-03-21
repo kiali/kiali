@@ -46,10 +46,10 @@ func (o *K8SClientFactoryMock) SetClients(clients map[string]kubernetes.ClientIn
 }
 
 // Business Methods
-func (o *K8SClientFactoryMock) GetClient(authInfo *api.AuthInfo) (kubernetes.ClientInterface, error) {
+func (o *K8SClientFactoryMock) GetClient(authInfo *api.AuthInfo, cluster string) (kubernetes.ClientInterface, error) {
 	o.lock.RLock()
 	defer o.lock.RUnlock()
-	return o.Clients[config.Get().KubernetesConfig.ClusterName], nil
+	return o.Clients[cluster], nil
 }
 
 // Business Methods

@@ -10,8 +10,10 @@ import (
 	"time"
 
 	osapps_v1 "github.com/openshift/api/apps/v1"
+	osoauth_v1 "github.com/openshift/api/oauth/v1"
 	osproject_v1 "github.com/openshift/api/project/v1"
 	osroutes_v1 "github.com/openshift/api/route/v1"
+	osuser_v1 "github.com/openshift/api/user/v1"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -38,11 +40,10 @@ import (
 type K8SClientInterface interface {
 	// Kube returns the underlying kubernetes client.
 	Kube() kubernetes.Interface
+
 	GetConfigMap(namespace, name string) (*core_v1.ConfigMap, error)
 	GetCronJobs(namespace string) ([]batch_v1.CronJob, error)
 	GetDeployment(namespace string, name string) (*apps_v1.Deployment, error)
-	GetDeploymentConfig(namespace string, name string) (*osapps_v1.DeploymentConfig, error)
-	GetDeploymentConfigs(namespace string) ([]osapps_v1.DeploymentConfig, error)
 	GetJobs(namespace string) ([]batch_v1.Job, error)
 	GetNamespace(namespace string) (*core_v1.Namespace, error)
 	GetNamespaces(labelSelector string) ([]core_v1.Namespace, error)
@@ -59,10 +60,15 @@ type K8SClientInterface interface {
 }
 
 type OSClientInterface interface {
-	GetProject(project string) (*osproject_v1.Project, error)
-	GetProjects(labelSelector string) ([]osproject_v1.Project, error)
-	GetRoute(namespace string, name string) (*osroutes_v1.Route, error)
-	UpdateProject(project string, jsonPatch string) (*osproject_v1.Project, error)
+	DeleteOAuthToken(ctx context.Context, token string) error
+	GetDeploymentConfig(ctx context.Context, namespace string, name string) (*osapps_v1.DeploymentConfig, error)
+	GetDeploymentConfigs(ctx context.Context, namespace string) ([]osapps_v1.DeploymentConfig, error)
+	GetOAuthClient(ctx context.Context, name string) (*osoauth_v1.OAuthClient, error)
+	GetProject(ctx context.Context, project string) (*osproject_v1.Project, error)
+	GetProjects(ctx context.Context, labelSelector string) ([]osproject_v1.Project, error)
+	GetRoute(ctx context.Context, namespace string, name string) (*osroutes_v1.Route, error)
+	GetUser(ctx context.Context, name string) (*osuser_v1.User, error)
+	UpdateProject(ctx context.Context, project string, jsonPatch string) (*osproject_v1.Project, error)
 }
 
 func (in *K8SClient) ForwardGetRequest(namespace, podName string, destinationPort int, path string) ([]byte, error) {
@@ -159,33 +165,50 @@ func (in *K8SClient) GetNamespaces(labelSelector string) ([]core_v1.Namespace, e
 // GetProject fetches and returns the definition of the project with
 // the specified name by querying the cluster API. GetProject will fail
 // if the underlying cluster is not Openshift.
-func (in *K8SClient) GetProject(name string) (*osproject_v1.Project, error) {
-	result := &osproject_v1.Project{}
-
-	err := in.k8s.Discovery().RESTClient().Get().Prefix("apis", "project.openshift.io", "v1", "projects", name).Do(in.ctx).Into(result)
-	if err != nil {
-		return nil, err
-	}
-
-	return result, nil
+func (in *K8SClient) GetProject(ctx context.Context, name string) (*osproject_v1.Project, error) {
+	return in.projectClient.ProjectV1().Projects().Get(ctx, name, emptyGetOptions)
 }
 
-func (in *K8SClient) GetProjects(labelSelector string) ([]osproject_v1.Project, error) {
-	result := &osproject_v1.ProjectList{}
-
-	request := in.k8s.Discovery().RESTClient().Get().Prefix("apis", "project.openshift.io", "v1", "projects")
-
-	// Apply label selector filtering if specified
-	if labelSelector != "" {
-		request.Param("labelSelector", labelSelector)
-	}
-
-	err := request.Do(in.ctx).Into(result)
+func (in *K8SClient) GetProjects(ctx context.Context, labelSelector string) ([]osproject_v1.Project, error) {
+	projects, err := in.projectClient.ProjectV1().Projects().List(ctx, meta_v1.ListOptions{LabelSelector: labelSelector})
 	if err != nil {
 		return nil, err
 	}
 
-	return result.Items, nil
+	return projects.Items, nil
+}
+
+func (in *K8SClient) GetDeploymentConfig(ctx context.Context, namespace string, name string) (*osapps_v1.DeploymentConfig, error) {
+	return in.osAppsClient.AppsV1().DeploymentConfigs(namespace).Get(ctx, name, emptyGetOptions)
+}
+
+func (in *K8SClient) GetDeploymentConfigs(ctx context.Context, namespace string) ([]osapps_v1.DeploymentConfig, error) {
+	deploymentConfigs, err := in.osAppsClient.AppsV1().DeploymentConfigs(namespace).List(ctx, emptyListOptions)
+	if err != nil {
+		return nil, err
+	}
+
+	return deploymentConfigs.Items, nil
+}
+
+func (in *K8SClient) GetOAuthClient(ctx context.Context, name string) (*osoauth_v1.OAuthClient, error) {
+	return in.oAuthClient.OauthV1().OAuthClients().Get(ctx, name, emptyGetOptions)
+}
+
+func (in *K8SClient) GetUser(ctx context.Context, name string) (*osuser_v1.User, error) {
+	return in.userClient.UserV1().Users().Get(ctx, name, emptyGetOptions)
+}
+
+func (in *K8SClient) DeleteOAuthToken(ctx context.Context, token string) error {
+	return in.oAuthClient.OauthV1().OAuthAccessTokens().Delete(ctx, token, meta_v1.DeleteOptions{})
+}
+
+func (in *K8SClient) UpdateProject(ctx context.Context, project string, jsonPatch string) (*osproject_v1.Project, error) {
+	return in.projectClient.ProjectV1().Projects().Patch(ctx, project, types.MergePatchType, []byte(jsonPatch), meta_v1.PatchOptions{})
+}
+
+func (in *K8SClient) GetRoute(ctx context.Context, namespace string, name string) (*osroutes_v1.Route, error) {
+	return in.routeClient.RouteV1().Routes(namespace).Get(ctx, name, emptyGetOptions)
 }
 
 func (in *K8SClient) IsOpenShift() bool {
@@ -291,17 +314,6 @@ func (in *K8SClient) GetDeployment(namespace, name string) (*apps_v1.Deployment,
 	return in.k8s.AppsV1().Deployments(namespace).Get(in.ctx, name, emptyGetOptions)
 }
 
-// GetRoute returns the external URL endpoint of a specific route name.
-// It returns an error on any problem.
-func (in *K8SClient) GetRoute(namespace, name string) (*osroutes_v1.Route, error) {
-	result := &osroutes_v1.Route{}
-	err := in.k8s.Discovery().RESTClient().Get().Prefix("apis", "route.openshift.io", "v1").Namespace(namespace).Resource("routes").SubResource(name).Do(in.ctx).Into(result)
-	if err != nil {
-		return nil, err
-	}
-	return result, nil
-}
-
 // GetDeployments returns an array of deployments for a given namespace.
 // It returns an error on any problem.
 func (in *K8SClient) GetDeployments(namespace string) ([]apps_v1.Deployment, error) {
@@ -310,29 +322,6 @@ func (in *K8SClient) GetDeployments(namespace string) ([]apps_v1.Deployment, err
 	} else {
 		return []apps_v1.Deployment{}, err
 	}
-}
-
-// GetDeployment returns the definition of a specific deployment.
-// It returns an error on any problem.
-func (in *K8SClient) GetDeploymentConfig(namespace, name string) (*osapps_v1.DeploymentConfig, error) {
-	result := &osapps_v1.DeploymentConfig{}
-	err := in.k8s.Discovery().RESTClient().Get().Prefix("apis", "apps.openshift.io", "v1").Namespace(namespace).Resource("deploymentconfigs").SubResource(name).Do(in.ctx).Into(result)
-	if err != nil {
-		return nil, err
-	}
-	return result, nil
-}
-
-// GetDeployments returns an array of deployments for a given namespace.
-// An empty labelSelector will fetch all Deployments for a namespace.
-// It returns an error on any problem.
-func (in *K8SClient) GetDeploymentConfigs(namespace string) ([]osapps_v1.DeploymentConfig, error) {
-	result := &osapps_v1.DeploymentConfigList{}
-	err := in.k8s.Discovery().RESTClient().Get().Prefix("apis", "apps.openshift.io", "v1").Namespace(namespace).Resource("deploymentconfigs").Do(in.ctx).Into(result)
-	if err != nil {
-		return nil, err
-	}
-	return result.Items, nil
 }
 
 func (in *K8SClient) GetReplicationControllers(namespace string) ([]core_v1.ReplicationController, error) {
@@ -518,17 +507,6 @@ func (in *K8SClient) UpdateNamespace(namespace string, jsonPatch string) (*core_
 	}
 
 	return ns, nil
-}
-
-func (in *K8SClient) UpdateProject(namespace string, jsonPatch string) (*osproject_v1.Project, error) {
-	result := &osproject_v1.Project{}
-	bytePatch := []byte(jsonPatch)
-	err := in.k8s.Discovery().RESTClient().Patch(types.MergePatchType).Prefix("apis", "project.openshift.io", "v1", "projects", namespace).Body(bytePatch).Do(in.ctx).Into(result)
-	if err != nil {
-		return nil, err
-	}
-
-	return result, nil
 }
 
 // GetTokenSubject returns the subject of the authInfo using

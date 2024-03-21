@@ -68,214 +68,68 @@ declare namespace Cypress {
     logout(): Chainable<Subject>;
   }
 }
-
-const getCsrfToken = (response: Cypress.Response<any>): string => {
-  const $html = Cypress.$(response.body);
-  const csrf = $html.find('input[name=csrf]').val();
-  return csrf.toString();
-};
-
-// Converts redirects from:
-//   302: https://localhost:8080/login?redirect=%2F
-// to:
-//   https://localhost:8080/login?redirect=%2F
-const parseRedirect = (redirect: string): string => {
-  return redirect.replace('302: ', '');
-};
-
-// finishLogin is only separated because we need to chain off .then
-// and this same block is repeated.
-const finishLogin = (authEndpoint: string, username: string, password: string, csrf: string): void => {
-  const openshiftLoginEndpointURL = new URL(authEndpoint);
-  const openshiftLoginEndpoint = openshiftLoginEndpointURL.origin + openshiftLoginEndpointURL.pathname;
-  const loginParams = new URLSearchParams(openshiftLoginEndpointURL.search);
-  cy.request({
-    url: openshiftLoginEndpoint,
-    method: 'POST',
-    form: true,
-    body: {
-      username: username,
-      password: password,
-      then: loginParams.get('then'),
-      csrf: csrf
-    }
-  }).then(resp => {
-    const kialiURLWithToken = new URL(resp.redirects.pop().replace('302: ', ''));
-    const kialiParams = new URLSearchParams(kialiURLWithToken.hash.slice(1));
-    cy.request({
-      url: 'api/authenticate',
-      body: {
-        access_token: kialiParams.get('access_token'),
-        expires_in: kialiParams.get('expires_in'),
-        scope: kialiParams.get('scope'),
-        token_type: kialiParams.get('token_type')
-      },
-      method: 'POST',
-      form: true
-    });
-  });
-};
-
-const timeout = 300000; // 5 minutes
-
-function ensureMulticlusterApplicationsAreHealthy(): void {
-  const startTime = this.startTime || Date.now();
-  this.startTime = startTime;
-
-  if (Date.now() - startTime > timeout) {
-    cy.log('Timeout reached without meeting the condition.');
-    return;
-  }
-
-  cy.request(
-    'api/clusters/apps?namespaces=bookinfo&clusterName=west&health=true&istioResources=true&rateInterval=60s'
-  ).then(resp => {
-    const has_http_200 = resp.body.applications.some(
-      app =>
-        app.name === 'reviews' &&
-        app.cluster === 'west' &&
-        app.health.requests.inbound.http !== undefined &&
-        app.health.requests.inbound.http['200'] > 0
-    );
-    if (has_http_200) {
-      cy.log("'reviews' app in 'west' cluster is healthy enough.");
-    } else {
-      cy.log("'reviews' app in 'west' cluster is not healthy yet, checking again in 10 seconds...");
-      cy.wait(10000);
-      ensureMulticlusterApplicationsAreHealthy();
-    }
-  });
-}
+// cy.exec('kubectl -n istio-system create token citest').then(result => {
+//   cy.get('#token').type(result.stdout);
+//   cy.get('button[type="submit"]').click();
+// });
 
 Cypress.Commands.add('login', (username: string, password: string) => {
   const auth_strategy = Cypress.env('AUTH_STRATEGY');
-  const provider = Cypress.env('AUTH_PROVIDER');
+  cy.session(
+    username,
+    () => {
+      if (auth_strategy === 'openshift') {
+        cy.log('Logging in with openshift auth strategy');
+        if (password === '' || password === undefined) {
+          throw new Error('Password is required for login. Please set CYPRESS_PASSWD environment variable.');
+        }
 
-  cy.window().then((win: any) => {
-    if (auth_strategy === 'anonymous') {
-      cy.log('Skipping login, Kiali is running with auth disabled');
-      return;
-    }
-    cy.log(
-      `provider: ${provider},
-					username: ${username},
-					auth_strategy: ${auth_strategy}`
-    );
+        cy.intercept('/api/namespaces').as('getNamespaces');
+        cy.intercept('/api/config').as('getConfig');
+        cy.intercept('/api/status').as('getStatus');
+        cy.intercept('/api/tracing').as('getTracing');
+        cy.intercept('/api/auth/info').as('getAuthInfo');
 
-    if (auth_strategy === 'openshift') {
-      if (provider === 'ibmcloud') {
-        // This flow comes from: https://cloud.ibm.com/docs/openshift?topic=openshift-access_cluster#access_api_key
-        cy.request('api/auth/info').then(({ body }) => {
-          const authEndpoint = body.authorizationEndpoint;
+        cy.visit('');
+        // TODO: Click idp if necessary.
+        cy.get('#inputUsername')
+          .clear()
+          .type('' || username);
 
+        cy.get('#inputPassword').type('' || password);
+        cy.get('button[type="submit"]').click();
+
+        // Wait for post login routes to be loaded. Otherwise cypress redirects you back to the home page
+        // which causes other tests to fail: https://github.com/cypress-io/cypress/issues/1713.
+        cy.wait('@getNamespaces');
+        cy.wait('@getConfig');
+        cy.wait('@getStatus');
+        cy.wait('@getTracing');
+        cy.wait('@getAuthInfo');
+
+        // cy.contains(KUBEADMIN_IDP).should('be.visible').click();
+        // cy.
+        // if (auth_strategy === 'token') {
+        //   cy.exec('kubectl -n istio-system create token citest').then(result => {
+        //     // TODO: token browser login.
+        //   });
+        // }
+      } else if (auth_strategy === 'token') {
+        cy.log('Logging in with token auth strategy');
+        cy.exec('kubectl -n istio-system create token citest').then(result => {
           cy.request({
-            url: authEndpoint,
-            method: 'GET',
-            headers: { 'X-CSRF-TOKEN': 'a' },
-            auth: { user: 'apikey', pass: password },
-            followRedirect: false
-          }).then(resp => {
-            // cookie automatically set by cypress for the next request.
-            const redirectURL = new URL(resp.headers.location as string);
-
-            // Strip first # out of hash.
-            const params = new URLSearchParams(redirectURL.hash.slice(1));
-
-            cy.request({
-              url: 'api/authenticate',
-              method: 'POST',
-              followRedirect: false,
-              form: true,
-              body: {
-                access_token: params.get('access_token'),
-                expires_in: params.get('expires_in'),
-                scope: params.get('scope'),
-                token_type: params.get('token_type')
-              }
-            });
-          });
-        });
-      } else {
-        // For all other providers, we assume it's an htpasswd like provider.
-        // This covers cases where the provider is htpasswd but named something different.
-        //
-        // This flow is ripped from the kiali-operator molecule tests:
-        // https://github.com/kiali/kiali-operator/blob/master/molecule/openshift-auth-test/converge.yml#L59
-        cy.request('api/auth/info').then(({ body }) => {
-          let authEndpoint = body.authorizationEndpoint;
-
-          cy.request({
-            url: authEndpoint,
-            method: 'GET',
-            followRedirect: true
-          }).then(resp => {
-            // If we got redirected, the login endpoint should be the redirect url and not the auth endpoint from the API.
-            if (resp.redirects && resp.redirects.length > 0) {
-              const csrf = getCsrfToken(resp);
-              authEndpoint = parseRedirect(resp.redirects[0]);
-              finishLogin(authEndpoint, username, password, csrf);
-            } else {
-              // If we didn't get redirected, there's multiple providers and we need to choose the provider
-              // that was requested by adding it as a query param and then we'll get redirected after login.
-              const authEndpointURL = new URL(authEndpoint);
-              authEndpointURL.searchParams.set('idp', provider);
-              authEndpoint = authEndpointURL.toString();
-
-              cy.request({
-                url: authEndpoint,
-                method: 'GET',
-                followRedirect: true
-              }).then(resp => {
-                const csrf = getCsrfToken(resp);
-                authEndpoint = parseRedirect(resp.redirects[0]);
-                finishLogin(authEndpoint, username, password, csrf);
-              });
+            method: 'POST',
+            url: 'api/authenticate',
+            form: true,
+            body: {
+              token: result.stdout
             }
           });
         });
       }
-    } else if (auth_strategy === 'openid') {
-      // Only works with keycloak at the moment.
-      cy.log('Logging in with OpenID');
-      cy.request('api/auth/info').then(({ body }) => {
-        let authEndpoint = body.authorizationEndpoint;
-        cy.request({
-          url: authEndpoint,
-          method: 'GET',
-          followRedirect: true
-        }).then(resp => {
-          const $html = Cypress.$(resp.body);
-          const postUrl = $html.find('form[id=kc-form-login]').attr('action');
-          const url = new URL(postUrl);
-          cy.request({
-            url: url.toString(),
-            method: 'POST',
-            form: true,
-            body: {
-              username: username,
-              password: password
-            }
-          }).then(() => {
-            const tags = Cypress.env('TAGS');
-            if (tags.includes('multi-cluster') || tags.includes('multi-primary')) {
-              ensureMulticlusterApplicationsAreHealthy();
-            }
-          });
-        });
-      });
-    } else if (auth_strategy === 'token') {
-      cy.exec('kubectl -n istio-system create token citest').then(result => {
-        cy.request({
-          method: 'POST',
-          url: 'api/authenticate',
-          form: true,
-          body: {
-            token: result.stdout
-          }
-        });
-      });
-    }
-  });
+    },
+    { cacheAcrossSpecs: true }
+  );
 });
 
 Cypress.Commands.add('getBySel', (selector: string, ...args: any) => cy.get(`[data-test="${selector}"]`, ...args));

@@ -5,6 +5,7 @@
 package handlers
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"time"
@@ -27,11 +28,11 @@ type noPrivClient struct {
 	kubernetes.ClientInterface
 }
 
-func (n *noPrivClient) GetProjects(labelSelector string) ([]osproject_v1.Project, error) {
+func (n *noPrivClient) GetProjects(ctx context.Context, labelSelector string) ([]osproject_v1.Project, error) {
 	return nil, fmt.Errorf("Rejecting")
 }
 
-func (n *noPrivClient) GetProject(name string) (*osproject_v1.Project, error) {
+func (n *noPrivClient) GetProject(ctx context.Context, name string) (*osproject_v1.Project, error) {
 	return nil, fmt.Errorf("Rejecting")
 }
 

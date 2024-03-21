@@ -11,7 +11,8 @@ require (
 	github.com/gorilla/mux v1.8.1
 	github.com/mitchellh/mapstructure v1.4.3
 	github.com/nitishm/engarde v0.1.1
-	github.com/openshift/api v0.0.0-20200221181648-8ce0047d664f
+	github.com/openshift/api v0.0.0-20240109042830-44756aa36879
+	github.com/openshift/client-go v0.0.0-20240109161853-2425b4b6d3b3
 	github.com/prometheus/client_golang v1.17.0
 	github.com/prometheus/common v0.45.0
 	github.com/rs/zerolog v1.20.0
@@ -25,7 +26,8 @@ require (
 	go.opentelemetry.io/otel/trace v1.22.0
 	go.uber.org/automaxprocs v1.5.3
 	golang.org/x/exp v0.0.0-20231006140011-7918f672742d
-	golang.org/x/net v0.20.0
+	golang.org/x/net v0.22.0
+	golang.org/x/oauth2 v0.18.0
 	golang.org/x/sync v0.4.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20240116215550-a9fa1716bcac
 	google.golang.org/grpc v1.60.1
@@ -75,10 +77,9 @@ require (
 	github.com/vjeantet/grok v1.0.0 // indirect
 	go.opentelemetry.io/otel/metric v1.22.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.0.0 // indirect
-	golang.org/x/crypto v0.18.0 // indirect
-	golang.org/x/oauth2 v0.13.0 // indirect
-	golang.org/x/sys v0.16.0 // indirect
-	golang.org/x/term v0.16.0 // indirect
+	golang.org/x/crypto v0.21.0 // indirect
+	golang.org/x/sys v0.18.0 // indirect
+	golang.org/x/term v0.18.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
