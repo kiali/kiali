@@ -38,7 +38,6 @@ import (
 	_ "go.uber.org/automaxprocs"
 
 	"github.com/kiali/kiali/business"
-	"github.com/kiali/kiali/business/authentication"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/cache"
@@ -105,8 +104,6 @@ func main() {
 	status.Put(status.CoreCommitHash, commitHash)
 	status.Put(status.ContainerVersion, determineContainerVersion(version))
 
-	authentication.InitializeAuthenticationController(cfg.Auth.Strategy)
-
 	// prepare our internal metrics so Prometheus can scrape them
 	internalmetrics.RegisterInternalMetrics()
 
@@ -123,7 +120,7 @@ func main() {
 	}
 	defer cache.Stop()
 
-	namespaceService := business.NewNamespaceService(clientFactory.GetSAClients(), clientFactory.GetSAClients(), cache, *cfg)
+	namespaceService := business.NewNamespaceService(clientFactory.GetSAClients(), clientFactory.GetSAClients(), cache, cfg)
 	meshService := business.NewMeshService(clientFactory.GetSAClients(), cache, namespaceService, *cfg)
 	cpm := business.NewControlPlaneMonitor(cache, clientFactory, *cfg, &meshService)
 

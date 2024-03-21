@@ -37,11 +37,7 @@ type openshiftSessionPayload struct {
 // replace an existing Kiali session. So, it is assumed that the 3rd-party
 // has its own persistence system (similarly to how 'header' auth works).
 type openshiftAuthController struct {
-	// businessInstantiator is a function that returns an already initialized
-	// business layer. Normally, it should be set to the business.Get function.
-	// For tests, it can be set to something else that returns a compatible API.
-	businessInstantiator func(authInfo *api.AuthInfo) (*business.Layer, error)
-
+	openshiftOAuth *business.OpenshiftOAuthService
 	// SessionStore persists the session between HTTP requests.
 	SessionStore SessionPersistor
 }
@@ -49,14 +45,10 @@ type openshiftAuthController struct {
 // NewOpenshiftAuthController initializes a new controller for handling OpenShift authentication, with the
 // given persistor and the given businessInstantiator. The businessInstantiator can be nil and
 // the initialized contoller will use the business.Get function.
-func NewOpenshiftAuthController(persistor SessionPersistor, businessInstantiator func(authInfo *api.AuthInfo) (*business.Layer, error)) *openshiftAuthController {
-	if businessInstantiator == nil {
-		businessInstantiator = business.Get
-	}
-
+func NewOpenshiftAuthController(persistor SessionPersistor, openshiftOAuth *business.OpenshiftOAuthService) *openshiftAuthController {
 	return &openshiftAuthController{
-		businessInstantiator: businessInstantiator,
-		SessionStore:         persistor,
+		openshiftOAuth: openshiftOAuth,
+		SessionStore:   persistor,
 	}
 }
 
@@ -66,7 +58,6 @@ func NewOpenshiftAuthController(persistor SessionPersistor, businessInstantiator
 // when using OpenShift, privileges are not checked here.
 func (o openshiftAuthController) Authenticate(r *http.Request, w http.ResponseWriter) (*UserSessionData, error) {
 	err := r.ParseForm()
-
 	if err != nil {
 		return nil, fmt.Errorf("error parsing form info: %w", err)
 	}
@@ -83,12 +74,8 @@ func (o openshiftAuthController) Authenticate(r *http.Request, w http.ResponseWr
 	}
 
 	expiresOn := time.Now().Add(time.Second * time.Duration(expiresInNumber))
-	bs, err := o.businessInstantiator(&api.AuthInfo{Token: ""})
-	if err != nil {
-		return nil, fmt.Errorf("error retrieving the OAuth package (getting business layer): %w", err)
-	}
 
-	user, err := bs.OpenshiftOAuth.GetUserInfo(token)
+	user, err := o.openshiftOAuth.GetUserInfo(token)
 	if err != nil {
 		o.SessionStore.TerminateSession(r, w)
 		return nil, &AuthenticationFailureError{
@@ -148,13 +135,7 @@ func (o openshiftAuthController) ValidateSession(r *http.Request, w http.Respons
 		expires = sData.ExpiresOn
 	}
 
-	bs, err := o.businessInstantiator(&api.AuthInfo{Token: token})
-	if err != nil {
-		log.Warningf("Could not get the business layer!: %v", err)
-		return nil, fmt.Errorf("could not get the business layer: %w", err)
-	}
-
-	user, err := bs.OpenshiftOAuth.GetUserInfo(token)
+	user, err := o.openshiftOAuth.GetUserInfo(token)
 	if err == nil {
 		// Internal header used to propagate the subject of the request for audit purposes
 		r.Header.Add("Kiali-User", user.Metadata.Name)
@@ -198,15 +179,7 @@ func (o openshiftAuthController) TerminateSession(r *http.Request, w http.Respon
 		}
 	}
 
-	bs, err := o.businessInstantiator(&api.AuthInfo{Token: sPayload.Token})
-	if err != nil {
-		return TerminateSessionError{
-			Message:    fmt.Sprintf("Could not get the business layer: %v", err),
-			HttpStatus: http.StatusInternalServerError,
-		}
-	}
-
-	err = bs.OpenshiftOAuth.Logout(sPayload.Token)
+	err = o.openshiftOAuth.Logout(sPayload.Token)
 	if err != nil {
 		return TerminateSessionError{
 			Message:    fmt.Sprintf("Could not log out of OpenShift: %v", err),

@@ -13,12 +13,14 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
 )
 
 func TestDrawPathProperly(t *testing.T) {
 	conf := new(config.Config)
-	router := NewRouter(conf, nil, nil, nil, nil, nil)
+	mockClientFactory := kubetest.NewK8SClientFactoryMock(kubetest.NewFakeK8sClient())
+	router := NewRouter(conf, nil, mockClientFactory, nil, nil, nil)
 	testRoute(router, "Root", "GET", t)
 }
 
@@ -43,7 +45,8 @@ func TestWebRootRedirect(t *testing.T) {
 	conf := new(config.Config)
 	conf.Server.WebRoot = "/test"
 
-	router := NewRouter(conf, nil, nil, nil, nil, nil)
+	mockClientFactory := kubetest.NewK8SClientFactoryMock(kubetest.NewFakeK8sClient())
+	router := NewRouter(conf, nil, mockClientFactory, nil, nil, nil)
 	ts := httptest.NewServer(router)
 	defer ts.Close()
 
@@ -65,7 +68,8 @@ func TestWebRootRedirect(t *testing.T) {
 func TestSimpleRoute(t *testing.T) {
 	conf := new(config.Config)
 
-	router := NewRouter(conf, nil, nil, nil, nil, nil)
+	mockClientFactory := kubetest.NewK8SClientFactoryMock(kubetest.NewFakeK8sClient())
+	router := NewRouter(conf, nil, mockClientFactory, nil, nil, nil)
 	ts := httptest.NewServer(router)
 	defer ts.Close()
 
@@ -83,7 +87,8 @@ func TestProfilerRoute(t *testing.T) {
 	conf := new(config.Config)
 	conf.Server.Profiler.Enabled = true
 
-	router := NewRouter(conf, nil, nil, nil, nil, nil)
+	mockClientFactory := kubetest.NewK8SClientFactoryMock(kubetest.NewFakeK8sClient())
+	router := NewRouter(conf, nil, mockClientFactory, nil, nil, nil)
 	ts := httptest.NewServer(router)
 	defer ts.Close()
 
@@ -114,7 +119,8 @@ func TestDisabledProfilerRoute(t *testing.T) {
 	conf := new(config.Config)
 	conf.Server.Profiler.Enabled = false
 
-	router := NewRouter(conf, nil, nil, nil, nil, nil)
+	mockClientFactory := kubetest.NewK8SClientFactoryMock(kubetest.NewFakeK8sClient())
+	router := NewRouter(conf, nil, mockClientFactory, nil, nil, nil)
 	ts := httptest.NewServer(router)
 	defer ts.Close()
 
@@ -150,7 +156,8 @@ func TestRedirectWithSetWebRootKeepsParams(t *testing.T) {
 	conf := new(config.Config)
 	conf.Server.WebRoot = "/test"
 
-	router := NewRouter(conf, nil, nil, nil, nil, nil)
+	mockClientFactory := kubetest.NewK8SClientFactoryMock(kubetest.NewFakeK8sClient())
+	router := NewRouter(conf, nil, mockClientFactory, nil, nil, nil)
 	ts := httptest.NewServer(router)
 	defer ts.Close()
 

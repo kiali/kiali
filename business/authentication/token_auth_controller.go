@@ -12,6 +12,8 @@ import (
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/util"
 )
@@ -23,11 +25,9 @@ import (
 // be any kind of token that can be passed using HTTP Bearer authentication
 // in requests to the Kubernetes API.
 type tokenAuthController struct {
-	// businessInstantiator is a function that returns an already initialized
-	// business layer. Normally, it should be set to the business.Get function.
-	// For tests, it can be set to something else that returns a compatible API.
-	businessInstantiator func(authInfo *api.AuthInfo) (*business.Layer, error)
-
+	conf          *config.Config
+	kialiCache    cache.KialiCache
+	clientFactory kubernetes.ClientFactory
 	// SessionStore persists the session between HTTP requests.
 	SessionStore SessionPersistor
 }
@@ -41,14 +41,12 @@ type tokenSessionPayload struct {
 // NewTokenAuthController initializes a new controller for handling token authentication, with the
 // given persistor and the given businessInstantiator. The businessInstantiator can be nil and
 // the initialized contoller will use the business.Get function.
-func NewTokenAuthController(persistor SessionPersistor, businessInstantiator func(authInfo *api.AuthInfo) (*business.Layer, error)) *tokenAuthController {
-	if businessInstantiator == nil {
-		businessInstantiator = business.Get
-	}
-
+func NewTokenAuthController(persistor SessionPersistor, clientFactory kubernetes.ClientFactory, kialiCache cache.KialiCache, conf *config.Config) *tokenAuthController {
 	return &tokenAuthController{
-		businessInstantiator: businessInstantiator,
-		SessionStore:         persistor,
+		clientFactory: clientFactory,
+		SessionStore:  persistor,
+		kialiCache:    kialiCache,
+		conf:          conf,
 	}
 }
 
@@ -73,15 +71,18 @@ func (c tokenAuthController) Authenticate(r *http.Request, w http.ResponseWriter
 		return nil, errors.New("token is empty")
 	}
 
+	// Need client factory to create a client for the namespace service
 	// Create a bs layer with the received token to check its validity.
-	bs, err := c.businessInstantiator(&api.AuthInfo{Token: token})
+	clients, err := c.clientFactory.GetClients(&api.AuthInfo{Token: token})
 	if err != nil {
-		return nil, fmt.Errorf("error instantiating the business layer: %w", err)
+		return nil, fmt.Errorf("could not get the clients: %w", err)
 	}
+
+	namespaceService := business.NewNamespaceService(clients, c.clientFactory.GetSAClients(), c.kialiCache, c.conf)
 
 	// Using the namespaces API to check if token is valid. In Kubernetes, the version API seems to allow
 	// anonymous access, so it's not feasible to use the version API for token verification.
-	nsList, err := bs.Namespace.GetNamespaces(r.Context())
+	nsList, err := namespaceService.GetNamespaces(r.Context())
 	if err != nil {
 		c.SessionStore.TerminateSession(r, w)
 		return nil, &AuthenticationFailureError{Reason: "token is not valid or is expired", Detail: err}
@@ -125,12 +126,13 @@ func (c tokenAuthController) ValidateSession(r *http.Request, w http.ResponseWri
 	}
 
 	// Check token validity.
-	bs, err := c.businessInstantiator(&api.AuthInfo{Token: sPayload.Token})
+	clients, err := c.clientFactory.GetClients(&api.AuthInfo{Token: sPayload.Token})
 	if err != nil {
-		return nil, fmt.Errorf("could not get the business layer: %w", err)
+		return nil, fmt.Errorf("could create user clients from token: %w", err)
 	}
 
-	_, err = bs.Namespace.GetNamespaces(r.Context())
+	namespaceService := business.NewNamespaceService(clients, c.clientFactory.GetSAClients(), c.kialiCache, c.conf)
+	_, err = namespaceService.GetNamespaces(r.Context())
 	if err != nil {
 		// The Kubernetes API rejected the token.
 		// Return no data (which means no active session).

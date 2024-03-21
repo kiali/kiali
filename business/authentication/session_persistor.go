@@ -35,6 +35,10 @@ const (
 	AESSessionChunksCookieName = config.TokenCookieName + "-chunks"
 )
 
+func NewCookieSessionPersistor(conf *config.Config) *cookieSessionPersistor {
+	return &cookieSessionPersistor{conf: conf}
+}
+
 // CookieSessionPersistor is a session storage based on browser cookies. Session
 // persistence is achieved by storing all session data in browser cookies. Only
 // client-side storage is used and no back-end storage is needed.
@@ -42,7 +46,9 @@ const (
 // is using multiple cookies. There is still a (browser dependant) limit on the
 // number of cookies that a website can set but we haven't heard of a user
 // facing problems because of reaching this limit.
-type CookieSessionPersistor struct{}
+type cookieSessionPersistor struct {
+	conf *config.Config
+}
 
 type sessionData struct {
 	Strategy  string    `json:"strategy"`
@@ -54,7 +60,7 @@ type sessionData struct {
 // For improved security, the data of the session is encrypted using the AES-GCM algorithm and
 // the encrypted data is what is sent in cookies. The strategy, expiresOn and payload arguments
 // are all required.
-func (p CookieSessionPersistor) CreateSession(r *http.Request, w http.ResponseWriter, strategy string, expiresOn time.Time, payload interface{}) error {
+func (p cookieSessionPersistor) CreateSession(r *http.Request, w http.ResponseWriter, strategy string, expiresOn time.Time, payload interface{}) error {
 	// Validate that there is a payload and a strategy. The strategy is required just in case Kiali is reconfigured with a
 	// different strategy and drop any stale session. The payload is required because it does not make sense to start a session
 	// if there is no data to persist.
@@ -93,7 +99,7 @@ func (p CookieSessionPersistor) CreateSession(r *http.Request, w http.ResponseWr
 	// The sDataJson string holds the session data that we want to persist.
 	// It's time to encrypt this data which will result in an illegible sequence of bytes which are then
 	// encoded to base64 get a string that is suitable to store in browser cookies.
-	block, err := aes.NewCipher([]byte(config.GetSigningKey()))
+	block, err := aes.NewCipher([]byte(getSigningKey(p.conf)))
 	if err != nil {
 		return fmt.Errorf("error when creating the session - failed to create cipher: %w", err)
 	}
@@ -116,8 +122,7 @@ func (p CookieSessionPersistor) CreateSession(r *http.Request, w http.ResponseWr
 
 	// If the resulting session data is large, it may not fit in one cookie. So, the resulting
 	// session data is broken in chunks and multiple cookies are used, as is needed.
-	conf := config.Get()
-	secureFlag := conf.IsServerHTTPS() || strings.HasPrefix(httputil.GuessKialiURL(r), "https:")
+	secureFlag := p.conf.IsServerHTTPS() || strings.HasPrefix(httputil.GuessKialiURL(p.conf, r), "https:")
 
 	sessionDataChunks := chunkString(base64SessionData, SessionCookieMaxSize)
 	for i, chunk := range sessionDataChunks {
@@ -140,7 +145,7 @@ func (p CookieSessionPersistor) CreateSession(r *http.Request, w http.ResponseWr
 			Expires:  expiresOn,
 			HttpOnly: true,
 			Secure:   secureFlag,
-			Path:     conf.Server.WebRoot,
+			Path:     p.conf.Server.WebRoot,
 			SameSite: http.SameSiteStrictMode,
 		}
 		http.SetCookie(w, &authCookie)
@@ -156,7 +161,7 @@ func (p CookieSessionPersistor) CreateSession(r *http.Request, w http.ResponseWr
 			Expires:  expiresOn,
 			HttpOnly: true,
 			Secure:   secureFlag,
-			Path:     conf.Server.WebRoot,
+			Path:     p.conf.Server.WebRoot,
 			SameSite: http.SameSiteStrictMode,
 		}
 		http.SetCookie(w, &chunksCookie)
@@ -170,7 +175,7 @@ func (p CookieSessionPersistor) CreateSession(r *http.Request, w http.ResponseWr
 // the session, validation of expiration time is performed and no data is returned assuming the session is stale.
 // Also, it is verified that the currently configured authentication strategy is the same as when the session was
 // created.
-func (p CookieSessionPersistor) ReadSession(r *http.Request, w http.ResponseWriter, payload interface{}) (*sessionData, error) {
+func (p cookieSessionPersistor) ReadSession(r *http.Request, w http.ResponseWriter, payload interface{}) (*sessionData, error) {
 	// This CookieSessionPersistor only deals with sessions using cookies holding encrypted data.
 	// Thus, presence for a cookie with the "-aes" suffix is checked and it's assumed no active session
 	// if such cookie is not found in the request.
@@ -237,7 +242,7 @@ func (p CookieSessionPersistor) ReadSession(r *http.Request, w http.ResponseWrit
 		}
 	}
 
-	block, err := aes.NewCipher([]byte(config.GetSigningKey()))
+	block, err := aes.NewCipher([]byte(getSigningKey(p.conf)))
 	if err != nil {
 		return nil, fmt.Errorf("error when restoring the session - failed to create the cipher: %w", err)
 	}
@@ -264,8 +269,8 @@ func (p CookieSessionPersistor) ReadSession(r *http.Request, w http.ResponseWrit
 
 	// Check that the currently configured strategy matches the strategy set in the session.
 	// This is to prevent taking a session as valid if somebody re-configured Kiali with a different auth strategy.
-	if sData.Strategy != config.Get().Auth.Strategy {
-		log.Tracef("Session is invalid because it was created with authentication strategy %s, but current authentication strategy is %s", sData.Strategy, config.Get().Auth.Strategy)
+	if sData.Strategy != p.conf.Auth.Strategy {
+		log.Tracef("Session is invalid because it was created with authentication strategy %s, but current authentication strategy is %s", sData.Strategy, p.conf.Auth.Strategy)
 		p.TerminateSession(r, w) // Kill the spurious session
 
 		return nil, nil
@@ -299,9 +304,8 @@ func (p CookieSessionPersistor) ReadSession(r *http.Request, w http.ResponseWrit
 // TerminateSession destroys any persisted data of a session created by the CreateSession function.
 // The session is terminated unconditionally (that is, there is no validation of the session), allowing
 // clearing any stale cookies/session.
-func (p CookieSessionPersistor) TerminateSession(r *http.Request, w http.ResponseWriter) {
-	conf := config.Get()
-	secureFlag := conf.IsServerHTTPS() || strings.HasPrefix(httputil.GuessKialiURL(r), "https:")
+func (p cookieSessionPersistor) TerminateSession(r *http.Request, w http.ResponseWriter) {
+	secureFlag := p.conf.IsServerHTTPS() || strings.HasPrefix(httputil.GuessKialiURL(p.conf, r), "https:")
 
 	var cookiesToDrop []string
 
@@ -334,7 +338,7 @@ func (p CookieSessionPersistor) TerminateSession(r *http.Request, w http.Respons
 				HttpOnly: true,
 				Secure:   secureFlag,
 				MaxAge:   -1,
-				Path:     conf.Server.WebRoot,
+				Path:     p.conf.Server.WebRoot,
 				SameSite: http.SameSiteStrictMode,
 			}
 			http.SetCookie(w, &tokenCookie)

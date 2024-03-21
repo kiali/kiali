@@ -50,8 +50,6 @@ func isOpenShiftResource(obj runtime.Object) bool {
 }
 
 // NewFakeK8sClient creates a new fake kubernetes client for testing purposes.
-// TODO: Pass in a config object to configure the fake client rather than relying on
-// the global config var to be set.
 func NewFakeK8sClient(objects ...runtime.Object) *FakeK8sClient {
 	// NOTE: The kube fake client object tracker guesses the resource name based on the Kind.
 	// For a plural resource, it will convert the kind to lowercase and add an "ies" to the end.

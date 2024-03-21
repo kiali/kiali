@@ -36,7 +36,7 @@ func TestSecureFlag(t *testing.T) {
 	}
 
 	rr := httptest.NewRecorder()
-	persistor := CookieSessionPersistor{}
+	persistor := NewCookieSessionPersistor(cfg)
 	expiresTime := time.Date(2021, 12, 1, 1, 0, 0, 0, time.UTC)
 	err := persistor.CreateSession(nil, rr, "test", expiresTime, payload)
 
@@ -67,7 +67,7 @@ func TestCreateSessionNoChunks(t *testing.T) {
 	}
 
 	rr := httptest.NewRecorder()
-	persistor := CookieSessionPersistor{}
+	persistor := NewCookieSessionPersistor(cfg)
 	expiresTime := time.Date(2021, 12, 1, 1, 0, 0, 0, time.UTC)
 	err := persistor.CreateSession(nil, rr, "test", expiresTime, payload)
 
@@ -116,7 +116,7 @@ func TestCreateSessionWithChunks(t *testing.T) {
 	}
 
 	rr := httptest.NewRecorder()
-	persistor := CookieSessionPersistor{}
+	persistor := NewCookieSessionPersistor(cfg)
 	expiresTime := time.Date(2021, 12, 1, 1, 0, 0, 0, time.UTC)
 	err := persistor.CreateSession(nil, rr, "test", expiresTime, payload)
 
@@ -142,7 +142,7 @@ func TestCreateSessionWithChunks(t *testing.T) {
 // creating a session if a nil payload is passed.
 func TestCreateSessionRejectsNilPayload(t *testing.T) {
 	rr := httptest.NewRecorder()
-	persistor := CookieSessionPersistor{}
+	persistor := NewCookieSessionPersistor(config.NewConfig())
 	expiresTime := time.Date(2021, 12, 1, 1, 0, 0, 0, time.UTC)
 	err := persistor.CreateSession(nil, rr, "test", expiresTime, nil)
 
@@ -160,7 +160,7 @@ func TestCreateSessionRejectsEmptyStrategy(t *testing.T) {
 	}
 
 	rr := httptest.NewRecorder()
-	persistor := CookieSessionPersistor{}
+	persistor := NewCookieSessionPersistor(config.NewConfig())
 	expiresTime := time.Date(2021, 12, 1, 1, 0, 0, 0, time.UTC)
 	err := persistor.CreateSession(nil, rr, "", expiresTime, payload)
 
@@ -181,7 +181,7 @@ func TestCreateSessionRejectsExpireTimeInThePast(t *testing.T) {
 	}
 
 	rr := httptest.NewRecorder()
-	persistor := CookieSessionPersistor{}
+	persistor := NewCookieSessionPersistor(config.NewConfig())
 	expiresTime := time.Date(2021, 12, 1, 0, 0, 0, 0, time.UTC)
 	err := persistor.CreateSession(nil, rr, "test", expiresTime, payload)
 
@@ -198,7 +198,7 @@ func TestReadSessionWithNoActiveSession(t *testing.T) {
 
 	var payload testSessionPayload
 	rr := httptest.NewRecorder()
-	persistor := CookieSessionPersistor{}
+	persistor := NewCookieSessionPersistor(config.NewConfig())
 	sData, err := persistor.ReadSession(request, rr, payload)
 
 	assert.Nil(t, sData)
@@ -221,7 +221,7 @@ func TestReadSessionWithSingleCookie(t *testing.T) {
 	}
 
 	rr := httptest.NewRecorder()
-	persistor := CookieSessionPersistor{}
+	persistor := NewCookieSessionPersistor(cfg)
 	expiresTime := time.Date(2021, 12, 1, 1, 0, 0, 0, time.UTC)
 	err := persistor.CreateSession(nil, rr, "test", expiresTime, payload)
 	assert.Nil(t, err)
@@ -264,7 +264,7 @@ func TestReadSessionWithTwoCookies(t *testing.T) {
 	}
 
 	rr := httptest.NewRecorder()
-	persistor := CookieSessionPersistor{}
+	persistor := NewCookieSessionPersistor(cfg)
 	expiresTime := time.Date(2021, 12, 1, 1, 0, 0, 0, time.UTC)
 	err := persistor.CreateSession(nil, rr, "test", expiresTime, payload)
 	assert.Nil(t, err)
@@ -306,7 +306,7 @@ func TestReadSessionRejectsExpired(t *testing.T) {
 	}
 
 	rr := httptest.NewRecorder()
-	persistor := CookieSessionPersistor{}
+	persistor := NewCookieSessionPersistor(cfg)
 	expiresTime := time.Date(2021, 12, 1, 1, 0, 0, 0, time.UTC)
 	err := persistor.CreateSession(nil, rr, "test", expiresTime, payload)
 	assert.Nil(t, err)
@@ -347,7 +347,7 @@ func TestReadSessionRejectsDifferentStrategy(t *testing.T) {
 	}
 
 	rr := httptest.NewRecorder()
-	persistor := CookieSessionPersistor{}
+	persistor := NewCookieSessionPersistor(cfg)
 	expiresTime := time.Date(2021, 12, 1, 1, 0, 0, 0, time.UTC)
 	err := persistor.CreateSession(nil, rr, "test", expiresTime, payload)
 	assert.Nil(t, err)
@@ -386,7 +386,7 @@ func TestReadSessionRejectsDifferentSigningKey(t *testing.T) {
 	}
 
 	rr := httptest.NewRecorder()
-	persistor := CookieSessionPersistor{}
+	persistor := NewCookieSessionPersistor(cfg)
 	expiresTime := time.Date(2021, 12, 1, 1, 0, 0, 0, time.UTC)
 	err := persistor.CreateSession(nil, rr, "test", expiresTime, payload)
 	assert.Nil(t, err)
@@ -431,7 +431,7 @@ func TestTerminateSessionClearsNonAesSession(t *testing.T) {
 	}
 	request.AddCookie(&cookie)
 
-	persistor := CookieSessionPersistor{}
+	persistor := NewCookieSessionPersistor(c)
 
 	rr := httptest.NewRecorder()
 	persistor.TerminateSession(request, rr)
@@ -462,7 +462,7 @@ func TestTerminateSessionClearsAesSession(t *testing.T) {
 	}
 	request.AddCookie(&cookie)
 
-	persistor := CookieSessionPersistor{}
+	persistor := NewCookieSessionPersistor(c)
 
 	rr := httptest.NewRecorder()
 	persistor.TerminateSession(request, rr)
@@ -501,7 +501,7 @@ func TestTerminateSessionClearsAesSessionWithOneChunk(t *testing.T) {
 	}
 	request.AddCookie(&cookie)
 
-	persistor := CookieSessionPersistor{}
+	persistor := NewCookieSessionPersistor(c)
 
 	rr := httptest.NewRecorder()
 	persistor.TerminateSession(request, rr)
@@ -550,7 +550,7 @@ func TestTerminateSessionClearsAesSessionWithTwoChunks(t *testing.T) {
 	}
 	request.AddCookie(&cookie)
 
-	persistor := CookieSessionPersistor{}
+	persistor := NewCookieSessionPersistor(c)
 
 	rr := httptest.NewRecorder()
 	persistor.TerminateSession(request, rr)

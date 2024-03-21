@@ -28,7 +28,6 @@ type Layer struct {
 	RegistryStatus RegistryStatusService
 	Svc            SvcService
 	TLS            TLSService
-	TokenReview    TokenReviewService
 	Validations    IstioValidationsService
 	Workload       WorkloadService
 }
@@ -82,7 +81,7 @@ func SetWithBackends(cf kubernetes.ClientFactory, prom prometheus.ClientInterfac
 // Note that the client passed here should *not* be the Kiali ServiceAccount client.
 // It should be the user client based on the logged in user's token.
 func NewWithBackends(userClients map[string]kubernetes.ClientInterface, kialiSAClients map[string]kubernetes.ClientInterface, prom prometheus.ClientInterface, traceClient tracing.ClientInterface) *Layer {
-	return newLayer(userClients, kialiSAClients, prom, traceClient, kialiCache, poller, config.Get())
+	return newLayer(userClients, kialiSAClients, prom, traceClient, kialiCache, config.Get())
 }
 
 func newLayer(
@@ -91,7 +90,6 @@ func newLayer(
 	prom prometheus.ClientInterface,
 	traceClient tracing.ClientInterface,
 	cache cache.KialiCache,
-	cpm ControlPlaneMonitor,
 	conf *config.Config,
 ) *Layer {
 	temporaryLayer := &Layer{}
@@ -104,16 +102,15 @@ func newLayer(
 	temporaryLayer.IstioConfig = IstioConfigService{config: *conf, userClients: userClients, kialiCache: cache, businessLayer: temporaryLayer, controlPlaneMonitor: poller}
 	temporaryLayer.IstioStatus = NewIstioStatusService(userClients, temporaryLayer, poller)
 	temporaryLayer.IstioCerts = IstioCertsService{k8s: userClients[homeClusterName], businessLayer: temporaryLayer}
-	temporaryLayer.Namespace = NewNamespaceService(userClients, kialiSAClients, cache, *conf)
+	temporaryLayer.Namespace = NewNamespaceService(userClients, kialiSAClients, cache, conf)
 	temporaryLayer.Mesh = NewMeshService(kialiSAClients, cache, temporaryLayer.Namespace, *conf)
-	temporaryLayer.OpenshiftOAuth = OpenshiftOAuthService{k8s: userClients[homeClusterName], kialiSAClient: kialiSAClients[homeClusterName]}
+	temporaryLayer.OpenshiftOAuth = OpenshiftOAuthService{kialiSAClient: kialiSAClients[homeClusterName]}
 	temporaryLayer.ProxyStatus = ProxyStatusService{kialiSAClients: kialiSAClients, kialiCache: cache, businessLayer: temporaryLayer}
 	// Out of order because it relies on ProxyStatus
 	temporaryLayer.ProxyLogging = ProxyLoggingService{userClients: userClients, proxyStatus: &temporaryLayer.ProxyStatus}
 	temporaryLayer.RegistryStatus = RegistryStatusService{kialiCache: cache}
 	temporaryLayer.TLS = TLSService{userClients: userClients, kialiCache: cache, businessLayer: temporaryLayer}
 	temporaryLayer.Svc = SvcService{config: *conf, kialiCache: cache, businessLayer: temporaryLayer, prom: prom, userClients: userClients}
-	temporaryLayer.TokenReview = NewTokenReview(userClients[homeClusterName])
 	temporaryLayer.Validations = IstioValidationsService{userClients: userClients, businessLayer: temporaryLayer}
 	temporaryLayer.Workload = *NewWorkloadService(userClients, prom, cache, temporaryLayer, conf)
 
@@ -131,5 +128,5 @@ func NewLayer(conf *config.Config, cache cache.KialiCache, cf kubernetes.ClientF
 	}
 
 	kialiSAClients := cf.GetSAClients()
-	return newLayer(userClients, kialiSAClients, prom, traceClient, cache, cpm, conf), nil
+	return newLayer(userClients, kialiSAClients, prom, traceClient, cache, conf), nil
 }

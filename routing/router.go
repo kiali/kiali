@@ -75,9 +75,24 @@ func NewRouter(conf *config.Config, kialiCache cache.KialiCache, clientFactory k
 
 	appRouter = appRouter.StrictSlash(true)
 
+	persistor := authentication.NewCookieSessionPersistor(conf)
+	strategy := conf.Auth.Strategy
+
+	var authController authentication.AuthController
+	if strategy == config.AuthStrategyToken {
+		authController = authentication.NewTokenAuthController(persistor, clientFactory, kialiCache, conf)
+	} else if strategy == config.AuthStrategyOpenId {
+		authController = authentication.NewOpenIdAuthController(persistor, kialiCache, clientFactory, conf)
+	} else if strategy == config.AuthStrategyOpenshift {
+		openshiftOAuthService := business.NewOpenshiftOAuthService(conf, clientFactory.GetSAHomeClusterClient())
+		authController = authentication.NewOpenshiftAuthController(persistor, &openshiftOAuthService)
+	} else if strategy == config.AuthStrategyHeader {
+		authController = authentication.NewHeaderAuthController(persistor, clientFactory.GetSAHomeClusterClient())
+	}
+
 	// Build our API server routes and install them.
-	apiRoutes := NewRoutes(conf, kialiCache, clientFactory, prom, traceClientLoader, cpm)
-	authenticationHandler, _ := handlers.NewAuthenticationHandler()
+	apiRoutes := NewRoutes(conf, kialiCache, clientFactory, prom, traceClientLoader, cpm, authController)
+	authenticationHandler := handlers.NewAuthenticationHandler(*conf, authController, clientFactory.GetSAHomeClusterClient())
 
 	allRoutes := apiRoutes.Routes
 
@@ -148,7 +163,7 @@ func NewRouter(conf *config.Config, kialiCache cache.KialiCache, clientFactory k
 			Handler(handlerFunction)
 	}
 
-	if authController := authentication.GetAuthController(); authController != nil {
+	if authController != nil {
 		if ac, ok := authController.(*authentication.OpenIdAuthController); ok {
 			ac.PostRoutes(appRouter)
 		}
@@ -160,7 +175,7 @@ func NewRouter(conf *config.Config, kialiCache cache.KialiCache, clientFactory k
 		serveIndexFile(w)
 	})
 
-	if authController := authentication.GetAuthController(); authController != nil {
+	if authController != nil {
 		if ac, ok := authController.(*authentication.OpenIdAuthController); ok {
 			authCallback := ac.GetAuthCallbackHandler(http.HandlerFunc(fileServerHandler))
 			rootRouter.Methods("GET").Path(webRootWithSlash).Handler(authCallback)

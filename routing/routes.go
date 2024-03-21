@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/kiali/kiali/business"
+	"github.com/kiali/kiali/business/authentication"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/handlers"
 	"github.com/kiali/kiali/kubernetes"
@@ -28,7 +29,15 @@ type Routes struct {
 }
 
 // NewRoutes creates and returns all the API routes
-func NewRoutes(conf *config.Config, kialiCache cache.KialiCache, clientFactory kubernetes.ClientFactory, prom prometheus.ClientInterface, traceClientLoader func() tracing.ClientInterface, cpm business.ControlPlaneMonitor) (r *Routes) {
+func NewRoutes(
+	conf *config.Config,
+	kialiCache cache.KialiCache,
+	clientFactory kubernetes.ClientFactory,
+	prom prometheus.ClientInterface,
+	traceClientLoader func() tracing.ClientInterface,
+	cpm business.ControlPlaneMonitor,
+	authController authentication.AuthController,
+) (r *Routes) {
 	r = new(Routes)
 
 	r.Routes = []Route{
@@ -87,7 +96,7 @@ func NewRoutes(conf *config.Config, kialiCache cache.KialiCache, clientFactory k
 			"Authenticate",
 			"GET",
 			"/api/authenticate",
-			handlers.Authenticate,
+			handlers.Authenticate(conf, authController),
 			false,
 		},
 		// swagger:route POST /authenticate auth openshiftCheckToken
@@ -106,7 +115,7 @@ func NewRoutes(conf *config.Config, kialiCache cache.KialiCache, clientFactory k
 			"OpenshiftCheckToken",
 			"POST",
 			"/api/authenticate",
-			handlers.Authenticate,
+			handlers.Authenticate(conf, authController),
 			false,
 		},
 		// swagger:route GET /logout auth logout
@@ -121,7 +130,7 @@ func NewRoutes(conf *config.Config, kialiCache cache.KialiCache, clientFactory k
 			"Logout",
 			"GET",
 			"/api/logout",
-			handlers.Logout,
+			handlers.Logout(conf, authController),
 			false,
 		},
 		// swagger:route GET /auth/info auth authenticationInfo
@@ -144,7 +153,7 @@ func NewRoutes(conf *config.Config, kialiCache cache.KialiCache, clientFactory k
 			"AuthenticationInfo",
 			"GET",
 			"/api/auth/info",
-			handlers.AuthenticationInfo,
+			handlers.AuthenticationInfo(conf, authController),
 			false,
 		},
 		// swagger:route GET /status status getStatus

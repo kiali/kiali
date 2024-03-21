@@ -180,9 +180,7 @@ func GetTLSConfig(auth *config.Auth) (*tls.Config, error) {
 	return nil, nil
 }
 
-func GuessKialiURL(r *http.Request) string {
-	cfg := config.Get()
-
+func GuessKialiURL(cfg *config.Config, r *http.Request) string {
 	// Take default values from configuration
 	schema := cfg.Server.WebSchema
 	port := strconv.Itoa(cfg.Server.Port)

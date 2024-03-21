@@ -20,9 +20,16 @@ import (
 	"github.com/kiali/kiali/util/httputil"
 )
 
+func NewOpenshiftOAuthService(conf *config.Config, kialiSAClient kubernetes.ClientInterface) OpenshiftOAuthService {
+	return OpenshiftOAuthService{
+		conf:          conf,
+		kialiSAClient: kialiSAClient,
+	}
+}
+
 type OpenshiftOAuthService struct {
-	k8s kubernetes.ClientInterface
 	// TODO: Support multi-cluster
+	conf          *config.Config
 	kialiSAClient kubernetes.ClientInterface
 }
 
@@ -66,16 +73,16 @@ var defaultAuthRequestTimeout = 0 * time.Second // will be determined by config 
 var kialiNamespace string
 
 func (in *OpenshiftOAuthService) Metadata(r *http.Request) (metadata *OAuthMetadata, err error) {
-	config := config.Get().Auth.OpenShift
+	config := in.conf.Auth.OpenShift
 
-	redirectURL := httputil.GuessKialiURL(r)
+	redirectURL := httputil.GuessKialiURL(in.conf, r)
 
 	server, err := getOAuthAuthorizationServer(config)
 	if err != nil {
 		return nil, err
 	}
 
-	version, err := in.k8s.GetServerVersion()
+	version, err := in.kialiSAClient.GetServerVersion()
 	if err != nil {
 		return nil, err
 	}
@@ -110,7 +117,7 @@ func (in *OpenshiftOAuthService) Metadata(r *http.Request) (metadata *OAuthMetad
 func getOAuthAuthorizationServer(config config.OpenShiftConfig) (*OAuthAuthorizationServer, error) {
 	var server *OAuthAuthorizationServer
 
-	response, err := request("GET", config.ServerPrefix, ".well-known/oauth-authorization-server", nil, config.UseSystemCA, config.CustomCA)
+	response, err := request("GET", config.ServerPrefix, ".well-known/oauth-authorization-server", nil, config.UseSystemCA, config.CustomCA, config.AuthTimeout)
 	if err != nil {
 		log.Error(err)
 		message := fmt.Errorf("could not get OAuthAuthorizationServer: %v", err)
@@ -118,7 +125,6 @@ func getOAuthAuthorizationServer(config config.OpenShiftConfig) (*OAuthAuthoriza
 	}
 
 	err = json.Unmarshal(response, &server)
-
 	if err != nil {
 		log.Error(err)
 		message := fmt.Errorf("could not parse OAuthAuthorizationServer: %v", err)
@@ -130,16 +136,15 @@ func getOAuthAuthorizationServer(config config.OpenShiftConfig) (*OAuthAuthoriza
 
 func (in *OpenshiftOAuthService) GetUserInfo(token string) (*OAuthUser, error) {
 	var user *OAuthUser
-	config := config.Get().Auth.OpenShift
+	config := in.conf.Auth.OpenShift
 
-	response, err := request("GET", config.ServerPrefix, "apis/user.openshift.io/v1/users/~", &token, config.UseSystemCA, config.CustomCA)
+	response, err := request("GET", config.ServerPrefix, "apis/user.openshift.io/v1/users/~", &token, config.UseSystemCA, config.CustomCA, config.AuthTimeout)
 	if err != nil {
 		log.Error(err)
 		return nil, fmt.Errorf("could not get user info from Openshift: %v", err)
 	}
 
 	err = json.Unmarshal(response, &user)
-
 	if err != nil {
 		log.Error(err)
 		return nil, fmt.Errorf("could not parse user info from Openshift: %v", err)
@@ -160,7 +165,7 @@ func getKialiNamespace() (string, error) {
 }
 
 func (in *OpenshiftOAuthService) Logout(token string) error {
-	config := config.Get().Auth.OpenShift
+	config := in.conf.Auth.OpenShift
 
 	// https://github.com/kiali/kiali/issues/3595
 	// OpenShift 4.6+ changed the format of the OAuthAccessToken.
@@ -177,7 +182,7 @@ func (in *OpenshiftOAuthService) Logout(token string) error {
 
 	// Delete the access token from the API server using OpenShift 4.6+ access token name
 	adminToken := in.kialiSAClient.GetToken()
-	_, err := request("DELETE", config.ServerPrefix, fmt.Sprintf("apis/oauth.openshift.io/v1/oauthaccesstokens/%v", oauthTokenName), &adminToken, config.UseSystemCA, config.CustomCA)
+	_, err := request("DELETE", config.ServerPrefix, fmt.Sprintf("apis/oauth.openshift.io/v1/oauthaccesstokens/%v", oauthTokenName), &adminToken, config.UseSystemCA, config.CustomCA, config.AuthTimeout)
 	if err != nil {
 		return err
 	}
@@ -185,10 +190,9 @@ func (in *OpenshiftOAuthService) Logout(token string) error {
 	return nil
 }
 
-func request(method string, serverPrefix string, url string, auth *string, useSystemCA bool, customCA string) ([]byte, error) {
+func request(method string, serverPrefix string, url string, auth *string, useSystemCA bool, customCA string, timeoutInSeconds int) ([]byte, error) {
 	if defaultAuthRequestTimeout == (0 * time.Second) {
-		config := config.Get().Auth.OpenShift
-		defaultAuthRequestTimeout = time.Duration(config.AuthTimeout) * time.Second
+		defaultAuthRequestTimeout = time.Duration(timeoutInSeconds) * time.Second
 		log.Tracef("OpenShift auth timeout is set to [%v]", defaultAuthRequestTimeout)
 	}
 	return requestWithTimeout(method, serverPrefix, url, auth, time.Duration(defaultAuthRequestTimeout), useSystemCA, customCA)
