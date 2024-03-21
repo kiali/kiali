@@ -97,7 +97,7 @@ You must embed the React class with the `withTranslation` function (similar to r
 export const Menu = withTranslation(I18N_NAMESPACE)(MenuComponent);
 ----
 
-Besides, `WithTranslation` props must be added to React class properties to include translation `t` function (like Redux properties)
+Also, `WithTranslation` props must be added to the React class properties in order to include the `t` translation function (like Redux properties)
 
 [source, typescript]
 ----
