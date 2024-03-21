@@ -216,7 +216,7 @@ labelsInfo = this.props.t('{{count}} label', {
 
 **Additional i18n notes:**
 
-- Add always namespace variable `I18N_NAMESPACE` to any React component translation configuration (`withTranslation` or `useTranslation`).
+- Always add namespace variable `I18N_NAMESPACE` to any React component translation configuration (`withTranslation` or `useTranslation`).
 [source, typescript]
 ----
 export const Menu = withTranslation(I18N_NAMESPACE)(MenuComponent);
