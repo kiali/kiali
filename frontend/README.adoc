@@ -239,7 +239,7 @@ const OverviewToolbarI18n = hoistNonReactStatics(
 );
 ----
 
-- If you need the translated class component includes React reference to access DOM nodes, use `{ withRef: true }` option:
+- If you need the translated class component to include a React reference to access DOM nodes, use `{ withRef: true }` option:
 [source, typescript]
 ----
 export const StatefulFilters = withTranslation(I18N_NAMESPACE, { withRef: true })(StatefulFiltersComponent);
