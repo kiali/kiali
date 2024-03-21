@@ -155,7 +155,7 @@ const Example: React.FC<Props> = (props: Props) => {
 
 - **External function:**
 
-External functions declared outside of React components cannot use `t` function directly. Instead it must be passed as input parameter (`TFunction` type must be imported from `react-i18next` library, it will fail if imported from `i18next` library):
+External functions declared outside of React components cannot use the `t` function directly. Instead, it must be passed as an input parameter (`TFunction` type must be imported from the `react-i18next` library, it will fail if imported from `i18next` library):
 
 [source, typescript]
 ----
