@@ -84,7 +84,52 @@ Run `yarn start` and try it!
 
 === Internationalization (i18n)
 
-Kiali supports internationalization with the `react-i18next` library. String literals to be translated are added automatically to a locale file (stored in `public/locales/<language>/translation.json`), during the development phase, with `i18n-parser` (executed along with `yarn start` or `yarn build` command). At runtime, the i18n library will use these locale files to perform translation to a specific language. The way to adapt a React component to the i18n framework depends on its type:
+Kiali supports internationalization with the `react-i18next` library. String literals to be translated are added automatically to a locale file (stored in `public/locales/<language>/translation.json`), during the development phase, with `i18n-parser` (executed along with `yarn start` or `yarn build` command). At runtime, the i18n library will use these locale files to perform translation to a specific language. 
+
+**Adding a new language**
+
+These are the steps to add a new language to Kiali:
+
+1. Add a new language entry in the link:https://github.com/kiali/kiali/blob/master/frontend/src/types/Common.ts[`common type`] enum `Language`.
+
+[source, typescript]
+----
+export const enum Language {
+  CHINESE = 'zh',
+  ENGLISH = 'en'
+  // Add new language entry here
+}
+----
+
+2. Add a new select entry for the new language in the component link:https://github.com/kiali/kiali/blob/master/frontend/src/components/Nav/Masthead/LanguageSwitch.tsx[`LanguageSwitch.tsx`]
+
+[source, typescript]
+----
+<DropdownItem key="Chinese" onClick={() => switchLanguage(Language.CHINESE)}>
+  <span>中文</span>
+  {language === Language.CHINESE && <KialiIcon.Check className={checkStyle} />}
+</DropdownItem>
+----
+
+If possible, include a new language test case scenario in the language selector unit test `LanguageSwitch.test.tsx`.
+
+3. Add the new language in the link:https://github.com/kiali/kiali/blob/master/frontend/i18next-parser.config.ts[`i18next-parser.config.ts`] file so that the `i18n-parser` generates the locale file for the new language.
+
+[source, typescript]
+----
+locales: ['en', 'zh', /* add new language code here */],
+----
+
+3. Execute `yarn build` to generate the new locale file.
+4. Modify the generated locale file as outlined in the next section.
+
+**Modify an existing language translation**
+
+The locale files are stored in `public/locales/<language>/translation.json`. If you find a wrong translation or an English statement (default value when the label is generated), simply modify that file to include the correct language translation.
+
+**Add i18n support to a React component**
+
+The way to adapt a React component to the i18n framework depends on its type:
 
 - **React class:**
 

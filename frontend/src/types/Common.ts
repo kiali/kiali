@@ -19,15 +19,15 @@ export enum HTTP_VERBS {
 export const PF_THEME_DARK = 'pf-v5-theme-dark';
 
 export const enum Theme {
-  LIGHT = 'Light',
-  DARK = 'Dark'
+  DARK = 'Dark',
+  LIGHT = 'Light'
 }
 
 export const I18N_NAMESPACE = process.env.I18N_NAMESPACE;
 
 export const enum Language {
-  ENGLISH = 'en',
-  CHINESE = 'zh'
+  CHINESE = 'zh',
+  ENGLISH = 'en'
 }
 
 export type TargetKind = 'app' | 'service' | 'workload';
