@@ -8,7 +8,8 @@ import {
   TargetPanelCommonProps,
   shouldRefreshData,
   targetPanel,
-  targetPanelHR,
+  targetPanelBody,
+  targetPanelBorder,
   targetPanelHeading,
   targetPanelWidth
 } from './TargetPanelCommon';
@@ -21,6 +22,7 @@ import * as FilterHelper from '../../../components/FilterList/FilterHelper';
 import { ApiError } from 'types/Api';
 import { KialiIcon } from 'config/KialiIcon';
 import { Tooltip } from '@patternfly/react-core';
+import { classes } from 'typestyle';
 
 type TargetPanelClusterState = {
   clusterNode?: Node<NodeModel, any>;
@@ -85,9 +87,29 @@ export class TargetPanelCluster extends React.Component<TargetPanelCommonProps, 
   }
 
   render() {
+    const cluster = this.meshCluster;
     return (
-      <div className={targetPanel} style={TargetPanelCluster.panelStyle}>
-        <div className={targetPanelHeading}>{this.renderCluster(this.meshCluster)}</div>
+      <div id="target-panel-cluster" className={classes(targetPanelBorder, targetPanel)}>
+        <div id="target-panel-cluster-heading" className={targetPanelHeading}>
+          {cluster.isKialiHome && (
+            <Tooltip content="Kiali home cluster">
+              <KialiIcon.Star />
+            </Tooltip>
+          )}
+          <PFBadge badge={PFBadges.Cluster} size="sm" style={{ marginLeft: '0.225rem', marginBottom: '0.125rem' }} />
+          {cluster.name}
+        </div>
+        <div className={targetPanelBody}>
+          {this.renderKialiLinks(cluster.kialiInstances)}
+          {`Network: `}
+          {cluster.network ? cluster.network : 'n/a'}
+          <br />
+          {`API Endpoint: `}
+          {cluster.apiEndpoint ? cluster.apiEndpoint : 'n/a'}
+          <br />
+          {`Secret Name: `}
+          {cluster.secretName ? cluster.secretName : 'n/a'}
+        </div>
       </div>
     );
   }
@@ -116,32 +138,6 @@ export class TargetPanelCluster extends React.Component<TargetPanelCommonProps, 
   private handleApiError(message: string, error: ApiError): void {
     FilterHelper.handleError(`${message}: ${API.getErrorString(error)}`);
   }
-
-  private renderCluster = (meshCluster: MeshCluster): React.ReactNode => {
-    return (
-      <React.Fragment key={meshCluster.name}>
-        <span>
-          {meshCluster.isKialiHome && (
-            <Tooltip content="Kiali home cluster">
-              <KialiIcon.Star />
-            </Tooltip>
-          )}
-          <PFBadge badge={PFBadges.Cluster} size="sm" style={{ marginLeft: '0.225rem', marginBottom: '0.125rem' }} />
-          {meshCluster.name}
-        </span>
-        {targetPanelHR()}
-        {this.renderKialiLinks(meshCluster.kialiInstances)}
-        {`Network: `}
-        {meshCluster.network ? meshCluster.network : 'n/a'}
-        <br />
-        {`API Endpoint: `}
-        {meshCluster.apiEndpoint ? meshCluster.apiEndpoint : 'n/a'}
-        <br />
-        {`Secret Name: `}
-        {meshCluster.secretName ? meshCluster.secretName : 'n/a'}
-      </React.Fragment>
-    );
-  };
 
   private renderKialiLinks = (kialiInstances: KialiInstance[]): React.ReactNode => {
     const kialiIcon = getKialiTheme() === Theme.DARK ? kialiIconDark : kialiIconLight;

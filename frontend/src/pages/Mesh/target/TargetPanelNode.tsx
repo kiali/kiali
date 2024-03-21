@@ -1,7 +1,13 @@
 import * as React from 'react';
 import { Node, NodeModel } from '@patternfly/react-topology';
 import { kialiStyle } from 'styles/StyleUtils';
-import { TargetPanelCommonProps, targetPanel, targetPanelHeading, targetPanelWidth } from './TargetPanelCommon';
+import {
+  TargetPanelCommonProps,
+  targetPanel,
+  targetPanelBody,
+  targetPanelHeading,
+  targetPanelWidth
+} from './TargetPanelCommon';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { MeshInfraType, MeshNodeData } from 'types/Mesh';
 import { classes } from 'typestyle';
@@ -55,12 +61,15 @@ export class TargetPanelNode extends React.Component<TargetPanelCommonProps, Tar
 
     return (
       <div className={classes(panelStyle, targetPanel)}>
-        <div className={targetPanelHeading}>{this.renderNode(data)}</div>
+        <div className={targetPanelHeading}>{this.renderNodeHeader(data)}</div>
+        <div className={targetPanelBody}>
+          <pre>{JSON.stringify(data.infraData, null, 2)}</pre>
+        </div>
       </div>
     );
   }
 
-  private renderNode = (data: MeshNodeData): React.ReactNode => {
+  private renderNodeHeader = (data: MeshNodeData): React.ReactNode => {
     let pfBadge;
 
     switch (data.infraType) {

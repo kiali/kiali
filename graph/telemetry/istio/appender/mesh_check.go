@@ -44,7 +44,7 @@ func (a *MeshCheckAppender) applyMeshChecks(trafficMap graph.TrafficMap, globalI
 		}
 
 		// skip if the node is not in an accessible namespace, we can't do the checking
-		if !a.nodeOK(n, namespaceInfo) {
+		if !a.nodeOK(n) {
 			continue
 		}
 
@@ -96,7 +96,7 @@ func (a *MeshCheckAppender) applyMeshChecks(trafficMap graph.TrafficMap, globalI
 }
 
 // nodeOK returns true if we have access to its workload info
-func (a *MeshCheckAppender) nodeOK(node *graph.Node, namespaceInfo *graph.AppenderNamespaceInfo) bool {
+func (a *MeshCheckAppender) nodeOK(node *graph.Node) bool {
 	key := graph.GetClusterSensitiveKey(node.Cluster, node.Namespace)
 	_, ok := a.AccessibleNamespaces[key]
 	return ok

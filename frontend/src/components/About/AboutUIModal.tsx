@@ -11,16 +11,13 @@ import {
   Alert
 } from '@patternfly/react-core';
 import kialiIconAbout from '../../assets/img/icon-aboutbkg.svg';
-import { ExternalServiceInfo, Status, StatusKey } from '../../types/StatusState';
+import { Status, StatusKey } from '../../types/StatusState';
 import { config, kialiLogoDark } from '../../config';
 import { kialiStyle } from 'styles/StyleUtils';
 import { KialiIcon } from 'config/KialiIcon';
-import { TEMPO } from '../../types/Tracing';
-
-import { GetTracingUrlProvider } from '../../utils/tracing/UrlProviders';
+import { IstioLogo } from 'pages/Mesh/MeshLegendData';
 
 type AboutUIModalProps = {
-  externalServices: ExternalServiceInfo[];
   isOpen: boolean;
   onClose: () => void;
   status: Status;
@@ -37,10 +34,6 @@ const iconStyle = kialiStyle({
   marginRight: '0.5rem'
 });
 
-const websiteStyle = kialiStyle({
-  marginRight: '2rem'
-});
-
 const textContentStyle = kialiStyle({
   $nest: {
     '& dt, & dd': {
@@ -49,48 +42,35 @@ const textContentStyle = kialiStyle({
   }
 });
 
+const websiteStyle = kialiStyle({
+  marginRight: '2rem'
+});
+
 export const AboutUIModal: React.FC<AboutUIModalProps> = (props: AboutUIModalProps) => {
-  const additionalComponentInfoContent = (externalService: ExternalServiceInfo): string | JSX.Element => {
-    if (!externalService.version && !externalService.url) {
-      return 'N/A';
+  const renderMeshLink = () => {
+    if (config?.about?.mesh) {
+      return (
+        <Button component="a" href={config.about.mesh.url} variant={ButtonVariant.link} isInline>
+          <IstioLogo className={iconStyle} />
+          {config.about.mesh.linkText}
+        </Button>
+      );
     }
 
-    const version = externalService.version ?? '';
-    const url = externalService.url ? (
-      <a href={externalService.url} target="_blank" rel="noopener noreferrer">
-        {externalService.url}
-      </a>
-    ) : (
-      ''
-    );
-
-    return (
-      <>
-        {version} {url}
-      </>
-    );
+    return null;
   };
 
-  const renderTempo = (externalServices: ExternalServiceInfo[]): JSX.Element => {
-    const tempoService = externalServices.find(service => service.name === TEMPO);
-
-    if (tempoService) {
-      tempoService.url = GetTracingUrlProvider(externalServices)?.HomeUrl();
-      return renderComponent(tempoService);
-    } else {
-      return <></>;
+  const renderProjectLink = () => {
+    if (config?.about?.project) {
+      return (
+        <Button component="a" href={config.about.project.url} variant={ButtonVariant.link} target="_blank" isInline>
+          <KialiIcon.Repository className={iconStyle} />
+          {config.about.project.linkText}
+        </Button>
+      );
     }
-  };
 
-  const renderComponent = (externalService: ExternalServiceInfo): JSX.Element => {
-    const name = externalService.version ? externalService.name : `${externalService.name} URL`;
-    const additionalInfo = additionalComponentInfoContent(externalService);
-    return (
-      <React.Fragment key={name}>
-        <TextListItem component="dt">{name.charAt(0).toUpperCase() + name.slice(1)}</TextListItem>
-        <TextListItem component="dd">{additionalInfo}</TextListItem>
-      </React.Fragment>
-    );
+    return null;
   };
 
   const renderWebsiteLink = (): JSX.Element | null => {
@@ -113,19 +93,6 @@ export const AboutUIModal: React.FC<AboutUIModalProps> = (props: AboutUIModalPro
     return null;
   };
 
-  const renderProjectLink = (): JSX.Element | null => {
-    if (config?.about?.project) {
-      return (
-        <Button component="a" href={config.about.project.url} variant={ButtonVariant.link} target="_blank" isInline>
-          <KialiIcon.Repository className={iconStyle} />
-          {config.about.project.linkText}
-        </Button>
-      );
-    }
-
-    return null;
-  };
-
   const coreVersion =
     props.status[StatusKey.KIALI_CORE_COMMIT_HASH] === '' ||
     props.status[StatusKey.KIALI_CORE_COMMIT_HASH] === 'unknown'
@@ -137,10 +104,6 @@ export const AboutUIModal: React.FC<AboutUIModalProps> = (props: AboutUIModalPro
   const meshVersion = props.status[StatusKey.MESH_NAME]
     ? `${props.status[StatusKey.MESH_NAME]} ${props.status[StatusKey.MESH_VERSION] ?? ''}`
     : 'Unknown';
-
-  const filteredServices = props.externalServices.filter(element => element.name !== TEMPO);
-  const componentList = filteredServices.map(externalService => renderComponent(externalService));
-  const tempoComponent = renderTempo(props.externalServices);
 
   return (
     <AboutModal
@@ -166,12 +129,16 @@ export const AboutUIModal: React.FC<AboutUIModalProps> = (props: AboutUIModalPro
           <TextListItem key="kiali-container-version" component="dd">
             {containerVersion!}
           </TextListItem>
-          <TextListItem key="service-mesh-name" component="dt">
-            Service Mesh
-          </TextListItem>
-          <TextListItem key="service-mesh-version" component="dd">
-            {meshVersion!}
-          </TextListItem>
+          {false && (
+            <>
+              <TextListItem key="service-mesh-name" component="dt">
+                Service Mesh
+              </TextListItem>
+              <TextListItem key="service-mesh-version" component="dd">
+                {meshVersion!}
+              </TextListItem>
+            </>
+          )}
         </TextList>
       </TextContent>
 
@@ -180,15 +147,14 @@ export const AboutUIModal: React.FC<AboutUIModalProps> = (props: AboutUIModalPro
       )}
 
       <TextContent className={textContentStyle}>
-        <Title headingLevel="h3" size={TitleSizes.xl} style={{ padding: '1.25rem 0 1.25rem' }}>
+        <Title headingLevel="h3" size={TitleSizes.xl} style={{ padding: '2.5rem 0 0 0', marginBottom: '0' }}>
           Components
         </Title>
+        {renderMeshLink()}
 
-        <TextList component="dl">
-          {componentList}
-          {tempoComponent}
-        </TextList>
-
+        <Title headingLevel="h3" size={TitleSizes.xl} style={{ padding: '1.0rem 0 0 0', marginBottom: '0' }}>
+          External Links
+        </Title>
         {renderWebsiteLink()}
         {renderProjectLink()}
       </TextContent>

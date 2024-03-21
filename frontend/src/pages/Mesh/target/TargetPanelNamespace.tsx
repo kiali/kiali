@@ -5,7 +5,7 @@ import {
   TargetPanelCommonProps,
   shouldRefreshData,
   targetPanel,
-  targetPanelBodyStyle as targetPanelBody,
+  targetPanelBody,
   targetPanelBorder,
   targetPanelHR,
   targetPanelWidth
@@ -88,29 +88,11 @@ const defaultState: TargetPanelNamespaceState = {
 const healthType: OverviewType = 'app';
 const direction: DirectionType = 'outbound';
 
-/*
-const namespaceStyle = kialiStyle({
-  alignItems: 'center',
-  display: 'flex'
-});
-*/
-
 const cardGridStyle = kialiStyle({
   textAlign: 'center',
   marginTop: 0,
   marginBottom: '0.5rem'
-  // width: 'auto'
 });
-
-/*
-const namespaceHeaderStyle = kialiStyle({
-  $nest: {
-    '& .pf-v5-c-card__header-main': {
-      width: '85%'
-    }
-  }
-});
-*/
 
 const namespaceNameStyle = kialiStyle({
   display: 'block',
