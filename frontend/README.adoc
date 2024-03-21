@@ -224,7 +224,7 @@ export const Menu = withTranslation(I18N_NAMESPACE)(MenuComponent);
 const { t } = useTranslation(I18N_NAMESPACE);
 ----
 
-- Always import i18n variable from `i18n`, not from `i18next` or `react-i18next` libraries
+- Always import the i18n variable from `i18n`, not from `i18next` or `react-i18next` libraries
 [source, typescript]
 ----
 import { i18n } from 'i18n';
