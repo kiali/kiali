@@ -8,6 +8,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/kiali/kiali/business"
+	"github.com/kiali/kiali/models"
 )
 
 // appParams holds the path and query parameters for appList and appDetails
@@ -68,6 +69,11 @@ func ClustersApps(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	clusterAppsList := &models.ClusterApps{
+		Apps:    []models.AppListItem{},
+		Cluster: p.ClusterName,
+	}
+
 	for _, ns := range nss {
 		criteria := business.AppCriteria{Cluster: p.ClusterName, Namespace: ns, IncludeIstioResources: p.IncludeIstioResources,
 			IncludeHealth: p.IncludeHealth, RateInterval: p.RateInterval, QueryTime: p.QueryTime}
@@ -82,15 +88,15 @@ func ClustersApps(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Fetch and build apps
-		appList, err := businessLayer.App.GetAppList(r.Context(), criteria)
+		appList, err := businessLayer.App.GetClusterAppList(r.Context(), criteria)
 		if err != nil {
 			handleErrorResponse(w, err)
 			return
 		}
-
+		clusterAppsList.Apps = append(clusterAppsList.Apps, appList.Apps...)
 	}
 
-	RespondWithJSON(w, http.StatusOK, appList)
+	RespondWithJSON(w, http.StatusOK, clusterAppsList)
 }
 
 // AppDetails is the API handler to fetch all details to be displayed, related to a single app

@@ -11,6 +11,7 @@ import * as React from 'react';
 import { StatefulFilters } from '../Filters/StatefulFilters';
 import { PFBadges, PFBadgeType } from '../../components/Pf/PfBadges';
 import { isGateway, isWaypoint } from '../../helpers/LabelFilterHelper';
+import { getNamespace } from '../../utils/Common';
 
 export type SortResource = AppListItem | WorkloadListItem | ServiceListItem;
 export type TResource = SortResource | IstioConfigItem;
@@ -29,11 +30,13 @@ export function hasHealth(r: RenderResource): r is SortResource {
 }
 
 export const hasMissingSidecar = (r: SortResource): boolean => {
-  return !isIstioNamespace(r.namespace) && !r.istioSidecar && !isGateway(r.labels) && !isWaypoint(r.labels);
+  return (
+    !isIstioNamespace(getNamespace(r.namespace)) && !r.istioSidecar && !isGateway(r.labels) && !isWaypoint(r.labels)
+  );
 };
 
 export const noAmbientLabels = (r: SortResource): boolean => {
-  return !isIstioNamespace(r.namespace) && !r.istioAmbient;
+  return !isIstioNamespace(getNamespace(r.namespace)) && !r.istioAmbient;
 };
 
 export type ResourceType<R extends RenderResource> = {

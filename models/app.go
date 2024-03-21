@@ -4,6 +4,11 @@ type ClusterApps struct {
 	// Applications list for namespaces of a single cluster
 	// required: true
 	Apps []AppListItem `json:"applications"`
+
+	// Cluster where the apps live in
+	// required: true
+	// example: east
+	Cluster string `json:"cluster"`
 }
 
 type AppList struct {

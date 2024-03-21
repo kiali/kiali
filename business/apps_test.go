@@ -50,14 +50,13 @@ func TestGetAppListFromDeployments(t *testing.T) {
 
 	svc := setupAppService(mockClientFactory.Clients)
 
-	criteria := AppCriteria{Namespace: "Namespace", IncludeIstioResources: false, IncludeHealth: false}
-	appList, err := svc.GetAppList(context.TODO(), criteria)
+	criteria := AppCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", IncludeIstioResources: false, IncludeHealth: false}
+	appList, err := svc.GetClusterAppList(context.TODO(), criteria)
 	require.NoError(err)
-
-	assert.Equal("Namespace", appList.Namespace.Name)
 
 	assert.Equal(1, len(appList.Apps))
 	assert.Equal("httpbin", appList.Apps[0].Name)
+	assert.Equal("Namespace", appList.Apps[0].Namespace.Name)
 }
 
 func TestGetAppFromDeployments(t *testing.T) {
@@ -127,13 +126,12 @@ func TestGetAppListFromReplicaSets(t *testing.T) {
 
 	svc := setupAppService(mockClientFactory.Clients)
 
-	criteria := AppCriteria{Namespace: "Namespace", IncludeIstioResources: false, IncludeHealth: false}
-	appList, _ := svc.GetAppList(context.TODO(), criteria)
-
-	assert.Equal("Namespace", appList.Namespace.Name)
+	criteria := AppCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", IncludeIstioResources: false, IncludeHealth: false}
+	appList, _ := svc.GetClusterAppList(context.TODO(), criteria)
 
 	assert.Equal(1, len(appList.Apps))
 	assert.Equal("httpbin", appList.Apps[0].Name)
+	assert.Equal("Namespace", appList.Apps[0].Namespace.Name)
 }
 
 func TestGetAppFromReplicaSets(t *testing.T) {

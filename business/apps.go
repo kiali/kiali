@@ -106,7 +106,7 @@ func (in *AppService) GetClusterAppList(ctx context.Context, criteria AppCriteri
 		istioConfigList, err = in.businessLayer.IstioConfig.GetIstioConfigListForNamespace(ctx, cluster, namespace, icCriteria)
 		if err != nil {
 			log.Errorf("Error fetching Istio Config per namespace %s: %s", criteria.Namespace, err)
-			return models.AppList{}, err
+			return *appList, err
 		}
 	}
 
@@ -323,7 +323,7 @@ func (in *AppService) GetAppList(ctx context.Context, criteria AppCriteria) (mod
 					log.Errorf("Error fetching Health in namespace %s for app %s: %s", criteria.Namespace, appItem.Name, err)
 				}
 			}
-			appItem.Cluster = valueApp.cluster
+			appItem.Namespace = models.Namespace{Cluster: valueApp.cluster, Name: criteria.Namespace}
 			appList.Apps = append(appList.Apps, *appItem)
 		}
 	}

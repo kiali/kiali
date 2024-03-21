@@ -210,10 +210,10 @@ func setupAppListEndpoint(t *testing.T, k8s kubernetes.ClientInterface, conf con
 	business.WithProm(prom)
 
 	mr := mux.NewRouter()
-	mr.HandleFunc("/api/namespaces/{namespace}/apps", http.HandlerFunc(
+	mr.HandleFunc("/api/clusters/apps", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
 			context := authentication.SetAuthInfoContext(r.Context(), &api.AuthInfo{Token: "test"})
-			AppList(w, r.WithContext(context))
+			ClustersApps(w, r.WithContext(context))
 		}))
 
 	mr.HandleFunc("/api/namespaces/{namespace}/apps/{app}", http.HandlerFunc(
@@ -254,7 +254,7 @@ func TestAppsEndpoint(t *testing.T) {
 	k8s.OpenShift = true
 	ts := setupAppListEndpoint(t, k8s, *cfg)
 
-	url := ts.URL + "/api/namespaces/Namespace/apps"
+	url := ts.URL + "/api/clusters/apps"
 
 	resp, err := http.Get(url)
 	if err != nil {

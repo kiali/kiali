@@ -119,6 +119,7 @@ const conf = {
       authInfo: 'api/auth/info',
       canaryUpgradeStatus: () => 'api/mesh/canaries/status',
       clusters: 'api/clusters',
+      clustersApps: () => `api/clusters/apps`,
       clustersHealth: () => `api/clusters/health`,
       clustersMetrics: () => `api/clusters/metrics`,
       clustersTls: () => `api/clusters/tls`,
