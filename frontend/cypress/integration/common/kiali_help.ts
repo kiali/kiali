@@ -16,6 +16,10 @@ Then('user sees the {string} modal', (title: string) => {
   cy.get('h1.pf-v5-c-modal-box__title').contains(title).should('be.visible');
 });
 
+Then('details about the certificates are displayed without an error', () => {
+    cy.contains('An error occurred getting certificates information').should('not.exist');
+});
+
 Then('user sees information about {int} clusters', (numOfClusters: number) => {
   cy.get('td[data-label="Configuration"]')
     .contains('clusters')
