@@ -89,6 +89,10 @@ func (in *AppService) GetClusterAppList(ctx context.Context, criteria AppCriteri
 	}
 
 	allApps, err := in.businessLayer.App.fetchNamespaceApps(ctx, namespace, cluster, "")
+	if err != nil {
+		log.Errorf("Error fetching Applications for cluster %s per namespace %s: %s", cluster, namespace, err)
+		return *appList, err
+	}
 
 	icCriteria := IstioConfigCriteria{
 		IncludeAuthorizationPolicies:  true,
@@ -105,7 +109,7 @@ func (in *AppService) GetClusterAppList(ctx context.Context, criteria AppCriteri
 	if criteria.IncludeIstioResources {
 		istioConfigList, err = in.businessLayer.IstioConfig.GetIstioConfigListForNamespace(ctx, cluster, namespace, icCriteria)
 		if err != nil {
-			log.Errorf("Error fetching Istio Config per namespace %s: %s", criteria.Namespace, err)
+			log.Errorf("Error fetching Istio Config for Cluster %s per namespace %s: %s", cluster, namespace, err)
 			return *appList, err
 		}
 	}

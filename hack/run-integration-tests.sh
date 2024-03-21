@@ -185,7 +185,7 @@ ensureKialiTracesReady() {
 ensureMulticlusterApplicationsAreHealthy() {
   local start_time=$(date +%s)
   local timeout=300
-  local url="${KIALI_URL}/api/namespaces/bookinfo/apps?health=true&istioResources=true&rateInterval=60s"
+  local url="${KIALI_URL}/api/clusters/apps?namespaces=bookinfo&clusterName=west&health=true&istioResources=true&rateInterval=60s"
 
   while true; do
     local current_time=$(date +%s)
@@ -197,7 +197,7 @@ ensureMulticlusterApplicationsAreHealthy() {
     fi
 
     response=$(curl -s "$url")
-    has_http_200=$(echo "$response" | jq '[.applications[] | select(.name=="reviews" and .cluster=="west" and .health.requests.inbound.http."200" > 0)] | length > 0')
+    has_http_200=$(echo "$response" | jq '[.applications[] | select(.name=="reviews" and .namespace.cluster=="west" and .health.requests.inbound.http."200" > 0)] | length > 0')
 
     if [ "$has_http_200" = "true" ]; then
       infomsg "'reviews' app in 'west' cluster is healthy enough."
