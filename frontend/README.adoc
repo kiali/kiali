@@ -90,7 +90,7 @@ Kiali supports internationalization with the `react-i18next` library. String lit
 
 Use the `withTranslation` high order component. More info link:https://react.i18next.com/latest/withtranslation-hoc[here]
 
-You have to embed React class with `withTranslation` function (similar to redux connect function):
+You must embed the React class with the `withTranslation` function (similar to redux connect function):
 
 [source, typescript]
 ----
