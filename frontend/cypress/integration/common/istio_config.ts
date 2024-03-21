@@ -148,6 +148,39 @@ const minimalSidecar = (name: string, namespace: string, hosts: string): string 
 }`;
 };
 
+const minimalK8Gateway = (name: string, namespace: string, gatewayClassName: string, port: number, labelsString: string): string => {
+    return `{
+        "kind": "Gateway",
+        "apiVersion": "gateway.networking.k8s.io/v1",
+        "metadata": {
+          "name": "${name}",
+          "namespace": "${namespace}",
+          "labels": ${labelsString},
+          "annotations": {}
+        },
+        "spec": {
+          "gatewayClassName": "${gatewayClassName}",
+          "listeners": [
+            {
+              "name": "hey",
+              "port": ${port},
+              "protocol": "HTTP",
+              "hostname": "google.com",
+              "allowedRoutes": {
+                "namespaces": {
+                  "from": "All",
+                  "selector": {
+                    "matchLabels": {}
+                  }
+                }
+              }
+            }
+          ],
+          "addresses": []
+        }
+      }`;
+};
+
 Given('a {string} AuthorizationPolicy in the {string} namespace', function (name: string, namespace: string) {
   cy.exec(`kubectl delete AuthorizationPolicy ${name} -n ${namespace}`, { failOnNonZeroExit: false });
   cy.exec(`echo '${minimalAuthorizationPolicy(name, namespace)}' | kubectl apply -f -`);
