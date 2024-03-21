@@ -84,7 +84,7 @@ Run `yarn start` and try it!
 
 === Internationalization (i18n)
 
-Kiali application supports internationalization with `react-i18next` library. String literals to be translated are added automatically to locale file (stored in `public/locales/<language>/translation.json`) in development phase with `i18n-parser` (executed along with `yarn start` or `yarn build` command). At runtime, i18n library will use these locale files to perform translation to specific language. The way to adapt React component to i18n framework depends on its type:
+Kiali supports internationalization with the `react-i18next` library. String literals to be translated are added automatically to a locale file (stored in `public/locales/<language>/translation.json`), during the development phase, with `i18n-parser` (executed along with `yarn start` or `yarn build` command). At runtime, the i18n library will use these locale files to perform translation to a specific language. The way to adapt a React component to the i18n framework depends on its type:
 
 - **React class:**
 
