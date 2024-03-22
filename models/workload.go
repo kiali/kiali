@@ -13,6 +13,19 @@ import (
 	"github.com/kiali/kiali/config"
 )
 
+type ClusterWorkloads struct {
+	// Cluster where the apps live in
+	// required: true
+	// example: east
+	Cluster string `json:"cluster"`
+
+	// Workloads list for namespaces of a single cluster
+	// required: true
+	Workloads []WorkloadListItem `json:"workloads"`
+
+	Validations IstioValidations `json:"validations"`
+}
+
 type WorkloadList struct {
 	// Namespace where the workloads live in
 	// required: true
@@ -33,10 +46,10 @@ type WorkloadListItem struct {
 	// example: reviews-v1
 	Name string `json:"name"`
 
-	// Cluster name where the workload is located
+	// Namespace where the workloads live in
 	// required: true
-	// example: west-cluster-01
-	Cluster string `json:"cluster"`
+	// example: bookinfo
+	Namespace Namespace `json:"namespace"`
 
 	// Type of the workload
 	// required: true
@@ -161,7 +174,7 @@ type Workloads []*Workload
 func (workload *WorkloadListItem) ParseWorkload(w *Workload) {
 	conf := config.Get()
 	workload.Name = w.Name
-	workload.Cluster = w.Cluster
+	workload.Namespace = w.Namespace
 	workload.Type = w.Type
 	workload.CreatedAt = w.CreatedAt
 	workload.ResourceVersion = w.ResourceVersion

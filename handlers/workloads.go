@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"strconv"
+	"strings"
 	"sync"
 
 	"github.com/gorilla/mux"
@@ -53,13 +54,16 @@ func (p *workloadParams) extract(r *http.Request) {
 	}
 }
 
-// WorkloadList is the API handler to fetch all the workloads to be displayed, related to a single namespace
-func WorkloadList(w http.ResponseWriter, r *http.Request) {
+// ClustersWorkloads is the API handler to fetch all the workloads to be displayed, related to a single namespace
+func ClustersWorkloads(w http.ResponseWriter, r *http.Request) {
+	query := r.URL.Query()
+	namespaces := query.Get("namespaces") // csl of namespaces
+	nss := []string{}
+	if len(namespaces) > 0 {
+		nss = strings.Split(namespaces, ",")
+	}
 	p := workloadParams{}
 	p.extract(r)
-
-	criteria := business.WorkloadCriteria{Namespace: p.Namespace, IncludeHealth: p.IncludeHealth,
-		IncludeIstioResources: p.IncludeIstioResources, RateInterval: p.RateInterval, QueryTime: p.QueryTime}
 
 	// Get business layer
 	businessLayer, err := getBusiness(r)
@@ -68,34 +72,43 @@ func WorkloadList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if criteria.IncludeHealth {
-		// When the cluster is not specified, we need to get it. If there are more than one,
-		// get the one for which the namespace creation time is oldest
-		namespaces, _ := businessLayer.Namespace.GetNamespaceClusters(r.Context(), p.Namespace)
-		if len(namespaces) == 0 {
-			err = fmt.Errorf("No clusters found for namespace  [%s]", p.Namespace)
-			handleErrorResponse(w, err, "Error looking for cluster: "+err.Error())
-			return
+	if len(nss) == 0 {
+		loadedNamespaces, _ := businessLayer.Namespace.GetClusterNamespaces(r.Context(), p.ClusterName)
+		for _, ns := range loadedNamespaces {
+			nss = append(nss, ns.Name)
 		}
-		ns := GetOldestNamespace(namespaces)
+	}
 
-		rateInterval, err := adjustRateInterval(r.Context(), businessLayer, p.Namespace, p.RateInterval, p.QueryTime, ns.Cluster)
+	clusterWorkloadsList := &models.ClusterWorkloads{
+		Cluster:     p.ClusterName,
+		Workloads:   []models.WorkloadListItem{},
+		Validations: models.IstioValidations{},
+	}
+
+	for _, ns := range nss {
+		criteria := business.WorkloadCriteria{Cluster: p.ClusterName, Namespace: ns, IncludeHealth: p.IncludeHealth,
+			IncludeIstioResources: p.IncludeIstioResources, RateInterval: p.RateInterval, QueryTime: p.QueryTime}
+
+		if p.IncludeHealth {
+			rateInterval, err := adjustRateInterval(r.Context(), businessLayer, ns, p.RateInterval, p.QueryTime, p.ClusterName)
+			if err != nil {
+				handleErrorResponse(w, err, "Adjust rate interval error: "+err.Error())
+				return
+			}
+			criteria.RateInterval = rateInterval
+		}
+
+		// Fetch and build workloads
+		workloadList, err := businessLayer.Workload.GetWorkloadList(r.Context(), criteria)
 		if err != nil {
-			handleErrorResponse(w, err, "Adjust rate interval error: "+err.Error())
+			handleErrorResponse(w, err)
 			return
 		}
-		criteria.RateInterval = rateInterval
+		clusterWorkloadsList.Workloads = append(clusterWorkloadsList.Workloads, workloadList.Workloads...)
+		clusterWorkloadsList.Validations = clusterWorkloadsList.Validations.MergeValidations(workloadList.Validations)
 	}
 
-	// Fetch and build workloads
-	// Criteria does not include cluster, so it will look workloads from all the clusters
-	workloadList, err := businessLayer.Workload.GetWorkloadList(r.Context(), criteria)
-	if err != nil {
-		handleErrorResponse(w, err)
-		return
-	}
-
-	RespondWithJSON(w, http.StatusOK, workloadList)
+	RespondWithJSON(w, http.StatusOK, clusterWorkloadsList)
 }
 
 // WorkloadDetails is the API handler to fetch all details to be displayed, related to a single workload
