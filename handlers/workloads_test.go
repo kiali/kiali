@@ -33,10 +33,10 @@ func setupWorkloadList(t *testing.T, k8s *kubetest.FakeK8sClient) (*httptest.Ser
 
 	mr := mux.NewRouter()
 
-	mr.HandleFunc("/api/namespaces/{namespace}/workloads", http.HandlerFunc(
+	mr.HandleFunc("/api/clusters/workloads", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
 			context := authentication.SetAuthInfoContext(r.Context(), &api.AuthInfo{Token: "test"})
-			WorkloadList(w, r.WithContext(context))
+			ClustersWorkloads(w, r.WithContext(context))
 		}))
 
 	ts := httptest.NewServer(mr)
@@ -63,7 +63,7 @@ func TestWorkloadsEndpoint(t *testing.T) {
 	k8s := kubetest.NewFakeK8sClient(kubeObjects...)
 	ts, _ := setupWorkloadList(t, k8s)
 
-	url := ts.URL + "/api/namespaces/ns/workloads"
+	url := ts.URL + "/api/clusters/workloads?namespaces=ns"
 
 	resp, err := http.Get(url)
 	if err != nil {

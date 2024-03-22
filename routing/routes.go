@@ -582,9 +582,9 @@ func NewRoutes(conf *config.Config, kialiCache cache.KialiCache, clientFactory k
 			handlers.TraceDetails,
 			true,
 		},
-		// swagger:route GET /namespaces/{namespace}/workloads workloads workloadList
+		// swagger:route GET /clusters/workloads workloads workloadList
 		// ---
-		// Endpoint to get the list of workloads for a namespace
+		// Endpoint to get the list of workloads for a cluster
 		//
 		//     Produces:
 		//     - application/json
@@ -596,10 +596,10 @@ func NewRoutes(conf *config.Config, kialiCache cache.KialiCache, clientFactory k
 		//      200: workloadListResponse
 		//
 		{
-			"WorkloadList",
+			"ClustersWorkloads",
 			"GET",
-			"/api/namespaces/{namespace}/workloads",
-			handlers.WorkloadList,
+			"/api/clusters/workloads",
+			handlers.ClustersWorkloads,
 			true,
 		},
 		// swagger:route GET /namespaces/{namespace}/workloads/{workload} workloads workloadDetails

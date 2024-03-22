@@ -146,7 +146,7 @@ func (in *WorkloadService) GetWorkloadList(ctx context.Context, criteria Workloa
 	defer end()
 
 	workloadList := &models.WorkloadList{
-		Namespace:   models.Namespace{Name: criteria.Namespace, CreationTimestamp: time.Time{}},
+		Namespace:   models.Namespace{Cluster: criteria.Cluster, Name: criteria.Namespace, CreationTimestamp: time.Time{}},
 		Workloads:   []models.WorkloadListItem{},
 		Validations: models.IstioValidations{},
 	}
@@ -208,16 +208,17 @@ func (in *WorkloadService) GetWorkloadList(ctx context.Context, criteria Workloa
 	for _, w := range ws {
 		wItem := &models.WorkloadListItem{Health: *models.EmptyWorkloadHealth()}
 		wItem.ParseWorkload(w)
-		if istioConfigList, ok := istioConfigMap[w.Cluster]; ok && criteria.IncludeIstioResources {
+		if istioConfigList, ok := istioConfigMap[criteria.Cluster]; ok && criteria.IncludeIstioResources {
 			wSelector := labels.Set(wItem.Labels).AsSelector().String()
 			wItem.IstioReferences = FilterUniqueIstioReferences(FilterWorkloadReferences(wSelector, istioConfigList))
 		}
 		if criteria.IncludeHealth {
-			wItem.Health, err = in.businessLayer.Health.GetWorkloadHealth(ctx, criteria.Namespace, w.Cluster, wItem.Name, criteria.RateInterval, criteria.QueryTime, w)
+			wItem.Health, err = in.businessLayer.Health.GetWorkloadHealth(ctx, criteria.Namespace, criteria.Cluster, wItem.Name, criteria.RateInterval, criteria.QueryTime, w)
 			if err != nil {
 				log.Errorf("Error fetching Health in namespace %s for workload %s: %s", criteria.Namespace, wItem.Name, err)
 			}
 		}
+		wItem.Namespace = models.Namespace{Cluster: criteria.Cluster, Name: criteria.Namespace}
 		workloadList.Workloads = append(workloadList.Workloads, *wItem)
 	}
 
@@ -979,7 +980,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 			Pods:     models.Pods{},
 			Services: []models.ServiceOverview{},
 		}
-		w.Cluster = cluster
+		w.Namespace = models.Namespace{Cluster: cluster, Name: namespace}
 		controllerType := controllers[controllerName]
 		// Flag to add a controller if it is found
 		cnFound := true
@@ -1184,7 +1185,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 
 	wl := &models.Workload{
 		WorkloadListItem: models.WorkloadListItem{
-			Cluster: criteria.Cluster,
+			Namespace: models.Namespace{Cluster: criteria.Cluster, Name: criteria.Namespace},
 		},
 		Pods:              models.Pods{},
 		Services:          []models.ServiceOverview{},
@@ -1541,7 +1542,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 	if _, exist := controllers[criteria.WorkloadName]; exist {
 		w := models.Workload{
 			WorkloadListItem: models.WorkloadListItem{
-				Cluster: criteria.Cluster,
+				Namespace: models.Namespace{Cluster: criteria.Cluster, Name: criteria.Namespace},
 			},
 			Pods:              models.Pods{},
 			Services:          []models.ServiceOverview{},
