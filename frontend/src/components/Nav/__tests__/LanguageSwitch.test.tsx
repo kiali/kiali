@@ -9,11 +9,6 @@ import { serverConfig, setServerConfig } from 'config/ServerConfig';
 
 const i18nServerConfig = Object.assign({}, serverConfig);
 
-jest.mock('i18next', () => ({
-  // this mock replaces i18next changeLanguage method
-  changeLanguage: () => new Promise(() => {})
-}));
-
 describe('Language switch', () => {
   beforeAll(() => {
     setServerConfig(i18nServerConfig);

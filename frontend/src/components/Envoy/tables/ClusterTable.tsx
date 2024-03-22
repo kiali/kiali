@@ -12,6 +12,7 @@ import { KialiIcon } from 'config/KialiIcon';
 import { kialiStyle } from 'styles/StyleUtils';
 import { isParentKiosk } from '../../Kiosk/KioskActions';
 import { SortableTh } from 'components/SimpleTable';
+import { i18n } from 'i18n';
 
 export class ClusterTable implements SummaryTable {
   kiosk: string;
@@ -33,34 +34,34 @@ export class ClusterTable implements SummaryTable {
   availableFilters = (): FilterType[] => {
     return [
       {
-        category: 'FQDN',
-        placeholder: 'FQDN',
+        category: i18n.t('FQDN'),
+        placeholder: i18n.t('FQDN'),
         filterType: AllFilterTypes.text,
         action: FILTER_ACTION_APPEND,
         filterValues: []
       },
       {
-        category: 'Port',
-        placeholder: 'Port',
+        category: i18n.t('Port'),
+        placeholder: i18n.t('Port'),
         filterType: AllFilterTypes.text,
         action: FILTER_ACTION_APPEND,
         filterValues: []
       },
       {
-        category: 'Subset',
-        placeholder: 'Subset',
+        category: i18n.t('Subset'),
+        placeholder: i18n.t('Subset'),
         filterType: AllFilterTypes.text,
         action: FILTER_ACTION_APPEND,
         filterValues: []
       },
       {
-        category: 'Direction',
-        placeholder: 'Direction',
+        category: i18n.t('Direction'),
+        placeholder: i18n.t('Direction'),
         filterType: AllFilterTypes.select,
         action: FILTER_ACTION_APPEND,
         filterValues: [
-          { id: 'inbound', title: 'inbound' },
-          { id: 'outbound', title: 'outbound' }
+          { id: 'inbound', title: i18n.t('inbound') },
+          { id: 'outbound', title: i18n.t('outbound') }
         ]
       }
     ];

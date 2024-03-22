@@ -19,7 +19,7 @@ cd kiali/frontend
 npm install -g yarn
 
 # Install kiali-ui dependencies
-yarn
+yarn install
 
 # Start a development server
 yarn start
@@ -44,10 +44,11 @@ reloads any changes to the browser for rapid development.
 * `src/assets`: Images and other assets
 * `src/components`: React Components
 * `src/config`: Configuration
-* `src/fonts`:  Fonts
 * `src/helpers`:  Utility functions and components
+* `src/hooks`:  Utility hooks
 * `src/pages`: Top level pages and nested components
 * `src/reducers`: Redux reducers
+* `src/routes`: Router wrapper components
 * `src/services`: Api services
 * `src/store`:  Redux store definitions
 * `src/styles`:  Application wide styles
@@ -61,41 +62,232 @@ The Kiali UI is a React application written in Typescript.
 We use `yarn` as the package manager, if adding dependencies to `package.json`
 make sure you install them with `yarn` and commit the `yarn.lock` file.
 
-=== Testing with Kiali
+=== Running Kiali Frontend
 
-When developing, it is usual to run this application outside of https://github.com/kiali/kiali[kiali].
+When developing, it is typical to run the frontend outside of the kiali server in the cluster.
 
 It is possible to proxy the API requests without having to push the changes to kiali.
-Add the https://github.com/facebook/create-react-app/blob/master/packages/react-scripts/template/README.md#proxying-api-requests-in-development[proxy]
+Add the link:https://github.com/facebook/create-react-app/blob/master/packages/react-scripts/template/README.md#proxying-api-requests-in-development[proxy]
 property to `package.json` with the url of kiali.
 [source, json]
 ----
 {
-  "name": "kiali-ui",
-  "version": "0.2.1",
-  "proxy": "http://kiali-istio-system.127.0.0.1.nip.io",
-  "bugs": {
-...
+  "proxy": "http://localhost:20001",
+  "name": "@kiali/kiali-ui",
+  "version": "1.82.0",
+}
 ----
-For a video on getting a Kiali-ui development environment running please see (complete with tips/tricks):
-
-video::v4MN04nQNCU[youtube]
 
 If Kiali is configured with a specific web root, make sure to append it to the URL. On many setups with Kubernetes, the web root will be `/kiali` by default.
 
 Run `yarn start` and try it!
-[source, bash]
+
+=== Internationalization (i18n)
+
+Kiali supports internationalization with the `react-i18next` library. String literals to be translated are added automatically to a locale file (stored in `public/locales/<language>/translation.json`), during the development phase, with `i18n-parser` (executed along with `yarn start` or `yarn build` command). At runtime, the i18n library will use these locale files to perform translation to a specific language. 
+
+**Adding a new language**
+
+These are the steps to add a new language to Kiali:
+
+1. Add a new language entry in the link:https://github.com/kiali/kiali/blob/master/frontend/src/types/Common.ts[`common type`] enum `Language`.
+
+[source, typescript]
 ----
-$ curl -u admin:admin http://localhost:3000/api
-Namespaces: [default istio-system kube-public kube-system myproject openshift openshift-infra openshift-node]
+export const enum Language {
+  CHINESE = 'zh',
+  ENGLISH = 'en'
+  // Add new language entry here
+}
+----
 
-Namespace: default Services [docker-registry kubernetes router]
+2. Add a new select entry for the new language in the component link:https://github.com/kiali/kiali/blob/master/frontend/src/components/Nav/Masthead/LanguageSwitch.tsx[`LanguageSwitch.tsx`]
 
-Service Name: docker-registry
-Service Labels:
-docker-registry = default
-Type: ClusterIP
-...
+[source, typescript]
+----
+<DropdownItem key="Chinese" onClick={() => switchLanguage(Language.CHINESE)}>
+  <span>中文</span>
+  {language === Language.CHINESE && <KialiIcon.Check className={checkStyle} />}
+</DropdownItem>
+----
+
+If possible, include a new language test case scenario in the language selector unit test `LanguageSwitch.test.tsx`.
+
+3. Add the new language in the link:https://github.com/kiali/kiali/blob/master/frontend/i18next-parser.config.ts[`i18next-parser.config.ts`] file so that the `i18n-parser` generates the locale file for the new language.
+
+[source, typescript]
+----
+locales: ['en', 'zh', /* add new language code here */],
+----
+
+3. Execute `yarn build` to generate the new locale file.
+4. Modify the generated locale file as outlined in the next section.
+
+**Modify an existing language translation**
+
+The locale files are stored in `public/locales/<language>/translation.json`. If you find a wrong translation or an English statement (default value when the label is generated), simply modify that file to include the correct language translation.
+
+**Add i18n support to a React component**
+
+The way to adapt a React component to the i18n framework depends on its type:
+
+- **React class:**
+
+Use the `withTranslation` high order component. More info link:https://react.i18next.com/latest/withtranslation-hoc[here]
+
+You must embed the React class with the `withTranslation` function (similar to redux connect function):
+
+[source, typescript]
+----
+export const Menu = withTranslation(I18N_NAMESPACE)(MenuComponent);
+----
+
+Also, `WithTranslation` props must be added to the React class properties in order to include the `t` translation function (like Redux properties)
+
+[source, typescript]
+----
+type MenuProps = WithTranslation & {
+   ...
+};
+----
+
+Then you will be able to use the `t` function, like any other React class property, to translate any label (variable or string literal).
+[source, typescript]
+----
+<h1>{this.props.t(title)}</h1>
+----
+
+
+- **React hook:**
+
+Use the `useTranslation` hook to get the `t` translation function. More info link:https://react.i18next.com/latest/usetranslation-hook[here]. 
+
+Any label (variable or string literal) can be translated with the`t` function within the component.
+
+[source, typescript]
+----
+const { t } = useTranslation(I18N_NAMESPACE);
+
+<h1>{t(title)}</h1>
+----
+
+- **External variable:**
+
+String literals that are stored in a variable defined outside of a React component cannot be translated directly. Instead, the translation has to be done when the variable is used within the React component (class or hook).
+
+The problem is that the i18n parser can't extract labels from variables, only from literals. To indicate to the i18n parser to add that kind of string literal to the locale file, use the`ì18n.t` function. Note that `i18n.t` does not perform any translation, it returns the same string literal at runtime (only for development purposes).
+
+[source, typescript]
+----
+import { i18n } from 'i18n';
+
+const overviewTypes = {
+  app: i18n.t('Apps'),
+  workload: i18n.t('Workloads'),
+  service: i18n.t('Services')
+};
+
+
+const Example: React.FC<Props> = (props: Props) => {
+  const { t } = useTranslation(I18N_NAMESPACE);
+
+  return (
+    <span>{t(overviewTypes.app)}</span>
+    ...
+  )
+}
+----
+
+- **External function:**
+
+External functions declared outside of React components cannot use the `t` function directly. Instead, it must be passed as an input parameter (`TFunction` type must be imported from the `react-i18next` library, it will fail if imported from `i18next` library):
+
+[source, typescript]
+----
+import { TFunction, useTranslation } from 'react-i18next';
+
+const externalFunction = (t: TFunction): React.ReactNode => {
+  return (
+    ...
+      <div>{t('Issuer:')}</div>
+    ...
+  )
+}
+
+const Example: React.FC<Props> = (props: Props) => {
+  const { t } = useTranslation(I18N_NAMESPACE);
+
+  return (
+    <Tooltip position={TooltipPosition.top} content={externalFunction(t)}>
+    ...
+    </Tooltip>
+  )
+}
+
+----
+
+**Special i18n cases:**
+
+- **Interpolation:**
+
+You can include any variable value within the translated statement with interpolation. More info link:https://www.i18next.com/translation-function/interpolation[here]
+
+[source, typescript]
+----
+<div>{t('Kiali home cluster: {{clusterName}}', { clusterName: homeCluster?.name })}</div>
+----
+
+The variables are represented with `{{$variable}}`. You can set any name to the variable, you have just to be sure that it matches the json field.
+
+This is how it looks like in the translation file:
+
+[source, json]
+----
+"Kiali home cluster: {{clusterName}}": "Kiali主集群: {{clusterName}}",
+----
+
+- **Plurals:**
+
+When a statement is different in singular and plural, you can use `defaultValue_one` and `defaultValue_other` fields to add different plural statements (no need to add 's' manually anymore). Note that in this case the variable name must be `count`. For convenience the key will be the singular statement. More info link:https://www.i18next.com/translation-function/plurals[here]
+
+[source, typescript]
+----
+labelsInfo = this.props.t('{{count}} label', {
+        count: labelsLength,
+        defaultValue_one: '{{count}} label',
+        defaultValue_other: '{{count}} labels'
+      });
+----
+
+**Additional i18n notes:**
+
+- Always add namespace variable `I18N_NAMESPACE` to any React component translation configuration (`withTranslation` or `useTranslation`).
+[source, typescript]
+----
+export const Menu = withTranslation(I18N_NAMESPACE)(MenuComponent);
+
+const { t } = useTranslation(I18N_NAMESPACE);
+----
+
+- Always import the i18n variable from `i18n`, not from `i18next` or `react-i18next` libraries
+[source, typescript]
+----
+import { i18n } from 'i18n';
+----
+
+- If the React class component contains static methods, you have to use the`hoistNonReactStatics` library to copy static methods to translated components
+[source, typescript]
+----
+const OverviewToolbarI18n = hoistNonReactStatics(
+  withTranslation(I18N_NAMESPACE)(OverviewToolbarComponent),
+  OverviewToolbarComponent
+);
+----
+
+- If you need the translated class component to include a React reference to access DOM nodes, use `{ withRef: true }` option:
+[source, typescript]
+----
+export const StatefulFilters = withTranslation(I18N_NAMESPACE, { withRef: true })(StatefulFiltersComponent);
 ----
 
 === Integration Testing

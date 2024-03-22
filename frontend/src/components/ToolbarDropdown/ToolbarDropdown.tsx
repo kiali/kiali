@@ -9,31 +9,34 @@ import {
   TooltipPosition
 } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
+import { useTranslation } from 'react-i18next';
+import { I18N_NAMESPACE } from 'types/Common';
 
 const dropdownTitle = kialiStyle({
-  marginRight: '10px',
-  alignSelf: 'center'
+  alignSelf: 'center',
+  marginRight: '10px'
 });
 
 type ToolbarDropdownProps = {
   className?: string;
   disabled?: boolean;
+  handleSelect: (value: string) => void;
   id: string;
-  label?: string;
+  label: string;
   nameDropdown?: string;
+  onToggle?: (isOpen: boolean) => void;
   options: object;
   tooltip?: string;
   tooltipPosition?: TooltipPosition;
   value?: number | string;
-
-  handleSelect: (value: string) => void;
-  onToggle?: (isOpen: boolean) => void;
 };
 
 export const ToolbarDropdown: React.FC<ToolbarDropdownProps> = (props: ToolbarDropdownProps) => {
   const [isOpen, setIsOpen] = React.useState<boolean>(false);
 
-  const onKeyChanged = (_event?: React.MouseEvent<Element, MouseEvent>, selection?: string | number) => {
+  const { t } = useTranslation(I18N_NAMESPACE);
+
+  const onKeyChanged = (_event?: React.MouseEvent<Element, MouseEvent>, selection?: string | number): void => {
     if (selection) {
       props.handleSelect(String(selection));
     }
@@ -41,12 +44,12 @@ export const ToolbarDropdown: React.FC<ToolbarDropdownProps> = (props: ToolbarDr
     setIsOpen(false);
   };
 
-  const onToggleClick = () => {
+  const onToggleClick = (): void => {
     setIsOpen(!isOpen);
     props.onToggle && props.onToggle(isOpen);
   };
 
-  const toggle = (toggleRef: React.Ref<MenuToggleElement>) => (
+  const toggle = (toggleRef: React.Ref<MenuToggleElement>): React.ReactNode => (
     <MenuToggle
       id={`${props.id}-toggle`}
       ref={toggleRef}
@@ -55,7 +58,7 @@ export const ToolbarDropdown: React.FC<ToolbarDropdownProps> = (props: ToolbarDr
       isDisabled={props.disabled}
       className={props.className}
     >
-      {props.label}
+      {t(props.label)}
     </MenuToggle>
   );
 
@@ -81,19 +84,20 @@ export const ToolbarDropdown: React.FC<ToolbarDropdownProps> = (props: ToolbarDr
               isSelected={key === String(props.value)}
               value={`${key}`}
             >
-              {props.options[key]}
+              {t(props.options[key])}
             </SelectOption>
           );
         })}
       </SelectList>
     </Select>
   );
+
   return (
     <>
       {props.nameDropdown && <span className={dropdownTitle}>{props.nameDropdown}</span>}
       {props.tooltip ? (
         <Tooltip
-          key={'ot-' + props.id}
+          key={`ot-${props.id}`}
           entryDelay={1000}
           position={props.tooltipPosition ? props.tooltipPosition : TooltipPosition.auto}
           content={<>{props.tooltip}</>}

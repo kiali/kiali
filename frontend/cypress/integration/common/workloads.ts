@@ -13,7 +13,8 @@ const activateFilter = (state: string): void => {
     }
   }).as('refresh');
 
-  cy.get('select[aria-label="filter_select_value"]').select(state);
+  cy.get('button#filter_select_value-toggle').click();
+  cy.contains('div#filter_select_value button', state).click();
 };
 
 Given('a healthy workload in the cluster', function () {
@@ -39,13 +40,8 @@ Given('a degraded workload in the mesh', function () {
 });
 
 When('user filters for workload type {string}', (workloadType: string) => {
-  cy.get('select[aria-label="filter_select_type"]')
-    .parent()
-    .parent()
-    .within(() => {
-      cy.get('button').click();
-      cy.get(`li[label="${workloadType}"]`).find('button').click();
-    });
+  cy.get('div#filter_select_value-toggle').find('button').click();
+  cy.contains('div#filter_select_value button', workloadType).click();
 });
 
 Then('user sees {string} in workloads table', (workload: string) => {

@@ -1,5 +1,6 @@
 import deepFreeze from 'deep-freeze';
 import { UNIT_TIME, MILLISECONDS } from '../types/Common';
+import { i18n } from 'i18n';
 
 // We assume this is always defined in the .env file
 const documentationUrl = process.env.REACT_APP_KIALI_DOC_URL!;
@@ -22,19 +23,19 @@ const conf = {
     },
     /** Options in refresh */
     refreshInterval: {
-      0: 'Pause',
-      10000: 'Every 10s',
-      15000: 'Every 15s',
-      30000: 'Every 30s',
-      60000: 'Every 1m',
-      300000: 'Every 5m',
-      900000: 'Every 15m'
+      0: i18n.t('Pause'),
+      10000: i18n.t('Every 10s'),
+      15000: i18n.t('Every 15s'),
+      30000: i18n.t('Every 30s'),
+      60000: i18n.t('Every 1m'),
+      300000: i18n.t('Every 5m'),
+      900000: i18n.t('Every 15m')
     },
     /** Graphs layouts types */
     graphLayouts: {
-      'kiali-grid': 'Grid',
-      'kiali-concentric': 'Concentric',
-      'kiali-dagre': 'Dagre'
+      'kiali-grid': i18n.t('Grid'),
+      'kiali-concentric': i18n.t('Concentric'),
+      'kiali-dagre': i18n.t('Dagre')
     }
   },
   /** About Tracing Configuration*/
@@ -50,7 +51,7 @@ const conf = {
         500: 500
       },
       statusCode: {
-        none: 'none',
+        none: i18n.t('none'),
         200: '200',
         400: '400',
         401: '401',
@@ -70,12 +71,12 @@ const conf = {
     project: {
       url: 'https://github.com/kiali',
       icon: 'RepositoryIcon',
-      linkText: 'Find us on GitHub'
+      linkText: i18n.t('Find us on GitHub')
     },
     website: {
       url: 'https://www.kiali.io', // Without www, we get an SSL error
       icon: 'HomeIcon',
-      linkText: 'Visit our web page'
+      linkText: i18n.t('Visit our web page')
     }
   },
   /** */

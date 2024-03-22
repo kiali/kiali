@@ -96,3 +96,6 @@ frontend/logs
 frontend/cypress/videos
 frontend/cypress/screenshots
 frontend/cypress/results
+
+# locales
+frontend/public/locales/en

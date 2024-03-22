@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { DurationInSeconds } from '../../types/Common';
+import { DurationInSeconds, I18N_NAMESPACE } from '../../types/Common';
 import { Metric } from '../../types/Metrics';
 import { getName } from '../../utils/RateIntervals';
 import { PFColors } from 'components/Pf/PfColors';
@@ -7,6 +7,7 @@ import { SparklineChart } from 'components/Charts/SparklineChart';
 import { toVCLine } from 'utils/VictoryChartsUtils';
 import { RichDataPoint, VCLine } from 'types/VictoryChartInfo';
 import { DirectionType } from './OverviewToolbar';
+import { useTranslation } from 'react-i18next';
 
 type Props = {
   direction: DirectionType;
@@ -25,6 +26,8 @@ const showMetrics = (metrics: Metric[] | undefined): boolean => {
 };
 
 export const OverviewCardDataPlaneNamespace: React.FC<Props> = (props: Props) => {
+  const { t } = useTranslation(I18N_NAMESPACE);
+
   let series: VCLine<RichDataPoint>[] = [];
 
   if (showMetrics(props.metrics)) {
@@ -57,7 +60,7 @@ export const OverviewCardDataPlaneNamespace: React.FC<Props> = (props: Props) =>
             style={{ paddingTop: '0.5rem' }}
             data-test={`sparkline-${props.direction.toLowerCase()}-duration-${getName(props.duration).toLowerCase()}`}
           >
-            {`${props.direction} traffic, ${getName(props.duration).toLowerCase()}`}
+            {`${t(props.direction)} ${t('traffic')}, ${getName(props.duration).toLowerCase()}`}
           </div>
 
           <SparklineChart
@@ -74,7 +77,9 @@ export const OverviewCardDataPlaneNamespace: React.FC<Props> = (props: Props) =>
         </>
       )}
 
-      {series.length === 0 && <div style={{ paddingTop: '2.5rem' }}>No {props.direction.toLowerCase()} traffic</div>}
+      {series.length === 0 && (
+        <div style={{ paddingTop: '2.5rem' }}>{`${t('No')} ${t(props.direction.toLowerCase())} ${t('traffic')}`}</div>
+      )}
     </div>
   );
 };

@@ -60,7 +60,7 @@ When('user clicks graph duration menu', () => {
 
 When(`user selects graph duration {string}`, (duration: string) => {
   cy.get('button#time_range_duration-toggle').click();
-  cy.get(`button#${duration}`).click();
+  cy.get(`button[id="${duration}"]`).click();
   cy.get('#loading_kiali_spinner').should('not.exist');
 });
 
@@ -78,7 +78,7 @@ When('user selects {string} graph type', (graphType: string) => {
     .click()
     .parent()
     .find('div#graph_type_dropdown')
-    .find(`button#${graphType}`)
+    .find(`button[id="${graphType}"]`)
     .click();
 
   cy.get('#loading_kiali_spinner').should('not.exist');

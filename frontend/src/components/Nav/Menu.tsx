@@ -75,7 +75,7 @@ class MenuComponent extends React.Component<MenuProps, MenuState> {
 
   renderMenuItems = (): React.ReactNode => {
     const { location } = this.props;
-    const allNavMenuItems = navMenuItems(this.props.t);
+    const allNavMenuItems = navMenuItems;
     const graphEnableCytoscape = serverConfig.kialiFeatureFlags.uiDefaults.graph.impl !== 'pf';
     const graphEnablePatternfly = serverConfig.kialiFeatureFlags.uiDefaults.graph.impl !== 'cy';
     const graphEnableMeshClassic = serverConfig.kialiFeatureFlags.uiDefaults.mesh.impl === 'classic';
@@ -127,7 +127,7 @@ class MenuComponent extends React.Component<MenuProps, MenuState> {
         let title = item.title;
 
         if (item.id === 'tracing') {
-          return tracingUrl && <ExternalLink key={item.to} href={tracingUrl} name={title} />;
+          return tracingUrl && <ExternalLink key={item.to} href={tracingUrl} name={this.props.t(title)} />;
         }
 
         if (
@@ -144,7 +144,7 @@ class MenuComponent extends React.Component<MenuProps, MenuState> {
         return (
           <NavItem isActive={activeMenuItem === item} key={item.to}>
             <Link id={item.id} to={item.to} onClick={() => history.push(item.to)}>
-              {title}
+              {this.props.t(title)}
             </Link>
           </NavItem>
         );

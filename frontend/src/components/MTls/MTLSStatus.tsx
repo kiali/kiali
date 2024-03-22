@@ -31,7 +31,7 @@ export const MTLSStatus: React.FC<MTLSStatusProps> = (props: MTLSStatusProps) =>
         icon={statusDescriptor.icon}
         iconClassName={props.className ?? ''}
         tooltipText={statusDescriptor.message}
-        tooltipPosition={props.overlayPosition ?? TooltipPosition.left}
+        tooltipPosition={props.overlayPosition ?? TooltipPosition.bottom}
       />
     );
   }
