@@ -29,7 +29,9 @@ const emptySvcHealth = new ServiceHealth(
 );
 const appList: AppListItem[] = [
   {
-    namespace: 'bookinfo',
+    namespace: {
+      name: 'bookinfo'
+    },
     health: emptyAppHealth,
     name: 'ratings',
     istioSidecar: false,
@@ -38,7 +40,9 @@ const appList: AppListItem[] = [
     istioReferences: []
   },
   {
-    namespace: 'bookinfo',
+    namespace: {
+      name: 'bookinfo'
+    },
     health: emptyAppHealth,
     name: 'productpage',
     istioSidecar: false,
@@ -47,7 +51,9 @@ const appList: AppListItem[] = [
     istioReferences: []
   },
   {
-    namespace: 'bookinfo',
+    namespace: {
+      name: 'bookinfo'
+    },
     health: emptyAppHealth,
     name: 'details',
     istioSidecar: false,
@@ -56,7 +62,9 @@ const appList: AppListItem[] = [
     istioReferences: []
   },
   {
-    namespace: 'bookinfo',
+    namespace: {
+      name: 'bookinfo'
+    },
     health: emptyAppHealth,
     name: 'reviews',
     istioSidecar: false,
@@ -212,7 +220,9 @@ describe('LabelFilter', () => {
     const result = filterByLabel(appList, ['app', 'service=details'], 'and');
     expect(result).toEqual([
       {
-        namespace: 'bookinfo',
+        namespace: {
+          name: 'bookinfo'
+        },
         health: emptyAppHealth,
         name: 'details',
         istioSidecar: false,
@@ -227,7 +237,9 @@ describe('LabelFilter', () => {
     const result = filterByLabel(appList, ['app', 'version=v2'], 'and');
     expect(result).toEqual([
       {
-        namespace: 'bookinfo',
+        namespace: {
+          name: 'bookinfo'
+        },
         health: emptyAppHealth,
         name: 'reviews',
         istioSidecar: false,

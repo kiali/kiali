@@ -30,7 +30,7 @@ import { StatusState, StatusKey } from 'types/StatusState';
 import { PromisesRegistry } from '../utils/CancelablePromises';
 import { GlobalActions } from '../actions/GlobalActions';
 import { getKialiTheme } from 'utils/ThemeUtils';
-import i18next from 'i18next';
+import { i18n } from 'i18n';
 
 interface ReduxStateProps {
   authenticated: boolean;
@@ -234,7 +234,7 @@ class AuthenticationControllerComponent extends React.Component<
     if (uiDefaults) {
       // Set I18n language
       let language = store.getState().globalState.language || uiDefaults.i18n.language;
-      i18next.changeLanguage(language);
+      i18n.changeLanguage(language);
       store.dispatch(GlobalActions.setLanguage(language));
 
       // Duration (aka metricsPerRefresh)

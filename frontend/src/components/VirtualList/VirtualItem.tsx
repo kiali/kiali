@@ -3,9 +3,10 @@ import { Tr } from '@patternfly/react-table';
 import { Resource, IstioTypes, hasHealth, RenderResource } from './Config';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 import { Health } from '../../types/Health';
-import { StatefulFilters } from '../Filters/StatefulFilters';
+import { StatefulFiltersComponent } from '../Filters/StatefulFilters';
 import { actionRenderer } from './Renderers';
 import { CSSProperties } from 'react';
+import { getNamespace } from '../../utils/Common';
 
 type VirtualItemProps = {
   action?: JSX.Element;
@@ -14,7 +15,7 @@ type VirtualItemProps = {
   config: Resource;
   index: number;
   item: RenderResource;
-  statefulFilterProps?: React.RefObject<StatefulFilters>;
+  statefulFilterProps?: React.RefObject<StatefulFiltersComponent>;
   style?: CSSProperties;
 };
 
@@ -30,19 +31,19 @@ export class VirtualItem extends React.Component<VirtualItemProps, VirtualItemSt
     this.state = { health: undefined };
   }
 
-  componentDidMount() {
+  componentDidMount(): void {
     if (hasHealth(this.props.item)) {
       this.setState({ health: this.props.item.health });
     }
   }
 
-  componentDidUpdate(prevProps: VirtualItemProps) {
+  componentDidUpdate(prevProps: VirtualItemProps): void {
     if (hasHealth(this.props.item) && this.props.item.health !== prevProps.item['health']) {
       this.setState({ health: this.props.item.health });
     }
   }
 
-  componentWillUnmount() {
+  componentWillUnmount(): void {
     this.promises.cancelAll();
   }
 
@@ -56,10 +57,10 @@ export class VirtualItem extends React.Component<VirtualItemProps, VirtualItemSt
     return this.props.config.name !== 'istio' ? this.props.config.badge : IstioTypes[this.props.item['type']].badge;
   };
 
-  render() {
+  render(): React.ReactNode {
     const { style, className, item } = this.props;
     const cluster = item.cluster ? `_Cluster${item.cluster}` : '';
-    const namespace = 'namespace' in item ? `_Ns${item.namespace}` : '';
+    const namespace = 'namespace' in item ? `_Ns${getNamespace(item.namespace)}` : '';
     const type = 'type' in item ? `_${item.type}` : '';
     // End result looks like: VirtualItem_Clusterwest_Nsbookinfo_gateway_bookinfo-gateway
 

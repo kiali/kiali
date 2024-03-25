@@ -1,3 +1,4 @@
+import { i18n } from 'i18n';
 import {
   ActiveFiltersInfo,
   FILTER_ACTION_APPEND,
@@ -11,8 +12,8 @@ import { MTLSStatuses } from '../../types/TLSStatus';
 import { TextInputTypes } from '@patternfly/react-core';
 
 export const nameFilter: RunnableFilter<NamespaceInfo> = {
-  category: 'Namespace',
-  placeholder: 'Filter by Namespace',
+  category: i18n.t('Namespace'),
+  placeholder: i18n.t('Filter by Namespace'),
   filterType: TextInputTypes.text,
   action: FILTER_ACTION_APPEND,
   filterValues: [],
@@ -21,21 +22,21 @@ export const nameFilter: RunnableFilter<NamespaceInfo> = {
 };
 
 export const mtlsValues: FilterValue[] = [
-  { id: 'enabled', title: 'Enabled' },
-  { id: 'partiallyEnabled', title: 'Partially Enabled' },
-  { id: 'disabled', title: 'Disabled' }
+  { id: 'enabled', title: i18n.t('Enabled') },
+  { id: 'partiallyEnabled', title: i18n.t('Partially Enabled') },
+  { id: 'disabled', title: i18n.t('Disabled') }
 ];
 
 const statusMap = new Map<string, string>([
-  [MTLSStatuses.ENABLED, 'Enabled'],
-  [MTLSStatuses.PARTIALLY, 'Partially Enabled'],
-  [MTLSStatuses.NOT_ENABLED, 'Disabled'],
-  [MTLSStatuses.DISABLED, 'Disabled']
+  [MTLSStatuses.ENABLED, i18n.t('Enabled')],
+  [MTLSStatuses.PARTIALLY, i18n.t('Partially Enabled')],
+  [MTLSStatuses.NOT_ENABLED, i18n.t('Disabled')],
+  [MTLSStatuses.DISABLED, i18n.t('Disabled')]
 ]);
 
 export const mtlsFilter: RunnableFilter<NamespaceInfo> = {
-  category: 'mTLS',
-  placeholder: 'Filter by mTLS',
+  category: i18n.t('mTLS'),
+  placeholder: i18n.t('Filter by mTLS'),
   filterType: AllFilterTypes.select,
   action: FILTER_ACTION_APPEND,
   filterValues: mtlsValues,
@@ -45,8 +46,8 @@ export const mtlsFilter: RunnableFilter<NamespaceInfo> = {
 };
 
 export const labelFilter: RunnableFilter<NamespaceInfo> = {
-  category: 'Namespace Label',
-  placeholder: 'Filter by Namespace Label',
+  category: i18n.t('Namespace Label'),
+  placeholder: i18n.t('Filter by Namespace Label'),
   filterType: AllFilterTypes.nsLabel,
   action: FILTER_ACTION_APPEND,
   filterValues: [],
@@ -62,6 +63,14 @@ export const labelFilter: RunnableFilter<NamespaceInfo> = {
   }
 };
 
+interface HealthFilters {
+  noFilter: boolean;
+  showInError: boolean;
+  showInNotReady: boolean;
+  showInSuccess: boolean;
+  showInWarning: boolean;
+}
+
 const healthValues: FilterValue[] = [
   { id: NOT_READY.name, title: NOT_READY.name },
   { id: FAILURE.name, title: FAILURE.name },
@@ -69,7 +78,7 @@ const healthValues: FilterValue[] = [
   { id: HEALTHY.name, title: HEALTHY.name }
 ];
 
-const summarizeHealthFilters = (healthFilters: ActiveFiltersInfo) => {
+const summarizeHealthFilters = (healthFilters: ActiveFiltersInfo): HealthFilters => {
   if (healthFilters.filters.length === 0) {
     return {
       noFilter: true,
@@ -79,10 +88,12 @@ const summarizeHealthFilters = (healthFilters: ActiveFiltersInfo) => {
       showInSuccess: true
     };
   }
+
   let showInNotReady = false,
     showInError = false,
     showInWarning = false,
     showInSuccess = false;
+
   healthFilters.filters.forEach(f => {
     switch (f.value) {
       case NOT_READY.name:
@@ -100,6 +111,7 @@ const summarizeHealthFilters = (healthFilters: ActiveFiltersInfo) => {
       default:
     }
   });
+
   return {
     noFilter: false,
     showInNotReady: showInNotReady,
@@ -110,13 +122,14 @@ const summarizeHealthFilters = (healthFilters: ActiveFiltersInfo) => {
 };
 
 export const healthFilter: RunnableFilter<NamespaceInfo> = {
-  category: 'Health',
-  placeholder: 'Filter by Application Health',
+  category: i18n.t('Health'),
+  placeholder: i18n.t('Filter by Application Health'),
   filterType: AllFilterTypes.select,
   action: FILTER_ACTION_APPEND,
   filterValues: healthValues,
   run: (ns: NamespaceInfo, filters: ActiveFiltersInfo) => {
     const { showInNotReady, showInError, showInWarning, showInSuccess, noFilter } = summarizeHealthFilters(filters);
+
     return noFilter
       ? true
       : ns.status

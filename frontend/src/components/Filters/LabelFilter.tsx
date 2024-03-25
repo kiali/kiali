@@ -16,7 +16,7 @@ const infoIconStyle = kialiStyle({
 });
 
 export const LabelFilters: React.FC<LabelFiltersProps> = (props: LabelFiltersProps) => {
-  const onKeyDown = (e: React.KeyboardEvent) => {
+  const onKeyDown = (e: React.KeyboardEvent): void => {
     if (e.key === 'Enter') {
       if (props.value && props.value.length > 0) {
         props.value.split(' ').map(val => !props.isActive(val) && props.filterAdd(val));
@@ -27,9 +27,10 @@ export const LabelFilters: React.FC<LabelFiltersProps> = (props: LabelFiltersPro
   return (
     <>
       <TextInput
+        id="filter_input_label"
         type="text"
         value={props.value}
-        aria-label="filter_input_label_key"
+        aria-label="Filter Input Label"
         placeholder="Set Label"
         onChange={(_event, value) => props.onChange(value)}
         onKeyDown={e => onKeyDown(e)}

@@ -5,6 +5,8 @@ import { OverviewType } from './OverviewToolbar';
 import { NamespaceStatus } from '../../types/NamespaceInfo';
 import { switchType } from './OverviewHelper';
 import { Paths } from '../../config';
+import { useTranslation } from 'react-i18next';
+import { I18N_NAMESPACE } from 'types/Common';
 
 type Props = {
   name: string;
@@ -13,6 +15,7 @@ type Props = {
 };
 
 export const NamespaceStatuses: React.FC<Props> = (props: Props) => {
+  const { t } = useTranslation(I18N_NAMESPACE);
   const targetPage = switchType(props.type, Paths.APPLICATIONS, Paths.SERVICES, Paths.WORKLOADS);
   const name = props.name;
   const status = props.status;
@@ -26,10 +29,28 @@ export const NamespaceStatuses: React.FC<Props> = (props: Props) => {
 
   let text: string;
 
-  if (nbItems === 1) {
-    text = switchType(props.type, '1 application', '1 service', '1 workload');
-  } else {
-    text = `${nbItems}${switchType(props.type, ' applications', ' services', ' workloads')}`;
+  switch (targetPage) {
+    case Paths.APPLICATIONS:
+      text = t('{{count}} application', {
+        count: nbItems,
+        defaultValueOne: '{{count}} application',
+        defaultValueOther: '{{count}} applications'
+      });
+      break;
+    case Paths.SERVICES:
+      text = t('{{count}} service', {
+        count: nbItems,
+        defaultValueOne: '{{count}} service',
+        defaultValueOther: '{{count}} services'
+      });
+      break;
+    case Paths.WORKLOADS:
+      text = t('{{count}} workload', {
+        count: nbItems,
+        defaultValueOne: '{{count}} workload',
+        defaultValueOther: '{{count}} workloads'
+      });
+      break;
   }
 
   return (

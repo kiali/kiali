@@ -20,7 +20,7 @@ import * as AppListClass from './AppListClass';
 import { VirtualList } from '../../components/VirtualList/VirtualList';
 import { TimeDurationComponent } from '../../components/Time/TimeDurationComponent';
 import { RefreshNotifier } from '../../components/Refresh/RefreshNotifier';
-import { isMultiCluster } from '../../config';
+import { isMultiCluster, serverConfig } from '../../config';
 
 type AppListPageState = FilterComponent.State<AppListItem>;
 
@@ -84,25 +84,33 @@ class AppListPageComponent extends FilterComponent.Component<AppListPageProps, A
     this.promises.cancelAll();
     const activeFilters: ActiveFiltersInfo = FilterSelected.getSelected();
     const activeToggles: ActiveTogglesInfo = Toggles.getToggles();
-    const namespacesSelected = this.props.activeNamespaces.map(item => item.name);
+    const uniqueClusters = new Set<string>();
 
-    if (namespacesSelected.length !== 0) {
-      this.fetchApps(namespacesSelected, activeFilters, activeToggles, this.props.duration);
+    Object.keys(serverConfig.clusters).forEach(cluster => {
+      uniqueClusters.add(cluster);
+    });
+
+    if (this.props.activeNamespaces.length !== 0) {
+      this.fetchApps(Array.from(uniqueClusters), activeFilters, activeToggles, this.props.duration);
     } else {
       this.setState({ listItems: [] });
     }
   }
 
-  fetchApps(namespaces: string[], filters: ActiveFiltersInfo, toggles: ActiveTogglesInfo, rateInterval: number): void {
-    const appsPromises = namespaces.map(namespace => {
+  fetchApps(clusters: string[], filters: ActiveFiltersInfo, toggles: ActiveTogglesInfo, rateInterval: number): void {
+    const appsPromises = clusters.map(cluster => {
       const health = toggles.get('health') ? 'true' : 'false';
       const istioResources = toggles.get('istioResources') ? 'true' : 'false';
 
-      return API.getApps(namespace, {
-        health: health,
-        istioResources: istioResources,
-        rateInterval: `${String(rateInterval)}s`
-      });
+      return API.getClustersApps(
+        this.props.activeNamespaces.map(ns => ns.name).join(','),
+        {
+          health: health,
+          istioResources: istioResources,
+          rateInterval: `${String(rateInterval)}s`
+        },
+        cluster
+      );
     });
 
     this.promises

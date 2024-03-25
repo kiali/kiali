@@ -8,6 +8,8 @@ import { Card, CardBody, Flex, FlexItem, Grid, GridItem, Tooltip, TooltipPositio
 import { KialiIcon } from 'config/KialiIcon';
 import { kialiStyle } from 'styles/StyleUtils';
 import { IstiodResourceThresholds } from 'types/IstioStatus';
+import { useTranslation } from 'react-i18next';
+import { I18N_NAMESPACE } from 'types/Common';
 
 export const infoStyle = kialiStyle({
   marginLeft: '0.25rem'
@@ -16,10 +18,10 @@ export const infoStyle = kialiStyle({
 const controlPlaneAnnotation = 'topology.istio.io/controlPlaneClusters';
 
 type ControlPlaneProps = {
-  istiodContainerMemory?: Metric[];
   istiodContainerCpu?: Metric[];
-  istiodProcessMemory?: Metric[];
+  istiodContainerMemory?: Metric[];
   istiodProcessCpu?: Metric[];
+  istiodProcessMemory?: Metric[];
   istiodResourceThresholds?: IstiodResourceThresholds;
   pilotLatency?: Metric[];
 };
@@ -46,6 +48,8 @@ const showMetrics = (metrics: Metric[] | undefined): boolean => {
 };
 
 export const OverviewCardControlPlaneNamespace: React.FC<ControlPlaneProps> = (props: ControlPlaneProps) => {
+  const { t } = useTranslation(I18N_NAMESPACE);
+
   let memorySeries: VCLine<RichDataPoint>[] = [];
   let cpuSeries: VCLine<RichDataPoint>[] = [];
   let memoryThresholds: VCLine<RichDataPoint>[] = [];
@@ -83,7 +87,7 @@ export const OverviewCardControlPlaneNamespace: React.FC<ControlPlaneProps> = (p
         ];
 
         datapointn[1] = props.istiodResourceThresholds?.memory;
-        const dataThre = toVCLine([datapoint0, datapointn], 'Mb (Threshold)', PFColors.Green300);
+        const dataThre = toVCLine([datapoint0, datapointn], t('Mb (Threshold)'), PFColors.Green300);
         memoryThresholds.push(dataThre);
       }
 
@@ -93,7 +97,7 @@ export const OverviewCardControlPlaneNamespace: React.FC<ControlPlaneProps> = (p
 
   if (showMetrics(cpu)) {
     if (cpu && cpu?.length > 0) {
-      const data = toVCLine(cpu[0].datapoints, 'cores', PFColors.Green400);
+      const data = toVCLine(cpu[0].datapoints, t('cores'), PFColors.Green400);
 
       if (props.istiodResourceThresholds?.cpu) {
         const datapoint0: Datapoint = [cpu[0].datapoints[0][0], cpu[0].datapoints[0][1]];
@@ -105,7 +109,7 @@ export const OverviewCardControlPlaneNamespace: React.FC<ControlPlaneProps> = (p
         ];
 
         datapointn[1] = props.istiodResourceThresholds?.cpu;
-        const dataThre = toVCLine([datapoint0, datapointn], 'cores', PFColors.Green300);
+        const dataThre = toVCLine([datapoint0, datapointn], t('cores'), PFColors.Green300);
         cpuThresholds.push(dataThre);
       }
 
@@ -116,7 +120,9 @@ export const OverviewCardControlPlaneNamespace: React.FC<ControlPlaneProps> = (p
   return (
     <div style={{ textAlign: 'center' }}>
       <div>
-        <div style={{ display: 'inline-block', width: '125px', whiteSpace: 'nowrap' }}>Control plane metrics</div>
+        <div style={{ display: 'inline-block', width: '125px', whiteSpace: 'nowrap' }}>
+          {t('Control plane metrics')}
+        </div>
       </div>
       <div
         style={{
@@ -137,12 +143,14 @@ export const OverviewCardControlPlaneNamespace: React.FC<ControlPlaneProps> = (p
                     style={{ textAlign: 'right', paddingRight: '2rem' }}
                   >
                     <FlexItem>
-                      <b>Memory</b>
+                      <b>{t('Memory')}</b>
                       <Tooltip
                         position={TooltipPosition.right}
                         content={
                           <div style={{ textAlign: 'left' }}>
-                            This chart shows memory consumption for the istiod {memoryMetricSource}
+                            {t('This chart shows memory consumption for the istiod {{memoryMetricSource}}', {
+                              memoryMetricSource
+                            })}
                           </div>
                         }
                       >
@@ -164,7 +172,7 @@ export const OverviewCardControlPlaneNamespace: React.FC<ControlPlaneProps> = (p
                       `${(dp.x as Date).toLocaleStringWithConditionalDate()}\n${dp.y.toFixed(2)} ${dp.name}`
                     }
                     series={memorySeries}
-                    labelName="mb"
+                    labelName={t('mb')}
                     thresholds={memoryThresholds}
                   />
                 </GridItem>
@@ -182,12 +190,14 @@ export const OverviewCardControlPlaneNamespace: React.FC<ControlPlaneProps> = (p
                     style={{ textAlign: 'right', paddingRight: '2rem' }}
                   >
                     <FlexItem>
-                      <b>CPU</b>
+                      <b>{t('CPU')}</b>
                       <Tooltip
                         position={TooltipPosition.right}
                         content={
                           <div style={{ textAlign: 'left' }}>
-                            This chart shows cpu consumption for the istiod {cpuMetricSource}
+                            {t('This chart shows cpu consumption for the istiod {{cpuMetricSource}}', {
+                              cpuMetricSource
+                            })}
                           </div>
                         }
                       >
@@ -209,7 +219,7 @@ export const OverviewCardControlPlaneNamespace: React.FC<ControlPlaneProps> = (p
                       `${(dp.x as Date).toLocaleStringWithConditionalDate()}\n${dp.y.toFixed(2)} ${dp.name}`
                     }
                     series={cpuSeries}
-                    labelName="cores"
+                    labelName={t('cores')}
                     thresholds={cpuThresholds}
                   />
                 </GridItem>

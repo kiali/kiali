@@ -260,16 +260,16 @@ func NamespaceServiceHealth(namespace string, params map[string]string) (*models
 	}
 }
 
-func ApplicationsList(namespace string) (*models.AppList, error) {
-	url := fmt.Sprintf("%s/api/namespaces/%s/apps", client.kialiURL, namespace)
-	appList := new(models.AppList)
-
+func ApplicationsList(namespace string) (*models.ClusterApps, error) {
+	url := fmt.Sprintf("%s/api/clusters/apps?namespaces=%s", client.kialiURL, namespace)
+	appList := new(models.ClusterApps)
+  
 	_, err := getRequestAndUnmarshalInto(url, appList)
 	if err == nil {
 		return appList, nil
-	} else {
-		return nil, err
-	}
+  } else {
+	  return nil, err
+  } 
 }
 
 func ApplicationDetails(name, namespace string) (*models.App, int, error) {

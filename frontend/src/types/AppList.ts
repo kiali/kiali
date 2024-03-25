@@ -3,11 +3,12 @@ import { AppHealth } from './Health';
 import { ObjectReference } from './IstioObjects';
 
 export interface AppList {
-  applications: AppOverview[];
-  namespace: Namespace;
+  applications: AppListItem[];
+  cluster?: string;
 }
 
-export interface AppOverview {
+export interface AppListItem {
+  // @TODO this should be gone as Namespace contains cluster
   cluster?: string;
   health: AppHealth;
   istioAmbient: boolean;
@@ -15,10 +16,7 @@ export interface AppOverview {
   istioSidecar: boolean;
   labels: { [key: string]: string };
   name: string;
-}
-
-export interface AppListItem extends AppOverview {
-  namespace: string;
+  namespace: Namespace;
 }
 
 export interface AppListQuery {

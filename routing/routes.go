@@ -648,9 +648,9 @@ func NewRoutes(conf *config.Config, kialiCache cache.KialiCache, clientFactory k
 			handlers.WorkloadUpdate,
 			true,
 		},
-		// swagger:route GET /namespaces/{namespace}/apps apps appList
+		// swagger:route GET /clusters/apps apps appList
 		// ---
-		// Endpoint to get the list of apps for a namespace
+		// Endpoint to get the list of apps for a cluster
 		//
 		//     Produces:
 		//     - application/json
@@ -662,10 +662,10 @@ func NewRoutes(conf *config.Config, kialiCache cache.KialiCache, clientFactory k
 		//      200: appListResponse
 		//
 		{
-			"AppList",
+			"ClustersApps",
 			"GET",
-			"/api/namespaces/{namespace}/apps",
-			handlers.AppList,
+			"/api/clusters/apps",
+			handlers.ClustersApps,
 			true,
 		},
 		// swagger:route GET /namespaces/{namespace}/apps/{app} apps appDetails

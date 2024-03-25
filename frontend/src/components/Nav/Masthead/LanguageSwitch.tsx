@@ -2,13 +2,13 @@ import * as React from 'react';
 import { kialiStyle } from 'styles/StyleUtils';
 import { Dropdown, DropdownItem, DropdownList, MenuToggle, MenuToggleElement, Tooltip } from '@patternfly/react-core';
 import { KialiIcon } from 'config/KialiIcon';
-import i18n from 'i18next';
 import { GlobalActions } from 'actions/GlobalActions';
 import { store } from 'store/ConfigStore';
 import { I18N_NAMESPACE, Language } from 'types/Common';
 import { KialiAppState } from 'store/Store';
 import { connect } from 'react-redux';
 import { useTranslation } from 'react-i18next';
+import { i18n } from 'i18n';
 
 const menuToggleStyle = kialiStyle({
   marginTop: '0.25rem',
@@ -33,20 +33,20 @@ type LanguageSwitchProps = {
   language: string;
 };
 
-export const LanguageSwitchComponent: React.FC<LanguageSwitchProps> = props => {
-  const { t } = useTranslation(I18N_NAMESPACE);
-
+export const LanguageSwitchComponent: React.FC<LanguageSwitchProps> = ({ language }) => {
   const [isDropdownOpen, setIsDropdownOpen] = React.useState<boolean>(false);
+
+  const { t } = useTranslation(I18N_NAMESPACE);
 
   const languageItems: React.ReactNode[] = [
     <DropdownItem key="English" onClick={() => switchLanguage(Language.ENGLISH)}>
       <span>English</span>
-      {props.language === Language.ENGLISH && <KialiIcon.Check className={checkStyle} />}
+      {language === Language.ENGLISH && <KialiIcon.Check className={checkStyle} />}
     </DropdownItem>,
 
     <DropdownItem key="Chinese" onClick={() => switchLanguage(Language.CHINESE)}>
       <span>中文</span>
-      {props.language === Language.CHINESE && <KialiIcon.Check className={checkStyle} />}
+      {language === Language.CHINESE && <KialiIcon.Check className={checkStyle} />}
     </DropdownItem>
   ];
 
@@ -60,7 +60,7 @@ export const LanguageSwitchComponent: React.FC<LanguageSwitchProps> = props => {
   };
 
   return (
-    <Tooltip position="left" content={<>{t('Switch language')}</>}>
+    <Tooltip position="bottom" content={<>{t('Switch language')}</>} trigger="mouseenter click" exitDelay={0}>
       <Dropdown
         toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
           <MenuToggle
@@ -68,7 +68,7 @@ export const LanguageSwitchComponent: React.FC<LanguageSwitchProps> = props => {
             className={menuToggleStyle}
             data-test="switch-language-button"
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-            aria-label={t('Switch language')}
+            aria-label="Switch language"
             variant="plain"
             isExpanded={isDropdownOpen}
           >

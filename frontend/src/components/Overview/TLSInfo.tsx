@@ -7,45 +7,53 @@ import { istioCertsInfoSelector } from '../../store/Selectors';
 import { CertsInfo } from '../../types/CertsInfo';
 import { connect } from 'react-redux';
 import { infoStyle } from '../../pages/Overview/OverviewCardControlPlaneNamespace';
+import { TFunction, useTranslation } from 'react-i18next';
+import { I18N_NAMESPACE } from 'types/Common';
 
-type Props = {
-  certificatesInformationIndicators: boolean;
-  version?: string;
+type ReduxProps = {
   certsInfo: CertsInfo[];
 };
 
-const lockIconStyle = kialiStyle({ marginLeft: '5px' });
+type Props = ReduxProps & {
+  certificatesInformationIndicators: boolean;
+  version?: string;
+};
 
-function showCerts(certs) {
+const lockIconStyle = kialiStyle({ marginLeft: '0.25rem' });
+
+const showCerts = (certs: CertsInfo[], t: TFunction): React.ReactNode => {
   if (certs) {
-    let rows = certs.map(function (item) {
+    let rows = certs.map(item => {
       return (
         <div key={'showCerts'}>
           <div style={{ display: 'inline-block', width: '125px', whiteSpace: 'nowrap' }}>From {item.issuer}</div>
           <div>
-            <div>Issuer: </div>
+            <div>{t('Issuer:')}</div>
             <div>{item.secretName}</div>
           </div>
           <div>
-            <div>Valid From: </div>
+            <div>{t('Valid From:')}</div>
             <div>{item.notAfter}</div>
           </div>
           <div>
-            <div>Valid To: </div>
+            <div>{t('Valid To:')}</div>
             <div>{item.notBefore}</div>
           </div>
         </div>
       );
     });
+
     return <div>{rows}</div>;
   } else {
-    return 'No cert info';
+    return t('No cert info');
   }
-}
+};
 
-function LockIcon(props) {
+const LockIcon = (props: Props): React.ReactElement => {
+  const { t } = useTranslation(I18N_NAMESPACE);
+
   return props.certificatesInformationIndicators === true ? (
-    <Tooltip position={TooltipPosition.top} content={showCerts(props.certsInfo)}>
+    <Tooltip position={TooltipPosition.top} content={showCerts(props.certsInfo, t)}>
       <div data-test={'lockerCA'}>
         <KialiIcon.MtlsLock className={lockIconStyle} />
       </div>
@@ -53,41 +61,41 @@ function LockIcon(props) {
   ) : (
     <KialiIcon.MtlsLock className={lockIconStyle} />
   );
-}
+};
 
-class TLSInfoComponent extends React.Component<Props> {
-  render() {
-    return (
-      <div style={{ textAlign: 'left' }}>
-        <div>
-          <div style={{ display: 'inline-block', width: '125px', whiteSpace: 'nowrap' }}>Min TLS version</div>
-          <Label isCompact color="blue" data-test={'label-TLS'}>
-            <div style={{ display: '-webkit-box' }}>
-              {this.props.version}{' '}
-              <LockIcon
-                certificatesInformationIndicators={this.props.certificatesInformationIndicators}
-                certsInfo={this.props.certsInfo}
-              ></LockIcon>
-              <Tooltip
-                position={TooltipPosition.right}
-                content={
-                  <div style={{ textAlign: 'left' }}>
-                    The meshConfig.meshMTLS.minProtocolVersion field specifies the minimum TLS version for the TLS
-                    connections among Istio workloads. N/A if it was not set.
-                  </div>
-                }
-              >
-                <KialiIcon.Info className={infoStyle} />
-              </Tooltip>
-            </div>
-          </Label>
-        </div>
+const TLSInfoComponent: React.FC<Props> = (props: Props) => {
+  const { t } = useTranslation(I18N_NAMESPACE);
+
+  return (
+    <div style={{ textAlign: 'left' }}>
+      <div>
+        <div style={{ display: 'inline-block', width: '125px', whiteSpace: 'nowrap' }}>{t('Min TLS version')}</div>
+        <Label isCompact color="blue" data-test={'label-TLS'}>
+          <div style={{ display: '-webkit-box' }}>
+            {props.version}{' '}
+            <LockIcon
+              certificatesInformationIndicators={props.certificatesInformationIndicators}
+              certsInfo={props.certsInfo}
+            ></LockIcon>
+            <Tooltip
+              position={TooltipPosition.right}
+              content={
+                <div style={{ textAlign: 'left' }}>
+                  {t(`The meshConfig.meshMTLS.minProtocolVersion field specifies the minimum TLS version for the TLS \
+                  connections among Istio workloads. N/A if it was not set.`)}
+                </div>
+              }
+            >
+              <KialiIcon.Info className={infoStyle} />
+            </Tooltip>
+          </div>
+        </Label>
       </div>
-    );
-  }
-}
+    </div>
+  );
+};
 
-const mapStateToProps = (state: KialiAppState) => ({
+const mapStateToProps = (state: KialiAppState): ReduxProps => ({
   certsInfo: istioCertsInfoSelector(state)
 });
 

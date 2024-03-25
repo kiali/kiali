@@ -2,7 +2,7 @@ import { Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import { activeFilters, showMore } from './label_check';
 
 const optionCheck = (name: string): void => {
-  cy.get('[aria-label="filter_select_value"]').contains(name).should('exist');
+  cy.contains('div#filter_select_value button', name).should('exist');
 };
 
 When('user types {string} into the input', (input: string) => {
@@ -21,7 +21,8 @@ When('user filters by {string}', (filterCategory: string) => {
     }
   }).as('noFilters');
 
-  cy.get('select[aria-label="filter_select_type"]').select(filterCategory);
+  cy.get('button#filter_select_type-toggle').click();
+  cy.contains('div#filter_select_type button', filterCategory).click();
 });
 
 Then('no filters are active', () => {
@@ -110,7 +111,8 @@ Then('the filter {string} should be visible only once', (category: string) => {
 });
 
 When('user chooses {int} type filters', (count: number) => {
-  cy.get('select[aria-label="filter_select_type"]').select('Type');
+  cy.get('button#filter_select_type-toggle').click();
+  cy.contains('div#filter_select_type button', 'Type').click();
 
   for (let i = 1; i <= count; i++) {
     cy.get('input[placeholder="Filter by Type"]').click();

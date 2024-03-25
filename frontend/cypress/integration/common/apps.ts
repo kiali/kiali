@@ -114,10 +114,10 @@ Then('user sees Details information for Apps', () => {
   });
 });
 
-Then('user only sees the apps with the {string} name in the {string} namespace', (name: string, ns: string) => {
+Then('user only sees the apps with the {string} name', (name: string) => {
   let count: number;
 
-  cy.request('GET', `/api/namespaces/${ns}/apps`).should(response => {
+  cy.request('GET', `/api/clusters/apps`).should(response => {
     count = response.body.applications.filter(item => item.name.includes(name)).length;
   });
 

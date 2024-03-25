@@ -54,30 +54,6 @@ func TestEnvVarLogLevel(t *testing.T) {
 			level:       zerolog.TraceLevel,
 		},
 		{
-			stringLevel: "0",
-			level:       zerolog.FatalLevel,
-		},
-		{
-			stringLevel: "1",
-			level:       zerolog.ErrorLevel,
-		},
-		{
-			stringLevel: "2",
-			level:       zerolog.WarnLevel,
-		},
-		{
-			stringLevel: "3",
-			level:       zerolog.InfoLevel,
-		},
-		{
-			stringLevel: "4",
-			level:       zerolog.DebugLevel,
-		},
-		{
-			stringLevel: "5",
-			level:       zerolog.TraceLevel,
-		},
-		{
 			stringLevel: "invalid",
 			level:       zerolog.InfoLevel,
 		},

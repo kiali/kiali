@@ -106,9 +106,9 @@ Valid command line arguments:
   -os1a|--openshift1-api <api URL>: The URL to the first OpenShift API server.
   -os1u|--openshift1-user <username>: The username of the user for the first OpenShift cluster. (default: kiali)
   -os1p|--openshift1-pass <password>: The password of the user for the first OpenShift cluster. (default: kiali)
-  -os2a|--openshift1-api <api URL>: The URL to the second OpenShift API server.
-  -os2u|--openshift1-user <username>: The username of the user for the second OpenShift cluster. (default: kiali)
-  -os2p|--openshift1-pass <password>: The password of the user for the second OpenShift cluster. (default: kiali)
+  -os2a|--openshift2-api <api URL>: The URL to the second OpenShift API server.
+  -os2u|--openshift2-user <username>: The username of the user for the second OpenShift cluster. (default: kiali)
+  -os2p|--openshift2-pass <password>: The password of the user for the second OpenShift cluster. (default: kiali)
   -ve|--validate-env <true|false>: if true, check that the environment has everything we need. Set this to false
                                    to speed up initialization of the script at the expense of not being able to
                                    fail-fast on obvious errors (default: true)
