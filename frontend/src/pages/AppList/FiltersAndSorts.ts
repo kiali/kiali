@@ -25,7 +25,7 @@ export const sortFields: SortField<AppListItem>[] = [
     isNumeric: false,
     param: 'ns',
     compare: (a: AppListItem, b: AppListItem): number => {
-      let sortValue = a.namespace.name.localeCompare(b.namespace.name);
+      let sortValue = a.namespace.localeCompare(b.namespace);
       if (sortValue === 0) {
         sortValue = a.name.localeCompare(b.name);
       }
@@ -76,9 +76,9 @@ export const sortFields: SortField<AppListItem>[] = [
 
         if (statusForA.priority === statusForB.priority) {
           // If both apps have same health status, use error rate to determine order.
-          const ratioA = calculateErrorRate(a.namespace.name, a.name, 'app', a.health.requests).errorRatio.global.status
+          const ratioA = calculateErrorRate(a.namespace, a.name, 'app', a.health.requests).errorRatio.global.status
             .value;
-          const ratioB = calculateErrorRate(b.namespace.name, b.name, 'app', b.health.requests).errorRatio.global.status
+          const ratioB = calculateErrorRate(b.namespace, b.name, 'app', b.health.requests).errorRatio.global.status
             .value;
           return ratioA === ratioB ? a.name.localeCompare(b.name) : ratioB - ratioA;
         }

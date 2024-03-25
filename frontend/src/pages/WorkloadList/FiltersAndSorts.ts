@@ -37,7 +37,7 @@ export const sortFields: SortField<WorkloadListItem>[] = [
     isNumeric: false,
     param: 'ns',
     compare: (a: WorkloadListItem, b: WorkloadListItem): number => {
-      let sortValue = a.namespace.name.localeCompare(b.namespace.name);
+      let sortValue = a.namespace.localeCompare(b.namespace);
       if (sortValue === 0) {
         sortValue = a.name.localeCompare(b.name);
       }
@@ -172,10 +172,10 @@ export const sortFields: SortField<WorkloadListItem>[] = [
 
         if (statusForA.priority === statusForB.priority) {
           // If both workloads have same health status, use error rate to determine order.
-          const ratioA = calculateErrorRate(a.namespace.name, a.name, 'workload', a.health.requests).errorRatio.global
-            .status.value;
-          const ratioB = calculateErrorRate(b.namespace.name, b.name, 'workload', b.health.requests).errorRatio.global
-            .status.value;
+          const ratioA = calculateErrorRate(a.namespace, a.name, 'workload', a.health.requests).errorRatio.global.status
+            .value;
+          const ratioB = calculateErrorRate(b.namespace, b.name, 'workload', b.health.requests).errorRatio.global.status
+            .value;
           return ratioA === ratioB ? a.name.localeCompare(b.name) : ratioB - ratioA;
         }
 
@@ -191,8 +191,8 @@ export const sortFields: SortField<WorkloadListItem>[] = [
     isNumeric: false,
     param: 'cl',
     compare: (a: WorkloadListItem, b: WorkloadListItem): number => {
-      if (a.namespace.cluster && b.namespace.cluster) {
-        let sortValue = a.namespace.cluster.localeCompare(b.namespace.cluster);
+      if (a.cluster && b.cluster) {
+        let sortValue = a.cluster.localeCompare(b.cluster);
         if (sortValue === 0) {
           sortValue = a.name.localeCompare(b.name);
         }

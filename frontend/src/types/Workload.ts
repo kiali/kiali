@@ -1,4 +1,3 @@
-import { Namespace } from './Namespace';
 import { WorkloadHealth, WorkloadHealthResponse } from './Health';
 import { ObjectReference, Pod, Service, Validations } from './IstioObjects';
 
@@ -66,7 +65,6 @@ export const WorkloadType = {
 export interface WorkloadListItem {
   additionalDetailSample?: AdditionalItem;
   appLabel: boolean;
-  // @TODO this should be gone as Namespace contains cluster
   cluster?: string;
   health: WorkloadHealth;
   istioAmbient: boolean;
@@ -74,7 +72,7 @@ export interface WorkloadListItem {
   istioSidecar: boolean;
   labels: { [key: string]: string };
   name: string;
-  namespace: Namespace;
+  namespace: string;
   notCoveredAuthPolicy: boolean;
   type: string;
   versionLabel: boolean;

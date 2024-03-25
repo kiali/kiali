@@ -111,7 +111,7 @@ class WorkloadListPageComponent extends FilterComponent.Component<
   getDeploymentItems = (data: ClusterWorkloadsResponse): WorkloadListItem[] => {
     if (data.workloads) {
       return data.workloads.map(deployment => ({
-        cluster: deployment.namespace.cluster,
+        cluster: deployment.cluster,
         namespace: deployment.namespace,
         name: deployment.name,
         type: deployment.type,
@@ -120,7 +120,7 @@ class WorkloadListPageComponent extends FilterComponent.Component<
         istioSidecar: deployment.istioSidecar,
         istioAmbient: deployment.istioAmbient,
         additionalDetailSample: deployment.additionalDetailSample,
-        health: WorkloadHealth.fromJson(deployment.namespace.name, deployment.name, deployment.health, {
+        health: WorkloadHealth.fromJson(deployment.namespace, deployment.name, deployment.health, {
           rateInterval: this.props.duration,
           hasSidecar: deployment.istioSidecar,
           hasAmbient: deployment.istioAmbient
@@ -128,7 +128,7 @@ class WorkloadListPageComponent extends FilterComponent.Component<
         labels: deployment.labels,
         istioReferences: sortIstioReferences(deployment.istioReferences, true),
         notCoveredAuthPolicy: hasMissingAuthPolicy(
-          validationKey(deployment.name, deployment.namespace.name),
+          validationKey(deployment.name, deployment.namespace),
           data.validations
         )
       }));

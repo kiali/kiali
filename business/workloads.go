@@ -218,7 +218,8 @@ func (in *WorkloadService) GetWorkloadList(ctx context.Context, criteria Workloa
 				log.Errorf("Error fetching Health in namespace %s for workload %s: %s", criteria.Namespace, wItem.Name, err)
 			}
 		}
-		wItem.Namespace = models.Namespace{Cluster: criteria.Cluster, Name: criteria.Namespace}
+		wItem.Cluster = criteria.Cluster
+		wItem.Namespace = criteria.Namespace
 		workloadList.Workloads = append(workloadList.Workloads, *wItem)
 	}
 
@@ -980,7 +981,8 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 			Pods:     models.Pods{},
 			Services: []models.ServiceOverview{},
 		}
-		w.Namespace = models.Namespace{Cluster: cluster, Name: namespace}
+		w.Cluster = cluster
+		w.Namespace = namespace
 		controllerType := controllers[controllerName]
 		// Flag to add a controller if it is found
 		cnFound := true
@@ -1185,7 +1187,8 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 
 	wl := &models.Workload{
 		WorkloadListItem: models.WorkloadListItem{
-			Namespace: models.Namespace{Cluster: criteria.Cluster, Name: criteria.Namespace},
+			Cluster:   criteria.Cluster,
+			Namespace: criteria.Namespace,
 		},
 		Pods:              models.Pods{},
 		Services:          []models.ServiceOverview{},
@@ -1542,7 +1545,8 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 	if _, exist := controllers[criteria.WorkloadName]; exist {
 		w := models.Workload{
 			WorkloadListItem: models.WorkloadListItem{
-				Namespace: models.Namespace{Cluster: criteria.Cluster, Name: criteria.Namespace},
+				Cluster:   criteria.Cluster,
+				Namespace: criteria.Namespace,
 			},
 			Pods:              models.Pods{},
 			Services:          []models.ServiceOverview{},

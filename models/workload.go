@@ -46,10 +46,11 @@ type WorkloadListItem struct {
 	// example: reviews-v1
 	Name string `json:"name"`
 
-	// Namespace where the workloads live in
-	// required: true
-	// example: bookinfo
-	Namespace Namespace `json:"namespace"`
+	// Namespace of the workload
+	Namespace string `json:"namespace"`
+
+	// The kube cluster where this workload is located.
+	Cluster string `json:"cluster"`
 
 	// Type of the workload
 	// required: true

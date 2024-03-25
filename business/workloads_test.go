@@ -1031,11 +1031,11 @@ func TestGetWorkloadMultiCluster(t *testing.T) {
 	workloadService := NewWithBackends(clients, clients, nil, nil).Workload
 	workload, err := workloadService.GetWorkload(context.TODO(), WorkloadCriteria{Cluster: "west", Namespace: "bookinfo", WorkloadName: "ratings-v1"})
 	require.NoError(err)
-	assert.Equal("west", workload.Namespace.Cluster)
+	assert.Equal("west", workload.Cluster)
 	assert.Contains(workload.Annotations, "unique-to-west")
 
 	workload, err = workloadService.GetWorkload(context.TODO(), WorkloadCriteria{Cluster: "east", Namespace: "bookinfo", WorkloadName: "ratings-v1"})
 	require.NoError(err)
-	assert.Equal("east", workload.Namespace.Cluster)
+	assert.Equal("east", workload.Cluster)
 	assert.Contains(workload.Annotations, "unique-to-east")
 }
