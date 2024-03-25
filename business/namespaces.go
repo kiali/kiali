@@ -632,9 +632,14 @@ func (in *NamespaceService) UpdateNamespace(ctx context.Context, namespace strin
 		return nil, err
 	}
 	kubeCache.Refresh(namespace)
+	// Clear all namespaces for this cluster.
 	in.kialiCache.RefreshTokenNamespaces(cluster)
 
-	// Call GetNamespace to update the caching
+	// Call GetClusterNamespaces to update the cache for this cluster.
+	if _, err := in.GetClusterNamespaces(ctx, cluster); err != nil {
+		return nil, err
+	}
+
 	return in.GetClusterNamespace(ctx, namespace, cluster)
 }
 
