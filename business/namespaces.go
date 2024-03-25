@@ -598,7 +598,10 @@ func (in *NamespaceService) GetClusterNamespace(ctx context.Context, namespace s
 	}
 
 	// Refresh namespace in cache since we've just fetched it from the API.
-	in.kialiCache.SetNamespace(client.GetToken(), result)
+	if _, err := in.GetClusterNamespaces(ctx, cluster); err != nil {
+		log.Errorf("Unable to refresh cache for cluster [%s]: %s", cluster, err)
+	}
+
 	return &result, nil
 }
 
@@ -634,7 +637,11 @@ func (in *NamespaceService) UpdateNamespace(ctx context.Context, namespace strin
 	kubeCache.Refresh(namespace)
 	in.kialiCache.RefreshTokenNamespaces(cluster)
 
-	// Call GetNamespace to update the caching
+	// Call GetClusterNamespaces to update the cache for this cluster.
+	if _, err := in.GetClusterNamespaces(ctx, cluster); err != nil {
+		return nil, err
+	}
+
 	return in.GetClusterNamespace(ctx, namespace, cluster)
 }
 
