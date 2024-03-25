@@ -668,7 +668,6 @@ func (in *SvcService) UpdateService(ctx context.Context, cluster, namespace, ser
 		return nil, err
 	}
 	kubeCache.Refresh(namespace)
-	in.kialiCache.RefreshTokenNamespaces(cluster)
 
 	// After the update we fetch the whole workload
 	return in.GetServiceDetails(ctx, cluster, namespace, service, interval, queryTime)
