@@ -232,7 +232,7 @@ func addLabels(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo
 func decorateMatchingGateways(cluster string, gwCrd *networking_v1beta1.Gateway, gatewayNodeMapping map[*models.WorkloadListItem][]*graph.Node, nodeMetadataKey graph.MetadataKey) {
 	gwSelector := labels.Set(gwCrd.Spec.Selector).AsSelector()
 	for gw, nodes := range gatewayNodeMapping {
-		if gw.Namespace.Cluster != cluster {
+		if gw.Cluster != cluster {
 			continue
 		}
 
@@ -261,7 +261,7 @@ func decorateMatchingGateways(cluster string, gwCrd *networking_v1beta1.Gateway,
 func decorateMatchingAPIGateways(cluster string, gwCrd *k8s_networking_v1.Gateway, gatewayNodeMapping map[*models.WorkloadListItem][]*graph.Node, nodeMetadataKey graph.MetadataKey) {
 	gwSelector := labels.Set(gwCrd.Labels).AsSelector()
 	for gw, nodes := range gatewayNodeMapping {
-		if gw.Namespace.Cluster != cluster {
+		if gw.Cluster != cluster {
 			continue
 		}
 
