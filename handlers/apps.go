@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/gorilla/mux"
+	"golang.org/x/exp/slices"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/models"
@@ -49,10 +50,6 @@ func (p *appParams) extract(r *http.Request) {
 func ClustersApps(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
 	namespaces := query.Get("namespaces") // csl of namespaces
-	nss := []string{}
-	if len(namespaces) > 0 {
-		nss = strings.Split(namespaces, ",")
-	}
 	p := appParams{}
 	p.extract(r)
 
@@ -62,9 +59,16 @@ func ClustersApps(w http.ResponseWriter, r *http.Request) {
 		RespondWithError(w, http.StatusInternalServerError, "Apps initialization error: "+err.Error())
 		return
 	}
-	if len(nss) == 0 {
-		loadedNamespaces, _ := businessLayer.Namespace.GetClusterNamespaces(r.Context(), p.ClusterName)
-		for _, ns := range loadedNamespaces {
+
+	nss := []string{}
+	namespaceQueryParams := strings.Split(namespaces, ",")
+	loadedNamespaces, _ := businessLayer.Namespace.GetClusterNamespaces(r.Context(), p.ClusterName)
+	for _, ns := range loadedNamespaces {
+		if len(namespaces) > 0 {
+			if slices.Contains(namespaceQueryParams, ns.Name) {
+				nss = append(nss, ns.Name)
+			}
+		} else {
 			nss = append(nss, ns.Name)
 		}
 	}
@@ -75,8 +79,10 @@ func ClustersApps(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for _, ns := range nss {
-		criteria := business.AppCriteria{Cluster: p.ClusterName, Namespace: ns, IncludeIstioResources: p.IncludeIstioResources,
-			IncludeHealth: p.IncludeHealth, RateInterval: p.RateInterval, QueryTime: p.QueryTime}
+		criteria := business.AppCriteria{
+			Cluster: p.ClusterName, Namespace: ns, IncludeIstioResources: p.IncludeIstioResources,
+			IncludeHealth: p.IncludeHealth, RateInterval: p.RateInterval, QueryTime: p.QueryTime,
+		}
 
 		if p.IncludeHealth {
 			rateInterval, err := adjustRateInterval(r.Context(), businessLayer, ns, p.RateInterval, p.QueryTime, p.ClusterName)
@@ -104,8 +110,10 @@ func AppDetails(w http.ResponseWriter, r *http.Request) {
 	p := appParams{}
 	p.extract(r)
 
-	criteria := business.AppCriteria{Namespace: p.Namespace, AppName: p.AppName, IncludeIstioResources: true, IncludeHealth: p.IncludeHealth,
-		RateInterval: p.RateInterval, QueryTime: p.QueryTime, Cluster: p.ClusterName}
+	criteria := business.AppCriteria{
+		Namespace: p.Namespace, AppName: p.AppName, IncludeIstioResources: true, IncludeHealth: p.IncludeHealth,
+		RateInterval: p.RateInterval, QueryTime: p.QueryTime, Cluster: p.ClusterName,
+	}
 
 	// Get business layer
 	business, err := getBusiness(r)

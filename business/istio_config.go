@@ -161,7 +161,7 @@ func (in *IstioConfigService) GetIstioConfigListForNamespace(ctx context.Context
 	if _, err := in.businessLayer.Namespace.GetClusterNamespace(ctx, namespace, cluster); err != nil {
 		// Check if the namespace exists on the cluster in multi-cluster mode.
 		// TODO: Remove this once other business methods stop looping over all clusters.
-		if api_errors.IsNotFound(err) && len(in.userClients) > 1 {
+		if (api_errors.IsNotFound(err) || api_errors.IsForbidden(err)) && len(in.userClients) > 1 {
 			return &models.IstioConfigList{}, nil
 		}
 		return nil, err
