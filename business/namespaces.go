@@ -598,7 +598,7 @@ func (in *NamespaceService) GetClusterNamespace(ctx context.Context, namespace s
 	}
 
 	// Refresh namespace in cache since we've just fetched it from the API.
-	in.kialiCache.SetNamespace(client.GetToken(), result)
+	in.GetClusterNamespaces(ctx, cluster)
 	return &result, nil
 }
 
@@ -632,7 +632,6 @@ func (in *NamespaceService) UpdateNamespace(ctx context.Context, namespace strin
 		return nil, err
 	}
 	kubeCache.Refresh(namespace)
-	// Clear all namespaces for this cluster.
 	in.kialiCache.RefreshTokenNamespaces(cluster)
 
 	// Call GetClusterNamespaces to update the cache for this cluster.
