@@ -76,7 +76,9 @@ const appList: AppListItem[] = [
 
 const workloadList: WorkloadListItem[] = [
   {
-    namespace: 'bookinfo',
+    namespace: {
+      name: 'bookinfo'
+    },
     health: emptyWorkHealth,
     name: 'details-v1',
     type: 'Deployment',
@@ -89,7 +91,9 @@ const workloadList: WorkloadListItem[] = [
     notCoveredAuthPolicy: false
   },
   {
-    namespace: 'bookinfo',
+    namespace: {
+      name: 'bookinfo'
+    },
     health: emptyWorkHealth,
     name: 'productpage-v1',
     type: 'Deployment',
@@ -102,7 +106,9 @@ const workloadList: WorkloadListItem[] = [
     notCoveredAuthPolicy: false
   },
   {
-    namespace: 'bookinfo',
+    namespace: {
+      name: 'bookinfo'
+    },
     health: emptyWorkHealth,
     name: 'ratings-v1',
     type: 'Deployment',
@@ -115,7 +121,9 @@ const workloadList: WorkloadListItem[] = [
     notCoveredAuthPolicy: false
   },
   {
-    namespace: 'bookinfo',
+    namespace: {
+      name: 'bookinfo'
+    },
     health: emptyWorkHealth,
     name: 'reviews-v1',
     type: 'Deployment',
@@ -128,7 +136,9 @@ const workloadList: WorkloadListItem[] = [
     notCoveredAuthPolicy: false
   },
   {
-    namespace: 'bookinfo',
+    namespace: {
+      name: 'bookinfo'
+    },
     health: emptyWorkHealth,
     name: 'reviews-v2',
     type: 'Deployment',
@@ -141,7 +151,9 @@ const workloadList: WorkloadListItem[] = [
     notCoveredAuthPolicy: false
   },
   {
-    namespace: 'bookinfo',
+    namespace: {
+      name: 'bookinfo'
+    },
     health: emptyWorkHealth,
     name: 'reviews-v3',
     type: 'Deployment',
