@@ -66,6 +66,8 @@ export const WorkloadType = {
 export interface WorkloadListItem {
   additionalDetailSample?: AdditionalItem;
   appLabel: boolean;
+  // @TODO this should be gone as Namespace contains cluster
+  cluster?: string;
   health: WorkloadHealth;
   istioAmbient: boolean;
   istioReferences: ObjectReference[];
