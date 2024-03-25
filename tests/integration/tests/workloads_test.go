@@ -25,13 +25,13 @@ func TestWorkloadsList(t *testing.T) {
 		require.NotEmpty(wl.Name)
 		require.NotNil(wl.Health)
 		require.NotNil(wl.Labels)
+		require.Equal(kiali.BOOKINFO, wl.Namespace.Name)
 		if !strings.Contains(wl.Name, "traffic-generator") {
 			require.True(wl.IstioSidecar)
 			require.NotNil(wl.IstioReferences)
 		}
 	}
 	require.NotNil(wlList.Validations)
-	require.Equal(kiali.BOOKINFO, wlList.Namespace.Name)
 }
 
 func TestWorkloadDetails(t *testing.T) {

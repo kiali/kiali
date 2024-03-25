@@ -45,6 +45,10 @@ func setupWorkloadList(t *testing.T, k8s *kubetest.FakeK8sClient) (*httptest.Ser
 }
 
 func TestWorkloadsEndpoint(t *testing.T) {
+	cfg := config.NewConfig()
+	cfg.ExternalServices.Istio.IstioAPIEnabled = false
+	config.Set(cfg)
+
 	mockClock()
 
 	kubeObjects := []runtime.Object{&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "ns"}}}

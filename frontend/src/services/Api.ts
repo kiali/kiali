@@ -57,7 +57,7 @@ import { TLSStatus } from '../types/TLSStatus';
 import {
   Workload,
   WorkloadListQuery,
-  WorkloadNamespaceResponse,
+  ClusterWorkloadsResponse,
   WorkloadQuery,
   WorkloadUpdateQuery
 } from '../types/Workload';
@@ -922,11 +922,20 @@ export const getServiceDetail = async (
   });
 };
 
-export const getWorkloads = (
-  namespace: string,
-  params: WorkloadListQuery
-): Promise<ApiResponse<WorkloadNamespaceResponse>> => {
-  return newRequest<WorkloadNamespaceResponse>(HTTP_VERBS.GET, urls.workloads(namespace), params, {});
+export const getClustersWorkloads = (
+  namespaces: string,
+  params: AppListQuery,
+  cluster?: string
+): Promise<ApiResponse<ClusterWorkloadsResponse>> => {
+  const queryParams: QueryParams<WorkloadListQuery & Namespaces> = {
+    ...params,
+    namespaces: namespaces
+  };
+
+  if (cluster) {
+    queryParams.clusterName = cluster;
+  }
+  return newRequest<ClusterWorkloadsResponse>(HTTP_VERBS.GET, urls.clustersWorkloads(), queryParams, {});
 };
 
 export const getWorkload = (
