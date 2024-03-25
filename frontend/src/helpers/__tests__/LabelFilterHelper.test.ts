@@ -271,7 +271,9 @@ describe('LabelFilter', () => {
     const result = filterByLabel(workloadList, ['app=reviews', 'version'], 'and');
     expect(result).toEqual([
       {
-        namespace: 'bookinfo',
+        namespace: {
+          name: 'bookinfo'
+        },
         health: emptyWorkHealth,
         name: 'reviews-v1',
         type: 'Deployment',
@@ -284,7 +286,9 @@ describe('LabelFilter', () => {
         notCoveredAuthPolicy: false
       },
       {
-        namespace: 'bookinfo',
+        namespace: {
+          name: 'bookinfo'
+        },
         health: emptyWorkHealth,
         name: 'reviews-v2',
         type: 'Deployment',
@@ -297,7 +301,9 @@ describe('LabelFilter', () => {
         notCoveredAuthPolicy: false
       },
       {
-        namespace: 'bookinfo',
+        namespace: {
+          name: 'bookinfo'
+        },
         health: emptyWorkHealth,
         name: 'reviews-v3',
         type: 'Deployment',
