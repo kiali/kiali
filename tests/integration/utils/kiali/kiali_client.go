@@ -266,19 +266,14 @@ func NamespaceServiceHealth(namespace string, params map[string]string) (*models
 	}
 }
 
-func ApplicationsList(namespace string) (*models.AppList, error) {
-	body, _, _, err := httpGETWithRetry(client.kialiURL+"/api/namespaces/"+namespace+"/apps", client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
-	if err == nil {
-		appList := new(models.AppList)
-		err = json.Unmarshal(body, &appList)
-		if err == nil {
-			return appList, nil
-		} else {
-			return nil, err
-		}
-	} else {
+func ApplicationsList(namespace string) (*models.ClusterApps, error) {
+	url := fmt.Sprintf("%s/api/clusters/apps?namespaces=%s", client.kialiURL, namespace)
+	appList := new(models.ClusterApps)
+	err := getRequestAndUnmarshalInto(url, appList)
+	if err != nil {
 		return nil, err
 	}
+	return appList, nil
 }
 
 func ApplicationDetails(name, namespace string) (*models.App, int, error) {

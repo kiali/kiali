@@ -1,8 +1,8 @@
 import { Namespace } from '../types/Namespace';
 
-export const removeDuplicatesArray = a => [...Array.from(new Set(a))] as string[];
+export const removeDuplicatesArray = (a: string[]): string[] => [...Array.from(new Set(a))] as string[];
 
-export const arrayEquals = <T>(a1: T[], a2: T[], comparator: (v1: T, v2: T) => boolean) => {
+export const arrayEquals = <T>(a1: T[], a2: T[], comparator: (v1: T, v2: T) => boolean): boolean => {
   if (a1.length !== a2.length) {
     return false;
   }
@@ -36,4 +36,13 @@ export const isValid = (isValid?: boolean, isWarning?: boolean): validationType 
     return 'success';
   }
   return isWarning ? 'warning' : 'error';
+};
+
+// @TODO this function should be removed once Workloads and Services lists are optimized
+export const getNamespace = (namespace: string | Namespace): string => {
+  if (typeof namespace === 'string') {
+    return namespace;
+  } else {
+    return namespace.name;
+  }
 };

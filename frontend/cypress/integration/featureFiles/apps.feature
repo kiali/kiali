@@ -65,7 +65,7 @@ Feature: Kiali Apps List page
   Scenario: Filter Applications table by Label
     When the user filters by "Label" for "app=reviews"
     Then user sees "reviews"
-    And user only sees the apps with the "reviews" name in the "bookinfo" namespace
+    And user only sees the apps with the "reviews" name
 
   @bookinfo-app
   Scenario: The healthy status of a logical mesh application is reported in the list of applications
@@ -103,7 +103,7 @@ Feature: Kiali Apps List page
 
   @multi-cluster
   Scenario: The column related to cluster name should be visible
-    Then the "Cluster" column "appears" 
+    Then the "Cluster" column "appears"
     And an entry for "east" cluster should be in the table
     And an entry for "west" cluster should be in the table
 
@@ -118,4 +118,4 @@ Feature: Kiali Apps List page
     Then the list is sorted by column "Cluster" in "ascending" order
     When user sorts the list by column "Cluster" in "descending" order
     Then the list is sorted by column "Cluster" in "descending" order
-    
+

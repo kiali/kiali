@@ -2,6 +2,7 @@ package business
 
 import (
 	"context"
+	"fmt"
 	"sort"
 	"strings"
 	"sync"
@@ -56,6 +57,126 @@ func buildFinalLabels(m map[string][]string) map[string]string {
 		consolidated[k] = strings.Join(list, ",")
 	}
 	return consolidated
+}
+
+// GetClusterAppList is the API handler to fetch the list of applications in a given namespace and cluster
+func (in *AppService) GetClusterAppList(ctx context.Context, criteria AppCriteria) (models.ClusterApps, error) {
+	var end observability.EndFunc
+	ctx, end = observability.StartSpan(ctx, "GetClusterAppList",
+		observability.Attribute("package", "business"),
+		observability.Attribute("namespace", criteria.Namespace),
+		observability.Attribute("cluster", criteria.Cluster),
+		observability.Attribute("includeHealth", criteria.IncludeHealth),
+		observability.Attribute("includeIstioResources", criteria.IncludeIstioResources),
+		observability.Attribute("rateInterval", criteria.RateInterval),
+		observability.Attribute("queryTime", criteria.QueryTime),
+	)
+	defer end()
+
+	appList := &models.ClusterApps{
+		Apps: []models.AppListItem{},
+	}
+
+	namespace := criteria.Namespace
+	cluster := criteria.Cluster
+
+	if _, ok := in.userClients[cluster]; !ok {
+		return *appList, fmt.Errorf("Cluster [%s] is not found or is not accessible for Kiali", cluster)
+	}
+
+	if _, err := in.businessLayer.Namespace.GetClusterNamespace(ctx, namespace, cluster); err != nil {
+		return *appList, err
+	}
+
+	allApps, err := in.businessLayer.App.fetchNamespaceApps(ctx, namespace, cluster, "")
+	if err != nil {
+		log.Errorf("Error fetching Applications for cluster %s per namespace %s: %s", cluster, namespace, err)
+		return *appList, err
+	}
+
+	icCriteria := IstioConfigCriteria{
+		IncludeAuthorizationPolicies:  true,
+		IncludeDestinationRules:       true,
+		IncludeEnvoyFilters:           true,
+		IncludeGateways:               true,
+		IncludePeerAuthentications:    true,
+		IncludeRequestAuthentications: true,
+		IncludeSidecars:               true,
+		IncludeVirtualServices:        true,
+	}
+	istioConfigList := &models.IstioConfigList{}
+
+	if criteria.IncludeIstioResources {
+		istioConfigList, err = in.businessLayer.IstioConfig.GetIstioConfigListForNamespace(ctx, cluster, namespace, icCriteria)
+		if err != nil {
+			log.Errorf("Error fetching Istio Config for Cluster %s per namespace %s: %s", cluster, namespace, err)
+			return *appList, err
+		}
+	}
+
+	for keyApp, valueApp := range allApps {
+		appItem := &models.AppListItem{
+			Name:         keyApp,
+			IstioSidecar: true,
+			Health:       models.EmptyAppHealth(),
+		}
+		applabels := make(map[string][]string)
+		svcReferences := make([]*models.IstioValidationKey, 0)
+		for _, srv := range valueApp.Services {
+			joinMap(applabels, srv.Labels)
+			if criteria.IncludeIstioResources {
+				vsFiltered := kubernetes.FilterVirtualServicesByService(istioConfigList.VirtualServices, srv.Namespace, srv.Name)
+				for _, v := range vsFiltered {
+					ref := models.BuildKey(v.Kind, v.Name, v.Namespace)
+					svcReferences = append(svcReferences, &ref)
+				}
+				drFiltered := kubernetes.FilterDestinationRulesByService(istioConfigList.DestinationRules, srv.Namespace, srv.Name)
+				for _, d := range drFiltered {
+					ref := models.BuildKey(d.Kind, d.Name, d.Namespace)
+					svcReferences = append(svcReferences, &ref)
+				}
+				gwFiltered := kubernetes.FilterGatewaysByVirtualServices(istioConfigList.Gateways, istioConfigList.VirtualServices)
+				for _, g := range gwFiltered {
+					ref := models.BuildKey(g.Kind, g.Name, g.Namespace)
+					svcReferences = append(svcReferences, &ref)
+				}
+
+			}
+
+		}
+
+		wkdReferences := make([]*models.IstioValidationKey, 0)
+		for _, wrk := range valueApp.Workloads {
+			joinMap(applabels, wrk.Labels)
+			if criteria.IncludeIstioResources {
+				wSelector := labels.Set(wrk.Labels).AsSelector().String()
+				wkdReferences = append(wkdReferences, FilterWorkloadReferences(wSelector, *istioConfigList)...)
+			}
+		}
+		appItem.Labels = buildFinalLabels(applabels)
+		appItem.IstioReferences = FilterUniqueIstioReferences(append(svcReferences, wkdReferences...))
+
+		for _, w := range valueApp.Workloads {
+			if appItem.IstioSidecar = w.IstioSidecar; !appItem.IstioSidecar {
+				break
+			}
+		}
+		for _, w := range valueApp.Workloads {
+			if appItem.IstioAmbient = w.HasIstioAmbient(); !appItem.IstioAmbient {
+				break
+			}
+		}
+		if criteria.IncludeHealth {
+			appItem.Health, err = in.businessLayer.Health.GetAppHealth(ctx, criteria.Namespace, valueApp.cluster, appItem.Name, criteria.RateInterval, criteria.QueryTime, valueApp)
+			if err != nil {
+				log.Errorf("Error fetching Health in namespace %s for app %s: %s", criteria.Namespace, appItem.Name, err)
+			}
+		}
+		appItem.Namespace = models.Namespace{Cluster: cluster, Name: namespace}
+		appList.Apps = append(appList.Apps, *appItem)
+	}
+
+	return *appList, nil
 }
 
 // GetAppList is the API handler to fetch the list of applications in a given namespace
@@ -206,7 +327,7 @@ func (in *AppService) GetAppList(ctx context.Context, criteria AppCriteria) (mod
 					log.Errorf("Error fetching Health in namespace %s for app %s: %s", criteria.Namespace, appItem.Name, err)
 				}
 			}
-			appItem.Cluster = valueApp.cluster
+			appItem.Namespace = models.Namespace{Cluster: valueApp.cluster, Name: criteria.Namespace}
 			appList.Apps = append(appList.Apps, *appItem)
 		}
 	}
