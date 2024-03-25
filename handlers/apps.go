@@ -49,11 +49,10 @@ func (p *appParams) extract(r *http.Request) {
 // ClustersApps is the API handler to fetch all the apps to be displayed, related to a single cluster
 func ClustersApps(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
-	namespaces := query.Get("namespaces") // csl of namespaces
+	namespacesQueryParam := query.Get("namespaces") // csl of namespaces
 	p := appParams{}
 	p.extract(r)
 
-	// Get business layer
 	businessLayer, err := getBusiness(r)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, "Apps initialization error: "+err.Error())
@@ -61,14 +60,16 @@ func ClustersApps(w http.ResponseWriter, r *http.Request) {
 	}
 
 	nss := []string{}
-	namespaceQueryParams := strings.Split(namespaces, ",")
+	namespacesFromQueryParams := strings.Split(namespacesQueryParam, ",")
 	loadedNamespaces, _ := businessLayer.Namespace.GetClusterNamespaces(r.Context(), p.ClusterName)
 	for _, ns := range loadedNamespaces {
-		if len(namespaces) > 0 {
-			if slices.Contains(namespaceQueryParams, ns.Name) {
+		// If namespaces have been provided in the query, further filter the results to only include those namespaces.
+		if len(namespacesQueryParam) > 0 {
+			if slices.Contains(namespacesFromQueryParams, ns.Name) {
 				nss = append(nss, ns.Name)
 			}
 		} else {
+			// Otherwise no namespaces have been provided in the query params, so include all namespaces the user has access to.
 			nss = append(nss, ns.Name)
 		}
 	}
