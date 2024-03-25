@@ -145,11 +145,23 @@ func (in *WorkloadService) GetWorkloadList(ctx context.Context, criteria Workloa
 	)
 	defer end()
 
+	namespace := criteria.Namespace
+	cluster := criteria.Cluster
+
 	workloadList := &models.WorkloadList{
-		Namespace:   models.Namespace{Cluster: criteria.Cluster, Name: criteria.Namespace, CreationTimestamp: time.Time{}},
+		Namespace:   models.Namespace{Cluster: cluster, Name: namespace, CreationTimestamp: time.Time{}},
 		Workloads:   []models.WorkloadListItem{},
 		Validations: models.IstioValidations{},
 	}
+
+	if _, ok := in.userClients[cluster]; !ok {
+		return *workloadList, fmt.Errorf("Cluster [%s] is not found or is not accessible for Kiali", cluster)
+	}
+
+	if _, err := in.businessLayer.Namespace.GetClusterNamespace(ctx, namespace, cluster); err != nil {
+		return *workloadList, err
+	}
+
 	var ws models.Workloads
 	// var authpolicies []*security_v1beta1.AuthorizationPolicy
 	var err error
@@ -166,13 +178,9 @@ func (in *WorkloadService) GetWorkloadList(ctx context.Context, criteria Workloa
 	go func(ctx context.Context) {
 		defer wg.Done()
 		var err2 error
-		if criteria.Cluster != "" {
-			ws, err2 = in.fetchWorkloadsFromCluster(ctx, criteria.Cluster, criteria.Namespace, "")
-		} else {
-			ws, err2 = in.fetchWorkloads(ctx, criteria.Namespace, "")
-		}
+		ws, err2 = in.fetchWorkloadsFromCluster(ctx, cluster, namespace, "")
 		if err2 != nil {
-			log.Errorf("Error fetching Workloads per namespace %s: %s", criteria.Namespace, err2)
+			log.Errorf("Error fetching Workloads per namespace %s: %s", namespace, err2)
 			errChan <- err2
 		}
 	}(ctx)
@@ -191,9 +199,9 @@ func (in *WorkloadService) GetWorkloadList(ctx context.Context, criteria Workloa
 		go func(ctx context.Context) {
 			defer wg.Done()
 			var err2 error
-			istioConfigMap, err2 = in.businessLayer.IstioConfig.GetIstioConfigMap(ctx, criteria.Namespace, istioConfigCriteria)
+			istioConfigMap, err2 = in.businessLayer.IstioConfig.GetIstioConfigMap(ctx, namespace, istioConfigCriteria)
 			if err2 != nil {
-				log.Errorf("Error fetching Istio Config per namespace %s: %s", criteria.Namespace, err2)
+				log.Errorf("Error fetching Istio Config per namespace %s: %s", namespace, err2)
 				errChan <- err2
 			}
 		}(ctx)
@@ -208,18 +216,18 @@ func (in *WorkloadService) GetWorkloadList(ctx context.Context, criteria Workloa
 	for _, w := range ws {
 		wItem := &models.WorkloadListItem{Health: *models.EmptyWorkloadHealth()}
 		wItem.ParseWorkload(w)
-		if istioConfigList, ok := istioConfigMap[criteria.Cluster]; ok && criteria.IncludeIstioResources {
+		if istioConfigList, ok := istioConfigMap[cluster]; ok && criteria.IncludeIstioResources {
 			wSelector := labels.Set(wItem.Labels).AsSelector().String()
 			wItem.IstioReferences = FilterUniqueIstioReferences(FilterWorkloadReferences(wSelector, istioConfigList))
 		}
 		if criteria.IncludeHealth {
-			wItem.Health, err = in.businessLayer.Health.GetWorkloadHealth(ctx, criteria.Namespace, criteria.Cluster, wItem.Name, criteria.RateInterval, criteria.QueryTime, w)
+			wItem.Health, err = in.businessLayer.Health.GetWorkloadHealth(ctx, namespace, cluster, wItem.Name, criteria.RateInterval, criteria.QueryTime, w)
 			if err != nil {
-				log.Errorf("Error fetching Health in namespace %s for workload %s: %s", criteria.Namespace, wItem.Name, err)
+				log.Errorf("Error fetching Health in namespace %s for workload %s: %s", namespace, wItem.Name, err)
 			}
 		}
-		wItem.Cluster = criteria.Cluster
-		wItem.Namespace = criteria.Namespace
+		wItem.Cluster = cluster
+		wItem.Namespace = namespace
 		workloadList.Workloads = append(workloadList.Workloads, *wItem)
 	}
 
@@ -227,7 +235,7 @@ func (in *WorkloadService) GetWorkloadList(ctx context.Context, criteria Workloa
 		// @TODO multi cluster validations
 		authpolicies := istioConfigList.AuthorizationPolicies
 		allWorkloads := map[string]models.WorkloadList{}
-		allWorkloads[criteria.Namespace] = *workloadList
+		allWorkloads[namespace] = *workloadList
 		validations := in.getWorkloadValidations(authpolicies, allWorkloads)
 		validations.StripIgnoredChecks()
 		workloadList.Validations = workloadList.Validations.MergeValidations(validations)

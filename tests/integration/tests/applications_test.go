@@ -19,7 +19,7 @@ func TestApplicationsList(t *testing.T) {
 		require.NotEmpty(app.Name)
 		require.NotNil(app.Health)
 		require.NotNil(app.Labels)
-		require.Equal(kiali.BOOKINFO, app.Namespace.Name)
+		require.Equal(kiali.BOOKINFO, app.Namespace)
 		if !strings.Contains(app.Name, "traffic-generator") {
 			require.True(app.IstioSidecar)
 			require.NotNil(app.IstioReferences)

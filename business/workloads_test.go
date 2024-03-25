@@ -932,7 +932,7 @@ func TestGetWorkloadListRSOwnedByCustom(t *testing.T) {
 	SetupBusinessLayer(t, k8s, *conf)
 	svc := setupWorkloadService(k8s, conf)
 
-	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: false, IncludeHealth: false}
+	criteria := WorkloadCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", IncludeIstioResources: false, IncludeHealth: false}
 	workloadList, err := svc.GetWorkloadList(context.TODO(), criteria)
 	require.NoError(err)
 	workloads := workloadList.Workloads
