@@ -123,6 +123,7 @@ const conf = {
       clustersApps: () => `api/clusters/apps`,
       clustersHealth: () => `api/clusters/health`,
       clustersMetrics: () => `api/clusters/metrics`,
+      clustersServices: () => `api/clusters/services`,
       clustersTls: () => `api/clusters/tls`,
       configValidations: () => `api/istio/validations`,
       crippledFeatures: 'api/crippled',

@@ -61,6 +61,17 @@ type ServiceOverview struct {
 	Health ServiceHealth `json:"health,omitempty"`
 }
 
+type ClusterServices struct {
+	// Cluster where the services live in
+	// required: true
+	// example: east
+	Cluster string `json:"cluster"`
+	// Services list for namespaces of a single cluster
+	// required: true
+	Services    []ServiceOverview `json:"services"`
+	Validations IstioValidations  `json:"validations"`
+}
+
 type ServiceList struct {
 	Namespace   Namespace         `json:"namespace"`
 	Services    []ServiceOverview `json:"services"`

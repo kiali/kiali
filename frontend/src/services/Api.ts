@@ -449,8 +449,20 @@ export const getClustersTls = (namespaces: string, cluster?: string): Promise<Ap
   return newRequest<[TLSStatus]>(HTTP_VERBS.GET, urls.clustersTls(), queryParams, {});
 };
 
-export const getServices = (namespace: string, params?: ServiceListQuery): Promise<ApiResponse<ServiceList>> => {
-  return newRequest<ServiceList>(HTTP_VERBS.GET, urls.services(namespace), params, {});
+export const getClustersServices = (
+  namespaces: string,
+  params: ServiceListQuery,
+  cluster?: string
+): Promise<ApiResponse<ServiceList>> => {
+  const queryParams: QueryParams<ServiceListQuery & Namespaces> = {
+    ...params,
+    namespaces: namespaces
+  };
+
+  if (cluster) {
+    queryParams.clusterName = cluster;
+  }
+  return newRequest<ServiceList>(HTTP_VERBS.GET, urls.clustersServices(), queryParams, {});
 };
 
 export const getServiceMetrics = (

@@ -27,6 +27,7 @@ func TestServicesList(t *testing.T) {
 		if service.Name == "productpage" {
 			require.True(service.IstioSidecar)
 			require.True(service.AppLabel)
+			require.Equal(kiali.BOOKINFO, service.Namespace)
 			require.NotNil(service.Health)
 			require.NotNil(service.Health.Requests)
 			require.NotNil(service.Health.Requests.Outbound)
@@ -34,7 +35,6 @@ func TestServicesList(t *testing.T) {
 		}
 	}
 	require.NotNil(serviceList.Validations)
-	require.Equal(kiali.BOOKINFO, serviceList.Namespace.Name)
 }
 
 func TestServiceDetails(t *testing.T) {
