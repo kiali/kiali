@@ -13,6 +13,10 @@ Feature: Kiali Graph page - Toolbar (various)
   # NOTE: Graph Find/Hide has its own test script
   # NOTE: Graph Replay has its own test script
 
+  Scenario: On the graph page the namespace selector should be sorted alphabetically
+    When user graphs "" namespaces
+    Then the namespace dropdown is sorted alphabetically
+
   @error-rates-app
   Scenario: Graph alpha namespace with query params
     When user graphs "alpha" namespaces with refresh "900000" and duration "300"
