@@ -44,7 +44,9 @@ export const meshComponentFactory: ComponentFactory = (
 ): React.FunctionComponent<any> | undefined => {
   switch (kind) {
     case ModelKind.edge:
-      return withSelection({ multiSelect: false, controlled: false })(MeshEdge as any);
+      // Currently, no side panel for edges, nothing really to show but the connectivity
+      // return withSelection({ multiSelect: false, controlled: false })(MeshEdge as any);
+      return MeshEdge as any;
     case ModelKind.graph:
       return withSelection({ multiSelect: false, controlled: false })(withPanZoom()(GraphComponent));
     case ModelKind.node: {

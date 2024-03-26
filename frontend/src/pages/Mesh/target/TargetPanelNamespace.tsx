@@ -46,7 +46,6 @@ import { switchType } from 'pages/Overview/OverviewHelper';
 import { IstiodResourceThresholds } from 'types/IstioStatus';
 import { TLSStatus, nsWideMTLSStatus } from 'types/TLSStatus';
 import * as FilterHelper from '../../../components/FilterList/FilterHelper';
-import { NodeAttr } from 'types/Graph';
 import { NodeData } from '../MeshElems';
 import { ControlPlaneMetricsMap, Metric } from 'types/Metrics';
 import { classes } from 'typestyle';
@@ -112,17 +111,12 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
     width: targetPanelWidth
   };
 
-  private cluster: string;
-  private namespace: string;
   private promises = new PromisesRegistry();
 
   constructor(props: TargetPanelNamespaceProps) {
     super(props);
 
     const namespaceNode = this.props.target.elem as Node<NodeModel, any>;
-    this.cluster = namespaceNode.getData()[NodeAttr.cluster];
-    this.namespace = namespaceNode.getData()[NodeAttr.namespace];
-
     this.state = {
       ...defaultState,
       namespaceNode: namespaceNode
@@ -150,14 +144,6 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
     }
   }
 
-  shouldComponentUpdate(
-    _nextProps: Readonly<TargetPanelNamespaceProps>,
-    nextState: Readonly<TargetPanelNamespaceState>,
-    _nextContext: any
-  ): boolean {
-    return nextState.loading === false;
-  }
-
   componentWillUnmount(): void {
     this.promises.cancelAll();
   }
@@ -168,7 +154,7 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
     }
 
     const isControlPlane = this.isControlPlane();
-    const nsInfo = this.state.nsInfo!;
+    const nsInfo = this.state.nsInfo;
     const ns = nsInfo.name;
     const actions = this.getNamespaceActions(nsInfo);
     const namespaceActions = (
@@ -711,10 +697,9 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
           this.setState({ ...defaultState, loading: false });
           return;
         }
-        this.setState({ nsInfo: nsInfo });
 
         this.promises
-          .registerAll(`promises-${this.cluster}:${this.namespace}`, [
+          .registerAll(`promises-${data.cluster}:${data.namespace}`, [
             this.fetchCanariesStatus(),
             this.fetchHealthStatus(),
             this.fetchIstiodResourceThresholds(),
@@ -723,7 +708,7 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
             this.fetchTLS()
           ])
           .then(_ => {
-            this.setState({ loading: false });
+            this.setState({ loading: false, nsInfo: nsInfo });
           })
           .catch(err => {
             if (err.isCanceled) {
@@ -770,7 +755,8 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
   }
 
   private fetchHealthStatus(): Promise<void> {
-    return API.getClustersAppHealth(this.namespace, this.props.duration, this.cluster)
+    const data = this.state.namespaceNode!.getData() as NodeData;
+    return API.getClustersAppHealth(data.namespace, this.props.duration, data.cluster)
       .then(results => {
         const nsStatus: NamespaceStatus = {
           inNotReady: [],
@@ -780,7 +766,7 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
           notAvailable: []
         };
 
-        const rs = results[this.namespace];
+        const rs = results[data.namespace];
         Object.keys(rs).forEach(item => {
           const health: Health = rs[item];
           const status = health.getGlobalStatus();
@@ -826,8 +812,9 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
       direction: direction,
       reporter: direction === 'inbound' ? 'destination' : 'source'
     };
+    const data = this.state.namespaceNode!.getData() as NodeData;
 
-    return API.getNamespaceMetrics(this.namespace, options, this.cluster)
+    return API.getNamespaceMetrics(data.namespace, options, data.cluster)
       .then(rs => {
         const metrics: Metric[] = rs.data.request_count as Metric[];
         const errorMetrics: Metric[] = rs.data.request_error_count as Metric[];
@@ -860,7 +847,8 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
       return Promise.resolve();
     }
 
-    return API.getNamespaceTls(this.namespace, this.cluster)
+    const data = this.state.namespaceNode!.getData() as NodeData;
+    return API.getNamespaceTls(data.namespace, data.cluster)
       .then(rs => {
         this.setState({
           tlsStatus: {
@@ -888,7 +876,8 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
   }
 
   private isControlPlane = (): boolean => {
-    return this.namespace === serverConfig.istioNamespace;
+    const data = this.state.namespaceNode!.getData() as NodeData;
+    return data.namespace === serverConfig.istioNamespace;
   };
 
   private handleApiError(message: string, error: ApiError): void {
@@ -897,10 +886,11 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
 
   private renderCharts(): JSX.Element {
     if (this.state.status) {
+      const data = this.state.namespaceNode!.getData() as NodeData;
       return (
         <OverviewCardSparklineCharts
-          key={this.namespace}
-          name={this.namespace}
+          key={data.namespace}
+          name={data.namespace}
           annotations={this.state.nsInfo!.annotations}
           duration={this.props.duration}
           direction={direction}
@@ -917,7 +907,8 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
 
   private renderStatus(): JSX.Element {
     const targetPage = switchType(healthType, Paths.APPLICATIONS, Paths.SERVICES, Paths.WORKLOADS);
-    const name = this.namespace;
+    const data = this.state.namespaceNode!.getData() as NodeData;
+    const name = data.namespace;
     const status = this.state.status;
     let nbItems = 0;
 
