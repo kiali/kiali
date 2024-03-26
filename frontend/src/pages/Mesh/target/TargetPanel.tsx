@@ -18,6 +18,7 @@ import { TargetPanelNode } from './TargetPanelNode';
 import { TargetPanelMesh } from './TargetPanelMesh';
 import { meshWideMTLSStatusSelector, minTLSVersionSelector } from 'store/Selectors';
 import { NodeData } from '../MeshElems';
+import { TargetPanelDataplanes } from './TargetPanelDataplanes';
 
 type TargetPanelState = {
   isVisible: boolean;
@@ -118,7 +119,7 @@ class TargetPanelComponent extends React.Component<TargetPanelProps, TargetPanel
         const data = elem.getData() as NodeData;
         const boxType: BoxByType = data.isBox as BoxByType;
         switch (boxType) {
-          case 'cluster':
+          case BoxByType.CLUSTER:
             return (
               <TargetPanelCluster
                 duration={this.props.duration}
@@ -129,7 +130,18 @@ class TargetPanelComponent extends React.Component<TargetPanelProps, TargetPanel
                 updateTime={this.props.updateTime}
               />
             );
-          case 'namespace':
+          case BoxByType.DATAPLANES:
+            return (
+              <TargetPanelDataplanes
+                duration={this.props.duration}
+                istioAPIEnabled={this.props.istioAPIEnabled}
+                kiosk={this.props.kiosk}
+                refreshInterval={this.props.refreshInterval}
+                target={target}
+                updateTime={this.props.updateTime}
+              />
+            );
+          case BoxByType.NAMESPACE:
             return (
               <TargetPanelNamespace
                 duration={this.props.duration}

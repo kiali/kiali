@@ -15,12 +15,12 @@ import { panelStyle } from 'pages/Graph/SummaryPanelStyle';
 
 type TargetPanelNodeState = {
   loading: boolean;
-  node: any;
+  node?: Node<NodeModel, any>;
 };
 
 const defaultState: TargetPanelNodeState = {
   loading: false,
-  node: null
+  node: undefined
 };
 
 const nodeStyle = kialiStyle({
@@ -56,6 +56,10 @@ export class TargetPanelNode extends React.Component<TargetPanelCommonProps, Tar
   componentWillUnmount() {}
 
   render() {
+    if (!this.state.node) {
+      return null;
+    }
+
     const node = this.props.target.elem as Node<NodeModel, any>;
     const data = node.getData() as MeshNodeData;
 

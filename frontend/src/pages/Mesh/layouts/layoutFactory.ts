@@ -18,28 +18,9 @@ export const LAYOUT_DEFAULTS: LayoutOptions = {
 
 export const layoutFactory: LayoutFactory = (type: string, graph: Graph): Layout | undefined => {
   switch (type) {
-    /*
-    case LayoutName.Dagre:
-      return new DagreLayout(graph, {
-        linkDistance: 40,
-        nodeDistance: 25,
-        marginx: undefined,
-        marginy: undefined,
-        ranker: 'network-simplex',
-        rankdir: 'LR'
-      });
-    case LayoutName.Cola:
-      return new ColaGroupsLayout(graph, {
-        // layoutOnDrag: false,
-        maxTicks: 0,
-        nodeDistance: 35
-      });
-    */
     default:
-      return new MeshLayout(graph, {
-        // layoutOnDrag: false,
-        maxTicks: 0,
-        nodeDistance: 35
-      });
+      // note - like other PFT layouts, this seems to work best
+      // if you don't mess with the defaults.
+      return new MeshLayout(graph, {});
   }
 };

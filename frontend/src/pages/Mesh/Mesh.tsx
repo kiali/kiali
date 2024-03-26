@@ -26,7 +26,7 @@ import {
   Edge
 } from '@patternfly/react-topology';
 import * as React from 'react';
-import { BoxByType, Layout } from 'types/Graph';
+import { Layout } from 'types/Graph';
 import { elementFactory } from './elements/elementFactory';
 import { layoutFactory } from './layouts/layoutFactory';
 import { TimeInMilliseconds } from 'types/Common';
@@ -49,7 +49,7 @@ import {
   setNodeLabel
 } from './MeshElems';
 import { MeshTourStops } from './MeshHelpTour';
-import { KialiMeshGraph } from 'components/CytoscapeGraph/graphs/KialiMeshGraph';
+import { KialiMeshGraph } from './layouts/KialiMeshGraph';
 
 let initialLayout = false;
 let requestFit = false;
@@ -62,9 +62,6 @@ const ZOOM_OUT = 3 / 4;
 export const FIT_PADDING = 90;
 
 export enum LayoutName {
-  // Cola = 'kiali-cola',
-  // Dagre = 'kiali-dagre',
-  // Grid = 'kiali-grid',
   Mesh = 'kiali-mesh'
 }
 
@@ -240,7 +237,8 @@ const TopologyContent: React.FC<{
       };
 
       function addGroup(data: NodeData): NodeModel {
-        const collapsed = data.isBox === BoxByType.DATAPLANES; // always collapse data-planes to start
+        // const collapsed = data.isBox === BoxByType.DATAPLANES; // always collapse data-planes to start
+        const collapsed = false; // due to layout issues, don't use collapsed groups
         data.collapsible = collapsed;
         data.onCollapseChange = onCollapseChange;
         data.onHover = onHover;
@@ -493,39 +491,19 @@ const TopologyContent: React.FC<{
                   zoomIn: false,
                   zoomOut: false,
                   /*
-                customButtons: [
-                  {
-                    ariaLabel: 'Layout - Mesh',
-                    id: 'toolbar_layout_mesh',
-                    disabled: LayoutName.Mesh === layoutName,
-                    icon: <TopologyIcon />,
-                    tooltip: 'Layout - mesh',
-                    callback: () => {
-                      setLayoutName(LayoutName.Mesh);
+                  customButtons: [
+                    {
+                      ariaLabel: 'Layout - Mesh',
+                      id: 'toolbar_layout_mesh',
+                      disabled: LayoutName.Mesh === layoutName,
+                      icon: <TopologyIcon />,
+                      tooltip: 'Layout - mesh',
+                      callback: () => {
+                        _setLayoutName(LayoutName.Mesh);
+                      }
                     }
-                  },
-                  {
-                    ariaLabel: 'Layout - Cola',
-                    id: 'toolbar_layout_cola',
-                    disabled: LayoutName.Cola === layoutName,
-                    icon: <TopologyIcon />,
-                    tooltip: 'Layout - cola',
-                    callback: () => {
-                      setLayoutName(LayoutName.Cola);
-                    }
-                  },
-                  {
-                    ariaLabel: 'Layout - Dagre',
-                    id: 'toolbar_layout_dagre',
-                    disabled: LayoutName.Dagre === layoutName,
-                    icon: <TopologyIcon />,
-                    tooltip: 'Layout - dagre',
-                    callback: () => {
-                      setLayoutName(LayoutName.Dagre);
-                    }
-                  }
-                ],
-                */
+                  ],
+                  */
                   // currently unused
                   zoomInCallback: () => {
                     controller && controller.getGraph().scaleBy(ZOOM_IN);
@@ -600,14 +578,6 @@ export const Mesh: React.FC<{
 
   const getLayoutName = (layout: Layout): LayoutName => {
     switch (layout.name) {
-      /*
-      case 'kiali-cola':
-        return LayoutName.Cola;
-      case 'kiali-dagre':
-        return LayoutName.Dagre;
-      case 'kiali-grid':
-        return LayoutName.Grid;
-     */
       default:
         return LayoutName.Mesh;
     }
@@ -616,17 +586,6 @@ export const Mesh: React.FC<{
   const setLayoutByName = (layoutName: LayoutName) => {
     let layout: Layout;
     switch (layoutName) {
-      /*
-      case LayoutName.Cola:
-        layout = KialiColaGraph.getLayout();
-        break;
-      case LayoutName.Dagre:
-        layout = KialiDagreGraph.getLayout();
-        break;
-      case LayoutName.Grid:
-        layout = KialiGridGraph.getLayout();
-        break;
-      */
       default:
         layout = KialiMeshGraph.getLayout();
     }
