@@ -29,17 +29,22 @@ import { KialiIcon } from 'config/KialiIcon';
 import { TourStop } from './Tour/TourStop';
 import { GraphTourStops } from '../pages/Graph/GraphHelpTour';
 
-type ReduxProps = {
+interface ReduxStateProps {
   activeNamespaces: Namespace[];
   filter: string;
   namespaces: Namespace[];
+}
+
+interface ReduxDispatchProps {
+  clearAll: () => void;
   refresh: () => void;
   setActiveNamespaces: (namespaces: Namespace[]) => void;
   setFilter: (filter: string) => void;
-};
+}
+
+type ReduxProps = ReduxStateProps & ReduxDispatchProps;
 
 type NamespaceDropdownProps = ReduxProps & {
-  clearAll: () => void;
   disabled: boolean;
 };
 
@@ -308,7 +313,7 @@ class NamespaceDropdownComponent extends React.PureComponent<NamespaceDropdownPr
   };
 }
 
-const mapStateToProps = (state: KialiAppState): any => {
+const mapStateToProps = (state: KialiAppState): ReduxStateProps => {
   return {
     namespaces: namespaceItemsSelector(state)!,
     activeNamespaces: activeNamespacesSelector(state),
@@ -316,7 +321,7 @@ const mapStateToProps = (state: KialiAppState): any => {
   };
 };
 
-const mapDispatchToProps = (dispatch: KialiDispatch): any => {
+const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => {
   return {
     refresh: () => {
       dispatch(NamespaceThunkActions.fetchNamespacesIfNeeded());
