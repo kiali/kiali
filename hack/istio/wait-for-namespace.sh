@@ -55,8 +55,8 @@ if [ "${ACCESSIBLE_NAMESPACES}" != "**" ]; then
   while [ "$KIALI_CR_REASON" != "Successful" -o "$KIALI_CR_STATUS" != "True" ]; do
     sleep 1
     echo -n "."
-    KIALI_CR_REASON="$(oc get kiali $KIALI_CR_NAME -n $KIALI_CR_NAMESPACE -o jsonpath='{.status.conditions[?(@.message=="Awaiting next reconciliation")].reason}')"
-    KIALI_CR_STATUS="$(oc get kiali $KIALI_CR_NAME -n $KIALI_CR_NAMESPACE -o jsonpath='{.status.conditions[?(@.message=="Awaiting next reconciliation")].status}')"
+    KIALI_CR_REASON="$(${CLIENT_EXE} get kiali $KIALI_CR_NAME -n $KIALI_CR_NAMESPACE -o jsonpath='{.status.conditions[?(@.message=="Awaiting next reconciliation")].reason}')"
+    KIALI_CR_STATUS="$(${CLIENT_EXE} get kiali $KIALI_CR_NAME -n $KIALI_CR_NAMESPACE -o jsonpath='{.status.conditions[?(@.message=="Awaiting next reconciliation")].status}')"
   done
   echo
   echo "Done reconciling"
