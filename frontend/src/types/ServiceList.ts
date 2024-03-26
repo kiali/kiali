@@ -29,8 +29,8 @@ export interface ServiceListItem extends ServiceOverview {
 }
 
 export interface ServiceListQuery {
-  health: 'true' | 'false';
-  istioResources: 'true' | 'false';
-  onlyDefinitions: 'true' | 'false';
+  health: boolean;
+  istioResources: boolean;
+  onlyDefinitions: boolean;
   rateInterval: string;
 }

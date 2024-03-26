@@ -7,10 +7,10 @@ Feature: Kiali Services page
 
   Background:
     Given user is at administrator perspective
-    And user is at the "services" list page
 
   @bookinfo-app
   Scenario: See services table with correct info
+    And user is at the "services" page
     When user applies kiali api "rest" annotations
     When user selects the "bookinfo" namespace
     Then user sees a table with headings
@@ -29,10 +29,12 @@ Feature: Kiali Services page
 
   @smoke
   Scenario: See all Services toggles
+    And user is at the "services" list page
     Then user sees all the Services toggles
 
   @smoke
   Scenario: Toggle Services configuration toggle
+    And user is at the "services" list page
     When user "unchecks" toggle "configuration"
     Then the "Configuration" column "disappears"
     When user "checks" toggle "configuration"
@@ -40,6 +42,7 @@ Feature: Kiali Services page
 
   @bookinfo-app
   Scenario: Filter services table by Service Name
+    And user is at the "services" page
     When user selects the "bookinfo" namespace
     And user selects filter "Service Name"
     And user filters for name "productpage"
@@ -48,6 +51,7 @@ Feature: Kiali Services page
 
   @bookinfo-app
   Scenario: Filter services table by Service Type
+    And user is at the "services" page
     When user selects the "bookinfo" namespace
     And user selects filter "Service Type"
     And user filters for service type "External"
@@ -55,6 +59,7 @@ Feature: Kiali Services page
 
   @bookinfo-app
   Scenario: Filter services table by sidecar
+    And user is at the "services" page
     When user selects the "bookinfo" namespace
     And user selects filter "Istio Sidecar"
     And user filters for sidecar "Present"
@@ -62,6 +67,7 @@ Feature: Kiali Services page
 
   @bookinfo-app
   Scenario: Filter services table by Istio Config Type
+    And user is at the "services" page
     When user selects the "bookinfo" namespace
     And user selects filter "Istio Config Type"
     And user filters for istio config type "VirtualService"
@@ -70,6 +76,7 @@ Feature: Kiali Services page
 
   @bookinfo-app
   Scenario: Filter services table by health
+    And user is at the "services" page
     When user selects the "bookinfo" namespace
     And user selects filter "Health"
     And user filters for health "Healthy"
@@ -78,6 +85,7 @@ Feature: Kiali Services page
 
   @bookinfo-app
   Scenario: Filter services table by label
+    And user is at the "services" page
     When user selects the "bookinfo" namespace
     And user selects filter "Label"
     And user filters for label "app=productpage"
@@ -86,6 +94,7 @@ Feature: Kiali Services page
 
   @bookinfo-app
   Scenario: Filter services table by label click
+    And user is at the "services" page
     When user selects the "bookinfo" namespace
     And user clicks "app=productpage" label
     Then user sees "productpage" in the table
@@ -93,6 +102,7 @@ Feature: Kiali Services page
 
   @bookinfo-app
   Scenario: Filter and unfilter services table by label click
+    And user is at the "services" page
     When user selects the "bookinfo" namespace
     And user clicks "app=productpage" label
     And user clicks "app=productpage" label
@@ -100,12 +110,14 @@ Feature: Kiali Services page
 
   @bookinfo-app
   Scenario: The healthy status of a service is reported in the list of services
+    And user is at the "services" page
     Given a service in the cluster with a healthy amount of traffic
     When user selects the "bookinfo" namespace
     Then the service should be listed as "healthy"
 
   @sleep-app
   Scenario: The idle status of a service is reported in the list of services
+    And user is at the "services" page
     Given a service in the cluster with no traffic
     When user selects the "sleep" namespace
     Then the service should be listed as "na"
@@ -113,6 +125,7 @@ Feature: Kiali Services page
 
   @error-rates-app
   Scenario: The failing status of a service is reported in the list of services
+    And user is at the "services" page
     Given a service in the mesh with a failing amount of traffic
     When user selects the "alpha" namespace
     Then the service should be listed as "failure"
@@ -120,6 +133,7 @@ Feature: Kiali Services page
 
   @error-rates-app
   Scenario: The degraded status of a service is reported in the list of services
+    And user is at the "services" page
     Given a service in the mesh with a degraded amount of traffic
     When user selects the "alpha" namespace
     Then the service should be listed as "degraded"
@@ -127,6 +141,7 @@ Feature: Kiali Services page
 
   @multi-cluster
   Scenario: The column related to cluster name should be visible
+    And user is at the "services" page
     When user selects the "bookinfo" namespace
     Then the "Cluster" column "appears"
     And an entry for "east" cluster should be in the table
@@ -135,11 +150,13 @@ Feature: Kiali Services page
   # inspired by this: https://github.com/kiali/kiali/pull/5998#pullrequestreview-1383754665
   @multi-cluster
   Scenario: Services from both clusters should have a validation
+    And user is at the "services" page
     When user selects the "bookinfo" namespace
     Then configuration in both clusters for the "bookinfo" namespace should be healthy
 
   @multi-cluster
   Scenario: Sort list by cluster column
+    And user is at the "services" page
     When user selects the "bookinfo" namespace
     And user sorts the list by column "Cluster" in "ascending" order
     Then the list is sorted by column "Cluster" in "ascending" order
