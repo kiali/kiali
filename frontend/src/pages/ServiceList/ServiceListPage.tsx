@@ -142,7 +142,7 @@ class ServiceListPageComponent extends FilterComponent.Component<
         health: toggles.get('health') ?? true,
         istioResources: toggles.get('istioResources') ?? true,
         rateInterval: `${String(rateInterval)}s`,
-        onlyDefinitions: toggles.get('configuration') ?? false // !configuration => onlyDefinitions
+        onlyDefinitions: toggles.get('configuration') !== undefined ? !toggles.get('configuration') : false // !configuration => onlyDefinitions
       })
     );
 
