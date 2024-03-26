@@ -35,7 +35,7 @@ CLIENT_EXE=${CLIENT_EXE:-kubectl}
 CLIENT_EXE="$(which ${CLIENT_EXE} 2>/dev/null || echo "invalid kubectl: ${CLIENT_EXE}")"
 echo "Using CLIENT_EXE: $CLIENT_EXE"
 
-KIALI_CR_NAMESPACE_NAME="$(${CLIENT_EXE} get kiali --all-namespaces -o jsonpath='{.items[*].metadata.namespace}')"
+KIALI_CR_NAMESPACE_NAME="$(${CLIENT_EXE} get kiali --all-namespaces -o jsonpath='{.items[*].metadata.namespace}{":"}{.items[*].metadata.name'})"
 KIALI_CR_NAMESPACE="$(echo ${KIALI_CR_NAMESPACE_NAME} | cut -d: -f1)"
 KIALI_CR_NAME="$(echo ${KIALI_CR_NAMESPACE_NAME} | cut -d: -f2)"
 ACCESSIBLE_NAMESPACES="$(${CLIENT_EXE} get kiali $KIALI_CR_NAME -n $KIALI_CR_NAMESPACE -o jsonpath='{.spec.deployment.accessible_namespaces}')"
