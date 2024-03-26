@@ -78,18 +78,8 @@ const getHeaders = () => {
   if (apiProxy) {
     return { 'Content-Type': 'application/x-www-form-urlencoded' };
   } else {
-    return { ...loginHeaders };
+    return { 'Content-Type': 'application/json', ...loginHeaders };
   }
-};
-
-/** Create content type correctly for a given request type */
-const getHeadersWithMethod = (method: HTTP_VERBS) => {
-  let allHeaders = getHeaders();
-  if (method === HTTP_VERBS.PATCH) {
-    allHeaders['Content-Type'] = 'application/json';
-  }
-
-  return allHeaders;
 };
 
 const basicAuth = (username: UserName, password: Password) => {
@@ -100,8 +90,8 @@ const newRequest = <P>(method: HTTP_VERBS, url: string, queryParams: any, data: 
   return axios.request<P>({
     method: method,
     url: apiProxy ? `${apiProxy}/${url}` : url,
-    data: data,
-    headers: getHeadersWithMethod(method),
+    data: apiProxy ? JSON.stringify(data) : data,
+    headers: getHeaders(),
     params: queryParams
   });
 };

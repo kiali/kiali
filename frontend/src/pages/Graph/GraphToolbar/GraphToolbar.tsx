@@ -45,11 +45,13 @@ import { GraphSecondaryMasthead } from './GraphSecondaryMasthead';
 import { INITIAL_USER_SETTINGS_STATE } from 'reducers/UserSettingsState';
 import { GraphReset } from './GraphReset';
 import { GraphFindPF } from './GraphFindPF';
+import { isParentKiosk, kioskContextMenuAction } from 'components/Kiosk/KioskActions';
 
 type ReduxProps = {
   activeNamespaces: Namespace[];
   edgeLabels: EdgeLabelMode[];
   graphType: GraphType;
+  kiosk: string;
   node?: NodeParamsType;
   rankBy: RankMode[];
   replayActive: boolean;
@@ -261,7 +263,14 @@ class GraphToolbarComponent extends React.PureComponent<GraphToolbarProps> {
       !this.props.summaryData ||
       (this.props.summaryData.summaryType !== 'node' && this.props.summaryData.summaryType !== 'box')
     ) {
-      history.push(`/${route}/namespaces`);
+      const returnUrl = `/${route}/namespaces`;
+
+      if (isParentKiosk(this.props.kiosk)) {
+        kioskContextMenuAction(returnUrl);
+      } else {
+        history.push(returnUrl);
+      }
+
       return;
     }
 
@@ -269,7 +278,14 @@ class GraphToolbarComponent extends React.PureComponent<GraphToolbarProps> {
       ? this.props.summaryData!.summaryTarget.getId()
       : `node[id = "${this.props.summaryData!.summaryTarget.data(NodeAttr.id)}"]`;
     this.props.setNode(undefined);
-    history.push(`/${route}/namespaces?focusSelector=${encodeURI(selector)}`);
+
+    const returnUrl = `/${route}/namespaces?focusSelector=${encodeURI(selector)}`;
+
+    if (isParentKiosk(this.props.kiosk)) {
+      kioskContextMenuAction(returnUrl);
+    } else {
+      history.push(returnUrl);
+    }
   };
 }
 
@@ -277,6 +293,7 @@ const mapStateToProps = (state: KialiAppState) => ({
   activeNamespaces: activeNamespacesSelector(state),
   edgeLabels: edgeLabelsSelector(state),
   graphType: graphTypeSelector(state),
+  kiosk: state.globalState.kiosk,
   node: state.graph.node,
   rankBy: state.graph.toolbarState.rankBy,
   replayActive: replayActiveSelector(state),

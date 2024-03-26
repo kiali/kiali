@@ -40,6 +40,7 @@ import { bindActionCreators } from 'redux';
 import { UserSettingsActions } from '../../actions/UserSettingsActions';
 import { timeRangeSelector } from '../../store/Selectors';
 import { TimeDurationIndicator } from '../Time/TimeDurationIndicator';
+import { isParentKiosk, kioskContextMenuAction } from 'components/Kiosk/KioskActions';
 
 type MetricsState = {
   cluster?: string;
@@ -66,6 +67,7 @@ type CustomMetricsProps = RouteComponentProps<{}> & {
 
 type ReduxProps = {
   jaegerIntegration: boolean;
+  kiosk: string;
   timeRange: TimeRange;
   setTimeRange: (range: TimeRange) => void;
 };
@@ -207,9 +209,14 @@ class CustomMetricsComponent extends React.Component<Props, MetricsState> {
     } else if ('traceId' in datum) {
       const traceId = datum.traceId;
       const spanId = datum.spanId;
-      history.push(
-        `/namespaces/${this.props.namespace}/applications/${this.props.app}?tab=traces&${URLParam.JAEGER_TRACE_ID}=${traceId}&${URLParam.JAEGER_SPAN_ID}=${spanId}`
-      );
+
+      const traceUrl = `/namespaces/${this.props.namespace}/applications/${this.props.app}?tab=traces&${URLParam.JAEGER_TRACE_ID}=${traceId}&${URLParam.JAEGER_SPAN_ID}=${spanId}`;
+
+      if (isParentKiosk(this.props.kiosk)) {
+        kioskContextMenuAction(traceUrl);
+      } else {
+        history.push(traceUrl);
+      }
     }
   };
 
@@ -366,6 +373,7 @@ class CustomMetricsComponent extends React.Component<Props, MetricsState> {
 const mapStateToProps = (state: KialiAppState) => {
   return {
     jaegerIntegration: state.jaegerState.info ? state.jaegerState.info.integration : false,
+    kiosk: state.globalState.kiosk,
     timeRange: timeRangeSelector(state)
   };
 };
