@@ -39,37 +39,42 @@ import { bindActionCreators } from 'redux';
 import { UserSettingsActions } from '../../actions/UserSettingsActions';
 import { timeRangeSelector } from '../../store/Selectors';
 import { TimeDurationIndicator } from '../Time/TimeDurationIndicator';
+import { isParentKiosk, kioskContextMenuAction } from 'components/Kiosk/KioskActions';
 
 type MetricsState = {
   cluster?: string;
   dashboard?: DashboardModel;
+  grafanaLinks: ExternalLink[];
   isTimeOptionsOpen: boolean;
   labelsSettings: LabelsSettings;
-  grafanaLinks: ExternalLink[];
+  showSpans: boolean;
   spanOverlay?: Overlay<JaegerLineInfo>;
   tabHeight: number;
-  showSpans: boolean;
 };
 
 type CustomMetricsProps = RouteComponentProps<{}> & {
-  namespace: string;
   app: string;
+  embedded?: boolean;
+  height?: number;
   lastRefreshAt: TimeInMilliseconds;
+  namespace: string;
+  template: string;
   version?: string;
   workload?: string;
   workloadType?: string;
-  template: string;
-  embedded?: boolean;
-  height?: number;
 };
 
-type ReduxProps = {
+type ReduxStateProps = {
+  kiosk: string;
   timeRange: TimeRange;
   tracingIntegration: boolean;
+};
+
+type ReduxDispatchProps = {
   setTimeRange: (range: TimeRange) => void;
 };
 
-type Props = ReduxProps & CustomMetricsProps;
+type Props = ReduxStateProps & ReduxDispatchProps & CustomMetricsProps;
 
 const fullHeightStyle = kialiStyle({
   height: '100%'
@@ -95,6 +100,7 @@ class CustomMetricsComponent extends React.Component<Props, MetricsState> {
     this.toolbarRef = React.createRef<HTMLDivElement>();
     const settings = MetricsHelper.retrieveMetricsSettings();
     this.options = this.initOptions(settings);
+
     // Initialize active filters from URL
     const cluster = HistoryManager.getClusterName();
     this.state = {
@@ -105,11 +111,13 @@ class CustomMetricsComponent extends React.Component<Props, MetricsState> {
       tabHeight: 300,
       showSpans: settings.showSpans
     };
+
     this.spanOverlay = new SpanOverlay(changed => this.setState({ spanOverlay: changed }));
   }
 
-  private initOptions(settings: MetricsSettings): DashboardQuery {
+  private initOptions = (settings: MetricsSettings): DashboardQuery => {
     const filters = `${serverConfig.istioLabels.appLabelName}:${this.props.app}`;
+
     const options: DashboardQuery = this.props.version
       ? {
           labelsFilters: `${filters},${serverConfig.istioLabels.versionLabelName}:${this.props.version}`
@@ -118,15 +126,17 @@ class CustomMetricsComponent extends React.Component<Props, MetricsState> {
           labelsFilters: filters,
           additionalLabels: 'version:Version'
         };
-    MetricsHelper.settingsToOptions(settings, options, []);
-    return options;
-  }
 
-  componentDidMount() {
+    MetricsHelper.settingsToOptions(settings, options, []);
+
+    return options;
+  };
+
+  componentDidMount(): void {
     this.refresh();
   }
 
-  componentDidUpdate(prevProps: Props) {
+  componentDidUpdate(prevProps: Props): void {
     if (
       this.props.namespace !== prevProps.namespace ||
       this.props.app !== prevProps.app ||
@@ -143,7 +153,7 @@ class CustomMetricsComponent extends React.Component<Props, MetricsState> {
     }
   }
 
-  private refresh = () => {
+  private refresh = (): void => {
     this.fetchMetrics();
     if (this.props.tracingIntegration) {
       this.spanOverlay.fetch({
@@ -156,15 +166,18 @@ class CustomMetricsComponent extends React.Component<Props, MetricsState> {
     }
   };
 
-  private fetchMetrics = () => {
+  private fetchMetrics = (): void => {
     // Time range needs to be reevaluated everytime fetching
     MetricsHelper.timeRangeToOptions(this.props.timeRange, this.options);
+
     // Workload name can be used to find personalized dashboards defined at workload level
     this.options.workload = this.props.workload;
     this.options.workloadType = this.props.workloadType;
+
     API.getCustomDashboard(this.props.namespace, this.props.template, this.options, this.state.cluster)
       .then(response => {
         const labelsSettings = MetricsHelper.extractLabelsSettings(response.data, this.state.labelsSettings);
+
         this.setState({
           dashboard: response.data,
           labelsSettings: labelsSettings,
@@ -176,44 +189,50 @@ class CustomMetricsComponent extends React.Component<Props, MetricsState> {
       });
   };
 
-  private onMetricsSettingsChanged = (settings: MetricsSettings) => {
+  private onMetricsSettingsChanged = (settings: MetricsSettings): void => {
     MetricsHelper.settingsToOptions(settings, this.options, []);
     this.fetchMetrics();
   };
 
-  private onLabelsFiltersChanged = (labelsFilters: LabelsSettings) => {
+  private onLabelsFiltersChanged = (labelsFilters: LabelsSettings): void => {
     this.setState({ labelsSettings: labelsFilters });
   };
 
-  private onRawAggregationChanged = (aggregator: Aggregator) => {
+  private onRawAggregationChanged = (aggregator: Aggregator): void => {
     this.options.rawDataAggregator = aggregator;
     this.fetchMetrics();
   };
 
-  private onClickDataPoint = (_, datum: RawOrBucket<JaegerLineInfo>) => {
+  private onClickDataPoint = (_, datum: RawOrBucket<JaegerLineInfo>): void => {
     if ('start' in datum && 'end' in datum) {
       // Zoom-in bucket
       this.onDomainChange([datum.start as Date, datum.end as Date]);
     } else if ('traceId' in datum) {
       const traceId = datum.traceId;
       const spanId = datum.spanId;
-      history.push(
-        `/namespaces/${this.props.namespace}/applications/${this.props.app}?tab=traces&${URLParam.TRACING_TRACE_ID}=${traceId}&${URLParam.TRACING_SPAN_ID}=${spanId}`
-      );
+
+      const traceUrl = `/namespaces/${this.props.namespace}/applications/${this.props.app}?tab=traces&${URLParam.TRACING_TRACE_ID}=${traceId}&${URLParam.TRACING_SPAN_ID}=${spanId}`;
+
+      if (isParentKiosk(this.props.kiosk)) {
+        kioskContextMenuAction(traceUrl);
+      } else {
+        history.push(traceUrl);
+      }
     }
   };
 
-  private onDomainChange(dates: [Date, Date]) {
+  private onDomainChange = (dates: [Date, Date]): void => {
     if (dates && dates[0] && dates[1]) {
       const range: TimeRange = {
         from: dates[0].getTime(),
         to: dates[1].getTime()
       };
+
       this.props.setTimeRange(range);
     }
-  }
+  };
 
-  renderFetchMetrics = title => {
+  renderFetchMetrics = (title: string): React.ReactNode => {
     return (
       <div className={emptyStyle}>
         <EmptyState variant={EmptyStateVariant.sm}>
@@ -223,9 +242,10 @@ class CustomMetricsComponent extends React.Component<Props, MetricsState> {
     );
   };
 
-  render() {
+  render(): React.ReactNode {
     const urlParams = new URLSearchParams(history.location.search);
     const expandedChart = urlParams.get('expand') || undefined;
+
     // 20px (card margin) + 24px (card padding) + 51px (toolbar) + 15px (toolbar padding) + 24px (card padding) + 20px (card margin)
     const toolbarHeight = this.toolbarRef.current ? this.toolbarRef.current.clientHeight : 51;
     const toolbarSpace = 20 + 24 + toolbarHeight + 15 + 24 + 20;
@@ -266,6 +286,7 @@ class CustomMetricsComponent extends React.Component<Props, MetricsState> {
             </Card>
           </RenderComponentScroll>
         )}
+
         <TimeDurationModal
           customDuration={true}
           isOpen={this.state.isTimeOptionsOpen}
@@ -276,17 +297,20 @@ class CustomMetricsComponent extends React.Component<Props, MetricsState> {
     );
   }
 
-  private onSpans = (checked: boolean) => {
+  private onSpans = (checked: boolean): void => {
     const urlParams = new URLSearchParams(history.location.search);
     urlParams.set(URLParam.SHOW_SPANS, String(checked));
-    history.replace(history.location.pathname + '?' + urlParams.toString());
+
+    history.replace(`${history.location.pathname}?${urlParams.toString()}`);
     this.setState({ showSpans: !this.state.showSpans });
   };
 
-  private renderOptionsBar() {
+  private renderOptionsBar = (): React.ReactNode => {
     const hasHistograms =
       this.state.dashboard !== undefined && this.state.dashboard.charts.some(chart => chart.metrics.some(m => m.stat));
+
     const hasLabels = this.state.labelsSettings.size > 0;
+
     return (
       <div ref={this.toolbarRef}>
         <Toolbar style={{ paddingBottom: 15 }}>
@@ -304,9 +328,11 @@ class CustomMetricsComponent extends React.Component<Props, MetricsState> {
                 />
               </ToolbarItem>
             )}
+
             <ToolbarItem>
               <MetricsRawAggregation onChanged={this.onRawAggregationChanged} />
             </ToolbarItem>
+
             <ToolbarItem style={{ alignSelf: 'center' }}>
               <Checkbox
                 id={`spans-show-`}
@@ -316,12 +342,14 @@ class CustomMetricsComponent extends React.Component<Props, MetricsState> {
                 onChange={(_event, checked) => this.onSpans(checked)}
               />
             </ToolbarItem>
+
             <KioskElement>
               <ToolbarItem style={{ marginLeft: 'auto' }}>
                 <TimeDurationIndicator onClick={this.toggleTimeOptionsVisibility} />
               </ToolbarItem>
             </KioskElement>
           </ToolbarGroup>
+
           <ToolbarGroup style={{ marginLeft: 'auto', paddingRight: '20px' }}>
             <GrafanaLinks
               links={this.state.grafanaLinks}
@@ -334,30 +362,33 @@ class CustomMetricsComponent extends React.Component<Props, MetricsState> {
         </Toolbar>
       </div>
     );
-  }
+  };
 
-  private expandHandler = (expandedChart?: string) => {
+  private expandHandler = (expandedChart?: string): void => {
     const urlParams = new URLSearchParams(history.location.search);
     urlParams.delete('expand');
+
     if (expandedChart) {
       urlParams.set('expand', expandedChart);
     }
-    history.push(history.location.pathname + '?' + urlParams.toString());
+
+    history.push(`${history.location.pathname}?${urlParams.toString()}`);
   };
 
-  private toggleTimeOptionsVisibility = () => {
+  private toggleTimeOptionsVisibility = (): void => {
     this.setState(prevState => ({ isTimeOptionsOpen: !prevState.isTimeOptionsOpen }));
   };
 }
 
-const mapStateToProps = (state: KialiAppState) => {
+const mapStateToProps = (state: KialiAppState): ReduxStateProps => {
   return {
+    kiosk: state.globalState.kiosk,
     timeRange: timeRangeSelector(state),
     tracingIntegration: state.tracingState.info ? state.tracingState.info.integration : false
   };
 };
 
-const mapDispatchToProps = (dispatch: KialiDispatch) => {
+const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => {
   return {
     setTimeRange: bindActionCreators(UserSettingsActions.setTimeRange, dispatch)
   };

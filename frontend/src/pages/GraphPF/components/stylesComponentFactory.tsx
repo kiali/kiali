@@ -25,17 +25,18 @@ import { GraphUrlParams, makeNodeGraphUrlFromParams } from 'components/Nav/NavUt
 import { history } from '../../../app/History';
 import { GraphNodeDoubleTapEvent } from 'components/CytoscapeGraph/CytoscapeGraph';
 import { isMultiCluster, serverConfig } from '../../../config';
+import { isParentKiosk, kioskContextMenuAction } from 'components/Kiosk/KioskActions';
 
 type ContextMenuOptionPF = ContextMenuOption & {
-  altClickHandler?: (node: GraphElement) => void;
+  altClickHandler?: (node: GraphElement, kiosk: string) => void;
   node?: GraphElement;
 };
 
-const doubleTapHandler = (node: GraphElement): void => {
-  handleDoubleTap(node);
+const doubleTapHandler = (node: GraphElement, kiosk: string): void => {
+  handleDoubleTap(node, kiosk);
 };
 
-const nodeContextMenu = (node: GraphElement): React.ReactElement[] => {
+const nodeContextMenu = (node: GraphElement, kiosk: string): React.ReactElement[] => {
   const options = getOptions(node.getData());
   const optionsPF = options.map(o => o as ContextMenuOptionPF);
   const nodeData = node.getData() as DecoratedGraphNodeData;
@@ -71,11 +72,11 @@ const nodeContextMenu = (node: GraphElement): React.ReactElement[] => {
     return (
       // TODO: fix kiosk param
       !!o.altClickHandler ? (
-        <ContextMenuItem key={`option-${i}`} onClick={() => o.altClickHandler!(o.node!)}>
+        <ContextMenuItem key={`option-${i}`} onClick={() => o.altClickHandler!(o.node!, kiosk)}>
           {o.text}
         </ContextMenuItem>
       ) : (
-        <ContextMenuItem key={`option-${i}`} onClick={() => clickHandler(o, '')}>
+        <ContextMenuItem key={`option-${i}`} onClick={() => clickHandler(o, kiosk)}>
           {o.text} {o.target === '_blank' && <ExternalLinkAltIcon />}
         </ContextMenuItem>
       )
@@ -87,7 +88,7 @@ const nodeContextMenu = (node: GraphElement): React.ReactElement[] => {
 
 // This is temporary until the PFT graph properly handles DoubleTap.  Until then
 // we offer a ContextMenu option for what would normally be handled via DoubleTap.
-const handleDoubleTap = (doubleTapNode: GraphElement): void => {
+const handleDoubleTap = (doubleTapNode: GraphElement, kiosk: string): void => {
   const dtNodeData = doubleTapNode.getData() as DecoratedGraphNodeData;
   const graphData = doubleTapNode.getGraph().getData().graphData;
 
@@ -169,7 +170,7 @@ const handleDoubleTap = (doubleTapNode: GraphElement): void => {
   // Instead, assume that the user wants more details for the node and do a
   // redirect to the details page.
   if (sameNode) {
-    handleDoubleTapSameNode(targetNode);
+    handleDoubleTapSameNode(targetNode, kiosk);
     return;
   }
 
@@ -195,17 +196,24 @@ const handleDoubleTap = (doubleTapNode: GraphElement): void => {
   };
 
   // To ensure updated components get the updated URL, update the URL first and then the state
-  history.push(makeNodeGraphUrlFromParams(urlParams, true));
+  const nodeGraphUrl = makeNodeGraphUrlFromParams(urlParams, true);
+
+  if (isParentKiosk(kiosk)) {
+    kioskContextMenuAction(nodeGraphUrl);
+  } else {
+    history.push(nodeGraphUrl);
+  }
 };
 
 // This allows us to navigate to the service details page when zoomed in on nodes
-const handleDoubleTapSameNode = (targetNode: NodeParamsType): void => {
+const handleDoubleTapSameNode = (targetNode: NodeParamsType, kiosk: string): void => {
   const makeAppDetailsPageUrl = (namespace: string, nodeType: string, name?: string): string => {
     return `/namespaces/${namespace}/${nodeType}/${name}`;
   };
   const nodeType = targetNode.nodeType;
   let urlNodeType = `${targetNode.nodeType}s`;
   let name = targetNode.app;
+
   if (nodeType === 'service') {
     name = targetNode.service;
   } else if (nodeType === 'workload') {
@@ -213,22 +221,26 @@ const handleDoubleTapSameNode = (targetNode: NodeParamsType): void => {
   } else {
     urlNodeType = 'applications';
   }
+
   let detailsPageUrl = makeAppDetailsPageUrl(targetNode.namespace.name, urlNodeType, name);
+
   if (targetNode.cluster && isMultiCluster) {
     detailsPageUrl = `${detailsPageUrl}?clusterName=${targetNode.cluster}`;
-  } // todo deal with kiosk
-  //if (isParentKiosk(this.props.kiosk)) {
-  //  kioskContextMenuAction(detailsPageUrl);
-  //} else {
-  history.push(detailsPageUrl);
-  //}
-  //return;
+  }
+
+  if (isParentKiosk(kiosk)) {
+    kioskContextMenuAction(detailsPageUrl);
+  } else {
+    history.push(detailsPageUrl);
+  }
 };
 
 export const stylesComponentFactory: ComponentFactory = (
   kind: ModelKind,
   type: string
 ): React.FunctionComponent<any> | undefined => {
+  const kiosk = store.getState().globalState.kiosk;
+
   switch (kind) {
     case ModelKind.edge:
       return withSelection({ multiSelect: false, controlled: false })(StyleEdge as any);
@@ -236,7 +248,7 @@ export const stylesComponentFactory: ComponentFactory = (
       return withSelection({ multiSelect: false, controlled: false })(withPanZoom()(GraphComponent));
     case ModelKind.node: {
       return withDragNode(nodeDragSourceSpec('node', true, true))(
-        withContextMenu(e => nodeContextMenu(e))(
+        withContextMenu(e => nodeContextMenu(e, kiosk))(
           withSelection({ multiSelect: false, controlled: false })((type === 'group' ? StyleGroup : StyleNode) as any)
         )
       );

@@ -32,6 +32,7 @@ import { UserSettingsActions } from 'actions/UserSettingsActions';
 import { KialiCrippledFeatures } from 'types/ServerConfig';
 import { TimeDurationIndicator } from '../Time/TimeDurationIndicator';
 import { ApiResponse } from 'types/Api';
+import { isParentKiosk, kioskContextMenuAction } from 'components/Kiosk/KioskActions';
 
 type MetricsState = {
   crippledFeatures?: KialiCrippledFeatures;
@@ -60,6 +61,7 @@ type IstioMetricsProps = ObjectId &
   };
 
 type ReduxStateProps = {
+  kiosk: string;
   refreshInterval: IntervalInMilliseconds;
   timeRange: TimeRange;
   tracingIntegration: boolean;
@@ -264,9 +266,13 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
           ? 'services'
           : 'workloads';
 
-      history.push(
-        `/namespaces/${this.props.namespace}/${domain}/${this.props.object}?tab=traces&${URLParam.TRACING_TRACE_ID}=${traceId}&${URLParam.TRACING_SPAN_ID}=${spanId}`
-      );
+      const traceUrl = `/namespaces/${this.props.namespace}/${domain}/${this.props.object}?tab=traces&${URLParam.TRACING_TRACE_ID}=${traceId}&${URLParam.TRACING_SPAN_ID}=${spanId}`;
+
+      if (isParentKiosk(this.props.kiosk)) {
+        kioskContextMenuAction(traceUrl);
+      } else {
+        history.push(traceUrl);
+      }
     }
   };
 
@@ -434,6 +440,7 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
 
 const mapStateToProps = (state: KialiAppState): ReduxStateProps => {
   return {
+    kiosk: state.globalState.kiosk,
     tracingIntegration: state.tracingState.info ? state.tracingState.info.integration : false,
     timeRange: timeRangeSelector(state),
     refreshInterval: refreshIntervalSelector(state)

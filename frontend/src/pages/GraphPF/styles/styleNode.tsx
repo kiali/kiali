@@ -8,7 +8,7 @@ import {
   useHover,
   WithSelectionProps
 } from '@patternfly/react-topology';
-import useDetailsLevel from '@patternfly/react-topology/dist/esm/hooks/useDetailsLevel';
+import { useDetailsLevel } from '@patternfly/react-topology';
 import * as React from 'react';
 import { KeyIcon, TopologyIcon } from '@patternfly/react-icons';
 import { PFColors } from 'components/Pf/PfColors';
