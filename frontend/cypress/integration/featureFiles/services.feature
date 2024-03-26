@@ -149,7 +149,6 @@ Feature: Kiali Services page
 
   # inspired by this: https://github.com/kiali/kiali/pull/5998#pullrequestreview-1383754665
   @multi-cluster
-  @selected
   Scenario: Services from both clusters should have a validation
     And user is at the "services" page
     When user selects the "bookinfo" namespace
