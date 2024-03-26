@@ -34,8 +34,8 @@ type ReduxProps = {
   filter: string;
   namespaces: Namespace[];
   refresh: () => void;
-  setFilter: (filter: string) => void;
   setActiveNamespaces: (namespaces: Namespace[]) => void;
+  setFilter: (filter: string) => void;
 };
 
 type NamespaceDropdownProps = ReduxProps & {
@@ -90,13 +90,13 @@ class NamespaceDropdownComponent extends React.PureComponent<NamespaceDropdownPr
     };
   }
 
-  componentDidMount() {
+  componentDidMount(): void {
     this.props.refresh();
     this.syncNamespacesURLParam();
   }
 
   // update redux with URL namespaces if set, otherwise update URL with redux
-  syncNamespacesURLParam = () => {
+  syncNamespacesURLParam = (): void => {
     const urlNamespaces = (HistoryManager.getParam(URLParam.NAMESPACES) || '').split(',').filter(Boolean);
     if (
       urlNamespaces.length > 0 &&
@@ -113,7 +113,7 @@ class NamespaceDropdownComponent extends React.PureComponent<NamespaceDropdownPr
     }
   };
 
-  componentDidUpdate(prevProps: NamespaceDropdownProps) {
+  componentDidUpdate(prevProps: NamespaceDropdownProps): void {
     if (prevProps.activeNamespaces !== this.props.activeNamespaces) {
       if (this.props.activeNamespaces.length === 0) {
         HistoryManager.deleteParam(URLParam.NAMESPACES);
@@ -124,7 +124,7 @@ class NamespaceDropdownComponent extends React.PureComponent<NamespaceDropdownPr
     }
   }
 
-  private namespaceButtonText() {
+  private namespaceButtonText(): JSX.Element {
     if (this.state.selectedNamespaces.length === 0) {
       return <span>Select Namespaces</span>;
     }
@@ -141,7 +141,7 @@ class NamespaceDropdownComponent extends React.PureComponent<NamespaceDropdownPr
     );
   }
 
-  private getBulkSelector() {
+  private getBulkSelector(): JSX.Element {
     const selectedNamespaces = this.filteredSelected();
     const numSelected = selectedNamespaces.length;
     const allSelected = numSelected === this.props.namespaces.length;
@@ -165,7 +165,7 @@ class NamespaceDropdownComponent extends React.PureComponent<NamespaceDropdownPr
     );
   }
 
-  private getHeader() {
+  private getHeader(): JSX.Element {
     const hasFilter = !!this.props.filter;
 
     return (
@@ -193,27 +193,29 @@ class NamespaceDropdownComponent extends React.PureComponent<NamespaceDropdownPr
     );
   }
 
-  private getBody() {
+  private getBody(): JSX.Element {
     if (this.props.namespaces.length > 0) {
       const selectedMap = this.state.selectedNamespaces.reduce((map, namespace) => {
         map[namespace.name] = namespace.name;
         return map;
       }, {});
-      const namespaces = this.filtered().map((namespace: Namespace) => (
-        <div
-          className={optionStyle}
-          id={`namespace-list-item[${namespace.name}]`}
-          key={`namespace-list-item[${namespace.name}]`}
-        >
-          <input
-            type="checkbox"
-            value={namespace.name}
-            checked={!!selectedMap[namespace.name]}
-            onChange={this.onNamespaceToggled}
-          />
-          <span className={optionLabelStyle}>{namespace.name}</span>
-        </div>
-      ));
+      const namespaces = this.filtered()
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .map((namespace: Namespace) => (
+          <div
+            className={optionStyle}
+            id={`namespace-list-item[${namespace.name}]`}
+            key={`namespace-list-item[${namespace.name}]`}
+          >
+            <input
+              type="checkbox"
+              value={namespace.name}
+              checked={!!selectedMap[namespace.name]}
+              onChange={this.onNamespaceToggled}
+            />
+            <span className={optionLabelStyle}>{namespace.name}</span>
+          </div>
+        ));
 
       return (
         <>
@@ -229,7 +231,7 @@ class NamespaceDropdownComponent extends React.PureComponent<NamespaceDropdownPr
     return <div className={optionStyle}>No namespaces found</div>;
   }
 
-  render() {
+  render(): JSX.Element {
     return (
       <TourStop info={GraphTourStops.Namespaces}>
         <Dropdown
@@ -257,7 +259,7 @@ class NamespaceDropdownComponent extends React.PureComponent<NamespaceDropdownPr
     );
   }
 
-  private onToggle = (isOpen: boolean) => {
+  private onToggle = (isOpen: boolean): void => {
     if (isOpen) {
       this.props.refresh();
     } else {
@@ -269,18 +271,18 @@ class NamespaceDropdownComponent extends React.PureComponent<NamespaceDropdownPr
     });
   };
 
-  private onBulkAll = () => {
+  private onBulkAll = (): void => {
     const union = Array.from(new Set([...this.state.selectedNamespaces, ...this.filtered()]));
     this.setState({ selectedNamespaces: union });
   };
 
-  private onBulkNone = () => {
+  private onBulkNone = (): void => {
     const filtered = this.filtered();
     const remaining = this.state.selectedNamespaces.filter(s => filtered.findIndex(f => f.name === s.name) < 0);
     this.setState({ selectedNamespaces: remaining });
   };
 
-  onNamespaceToggled = event => {
+  onNamespaceToggled = (event): void => {
     const namespace = event.target.value;
     const selectedNamespaces = !!this.state.selectedNamespaces.find(n => n.name === namespace)
       ? this.state.selectedNamespaces.filter(n => n.name !== namespace)
@@ -288,11 +290,11 @@ class NamespaceDropdownComponent extends React.PureComponent<NamespaceDropdownPr
     this.setState({ selectedNamespaces: selectedNamespaces });
   };
 
-  private onFilterChange = (value: string) => {
+  private onFilterChange = (value: string): void => {
     this.props.setFilter(value);
   };
 
-  private clearFilter = () => {
+  private clearFilter = (): void => {
     this.props.setFilter('');
   };
 
@@ -306,7 +308,7 @@ class NamespaceDropdownComponent extends React.PureComponent<NamespaceDropdownPr
   };
 }
 
-const mapStateToProps = (state: KialiAppState) => {
+const mapStateToProps = (state: KialiAppState): any => {
   return {
     namespaces: namespaceItemsSelector(state)!,
     activeNamespaces: activeNamespacesSelector(state),
@@ -314,7 +316,7 @@ const mapStateToProps = (state: KialiAppState) => {
   };
 };
 
-const mapDispatchToProps = (dispatch: KialiDispatch) => {
+const mapDispatchToProps = (dispatch: KialiDispatch): any => {
   return {
     refresh: () => {
       dispatch(NamespaceThunkActions.fetchNamespacesIfNeeded());
