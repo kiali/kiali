@@ -137,16 +137,12 @@ class ServiceListPageComponent extends FilterComponent.Component<
     toggles: ActiveTogglesInfo,
     rateInterval: number
   ): void {
-    const health = toggles.get('health') ? 'true' : 'false';
-    const istioResources = toggles.get('istioResources') ? 'true' : 'false';
-    const onlyDefinitions = toggles.get('configuration') ? 'false' : 'true'; // !configuration => onlyDefinitions
-
     const servicesPromises = namespaces.map(ns =>
       API.getServices(ns, {
-        health: health,
-        istioResources: istioResources,
+        health: toggles.get('health') ?? true,
+        istioResources: toggles.get('istioResources') ?? true,
         rateInterval: `${String(rateInterval)}s`,
-        onlyDefinitions: onlyDefinitions
+        onlyDefinitions: toggles.get('configuration') ?? false // !configuration => onlyDefinitions
       })
     );
 
