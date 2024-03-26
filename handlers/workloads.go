@@ -9,6 +9,7 @@ import (
 	"sync"
 
 	"github.com/gorilla/mux"
+	"golang.org/x/exp/slices"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
@@ -57,11 +58,7 @@ func (p *workloadParams) extract(r *http.Request) {
 // ClustersWorkloads is the API handler to fetch all the workloads to be displayed, related to a single namespace
 func ClustersWorkloads(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
-	namespaces := query.Get("namespaces") // csl of namespaces
-	nss := []string{}
-	if len(namespaces) > 0 {
-		nss = strings.Split(namespaces, ",")
-	}
+	namespacesQueryParam := query.Get("namespaces") // csl of namespaces
 	p := workloadParams{}
 	p.extract(r)
 
@@ -72,9 +69,17 @@ func ClustersWorkloads(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if len(nss) == 0 {
-		loadedNamespaces, _ := businessLayer.Namespace.GetClusterNamespaces(r.Context(), p.ClusterName)
-		for _, ns := range loadedNamespaces {
+	nss := []string{}
+	namespacesFromQueryParams := strings.Split(namespacesQueryParam, ",")
+	loadedNamespaces, _ := businessLayer.Namespace.GetClusterNamespaces(r.Context(), p.ClusterName)
+	for _, ns := range loadedNamespaces {
+		// If namespaces have been provided in the query, further filter the results to only include those namespaces.
+		if len(namespacesQueryParam) > 0 {
+			if slices.Contains(namespacesFromQueryParams, ns.Name) {
+				nss = append(nss, ns.Name)
+			}
+		} else {
+			// Otherwise no namespaces have been provided in the query params, so include all namespaces the user has access to.
 			nss = append(nss, ns.Name)
 		}
 	}
