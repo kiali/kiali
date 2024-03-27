@@ -212,15 +212,11 @@ func Namespaces() (*models.Namespaces, int, error) {
 func NamespaceWorkloadHealth(namespace string, params map[string]string) (*models.NamespaceWorkloadHealth, int, error) {
 	params["type"] = "workload"
 	url := fmt.Sprintf("%s/api/clusters/health?namespaces=%s&%s", client.kialiURL, namespace, ParamsAsString(params))
-	body, code, _, err := httpGETWithRetry(url, client.GetAuth(), 10*time.Second, nil, client.kialiCookies)
+	health := new(models.ClustersNamespaceHealth)
+
+	code, err := getRequestAndUnmarshalInto(url, health)
 	if err == nil {
-		health := new(models.ClustersNamespaceHealth)
-		err = json.Unmarshal(body, &health)
-		if err == nil {
-			return health.WorkloadHealth[namespace], code, nil
-		} else {
-			return nil, code, err
-		}
+		return health.WorkloadHealth[namespace], code, nil
 	} else {
 		return nil, code, err
 	}
@@ -229,15 +225,11 @@ func NamespaceWorkloadHealth(namespace string, params map[string]string) (*model
 func NamespaceAppHealth(namespace string, params map[string]string) (*models.NamespaceAppHealth, int, error) {
 	params["type"] = "app"
 	url := fmt.Sprintf("%s/api/clusters/health?namespaces=%s&%s", client.kialiURL, namespace, ParamsAsString(params))
-	body, code, _, err := httpGETWithRetry(url, client.GetAuth(), 10*time.Second, nil, client.kialiCookies)
+	health := new(models.ClustersNamespaceHealth)
+
+	code, err := getRequestAndUnmarshalInto(url, health)
 	if err == nil {
-		health := new(models.ClustersNamespaceHealth)
-		err = json.Unmarshal(body, &health)
-		if err == nil {
-			return health.AppHealth[namespace], code, nil
-		} else {
-			return nil, code, err
-		}
+		return health.AppHealth[namespace], code, nil
 	} else {
 		return nil, code, err
 	}
@@ -246,15 +238,11 @@ func NamespaceAppHealth(namespace string, params map[string]string) (*models.Nam
 func NamespaceServiceHealth(namespace string, params map[string]string) (*models.NamespaceServiceHealth, int, error) {
 	params["type"] = "service"
 	url := fmt.Sprintf("%s/api/clusters/health?namespaces=%s&%s", client.kialiURL, namespace, ParamsAsString(params))
-	body, code, _, err := httpGETWithRetry(url, client.GetAuth(), 10*time.Second, nil, client.kialiCookies)
+	health := new(models.ClustersNamespaceHealth)
+
+	code, err := getRequestAndUnmarshalInto(url, health)
 	if err == nil {
-		health := new(models.ClustersNamespaceHealth)
-		err = json.Unmarshal(body, &health)
-		if err == nil {
-			return health.ServiceHealth[namespace], code, nil
-		} else {
-			return nil, code, err
-		}
+		return health.ServiceHealth[namespace], code, nil
 	} else {
 		return nil, code, err
 	}
@@ -263,13 +251,13 @@ func NamespaceServiceHealth(namespace string, params map[string]string) (*models
 func ApplicationsList(namespace string) (*models.ClusterApps, error) {
 	url := fmt.Sprintf("%s/api/clusters/apps?namespaces=%s", client.kialiURL, namespace)
 	appList := new(models.ClusterApps)
-  
+
 	_, err := getRequestAndUnmarshalInto(url, appList)
 	if err == nil {
 		return appList, nil
-  } else {
-	  return nil, err
-  } 
+	} else {
+		return nil, err
+	}
 }
 
 func ApplicationDetails(name, namespace string) (*models.App, int, error) {
@@ -625,15 +613,11 @@ func FirstPodName(name, namespace string) (string, error) {
 
 func PodLogs(name, namespace string, params map[string]string) (*business.PodLog, error) {
 	url := fmt.Sprintf("%s/api/namespaces/%s/pods/%s/logs?sinceTime=%d&%s", client.kialiURL, namespace, name, TimeSinceSeconds(), ParamsAsString(params))
-	body, _, _, err := httpGETWithRetry(url, client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
+	logs := new(business.PodLog)
+
+	_, err := getRequestAndUnmarshalInto(url, logs)
 	if err == nil {
-		logs := new(business.PodLog)
-		err = json.Unmarshal(body, &logs)
-		if err == nil {
-			return logs, nil
-		} else {
-			return nil, err
-		}
+		return logs, nil
 	} else {
 		return nil, err
 	}

@@ -41,7 +41,8 @@ func TestInvalidNamespaceHealth(t *testing.T) {
 	_, code, err := kiali.NamespaceWorkloadHealth("invalid", params)
 
 	// namespace not found instead of internal server error
-	require.Nil(err)
+	require.Error(err)
+	require.Contains(err.Error(), "namespaces \"invalid\" not found")
 	require.NotEqual(200, code)
 }
 
@@ -70,7 +71,7 @@ func TestNamespaceHealthInvalidRate(t *testing.T) {
 	_, code, err := kiali.NamespaceAppHealth(kiali.BOOKINFO, params)
 
 	// 500 and error message which is not failing in unmarshalling
-	require.Nil(err)
+	require.NoError(err)
 	require.NotEqual(200, code)
 }
 
