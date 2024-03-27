@@ -81,7 +81,7 @@ func SidecarSelectorMultiMatchChecker(cluster, subjectType string, sc []*network
 	i := 0
 	for _, s := range sc {
 		for _, wls := range workloadsPerNamespace {
-			if s.Namespace != wls.Namespace.Name {
+			if s.Namespace != wls.Namespace {
 				// Workloads from Sidecar's own Namespaces only are considered in Selector
 				continue
 			}
@@ -231,7 +231,7 @@ func (m GenericMultiMatchChecker) multiMatchSubjects() ReferenceMap {
 					continue
 				}
 
-				workloadKey := models.BuildKey(w.Type, w.Name, wls.Namespace.Name)
+				workloadKey := models.BuildKey(w.Type, w.Name, wls.Namespace)
 				workloadSubjects.Add(workloadKey, subjectKey)
 			}
 		}

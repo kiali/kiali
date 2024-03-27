@@ -30,7 +30,7 @@ type WorkloadList struct {
 	// Namespace where the workloads live in
 	// required: true
 	// example: bookinfo
-	Namespace Namespace `json:"namespace"`
+	Namespace string `json:"namespace"`
 
 	// Workloads for a given namespace
 	// required: true

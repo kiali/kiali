@@ -79,7 +79,7 @@ func (a AuthorizationPolicyChecker) ServiceAccountNames(clusterName string) []st
 	for _, wpn := range a.WorkloadsPerNamespace {
 		for _, wl := range wpn.Workloads {
 			for _, sAccountName := range wl.ServiceAccountNames {
-				saFullName := fmt.Sprintf("%s/ns/%s/sa/%s", clusterName, wpn.Namespace.Name, sAccountName)
+				saFullName := fmt.Sprintf("%s/ns/%s/sa/%s", clusterName, wpn.Namespace, sAccountName)
 				found := false
 				for _, name := range names {
 					if name == saFullName {

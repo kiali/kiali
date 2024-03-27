@@ -97,13 +97,13 @@ func (n AuthorizationPolicyReferences) getWorkloadReferences(ap *security_v1beta
 
 		// AuthPolicy searches Workloads from own namespace, or from all namespaces when AuthPolicy is in root namespace
 		for _, wls := range n.WorkloadsPerNamespace {
-			if !config.IsRootNamespace(ap.Namespace) && wls.Namespace.Name != ap.Namespace {
+			if !config.IsRootNamespace(ap.Namespace) && wls.Namespace != ap.Namespace {
 				continue
 			}
 			for _, wl := range wls.Workloads {
 				wlLabelSet := labels.Set(wl.Labels)
 				if selector.Matches(wlLabelSet) {
-					result = append(result, models.WorkloadReference{Name: wl.Name, Namespace: wls.Namespace.Name})
+					result = append(result, models.WorkloadReference{Name: wl.Name, Namespace: wls.Namespace})
 				}
 			}
 		}
