@@ -157,9 +157,7 @@ func TestValidIstioNamespaceSelector(t *testing.T) {
 		Gateway: gw,
 		WorkloadsPerNamespace: map[string]models.WorkloadList{
 			"test": {
-				Namespace: models.Namespace{
-					Name: "test",
-				},
+				Namespace: "test",
 				Workloads: []models.WorkloadListItem{},
 			},
 		},
