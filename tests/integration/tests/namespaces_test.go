@@ -71,7 +71,8 @@ func TestNamespaceHealthInvalidRate(t *testing.T) {
 	_, code, err := kiali.NamespaceAppHealth(kiali.BOOKINFO, params)
 
 	// 500 and error message which is not failing in unmarshalling
-	require.NoError(err)
+	require.Error(err)
+	require.Contains(err.Error(), "not a valid duration string: \"invalid\"")
 	require.NotEqual(200, code)
 }
 
