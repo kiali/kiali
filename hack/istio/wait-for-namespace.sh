@@ -11,42 +11,59 @@ if [ $# -eq 0 ]
     exit 1
 fi
 
-# process command line args
+helpmsg() {
+  cat <<HELP
+Valid command line arguments:
+   -ce|--client-exe <path to kubectl> The 'kubectl' or 'oc' command, if not in PATH then must be a full path. Default: oc
+   -n|--namespaces <name>: all of the namespaces we want to patch operator and wait for
+   -h|--help : this message
+HELP
+}
+
 while [[ $# -gt 0 ]]; do
   key="$1"
   case $key in
-    -n|--namespace)
-      shift;
-      NAMESPACES=( "$@" )
-      break;
-      ;;
-    -h|--help)
-      cat <<HELPMSG
-Valid command line arguments:
-  -n|--namespaces <name>: all of the namespaces we want to patch operator and wait for
-  -h|--help : this message
-HELPMSG
-      exit 1
-      ;;
-    *)
-      echo "Unknown argument [$key]. Aborting."
-      exit 1
-      ;;
+    -ce|--client-exe)             CLIENT_EXE="$2";            shift;shift; ;;
+    -n|--namespace)               NAMESPACES="$2";            shift;shift; ;;
+    -h|--help)                    helpmsg;                    exit 1       ;;
+    *) echo "Unknown argument: [$key]. Aborting."; helpmsg; exit 1 ;;
   esac
 done
 
-IS_MAISTRA=$([ "$(oc get crd | grep servicemesh | wc -l)" -gt "0" ] && echo "true" || echo "false")
+# set up some of our defaults
+CLIENT_EXE=${CLIENT_EXE:-kubectl}
+CLIENT_EXE="$(which ${CLIENT_EXE} 2>/dev/null || echo "invalid kubectl: ${CLIENT_EXE}")"
+echo "Using CLIENT_EXE: $CLIENT_EXE"
 
-if [ "${IS_MAISTRA}" == "false" ]; then
+KIALI_CR_NAMESPACE_NAME="$(${CLIENT_EXE} get kiali --all-namespaces -o jsonpath='{.items[*].metadata.namespace}{":"}{.items[*].metadata.name'})"
+KIALI_CR_NAMESPACE="$(echo ${KIALI_CR_NAMESPACE_NAME} | cut -d: -f1)"
+KIALI_CR_NAME="$(echo ${KIALI_CR_NAMESPACE_NAME} | cut -d: -f2)"
+ACCESSIBLE_NAMESPACES="$(${CLIENT_EXE} get kiali $KIALI_CR_NAME -n $KIALI_CR_NAMESPACE -o jsonpath='{.spec.deployment.accessible_namespaces}')"
+
+# All namespaces are accessible, no need to add namespaces access to Kiali CR
+if [ "${ACCESSIBLE_NAMESPACES}" != "**" ]; then
+  # accessible_namespaces field is not defined in the Kiali CR, initializing value to empty array
+  if [ "${ACCESSIBLE_NAMESPACES}" == "" ]; then
+    ${CLIENT_EXE} patch kiali $KIALI_CR_NAME -n $KIALI_CR_NAMESPACE --type=merge -p '{"spec": {"deployment": {"accessible_namespaces": []}}}'
+  fi
+
   for NAMESPACE in ${NAMESPACES[@]}; do
-    oc patch kiali kiali -n kiali-operator --type=json '-p=[{"op": "add", "path": "/spec/deployment/accessible_namespaces/0", "value":"'$NAMESPACE'"}]'
+    ${CLIENT_EXE} patch kiali $KIALI_CR_NAME -n $KIALI_CR_NAMESPACE --type=json '-p=[{"op": "add", "path": "/spec/deployment/accessible_namespaces/-", "value":"'$NAMESPACE'"}]'
   done
-    oc wait --for=condition=Successful kiali/kiali --timeout=120s -n kiali-operator
+
+  echo -n "Waiting for operator to finish reconciling the CR named [$KIALI_CR_NAME] located in namespace [$KIALI_CR_NAMESPACE]"
+  while [ "$KIALI_CR_REASON" != "Successful" -o "$KIALI_CR_STATUS" != "True" ]; do
+    sleep 1
+    echo -n "."
+    KIALI_CR_REASON="$(${CLIENT_EXE} get kiali $KIALI_CR_NAME -n $KIALI_CR_NAMESPACE -o jsonpath='{.status.conditions[?(@.message=="Awaiting next reconciliation")].reason}')"
+    KIALI_CR_STATUS="$(${CLIENT_EXE} get kiali $KIALI_CR_NAME -n $KIALI_CR_NAMESPACE -o jsonpath='{.status.conditions[?(@.message=="Awaiting next reconciliation")].status}')"
+  done
+  echo
+  echo "Done reconciling"
 fi
 
 for NAMESPACE in ${NAMESPACES[@]}; do
-  oc wait --for=condition=Ready pods --all -n "$NAMESPACE" --timeout 60s || true
-  oc wait --for=condition=Ready pods --all -n "$NAMESPACE" --timeout 60s
+  ${CLIENT_EXE} wait --for=condition=Ready pods --all -n "$NAMESPACE" --timeout 60s || true
 done
 
 sleep 80
