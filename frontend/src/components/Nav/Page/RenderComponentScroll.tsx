@@ -38,18 +38,19 @@ export class RenderComponentScroll extends React.Component<Props, State> {
     this.state = { height: 0 };
   }
 
-  componentDidMount() {
+  componentDidMount(): void {
     this.updateWindowDimensions();
     window.addEventListener('resize', this.updateWindowDimensions);
   }
 
-  componentWillUnmount() {
+  componentWillUnmount(): void {
     window.removeEventListener('resize', this.updateWindowDimensions);
   }
 
-  updateWindowDimensions = () => {
+  updateWindowDimensions = (): void => {
     const isStandalone = !isKiosk(store.getState().globalState.kiosk);
     const topPadding = isStandalone ? TOP_PADDING : EMBEDDED_PADDING;
+
     this.setState(
       {
         height: window.innerHeight - topPadding
@@ -62,12 +63,12 @@ export class RenderComponentScroll extends React.Component<Props, State> {
     );
   };
 
-  render() {
+  render(): React.ReactNode {
     let scrollStyle = {};
 
     // If there is no global scrollbar, height is fixed to force the scrollbar to appear in the component
     if (globalScrollbar === 'false') {
-      scrollStyle = { height: this.state.height, overflowY: 'auto' };
+      scrollStyle = { height: this.state.height, overflowY: 'auto', width: '100%' };
     }
 
     return (

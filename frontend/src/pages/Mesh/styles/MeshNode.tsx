@@ -7,7 +7,7 @@ import {
   useHover,
   WithSelectionProps
 } from '@patternfly/react-topology';
-import useDetailsLevel from '@patternfly/react-topology/dist/esm/hooks/useDetailsLevel';
+import { useDetailsLevel } from '@patternfly/react-topology';
 import * as React from 'react';
 import { PFColors } from 'components/Pf/PfColors';
 import { kialiStyle } from 'styles/StyleUtils';

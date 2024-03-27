@@ -7,7 +7,7 @@ import {
   ShapeProps,
   WithSelectionProps
 } from '@patternfly/react-topology';
-import useDetailsLevel from '@patternfly/react-topology/dist/esm/hooks/useDetailsLevel';
+import { useDetailsLevel } from '@patternfly/react-topology';
 import { PFColors } from 'components/Pf/PfColors';
 import React from 'react';
 

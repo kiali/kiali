@@ -93,10 +93,12 @@ import { ClusterDropdown } from './ClusterDropdown';
 import { NamespaceDropdown } from '../../components/NamespaceDropdown';
 import { Labels } from '../../components/Label/Labels';
 import { WizardLabels } from '../../components/IstioWizards/WizardLabels';
+import { isParentKiosk, kioskContextMenuAction } from 'components/Kiosk/KioskActions';
 
 type ReduxProps = {
   activeClusters: MeshCluster[];
   activeNamespaces: Namespace[];
+  kiosk: string;
   namespacesPerCluster?: Map<string, string[]>;
 };
 
@@ -479,7 +481,13 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
   backToList = (): void => {
     this.setState(initState(), () => {
       // Back to list page
-      history.push(`/${Paths.ISTIO}?namespaces=${this.props.activeNamespaces.map(n => n.name).join(',')}`);
+      const backUrl = `/${Paths.ISTIO}?namespaces=${this.props.activeNamespaces.map(n => n.name).join(',')}`;
+
+      if (isParentKiosk(this.props.kiosk)) {
+        kioskContextMenuAction(backUrl);
+      } else {
+        history.push(backUrl);
+      }
     });
   };
 
@@ -761,6 +769,7 @@ const mapStateToProps = (state: KialiAppState): ReduxProps => {
   return {
     activeClusters: activeClustersSelector(state),
     activeNamespaces: activeNamespacesSelector(state),
+    kiosk: state.globalState.kiosk,
     namespacesPerCluster: namespacesPerClusterSelector(state)
   };
 };

@@ -21,7 +21,7 @@
 //
 
 import { Edge, Node } from '@patternfly/react-topology';
-import { Controller, GraphElement } from '@patternfly/react-topology/dist/esm/types';
+import { Controller, GraphElement } from '@patternfly/react-topology';
 import { NodeData, ancestors, predecessors, successors } from './MeshElems';
 
 export class MeshHighlighter {
@@ -33,7 +33,7 @@ export class MeshHighlighter {
     this.controller = controller;
   }
 
-  setSelectedId(selectedId?: string) {
+  setSelectedId = (selectedId?: string): void => {
     // ignore clicks on the currently selected element
     if (this.selectedId === selectedId) {
       return;
@@ -42,15 +42,15 @@ export class MeshHighlighter {
     this.selectedId = selectedId;
     this.clearHover();
     this.clearHighlighting();
-  }
+  };
 
-  clearHover = () => {
+  clearHover = (): void => {
     if (this.hovered) {
       this.hovered = undefined;
     }
   };
 
-  onMouseIn = (element: GraphElement) => {
+  onMouseIn = (element: GraphElement): void => {
     // only set Hovered when nothing is currently selected, otherwise just leave the selected element as-is
     if (!this.selectedId) {
       this.hovered = element;
@@ -58,23 +58,24 @@ export class MeshHighlighter {
     }
   };
 
-  onMouseOut = (element: GraphElement) => {
+  onMouseOut = (element: GraphElement): void => {
     if (this.hovered === element) {
       this.clearHover();
       this.clearHighlighting();
     }
   };
 
-  clearHighlighting = () => {
+  clearHighlighting = (): void => {
     this.controller.getElements().forEach(e => {
       const data = e.getData() as NodeData;
+
       if (data.isHighlighted || data.isUnhighlighted) {
         e.setData({ ...data, isHighlighted: false, isUnhighlighted: false });
       }
     });
   };
 
-  refresh = () => {
+  refresh = (): void => {
     const highlighted = this.getHighlighted();
     if (!highlighted.toHighlight) {
       return;
@@ -96,9 +97,10 @@ export class MeshHighlighter {
 
   // Returns the nodes to highlight. Highlighting for a hovered or selected element
   // is the same, it extends to full inbound and outbound paths.
-  getHighlighted(): { toHighlight: GraphElement[]; unhighlightOthers: boolean } {
+  getHighlighted = (): { toHighlight: GraphElement[]; unhighlightOthers: boolean } => {
     const isHover = !this.selectedId;
     const element = isHover ? this.hovered : this.controller.getElementById(this.selectedId!);
+
     if (element) {
       switch (element.getKind()) {
         case 'node':
@@ -114,36 +116,41 @@ export class MeshHighlighter {
       }
     }
     return { toHighlight: [], unhighlightOthers: false };
-  }
+  };
 
-  includeAncestorNodes(nodes: GraphElement[]) {
+  includeAncestorNodes = (nodes: GraphElement[]): GraphElement[] => {
     return nodes.reduce((all: GraphElement[], current) => {
       all.push(current);
+
       if (current.getKind() === 'node' && (current as Node).hasParent()) {
         all = Array.from(
           new Set<GraphElement>([...all, ...ancestors(current as Node)])
         );
       }
+
       return all;
     }, []);
-  }
+  };
 
-  getNodeHighlight(node: Node) {
+  getNodeHighlight = (node: Node): GraphElement[] => {
     const elems = predecessors(node).concat(successors(node));
     elems.push(node);
-    return this.includeAncestorNodes(elems);
-  }
 
-  getEdgeHighlight(edge: Edge) {
+    return this.includeAncestorNodes(elems);
+  };
+
+  getEdgeHighlight = (edge: Edge): GraphElement[] => {
     const source = edge.getSource();
     const target = edge.getTarget();
+
     let elems = [edge, source, target, ...predecessors(source), ...successors(target)];
     elems = this.includeAncestorNodes(elems);
-    return elems;
-  }
 
-  getBoxHighlight(box: Node): { toHighlight: GraphElement[]; unhighlightOthers: boolean } {
+    return elems;
+  };
+
+  getBoxHighlight = (box: Node): { toHighlight: GraphElement[]; unhighlightOthers: boolean } => {
     // Namespace and Cluster boxes highlight themselves and their anscestors.
     return { toHighlight: this.includeAncestorNodes([box]), unhighlightOthers: false };
-  }
+  };
 }

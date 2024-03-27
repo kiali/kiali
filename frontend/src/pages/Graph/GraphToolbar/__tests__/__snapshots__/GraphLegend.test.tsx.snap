@@ -27,7 +27,7 @@ exports[`GraphLegend test should render correctly 1`] = `
           onClick={[MockFunction]}
           variant="plain"
         >
-          <CloseIcon />
+          <Close />
         </Button>
       </Tooltip>
     </span>
