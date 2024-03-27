@@ -73,7 +73,7 @@ func TestGetWorkloadListFromDeployments(t *testing.T) {
 	workloadList, _ := svc.GetWorkloadList(context.TODO(), criteria)
 	workloads := workloadList.Workloads
 
-	assert.Equal("Namespace", workloadList.Namespace.Name)
+	assert.Equal("Namespace", workloadList.Namespace)
 
 	require.Equal(3, len(workloads))
 	assert.Equal("httpbin-v1", workloads[0].Name)
@@ -114,7 +114,7 @@ func TestGetWorkloadListFromReplicaSets(t *testing.T) {
 	workloadList, _ := svc.GetWorkloadList(context.TODO(), criteria)
 	workloads := workloadList.Workloads
 
-	assert.Equal("Namespace", workloadList.Namespace.Name)
+	assert.Equal("Namespace", workloadList.Namespace)
 
 	require.Equal(3, len(workloads))
 	assert.Equal("httpbin-v1", workloads[0].Name)
@@ -153,7 +153,7 @@ func TestGetWorkloadListFromReplicationControllers(t *testing.T) {
 	workloadList, _ := svc.GetWorkloadList(context.TODO(), criteria)
 	workloads := workloadList.Workloads
 
-	assert.Equal("Namespace", workloadList.Namespace.Name)
+	assert.Equal("Namespace", workloadList.Namespace)
 
 	require.Equal(3, len(workloads))
 	assert.Equal("httpbin-v1", workloads[0].Name)
@@ -192,7 +192,7 @@ func TestGetWorkloadListFromDeploymentConfigs(t *testing.T) {
 	workloadList, _ := svc.GetWorkloadList(context.TODO(), criteria)
 	workloads := workloadList.Workloads
 
-	assert.Equal("Namespace", workloadList.Namespace.Name)
+	assert.Equal("Namespace", workloadList.Namespace)
 
 	require.Equal(3, len(workloads))
 	assert.Equal("httpbin-v1", workloads[0].Name)
@@ -231,7 +231,7 @@ func TestGetWorkloadListFromStatefulSets(t *testing.T) {
 	workloadList, _ := svc.GetWorkloadList(context.TODO(), criteria)
 	workloads := workloadList.Workloads
 
-	assert.Equal("Namespace", workloadList.Namespace.Name)
+	assert.Equal("Namespace", workloadList.Namespace)
 
 	require.Equal(3, len(workloads))
 	assert.Equal("httpbin-v1", workloads[0].Name)
@@ -270,7 +270,7 @@ func TestGetWorkloadListFromDaemonSets(t *testing.T) {
 	workloadList, _ := svc.GetWorkloadList(context.TODO(), criteria)
 	workloads := workloadList.Workloads
 
-	assert.Equal("Namespace", workloadList.Namespace.Name)
+	assert.Equal("Namespace", workloadList.Namespace)
 
 	require.Equal(3, len(workloads))
 	assert.Equal("httpbin-v1", workloads[0].Name)
@@ -316,7 +316,7 @@ func TestGetWorkloadListFromDepRCPod(t *testing.T) {
 	workloadList, _ := svc.GetWorkloadList(context.TODO(), criteria)
 	workloads := workloadList.Workloads
 
-	assert.Equal("Namespace", workloadList.Namespace.Name)
+	assert.Equal("Namespace", workloadList.Namespace)
 
 	require.Equal(1, len(workloads))
 	assert.Equal("details-v1", workloads[0].Name)
@@ -346,7 +346,7 @@ func TestGetWorkloadListFromPod(t *testing.T) {
 	workloadList, _ := svc.GetWorkloadList(context.TODO(), criteria)
 	workloads := workloadList.Workloads
 
-	assert.Equal("Namespace", workloadList.Namespace.Name)
+	assert.Equal("Namespace", workloadList.Namespace)
 
 	require.Equal(1, len(workloads))
 	assert.Equal("orphan-pod", workloads[0].Name)
@@ -380,7 +380,7 @@ func TestGetWorkloadListFromPods(t *testing.T) {
 	workloadList, _ := svc.GetWorkloadList(context.TODO(), criteria)
 	workloads := workloadList.Workloads
 
-	assert.Equal("Namespace", workloadList.Namespace.Name)
+	assert.Equal("Namespace", workloadList.Namespace)
 
 	require.Equal(1, len(workloads))
 	assert.Equal("custom-controller-RS-123", workloads[0].Name)

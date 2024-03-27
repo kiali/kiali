@@ -149,7 +149,7 @@ func (in *WorkloadService) GetWorkloadList(ctx context.Context, criteria Workloa
 	cluster := criteria.Cluster
 
 	workloadList := &models.WorkloadList{
-		Namespace:   models.Namespace{Cluster: cluster, Name: namespace, CreationTimestamp: time.Time{}},
+		Namespace:   namespace,
 		Workloads:   []models.WorkloadListItem{},
 		Validations: models.IstioValidations{},
 	}
