@@ -140,18 +140,14 @@ class ServiceListPageComponent extends FilterComponent.Component<
     toggles: ActiveTogglesInfo,
     rateInterval: number
   ): void {
-    const health = toggles.get('health') ? 'true' : 'false';
-    const istioResources = toggles.get('istioResources') ? 'true' : 'false';
-    const onlyDefinitions = toggles.get('configuration') ? 'false' : 'true'; // !configuration => onlyDefinitions
-
     const servicesPromises = clusters.map(cluster =>
       API.getClustersServices(
         this.props.activeNamespaces.map(ns => ns.name).join(','),
         {
-          health: health,
-          istioResources: istioResources,
+          health: toggles.get('health') ?? true,
+          istioResources: toggles.get('istioResources') ?? true,
           rateInterval: `${String(rateInterval)}s`,
-          onlyDefinitions: onlyDefinitions
+          onlyDefinitions: toggles.get('configuration') !== undefined ? !toggles.get('configuration') : false // !configuration => onlyDefinitions
         },
         cluster
       )

@@ -189,7 +189,7 @@ func addLabels(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo
 	for _, n := range trafficMap {
 		if serviceList, ok := serviceLists[n.Cluster]; ok {
 			// make sure service nodes have the defined app label so it can be used for app grouping in the UI.
-			if n.NodeType == graph.NodeTypeService && n.Namespace == serviceList.Namespace.Name && n.App == "" {
+			if n.NodeType == graph.NodeTypeService && n.Namespace == serviceList.Namespace && n.App == "" {
 				// For service nodes that are a service entries, use the `hosts` property of the SE to find
 				// a matching Kubernetes Svc for adding missing labels
 				if _, ok := n.Metadata[graph.IsServiceEntry]; ok {

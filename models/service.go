@@ -73,7 +73,7 @@ type ClusterServices struct {
 }
 
 type ServiceList struct {
-	Namespace   Namespace         `json:"namespace"`
+	Namespace   string            `json:"namespace"`
 	Services    []ServiceOverview `json:"services"`
 	Validations IstioValidations  `json:"validations"`
 }

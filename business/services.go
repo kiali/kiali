@@ -183,7 +183,7 @@ func (in *SvcService) getServiceListForCluster(ctx context.Context, criteria Ser
 	}
 
 	// Convert to Kiali model
-	services := in.buildServiceList(cluster, models.Namespace{Name: criteria.Namespace}, svcs, rSvcs, pods, deployments, istioConfigList, criteria)
+	services := in.buildServiceList(cluster, criteria.Namespace, svcs, rSvcs, pods, deployments, istioConfigList, criteria)
 
 	// Check if we need to add health
 
@@ -220,7 +220,7 @@ func getDRKialiScenario(dr []*networking_v1beta1.DestinationRule) string {
 	return scenario
 }
 
-func (in *SvcService) buildServiceList(cluster string, namespace models.Namespace, svcs []core_v1.Service, rSvcs []*kubernetes.RegistryService, pods []core_v1.Pod, deployments []apps_v1.Deployment, istioConfigList models.IstioConfigList, criteria ServiceCriteria) *models.ServiceList {
+func (in *SvcService) buildServiceList(cluster string, namespace string, svcs []core_v1.Service, rSvcs []*kubernetes.RegistryService, pods []core_v1.Pod, deployments []apps_v1.Deployment, istioConfigList models.IstioConfigList, criteria ServiceCriteria) *models.ServiceList {
 	services := []models.ServiceOverview{}
 	validations := models.IstioValidations{}
 	if !criteria.IncludeOnlyDefinitions {
