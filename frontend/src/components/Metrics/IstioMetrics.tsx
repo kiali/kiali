@@ -31,6 +31,7 @@ import { refreshIntervalSelector, timeRangeSelector } from 'store/Selectors';
 import { UserSettingsActions } from 'actions/UserSettingsActions';
 import { KialiCrippledFeatures } from 'types/ServerConfig';
 import { TimeDurationIndicator } from '../Time/TimeDurationIndicator';
+import { isParentKiosk, kioskContextMenuAction } from 'components/Kiosk/KioskActions';
 
 type MetricsState = {
   crippledFeatures?: KialiCrippledFeatures;
@@ -60,6 +61,7 @@ type IstioMetricsProps = ObjectId &
 
 type ReduxProps = {
   jaegerIntegration: boolean;
+  kiosk: string;
   timeRange: TimeRange;
   refreshInterval: IntervalInMilliseconds;
   setTimeRange: (range: TimeRange) => void;
@@ -252,9 +254,14 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
           : this.props.objectType === MetricsObjectTypes.SERVICE
           ? 'services'
           : 'workloads';
-      history.push(
-        `/namespaces/${this.props.namespace}/${domain}/${this.props.object}?tab=traces&${URLParam.JAEGER_TRACE_ID}=${traceId}&${URLParam.JAEGER_SPAN_ID}=${spanId}`
-      );
+
+      const traceUrl = `/namespaces/${this.props.namespace}/${domain}/${this.props.object}?tab=traces&${URLParam.JAEGER_TRACE_ID}=${traceId}&${URLParam.JAEGER_SPAN_ID}=${spanId}`;
+
+      if (isParentKiosk(this.props.kiosk)) {
+        kioskContextMenuAction(traceUrl);
+      } else {
+        history.push(traceUrl);
+      }
     }
   };
 
@@ -413,6 +420,7 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
 const mapStateToProps = (state: KialiAppState) => {
   return {
     jaegerIntegration: state.jaegerState.info ? state.jaegerState.info.integration : false,
+    kiosk: state.globalState.kiosk,
     timeRange: timeRangeSelector(state),
     refreshInterval: refreshIntervalSelector(state)
   };

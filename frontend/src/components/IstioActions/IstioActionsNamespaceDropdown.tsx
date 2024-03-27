@@ -5,6 +5,8 @@ import { serverConfig } from '../../config';
 import { NEW_ISTIO_RESOURCE } from '../../pages/IstioConfigNew/IstioConfigNewPage';
 import { K8SGATEWAY } from '../../pages/IstioConfigNew/K8sGatewayForm';
 import { groupMenuStyle } from 'styles/DropdownStyles';
+import { isParentKiosk, kioskContextMenuAction } from 'components/Kiosk/KioskActions';
+import { store } from 'store/ConfigStore';
 
 type Props = {};
 
@@ -38,7 +40,14 @@ export class IstioActionsNamespaceDropdown extends React.Component<Props, State>
   };
 
   onClickCreate = (type: string) => {
-    history.push('/istio/new/' + type);
+    const kiosk = store.getState().globalState.kiosk;
+    const newUrl = `/istio/new/${type}`;
+
+    if (isParentKiosk(kiosk)) {
+      kioskContextMenuAction(newUrl);
+    } else {
+      history.push(newUrl);
+    }
   };
 
   render() {

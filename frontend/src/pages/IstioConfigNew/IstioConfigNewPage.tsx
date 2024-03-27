@@ -71,11 +71,13 @@ import { ConfigPreviewItem, IstioConfigPreview } from 'components/IstioConfigPre
 import { isValid } from 'utils/Common';
 import { ClusterDropdown } from './ClusterDropdown';
 import { NamespaceDropdown } from '../../components/NamespaceDropdown';
+import { isParentKiosk, kioskContextMenuAction } from 'components/Kiosk/KioskActions';
 
 type Props = {
   objectType: string;
   activeNamespaces: Namespace[];
   activeClusters: MeshCluster[];
+  kiosk: string;
   namespacesPerCluster?: Map<string, string[]>;
 };
 
@@ -344,7 +346,13 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
   backToList = () => {
     this.setState(initState(), () => {
       // Back to list page
-      history.push(`/${Paths.ISTIO}?namespaces=${this.props.activeNamespaces.map(n => n.name).join(',')}`);
+      const backUrl = `/${Paths.ISTIO}?namespaces=${this.props.activeNamespaces.map(n => n.name).join(',')}`;
+
+      if (isParentKiosk(this.props.kiosk)) {
+        kioskContextMenuAction(backUrl);
+      } else {
+        history.push(backUrl);
+      }
     });
   };
 
@@ -556,6 +564,7 @@ const mapStateToProps = (state: KialiAppState) => {
   return {
     activeClusters: activeClustersSelector(state),
     activeNamespaces: activeNamespacesSelector(state),
+    kiosk: state.globalState.kiosk,
     namespacesPerCluster: namespacesPerClusterSelector(state)
   };
 };
