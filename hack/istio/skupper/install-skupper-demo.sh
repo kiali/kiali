@@ -13,6 +13,10 @@
 # Mongo database over that pipe. The MySQL database will be exposed externally
 # using a LoadBalancer (if on minikube) and the NodePort (if on OpenShift).
 #
+# As an extra option, you can ask this script to install the basic Skupper
+# demo that we will call the east-west demo (see: https://skupper.io/start/).
+# Cluster #1 will be "west" and cluster #2 will be "east".
+#
 # If you are using minikube, this script will start 2 minikube clusters.
 # If you are using OpenShift, you are responsible for starting the two
 # clusters and telling this script how to connect to those clusters
@@ -35,6 +39,9 @@ infomsg() {
 CLUSTER1_ISTIO="istio"
 CLUSTER2_DB="db"
 
+NAMESPACE_WEST="west"
+NAMESPACE_EAST="east"
+
 # Some defaults
 
 SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
@@ -44,6 +51,7 @@ OUTPUT_DIR="${ROOT_DIR}/_output"
 CLIENT_EXE="kubectl"
 CLUSTER_TYPE="minikube"
 HACK_SCRIPTS_DIR="${ROOT_DIR}/hack"
+INSTALL_EAST_WEST_DEMO="false"
 KIALI_DEV_BUILD="true"
 KIALI_VERSION="dev"
 MONGONS="mongons"
@@ -75,6 +83,7 @@ while [ $# -gt 0 ]; do
     sui)                      _CMD="sui"                           ;shift ;;
     -c|--client)              CLIENT_EXE="$2"                ;shift;shift ;;
     -ct|--cluster-type)       CLUSTER_TYPE="$2"              ;shift;shift ;;
+    -ewd|--east-west-demo)    INSTALL_EAST_WEST_DEMO="$2"    ;shift;shift ;;
     -kdb|--kiali-dev-build)   KIALI_DEV_BUILD="$2"           ;shift;shift ;;
     -kv|--kiali-version)      KIALI_VERSION="$2"             ;shift;shift ;;
     -os1a|--openshift1-api)   OPENSHIFT1_API="$2"            ;shift;shift ;;
@@ -92,6 +101,8 @@ Valid command line arguments:
                                            If "minikube", this script creates its own clusters.
                                            If "openshift", the clusters must be started already.
                                            Default: "minikube"
+  -ewd|--east-west-demo [true|false]: If "true" the basic Skupper demo is also installed, too.
+                                      Default: "false"
   -kdb|--kiali-dev-build [true|false]: If "true" and --kiali-version is "dev", a dev image will be
                                        built. If "false" and --kiali-version is "dev", you must
                                        have previously built a dev image prior to running this script.
@@ -115,8 +126,8 @@ Valid command line arguments:
   -h|--help : This message.
 
 Valid commands:
-  install: Installs the demo that consists of Istio, Kiali, Bookinfo demo, and Skupper.
-  delete: Uninstalls the demo by shutting down the two minikube clusters
+  install: Installs the Istio/Kiali/Bookinfo/Skupper demo (and optionally the east-west demo)
+  delete: Uninstalls the demo by shutting down the two minikube clusters or removing resources from OpenShift
   iprom: Open a browser window to the Istio Prometheus UI
   kui: Open a browser window to the Kiali UI
   smetrics: Dumps the live metrics from the Skupper metrics endpoint
@@ -385,6 +396,59 @@ openshift_install_skupper() {
   ${CLIENT_EXE} -n ${MONGOSKUPPERNS} expose svc skupper-prometheus
 }
 
+minikube_install_east_west_demo() {
+  infomsg "Installing East-West Demo..."
+
+  ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} create namespace ${NAMESPACE_WEST}
+  ${CLIENT_EXE} --context ${CLUSTER2_DB} create namespace ${NAMESPACE_EAST}
+
+  ${SKUPPER_EXE} --context ${CLUSTER1_ISTIO} -n ${NAMESPACE_WEST} init --enable-console --enable-flow-collector
+  ${SKUPPER_EXE} --context ${CLUSTER2_DB} -n ${NAMESPACE_EAST} init
+
+  rm -r "${SKUPPER_TOKEN_FILE}"
+  ${SKUPPER_EXE} --context ${CLUSTER1_ISTIO} -n ${NAMESPACE_WEST} token create "${SKUPPER_TOKEN_FILE}"
+  ${SKUPPER_EXE} --context ${CLUSTER2_DB} -n ${NAMESPACE_EAST} link create "${SKUPPER_TOKEN_FILE}"
+
+  ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} -n ${NAMESPACE_WEST} create deployment frontend --image quay.io/skupper/hello-world-frontend
+  ${CLIENT_EXE} --context ${CLUSTER2_DB} -n ${NAMESPACE_EAST} create deployment backend --image quay.io/skupper/hello-world-backend --replicas 3
+
+  # expose with http protocol
+  ${SKUPPER_EXE} --context ${CLUSTER2_DB} -n ${NAMESPACE_EAST} expose deployment/backend --port 8080 --protocol http
+  ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} -n ${NAMESPACE_WEST} expose deployment frontend --port 8080 --type LoadBalancer
+
+  infomsg "Exposing Skupper Prometheus so its UI can be accessed"
+  ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} -n ${NAMESPACE_WEST} patch svc skupper-prometheus --type=merge --patch '{"spec":{"type":"LoadBalancer"}}'
+  infomsg "East-West Demo installed."
+}
+
+openshift_install_east_west_demo() {
+  infomsg "Installing East-West Demo..."
+
+  openshift_login ${CLUSTER1_ISTIO} && ${CLIENT_EXE} create namespace ${NAMESPACE_WEST}
+  openshift_login ${CLUSTER2_DB} && ${CLIENT_EXE} create namespace ${NAMESPACE_EAST}
+
+  openshift_login ${CLUSTER1_ISTIO} && ${SKUPPER_EXE} -n ${NAMESPACE_WEST} init --enable-console --enable-flow-collector
+  openshift_login ${CLUSTER2_DB} && ${SKUPPER_EXE} -n ${NAMESPACE_EAST} init
+
+  rm -r "${SKUPPER_TOKEN_FILE}"
+  openshift_login ${CLUSTER1_ISTIO} && ${SKUPPER_EXE} -n ${NAMESPACE_WEST} token create "${SKUPPER_TOKEN_FILE}"
+  openshift_login ${CLUSTER2_DB} && ${SKUPPER_EXE} -n ${NAMESPACE_EAST} link create "${SKUPPER_TOKEN_FILE}"
+
+  openshift_login ${CLUSTER1_ISTIO} && ${CLIENT_EXE} -n ${NAMESPACE_WEST} create deployment frontend --image quay.io/skupper/hello-world-frontend
+  openshift_login ${CLUSTER2_DB} && ${CLIENT_EXE} -n ${NAMESPACE_EAST} create deployment backend --image quay.io/skupper/hello-world-backend --replicas 3
+
+  # expose with http protocol - still logged into cluster 2
+  ${SKUPPER_EXE} -n ${NAMESPACE_EAST} expose deployment/backend --port 8080 --protocol http
+  openshift_login ${CLUSTER1_ISTIO}
+  ${CLIENT_EXE} -n ${NAMESPACE_WEST} expose deployment frontend --port 8080
+  ${CLIENT_EXE} -n ${NAMESPACE_WEST} expose svc frontend
+
+  infomsg "Exposing Skupper Prometheus so its UI can be accessed"
+  ${CLIENT_EXE} -n ${NAMESPACE_WEST} expose svc skupper-prometheus
+
+  infomsg "East-West Demo installed."
+}
+
 confirm_cluster_is_up() {
   local cluster_name="${1}"
 
@@ -493,15 +557,21 @@ if [ "$_CMD" == "install" ]; then
 
   case ${CLUSTER_TYPE} in
     minikube)
-      infomsg "Installing demo on minikube"
+      infomsg "Installing Istio/Kiali/Bookinfo demo on minikube"
       minikube_install_basic_demo
       minikube_install_skupper
+      if [ "${INSTALL_EAST_WEST_DEMO}" == "true" ]; then
+        minikube_install_east_west_demo
+      fi
       ;;
 
     openshift)
-      infomsg "Installing demo on OpenShift"
+      infomsg "Installing Istio/Kiali/Bookinfo demo on OpenShift"
       openshift_install_basic_demo
       openshift_install_skupper
+      if [ "${INSTALL_EAST_WEST_DEMO}" == "true" ]; then
+        openshift_install_east_west_demo
+      fi
       ;;
 
     *) errormsg "Invalid cluster type" && exit 1 ;;
@@ -526,19 +596,28 @@ elif [ "$_CMD" == "delete" ]; then
       infomsg "Uninstalling Kiali ..."
       make --directory "${ROOT_DIR}" -e OC="$(which ${CLIENT_EXE})" -e CLUSTER_TYPE=openshift operator-delete
 
+      # ignore any errors while deleting, just try to delete everything
+      set +e
       infomsg "Uninstalling Bookinfo demo ..."
-      ${CLIENT_EXE} get namespace bookinfo && ${HACK_SCRIPTS_DIR}/istio/install-bookinfo-demo.sh -c ${CLIENT_EXE} --delete-bookinfo true
+      ${CLIENT_EXE} get namespace bookinfo 2>/dev/null && ${HACK_SCRIPTS_DIR}/istio/install-bookinfo-demo.sh -c ${CLIENT_EXE} --delete-bookinfo true
       infomsg "Uninstalling Istio ..."
-      ${CLIENT_EXE} get namespace istio-system && ${HACK_SCRIPTS_DIR}/istio/install-istio-via-istioctl.sh -c ${CLIENT_EXE} --delete-istio true
+      ${CLIENT_EXE} get namespace istio-system 2>/dev/null && ${HACK_SCRIPTS_DIR}/istio/install-istio-via-istioctl.sh -c ${CLIENT_EXE} --delete-istio true
       infomsg "Uninstalling Skupper pipe ..."
-      ${CLIENT_EXE} get namespace ${MONGOSKUPPERNS} && ${CLIENT_EXE} delete namespace ${MONGOSKUPPERNS}
+      ${CLIENT_EXE} get namespace ${MONGOSKUPPERNS} 2>/dev/null && ${CLIENT_EXE} delete namespace ${MONGOSKUPPERNS}
+
+      infomsg "Uninstalling ${NAMESPACE_WEST} namespace ..."
+      ${CLIENT_EXE} get namespace ${NAMESPACE_WEST} 2>/dev/null && ${CLIENT_EXE} delete namespace ${NAMESPACE_WEST}
 
       # LOGIN TO CLUSTER 2
       openshift_login ${CLUSTER2_DB}
 
       infomsg "Uninstalling the databases ..."
-      ${CLIENT_EXE} get namespace ${MYSQLNS} && ${CLIENT_EXE} delete namespace ${MYSQLNS}
-      ${CLIENT_EXE} get namespace ${MONGONS} && ${CLIENT_EXE} delete namespace ${MONGONS}
+      ${CLIENT_EXE} get namespace ${MYSQLNS} 2>/dev/null && ${CLIENT_EXE} delete namespace ${MYSQLNS}
+      ${CLIENT_EXE} get namespace ${MONGONS} 2>/dev/null && ${CLIENT_EXE} delete namespace ${MONGONS}
+
+      infomsg "Uninstalling ${NAMESPACE_EAST} namespace ..."
+      ${CLIENT_EXE} get namespace ${NAMESPACE_EAST} 2>/dev/null && ${CLIENT_EXE} delete namespace ${NAMESPACE_EAST}
+      set -e
       ;;
 
     *) errormsg "Invalid cluster type" && exit 1 ;;
@@ -593,6 +672,8 @@ elif [ "$_CMD" == "sprom" ]; then
 elif [ "$_CMD" == "sstatus" ]; then
 
   confirm_cluster_is_up "${CLUSTER2_DB}"
+  skupper_ui_username="admin"
+
   infomsg "Status of Skupper link on [${CLUSTER2_DB}] cluster:"
 
   case ${CLUSTER_TYPE} in
@@ -610,22 +691,50 @@ elif [ "$_CMD" == "sstatus" ]; then
     *) errormsg "Invalid cluster type" && exit 1 ;;
   esac
 
+  case ${CLUSTER_TYPE} in
+    minikube)
+      if ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} -n ${NAMESPACE_WEST} get service/frontend &>/dev/null; then
+        east_west_demo_app_ip="$(${CLIENT_EXE} --context ${CLUSTER1_ISTIO} -n ${NAMESPACE_WEST} get service/frontend -o jsonpath={.status.loadBalancer.ingress[0].ip} 2>/dev/null)"
+        east_west_demo_pui="http://$(${CLIENT_EXE} -n ${NAMESPACE_WEST} get svc skupper-prometheus -ojsonpath='{.status.loadBalancer.ingress[0].ip}'):9090"
+        east_west_demo_spass="$(${CLIENT_EXE} --context ${CLUSTER1_ISTIO} get secret -n ${NAMESPACE_WEST} skupper-console-users -ojsonpath={.data.${skupper_ui_username}} | base64 -d)"
+        east_west_demo_sui="https://$(${CLIENT_EXE} --context ${CLUSTER1_ISTIO} -n ${NAMESPACE_WEST} get svc skupper -ojsonpath='{.status.loadBalancer.ingress[0].ip}'):8010"
+      fi
+    ;;
+    openshift)
+      if ${CLIENT_EXE} -n ${NAMESPACE_WEST} get service/frontend &>/dev/null; then
+        east_west_demo_app_ip="$(${CLIENT_EXE} -n ${NAMESPACE_WEST} get route frontend -o jsonpath={.spec.host} 2>/dev/null)"
+        east_west_demo_pui="http://$(${CLIENT_EXE} -n ${NAMESPACE_WEST} get route skupper-prometheus -ojsonpath='{.spec.host}')"
+        east_west_demo_spass="$(${CLIENT_EXE} get secret -n ${NAMESPACE_WEST} skupper-console-users -ojsonpath={.data.${skupper_ui_username}} | base64 -d)"
+        east_west_demo_sui="https://$(${CLIENT_EXE} -n ${NAMESPACE_WEST} get route skupper -ojsonpath='{.spec.host}')"
+      fi
+    ;;
+    *) errormsg "Invalid cluster type" && exit 1
+    ;;
+  esac
+  if [ -n "${east_west_demo_app_ip:-}" ]; then
+    echo
+    [ "${CLUSTER_TYPE}" == "minikube" ] && infomsg "East-West Demo Frontend App: http://${east_west_demo_app_ip}:8080"
+    [ "${CLUSTER_TYPE}" == "openshift" ] && infomsg "East-West Demo Frontend App: http://${east_west_demo_app_ip}"
+    infomsg "East-West Demo Prometheus UI URL: ${east_west_demo_pui}"
+    infomsg "East-West Demo Skupper UI URL (USERNAME=[${skupper_ui_username}], PASSWORD=[${east_west_demo_spass}]): ${east_west_demo_sui}"
+  fi
+
 elif [ "$_CMD" == "sui" ]; then
 
   confirm_cluster_is_up "${CLUSTER1_ISTIO}"
-  USERNAME="admin"
+  skupper_ui_username="admin"
 
   case ${CLUSTER_TYPE} in
     minikube)
-      PASSWORD="$(${CLIENT_EXE} --context ${CLUSTER1_ISTIO} get secret -n ${MONGOSKUPPERNS} skupper-console-users -ojsonpath={.data.${USERNAME}} | base64 -d)"
+      PASSWORD="$(${CLIENT_EXE} --context ${CLUSTER1_ISTIO} get secret -n ${MONGOSKUPPERNS} skupper-console-users -ojsonpath={.data.${skupper_ui_username}} | base64 -d)"
       open_browser https://$(${CLIENT_EXE} --context ${CLUSTER1_ISTIO} -n ${MONGOSKUPPERNS} get svc skupper -ojsonpath='{.status.loadBalancer.ingress[0].ip}'):8010 ;;
     openshift)
-      PASSWORD="$(${CLIENT_EXE} get secret -n ${MONGOSKUPPERNS} skupper-console-users -ojsonpath={.data.${USERNAME}} | base64 -d)"
+      PASSWORD="$(${CLIENT_EXE} get secret -n ${MONGOSKUPPERNS} skupper-console-users -ojsonpath={.data.${skupper_ui_username}} | base64 -d)"
       open_browser https://$(${CLIENT_EXE} -n ${MONGOSKUPPERNS} get route skupper -ojsonpath='{.spec.host}') ;;
     *) errormsg "Invalid cluster type" && exit 1 ;;
   esac
 
-  infomsg "Log into the Skupper UI with these credentials: USERNAME=[${USERNAME}], PASSWORD=[${PASSWORD}]"
+  infomsg "Log into the Skupper UI with these credentials: USERNAME=[${skupper_ui_username}], PASSWORD=[${PASSWORD}]"
 
 elif [ "$_CMD" == "" ]; then
   errormsg "You must specify the command to execute. See --help for more details."
