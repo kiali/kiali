@@ -148,24 +148,24 @@ const minimalSidecar = (name: string, namespace: string, hosts: string): string 
 }`;
 };
 
-const minimalK8Gateway = (name: string, namespace: string, gatewayClassName: string, port: number, labelsString: string): string => {
+const minimalK8Gateway = (name: string, namespace: string, hostname:string, protocol:string, port: string, gatewayClassName: string): string => {
     return `{
         "kind": "Gateway",
         "apiVersion": "gateway.networking.k8s.io/v1",
         "metadata": {
           "name": "${name}",
           "namespace": "${namespace}",
-          "labels": ${labelsString},
+          "labels": {},
           "annotations": {}
         },
         "spec": {
           "gatewayClassName": "${gatewayClassName}",
           "listeners": [
             {
-              "name": "hey",
+              "name": "foo",
               "port": ${port},
-              "protocol": "HTTP",
-              "hostname": "google.com",
+              "protocol": "${protocol}",
+              "hostname": "${hostname}",
               "allowedRoutes": {
                 "namespaces": {
                   "from": "All",
@@ -383,6 +383,10 @@ When('user filters for config {string}', (configName: string) => {
   cy.contains('div#filter_select_value button', configName).click();
 });
 
+When('there is a {string} K8Gateway in the {string} namespace for {string} host using {string} protocol on port {string} and {string} gatewayClassName',(name:string,ns:string,host:string,protocol:string,port:string,gatewayClassName:string) =>{
+  cy.exec(`echo '${minimalK8Gateway(name,ns,host,protocol,port,gatewayClassName)}' | kubectl apply -f  -`);
+})
+
 Then('user sees all the Istio Config objects in the bookinfo namespace', () => {
   // There should be two Istio Config objects in the bookinfo namespace
   // represented by two rows in the table.
@@ -587,7 +591,11 @@ Then(
   }
 );
 
-After({ tags: '@istio-config and @crd-validation' }, () => {
+Then('the {string} K8Gateway in the {string} namespace has an address with a {string} type and a {string} value)', (name:string,ns:string,type:string,value:string) => {
+  cy.exec(`kubectl patch Gateway ${name} -n ${ns} --type=merge -p '{"spec":{"addresses":[{"type": "${type}","value":"${value}"}]}}'`)
+});
+
+After({ tags: '@istio-page and @crd-validation' }, () => {
   cy.exec('kubectl delete PeerAuthentications,DestinationRules,AuthorizationPolicies,Sidecars --all --all-namespaces', {
     failOnNonZeroExit: false
   });
