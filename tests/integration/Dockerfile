@@ -7,7 +7,7 @@ ENV HOME=$GOPATH/src/kiali
 
 # install required packages and prepare go dirs
 WORKDIR /bin
-RUN microdnf install --nodocs tar gzip make which \
+RUN microdnf install --nodocs tar gzip make which gettext git \
     && curl -Lo ./oc.tar.gz https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable/openshift-client-linux.tar.gz \
     && tar -xf oc.tar.gz \
     && rm -f oc.tar.gz \
