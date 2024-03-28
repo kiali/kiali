@@ -37,12 +37,3 @@ export const isValid = (isValid?: boolean, isWarning?: boolean): validationType 
   }
   return isWarning ? 'warning' : 'error';
 };
-
-// @TODO this function should be removed once Workloads and Services lists are optimized
-export const getNamespace = (namespace: string | Namespace): string => {
-  if (typeof namespace === 'string') {
-    return namespace;
-  } else {
-    return namespace.name;
-  }
-};

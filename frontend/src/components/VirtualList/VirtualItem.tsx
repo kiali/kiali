@@ -6,7 +6,6 @@ import { Health } from '../../types/Health';
 import { StatefulFiltersComponent } from '../Filters/StatefulFilters';
 import { actionRenderer } from './Renderers';
 import { CSSProperties } from 'react';
-import { getNamespace } from '../../utils/Common';
 
 type VirtualItemProps = {
   action?: JSX.Element;
@@ -60,7 +59,7 @@ export class VirtualItem extends React.Component<VirtualItemProps, VirtualItemSt
   render(): React.ReactNode {
     const { style, className, item } = this.props;
     const cluster = item.cluster ? `_Cluster${item.cluster}` : '';
-    const namespace = 'namespace' in item ? `_Ns${getNamespace(item.namespace)}` : '';
+    const namespace = 'namespace' in item ? `_Ns${item.namespace}` : '';
     const type = 'type' in item ? `_${item.type}` : '';
     // End result looks like: VirtualItem_Clusterwest_Nsbookinfo_gateway_bookinfo-gateway
 

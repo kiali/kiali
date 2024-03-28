@@ -12,7 +12,7 @@ func CreateWorkloadsPerNamespace(namespaces []string, items ...models.WorkloadLi
 
 func CreateWorkloadList(namespace string, items ...models.WorkloadListItem) models.WorkloadList {
 	return models.WorkloadList{
-		Namespace: models.Namespace{Name: namespace},
+		Namespace: namespace,
 		Workloads: items,
 	}
 }

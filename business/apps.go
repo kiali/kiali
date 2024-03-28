@@ -172,7 +172,8 @@ func (in *AppService) GetClusterAppList(ctx context.Context, criteria AppCriteri
 				log.Errorf("Error fetching Health in namespace %s for app %s: %s", criteria.Namespace, appItem.Name, err)
 			}
 		}
-		appItem.Namespace = models.Namespace{Cluster: cluster, Name: namespace}
+		appItem.Cluster = cluster
+		appItem.Namespace = namespace
 		appList.Apps = append(appList.Apps, *appItem)
 	}
 
@@ -327,7 +328,8 @@ func (in *AppService) GetAppList(ctx context.Context, criteria AppCriteria) (mod
 					log.Errorf("Error fetching Health in namespace %s for app %s: %s", criteria.Namespace, appItem.Name, err)
 				}
 			}
-			appItem.Namespace = models.Namespace{Cluster: valueApp.cluster, Name: criteria.Namespace}
+			appItem.Cluster = valueApp.cluster
+			appItem.Namespace = criteria.Namespace
 			appList.Apps = append(appList.Apps, *appItem)
 		}
 	}

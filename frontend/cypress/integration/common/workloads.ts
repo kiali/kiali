@@ -7,7 +7,7 @@ const activateFilter = (state: string): void => {
   cy.get('button[id="0"]').click().get('#loading_kiali_spinner').should('not.exist');
 
   cy.intercept({
-    pathname: '**/api/namespaces/bookinfo/workloads',
+    pathname: '**/api/clusters/workloads',
     query: {
       objects: ''
     }

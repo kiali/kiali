@@ -27,7 +27,7 @@ func (s SelectorChecker) hasMatchingWorkload(labelSelector map[string]string) bo
 	selector := labels.SelectorFromSet(labelSelector)
 
 	for _, wls := range s.WorkloadsPerNamespace {
-		if s.IsGatewayToNamespace && wls.Namespace.Name != s.Gateway.Namespace {
+		if s.IsGatewayToNamespace && wls.Namespace != s.Gateway.Namespace {
 			continue
 		}
 		for _, wl := range wls.Workloads {

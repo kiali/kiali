@@ -20,7 +20,7 @@ func (w WorkloadChecker) Check() models.IstioValidations {
 
 	for _, wls := range w.WorkloadsPerNamespace {
 		for _, wl := range wls.Workloads {
-			validations.MergeValidations(w.runChecks(wl, wls.Namespace.Name))
+			validations.MergeValidations(w.runChecks(wl, wls.Namespace))
 		}
 	}
 

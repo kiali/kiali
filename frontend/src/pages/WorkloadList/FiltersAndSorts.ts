@@ -36,7 +36,7 @@ export const sortFields: SortField<WorkloadListItem>[] = [
     title: 'Namespace',
     isNumeric: false,
     param: 'ns',
-    compare: (a: WorkloadListItem, b: WorkloadListItem) => {
+    compare: (a: WorkloadListItem, b: WorkloadListItem): number => {
       let sortValue = a.namespace.localeCompare(b.namespace);
       if (sortValue === 0) {
         sortValue = a.name.localeCompare(b.name);
@@ -63,7 +63,7 @@ export const sortFields: SortField<WorkloadListItem>[] = [
     title: 'Details',
     isNumeric: false,
     param: 'is',
-    compare: (a: WorkloadListItem, b: WorkloadListItem) => {
+    compare: (a: WorkloadListItem, b: WorkloadListItem): number => {
       // First sort by missing sidecar
       const aSC = hasMissingSidecar(a) ? 1 : 0;
       const bSC = hasMissingSidecar(b) ? 1 : 0;
@@ -108,7 +108,7 @@ export const sortFields: SortField<WorkloadListItem>[] = [
     title: 'App Label',
     isNumeric: false,
     param: 'al',
-    compare: (a: WorkloadListItem, b: WorkloadListItem) => {
+    compare: (a: WorkloadListItem, b: WorkloadListItem): number => {
       if (a.appLabel && !b.appLabel) {
         return -1;
       } else if (!a.appLabel && b.appLabel) {
@@ -123,7 +123,7 @@ export const sortFields: SortField<WorkloadListItem>[] = [
     title: 'Version Label',
     isNumeric: false,
     param: 'vl',
-    compare: (a: WorkloadListItem, b: WorkloadListItem) => {
+    compare: (a: WorkloadListItem, b: WorkloadListItem): number => {
       if (a.versionLabel && !b.versionLabel) {
         return -1;
       } else if (!a.versionLabel && b.versionLabel) {
@@ -138,7 +138,7 @@ export const sortFields: SortField<WorkloadListItem>[] = [
     title: 'Label Validation',
     isNumeric: false,
     param: 'lb',
-    compare: (a: WorkloadListItem, b: WorkloadListItem) => {
+    compare: (a: WorkloadListItem, b: WorkloadListItem): number => {
       if (a.versionLabel && a.appLabel && !(b.versionLabel && b.appLabel)) {
         return -1;
       } else if (!(a.versionLabel && a.appLabel) && b.versionLabel && b.appLabel) {
@@ -165,7 +165,7 @@ export const sortFields: SortField<WorkloadListItem>[] = [
     title: 'Health',
     isNumeric: false,
     param: 'he',
-    compare: (a, b) => {
+    compare: (a: WorkloadListItem, b: WorkloadListItem): number => {
       if (hasHealth(a) && hasHealth(b)) {
         const statusForA = a.health.getGlobalStatus();
         const statusForB = b.health.getGlobalStatus();
@@ -190,7 +190,7 @@ export const sortFields: SortField<WorkloadListItem>[] = [
     title: 'Cluster',
     isNumeric: false,
     param: 'cl',
-    compare: (a: WorkloadListItem, b: WorkloadListItem) => {
+    compare: (a: WorkloadListItem, b: WorkloadListItem): number => {
       if (a.cluster && b.cluster) {
         let sortValue = a.cluster.localeCompare(b.cluster);
         if (sortValue === 0) {
@@ -285,7 +285,7 @@ export const availableFilters: FilterType[] = [
 ];
 
 /** Filter Method */
-const includeName = (name: string, names: string[]) => {
+const includeName = (name: string, names: string[]): boolean => {
   for (let i = 0; i < names.length; i++) {
     if (name.includes(names[i])) {
       return true;
