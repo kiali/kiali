@@ -1,5 +1,6 @@
 import * as API from '../Api';
 import { IstioMetricsOptions } from '../../types/MetricsOptions';
+import { ServiceListQuery } from '../../types/ServiceList';
 
 describe('#GetErrorString', () => {
   it('should return an error message with status', () => {
@@ -105,8 +106,8 @@ describe.skip('#Test Methods return a Promise', () => {
     evaluatePromise(result);
   });
 
-  it('#getServices', () => {
-    const result = API.getServices('istio-system');
+  it('#getClustersServices', () => {
+    const result = API.getClustersServices('istio-system', {} as ServiceListQuery);
     evaluatePromise(result);
   });
 

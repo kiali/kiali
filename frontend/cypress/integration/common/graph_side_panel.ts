@@ -43,7 +43,7 @@ When(
   'there is traffic routing for the {string} service in the {string} namespace and in the {string} cluster',
   (service: string, namespace: string, cluster: string) => {
     cy.request({
-      url: `api/namespaces/${namespace}/services`,
+      url: `api/clusters/services?namespaces=${namespace}`,
       qs: { clusterName: cluster, istioResources: true, onlyDefinitions: false }
     }).then(response => {
       cy.wrap(response).its('status').should('eq', 200);
@@ -175,7 +175,7 @@ Then(
   'there is no traffic routing for the {string} service in the {string} namespace and in the {string} cluster',
   (service: string, namespace: string, cluster: string) => {
     cy.request({
-      url: `api/namespaces/${namespace}/services`,
+      url: `api/clusters/services?namespaces=${namespace}`,
       qs: { clusterName: cluster, istioResources: true, onlyDefinitions: false }
     }).then(response => {
       cy.wrap(response).its('status').should('eq', 200);

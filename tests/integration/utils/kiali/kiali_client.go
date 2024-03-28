@@ -292,18 +292,11 @@ func ApplicationDetails(name, namespace string) (*models.App, int, error) {
 }
 
 func ServicesList(namespace string) (*ServiceListJson, error) {
-	body, _, _, err := httpGETWithRetry(client.kialiURL+"/api/namespaces/"+namespace+"/services", client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
-	if err == nil {
-		serviceList := new(ServiceListJson)
-		err = json.Unmarshal(body, &serviceList)
-		if err == nil {
-			return serviceList, nil
-		} else {
-			return nil, err
-		}
-	} else {
+	serviceList := new(ServiceListJson)
+	if err := getRequestAndUnmarshalInto(client.kialiURL+"/api/clusters/services?namespaces="+namespace, serviceList); err != nil {
 		return nil, err
 	}
+	return serviceList, nil
 }
 
 func ServiceDetails(name, namespace string) (*ServiceDetailsJson, int, error) {

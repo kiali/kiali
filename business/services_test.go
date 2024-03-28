@@ -49,12 +49,14 @@ func TestServiceListParsing(t *testing.T) {
 	serviceList, err := svc.GetServiceList(context.TODO(), criteria)
 	require.NoError(err)
 
-	require.Equal("Namespace", serviceList.Namespace.Name)
+	require.Equal("Namespace", serviceList.Namespace)
 	require.Len(serviceList.Services, 2)
 	serviceNames := []string{serviceList.Services[0].Name, serviceList.Services[1].Name}
 
 	assert.Contains(serviceNames, "reviews")
 	assert.Contains(serviceNames, "httpbin")
+	assert.Equal("Namespace", serviceList.Services[0].Namespace)
+	assert.Equal("Namespace", serviceList.Services[1].Namespace)
 }
 
 func TestParseRegistryServices(t *testing.T) {
