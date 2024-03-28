@@ -58,7 +58,7 @@ func TestLogsInvalidLineCount(t *testing.T) {
 }
 
 func assertEmptyLogs(logs *business.PodLog, err error, require *require.Assertions) {
-	require.Error(err)
+	require.NoError(err)
 	require.NotNil(logs)
 	require.Empty(logs.Entries)
 }

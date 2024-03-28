@@ -613,11 +613,15 @@ func FirstPodName(name, namespace string) (string, error) {
 
 func PodLogs(name, namespace string, params map[string]string) (*business.PodLog, error) {
 	url := fmt.Sprintf("%s/api/namespaces/%s/pods/%s/logs?sinceTime=%d&%s", client.kialiURL, namespace, name, TimeSinceSeconds(), ParamsAsString(params))
-	logs := new(business.PodLog)
-
-	_, err := getRequestAndUnmarshalInto(url, logs)
+	body, _, _, err := httpGETWithRetry(url, client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
 	if err == nil {
-		return logs, nil
+		logs := new(business.PodLog)
+		err = json.Unmarshal(body, &logs)
+		if err == nil {
+			return logs, nil
+		} else {
+			return nil, err
+		}
 	} else {
 		return nil, err
 	}

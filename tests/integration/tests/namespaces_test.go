@@ -72,7 +72,7 @@ func TestNamespaceHealthInvalidRate(t *testing.T) {
 
 	// 500 and error message which is not failing in unmarshalling
 	require.Error(err)
-	require.Contains(err.Error(), "not a valid duration string: \"invalid\"")
+	require.Contains(err.Error(), "not a valid duration string: \\\"invalid\\\"")
 	require.NotEqual(200, code)
 }
 
