@@ -193,7 +193,7 @@ minikube_install_basic_demo() {
     if [ "${KIALI_DEV_BUILD}" == "true" ]; then
       local make_build_targets="build build-ui"
     fi
-    make --directory "${ROOT_DIR}" -e OC="$(which ${CLIENT_EXE})" -e CLUSTER_TYPE=minikube -e MINIKUBE_PROFILE=${CLUSTER1_ISTIO} ACCESSIBLE_NAMESPACES=bookinfo SERVICE_TYPE=LoadBalancer ${make_build_targets:-} cluster-push operator-create kiali-create
+    make --directory "${ROOT_DIR}" -e OC="$(which ${CLIENT_EXE})" -e CLUSTER_TYPE=minikube -e MINIKUBE_PROFILE=${CLUSTER1_ISTIO} SERVICE_TYPE=LoadBalancer ${make_build_targets:-} cluster-push operator-create kiali-create
   else
     infomsg "Installing Kiali [${KIALI_VERSION}] via Helm ..."
     if ! helm repo update kiali 2> /dev/null; then
@@ -399,7 +399,7 @@ openshift_install_skupper() {
 minikube_install_east_west_demo() {
   infomsg "Installing East-West Demo..."
 
-  ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} create namespace ${NAMESPACE_WEST}
+  ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} create namespace ${NAMESPACE_WEST} && ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} label namespace ${NAMESPACE_WEST} istio-injection=enabled
   ${CLIENT_EXE} --context ${CLUSTER2_DB} create namespace ${NAMESPACE_EAST}
 
   ${SKUPPER_EXE} --context ${CLUSTER1_ISTIO} -n ${NAMESPACE_WEST} init --enable-console --enable-flow-collector
@@ -410,7 +410,9 @@ minikube_install_east_west_demo() {
   ${SKUPPER_EXE} --context ${CLUSTER2_DB} -n ${NAMESPACE_EAST} link create "${SKUPPER_TOKEN_FILE}"
 
   ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} -n ${NAMESPACE_WEST} create deployment frontend --image quay.io/skupper/hello-world-frontend
+  ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} -n ${NAMESPACE_WEST} patch deployment frontend --type=json -p='[{"op": "add", "path": "/spec/template/metadata/labels/version", "value":"1"}]'
   ${CLIENT_EXE} --context ${CLUSTER2_DB} -n ${NAMESPACE_EAST} create deployment backend --image quay.io/skupper/hello-world-backend --replicas 3
+  ${CLIENT_EXE} --context ${CLUSTER2_DB} -n ${NAMESPACE_EAST} patch deployment backend --type=json -p='[{"op": "add", "path": "/spec/template/metadata/labels/version", "value":"1"}]'
 
   # expose with http protocol
   ${SKUPPER_EXE} --context ${CLUSTER2_DB} -n ${NAMESPACE_EAST} expose deployment/backend --port 8080 --protocol http
@@ -418,13 +420,14 @@ minikube_install_east_west_demo() {
 
   infomsg "Exposing Skupper Prometheus so its UI can be accessed"
   ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} -n ${NAMESPACE_WEST} patch svc skupper-prometheus --type=merge --patch '{"spec":{"type":"LoadBalancer"}}'
+
   infomsg "East-West Demo installed."
 }
 
 openshift_install_east_west_demo() {
   infomsg "Installing East-West Demo..."
 
-  openshift_login ${CLUSTER1_ISTIO} && ${CLIENT_EXE} create namespace ${NAMESPACE_WEST}
+  openshift_login ${CLUSTER1_ISTIO} && ${CLIENT_EXE} create namespace ${NAMESPACE_WEST} && ${CLIENT_EXE} label namespace ${NAMESPACE_WEST} istio-injection=enabled
   openshift_login ${CLUSTER2_DB} && ${CLIENT_EXE} create namespace ${NAMESPACE_EAST}
 
   openshift_login ${CLUSTER1_ISTIO} && ${SKUPPER_EXE} -n ${NAMESPACE_WEST} init --enable-console --enable-flow-collector
@@ -435,7 +438,9 @@ openshift_install_east_west_demo() {
   openshift_login ${CLUSTER2_DB} && ${SKUPPER_EXE} -n ${NAMESPACE_EAST} link create "${SKUPPER_TOKEN_FILE}"
 
   openshift_login ${CLUSTER1_ISTIO} && ${CLIENT_EXE} -n ${NAMESPACE_WEST} create deployment frontend --image quay.io/skupper/hello-world-frontend
+  ${CLIENT_EXE} -n ${NAMESPACE_WEST} patch deployment frontend --type=json -p='[{"op": "add", "path": "/spec/template/metadata/labels/version", "value":"1"}]'
   openshift_login ${CLUSTER2_DB} && ${CLIENT_EXE} -n ${NAMESPACE_EAST} create deployment backend --image quay.io/skupper/hello-world-backend --replicas 3
+  ${CLIENT_EXE} -n ${NAMESPACE_EAST} patch deployment backend --type=json -p='[{"op": "add", "path": "/spec/template/metadata/labels/version", "value":"1"}]'
 
   # expose with http protocol - still logged into cluster 2
   ${SKUPPER_EXE} -n ${NAMESPACE_EAST} expose deployment/backend --port 8080 --protocol http
