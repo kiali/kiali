@@ -15,7 +15,15 @@
 #
 # As an extra option, you can ask this script to install the basic Skupper
 # demo that we will call the east-west demo (see: https://skupper.io/start/).
-# Cluster #1 will be "west" and cluster #2 will be "east".
+# Cluster #1 will be "west" and cluster #2 will be "east". All west components
+# will be put into the mesh unless you pass in the value "partial" for the
+# --east-west-demo option. In that case, the Skupper components themselves
+# will not be placed into the mesh; only the frontend app will be in the mesh.
+# You can manually take the Skupper components out of the mesh and put them back
+# in the mesh by setting the sidecar label to true or false; e.g.:
+#   for d in skupper-prometheus skupper-router skupper-service-controller; do
+#     kubectl -n west patch deployment $d --type=json -p='[{"op": "add", "path": "/spec/template/metadata/labels/sidecar.istio.io~1inject", "value": "false"}]'
+#   done
 #
 # If you are using minikube, this script will start 2 minikube clusters.
 # If you are using OpenShift, you are responsible for starting the two
@@ -51,7 +59,7 @@ OUTPUT_DIR="${ROOT_DIR}/_output"
 CLIENT_EXE="kubectl"
 CLUSTER_TYPE="minikube"
 HACK_SCRIPTS_DIR="${ROOT_DIR}/hack"
-INSTALL_EAST_WEST_DEMO="false"
+INSTALL_EAST_WEST_DEMO="no"
 KIALI_DEV_BUILD="true"
 KIALI_VERSION="dev"
 MONGONS="mongons"
@@ -101,8 +109,14 @@ Valid command line arguments:
                                            If "minikube", this script creates its own clusters.
                                            If "openshift", the clusters must be started already.
                                            Default: "minikube"
-  -ewd|--east-west-demo [true|false]: If "true" the basic Skupper demo is also installed, too.
-                                      Default: "false"
+  -ewd|--east-west-demo [yes|no|partial]: The east-west demo is the basic Skupper demo. See: https://skupper.io/start/
+                                          If this value is "no", the east-west demo will not be installed.
+                                          If this value is "yes", the east-west demo will be installed and all
+                                          components will be placed into the mesh, including all Skupper components.
+                                          If this value is "partial", the east-west demo is installed, however,
+                                          only the west cluster "frontend" app is injected into the mesh;
+                                          the Skupper components will be installed but will not be part of the mesh.
+                                          Default: "no"
   -kdb|--kiali-dev-build [true|false]: If "true" and --kiali-version is "dev", a dev image will be
                                        built. If "false" and --kiali-version is "dev", you must
                                        have previously built a dev image prior to running this script.
@@ -294,7 +308,7 @@ openshift_install_basic_demo() {
     if [ "${KIALI_DEV_BUILD}" == "true" ]; then
       local make_build_targets="build build-ui"
     fi
-    make --directory "${ROOT_DIR}" -e OC="$(which ${CLIENT_EXE})" -e CLUSTER_TYPE=openshift ACCESSIBLE_NAMESPACES=bookinfo ${make_build_targets:-} cluster-push operator-create kiali-create
+    make --directory "${ROOT_DIR}" -e OC="$(which ${CLIENT_EXE})" -e CLUSTER_TYPE=openshift ${make_build_targets:-} cluster-push operator-create kiali-create
   else
     infomsg "Installing Kiali [${KIALI_VERSION}] via Helm ..."
     if ! helm repo update kiali 2> /dev/null; then
@@ -399,7 +413,7 @@ openshift_install_skupper() {
 minikube_install_east_west_demo() {
   infomsg "Installing East-West Demo..."
 
-  ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} create namespace ${NAMESPACE_WEST} && ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} label namespace ${NAMESPACE_WEST} istio-injection=enabled
+  ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} create namespace ${NAMESPACE_WEST}
   ${CLIENT_EXE} --context ${CLUSTER2_DB} create namespace ${NAMESPACE_EAST}
 
   ${SKUPPER_EXE} --context ${CLUSTER1_ISTIO} -n ${NAMESPACE_WEST} init --enable-console --enable-flow-collector
@@ -418,6 +432,27 @@ minikube_install_east_west_demo() {
   ${SKUPPER_EXE} --context ${CLUSTER2_DB} -n ${NAMESPACE_EAST} expose deployment/backend --port 8080 --protocol http
   ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} -n ${NAMESPACE_WEST} expose deployment frontend --port 8080 --type LoadBalancer
 
+  case ${INSTALL_EAST_WEST_DEMO} in
+    yes)
+      infomsg "East-West Demo is fully deployed in the mesh"
+      ;;
+    partial)
+      for d in skupper-prometheus skupper-router skupper-service-controller; do
+        ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} -n ${NAMESPACE_WEST} patch deployment $d --type=json -p='[{"op": "add", "path": "/spec/template/metadata/labels/sidecar.istio.io~1inject", "value": "false"}]'
+      done
+      infomsg "East-West Demo is deployed with frontend app in the mesh, but Skupper components are not in the mesh"
+      ;;
+    *)
+      errormsg "--east-west-demo option is not valid [${INSTALL_EAST_WEST_DEMO}]. Must be one of: yes, no, partial"
+      exit 1
+      ;;
+  esac
+
+  # start injecting sidecars
+  infomsg "Adding injection flag to west namespace to add components to the mesh"
+  ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} label namespace ${NAMESPACE_WEST} istio-injection=enabled
+  ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} rollout restart deployment -n ${NAMESPACE_WEST}
+
   infomsg "Exposing Skupper Prometheus so its UI can be accessed"
   ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} -n ${NAMESPACE_WEST} patch svc skupper-prometheus --type=merge --patch '{"spec":{"type":"LoadBalancer"}}'
 
@@ -427,7 +462,7 @@ minikube_install_east_west_demo() {
 openshift_install_east_west_demo() {
   infomsg "Installing East-West Demo..."
 
-  openshift_login ${CLUSTER1_ISTIO} && ${CLIENT_EXE} create namespace ${NAMESPACE_WEST} && ${CLIENT_EXE} label namespace ${NAMESPACE_WEST} istio-injection=enabled
+  openshift_login ${CLUSTER1_ISTIO} && ${CLIENT_EXE} create namespace ${NAMESPACE_WEST}
   openshift_login ${CLUSTER2_DB} && ${CLIENT_EXE} create namespace ${NAMESPACE_EAST}
 
   openshift_login ${CLUSTER1_ISTIO} && ${SKUPPER_EXE} -n ${NAMESPACE_WEST} init --enable-console --enable-flow-collector
@@ -444,9 +479,33 @@ openshift_install_east_west_demo() {
 
   # expose with http protocol - still logged into cluster 2
   ${SKUPPER_EXE} -n ${NAMESPACE_EAST} expose deployment/backend --port 8080 --protocol http
+
+  # switch back to cluster 1 and finish up
+
   openshift_login ${CLUSTER1_ISTIO}
   ${CLIENT_EXE} -n ${NAMESPACE_WEST} expose deployment frontend --port 8080
   ${CLIENT_EXE} -n ${NAMESPACE_WEST} expose svc frontend
+
+  case ${INSTALL_EAST_WEST_DEMO} in
+    yes)
+      infomsg "East-West Demo is fully deployed in the mesh"
+      ;;
+    partial)
+      for d in skupper-prometheus skupper-router skupper-service-controller; do
+        ${CLIENT_EXE} -n ${NAMESPACE_WEST} patch deployment $d --type=json -p='[{"op": "add", "path": "/spec/template/metadata/labels/sidecar.istio.io~1inject", "value": "false"}]'
+      done
+      infomsg "East-West Demo is deployed with frontend app in the mesh, but Skupper components are not in the mesh"
+      ;;
+    *)
+      errormsg "--east-west-demo option is not valid [${INSTALL_EAST_WEST_DEMO}]. Must be one of: yes, no, partial"
+      exit 1
+      ;;
+  esac
+
+  # start injecting sidecars
+  infomsg "Adding injection flag to west namespace to add components to the mesh"
+  ${CLIENT_EXE} label namespace ${NAMESPACE_WEST} istio-injection=enabled
+  ${CLIENT_EXE} rollout restart deployment -n ${NAMESPACE_WEST}
 
   infomsg "Exposing Skupper Prometheus so its UI can be accessed"
   ${CLIENT_EXE} -n ${NAMESPACE_WEST} expose svc skupper-prometheus
@@ -565,7 +624,7 @@ if [ "$_CMD" == "install" ]; then
       infomsg "Installing Istio/Kiali/Bookinfo demo on minikube"
       minikube_install_basic_demo
       minikube_install_skupper
-      if [ "${INSTALL_EAST_WEST_DEMO}" == "true" ]; then
+      if [ "${INSTALL_EAST_WEST_DEMO}" != "no" ]; then
         minikube_install_east_west_demo
       fi
       ;;
@@ -574,7 +633,7 @@ if [ "$_CMD" == "install" ]; then
       infomsg "Installing Istio/Kiali/Bookinfo demo on OpenShift"
       openshift_install_basic_demo
       openshift_install_skupper
-      if [ "${INSTALL_EAST_WEST_DEMO}" == "true" ]; then
+      if [ "${INSTALL_EAST_WEST_DEMO}" != "no" ]; then
         openshift_install_east_west_demo
       fi
       ;;
