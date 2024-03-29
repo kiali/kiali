@@ -25,8 +25,9 @@ import {
   VisualizationSurface,
   Edge
 } from '@patternfly/react-topology';
+import { TopologyIcon } from '@patternfly/react-icons';
 import * as React from 'react';
-import { Layout } from 'types/Graph';
+import { BoxByType, Layout } from 'types/Graph';
 import { elementFactory } from './elements/elementFactory';
 import { layoutFactory } from './layouts/layoutFactory';
 import { TimeInMilliseconds } from 'types/Common';
@@ -49,7 +50,9 @@ import {
   setNodeLabel
 } from './MeshElems';
 import { MeshTourStops } from './MeshHelpTour';
-import { KialiMeshGraph } from './layouts/KialiMeshGraph';
+import { KialiMeshDagre } from './layouts/KialiMeshDagre';
+import { KialiMeshCola } from './layouts/KialiMeshCola';
+import { KialiDagreGraph } from 'components/CytoscapeGraph/graphs/KialiDagreGraph';
 
 let initialLayout = false;
 let requestFit = false;
@@ -62,7 +65,9 @@ const ZOOM_OUT = 3 / 4;
 export const FIT_PADDING = 90;
 
 export enum LayoutName {
-  Mesh = 'kiali-mesh'
+  Dagre = 'dagre',
+  MeshCola = 'kiali-mesh-cola',
+  MeshDagre = 'kiali-mesh-dagre'
 }
 
 // TODO: Implement some sort of focus when provided
@@ -166,6 +171,7 @@ const TopologyContent: React.FC<{
   const onResize = React.useCallback(() => {
     if (!requestFit) {
       requestFit = true;
+      controller.getGraph()?.reset();
       controller.getGraph()?.layout();
     }
   }, [controller]);
@@ -237,8 +243,8 @@ const TopologyContent: React.FC<{
       };
 
       function addGroup(data: NodeData): NodeModel {
-        // const collapsed = data.isBox === BoxByType.DATAPLANES; // always collapse data-planes to start
-        const collapsed = false; // due to layout issues, don't use collapsed groups
+        const collapsed = data.isBox === BoxByType.DATAPLANES; // always collapse data-planes to start
+        //const collapsed = false; // due to layout issues, don't use collapsed groups
         data.collapsible = collapsed;
         data.onCollapseChange = onCollapseChange;
         data.onHover = onHover;
@@ -490,20 +496,38 @@ const TopologyContent: React.FC<{
                   fitToScreen: false,
                   zoomIn: false,
                   zoomOut: false,
-                  /*
                   customButtons: [
                     {
-                      ariaLabel: 'Layout - Mesh',
-                      id: 'toolbar_layout_mesh',
-                      disabled: LayoutName.Mesh === layoutName,
+                      ariaLabel: 'Layout - Dagre',
+                      id: 'toolbar_layout_dagre',
+                      disabled: LayoutName.Dagre === layoutName,
                       icon: <TopologyIcon />,
-                      tooltip: 'Layout - mesh',
+                      tooltip: 'Layout - Dagre',
                       callback: () => {
-                        _setLayoutName(LayoutName.Mesh);
+                        _setLayoutName(LayoutName.Dagre);
+                      }
+                    },
+                    {
+                      ariaLabel: 'Layout - Mesh Dagre',
+                      id: 'toolbar_layout_mesh_dagre',
+                      disabled: LayoutName.MeshDagre === layoutName,
+                      icon: <TopologyIcon />,
+                      tooltip: 'Layout - Mesh Dagre',
+                      callback: () => {
+                        _setLayoutName(LayoutName.MeshDagre);
+                      }
+                    },
+                    {
+                      ariaLabel: 'Layout - Mesh Cola',
+                      id: 'toolbar_layout_mesh_cola',
+                      disabled: LayoutName.MeshCola === layoutName,
+                      icon: <TopologyIcon />,
+                      tooltip: 'Layout - Mesh Cola',
+                      callback: () => {
+                        _setLayoutName(LayoutName.MeshCola);
                       }
                     }
                   ],
-                  */
                   // currently unused
                   zoomInCallback: () => {
                     controller && controller.getGraph().scaleBy(ZOOM_IN);
@@ -578,16 +602,25 @@ export const Mesh: React.FC<{
 
   const getLayoutName = (layout: Layout): LayoutName => {
     switch (layout.name) {
+      case LayoutName.MeshCola:
+      case LayoutName.MeshDagre:
+        return layout.name;
       default:
-        return LayoutName.Mesh;
+        return LayoutName.Dagre;
     }
   };
 
   const setLayoutByName = (layoutName: LayoutName) => {
     let layout: Layout;
     switch (layoutName) {
+      case LayoutName.MeshCola:
+        layout = KialiMeshCola.getLayout();
+        break;
+      case LayoutName.MeshDagre:
+        layout = KialiMeshDagre.getLayout();
+        break;
       default:
-        layout = KialiMeshGraph.getLayout();
+        layout = KialiDagreGraph.getLayout();
     }
 
     HistoryManager.setParam(URLParam.MESH_LAYOUT, layout.name);
