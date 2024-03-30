@@ -24,9 +24,8 @@ const (
 )
 
 const (
-	BoxByCluster    string = "cluster"
-	BoxByDataPlanes string = "dataplanes"
-	BoxByNamespace  string = "namespace"
+	BoxByCluster   string = "cluster"
+	BoxByNamespace string = "namespace"
 )
 
 // CommonOptions are those supplied to Vendors

@@ -27,7 +27,7 @@ import {
 } from '@patternfly/react-topology';
 import { TopologyIcon } from '@patternfly/react-icons';
 import * as React from 'react';
-import { BoxByType, Layout } from 'types/Graph';
+import { Layout } from 'types/Graph';
 import { elementFactory } from './elements/elementFactory';
 import { layoutFactory } from './layouts/layoutFactory';
 import { TimeInMilliseconds } from 'types/Common';
@@ -227,13 +227,6 @@ const TopologyContent: React.FC<{
       let nodeMap: Map<string, NodeModel> = new Map<string, NodeModel>();
       const edges: EdgeModel[] = [];
 
-      const onCollapseChange = (group: Node, collapsed: boolean): void => {
-        requestFit = true;
-        if (collapsed) {
-          group.getGraph()?.layout();
-        }
-      };
-
       const onHover = (element: GraphElement, isMouseIn: boolean): void => {
         if (isMouseIn) {
           highlighter.onMouseIn(element);
@@ -243,14 +236,10 @@ const TopologyContent: React.FC<{
       };
 
       function addGroup(data: NodeData): NodeModel {
-        const collapsed = data.isBox === BoxByType.DATAPLANES; // always collapse data-planes to start
-        //const collapsed = false; // due to layout issues, don't use collapsed groups
-        data.collapsible = collapsed;
-        data.onCollapseChange = onCollapseChange;
+        data.collapsible = false;
         data.onHover = onHover;
         const group: NodeModel = {
           children: [],
-          collapsed: collapsed,
           data: data,
           group: true,
           id: data.id,

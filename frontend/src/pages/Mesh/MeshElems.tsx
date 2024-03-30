@@ -127,7 +127,6 @@ export const setNodeLabel = (node: NodeModel, _nodeMap: NodeMap): void => {
         pfBadge = PFBadges.Cluster;
         break;
       case BoxByType.NAMESPACE:
-      case BoxByType.DATAPLANES:
         content.push(data.namespace);
         pfBadge = PFBadges.Namespace;
         break;

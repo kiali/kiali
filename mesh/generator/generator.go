@@ -12,8 +12,19 @@ import (
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/mesh"
 	"github.com/kiali/kiali/mesh/appender"
+	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/observability"
 )
+
+func getNamespacesByName(name string, namespaces []models.Namespace) []models.Namespace {
+	result := []models.Namespace{}
+	for _, ns := range namespaces {
+		if name == ns.Name {
+			result = append(result, ns)
+		}
+	}
+	return result
+}
 
 // BuildMeshMap is required by the graph/TelemetryVendor interface
 func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalInfo) mesh.MeshMap {
@@ -38,15 +49,33 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalIn
 	meshDef, err := gi.Business.Mesh.GetMesh(ctx)
 	graph.CheckError(err)
 
-	var temp *mesh.Node
+	namespaces, err := gi.Business.Namespace.GetNamespaces(ctx)
+	graph.CheckError(err)
+
+	canaryStatus, err := gi.Business.Mesh.CanaryUpgradeStatus()
+	graph.CheckError(err)
+
+	canaryMigrated := []models.Namespace{}
+	canaryPending := []models.Namespace{}
+	isCanary := mesh.IsOK(canaryStatus.CurrentVersion) && mesh.IsOK(canaryStatus.UpgradeVersion)
+	if isCanary {
+		for _, name := range canaryStatus.MigratedNamespaces {
+			canaryMigrated = append(canaryMigrated, getNamespacesByName(name, namespaces)...)
+		}
+		for _, name := range canaryStatus.PendingNamespaces {
+			canaryPending = append(canaryPending, getNamespacesByName(name, namespaces)...)
+		}
+	}
 
 	clusterMap := make(map[string]bool)
 	for _, cp := range meshDef.ControlPlanes {
+		// add control plane cluster if not already added
 		if _, ok := clusterMap[cp.Cluster.Name]; !ok {
 			_, _, err := addInfra(meshMap, mesh.InfraTypeCluster, cp.Cluster.Name, mesh.Unknown, cp.Cluster.Name, cp.Cluster)
 			mesh.CheckError(err)
 		}
 
+		// add managed clusters if not already added
 		for _, mc := range cp.ManagedClusters {
 			if _, ok := clusterMap[mc.Name]; ok {
 				_, _, err := addInfra(meshMap, mesh.InfraTypeCluster, mc.Name, mesh.Unknown, mc.Name, mc)
@@ -56,14 +85,36 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalIn
 			}
 		}
 
-		// add the control plane istiod
+		// add the control plane istiod revision
 		name := cp.IstiodName
 		if cp.Revision != "" {
 			name = fmt.Sprintf("%s-%s", cp.IstiodName, cp.Revision)
 		}
 		istiod, _, err := addInfra(meshMap, mesh.InfraTypeIstiod, cp.Cluster.Name, cp.IstiodNamespace, name, cp.Config)
 		mesh.CheckError(err)
-		temp = istiod
+
+		// add the managed namespaces by cluster and narrowed, if necessary, by revision
+		dataplaneMap := make(map[string][]models.Namespace)
+		cpNamespaces := namespaces
+		if isCanary {
+			cpNamespaces = canaryPending
+			if cp.Revision == canaryStatus.UpgradeVersion {
+				cpNamespaces = canaryMigrated
+			}
+		}
+		for _, ns := range cpNamespaces {
+			clusterNamespaces := dataplaneMap[ns.Cluster]
+			if clusterNamespaces == nil {
+				clusterNamespaces = []models.Namespace{}
+			}
+			dataplaneMap[ns.Cluster] = append(clusterNamespaces, ns)
+		}
+		for cluster, namespaces := range dataplaneMap {
+			dp, _, err := addInfra(meshMap, mesh.InfraTypeDataplanes, cluster, "", fmt.Sprintf("%d dataplanes", len(namespaces)), namespaces)
+			graph.CheckError(err)
+
+			istiod.AddEdge(dp)
+		}
 
 		// add any Kiali instances
 		conf := config.Get().Obfuscate()
@@ -113,18 +164,6 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalIn
 		}
 	}
 
-	// start by creating infra nodes for each accessible namespace
-	// note - namespace infra nodes will be converted, as needed, by namespace boxes at the config-gen stage (e.g. in Cytoscape.go)
-	for _, ns := range o.AccessibleNamespaces {
-		var err error
-		dpns, _, err := addInfra(meshMap, mesh.InfraTypeNamespace, ns.Cluster, ns.Name, ns.Name, nil)
-		mesh.CheckError(err)
-
-		if ns.Name != "istio-system" {
-			temp.AddEdge(dpns)
-		}
-	}
-
 	// The finalizers can perform final manipulations on the complete graph
 	for _, f := range finalizers {
 		f.AppendGraph(meshMap, gi, nil)
@@ -136,7 +175,7 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalIn
 func addInfra(meshMap mesh.MeshMap, infraType, cluster, namespace, name string, infraData interface{}) (*mesh.Node, bool, error) {
 	log.Infof("Adding Infra [%s][%s]", infraType, name)
 
-	id, err := mesh.Id(cluster, namespace, name)
+	id, err := mesh.Id(cluster, namespace, name, infraType)
 	if err != nil {
 		return nil, false, err
 	}

@@ -10,12 +10,13 @@ import (
 const (
 	BoxTypeCluster       string = "cluster"
 	BoxTypeNamespace     string = "namespace"
-	InfraTypeCluster     string = "cluster" // cluster node (not box) with no other infra (very rare)
+	InfraTypeCluster     string = "cluster"    // cluster node (not box) with no other infra (very rare)
+	InfraTypeDataplanes  string = "dataplanes" // single node representing 1 or more dataplane namespaces
 	InfraTypeGrafana     string = "grafana"
 	InfraTypeIstiod      string = "istiod"
 	InfraTypeKiali       string = "kiali"
-	InfraTypeNamespace   string = "namespace"
 	InfraTypeMetricStore string = "metricStore"
+	InfraTypeNamespace   string = "namespace"
 	InfraTypeTraceStore  string = "traceStore"
 	NodeTypeBox          string = "box"                 // The special "box" node. isBox will be set to a BoxType
 	NodeTypeInfra        string = "infra"               // Any non-box node of interest
@@ -67,7 +68,7 @@ func (tm MeshMap) Edges() []*Edge {
 
 // NewNode constructor
 func NewNode(infraType, cluster, namespace, name string) (*Node, error) {
-	id, err := Id(cluster, namespace, name)
+	id, err := Id(cluster, namespace, name, infraType)
 	if err != nil {
 		return nil, err
 	}
@@ -113,8 +114,8 @@ func NewMeshMap() MeshMap {
 }
 
 // Id returns the unique node ID
-func Id(cluster, namespace, name string) (id string, err error) {
-	if cluster != "" && namespace != "" && name != "" {
+func Id(cluster, namespace, name, infraType string) (id string, err error) {
+	if cluster != "" && (namespace != "" || infraType == InfraTypeDataplanes) && name != "" {
 		return fmt.Sprintf("infra_%s_%s_%s", cluster, namespace, name), nil
 	}
 	return "", fmt.Errorf("Failed Mesh ID gen: cluster=[%s] namespace=[%s] name=[%s]", cluster, namespace, name)

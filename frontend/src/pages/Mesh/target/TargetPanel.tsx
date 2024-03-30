@@ -18,7 +18,6 @@ import { TargetPanelNode } from './TargetPanelNode';
 import { TargetPanelMesh } from './TargetPanelMesh';
 import { meshWideMTLSStatusSelector, minTLSVersionSelector } from 'store/Selectors';
 import { NodeData } from '../MeshElems';
-import { TargetPanelDataplanes } from './TargetPanelDataplanes';
 
 type TargetPanelState = {
   isVisible: boolean;
@@ -122,17 +121,6 @@ class TargetPanelComponent extends React.Component<TargetPanelProps, TargetPanel
           case BoxByType.CLUSTER:
             return (
               <TargetPanelCluster
-                duration={this.props.duration}
-                istioAPIEnabled={this.props.istioAPIEnabled}
-                kiosk={this.props.kiosk}
-                refreshInterval={this.props.refreshInterval}
-                target={target}
-                updateTime={this.props.updateTime}
-              />
-            );
-          case BoxByType.DATAPLANES:
-            return (
-              <TargetPanelDataplanes
                 duration={this.props.duration}
                 istioAPIEnabled={this.props.istioAPIEnabled}
                 kiosk={this.props.kiosk}
