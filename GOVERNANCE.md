@@ -68,7 +68,7 @@ Current list of testers (alphabetically ordered):
 
 - [FilipB](https://github.com/FilipB)
 - [matejnesuta](https://github.com/matejnesuta)
-- [mkralik](https://github.com/mkralik)
+- [mkralik3](https://github.com/mkralik3)
 - [pbajjuri20](https://github.com/pbajjuri20)
 - [prachiyadav](https://github.com/prachiyadav)
 - [ScriptingShrimp](https://github.com/ScriptingShrimp)
