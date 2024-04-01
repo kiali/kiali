@@ -15,38 +15,38 @@ A maintainer is a contributor to the Kiali project's success and a citizen helpi
 
 Current list of maintainers (alphabetically ordered):
 
-* [aljesusg](https://github.com/aljesusg)
-* [ferhoyos](https://github.com/ferhoyos)
-* [hhovsepy](https://github.com/hhovsepy)
-* [jmazzitelli](https://github.com/jmazzitelli)
-* [josunect](https://github.com/josunect)
-* [leandroberetta](https://github.com/leandroberetta)
-* [nrfox](https://github.com/nrfox)
-* [xunzhuo](https://github.com/xunzhuo)
+- [aljesusg](https://github.com/aljesusg)
+- [ferhoyos](https://github.com/ferhoyos)
+- [hhovsepy](https://github.com/hhovsepy)
+- [jmazzitelli](https://github.com/jmazzitelli)
+- [josunect](https://github.com/josunect)
+- [leandroberetta](https://github.com/leandroberetta)
+- [nrfox](https://github.com/nrfox)
+- [xunzhuo](https://github.com/xunzhuo)
 
 ### Becoming a Maintainer
 
 To become a Maintainer you need to demonstrate the following:
 
-* commitment to the project
-  * participate in discussions, contributions, code reviews for 3 months or more,
-  * perform code reviews for 10 non-trivial pull requests,
-  * contribute 10 non-trivial pull requests and have them merged,
-* ability to write high quality code and/or documentation,
-* ability to collaborate with the team,
-* understanding of team policies and processes,
-* understanding of the project's code base, and coding and documentation style.
+- commitment to the project
+  - participate in discussions, contributions, code reviews for 3 months or more,
+  - perform code reviews for 10 non-trivial pull requests,
+  - contribute 10 non-trivial pull requests and have them merged,
+- ability to write high quality code and/or documentation,
+- ability to collaborate with the team,
+- understanding of team policies and processes,
+- understanding of the project's code base, and coding and documentation style.
 
 A new maintainer must be proposed by an existing maintainer by opening a pull request
 modifying the maintainers list to add the new proposed maintainer, or via a [GitHub
 discussion](https://github.com/kiali/kiali/discussions/new) under the Governance category.
 The following information must be provided:
 
-* nominee's GitHub username,
-* an explanation of why the nominee should be a maintainer,
-* a list of links to non-trivial pull requests (top 10) authored by the nominee.
+- nominee's GitHub username,
+- an explanation of why the nominee should be a maintainer,
+- a list of links to non-trivial pull requests (top 10) authored by the nominee.
 
-Two other maintainers need to second the nomination. If no one objects in 5 working days (U.S.), the nomination is accepted.  If anyone objects or wants more information, the maintainers discuss and usually come to a consensus (within the 5 working days). If issues can't be resolved, there's a simple majority vote among current maintainers.
+Two other maintainers need to second the nomination. If no one objects in 5 working days (U.S.), the nomination is accepted. If anyone objects or wants more information, the maintainers discuss and usually come to a consensus (within the 5 working days). If issues can't be resolved, there's a simple majority vote among current maintainers.
 
 ## Testers
 
@@ -66,24 +66,24 @@ both roles aren't mutually exclusive.
 
 Current list of testers (alphabetically ordered):
 
-* [FilipB](https://github.com/FilipB)
-* [matejnesuta](https://github.com/matejnesuta)
-* [mattmahoneyrh](https://github.com/mattmahoneyrh)
-* [pbajjuri20](https://github.com/pbajjuri20)
-* [prachiyadav](https://github.com/prachiyadav)
-* [ScriptingShrimp](https://github.com/ScriptingShrimp)
+- [FilipB](https://github.com/FilipB)
+- [matejnesuta](https://github.com/matejnesuta)
+- [mkralik3](https://github.com/mkralik3)
+- [pbajjuri20](https://github.com/pbajjuri20)
+- [prachiyadav](https://github.com/prachiyadav)
+- [ScriptingShrimp](https://github.com/ScriptingShrimp)
 
 ### Becoming a Tester
 
 To become a Tester you need to:
 
-* actively participate in testing code changes of the Kiali project
-  * testing pull requests for 3 months or more,
-  * find 5 non trivial defects in Kiali,
-  * occassionally, do testing over `master` branches to find broken features
-* ability to collaborate with the team,
-* ability to document testing procedures of Kiali features and to update existing documentation if features change,
-* understanding of team policies and processes.
+- actively participate in testing code changes of the Kiali project
+  - testing pull requests for 3 months or more,
+  - find 5 non trivial defects in Kiali,
+  - occassionally, do testing over `master` branches to find broken features
+- ability to collaborate with the team,
+- ability to document testing procedures of Kiali features and to update existing documentation if features change,
+- understanding of team policies and processes.
 
 You can propose yourself to apply for the Tester role, or a Maintainer can do it for you.
 Proposals must be posted by opening a pull request
@@ -91,9 +91,9 @@ modifying the testers list to add the new proposed tester, or via
 a [GitHub discussion](https://github.com/kiali/kiali/discussions/new) under the
 Governance category. The following information must be provided:
 
-* nominee's GitHub username
-* a list of pull requests (top 5) tested by the nominee.
-* a list of documented test cases (if any)
+- nominee's GitHub username
+- a list of pull requests (top 5) tested by the nominee.
+- a list of documented test cases (if any)
 
 Formalization of the Tester role is granted if a simple majority vote
 among current maintainers succeeds.
@@ -106,7 +106,7 @@ Thus, they are able to guide and mentor other Maintainers, give direction, and s
 
 Current list of leaders (alphabetically ordered):
 
-* [jshaughn](https://github.com/jshaughn)
+- [jshaughn](https://github.com/jshaughn)
 
 ### Becoming a Leader
 
@@ -115,8 +115,8 @@ by an existing Maintainer by opening a pull request modifying the leaders list t
 proposed leader, or via a by opening a [GitHub discussion](https://github.com/kiali/kiali/discussions/new)
 under the Governance category. The following information must be provided:
 
-* nominee's GitHub username,
-* an explanation of why the nominee should be a leader.
+- nominee's GitHub username,
+- an explanation of why the nominee should be a leader.
 
 Leadership is granted if a simple majority vote among current maintainers succeeds.
 
@@ -124,12 +124,12 @@ Leadership is granted if a simple majority vote among current maintainers succee
 
 It is important for contributors to be and stay active to set an example and show commitment to the project. Inactivity is harmful to the project as it may lead to unexpected delays, contributor attrition, and a lost of trust in the project.
 
-* Inactivity is measured by:
-    * Periods of no contributions for longer than 4 months
-    * Periods of no communication for longer than 4 months
-* Consequences of being inactive include:
-    * Involuntary removal or demotion
-    * Being asked to move to Emeritus status
+- Inactivity is measured by:
+  - Periods of no contributions for longer than 4 months
+  - Periods of no communication for longer than 4 months
+- Consequences of being inactive include:
+  - Involuntary removal or demotion
+  - Being asked to move to Emeritus status
 
 ## Involuntary Removal or Demotion
 
@@ -145,26 +145,27 @@ Contact the Maintainers about changing to Emeritus status, or reducing your cont
 
 ### Emeritus contributors
 
-* [abonas](https://github.com/abonas)
-* [beaumorley](https://github.com/beaumorley)
-* [burmanm](https://github.com/burmanm)
-* [cfcosta](https://github.com/cfcosta)
-* [gbaufake](https://github.com/gbaufake)
-* [israel-hdez](https://github.com/israel-hdez)
-* [josejulio](https://github.com/josejulio)
-* [jotak](https://github.com/jotak)
-* [jstickler](https://github.com/JStickler)
-* [jpkrohling](https://github.com/jpkrohling)
-* [kevinearls](https://github.com/kevinearls)
-* [lucasponce](https://github.com/lucasponce)
-* [lwrigh](https://github.com/lwrigh)
-* [maltron](https://github.com/maltron)
-* [mtho11](https://github.com/mtho11)
-* [mwringe](https://github.com/mwringe)
-* [pavolloffay](https://github.com/pavolloffay)
-* [serenamarie125](https://github.com/serenamarie125)
-* [skondkar](https://github.com/skondkar)
-* [xeviknal](https://github.com/xeviknal)
+- [abonas](https://github.com/abonas)
+- [beaumorley](https://github.com/beaumorley)
+- [burmanm](https://github.com/burmanm)
+- [cfcosta](https://github.com/cfcosta)
+- [gbaufake](https://github.com/gbaufake)
+- [israel-hdez](https://github.com/israel-hdez)
+- [josejulio](https://github.com/josejulio)
+- [jotak](https://github.com/jotak)
+- [jstickler](https://github.com/JStickler)
+- [jpkrohling](https://github.com/jpkrohling)
+- [kevinearls](https://github.com/kevinearls)
+- [lucasponce](https://github.com/lucasponce)
+- [lwrigh](https://github.com/lwrigh)
+- [maltron](https://github.com/maltron)
+- [mattmahoneyrh](https://github.com/mattmahoneyrh)
+- [mtho11](https://github.com/mtho11)
+- [mwringe](https://github.com/mwringe)
+- [pavolloffay](https://github.com/pavolloffay)
+- [serenamarie125](https://github.com/serenamarie125)
+- [skondkar](https://github.com/skondkar)
+- [xeviknal](https://github.com/xeviknal)
 
 ## Voting
 
