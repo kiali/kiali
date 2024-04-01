@@ -95,6 +95,11 @@ get_oauth_host() {
   OPENSHIFT_OAUTH_HOST="$(${CRC_OC} get route oauth-openshift -n openshift-authentication -o jsonpath='{.spec.host}')"
 }
 
+# is_logged_in sets the env var OC_IS_LOGGED_IN to true or false
+is_logged_in() {
+  OC_IS_LOGGED_IN="$(${CRC_OC} whoami &> /dev/null < /dev/null && echo true || echo false)"
+}
+
 get_status() {
   check_crc_running
   echo "====================================================================="
@@ -107,20 +112,20 @@ get_status() {
   echo "Status from crc command [${CRC_COMMAND}]"
   ${CRC_COMMAND} status
   echo "====================================================================="
-
   if [ "${_CRC_RUNNING}" == "true" ]; then
-    get_registry_names
-    get_console_url
-    get_base_domain_name
-    get_oauth_host
+    is_logged_in
+    if [ "${OC_IS_LOGGED_IN}" == "true" ]; then
+      get_registry_names
+      get_console_url
+      get_base_domain_name
+      get_oauth_host
+      echo "Logged in?: yes"
+    else
+      echo "Logged in?: no"
+    fi
+    echo "====================================================================="
     echo "To install 'oc' in your environment:"
     ${CRC_COMMAND} oc-env
-    echo "====================================================================="
-    echo "Version from oc command [${CRC_OC}]"
-    ${CRC_OC} version
-    echo "====================================================================="
-    echo "Status from oc command [${CRC_OC}]"
-    ${CRC_OC} status
     echo "====================================================================="
     echo "TOP output:"
     printf "%s\n" "$(exec_ssh 'top -b -n 1 | head -n 5')"
@@ -128,31 +133,42 @@ get_status() {
     echo "Memory usage:"
     printf "%s\n" "$(exec_ssh 'free -ht')"
     echo "====================================================================="
-    echo "Number of CPUs: $(${CRC_OC} get $(${CRC_OC} get nodes -o name) -o jsonpath={.status.capacity.cpu})"
-    echo "====================================================================="
-    echo "Age of cluster: $(${CRC_OC} get namespace kube-system --no-headers | tr -s ' ' | cut -d ' ' -f3)"
     echo "Uptime of VM: $(exec_ssh 'uptime --pretty') (since $(exec_ssh 'uptime --since'))"
-    echo "====================================================================="
-    echo "whoami: $(${CRC_OC_BIN} whoami 2>&1) ($(${CRC_OC_BIN} whoami --show-server 2>&1))"
-    echo "====================================================================="
-    echo "Domain Name: ${OPENSHIFT_BASE_DOMAIN_NAME}"
-    echo "Console:     ${CONSOLE_URL}"
-    echo "API URL:     ${OPENSHIFT_API_SERVER_URL}"
-    echo "IP address:  $(${CRC_COMMAND} ip)"
-    echo "Image Repo:  ${EXTERNAL_IMAGE_REGISTRY} (${INTERNAL_IMAGE_REGISTRY})"
-    echo "OAuth Host:  ${OPENSHIFT_OAUTH_HOST}"
+    if [ "${OC_IS_LOGGED_IN}" == "true" ]; then
+      echo "====================================================================="
+      echo "Version from oc command [${CRC_OC}]"
+      ${CRC_OC} version
+      echo "====================================================================="
+      echo "Status from oc command [${CRC_OC}]"
+      ${CRC_OC} status
+      echo "====================================================================="
+      echo "Number of CPUs: $(${CRC_OC} get $(${CRC_OC} get nodes -o name) -o jsonpath={.status.capacity.cpu})"
+      echo "====================================================================="
+      echo "Age of cluster: $(${CRC_OC} get namespace kube-system --no-headers | tr -s ' ' | cut -d ' ' -f3)"
+      echo "====================================================================="
+      echo "whoami: $(${CRC_OC} whoami 2>&1 < /dev/null) ($(${CRC_OC} whoami --show-server 2>&1 < /dev/null))"
+      echo "====================================================================="
+      echo "Domain Name: ${OPENSHIFT_BASE_DOMAIN_NAME}"
+      echo "Console:     ${CONSOLE_URL}"
+      echo "API URL:     ${OPENSHIFT_API_SERVER_URL}"
+      echo "IP address:  $(${CRC_COMMAND} ip)"
+      echo "Image Repo:  ${EXTERNAL_IMAGE_REGISTRY} (${INTERNAL_IMAGE_REGISTRY})"
+      echo "OAuth Host:  ${OPENSHIFT_OAUTH_HOST}"
+    fi
     echo "====================================================================="
     echo "kubeadmin password: $(cat ${CRC_KUBEADMIN_PASSWORD_FILE})"
     echo "$(${CRC_COMMAND} console --credentials)"
     echo "====================================================================="
     echo "To push images to the image repo you need to log in."
     echo "You can use docker or podman, and you can use kubeadmin or kiali user."
-    echo "  oc login -u kubeadmin -p $(cat ${CRC_KUBEADMIN_PASSWORD_FILE}) ${OPENSHIFT_API_SERVER_URL}"
-    echo '  docker login -u kubeadmin -p $(oc whoami -t)' ${EXTERNAL_IMAGE_REGISTRY}
+    echo "  oc login -u kubeadmin -p $(cat ${CRC_KUBEADMIN_PASSWORD_FILE}) ${OPENSHIFT_API_SERVER_URL:-<api url>}"
+    echo '  docker login -u kubeadmin -p $(oc whoami -t)' ${EXTERNAL_IMAGE_REGISTRY:-<image registry>}
     echo "or"
-    echo "  oc login -u kiali -p kiali ${OPENSHIFT_API_SERVER_URL}"
-    echo '  podman login --tls-verify=false -u kiali -p $(oc whoami -t)' ${EXTERNAL_IMAGE_REGISTRY}
+    echo "  oc login -u kiali -p kiali ${OPENSHIFT_API_SERVER_URL:-<api url>}"
+    echo '  podman login --tls-verify=false -u kiali -p $(oc whoami -t)' ${EXTERNAL_IMAGE_REGISTRY:-<image registry>}
     echo "====================================================================="
+  else
+    echo "CRC is not running."
   fi
 }
 
@@ -269,15 +285,18 @@ expose_cluster() {
   done
 
   # give some hints to the user about how to access it
-  get_machine_ip
-  get_base_domain_name
-  get_registry_names
-  get_oauth_host
-  local console_host="$(${CRC_OC} get route console -n openshift-console -o jsonpath='{.spec.host}')"
-
   infomsg "When accessing this cluster from outside make sure that cluster FQDNs resolve from outside."
-  infomsg "For basic api/console access, something like the following in an /etc/hosts entry should work:"
-  infomsg "${MACHINE_IP:-<IP-of-this-host>} api.${OPENSHIFT_BASE_DOMAIN_NAME:-} ${console_host:-} ${EXTERNAL_IMAGE_REGISTRY} ${OPENSHIFT_OAUTH_HOST:-}"
+
+  is_logged_in
+  if [ "${OC_IS_LOGGED_IN}" == "true" ]; then
+    get_machine_ip
+    get_base_domain_name
+    get_registry_names
+    get_oauth_host
+    local console_host="$(${CRC_OC} get route console -n openshift-console -o jsonpath='{.spec.host}')"
+    infomsg "For basic api/console access, something like the following in an /etc/hosts entry should work:"
+    infomsg "${MACHINE_IP:-<IP-of-this-host>} api.${OPENSHIFT_BASE_DOMAIN_NAME:-} ${console_host:-} ${EXTERNAL_IMAGE_REGISTRY} ${OPENSHIFT_OAUTH_HOST:-}"
+  fi
 }
 
 unexpose_cluster() {
@@ -340,11 +359,87 @@ change_crc_domain_name() {
     exit 1
   fi
 
+  is_logged_in
+  if [ "${OC_IS_LOGGED_IN}" != "true" ]; then
+    infomsg "You are not logged into the OpenShift cluster."
+    exit 1
+  fi
+
   get_machine_ip
   if ! ping -c 1 "${MACHINE_IP}" >/dev/null; then
     infomsg "Cannot determine the machine IP. Aborting."
     exit 1
   fi
+
+  if [ ! -f /etc/haproxy/haproxy.cfg ] ; then
+    echo "haproxy is not installed. Run: sudo dnf -y install haproxy policycoreutils-python-utils"
+    exit 1
+  fi
+
+  local sudo=$(test "$(whoami)" = "root" && echo "" || echo "sudo")
+
+  # firewall screws things up. Disable it. TODO: see if we can work with the firewall
+  if systemctl -q is-active firewalld; then
+    infomsg "Shutting down the firewalld service"
+    $sudo systemctl stop firewalld
+  fi
+
+  local crc_ip="$(${CRC_COMMAND} ip)"
+
+  infomsg "Setting up HAProxy"
+  cat << EOF > /tmp/haproxy.cfg.crc
+global
+        maxconn 4000
+
+defaults
+        balance roundrobin
+        log global
+        timeout connect 10s
+        timeout client 1m
+        timeout server 1m
+
+frontend fe-api
+        bind 0.0.0.0:6443
+        mode tcp
+        option tcplog
+        default_backend be-api
+
+frontend fe-https
+        bind 0.0.0.0:443
+        mode tcp
+        option tcplog
+        default_backend be-https
+
+frontend fe-http
+        bind 0.0.0.0:80
+        mode http
+        option httplog
+        default_backend be-http
+
+backend be-api
+        mode tcp
+        option ssl-hello-chk
+        server webserver1 ${crc_ip}:6443
+
+backend be-https
+        mode tcp
+        option ssl-hello-chk
+        server webserver1 ${crc_ip}:443
+
+backend be-http
+        mode http
+        option ssl-hello-chk
+        server webserver1 ${crc_ip}:80
+EOF
+
+  if [ ! -f /etc/haproxy/haproxy.cfg.ORIGINAL ] ; then
+    infomsg "Backing up original haproxy config file"
+    $sudo cp /etc/haproxy/haproxy.cfg /etc/haproxy/haproxy.cfg.ORIGINAL
+  fi
+
+  $sudo cp /tmp/haproxy.cfg.crc /etc/haproxy/haproxy.cfg
+  $sudo systemctl restart haproxy
+  infomsg "HAProxy is ready"
 
   # the new CRC base domain name
   BASE_DOMAIN="${MACHINE_IP}.nip.io"
@@ -385,8 +480,15 @@ EOF
   ${CRC_OC} patch apiserver cluster --type=merge -p "{\"spec\":{\"servingCerts\": {\"namedCertificates\":[{\"names\":[\"api.${BASE_DOMAIN}\"],\"servingCertificate\": {\"name\": \"crc-nip-secret\"}}]}}}"
   if [ "$?" != "0" ]; then infomsg "Failed to patch cluster apiserver" && exit 1; fi
 
+  infomsg "The server will soon be accessible via web console at: https://console-openshift-console.apps.${BASE_DOMAIN}"
+  infomsg "To log into the cluster via 'oc': oc login -u <username> -p <password> https://api.${BASE_DOMAIN}:6443"
+
   # wait for the cluster to fully incorporate these changes
   wait_for_cluster_operators
+
+  infomsg "The API server URL has changed. Logging out of the obsolete session"
+  ${CRC_OC} logout
+  infomsg "Log back into the cluster via: oc login -u <username> -p <password> https://api.${BASE_DOMAIN}:6443"
 }
 
 # Change to the directory where this script is and set our environment
