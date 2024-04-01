@@ -54,6 +54,7 @@ get_downloader() {
   debug "Downloader command to be used: ${DOWNLOADER}"
 }
 
+# check_crc_running sets env var _CRC_RUNNING to true or false
 check_crc_running() {
   if [ -z ${_CRC_RUNNING} ]; then
     if crc status | grep "CRC VM:.*Running" > /dev/null 2>&1; then
@@ -65,6 +66,7 @@ check_crc_running() {
   fi
 }
 
+# get_console_url sets the env var CONSOLE_URL
 get_console_url() {
   CONSOLE_URL="$(${CRC_OC} get console cluster -o jsonpath='{.status.consoleURL}' 2>/dev/null)"
   if [ "$?" != "0" -o "$CONSOLE_URL" == "" ]; then
@@ -72,8 +74,25 @@ get_console_url() {
   fi
 }
 
+# get_api_server_url sets the env var OPENSHIFT_API_SERVER_URL
 get_api_server_url() {
-  OPENSHIFT_API_SERVER_URL="$(${CRC_OC} whoami --show-server 2>/dev/null || echo 'https://api.crc.testing:6443')"
+  OPENSHIFT_API_SERVER_URL="$(${CRC_OC} whoami --show-server 2>/dev/null || echo 'unknown')"
+}
+
+# get_base_domain_name sets the env vars OPENSHIFT_BASE_DOMAIN_NAME as well as OPENSHIFT_API_SERVER_URL
+get_base_domain_name() {
+  get_api_server_url
+  OPENSHIFT_BASE_DOMAIN_NAME="$(echo "${OPENSHIFT_API_SERVER_URL}" | awk -F[/:] '{sub(/^api\./, "", $4); print $4}')"
+}
+
+# get_machine_ip sets the env var MACHINE_IP
+get_machine_ip() {
+  MACHINE_IP="$(hostname -I | awk '{print $1}')"
+}
+
+# get_oauth_host sets the env var OPENSHIFT_OAUTH_HOST
+get_oauth_host() {
+  OPENSHIFT_OAUTH_HOST="$(${CRC_OC} get route oauth-openshift -n openshift-authentication -o jsonpath='{.spec.host}')"
 }
 
 get_status() {
@@ -92,7 +111,8 @@ get_status() {
   if [ "${_CRC_RUNNING}" == "true" ]; then
     get_registry_names
     get_console_url
-    get_api_server_url
+    get_base_domain_name
+    get_oauth_host
     echo "To install 'oc' in your environment:"
     ${CRC_COMMAND} oc-env
     echo "====================================================================="
@@ -115,10 +135,12 @@ get_status() {
     echo "====================================================================="
     echo "whoami: $(${CRC_OC_BIN} whoami 2>&1) ($(${CRC_OC_BIN} whoami --show-server 2>&1))"
     echo "====================================================================="
-    echo "Console:    ${CONSOLE_URL}"
-    echo "API URL:    ${OPENSHIFT_API_SERVER_URL}"
-    echo "IP address: $(${CRC_COMMAND} ip)"
-    echo "Image Repo: ${EXTERNAL_IMAGE_REGISTRY} (${INTERNAL_IMAGE_REGISTRY})"
+    echo "Domain Name: ${OPENSHIFT_BASE_DOMAIN_NAME}"
+    echo "Console:     ${CONSOLE_URL}"
+    echo "API URL:     ${OPENSHIFT_API_SERVER_URL}"
+    echo "IP address:  $(${CRC_COMMAND} ip)"
+    echo "Image Repo:  ${EXTERNAL_IMAGE_REGISTRY} (${INTERNAL_IMAGE_REGISTRY})"
+    echo "OAuth Host:  ${OPENSHIFT_OAUTH_HOST}"
     echo "====================================================================="
     echo "kubeadmin password: $(cat ${CRC_KUBEADMIN_PASSWORD_FILE})"
     echo "$(${CRC_COMMAND} console --credentials)"
@@ -207,6 +229,12 @@ exec_ssh() {
 }
 
 expose_cluster() {
+  check_crc_running
+  if [ "${_CRC_RUNNING}" != "true" ]; then
+    infomsg "CRC is not running. Aborting."
+    exit 1
+  fi
+
   local virt_interface="crc"
   local crc_ip="$(${CRC_COMMAND} ip 2>/dev/null)"
   local sudo=$(test "$(whoami)" = "root" && echo "" || echo "sudo")
@@ -240,9 +268,16 @@ expose_cluster() {
     $sudo $c
   done
 
+  # give some hints to the user about how to access it
+  get_machine_ip
+  get_base_domain_name
+  get_registry_names
+  get_oauth_host
+  local console_host="$(${CRC_OC} get route console -n openshift-console -o jsonpath='{.spec.host}')"
+
   infomsg "When accessing this cluster from outside make sure that cluster FQDNs resolve from outside."
   infomsg "For basic api/console access, something like the following in an /etc/hosts entry should work:"
-  infomsg "<IP-of-this-host> api.crc.testing console-openshift-console.apps-crc.testing default-route-openshift-image-registry.apps-crc.testing oauth-openshift.apps-crc.testing"
+  infomsg "${MACHINE_IP:-<IP-of-this-host>} api.${OPENSHIFT_BASE_DOMAIN_NAME:-} ${console_host:-} ${EXTERNAL_IMAGE_REGISTRY} ${OPENSHIFT_OAUTH_HOST:-}"
 }
 
 unexpose_cluster() {
@@ -261,8 +296,97 @@ unexpose_cluster() {
       $sudo firewall-cmd --remove-forward-port="$x"
     done
   else
-    echo "No relevant firewalld rules exist - nothing needs to be removed."
+    infomsg "No relevant firewalld rules exist - nothing needs to be removed."
   fi
+}
+
+wait_for_cluster_operators() {
+  while true; do
+
+    infomsg "Waiting for the cluster operators to be ready..."
+    sleep 5
+
+    local co_status
+    co_status=$(${CRC_OC} get clusteroperators --no-headers 2> /dev/null)
+    if [ "$?" != "0" ]; then
+      infomsg "Could not get info on cluster operators. Assuming the API Server is not ready..."
+      continue
+    fi
+    if [ "$(echo "$co_status" | wc -l 2>/dev/null)" -lt "3" ]; then
+      infomsg "OpenShift cluster is still starting up..."
+      continue
+    fi
+
+    # if there are any operators NOT AVAILABLE, exit code will be 0.
+    echo "$co_status" | awk '{print $3}' | grep False &>/dev/null
+    local available_operators=$?
+    # if there are any operators PROGRESSING, exit code will be 0.
+    echo "$co_status" | awk '{print $4}' | grep True &>/dev/null
+    local progressing_operators=$?
+    # if there are any operators DEGRADED, exit code will be 0.
+    echo "$co_status" | awk '{print $5}' | grep True &>/dev/null
+    local degraded_operators=$?
+    if [ "$available_operators" != "0" -a "$progressing_operators" != "0" -a "$degraded_operators" != "0" ]; then
+      infomsg "All cluster operators appear to be ready."
+      break
+    fi
+  done
+}
+
+change_crc_domain_name() {
+  check_crc_running
+  if [ "${_CRC_RUNNING}" != "true" ]; then
+    infomsg "CRC is not running - cannot set CRC domain name. Aborting."
+    exit 1
+  fi
+
+  get_machine_ip
+  if ! ping -c 1 "${MACHINE_IP}" >/dev/null; then
+    infomsg "Cannot determine the machine IP. Aborting."
+    exit 1
+  fi
+
+  # the new CRC base domain name
+  BASE_DOMAIN="${MACHINE_IP}.nip.io"
+  infomsg "Will change CRC cluster domain name to [${BASE_DOMAIN}]"
+
+  # create new certificate with the new base domain name
+  infomsg "Generating new certificate..."
+  openssl req -newkey rsa:2048 -new -nodes -x509 -days 3650 -keyout /tmp/crc-nip.key -out /tmp/crc-nip.crt -subj "/CN=${BASE_DOMAIN}" -addext "subjectAltName=DNS:apps.${BASE_DOMAIN},DNS:*.apps.${BASE_DOMAIN},DNS:api.${BASE_DOMAIN}"
+  if [ "$?" != "0" ]; then infomsg "Cannot create certificate" && exit 1; fi
+
+  # put the new certificate in a secret within the openshift-config namespace
+  infomsg "New certificate generated. Now configuring OpenShift..."
+  ${CRC_OC} create secret tls crc-nip-secret --cert=/tmp/crc-nip.crt --key=/tmp/crc-nip.key -n openshift-config
+  if [ "$?" != "0" ]; then infomsg "Cannot create secret with the new certificate" && exit 1; fi
+
+  # configure some additional places in the OpenShift cluster that need to know about the new domain name
+  ${CRC_OC} patch route default-route -n openshift-image-registry --type=merge -p "{\"spec\": {\"host\": \"default-route-openshift-image-registry.$BASE_DOMAIN\"}}"
+  if [ "$?" != "0" ]; then infomsg "Failed to patch openshift-image-registry/default-route" && exit 1; fi
+
+  cat <<EOF > /tmp/crc-ingress-patch.yaml
+spec:
+  appsDomain: apps.${BASE_DOMAIN}
+  componentRoutes:
+  - hostname: console-openshift-console.apps.${BASE_DOMAIN}
+    name: console
+    namespace: openshift-console
+    servingCertKeyPairSecret:
+      name: crc-nip-secret
+  - hostname: oauth-openshift.apps.${BASE_DOMAIN}
+    name: oauth-openshift
+    namespace: openshift-authentication
+    servingCertKeyPairSecret:
+      name: crc-nip-secret
+EOF
+  ${CRC_OC} patch ingresses.config.openshift.io cluster --type=merge --patch-file=/tmp/crc-ingress-patch.yaml
+  if [ "$?" != "0" ]; then infomsg "Failed to patch cluster ingress" && exit 1; fi
+
+  ${CRC_OC} patch apiserver cluster --type=merge -p "{\"spec\":{\"servingCerts\": {\"namedCertificates\":[{\"names\":[\"api.${BASE_DOMAIN}\"],\"servingCertificate\": {\"name\": \"crc-nip-secret\"}}]}}}"
+  if [ "$?" != "0" ]; then infomsg "Failed to patch cluster apiserver" && exit 1; fi
+
+  # wait for the cluster to fully incorporate these changes
+  wait_for_cluster_operators
 }
 
 # Change to the directory where this script is and set our environment
@@ -276,13 +400,13 @@ DEFAULT_CRC_DOWNLOAD_VERSION="2.32.0"
 DEFAULT_CRC_LIBVIRT_DOWNLOAD_VERSION="4.14.8"
 
 # The default virtual CPUs assigned to the CRC VM
-DEFAULT_CRC_CPUS="5"
+DEFAULT_CRC_CPUS="6"
 
 # The default memory (in GB) assigned to the CRC VM
-DEFAULT_CRC_MEMORY="16"
+DEFAULT_CRC_MEMORY="32"
 
 # The default virtual disk size (in GB) assigned to the CRC VM
-DEFAULT_CRC_VIRTUAL_DISK_SIZE="31"
+DEFAULT_CRC_VIRTUAL_DISK_SIZE="48"
 
 # If true the OpenShift bundle will be downloaded when needed.
 DEFAULT_DOWNLOAD_BUNDLE="false"
@@ -333,6 +457,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     unexpose)
       _CMD="unexpose"
+      shift
+      ;;
+    changedomain)
+      _CMD="changedomain"
       shift
       ;;
     -b|--bin-dir)
@@ -449,6 +577,7 @@ The command must be one of:
   * services: Outputs URLs for all known service endpoints (excluding internal openshift services).
   * expose: Creates firewalld rules so remote clients can access the cluster.
   * unexpose: Removes firewalld rules so remote clients cannot access the cluster.
+  * changedomain: Changes the CRC cluster base domain name from 'crc.testing' to a unique 'nip.io' name.
 
 HELPMSG
       exit 1
@@ -695,7 +824,7 @@ if [ "$_CMD" = "start" ]; then
       fi
     done
   else
-    echo "Not adding user 'kiali' because you do not have htpasswd installed - use the default users that come with CRC"
+    infomsg "Not adding user 'kiali' because you do not have htpasswd installed - use the default users that come with CRC"
   fi
 
   # Make sure the image registry is exposed via the default route
@@ -750,7 +879,11 @@ elif [ "$_CMD" = "unexpose" ]; then
 
   unexpose_cluster
 
+elif [ "$_CMD" = "changedomain" ]; then
+
+  change_crc_domain_name
+
 else
-  infomsg "ERROR: Required command must be either: start, stop, delete, status, ssh, sshoc, routes, services, expose, unexpose"
+  infomsg "ERROR: Required command must be either: start, stop, delete, status, ssh, sshoc, routes, services, expose, unexpose, changedomain"
   exit 1
 fi
