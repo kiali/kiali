@@ -161,10 +161,10 @@ get_status() {
     echo "====================================================================="
     echo "To push images to the image repo you need to log in."
     echo "You can use docker or podman, and you can use kubeadmin or kiali user."
-    echo "  oc login -u kubeadmin -p $(cat ${CRC_KUBEADMIN_PASSWORD_FILE}) ${OPENSHIFT_API_SERVER_URL:-<api url>}"
+    echo "  oc login -u kubeadmin -p $(cat ${CRC_KUBEADMIN_PASSWORD_FILE}) --server ${OPENSHIFT_API_SERVER_URL:-<api url>}"
     echo '  docker login -u kubeadmin -p $(oc whoami -t)' ${EXTERNAL_IMAGE_REGISTRY:-<image registry>}
     echo "or"
-    echo "  oc login -u kiali -p kiali ${OPENSHIFT_API_SERVER_URL:-<api url>}"
+    echo "  oc login -u kiali -p kiali --server ${OPENSHIFT_API_SERVER_URL:-<api url>}"
     echo '  podman login --tls-verify=false -u kiali -p $(oc whoami -t)' ${EXTERNAL_IMAGE_REGISTRY:-<image registry>}
     echo "====================================================================="
   else
@@ -323,7 +323,7 @@ wait_for_cluster_operators() {
   while true; do
 
     infomsg "Waiting for the cluster operators to be ready..."
-    sleep 5
+    sleep 10
 
     local co_status
     co_status=$(${CRC_OC} get clusteroperators --no-headers 2> /dev/null)
@@ -488,7 +488,10 @@ EOF
 
   infomsg "The API server URL has changed. Logging out of the obsolete session"
   ${CRC_OC} logout
-  infomsg "Log back into the cluster via: oc login -u <username> -p <password> https://api.${BASE_DOMAIN}:6443"
+  infomsg "Using the CRC oc client to login as kubeadmin"
+  ${CRC_OC} login -u kubeadmin -p $(cat ${CRC_KUBEADMIN_PASSWORD_FILE}) --server https://api.${BASE_DOMAIN}:6443
+
+  infomsg "Log back into the cluster via: oc login -u <username> -p <password> --server https://api.${BASE_DOMAIN}:6443"
 }
 
 # Change to the directory where this script is and set our environment
