@@ -1,5 +1,6 @@
 import { Controller, ElementModel, GraphElement } from '@patternfly/react-topology';
 import { AppenderString } from './Common';
+import { NamespaceInfo } from './NamespaceInfo';
 
 export interface MeshCluster {
   accessible: boolean;
@@ -25,6 +26,7 @@ export type MeshClusters = MeshCluster[];
 
 export enum MeshInfraType {
   CLUSTER = 'cluster',
+  DATAPLANES = 'dataplanes',
   GRAFANA = 'grafana',
   ISTIOD = 'istiod',
   KIALI = 'kiali',
@@ -53,7 +55,7 @@ export interface MeshNodeData {
 
   // optional
   healthData?: MeshNodeHealthData;
-  infraData?: MeshCluster; // add other type options as the case arises
+  infraData?: MeshCluster | NamespaceInfo[] | any; // add other type options as the case arises
   isAmbient?: boolean;
   isBox?: string;
   isInaccessible?: boolean;

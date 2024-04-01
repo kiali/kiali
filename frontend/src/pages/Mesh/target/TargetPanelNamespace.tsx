@@ -20,7 +20,6 @@ import { isRemoteCluster } from 'pages/Overview/OverviewCardControlPlaneNamespac
 import { NamespaceMTLSStatus } from 'components/MTls/NamespaceMTLSStatus';
 import { NamespaceStatuses } from 'pages/Overview/NamespaceStatuses';
 import { DirectionType, OverviewType } from 'pages/Overview/OverviewToolbar';
-import { ControlPlaneNamespaceStatus } from 'pages/Overview/ControlPlaneNamespaceStatus';
 import { PromisesRegistry } from 'utils/CancelablePromises';
 import { TLSInfo } from 'components/Overview/TLSInfo';
 import { CanaryUpgradeProgress } from 'pages/Overview/CanaryUpgradeProgress';
@@ -195,23 +194,12 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
                 <div style={{ textAlign: 'left' }}>
                   <div style={{ display: 'inline-block', width: '125px' }}>Istio config</div>
 
-                  {nsInfo.tlsStatus && (
-                    <span>
-                      <NamespaceMTLSStatus status={nsInfo.tlsStatus.status} />
-                    </span>
-                  )}
-
                   {this.props.istioAPIEnabled ? this.renderIstioConfigStatus(nsInfo) : 'N/A'}
                 </div>
 
                 {this.state.status && (
                   <NamespaceStatuses key={ns} name={ns} status={this.state.status} type={healthType} />
                 )}
-
-                <ControlPlaneNamespaceStatus
-                  outboundTrafficPolicy={this.state.outboundPolicyMode}
-                  namespace={nsInfo}
-                ></ControlPlaneNamespaceStatus>
 
                 <TLSInfo
                   certificatesInformationIndicators={

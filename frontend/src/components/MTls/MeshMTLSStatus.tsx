@@ -74,7 +74,6 @@ const statusDescriptors = new Map<string, StatusDescriptor>([
 
 const iconStyle = kialiStyle({
   marginRight: '0.5rem',
-  marginLeft: '0.5rem',
   width: '0.75rem'
 });
 

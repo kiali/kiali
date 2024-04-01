@@ -7,7 +7,7 @@ import { TourStop } from 'components/Tour/TourStop';
 import { FocusNode } from 'pages/GraphPF/GraphPF';
 import { classes } from 'typestyle';
 import { PFColors } from 'components/Pf/PfColors';
-import { MeshInfraType, MeshTarget } from 'types/Mesh';
+import { MeshInfraType, MeshTarget, MeshType } from 'types/Mesh';
 import { TargetPanelCommonProps, targetPanel } from './TargetPanelCommon';
 import { MeshTourStops } from '../MeshHelpTour';
 import { BoxByType } from 'types/Graph';
@@ -18,6 +18,8 @@ import { TargetPanelNode } from './TargetPanelNode';
 import { TargetPanelMesh } from './TargetPanelMesh';
 import { meshWideMTLSStatusSelector, minTLSVersionSelector } from 'store/Selectors';
 import { NodeData } from '../MeshElems';
+import { TargetPanelControlPlane } from './TargetPanelControlPlane';
+import { TargetPanelDataplanes } from './TargetPanelDataplanes';
 
 type TargetPanelState = {
   isVisible: boolean;
@@ -110,7 +112,7 @@ class TargetPanelComponent extends React.Component<TargetPanelProps, TargetPanel
   }
 
   private getTargetPanel = (target: MeshTarget): React.ReactFragment => {
-    const targetType = target.type as string;
+    const targetType = target.type as MeshType;
 
     switch (targetType) {
       case 'box': {
@@ -160,30 +162,43 @@ class TargetPanelComponent extends React.Component<TargetPanelProps, TargetPanel
       case 'node':
         const elem = target.elem as GraphElement<ElementModel, any>;
         const data = elem.getData() as NodeData;
-        if (data.infraType === MeshInfraType.NAMESPACE) {
-          return (
-            <TargetPanelNamespace
-              duration={this.props.duration}
-              istioAPIEnabled={this.props.istioAPIEnabled}
-              kiosk={this.props.kiosk}
-              meshStatus={this.props.meshStatus}
-              minTLS={this.props.minTLS}
-              refreshInterval={this.props.refreshInterval}
-              target={target}
-              updateTime={this.props.updateTime}
-            />
-          );
+        switch (data.infraType) {
+          case MeshInfraType.ISTIOD:
+            return (
+              <TargetPanelControlPlane
+                duration={this.props.duration}
+                istioAPIEnabled={this.props.istioAPIEnabled}
+                kiosk={this.props.kiosk}
+                meshStatus={this.props.meshStatus}
+                minTLS={this.props.minTLS}
+                refreshInterval={this.props.refreshInterval}
+                target={target}
+                updateTime={this.props.updateTime}
+              />
+            );
+          case MeshInfraType.DATAPLANES:
+            return (
+              <TargetPanelDataplanes
+                duration={this.props.duration}
+                istioAPIEnabled={this.props.istioAPIEnabled}
+                kiosk={this.props.kiosk}
+                refreshInterval={this.props.refreshInterval}
+                target={target}
+                updateTime={this.props.updateTime}
+              />
+            );
+          default:
+            return (
+              <TargetPanelNode
+                duration={this.props.duration}
+                istioAPIEnabled={this.props.istioAPIEnabled}
+                kiosk={this.props.kiosk}
+                refreshInterval={this.props.refreshInterval}
+                target={target}
+                updateTime={this.props.updateTime}
+              />
+            );
         }
-        return (
-          <TargetPanelNode
-            duration={this.props.duration}
-            istioAPIEnabled={this.props.istioAPIEnabled}
-            kiosk={this.props.kiosk}
-            refreshInterval={this.props.refreshInterval}
-            target={target}
-            updateTime={this.props.updateTime}
-          />
-        );
       default:
         return <></>;
     }

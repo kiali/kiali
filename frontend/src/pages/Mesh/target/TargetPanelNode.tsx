@@ -12,6 +12,7 @@ import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { MeshInfraType, MeshNodeData } from 'types/Mesh';
 import { classes } from 'typestyle';
 import { panelStyle } from 'pages/Graph/SummaryPanelStyle';
+import { Title, TitleSizes } from '@patternfly/react-core';
 
 type TargetPanelNodeState = {
   loading: boolean;
@@ -83,17 +84,11 @@ export class TargetPanelNode extends React.Component<TargetPanelCommonProps, Tar
       case MeshInfraType.GRAFANA:
         pfBadge = PFBadges.Grafana;
         break;
-      case MeshInfraType.ISTIOD:
-        pfBadge = PFBadges.Istio;
-        break;
       case MeshInfraType.KIALI:
         pfBadge = PFBadges.Kiali;
         break;
       case MeshInfraType.METRIC_STORE:
         pfBadge = PFBadges.MetricStore;
-        break;
-      case MeshInfraType.NAMESPACE:
-        pfBadge = PFBadges.Namespace;
         break;
       case MeshInfraType.TRACE_STORE:
         pfBadge = PFBadges.TraceStore;
@@ -104,17 +99,19 @@ export class TargetPanelNode extends React.Component<TargetPanelCommonProps, Tar
 
     return (
       <React.Fragment key={data.infraName}>
-        <span className={nodeStyle}>
-          <PFBadge badge={PFBadges.Cluster} size="sm" />
-          {data.cluster}
-        </span>
+        <Title headingLevel="h5" size={TitleSizes.lg}>
+          <span className={nodeStyle}>
+            <PFBadge badge={pfBadge} size="sm" />
+            {data.infraName}
+          </span>
+        </Title>
         <span className={nodeStyle}>
           <PFBadge badge={PFBadges.Namespace} size="sm" />
           {data.namespace}
         </span>
         <span className={nodeStyle}>
-          <PFBadge badge={pfBadge} size="sm" />
-          {data.infraName}
+          <PFBadge badge={PFBadges.Cluster} size="sm" />
+          {data.cluster}
         </span>
       </React.Fragment>
     );
