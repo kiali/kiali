@@ -16,6 +16,7 @@
 #     services: outputs all known service endpoints (excluding internal openshift services)
 #       expose: creates firewalld rules so remote clients can access the cluster
 #     unexpose: removes firewalld rules so remote clients cannot access the cluster
+# changedomain: change the cluster to use an nip.io domain rather than "crc.testing".
 #
 # This script accepts several options - see --help for details.
 #
@@ -680,7 +681,7 @@ The command must be one of:
   * sshoc: Provides a command line prompt with root access inside the CRC VM. Logs in via oc debug.
   * routes: Outputs URLs for all known routes.
   * services: Outputs URLs for all known service endpoints (excluding internal openshift services).
-  * expose: Creates firewalld rules so remote clients can access the cluster.
+  * expose: Creates firewalld rules so remote clients can access the cluster. Do not use in conjunction with changedomain.
   * unexpose: Removes firewalld rules so remote clients cannot access the cluster.
   * changedomain: Changes the CRC cluster base domain name from 'crc.testing' to a unique 'nip.io' name.
 
