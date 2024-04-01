@@ -157,7 +157,7 @@ get_status() {
     fi
     echo "====================================================================="
     echo "kubeadmin password: $(cat ${CRC_KUBEADMIN_PASSWORD_FILE})"
-    echo "$(${CRC_COMMAND} console --credentials)"
+    echo "$(${CRC_COMMAND} console --credentials | sed 's/crc.testing/'${OPENSHIFT_BASE_DOMAIN_NAME}'/')"
     echo "====================================================================="
     echo "To push images to the image repo you need to log in."
     echo "You can use docker or podman, and you can use kubeadmin or kiali user."
