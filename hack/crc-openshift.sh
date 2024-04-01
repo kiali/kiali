@@ -379,9 +379,11 @@ change_crc_domain_name() {
 
   local sudo=$(test "$(whoami)" = "root" && echo "" || echo "sudo")
 
-  # firewall screws things up. Disable it. TODO: see if we can work with the firewall
+  # firewall screws things up. Disable it now; we will restart it later.
+  local firewall_was_active="false"
   if systemctl -q is-active firewalld; then
-    infomsg "Shutting down the firewalld service"
+    firewall_was_active="true"
+    infomsg "Shutting down the firewalld service. It will be restarted soon, with additionl rules added."
     $sudo systemctl stop firewalld
   fi
 
@@ -490,9 +492,15 @@ EOF
   infomsg "The API server URL has changed. Logging out of the obsolete session"
   ${CRC_OC} logout
   infomsg "Using the CRC oc client to login as kubeadmin"
-  ${CRC_OC} login -u kubeadmin -p $(cat ${CRC_KUBEADMIN_PASSWORD_FILE}) --server https://api.${BASE_DOMAIN}:6443
+  ${CRC_OC} login --insecure-skip-tls-verify=true -u kubeadmin -p $(cat ${CRC_KUBEADMIN_PASSWORD_FILE}) --server https://api.${BASE_DOMAIN}:6443
 
   infomsg "Log back into the cluster via: oc login -u <username> -p <password> --server https://api.${BASE_DOMAIN}:6443"
+
+  if [ "${firewall_was_active}" == "true" ]; then
+    infomsg "The firewall was originally active. It will now be restarted and rules added"
+    $sudo systemctl restart firewalld
+    expose_cluster
+  fi
 }
 
 # Change to the directory where this script is and set our environment
@@ -681,7 +689,7 @@ The command must be one of:
   * sshoc: Provides a command line prompt with root access inside the CRC VM. Logs in via oc debug.
   * routes: Outputs URLs for all known routes.
   * services: Outputs URLs for all known service endpoints (excluding internal openshift services).
-  * expose: Creates firewalld rules so remote clients can access the cluster. Do not use in conjunction with changedomain.
+  * expose: Creates firewalld rules so remote clients can access the cluster.
   * unexpose: Removes firewalld rules so remote clients cannot access the cluster.
   * changedomain: Changes the CRC cluster base domain name from 'crc.testing' to a unique 'nip.io' name.
 
