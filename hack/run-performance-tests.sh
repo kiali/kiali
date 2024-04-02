@@ -114,12 +114,13 @@ deleteData() {
   for ((i = 1; i <= $TEST_DATA; i++)); do
     kubectl delete --ignore-not-found=true -l kiali.io=perf-test ns
   done
+  jq '.allNamespaces = .namespaces' "$COMMON_PARAMS" > "$COMMON_PARAMS.tmp" && mv "$COMMON_PARAMS.tmp" "$COMMON_PARAMS"
 }
 
 ensureCypressInstalled
 
 if [ "${TESTS_ONLY}" != "true" ]; then
-infomsg "Install test data"
+  infomsg "Install test data"
   createData
 fi
 
@@ -136,6 +137,9 @@ infomsg "Running cypress performance tests"
 echo "[Running cypress performance tests for $TEST_DATA namespaces]" > $OUTPUT_FILE
 yarn cypress:run:perf
 
-infomsg "Remove test data"
-deleteData
+if [ "${TESTS_ONLY}" != "true" ]; then
+  infomsg "Remove test data"
+  deleteData
+fi
+
 

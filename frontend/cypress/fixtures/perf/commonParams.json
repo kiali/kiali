@@ -1,6 +1,6 @@
 {
   "namespaces": "bookinfo,alpha,beta,gamma,sleep",
-  "allNamespaces": "bookinfo,alpha,beta,gamma,sleep,perf-testing-1,perf-testing-2,perf-test-1,perf-test-2,perf-test-1,perf-test-2,perf-test-3,perf-test-4,perf-test-5,perf-test-6,perf-test-7,perf-test-8,perf-test-9,perf-test-10",
+  "allNamespaces": "bookinfo,alpha,beta,gamma,sleep",
   "detailsNs": "bookinfo",
   "workloadName": "productpage-v1",
   "serviceName": "productpage",
