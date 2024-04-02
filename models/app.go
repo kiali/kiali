@@ -34,10 +34,11 @@ type AppListItem struct {
 	// example: reviews
 	Name string `json:"name"`
 
-	// Namespace where the apps live in
-	// required: true
-	// example: bookinfo
-	Namespace Namespace `json:"namespace"`
+	// Namespace of the application
+	Namespace string `json:"namespace"`
+
+	// The kube cluster where this application is located.
+	Cluster string `json:"cluster"`
 
 	// Define if all Pods related to the Workloads of this app has an IstioSidecar deployed
 	// required: true

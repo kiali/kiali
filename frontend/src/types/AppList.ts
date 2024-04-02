@@ -1,4 +1,3 @@
-import { Namespace } from './Namespace';
 import { AppHealth } from './Health';
 import { ObjectReference } from './IstioObjects';
 
@@ -8,7 +7,6 @@ export interface AppList {
 }
 
 export interface AppListItem {
-  // @TODO this should be gone as Namespace contains cluster
   cluster?: string;
   health: AppHealth;
   istioAmbient: boolean;
@@ -16,7 +14,7 @@ export interface AppListItem {
   istioSidecar: boolean;
   labels: { [key: string]: string };
   name: string;
-  namespace: Namespace;
+  namespace: string;
 }
 
 export interface AppListQuery {

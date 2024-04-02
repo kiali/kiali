@@ -41,7 +41,7 @@ func (n GatewayReferences) getWorkloadReferences(gw *networking_v1beta1.Gateway)
 		for _, wl := range wls.Workloads {
 			wlLabelSet := labels.Set(wl.Labels)
 			if selector.Matches(wlLabelSet) {
-				result = append(result, models.WorkloadReference{Name: wl.Name, Namespace: wls.Namespace.Name})
+				result = append(result, models.WorkloadReference{Name: wl.Name, Namespace: wls.Namespace})
 			}
 		}
 	}

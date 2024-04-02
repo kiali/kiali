@@ -56,7 +56,7 @@ func TestGetAppListFromDeployments(t *testing.T) {
 
 	assert.Equal(1, len(appList.Apps))
 	assert.Equal("httpbin", appList.Apps[0].Name)
-	assert.Equal("Namespace", appList.Apps[0].Namespace.Name)
+	assert.Equal("Namespace", appList.Apps[0].Namespace)
 }
 
 func TestGetAppFromDeployments(t *testing.T) {
@@ -131,7 +131,7 @@ func TestGetAppListFromReplicaSets(t *testing.T) {
 
 	assert.Equal(1, len(appList.Apps))
 	assert.Equal("httpbin", appList.Apps[0].Name)
-	assert.Equal("Namespace", appList.Apps[0].Namespace.Name)
+	assert.Equal("Namespace", appList.Apps[0].Namespace)
 }
 
 func TestGetAppFromReplicaSets(t *testing.T) {

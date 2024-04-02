@@ -124,6 +124,7 @@ const conf = {
       clustersHealth: () => `api/clusters/health`,
       clustersMetrics: () => `api/clusters/metrics`,
       clustersTls: () => `api/clusters/tls`,
+      clustersWorkloads: () => `api/clusters/workloads`,
       configValidations: () => `api/istio/validations`,
       crippledFeatures: 'api/crippled',
       customDashboard: (namespace: string, template: string) =>
@@ -175,7 +176,6 @@ const conf = {
       tracingTrace: (idTrace: string) => `api/traces/${idTrace}`,
       workloadSpans: (namespace: string, workload: string) => `api/namespaces/${namespace}/workloads/${workload}/spans`,
       workloadTraces: (namespace: string, wkd: string) => `api/namespaces/${namespace}/workloads/${wkd}/traces`,
-      workloads: (namespace: string) => `api/namespaces/${namespace}/workloads`,
       workload: (namespace: string, workload: string) => `api/namespaces/${namespace}/workloads/${workload}`,
       workloadGraphElements: (namespace: string, workload: string) =>
         `api/namespaces/${namespace}/workloads/${workload}/graph`,

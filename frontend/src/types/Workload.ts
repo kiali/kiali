@@ -1,4 +1,3 @@
-import { Namespace } from './Namespace';
 import { WorkloadHealth, WorkloadHealthResponse } from './Health';
 import { ObjectReference, Pod, Service, Validations } from './IstioObjects';
 
@@ -12,7 +11,6 @@ export interface Workload {
   annotations: { [key: string]: string };
   appLabel: boolean;
   availableReplicas: Number;
-  name: string;
   cluster?: string;
   createdAt: string;
   health?: WorkloadHealthResponse;
@@ -20,6 +18,7 @@ export interface Workload {
   istioInjectionAnnotation?: boolean;
   istioSidecar: boolean;
   labels: { [key: string]: string };
+  name: string;
   pods: Pod[];
   replicas: Number;
   resourceVersion: string;
@@ -63,7 +62,7 @@ export const WorkloadType = {
   StatefulSet: 'StatefulSet'
 };
 
-export interface WorkloadOverview {
+export interface WorkloadListItem {
   additionalDetailSample?: AdditionalItem;
   appLabel: boolean;
   cluster?: string;
@@ -73,6 +72,7 @@ export interface WorkloadOverview {
   istioSidecar: boolean;
   labels: { [key: string]: string };
   name: string;
+  namespace: string;
   notCoveredAuthPolicy: boolean;
   type: string;
   versionLabel: boolean;
@@ -89,20 +89,16 @@ export interface WorkloadUpdateQuery {
   type: string;
 }
 
-export interface WorkloadListItem extends WorkloadOverview {
-  namespace: string;
-}
-
 export interface WorkloadListQuery {
   health: 'true' | 'false';
   istioResources: 'true' | 'false';
   rateInterval: string;
 }
 
-export interface WorkloadNamespaceResponse {
-  namespace: Namespace;
+export interface ClusterWorkloadsResponse {
+  cluster?: string;
   validations: Validations;
-  workloads: WorkloadOverview[];
+  workloads: WorkloadListItem[];
 }
 
 export interface Runtime {

@@ -53,6 +53,8 @@ func TestGetWorkloadListFromDeployments(t *testing.T) {
 	require := require.New(t)
 
 	conf := config.NewConfig()
+	conf.ExternalServices.Istio.IstioAPIEnabled = false
+	config.Set(conf)
 
 	// Setup mocks
 	kubeObjs := []runtime.Object{
@@ -71,7 +73,7 @@ func TestGetWorkloadListFromDeployments(t *testing.T) {
 	workloadList, _ := svc.GetWorkloadList(context.TODO(), criteria)
 	workloads := workloadList.Workloads
 
-	assert.Equal("Namespace", workloadList.Namespace.Name)
+	assert.Equal("Namespace", workloadList.Namespace)
 
 	require.Equal(3, len(workloads))
 	assert.Equal("httpbin-v1", workloads[0].Name)
@@ -112,7 +114,7 @@ func TestGetWorkloadListFromReplicaSets(t *testing.T) {
 	workloadList, _ := svc.GetWorkloadList(context.TODO(), criteria)
 	workloads := workloadList.Workloads
 
-	assert.Equal("Namespace", workloadList.Namespace.Name)
+	assert.Equal("Namespace", workloadList.Namespace)
 
 	require.Equal(3, len(workloads))
 	assert.Equal("httpbin-v1", workloads[0].Name)
@@ -151,7 +153,7 @@ func TestGetWorkloadListFromReplicationControllers(t *testing.T) {
 	workloadList, _ := svc.GetWorkloadList(context.TODO(), criteria)
 	workloads := workloadList.Workloads
 
-	assert.Equal("Namespace", workloadList.Namespace.Name)
+	assert.Equal("Namespace", workloadList.Namespace)
 
 	require.Equal(3, len(workloads))
 	assert.Equal("httpbin-v1", workloads[0].Name)
@@ -190,7 +192,7 @@ func TestGetWorkloadListFromDeploymentConfigs(t *testing.T) {
 	workloadList, _ := svc.GetWorkloadList(context.TODO(), criteria)
 	workloads := workloadList.Workloads
 
-	assert.Equal("Namespace", workloadList.Namespace.Name)
+	assert.Equal("Namespace", workloadList.Namespace)
 
 	require.Equal(3, len(workloads))
 	assert.Equal("httpbin-v1", workloads[0].Name)
@@ -229,7 +231,7 @@ func TestGetWorkloadListFromStatefulSets(t *testing.T) {
 	workloadList, _ := svc.GetWorkloadList(context.TODO(), criteria)
 	workloads := workloadList.Workloads
 
-	assert.Equal("Namespace", workloadList.Namespace.Name)
+	assert.Equal("Namespace", workloadList.Namespace)
 
 	require.Equal(3, len(workloads))
 	assert.Equal("httpbin-v1", workloads[0].Name)
@@ -268,7 +270,7 @@ func TestGetWorkloadListFromDaemonSets(t *testing.T) {
 	workloadList, _ := svc.GetWorkloadList(context.TODO(), criteria)
 	workloads := workloadList.Workloads
 
-	assert.Equal("Namespace", workloadList.Namespace.Name)
+	assert.Equal("Namespace", workloadList.Namespace)
 
 	require.Equal(3, len(workloads))
 	assert.Equal("httpbin-v1", workloads[0].Name)
@@ -314,7 +316,7 @@ func TestGetWorkloadListFromDepRCPod(t *testing.T) {
 	workloadList, _ := svc.GetWorkloadList(context.TODO(), criteria)
 	workloads := workloadList.Workloads
 
-	assert.Equal("Namespace", workloadList.Namespace.Name)
+	assert.Equal("Namespace", workloadList.Namespace)
 
 	require.Equal(1, len(workloads))
 	assert.Equal("details-v1", workloads[0].Name)
@@ -344,7 +346,7 @@ func TestGetWorkloadListFromPod(t *testing.T) {
 	workloadList, _ := svc.GetWorkloadList(context.TODO(), criteria)
 	workloads := workloadList.Workloads
 
-	assert.Equal("Namespace", workloadList.Namespace.Name)
+	assert.Equal("Namespace", workloadList.Namespace)
 
 	require.Equal(1, len(workloads))
 	assert.Equal("orphan-pod", workloads[0].Name)
@@ -378,7 +380,7 @@ func TestGetWorkloadListFromPods(t *testing.T) {
 	workloadList, _ := svc.GetWorkloadList(context.TODO(), criteria)
 	workloads := workloadList.Workloads
 
-	assert.Equal("Namespace", workloadList.Namespace.Name)
+	assert.Equal("Namespace", workloadList.Namespace)
 
 	require.Equal(1, len(workloads))
 	assert.Equal("custom-controller-RS-123", workloads[0].Name)
@@ -930,7 +932,7 @@ func TestGetWorkloadListRSOwnedByCustom(t *testing.T) {
 	SetupBusinessLayer(t, k8s, *conf)
 	svc := setupWorkloadService(k8s, conf)
 
-	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: false, IncludeHealth: false}
+	criteria := WorkloadCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", IncludeIstioResources: false, IncludeHealth: false}
 	workloadList, err := svc.GetWorkloadList(context.TODO(), criteria)
 	require.NoError(err)
 	workloads := workloadList.Workloads

@@ -321,15 +321,13 @@ func Spans(objectType, name, namespace string) ([]model.TracingSpan, int, error)
 }
 
 func WorkloadsList(namespace string) (*WorkloadListJson, error) {
-	url := fmt.Sprintf("%s/api/namespaces/%s/workloads", client.kialiURL, namespace)
-	workloadList := new(WorkloadListJson)
-
-	_, err := getRequestAndUnmarshalInto(url, workloadList)
-	if err == nil {
-		return workloadList, nil
-	} else {
+	url := fmt.Sprintf("%s/api/clusters/workloads?namespaces=%s", client.kialiURL, namespace)
+	wlList := new(WorkloadListJson)
+	_, err := getRequestAndUnmarshalInto(url, wlList)
+	if err != nil {
 		return nil, err
 	}
+	return wlList, nil
 }
 
 func WorkloadDetails(name, namespace string) (*WorkloadJson, int, error) {
