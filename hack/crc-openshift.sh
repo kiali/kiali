@@ -277,9 +277,7 @@ expose_cluster() {
   for c in \
     "firewall-cmd --add-forward-port=port=443:proto=tcp:toaddr=${crc_ip}:toport=443" \
     "firewall-cmd --add-forward-port=port=6443:proto=tcp:toaddr=${crc_ip}:toport=6443" \
-    "firewall-cmd --add-forward-port=port=80:proto=tcp:toaddr=${crc_ip}:toport=80" \
-    "firewall-cmd --direct --passthrough ipv4 -I FORWARD -i ${virt_interface} -j ACCEPT" \
-    "firewall-cmd --direct --passthrough ipv4 -I FORWARD -o ${virt_interface} -j ACCEPT"
+    "firewall-cmd --add-forward-port=port=80:proto=tcp:toaddr=${crc_ip}:toport=80"
   do
     echo -n "EXECUTING: $sudo $c ... "
     $sudo $c
@@ -398,8 +396,8 @@ defaults
         balance roundrobin
         log global
         timeout connect 10s
-        timeout client 1m
-        timeout server 1m
+        timeout client 2000s
+        timeout server 2000s
 
 frontend fe-api
         bind 0.0.0.0:6443
@@ -415,24 +413,23 @@ frontend fe-https
 
 frontend fe-http
         bind 0.0.0.0:80
-        mode http
-        option httplog
+        mode tcp
+        option tcplog
         default_backend be-http
 
 backend be-api
         mode tcp
         option ssl-hello-chk
-        server webserver1 ${crc_ip}:6443
+        server crcvm ${crc_ip}:6443 check
 
 backend be-https
         mode tcp
         option ssl-hello-chk
-        server webserver1 ${crc_ip}:443
+        server crcvm ${crc_ip}:443 check
 
 backend be-http
-        mode http
-        option ssl-hello-chk
-        server webserver1 ${crc_ip}:80
+        mode tcp
+        server crcvm ${crc_ip}:80 check
 EOF
 
   if [ ! -f /etc/haproxy/haproxy.cfg.ORIGINAL ] ; then
