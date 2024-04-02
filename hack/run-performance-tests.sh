@@ -81,7 +81,8 @@ set -e
 # Determine where this script is and make it the cwd
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
 COMMON_PARAMS="${SCRIPT_DIR}/../frontend/cypress/fixtures/perf/commonParams.json"
-OUTPUT_FILE=${SCRIPT_DIR}/../frontend/cypress/results/performance.txt
+OUTPUT_DIR=${SCRIPT_DIR}/../frontend/cypress/results
+OUTPUT_FILE=${OUTPUT_DIR}/performance.txt
 
 ensureCypressInstalled() {
   cd "${SCRIPT_DIR}"/../frontend
@@ -95,7 +96,7 @@ ensureCypressInstalled() {
 createData() {
   ISTIO_INGRESS_IP="$(kubectl get svc istio-ingressgateway -n istio-system -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')"
   # Install demo apps
-  # "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl" -g "${ISTIO_INGRESS_IP}"
+  "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl" -g "${ISTIO_INGRESS_IP}"
   for ((i = 1; i <= $TEST_DATA; i++)); do
     cat <<EOF | kubectl apply -f -
 apiVersion: v1
@@ -129,11 +130,12 @@ export CYPRESS_NUM_TESTS_KEPT_IN_MEMORY=0
 export CYPRESS_VIDEO=false
 
 if [ "${SETUP_ONLY}" == "true" ]; then
-exit 0
+  exit 0
 fi
 
 cd "${SCRIPT_DIR}"/../frontend
 infomsg "Running cypress performance tests"
+mkdir "$OUTPUT_DIR"
 echo "[Running cypress performance tests for $TEST_DATA namespaces]" > $OUTPUT_FILE
 yarn cypress:run:perf
 
