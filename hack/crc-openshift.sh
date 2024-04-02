@@ -377,11 +377,9 @@ change_crc_domain_name() {
 
   local sudo=$(test "$(whoami)" = "root" && echo "" || echo "sudo")
 
-  # firewall screws things up. Disable it now; we will restart it later.
-  local firewall_was_active="false"
+  # firewall screws things up. Have never been able to figure it out. Disable it.
   if systemctl -q is-active firewalld; then
-    firewall_was_active="true"
-    infomsg "Shutting down the firewalld service. It will be restarted soon, with additionl rules added."
+    infomsg "Shutting down the firewalld service."
     $sudo systemctl stop firewalld
   fi
 
@@ -491,13 +489,13 @@ EOF
   infomsg "Using the CRC oc client to login as kubeadmin"
   ${CRC_OC} login --insecure-skip-tls-verify=true -u kubeadmin -p $(cat ${CRC_KUBEADMIN_PASSWORD_FILE}) --server https://api.${BASE_DOMAIN}:6443
 
-  infomsg "Log back into the cluster via: oc login -u <username> -p <password> --server https://api.${BASE_DOMAIN}:6443"
-
-  if [ "${firewall_was_active}" == "true" ]; then
-    infomsg "The firewall was originally active. It will now be restarted and rules added"
-    $sudo systemctl restart firewalld
-    expose_cluster
+  if which oc &> /dev/null; then
+    infomsg "Using the 'oc' client found in PATH to login as kubeadmin"
+    oc login --insecure-skip-tls-verify=true -u kubeadmin -p $(cat ${CRC_KUBEADMIN_PASSWORD_FILE}) --server https://api.${BASE_DOMAIN}:6443
+  else
+    infomsg "You need to log back into the cluster via your 'oc' client."
   fi
+  infomsg "Login Command: oc login -u <username> -p <password> --server https://api.${BASE_DOMAIN}:6443"
 }
 
 # Change to the directory where this script is and set our environment
