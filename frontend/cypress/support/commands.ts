@@ -131,7 +131,11 @@ function ensureMulticlusterApplicationsAreHealthy(): void {
     'api/clusters/apps?namespaces=bookinfo&clusterName=west&health=true&istioResources=true&rateInterval=60s'
   ).then(resp => {
     const has_http_200 = resp.body.applications.some(
-      app => app.name === 'reviews' && app.cluster === 'west' && app.health.requests.inbound.http['200'] > 0
+      app =>
+        app.name === 'reviews' &&
+        app.cluster === 'west' &&
+        app.health.requests.inbound.http !== undefined &&
+        app.health.requests.inbound.http['200'] > 0
     );
     if (has_http_200) {
       cy.log("'reviews' app in 'west' cluster is healthy enough.");
