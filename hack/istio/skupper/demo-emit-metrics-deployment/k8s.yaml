@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo-extension-metrics-server
+  labels:
+    app: demo-extension-metrics-server
+    app.kubernetes.io/name: demo-extension-metrics-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: demo-extension-metrics-server
+  template:
+    metadata:
+      labels:
+        app: demo-extension-metrics-server
+        app.kubernetes.io/name: demo-extension-metrics-server
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/metrics"
+        prometheus.io/port: "9090"
+    spec:
+      containers:
+      - name: demo-extension-metrics-server
+        image: quay.io/kiali/demo-extension-metrics-server:latest
+        ports:
+        - containerPort: 9090
+        env:
+        - name: METRICS_PORT
+          value: "9090"
+        - name: METRICS_FILE
+          value: "/tmp/metrics.txt"
+        volumeMounts:
+        - name: metrics-volume
+          mountPath: /tmp/metrics.txt
+          subPath: metrics.txt
+      volumes:
+      - name: metrics-volume
+        configMap:
+          name: metrics-configmap
+      serviceAccountName: default
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: demo-extension-metrics-service
+  labels:
+    app: demo-extension-metrics-server
+    app.kubernetes.io/name: demo-extension-metrics-server
+spec:
+  selector:
+    app: demo-extension-metrics-server
+  ports:
+  - protocol: TCP
+    port: 9090
+    targetPort: 9090
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: metrics-configmap
+data:
+  metrics.txt: |
+    # HELP metric1 Help text for metric
+    # TYPE metric1 gauge
+    metric1{label1="foo",label2="bar"} $(shuf -i 5-10 -n 1)
+    # HELP metric2 Help text for metric
+    # TYPE metric2 counter
+    metric2{label1="foo",label2="bar",label3="splat"} $(shuf -i 1-100 -n 1)
+    # HELP metric3 Help text for metric
+    # TYPE metric3 counter
+    metric3{label1="foo",label2="bar",label3="splat",label4="wotgorilla"} $(shuf -i 50-150 -n 1)
