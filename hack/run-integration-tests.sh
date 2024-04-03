@@ -318,8 +318,8 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_MULTI_PRIMARY}" ]; then
   fi
   
   ensureKialiServerReady
-  # We now need a kiali-aes-cookie to be able to talk to the API.
-  # ensureMulticlusterApplicationsAreHealthy
+  # We now need a kiali-aes-cookie to be able to talk to the API so checks for the applications
+  # being healthy have moved into the frontend tests where it's easier to get the cookie.
 
   export CYPRESS_BASE_URL="${KIALI_URL}"
   export CYPRESS_CLUSTER1_CONTEXT="kind-east"
