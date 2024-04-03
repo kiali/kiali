@@ -143,7 +143,9 @@ if [ "${MANAGE_KIND}" == "true" ]; then
 
   if [ "${KIALI_AUTH_STRATEGY}" == "openid" ]; then
     "${SCRIPT_DIR}/../../keycloak.sh" -kcd "${KEYCLOAK_CERTS_DIR}" create-ca
-  
+
+    docker network create kind || true
+
     # Given: 172.18.0.0/16 this should return 172.18
     beginning_subnet_octets=$(docker network inspect kind --format '{{(index .IPAM.Config 0).Subnet}}' | cut -d'.' -f1,2)
     lb_range_start="255.70"
