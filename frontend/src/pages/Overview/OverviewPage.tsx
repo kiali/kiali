@@ -83,7 +83,8 @@ import { IstioConfigList } from 'types/IstioConfigList';
 const gridStyleCompact = kialiStyle({
   backgroundColor: PFColors.BackgroundColor200,
   paddingBottom: '1.25rem',
-  marginTop: 0
+  marginTop: 0,
+  flex: '1'
 });
 
 const gridStyleList = kialiStyle({
@@ -91,7 +92,8 @@ const gridStyleList = kialiStyle({
   // The VirtualTable component has a different style than cards
   // We need to adjust the grid style if we are on compact vs list view
   padding: '0 !important',
-  marginTop: 0
+  marginTop: 0,
+  flex: '1'
 });
 
 const cardGridStyle = kialiStyle({
