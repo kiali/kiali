@@ -2,18 +2,18 @@ import * as React from 'react';
 import { kialiStyle } from 'styles/StyleUtils';
 import { legendData, MeshLegendItem, MeshLegendItemRow } from './MeshLegendData';
 import { Button, ButtonVariant, Tooltip } from '@patternfly/react-core';
-import CloseIcon from '@patternfly/react-icons/dist/js/icons/close-icon';
 import { PFColors } from 'components/Pf/PfColors';
+import { KialiIcon } from 'config/KialiIcon';
 
 export interface MeshLegendProps {
-  closeLegend: () => void;
   className?: string;
+  closeLegend: () => void;
 }
 
 const width = '190px';
 
 export class MeshLegend extends React.Component<MeshLegendProps> {
-  render() {
+  render(): React.ReactNode {
     const legendBoxStyle = kialiStyle({
       backgroundColor: PFColors.BackgroundColor100,
       border: `1px solid ${PFColors.BorderColor100}`,
@@ -45,11 +45,12 @@ export class MeshLegend extends React.Component<MeshLegendProps> {
           <span className={closeBoxStyle}>
             <Tooltip content="Close Legend">
               <Button id="legend_close" variant={ButtonVariant.plain} onClick={this.props.closeLegend}>
-                <CloseIcon />
+                <KialiIcon.Close />
               </Button>
             </Tooltip>
           </span>
         </div>
+
         <div className={bodyStyle}>
           <div>{this.renderGraphLegendList(legendData)}</div>
         </div>
@@ -57,11 +58,12 @@ export class MeshLegend extends React.Component<MeshLegendProps> {
     );
   }
 
-  renderGraphLegendList(legendData: MeshLegendItem[]) {
+  renderGraphLegendList = (legendData: MeshLegendItem[]): React.ReactNode => {
     const legendColumnHeadingStyle = kialiStyle({
       fontWeight: 'bold',
       paddingTop: '1.25em'
     });
+
     const aStyle = kialiStyle({
       height: '100%'
     });
@@ -71,20 +73,21 @@ export class MeshLegend extends React.Component<MeshLegendProps> {
         {legendData.map((legendItem: MeshLegendItem) => (
           <div key={legendItem.title} className={legendColumnHeadingStyle}>
             {legendItem.title}
+
             {this.renderLegendRowItems(legendItem.data)}
           </div>
         ))}
       </div>
     );
-  }
+  };
 
-  renderLegendRowItems(legendData: MeshLegendItemRow[]) {
+  renderLegendRowItems = (legendData: MeshLegendItemRow[]): React.ReactNode => {
     return (
       <>{legendData.map((legendItemRow: MeshLegendItemRow) => MeshLegend.renderLegendIconAndLabel(legendItemRow))}</>
     );
-  }
+  };
 
-  static renderLegendIconAndLabel(legendItemRow: MeshLegendItemRow) {
+  static renderLegendIconAndLabel = (legendItemRow: MeshLegendItemRow): React.ReactNode => {
     const keyWidth = '70px';
 
     const keyStyle = kialiStyle({
@@ -107,8 +110,9 @@ export class MeshLegend extends React.Component<MeshLegendProps> {
         <span className={keyStyle}>
           <img alt={legendItemRow.label} src={legendItemRow.icon} />
         </span>
+
         <span className={legendItemLabelStyle}>{legendItemRow.label}</span>
       </div>
     );
-  }
+  };
 }

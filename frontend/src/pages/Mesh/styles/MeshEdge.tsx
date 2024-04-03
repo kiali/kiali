@@ -1,5 +1,5 @@
 import { DefaultEdge, Edge, observer, ScaleDetailsLevel, WithSelectionProps } from '@patternfly/react-topology';
-import useDetailsLevel from '@patternfly/react-topology/dist/esm/hooks/useDetailsLevel';
+import { useDetailsLevel } from '@patternfly/react-topology';
 import { PFColors } from 'components/Pf/PfColors';
 import * as React from 'react';
 import { kialiStyle } from 'styles/StyleUtils';
@@ -30,11 +30,11 @@ const MeshEdgeComponent: React.FC<MeshEdgeProps> = ({ element, ...rest }) => {
 
   let cssClasses: string[] = [];
 
-  const onMouseEnter = () => {
+  const onMouseEnter = (): void => {
     data.onHover(element, true);
   };
 
-  const onMouseLeave = () => {
+  const onMouseLeave = (): void => {
     data.onHover(element, false);
   };
 
@@ -115,14 +115,17 @@ const MeshEdgeComponent: React.FC<MeshEdgeProps> = ({ element, ...rest }) => {
 
   const passedData = React.useMemo(() => {
     const newData = { ...data };
+
     if (detailsLevel !== ScaleDetailsLevel.high) {
       newData.showTag = false;
     }
+
     Object.keys(newData).forEach(key => {
       if (newData[key] === undefined) {
         delete newData[key];
       }
     });
+
     return newData;
   }, [data, detailsLevel]);
 

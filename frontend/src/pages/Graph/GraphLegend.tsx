@@ -2,19 +2,19 @@ import * as React from 'react';
 import { kialiStyle } from 'styles/StyleUtils';
 import { legendData, GraphLegendItem, GraphLegendItemRow } from './GraphLegendData';
 import { Button, ButtonVariant, Tooltip } from '@patternfly/react-core';
-import CloseIcon from '@patternfly/react-icons/dist/js/icons/close-icon';
 import { PFColors } from 'components/Pf/PfColors';
 import { summaryFont, summaryTitle } from './SummaryPanelCommon';
+import { KialiIcon } from 'config/KialiIcon';
 
 export interface GraphLegendProps {
-  closeLegend: () => void;
   className?: string;
+  closeLegend: () => void;
 }
 
 const width = '190px';
 
 export class GraphLegend extends React.Component<GraphLegendProps> {
-  render() {
+  render(): React.ReactNode {
     const legendBoxStyle = kialiStyle({
       backgroundColor: PFColors.BackgroundColor100,
       border: `1px solid ${PFColors.BorderColor100}`,
@@ -46,7 +46,7 @@ export class GraphLegend extends React.Component<GraphLegendProps> {
           <span className={closeBoxStyle}>
             <Tooltip content="Close Legend">
               <Button id="legend_close" variant={ButtonVariant.plain} onClick={this.props.closeLegend}>
-                <CloseIcon />
+                <KialiIcon.Close />
               </Button>
             </Tooltip>
           </span>
@@ -58,7 +58,7 @@ export class GraphLegend extends React.Component<GraphLegendProps> {
     );
   }
 
-  renderGraphLegendList(legendData: GraphLegendItem[]) {
+  renderGraphLegendList = (legendData: GraphLegendItem[]): React.ReactNode => {
     const legendColumnHeadingStyle = kialiStyle({
       fontWeight: 'bold',
       paddingTop: '1.25em'
@@ -77,15 +77,15 @@ export class GraphLegend extends React.Component<GraphLegendProps> {
         ))}
       </div>
     );
-  }
+  };
 
-  renderLegendRowItems(legendData: GraphLegendItemRow[]) {
+  renderLegendRowItems = (legendData: GraphLegendItemRow[]): React.ReactNode => {
     return (
       <>{legendData.map((legendItemRow: GraphLegendItemRow) => GraphLegend.renderLegendIconAndLabel(legendItemRow))}</>
     );
-  }
+  };
 
-  static renderLegendIconAndLabel(legendItemRow: GraphLegendItemRow) {
+  static renderLegendIconAndLabel = (legendItemRow: GraphLegendItemRow): React.ReactNode => {
     const keyWidth = '70px';
 
     const keyStyle = kialiStyle({
@@ -111,5 +111,5 @@ export class GraphLegend extends React.Component<GraphLegendProps> {
         <span className={legendItemLabelStyle}>{legendItemRow.label}</span>
       </div>
     );
-  }
+  };
 }
