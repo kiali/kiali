@@ -4,6 +4,7 @@ go 1.20
 
 require (
 	github.com/NYTimes/gziphandler v1.1.1
+	github.com/go-jose/go-jose v2.6.3+incompatible
 	github.com/golang/protobuf v1.5.4
 	github.com/google/go-cmp v0.6.0
 	github.com/gorilla/mux v1.8.1
@@ -28,7 +29,6 @@ require (
 	google.golang.org/genproto/googleapis/api v0.0.0-20231002182017-d307bd883b97
 	google.golang.org/grpc v1.60.1
 	google.golang.org/protobuf v1.33.0
-	gopkg.in/square/go-jose.v2 v2.5.1
 	gopkg.in/yaml.v2 v2.4.0
 	istio.io/api v0.0.0-20230524015941-fa6c5f7916bf
 	istio.io/client-go v1.18.0
@@ -83,6 +83,7 @@ require (
 	google.golang.org/appengine v1.6.8 // indirect
 	google.golang.org/genproto v0.0.0-20231002182017-d307bd883b97 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20231002182017-d307bd883b97 // indirect
+	gopkg.in/go-jose/go-jose.v2 v2.6.3 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/klog/v2 v2.90.1 // indirect

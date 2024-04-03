@@ -15,9 +15,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/go-jose/go-jose"
 	osproject_v1 "github.com/openshift/api/project/v1"
 	"github.com/stretchr/testify/assert"
-	"gopkg.in/square/go-jose.v2"
 	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/clientcmd/api"
