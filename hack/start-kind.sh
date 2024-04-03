@@ -12,9 +12,12 @@
 
 NAME="kiali-testing"
 DORP="docker"
+ENABLE_KEYCLOAK="false"
 ENABLE_IMAGE_REGISTRY="false"
 IMAGE=""
 LOAD_BALANCER_RANGE="255.70-255.84"
+KEYCLOAK_ISSUER_URI=""
+KEYCLOAK_CERTS_DIR=""
 
 # for now these are fixed unless you override with env vars (no cmdline opts)
 KIND_IMAGE_REGISTRY_NAME="${KIND_IMAGE_REGISTRY_NAME:-kind-registry}"
@@ -32,19 +35,26 @@ Options:
     What to use when running kind.
     NOTE: Today only docker works. If you specify podman, it will be ignored and docker will be forced.
     Default: docker
+-ek|--enable-keycloak <true|false>
+    If true, the KinD cluster will be configured to use Keycloak for authentication.
+    Default: false
 -eir|--enable-image-registry <true|false>
     If true, an external image registry will be started and will be used by the KinD cluster.
     When enabled, you can push/pull images using the normal docker/podman push/pull commands
     to manage images that are accessible to the KinD cluster.
     Default: false
--n|--name
-    Name of the kind cluster.
-    Default: kiali-testing
 -i|--image
     Image of the kind cluster. Defaults to latest kind image if not specified.
+-kcd|--keycloak-certs-dir
+    Directory where the keycloak certs are stored.
+-kiu|--keycloak-issuer-uri
+    The Keycloak issuer URI.
 -lbr|--load-balancer-range
     Range for the metallb load balancer.
     Default: 255.70-255.84
+-n|--name
+    Name of the kind cluster.
+    Default: kiali-testing
 HELP
 }
 
@@ -53,10 +63,13 @@ while [[ $# -gt 0 ]]; do
   key="$1"
   case $key in
     -dorp|--docker-or-podman)     DORP="$2";                  shift;shift; ;;
+    -ek|--enable-keycloak)        ENABLE_KEYCLOAK="$2";       shift;shift; ;;
     -eir|--enable-image-registry) ENABLE_IMAGE_REGISTRY="$2"; shift;shift; ;;
     -i|--image)                   IMAGE="$2";                 shift;shift; ;;
-    -n|--name)                    NAME="$2";                  shift;shift; ;;
+    -kcd|--keycloak-certs-dir)    KEYCLOAK_CERTS_DIR="$2";    shift;shift; ;;
+    -kiu|--keycloak-issuer-uri)   KEYCLOAK_ISSUER_URI="$2";   shift;shift; ;;
     -lbr|--load-balancer-range)   LOAD_BALANCER_RANGE="$2";   shift;shift; ;;
+    -n|--name)                    NAME="$2";                  shift;shift; ;;
     -h|--help)                    helpmsg;                    exit 1       ;;
     *) echo "Unknown argument: [$key]. Aborting."; helpmsg; exit 1 ;;
   esac
@@ -123,6 +136,42 @@ EOF
   fi
 }
 
+echo_keycloak_kubeadm_config() {
+  # see: https://kind.sigs.k8s.io/docs/user/local-registry/
+  if [ "${ENABLE_KEYCLOAK}" == "true" ]; then
+    cat <<EOF
+kubeadmConfigPatches:
+- |-
+  kind: ClusterConfiguration
+  apiServer:
+    extraArgs:
+      oidc-client-id: kube
+      oidc-issuer-url: ${KEYCLOAK_ISSUER_URI}
+      oidc-groups-claim: groups
+      oidc-username-prefix: "oidc:"
+      oidc-groups-prefix: "oidc:"
+      oidc-username-claim: preferred_username
+      oidc-ca-file: /etc/ca-certificates/keycloak/root-ca.pem
+EOF
+  else
+    echo
+  fi
+}
+
+echo_keycloak_mount() {
+  # see: https://kind.sigs.k8s.io/docs/user/local-registry/
+  if [ "${ENABLE_KEYCLOAK}" == "true" ]; then
+    cat <<EOF
+    extraMounts:
+    - hostPath: $KEYCLOAK_CERTS_DIR/root-ca.pem
+      containerPath: /etc/ca-certificates/keycloak/root-ca.pem
+      readOnly: true
+EOF
+  else
+    echo
+  fi
+}
+
 finish_image_registry_config() {
   # see: https://kind.sigs.k8s.io/docs/user/local-registry/
   if [ "${ENABLE_IMAGE_REGISTRY}" == "true" ]; then
@@ -152,6 +201,11 @@ EOF2
   fi
 }
 
+if [ "${ENABLE_KEYCLOAK}" == "true" ] && [ -z "${KEYCLOAK_CERTS_DIR}" ]; then
+  echo "You must specify the directory where the Keycloak certs are stored with the -kcd|--keycloak-certs-dir option when keycloak is enabled."
+  exit 1
+fi
+
 start_kind() {
   # Due to: https://github.com/kubernetes-sigs/kind/issues/1449#issuecomment-1612648982 we need two nodes.
   infomsg "Kind cluster to be created with name [${NAME}]"
@@ -159,9 +213,11 @@ start_kind() {
   cat <<EOF | ${KIND_EXE} create cluster --name "${NAME}" --config -
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
+$(echo_keycloak_kubeadm_config)
 nodes:
   - role: control-plane
     ${NODE_IMAGE_LINE}
+$(echo_keycloak_mount)
   - role: worker
     ${NODE_IMAGE_LINE}
 $(echo_image_registry_cluster_config)

@@ -68,7 +68,6 @@ ISTIO_TAG=""
 
 # Certs directory where you want the generates cert files to be written
 CERTS_DIR="/tmp/istio-multicluster-certs"
-KEYCLOAK_CERTS_DIR=${CERTS_DIR}/keycloak
 
 # The default Mesh and Network identifiers
 MESH_ID="mesh-hack"
@@ -130,7 +129,8 @@ MINIKUBE_CPU=""
 MINIKUBE_DISK=""
 MINIKUBE_MEMORY=""
 
-# Keycloak settings. Openshift only.
+# Keycloak settings.
+KEYCLOAK_ADDRESS=""
 KEYCLOAK_DB_PASSWORD="${KEYCLOAK_DB_PASSWORD:-keycloak-password}"
 KEYCLOAK_KUBE_CLIENT_SECRET="${KEYCLOAK_KUBE_CLIENT_SECRET:-kube-client-secret}"
 KIALI_USER_PASSWORD="${KIALI_USER_PASSWORD:-kiali}"
@@ -195,6 +195,10 @@ while [[ $# -gt 0 ]]; do
       CLUSTER2_USER="$2"
       shift;shift
       ;;
+    -cd|--certs-dir)
+      CERTS_DIR="$2"
+      shift;shift
+      ;;
     -dorp|--docker-or-podman)
       [ "${2:-}" != "docker" -a "${2:-}" != "podman" ] && echo "-dorp must be 'docker' or 'podman'" && exit 1
       DORP="$2"
@@ -219,6 +223,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     -it|--istio-tag)
       ISTIO_TAG="$2"
+      shift;shift
+      ;;
+    -ka|--keycloak-address)
+      KEYCLOAK_ADDRESS="$2"
       shift;shift
       ;;
     -kas|--kiali-auth-strategy)
@@ -337,6 +345,7 @@ Valid command line arguments:
   -c2n|--cluster2-name <name>: The name of cluster2 (Default: west)
   -c2p|--cluster2-password <name>: If cluster2 is OpenShift, this is the password used to log in (Default: kiali)
   -c2u|--cluster2-username <name>: If cluster2 is OpenShift, this is the username used to log in (Default: kiali)
+  -cd|--certs-dir <dir>: Directory where the keycloak certs are located. (Default: /tmp/istio-multicluster-certs)
   -dorp|--docker-or-podman <docker|podman>: What image registry client to use (Default: podman)
   -gr|--gateway-required <bool>: If a gateway is required to cross between networks, set this to true
   -id|--istio-dir <dir>: Where Istio has already been downloaded. If not found, this script aborts.
@@ -360,6 +369,7 @@ Valid command line arguments:
   -k1ws|--kiali1-web-schema <schema>: If specified, this will be the #1 Kaili setting for spec.server.web_schema.
   -k2wf|--kiali2-web-fqdn <fqdn>: If specified, this will be the #2 Kaili setting for spec.server.web_fqdn.
   -k2ws|--kiali2-web-schema <schema>: If specified, this will be the #2 Kaili setting for spec.server.web_schema.
+  -ka|--keycloak-address <ip or host name>: Address of the keycloak idp.
   -kcs|--keycloak-client-secret <password>: Client secret for the openshift kube client in keycloak.
   -kdp|--keycloak-db-password <password>: Password for the keycloak database.
   -kup|--kiali-user-password <password>: Password for the kiali user in keycloak.
@@ -386,6 +396,8 @@ HELPMSG
       ;;
   esac
 done
+
+KEYCLOAK_CERTS_DIR=${CERTS_DIR}/keycloak
 
 if [ "${ISTIO_DIR}" == "" ]; then
   # Go to the main output directory and try to find an Istio there.
@@ -509,6 +521,7 @@ fi
 # Export all variables so child scripts pick them up
 export BOOKINFO_ENABLED \
        BOOKINFO_NAMESPACE \
+       CERTS_DIR \
        CLIENT_EXE_NAME \
        CLUSTER1_CONTEXT \
        CLUSTER1_NAME \
@@ -529,6 +542,7 @@ export BOOKINFO_ENABLED \
        KIALI_CREATE_REMOTE_CLUSTER_SECRETS \
        KIALI_ENABLED \
        KIALI_USE_DEV_IMAGE \
+       KEYCLOAK_CERTS_DIR \
        MANAGE_KIND \
        MANAGE_MINIKUBE \
        MANUAL_MESH_NETWORK_CONFIG \
@@ -545,6 +559,7 @@ cat <<EOM
 === SETTINGS ===
 BOOKINFO_ENABLED=$BOOKINFO_ENABLED
 BOOKINFO_NAMESPACE=$BOOKINFO_NAMESPACE
+CERTS_DIR=$CERTS_DIR
 CLIENT_EXE_NAME=$CLIENT_EXE_NAME
 CLUSTER1_CONTEXT=$CLUSTER1_CONTEXT
 CLUSTER1_NAME=$CLUSTER1_NAME
@@ -561,6 +576,7 @@ ISTIO_DIR=$ISTIO_DIR
 ISTIO_NAMESPACE=$ISTIO_NAMESPACE
 ISTIO_HUB=$ISTIO_HUB
 ISTIO_TAG=$ISTIO_TAG
+KEYCLOAK_CERTS_DIR=$KEYCLOAK_CERTS_DIR
 KIALI_AUTH_STRATEGY=$KIALI_AUTH_STRATEGY
 KIALI_CREATE_REMOTE_CLUSTER_SECRETS=$KIALI_CREATE_REMOTE_CLUSTER_SECRETS
 KIALI_ENABLED=$KIALI_ENABLED

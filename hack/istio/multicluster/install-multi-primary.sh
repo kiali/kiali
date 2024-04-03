@@ -141,11 +141,50 @@ if [ "${MANAGE_KIND}" == "true" ]; then
     KIND_NODE_IMAGE="kindest/node:v1.27.3@sha256:3966ac761ae0136263ffdb6cfd4db23ef8a83cba8a463690e98317add2c9ba72"
   fi
 
-  echo "==== START KIND FOR CLUSTER #1 [${CLUSTER1_NAME}] - ${CLUSTER1_CONTEXT}"
-  "${SCRIPT_DIR}"/../../start-kind.sh --name "${CLUSTER1_NAME}" --load-balancer-range "255.70-255.84" --image "${KIND_NODE_IMAGE}"
+  if [ "${KIALI_AUTH_STRATEGY}" == "openid" ]; then
+    "${SCRIPT_DIR}/../../keycloak.sh" -kcd "${KEYCLOAK_CERTS_DIR}" create-ca
 
-  echo "==== START KIND FOR CLUSTER #2 [${CLUSTER2_NAME}] - ${CLUSTER2_CONTEXT}"
-  "${SCRIPT_DIR}"/../../start-kind.sh --name "${CLUSTER2_NAME}" --load-balancer-range "255.85-255.98" --image "${KIND_NODE_IMAGE}"
+    docker network create kind || true
+
+    # Given: 172.18.0.0/16 this should return 172.18
+    beginning_subnet_octets=$(docker network inspect kind --format '{{(index .IPAM.Config 0).Subnet}}' | cut -d'.' -f1,2)
+    lb_range_start="255.70"
+    lb_range_end="255.84"
+
+    KEYCLOAK_ADDRESS="${beginning_subnet_octets}.${lb_range_start}"
+
+    echo "==== START KIND FOR CLUSTER #1 [${CLUSTER1_NAME}] - ${CLUSTER1_CONTEXT}"
+    "${SCRIPT_DIR}"/../../start-kind.sh \
+      --name "${CLUSTER1_NAME}" \
+      --load-balancer-range "${lb_range_start}-${lb_range_end}" \
+      --image "${KIND_NODE_IMAGE}" \
+      --enable-keycloak true \
+      --keycloak-certs-dir "${KEYCLOAK_CERTS_DIR}" \
+      --keycloak-issuer-uri https://"${KEYCLOAK_ADDRESS}"/realms/kube
+
+    "${SCRIPT_DIR}/../../keycloak.sh" -kcd "${KEYCLOAK_CERTS_DIR}" -kip "${KEYCLOAK_ADDRESS}" deploy
+
+    echo "==== START KIND FOR CLUSTER #2 [${CLUSTER2_NAME}] - ${CLUSTER2_CONTEXT}"
+    "${SCRIPT_DIR}"/../../start-kind.sh \
+      --name "${CLUSTER2_NAME}" \
+      --load-balancer-range "255.85-255.98" \
+      --image "${KIND_NODE_IMAGE}" \
+      --enable-keycloak true \
+      --keycloak-certs-dir "${KEYCLOAK_CERTS_DIR}" \
+      --keycloak-issuer-uri https://"${KEYCLOAK_ADDRESS}"/realms/kube
+  else
+    echo "==== START KIND FOR CLUSTER #1 [${CLUSTER1_NAME}] - ${CLUSTER1_CONTEXT}"
+    "${SCRIPT_DIR}"/../../start-kind.sh \
+      --name "${CLUSTER1_NAME}" \
+      --load-balancer-range "255.70-255.84" \
+      --image "${KIND_NODE_IMAGE}"
+
+    echo "==== START KIND FOR CLUSTER #2 [${CLUSTER2_NAME}] - ${CLUSTER2_CONTEXT}"
+    "${SCRIPT_DIR}"/../../start-kind.sh \
+      --name "${CLUSTER2_NAME}" \
+      --load-balancer-range "255.85-255.98" \
+      --image "${KIND_NODE_IMAGE}"
+  fi
 fi
 
 # Setup the certificates

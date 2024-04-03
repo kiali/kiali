@@ -301,6 +301,8 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_PRIMARY_REMOTE}" ]; then
   export CYPRESS_NUM_TESTS_KEPT_IN_MEMORY=0
   # Recorded video is unusable due to low resources in CI: https://github.com/cypress-io/cypress/issues/4722
   export CYPRESS_VIDEO=false
+  export CYPRESS_USERNAME="kiali"
+  export CYPRESS_PASSWD="kiali"
 
   if [ "${SETUP_ONLY}" == "true" ]; then
     exit 0
@@ -312,17 +314,21 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_MULTI_PRIMARY}" ]; then
   ensureCypressInstalled
 
   if [ "${TESTS_ONLY}" == "false" ]; then
-    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --multicluster "multi-primary" ${ISTIO_VERSION_ARG}
+    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --multicluster "multi-primary" ${ISTIO_VERSION_ARG} --auth-strategy openid
   fi
   
   ensureKialiServerReady
-  ensureMulticlusterApplicationsAreHealthy
+  # We now need a kiali-aes-cookie to be able to talk to the API so checks for the applications
+  # being healthy have moved into the frontend tests where it's easier to get the cookie.
 
   export CYPRESS_BASE_URL="${KIALI_URL}"
   export CYPRESS_CLUSTER1_CONTEXT="kind-east"
   export CYPRESS_CLUSTER2_CONTEXT="kind-west"
   export CYPRESS_NUM_TESTS_KEPT_IN_MEMORY=0
   export CYPRESS_VIDEO=false
+  export CYPRESS_AUTH_PROVIDER="keycloak"
+  export CYPRESS_USERNAME="kiali"
+  export CYPRESS_PASSWD="kiali"
 
   if [ "${SETUP_ONLY}" == "true" ]; then
     exit 0

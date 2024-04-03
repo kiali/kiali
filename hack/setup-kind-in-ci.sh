@@ -95,7 +95,7 @@ fi
 # print out our settings for debug purposes
 cat <<EOM
 === SETTINGS ===
-AUTH_STRATEGY="$AUTH_STRATEGY
+AUTH_STRATEGY=$AUTH_STRATEGY
 DORP=$DORP
 ISTIO_VERSION=$ISTIO_VERSION
 KIND_NODE_IMAGE=$KIND_NODE_IMAGE
@@ -253,7 +253,6 @@ setup_kind_multicluster() {
   git clone --single-branch --branch "${TARGET_BRANCH}" https://github.com/kiali/helm-charts.git "${HELM_CHARTS_DIR}"
   make -C "${HELM_CHARTS_DIR}" build-helm-charts
 
-  infomsg "Kind cluster to be created with name [ci]"
   local script_dir
   script_dir="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
   local output_dir
@@ -265,12 +264,24 @@ setup_kind_multicluster() {
     local hub_arg="--istio-hub default"
   fi
 
+  local certs_dir
+  if [ "${AUTH_STRATEGY}" == "openid" ]; then
+    certs_dir=$(mktemp -d)
+    mkdir -p "${certs_dir}"/keycloak
+  fi
+
   local cluster1_context
   local cluster2_context
   local cluster1_name
   local cluster2_name
   if [ "${MULTICLUSTER}" == "${MULTI_PRIMARY}" ]; then
-    "${SCRIPT_DIR}"/istio/multicluster/install-multi-primary.sh --manage-kind true -dorp docker --istio-dir "${istio_dir}" ${hub_arg:-}
+    "${SCRIPT_DIR}"/istio/multicluster/install-multi-primary.sh \
+      --manage-kind true \
+      --certs-dir "${certs_dir}" \
+      -dorp docker \
+      --istio-dir "${istio_dir}" \
+      ${hub_arg:-}
+
     cluster1_context="kind-east"
     cluster2_context="kind-west"
     cluster1_name="east"
@@ -294,15 +305,23 @@ setup_kind_multicluster() {
     kubectl rollout status deployment prometheus -n istio-system --context kind-controlplane
     kubectl rollout status deployment prometheus -n external-istiod --context kind-dataplane
   fi
-  
+
+  auth_flags=()
+  if [ "${AUTH_STRATEGY}" == "openid" ]; then
+    local keycloak_ip
+    keycloak_ip=$(kubectl get svc keycloak -n keycloak -o=jsonpath='{.status.loadBalancer.ingress[0].ip}' --context "${cluster1_context}") 
+    auth_flags+=(--keycloak-address "${keycloak_ip}")
+    auth_flags+=(--certs-dir "${certs_dir}")
+  fi
   "${SCRIPT_DIR}"/istio/multicluster/deploy-kiali.sh \
     --cluster1-context ${cluster1_context} \
     --cluster2-context ${cluster2_context} \
     --cluster1-name ${cluster1_name} \
     --cluster2-name ${cluster2_name} \
     --manage-kind true \
+    ${auth_flags[@]} \
     -dorp docker \
-    -kas anonymous \
+    -kas "${AUTH_STRATEGY}" \
     -kudi true \
     -kshc "${HELM_CHARTS_DIR}"/_output/charts/kiali-server-*.tgz
 }
