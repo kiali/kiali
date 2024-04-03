@@ -26,7 +26,7 @@ export type MeshClusters = MeshCluster[];
 
 export enum MeshInfraType {
   CLUSTER = 'cluster',
-  DATAPLANES = 'dataplanes',
+  DATAPLANE = 'dataplane',
   GRAFANA = 'grafana',
   ISTIOD = 'istiod',
   KIALI = 'kiali',
@@ -58,9 +58,9 @@ export interface MeshNodeData {
   infraData?: MeshCluster | NamespaceInfo[] | any; // add other type options as the case arises
   isAmbient?: boolean;
   isBox?: string;
+  isExternal?: boolean;
   isInaccessible?: boolean;
   isMTLS?: boolean;
-  isOutOfMesh?: boolean;
   labels?: { [key: string]: string };
   parent?: string;
 }

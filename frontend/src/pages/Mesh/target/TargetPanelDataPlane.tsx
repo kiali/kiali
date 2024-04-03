@@ -9,14 +9,15 @@ import { kialiStyle } from 'styles/StyleUtils';
 import { Title, TitleSizes } from '@patternfly/react-core';
 import { ExpandableRowContent, Table, Tbody, Td, Th, Thead, Tr } from '@patternfly/react-table';
 import { NamespaceInfo } from 'types/NamespaceInfo';
+import { TargetPanelNamespace } from './TargetPanelNamespace';
 
-type TargetPanelDataplanesState = {
+type TargetPanelDataPlaneState = {
   expanded: string[];
   node?: Node<NodeModel, any>;
   loading: boolean;
 };
 
-const defaultState: TargetPanelDataplanesState = {
+const defaultState: TargetPanelDataPlaneState = {
   expanded: [],
   node: undefined,
   loading: false
@@ -27,12 +28,12 @@ const nodeStyle = kialiStyle({
   display: 'flex'
 });
 
-export class TargetPanelDataplanes extends React.Component<TargetPanelCommonProps, TargetPanelDataplanesState> {
+export class TargetPanelDataPlane extends React.Component<TargetPanelCommonProps, TargetPanelDataPlaneState> {
   constructor(props: TargetPanelCommonProps) {
     super(props);
 
-    const dataplanesNode = this.props.target.elem as Node<NodeModel, any>;
-    this.state = { ...defaultState, node: dataplanesNode };
+    const dataPlaneNode = this.props.target.elem as Node<NodeModel, any>;
+    this.state = { ...defaultState, node: dataPlaneNode };
   }
 
   render() {
@@ -47,7 +48,7 @@ export class TargetPanelDataplanes extends React.Component<TargetPanelCommonProp
       <div className={classes(panelStyle, targetPanel)}>
         <div className={targetPanelHeading}>{this.renderNodeHeader(data)}</div>
         <div className={targetPanelBody}>
-          <Table aria-label="dataplanes-table" variant="compact">
+          <Table aria-label="dataplane-table" variant="compact">
             <Thead>
               <Tr>
                 <Th />
@@ -70,7 +71,18 @@ export class TargetPanelDataplanes extends React.Component<TargetPanelCommonProp
                   </Tr>
                   <Tr isExpanded={this.isExpanded(ns)}>
                     <Td dataLabel="detail">
-                      <ExpandableRowContent>{JSON.stringify(ns)}</ExpandableRowContent>
+                      <ExpandableRowContent>
+                        <TargetPanelNamespace
+                          duration={this.props.duration}
+                          istioAPIEnabled={this.props.istioAPIEnabled}
+                          kiosk={this.props.kiosk}
+                          refreshInterval={this.props.refreshInterval}
+                          target={this.props.target} // ignored
+                          targetCluster={ns.cluster}
+                          targetNamespace={ns.name}
+                          updateTime={this.props.updateTime}
+                        />
+                      </ExpandableRowContent>
                     </Td>
                   </Tr>
                 </Tbody>

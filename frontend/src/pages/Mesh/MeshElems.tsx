@@ -18,6 +18,7 @@ import { PFBadges, PFBadgeType } from 'components/Pf/PfBadges';
 import { DEGRADED, FAILURE } from 'types/Health';
 import { DecoratedMeshEdgeData, DecoratedMeshEdgeWrapper, DecoratedMeshNodeData, MeshInfraType } from 'types/Mesh';
 import { BoxByType } from 'types/Graph';
+import { NamespaceInfo } from 'types/NamespaceInfo';
 
 // Utilities for working with PF Topology
 // - most of these add cytoscape-like functions
@@ -114,20 +115,18 @@ export const setNodeLabel = (node: NodeModel, _nodeMap: NodeMap): void => {
   const content: string[] = [];
 
   // append name
-  if (!isBox) {
-    content.push(infraName);
-  }
+  content.push(infraName);
 
   // set PfBadge
   let pfBadge: PFBadgeType | undefined;
   if (isBox) {
     switch (isBox) {
       case BoxByType.CLUSTER:
-        content.push(data.cluster);
-        pfBadge = PFBadges.Cluster;
+        if (!data.isExternal) {
+          pfBadge = PFBadges.Cluster;
+        }
         break;
       case BoxByType.NAMESPACE:
-        content.push(data.namespace);
         pfBadge = PFBadges.Namespace;
         break;
       default:
@@ -137,6 +136,10 @@ export const setNodeLabel = (node: NodeModel, _nodeMap: NodeMap): void => {
     switch (infraType) {
       case MeshInfraType.CLUSTER:
         pfBadge = PFBadges.Cluster;
+        break;
+      case MeshInfraType.DATAPLANE:
+        pfBadge = PFBadges.DATAPLANE;
+        content.push(`${(data.infraData as NamespaceInfo[]).length} Namespaces`);
         break;
       case MeshInfraType.GRAFANA:
         pfBadge = PFBadges.Grafana;

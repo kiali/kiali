@@ -40,9 +40,9 @@ type NodeData struct {
 	InfraData      interface{} `json:"infraData,omitempty"`      // infraType-dependent data
 	IsAmbient      bool        `json:"isAmbient,omitempty"`      // true if configured for ambient
 	IsBox          string      `json:"isBox,omitempty"`          // set for NodeTypeBox, current values: [ 'cluster', 'dataplanes', 'namespace' ]
+	IsExternal     bool        `json:"isExternal,omitempty"`     // true if the infra is external to the mesh | false
 	IsInaccessible bool        `json:"isInaccessible,omitempty"` // true if the node exists in an inaccessible namespace
 	IsMTLS         bool        `json:"isMTLS,omitempty"`         // true if mesh-wide mTLS is enabled
-	IsOutOfMesh    bool        `json:"isOutOfMesh,omitempty"`    // true (has missing sidecar) | false
 }
 
 type EdgeData struct {
@@ -154,14 +154,15 @@ func buildConfig(meshMap mesh.MeshMap, nodes *[]*NodeWrapper, edges *[]*EdgeWrap
 			nd.InfraData = val
 		}
 
+		// node is external (or url could not be parsed)
+		if val, ok := n.Metadata[mesh.IsExternal]; ok && val.(bool) {
+			nd.IsExternal = true
+			nd.IsInaccessible = true
+		}
+
 		// node is not accessible to the current user
 		if val, ok := n.Metadata[mesh.IsInaccessible]; ok {
 			nd.IsInaccessible = val.(bool)
-		}
-
-		// set mesh checks, if available
-		if val, ok := n.Metadata[mesh.IsOutOfMesh]; ok {
-			nd.IsOutOfMesh = val.(bool)
 		}
 
 		nw := NodeWrapper{
@@ -194,11 +195,11 @@ func boxByNamespace(nodes *[]*NodeWrapper) {
 
 	for _, n := range *nodes {
 		nd := n.Data
-		if nd.Namespace == "" {
+		if nd.Namespace == "" || nd.IsExternal {
 			continue
 		}
 
-		id, err := mesh.Id(nd.Cluster, nd.Namespace, nd.Namespace, nd.InfraType)
+		id, err := mesh.Id(nd.Cluster, nd.Namespace, nd.Namespace, nd.InfraType, false)
 		mesh.CheckError(err)
 
 		box, found := namespaceBoxes[id]
@@ -220,6 +221,7 @@ func boxByNamespace(nodes *[]*NodeWrapper) {
 			}
 
 			*nodes = append(*nodes, box)
+			namespaceBoxes[id] = box
 		}
 		nd.Parent = box.Data.ID
 	}
@@ -233,11 +235,16 @@ func boxByCluster(nodes *[]*NodeWrapper) {
 		}
 
 		for _, child := range *nodes {
-			if child.Data.InfraType == mesh.InfraTypeNamespace || child.Data.Namespace == "" {
-				parent.Data.NodeType = mesh.NodeTypeBox
-				parent.Data.IsBox = mesh.BoxByCluster
-				child.Data.Parent = parent.Data.ID
+			if child.Data.InfraType == mesh.InfraTypeCluster ||
+				child.Data.Cluster != parent.Data.Cluster ||
+				(child.Data.InfraType != mesh.InfraTypeNamespace && child.Data.Namespace != "") {
+				continue
 			}
+
+			parent.Data.NodeType = mesh.NodeTypeBox
+			parent.Data.IsBox = mesh.BoxByCluster
+			child.Data.Parent = parent.Data.ID
+
 		}
 	}
 }

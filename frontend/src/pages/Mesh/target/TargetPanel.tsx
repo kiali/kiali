@@ -18,8 +18,8 @@ import { TargetPanelNode } from './TargetPanelNode';
 import { TargetPanelMesh } from './TargetPanelMesh';
 import { meshWideMTLSStatusSelector, minTLSVersionSelector } from 'store/Selectors';
 import { NodeData } from '../MeshElems';
+import { TargetPanelDataPlane } from './TargetPanelDataPlane';
 import { TargetPanelControlPlane } from './TargetPanelControlPlane';
-import { TargetPanelDataplanes } from './TargetPanelDataplanes';
 
 type TargetPanelState = {
   isVisible: boolean;
@@ -137,8 +137,6 @@ class TargetPanelComponent extends React.Component<TargetPanelProps, TargetPanel
                 duration={this.props.duration}
                 istioAPIEnabled={this.props.istioAPIEnabled}
                 kiosk={this.props.kiosk}
-                meshStatus={this.props.meshStatus}
-                minTLS={this.props.minTLS}
                 refreshInterval={this.props.refreshInterval}
                 target={target}
                 updateTime={this.props.updateTime}
@@ -176,9 +174,9 @@ class TargetPanelComponent extends React.Component<TargetPanelProps, TargetPanel
                 updateTime={this.props.updateTime}
               />
             );
-          case MeshInfraType.DATAPLANES:
+          case MeshInfraType.DATAPLANE:
             return (
-              <TargetPanelDataplanes
+              <TargetPanelDataPlane
                 duration={this.props.duration}
                 istioAPIEnabled={this.props.istioAPIEnabled}
                 kiosk={this.props.kiosk}

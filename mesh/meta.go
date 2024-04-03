@@ -15,7 +15,7 @@ func NewMetadata() Metadata {
 const (
 	HealthData     MetadataKey = "healthData"
 	InfraData      MetadataKey = "infraData"
+	IsExternal     MetadataKey = "isExternal"
 	IsInaccessible MetadataKey = "isInaccessible"
 	IsMTLS         MetadataKey = "isMTLS"
-	IsOutOfMesh    MetadataKey = "isOutOfMesh"
 )
