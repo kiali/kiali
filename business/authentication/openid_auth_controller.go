@@ -15,10 +15,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-jose/go-jose"
+	"github.com/go-jose/go-jose/jwt"
 	"github.com/gorilla/mux"
 	"golang.org/x/sync/singleflight"
-	"gopkg.in/square/go-jose.v2"
-	"gopkg.in/square/go-jose.v2/jwt"
 	"k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/kiali/kiali/business"
@@ -886,8 +886,8 @@ func checkDomain(tokenClaims map[string]interface{}, allowedDomains []string) er
 	if v, ok := tokenClaims["hd"]; ok {
 		hostedDomain = v.(string)
 	} else {
-		//domains like gmail.com don't have the hosted domain (hd) on claims
-		//fields, so we try to get the domain on email claim
+		// domains like gmail.com don't have the hosted domain (hd) on claims
+		// fields, so we try to get the domain on email claim
 		var email string
 		if v, ok := tokenClaims["email"]; ok {
 			email = v.(string)
@@ -915,7 +915,6 @@ func checkDomain(tokenClaims map[string]interface{}, allowedDomains []string) er
 func createHttpClient(toUrl string) (*http.Client, error) {
 	cfg := config.Get().Auth.OpenId
 	parsedUrl, err := url.Parse(toUrl)
-
 	if err != nil {
 		return nil, err
 	}
@@ -1024,7 +1023,7 @@ func getConfiguredOpenIdScopes() []string {
 // See also getOpenIdJwks, validateOpenIdTokenInHouse.
 func getJwkFromKeySet(keyId string) (*jose.JSONWebKey, error) {
 	// Helper function to find a key with a certain key id in a key-set.
-	var findJwkFunc = func(kid string, jwks *jose.JSONWebKeySet) *jose.JSONWebKey {
+	findJwkFunc := func(kid string, jwks *jose.JSONWebKeySet) *jose.JSONWebKey {
 		for _, key := range jwks.Keys {
 			if key.KeyID == kid {
 				return &key
@@ -1232,7 +1231,6 @@ func parseTimeClaim(claimValue interface{}) (int64, error) {
 	case json.Number:
 		// This can fail, so we short-circuit if we get an invalid value.
 		parsedTime, err = exp.Int64()
-
 		if err != nil {
 			return 0, err
 		}
