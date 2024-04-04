@@ -102,8 +102,8 @@ const loginHeaders = config.login.headers;
 
 /**  Helpers to Requests */
 
-const getHeaders = (): Partial<AxiosHeaders> => {
-  if (apiProxy) {
+const getHeaders = (urlEncoded?: boolean): Partial<AxiosHeaders> => {
+  if (apiProxy || urlEncoded) {
     return { 'Content-Type': 'application/x-www-form-urlencoded' };
   } else {
     return { 'Content-Type': 'application/json', ...loginHeaders };
@@ -143,7 +143,7 @@ export const login = async (
   const axiosRequest = {
     method: HTTP_VERBS.POST,
     url: apiProxy ? `${apiProxy}/${urls.authenticate}` : urls.authenticate,
-    headers: getHeaders() as AxiosHeaders,
+    headers: getHeaders(true) as AxiosHeaders,
     data: params
   };
 
