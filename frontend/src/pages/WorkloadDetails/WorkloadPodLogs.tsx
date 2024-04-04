@@ -1025,7 +1025,14 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
       const isAmbient = c.isAmbient;
 
       if (c.isProxy) {
-        return { color: proxyContainerColor, displayName: name, isAmbient: isAmbient, isProxy: true, isSelected: true, name: name };
+        return {
+          color: proxyContainerColor,
+          displayName: name,
+          isAmbient: isAmbient,
+          isProxy: true,
+          isSelected: true,
+          name: name
+        };
       }
 
       const color = appContainerColors[appContainerCount++ % appContainerColors.length];
@@ -1063,7 +1070,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
       if (c.isAmbient && showZtunnel) {
         const ztunnel = { ...c };
         ztunnel.isAmbient = false;
-        ztunnel.color = appContainerColors[appContainerColors.length-1];
+        ztunnel.color = appContainerColors[appContainerColors.length - 1];
         extraContainers.push(ztunnel);
       }
     }
