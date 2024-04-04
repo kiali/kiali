@@ -1,4 +1,4 @@
-import { Given, Then } from '@badeball/cypress-cucumber-preprocessor';
+import { Given, Then, When } from '@badeball/cypress-cucumber-preprocessor';
 
 const USERNAME = Cypress.env('USERNAME') ?? 'jenkins'; // CYPRESS_USERNAME to the user
 const PASSWD = Cypress.env('PASSWD'); // CYPRESS_PASSWD to the user
@@ -91,4 +91,19 @@ Then('user sees the {string} phrase displayed', (phrase: string) => {
 
     cy.url().should('include', 'login');
   }
+});
+
+Then('user fills in a valid password', () => {
+  if (auth_strategy === 'openshift') {
+    cy.log(`Log in as user with valid password: ${USERNAME}`);
+
+    cy.get('#inputUsername').clear().type(`${USERNAME}`);
+
+    cy.get('#inputPassword').type(`${PASSWD}`);
+    cy.get('button[type="submit"]').click();
+  }
+});
+
+Then('user sees the Overview page', () => {
+  cy.get('div[data-test="overview-app-health"]').should('exist');
 });

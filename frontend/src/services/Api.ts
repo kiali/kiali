@@ -103,14 +103,10 @@ const loginHeaders = config.login.headers;
 /**  Helpers to Requests */
 
 const getHeaders = (urlEncoded?: boolean): Partial<AxiosHeaders> => {
-  if (apiProxy) {
-    return { 'Content-Type': 'application/x-www-form-urlencoded' };
-  } else {
-    if (urlEncoded) {
-      return { 'Content-Type': 'application/x-www-form-urlencoded', ...loginHeaders };
-    }
-    return { 'Content-Type': 'application/json', ...loginHeaders };
+  if (apiProxy || urlEncoded) {
+    return { 'Content-Type': 'application/x-www-form-urlencoded', ...loginHeaders };
   }
+  return { 'Content-Type': 'application/json', ...loginHeaders };
 };
 
 const basicAuth = (username: UserName, password: Password): BasicAuth => {
