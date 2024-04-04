@@ -148,8 +148,15 @@ const minimalSidecar = (name: string, namespace: string, hosts: string): string 
 }`;
 };
 
-const minimalK8Gateway = (name: string, namespace: string, hostname:string, protocol:string, port: string, gatewayClassName: string): string => {
-    return `{
+const minimalK8Gateway = (
+  name: string,
+  namespace: string,
+  hostname: string,
+  protocol: string,
+  port: string,
+  gatewayClassName: string
+): string => {
+  return `{
         "kind": "Gateway",
         "apiVersion": "gateway.networking.k8s.io/v1",
         "metadata": {
@@ -383,9 +390,21 @@ When('user filters for config {string}', (configName: string) => {
   cy.contains('div#filter_select_value button', configName).click();
 });
 
-When('there is a {string} K8Gateway in the {string} namespace for {string} host using {string} protocol on port {string} and {string} gatewayClassName',(name:string,ns:string,host:string,protocol:string,port:string,gatewayClassName:string) =>{
-  cy.exec(`echo '${minimalK8Gateway(name,ns,host,protocol,port,gatewayClassName)}' | kubectl apply -f  -`);
-})
+When(
+  'there is a {string} K8Gateway in the {string} namespace for {string} host using {string} protocol on port {string} and {string} gatewayClassName',
+  (name: string, ns: string, host: string, protocol: string, port: string, gatewayClassName: string) => {
+    cy.exec(`echo '${minimalK8Gateway(name, ns, host, protocol, port, gatewayClassName)}' | kubectl apply -f  -`);
+  }
+);
+
+When(
+  'user adds a {string} listener with {string} host using {string} protocol on port {string} to the {string} K8Gateway in the {string} namespace',
+  (listener: string, host: string, protocol: string, port: string, name: string, ns: string) => {
+    cy.exec(
+      `kubectl patch Gateway ${name} -n ${ns} --type=json -p '{"spec":{"listeners":[{"name":"${listener}","port":${port},"protocol":"${protocol}","hostname":"${host}","allowedRoutes":{"namespaces":{"from":"All","selector":{"matchLabels":{}}}}}]}}'`
+    );
+  }
+);
 
 Then('user sees all the Istio Config objects in the bookinfo namespace', () => {
   // There should be two Istio Config objects in the bookinfo namespace
@@ -591,9 +610,14 @@ Then(
   }
 );
 
-Then('the {string} K8Gateway in the {string} namespace has an address with a {string} type and a {string} value)', (name:string,ns:string,type:string,value:string) => {
-  cy.exec(`kubectl patch Gateway ${name} -n ${ns} --type=merge -p '{"spec":{"addresses":[{"type": "${type}","value":"${value}"}]}}'`)
-});
+Then(
+  'the {string} K8Gateway in the {string} namespace has an address with a {string} type and a {string} value',
+  (name: string, ns: string, type: string, value: string) => {
+    cy.exec(
+      `kubectl patch Gateway ${name} -n ${ns} --type=merge -p '{"spec":{"addresses":[{"type": "${type}","value":"${value}"}]}}'`
+    );
+  }
+);
 
 After({ tags: '@istio-page and @crd-validation' }, () => {
   cy.exec('kubectl delete PeerAuthentications,DestinationRules,AuthorizationPolicies,Sidecars --all --all-namespaces', {
