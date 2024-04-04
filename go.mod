@@ -73,6 +73,7 @@ require (
 	github.com/vjeantet/grok v1.0.0 // indirect
 	go.opentelemetry.io/otel/metric v1.22.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.0.0 // indirect
+	go.uber.org/automaxprocs v1.5.3 // indirect
 	golang.org/x/crypto v0.15.0 // indirect
 	golang.org/x/oauth2 v0.13.0 // indirect
 	golang.org/x/sys v0.16.0 // indirect
