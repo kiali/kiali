@@ -104,7 +104,7 @@ Then('user fills in a valid password', () => {
   }
   if (auth_strategy === 'token') {
     cy.exec('kubectl -n istio-system create token citest').then(result => {
-      cy.get('button[id="token"]').type(result.stdout);
+      cy.get('#token').type(result.stdout);
       cy.get('button[type="submit"]').click();
     });
   }
