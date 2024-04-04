@@ -445,7 +445,7 @@ func (in *WorkloadService) GetPod(cluster, namespace, name string) (*models.Pod,
 	return &pod, nil
 }
 
-func (in *WorkloadService) BuildLogOptionsCriteria(container, duration, isProxy, sinceTime, maxLines string) (*LogOptions, error) {
+func (in *WorkloadService) BuildLogOptionsCriteria(container, duration, isProxy, isAmbient, sinceTime, maxLines string) (*LogOptions, error) {
 	opts := &LogOptions{}
 	opts.PodLogOptions = core_v1.PodLogOptions{Timestamps: true}
 

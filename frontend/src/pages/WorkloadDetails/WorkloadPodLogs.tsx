@@ -76,6 +76,7 @@ export type WorkloadPodLogsProps = ReduxProps & {
 type ContainerOption = {
   color: PFColorVal;
   displayName: string;
+  isAmbient: boolean;
   isProxy: boolean;
   isSelected: boolean;
   name: string;
@@ -110,6 +111,7 @@ interface WorkloadPodLogsState {
   showSpans: boolean;
   showTimestamps: boolean;
   showToolbar: boolean;
+  showZtunnel: boolean;
   useRegex: boolean;
 }
 
@@ -246,6 +248,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
 
     const urlParams = new URLSearchParams(history.location.search);
     const showSpans = urlParams.get(URLParam.SHOW_SPANS);
+    const showZtunnel = urlParams.get(URLParam.SHOW_ZTUNNEL);
 
     const defaultState = {
       accessLogModals: new Map<string, AccessLog>(),
@@ -262,6 +265,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
       showClearShowLogButton: false,
       showLogValue: '',
       showSpans: showSpans === 'true',
+      showZtunnel: showZtunnel === 'false',
       showTimestamps: false,
       showToolbar: true,
       useRegex: false
@@ -303,6 +307,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
         pod.name,
         this.state.containerOptions,
         this.state.showSpans,
+        this.state.showZtunnel,
         this.state.maxLines,
         this.props.timeRange,
         this.props.cluster
@@ -326,6 +331,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
         pod.name,
         newContainerOptions!,
         this.state.showSpans,
+        this.state.showZtunnel,
         this.state.maxLines,
         this.props.timeRange,
         this.props.cluster
@@ -687,7 +693,6 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
         <Toolbar style={{ padding: '0.25rem 0' }}>
           <ToolbarGroup style={{ margin: 0 }}>
             <ToolbarItem>{this.getContainerLegend()}</ToolbarItem>
-
             <ToolbarItem className={copyActionStyle}>
               <Tooltip key="copy_logs" position="top" content="Copy logs to clipboard">
                 <CopyToClipboard text={this.entriesToString(this.state.entries)}>
@@ -1017,12 +1022,14 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
     let containerOptions = containers.map(c => {
       const name = c.name;
 
+      const isAmbient = c.isAmbient;
+
       if (c.isProxy) {
-        return { color: proxyContainerColor, displayName: name, isProxy: true, isSelected: true, name: name };
+        return { color: proxyContainerColor, displayName: name, isAmbient: isAmbient, isProxy: true, isSelected: true, name: name };
       }
 
       const color = appContainerColors[appContainerCount++ % appContainerColors.length];
-      return { color: color, displayName: name, isProxy: false, isSelected: true, name: name };
+      return { color: color, displayName: name, isAmbient: isAmbient, isProxy: false, isSelected: true, name: name };
     });
 
     return containerOptions;
@@ -1033,6 +1040,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
     podName: string,
     containerOptions: ContainerOption[],
     showSpans: boolean,
+    showZtunnel: boolean,
     maxLines: number,
     timeRange: TimeRange,
     cluster?: string
@@ -1050,8 +1058,17 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
     }
 
     const selectedContainers = containerOptions.filter(c => c.isSelected);
-    const promises: Promise<ApiResponse<PodLogs | Span[]>>[] = selectedContainers.map(c => {
-      return getPodLogs(namespace, podName, c.name, maxLines, sinceTime, duration, c.isProxy, cluster);
+    const extraContainers = selectedContainers;
+    for (const c of selectedContainers) {
+      if (c.isAmbient && showZtunnel) {
+        const ztunnel = { ...c };
+        ztunnel.isAmbient = false;
+        ztunnel.color = appContainerColors[appContainerColors.length-1];
+        extraContainers.push(ztunnel);
+      }
+    }
+    const promises: Promise<ApiResponse<PodLogs | Span[]>>[] = extraContainers.map(c => {
+      return getPodLogs(namespace, podName, c.name, maxLines, sinceTime, duration, c.isAmbient, c.isProxy, cluster);
     });
 
     if (showSpans) {

@@ -144,6 +144,7 @@ export interface WorkloadReference {
 
 export interface ContainerInfo {
   image: string;
+  isAmbient: boolean;
   isProxy: boolean;
   isReady: boolean;
   name: string;
@@ -252,6 +253,7 @@ export interface PodLogs {
 export interface PodLogsQuery {
   container?: string;
   duration?: string;
+  isAmbient?: boolean;
   isProxy?: boolean;
   maxLines?: number;
   sinceTime?: number;
