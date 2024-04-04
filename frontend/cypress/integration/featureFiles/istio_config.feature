@@ -334,21 +334,32 @@ Feature: Kiali Istio Config page
     Then the "foo" "VirtualService" of the "sleep" namespace should have a "warning"
 
   # KIA1501 is tested through GUI in wizard_istio_config.feature
-
   @crd-validation
   @bookinfo-app
   @gateway-api
-  @selected
   Scenario: KIA1502 validation
-    Given user deletes k8sgateway named "gateway1" and the resource is no longer available
-    And user deletes k8sgateway named "gateway2" and the resource is no longer available
-    When there is a "k8gateway1" K8Gateway in the "bookinfo" namespace for "google.com" host using "HTTP" protocol on port "80" and "istio" gatewayClassName  
-    And there is a "k8gateway2" K8Gateway in the "bookinfo" namespace for "secondary.com" host using "HTTP" protocol on port "9080" and "istio" gatewayClassName  
-    And the "k8gateway1" K8Gateway in the "bookinfo" namespace has an address with a "Hostname" type and a "example.com" value
-    And the "k8gateway2" K8Gateway in the "bookinfo" namespace has an address with a "Hostname" type and a "example.com" value
-    Then the "k8gateway1" "K8Gateway" of the "bookinfo" namespace should have a "warning"
-    And the "k8gateway2" "K8Gateway" of the "bookinfo" namespace should have a "warning"
-  # Scenario: KIA1503 validation
+    Given user deletes k8sgateway named "foo" and the resource is no longer available
+    And user deletes k8sgateway named "bar" and the resource is no longer available
+    When there is a "foo" K8Gateway in the "bookinfo" namespace for "google.com" host using "HTTP" protocol on port "80" and "istio" gatewayClassName  
+    And there is a "bar" K8Gateway in the "bookinfo" namespace for "secondary.com" host using "HTTP" protocol on port "9080" and "istio" gatewayClassName  
+    And the "foo" K8Gateway in the "bookinfo" namespace has an address with a "Hostname" type and a "example.com" value
+    And the "bar" K8Gateway in the "bookinfo" namespace has an address with a "Hostname" type and a "example.com" value
+    When the user refreshes the page
+    And user selects the "bookinfo" namespace
+    Then the "foo" "K8Gateway" of the "bookinfo" namespace should have a "warning"
+    And the "bar" "K8Gateway" of the "bookinfo" namespace should have a "warning"
+
+  @selected
+  @crd-validation
+  @bookinfo-app
+  @gateway-api
+  Scenario: KIA1503 validation
+    Given user deletes k8sgateway named "foo" and the resource is no longer available
+    When there is a "foo" K8Gateway in the "bookinfo" namespace for "google.com" host using "HTTP" protocol on port "80" and "istio" gatewayClassName  
+    When the user refreshes the page
+    And user selects the "bookinfo" namespace
+    # And user adds a "secondary" listener with "google.com" host using "HTTP" protocol on port "80" to the "foo" K8Gateway in the "bookinfo" namespace 
+    Then the "foo" "K8Gateway" of the "bookinfo" namespace should have a "warning"
 
   # Scenario: KIA1504 validation
 
