@@ -1,4 +1,4 @@
-import { Given, Then, When } from '@badeball/cypress-cucumber-preprocessor';
+import { Given, Then } from '@badeball/cypress-cucumber-preprocessor';
 
 const USERNAME = Cypress.env('USERNAME') ?? 'jenkins'; // CYPRESS_USERNAME to the user
 const PASSWD = Cypress.env('PASSWD'); // CYPRESS_PASSWD to the user
