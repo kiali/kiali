@@ -102,6 +102,12 @@ Then('user fills in a valid password', () => {
     cy.get('#inputPassword').type(`${PASSWD}`);
     cy.get('button[type="submit"]').click();
   }
+  if (auth_strategy === 'token') {
+    cy.exec('kubectl -n istio-system create token citest').then(result => {
+      cy.get('button[id="token"]').type(result.stdout);
+      cy.get('button[type="submit"]').click();
+    });
+  }
 });
 
 Then('user sees the Overview page', () => {
