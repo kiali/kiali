@@ -6,7 +6,7 @@ infomsg() {
 
 SETUP_ONLY="false"
 TESTS_ONLY="false"
-TEST_DATA="5"
+TEST_NAMESPACES="5"
 
 # process command line args
 while [[ $# -gt 0 ]]; do
@@ -28,10 +28,10 @@ while [[ $# -gt 0 ]]; do
       fi
       shift;shift
       ;;
-    -td|--test-data)
-      TEST_DATA="${2}"
+    -tn|--test-namespaces)
+      TEST_NAMESPACES="${2}"
       if [[ $2 -le 0 || $2 -ge 1000 ]]; then
-        echo "--test-data option must be is a valid number between 1 and 1000."
+        echo "--test-namespaces option must be is a valid number between 1 and 1000."
         exit 1
       fi
       shift;shift
@@ -45,7 +45,7 @@ Valid command line arguments:
   -to|--tests-only <true|false>
     If true, only run the tests and skip the setup.
     Default: false
-  -td|--test-data <number>
+  -tn|--test-namespaces <number>
     Number of test namespaces created before performance run.
     Default: "5"
   -h|--help:
@@ -72,7 +72,7 @@ cat <<EOM
 === SETTINGS ===
 SETUP_ONLY=$SETUP_ONLY
 TESTS_ONLY=$TESTS_ONLY
-TEST_DATA=$TEST_DATA
+TEST_NAMESPACES=$TEST_NAMESPACES
 === SETTINGS ===
 EOM
 
@@ -93,11 +93,11 @@ ensureCypressInstalled() {
   cd -
 }
 
-createData() {
+createNamespaces() {
   ISTIO_INGRESS_IP="$(kubectl get svc istio-ingressgateway -n istio-system -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')"
   # Install demo apps
   "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl" -g "${ISTIO_INGRESS_IP}"
-  for ((i = 1; i <= $TEST_DATA; i++)); do
+  for ((i = 1; i <= $TEST_NAMESPACES; i++)); do
     cat <<EOF | kubectl apply -f -
 apiVersion: v1
 kind: Namespace
@@ -111,8 +111,8 @@ EOF
   done
 }
 
-deleteData() {
-  for ((i = 1; i <= $TEST_DATA; i++)); do
+deleteNamespaces() {
+  for ((i = 1; i <= $TEST_NAMESPACES; i++)); do
     kubectl delete --ignore-not-found=true -l kiali.io=perf-test ns
   done
   jq '.allNamespaces = .namespaces' "$COMMON_PARAMS" > "$COMMON_PARAMS.tmp" && mv "$COMMON_PARAMS.tmp" "$COMMON_PARAMS"
@@ -121,8 +121,8 @@ deleteData() {
 ensureCypressInstalled
 
 if [ "${TESTS_ONLY}" != "true" ]; then
-  infomsg "Install test data"
-  createData
+  infomsg "Install test namespaces"
+  createNamespaces
 fi
 
 export CYPRESS_NUM_TESTS_KEPT_IN_MEMORY=0
@@ -136,12 +136,12 @@ fi
 cd "${SCRIPT_DIR}"/../frontend
 infomsg "Running cypress performance tests"
 mkdir "$OUTPUT_DIR"
-echo "[Running cypress performance tests for $TEST_DATA namespaces]" > $OUTPUT_FILE
+echo "[Running cypress performance tests for $TEST_NAMESPACES namespaces]" > $OUTPUT_FILE
 yarn cypress:run:perf
 
 if [ "${TESTS_ONLY}" != "true" ]; then
-  infomsg "Remove test data"
-  deleteData
+  infomsg "Remove test namespaces"
+  deleteNamespaces
 fi
 
 
