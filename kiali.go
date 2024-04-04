@@ -35,6 +35,8 @@ import (
 	"strings"
 	"syscall"
 
+	_ "go.uber.org/automaxprocs"
+
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/business/authentication"
 	"github.com/kiali/kiali/config"
