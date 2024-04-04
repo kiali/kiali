@@ -1,5 +1,5 @@
 {
-  "namespaces": "bookinfo",
+  "namespaces": "bookinfo,alpha,beta,gamma,sleep",
   "allNamespaces": "bookinfo,alpha,beta,gamma,sleep",
   "detailsNs": "bookinfo",
   "workloadName": "productpage-v1",
