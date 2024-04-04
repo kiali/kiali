@@ -123,6 +123,7 @@ const conf = {
       clustersApps: () => `api/clusters/apps`,
       clustersHealth: () => `api/clusters/health`,
       clustersMetrics: () => `api/clusters/metrics`,
+      clustersServices: () => `api/clusters/services`,
       clustersTls: () => `api/clusters/tls`,
       clustersWorkloads: () => `api/clusters/workloads`,
       configValidations: () => `api/istio/validations`,
@@ -160,7 +161,6 @@ const conf = {
       podEnvoyProxyResourceEntries: (namespace: string, pod: string, resource: string) =>
         `api/namespaces/${namespace}/pods/${pod}/config_dump/${resource}`,
       serverConfig: `api/config`,
-      services: (namespace: string) => `api/namespaces/${namespace}/services`,
       service: (namespace: string, service: string) => `api/namespaces/${namespace}/services/${service}`,
       serviceGraphElements: (namespace: string, service: string) =>
         `api/namespaces/${namespace}/services/${service}/graph`,

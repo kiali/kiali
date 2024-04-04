@@ -354,9 +354,9 @@ func NewRoutes(conf *config.Config, kialiCache cache.KialiCache, clientFactory k
 			handlers.IstioConfigCreate,
 			true,
 		},
-		// swagger:route GET /namespaces/{namespace}/services services serviceList
+		// swagger:route GET /clusters/services services serviceList
 		// ---
-		// Endpoint to get the details of a given service
+		// Endpoint to get the list of services for a given cluster
 		//
 		//     Produces:
 		//     - application/json
@@ -368,10 +368,10 @@ func NewRoutes(conf *config.Config, kialiCache cache.KialiCache, clientFactory k
 		//      200: serviceListResponse
 		//
 		{
-			"ServiceList",
+			"ClustersServices",
 			"GET",
-			"/api/namespaces/{namespace}/services",
-			handlers.ServiceList,
+			"/api/clusters/services",
+			handlers.ClustersServices,
 			true,
 		},
 		// swagger:route GET /namespaces/{namespace}/services/{service} services serviceDetails

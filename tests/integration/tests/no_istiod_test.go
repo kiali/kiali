@@ -61,7 +61,7 @@ func servicesListNoRegistryServices(t *testing.T) {
 
 	// Now, create a Service Entry (Part of th
 	require.NotNil(serviceList.Validations)
-	require.Equal(kiali.BOOKINFO, serviceList.Namespace.Name)
+	require.Equal(kiali.BOOKINFO, serviceList.Services[0].Namespace)
 
 	// Cleanup
 	deleteSe := utils.DeleteFile("../assets/bookinfo-service-entry-external.yaml", "bookinfo")

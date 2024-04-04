@@ -273,9 +273,8 @@ func ApplicationDetails(name, namespace string) (*models.App, int, error) {
 }
 
 func ServicesList(namespace string) (*ServiceListJson, error) {
-	url := fmt.Sprintf("%s/api/namespaces/%s/services", client.kialiURL, namespace)
+	url := fmt.Sprintf("%s/api/clusters/services?namespaces=%s", client.kialiURL, namespace)
 	serviceList := new(ServiceListJson)
-
 	_, err := getRequestAndUnmarshalInto(url, serviceList)
 	if err == nil {
 		return serviceList, nil
