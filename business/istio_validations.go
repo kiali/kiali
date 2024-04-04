@@ -3,6 +3,7 @@ package business
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 
 	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
@@ -73,13 +74,14 @@ func (in *IstioValidationsService) GetValidations(ctx context.Context, cluster, 
 
 	var istioConfigList models.IstioConfigList
 	var services models.ServiceList
+	var serviceAccountNames map[string]bool
 	var namespaces models.Namespaces
 	var workloadsPerNamespace map[string]models.WorkloadList
 	var mtlsDetails kubernetes.MTLSDetails
 	var rbacDetails kubernetes.RBACDetails
 	var registryServices []*kubernetes.RegistryService
 
-	wg.Add(3) // We need to add these here to make sure we don't execute wg.Wait() before scheduler has started goroutines
+	wg.Add(4) // We need to add these here to make sure we don't execute wg.Wait() before scheduler has started goroutines
 	if service != "" {
 		wg.Add(1)
 	}
@@ -93,6 +95,8 @@ func (in *IstioValidationsService) GetValidations(ctx context.Context, cluster, 
 	} else {
 		go in.fetchAllWorkloads(ctx, &workloadsPerNamespace, cluster, &namespaces, errChan, &wg)
 	}
+
+	go in.fetchServiceAccountNames(ctx, &serviceAccountNames, errChan, &wg)
 
 	go in.fetchNonLocalmTLSConfigs(&mtlsDetails, cluster, errChan, &wg)
 	if service != "" {
@@ -167,6 +171,7 @@ func (in *IstioValidationsService) GetIstioObjectValidations(ctx context.Context
 	var mtlsDetails kubernetes.MTLSDetails
 	var rbacDetails kubernetes.RBACDetails
 	var registryServices []*kubernetes.RegistryService
+	var serviceAccountNames map[string]bool
 	var err error
 	var objectCheckers []ObjectChecker
 	var referenceChecker ReferenceChecker
@@ -188,10 +193,11 @@ func (in *IstioValidationsService) GetIstioObjectValidations(ctx context.Context
 	errChan := make(chan error, 1)
 
 	// Get all the Istio objects from a Namespace and all gateways from every namespace
-	wg.Add(3)
+	wg.Add(4)
 
 	go in.fetchIstioConfigList(ctx, &istioConfigList, &mtlsDetails, &rbacDetails, cluster, namespace, errChan, &wg)
 	go in.fetchAllWorkloads(ctx, &workloadsPerNamespace, cluster, &namespaces, errChan, &wg)
+	go in.fetchServiceAccountNames(ctx, &serviceAccountNames, errChan, &wg)
 	go in.fetchNonLocalmTLSConfigs(&mtlsDetails, cluster, errChan, &wg)
 
 	if istioApiEnabled {
@@ -389,6 +395,39 @@ func (in *IstioValidationsService) fetchWorkload(ctx context.Context, rValue *ma
 			allWorkloads[namespace] = workloadList
 		}
 		*rValue = allWorkloads
+	}
+}
+
+func (in *IstioValidationsService) fetchServiceAccountNames(ctx context.Context, localCluster string, rValue *map[string]bool, errChan chan error, wg *sync.WaitGroup) {
+	istioDomain := strings.Replace(config.Get().ExternalServices.Istio.IstioIdentityDomain, "svc.", "", 1)
+	defer wg.Done()
+	if len(errChan) == 0 {
+		for _, cluster := range in.businessLayer.Namespace.GetClusterList() {
+			nss, err := in.businessLayer.Namespace.GetClusterNamespaces(ctx, cluster)
+			if err != nil {
+				errChan <- err
+				return
+			}
+			for _, ns := range nss {
+				criteria := WorkloadCriteria{Cluster: cluster, Namespace: ns.Name, IncludeIstioResources: false, IncludeHealth: false}
+				workloadList, err := in.businessLayer.Workload.GetWorkloadList(ctx, criteria)
+				if err != nil {
+					select {
+					case errChan <- err:
+					default:
+					}
+				} else {
+					for _, wl := range workloadList.Workloads {
+						for _, sAccountName := range wl.ServiceAccountNames {
+							saFullName := fmt.Sprintf("%s/ns/%s/sa/%s", istioDomain, ns, sAccountName)
+							if _, ok := rValue[saFullName]; !ok {
+								rValue[saFullName] = cluster == localCluster
+							}
+						}
+					}
+				}
+			}
+		}
 	}
 }
 
