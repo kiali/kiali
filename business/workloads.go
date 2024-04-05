@@ -99,9 +99,10 @@ type LogEntry struct {
 
 // LogOptions holds query parameter values
 type LogOptions struct {
-	Duration *time.Duration
-	IsProxy  bool // fetching logs for Istio Proxy (Envoy access log)
-	MaxLines *int
+	Duration  *time.Duration
+	IsProxy   bool // fetching logs for Istio Proxy (Envoy access log)
+	IsZtunnel bool
+	MaxLines  *int
 	core_v1.PodLogOptions
 }
 
@@ -445,7 +446,7 @@ func (in *WorkloadService) GetPod(cluster, namespace, name string) (*models.Pod,
 	return &pod, nil
 }
 
-func (in *WorkloadService) BuildLogOptionsCriteria(container, duration, isProxy, isAmbient, sinceTime, maxLines string) (*LogOptions, error) {
+func (in *WorkloadService) BuildLogOptionsCriteria(container, duration, isProxy, isZtunnel, sinceTime, maxLines string) (*LogOptions, error) {
 	opts := &LogOptions{}
 	opts.PodLogOptions = core_v1.PodLogOptions{Timestamps: true}
 
@@ -463,6 +464,7 @@ func (in *WorkloadService) BuildLogOptionsCriteria(container, duration, isProxy,
 	}
 
 	opts.IsProxy = isProxy == "true"
+	opts.IsZtunnel = isZtunnel == "false"
 
 	if sinceTime != "" {
 		numTime, err := strconv.ParseInt(sinceTime, 10, 64)

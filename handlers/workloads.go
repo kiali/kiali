@@ -282,7 +282,7 @@ func PodLogs(w http.ResponseWriter, r *http.Request) {
 		queryParams.Get("container"),
 		queryParams.Get("duration"),
 		queryParams.Get("isProxy"),
-		queryParams.Get("isAmbient"),
+		queryParams.Get("isZtunnel"),
 		queryParams.Get("sinceTime"),
 		queryParams.Get("maxLines"))
 	if err != nil {
