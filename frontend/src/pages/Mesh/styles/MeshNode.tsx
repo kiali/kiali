@@ -12,18 +12,14 @@ import * as React from 'react';
 import { PFColors } from 'components/Pf/PfColors';
 import { kialiStyle } from 'styles/StyleUtils';
 import { MeshInfraType, MeshNodeData } from 'types/Mesh';
-import {
-  GrafanaLogo,
-  GrafanaLogoStyle,
-  IstioLogo,
-  IstioLogoStyle,
-  JaegerLogo,
-  JaegerLogoStyle,
-  KialiLogo,
-  KialiLogoStyle,
-  PrometheusLogo,
-  PrometheusLogoStyle
-} from '../MeshLegendData';
+import { ReactComponent as JaegerLogo } from '../../../assets/img/mesh/jaeger.svg';
+import { ReactComponent as PrometheusLogo } from '../../../assets/img/mesh/prometheus.svg';
+import { ReactComponent as GrafanaLogo } from '../../../assets/img/mesh/grafana.svg';
+import { ReactComponent as IstioLogo } from '../../../assets/img/mesh/istio.svg';
+import { ReactComponent as KialiLogo } from '../../../assets/img/mesh/kiali.svg';
+import { ReactComponent as TempoLogo } from '../../../assets/img/mesh/tempo.svg';
+import { store } from 'store/ConfigStore';
+import { JAEGER, TEMPO } from 'types/Tracing';
 
 // This is the registered Node component override that utilizes our customized Node.tsx component.
 
@@ -32,26 +28,26 @@ type MeshNodeProps = {
 } & WithSelectionProps;
 
 const renderIcon = (element: Node): React.ReactNode => {
-  let Component: React.ComponentClass<React.ComponentProps<any>> | undefined;
-  let componentStyle: React.CSSProperties | undefined;
+  let Component: React.FunctionComponent<React.SVGProps<SVGSVGElement>> | undefined;
+
   const data = element.getData() as MeshNodeData;
+  const externalServices = store.getState().statusState.externalServices;
+
   if (data.infraType === MeshInfraType.GRAFANA) {
     Component = GrafanaLogo;
-    componentStyle = GrafanaLogoStyle;
   } else if (data.infraType === MeshInfraType.ISTIOD) {
     Component = IstioLogo;
-    componentStyle = IstioLogoStyle;
   } else if (data.infraType === MeshInfraType.TRACE_STORE) {
-    // TODO: don't assume Jaeger
-    Component = JaegerLogo;
-    componentStyle = JaegerLogoStyle;
+    if (externalServices.find(service => service.name.toLowerCase() === TEMPO)) {
+      Component = TempoLogo;
+    } else if (externalServices.find(service => service.name.toLowerCase() === JAEGER)) {
+      Component = JaegerLogo;
+    }
   } else if (data.infraType === MeshInfraType.KIALI) {
     Component = KialiLogo;
-    componentStyle = KialiLogoStyle;
   } else if (data.infraType === MeshInfraType.METRIC_STORE) {
-    // TODO: don't assume Prom
+    // TODO: don't assume Prometheus
     Component = PrometheusLogo;
-    componentStyle = PrometheusLogoStyle;
   }
 
   const { width, height } = element.getDimensions();
@@ -59,7 +55,7 @@ const renderIcon = (element: Node): React.ReactNode => {
 
   return Component ? (
     <g transform={`translate(${(width - iconSize) / 2}, ${(height - iconSize) / 2})`}>
-      <Component style={componentStyle} width={iconSize} height={iconSize} />
+      <Component width={iconSize} height={iconSize} />
     </g>
   ) : (
     <></>
