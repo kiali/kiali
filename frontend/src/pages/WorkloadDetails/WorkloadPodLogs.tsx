@@ -1089,7 +1089,8 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
     const selectedContainers = containerOptions.filter(c => c.isSelected);
     const extraContainers: ContainerOption[] = [];
     for (const c of selectedContainers) {
-      if (c.isAmbient) {
+      // TODO: Update showZtunnel (Now is alway false)
+      if (c.isAmbient && !showZtunnel) {
         const ztunnel = { ...c };
         ztunnel.isAmbient = false;
         ztunnel.color = proxyContainerColor;
