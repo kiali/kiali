@@ -152,6 +152,11 @@ var checkDescriptors = map[string]IstioCheck{
 		Message:  "Service Account not found for this principal",
 		Severity: ErrorSeverity,
 	},
+	"authorizationpolicy.source.principalremote": {
+		Code:     "KIA0107",
+		Message:  "Service Account for this principal is on remote cluster",
+		Severity: WarningSeverity,
+	},
 	"authorizationpolicy.to.wrongmethod": {
 		Code:     "KIA0102",
 		Message:  "Only HTTP methods and fully-qualified gRPC names are allowed",
