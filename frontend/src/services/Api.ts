@@ -1011,8 +1011,8 @@ export const getPodLogs = (
   maxLines?: number,
   sinceTime?: number,
   duration?: DurationInSeconds,
-  isAmbient?: boolean,
   isProxy?: boolean,
+  isZtunnel?: boolean,
   cluster?: string
 ): Promise<ApiResponse<PodLogs>> => {
   const params: QueryParams<PodLogsQuery> = {};
@@ -1037,7 +1037,7 @@ export const getPodLogs = (
     params.clusterName = cluster;
   }
 
-  params.isAmbient = !!isAmbient;
+  params.isZtunnel = !!isZtunnel;
   params.isProxy = !!isProxy;
 
   return newRequest<PodLogs>(HTTP_VERBS.GET, urls.podLogs(namespace, name), params, {});

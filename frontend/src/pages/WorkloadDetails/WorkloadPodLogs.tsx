@@ -509,24 +509,46 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
 
           {this.state.containerOptions!.map((c, i) => {
             return (
-              <Checkbox
-                id={`container-${c.displayName}`}
-                key={`c-d-${i}`}
-                className={checkboxStyle}
-                inputClassName={colorCheck(c.color)}
-                isChecked={c.isSelected}
-                label={
-                  <span
-                    style={{
-                      color: c.color,
-                      fontWeight: 'bold'
-                    }}
-                  >
-                    {c.displayName}
-                  </span>
-                }
-                onChange={() => this.toggleSelected(c)}
-              />
+              <>
+                <Checkbox
+                  id={`container-${c.displayName}`}
+                  key={`c-d-${i}`}
+                  className={checkboxStyle}
+                  inputClassName={colorCheck(c.color)}
+                  isChecked={c.isSelected}
+                  label={
+                    <span
+                      style={{
+                        color: c.color,
+                        fontWeight: 'bold'
+                      }}
+                    >
+                      {c.displayName}
+                    </span>
+                  }
+                  onChange={() => this.toggleSelected(c)}
+                />
+                {c.isAmbient && (
+                  <Checkbox
+                    id={`ztunnel-${c.displayName}`}
+                    key={`c-d-${i}`}
+                    className={checkboxStyle}
+                    inputClassName={colorCheck(proxyContainerColor)}
+                    isChecked={c.isSelected}
+                    label={
+                      <span
+                        style={{
+                          color: proxyContainerColor,
+                          fontWeight: 'bold'
+                        }}
+                      >
+                        "istio-proxy (z-tunnel)"
+                      </span>
+                    }
+                    onChange={() => this.toggleSelected(c)}
+                  />
+                )}
+              </>
             );
           })}
         </FormGroup>
@@ -1065,18 +1087,25 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
     }
 
     const selectedContainers = containerOptions.filter(c => c.isSelected);
-    const extraContainers = selectedContainers;
+    const extraContainers: ContainerOption[] = [];
     for (const c of selectedContainers) {
-      if (c.isAmbient && showZtunnel) {
+      if (c.isAmbient) {
         const ztunnel = { ...c };
         ztunnel.isAmbient = false;
-        ztunnel.color = appContainerColors[appContainerColors.length - 1];
+        ztunnel.color = proxyContainerColor;
+        ztunnel.displayName = 'ztunnel';
         extraContainers.push(ztunnel);
       }
     }
-    const promises: Promise<ApiResponse<PodLogs | Span[]>>[] = extraContainers.map(c => {
-      return getPodLogs(namespace, podName, c.name, maxLines, sinceTime, duration, c.isAmbient, c.isProxy, cluster);
+    const promises: Promise<ApiResponse<PodLogs | Span[]>>[] = selectedContainers.map(c => {
+      return getPodLogs(namespace, podName, c.name, maxLines, sinceTime, duration, c.isProxy, false, cluster);
     });
+    // TODO: showZtunnel
+    if (true) {
+      extraContainers.forEach(c => {
+        promises.push(getPodLogs(namespace, podName, c.name, maxLines, sinceTime, duration, false, true, cluster));
+      });
+    }
 
     if (showSpans) {
       // Convert seconds to microseconds
@@ -1109,6 +1138,8 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
 
         let linesTruncatedContainers: string[] = [];
 
+        // TODO: Merge just if showZtunnel?
+        const allContainers = selectedContainers.concat(extraContainers);
         for (let i = 0; i < responses.length; i++) {
           const response = responses[i].data as PodLogs;
           const containerLogEntries = response.entries as LogEntry[];
@@ -1117,7 +1148,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
             continue;
           }
 
-          const color = selectedContainers[i].color;
+          const color = allContainers[i].color;
           containerLogEntries.forEach(le => {
             le.color = color;
             entries.push({ timestamp: le.timestamp, timestampUnix: le.timestampUnix, logEntry: le } as Entry);

@@ -253,8 +253,8 @@ export interface PodLogs {
 export interface PodLogsQuery {
   container?: string;
   duration?: string;
-  isAmbient?: boolean;
   isProxy?: boolean;
+  isZtunnel?: boolean;
   maxLines?: number;
   sinceTime?: number;
 }
