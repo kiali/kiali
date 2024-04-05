@@ -12,8 +12,8 @@ import (
 )
 
 type PrincipalsChecker struct {
-	Cluster             string
 	AuthorizationPolicy *security_v1beta.AuthorizationPolicy
+	Cluster             string
 	ServiceAccounts     map[string][]string
 }
 
@@ -59,12 +59,11 @@ func (pc PrincipalsChecker) validateFromField(ruleIdx int, from []*api_security_
 		for i, p := range f.Source.Principals {
 			if !pc.hasMatchingServiceAccount(pc.ServiceAccounts[pc.Cluster], p) {
 				path := fmt.Sprintf("spec/rules[%d]/from[%d]/source/principals[%d]", ruleIdx, fromIdx, i)
+				valid = false
 				if pc.hasMatchingRemoteServiceAccount(p) {
-					valid = true
 					validation := models.Build("authorizationpolicy.source.principalremote", path)
 					checks = append(checks, &validation)
 				} else {
-					valid = false
 					validation := models.Build("authorizationpolicy.source.principalnotfound", path)
 					checks = append(checks, &validation)
 				}
