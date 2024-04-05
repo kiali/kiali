@@ -1,4 +1,4 @@
-import axios, { AxiosError } from 'axios';
+import axios, {AxiosError} from 'axios';
 import { config } from '../config';
 import { LoginSession } from '../store/Store';
 import { App } from '../types/App';
@@ -74,12 +74,11 @@ const loginHeaders = config.login.headers;
 
 /**  Helpers to Requests */
 
-const getHeaders = () => {
-  if (apiProxy) {
-    return { 'Content-Type': 'application/x-www-form-urlencoded' };
-  } else {
-    return { 'Content-Type': 'application/json', ...loginHeaders };
+const getHeaders = (urlEncoded?: boolean)  => {
+  if (apiProxy || urlEncoded) {
+    return { 'Content-Type': 'application/x-www-form-urlencoded', ...loginHeaders };
   }
+  return { 'Content-Type': 'application/json', ...loginHeaders };
 };
 
 const basicAuth = (username: UserName, password: Password) => {
@@ -116,7 +115,7 @@ export const login = async (
   return axios({
     method: HTTP_VERBS.POST,
     url: apiProxy ? `${apiProxy}/${urls.authenticate}` : urls.authenticate,
-    headers: getHeaders(),
+    headers: getHeaders(true),
     auth: basicAuth(request.username, request.password),
     data: params
   });
