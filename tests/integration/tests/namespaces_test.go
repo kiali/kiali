@@ -42,7 +42,7 @@ func TestInvalidNamespaceHealth(t *testing.T) {
 
 	// namespace not found instead of internal server error
 	require.Error(err)
-	require.Contains(err.Error(), "namespaces \\\"invalid\\\" not found")
+	require.Contains(err.Error(), "Namespace [invalid] is not accessible for Kiali")
 	require.NotEqual(200, code)
 }
 
