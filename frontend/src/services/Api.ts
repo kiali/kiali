@@ -130,7 +130,13 @@ export const getAuthInfo = async () => {
 };
 
 export const checkOpenshiftAuth = async (data: any): Promise<Response<LoginSession>> => {
-  return newRequest<LoginSession>(HTTP_VERBS.POST, urls.authenticate, {}, data);
+  return axios.request<LoginSession>({
+    method: HTTP_VERBS.POST,
+    url: urls.authenticate,
+    data: data,
+    headers: getHeaders(true),
+    params: {}
+  });
 };
 
 export const getStatus = () => {
