@@ -162,7 +162,13 @@ export const getAuthInfo = async (): Promise<ApiResponse<AuthInfo>> => {
 };
 
 export const checkOpenshiftAuth = async (data: string): Promise<ApiResponse<LoginSession>> => {
-  return newRequest<LoginSession>(HTTP_VERBS.POST, urls.authenticate, {}, data);
+  return axios.request<LoginSession>({
+    method: HTTP_VERBS.POST,
+    url: urls.authenticate,
+    data: data,
+    headers: getHeaders(true) as AxiosHeaders,
+    params: {}
+  });
 };
 
 export const getStatus = (): Promise<ApiResponse<StatusState>> => {
