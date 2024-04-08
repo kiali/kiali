@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -42,7 +43,7 @@ func TestInvalidNamespaceHealth(t *testing.T) {
 
 	// namespace not found instead of internal server error
 	require.Error(err)
-	require.Contains(err.Error(), "Namespace [invalid] is not accessible for Kiali")
+	require.True(strings.Contains(err.Error(), "namespaces \\\"invalid\\\" not found") || strings.Contains(err.Error(), "Namespace [invalid] is not accessible for Kiali"))
 	require.NotEqual(200, code)
 }
 
