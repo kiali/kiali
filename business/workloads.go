@@ -104,6 +104,7 @@ type LogOptions struct {
 	IsZtunnel bool
 	MaxLines  *int
 	core_v1.PodLogOptions
+	filter []string
 }
 
 // Matches an ISO8601 full date
@@ -2041,6 +2042,10 @@ func (in *WorkloadService) streamParsedLogs(cluster, namespace, name string, opt
 			continue
 		}
 
+		if opts.filter != nil && !filterMatches(entry.Message, opts.filter) {
+			continue
+		}
+
 		// If we are past the requested time window then stop processing
 		if startTime == nil {
 			startTime = &entry.OriginalTime
@@ -2107,4 +2112,55 @@ func (in *WorkloadService) streamParsedLogs(cluster, namespace, name string, opt
 // StreamPodLogs streams pod logs to an HTTP Response given the provided options
 func (in *WorkloadService) StreamPodLogs(cluster, namespace, name string, opts *LogOptions, w http.ResponseWriter) error {
 	return in.streamParsedLogs(cluster, namespace, name, opts, w)
+}
+
+// StreamZtunnelLogs streams pod logs to an HTTP Response given the provided options
+func (in *WorkloadService) StreamZtunnelLogs(cluster, namespace, name string, opts *LogOptions, w http.ResponseWriter) error {
+	// First, get ztunnel namespace and containers
+	pods := in.cache.GetZtunnel(cluster)
+
+	opts.PodLogOptions.Container = models.IstioProxy
+	// Then, get the wk service to filter by IP
+	criteria := WorkloadCriteria{Namespace: namespace, WorkloadName: name,
+		IncludeIstioResources: false, IncludeServices: true, IncludeHealth: false,
+		Cluster: cluster}
+	workload, err2 := in.fetchWorkload(context.TODO(), criteria)
+	if err2 != nil {
+		log.Errorf("Error getting workload: %s", err2.Error())
+	}
+	kubeCache, err := in.cache.GetKubeCache(cluster)
+
+	if err != nil {
+		log.Errorf("Error getting workload: %s", err.Error())
+	}
+	serviceCriteria := ServiceCriteria{
+		Cluster:                criteria.Cluster,
+		Namespace:              criteria.Namespace,
+		ServiceSelector:        labels.Set(workload.WorkloadListItem.Labels).String(),
+		IncludeHealth:          false,
+		IncludeOnlyDefinitions: true,
+	}
+	services, err := in.businessLayer.Svc.GetServiceList(context.TODO(), serviceCriteria)
+
+	ipList := []string{}
+	for _, s := range services.Services {
+		e, _ := kubeCache.GetEndpoints(namespace, s.Name)
+		for _, subsets := range e.Subsets {
+			for _, addresses := range subsets.Addresses {
+				ipList = append(ipList, addresses.IP)
+			}
+		}
+	}
+
+	opts.filter = ipList
+	return in.streamParsedLogs(cluster, pods.Namespace, pods.Pods[0], opts, w)
+}
+
+func filterMatches(line string, filter []string) bool {
+	for _, filter := range filter {
+		if strings.Contains(line, filter) {
+			return true
+		}
+	}
+	return false
 }

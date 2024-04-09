@@ -3,6 +3,7 @@ package cache
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -62,6 +63,8 @@ type KialiCache interface {
 	// IsAmbientEnabled checks if the istio Ambient profile was enabled
 	// by checking if the ztunnel daemonset exists on the cluster.
 	IsAmbientEnabled(cluster string) bool
+
+	GetZtunnel(cluster string) models.PodsList
 }
 
 type kialiCacheImpl struct {
@@ -202,6 +205,43 @@ func (in *kialiCacheImpl) IsAmbientEnabled(cluster string) bool {
 	}
 
 	return check
+}
+
+// IsAmbientEnabled checks if the istio Ambient profile was enabled
+// by checking if the ztunnel daemonset exists on the cluster.
+func (in *kialiCacheImpl) GetZtunnel(cluster string) models.PodsList {
+
+	pods := models.PodsList{}
+	kubeCache, err := in.GetKubeCache(cluster)
+	if err != nil {
+		log.Debugf("Unable to get kube cache when checking for ambient profile: %s", err)
+		return pods
+	}
+	selector := map[string]string{
+		"app": "ztunnel",
+	}
+	daemonsets, err := kubeCache.GetDaemonSetsWithSelector(metav1.NamespaceAll, selector)
+	if err != nil {
+		// Don't set the check so we will check again the next time since this error may be transient.
+		log.Debugf("Error checking for ztunnel in Kiali accessible namespaces in cluster '%s': %s", cluster, err.Error())
+		return pods
+	}
+
+	if len(daemonsets) == 0 {
+		log.Debugf("No ztunnel daemonsets found in Kiali accessible namespaces in cluster '%s'", cluster)
+		return pods
+	}
+
+	dsPods, err := kubeCache.GetPods(daemonsets[0].Namespace, "")
+	pods.Namespace = daemonsets[0].Namespace
+	pods.Pods = []string{}
+	for _, pod := range dsPods {
+		if strings.Contains(pod.Name, "ztunnel") {
+			pods.Pods = append(pods.Pods, pod.Name)
+		}
+	}
+
+	return pods
 }
 
 type namespacesKey struct {

@@ -290,6 +290,17 @@ func PodLogs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	ztunnel := queryParams.Get("isZtunnel")
+	if ztunnel == "true" {
+		// Fetch pod logs
+		err = business.Workload.StreamZtunnelLogs(cluster, namespace, pod, opts, w)
+		if err != nil {
+			handleErrorResponse(w, err)
+			return
+		}
+		return
+	}
+
 	// Fetch pod logs
 	err = business.Workload.StreamPodLogs(cluster, namespace, pod, opts, w)
 	if err != nil {

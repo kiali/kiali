@@ -310,7 +310,8 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
         this.state.showZtunnel,
         this.state.maxLines,
         this.props.timeRange,
-        this.props.cluster
+        this.props.cluster,
+        this.props.workload
       );
     }
   }
@@ -542,7 +543,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                           fontWeight: 'bold'
                         }}
                       >
-                        "istio-proxy (z-tunnel)"
+                        istio-proxy (z-tunnel)
                       </span>
                     }
                     onChange={() => this.toggleSelected(c)}
@@ -1072,7 +1073,8 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
     showZtunnel: boolean,
     maxLines: number,
     timeRange: TimeRange,
-    cluster?: string
+    cluster?: string,
+    workload?: string
   ): void => {
     const now: TimeInMilliseconds = Date.now();
     const timeRangeDates = evalTimeRange(timeRange);
@@ -1104,7 +1106,19 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
     // TODO: showZtunnel
     if (true) {
       extraContainers.forEach(c => {
-        promises.push(getPodLogs(namespace, podName, c.name, maxLines, sinceTime, duration, false, true, cluster));
+        promises.push(
+          getPodLogs(
+            namespace,
+            workload ? workload : podName,
+            c.name,
+            maxLines,
+            sinceTime,
+            duration,
+            false,
+            true,
+            cluster
+          )
+        );
       });
     }
 
