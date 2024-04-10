@@ -233,6 +233,11 @@ func (in *kialiCacheImpl) GetZtunnel(cluster string) models.PodsList {
 	}
 
 	dsPods, err := kubeCache.GetPods(daemonsets[0].Namespace, "")
+	if err != nil {
+		log.Errorf("Unable to get pods: %s", err)
+		return pods
+	}
+
 	pods.Namespace = daemonsets[0].Namespace
 	pods.Pods = []string{}
 	for _, pod := range dsPods {

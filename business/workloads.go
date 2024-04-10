@@ -2123,6 +2123,10 @@ func (in *WorkloadService) StreamZtunnelLogs(cluster, namespace, name string, op
 
 	// Then, get the wk service to filter by IP
 	kubeCache, err := in.cache.GetKubeCache(cluster)
+	if err != nil {
+		log.Errorf("Error getting kube cache: %s", err.Error())
+	}
+
 	pds, err := kubeCache.GetPods(namespace, "")
 	if err != nil {
 		log.Errorf("Error getting pods: %s", err.Error())
@@ -2139,10 +2143,11 @@ func (in *WorkloadService) StreamZtunnelLogs(cluster, namespace, name string, op
 	}
 
 	opts.filter = ipList
+	var streamErr error
 	for _, pod := range pods.Pods {
-		in.streamParsedLogs(cluster, pods.Namespace, pod, opts, w, true)
+		streamErr = in.streamParsedLogs(cluster, pods.Namespace, pod, opts, w, true)
 	}
-	return nil
+	return streamErr
 }
 
 func filterMatches(line string, filter []string) bool {
