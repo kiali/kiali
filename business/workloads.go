@@ -1973,7 +1973,7 @@ func (in *WorkloadService) GetWorkloadAppName(ctx context.Context, cluster, name
 // streamParsedLogs fetches logs from a container in a pod, parses and decorates each log line with some metadata (of possible) and
 // sends the processed lines to the client in JSON format. Results are sent as processing is performed, so in case of any error when
 // doing processing the JSON document will be truncated.
-func (in *WorkloadService) streamParsedLogs(cluster, namespace, name string, opts *LogOptions, w http.ResponseWriter) error {
+func (in *WorkloadService) streamParsedLogs(cluster, namespace, name string, opts *LogOptions, w http.ResponseWriter, ztunnel bool) error {
 	userClient, ok := in.userClients[cluster]
 	if !ok {
 		return fmt.Errorf("user client for cluster [%s] not found", cluster)
@@ -2111,49 +2111,38 @@ func (in *WorkloadService) streamParsedLogs(cluster, namespace, name string, opt
 
 // StreamPodLogs streams pod logs to an HTTP Response given the provided options
 func (in *WorkloadService) StreamPodLogs(cluster, namespace, name string, opts *LogOptions, w http.ResponseWriter) error {
-	return in.streamParsedLogs(cluster, namespace, name, opts, w)
+	return in.streamParsedLogs(cluster, namespace, name, opts, w, false)
 }
 
 // StreamZtunnelLogs streams pod logs to an HTTP Response given the provided options
 func (in *WorkloadService) StreamZtunnelLogs(cluster, namespace, name string, opts *LogOptions, w http.ResponseWriter) error {
+
 	// First, get ztunnel namespace and containers
 	pods := in.cache.GetZtunnel(cluster)
-
 	opts.PodLogOptions.Container = models.IstioProxy
-	// Then, get the wk service to filter by IP
-	criteria := WorkloadCriteria{Namespace: namespace, WorkloadName: name,
-		IncludeIstioResources: false, IncludeServices: true, IncludeHealth: false,
-		Cluster: cluster}
-	workload, err2 := in.fetchWorkload(context.TODO(), criteria)
-	if err2 != nil {
-		log.Errorf("Error getting workload: %s", err2.Error())
-	}
-	kubeCache, err := in.cache.GetKubeCache(cluster)
 
+	// Then, get the wk service to filter by IP
+	kubeCache, err := in.cache.GetKubeCache(cluster)
+	pds, err := kubeCache.GetPods(namespace, "")
 	if err != nil {
-		log.Errorf("Error getting workload: %s", err.Error())
+		log.Errorf("Error getting pods: %s", err.Error())
 	}
-	serviceCriteria := ServiceCriteria{
-		Cluster:                criteria.Cluster,
-		Namespace:              criteria.Namespace,
-		ServiceSelector:        labels.Set(workload.WorkloadListItem.Labels).String(),
-		IncludeHealth:          false,
-		IncludeOnlyDefinitions: true,
-	}
-	services, err := in.businessLayer.Svc.GetServiceList(context.TODO(), serviceCriteria)
 
 	ipList := []string{}
-	for _, s := range services.Services {
-		e, _ := kubeCache.GetEndpoints(namespace, s.Name)
-		for _, subsets := range e.Subsets {
-			for _, addresses := range subsets.Addresses {
-				ipList = append(ipList, addresses.IP)
+	for _, p := range pds {
+		if p.Name == name {
+			for _, ip := range p.Status.PodIPs {
+				ipList = append(ipList, ip.IP)
 			}
+			break
 		}
 	}
 
 	opts.filter = ipList
-	return in.streamParsedLogs(cluster, pods.Namespace, pods.Pods[0], opts, w)
+	for _, pod := range pods.Pods {
+		in.streamParsedLogs(cluster, pods.Namespace, pod, opts, w, true)
+	}
+	return nil
 }
 
 func filterMatches(line string, filter []string) bool {

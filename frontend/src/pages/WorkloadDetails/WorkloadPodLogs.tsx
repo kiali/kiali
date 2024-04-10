@@ -265,7 +265,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
       showClearShowLogButton: false,
       showLogValue: '',
       showSpans: showSpans === 'true',
-      showZtunnel: showZtunnel === 'false',
+      showZtunnel: showZtunnel === 'true',
       showTimestamps: false,
       showToolbar: true,
       useRegex: false
@@ -310,8 +310,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
         this.state.showZtunnel,
         this.state.maxLines,
         this.props.timeRange,
-        this.props.cluster,
-        this.props.workload
+        this.props.cluster
       );
     }
   }
@@ -324,8 +323,16 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
     const lastRefreshChanged = prevProps.lastRefreshAt !== this.props.lastRefreshAt;
     const showSpansChanged = prevState.showSpans !== this.state.showSpans;
     const timeRangeChanged = !isEqualTimeRange(this.props.timeRange, prevProps.timeRange);
+    const showZtunnel = prevState.showZtunnel !== this.state.showZtunnel;
 
-    if (updateContainerOptions || updateMaxLines || lastRefreshChanged || showSpansChanged || timeRangeChanged) {
+    if (
+      updateContainerOptions ||
+      updateMaxLines ||
+      lastRefreshChanged ||
+      showSpansChanged ||
+      timeRangeChanged ||
+      showZtunnel
+    ) {
       const pod = this.props.pods[this.state.podValue!];
       this.fetchEntries(
         this.props.namespace,
@@ -532,10 +539,10 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                 {c.isAmbient && (
                   <Checkbox
                     id={`ztunnel-${c.displayName}`}
-                    key={`c-d-${i}`}
+                    key={`ztunnel-${i}`}
                     className={checkboxStyle}
                     inputClassName={colorCheck(proxyContainerColor)}
-                    isChecked={c.isSelected}
+                    isChecked={this.state.showZtunnel}
                     label={
                       <span
                         style={{
@@ -543,10 +550,10 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                           fontWeight: 'bold'
                         }}
                       >
-                        istio-proxy (z-tunnel)
+                        istio-proxy (ztunnel)
                       </span>
                     }
-                    onChange={() => this.toggleSelected(c)}
+                    onChange={() => this.toggleZtunnel()}
                   />
                 )}
               </>
@@ -560,6 +567,14 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
   private toggleSelected = (c: ContainerOption): void => {
     c.isSelected = !c.isSelected;
     this.setState({ containerOptions: [...this.state.containerOptions!] });
+  };
+
+  private toggleZtunnel = (): void => {
+    const urlParams = new URLSearchParams(history.location.search);
+    urlParams.set(URLParam.SHOW_ZTUNNEL, String(!this.state.showZtunnel));
+    history.replace(`${history.location.pathname}?${urlParams.toString()}`);
+
+    this.setState({ showZtunnel: !this.state.showZtunnel });
   };
 
   private toggleTimeOptionsVisibility = (): void => {
@@ -1073,8 +1088,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
     showZtunnel: boolean,
     maxLines: number,
     timeRange: TimeRange,
-    cluster?: string,
-    workload?: string
+    cluster?: string
   ): void => {
     const now: TimeInMilliseconds = Date.now();
     const timeRangeDates = evalTimeRange(timeRange);
@@ -1090,35 +1104,26 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
 
     const selectedContainers = containerOptions.filter(c => c.isSelected);
     const extraContainers: ContainerOption[] = [];
-    for (const c of selectedContainers) {
-      // TODO: Update showZtunnel (Now is alway false)
-      if (c.isAmbient && !showZtunnel) {
-        const ztunnel = { ...c };
-        ztunnel.isAmbient = false;
-        ztunnel.color = proxyContainerColor;
-        ztunnel.displayName = 'ztunnel';
-        extraContainers.push(ztunnel);
+
+    if (showZtunnel) {
+      for (const c of containerOptions) {
+        if (c.isAmbient) {
+          const ztunnel = { ...c };
+          ztunnel.isAmbient = false;
+          ztunnel.color = proxyContainerColor;
+          ztunnel.displayName = 'ztunnel';
+          extraContainers.push(ztunnel);
+        }
       }
     }
+
     const promises: Promise<ApiResponse<PodLogs | Span[]>>[] = selectedContainers.map(c => {
       return getPodLogs(namespace, podName, c.name, maxLines, sinceTime, duration, c.isProxy, false, cluster);
     });
-    // TODO: showZtunnel
-    if (true) {
+
+    if (showZtunnel) {
       extraContainers.forEach(c => {
-        promises.push(
-          getPodLogs(
-            namespace,
-            workload ? workload : podName,
-            c.name,
-            maxLines,
-            sinceTime,
-            duration,
-            false,
-            true,
-            cluster
-          )
-        );
+        promises.push(getPodLogs(namespace, podName, c.name, maxLines, sinceTime, duration, false, true, cluster));
       });
     }
 

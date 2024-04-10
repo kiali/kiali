@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Provider } from 'react-redux';
 import { mount, shallow } from 'enzyme';
 import screenfull, { Screenfull } from 'screenfull';
-import { WorkloadPodLogsComponent } from '../WorkloadPodLogs';
+import { WorkloadPodLogsComponent, WorkloadPodLogsProps } from '../WorkloadPodLogs';
 import { store } from '../../../store/ConfigStore';
 import axios from 'axios';
 import axiosMockAdapter from 'axios-mock-adapter';
@@ -10,7 +10,7 @@ import MockAdapter from 'axios-mock-adapter';
 import { Dropdown, DropdownItem } from '@patternfly/react-core';
 import { KialiIcon } from 'config/KialiIcon';
 
-const defaultProps = () => ({
+const defaultProps = (): WorkloadPodLogsProps => ({
   kiosk: '',
   lastRefreshAt: 200,
   timeRange: {},
@@ -24,8 +24,8 @@ const defaultProps = () => ({
       status: 'any',
       appLabel: false,
       versionLabel: false,
-      containers: [{ name: 'busybox', image: 'busybox:v1', isProxy: false, isReady: true }],
-      istioContainers: [{ name: 'istio-proxy', image: 'istio:latest', isProxy: true, isReady: true }],
+      containers: [{ name: 'busybox', image: 'busybox:v1', isProxy: false, isAmbient: false, isReady: true }],
+      istioContainers: [{ name: 'istio-proxy', image: 'istio:latest', isProxy: true, isAmbient: false, isReady: true }],
       serviceAccountName: 'namespace-testingpod'
     }
   ]
