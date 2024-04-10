@@ -522,7 +522,6 @@ Then('the AuthorizationPolicy should have a {string}', function (healthStatus: s
 Then(
   'the {string} {string} of the {string} namespace should have a {string}',
   (crdInstanceName: string, crdName: string, namespace: string, healthStatus: string) => {
-    it('loading config list', { retries: 3 }, () => {
       cy.request('GET', `${Cypress.config('baseUrl')}/api/istio/config?refresh=0`);
       cy.get('[data-test="refresh-button"]').click();
       ensureKialiFinishedLoading();
@@ -532,7 +531,6 @@ Then(
       })
         .should('be.visible')
         .hasCssVar('color', `--pf-v5-global--${healthStatus}-color--100`);
-    });
   }
 );
 
