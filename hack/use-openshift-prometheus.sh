@@ -216,6 +216,12 @@ EOM
   fi
 
   echo "Apply Telemetry resource to [${ISTIO_NAMESPACE}] to ensure Prometheus is a metrics provider"
+  tel_name=$(${OC} get telemetry -n ${ISTIO_NAMESPACE} -o name)
+  if [ ! -z "$tel_name" ]
+  then
+    echo "Found existing ${tel_name} in ${ISTIO_NAMESPACE}, patching..."
+    ${OC} patch ${tel_name} -n ${ISTIO_NAMESPACE} --type=merge -p '{"spec":{"metrics":[{"providers":[{"name":"prometheus"}]}]}}'
+  else
   cat <<EOM | ${OC} apply -n ${ISTIO_NAMESPACE} -f -
 apiVersion: telemetry.istio.io/v1alpha1
 kind: Telemetry
@@ -228,6 +234,7 @@ spec:
   - providers:
     - name: prometheus
 EOM
+  fi
 
   echo "Applying ServiceMonitor resource in [${ISTIO_NAMESPACE}] to collect istiod metrics"
   cat <<EOM | ${OC} apply -n ${ISTIO_NAMESPACE} -f -
