@@ -97,12 +97,18 @@ type LogEntry struct {
 	AccessLog     *parser.AccessLog `json:"accessLog,omitempty"`
 }
 
+type LogType string
+
+const (
+	Proxy   LogType = "proxy"
+	Ztunnel LogType = "ztunnel"
+)
+
 // LogOptions holds query parameter values
 type LogOptions struct {
-	Duration  *time.Duration
-	IsProxy   bool // fetching logs for Istio Proxy (Envoy access log)
-	IsZtunnel bool
-	MaxLines  *int
+	Duration *time.Duration
+	LogType  LogType
+	MaxLines *int
 	core_v1.PodLogOptions
 	filter []string
 }
@@ -464,8 +470,7 @@ func (in *WorkloadService) BuildLogOptionsCriteria(container, duration, isProxy,
 		opts.Duration = &duration
 	}
 
-	opts.IsProxy = isProxy == "true"
-	opts.IsZtunnel = isZtunnel == "false"
+	opts.LogType = Proxy
 
 	if sinceTime != "" {
 		numTime, err := strconv.ParseInt(sinceTime, 10, 64)
@@ -2128,7 +2133,7 @@ func (in *WorkloadService) streamParsedLogs(cluster, namespace, name string, opt
 		if ambient {
 			entry = parseZtunnelLine(line)
 		} else {
-			entry = parseLogLine(line, opts.IsProxy, engardeParser)
+			entry = parseLogLine(line, opts.LogType == Proxy, engardeParser)
 		}
 
 		if entry == nil {

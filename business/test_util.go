@@ -1,6 +1,9 @@
 package business
 
 import (
+	"fmt"
+	"io"
+	"os"
 	"time"
 
 	osapps_v1 "github.com/openshift/api/apps/v1"
@@ -11,6 +14,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
+	"github.com/kiali/kiali/log"
 )
 
 // Consolidate fake/mock data used in tests per package
@@ -723,10 +727,12 @@ func FakePodLogsProxy() *kubernetes.PodLogs {
 }
 
 func FakePodLogsZtunnel() *kubernetes.PodLogs {
+	content, err := readFile("../tests/data/logs/ztunnel.log")
+	if err != nil {
+		log.Errorf("Error reading logs file: %s", err.Error())
+	}
 	return &kubernetes.PodLogs{
-		Logs: `2024-04-12T10:17:44.080629Z	info	access	connection complete	src.addr=10.244.0.16:52008 src.workload="productpage-v1-87d54dd59-fzflt" src.namespace="bookinfo" src.identity="spiffe://cluster.local/ns/bookinfo/sa/bookinfo-productpage" dst.addr=10.244.0.14:15008 dst.service="reviews.bookinfo.svc.cluster.local" dst.workload="reviews-v2-6f9b55c5db-vnpzr" dst.namespace="reviews" dst.identity="spiffe://cluster.local/ns/bookinfo/sa/bookinfo-reviews" direction="outbound" bytes_sent=200 bytes_recv=603 duration="2ms"
-2024-04-12T10:17:44.081519Z	info	access	connection complete	src.addr=10.244.0.5:45896 src.workload="istio-ingressgateway-cbdcbb75c-9q9nb" src.namespace="istio-system" src.identity="spiffe://cluster.local/ns/istio-system/sa/istio-ingressgateway-service-account" dst.addr=10.244.0.16:9080 dst.hbone_addr="10.244.0.16:9080" dst.service="productpage.bookinfo.svc.cluster.local" dst.workload="productpage-v1-87d54dd59-fzflt" dst.namespace="productpage" dst.identity="spiffe://cluster.local/ns/bookinfo/sa/bookinfo-productpage" direction="inbound" bytes_sent=5483 bytes_recv=1551 duration="8ms"
-2024-04-12T10:31:51.078103Z	info	access	connection complete	src.addr=10.244.0.16:51748 src.workload="productpage-v1-87d54dd59-fzflt" src.namespace="bookinfo" src.identity="spiffe://cluster.local/ns/bookinfo/sa/bookinfo-productpage" dst.addr=10.244.0.11:15008 dst.service="details.bookinfo.svc.cluster.local" dst.workload="details-v1-cf74bb974-wg44w" dst.namespace="details" dst.identity="spiffe://cluster.local/ns/bookinfo/sa/bookinfo-details" direction="outbound" bytes_sent=200 bytes_recv=358 duration="1ms"`,
+		Logs: content,
 	}
 }
 
@@ -976,4 +982,16 @@ func FakeServices() []core_v1.Service {
 			},
 		},
 	}
+}
+
+func readFile(fileName string) (string, error) {
+
+	f, err := os.OpenFile(fileName, os.O_RDONLY, 0644)
+	defer f.Close()
+
+	content, err := io.ReadAll(f)
+	if err != nil {
+		return "", fmt.Errorf("error opening file %s", err)
+	}
+	return string(content), nil
 }
