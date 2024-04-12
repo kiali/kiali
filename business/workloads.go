@@ -1973,7 +1973,7 @@ func (in *WorkloadService) GetWorkloadAppName(ctx context.Context, cluster, name
 // streamParsedLogs fetches logs from a container in a pod, parses and decorates each log line with some metadata (of possible) and
 // sends the processed lines to the client in JSON format. Results are sent as processing is performed, so in case of any error when
 // doing processing the JSON document will be truncated.
-func (in *WorkloadService) streamParsedLogs(cluster, namespace, name string, opts *LogOptions, w http.ResponseWriter, ztunnel bool) error {
+func (in *WorkloadService) streamParsedLogs(cluster, namespace, name string, opts *LogOptions, w http.ResponseWriter) error {
 	userClient, ok := in.userClients[cluster]
 	if !ok {
 		return fmt.Errorf("user client for cluster [%s] not found", cluster)
@@ -2111,7 +2111,7 @@ func (in *WorkloadService) streamParsedLogs(cluster, namespace, name string, opt
 
 // StreamPodLogs streams pod logs to an HTTP Response given the provided options
 func (in *WorkloadService) StreamPodLogs(cluster, namespace, name string, opts *LogOptions, w http.ResponseWriter) error {
-	return in.streamParsedLogs(cluster, namespace, name, opts, w, false)
+	return in.streamParsedLogs(cluster, namespace, name, opts, w)
 }
 
 // StreamZtunnelLogs streams pod logs to an HTTP Response given the provided options
@@ -2121,40 +2121,21 @@ func (in *WorkloadService) StreamZtunnelLogs(cluster, namespace, name string, op
 	pods := in.cache.GetZtunnel(cluster)
 	opts.PodLogOptions.Container = models.IstioProxy
 
-	// Then, get the wk service to filter by IP
-	kubeCache, err := in.cache.GetKubeCache(cluster)
-	if err != nil {
-		log.Errorf("Error getting kube cache: %s", err.Error())
-	}
-
-	pds, err := kubeCache.GetPods(namespace, "")
-	if err != nil {
-		log.Errorf("Error getting pods: %s", err.Error())
-	}
-
-	ipList := []string{}
-	for _, p := range pds {
-		if p.Name == name {
-			for _, ip := range p.Status.PodIPs {
-				ipList = append(ipList, ip.IP)
-			}
-			break
-		}
-	}
-
-	opts.filter = ipList
+	// The ztunnel line should include the pod and the namespace
+	opts.filter = []string{namespace, name}
 	var streamErr error
 	for _, pod := range pods.Pods {
-		streamErr = in.streamParsedLogs(cluster, pods.Namespace, pod, opts, w, true)
+		streamErr = in.streamParsedLogs(cluster, pods.Namespace, pod, opts, w)
 	}
 	return streamErr
 }
 
+// AND filter
 func filterMatches(line string, filter []string) bool {
 	for _, filter := range filter {
-		if strings.Contains(line, filter) {
-			return true
+		if !strings.Contains(line, filter) {
+			return false
 		}
 	}
-	return false
+	return true
 }
