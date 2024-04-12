@@ -579,6 +579,85 @@ func parseLogLine(line string, isProxy bool, engardeParser *parser.Parser) *LogE
 	return &entry
 }
 
+func parseZtunnelLine(line string) *LogEntry {
+	entry := LogEntry{
+		Message:       "",
+		Timestamp:     "",
+		TimestampUnix: 0,
+		Severity:      "INFO",
+	}
+
+	splitted := strings.Split(line, "\t")
+
+	// k8s promises RFC3339 or RFC3339Nano timestamp, ensure RFC3339
+	// Split by blanks, to get the miliseconds for sorting, try RFC3339Nano
+	entry.Timestamp = splitted[0]
+
+	entry.Message = splitted[4]
+	if entry.Message == "" {
+		log.Debugf("Skipping empty log line [%s]", line)
+		return nil
+	}
+
+	// If we are past the requested time window then stop processing
+	parsedTimestamp, err := time.Parse(time.RFC3339Nano, entry.Timestamp)
+	entry.OriginalTime = parsedTimestamp
+	if err != nil {
+		log.Debugf("Failed to parse log timestamp (skipping) [%s], %s", entry.Timestamp, err.Error())
+		return nil
+	}
+
+	severity := splitted[1]
+	if severity != "" {
+		entry.Severity = strings.ToUpper(severity)
+	}
+
+	// Process some access log data
+	splittedAl := strings.Split(entry.Message, " ")
+	if len(splittedAl) < 13 {
+		log.Debugf("AccessLog parse for ztunnel failure for line: %s", entry.Message)
+	} else {
+		// More validations can be done. Data is in format direction=outbound
+		// Also, more data could be added?
+		al := parser.AccessLog{}
+		al.BytesSent = getValue(splittedAl[10])
+		al.RequestedServer = getValue(splittedAl[3])
+		al.UpstreamCluster = getValue(splittedAl[8])
+		al.Duration = getValue(splittedAl[12])
+		al.BytesReceived = getValue(splittedAl[11])
+
+		entry.AccessLog = &al
+	}
+
+	// override the timestamp with a simpler format
+	precision := strings.Split(parsedTimestamp.String(), ".")
+	var milliseconds string
+	if len(precision) > 1 {
+		ms := precision[1]
+		milliseconds = ms[:3]
+		splittedms := strings.Fields(milliseconds) // This is needed to avoid invalid dates in ms like 200
+		milliseconds = splittedms[0]
+	} else {
+		milliseconds = "000"
+	}
+
+	timestamp := fmt.Sprintf("%d-%02d-%02d %02d:%02d:%02d.%s",
+		parsedTimestamp.Year(), parsedTimestamp.Month(), parsedTimestamp.Day(),
+		parsedTimestamp.Hour(), parsedTimestamp.Minute(), parsedTimestamp.Second(), milliseconds)
+	entry.Timestamp = timestamp
+	entry.TimestampUnix = parsedTimestamp.UnixMilli()
+
+	return &entry
+}
+
+func getValue(line string) string {
+	value := strings.Split(line, "=")
+	if len(value) == 2 {
+		return strings.Replace(value[1], "\"", "", -1)
+	}
+	return line
+}
+
 func isAccessLogEmpty(al *parser.AccessLog) bool {
 	if al == nil {
 		return true
@@ -2037,7 +2116,13 @@ func (in *WorkloadService) streamParsedLogs(cluster, namespace, name string, opt
 			break
 		}
 
-		entry := parseLogLine(line, opts.IsProxy, engardeParser)
+		var entry *LogEntry
+		if opts.IsZtunnel {
+			entry = parseZtunnelLine(line)
+		} else {
+			entry = parseLogLine(line, opts.IsProxy, engardeParser)
+		}
+
 		if entry == nil {
 			continue
 		}

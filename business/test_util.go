@@ -722,6 +722,14 @@ func FakePodLogsProxy() *kubernetes.PodLogs {
 	}
 }
 
+func FakePodLogsZtunnel() *kubernetes.PodLogs {
+	return &kubernetes.PodLogs{
+		Logs: `2024-04-12T10:17:44.080629Z	info	access	connection complete	src.addr=10.244.0.16:52008 src.workload="productpage-v1-87d54dd59-fzflt" src.namespace="bookinfo" src.identity="spiffe://cluster.local/ns/bookinfo/sa/bookinfo-productpage" dst.addr=10.244.0.14:15008 dst.service="reviews.bookinfo.svc.cluster.local" dst.workload="reviews-v2-6f9b55c5db-vnpzr" dst.namespace="reviews" dst.identity="spiffe://cluster.local/ns/bookinfo/sa/bookinfo-reviews" direction="outbound" bytes_sent=200 bytes_recv=603 duration="2ms"
+2024-04-12T10:17:44.081519Z	info	access	connection complete	src.addr=10.244.0.5:45896 src.workload="istio-ingressgateway-cbdcbb75c-9q9nb" src.namespace="istio-system" src.identity="spiffe://cluster.local/ns/istio-system/sa/istio-ingressgateway-service-account" dst.addr=10.244.0.16:9080 dst.hbone_addr="10.244.0.16:9080" dst.service="productpage.bookinfo.svc.cluster.local" dst.workload="productpage-v1-87d54dd59-fzflt" dst.namespace="productpage" dst.identity="spiffe://cluster.local/ns/bookinfo/sa/bookinfo-productpage" direction="inbound" bytes_sent=5483 bytes_recv=1551 duration="8ms"
+2024-04-12T10:31:51.078103Z	info	access	connection complete	src.addr=10.244.0.16:51748 src.workload="productpage-v1-87d54dd59-fzflt" src.namespace="bookinfo" src.identity="spiffe://cluster.local/ns/bookinfo/sa/bookinfo-productpage" dst.addr=10.244.0.11:15008 dst.service="details.bookinfo.svc.cluster.local" dst.workload="details-v1-cf74bb974-wg44w" dst.namespace="details" dst.identity="spiffe://cluster.local/ns/bookinfo/sa/bookinfo-details" direction="outbound" bytes_sent=200 bytes_recv=358 duration="1ms"`,
+	}
+}
+
 func FakePodsSyncedWithDuplicated() []core_v1.Pod {
 	conf := config.NewConfig()
 
@@ -844,6 +852,74 @@ func FakePodsFromCustomController() []core_v1.Pod {
 					{Name: "istio-init", Image: "docker.io/istio/proxy_init:0.7.1"},
 					{Name: "enable-core-dump", Image: "alpine"},
 				},
+			},
+		},
+	}
+}
+
+func FakeZtunnelPods() []core_v1.Pod {
+	conf := config.NewConfig()
+
+	appLabel := conf.IstioLabels.AppLabelName
+	versionLabel := conf.IstioLabels.VersionLabelName
+	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
+	controller := true
+	return []core_v1.Pod{
+		{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:              "ztunnel",
+				Namespace:         "istio-system",
+				CreationTimestamp: meta_v1.NewTime(t1),
+				Labels:            map[string]string{appLabel: "ztunnel", versionLabel: "v1"},
+				OwnerReferences: []meta_v1.OwnerReference{{
+					Controller: &controller,
+					Kind:       "ReplicaSet",
+					Name:       "ztunnel",
+				}},
+				Annotations: kubetest.FakeIstioAnnotations(),
+			},
+			Spec: core_v1.PodSpec{
+				Containers: []core_v1.Container{
+					{Name: "ztunnel-lrzrn", Image: "whatever"},
+				},
+				InitContainers: []core_v1.Container{
+					{Name: "istio-init", Image: "docker.io/istio/proxy_init:0.7.1"},
+				},
+			},
+		},
+	}
+}
+
+func FakeZtunnelDaemonSet() []apps_v1.DaemonSet {
+	conf := config.NewConfig()
+	conf.KubernetesConfig.ExcludeWorkloads = []string{}
+
+	appLabel := conf.IstioLabels.AppLabelName
+	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
+	return []apps_v1.DaemonSet{
+		{
+			TypeMeta: meta_v1.TypeMeta{
+				Kind: "DaemonSet",
+			},
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:              "ztunnel",
+				Namespace:         "istio-system",
+				CreationTimestamp: meta_v1.NewTime(t1),
+			},
+			Spec: apps_v1.DaemonSetSpec{
+				Template: core_v1.PodTemplateSpec{
+					ObjectMeta: meta_v1.ObjectMeta{
+						Labels: map[string]string{appLabel: "ztunnel"},
+					},
+				},
+				Selector: &meta_v1.LabelSelector{
+					MatchLabels: map[string]string{appLabel: "ztunnel"},
+				},
+			},
+			Status: apps_v1.DaemonSetStatus{
+				DesiredNumberScheduled: 1,
+				CurrentNumberScheduled: 1,
+				NumberAvailable:        1,
 			},
 		},
 	}

@@ -37,7 +37,11 @@ func setupWorkloadService(k8s kubernetes.ClientInterface, conf *config.Config) W
 
 func callStreamPodLogs(svc WorkloadService, namespace, podName string, opts *LogOptions) PodLog {
 	w := httptest.NewRecorder()
-	_ = svc.StreamPodLogs(svc.config.KubernetesConfig.ClusterName, namespace, podName, opts, w)
+	if opts.IsZtunnel {
+		_ = svc.StreamZtunnelLogs(svc.config.KubernetesConfig.ClusterName, namespace, podName, opts, w)
+	} else {
+		_ = svc.StreamPodLogs(svc.config.KubernetesConfig.ClusterName, namespace, podName, opts, w)
+	}
 
 	response := w.Result()
 	body, _ := io.ReadAll(response.Body)
@@ -701,6 +705,49 @@ func TestGetPodLogsProxy(t *testing.T) {
 	assert.Equal("200", entry.AccessLog.StatusCode)
 	assert.Equal("2021-02-01T21:34:35.533Z", entry.AccessLog.Timestamp)
 	assert.Equal(int64(1612215275533), entry.TimestampUnix)
+}
+
+func TestGetZtunnelPodLogsProxy(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+	conf := config.NewConfig()
+
+	// Setup mocks
+	kubeObjs := []runtime.Object{
+		FakePodSyncedWithDeployments(),
+		&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "bookinfo"}},
+	}
+	for _, obj := range FakeZtunnelDaemonSet() {
+		o := obj
+		kubeObjs = append(kubeObjs, &o)
+	}
+	for _, obj := range FakeZtunnelPods() {
+		o := obj
+		kubeObjs = append(kubeObjs, &o)
+	}
+	k8s := &logStreamer{
+		logs:            FakePodLogsZtunnel().Logs,
+		ClientInterface: kubetest.NewFakeK8sClient(kubeObjs...),
+	}
+	SetupBusinessLayer(t, k8s, *config.NewConfig())
+	svc := setupWorkloadService(k8s, conf)
+
+	maxLines := 2
+	duration, _ := time.ParseDuration("2h")
+	podLogs := callStreamPodLogs(svc, "bookinfo", "details-v1-cf74bb974-wg44w", &LogOptions{Duration: &duration, IsProxy: false, IsZtunnel: true, PodLogOptions: core_v1.PodLogOptions{Container: "details"}, MaxLines: &maxLines})
+	require.Equal(1, len(podLogs.Entries))
+	entry := podLogs.Entries[0]
+
+	assert.Equal(`src.addr=10.244.0.16:51748 src.workload="productpage-v1-87d54dd59-fzflt" src.namespace="bookinfo" src.identity="spiffe://cluster.local/ns/bookinfo/sa/bookinfo-productpage" dst.addr=10.244.0.11:15008 dst.service="details.bookinfo.svc.cluster.local" dst.workload="details-v1-cf74bb974-wg44w" dst.namespace="details" dst.identity="spiffe://cluster.local/ns/bookinfo/sa/bookinfo-details" direction="outbound" bytes_sent=200 bytes_recv=358 duration="1ms"`, entry.Message)
+	assert.Equal("2024-04-12 10:31:51.078", entry.Timestamp)
+	assert.NotNil(entry.AccessLog)
+	assert.Equal("358", entry.AccessLog.BytesReceived)
+	assert.Equal("200", entry.AccessLog.BytesSent)
+	assert.Equal("1ms", entry.AccessLog.Duration)
+	assert.Equal("spiffe://cluster.local/ns/bookinfo/sa/bookinfo-details", entry.AccessLog.UpstreamCluster)
+	assert.Equal("spiffe://cluster.local/ns/bookinfo/sa/bookinfo-productpage", entry.AccessLog.RequestedServer)
+	assert.Equal(int64(1712917911078), entry.TimestampUnix)
+
 }
 
 func TestDuplicatedControllers(t *testing.T) {
