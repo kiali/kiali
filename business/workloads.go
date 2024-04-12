@@ -104,13 +104,20 @@ const (
 	Ztunnel LogType = "ztunnel"
 )
 
+type filterOpts struct {
+	destWk string
+	destNs string
+	srcWk  string
+	srcNs  string
+}
+
 // LogOptions holds query parameter values
 type LogOptions struct {
 	Duration *time.Duration
 	LogType  LogType
 	MaxLines *int
 	core_v1.PodLogOptions
-	filter []string
+	filter filterOpts
 }
 
 // Matches an ISO8601 full date
@@ -2140,7 +2147,7 @@ func (in *WorkloadService) streamParsedLogs(cluster, namespace, name string, opt
 			continue
 		}
 
-		if opts.filter != nil && !filterMatches(entry.Message, opts.filter) {
+		if opts.LogType == Ztunnel && !filterMatches(entry.Message, opts.filter) {
 			continue
 		}
 
@@ -2220,7 +2227,13 @@ func (in *WorkloadService) StreamZtunnelLogs(cluster, namespace, name string, op
 	opts.PodLogOptions.Container = models.IstioProxy
 
 	// The ztunnel line should include the pod and the namespace
-	opts.filter = []string{namespace, name}
+	fs := filterOpts{
+		destWk: fmt.Sprintf("dst.workload=\"%s\"", name),
+		destNs: fmt.Sprintf("dst.namespace=\"%s\"", namespace),
+		srcWk:  fmt.Sprintf("src.workload=\"%s\"", name),
+		srcNs:  fmt.Sprintf("src.namespace=\"%s\"", namespace),
+	}
+	opts.filter = fs
 	var streamErr error
 	for _, pod := range pods.Pods {
 		streamErr = in.streamParsedLogs(cluster, pods.Namespace, pod, opts, w, true)
@@ -2229,11 +2242,9 @@ func (in *WorkloadService) StreamZtunnelLogs(cluster, namespace, name string, op
 }
 
 // AND filter
-func filterMatches(line string, filter []string) bool {
-	for _, filter := range filter {
-		if !strings.Contains(line, filter) {
-			return false
-		}
+func filterMatches(line string, filter filterOpts) bool {
+	if (strings.Contains(line, filter.destNs) && strings.Contains(line, filter.destWk)) || (strings.Contains(line, filter.srcNs) && strings.Contains(line, filter.srcWk)) {
+		return true
 	}
-	return true
+	return false
 }
