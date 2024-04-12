@@ -589,6 +589,11 @@ func parseZtunnelLine(line string) *LogEntry {
 
 	splitted := strings.Split(line, "\t")
 
+	if len(splitted) < 4 {
+		log.Debugf("Error splitting line line [%s]", line)
+		entry.Message = line
+		return &entry
+	}
 	// k8s promises RFC3339 or RFC3339Nano timestamp, ensure RFC3339
 	// Split by blanks, to get the miliseconds for sorting, try RFC3339Nano
 	entry.Timestamp = splitted[0]
@@ -599,6 +604,9 @@ func parseZtunnelLine(line string) *LogEntry {
 		return nil
 	}
 
+	// Fix: Sometimes de timestamp is duplicated
+	timeParsed := strings.Split(entry.Timestamp, " ")
+	entry.Timestamp = timeParsed[0]
 	// If we are past the requested time window then stop processing
 	parsedTimestamp, err := time.Parse(time.RFC3339Nano, entry.Timestamp)
 	entry.OriginalTime = parsedTimestamp
@@ -2052,7 +2060,7 @@ func (in *WorkloadService) GetWorkloadAppName(ctx context.Context, cluster, name
 // streamParsedLogs fetches logs from a container in a pod, parses and decorates each log line with some metadata (of possible) and
 // sends the processed lines to the client in JSON format. Results are sent as processing is performed, so in case of any error when
 // doing processing the JSON document will be truncated.
-func (in *WorkloadService) streamParsedLogs(cluster, namespace, name string, opts *LogOptions, w http.ResponseWriter) error {
+func (in *WorkloadService) streamParsedLogs(cluster, namespace, name string, opts *LogOptions, w http.ResponseWriter, ambient bool) error {
 	userClient, ok := in.userClients[cluster]
 	if !ok {
 		return fmt.Errorf("user client for cluster [%s] not found", cluster)
@@ -2117,7 +2125,7 @@ func (in *WorkloadService) streamParsedLogs(cluster, namespace, name string, opt
 		}
 
 		var entry *LogEntry
-		if opts.IsZtunnel {
+		if ambient {
 			entry = parseZtunnelLine(line)
 		} else {
 			entry = parseLogLine(line, opts.IsProxy, engardeParser)
@@ -2196,7 +2204,7 @@ func (in *WorkloadService) streamParsedLogs(cluster, namespace, name string, opt
 
 // StreamPodLogs streams pod logs to an HTTP Response given the provided options
 func (in *WorkloadService) StreamPodLogs(cluster, namespace, name string, opts *LogOptions, w http.ResponseWriter) error {
-	return in.streamParsedLogs(cluster, namespace, name, opts, w)
+	return in.streamParsedLogs(cluster, namespace, name, opts, w, false)
 }
 
 // StreamZtunnelLogs streams pod logs to an HTTP Response given the provided options
@@ -2210,7 +2218,7 @@ func (in *WorkloadService) StreamZtunnelLogs(cluster, namespace, name string, op
 	opts.filter = []string{namespace, name}
 	var streamErr error
 	for _, pod := range pods.Pods {
-		streamErr = in.streamParsedLogs(cluster, pods.Namespace, pod, opts, w)
+		streamErr = in.streamParsedLogs(cluster, pods.Namespace, pod, opts, w, true)
 	}
 	return streamErr
 }
