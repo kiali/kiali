@@ -522,19 +522,19 @@ Then('the AuthorizationPolicy should have a {string}', function (healthStatus: s
 Then(
   'the {string} {string} of the {string} namespace should have a {string}',
   (crdInstanceName: string, crdName: string, namespace: string, healthStatus: string) => {
-      cy.request('GET', `${Cypress.config('baseUrl')}/api/istio/config?refresh=0`);
-      cy.get('[data-test="refresh-button"]').click();
-      ensureKialiFinishedLoading();
+    cy.request('GET', `${Cypress.config('baseUrl')}/api/istio/config?refresh=0`);
+    cy.get('[data-test="refresh-button"]').click();
+    ensureKialiFinishedLoading();
 
-      cy.get(`[data-test=VirtualItem_Ns${namespace}_${crdName.toLowerCase()}_${crdInstanceName}] span.pf-v5-c-icon`, {
-        timeout: 40000
-      })
-        .should('be.visible')
-        .hasCssVar('color', `--pf-v5-global--${healthStatus}-color--100`);
+    cy.get(`[data-test=VirtualItem_Ns${namespace}_${crdName.toLowerCase()}_${crdInstanceName}] span.pf-v5-c-icon`, {
+      timeout: 40000
+    })
+      .should('be.visible')
+      .hasCssVar('color', `--pf-v5-global--${healthStatus}-color--100`);
   }
 );
 
-After({ tags: '@istio-page and @crd-validation' }, () => {
+After({ tags: '@istio-config and @crd-validation' }, () => {
   cy.exec('kubectl delete PeerAuthentications,DestinationRules,AuthorizationPolicies,Sidecars --all --all-namespaces', {
     failOnNonZeroExit: false
   });
