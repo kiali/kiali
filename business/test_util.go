@@ -987,11 +987,19 @@ func FakeServices() []core_v1.Service {
 func readFile(fileName string) (string, error) {
 
 	f, err := os.OpenFile(fileName, os.O_RDONLY, 0644)
-	defer f.Close()
+	if err != nil {
+		return "", fmt.Errorf("error opening file %s", err)
+	}
+	defer func(f *os.File) {
+		errClose := f.Close()
+		if errClose != nil {
+			log.Errorf("error closing file %s", err)
+		}
+	}(f)
 
 	content, err := io.ReadAll(f)
 	if err != nil {
-		return "", fmt.Errorf("error opening file %s", err)
+		return "", fmt.Errorf("error reading file %s", err)
 	}
 	return string(content), nil
 }
