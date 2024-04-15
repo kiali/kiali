@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"reflect"
 	"regexp"
 	"sort"
 	"strconv"
@@ -571,20 +572,7 @@ func parseLogLine(line string, isProxy bool, engardeParser *parser.Parser) *LogE
 	}
 
 	// override the timestamp with a simpler format
-	precision := strings.Split(parsedTimestamp.String(), ".")
-	var milliseconds string
-	if len(precision) > 1 {
-		ms := precision[1]
-		milliseconds = ms[:3]
-		splittedms := strings.Fields(milliseconds) // This is needed to avoid invalid dates in ms like 200
-		milliseconds = splittedms[0]
-	} else {
-		milliseconds = "000"
-	}
-
-	timestamp := fmt.Sprintf("%d-%02d-%02d %02d:%02d:%02d.%s",
-		parsedTimestamp.Year(), parsedTimestamp.Month(), parsedTimestamp.Day(),
-		parsedTimestamp.Hour(), parsedTimestamp.Minute(), parsedTimestamp.Second(), milliseconds)
+	timestamp := parseTimestamp(parsedTimestamp)
 	entry.Timestamp = timestamp
 	entry.TimestampUnix = parsedTimestamp.UnixMilli()
 
@@ -599,6 +587,58 @@ func parseZtunnelLine(line string) *LogEntry {
 		Severity:      "INFO",
 	}
 
+	regex := regexp.MustCompile(models.ZtunnelRegexLine)
+	matches := regex.FindStringSubmatch(line)
+	prop := models.Hbone
+
+	if len(matches) < 18 {
+		// Try additional format
+		regex = regexp.MustCompile(models.ZtunnelInboundRegexLine)
+		matches = regex.FindStringSubmatch(line)
+		prop = models.Ztunnel
+		if len(matches) < 18 {
+			regex = regexp.MustCompile(models.ZtunnelError)
+			matches = regex.FindStringSubmatch(line)
+			prop = models.ErrorLine
+			if len(matches) < 16 {
+				regex = regexp.MustCompile(models.ZtunnelSimpleError)
+				matches = regex.FindStringSubmatch(line)
+				prop = models.SimpleError
+				if len(matches) < 4 {
+					log.Debugf("Error splitting line line [%s]", line)
+					entry.Message = line
+					return &entry
+				}
+			}
+
+		}
+	}
+
+	ztunnelLogLine := models.ZtunnelLogLine{}
+	var field reflect.Value
+	var modelProps string
+	for i, match := range matches[1:] {
+
+		switch prop {
+		case models.Hbone:
+			modelProps = models.ZtunnelProps[i]
+		case models.Ztunnel:
+			modelProps = models.ZtunnelInboundProps[i]
+		case models.ErrorLine:
+			modelProps = models.ZtunnelErrorProps[i]
+		case models.SimpleError:
+			modelProps = models.ZtunnelSimpleErrorProps[i]
+		}
+
+		field = reflect.ValueOf(&ztunnelLogLine).Elem().FieldByName(modelProps)
+
+		if field.IsValid() && field.CanSet() {
+			if field.Kind() == reflect.String {
+				field.SetString(match)
+			}
+		}
+	}
+
 	splitted := strings.Split(line, "\t")
 
 	if len(splitted) < 4 {
@@ -606,19 +646,19 @@ func parseZtunnelLine(line string) *LogEntry {
 		entry.Message = line
 		return &entry
 	}
-	// k8s promises RFC3339 or RFC3339Nano timestamp, ensure RFC3339
-	// Split by blanks, to get the miliseconds for sorting, try RFC3339Nano
-	entry.Timestamp = splitted[0]
 
 	entry.Message = splitted[4]
 	if entry.Message == "" {
 		log.Debugf("Skipping empty log line [%s]", line)
-		return nil
+		entry.Message = line
+		return &entry
 	}
 
-	// Fix: Sometimes de timestamp is duplicated
-	timeParsed := strings.Split(entry.Timestamp, " ")
-	entry.Timestamp = timeParsed[0]
+	// k8s promises RFC3339 or RFC3339Nano timestamp, ensure RFC3339
+	// Split by blanks, to get the miliseconds for sorting, try RFC3339Nano
+	ts := strings.Split(ztunnelLogLine.Timestamp, " ") // Sometime timestamp is duplicated
+	entry.Timestamp = ts[0]
+
 	// If we are past the requested time window then stop processing
 	parsedTimestamp, err := time.Parse(time.RFC3339Nano, entry.Timestamp)
 	entry.OriginalTime = parsedTimestamp
@@ -627,29 +667,31 @@ func parseZtunnelLine(line string) *LogEntry {
 		return nil
 	}
 
-	severity := splitted[1]
-	if severity != "" {
-		entry.Severity = strings.ToUpper(severity)
+	if ztunnelLogLine.Severity != "" {
+		entry.Severity = strings.ToUpper(ztunnelLogLine.Severity)
 	}
 
 	// Process some access log data
-	splittedAl := strings.Split(entry.Message, " ")
-	if len(splittedAl) < 13 {
-		log.Debugf("AccessLog parse for ztunnel failure for line: %s", entry.Message)
-	} else {
-		// More validations can be done. Data is in format direction=outbound
-		// Also, more data could be added?
-		al := parser.AccessLog{}
-		al.BytesSent = getValue(splittedAl[10])
-		al.RequestedServer = getValue(splittedAl[3])
-		al.UpstreamCluster = getValue(splittedAl[8])
-		al.Duration = getValue(splittedAl[12])
-		al.BytesReceived = getValue(splittedAl[11])
+	// More validations can be done. Data is in format direction=outbound
+	// Also, more data could be added?
+	al := parser.AccessLog{}
+	al.BytesSent = ztunnelLogLine.BytesSent
+	al.RequestedServer = ztunnelLogLine.DstIdentity
+	al.UpstreamCluster = ztunnelLogLine.SrcIdentity
+	al.Duration = ztunnelLogLine.Duration
+	al.BytesReceived = ztunnelLogLine.BytesReceived
 
-		entry.AccessLog = &al
-	}
+	entry.AccessLog = &al
 
 	// override the timestamp with a simpler format
+	timestamp := parseTimestamp(parsedTimestamp)
+	entry.Timestamp = timestamp
+	entry.TimestampUnix = parsedTimestamp.UnixMilli()
+
+	return &entry
+}
+
+func parseTimestamp(parsedTimestamp time.Time) string {
 	precision := strings.Split(parsedTimestamp.String(), ".")
 	var milliseconds string
 	if len(precision) > 1 {
@@ -664,18 +706,7 @@ func parseZtunnelLine(line string) *LogEntry {
 	timestamp := fmt.Sprintf("%d-%02d-%02d %02d:%02d:%02d.%s",
 		parsedTimestamp.Year(), parsedTimestamp.Month(), parsedTimestamp.Day(),
 		parsedTimestamp.Hour(), parsedTimestamp.Minute(), parsedTimestamp.Second(), milliseconds)
-	entry.Timestamp = timestamp
-	entry.TimestampUnix = parsedTimestamp.UnixMilli()
-
-	return &entry
-}
-
-func getValue(line string) string {
-	value := strings.Split(line, "=")
-	if len(value) == 2 {
-		return strings.Replace(value[1], "\"", "", -1)
-	}
-	return line
+	return timestamp
 }
 
 func isAccessLogEmpty(al *parser.AccessLog) bool {
