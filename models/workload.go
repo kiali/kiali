@@ -170,13 +170,6 @@ type Workload struct {
 	Health WorkloadHealth `json:"health"`
 }
 
-type PodsList struct {
-	// namespace
-	Namespace string
-	// Pods list
-	Pods []string
-}
-
 type Workloads []*Workload
 
 func (workload *WorkloadListItem) ParseWorkload(w *Workload) {

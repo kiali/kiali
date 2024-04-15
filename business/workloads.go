@@ -2223,7 +2223,7 @@ func (in *WorkloadService) StreamPodLogs(cluster, namespace, name string, opts *
 func (in *WorkloadService) StreamZtunnelLogs(cluster, namespace, name string, opts *LogOptions, w http.ResponseWriter) error {
 
 	// First, get ztunnel namespace and containers
-	pods := in.cache.GetZtunnel(cluster)
+	pods := in.cache.GetZtunnelPods(cluster)
 	opts.PodLogOptions.Container = models.IstioProxy
 
 	// The ztunnel line should include the pod and the namespace
@@ -2235,8 +2235,8 @@ func (in *WorkloadService) StreamZtunnelLogs(cluster, namespace, name string, op
 	}
 	opts.filter = fs
 	var streamErr error
-	for _, pod := range pods.Pods {
-		streamErr = in.streamParsedLogs(cluster, pods.Namespace, pod, opts, w, true)
+	for _, pod := range pods {
+		streamErr = in.streamParsedLogs(cluster, pod.Namespace, pod.Name, opts, w, true)
 	}
 	return streamErr
 }

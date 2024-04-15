@@ -9,6 +9,7 @@ import (
 
 	"golang.org/x/exp/maps"
 
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/config"
@@ -64,7 +65,7 @@ type KialiCache interface {
 	// by checking if the ztunnel daemonset exists on the cluster.
 	IsAmbientEnabled(cluster string) bool
 
-	GetZtunnel(cluster string) models.PodsList
+	GetZtunnelPods(cluster string) []v1.Pod
 }
 
 type kialiCacheImpl struct {
@@ -207,15 +208,15 @@ func (in *kialiCacheImpl) IsAmbientEnabled(cluster string) bool {
 	return check
 }
 
-// IsAmbientEnabled checks if the istio Ambient profile was enabled
-// by checking if the ztunnel daemonset exists on the cluster.
-func (in *kialiCacheImpl) GetZtunnel(cluster string) models.PodsList {
+// GetZtunnel returs the pods list from ztunnel daemonset
+func (in *kialiCacheImpl) GetZtunnelPods(cluster string) []v1.Pod {
 
-	pods := models.PodsList{}
+	ztunnelPods := []v1.Pod{}
 	kubeCache, err := in.GetKubeCache(cluster)
 	if err != nil {
 		log.Debugf("Unable to get kube cache when checking for ambient profile: %s", err)
-		return pods
+		return ztunnelPods
+
 	}
 	selector := map[string]string{
 		"app": "ztunnel",
@@ -224,29 +225,28 @@ func (in *kialiCacheImpl) GetZtunnel(cluster string) models.PodsList {
 	if err != nil {
 		// Don't set the check so we will check again the next time since this error may be transient.
 		log.Debugf("Error checking for ztunnel in Kiali accessible namespaces in cluster '%s': %s", cluster, err.Error())
-		return pods
+		return ztunnelPods
 	}
 
 	if len(daemonsets) == 0 {
 		log.Debugf("No ztunnel daemonsets found in Kiali accessible namespaces in cluster '%s'", cluster)
-		return pods
+		return ztunnelPods
 	}
 
 	dsPods, err := kubeCache.GetPods(daemonsets[0].Namespace, "")
 	if err != nil {
 		log.Errorf("Unable to get pods: %s", err)
-		return pods
+		return ztunnelPods
+
 	}
 
-	pods.Namespace = daemonsets[0].Namespace
-	pods.Pods = []string{}
 	for _, pod := range dsPods {
 		if strings.Contains(pod.Name, "ztunnel") {
-			pods.Pods = append(pods.Pods, pod.Name)
+			ztunnelPods = append(ztunnelPods, pod)
 		}
 	}
 
-	return pods
+	return ztunnelPods
 }
 
 type namespacesKey struct {
