@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"gopkg.in/square/go-jose.v2/jwt"
+	"github.com/go-jose/go-jose/jwt"
 	"k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/kiali/kiali/business"

@@ -3,9 +3,9 @@ package kubetest
 import (
 	"sync"
 
+	"github.com/go-jose/go-jose/jwt"
 	osapps_v1 "github.com/openshift/api/apps/v1"
 	"github.com/stretchr/testify/mock"
-	"gopkg.in/square/go-jose.v2/jwt"
 	istio_fake "istio.io/client-go/pkg/clientset/versioned/fake"
 	apps_v1 "k8s.io/api/apps/v1"
 	batch_v1 "k8s.io/api/batch/v1"
