@@ -39,47 +39,6 @@ type WorkloadList struct {
 	Validations IstioValidations `json:"validations"`
 }
 
-type ZtunnelLogLine struct {
-	Timestamp     string
-	Severity      string
-	Access        string
-	Connection    string
-	SrcAddr       string
-	SrcWorkload   string
-	SrcNamespace  string
-	SrcIdentity   string
-	DstAddr       string
-	DstHboneAddr  string
-	DstService    string
-	DstWorkload   string
-	DstNamespace  string
-	DstIdentity   string
-	Direction     string
-	BytesSent     string
-	BytesReceived string
-	Duration      string
-	Error         string
-}
-
-const ZtunnelRegexLine = `(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6,9}Z(?:\s+\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6,9}Z)*)\t+(\w+)\t+(\w+)\t+(\w+\s*\w+)\t+src\.addr=(\S+)\s+src\.workload="([^"]+)"\s+src\.namespace="([^"]+)"\s+src\.identity="([^"]+)"\s+dst\.addr=(\S+)\s+dst\.hbone_addr="([^"]+)"\s+dst\.service="([^"]+)"\s+dst\.workload="([^"]+)"\s+dst\.namespace="([^"]+)"\s+dst\.identity="([^"]+)"\s+direction="([^"]+)"\s+bytes_sent=(\d+)\s+bytes_recv=(\d+)\s+duration="([^"]+)"`
-const ZtunnelInboundRegexLine = `(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6,9}Z(?:\s+\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6,9}Z)*)\t+(\w+)\t+(\w+)\t+(\w+\s*\w+)\t+src\.addr=(\S+)\s+src\.workload="([^"]+)"\s+src\.namespace="([^"]+)"\s+src\.identity="([^"]+)"\s+dst\.addr=(\S+)\s+dst\.service="([^"]+)"\s+dst\.workload="([^"]+)"\s+dst\.namespace="([^"]+)"\s+dst\.identity="([^"]+)"\s+direction="([^"]+)"\s+bytes_sent=(\d+)\s+bytes_recv=(\d+)\s+duration="([^"]+)"`
-const ZtunnelError = `(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6,9}Z(?:\s+\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6,9}Z)*)\t+(\w+)\t+(\w+)\t+(\w+\s*\w+)\t+src\.addr=(\S+)\s+src\.workload="([^"]+)"\s+src\.namespace="([^"]+)"\s+src\.identity="([^"]+)"\s+dst\.addr=(\S+)\s+dst\.service="([^"]+)"\s+dst\.workload="([^"]+)"\s+dst\.namespace="([^"]+)"\s+dst\.identity="([^"]+)"\s+direction="([^"]+)"\s+duration="([^"]+)"\s+error="([^"]+)"`
-const ZtunnelSimpleError = `(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6,9}Z(?:\s+\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6,9}Z)*)\t+(\w+)\t+([\w:{}=-]+)\t+([\w:{}=,()\s]+)`
-
-var ZtunnelProps = [19]string{"Timestamp", "Severity", "Access", "Connection", "SrcAddr", "SrcWorkload", "SrcNamespace", "SrcIdentity", "DstAddr", "DestHboneAddr", "DstService", "DstWorkload", "DstNamespace", "DstIdentity", "Direction", "BytesSent", "BytesReceived", "Duration"}
-var ZtunnelInboundProps = [19]string{"Timestamp", "Severity", "Access", "Connection", "SrcAddr", "SrcWorkload", "SrcNamespace", "SrcIdentity", "DstAddr", "DstService", "DstWorkload", "DstNamespace", "DstIdentity", "Direction", "BytesSent", "BytesReceived", "Duration"}
-var ZtunnelErrorProps = [19]string{"Timestamp", "Severity", "Access", "Connection", "SrcAddr", "SrcWorkload", "SrcNamespace", "SrcIdentity", "DstAddr", "DstService", "DstWorkload", "DstNamespace", "DstIdentity", "Direction", "Error"}
-var ZtunnelSimpleErrorProps = [19]string{"Timestamp", "Severity", "Access", "Error"}
-
-type ZtunnelLogLineType string
-
-const (
-	Hbone       ZtunnelLogLineType = "hbone"
-	Ztunnel     ZtunnelLogLineType = "ztunnel"
-	ErrorLine   ZtunnelLogLineType = "error"
-	SimpleError ZtunnelLogLineType = "simpleError"
-)
-
 type LogType string
 
 const (

@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"reflect"
 	"regexp"
 	"sort"
 	"strconv"
@@ -580,67 +579,21 @@ func parseZtunnelLine(line string) *LogEntry {
 		Severity:      "INFO",
 	}
 
-	regex := regexp.MustCompile(models.ZtunnelRegexLine)
-	matches := regex.FindStringSubmatch(line)
-	prop := models.Hbone
-
-	if len(matches) < 18 {
-		// Try additional format
-		regex = regexp.MustCompile(models.ZtunnelInboundRegexLine)
-		matches = regex.FindStringSubmatch(line)
-		prop = models.Ztunnel
-		if len(matches) < 18 {
-			regex = regexp.MustCompile(models.ZtunnelError)
-			matches = regex.FindStringSubmatch(line)
-			prop = models.ErrorLine
-			if len(matches) < 16 {
-				regex = regexp.MustCompile(models.ZtunnelSimpleError)
-				matches = regex.FindStringSubmatch(line)
-				prop = models.SimpleError
-				if len(matches) < 4 {
-					log.Debugf("Error splitting line line [%s]", line)
-					entry.Message = line
-					return &entry
-				}
-			}
-
-		}
+	splitted := strings.SplitN(line, " ", 2)
+	if len(splitted) != 2 {
+		log.Debugf("Skipping unexpected log line [%s]", line)
+		return nil
 	}
 
-	ztunnelLogLine := models.ZtunnelLogLine{}
-	var field reflect.Value
-	var modelProps string
-	for i, match := range matches[1:] {
+	splitted2 := strings.Split(line, "\t")
 
-		switch prop {
-		case models.Hbone:
-			modelProps = models.ZtunnelProps[i]
-		case models.Ztunnel:
-			modelProps = models.ZtunnelInboundProps[i]
-		case models.ErrorLine:
-			modelProps = models.ZtunnelErrorProps[i]
-		case models.SimpleError:
-			modelProps = models.ZtunnelSimpleErrorProps[i]
-		}
-
-		field = reflect.ValueOf(&ztunnelLogLine).Elem().FieldByName(modelProps)
-
-		if field.IsValid() && field.CanSet() {
-			if field.Kind() == reflect.String {
-				field.SetString(match)
-			}
-		}
-	}
-
-	splitted := strings.Split(line, "\t")
-
-	if len(splitted) < 4 {
+	if len(splitted2) < 4 {
 		log.Debugf("Error splitting line line [%s]", line)
 		entry.Message = line
 		return &entry
 	}
 
-	entry.Message = splitted[4]
+	entry.Message = splitted2[4]
 	if entry.Message == "" {
 		log.Debugf("Skipping empty log line [%s]", line)
 		entry.Message = line
@@ -649,7 +602,7 @@ func parseZtunnelLine(line string) *LogEntry {
 
 	// k8s promises RFC3339 or RFC3339Nano timestamp, ensure RFC3339
 	// Split by blanks, to get the miliseconds for sorting, try RFC3339Nano
-	ts := strings.Split(ztunnelLogLine.Timestamp, " ") // Sometime timestamp is duplicated
+	ts := strings.Split(splitted[0], " ") // Sometime timestamp is duplicated
 	entry.Timestamp = ts[0]
 
 	// If we are past the requested time window then stop processing
@@ -660,26 +613,45 @@ func parseZtunnelLine(line string) *LogEntry {
 		return nil
 	}
 
-	if ztunnelLogLine.Severity != "" {
-		entry.Severity = strings.ToUpper(ztunnelLogLine.Severity)
+	if splitted[1] != "" {
+		entry.Severity = strings.ToUpper(splitted[1])
 	}
-
-	// Process some access log data
-	// More validations can be done. Data is in format direction=outbound
-	// Also, more data could be added?
-	al := parser.AccessLog{}
-	al.BytesSent = ztunnelLogLine.BytesSent
-	al.RequestedServer = ztunnelLogLine.DstIdentity
-	al.UpstreamCluster = ztunnelLogLine.SrcIdentity
-	al.Duration = ztunnelLogLine.Duration
-	al.BytesReceived = ztunnelLogLine.BytesReceived
-
-	entry.AccessLog = &al
 
 	// override the timestamp with a simpler format
 	timestamp := parseTimestamp(parsedTimestamp)
 	entry.Timestamp = timestamp
 	entry.TimestampUnix = parsedTimestamp.UnixMilli()
+
+	// Process some access log data
+	// More validations can be done. Data is in format direction=outbound
+	// Also, more data could be added?
+	al := parser.AccessLog{}
+	al.Timestamp = timestamp
+	if len(splitted2) > 4 {
+		accessLog := strings.Split(splitted2[4], " ")
+		for _, field := range accessLog {
+			parsed := strings.Split(field, "=")
+			if len(parsed) == 2 {
+				parsed[1] = strings.Replace(parsed[1], "\"", "", -1)
+				switch parsed[0] {
+				case "src.identity":
+					al.UpstreamCluster = parsed[1]
+				case "duration":
+					al.Duration = parsed[1]
+				case "bytes_recv":
+					al.BytesReceived = parsed[1]
+				case "bytes_sent":
+					al.BytesSent = parsed[1]
+				case "dst.service":
+					al.RequestedServer = parsed[1]
+				case "error":
+					al.ParseError = parsed[1]
+				}
+			}
+		}
+	}
+
+	entry.AccessLog = &al
 
 	return &entry
 }

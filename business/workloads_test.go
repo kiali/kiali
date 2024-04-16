@@ -37,11 +37,8 @@ func setupWorkloadService(k8s kubernetes.ClientInterface, conf *config.Config) W
 
 func callStreamPodLogs(svc WorkloadService, namespace, podName string, opts *LogOptions) PodLog {
 	w := httptest.NewRecorder()
-	if opts.LogType == models.ZtunnelLog {
-		_ = svc.StreamZtunnelLogs(svc.config.KubernetesConfig.ClusterName, namespace, podName, opts, w)
-	} else {
-		_ = svc.StreamPodLogs(svc.config.KubernetesConfig.ClusterName, namespace, podName, opts, w)
-	}
+
+	_ = svc.StreamPodLogs(svc.config.KubernetesConfig.ClusterName, namespace, podName, opts, w)
 
 	response := w.Result()
 	body, _ := io.ReadAll(response.Body)
