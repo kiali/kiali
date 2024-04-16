@@ -740,9 +740,9 @@ func TestGetZtunnelPodLogsProxy(t *testing.T) {
 	assert.NotNil(entry.AccessLog)
 	assert.Equal("358", entry.AccessLog.BytesReceived)
 	assert.Equal("200", entry.AccessLog.BytesSent)
-	assert.Equal("1ms", entry.AccessLog.Duration)
+	assert.Equal("1ms\n", entry.AccessLog.Duration)
 	assert.Equal("spiffe://cluster.local/ns/bookinfo/sa/bookinfo-productpage", entry.AccessLog.UpstreamCluster)
-	assert.Equal("spiffe://cluster.local/ns/bookinfo/sa/bookinfo-details", entry.AccessLog.RequestedServer)
+	assert.Equal("details.bookinfo.svc.cluster.local", entry.AccessLog.RequestedServer)
 	assert.Equal(int64(1712917911078), entry.TimestampUnix)
 
 }

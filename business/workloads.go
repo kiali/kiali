@@ -585,15 +585,15 @@ func parseZtunnelLine(line string) *LogEntry {
 		return nil
 	}
 
-	splitted2 := strings.Split(line, "\t")
+	msgSplit := strings.Split(line, "\t")
 
-	if len(splitted2) < 4 {
+	if len(msgSplit) < 4 {
 		log.Debugf("Error splitting line line [%s]", line)
 		entry.Message = line
 		return &entry
 	}
 
-	entry.Message = splitted2[4]
+	entry.Message = msgSplit[4]
 	if entry.Message == "" {
 		log.Debugf("Skipping empty log line [%s]", line)
 		entry.Message = line
@@ -602,7 +602,7 @@ func parseZtunnelLine(line string) *LogEntry {
 
 	// k8s promises RFC3339 or RFC3339Nano timestamp, ensure RFC3339
 	// Split by blanks, to get the miliseconds for sorting, try RFC3339Nano
-	ts := strings.Split(splitted[0], " ") // Sometime timestamp is duplicated
+	ts := strings.Split(msgSplit[0], " ") // Sometime timestamp is duplicated
 	entry.Timestamp = ts[0]
 
 	// If we are past the requested time window then stop processing
@@ -627,8 +627,8 @@ func parseZtunnelLine(line string) *LogEntry {
 	// Also, more data could be added?
 	al := parser.AccessLog{}
 	al.Timestamp = timestamp
-	if len(splitted2) > 4 {
-		accessLog := strings.Split(splitted2[4], " ")
+	if len(msgSplit) > 4 {
+		accessLog := strings.Split(msgSplit[4], " ")
 		for _, field := range accessLog {
 			parsed := strings.Split(field, "=")
 			if len(parsed) == 2 {
