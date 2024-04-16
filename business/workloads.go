@@ -2100,7 +2100,7 @@ func (in *WorkloadService) GetWorkloadAppName(ctx context.Context, cluster, name
 	return app, nil
 }
 
-// streamParsedLogs fetches logs from a container in a pod, parses and decorates each log line with some metadata (of possible) and
+// streamParsedLogs fetches logs from a container in a pod, parses and decorates each log line with some metadata (if possible) and
 // sends the processed lines to the client in JSON format. Results are sent as processing is performed, so in case of any error when
 // doing processing the JSON document will be truncated.
 func (in *WorkloadService) streamParsedLogs(cluster, namespace, name string, opts *LogOptions, w http.ResponseWriter, ambient bool) error {
