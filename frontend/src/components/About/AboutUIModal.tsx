@@ -16,6 +16,7 @@ import { config, kialiLogoDark } from '../../config';
 import { kialiStyle } from 'styles/StyleUtils';
 import { KialiIcon } from 'config/KialiIcon';
 import { ReactComponent as IstioLogo } from '../../assets/img/mesh/istio.svg';
+import { Link } from 'react-router-dom';
 
 type AboutUIModalProps = {
   isOpen: boolean;
@@ -52,10 +53,10 @@ export const AboutUIModal: React.FC<AboutUIModalProps> = (props: AboutUIModalPro
   const renderMeshLink = () => {
     if (config?.about?.mesh) {
       return (
-        <Button component="a" href={config.about.mesh.url} variant={ButtonVariant.link} isInline>
+        <Link id="mesh" to={config.about.mesh.url} onClick={props.onClose}>
           <IstioLogo className={iconStyle} />
           {config.about.mesh.linkText}
-        </Button>
+        </Link>
       );
     }
 
@@ -66,7 +67,7 @@ export const AboutUIModal: React.FC<AboutUIModalProps> = (props: AboutUIModalPro
     if (config?.about?.project) {
       return (
         <Button component="a" href={config.about.project.url} variant={ButtonVariant.link} target="_blank" isInline>
-          <KialiIcon.Repository className={iconStyle} />
+          <KialiIcon.Github className={iconStyle} />
           {config.about.project.linkText}
         </Button>
       );

@@ -70,17 +70,14 @@ const conf = {
   about: {
     mesh: {
       url: '/mesh',
-      icon: 'IstioIcon',
       linkText: 'Visit the Mesh page'
     },
     project: {
       url: 'https://github.com/kiali',
-      icon: 'RepositoryIcon',
       linkText: i18n.t('Kiali on GitHub')
     },
     website: {
       url: 'https://www.kiali.io', // Without www, we get an SSL error
-      icon: 'HomeIcon',
       linkText: 'kiali.io'
     }
   },
