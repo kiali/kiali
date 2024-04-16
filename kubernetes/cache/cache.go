@@ -235,7 +235,7 @@ func (in *kialiCacheImpl) GetZtunnelPods(cluster string) []v1.Pod {
 
 	dsPods, err := kubeCache.GetPods(daemonsets[0].Namespace, "")
 	if err != nil {
-		log.Errorf("Unable to get pods: %s", err)
+		log.Errorf("Unable to get ztunnel pods: %s", err)
 		return ztunnelPods
 
 	}
