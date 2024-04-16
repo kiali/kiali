@@ -601,7 +601,7 @@ func parseZtunnelLine(line string) *LogEntry {
 	}
 
 	// k8s promises RFC3339 or RFC3339Nano timestamp, ensure RFC3339
-	// Split by blanks, to get the miliseconds for sorting, try RFC3339Nano
+	// Split by blanks, to get the milliseconds for sorting, try RFC3339Nano
 	ts := strings.Split(msgSplit[0], " ") // Sometime timestamp is duplicated
 	entry.Timestamp = ts[0]
 
