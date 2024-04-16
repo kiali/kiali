@@ -80,6 +80,15 @@ const (
 	SimpleError ZtunnelLogLineType = "simpleError"
 )
 
+type LogType string
+
+const (
+	AppLog      LogType = "app"
+	ProxyLog    LogType = "proxy"
+	WaypointLog LogType = "waypoint"
+	ZtunnelLog  LogType = "ztunnel"
+)
+
 // WorkloadListItem has the necessary information to display the console workload list
 type WorkloadListItem struct {
 	// Name of the workload

@@ -250,11 +250,17 @@ export interface PodLogs {
   linesTruncated?: boolean;
 }
 
+export enum LogType {
+  APP = 'app',
+  PROXY = 'proxy',
+  ZTUNNEL = 'ztunnel',
+  WAYPOINT = 'waypoint'
+}
+
 export interface PodLogsQuery {
   container?: string;
   duration?: string;
-  isProxy?: boolean;
-  isZtunnel?: boolean;
+  logType?: LogType;
   maxLines?: number;
   sinceTime?: number;
 }

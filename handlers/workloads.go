@@ -281,23 +281,11 @@ func PodLogs(w http.ResponseWriter, r *http.Request) {
 	opts, err := business.Workload.BuildLogOptionsCriteria(
 		queryParams.Get("container"),
 		queryParams.Get("duration"),
-		queryParams.Get("isProxy"),
-		queryParams.Get("isZtunnel"),
+		models.LogType(queryParams.Get("logType")),
 		queryParams.Get("sinceTime"),
 		queryParams.Get("maxLines"))
 	if err != nil {
 		handleErrorResponse(w, err)
-		return
-	}
-
-	ztunnel := queryParams.Get("isZtunnel")
-	if ztunnel == "true" {
-		// Fetch pod logs
-		err = business.Workload.StreamZtunnelLogs(cluster, namespace, pod, opts, w)
-		if err != nil {
-			handleErrorResponse(w, err)
-			return
-		}
 		return
 	}
 

@@ -98,15 +98,6 @@ type LogEntry struct {
 	AccessLog     *parser.AccessLog `json:"accessLog,omitempty"`
 }
 
-type LogType string
-
-const (
-	AppLog      LogType = "app"
-	ProxyLog    LogType = "proxy"
-	WaypointLog LogType = "waypoint"
-	ZtunnelLog  LogType = "ztunnel"
-)
-
 type filterOpts struct {
 	destWk string
 	destNs string
@@ -117,7 +108,7 @@ type filterOpts struct {
 // LogOptions holds query parameter values
 type LogOptions struct {
 	Duration *time.Duration
-	LogType  LogType
+	LogType  models.LogType
 	MaxLines *int
 	core_v1.PodLogOptions
 	filter filterOpts
@@ -463,7 +454,7 @@ func (in *WorkloadService) GetPod(cluster, namespace, name string) (*models.Pod,
 	return &pod, nil
 }
 
-func (in *WorkloadService) BuildLogOptionsCriteria(container, duration, isProxy, isZtunnel, sinceTime, maxLines string) (*LogOptions, error) {
+func (in *WorkloadService) BuildLogOptionsCriteria(container, duration string, logType models.LogType, sinceTime, maxLines string) (*LogOptions, error) {
 	opts := &LogOptions{}
 	opts.PodLogOptions = core_v1.PodLogOptions{Timestamps: true}
 
@@ -480,7 +471,7 @@ func (in *WorkloadService) BuildLogOptionsCriteria(container, duration, isProxy,
 		opts.Duration = &duration
 	}
 
-	opts.LogType = ProxyLog
+	opts.LogType = logType
 
 	if sinceTime != "" {
 		numTime, err := strconv.ParseInt(sinceTime, 10, 64)
@@ -2168,18 +2159,18 @@ func (in *WorkloadService) streamParsedLogs(cluster, namespace, name string, opt
 		}
 
 		var entry *LogEntry
-		if opts.LogType == ZtunnelLog {
+		if opts.LogType == models.ZtunnelLog {
 			entry = parseZtunnelLine(line)
 		} else {
 			engardeParser := parser.New(parser.IstioProxyAccessLogsPattern)
-			entry = parseLogLine(line, opts.LogType == ProxyLog, engardeParser)
+			entry = parseLogLine(line, opts.LogType == models.ProxyLog, engardeParser)
 		}
 
 		if entry == nil {
 			continue
 		}
 
-		if opts.LogType == ZtunnelLog && !filterMatches(entry.Message, opts.filter) {
+		if opts.LogType == models.ZtunnelLog && !filterMatches(entry.Message, opts.filter) {
 			continue
 		}
 
@@ -2248,29 +2239,27 @@ func (in *WorkloadService) streamParsedLogs(cluster, namespace, name string, opt
 
 // StreamPodLogs streams pod logs to an HTTP Response given the provided options
 func (in *WorkloadService) StreamPodLogs(cluster, namespace, name string, opts *LogOptions, w http.ResponseWriter) error {
+
+	if opts.LogType == models.ZtunnelLog {
+		// First, get ztunnel namespace and containers
+		pods := in.cache.GetZtunnelPods(cluster)
+		opts.PodLogOptions.Container = models.IstioProxy
+		opts.LogType = models.ZtunnelLog
+		// The ztunnel line should include the pod and the namespace
+		fs := filterOpts{
+			destWk: fmt.Sprintf("dst.workload=\"%s\"", name),
+			destNs: fmt.Sprintf("dst.namespace=\"%s\"", namespace),
+			srcWk:  fmt.Sprintf("src.workload=\"%s\"", name),
+			srcNs:  fmt.Sprintf("src.namespace=\"%s\"", namespace),
+		}
+		opts.filter = fs
+		var streamErr error
+		for _, pod := range pods {
+			streamErr = in.streamParsedLogs(cluster, pod.Namespace, pod.Name, opts, w)
+		}
+		return streamErr
+	}
 	return in.streamParsedLogs(cluster, namespace, name, opts, w)
-}
-
-// StreamZtunnelLogs streams pod logs to an HTTP Response given the provided options
-func (in *WorkloadService) StreamZtunnelLogs(cluster, namespace, name string, opts *LogOptions, w http.ResponseWriter) error {
-
-	// First, get ztunnel namespace and containers
-	pods := in.cache.GetZtunnelPods(cluster)
-	opts.PodLogOptions.Container = models.IstioProxy
-	opts.LogType = ZtunnelLog
-	// The ztunnel line should include the pod and the namespace
-	fs := filterOpts{
-		destWk: fmt.Sprintf("dst.workload=\"%s\"", name),
-		destNs: fmt.Sprintf("dst.namespace=\"%s\"", namespace),
-		srcWk:  fmt.Sprintf("src.workload=\"%s\"", name),
-		srcNs:  fmt.Sprintf("src.namespace=\"%s\"", namespace),
-	}
-	opts.filter = fs
-	var streamErr error
-	for _, pod := range pods {
-		streamErr = in.streamParsedLogs(cluster, pod.Namespace, pod.Name, opts, w)
-	}
-	return streamErr
 }
 
 // AND filter

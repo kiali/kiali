@@ -10,6 +10,7 @@ export interface AccessLogModalProps {
   accessLog: AccessLog;
   accessLogMessage: string;
   className?: string;
+  isZtunnel: boolean;
   onClose?: () => void;
 }
 
@@ -839,7 +840,7 @@ export const AccessLogModal: React.FC<AccessLogModalProps> = (props: AccessLogMo
     <Modal
       className={modalStyle}
       disableFocusTrap={true}
-      title="Envoy Access Log Entry"
+      title={props.isZtunnel ? 'ztunnel Access Log Entry' : 'Envoy Access Log Entry'}
       isOpen={true}
       onClose={props.onClose}
     >

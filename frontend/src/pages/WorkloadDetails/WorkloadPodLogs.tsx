@@ -5,34 +5,34 @@ import {
   ButtonVariant,
   Card,
   CardBody,
+  Checkbox,
+  Divider,
+  Dropdown,
+  DropdownItem,
+  DropdownList,
+  Form,
+  FormGroup,
   Grid,
   GridItem,
+  MenuGroup,
+  MenuToggle,
+  MenuToggleElement,
   TextInput,
   Toolbar,
   ToolbarGroup,
   ToolbarItem,
   Tooltip,
-  TooltipPosition,
-  Form,
-  FormGroup,
-  Checkbox,
-  DropdownItem,
-  Divider,
-  MenuGroup,
-  Dropdown,
-  MenuToggleElement,
-  MenuToggle,
-  DropdownList
+  TooltipPosition
 } from '@patternfly/react-core';
 import memoize from 'micro-memoize';
 import { AutoSizer, List } from 'react-virtualized';
 import { kialiStyle } from 'styles/StyleUtils';
 import { addError, addSuccess } from 'utils/AlertUtils';
-import { Pod, LogEntry, AccessLog, PodLogs } from '../../types/IstioObjects';
+import { AccessLog, LogEntry, LogType, Pod, PodLogs } from '../../types/IstioObjects';
 import { getPodLogs, getWorkloadSpans, setPodEnvoyProxyLogLevel } from '../../services/Api';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 import { ToolbarDropdown } from '../../components/ToolbarDropdown/ToolbarDropdown';
-import { TimeRange, evalTimeRange, TimeInMilliseconds, isEqualTimeRange, TimeInSeconds } from '../../types/Common';
+import { evalTimeRange, isEqualTimeRange, TimeInMilliseconds, TimeInSeconds, TimeRange } from '../../types/Common';
 import { RenderComponentScroll } from '../../components/Nav/Page';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
 import { KialiIcon } from '../../config/KialiIcon';
@@ -44,7 +44,7 @@ import { PFColors, PFColorVal } from 'components/Pf/PfColors';
 import { AccessLogModal } from 'components/Envoy/AccessLogModal';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { history, URLParam } from 'app/History';
-import { TracingQuery, Span } from 'types/Tracing';
+import { Span, TracingQuery } from 'types/Tracing';
 import moment from 'moment';
 import { formatDuration } from 'utils/tracing/TracingHelper';
 import { infoStyle, kebabToggleStyle } from 'styles/DropdownStyles';
@@ -843,6 +843,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
           accessLog={v}
           accessLogMessage={k}
           onClose={() => this.removeAccessLogModal(k)}
+          isZtunnel={this.state.showZtunnel}
         />
       );
     });
@@ -1118,12 +1119,21 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
     }
 
     const promises: Promise<ApiResponse<PodLogs | Span[]>>[] = selectedContainers.map(c => {
-      return getPodLogs(namespace, podName, c.name, maxLines, sinceTime, duration, c.isProxy, false, cluster);
+      return getPodLogs(
+        namespace,
+        podName,
+        c.name,
+        maxLines,
+        sinceTime,
+        duration,
+        c.isProxy ? LogType.PROXY : LogType.APP,
+        cluster
+      );
     });
 
     if (showZtunnel) {
       extraContainers.forEach(c => {
-        promises.push(getPodLogs(namespace, podName, c.name, maxLines, sinceTime, duration, false, true, cluster));
+        promises.push(getPodLogs(namespace, podName, c.name, maxLines, sinceTime, duration, LogType.ZTUNNEL, cluster));
       });
     }
 
