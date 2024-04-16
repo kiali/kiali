@@ -23,7 +23,7 @@ import (
 
 // NamespaceService deals with fetching k8sClients namespaces / OpenShift projects and convert to kiali model
 type NamespaceService struct {
-	conf                   config.Config
+	conf                   *config.Config
 	hasProjects            bool
 	homeClusterUserClient  kubernetes.ClientInterface
 	isAccessibleNamespaces map[string]bool
@@ -45,7 +45,7 @@ func IsAccessibleError(err error) bool {
 	return isAccessibleError
 }
 
-func NewNamespaceService(userClients map[string]kubernetes.ClientInterface, kialiSAClients map[string]kubernetes.ClientInterface, cache cache.KialiCache, conf config.Config) NamespaceService {
+func NewNamespaceService(userClients map[string]kubernetes.ClientInterface, kialiSAClients map[string]kubernetes.ClientInterface, cache cache.KialiCache, conf *config.Config) NamespaceService {
 	var hasProjects bool
 
 	homeClusterName := conf.KubernetesConfig.ClusterName
@@ -113,7 +113,7 @@ func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Namespa
 		log.Errorf("Will not process discoverySelectors due to a failure to get the Kiali cache: %v", err)
 	} else {
 		// determine what the discoverySelectors are by examining the Istio ConfigMap
-		if icm, err := homeClusterCache.GetConfigMap(in.conf.IstioNamespace, IstioConfigMapName(in.conf, "")); err == nil {
+		if icm, err := homeClusterCache.GetConfigMap(in.conf.IstioNamespace, IstioConfigMapName(*in.conf, "")); err == nil {
 			if ic, err2 := kubernetes.GetIstioConfigMap(icm); err2 == nil {
 				discoverySelectors = ic.DiscoverySelectors
 			} else {

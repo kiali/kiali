@@ -25,7 +25,7 @@ func setupNamespaceService(t *testing.T, k8s kubernetes.ClientInterface, conf *c
 
 	k8sclients := make(map[string]kubernetes.ClientInterface)
 	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
-	return NewNamespaceService(k8sclients, k8sclients, cache, *conf)
+	return NewNamespaceService(k8sclients, k8sclients, cache, conf)
 }
 
 // Namespace service setup
@@ -234,7 +234,7 @@ func TestMultiClusterGetNamespace(t *testing.T) {
 	SetWithBackends(mockClientFactory, nil)
 	cache := cache.NewTestingCacheWithFactory(t, clientFactory, *conf)
 
-	nsservice := NewNamespaceService(clients, clients, cache, *conf)
+	nsservice := NewNamespaceService(clients, clients, cache, conf)
 
 	ns, err := nsservice.GetClusterNamespace(context.TODO(), "bookinfo", conf.KubernetesConfig.ClusterName)
 	require.NoError(err)
@@ -266,7 +266,7 @@ func TestMultiClusterGetNamespaces(t *testing.T) {
 	SetWithBackends(mockClientFactory, nil)
 	cache := cache.NewTestingCacheWithFactory(t, clientFactory, *conf)
 
-	nsservice := NewNamespaceService(clients, clients, cache, *conf)
+	nsservice := NewNamespaceService(clients, clients, cache, conf)
 	namespaces, err := nsservice.GetNamespaces(context.TODO())
 	require.NoError(err)
 
@@ -306,7 +306,7 @@ func TestGetNamespacesCached(t *testing.T) {
 		[]models.Namespace{{Name: "bookinfo", Cluster: "east"}, {Name: "alpha", Cluster: "east"}, {Name: "beta", Cluster: "east"}, {Name: "gamma", Cluster: "west"}},
 	)
 
-	nsservice := NewNamespaceService(clients, clients, cache, *conf)
+	nsservice := NewNamespaceService(clients, clients, cache, conf)
 	namespaces, err := nsservice.GetNamespaces(context.TODO())
 	require.NoError(err)
 
@@ -349,7 +349,7 @@ func TestGetNamespacesDifferentTokens(t *testing.T) {
 		[]models.Namespace{{Name: "gamma", Cluster: "west"}},
 	)
 
-	nsservice := NewNamespaceService(clients, clients, cache, *conf)
+	nsservice := NewNamespaceService(clients, clients, cache, conf)
 	namespaces, err := nsservice.GetNamespaces(context.TODO())
 	require.NoError(err)
 
@@ -401,7 +401,7 @@ func TestGetNamespacesForbiddenCached(t *testing.T) {
 		[]models.Namespace{{Name: "bookinfo", Cluster: "west"}},
 	)
 
-	nsservice := NewNamespaceService(clients, clients, cache, *conf)
+	nsservice := NewNamespaceService(clients, clients, cache, conf)
 	// Try to get the bookinfo namespace from the home cluster.
 	_, err := nsservice.GetClusterNamespace(context.TODO(), "bookinfo", "east")
 	require.Error(err)

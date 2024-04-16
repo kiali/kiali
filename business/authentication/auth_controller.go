@@ -6,8 +6,6 @@ import (
 	"time"
 
 	"k8s.io/client-go/tools/clientcmd/api"
-
-	"github.com/kiali/kiali/config"
 )
 
 // TerminateSessionError is a helper type implementing the error interface.
@@ -94,29 +92,4 @@ func (e *AuthenticationFailureError) Error() string {
 	}
 
 	return e.Reason
-}
-
-var authController AuthController
-
-// GetAuthController gets the authentication controller that is currently configured and handling
-// user sessions and any authentication related requests.
-func GetAuthController() AuthController {
-	return authController
-}
-
-// InitializeAuthenticationController initializes the authentication controller associated to the
-// given strategy and prepares it to control user sessions and handle authentication requests.
-// This should be called during Kiali startup, before starting to listen to HTTP requests.
-func InitializeAuthenticationController(strategy string) {
-	persistor := CookieSessionPersistor{}
-
-	if strategy == config.AuthStrategyToken {
-		authController = NewTokenAuthController(persistor, nil)
-	} else if strategy == config.AuthStrategyOpenId {
-		authController = NewOpenIdAuthController(persistor, nil)
-	} else if strategy == config.AuthStrategyOpenshift {
-		authController = NewOpenshiftAuthController(persistor, nil)
-	} else if strategy == config.AuthStrategyHeader {
-		authController = NewHeaderAuthController(persistor, nil)
-	}
 }
