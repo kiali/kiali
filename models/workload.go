@@ -42,10 +42,10 @@ type WorkloadList struct {
 type LogType string
 
 const (
-	AppLog      LogType = "app"
-	ProxyLog    LogType = "proxy"
-	WaypointLog LogType = "waypoint"
-	ZtunnelLog  LogType = "ztunnel"
+	LogTypeApp      LogType = "app"
+	LogTypeProxy    LogType = "proxy"
+	LogTypeWaypoint LogType = "waypoint"
+	LogTypeZtunnel  LogType = "ztunnel"
 )
 
 // WorkloadListItem has the necessary information to display the console workload list

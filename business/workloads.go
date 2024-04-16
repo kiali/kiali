@@ -2079,7 +2079,7 @@ func (in *WorkloadService) streamParsedLogs(cluster, namespace, name string, opt
 	}
 
 	var engardeParser *parser.Parser
-	if opts.LogType == models.ProxyLog {
+	if opts.LogType == models.LogTypeProxy {
 		engardeParser = parser.New(parser.IstioProxyAccessLogsPattern)
 	}
 
@@ -2140,17 +2140,17 @@ func (in *WorkloadService) streamParsedLogs(cluster, namespace, name string, opt
 		}
 
 		var entry *LogEntry
-		if opts.LogType == models.ZtunnelLog {
+		if opts.LogType == models.LogTypeZtunnel {
 			entry = parseZtunnelLine(line)
 		} else {
-			entry = parseLogLine(line, opts.LogType == models.ProxyLog, engardeParser)
+			entry = parseLogLine(line, opts.LogType == models.LogTypeProxy, engardeParser)
 		}
 
 		if entry == nil {
 			continue
 		}
 
-		if opts.LogType == models.ZtunnelLog && !filterMatches(entry.Message, opts.filter) {
+		if opts.LogType == models.LogTypeZtunnel && !filterMatches(entry.Message, opts.filter) {
 			continue
 		}
 
@@ -2220,7 +2220,7 @@ func (in *WorkloadService) streamParsedLogs(cluster, namespace, name string, opt
 // StreamPodLogs streams pod logs to an HTTP Response given the provided options
 func (in *WorkloadService) StreamPodLogs(cluster, namespace, name string, opts *LogOptions, w http.ResponseWriter) error {
 
-	if opts.LogType == models.ZtunnelLog {
+	if opts.LogType == models.LogTypeZtunnel {
 		// First, get ztunnel namespace and containers
 		pods := in.cache.GetZtunnelPods(cluster)
 		// This is needed for the K8S client

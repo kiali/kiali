@@ -692,7 +692,7 @@ func TestGetPodLogsProxy(t *testing.T) {
 
 	maxLines := 2
 	duration, _ := time.ParseDuration("2h")
-	podLogs := callStreamPodLogs(svc, "Namespace", "details-v1-3618568057-dnkjp", &LogOptions{Duration: &duration, LogType: models.ProxyLog, PodLogOptions: core_v1.PodLogOptions{Container: "details"}, MaxLines: &maxLines})
+	podLogs := callStreamPodLogs(svc, "Namespace", "details-v1-3618568057-dnkjp", &LogOptions{Duration: &duration, LogType: models.LogTypeProxy, PodLogOptions: core_v1.PodLogOptions{Container: "details"}, MaxLines: &maxLines})
 	require.Equal(1, len(podLogs.Entries))
 	entry := podLogs.Entries[0]
 	assert.Equal(`[2021-02-01T21:34:35.533Z] "GET /hotels/Ljubljana HTTP/1.1" 200 - via_upstream - "-" 0 99 14 14 "-" "Go-http-client/1.1" "7e7e2dd0-0a96-4535-950b-e303805b7e27" "hotels.travel-agency:8000" "127.0.2021-02-01T21:34:38.761055140Z 0.1:8000" inbound|8000|| 127.0.0.1:33704 10.129.0.72:8000 10.128.0.79:39880 outbound_.8000_._.hotels.travel-agency.svc.cluster.local default`, entry.Message)
@@ -731,7 +731,7 @@ func TestGetZtunnelPodLogsProxy(t *testing.T) {
 
 	maxLines := 2
 	duration, _ := time.ParseDuration("2h")
-	podLogs := callStreamPodLogs(svc, "bookinfo", "details-v1-cf74bb974-wg44w", &LogOptions{Duration: &duration, LogType: models.ZtunnelLog, PodLogOptions: core_v1.PodLogOptions{Container: "details"}, MaxLines: &maxLines})
+	podLogs := callStreamPodLogs(svc, "bookinfo", "details-v1-cf74bb974-wg44w", &LogOptions{Duration: &duration, LogType: models.LogTypeZtunnel, PodLogOptions: core_v1.PodLogOptions{Container: "details"}, MaxLines: &maxLines})
 	require.Equal(1, len(podLogs.Entries))
 	entry := podLogs.Entries[0]
 
@@ -1013,7 +1013,7 @@ func TestGetPodLogsWithoutAccessLogs(t *testing.T) {
 	SetupBusinessLayer(t, k8s, *conf)
 	svc := setupWorkloadService(k8s, conf)
 
-	podLogs := callStreamPodLogs(svc, "Namespace", "details-v1-3618568057-dnkjp", &LogOptions{LogType: models.ProxyLog, PodLogOptions: core_v1.PodLogOptions{Container: "istio-proxy"}})
+	podLogs := callStreamPodLogs(svc, "Namespace", "details-v1-3618568057-dnkjp", &LogOptions{LogType: models.LogTypeProxy, PodLogOptions: core_v1.PodLogOptions{Container: "istio-proxy"}})
 
 	assert.Equal(8, len(podLogs.Entries))
 	for _, entry := range podLogs.Entries {
