@@ -208,7 +208,7 @@ func (in *kialiCacheImpl) IsAmbientEnabled(cluster string) bool {
 	return check
 }
 
-// GetZtunnel returs the pods list from ztunnel daemonset
+// GetZtunnelPods returns the pods list from ztunnel daemonset
 func (in *kialiCacheImpl) GetZtunnelPods(cluster string) []v1.Pod {
 
 	ztunnelPods := []v1.Pod{}
