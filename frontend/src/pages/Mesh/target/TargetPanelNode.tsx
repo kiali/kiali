@@ -1,13 +1,7 @@
 import * as React from 'react';
 import { Node, NodeModel } from '@patternfly/react-topology';
 import { kialiStyle } from 'styles/StyleUtils';
-import {
-  TargetPanelCommonProps,
-  targetPanel,
-  targetPanelBody,
-  targetPanelHeading,
-  targetPanelWidth
-} from './TargetPanelCommon';
+import { TargetPanelCommonProps, targetPanel, targetPanelBody, targetPanelHeading } from './TargetPanelCommon';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { MeshInfraType, MeshNodeData } from 'types/Mesh';
 import { classes } from 'typestyle';
@@ -30,14 +24,6 @@ const nodeStyle = kialiStyle({
 });
 
 export class TargetPanelNode extends React.Component<TargetPanelCommonProps, TargetPanelNodeState> {
-  static readonly panelStyle = {
-    height: '100%',
-    margin: 0,
-    minWidth: targetPanelWidth,
-    overflowY: 'auto' as 'auto',
-    width: targetPanelWidth
-  };
-
   constructor(props: TargetPanelCommonProps) {
     super(props);
 

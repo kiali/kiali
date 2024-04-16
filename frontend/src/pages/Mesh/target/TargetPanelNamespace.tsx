@@ -7,8 +7,7 @@ import {
   targetPanel,
   targetPanelBody,
   targetPanelBorder,
-  targetPanelHR,
-  targetPanelWidth
+  targetPanelHR
 } from './TargetPanelCommon';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { Card, CardBody, CardHeader, Label, Title, TitleSizes, Tooltip, TooltipPosition } from '@patternfly/react-core';
@@ -106,14 +105,6 @@ const namespaceNameStyle = kialiStyle({
 });
 
 export class TargetPanelNamespace extends React.Component<TargetPanelNamespaceProps, TargetPanelNamespaceState> {
-  static readonly panelStyle = {
-    height: '100%',
-    margin: 0,
-    minWidth: targetPanelWidth,
-    overflowY: 'auto' as 'auto',
-    width: targetPanelWidth
-  };
-
   private promises = new PromisesRegistry();
 
   constructor(props: TargetPanelNamespaceProps) {
@@ -161,7 +152,7 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
 
   render(): React.ReactNode {
     if (this.state.loading || !this.state.nsInfo) {
-      return null;
+      return this.getLoading();
     }
 
     const isControlPlane = this.isControlPlane();
@@ -277,7 +268,27 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
     );
   }
 
-  hasCanaryUpgradeConfigured = (): boolean => {
+  private getLoading = (): React.ReactNode => {
+    return (
+      <div className={classes(targetPanelBorder, targetPanel)}>
+        <Card
+          isCompact={true}
+          className={cardGridStyle}
+          style={!this.props.istioAPIEnabled && !this.hasCanaryUpgradeConfigured() ? { height: '96%' } : {}}
+        >
+          <CardHeader className={panelHeadingStyle}>
+            <Title headingLevel="h5" size={TitleSizes.lg}>
+              <span className={namespaceNameStyle}>
+                <span>Loading...</span>
+              </span>
+            </Title>
+          </CardHeader>
+        </Card>
+      </div>
+    );
+  };
+
+  private hasCanaryUpgradeConfigured = (): boolean => {
     if (this.state.canaryUpgradeStatus) {
       if (
         this.state.canaryUpgradeStatus.pendingNamespaces.length > 0 ||
@@ -290,7 +301,7 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
     return false;
   };
 
-  getNamespaceActions = (nsInfo: NamespaceInfo): OverviewNamespaceAction[] => {
+  private getNamespaceActions = (nsInfo: NamespaceInfo): OverviewNamespaceAction[] => {
     // Today actions are fixed, but soon actions may depend of the state of a namespace
     // So we keep this wrapped in a showActions function.
     const namespaceActions: OverviewNamespaceAction[] = isParentKiosk(this.props.kiosk)
@@ -575,7 +586,7 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
     return namespaceActions;
   };
 
-  renderNamespaceBadges(ns: NamespaceInfo, tooltip: boolean): JSX.Element {
+  private renderNamespaceBadges(ns: NamespaceInfo, tooltip: boolean): JSX.Element {
     const isControlPlane = this.isControlPlane();
     return (
       <>
@@ -612,7 +623,7 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
     );
   }
 
-  renderLabels(ns: NamespaceInfo): JSX.Element {
+  private renderLabels(ns: NamespaceInfo): JSX.Element {
     const labelsLength = ns.labels ? `${Object.entries(ns.labels).length}` : 'No';
 
     const labelContent = ns.labels ? (
@@ -644,7 +655,7 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
     return labelContent;
   }
 
-  renderIstioConfigStatus(ns: NamespaceInfo): JSX.Element {
+  private renderIstioConfigStatus(ns: NamespaceInfo): JSX.Element {
     let validations: ValidationStatus = { errors: 0, namespace: ns.name, objectCount: 0, warnings: 0 };
 
     if (!!ns.validations) {

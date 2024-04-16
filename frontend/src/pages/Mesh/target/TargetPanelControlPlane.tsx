@@ -7,8 +7,7 @@ import {
   targetPanel,
   targetPanelBody,
   targetPanelBorder,
-  targetPanelHR,
-  targetPanelWidth
+  targetPanelHR
 } from './TargetPanelCommon';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { Card, CardBody, CardHeader, Title, TitleSizes } from '@patternfly/react-core';
@@ -88,14 +87,6 @@ export class TargetPanelControlPlane extends React.Component<
   TargetPanelControlPlaneProps,
   TargetPanelControlPlaneState
 > {
-  static readonly panelStyle = {
-    height: '100%',
-    margin: 0,
-    minWidth: targetPanelWidth,
-    overflowY: 'auto' as 'auto',
-    width: targetPanelWidth
-  };
-
   private promises = new PromisesRegistry();
 
   constructor(props: TargetPanelControlPlaneProps) {
@@ -135,7 +126,7 @@ export class TargetPanelControlPlane extends React.Component<
 
   render(): React.ReactNode {
     if (this.state.loading || !this.state.nsInfo) {
-      return null;
+      return this.getLoading();
     }
 
     const nsInfo = this.state.nsInfo;
@@ -207,7 +198,27 @@ export class TargetPanelControlPlane extends React.Component<
     );
   }
 
-  hasCanaryUpgradeConfigured = (): boolean => {
+  private getLoading = (): React.ReactNode => {
+    return (
+      <div className={classes(targetPanelBorder, targetPanel)}>
+        <Card
+          isCompact={true}
+          className={cardGridStyle}
+          style={!this.props.istioAPIEnabled && !this.hasCanaryUpgradeConfigured() ? { height: '96%' } : {}}
+        >
+          <CardHeader className={panelHeadingStyle}>
+            <Title headingLevel="h5" size={TitleSizes.lg}>
+              <span className={nodeStyle}>
+                <span>Loading...</span>
+              </span>
+            </Title>
+          </CardHeader>
+        </Card>
+      </div>
+    );
+  };
+
+  private hasCanaryUpgradeConfigured = (): boolean => {
     if (this.state.canaryUpgradeStatus) {
       if (
         this.state.canaryUpgradeStatus.pendingNamespaces.length > 0 ||
