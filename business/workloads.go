@@ -101,8 +101,10 @@ type LogEntry struct {
 type LogType string
 
 const (
-	Proxy   LogType = "proxy"
-	Ztunnel LogType = "ztunnel"
+	AppLog      LogType = "app"
+	ProxyLog    LogType = "proxy"
+	WaypointLog LogType = "waypoint"
+	ZtunnelLog  LogType = "ztunnel"
 )
 
 type filterOpts struct {
@@ -478,7 +480,7 @@ func (in *WorkloadService) BuildLogOptionsCriteria(container, duration, isProxy,
 		opts.Duration = &duration
 	}
 
-	opts.LogType = Proxy
+	opts.LogType = ProxyLog
 
 	if sinceTime != "" {
 		numTime, err := strconv.ParseInt(sinceTime, 10, 64)
@@ -2103,7 +2105,7 @@ func (in *WorkloadService) GetWorkloadAppName(ctx context.Context, cluster, name
 // streamParsedLogs fetches logs from a container in a pod, parses and decorates each log line with some metadata (if possible) and
 // sends the processed lines to the client in JSON format. Results are sent as processing is performed, so in case of any error when
 // doing processing the JSON document will be truncated.
-func (in *WorkloadService) streamParsedLogs(cluster, namespace, name string, opts *LogOptions, w http.ResponseWriter, ambient bool) error {
+func (in *WorkloadService) streamParsedLogs(cluster, namespace, name string, opts *LogOptions, w http.ResponseWriter) error {
 	userClient, ok := in.userClients[cluster]
 	if !ok {
 		return fmt.Errorf("user client for cluster [%s] not found", cluster)
@@ -2138,8 +2140,6 @@ func (in *WorkloadService) streamParsedLogs(cluster, namespace, name string, opt
 		}
 	}
 
-	engardeParser := parser.New(parser.IstioProxyAccessLogsPattern)
-
 	// To avoid high memory usage, the JSON will be written
 	// to the HTTP Response as it's received from the cluster API.
 	// That is, each log line is parsed, decorated with Kiali's metadata,
@@ -2168,17 +2168,18 @@ func (in *WorkloadService) streamParsedLogs(cluster, namespace, name string, opt
 		}
 
 		var entry *LogEntry
-		if ambient {
+		if opts.LogType == ZtunnelLog {
 			entry = parseZtunnelLine(line)
 		} else {
-			entry = parseLogLine(line, opts.LogType == Proxy, engardeParser)
+			engardeParser := parser.New(parser.IstioProxyAccessLogsPattern)
+			entry = parseLogLine(line, opts.LogType == ProxyLog, engardeParser)
 		}
 
 		if entry == nil {
 			continue
 		}
 
-		if opts.LogType == Ztunnel && !filterMatches(entry.Message, opts.filter) {
+		if opts.LogType == ZtunnelLog && !filterMatches(entry.Message, opts.filter) {
 			continue
 		}
 
@@ -2247,7 +2248,7 @@ func (in *WorkloadService) streamParsedLogs(cluster, namespace, name string, opt
 
 // StreamPodLogs streams pod logs to an HTTP Response given the provided options
 func (in *WorkloadService) StreamPodLogs(cluster, namespace, name string, opts *LogOptions, w http.ResponseWriter) error {
-	return in.streamParsedLogs(cluster, namespace, name, opts, w, false)
+	return in.streamParsedLogs(cluster, namespace, name, opts, w)
 }
 
 // StreamZtunnelLogs streams pod logs to an HTTP Response given the provided options
@@ -2256,7 +2257,7 @@ func (in *WorkloadService) StreamZtunnelLogs(cluster, namespace, name string, op
 	// First, get ztunnel namespace and containers
 	pods := in.cache.GetZtunnelPods(cluster)
 	opts.PodLogOptions.Container = models.IstioProxy
-
+	opts.LogType = ZtunnelLog
 	// The ztunnel line should include the pod and the namespace
 	fs := filterOpts{
 		destWk: fmt.Sprintf("dst.workload=\"%s\"", name),
@@ -2267,7 +2268,7 @@ func (in *WorkloadService) StreamZtunnelLogs(cluster, namespace, name string, op
 	opts.filter = fs
 	var streamErr error
 	for _, pod := range pods {
-		streamErr = in.streamParsedLogs(cluster, pod.Namespace, pod.Name, opts, w, true)
+		streamErr = in.streamParsedLogs(cluster, pod.Namespace, pod.Name, opts, w)
 	}
 	return streamErr
 }
