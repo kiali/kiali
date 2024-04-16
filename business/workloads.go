@@ -2078,6 +2078,11 @@ func (in *WorkloadService) streamParsedLogs(cluster, namespace, name string, opt
 		return fmt.Errorf("user client for cluster [%s] not found", cluster)
 	}
 
+	var engardeParser *parser.Parser
+	if opts.LogType == models.ProxyLog {
+		engardeParser = parser.New(parser.IstioProxyAccessLogsPattern)
+	}
+
 	k8sOpts := opts.PodLogOptions
 	// the k8s API does not support "endTime/beforeTime". So for bounded time ranges we need to
 	// discard the logs after sinceTime+duration
@@ -2138,7 +2143,6 @@ func (in *WorkloadService) streamParsedLogs(cluster, namespace, name string, opt
 		if opts.LogType == models.ZtunnelLog {
 			entry = parseZtunnelLine(line)
 		} else {
-			engardeParser := parser.New(parser.IstioProxyAccessLogsPattern)
 			entry = parseLogLine(line, opts.LogType == models.ProxyLog, engardeParser)
 		}
 
