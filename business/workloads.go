@@ -646,6 +646,10 @@ func parseZtunnelLine(line string) *LogEntry {
 					al.RequestedServer = parsed[1]
 				case "error":
 					al.ParseError = parsed[1]
+				case "dst.addr":
+					al.UpstreamService = parsed[1]
+				case "src.addr":
+					al.DownstreamRemote = parsed[1]
 				}
 			}
 		}
@@ -2215,8 +2219,8 @@ func (in *WorkloadService) StreamPodLogs(cluster, namespace, name string, opts *
 	if opts.LogType == models.ZtunnelLog {
 		// First, get ztunnel namespace and containers
 		pods := in.cache.GetZtunnelPods(cluster)
+		// This is needed for the K8S client
 		opts.PodLogOptions.Container = models.IstioProxy
-		opts.LogType = models.ZtunnelLog
 		// The ztunnel line should include the pod and the namespace
 		fs := filterOpts{
 			destWk: fmt.Sprintf("dst.workload=\"%s\"", name),
