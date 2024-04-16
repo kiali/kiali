@@ -15,7 +15,7 @@ import { Status, StatusKey } from '../../types/StatusState';
 import { config, kialiLogoDark } from '../../config';
 import { kialiStyle } from 'styles/StyleUtils';
 import { KialiIcon } from 'config/KialiIcon';
-import { IstioLogo } from 'pages/Mesh/MeshLegendData';
+import { ReactComponent as IstioLogo } from '../../assets/img/mesh/istio.svg';
 
 type AboutUIModalProps = {
   isOpen: boolean;
@@ -30,8 +30,10 @@ const modalStyle = kialiStyle({
 });
 
 const iconStyle = kialiStyle({
-  marginTop: '1rem',
-  marginRight: '0.5rem'
+  height: '1rem',
+  marginBottom: '-2px',
+  marginRight: '0.5rem',
+  marginTop: '1rem'
 });
 
 const textContentStyle = kialiStyle({
