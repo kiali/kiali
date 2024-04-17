@@ -19,6 +19,9 @@ Options:
 -a|--auth-strategy <anonymous|token>
     Auth stategy to use for Kiali.
     Default: anonymous
+-ab|--ambient
+    Install Istio Ambient profile
+    Default: Not set
 -dorp|--docker-or-podman <docker|podman>
     What to use when building images.
     Default: docker
@@ -33,7 +36,7 @@ Options:
     and which kind of multicluster environment to setup.
     Default: <none>
 -t|--tempo
-    If Tempo will be installed as a the tracing platform
+    If Tempo will be installed as the tracing platform
     instead of Jaeger
 HELP
 }
@@ -48,6 +51,7 @@ while [[ $# -gt 0 ]]; do
   key="$1"
   case $key in
     -a|--auth-strategy)           AUTH_STRATEGY="$2";         shift;shift; ;;
+    -ab|--ambient)                AMBIENT="true";         shift;shift; ;;
     -dorp|--docker-or-podman)     DORP="$2";                  shift;shift; ;;
     -h|--help)                    helpmsg;                    exit 1       ;;
     -iv|--istio-version)          ISTIO_VERSION="$2";         shift;shift; ;;
@@ -134,8 +138,13 @@ setup_kind_singlecluster() {
   if [[ "${ISTIO_VERSION}" == *-dev ]]; then
     local hub_arg="--image-hub default"
   fi
-  
-  "${SCRIPT_DIR}"/istio/install-istio-via-istioctl.sh --reduce-resources true --client-exe-path "$(which kubectl)" -cn "cluster-default" -mid "mesh-default" -net "network-default" -gae "true" ${hub_arg:-}
+
+  if [ -n "${AMBIENT}" ]; then
+      infomsg "Installing Istio with Ambient arguments"
+      local ambient_args = " -cp ambient"
+  fi
+
+  "${SCRIPT_DIR}"/istio/install-istio-via-istioctl.sh --reduce-resources true --client-exe-path "$(which kubectl)" -cn "cluster-default" -mid "mesh-default" -net "network-default" -gae "true" ${hub_arg:-} "${ambient_args:-}"
 
   infomsg "Pushing the images into the cluster..."
   make -e DORP="${DORP}" -e CLUSTER_TYPE="kind" -e KIND_NAME="ci" cluster-push-kiali
