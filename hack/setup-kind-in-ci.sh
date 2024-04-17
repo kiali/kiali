@@ -140,11 +140,11 @@ setup_kind_singlecluster() {
   fi
 
   if [ -n "${AMBIENT}" ]; then
-      infomsg "Installing Istio with Ambient arguments"
-      local ambient_args = " -cp ambient"
+      infomsg "Installing Istio with Ambient profile"
+      local ambient_args="--config-profile ambient"
   fi
 
-  "${SCRIPT_DIR}"/istio/install-istio-via-istioctl.sh --reduce-resources true --client-exe-path "$(which kubectl)" -cn "cluster-default" -mid "mesh-default" -net "network-default" -gae "true" ${hub_arg:-} "${ambient_args:-}"
+  "${SCRIPT_DIR}"/istio/install-istio-via-istioctl.sh --reduce-resources true --client-exe-path "$(which kubectl)" -cn "cluster-default" -mid "mesh-default" -net "network-default" -gae "true" ${hub_arg:-} ${ambient_args:-}
 
   infomsg "Pushing the images into the cluster..."
   make -e DORP="${DORP}" -e CLUSTER_TYPE="kind" -e KIND_NAME="ci" cluster-push-kiali
