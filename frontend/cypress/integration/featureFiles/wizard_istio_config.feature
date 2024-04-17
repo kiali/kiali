@@ -281,6 +281,7 @@ Feature: Kiali Istio Config wizard
 
   @gateway-api
   @bookinfo-app
+  @selected
   Scenario: Create multiple K8s Gateways with colliding hostnames and port combinations and check for a reference. Then delete one of them and the reference should be gone.
     When user deletes k8sgateway named "gatewayapi-1" and the resource is no longer available
     And user deletes k8sgateway named "gatewayapi-2" and the resource is no longer available
@@ -317,6 +318,7 @@ Feature: Kiali Istio Config wizard
     When user is at the "istio" page
     And viewing the detail for "gatewayapi-2"
     And choosing to delete it
+    And user selects the "bookinfo" namespace
     Then the "K8sGateway" "gatewayapi-2" should not be listed in "bookinfo" namespace
     And the "gatewayapi-1" "K8sGateway" of the "bookinfo" namespace should have a "success"
     When viewing the detail for "gatewayapi-1"
