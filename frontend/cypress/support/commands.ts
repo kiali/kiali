@@ -73,6 +73,37 @@ declare namespace Cypress {
 //   cy.get('button[type="submit"]').click();
 // });
 
+const timeout = 300000; // 5 minutes
+
+function ensureMulticlusterApplicationsAreHealthy(): void {
+  const startTime = this.startTime || Date.now();
+  this.startTime = startTime;
+
+  if (Date.now() - startTime > timeout) {
+    cy.log('Timeout reached without meeting the condition.');
+    return;
+  }
+
+  cy.request(
+    'api/clusters/apps?namespaces=bookinfo&clusterName=west&health=true&istioResources=true&rateInterval=60s'
+  ).then(resp => {
+    const has_http_200 = resp.body.applications.some(
+      app =>
+        app.name === 'reviews' &&
+        app.cluster === 'west' &&
+        app.health.requests.inbound.http !== undefined &&
+        app.health.requests.inbound.http['200'] > 0
+    );
+    if (has_http_200) {
+      cy.log("'reviews' app in 'west' cluster is healthy enough.");
+    } else {
+      cy.log("'reviews' app in 'west' cluster is not healthy yet, checking again in 10 seconds...");
+      cy.wait(10000);
+      ensureMulticlusterApplicationsAreHealthy();
+    }
+  });
+}
+
 Cypress.Commands.add('login', (username: string, password: string) => {
   const auth_strategy = Cypress.env('AUTH_STRATEGY');
   cy.session(
@@ -81,7 +112,9 @@ Cypress.Commands.add('login', (username: string, password: string) => {
       if (auth_strategy === 'openshift') {
         cy.log('Logging in with openshift auth strategy');
         if (password === '' || password === undefined) {
-          throw new Error('Password is required for login. Please set CYPRESS_PASSWD environment variable.');
+          throw new Error(
+            'Password is required for login with openshift auth strategy. Please set CYPRESS_PASSWD environment variable.'
+          );
         }
 
         cy.intercept('/api/namespaces').as('getNamespaces');
@@ -108,12 +141,41 @@ Cypress.Commands.add('login', (username: string, password: string) => {
         cy.wait('@getAuthInfo');
 
         // cy.contains(KUBEADMIN_IDP).should('be.visible').click();
-        // cy.
-        // if (auth_strategy === 'token') {
-        //   cy.exec('kubectl -n istio-system create token citest').then(result => {
-        //     // TODO: token browser login.
-        //   });
-        // }
+      } else if (auth_strategy === 'openid') {
+        // Only works with keycloak at the moment.
+        cy.log('Logging in with OpenID');
+        if (password === '' || password === undefined) {
+          throw new Error(
+            'Password is required for login with openid auth strategy. Please set CYPRESS_PASSWD environment variable.'
+          );
+        }
+
+        cy.request('api/auth/info').then(({ body }) => {
+          let authEndpoint = body.authorizationEndpoint;
+          cy.request({
+            url: authEndpoint,
+            method: 'GET',
+            followRedirect: true
+          }).then(resp => {
+            const $html = Cypress.$(resp.body);
+            const postUrl = $html.find('form[id=kc-form-login]').attr('action');
+            const url = new URL(postUrl);
+            cy.request({
+              url: url.toString(),
+              method: 'POST',
+              form: true,
+              body: {
+                username: username,
+                password: password
+              }
+            }).then(() => {
+              const tags = Cypress.env('TAGS');
+              if (tags.includes('multi-cluster') || tags.includes('multi-primary')) {
+                ensureMulticlusterApplicationsAreHealthy();
+              }
+            });
+          });
+        });
       } else if (auth_strategy === 'token') {
         cy.log('Logging in with token auth strategy');
         cy.exec('kubectl -n istio-system create token citest').then(result => {
