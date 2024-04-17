@@ -145,6 +145,12 @@ const alInfoIcon = kialiStyle({
   width: '0.75rem'
 });
 
+const checkInfoIcon = kialiStyle({
+  display: 'flex',
+  width: '0.75rem',
+  marginTop: '6px'
+});
+
 const infoIcons = kialiStyle({
   marginLeft: '0.5em',
   marginTop: '30%',
@@ -537,24 +543,34 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                   onChange={() => this.toggleSelected(c)}
                 />
                 {c.isAmbient && (
-                  <Checkbox
-                    id={`ztunnel-${c.displayName}`}
-                    key={`ztunnel-${i}`}
-                    className={checkboxStyle}
-                    inputClassName={colorCheck(proxyContainerColor)}
-                    isChecked={this.state.showZtunnel}
-                    label={
-                      <span
-                        style={{
-                          color: proxyContainerColor,
-                          fontWeight: 'bold'
-                        }}
-                      >
-                        istio-proxy (ztunnel)
-                      </span>
-                    }
-                    onChange={() => this.toggleZtunnel()}
-                  />
+                  <>
+                    <Checkbox
+                      id={`ztunnel-${c.displayName}`}
+                      key={`ztunnel-${i}`}
+                      className={checkboxStyle}
+                      inputClassName={colorCheck(proxyContainerColor)}
+                      isChecked={this.state.showZtunnel}
+                      label={
+                        <span
+                          style={{
+                            color: proxyContainerColor,
+                            fontWeight: 'bold'
+                          }}
+                        >
+                          istio-proxy (ztunnel)
+                        </span>
+                      }
+                      onChange={() => this.toggleZtunnel()}
+                    />
+                    <Tooltip
+                      key={`al-tt-tl`}
+                      position={TooltipPosition.auto}
+                      entryDelay={1000}
+                      content="This proxy logs are filtered from the ztunnel pod's own containers"
+                    >
+                      <KialiIcon.Info key={`al-i-ki`} className={checkInfoIcon} />
+                    </Tooltip>
+                  </>
                 )}
               </>
             );
