@@ -148,7 +148,8 @@ const alInfoIcon = kialiStyle({
 const checkInfoIcon = kialiStyle({
   display: 'flex',
   width: '0.75rem',
-  marginTop: '6px'
+  marginLeft: '-5px',
+  marginTop: '5px'
 });
 
 const infoIcons = kialiStyle({
@@ -557,7 +558,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                             fontWeight: 'bold'
                           }}
                         >
-                          istio-proxy (ztunnel)
+                          ztunnel
                         </span>
                       }
                       onChange={() => this.toggleZtunnel()}
@@ -566,9 +567,9 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                       key={`al-tt-tl`}
                       position={TooltipPosition.auto}
                       entryDelay={1000}
-                      content="This proxy logs are filtered from the ztunnel pod's own containers"
+                      content="A filtered subset of log entries from the ztunnel's (ambient node proxy) pod logs, relevant to the selected workload pod"
                     >
-                      <KialiIcon.Info key={`al-i-ki`} className={checkInfoIcon} />
+                      <KialiIcon.Info key={`al-i-ki`} className={checkInfoIcon} color={proxyContainerColor} />
                     </Tooltip>
                   </>
                 )}
@@ -1080,9 +1081,11 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
       const isAmbient = c.isAmbient;
 
       if (c.isProxy) {
+        const proxyName = pod.name.includes('ztunnel') ? 'ztunnel' : 'sidecar-proxy';
+
         return {
           color: proxyContainerColor,
-          displayName: name,
+          displayName: proxyName,
           isAmbient: isAmbient,
           isProxy: true,
           isSelected: true,
