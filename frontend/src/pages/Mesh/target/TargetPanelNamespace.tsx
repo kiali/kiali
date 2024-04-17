@@ -46,13 +46,8 @@ import * as FilterHelper from '../../../components/FilterList/FilterHelper';
 import { ControlPlaneMetricsMap, Metric } from 'types/Metrics';
 import { classes } from 'typestyle';
 import { panelHeadingStyle } from 'pages/Graph/SummaryPanelStyle';
-import { MeshNodeData } from 'types/Mesh';
 
-type TargetPanelNamespaceProps = TargetPanelCommonProps & {
-  // if supplied, overrides the actual targetNode, which may be a DataPlaneNode
-  targetCluster?: string;
-  targetNamespace?: string;
-};
+type TargetPanelNamespaceProps = TargetPanelCommonProps;
 
 type TargetPanelNamespaceState = {
   canaryUpgradeStatus?: CanaryUpgradeStatus;
@@ -79,8 +74,6 @@ const defaultState: TargetPanelNamespaceState = {
   nsInfo: undefined,
   outboundPolicyMode: undefined,
   status: undefined,
-  targetCluster: undefined,
-  targetNamespace: undefined,
   targetNode: undefined,
   tlsStatus: undefined
 };
@@ -111,11 +104,11 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
     super(props);
 
     const targetNode = this.props.target.elem as Node<NodeModel, any>;
-    const targetData = targetNode.getData() as MeshNodeData;
+    const data = (props.target.elem as GraphElement<ElementModel, any>).getData();
     this.state = {
       ...defaultState,
-      targetCluster: this.props.targetCluster ?? targetData.cluster,
-      targetNamespace: this.props.targetNamespace ?? targetData.namespace,
+      targetCluster: data.cluster,
+      targetNamespace: data.namespace,
       targetNode: targetNode
     };
   }

@@ -9,7 +9,8 @@ import { kialiStyle } from 'styles/StyleUtils';
 import { Title, TitleSizes } from '@patternfly/react-core';
 import { ExpandableRowContent, Table, Tbody, Td, Th, Thead, Tr } from '@patternfly/react-table';
 import { NamespaceInfo } from 'types/NamespaceInfo';
-import { TargetPanelNamespace } from './TargetPanelNamespace';
+import { TargetPanelDataPlaneNamespace } from './TargetPanelDataPlaneNamespace';
+import { serverConfig } from 'config';
 
 type TargetPanelDataPlaneState = {
   expanded: string[];
@@ -55,39 +56,40 @@ export class TargetPanelDataPlane extends React.Component<TargetPanelCommonProps
                 <Th>Namespace</Th>
               </Tr>
             </Thead>
-            {(data.infraData as NamespaceInfo[]).map((ns, i) => {
-              return (
-                <Tbody key={ns.name} isExpanded={this.isExpanded(ns)}>
-                  <Tr>
-                    <Td
-                      expand={{
-                        rowIndex: i,
-                        isExpanded: this.isExpanded(ns),
-                        onToggle: () => this.toggleExpanded(ns),
-                        expandId: `ns-${ns.name}`
-                      }}
-                    />
-                    <Td dataLabel="Namespace">{ns.name}</Td>
-                  </Tr>
-                  <Tr isExpanded={this.isExpanded(ns)}>
-                    <Td dataLabel="detail">
-                      <ExpandableRowContent>
-                        <TargetPanelNamespace
-                          duration={this.props.duration}
-                          istioAPIEnabled={this.props.istioAPIEnabled}
-                          kiosk={this.props.kiosk}
-                          refreshInterval={this.props.refreshInterval}
-                          target={this.props.target} // ignored
-                          targetCluster={ns.cluster}
-                          targetNamespace={ns.name}
-                          updateTime={this.props.updateTime}
-                        />
-                      </ExpandableRowContent>
-                    </Td>
-                  </Tr>
-                </Tbody>
-              );
-            })}
+            {(data.infraData as NamespaceInfo[])
+              .filter(ns => ns.name !== serverConfig.istioNamespace)
+              .map((ns, i) => {
+                return (
+                  <Tbody key={ns.name} isExpanded={this.isExpanded(ns)}>
+                    <Tr>
+                      <Td
+                        expand={{
+                          rowIndex: i,
+                          isExpanded: this.isExpanded(ns),
+                          onToggle: () => this.toggleExpanded(ns),
+                          expandId: `ns-${ns.name}`
+                        }}
+                      />
+                      <Td dataLabel="Namespace">{ns.name}</Td>
+                    </Tr>
+                    <Tr isExpanded={this.isExpanded(ns)}>
+                      <Td dataLabel={`detail-${ns}`} noPadding={true} colSpan={2}>
+                        <ExpandableRowContent>
+                          <TargetPanelDataPlaneNamespace
+                            duration={this.props.duration}
+                            istioAPIEnabled={this.props.istioAPIEnabled}
+                            kiosk={this.props.kiosk}
+                            refreshInterval={this.props.refreshInterval}
+                            targetCluster={ns.cluster!}
+                            targetNamespace={ns.name}
+                            updateTime={this.props.updateTime}
+                          />
+                        </ExpandableRowContent>
+                      </Td>
+                    </Tr>
+                  </Tbody>
+                );
+              })}
           </Table>
           <pre>{JSON.stringify(data.infraData, null, 2)}</pre>
         </div>
