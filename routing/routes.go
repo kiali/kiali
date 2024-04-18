@@ -743,6 +743,26 @@ func NewRoutes(
 			handlers.NamespaceUpdate,
 			true,
 		},
+		// swagger:route GET /namespaces/{namespace}/info namespaces namespaceInfo
+		// ---
+		// Endpoint to get info about a single namespace
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      500: internalError
+		//      200: namespaceList
+		//
+		{
+			"NamespaceInfo",
+			"GET",
+			"/api/namespaces/{namespace}/info",
+			handlers.NamespaceInfo,
+			true,
+		},
 		// swagger:route GET /namespaces/{namespace}/services/{service}/metrics services serviceMetrics
 		// ---
 		// Endpoint to fetch metrics to be displayed, related to a single service

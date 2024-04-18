@@ -40,6 +40,7 @@ import { panelHeadingStyle } from 'pages/Graph/SummaryPanelStyle';
 import { Metric } from 'types/Metrics';
 
 type TargetPanelDataPlaneNamespaceProps = Omit<TargetPanelCommonProps, 'target'> & {
+  isExpanded: boolean;
   targetCluster: string;
   targetNamespace: string;
 };
@@ -106,12 +107,10 @@ export class TargetPanelDataPlaneNamespace extends React.Component<
     this.state = defaultState;
   }
 
-  componentDidMount(): void {
-    this.load();
-  }
-
   componentDidUpdate(prevProps: TargetPanelDataPlaneNamespaceProps): void {
-    if (prevProps.updateTime !== this.props.updateTime) {
+    const shouldLoad =
+      prevProps.updateTime !== this.props.updateTime || (!prevProps.isExpanded && this.props.isExpanded);
+    if (shouldLoad) {
       this.load();
     }
   }
@@ -340,13 +339,13 @@ export class TargetPanelDataPlaneNamespace extends React.Component<
   private load = (): void => {
     this.promises.cancelAll();
 
-    API.getNamespaces()
+    const cluster = this.props.targetCluster;
+    const namespace = this.props.targetNamespace;
+    API.getNamespace(namespace, cluster)
       .then(result => {
-        const cluster = this.props.targetCluster;
-        const namespace = this.props.targetNamespace;
-        const nsInfo = result.data.find(ns => ns.cluster === cluster && ns.name === namespace);
+        const nsInfo = result.data;
         if (!nsInfo) {
-          AlertUtils.add(`Failed to find |${cluster}:${namespace}| in GetNamespaces() result`);
+          AlertUtils.add(`Failed to find |${namespace}:${cluster}| in GetNamespace() result`);
           this.setState({ ...defaultState, loading: false });
           return;
         }
@@ -413,6 +412,7 @@ export class TargetPanelDataPlaneNamespace extends React.Component<
             nsStatus.notAvailable.push(item);
           }
         });
+
         this.setState({ status: nsStatus });
       })
       .catch(err => this.handleApiError('Could not fetch namespace health', err));
@@ -438,10 +438,7 @@ export class TargetPanelDataPlaneNamespace extends React.Component<
 
         this.setState(
           direction === 'inbound'
-            ? {
-                errorMetricsInbound: errorMetrics,
-                metricsInbound: metrics
-              }
+            ? { errorMetricsInbound: errorMetrics, metricsInbound: metrics }
             : { errorMetricsOutbound: errorMetrics, metricsOutbound: metrics }
         );
       })

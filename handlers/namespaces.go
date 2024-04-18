@@ -29,6 +29,29 @@ func NamespaceList(w http.ResponseWriter, r *http.Request) {
 	RespondWithJSON(w, http.StatusOK, namespaces)
 }
 
+func NamespaceInfo(w http.ResponseWriter, r *http.Request) {
+	query := r.URL.Query()
+	vars := mux.Vars(r)
+	namespace := vars["namespace"]
+	cluster := clusterNameFromQuery(query)
+
+	business, err := getBusiness(r)
+	if err != nil {
+		log.Error(err)
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	namespaceInfo, err := business.Namespace.GetClusterNamespace(r.Context(), namespace, cluster)
+	if err != nil {
+		log.Error(err)
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	RespondWithJSON(w, http.StatusOK, namespaceInfo)
+}
+
 // NamespaceValidationSummary is the API handler to fetch validations summary to be displayed.
 // It is related to all the Istio Objects within the namespace
 func NamespaceValidationSummary(w http.ResponseWriter, r *http.Request) {

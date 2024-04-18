@@ -92,7 +92,7 @@ export const getNodeStatus = (data: NodeData): NodeStatus => {
 
 export const getNodeShape = (data: NodeData): NodeShape => {
   switch (data.infraType) {
-    case MeshInfraType.NAMESPACE:
+    case MeshInfraType.DATAPLANE:
       return NodeShape.rect;
     default:
       return NodeShape.hexagon;

@@ -150,7 +150,7 @@ const conf = {
       meshTls: () => 'api/mesh/tls',
       metricsStats: 'api/stats/metrics',
       namespaces: 'api/namespaces',
-      namespace: (namespace: string) => `api/namespaces/${namespace}`,
+      namespace: (namespace: string) => `api/namespaces/${namespace}/info`,
       namespacesGraphElements: `api/namespaces/graph`,
       namespaceMetrics: (namespace: string) => `api/namespaces/${namespace}/metrics`,
       namespaceTls: (namespace: string) => `api/namespaces/${namespace}/tls`,

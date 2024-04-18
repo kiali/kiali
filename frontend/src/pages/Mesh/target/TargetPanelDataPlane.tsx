@@ -58,6 +58,7 @@ export class TargetPanelDataPlane extends React.Component<TargetPanelCommonProps
             </Thead>
             {(data.infraData as NamespaceInfo[])
               .filter(ns => ns.name !== serverConfig.istioNamespace)
+              .sort((ns1, ns2) => (ns1.name < ns2.name ? -1 : 1))
               .map((ns, i) => {
                 return (
                   <Tbody key={ns.name} isExpanded={this.isExpanded(ns)}>
@@ -78,6 +79,7 @@ export class TargetPanelDataPlane extends React.Component<TargetPanelCommonProps
                           <TargetPanelDataPlaneNamespace
                             duration={this.props.duration}
                             istioAPIEnabled={this.props.istioAPIEnabled}
+                            isExpanded={this.isExpanded(ns)}
                             kiosk={this.props.kiosk}
                             refreshInterval={this.props.refreshInterval}
                             targetCluster={ns.cluster!}

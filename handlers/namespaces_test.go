@@ -133,6 +133,35 @@ func TestNamespaceMetricsInaccessibleNamespace(t *testing.T) {
 	assert.Equal(t, http.StatusForbidden, resp.StatusCode)
 }
 
+func TestNamespaceInfo(t *testing.T) {
+	setupMocked(t)
+
+	mr := mux.NewRouter()
+	mr.HandleFunc("/api/namespaces/{namespace}/info", http.HandlerFunc(
+		func(w http.ResponseWriter, r *http.Request) {
+			context := authentication.SetAuthInfoContext(r.Context(), &api.AuthInfo{Token: "test"})
+			NamespaceInfo(w, r.WithContext(context))
+		}))
+
+	ts := httptest.NewServer(mr)
+	t.Cleanup(ts.Close)
+
+	req, err := http.NewRequest("GET", ts.URL+"/api/namespaces/ns/info", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	httpclient := &http.Client{}
+	resp, err := httpclient.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	actual, _ := io.ReadAll(resp.Body)
+
+	assert.NotEmpty(t, actual)
+	assert.Equal(t, 200, resp.StatusCode, string(actual))
+}
+
 func setupNamespaceMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheustest.PromAPIMock) {
 	client, xapi := setupMocked(t)
 

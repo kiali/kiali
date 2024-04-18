@@ -179,6 +179,16 @@ export const getNamespaces = (): Promise<ApiResponse<Namespace[]>> => {
   return newRequest<Namespace[]>(HTTP_VERBS.GET, urls.namespaces, {}, {});
 };
 
+export const getNamespace = (namespace: string, cluster?: string): Promise<ApiResponse<Namespace>> => {
+  const queryParams: ClusterParam = {};
+
+  if (cluster) {
+    queryParams.clusterName = cluster;
+  }
+
+  return newRequest<Namespace>(HTTP_VERBS.GET, urls.namespace(namespace), queryParams, {});
+};
+
 export const getNamespaceMetrics = (
   namespace: string,
   params: IstioMetricsOptions,
