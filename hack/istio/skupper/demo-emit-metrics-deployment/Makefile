@@ -13,7 +13,7 @@ run:
 	@echo "Extracing metrics.txt from ConfigMap from k8s.yaml and storing to /tmp/metrics.txt"
 	@cat ./k8s.yaml | sed -n '/^  metrics.txt: |/,$$p' | sed -e 's/^  metrics.txt: |//' -e 's/^  //' | sed '/^$$/d' | sed 's/^[[:space:]]*//' > /tmp/metrics.txt
 	@echo "Starting metric server. To access, run 'curl http://localhost:9090'"
-	${DORP} run -it --rm -p 9090:9090 -v /tmp/metrics.txt:/tmp/metrics.txt ${QUAY_IMAGE_NAME}
+	${DORP} run -it --rm -p 9090:9090 -v /tmp/metrics.txt:/tmp/metrics.txt:z ${QUAY_IMAGE_NAME}
 
 # Builds and pushes a new image to quay. You only need to do this if you change the script itself or the Dockerfile.
 # You do not need to build or push the image if you are only changing the Deployment yaml or the metrics in the ConfigMap yaml.
