@@ -61,12 +61,22 @@ metadata:
   name: metrics-configmap
 data:
   metrics.txt: |
-    # HELP metric1 Help text for metric
-    # TYPE metric1 gauge
-    metric1{label1="foo",label2="bar"} $(shuf -i 5-10 -n 1)
-    # HELP metric2 Help text for metric
-    # TYPE metric2 counter
-    metric2{label1="foo",label2="bar",label3="splat"} $(shuf -i 1-100 -n 1)
-    # HELP metric3 Help text for metric
-    # TYPE metric3 counter
-    metric3{label1="foo",label2="bar",label3="splat",label4="wotgorilla"} $(shuf -i 50-150 -n 1)
+    # HELP kiali_ext_requests_total Total number of requests that have responses
+    # TYPE kiali_ext_requests_total counter
+    kiali_ext_requests_total{extension="skupper",protocol="http",source_cluster="my-cluster",source_namespace="east",source_service="the-client-svc",source_version="1.0",reporter="source",reporter_id="abcde12345",dest_cluster="west",dest_service="the-db-svc",dest_version="1.0",security="mtls",status_code="200",flags=""} $(shuf -i 5-10 -n 1)
+    # HELP kiali_ext_response_time_seconds Amount of seconds before a response was sent back
+    # TYPE kiali_ext_response_time_seconds histogram
+    kiali_ext_response_time_seconds_bucket{extension="skupper",protocol="http",source_cluster="my-cluster",source_namespace="east",source_service="the-client-svc",source_version="1.0",reporter="source",reporter_id="abcde12345",dest_cluster="west",dest_service="the-db-svc",dest_version="1.0",security="mtls",flags="",le="0.05"} 2
+    kiali_ext_response_time_seconds_bucket{extension="skupper",protocol="http",source_cluster="my-cluster",source_namespace="east",source_service="the-client-svc",source_version="1.0",reporter="source",reporter_id="abcde12345",dest_cluster="west",dest_service="the-db-svc",dest_version="1.0",security="mtls",flags="",le="0.1"} 3
+    kiali_ext_response_time_seconds_bucket{extension="skupper",protocol="http",source_cluster="my-cluster",source_namespace="east",source_service="the-client-svc",source_version="1.0",reporter="source",reporter_id="abcde12345",dest_cluster="west",dest_service="the-db-svc",dest_version="1.0",security="mtls",flags="",le="0.5"} 5
+    kiali_ext_response_time_seconds_bucket{extension="skupper",protocol="http",source_cluster="my-cluster",source_namespace="east",source_service="the-client-svc",source_version="1.0",reporter="source",reporter_id="abcde12345",dest_cluster="west",dest_service="the-db-svc",dest_version="1.0",security="mtls",flags="",le="1"} 8
+    kiali_ext_response_time_seconds_bucket{extension="skupper",protocol="http",source_cluster="my-cluster",source_namespace="east",source_service="the-client-svc",source_version="1.0",reporter="source",reporter_id="abcde12345",dest_cluster="west",dest_service="the-db-svc",dest_version="1.0",security="mtls",flags="",le="5"} 12
+    kiali_ext_response_time_seconds_bucket{extension="skupper",protocol="http",source_cluster="my-cluster",source_namespace="east",source_service="the-client-svc",source_version="1.0",reporter="source",reporter_id="abcde12345",dest_cluster="west",dest_service="the-db-svc",dest_version="1.0",security="mtls",flags="",le="+Inf"} 17
+    kiali_ext_response_time_seconds_sum{extension="skupper",protocol="http",source_cluster="my-cluster",source_namespace="east",source_service="the-client-svc",source_version="1.0",reporter="source",reporter_id="abcde12345",dest_cluster="west",dest_service="the-db-svc",dest_version="1.0",security="mtls",flags=""} 100
+    kiali_ext_response_time_seconds_count{extension="skupper",protocol="http",source_cluster="my-cluster",source_namespace="east",source_service="the-client-svc",source_version="1.0",reporter="source",reporter_id="abcde12345",dest_cluster="west",dest_service="the-db-svc",dest_version="1.0",security="mtls",flags=""} 17
+    # HELP kiali_ext_tcp_sent_total Total number of bytes sent over the connection
+    # TYPE kiali_ext_tcp_sent_total counter
+    kiali_ext_tcp_sent_total{extension="skupper",source_cluster="my-cluster",source_namespace="east",source_service="the-client-svc",source_version="1.0",reporter="source",reporter_id="abcde12345",dest_cluster="west",dest_service="the-db-svc",dest_version="1.0",security="mtls",flags=""} $(shuf -i 5-10 -n 1)
+    # HELP kiali_ext_tcp_received_total Total number of bytes received over the connection
+    # TYPE kiali_ext_tcp_received_total counter
+    kiali_ext_tcp_received_total{extension="skupper",source_cluster="my-cluster",source_namespace="east",source_service="the-client-svc",source_version="1.0",reporter="source",reporter_id="abcde12345",dest_cluster="west",dest_service="the-db-svc",dest_version="1.0",security="mtls",flags=""} $(shuf -i 5-10 -n 1)
