@@ -80,7 +80,10 @@ users:
 - "system:serviceaccount:sleep:sleep"
 SCC
   fi
-
+  if [ "${ARCH}" == "s390x" ]; then
+    echo "Using s390x specific images for curl in sleep.yaml"
+    sed -i.bak -E '/curlimages\/curl:8\.4\.0/! s;curlimages/curl;curlimages/curl:8.4.0;g' ${ISTIO_DIR}/samples/sleep/sleep.yaml 
+  fi
   ${CLIENT_EXE} apply -n sleep -f ${ISTIO_DIR}/samples/sleep/sleep.yaml
 
   if [ "${IS_MAISTRA}" == "true" ]; then
