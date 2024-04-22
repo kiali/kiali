@@ -28,6 +28,7 @@ Feature: Kiali login
     And user fills in a valid password
     Then user sees the Overview page
 
+  @openshift
   Scenario: Openshift login shows error message when code exchange fails
     And the server will return a login error
     And user fills in a valid password

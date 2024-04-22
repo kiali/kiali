@@ -1,4 +1,4 @@
-import { Given, Then } from '@badeball/cypress-cucumber-preprocessor';
+import { Before, Given, Then } from '@badeball/cypress-cucumber-preprocessor';
 
 const USERNAME = Cypress.env('USERNAME') ?? 'jenkins'; // CYPRESS_USERNAME to the user
 const PASSWD = Cypress.env('PASSWD'); // CYPRESS_PASSWD to the user
@@ -126,4 +126,11 @@ Then('user sees an error message on the login form', () => {
 
 Then('the error description is in the url', () => {
   cy.url().should('include', 'openshift_error');
+});
+
+Before({ tags: '@openshift' }, function () {
+  if (auth_strategy !== 'openshift') {
+    cy.log('Not running on Openshift, skipping openshift tests');
+    this.skip();
+  }
 });
