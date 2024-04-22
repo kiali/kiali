@@ -20,6 +20,7 @@ ISTIO_DIR=$(ls -dt1 ${SCRIPT_DIR}/../../_output/istio-* | head -n1)
 MINIKUBE_PROFILE="minikube"
 
 : ${CLIENT_EXE:=oc}
+: ${AMBIENT:="false"}
 : ${ARCH:=amd64}
 : ${DELETE_DEMOS:=false}
 : ${ENABLE_INJECTION:=true}
@@ -30,6 +31,10 @@ ISTIO_NAMESPACE="istio-system"
 while [ $# -gt 0 ]; do
   key="$1"
   case $key in
+    -ab|--ambient)
+      AMBIENT="$2"
+      shift;shift
+      ;;
     -a|--arch)
       ARCH="$2"
       shift;shift
@@ -62,6 +67,7 @@ while [ $# -gt 0 ]; do
       cat <<HELPMSG
 Valid command line arguments:
   -a|--arch <amd64|ppc64le|s390x|arm64>: Images for given arch will be used (default: amd64).
+  -am|--ambient: Istio Ambient enabled
   -c|--client: either 'oc' or 'kubectl'
   -d|--delete: if 'true' demos will be deleted; otherwise, they will be installed
   -g|--gateway-host: host to use for the ingress gateway
@@ -107,15 +113,20 @@ wait_for_workloads () {
 
 if [ "${DELETE_DEMOS}" != "true" ]; then
 
+  if [ "${AMBIENT_ENABLED}" == "true" ]; then
+    infomsg "Installing testing demos with Ambient enabled"
+    local ambient_args="-ai false"
+  fi
+
   # Installed demos should be the exact same for both environments.
   # Only the args passed to the scripts differ from each other.
   if [ "${IS_OPENSHIFT}" == "true" ]; then
     echo "Deploying bookinfo demo ..."
-    "${SCRIPT_DIR}/install-bookinfo-demo.sh" -tg -in ${ISTIO_NAMESPACE} -a ${ARCH}
+    "${SCRIPT_DIR}/install-bookinfo-demo.sh" -tg -in ${ISTIO_NAMESPACE} -a ${ARCH} ${ambient_args:-}
     echo "Deploying error rates demo ..."
-    "${SCRIPT_DIR}/install-error-rates-demo.sh" -in ${ISTIO_NAMESPACE} -a ${ARCH}
+    "${SCRIPT_DIR}/install-error-rates-demo.sh" -in ${ISTIO_NAMESPACE} -a ${ARCH} ${ambient_args:-}
     echo "Deploying sleep demo ..."
-    "${SCRIPT_DIR}/install-sleep-demo.sh" -in ${ISTIO_NAMESPACE} -a ${ARCH}
+    "${SCRIPT_DIR}/install-sleep-demo.sh" -in ${ISTIO_NAMESPACE} -a ${ARCH} ${ambient_args:-}
 
   else
     gateway_yaml=""
@@ -168,13 +179,13 @@ spec:
 EOF
     fi
     echo "Deploying bookinfo demo..."
-    "${SCRIPT_DIR}/install-bookinfo-demo.sh" -c kubectl -mp ${MINIKUBE_PROFILE} -tg -in ${ISTIO_NAMESPACE} -a ${ARCH} ${gateway_yaml:+-g ${gateway_yaml}}
+    "${SCRIPT_DIR}/install-bookinfo-demo.sh" -c kubectl -mp ${MINIKUBE_PROFILE} -tg -in ${ISTIO_NAMESPACE} -a ${ARCH} ${gateway_yaml:+-g ${gateway_yaml}} ${ambient_args:-}
 
     echo "Deploying error rates demo..."
-    "${SCRIPT_DIR}/install-error-rates-demo.sh" -c kubectl -in ${ISTIO_NAMESPACE} -a ${ARCH}
+    "${SCRIPT_DIR}/install-error-rates-demo.sh" -c kubectl -in ${ISTIO_NAMESPACE} -a ${ARCH} ${ambient_args:-}
 
     echo "Deploying sleep demo ..."
-    "${SCRIPT_DIR}/install-sleep-demo.sh" -c kubectl -in ${ISTIO_NAMESPACE} -a ${ARCH}
+    "${SCRIPT_DIR}/install-sleep-demo.sh" -c kubectl -in ${ISTIO_NAMESPACE} -a ${ARCH} ${ambient_args:-}
   fi
 
   if [ -v "${GATEWAY_HOST}" ]; then
