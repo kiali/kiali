@@ -9,7 +9,8 @@ const LoginProps = {
   status: LoginStatus.loggedOut,
   authenticate: jest.fn(),
   checkCredentials: jest.fn(),
-  isPostLoginPerforming: false
+  isPostLoginPerforming: false,
+  message: ''
 };
 
 const wrapper = shallow(<LoginPageComponent {...LoginProps} />);
