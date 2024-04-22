@@ -83,9 +83,17 @@ func (c OpenshiftAuthController) PostRoutes(router *mux.Router) {
 
 			// Redirect user to consent page to ask for permission
 			// for the scopes specified above.
+			// TODO: Include cluster
 			url, err := c.openshiftOAuth.AuthCodeURL(verifier, c.conf.KubernetesConfig.ClusterName)
 			if err != nil {
 				log.Errorf("Error getting the AuthCodeURL: %v", err)
+				http.Error(w, "Internal error", http.StatusInternalServerError)
+				return
+			}
+
+			oAuthConfig, err := c.openshiftOAuth.OAuthConfig(c.conf.KubernetesConfig.ClusterName)
+			if err != nil {
+				log.Errorf("Error getting the OAuthConfig: %v", err)
 				http.Error(w, "Internal error", http.StatusInternalServerError)
 				return
 			}
@@ -95,7 +103,7 @@ func (c OpenshiftAuthController) PostRoutes(router *mux.Router) {
 			secureFlag := c.conf.IsServerHTTPS() || strings.HasPrefix(url, "https:")
 
 			nowTime := util.Clock.Now()
-			expirationTime := nowTime.Add(time.Duration(c.conf.Auth.OpenId.AuthenticationTimeout) * time.Second)
+			expirationTime := nowTime.Add(time.Duration(oAuthConfig.TokenAgeInSeconds) * time.Second)
 
 			// nonce cookie stores the verifier.
 			nonceCookie := http.Cookie{
@@ -105,8 +113,8 @@ func (c OpenshiftAuthController) PostRoutes(router *mux.Router) {
 				Name:     OpenIdNonceCookieName,
 				Path:     c.conf.Server.WebRoot,
 				// TODO: Can this be strict?
-				SameSite: http.SameSiteStrictMode,
-				// TODO: Store cluster and any other state we need about the request in the cookie.
+				SameSite: http.SameSiteLaxMode,
+				// TODO: Possibly store cluster and any other state we need about the request in the cookie.
 				Value: verifier,
 			}
 			http.SetCookie(w, &nonceCookie)
@@ -143,13 +151,13 @@ func (c OpenshiftAuthController) GetAuthCallbackHandler(fallbackHandler http.Han
 		tok, err := c.openshiftOAuth.Exchange(r.Context(), code, nonceCookie.Value, c.conf.KubernetesConfig.ClusterName)
 		if err != nil {
 			log.Errorf("Authentication rejected: Unable to exchange the code for a token: %v", err)
-			http.Redirect(w, r, fmt.Sprintf("%s?openid_error=%s", webRootWithSlash, url.QueryEscape(err.Error())), http.StatusFound)
+			http.Redirect(w, r, fmt.Sprintf("%s?openshift_error=%s", webRootWithSlash, url.QueryEscape(err.Error())), http.StatusFound)
 			return
 		}
 
 		if err := c.SessionStore.CreateSession(r, w, config.AuthStrategyOpenshift, tok.Expiry, tok); err != nil {
 			log.Errorf("Authentication rejected: Could not create the session: %v", err)
-			http.Redirect(w, r, fmt.Sprintf("%s?openid_error=%s", webRootWithSlash, url.QueryEscape(err.Error())), http.StatusFound)
+			http.Redirect(w, r, fmt.Sprintf("%s?openshift_error=%s", webRootWithSlash, url.QueryEscape(err.Error())), http.StatusFound)
 			return
 		}
 

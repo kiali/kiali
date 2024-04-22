@@ -5,6 +5,8 @@ import (
 
 	osappsfake "github.com/openshift/client-go/apps/clientset/versioned/fake"
 	osappsscheme "github.com/openshift/client-go/apps/clientset/versioned/scheme"
+	oauthfake "github.com/openshift/client-go/oauth/clientset/versioned/fake"
+	oauthscheme "github.com/openshift/client-go/oauth/clientset/versioned/scheme"
 	projectfake "github.com/openshift/client-go/project/clientset/versioned/fake"
 	projectscheme "github.com/openshift/client-go/project/clientset/versioned/scheme"
 	routefake "github.com/openshift/client-go/route/clientset/versioned/fake"
@@ -62,6 +64,11 @@ func isUserResource(obj runtime.Object) bool {
 	return err == nil
 }
 
+func isOAuthResource(obj runtime.Object) bool {
+	_, _, err := oauthscheme.Scheme.ObjectKinds(obj)
+	return err == nil
+}
+
 // NewFakeK8sClient creates a new fake kubernetes client for testing purposes.
 func NewFakeK8sClient(objects ...runtime.Object) *FakeK8sClient {
 	// NOTE: The kube fake client object tracker guesses the resource name based on the Kind.
@@ -77,6 +84,7 @@ func NewFakeK8sClient(objects ...runtime.Object) *FakeK8sClient {
 		routeObjects      []runtime.Object
 		projectObjects    []runtime.Object
 		userObjects       []runtime.Object
+		oAuthObjects      []runtime.Object
 		istioGateways     []*networking_v1beta1.Gateway
 	)
 
@@ -101,6 +109,8 @@ func NewFakeK8sClient(objects ...runtime.Object) *FakeK8sClient {
 			projectObjects = append(projectObjects, o)
 		case isUserResource(o):
 			userObjects = append(userObjects, o)
+		case isOAuthResource(o):
+			oAuthObjects = append(oAuthObjects, o)
 		}
 	}
 
@@ -111,6 +121,7 @@ func NewFakeK8sClient(objects ...runtime.Object) *FakeK8sClient {
 	projectClient := projectfake.NewSimpleClientset(projectObjects...)
 	routeClient := routefake.NewSimpleClientset(routeObjects...)
 	userClient := userfake.NewSimpleClientset(userObjects...)
+	oAuthClient := oauthfake.NewSimpleClientset(oAuthObjects...)
 
 	// These are created separately because the fake clientset guesses the resource name based on the Kind.
 	for _, gw := range istioGateways {
@@ -120,7 +131,7 @@ func NewFakeK8sClient(objects ...runtime.Object) *FakeK8sClient {
 	}
 
 	return &FakeK8sClient{
-		ClientInterface: kialikube.NewClient(kubeClient, istioClient, gatewayAPIClient, osAppsClient, projectClient, routeClient, userClient),
+		ClientInterface: kialikube.NewClient(kubeClient, istioClient, gatewayAPIClient, osAppsClient, projectClient, routeClient, userClient, oAuthClient),
 		KubeClientset:   kubeClient,
 		IstioClientset:  istioClient,
 		ProjectFake:     projectClient,

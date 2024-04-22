@@ -13,6 +13,7 @@ import (
 
 	user_v1 "github.com/openshift/api/user/v1"
 	"golang.org/x/oauth2"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd/api"
 
@@ -22,15 +23,33 @@ import (
 )
 
 const (
-	defaultAuthRequestTimeout = 10 * time.Second
-	userScopeFull             = "user:full"
+	defaultAccessTokenAgeInSeconds = 86400 // 24 hours in seconds
+	userScopeFull                  = "user:full"
 )
+
+// TODO: Too many oauthconfigs? We don't want to expose the oauth2.Config since that
+// potentially has the secret in it but there's probably too many representations of
+// the oauthconfig.
+
+// OAuthConfig is some configuration for the OAuth service.
+type OAuthConfig struct {
+	TokenAgeInSeconds int
+}
+
+// oAuthConfig is the oauth2 config with some additional fields
+// copied over from the openshift oauthclient object.
+type oAuthConfig struct {
+	oauth2.Config
+
+	// AccessTokenMaxAgeSeconds is the maximum age of the access token in seconds.
+	AccessTokenMaxAgeSeconds int
+}
 
 type OpenshiftOAuthService struct {
 	clientFactory  kubernetes.ClientFactory
 	conf           *config.Config
 	kialiSAClients map[string]kubernetes.ClientInterface
-	oAuthConfigs   map[string]*oauth2.Config
+	oAuthConfigs   map[string]*oAuthConfig
 }
 
 // Structure that's returned by the openshift oauth authorization server.
@@ -46,26 +65,45 @@ type OAuthAuthorizationServer struct {
 // It will try to autodiscover the OAuth server configuration from each cluster.
 // It also assumes that you've created an OAuthClient for Kiali in each cluster.
 func NewOpenshiftOAuthService(ctx context.Context, conf *config.Config, kialiSAClients map[string]kubernetes.ClientInterface, clientFactory kubernetes.ClientFactory) (*OpenshiftOAuthService, error) {
-	oAuthConfigs := make(map[string]*oauth2.Config)
+	oAuthConfigs := make(map[string]*oAuthConfig)
+
+	// Creating a single context for all the clusters.
+	var cancel context.CancelFunc
+	// How many times we're going to try to get the oAuth metdata.
+	// After a minute we should give up.
+	oneMinuteFromNow := time.Now().Add(time.Minute)
+	ctx, cancel = context.WithDeadline(ctx, oneMinuteFromNow)
+	defer cancel()
+
+	// TODO: We could parallelize this to potentially speed up the process.
 	for cluster, client := range kialiSAClients {
 		// Use CA info from kube config.
-		// TODO: Checks for ending in :6443?
 		url := client.ClusterInfo().ClientConfig.Host + "/.well-known/oauth-authorization-server"
-		// TODO: Retries
 		request, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 		if err != nil {
-			return nil, fmt.Errorf("failed to create request for api endpoint [%s] for oauth consumption, error: %s", url, err)
+			return nil, fmt.Errorf("failed to create request for fetching oauth server metadata from kube api server url [%s]. Likely the url is malformed. Error: %s", url, err)
 		}
 		request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", client.GetToken()))
 
 		httpClient, err := rest.HTTPClientFor(client.ClusterInfo().ClientConfig)
 		if err != nil {
-			return nil, fmt.Errorf("failed to create http client for api endpoint [%s] for oauth consumption, error: %s", url, err)
+			return nil, fmt.Errorf("failed to create http client for fetching oauth server metadata from kube api server [%s], error: %s", url, err)
 		}
 
-		response, err := doRequest(httpClient, request)
+		var response []byte
+		err = wait.PollUntilContextCancel(ctx, time.Second*10, true, func(ctx context.Context) (bool, error) {
+			// TODO: Catch specific errors and retry only on those?
+			var err error
+			response, err = doRequest(httpClient, request)
+			if err != nil {
+				log.Infof("Failed to get oauth metadata from Kubernetes API server for endpoint [%s]. Error: %s. Retrying...", url, err)
+				return false, nil
+			}
+
+			return true, nil
+		})
 		if err != nil {
-			return nil, fmt.Errorf("failed to get response for api endpoint [%s] for oauth consumption, error: %s", url, err)
+			return nil, fmt.Errorf("failed to get oauth metadata from Kubernetes API server for endpoint [%s]. Error: %s", url, err)
 		}
 
 		oAuthServer := &OAuthAuthorizationServer{}
@@ -87,14 +125,22 @@ func NewOpenshiftOAuthService(ctx context.Context, conf *config.Config, kialiSAC
 			return nil, fmt.Errorf("oAuth client has no redirect URIs")
 		}
 
-		oAuthConfig := &oauth2.Config{
-			ClientID:    oAuthClient.Name,
-			RedirectURL: oAuthClient.RedirectURIs[0],
-			Scopes:      []string{userScopeFull},
-			Endpoint: oauth2.Endpoint{
-				AuthURL:  oAuthServer.AuthorizationEndpoint,
-				TokenURL: oAuthServer.TokenEndpoint,
+		oAuthConfig := &oAuthConfig{
+			Config: oauth2.Config{
+				ClientID:    oAuthClient.Name,
+				RedirectURL: oAuthClient.RedirectURIs[0],
+				Scopes:      []string{userScopeFull},
+				Endpoint: oauth2.Endpoint{
+					AuthURL:  oAuthServer.AuthorizationEndpoint,
+					TokenURL: oAuthServer.TokenEndpoint,
+				},
 			},
+		}
+
+		if oAuthClient.AccessTokenMaxAgeSeconds != nil {
+			oAuthConfig.AccessTokenMaxAgeSeconds = int(*oAuthClient.AccessTokenMaxAgeSeconds)
+		} else {
+			oAuthConfig.AccessTokenMaxAgeSeconds = defaultAccessTokenAgeInSeconds
 		}
 
 		oAuthConfigs[cluster] = oAuthConfig
@@ -108,6 +154,7 @@ func NewOpenshiftOAuthService(ctx context.Context, conf *config.Config, kialiSAC
 	}, nil
 }
 
+// Exchange exchanges the code for a token that can be used to talk to the kube API server.
 func (in *OpenshiftOAuthService) Exchange(ctx context.Context, code string, verifier string, cluster string) (*oauth2.Token, error) {
 	client := in.kialiSAClients[cluster]
 	if client == nil {
@@ -132,6 +179,7 @@ func (in *OpenshiftOAuthService) Exchange(ctx context.Context, code string, veri
 	return tok, nil
 }
 
+// AuthCodeURL returns the URL to redirect the user to for authentication.
 func (in *OpenshiftOAuthService) AuthCodeURL(verifier string, cluster string) (string, error) {
 	oAuthConfig := in.oAuthConfigs[cluster]
 	if oAuthConfig == nil {
@@ -142,6 +190,7 @@ func (in *OpenshiftOAuthService) AuthCodeURL(verifier string, cluster string) (s
 }
 
 func (in *OpenshiftOAuthService) GetUserInfo(ctx context.Context, token string) (*user_v1.User, error) {
+	// TODO: Pass cluster
 	userClient, err := in.clientFactory.GetClient(&api.AuthInfo{Token: token}, in.conf.KubernetesConfig.ClusterName)
 	if err != nil {
 		return nil, fmt.Errorf("could not get client for user info: %v", err)
@@ -155,6 +204,7 @@ func (in *OpenshiftOAuthService) GetUserInfo(ctx context.Context, token string) 
 	return user, nil
 }
 
+// Logout deletes the oauth access token from the API server.
 func (in *OpenshiftOAuthService) Logout(ctx context.Context, token string, cluster string) error {
 	// https://github.com/kiali/kiali/issues/3595
 	// OpenShift 4.6+ changed the format of the OAuthAccessToken.
@@ -176,6 +226,17 @@ func (in *OpenshiftOAuthService) Logout(ctx context.Context, token string, clust
 	}
 
 	return kialiSAClient.DeleteOAuthToken(ctx, oauthTokenName)
+}
+
+func (in *OpenshiftOAuthService) OAuthConfig(cluster string) (*OAuthConfig, error) {
+	oAuthConfig := in.oAuthConfigs[cluster]
+	if oAuthConfig == nil {
+		return nil, fmt.Errorf("OAuth config does not exist for cluster [%s]", cluster)
+	}
+
+	return &OAuthConfig{
+		TokenAgeInSeconds: oAuthConfig.AccessTokenMaxAgeSeconds,
+	}, nil
 }
 
 func doRequest(client *http.Client, request *http.Request) ([]byte, error) {

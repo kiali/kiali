@@ -225,6 +225,7 @@ func NewClient(
 	projectClient projectclient.Interface,
 	routeClient routeclient.Interface,
 	userClient userclient.Interface,
+	oAuthClient oauthclient.Interface,
 ) *K8SClient {
 	return &K8SClient{
 		istioClientset: istioClient,
@@ -234,5 +235,6 @@ func NewClient(
 		projectClient:  projectClient,
 		routeClient:    routeClient,
 		userClient:     userClient,
+		oAuthClient:    oAuthClient,
 	}
 }

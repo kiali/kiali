@@ -68,11 +68,6 @@ declare namespace Cypress {
     logout(): Chainable<Subject>;
   }
 }
-// cy.exec('kubectl -n istio-system create token citest').then(result => {
-//   cy.get('#token').type(result.stdout);
-//   cy.get('button[type="submit"]').click();
-// });
-
 const timeout = 300000; // 5 minutes
 
 function ensureMulticlusterApplicationsAreHealthy(): void {
@@ -124,7 +119,10 @@ Cypress.Commands.add('login', (username: string, password: string) => {
         cy.intercept('/api/auth/info').as('getAuthInfo');
 
         cy.visit('');
-        // TODO: Click idp if necessary.
+        const authProvider = Cypress.env('AUTH_PROVIDER');
+        if (authProvider !== '' && authProvider !== undefined) {
+          cy.contains(authProvider).should('be.visible').click();
+        }
         cy.get('#inputUsername')
           .clear()
           .type('' || username);
@@ -139,8 +137,6 @@ Cypress.Commands.add('login', (username: string, password: string) => {
         cy.wait('@getStatus');
         cy.wait('@getTracing');
         cy.wait('@getAuthInfo');
-
-        // cy.contains(KUBEADMIN_IDP).should('be.visible').click();
       } else if (auth_strategy === 'openid') {
         // Only works with keycloak at the moment.
         cy.log('Logging in with OpenID');

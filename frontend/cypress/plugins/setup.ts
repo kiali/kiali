@@ -5,14 +5,10 @@
 import get from 'axios';
 import https from 'https';
 
-export const getAuthStrategy = async (url: string): Promise<any> => {
+export const getAuthStrategy = async (url: string, allow_insecure?: boolean): Promise<any> => {
+  const requestOpts = allow_insecure ? { httpsAgent: new https.Agent({ rejectUnauthorized: false }) } : {};
   try {
-    const resp = await get(`${url}/api/auth/info`, {
-      httpsAgent: new https.Agent({
-        rejectUnauthorized: false
-      })
-    });
-
+    const resp = await get(`${url}/api/auth/info`, requestOpts);
     return resp.data.strategy;
   } catch (err) {
     let errMessage = `ERROR: ${err}.`;

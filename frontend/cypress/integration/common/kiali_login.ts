@@ -113,3 +113,17 @@ Then('user fills in a valid password', () => {
 Then('user sees the Overview page', () => {
   cy.get('div[data-test="overview-app-health"]').should('exist');
 });
+
+Then('the server will return a login error', () => {
+  cy.intercept({ url: `${Cypress.config('baseUrl')}/*`, query: { code: '*' } }, req => {
+    req.query['code'] = 'invalidcode';
+  });
+});
+
+Then('user sees an error message on the login form', () => {
+  cy.contains('Openshift authentication failed.').should('be.visible');
+});
+
+Then('the error description is in the url', () => {
+  cy.url().should('include', 'openshift_error');
+});
