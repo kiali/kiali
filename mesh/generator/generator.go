@@ -1,15 +1,15 @@
 package generator
 
 import (
+	"cmp"
 	"context"
 	"crypto/md5"
 	"fmt"
-	"math/rand"
 	"regexp"
+	"slices"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
-	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/mesh"
 	"github.com/kiali/kiali/mesh/appender"
 	"github.com/kiali/kiali/models"
@@ -28,8 +28,6 @@ func getNamespacesByName(name string, namespaces []models.Namespace) []models.Na
 
 // BuildMeshMap is required by the graph/TelemetryVendor interface
 func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalInfo) mesh.MeshMap {
-	force := r.Intn(100) < 50
-
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "BuildMeshMap",
 		observability.Attribute("package", "generator"),
@@ -107,9 +105,20 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalIn
 			if clusterNamespaces == nil {
 				clusterNamespaces = []models.Namespace{}
 			}
-			dataplaneMap[ns.Cluster] = append(clusterNamespaces, ns)
+			if !config.IsIstioNamespace(ns.Name) {
+				dataplaneMap[ns.Cluster] = append(clusterNamespaces, ns)
+			}
 		}
 		for cluster, namespaces := range dataplaneMap {
+			// sort namespaces by cluster,name. This is more for test data consistency than anything else, but it doesn't hurt
+			slices.SortFunc(namespaces, func(a, b models.Namespace) int {
+				clusterComp := cmp.Compare(a.Cluster, b.Cluster)
+				if clusterComp != 0 {
+					return clusterComp
+				}
+				return cmp.Compare(a.Name, b.Name)
+			})
+
 			dp, _, err := addInfra(meshMap, mesh.InfraTypeDataPlane, cluster, "", "Data Plane", namespaces, false)
 			graph.CheckError(err)
 
@@ -132,7 +141,7 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalIn
 			// add the Kiali external services...
 
 			// metrics/prometheus
-			cluster, namespace, isExternal := discoverInfraService(es.Prometheus.URL, ctx, gi, force)
+			cluster, namespace, isExternal := discoverInfraService(es.Prometheus.URL, ctx, gi)
 			var node *mesh.Node
 			node, _, err = addInfra(meshMap, mesh.InfraTypeMetricStore, cluster, namespace, "Prometheus", es.Prometheus, isExternal)
 			mesh.CheckError(err)
@@ -141,7 +150,7 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalIn
 			hasExternalServices = hasExternalServices || isExternal
 
 			if conf.ExternalServices.Tracing.Enabled {
-				cluster, namespace, isExternal = discoverInfraService(es.Tracing.InClusterURL, ctx, gi, force)
+				cluster, namespace, isExternal = discoverInfraService(es.Tracing.InClusterURL, ctx, gi)
 				node, _, err = addInfra(meshMap, mesh.InfraTypeTraceStore, cluster, namespace, string(es.Tracing.Provider), es.Tracing, isExternal)
 				mesh.CheckError(err)
 
@@ -150,7 +159,7 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalIn
 			}
 
 			if conf.ExternalServices.Grafana.Enabled {
-				cluster, namespace, isExternal = discoverInfraService(es.Grafana.InClusterURL, ctx, gi, force)
+				cluster, namespace, isExternal = discoverInfraService(es.Grafana.InClusterURL, ctx, gi)
 				node, _, err = addInfra(meshMap, mesh.InfraTypeGrafana, cluster, namespace, "Grafana", es.Grafana, isExternal)
 				mesh.CheckError(err)
 
@@ -173,8 +182,6 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalIn
 }
 
 func addInfra(meshMap mesh.MeshMap, infraType, cluster, namespace, name string, infraData interface{}, isExternal bool) (*mesh.Node, bool, error) {
-	log.Infof("Adding Infra [%s][%s]", infraType, name)
-
 	id, err := mesh.Id(cluster, namespace, name, infraType, isExternal)
 	if err != nil {
 		return nil, false, err
@@ -203,12 +210,10 @@ var inMeshUrlRegexp = []*regexp.Regexp{
 	regexp.MustCompile(`^h.+\/\/(.+?)\.(.+)$`),
 }
 
-var r = rand.New(rand.NewSource(99))
-
 // discoverInfraService tries to determine the cluster and namespace of a service, from its URL. Currently it's only
 // targeting in-cluster URLs on the local cluster.  If it can't resolve the URL, or it can't fetch the resulting service,
 // it assumes the URL is outside the mesh and returns ("", "", true).
-func discoverInfraService(url string, ctx context.Context, gi *mesh.AppenderGlobalInfo, force bool) (cluster, namespace string, isExternal bool) {
+func discoverInfraService(url string, ctx context.Context, gi *mesh.AppenderGlobalInfo) (cluster, namespace string, isExternal bool) {
 	cluster = mesh.External
 	isExternal = true
 	namespace = ""
@@ -224,7 +229,7 @@ func discoverInfraService(url string, ctx context.Context, gi *mesh.AppenderGlob
 			break
 		}
 	}
-	if matches == nil || force {
+	if matches == nil {
 		return
 	}
 
