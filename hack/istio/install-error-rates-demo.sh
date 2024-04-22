@@ -56,6 +56,10 @@ while [ $# -gt 0 ]; do
       CLUSTER2_CONTEXT="$2"
       shift;shift
       ;;
+    -w|--waypoint)
+      WAYPOINT="$2"
+      shift;shift
+      ;;
     -h|--help)
       cat <<HELPMSG
 Valid command line arguments:
@@ -67,6 +71,7 @@ Valid command line arguments:
   -dd|--distribute-demo 'true' or 'false'. If 'true' alpha namespace will be created on east cluster, beta and gamma namespaces on west cluster.
   -c1|--cluster1: context name of the cluster 1. Doesn't do anything if --distribute-demo is set to false (default: east)
   -c2|--cluster2: context name of the cluster 2. Doesn't do anything if --distribute-demo is set to false (default: west)
+  -w|--waypoint: Create a waypoint proxy per namespace (When ISTIO_INJECTION=false) (default: false)
   -h|--help: this text
   -s|--source: demo file source. For example: file:///home/me/demos Default: https://raw.githubusercontent.com/kiali/demos/master
 HELPMSG
@@ -182,9 +187,9 @@ if [ "${AMBIENT_ENABLED}" == "true" ]; then
       { $CLIENT_EXE kustomize "github.com/kubernetes-sigs/gateway-api/config/crd/experimental?ref=v1.0.0" | $CLIENT_EXE apply -f -; }
     # Create Waypoint proxy
     echo "Create Waypoint proxy"
-    ${ISTIOCTL} x waypoint apply -n ${NAMESPACE}
-    ${ISTIOCTL} x waypoint apply -n ${NAMESPACE}
-    ${ISTIOCTL} x waypoint apply -n ${NAMESPACE}
+    ${ISTIOCTL} x waypoint apply -n ${NAMESPACE_ALPHA}
+    ${ISTIOCTL} x waypoint apply -n ${NAMESPACE_BETA}
+    ${ISTIOCTL} x waypoint apply -n ${NAMESPACE_GAMMA}
   fi
 else
   if [ "${ENABLE_INJECTION}" == "true" ]; then

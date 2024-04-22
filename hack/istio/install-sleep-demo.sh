@@ -31,6 +31,10 @@ while [[ $# -gt 0 ]]; do
       ARCH="$2"
       shift;shift
       ;;
+    -ai|--auto-injection)
+      AUTO_INJECTION="$2"
+      shift;shift
+      ;;
     -ds|--delete-sleep)
       DELETE_SLEEP="$2"
       shift;shift
@@ -51,6 +55,7 @@ while [[ $# -gt 0 ]]; do
       cat <<HELPMSG
 Valid command line arguments:
   -a|--arch <amd64|ppc64le|s390x>: Images for given arch will be used (default: amd64).
+  -ai|--auto-injection <true|false>: If you want sidecars to be auto-injected (default: true).
   -ds|--delete-sleep <true|false>: If true, uninstall sleep. If false, install sleep. (default: false).
   -id|--istio-dir <dir>: Where Istio has already been downloaded. If not found, this script aborts.
   -c|--client-exe <name>: Cluster client executable name - valid values are "kubectl" or "oc"
@@ -95,6 +100,7 @@ if [ "${DELETE_SLEEP}" == "true" ]; then
 
 else
   echo "Installing the 'sleep' app in the 'sleep' namespace..."
+  ISTIO_INJECTION=""
   if [ "${ISTIO_DIR}" == "" ]; then
     ISTIO_DIR=$(ls -dt1 ${SCRIPT_DIR}/../../_output/istio-* | head -n1)
   fi
@@ -105,7 +111,23 @@ else
     ${CLIENT_EXE} get ns sleep || ${CLIENT_EXE} create ns sleep
   fi
 
-  ${CLIENT_EXE} label namespace "sleep" istio-injection=enabled --overwrite=true
+  if [ "${AUTO_INJECTION}" == "false" ]; then
+    for n in $(${CLIENT_EXE} get daemonset --all-namespaces -o jsonpath='{.items[*].metadata.name}')
+    do
+      if [ "${n}" == "ztunnel" ]; then
+        ISTIO_INJECTION="istio.io/dataplane-mode=ambient"
+        break
+      fi
+    done
+    if [ "${AMBIENT_ENABLED}" == "false" ] && [ "${WAYPOINT}" == "true" ]; then
+     echo "Waypoint proxy cannot be installed as Ambient is not enabled."
+     exit 1
+    fi
+  else
+    ISTIO_INJECTION="istio-injection=enabled"
+  fi
+
+  ${CLIENT_EXE} label namespace "sleep" ${ISTIO_INJECTION} --overwrite=true
 
   # For OpenShift 4.11, adds default service account in the current ns to use as a user
   if [ "${IS_OPENSHIFT}" == "true" ]; then
