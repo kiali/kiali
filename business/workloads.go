@@ -97,12 +97,20 @@ type LogEntry struct {
 	AccessLog     *parser.AccessLog `json:"accessLog,omitempty"`
 }
 
+type filterOpts struct {
+	destWk string
+	destNs string
+	srcWk  string
+	srcNs  string
+}
+
 // LogOptions holds query parameter values
 type LogOptions struct {
 	Duration *time.Duration
-	IsProxy  bool // fetching logs for Istio Proxy (Envoy access log)
+	LogType  models.LogType
 	MaxLines *int
 	core_v1.PodLogOptions
+	filter filterOpts
 }
 
 // Matches an ISO8601 full date
@@ -445,7 +453,7 @@ func (in *WorkloadService) GetPod(cluster, namespace, name string) (*models.Pod,
 	return &pod, nil
 }
 
-func (in *WorkloadService) BuildLogOptionsCriteria(container, duration, isProxy, sinceTime, maxLines string) (*LogOptions, error) {
+func (in *WorkloadService) BuildLogOptionsCriteria(container, duration string, logType models.LogType, sinceTime, maxLines string) (*LogOptions, error) {
 	opts := &LogOptions{}
 	opts.PodLogOptions = core_v1.PodLogOptions{Timestamps: true}
 
@@ -462,7 +470,7 @@ func (in *WorkloadService) BuildLogOptionsCriteria(container, duration, isProxy,
 		opts.Duration = &duration
 	}
 
-	opts.IsProxy = isProxy == "true"
+	opts.LogType = logType
 
 	if sinceTime != "" {
 		numTime, err := strconv.ParseInt(sinceTime, 10, 64)
@@ -556,6 +564,103 @@ func parseLogLine(line string, isProxy bool, engardeParser *parser.Parser) *LogE
 	}
 
 	// override the timestamp with a simpler format
+	timestamp := parseTimestamp(parsedTimestamp)
+	entry.Timestamp = timestamp
+	entry.TimestampUnix = parsedTimestamp.UnixMilli()
+
+	return &entry
+}
+
+func parseZtunnelLine(line string) *LogEntry {
+	entry := LogEntry{
+		Message:       "",
+		Timestamp:     "",
+		TimestampUnix: 0,
+		Severity:      "INFO",
+	}
+
+	splitted := strings.SplitN(line, " ", 2)
+	if len(splitted) != 2 {
+		log.Debugf("Skipping unexpected log line [%s]", line)
+		return nil
+	}
+
+	msgSplit := strings.Split(line, "\t")
+
+	if len(msgSplit) < 4 {
+		log.Debugf("Error splitting log line [%s]", line)
+		entry.Message = line
+		return &entry
+	}
+
+	entry.Message = msgSplit[4]
+	if entry.Message == "" {
+		log.Debugf("Skipping empty log line [%s]", line)
+		entry.Message = line
+		return &entry
+	}
+
+	// k8s promises RFC3339 or RFC3339Nano timestamp, ensure RFC3339
+	// Split by blanks, to get the milliseconds for sorting, try RFC3339Nano
+	ts := strings.Split(msgSplit[0], " ") // Sometime timestamp is duplicated
+	entry.Timestamp = ts[0]
+
+	// If we are past the requested time window then stop processing
+	parsedTimestamp, err := time.Parse(time.RFC3339Nano, entry.Timestamp)
+	entry.OriginalTime = parsedTimestamp
+	if err != nil {
+		log.Debugf("Failed to parse log timestamp (skipping) [%s], %s", entry.Timestamp, err.Error())
+		return nil
+	}
+
+	if splitted[1] != "" {
+		entry.Severity = strings.ToUpper(splitted[1])
+	}
+
+	// override the timestamp with a simpler format
+	timestamp := parseTimestamp(parsedTimestamp)
+	entry.Timestamp = timestamp
+	entry.TimestampUnix = parsedTimestamp.UnixMilli()
+
+	// Process some access log data
+	// More validations can be done. Data is in format direction=outbound
+	// Also, more data could be added?
+	al := parser.AccessLog{}
+	al.Timestamp = timestamp
+	if len(msgSplit) > 4 {
+		accessLog := strings.Split(msgSplit[4], " ")
+		for _, field := range accessLog {
+			parsed := strings.SplitN(field, "=", 2)
+			if len(parsed) == 2 {
+				parsed[1] = strings.Replace(parsed[1], "\"", "", -1)
+				switch parsed[0] {
+				case "src.identity":
+					al.UpstreamCluster = parsed[1]
+				case "duration":
+					al.Duration = parsed[1]
+				case "bytes_recv":
+					al.BytesReceived = parsed[1]
+				case "bytes_sent":
+					al.BytesSent = parsed[1]
+				case "dst.service":
+					al.RequestedServer = parsed[1]
+				case "error":
+					al.ParseError = parsed[1]
+				case "dst.addr":
+					al.UpstreamService = parsed[1]
+				case "src.addr":
+					al.DownstreamRemote = parsed[1]
+				}
+			}
+		}
+	}
+
+	entry.AccessLog = &al
+
+	return &entry
+}
+
+func parseTimestamp(parsedTimestamp time.Time) string {
 	precision := strings.Split(parsedTimestamp.String(), ".")
 	var milliseconds string
 	if len(precision) > 1 {
@@ -570,10 +675,7 @@ func parseLogLine(line string, isProxy bool, engardeParser *parser.Parser) *LogE
 	timestamp := fmt.Sprintf("%d-%02d-%02d %02d:%02d:%02d.%s",
 		parsedTimestamp.Year(), parsedTimestamp.Month(), parsedTimestamp.Day(),
 		parsedTimestamp.Hour(), parsedTimestamp.Minute(), parsedTimestamp.Second(), milliseconds)
-	entry.Timestamp = timestamp
-	entry.TimestampUnix = parsedTimestamp.UnixMilli()
-
-	return &entry
+	return timestamp
 }
 
 func isAccessLogEmpty(al *parser.AccessLog) bool {
@@ -1967,13 +2069,18 @@ func (in *WorkloadService) GetWorkloadAppName(ctx context.Context, cluster, name
 	return app, nil
 }
 
-// streamParsedLogs fetches logs from a container in a pod, parses and decorates each log line with some metadata (of possible) and
+// streamParsedLogs fetches logs from a container in a pod, parses and decorates each log line with some metadata (if possible) and
 // sends the processed lines to the client in JSON format. Results are sent as processing is performed, so in case of any error when
 // doing processing the JSON document will be truncated.
 func (in *WorkloadService) streamParsedLogs(cluster, namespace, name string, opts *LogOptions, w http.ResponseWriter) error {
 	userClient, ok := in.userClients[cluster]
 	if !ok {
 		return fmt.Errorf("user client for cluster [%s] not found", cluster)
+	}
+
+	var engardeParser *parser.Parser
+	if opts.LogType == models.LogTypeProxy {
+		engardeParser = parser.New(parser.IstioProxyAccessLogsPattern)
 	}
 
 	k8sOpts := opts.PodLogOptions
@@ -2005,8 +2112,6 @@ func (in *WorkloadService) streamParsedLogs(cluster, namespace, name string, opt
 		}
 	}
 
-	engardeParser := parser.New(parser.IstioProxyAccessLogsPattern)
-
 	// To avoid high memory usage, the JSON will be written
 	// to the HTTP Response as it's received from the cluster API.
 	// That is, each log line is parsed, decorated with Kiali's metadata,
@@ -2034,8 +2139,18 @@ func (in *WorkloadService) streamParsedLogs(cluster, namespace, name string, opt
 			break
 		}
 
-		entry := parseLogLine(line, opts.IsProxy, engardeParser)
+		var entry *LogEntry
+		if opts.LogType == models.LogTypeZtunnel {
+			entry = parseZtunnelLine(line)
+		} else {
+			entry = parseLogLine(line, opts.LogType == models.LogTypeProxy, engardeParser)
+		}
+
 		if entry == nil {
+			continue
+		}
+
+		if opts.LogType == models.LogTypeZtunnel && !filterMatches(entry.Message, opts.filter) {
 			continue
 		}
 
@@ -2104,5 +2219,33 @@ func (in *WorkloadService) streamParsedLogs(cluster, namespace, name string, opt
 
 // StreamPodLogs streams pod logs to an HTTP Response given the provided options
 func (in *WorkloadService) StreamPodLogs(cluster, namespace, name string, opts *LogOptions, w http.ResponseWriter) error {
+
+	if opts.LogType == models.LogTypeZtunnel {
+		// First, get ztunnel namespace and containers
+		pods := in.cache.GetZtunnelPods(cluster)
+		// This is needed for the K8S client
+		opts.PodLogOptions.Container = models.IstioProxy
+		// The ztunnel line should include the pod and the namespace
+		fs := filterOpts{
+			destWk: fmt.Sprintf("dst.workload=\"%s\"", name),
+			destNs: fmt.Sprintf("dst.namespace=\"%s\"", namespace),
+			srcWk:  fmt.Sprintf("src.workload=\"%s\"", name),
+			srcNs:  fmt.Sprintf("src.namespace=\"%s\"", namespace),
+		}
+		opts.filter = fs
+		var streamErr error
+		for _, pod := range pods {
+			streamErr = in.streamParsedLogs(cluster, pod.Namespace, pod.Name, opts, w)
+		}
+		return streamErr
+	}
 	return in.streamParsedLogs(cluster, namespace, name, opts, w)
+}
+
+// AND filter
+func filterMatches(line string, filter filterOpts) bool {
+	if (strings.Contains(line, filter.destNs) && strings.Contains(line, filter.destWk)) || (strings.Contains(line, filter.srcNs) && strings.Contains(line, filter.srcWk)) {
+		return true
+	}
+	return false
 }

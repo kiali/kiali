@@ -35,7 +35,8 @@ import {
   OutboundTrafficPolicy,
   CanaryUpgradeStatus,
   PodLogsQuery,
-  LogLevelQuery
+  LogLevelQuery,
+  LogType
 } from '../types/IstioObjects';
 import { ComponentStatus, IstiodResourceThresholds } from '../types/IstioStatus';
 import { TracingInfo, TracingResponse, TracingSingleResponse } from '../types/TracingInfo';
@@ -1011,7 +1012,7 @@ export const getPodLogs = (
   maxLines?: number,
   sinceTime?: number,
   duration?: DurationInSeconds,
-  isProxy?: boolean,
+  logType?: LogType,
   cluster?: string
 ): Promise<ApiResponse<PodLogs>> => {
   const params: QueryParams<PodLogsQuery> = {};
@@ -1036,7 +1037,9 @@ export const getPodLogs = (
     params.clusterName = cluster;
   }
 
-  params.isProxy = !!isProxy;
+  if (logType) {
+    params.logType = logType;
+  }
 
   return newRequest<PodLogs>(HTTP_VERBS.GET, urls.podLogs(namespace, name), params, {});
 };

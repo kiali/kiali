@@ -39,6 +39,15 @@ type WorkloadList struct {
 	Validations IstioValidations `json:"validations"`
 }
 
+type LogType string
+
+const (
+	LogTypeApp      LogType = "app"
+	LogTypeProxy    LogType = "proxy"
+	LogTypeWaypoint LogType = "waypoint"
+	LogTypeZtunnel  LogType = "ztunnel"
+)
+
 // WorkloadListItem has the necessary information to display the console workload list
 type WorkloadListItem struct {
 	// Name of the workload

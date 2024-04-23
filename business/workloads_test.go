@@ -37,6 +37,7 @@ func setupWorkloadService(k8s kubernetes.ClientInterface, conf *config.Config) W
 
 func callStreamPodLogs(svc WorkloadService, namespace, podName string, opts *LogOptions) PodLog {
 	w := httptest.NewRecorder()
+
 	_ = svc.StreamPodLogs(svc.config.KubernetesConfig.ClusterName, namespace, podName, opts, w)
 
 	response := w.Result()
@@ -691,7 +692,7 @@ func TestGetPodLogsProxy(t *testing.T) {
 
 	maxLines := 2
 	duration, _ := time.ParseDuration("2h")
-	podLogs := callStreamPodLogs(svc, "Namespace", "details-v1-3618568057-dnkjp", &LogOptions{Duration: &duration, IsProxy: true, PodLogOptions: core_v1.PodLogOptions{Container: "details"}, MaxLines: &maxLines})
+	podLogs := callStreamPodLogs(svc, "Namespace", "details-v1-3618568057-dnkjp", &LogOptions{Duration: &duration, LogType: models.LogTypeProxy, PodLogOptions: core_v1.PodLogOptions{Container: "details"}, MaxLines: &maxLines})
 	require.Equal(1, len(podLogs.Entries))
 	entry := podLogs.Entries[0]
 	assert.Equal(`[2021-02-01T21:34:35.533Z] "GET /hotels/Ljubljana HTTP/1.1" 200 - via_upstream - "-" 0 99 14 14 "-" "Go-http-client/1.1" "7e7e2dd0-0a96-4535-950b-e303805b7e27" "hotels.travel-agency:8000" "127.0.2021-02-01T21:34:38.761055140Z 0.1:8000" inbound|8000|| 127.0.0.1:33704 10.129.0.72:8000 10.128.0.79:39880 outbound_.8000_._.hotels.travel-agency.svc.cluster.local default`, entry.Message)
@@ -701,6 +702,49 @@ func TestGetPodLogsProxy(t *testing.T) {
 	assert.Equal("200", entry.AccessLog.StatusCode)
 	assert.Equal("2021-02-01T21:34:35.533Z", entry.AccessLog.Timestamp)
 	assert.Equal(int64(1612215275533), entry.TimestampUnix)
+}
+
+func TestGetZtunnelPodLogsProxy(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+	conf := config.NewConfig()
+
+	// Setup mocks
+	kubeObjs := []runtime.Object{
+		FakePodSyncedWithDeployments(),
+		&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "bookinfo"}},
+	}
+	for _, obj := range FakeZtunnelDaemonSet() {
+		o := obj
+		kubeObjs = append(kubeObjs, &o)
+	}
+	for _, obj := range FakeZtunnelPods() {
+		o := obj
+		kubeObjs = append(kubeObjs, &o)
+	}
+	k8s := &logStreamer{
+		logs:            FakePodLogsZtunnel().Logs,
+		ClientInterface: kubetest.NewFakeK8sClient(kubeObjs...),
+	}
+	SetupBusinessLayer(t, k8s, *config.NewConfig())
+	svc := setupWorkloadService(k8s, conf)
+
+	maxLines := 2
+	duration, _ := time.ParseDuration("2h")
+	podLogs := callStreamPodLogs(svc, "bookinfo", "details-v1-cf74bb974-wg44w", &LogOptions{Duration: &duration, LogType: models.LogTypeZtunnel, PodLogOptions: core_v1.PodLogOptions{Container: "details"}, MaxLines: &maxLines})
+	require.Equal(1, len(podLogs.Entries))
+	entry := podLogs.Entries[0]
+
+	assert.Equal("src.addr=10.244.0.16:51748 src.workload=\"productpage-v1-87d54dd59-fzflt\" src.namespace=\"bookinfo\" src.identity=\"spiffe://cluster.local/ns/bookinfo/sa/bookinfo-productpage\" dst.addr=10.244.0.11:15008 dst.service=\"details.bookinfo.svc.cluster.local\" dst.workload=\"details-v1-cf74bb974-wg44w\" dst.namespace=\"bookinfo\" dst.identity=\"spiffe://cluster.local/ns/bookinfo/sa/bookinfo-details\" direction=\"outbound\" bytes_sent=200 bytes_recv=358 duration=\"1ms\"\n", entry.Message)
+	assert.Equal("2024-04-12 10:31:51.078", entry.Timestamp)
+	assert.NotNil(entry.AccessLog)
+	assert.Equal("358", entry.AccessLog.BytesReceived)
+	assert.Equal("200", entry.AccessLog.BytesSent)
+	assert.Equal("1ms\n", entry.AccessLog.Duration)
+	assert.Equal("spiffe://cluster.local/ns/bookinfo/sa/bookinfo-productpage", entry.AccessLog.UpstreamCluster)
+	assert.Equal("details.bookinfo.svc.cluster.local", entry.AccessLog.RequestedServer)
+	assert.Equal(int64(1712917911078), entry.TimestampUnix)
+
 }
 
 func TestDuplicatedControllers(t *testing.T) {
@@ -969,7 +1013,7 @@ func TestGetPodLogsWithoutAccessLogs(t *testing.T) {
 	SetupBusinessLayer(t, k8s, *conf)
 	svc := setupWorkloadService(k8s, conf)
 
-	podLogs := callStreamPodLogs(svc, "Namespace", "details-v1-3618568057-dnkjp", &LogOptions{IsProxy: true, PodLogOptions: core_v1.PodLogOptions{Container: "istio-proxy"}})
+	podLogs := callStreamPodLogs(svc, "Namespace", "details-v1-3618568057-dnkjp", &LogOptions{LogType: models.LogTypeProxy, PodLogOptions: core_v1.PodLogOptions{Container: "istio-proxy"}})
 
 	assert.Equal(8, len(podLogs.Entries))
 	for _, entry := range podLogs.Entries {

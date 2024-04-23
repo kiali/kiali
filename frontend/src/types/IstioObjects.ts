@@ -144,6 +144,7 @@ export interface WorkloadReference {
 
 export interface ContainerInfo {
   image: string;
+  isAmbient: boolean;
   isProxy: boolean;
   isReady: boolean;
   name: string;
@@ -249,10 +250,17 @@ export interface PodLogs {
   linesTruncated?: boolean;
 }
 
+export enum LogType {
+  APP = 'app',
+  PROXY = 'proxy',
+  ZTUNNEL = 'ztunnel',
+  WAYPOINT = 'waypoint'
+}
+
 export interface PodLogsQuery {
   container?: string;
   duration?: string;
-  isProxy?: boolean;
+  logType?: LogType;
   maxLines?: number;
   sinceTime?: number;
 }

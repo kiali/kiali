@@ -1,6 +1,9 @@
 package business
 
 import (
+	"fmt"
+	"io"
+	"os"
 	"time"
 
 	osapps_v1 "github.com/openshift/api/apps/v1"
@@ -11,6 +14,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
+	"github.com/kiali/kiali/log"
 )
 
 // Consolidate fake/mock data used in tests per package
@@ -722,6 +726,16 @@ func FakePodLogsProxy() *kubernetes.PodLogs {
 	}
 }
 
+func FakePodLogsZtunnel() *kubernetes.PodLogs {
+	content, err := readFile("../tests/data/logs/ztunnel.log")
+	if err != nil {
+		log.Errorf("Error reading logs file: %s", err.Error())
+	}
+	return &kubernetes.PodLogs{
+		Logs: content,
+	}
+}
+
 func FakePodsSyncedWithDuplicated() []core_v1.Pod {
 	conf := config.NewConfig()
 
@@ -849,6 +863,74 @@ func FakePodsFromCustomController() []core_v1.Pod {
 	}
 }
 
+func FakeZtunnelPods() []core_v1.Pod {
+	conf := config.NewConfig()
+
+	appLabel := conf.IstioLabels.AppLabelName
+	versionLabel := conf.IstioLabels.VersionLabelName
+	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
+	controller := true
+	return []core_v1.Pod{
+		{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:              "ztunnel",
+				Namespace:         "istio-system",
+				CreationTimestamp: meta_v1.NewTime(t1),
+				Labels:            map[string]string{appLabel: "ztunnel", versionLabel: "v1"},
+				OwnerReferences: []meta_v1.OwnerReference{{
+					Controller: &controller,
+					Kind:       "ReplicaSet",
+					Name:       "ztunnel",
+				}},
+				Annotations: kubetest.FakeIstioAnnotations(),
+			},
+			Spec: core_v1.PodSpec{
+				Containers: []core_v1.Container{
+					{Name: "ztunnel-lrzrn", Image: "whatever"},
+				},
+				InitContainers: []core_v1.Container{
+					{Name: "istio-init", Image: "docker.io/istio/proxy_init:0.7.1"},
+				},
+			},
+		},
+	}
+}
+
+func FakeZtunnelDaemonSet() []apps_v1.DaemonSet {
+	conf := config.NewConfig()
+	conf.KubernetesConfig.ExcludeWorkloads = []string{}
+
+	appLabel := conf.IstioLabels.AppLabelName
+	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
+	return []apps_v1.DaemonSet{
+		{
+			TypeMeta: meta_v1.TypeMeta{
+				Kind: "DaemonSet",
+			},
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:              "ztunnel",
+				Namespace:         "istio-system",
+				CreationTimestamp: meta_v1.NewTime(t1),
+			},
+			Spec: apps_v1.DaemonSetSpec{
+				Template: core_v1.PodTemplateSpec{
+					ObjectMeta: meta_v1.ObjectMeta{
+						Labels: map[string]string{appLabel: "ztunnel"},
+					},
+				},
+				Selector: &meta_v1.LabelSelector{
+					MatchLabels: map[string]string{appLabel: "ztunnel"},
+				},
+			},
+			Status: apps_v1.DaemonSetStatus{
+				DesiredNumberScheduled: 1,
+				CurrentNumberScheduled: 1,
+				NumberAvailable:        1,
+			},
+		},
+	}
+}
+
 func FakeCustomControllerRSSyncedWithPods() []apps_v1.ReplicaSet {
 	conf := config.NewConfig()
 
@@ -900,4 +982,24 @@ func FakeServices() []core_v1.Service {
 			},
 		},
 	}
+}
+
+func readFile(fileName string) (string, error) {
+
+	f, err := os.OpenFile(fileName, os.O_RDONLY, 0644)
+	if err != nil {
+		return "", fmt.Errorf("error opening file %s", err)
+	}
+	defer func(f *os.File) {
+		errClose := f.Close()
+		if errClose != nil {
+			log.Errorf("error closing file %s", err)
+		}
+	}(f)
+
+	content, err := io.ReadAll(f)
+	if err != nil {
+		return "", fmt.Errorf("error reading file %s", err)
+	}
+	return string(content), nil
 }

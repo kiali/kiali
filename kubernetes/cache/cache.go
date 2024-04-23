@@ -3,11 +3,13 @@ package cache
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
 	"golang.org/x/exp/maps"
 
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/config"
@@ -27,18 +29,12 @@ const ambientCheckExpirationTime = 10 * time.Minute
 // the objects returned by the cache should be filtered/restricted to the user's
 // token access but the cache returns objects without any filtering or restrictions.
 type KialiCache interface {
-	GetKubeCaches() map[string]KubeCache
-	GetKubeCache(cluster string) (KubeCache, error)
 
 	// GetClusters returns the list of clusters that the cache knows about.
 	// This gets set by the mesh service.
 	GetClusters() []kubernetes.Cluster
-
-	// SetClusters sets the list of clusters that the cache knows about.
-	SetClusters([]kubernetes.Cluster)
-
-	RegistryStatusCache
-	ProxyStatusCache
+	GetKubeCaches() map[string]KubeCache
+	GetKubeCache(cluster string) (KubeCache, error)
 
 	// GetNamespace returns a namespace from the in memory cache if it exists.
 	GetNamespace(cluster string, token string, name string) (models.Namespace, bool)
@@ -46,8 +42,21 @@ type KialiCache interface {
 	// GetNamespaces returns all namespaces for the cluster/token from the in memory cache.
 	GetNamespaces(cluster string, token string) ([]models.Namespace, bool)
 
+	// Returns a list of ztunnel pods from the ztunnel daemonset
+	GetZtunnelPods(cluster string) []v1.Pod
+
+	// IsAmbientEnabled checks if the istio Ambient profile was enabled
+	// by checking if the ztunnel daemonset exists on the cluster.
+	IsAmbientEnabled(cluster string) bool
+
 	// RefreshTokenNamespaces clears the in memory cache of namespaces.
 	RefreshTokenNamespaces(cluster string)
+
+	RegistryStatusCache
+	ProxyStatusCache
+
+	// SetClusters sets the list of clusters that the cache knows about.
+	SetClusters([]kubernetes.Cluster)
 
 	// SetNamespaces sets the in memory cache of namespaces.
 	// We cache all namespaces for cluster + token.
@@ -58,10 +67,6 @@ type KialiCache interface {
 
 	// Stop stops the cache and all its kube caches.
 	Stop()
-
-	// IsAmbientEnabled checks if the istio Ambient profile was enabled
-	// by checking if the ztunnel daemonset exists on the cluster.
-	IsAmbientEnabled(cluster string) bool
 }
 
 type kialiCacheImpl struct {
@@ -202,6 +207,47 @@ func (in *kialiCacheImpl) IsAmbientEnabled(cluster string) bool {
 	}
 
 	return check
+}
+
+// GetZtunnelPods returns the pods list from ztunnel daemonset
+func (in *kialiCacheImpl) GetZtunnelPods(cluster string) []v1.Pod {
+
+	ztunnelPods := []v1.Pod{}
+	kubeCache, err := in.GetKubeCache(cluster)
+	if err != nil {
+		log.Debugf("Unable to get kube cache when checking for ambient profile: %s", err)
+		return ztunnelPods
+
+	}
+	selector := map[string]string{
+		"app": "ztunnel",
+	}
+	daemonsets, err := kubeCache.GetDaemonSetsWithSelector(metav1.NamespaceAll, selector)
+	if err != nil {
+		// Don't set the check so we will check again the next time since this error may be transient.
+		log.Debugf("Error checking for ztunnel in Kiali accessible namespaces in cluster '%s': %s", cluster, err.Error())
+		return ztunnelPods
+	}
+
+	if len(daemonsets) == 0 {
+		log.Debugf("No ztunnel daemonsets found in Kiali accessible namespaces in cluster '%s'", cluster)
+		return ztunnelPods
+	}
+
+	dsPods, err := kubeCache.GetPods(daemonsets[0].Namespace, "")
+	if err != nil {
+		log.Errorf("Unable to get ztunnel pods: %s", err)
+		return ztunnelPods
+
+	}
+
+	for _, pod := range dsPods {
+		if strings.Contains(pod.Name, "ztunnel") {
+			ztunnelPods = append(ztunnelPods, pod)
+		}
+	}
+
+	return ztunnelPods
 }
 
 type namespacesKey struct {

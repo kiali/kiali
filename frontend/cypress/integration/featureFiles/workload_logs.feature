@@ -14,9 +14,9 @@ Feature: Workload logs tab
   Scenario: The logs tab should show the logs of a pod
     Given I am on the "productpage-v1" workload detail page of the "bookinfo" namespace
     When I go to the Logs tab of the workload detail page
-    Then I should see the "istio-proxy" container listed
+    Then I should see the "sidecar-proxy" container listed
     And I should see the "productpage" container listed
-    And the "istio-proxy" container should be checked
+    And the "sidecar-proxy" container should be checked
     And the "productpage" container should be checked
     And I should see some "productpage-v1" pod selected in the pod selector
 

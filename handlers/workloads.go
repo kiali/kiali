@@ -281,7 +281,7 @@ func PodLogs(w http.ResponseWriter, r *http.Request) {
 	opts, err := business.Workload.BuildLogOptionsCriteria(
 		queryParams.Get("container"),
 		queryParams.Get("duration"),
-		queryParams.Get("isProxy"),
+		models.LogType(queryParams.Get("logType")),
 		queryParams.Get("sinceTime"),
 		queryParams.Get("maxLines"))
 	if err != nil {
