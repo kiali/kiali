@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"fmt"
 	"math/rand"
 	"net/http"
@@ -65,6 +66,7 @@ func TestStrategyTokenAuthentication(t *testing.T) {
 func TestStrategyTokenFails(t *testing.T) {
 	cfg := config.NewConfig()
 	cfg.Auth.Strategy = config.AuthStrategyToken
+	cfg.LoginToken.SigningKey = util.RandomString(16)
 	config.Set(cfg)
 
 	k8s := kubetest.NewFakeK8sClient(&osproject_v1.Project{ObjectMeta: meta_v1.ObjectMeta{Name: "tutorial"}})
@@ -268,6 +270,6 @@ func TestStrategyHeaderOidcWithImpersonationAuthentication(t *testing.T) {
 
 type rejectClient struct{ kubernetes.ClientInterface }
 
-func (r *rejectClient) GetProjects(labelSelector string) ([]osproject_v1.Project, error) {
+func (r *rejectClient) GetProjects(ctx context.Context, labelSelector string) ([]osproject_v1.Project, error) {
 	return nil, fmt.Errorf("Rejecting")
 }

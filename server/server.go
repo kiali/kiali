@@ -42,9 +42,13 @@ func NewServer(controlPlaneMonitor business.ControlPlaneMonitor,
 	conf *config.Config,
 	prom prometheus.ClientInterface,
 	traceClientLoader func() tracing.ClientInterface,
-) *Server {
+) (*Server, error) {
 	// create a router that will route all incoming API server requests to different handlers
-	router := routing.NewRouter(conf, cache, clientFactory, prom, traceClientLoader, controlPlaneMonitor)
+	router, err := routing.NewRouter(conf, cache, clientFactory, prom, traceClientLoader, controlPlaneMonitor)
+	if err != nil {
+		return nil, err
+	}
+
 	var tracingProvider *sdktrace.TracerProvider
 	if conf.Server.Observability.Tracing.Enabled {
 		log.Infof("Tracing Enabled. Initializing tracer with collector url: %s", conf.Server.Observability.Tracing.CollectorURL)
@@ -110,7 +114,7 @@ func NewServer(controlPlaneMonitor business.ControlPlaneMonitor,
 	if conf.Server.Observability.Tracing.Enabled && tracingProvider != nil {
 		s.tracer = tracingProvider
 	}
-	return s
+	return s, nil
 }
 
 // Start HTTP server asynchronously. TLS may be active depending on the global configuration.

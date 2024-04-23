@@ -12,10 +12,11 @@ The suite is able to re-install specific demo-app automatically when a faulty de
 Before you start using Cypress suite, you might need export some environment variables - depending on environment where tests are executed.  If your authentication method defaults to `anonymous` **(i.e. dev env), no actions are needed.**
 
 ```bash
-export CYPRESS_BASE_URL=<value>               # defaults to http://localhost:3000
-export CYPRESS_USERNAME=<value>               # defaults to jenkins, opt. kubeadmin
-export CYPRESS_PASSWD=<value>                 # no defaults
-export CYPRESS_AUTH_PROVIDER=<value>          # defaults to my_htpasswd_provider
+export CYPRESS_BASE_URL=<value>                      # defaults to http://localhost:3000
+export CYPRESS_USERNAME=<value>                      # defaults to jenkins, opt. kubeadmin
+export CYPRESS_PASSWD=<value>                        # no defaults
+export CYPRESS_AUTH_PROVIDER=<value>                 # defaults to my_htpasswd_provider
+export CYPRESS_ALLOW_INSECURE_KIALI_API=<true|false> # Useful when running tests locally against an insecure endpoint like crc.
 ```
 
 When running the Cypress tests for multi-cluster, both contexts for the kubectl/oc command must be specified. 

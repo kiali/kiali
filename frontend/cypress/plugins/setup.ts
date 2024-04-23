@@ -3,15 +3,20 @@
   It contains shared functionality used by the cypress config files.
 */
 import get from 'axios';
+import https from 'https';
 
-export const getAuthStrategy = async (url: string): Promise<any> => {
+export const getAuthStrategy = async (url: string, allow_insecure?: boolean): Promise<any> => {
+  const requestOpts = allow_insecure ? { httpsAgent: new https.Agent({ rejectUnauthorized: false }) } : {};
   try {
-    const resp = await get(`${url}/api/auth/info`);
-
+    const resp = await get(`${url}/api/auth/info`, requestOpts);
     return resp.data.strategy;
   } catch (err) {
-    console.error(`ERROR: Kiali API is not reachable at ${JSON.stringify(err.config.url)}`);
+    let errMessage = `ERROR: ${err}.`;
+    if (err.config && err.config.url) {
+      errMessage += ` Kiali API is not reachable at ${JSON.stringify(err.config.url)}`;
+    }
+    console.error(errMessage);
 
-    throw new Error(`Kiali API is not reachable at ${JSON.stringify(err.config.url)}`);
+    throw new Error(errMessage);
   }
 };

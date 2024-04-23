@@ -91,6 +91,8 @@ config:
           - zipkin
       metrics: null
       logs: null
+image:
+  repository: "otel/opentelemetry-collector-contrib"
 ports:
   jaeger-compact:
     enabled: false

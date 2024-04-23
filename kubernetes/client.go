@@ -4,6 +4,11 @@ import (
 	"context"
 	"sync"
 
+	osappsclient "github.com/openshift/client-go/apps/clientset/versioned"
+	oauthclient "github.com/openshift/client-go/oauth/clientset/versioned"
+	projectclient "github.com/openshift/client-go/project/clientset/versioned"
+	routeclient "github.com/openshift/client-go/route/clientset/versioned"
+	userclient "github.com/openshift/client-go/user/clientset/versioned"
 	istio "istio.io/client-go/pkg/clientset/versioned"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/version"
@@ -59,6 +64,12 @@ type ClientInterface interface {
 type K8SClient struct {
 	token string
 	k8s   kube.Interface
+
+	projectClient projectclient.Interface
+	routeClient   routeclient.Interface
+	osAppsClient  osappsclient.Interface
+	oAuthClient   oauthclient.Interface
+	userClient    userclient.Interface
 
 	istioClientset istio.Interface
 	// Used for portforwarding requests.
@@ -175,16 +186,55 @@ func newClientFromConfig(config *rest.Config) (*K8SClient, error) {
 		return nil, err
 	}
 
+	client.osAppsClient, err = osappsclient.NewForConfig(config)
+	if err != nil {
+		return nil, err
+	}
+
+	client.projectClient, err = projectclient.NewForConfig(config)
+	if err != nil {
+		return nil, err
+	}
+
+	client.routeClient, err = routeclient.NewForConfig(config)
+	if err != nil {
+		return nil, err
+	}
+
+	client.userClient, err = userclient.NewForConfig(config)
+	if err != nil {
+		return nil, err
+	}
+
+	client.oAuthClient, err = oauthclient.NewForConfig(config)
+	if err != nil {
+		return nil, err
+	}
+
 	client.ctx = context.Background()
 
 	return &client, nil
 }
 
 // NewClient is just used for testing purposes.
-func NewClient(kubeClient kube.Interface, istioClient istio.Interface, gatewayapiClient gatewayapiclient.Interface) *K8SClient {
+func NewClient(
+	kubeClient kube.Interface,
+	istioClient istio.Interface,
+	gatewayapiClient gatewayapiclient.Interface,
+	osAppsClient osappsclient.Interface,
+	projectClient projectclient.Interface,
+	routeClient routeclient.Interface,
+	userClient userclient.Interface,
+	oAuthClient oauthclient.Interface,
+) *K8SClient {
 	return &K8SClient{
 		istioClientset: istioClient,
 		k8s:            kubeClient,
 		gatewayapi:     gatewayapiClient,
+		osAppsClient:   osAppsClient,
+		projectClient:  projectClient,
+		routeClient:    routeClient,
+		userClient:     userClient,
+		oAuthClient:    oAuthClient,
 	}
 }

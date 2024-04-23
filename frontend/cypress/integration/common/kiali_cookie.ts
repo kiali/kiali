@@ -4,9 +4,7 @@ const USERNAME = Cypress.env('USERNAME') ?? 'jenkins';
 const PASSWD = Cypress.env('PASSWD');
 
 Given('user is at administrator perspective', () => {
-  cy.session(USERNAME, () => {
-    cy.login(USERNAME, PASSWD);
-  },{cacheAcrossSpecs:true});
+  cy.login(USERNAME, PASSWD);
 });
 
 Given('user visits base url', () => {

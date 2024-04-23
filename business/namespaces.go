@@ -194,7 +194,7 @@ func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Namespa
 			wg.Add(1)
 			go func(c string) {
 				defer wg.Done()
-				list, error := in.getNamespacesByCluster(c)
+				list, error := in.getNamespacesByCluster(ctx, c)
 				if error != nil {
 					resultsCh <- result{cluster: c, ns: nil, err: error}
 				} else {
@@ -295,8 +295,8 @@ func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Namespa
 	return resultns, nil
 }
 
-func (in *NamespaceService) getNamespacesByCluster(cluster string) ([]models.Namespace, error) {
-	configObject := config.Get()
+func (in *NamespaceService) getNamespacesByCluster(ctx context.Context, cluster string) ([]models.Namespace, error) {
+	configObject := in.conf
 
 	labelSelectorInclude := configObject.API.Namespaces.LabelSelectorInclude
 
@@ -304,44 +304,43 @@ func (in *NamespaceService) getNamespacesByCluster(cluster string) ([]models.Nam
 	_, queryAllNamespaces := in.isAccessibleNamespaces["**"]
 	// If we are running in OpenShift, we will use the project names since these are the list of accessible namespaces
 	if in.hasProjects {
-		projects, err2 := in.userClients[cluster].GetProjects(labelSelectorInclude)
-		if err2 == nil {
-			// Everything is good, return the projects we got from OpenShift
-			if queryAllNamespaces {
-				namespaces = models.CastProjectCollection(projects, cluster)
-				// add the namespaces explicitly included in the include list.
-				includes := configObject.API.Namespaces.Include
-				if len(includes) > 0 {
-					var allNamespaces []models.Namespace
-					var seedNamespaces []models.Namespace
+		projects, err := in.userClients[cluster].GetProjects(ctx, labelSelectorInclude)
+		if err != nil {
+			return nil, err
+		}
+		if queryAllNamespaces {
+			namespaces = models.CastProjectCollection(projects, cluster)
+			// add the namespaces explicitly included in the include list.
+			includes := configObject.API.Namespaces.Include
+			if len(includes) > 0 {
+				var allNamespaces []models.Namespace
+				var seedNamespaces []models.Namespace
 
-					if labelSelectorInclude == "" {
-						// we have already retrieved all the namespaces, but we want only those in the Include list
-						allNamespaces = namespaces
-						seedNamespaces = make([]models.Namespace, 0)
-					} else {
-						// we have already got those namespaces that match the LabelSelectorInclude - that is our seed list.
-						// but we need ALL namespaces so we can look for more that match the Include list.
-						if allProjects, err := in.userClients[cluster].GetProjects(""); err != nil {
-							return nil, err
-						} else {
-							allNamespaces = models.CastProjectCollection(allProjects, cluster)
-							seedNamespaces = namespaces
-						}
+				if labelSelectorInclude == "" {
+					// we have already retrieved all the namespaces, but we want only those in the Include list
+					allNamespaces = namespaces
+					seedNamespaces = make([]models.Namespace, 0)
+				} else {
+					// we have already got those namespaces that match the LabelSelectorInclude - that is our seed list.
+					// but we need ALL namespaces so we can look for more that match the Include list.
+					allProjectList, err := in.userClients[cluster].GetProjects(ctx, "")
+					if err != nil {
+						return nil, err
 					}
-					namespaces = in.addIncludedNamespaces(allNamespaces, seedNamespaces)
+
+					allNamespaces = models.CastProjectCollection(allProjectList, cluster)
+					seedNamespaces = namespaces
 				}
-			} else {
-				filteredProjects := make([]osproject_v1.Project, 0)
-				for _, project := range projects {
-					if _, isAccessible := in.isAccessibleNamespaces[project.Name]; isAccessible {
-						filteredProjects = append(filteredProjects, project)
-					}
-				}
-				namespaces = models.CastProjectCollection(filteredProjects, cluster)
+				namespaces = in.addIncludedNamespaces(allNamespaces, seedNamespaces)
 			}
 		} else {
-			return nil, err2
+			filteredProjects := make([]osproject_v1.Project, 0)
+			for _, project := range projects {
+				if _, isAccessible := in.isAccessibleNamespaces[project.Name]; isAccessible {
+					filteredProjects = append(filteredProjects, project)
+				}
+			}
+			namespaces = models.CastProjectCollection(filteredProjects, cluster)
 		}
 	} else {
 		// if the accessible namespaces define a distinct list of namespaces, use only those.
@@ -443,7 +442,7 @@ func (in *NamespaceService) addIncludedNamespaces(all []models.Namespace, seed [
 	var controlPlaneNamespace models.Namespace
 	hasNamespace := make(map[string]bool, len(seed))
 	results := make([]models.Namespace, 0, len(seed))
-	configObject := config.Get()
+	configObject := in.conf
 
 	// seed with the initial set of namespaces - this ensures there are no duplicates in the seed list
 	for _, ns := range seed {
@@ -494,7 +493,7 @@ func (in *NamespaceService) isAccessibleNamespace(namespace string) bool {
 }
 
 func (in *NamespaceService) isExcludedNamespace(namespace string) bool {
-	configObject := config.Get()
+	configObject := in.conf
 	excludes := configObject.API.Namespaces.Exclude
 	if len(excludes) == 0 {
 		return false
@@ -516,7 +515,7 @@ func (in *NamespaceService) isIncludedNamespace(namespace string) bool {
 		return true // Include list is ignored if accessible namespaces is not **; for our purposes, when ignored we assume the Include list includes all.
 	}
 
-	configObject := config.Get()
+	configObject := in.conf
 	if namespace == configObject.IstioNamespace {
 		return true // the control plane namespace is always included
 	}
@@ -584,7 +583,7 @@ func (in *NamespaceService) GetClusterNamespace(ctx context.Context, namespace s
 
 	var result models.Namespace
 	if in.hasProjects {
-		project, err := client.GetProject(namespace)
+		project, err := client.GetProject(ctx, namespace)
 		if err != nil {
 			return nil, err
 		}

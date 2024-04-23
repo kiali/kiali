@@ -43,7 +43,7 @@ export default defineConfig({
       // This name is non-standard and might change based on your environment hence the separate
       // env variable.
       config.env.AUTH_PROVIDER = config.env.AUTH_PROVIDER || 'my_htpasswd_provider';
-      config.env.AUTH_STRATEGY = await getAuthStrategy(config.baseUrl!);
+      config.env.AUTH_STRATEGY = await getAuthStrategy(config.baseUrl!, config.env.ALLOW_INSECURE_KIALI_API);
 
       return config;
     },

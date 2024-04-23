@@ -401,7 +401,7 @@ func TestClientCreatedWithProxyInfo(t *testing.T) {
 	clientFactory := NewTestingClientFactory(t)
 
 	// Regular clients should have the proxy info
-	client, err := clientFactory.GetClient(api.NewAuthInfo())
+	client, err := clientFactory.GetClient(api.NewAuthInfo(), cfg.KubernetesConfig.ClusterName)
 	require.NoError(err)
 
 	require.Equal(cfg.Auth.OpenId.ApiProxy, client.ClusterInfo().ClientConfig.Host)
@@ -413,7 +413,7 @@ func TestClientCreatedWithProxyInfo(t *testing.T) {
 	authInfo := api.NewAuthInfo()
 	authInfo.Token = KialiTokenForHomeCluster
 
-	client, err = clientFactory.GetClient(authInfo)
+	client, err = clientFactory.GetClient(authInfo, cfg.KubernetesConfig.ClusterName)
 	require.NoError(err)
 
 	require.NotEqual(cfg.Auth.OpenId.ApiProxy, client.ClusterInfo().ClientConfig.Host)

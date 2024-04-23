@@ -24,6 +24,7 @@ import (
 //// Mock for the K8SClientFactory
 
 type K8SClientFactoryMock struct {
+	conf    *config.Config
 	lock    sync.RWMutex
 	Clients map[string]kubernetes.ClientInterface
 }
@@ -32,10 +33,15 @@ type K8SClientFactoryMock struct {
 var _ kubernetes.ClientFactory = &K8SClientFactoryMock{}
 
 // Constructor
+// Deprecated: use NewFakeClientFactory instead since it doesn't rely on the global config.Get()
 func NewK8SClientFactoryMock(k8s kubernetes.ClientInterface) *K8SClientFactoryMock {
-	k8sClientFactory := new(K8SClientFactoryMock)
-	k8sClientFactory.Clients = map[string]kubernetes.ClientInterface{config.Get().KubernetesConfig.ClusterName: k8s}
-	return k8sClientFactory
+	conf := config.Get()
+	clients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: k8s}
+	return NewFakeClientFactory(conf, clients)
+}
+
+func NewFakeClientFactory(conf *config.Config, clients map[string]kubernetes.ClientInterface) *K8SClientFactoryMock {
+	return &K8SClientFactoryMock{conf: conf, Clients: clients}
 }
 
 // Testing specific methods
@@ -46,10 +52,10 @@ func (o *K8SClientFactoryMock) SetClients(clients map[string]kubernetes.ClientIn
 }
 
 // Business Methods
-func (o *K8SClientFactoryMock) GetClient(authInfo *api.AuthInfo) (kubernetes.ClientInterface, error) {
+func (o *K8SClientFactoryMock) GetClient(authInfo *api.AuthInfo, cluster string) (kubernetes.ClientInterface, error) {
 	o.lock.RLock()
 	defer o.lock.RUnlock()
-	return o.Clients[config.Get().KubernetesConfig.ClusterName], nil
+	return o.Clients[cluster], nil
 }
 
 // Business Methods
@@ -74,7 +80,7 @@ func (o *K8SClientFactoryMock) GetSAClients() map[string]kubernetes.ClientInterf
 func (o *K8SClientFactoryMock) GetSAHomeClusterClient() kubernetes.ClientInterface {
 	o.lock.RLock()
 	defer o.lock.RUnlock()
-	return o.Clients[config.Get().KubernetesConfig.ClusterName]
+	return o.Clients[o.conf.KubernetesConfig.ClusterName]
 }
 
 /////
