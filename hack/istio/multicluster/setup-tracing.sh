@@ -64,7 +64,7 @@ mode: deployment
 service:
   enabled: false
 image:
-  repository: "otel/opentelemetry-collector-contrib"
+  repository: "otel/opentelemetry-collector-k8s"
 config:
   exporters:
     logging: {}
