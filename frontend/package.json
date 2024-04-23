@@ -46,7 +46,7 @@
     "cypress:tracing": "cypress open -e TAGS=\"@tracing\"",
     "cypress:selected": "cypress open -e TAGS=\"@selected\"",
     "cypress:run:selected": "cypress run -e TAGS=\"@selected\"",
-    "cypress:run": "cypress run -e TAGS=\"@smoke\" && cypress run -e TAGS=\"not @crd-validation and not @multi-cluster and not @smoke\" && cypress run -e TAGS=\"@crd-validation and not @multi-cluster and not @smoke\"",
+    "cypress:run": "cypress run -e TAGS=\"@smoke\" && cypress run -e TAGS=\"not @crd-validation and not @multi-cluster and not @smoke and not @ambient\" && cypress run -e TAGS=\"@crd-validation and not @multi-cluster and not @smoke and not @ambient\"",
     "cypress:run:ambient": "cypress run -e TAGS=\"@ambient\"",
     "cypress:run:smoke": "cypress run -e TAGS=\"@smoke\"",
     "cypress:run:multi-cluster": "cypress run -e TAGS=\"not @crd-validation and @multi-cluster and not @multi-primary\"",
