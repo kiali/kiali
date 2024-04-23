@@ -36,6 +36,10 @@ while [[ $# -gt 0 ]]; do
       HELM_CHARTS_REPO="$2"
       shift;shift
       ;;
+    -hcrp|--helm-charts-repo-pull)
+      HELM_CHARTS_REPO_PULL="$2"
+      shift;shift
+      ;;
     -jxf|--junit-xml-file)
       JUNIT_XML_FILE="$2"
       shift;shift
@@ -97,46 +101,47 @@ while [[ $# -gt 0 ]]; do
 
 $0 [option...] command
 
--at|--all-tests          Space-separated list of all the molecule tests to be run. Note that this list may not be the
-                         tests that are actually run - see --skip-tests.
-                         The default is all the tests found in the operator/molecule directory in the Kiali source home directory.
--c|--color               True if you want color in the output. (default: true)
--ce|--client-exe         Location of the client executable (either referring to 'oc' or 'kubectl') (default: relies on path).
--ci                      Run in continuous-integration mode. Verbose logs will be printed to stdout. (default: false).
--ct|--cluster-type       The type of cluster being tested. Must be one of: minikube, openshift. (default: openshift)
--d|--debug               True if you want the molecule tests to output large amounts of debug messages. (default: true)
--dorp|--docker-or-podman What should be used. NOTE: Docker is no longer supported. Molecule tests will only run with "podman". (default: podman)
--hcr|--helm-charts-repo  Location of the helm charts git repo. (default: ../helm-charts)
--jxf|--junit-xml-file    Location of the JUnit XML results file; set to "" to not output this file. (default: results.xml in the --test-logs-dir)
--ksh|--kiali_src-home    Location of the Kiali source code, the makefiles, and operator/molecule tests. (default: ..)
--ke|--kind-exe           If cluster type is 'kind' you can specify the kind executable to use via this option.
--kn|--kind-name          If cluster type is 'kind' you can specify the cluster name that is in use via this option.
--me|--minikube-exe       If cluster type is 'minikube' you can specify the minikube executable that should be used.
--mp|--minikube-profile   If cluster type is 'minikube' you can specify the profile that is in use via this option.
--nd|--never-destroy      Do not have the molecule framework destroy the test scaffolding. Setting this to true
-                         will help test failures by allowing you to examine the operator logs after a test finished.
-                         Default is 'false' - the operator resources will be deleted after a test completes, no matter
-                         if the test succeeded or failed.
--oi|--operator-installer How the operator is to be installed by the molecule tests. It is either installed
-                         via helm or the installation is skipped entirely. Use "skip" if you installed the
-                         operator yourself (say, via OLM) and you want the molecule tests to use it rather
-                         than to install its own operator. Valid values: "helm" or "skip" (default: helm)
--p|--profiler            True if you want to enable the ansible profiler in the operator (default: true)
--st|--skip-tests         Space-separated list of all the molecule tests to be skipped. (default: tests unable to run on cluster type)
--sv|--spec-version       The Kiali CR spec.version to test. (default: default)
--tld|--test-logs-dir     Location where the test log files will be stored. (default: /tmp/kiali-molecule-test-logs.<date-time>)
--udi|--use-dev-images    If true, the tests will use locally built dev images of Kiali and the operator. When using dev
-                         images, you must have already pushed locally built dev images into your cluster.
-                         If false, the cluster will put the latest images found on quay.io.
-                         Default: false
+-at|--all-tests               Space-separated list of all the molecule tests to be run. Note that this list may not be the
+                              tests that are actually run - see --skip-tests.
+                              The default is all the tests found in the operator/molecule directory in the Kiali source home directory.
+-c|--color                    True if you want color in the output. (default: true)
+-ce|--client-exe              Location of the client executable (either referring to 'oc' or 'kubectl') (default: relies on path).
+-ci                           Run in continuous-integration mode. Verbose logs will be printed to stdout. (default: false).
+-ct|--cluster-type            The type of cluster being tested. Must be one of: minikube, openshift. (default: openshift)
+-d|--debug                    True if you want the molecule tests to output large amounts of debug messages. (default: true)
+-dorp|--docker-or-podman      What should be used. NOTE: Docker is no longer supported. Molecule tests will only run with "podman". (default: podman)
+-hcr|--helm-charts-repo       Location of the helm charts git repo. (default: ../helm-charts)
+-hcrp|--helm-charts-repo-pull Whether or not to pull helm charts from the repo. (default: true)
+-jxf|--junit-xml-file         Location of the JUnit XML results file; set to "" to not output this file. (default: results.xml in the --test-logs-dir)
+-ksh|--kiali_src-home         Location of the Kiali source code, the makefiles, and operator/molecule tests. (default: ..)
+-ke|--kind-exe                If cluster type is 'kind' you can specify the kind executable to use via this option.
+-kn|--kind-name               If cluster type is 'kind' you can specify the cluster name that is in use via this option.
+-me|--minikube-exe            If cluster type is 'minikube' you can specify the minikube executable that should be used.
+-mp|--minikube-profile        If cluster type is 'minikube' you can specify the profile that is in use via this option.
+-nd|--never-destroy           Do not have the molecule framework destroy the test scaffolding. Setting this to true
+                              will help test failures by allowing you to examine the operator logs after a test finished.
+                              Default is 'false' - the operator resources will be deleted after a test completes, no matter
+                              if the test succeeded or failed.
+-oi|--operator-installer      How the operator is to be installed by the molecule tests. It is either installed
+                              via helm or the installation is skipped entirely. Use "skip" if you installed the
+                              operator yourself (say, via OLM) and you want the molecule tests to use it rather
+                              than to install its own operator. Valid values: "helm" or "skip" (default: helm)
+-p|--profiler                 True if you want to enable the ansible profiler in the operator (default: true)
+-st|--skip-tests              Space-separated list of all the molecule tests to be skipped. (default: tests unable to run on cluster type)
+-sv|--spec-version            The Kiali CR spec.version to test. (default: default)
+-tld|--test-logs-dir          Location where the test log files will be stored. (default: /tmp/kiali-molecule-test-logs.<date-time>)
+-udi|--use-dev-images         If true, the tests will use locally built dev images of Kiali and the operator. When using dev
+                              images, you must have already pushed locally built dev images into your cluster.
+                              If false, the cluster will put the latest images found on quay.io.
+                              Default: false
 -udefi|--use-default-images
-                         If true (and --use-dev-images is 'false') no specific image name or version will be specified in
-                         the CRs that are created by the molecule tests. In other words, spec.deployment.image_name and
-                         spec.deployment.image_version will be empty strings. This means the Kial server image and the OSSMC image
-                         that will be deployed in the tests will be determined by the operator defaults.
-                         This is useful when testing with a specific spec.version (--spec-version) and you want the operator
-                         to install the default server image for that version.
-                         Default: false
+                              If true (and --use-dev-images is 'false') no specific image name or version will be specified in
+                              the CRs that are created by the molecule tests. In other words, spec.deployment.image_name and
+                              spec.deployment.image_version will be empty strings. This means the Kial server image and the OSSMC image
+                              that will be deployed in the tests will be determined by the operator defaults.
+                              This is useful when testing with a specific spec.version (--spec-version) and you want the operator
+                              to install the default server image for that version.
+                              Default: false
 HELPMSG
       exit 1
       ;;
@@ -210,6 +215,8 @@ export MOLECULE_OSSMCONSOLE_CR_SPEC_VERSION="${MOLECULE_OSSMCONSOLE_CR_SPEC_VERS
 # Set to true if you want molecule's logs to be printed to the terminal, rather than a simple success/failure/skipped summary.
 export CI="${CI:-false}"
 
+export HELM_CHARTS_REPO_PULL="${HELM_CHARTS_REPO_PULL:-true}"
+
 # The parent directory where all the test logs are going to be stored.
 TEST_LOGS_DIR="${TEST_LOGS_DIR:-/tmp/kiali-molecule-test-logs.$(date +'%Y-%m-%d_%H-%M-%S')}"
 
@@ -249,6 +256,7 @@ echo MINIKUBE_PROFILE="$MINIKUBE_PROFILE"
 echo KIND="$KIND"
 echo KIND_NAME="$KIND_NAME"
 echo HELM_CHARTS_REPO="$HELM_CHARTS_REPO"
+echo HELM_CHARTS_REPO_PULL="$HELM_CHARTS_REPO_PULL"
 echo CI="$CI"
 echo "=============================="
 
@@ -438,10 +446,10 @@ do
 
   export MOLECULE_SCENARIO="${t}"
   if [ "$CI" != "true" ]; then
-    make molecule-test >> ${TEST_LOGS_DIR}/${t}.log 2>&1
+    make HELM_CHARTS_REPO="${HELM_CHARTS_REPO}" HELM_CHARTS_REPO_PULL="${HELM_CHARTS_REPO_PULL}" molecule-test >> ${TEST_LOGS_DIR}/${t}.log 2>&1
     exitcode="$?"
   else
-    make molecule-test |& tee ${TEST_LOGS_DIR}/${t}.log
+    make HELM_CHARTS_REPO="${HELM_CHARTS_REPO}" HELM_CHARTS_REPO_PULL="${HELM_CHARTS_REPO_PULL}" molecule-test |& tee ${TEST_LOGS_DIR}/${t}.log
     exitcode="${PIPESTATUS[0]}"
   fi
 

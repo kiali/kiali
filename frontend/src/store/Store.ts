@@ -50,7 +50,7 @@ export interface NamespaceState {
   readonly isFetching: boolean;
   readonly items?: Namespace[];
   readonly lastUpdated?: Date;
-  readonly namespacesPerCluster?: Map<string, string[]>;
+  readonly namespacesPerCluster: Map<string, string[]>;
 }
 
 // Various pages are described here with their various sections
@@ -108,7 +108,12 @@ export enum LoginStatus {
   expired
 }
 
+export interface SessionClusterInfo {
+  name: string;
+}
+
 export interface LoginSession {
+  clusterInfo?: { [cluster: string]: SessionClusterInfo };
   expiresOn: RawDate;
   username: UserName;
 }

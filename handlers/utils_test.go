@@ -14,8 +14,8 @@ import (
 	"k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/kiali/kiali/business"
-	"github.com/kiali/kiali/business/authentication"
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/handlers/authentication"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/models"
@@ -68,7 +68,8 @@ func TestCreateMetricsServiceForNamespace(t *testing.T) {
 	prom := utilSetupMocks(t)
 
 	req := httptest.NewRequest("GET", "/foo", nil)
-	req = req.WithContext(authentication.SetAuthInfoContext(req.Context(), &api.AuthInfo{Token: "test"}))
+	authInfo := map[string]*api.AuthInfo{config.Get().KubernetesConfig.ClusterName: {Token: "test"}}
+	req = req.WithContext(authentication.SetAuthInfoContext(req.Context(), authInfo))
 
 	w := httptest.NewRecorder()
 	srv, info := createMetricsServiceForNamespace(w, req, prom, models.Namespace{Name: "ns1", Cluster: config.Get().KubernetesConfig.ClusterName})
@@ -84,7 +85,8 @@ func TestCreateMetricsServiceForNamespaceForbidden(t *testing.T) {
 	prom := utilSetupMocks(t)
 
 	req := httptest.NewRequest("GET", "/foo", nil)
-	req = req.WithContext(authentication.SetAuthInfoContext(req.Context(), &api.AuthInfo{Token: "test"}))
+	authInfo := map[string]*api.AuthInfo{config.Get().KubernetesConfig.ClusterName: {Token: "test"}}
+	req = req.WithContext(authentication.SetAuthInfoContext(req.Context(), authInfo))
 
 	w := httptest.NewRecorder()
 	srv, info := createMetricsServiceForNamespace(w, req, prom, models.Namespace{Name: "nsNil", Cluster: config.Get().KubernetesConfig.ClusterName})
@@ -99,7 +101,8 @@ func TestCreateMetricsServiceForSeveralNamespaces(t *testing.T) {
 	prom := utilSetupMocks(t)
 
 	req := httptest.NewRequest("GET", "/foo", nil)
-	req = req.WithContext(authentication.SetAuthInfoContext(req.Context(), &api.AuthInfo{Token: "test"}))
+	authInfo := map[string]*api.AuthInfo{config.Get().KubernetesConfig.ClusterName: {Token: "test"}}
+	req = req.WithContext(authentication.SetAuthInfoContext(req.Context(), authInfo))
 
 	w := httptest.NewRecorder()
 	srv, info := createMetricsServiceForNamespaces(w, req, prom, []models.Namespace{{Name: "ns1"}, {Name: "ns2"}, {Name: "nsNil"}})

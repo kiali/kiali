@@ -15,6 +15,7 @@
 	@$(eval CLUSTER_KIALI_INTERNAL_NAME ?= ${CLUSTER_REPO_INTERNAL}/${CONTAINER_NAME})
 	@$(eval CLUSTER_KIALI_NAME ?= ${CLUSTER_REPO}/${CONTAINER_NAME})
 	@$(eval CLUSTER_KIALI_TAG ?= ${CLUSTER_KIALI_NAME}:${CONTAINER_VERSION})
+	@$(eval CLUSTER_KIALI_TAG_INTERNAL ?= ${CLUSTER_KIALI_INTERNAL_NAME}:${CONTAINER_VERSION})
 	@$(eval CLUSTER_OPERATOR_INTERNAL_NAME ?= ${CLUSTER_REPO_INTERNAL}/${OPERATOR_CONTAINER_NAME})
 	@$(eval CLUSTER_OPERATOR_NAME ?= ${CLUSTER_REPO}/${OPERATOR_CONTAINER_NAME})
 	@$(eval CLUSTER_OPERATOR_TAG ?= ${CLUSTER_OPERATOR_NAME}:${OPERATOR_CONTAINER_VERSION})
@@ -193,10 +194,10 @@ endif
 cluster-build-kiali: .prepare-cluster container-build-kiali
 ifeq ($(DORP),docker)
 	@echo Re-tag the already built Kiali container image for a remote cluster using docker
-	docker tag ${QUAY_TAG} ${CLUSTER_KIALI_TAG}
+	docker tag ${QUAY_TAG} ${CLUSTER_KIALI_TAG} ${CLUSTER_KIALI_TAG_INTERNAL}
 else
 	@echo Re-tag the already built Kiali container image for a remote cluster using podman
-	podman tag ${QUAY_TAG} ${CLUSTER_KIALI_TAG}
+	podman tag ${QUAY_TAG} ${CLUSTER_KIALI_TAG} ${CLUSTER_KIALI_TAG_INTERNAL}
 endif
 
 ## cluster-build: Builds the images for development with a remote cluster

@@ -1,7 +1,6 @@
 package routing
 
 import (
-	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -15,10 +14,10 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/kiali/kiali/business"
-	"github.com/kiali/kiali/business/authentication"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/grafana"
 	"github.com/kiali/kiali/handlers"
+	"github.com/kiali/kiali/handlers/authentication"
 	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/cache"
@@ -87,33 +86,82 @@ func NewRouter(
 
 	appRouter = appRouter.StrictSlash(true)
 
-	persistor := authentication.NewCookieSessionPersistor(conf)
 	strategy := conf.Auth.Strategy
 
+	// Routes that are specific to different auth stragies like auth callbacks.
+	var authRoutes []Route
 	var authController authentication.AuthController
+	var authRedirectHandler http.Handler
 	if strategy == config.AuthStrategyToken {
-		authController = authentication.NewTokenAuthController(persistor, clientFactory, kialiCache, conf, discovery)
-	} else if strategy == config.AuthStrategyOpenId {
-		authController = authentication.NewOpenIdAuthController(persistor, kialiCache, clientFactory, conf, discovery)
-	} else if strategy == config.AuthStrategyOpenshift {
-		openshiftOAuthService, err := business.NewOpenshiftOAuthService(context.TODO(), conf, clientFactory.GetSAClients(), clientFactory)
+		tokenAuth, err := authentication.NewTokenAuthController(clientFactory, kialiCache, conf, discovery)
 		if err != nil {
-			log.Errorf("Error creating OpenshiftOAuthService: %v", err)
+			log.Errorf("Error creating TokenAuthController: %v", err)
 			return nil, err
 		}
-		openshiftAuth, err := authentication.NewOpenshiftAuthController(persistor, openshiftOAuthService, conf)
+		authController = tokenAuth
+	} else if strategy == config.AuthStrategyOpenId {
+		openIDAuth, err := authentication.NewOpenIdAuthController(kialiCache, clientFactory, conf, discovery)
+		if err != nil {
+			log.Errorf("Error creating OpenIdAuthController: %v", err)
+			return nil, err
+		}
+		authController = openIDAuth
+	} else if strategy == config.AuthStrategyOpenshift {
+		openshiftAuth, err := authentication.NewOpenshiftAuthController(conf, clientFactory)
 		if err != nil {
 			log.Errorf("Error creating OpenshiftAuthController: %v", err)
 			return nil, err
 		}
+
 		authController = openshiftAuth
+
+		authCallbacks := []Route{
+			{
+				Name:          "BaseAuthRedirect",
+				Method:        "GET",
+				Pattern:       "/api/auth/redirect",
+				HandlerFunc:   openshiftAuth.OpenshiftAuthRedirect,
+				Authenticated: false,
+			},
+			{
+				Name:          "ClusterAuthRedirect",
+				Method:        "GET",
+				Pattern:       "/api/auth/redirect/{cluster}",
+				HandlerFunc:   openshiftAuth.OpenshiftAuthRedirect,
+				Authenticated: false,
+			},
+			{
+				Name:          "BaseAuthCallback",
+				Method:        "GET",
+				Pattern:       "/api/auth/callback",
+				HandlerFunc:   openshiftAuth.OpenshiftAuthCallback,
+				Authenticated: false,
+			},
+			{
+				Name:          "ClusterAuthCallback",
+				Method:        "GET",
+				Pattern:       "/api/auth/callback/{cluster}",
+				HandlerFunc:   openshiftAuth.OpenshiftAuthCallback,
+				Authenticated: false,
+			},
+		}
+		authRoutes = append(authRoutes, authCallbacks...)
+		authRedirectHandler = http.HandlerFunc(openshiftAuth.OpenshiftAuthRedirect)
 	} else if strategy == config.AuthStrategyHeader {
-		authController = authentication.NewHeaderAuthController(persistor, clientFactory.GetSAHomeClusterClient())
+		headerAuth, err := authentication.NewHeaderAuthController(conf, clientFactory.GetSAHomeClusterClient())
+		if err != nil {
+			log.Errorf("Error creating HeaderAuthController: %v", err)
+			return nil, err
+		}
+		authController = headerAuth
 	}
 
 	// Build our API server routes and install them.
-	apiRoutes := NewRoutes(conf, kialiCache, clientFactory, prom, traceClientLoader, cpm, authController, grafana, discovery)
-	authenticationHandler := handlers.NewAuthenticationHandler(*conf, authController, clientFactory.GetSAHomeClusterClient())
+	apiRoutes := NewRoutes(conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, authController, grafana, discovery)
+	// Add any auth routes to the app router.
+	apiRoutes.Routes = append(apiRoutes.Routes, authRoutes...)
+
+	authenticationHandler := handlers.NewAuthenticationHandler(conf, authController, clientFactory.GetSAHomeClusterClient(), authRedirectHandler, clientFactory.GetSAClients())
 
 	allRoutes := apiRoutes.Routes
 
@@ -187,8 +235,6 @@ func NewRouter(
 	if authController != nil {
 		if ac, ok := authController.(*authentication.OpenIdAuthController); ok {
 			ac.PostRoutes(appRouter)
-		} else if ac, ok := authController.(*authentication.OpenshiftAuthController); ok {
-			ac.PostRoutes(appRouter)
 		}
 	}
 
@@ -200,10 +246,6 @@ func NewRouter(
 
 	if authController != nil {
 		if ac, ok := authController.(*authentication.OpenIdAuthController); ok {
-			authCallback := ac.GetAuthCallbackHandler(http.HandlerFunc(fileServerHandler))
-			rootRouter.Methods("GET").Path(webRootWithSlash).Handler(authCallback)
-			// Need a URL to catch for openshift too.
-		} else if ac, ok := authController.(*authentication.OpenshiftAuthController); ok {
 			authCallback := ac.GetAuthCallbackHandler(http.HandlerFunc(fileServerHandler))
 			rootRouter.Methods("GET").Path(webRootWithSlash).Handler(authCallback)
 		}

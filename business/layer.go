@@ -65,9 +65,9 @@ func Start(
 }
 
 // Get the business.Layer
-func Get(authInfo *api.AuthInfo) (*Layer, error) {
+func Get(authInfos map[string]*api.AuthInfo) (*Layer, error) {
 	// Creates new k8s clients based on the current users token
-	userClients, err := clientFactory.GetClients(authInfo)
+	userClients, err := clientFactory.GetClients(authInfos)
 	if err != nil {
 		return nil, err
 	}
@@ -94,7 +94,7 @@ func SetWithBackends(cf kubernetes.ClientFactory, prom prometheus.ClientInterfac
 // Note that the client passed here should *not* be the Kiali ServiceAccount client.
 // It should be the user client based on the logged in user's token.
 func NewWithBackends(userClients map[string]kubernetes.ClientInterface, kialiSAClients map[string]kubernetes.ClientInterface, prom prometheus.ClientInterface, traceClient tracing.ClientInterface) *Layer {
-	return newLayer(userClients, kialiSAClients, prom, traceClient, kialiCache, config.Get(), grafanaService, discovery)
+	return newLayer(userClients, kialiSAClients, prom, traceClient, kialiCache, config.Get(), grafanaService, discovery, poller)
 }
 
 func newLayer(
@@ -106,6 +106,7 @@ func newLayer(
 	conf *config.Config,
 	grafana *grafana.Service,
 	discovery meshDiscovery,
+	cpm ControlPlaneMonitor,
 ) *Layer {
 	temporaryLayer := &Layer{}
 
@@ -144,13 +145,13 @@ func NewLayer(
 	cpm ControlPlaneMonitor,
 	grafana *grafana.Service,
 	discovery *istio.Discovery,
-	authInfo *api.AuthInfo,
+	authInfos map[string]*api.AuthInfo,
 ) (*Layer, error) {
-	userClients, err := cf.GetClients(authInfo)
+	userClients, err := cf.GetClients(authInfos)
 	if err != nil {
 		return nil, err
 	}
 
 	kialiSAClients := cf.GetSAClients()
-	return newLayer(userClients, kialiSAClients, prom, traceClient, cache, conf, grafana, discovery), nil
+	return newLayer(userClients, kialiSAClients, prom, traceClient, cache, conf, grafana, discovery, cpm), nil
 }

@@ -19,8 +19,8 @@ import (
 	"k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/kiali/kiali/business"
-	"github.com/kiali/kiali/business/authentication"
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/handlers/authentication"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus"
@@ -317,14 +317,15 @@ func setupAggregateMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheust
 	}
 	prom.Inject(xapi)
 
+	authInfo := map[string]*api.AuthInfo{conf.KubernetesConfig.ClusterName: {Token: "test"}}
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/{namespace}/aggregates/{aggregate}/{aggregateValue}/metrics", http.HandlerFunc(
-		func(w http.ResponseWriter, r *http.Request) {
-			context := authentication.SetAuthInfoContext(r.Context(), &api.AuthInfo{Token: "test"})
-			getAggregateMetrics(w, r.WithContext(context), func() (*prometheus.Client, error) {
+		WithAuthInfo(authInfo, func(w http.ResponseWriter, r *http.Request) {
+			getAggregateMetrics(w, r, func() (*prometheus.Client, error) {
 				return prom, nil
 			})
-		}))
+		})),
+	)
 
 	ts := httptest.NewServer(mr)
 	t.Cleanup(ts.Close)
@@ -339,7 +340,8 @@ func TestPrepareStatsQueriesPartialError(t *testing.T) {
 	prom := utilSetupMocks(t)
 
 	req := httptest.NewRequest("GET", "/foo", nil)
-	req = req.WithContext(authentication.SetAuthInfoContext(req.Context(), &api.AuthInfo{Token: "test"}))
+	authInfo := map[string]*api.AuthInfo{config.Get().KubernetesConfig.ClusterName: {Token: "test"}}
+	req = req.WithContext(authentication.SetAuthInfoContext(req.Context(), authInfo))
 	w := httptest.NewRecorder()
 	queryTime := time.Date(2020, 10, 22, 0, 0, 0, 0, time.UTC).Unix()
 
@@ -417,7 +419,8 @@ func TestPrepareStatsQueriesNoErrorIntervalAdjusted(t *testing.T) {
 	prom := utilSetupMocks(t, &core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "ns3", CreationTimestamp: meta_v1.NewTime(queryTime.Add(-1 * time.Hour))}})
 
 	req := httptest.NewRequest("GET", "/foo", nil)
-	req = req.WithContext(authentication.SetAuthInfoContext(req.Context(), &api.AuthInfo{Token: "test"}))
+	authInfo := map[string]*api.AuthInfo{config.Get().KubernetesConfig.ClusterName: {Token: "test"}}
+	req = req.WithContext(authentication.SetAuthInfoContext(req.Context(), authInfo))
 	w := httptest.NewRecorder()
 
 	rawQ := []models.MetricsStatsQuery{{

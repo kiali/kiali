@@ -167,16 +167,6 @@ export const getAuthInfo = async (): Promise<ApiResponse<AuthInfo>> => {
   return newRequest<AuthInfo>(HTTP_VERBS.GET, urls.authInfo, {}, {});
 };
 
-export const checkOpenshiftAuth = async (data: string): Promise<ApiResponse<LoginSession>> => {
-  return axios.request<LoginSession>({
-    method: HTTP_VERBS.POST,
-    url: urls.authenticate,
-    data: data,
-    headers: getHeaders(true) as AxiosHeaders,
-    params: {}
-  });
-};
-
 export const getStatus = (): Promise<ApiResponse<StatusState>> => {
   return newRequest<StatusState>(HTTP_VERBS.GET, urls.status, {}, {});
 };

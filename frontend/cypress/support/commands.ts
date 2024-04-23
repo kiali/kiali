@@ -32,7 +32,7 @@ declare namespace Cypress {
      * @param args the rest of DOM element args
      * @example cy.getBySel('greeting')
      */
-    getBySel(selector: string, ...args: any): Chainable<Subject>;
+    getBySel(selector: string, ...args: any): Chainable<JQuery<HTMLElement>>;
 
     /**
      * Custom command to check if a DOM element has specific CSS variable

@@ -2,7 +2,6 @@ package api
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -17,12 +16,12 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/kiali/kiali/business"
-	"github.com/kiali/kiali/business/authentication"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/istio"
@@ -35,7 +34,8 @@ import (
 
 // Setup mock
 
-func setupMocked(t *testing.T) (*prometheus.Client, *prometheustest.PromAPIMock) {
+func setupMocked(t *testing.T) (*prometheus.Client, *prometheustest.PromAPIMock, *business.Layer) {
+	t.Helper()
 	conf := config.NewConfig()
 	conf.KubernetesConfig.ClusterName = "east"
 	config.Set(conf)
@@ -44,6 +44,7 @@ func setupMocked(t *testing.T) (*prometheus.Client, *prometheustest.PromAPIMock)
 		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "bookinfo"}},
 		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "tutorial"}},
 	)
+	authInfo := map[string]*api.AuthInfo{conf.KubernetesConfig.ClusterName: {Token: "test"}}
 
 	api := new(prometheustest.PromAPIMock)
 	client, err := prometheus.NewClient()
@@ -52,9 +53,17 @@ func setupMocked(t *testing.T) (*prometheus.Client, *prometheustest.PromAPIMock)
 	}
 	client.Inject(api)
 
-	business.SetupBusinessLayer(t, k8s, *conf)
+	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
+	business.SetWithBackends(mockClientFactory, nil)
+	cache := cache.NewTestingCache(t, k8s, *conf)
+	business.WithKialiCache(cache)
+	discovery := istio.NewDiscovery(mockClientFactory.Clients, cache, conf)
+	business.WithDiscovery(discovery)
 
-	return client, api
+	biz, err := business.NewLayer(conf, cache, mockClientFactory, client, nil, nil, nil, discovery, authInfo)
+	require.NoError(t, err)
+
+	return client, api, biz
 }
 
 // firstKey returns the first key from the map.
@@ -68,7 +77,7 @@ func firstKey[K comparable, V any](m map[K]V) K {
 	return k
 }
 
-func setupMockedWithIstioComponentNamespaces(t *testing.T, meshId string, userClients map[string]kubernetes.ClientInterface) (*prometheus.Client, *prometheustest.PromAPIMock, error) {
+func setupMockedWithIstioComponentNamespaces(t *testing.T, meshId string, userClients map[string]kubernetes.ClientInterface) (*prometheus.Client, *prometheustest.PromAPIMock, error, *business.Layer) {
 	testConfig := config.NewConfig()
 	testConfig.KubernetesConfig.ClusterName = firstKey(userClients)
 	if meshId != "" {
@@ -76,11 +85,12 @@ func setupMockedWithIstioComponentNamespaces(t *testing.T, meshId string, userCl
 	}
 	config.Set(testConfig)
 	fmt.Println("!!! Set up complex mock")
+	authInfo := map[string]*api.AuthInfo{testConfig.KubernetesConfig.ClusterName: {Token: "test"}}
 
 	api := new(prometheustest.PromAPIMock)
 	client, err := prometheus.NewClient()
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, err, nil
 	}
 	client.Inject(api)
 
@@ -94,7 +104,9 @@ func setupMockedWithIstioComponentNamespaces(t *testing.T, meshId string, userCl
 	business.WithKialiCache(cache)
 	business.SetWithBackends(mockClientFactory, nil)
 
-	return client, api, nil
+	biz, err := business.NewLayer(testConfig, cache, mockClientFactory, client, nil, nil, nil, discovery, authInfo)
+	require.NoError(t, err)
+	return client, api, nil, biz
 }
 
 func mockQuery(api *prometheustest.PromAPIMock, query string, ret *model.Vector) {
@@ -113,7 +125,7 @@ func mockQuery(api *prometheustest.PromAPIMock, query string, ret *model.Vector)
 }
 
 // mockNamespaceGraph provides the same single-namespace mocks to be used for different graph types
-func mockNamespaceGraph(t *testing.T) (*prometheus.Client, *prometheustest.PromAPIMock, error) {
+func mockNamespaceGraph(t *testing.T) (*prometheus.Client, *prometheustest.PromAPIMock, error, *business.Layer) {
 	q0 := `round(sum(rate(istio_requests_total{reporter=~"source|waypoint",source_workload_namespace!="bookinfo",destination_workload_namespace="unknown",destination_workload="unknown",destination_service=~"^.+\\.bookinfo\\..+$"} [600s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,request_protocol,response_code,grpc_response_status,response_flags) > 0,0.001)`
 	v0 := model.Vector{}
 
@@ -987,7 +999,7 @@ func mockNamespaceGraph(t *testing.T) (*prometheus.Client, *prometheustest.PromA
 		},
 	}
 
-	client, api := setupMocked(t)
+	client, api, biz := setupMocked(t)
 
 	mockQuery(api, q0, &v0)
 	mockQuery(api, q1, &v1)
@@ -996,16 +1008,16 @@ func mockNamespaceGraph(t *testing.T) (*prometheus.Client, *prometheustest.PromA
 	mockQuery(api, q4, &v4)
 	mockQuery(api, q5, &v5)
 
-	return client, api, nil
+	return client, api, nil, biz
 }
 
 // mockNamespaceRatesGraph adds additional queries to mockNamespaceGraph to test non-default rates for graph-gen. Basic approach
 // is for "sent" to use the same traffic/rates as is done for the default traffic.  This produces the same rates (and nearly the
 // same graph as for the defaults). Use double the rates for "received".  And so "total" should be triple the "sent" rates.
-func mockNamespaceRatesGraph(t *testing.T) (*prometheus.Client, *prometheustest.PromAPIMock, error) {
-	client, api, err := mockNamespaceGraph(t)
+func mockNamespaceRatesGraph(t *testing.T) (*prometheus.Client, *prometheustest.PromAPIMock, error, *business.Layer) {
+	client, api, err, biz := mockNamespaceGraph(t)
 	if err != nil {
-		return client, api, err
+		return client, api, err, biz
 	}
 
 	q6 := `round(sum(rate(istio_tcp_received_bytes_total{reporter="source",source_workload_namespace!="bookinfo",destination_workload_namespace="unknown",destination_workload="unknown",destination_service=~"^.+\\.bookinfo\\..+$"} [600s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,response_flags) > 0,0.001)`
@@ -1167,7 +1179,7 @@ func mockNamespaceRatesGraph(t *testing.T) (*prometheus.Client, *prometheustest.
 	mockQuery(api, q13, &v13)
 	mockQuery(api, q14, &v14)
 
-	return client, api, nil
+	return client, api, nil, biz
 }
 
 func respond(w http.ResponseWriter, code int, payload interface{}) {
@@ -1217,26 +1229,22 @@ func assertObjectsEqual(t *testing.T, expected, actual []byte) {
 }
 
 func TestAppGraph(t *testing.T) {
-	client, _, err := mockNamespaceRatesGraph(t)
+	client, _, err, biz := mockNamespaceRatesGraph(t)
 	if err != nil {
 		t.Error(err)
 		return
 	}
 
-	var fut func(ctx context.Context, b *business.Layer, p *prometheus.Client, o graph.Options) (int, interface{})
-
 	mr := mux.NewRouter()
-	mr.HandleFunc("/api/namespaces/graph", http.HandlerFunc(
-		func(w http.ResponseWriter, r *http.Request) {
-			context := authentication.SetAuthInfoContext(r.Context(), &api.AuthInfo{Token: "test"})
-			code, config := fut(context, nil, client, graph.NewOptions(r.WithContext(context)))
-			respond(w, code, config)
-		}))
+	mr.HandleFunc("/api/namespaces/graph", func(w http.ResponseWriter, r *http.Request) {
+		code, config := graphNamespacesIstio(r.Context(), biz, client, graph.NewOptions(r, &biz.Namespace))
+		respond(w, code, config)
+	},
+	)
 
 	ts := httptest.NewServer(mr)
 	defer ts.Close()
 
-	fut = graphNamespacesIstio
 	url := ts.URL + "/api/namespaces/graph?namespaces=bookinfo&graphType=app&appenders&queryTime=1523364075"
 	resp, err := http.Get(url)
 	if err != nil {
@@ -1254,26 +1262,22 @@ func TestAppGraph(t *testing.T) {
 }
 
 func TestVersionedAppGraph(t *testing.T) {
-	client, _, err := mockNamespaceRatesGraph(t)
+	client, _, err, biz := mockNamespaceRatesGraph(t)
 	if err != nil {
 		t.Error(err)
 		return
 	}
 
-	var fut func(ctx context.Context, b *business.Layer, p *prometheus.Client, o graph.Options) (int, interface{})
-
 	mr := mux.NewRouter()
-	mr.HandleFunc("/api/namespaces/graph", http.HandlerFunc(
-		func(w http.ResponseWriter, r *http.Request) {
-			context := authentication.SetAuthInfoContext(r.Context(), &api.AuthInfo{Token: "test"})
-			code, config := fut(context, nil, client, graph.NewOptions(r.WithContext(context)))
-			respond(w, code, config)
-		}))
+	mr.HandleFunc("/api/namespaces/graph", func(w http.ResponseWriter, r *http.Request) {
+		code, config := graphNamespacesIstio(r.Context(), biz, client, graph.NewOptions(r, &biz.Namespace))
+		respond(w, code, config)
+	},
+	)
 
 	ts := httptest.NewServer(mr)
 	defer ts.Close()
 
-	fut = graphNamespacesIstio
 	url := ts.URL + "/api/namespaces/graph?namespaces=bookinfo&graphType=versionedApp&appenders&queryTime=1523364075"
 	resp, err := http.Get(url)
 	if err != nil {
@@ -1291,26 +1295,22 @@ func TestVersionedAppGraph(t *testing.T) {
 }
 
 func TestServiceGraph(t *testing.T) {
-	client, _, err := mockNamespaceRatesGraph(t)
+	client, _, err, biz := mockNamespaceRatesGraph(t)
 	if err != nil {
 		t.Error(err)
 		return
 	}
 
-	var fut func(ctx context.Context, b *business.Layer, p *prometheus.Client, o graph.Options) (int, interface{})
-
 	mr := mux.NewRouter()
-	mr.HandleFunc("/api/namespaces/graph", http.HandlerFunc(
-		func(w http.ResponseWriter, r *http.Request) {
-			context := authentication.SetAuthInfoContext(r.Context(), &api.AuthInfo{Token: "test"})
-			code, config := fut(context, nil, client, graph.NewOptions(r.WithContext(context)))
-			respond(w, code, config)
-		}))
+	mr.HandleFunc("/api/namespaces/graph", func(w http.ResponseWriter, r *http.Request) {
+		code, config := graphNamespacesIstio(r.Context(), biz, client, graph.NewOptions(r, &biz.Namespace))
+		respond(w, code, config)
+	},
+	)
 
 	ts := httptest.NewServer(mr)
 	defer ts.Close()
 
-	fut = graphNamespacesIstio
 	url := ts.URL + "/api/namespaces/graph?namespaces=bookinfo&graphType=service&appenders&queryTime=1523364075"
 	resp, err := http.Get(url)
 	if err != nil {
@@ -1328,26 +1328,22 @@ func TestServiceGraph(t *testing.T) {
 }
 
 func TestWorkloadGraph(t *testing.T) {
-	client, _, err := mockNamespaceRatesGraph(t)
+	client, _, err, biz := mockNamespaceRatesGraph(t)
 	if err != nil {
 		t.Error(err)
 		return
 	}
 
-	var fut func(ctx context.Context, b *business.Layer, p *prometheus.Client, o graph.Options) (int, interface{})
-
 	mr := mux.NewRouter()
-	mr.HandleFunc("/api/namespaces/graph", http.HandlerFunc(
-		func(w http.ResponseWriter, r *http.Request) {
-			context := authentication.SetAuthInfoContext(r.Context(), &api.AuthInfo{Token: "test"})
-			code, config := fut(context, nil, client, graph.NewOptions(r.WithContext(context)))
-			respond(w, code, config)
-		}))
+	mr.HandleFunc("/api/namespaces/graph", func(w http.ResponseWriter, r *http.Request) {
+		code, config := graphNamespacesIstio(r.Context(), biz, client, graph.NewOptions(r, &biz.Namespace))
+		respond(w, code, config)
+	},
+	)
 
 	ts := httptest.NewServer(mr)
 	defer ts.Close()
 
-	fut = graphNamespacesIstio
 	url := ts.URL + "/api/namespaces/graph?namespaces=bookinfo&graphType=workload&appenders&queryTime=1523364075"
 	resp, err := http.Get(url)
 	if err != nil {
@@ -1365,26 +1361,23 @@ func TestWorkloadGraph(t *testing.T) {
 }
 
 func TestRatesGraphSent(t *testing.T) {
-	client, _, err := mockNamespaceRatesGraph(t)
+	client, _, err, biz := mockNamespaceRatesGraph(t)
 	if err != nil {
 		t.Error(err)
 		return
 	}
 
-	var fut func(ctx context.Context, b *business.Layer, p *prometheus.Client, o graph.Options) (int, interface{})
-
 	mr := mux.NewRouter()
-	mr.HandleFunc("/api/namespaces/graph", http.HandlerFunc(
+	mr.HandleFunc("/api/namespaces/graph",
 		func(w http.ResponseWriter, r *http.Request) {
-			context := authentication.SetAuthInfoContext(r.Context(), &api.AuthInfo{Token: "test"})
-			code, config := fut(context, nil, client, graph.NewOptions(r.WithContext(context)))
+			code, config := graphNamespacesIstio(r.Context(), biz, client, graph.NewOptions(r, &biz.Namespace))
 			respond(w, code, config)
-		}))
+		},
+	)
 
 	ts := httptest.NewServer(mr)
 	defer ts.Close()
 
-	fut = graphNamespacesIstio
 	url := ts.URL + "/api/namespaces/graph?namespaces=bookinfo&graphType=workload&appenders&queryTime=1523364075&rateGrpc=sent&rateHttp=requests&rateTcp=sent"
 	resp, err := http.Get(url)
 	if err != nil {
@@ -1402,26 +1395,22 @@ func TestRatesGraphSent(t *testing.T) {
 }
 
 func TestRatesGraphReceived(t *testing.T) {
-	client, _, err := mockNamespaceRatesGraph(t)
+	client, _, err, biz := mockNamespaceRatesGraph(t)
 	if err != nil {
 		t.Error(err)
 		return
 	}
 
-	var fut func(ctx context.Context, b *business.Layer, p *prometheus.Client, o graph.Options) (int, interface{})
-
 	mr := mux.NewRouter()
-	mr.HandleFunc("/api/namespaces/graph", http.HandlerFunc(
-		func(w http.ResponseWriter, r *http.Request) {
-			context := authentication.SetAuthInfoContext(r.Context(), &api.AuthInfo{Token: "test"})
-			code, config := fut(context, nil, client, graph.NewOptions(r.WithContext(context)))
-			respond(w, code, config)
-		}))
+	mr.HandleFunc("/api/namespaces/graph", func(w http.ResponseWriter, r *http.Request) {
+		code, config := graphNamespacesIstio(r.Context(), biz, client, graph.NewOptions(r, &biz.Namespace))
+		respond(w, code, config)
+	},
+	)
 
 	ts := httptest.NewServer(mr)
 	defer ts.Close()
 
-	fut = graphNamespacesIstio
 	url := ts.URL + "/api/namespaces/graph?namespaces=bookinfo&graphType=workload&appenders&queryTime=1523364075&rateGrpc=received&rateHttp=requests&rateTcp=received"
 	resp, err := http.Get(url)
 	if err != nil {
@@ -1439,26 +1428,22 @@ func TestRatesGraphReceived(t *testing.T) {
 }
 
 func TestRatesGraphTotal(t *testing.T) {
-	client, _, err := mockNamespaceRatesGraph(t)
+	client, _, err, biz := mockNamespaceRatesGraph(t)
 	if err != nil {
 		t.Error(err)
 		return
 	}
 
-	var fut func(ctx context.Context, b *business.Layer, p *prometheus.Client, o graph.Options) (int, interface{})
-
 	mr := mux.NewRouter()
-	mr.HandleFunc("/api/namespaces/graph", http.HandlerFunc(
-		func(w http.ResponseWriter, r *http.Request) {
-			context := authentication.SetAuthInfoContext(r.Context(), &api.AuthInfo{Token: "test"})
-			code, config := fut(context, nil, client, graph.NewOptions(r.WithContext(context)))
-			respond(w, code, config)
-		}))
+	mr.HandleFunc("/api/namespaces/graph", func(w http.ResponseWriter, r *http.Request) {
+		code, config := graphNamespacesIstio(r.Context(), biz, client, graph.NewOptions(r, &biz.Namespace))
+		respond(w, code, config)
+	},
+	)
 
 	ts := httptest.NewServer(mr)
 	defer ts.Close()
 
-	fut = graphNamespacesIstio
 	url := ts.URL + "/api/namespaces/graph?namespaces=bookinfo&graphType=workload&appenders&queryTime=1523364075&rateGrpc=total&rateHttp=requests&rateTcp=total"
 	resp, err := http.Get(url)
 	if err != nil {
@@ -1476,26 +1461,23 @@ func TestRatesGraphTotal(t *testing.T) {
 }
 
 func TestRatesGraphNone(t *testing.T) {
-	client, _, err := mockNamespaceRatesGraph(t)
+	client, _, err, biz := mockNamespaceRatesGraph(t)
 	if err != nil {
 		t.Error(err)
 		return
 	}
 
-	var fut func(ctx context.Context, b *business.Layer, p *prometheus.Client, o graph.Options) (int, interface{})
-
 	mr := mux.NewRouter()
-	mr.HandleFunc("/api/namespaces/graph", http.HandlerFunc(
+	mr.HandleFunc("/api/namespaces/graph",
 		func(w http.ResponseWriter, r *http.Request) {
-			context := authentication.SetAuthInfoContext(r.Context(), &api.AuthInfo{Token: "test"})
-			code, config := fut(context, nil, client, graph.NewOptions(r.WithContext(context)))
+			code, config := graphNamespacesIstio(r.Context(), biz, client, graph.NewOptions(r, &biz.Namespace))
 			respond(w, code, config)
-		}))
+		},
+	)
 
 	ts := httptest.NewServer(mr)
 	defer ts.Close()
 
-	fut = graphNamespacesIstio
 	url := ts.URL + "/api/namespaces/graph?namespaces=bookinfo&graphType=workload&appenders&queryTime=1523364075&rateGrpc=total&rateHttp=none&rateTcp=total"
 	resp, err := http.Get(url)
 	if err != nil {
@@ -1797,27 +1779,23 @@ func TestWorkloadNodeGraph(t *testing.T) {
 		},
 	}
 
-	client, xapi := setupMocked(t)
+	client, xapi, biz := setupMocked(t)
 
 	mockQuery(xapi, q0, &v0)
 	mockQuery(xapi, q1, &v1)
 	mockQuery(xapi, q2, &v2)
 	mockQuery(xapi, q3, &v3)
 
-	var fut func(ctx context.Context, b *business.Layer, p *prometheus.Client, o graph.Options) (int, interface{})
-
 	mr := mux.NewRouter()
-	mr.HandleFunc("/api/namespaces/{namespace}/workloads/{workload}/graph", http.HandlerFunc(
-		func(w http.ResponseWriter, r *http.Request) {
-			context := authentication.SetAuthInfoContext(r.Context(), &api.AuthInfo{Token: "test"})
-			code, config := fut(context, nil, client, graph.NewOptions(r.WithContext(context)))
-			respond(w, code, config)
-		}))
+	mr.HandleFunc("/api/namespaces/{namespace}/workloads/{workload}/graph", func(w http.ResponseWriter, r *http.Request) {
+		code, config := graphNodeIstio(r.Context(), biz, client, graph.NewOptions(r, &biz.Namespace))
+		respond(w, code, config)
+	},
+	)
 
 	ts := httptest.NewServer(mr)
 	defer ts.Close()
 
-	fut = graphNodeIstio
 	url := ts.URL + "/api/namespaces/bookinfo/workloads/productpage-v1/graph?graphType=workload&appenders&queryTime=1523364075"
 	resp, err := http.Get(url)
 	if err != nil {
@@ -2119,27 +2097,23 @@ func TestAppNodeGraph(t *testing.T) {
 		},
 	}
 
-	client, xapi := setupMocked(t)
+	client, xapi, biz := setupMocked(t)
 
 	mockQuery(xapi, q0, &v0)
 	mockQuery(xapi, q1, &v1)
 	mockQuery(xapi, q2, &v2)
 	mockQuery(xapi, q3, &v3)
 
-	var fut func(ctx context.Context, b *business.Layer, p *prometheus.Client, o graph.Options) (int, interface{})
-
 	mr := mux.NewRouter()
-	mr.HandleFunc("/api/namespaces/{namespace}/applications/{app}/graph", http.HandlerFunc(
-		func(w http.ResponseWriter, r *http.Request) {
-			context := authentication.SetAuthInfoContext(r.Context(), &api.AuthInfo{Token: "test"})
-			code, config := fut(context, nil, client, graph.NewOptions(r.WithContext(context)))
-			respond(w, code, config)
-		}))
+	mr.HandleFunc("/api/namespaces/{namespace}/applications/{app}/graph", func(w http.ResponseWriter, r *http.Request) {
+		code, config := graphNodeIstio(r.Context(), biz, client, graph.NewOptions(r, &biz.Namespace))
+		respond(w, code, config)
+	},
+	)
 
 	ts := httptest.NewServer(mr)
 	defer ts.Close()
 
-	fut = graphNodeIstio
 	url := ts.URL + "/api/namespaces/bookinfo/applications/productpage/graph?graphType=versionedApp&appenders&queryTime=1523364075"
 	resp, err := http.Get(url)
 	if err != nil {
@@ -2441,27 +2415,23 @@ func TestVersionedAppNodeGraph(t *testing.T) {
 		},
 	}
 
-	client, xapi := setupMocked(t)
+	client, xapi, biz := setupMocked(t)
 
 	mockQuery(xapi, q0, &v0)
 	mockQuery(xapi, q1, &v1)
 	mockQuery(xapi, q2, &v2)
 	mockQuery(xapi, q3, &v3)
 
-	var fut func(ctx context.Context, b *business.Layer, p *prometheus.Client, o graph.Options) (int, interface{})
-
 	mr := mux.NewRouter()
-	mr.HandleFunc("/api/namespaces/{namespace}/applications/{app}/versions/{version}/graph", http.HandlerFunc(
-		func(w http.ResponseWriter, r *http.Request) {
-			context := authentication.SetAuthInfoContext(r.Context(), &api.AuthInfo{Token: "test"})
-			code, config := fut(context, nil, client, graph.NewOptions(r.WithContext(context)))
-			respond(w, code, config)
-		}))
+	mr.HandleFunc("/api/namespaces/{namespace}/applications/{app}/versions/{version}/graph", func(w http.ResponseWriter, r *http.Request) {
+		code, config := graphNodeIstio(r.Context(), biz, client, graph.NewOptions(r, &biz.Namespace))
+		respond(w, code, config)
+	},
+	)
 
 	ts := httptest.NewServer(mr)
 	defer ts.Close()
 
-	fut = graphNodeIstio
 	url := ts.URL + "/api/namespaces/bookinfo/applications/productpage/versions/v1/graph?graphType=versionedApp&appenders&queryTime=1523364075"
 	resp, err := http.Get(url)
 	if err != nil {
@@ -2533,26 +2503,22 @@ func TestServiceNodeGraph(t *testing.T) {
 		},
 	}
 
-	client, xapi := setupMocked(t)
+	client, xapi, biz := setupMocked(t)
 
 	mockQuery(xapi, q0, &v0)
 	mockQuery(xapi, q1, &v1)
 	mockQuery(xapi, q2, &v2)
 
-	var fut func(ctx context.Context, b *business.Layer, p *prometheus.Client, o graph.Options) (int, interface{})
-
 	mr := mux.NewRouter()
-	mr.HandleFunc("/api/namespaces/{namespace}/services/{service}/graph", http.HandlerFunc(
-		func(w http.ResponseWriter, r *http.Request) {
-			context := authentication.SetAuthInfoContext(r.Context(), &api.AuthInfo{Token: "test"})
-			code, config := fut(context, nil, client, graph.NewOptions(r.WithContext(context)))
-			respond(w, code, config)
-		}))
+	mr.HandleFunc("/api/namespaces/{namespace}/services/{service}/graph", func(w http.ResponseWriter, r *http.Request) {
+		code, config := graphNodeIstio(r.Context(), biz, client, graph.NewOptions(r, &biz.Namespace))
+		respond(w, code, config)
+	},
+	)
 
 	ts := httptest.NewServer(mr)
 	defer ts.Close()
 
-	fut = graphNodeIstio
 	url := ts.URL + "/api/namespaces/bookinfo/services/productpage/graph?graphType=workload&appenders&queryTime=1523364075"
 	resp, err := http.Get(url)
 	if err != nil {
@@ -2958,7 +2924,7 @@ func TestRatesNodeGraphTotal(t *testing.T) {
 		},
 	}
 
-	client, xapi := setupMocked(t)
+	client, xapi, biz := setupMocked(t)
 
 	mockQuery(xapi, q0, &v0)
 	mockQuery(xapi, q1, &v1)
@@ -2971,20 +2937,16 @@ func TestRatesNodeGraphTotal(t *testing.T) {
 	mockQuery(xapi, q8, &v8)
 	mockQuery(xapi, q9, &v9)
 
-	var fut func(ctx context.Context, b *business.Layer, p *prometheus.Client, o graph.Options) (int, interface{})
-
 	mr := mux.NewRouter()
-	mr.HandleFunc("/api/namespaces/{namespace}/workloads/{workload}/graph", http.HandlerFunc(
-		func(w http.ResponseWriter, r *http.Request) {
-			context := authentication.SetAuthInfoContext(r.Context(), &api.AuthInfo{Token: "test"})
-			code, config := fut(context, nil, client, graph.NewOptions(r.WithContext(context)))
-			respond(w, code, config)
-		}))
+	mr.HandleFunc("/api/namespaces/{namespace}/workloads/{workload}/graph", func(w http.ResponseWriter, r *http.Request) {
+		code, config := graphNodeIstio(r.Context(), biz, client, graph.NewOptions(r, &biz.Namespace))
+		respond(w, code, config)
+	},
+	)
 
 	ts := httptest.NewServer(mr)
 	defer ts.Close()
 
-	fut = graphNodeIstio
 	url := ts.URL + "/api/namespaces/bookinfo/workloads/productpage-v1/graph?rateGrpc=total&rateHttp=requests&rateTcp=total&graphType=workload&appenders&queryTime=1523364075"
 	resp, err := http.Get(url)
 	if err != nil {
@@ -3505,7 +3467,7 @@ func TestComplexGraph(t *testing.T) {
 			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "istio-telemetry"}},
 		),
 	}
-	client, xapi, err := setupMockedWithIstioComponentNamespaces(t, "mesh1", clients)
+	client, xapi, err, biz := setupMockedWithIstioComponentNamespaces(t, "mesh1", clients)
 	if err != nil {
 		t.Error(err)
 		return
@@ -3529,20 +3491,16 @@ func TestComplexGraph(t *testing.T) {
 	mockQuery(xapi, q16, &v16)
 	mockQuery(xapi, q17, &v17)
 
-	var fut func(ctx context.Context, b *business.Layer, p *prometheus.Client, o graph.Options) (int, interface{})
-
 	mr := mux.NewRouter()
-	mr.HandleFunc("/api/namespaces/graph", http.HandlerFunc(
-		func(w http.ResponseWriter, r *http.Request) {
-			context := authentication.SetAuthInfoContext(r.Context(), &api.AuthInfo{Token: "test"})
-			code, config := fut(context, nil, client, graph.NewOptions(r.WithContext(context)))
-			respond(w, code, config)
-		}))
+	mr.HandleFunc("/api/namespaces/graph", func(w http.ResponseWriter, r *http.Request) {
+		code, config := graphNamespacesIstio(r.Context(), biz, client, graph.NewOptions(r, &biz.Namespace))
+		respond(w, code, config)
+	},
+	)
 
 	ts := httptest.NewServer(mr)
 	defer ts.Close()
 
-	fut = graphNamespacesIstio
 	url := ts.URL + "/api/namespaces/graph?graphType=versionedApp&appenders=&queryTime=1523364075&namespaces=bookinfo,tutorial,istio-system"
 	resp, err := http.Get(url)
 	if err != nil {
@@ -3834,7 +3792,7 @@ func TestMultiClusterSourceGraph(t *testing.T) {
 			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "istio-system"}},
 		),
 	}
-	client, xapi, err := setupMockedWithIstioComponentNamespaces(t, "", clients)
+	client, xapi, err, biz := setupMockedWithIstioComponentNamespaces(t, "", clients)
 	if err != nil {
 		t.Error(err)
 		return
@@ -3847,20 +3805,16 @@ func TestMultiClusterSourceGraph(t *testing.T) {
 	mockQuery(xapi, q4, &v4)
 	mockQuery(xapi, q5, &v5)
 
-	var fut func(ctx context.Context, b *business.Layer, p *prometheus.Client, o graph.Options) (int, interface{})
-
 	mr := mux.NewRouter()
-	mr.HandleFunc("/api/namespaces/graph", http.HandlerFunc(
-		func(w http.ResponseWriter, r *http.Request) {
-			context := authentication.SetAuthInfoContext(r.Context(), &api.AuthInfo{Token: "test"})
-			code, config := fut(context, nil, client, graph.NewOptions(r.WithContext(context)))
-			respond(w, code, config)
-		}))
+	mr.HandleFunc("/api/namespaces/graph", func(w http.ResponseWriter, r *http.Request) {
+		code, config := graphNamespacesIstio(r.Context(), biz, client, graph.NewOptions(r, &biz.Namespace))
+		respond(w, code, config)
+	},
+	)
 
 	ts := httptest.NewServer(mr)
 	defer ts.Close()
 
-	fut = graphNamespacesIstio
 	url := ts.URL + "/api/namespaces/graph?graphType=versionedApp&injectServiceNodes=true&includeIdleEdges=true&appenders=&queryTime=1523364075&namespaces=bookinfo"
 	resp, err := http.Get(url)
 	if err != nil {

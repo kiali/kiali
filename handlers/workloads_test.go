@@ -19,7 +19,6 @@ import (
 	"k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/kiali/kiali/business"
-	"github.com/kiali/kiali/business/authentication"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/prometheus"
@@ -33,11 +32,12 @@ func setupWorkloadList(t *testing.T, k8s *kubetest.FakeK8sClient) (*httptest.Ser
 
 	mr := mux.NewRouter()
 
+	authInfo := map[string]*api.AuthInfo{config.Get().KubernetesConfig.ClusterName: {Token: "test"}}
 	mr.HandleFunc("/api/clusters/workloads", http.HandlerFunc(
-		func(w http.ResponseWriter, r *http.Request) {
-			context := authentication.SetAuthInfoContext(r.Context(), &api.AuthInfo{Token: "test"})
-			ClustersWorkloads(w, r.WithContext(context))
-		}))
+		WithAuthInfo(authInfo, func(w http.ResponseWriter, r *http.Request) {
+			ClustersWorkloads(w, r)
+		})),
+	)
 
 	ts := httptest.NewServer(mr)
 	t.Cleanup(ts.Close)
@@ -315,13 +315,14 @@ func setupWorkloadMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheuste
 	prom.Inject(xapi)
 
 	mr := mux.NewRouter()
+	authInfo := map[string]*api.AuthInfo{config.Get().KubernetesConfig.ClusterName: {Token: "test"}}
 	mr.HandleFunc("/api/namespaces/{namespace}/workloads/{workload}/metrics", http.HandlerFunc(
-		func(w http.ResponseWriter, r *http.Request) {
-			context := authentication.SetAuthInfoContext(r.Context(), &api.AuthInfo{Token: "test"})
-			getWorkloadMetrics(w, r.WithContext(context), func() (*prometheus.Client, error) {
+		WithAuthInfo(authInfo, func(w http.ResponseWriter, r *http.Request) {
+			getWorkloadMetrics(w, r, func() (*prometheus.Client, error) {
 				return prom, nil
 			})
-		}))
+		})),
+	)
 
 	ts := httptest.NewServer(mr)
 	t.Cleanup(ts.Close)

@@ -146,6 +146,8 @@ KIALI2_WEB_SCHEMA="${KIALI2_WEB_SCHEMA:-}"
 # e.g. /source/helm-charts/_output/charts/kiali-server-1.64.0-SNAPSHOT.tgz
 KIALI_SERVER_HELM_CHARTS="${KIALI_SERVER_HELM_CHARTS:-kiali-server}"
 
+KIALI_BUILD_DEV_IMAGE="${KIALI_BUILD_DEV_IMAGE:-false}"
+
 # process command line args
 while [[ $# -gt 0 ]]; do
   key="$1"
@@ -230,8 +232,13 @@ while [[ $# -gt 0 ]]; do
       shift;shift
       ;;
     -kas|--kiali-auth-strategy)
-      [ "${2:-}" != "anonymous" -a "${2:-}" != "openid" ] && echo "--kiali-auth-strategy must be 'anonymous' or 'openid'" && exit 1
+      [ "${2:-}" != "anonymous" -a "${2:-}" != "openid" -a "${2:-}" != "openshift" ] && echo "--kiali-auth-strategy must be 'anonymous', 'openid', or 'openshift'" && exit 1
       KIALI_AUTH_STRATEGY="$2"
+      shift;shift
+      ;;
+    -kbdi|--kiali-build-dev-image)
+      [ "${2:-}" != "true" -a "${2:-}" != "false" ] && echo "--kiali-build-dev-image must be 'true' or 'false'" && exit 1
+      KIALI_BUILD_DEV_IMAGE="$2"
       shift;shift
       ;;
     -kcrcs|--kiali-create-remote-cluster-secrets)
@@ -353,7 +360,9 @@ Valid command line arguments:
   -ih|--istio-hub <hub>: If you want to override the image hub used by istioctl (where the images are found),
                          set this to the hub name, or "default" to use the default image locations.
   -it|--istio-tag <tag>: If you want to override the image tag used by istioctl, set this to the tag name.
-  -kas|--kiali-auth-strategy <openid|anonymous>: The authentication strategy to use for Kiali (Default: openid)
+  -kas|--kiali-auth-strategy <openid|openshift|anonymous>: The authentication strategy to use for Kiali (Default: openid)
+  -kbdi|--kiali-build-dev-image <bool>: If "true" the local dev image of Kiali will be built and used in the Kiali deployment.
+                                        Will be ignored if --kiali-enabled is 'false'. (Default: false)
   -kcrcs|--kiali-create-remote-cluster-secrets <bool>: Create remote cluster secrets for kiali remote cluster access.
   -ke|--kiali-enabled <bool>: If "true" the latest release of Kiali will be installed in both clusters. If you want
                               a different version of Kiali installed, you must set this to "false" and install it yourself.
@@ -539,6 +548,7 @@ export BOOKINFO_ENABLED \
        ISTIO_HUB \
        ISTIO_TAG \
        KIALI_AUTH_STRATEGY \
+       KIALI_BUILD_DEV_IMAGE \
        KIALI_CREATE_REMOTE_CLUSTER_SECRETS \
        KIALI_ENABLED \
        KIALI_USE_DEV_IMAGE \
@@ -578,6 +588,7 @@ ISTIO_HUB=$ISTIO_HUB
 ISTIO_TAG=$ISTIO_TAG
 KEYCLOAK_CERTS_DIR=$KEYCLOAK_CERTS_DIR
 KIALI_AUTH_STRATEGY=$KIALI_AUTH_STRATEGY
+KIALI_BUILD_DEV_IMAGE=$KIALI_BUILD_DEV_IMAGE
 KIALI_CREATE_REMOTE_CLUSTER_SECRETS=$KIALI_CREATE_REMOTE_CLUSTER_SECRETS
 KIALI_ENABLED=$KIALI_ENABLED
 KIALI_USE_DEV_IMAGE=$KIALI_USE_DEV_IMAGE

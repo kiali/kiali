@@ -14,7 +14,7 @@ import (
 	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/tools/clientcmd/api"
 
-	"github.com/kiali/kiali/business/authentication"
+	"github.com/kiali/kiali/handlers/authentication"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/util"
 )
@@ -46,7 +46,7 @@ func (n *noPrivClient) GetNamespaces(labelSelector string) ([]core_v1.Namespace,
 
 // WithAuthInfo injects the given auth info into the request context of the given handler.
 // Useful for testing only.
-func WithAuthInfo(authInfo *api.AuthInfo, hf http.HandlerFunc) http.HandlerFunc {
+func WithAuthInfo(authInfo map[string]*api.AuthInfo, hf http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		context := authentication.SetAuthInfoContext(r.Context(), authInfo)
 		hf(w, r.WithContext(context))

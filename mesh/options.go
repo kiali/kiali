@@ -11,10 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"k8s.io/client-go/tools/clientcmd/api"
-
 	"github.com/kiali/kiali/business"
-	"github.com/kiali/kiali/business/authentication"
 )
 
 // The supported vendors
@@ -72,7 +69,7 @@ type Options struct {
 	ConfigOptions
 }
 
-func NewOptions(r *http.Request) Options {
+func NewOptions(r *http.Request, namespacesService *business.NamespaceService) Options {
 	// path variables (0 or more will be set)
 	// vars := mux.Vars(r)
 
@@ -108,20 +105,7 @@ func NewOptions(r *http.Request) Options {
 	// Process namespaces options:
 	namespaceMap := NewNamespaceInfoMap()
 
-	authInfoContext := authentication.GetAuthInfoContext(r.Context())
-
-	var authInfo *api.AuthInfo
-	if authInfoContext != nil {
-		if authInfoCheck, ok := authInfoContext.(*api.AuthInfo); !ok {
-			Error("authInfo is not of type *api.AuthInfo")
-		} else {
-			authInfo = authInfoCheck
-		}
-	} else {
-		Error("token missing in request context")
-	}
-
-	accessibleNamespaces := getAccessibleNamespaces(authInfo)
+	accessibleNamespaces := getAccessibleNamespaces(r.Context(), namespacesService)
 
 	options := Options{
 		AccessibleNamespaces: accessibleNamespaces,
@@ -143,12 +127,9 @@ func NewOptions(r *http.Request) Options {
 // The Set is implemented using the map convention. Each map entry is set to the
 // creation timestamp of the namespace, to be used to ensure valid time ranges for
 // queries against the namespace.
-func getAccessibleNamespaces(authInfo *api.AuthInfo) AccessibleNamespaces {
+func getAccessibleNamespaces(ctx context.Context, namespacesService *business.NamespaceService) AccessibleNamespaces {
 	// Get the namespaces
-	business, err := business.Get(authInfo)
-	CheckError(err)
-
-	namespaces, err := business.Namespace.GetNamespaces(context.TODO())
+	namespaces, err := namespacesService.GetNamespaces(ctx)
 	CheckError(err)
 
 	// Create a map to store the namespaces

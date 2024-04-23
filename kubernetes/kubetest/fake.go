@@ -135,7 +135,9 @@ func NewFakeK8sClient(objects ...runtime.Object) *FakeK8sClient {
 		KubeClientset:   kubeClient,
 		IstioClientset:  istioClient,
 		ProjectFake:     projectClient,
+		UserFake:        userClient,
 		IstioAPIEnabled: true,
+		OAuthFake:       oAuthClient,
 	}
 }
 
@@ -155,6 +157,8 @@ type FakeK8sClient struct {
 	Token           string
 	KubeClusterInfo kialikube.ClusterInfo
 	ProjectFake     *projectfake.Clientset
+	UserFake        *userfake.Clientset
+	OAuthFake       *oauthfake.Clientset
 }
 
 func (c *FakeK8sClient) IsOpenShift() bool                  { return c.OpenShift }

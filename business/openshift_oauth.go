@@ -33,7 +33,12 @@ const (
 
 // OAuthConfig is some configuration for the OAuth service.
 type OAuthConfig struct {
-	TokenAgeInSeconds int
+	// AuthorizationEndpoint is the url to redirect the user to for authentication.
+	// Kiali must now redirect to a url that it owns in order to first attach
+	// the nonce to the session until we can think of a better way to do this.
+	AuthorizationEndpoint string
+	RedirectURL           string
+	TokenAgeInSeconds     int
 }
 
 // oAuthConfig is the oauth2 config with some additional fields
@@ -77,6 +82,7 @@ func NewOpenshiftOAuthService(ctx context.Context, conf *config.Config, kialiSAC
 
 	// TODO: We could parallelize this to potentially speed up the process.
 	for cluster, client := range kialiSAClients {
+		log.Debugf("Getting OAuth config for cluster [%s]", cluster)
 		// Use CA info from kube config.
 		url := client.ClusterInfo().ClientConfig.Host + "/.well-known/oauth-authorization-server"
 		request, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
@@ -189,16 +195,15 @@ func (in *OpenshiftOAuthService) AuthCodeURL(verifier string, cluster string) (s
 	return oAuthConfig.AuthCodeURL("", oauth2.S256ChallengeOption(verifier)), nil
 }
 
-func (in *OpenshiftOAuthService) GetUserInfo(ctx context.Context, token string) (*user_v1.User, error) {
-	// TODO: Pass cluster
-	userClient, err := in.clientFactory.GetClient(&api.AuthInfo{Token: token}, in.conf.KubernetesConfig.ClusterName)
+func (in *OpenshiftOAuthService) GetUserInfo(ctx context.Context, token string, cluster string) (*user_v1.User, error) {
+	userClient, err := in.clientFactory.GetClient(&api.AuthInfo{Token: token}, cluster)
 	if err != nil {
-		return nil, fmt.Errorf("could not get client for user info: %v", err)
+		return nil, fmt.Errorf("could not get client for user info: %w", err)
 	}
 
 	user, err := userClient.GetUser(ctx, "~")
 	if err != nil {
-		return nil, fmt.Errorf("could not get user info: %v", err)
+		return nil, fmt.Errorf("could not get user info: %w", err)
 	}
 
 	return user, nil
@@ -235,6 +240,7 @@ func (in *OpenshiftOAuthService) OAuthConfig(cluster string) (*OAuthConfig, erro
 	}
 
 	return &OAuthConfig{
+		RedirectURL:       oAuthConfig.RedirectURL,
 		TokenAgeInSeconds: oAuthConfig.AccessTokenMaxAgeSeconds,
 	}, nil
 }

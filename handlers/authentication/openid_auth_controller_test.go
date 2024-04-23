@@ -17,6 +17,7 @@ import (
 	"github.com/go-jose/go-jose"
 	osproject_v1 "github.com/openshift/api/project/v1"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -241,15 +242,16 @@ QwIDAQAB
 	cache := cache.NewTestingCacheWithFactory(t, mockClientFactory, *conf)
 	discovery := istio.NewDiscovery(mockClientFactory.Clients, cache, conf)
 
-	stateHash := sha256.Sum224([]byte(fmt.Sprintf("%s+%s+%s", "nonceString", clockTime.UTC().Format("060102150405"), getSigningKey(conf))))
+	stateHash := sha256.Sum224([]byte(fmt.Sprintf("%s+%s+%s", "nonceString", clockTime.UTC().Format("060102150405"), conf.LoginToken.SigningKey)))
 	uri := fmt.Sprintf("https://kiali.io:44/api/authenticate?code=f0code&state=%x-%s", stateHash, clockTime.UTC().Format("060102150405"))
 	request := httptest.NewRequest(http.MethodGet, uri, nil)
 	request.AddCookie(&http.Cookie{
-		Name:  OpenIdNonceCookieName,
+		Name:  nonceCookieName(conf.KubernetesConfig.ClusterName),
 		Value: "nonceString",
 	})
 
-	controller := NewOpenIdAuthController(NewCookieSessionPersistor(conf), cache, mockClientFactory, conf, discovery)
+	controller, err := NewOpenIdAuthController(cache, mockClientFactory, conf, discovery)
+	require.NoError(t, err)
 
 	expectedExpiration := time.Date(2021, 12, 1, 0, 0, 1, 0, time.UTC)
 
@@ -263,13 +265,13 @@ QwIDAQAB
 	assert.Len(t, response.Cookies(), 2)
 
 	// nonce cookie cleanup
-	assert.Equal(t, OpenIdNonceCookieName, response.Cookies()[0].Name)
+	assert.Equal(t, nonceCookieName(conf.KubernetesConfig.ClusterName), response.Cookies()[0].Name)
 	assert.True(t, clockTime.After(response.Cookies()[0].Expires))
 	assert.True(t, response.Cookies()[0].HttpOnly)
 	assert.True(t, response.Cookies()[0].Secure) // the test URL is https://kiali.io:44/kiali-test ; https: means it should be Secure
 
 	// Session cookie
-	assert.Equal(t, AESSessionCookieName, response.Cookies()[1].Name)
+	assert.Equal(t, SessionCookieName, response.Cookies()[1].Name)
 	assert.Equal(t, expectedExpiration, response.Cookies()[1].Expires)
 	assert.Equal(t, http.StatusFound, response.StatusCode)
 	assert.True(t, response.Cookies()[1].HttpOnly)
@@ -291,7 +293,7 @@ QwIDAQAB
 	// Check that there is only one cookie (nonce) - the other AES cookie should be missing because the audience claim was bad
 	response = rr.Result()
 	assert.Len(t, response.Cookies(), 1)
-	assert.Equal(t, OpenIdNonceCookieName, response.Cookies()[0].Name)
+	assert.Equal(t, nonceCookieName(conf.KubernetesConfig.ClusterName), response.Cookies()[0].Name)
 	assert.Equal(t, "/kiali-test/?openid_error=the+OpenID+token+was+rejected%3A+the+OpenId+token+is+not+targeted+for+Kiali%3B+got+aud+%3D+%27bad-aud-client%27", response.Header.Get("Location"))
 }
 
@@ -316,17 +318,19 @@ func TestOpenIdAuthControllerRejectsImplicitFlow(t *testing.T) {
 	cache := cache.NewTestingCacheWithFactory(t, mockClientFactory, *conf)
 	discovery := istio.NewDiscovery(mockClientFactory.Clients, cache, conf)
 
-	stateHash := sha256.Sum224([]byte(fmt.Sprintf("%s+%s+%s", "nonceString", clockTime.UTC().Format("060102150405"), getSigningKey(conf))))
+	stateHash := sha256.Sum224([]byte(fmt.Sprintf("%s+%s+%s", "nonceString", clockTime.UTC().Format("060102150405"), conf.LoginToken.SigningKey)))
 
 	requestBody := strings.NewReader(fmt.Sprintf("id_token=%s&state=%x-%s", openIdTestToken, stateHash, clockTime.UTC().Format("060102150405")))
 	request := httptest.NewRequest(http.MethodPost, "/api/authenticate", requestBody)
 	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	request.AddCookie(&http.Cookie{
-		Name:  OpenIdNonceCookieName,
+		Name:  nonceCookieName(conf.KubernetesConfig.ClusterName),
 		Value: "nonceString",
 	})
 
-	controller := NewOpenIdAuthController(NewCookieSessionPersistor(conf), cache, mockClientFactory, conf, discovery)
+	controller, err := NewOpenIdAuthController(cache, mockClientFactory, conf, discovery)
+	require.NoError(t, err)
+
 	rr := httptest.NewRecorder()
 	sData, err := controller.Authenticate(request, rr)
 
@@ -394,15 +398,16 @@ func TestOpenIdAuthControllerAuthenticatesCorrectlyWithAuthorizationCodeFlow(t *
 	cache := cache.NewTestingCacheWithFactory(t, mockClientFactory, *conf)
 	discovery := istio.NewDiscovery(mockClientFactory.Clients, cache, conf)
 
-	stateHash := sha256.Sum224([]byte(fmt.Sprintf("%s+%s+%s", "nonceString", clockTime.UTC().Format("060102150405"), getSigningKey(conf))))
+	stateHash := sha256.Sum224([]byte(fmt.Sprintf("%s+%s+%s", "nonceString", clockTime.UTC().Format("060102150405"), conf.LoginToken.SigningKey)))
 	uri := fmt.Sprintf("https://kiali.io:44/api/authenticate?code=f0code&state=%x-%s", stateHash, clockTime.UTC().Format("060102150405"))
 	request := httptest.NewRequest(http.MethodGet, uri, nil)
 	request.AddCookie(&http.Cookie{
-		Name:  OpenIdNonceCookieName,
+		Name:  nonceCookieName(conf.KubernetesConfig.ClusterName),
 		Value: "nonceString",
 	})
 
-	controller := NewOpenIdAuthController(NewCookieSessionPersistor(conf), cache, mockClientFactory, conf, discovery)
+	controller, err := NewOpenIdAuthController(cache, mockClientFactory, conf, discovery)
+	require.NoError(t, err)
 
 	rr := httptest.NewRecorder()
 	controller.GetAuthCallbackHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -416,13 +421,13 @@ func TestOpenIdAuthControllerAuthenticatesCorrectlyWithAuthorizationCodeFlow(t *
 	assert.Len(t, response.Cookies(), 2)
 
 	// nonce cookie cleanup
-	assert.Equal(t, OpenIdNonceCookieName, response.Cookies()[0].Name)
+	assert.Equal(t, nonceCookieName(conf.KubernetesConfig.ClusterName), response.Cookies()[0].Name)
 	assert.True(t, clockTime.After(response.Cookies()[0].Expires))
 	assert.True(t, response.Cookies()[0].HttpOnly)
 	assert.True(t, response.Cookies()[0].Secure)
 
 	// Session cookie
-	assert.Equal(t, AESSessionCookieName, response.Cookies()[1].Name)
+	assert.Equal(t, SessionCookieName, response.Cookies()[1].Name)
 	assert.Equal(t, expectedExpiration, response.Cookies()[1].Expires)
 	assert.Equal(t, http.StatusFound, response.StatusCode)
 	assert.True(t, response.Cookies()[1].HttpOnly)
@@ -478,15 +483,16 @@ func TestOpenIdCodeFlowShouldFailWithMissingIdTokenFromOpenIdServer(t *testing.T
 	cache := cache.NewTestingCacheWithFactory(t, mockClientFactory, *cfg)
 	discovery := istio.NewDiscovery(mockClientFactory.Clients, cache, cfg)
 
-	stateHash := sha256.Sum224([]byte(fmt.Sprintf("%s+%s+%s", "nonceString", clockTime.UTC().Format("060102150405"), getSigningKey(cfg))))
+	stateHash := sha256.Sum224([]byte(fmt.Sprintf("%s+%s+%s", "nonceString", clockTime.UTC().Format("060102150405"), cfg.LoginToken.SigningKey)))
 	uri := fmt.Sprintf("https://kiali.io:44/api/authenticate?code=f0code&state=%x-%s", stateHash, clockTime.UTC().Format("060102150405"))
 	request := httptest.NewRequest(http.MethodGet, uri, nil)
 	request.AddCookie(&http.Cookie{
-		Name:  OpenIdNonceCookieName,
+		Name:  nonceCookieName(cfg.KubernetesConfig.ClusterName),
 		Value: "nonceString",
 	})
 
-	controller := NewOpenIdAuthController(NewCookieSessionPersistor(cfg), cache, mockClientFactory, cfg, discovery)
+	controller, err := NewOpenIdAuthController(cache, mockClientFactory, cfg, discovery)
+	require.NoError(t, err)
 
 	rr := httptest.NewRecorder()
 	controller.GetAuthCallbackHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -496,7 +502,7 @@ func TestOpenIdCodeFlowShouldFailWithMissingIdTokenFromOpenIdServer(t *testing.T
 	// nonce cookie cleanup
 	response := rr.Result()
 	assert.Len(t, response.Cookies(), 1)
-	assert.Equal(t, OpenIdNonceCookieName, response.Cookies()[0].Name)
+	assert.Equal(t, nonceCookieName(cfg.KubernetesConfig.ClusterName), response.Cookies()[0].Name)
 	assert.True(t, clockTime.After(response.Cookies()[0].Expires))
 
 	// Redirection to boot the UI
@@ -550,15 +556,16 @@ func TestOpenIdCodeFlowShouldFailWithBadResponseFromTokenEndpoint(t *testing.T) 
 	cache := cache.NewTestingCacheWithFactory(t, mockClientFactory, *cfg)
 	discovery := istio.NewDiscovery(mockClientFactory.Clients, cache, cfg)
 
-	stateHash := sha256.Sum224([]byte(fmt.Sprintf("%s+%s+%s", "nonceString", clockTime.UTC().Format("060102150405"), getSigningKey(cfg))))
+	stateHash := sha256.Sum224([]byte(fmt.Sprintf("%s+%s+%s", "nonceString", clockTime.UTC().Format("060102150405"), cfg.LoginToken.SigningKey)))
 	uri := fmt.Sprintf("https://kiali.io:44/api/authenticate?code=f0code&state=%x-%s", stateHash, clockTime.UTC().Format("060102150405"))
 	request := httptest.NewRequest(http.MethodGet, uri, nil)
 	request.AddCookie(&http.Cookie{
-		Name:  OpenIdNonceCookieName,
+		Name:  nonceCookieName(cfg.KubernetesConfig.ClusterName),
 		Value: "nonceString",
 	})
 
-	controller := NewOpenIdAuthController(NewCookieSessionPersistor(cfg), cache, mockClientFactory, cfg, discovery)
+	controller, err := NewOpenIdAuthController(cache, mockClientFactory, cfg, discovery)
+	require.NoError(t, err)
 
 	rr := httptest.NewRecorder()
 	controller.GetAuthCallbackHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -568,7 +575,7 @@ func TestOpenIdCodeFlowShouldFailWithBadResponseFromTokenEndpoint(t *testing.T) 
 	// nonce cookie cleanup
 	response := rr.Result()
 	assert.Len(t, response.Cookies(), 1)
-	assert.Equal(t, OpenIdNonceCookieName, response.Cookies()[0].Name)
+	assert.Equal(t, nonceCookieName(cfg.KubernetesConfig.ClusterName), response.Cookies()[0].Name)
 	assert.True(t, clockTime.After(response.Cookies()[0].Expires))
 
 	// Redirection to boot the UI
@@ -622,15 +629,16 @@ func TestOpenIdCodeFlowShouldFailWithNonJsonResponse(t *testing.T) {
 	cache := cache.NewTestingCacheWithFactory(t, mockClientFactory, *cfg)
 	discovery := istio.NewDiscovery(mockClientFactory.Clients, cache, cfg)
 
-	stateHash := sha256.Sum224([]byte(fmt.Sprintf("%s+%s+%s", "nonceString", clockTime.UTC().Format("060102150405"), getSigningKey(cfg))))
+	stateHash := sha256.Sum224([]byte(fmt.Sprintf("%s+%s+%s", "nonceString", clockTime.UTC().Format("060102150405"), cfg.LoginToken.SigningKey)))
 	uri := fmt.Sprintf("https://kiali.io:44/api/authenticate?code=f0code&state=%x-%s", stateHash, clockTime.UTC().Format("060102150405"))
 	request := httptest.NewRequest(http.MethodGet, uri, nil)
 	request.AddCookie(&http.Cookie{
-		Name:  OpenIdNonceCookieName,
+		Name:  nonceCookieName(cfg.KubernetesConfig.ClusterName),
 		Value: "nonceString",
 	})
 
-	controller := NewOpenIdAuthController(NewCookieSessionPersistor(cfg), cache, mockClientFactory, cfg, discovery)
+	controller, err := NewOpenIdAuthController(cache, mockClientFactory, cfg, discovery)
+	require.NoError(t, err)
 
 	rr := httptest.NewRecorder()
 	controller.GetAuthCallbackHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -640,7 +648,7 @@ func TestOpenIdCodeFlowShouldFailWithNonJsonResponse(t *testing.T) {
 	// nonce cookie cleanup
 	response := rr.Result()
 	assert.Len(t, response.Cookies(), 1)
-	assert.Equal(t, OpenIdNonceCookieName, response.Cookies()[0].Name)
+	assert.Equal(t, nonceCookieName(cfg.KubernetesConfig.ClusterName), response.Cookies()[0].Name)
 	assert.True(t, clockTime.After(response.Cookies()[0].Expires))
 
 	// Redirection to boot the UI
@@ -694,15 +702,16 @@ func TestOpenIdCodeFlowShouldFailWithNonJwtIdToken(t *testing.T) {
 	cache := cache.NewTestingCacheWithFactory(t, mockClientFactory, *cfg)
 	discovery := istio.NewDiscovery(mockClientFactory.Clients, cache, cfg)
 
-	stateHash := sha256.Sum224([]byte(fmt.Sprintf("%s+%s+%s", "nonceString", clockTime.UTC().Format("060102150405"), getSigningKey(cfg))))
+	stateHash := sha256.Sum224([]byte(fmt.Sprintf("%s+%s+%s", "nonceString", clockTime.UTC().Format("060102150405"), cfg.LoginToken.SigningKey)))
 	uri := fmt.Sprintf("https://kiali.io:44/api/authenticate?code=f0code&state=%x-%s", stateHash, clockTime.UTC().Format("060102150405"))
 	request := httptest.NewRequest(http.MethodGet, uri, nil)
 	request.AddCookie(&http.Cookie{
-		Name:  OpenIdNonceCookieName,
+		Name:  nonceCookieName(cfg.KubernetesConfig.ClusterName),
 		Value: "nonceString",
 	})
 
-	controller := NewOpenIdAuthController(NewCookieSessionPersistor(cfg), cache, mockClientFactory, cfg, discovery)
+	controller, err := NewOpenIdAuthController(cache, mockClientFactory, cfg, discovery)
+	require.NoError(t, err)
 
 	rr := httptest.NewRecorder()
 	controller.GetAuthCallbackHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -712,7 +721,7 @@ func TestOpenIdCodeFlowShouldFailWithNonJwtIdToken(t *testing.T) {
 	// nonce cookie cleanup
 	response := rr.Result()
 	assert.Len(t, response.Cookies(), 1)
-	assert.Equal(t, OpenIdNonceCookieName, response.Cookies()[0].Name)
+	assert.Equal(t, nonceCookieName(cfg.KubernetesConfig.ClusterName), response.Cookies()[0].Name)
 	assert.True(t, clockTime.After(response.Cookies()[0].Expires))
 
 	// Redirection to boot the UI
@@ -737,15 +746,16 @@ func TestOpenIdCodeFlowShouldRejectMissingAuthorizationCode(t *testing.T) {
 	cache := cache.NewTestingCacheWithFactory(t, mockClientFactory, *cfg)
 	discovery := istio.NewDiscovery(mockClientFactory.Clients, cache, cfg)
 
-	stateHash := sha256.Sum224([]byte(fmt.Sprintf("%s+%s+%s", "nonceString", clockTime.UTC().Format("060102150405"), getSigningKey(cfg))))
+	stateHash := sha256.Sum224([]byte(fmt.Sprintf("%s+%s+%s", "nonceString", clockTime.UTC().Format("060102150405"), cfg.LoginToken.SigningKey)))
 	uri := fmt.Sprintf("/api/authenticate?state=%x-%s", stateHash, clockTime.UTC().Format("060102150405"))
 	request := httptest.NewRequest(http.MethodGet, uri, nil)
 	request.AddCookie(&http.Cookie{
-		Name:  OpenIdNonceCookieName,
+		Name:  nonceCookieName(cfg.KubernetesConfig.ClusterName),
 		Value: "nonceString",
 	})
 
-	controller := NewOpenIdAuthController(NewCookieSessionPersistor(cfg), cache, mockClientFactory, cfg, discovery)
+	controller, err := NewOpenIdAuthController(cache, mockClientFactory, cfg, discovery)
+	require.NoError(t, err)
 
 	callbackCalled := false
 	rr := httptest.NewRecorder()
@@ -806,15 +816,16 @@ func TestOpenIdCodeFlowShouldFailWithIdTokenWithoutExpiration(t *testing.T) {
 	cache := cache.NewTestingCacheWithFactory(t, mockClientFactory, *cfg)
 	discovery := istio.NewDiscovery(mockClientFactory.Clients, cache, cfg)
 
-	stateHash := sha256.Sum224([]byte(fmt.Sprintf("%s+%s+%s", "nonceString", clockTime.UTC().Format("060102150405"), getSigningKey(cfg))))
+	stateHash := sha256.Sum224([]byte(fmt.Sprintf("%s+%s+%s", "nonceString", clockTime.UTC().Format("060102150405"), cfg.LoginToken.SigningKey)))
 	uri := fmt.Sprintf("https://kiali.io:44/api/authenticate?code=f0code&state=%x-%s", stateHash, clockTime.UTC().Format("060102150405"))
 	request := httptest.NewRequest(http.MethodGet, uri, nil)
 	request.AddCookie(&http.Cookie{
-		Name:  OpenIdNonceCookieName,
+		Name:  nonceCookieName(cfg.KubernetesConfig.ClusterName),
 		Value: "nonceString",
 	})
 
-	controller := NewOpenIdAuthController(NewCookieSessionPersistor(cfg), cache, mockClientFactory, cfg, discovery)
+	controller, err := NewOpenIdAuthController(cache, mockClientFactory, cfg, discovery)
+	require.NoError(t, err)
 
 	rr := httptest.NewRecorder()
 	controller.GetAuthCallbackHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -824,7 +835,7 @@ func TestOpenIdCodeFlowShouldFailWithIdTokenWithoutExpiration(t *testing.T) {
 	// nonce cookie cleanup
 	response := rr.Result()
 	assert.Len(t, response.Cookies(), 1)
-	assert.Equal(t, OpenIdNonceCookieName, response.Cookies()[0].Name)
+	assert.Equal(t, nonceCookieName(cfg.KubernetesConfig.ClusterName), response.Cookies()[0].Name)
 	assert.True(t, clockTime.After(response.Cookies()[0].Expires))
 
 	// Redirection to boot the UI
@@ -878,15 +889,16 @@ func TestOpenIdCodeFlowShouldFailWithIdTokenWithNonNumericExpClaim(t *testing.T)
 	cache := cache.NewTestingCacheWithFactory(t, mockClientFactory, *cfg)
 	discovery := istio.NewDiscovery(mockClientFactory.Clients, cache, cfg)
 
-	stateHash := sha256.Sum224([]byte(fmt.Sprintf("%s+%s+%s", "nonceString", clockTime.UTC().Format("060102150405"), getSigningKey(cfg))))
+	stateHash := sha256.Sum224([]byte(fmt.Sprintf("%s+%s+%s", "nonceString", clockTime.UTC().Format("060102150405"), cfg.LoginToken.SigningKey)))
 	uri := fmt.Sprintf("https://kiali.io:44/api/authenticate?code=f0code&state=%x-%s", stateHash, clockTime.UTC().Format("060102150405"))
 	request := httptest.NewRequest(http.MethodGet, uri, nil)
 	request.AddCookie(&http.Cookie{
-		Name:  OpenIdNonceCookieName,
+		Name:  nonceCookieName(cfg.KubernetesConfig.ClusterName),
 		Value: "nonceString",
 	})
 
-	controller := NewOpenIdAuthController(NewCookieSessionPersistor(cfg), cache, mockClientFactory, cfg, discovery)
+	controller, err := NewOpenIdAuthController(cache, mockClientFactory, cfg, discovery)
+	require.NoError(t, err)
 
 	rr := httptest.NewRecorder()
 	controller.GetAuthCallbackHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -896,7 +908,7 @@ func TestOpenIdCodeFlowShouldFailWithIdTokenWithNonNumericExpClaim(t *testing.T)
 	// nonce cookie cleanup
 	response := rr.Result()
 	assert.Len(t, response.Cookies(), 1)
-	assert.Equal(t, OpenIdNonceCookieName, response.Cookies()[0].Name)
+	assert.Equal(t, nonceCookieName(cfg.KubernetesConfig.ClusterName), response.Cookies()[0].Name)
 	assert.True(t, clockTime.After(response.Cookies()[0].Expires))
 
 	// Redirection to boot the UI
@@ -917,11 +929,11 @@ func TestOpenIdCodeFlowShouldRejectInvalidState(t *testing.T) {
 	config.Set(cfg)
 
 	// Calculate a hash of the wrong string.
-	stateHash := sha256.Sum224([]byte(fmt.Sprintf("%s+%s+%s", "badNonceString", clockTime.UTC().Format("060102150405"), getSigningKey(cfg))))
+	stateHash := sha256.Sum224([]byte(fmt.Sprintf("%s+%s+%s", "badNonceString", clockTime.UTC().Format("060102150405"), cfg.LoginToken.SigningKey)))
 	uri := fmt.Sprintf("/api/authenticate?code=f0code&state=%x-%s", stateHash, clockTime.UTC().Format("060102150405"))
 	request := httptest.NewRequest(http.MethodGet, uri, nil)
 	request.AddCookie(&http.Cookie{
-		Name:  OpenIdNonceCookieName,
+		Name:  nonceCookieName(cfg.KubernetesConfig.ClusterName),
 		Value: "nonceString",
 	})
 
@@ -930,7 +942,8 @@ func TestOpenIdCodeFlowShouldRejectInvalidState(t *testing.T) {
 	cache := cache.NewTestingCacheWithFactory(t, mockClientFactory, *cfg)
 	discovery := istio.NewDiscovery(mockClientFactory.Clients, cache, cfg)
 
-	controller := NewOpenIdAuthController(NewCookieSessionPersistor(cfg), cache, mockClientFactory, cfg, discovery)
+	controller, err := NewOpenIdAuthController(cache, mockClientFactory, cfg, discovery)
+	require.NoError(t, err)
 
 	rr := httptest.NewRecorder()
 	controller.GetAuthCallbackHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -940,7 +953,7 @@ func TestOpenIdCodeFlowShouldRejectInvalidState(t *testing.T) {
 	// nonce cookie cleanup
 	response := rr.Result()
 	assert.Len(t, response.Cookies(), 1)
-	assert.Equal(t, OpenIdNonceCookieName, response.Cookies()[0].Name)
+	assert.Equal(t, nonceCookieName(cfg.KubernetesConfig.ClusterName), response.Cookies()[0].Name)
 	assert.True(t, clockTime.After(response.Cookies()[0].Expires))
 
 	// Redirection to boot the UI
@@ -961,11 +974,11 @@ func TestOpenIdCodeFlowShouldRejectBadStateFormat(t *testing.T) {
 	config.Set(cfg)
 
 	// Calculate a hash of the wrong string.
-	stateHash := sha256.Sum224([]byte(fmt.Sprintf("%s+%s+%s", "nonceString", clockTime.UTC().Format("060102150405"), getSigningKey(cfg))))
+	stateHash := sha256.Sum224([]byte(fmt.Sprintf("%s+%s+%s", "nonceString", clockTime.UTC().Format("060102150405"), cfg.LoginToken.SigningKey)))
 	uri := fmt.Sprintf("/api/authenticate?code=f0code&state=%xp%s", stateHash, clockTime.UTC().Format("060102150405"))
 	request := httptest.NewRequest(http.MethodGet, uri, nil)
 	request.AddCookie(&http.Cookie{
-		Name:  OpenIdNonceCookieName,
+		Name:  nonceCookieName(cfg.KubernetesConfig.ClusterName),
 		Value: "nonceString",
 	})
 
@@ -974,7 +987,8 @@ func TestOpenIdCodeFlowShouldRejectBadStateFormat(t *testing.T) {
 	cache := cache.NewTestingCacheWithFactory(t, mockClientFactory, *cfg)
 	discovery := istio.NewDiscovery(mockClientFactory.Clients, cache, cfg)
 
-	controller := NewOpenIdAuthController(NewCookieSessionPersistor(cfg), cache, mockClientFactory, cfg, discovery)
+	controller, err := NewOpenIdAuthController(cache, mockClientFactory, cfg, discovery)
+	require.NoError(t, err)
 
 	rr := httptest.NewRecorder()
 	controller.GetAuthCallbackHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -984,7 +998,7 @@ func TestOpenIdCodeFlowShouldRejectBadStateFormat(t *testing.T) {
 	// nonce cookie cleanup
 	response := rr.Result()
 	assert.Len(t, response.Cookies(), 1)
-	assert.Equal(t, OpenIdNonceCookieName, response.Cookies()[0].Name)
+	assert.Equal(t, nonceCookieName(cfg.KubernetesConfig.ClusterName), response.Cookies()[0].Name)
 	assert.True(t, clockTime.After(response.Cookies()[0].Expires))
 
 	// Redirection to boot the UI
@@ -1007,7 +1021,7 @@ func TestOpenIdCodeFlowShouldRejectMissingState(t *testing.T) {
 	uri := "/api/authenticate?code=f0code"
 	request := httptest.NewRequest(http.MethodGet, uri, nil)
 	request.AddCookie(&http.Cookie{
-		Name:  OpenIdNonceCookieName,
+		Name:  nonceCookieName(cfg.KubernetesConfig.ClusterName),
 		Value: "nonceString",
 	})
 
@@ -1016,7 +1030,8 @@ func TestOpenIdCodeFlowShouldRejectMissingState(t *testing.T) {
 	cache := cache.NewTestingCacheWithFactory(t, mockClientFactory, *cfg)
 	discovery := istio.NewDiscovery(mockClientFactory.Clients, cache, cfg)
 
-	controller := NewOpenIdAuthController(NewCookieSessionPersistor(cfg), cache, mockClientFactory, cfg, discovery)
+	controller, err := NewOpenIdAuthController(cache, mockClientFactory, cfg, discovery)
+	require.NoError(t, err)
 
 	callbackCalled := false
 	rr := httptest.NewRecorder()
@@ -1048,11 +1063,12 @@ func TestOpenIdCodeFlowShouldRejectMissingNonceCookie(t *testing.T) {
 	cache := cache.NewTestingCacheWithFactory(t, mockClientFactory, *cfg)
 	discovery := istio.NewDiscovery(mockClientFactory.Clients, cache, cfg)
 
-	stateHash := sha256.Sum224([]byte(fmt.Sprintf("%s+%s+%s", "nonceString", clockTime.UTC().Format("060102150405"), getSigningKey(cfg))))
+	stateHash := sha256.Sum224([]byte(fmt.Sprintf("%s+%s+%s", "nonceString", clockTime.UTC().Format("060102150405"), cfg.LoginToken.SigningKey)))
 	uri := fmt.Sprintf("/api/authenticate?code=f0code&state=%x-%s", stateHash, clockTime.UTC().Format("060102150405"))
 	request := httptest.NewRequest(http.MethodGet, uri, nil)
 
-	controller := NewOpenIdAuthController(NewCookieSessionPersistor(cfg), cache, mockClientFactory, cfg, discovery)
+	controller, err := NewOpenIdAuthController(cache, mockClientFactory, cfg, discovery)
+	require.NoError(t, err)
 
 	callbackCalled := false
 	rr := httptest.NewRecorder()
@@ -1113,15 +1129,16 @@ func TestOpenIdCodeFlowShouldRejectMissingNonceInToken(t *testing.T) {
 	cache := cache.NewTestingCacheWithFactory(t, mockClientFactory, *cfg)
 	discovery := istio.NewDiscovery(mockClientFactory.Clients, cache, cfg)
 
-	stateHash := sha256.Sum224([]byte(fmt.Sprintf("%s+%s+%s", "nonceString", clockTime.UTC().Format("060102150405"), getSigningKey(cfg))))
+	stateHash := sha256.Sum224([]byte(fmt.Sprintf("%s+%s+%s", "nonceString", clockTime.UTC().Format("060102150405"), cfg.LoginToken.SigningKey)))
 	uri := fmt.Sprintf("https://kiali.io:44/api/authenticate?code=f0code&state=%x-%s", stateHash, clockTime.UTC().Format("060102150405"))
 	request := httptest.NewRequest(http.MethodGet, uri, nil)
 	request.AddCookie(&http.Cookie{
-		Name:  OpenIdNonceCookieName,
+		Name:  nonceCookieName(cfg.KubernetesConfig.ClusterName),
 		Value: "nonceString",
 	})
 
-	controller := NewOpenIdAuthController(NewCookieSessionPersistor(cfg), cache, mockClientFactory, cfg, discovery)
+	controller, err := NewOpenIdAuthController(cache, mockClientFactory, cfg, discovery)
+	require.NoError(t, err)
 
 	rr := httptest.NewRecorder()
 	controller.GetAuthCallbackHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -1131,7 +1148,7 @@ func TestOpenIdCodeFlowShouldRejectMissingNonceInToken(t *testing.T) {
 	// nonce cookie cleanup
 	response := rr.Result()
 	assert.Len(t, response.Cookies(), 1)
-	assert.Equal(t, OpenIdNonceCookieName, response.Cookies()[0].Name)
+	assert.Equal(t, nonceCookieName(cfg.KubernetesConfig.ClusterName), response.Cookies()[0].Name)
 	assert.True(t, clockTime.After(response.Cookies()[0].Expires))
 
 	// Redirection to boot the UI

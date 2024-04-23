@@ -3,6 +3,7 @@ package handlers
 import (
 	"net/http"
 
+	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/grafana"
 	"github.com/kiali/kiali/istio"
@@ -10,6 +11,8 @@ import (
 	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/mesh"
 	"github.com/kiali/kiali/mesh/api"
+	"github.com/kiali/kiali/prometheus"
+	"github.com/kiali/kiali/tracing"
 )
 
 func OutboundTrafficPolicyMode(w http.ResponseWriter, r *http.Request) {
@@ -46,14 +49,23 @@ func IstiodCanariesStatus(w http.ResponseWriter, r *http.Request) {
 }
 
 // MeshGraph is a REST http.HandlerFunc handling graph generation for the mesh
-func MeshGraph(conf *config.Config, clientFactory kubernetes.ClientFactory, cache cache.KialiCache, grafana *grafana.Service, discovery *istio.Discovery) http.HandlerFunc {
+func MeshGraph(
+	conf *config.Config,
+	clientFactory kubernetes.ClientFactory,
+	cache cache.KialiCache,
+	grafana *grafana.Service,
+	prom prometheus.ClientInterface,
+	traceClientLoader func() tracing.ClientInterface,
+	discovery *istio.Discovery,
+	cpm business.ControlPlaneMonitor,
+) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer handlePanic(w)
 
-		o := mesh.NewOptions(r)
-
-		business, err := getBusiness(r)
+		business, err := getLayer(r, conf, cache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
 		mesh.CheckError(err)
+
+		o := mesh.NewOptions(r, &business.Namespace)
 
 		meshInfo, err := discovery.Mesh(r.Context())
 		mesh.CheckError(err)

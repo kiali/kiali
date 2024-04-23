@@ -13,9 +13,6 @@ set -u
 # See --help for more details and valid options.
 ##############################################################################
 
-# Used to name all the resources on the remote cluster.
-KIALI_RESOURCE_NAME="kiali-remote-access"
-
 # The "Kiali Secret" is the remote cluster secret that is created in the
 # namespace where Kiali is to be deployed.
 KIALI_SECRET_LABEL_NAME_MULTICLUSTER="kiali.io/multiCluster"
@@ -36,6 +33,7 @@ DEFAULT_REMOTE_CLUSTER_CONTEXT="west"
 DEFAULT_REMOTE_CLUSTER_NAME=""
 DEFAULT_REMOTE_CLUSTER_NAMESPACE="kiali-access-ns"
 DEFAULT_REMOTE_CLUSTER_URL=""
+DEFAULT_RESOURCE_NAME="kiali-remote-access"
 DEFAULT_VIEW_ONLY="true"
 DEFAULT_EXEC_AUTH_JSON=""
 
@@ -46,6 +44,7 @@ DEFAULT_EXEC_AUTH_JSON=""
 : ${HELM:=${DEFAULT_HELM}}
 : ${KIALI_CLUSTER_CONTEXT:=${DEFAULT_KIALI_CLUSTER_CONTEXT}}
 : ${KIALI_CLUSTER_NAMESPACE:=${DEFAULT_KIALI_CLUSTER_NAMESPACE}}
+: ${KIALI_RESOURCE_NAME:=${DEFAULT_RESOURCE_NAME}}
 : ${KIALI_VERSION:=${DEFAULT_KIALI_VERSION}}
 : ${PROCESS_KIALI_SECRET:=${DEFAULT_PROCESS_KIALI_SECRET}}
 : ${PROCESS_REMOTE_RESOURCES:=${DEFAULT_PROCESS_REMOTE_RESOURCES}}
@@ -357,6 +356,10 @@ while [ $# -gt 0 ]; do
       KIALI_CLUSTER_NAMESPACE="$2"
       shift;shift
       ;;
+    -krn|--kiali-resource-name)
+      KIALI_RESOURCE_NAME="$2"
+      shift;shift
+      ;;
     -kv|--kiali-version)
       KIALI_VERSION="$2"
       shift;shift
@@ -453,6 +456,8 @@ Valid command line arguments:
                                   in the cluster defined by the Kiali cluster
                                   context (see --kiali-cluster-context).
                                   Default: "${DEFAULT_KIALI_CLUSTER_NAMESPACE}"
+  -krn|--kiali-resource-name: used to name all the resources on the remote cluster.
+                              Default: "${DEFAULT_RESOURCE_NAME}"
   -kv|--kiali-version: The version of Kiali that is installed. This is used to
                        determine what the role should look like. Pass in
                        "latest" to specify the latest version of Kiali.
@@ -524,6 +529,7 @@ info DRY_RUN=${DRY_RUN}
 info HELM=${HELM}
 info KIALI_CLUSTER_CONTEXT=${KIALI_CLUSTER_CONTEXT}
 info KIALI_CLUSTER_NAMESPACE=${KIALI_CLUSTER_NAMESPACE}
+info KIALI_RESOURCE_NAME=${KIALI_RESOURCE_NAME}
 info KIALI_VERSION=${KIALI_VERSION}
 info REMOTE_CLUSTER_CONTEXT=${REMOTE_CLUSTER_CONTEXT}
 info REMOTE_CLUSTER_NAME=${REMOTE_CLUSTER_NAME}

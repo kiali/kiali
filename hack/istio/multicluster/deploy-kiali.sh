@@ -10,6 +10,10 @@
 SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
 source ${SCRIPT_DIR}/env.sh $*
 
+KIALI_REPO_ROOT="${SCRIPT_DIR}/../../../"
+
+set -euo pipefail
+
 if [ "${KIALI_ENABLED}" != "true" ]; then
   echo "Will not install kiali"
   return 0
@@ -29,7 +33,7 @@ fi
 deploy_kiali() {
   local helm_args=()
   if [ "${IS_OPENSHIFT}" == "true" ]; then
-    helm_args="--disable-openapi-validation"
+    helm_args+=("--disable-openapi-validation")
     if [ "${KIALI_USE_DEV_IMAGE}" == "true" ]; then
       echo "'--kiali-use-dev-image true' is not supported with Openshift today - will not install Kiali"
       return 1
@@ -42,10 +46,8 @@ deploy_kiali() {
   [ -n "${web_fqdn}" ] && helm_args+=("--set server.web_fqdn=${web_fqdn}")
   [ -n "${web_schema}" ] && helm_args+=("--set server.web_schema=${web_schema}")
 
-  # Setting this as an array so things expand correctly.
-  local auth_flags=()
   if [ "${KIALI_AUTH_STRATEGY}" == "anonymous" ]; then
-    auth_flags=("--set auth.strategy=anonymous")
+    helm_args+=("--set auth.strategy=anonymous")
   elif [ "${KIALI_AUTH_STRATEGY}" == "openid" ]; then
     # These need to exist prior to installing Kiali.
     # Create secret with the oidc secret
@@ -53,12 +55,16 @@ deploy_kiali() {
     ${CLIENT_EXE} create secret generic kiali --from-literal="oidc-secret=kube-client-secret" -n istio-system
     ${CLIENT_EXE} create clusterrolebinding kiali-user-viewer --clusterrole=kiali-viewer --user=oidc:kiali
 
-    auth_flags=(
+    helm_args+=(
       "--set auth.strategy=openid"
       "--set auth.openid.client_id=kube"
       "--set-string auth.openid.issuer_uri=https://${KEYCLOAK_ADDRESS}/realms/kube"
       "--set auth.openid.insecure_skip_verify_tls=false"
       "--set auth.openid.username_claim=preferred_username"
+    )
+  elif [ "${KIALI_AUTH_STRATEGY}" == "openshift" ]; then
+    helm_args+=(
+      "--set auth.strategy=openshift"
     )
   else
     echo "Kiali auth strategy [${KIALI_AUTH_STRATEGY}] is not supported for multi-cluster - will not install Kiali"
@@ -66,11 +72,31 @@ deploy_kiali() {
   fi
 
   if [ "${KIALI_USE_DEV_IMAGE}" == "true" ]; then
+    if [ "${KIALI_BUILD_DEV_IMAGE}" == "true" ]; then
+      echo "Building the dev image..."
+      make -e -C "${KIALI_REPO_ROOT}" build build-ui
+    fi
+
     if [ "${MANAGE_KIND}" == "true" ]; then
       echo "Pushing the images into the cluster..."
-      make -e DORP="${DORP}" -e CLUSTER_TYPE="kind" -e KIND_NAME="${cluster_name}" CLUSTER_REPO=localhost cluster-push-kiali
-      helm_args+=('--set deployment.image_pull_policy="Never"')
-      helm_args+=("--set deployment.image_name=localhost/kiali/kiali --set deployment.image_version=dev")
+      make -e -C "${KIALI_REPO_ROOT}" DORP="${DORP}" CLUSTER_TYPE="kind" KIND_NAME="${cluster_name}" cluster-push-kiali
+      helm_args+=(
+        '--set deployment.image_pull_policy="Never"'
+        "--set deployment.image_name=localhost/kiali/kiali"
+        "--set deployment.image_version=dev"
+      )
+    elif [ "${KIALI_AUTH_STRATEGY}" == "openshift" ]; then
+      echo "Pushing the images into the cluster..."
+      make -e -C "${KIALI_REPO_ROOT}" DORP="${DORP}" CLUSTER_TYPE="openshift" cluster-status
+      local image_name
+      podman login --tls-verify=false -u "$(oc whoami | tr -d ':')" -p "$(oc whoami -t)" "$(oc get image.config.openshift.io/cluster -o custom-columns=EXT:.status.externalRegistryHostnames[0] --no-headers 2>/dev/null)"
+      image_name="$(oc get image.config.openshift.io/cluster -o custom-columns=INT:.status.internalRegistryHostname --no-headers 2>/dev/null)/kiali/kiali"
+      make -e -C "${KIALI_REPO_ROOT}" DORP="${DORP}" CLUSTER_TYPE="openshift" cluster-push-kiali
+      helm_args+=(
+        '--set deployment.image_pull_policy="Always"'
+        "--set deployment.image_name=${image_name}"
+        "--set deployment.image_version=dev"
+      )
     else
       local image_to_tag="quay.io/kiali/kiali:dev"
       local image_to_push="$(minikube -p ${cluster_name} ip):5000/kiali/kiali:dev"
@@ -78,19 +104,26 @@ deploy_kiali() {
       ${DORP} tag ${image_to_tag} ${image_to_push}
       echo "Pushing the dev image [${image_to_push}] to the cluster [${cluster_name}]..."
       ${DORP} push --tls-verify=false ${image_to_push}
-      helm_args+=("--set deployment.image_name=localhost:5000/kiali/kiali --set deployment.image_version=dev")
+      helm_args+=(
+        "--set deployment.image_name=localhost:5000/kiali/kiali"
+        "--set deployment.image_version=dev"
+      )
     fi
   fi
 
 
   if [ "${KIALI_CREATE_REMOTE_CLUSTER_SECRETS}" == "true" ]; then
+    local openshift_flags=""
+    if [ "${KIALI_AUTH_STRATEGY}" == "openshift" ]; then
+      openshift_flags="--allow-skip-tls-verify true --kiali-resource-name kiali"
+    fi
     if [ "${SINGLE_KIALI}" == "true" ]; then
       local remote_url_flag=""
       if [ "${MANAGE_KIND}" == "true" ]; then
         remote_url_flag="--remote-cluster-url https://$(${CLIENT_EXE} get nodes ${CLUSTER2_NAME}-control-plane --context ${CLUSTER2_CONTEXT} -o jsonpath='{.status.addresses[?(@.type == "InternalIP")].address}'):6443"
       fi
       echo "Preparing remote cluster secret for single Kiali install in multicluster mode."
-      ${SCRIPT_DIR}/kiali-prepare-remote-cluster.sh -c ${CLIENT_EXE} --remote-cluster-name ${CLUSTER2_NAME} -kcc ${CLUSTER1_CONTEXT} -rcc ${CLUSTER2_CONTEXT} ${remote_url_flag} -vo false
+      ${SCRIPT_DIR}/kiali-prepare-remote-cluster.sh -c ${CLIENT_EXE} --remote-cluster-name ${CLUSTER2_NAME} -kcc ${CLUSTER1_CONTEXT} -rcc ${CLUSTER2_CONTEXT} ${remote_url_flag} -vo false ${openshift_flags} -rcns ${ISTIO_NAMESPACE}
     else
       echo "Preparing remote cluster secrets for both Kiali installs."
       local remote_url_flag1=""
@@ -99,19 +132,29 @@ deploy_kiali() {
         remote_url_flag1="--remote-cluster-url https://$(${CLIENT_EXE} get nodes ${CLUSTER2_NAME}-control-plane --context ${CLUSTER2_CONTEXT} -o jsonpath='{.status.addresses[?(@.type == "InternalIP")].address}'):6443"
         remote_url_flag2="--remote-cluster-url https://$(${CLIENT_EXE} get nodes ${CLUSTER1_NAME}-control-plane --context ${CLUSTER1_CONTEXT} -o jsonpath='{.status.addresses[?(@.type == "InternalIP")].address}'):6443"
       fi
-      ${SCRIPT_DIR}/kiali-prepare-remote-cluster.sh -c ${CLIENT_EXE} --remote-cluster-name ${CLUSTER2_NAME} -kcc ${CLUSTER1_CONTEXT} -rcc ${CLUSTER2_CONTEXT} ${remote_url_flag1} -vo false
-      ${SCRIPT_DIR}/kiali-prepare-remote-cluster.sh -c ${CLIENT_EXE} --remote-cluster-name ${CLUSTER1_NAME} -kcc ${CLUSTER2_CONTEXT} -rcc ${CLUSTER1_CONTEXT} ${remote_url_flag2} -vo false
+      ${SCRIPT_DIR}/kiali-prepare-remote-cluster.sh -c ${CLIENT_EXE} --remote-cluster-name ${CLUSTER2_NAME} -kcc ${CLUSTER1_CONTEXT} -rcc ${CLUSTER2_CONTEXT} ${remote_url_flag1} -vo false ${openshift_flags}
+      ${SCRIPT_DIR}/kiali-prepare-remote-cluster.sh -c ${CLIENT_EXE} --remote-cluster-name ${CLUSTER1_NAME} -kcc ${CLUSTER2_CONTEXT} -rcc ${CLUSTER1_CONTEXT} ${remote_url_flag2} -vo false ${openshift_flags}
     fi
   fi
 
-  local helm_auth_flags="${auth_flags[*]}"
+  local service_type="LoadBalancer"
+  local ingress_enabled="false"
+  local web_port="80"
+  if [ "${KIALI_AUTH_STRATEGY}" == "openshift" ]; then
+    service_type="ClusterIP"
+    ingress_enabled="true"
+    web_port=""
+  
+    local kiali_route_url
+    kiali_route_url="https://kiali-${ISTIO_NAMESPACE}.$(kubectl get ingresses.config/cluster -o jsonpath='{.spec.domain}')"
+    helm_args+=("--set kiali_route_url=${kiali_route_url}")
+  fi
+
   
   helm_command='helm upgrade --install
     ${helm_args[@]}
     --namespace ${ISTIO_NAMESPACE}
-    ${helm_auth_flags}
     --set deployment.logger.log_level="debug" 
-    --set deployment.service_type="LoadBalancer"
     --set external_services.grafana.url="http://grafana.istio-system:3000"
     --set external_services.grafana.dashboards[0].name="Istio Mesh Dashboard"
     --set external_services.tracing.url="http://tracing.istio-system:16685/jaeger"
@@ -121,17 +164,22 @@ deploy_kiali() {
     --set health_config.rate[0].tolerance[0].code="5xx"
     --set health_config.rate[0].tolerance[0].degraded=2
     --set health_config.rate[0].tolerance[0].failure=100
-    --set deployment.ingress.enabled="false"
-    --set deployment.service_type="LoadBalancer"
-    --set server.web_port="80"
-    --repo https://kiali.org/helm-charts
+    --set deployment.ingress.enabled=${ingress_enabled}
+    --set deployment.service_type=${service_type}
+    --set server.web_port=${web_port}
     kiali-server
     ${KIALI_SERVER_HELM_CHARTS}'
 
   eval $helm_command
+  if [ "${KIALI_AUTH_STRATEGY}" == "openshift" ]; then
+    local kiali_route_url
+    kiali_route_url=$(kubectl get route kiali -n "${ISTIO_NAMESPACE}" -o jsonpath='{.spec.host}')
+    ${CLIENT_EXE} get oauthclients --context "${CLUSTER1_CONTEXT}" -n "${ISTIO_NAMESPACE}" kiali-"${ISTIO_NAMESPACE}" -o json | jq ".redirectURIs = [\"https://${kiali_route_url}/api/auth/callback/${CLUSTER2_CONTEXT}\"]" | ${CLIENT_EXE} --force=true --context "${CLUSTER2_CONTEXT}" apply -f -
+  else
   # Helm chart doesn't support passing in service opts so patch them after the helm deploy.
-  kubectl patch service kiali -n "${ISTIO_NAMESPACE}" --type=json -p='[{"op": "replace", "path": "/spec/ports/0/port", "value":80}]'
-  kubectl wait --for=jsonpath='{.status.loadBalancer.ingress}' -n istio-system service/kiali
+    kubectl patch service kiali -n "${ISTIO_NAMESPACE}" --type=json -p='[{"op": "replace", "path": "/spec/ports/0/port", "value":80}]'
+    kubectl wait --for=jsonpath='{.status.loadBalancer.ingress}' -n istio-system service/kiali
+  fi
 
   # If using openid auth strategy, create the keycloak realm and the kiali user.
 
@@ -146,7 +194,8 @@ deploy_kiali() {
                 -d response_type=id_token | jq -r '.access_token')
 
     # Replace the redirect URI with the minikube ip. Create the realm.
-    local KIALI_SVC_LB_IP=$(kubectl get svc kiali -o=jsonpath='{.status.loadBalancer.ingress[0].ip}' -n istio-system)
+    local KIALI_SVC_LB_IP
+    KIALI_SVC_LB_IP=$(kubectl get svc kiali -o=jsonpath='{.status.loadBalancer.ingress[0].ip}' -n istio-system)
     jq ".clients[] |= if .clientId == \"kube\" then .redirectUris = [\"http://${KIALI_SVC_LB_IP}/kiali/*\"] else . end" < "${SCRIPT_DIR}"/realm-export-template.json | curl -k -L https://"${KEYCLOAK_ADDRESS}"/admin/realms -H "Authorization: Bearer $TOKEN_KEY" -H "Content-Type: application/json" -X POST -d @-
 
     # Create the kiali user

@@ -1,5 +1,6 @@
 export interface AuthConfig {
   authorizationEndpoint?: string;
+  authorizationEndpointPerCluster?: { [cluster: string]: string };
   logoutEndpoint?: string;
   logoutRedirect?: string;
   strategy: AuthStrategy;
@@ -29,7 +30,12 @@ export enum AuthResult {
   FAILURE = 'failure'
 }
 
+export interface SessionClusterInfo {
+  name: string;
+}
+
 export interface SessionInfo {
-  username?: string;
+  clusterInfo?: { [cluster: string]: SessionClusterInfo };
   expiresOn?: string;
+  username?: string;
 }

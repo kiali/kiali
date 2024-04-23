@@ -41,10 +41,10 @@ install_bookinfo() {
 }
 
 if ! kind get clusters -q | grep -q "${EXTERNAL_CLUSTER_NAME}" ; then
-    ./hack/start-kind.sh --load-balancer-range 255.70-255.84 -n "${EXTERNAL_CLUSTER_NAME}" -eir true -i "kindest/node:v1.27.3@sha256:3966ac761ae0136263ffdb6cfd4db23ef8a83cba8a463690e98317add2c9ba72"
+    ./hack/start-kind.sh --load-balancer-range 255.70-255.84 -n "${EXTERNAL_CLUSTER_NAME}" -eir false -i "kindest/node:v1.27.3@sha256:3966ac761ae0136263ffdb6cfd4db23ef8a83cba8a463690e98317add2c9ba72"
 fi
 if ! kind get clusters -q | grep -q "${REMOTE_CLUSTER_NAME}" ; then
-    ./hack/start-kind.sh --load-balancer-range 255.85-255.98 -n "${REMOTE_CLUSTER_NAME}" -eir true -i "kindest/node:v1.27.3@sha256:3966ac761ae0136263ffdb6cfd4db23ef8a83cba8a463690e98317add2c9ba72"
+    ./hack/start-kind.sh --load-balancer-range 255.85-255.98 -n "${REMOTE_CLUSTER_NAME}" -eir false -i "kindest/node:v1.27.3@sha256:3966ac761ae0136263ffdb6cfd4db23ef8a83cba8a463690e98317add2c9ba72"
 fi
 
 # Following: https://istio.io/latest/docs/setup/install/external-controlplane/

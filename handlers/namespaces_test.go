@@ -20,7 +20,6 @@ import (
 	"k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/kiali/kiali/business"
-	"github.com/kiali/kiali/business/authentication"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/prometheus"
@@ -137,12 +136,9 @@ func TestNamespaceMetricsInaccessibleNamespace(t *testing.T) {
 func TestNamespaceInfo(t *testing.T) {
 	setupMocked(t)
 
+	authInfo := map[string]*api.AuthInfo{config.Get().KubernetesConfig.ClusterName: {Token: "test"}}
 	mr := mux.NewRouter()
-	mr.HandleFunc("/api/namespaces/{namespace}/info", http.HandlerFunc(
-		func(w http.ResponseWriter, r *http.Request) {
-			context := authentication.SetAuthInfoContext(r.Context(), &api.AuthInfo{Token: "test"})
-			NamespaceInfo(w, r.WithContext(context))
-		}))
+	mr.HandleFunc("/api/namespaces/{namespace}/info", WithAuthInfo(authInfo, NamespaceInfo))
 
 	ts := httptest.NewServer(mr)
 	t.Cleanup(ts.Close)
@@ -170,11 +166,15 @@ func (n *notRemote) IsRemoteCluster(context.Context, string) bool { return false
 func setupNamespaceMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheustest.PromAPIMock) {
 	client, xapi := setupMocked(t)
 
+	authInfo := map[string]*api.AuthInfo{config.Get().KubernetesConfig.ClusterName: {Token: "test"}}
 	mr := mux.NewRouter()
-	mr.HandleFunc("/api/namespaces/{namespace}/metrics", WithAuthInfo(
-		&api.AuthInfo{Token: "test"},
-		NamespaceMetrics(func() (*prometheus.Client, error) { return client, nil }, &notRemote{}),
+	mr.HandleFunc("/api/namespaces/{namespace}/metrics", http.HandlerFunc(
+		WithAuthInfo(
+			authInfo,
+			NamespaceMetrics(func() (*prometheus.Client, error) { return client, nil }, &notRemote{}),
+		),
 	))
+
 	ts := httptest.NewServer(mr)
 	t.Cleanup(ts.Close)
 	return ts, xapi

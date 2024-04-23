@@ -8,26 +8,26 @@ import { KialiDispatch } from '../types/Redux';
 import { authenticationConfig } from '../config/AuthenticationConfig';
 
 export interface LoginResult {
-  status: AuthResult;
-  session?: LoginSession;
   error?: any;
+  session?: LoginSession;
+  status: AuthResult;
 }
 
 interface LoginStrategy<T extends unknown> {
-  prepare: (info: AuthConfig) => Promise<AuthResult>;
   perform: (request: DispatchRequest<T>) => Promise<LoginResult>;
+  prepare: (info: AuthConfig) => Promise<AuthResult>;
 }
 
 interface DispatchRequest<T> {
+  data: T;
   dispatch: KialiDispatch;
   state: KialiAppState;
-  data: T;
 }
 
 type NullDispatch = DispatchRequest<unknown>;
 
 class AnonymousLogin implements LoginStrategy<unknown> {
-  public async prepare(_info: AuthConfig) {
+  public async prepare(_info: AuthConfig): Promise<AuthResult> {
     return AuthResult.CONTINUE;
   }
 
@@ -43,12 +43,12 @@ class AnonymousLogin implements LoginStrategy<unknown> {
 }
 
 interface WebLoginData {
-  username: string;
   password: string;
+  username: string;
 }
 
 class TokenLogin implements LoginStrategy<WebLoginData> {
-  public async prepare(_info: AuthConfig) {
+  public async prepare(_info: AuthConfig): Promise<AuthResult> {
     return AuthResult.CONTINUE;
   }
 
@@ -63,7 +63,7 @@ class TokenLogin implements LoginStrategy<WebLoginData> {
 }
 
 class HeaderLogin implements LoginStrategy<WebLoginData> {
-  public async prepare(_info: AuthConfig) {
+  public async prepare(_info: AuthConfig): Promise<AuthResult> {
     return AuthResult.CONTINUE;
   }
 
@@ -78,30 +78,17 @@ class HeaderLogin implements LoginStrategy<WebLoginData> {
 }
 
 class OAuthLogin implements LoginStrategy<unknown> {
-  public async prepare(info: AuthConfig) {
+  public async prepare(info: AuthConfig): Promise<AuthResult> {
     if (!info.authorizationEndpoint) {
       return AuthResult.FAILURE;
     }
-
-    const pattern = /[#&](access_token|id_token)=/;
-    if (pattern.test(window.location.hash)) {
-      return AuthResult.CONTINUE;
-    } else {
-      return AuthResult.HOLD;
-    }
+    return AuthResult.HOLD;
   }
 
   public async perform(_request: NullDispatch): Promise<LoginResult> {
-    // get the data from the url that was passed by the OAuth login.
-    const session = (await API.checkOpenshiftAuth(window.location.hash.substring(1))).data;
-
-    // remove the data that was passed by the OAuth login. In certain error situations this can cause the
-    // page to enter a refresh loop since it tries to reload the page which then tries to reuse the bad token again.
-    window.history.replaceState('', document.title, window.location.pathname + window.location.search);
-
     return {
-      status: AuthResult.SUCCESS,
-      session: session
+      status: AuthResult.SUCCESS
+      // session: session
     };
   }
 }
@@ -114,10 +101,10 @@ export class LoginDispatcher {
     this.strategyMapping = new Map();
 
     this.strategyMapping.set(AuthStrategy.anonymous, new AnonymousLogin());
-    this.strategyMapping.set(AuthStrategy.openshift, new OAuthLogin());
     this.strategyMapping.set(AuthStrategy.token, new TokenLogin());
-    this.strategyMapping.set(AuthStrategy.openid, new OAuthLogin());
     this.strategyMapping.set(AuthStrategy.header, new HeaderLogin());
+    this.strategyMapping.set(AuthStrategy.openshift, new OAuthLogin());
+    this.strategyMapping.set(AuthStrategy.openid, new OAuthLogin());
   }
 
   public async prepare(): Promise<AuthResult> {
@@ -125,7 +112,7 @@ export class LoginDispatcher {
     const strategy = this.strategyMapping.get(info.strategy)!;
 
     try {
-      const delay = async (ms: TimeInMilliseconds = 3000) => {
+      const delay = async (ms: TimeInMilliseconds = 3000): Promise<unknown> => {
         return new Promise(resolve => setTimeout(resolve, ms));
       };
 

@@ -21,6 +21,7 @@ import (
 	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/util/slicetest"
 )
 
 func fakeIstiodDeployment(cluster string, manageExternal bool) *apps_v1.Deployment {
@@ -222,7 +223,7 @@ func TestGetClustersResolvesRemoteClusters(t *testing.T) {
 	a, err := discovery.Clusters()
 	check.Nil(err, "GetClusters returned error: %v", err)
 
-	remoteCluster := business.FindOrFail(t, a, func(c models.KubeCluster) bool { return c.Name == "KialiCluster" })
+	remoteCluster := slicetest.FindOrFail(t, a, func(c models.KubeCluster) bool { return c.Name == "KialiCluster" })
 
 	check.NotNil(a, "GetClusters returned nil")
 	check.Len(a, 2, "GetClusters didn't resolve the remote clusters")
@@ -442,13 +443,13 @@ trustDomain: cluster.local
 	require.NoError(err)
 	require.Len(mesh.ControlPlanes, 2)
 
-	controlPlane_1_18 := business.FindOrFail(t, mesh.ControlPlanes, func(c models.ControlPlane) bool {
+	controlPlane_1_18 := slicetest.FindOrFail(t, mesh.ControlPlanes, func(c models.ControlPlane) bool {
 		return c.Revision == "1-18-0"
 	})
 	require.False(*controlPlane_1_18.Config.EnableAutoMtls)
 	require.Len(controlPlane_1_18.ManagedClusters, 1)
 
-	controlPlane_1_19 := business.FindOrFail(t, mesh.ControlPlanes, func(c models.ControlPlane) bool {
+	controlPlane_1_19 := slicetest.FindOrFail(t, mesh.ControlPlanes, func(c models.ControlPlane) bool {
 		return c.Revision == "1-19-0"
 	})
 	require.True(*controlPlane_1_19.Config.EnableAutoMtls)
@@ -516,7 +517,7 @@ trustDomain: cluster.local
 	controlPlane := mesh.ControlPlanes[0]
 
 	require.Equal(conf.KubernetesConfig.ClusterName, controlPlane.Cluster.Name)
-	business.FindOrFail(t, controlPlane.ManagedClusters, func(c *models.KubeCluster) bool {
+	slicetest.FindOrFail(t, controlPlane.ManagedClusters, func(c *models.KubeCluster) bool {
 		return c.Name == "remote"
 	})
 }
@@ -566,7 +567,7 @@ trustDomain: cluster.local
 	controlPlane := mesh.ControlPlanes[0]
 
 	require.Equal(conf.KubernetesConfig.ClusterName, controlPlane.Cluster.Name)
-	business.FindOrFail(t, controlPlane.ManagedClusters, func(c *models.KubeCluster) bool {
+	slicetest.FindOrFail(t, controlPlane.ManagedClusters, func(c *models.KubeCluster) bool {
 		return c.Name == "remote"
 	})
 }
@@ -656,10 +657,10 @@ trustDomain: cluster.local
 	require.Len(mesh.ControlPlanes[0].ManagedClusters, 1)
 	require.Len(mesh.ControlPlanes[1].ManagedClusters, 1)
 
-	eastControlPlane := business.FindOrFail(t, mesh.ControlPlanes, func(c models.ControlPlane) bool {
+	eastControlPlane := slicetest.FindOrFail(t, mesh.ControlPlanes, func(c models.ControlPlane) bool {
 		return c.Cluster.Name == "east"
 	})
-	westControlPlane := business.FindOrFail(t, mesh.ControlPlanes, func(c models.ControlPlane) bool {
+	westControlPlane := slicetest.FindOrFail(t, mesh.ControlPlanes, func(c models.ControlPlane) bool {
 		return c.Cluster.Name == "west"
 	})
 
@@ -728,10 +729,10 @@ trustDomain: cluster.local
 	require.Len(mesh.ControlPlanes[0].ManagedClusters, 2)
 	require.Len(mesh.ControlPlanes[1].ManagedClusters, 2)
 
-	eastControlPlane := business.FindOrFail(t, mesh.ControlPlanes, func(c models.ControlPlane) bool {
+	eastControlPlane := slicetest.FindOrFail(t, mesh.ControlPlanes, func(c models.ControlPlane) bool {
 		return c.Cluster.Name == "east"
 	})
-	westControlPlane := business.FindOrFail(t, mesh.ControlPlanes, func(c models.ControlPlane) bool {
+	westControlPlane := slicetest.FindOrFail(t, mesh.ControlPlanes, func(c models.ControlPlane) bool {
 		return c.Cluster.Name == "west"
 	})
 
@@ -814,10 +815,10 @@ trustDomain: cluster.local
 	require.NoError(err)
 	require.Len(mesh.ControlPlanes, 2)
 
-	controlPlane := business.FindOrFail(t, mesh.ControlPlanes, func(c models.ControlPlane) bool {
+	controlPlane := slicetest.FindOrFail(t, mesh.ControlPlanes, func(c models.ControlPlane) bool {
 		return c.Cluster.Name == "controlplane" && c.ID == "controlplane"
 	})
-	extControlPlane := business.FindOrFail(t, mesh.ControlPlanes, func(c models.ControlPlane) bool {
+	extControlPlane := slicetest.FindOrFail(t, mesh.ControlPlanes, func(c models.ControlPlane) bool {
 		return c.Cluster.Name == "controlplane" && c.ID == "dataplane"
 	})
 	require.Len(controlPlane.ManagedClusters, 1)
