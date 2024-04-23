@@ -309,7 +309,7 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_AMBIENT}" ]; then
   fi
 
   cd "${SCRIPT_DIR}"/../frontend
-  yarn run cypress:run
+  yarn run cypress:run:ambient
 elif [ "${TEST_SUITE}" == "${FRONTEND_PRIMARY_REMOTE}" ]; then
   ensureCypressInstalled
   
