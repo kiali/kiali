@@ -630,7 +630,7 @@ func parseZtunnelLine(line string) *LogEntry {
 	if len(msgSplit) > 4 {
 		accessLog := strings.Split(msgSplit[4], " ")
 		for _, field := range accessLog {
-			parsed := strings.Split(field, "=")
+			parsed := strings.SplitN(field, "=", 2)
 			if len(parsed) == 2 {
 				parsed[1] = strings.Replace(parsed[1], "\"", "", -1)
 				switch parsed[0] {
