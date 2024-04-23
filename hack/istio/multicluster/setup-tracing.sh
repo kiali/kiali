@@ -63,6 +63,8 @@ helm --kube-context "${CLUSTER2_CONTEXT}" upgrade --install --namespace istio-sy
 mode: deployment
 service:
   enabled: false
+image:
+  repository: "otel/opentelemetry-collector-k8s"
 config:
   exporters:
     logging: {}
