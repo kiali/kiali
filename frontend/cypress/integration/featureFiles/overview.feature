@@ -189,4 +189,4 @@ Feature: Kiali Overview page
   Scenario: See ambient badge in the LIST view
     When user clicks in the "LIST" view
     Then user sees a "LIST" "istio-system" namespace
-    And badge for "Ambient" is visible in the LIST view in cluster "Kubernetes" and namespace "istio-system"
+    And badge for "Ambient" is visible in the LIST view in cluster "cluster-default" and namespace "istio-system"
