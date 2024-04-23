@@ -588,7 +588,7 @@ func parseZtunnelLine(line string) *LogEntry {
 	msgSplit := strings.Split(line, "\t")
 
 	if len(msgSplit) < 4 {
-		log.Debugf("Error splitting line line [%s]", line)
+		log.Debugf("Error splitting log line [%s]", line)
 		entry.Message = line
 		return &entry
 	}
