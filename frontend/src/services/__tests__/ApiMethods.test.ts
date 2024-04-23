@@ -102,7 +102,7 @@ describe.skip('#Test Methods return a Promise', () => {
   });
 
   it('#getNamespace', () => {
-    const result = API.getNamespace('istio-system');
+    const result = API.getNamespaceInfo('istio-system');
     evaluatePromise(result);
   });
 

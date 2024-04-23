@@ -341,7 +341,7 @@ export class TargetPanelDataPlaneNamespace extends React.Component<
 
     const cluster = this.props.targetCluster;
     const namespace = this.props.targetNamespace;
-    API.getNamespace(namespace, cluster)
+    API.getNamespaceInfo(namespace, cluster)
       .then(result => {
         const nsInfo = result.data;
         if (!nsInfo) {
