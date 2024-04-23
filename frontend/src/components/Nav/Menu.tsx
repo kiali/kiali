@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 import { Nav, NavList, NavItem } from '@patternfly/react-core';
 import { history } from '../../app/History';
 import { navMenuItems } from '../../routes';
-import { homeCluster, serverConfig } from '../../config';
+import { serverConfig } from '../../config';
 import { kialiStyle } from 'styles/StyleUtils';
 import { ExternalServiceInfo } from '../../types/StatusState';
 import { KialiIcon } from 'config/KialiIcon';
@@ -78,9 +78,6 @@ class MenuComponent extends React.Component<MenuProps, MenuState> {
     const allNavMenuItems = navMenuItems;
     const graphEnableCytoscape = serverConfig.kialiFeatureFlags.uiDefaults.graph.impl !== 'pf';
     const graphEnablePatternfly = serverConfig.kialiFeatureFlags.uiDefaults.graph.impl !== 'cy';
-    const graphEnableMeshClassic = serverConfig.kialiFeatureFlags.uiDefaults.mesh.impl === 'classic';
-    const graphEnableMeshGraph = serverConfig.kialiFeatureFlags.uiDefaults.mesh.impl !== 'classic';
-    const graphEnableMeshOverview = serverConfig.kialiFeatureFlags.uiDefaults.mesh.impl === 'topo-as-overview';
 
     const activeMenuItem = allNavMenuItems.find(item => {
       let isRoute = matchPath(location.pathname, { path: item.to, exact: true, strict: false }) ? true : false;
@@ -96,18 +93,6 @@ class MenuComponent extends React.Component<MenuProps, MenuState> {
 
     return allNavMenuItems
       .filter(item => {
-        if (item.id === 'mesh_classic') {
-          return graphEnableMeshClassic && homeCluster?.name !== undefined;
-        }
-
-        if (item.id === 'mesh_graph') {
-          return graphEnableMeshGraph;
-        }
-
-        if (item.id === 'overview') {
-          return !graphEnableMeshOverview;
-        }
-
         if (item.id === 'traffic_graph_cy') {
           return graphEnableCytoscape;
         }
@@ -117,11 +102,6 @@ class MenuComponent extends React.Component<MenuProps, MenuState> {
         }
 
         return true;
-      })
-      .sort((a, b): number => {
-        if (graphEnableMeshOverview && a.id === 'mesh_graph') return -1;
-        if (graphEnableMeshOverview && b.id === 'mesh_graph') return 1;
-        return 0;
       })
       .map(item => {
         let title = item.title;
@@ -135,10 +115,6 @@ class MenuComponent extends React.Component<MenuProps, MenuState> {
           (item.id === 'traffic_graph_pf' && !graphEnableCytoscape)
         ) {
           title = this.props.t('Traffic Graph');
-        }
-
-        if (item.id === 'mesh_classic' || item.id === 'mesh_graph') {
-          title = this.props.t('Mesh');
         }
 
         return (

@@ -487,7 +487,6 @@ type ListUIDefaults struct {
 type MeshUIDefaults struct {
 	FindOptions []GraphFindOption `yaml:"find_options,omitempty" json:"findOptions,omitempty"`
 	HideOptions []GraphFindOption `yaml:"hide_options,omitempty" json:"hideOptions,omitempty"`
-	Impl        string            `yaml:"impl,omitempty" json:"impl,omitempty"` // classic | topo | topo-as-overview
 }
 
 // Aggregation represents label's allowed aggregations, transformed from aggregation in MonitoringDashboard config resource
@@ -845,7 +844,6 @@ func NewConfig() (c *Config) {
 							Expression:  "healthy",
 						},
 					},
-					Impl: "classic",
 				},
 				MetricsInbound:    MetricsDefaults{},
 				MetricsOutbound:   MetricsDefaults{},

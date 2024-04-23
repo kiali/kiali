@@ -1499,24 +1499,6 @@ func NewRoutes(
 			HandlerFunc:   handlers.MetricsStats,
 			Authenticated: true,
 		},
-		// swagger:route GET /api/clusters
-		// ---
-		// Endpoint to get the list of the clusters that are hosting the service mesh.
-		//              Produces:
-		//              - application/json
-		//
-		//              Schemes: http, https
-		//
-		// responses:
-		//              500: internalError
-		//              200: clustersResponse
-		{
-			"GetClusters",
-			"GET",
-			"/api/clusters",
-			handlers.GetClusters(conf, kialiCache, clientFactory, prom, traceClientLoader, cpm),
-			true,
-		},
 		// swagger:route GET /api/mesh/outbound_traffic_policy/mode
 		// ---
 		// Endpoint to get the OutboundTrafficPolicy Mode configured in the service mesh.

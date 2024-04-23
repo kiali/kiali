@@ -4,43 +4,10 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/kubernetes"
-	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/mesh"
 	"github.com/kiali/kiali/mesh/api"
-	"github.com/kiali/kiali/prometheus"
-	"github.com/kiali/kiali/tracing"
 )
-
-// GetClusters writes to the HTTP response a JSON document with the
-// list of clusters that are part of the mesh when multi-cluster is enabled. If
-// multi-cluster is not enabled in the control plane, this handler may provide
-// erroneous data.
-func GetClusters(conf *config.Config, kialiCache cache.KialiCache, clientFactory kubernetes.ClientFactory, prom prometheus.ClientInterface, traceClientLoader func() tracing.ClientInterface, cpm business.ControlPlaneMonitor) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		authInfo, err := getAuthInfo(r)
-		if err != nil {
-			RespondWithError(w, http.StatusInternalServerError, err.Error())
-			return
-		}
-
-		layer, err := business.NewLayer(conf, kialiCache, clientFactory, prom, traceClientLoader(), cpm, authInfo)
-		if err != nil {
-			RespondWithError(w, http.StatusInternalServerError, err.Error())
-			return
-		}
-
-		meshClusters, err := layer.Mesh.GetClusters()
-		if err != nil {
-			RespondWithError(w, http.StatusServiceUnavailable, "Cannot fetch mesh clusters: "+err.Error())
-			return
-		}
-
-		RespondWithJSON(w, http.StatusOK, meshClusters)
-	}
-}
 
 func OutboundTrafficPolicyMode(w http.ResponseWriter, r *http.Request) {
 	business, err := getBusiness(r)

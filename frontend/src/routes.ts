@@ -15,7 +15,6 @@ import { IstioConfigDetailsRoute } from 'routes/IstioConfigDetailsRoute';
 import { IstioConfigNewRoute } from 'routes/IstioConfigNewRoute';
 import { GraphRoutePF } from 'routes/GraphRoutePF';
 import { GraphPagePF } from 'pages/GraphPF/GraphPagePF';
-import { OldMeshPage } from 'pages/Mesh/old/OldMeshPage';
 import { i18n } from 'i18n';
 
 /**
@@ -71,14 +70,9 @@ const navMenuItems: MenuItem[] = [
     to: '/tracing'
   },
   {
-    id: 'mesh_graph',
-    title: i18n.t('Mesh [graph]'),
+    id: 'mesh',
+    title: i18n.t('Mesh'),
     to: '/mesh'
-  },
-  {
-    id: 'mesh_classic',
-    title: i18n.t('Mesh [classic]'),
-    to: '/oldmesh'
   }
 ];
 
@@ -180,10 +174,6 @@ const pathRoutes: Path[] = [
   {
     path: `/${Paths.MESH}`,
     component: MeshPage
-  },
-  {
-    path: '/oldmesh',
-    component: OldMeshPage
   }
 ];
 
