@@ -269,7 +269,7 @@ Feature: Kiali Graph page - Display menu
     And there are Istio objects in the "bookinfo" namespace for "west" cluster
     When user graphs "bookinfo" namespaces
     Then the Istio objects for the "bookinfo" namespace for both clusters should be grouped together in the panel
-    
+
   @multi-cluster
   Scenario Outline: User double clicks node from specific cluster
     When user graphs "bookinfo" namespaces
@@ -282,3 +282,17 @@ Feature: Kiali Graph page - Display menu
       | app      | west    |
       | service  | east    |
       | service  | west    |
+
+  @ambient
+  Scenario: User sees tcp traffic
+    When user graphs "bookinfo" namespaces
+    Then user sees the "bookinfo" namespace
+    Then 12 edges appear in the graph
+
+  @ambient
+  Scenario: User sees no http traffic
+    When user graphs "bookinfo" namespaces
+    Then user sees the "bookinfo" namespace
+    Then user opens traffic menu
+    And user "disables" "tcp" traffic option
+    Then user sees empty graph

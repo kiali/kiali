@@ -423,21 +423,48 @@ Then(
     });
   }
 );
-Then('user double-clicks on the {string} {string} from the {string} cluster in the main graph', (name:string,type:string,cluster:string) => {
+Then(
+  'user double-clicks on the {string} {string} from the {string} cluster in the main graph',
+  (name: string, type: string, cluster: string) => {
+    cy.waitForReact();
+
+    cy.getReact('CytoscapeGraph')
+      .should('have.length', '1')
+      .getCurrentState()
+      .then(state => {
+        let node;
+        if (type === 'app') {
+          node = state.cy.nodes(`[app="${name}"][cluster="${cluster}"][isBox="app"]`);
+        } else if (type === 'service') {
+          node = state.cy.nodes(`[nodeType="service"][cluster="${cluster}"][app="${name}"]`);
+        }
+        // none of the standard cytoscape.js events for double-clicks were not working unfortunately
+        node.emit('tap');
+        node.emit('tap');
+      });
+  }
+);
+
+When('user opens traffic menu', () => {
+  cy.get('button#graph-traffic-dropdown').click();
+});
+
+When('user {string} {string} traffic option', (action: string, option: string) => {
+  if (action === 'enables') {
+    cy.get('div#graph-traffic-menu').find(`input#${option}`).check();
+  } else {
+    cy.get('div#graph-traffic-menu').find(`input#${option}`).uncheck();
+  }
+});
+
+Then('{int} edges appear in the graph', (edges: number) => {
   cy.waitForReact();
 
   cy.getReact('CytoscapeGraph')
     .should('have.length', '1')
     .getCurrentState()
     .then(state => {
-      let node;
-      if (type === 'app'){
-        node = state.cy.nodes(`[app="${name}"][cluster="${cluster}"][isBox="app"]`);
-      } else if (type === 'service'){
-        node = state.cy.nodes(`[nodeType="service"][cluster="${cluster}"][app="${name}"]`);
-      } 
-      // none of the standard cytoscape.js events for double-clicks were not working unfortunately
-      node.emit('tap');
-      node.emit('tap');
+      const numEdges = state.cy.edges(`[hasTraffic]`).length;
+      assert.equal(numEdges, edges);
     });
 });
