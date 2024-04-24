@@ -17,6 +17,7 @@ SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
 # ISTIO_DIR is where the Istio download is installed and thus where the sleep demo files are found.
 # CLIENT_EXE_NAME is going to either be "oc" or "kubectl"
 ISTIO_DIR=
+AMBIENT="false"
 ARCH="amd64"
 CLIENT_EXE="oc"
 DELETE_SLEEP="false"
@@ -29,6 +30,10 @@ while [[ $# -gt 0 ]]; do
   case $key in
     -a|--arch)
       ARCH="$2"
+      shift;shift
+      ;;
+    -ab|--ambient)
+      AMBIENT="$2"
       shift;shift
       ;;
     -ai|--auto-injection)
@@ -55,6 +60,7 @@ while [[ $# -gt 0 ]]; do
       cat <<HELPMSG
 Valid command line arguments:
   -a|--arch <amd64|ppc64le|s390x>: Images for given arch will be used (default: amd64).
+  -ab|--ambient <true|false>: If you want to include to Ambient mesh (default: false).
   -ai|--auto-injection <true|false>: If you want sidecars to be auto-injected (default: true).
   -ds|--delete-sleep <true|false>: If true, uninstall sleep. If false, install sleep. (default: false).
   -id|--istio-dir <dir>: Where Istio has already been downloaded. If not found, this script aborts.
@@ -111,7 +117,7 @@ else
     ${CLIENT_EXE} get ns sleep || ${CLIENT_EXE} create ns sleep
   fi
 
-  if [ "${AUTO_INJECTION}" == "false" ]; then
+  if [ "${AMBIENT}" == "true" ]; then
     for n in $(${CLIENT_EXE} get daemonset --all-namespaces -o jsonpath='{.items[*].metadata.name}')
     do
       if [ "${n}" == "ztunnel" ]; then
@@ -124,7 +130,9 @@ else
      exit 1
     fi
   else
-    ISTIO_INJECTION="istio-injection=enabled"
+    if [ "${AUTO_INJECTION}" == "true" ]; then
+      ISTIO_INJECTION="istio-injection=enabled"
+    fi
   fi
 
   ${CLIENT_EXE} label namespace "sleep" ${ISTIO_INJECTION} --overwrite=true

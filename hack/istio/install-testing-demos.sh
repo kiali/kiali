@@ -130,9 +130,9 @@ if [ "${DELETE_DEMOS}" != "true" ]; then
     if [ "${AMBIENT_ENABLED}" != "true" ]; then
       echo "Deploying error rates demo ..."
       "${SCRIPT_DIR}/install-error-rates-demo.sh" -in ${ISTIO_NAMESPACE} -a ${ARCH} ${AMBIENT_ARGS_ERROR_RATES}
+    fi
     echo "Deploying sleep demo ..."
     "${SCRIPT_DIR}/install-sleep-demo.sh" -in ${ISTIO_NAMESPACE} -a ${ARCH} ${AMBIENT_ARGS_BOOKINFO}
-    fi
   else
     gateway_yaml=""
     if [ "${USE_GATEWAY_API}" == "true" ]; then
