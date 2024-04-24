@@ -8,6 +8,8 @@ import (
 	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	security_v1beta "istio.io/client-go/pkg/apis/security/v1beta1"
 
+	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"github.com/kiali/kiali/business/checkers"
 	"github.com/kiali/kiali/business/references"
 	"github.com/kiali/kiali/config"
@@ -419,7 +421,7 @@ func (in *IstioValidationsService) fetchIstioConfigList(ctx context.Context, rVa
 		IncludeK8sGateways:            true,
 		IncludeK8sReferenceGrants:     true,
 	}
-	istioConfigMap, err := in.businessLayer.IstioConfig.GetIstioConfigMap(ctx, namespace, criteria)
+	istioConfigMap, err := in.businessLayer.IstioConfig.GetIstioConfigMap(ctx, meta_v1.NamespaceAll, criteria)
 	if err != nil {
 		errChan <- err
 		return

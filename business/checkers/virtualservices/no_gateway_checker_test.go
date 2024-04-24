@@ -131,6 +131,26 @@ func TestFoundGateway(t *testing.T) {
 	assert.Empty(vals)
 }
 
+func TestFoundRemoteGateway(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	virtualService := data.AddGatewaysToVirtualService([]string{"remote/my-gateway", "mesh"}, data.CreateVirtualService())
+	gatewayNames := kubernetes.GatewayNames([]*networking_v1beta1.Gateway{
+		data.CreateEmptyGateway("my-gateway", "remote", make(map[string]string)),
+	})
+
+	checker := NoGatewayChecker{
+		VirtualService: virtualService,
+		GatewayNames:   gatewayNames,
+	}
+
+	vals, valid := checker.Check()
+	assert.True(valid)
+	assert.Empty(vals)
+}
+
 func TestFoundGatewayTwoPartNaming(t *testing.T) {
 	assert := assert.New(t)
 	conf := config.NewConfig()
