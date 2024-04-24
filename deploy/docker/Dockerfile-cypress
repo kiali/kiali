@@ -23,6 +23,10 @@ COPY frontend/ $HOME/
 
 WORKDIR $HOME
 
+# Use cypress cache in home folder, not under root
+RUN mkdir .cache
+ENV CYPRESS_CACHE_FOLDER=$HOME/.cache
+
 # Install Cypress dependencies.
 RUN yarn install --frozen-lockfile
 
