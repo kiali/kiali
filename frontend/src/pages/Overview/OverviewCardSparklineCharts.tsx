@@ -27,7 +27,7 @@ type Props = ReduxProps & {
 const OverviewCardSparklineChartsComponent: React.FC<Props> = (props: Props) => {
   return (
     <>
-      {props.name !== serverConfig.istioNamespace && (
+      {(props.name !== serverConfig.istioNamespace || !props.controlPlaneMetrics) && (
         <OverviewCardDataPlaneNamespace
           metrics={props.metrics}
           errorMetrics={props.errorMetrics}
@@ -36,16 +36,19 @@ const OverviewCardSparklineChartsComponent: React.FC<Props> = (props: Props) => 
         />
       )}
 
-      {props.name === serverConfig.istioNamespace && props.istioAPIEnabled && !isRemoteCluster(props.annotations) && (
-        <OverviewCardControlPlaneNamespace
-          pilotLatency={props.controlPlaneMetrics?.istiod_proxy_time}
-          istiodContainerMemory={props.controlPlaneMetrics?.istiod_container_mem}
-          istiodContainerCpu={props.controlPlaneMetrics?.istiod_container_cpu}
-          istiodProcessMemory={props.controlPlaneMetrics?.istiod_process_mem}
-          istiodProcessCpu={props.controlPlaneMetrics?.istiod_process_cpu}
-          istiodResourceThresholds={props.istiodResourceThresholds}
-        />
-      )}
+      {props.name === serverConfig.istioNamespace &&
+        props.controlPlaneMetrics &&
+        props.istioAPIEnabled &&
+        !isRemoteCluster(props.annotations) && (
+          <OverviewCardControlPlaneNamespace
+            pilotLatency={props.controlPlaneMetrics?.istiod_proxy_time}
+            istiodContainerMemory={props.controlPlaneMetrics?.istiod_container_mem}
+            istiodContainerCpu={props.controlPlaneMetrics?.istiod_container_cpu}
+            istiodProcessMemory={props.controlPlaneMetrics?.istiod_process_mem}
+            istiodProcessCpu={props.controlPlaneMetrics?.istiod_process_cpu}
+            istiodResourceThresholds={props.istiodResourceThresholds}
+          />
+        )}
     </>
   );
 };

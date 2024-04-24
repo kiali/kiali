@@ -68,7 +68,6 @@ import { isParentKiosk, kioskOverviewAction } from '../../components/Kiosk/Kiosk
 import { ValidationSummaryLink } from '../../components/Link/ValidationSummaryLink';
 import { ControlPlaneBadge } from './ControlPlaneBadge';
 import { OverviewStatus } from './OverviewStatus';
-import { ControlPlaneNamespaceStatus } from './ControlPlaneNamespaceStatus';
 import { IstiodResourceThresholds } from 'types/IstioStatus';
 import { TLSInfo } from 'components/Overview/TLSInfo';
 import { CanaryUpgradeProgress } from './CanaryUpgradeProgress';
@@ -102,11 +101,13 @@ const cardGridStyle = kialiStyle({
   marginBottom: '0.5rem'
 });
 
+/*
 const cardControlPlaneGridStyle = kialiStyle({
   textAlign: 'center',
   marginTop: 0,
   marginBottom: '0.5rem'
 });
+*/
 
 const emptyStateStyle = kialiStyle({
   height: '300px',
@@ -256,8 +257,8 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
               errorMetrics: previous ? previous.errorMetrics : undefined,
               validations: previous ? previous.validations : undefined,
               labels: ns.labels,
-              annotations: ns.annotations,
-              controlPlaneMetrics: previous ? previous.controlPlaneMetrics : undefined
+              annotations: ns.annotations
+              //controlPlaneMetrics: previous ? previous.controlPlaneMetrics : undefined
             };
           });
 
@@ -445,6 +446,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
             nsInfo.metrics = rs.request_count;
             nsInfo.errorMetrics = rs.request_error_count;
 
+            /*
             if (nsInfo.name === serverConfig.istioNamespace) {
               nsInfo.controlPlaneMetrics = {
                 istiod_proxy_time: rs.pilot_proxy_convergence_time,
@@ -454,6 +456,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
                 istiod_process_mem: rs.process_resident_memory_bytes
               };
             }
+            */
           }
         });
       })
@@ -1085,7 +1088,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
                       sm={
                         ns.name === serverConfig.istioNamespace &&
                         this.state.displayMode === OverviewDisplayMode.EXPAND &&
-                        (this.props.istioAPIEnabled || this.hasCanaryUpgradeConfigured())
+                        this.hasCanaryUpgradeConfigured()
                           ? isRemoteCluster(ns.annotations)
                             ? rlg
                             : lg
@@ -1094,7 +1097,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
                       md={
                         ns.name === serverConfig.istioNamespace &&
                         this.state.displayMode === OverviewDisplayMode.EXPAND &&
-                        (this.props.istioAPIEnabled || this.hasCanaryUpgradeConfigured())
+                        this.hasCanaryUpgradeConfigured()
                           ? isRemoteCluster(ns.annotations)
                             ? rlg
                             : lg
@@ -1106,7 +1109,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
                     >
                       <Card
                         isCompact={true}
-                        className={ns.name === serverConfig.istioNamespace ? cardControlPlaneGridStyle : cardGridStyle}
+                        className={cardGridStyle}
                         data-test={`${ns.name}-${OverviewDisplayMode[this.state.displayMode]}`}
                         style={
                           !this.props.istioAPIEnabled && !this.hasCanaryUpgradeConfigured() ? { height: '96%' } : {}
@@ -1147,7 +1150,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
                             !isRemoteCluster(ns.annotations) &&
                             this.state.displayMode === OverviewDisplayMode.EXPAND && (
                               <Grid>
-                                <GridItem md={this.props.istioAPIEnabled || this.hasCanaryUpgradeConfigured() ? 3 : 6}>
+                                <GridItem md={this.hasCanaryUpgradeConfigured() ? 3 : 6}>
                                   {this.renderLabels(ns)}
 
                                   <div style={{ textAlign: 'left' }}>
@@ -1171,22 +1174,6 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
                                       status={ns.status}
                                       type={this.state.type}
                                     />
-                                  )}
-
-                                  {this.state.displayMode === OverviewDisplayMode.EXPAND && (
-                                    <ControlPlaneNamespaceStatus
-                                      outboundTrafficPolicy={this.state.outboundPolicyMode}
-                                      namespace={ns}
-                                    ></ControlPlaneNamespaceStatus>
-                                  )}
-
-                                  {this.state.displayMode === OverviewDisplayMode.EXPAND && (
-                                    <TLSInfo
-                                      certificatesInformationIndicators={
-                                        serverConfig.kialiFeatureFlags.certificatesInformationIndicators.enabled
-                                      }
-                                      version={this.props.minTLS}
-                                    ></TLSInfo>
                                   )}
                                 </GridItem>
 
@@ -1366,7 +1353,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
           direction={this.state.direction}
           metrics={ns.metrics}
           errorMetrics={ns.errorMetrics}
-          controlPlaneMetrics={ns.controlPlaneMetrics}
+          // controlPlaneMetrics={ns.controlPlaneMetrics}
           istiodResourceThresholds={this.state.istiodResourceThresholds}
         />
       );
