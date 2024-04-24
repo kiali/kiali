@@ -44,6 +44,19 @@ In order to run the Cypress suite for a different setup (Multicluster, Tempo, et
 :multi-primary      #for the Multi-Primary tests
 :tracing            #for tests related to Tempo
 ```
+\
+Running specific test groups:
+
+```bash
+export TEST_GROUP="@smoke"
+yarn cypress:run:test-group:junit
+```
+
+you can use complex expresions, like
+```bash
+export TEST_GROUP="not @crd-validation and not @multi-cluster and not @smoke"
+yarn cypress:run:test-group:junit
+```
 
 ### Running tests in a container
 You can also run the test suite in a container, using the image `quay.io/kiali/kiali-cypress-tests:latest` or with a specific tag version.
