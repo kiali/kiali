@@ -284,6 +284,17 @@ Feature: Kiali Istio Config page
   @crd-validation
   @bookinfo-app
   @sleep-app
+  Scenario: VirtualService references to Gateway
+    Given there is a "foo" Gateway on "bookinfo" namespace for "productpage.local" hosts on HTTP port 80 with "app=productpage" labels selector
+    And there is a "foo" VirtualService in the "sleep" namespace with a "foo-route" http-route to host "sleep"
+    And the VirtualService applies to "sleep" hosts
+    And the VirtualService references "bookinfo/foo" gateways
+    When user selects the "sleep" namespace
+    Then the "foo" "VirtualService" of the "sleep" namespace should have a "success"
+
+  @crd-validation
+  @bookinfo-app
+  @sleep-app
   Scenario: KIA1104 validation
     Given there is a "foo" VirtualService in the "sleep" namespace with a "foo-route" http-route to host "sleep"
     And the route of the VirtualService has weight 10
