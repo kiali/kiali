@@ -67,7 +67,7 @@ while [ $# -gt 0 ]; do
       cat <<HELPMSG
 Valid command line arguments:
   -a|--arch <amd64|ppc64le|s390x|arm64>: Images for given arch will be used (default: amd64).
-  -am|--ambient: Istio Ambient enabled
+  -ab|--ambient: Istio Ambient enabled
   -c|--client: either 'oc' or 'kubectl'
   -d|--delete: if 'true' demos will be deleted; otherwise, they will be installed
   -g|--gateway-host: host to use for the ingress gateway
@@ -133,6 +133,12 @@ if [ "${DELETE_DEMOS}" != "true" ]; then
     fi
     echo "Deploying sleep demo ..."
     "${SCRIPT_DIR}/install-sleep-demo.sh" -in ${ISTIO_NAMESPACE} -a ${ARCH} ${AMBIENT_ARGS_BOOKINFO}
+  elif [ "${AMBIENT_ENABLED}" == "true" ]; then
+    echo "Deploying bookinfo demo..."
+    "${SCRIPT_DIR}/install-bookinfo-demo.sh" -c kubectl -mp ${MINIKUBE_PROFILE} -tg ${AMBIENT_ARGS_BOOKINFO}
+
+    echo "Deploying sleep demo ..."
+    "${SCRIPT_DIR}/install-sleep-demo.sh" -c kubectl -in ${ISTIO_NAMESPACE} -a ${ARCH} ${AMBIENT_ARGS_BOOKINFO}
   else
     gateway_yaml=""
     if [ "${USE_GATEWAY_API}" == "true" ]; then

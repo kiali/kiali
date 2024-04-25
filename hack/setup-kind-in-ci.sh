@@ -132,19 +132,36 @@ infomsg "Downloading istio"
 "${SCRIPT_DIR}"/istio/download-istio.sh ${DOWNLOAD_ISTIO_VERSION_ARG}
 
 setup_kind_singlecluster() {
-  "${SCRIPT_DIR}"/start-kind.sh --name ci --image "${KIND_NODE_IMAGE}"
 
+  if [ -n "${AMBIENT}" ]; then
+kind create cluster --config=- <<EOF
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: ci
+nodes:
+- role: control-plane
+- role: worker
+- role: worker
+EOF
+  else
+    "${SCRIPT_DIR}"/start-kind.sh --name ci --image "${KIND_NODE_IMAGE}"
+  fi
+
+  GAE="true"
   infomsg "Installing istio"
   if [[ "${ISTIO_VERSION}" == *-dev ]]; then
     local hub_arg="--image-hub default"
   fi
 
+  LOAD_BALANCER="--set deployment.service_type=\"LoadBalancer\""
   if [ -n "${AMBIENT}" ]; then
       infomsg "Installing Istio with Ambient profile"
       local ambient_args="--config-profile ambient"
+      GAE="false"
+      unset LOAD_BALANCER
   fi
 
-  "${SCRIPT_DIR}"/istio/install-istio-via-istioctl.sh --reduce-resources true --client-exe-path "$(which kubectl)" -cn "cluster-default" -mid "mesh-default" -net "network-default" -gae "true" ${hub_arg:-} ${ambient_args:-}
+  "${SCRIPT_DIR}"/istio/install-istio-via-istioctl.sh --reduce-resources true --client-exe-path "$(which kubectl)" -cn "cluster-default" -mid "mesh-default" -gae ${GAE} ${hub_arg:-} ${ambient_args:-}
 
   infomsg "Pushing the images into the cluster..."
   make -e DORP="${DORP}" -e CLUSTER_TYPE="kind" -e KIND_NAME="ci" cluster-push-kiali
@@ -160,6 +177,7 @@ setup_kind_singlecluster() {
 
   infomsg "Installing kiali server via Helm"
   infomsg "Chart to be installed: $(ls -1 ${HELM_CHARTS_DIR}/_output/charts/kiali-server-*.tgz)"
+
   # The grafana and tracing urls need to be set for backend e2e tests
   # but they don't need to be accessible outside the cluster.
   # Need a single dashboard set for grafana.
@@ -171,11 +189,10 @@ setup_kind_singlecluster() {
     --set deployment.image_name=localhost/kiali/kiali \
     --set deployment.image_version=dev \
     --set deployment.image_pull_policy="Never" \
-    --set deployment.service_type="LoadBalancer" \
     --set external_services.grafana.url="http://grafana.istio-system:3000" \
     --set external_services.grafana.dashboards[0].name="Istio Mesh Dashboard" \
     --set external_services.tracing.url="http://tracing.istio-system:16685/jaeger" \
-    --set health_config.rate[0].kind="service" \
+    --set health_config.rate[0].kind="service" ${LOAD_BALANCER:-} \
     --set health_config.rate[0].name="y-server" \
     --set health_config.rate[0].namespace="alpha" \
     --set health_config.rate[0].tolerance[0].code="5xx" \
@@ -183,10 +200,12 @@ setup_kind_singlecluster() {
     --set health_config.rate[0].tolerance[0].failure=100 \
     kiali-server \
     "${HELM_CHARTS_DIR}"/_output/charts/kiali-server-*.tgz
-  
-  # Helm chart doesn't support passing in service opts so patch them after the helm deploy.
-  kubectl patch service kiali -n istio-system --type=json -p='[{"op": "replace", "path": "/spec/ports/0/port", "value":80}]'
-  kubectl wait --for=jsonpath='{.status.loadBalancer.ingress}' -n istio-system service/kiali
+
+  if [ ! -n "${AMBIENT}" ]; then
+    # Helm chart doesn't support passing in service opts so patch them after the helm deploy.
+    kubectl patch service kiali -n istio-system --type=json -p='[{"op": "replace", "path": "/spec/ports/0/port", "value":80}]'
+    kubectl wait --for=jsonpath='{.status.loadBalancer.ingress}' -n istio-system service/kiali
+  fi
 }
 
 setup_kind_tempo() {
