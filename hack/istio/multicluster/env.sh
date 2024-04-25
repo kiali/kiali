@@ -52,7 +52,7 @@ ISTIO_DIR=""
 DORP="${DORP:-podman}"
 
 # The namespace where Istio will be found - this namespace must be the same on both clusters
-ISTIO_NAMESPACE="istio-system"
+ISTIO_NAMESPACE="${ISTIO_NAMESPACE:-istio-system}"
 
 # If you want to pull Istio images from a different image repository than what the hack script
 # will tell Istio to pull from, then set that hub name here. If you set this to "default",
@@ -75,11 +75,11 @@ NETWORK1_ID="network-east"
 NETWORK2_ID="network-west"
 
 # Deploy a single kiali or a kiali per cluster
-SINGLE_KIALI="true"
+SINGLE_KIALI="${SINGLE_KIALI:-true}"
 
 # Create kiali remote secrets so kiali can access the different clusters
 # When left empty, this will be true if SINGLE_KIALI is true or false otherwise.
-KIALI_CREATE_REMOTE_CLUSTER_SECRETS=""
+KIALI_CREATE_REMOTE_CLUSTER_SECRETS="${KIALI_CREATE_REMOTE_CLUSTER_SECRETS:-}"
 
 # If a gateway is required to cross the networks, set this to true and one will be created
 # See: https://istio.io/latest/docs/setup/install/multicluster/multi-primary_multi-network/
@@ -89,39 +89,39 @@ CROSSNETWORK_GATEWAY_REQUIRED="true"
 MANUAL_MESH_NETWORK_CONFIG=""
 
 # The names of each cluster
-CLUSTER1_NAME="east"
-CLUSTER2_NAME="west"
+CLUSTER1_NAME="${CLUSTER1_NAME:-east}"
+CLUSTER2_NAME="${CLUSTER2_NAME:-west}"
 
 # If using Kubernetes, these are the kube context names used to connect to the clusters
 # If using OpenShift, these are the URLs to the API login server (e.g. "https://api.server-name.com:6443")
-CLUSTER1_CONTEXT=""
-CLUSTER2_CONTEXT=""
+CLUSTER1_CONTEXT="${CLUSTER1_CONTEXT:-}"
+CLUSTER2_CONTEXT="${CLUSTER2_CONTEXT:-}"
 
 # if using OpenShift, these are the credentials needed to log on to the clusters
-CLUSTER1_USER="kiali"
-CLUSTER1_PASS="kiali"
-CLUSTER2_USER="kiali"
-CLUSTER2_PASS="kiali"
+CLUSTER1_USER="${CLUSTER1_USER:-kiali}"
+CLUSTER1_PASS="${CLUSTER1_PASS:-kiali}"
+CLUSTER2_USER="${CLUSTER2_USER:-kiali}"
+CLUSTER2_PASS="${CLUSTER2_PASS:-kiali}"
 
 # Should Kiali be installed? This installs the last release of Kiali via the kiali-server helm chart.
 # If you want another version, you must disable this and install what you want manually.
-KIALI_ENABLED="true"
+KIALI_ENABLED="${KIALI_ENABLED:-true}"
 
 # When installing Kiali, this will determine if a released image is used or if a local dev image is to be pushed and used.
-KIALI_USE_DEV_IMAGE="false"
+KIALI_USE_DEV_IMAGE="${KIALI_USE_DEV_IMAGE:-false}"
 
 # Sets the auth strategy for kiali. If "openid" is used then keycloak is provisioned for the auth provider.
-KIALI_AUTH_STRATEGY="openid"
+KIALI_AUTH_STRATEGY="${KIALI_AUTH_STRATEGY:-openid}"
 
 # Should Bookinfo demo be installed? If so, where?
 BOOKINFO_ENABLED="true"
 BOOKINFO_NAMESPACE="bookinfo"
 
 # If true and client exe is kubectl, then two minikube instances will be installed/uninstalled by these scripts
-MANAGE_MINIKUBE="true"
+MANAGE_MINIKUBE="${MANAGE_MINIKUBE:-true}"
 
 # If true and client exe is kubectl, then two kind instances will be installed/uninstalled by these scripts
-MANAGE_KIND="false"
+MANAGE_KIND="${MANAGE_KIND:-false}"
 
 # Minikube options - these are ignored if MANAGE_MINIKUBE is false
 MINIKUBE_DRIVER="kvm2"
@@ -130,21 +130,21 @@ MINIKUBE_DISK=""
 MINIKUBE_MEMORY=""
 
 # Keycloak settings.
-KEYCLOAK_ADDRESS=""
+KEYCLOAK_ADDRESS="${KEYCLOAK_ADDRESS:-}"
 KEYCLOAK_DB_PASSWORD="${KEYCLOAK_DB_PASSWORD:-keycloak-password}"
 KEYCLOAK_KUBE_CLIENT_SECRET="${KEYCLOAK_KUBE_CLIENT_SECRET:-kube-client-secret}"
 KIALI_USER_PASSWORD="${KIALI_USER_PASSWORD:-kiali}"
 
 # Some settings that can be configured when helm installing the two Kiali instances.
-KIALI1_WEB_FQDN=""
-KIALI1_WEB_SCHEMA=""
-KIALI2_WEB_FQDN=""
-KIALI2_WEB_SCHEMA=""
+KIALI1_WEB_FQDN="${KIALI1_WEB_FQDN:-}"
+KIALI1_WEB_SCHEMA="${KIALI1_WEB_SCHEMA:-}"
+KIALI2_WEB_FQDN="${KIALI2_WEB_FQDN:-}"
+KIALI2_WEB_SCHEMA="${KIALI2_WEB_SCHEMA:-}"
 
 # Used by the Kiali deployment functions, this declares what Kiali Server Helm Charts to use.
 # The user should set this to a tarball if a different helm chart should be used.
 # e.g. /source/helm-charts/_output/charts/kiali-server-1.64.0-SNAPSHOT.tgz
-KIALI_SERVER_HELM_CHARTS="kiali-server"
+KIALI_SERVER_HELM_CHARTS="${KIALI_SERVER_HELM_CHARTS:-kiali-server}"
 
 # process command line args
 while [[ $# -gt 0 ]]; do
