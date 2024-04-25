@@ -183,6 +183,32 @@ ensureKialiTracesReady() {
   done
 }
 
+ensureBookinfoGraphReady() {
+  infomsg "Waiting for Kiali to have graph data"
+  local start_time=$(date +%s)
+  local end_time=$((start_time + 60))
+
+  local graph_url="${KIALI_URL}/api/namespaces/graph?duration=120s&graphType=versionedApp&includeIdleEdges=false&injectServiceNodes=true&boxBy=cluster,namespace,app&waypoints=false&appenders=deadNode,istio,serviceEntry,meshCheck,workloadEntry,health,ambient&rateGrpc=requests&rateHttp=requests&rateTcp=sent&namespaces=bookinfo"
+  infomsg "Graph url: ${graph_url}"
+  while true; do
+    result=$(curl -k -s --fail "$graph_url" \
+        -H 'Accept: application/json, text/plain, */*' \
+        -H 'Content-Type: application/json' | jq -r '.elements.nodes')
+
+    if [ "$result" == "[]" ]; then
+      local now=$(date +%s)
+      if [ "${now}" -gt "${end_time}" ]; then
+        echo "Timed out waiting for Kiali to get any graph data"
+        break
+      fi
+      sleep 1
+    else
+      break
+    fi
+
+  done
+}
+
 ensureMulticlusterApplicationsAreHealthy() {
   local start_time=$(date +%s)
   local timeout=300
@@ -298,6 +324,7 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_AMBIENT}" ]; then
   fi
 
   ensureKialiServerReady
+  ensureBookinfoGraphReady
 
   export CYPRESS_BASE_URL="${KIALI_URL}"
   export CYPRESS_NUM_TESTS_KEPT_IN_MEMORY=0
