@@ -40,6 +40,19 @@ or in headless mode:
 ```bash
 yarn cypress:run:multi-cluster
 ```
+\
+Running specific test groups:
+
+```bash
+export TEST_GROUP="@smoke"
+yarn cypress:run:test-group:junit
+```
+
+you can use complex expresions, like
+```bash
+export TEST_GROUP="not @crd-validation and not @multi-cluster and not @smoke"
+yarn cypress:run:test-group:junit
+```
 
 ### Running tests in a container
 You can also run the test suite in a container, using the image `quay.io/kiali/kiali-cypress-tests:v1.73`.
