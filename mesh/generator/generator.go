@@ -197,12 +197,14 @@ func addInfra(meshMap mesh.MeshMap, infraType, cluster, namespace, name string, 
 	if err != nil {
 		return nil, false, err
 	}
+
 	node, found := meshMap[id]
 	if !found {
 		newNode := mesh.NewNode(id, mesh.NodeTypeInfra, infraType, cluster, namespace, name)
 		node = newNode
 		meshMap[id] = node
 	}
+
 	node.Metadata["tsHash"] = timeSeriesHash(cluster, namespace, name)
 
 	if infraData != nil {

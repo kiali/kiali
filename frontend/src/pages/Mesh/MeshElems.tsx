@@ -192,10 +192,19 @@ const getEdgeStatus = (data: EdgeData): NodeStatus => {
   }
 };
 
-const getPathStyle = (_data: EdgeData): React.CSSProperties => {
-  return {
-    strokeWidth: 3
-  } as React.CSSProperties;
+const getPathStyle = (data: EdgeData): React.CSSProperties => {
+  switch (data.healthStatus) {
+    case FAILURE.name:
+    case DEGRADED.name:
+      return {
+        strokeWidth: 3,
+        strokeDasharray: '10 10'
+      } as React.CSSProperties;
+    default:
+      return {
+        strokeWidth: 3
+      } as React.CSSProperties;
+  }
 };
 
 export const setEdgeOptions = (edge: EdgeModel, nodeMap: NodeMap): void => {

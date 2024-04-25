@@ -20,6 +20,7 @@ import { NamespaceThunkActions } from '../../actions/NamespaceThunkActions';
 import { connectRefresh } from '../Refresh/connectRefresh';
 import { kialiStyle } from 'styles/StyleUtils';
 import { IconProps, createIcon } from 'config/KialiIcon';
+import { Link } from 'react-router-dom';
 
 type ReduxStateProps = {
   namespaces?: Namespace[];
@@ -68,6 +69,17 @@ const iconStyle = kialiStyle({
   verticalAlign: '-0.125rem'
 });
 
+const meshLinkStyle = kialiStyle({
+  display: 'flex',
+  justifyContent: 'center',
+  marginTop: '0.75rem',
+  $nest: {
+    '& > span': {
+      marginRight: '0.5rem'
+    }
+  }
+});
+
 export class IstioStatusComponent extends React.Component<Props> {
   componentDidMount(): void {
     this.props.refreshNamespaces();
@@ -98,7 +110,15 @@ export class IstioStatusComponent extends React.Component<Props> {
   };
 
   tooltipContent = (): React.ReactNode => {
-    return <IstioStatusList status={this.props.status} />;
+    return (
+      <>
+        <IstioStatusList status={this.props.status} />
+        <div className={meshLinkStyle}>
+          <span>More info at</span>
+          <Link to="/mesh">Mesh page</Link>
+        </div>
+      </>
+    );
   };
 
   tooltipColor = (): string => {
