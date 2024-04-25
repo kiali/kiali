@@ -34,5 +34,7 @@ RUN yarn install --frozen-lockfile
 RUN chgrp -R 0 $HOME && \
     chmod -R g=u $HOME
 
+ENV TEST_GROUP="not @multi-cluster"
+
 # Run Cypress tests.
-CMD ["yarn", "cypress:run:junit"]
+CMD ["yarn", "cypress:run:test-group:junit"]
