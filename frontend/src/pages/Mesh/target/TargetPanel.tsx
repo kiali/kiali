@@ -22,7 +22,7 @@ import { TargetPanelDataPlane } from './TargetPanelDataPlane';
 import { TargetPanelControlPlane } from './TargetPanelControlPlane';
 
 type TargetPanelState = {
-  isVisible: boolean;
+  isCollapsed: boolean;
 };
 
 type ReduxProps = {
@@ -71,13 +71,13 @@ class TargetPanelComponent extends React.Component<TargetPanelProps, TargetPanel
   constructor(props: TargetPanelProps) {
     super(props);
     this.state = {
-      isVisible: true
+      isCollapsed: false
     };
   }
 
   componentDidUpdate(prevProps: Readonly<TargetPanelProps>): void {
     if (prevProps.target.elem !== this.props.target.elem) {
-      this.setState({ isVisible: true });
+      this.setState({ isCollapsed: false });
     }
   }
 
@@ -86,7 +86,7 @@ class TargetPanelComponent extends React.Component<TargetPanelProps, TargetPanel
       return null;
     }
 
-    const mainTopStyle = this.state.isVisible ? expandedStyle : collapsedStyle;
+    const mainTopStyle = this.state.isCollapsed ? collapsedStyle : expandedStyle;
     const target: MeshTarget = this.props.target;
 
     return (
@@ -94,13 +94,13 @@ class TargetPanelComponent extends React.Component<TargetPanelProps, TargetPanel
         <div id="mesh-target-panel" className={mainStyle}>
           <div className={mainTopStyle}>
             <div className={classes(toggleTargetPanelStyle)} onClick={this.togglePanel}>
-              {this.state.isVisible ? (
+              {this.state.isCollapsed ? (
                 <>
-                  <KialiIcon.AngleDoubleDown /> Hide
+                  <KialiIcon.AngleDoubleUp /> Show
                 </>
               ) : (
                 <>
-                  <KialiIcon.AngleDoubleUp /> Show
+                  <KialiIcon.AngleDoubleDown /> Hide
                 </>
               )}
             </div>
@@ -204,7 +204,7 @@ class TargetPanelComponent extends React.Component<TargetPanelProps, TargetPanel
 
   private togglePanel = () => {
     this.setState((state: TargetPanelState) => ({
-      isVisible: !state.isVisible
+      isCollapsed: !state.isCollapsed
     }));
   };
 }

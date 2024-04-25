@@ -5,6 +5,8 @@ import { Button, ButtonVariant, Tooltip } from '@patternfly/react-core';
 import { PFColors } from 'components/Pf/PfColors';
 import { KialiIcon } from 'config/KialiIcon';
 
+// This is just a shell, Legend is a TODO!!!!!
+
 export interface MeshLegendProps {
   className?: string;
   closeLegend: () => void;

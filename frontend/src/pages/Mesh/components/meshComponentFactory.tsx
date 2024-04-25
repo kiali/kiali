@@ -1,10 +1,8 @@
 import {
   ComponentFactory,
   GraphComponent,
-  GraphElement,
   ModelKind,
   nodeDragSourceSpec,
-  withContextMenu,
   withDragNode,
   withPanZoom,
   withSelection
@@ -34,9 +32,11 @@ const handleDoubleTap = (_doubleTapNode: GraphElement) => {
 */
 
 // There are currently no actiones to take on a mesh node, so this returns an empty array
+/*
 const nodeContextMenu = (_node: GraphElement): React.ReactElement[] => {
   return [];
 };
+*/
 
 export const meshComponentFactory: ComponentFactory = (
   kind: ModelKind,
@@ -51,9 +51,9 @@ export const meshComponentFactory: ComponentFactory = (
       return withSelection({ multiSelect: false, controlled: false })(withPanZoom()(GraphComponent));
     case ModelKind.node: {
       return withDragNode(nodeDragSourceSpec('node', true, true))(
-        withContextMenu(e => nodeContextMenu(e))(
-          withSelection({ multiSelect: false, controlled: false })((type === 'group' ? MeshGroup : MeshNode) as any)
-        )
+        // withContextMenu(e => nodeContextMenu(e))( // currently no context menu options
+        withSelection({ multiSelect: false, controlled: false })((type === 'group' ? MeshGroup : MeshNode) as any)
+        //)
       );
     }
     default:

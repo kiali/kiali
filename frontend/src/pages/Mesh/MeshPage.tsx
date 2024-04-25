@@ -39,6 +39,7 @@ import { MeshToolbar } from './toolbar/MeshToolbar';
 import { TargetPanel } from './target/TargetPanel';
 import { MeshTour } from './MeshHelpTour';
 import { MeshThunkActions } from 'actions/MeshThunkActions';
+import { toRangeString } from 'components/Time/Utils';
 
 type ReduxProps = {
   activeTour?: TourInfo;
@@ -80,6 +81,7 @@ export type MeshData = {
 
 type MeshPageState = {
   meshData: MeshData;
+  lastResizeTime: TimeInMilliseconds; // just a way to force a top-down re-render on a mesh-level resize (e..f targetPanelCollapse)
 };
 
 const containerStyle = kialiStyle({
@@ -144,7 +146,8 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
         fetchParams: this.meshDataSource.fetchParameters,
         isLoading: true,
         timestamp: 0
-      }
+      },
+      lastResizeTime: 0
     };
   }
 
@@ -220,7 +223,7 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
               )}
               {isReady && (
                 <Chip className={`${meshChip} ${meshBackground}`} isReadOnly={true}>
-                  {`TODO: ${'Mesh Name Here'}`}
+                  {this.displayTimeRange()}
                 </Chip>
               )}
               <div id="mesh-container" className={meshContainerStyle}>
@@ -232,7 +235,13 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
                   isLoading={this.state.meshData.isLoading}
                   isMiniMesh={false}
                 >
-                  <Mesh focusNode={this.focusNode} meshData={this.state.meshData} isMiniMesh={false} {...this.props} />
+                  <Mesh
+                    focusNode={this.focusNode}
+                    isMiniMesh={false}
+                    meshData={this.state.meshData}
+                    onResize={this.onResize}
+                    {...this.props}
+                  />
                 </EmptyMeshLayout>
               </div>
             </ErrorBoundary>
@@ -252,6 +261,10 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
       </>
     );
   }
+
+  private onResize = () => {
+    this.setState({ lastResizeTime: Date.now() });
+  };
 
   // TODO Focus...
   private onFocus = (focusNode: FocusNode) => {
@@ -368,6 +381,13 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
       .map(e => e.data.id)
       .sort()
       .every((eId, index) => eId === aIds[index]);
+  };
+
+  private displayTimeRange = (): string => {
+    const rangeEnd: TimeInMilliseconds = this.state.meshData.timestamp;
+    const rangeStart: TimeInMilliseconds = rangeEnd - this.props.duration * 1000;
+
+    return toRangeString(rangeStart, rangeEnd, { second: '2-digit' }, { second: '2-digit' });
   };
 }
 

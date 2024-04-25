@@ -86,6 +86,7 @@ const TopologyContent: React.FC<{
   onEdgeTap?: (edge: Edge<EdgeModel>) => void;
   onNodeTap?: (node: Node<NodeModel>) => void;
   onReady: (controller: any) => void;
+  onResize?: () => void;
   setLayout: (val: LayoutName) => void;
   setTarget: (meshTarget: MeshTarget) => void;
   setUpdateTime: (val: TimeInMilliseconds) => void;
@@ -99,6 +100,7 @@ const TopologyContent: React.FC<{
   onEdgeTap,
   onNodeTap,
   onReady,
+  onResize,
   setLayout: _setLayoutName,
   setTarget,
   setUpdateTime,
@@ -162,19 +164,24 @@ const TopologyContent: React.FC<{
   // fitView handling
   //
   const fitView = React.useCallback(() => {
-    const graph = controller?.getGraph();
-    graph?.reset();
-    graph?.fit(FIT_PADDING);
+    if (controller?.hasGraph()) {
+      const graph = controller.getGraph();
+      graph.reset();
+      graph.fit(FIT_PADDING);
+    }
   }, [controller]);
 
   // resize handling
-  const onResize = React.useCallback(() => {
-    if (!requestFit) {
+  const handleResize = React.useCallback(() => {
+    if (!requestFit && controller?.hasGraph()) {
       requestFit = true;
-      controller.getGraph()?.reset();
-      controller.getGraph()?.layout();
+      controller.getGraph().reset();
+      controller.getGraph().layout();
     }
-  }, [controller]);
+    if (onResize) {
+      onResize();
+    }
+  }, [onResize, controller]);
 
   //
   // layoutEnd handling
@@ -472,7 +479,7 @@ const TopologyContent: React.FC<{
     </TopologyView>
   ) : (
     <>
-      <ReactResizeDetector handleWidth={true} handleHeight={true} skipOnMount={false} onResize={onResize} />
+      <ReactResizeDetector handleWidth={true} handleHeight={true} skipOnMount={true} onResize={handleResize} />
       <TopologyView
         data-test="mesh-topology-view-pf"
         controlBar={
@@ -505,16 +512,6 @@ const TopologyContent: React.FC<{
                       callback: () => {
                         _setLayoutName(LayoutName.MeshDagre);
                       }
-                    },
-                    {
-                      ariaLabel: 'Layout - Mesh Cola',
-                      id: 'toolbar_layout_mesh_cola',
-                      disabled: LayoutName.MeshCola === layoutName,
-                      icon: <TopologyIcon />,
-                      tooltip: 'Layout - Mesh Cola',
-                      callback: () => {
-                        _setLayoutName(LayoutName.MeshCola);
-                      }
                     }
                   ],
                   // currently unused
@@ -532,7 +529,7 @@ const TopologyContent: React.FC<{
                       controller.getGraph().layout();
                     }
                   },
-                  legend: true,
+                  legend: false, // Actual Legend is still TODO...
                   legendIcon: <MapIcon />,
                   legendTip: 'Legend',
                   legendCallback: () => {
@@ -558,6 +555,7 @@ export const Mesh: React.FC<{
   onEdgeTap?: (edge: Edge<EdgeModel>) => void;
   onNodeTap?: (node: Node<NodeModel>) => void;
   onReady: (controller: any) => void;
+  onResize: () => void;
   setLayout: (layout: Layout) => void;
   setTarget: (meshTarget: MeshTarget) => void;
   setUpdateTime: (val: TimeInMilliseconds) => void;
@@ -569,6 +567,7 @@ export const Mesh: React.FC<{
   onEdgeTap,
   onNodeTap,
   onReady,
+  onResize,
   setLayout,
   setTarget,
   setUpdateTime,
@@ -635,6 +634,7 @@ export const Mesh: React.FC<{
         layoutName={getLayoutName(layout)}
         onEdgeTap={onEdgeTap}
         onNodeTap={onNodeTap}
+        onResize={onResize}
         onReady={onReady}
         setLayout={setLayoutByName}
         setTarget={setTarget}
