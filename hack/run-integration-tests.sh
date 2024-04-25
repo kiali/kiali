@@ -186,7 +186,7 @@ ensureKialiTracesReady() {
 ensureBookinfoGraphReady() {
   infomsg "Waiting for Kiali to have graph data"
   local start_time=$(date +%s)
-  local end_time=$((start_time + 60))
+  local end_time=$((start_time + 240))
 
   local graph_url="${KIALI_URL}/api/namespaces/graph?duration=120s&graphType=versionedApp&includeIdleEdges=false&injectServiceNodes=true&boxBy=cluster,namespace,app&waypoints=false&appenders=deadNode,istio,serviceEntry,meshCheck,workloadEntry,health,ambient&rateGrpc=requests&rateHttp=requests&rateTcp=sent&namespaces=bookinfo"
   infomsg "Graph url: ${graph_url}"
