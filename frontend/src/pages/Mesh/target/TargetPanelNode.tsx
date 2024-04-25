@@ -33,19 +33,22 @@ export class TargetPanelNode extends React.Component<TargetPanelCommonProps, Tar
     this.state = { ...defaultState };
   }
 
-  static getDerivedStateFromProps(props: TargetPanelCommonProps, state: TargetPanelNodeState) {
+  static getDerivedStateFromProps = (
+    props: TargetPanelCommonProps,
+    state: TargetPanelNodeState
+  ): TargetPanelNodeState | null => {
     // if the target (i.e. node) has changed, then init the state and set to loading. The loading
     // will actually be kicked off after the render (in componentDidMount/Update).
-    return props.target.elem !== state.node ? { node: props.target.elem, loading: true } : null;
-  }
+    return props.target.elem !== state.node ? { node: props.target.elem as Node<NodeModel, any>, loading: true } : null;
+  };
 
-  componentDidMount() {}
+  componentDidMount(): void {}
 
-  componentDidUpdate(_prevProps: TargetPanelCommonProps) {}
+  componentDidUpdate(_prevProps: TargetPanelCommonProps): void {}
 
-  componentWillUnmount() {}
+  componentWillUnmount(): void {}
 
-  render() {
+  render(): React.ReactNode {
     if (!this.state.node) {
       return null;
     }

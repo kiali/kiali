@@ -57,9 +57,9 @@ export type NodeData = DecoratedMeshNodeData & {
   showContextMenu?: boolean;
   showStatusDecorator?: boolean;
   statusDecoratorTooltip?: React.ReactNode;
+  truncateLength?: number;
   x?: number;
   y?: number;
-  truncateLength?: number;
 };
 
 export type EdgeData = DecoratedMeshEdgeData & {
@@ -218,15 +218,16 @@ export const setEdgeOptions = (edge: EdgeModel, nodeMap: NodeMap): void => {
   data.tagStatus = status;
 };
 
-export const assignEdgeHealth = (_edges: DecoratedMeshEdgeWrapper[], _nodeMap: NodeMap) => {
+export const assignEdgeHealth = (_edges: DecoratedMeshEdgeWrapper[], _nodeMap: NodeMap): void => {
   // unset implies healthy or n/a
   return;
 };
 
 ///// PFT helpers
 
-export const elems = (c: Controller): { nodes: Node[]; edges: Edge[] } => {
+export const elems = (c: Controller): { edges: Edge[]; nodes: Node[] } => {
   const elems = c.getElements();
+
   return {
     nodes: elems.filter(e => isNode(e)) as Node[],
     edges: elems.filter(e => isEdge(e)) as Edge[]
@@ -277,9 +278,9 @@ export type SelectOp =
   | 'falsy'
   | 'truthy';
 export type SelectExp = {
+  op?: SelectOp;
   prop: string;
   val?: any;
-  op?: SelectOp;
 };
 export type SelectAnd = SelectExp[];
 export type SelectOr = SelectAnd[];
