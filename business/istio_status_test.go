@@ -205,10 +205,10 @@ func TestGrafanaWorking(t *testing.T) {
 	assert.Equal(1, *grafanaCalls)
 	assert.Equal(1, *promCalls)
 
-	assertNotPresent(assert, icsl, "grafana")
-	assertNotPresent(assert, icsl, "prometheus")
-	assertNotPresent(assert, icsl, "tracing")
-	assertNotPresent(assert, icsl, "custom dashboards")
+	assertComponent(assert, icsl, "grafana", kubernetes.ComponentHealthy, false)
+	assertComponent(assert, icsl, "prometheus", kubernetes.ComponentHealthy, false)
+	assertComponent(assert, icsl, "tracing", kubernetes.ComponentHealthy, false)
+	assertComponent(assert, icsl, "custom dashboards", kubernetes.ComponentHealthy, false)
 }
 
 func TestGrafanaDisabled(t *testing.T) {
@@ -248,10 +248,10 @@ func TestGrafanaDisabled(t *testing.T) {
 	// Requests to Tracing and Prometheus performed once
 	assert.Equal(1, *promCalls)
 
-	assertNotPresent(assert, icsl, "grafana")
-	assertNotPresent(assert, icsl, "prometheus")
-	assertNotPresent(assert, icsl, "tracing")
-	assertNotPresent(assert, icsl, "custom dashboards")
+	assertComponent(assert, icsl, "grafana", kubernetes.ComponentHealthy, false)
+	assertComponent(assert, icsl, "prometheus", kubernetes.ComponentHealthy, false)
+	assertComponent(assert, icsl, "tracing", kubernetes.ComponentHealthy, false)
+	assertComponent(assert, icsl, "custom dashboards", kubernetes.ComponentHealthy, false)
 }
 
 func TestGrafanaNotWorking(t *testing.T) {
@@ -302,9 +302,9 @@ func TestGrafanaNotWorking(t *testing.T) {
 	assert.Equal(1, prometheusCalls)
 
 	assertComponent(assert, icsl, "grafana", kubernetes.ComponentUnreachable, false)
-	assertNotPresent(assert, icsl, "prometheus")
-	assertNotPresent(assert, icsl, "tracing")
-	assertNotPresent(assert, icsl, "custom dashboards")
+	assertComponent(assert, icsl, "prometheus", kubernetes.ComponentHealthy, false)
+	assertComponent(assert, icsl, "tracing", kubernetes.ComponentHealthy, false)
+	assertComponent(assert, icsl, "custom dashboards", kubernetes.ComponentHealthy, false)
 }
 
 func TestFailingTracingService(t *testing.T) {
@@ -329,9 +329,9 @@ func TestFailingTracingService(t *testing.T) {
 	assert.Equal(1, *grafanaCalls)
 	assert.Equal(1, *promCalls)
 
-	assertNotPresent(assert, icsl, "grafana")
-	assertNotPresent(assert, icsl, "prometheus")
-	assertNotPresent(assert, icsl, "custom dashboards")
+	assertComponent(assert, icsl, "grafana", kubernetes.ComponentHealthy, false)
+	assertComponent(assert, icsl, "prometheus", kubernetes.ComponentHealthy, false)
+	assertComponent(assert, icsl, "custom dashboards", kubernetes.ComponentHealthy, false)
 	assertComponent(assert, icsl, "tracing", kubernetes.ComponentUnreachable, false)
 }
 
@@ -355,10 +355,10 @@ func TestOverriddenUrls(t *testing.T) {
 	assert.Equal(1, *grafanaCalls)
 	assert.Equal(1, *promCalls)
 
-	assertNotPresent(assert, icsl, "grafana")
-	assertNotPresent(assert, icsl, "prometheus")
-	assertNotPresent(assert, icsl, "tracing")
-	assertNotPresent(assert, icsl, "custom dashboards")
+	assertComponent(assert, icsl, "grafana", kubernetes.ComponentHealthy, false)
+	assertComponent(assert, icsl, "prometheus", kubernetes.ComponentHealthy, false)
+	assertComponent(assert, icsl, "tracing", kubernetes.ComponentHealthy, false)
+	assertComponent(assert, icsl, "custom dashboards", kubernetes.ComponentHealthy, false)
 }
 
 func TestCustomDashboardsMainPrometheus(t *testing.T) {
@@ -385,10 +385,10 @@ func TestCustomDashboardsMainPrometheus(t *testing.T) {
 	assert.Equal(1, *grafanaCalls)
 	assert.Equal(2, *promCalls)
 
-	assertNotPresent(assert, icsl, "grafana")
-	assertNotPresent(assert, icsl, "prometheus")
-	assertNotPresent(assert, icsl, "tracing")
-	assertNotPresent(assert, icsl, "custom dashboards")
+	assertComponent(assert, icsl, "grafana", kubernetes.ComponentHealthy, false)
+	assertComponent(assert, icsl, "prometheus", kubernetes.ComponentHealthy, false)
+	assertComponent(assert, icsl, "tracing", kubernetes.ComponentHealthy, false)
+	assertComponent(assert, icsl, "custom dashboards", kubernetes.ComponentHealthy, false)
 }
 
 func TestNoIstioComponentFoundError(t *testing.T) {
@@ -436,11 +436,11 @@ func TestDefaults(t *testing.T) {
 	assertComponent(assert, icsl, "istio-ingressgateway", kubernetes.ComponentNotFound, true)
 	assertComponent(assert, icsl, "istio-egressgateway", kubernetes.ComponentUnhealthy, false)
 
-	// Don't return kubernetes.ComponentHealthy deployments
-	assertNotPresent(assert, icsl, "istiod")
-	assertNotPresent(assert, icsl, "grafana")
-	assertNotPresent(assert, icsl, "prometheus")
-	assertNotPresent(assert, icsl, "tracing")
+	// Return kubernetes.ComponentHealthy deployments
+	assertComponent(assert, icsl, "grafana", kubernetes.ComponentHealthy, false)
+	assertComponent(assert, icsl, "prometheus", kubernetes.ComponentHealthy, false)
+	assertComponent(assert, icsl, "tracing", kubernetes.ComponentHealthy, false)
+	assertComponent(assert, icsl, "custom dashboards", kubernetes.ComponentHealthy, false)
 
 	// Requests to AddOns have to be 1
 	assert.Equal(1, *grafanaCalls)
@@ -485,11 +485,11 @@ func TestNonDefaults(t *testing.T) {
 	assertComponent(assert, icsl, "istio-ingressgateway", kubernetes.ComponentNotFound, false)
 	assertComponent(assert, icsl, "istio-egressgateway", kubernetes.ComponentUnhealthy, false)
 
-	// Don't return kubernetes.ComponentHealthy deployments
-	assertNotPresent(assert, icsl, "istiod")
-	assertNotPresent(assert, icsl, "grafana")
-	assertNotPresent(assert, icsl, "prometheus")
-	assertNotPresent(assert, icsl, "tracing")
+	// Return kubernetes.ComponentHealthy deployments
+	assertComponent(assert, icsl, "grafana", kubernetes.ComponentHealthy, false)
+	assertComponent(assert, icsl, "prometheus", kubernetes.ComponentHealthy, false)
+	assertComponent(assert, icsl, "tracing", kubernetes.ComponentHealthy, false)
+	assertComponent(assert, icsl, "custom dashboards", kubernetes.ComponentHealthy, false)
 
 	// Requests to AddOns have to be 1
 	assert.Equal(1, *grafanaCalls)
@@ -533,10 +533,11 @@ func TestIstiodNotReady(t *testing.T) {
 	assertComponent(assert, icsl, "istio-egressgateway", kubernetes.ComponentUnhealthy, false)
 	assertComponent(assert, icsl, "istiod", kubernetes.ComponentNotReady, true)
 
-	// Don't return kubernetes.ComponentHealthy deployments
-	assertNotPresent(assert, icsl, "grafana")
-	assertNotPresent(assert, icsl, "prometheus")
-	assertNotPresent(assert, icsl, "tracing")
+	//  Return kubernetes.ComponentHealthy deployments
+	assertComponent(assert, icsl, "grafana", kubernetes.ComponentHealthy, false)
+	assertComponent(assert, icsl, "prometheus", kubernetes.ComponentHealthy, false)
+	assertComponent(assert, icsl, "tracing", kubernetes.ComponentHealthy, false)
+
 	assertNotPresent(assert, icsl, "istiod-x3v1kn0l-terminating")
 	assertNotPresent(assert, icsl, "istiod-x3v1kn1l-terminating")
 
@@ -595,10 +596,12 @@ func TestIstiodUnreachable(t *testing.T) {
 	assertComponent(assert, icsl, "istiod-x3v1kn0l-running", kubernetes.ComponentUnreachable, true)
 	assertComponent(assert, icsl, "istiod-x3v1kn1l-running", kubernetes.ComponentUnreachable, true)
 
-	// Don't return kubernetes.ComponentHealthy deployments
-	assertNotPresent(assert, icsl, "grafana")
-	assertNotPresent(assert, icsl, "prometheus")
-	assertNotPresent(assert, icsl, "tracing")
+	// Return kubernetes.ComponentHealthy deployments
+	assertComponent(assert, icsl, "grafana", kubernetes.ComponentHealthy, false)
+	assertComponent(assert, icsl, "prometheus", kubernetes.ComponentHealthy, false)
+	assertComponent(assert, icsl, "tracing", kubernetes.ComponentHealthy, false)
+	assertComponent(assert, icsl, "custom dashboards", kubernetes.ComponentHealthy, false)
+
 	assertNotPresent(assert, icsl, "istiod-x3v1kn0l-terminating")
 	assertNotPresent(assert, icsl, "istiod-x3v1kn1l-terminating")
 
@@ -648,11 +651,11 @@ func TestCustomizedAppLabel(t *testing.T) {
 	assertComponent(assert, icsl, "istio-ingressgateway", kubernetes.ComponentNotFound, false)
 	assertComponent(assert, icsl, "istio-egressgateway", kubernetes.ComponentUnhealthy, false)
 
-	// Don't return kubernetes.ComponentHealthy deployments
-	assertNotPresent(assert, icsl, "istiod")
-	assertNotPresent(assert, icsl, "grafana")
-	assertNotPresent(assert, icsl, "prometheus")
-	assertNotPresent(assert, icsl, "tracing")
+	// Return kubernetes.ComponentHealthy deployments
+	assertComponent(assert, icsl, "grafana", kubernetes.ComponentHealthy, false)
+	assertComponent(assert, icsl, "prometheus", kubernetes.ComponentHealthy, false)
+	assertComponent(assert, icsl, "tracing", kubernetes.ComponentHealthy, false)
+	assertComponent(assert, icsl, "custom dashboards", kubernetes.ComponentHealthy, false)
 
 	// Requests to AddOns have to be 1
 	assert.Equal(1, *grafanaCalls)
@@ -698,12 +701,12 @@ func TestDaemonSetComponentHealthy(t *testing.T) {
 	assert.NoError(error)
 	assertComponent(assert, icsl, "istio-egressgateway", kubernetes.ComponentUnhealthy, false)
 
-	// Don't return kubernetes.ComponentHealthy deployments
-	assertNotPresent(assert, icsl, "istio-ingressgateway")
-	assertNotPresent(assert, icsl, "istiod")
-	assertNotPresent(assert, icsl, "grafana")
-	assertNotPresent(assert, icsl, "prometheus")
-	assertNotPresent(assert, icsl, "tracing")
+	// Return kubernetes.ComponentHealthy deployments
+	assertComponent(assert, icsl, "istio-ingressgateway", kubernetes.ComponentHealthy, false)
+	assertComponent(assert, icsl, "grafana", kubernetes.ComponentHealthy, false)
+	assertComponent(assert, icsl, "prometheus", kubernetes.ComponentHealthy, false)
+	assertComponent(assert, icsl, "tracing", kubernetes.ComponentHealthy, false)
+	assertComponent(assert, icsl, "custom dashboards", kubernetes.ComponentHealthy, false)
 
 	// Requests to AddOns have to be 1
 	assert.Equal(1, *grafanaCalls)
@@ -746,11 +749,11 @@ func TestDaemonSetComponentUnhealthy(t *testing.T) {
 	assertComponent(assert, icsl, "istio-ingressgateway", kubernetes.ComponentUnhealthy, false)
 	assertComponent(assert, icsl, "istio-egressgateway", kubernetes.ComponentUnhealthy, false)
 
-	// Don't return kubernetes.ComponentHealthy deployments
-	assertNotPresent(assert, icsl, "istiod")
-	assertNotPresent(assert, icsl, "grafana")
-	assertNotPresent(assert, icsl, "prometheus")
-	assertNotPresent(assert, icsl, "tracing")
+	// Return kubernetes.ComponentHealthy deployments
+	assertComponent(assert, icsl, "grafana", kubernetes.ComponentHealthy, false)
+	assertComponent(assert, icsl, "prometheus", kubernetes.ComponentHealthy, false)
+	assertComponent(assert, icsl, "tracing", kubernetes.ComponentHealthy, false)
+	assertComponent(assert, icsl, "custom dashboards", kubernetes.ComponentHealthy, false)
 
 	// Requests to AddOns have to be 1
 	assert.Equal(1, *grafanaCalls)

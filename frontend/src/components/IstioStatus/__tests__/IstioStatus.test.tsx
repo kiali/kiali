@@ -3,6 +3,7 @@ import { ShallowWrapper, shallow } from 'enzyme';
 import { ComponentStatus, Status } from '../../../types/IstioStatus';
 import { IstioStatusComponent } from '../IstioStatus';
 import { shallowToJson } from 'enzyme-to-json';
+import { i18n } from 'i18n';
 
 const mockIcon = (componentList: ComponentStatus[]): ShallowWrapper => {
   return shallow(
@@ -12,6 +13,9 @@ const mockIcon = (componentList: ComponentStatus[]): ShallowWrapper => {
       namespaces={[{ name: 'bookinfo' }, { name: 'istio-system' }]}
       setIstioStatus={jest.fn()}
       refreshNamespaces={jest.fn()}
+      t={(key: string) => key}
+      tReady={true}
+      i18n={i18n}
     />
   );
 };
