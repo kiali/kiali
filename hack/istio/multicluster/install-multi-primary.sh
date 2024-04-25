@@ -238,3 +238,6 @@ source ${SCRIPT_DIR}/setup-tracing.sh
 
 # Install bookinfo across cluster if enabled
 source ${SCRIPT_DIR}/split-bookinfo.sh
+
+# Install Kiali if enabled
+source ${SCRIPT_DIR}/deploy-kiali.sh
