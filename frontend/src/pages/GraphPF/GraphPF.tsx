@@ -84,6 +84,19 @@ export enum LayoutName {
   Grid = 'Grid'
 }
 
+export function getLayoutByName(layoutName: string): Layout {
+  switch (layoutName) {
+    case LayoutName.BreadthFirst:
+      return KialiBreadthFirstGraph.getLayout();
+    case LayoutName.Concentric:
+      return KialiConcentricGraph.getLayout();
+    case LayoutName.Grid:
+      return KialiGridGraph.getLayout();
+    default:
+      return KialiDagreGraph.getLayout();
+  }
+}
+
 // TODO: Implement some sort of focus when provided
 export interface FocusNode {
   id: string;
@@ -833,23 +846,9 @@ export const GraphPF: React.FC<{
   };
 
   const setLayoutByName = (layoutName: LayoutName): void => {
-    let layout: Layout;
-    // TODO, handle namespaceLayout
-    switch (layoutName) {
-      case LayoutName.BreadthFirst:
-        layout = KialiBreadthFirstGraph.getLayout();
-        break;
-      case LayoutName.Concentric:
-        layout = KialiConcentricGraph.getLayout();
-        break;
-      case LayoutName.Grid:
-        layout = KialiGridGraph.getLayout();
-        break;
-      default:
-        layout = KialiDagreGraph.getLayout();
-    }
-
+    const layout = getLayoutByName(layoutName);
     HistoryManager.setParam(URLParam.GRAPH_LAYOUT, layout.name);
+    // TODO: PF graph does have support for namespace box layout, just use dagre
     HistoryManager.setParam(URLParam.GRAPH_NAMESPACE_LAYOUT, KialiDagreGraph.getLayout().name);
     setLayout(layout);
   };

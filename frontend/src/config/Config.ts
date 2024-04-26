@@ -70,7 +70,7 @@ const conf = {
   about: {
     mesh: {
       url: '/mesh',
-      linkText: 'Visit the Mesh page'
+      linkText: i18n.t('Visit the Mesh page')
     },
     project: {
       url: 'https://github.com/kiali',

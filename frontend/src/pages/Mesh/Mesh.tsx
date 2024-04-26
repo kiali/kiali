@@ -51,7 +51,7 @@ import {
 } from './MeshElems';
 import { MeshTourStops } from './MeshHelpTour';
 import { KialiMeshDagre } from './layouts/KialiMeshDagre';
-import { KialiMeshCola } from './layouts/KialiMeshCola';
+//import { KialiMeshCola } from './layouts/KialiMeshCola';
 import { KialiDagreGraph } from 'components/CytoscapeGraph/graphs/KialiDagreGraph';
 
 let initialLayout = false;
@@ -66,8 +66,19 @@ export const FIT_PADDING = 90;
 
 export enum LayoutName {
   Dagre = 'dagre',
-  MeshCola = 'kiali-mesh-cola',
+  //MeshCola = 'kiali-mesh-cola',
   MeshDagre = 'kiali-mesh-dagre'
+}
+
+export function getLayoutByName(layoutName: string): Layout {
+  switch (layoutName) {
+    // case LayoutName.MeshCola:
+    // return KialiMeshCola.getLayout();
+    case LayoutName.MeshDagre:
+      return KialiMeshDagre.getLayout();
+    default:
+      return KialiDagreGraph.getLayout();
+  }
 }
 
 // TODO: Implement some sort of focus when provided
@@ -590,7 +601,7 @@ export const Mesh: React.FC<{
 
   const getLayoutName = (layout: Layout): LayoutName => {
     switch (layout.name) {
-      case LayoutName.MeshCola:
+      // case LayoutName.MeshCola:
       case LayoutName.MeshDagre:
         return layout.name;
       default:
@@ -599,18 +610,7 @@ export const Mesh: React.FC<{
   };
 
   const setLayoutByName = (layoutName: LayoutName) => {
-    let layout: Layout;
-    switch (layoutName) {
-      case LayoutName.MeshCola:
-        layout = KialiMeshCola.getLayout();
-        break;
-      case LayoutName.MeshDagre:
-        layout = KialiMeshDagre.getLayout();
-        break;
-      default:
-        layout = KialiDagreGraph.getLayout();
-    }
-
+    const layout = getLayoutByName(layoutName);
     HistoryManager.setParam(URLParam.MESH_LAYOUT, layout.name);
     setLayout(layout);
   };

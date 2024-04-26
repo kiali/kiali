@@ -69,10 +69,11 @@ import { canCreate, canUpdate } from '../../types/Permissions';
 import { connectRefresh } from '../../components/Refresh/connectRefresh';
 import { triggerRefresh } from '../../hooks/refresh';
 import { GraphData } from 'pages/Graph/GraphPage';
-import { GraphPF, FocusNode } from './GraphPF';
+import { GraphPF, FocusNode, getLayoutByName } from './GraphPF';
 import * as CytoscapeGraphUtils from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
 import { Controller } from '@patternfly/react-topology';
 import { GraphLegendPF } from './GraphLegendPF';
+import { HistoryManager, URLParam } from 'app/History';
 
 // GraphURLPathProps holds path variable values.  Currently all path variables are relevant only to a node graph
 export type GraphURLPathProps = {
@@ -343,9 +344,20 @@ class GraphPagePFComponent extends React.Component<GraphPagePropsPF, GraphPageSt
       this.props.setNode(urlNode);
     }
 
+    // trace url info
     const urlTrace = getTraceId();
     if (urlTrace !== this.props.trace?.traceID) {
       this.props.setTraceId(urlTrace);
+    }
+
+    // layout url info
+    const urlLayout = HistoryManager.getParam(URLParam.GRAPH_LAYOUT);
+    if (urlLayout) {
+      if (urlLayout !== this.props.layout.name) {
+        this.props.setLayout(getLayoutByName(urlLayout));
+      }
+    } else {
+      HistoryManager.setParam(URLParam.GRAPH_LAYOUT, this.props.layout.name);
     }
   }
 

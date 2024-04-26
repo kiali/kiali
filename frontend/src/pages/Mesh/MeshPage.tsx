@@ -31,7 +31,7 @@ import {
   MeshDefinition,
   MeshTarget
 } from 'types/Mesh';
-import { FocusNode, Mesh } from './Mesh';
+import { FocusNode, Mesh, getLayoutByName } from './Mesh';
 import { MeshActions } from 'actions/MeshActions';
 import { MeshLegend } from './MeshLegend';
 import { MeshToolbarActions } from 'actions/MeshToolbarActions';
@@ -40,6 +40,7 @@ import { TargetPanel } from './target/TargetPanel';
 import { MeshTour } from './MeshHelpTour';
 import { MeshThunkActions } from 'actions/MeshThunkActions';
 import { toRangeString } from 'components/Time/Utils';
+import { HistoryManager, URLParam } from 'app/History';
 
 type ReduxProps = {
   activeTour?: TourInfo;
@@ -152,6 +153,17 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
   }
 
   componentDidMount() {
+    // Let URL override current redux state at mount time. Update URL with unset params.
+    const urlLayout = HistoryManager.getParam(URLParam.MESH_LAYOUT);
+
+    if (urlLayout) {
+      if (urlLayout !== this.props.layout.name) {
+        this.props.setLayout(getLayoutByName(urlLayout));
+      }
+    } else {
+      HistoryManager.setParam(URLParam.MESH_LAYOUT, this.props.layout.name);
+    }
+
     // Connect to mesh data source updates
     this.meshDataSource.on('loadStart', this.handleMeshDataSourceStart);
     this.meshDataSource.on('fetchError', this.handleMeshDataSourceError);
