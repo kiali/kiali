@@ -503,10 +503,10 @@ SCRIPT_ROOT="$( cd "$(dirname "$0")" ; pwd -P )"
 cd ${SCRIPT_ROOT}
 
 # The default version of the crc tool to be downloaded
-DEFAULT_CRC_DOWNLOAD_VERSION="2.32.0"
+DEFAULT_CRC_DOWNLOAD_VERSION="2.34.1"
 
 # The default version of the crc bundle - this is typically the version included with the CRC download
-DEFAULT_CRC_LIBVIRT_DOWNLOAD_VERSION="4.14.8"
+DEFAULT_CRC_LIBVIRT_DOWNLOAD_VERSION="4.15.3"
 
 # The default virtual CPUs assigned to the CRC VM
 DEFAULT_CRC_CPUS="6"
@@ -798,6 +798,12 @@ if [ ! -d "${OPENSHIFT_BIN_PATH}" ]; then
   exit 1
 fi
 
+# fail fast if systemd-resolved is running - see https://github.com/crc-org/crc/issues/4110#issuecomment-2085562237
+if systemctl status systemd-resolved.service &> /dev/null; then
+  infomsg "ERROR: You must stop/disable the systemd-resolved service. The following commands are suggested: sudo systemctl stop systemd-resolved.service && sudo systemctl mask systemd-resolved.service"
+  exit 1
+fi
+
 # Download the crc tool if we do not have it yet
 if [ -f "${CRC_EXE_PATH}" ]; then
   _existingVersion=$(${CRC_EXE_PATH} version 2>/dev/null | head -n 1 | sed ${SEDOPTIONS} "s/^C.*: \([A-Za-z0-9.]*\)[A-Za-z0-9.-]*+[a-z0-9]*$/\1/")
@@ -956,6 +962,8 @@ elif [ "$_CMD" = "delete" ]; then
 
   infomsg "Will delete the OpenShift cluster - this removes all persisted data."
   ${CRC_COMMAND} delete --clear-cache --force
+  infomsg "Cleaning up CRC"
+  ${CRC_COMMAND} cleanup
   infomsg "If CRC is not cleaned up fully, execute: sudo virsh destroy crc && sudo virsh undefine crc"
 
 elif [ "$_CMD" = "status" ]; then
