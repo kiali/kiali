@@ -6,6 +6,7 @@ infomsg() {
 
 SETUP_ONLY="false"
 TESTS_ONLY="false"
+DELETE_ONLY="false"
 TEST_NAMESPACES="5"
 
 # process command line args
@@ -28,6 +29,14 @@ while [[ $# -gt 0 ]]; do
       fi
       shift;shift
       ;;
+    -do|--delete-only)
+      DELETE_ONLY="${2}"
+      if [ "${DELETE_ONLY}" != "true" -a "${DELETE_ONLY}" != "false" ]; then
+        echo "--delete-only option must be one of 'true' or 'false'"
+        exit 1
+      fi
+      shift;shift
+      ;;
     -tn|--test-namespaces)
       TEST_NAMESPACES="${2}"
       if [[ $2 -le 0 || $2 -ge 1000 ]]; then
@@ -45,6 +54,9 @@ Valid command line arguments:
   -to|--tests-only <true|false>
     If true, only run the tests and skip the setup.
     Default: false
+  -do|--delete-only <true|false>
+    If true, only delete the test namespaces.
+    Default: false
   -tn|--test-namespaces <number>
     Number of test namespaces created before performance run.
     Default: "5"
@@ -61,8 +73,8 @@ HELPMSG
   esac
 done
 
-if [ "${SETUP_ONLY}" == "true" -a "${TESTS_ONLY}" == "true" ]; then
-  echo "ERROR: --setup-only and --tests-only cannot both be true. Aborting."
+if [ "${SETUP_ONLY}" == "true" -a "${TESTS_ONLY}" == "true" -a "${DELETE_ONLY}" == "true" ]; then
+  echo "ERROR: --setup-only --tests-only and --delete-only cannot all be true. Aborting."
   exit 1
 fi
 
@@ -72,6 +84,7 @@ cat <<EOM
 === SETTINGS ===
 SETUP_ONLY=$SETUP_ONLY
 TESTS_ONLY=$TESTS_ONLY
+DELETE_ONLY=$DELETE_ONLY
 TEST_NAMESPACES=$TEST_NAMESPACES
 === SETTINGS ===
 EOM
@@ -112,17 +125,21 @@ EOF
 }
 
 deleteNamespaces() {
-  for ((i = 1; i <= $TEST_NAMESPACES; i++)); do
-    kubectl delete --ignore-not-found=true -l kiali.io=perf-test ns
-  done
+  kubectl delete --ignore-not-found=true -l kiali.io=perf-test ns
   jq '.allNamespaces = .namespaces' "$COMMON_PARAMS" > "$COMMON_PARAMS.tmp" && mv "$COMMON_PARAMS.tmp" "$COMMON_PARAMS"
 }
 
 ensureCypressInstalled
 
-if [ "${TESTS_ONLY}" != "true" ]; then
+if [ "${TESTS_ONLY}" != "true" -a "${DELETE_ONLY}" != "true" ]; then
   infomsg "Install test namespaces"
   createNamespaces
+fi
+
+if [ "${DELETE_ONLY}" == "true" ]; then
+  infomsg "Remove test namespaces"
+  deleteNamespaces
+  exit 0
 fi
 
 export CYPRESS_NUM_TESTS_KEPT_IN_MEMORY=0
