@@ -75,6 +75,18 @@ podman run -it \
   quay.io/kiali/kiali-cypress-tests:latest
 ```
 
+By default, all tests without multicluster tests will be run (TEST_GROUP="not @multi-cluster")
+If you want to run only a specific test group by tag, you can run the command above with env `TEST_GROUP`, e.g.
+```console
+podman run -it \
+  -e CYPRESS_BASE_URL=https://kiali-istio-system.apps.test-cluster.test.com \
+  -e CYPRESS_PASSWD=<password> \
+  -e CYPRESS_USERNAME="kubeadmin" \
+  -e CYPRESS_AUTH_PROVIDER="kube:admin" \
+  -e TEST_GROUP="@smoke" \
+  quay.io/kiali/kiali-cypress-tests:v1.73
+```
+
 ## Structure
 
 ```

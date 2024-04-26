@@ -95,6 +95,7 @@ Feature: Kiali Overview page
     And the "failure" application indicator should list the application
 
   @error-rates-app
+  @skip-lpinterop
   Scenario: The degraded status of a logical mesh application is reported in the overview of a namespace
     Given a degraded application in the mesh
     When I fetch the overview of the cluster

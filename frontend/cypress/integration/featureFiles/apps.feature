@@ -94,6 +94,7 @@ Feature: Kiali Apps List page
 
   @bookinfo-app
   @error-rates-app
+  @skip-lpinterop
   Scenario: The degraded status of a logical mesh application is reported in the list of applications
     Given a degraded application in the mesh
     When I fetch the list of applications

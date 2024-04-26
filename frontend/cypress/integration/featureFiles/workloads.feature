@@ -117,6 +117,7 @@ Feature: Kiali Workloads page
     And the health status of the workload should be "Failure"
 
   @error-rates-app
+  @skip-lpinterop
   Scenario: The degraded status of a workload is reported in the list of workloads
     Given a degraded workload in the mesh
     When user selects the "alpha" namespace
