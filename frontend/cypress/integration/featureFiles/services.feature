@@ -116,6 +116,7 @@ Feature: Kiali Services page
     And the health status of the service should be "Failure"
 
   @error-rates-app
+  @skip-lpinterop
   Scenario: The degraded status of a service is reported in the list of services
     Given a service in the mesh with a degraded amount of traffic
     When user selects the "alpha" namespace
