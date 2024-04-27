@@ -18,4 +18,5 @@ const (
 	IsExternal     MetadataKey = "isExternal"
 	IsInaccessible MetadataKey = "isInaccessible"
 	IsMTLS         MetadataKey = "isMTLS"
+	Version        MetadataKey = "version"
 )

@@ -37,11 +37,12 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalIn
 	_, finalizers := appender.ParseAppenders(o)
 	meshMap := mesh.NewMeshMap()
 
-	// Kiali instances will be configured with the external services with which they communicate. If possible, we want to
-	// show these service nodes in the mesh, positioned in the proper cluster and namespaces.  To do this we look for
-	// the service deployments.  If not found (or not accessible to the user) we assume the services are deployed
-	// externally and we fall back to the configured URLs.  So, start by trying to discover the infra services...
-	//infraServices := discoverInfraServices(gi)
+	// get the current status info to determine versions
+	statusInfo := mesh.StatusGetter()
+	esVersions := make(map[string]string)
+	for _, es := range statusInfo.ExternalServices {
+		esVersions[es.Name] = es.Version
+	}
 
 	// start by adding istio control planes and the mesh clusters
 	meshDef, err := gi.Business.Mesh.GetMesh(ctx)
@@ -69,14 +70,14 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalIn
 	for _, cp := range meshDef.ControlPlanes {
 		// add control plane cluster if not already added
 		if _, ok := clusterMap[cp.Cluster.Name]; !ok {
-			_, _, err := addInfra(meshMap, mesh.InfraTypeCluster, cp.Cluster.Name, "", cp.Cluster.Name, cp.Cluster, false)
+			_, _, err := addInfra(meshMap, mesh.InfraTypeCluster, cp.Cluster.Name, "", cp.Cluster.Name, cp.Cluster, esVersions[cp.Cluster.Name], false)
 			mesh.CheckError(err)
 		}
 
 		// add managed clusters if not already added
 		for _, mc := range cp.ManagedClusters {
 			if _, ok := clusterMap[mc.Name]; ok {
-				_, _, err := addInfra(meshMap, mesh.InfraTypeCluster, mc.Name, "", mc.Name, mc, false)
+				_, _, err := addInfra(meshMap, mesh.InfraTypeCluster, mc.Name, "", mc.Name, mc, "", false)
 				mesh.CheckError(err)
 
 				continue
@@ -88,7 +89,14 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalIn
 		if cp.Revision != "" {
 			name = fmt.Sprintf("%s-%s", cp.IstiodName, cp.Revision)
 		}
-		istiod, _, err := addInfra(meshMap, mesh.InfraTypeIstiod, cp.Cluster.Name, cp.IstiodNamespace, name, cp.Config, false)
+		// TODO: We need to be able to support different versions for the different revisions, but
+		// if there is no revision name assume we have the correct istio version
+		version := ""
+		if len(meshDef.ControlPlanes) == 1 {
+			version = esVersions["Istio"]
+		}
+
+		istiod, _, err := addInfra(meshMap, mesh.InfraTypeIstiod, cp.Cluster.Name, cp.IstiodNamespace, name, cp.Config, version, false)
 		mesh.CheckError(err)
 
 		// add the managed namespaces by cluster and narrowed, if necessary, by revision
@@ -119,7 +127,7 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalIn
 				return cmp.Compare(a.Name, b.Name)
 			})
 
-			dp, _, err := addInfra(meshMap, mesh.InfraTypeDataPlane, cluster, "", "Data Plane", namespaces, false)
+			dp, _, err := addInfra(meshMap, mesh.InfraTypeDataPlane, cluster, "", "Data Plane", namespaces, "", false)
 			graph.CheckError(err)
 
 			istiod.AddEdge(dp)
@@ -131,7 +139,7 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalIn
 		hasExternalServices := false // external to the cluster/mesh (or a URL that can't be parsed)
 
 		for _, ki := range cp.Cluster.KialiInstances {
-			kiali, _, err := addInfra(meshMap, mesh.InfraTypeKiali, cp.Cluster.Name, ki.Namespace, ki.ServiceName, es.Istio, false)
+			kiali, _, err := addInfra(meshMap, mesh.InfraTypeKiali, cp.Cluster.Name, ki.Namespace, ki.ServiceName, es.Istio, ki.Version, false)
 			mesh.CheckError(err)
 
 			if es.Istio.IstioAPIEnabled {
@@ -143,7 +151,8 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalIn
 			// metrics/prometheus
 			cluster, namespace, isExternal := discoverInfraService(es.Prometheus.URL, ctx, gi)
 			var node *mesh.Node
-			node, _, err = addInfra(meshMap, mesh.InfraTypeMetricStore, cluster, namespace, "Prometheus", es.Prometheus, isExternal)
+			name = "Prometheus"
+			node, _, err = addInfra(meshMap, mesh.InfraTypeMetricStore, cluster, namespace, name, es.Prometheus, esVersions[name], isExternal)
 			mesh.CheckError(err)
 
 			kiali.AddEdge(node)
@@ -151,7 +160,8 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalIn
 
 			if conf.ExternalServices.Tracing.Enabled {
 				cluster, namespace, isExternal = discoverInfraService(es.Tracing.InClusterURL, ctx, gi)
-				node, _, err = addInfra(meshMap, mesh.InfraTypeTraceStore, cluster, namespace, string(es.Tracing.Provider), es.Tracing, isExternal)
+				name = string(es.Tracing.Provider)
+				node, _, err = addInfra(meshMap, mesh.InfraTypeTraceStore, cluster, namespace, name, es.Tracing, esVersions[name], isExternal)
 				mesh.CheckError(err)
 
 				kiali.AddEdge(node)
@@ -160,7 +170,8 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalIn
 
 			if conf.ExternalServices.Grafana.Enabled {
 				cluster, namespace, isExternal = discoverInfraService(es.Grafana.InClusterURL, ctx, gi)
-				node, _, err = addInfra(meshMap, mesh.InfraTypeGrafana, cluster, namespace, "Grafana", es.Grafana, isExternal)
+				name = "Grafana"
+				node, _, err = addInfra(meshMap, mesh.InfraTypeGrafana, cluster, namespace, name, es.Grafana, esVersions[name], isExternal)
 				mesh.CheckError(err)
 
 				kiali.AddEdge(node)
@@ -168,7 +179,7 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalIn
 			}
 		}
 		if hasExternalServices {
-			_, _, err = addInfra(meshMap, mesh.InfraTypeCluster, mesh.External, "", "External Deployments", nil, true)
+			_, _, err = addInfra(meshMap, mesh.InfraTypeCluster, mesh.External, "", "External Deployments", nil, "", true)
 			mesh.CheckError(err)
 		}
 	}
@@ -181,7 +192,7 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalIn
 	return meshMap
 }
 
-func addInfra(meshMap mesh.MeshMap, infraType, cluster, namespace, name string, infraData interface{}, isExternal bool) (*mesh.Node, bool, error) {
+func addInfra(meshMap mesh.MeshMap, infraType, cluster, namespace, name string, infraData interface{}, version string, isExternal bool) (*mesh.Node, bool, error) {
 	id, err := mesh.Id(cluster, namespace, name, infraType, isExternal)
 	if err != nil {
 		return nil, false, err
@@ -193,11 +204,15 @@ func addInfra(meshMap mesh.MeshMap, infraType, cluster, namespace, name string, 
 		meshMap[id] = node
 	}
 	node.Metadata["tsHash"] = timeSeriesHash(cluster, namespace, name)
+
 	if infraData != nil {
 		node.Metadata[mesh.InfraData] = infraData
 	}
 	if isExternal {
 		node.Metadata[mesh.IsExternal] = true
+	}
+	if version != "" {
+		node.Metadata[mesh.Version] = version
 	}
 	return node, found, nil
 }

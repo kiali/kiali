@@ -63,6 +63,7 @@ export interface MeshNodeData {
   isMTLS?: boolean;
   labels?: { [key: string]: string };
   parent?: string;
+  version?: string;
 }
 
 // Edge data expected from server
@@ -146,5 +147,6 @@ export const MeshAttr = {
   isInaccessible: 'isInaccessible',
   isOutOfMesh: 'isOutOfMesh',
   namespace: 'namespace',
-  nodeType: 'nodeType'
+  nodeType: 'nodeType',
+  version: 'version'
 };

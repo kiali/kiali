@@ -93,6 +93,7 @@ export class TargetPanelCluster extends React.Component<TargetPanelCommonProps, 
       isKialiHome: false,
       name: UNKNOWN
     };
+    const version = this.state.clusterNode.getData()[MeshAttr.version];
 
     return (
       <div id="target-panel-cluster" className={classes(targetPanelBorder, targetPanel)}>
@@ -107,6 +108,13 @@ export class TargetPanelCluster extends React.Component<TargetPanelCommonProps, 
         </div>
         <div className={targetPanelBody}>
           {clusterData.accessible && this.renderKialiLinks(clusterData.kialiInstances)}
+          {version && (
+            <>
+              {`Version: `}
+              {version}
+              <br />
+            </>
+          )}
           {`Network: `}
           {clusterData.network ? clusterData.network : 'n/a'}
           <br />

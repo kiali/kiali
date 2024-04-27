@@ -158,6 +158,13 @@ export class TargetPanelControlPlane extends React.Component<
           </CardHeader>
           <CardBody>
             <div className={targetPanelBody}>
+              {data.version && (
+                <div style={{ textAlign: 'left' }}>
+                  {`Version: `}
+                  {data.version}
+                  <br />
+                </div>
+              )}
               <div style={{ textAlign: 'left' }}>
                 <div>
                   <MeshMTLSStatus />

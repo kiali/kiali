@@ -43,6 +43,7 @@ type NodeData struct {
 	IsExternal     bool        `json:"isExternal,omitempty"`     // true if the infra is external to the mesh | false
 	IsInaccessible bool        `json:"isInaccessible,omitempty"` // true if the node exists in an inaccessible namespace
 	IsMTLS         bool        `json:"isMTLS,omitempty"`         // true if mesh-wide mTLS is enabled
+	Version        string      `json:"version,omitempty"`        // version of the component, if applicable and available
 }
 
 type EdgeData struct {
@@ -163,6 +164,10 @@ func buildConfig(meshMap mesh.MeshMap, nodes *[]*NodeWrapper, edges *[]*EdgeWrap
 		// node is not accessible to the current user
 		if val, ok := n.Metadata[mesh.IsInaccessible]; ok {
 			nd.IsInaccessible = val.(bool)
+		}
+
+		if val, ok := n.Metadata[mesh.Version]; ok {
+			nd.Version = val.(string)
 		}
 
 		nw := NodeWrapper{

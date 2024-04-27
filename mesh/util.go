@@ -2,12 +2,19 @@ package mesh
 
 import (
 	nethttp "net/http"
+
+	"github.com/kiali/kiali/status"
 )
 
 type Response struct {
 	Message string
 	Code    int
 }
+
+var (
+	// StatusGetter var allos test code to mock out this function with a mock
+	StatusGetter func() status.StatusInfo = status.Get
+)
 
 // Error panics with InternalServerError (500) and the provided message
 func Error(message string) {

@@ -54,6 +54,13 @@ export class TargetPanelNode extends React.Component<TargetPanelCommonProps, Tar
       <div className={classes(panelStyle, targetPanel)}>
         <div className={targetPanelHeading}>{this.renderNodeHeader(data)}</div>
         <div className={targetPanelBody}>
+          {data.version && (
+            <div style={{ textAlign: 'left' }}>
+              {`Version: `}
+              {data.version}
+              <br />
+            </div>
+          )}
           <pre>{JSON.stringify(data.infraData, null, 2)}</pre>
         </div>
       </div>
