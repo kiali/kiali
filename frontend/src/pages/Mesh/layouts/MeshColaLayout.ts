@@ -37,9 +37,7 @@ export class MeshColaLayout extends ColaLayout implements Layout {
 
   private childLayouts: BaseLayout[] = [];
 
-  protected initializeLayout(): void {
-    console.log('init mesh layout');
-  }
+  protected initializeLayout(): void {}
 
   protected initializeColaGroupLayout(graph: Graph): void {
     this.d3Cola = webcola.d3adaptor(d3);
