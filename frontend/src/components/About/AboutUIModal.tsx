@@ -104,10 +104,6 @@ export const AboutUIModal: React.FC<AboutUIModalProps> = (props: AboutUIModalPro
 
   const containerVersion = props.status[StatusKey.KIALI_CONTAINER_VERSION];
 
-  const meshVersion = props.status[StatusKey.MESH_NAME]
-    ? `${props.status[StatusKey.MESH_NAME]} ${props.status[StatusKey.MESH_VERSION] ?? ''}`
-    : 'Unknown';
-
   return (
     <AboutModal
       backgroundImageSrc={kialiIconAbout}
@@ -132,16 +128,6 @@ export const AboutUIModal: React.FC<AboutUIModalProps> = (props: AboutUIModalPro
           <TextListItem key="kiali-container-version" component="dd">
             {containerVersion!}
           </TextListItem>
-          {false && (
-            <>
-              <TextListItem key="service-mesh-name" component="dt">
-                Service Mesh
-              </TextListItem>
-              <TextListItem key="service-mesh-version" component="dd">
-                {meshVersion!}
-              </TextListItem>
-            </>
-          )}
         </TextList>
       </TextContent>
 

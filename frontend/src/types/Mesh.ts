@@ -93,6 +93,7 @@ export interface MeshQuery {
 
 export interface MeshDefinition {
   elements: MeshElements;
+  name: string;
   timestamp: number;
 }
 

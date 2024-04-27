@@ -319,5 +319,6 @@
       }
     ]
   },
+  "meshName": "Istio Mesh",
   "timestamp": 1523364075
 }

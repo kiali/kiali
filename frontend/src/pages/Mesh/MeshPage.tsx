@@ -4,7 +4,7 @@ import { connect } from 'react-redux';
 import FlexView from 'react-flexview';
 import { kialiStyle } from 'styles/StyleUtils';
 import { DurationInSeconds, IntervalInMilliseconds, TimeInMilliseconds, TimeInSeconds } from '../../types/Common';
-import { Layout } from '../../types/Graph';
+import { Layout, UNKNOWN } from '../../types/Graph';
 import * as AlertUtils from '../../utils/AlertUtils';
 import { ErrorBoundary } from '../../components/ErrorBoundary/ErrorBoundary';
 import {
@@ -77,6 +77,7 @@ export type MeshData = {
   fetchParams: MeshFetchParams;
   isLoading: boolean;
   isError?: boolean;
+  name: string;
   timestamp: TimeInMilliseconds;
 };
 
@@ -146,6 +147,7 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
         elementsChanged: false,
         fetchParams: this.meshDataSource.fetchParameters,
         isLoading: true,
+        name: UNKNOWN,
         timestamp: 0
       },
       lastResizeTime: 0
@@ -288,6 +290,7 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
   };
 
   private handleMeshDataSourceSuccess = (
+    meshName: string,
     meshTimestamp: TimeInSeconds,
     elements: DecoratedMeshElements,
     fetchParams: MeshFetchParams
@@ -299,6 +302,7 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
         elementsChanged: this.elementsChanged(prevElements, elements),
         fetchParams: fetchParams,
         isLoading: false,
+        name: meshName,
         timestamp: meshTimestamp * 1000
       }
     });
@@ -315,6 +319,7 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
         isError: true,
         isLoading: false,
         fetchParams: fetchParams,
+        name: UNKNOWN,
         timestamp: Date.now()
       }
     });
@@ -327,6 +332,7 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
         elementsChanged: false,
         fetchParams: fetchParams,
         isLoading: true,
+        name: isPreviousDataInvalid ? UNKNOWN : this.state.meshData.name,
         timestamp: isPreviousDataInvalid ? Date.now() : this.state.meshData.timestamp
       }
     });

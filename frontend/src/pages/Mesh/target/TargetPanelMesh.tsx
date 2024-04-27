@@ -4,11 +4,9 @@ import {
   TargetPanelCommonProps,
   getTitle,
   targetPanel,
-  targetPanelBody,
   targetPanelBorder,
   targetPanelHeading
 } from './TargetPanelCommon';
-import { MeshMTLSStatus } from 'components/MTls/MeshMTLSStatus';
 import { classes } from 'typestyle';
 
 type TargetPanelMeshState = {
@@ -50,10 +48,7 @@ export class TargetPanelMesh extends React.Component<TargetPanelCommonProps, Tar
     return (
       <div id="target-panel-mesh" className={classes(targetPanelBorder, targetPanel)}>
         <div id="target-panel-mesh-heading" className={targetPanelHeading}>
-          {getTitle('Istio Mesh')}
-        </div>
-        <div className={targetPanelBody}>
-          <MeshMTLSStatus />
+          {getTitle(`Mesh Name: ${controller.getGraph().getData().meshData.name}`)}
         </div>
       </div>
     );

@@ -70,6 +70,7 @@ type Elements struct {
 
 type Config struct {
 	Elements  Elements `json:"elements"`
+	MeshName  string   `json:"meshName"`
 	Timestamp int64    `json:"timestamp"`
 }
 
@@ -127,8 +128,13 @@ func NewConfig(meshMap mesh.MeshMap, o mesh.ConfigOptions) (result Config) {
 	})
 
 	elements := Elements{nodes, edges}
+	meshName := mesh.StatusGetter().Status["Mesh Version"]
+	if meshName == "" {
+		meshName = "Istio Mesh"
+	}
 	result = Config{
 		Elements:  elements,
+		MeshName:  meshName,
 		Timestamp: o.QueryTime,
 	}
 	return result
