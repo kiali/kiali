@@ -186,14 +186,22 @@ ensureKialiTracesReady() {
 ensureBookinfoGraphReady() {
   infomsg "Waiting for Kiali to have graph data"
   local start_time=$(date +%s)
-  local end_time=$((start_time + 240))
+  local end_time=$((start_time + 120))
+
+  # Authenticate first
+  local kiali_token=$(kubectl -n istio-system create token kiali)
+  auth=$(curl --cookie-jar cookies.txt "${KIALI_URL}/api/authenticate" \
+          -H 'Accept: application/json, text/plain, */*' \
+          -H 'Content-Type: application/x-www-form-urlencoded' \
+          --request POST \
+          --data-raw "token=${kiali_token}")
 
   local graph_url="${KIALI_URL}/api/namespaces/graph?duration=120s&graphType=versionedApp&includeIdleEdges=false&injectServiceNodes=true&boxBy=cluster,namespace,app&waypoints=false&appenders=deadNode,istio,serviceEntry,meshCheck,workloadEntry,health,ambient&rateGrpc=requests&rateHttp=requests&rateTcp=sent&namespaces=bookinfo"
   infomsg "Graph url: ${graph_url}"
   while true; do
     result=$(curl -k -s --fail "$graph_url" \
         -H 'Accept: application/json, text/plain, */*' \
-        -H 'Content-Type: application/json' | jq -r '.elements.nodes')
+        -H 'Content-Type: application/json' -b cookies.txt | jq -r '.elements.nodes')
 
     if [ "$result" == "[]" ]; then
       local now=$(date +%s)
@@ -325,6 +333,8 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_AMBIENT}" ]; then
 
   ensureKialiServerReady
   ensureBookinfoGraphReady
+
+  kubectl logs $(kubectl get pod -l app=kiali-traffic-generator -n bookinfo -o=jsonpath='{.items[*].metadata.name}') -n bookinfo
 
   export CYPRESS_BASE_URL="${KIALI_URL}"
   export CYPRESS_NUM_TESTS_KEPT_IN_MEMORY=0
