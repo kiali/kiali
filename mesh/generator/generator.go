@@ -10,6 +10,7 @@ import (
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/mesh"
 	"github.com/kiali/kiali/mesh/appender"
 	"github.com/kiali/kiali/models"
@@ -70,14 +71,14 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalIn
 	for _, cp := range meshDef.ControlPlanes {
 		// add control plane cluster if not already added
 		if _, ok := clusterMap[cp.Cluster.Name]; !ok {
-			_, _, err := addInfra(meshMap, mesh.InfraTypeCluster, cp.Cluster.Name, "", cp.Cluster.Name, cp.Cluster, esVersions[cp.Cluster.Name], false)
+			_, _, err := addInfra(meshMap, mesh.InfraTypeCluster, cp.Cluster.Name, "", cp.Cluster.Name, cp.Cluster, esVersions[cp.Cluster.Name], false, "")
 			mesh.CheckError(err)
 		}
 
 		// add managed clusters if not already added
 		for _, mc := range cp.ManagedClusters {
 			if _, ok := clusterMap[mc.Name]; ok {
-				_, _, err := addInfra(meshMap, mesh.InfraTypeCluster, mc.Name, "", mc.Name, mc, "", false)
+				_, _, err := addInfra(meshMap, mesh.InfraTypeCluster, mc.Name, "", mc.Name, mc, "", false, "")
 				mesh.CheckError(err)
 
 				continue
@@ -96,7 +97,18 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalIn
 			version = esVersions["Istio"]
 		}
 
-		istiod, _, err := addInfra(meshMap, mesh.InfraTypeIstiod, cp.Cluster.Name, cp.IstiodNamespace, name, cp.Config, version, false)
+		// get istio status components (istiod, grafana, prometheus, tracing)
+		var istioStatus kubernetes.IstioComponentStatus
+		istioStatus, err = gi.IstioStatusGetter.GetStatus(ctx, cp.Cluster.Name)
+		mesh.CheckError(err)
+
+		// convert istio status slice into map
+		healthData := make(map[string]string)
+		for _, data := range istioStatus {
+			healthData[data.Name] = data.Status
+		}
+
+		istiod, _, err := addInfra(meshMap, mesh.InfraTypeIstiod, cp.Cluster.Name, cp.IstiodNamespace, name, cp.Config, version, false, healthData["istiod"])
 		mesh.CheckError(err)
 
 		// add the managed namespaces by cluster and narrowed, if necessary, by revision
@@ -127,7 +139,7 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalIn
 				return cmp.Compare(a.Name, b.Name)
 			})
 
-			dp, _, err := addInfra(meshMap, mesh.InfraTypeDataPlane, cluster, "", "Data Plane", namespaces, "", false)
+			dp, _, err := addInfra(meshMap, mesh.InfraTypeDataPlane, cluster, "", "Data Plane", namespaces, "", false, "")
 			graph.CheckError(err)
 
 			istiod.AddEdge(dp)
@@ -139,7 +151,7 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalIn
 		hasExternalServices := false // external to the cluster/mesh (or a URL that can't be parsed)
 
 		for _, ki := range cp.Cluster.KialiInstances {
-			kiali, _, err := addInfra(meshMap, mesh.InfraTypeKiali, cp.Cluster.Name, ki.Namespace, ki.ServiceName, es.Istio, ki.Version, false)
+			kiali, _, err := addInfra(meshMap, mesh.InfraTypeKiali, cp.Cluster.Name, ki.Namespace, ki.ServiceName, es.Istio, ki.Version, false, "")
 			mesh.CheckError(err)
 
 			if es.Istio.IstioAPIEnabled {
@@ -152,7 +164,7 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalIn
 			cluster, namespace, isExternal := discoverInfraService(es.Prometheus.URL, ctx, gi)
 			var node *mesh.Node
 			name = "Prometheus"
-			node, _, err = addInfra(meshMap, mesh.InfraTypeMetricStore, cluster, namespace, name, es.Prometheus, esVersions[name], isExternal)
+			node, _, err = addInfra(meshMap, mesh.InfraTypeMetricStore, cluster, namespace, name, es.Prometheus, esVersions[name], isExternal, healthData["prometheus"])
 			mesh.CheckError(err)
 
 			kiali.AddEdge(node)
@@ -161,7 +173,7 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalIn
 			if conf.ExternalServices.Tracing.Enabled {
 				cluster, namespace, isExternal = discoverInfraService(es.Tracing.InClusterURL, ctx, gi)
 				name = string(es.Tracing.Provider)
-				node, _, err = addInfra(meshMap, mesh.InfraTypeTraceStore, cluster, namespace, name, es.Tracing, esVersions[name], isExternal)
+				node, _, err = addInfra(meshMap, mesh.InfraTypeTraceStore, cluster, namespace, name, es.Tracing, esVersions[name], isExternal, healthData["tracing"])
 				mesh.CheckError(err)
 
 				kiali.AddEdge(node)
@@ -171,15 +183,16 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalIn
 			if conf.ExternalServices.Grafana.Enabled {
 				cluster, namespace, isExternal = discoverInfraService(es.Grafana.InClusterURL, ctx, gi)
 				name = "Grafana"
-				node, _, err = addInfra(meshMap, mesh.InfraTypeGrafana, cluster, namespace, name, es.Grafana, esVersions[name], isExternal)
+				node, _, err = addInfra(meshMap, mesh.InfraTypeGrafana, cluster, namespace, name, es.Grafana, esVersions[name], isExternal, healthData["grafana"])
 				mesh.CheckError(err)
 
 				kiali.AddEdge(node)
 				hasExternalServices = hasExternalServices || isExternal
 			}
 		}
+
 		if hasExternalServices {
-			_, _, err = addInfra(meshMap, mesh.InfraTypeCluster, mesh.External, "", "External Deployments", nil, "", true)
+			_, _, err = addInfra(meshMap, mesh.InfraTypeCluster, mesh.External, "", "External Deployments", nil, "", true, "")
 			mesh.CheckError(err)
 		}
 	}
@@ -192,7 +205,7 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalIn
 	return meshMap
 }
 
-func addInfra(meshMap mesh.MeshMap, infraType, cluster, namespace, name string, infraData interface{}, version string, isExternal bool) (*mesh.Node, bool, error) {
+func addInfra(meshMap mesh.MeshMap, infraType, cluster, namespace, name string, infraData interface{}, version string, isExternal bool, healthData string) (*mesh.Node, bool, error) {
 	id, err := mesh.Id(cluster, namespace, name, infraType, isExternal)
 	if err != nil {
 		return nil, false, err
@@ -210,12 +223,19 @@ func addInfra(meshMap mesh.MeshMap, infraType, cluster, namespace, name string, 
 	if infraData != nil {
 		node.Metadata[mesh.InfraData] = infraData
 	}
+
 	if isExternal {
 		node.Metadata[mesh.IsExternal] = true
 	}
+
 	if version != "" {
 		node.Metadata[mesh.Version] = version
 	}
+
+	if healthData != "" {
+		node.Metadata[mesh.HealthData] = healthData
+	}
+
 	return node, found, nil
 }
 

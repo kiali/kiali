@@ -25,18 +25,19 @@ func GraphMesh(ctx context.Context, business *business.Layer, o mesh.Options) (c
 	//promtimer := internalmetrics.GetMeshGraphGenerationTimePrometheusTimer()
 	//defer promtimer.ObserveDuration()
 
-	code, config = graphMesh(ctx, business, o)
+	// Create a 'global' object to store the business. Global only to the request.
+	globalInfo := mesh.NewAppenderGlobalInfo()
+	globalInfo.Business = business
+	globalInfo.IstioStatusGetter = &business.IstioStatus
+	globalInfo.Context = ctx
+
+	code, config = graphMesh(ctx, globalInfo, o)
 
 	return code, config
 }
 
 // graphMesh provides a test hook that accepts mock clients
-func graphMesh(ctx context.Context, business *business.Layer, o mesh.Options) (code int, config interface{}) {
-
-	// Create a 'global' object to store the business. Global only to the request.
-	globalInfo := mesh.NewAppenderGlobalInfo()
-	globalInfo.Business = business
-	globalInfo.Context = ctx
+func graphMesh(ctx context.Context, globalInfo *mesh.AppenderGlobalInfo, o mesh.Options) (code int, config interface{}) {
 
 	meshMap := generator.BuildMeshMap(ctx, o, globalInfo)
 	code, config = generateGraph(meshMap, o)

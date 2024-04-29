@@ -33,8 +33,7 @@ import (
 )
 
 // Setup mock
-
-func setupMocks(t *testing.T) *business.Layer {
+func setupMocks(t *testing.T) *mesh.AppenderGlobalInfo {
 	istiodDeployment := apps_v1.Deployment{
 		ObjectMeta: v1.ObjectMeta{
 			Name:      "istiod",
@@ -43,6 +42,11 @@ func setupMocks(t *testing.T) *business.Layer {
 		},
 		Spec: apps_v1.DeploymentSpec{
 			Template: core_v1.PodTemplateSpec{
+				ObjectMeta: v1.ObjectMeta{
+					Name:      "istiod",
+					Namespace: "istio-system",
+					Labels:    map[string]string{"app": "istiod"},
+				},
 				Spec: core_v1.PodSpec{
 					Containers: []core_v1.Container{
 						{
@@ -138,13 +142,15 @@ trustDomain: cluster.local
 	require.Len(a[0].KialiInstances, 1, "GetClusters didn't resolve the local Kiali instance")
 	assert.Equal("istio-system", a[0].KialiInstances[0].Namespace, "GetClusters didn't set the right namespace of the Kiali instance")
 
-	return layer
+	globalInfo := mesh.NewAppenderGlobalInfo()
+	globalInfo.Business = layer
+
+	return globalInfo
 }
 
 // mockMeshGraph provides a common single-cluster mock
-func mockMeshGraph(t *testing.T) (*business.Layer, error) {
-
-	layer := setupMocks(t)
+func mockMeshGraph(t *testing.T) (*mesh.AppenderGlobalInfo, error) {
+	globalInfo := setupMocks(t)
 
 	mesh.StatusGetter = func() status.StatusInfo {
 		return status.StatusInfo{
@@ -152,7 +158,35 @@ func mockMeshGraph(t *testing.T) (*business.Layer, error) {
 		}
 	}
 
-	return layer, nil
+	return globalInfo, nil
+}
+
+type fakeIstioStatusGetter struct{}
+
+// mock GetStatus function to obtain fake graph component status
+func (f *fakeIstioStatusGetter) GetStatus(ctx context.Context, cluster string) (kubernetes.IstioComponentStatus, error) {
+	return kubernetes.IstioComponentStatus{
+		kubernetes.ComponentStatus{
+			Name:   "istiod",
+			Status: kubernetes.ComponentHealthy,
+			IsCore: true,
+		},
+		kubernetes.ComponentStatus{
+			Name:   "prometheus",
+			Status: kubernetes.ComponentHealthy,
+			IsCore: false,
+		},
+		kubernetes.ComponentStatus{
+			Name:   "grafana",
+			Status: kubernetes.ComponentHealthy,
+			IsCore: false,
+		},
+		kubernetes.ComponentStatus{
+			Name:   "tracing",
+			Status: kubernetes.ComponentHealthy,
+			IsCore: false,
+		},
+	}, nil
 }
 
 func respond(w http.ResponseWriter, code int, payload interface{}) {
@@ -202,19 +236,21 @@ func assertObjectsEqual(t *testing.T, expected, actual []byte) {
 }
 
 func TestMeshGraph(t *testing.T) {
-	layer, err := mockMeshGraph(t)
+	globalInfo, err := mockMeshGraph(t)
 	if err != nil {
 		t.Error(err)
 		return
 	}
 
-	var fut func(ctx context.Context, b *business.Layer, o mesh.Options) (int, interface{})
+	globalInfo.IstioStatusGetter = &fakeIstioStatusGetter{}
+
+	var fut func(ctx context.Context, globalInfo *mesh.AppenderGlobalInfo, o mesh.Options) (int, interface{})
 
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/mesh", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
 			context := authentication.SetAuthInfoContext(r.Context(), &api.AuthInfo{Token: "test"})
-			code, config := fut(context, layer, mesh.NewOptions(r.WithContext(context)))
+			code, config := fut(context, globalInfo, mesh.NewOptions(r.WithContext(context)))
 			respond(w, code, config)
 		}))
 

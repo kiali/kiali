@@ -12,7 +12,7 @@ type Response struct {
 }
 
 var (
-	// StatusGetter var allos test code to mock out this function with a mock
+	// StatusGetter var allows test code to mock out this function with a mock
 	StatusGetter func() status.StatusInfo = status.Get
 )
 
