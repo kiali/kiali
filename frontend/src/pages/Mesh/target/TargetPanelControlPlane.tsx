@@ -3,6 +3,7 @@ import { Node, NodeModel } from '@patternfly/react-topology';
 import { kialiStyle } from 'styles/StyleUtils';
 import {
   TargetPanelCommonProps,
+  getHealthStatus,
   shouldRefreshData,
   targetPanel,
   targetPanelBody,
@@ -155,6 +156,7 @@ export class TargetPanelControlPlane extends React.Component<
               <PFBadge badge={PFBadges.Cluster} size="sm" />
               {data.cluster}
             </span>
+            {getHealthStatus(data)}
           </CardHeader>
           <CardBody>
             <div className={targetPanelBody}>

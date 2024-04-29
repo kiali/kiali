@@ -1,8 +1,11 @@
 import * as React from 'react';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from 'components/Pf/PfColors';
-import { MeshTarget } from 'types/Mesh';
+import { MeshNodeData, MeshTarget } from 'types/Mesh';
 import { DurationInSeconds, IntervalInMilliseconds, TimeInMilliseconds } from 'types/Common';
+import { ValidationTypes } from 'types/IstioObjects';
+import { Status } from 'types/IstioStatus';
+import { Validation } from 'components/Validations/Validation';
 
 export interface TargetPanelCommonProps {
   duration: DurationInSeconds;
@@ -77,7 +80,7 @@ const hrStyle = kialiStyle({
   margin: '1.0rem 0'
 });
 
-export const targetPanelHR = () => {
+export const targetPanelHR = (): React.ReactNode => {
   return <hr className={hrStyle} />;
 };
 
@@ -99,4 +102,21 @@ export const getTitle = (title: string): React.ReactNode => {
       <br />
     </div>
   );
+};
+
+export const getHealthStatus = (data: MeshNodeData): React.ReactNode => {
+  let healthSeverity: ValidationTypes;
+
+  switch (data.healthData) {
+    case Status.Healthy:
+      healthSeverity = ValidationTypes.Correct;
+      break;
+    case Status.NotReady:
+      healthSeverity = ValidationTypes.Warning;
+      break;
+    default:
+      healthSeverity = ValidationTypes.Error;
+  }
+
+  return <>{data.healthData && <Validation severity={healthSeverity} message={data.healthData}></Validation>}</>;
 };

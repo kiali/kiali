@@ -1,15 +1,18 @@
 import * as React from 'react';
 import { Node, NodeModel } from '@patternfly/react-topology';
 import { kialiStyle } from 'styles/StyleUtils';
-import { TargetPanelCommonProps, targetPanel, targetPanelBody, targetPanelHeading } from './TargetPanelCommon';
+import {
+  TargetPanelCommonProps,
+  getHealthStatus,
+  targetPanel,
+  targetPanelBody,
+  targetPanelHeading
+} from './TargetPanelCommon';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { MeshInfraType, MeshNodeData } from 'types/Mesh';
 import { classes } from 'typestyle';
 import { panelStyle } from 'pages/Graph/SummaryPanelStyle';
 import { Title, TitleSizes } from '@patternfly/react-core';
-import { ValidationTypes } from 'types/IstioObjects';
-import { Status } from 'types/IstioStatus';
-import { Validation } from 'components/Validations/Validation';
 
 type TargetPanelNodeState = {
   loading: boolean;
@@ -96,19 +99,6 @@ export class TargetPanelNode extends React.Component<TargetPanelCommonProps, Tar
         console.warn(`MeshElems: Unexpected infraType [${data.infraType}] `);
     }
 
-    let healthSeverity: ValidationTypes;
-
-    switch (data.healthData) {
-      case Status.Healthy:
-        healthSeverity = ValidationTypes.Correct;
-        break;
-      case Status.NotReady:
-        healthSeverity = ValidationTypes.Warning;
-        break;
-      default:
-        healthSeverity = ValidationTypes.Error;
-    }
-
     return (
       <React.Fragment key={data.infraName}>
         <Title headingLevel="h5" size={TitleSizes.lg}>
@@ -125,7 +115,7 @@ export class TargetPanelNode extends React.Component<TargetPanelCommonProps, Tar
           <PFBadge badge={PFBadges.Cluster} size="sm" />
           {data.cluster}
         </span>
-        {data.healthData && <Validation severity={healthSeverity} message={data.healthData}></Validation>}
+        {getHealthStatus(data)}
       </React.Fragment>
     );
   };
