@@ -465,6 +465,7 @@ Then('{int} edges appear in the graph', (edges: number) => {
     .getCurrentState()
     .then(state => {
       const numEdges = state.cy.edges(`[hasTraffic]`).length;
-      assert.equal(numEdges, edges);
+      // It can be more, depending on the service version redirection
+      assert.isAtLeast(numEdges, edges);
     });
 });

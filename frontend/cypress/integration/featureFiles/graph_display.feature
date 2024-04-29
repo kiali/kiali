@@ -287,7 +287,7 @@ Feature: Kiali Graph page - Display menu
   Scenario: User sees tcp traffic
     When user graphs "bookinfo" namespaces
     Then user sees the "bookinfo" namespace
-    Then 8 edges appear in the graph
+    Then 6 edges appear in the graph
 
   @ambient
   Scenario: User sees no http traffic
