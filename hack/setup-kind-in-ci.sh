@@ -135,7 +135,6 @@ setup_kind_singlecluster() {
 
   "${SCRIPT_DIR}"/start-kind.sh --name ci --image "${KIND_NODE_IMAGE}"
 
-  GAE="true"
   infomsg "Installing istio"
   if [[ "${ISTIO_VERSION}" == *-dev ]]; then
     local hub_arg="--image-hub default"
@@ -143,11 +142,9 @@ setup_kind_singlecluster() {
 
   if [ -n "${AMBIENT}" ]; then
       infomsg "Installing Istio with Ambient profile"
-      GAE="false"
-      unset LOAD_BALANCER
-      "${SCRIPT_DIR}"/istio/install-istio-via-istioctl.sh --reduce-resources true --client-exe-path "$(which kubectl)" -cn "cluster-default" ${hub_arg:-} -cp ambient
+      "${SCRIPT_DIR}"/istio/install-istio-via-istioctl.sh --reduce-resources true --client-exe-path "$(which kubectl)" -cn "cluster-default" -mid "mesh-default" -gae true ${hub_arg:-} -cp ambient
   else
-    "${SCRIPT_DIR}"/istio/install-istio-via-istioctl.sh --reduce-resources true --client-exe-path "$(which kubectl)" -cn "cluster-default" -mid "mesh-default" -net "network-default" -gae ${GAE} ${hub_arg:-}
+    "${SCRIPT_DIR}"/istio/install-istio-via-istioctl.sh --reduce-resources true --client-exe-path "$(which kubectl)" -cn "cluster-default" -mid "mesh-default" -net "network-default" -gae true ${hub_arg:-}
   fi
 
   infomsg "Pushing the images into the cluster..."
