@@ -151,3 +151,9 @@ export const MeshAttr = {
   nodeType: 'nodeType',
   version: 'version'
 };
+
+// determine if the infra is deployed externally, typically
+// tested against the clusterName.
+export function isExternal(name): boolean {
+  return name === '_external_';
+}

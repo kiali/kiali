@@ -9,12 +9,13 @@ import {
   targetPanelHeading
 } from './TargetPanelCommon';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
-import { MeshInfraType, MeshNodeData } from 'types/Mesh';
+import { MeshInfraType, MeshNodeData, isExternal } from 'types/Mesh';
 import { classes } from 'typestyle';
 import { panelStyle } from 'pages/Graph/SummaryPanelStyle';
 import { Title, TitleSizes } from '@patternfly/react-core';
 import { WithTranslation, withTranslation } from 'react-i18next';
 import { I18N_NAMESPACE } from 'types/Common';
+import { TFunction } from 'react-i18next';
 
 type TargetPanelNodeProps = WithTranslation & TargetPanelCommonProps;
 
@@ -32,6 +33,59 @@ const nodeStyle = kialiStyle({
   alignItems: 'center',
   display: 'flex'
 });
+
+export function renderNodeHeader(
+  data: MeshNodeData,
+  t: TFunction,
+  nameOnly?: boolean,
+  nameSize?: TitleSizes
+): React.ReactNode {
+  let pfBadge;
+
+  switch (data.infraType) {
+    case MeshInfraType.CLUSTER:
+      pfBadge = PFBadges.Cluster;
+      break;
+    case MeshInfraType.GRAFANA:
+      pfBadge = PFBadges.Grafana;
+      break;
+    case MeshInfraType.KIALI:
+      pfBadge = PFBadges.Kiali;
+      break;
+    case MeshInfraType.METRIC_STORE:
+      pfBadge = PFBadges.MetricStore;
+      break;
+    case MeshInfraType.TRACE_STORE:
+      pfBadge = PFBadges.TraceStore;
+      break;
+    default:
+      console.warn(`MeshElems: Unexpected infraType [${data.infraType}] `);
+  }
+
+  return (
+    <React.Fragment key={data.infraName}>
+      <Title headingLevel="h5" size={nameSize ?? TitleSizes.lg}>
+        <span className={nodeStyle}>
+          <PFBadge badge={pfBadge} size="global" />
+          {data.infraName}
+          {!nameOnly && getHealthStatus(data, t)}
+        </span>
+      </Title>
+      {!nameOnly && (
+        <>
+          <span className={nodeStyle}>
+            <PFBadge badge={PFBadges.Namespace} size="sm" />
+            {data.namespace}
+          </span>
+          <span className={nodeStyle}>
+            <PFBadge badge={PFBadges.Cluster} size="sm" />
+            {data.cluster}
+          </span>
+        </>
+      )}
+    </React.Fragment>
+  );
+}
 
 class TargetPanelNodeComponent extends React.Component<TargetPanelNodeProps, TargetPanelNodeState> {
   constructor(props: TargetPanelNodeProps) {
@@ -65,7 +119,7 @@ class TargetPanelNodeComponent extends React.Component<TargetPanelNodeProps, Tar
 
     return (
       <div className={classes(panelStyle, targetPanel)}>
-        <div className={targetPanelHeading}>{this.renderNodeHeader(data)}</div>
+        <div className={targetPanelHeading}>{renderNodeHeader(data, this.props.t, isExternal(data.cluster))}</div>
         <div className={targetPanelBody}>
           {data.version && (
             <div style={{ textAlign: 'left' }}>
@@ -79,50 +133,6 @@ class TargetPanelNodeComponent extends React.Component<TargetPanelNodeProps, Tar
       </div>
     );
   }
-
-  private renderNodeHeader = (data: MeshNodeData): React.ReactNode => {
-    let pfBadge = PFBadges.Unknown;
-
-    switch (data.infraType) {
-      case MeshInfraType.CLUSTER:
-        pfBadge = PFBadges.Cluster;
-        break;
-      case MeshInfraType.GRAFANA:
-        pfBadge = PFBadges.Grafana;
-        break;
-      case MeshInfraType.KIALI:
-        pfBadge = PFBadges.Kiali;
-        break;
-      case MeshInfraType.METRIC_STORE:
-        pfBadge = PFBadges.MetricStore;
-        break;
-      case MeshInfraType.TRACE_STORE:
-        pfBadge = PFBadges.TraceStore;
-        break;
-      default:
-        console.warn(`MeshElems: Unexpected infraType [${data.infraType}] `);
-    }
-
-    return (
-      <React.Fragment key={data.infraName}>
-        <Title headingLevel="h5" size={TitleSizes.lg}>
-          <span className={nodeStyle}>
-            <PFBadge badge={pfBadge} size="global" />
-            {data.infraName}
-            {getHealthStatus(data, this.props.t)}
-          </span>
-        </Title>
-        <span className={nodeStyle}>
-          <PFBadge badge={PFBadges.Namespace} size="sm" />
-          {data.namespace}
-        </span>
-        <span className={nodeStyle}>
-          <PFBadge badge={PFBadges.Cluster} size="sm" />
-          {data.cluster}
-        </span>
-      </React.Fragment>
-    );
-  };
 }
 
 export const TargetPanelNode = withTranslation(I18N_NAMESPACE)(TargetPanelNodeComponent);
