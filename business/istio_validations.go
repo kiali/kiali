@@ -3,6 +3,7 @@ package business
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 
 	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
@@ -75,13 +76,14 @@ func (in *IstioValidationsService) GetValidations(ctx context.Context, cluster, 
 
 	var istioConfigList models.IstioConfigList
 	var services models.ServiceList
+	var serviceAccounts map[string][]string
 	var namespaces models.Namespaces
 	var workloadsPerNamespace map[string]models.WorkloadList
 	var mtlsDetails kubernetes.MTLSDetails
 	var rbacDetails kubernetes.RBACDetails
 	var registryServices []*kubernetes.RegistryService
 
-	wg.Add(3) // We need to add these here to make sure we don't execute wg.Wait() before scheduler has started goroutines
+	wg.Add(4) // We need to add these here to make sure we don't execute wg.Wait() before scheduler has started goroutines
 	if service != "" {
 		wg.Add(1)
 	}
@@ -95,6 +97,8 @@ func (in *IstioValidationsService) GetValidations(ctx context.Context, cluster, 
 	} else {
 		go in.fetchAllWorkloads(ctx, &workloadsPerNamespace, cluster, &namespaces, errChan, &wg)
 	}
+
+	go in.fetchServiceAccounts(ctx, &serviceAccounts, errChan, &wg)
 
 	go in.fetchNonLocalmTLSConfigs(&mtlsDetails, cluster, errChan, &wg)
 	if service != "" {
@@ -112,7 +116,7 @@ func (in *IstioValidationsService) GetValidations(ctx context.Context, cluster, 
 		}
 	}
 
-	objectCheckers := in.getAllObjectCheckers(istioConfigList, workloadsPerNamespace, mtlsDetails, rbacDetails, namespaces, registryServices, cluster)
+	objectCheckers := in.getAllObjectCheckers(istioConfigList, workloadsPerNamespace, mtlsDetails, rbacDetails, namespaces, registryServices, cluster, serviceAccounts)
 
 	// Get group validations for same kind istio objects
 	validations := runObjectCheckers(objectCheckers)
@@ -131,7 +135,7 @@ func (in *IstioValidationsService) GetValidations(ctx context.Context, cluster, 
 	return validations, nil
 }
 
-func (in *IstioValidationsService) getAllObjectCheckers(istioConfigList models.IstioConfigList, workloadsPerNamespace map[string]models.WorkloadList, mtlsDetails kubernetes.MTLSDetails, rbacDetails kubernetes.RBACDetails, namespaces []models.Namespace, registryServices []*kubernetes.RegistryService, cluster string) []ObjectChecker {
+func (in *IstioValidationsService) getAllObjectCheckers(istioConfigList models.IstioConfigList, workloadsPerNamespace map[string]models.WorkloadList, mtlsDetails kubernetes.MTLSDetails, rbacDetails kubernetes.RBACDetails, namespaces []models.Namespace, registryServices []*kubernetes.RegistryService, cluster string, serviceAccounts map[string][]string) []ObjectChecker {
 	return []ObjectChecker{
 		checkers.NoServiceChecker{Namespaces: namespaces, IstioConfigList: &istioConfigList, WorkloadsPerNamespace: workloadsPerNamespace, AuthorizationDetails: &rbacDetails, RegistryServices: registryServices, PolicyAllowAny: in.isPolicyAllowAny(), Cluster: cluster},
 		checkers.VirtualServiceChecker{Namespaces: namespaces, VirtualServices: istioConfigList.VirtualServices, DestinationRules: istioConfigList.DestinationRules, Cluster: cluster},
@@ -139,7 +143,7 @@ func (in *IstioValidationsService) getAllObjectCheckers(istioConfigList models.I
 		checkers.GatewayChecker{Gateways: istioConfigList.Gateways, WorkloadsPerNamespace: workloadsPerNamespace, IsGatewayToNamespace: in.isGatewayToNamespace(), Cluster: cluster},
 		checkers.PeerAuthenticationChecker{PeerAuthentications: mtlsDetails.PeerAuthentications, MTLSDetails: mtlsDetails, WorkloadsPerNamespace: workloadsPerNamespace, Cluster: cluster},
 		checkers.ServiceEntryChecker{ServiceEntries: istioConfigList.ServiceEntries, Namespaces: namespaces, WorkloadEntries: istioConfigList.WorkloadEntries, Cluster: cluster},
-		checkers.AuthorizationPolicyChecker{AuthorizationPolicies: rbacDetails.AuthorizationPolicies, Namespaces: namespaces, ServiceEntries: istioConfigList.ServiceEntries, WorkloadsPerNamespace: workloadsPerNamespace, MtlsDetails: mtlsDetails, VirtualServices: istioConfigList.VirtualServices, RegistryServices: registryServices, PolicyAllowAny: in.isPolicyAllowAny(), Cluster: cluster},
+		checkers.AuthorizationPolicyChecker{AuthorizationPolicies: rbacDetails.AuthorizationPolicies, Namespaces: namespaces, ServiceEntries: istioConfigList.ServiceEntries, WorkloadsPerNamespace: workloadsPerNamespace, MtlsDetails: mtlsDetails, VirtualServices: istioConfigList.VirtualServices, RegistryServices: registryServices, PolicyAllowAny: in.isPolicyAllowAny(), Cluster: cluster, ServiceAccounts: serviceAccounts},
 		checkers.SidecarChecker{Sidecars: istioConfigList.Sidecars, Namespaces: namespaces, WorkloadsPerNamespace: workloadsPerNamespace, ServiceEntries: istioConfigList.ServiceEntries, RegistryServices: registryServices, Cluster: cluster},
 		checkers.RequestAuthenticationChecker{RequestAuthentications: istioConfigList.RequestAuthentications, WorkloadsPerNamespace: workloadsPerNamespace, Cluster: cluster},
 		checkers.WorkloadChecker{AuthorizationPolicies: rbacDetails.AuthorizationPolicies, WorkloadsPerNamespace: workloadsPerNamespace, Cluster: cluster},
@@ -169,6 +173,7 @@ func (in *IstioValidationsService) GetIstioObjectValidations(ctx context.Context
 	var mtlsDetails kubernetes.MTLSDetails
 	var rbacDetails kubernetes.RBACDetails
 	var registryServices []*kubernetes.RegistryService
+	var serviceAccounts map[string][]string
 	var err error
 	var objectCheckers []ObjectChecker
 	var referenceChecker ReferenceChecker
@@ -190,10 +195,11 @@ func (in *IstioValidationsService) GetIstioObjectValidations(ctx context.Context
 	errChan := make(chan error, 1)
 
 	// Get all the Istio objects from a Namespace and all gateways from every namespace
-	wg.Add(3)
+	wg.Add(4)
 
 	go in.fetchIstioConfigList(ctx, &istioConfigList, &mtlsDetails, &rbacDetails, cluster, namespace, errChan, &wg)
 	go in.fetchAllWorkloads(ctx, &workloadsPerNamespace, cluster, &namespaces, errChan, &wg)
+	go in.fetchServiceAccounts(ctx, &serviceAccounts, errChan, &wg)
 	go in.fetchNonLocalmTLSConfigs(&mtlsDetails, cluster, errChan, &wg)
 
 	if istioApiEnabled {
@@ -233,7 +239,7 @@ func (in *IstioValidationsService) GetIstioObjectValidations(ctx context.Context
 	case kubernetes.AuthorizationPolicies:
 		authPoliciesChecker := checkers.AuthorizationPolicyChecker{
 			AuthorizationPolicies: rbacDetails.AuthorizationPolicies,
-			Cluster:               cluster, Namespaces: namespaces, ServiceEntries: istioConfigList.ServiceEntries,
+			Cluster:               cluster, Namespaces: namespaces, ServiceEntries: istioConfigList.ServiceEntries, ServiceAccounts: serviceAccounts,
 			WorkloadsPerNamespace: workloadsPerNamespace, MtlsDetails: mtlsDetails, VirtualServices: istioConfigList.VirtualServices, RegistryServices: registryServices, PolicyAllowAny: in.isPolicyAllowAny(),
 		}
 		objectCheckers = []ObjectChecker{authPoliciesChecker}
@@ -391,6 +397,53 @@ func (in *IstioValidationsService) fetchWorkload(ctx context.Context, rValue *ma
 			allWorkloads[namespace] = workloadList
 		}
 		*rValue = allWorkloads
+	}
+}
+
+// fetchServiceAccounts returns list of names of the ServiceAccounts retrieved from Registry Services in a map per cluster.
+func (in *IstioValidationsService) fetchServiceAccounts(ctx context.Context, rValue *map[string][]string, errChan chan error, wg *sync.WaitGroup) {
+	serviceAccounts := map[string][]string{}
+
+	istioDomain := strings.Replace(config.Get().ExternalServices.Istio.IstioIdentityDomain, "svc.", "", 1)
+	defer wg.Done()
+	if len(errChan) == 0 {
+		for _, cluster := range in.businessLayer.Namespace.GetClusterList() {
+			nss, err := in.businessLayer.Namespace.GetClusterNamespaces(ctx, cluster)
+			if err != nil {
+				errChan <- err
+				return
+			}
+			for _, ns := range nss {
+				criteria := WorkloadCriteria{Cluster: cluster, Namespace: ns.Name, IncludeIstioResources: false, IncludeHealth: false}
+				workloadList, err := in.businessLayer.Workload.GetWorkloadList(ctx, criteria)
+				if err != nil {
+					select {
+					case errChan <- err:
+					default:
+					}
+				} else {
+					for _, wl := range workloadList.Workloads {
+						for _, sAccountName := range wl.ServiceAccountNames {
+							saFullName := fmt.Sprintf("%s/ns/%s/sa/%s", istioDomain, ns.Name, sAccountName)
+							found := false
+							if _, ok := serviceAccounts[cluster]; !ok {
+								serviceAccounts[cluster] = []string{}
+							}
+							for _, name := range serviceAccounts[cluster] {
+								if name == saFullName {
+									found = true
+									break
+								}
+							}
+							if !found {
+								serviceAccounts[cluster] = append(serviceAccounts[cluster], saFullName)
+							}
+						}
+					}
+				}
+			}
+		}
+		*rValue = serviceAccounts
 	}
 }
 

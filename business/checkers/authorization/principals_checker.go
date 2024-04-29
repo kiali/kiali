@@ -13,7 +13,8 @@ import (
 
 type PrincipalsChecker struct {
 	AuthorizationPolicy *security_v1beta.AuthorizationPolicy
-	ServiceAccounts     []string
+	Cluster             string
+	ServiceAccounts     map[string][]string
 }
 
 const (
@@ -56,11 +57,16 @@ func (pc PrincipalsChecker) validateFromField(ruleIdx int, from []*api_security_
 		}
 
 		for i, p := range f.Source.Principals {
-			if !pc.hasMatchingServiceAccount(p) {
-				valid = false
+			if !pc.hasMatchingServiceAccount(pc.ServiceAccounts[pc.Cluster], p) {
 				path := fmt.Sprintf("spec/rules[%d]/from[%d]/source/principals[%d]", ruleIdx, fromIdx, i)
-				validation := models.Build("authorizationpolicy.source.principalnotfound", path)
-				checks = append(checks, &validation)
+				valid = false
+				if pc.hasMatchingRemoteServiceAccount(p) {
+					validation := models.Build("authorizationpolicy.source.principalremote", path)
+					checks = append(checks, &validation)
+				} else {
+					validation := models.Build("authorizationpolicy.source.principalnotfound", path)
+					checks = append(checks, &validation)
+				}
 			}
 		}
 	}
@@ -68,11 +74,12 @@ func (pc PrincipalsChecker) validateFromField(ruleIdx int, from []*api_security_
 	return checks, valid
 }
 
-func (pc PrincipalsChecker) hasMatchingServiceAccount(principal string) bool {
+func (pc PrincipalsChecker) hasMatchingServiceAccount(serviceAccounts []string, principal string) bool {
 	if principal == wildCardMatch {
 		return true
 	}
-	for _, sa := range pc.ServiceAccounts {
+
+	for _, sa := range serviceAccounts {
 		if (strings.HasPrefix(principal, wildCardMatch) || strings.HasSuffix(principal, wildCardMatch)) && regexpFromPrincipal(principal).MatchString(sa) {
 			// Prefix match: “abc*” will match on value “abc” and “abcd”.
 			// Suffix match: “*abc” will match on value “abc” and “xabc”.
@@ -82,6 +89,16 @@ func (pc PrincipalsChecker) hasMatchingServiceAccount(principal string) bool {
 		}
 	}
 
+	return false
+}
+
+func (pc PrincipalsChecker) hasMatchingRemoteServiceAccount(principal string) bool {
+	// should check among remote cluster's service accounts
+	for cluster, sas := range pc.ServiceAccounts {
+		if cluster != pc.Cluster && pc.hasMatchingServiceAccount(sas, principal) {
+			return true
+		}
+	}
 	return false
 }
 

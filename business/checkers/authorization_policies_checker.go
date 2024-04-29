@@ -1,15 +1,11 @@
 package checkers
 
 import (
-	"fmt"
-	"strings"
-
 	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	security_v1beta "istio.io/client-go/pkg/apis/security/v1beta1"
 
 	"github.com/kiali/kiali/business/checkers/authorization"
 	"github.com/kiali/kiali/business/checkers/common"
-	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
@@ -17,15 +13,16 @@ import (
 const AuthorizationPolicyCheckerType = "authorizationpolicy"
 
 type AuthorizationPolicyChecker struct {
-	AuthorizationPolicies []*security_v1beta.AuthorizationPolicy
-	Namespaces            models.Namespaces
-	ServiceEntries        []*networking_v1beta1.ServiceEntry
-	WorkloadsPerNamespace map[string]models.WorkloadList
-	MtlsDetails           kubernetes.MTLSDetails
-	VirtualServices       []*networking_v1beta1.VirtualService
-	RegistryServices      []*kubernetes.RegistryService
-	PolicyAllowAny        bool
 	Cluster               string
+	MtlsDetails           kubernetes.MTLSDetails
+	Namespaces            models.Namespaces
+	PolicyAllowAny        bool
+	RegistryServices      []*kubernetes.RegistryService
+	ServiceAccounts       map[string][]string
+	ServiceEntries        []*networking_v1beta1.ServiceEntry
+	AuthorizationPolicies []*security_v1beta.AuthorizationPolicy
+	VirtualServices       []*networking_v1beta1.VirtualService
+	WorkloadsPerNamespace map[string]models.WorkloadList
 }
 
 func (a AuthorizationPolicyChecker) Check() models.IstioValidations {
@@ -60,7 +57,7 @@ func (a AuthorizationPolicyChecker) runChecks(authPolicy *security_v1beta.Author
 		authorization.NamespaceMethodChecker{AuthorizationPolicy: authPolicy, Namespaces: a.Namespaces.GetNames()},
 		authorization.NoHostChecker{AuthorizationPolicy: authPolicy, Namespaces: a.Namespaces,
 			ServiceEntries: serviceHosts, VirtualServices: a.VirtualServices, RegistryServices: a.RegistryServices, PolicyAllowAny: a.PolicyAllowAny},
-		authorization.PrincipalsChecker{AuthorizationPolicy: authPolicy, ServiceAccounts: a.ServiceAccountNames(strings.Replace(config.Get().ExternalServices.Istio.IstioIdentityDomain, "svc.", "", 1))},
+		authorization.PrincipalsChecker{Cluster: a.Cluster, AuthorizationPolicy: authPolicy, ServiceAccounts: a.ServiceAccounts},
 	}
 
 	for _, checker := range enabledCheckers {
@@ -70,28 +67,4 @@ func (a AuthorizationPolicyChecker) runChecks(authPolicy *security_v1beta.Author
 	}
 
 	return models.IstioValidations{key: rrValidation}
-}
-
-// ServiceAccountNames returns a list of names of the ServiceAccounts retrieved from Registry Services.
-func (a AuthorizationPolicyChecker) ServiceAccountNames(clusterName string) []string {
-	names := make([]string, 0)
-
-	for _, wpn := range a.WorkloadsPerNamespace {
-		for _, wl := range wpn.Workloads {
-			for _, sAccountName := range wl.ServiceAccountNames {
-				saFullName := fmt.Sprintf("%s/ns/%s/sa/%s", clusterName, wpn.Namespace, sAccountName)
-				found := false
-				for _, name := range names {
-					if name == saFullName {
-						found = true
-						break
-					}
-				}
-				if !found {
-					names = append(names, saFullName)
-				}
-			}
-		}
-	}
-	return names
 }
