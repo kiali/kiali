@@ -1,5 +1,6 @@
 import { Controller, ElementModel, GraphElement } from '@patternfly/react-topology';
 import { AppenderString } from './Common';
+import { NamespaceInfo } from './NamespaceInfo';
 
 export interface MeshCluster {
   accessible: boolean;
@@ -25,6 +26,7 @@ export type MeshClusters = MeshCluster[];
 
 export enum MeshInfraType {
   CLUSTER = 'cluster',
+  DATAPLANE = 'dataplane',
   GRAFANA = 'grafana',
   ISTIOD = 'istiod',
   KIALI = 'kiali',
@@ -53,14 +55,15 @@ export interface MeshNodeData {
 
   // optional
   healthData?: MeshNodeHealthData;
-  infraData?: MeshCluster; // add other type options as the case arises
+  infraData?: MeshCluster | NamespaceInfo[] | any; // add other type options as the case arises
   isAmbient?: boolean;
   isBox?: string;
+  isExternal?: boolean;
   isInaccessible?: boolean;
   isMTLS?: boolean;
-  isOutOfMesh?: boolean;
   labels?: { [key: string]: string };
   parent?: string;
+  version?: string;
 }
 
 // Edge data expected from server
@@ -90,6 +93,7 @@ export interface MeshQuery {
 
 export interface MeshDefinition {
   elements: MeshElements;
+  name: string;
   timestamp: number;
 }
 
@@ -144,5 +148,6 @@ export const MeshAttr = {
   isInaccessible: 'isInaccessible',
   isOutOfMesh: 'isOutOfMesh',
   namespace: 'namespace',
-  nodeType: 'nodeType'
+  nodeType: 'nodeType',
+  version: 'version'
 };

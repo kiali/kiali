@@ -25,8 +25,9 @@ import {
   VisualizationSurface,
   Edge
 } from '@patternfly/react-topology';
+import { TopologyIcon } from '@patternfly/react-icons';
 import * as React from 'react';
-import { BoxByType, Layout } from 'types/Graph';
+import { Layout } from 'types/Graph';
 import { elementFactory } from './elements/elementFactory';
 import { layoutFactory } from './layouts/layoutFactory';
 import { TimeInMilliseconds } from 'types/Common';
@@ -49,7 +50,9 @@ import {
   setNodeLabel
 } from './MeshElems';
 import { MeshTourStops } from './MeshHelpTour';
-import { KialiMeshGraph } from 'components/CytoscapeGraph/graphs/KialiMeshGraph';
+import { KialiMeshDagre } from './layouts/KialiMeshDagre';
+//import { KialiMeshCola } from './layouts/KialiMeshCola';
+import { KialiDagreGraph } from 'components/CytoscapeGraph/graphs/KialiDagreGraph';
 
 let initialLayout = false;
 let requestFit = false;
@@ -62,10 +65,20 @@ const ZOOM_OUT = 3 / 4;
 export const FIT_PADDING = 90;
 
 export enum LayoutName {
-  // Cola = 'kiali-cola',
-  // Dagre = 'kiali-dagre',
-  // Grid = 'kiali-grid',
-  Mesh = 'kiali-mesh'
+  Dagre = 'dagre',
+  //MeshCola = 'kiali-mesh-cola',
+  MeshDagre = 'kiali-mesh-dagre'
+}
+
+export function getLayoutByName(layoutName: string): Layout {
+  switch (layoutName) {
+    // case LayoutName.MeshCola:
+    // return KialiMeshCola.getLayout();
+    case LayoutName.MeshDagre:
+      return KialiMeshDagre.getLayout();
+    default:
+      return KialiDagreGraph.getLayout();
+  }
 }
 
 // TODO: Implement some sort of focus when provided
@@ -84,6 +97,7 @@ const TopologyContent: React.FC<{
   onEdgeTap?: (edge: Edge<EdgeModel>) => void;
   onNodeTap?: (node: Node<NodeModel>) => void;
   onReady: (controller: any) => void;
+  onResize?: () => void;
   setLayout: (val: LayoutName) => void;
   setTarget: (meshTarget: MeshTarget) => void;
   setUpdateTime: (val: TimeInMilliseconds) => void;
@@ -97,6 +111,7 @@ const TopologyContent: React.FC<{
   onEdgeTap,
   onNodeTap,
   onReady,
+  onResize,
   setLayout: _setLayoutName,
   setTarget,
   setUpdateTime,
@@ -160,18 +175,24 @@ const TopologyContent: React.FC<{
   // fitView handling
   //
   const fitView = React.useCallback(() => {
-    const graph = controller?.getGraph();
-    graph?.reset();
-    graph?.fit(FIT_PADDING);
+    if (controller?.hasGraph()) {
+      const graph = controller.getGraph();
+      graph.reset();
+      graph.fit(FIT_PADDING);
+    }
   }, [controller]);
 
   // resize handling
-  const onResize = React.useCallback(() => {
-    if (!requestFit) {
+  const handleResize = React.useCallback(() => {
+    if (!requestFit && controller?.hasGraph()) {
       requestFit = true;
-      controller.getGraph()?.layout();
+      controller.getGraph().reset();
+      controller.getGraph().layout();
     }
-  }, [controller]);
+    if (onResize) {
+      onResize();
+    }
+  }, [onResize, controller]);
 
   //
   // layoutEnd handling
@@ -224,13 +245,6 @@ const TopologyContent: React.FC<{
       let nodeMap: Map<string, NodeModel> = new Map<string, NodeModel>();
       const edges: EdgeModel[] = [];
 
-      const onCollapseChange = (group: Node, collapsed: boolean): void => {
-        requestFit = true;
-        if (collapsed) {
-          group.getGraph()?.layout();
-        }
-      };
-
       const onHover = (element: GraphElement, isMouseIn: boolean): void => {
         if (isMouseIn) {
           highlighter.onMouseIn(element);
@@ -240,13 +254,10 @@ const TopologyContent: React.FC<{
       };
 
       function addGroup(data: NodeData): NodeModel {
-        const collapsed = data.isBox === BoxByType.DATAPLANES; // always collapse data-planes to start
-        data.collapsible = collapsed;
-        data.onCollapseChange = onCollapseChange;
+        data.collapsible = false;
         data.onHover = onHover;
         const group: NodeModel = {
           children: [],
-          collapsed: collapsed,
           data: data,
           group: true,
           id: data.id,
@@ -479,7 +490,7 @@ const TopologyContent: React.FC<{
     </TopologyView>
   ) : (
     <>
-      <ReactResizeDetector handleWidth={true} handleHeight={true} skipOnMount={false} onResize={onResize} />
+      <ReactResizeDetector handleWidth={true} handleHeight={true} skipOnMount={true} onResize={handleResize} />
       <TopologyView
         data-test="mesh-topology-view-pf"
         controlBar={
@@ -492,40 +503,28 @@ const TopologyContent: React.FC<{
                   fitToScreen: false,
                   zoomIn: false,
                   zoomOut: false,
-                  /*
-                customButtons: [
-                  {
-                    ariaLabel: 'Layout - Mesh',
-                    id: 'toolbar_layout_mesh',
-                    disabled: LayoutName.Mesh === layoutName,
-                    icon: <TopologyIcon />,
-                    tooltip: 'Layout - mesh',
-                    callback: () => {
-                      setLayoutName(LayoutName.Mesh);
+                  customButtons: [
+                    {
+                      ariaLabel: 'Layout - Dagre',
+                      id: 'toolbar_layout_dagre',
+                      disabled: LayoutName.Dagre === layoutName,
+                      icon: <TopologyIcon />,
+                      tooltip: 'Layout - Dagre',
+                      callback: () => {
+                        _setLayoutName(LayoutName.Dagre);
+                      }
+                    },
+                    {
+                      ariaLabel: 'Layout - Mesh Dagre',
+                      id: 'toolbar_layout_mesh_dagre',
+                      disabled: LayoutName.MeshDagre === layoutName,
+                      icon: <TopologyIcon />,
+                      tooltip: 'Layout - Mesh Dagre',
+                      callback: () => {
+                        _setLayoutName(LayoutName.MeshDagre);
+                      }
                     }
-                  },
-                  {
-                    ariaLabel: 'Layout - Cola',
-                    id: 'toolbar_layout_cola',
-                    disabled: LayoutName.Cola === layoutName,
-                    icon: <TopologyIcon />,
-                    tooltip: 'Layout - cola',
-                    callback: () => {
-                      setLayoutName(LayoutName.Cola);
-                    }
-                  },
-                  {
-                    ariaLabel: 'Layout - Dagre',
-                    id: 'toolbar_layout_dagre',
-                    disabled: LayoutName.Dagre === layoutName,
-                    icon: <TopologyIcon />,
-                    tooltip: 'Layout - dagre',
-                    callback: () => {
-                      setLayoutName(LayoutName.Dagre);
-                    }
-                  }
-                ],
-                */
+                  ],
                   // currently unused
                   zoomInCallback: () => {
                     controller && controller.getGraph().scaleBy(ZOOM_IN);
@@ -541,7 +540,7 @@ const TopologyContent: React.FC<{
                       controller.getGraph().layout();
                     }
                   },
-                  legend: true,
+                  legend: false, // Actual Legend is still TODO...
                   legendIcon: <MapIcon />,
                   legendTip: 'Legend',
                   legendCallback: () => {
@@ -567,6 +566,7 @@ export const Mesh: React.FC<{
   onEdgeTap?: (edge: Edge<EdgeModel>) => void;
   onNodeTap?: (node: Node<NodeModel>) => void;
   onReady: (controller: any) => void;
+  onResize: () => void;
   setLayout: (layout: Layout) => void;
   setTarget: (meshTarget: MeshTarget) => void;
   setUpdateTime: (val: TimeInMilliseconds) => void;
@@ -578,6 +578,7 @@ export const Mesh: React.FC<{
   onEdgeTap,
   onNodeTap,
   onReady,
+  onResize,
   setLayout,
   setTarget,
   setUpdateTime,
@@ -600,37 +601,16 @@ export const Mesh: React.FC<{
 
   const getLayoutName = (layout: Layout): LayoutName => {
     switch (layout.name) {
-      /*
-      case 'kiali-cola':
-        return LayoutName.Cola;
-      case 'kiali-dagre':
-        return LayoutName.Dagre;
-      case 'kiali-grid':
-        return LayoutName.Grid;
-     */
+      // case LayoutName.MeshCola:
+      case LayoutName.MeshDagre:
+        return layout.name;
       default:
-        return LayoutName.Mesh;
+        return LayoutName.Dagre;
     }
   };
 
   const setLayoutByName = (layoutName: LayoutName) => {
-    let layout: Layout;
-    switch (layoutName) {
-      /*
-      case LayoutName.Cola:
-        layout = KialiColaGraph.getLayout();
-        break;
-      case LayoutName.Dagre:
-        layout = KialiDagreGraph.getLayout();
-        break;
-      case LayoutName.Grid:
-        layout = KialiGridGraph.getLayout();
-        break;
-      */
-      default:
-        layout = KialiMeshGraph.getLayout();
-    }
-
+    const layout = getLayoutByName(layoutName);
     HistoryManager.setParam(URLParam.MESH_LAYOUT, layout.name);
     setLayout(layout);
   };
@@ -654,6 +634,7 @@ export const Mesh: React.FC<{
         layoutName={getLayoutName(layout)}
         onEdgeTap={onEdgeTap}
         onNodeTap={onNodeTap}
+        onResize={onResize}
         onReady={onReady}
         setLayout={setLayoutByName}
         setTarget={setTarget}

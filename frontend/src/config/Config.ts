@@ -68,15 +68,17 @@ const conf = {
   },
   /** About dialog configuration */
   about: {
+    mesh: {
+      url: '/mesh',
+      linkText: i18n.t('Visit the Mesh page')
+    },
     project: {
       url: 'https://github.com/kiali',
-      icon: 'RepositoryIcon',
-      linkText: i18n.t('Find us on GitHub')
+      linkText: i18n.t('Kiali on GitHub')
     },
     website: {
       url: 'https://www.kiali.io', // Without www, we get an SSL error
-      icon: 'HomeIcon',
-      linkText: i18n.t('Visit our web page')
+      linkText: 'kiali.io'
     }
   },
   /** */
@@ -147,12 +149,13 @@ const conf = {
       meshGraph: 'api/mesh/graph',
       meshTls: () => 'api/mesh/tls',
       metricsStats: 'api/stats/metrics',
-      namespaces: 'api/namespaces',
       namespace: (namespace: string) => `api/namespaces/${namespace}`,
-      namespacesGraphElements: `api/namespaces/graph`,
+      namespaceInfo: (namespace: string) => `api/namespaces/${namespace}/info`,
       namespaceMetrics: (namespace: string) => `api/namespaces/${namespace}/metrics`,
       namespaceTls: (namespace: string) => `api/namespaces/${namespace}/tls`,
       namespaceValidations: (namespace: string) => `api/namespaces/${namespace}/validations`,
+      namespaces: 'api/namespaces',
+      namespacesGraphElements: `api/namespaces/graph`,
       outboundTrafficPolicyMode: () => 'api/mesh/outbound_traffic_policy/mode',
       pod: (namespace: string, pod: string) => `api/namespaces/${namespace}/pods/${pod}`,
       podLogs: (namespace: string, pod: string) => `api/namespaces/${namespace}/pods/${pod}/logs`,

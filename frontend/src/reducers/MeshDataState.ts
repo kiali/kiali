@@ -4,11 +4,11 @@ import { MeshState } from '../store/Store';
 import { updateState } from '../utils/Reducer';
 import { MeshActions } from 'actions/MeshActions';
 import { MeshToolbarActions } from 'actions/MeshToolbarActions';
-import { KialiMeshGraph } from 'components/CytoscapeGraph/graphs/KialiMeshGraph';
+import { KialiDagreGraph } from 'components/CytoscapeGraph/graphs/KialiDagreGraph';
 
 export const INITIAL_MESH_STATE: MeshState = {
   definition: null,
-  layout: KialiMeshGraph.getLayout(),
+  layout: KialiDagreGraph.getLayout(),
   target: null,
   toolbarState: {
     findValue: '',

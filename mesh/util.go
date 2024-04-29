@@ -2,12 +2,19 @@ package mesh
 
 import (
 	nethttp "net/http"
+
+	"github.com/kiali/kiali/status"
 )
 
 type Response struct {
 	Message string
 	Code    int
 }
+
+var (
+	// StatusGetter var allos test code to mock out this function with a mock
+	StatusGetter func() status.StatusInfo = status.Get
+)
 
 // Error panics with InternalServerError (500) and the provided message
 func Error(message string) {
@@ -46,13 +53,7 @@ func CheckUnavailable(err error) {
 	}
 }
 
-// IsOK just validates that a telemetry label value is not empty or unknown
+// IsOK just validates that a telemetry label value is not empty
 func IsOK(telemetryVal string) bool {
-	return telemetryVal != "" && telemetryVal != Unknown
-}
-
-// IsOKVersion does standard validation and also rejects "latest", which is equivalent to "unknown"
-// when using canonical_revision
-func IsOKVersion(telemetryVal string) bool {
-	return telemetryVal != "" && telemetryVal != Unknown && telemetryVal != "latest"
+	return telemetryVal != ""
 }

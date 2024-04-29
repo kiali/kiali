@@ -37,7 +37,6 @@
   "Filter by mTLS": "Filter by mTLS",
   "Filter by Namespace": "Filter by Namespace",
   "Filter by Namespace Label": "Filter by Namespace Label",
-  "Find us on GitHub": "在GitHub上找到我们",
   "FQDN": "完全限定域名",
   "Grid": "Grid",
   "Health": "正常状态",
@@ -50,6 +49,7 @@
   "Istio config": "Istio配置",
   "Istio Config": "Istio配置",
   "Kiali home cluster: {{name}}": "Kiali主集群: {{name}}",
+  "Kiali on GitHub": "Kiali on GitHub",
   "Last": "最近的",
   "List view": "列表视图",
   "mb": "mb",
@@ -103,6 +103,6 @@
   "Traffic Status": "流量状态",
   "Valid From:": "有效开始时间:",
   "Valid To:": "有效结束时间:",
-  "Visit our web page": "访问我们的网页",
+  "Visit the Mesh page": "Visit the Mesh page",
   "Workloads": "工作负载"
 }

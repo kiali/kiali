@@ -101,6 +101,11 @@ describe.skip('#Test Methods return a Promise', () => {
     evaluatePromise(result);
   });
 
+  it('#getNamespace', () => {
+    const result = API.getNamespaceInfo('istio-system');
+    evaluatePromise(result);
+  });
+
   it('#getNamespaceMetrics', () => {
     const result = API.getNamespaceMetrics('istio-system', {} as IstioMetricsOptions);
     evaluatePromise(result);

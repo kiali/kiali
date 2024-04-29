@@ -1,20 +1,21 @@
 import * as React from 'react';
 import { Node, NodeModel } from '@patternfly/react-topology';
 import { kialiStyle } from 'styles/StyleUtils';
-import { TargetPanelCommonProps, targetPanel, targetPanelHeading, targetPanelWidth } from './TargetPanelCommon';
+import { TargetPanelCommonProps, targetPanel, targetPanelBody, targetPanelHeading } from './TargetPanelCommon';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { MeshInfraType, MeshNodeData } from 'types/Mesh';
 import { classes } from 'typestyle';
 import { panelStyle } from 'pages/Graph/SummaryPanelStyle';
+import { Title, TitleSizes } from '@patternfly/react-core';
 
 type TargetPanelNodeState = {
   loading: boolean;
-  node: any;
+  node?: Node<NodeModel, any>;
 };
 
 const defaultState: TargetPanelNodeState = {
   loading: false,
-  node: null
+  node: undefined
 };
 
 const nodeStyle = kialiStyle({
@@ -23,14 +24,6 @@ const nodeStyle = kialiStyle({
 });
 
 export class TargetPanelNode extends React.Component<TargetPanelCommonProps, TargetPanelNodeState> {
-  static readonly panelStyle = {
-    height: '100%',
-    margin: 0,
-    minWidth: targetPanelWidth,
-    overflowY: 'auto' as 'auto',
-    width: targetPanelWidth
-  };
-
   constructor(props: TargetPanelCommonProps) {
     super(props);
 
@@ -50,17 +43,31 @@ export class TargetPanelNode extends React.Component<TargetPanelCommonProps, Tar
   componentWillUnmount() {}
 
   render() {
+    if (!this.state.node) {
+      return null;
+    }
+
     const node = this.props.target.elem as Node<NodeModel, any>;
     const data = node.getData() as MeshNodeData;
 
     return (
       <div className={classes(panelStyle, targetPanel)}>
-        <div className={targetPanelHeading}>{this.renderNode(data)}</div>
+        <div className={targetPanelHeading}>{this.renderNodeHeader(data)}</div>
+        <div className={targetPanelBody}>
+          {data.version && (
+            <div style={{ textAlign: 'left' }}>
+              {`Version: `}
+              {data.version}
+              <br />
+            </div>
+          )}
+          <pre>{JSON.stringify(data.infraData, null, 2)}</pre>
+        </div>
       </div>
     );
   }
 
-  private renderNode = (data: MeshNodeData): React.ReactNode => {
+  private renderNodeHeader = (data: MeshNodeData): React.ReactNode => {
     let pfBadge;
 
     switch (data.infraType) {
@@ -70,17 +77,11 @@ export class TargetPanelNode extends React.Component<TargetPanelCommonProps, Tar
       case MeshInfraType.GRAFANA:
         pfBadge = PFBadges.Grafana;
         break;
-      case MeshInfraType.ISTIOD:
-        pfBadge = PFBadges.Istio;
-        break;
       case MeshInfraType.KIALI:
         pfBadge = PFBadges.Kiali;
         break;
       case MeshInfraType.METRIC_STORE:
         pfBadge = PFBadges.MetricStore;
-        break;
-      case MeshInfraType.NAMESPACE:
-        pfBadge = PFBadges.Namespace;
         break;
       case MeshInfraType.TRACE_STORE:
         pfBadge = PFBadges.TraceStore;
@@ -91,17 +92,19 @@ export class TargetPanelNode extends React.Component<TargetPanelCommonProps, Tar
 
     return (
       <React.Fragment key={data.infraName}>
-        <span className={nodeStyle}>
-          <PFBadge badge={PFBadges.Cluster} size="sm" />
-          {data.cluster}
-        </span>
+        <Title headingLevel="h5" size={TitleSizes.lg}>
+          <span className={nodeStyle}>
+            <PFBadge badge={pfBadge} size="sm" />
+            {data.infraName}
+          </span>
+        </Title>
         <span className={nodeStyle}>
           <PFBadge badge={PFBadges.Namespace} size="sm" />
           {data.namespace}
         </span>
         <span className={nodeStyle}>
-          <PFBadge badge={pfBadge} size="sm" />
-          {data.infraName}
+          <PFBadge badge={PFBadges.Cluster} size="sm" />
+          {data.cluster}
         </span>
       </React.Fragment>
     );

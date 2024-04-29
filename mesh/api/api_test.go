@@ -29,6 +29,7 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/mesh"
+	"github.com/kiali/kiali/status"
 )
 
 // Setup mock
@@ -144,6 +145,12 @@ trustDomain: cluster.local
 func mockMeshGraph(t *testing.T) (*business.Layer, error) {
 
 	layer := setupMocks(t)
+
+	mesh.StatusGetter = func() status.StatusInfo {
+		return status.StatusInfo{
+			ExternalServices: []status.ExternalServiceInfo{},
+		}
+	}
 
 	return layer, nil
 }

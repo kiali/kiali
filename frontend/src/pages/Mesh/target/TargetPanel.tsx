@@ -7,7 +7,7 @@ import { TourStop } from 'components/Tour/TourStop';
 import { FocusNode } from 'pages/GraphPF/GraphPF';
 import { classes } from 'typestyle';
 import { PFColors } from 'components/Pf/PfColors';
-import { MeshInfraType, MeshTarget } from 'types/Mesh';
+import { MeshInfraType, MeshTarget, MeshType } from 'types/Mesh';
 import { TargetPanelCommonProps, targetPanel } from './TargetPanelCommon';
 import { MeshTourStops } from '../MeshHelpTour';
 import { BoxByType } from 'types/Graph';
@@ -18,9 +18,11 @@ import { TargetPanelNode } from './TargetPanelNode';
 import { TargetPanelMesh } from './TargetPanelMesh';
 import { meshWideMTLSStatusSelector, minTLSVersionSelector } from 'store/Selectors';
 import { NodeData } from '../MeshElems';
+import { TargetPanelDataPlane } from './TargetPanelDataPlane';
+import { TargetPanelControlPlane } from './TargetPanelControlPlane';
 
 type TargetPanelState = {
-  isVisible: boolean;
+  isCollapsed: boolean;
 };
 
 type ReduxProps = {
@@ -69,13 +71,13 @@ class TargetPanelComponent extends React.Component<TargetPanelProps, TargetPanel
   constructor(props: TargetPanelProps) {
     super(props);
     this.state = {
-      isVisible: true
+      isCollapsed: false
     };
   }
 
   componentDidUpdate(prevProps: Readonly<TargetPanelProps>): void {
     if (prevProps.target.elem !== this.props.target.elem) {
-      this.setState({ isVisible: true });
+      this.setState({ isCollapsed: false });
     }
   }
 
@@ -84,7 +86,7 @@ class TargetPanelComponent extends React.Component<TargetPanelProps, TargetPanel
       return null;
     }
 
-    const mainTopStyle = this.state.isVisible ? expandedStyle : collapsedStyle;
+    const mainTopStyle = this.state.isCollapsed ? collapsedStyle : expandedStyle;
     const target: MeshTarget = this.props.target;
 
     return (
@@ -92,13 +94,13 @@ class TargetPanelComponent extends React.Component<TargetPanelProps, TargetPanel
         <div id="mesh-target-panel" className={mainStyle}>
           <div className={mainTopStyle}>
             <div className={classes(toggleTargetPanelStyle)} onClick={this.togglePanel}>
-              {this.state.isVisible ? (
+              {this.state.isCollapsed ? (
                 <>
-                  <KialiIcon.AngleDoubleDown /> Hide
+                  <KialiIcon.AngleDoubleUp /> Show
                 </>
               ) : (
                 <>
-                  <KialiIcon.AngleDoubleUp /> Show
+                  <KialiIcon.AngleDoubleDown /> Hide
                 </>
               )}
             </div>
@@ -110,7 +112,7 @@ class TargetPanelComponent extends React.Component<TargetPanelProps, TargetPanel
   }
 
   private getTargetPanel = (target: MeshTarget): React.ReactFragment => {
-    const targetType = target.type as string;
+    const targetType = target.type as MeshType;
 
     switch (targetType) {
       case 'box': {
@@ -118,7 +120,7 @@ class TargetPanelComponent extends React.Component<TargetPanelProps, TargetPanel
         const data = elem.getData() as NodeData;
         const boxType: BoxByType = data.isBox as BoxByType;
         switch (boxType) {
-          case 'cluster':
+          case BoxByType.CLUSTER:
             return (
               <TargetPanelCluster
                 duration={this.props.duration}
@@ -129,14 +131,12 @@ class TargetPanelComponent extends React.Component<TargetPanelProps, TargetPanel
                 updateTime={this.props.updateTime}
               />
             );
-          case 'namespace':
+          case BoxByType.NAMESPACE:
             return (
               <TargetPanelNamespace
                 duration={this.props.duration}
                 istioAPIEnabled={this.props.istioAPIEnabled}
                 kiosk={this.props.kiosk}
-                meshStatus={this.props.meshStatus}
-                minTLS={this.props.minTLS}
                 refreshInterval={this.props.refreshInterval}
                 target={target}
                 updateTime={this.props.updateTime}
@@ -160,30 +160,43 @@ class TargetPanelComponent extends React.Component<TargetPanelProps, TargetPanel
       case 'node':
         const elem = target.elem as GraphElement<ElementModel, any>;
         const data = elem.getData() as NodeData;
-        if (data.infraType === MeshInfraType.NAMESPACE) {
-          return (
-            <TargetPanelNamespace
-              duration={this.props.duration}
-              istioAPIEnabled={this.props.istioAPIEnabled}
-              kiosk={this.props.kiosk}
-              meshStatus={this.props.meshStatus}
-              minTLS={this.props.minTLS}
-              refreshInterval={this.props.refreshInterval}
-              target={target}
-              updateTime={this.props.updateTime}
-            />
-          );
+        switch (data.infraType) {
+          case MeshInfraType.ISTIOD:
+            return (
+              <TargetPanelControlPlane
+                duration={this.props.duration}
+                istioAPIEnabled={this.props.istioAPIEnabled}
+                kiosk={this.props.kiosk}
+                meshStatus={this.props.meshStatus}
+                minTLS={this.props.minTLS}
+                refreshInterval={this.props.refreshInterval}
+                target={target}
+                updateTime={this.props.updateTime}
+              />
+            );
+          case MeshInfraType.DATAPLANE:
+            return (
+              <TargetPanelDataPlane
+                duration={this.props.duration}
+                istioAPIEnabled={this.props.istioAPIEnabled}
+                kiosk={this.props.kiosk}
+                refreshInterval={this.props.refreshInterval}
+                target={target}
+                updateTime={this.props.updateTime}
+              />
+            );
+          default:
+            return (
+              <TargetPanelNode
+                duration={this.props.duration}
+                istioAPIEnabled={this.props.istioAPIEnabled}
+                kiosk={this.props.kiosk}
+                refreshInterval={this.props.refreshInterval}
+                target={target}
+                updateTime={this.props.updateTime}
+              />
+            );
         }
-        return (
-          <TargetPanelNode
-            duration={this.props.duration}
-            istioAPIEnabled={this.props.istioAPIEnabled}
-            kiosk={this.props.kiosk}
-            refreshInterval={this.props.refreshInterval}
-            target={target}
-            updateTime={this.props.updateTime}
-          />
-        );
       default:
         return <></>;
     }
@@ -191,7 +204,7 @@ class TargetPanelComponent extends React.Component<TargetPanelProps, TargetPanel
 
   private togglePanel = () => {
     this.setState((state: TargetPanelState) => ({
-      isVisible: !state.isVisible
+      isCollapsed: !state.isCollapsed
     }));
   };
 }

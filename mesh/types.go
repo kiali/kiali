@@ -10,17 +10,18 @@ import (
 const (
 	BoxTypeCluster       string = "cluster"
 	BoxTypeNamespace     string = "namespace"
-	InfraTypeCluster     string = "cluster" // cluster node (not box) with no other infra (very rare)
+	External             string = "_external_" // Special cluster name for external deployment
+	InfraTypeCluster     string = "cluster"    // cluster node (not box) with no other infra (very rare)
+	InfraTypeDataPlane   string = "dataplane"  // single node representing 1 or more dataPlane namespaces
 	InfraTypeGrafana     string = "grafana"
 	InfraTypeIstiod      string = "istiod"
 	InfraTypeKiali       string = "kiali"
-	InfraTypeNamespace   string = "namespace"
 	InfraTypeMetricStore string = "metricStore"
+	InfraTypeNamespace   string = "namespace"
 	InfraTypeTraceStore  string = "traceStore"
 	NodeTypeBox          string = "box"                 // The special "box" node. isBox will be set to a BoxType
 	NodeTypeInfra        string = "infra"               // Any non-box node of interest
 	TF                   string = "2006-01-02 15:04:05" // TF is the TimeFormat for timestamps
-	Unknown              string = "unknown"             // Istio unknown label value
 )
 
 type Node struct {
@@ -65,18 +66,8 @@ func (tm MeshMap) Edges() []*Edge {
 	return edges
 }
 
-// NewNode constructor
-func NewNode(infraType, cluster, namespace, name string) (*Node, error) {
-	id, err := Id(cluster, namespace, name)
-	if err != nil {
-		return nil, err
-	}
-
-	return NewNodeExplicit(id, NodeTypeInfra, infraType, cluster, namespace, name), nil
-}
-
-// NewNodeExplicit constructor assigns the specified ID
-func NewNodeExplicit(id, nodeType, infraType, cluster, namespace, name string) *Node {
+// NewNode constructor assigns the specified ID
+func NewNode(id, nodeType, infraType, cluster, namespace, name string) *Node {
 	metadata := make(Metadata)
 
 	return &Node{
@@ -113,9 +104,9 @@ func NewMeshMap() MeshMap {
 }
 
 // Id returns the unique node ID
-func Id(cluster, namespace, name string) (id string, err error) {
-	if cluster != "" && namespace != "" && name != "" {
-		return fmt.Sprintf("infra_%s_%s_%s", cluster, namespace, name), nil
+func Id(cluster, namespace, name, infraType string, isExternal bool) (id string, err error) {
+	if cluster == "" || (namespace == "" && !(isExternal || infraType == InfraTypeCluster || infraType == InfraTypeDataPlane)) || name == "" {
+		return "", fmt.Errorf("failed Mesh ID gen: type=[%s] cluster=[%s] namespace=[%s] name=[%s], isExternal=[%v]", infraType, cluster, namespace, name, isExternal)
 	}
-	return "", fmt.Errorf("Failed Mesh ID gen: cluster=[%s] namespace=[%s] name=[%s]", cluster, namespace, name)
+	return fmt.Sprintf("infra_%s_%s_%s", cluster, namespace, name), nil
 }

@@ -6,6 +6,7 @@ import { decorateMeshData } from '../store/Selectors/MeshData';
 import EventEmitter from 'eventemitter3';
 import { createSelector } from 'reselect';
 import { DecoratedMeshElements, MeshDefinition, MeshElements, MeshQuery } from 'types/Mesh';
+import { UNKNOWN } from 'types/Graph';
 
 export const EMPTY_MESH_DATA = { nodes: [], edges: [] };
 const PROMISE_KEY = 'CURRENT_REQUEST';
@@ -36,6 +37,7 @@ type EmitEvents = {
   (eventName: 'fetchError', errorMessage: string | null, fetchParams: MeshFetchParams): void;
   (
     eventName: 'fetchSuccess',
+    meshName: string,
     meshTimestamp: TimeInSeconds,
     meshData: DecoratedMeshElements,
     fetchParams: MeshFetchParams
@@ -53,7 +55,12 @@ type OnEvents = {
   (eventName: 'fetchError', callback: (errorMessage: string | null, fetchParams: MeshFetchParams) => void): void;
   (
     eventName: 'fetchSuccess',
-    callback: (meshTimestamp: TimeInSeconds, meshData: DecoratedMeshElements, fetchParams: MeshFetchParams) => void
+    callback: (
+      meshName: string,
+      meshTimestamp: TimeInSeconds,
+      meshData: DecoratedMeshElements,
+      fetchParams: MeshFetchParams
+    ) => void
   ): void;
 };
 
@@ -67,6 +74,7 @@ export class MeshDataSource {
 
   private eventEmitter: EventEmitter;
   private meshElements: MeshElements;
+  private meshName: string;
   private promiseRegistry: PromisesRegistry;
 
   private decoratedData = createSelector(
@@ -78,6 +86,7 @@ export class MeshDataSource {
 
   constructor() {
     this.meshElements = EMPTY_MESH_DATA;
+    this.meshName = UNKNOWN;
     this.meshTimestamp = 0;
 
     this.eventEmitter = new EventEmitter();
@@ -110,6 +119,7 @@ export class MeshDataSource {
     if (isPreviousDataInvalid) {
       // Reset the mesh data
       this.meshElements = EMPTY_MESH_DATA;
+      this.meshName = '';
       this.meshTimestamp = 0;
     }
 
@@ -144,12 +154,13 @@ export class MeshDataSource {
     this.promiseRegistry.register(PROMISE_KEY, API.getMeshGraph(restParams)).then(
       response => {
         const responseData: any = response.data;
-        this.meshElements = responseData && responseData.elements ? responseData.elements : EMPTY_MESH_DATA;
-        this.meshTimestamp = responseData && responseData.timestamp ? responseData.timestamp : 0;
+        this.meshElements = responseData?.elements ?? EMPTY_MESH_DATA;
+        this.meshName = responseData?.meshName ?? 'Istio mesh';
+        this.meshTimestamp = responseData?.timestamp ?? 0;
         const decoratedMeshElements = this.meshData;
         this._isLoading = this._isError = false;
 
-        this.emit('fetchSuccess', this.meshTimestamp, decoratedMeshElements, this.fetchParameters);
+        this.emit('fetchSuccess', this.meshName, this.meshTimestamp, decoratedMeshElements, this.fetchParameters);
       },
       error => {
         this._isLoading = false;
@@ -174,6 +185,7 @@ export class MeshDataSource {
   public get meshDefinition(): MeshDefinition {
     return {
       elements: this.meshElements,
+      name: this.meshName,
       timestamp: this.meshTimestamp
     };
   }

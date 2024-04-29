@@ -22,9 +22,9 @@ export interface ChildGroup {
   groups: LayoutGroup[];
 }
 
-// MeshLayout is a copy of PFT's ColaGroupsLayout, but for innermost groups it copies the simple
+// MeshColaLayout is a copy of PFT's ColaGroupsLayout, but for innermost groups it copies the simple
 // logic of GridLayout, which works better when organizing nodes with few, or no edges.
-class MeshLayout extends ColaLayout implements Layout {
+export class MeshColaLayout extends ColaLayout implements Layout {
   private layerNodes: LayoutNode[] = [];
 
   private layerGroupNodes: ChildGroup[] = [];
@@ -134,7 +134,7 @@ class MeshLayout extends ColaLayout implements Layout {
     edges: LayoutLink[],
     groups: LayoutGroup[]
   ): BaseLayout {
-    const layout = new MeshLayout(graph, {
+    const layout = new MeshColaLayout(graph, {
       ...this.options,
       onSimulationEnd: undefined,
       listenForChanges: false
@@ -311,5 +311,3 @@ class MeshLayout extends ColaLayout implements Layout {
     doStartGrid();
   }
 }
-
-export { MeshLayout };

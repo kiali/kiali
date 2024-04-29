@@ -103,12 +103,6 @@ Feature: Kiali Overview page
     And the "degraded" application indicator should list the application
 
   @error-rates-app
-  Scenario: The minimum TLS version is visible in the control plane
-    When user hovers over the MinTLS locker
-    Then the user sees the certificates information
-    And the minimum TLS version
-
-  @error-rates-app
   Scenario: The canary upgrade information is not present when there is no canary configured
     Then the user sees no information related to canary upgrades
 
