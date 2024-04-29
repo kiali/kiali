@@ -52,6 +52,7 @@
     "cypress:run:multi-primary": "cypress run -e TAGS=\"not @crd-validation and @multi-cluster and @multi-primary\"",
     "cypress:run:perf": "cypress run --config-file cypress-perf.config.ts",
     "cypress:run:tracing": "cypress run -e TAGS=\"@tracing\"",
+    "cypress:run:test-group:junit": "cypress run --reporter cypress-multi-reporters --reporter-options configFile=reporter-config.json -e TAGS=\"${TEST_GROUP}\"",
     "cypress:run:junit": "cypress run --reporter cypress-multi-reporters --reporter-options configFile=reporter-config.json -e TAGS=\"not @crd-validation and not @multi-cluster\" && cypress run --reporter cypress-multi-reporters --reporter-options configFile=reporter-config.json -e TAGS=\"@crd-validation and not @multi-cluster\"",
     "cypress:delete:reports": "rm cypress/results/* || true",
     "cypress:combine:reports": "jrm cypress/results/combined-report.xml \"cypress/results/*.xml\"",

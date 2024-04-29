@@ -44,6 +44,19 @@ In order to run the Cypress suite for a different setup (Multicluster, Tempo, et
 :multi-primary      #for the Multi-Primary tests
 :tracing            #for tests related to Tempo
 ```
+\
+Running specific test groups:
+
+```bash
+export TEST_GROUP="@smoke"
+yarn cypress:run:test-group:junit
+```
+
+you can use complex expresions, like
+```bash
+export TEST_GROUP="not @crd-validation and not @multi-cluster and not @smoke"
+yarn cypress:run:test-group:junit
+```
 
 ### Running tests in a container
 You can also run the test suite in a container, using the image `quay.io/kiali/kiali-cypress-tests:latest` or with a specific tag version.
@@ -60,6 +73,18 @@ podman run -it \
   -e CYPRESS_USERNAME="kubeadmin" \
   -e CYPRESS_AUTH_PROVIDER="kube:admin" \
   quay.io/kiali/kiali-cypress-tests:latest
+```
+
+By default, all tests without multicluster tests will be run (TEST_GROUP="not @multi-cluster")
+If you want to run only a specific test group by tag, you can run the command above with env `TEST_GROUP`, e.g.
+```console
+podman run -it \
+  -e CYPRESS_BASE_URL=https://kiali-istio-system.apps.test-cluster.test.com \
+  -e CYPRESS_PASSWD=<password> \
+  -e CYPRESS_USERNAME="kubeadmin" \
+  -e CYPRESS_AUTH_PROVIDER="kube:admin" \
+  -e TEST_GROUP="@smoke" \
+  quay.io/kiali/kiali-cypress-tests:v1.73
 ```
 
 ## Structure
