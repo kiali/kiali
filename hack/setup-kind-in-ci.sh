@@ -145,7 +145,7 @@ setup_kind_singlecluster() {
       infomsg "Installing Istio with Ambient profile"
       GAE="false"
       unset LOAD_BALANCER
-      "${SCRIPT_DIR}"/istio/install-istio-via-istioctl.sh --client-exe-path "$(which kubectl)" -cn "cluster-default" ${hub_arg:-} -cp ambient
+      "${SCRIPT_DIR}"/istio/install-istio-via-istioctl.sh --client-exe-path "$(which kubectl)" -cn "cluster-default" -mid "mesh-default" -net "network-default" -gae ${GAE} ${hub_arg:-} -cp ambient
   else
     "${SCRIPT_DIR}"/istio/install-istio-via-istioctl.sh --reduce-resources true --client-exe-path "$(which kubectl)" -cn "cluster-default" -mid "mesh-default" -net "network-default" -gae ${GAE} ${hub_arg:-}
   fi

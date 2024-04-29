@@ -334,8 +334,6 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_AMBIENT}" ]; then
   ensureKialiServerReady
   ensureBookinfoGraphReady
 
-  kubectl logs $(kubectl get pod -l app=kiali-traffic-generator -n bookinfo -o=jsonpath='{.items[*].metadata.name}') -n bookinfo
-
   export CYPRESS_BASE_URL="${KIALI_URL}"
   export CYPRESS_NUM_TESTS_KEPT_IN_MEMORY=0
   # Recorded video is unusable due to low resources in CI: https://github.com/cypress-io/cypress/issues/4722
