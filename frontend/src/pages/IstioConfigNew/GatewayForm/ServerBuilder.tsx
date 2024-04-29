@@ -42,7 +42,7 @@ const columns: ThProps[] = [
 ];
 
 export const protocols = ['HTTP', 'HTTPS', 'GRPC', 'HTTP2', 'MONGO', 'TCP', 'TLS'];
-const tlsModes = ['PASSTHROUGH', 'SIMPLE', 'MUTUAL', 'AUTO_PASSTHROUGH', 'ISTIO_MUTUAL'];
+const tlsModes = ['PASSTHROUGH', 'SIMPLE', 'MUTUAL', 'AUTO_PASSTHROUGH', 'ISTIO_MUTUAL', 'OPTIONAL_MUTUAL'];
 
 export const areValidHosts = (hosts: string[]): boolean => {
   if (hosts.length === 0) {
