@@ -69,7 +69,9 @@ class MeshToolbarComponent extends React.PureComponent<MeshToolbarProps> {
               <MeshReset />
             </ToolbarItem>
             <ToolbarItem>
-              <TimeDurationComponent id="mesh_time_range" disabled={this.props.disabled} supportsReplay={false} />
+              <TourStop info={MeshTourStops.TimeRange}>
+                <TimeDurationComponent id="mesh_time_range" disabled={this.props.disabled} supportsReplay={false} />
+              </TourStop>
             </ToolbarItem>
           </ToolbarGroup>
         </Toolbar>

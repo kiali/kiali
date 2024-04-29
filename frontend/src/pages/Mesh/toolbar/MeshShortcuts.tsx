@@ -9,9 +9,9 @@ interface Shortcut {
 const shortcuts: Shortcut[] = [
   { shortcut: 'Mouse wheel', description: 'Zoom' },
   { shortcut: 'Click + Drag', description: 'Panning' },
-  { shortcut: 'Shift + Drag', description: 'Select zoom area' },
-  { shortcut: 'Right click', description: 'Contextual menu on nodes' },
-  { shortcut: 'Single click', description: 'Details in side panel on nodes and edges' }
+  // { shortcut: 'Shift + Drag', description: 'Select zoom area' },
+  // { shortcut: 'Right click', description: 'Contextual menu on nodes' },
+  { shortcut: 'Single click', description: 'Details in side panel on nodes' }
 ];
 
 const makeShortcut = (shortcut: Shortcut): JSX.Element => {

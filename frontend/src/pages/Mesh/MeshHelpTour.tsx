@@ -20,12 +20,6 @@ export const MeshTourStops: { [name: string]: TourStopInfo } = {
       'Highlight or Hide mesh elements via typed expressions. Click the dropdown for preset Find or Hide expressions. Click the Find/Hide help icon for details on the expression language.',
     position: PopoverPosition.bottom
   },
-  Mesh: {
-    name: 'Mesh',
-    description: 'Click on a node or edge to see its summary and emphasize its end-to-end paths.',
-    position: PopoverPosition.left,
-    distance: 250
-  },
   Layout: {
     name: 'Layout selection',
     description:
@@ -37,10 +31,11 @@ export const MeshTourStops: { [name: string]: TourStopInfo } = {
     description: 'Display the legend to learn about what the different shapes, colors and backgrounds mean.',
     position: PopoverPosition.rightEnd
   },
-  Refresh: {
-    name: 'Refresh',
-    description: 'Select how often to refresh the mesh topology.',
-    position: PopoverPosition.bottomEnd
+  Mesh: {
+    name: 'Mesh',
+    description: 'Click on a node or edge to see its summary and emphasize its end-to-end paths.',
+    position: PopoverPosition.left,
+    distance: 250
   },
   Shortcuts: {
     name: 'Shortcuts',
@@ -51,6 +46,12 @@ export const MeshTourStops: { [name: string]: TourStopInfo } = {
     name: 'Side Panel',
     description: 'The Side Panel shows details about the currently selected node or edge, otherwise the whole mesh.',
     position: PopoverPosition.left
+  },
+  TimeRange: {
+    name: 'Time Range',
+    description:
+      'Select how often to refresh the mesh and how much historical metric data is used for metric charts. For example "Last 5m" means use the most recent 5 minutes of request metric data.',
+    position: PopoverPosition.bottomEnd
   }
 };
 
@@ -58,13 +59,13 @@ export const MeshTour: TourInfo = {
   name: 'MeshTour',
   stops: [
     MeshTourStops.Shortcuts,
-    MeshTourStops.Display,
+    // MeshTourStops.Display,
     MeshTourStops.Find,
-    MeshTourStops.Refresh,
+    MeshTourStops.TimeRange,
     MeshTourStops.Mesh,
-    MeshTourStops.ContextualMenu,
     MeshTourStops.TargetPanel,
-    MeshTourStops.Layout,
-    MeshTourStops.Legend
+    // MeshTourStops.ContextualMenu,
+    MeshTourStops.Layout
+    // MeshTourStops.Legend
   ]
 };

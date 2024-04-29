@@ -88,9 +88,10 @@ class TargetPanelComponent extends React.Component<TargetPanelProps, TargetPanel
 
     const mainTopStyle = this.state.isCollapsed ? collapsedStyle : expandedStyle;
     const target: MeshTarget = this.props.target;
+    const tourStops = [MeshTourStops.TargetPanel, MeshTourStops.Mesh];
 
     return (
-      <TourStop info={MeshTourStops.TargetPanel}>
+      <TourStop info={tourStops}>
         <div id="mesh-target-panel" className={mainStyle}>
           <div className={mainTopStyle}>
             <div className={classes(toggleTargetPanelStyle)} onClick={this.togglePanel}>
