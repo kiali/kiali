@@ -247,7 +247,7 @@ func TestMeshGraph(t *testing.T) {
 	var fut func(ctx context.Context, globalInfo *mesh.AppenderGlobalInfo, o mesh.Options) (int, interface{})
 
 	mr := mux.NewRouter()
-	mr.HandleFunc("/api/mesh", http.HandlerFunc(
+	mr.HandleFunc("/api/mesh/graph", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
 			context := authentication.SetAuthInfoContext(r.Context(), &api.AuthInfo{Token: "test"})
 			code, config := fut(context, globalInfo, mesh.NewOptions(r.WithContext(context)))
@@ -258,7 +258,7 @@ func TestMeshGraph(t *testing.T) {
 	defer ts.Close()
 
 	fut = graphMesh
-	url := ts.URL + "/api/mesh?queryTime=1523364075"
+	url := ts.URL + "/api/mesh/graph?queryTime=1523364075"
 	resp, err := http.Get(url)
 	if err != nil {
 		t.Fatal(err)

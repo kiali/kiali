@@ -11,7 +11,6 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph/config/cytoscape"
 	"github.com/kiali/kiali/handlers"
-	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/status"
@@ -507,26 +506,6 @@ func Grafana() (*models.GrafanaInfo, int, error) {
 	} else {
 		return nil, code, err
 	}
-}
-
-func Clusters() ([]kubernetes.Cluster, error) {
-	url := fmt.Sprintf("%s/api/clusters", client.kialiURL)
-	body, code, _, err := httpGETWithRetry(url, client.GetAuth(), TIMEOUT, nil, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	if code != http.StatusOK {
-		return nil, fmt.Errorf("non 200 response code: %d when getting clusters. Body: %s", code, body)
-	}
-
-	clusters := []kubernetes.Cluster{}
-	err = json.Unmarshal(body, &clusters)
-	if err != nil {
-		return nil, fmt.Errorf("unable to unmarshal body into clusters. Body: %s", body)
-	}
-
-	return clusters, nil
 }
 
 func getRequestAndUnmarshalInto[T any](url string, response *T) (int, error) {
