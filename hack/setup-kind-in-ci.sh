@@ -142,6 +142,8 @@ setup_kind_singlecluster() {
 
   if [ -n "${AMBIENT}" ]; then
       infomsg "Installing Istio with Ambient profile"
+      # -net is giving issues trying to access the services inside the cluster with HTTP code 56
+      # At least with Ambient 1.21
       "${SCRIPT_DIR}"/istio/install-istio-via-istioctl.sh --reduce-resources true --client-exe-path "$(which kubectl)" -cn "cluster-default" -mid "mesh-default" -gae true ${hub_arg:-} -cp ambient
   else
     "${SCRIPT_DIR}"/istio/install-istio-via-istioctl.sh --reduce-resources true --client-exe-path "$(which kubectl)" -cn "cluster-default" -mid "mesh-default" -net "network-default" -gae true ${hub_arg:-}
