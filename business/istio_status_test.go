@@ -205,6 +205,7 @@ func TestGrafanaWorking(t *testing.T) {
 	assert.Equal(1, *grafanaCalls)
 	assert.Equal(1, *promCalls)
 
+	// All services are healthy
 	assertComponent(assert, icsl, "grafana", kubernetes.ComponentHealthy, false)
 	assertComponent(assert, icsl, "prometheus", kubernetes.ComponentHealthy, false)
 	assertComponent(assert, icsl, "tracing", kubernetes.ComponentHealthy, false)
@@ -239,16 +240,21 @@ func TestGrafanaDisabled(t *testing.T) {
 	icsl, error := iss.GetStatus(context.TODO(), conf.KubernetesConfig.ClusterName)
 	assert.NoError(error)
 
-	// Only two Istio components are missing
-	assert.Equal(2, len(icsl))
-
 	// No request performed to Grafana endpoint
 	assert.Zero(*grafanaCalls)
 
 	// Requests to Tracing and Prometheus performed once
 	assert.Equal(1, *promCalls)
 
-	assertComponent(assert, icsl, "grafana", kubernetes.ComponentHealthy, false)
+	// Grafana is disabled
+	assertNotPresent(assert, icsl, "grafana")
+
+	// Two Istio components are missing
+	assertComponent(assert, icsl, "istio-ingressgateway", kubernetes.ComponentNotFound, true)
+	assertComponent(assert, icsl, "istiod", kubernetes.ComponentNotFound, true)
+
+	// The rest of the components are healthy
+	assertComponent(assert, icsl, "istio-egressgateway", kubernetes.ComponentHealthy, false)
 	assertComponent(assert, icsl, "prometheus", kubernetes.ComponentHealthy, false)
 	assertComponent(assert, icsl, "tracing", kubernetes.ComponentHealthy, false)
 	assertComponent(assert, icsl, "custom dashboards", kubernetes.ComponentHealthy, false)
@@ -294,14 +300,17 @@ func TestGrafanaNotWorking(t *testing.T) {
 	icsl, error := iss.GetStatus(context.TODO(), conf.KubernetesConfig.ClusterName)
 	assert.NoError(error)
 
-	// Grafana and two Istio comps missing
-	assert.Equal(3, len(icsl))
-
 	// Requests to AddOns have to be 1
 	assert.Equal(1, grafanaCalls)
 	assert.Equal(1, prometheusCalls)
 
+	// Grafana and two Istio comps missing
 	assertComponent(assert, icsl, "grafana", kubernetes.ComponentUnreachable, false)
+	assertComponent(assert, icsl, "istiod", kubernetes.ComponentNotFound, true)
+	assertComponent(assert, icsl, "istio-ingressgateway", kubernetes.ComponentNotFound, true)
+
+	// The rest of the components are healthy
+	assertComponent(assert, icsl, "istio-egressgateway", kubernetes.ComponentHealthy, false)
 	assertComponent(assert, icsl, "prometheus", kubernetes.ComponentHealthy, false)
 	assertComponent(assert, icsl, "tracing", kubernetes.ComponentHealthy, false)
 	assertComponent(assert, icsl, "custom dashboards", kubernetes.ComponentHealthy, false)
@@ -329,10 +338,14 @@ func TestFailingTracingService(t *testing.T) {
 	assert.Equal(1, *grafanaCalls)
 	assert.Equal(1, *promCalls)
 
+	// Tracing service is unreachable
+	assertComponent(assert, icsl, "tracing", kubernetes.ComponentUnreachable, false)
+
+	// The rest of the services are healthy
 	assertComponent(assert, icsl, "grafana", kubernetes.ComponentHealthy, false)
 	assertComponent(assert, icsl, "prometheus", kubernetes.ComponentHealthy, false)
 	assertComponent(assert, icsl, "custom dashboards", kubernetes.ComponentHealthy, false)
-	assertComponent(assert, icsl, "tracing", kubernetes.ComponentUnreachable, false)
+
 }
 
 func TestOverriddenUrls(t *testing.T) {
@@ -355,6 +368,7 @@ func TestOverriddenUrls(t *testing.T) {
 	assert.Equal(1, *grafanaCalls)
 	assert.Equal(1, *promCalls)
 
+	// All the services are healthy
 	assertComponent(assert, icsl, "grafana", kubernetes.ComponentHealthy, false)
 	assertComponent(assert, icsl, "prometheus", kubernetes.ComponentHealthy, false)
 	assertComponent(assert, icsl, "tracing", kubernetes.ComponentHealthy, false)
@@ -385,6 +399,7 @@ func TestCustomDashboardsMainPrometheus(t *testing.T) {
 	assert.Equal(1, *grafanaCalls)
 	assert.Equal(2, *promCalls)
 
+	// All the services are healthy
 	assertComponent(assert, icsl, "grafana", kubernetes.ComponentHealthy, false)
 	assertComponent(assert, icsl, "prometheus", kubernetes.ComponentHealthy, false)
 	assertComponent(assert, icsl, "tracing", kubernetes.ComponentHealthy, false)
@@ -433,10 +448,13 @@ func TestDefaults(t *testing.T) {
 
 	icsl, err := iss.GetStatus(context.TODO(), conf.KubernetesConfig.ClusterName)
 	assert.NoError(err)
+
+	// Two istio components are not found or unhealthy
 	assertComponent(assert, icsl, "istio-ingressgateway", kubernetes.ComponentNotFound, true)
 	assertComponent(assert, icsl, "istio-egressgateway", kubernetes.ComponentUnhealthy, false)
 
-	// Return kubernetes.ComponentHealthy deployments
+	// The rest of the components are healthy
+	assertComponent(assert, icsl, "istiod", kubernetes.ComponentHealthy, true)
 	assertComponent(assert, icsl, "grafana", kubernetes.ComponentHealthy, false)
 	assertComponent(assert, icsl, "prometheus", kubernetes.ComponentHealthy, false)
 	assertComponent(assert, icsl, "tracing", kubernetes.ComponentHealthy, false)
@@ -482,10 +500,13 @@ func TestNonDefaults(t *testing.T) {
 
 	icsl, error := iss.GetStatus(context.TODO(), conf.KubernetesConfig.ClusterName)
 	assert.NoError(error)
+
+	// Two istio components are not found or unhealthy
 	assertComponent(assert, icsl, "istio-ingressgateway", kubernetes.ComponentNotFound, false)
 	assertComponent(assert, icsl, "istio-egressgateway", kubernetes.ComponentUnhealthy, false)
 
-	// Return kubernetes.ComponentHealthy deployments
+	// The rest of the components are healthy
+	assertComponent(assert, icsl, "istiod", kubernetes.ComponentHealthy, false)
 	assertComponent(assert, icsl, "grafana", kubernetes.ComponentHealthy, false)
 	assertComponent(assert, icsl, "prometheus", kubernetes.ComponentHealthy, false)
 	assertComponent(assert, icsl, "tracing", kubernetes.ComponentHealthy, false)
@@ -529,15 +550,18 @@ func TestIstiodNotReady(t *testing.T) {
 
 	icsl, error := iss.GetStatus(context.TODO(), conf.KubernetesConfig.ClusterName)
 	assert.NoError(error)
+
+	// Three istio components are unhealthy, not found or not ready
 	assertComponent(assert, icsl, "istio-ingressgateway", kubernetes.ComponentNotFound, false)
 	assertComponent(assert, icsl, "istio-egressgateway", kubernetes.ComponentUnhealthy, false)
 	assertComponent(assert, icsl, "istiod", kubernetes.ComponentNotReady, true)
 
-	//  Return kubernetes.ComponentHealthy deployments
+	// The rest of the components are healthy
 	assertComponent(assert, icsl, "grafana", kubernetes.ComponentHealthy, false)
 	assertComponent(assert, icsl, "prometheus", kubernetes.ComponentHealthy, false)
 	assertComponent(assert, icsl, "tracing", kubernetes.ComponentHealthy, false)
 
+	// Terminating pods are not present
 	assertNotPresent(assert, icsl, "istiod-x3v1kn0l-terminating")
 	assertNotPresent(assert, icsl, "istiod-x3v1kn1l-terminating")
 
@@ -591,17 +615,20 @@ func TestIstiodUnreachable(t *testing.T) {
 
 	icsl, error := iss.GetStatus(context.TODO(), conf.KubernetesConfig.ClusterName)
 	assert.NoError(error)
+
+	// Four istio components are unhealthy, not found or not ready
 	assertComponent(assert, icsl, "istio-ingressgateway", kubernetes.ComponentNotFound, false)
 	assertComponent(assert, icsl, "istio-egressgateway", kubernetes.ComponentUnhealthy, false)
 	assertComponent(assert, icsl, "istiod-x3v1kn0l-running", kubernetes.ComponentUnreachable, true)
 	assertComponent(assert, icsl, "istiod-x3v1kn1l-running", kubernetes.ComponentUnreachable, true)
 
-	// Return kubernetes.ComponentHealthy deployments
+	// The rest of the components are healthy
 	assertComponent(assert, icsl, "grafana", kubernetes.ComponentHealthy, false)
 	assertComponent(assert, icsl, "prometheus", kubernetes.ComponentHealthy, false)
 	assertComponent(assert, icsl, "tracing", kubernetes.ComponentHealthy, false)
 	assertComponent(assert, icsl, "custom dashboards", kubernetes.ComponentHealthy, false)
 
+	// Terminating pods are not present
 	assertNotPresent(assert, icsl, "istiod-x3v1kn0l-terminating")
 	assertNotPresent(assert, icsl, "istiod-x3v1kn1l-terminating")
 
@@ -648,10 +675,13 @@ func TestCustomizedAppLabel(t *testing.T) {
 
 	icsl, error := iss.GetStatus(context.TODO(), conf.KubernetesConfig.ClusterName)
 	assert.NoError(error)
+
+	// Two istio components are not found or unhealthy
 	assertComponent(assert, icsl, "istio-ingressgateway", kubernetes.ComponentNotFound, false)
 	assertComponent(assert, icsl, "istio-egressgateway", kubernetes.ComponentUnhealthy, false)
 
-	// Return kubernetes.ComponentHealthy deployments
+	// The rest of the components are healthy
+	assertComponent(assert, icsl, "istiod", kubernetes.ComponentHealthy, false)
 	assertComponent(assert, icsl, "grafana", kubernetes.ComponentHealthy, false)
 	assertComponent(assert, icsl, "prometheus", kubernetes.ComponentHealthy, false)
 	assertComponent(assert, icsl, "tracing", kubernetes.ComponentHealthy, false)
@@ -699,10 +729,13 @@ func TestDaemonSetComponentHealthy(t *testing.T) {
 
 	icsl, error := iss.GetStatus(context.TODO(), conf.KubernetesConfig.ClusterName)
 	assert.NoError(error)
+
+	// One istio components is unhealthy
 	assertComponent(assert, icsl, "istio-egressgateway", kubernetes.ComponentUnhealthy, false)
 
-	// Return kubernetes.ComponentHealthy deployments
+	// The rest of the components are healthy
 	assertComponent(assert, icsl, "istio-ingressgateway", kubernetes.ComponentHealthy, false)
+	assertComponent(assert, icsl, "istiod", kubernetes.ComponentHealthy, false)
 	assertComponent(assert, icsl, "grafana", kubernetes.ComponentHealthy, false)
 	assertComponent(assert, icsl, "prometheus", kubernetes.ComponentHealthy, false)
 	assertComponent(assert, icsl, "tracing", kubernetes.ComponentHealthy, false)
@@ -746,10 +779,13 @@ func TestDaemonSetComponentUnhealthy(t *testing.T) {
 
 	icsl, error := iss.GetStatus(context.TODO(), conf.KubernetesConfig.ClusterName)
 	assert.NoError(error)
+
+	// Two istio components are unhealthy
 	assertComponent(assert, icsl, "istio-ingressgateway", kubernetes.ComponentUnhealthy, false)
 	assertComponent(assert, icsl, "istio-egressgateway", kubernetes.ComponentUnhealthy, false)
 
-	// Return kubernetes.ComponentHealthy deployments
+	// The rest of the components are healthy
+	assertComponent(assert, icsl, "istiod", kubernetes.ComponentHealthy, false)
 	assertComponent(assert, icsl, "grafana", kubernetes.ComponentHealthy, false)
 	assertComponent(assert, icsl, "prometheus", kubernetes.ComponentHealthy, false)
 	assertComponent(assert, icsl, "tracing", kubernetes.ComponentHealthy, false)
