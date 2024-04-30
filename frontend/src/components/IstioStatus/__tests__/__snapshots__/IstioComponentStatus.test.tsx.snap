@@ -123,7 +123,9 @@ exports[`IstioComponentStatus renders success icon when core component is runnin
     >
       isito-ingress
     </SplitItem>
-    <SplitItem />
+    <SplitItem>
+      Healthy
+    </SplitItem>
   </Split>
 </Fragment>
 `;
@@ -147,7 +149,9 @@ exports[`IstioComponentStatus renders success icon when core component is runnin
     >
       prometheus
     </SplitItem>
-    <SplitItem />
+    <SplitItem>
+      Healthy
+    </SplitItem>
   </Split>
 </Fragment>
 `;

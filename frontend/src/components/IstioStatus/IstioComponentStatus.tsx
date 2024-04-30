@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { ComponentStatus, Status } from '../../types/IstioStatus';
+import { ComponentStatus, Status, statusMsg } from '../../types/IstioStatus';
 import { PFColors } from '../Pf/PfColors';
 import {
   CheckCircleIcon,
@@ -10,6 +10,8 @@ import {
 import { Split, SplitItem } from '@patternfly/react-core';
 import { IconProps, createIcon } from 'config/KialiIcon';
 import { kialiStyle } from 'styles/StyleUtils';
+import { useTranslation } from 'react-i18next';
+import { I18N_NAMESPACE } from 'types/Common';
 
 type Props = {
   componentStatus: ComponentStatus;
@@ -43,18 +45,13 @@ const validToIcon: { [valid: string]: IconProps } = {
   'true-true': SuccessComponent
 };
 
-const statusMsg = {
-  [Status.NotFound]: 'Not found',
-  [Status.NotReady]: 'Not ready',
-  [Status.Unhealthy]: 'Not healthy',
-  [Status.Unreachable]: 'Unreachable'
-};
-
 const splitItemStyle = kialiStyle({
   textAlign: 'left'
 });
 
 export const IstioComponentStatus: React.FC<Props> = (props: Props) => {
+  const { t } = useTranslation(I18N_NAMESPACE);
+
   const renderIcon = (status: Status, isCore: boolean): React.ReactNode => {
     let compIcon = validToIcon[`${status === Status.Healthy}-${isCore}`];
 
@@ -76,7 +73,7 @@ export const IstioComponentStatus: React.FC<Props> = (props: Props) => {
       <Split key={`cell-status-icon-${comp.name}`} hasGutter={true} className={splitItemStyle}>
         <SplitItem>{renderIcon(props.componentStatus.status, props.componentStatus.is_core)}</SplitItem>
         <SplitItem isFilled={true}>{comp.name}</SplitItem>
-        <SplitItem>{statusMsg[comp.status]}</SplitItem>
+        <SplitItem>{t(statusMsg[comp.status])}</SplitItem>
       </Split>
     ];
   };

@@ -1,3 +1,5 @@
+import { i18n } from 'i18n';
+
 export enum Status {
   Healthy = 'Healthy',
   Unhealthy = 'Unhealthy',
@@ -6,13 +8,21 @@ export enum Status {
   NotReady = 'NotReady'
 }
 
+export const statusMsg = {
+  [Status.Healthy]: i18n.t('Healthy'),
+  [Status.NotFound]: i18n.t('Not found'),
+  [Status.NotReady]: i18n.t('Not ready'),
+  [Status.Unhealthy]: i18n.t('Not healthy'),
+  [Status.Unreachable]: i18n.t('Unreachable')
+};
+
 export interface ComponentStatus {
+  is_core: boolean;
   name: string;
   status: Status;
-  is_core: boolean;
 }
 
 export interface IstiodResourceThresholds {
-  memory: number;
   cpu: number;
+  memory: number;
 }

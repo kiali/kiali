@@ -1,8 +1,13 @@
 import * as React from 'react';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from 'components/Pf/PfColors';
-import { MeshTarget } from 'types/Mesh';
+import { MeshNodeData, MeshTarget } from 'types/Mesh';
 import { DurationInSeconds, IntervalInMilliseconds, TimeInMilliseconds } from 'types/Common';
+import { ValidationTypes } from 'types/IstioObjects';
+import { Status, statusMsg } from 'types/IstioStatus';
+import { Validation } from 'components/Validations/Validation';
+import { Tooltip, TooltipPosition } from '@patternfly/react-core';
+import { TFunction } from 'react-i18next';
 
 export interface TargetPanelCommonProps {
   duration: DurationInSeconds;
@@ -71,13 +76,17 @@ export const targetPanelTitle = kialiStyle({
   textAlign: 'left'
 });
 
+const healthStatusStyle = kialiStyle({
+  marginLeft: '0.5rem'
+});
+
 const hrStyle = kialiStyle({
   border: 0,
   borderTop: `1px solid ${PFColors.BorderColor100}`,
   margin: '1.0rem 0'
 });
 
-export const targetPanelHR = () => {
+export const targetPanelHR = (): React.ReactNode => {
   return <hr className={hrStyle} />;
 };
 
@@ -98,5 +107,37 @@ export const getTitle = (title: string): React.ReactNode => {
       {title}
       <br />
     </div>
+  );
+};
+
+export const getHealthStatus = (data: MeshNodeData, t: TFunction): React.ReactNode => {
+  let healthSeverity: ValidationTypes;
+
+  switch (data.healthData) {
+    case Status.Healthy:
+      healthSeverity = ValidationTypes.Correct;
+      break;
+    case Status.NotReady:
+      healthSeverity = ValidationTypes.Warning;
+      break;
+    default:
+      healthSeverity = ValidationTypes.Error;
+  }
+
+  return (
+    <>
+      {data.healthData && (
+        <Tooltip
+          aria-label={t('Health status')}
+          position={TooltipPosition.right}
+          enableFlip={true}
+          content={<>{t(statusMsg[data.healthData])}</>}
+        >
+          <span className={healthStatusStyle}>
+            <Validation severity={healthSeverity} />
+          </span>
+        </Tooltip>
+      )}
+    </>
   );
 };

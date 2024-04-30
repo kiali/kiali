@@ -1,12 +1,22 @@
 import * as React from 'react';
 import { Node, NodeModel } from '@patternfly/react-topology';
 import { kialiStyle } from 'styles/StyleUtils';
-import { TargetPanelCommonProps, targetPanel, targetPanelBody, targetPanelHeading } from './TargetPanelCommon';
+import {
+  TargetPanelCommonProps,
+  getHealthStatus,
+  targetPanel,
+  targetPanelBody,
+  targetPanelHeading
+} from './TargetPanelCommon';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { MeshInfraType, MeshNodeData } from 'types/Mesh';
 import { classes } from 'typestyle';
 import { panelStyle } from 'pages/Graph/SummaryPanelStyle';
 import { Title, TitleSizes } from '@patternfly/react-core';
+import { WithTranslation, withTranslation } from 'react-i18next';
+import { I18N_NAMESPACE } from 'types/Common';
+
+type TargetPanelNodeProps = WithTranslation & TargetPanelCommonProps;
 
 type TargetPanelNodeState = {
   loading: boolean;
@@ -23,26 +33,29 @@ const nodeStyle = kialiStyle({
   display: 'flex'
 });
 
-export class TargetPanelNode extends React.Component<TargetPanelCommonProps, TargetPanelNodeState> {
-  constructor(props: TargetPanelCommonProps) {
+class TargetPanelNodeComponent extends React.Component<TargetPanelNodeProps, TargetPanelNodeState> {
+  constructor(props: TargetPanelNodeProps) {
     super(props);
 
     this.state = { ...defaultState };
   }
 
-  static getDerivedStateFromProps(props: TargetPanelCommonProps, state: TargetPanelNodeState) {
+  static getDerivedStateFromProps: React.GetDerivedStateFromProps<TargetPanelCommonProps, TargetPanelNodeState> = (
+    props: TargetPanelCommonProps,
+    state: TargetPanelNodeState
+  ) => {
     // if the target (i.e. node) has changed, then init the state and set to loading. The loading
     // will actually be kicked off after the render (in componentDidMount/Update).
-    return props.target.elem !== state.node ? { node: props.target.elem, loading: true } : null;
-  }
+    return props.target.elem !== state.node ? { node: props.target.elem as Node<NodeModel, any>, loading: true } : null;
+  };
 
-  componentDidMount() {}
+  componentDidMount(): void {}
 
-  componentDidUpdate(_prevProps: TargetPanelCommonProps) {}
+  componentDidUpdate(_prevProps: TargetPanelCommonProps): void {}
 
-  componentWillUnmount() {}
+  componentWillUnmount(): void {}
 
-  render() {
+  render(): React.ReactNode {
     if (!this.state.node) {
       return null;
     }
@@ -68,7 +81,7 @@ export class TargetPanelNode extends React.Component<TargetPanelCommonProps, Tar
   }
 
   private renderNodeHeader = (data: MeshNodeData): React.ReactNode => {
-    let pfBadge;
+    let pfBadge = PFBadges.Unknown;
 
     switch (data.infraType) {
       case MeshInfraType.CLUSTER:
@@ -94,8 +107,9 @@ export class TargetPanelNode extends React.Component<TargetPanelCommonProps, Tar
       <React.Fragment key={data.infraName}>
         <Title headingLevel="h5" size={TitleSizes.lg}>
           <span className={nodeStyle}>
-            <PFBadge badge={pfBadge} size="sm" />
+            <PFBadge badge={pfBadge} size="global" />
             {data.infraName}
+            {getHealthStatus(data, this.props.t)}
           </span>
         </Title>
         <span className={nodeStyle}>
@@ -110,3 +124,5 @@ export class TargetPanelNode extends React.Component<TargetPanelCommonProps, Tar
     );
   };
 }
+
+export const TargetPanelNode = withTranslation(I18N_NAMESPACE)(TargetPanelNodeComponent);

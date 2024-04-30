@@ -94,7 +94,7 @@
           "infraType": "istiod",
           "namespace": "istio-system",
           "nodeType": "infra",
-          "healthData": null,
+          "healthData": "Healthy",
           "infraData": {
             "OutboundTrafficPolicy": {
               "mode": ""
@@ -179,7 +179,7 @@
           "infraType": "metricStore",
           "namespace": "",
           "nodeType": "infra",
-          "healthData": null,
+          "healthData": "Healthy",
           "infraData": {
             "Auth": {
               "CAFile": "xxx",
@@ -217,7 +217,7 @@
           "infraType": "grafana",
           "namespace": "",
           "nodeType": "infra",
-          "healthData": null,
+          "healthData": "Healthy",
           "infraData": {
             "Auth": {
               "CAFile": "xxx",
@@ -248,7 +248,7 @@
           "infraType": "traceStore",
           "namespace": "",
           "nodeType": "infra",
-          "healthData": null,
+          "healthData": "Healthy",
           "infraData": {
             "Auth": {
               "CAFile": "xxx",

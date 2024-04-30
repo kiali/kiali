@@ -1,3 +1,4 @@
+import { Status } from 'types/IstioStatus';
 import {
   DecoratedMeshEdgeData,
   DecoratedMeshEdgeWrapper,
@@ -8,7 +9,7 @@ import {
   MeshElements,
   MeshNodeWrapper
 } from '../../types/Mesh';
-import { NA } from 'types/Health';
+import { DEGRADED, FAILURE, HEALTHY } from 'types/Health';
 
 // When updating the mesh, the element data expects to have all the changes
 // non-provided values are taken as "this didn't change", similar as setState does.
@@ -32,10 +33,21 @@ export const decorateMeshData = (meshData: MeshElements): DecoratedMeshElements 
     if (meshData.nodes) {
       decoratedMesh.nodes = meshData.nodes.map((node: MeshNodeWrapper) => {
         const decoratedNode: any = { ...node };
-        // Calculate health
-        if (decoratedNode.data.healthData) {
-          decoratedNode.data.healthStatus = NA.name;
+
+        // Calculate health (except for Kiali instance)
+        if (decoratedNode.data.healthData && decoratedNode.data.name !== 'kiali') {
+          switch (decoratedNode.data.healthData) {
+            case Status.Healthy:
+              decoratedNode.data.healthStatus = HEALTHY.name;
+              break;
+            case Status.NotReady:
+              decoratedNode.data.healthStatus = DEGRADED.name;
+              break;
+            default:
+              decoratedNode.data.healthStatus = FAILURE.name;
+          }
         }
+
         decoratedNode.data = { ...elementsDefaults.nodes, ...decoratedNode.data } as DecoratedMeshNodeData;
         return decoratedNode as DecoratedMeshNodeWrapper;
       });
@@ -43,6 +55,11 @@ export const decorateMeshData = (meshData: MeshElements): DecoratedMeshElements 
     if (meshData.edges) {
       decoratedMesh.edges = meshData.edges.map((edge: MeshEdgeWrapper) => {
         const decoratedEdge: any = { ...edge };
+
+        // Edge has the same health status as the infra target node
+        const targetNode = decoratedMesh.nodes?.find(node => node.data.id === edge.data.target);
+        decoratedEdge.data.healthStatus = targetNode?.data.healthStatus;
+
         decoratedEdge.data = { ...elementsDefaults.edges, ...decoratedEdge.data } as DecoratedMeshEdgeData;
         return decoratedEdge as DecoratedMeshEdgeWrapper;
       });

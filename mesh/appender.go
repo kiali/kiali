@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/kiali/kiali/business"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/prometheus"
 )
 
@@ -14,10 +15,11 @@ type AppenderVendorInfo map[string]interface{}
 // can re-use the information.  A new instance is generated for graph and
 // is initially empty.
 type AppenderGlobalInfo struct {
-	Business   *business.Layer
-	Context    context.Context
-	PromClient *prometheus.Client
-	Vendor     AppenderVendorInfo // telemetry vendor's global info
+	Business         *business.Layer
+	Context          context.Context
+	MeshStatusGetter MeshStatusGetter
+	PromClient       *prometheus.Client
+	Vendor           AppenderVendorInfo // telemetry vendor's global info
 }
 
 // AppenderNamespaceInfo caches information relevant to a single namespace. It allows
@@ -55,4 +57,9 @@ type Appender interface {
 
 	// Name returns a unique appender name and which is the name used to identify the appender (e.g in 'appenders' query param)
 	Name() string
+}
+
+// MeshStatusGetter gets the status of the mesh graph components
+type MeshStatusGetter interface {
+	GetStatus(ctx context.Context, cluster string) (kubernetes.IstioComponentStatus, error)
 }

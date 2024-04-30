@@ -90,10 +90,10 @@ export interface FocusNode {
 // The is the main graph rendering component
 const TopologyContent: React.FC<{
   controller: Controller;
-  meshData: MeshData;
   highlighter: MeshHighlighter;
   isMiniMesh: boolean;
   layoutName: LayoutName;
+  meshData: MeshData;
   onEdgeTap?: (edge: Edge<EdgeModel>) => void;
   onNodeTap?: (node: Node<NodeModel>) => void;
   onReady: (controller: any) => void;
@@ -104,10 +104,10 @@ const TopologyContent: React.FC<{
   toggleLegend?: () => void;
 }> = ({
   controller,
-  meshData,
   highlighter,
   isMiniMesh,
   layoutName,
+  meshData,
   onEdgeTap,
   onNodeTap,
   onReady,
@@ -121,6 +121,7 @@ const TopologyContent: React.FC<{
   // SelectedIds State
   //
   const [selectedIds, setSelectedIds] = useVisualizationState<string[]>(SELECTION_STATE, []);
+
   React.useEffect(() => {
     if (isMiniMesh) {
       if (selectedIds.length > 0) {
@@ -169,7 +170,7 @@ const TopologyContent: React.FC<{
       highlighter.setSelectedId(undefined);
       setTarget({ elem: controller, type: 'mesh' } as MeshTarget);
     }
-  }, [setTarget, selectedIds, highlighter, controller, isMiniMesh, onEdgeTap, onNodeTap, setSelectedIds]);
+  }, [setTarget, selectedIds, highlighter, controller, isMiniMesh, onEdgeTap, onNodeTap, setSelectedIds, meshData]);
 
   //
   // fitView handling
@@ -177,6 +178,7 @@ const TopologyContent: React.FC<{
   const fitView = React.useCallback(() => {
     if (controller?.hasGraph()) {
       const graph = controller.getGraph();
+
       graph.reset();
       graph.fit(FIT_PADDING);
     }
@@ -188,7 +190,13 @@ const TopologyContent: React.FC<{
       requestFit = true;
       controller.getGraph().reset();
       controller.getGraph().layout();
+
+      // Fit padding after resize
+      setTimeout(() => {
+        controller.getGraph().fit(FIT_PADDING);
+      }, 0);
     }
+
     if (onResize) {
       onResize();
     }
@@ -224,7 +232,7 @@ const TopologyContent: React.FC<{
     //
     // Reset [new] graph with initial model
     //
-    const resetGraph = () => {
+    const resetGraph = (): void => {
       if (controller) {
         const defaultModel: Model = {
           graph: {
@@ -241,7 +249,7 @@ const TopologyContent: React.FC<{
     //
     // Manage the GraphData / DataModel
     //
-    const generateDataModel = () => {
+    const generateDataModel = (): { edges: EdgeModel[]; nodes: NodeModel[] } => {
       let nodeMap: Map<string, NodeModel> = new Map<string, NodeModel>();
       const edges: EdgeModel[] = [];
 
@@ -345,7 +353,7 @@ const TopologyContent: React.FC<{
     //
     // update model merging existing nodes / edges
     //
-    const updateModel = (controller: Controller) => {
+    const updateModel = (controller: Controller): void => {
       if (!controller) {
         return;
       }
@@ -406,6 +414,7 @@ const TopologyContent: React.FC<{
     const initialGraph = !controller.hasGraph();
     console.debug(`mesh updateModel`);
     updateModel(controller);
+
     if (initialGraph) {
       console.debug('mesh onReady');
       onReady(controller);
@@ -560,9 +569,9 @@ const TopologyContent: React.FC<{
 
 export const Mesh: React.FC<{
   focusNode?: FocusNode;
-  meshData: MeshData;
   isMiniMesh: boolean;
   layout: Layout;
+  meshData: MeshData;
   onEdgeTap?: (edge: Edge<EdgeModel>) => void;
   onNodeTap?: (node: Node<NodeModel>) => void;
   onReady: (controller: any) => void;
@@ -572,9 +581,9 @@ export const Mesh: React.FC<{
   setUpdateTime: (val: TimeInMilliseconds) => void;
   toggleLegend?: () => void;
 }> = ({
-  meshData,
   isMiniMesh,
   layout,
+  meshData,
   onEdgeTap,
   onNodeTap,
   onReady,
@@ -609,7 +618,7 @@ export const Mesh: React.FC<{
     }
   };
 
-  const setLayoutByName = (layoutName: LayoutName) => {
+  const setLayoutByName = (layoutName: LayoutName): void => {
     const layout = getLayoutByName(layoutName);
     HistoryManager.setParam(URLParam.MESH_LAYOUT, layout.name);
     setLayout(layout);

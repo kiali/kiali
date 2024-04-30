@@ -2,7 +2,7 @@ import * as React from 'react';
 import { SVGIconProps } from '@patternfly/react-icons/dist/js/createIcon';
 import * as API from '../../services/Api';
 import * as AlertUtils from '../../utils/AlertUtils';
-import { TimeInMilliseconds } from '../../types/Common';
+import { I18N_NAMESPACE, TimeInMilliseconds } from '../../types/Common';
 import { ComponentStatus, Status } from '../../types/IstioStatus';
 import { MessageType } from '../../types/MessageCenter';
 import { Namespace } from '../../types/Namespace';
@@ -20,6 +20,8 @@ import { NamespaceThunkActions } from '../../actions/NamespaceThunkActions';
 import { connectRefresh } from '../Refresh/connectRefresh';
 import { kialiStyle } from 'styles/StyleUtils';
 import { IconProps, createIcon } from 'config/KialiIcon';
+import { Link } from 'react-router-dom';
+import { WithTranslation, withTranslation } from 'react-i18next';
 
 type ReduxStateProps = {
   namespaces?: Namespace[];
@@ -39,7 +41,8 @@ type StatusIcons = {
 };
 
 type Props = ReduxStateProps &
-  ReduxDispatchProps & {
+  ReduxDispatchProps &
+  WithTranslation & {
     cluster?: string;
     icons?: StatusIcons;
     lastRefreshAt: TimeInMilliseconds;
@@ -68,6 +71,17 @@ const iconStyle = kialiStyle({
   verticalAlign: '-0.125rem'
 });
 
+const meshLinkStyle = kialiStyle({
+  display: 'flex',
+  justifyContent: 'center',
+  marginTop: '0.75rem',
+  $nest: {
+    '& > span': {
+      marginRight: '0.5rem'
+    }
+  }
+});
+
 export class IstioStatusComponent extends React.Component<Props> {
   componentDidMount(): void {
     this.props.refreshNamespaces();
@@ -90,15 +104,28 @@ export class IstioStatusComponent extends React.Component<Props> {
         const informative = this.props.namespaces && this.props.namespaces.length < 1;
 
         if (informative) {
-          AlertUtils.addError('Istio deployment status disabled.', error, 'default', MessageType.INFO);
+          AlertUtils.addError(this.props.t('Istio deployment status disabled.'), error, 'default', MessageType.INFO);
         } else {
-          AlertUtils.addError('Error fetching Istio deployment status.', error, 'default', MessageType.ERROR);
+          AlertUtils.addError(
+            this.props.t('Error fetching Istio deployment status.'),
+            error,
+            'default',
+            MessageType.ERROR
+          );
         }
       });
   };
 
   tooltipContent = (): React.ReactNode => {
-    return <IstioStatusList status={this.props.status} />;
+    return (
+      <>
+        <IstioStatusList status={this.props.status} />
+        <div className={meshLinkStyle}>
+          <span>{this.props.t('More info at')}</span>
+          <Link to="/mesh">{this.props.t('Mesh page')}</Link>
+        </div>
+      </>
+    );
   };
 
   tooltipColor = (): string => {
@@ -178,4 +205,6 @@ const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => ({
   }
 });
 
-export const IstioStatus = connectRefresh(connect(mapStateToProps, mapDispatchToProps)(IstioStatusComponent));
+export const IstioStatus = connectRefresh(
+  connect(mapStateToProps, mapDispatchToProps)(withTranslation(I18N_NAMESPACE)(IstioStatusComponent))
+);

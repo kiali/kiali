@@ -173,15 +173,14 @@ func (iss *IstioStatusService) getStatusOf(workloads []*models.Workload) (kubern
 			// @TODO when components exists on remote clusters only but config not marked multicluster
 		}
 
-		if status := GetWorkloadStatus(*workload); status != kubernetes.ComponentHealthy {
-			// Check status
-			isc = append(isc, kubernetes.ComponentStatus{
-				Name:   workload.Name,
-				Status: status,
-				IsCore: stat.IsCore,
-			},
-			)
-		}
+		status := GetWorkloadStatus(*workload)
+		// Add status
+		isc = append(isc, kubernetes.ComponentStatus{
+			Name:   workload.Name,
+			Status: status,
+			IsCore: stat.IsCore,
+		})
+
 	}
 
 	// Add missing deployments
@@ -277,17 +276,20 @@ func getAddonStatus(name string, enabled bool, isCore bool, auth *config.Auth, u
 		auth.Token = token
 	}
 
+	status := kubernetes.ComponentHealthy
 	// Call the addOn service endpoint to find out whether is reachable or not
 	_, statusCode, _, err := httputil.HttpGet(url, auth, 10*time.Second, nil, nil)
 	if err != nil || statusCode > 399 {
 		log.Tracef("addon health check failed: name=[%v], url=[%v], code=[%v]", name, url, statusCode)
-		staChan <- kubernetes.IstioComponentStatus{
-			kubernetes.ComponentStatus{
-				Name:   name,
-				Status: kubernetes.ComponentUnreachable,
-				IsCore: isCore,
-			},
-		}
+		status = kubernetes.ComponentUnreachable
+	}
+
+	staChan <- kubernetes.IstioComponentStatus{
+		kubernetes.ComponentStatus{
+			Name:   name,
+			Status: status,
+			IsCore: isCore,
+		},
 	}
 }
 
@@ -298,14 +300,19 @@ func (iss *IstioStatusService) getTracingStatus(name string, enabled bool, isCor
 		return
 	}
 
-	if accessible, err := iss.businessLayer.Tracing.GetStatus(); !accessible {
+	status := kubernetes.ComponentHealthy
+
+	accessible, err := iss.businessLayer.Tracing.GetStatus()
+	if !accessible {
 		log.Errorf("Error fetching availability of the tracing service: %v", err)
-		staChan <- kubernetes.IstioComponentStatus{
-			kubernetes.ComponentStatus{
-				Name:   name,
-				Status: kubernetes.ComponentUnreachable,
-				IsCore: isCore,
-			},
-		}
+		status = kubernetes.ComponentUnreachable
+	}
+
+	staChan <- kubernetes.IstioComponentStatus{
+		kubernetes.ComponentStatus{
+			Name:   name,
+			Status: status,
+			IsCore: isCore,
+		},
 	}
 }
