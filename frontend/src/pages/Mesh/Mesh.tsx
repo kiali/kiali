@@ -97,7 +97,6 @@ const TopologyContent: React.FC<{
   onEdgeTap?: (edge: Edge<EdgeModel>) => void;
   onNodeTap?: (node: Node<NodeModel>) => void;
   onReady: (controller: any) => void;
-  onResize?: () => void;
   setLayout: (val: LayoutName) => void;
   setTarget: (meshTarget: MeshTarget) => void;
   setUpdateTime: (val: TimeInMilliseconds) => void;
@@ -111,7 +110,6 @@ const TopologyContent: React.FC<{
   onEdgeTap,
   onNodeTap,
   onReady,
-  onResize,
   setLayout: _setLayoutName,
   setTarget,
   setUpdateTime,
@@ -196,11 +194,7 @@ const TopologyContent: React.FC<{
         controller.getGraph().fit(FIT_PADDING);
       }, 0);
     }
-
-    if (onResize) {
-      onResize();
-    }
-  }, [onResize, controller]);
+  }, [controller]);
 
   //
   // layoutEnd handling
@@ -575,7 +569,6 @@ export const Mesh: React.FC<{
   onEdgeTap?: (edge: Edge<EdgeModel>) => void;
   onNodeTap?: (node: Node<NodeModel>) => void;
   onReady: (controller: any) => void;
-  onResize: () => void;
   setLayout: (layout: Layout) => void;
   setTarget: (meshTarget: MeshTarget) => void;
   setUpdateTime: (val: TimeInMilliseconds) => void;
@@ -587,7 +580,6 @@ export const Mesh: React.FC<{
   onEdgeTap,
   onNodeTap,
   onReady,
-  onResize,
   setLayout,
   setTarget,
   setUpdateTime,
@@ -643,7 +635,6 @@ export const Mesh: React.FC<{
         layoutName={getLayoutName(layout)}
         onEdgeTap={onEdgeTap}
         onNodeTap={onNodeTap}
-        onResize={onResize}
         onReady={onReady}
         setLayout={setLayoutByName}
         setTarget={setTarget}

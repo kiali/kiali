@@ -83,7 +83,6 @@ export type MeshData = {
 
 type MeshPageState = {
   meshData: MeshData;
-  lastResizeTime: TimeInMilliseconds; // just a way to force a top-down re-render on a mesh-level resize (e..f targetPanelCollapse)
 };
 
 const containerStyle = kialiStyle({
@@ -149,8 +148,7 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
         isLoading: true,
         name: UNKNOWN,
         timestamp: 0
-      },
-      lastResizeTime: 0
+      }
     };
   }
 
@@ -249,13 +247,7 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
                   isLoading={this.state.meshData.isLoading}
                   isMiniMesh={false}
                 >
-                  <Mesh
-                    focusNode={this.focusNode}
-                    isMiniMesh={false}
-                    meshData={this.state.meshData}
-                    onResize={this.onResize}
-                    {...this.props}
-                  />
+                  <Mesh focusNode={this.focusNode} isMiniMesh={false} meshData={this.state.meshData} {...this.props} />
                 </EmptyMeshLayout>
               </div>
             </ErrorBoundary>
@@ -275,10 +267,6 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
       </>
     );
   }
-
-  private onResize = () => {
-    this.setState({ lastResizeTime: Date.now() });
-  };
 
   // TODO Focus...
   private onFocus = (focusNode: FocusNode) => {
