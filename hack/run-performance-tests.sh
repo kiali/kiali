@@ -129,8 +129,6 @@ deleteNamespaces() {
   jq '.allNamespaces = .namespaces' "$COMMON_PARAMS" > "$COMMON_PARAMS.tmp" && mv "$COMMON_PARAMS.tmp" "$COMMON_PARAMS"
 }
 
-ensureCypressInstalled
-
 if [ "${TESTS_ONLY}" != "true" -a "${DELETE_ONLY}" != "true" ]; then
   infomsg "Install test namespaces"
   createNamespaces
@@ -149,6 +147,8 @@ export CYPRESS_VIDEO=false
 if [ "${SETUP_ONLY}" == "true" ]; then
   exit 0
 fi
+
+ensureCypressInstalled
 
 cd "${SCRIPT_DIR}"/../frontend
 infomsg "Running cypress performance tests"
