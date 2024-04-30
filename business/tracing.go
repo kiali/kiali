@@ -331,6 +331,14 @@ func spanMatchesWorkload(span *jaegerModels.Span, namespace, workload string) bo
 				}
 			}
 		}
+		// For Tempo Traces
+		if tag.Key == "hostname" {
+			if v, ok := tag.Value.(string); ok {
+				if strings.HasPrefix(v, workload) {
+					return true
+				}
+			}
+		}
 	}
 	// Tag not found => try with 'hostname' in process' tags
 	if span.Process != nil {
