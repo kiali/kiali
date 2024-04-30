@@ -9,6 +9,7 @@
 #        start: starts the OpenShift environment
 #         stop: stops the OpenShift environment
 #       delete: deletes the OpenShift environment removing persisted data
+#      cleanup: just like delete but also further cleans up the CRC environment
 #       status: outputs the current status of the OpenShift environment
 #          ssh: logs into the CRC VM via ssh so you can probe in the VM
 #        sshoc: logs into the CRC VM via oc debug so you can probe in the VM
@@ -540,6 +541,10 @@ while [[ $# -gt 0 ]]; do
       _CMD="delete"
       shift
       ;;
+    cleanup)
+      _CMD="cleanup"
+      shift
+      ;;
     status)
       _CMD="status"
       shift
@@ -679,6 +684,7 @@ The command must be one of:
   * start: Starts the CRC VM with OpenShift 4.x.
   * stop: Stops the CRC VM retaining all data. 'start' will then bring up the CRC VM in the same state.
   * delete: Stops the CRC VM and removes all persistent data. 'start' will then bring up a clean CRC VM.
+  * cleanup: Just like delete but also further cleans up the CRC environment including the large downloaded bundles.
   * status: Information about the CRC VM and the OpenShift cluster running inside it.
   * ssh: Provides a command line prompt with root access inside the CRC VM. Logs in via ssh.
   * sshoc: Provides a command line prompt with root access inside the CRC VM. Logs in via oc debug.
@@ -960,9 +966,14 @@ elif [ "$_CMD" = "stop" ]; then
 
 elif [ "$_CMD" = "delete" ]; then
 
-  infomsg "Will delete the OpenShift cluster - this removes all persisted data."
+  infomsg "Will delete the OpenShift cluster. This removes all persisted data but downloaded bundles remain."
+  ${CRC_COMMAND} delete --force
+
+elif [ "$_CMD" = "cleanup" ]; then
+
+  infomsg "Will cleanup the CRC environment, including the large bundles that were downloaded."
   ${CRC_COMMAND} delete --clear-cache --force
-  infomsg "Cleaning up CRC"
+  infomsg "Further cleaning up of the CRC environment"
   ${CRC_COMMAND} cleanup
   infomsg "If CRC is not cleaned up fully, execute: sudo virsh destroy crc && sudo virsh undefine crc"
 
