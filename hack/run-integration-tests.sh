@@ -211,6 +211,7 @@ ensureBookinfoGraphReady() {
       fi
       sleep 1
     else
+      sleep 5
       break
     fi
 
