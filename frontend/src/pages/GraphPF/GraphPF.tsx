@@ -1,4 +1,5 @@
 import { Bullseye, Spinner } from '@patternfly/react-core';
+import ReactResizeDetector from 'react-resize-detector';
 import { LongArrowAltRightIcon, TopologyIcon, MapIcon } from '@patternfly/react-icons';
 import {
   Controller,
@@ -214,7 +215,17 @@ const TopologyContent: React.FC<{
       highlighter.setSelectedId(undefined);
       updateSummary({ isPF: true, summaryType: 'graph', summaryTarget: controller } as GraphEvent);
     }
-  }, [updateSummary, selectedIds, highlighter, controller, isMiniGraph, onEdgeTap, onNodeTap, setSelectedIds]);
+  }, [
+    controller,
+    graphData,
+    highlighter,
+    isMiniGraph,
+    onEdgeTap,
+    onNodeTap,
+    selectedIds,
+    setSelectedIds,
+    updateSummary
+  ]);
 
   //
   // TraceOverlay State
@@ -241,6 +252,20 @@ const TopologyContent: React.FC<{
       controller.getGraph().fit(FIT_PADDING);
     } else {
       console.error('fitView called before controller graph');
+    }
+  }, [controller]);
+
+  // resize handling
+  const handleResize = React.useCallback(() => {
+    if (!requestFit && controller?.hasGraph()) {
+      requestFit = true;
+      controller.getGraph().reset();
+      controller.getGraph().layout();
+
+      // Fit padding after resize
+      setTimeout(() => {
+        controller.getGraph().fit(FIT_PADDING);
+      }, 0);
     }
   }, [controller]);
 
@@ -656,124 +681,127 @@ const TopologyContent: React.FC<{
       <VisualizationSurface data-test="visualization-surface" state={{}} />
     </TopologyView>
   ) : (
-    <TopologyView
-      data-test="topology-view-pf"
-      controlBar={
-        <TourStop info={GraphTourStops.Layout}>
-          <TourStop info={GraphTourStops.Legend}>
-            <TopologyControlBar
-              data-test="topology-control-bar"
-              controlButtons={createTopologyControlButtons({
-                ...defaultControlButtonsOptions,
-                fitToScreen: false,
-                zoomIn: false,
-                zoomOut: false,
-                customButtons: [
-                  // TODO, get rid of the show all edges option, and the disabling, when we can set an option active
-                  {
-                    ariaLabel: 'Show All Edges',
-                    callback: () => {
-                      setEdgeMode(EdgeMode.ALL);
+    <>
+      <ReactResizeDetector handleWidth={true} handleHeight={true} skipOnMount={true} onResize={handleResize} />
+      <TopologyView
+        data-test="topology-view-pf"
+        controlBar={
+          <TourStop info={GraphTourStops.Layout}>
+            <TourStop info={GraphTourStops.Legend}>
+              <TopologyControlBar
+                data-test="topology-control-bar"
+                controlButtons={createTopologyControlButtons({
+                  ...defaultControlButtonsOptions,
+                  fitToScreen: false,
+                  zoomIn: false,
+                  zoomOut: false,
+                  customButtons: [
+                    // TODO, get rid of the show all edges option, and the disabling, when we can set an option active
+                    {
+                      ariaLabel: 'Show All Edges',
+                      callback: () => {
+                        setEdgeMode(EdgeMode.ALL);
+                      },
+                      disabled: EdgeMode.ALL === edgeMode,
+                      icon: <LongArrowAltRightIcon />,
+                      id: 'toolbar_edge_mode_all',
+                      tooltip: 'Show all edges'
                     },
-                    disabled: EdgeMode.ALL === edgeMode,
-                    icon: <LongArrowAltRightIcon />,
-                    id: 'toolbar_edge_mode_all',
-                    tooltip: 'Show all edges'
-                  },
-                  {
-                    ariaLabel: 'Hide Healthy Edges',
-                    callback: () => {
-                      //change this back when we have the active styling
-                      //setEdgeMode(EdgeMode.UNHEALTHY === edgeMode ? EdgeMode.ALL : EdgeMode.UNHEALTHY);
-                      setEdgeMode(EdgeMode.UNHEALTHY);
+                    {
+                      ariaLabel: 'Hide Healthy Edges',
+                      callback: () => {
+                        //change this back when we have the active styling
+                        //setEdgeMode(EdgeMode.UNHEALTHY === edgeMode ? EdgeMode.ALL : EdgeMode.UNHEALTHY);
+                        setEdgeMode(EdgeMode.UNHEALTHY);
+                      },
+                      disabled: EdgeMode.UNHEALTHY === edgeMode,
+                      icon: <LongArrowAltRightIcon />,
+                      id: 'toolbar_edge_mode_unhealthy',
+                      tooltip: 'Hide healthy edges'
                     },
-                    disabled: EdgeMode.UNHEALTHY === edgeMode,
-                    icon: <LongArrowAltRightIcon />,
-                    id: 'toolbar_edge_mode_unhealthy',
-                    tooltip: 'Hide healthy edges'
+                    {
+                      ariaLabel: 'Hide All Edges',
+                      id: 'toolbar_edge_mode_none',
+                      disabled: EdgeMode.NONE === edgeMode,
+                      icon: <LongArrowAltRightIcon />,
+                      tooltip: 'Hide all edges',
+                      callback: () => {
+                        //change this back when we have the active styling
+                        //setEdgeMode(EdgeMode.NONE === edgeMode ? EdgeMode.ALL : EdgeMode.NONE);
+                        setEdgeMode(EdgeMode.NONE);
+                      }
+                    },
+                    {
+                      ariaLabel: 'Layout - Dagre',
+                      id: 'toolbar_layout_dagre',
+                      disabled: LayoutName.Dagre === layoutName,
+                      icon: <TopologyIcon />,
+                      tooltip: 'Layout - dagre',
+                      callback: () => {
+                        setLayoutName(LayoutName.Dagre);
+                      }
+                    },
+                    {
+                      ariaLabel: 'Layout - Grid',
+                      id: 'toolbar_layout_grid',
+                      disabled: LayoutName.Grid === layoutName,
+                      icon: <TopologyIcon />,
+                      tooltip: 'Layout - grid',
+                      callback: () => {
+                        setLayoutName(LayoutName.Grid);
+                      }
+                    },
+                    {
+                      ariaLabel: 'Layout - Concentric',
+                      id: 'toolbar_layout_concentric',
+                      disabled: LayoutName.Concentric === layoutName,
+                      icon: <TopologyIcon />,
+                      tooltip: 'Layout - concentric',
+                      callback: () => {
+                        setLayoutName(LayoutName.Concentric);
+                      }
+                    },
+                    {
+                      ariaLabel: 'Layout - Breadth First',
+                      id: 'toolbar_layout_breadth_first',
+                      disabled: LayoutName.BreadthFirst === layoutName,
+                      icon: <TopologyIcon />,
+                      tooltip: 'Layout - breadth first',
+                      callback: () => {
+                        setLayoutName(LayoutName.BreadthFirst);
+                      }
+                    }
+                  ],
+                  // currently unused
+                  zoomInCallback: () => {
+                    controller && controller.getGraph().scaleBy(ZOOM_IN);
                   },
-                  {
-                    ariaLabel: 'Hide All Edges',
-                    id: 'toolbar_edge_mode_none',
-                    disabled: EdgeMode.NONE === edgeMode,
-                    icon: <LongArrowAltRightIcon />,
-                    tooltip: 'Hide all edges',
-                    callback: () => {
-                      //change this back when we have the active styling
-                      //setEdgeMode(EdgeMode.NONE === edgeMode ? EdgeMode.ALL : EdgeMode.NONE);
-                      setEdgeMode(EdgeMode.NONE);
+                  // currently unused
+                  zoomOutCallback: () => {
+                    controller && controller.getGraph().scaleBy(ZOOM_OUT);
+                  },
+                  resetViewCallback: () => {
+                    if (controller) {
+                      requestFit = true;
+                      controller.getGraph().reset();
+                      controller.getGraph().layout();
                     }
                   },
-                  {
-                    ariaLabel: 'Layout - Dagre',
-                    id: 'toolbar_layout_dagre',
-                    disabled: LayoutName.Dagre === layoutName,
-                    icon: <TopologyIcon />,
-                    tooltip: 'Layout - dagre',
-                    callback: () => {
-                      setLayoutName(LayoutName.Dagre);
-                    }
-                  },
-                  {
-                    ariaLabel: 'Layout - Grid',
-                    id: 'toolbar_layout_grid',
-                    disabled: LayoutName.Grid === layoutName,
-                    icon: <TopologyIcon />,
-                    tooltip: 'Layout - grid',
-                    callback: () => {
-                      setLayoutName(LayoutName.Grid);
-                    }
-                  },
-                  {
-                    ariaLabel: 'Layout - Concentric',
-                    id: 'toolbar_layout_concentric',
-                    disabled: LayoutName.Concentric === layoutName,
-                    icon: <TopologyIcon />,
-                    tooltip: 'Layout - concentric',
-                    callback: () => {
-                      setLayoutName(LayoutName.Concentric);
-                    }
-                  },
-                  {
-                    ariaLabel: 'Layout - Breadth First',
-                    id: 'toolbar_layout_breadth_first',
-                    disabled: LayoutName.BreadthFirst === layoutName,
-                    icon: <TopologyIcon />,
-                    tooltip: 'Layout - breadth first',
-                    callback: () => {
-                      setLayoutName(LayoutName.BreadthFirst);
-                    }
+                  legend: true,
+                  legendIcon: <MapIcon />,
+                  legendTip: 'Legend',
+                  legendCallback: () => {
+                    if (toggleLegend) toggleLegend();
                   }
-                ],
-                // currently unused
-                zoomInCallback: () => {
-                  controller && controller.getGraph().scaleBy(ZOOM_IN);
-                },
-                // currently unused
-                zoomOutCallback: () => {
-                  controller && controller.getGraph().scaleBy(ZOOM_OUT);
-                },
-                resetViewCallback: () => {
-                  if (controller) {
-                    requestFit = true;
-                    controller.getGraph().reset();
-                    controller.getGraph().layout();
-                  }
-                },
-                legend: true,
-                legendIcon: <MapIcon />,
-                legendTip: 'Legend',
-                legendCallback: () => {
-                  if (toggleLegend) toggleLegend();
-                }
-              })}
-            />
+                })}
+              />
+            </TourStop>
           </TourStop>
-        </TourStop>
-      }
-    >
-      <VisualizationSurface data-test="visualization-surface" state={{}} />
-    </TopologyView>
+        }
+      >
+        <VisualizationSurface data-test="visualization-surface" state={{}} />
+      </TopologyView>
+    </>
   );
 };
 
