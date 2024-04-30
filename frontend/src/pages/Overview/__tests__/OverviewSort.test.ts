@@ -91,12 +91,12 @@ describe('Overview Page ', () => {
   it('sorts config asc', () => {
     const sortedNamespaces = sortFunc(allNamespaces, configSortField, true);
     expect(sortedNamespaces.map(n => n.name)).toEqual([
-      'istio-system',
       'default',
       'electronic-shop',
       'alpha',
       'beta',
       'fraud-detection',
+      'istio-system',
       'travel-agency',
       'travel-control',
       'travel-portal'
@@ -106,10 +106,10 @@ describe('Overview Page ', () => {
   it('sorts config desc', () => {
     const sortedNamespaces = sortFunc(allNamespaces, configSortField, false);
     expect(sortedNamespaces.map(n => n.name)).toEqual([
-      'istio-system',
       'travel-portal',
       'travel-control',
       'travel-agency',
+      'istio-system',
       'fraud-detection',
       'beta',
       'alpha',
