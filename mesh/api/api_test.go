@@ -161,10 +161,10 @@ func mockMeshGraph(t *testing.T) (*mesh.AppenderGlobalInfo, error) {
 	return globalInfo, nil
 }
 
-type fakeIstioStatusGetter struct{}
+type fakeMeshStatusGetter struct{}
 
 // mock GetStatus function to obtain fake graph component status
-func (f *fakeIstioStatusGetter) GetStatus(ctx context.Context, cluster string) (kubernetes.IstioComponentStatus, error) {
+func (f *fakeMeshStatusGetter) GetStatus(ctx context.Context, cluster string) (kubernetes.IstioComponentStatus, error) {
 	return kubernetes.IstioComponentStatus{
 		kubernetes.ComponentStatus{
 			Name:   "istiod",
@@ -242,7 +242,7 @@ func TestMeshGraph(t *testing.T) {
 		return
 	}
 
-	globalInfo.IstioStatusGetter = &fakeIstioStatusGetter{}
+	globalInfo.MeshStatusGetter = &fakeMeshStatusGetter{}
 
 	var fut func(ctx context.Context, globalInfo *mesh.AppenderGlobalInfo, o mesh.Options) (int, interface{})
 

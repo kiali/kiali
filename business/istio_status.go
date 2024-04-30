@@ -276,15 +276,12 @@ func getAddonStatus(name string, enabled bool, isCore bool, auth *config.Auth, u
 		auth.Token = token
 	}
 
-	var status string
-
+	status := kubernetes.ComponentHealthy
 	// Call the addOn service endpoint to find out whether is reachable or not
 	_, statusCode, _, err := httputil.HttpGet(url, auth, 10*time.Second, nil, nil)
 	if err != nil || statusCode > 399 {
 		log.Tracef("addon health check failed: name=[%v], url=[%v], code=[%v]", name, url, statusCode)
 		status = kubernetes.ComponentUnreachable
-	} else {
-		status = kubernetes.ComponentHealthy
 	}
 
 	staChan <- kubernetes.IstioComponentStatus{
@@ -303,14 +300,12 @@ func (iss *IstioStatusService) getTracingStatus(name string, enabled bool, isCor
 		return
 	}
 
-	var status string
+	status := kubernetes.ComponentHealthy
 
 	accessible, err := iss.businessLayer.Tracing.GetStatus()
 	if !accessible {
 		log.Errorf("Error fetching availability of the tracing service: %v", err)
 		status = kubernetes.ComponentUnreachable
-	} else {
-		status = kubernetes.ComponentHealthy
 	}
 
 	staChan <- kubernetes.IstioComponentStatus{

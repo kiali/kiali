@@ -37,11 +37,14 @@ import { ControlPlaneMetricsMap, Metric } from 'types/Metrics';
 import { classes } from 'typestyle';
 import { panelHeadingStyle } from 'pages/Graph/SummaryPanelStyle';
 import { MeshMTLSStatus } from 'components/MTls/MeshMTLSStatus';
+import { WithTranslation, withTranslation } from 'react-i18next';
+import { I18N_NAMESPACE } from 'types/Common';
 
-type TargetPanelControlPlaneProps = TargetPanelCommonProps & {
-  meshStatus: string;
-  minTLS: string;
-};
+type TargetPanelControlPlaneProps = TargetPanelCommonProps &
+  WithTranslation & {
+    meshStatus: string;
+    minTLS: string;
+  };
 
 type TargetPanelControlPlaneState = {
   canaryUpgradeStatus?: CanaryUpgradeStatus;
@@ -84,7 +87,7 @@ const nodeStyle = kialiStyle({
   display: 'flex'
 });
 
-export class TargetPanelControlPlane extends React.Component<
+class TargetPanelControlPlaneComponent extends React.Component<
   TargetPanelControlPlaneProps,
   TargetPanelControlPlaneState
 > {
@@ -100,16 +103,16 @@ export class TargetPanelControlPlane extends React.Component<
     };
   }
 
-  static getDerivedStateFromProps(
-    props: TargetPanelCommonProps,
-    state: TargetPanelControlPlaneState
-  ): TargetPanelControlPlaneState | null {
+  static getDerivedStateFromProps: React.GetDerivedStateFromProps<
+    TargetPanelCommonProps,
+    TargetPanelControlPlaneState
+  > = (props, state) => {
     // if the target (e.g. namespaceBox) has changed, then init the state and set to loading. The loading
     // will actually be kicked off after the render (in componentDidMount/Update).
     return props.target.elem !== state.controlPlaneNode
-      ? ({ controlPlaneNode: props.target.elem, loading: true } as TargetPanelControlPlaneState)
+      ? { controlPlaneNode: props.target.elem as Node<NodeModel, any>, loading: true }
       : null;
-  }
+  };
 
   componentDidMount(): void {
     this.load();
@@ -144,8 +147,9 @@ export class TargetPanelControlPlane extends React.Component<
           <CardHeader className={panelHeadingStyle}>
             <Title headingLevel="h5" size={TitleSizes.lg}>
               <span className={nodeStyle}>
-                <PFBadge badge={PFBadges.Istio} size="sm" />
+                <PFBadge badge={PFBadges.Istio} size="global" />
                 {data.infraName}
+                {getHealthStatus(data, this.props.t)}
               </span>
             </Title>
             <span className={nodeStyle}>
@@ -156,7 +160,6 @@ export class TargetPanelControlPlane extends React.Component<
               <PFBadge badge={PFBadges.Cluster} size="sm" />
               {data.cluster}
             </span>
-            {getHealthStatus(data)}
           </CardHeader>
           <CardBody>
             <div className={targetPanelBody}>
@@ -462,3 +465,5 @@ export class TargetPanelControlPlane extends React.Component<
     return <div style={{ height: '70px' }} />;
   }
 }
+
+export const TargetPanelControlPlane = withTranslation(I18N_NAMESPACE)(TargetPanelControlPlaneComponent);

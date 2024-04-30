@@ -28,7 +28,7 @@ func GraphMesh(ctx context.Context, business *business.Layer, o mesh.Options) (c
 	// Create a 'global' object to store the business. Global only to the request.
 	globalInfo := mesh.NewAppenderGlobalInfo()
 	globalInfo.Business = business
-	globalInfo.IstioStatusGetter = &business.IstioStatus
+	globalInfo.MeshStatusGetter = &business.IstioStatus
 	globalInfo.Context = ctx
 
 	code, config = graphMesh(ctx, globalInfo, o)

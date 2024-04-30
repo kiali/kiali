@@ -13,6 +13,10 @@ import { MeshInfraType, MeshNodeData } from 'types/Mesh';
 import { classes } from 'typestyle';
 import { panelStyle } from 'pages/Graph/SummaryPanelStyle';
 import { Title, TitleSizes } from '@patternfly/react-core';
+import { WithTranslation, withTranslation } from 'react-i18next';
+import { I18N_NAMESPACE } from 'types/Common';
+
+type TargetPanelNodeProps = WithTranslation & TargetPanelCommonProps;
 
 type TargetPanelNodeState = {
   loading: boolean;
@@ -29,17 +33,17 @@ const nodeStyle = kialiStyle({
   display: 'flex'
 });
 
-export class TargetPanelNode extends React.Component<TargetPanelCommonProps, TargetPanelNodeState> {
-  constructor(props: TargetPanelCommonProps) {
+class TargetPanelNodeComponent extends React.Component<TargetPanelNodeProps, TargetPanelNodeState> {
+  constructor(props: TargetPanelNodeProps) {
     super(props);
 
     this.state = { ...defaultState };
   }
 
-  static getDerivedStateFromProps = (
+  static getDerivedStateFromProps: React.GetDerivedStateFromProps<TargetPanelCommonProps, TargetPanelNodeState> = (
     props: TargetPanelCommonProps,
     state: TargetPanelNodeState
-  ): TargetPanelNodeState | null => {
+  ) => {
     // if the target (i.e. node) has changed, then init the state and set to loading. The loading
     // will actually be kicked off after the render (in componentDidMount/Update).
     return props.target.elem !== state.node ? { node: props.target.elem as Node<NodeModel, any>, loading: true } : null;
@@ -103,8 +107,9 @@ export class TargetPanelNode extends React.Component<TargetPanelCommonProps, Tar
       <React.Fragment key={data.infraName}>
         <Title headingLevel="h5" size={TitleSizes.lg}>
           <span className={nodeStyle}>
-            <PFBadge badge={pfBadge} size="sm" />
+            <PFBadge badge={pfBadge} size="global" />
             {data.infraName}
+            {getHealthStatus(data, this.props.t)}
           </span>
         </Title>
         <span className={nodeStyle}>
@@ -115,8 +120,9 @@ export class TargetPanelNode extends React.Component<TargetPanelCommonProps, Tar
           <PFBadge badge={PFBadges.Cluster} size="sm" />
           {data.cluster}
         </span>
-        {getHealthStatus(data)}
       </React.Fragment>
     );
   };
 }
+
+export const TargetPanelNode = withTranslation(I18N_NAMESPACE)(TargetPanelNodeComponent);

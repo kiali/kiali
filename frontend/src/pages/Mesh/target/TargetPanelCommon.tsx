@@ -4,8 +4,10 @@ import { PFColors } from 'components/Pf/PfColors';
 import { MeshNodeData, MeshTarget } from 'types/Mesh';
 import { DurationInSeconds, IntervalInMilliseconds, TimeInMilliseconds } from 'types/Common';
 import { ValidationTypes } from 'types/IstioObjects';
-import { Status } from 'types/IstioStatus';
+import { Status, statusMsg } from 'types/IstioStatus';
 import { Validation } from 'components/Validations/Validation';
+import { Tooltip, TooltipPosition } from '@patternfly/react-core';
+import { TFunction } from 'react-i18next';
 
 export interface TargetPanelCommonProps {
   duration: DurationInSeconds;
@@ -74,6 +76,10 @@ export const targetPanelTitle = kialiStyle({
   textAlign: 'left'
 });
 
+const healthStatusStyle = kialiStyle({
+  marginLeft: '0.5rem'
+});
+
 const hrStyle = kialiStyle({
   border: 0,
   borderTop: `1px solid ${PFColors.BorderColor100}`,
@@ -104,7 +110,7 @@ export const getTitle = (title: string): React.ReactNode => {
   );
 };
 
-export const getHealthStatus = (data: MeshNodeData): React.ReactNode => {
+export const getHealthStatus = (data: MeshNodeData, t: TFunction): React.ReactNode => {
   let healthSeverity: ValidationTypes;
 
   switch (data.healthData) {
@@ -118,5 +124,20 @@ export const getHealthStatus = (data: MeshNodeData): React.ReactNode => {
       healthSeverity = ValidationTypes.Error;
   }
 
-  return <>{data.healthData && <Validation severity={healthSeverity} message={data.healthData}></Validation>}</>;
+  return (
+    <>
+      {data.healthData && (
+        <Tooltip
+          aria-label={t('Health status')}
+          position={TooltipPosition.right}
+          enableFlip={true}
+          content={<>{t(statusMsg[data.healthData])}</>}
+        >
+          <span className={healthStatusStyle}>
+            <Validation severity={healthSeverity} />
+          </span>
+        </Tooltip>
+      )}
+    </>
+  );
 };

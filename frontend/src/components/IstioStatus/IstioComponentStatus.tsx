@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { ComponentStatus, Status } from '../../types/IstioStatus';
+import { ComponentStatus, Status, statusMsg } from '../../types/IstioStatus';
 import { PFColors } from '../Pf/PfColors';
 import {
   CheckCircleIcon,
@@ -12,7 +12,6 @@ import { IconProps, createIcon } from 'config/KialiIcon';
 import { kialiStyle } from 'styles/StyleUtils';
 import { useTranslation } from 'react-i18next';
 import { I18N_NAMESPACE } from 'types/Common';
-import { i18n } from 'i18n';
 
 type Props = {
   componentStatus: ComponentStatus;
@@ -44,13 +43,6 @@ const validToIcon: { [valid: string]: IconProps } = {
   'false-true': ErrorCoreComponent,
   'true-false': SuccessComponent,
   'true-true': SuccessComponent
-};
-
-const statusMsg = {
-  [Status.NotFound]: i18n.t('Not found'),
-  [Status.NotReady]: i18n.t('Not ready'),
-  [Status.Unhealthy]: i18n.t('Not healthy'),
-  [Status.Unreachable]: i18n.t('Unreachable')
 };
 
 const splitItemStyle = kialiStyle({

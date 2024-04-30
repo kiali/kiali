@@ -357,7 +357,7 @@ func (p *controlPlaneMonitor) canConnectToIstiodForRevision(client kubernetes.Cl
 		go func(name, namespace string) {
 			defer wg.Done()
 
-			var status string
+			status := kubernetes.ComponentHealthy
 			// The 8080 port is not accessible from outside of the pod. However, it is used for kubernetes to do the live probes.
 			// Using the proxy method to make sure that K8s API has access to the Istio Control Plane namespace.
 			// By proxying one Istiod, we ensure that the following connection is allowed:
@@ -367,8 +367,6 @@ func (p *controlPlaneMonitor) canConnectToIstiodForRevision(client kubernetes.Cl
 			if err != nil {
 				log.Warningf("Unable to get ready status of istiod: %s/%s. Err: %s", namespace, name, err)
 				status = kubernetes.ComponentUnreachable
-			} else {
-				status = kubernetes.ComponentHealthy
 			}
 
 			syncChan <- kubernetes.ComponentStatus{
