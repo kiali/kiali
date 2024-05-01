@@ -82,6 +82,7 @@ export type MeshData = {
 };
 
 type MeshPageState = {
+  controller?: Controller;
   meshData: MeshData;
 };
 
@@ -127,20 +128,19 @@ const MeshErrorBoundaryFallback = () => {
 };
 
 class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
-  private controller?: Controller;
   private readonly errorBoundaryRef: any;
   private focusNode?: FocusNode;
   private meshDataSource: MeshDataSource;
 
   constructor(props: MeshPageProps) {
     super(props);
-    this.controller = undefined;
     this.errorBoundaryRef = React.createRef();
     const focusNodeId = getFocusSelector();
     this.focusNode = focusNodeId ? { id: focusNodeId, isSelected: true } : undefined;
     this.meshDataSource = new MeshDataSource();
 
     this.state = {
+      controller: undefined,
       meshData: {
         elements: { edges: [], nodes: [] },
         elementsChanged: false,
@@ -178,10 +178,6 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
     // settings. That in turn ensures the initial fetchParams are correct.
     const isInitialLoad = !this.state.meshData.timestamp;
 
-    if (curr.target?.type === 'mesh') {
-      this.controller = curr.target.elem as Controller;
-    }
-
     if (
       isInitialLoad ||
       prev.duration !== curr.duration ||
@@ -218,7 +214,7 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
         <FlexView className={conStyle} column={true}>
           <div>
             <MeshToolbar
-              controller={this.controller}
+              controller={this.state.controller}
               disabled={this.state.meshData.isLoading}
               elementsChanged={this.state.meshData.elementsChanged}
               onToggleHelp={this.toggleHelp}
@@ -247,7 +243,13 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
                   isLoading={this.state.meshData.isLoading}
                   isMiniMesh={false}
                 >
-                  <Mesh focusNode={this.focusNode} isMiniMesh={false} meshData={this.state.meshData} {...this.props} />
+                  <Mesh
+                    {...this.props}
+                    focusNode={this.focusNode}
+                    isMiniMesh={false}
+                    meshData={this.state.meshData}
+                    onReady={this.handleReady}
+                  />
                 </EmptyMeshLayout>
               </div>
             </ErrorBoundary>
@@ -271,6 +273,10 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
   // TODO Focus...
   private onFocus = (focusNode: FocusNode) => {
     console.debug(`onFocus(${focusNode})`);
+  };
+
+  private handleReady = (controller: Controller) => {
+    this.setState({ controller: controller });
   };
 
   private handleEmptyMeshAction = () => {
