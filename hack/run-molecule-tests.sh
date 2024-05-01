@@ -426,7 +426,7 @@ do
     echo "/*** BEGIN MOLECULE TEST: $t ***/"
   fi
 
-  if [[ "${SKIP_TESTS}" == *"$t"* ]]; then
+  if [[ " ${SKIP_TESTS} " == *" $t "* ]]; then
     printf '%s' "$(dim 'skipped')"
     continue;
   fi
