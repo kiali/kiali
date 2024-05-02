@@ -4,7 +4,7 @@ import (
 	jaegerModels "github.com/kiali/kiali/tracing/jaeger/model/json"
 )
 
-type structuredError struct {
+type StructuredError struct {
 	Code    int    `json:"code,omitempty"`
 	Msg     string `json:"msg"`
 	TraceID string `json:"traceID,omitempty"`
@@ -16,14 +16,14 @@ type TracingServices struct {
 
 type TracingResponse struct {
 	Data               []jaegerModels.Trace `json:"data"`
-	Errors             []structuredError    `json:"errors"`
+	Errors             []StructuredError    `json:"errors"`
 	FromAllClusters    bool                 `json:"fromAllClusters"`
 	TracingServiceName string               `json:"tracingServiceName"`
 }
 
 type TracingSingleTrace struct {
 	Data   jaegerModels.Trace `json:"data"`
-	Errors []structuredError  `json:"errors"`
+	Errors []StructuredError  `json:"errors"`
 }
 
 type TracingSpan struct {

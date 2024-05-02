@@ -33,13 +33,7 @@ func NewOtelClient(client http.Client, baseURL *url.URL) (otelClient *OtelHTTPCl
 	tags := false
 	r, status, _ := makeRequest(client, url.String(), nil)
 	if status != 200 {
-		responseError, errUnmarshall := unmarshalError(r, baseURL)
-		// If it is possible to decode the error, show the issue
-		if errUnmarshall != nil {
-			log.Debugf("Error getting Tempo tags for tracing. Tags will be disabled. %s", errUnmarshall.Error())
-		} else {
-			log.Debugf("Error getting Tempo tags for tracing. Tags will be disabled. %s", responseError.Error)
-		}
+		log.Debugf("Error getting Tempo tags for tracing. Tags will be disabled. %s", r)
 	} else {
 		var response otel.TagsResponse
 		if errMarshal := json.Unmarshal(r, &response); errMarshal != nil {
@@ -72,25 +66,24 @@ func (oc OtelHTTPClient) GetAppTracesHTTP(client http.Client, baseURL *url.URL, 
 // GetTraceDetailHTTP get one trace by trace ID
 func (oc OtelHTTPClient) GetTraceDetailHTTP(client http.Client, endpoint *url.URL, traceID string) (*model.TracingSingleTrace, error) {
 	u := *endpoint
-	u.Path = "/api/traces/" + traceID
+	u.Path = path.Join(u.Path, "/api/traces/", traceID)
 	resp, code, reqError := makeRequest(client, u.String(), nil)
 	if reqError != nil {
 		log.Errorf("API Tempo query error: %s [code: %d, URL: %v]", reqError, code, u)
 		return nil, reqError
 	}
 	if code != 200 {
-		responseError, err := unmarshalError(resp, endpoint)
-		if err != nil {
-			log.Errorf("Tempo API query error: %s [code: %d, URL: %v]", responseError.Error, code, u)
-			return nil, errors.New(responseError.Error)
-		}
-		log.Errorf("Error returning traces %d", code)
-		return nil, errors.New("Error returning traces")
+		errorMsg := fmt.Sprintf("Error returning traces: %s", resp)
+		log.Errorf(errorMsg)
+		var errorTrace []model.StructuredError
+		errorTrace = append(errorTrace, model.StructuredError{TraceID: traceID, Code: code, Msg: errorMsg})
+		return &model.TracingSingleTrace{Errors: errorTrace}, errors.New(errorMsg)
 	}
-	// Tempo would return "200 OK" when trace is not found, with an empty response
+
 	if len(resp) == 0 {
-		return nil, nil
+		return nil, errors.New("empty body response")
 	}
+
 	responseOtel, _ := unmarshalSingleTrace(resp, &u)
 
 	response, err := convertSingleTrace(responseOtel, traceID)
@@ -143,14 +136,10 @@ func (oc OtelHTTPClient) queryTracesHTTP(client http.Client, u *url.URL, error s
 		log.Errorf("Tempo API query error: %s [code: %d, URL: %v]", reqError, code, u)
 		return &model.TracingResponse{}, reqError
 	}
-	if code != 200 && code != 404 {
-		responseError, err := unmarshalError(resp, u)
-		if err != nil {
-			log.Errorf("Tempo API query error unmarshalling response: %s ", err)
-			return &model.TracingResponse{}, err
-		}
-		log.Errorf("Tempo API query error: %s [code: %d, URL: %v]", responseError.Error, code, u)
-		return &model.TracingResponse{}, errors.New(responseError.Error)
+	if code != 200 {
+		errorMsg := fmt.Sprintf("Tempo API query error: %s [code: %d, URL: %v]", resp, code, u)
+		log.Errorf(errorMsg)
+		return &model.TracingResponse{}, errors.New(errorMsg)
 	}
 	limit, err := strconv.Atoi(u.Query().Get("limit"))
 	if err != nil {
@@ -192,16 +181,6 @@ func (oc OtelHTTPClient) transformTrace(traces *otel.Traces, error string, limit
 
 func unmarshal(r []byte, u *url.URL) (*otel.Traces, error) {
 	var response otel.Traces
-	if errMarshal := json.Unmarshal(r, &response); errMarshal != nil {
-		log.Errorf("Error unmarshalling Tempo API response: %s [URL: %v]", errMarshal, u)
-		return nil, errMarshal
-	}
-
-	return &response, nil
-}
-
-func unmarshalError(r []byte, u *url.URL) (*otel.TracesError, error) {
-	var response otel.TracesError
 	if errMarshal := json.Unmarshal(r, &response); errMarshal != nil {
 		log.Errorf("Error unmarshalling Tempo API response: %s [URL: %v]", errMarshal, u)
 		return nil, errMarshal
@@ -277,7 +256,7 @@ func (oc OtelHTTPClient) prepareTraceQL(u *url.URL, tracingServiceName string, q
 		}
 	}
 
-	selects := []string{"status", ".service_name", ".node_id", ".component", ".upstream_cluster", ".http.method", ".response_flags"}
+	selects := []string{"status", ".service_name", ".node_id", ".component", ".upstream_cluster", ".http.method", ".response_flags", "resource.hostname"}
 	trace := TraceQL{operator1: Subquery{queryPart}, operand: AND, operator2: Subquery{}}
 	queryQL := fmt.Sprintf("%s| %s", printOperator(trace), printSelect(selects))
 
