@@ -6,7 +6,8 @@ Feature: Kiali login
   User wants to login to Kiali and see landing page
 
   Background:
-    Given user opens base url
+    Given all sessions are cleared
+    And user opens base url
 
   Scenario: Try to log in without filling the username and password
     And user clicks my_htpasswd_provider

@@ -5,6 +5,11 @@ const PASSWD = Cypress.env('PASSWD'); // CYPRESS_PASSWD to the user
 const KUBEADMIN_IDP = Cypress.env('AUTH_PROVIDER'); // CYPRESS_AUTH_PROVIDER to the user
 const auth_strategy = Cypress.env('AUTH_STRATEGY');
 
+Given('all sessions are cleared', () => {
+  Cypress.session.clearAllSavedSessions();
+  Cypress.session.clearCurrentSessionData();
+});
+
 Given('user opens base url', () => {
   cy.visit('/');
   cy.log(auth_strategy);
@@ -19,7 +24,7 @@ Given('user opens base url', () => {
 });
 
 Given('user clicks my_htpasswd_provider', () => {
-  if (auth_strategy === 'openshift') {
+  if (auth_strategy === 'openshift' && KUBEADMIN_IDP !== '' && KUBEADMIN_IDP !== undefined) {
     cy.exec('kubectl get user').then(result => {
       if (result.stderr !== 'No resources found') {
         cy.log(`Log in using auth provider: ${KUBEADMIN_IDP}`);
@@ -46,6 +51,7 @@ Given('user fill in username and password', () => {
 Given('user does not fill in username and password', () => {
   if (auth_strategy === 'openshift') {
     cy.log('Log in with empty credentials');
+    cy.get('#inputUsername').clear();
     cy.get('button[type="submit"]').click();
   }
 });
