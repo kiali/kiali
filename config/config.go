@@ -436,6 +436,16 @@ type DeploymentConfig struct {
 	RemoteSecretPath string `yaml:"remote_secret_path,omitempty"`
 }
 
+// ExtensionConfig provides details on a registered Extension
+type ExtensionConfig struct {
+	Enabled       bool   `yaml:"enabled,omitempty"`
+	Name          string `yaml:"name"`           // same name used in metrics "extension" attribute
+	RootCluster   string `yaml:"root_cluster"`   // root of mesh connection, e.g. skupper router cluster
+	RootNamespace string `yaml:"root_namespace"` // root of mesh connection, e.g. skupper router namespace
+	RootService   string `yaml:"root_service"`   // root of mesh connection, e.g. skupper router service name
+	RootVersion   string `yaml:"root_version"`   // root of mesh connection, e.g. skupper router service version
+}
+
 // GraphFindOption defines a single Graph Find/Hide Option
 type GraphFindOption struct {
 	AutoSelect  bool   `yaml:"auto_select,omitempty" json:"autoSelect,omitempty"`
@@ -603,6 +613,7 @@ type Config struct {
 	Clustering               Clustering                          `yaml:"clustering,omitempty"`
 	CustomDashboards         dashboards.MonitoringDashboardsList `yaml:"custom_dashboards,omitempty"`
 	Deployment               DeploymentConfig                    `yaml:"deployment,omitempty"`
+	Extensions               []ExtensionConfig                   `yaml:"extensions,omitempty`
 	ExternalServices         ExternalServices                    `yaml:"external_services,omitempty"`
 	HealthConfig             HealthConfig                        `yaml:"health_config,omitempty" json:"healthConfig,omitempty"`
 	Identity                 security.Identity                   `yaml:",omitempty"`
