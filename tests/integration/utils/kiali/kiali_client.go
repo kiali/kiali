@@ -4,9 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"net/url"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/kiali/kiali/business"
@@ -18,13 +16,11 @@ import (
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/status"
 	"github.com/kiali/kiali/tracing/jaeger/model"
-	"github.com/kiali/kiali/util/httputil"
 )
 
 type KialiClient struct {
 	kialiURL     string
 	kialiToken   string
-	kialiCookies []*http.Cookie
 	authStrategy string
 }
 
@@ -118,12 +114,6 @@ func NewKialiClient() (c *KialiClient) {
 				log.Fatalf("TOKEN environment variable is required by Kiali Auth strategy.")
 				return
 			}
-			tokenResult, tokenCookies := c.GetCookies()
-			if !tokenResult || tokenCookies == nil {
-				log.Fatalf("Unable to login to the Kiali: %s by provided token: %s", c.kialiURL, c.kialiToken)
-				return
-			}
-			c.kialiCookies = tokenCookies
 		}
 	} else {
 		log.Fatalf("Unable to check Kiali auth strategy, Err: %s", err)
@@ -148,7 +138,7 @@ func (c *KialiClient) KialiAuthStrategy() (string, error) {
 }
 
 func KialiStatus() (bool, int, error) {
-	_, code, _, err := httpGETWithRetry(client.kialiURL+"/api/istio/status", client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
+	_, code, _, err := httpGETWithRetry(client.kialiURL+"/api/istio/status", client.GetAuth(), TIMEOUT, nil, nil)
 	if err == nil {
 		return true, code, nil
 	} else {
@@ -168,21 +158,6 @@ func (c *KialiClient) GetAuth() *config.Auth {
 			InsecureSkipVerify: true,
 		}
 	}
-}
-
-func (c *KialiClient) GetCookies() (bool, []*http.Cookie) {
-	auth := c.GetAuth()
-	requestParams := url.Values{}
-	requestParams.Set("access_token", auth.Token)
-	requestParams.Set("expires_in", "86400")
-	customHeaders := map[string]string{
-		"Content-Type": "application/x-www-form-urlencoded",
-	}
-	_, code, cookies, err := httputil.HttpPost(c.kialiURL+"/api/authenticate", auth, strings.NewReader(requestParams.Encode()), TIMEOUT, customHeaders)
-	if code == 200 && err == nil && cookies != nil {
-		return true, cookies
-	}
-	return false, nil
 }
 
 func KialiConfig() (*handlers.PublicConfig, int, error) {
@@ -475,7 +450,7 @@ func ObjectMetrics(namespace, service, objectType string, params map[string]stri
 
 func ObjectDashboard(namespace, name, objectType string) (*models.MonitoringDashboard, error) {
 	url := fmt.Sprintf("%s/api/namespaces/%s/%s/%s/dashboard", client.kialiURL, namespace, objectType, name)
-	body, _, _, err := httpGETWithRetry(url, client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
+	body, _, _, err := httpGETWithRetry(url, client.GetAuth(), TIMEOUT, nil, nil)
 	if err == nil {
 		response := new(models.MonitoringDashboard)
 		// tests are checking only common response for different object types, ignore the error
@@ -536,7 +511,7 @@ func Grafana() (*models.GrafanaInfo, int, error) {
 
 func Clusters() ([]kubernetes.Cluster, error) {
 	url := fmt.Sprintf("%s/api/clusters", client.kialiURL)
-	body, code, _, err := httpGETWithRetry(url, client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
+	body, code, _, err := httpGETWithRetry(url, client.GetAuth(), TIMEOUT, nil, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -555,7 +530,7 @@ func Clusters() ([]kubernetes.Cluster, error) {
 }
 
 func getRequestAndUnmarshalInto[T any](url string, response *T) (int, error) {
-	body, code, _, err := httpGETWithRetry(url, client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
+	body, code, _, err := httpGETWithRetry(url, client.GetAuth(), TIMEOUT, nil, nil)
 	if err != nil {
 		return code, err
 	}
@@ -610,7 +585,7 @@ func FirstPodName(name, namespace string) (string, error) {
 
 func PodLogs(name, namespace string, params map[string]string) (*business.PodLog, error) {
 	url := fmt.Sprintf("%s/api/namespaces/%s/pods/%s/logs?sinceTime=%d&%s", client.kialiURL, namespace, name, TimeSinceSeconds(), ParamsAsString(params))
-	body, _, _, err := httpGETWithRetry(url, client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
+	body, _, _, err := httpGETWithRetry(url, client.GetAuth(), TIMEOUT, nil, nil)
 	if err == nil {
 		logs := new(business.PodLog)
 		err = json.Unmarshal(body, &logs)
