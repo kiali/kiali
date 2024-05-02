@@ -79,10 +79,11 @@ func (oc OtelHTTPClient) GetTraceDetailHTTP(client http.Client, endpoint *url.UR
 		errorTrace = append(errorTrace, model.StructuredError{TraceID: traceID, Code: code, Msg: errorMsg})
 		return &model.TracingSingleTrace{Errors: errorTrace}, errors.New(errorMsg)
 	}
-	// Tempo would return "200 OK" when trace is not found, with an empty response
+
 	if len(resp) == 0 {
-		return nil, nil
+		return nil, errors.New("empty body response")
 	}
+
 	responseOtel, _ := unmarshalSingleTrace(resp, &u)
 
 	response, err := convertSingleTrace(responseOtel, traceID)
