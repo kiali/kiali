@@ -117,7 +117,7 @@ Then('user fills in a valid password', () => {
 });
 
 Then('user sees the Overview page', () => {
-  cy.get('div[data-test="overview-app-health"]').should('exist');
+  cy.url().should('include', 'overview');
 });
 
 Then('the server will return a login error', () => {

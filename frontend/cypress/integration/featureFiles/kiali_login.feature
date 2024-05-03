@@ -32,6 +32,7 @@ Feature: Kiali login
   @openshift
   Scenario: Openshift login shows error message when code exchange fails
     And the server will return a login error
+    And user clicks my_htpasswd_provider
     And user fills in a valid password
     Then user sees an error message on the login form
     And the error description is in the url
