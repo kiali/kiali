@@ -75,6 +75,16 @@ install_kiali_cr() {
     fi
   fi
 
+  # determine the control plane's Istio version - we need it because it is part of the names of the Istio config maps/deployments
+  local istio_version="unknown"
+  for r in $(${OC} get istio -o name);
+  do
+    local ns="$(${OC} get $r -o jsonpath='{.spec.namespace}')"
+    if [ "${ns}" == "${control_plane_namespace}" ]; then
+      istio_version="$(${OC} get $r -o jsonpath='{.spec.version}')"
+    fi
+  done
+
   cat <<EOM | ${OC} apply -f -
 apiVersion: kiali.io/v1alpha1
 kind: Kiali
@@ -90,6 +100,10 @@ spec:
       in_cluster_url: "http://tempo-tempo-query-frontend.${TEMPO_NAMESPACE}.svc.cluster.local:3200"
       url: "$(${OC} get route -n ${TEMPO_NAMESPACE} -l app.kubernetes.io/name=tempo,app.kubernetes.io/component=query-frontend -o jsonpath='https://{..spec.host}')"
       use_grpc: false
+    istio:
+      config_map_name: istio-istio-${control_plane_namespace}-${istio_version}
+      istio_sidecar_injector_config_map_name: istio-sidecar-injector-istio-${control_plane_namespace}-${istio_version}
+      istiod_deployment_name: istiod-istio-${control_plane_namespace}-${istio_version}
 EOM
 }
 

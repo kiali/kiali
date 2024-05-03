@@ -50,6 +50,7 @@ delete_minio() {
   ${OC} delete --ignore-not-found=true secret --namespace ${MINIO_NAMESPACE} ${MINIO_SECRET_NAME}
 }
 
+# see https://grafana.com/docs/tempo/latest/setup/tanka/
 _define_minio_yaml() {
   MINIO_YAML="$(cat <<EOM
 ---
@@ -95,7 +96,7 @@ spec:
           claimName: minio-pv-claim
       initContainers:
       - name: create-buckets
-        image: quay.io/official-images/busybox:1.28
+        image: quay.io/jitesoft/alpine:latest
         command:
           - "sh"
           - "-c"

@@ -73,6 +73,7 @@ install_istio() {
      envoyfilters.networking.istio.io \
      gateways.networking.istio.io \
      istios.operator.istio.io \
+     istiocnis.operator.istio.io \
      peerauthentications.security.istio.io \
      proxyconfigs.networking.istio.io \
      requestauthentications.security.istio.io \
@@ -129,9 +130,46 @@ install_istio() {
     ${OC} create namespace ${control_plane_namespace}
   fi
 
+  # IstioCNI is required for OpenShift. When on OpenShift, ensure there is one and only one IstioCNI installed.
+  # It must be named "default". It will always refer to the namespace "istio-cni".
+  if [ "${IS_OPENSHIFT}" == "true" ]; then
+    local istiocni_yaml_file="/tmp/istiocni-cr.yaml"
+    local istiocni_name="default"
+    if ! ${OC} get istiocni ${istiocni_name} >& /dev/null; then
+      if ! ${OC} get namespace istio-cni >& /dev/null; then
+        infomsg "Creating istio-cni namespace"
+        ${OC} create namespace istio-cni
+      fi
+      infomsg "Installing IstioCNI CR"
+      cat <<EOMCNI > ${istiocni_yaml_file}
+apiVersion: operator.istio.io/v1alpha1
+kind: IstioCNI
+metadata:
+  name: ${istiocni_name}
+spec:
+  version: ${istio_version}
+  namespace: istio-cni
+EOMCNI
+      while ! ${OC} apply -f ${istiocni_yaml_file}
+      do
+        errormsg "WARNING: Failed to create IstioCNI CR - will retry in 5 seconds to see if the error condition clears up..."
+        sleep 5
+      done
+      infomsg "IstioCNI has been successfully created"
+    else
+      infomsg "IstioCNI already exists; will not create another one"
+    fi
+  else
+    infomsg "Not installing on OpenShift; IstioCNI CR will not be created"
+  fi
+
   infomsg "Installing Istio CR"
   if [ "${istio_yaml_file}" == "" ]; then
-    istio_yaml_file="/tmp/istio-cr.yaml"
+    local global_platform=""
+    if [ "${IS_OPENSHIFT}" == "true" ]; then
+      global_platform="openshift"
+    fi
+    local istio_yaml_file="/tmp/istio-cr.yaml"
     cat <<EOM > ${istio_yaml_file}
 apiVersion: operator.istio.io/v1alpha1
 kind: Istio
@@ -143,22 +181,8 @@ spec:
   updateStrategy:
     type: RevisionBased
   values:
-    cni:
-      chained: false
-      cniBinDir: /var/lib/cni/bin
-      cniConfDir: /etc/cni/multus/net.d
-      cniConfFileName: istio-cni.conf
-      excludeNamespaces:
-      - istio-system
-      - kube-system
-      logLevel: info
-      privileged: true
-      provider: multus
     global:
-      platform: openshift
-    istio_cni:
-      chained: false
-      enabled: true
+      platform: "${global_platform}"
     meshConfig:
       defaultConfig:
         tracing:
@@ -178,13 +202,13 @@ EOM
 delete_servicemesh_operators() {
   local abort_operation="false"
   for cr in \
-    $(${OC} get istio --all-namespaces -o custom-columns=K:.kind,NS:.metadata.namespace,N:.metadata.name --no-headers | sed 's/  */:/g' )
+    $(${OC} get istio    -o custom-columns=K:.kind,N:.metadata.name --no-headers | sed 's/  */:/g' ) \
+    $(${OC} get istiocni -o custom-columns=K:.kind,N:.metadata.name --no-headers | sed 's/  */:/g' )
   do
     abort_operation="true"
     local res_kind=$(echo ${cr} | cut -d: -f1)
-    local res_namespace=$(echo ${cr} | cut -d: -f2)
-    local res_name=$(echo ${cr} | cut -d: -f3)
-    errormsg "A [${res_kind}] resource named [${res_name}] in namespace [${res_namespace}] still exists. You must delete it first."
+    local res_name=$(echo ${cr} | cut -d: -f2)
+    errormsg "A [${res_kind}] resource named [${res_name}] still exists. You must delete it first."
   done
   if [ "${abort_operation}" == "true" ]; then
     errormsg "Aborting"
@@ -225,19 +249,20 @@ delete_servicemesh_operators() {
 }
 
 delete_istio() {
-  infomsg "Deleting all Istio CRs (if they exist) which uninstalls all the Service Mesh components"
+  infomsg "Deleting all Istio and IstioCNI CRs (if they exist) which uninstalls all the Service Mesh components"
   local doomed_namespaces=""
   for cr in \
-    $(${OC} get istio -o custom-columns=K:.kind,NS:.spec.namespace,N:.metadata.name --no-headers | sed 's/  */:/g' )
+    $(${OC} get istio    -o custom-columns=K:.kind,N:.metadata.name,NS:.spec.namespace --no-headers | sed 's/  */:/g' ) \
+    $(${OC} get istiocni -o custom-columns=K:.kind,N:.metadata.name,NS:.spec.namespace --no-headers | sed 's/  */:/g' )
   do
     local res_kind=$(echo ${cr} | cut -d: -f1)
-    local res_namespace=$(echo ${cr} | cut -d: -f2)
-    local res_name=$(echo ${cr} | cut -d: -f3)
+    local res_name=$(echo ${cr} | cut -d: -f2)
+    local doomed_ns=$(echo ${cr} | cut -d: -f3)
     ${OC} delete ${res_kind} ${res_name}
-    doomed_namespaces="$(echo ${res_namespace} ${doomed_namespaces} | tr ' ' '\n' | sort -u)"
+    doomed_namespaces="$(echo ${doomed_ns} ${doomed_namespaces} | tr ' ' '\n' | sort -u)"
   done
 
-  infomsg "Deleting the control plane namespaces"
+  infomsg "Deleting the control plane and CNI namespaces"
   for ns in ${doomed_namespaces}
   do
     ${OC} delete namespace ${ns}
@@ -276,5 +301,23 @@ status_istio() {
     done
   else
     infomsg "There are no Istio CRs in the cluster"
+  fi
+
+  infomsg ""
+  infomsg "===== IstioCNI CRs"
+  if [ "$(${OC} get istiocni 2> /dev/null | wc -l)" -gt "0" ] ; then
+    infomsg "One or more Istio CNI CRs exist in the cluster"
+    ${OC} get istiocni
+    infomsg ""
+    for cr in \
+      $(${OC} get istiocni -o custom-columns=NS:.spec.namespace,N:.metadata.name --no-headers | sed 's/  */:/g' )
+    do
+      local res_namespace=$(echo ${cr} | cut -d: -f1)
+      local res_name=$(echo ${cr} | cut -d: -f2)
+      infomsg "IstioCNI [${res_name}], CNI namespace [${res_namespace}]:"
+      ${OC} get pods -n ${res_namespace}
+    done
+  else
+    infomsg "There are no IstioCNI CRs in the cluster"
   fi
 }
