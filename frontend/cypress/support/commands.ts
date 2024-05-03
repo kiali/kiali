@@ -118,7 +118,7 @@ Cypress.Commands.add('login', (username: string, password: string) => {
         cy.intercept('/api/tracing').as('getTracing');
         cy.intercept('/api/auth/info').as('getAuthInfo');
 
-        cy.visit('');
+        cy.visit('/');
         const authProvider = Cypress.env('AUTH_PROVIDER');
         if (authProvider !== '' && authProvider !== undefined) {
           cy.contains(authProvider).should('be.visible').click();
@@ -186,7 +186,15 @@ Cypress.Commands.add('login', (username: string, password: string) => {
         });
       }
     },
-    { cacheAcrossSpecs: true }
+    {
+      cacheAcrossSpecs: true,
+      validate: () => {
+        // For some reason validate is needed to preserve the kiali-token-aes cookie.
+        if (auth_strategy === 'openshift') {
+          cy.getCookie('kiali-token-aes').should('exist');
+        }
+      }
+    }
   );
 });
 
