@@ -9,6 +9,7 @@
 #        start: starts the OpenShift environment
 #         stop: stops the OpenShift environment
 #       delete: deletes the OpenShift environment removing persisted data
+#      cleanup: just like delete but also further cleans up the CRC environment
 #       status: outputs the current status of the OpenShift environment
 #          ssh: logs into the CRC VM via ssh so you can probe in the VM
 #        sshoc: logs into the CRC VM via oc debug so you can probe in the VM
@@ -503,10 +504,10 @@ SCRIPT_ROOT="$( cd "$(dirname "$0")" ; pwd -P )"
 cd ${SCRIPT_ROOT}
 
 # The default version of the crc tool to be downloaded
-DEFAULT_CRC_DOWNLOAD_VERSION="2.32.0"
+DEFAULT_CRC_DOWNLOAD_VERSION="2.34.1"
 
 # The default version of the crc bundle - this is typically the version included with the CRC download
-DEFAULT_CRC_LIBVIRT_DOWNLOAD_VERSION="4.14.8"
+DEFAULT_CRC_LIBVIRT_DOWNLOAD_VERSION="4.15.3"
 
 # The default virtual CPUs assigned to the CRC VM
 DEFAULT_CRC_CPUS="6"
@@ -538,6 +539,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     delete)
       _CMD="delete"
+      shift
+      ;;
+    cleanup)
+      _CMD="cleanup"
       shift
       ;;
     status)
@@ -679,6 +684,7 @@ The command must be one of:
   * start: Starts the CRC VM with OpenShift 4.x.
   * stop: Stops the CRC VM retaining all data. 'start' will then bring up the CRC VM in the same state.
   * delete: Stops the CRC VM and removes all persistent data. 'start' will then bring up a clean CRC VM.
+  * cleanup: Just like delete but also further cleans up the CRC environment including the large downloaded bundles.
   * status: Information about the CRC VM and the OpenShift cluster running inside it.
   * ssh: Provides a command line prompt with root access inside the CRC VM. Logs in via ssh.
   * sshoc: Provides a command line prompt with root access inside the CRC VM. Logs in via oc debug.
@@ -795,6 +801,12 @@ debug "ENVIRONMENT:
 # Fail fast if we don't even have the correct location where the oc client should be
 if [ ! -d "${OPENSHIFT_BIN_PATH}" ]; then
   infomsg "ERROR: You must define OPENSHIFT_BIN_PATH to an existing location where you want the downloaded tools to be. It is currently set to: ${OPENSHIFT_BIN_PATH}"
+  exit 1
+fi
+
+# fail fast if systemd-resolved is running - see https://github.com/crc-org/crc/issues/4110#issuecomment-2085562237
+if systemctl status systemd-resolved.service &> /dev/null; then
+  infomsg "ERROR: You must stop/disable the systemd-resolved service. The following commands are suggested: sudo systemctl stop systemd-resolved.service && sudo systemctl mask systemd-resolved.service"
   exit 1
 fi
 
@@ -954,8 +966,15 @@ elif [ "$_CMD" = "stop" ]; then
 
 elif [ "$_CMD" = "delete" ]; then
 
-  infomsg "Will delete the OpenShift cluster - this removes all persisted data."
+  infomsg "Will delete the OpenShift cluster. This removes all persisted data but downloaded bundles remain."
+  ${CRC_COMMAND} delete --force
+
+elif [ "$_CMD" = "cleanup" ]; then
+
+  infomsg "Will cleanup the CRC environment, including the large bundles that were downloaded."
   ${CRC_COMMAND} delete --clear-cache --force
+  infomsg "Further cleaning up of the CRC environment"
+  ${CRC_COMMAND} cleanup
   infomsg "If CRC is not cleaned up fully, execute: sudo virsh destroy crc && sudo virsh undefine crc"
 
 elif [ "$_CMD" = "status" ]; then
