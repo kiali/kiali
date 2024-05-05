@@ -1,5 +1,6 @@
 import { Given, Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import { ensureKialiFinishedLoading } from './transition';
+import { MeshCluster } from '../../../src/types/Mesh';
 
 // Most of these "Given" implementations are directly using the Kiali API
 // in order to reach a well known state in the environment before performing
@@ -247,11 +248,13 @@ When('I override the default automatic sidecar injection policy in the namespace
   cy.request('GET', '/api/status').then(response => {
     expect(response.status).to.equal(200);
 
-    cy.request('/api/clusters').then(response => {
+    cy.request('/api/config').then(response => {
       cy.wrap(response.isOkStatusCode).should('be.true');
-      cy.wrap(response.body).should('have.length', 1);
 
-      const cluster = response.body[0].name;
+      const clusters: { [key: string]: MeshCluster } = response.body.clusters;
+      const clusterNames = Object.keys(clusters);
+      cy.wrap(clusterNames).should('have.length', 1);
+      const cluster = clusterNames[0];
 
       cy.getBySel('overview-type-LIST').should('be.visible').click();
 
@@ -273,11 +276,13 @@ When(
     cy.request('GET', '/api/status').then(response => {
       expect(response.status).to.equal(200);
 
-      cy.request('/api/clusters').then(response => {
+      cy.request('/api/config').then(response => {
         cy.wrap(response.isOkStatusCode).should('be.true');
-        cy.wrap(response.body).should('have.length', 1);
 
-        const cluster = response.body[0].name;
+        const clusters: { [key: string]: MeshCluster } = response.body.clusters;
+        const clusterNames = Object.keys(clusters);
+        cy.wrap(clusterNames).should('have.length', 1);
+        const cluster = clusterNames[0];
 
         cy.getBySel('overview-type-LIST').should('be.visible').click();
 
@@ -300,11 +305,13 @@ When('I remove override configuration for sidecar injection in the namespace', f
   cy.request('GET', '/api/status').then(response => {
     expect(response.status).to.equal(200);
 
-    cy.request('/api/clusters').then(response => {
+    cy.request('/api/config').then(response => {
       cy.wrap(response.isOkStatusCode).should('be.true');
-      cy.wrap(response.body).should('have.length', 1);
 
-      const cluster = response.body[0].name;
+      const clusters: { [key: string]: MeshCluster } = response.body.clusters;
+      const clusterNames = Object.keys(clusters);
+      cy.wrap(clusterNames).should('have.length', 1);
+      const cluster = clusterNames[0];
 
       cy.getBySel('overview-type-LIST').should('be.visible').click();
 
@@ -351,11 +358,13 @@ Then('I should see the override annotation for sidecar injection in the namespac
 
     const expectation = 'exist';
 
-    cy.request('/api/clusters').then(response => {
+    cy.request('/api/config').then(response => {
       cy.wrap(response.isOkStatusCode).should('be.true');
-      cy.wrap(response.body).should('have.length', 1);
 
-      const cluster = response.body[0].name;
+      const clusters: { [key: string]: MeshCluster } = response.body.clusters;
+      const clusterNames = Object.keys(clusters);
+      cy.wrap(clusterNames).should('have.length', 1);
+      const cluster = clusterNames[0];
 
       cy.getBySel(`VirtualItem_Cluster${cluster}_${this.targetNamespace}`)
         .contains(`istio-injection=${enabled}`)
@@ -368,11 +377,13 @@ Then('I should see no override annotation for sidecar injection in the namespace
   cy.request('GET', '/api/status').then(response => {
     expect(response.status).to.equal(200);
 
-    cy.request('/api/clusters').then(response => {
+    cy.request('/api/config').then(response => {
       cy.wrap(response.isOkStatusCode).should('be.true');
-      cy.wrap(response.body).should('have.length', 1);
 
-      const cluster = response.body[0].name;
+      const clusters: { [key: string]: MeshCluster } = response.body.clusters;
+      const clusterNames = Object.keys(clusters);
+      cy.wrap(clusterNames).should('have.length', 1);
+      const cluster = clusterNames[0];
 
       cy.getBySel(`VirtualItem_Cluster${cluster}_${this.targetNamespace}`)
         .contains(`istio-injection`)
