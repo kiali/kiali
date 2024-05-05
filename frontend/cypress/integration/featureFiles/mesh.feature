@@ -11,16 +11,15 @@ Feature: Kiali Mesh page
 
 # NOTE: Mesh Find/Hide has its own feature file
 
-  @selected
   Scenario: Open mesh Tour
     When user opens mesh tour
     Then user "sees" mesh tour
 
   Scenario: Close mesh Tour
-    When user closes mesh tour
+    When user opens mesh tour
+    And user closes mesh tour
     Then user "does not see" mesh tour
 
-  @selected
   Scenario: See mesh
     Then mesh side panel is shown
     And user sees expected mesh infra
