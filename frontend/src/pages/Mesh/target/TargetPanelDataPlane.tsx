@@ -86,6 +86,13 @@ export class TargetPanelDataPlane extends React.Component<TargetPanelCommonProps
                             targetNamespace={ns.name}
                             updateTime={this.props.updateTime}
                           />
+                          <pre>
+                            {JSON.stringify(
+                              data.infraData.find(id => id.name === ns.name),
+                              null,
+                              2
+                            )}
+                          </pre>
                         </ExpandableRowContent>
                       </Td>
                     </Tr>
@@ -93,7 +100,6 @@ export class TargetPanelDataPlane extends React.Component<TargetPanelCommonProps
                 );
               })}
           </Table>
-          <pre>{JSON.stringify(data.infraData, null, 2)}</pre>
         </div>
       </div>
     );
