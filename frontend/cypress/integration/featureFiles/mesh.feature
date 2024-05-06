@@ -11,10 +11,12 @@ Feature: Kiali Mesh page
 
 # NOTE: Mesh Find/Hide has its own feature file
 
+  @selected
   Scenario: Open mesh Tour
     When user opens mesh tour
     Then user "sees" mesh tour
 
+  @selected
   Scenario: Close mesh Tour
     When user opens mesh tour
     And user closes mesh tour
@@ -23,6 +25,11 @@ Feature: Kiali Mesh page
   Scenario: See mesh
     Then mesh side panel is shown
     And user sees expected mesh infra
+
+  @selected
+  Scenario: Test DataPlane
+    When user selects mesh node with label "Data Plane"
+    Then user sees data plane side panel
 
   # @bookinfo-app
   # Scenario: See DataPlane

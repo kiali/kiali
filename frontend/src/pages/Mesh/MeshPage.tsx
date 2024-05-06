@@ -84,6 +84,7 @@ export type MeshData = {
 type MeshPageState = {
   controller?: Controller;
   meshData: MeshData;
+  setSelectedIds?: (values: string[]) => void;
 };
 
 const containerStyle = kialiStyle({
@@ -275,8 +276,8 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
     console.debug(`onFocus(${focusNode})`);
   };
 
-  private handleReady = (controller: Controller) => {
-    this.setState({ controller: controller });
+  private handleReady = (controller: Controller, setSelectedIds: (values: string[]) => void) => {
+    this.setState({ controller: controller, setSelectedIds: setSelectedIds });
   };
 
   private handleEmptyMeshAction = () => {

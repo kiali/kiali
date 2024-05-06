@@ -1,5 +1,6 @@
 import { Before, Then, When } from '@badeball/cypress-cucumber-preprocessor';
-import { Controller, Edge, Node, isEdge, isNode } from '@patternfly/react-topology';
+import { Controller, Edge, Node, Visualization, isEdge, isNode } from '@patternfly/react-topology';
+import { MeshNodeData, MeshTarget } from '../../../src/types/Mesh';
 
 const url = '/console';
 
@@ -19,12 +20,12 @@ Before(() => {
   });
 });
 
-When(
-  'user asks for mesh with refresh {string} and duration {string}',
-  (namespaces: string, refresh: string, duration: string) => {
-    cy.visit(`${url}/mesh?refresh=${refresh}&duration=${duration}&namespaces=${namespaces}`);
-  }
-);
+//When(
+//  'user asks for mesh with refresh {string} and duration {string}',
+//  (namespaces: string, refresh: string, duration: string) => {
+//    cy.visit(`${url}/mesh?refresh=${refresh}&duration=${duration}&namespaces=${namespaces}`);
+//  }
+//);
 
 When('user opens mesh tour', () => {
   cy.get('button#mesh-tour').click();
@@ -32,6 +33,28 @@ When('user opens mesh tour', () => {
 
 When('user closes mesh tour', () => {
   cy.get('div[role="dialog"]').find('button[aria-label="Close"]').click();
+});
+
+When('user selects mesh node with label {string}', (label: string) => {
+  cy.get('#target-panel-mesh')
+    .should('be.visible')
+    .within(div => {
+      cy.contains('Mesh Name: Istio Mesh');
+    });
+  cy.waitForReact();
+  cy.getReact('MeshPageComponent')
+    .should('have.length', '2')
+    .nthNode(1)
+    .getCurrentState()
+    .then(state => {
+      const controller = state.controller as Visualization;
+      assert.isTrue(controller.hasGraph());
+      const { nodes } = elems(controller);
+      const node = nodes.find(n => n.getLabel() === label);
+      assert.exists(node);
+      const setSelectedIds = state.setSelectedIds as (values: string[]) => void;
+      setSelectedIds([node.getId()]);
+    });
 });
 
 Then('user {string} mesh tour', (action: string) => {
@@ -61,6 +84,11 @@ When(`user selects mesh refresh {string}`, (refresh: string) => {
   cy.get(`button[id="${refresh}"]`).click().get('#loading_kiali_spinner').should('not.exist');
 });
 
+When(`user selects mesh refresh {string}`, (refresh: string) => {
+  cy.get('button#time_range_refresh-toggle').click();
+  cy.get(`button[id="${refresh}"]`).click().get('#loading_kiali_spinner').should('not.exist');
+});
+
 Then('mesh side panel is shown', () => {
   cy.get('#target-panel-mesh')
     .should('be.visible')
@@ -82,6 +110,22 @@ Then('user sees expected mesh infra', () => {
       const { nodes, edges } = elems(controller);
       assert.equal(nodes.length, 8, 'Unexpected number of infra nodes');
       assert.equal(edges.length, 5, 'Unexpected number of infra edges');
+      const nodeNames = nodes.map(n => n.getLabel());
+      assert.isTrue(nodeNames.some(n => n === 'Data Plane'));
+      assert.isTrue(nodeNames.some(n => n === 'Grafana'));
+      assert.isTrue(nodeNames.some(n => n.startsWith('istiod')));
+      assert.isTrue(nodeNames.some(n => n === 'jaeger' || n === 'Tempo'));
+      assert.isTrue(nodeNames.some(n => n === 'kiali'));
+      assert.isTrue(nodeNames.some(n => n === 'Prometheus'));
+    });
+});
+
+Then('user sees data plane side panel', () => {
+  cy.get('#loading_kiali_spinner').should('not.exist');
+  cy.get('#target-panel-mesh')
+    .should('be.visible')
+    .within(div => {
+      cy.contains('Data Plane');
     });
 });
 

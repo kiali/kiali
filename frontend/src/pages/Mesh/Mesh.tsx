@@ -96,7 +96,7 @@ const TopologyContent: React.FC<{
   meshData: MeshData;
   onEdgeTap?: (edge: Edge<EdgeModel>) => void;
   onNodeTap?: (node: Node<NodeModel>) => void;
-  onReady: (controller: any) => void;
+  onReady: (controller: any, setSelectedIds: (value: string[]) => void) => void;
   setLayout: (val: LayoutName) => void;
   setTarget: (meshTarget: MeshTarget) => void;
   setUpdateTime: (val: TimeInMilliseconds) => void;
@@ -411,7 +411,7 @@ const TopologyContent: React.FC<{
 
     if (initialGraph) {
       console.debug('mesh onReady');
-      onReady(controller);
+      onReady(controller, setSelectedIds);
     }
 
     // notify that the graph has been updated
@@ -568,7 +568,7 @@ export const Mesh: React.FC<{
   meshData: MeshData;
   onEdgeTap?: (edge: Edge<EdgeModel>) => void;
   onNodeTap?: (node: Node<NodeModel>) => void;
-  onReady: (controller: any) => void;
+  onReady: (controller: any, setSelectedIds: (values: string[]) => void) => void;
   setLayout: (layout: Layout) => void;
   setTarget: (meshTarget: MeshTarget) => void;
   setUpdateTime: (val: TimeInMilliseconds) => void;
