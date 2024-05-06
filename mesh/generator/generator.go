@@ -234,6 +234,8 @@ func addInfra(meshMap mesh.MeshMap, infraType, cluster, namespace, name string, 
 
 	if healthData != "" {
 		node.Metadata[mesh.HealthData] = healthData
+	} else {
+		node.Metadata[mesh.HealthData] = kubernetes.ComponentHealthy
 	}
 
 	return node, found, nil
