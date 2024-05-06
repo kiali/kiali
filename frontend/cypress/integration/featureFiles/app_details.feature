@@ -14,6 +14,7 @@ Feature: Kiali App Details page
     And user is at the details page for the "app" "bookinfo/details" located in the "" cluster
 
   @bookinfo-app
+  @record
   Scenario: See details for app.
     Then user sees details information for the "details" app
     But no cluster badge for the "app" should be visible
