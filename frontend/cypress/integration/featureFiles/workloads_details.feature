@@ -12,6 +12,7 @@ Feature: Kiali Workload Details page
     And user is at the details page for the "workload" "bookinfo/details-v1" located in the "" cluster
 
   @bookinfo-app
+  @record
   Scenario: See details for workload
     Then user sees details information for workload
     But no cluster badge for the "workload" should be visible
