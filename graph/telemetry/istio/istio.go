@@ -150,6 +150,16 @@ func buildNamespaceTrafficMap(ctx context.Context, namespace string, o graph.Tel
 			idleCondition)
 		outgoingVector := promQuery(query, time.Unix(o.QueryTime, 0), client.API())
 		populateTrafficMap(trafficMap, &outgoingVector, metric, o)
+
+		// 3) Waypoint
+		query = fmt.Sprintf(`sum(rate(%s{reporter="waypoint",source_workload_namespace="%s"} [%vs])) by (%s) %s`,
+			metric,
+			namespace,
+			int(duration.Seconds()), // range duration for the query
+			groupBy,
+			idleCondition)
+		incomingVector = promQuery(query, time.Unix(o.QueryTime, 0), client.API())
+		populateTrafficMap(trafficMap, &incomingVector, metric, o)
 	}
 
 	// GRPC Message traffic
