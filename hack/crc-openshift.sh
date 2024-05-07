@@ -504,10 +504,10 @@ SCRIPT_ROOT="$( cd "$(dirname "$0")" ; pwd -P )"
 cd ${SCRIPT_ROOT}
 
 # The default version of the crc tool to be downloaded
-DEFAULT_CRC_DOWNLOAD_VERSION="2.34.1"
+DEFAULT_CRC_DOWNLOAD_VERSION="2.32.0"
 
 # The default version of the crc bundle - this is typically the version included with the CRC download
-DEFAULT_CRC_LIBVIRT_DOWNLOAD_VERSION="4.15.3"
+DEFAULT_CRC_LIBVIRT_DOWNLOAD_VERSION="4.14.8"
 
 # The default virtual CPUs assigned to the CRC VM
 DEFAULT_CRC_CPUS="6"
@@ -801,12 +801,6 @@ debug "ENVIRONMENT:
 # Fail fast if we don't even have the correct location where the oc client should be
 if [ ! -d "${OPENSHIFT_BIN_PATH}" ]; then
   infomsg "ERROR: You must define OPENSHIFT_BIN_PATH to an existing location where you want the downloaded tools to be. It is currently set to: ${OPENSHIFT_BIN_PATH}"
-  exit 1
-fi
-
-# fail fast if systemd-resolved is running - see https://github.com/crc-org/crc/issues/4110#issuecomment-2085562237
-if systemctl status systemd-resolved.service &> /dev/null; then
-  infomsg "ERROR: You must stop/disable the systemd-resolved service. The following commands are suggested: sudo systemctl stop systemd-resolved.service && sudo systemctl mask systemd-resolved.service"
   exit 1
 fi
 
