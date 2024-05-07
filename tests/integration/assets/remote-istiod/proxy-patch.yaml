@@ -19,5 +19,5 @@ spec:
               }
               EOF
               nginx -g "daemon off;"
-          image: nginxinc/nginx-unprivileged
+          image: quay.io/nginx/nginx-unprivileged
           name: nginx
