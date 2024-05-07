@@ -9,7 +9,7 @@
           "infraType": "cluster",
           "namespace": "",
           "nodeType": "box",
-          "healthData": null,
+          "healthData": "Healthy",
           "infraData": {
             "apiEndpoint": "http://127.0.0.2:9443",
             "isKialiHome": true,
@@ -38,7 +38,7 @@
           "infraType": "cluster",
           "namespace": "",
           "nodeType": "box",
-          "healthData": null,
+          "healthData": "Healthy",
           "isBox": "cluster",
           "isExternal": true,
           "isInaccessible": true
@@ -66,7 +66,7 @@
           "infraType": "dataplane",
           "namespace": "",
           "nodeType": "infra",
-          "healthData": null,
+          "healthData": "Healthy",
           "infraData": [
             {
               "name": "data-plane-1",
@@ -121,7 +121,7 @@
           "infraType": "kiali",
           "namespace": "istio-system",
           "nodeType": "infra",
-          "healthData": null,
+          "healthData": "Healthy",
           "infraData": {
             "ComponentStatuses": {
               "Enabled": true,
