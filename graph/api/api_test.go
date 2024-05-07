@@ -1157,6 +1157,9 @@ func mockNamespaceRatesGraph(t *testing.T) (*prometheus.Client, *prometheustest.
 		},
 	}
 
+	q15 := `round(sum(rate(istio_requests_total{reporter="waypoint",source_workload_namespace="bookinfo"} [600s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,request_protocol,response_code,grpc_response_status,response_flags) > 0,0.001)`
+	v15 := model.Vector{}
+
 	mockQuery(api, q6, &v6)
 	mockQuery(api, q7, &v7)
 	mockQuery(api, q8, &v8)
@@ -1166,6 +1169,7 @@ func mockNamespaceRatesGraph(t *testing.T) (*prometheus.Client, *prometheustest.
 	mockQuery(api, q12, &v12)
 	mockQuery(api, q13, &v13)
 	mockQuery(api, q14, &v14)
+	mockQuery(api, q15, &v15)
 
 	return client, api, nil
 }
@@ -3485,6 +3489,15 @@ func TestComplexGraph(t *testing.T) {
 	q17 := `round(sum(rate(istio_tcp_received_bytes_total{mesh_id="mesh1",reporter="source",source_workload_namespace="istio-system"} [600s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,response_flags) > 0,0.001)`
 	v17 := model.Vector{}
 
+	q18 := `round(sum(rate(istio_requests_total{mesh_id="mesh1",reporter="waypoint",source_workload_namespace="bookinfo"} [600s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,request_protocol,response_code,grpc_response_status,response_flags) > 0,0.001)`
+	v18 := model.Vector{}
+
+	q19 := `round(sum(rate(istio_requests_total{mesh_id="mesh1",reporter="waypoint",source_workload_namespace="tutorial"} [600s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,request_protocol,response_code,grpc_response_status,response_flags) > 0,0.001)`
+	v19 := model.Vector{}
+
+	q20 := `round(sum(rate(istio_requests_total{mesh_id="mesh1",reporter="waypoint",source_workload_namespace="istio-system"} [600s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,request_protocol,response_code,grpc_response_status,response_flags) > 0,0.001)`
+	v20 := model.Vector{}
+
 	clients := map[string]kubernetes.ClientInterface{
 		"cluster-tutorial": kubetest.NewFakeK8sClient(
 			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "bookinfo"}},
@@ -3528,6 +3541,9 @@ func TestComplexGraph(t *testing.T) {
 	mockQuery(xapi, q15, &v15)
 	mockQuery(xapi, q16, &v16)
 	mockQuery(xapi, q17, &v17)
+	mockQuery(xapi, q18, &v18)
+	mockQuery(xapi, q19, &v19)
+	mockQuery(xapi, q20, &v20)
 
 	var fut func(ctx context.Context, b *business.Layer, p *prometheus.Client, o graph.Options) (int, interface{})
 
@@ -3824,6 +3840,9 @@ func TestMultiClusterSourceGraph(t *testing.T) {
 	q5 := `round(sum(rate(istio_tcp_received_bytes_total{reporter="source",source_workload_namespace="bookinfo"} [600s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,response_flags) ,0.001)`
 	v5 := model.Vector{}
 
+	q6 := `round(sum(rate(istio_requests_total{reporter="waypoint",source_workload_namespace="bookinfo"} [600s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,request_protocol,response_code,grpc_response_status,response_flags) ,0.001)`
+	v6 := model.Vector{}
+
 	clients := map[string]kubernetes.ClientInterface{
 		"kukulcan": kubetest.NewFakeK8sClient(
 			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "bookinfo"}},
@@ -3846,6 +3865,7 @@ func TestMultiClusterSourceGraph(t *testing.T) {
 	mockQuery(xapi, q3, &v3)
 	mockQuery(xapi, q4, &v4)
 	mockQuery(xapi, q5, &v5)
+	mockQuery(xapi, q6, &v6)
 
 	var fut func(ctx context.Context, b *business.Layer, p *prometheus.Client, o graph.Options) (int, interface{})
 
