@@ -1,6 +1,43 @@
 package dashboards
 
 const DEFAULT_DASHBOARDS_YAML = `
+- name: istiod
+  title: Istiod Metrics
+  discoverOn: "pilot_info"
+  items:
+  - chart:
+      name: "Proxy Push Time"
+      spans: 3
+      metricName: "pilot_proxy_convergence_time_count"
+      unit: "s"
+      dataType: "rate"
+  - chart:
+      name: "CPU Usage"
+      spans: 3
+      metricName: "process_cpu_seconds_total"
+      unit: "s"
+      dataType: "rate"
+      min: 0
+  - chart:
+      name: "Pilot Pushes"
+      unit: "ops/s"
+      spans: 3
+      metricName: "pilot_xds_pushes"
+      dataType: "raw"
+      min: 0
+  - chart:
+      name: "XDS Active Connections"
+      spans: 3
+      metricName: "pilot_xds"
+      dataType: "raw"
+      min: 0
+  - chart:
+      name: "Known Services"
+      spans: 3
+      metricName: "pilot_services"
+      dataType: "raw"
+      min: 0
+
 - name: envoy
   title: Envoy Metrics
   discoverOn: "envoy_server_uptime"
