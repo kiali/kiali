@@ -73,13 +73,15 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalIn
 		if _, ok := clusterMap[cp.Cluster.Name]; !ok {
 			_, _, err := addInfra(meshMap, mesh.InfraTypeCluster, cp.Cluster.Name, "", cp.Cluster.Name, cp.Cluster, esVersions[cp.Cluster.Name], false, "")
 			mesh.CheckError(err)
+			clusterMap[cp.Cluster.Name] = true
 		}
 
 		// add managed clusters if not already added
 		for _, mc := range cp.ManagedClusters {
-			if _, ok := clusterMap[mc.Name]; ok {
+			if _, ok := clusterMap[mc.Name]; !ok {
 				_, _, err := addInfra(meshMap, mesh.InfraTypeCluster, mc.Name, "", mc.Name, mc, "", false, "")
 				mesh.CheckError(err)
+				clusterMap[mc.Name] = true
 
 				continue
 			}
