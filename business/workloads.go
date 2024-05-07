@@ -2088,24 +2088,6 @@ func (in *WorkloadService) streamParsedLogs(cluster, namespace string, names []s
 	// discard the logs after sinceTime+duration
 	isBounded := opts.Duration != nil
 
-	// To avoid high memory usage, the JSON will be written
-	// to the HTTP Response as it's received from the cluster API.
-	// That is, each log line is parsed, decorated with Kiali's metadata,
-	// marshalled to JSON and immediately written to the HTTP Response.
-	// This means that it is needed to push HTTP headers and start writing
-	// the response body right now and any errors at the middle of the log
-	// processing can no longer be informed to the client. So, starting
-	// these lines, the best we can do if some error happens is to simply
-	// log the error and stop/truncate the response, which will have the
-	// effect of sending an incomplete JSON document that the browser will fail
-	// to parse. Hopefully, the client/UI can catch the parsing error and
-	// properly show an error message about the failure retrieving logs.
-	w.Header().Set("Content-Type", "application/json")
-	_, writeErr := w.Write([]byte("{\"entries\":[")) // This starts the JSON document
-	if writeErr != nil {
-		return writeErr
-	}
-
 	firstEntry := true
 
 	for i, name := range names {
@@ -2130,6 +2112,28 @@ func (in *WorkloadService) streamParsedLogs(cluster, namespace string, names []s
 			if isBounded {
 				end := startTime.Add(*opts.Duration)
 				endTime = &end
+			}
+		}
+
+		var writeErr error
+
+		if firstEntry {
+			// To avoid high memory usage, the JSON will be written
+			// to the HTTP Response as it's received from the cluster API.
+			// That is, each log line is parsed, decorated with Kiali's metadata,
+			// marshalled to JSON and immediately written to the HTTP Response.
+			// This means that it is needed to push HTTP headers and start writing
+			// the response body right now and any errors at the middle of the log
+			// processing can no longer be informed to the client. So, starting
+			// these lines, the best we can do if some error happens is to simply
+			// log the error and stop/truncate the response, which will have the
+			// effect of sending an incomplete JSON document that the browser will fail
+			// to parse. Hopefully, the client/UI can catch the parsing error and
+			// properly show an error message about the failure retrieving logs.
+			w.Header().Set("Content-Type", "application/json")
+			_, writeErr = w.Write([]byte("{\"entries\":[")) // This starts the JSON document
+			if writeErr != nil {
+				return writeErr
 			}
 		}
 
