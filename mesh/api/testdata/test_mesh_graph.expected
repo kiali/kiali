@@ -46,6 +46,27 @@
       },
       {
         "data": {
+          "id": "ecbd12dbd745b071361a4fbb12f3ebe8",
+          "cluster": "cluster-remote",
+          "infraName": "cluster-remote",
+          "infraType": "cluster",
+          "namespace": "",
+          "nodeType": "box",
+          "healthData": "Healthy",
+          "infraData": {
+            "apiEndpoint": "",
+            "isKialiHome": false,
+            "kialiInstances": null,
+            "name": "cluster-remote",
+            "network": "",
+            "secretName": "",
+            "accessible": true
+          },
+          "isBox": "cluster"
+        }
+      },
+      {
+        "data": {
           "id": "54de7d83a35cb05d3834c1b53d7c53e6",
           "parent": "8b0417cc2584b04a88544ddcb1c18174",
           "cluster": "cluster-primary",
@@ -283,6 +304,7 @@
       {
         "data": {
           "id": "f50226d64063fb859a1d7fad6a609978",
+          "parent": "ecbd12dbd745b071361a4fbb12f3ebe8",
           "cluster": "cluster-remote",
           "infraName": "Data Plane",
           "infraType": "dataplane",

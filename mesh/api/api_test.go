@@ -35,6 +35,12 @@ import (
 
 // Setup mock
 func setupMocks(t *testing.T) *mesh.AppenderGlobalInfo {
+	assert := assert.New(t)
+	require := require.New(t)
+	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = "cluster-primary"
+	config.Set(conf)
+
 	istiodDeployment := apps_v1.Deployment{
 		ObjectMeta: v1.ObjectMeta{
 			Name:      "istiod",
@@ -43,21 +49,17 @@ func setupMocks(t *testing.T) *mesh.AppenderGlobalInfo {
 		},
 		Spec: apps_v1.DeploymentSpec{
 			Template: core_v1.PodTemplateSpec{
-				ObjectMeta: v1.ObjectMeta{
-					Name:      "istiod",
-					Namespace: "istio-system",
-					Labels:    map[string]string{"app": "istiod"},
-				},
 				Spec: core_v1.PodSpec{
 					Containers: []core_v1.Container{
 						{
+							Name: "discovery",
 							Env: []core_v1.EnvVar{
 								{
 									Name:  "CLUSTER_ID",
-									Value: "cluster-primary",
+									Value: conf.KubernetesConfig.ClusterName,
 								},
-								{
-									Name:  "PILOT_SCOPE_GATEWAY_TO_NAMESPACE",
+								core_v1.EnvVar{
+									Name:  "EXTERNAL_ISTIOD",
 									Value: "true",
 								},
 							},
@@ -99,13 +101,6 @@ trustDomain: cluster.local
 		},
 	}
 
-	assert := assert.New(t)
-	require := require.New(t)
-	conf := config.NewConfig()
-	conf.InCluster = false
-	conf.KubernetesConfig.ClusterName = "cluster-primary"
-	config.Set(conf)
-
 	primaryClient := kubetest.NewFakeK8sClient(
 		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
 		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "data-plane-1"}},
@@ -121,25 +116,33 @@ trustDomain: cluster.local
 		},
 	}
 	remoteClient := kubetest.NewFakeK8sClient(
+		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{
+			Name:        "istio-system",
+			Annotations: map[string]string{business.IstioControlPlaneClustersLabel: conf.KubernetesConfig.ClusterName},
+		}},
 		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "data-plane-3"}},
 		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "data-plane-4"}},
 	)
 	clients := map[string]kubernetes.ClientInterface{
-		"cluster-primary": primaryClient,
-		"cluster-remote":  remoteClient,
+		conf.KubernetesConfig.ClusterName: primaryClient,
+		"cluster-remote":                  remoteClient,
 	}
+	factory := kubetest.NewK8SClientFactoryMock(nil)
+	factory.SetClients(clients)
 
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(nil)
 	mockClientFactory.SetClients(clients)
-
 	cache := cache.NewTestingCacheWithFactory(t, mockClientFactory, *conf)
-
 	business.WithKialiCache(cache)
 	business.SetWithBackends(mockClientFactory, nil)
 	layer := business.NewWithBackends(clients, clients, nil, nil)
 	meshSvc := layer.Mesh
 
-	//r := httptest.NewRequest("GET", "http://kiali.url.local/", nil)
+	meshDef, err := meshSvc.GetMesh(context.TODO())
+	require.NoError(err)
+	require.Len(meshDef.ControlPlanes, 1)
+	require.Len(meshDef.ControlPlanes[0].ManagedClusters, 2)
+
 	a, err := meshSvc.GetClusters()
 	sort.Slice(a, func(i, j int) bool {
 		return a[i].Name < a[j].Name
