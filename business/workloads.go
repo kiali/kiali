@@ -571,7 +571,7 @@ func parseLogLine(line string, isProxy bool, engardeParser *parser.Parser) *LogE
 	return &entry
 }
 
-func parseZtunnelLine(line string) *LogEntry {
+func parseZtunnelLine(line, name string) *LogEntry {
 	entry := LogEntry{
 		Message:       "",
 		Timestamp:     "",
@@ -589,14 +589,14 @@ func parseZtunnelLine(line string) *LogEntry {
 
 	if len(msgSplit) < 5 {
 		log.Debugf("Error splitting log line [%s]", line)
-		entry.Message = line
+		entry.Message = fmt.Sprintf("[%s] %s", name, line)
 		return &entry
 	}
 
-	entry.Message = msgSplit[4]
+	entry.Message = fmt.Sprintf("[%s] %s", name, msgSplit[4])
 	if entry.Message == "" {
 		log.Debugf("Skipping empty log line [%s]", line)
-		entry.Message = line
+		entry.Message = fmt.Sprintf("[%s] %s", name, line)
 		return &entry
 	}
 
@@ -2109,7 +2109,6 @@ func (in *WorkloadService) streamParsedLogs(cluster, namespace string, names []s
 	firstEntry := true
 
 	for i, name := range names {
-		log.Infof("Reading logs from %s", name)
 		logsReader, err := userClient.StreamPodLogs(namespace, name, &k8sOpts)
 		if err != nil {
 			return err
@@ -2144,7 +2143,7 @@ func (in *WorkloadService) streamParsedLogs(cluster, namespace string, names []s
 
 			var entry *LogEntry
 			if opts.LogType == models.LogTypeZtunnel {
-				entry = parseZtunnelLine(line)
+				entry = parseZtunnelLine(line, name)
 			} else {
 				entry = parseLogLine(line, opts.LogType == models.LogTypeProxy, engardeParser)
 			}
@@ -2208,15 +2207,18 @@ func (in *WorkloadService) streamParsedLogs(cluster, namespace string, names []s
 		if readErr == nil && opts.MaxLines != nil && linesWritten >= *opts.MaxLines {
 			// End the JSON document, setting the max-lines truncated flag
 			_, writeErr = w.Write([]byte("], \"linesTruncated\": true}"))
+			if writeErr != nil {
+				log.Errorf("Error when writing the outro of the JSON document while streaming pod logs: %s", err.Error())
+			}
 			break
 		} else {
 			if i == len(names)-1 {
 				// End the JSON document
 				_, writeErr = w.Write([]byte("]}"))
+				if writeErr != nil {
+					log.Errorf("Error when writing the outro of the JSON document while streaming pod logs: %s", err.Error())
+				}
 			}
-		}
-		if writeErr != nil {
-			log.Errorf("Error when writing the outro of the JSON document while streaming pod logs: %s", err.Error())
 		}
 	}
 
