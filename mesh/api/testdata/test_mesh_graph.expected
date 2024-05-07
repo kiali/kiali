@@ -3,9 +3,23 @@
     "nodes": [
       {
         "data": {
-          "id": "2411347cfd042289a2ccec31ae4de661",
-          "cluster": "East",
-          "infraName": "East",
+          "id": "f2a39c06544bab3ee6f6b9014db8530d",
+          "cluster": "_external_",
+          "infraName": "External Deployments",
+          "infraType": "cluster",
+          "namespace": "",
+          "nodeType": "box",
+          "healthData": "Healthy",
+          "isBox": "cluster",
+          "isExternal": true,
+          "isInaccessible": true
+        }
+      },
+      {
+        "data": {
+          "id": "8b0417cc2584b04a88544ddcb1c18174",
+          "cluster": "cluster-primary",
+          "infraName": "cluster-primary",
           "infraType": "cluster",
           "namespace": "",
           "nodeType": "box",
@@ -22,7 +36,7 @@
                 "version": ""
               }
             ],
-            "name": "East",
+            "name": "cluster-primary",
             "network": "kialiNetwork",
             "secretName": "",
             "accessible": true
@@ -32,142 +46,15 @@
       },
       {
         "data": {
-          "id": "f2a39c06544bab3ee6f6b9014db8530d",
-          "cluster": "_external_",
-          "infraName": "External Deployments",
-          "infraType": "cluster",
-          "namespace": "",
-          "nodeType": "box",
-          "healthData": "Healthy",
-          "isBox": "cluster",
-          "isExternal": true,
-          "isInaccessible": true
-        }
-      },
-      {
-        "data": {
-          "id": "a7784c32ca8454299b1c0d174df2034d",
-          "parent": "2411347cfd042289a2ccec31ae4de661",
-          "cluster": "East",
+          "id": "54de7d83a35cb05d3834c1b53d7c53e6",
+          "parent": "8b0417cc2584b04a88544ddcb1c18174",
+          "cluster": "cluster-primary",
           "infraName": "istio-system",
           "infraType": "namespace",
           "namespace": "istio-system",
           "nodeType": "box",
           "healthData": null,
           "isBox": "namespace"
-        }
-      },
-      {
-        "data": {
-          "id": "3ab2df5f89394de1661e4b230d8fd488",
-          "parent": "2411347cfd042289a2ccec31ae4de661",
-          "cluster": "East",
-          "infraName": "Data Plane",
-          "infraType": "dataplane",
-          "namespace": "",
-          "nodeType": "infra",
-          "healthData": "Healthy",
-          "infraData": [
-            {
-              "name": "data-plane-1",
-              "cluster": "East",
-              "isAmbient": false,
-              "labels": null,
-              "annotations": null
-            },
-            {
-              "name": "data-plane-2",
-              "cluster": "East",
-              "isAmbient": false,
-              "labels": null,
-              "annotations": null
-            }
-          ]
-        }
-      },
-      {
-        "data": {
-          "id": "46d95dbc7d76eaba80100dfa480dea56",
-          "parent": "a7784c32ca8454299b1c0d174df2034d",
-          "cluster": "East",
-          "infraName": "istiod",
-          "infraType": "istiod",
-          "namespace": "istio-system",
-          "nodeType": "infra",
-          "healthData": "Healthy",
-          "infraData": {
-            "OutboundTrafficPolicy": {
-              "mode": ""
-            },
-            "Network": "",
-            "DisableMixerHttpReports": false,
-            "DiscoverySelectors": null,
-            "EnableAutoMtls": true,
-            "MeshMTLS": {
-              "MinProtocolVersion": ""
-            },
-            "defaultConfig": {
-              "MeshId": ""
-            }
-          }
-        }
-      },
-      {
-        "data": {
-          "id": "7b74d3459937f2d07ade2827bc6d3aac",
-          "parent": "a7784c32ca8454299b1c0d174df2034d",
-          "cluster": "East",
-          "infraName": "kiali",
-          "infraType": "kiali",
-          "namespace": "istio-system",
-          "nodeType": "infra",
-          "healthData": "Healthy",
-          "infraData": {
-            "ComponentStatuses": {
-              "Enabled": true,
-              "Components": [
-                {
-                  "AppLabel": "istio-egressgateway",
-                  "IsCore": false,
-                  "IsProxy": true,
-                  "IsMultiCluster": false,
-                  "Namespace": ""
-                },
-                {
-                  "AppLabel": "istio-ingressgateway",
-                  "IsCore": true,
-                  "IsProxy": true,
-                  "IsMultiCluster": false,
-                  "Namespace": ""
-                },
-                {
-                  "AppLabel": "istiod",
-                  "IsCore": true,
-                  "IsProxy": false,
-                  "IsMultiCluster": false,
-                  "Namespace": ""
-                }
-              ]
-            },
-            "ConfigMapName": "istio",
-            "EnvoyAdminLocalPort": 15000,
-            "GatewayAPIClasses": [],
-            "IstioAPIEnabled": true,
-            "IstioCanaryRevision": {
-              "Current": "",
-              "Upgrade": ""
-            },
-            "IstioIdentityDomain": "svc.cluster.local",
-            "IstioInjectionAnnotation": "sidecar.istio.io/inject",
-            "IstioSidecarInjectorConfigMapName": "istio-sidecar-injector",
-            "IstioSidecarAnnotation": "sidecar.istio.io/status",
-            "IstiodDeploymentName": "istiod",
-            "IstiodPodMonitoringPort": 15014,
-            "IstiodPollingIntervalSeconds": 20,
-            "Registry": null,
-            "RootNamespace": "istio-system",
-            "UrlServiceVersion": "http://istiod.istio-system:15014/version"
-          }
         }
       },
       {
@@ -279,41 +166,188 @@
           "isExternal": true,
           "isInaccessible": true
         }
+      },
+      {
+        "data": {
+          "id": "7c9269b87249746045770ea45dec2786",
+          "parent": "8b0417cc2584b04a88544ddcb1c18174",
+          "cluster": "cluster-primary",
+          "infraName": "Data Plane",
+          "infraType": "dataplane",
+          "namespace": "",
+          "nodeType": "infra",
+          "healthData": "Healthy",
+          "infraData": [
+            {
+              "name": "data-plane-1",
+              "cluster": "cluster-primary",
+              "isAmbient": false,
+              "labels": null,
+              "annotations": null
+            },
+            {
+              "name": "data-plane-2",
+              "cluster": "cluster-primary",
+              "isAmbient": false,
+              "labels": null,
+              "annotations": null
+            }
+          ]
+        }
+      },
+      {
+        "data": {
+          "id": "b4fef251c5e835d9269751857825b5ea",
+          "parent": "54de7d83a35cb05d3834c1b53d7c53e6",
+          "cluster": "cluster-primary",
+          "infraName": "istiod",
+          "infraType": "istiod",
+          "namespace": "istio-system",
+          "nodeType": "infra",
+          "healthData": "Healthy",
+          "infraData": {
+            "OutboundTrafficPolicy": {
+              "mode": ""
+            },
+            "Network": "",
+            "DisableMixerHttpReports": false,
+            "DiscoverySelectors": null,
+            "EnableAutoMtls": true,
+            "MeshMTLS": {
+              "MinProtocolVersion": ""
+            },
+            "defaultConfig": {
+              "MeshId": ""
+            }
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "ed31cec8e279d017c1ac1f7100723e79",
+          "parent": "54de7d83a35cb05d3834c1b53d7c53e6",
+          "cluster": "cluster-primary",
+          "infraName": "kiali",
+          "infraType": "kiali",
+          "namespace": "istio-system",
+          "nodeType": "infra",
+          "healthData": "Healthy",
+          "infraData": {
+            "ComponentStatuses": {
+              "Enabled": true,
+              "Components": [
+                {
+                  "AppLabel": "istio-egressgateway",
+                  "IsCore": false,
+                  "IsProxy": true,
+                  "IsMultiCluster": false,
+                  "Namespace": ""
+                },
+                {
+                  "AppLabel": "istio-ingressgateway",
+                  "IsCore": true,
+                  "IsProxy": true,
+                  "IsMultiCluster": false,
+                  "Namespace": ""
+                },
+                {
+                  "AppLabel": "istiod",
+                  "IsCore": true,
+                  "IsProxy": false,
+                  "IsMultiCluster": false,
+                  "Namespace": ""
+                }
+              ]
+            },
+            "ConfigMapName": "istio",
+            "EnvoyAdminLocalPort": 15000,
+            "GatewayAPIClasses": [],
+            "IstioAPIEnabled": true,
+            "IstioCanaryRevision": {
+              "Current": "",
+              "Upgrade": ""
+            },
+            "IstioIdentityDomain": "svc.cluster.local",
+            "IstioInjectionAnnotation": "sidecar.istio.io/inject",
+            "IstioSidecarInjectorConfigMapName": "istio-sidecar-injector",
+            "IstioSidecarAnnotation": "sidecar.istio.io/status",
+            "IstiodDeploymentName": "istiod",
+            "IstiodPodMonitoringPort": 15014,
+            "IstiodPollingIntervalSeconds": 20,
+            "Registry": null,
+            "RootNamespace": "istio-system",
+            "UrlServiceVersion": "http://istiod.istio-system:15014/version"
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "f50226d64063fb859a1d7fad6a609978",
+          "cluster": "cluster-remote",
+          "infraName": "Data Plane",
+          "infraType": "dataplane",
+          "namespace": "",
+          "nodeType": "infra",
+          "healthData": "Healthy",
+          "infraData": [
+            {
+              "name": "data-plane-3",
+              "cluster": "cluster-remote",
+              "isAmbient": false,
+              "labels": null,
+              "annotations": null
+            },
+            {
+              "name": "data-plane-4",
+              "cluster": "cluster-remote",
+              "isAmbient": false,
+              "labels": null,
+              "annotations": null
+            }
+          ]
+        }
       }
     ],
     "edges": [
       {
         "data": {
-          "id": "42fc58fc1ba10ba8b90db16dfde683e5",
-          "source": "46d95dbc7d76eaba80100dfa480dea56",
-          "target": "3ab2df5f89394de1661e4b230d8fd488"
+          "id": "c33dfb69aa02feb7e0798c9185a68525",
+          "source": "b4fef251c5e835d9269751857825b5ea",
+          "target": "7c9269b87249746045770ea45dec2786"
         }
       },
       {
         "data": {
-          "id": "ca6610898d355f2112b9f0fe60d38ded",
-          "source": "7b74d3459937f2d07ade2827bc6d3aac",
+          "id": "758f05601a173df0bed8693eaf5cfbb6",
+          "source": "b4fef251c5e835d9269751857825b5ea",
+          "target": "f50226d64063fb859a1d7fad6a609978"
+        }
+      },
+      {
+        "data": {
+          "id": "574ebfd667eaa055aeefdec6d46cd012",
+          "source": "ed31cec8e279d017c1ac1f7100723e79",
           "target": "0ff3498362503e275d0d47f0e6ca5479"
         }
       },
       {
         "data": {
-          "id": "e9224ceaa56b7b51afa4cb8cf4f141bf",
-          "source": "7b74d3459937f2d07ade2827bc6d3aac",
-          "target": "46d95dbc7d76eaba80100dfa480dea56"
-        }
-      },
-      {
-        "data": {
-          "id": "1a9d17c36fef9b15660c16a58c0a79f2",
-          "source": "7b74d3459937f2d07ade2827bc6d3aac",
+          "id": "4f46af89fe1178d9847cec0dde5ea9da",
+          "source": "ed31cec8e279d017c1ac1f7100723e79",
           "target": "726a5e87be54c6dfbbc55b22e3cbb1c5"
         }
       },
       {
         "data": {
-          "id": "32a914d7695d6d0e86b3629d58d0ce07",
-          "source": "7b74d3459937f2d07ade2827bc6d3aac",
+          "id": "b1314f35029eaa664b52b865540e1427",
+          "source": "ed31cec8e279d017c1ac1f7100723e79",
+          "target": "b4fef251c5e835d9269751857825b5ea"
+        }
+      },
+      {
+        "data": {
+          "id": "7410fb5a927072cb1547d44b61e104ec",
+          "source": "ed31cec8e279d017c1ac1f7100723e79",
           "target": "e4dddd6aa55b9806c0e99646d0ac4711"
         }
       }
