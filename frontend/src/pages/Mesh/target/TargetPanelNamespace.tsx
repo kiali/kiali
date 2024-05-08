@@ -157,7 +157,7 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
     );
 
     return (
-      <div className={classes(targetPanelBorder, targetPanel)}>
+      <div id="target-panel-namespace" className={classes(targetPanelBorder, targetPanel)}>
         <Card
           isCompact={true}
           className={cardGridStyle}

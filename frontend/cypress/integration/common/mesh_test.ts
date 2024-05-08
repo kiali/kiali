@@ -47,12 +47,12 @@ When('user selects mesh node with label {string}', (label: string) => {
     .nthNode(1)
     .getCurrentState()
     .then(state => {
-      const controller = state.controller as Visualization;
+      const controller = state.meshRefs.controller as Visualization;
       assert.isTrue(controller.hasGraph());
       const { nodes } = elems(controller);
       const node = nodes.find(n => n.getLabel() === label);
       assert.exists(node);
-      const setSelectedIds = state.setSelectedIds as (values: string[]) => void;
+      const setSelectedIds = state.meshRefs.setSelectedIds as (values: string[]) => void;
       setSelectedIds([node.getId()]);
     });
 });
@@ -90,6 +90,7 @@ When(`user selects mesh refresh {string}`, (refresh: string) => {
 });
 
 Then('mesh side panel is shown', () => {
+  cy.get('#loading_kiali_spinner').should('not.exist');
   cy.get('#target-panel-mesh')
     .should('be.visible')
     .within(div => {
@@ -98,14 +99,13 @@ Then('mesh side panel is shown', () => {
 });
 
 Then('user sees expected mesh infra', () => {
-  //cy.get('#loading_kiali_spinner').should('not.exist');
   cy.waitForReact();
   cy.getReact('MeshPageComponent')
     .should('have.length', '2')
     .nthNode(1)
     .getCurrentState()
     .then(state => {
-      const controller = state.controller;
+      const controller = state.meshRefs.controller;
       assert.isTrue(controller.hasGraph());
       const { nodes, edges } = elems(controller);
       assert.equal(nodes.length, 8, 'Unexpected number of infra nodes');
@@ -120,12 +120,48 @@ Then('user sees expected mesh infra', () => {
     });
 });
 
+Then('user sees {string} cluster side panel', (name: string) => {
+  cy.get('#loading_kiali_spinner').should('not.exist');
+  cy.get('#target-panel-cluster')
+    .should('be.visible')
+    .within(div => {
+      cy.contains(name);
+    });
+});
+
+Then('user sees control plane side panel', () => {
+  cy.get('#loading_kiali_spinner').should('not.exist');
+  cy.get('#target-panel-control-plane')
+    .should('be.visible')
+    .within(div => {
+      cy.contains('istiod-default');
+    });
+});
+
 Then('user sees data plane side panel', () => {
   cy.get('#loading_kiali_spinner').should('not.exist');
-  cy.get('#target-panel-mesh')
+  cy.get('#target-panel-data-plane')
     .should('be.visible')
     .within(div => {
       cy.contains('Data Plane');
+    });
+});
+
+Then('user sees {string} namespace side panel', (name: string) => {
+  cy.get('#loading_kiali_spinner').should('not.exist');
+  cy.get('#target-panel-namespace')
+    .should('be.visible')
+    .within(div => {
+      cy.contains(name);
+    });
+});
+
+Then('user sees {string} node side panel', (name: string) => {
+  cy.get('#loading_kiali_spinner').should('not.exist');
+  cy.get('#target-panel-node')
+    .should('be.visible')
+    .within(div => {
+      cy.contains(name);
     });
 });
 

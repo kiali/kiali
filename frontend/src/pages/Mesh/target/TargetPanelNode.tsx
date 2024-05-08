@@ -118,7 +118,7 @@ class TargetPanelNodeComponent extends React.Component<TargetPanelNodeProps, Tar
     const data = node.getData() as MeshNodeData;
 
     return (
-      <div className={classes(panelStyle, targetPanel)}>
+      <div id="target-panel-node" className={classes(panelStyle, targetPanel)}>
         <div className={targetPanelHeading}>{renderNodeHeader(data, this.props.t, isExternal(data.cluster))}</div>
         <div className={targetPanelBody}>
           {data.version && (

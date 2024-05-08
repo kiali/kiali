@@ -81,10 +81,16 @@ export type MeshData = {
   timestamp: TimeInMilliseconds;
 };
 
+// MeshRefs are passed back from the graph when it is ready, to allow for
+// other components, or test code, to manipulate the graph programatically.
+export type MeshRefs = {
+  controller: Controller;
+  setSelectedIds: (values: string[]) => void;
+};
+
 type MeshPageState = {
-  controller?: Controller;
   meshData: MeshData;
-  setSelectedIds?: (values: string[]) => void;
+  meshRefs?: MeshRefs;
 };
 
 const containerStyle = kialiStyle({
@@ -141,7 +147,6 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
     this.meshDataSource = new MeshDataSource();
 
     this.state = {
-      controller: undefined,
       meshData: {
         elements: { edges: [], nodes: [] },
         elementsChanged: false,
@@ -215,7 +220,7 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
         <FlexView className={conStyle} column={true}>
           <div>
             <MeshToolbar
-              controller={this.state.controller}
+              controller={this.state.meshRefs?.controller}
               disabled={this.state.meshData.isLoading}
               elementsChanged={this.state.meshData.elementsChanged}
               onToggleHelp={this.toggleHelp}
@@ -276,8 +281,8 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
     console.debug(`onFocus(${focusNode})`);
   };
 
-  private handleReady = (controller: Controller, setSelectedIds: (values: string[]) => void) => {
-    this.setState({ controller: controller, setSelectedIds: setSelectedIds });
+  private handleReady = (refs: MeshRefs) => {
+    this.setState({ meshRefs: refs });
   };
 
   private handleEmptyMeshAction = () => {

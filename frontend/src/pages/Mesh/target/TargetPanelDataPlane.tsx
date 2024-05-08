@@ -46,7 +46,7 @@ export class TargetPanelDataPlane extends React.Component<TargetPanelCommonProps
     const data = node.getData() as MeshNodeData;
 
     return (
-      <div className={classes(panelStyle, targetPanel)}>
+      <div id="target-panel-data-plane" className={classes(panelStyle, targetPanel)}>
         <div className={targetPanelHeading}>{this.renderNodeHeader(data)}</div>
         <div className={targetPanelBody}>
           <Table aria-label="dataplane-table" variant="compact">

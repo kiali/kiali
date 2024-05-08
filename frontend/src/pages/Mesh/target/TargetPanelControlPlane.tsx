@@ -137,7 +137,7 @@ class TargetPanelControlPlaneComponent extends React.Component<
     const data = this.state.controlPlaneNode?.getData() as NodeData;
 
     return (
-      <div className={classes(targetPanelBorder, targetPanel)}>
+      <div id="target-panel-control-plane" className={classes(targetPanelBorder, targetPanel)}>
         <Card
           isCompact={true}
           className={cardGridStyle}
