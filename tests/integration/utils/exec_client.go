@@ -4,6 +4,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"testing"
 
 	"github.com/kiali/kiali/log"
 )
@@ -17,6 +18,19 @@ func NewExecCommand() string {
 	} else {
 		return "oc"
 	}
+}
+
+// ApplyFileWithCleanup applies a yaml file and deletes it after the test is over.
+func ApplyFileWithCleanup(t *testing.T, yamlFilePath, namespace string) bool {
+	t.Helper()
+
+	if ApplyFile(yamlFilePath, namespace) {
+		t.Cleanup(func() {
+			DeleteFile(yamlFilePath, namespace)
+		})
+		return true
+	}
+	return false
 }
 
 func ApplyFile(yamlFile, namespace string) bool {

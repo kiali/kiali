@@ -63,8 +63,14 @@ func TestServiceEntryLabels(t *testing.T) {
 func TestServiceEntryLabelsNotMatch(t *testing.T) {
 	require := require.New(t)
 	filePath := path.Join(cmd.KialiProjectRoot, kiali.ASSETS+"/bookinfo-service-entry-wrong-labels.yaml")
-	defer utils.DeleteFile(filePath, kiali.BOOKINFO)
-	require.True(utils.ApplyFile(filePath, kiali.BOOKINFO))
+	require.True(utils.ApplyFileWithCleanup(t, filePath, kiali.BOOKINFO))
+
+	// There's multiple objects in the file, so we need to ensure that Kiali has seen both the destination rules
+	// and the service entries get created before we can check the validation. There's some delay between when
+	// the object gets created with Apply here in the tests and when the Kiali API's kubernetes cache is updated to have the
+	// object in it.
+	_, err := getConfigDetails(kiali.BOOKINFO, "service-entry-labels", kubernetes.ServiceEntries, false, require)
+	require.NoError(err)
 
 	// the DR with error, labels not match with SE
 	name := "dest-rule-labels-wrong"
