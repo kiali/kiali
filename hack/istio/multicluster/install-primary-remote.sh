@@ -76,6 +76,10 @@ ${CLIENT_EXE} apply --context=${CLUSTER1_CONTEXT} -n ${ISTIO_NAMESPACE} -f $EXPO
 
 # Install Kiali in both clusters if enabled
 if [ "${KIALI_ENABLED}" == "true" ]; then
+  if [ -z "${KEYCLOAK_ADDRESS}" ]; then
+    echo "Keycloak is not available for this cluster setup. Switching Kial to 'anonymous' mode."
+    export KIALI_AUTH_STRATEGY="anonymous"
+  fi
   source ${SCRIPT_DIR}/deploy-kiali.sh
 fi
 

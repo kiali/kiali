@@ -241,5 +241,9 @@ source ${SCRIPT_DIR}/split-bookinfo.sh
 
 # Install Kiali if enabled
 if [ "${KIALI_ENABLED}" == "true" ]; then
+  if [ -z "${KEYCLOAK_ADDRESS}" ]; then
+    echo "Keycloak is not available for this cluster setup. Switching Kial to 'anonymous' mode."
+    export KIALI_AUTH_STRATEGY="anonymous"
+  fi
   source ${SCRIPT_DIR}/deploy-kiali.sh
 fi
