@@ -31,7 +31,7 @@ import { isValid } from 'utils/Common';
 import { descendents, elems, SelectAnd, SelectExp, selectOr, SelectOr } from 'pages/GraphPF/GraphPFElems';
 import { FIT_PADDING } from 'pages/GraphPF/GraphPF';
 import { isArray } from 'lodash';
-import { MeshAttr, MeshEdgeData, MeshInfraType, MeshNodeData, MeshNodeType } from 'types/Mesh';
+import { MeshAttr, MeshEdgeData, MeshInfraType, MeshNodeData } from 'types/Mesh';
 import { Layout } from 'types/Graph';
 import { MeshToolbarActions } from 'actions/MeshToolbarActions';
 import { MeshFindOptions } from './MeshFindOptions';
@@ -92,7 +92,7 @@ const meshFindStyle = kialiStyle({
   }
 });
 
-const operands: string[] = ['cluster', 'healthy', 'inaccessible', 'name', 'node', 'namespace', 'infratype'];
+const operands: string[] = ['cluster', 'healthy', 'inaccessible', 'name', 'namespace', 'infratype'];
 
 export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindState> {
   static contextTypes = {
@@ -728,19 +728,6 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
       case 'name': {
         return { target: 'node', selector: { prop: MeshAttr.infraName, op: op, val: val } };
       }
-      case 'node':
-        let nodeType = val.toLowerCase();
-        switch (nodeType) {
-          case MeshNodeType.BOX:
-          case MeshNodeType.INFRA:
-            return { target: 'node', selector: { prop: MeshAttr.nodeType, op: op, val: nodeType } };
-          default:
-            this.setError(
-              `Invalid node type [${nodeType}]. Expected app | operation | service | unknown | workload`,
-              isFind
-            );
-        }
-        return undefined;
       case 'ns':
       case 'namespace':
         return { target: 'node', selector: { prop: MeshAttr.namespace, op: op, val: val } };
@@ -748,24 +735,24 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
       case 'infratype':
         let infraType = val.toLowerCase();
         switch (infraType) {
-          case MeshInfraType.CLUSTER:
+          case MeshInfraType.DATAPLANE:
+          case MeshInfraType.GRAFANA:
           case MeshInfraType.ISTIOD:
           case MeshInfraType.KIALI:
-          case MeshInfraType.NAMESPACE:
             return { target: 'node', selector: { prop: MeshAttr.infraType, op: op, val: infraType } };
-          case 'metricstore':
+          case MeshInfraType.METRIC_STORE:
           case 'ms':
           case 'prom':
           case 'prometheus':
             return { target: 'node', selector: { prop: MeshAttr.infraType, op: op, val: MeshInfraType.METRIC_STORE } };
-          case 'tracestore':
+          case MeshInfraType.TRACE_STORE:
           case 'ts':
           case 'jaeger':
           case 'tempo':
             return { target: 'node', selector: { prop: MeshAttr.infraType, op: op, val: MeshInfraType.TRACE_STORE } };
           default:
             this.setError(
-              `Invalid infra type [${infraType}]. Expected cluster | istiod | kiali | metricStore | namespace | traceStore`,
+              `Invalid infra type [${infraType}]. Expected dataplane | istiod | kiali | metricStore | traceStore`,
               isFind
             );
         }
