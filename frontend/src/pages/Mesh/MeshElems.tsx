@@ -138,7 +138,7 @@ export const setNodeLabel = (node: NodeModel, _nodeMap: NodeMap): void => {
         pfBadge = PFBadges.Cluster;
         break;
       case MeshInfraType.DATAPLANE:
-        pfBadge = PFBadges.DATAPLANE;
+        pfBadge = PFBadges.DataPlane;
         content.push(`${(data.infraData as NamespaceInfo[]).length} Namespaces`);
         break;
       case MeshInfraType.GRAFANA:

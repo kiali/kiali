@@ -20,6 +20,7 @@ import { ReactComponent as KialiLogo } from '../../../assets/img/mesh/kiali.svg'
 import { ReactComponent as TempoLogo } from '../../../assets/img/mesh/tempo.svg';
 import { store } from 'store/ConfigStore';
 import { JAEGER, TEMPO } from 'types/Tracing';
+import { LayerGroupIcon } from '@patternfly/react-icons';
 
 // This is the registered Node component override that utilizes our customized Node.tsx component.
 
@@ -28,26 +29,38 @@ type MeshNodeProps = {
 } & WithSelectionProps;
 
 const renderIcon = (element: Node): React.ReactNode => {
-  let Component: React.FunctionComponent<React.SVGProps<SVGSVGElement>> | undefined;
+  let Component:
+    | React.FunctionComponent<React.SVGProps<SVGSVGElement>>
+    | React.ComponentClass<React.ComponentProps<any>>
+    | undefined;
 
   const data = element.getData() as MeshNodeData;
   const externalServices = store.getState().statusState.externalServices;
 
-  if (data.infraType === MeshInfraType.GRAFANA) {
-    Component = GrafanaLogo;
-  } else if (data.infraType === MeshInfraType.ISTIOD) {
-    Component = IstioLogo;
-  } else if (data.infraType === MeshInfraType.TRACE_STORE) {
-    if (externalServices.find(service => service.name.toLowerCase() === TEMPO)) {
-      Component = TempoLogo;
-    } else if (externalServices.find(service => service.name.toLowerCase() === JAEGER)) {
-      Component = JaegerLogo;
-    }
-  } else if (data.infraType === MeshInfraType.KIALI) {
-    Component = KialiLogo;
-  } else if (data.infraType === MeshInfraType.METRIC_STORE) {
-    // TODO: don't assume Prometheus
-    Component = PrometheusLogo;
+  switch (data.infraType) {
+    case MeshInfraType.DATAPLANE:
+      Component = LayerGroupIcon;
+      break;
+    case MeshInfraType.GRAFANA:
+      Component = GrafanaLogo;
+      break;
+    case MeshInfraType.ISTIOD:
+      Component = IstioLogo;
+      break;
+    case MeshInfraType.TRACE_STORE:
+      if (externalServices.find(service => service.name.toLowerCase() === TEMPO)) {
+        Component = TempoLogo;
+      } else if (externalServices.find(service => service.name.toLowerCase() === JAEGER)) {
+        Component = JaegerLogo;
+      }
+      break;
+    case MeshInfraType.KIALI:
+      Component = KialiLogo;
+      break;
+    case MeshInfraType.METRIC_STORE:
+      // TODO: don't assume Prometheus
+      Component = PrometheusLogo;
+      break;
   }
 
   const { width, height } = element.getDimensions();
