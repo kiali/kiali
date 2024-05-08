@@ -1,9 +1,9 @@
 import * as React from 'react';
 import { Node, NodeModel } from '@patternfly/react-topology';
-import { TargetPanelCommonProps, targetPanel, targetPanelBody, targetPanelHeading } from './TargetPanelCommon';
+import { TargetPanelCommonProps, targetPanelHR, targetPanelStyle } from './TargetPanelCommon';
 import { classes } from 'typestyle';
 import { MeshNodeData } from 'types/Mesh';
-import { panelStyle } from 'pages/Graph/SummaryPanelStyle';
+import { panelBodyStyle, panelHeadingStyle, panelStyle } from 'pages/Graph/SummaryPanelStyle';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { kialiStyle } from 'styles/StyleUtils';
 import { Title, TitleSizes } from '@patternfly/react-core';
@@ -14,14 +14,14 @@ import { serverConfig } from 'config';
 
 type TargetPanelDataPlaneState = {
   expanded: string[];
-  node?: Node<NodeModel, any>;
   loading: boolean;
+  node?: Node<NodeModel, any>;
 };
 
 const defaultState: TargetPanelDataPlaneState = {
   expanded: [],
-  node: undefined,
-  loading: false
+  loading: false,
+  node: undefined
 };
 
 const nodeStyle = kialiStyle({
@@ -37,7 +37,7 @@ export class TargetPanelDataPlane extends React.Component<TargetPanelCommonProps
     this.state = { ...defaultState, node: dataPlaneNode };
   }
 
-  render() {
+  render(): React.ReactNode {
     if (!this.state.node) {
       return null;
     }
@@ -46,9 +46,9 @@ export class TargetPanelDataPlane extends React.Component<TargetPanelCommonProps
     const data = node.getData() as MeshNodeData;
 
     return (
-      <div id="target-panel-data-plane" className={classes(panelStyle, targetPanel)}>
-        <div className={targetPanelHeading}>{this.renderNodeHeader(data)}</div>
-        <div className={targetPanelBody}>
+      <div id="target-panel-data-plane" className={classes(panelStyle, targetPanelStyle)}>
+        <div className={panelHeadingStyle}>{this.renderNodeHeader(data)}</div>
+        <div className={panelBodyStyle}>
           <Table aria-label="dataplane-table" variant="compact">
             <Thead>
               <Tr>
@@ -86,6 +86,7 @@ export class TargetPanelDataPlane extends React.Component<TargetPanelCommonProps
                             targetNamespace={ns.name}
                             updateTime={this.props.updateTime}
                           />
+                          {targetPanelHR}
                           <pre>
                             {JSON.stringify(
                               data.infraData.find(id => id.name === ns.name),

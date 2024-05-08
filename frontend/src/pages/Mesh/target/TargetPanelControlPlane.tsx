@@ -5,13 +5,11 @@ import {
   TargetPanelCommonProps,
   getHealthStatus,
   shouldRefreshData,
-  targetPanel,
-  targetPanelBody,
-  targetPanelBorder,
-  targetPanelHR
+  targetPanelHR,
+  targetPanelStyle
 } from './TargetPanelCommon';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
-import { Card, CardBody, CardHeader, Title, TitleSizes } from '@patternfly/react-core';
+import { Title, TitleSizes } from '@patternfly/react-core';
 import { serverConfig } from 'config';
 import { CanaryUpgradeStatus, OutboundTrafficPolicy } from 'types/IstioObjects';
 import { NamespaceInfo, NamespaceStatus } from 'types/NamespaceInfo';
@@ -35,7 +33,7 @@ import * as FilterHelper from '../../../components/FilterList/FilterHelper';
 import { NodeData } from '../MeshElems';
 import { ControlPlaneMetricsMap, Metric } from 'types/Metrics';
 import { classes } from 'typestyle';
-import { panelHeadingStyle } from 'pages/Graph/SummaryPanelStyle';
+import { panelBodyStyle, panelHeadingStyle, panelStyle } from 'pages/Graph/SummaryPanelStyle';
 import { MeshMTLSStatus } from 'components/MTls/MeshMTLSStatus';
 import { WithTranslation, withTranslation } from 'react-i18next';
 import { I18N_NAMESPACE } from 'types/Common';
@@ -75,12 +73,6 @@ const defaultState: TargetPanelControlPlaneState = {
 
 // TODO: Should these remain fixed values?
 const direction: DirectionType = 'outbound';
-
-const cardGridStyle = kialiStyle({
-  marginBottom: '0.5rem',
-  marginTop: 0,
-  textAlign: 'center'
-});
 
 const nodeStyle = kialiStyle({
   alignItems: 'center',
@@ -137,73 +129,66 @@ class TargetPanelControlPlaneComponent extends React.Component<
     const data = this.state.controlPlaneNode?.getData() as NodeData;
 
     return (
-      <div id="target-panel-control-plane" className={classes(targetPanelBorder, targetPanel)}>
-        <Card
-          isCompact={true}
-          className={cardGridStyle}
-          data-test={`${data.infraName}-mesh-target`}
-          style={!this.props.istioAPIEnabled && !this.hasCanaryUpgradeConfigured() ? { height: '96%' } : {}}
-        >
-          <CardHeader className={panelHeadingStyle}>
-            <Title headingLevel="h5" size={TitleSizes.lg}>
-              <span className={nodeStyle}>
-                <PFBadge badge={PFBadges.Istio} size="global" />
-                {data.infraName}
-                {getHealthStatus(data, this.props.t)}
-              </span>
-            </Title>
+      <div
+        id="target-panel-control-plane"
+        data-test={`${data.infraName}-mesh-target`}
+        className={classes(panelStyle, targetPanelStyle)}
+      >
+        <div className={panelHeadingStyle}>
+          <Title headingLevel="h5" size={TitleSizes.lg}>
             <span className={nodeStyle}>
-              <PFBadge badge={PFBadges.Namespace} size="sm" />
-              {data.namespace}
+              <PFBadge badge={PFBadges.Istio} size="global" />
+              {data.infraName}
+              {getHealthStatus(data, this.props.t)}
             </span>
-            <span className={nodeStyle}>
-              <PFBadge badge={PFBadges.Cluster} size="sm" />
-              {data.cluster}
-            </span>
-          </CardHeader>
-          <CardBody>
-            <div className={targetPanelBody}>
-              {data.version && (
-                <div style={{ textAlign: 'left' }}>
-                  {`Version: `}
-                  {data.version}
-                  <br />
-                </div>
-              )}
-              <div style={{ textAlign: 'left' }}>
-                <div>
-                  <MeshMTLSStatus />
-                </div>
-              </div>
-
-              <ControlPlaneNamespaceStatus
-                outboundTrafficPolicy={this.state.outboundPolicyMode}
-                namespace={nsInfo}
-              ></ControlPlaneNamespaceStatus>
-
-              <TLSInfo
-                certificatesInformationIndicators={
-                  serverConfig.kialiFeatureFlags.certificatesInformationIndicators.enabled
-                }
-                version={this.props.minTLS}
-              ></TLSInfo>
-
-              {!isRemoteCluster(nsInfo.annotations) && (
-                <div>
-                  {targetPanelHR()}
-                  {this.state.canaryUpgradeStatus && this.hasCanaryUpgradeConfigured() && (
-                    <div>
-                      {targetPanelHR}
-                      <CanaryUpgradeProgress canaryUpgradeStatus={this.state.canaryUpgradeStatus} />
-                    </div>
-                  )}
-                  <div>{this.props.istioAPIEnabled && <div>{this.renderCharts()}</div>}</div>
-                </div>
-              )}
+          </Title>
+          <span className={nodeStyle}>
+            <PFBadge badge={PFBadges.Namespace} size="sm" />
+            {data.namespace}
+          </span>
+          <span className={nodeStyle}>
+            <PFBadge badge={PFBadges.Cluster} size="sm" />
+            {data.cluster}
+          </span>
+        </div>
+        <div className={panelBodyStyle}>
+          {data.version && (
+            <div style={{ textAlign: 'left' }}>
+              {`Version: `}
+              {data.version}
+              <br />
             </div>
-          </CardBody>
-        </Card>
-        <div className={targetPanelBody}>
+          )}
+          <div style={{ textAlign: 'left' }}>
+            <div>
+              <MeshMTLSStatus />
+            </div>
+          </div>
+
+          <ControlPlaneNamespaceStatus
+            outboundTrafficPolicy={this.state.outboundPolicyMode}
+            namespace={nsInfo}
+          ></ControlPlaneNamespaceStatus>
+
+          <TLSInfo
+            certificatesInformationIndicators={serverConfig.kialiFeatureFlags.certificatesInformationIndicators.enabled}
+            version={this.props.minTLS}
+          ></TLSInfo>
+
+          {!isRemoteCluster(nsInfo.annotations) && (
+            <div>
+              {targetPanelHR}
+              {this.state.canaryUpgradeStatus && this.hasCanaryUpgradeConfigured() && (
+                <div>
+                  {targetPanelHR}
+                  <CanaryUpgradeProgress canaryUpgradeStatus={this.state.canaryUpgradeStatus} />
+                </div>
+              )}
+              <div>{this.props.istioAPIEnabled && <div>{this.renderCharts()}</div>}</div>
+            </div>
+          )}
+
+          {targetPanelHR}
           <pre>{JSON.stringify(data.infraData, null, 2)}</pre>
         </div>
       </div>
@@ -212,20 +197,14 @@ class TargetPanelControlPlaneComponent extends React.Component<
 
   private getLoading = (): React.ReactNode => {
     return (
-      <div className={classes(targetPanelBorder, targetPanel)}>
-        <Card
-          isCompact={true}
-          className={cardGridStyle}
-          style={!this.props.istioAPIEnabled && !this.hasCanaryUpgradeConfigured() ? { height: '96%' } : {}}
-        >
-          <CardHeader className={panelHeadingStyle}>
-            <Title headingLevel="h5" size={TitleSizes.lg}>
-              <span className={nodeStyle}>
-                <span>Loading...</span>
-              </span>
-            </Title>
-          </CardHeader>
-        </Card>
+      <div className={classes(panelStyle, targetPanelStyle)}>
+        <div className={panelHeadingStyle}>
+          <Title headingLevel="h5" size={TitleSizes.lg}>
+            <span className={nodeStyle}>
+              <span>Loading...</span>
+            </span>
+          </Title>
+        </div>
       </div>
     );
   };
@@ -444,7 +423,7 @@ class TargetPanelControlPlaneComponent extends React.Component<
     FilterHelper.handleError(`${message}: ${API.getErrorString(error)}`);
   }
 
-  private renderCharts(): JSX.Element {
+  private renderCharts(): React.ReactNode {
     if (this.state.status) {
       const data = this.state.controlPlaneNode!.getData() as NodeData;
       return (

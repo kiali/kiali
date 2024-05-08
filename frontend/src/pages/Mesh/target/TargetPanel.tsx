@@ -8,7 +8,7 @@ import { FocusNode } from 'pages/GraphPF/GraphPF';
 import { classes } from 'typestyle';
 import { PFColors } from 'components/Pf/PfColors';
 import { MeshInfraType, MeshTarget, MeshType } from 'types/Mesh';
-import { TargetPanelCommonProps, targetPanel } from './TargetPanelCommon';
+import { TargetPanelCommonProps, targetPanelStyle } from './TargetPanelCommon';
 import { MeshTourStops } from '../MeshHelpTour';
 import { BoxByType } from 'types/Graph';
 import { ElementModel, GraphElement } from '@patternfly/react-topology';
@@ -26,6 +26,7 @@ type TargetPanelState = {
 };
 
 type ReduxProps = {
+  kiosk: string;
   meshStatus: string;
   minTLS: string;
 };
@@ -47,7 +48,7 @@ const expandedStyle = kialiStyle({ height: '100%' });
 
 const collapsedStyle = kialiStyle({
   $nest: {
-    ['& > .' + targetPanel]: {
+    [`& > .${targetPanelStyle}`]: {
       display: 'none'
     }
   }
@@ -81,7 +82,7 @@ class TargetPanelComponent extends React.Component<TargetPanelProps, TargetPanel
     }
   }
 
-  render() {
+  render(): React.ReactNode {
     if (!this.props.isPageVisible || !this.props.target.elem) {
       return null;
     }
@@ -112,7 +113,7 @@ class TargetPanelComponent extends React.Component<TargetPanelProps, TargetPanel
     );
   }
 
-  private getTargetPanel = (target: MeshTarget): React.ReactFragment => {
+  private getTargetPanel = (target: MeshTarget): React.ReactNode => {
     const targetType = target.type as MeshType;
 
     switch (targetType) {
@@ -203,14 +204,14 @@ class TargetPanelComponent extends React.Component<TargetPanelProps, TargetPanel
     }
   };
 
-  private togglePanel = () => {
+  private togglePanel = (): void => {
     this.setState((state: TargetPanelState) => ({
       isCollapsed: !state.isCollapsed
     }));
   };
 }
 
-const mapStateToProps = (state: KialiAppState) => ({
+const mapStateToProps = (state: KialiAppState): ReduxProps => ({
   kiosk: state.globalState.kiosk,
   meshStatus: meshWideMTLSStatusSelector(state),
   minTLS: minTLSVersionSelector(state)

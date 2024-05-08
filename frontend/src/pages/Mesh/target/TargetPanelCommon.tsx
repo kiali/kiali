@@ -20,54 +20,20 @@ export interface TargetPanelCommonProps {
 
 export const targetPanelWidth = '35rem';
 
-export const targetPanel = kialiStyle({
+export const targetPanelStyle = kialiStyle({
   fontSize: 'var(--graph-side-panel--font-size)',
   height: '100%',
   margin: 0,
   minWidth: targetPanelWidth,
-  overflowY: 'scroll',
+  overflowY: 'auto',
   padding: 0,
   position: 'relative',
   width: targetPanelWidth
 });
 
-export const targetPanelBody = kialiStyle({
-  padding: '15px',
-  $nest: {
-    '&:after, &:before': {
-      display: 'table',
-      content: ' '
-    },
-
-    '&:after': {
-      clear: 'both'
-    }
-  }
-});
-
-export const targetPanelBorder = kialiStyle({
-  marginBottom: '23px',
-  border: `1px solid ${PFColors.BorderColor100}`,
-  borderRadius: '1px',
-  '-webkit-box-shadow': '0 1px 1px rgba(0, 0, 0, 0.05)',
-  boxShadow: '0 1px 1px rgba(0, 0, 0, 0.05)'
-});
-
 export const targetPanelFont: React.CSSProperties = {
   fontSize: 'var(--graph-side-panel--font-size)'
 };
-
-export const targetPanelHeading = kialiStyle({
-  padding: '10px 15px',
-  borderBottom: '1px solid transparent',
-  borderTopLeftRadius: 0,
-  borderTopRightRadius: 0,
-  borderColor: PFColors.BorderColor100
-});
-
-export const TargetPanelTabs = kialiStyle({
-  padding: '0.5rem 1rem 0 1rem'
-});
 
 export const targetPanelTitle = kialiStyle({
   fontWeight: 'bolder',
@@ -83,12 +49,10 @@ const healthStatusStyle = kialiStyle({
 const hrStyle = kialiStyle({
   border: 0,
   borderTop: `1px solid ${PFColors.BorderColor100}`,
-  margin: '1.0rem 0'
+  margin: '1rem 0'
 });
 
-export const targetPanelHR = (): React.ReactNode => {
-  return <hr className={hrStyle} />;
-};
+export const targetPanelHR = <hr className={hrStyle} />;
 
 export const shouldRefreshData = (prevProps: TargetPanelCommonProps, nextProps: TargetPanelCommonProps): boolean => {
   return (

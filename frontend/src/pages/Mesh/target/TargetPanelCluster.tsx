@@ -4,15 +4,7 @@ import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from 'components/Pf/PfColors';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { getKialiTheme } from 'utils/ThemeUtils';
-import {
-  TargetPanelCommonProps,
-  shouldRefreshData,
-  targetPanel,
-  targetPanelBody,
-  targetPanelBorder,
-  targetPanelHeading,
-  targetPanelWidth
-} from './TargetPanelCommon';
+import { TargetPanelCommonProps, shouldRefreshData, targetPanelStyle, targetPanelWidth } from './TargetPanelCommon';
 import { kialiIconDark, kialiIconLight } from 'config';
 import { KialiInstance, MeshNodeData, isExternal } from 'types/Mesh';
 import { I18N_NAMESPACE, Theme } from 'types/Common';
@@ -26,6 +18,7 @@ import { classes } from 'typestyle';
 import { descendents } from '../MeshElems';
 import { renderNodeHeader } from './TargetPanelNode';
 import { WithTranslation, withTranslation } from 'react-i18next';
+import { panelBodyStyle, panelHeadingStyle, panelStyle } from 'pages/Graph/SummaryPanelStyle';
 
 type TargetPanelClusterProps = WithTranslation & TargetPanelCommonProps;
 
@@ -73,21 +66,21 @@ class TargetPanelClusterComponent extends React.Component<TargetPanelClusterProp
       : null;
   };
 
-  componentDidMount() {
+  componentDidMount(): void {
     this.load();
   }
 
-  componentDidUpdate(prevProps: TargetPanelClusterProps) {
+  componentDidUpdate(prevProps: TargetPanelClusterProps): void {
     if (shouldRefreshData(prevProps, this.props)) {
       this.load();
     }
   }
 
-  componentWillUnmount() {
+  componentWillUnmount(): void {
     this.promises.cancelAll();
   }
 
-  render() {
+  render(): React.ReactNode {
     if (this.state.loading || !this.state.clusterNode) {
       return null;
     }
@@ -101,8 +94,8 @@ class TargetPanelClusterComponent extends React.Component<TargetPanelClusterProp
     const version = data.version;
 
     return (
-      <div id="target-panel-cluster" className={classes(targetPanelBorder, targetPanel)}>
-        <div id="target-panel-cluster-heading" className={targetPanelHeading}>
+      <div id="target-panel-cluster" className={classes(panelStyle, targetPanelStyle)}>
+        <div id="target-panel-cluster-heading" className={panelHeadingStyle}>
           {clusterData.isKialiHome && (
             <Tooltip content={this.props.t('Kiali home cluster')}>
               <KialiIcon.Star />
@@ -112,7 +105,7 @@ class TargetPanelClusterComponent extends React.Component<TargetPanelClusterProp
           {clusterData.name}
         </div>
         {isExternal(data.cluster) ? (
-          <div className={targetPanelBody}>
+          <div className={panelBodyStyle}>
             {descendents(this.state.clusterNode)
               .sort((n1, n2) => {
                 const name1 = (n1.getData() as MeshNodeData).infraName.toLowerCase();
@@ -124,7 +117,7 @@ class TargetPanelClusterComponent extends React.Component<TargetPanelClusterProp
               })}
           </div>
         ) : (
-          <div className={targetPanelBody}>
+          <div className={panelBodyStyle}>
             {clusterData.accessible && this.renderKialiLinks(clusterData.kialiInstances)}
             {version && (
               <>
@@ -174,7 +167,7 @@ class TargetPanelClusterComponent extends React.Component<TargetPanelClusterProp
 
   private renderKialiLinks = (kialiInstances: KialiInstance[]): React.ReactNode => {
     const kialiIcon = getKialiTheme() === Theme.DARK ? kialiIconDark : kialiIconLight;
-    return kialiInstances.map(instance => {
+    return kialiInstances?.map(instance => {
       if (instance.url.length !== 0) {
         return (
           <span>

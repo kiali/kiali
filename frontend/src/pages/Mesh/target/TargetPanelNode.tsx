@@ -1,17 +1,11 @@
 import * as React from 'react';
 import { Node, NodeModel } from '@patternfly/react-topology';
 import { kialiStyle } from 'styles/StyleUtils';
-import {
-  TargetPanelCommonProps,
-  getHealthStatus,
-  targetPanel,
-  targetPanelBody,
-  targetPanelHeading
-} from './TargetPanelCommon';
+import { TargetPanelCommonProps, getHealthStatus, targetPanelStyle } from './TargetPanelCommon';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { MeshInfraType, MeshNodeData, isExternal } from 'types/Mesh';
 import { classes } from 'typestyle';
-import { panelStyle } from 'pages/Graph/SummaryPanelStyle';
+import { panelBodyStyle, panelHeadingStyle, panelStyle } from 'pages/Graph/SummaryPanelStyle';
 import { Title, TitleSizes } from '@patternfly/react-core';
 import { WithTranslation, withTranslation } from 'react-i18next';
 import { I18N_NAMESPACE } from 'types/Common';
@@ -58,8 +52,12 @@ export function renderNodeHeader(
     case MeshInfraType.TRACE_STORE:
       pfBadge = PFBadges.TraceStore;
       break;
+    case MeshInfraType.ISTIOD:
+      pfBadge = PFBadges.Istio;
+      break;
     default:
       console.warn(`MeshElems: Unexpected infraType [${data.infraType}] `);
+      pfBadge = PFBadges.Unknown;
   }
 
   return (
@@ -68,7 +66,7 @@ export function renderNodeHeader(
         <span className={nodeStyle}>
           <PFBadge badge={pfBadge} size="global" />
           {data.infraName}
-          {!nameOnly && getHealthStatus(data, t)}
+          {getHealthStatus(data, t)}
         </span>
       </Title>
       {!nameOnly && (
@@ -118,9 +116,9 @@ class TargetPanelNodeComponent extends React.Component<TargetPanelNodeProps, Tar
     const data = node.getData() as MeshNodeData;
 
     return (
-      <div id="target-panel-node" className={classes(panelStyle, targetPanel)}>
-        <div className={targetPanelHeading}>{renderNodeHeader(data, this.props.t, isExternal(data.cluster))}</div>
-        <div className={targetPanelBody}>
+      <div id="target-panel-node" className={classes(panelStyle, targetPanelStyle)}>
+        <div className={panelHeadingStyle}>{renderNodeHeader(data, this.props.t, isExternal(data.cluster))}</div>
+        <div className={panelBodyStyle}>
           {data.version && (
             <div style={{ textAlign: 'left' }}>
               {`Version: `}

@@ -27,12 +27,17 @@ import { Menu } from './Menu';
 import { Link } from 'react-router-dom';
 import { ExternalServiceInfo } from '../../types/StatusState';
 
-type PropsType = RouteComponentProps & {
-  navCollapsed: boolean;
-  setNavCollapsed: (collapse: boolean) => void;
-  tracingUrl?: string;
+type ReduxStateProps = {
   externalServices: ExternalServiceInfo[];
+  navCollapsed: boolean;
+  tracingUrl?: string;
 };
+
+type ReduxDispatchProps = {
+  setNavCollapsed: (collapse: boolean) => void;
+};
+
+type PropsType = RouteComponentProps & ReduxStateProps & ReduxDispatchProps;
 
 type NavigationState = {
   isMobileView: boolean;
@@ -47,7 +52,7 @@ const flexBoxColumnStyle = kialiStyle({
 
 export class NavigationComponent extends React.Component<PropsType, NavigationState> {
   static contextTypes = {
-    router: () => null
+    router: (): null => null
   };
 
   constructor(props: PropsType) {
@@ -59,43 +64,47 @@ export class NavigationComponent extends React.Component<PropsType, NavigationSt
     };
   }
 
-  setControlledState = event => {
+  setControlledState = (event: Event): void => {
     if ('navCollapsed' in event) {
       this.props.setNavCollapsed(this.props.navCollapsed);
     }
   };
 
-  goTotracing() {
+  goTotracing = (): void => {
     window.open(this.props.tracingUrl, '_blank');
-  }
+  };
 
-  componentDidMount() {
+  componentDidMount = (): void => {
     let pageTitle = serverConfig.installationTag ? serverConfig.installationTag : 'Kiali';
     if (homeCluster?.name) {
       pageTitle += ` [${homeCluster?.name}]`;
     }
 
     document.title = pageTitle;
-  }
-
-  isGraph = () => {
-    return this.props.location.pathname.startsWith('/graph') || this.props.location.pathname.startsWith('/graphpf');
   };
 
-  onNavToggleDesktop = () => {
+  isGraph = (): boolean => {
+    return (
+      this.props.location.pathname.startsWith('/graph') ||
+      this.props.location.pathname.startsWith('/graphpf') ||
+      this.props.location.pathname.startsWith('/mesh')
+    );
+  };
+
+  onNavToggleDesktop = (): void => {
     this.setState({
       isNavOpenDesktop: !this.state.isNavOpenDesktop
     });
     this.props.setNavCollapsed(!this.props.navCollapsed);
   };
 
-  onNavToggleMobile = () => {
+  onNavToggleMobile = (): void => {
     this.setState({
       isNavOpenMobile: !this.state.isNavOpenMobile
     });
   };
 
-  onPageResize = ({ mobileView, windowSize }) => {
+  onPageResize = ({ mobileView, windowSize }: { mobileView: boolean; windowSize: number }): void => {
     let ismobile = mobileView;
     if (windowSize < 1000) {
       ismobile = true;
@@ -105,7 +114,7 @@ export class NavigationComponent extends React.Component<PropsType, NavigationSt
     });
   };
 
-  render() {
+  render = (): React.ReactNode => {
     const { isNavOpenDesktop, isNavOpenMobile, isMobileView } = this.state;
     const isNavOpen = isMobileView ? isNavOpenMobile : isNavOpenDesktop || !this.props.navCollapsed;
 
@@ -154,16 +163,16 @@ export class NavigationComponent extends React.Component<PropsType, NavigationSt
         </PageSection>
       </Page>
     );
-  }
+  };
 }
 
-const mapStateToProps = (state: KialiAppState) => ({
+const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
   navCollapsed: state.userSettings.interface.navCollapse,
   tracingUrl: state.tracingState.info && state.tracingState.info.url ? state.tracingState.info.url : undefined,
   externalServices: state.statusState.externalServices
 });
 
-const mapDispatchToProps = (dispatch: KialiDispatch) => ({
+const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => ({
   setNavCollapsed: (collapse: boolean) => dispatch(UserSettingsThunkActions.setNavCollapsed(collapse))
 });
 
