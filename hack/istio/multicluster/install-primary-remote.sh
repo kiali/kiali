@@ -75,7 +75,9 @@ EXPOSE_SERVICES_YAML="${ISTIO_DIR}/samples/multicluster/expose-services.yaml"
 ${CLIENT_EXE} apply --context=${CLUSTER1_CONTEXT} -n ${ISTIO_NAMESPACE} -f $EXPOSE_SERVICES_YAML
 
 # Install Kiali in both clusters if enabled
-source ${SCRIPT_DIR}/deploy-kiali.sh
+if [ "${KIALI_ENABLED}" == "true" ]; then
+  source ${SCRIPT_DIR}/deploy-kiali.sh
+fi
 
 # Cluster West
 switch_cluster "${CLUSTER2_CONTEXT}" "${CLUSTER2_USER}" "${CLUSTER2_PASS}"

@@ -240,4 +240,6 @@ source ${SCRIPT_DIR}/setup-tracing.sh
 source ${SCRIPT_DIR}/split-bookinfo.sh
 
 # Install Kiali if enabled
-source ${SCRIPT_DIR}/deploy-kiali.sh
+if [ "${KIALI_ENABLED}" == "true" ]; then
+  source ${SCRIPT_DIR}/deploy-kiali.sh
+fi
