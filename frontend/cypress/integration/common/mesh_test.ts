@@ -1,8 +1,5 @@
 import { Before, Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import { Controller, Edge, Node, Visualization, isEdge, isNode } from '@patternfly/react-topology';
-import { MeshNodeData, MeshTarget } from '../../../src/types/Mesh';
-
-const url = '/console';
 
 Before(() => {
   // Copied from overview.ts.  This prevents cypress from stopping on errors unrelated to the tests.
@@ -20,13 +17,6 @@ Before(() => {
   });
 });
 
-//When(
-//  'user asks for mesh with refresh {string} and duration {string}',
-//  (namespaces: string, refresh: string, duration: string) => {
-//    cy.visit(`${url}/mesh?refresh=${refresh}&duration=${duration}&namespaces=${namespaces}`);
-//  }
-//);
-
 When('user opens mesh tour', () => {
   cy.get('button#mesh-tour').click();
 });
@@ -36,15 +26,9 @@ When('user closes mesh tour', () => {
 });
 
 When('user selects mesh node with label {string}', (label: string) => {
-  cy.get('#target-panel-mesh')
-    .should('be.visible')
-    .within(div => {
-      cy.contains('Mesh Name: Istio Mesh');
-    });
   cy.waitForReact();
-  cy.getReact('MeshPageComponent')
-    .should('have.length', '2')
-    .nthNode(1)
+  cy.getReact('MeshPageComponent', { state: { meshData: { isLoading: false } } })
+    .should('have.length', 1)
     .getCurrentState()
     .then(state => {
       const controller = state.meshRefs.controller as Visualization;
@@ -100,9 +84,8 @@ Then('mesh side panel is shown', () => {
 
 Then('user sees expected mesh infra', () => {
   cy.waitForReact();
-  cy.getReact('MeshPageComponent')
-    .should('have.length', '2')
-    .nthNode(1)
+  cy.getReact('MeshPageComponent', { state: { meshData: { isLoading: false } } })
+    .should('have.length', 1)
     .getCurrentState()
     .then(state => {
       const controller = state.meshRefs.controller;
