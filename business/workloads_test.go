@@ -735,7 +735,7 @@ func TestGetZtunnelPodLogsProxy(t *testing.T) {
 	require.Equal(1, len(podLogs.Entries))
 	entry := podLogs.Entries[0]
 
-	assert.Equal("[ztunnel] src.addr=10.244.0.16:51748 src.workload=\"productpage-v1-87d54dd59-fzflt\" src.namespace=\"bookinfo\" src.identity=\"spiffe://cluster.local/ns/bookinfo/sa/bookinfo-productpage\" dst.addr=10.244.0.11:15008 dst.service=\"details.bookinfo.svc.cluster.local\" dst.workload=\"details-v1-cf74bb974-wg44w\" dst.namespace=\"bookinfo\" dst.identity=\"spiffe://cluster.local/ns/bookinfo/sa/bookinfo-details\" direction=\"outbound\" bytes_sent=200 bytes_recv=358 duration=\"1ms\"\n", entry.Message)
+	assert.Equal("[ztunnel] src.addr=10.244.0.16:51748 src.workload=productpage-v1-87d54dd59-fzflt src.namespace=bookinfo src.identity=\"spiffe://cluster.local/ns/bookinfo/sa/bookinfo-productpage\" dst.addr=10.244.0.11:15008 dst.service=details.bookinfo.svc.cluster.local dst.workload=details-v1-cf74bb974-wg44w dst.namespace=bookinfo dst.identity=\"spiffe://cluster.local/ns/bookinfo/sa/bookinfo-details\" direction=\"outbound\" bytes_sent=200 bytes_recv=358 duration=\"1ms\"\n", entry.Message)
 	assert.Equal("2024-04-12 10:31:51.078", entry.Timestamp)
 	assert.NotNil(entry.AccessLog)
 	assert.Equal("358", entry.AccessLog.BytesReceived)
