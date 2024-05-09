@@ -14,7 +14,7 @@ const statusDescriptors = new Map<string, StatusDescriptor>([
     MTLSStatuses.ENABLED,
     {
       message: 'mTLS is enabled for this namespace',
-      icon: MTLSIconTypes.LOCK_FULL_DARK,
+      icon: MTLSIconTypes.LOCK_FULL,
       showStatus: true
     }
   ],
@@ -22,7 +22,7 @@ const statusDescriptors = new Map<string, StatusDescriptor>([
     MTLSStatuses.ENABLED_EXTENDED,
     {
       message: 'mTLS is enabled for this namespace, extended from Mesh-wide config',
-      icon: MTLSIconTypes.LOCK_FULL_DARK,
+      icon: MTLSIconTypes.LOCK_FULL,
       showStatus: true
     }
   ],
@@ -30,7 +30,7 @@ const statusDescriptors = new Map<string, StatusDescriptor>([
     MTLSStatuses.PARTIALLY,
     {
       message: 'mTLS is partially enabled for this namespace',
-      icon: MTLSIconTypes.LOCK_HOLLOW_DARK,
+      icon: MTLSIconTypes.LOCK_HOLLOW,
       showStatus: true
     }
   ],

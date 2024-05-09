@@ -7,7 +7,7 @@ import { ValidationTypes } from 'types/IstioObjects';
 import { Status, statusMsg } from 'types/IstioStatus';
 import { Validation } from 'components/Validations/Validation';
 import { Tooltip, TooltipPosition } from '@patternfly/react-core';
-import { TFunction } from 'react-i18next';
+import { t } from 'utils/I18nUtils';
 
 export interface TargetPanelCommonProps {
   duration: DurationInSeconds;
@@ -74,7 +74,7 @@ export const getTitle = (title: string): React.ReactNode => {
   );
 };
 
-export const getHealthStatus = (data: MeshNodeData, t: TFunction): React.ReactNode => {
+export const getHealthStatus = (data: MeshNodeData): React.ReactNode => {
   let healthSeverity: ValidationTypes;
 
   switch (data.healthData) {

@@ -7,7 +7,7 @@ import { getKialiTheme } from 'utils/ThemeUtils';
 import { TargetPanelCommonProps, shouldRefreshData, targetPanelStyle, targetPanelWidth } from './TargetPanelCommon';
 import { kialiIconDark, kialiIconLight } from 'config';
 import { KialiInstance, MeshNodeData, isExternal } from 'types/Mesh';
-import { I18N_NAMESPACE, Theme } from 'types/Common';
+import { Theme } from 'types/Common';
 import { PromisesRegistry } from 'utils/CancelablePromises';
 import * as API from '../../../services/Api';
 import * as FilterHelper from '../../../components/FilterList/FilterHelper';
@@ -17,8 +17,9 @@ import { TitleSizes, Tooltip } from '@patternfly/react-core';
 import { classes } from 'typestyle';
 import { descendents } from '../MeshElems';
 import { renderNodeHeader } from './TargetPanelNode';
-import { WithTranslation, withTranslation } from 'react-i18next';
+import { WithTranslation } from 'react-i18next';
 import { panelBodyStyle, panelHeadingStyle, panelStyle } from 'pages/Graph/SummaryPanelStyle';
+import { withKialiTranslation } from 'utils/I18nUtils';
 
 type TargetPanelClusterProps = WithTranslation & TargetPanelCommonProps;
 
@@ -113,7 +114,7 @@ class TargetPanelClusterComponent extends React.Component<TargetPanelClusterProp
                 return name1 < name2 ? -1 : 1;
               })
               .map(n => {
-                return renderNodeHeader(n.getData() as MeshNodeData, this.props.t, true, TitleSizes.md);
+                return renderNodeHeader(n.getData() as MeshNodeData, true, TitleSizes.md);
               })}
           </div>
         ) : (
@@ -191,4 +192,4 @@ class TargetPanelClusterComponent extends React.Component<TargetPanelClusterProp
   };
 }
 
-export const TargetPanelCluster = withTranslation(I18N_NAMESPACE)(TargetPanelClusterComponent);
+export const TargetPanelCluster = withKialiTranslation()(TargetPanelClusterComponent);

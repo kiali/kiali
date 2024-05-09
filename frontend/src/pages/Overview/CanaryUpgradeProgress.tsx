@@ -21,35 +21,30 @@ export const CanaryUpgradeProgress: React.FC<Props> = (props: Props) => {
 
   return (
     <div style={{ textAlign: 'center' }} data-test="canary-upgrade">
-      <div>
-        <div>
-          Canary upgrade status
-          <Tooltip
-            position={TooltipPosition.right}
-            content={`There is an in progress canary upgrade from version "${props.canaryUpgradeStatus.currentVersion}" to version "${props.canaryUpgradeStatus.upgradeVersion}"`}
-          >
-            <KialiIcon.Info className={infoStyle} />
-          </Tooltip>
-        </div>
+      <span>Canary upgrade status</span>
 
-        <div style={{ height: 180 }}>
-          <ChartDonutUtilization
-            ariaDesc="Canary upgrade status"
-            ariaTitle="Canary upgrade status"
-            constrainToVisibleArea
-            data={{ x: 'Migrated namespaces', y: migrated }}
-            labels={({ datum }) => (datum.x ? `${datum.x}: ${datum.y.toFixed(2)}%` : null)}
-            invert
-            title={`${migrated.toFixed(2)}%`}
-            height={170}
-            themeColor={ChartThemeColor.green}
-          />
-        </div>
+      <Tooltip
+        position={TooltipPosition.right}
+        content={`There is an in progress canary upgrade from version "${props.canaryUpgradeStatus.currentVersion}" to version "${props.canaryUpgradeStatus.upgradeVersion}"`}
+      >
+        <KialiIcon.Info className={infoStyle} />
+      </Tooltip>
 
-        <div>
-          <p>{`${props.canaryUpgradeStatus.migratedNamespaces.length} of ${total} namespaces migrated`}</p>
-        </div>
+      <div style={{ height: '180px' }}>
+        <ChartDonutUtilization
+          ariaDesc="Canary upgrade status"
+          ariaTitle="Canary upgrade status"
+          constrainToVisibleArea
+          data={{ x: 'Migrated namespaces', y: migrated }}
+          labels={({ datum }) => (datum.x ? `${datum.x}: ${datum.y.toFixed(2)}%` : null)}
+          invert
+          title={`${migrated.toFixed(2)}%`}
+          height={170}
+          themeColor={ChartThemeColor.green}
+        />
       </div>
+
+      <p>{`${props.canaryUpgradeStatus.migratedNamespaces.length} of ${total} namespaces migrated`}</p>
     </div>
   );
 };

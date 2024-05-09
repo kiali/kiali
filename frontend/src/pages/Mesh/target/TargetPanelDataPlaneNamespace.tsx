@@ -434,6 +434,7 @@ export class TargetPanelDataPlaneNamespace extends React.Component<
   private renderCharts(direction: DirectionType): React.ReactNode {
     if (this.state.status) {
       const namespace = this.props.targetNamespace;
+
       return (
         <OverviewCardSparklineCharts
           key={`${namespace}-${direction}`}
@@ -448,7 +449,7 @@ export class TargetPanelDataPlaneNamespace extends React.Component<
       );
     }
 
-    return <div style={{ height: '70px' }} />;
+    return <div style={{ padding: '1.5rem 0', textAlign: 'center' }}>Namespace metrics are not available</div>;
   }
 
   private renderStatus(): React.ReactNode {

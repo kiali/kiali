@@ -7,9 +7,8 @@ import { MeshInfraType, MeshNodeData, isExternal } from 'types/Mesh';
 import { classes } from 'typestyle';
 import { panelBodyStyle, panelHeadingStyle, panelStyle } from 'pages/Graph/SummaryPanelStyle';
 import { Title, TitleSizes } from '@patternfly/react-core';
-import { WithTranslation, withTranslation } from 'react-i18next';
-import { I18N_NAMESPACE } from 'types/Common';
-import { TFunction } from 'react-i18next';
+import { WithTranslation } from 'react-i18next';
+import { withKialiTranslation } from 'utils/I18nUtils';
 
 type TargetPanelNodeProps = WithTranslation & TargetPanelCommonProps;
 
@@ -28,12 +27,7 @@ const nodeStyle = kialiStyle({
   display: 'flex'
 });
 
-export function renderNodeHeader(
-  data: MeshNodeData,
-  t: TFunction,
-  nameOnly?: boolean,
-  nameSize?: TitleSizes
-): React.ReactNode {
+export function renderNodeHeader(data: MeshNodeData, nameOnly?: boolean, nameSize?: TitleSizes): React.ReactNode {
   let pfBadge;
 
   switch (data.infraType) {
@@ -66,7 +60,7 @@ export function renderNodeHeader(
         <span className={nodeStyle}>
           <PFBadge badge={pfBadge} size="global" />
           {data.infraName}
-          {getHealthStatus(data, t)}
+          {getHealthStatus(data)}
         </span>
       </Title>
       {!nameOnly && (
@@ -117,7 +111,7 @@ class TargetPanelNodeComponent extends React.Component<TargetPanelNodeProps, Tar
 
     return (
       <div id="target-panel-node" className={classes(panelStyle, targetPanelStyle)}>
-        <div className={panelHeadingStyle}>{renderNodeHeader(data, this.props.t, isExternal(data.cluster))}</div>
+        <div className={panelHeadingStyle}>{renderNodeHeader(data, isExternal(data.cluster))}</div>
         <div className={panelBodyStyle}>
           {data.version && (
             <div style={{ textAlign: 'left' }}>
@@ -133,4 +127,4 @@ class TargetPanelNodeComponent extends React.Component<TargetPanelNodeProps, Tar
   }
 }
 
-export const TargetPanelNode = withTranslation(I18N_NAMESPACE)(TargetPanelNodeComponent);
+export const TargetPanelNode = withKialiTranslation()(TargetPanelNodeComponent);

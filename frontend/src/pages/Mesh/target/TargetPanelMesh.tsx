@@ -6,8 +6,8 @@ import { panelBodyStyle, panelHeadingStyle, panelStyle } from 'pages/Graph/Summa
 import { elems, selectAnd } from '../MeshElems';
 import { MeshAttr, MeshInfraType } from 'types/Mesh';
 import { renderNodeHeader } from './TargetPanelNode';
-import { WithTranslation, withTranslation } from 'react-i18next';
-import { I18N_NAMESPACE } from 'types/Common';
+import { WithTranslation } from 'react-i18next';
+import { withKialiTranslation } from 'utils/I18nUtils';
 
 type TargetPanelMeshState = {
   loading: boolean;
@@ -66,8 +66,8 @@ class TargetPanelMeshComponent extends React.Component<TargetPanelMeshProps, Tar
   }
 
   private renderMeshSummary = (infraNodes: GraphElement[]): React.ReactNode => (
-    <>{infraNodes.map(node => renderNodeHeader(node.getData(), this.props.t, true))}</>
+    <>{infraNodes.map(node => renderNodeHeader(node.getData(), true))}</>
   );
 }
 
-export const TargetPanelMesh = withTranslation(I18N_NAMESPACE)(TargetPanelMeshComponent);
+export const TargetPanelMesh = withKialiTranslation()(TargetPanelMeshComponent);

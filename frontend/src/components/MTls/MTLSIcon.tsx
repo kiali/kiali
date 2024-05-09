@@ -4,8 +4,8 @@ import fullIcon from '../../assets/img/mtls-status-full.svg';
 import hollowIcon from '../../assets/img/mtls-status-partial.svg';
 import fullIconDark from '../../assets/img/mtls-status-full-dark.svg';
 import hollowIconDark from '../../assets/img/mtls-status-partial-dark.svg';
-
-export { fullIcon, hollowIcon, fullIconDark, hollowIconDark };
+import { useKialiTheme } from 'utils/ThemeUtils';
+import { Theme } from 'types/Common';
 
 type MTLSIconProps = {
   icon: string;
@@ -16,22 +16,24 @@ type MTLSIconProps = {
 
 export enum MTLSIconTypes {
   LOCK_FULL = 'LOCK_FULL',
-  LOCK_FULL_DARK = 'LOCK_FULL_DARK',
-  LOCK_HOLLOW = 'LOCK_HOLLOW',
-  LOCK_HOLLOW_DARK = 'LOCK_HOLLOW_DARK'
+  LOCK_HOLLOW = 'LOCK_HOLLOW'
 }
 
-const nameToSource = new Map<string, string>([
-  [MTLSIconTypes.LOCK_FULL, fullIcon],
-  [MTLSIconTypes.LOCK_FULL_DARK, fullIconDark],
-  [MTLSIconTypes.LOCK_HOLLOW, hollowIcon],
-  [MTLSIconTypes.LOCK_HOLLOW_DARK, hollowIconDark]
-]);
-
 export const MTLSIcon: React.FC<MTLSIconProps> = (props: MTLSIconProps) => {
+  const darkTheme = useKialiTheme() === Theme.DARK;
+  const [mtlsIcon, setMtlsIcon] = React.useState('');
+
+  React.useEffect(() => {
+    if (props.icon === MTLSIconTypes.LOCK_FULL) {
+      setMtlsIcon(darkTheme ? fullIcon : fullIconDark);
+    } else if (props.icon === MTLSIconTypes.LOCK_HOLLOW) {
+      setMtlsIcon(darkTheme ? hollowIcon : hollowIconDark);
+    }
+  }, [darkTheme, props.icon]);
+
   return (
     <Tooltip aria-label="mTLS status" position={props.tooltipPosition} enableFlip={true} content={props.tooltipText}>
-      <img className={props.iconClassName} src={nameToSource.get(props.icon)} alt={props.tooltipPosition} />
+      <img key={mtlsIcon} className={props.iconClassName} src={mtlsIcon} alt={props.tooltipPosition} />
     </Tooltip>
   );
 };

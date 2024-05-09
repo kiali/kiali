@@ -70,7 +70,6 @@ import { ControlPlaneBadge } from './ControlPlaneBadge';
 import { OverviewStatus } from './OverviewStatus';
 import { IstiodResourceThresholds } from 'types/IstioStatus';
 import { TLSInfo } from 'components/Overview/TLSInfo';
-import { CanaryUpgradeProgress } from './CanaryUpgradeProgress';
 import { ControlPlaneVersionBadge } from './ControlPlaneVersionBadge';
 import { AmbientBadge } from '../../components/Ambient/AmbientBadge';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
@@ -1041,8 +1040,6 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
   render(): React.ReactNode {
     const sm = this.state.displayMode === OverviewDisplayMode.COMPACT ? 3 : 6;
     const md = this.state.displayMode === OverviewDisplayMode.COMPACT ? 3 : 4;
-    const rlg = 4;
-    const lg = 12;
 
     const filteredNamespaces = FilterHelper.runFilters(
       this.state.namespaces,
@@ -1085,24 +1082,8 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
                 {filteredNamespaces.map((ns, i) => {
                   return (
                     <GridItem
-                      sm={
-                        ns.name === serverConfig.istioNamespace &&
-                        this.state.displayMode === OverviewDisplayMode.EXPAND &&
-                        this.hasCanaryUpgradeConfigured()
-                          ? isRemoteCluster(ns.annotations)
-                            ? rlg
-                            : lg
-                          : sm
-                      }
-                      md={
-                        ns.name === serverConfig.istioNamespace &&
-                        this.state.displayMode === OverviewDisplayMode.EXPAND &&
-                        this.hasCanaryUpgradeConfigured()
-                          ? isRemoteCluster(ns.annotations)
-                            ? rlg
-                            : lg
-                          : md
-                      }
+                      sm={sm}
+                      md={md}
                       key={`CardItem_${ns.name}_${ns.cluster}`}
                       data-test={`CardItem_${ns.name}_${ns.cluster}`}
                       style={{ margin: '0 0.25rem' }}
@@ -1111,9 +1092,6 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
                         isCompact={true}
                         className={cardGridStyle}
                         data-test={`${ns.name}-${OverviewDisplayMode[this.state.displayMode]}`}
-                        style={
-                          !this.props.istioAPIEnabled && !this.hasCanaryUpgradeConfigured() ? { height: '96%' } : {}
-                        }
                       >
                         <CardHeader
                           className={namespaceHeaderStyle}
@@ -1150,7 +1128,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
                             !isRemoteCluster(ns.annotations) &&
                             this.state.displayMode === OverviewDisplayMode.EXPAND && (
                               <Grid>
-                                <GridItem md={this.hasCanaryUpgradeConfigured() ? 3 : 6}>
+                                <GridItem md={6}>
                                   {this.renderLabels(ns)}
 
                                   <div style={{ textAlign: 'left' }}>
@@ -1180,16 +1158,8 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
                                 {ns.name === serverConfig.istioNamespace && (
                                   <GridItem md={9}>
                                     <Grid>
-                                      {this.state.canaryUpgradeStatus && this.hasCanaryUpgradeConfigured() && (
-                                        <GridItem md={this.props.istioAPIEnabled ? 4 : 9}>
-                                          <CanaryUpgradeProgress canaryUpgradeStatus={this.state.canaryUpgradeStatus} />
-                                        </GridItem>
-                                      )}
-
                                       {this.props.istioAPIEnabled === true && (
-                                        <GridItem md={this.hasCanaryUpgradeConfigured() ? 8 : 12}>
-                                          {this.renderCharts(ns)}
-                                        </GridItem>
+                                        <GridItem md={12}>{this.renderCharts(ns)}</GridItem>
                                       )}
                                     </Grid>
                                   </GridItem>
@@ -1344,6 +1314,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
       if (this.state.displayMode === OverviewDisplayMode.COMPACT) {
         return <NamespaceStatuses key={ns.name} name={ns.name} status={ns.status} type={this.state.type} />;
       }
+
       return (
         <OverviewCardSparklineCharts
           key={ns.name}
@@ -1353,13 +1324,12 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
           direction={this.state.direction}
           metrics={ns.metrics}
           errorMetrics={ns.errorMetrics}
-          // controlPlaneMetrics={ns.controlPlaneMetrics}
           istiodResourceThresholds={this.state.istiodResourceThresholds}
         />
       );
     }
 
-    return <div style={{ height: '70px' }} />;
+    return <div style={{ padding: '1.5rem 0', textAlign: 'center' }}>Namespace metrics are not available</div>;
   };
 
   renderIstioConfigStatus = (ns: NamespaceInfo): React.ReactNode => {

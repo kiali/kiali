@@ -152,13 +152,7 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
 
     return (
       <div className={classes(panelStyle, targetPanelStyle)}>
-        <Card
-          id="target-panel-namespace"
-          isCompact={true}
-          className={cardGridStyle}
-          data-test={`${ns}-mesh-target`}
-          style={!this.props.istioAPIEnabled && !this.hasCanaryUpgradeConfigured() ? { height: '96%' } : {}}
-        >
+        <Card id="target-panel-namespace" isCompact={true} className={cardGridStyle} data-test={`${ns}-mesh-target`}>
           <CardHeader
             className={panelHeadingStyle}
             actions={{ actions: <>{namespaceActions}</>, hasNoOffset: false, className: undefined }}
@@ -259,11 +253,7 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
   private getLoading = (): React.ReactNode => {
     return (
       <div className={classes(panelStyle, targetPanelStyle)}>
-        <Card
-          isCompact={true}
-          className={cardGridStyle}
-          style={!this.props.istioAPIEnabled && !this.hasCanaryUpgradeConfigured() ? { height: '96%' } : {}}
-        >
+        <Card isCompact={true} className={cardGridStyle}>
           <CardHeader className={panelHeadingStyle}>
             <Title headingLevel="h5" size={TitleSizes.lg}>
               <span className={namespaceNameStyle}>
@@ -838,6 +828,7 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
   private renderCharts(): React.ReactNode {
     if (this.state.status) {
       const namespace = this.state.targetNamespace!;
+
       return (
         <OverviewCardSparklineCharts
           key={namespace}
@@ -853,7 +844,7 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
       );
     }
 
-    return <div style={{ height: '70px' }} />;
+    return <div style={{ padding: '1.5rem 0', textAlign: 'center' }}>Namespace metrics are not available</div>;
   }
 
   private renderStatus(): React.ReactNode {
