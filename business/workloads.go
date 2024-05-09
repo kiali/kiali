@@ -2089,7 +2089,7 @@ func (in *WorkloadService) streamParsedLogs(cluster, namespace string, names []s
 	isBounded := opts.Duration != nil
 
 	firstEntry := true
-
+	firstWritter := true
 	for i, name := range names {
 		logsReader, err := userClient.StreamPodLogs(namespace, name, &k8sOpts)
 		if err != nil {
@@ -2117,7 +2117,7 @@ func (in *WorkloadService) streamParsedLogs(cluster, namespace string, names []s
 
 		var writeErr error
 
-		if firstEntry {
+		if firstWritter {
 			// To avoid high memory usage, the JSON will be written
 			// to the HTTP Response as it's received from the cluster API.
 			// That is, each log line is parsed, decorated with Kiali's metadata,
@@ -2135,6 +2135,7 @@ func (in *WorkloadService) streamParsedLogs(cluster, namespace string, names []s
 			if writeErr != nil {
 				return writeErr
 			}
+			firstWritter = false
 		}
 
 		line, readErr := bufferedReader.ReadString('\n')
@@ -2240,10 +2241,10 @@ func (in *WorkloadService) StreamPodLogs(cluster, namespace, name string, opts *
 		opts.PodLogOptions.Container = models.IstioProxy
 		// The ztunnel line should include the pod and the namespace
 		fs := filterOpts{
-			destWk: fmt.Sprintf("dst.workload=\"%s\"", name),
-			destNs: fmt.Sprintf("dst.namespace=\"%s\"", namespace),
-			srcWk:  fmt.Sprintf("src.workload=\"%s\"", name),
-			srcNs:  fmt.Sprintf("src.namespace=\"%s\"", namespace),
+			destWk: fmt.Sprintf("dst.workload=%s", name),
+			destNs: fmt.Sprintf("dst.namespace=%s", namespace),
+			srcWk:  fmt.Sprintf("src.workload=%s", name),
+			srcNs:  fmt.Sprintf("src.namespace=%s", namespace),
 		}
 		opts.filter = fs
 		for _, pod := range pods {
