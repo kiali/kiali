@@ -276,6 +276,7 @@ setup_kind_multicluster() {
   local cluster2_name
   if [ "${MULTICLUSTER}" == "${MULTI_PRIMARY}" ]; then
     "${SCRIPT_DIR}"/istio/multicluster/install-multi-primary.sh \
+      --kiali-enabled false \
       --manage-kind true \
       --certs-dir "${certs_dir}" \
       -dorp docker \
@@ -289,7 +290,7 @@ setup_kind_multicluster() {
     kubectl rollout status deployment prometheus -n istio-system --context kind-east
     kubectl rollout status deployment prometheus -n istio-system --context kind-west
   elif [ "${MULTICLUSTER}" == "${PRIMARY_REMOTE}" ]; then 
-    "${SCRIPT_DIR}"/istio/multicluster/install-primary-remote.sh --manage-kind true -dorp docker --istio-dir "${istio_dir}" ${hub_arg:-}
+    "${SCRIPT_DIR}"/istio/multicluster/install-primary-remote.sh --kiali-enabled false --manage-kind true -dorp docker --istio-dir "${istio_dir}" ${hub_arg:-}
     cluster1_context="kind-east"
     cluster2_context="kind-west"
     cluster1_name="east"
