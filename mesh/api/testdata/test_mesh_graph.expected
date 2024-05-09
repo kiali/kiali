@@ -3,7 +3,7 @@
     "nodes": [
       {
         "data": {
-          "id": "f2a39c06544bab3ee6f6b9014db8530d",
+          "id": "107648411a3f61763d45f8433b787970",
           "cluster": "_external_",
           "infraName": "External Deployments",
           "infraType": "cluster",
@@ -17,7 +17,7 @@
       },
       {
         "data": {
-          "id": "8b0417cc2584b04a88544ddcb1c18174",
+          "id": "63477ebaf31eccdd960ec1d9ff35b478",
           "cluster": "cluster-primary",
           "infraName": "cluster-primary",
           "infraType": "cluster",
@@ -46,7 +46,7 @@
       },
       {
         "data": {
-          "id": "ecbd12dbd745b071361a4fbb12f3ebe8",
+          "id": "1aabe556f7e14438273ef43c7bce6148",
           "cluster": "cluster-remote",
           "infraName": "cluster-remote",
           "infraType": "cluster",
@@ -67,8 +67,8 @@
       },
       {
         "data": {
-          "id": "54de7d83a35cb05d3834c1b53d7c53e6",
-          "parent": "8b0417cc2584b04a88544ddcb1c18174",
+          "id": "d1c7a41aefa12a640ebeb0e57c079e8e",
+          "parent": "63477ebaf31eccdd960ec1d9ff35b478",
           "cluster": "cluster-primary",
           "infraName": "istio-system",
           "infraType": "namespace",
@@ -80,8 +80,8 @@
       },
       {
         "data": {
-          "id": "0ff3498362503e275d0d47f0e6ca5479",
-          "parent": "f2a39c06544bab3ee6f6b9014db8530d",
+          "id": "82397758134f81118fb9935477d6f598",
+          "parent": "107648411a3f61763d45f8433b787970",
           "cluster": "_external_",
           "infraName": "Prometheus",
           "infraType": "metricStore",
@@ -118,39 +118,8 @@
       },
       {
         "data": {
-          "id": "726a5e87be54c6dfbbc55b22e3cbb1c5",
-          "parent": "f2a39c06544bab3ee6f6b9014db8530d",
-          "cluster": "_external_",
-          "infraName": "Grafana",
-          "infraType": "grafana",
-          "namespace": "",
-          "nodeType": "infra",
-          "healthData": "Healthy",
-          "infraData": {
-            "Auth": {
-              "CAFile": "xxx",
-              "InsecureSkipVerify": false,
-              "Password": "xxx",
-              "Token": "xxx",
-              "Type": "none",
-              "UseKialiToken": false,
-              "Username": "xxx"
-            },
-            "Dashboards": null,
-            "Enabled": true,
-            "HealthCheckUrl": "",
-            "InClusterURL": "http://grafana.istio-system:3000",
-            "IsCore": false,
-            "URL": ""
-          },
-          "isExternal": true,
-          "isInaccessible": true
-        }
-      },
-      {
-        "data": {
-          "id": "e4dddd6aa55b9806c0e99646d0ac4711",
-          "parent": "f2a39c06544bab3ee6f6b9014db8530d",
+          "id": "9c46b0cb8c955460035427187706cfbc",
+          "parent": "107648411a3f61763d45f8433b787970",
           "cluster": "_external_",
           "infraName": "jaeger",
           "infraType": "traceStore",
@@ -190,8 +159,39 @@
       },
       {
         "data": {
-          "id": "7c9269b87249746045770ea45dec2786",
-          "parent": "8b0417cc2584b04a88544ddcb1c18174",
+          "id": "fb536b180952008dd29b4319593ef044",
+          "parent": "107648411a3f61763d45f8433b787970",
+          "cluster": "_external_",
+          "infraName": "Grafana",
+          "infraType": "grafana",
+          "namespace": "",
+          "nodeType": "infra",
+          "healthData": "Healthy",
+          "infraData": {
+            "Auth": {
+              "CAFile": "xxx",
+              "InsecureSkipVerify": false,
+              "Password": "xxx",
+              "Token": "xxx",
+              "Type": "none",
+              "UseKialiToken": false,
+              "Username": "xxx"
+            },
+            "Dashboards": null,
+            "Enabled": true,
+            "HealthCheckUrl": "",
+            "InClusterURL": "http://grafana.istio-system:3000",
+            "IsCore": false,
+            "URL": ""
+          },
+          "isExternal": true,
+          "isInaccessible": true
+        }
+      },
+      {
+        "data": {
+          "id": "a1c47185abeae268a8280338027e20a5",
+          "parent": "63477ebaf31eccdd960ec1d9ff35b478",
           "cluster": "cluster-primary",
           "infraName": "Data Plane",
           "infraType": "dataplane",
@@ -218,35 +218,8 @@
       },
       {
         "data": {
-          "id": "b4fef251c5e835d9269751857825b5ea",
-          "parent": "54de7d83a35cb05d3834c1b53d7c53e6",
-          "cluster": "cluster-primary",
-          "infraName": "istiod",
-          "infraType": "istiod",
-          "namespace": "istio-system",
-          "nodeType": "infra",
-          "healthData": "Healthy",
-          "infraData": {
-            "OutboundTrafficPolicy": {
-              "mode": ""
-            },
-            "Network": "",
-            "DisableMixerHttpReports": false,
-            "DiscoverySelectors": null,
-            "EnableAutoMtls": true,
-            "MeshMTLS": {
-              "MinProtocolVersion": ""
-            },
-            "defaultConfig": {
-              "MeshId": ""
-            }
-          }
-        }
-      },
-      {
-        "data": {
-          "id": "ed31cec8e279d017c1ac1f7100723e79",
-          "parent": "54de7d83a35cb05d3834c1b53d7c53e6",
+          "id": "cdf7185cca90872db8b743e7a5b36ef0",
+          "parent": "d1c7a41aefa12a640ebeb0e57c079e8e",
           "cluster": "cluster-primary",
           "infraName": "kiali",
           "infraType": "kiali",
@@ -303,8 +276,35 @@
       },
       {
         "data": {
-          "id": "f50226d64063fb859a1d7fad6a609978",
-          "parent": "ecbd12dbd745b071361a4fbb12f3ebe8",
+          "id": "e0de428cc2c4c6381c3f8082a615f25d",
+          "parent": "d1c7a41aefa12a640ebeb0e57c079e8e",
+          "cluster": "cluster-primary",
+          "infraName": "istiod",
+          "infraType": "istiod",
+          "namespace": "istio-system",
+          "nodeType": "infra",
+          "healthData": "Healthy",
+          "infraData": {
+            "OutboundTrafficPolicy": {
+              "mode": ""
+            },
+            "Network": "",
+            "DisableMixerHttpReports": false,
+            "DiscoverySelectors": null,
+            "EnableAutoMtls": true,
+            "MeshMTLS": {
+              "MinProtocolVersion": ""
+            },
+            "defaultConfig": {
+              "MeshId": ""
+            }
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "6514e7140e9a0c07ca296b90cf22cf9f",
+          "parent": "1aabe556f7e14438273ef43c7bce6148",
           "cluster": "cluster-remote",
           "infraName": "Data Plane",
           "infraType": "dataplane",
@@ -333,44 +333,44 @@
     "edges": [
       {
         "data": {
-          "id": "c33dfb69aa02feb7e0798c9185a68525",
-          "source": "b4fef251c5e835d9269751857825b5ea",
-          "target": "7c9269b87249746045770ea45dec2786"
+          "id": "1425e29b8977c19c906115f31a1f8a6b",
+          "source": "cdf7185cca90872db8b743e7a5b36ef0",
+          "target": "82397758134f81118fb9935477d6f598"
         }
       },
       {
         "data": {
-          "id": "758f05601a173df0bed8693eaf5cfbb6",
-          "source": "b4fef251c5e835d9269751857825b5ea",
-          "target": "f50226d64063fb859a1d7fad6a609978"
+          "id": "d1d2a29141584c3aebd0c2940e951030",
+          "source": "cdf7185cca90872db8b743e7a5b36ef0",
+          "target": "9c46b0cb8c955460035427187706cfbc"
         }
       },
       {
         "data": {
-          "id": "574ebfd667eaa055aeefdec6d46cd012",
-          "source": "ed31cec8e279d017c1ac1f7100723e79",
-          "target": "0ff3498362503e275d0d47f0e6ca5479"
+          "id": "8e54c055e5da60e7a310ab5f8bc0aa3d",
+          "source": "cdf7185cca90872db8b743e7a5b36ef0",
+          "target": "e0de428cc2c4c6381c3f8082a615f25d"
         }
       },
       {
         "data": {
-          "id": "4f46af89fe1178d9847cec0dde5ea9da",
-          "source": "ed31cec8e279d017c1ac1f7100723e79",
-          "target": "726a5e87be54c6dfbbc55b22e3cbb1c5"
+          "id": "e44f9ff10bbd28f2c0c2b3f9d6b442f1",
+          "source": "cdf7185cca90872db8b743e7a5b36ef0",
+          "target": "fb536b180952008dd29b4319593ef044"
         }
       },
       {
         "data": {
-          "id": "b1314f35029eaa664b52b865540e1427",
-          "source": "ed31cec8e279d017c1ac1f7100723e79",
-          "target": "b4fef251c5e835d9269751857825b5ea"
+          "id": "988fc84000271532ec53aac83a7a8b39",
+          "source": "e0de428cc2c4c6381c3f8082a615f25d",
+          "target": "6514e7140e9a0c07ca296b90cf22cf9f"
         }
       },
       {
         "data": {
-          "id": "7410fb5a927072cb1547d44b61e104ec",
-          "source": "ed31cec8e279d017c1ac1f7100723e79",
-          "target": "e4dddd6aa55b9806c0e99646d0ac4711"
+          "id": "5d4c6712e449af9af6ce0719cd42eda8",
+          "source": "e0de428cc2c4c6381c3f8082a615f25d",
+          "target": "a1c47185abeae268a8280338027e20a5"
         }
       }
     ]

@@ -141,7 +141,7 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalIn
 				return cmp.Compare(a.Name, b.Name)
 			})
 
-			dp, _, err := addInfra(meshMap, mesh.InfraTypeDataPlane, cluster, "", "Data Plane", namespaces, "", false, "")
+			dp, _, err := addInfra(meshMap, mesh.InfraTypeDataPlane, cluster, "", "Data Plane", namespaces, cp.Revision, false, "")
 			graph.CheckError(err)
 
 			istiod.AddEdge(dp)
@@ -208,7 +208,7 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalIn
 }
 
 func addInfra(meshMap mesh.MeshMap, infraType, cluster, namespace, name string, infraData interface{}, version string, isExternal bool, healthData string) (*mesh.Node, bool, error) {
-	id, err := mesh.Id(cluster, namespace, name, infraType, isExternal)
+	id, err := mesh.Id(cluster, namespace, name, infraType, version, isExternal)
 	if err != nil {
 		return nil, false, err
 	}

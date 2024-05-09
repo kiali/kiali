@@ -210,7 +210,7 @@ func boxByNamespace(nodes *[]*NodeWrapper) {
 			continue
 		}
 
-		id, err := mesh.Id(nd.Cluster, nd.Namespace, nd.Namespace, nd.InfraType, false)
+		id, err := mesh.Id(nd.Cluster, nd.Namespace, nd.Namespace, nd.InfraType, "", false)
 		mesh.CheckError(err)
 
 		box, found := namespaceBoxes[id]

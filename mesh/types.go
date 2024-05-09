@@ -104,9 +104,9 @@ func NewMeshMap() MeshMap {
 }
 
 // Id returns the unique node ID
-func Id(cluster, namespace, name, infraType string, isExternal bool) (id string, err error) {
+func Id(cluster, namespace, name, infraType, version string, isExternal bool) (id string, err error) {
 	if cluster == "" || (namespace == "" && !(isExternal || infraType == InfraTypeCluster || infraType == InfraTypeDataPlane)) || name == "" {
 		return "", fmt.Errorf("failed Mesh ID gen: type=[%s] cluster=[%s] namespace=[%s] name=[%s], isExternal=[%v]", infraType, cluster, namespace, name, isExternal)
 	}
-	return fmt.Sprintf("infra_%s_%s_%s", cluster, namespace, name), nil
+	return fmt.Sprintf("infra_%s_%s_%s_%s", cluster, namespace, name, version), nil
 }
