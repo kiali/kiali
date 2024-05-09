@@ -21,7 +21,7 @@ Feature: Kiali Mesh page
     Then user "does not see" mesh tour
 
   Scenario: See mesh
-    Then mesh side panel is shown
+    Then user sees mesh side panel
     And user sees expected mesh infra
 
   Scenario: Test istiod
@@ -44,9 +44,9 @@ Feature: Kiali Mesh page
     When user selects mesh node with label "Data Plane"
     Then user sees data plane side panel
 
-  Scenario: Test Kubernetes
-    When user selects mesh node with label "Kubernetes"
-    Then user sees "Kubernetes" cluster side panel
+  Scenario: Test Cluster
+    When user selects cluster mesh node
+    Then user sees cluster side panel
 
   Scenario: Test istio-system
     When user selects mesh node with label "istio-system"

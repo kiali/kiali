@@ -1,5 +1,6 @@
 import { Before, Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import { Controller, Edge, Node, Visualization, isEdge, isNode } from '@patternfly/react-topology';
+import { MeshInfraType, MeshNodeData } from '../../../src/types/Mesh';
 
 Before(() => {
   // Copied from overview.ts.  This prevents cypress from stopping on errors unrelated to the tests.
@@ -17,12 +18,28 @@ Before(() => {
   });
 });
 
+When('user closes mesh tour', () => {
+  cy.get('div[role="dialog"]').find('button[aria-label="Close"]').click();
+});
+
 When('user opens mesh tour', () => {
   cy.get('button#mesh-tour').click();
 });
 
-When('user closes mesh tour', () => {
-  cy.get('div[role="dialog"]').find('button[aria-label="Close"]').click();
+When('user selects cluster mesh node', () => {
+  cy.waitForReact();
+  cy.getReact('MeshPageComponent', { state: { meshData: { isLoading: false } } })
+    .should('have.length', 1)
+    .getCurrentState()
+    .then(state => {
+      const controller = state.meshRefs.controller as Visualization;
+      assert.isTrue(controller.hasGraph());
+      const { nodes } = elems(controller);
+      const node = nodes.find(n => (n.getData() as MeshNodeData).infraType === MeshInfraType.CLUSTER);
+      assert.exists(node);
+      const setSelectedIds = state.meshRefs.setSelectedIds as (values: string[]) => void;
+      setSelectedIds([node.getId()]);
+    });
 });
 
 When('user selects mesh node with label {string}', (label: string) => {
@@ -41,44 +58,26 @@ When('user selects mesh node with label {string}', (label: string) => {
     });
 });
 
-Then('user {string} mesh tour', (action: string) => {
-  if (action === 'sees') {
-    cy.get('div[role="dialog"]').find('span').contains('Shortcuts').should('exist');
-  } else {
-    cy.get('div[role="dialog"]').should('not.exist');
-  }
-});
-
-When('user clicks mesh duration menu', () => {
-  cy.get('button#time_range_duration-toggle').click();
-});
-
-When(`user selects mesh duration {string}`, (duration: string) => {
-  cy.get('button#time_range_duration-toggle').click();
-  cy.get(`button[id="${duration}"]`).click();
+Then('user sees cluster side panel', () => {
   cy.get('#loading_kiali_spinner').should('not.exist');
+  cy.get('#target-panel-cluster').should('be.visible');
 });
 
-When('user clicks mesh refresh menu', () => {
-  cy.get('button#time_range_refresh-toggle').click();
-});
-
-When(`user selects mesh refresh {string}`, (refresh: string) => {
-  cy.get('button#time_range_refresh-toggle').click();
-  cy.get(`button[id="${refresh}"]`).click().get('#loading_kiali_spinner').should('not.exist');
-});
-
-When(`user selects mesh refresh {string}`, (refresh: string) => {
-  cy.get('button#time_range_refresh-toggle').click();
-  cy.get(`button[id="${refresh}"]`).click().get('#loading_kiali_spinner').should('not.exist');
-});
-
-Then('mesh side panel is shown', () => {
+Then('user sees control plane side panel', () => {
   cy.get('#loading_kiali_spinner').should('not.exist');
-  cy.get('#target-panel-mesh')
+  cy.get('#target-panel-control-plane')
     .should('be.visible')
     .within(div => {
-      cy.contains('Mesh Name: Istio Mesh');
+      cy.contains('istiod-default');
+    });
+});
+
+Then('user sees data plane side panel', () => {
+  cy.get('#loading_kiali_spinner').should('not.exist');
+  cy.get('#target-panel-data-plane')
+    .should('be.visible')
+    .within(div => {
+      cy.contains('Data Plane');
     });
 });
 
@@ -103,31 +102,21 @@ Then('user sees expected mesh infra', () => {
     });
 });
 
-Then('user sees {string} cluster side panel', (name: string) => {
+Then('user sees mesh side panel', () => {
   cy.get('#loading_kiali_spinner').should('not.exist');
-  cy.get('#target-panel-cluster')
+  cy.get('#target-panel-mesh')
     .should('be.visible')
     .within(div => {
-      cy.contains(name);
+      cy.contains('Mesh Name: Istio Mesh');
     });
 });
 
-Then('user sees control plane side panel', () => {
-  cy.get('#loading_kiali_spinner').should('not.exist');
-  cy.get('#target-panel-control-plane')
-    .should('be.visible')
-    .within(div => {
-      cy.contains('istiod-default');
-    });
-});
-
-Then('user sees data plane side panel', () => {
-  cy.get('#loading_kiali_spinner').should('not.exist');
-  cy.get('#target-panel-data-plane')
-    .should('be.visible')
-    .within(div => {
-      cy.contains('Data Plane');
-    });
+Then('user {string} mesh tour', (action: string) => {
+  if (action === 'sees') {
+    cy.get('div[role="dialog"]').find('span').contains('Shortcuts').should('exist');
+  } else {
+    cy.get('div[role="dialog"]').should('not.exist');
+  }
 });
 
 Then('user sees {string} namespace side panel', (name: string) => {
@@ -148,7 +137,10 @@ Then('user sees {string} node side panel', (name: string) => {
     });
 });
 
+//
 // Since I can't import from MeshElems.tsx, copying some helpers here...
+//
+
 const elems = (c: Controller): { edges: Edge[]; nodes: Node[] } => {
   const elems = c.getElements();
 
