@@ -1,12 +1,6 @@
 import { TOptions } from 'i18next';
-import { UseTranslationResponse, getI18n, useTranslation, withTranslation } from 'react-i18next';
+import { UseTranslationResponse, getI18n, useTranslation } from 'react-i18next';
 import { I18N_NAMESPACE } from 'types/Common';
-
-/* eslint-disable @typescript-eslint/explicit-function-return-type*/
-/* eslint-disable @typescript-eslint/explicit-module-boundary-types*/
-export const withKialiTranslation = () => {
-  return withTranslation(I18N_NAMESPACE);
-};
 
 /**
  * A Hook for using the i18n translation.

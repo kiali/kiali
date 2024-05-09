@@ -17,11 +17,10 @@ import { TitleSizes, Tooltip } from '@patternfly/react-core';
 import { classes } from 'typestyle';
 import { descendents } from '../MeshElems';
 import { renderNodeHeader } from './TargetPanelNode';
-import { WithTranslation } from 'react-i18next';
 import { panelBodyStyle, panelHeadingStyle, panelStyle } from 'pages/Graph/SummaryPanelStyle';
-import { withKialiTranslation } from 'utils/I18nUtils';
+import { t } from 'utils/I18nUtils';
 
-type TargetPanelClusterProps = WithTranslation & TargetPanelCommonProps;
+type TargetPanelClusterProps = TargetPanelCommonProps;
 
 type TargetPanelClusterState = {
   clusterNode?: Node<NodeModel, any>;
@@ -38,7 +37,7 @@ const kialiIconStyle = kialiStyle({
   marginRight: '0.25rem'
 });
 
-class TargetPanelClusterComponent extends React.Component<TargetPanelClusterProps, TargetPanelClusterState> {
+export class TargetPanelCluster extends React.Component<TargetPanelClusterProps, TargetPanelClusterState> {
   static readonly panelStyle = {
     backgroundColor: PFColors.BackgroundColor100,
     height: '100%',
@@ -98,7 +97,7 @@ class TargetPanelClusterComponent extends React.Component<TargetPanelClusterProp
       <div id="target-panel-cluster" className={classes(panelStyle, targetPanelStyle)}>
         <div id="target-panel-cluster-heading" className={panelHeadingStyle}>
           {clusterData.isKialiHome && (
-            <Tooltip content={this.props.t('Kiali home cluster')}>
+            <Tooltip content={t('Kiali home cluster')}>
               <KialiIcon.Star />
             </Tooltip>
           )}
@@ -122,19 +121,15 @@ class TargetPanelClusterComponent extends React.Component<TargetPanelClusterProp
             {clusterData.accessible && this.renderKialiLinks(clusterData.kialiInstances)}
             {version && (
               <>
-                {`${this.props.t('Version')}: `}
-                {version}
+                {`${t('Version')}: ${version}`}
                 <br />
               </>
             )}
-            {`${this.props.t('Network')}: `}
-            {clusterData.network ? clusterData.network : 'n/a'}
+            {`${t('Network')}: ${clusterData.network || t('n/a')}`}
             <br />
-            {`${this.props.t('API Endpoint')}: `}
-            {clusterData.apiEndpoint ? clusterData.apiEndpoint : 'n/a'}
+            {`${t('API Endpoint')}: ${clusterData.apiEndpoint || t('n/a')}`}
             <br />
-            {`${this.props.t('Secret Name')}: `}
-            {clusterData.secretName ? clusterData.secretName : 'n/a'}
+            {`${t('Secret Name')}: ${clusterData.secretName || t('n/a')}`}
           </div>
         )}
       </div>
@@ -191,5 +186,3 @@ class TargetPanelClusterComponent extends React.Component<TargetPanelClusterProp
     });
   };
 }
-
-export const TargetPanelCluster = withKialiTranslation()(TargetPanelClusterComponent);

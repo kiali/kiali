@@ -7,10 +7,8 @@ import { MeshInfraType, MeshNodeData, isExternal } from 'types/Mesh';
 import { classes } from 'typestyle';
 import { panelBodyStyle, panelHeadingStyle, panelStyle } from 'pages/Graph/SummaryPanelStyle';
 import { Title, TitleSizes } from '@patternfly/react-core';
-import { WithTranslation } from 'react-i18next';
-import { withKialiTranslation } from 'utils/I18nUtils';
 
-type TargetPanelNodeProps = WithTranslation & TargetPanelCommonProps;
+type TargetPanelNodeProps = TargetPanelCommonProps;
 
 type TargetPanelNodeState = {
   loading: boolean;
@@ -79,7 +77,7 @@ export function renderNodeHeader(data: MeshNodeData, nameOnly?: boolean, nameSiz
   );
 }
 
-class TargetPanelNodeComponent extends React.Component<TargetPanelNodeProps, TargetPanelNodeState> {
+export class TargetPanelNode extends React.Component<TargetPanelNodeProps, TargetPanelNodeState> {
   constructor(props: TargetPanelNodeProps) {
     super(props);
 
@@ -126,5 +124,3 @@ class TargetPanelNodeComponent extends React.Component<TargetPanelNodeProps, Tar
     );
   }
 }
-
-export const TargetPanelNode = withKialiTranslation()(TargetPanelNodeComponent);

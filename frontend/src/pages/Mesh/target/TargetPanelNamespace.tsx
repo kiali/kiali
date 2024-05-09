@@ -187,16 +187,21 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
                 )}
 
                 {isControlPlane && (
-                  <div>
-                    {targetPanelHR}
+                  <>
                     {this.state.canaryUpgradeStatus && this.hasCanaryUpgradeConfigured() && (
-                      <div>
+                      <>
                         {targetPanelHR}
                         <CanaryUpgradeProgress canaryUpgradeStatus={this.state.canaryUpgradeStatus} />
-                      </div>
+                      </>
                     )}
-                    <div>{this.props.istioAPIEnabled && <div>{this.renderCharts()}</div>}</div>
-                  </div>
+
+                    {this.props.istioAPIEnabled && (
+                      <>
+                        {targetPanelHR}
+                        {this.renderCharts()}
+                      </>
+                    )}
+                  </>
                 )}
               </>
             )}

@@ -35,14 +35,11 @@ import { ControlPlaneMetricsMap, Metric } from 'types/Metrics';
 import { classes } from 'typestyle';
 import { panelBodyStyle, panelHeadingStyle, panelStyle } from 'pages/Graph/SummaryPanelStyle';
 import { MeshMTLSStatus } from 'components/MTls/MeshMTLSStatus';
-import { WithTranslation } from 'react-i18next';
-import { withKialiTranslation } from 'utils/I18nUtils';
 
-type TargetPanelControlPlaneProps = TargetPanelCommonProps &
-  WithTranslation & {
-    meshStatus: string;
-    minTLS: string;
-  };
+type TargetPanelControlPlaneProps = TargetPanelCommonProps & {
+  meshStatus: string;
+  minTLS: string;
+};
 
 type TargetPanelControlPlaneState = {
   canaryUpgradeStatus?: CanaryUpgradeStatus;
@@ -79,7 +76,7 @@ const nodeStyle = kialiStyle({
   display: 'flex'
 });
 
-class TargetPanelControlPlaneComponent extends React.Component<
+export class TargetPanelControlPlane extends React.Component<
   TargetPanelControlPlaneProps,
   TargetPanelControlPlaneState
 > {
@@ -458,5 +455,3 @@ class TargetPanelControlPlaneComponent extends React.Component<
     return <div style={{ padding: '1.5rem 0', textAlign: 'center' }}>Control plane metrics are not available</div>;
   };
 }
-
-export const TargetPanelControlPlane = withKialiTranslation()(TargetPanelControlPlaneComponent);
