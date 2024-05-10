@@ -31,6 +31,7 @@ import { TLSStatus } from 'types/TLSStatus';
 import * as FilterHelper from '../../../components/FilterList/FilterHelper';
 import { panelBodyStyle, panelHeadingStyle } from 'pages/Graph/SummaryPanelStyle';
 import { Metric } from 'types/Metrics';
+import { t } from 'utils/I18nUtils';
 
 type TargetPanelDataPlaneNamespaceProps = Omit<TargetPanelCommonProps, 'target'> & {
   isExpanded: boolean;
@@ -98,6 +99,7 @@ export class TargetPanelDataPlaneNamespace extends React.Component<
   componentDidUpdate(prevProps: TargetPanelDataPlaneNamespaceProps): void {
     const shouldLoad =
       prevProps.updateTime !== this.props.updateTime || (!prevProps.isExpanded && this.props.isExpanded);
+
     if (shouldLoad) {
       this.load();
     }
@@ -169,7 +171,7 @@ export class TargetPanelDataPlaneNamespace extends React.Component<
         <CardHeader className={panelHeadingStyle}>
           <Title headingLevel="h5" size={TitleSizes.lg}>
             <span className={namespaceNameStyle}>
-              <span>Loading...</span>
+              <span>{t('Loading...')}</span>
             </span>
           </Title>
         </CardHeader>
@@ -251,7 +253,7 @@ export class TargetPanelDataPlaneNamespace extends React.Component<
     return namespaceActions;
   };
 
-  private renderNamespaceBadges(ns: NamespaceInfo, tooltip: boolean): React.ReactNode {
+  private renderNamespaceBadges = (ns: NamespaceInfo, tooltip: boolean): React.ReactNode => {
     return (
       <>
         {serverConfig.ambientEnabled && ns.labels && ns.isAmbient && (
@@ -259,9 +261,9 @@ export class TargetPanelDataPlaneNamespace extends React.Component<
         )}
       </>
     );
-  }
+  };
 
-  private renderLabels(ns: NamespaceInfo): React.ReactNode {
+  private renderLabels = (ns: NamespaceInfo): React.ReactNode => {
     const labelsLength = ns.labels ? `${Object.entries(ns.labels).length}` : 'No';
 
     const labelContent = ns.labels ? (
@@ -291,9 +293,9 @@ export class TargetPanelDataPlaneNamespace extends React.Component<
     );
 
     return labelContent;
-  }
+  };
 
-  private renderIstioConfigStatus(ns: NamespaceInfo): React.ReactNode {
+  private renderIstioConfigStatus = (ns: NamespaceInfo): React.ReactNode => {
     let validations: ValidationStatus = { errors: 0, namespace: ns.name, objectCount: 0, warnings: 0 };
 
     if (!!ns.validations) {
@@ -316,7 +318,7 @@ export class TargetPanelDataPlaneNamespace extends React.Component<
         />
       </ValidationSummaryLink>
     );
-  }
+  };
 
   private load = (): void => {
     this.promises.cancelAll();
@@ -364,7 +366,7 @@ export class TargetPanelDataPlaneNamespace extends React.Component<
     this.setState({ loading: true });
   };
 
-  private fetchHealthStatus(): Promise<void> {
+  private fetchHealthStatus = async (): Promise<void> => {
     const cluster = this.props.targetCluster;
     const namespace = this.props.targetNamespace;
     return API.getClustersAppHealth(namespace, this.props.duration, cluster!)
@@ -398,9 +400,9 @@ export class TargetPanelDataPlaneNamespace extends React.Component<
         this.setState({ status: nsStatus });
       })
       .catch(err => this.handleApiError('Could not fetch namespace health', err));
-  }
+  };
 
-  private fetchMetrics(direction: DirectionType): Promise<void> {
+  private fetchMetrics = async (direction: DirectionType): Promise<void> => {
     const rateParams = computePrometheusRateParams(this.props.duration, 10);
     const options: IstioMetricsOptions = {
       filters: ['request_count', 'request_error_count'],
@@ -425,13 +427,13 @@ export class TargetPanelDataPlaneNamespace extends React.Component<
         );
       })
       .catch(err => this.handleApiError(`Could not fetch ${direction} metrics for namespace [${namespace}]`, err));
-  }
+  };
 
-  private handleApiError(message: string, error: ApiError): void {
+  private handleApiError = (message: string, error: ApiError): void => {
     FilterHelper.handleError(`${message}: ${API.getErrorString(error)}`);
-  }
+  };
 
-  private renderCharts(direction: DirectionType): React.ReactNode {
+  private renderCharts = (direction: DirectionType): React.ReactNode => {
     if (this.state.status) {
       const namespace = this.props.targetNamespace;
 
@@ -450,9 +452,9 @@ export class TargetPanelDataPlaneNamespace extends React.Component<
     }
 
     return <div style={{ padding: '1.5rem 0', textAlign: 'center' }}>Namespace metrics are not available</div>;
-  }
+  };
 
-  private renderStatus(): React.ReactNode {
+  private renderStatus = (): React.ReactNode => {
     const targetPage = switchType(healthType, Paths.APPLICATIONS, Paths.SERVICES, Paths.WORKLOADS);
     const namespace = this.props.targetNamespace;
     const status = this.state.status;
@@ -545,7 +547,7 @@ export class TargetPanelDataPlaneNamespace extends React.Component<
         </span>
       </div>
     );
-  }
+  };
 
   private show = (showType: Show, namespace: string, graphType: string): void => {
     let destination = '';

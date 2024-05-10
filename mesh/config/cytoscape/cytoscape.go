@@ -40,6 +40,7 @@ type NodeData struct {
 	InfraData      interface{} `json:"infraData,omitempty"`      // infraType-dependent data
 	IsAmbient      bool        `json:"isAmbient,omitempty"`      // true if configured for ambient
 	IsBox          string      `json:"isBox,omitempty"`          // set for NodeTypeBox, current values: [ 'cluster', 'dataplanes', 'namespace' ]
+	IsCanary       bool        `json:"isCanary,omitempty"`       // true if the data plane is canary
 	IsExternal     bool        `json:"isExternal,omitempty"`     // true if the infra is external to the mesh | false
 	IsInaccessible bool        `json:"isInaccessible,omitempty"` // true if the node exists in an inaccessible namespace
 	IsMTLS         bool        `json:"isMTLS,omitempty"`         // true if mesh-wide mTLS is enabled
@@ -174,6 +175,10 @@ func buildConfig(meshMap mesh.MeshMap, nodes *[]*NodeWrapper, edges *[]*EdgeWrap
 
 		if val, ok := n.Metadata[mesh.Version]; ok {
 			nd.Version = val.(string)
+		}
+
+		if val, ok := n.Metadata[mesh.IsCanary]; ok {
+			nd.IsCanary = val.(bool)
 		}
 
 		nw := NodeWrapper{

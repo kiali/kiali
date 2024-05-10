@@ -39,7 +39,7 @@ export const MastheadItems: React.FC = () => {
               <ThemeSwitch />
             </FlexItem>
             <FlexItem>
-              <IstioStatus cluster={homeCluster?.name} />
+              <IstioStatus cluster={homeCluster?.name} location={'masthead'} />
             </FlexItem>
             <FlexItem style={{ marginRight: 0 }}>
               <MessageCenterTrigger />

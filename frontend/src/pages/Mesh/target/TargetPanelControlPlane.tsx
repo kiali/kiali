@@ -35,6 +35,7 @@ import { ControlPlaneMetricsMap, Metric } from 'types/Metrics';
 import { classes } from 'typestyle';
 import { panelBodyStyle, panelHeadingStyle, panelStyle } from 'pages/Graph/SummaryPanelStyle';
 import { MeshMTLSStatus } from 'components/MTls/MeshMTLSStatus';
+import { t } from 'utils/I18nUtils';
 
 type TargetPanelControlPlaneProps = TargetPanelCommonProps & {
   meshStatus: string;
@@ -154,8 +155,7 @@ export class TargetPanelControlPlane extends React.Component<
         <div className={panelBodyStyle}>
           {data.version && (
             <div style={{ textAlign: 'left' }}>
-              {`Version: `}
-              {data.version}
+              {`${t('Version')}: ${data.version}`}
               <br />
             </div>
           )}
@@ -193,6 +193,7 @@ export class TargetPanelControlPlane extends React.Component<
           )}
 
           {targetPanelHR}
+          <span>{`${t('Configuration')}:`}</span>
           <pre>{JSON.stringify(data.infraData, null, 2)}</pre>
         </div>
       </div>
@@ -205,7 +206,7 @@ export class TargetPanelControlPlane extends React.Component<
         <div className={panelHeadingStyle}>
           <Title headingLevel="h5" size={TitleSizes.lg}>
             <span className={nodeStyle}>
-              <span>Loading...</span>
+              <span>{t('Loading...')}</span>
             </span>
           </Title>
         </div>

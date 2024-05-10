@@ -7,6 +7,7 @@ import { MeshInfraType, MeshNodeData, isExternal } from 'types/Mesh';
 import { classes } from 'typestyle';
 import { panelBodyStyle, panelHeadingStyle, panelStyle } from 'pages/Graph/SummaryPanelStyle';
 import { Title, TitleSizes } from '@patternfly/react-core';
+import { t } from 'utils/I18nUtils';
 
 type TargetPanelNodeProps = TargetPanelCommonProps;
 
@@ -111,13 +112,8 @@ export class TargetPanelNode extends React.Component<TargetPanelNodeProps, Targe
       <div id="target-panel-node" className={classes(panelStyle, targetPanelStyle)}>
         <div className={panelHeadingStyle}>{renderNodeHeader(data, isExternal(data.cluster))}</div>
         <div className={panelBodyStyle}>
-          {data.version && (
-            <div style={{ textAlign: 'left' }}>
-              {`Version: `}
-              {data.version}
-              <br />
-            </div>
-          )}
+          {data.version && <div style={{ textAlign: 'left' }}>{`${t('Version')}: ${data.version}`}</div>}
+          <span>{`${t('Configuration')}:`}</span>
           <pre>{JSON.stringify(data.infraData, null, 2)}</pre>
         </div>
       </div>
