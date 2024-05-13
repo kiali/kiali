@@ -249,6 +249,7 @@ type TempoConfig struct {
 // TracingConfig describes configuration used for tracing links
 type TracingConfig struct {
 	Auth                 Auth              `yaml:"auth"`
+	CustomHeaders        map[string]string `yaml:"custom_headers,omitempty"`
 	Enabled              bool              `yaml:"enabled"` // Enable Tracing in Kiali
 	HealthCheckUrl       string            `yaml:"health_check_url,omitempty"`
 	GrpcPort             int               `yaml:"grpc_port,omitempty"`
@@ -739,6 +740,7 @@ func NewConfig() (c *Config) {
 				Auth: Auth{
 					Type: AuthTypeNone,
 				},
+				CustomHeaders:        map[string]string{},
 				Enabled:              true,
 				GrpcPort:             9095,
 				InClusterURL:         "http://tracing.istio-system:16685/jaeger",

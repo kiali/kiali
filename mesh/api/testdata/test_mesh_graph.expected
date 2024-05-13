@@ -136,6 +136,7 @@
               "UseKialiToken": false,
               "Username": "xxx"
             },
+            "CustomHeaders": {},
             "Enabled": true,
             "HealthCheckUrl": "",
             "GrpcPort": 9095,
