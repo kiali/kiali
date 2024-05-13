@@ -108,7 +108,15 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalIn
 		// convert istio status slice into map
 		healthData := make(map[string]string)
 		for _, data := range istioStatus {
-			healthData[data.Name] = data.Status
+			// istiod health depends on istiod and istio-pod status (both starts with "istiod" prefix)
+			if strings.HasPrefix(data.Name, "istiod") {
+				// don't update if previous status is not healthy to display a problem in the mesh
+				if healthData["istiod"] == "" || healthData["istiod"] == kubernetes.ComponentHealthy {
+					healthData["istiod"] = data.Status
+				}
+			} else {
+				healthData[data.Name] = data.Status
+			}
 		}
 
 		istiod, _, err := addInfra(meshMap, mesh.InfraTypeIstiod, cp.Cluster.Name, cp.IstiodNamespace, name, cp.Config, version, false, healthData["istiod"], false)

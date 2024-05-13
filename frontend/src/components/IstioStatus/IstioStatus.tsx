@@ -91,25 +91,22 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
     refreshNamespaces();
   }, [refreshNamespaces]);
 
-  const fetchStatus = React.useCallback(
-    () => (): void => {
-      API.getIstioStatus(cluster)
-        .then(response => {
-          setIstioStatus(response.data);
-        })
-        .catch(error => {
-          // User without namespaces can't have access to mTLS information. Reduce severity to info.
-          const informative = namespaces && namespaces.length < 1;
+  const fetchStatus = React.useCallback((): void => {
+    API.getIstioStatus(cluster)
+      .then(response => {
+        setIstioStatus(response.data);
+      })
+      .catch(error => {
+        // User without namespaces can't have access to mTLS information. Reduce severity to info.
+        const informative = namespaces && namespaces.length < 1;
 
-          if (informative) {
-            AlertUtils.addError(t('Istio deployment status disabled.'), error, 'default', MessageType.INFO);
-          } else {
-            AlertUtils.addError(t('Error fetching Istio deployment status.'), error, 'default', MessageType.ERROR);
-          }
-        });
-    },
-    [cluster, namespaces, setIstioStatus, t]
-  );
+        if (informative) {
+          AlertUtils.addError(t('Istio deployment status disabled.'), error, 'default', MessageType.INFO);
+        } else {
+          AlertUtils.addError(t('Error fetching Istio deployment status.'), error, 'default', MessageType.ERROR);
+        }
+      });
+  }, [cluster, namespaces, setIstioStatus, t]);
 
   React.useEffect(() => {
     fetchStatus();
