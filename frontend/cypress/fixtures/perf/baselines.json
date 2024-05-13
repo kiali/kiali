@@ -1,15 +1,15 @@
 {
-  "workloadListAll": "2",
-  "workloadListSelected": "2",
-  "workloadDetails": "1",
-  "serviceListAll": "2",
-  "serviceListSelected": "2",
-  "serviceDetails": "1",
-  "appListAll": "2",
-  "appListSelected": "2",
-  "appDetails": "1",
-  "configListAdd": "2",
-  "configListSelected": "2",
+  "workloadListAll": "1.2",
+  "workloadListSelected": "0.8",
+  "workloadDetails": "0.7",
+  "serviceListAll": "1",
+  "serviceListSelected": "0.5",
+  "serviceDetails": "0.8",
+  "appListAll": "1",
+  "appListSelected": "0.8",
+  "appDetails": "0.8",
+  "configListAll": "0.8",
+  "configListSelected": "0.5",
   "configDetails": "1",
-  "overview": "2"
+  "overview": "1.3"
 }
