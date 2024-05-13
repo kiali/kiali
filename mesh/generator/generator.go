@@ -88,9 +88,6 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalIn
 			}
 		}
 
-		// add the control plane name
-		name := cp.IstiodName
-
 		version := ""
 		if cp.Revision != "" {
 			// the version is the revision name with '.' instead of '-'
@@ -108,18 +105,18 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalIn
 		// convert istio status slice into map
 		healthData := make(map[string]string)
 		for _, data := range istioStatus {
-			// istiod health depends on istiod and istio-pod status (both starts with "istiod" prefix)
-			if strings.HasPrefix(data.Name, "istiod") {
+			// istiod health depends on istiod and istio-pod status (both starts with the istiod name of the control plane)
+			if strings.HasPrefix(data.Name, cp.IstiodName) {
 				// don't update if previous status is not healthy to display a problem in the mesh
-				if healthData["istiod"] == "" || healthData["istiod"] == kubernetes.ComponentHealthy {
-					healthData["istiod"] = data.Status
+				if healthData[cp.IstiodName] == "" || healthData[cp.IstiodName] == kubernetes.ComponentHealthy {
+					healthData[cp.IstiodName] = data.Status
 				}
 			} else {
 				healthData[data.Name] = data.Status
 			}
 		}
 
-		istiod, _, err := addInfra(meshMap, mesh.InfraTypeIstiod, cp.Cluster.Name, cp.IstiodNamespace, name, cp.Config, version, false, healthData["istiod"], false)
+		istiod, _, err := addInfra(meshMap, mesh.InfraTypeIstiod, cp.Cluster.Name, cp.IstiodNamespace, cp.IstiodName, cp.Config, version, false, healthData[cp.IstiodName], false)
 		mesh.CheckError(err)
 
 		// add the managed namespaces by cluster and narrowed, if necessary, by revision
@@ -174,7 +171,7 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalIn
 			// metrics/prometheus
 			cluster, namespace, isExternal := discoverInfraService(es.Prometheus.URL, ctx, gi)
 			var node *mesh.Node
-			name = "Prometheus"
+			name := "Prometheus"
 			node, _, err = addInfra(meshMap, mesh.InfraTypeMetricStore, cluster, namespace, name, es.Prometheus, esVersions[name], isExternal, healthData["prometheus"], false)
 			mesh.CheckError(err)
 
