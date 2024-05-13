@@ -31,7 +31,7 @@ export const ControlPlaneBadge: React.FC<Props> = (props: Props) => {
       <Tooltip
         content={
           <>
-            <span>{t('It belongs to the istio control plane')}</span>
+            <span>{t('Istio control plane')}</span>
             {!pathname.endsWith('/mesh') && (
               <div className={meshLinkStyle}>
                 <span>{t('More info at')}</span>

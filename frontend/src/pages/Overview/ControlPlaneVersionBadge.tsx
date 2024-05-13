@@ -18,7 +18,7 @@ export const ControlPlaneVersionBadge: React.FC<Props> = (props: Props) => {
     <Tooltip
       content={
         <>
-          <span>{`${t('It belongs to the istio revision')} '${props.version}'`}</span>
+          <span>{`${t('Istio revision')} '${props.version}'`}</span>
           {!pathname.endsWith('/mesh') && (
             <div className={meshLinkStyle}>
               <span>{t('More info at')}</span>
