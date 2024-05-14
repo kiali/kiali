@@ -36,9 +36,9 @@ export const TargetPanelMesh: React.FC<TargetPanelMeshProps> = (props: TargetPan
 
     return (
       <div style={{ marginBottom: '1rem' }}>
-        {renderNodeHeader(clusterData, true)}
+        {renderNodeHeader(clusterData, { nameOnly: true, smallSize: false, hideBadge: clusterData.isExternal })}
         <div className={infoStyle}>
-          {clusterData.version && `${t('Version')}: ${clusterData.version}`}
+          {`${t('Version')}: ${clusterData.version || t('unknown')}`}
           {infraNodes
             .filter(node => node.getData().cluster === clusterData.cluster)
             .map(node => renderInfraNodeSummary(node.getData()))}
@@ -51,9 +51,9 @@ export const TargetPanelMesh: React.FC<TargetPanelMeshProps> = (props: TargetPan
   const renderInfraNodeSummary = (nodeData: MeshNodeData): React.ReactNode => {
     return (
       <div className={summaryStyle}>
-        {renderNodeHeader(nodeData, true, true)}
+        {renderNodeHeader(nodeData, { nameOnly: true, smallSize: true })}
         <div className={infoStyle}>
-          {nodeData.version && <div>{`${t('Version')}: ${nodeData.version}`}</div>}
+          <div>{`${t('Version')}: ${nodeData.version || t('unknown')}`}</div>
           {nodeData.namespace && <div>{`${t('Namespace')}: ${nodeData.namespace}`}</div>}
         </div>
       </div>
@@ -63,7 +63,7 @@ export const TargetPanelMesh: React.FC<TargetPanelMeshProps> = (props: TargetPan
   const renderDataPlaneSummary = (nodeData: MeshNodeData, showCanaryInfo: boolean): React.ReactNode => {
     return (
       <div className={summaryStyle}>
-        {renderNodeHeader(nodeData, true, true)}
+        {renderNodeHeader(nodeData, { nameOnly: true, smallSize: true })}
         <div className={infoStyle}>
           {showCanaryInfo && (
             <>

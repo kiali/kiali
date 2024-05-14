@@ -117,7 +117,16 @@ export const nodeStyle = kialiStyle({
   display: 'flex'
 });
 
-export function renderNodeHeader(data: MeshNodeData, nameOnly?: boolean, smallSize?: boolean): React.ReactNode {
+interface NodeHeaderOptions {
+  hideBadge?: boolean;
+  nameOnly?: boolean;
+  smallSize?: boolean;
+}
+
+export function renderNodeHeader(
+  data: MeshNodeData,
+  options: NodeHeaderOptions = { nameOnly: false, smallSize: false, hideBadge: false }
+): React.ReactNode {
   let pfBadge = PFBadges.Unknown;
 
   switch (data.infraType) {
@@ -148,14 +157,14 @@ export function renderNodeHeader(data: MeshNodeData, nameOnly?: boolean, smallSi
 
   return (
     <React.Fragment key={data.infraName}>
-      <Title headingLevel="h5" size={smallSize ? TitleSizes.md : TitleSizes.lg}>
+      <Title headingLevel="h5" size={options.smallSize ? TitleSizes.md : TitleSizes.lg}>
         <span className={nodeStyle}>
-          <PFBadge badge={pfBadge} size={smallSize ? 'sm' : 'global'} />
+          {!options.hideBadge && <PFBadge badge={pfBadge} size={options.smallSize ? 'sm' : 'global'} />}
           {data.infraName}
           {renderHealthStatus(data)}
         </span>
       </Title>
-      {!nameOnly && (
+      {!options.nameOnly && (
         <>
           <span className={nodeStyle}>
             <PFBadge badge={PFBadges.Namespace} size="sm" />

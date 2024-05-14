@@ -109,7 +109,7 @@ export class TargetPanelCluster extends React.Component<TargetPanelClusterProps,
                 </span>
               </Tooltip>
             )}
-            <PFBadge badge={PFBadges.Cluster} size="global" />
+            {!isExternal(data.cluster) && <PFBadge badge={PFBadges.Cluster} size="global" />}
             {clusterData.name}
           </Title>
         </div>
@@ -122,18 +122,14 @@ export class TargetPanelCluster extends React.Component<TargetPanelClusterProps,
                 return name1 < name2 ? -1 : 1;
               })
               .map(n => {
-                return renderNodeHeader(n.getData() as MeshNodeData, true, true);
+                return renderNodeHeader(n.getData() as MeshNodeData, { nameOnly: true, smallSize: true });
               })}
           </div>
         ) : (
           <div className={panelBodyStyle}>
             {clusterData.accessible && this.renderKialiLinks(clusterData.kialiInstances)}
-            {version && (
-              <>
-                {`${t('Version')}: ${version}`}
-                <br />
-              </>
-            )}
+            {`${t('Version')}: ${version || t('unknown')}`}
+            <br />
             {`${t('Network')}: ${clusterData.network || t('n/a')}`}
             <br />
             {`${t('API Endpoint')}: ${clusterData.apiEndpoint || t('n/a')}`}

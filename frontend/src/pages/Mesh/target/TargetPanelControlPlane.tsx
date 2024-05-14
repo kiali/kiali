@@ -126,15 +126,10 @@ export class TargetPanelControlPlane extends React.Component<
         data-test={`${data.infraName}-mesh-target`}
         className={classes(panelStyle, targetPanelStyle)}
       >
-        <div className={panelHeadingStyle}>{renderNodeHeader(data)}</div>
+        <div className={panelHeadingStyle}>{renderNodeHeader(data, {})}</div>
 
         <div className={panelBodyStyle}>
-          {data.version && (
-            <div style={{ textAlign: 'left' }}>
-              {`${t('Version')}: ${data.version}`}
-              <br />
-            </div>
-          )}
+          <div style={{ textAlign: 'left' }}>{`${t('Version')}: ${data.version || t('unknown')}`}</div>
 
           <div style={{ textAlign: 'left' }}>
             <MeshMTLSStatus />

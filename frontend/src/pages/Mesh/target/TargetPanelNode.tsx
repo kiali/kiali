@@ -19,9 +19,9 @@ export const TargetPanelNode: React.FC<TargetPanelNodeProps> = (props: TargetPan
 
   return (
     <div id="target-panel-node" className={classes(panelStyle, targetPanelStyle)}>
-      <div className={panelHeadingStyle}>{renderNodeHeader(data, isExternal(data.cluster))}</div>
+      <div className={panelHeadingStyle}>{renderNodeHeader(data, { nameOnly: isExternal(data.cluster) })}</div>
       <div className={panelBodyStyle}>
-        {data.version && <div style={{ textAlign: 'left' }}>{`${t('Version')}: ${data.version}`}</div>}
+        <div style={{ textAlign: 'left' }}>{`${t('Version')}: ${data.version || t('unknown')}`}</div>
         <span>{`${t('Configuration')}:`}</span>
         <pre>{JSON.stringify(data.infraData, null, 2)}</pre>
       </div>
