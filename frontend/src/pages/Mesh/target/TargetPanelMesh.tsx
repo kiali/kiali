@@ -14,7 +14,7 @@ const infoStyle = kialiStyle({
 });
 
 const summaryStyle = kialiStyle({
-  marginLeft: '0.5rem'
+  marginTop: '0.25rem'
 });
 
 export const TargetPanelMesh: React.FC<TargetPanelMeshProps> = (props: TargetPanelMeshProps) => {
