@@ -2,7 +2,7 @@ import { Namespace } from './Namespace';
 import { AppenderString, DurationInSeconds, TimeInSeconds } from './Common';
 import { Health } from './Health';
 import { HealthAnnotationType } from './HealthAnnotation';
-import { t } from 'utils/I18nUtils';
+import { t } from 'i18next';
 
 export interface Layout {
   name: string;

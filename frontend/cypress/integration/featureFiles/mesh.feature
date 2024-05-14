@@ -25,7 +25,7 @@ Feature: Kiali Mesh page
     And user sees expected mesh infra
 
   Scenario: Test istiod
-    When user selects mesh node with label "istiod-default"
+    When user selects mesh node with label "istiod"
     Then user sees control plane side panel
 
   Scenario: Grafana Infra

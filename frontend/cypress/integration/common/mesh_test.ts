@@ -68,7 +68,7 @@ Then('user sees control plane side panel', () => {
   cy.get('#target-panel-control-plane')
     .should('be.visible')
     .within(div => {
-      cy.contains('istiod-default');
+      cy.contains('istiod');
     });
 });
 
