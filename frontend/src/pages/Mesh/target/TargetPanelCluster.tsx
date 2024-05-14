@@ -24,6 +24,7 @@ import { classes } from 'typestyle';
 import { descendents } from '../MeshElems';
 import { panelBodyStyle, panelHeadingStyle, panelStyle } from 'pages/Graph/SummaryPanelStyle';
 import { t } from 'utils/I18nUtils';
+import { UNKNOWN } from 'types/Graph';
 
 type TargetPanelClusterProps = TargetPanelCommonProps;
 
@@ -128,7 +129,7 @@ export class TargetPanelCluster extends React.Component<TargetPanelClusterProps,
         ) : (
           <div className={panelBodyStyle}>
             {clusterData.accessible && this.renderKialiLinks(clusterData.kialiInstances)}
-            {`${t('Version')}: ${version || t('unknown')}`}
+            {`${t('Version')}: ${version || UNKNOWN}`}
             <br />
             {`${t('Network')}: ${clusterData.network || t('n/a')}`}
             <br />

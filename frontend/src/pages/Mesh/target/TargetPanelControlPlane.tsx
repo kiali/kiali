@@ -35,6 +35,7 @@ import { classes } from 'typestyle';
 import { panelBodyStyle, panelHeadingStyle, panelStyle } from 'pages/Graph/SummaryPanelStyle';
 import { MeshMTLSStatus } from 'components/MTls/MeshMTLSStatus';
 import { t } from 'utils/I18nUtils';
+import { UNKNOWN } from 'types/Graph';
 
 type TargetPanelControlPlaneProps = TargetPanelCommonProps & {
   meshStatus: string;
@@ -129,7 +130,7 @@ export class TargetPanelControlPlane extends React.Component<
         <div className={panelHeadingStyle}>{renderNodeHeader(data, {})}</div>
 
         <div className={panelBodyStyle}>
-          <div style={{ textAlign: 'left' }}>{`${t('Version')}: ${data.version || t('unknown')}`}</div>
+          <div style={{ textAlign: 'left' }}>{`${t('Version')}: ${data.version || UNKNOWN}`}</div>
 
           <div style={{ textAlign: 'left' }}>
             <MeshMTLSStatus />

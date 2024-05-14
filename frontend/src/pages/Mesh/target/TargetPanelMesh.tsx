@@ -7,11 +7,12 @@ import { elems, selectAnd } from '../MeshElems';
 import { MeshAttr, MeshInfraType, MeshNodeData } from 'types/Mesh';
 import { kialiStyle } from 'styles/StyleUtils';
 import { useKialiTranslation } from 'utils/I18nUtils';
+import { UNKNOWN } from 'types/Graph';
 
 type TargetPanelMeshProps = TargetPanelCommonProps;
 
 const infoStyle = kialiStyle({
-  marginLeft: '0.5rem'
+  marginLeft: '1.0rem'
 });
 
 const summaryStyle = kialiStyle({
@@ -38,9 +39,20 @@ export const TargetPanelMesh: React.FC<TargetPanelMeshProps> = (props: TargetPan
       <div style={{ marginBottom: '1rem' }}>
         {renderNodeHeader(clusterData, { nameOnly: true, smallSize: false, hideBadge: clusterData.isExternal })}
         <div className={infoStyle}>
-          {`${t('Version')}: ${clusterData.version || t('unknown')}`}
+          {`${t('Version')}: ${clusterData.version || UNKNOWN}`}
           {infraNodes
             .filter(node => node.getData().cluster === clusterData.cluster)
+            .sort((in1, in2) => {
+              const data1 = in1.getData() as MeshNodeData;
+              const data2 = in2.getData() as MeshNodeData;
+              if (data1.infraType === MeshInfraType.ISTIOD) {
+                return -1;
+              }
+              if (data2.infraType === MeshInfraType.ISTIOD) {
+                return 1;
+              }
+              return data1.infraName.toLowerCase() < data2.infraName.toLowerCase() ? -1 : 1;
+            })
             .map(node => renderInfraNodeSummary(node.getData()))}
           {clusterDataPlanes.map(node => renderDataPlaneSummary(node.getData(), clusterDataPlanes.length > 1))}
         </div>
@@ -53,8 +65,10 @@ export const TargetPanelMesh: React.FC<TargetPanelMeshProps> = (props: TargetPan
       <div className={summaryStyle}>
         {renderNodeHeader(nodeData, { nameOnly: true, smallSize: true })}
         <div className={infoStyle}>
-          <div>{`${t('Version')}: ${nodeData.version || t('unknown')}`}</div>
-          {nodeData.namespace && <div>{`${t('Namespace')}: ${nodeData.namespace}`}</div>}
+          <div>{`${t('Version')}: ${nodeData.version || UNKNOWN}`}</div>
+          {nodeData.infraType === MeshInfraType.ISTIOD && nodeData.namespace && (
+            <div>{`${t('Namespace')}: ${nodeData.namespace}`}</div>
+          )}
         </div>
       </div>
     );
