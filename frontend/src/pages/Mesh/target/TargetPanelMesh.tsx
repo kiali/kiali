@@ -6,6 +6,7 @@ import { panelBodyStyle, panelHeadingStyle, panelStyle } from 'pages/Graph/Summa
 import { elems, selectAnd } from '../MeshElems';
 import { MeshAttr, MeshInfraType, MeshNodeData } from 'types/Mesh';
 import { kialiStyle } from 'styles/StyleUtils';
+import { useKialiTranslation } from 'utils/I18nUtils';
 
 type TargetPanelMeshProps = TargetPanelCommonProps;
 
@@ -18,6 +19,8 @@ const summaryStyle = kialiStyle({
 });
 
 export const TargetPanelMesh: React.FC<TargetPanelMeshProps> = (props: TargetPanelMeshProps) => {
+  const { t } = useKialiTranslation();
+
   const renderMeshSummary = (nodes: Node<NodeModel>[], clusterData: MeshNodeData): React.ReactNode => {
     const dataPlaneNodes = selectAnd(nodes, [{ prop: MeshAttr.infraType, op: '=', val: MeshInfraType.DATAPLANE }]);
 
@@ -35,7 +38,7 @@ export const TargetPanelMesh: React.FC<TargetPanelMeshProps> = (props: TargetPan
       <div style={{ marginBottom: '1rem' }}>
         {renderNodeHeader(clusterData, true)}
         <div className={infoStyle}>
-          {clusterData.version && `Version: ${clusterData.version}`}
+          {clusterData.version && `${t('Version')}: ${clusterData.version}`}
           {infraNodes
             .filter(node => node.getData().cluster === clusterData.cluster)
             .map(node => renderInfraNodeSummary(node.getData()))}
@@ -50,9 +53,8 @@ export const TargetPanelMesh: React.FC<TargetPanelMeshProps> = (props: TargetPan
       <div className={summaryStyle}>
         {renderNodeHeader(nodeData, true, true)}
         <div className={infoStyle}>
-          {nodeData.version && `Version: ${nodeData.version}`}
-          <br />
-          {nodeData.namespace && `Namespace: ${nodeData.namespace}`}
+          {nodeData.version && <div>{`${t('Version')}: ${nodeData.version}`}</div>}
+          {nodeData.namespace && <div>{`${t('Namespace')}: ${nodeData.namespace}`}</div>}
         </div>
       </div>
     );
@@ -65,14 +67,16 @@ export const TargetPanelMesh: React.FC<TargetPanelMeshProps> = (props: TargetPan
         <div className={infoStyle}>
           {showCanaryInfo && (
             <>
-              {`Canary: ${nodeData.isCanary ?? false}`}
-              <br />
-              {nodeData.version && `Revision: ${nodeData.version}`}
-              <br />
+              <div>{`${t('Canary')}: ${nodeData.isCanary ?? false}`}</div>
+              {nodeData.version && <div>{`${t('Revision')}: ${nodeData.version}`}</div>}
             </>
           )}
 
-          {`${nodeData.infraData.length} namespaces`}
+          {t('{{count}} namespace', {
+            count: nodeData.infraData.length,
+            defaultValue_one: '{{count}} namespace',
+            defaultValue_other: '{{count}} namespaces'
+          })}
         </div>
       </div>
     );
@@ -91,7 +95,7 @@ export const TargetPanelMesh: React.FC<TargetPanelMeshProps> = (props: TargetPan
   return (
     <div id="target-panel-mesh" className={classes(panelStyle, targetPanelStyle)}>
       <div id="target-panel-mesh-heading" className={panelHeadingStyle}>
-        {getTitle(`Mesh Name: ${controller.getGraph().getData().meshData.name}`)}
+        {getTitle(`${t('Mesh Name')}: ${controller.getGraph().getData().meshData.name}`)}
       </div>
       <div id="target-panel-mesh-body" className={panelBodyStyle}>
         {clusterNodes.map(cluster => renderMeshSummary(nodes, cluster.getData()))}
