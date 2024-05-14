@@ -1,14 +1,13 @@
 import * as React from 'react';
 import { Node, NodeModel } from '@patternfly/react-topology';
-import { kialiStyle } from 'styles/StyleUtils';
 import {
   TargetPanelCommonProps,
-  getHealthStatus,
+  nodeStyle,
+  renderNodeHeader,
   shouldRefreshData,
   targetPanelHR,
   targetPanelStyle
 } from './TargetPanelCommon';
-import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { Title, TitleSizes } from '@patternfly/react-core';
 import { serverConfig } from 'config';
 import { CanaryUpgradeStatus, OutboundTrafficPolicy } from 'types/IstioObjects';
@@ -72,11 +71,6 @@ const defaultState: TargetPanelControlPlaneState = {
 // TODO: Should these remain fixed values?
 const direction: DirectionType = 'outbound';
 
-const nodeStyle = kialiStyle({
-  alignItems: 'center',
-  display: 'flex'
-});
-
 export class TargetPanelControlPlane extends React.Component<
   TargetPanelControlPlaneProps,
   TargetPanelControlPlaneState
@@ -132,25 +126,7 @@ export class TargetPanelControlPlane extends React.Component<
         data-test={`${data.infraName}-mesh-target`}
         className={classes(panelStyle, targetPanelStyle)}
       >
-        <div className={panelHeadingStyle}>
-          <Title headingLevel="h5" size={TitleSizes.lg}>
-            <span className={nodeStyle}>
-              <PFBadge badge={PFBadges.Istio} size="global" />
-              {data.infraName}
-              {getHealthStatus(data)}
-            </span>
-          </Title>
-
-          <span className={nodeStyle}>
-            <PFBadge badge={PFBadges.Namespace} size="sm" />
-            {data.namespace}
-          </span>
-
-          <span className={nodeStyle}>
-            <PFBadge badge={PFBadges.Cluster} size="sm" />
-            {data.cluster}
-          </span>
-        </div>
+        <div className={panelHeadingStyle}>{renderNodeHeader(data)}</div>
 
         <div className={panelBodyStyle}>
           {data.version && (

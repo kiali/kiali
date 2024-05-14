@@ -89,11 +89,10 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalIn
 		}
 
 		version := ""
-		if cp.Revision != "" {
-			// the version is the revision name with '.' instead of '-'
+		if isCanary {
+			// for canary upgrade the version is the revision name with '.' instead of '-'
 			version = strings.Replace(cp.Revision, "-", ".", -1)
 		} else {
-			// if there is no revision name assume we have the correct istio version
 			version = esVersions["Istio"]
 		}
 
@@ -147,7 +146,9 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalIn
 				return cmp.Compare(a.Name, b.Name)
 			})
 
-			dp, _, err := addInfra(meshMap, mesh.InfraTypeDataPlane, cluster, "", "Data Plane", namespaces, cp.Revision, false, "", cp.Revision == canaryStatus.UpgradeVersion)
+			isDataPlaneCanary := isCanary && cp.Revision == canaryStatus.UpgradeVersion
+
+			dp, _, err := addInfra(meshMap, mesh.InfraTypeDataPlane, cluster, "", "Data Plane", namespaces, cp.Revision, false, "", isDataPlaneCanary)
 			graph.CheckError(err)
 
 			istiod.AddEdge(dp)

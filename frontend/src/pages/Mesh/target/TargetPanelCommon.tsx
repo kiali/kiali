@@ -1,13 +1,14 @@
 import * as React from 'react';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from 'components/Pf/PfColors';
-import { MeshNodeData, MeshTarget } from 'types/Mesh';
+import { MeshInfraType, MeshNodeData, MeshTarget } from 'types/Mesh';
 import { DurationInSeconds, IntervalInMilliseconds, TimeInMilliseconds } from 'types/Common';
 import { ValidationTypes } from 'types/IstioObjects';
 import { Status, statusMsg } from 'types/IstioStatus';
 import { Validation } from 'components/Validations/Validation';
-import { Tooltip, TooltipPosition } from '@patternfly/react-core';
+import { Title, TitleSizes, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { t } from 'utils/I18nUtils';
+import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 
 export interface TargetPanelCommonProps {
   duration: DurationInSeconds;
@@ -74,7 +75,12 @@ export const getTitle = (title: string): React.ReactNode => {
   );
 };
 
-export const getHealthStatus = (data: MeshNodeData): React.ReactNode => {
+export const renderHealthStatus = (data: MeshNodeData): React.ReactNode => {
+  // Clusters and data planes do not display health status
+  if (data.infraType === MeshInfraType.CLUSTER || data.infraType === MeshInfraType.DATAPLANE) {
+    return null;
+  }
+
   let healthSeverity: ValidationTypes;
 
   switch (data.healthData) {
@@ -105,3 +111,62 @@ export const getHealthStatus = (data: MeshNodeData): React.ReactNode => {
     </>
   );
 };
+
+export const nodeStyle = kialiStyle({
+  alignItems: 'center',
+  display: 'flex'
+});
+
+export function renderNodeHeader(data: MeshNodeData, nameOnly?: boolean, smallSize?: boolean): React.ReactNode {
+  let pfBadge = PFBadges.Unknown;
+
+  switch (data.infraType) {
+    case MeshInfraType.CLUSTER:
+      pfBadge = PFBadges.Cluster;
+      break;
+    case MeshInfraType.DATAPLANE:
+      pfBadge = PFBadges.DataPlane;
+      break;
+    case MeshInfraType.GRAFANA:
+      pfBadge = PFBadges.Grafana;
+      break;
+    case MeshInfraType.KIALI:
+      pfBadge = PFBadges.Kiali;
+      break;
+    case MeshInfraType.METRIC_STORE:
+      pfBadge = PFBadges.MetricStore;
+      break;
+    case MeshInfraType.TRACE_STORE:
+      pfBadge = PFBadges.TraceStore;
+      break;
+    case MeshInfraType.ISTIOD:
+      pfBadge = PFBadges.Istio;
+      break;
+    default:
+      console.warn(`MeshElems: Unexpected infraType [${data.infraType}] `);
+  }
+
+  return (
+    <React.Fragment key={data.infraName}>
+      <Title headingLevel="h5" size={smallSize ? TitleSizes.md : TitleSizes.lg}>
+        <span className={nodeStyle}>
+          <PFBadge badge={pfBadge} size={smallSize ? 'sm' : 'global'} />
+          {data.infraName}
+          {renderHealthStatus(data)}
+        </span>
+      </Title>
+      {!nameOnly && (
+        <>
+          <span className={nodeStyle}>
+            <PFBadge badge={PFBadges.Namespace} size="sm" />
+            {data.namespace}
+          </span>
+          <span className={nodeStyle}>
+            <PFBadge badge={PFBadges.Cluster} size="sm" />
+            {data.cluster}
+          </span>
+        </>
+      )}
+    </React.Fragment>
+  );
+}

@@ -1,48 +1,25 @@
 import * as React from 'react';
-import { GraphElement, Visualization } from '@patternfly/react-topology';
-import { TargetPanelCommonProps, getTitle, targetPanelStyle } from './TargetPanelCommon';
+import { Node, NodeModel, Visualization } from '@patternfly/react-topology';
+import { TargetPanelCommonProps, getTitle, renderNodeHeader, targetPanelStyle } from './TargetPanelCommon';
 import { classes } from 'typestyle';
 import { panelBodyStyle, panelHeadingStyle, panelStyle } from 'pages/Graph/SummaryPanelStyle';
 import { elems, selectAnd } from '../MeshElems';
-import { MeshAttr, MeshInfraType } from 'types/Mesh';
-import { renderNodeHeader } from './TargetPanelNode';
-
-type TargetPanelMeshState = {
-  loading: boolean;
-  mesh: any;
-};
-
-const defaultState: TargetPanelMeshState = {
-  mesh: null,
-  loading: false
-};
+import { MeshAttr, MeshInfraType, MeshNodeData } from 'types/Mesh';
+import { kialiStyle } from 'styles/StyleUtils';
 
 type TargetPanelMeshProps = TargetPanelCommonProps;
 
-export class TargetPanelMesh extends React.Component<TargetPanelMeshProps, TargetPanelMeshState> {
-  constructor(props: TargetPanelMeshProps) {
-    super(props);
+const infoStyle = kialiStyle({
+  marginLeft: '0.5rem'
+});
 
-    this.state = { ...defaultState };
-  }
+const summaryStyle = kialiStyle({
+  marginLeft: '0.5rem'
+});
 
-  static getDerivedStateFromProps: React.GetDerivedStateFromProps<TargetPanelMeshProps, TargetPanelMeshState> = (
-    props: TargetPanelCommonProps,
-    state: TargetPanelMeshState
-  ) => {
-    // if the target (i.e. mesh) has changed, then init the state and set to loading. The loading
-    // will actually be kicked off after the render (in componentDidMount/Update).
-    return props.target.elem !== state.mesh ? { graph: props.target.elem, loading: true } : null;
-  };
-
-  render(): React.ReactNode {
-    const controller = this.props.target.elem as Visualization;
-
-    if (!controller) {
-      return null;
-    }
-
-    const { nodes } = elems(controller);
+export const TargetPanelMesh: React.FC<TargetPanelMeshProps> = (props: TargetPanelMeshProps) => {
+  const renderMeshSummary = (nodes: Node<NodeModel>[], clusterData: MeshNodeData): React.ReactNode => {
+    const dataPlaneNodes = selectAnd(nodes, [{ prop: MeshAttr.infraType, op: '=', val: MeshInfraType.DATAPLANE }]);
 
     const infraNodes = selectAnd(nodes, [
       { prop: MeshAttr.infraType, op: '!=', val: MeshInfraType.CLUSTER },
@@ -51,19 +28,74 @@ export class TargetPanelMesh extends React.Component<TargetPanelMeshProps, Targe
       { prop: MeshAttr.infraType, op: '!=', val: '' }
     ]);
 
+    // get cluster data planes to check if we have to show canary info (more than 1 dataplane per cluster)
+    const clusterDataPlanes = dataPlaneNodes.filter(node => node.getData().cluster === clusterData.cluster);
+
     return (
-      <div id="target-panel-mesh" className={classes(panelStyle, targetPanelStyle)}>
-        <div id="target-panel-mesh-heading" className={panelHeadingStyle}>
-          {getTitle(`Mesh Name: ${controller.getGraph().getData().meshData.name}`)}
-        </div>
-        <div id="target-panel-mesh-body" className={panelBodyStyle}>
-          {this.renderMeshSummary(infraNodes)}
+      <div style={{ marginBottom: '1rem' }}>
+        {renderNodeHeader(clusterData, true)}
+        <div className={infoStyle}>
+          {clusterData.version && `Version: ${clusterData.version}`}
+          {infraNodes
+            .filter(node => node.getData().cluster === clusterData.cluster)
+            .map(node => renderInfraNodeSummary(node.getData()))}
+          {clusterDataPlanes.map(node => renderDataPlaneSummary(node.getData(), clusterDataPlanes.length > 1))}
         </div>
       </div>
     );
+  };
+
+  const renderInfraNodeSummary = (nodeData: MeshNodeData): React.ReactNode => {
+    return (
+      <div className={summaryStyle}>
+        {renderNodeHeader(nodeData, true, true)}
+        <div className={infoStyle}>
+          {nodeData.version && `Version: ${nodeData.version}`}
+          <br />
+          {nodeData.namespace && `Namespace: ${nodeData.namespace}`}
+        </div>
+      </div>
+    );
+  };
+
+  const renderDataPlaneSummary = (nodeData: MeshNodeData, showCanaryInfo: boolean): React.ReactNode => {
+    return (
+      <div className={summaryStyle}>
+        {renderNodeHeader(nodeData, true, true)}
+        <div className={infoStyle}>
+          {showCanaryInfo && (
+            <>
+              {`Canary: ${nodeData.isCanary ?? false}`}
+              <br />
+              {nodeData.version && `Revision: ${nodeData.version}`}
+              <br />
+            </>
+          )}
+
+          {`${nodeData.infraData.length} namespaces`}
+        </div>
+      </div>
+    );
+  };
+
+  const controller = props.target.elem as Visualization;
+
+  if (!controller) {
+    return null;
   }
 
-  private renderMeshSummary = (infraNodes: GraphElement[]): React.ReactNode => (
-    <>{infraNodes.map(node => renderNodeHeader(node.getData(), true))}</>
+  const { nodes } = elems(controller);
+
+  const clusterNodes = selectAnd(nodes, [{ prop: MeshAttr.infraType, op: '=', val: MeshInfraType.CLUSTER }]);
+
+  return (
+    <div id="target-panel-mesh" className={classes(panelStyle, targetPanelStyle)}>
+      <div id="target-panel-mesh-heading" className={panelHeadingStyle}>
+        {getTitle(`Mesh Name: ${controller.getGraph().getData().meshData.name}`)}
+      </div>
+      <div id="target-panel-mesh-body" className={panelBodyStyle}>
+        {clusterNodes.map(cluster => renderMeshSummary(nodes, cluster.getData()))}
+      </div>
+    </div>
   );
-}
+};

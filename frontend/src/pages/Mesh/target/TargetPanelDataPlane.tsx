@@ -1,11 +1,10 @@
 import * as React from 'react';
 import { Node, NodeModel } from '@patternfly/react-topology';
-import { TargetPanelCommonProps, targetPanelHR, targetPanelStyle } from './TargetPanelCommon';
+import { TargetPanelCommonProps, nodeStyle, targetPanelHR, targetPanelStyle } from './TargetPanelCommon';
 import { classes } from 'typestyle';
 import { MeshNodeData } from 'types/Mesh';
 import { panelBodyStyle, panelHeadingStyle, panelStyle } from 'pages/Graph/SummaryPanelStyle';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
-import { kialiStyle } from 'styles/StyleUtils';
 import { Title, TitleSizes } from '@patternfly/react-core';
 import { ExpandableRowContent, Table, Tbody, Td, Th, Thead, Tr } from '@patternfly/react-table';
 import { NamespaceInfo } from 'types/NamespaceInfo';
@@ -13,11 +12,6 @@ import { TargetPanelDataPlaneNamespace } from './TargetPanelDataPlaneNamespace';
 import { serverConfig } from 'config';
 import { t } from 'utils/I18nUtils';
 import { ControlPlaneVersionBadge } from 'pages/Overview/ControlPlaneVersionBadge';
-
-const nodeStyle = kialiStyle({
-  alignItems: 'center',
-  display: 'flex'
-});
 
 export const TargetPanelDataPlane: React.FC<TargetPanelCommonProps> = (props: TargetPanelCommonProps) => {
   const [expanded, setExpanded] = React.useState<string[]>([]);
@@ -34,15 +28,18 @@ export const TargetPanelDataPlane: React.FC<TargetPanelCommonProps> = (props: Ta
     setExpanded(updatedExpanded);
   };
 
-  const renderNodeHeader = (data: MeshNodeData): React.ReactNode => {
+  const renderDataPlaneHeader = (data: MeshNodeData): React.ReactNode => {
     return (
       <React.Fragment key={data.infraName}>
         <Title headingLevel="h5" size={TitleSizes.lg}>
           <span className={nodeStyle}>
-            <PFBadge badge={PFBadges.DataPlane} size="sm" />
+            <PFBadge badge={PFBadges.DataPlane} size="global" />
             {data.infraName}
             {data.version && (
-              <ControlPlaneVersionBadge isCanary={data.isCanary!} version={data.version}></ControlPlaneVersionBadge>
+              <ControlPlaneVersionBadge
+                isCanary={data.isCanary ?? false}
+                version={data.version}
+              ></ControlPlaneVersionBadge>
             )}
           </span>
         </Title>
@@ -64,7 +61,7 @@ export const TargetPanelDataPlane: React.FC<TargetPanelCommonProps> = (props: Ta
 
   return (
     <div id="target-panel-data-plane" className={classes(panelStyle, targetPanelStyle)}>
-      <div className={panelHeadingStyle}>{renderNodeHeader(data)}</div>
+      <div className={panelHeadingStyle}>{renderDataPlaneHeader(data)}</div>
       <div className={panelBodyStyle}>
         <Table aria-label="dataplane-table" variant="compact">
           <Thead>

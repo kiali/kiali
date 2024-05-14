@@ -4,7 +4,13 @@ import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from 'components/Pf/PfColors';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { getKialiTheme } from 'utils/ThemeUtils';
-import { TargetPanelCommonProps, shouldRefreshData, targetPanelStyle, targetPanelWidth } from './TargetPanelCommon';
+import {
+  TargetPanelCommonProps,
+  renderNodeHeader,
+  shouldRefreshData,
+  targetPanelStyle,
+  targetPanelWidth
+} from './TargetPanelCommon';
 import { kialiIconDark, kialiIconLight } from 'config';
 import { KialiInstance, MeshNodeData, isExternal } from 'types/Mesh';
 import { Theme } from 'types/Common';
@@ -13,10 +19,9 @@ import * as API from '../../../services/Api';
 import * as FilterHelper from '../../../components/FilterList/FilterHelper';
 import { ApiError } from 'types/Api';
 import { KialiIcon } from 'config/KialiIcon';
-import { TitleSizes, Tooltip } from '@patternfly/react-core';
+import { Title, TitleSizes, Tooltip } from '@patternfly/react-core';
 import { classes } from 'typestyle';
 import { descendents } from '../MeshElems';
-import { renderNodeHeader } from './TargetPanelNode';
 import { panelBodyStyle, panelHeadingStyle, panelStyle } from 'pages/Graph/SummaryPanelStyle';
 import { t } from 'utils/I18nUtils';
 
@@ -96,13 +101,17 @@ export class TargetPanelCluster extends React.Component<TargetPanelClusterProps,
     return (
       <div id="target-panel-cluster" className={classes(panelStyle, targetPanelStyle)}>
         <div id="target-panel-cluster-heading" className={panelHeadingStyle}>
-          {clusterData.isKialiHome && (
-            <Tooltip content={t('Kiali home cluster')}>
-              <KialiIcon.Star />
-            </Tooltip>
-          )}
-          <PFBadge badge={PFBadges.Cluster} size="sm" style={{ marginLeft: '0.225rem', marginBottom: '0.125rem' }} />
-          {clusterData.name}
+          <Title headingLevel="h5" size={TitleSizes.lg}>
+            {clusterData.isKialiHome && (
+              <Tooltip content={t('Kiali home cluster')}>
+                <span style={{ marginRight: '0.5rem' }}>
+                  <KialiIcon.Star />
+                </span>
+              </Tooltip>
+            )}
+            <PFBadge badge={PFBadges.Cluster} size="global" />
+            {clusterData.name}
+          </Title>
         </div>
         {isExternal(data.cluster) ? (
           <div className={panelBodyStyle}>
@@ -113,7 +122,7 @@ export class TargetPanelCluster extends React.Component<TargetPanelClusterProps,
                 return name1 < name2 ? -1 : 1;
               })
               .map(n => {
-                return renderNodeHeader(n.getData() as MeshNodeData, true, TitleSizes.md);
+                return renderNodeHeader(n.getData() as MeshNodeData, true, true);
               })}
           </div>
         ) : (
