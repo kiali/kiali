@@ -88,12 +88,19 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalIn
 			}
 		}
 
+		name := cp.IstiodName
+
 		version := ""
 		if isCanary {
 			// for canary upgrade the version is the revision name with '.' instead of '-'
 			version = strings.Replace(cp.Revision, "-", ".", -1)
 		} else {
 			version = esVersions["Istio"]
+
+			// attach the revision to istiod name (on canary upgrade it is already attached)
+			if cp.Revision != "" {
+				name = fmt.Sprintf("%s-%s", cp.IstiodName, cp.Revision)
+			}
 		}
 
 		// get istio status components (istiod, grafana, prometheus, tracing)
@@ -115,7 +122,7 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalIn
 			}
 		}
 
-		istiod, _, err := addInfra(meshMap, mesh.InfraTypeIstiod, cp.Cluster.Name, cp.IstiodNamespace, cp.IstiodName, cp.Config, version, false, healthData[cp.IstiodName], false)
+		istiod, _, err := addInfra(meshMap, mesh.InfraTypeIstiod, cp.Cluster.Name, cp.IstiodNamespace, name, cp.Config, version, false, healthData[cp.IstiodName], false)
 		mesh.CheckError(err)
 
 		// add the managed namespaces by cluster and narrowed, if necessary, by revision
