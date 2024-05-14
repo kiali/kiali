@@ -69,7 +69,14 @@ Then('user sees control plane side panel', () => {
     .should('be.visible')
     .within(div => {
       cy.contains('istiod');
+      cy.contains('Control plane').should('be.visible');
+      cy.contains('Outbound policy').should('be.visible');
+      cy.get('div[data-test="memory-chart"]').should('exist');
+      cy.get('div[data-test="cpu-chart"]').should('exist');
+      cy.get('[data-test="label-TLS"]').contains('N/A');
+      cy.get('[data-test="lockerCA"]').should('exist');
     });
+  cy.get('[data-test="lockerCA"]').trigger('mouseenter').get('[role="tooltip"]').contains('Valid From');
 });
 
 Then('user sees data plane side panel', () => {
