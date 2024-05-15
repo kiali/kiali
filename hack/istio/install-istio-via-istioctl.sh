@@ -482,7 +482,10 @@ for s in \
    "${CUSTOM_NAMESPACE_OPTIONS}" \
    "--set values.gateways.istio-egressgateway.enabled=${ISTIO_EGRESSGATEWAY_ENABLED}" \
    "--set values.gateways.istio-ingressgateway.enabled=${ISTIO_INGRESSGATEWAY_ENABLED}" \
-   "--set values.meshConfig.defaultConfig.tracing.sampling=100.00" \
+   "--set values.meshConfig.enableTracing=true" \
+   "--set values.meshConfig.extensionProviders[0].name=zipkin" \
+   "--set values.meshConfig.extensionProviders[0].zipkin.service=zipkin.${NAMESPACE}.svc.cluster.local" \
+   "--set values.meshConfig.extensionProviders[0].zipkin.port=9411" \
    "--set values.meshConfig.accessLogFile=/dev/stdout" \
    "${CNI_OPTIONS}" \
    "${MESH_ID_OPTION}" \
@@ -552,6 +555,20 @@ else
       sleep 10
     done
   done
+
+  # Enable tracing.
+  ${CLIENT_EXE} apply -f - <<EOF
+apiVersion: telemetry.istio.io/v1alpha1
+kind: Telemetry
+metadata:
+  name: mesh-default
+  namespace: ${NAMESPACE}
+spec:
+  tracing:
+    - providers:
+        - name: "zipkin"
+      randomSamplingPercentage: 100.00
+EOF
 
   if [ "${K8S_GATEWAY_API_ENABLED}" == "true" ]; then
     if [ "${K8S_GATEWAY_API_VERSION}" == "" ]; then
