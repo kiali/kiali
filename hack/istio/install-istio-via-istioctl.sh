@@ -473,6 +473,12 @@ if [ "${NETWORK}" != "" ]; then
   NETWORK_OPTION="--set values.global.network=${NETWORK}"
 fi
 
+ZIPKIN_SERVICE_OPTION="--set values.meshConfig.extensionProviders[0].zipkin.service=zipkin.${NAMESPACE}.svc.cluster.local"
+if [[ "${CUSTOM_INSTALL_SETTINGS}" == *"values.meshConfig.extensionProviders[0].zipkin.service"* ]]; then
+  echo "Custom settings are set: ${CUSTOM_INSTALL_SETTINGS}"
+  ZIPKIN_SERVICE_OPTION=""
+fi
+
 for s in \
    "${IMAGE_HUB_OPTION}" \
    "${IMAGE_TAG_OPTION}" \
@@ -484,7 +490,7 @@ for s in \
    "--set values.gateways.istio-ingressgateway.enabled=${ISTIO_INGRESSGATEWAY_ENABLED}" \
    "--set values.meshConfig.enableTracing=true" \
    "--set values.meshConfig.extensionProviders[0].name=zipkin" \
-   "--set values.meshConfig.extensionProviders[0].zipkin.service=zipkin.${NAMESPACE}.svc.cluster.local" \
+   "${ZIPKIN_SERVICE_OPTION}" \
    "--set values.meshConfig.extensionProviders[0].zipkin.port=9411" \
    "--set values.meshConfig.accessLogFile=/dev/stdout" \
    "${CNI_OPTIONS}" \
