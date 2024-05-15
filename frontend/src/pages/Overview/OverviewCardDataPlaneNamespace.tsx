@@ -42,6 +42,19 @@ export const OverviewCardDataPlaneNamespace: React.FC<Props> = (props: Props) =>
     }
   }
 
+  if (series.length === 0) {
+    return (
+      <div
+        style={{
+          width: '100%',
+          verticalAlign: 'top'
+        }}
+      >
+        <div style={{ paddingTop: '0.5rem' }}>{`${t('No')} ${t(props.direction.toLowerCase())} ${t('traffic')}`}</div>
+      </div>
+    );
+  }
+
   return (
     <div
       style={{
@@ -53,33 +66,26 @@ export const OverviewCardDataPlaneNamespace: React.FC<Props> = (props: Props) =>
       <div>
         <></>
       </div>
+      <>
+        <div
+          style={{ paddingTop: '0.5rem' }}
+          data-test={`sparkline-${props.direction.toLowerCase()}-duration-${getName(props.duration).toLowerCase()}`}
+        >
+          {`${t(props.direction)} ${t('traffic')}, ${getName(props.duration).toLowerCase()}`}
+        </div>
 
-      {series.length > 0 && (
-        <>
-          <div
-            style={{ paddingTop: '0.5rem' }}
-            data-test={`sparkline-${props.direction.toLowerCase()}-duration-${getName(props.duration).toLowerCase()}`}
-          >
-            {`${t(props.direction)} ${t('traffic')}, ${getName(props.duration).toLowerCase()}`}
-          </div>
-
-          <SparklineChart
-            name="traffics"
-            height={85}
-            showLegend={false}
-            showYAxis={true}
-            showXAxisValues={true}
-            padding={{ top: 10, left: 30, right: 30, bottom: 30 }}
-            tooltipFormat={dp => `${(dp.x as Date).toLocaleStringWithConditionalDate()}\n${dp.y.toFixed(2)} ${dp.name}`}
-            series={series}
-            labelName="ops"
-          />
-        </>
-      )}
-
-      {series.length === 0 && (
-        <div style={{ paddingTop: '2.5rem' }}>{`${t('No')} ${t(props.direction.toLowerCase())} ${t('traffic')}`}</div>
-      )}
+        <SparklineChart
+          name="traffics"
+          height={85}
+          showLegend={false}
+          showYAxis={true}
+          showXAxisValues={true}
+          padding={{ top: 10, left: 30, right: 30, bottom: 30 }}
+          tooltipFormat={dp => `${(dp.x as Date).toLocaleStringWithConditionalDate()}\n${dp.y.toFixed(2)} ${dp.name}`}
+          series={series}
+          labelName="ops"
+        />
+      </>
     </div>
   );
 };
