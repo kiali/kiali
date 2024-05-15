@@ -207,10 +207,32 @@ func tracingVersion() (*ExternalServiceInfo, error) {
 	return &product, nil
 }
 
+type grafanaBuildInfo struct {
+	Version string `json:"version"`
+}
+
+type grafanaResponseVersion struct {
+	BuildInfo grafanaBuildInfo `json:"buildInfo"`
+}
+
 func grafanaVersion() (*ExternalServiceInfo, error) {
 	product := ExternalServiceInfo{}
 	product.Name = "Grafana"
 	product.Url = DiscoverGrafana()
+	if product.Url != "" {
+		// try to determine version by querying
+		url := fmt.Sprintf("%s/api/frontend/settings", product.Url)
+		body, statusCode, _, err := httputil.HttpGet(url, nil, 10*time.Second, nil, nil)
+		if err != nil || statusCode > 399 {
+			log.Infof("grafana version check failed: url=[%v], code=[%v]", url, statusCode)
+		} else {
+			grafanaV := new(grafanaResponseVersion)
+			err = json.Unmarshal(body, &grafanaV)
+			if err == nil {
+				product.Version = grafanaV.BuildInfo.Version
+			}
+		}
+	}
 
 	return &product, nil
 }
