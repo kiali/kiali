@@ -35,7 +35,6 @@ import { OverviewToolbar, OverviewDisplayMode, OverviewType, DirectionType } fro
 import { NamespaceInfo, NamespaceStatus } from '../../types/NamespaceInfo';
 import { NamespaceMTLSStatus } from '../../components/MTls/NamespaceMTLSStatus';
 import { RenderComponentScroll } from '../../components/Nav/Page';
-import { NamespaceStatuses } from './NamespaceStatuses';
 import { OverviewCardSparklineCharts } from './OverviewCardSparklineCharts';
 import { OverviewTrafficPolicies } from './OverviewTrafficPolicies';
 import { IstioMetricsOptions } from '../../types/MetricsOptions';
@@ -69,11 +68,9 @@ import { ValidationSummaryLink } from '../../components/Link/ValidationSummaryLi
 import { ControlPlaneBadge } from './ControlPlaneBadge';
 import { OverviewStatus } from './OverviewStatus';
 import { IstiodResourceThresholds } from 'types/IstioStatus';
-import { TLSInfo } from 'components/Overview/TLSInfo';
 import { ControlPlaneVersionBadge } from './ControlPlaneVersionBadge';
 import { AmbientBadge } from '../../components/Ambient/AmbientBadge';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
-import { isRemoteCluster } from './OverviewCardControlPlaneNamespace';
 import { ApiError } from 'types/Api';
 import { WithTranslation, withTranslation } from 'react-i18next';
 import { IstioConfigList } from 'types/IstioConfigList';
@@ -1124,90 +1121,9 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
                             </div>
                           )}
 
-                          {ns.name === serverConfig.istioNamespace &&
-                            !isRemoteCluster(ns.annotations) &&
-                            this.state.displayMode === OverviewDisplayMode.EXPAND && (
-                              <Grid>
-                                <GridItem md={6}>
-                                  {this.renderLabels(ns)}
-
-                                  <div style={{ textAlign: 'left' }}>
-                                    <div style={{ display: 'inline-block', width: '125px' }}>
-                                      {this.props.t('Istio config')}
-                                    </div>
-
-                                    {ns.tlsStatus && (
-                                      <span>
-                                        <NamespaceMTLSStatus status={ns.tlsStatus.status} />
-                                      </span>
-                                    )}
-
-                                    {this.props.istioAPIEnabled ? this.renderIstioConfigStatus(ns) : 'N/A'}
-                                  </div>
-
-                                  {ns.status && (
-                                    <NamespaceStatuses
-                                      key={ns.name}
-                                      name={ns.name}
-                                      status={ns.status}
-                                      type={this.state.type}
-                                    />
-                                  )}
-                                </GridItem>
-
-                                {ns.name === serverConfig.istioNamespace && (
-                                  <GridItem md={9}>
-                                    <Grid>
-                                      {this.props.istioAPIEnabled === true && (
-                                        <GridItem md={12}>{this.renderCharts(ns)}</GridItem>
-                                      )}
-                                    </Grid>
-                                  </GridItem>
-                                )}
-                              </Grid>
-                            )}
-
-                          {ns.name === serverConfig.istioNamespace &&
-                            isRemoteCluster(ns.annotations) &&
-                            this.state.displayMode === OverviewDisplayMode.EXPAND && (
-                              <div>
-                                {this.renderLabels(ns)}
-
-                                <div style={{ textAlign: 'left' }}>
-                                  <div style={{ display: 'inline-block', width: '125px' }}>
-                                    {this.props.t('Istio config')}
-                                  </div>
-
-                                  {ns.tlsStatus && (
-                                    <span>
-                                      <NamespaceMTLSStatus status={ns.tlsStatus.status} />
-                                    </span>
-                                  )}
-
-                                  {this.props.istioAPIEnabled ? this.renderIstioConfigStatus(ns) : 'N/A'}
-                                </div>
-
-                                {this.renderStatus(ns)}
-
-                                {this.state.displayMode === OverviewDisplayMode.EXPAND && (
-                                  <TLSInfo
-                                    certificatesInformationIndicators={
-                                      serverConfig.kialiFeatureFlags.certificatesInformationIndicators.enabled
-                                    }
-                                    version={this.props.minTLS}
-                                  ></TLSInfo>
-                                )}
-
-                                {this.state.displayMode === OverviewDisplayMode.EXPAND && (
-                                  <div style={{ height: '110px' }} />
-                                )}
-                              </div>
-                            )}
-
-                          {((ns.name !== serverConfig.istioNamespace &&
-                            this.state.displayMode === OverviewDisplayMode.EXPAND) ||
+                          {(this.state.displayMode === OverviewDisplayMode.EXPAND ||
                             this.state.displayMode === OverviewDisplayMode.COMPACT) && (
-                            <div>
+                            <>
                               {this.renderLabels(ns)}
 
                               <div style={{ textAlign: 'left' }}>
@@ -1226,7 +1142,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
                               {this.renderStatus(ns)}
 
                               {this.state.displayMode === OverviewDisplayMode.EXPAND && this.renderCharts(ns)}
-                            </div>
+                            </>
                           )}
                         </CardBody>
                       </Card>
@@ -1310,26 +1226,24 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
   };
 
   renderCharts = (ns: NamespaceInfo): React.ReactNode => {
-    if (ns.status) {
-      if (this.state.displayMode === OverviewDisplayMode.COMPACT) {
-        return <NamespaceStatuses key={ns.name} name={ns.name} status={ns.status} type={this.state.type} />;
-      }
-
-      return (
-        <OverviewCardSparklineCharts
-          key={ns.name}
-          name={ns.name}
-          annotations={ns.annotations}
-          duration={FilterHelper.currentDuration()}
-          direction={this.state.direction}
-          metrics={ns.metrics}
-          errorMetrics={ns.errorMetrics}
-          istiodResourceThresholds={this.state.istiodResourceThresholds}
-        />
-      );
-    }
-
-    return <div style={{ padding: '1.5rem 0', textAlign: 'center' }}>Namespace metrics are not available</div>;
+    return (
+      <div style={{ height: '130px' }}>
+        {ns.status ? (
+          <OverviewCardSparklineCharts
+            key={ns.name}
+            name={ns.name}
+            annotations={ns.annotations}
+            duration={FilterHelper.currentDuration()}
+            direction={this.state.direction}
+            metrics={ns.metrics}
+            errorMetrics={ns.errorMetrics}
+            istiodResourceThresholds={this.state.istiodResourceThresholds}
+          />
+        ) : (
+          <div style={{ padding: '1.5rem 0', textAlign: 'center' }}>Namespace metrics are not available</div>
+        )}
+      </div>
+    );
   };
 
   renderIstioConfigStatus = (ns: NamespaceInfo): React.ReactNode => {

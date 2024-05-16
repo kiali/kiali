@@ -39,7 +39,7 @@ export const TargetPanelMesh: React.FC<TargetPanelMeshProps> = (props: TargetPan
       <div style={{ marginBottom: '1rem' }}>
         {renderNodeHeader(clusterData, { nameOnly: true, smallSize: false, hideBadge: clusterData.isExternal })}
         <div className={infoStyle}>
-          {`${t('Version')}: ${clusterData.version || UNKNOWN}`}
+          {!clusterData.isExternal && `${t('Version')}: ${clusterData.version || UNKNOWN}`}
           {infraNodes
             .filter(node => node.getData().cluster === clusterData.cluster)
             .sort((in1, in2) => {
