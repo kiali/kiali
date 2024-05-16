@@ -236,6 +236,7 @@ func (in *K8SClient) IsGatewayAPI() bool {
 			K8sActualGatewayType:   K8sActualGateways,
 			K8sGatewayClassType:    K8sActualGatewayClasses,
 			K8sActualHTTPRouteType: K8sActualHTTPRoutes,
+			K8sActualGRPCRouteType: K8sActualGRPCRoutes,
 		}
 		v1beta1Types := map[string]string{
 			K8sActualReferenceGrantType: K8sActualReferenceGrants,
@@ -256,9 +257,8 @@ func (in *K8SClient) IsExpGatewayAPI() bool {
 	}
 	if in.isExpGatewayAPI == nil {
 		v1alpha2Types := map[string]string{
-			K8sActualGRPCRouteType: K8sActualGRPCRoutes,
-			K8sActualTCPRouteType:  K8sActualTCPRoutes,
-			K8sActualTLSRouteType:  K8sActualTLSRoutes,
+			K8sActualTCPRouteType: K8sActualTCPRoutes,
+			K8sActualTLSRouteType: K8sActualTLSRoutes,
 		}
 		isGatewayAPIV1Alpha2 := checkGatewayAPIs(in, K8sNetworkingGroupVersionV1Alpha2.String(), v1alpha2Types)
 		in.isExpGatewayAPI = &isGatewayAPIV1Alpha2

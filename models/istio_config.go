@@ -27,7 +27,7 @@ type IstioConfigList struct {
 	Telemetries      []*v1alpha1.Telemetry                 `json:"telemetries"`
 
 	K8sGateways        []*k8s_networking_v1.Gateway             `json:"k8sGateways"`
-	K8sGRPCRoutes      []*k8s_networking_v1alpha2.GRPCRoute     `json:"k8sGRPCRoutes"`
+	K8sGRPCRoutes      []*k8s_networking_v1.GRPCRoute           `json:"k8sGRPCRoutes"`
 	K8sHTTPRoutes      []*k8s_networking_v1.HTTPRoute           `json:"k8sHTTPRoutes"`
 	K8sReferenceGrants []*k8s_networking_v1beta1.ReferenceGrant `json:"k8sReferenceGrants"`
 	K8sTCPRoutes       []*k8s_networking_v1alpha2.TCPRoute      `json:"k8sTCPRoutes"`
@@ -81,7 +81,7 @@ func (i *IstioConfigList) ConvertToResponse() {
 		i.K8sGateways = []*k8s_networking_v1.Gateway{}
 	}
 	if i.K8sGRPCRoutes == nil {
-		i.K8sGRPCRoutes = []*k8s_networking_v1alpha2.GRPCRoute{}
+		i.K8sGRPCRoutes = []*k8s_networking_v1.GRPCRoute{}
 	}
 	if i.K8sHTTPRoutes == nil {
 		i.K8sHTTPRoutes = []*k8s_networking_v1.HTTPRoute{}
@@ -129,7 +129,7 @@ type IstioConfigDetails struct {
 	Telemetry             *v1alpha1.Telemetry                    `json:"telemetry"`
 
 	K8sGateway        *k8s_networking_v1.Gateway             `json:"k8sGateway"`
-	K8sGRPCRoute      *k8s_networking_v1alpha2.GRPCRoute     `json:"k8sGRPCRoute"`
+	K8sGRPCRoute      *k8s_networking_v1.GRPCRoute           `json:"k8sGRPCRoute"`
 	K8sHTTPRoute      *k8s_networking_v1.HTTPRoute           `json:"k8sHTTPRoute"`
 	K8sReferenceGrant *k8s_networking_v1beta1.ReferenceGrant `json:"k8sReferenceGrant"`
 	K8sTCPRoute       *k8s_networking_v1alpha2.TCPRoute      `json:"k8sTCPRoute"`
@@ -292,7 +292,7 @@ func (configList IstioConfigList) FilterIstioConfigs(nss []string) *IstioConfigs
 			filtered[ns].EnvoyFilters = []*networking_v1alpha3.EnvoyFilter{}
 			filtered[ns].Gateways = []*networking_v1beta1.Gateway{}
 			filtered[ns].K8sGateways = []*k8s_networking_v1.Gateway{}
-			filtered[ns].K8sGRPCRoutes = []*k8s_networking_v1alpha2.GRPCRoute{}
+			filtered[ns].K8sGRPCRoutes = []*k8s_networking_v1.GRPCRoute{}
 			filtered[ns].K8sHTTPRoutes = []*k8s_networking_v1.HTTPRoute{}
 			filtered[ns].K8sReferenceGrants = []*k8s_networking_v1beta1.ReferenceGrant{}
 			filtered[ns].K8sTCPRoutes = []*k8s_networking_v1alpha2.TCPRoute{}
