@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { DurationInSeconds, I18N_NAMESPACE } from '../../types/Common';
+import { DurationInSeconds } from '../../types/Common';
 import { Metric } from '../../types/Metrics';
 import { getName } from '../../utils/RateIntervals';
 import { PFColors } from 'components/Pf/PfColors';
@@ -7,7 +7,8 @@ import { SparklineChart } from 'components/Charts/SparklineChart';
 import { toVCLine } from 'utils/VictoryChartsUtils';
 import { RichDataPoint, VCLine } from 'types/VictoryChartInfo';
 import { DirectionType } from './OverviewToolbar';
-import { useTranslation } from 'react-i18next';
+import { useKialiTranslation } from 'utils/I18nUtils';
+import { kialiStyle } from 'styles/StyleUtils';
 
 type Props = {
   direction: DirectionType;
@@ -25,8 +26,16 @@ const showMetrics = (metrics: Metric[] | undefined): boolean => {
   return false;
 };
 
+const noTrafficStyle = kialiStyle({
+  padding: '0.5rem 0',
+  height: '100%',
+  display: 'flex',
+  justifyContent: 'center',
+  alignItems: 'center'
+});
+
 export const OverviewCardDataPlaneNamespace: React.FC<Props> = (props: Props) => {
-  const { t } = useTranslation(I18N_NAMESPACE);
+  const { t } = useKialiTranslation();
 
   let series: VCLine<RichDataPoint>[] = [];
 
@@ -42,50 +51,34 @@ export const OverviewCardDataPlaneNamespace: React.FC<Props> = (props: Props) =>
     }
   }
 
-  if (series.length === 0) {
-    return (
-      <div
-        style={{
-          width: '100%',
-          verticalAlign: 'top'
-        }}
-      >
-        <div style={{ paddingTop: '0.5rem' }}>{`${t('No')} ${t(props.direction.toLowerCase())} ${t('traffic')}`}</div>
-      </div>
-    );
-  }
-
   return (
-    <div
-      style={{
-        width: '100%',
-        height: 130,
-        verticalAlign: 'top'
-      }}
-    >
-      <div>
-        <></>
-      </div>
-      <>
-        <div
-          style={{ paddingTop: '0.5rem' }}
-          data-test={`sparkline-${props.direction.toLowerCase()}-duration-${getName(props.duration).toLowerCase()}`}
-        >
-          {`${t(props.direction)} ${t('traffic')}, ${getName(props.duration).toLowerCase()}`}
-        </div>
+    <div style={{ height: '100%' }}>
+      {series.length > 0 && (
+        <>
+          <div
+            style={{ paddingTop: '0.5rem' }}
+            data-test={`sparkline-${props.direction.toLowerCase()}-duration-${getName(props.duration).toLowerCase()}`}
+          >
+            {`${t(props.direction)} ${t('traffic')}, ${getName(props.duration).toLowerCase()}`}
+          </div>
 
-        <SparklineChart
-          name="traffics"
-          height={85}
-          showLegend={false}
-          showYAxis={true}
-          showXAxisValues={true}
-          padding={{ top: 10, left: 30, right: 30, bottom: 30 }}
-          tooltipFormat={dp => `${(dp.x as Date).toLocaleStringWithConditionalDate()}\n${dp.y.toFixed(2)} ${dp.name}`}
-          series={series}
-          labelName="ops"
-        />
-      </>
+          <SparklineChart
+            name="traffics"
+            height={85}
+            showLegend={false}
+            showYAxis={true}
+            showXAxisValues={true}
+            padding={{ top: 10, left: 30, right: 30, bottom: 30 }}
+            tooltipFormat={dp => `${(dp.x as Date).toLocaleStringWithConditionalDate()}\n${dp.y.toFixed(2)} ${dp.name}`}
+            series={series}
+            labelName="ops"
+          />
+        </>
+      )}
+
+      {series.length === 0 && (
+        <div className={noTrafficStyle}>{`${t('No')} ${t(props.direction.toLowerCase())} ${t('traffic')}`}</div>
+      )}
     </div>
   );
 };
