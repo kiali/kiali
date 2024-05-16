@@ -70,6 +70,8 @@ func TestRemoteIstiod(t *testing.T) {
 		}
 		_, err = kubeClient.AppsV1().Deployments(originalConf.IstioNamespace).Update(ctx, istiod, metav1.UpdateOptions{})
 		require.NoError(err)
+
+		require.NoError(kube.WaitForDeploymentReady(ctx, kubeClient, originalConf.IstioNamespace, istioDeploymentName))
 	})
 
 	// Expose the istiod /debug endpoints by adding a proxy to the pod.

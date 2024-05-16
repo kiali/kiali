@@ -18,6 +18,7 @@ import (
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/tests/integration/utils/kube"
 )
 
 var kialiGroupVersionResource = schema.GroupVersionResource{Group: "kiali.io", Version: "v1alpha1", Resource: "kialis"}
@@ -218,40 +219,6 @@ func restartDeployment(ctx context.Context, clientset kubernetes.Interface, name
 	return retryErr
 }
 
-func waitForDeploymentReady(ctx context.Context, clientset kubernetes.Interface, namespace, deploymentName string) error {
-	timeout := 5 * time.Minute
-	pollInterval := 10 * time.Second
-
-	return wait.PollUntilContextTimeout(ctx, pollInterval, timeout, true, func(ctx context.Context) (bool, error) {
-		deployment, err := clientset.AppsV1().Deployments(namespace).Get(ctx, deploymentName, metav1.GetOptions{})
-		if err != nil {
-			return false, err
-		}
-
-		if deployment.Generation != deployment.Status.ObservedGeneration {
-			log.Debug("The deployment has not observed the latest spec update yet.")
-			return false, nil
-		}
-
-		if deployment.Status.Replicas != *deployment.Spec.Replicas {
-			log.Debugf("Waiting for deployment to be fully rolled out (%d/%d replicas)", deployment.Status.Replicas, *deployment.Spec.Replicas)
-			return false, nil
-		}
-
-		if deployment.Status.UpdatedReplicas != *deployment.Spec.Replicas {
-			log.Debugf("Waiting for deployment to be updated (%d/%d replicas)", deployment.Status.UpdatedReplicas, *deployment.Spec.Replicas)
-			return false, nil
-		}
-
-		if deployment.Status.ReadyReplicas != *deployment.Spec.Replicas {
-			log.Debugf("Waiting for deployment to be ready (%d/%d replicas)", deployment.Status.ReadyReplicas, *deployment.Spec.Replicas)
-			return false, nil
-		}
-
-		return true, nil
-	})
-}
-
 // Restart will recreate the Kiali pod and wait for it to be ready.
 func (in *Instance) Restart(ctx context.Context) error {
 	log.Debug("Restarting Kiali deployment")
@@ -260,7 +227,7 @@ func (in *Instance) Restart(ctx context.Context) error {
 	}
 
 	log.Debug("Waiting for Kiali deployment to be ready")
-	if err := waitForDeploymentReady(ctx, in.kubeClient, in.ResourceNamespace, in.Name); err != nil {
+	if err := kube.WaitForDeploymentReady(ctx, in.kubeClient, in.ResourceNamespace, in.Name); err != nil {
 		return err
 	}
 
