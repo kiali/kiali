@@ -132,6 +132,7 @@ Cypress.Commands.add('login', (username: string, password: string) => {
 
         // Wait for post login routes to be loaded. Otherwise cypress redirects you back to the home page
         // which causes other tests to fail: https://github.com/cypress-io/cypress/issues/1713.
+        cy.url().should('include', '/console/overview');
         cy.wait('@getNamespaces');
         cy.wait('@getConfig');
         cy.wait('@getStatus');
