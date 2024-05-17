@@ -38,6 +38,11 @@ Options:
 HELP
 }
 
+# Determine where this script is. We assume it is in the hack/ directory - make the cwd the parent directory.
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
+cd ${SCRIPT_DIR}/..
+
 # process command line arguments
 while [[ $# -gt 0 ]]; do
   key="$1"
@@ -110,7 +115,6 @@ which kind > /dev/null || (infomsg "kind executable is missing"; exit 1)
 which "${DORP}" > /dev/null || (infomsg "[$DORP] is not in the PATH"; exit 1)
 
 HELM_CHARTS_DIR="$(mktemp -d)"
-SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
 
 if [ -n "${ISTIO_VERSION}" ]; then
   if [[ "${ISTIO_VERSION}" == *-dev ]]; then
@@ -181,8 +185,6 @@ setup_kind_tempo() {
 
   infomsg "Installing tempo"
   ${SCRIPT_DIR}/istio/tempo/install-tempo-env.sh -c kubectl -ot true
-
-  SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
 
   infomsg "Installing istio"
   if [[ "${ISTIO_VERSION}" == *-dev ]]; then
