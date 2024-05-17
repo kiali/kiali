@@ -40,7 +40,7 @@ import {
 } from '../types/IstioObjects';
 import { ComponentStatus, IstiodResourceThresholds } from '../types/IstioStatus';
 import { TracingInfo, TracingResponse, TracingSingleResponse } from '../types/TracingInfo';
-import { MeshClusters, MeshDefinition, MeshQuery } from '../types/Mesh';
+import { MeshDefinition, MeshQuery } from '../types/Mesh';
 import { DashboardQuery, IstioMetricsOptions, MetricsStatsQuery } from '../types/MetricsOptions';
 import { IstioMetricsMap, MetricsPerNamespace, MetricsStatsResult } from '../types/Metrics';
 import { Namespace } from '../types/Namespace';
@@ -1194,10 +1194,6 @@ export const getIstioPermissions = (namespaces: string[], cluster?: string): Pro
 
 export const getMetricsStats = (queries: MetricsStatsQuery[]): Promise<ApiResponse<MetricsStatsResult>> => {
   return newRequest<MetricsStatsResult>(HTTP_VERBS.POST, urls.metricsStats, {}, { queries: queries });
-};
-
-export const getClusters = (): Promise<ApiResponse<MeshClusters>> => {
-  return newRequest<MeshClusters>(HTTP_VERBS.GET, urls.clusters, {}, {});
 };
 
 export function deleteServiceTrafficRouting(

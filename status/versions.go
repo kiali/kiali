@@ -193,24 +193,77 @@ type p8sResponseVersion struct {
 	Revision string `json:"revision"`
 }
 
+type jaegerResponseVersion struct {
+	Version string `json:"gitVersion"`
+}
+
 func tracingVersion() (*ExternalServiceInfo, error) {
 	tracingConfig := config.Get().ExternalServices.Tracing
 
 	if !tracingConfig.Enabled {
 		return nil, nil
 	}
+
 	product := ExternalServiceInfo{}
 	product.Name = string(tracingConfig.Provider)
 	product.Url = tracingConfig.URL
+
+	if product.Url != "" {
+		// try to determine version by querying
+		if tracingConfig.Provider == config.JaegerProvider {
+			body, statusCode, _, err := httputil.HttpGet(product.Url, nil, 10*time.Second, nil, nil)
+			if err != nil || statusCode > 399 {
+				log.Infof("jaeger version check failed: url=[%v], code=[%v]", product.Url, statusCode)
+			} else {
+				// Jaeger does not provide api to get version, so it is obtained from js function inside html main page
+				// const JAEGER_VERSION = {"gitCommit: xxx, gitVersion: yyy, buildDate: zzz"}
+				bodyStr := string(body)
+				jaegerVersionConst := "const JAEGER_VERSION = "
+				jsonStartIndex := strings.Index(bodyStr, jaegerVersionConst) + len(jaegerVersionConst)
+				jsonEndIndex := jsonStartIndex + strings.Index(bodyStr[jsonStartIndex:], ";") //version json ends with ;
+				jaegerVersion := bodyStr[jsonStartIndex:jsonEndIndex]
+
+				jaegerV := new(jaegerResponseVersion)
+				err = json.Unmarshal([]byte(jaegerVersion), &jaegerV)
+				if err == nil {
+					product.Version = jaegerV.Version
+				}
+			}
+		}
+		// TODO determine version for Tempo
+	}
+
 	product.TempoConfig = tracingConfig.TempoConfig
 
 	return &product, nil
+}
+
+type grafanaBuildInfo struct {
+	Version string `json:"version"`
+}
+
+type grafanaResponseVersion struct {
+	BuildInfo grafanaBuildInfo `json:"buildInfo"`
 }
 
 func grafanaVersion() (*ExternalServiceInfo, error) {
 	product := ExternalServiceInfo{}
 	product.Name = "Grafana"
 	product.Url = DiscoverGrafana()
+	if product.Url != "" {
+		// try to determine version by querying
+		url := fmt.Sprintf("%s/api/frontend/settings", product.Url)
+		body, statusCode, _, err := httputil.HttpGet(url, nil, 10*time.Second, nil, nil)
+		if err != nil || statusCode > 399 {
+			log.Infof("grafana version check failed: url=[%v], code=[%v]", url, statusCode)
+		} else {
+			grafanaV := new(grafanaResponseVersion)
+			err = json.Unmarshal(body, &grafanaV)
+			if err == nil {
+				product.Version = grafanaV.BuildInfo.Version
+			}
+		}
+	}
 
 	return &product, nil
 }

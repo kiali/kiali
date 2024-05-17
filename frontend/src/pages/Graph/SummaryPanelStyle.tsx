@@ -2,7 +2,7 @@ import { PFColors } from 'components/Pf/PfColors';
 import { kialiStyle } from 'styles/StyleUtils';
 
 export const panelStyle = kialiStyle({
-  marginBottom: '23px',
+  marginBottom: '1.5rem',
   border: `1px solid ${PFColors.BorderColor100}`,
   borderRadius: '1px',
   '-webkit-box-shadow': '0 1px 1px rgba(0, 0, 0, 0.05)',
@@ -10,15 +10,14 @@ export const panelStyle = kialiStyle({
 });
 
 export const panelHeadingStyle = kialiStyle({
-  padding: '10px 15px',
-  borderBottom: '1px solid transparent',
+  padding: '0.5rem 1rem',
+  borderBottom: `1px solid ${PFColors.BorderColor100}`,
   borderTopLeftRadius: 0,
-  borderTopRightRadius: 0,
-  borderColor: PFColors.BorderColor100
+  borderTopRightRadius: 0
 });
 
 export const panelBodyStyle = kialiStyle({
-  padding: '15px',
+  padding: '1rem',
   $nest: {
     '&:after, &:before': {
       display: 'table',
@@ -27,6 +26,10 @@ export const panelBodyStyle = kialiStyle({
 
     '&:after': {
       clear: 'both'
+    },
+
+    '& pre': {
+      whiteSpace: 'pre-wrap'
     }
   }
 });

@@ -3,13 +3,27 @@
     "nodes": [
       {
         "data": {
-          "id": "2411347cfd042289a2ccec31ae4de661",
-          "cluster": "East",
-          "infraName": "East",
+          "id": "107648411a3f61763d45f8433b787970",
+          "cluster": "_external_",
+          "infraName": "External Deployments",
           "infraType": "cluster",
           "namespace": "",
           "nodeType": "box",
-          "healthData": null,
+          "healthData": "Healthy",
+          "isBox": "cluster",
+          "isExternal": true,
+          "isInaccessible": true
+        }
+      },
+      {
+        "data": {
+          "id": "63477ebaf31eccdd960ec1d9ff35b478",
+          "cluster": "cluster-primary",
+          "infraName": "cluster-primary",
+          "infraType": "cluster",
+          "namespace": "",
+          "nodeType": "box",
+          "healthData": "Healthy",
           "infraData": {
             "apiEndpoint": "http://127.0.0.2:9443",
             "isKialiHome": true,
@@ -22,7 +36,7 @@
                 "version": ""
               }
             ],
-            "name": "East",
+            "name": "cluster-primary",
             "network": "kialiNetwork",
             "secretName": "",
             "accessible": true
@@ -32,23 +46,30 @@
       },
       {
         "data": {
-          "id": "f2a39c06544bab3ee6f6b9014db8530d",
-          "cluster": "_external_",
-          "infraName": "External Deployments",
+          "id": "1aabe556f7e14438273ef43c7bce6148",
+          "cluster": "cluster-remote",
+          "infraName": "cluster-remote",
           "infraType": "cluster",
           "namespace": "",
           "nodeType": "box",
-          "healthData": null,
-          "isBox": "cluster",
-          "isExternal": true,
-          "isInaccessible": true
+          "healthData": "Healthy",
+          "infraData": {
+            "apiEndpoint": "",
+            "isKialiHome": false,
+            "kialiInstances": null,
+            "name": "cluster-remote",
+            "network": "",
+            "secretName": "",
+            "accessible": true
+          },
+          "isBox": "cluster"
         }
       },
       {
         "data": {
-          "id": "a7784c32ca8454299b1c0d174df2034d",
-          "parent": "2411347cfd042289a2ccec31ae4de661",
-          "cluster": "East",
+          "id": "d1c7a41aefa12a640ebeb0e57c079e8e",
+          "parent": "63477ebaf31eccdd960ec1d9ff35b478",
+          "cluster": "cluster-primary",
           "infraName": "istio-system",
           "infraType": "namespace",
           "namespace": "istio-system",
@@ -59,25 +80,135 @@
       },
       {
         "data": {
-          "id": "3ab2df5f89394de1661e4b230d8fd488",
-          "parent": "2411347cfd042289a2ccec31ae4de661",
-          "cluster": "East",
+          "id": "82397758134f81118fb9935477d6f598",
+          "parent": "107648411a3f61763d45f8433b787970",
+          "cluster": "_external_",
+          "infraName": "Prometheus",
+          "infraType": "metricStore",
+          "namespace": "",
+          "nodeType": "infra",
+          "healthData": "Healthy",
+          "infraData": {
+            "Auth": {
+              "CAFile": "xxx",
+              "InsecureSkipVerify": false,
+              "Password": "xxx",
+              "Token": "xxx",
+              "Type": "none",
+              "UseKialiToken": false,
+              "Username": "xxx"
+            },
+            "CacheDuration": 7,
+            "CacheEnabled": true,
+            "CacheExpiration": 300,
+            "CustomHeaders": {},
+            "HealthCheckUrl": "",
+            "IsCore": false,
+            "QueryScope": {},
+            "ThanosProxy": {
+              "Enabled": false,
+              "RetentionPeriod": "7d",
+              "ScrapeInterval": "30s"
+            },
+            "URL": "http://prometheus.istio-system:9090"
+          },
+          "isExternal": true,
+          "isInaccessible": true
+        }
+      },
+      {
+        "data": {
+          "id": "9c46b0cb8c955460035427187706cfbc",
+          "parent": "107648411a3f61763d45f8433b787970",
+          "cluster": "_external_",
+          "infraName": "jaeger",
+          "infraType": "traceStore",
+          "namespace": "",
+          "nodeType": "infra",
+          "healthData": "Healthy",
+          "infraData": {
+            "Auth": {
+              "CAFile": "xxx",
+              "InsecureSkipVerify": false,
+              "Password": "xxx",
+              "Token": "xxx",
+              "Type": "none",
+              "UseKialiToken": false,
+              "Username": "xxx"
+            },
+            "Enabled": true,
+            "HealthCheckUrl": "",
+            "GrpcPort": 9095,
+            "InClusterURL": "http://tracing.istio-system:16685/jaeger",
+            "IsCore": false,
+            "Provider": "jaeger",
+            "TempoConfig": {},
+            "NamespaceSelector": true,
+            "QueryScope": {},
+            "QueryTimeout": 5,
+            "URL": "",
+            "UseGRPC": true,
+            "WhiteListIstioSystem": [
+              "jaeger-query",
+              "istio-ingressgateway"
+            ]
+          },
+          "isExternal": true,
+          "isInaccessible": true
+        }
+      },
+      {
+        "data": {
+          "id": "fb536b180952008dd29b4319593ef044",
+          "parent": "107648411a3f61763d45f8433b787970",
+          "cluster": "_external_",
+          "infraName": "Grafana",
+          "infraType": "grafana",
+          "namespace": "",
+          "nodeType": "infra",
+          "healthData": "Healthy",
+          "infraData": {
+            "Auth": {
+              "CAFile": "xxx",
+              "InsecureSkipVerify": false,
+              "Password": "xxx",
+              "Token": "xxx",
+              "Type": "none",
+              "UseKialiToken": false,
+              "Username": "xxx"
+            },
+            "Dashboards": null,
+            "Enabled": true,
+            "HealthCheckUrl": "",
+            "InClusterURL": "http://grafana.istio-system:3000",
+            "IsCore": false,
+            "URL": ""
+          },
+          "isExternal": true,
+          "isInaccessible": true
+        }
+      },
+      {
+        "data": {
+          "id": "a1c47185abeae268a8280338027e20a5",
+          "parent": "63477ebaf31eccdd960ec1d9ff35b478",
+          "cluster": "cluster-primary",
           "infraName": "Data Plane",
           "infraType": "dataplane",
           "namespace": "",
           "nodeType": "infra",
-          "healthData": null,
+          "healthData": "Healthy",
           "infraData": [
             {
               "name": "data-plane-1",
-              "cluster": "East",
+              "cluster": "cluster-primary",
               "isAmbient": false,
               "labels": null,
               "annotations": null
             },
             {
               "name": "data-plane-2",
-              "cluster": "East",
+              "cluster": "cluster-primary",
               "isAmbient": false,
               "labels": null,
               "annotations": null
@@ -87,41 +218,14 @@
       },
       {
         "data": {
-          "id": "46d95dbc7d76eaba80100dfa480dea56",
-          "parent": "a7784c32ca8454299b1c0d174df2034d",
-          "cluster": "East",
-          "infraName": "istiod",
-          "infraType": "istiod",
-          "namespace": "istio-system",
-          "nodeType": "infra",
-          "healthData": "Healthy",
-          "infraData": {
-            "OutboundTrafficPolicy": {
-              "mode": ""
-            },
-            "Network": "",
-            "DisableMixerHttpReports": false,
-            "DiscoverySelectors": null,
-            "EnableAutoMtls": true,
-            "MeshMTLS": {
-              "MinProtocolVersion": ""
-            },
-            "defaultConfig": {
-              "MeshId": ""
-            }
-          }
-        }
-      },
-      {
-        "data": {
-          "id": "7b74d3459937f2d07ade2827bc6d3aac",
-          "parent": "a7784c32ca8454299b1c0d174df2034d",
-          "cluster": "East",
+          "id": "cdf7185cca90872db8b743e7a5b36ef0",
+          "parent": "d1c7a41aefa12a640ebeb0e57c079e8e",
+          "cluster": "cluster-primary",
           "infraName": "kiali",
           "infraType": "kiali",
           "namespace": "istio-system",
           "nodeType": "infra",
-          "healthData": null,
+          "healthData": "Healthy",
           "infraData": {
             "ComponentStatuses": {
               "Enabled": true,
@@ -172,149 +276,101 @@
       },
       {
         "data": {
-          "id": "0ff3498362503e275d0d47f0e6ca5479",
-          "parent": "f2a39c06544bab3ee6f6b9014db8530d",
-          "cluster": "_external_",
-          "infraName": "Prometheus",
-          "infraType": "metricStore",
-          "namespace": "",
+          "id": "e0de428cc2c4c6381c3f8082a615f25d",
+          "parent": "d1c7a41aefa12a640ebeb0e57c079e8e",
+          "cluster": "cluster-primary",
+          "infraName": "istiod",
+          "infraType": "istiod",
+          "namespace": "istio-system",
           "nodeType": "infra",
           "healthData": "Healthy",
           "infraData": {
-            "Auth": {
-              "CAFile": "xxx",
-              "InsecureSkipVerify": false,
-              "Password": "xxx",
-              "Token": "xxx",
-              "Type": "none",
-              "UseKialiToken": false,
-              "Username": "xxx"
+            "OutboundTrafficPolicy": {
+              "mode": ""
             },
-            "CacheDuration": 7,
-            "CacheEnabled": true,
-            "CacheExpiration": 300,
-            "CustomHeaders": {},
-            "HealthCheckUrl": "",
-            "IsCore": false,
-            "QueryScope": {},
-            "ThanosProxy": {
-              "Enabled": false,
-              "RetentionPeriod": "7d",
-              "ScrapeInterval": "30s"
+            "Network": "",
+            "DisableMixerHttpReports": false,
+            "DiscoverySelectors": null,
+            "EnableAutoMtls": true,
+            "MeshMTLS": {
+              "MinProtocolVersion": ""
             },
-            "URL": "http://prometheus.istio-system:9090"
-          },
-          "isExternal": true,
-          "isInaccessible": true
+            "defaultConfig": {
+              "MeshId": ""
+            }
+          }
         }
       },
       {
         "data": {
-          "id": "726a5e87be54c6dfbbc55b22e3cbb1c5",
-          "parent": "f2a39c06544bab3ee6f6b9014db8530d",
-          "cluster": "_external_",
-          "infraName": "Grafana",
-          "infraType": "grafana",
+          "id": "6514e7140e9a0c07ca296b90cf22cf9f",
+          "parent": "1aabe556f7e14438273ef43c7bce6148",
+          "cluster": "cluster-remote",
+          "infraName": "Data Plane",
+          "infraType": "dataplane",
           "namespace": "",
           "nodeType": "infra",
           "healthData": "Healthy",
-          "infraData": {
-            "Auth": {
-              "CAFile": "xxx",
-              "InsecureSkipVerify": false,
-              "Password": "xxx",
-              "Token": "xxx",
-              "Type": "none",
-              "UseKialiToken": false,
-              "Username": "xxx"
+          "infraData": [
+            {
+              "name": "data-plane-3",
+              "cluster": "cluster-remote",
+              "isAmbient": false,
+              "labels": null,
+              "annotations": null
             },
-            "Dashboards": null,
-            "Enabled": true,
-            "HealthCheckUrl": "",
-            "InClusterURL": "http://grafana.istio-system:3000",
-            "IsCore": false,
-            "URL": ""
-          },
-          "isExternal": true,
-          "isInaccessible": true
-        }
-      },
-      {
-        "data": {
-          "id": "e4dddd6aa55b9806c0e99646d0ac4711",
-          "parent": "f2a39c06544bab3ee6f6b9014db8530d",
-          "cluster": "_external_",
-          "infraName": "jaeger",
-          "infraType": "traceStore",
-          "namespace": "",
-          "nodeType": "infra",
-          "healthData": "Healthy",
-          "infraData": {
-            "Auth": {
-              "CAFile": "xxx",
-              "InsecureSkipVerify": false,
-              "Password": "xxx",
-              "Token": "xxx",
-              "Type": "none",
-              "UseKialiToken": false,
-              "Username": "xxx"
-            },
-            "Enabled": true,
-            "HealthCheckUrl": "",
-            "GrpcPort": 9095,
-            "InClusterURL": "http://tracing.istio-system:16685/jaeger",
-            "IsCore": false,
-            "Provider": "jaeger",
-            "TempoConfig": {},
-            "NamespaceSelector": true,
-            "QueryScope": {},
-            "QueryTimeout": 5,
-            "URL": "",
-            "UseGRPC": true,
-            "WhiteListIstioSystem": [
-              "jaeger-query",
-              "istio-ingressgateway"
-            ]
-          },
-          "isExternal": true,
-          "isInaccessible": true
+            {
+              "name": "data-plane-4",
+              "cluster": "cluster-remote",
+              "isAmbient": false,
+              "labels": null,
+              "annotations": null
+            }
+          ]
         }
       }
     ],
     "edges": [
       {
         "data": {
-          "id": "42fc58fc1ba10ba8b90db16dfde683e5",
-          "source": "46d95dbc7d76eaba80100dfa480dea56",
-          "target": "3ab2df5f89394de1661e4b230d8fd488"
+          "id": "1425e29b8977c19c906115f31a1f8a6b",
+          "source": "cdf7185cca90872db8b743e7a5b36ef0",
+          "target": "82397758134f81118fb9935477d6f598"
         }
       },
       {
         "data": {
-          "id": "ca6610898d355f2112b9f0fe60d38ded",
-          "source": "7b74d3459937f2d07ade2827bc6d3aac",
-          "target": "0ff3498362503e275d0d47f0e6ca5479"
+          "id": "d1d2a29141584c3aebd0c2940e951030",
+          "source": "cdf7185cca90872db8b743e7a5b36ef0",
+          "target": "9c46b0cb8c955460035427187706cfbc"
         }
       },
       {
         "data": {
-          "id": "e9224ceaa56b7b51afa4cb8cf4f141bf",
-          "source": "7b74d3459937f2d07ade2827bc6d3aac",
-          "target": "46d95dbc7d76eaba80100dfa480dea56"
+          "id": "8e54c055e5da60e7a310ab5f8bc0aa3d",
+          "source": "cdf7185cca90872db8b743e7a5b36ef0",
+          "target": "e0de428cc2c4c6381c3f8082a615f25d"
         }
       },
       {
         "data": {
-          "id": "1a9d17c36fef9b15660c16a58c0a79f2",
-          "source": "7b74d3459937f2d07ade2827bc6d3aac",
-          "target": "726a5e87be54c6dfbbc55b22e3cbb1c5"
+          "id": "e44f9ff10bbd28f2c0c2b3f9d6b442f1",
+          "source": "cdf7185cca90872db8b743e7a5b36ef0",
+          "target": "fb536b180952008dd29b4319593ef044"
         }
       },
       {
         "data": {
-          "id": "32a914d7695d6d0e86b3629d58d0ce07",
-          "source": "7b74d3459937f2d07ade2827bc6d3aac",
-          "target": "e4dddd6aa55b9806c0e99646d0ac4711"
+          "id": "988fc84000271532ec53aac83a7a8b39",
+          "source": "e0de428cc2c4c6381c3f8082a615f25d",
+          "target": "6514e7140e9a0c07ca296b90cf22cf9f"
+        }
+      },
+      {
+        "data": {
+          "id": "5d4c6712e449af9af6ce0719cd42eda8",
+          "source": "e0de428cc2c4c6381c3f8082a615f25d",
+          "target": "a1c47185abeae268a8280338027e20a5"
         }
       }
     ]

@@ -1,16 +1,127 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`when Icon is LOCK_FULL MTLSIcon renders properly 1`] = `
-<Tooltip
-  aria-label="mTLS status"
-  content="Overlay Test"
-  enableFlip={true}
-  position="right"
+<Provider
+  store={
+    Object {
+      "dispatch": [Function],
+      "getState": [Function],
+      "replaceReducer": [Function],
+      "subscribe": [Function],
+      Symbol(observable): [Function],
+    }
+  }
 >
-  <img
-    alt="right"
-    className="className"
-    src="mtls-status-full.svg"
-  />
-</Tooltip>
+  <MTLSIcon
+    icon="LOCK_FULL"
+    iconClassName="className"
+    tooltipPosition="right"
+    tooltipText="Overlay Test"
+  >
+    <Tooltip
+      aria-label="mTLS status"
+      content="Overlay Test"
+      enableFlip={true}
+      position="right"
+    >
+      <Popper
+        animationDuration={300}
+        appendTo={[Function]}
+        distance={15}
+        enableFlip={true}
+        entryDelay={300}
+        exitDelay={300}
+        flipBehavior={
+          Array [
+            "top",
+            "right",
+            "bottom",
+            "left",
+            "top",
+            "right",
+            "bottom",
+          ]
+        }
+        isVisible={false}
+        minWidth="revert"
+        onBlur={[Function]}
+        onDocumentClick={false}
+        onDocumentKeyDown={[Function]}
+        onFocus={[Function]}
+        onHidden={[Function]}
+        onMouseEnter={[Function]}
+        onMouseLeave={[Function]}
+        onPopperMouseEnter={[Function]}
+        onPopperMouseLeave={[Function]}
+        onTriggerEnter={[Function]}
+        placement="right"
+        popper={
+          <div
+            aria-label="mTLS status"
+            aria-live="off"
+            className="pf-v5-c-tooltip"
+            id="pf-tooltip-2"
+            role="tooltip"
+            style={
+              Object {
+                "maxWidth": null,
+              }
+            }
+          >
+            <TooltipArrow />
+            <TooltipContent
+              isLeftAligned={false}
+            >
+              Overlay Test
+            </TooltipContent>
+          </div>
+        }
+        popperRef={
+          Object {
+            "current": null,
+          }
+        }
+        positionModifiers={
+          Object {
+            "bottom": "pf-m-bottom",
+            "bottom-end": "pf-m-bottom-right",
+            "bottom-start": "pf-m-bottom-left",
+            "left": "pf-m-left",
+            "left-end": "pf-m-left-bottom",
+            "left-start": "pf-m-left-top",
+            "right": "pf-m-right",
+            "right-end": "pf-m-right-bottom",
+            "right-start": "pf-m-right-top",
+            "top": "pf-m-top",
+            "top-end": "pf-m-top-right",
+            "top-start": "pf-m-top-left",
+          }
+        }
+        trigger={
+          <img
+            alt="right"
+            className="className"
+            src="mtls-status-full-dark.svg"
+          />
+        }
+        zIndex={9999}
+      >
+        <div
+          style={
+            Object {
+              "display": "contents",
+            }
+          }
+        >
+          <img
+            alt="right"
+            className="className"
+            key="mtls-status-full-dark.svg"
+            src="mtls-status-full-dark.svg"
+          />
+        </div>
+      </Popper>
+    </Tooltip>
+  </MTLSIcon>
+</Provider>
 `;

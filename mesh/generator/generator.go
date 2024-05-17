@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"regexp"
 	"slices"
+	"strings"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
@@ -71,30 +72,28 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalIn
 	for _, cp := range meshDef.ControlPlanes {
 		// add control plane cluster if not already added
 		if _, ok := clusterMap[cp.Cluster.Name]; !ok {
-			_, _, err := addInfra(meshMap, mesh.InfraTypeCluster, cp.Cluster.Name, "", cp.Cluster.Name, cp.Cluster, esVersions[cp.Cluster.Name], false, "")
+			_, _, err := addInfra(meshMap, mesh.InfraTypeCluster, cp.Cluster.Name, "", cp.Cluster.Name, cp.Cluster, esVersions[cp.Cluster.Name], false, "", false)
 			mesh.CheckError(err)
+			clusterMap[cp.Cluster.Name] = true
 		}
 
 		// add managed clusters if not already added
 		for _, mc := range cp.ManagedClusters {
-			if _, ok := clusterMap[mc.Name]; ok {
-				_, _, err := addInfra(meshMap, mesh.InfraTypeCluster, mc.Name, "", mc.Name, mc, "", false, "")
+			if _, ok := clusterMap[mc.Name]; !ok {
+				_, _, err := addInfra(meshMap, mesh.InfraTypeCluster, mc.Name, "", mc.Name, mc, "", false, "", false)
 				mesh.CheckError(err)
+				clusterMap[mc.Name] = true
 
 				continue
 			}
 		}
 
-		// add the control plane istiod revision
 		name := cp.IstiodName
-		if cp.Revision != "" {
-			name = fmt.Sprintf("%s-%s", cp.IstiodName, cp.Revision)
-		}
-		// TODO: We need to be able to support different versions for the different revisions, but
-		// if there is no revision name assume we have the correct istio version
-		version := ""
-		if len(meshDef.ControlPlanes) == 1 {
-			version = esVersions["Istio"]
+
+		version := esVersions["Istio"]
+		if isCanary {
+			// for canary upgrade the version is the revision name with '.' instead of '-'
+			version = strings.Replace(cp.Revision, "-", ".", -1)
 		}
 
 		// get istio status components (istiod, grafana, prometheus, tracing)
@@ -105,10 +104,18 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalIn
 		// convert istio status slice into map
 		healthData := make(map[string]string)
 		for _, data := range istioStatus {
-			healthData[data.Name] = data.Status
+			// istiod health depends on istiod and istio-pod status (both starts with the istiod name of the control plane)
+			if strings.HasPrefix(data.Name, cp.IstiodName) {
+				// don't update if previous status is not healthy to display a problem in the mesh
+				if healthData[cp.IstiodName] == "" || healthData[cp.IstiodName] == kubernetes.ComponentHealthy {
+					healthData[cp.IstiodName] = data.Status
+				}
+			} else {
+				healthData[data.Name] = data.Status
+			}
 		}
 
-		istiod, _, err := addInfra(meshMap, mesh.InfraTypeIstiod, cp.Cluster.Name, cp.IstiodNamespace, name, cp.Config, version, false, healthData["istiod"])
+		istiod, _, err := addInfra(meshMap, mesh.InfraTypeIstiod, cp.Cluster.Name, cp.IstiodNamespace, name, cp.Config, version, false, healthData[cp.IstiodName], false)
 		mesh.CheckError(err)
 
 		// add the managed namespaces by cluster and narrowed, if necessary, by revision
@@ -139,7 +146,9 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalIn
 				return cmp.Compare(a.Name, b.Name)
 			})
 
-			dp, _, err := addInfra(meshMap, mesh.InfraTypeDataPlane, cluster, "", "Data Plane", namespaces, "", false, "")
+			isDataPlaneCanary := isCanary && cp.Revision == canaryStatus.UpgradeVersion
+
+			dp, _, err := addInfra(meshMap, mesh.InfraTypeDataPlane, cluster, "", "Data Plane", namespaces, cp.Revision, false, "", isDataPlaneCanary)
 			graph.CheckError(err)
 
 			istiod.AddEdge(dp)
@@ -151,7 +160,7 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalIn
 		hasExternalServices := false // external to the cluster/mesh (or a URL that can't be parsed)
 
 		for _, ki := range cp.Cluster.KialiInstances {
-			kiali, _, err := addInfra(meshMap, mesh.InfraTypeKiali, cp.Cluster.Name, ki.Namespace, ki.ServiceName, es.Istio, ki.Version, false, "")
+			kiali, _, err := addInfra(meshMap, mesh.InfraTypeKiali, cp.Cluster.Name, ki.Namespace, ki.ServiceName, es.Istio, ki.Version, false, "", false)
 			mesh.CheckError(err)
 
 			if es.Istio.IstioAPIEnabled {
@@ -163,8 +172,8 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalIn
 			// metrics/prometheus
 			cluster, namespace, isExternal := discoverInfraService(es.Prometheus.URL, ctx, gi)
 			var node *mesh.Node
-			name = "Prometheus"
-			node, _, err = addInfra(meshMap, mesh.InfraTypeMetricStore, cluster, namespace, name, es.Prometheus, esVersions[name], isExternal, healthData["prometheus"])
+			name := "Prometheus"
+			node, _, err = addInfra(meshMap, mesh.InfraTypeMetricStore, cluster, namespace, name, es.Prometheus, esVersions[name], isExternal, healthData["prometheus"], false)
 			mesh.CheckError(err)
 
 			kiali.AddEdge(node)
@@ -173,7 +182,7 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalIn
 			if conf.ExternalServices.Tracing.Enabled {
 				cluster, namespace, isExternal = discoverInfraService(es.Tracing.InClusterURL, ctx, gi)
 				name = string(es.Tracing.Provider)
-				node, _, err = addInfra(meshMap, mesh.InfraTypeTraceStore, cluster, namespace, name, es.Tracing, esVersions[name], isExternal, healthData["tracing"])
+				node, _, err = addInfra(meshMap, mesh.InfraTypeTraceStore, cluster, namespace, name, es.Tracing, esVersions[name], isExternal, healthData["tracing"], false)
 				mesh.CheckError(err)
 
 				kiali.AddEdge(node)
@@ -183,7 +192,7 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalIn
 			if conf.ExternalServices.Grafana.Enabled {
 				cluster, namespace, isExternal = discoverInfraService(es.Grafana.InClusterURL, ctx, gi)
 				name = "Grafana"
-				node, _, err = addInfra(meshMap, mesh.InfraTypeGrafana, cluster, namespace, name, es.Grafana, esVersions[name], isExternal, healthData["grafana"])
+				node, _, err = addInfra(meshMap, mesh.InfraTypeGrafana, cluster, namespace, name, es.Grafana, esVersions[name], isExternal, healthData["grafana"], false)
 				mesh.CheckError(err)
 
 				kiali.AddEdge(node)
@@ -192,7 +201,7 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalIn
 		}
 
 		if hasExternalServices {
-			_, _, err = addInfra(meshMap, mesh.InfraTypeCluster, mesh.External, "", "External Deployments", nil, "", true, "")
+			_, _, err = addInfra(meshMap, mesh.InfraTypeCluster, mesh.External, "", "External Deployments", nil, "", true, "", false)
 			mesh.CheckError(err)
 		}
 	}
@@ -205,8 +214,8 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalIn
 	return meshMap
 }
 
-func addInfra(meshMap mesh.MeshMap, infraType, cluster, namespace, name string, infraData interface{}, version string, isExternal bool, healthData string) (*mesh.Node, bool, error) {
-	id, err := mesh.Id(cluster, namespace, name, infraType, isExternal)
+func addInfra(meshMap mesh.MeshMap, infraType, cluster, namespace, name string, infraData interface{}, version string, isExternal bool, healthData string, isCanary bool) (*mesh.Node, bool, error) {
+	id, err := mesh.Id(cluster, namespace, name, infraType, version, isExternal)
 	if err != nil {
 		return nil, false, err
 	}
@@ -234,6 +243,12 @@ func addInfra(meshMap mesh.MeshMap, infraType, cluster, namespace, name string, 
 
 	if healthData != "" {
 		node.Metadata[mesh.HealthData] = healthData
+	} else {
+		node.Metadata[mesh.HealthData] = kubernetes.ComponentHealthy
+	}
+
+	if isCanary {
+		node.Metadata[mesh.IsCanary] = true
 	}
 
 	return node, found, nil

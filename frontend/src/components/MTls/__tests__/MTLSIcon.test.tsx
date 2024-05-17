@@ -1,42 +1,50 @@
 import * as React from 'react';
-import { shallow } from 'enzyme';
+import { mount } from 'enzyme';
 import { MTLSIcon, MTLSIconTypes } from '../MTLSIcon';
-import { shallowToJson } from 'enzyme-to-json';
-import { TooltipPosition } from '@patternfly/react-core';
+import { mountToJson } from 'enzyme-to-json';
+import { Tooltip, TooltipPosition } from '@patternfly/react-core';
+import { Provider } from 'react-redux';
+import { store } from 'store/ConfigStore';
 
 const mockIcon = (icon: string) => {
   const component = (
-    <MTLSIcon
-      icon={icon}
-      iconClassName="className"
-      tooltipText="Overlay Test"
-      tooltipPosition={TooltipPosition.right}
-    />
+    <Provider store={store}>
+      <MTLSIcon
+        icon={icon}
+        iconClassName="className"
+        tooltipText="Overlay Test"
+        tooltipPosition={TooltipPosition.right}
+      />
+    </Provider>
   );
-  return shallow(component);
+  return mount(component);
 };
 
 describe('when Icon is LOCK_FULL', () => {
   it('MTLSIcon renders properly', () => {
-    const wrapper = mockIcon(MTLSIconTypes.LOCK_FULL);
+    const mount = mockIcon(MTLSIconTypes.LOCK_FULL);
 
-    expect(shallowToJson(wrapper)).toBeDefined();
-    expect(shallowToJson(wrapper)).toMatchSnapshot();
+    expect(mountToJson(mount)).toBeDefined();
+    expect(mountToJson(mount)).toMatchSnapshot();
 
-    expect(wrapper.name()).toEqual('Tooltip');
-    expect(wrapper.props().position).toEqual('right');
-    expect(wrapper.props().content).toEqual('Overlay Test');
+    const tooltip = mount.find(Tooltip);
+    expect(tooltip.exists()).toBeTruthy();
+    expect(tooltip.props().position).toEqual('right');
+    expect(tooltip.props().content).toEqual('Overlay Test');
 
-    expect(wrapper.children()).toBeDefined();
-    expect(wrapper.children().name()).toEqual('img');
-    expect(wrapper.children().prop('className')).toEqual('className');
-    expect(wrapper.children().prop('src')).toEqual('mtls-status-full.svg');
+    const img = tooltip.find('img');
+    expect(img.exists()).toBeTruthy();
+    expect(img.props().className).toEqual('className');
+    expect(img.props().src).toEqual('mtls-status-full-dark.svg');
   });
 });
 
 describe('when Icon is LOCK_HOLLOW', () => {
   it('MTLSIcon renders properly', () => {
-    const wrapper = mockIcon(MTLSIconTypes.LOCK_HOLLOW);
-    expect(wrapper.children().prop('src')).toEqual('mtls-status-partial.svg');
+    const mount = mockIcon(MTLSIconTypes.LOCK_HOLLOW);
+    const img = mount.find('img');
+    expect(img.exists()).toBeTruthy();
+    expect(img.props().className).toEqual('className');
+    expect(img.props().src).toEqual('mtls-status-partial-dark.svg');
   });
 });

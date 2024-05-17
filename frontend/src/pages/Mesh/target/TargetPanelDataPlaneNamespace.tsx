@@ -1,12 +1,6 @@
 import * as React from 'react';
 import { kialiStyle } from 'styles/StyleUtils';
-import {
-  TargetPanelCommonProps,
-  targetPanel,
-  targetPanelBody,
-  targetPanelBorder,
-  targetPanelHR
-} from './TargetPanelCommon';
+import { TargetPanelCommonProps, targetPanelHR } from './TargetPanelCommon';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { Card, CardBody, CardHeader, Title, TitleSizes, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { Paths, serverConfig } from 'config';
@@ -35,9 +29,9 @@ import { switchType } from 'pages/Overview/OverviewHelper';
 import { IstiodResourceThresholds } from 'types/IstioStatus';
 import { TLSStatus } from 'types/TLSStatus';
 import * as FilterHelper from '../../../components/FilterList/FilterHelper';
-import { classes } from 'typestyle';
-import { panelHeadingStyle } from 'pages/Graph/SummaryPanelStyle';
+import { panelBodyStyle, panelHeadingStyle } from 'pages/Graph/SummaryPanelStyle';
 import { Metric } from 'types/Metrics';
+import { t } from 'utils/I18nUtils';
 
 type TargetPanelDataPlaneNamespaceProps = Omit<TargetPanelCommonProps, 'target'> & {
   isExpanded: boolean;
@@ -77,7 +71,8 @@ const healthType: OverviewType = 'app';
 const cardGridStyle = kialiStyle({
   textAlign: 'center',
   marginTop: 0,
-  marginBottom: '0.5rem'
+  marginBottom: '-0.5rem',
+  boxShadow: 'none'
 });
 
 const namespaceNameStyle = kialiStyle({
@@ -87,12 +82,6 @@ const namespaceNameStyle = kialiStyle({
   verticalAlign: 'middle',
   whiteSpace: 'nowrap',
   textOverflow: 'ellipsis'
-});
-
-const panel = kialiStyle({
-  fontSize: 'var(--graph-side-panel--font-size)',
-  margin: 0,
-  padding: 0
 });
 
 export class TargetPanelDataPlaneNamespace extends React.Component<
@@ -110,6 +99,7 @@ export class TargetPanelDataPlaneNamespace extends React.Component<
   componentDidUpdate(prevProps: TargetPanelDataPlaneNamespaceProps): void {
     const shouldLoad =
       prevProps.updateTime !== this.props.updateTime || (!prevProps.isExpanded && this.props.isExpanded);
+
     if (shouldLoad) {
       this.load();
     }
@@ -132,66 +122,60 @@ export class TargetPanelDataPlaneNamespace extends React.Component<
     );
 
     return (
-      <div className={classes(targetPanelBorder, panel)}>
-        <Card isCompact={true} className={cardGridStyle} data-test={`${ns}-mesh-target`} style={{ height: '96%' }}>
-          <CardHeader
-            className={panelHeadingStyle}
-            actions={{ actions: <>{namespaceActions}</>, hasNoOffset: false, className: undefined }}
-          >
-            <Title headingLevel="h5" size={TitleSizes.lg}>
-              <span className={namespaceNameStyle}>
-                <span>
-                  <PFBadge badge={PFBadges.Namespace} />
-                  {ns}
-                </span>
-                {this.renderNamespaceBadges(nsInfo, true)}
+      <Card isCompact={true} className={cardGridStyle} data-test={`${ns}-mesh-target`}>
+        <CardHeader
+          className={panelHeadingStyle}
+          actions={{ actions: <>{namespaceActions}</>, hasNoOffset: false, className: undefined }}
+        >
+          <Title headingLevel="h5" size={TitleSizes.lg}>
+            <span className={namespaceNameStyle}>
+              <span>
+                <PFBadge badge={PFBadges.Namespace} />
+                {ns}
               </span>
-            </Title>
-            <div style={{ textAlign: 'left', paddingBottom: 3 }}>
-              <PFBadge badge={PFBadges.Cluster} position={TooltipPosition.right} />
-              {nsInfo.cluster}
-            </div>
-          </CardHeader>
-          <CardBody>
-            <div className={targetPanelBody}>
-              {this.renderLabels(nsInfo)}
+              {this.renderNamespaceBadges(nsInfo, true)}
+            </span>
+          </Title>
+          <div style={{ textAlign: 'left', paddingBottom: 3 }}>
+            <PFBadge badge={PFBadges.Cluster} position={TooltipPosition.right} />
+            {nsInfo.cluster}
+          </div>
+        </CardHeader>
+        <CardBody className={panelBodyStyle}>
+          {this.renderLabels(nsInfo)}
 
-              <div style={{ textAlign: 'left' }}>
-                <div style={{ display: 'inline-block', width: '125px' }}>Istio config</div>
+          <div style={{ textAlign: 'left' }}>
+            <div style={{ display: 'inline-block', width: '125px' }}>Istio config</div>
 
-                {nsInfo.tlsStatus && (
-                  <span>
-                    <NamespaceMTLSStatus status={nsInfo.tlsStatus.status} />
-                  </span>
-                )}
-                {this.props.istioAPIEnabled ? this.renderIstioConfigStatus(nsInfo) : 'N/A'}
-              </div>
+            {nsInfo.tlsStatus && (
+              <span>
+                <NamespaceMTLSStatus status={nsInfo.tlsStatus.status} />
+              </span>
+            )}
+            {this.props.istioAPIEnabled ? this.renderIstioConfigStatus(nsInfo) : 'N/A'}
+          </div>
 
-              {this.renderStatus()}
+          {this.renderStatus()}
 
-              {targetPanelHR()}
-              {this.renderCharts('inbound')}
-              {this.renderCharts('outbound')}
-            </div>
-          </CardBody>
-        </Card>
-      </div>
+          {targetPanelHR}
+          {this.renderCharts('inbound')}
+          {this.renderCharts('outbound')}
+        </CardBody>
+      </Card>
     );
   }
 
   private getLoading = (): React.ReactNode => {
     return (
-      <div className={classes(targetPanelBorder, targetPanel)}>
-        <Card isCompact={true} className={cardGridStyle} style={{ height: '96%' }}>
-          <CardHeader className={panelHeadingStyle}>
-            <Title headingLevel="h5" size={TitleSizes.lg}>
-              <span className={namespaceNameStyle}>
-                <span>Loading...</span>
-              </span>
-            </Title>
-          </CardHeader>
-        </Card>
-      </div>
+      <Card isCompact={true} className={cardGridStyle}>
+        <CardHeader className={panelHeadingStyle}>
+          <Title headingLevel="h5" size={TitleSizes.lg}>
+            <span className={namespaceNameStyle}>
+              <span>{t('Loading...')}</span>
+            </span>
+          </Title>
+        </CardHeader>
+      </Card>
     );
   };
 
@@ -269,7 +253,7 @@ export class TargetPanelDataPlaneNamespace extends React.Component<
     return namespaceActions;
   };
 
-  private renderNamespaceBadges(ns: NamespaceInfo, tooltip: boolean): JSX.Element {
+  private renderNamespaceBadges = (ns: NamespaceInfo, tooltip: boolean): React.ReactNode => {
     return (
       <>
         {serverConfig.ambientEnabled && ns.labels && ns.isAmbient && (
@@ -277,9 +261,9 @@ export class TargetPanelDataPlaneNamespace extends React.Component<
         )}
       </>
     );
-  }
+  };
 
-  private renderLabels(ns: NamespaceInfo): JSX.Element {
+  private renderLabels = (ns: NamespaceInfo): React.ReactNode => {
     const labelsLength = ns.labels ? `${Object.entries(ns.labels).length}` : 'No';
 
     const labelContent = ns.labels ? (
@@ -309,9 +293,9 @@ export class TargetPanelDataPlaneNamespace extends React.Component<
     );
 
     return labelContent;
-  }
+  };
 
-  private renderIstioConfigStatus(ns: NamespaceInfo): JSX.Element {
+  private renderIstioConfigStatus = (ns: NamespaceInfo): React.ReactNode => {
     let validations: ValidationStatus = { errors: 0, namespace: ns.name, objectCount: 0, warnings: 0 };
 
     if (!!ns.validations) {
@@ -334,7 +318,7 @@ export class TargetPanelDataPlaneNamespace extends React.Component<
         />
       </ValidationSummaryLink>
     );
-  }
+  };
 
   private load = (): void => {
     this.promises.cancelAll();
@@ -382,7 +366,7 @@ export class TargetPanelDataPlaneNamespace extends React.Component<
     this.setState({ loading: true });
   };
 
-  private fetchHealthStatus(): Promise<void> {
+  private fetchHealthStatus = async (): Promise<void> => {
     const cluster = this.props.targetCluster;
     const namespace = this.props.targetNamespace;
     return API.getClustersAppHealth(namespace, this.props.duration, cluster!)
@@ -416,9 +400,9 @@ export class TargetPanelDataPlaneNamespace extends React.Component<
         this.setState({ status: nsStatus });
       })
       .catch(err => this.handleApiError('Could not fetch namespace health', err));
-  }
+  };
 
-  private fetchMetrics(direction: DirectionType): Promise<void> {
+  private fetchMetrics = async (direction: DirectionType): Promise<void> => {
     const rateParams = computePrometheusRateParams(this.props.duration, 10);
     const options: IstioMetricsOptions = {
       filters: ['request_count', 'request_error_count'],
@@ -443,15 +427,16 @@ export class TargetPanelDataPlaneNamespace extends React.Component<
         );
       })
       .catch(err => this.handleApiError(`Could not fetch ${direction} metrics for namespace [${namespace}]`, err));
-  }
+  };
 
-  private handleApiError(message: string, error: ApiError): void {
+  private handleApiError = (message: string, error: ApiError): void => {
     FilterHelper.handleError(`${message}: ${API.getErrorString(error)}`);
-  }
+  };
 
-  private renderCharts(direction: DirectionType): JSX.Element {
+  private renderCharts = (direction: DirectionType): React.ReactNode => {
     if (this.state.status) {
       const namespace = this.props.targetNamespace;
+
       return (
         <OverviewCardSparklineCharts
           key={`${namespace}-${direction}`}
@@ -466,10 +451,10 @@ export class TargetPanelDataPlaneNamespace extends React.Component<
       );
     }
 
-    return <div style={{ height: '70px' }} />;
-  }
+    return <div style={{ padding: '1.5rem 0', textAlign: 'center' }}>Namespace metrics are not available</div>;
+  };
 
-  private renderStatus(): JSX.Element {
+  private renderStatus = (): React.ReactNode => {
     const targetPage = switchType(healthType, Paths.APPLICATIONS, Paths.SERVICES, Paths.WORKLOADS);
     const namespace = this.props.targetNamespace;
     const status = this.state.status;
@@ -562,7 +547,7 @@ export class TargetPanelDataPlaneNamespace extends React.Component<
         </span>
       </div>
     );
-  }
+  };
 
   private show = (showType: Show, namespace: string, graphType: string): void => {
     let destination = '';

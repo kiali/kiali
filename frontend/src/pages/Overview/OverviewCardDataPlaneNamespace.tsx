@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { DurationInSeconds, I18N_NAMESPACE } from '../../types/Common';
+import { DurationInSeconds } from '../../types/Common';
 import { Metric } from '../../types/Metrics';
 import { getName } from '../../utils/RateIntervals';
 import { PFColors } from 'components/Pf/PfColors';
@@ -7,7 +7,8 @@ import { SparklineChart } from 'components/Charts/SparklineChart';
 import { toVCLine } from 'utils/VictoryChartsUtils';
 import { RichDataPoint, VCLine } from 'types/VictoryChartInfo';
 import { DirectionType } from './OverviewToolbar';
-import { useTranslation } from 'react-i18next';
+import { useKialiTranslation } from 'utils/I18nUtils';
+import { kialiStyle } from 'styles/StyleUtils';
 
 type Props = {
   direction: DirectionType;
@@ -25,8 +26,16 @@ const showMetrics = (metrics: Metric[] | undefined): boolean => {
   return false;
 };
 
+const noTrafficStyle = kialiStyle({
+  padding: '0.5rem 0',
+  height: '100%',
+  display: 'flex',
+  justifyContent: 'center',
+  alignItems: 'center'
+});
+
 export const OverviewCardDataPlaneNamespace: React.FC<Props> = (props: Props) => {
-  const { t } = useTranslation(I18N_NAMESPACE);
+  const { t } = useKialiTranslation();
 
   let series: VCLine<RichDataPoint>[] = [];
 
@@ -43,17 +52,7 @@ export const OverviewCardDataPlaneNamespace: React.FC<Props> = (props: Props) =>
   }
 
   return (
-    <div
-      style={{
-        width: '100%',
-        height: 130,
-        verticalAlign: 'top'
-      }}
-    >
-      <div>
-        <></>
-      </div>
-
+    <div style={{ height: '100%' }}>
       {series.length > 0 && (
         <>
           <div
@@ -78,7 +77,7 @@ export const OverviewCardDataPlaneNamespace: React.FC<Props> = (props: Props) =>
       )}
 
       {series.length === 0 && (
-        <div style={{ paddingTop: '2.5rem' }}>{`${t('No')} ${t(props.direction.toLowerCase())} ${t('traffic')}`}</div>
+        <div className={noTrafficStyle}>{`${t('No')} ${t(props.direction.toLowerCase())} ${t('traffic')}`}</div>
       )}
     </div>
   );

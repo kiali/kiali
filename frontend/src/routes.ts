@@ -15,8 +15,7 @@ import { IstioConfigDetailsRoute } from 'routes/IstioConfigDetailsRoute';
 import { IstioConfigNewRoute } from 'routes/IstioConfigNewRoute';
 import { GraphRoutePF } from 'routes/GraphRoutePF';
 import { GraphPagePF } from 'pages/GraphPF/GraphPagePF';
-import { OldMeshPage } from 'pages/Mesh/old/OldMeshPage';
-import { i18n } from 'i18n';
+import { t } from 'utils/I18nUtils';
 
 /**
  * Return array of objects that describe vertical menu
@@ -25,60 +24,55 @@ import { i18n } from 'i18n';
 const navMenuItems: MenuItem[] = [
   {
     id: 'overview',
-    title: i18n.t('Overview'),
+    title: t('Overview'),
     to: '/overview',
     pathsActive: [/^\/overview\/(.*)/]
   },
   {
     id: 'traffic_graph_cy',
-    title: i18n.t('Traffic Graph [Cy]'),
+    title: t('Traffic Graph [Cy]'),
     to: '/graph/namespaces/',
     pathsActive: [/^\/graph\/(.*)/]
   },
   {
     id: 'traffic_graph_pf',
-    title: i18n.t('Traffic Graph [PF]'),
+    title: t('Traffic Graph [PF]'),
     to: '/graphpf/namespaces/',
     pathsActive: [/^\/graphpf\/(.*)/]
   },
   {
     id: 'applications',
-    title: i18n.t('Applications'),
+    title: t('Applications'),
     to: `/${Paths.APPLICATIONS}`,
     pathsActive: [new RegExp(`^/namespaces/(.*)/${Paths.APPLICATIONS}/(.*)`)]
   },
   {
     id: 'workloads',
-    title: i18n.t('Workloads'),
+    title: t('Workloads'),
     to: `/${Paths.WORKLOADS}`,
     pathsActive: [new RegExp(`^/namespaces/(.*)/${Paths.WORKLOADS}/(.*)`)]
   },
   {
     id: 'services',
-    title: i18n.t('Services'),
+    title: t('Services'),
     to: `/${Paths.SERVICES}`,
     pathsActive: [new RegExp(`^/namespaces/(.*)/${Paths.SERVICES}/(.*)`)]
   },
   {
     id: 'istio',
-    title: i18n.t('Istio Config'),
+    title: t('Istio Config'),
     to: `/${Paths.ISTIO}`,
     pathsActive: [new RegExp(`^/namespaces/(.*)/${Paths.ISTIO}/(.*)`), new RegExp(`/${Paths.ISTIO}/new/(.*)`)]
   },
   {
     id: 'tracing',
-    title: i18n.t('Distributed Tracing'),
+    title: t('Distributed Tracing'),
     to: '/tracing'
   },
   {
-    id: 'mesh_graph',
-    title: i18n.t('Mesh [graph]'),
+    id: 'mesh',
+    title: t('Mesh'),
     to: '/mesh'
-  },
-  {
-    id: 'mesh_classic',
-    title: i18n.t('Mesh [classic]'),
-    to: '/oldmesh'
   }
 ];
 
@@ -180,10 +174,6 @@ const pathRoutes: Path[] = [
   {
     path: `/${Paths.MESH}`,
     component: MeshPage
-  },
-  {
-    path: '/oldmesh',
-    component: OldMeshPage
   }
 ];
 

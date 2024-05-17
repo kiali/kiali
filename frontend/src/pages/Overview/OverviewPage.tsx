@@ -35,7 +35,6 @@ import { OverviewToolbar, OverviewDisplayMode, OverviewType, DirectionType } fro
 import { NamespaceInfo, NamespaceStatus } from '../../types/NamespaceInfo';
 import { NamespaceMTLSStatus } from '../../components/MTls/NamespaceMTLSStatus';
 import { RenderComponentScroll } from '../../components/Nav/Page';
-import { NamespaceStatuses } from './NamespaceStatuses';
 import { OverviewCardSparklineCharts } from './OverviewCardSparklineCharts';
 import { OverviewTrafficPolicies } from './OverviewTrafficPolicies';
 import { IstioMetricsOptions } from '../../types/MetricsOptions';
@@ -68,14 +67,10 @@ import { isParentKiosk, kioskOverviewAction } from '../../components/Kiosk/Kiosk
 import { ValidationSummaryLink } from '../../components/Link/ValidationSummaryLink';
 import { ControlPlaneBadge } from './ControlPlaneBadge';
 import { OverviewStatus } from './OverviewStatus';
-import { ControlPlaneNamespaceStatus } from './ControlPlaneNamespaceStatus';
 import { IstiodResourceThresholds } from 'types/IstioStatus';
-import { TLSInfo } from 'components/Overview/TLSInfo';
-import { CanaryUpgradeProgress } from './CanaryUpgradeProgress';
 import { ControlPlaneVersionBadge } from './ControlPlaneVersionBadge';
 import { AmbientBadge } from '../../components/Ambient/AmbientBadge';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
-import { isRemoteCluster } from './OverviewCardControlPlaneNamespace';
 import { ApiError } from 'types/Api';
 import { WithTranslation, withTranslation } from 'react-i18next';
 import { IstioConfigList } from 'types/IstioConfigList';
@@ -102,11 +97,13 @@ const cardGridStyle = kialiStyle({
   marginBottom: '0.5rem'
 });
 
+/*
 const cardControlPlaneGridStyle = kialiStyle({
   textAlign: 'center',
   marginTop: 0,
   marginBottom: '0.5rem'
 });
+*/
 
 const emptyStateStyle = kialiStyle({
   height: '300px',
@@ -256,8 +253,8 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
               errorMetrics: previous ? previous.errorMetrics : undefined,
               validations: previous ? previous.validations : undefined,
               labels: ns.labels,
-              annotations: ns.annotations,
-              controlPlaneMetrics: previous ? previous.controlPlaneMetrics : undefined
+              annotations: ns.annotations
+              //controlPlaneMetrics: previous ? previous.controlPlaneMetrics : undefined
             };
           });
 
@@ -445,6 +442,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
             nsInfo.metrics = rs.request_count;
             nsInfo.errorMetrics = rs.request_error_count;
 
+            /*
             if (nsInfo.name === serverConfig.istioNamespace) {
               nsInfo.controlPlaneMetrics = {
                 istiod_proxy_time: rs.pilot_proxy_convergence_time,
@@ -454,6 +452,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
                 istiod_process_mem: rs.process_resident_memory_bytes
               };
             }
+            */
           }
         });
       })
@@ -1038,8 +1037,6 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
   render(): React.ReactNode {
     const sm = this.state.displayMode === OverviewDisplayMode.COMPACT ? 3 : 6;
     const md = this.state.displayMode === OverviewDisplayMode.COMPACT ? 3 : 4;
-    const rlg = 4;
-    const lg = 12;
 
     const filteredNamespaces = FilterHelper.runFilters(
       this.state.namespaces,
@@ -1082,35 +1079,16 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
                 {filteredNamespaces.map((ns, i) => {
                   return (
                     <GridItem
-                      sm={
-                        ns.name === serverConfig.istioNamespace &&
-                        this.state.displayMode === OverviewDisplayMode.EXPAND &&
-                        (this.props.istioAPIEnabled || this.hasCanaryUpgradeConfigured())
-                          ? isRemoteCluster(ns.annotations)
-                            ? rlg
-                            : lg
-                          : sm
-                      }
-                      md={
-                        ns.name === serverConfig.istioNamespace &&
-                        this.state.displayMode === OverviewDisplayMode.EXPAND &&
-                        (this.props.istioAPIEnabled || this.hasCanaryUpgradeConfigured())
-                          ? isRemoteCluster(ns.annotations)
-                            ? rlg
-                            : lg
-                          : md
-                      }
+                      sm={sm}
+                      md={md}
                       key={`CardItem_${ns.name}_${ns.cluster}`}
                       data-test={`CardItem_${ns.name}_${ns.cluster}`}
                       style={{ margin: '0 0.25rem' }}
                     >
                       <Card
                         isCompact={true}
-                        className={ns.name === serverConfig.istioNamespace ? cardControlPlaneGridStyle : cardGridStyle}
+                        className={cardGridStyle}
                         data-test={`${ns.name}-${OverviewDisplayMode[this.state.displayMode]}`}
-                        style={
-                          !this.props.istioAPIEnabled && !this.hasCanaryUpgradeConfigured() ? { height: '96%' } : {}
-                        }
                       >
                         <CardHeader
                           className={namespaceHeaderStyle}
@@ -1143,114 +1121,9 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
                             </div>
                           )}
 
-                          {ns.name === serverConfig.istioNamespace &&
-                            !isRemoteCluster(ns.annotations) &&
-                            this.state.displayMode === OverviewDisplayMode.EXPAND && (
-                              <Grid>
-                                <GridItem md={this.props.istioAPIEnabled || this.hasCanaryUpgradeConfigured() ? 3 : 6}>
-                                  {this.renderLabels(ns)}
-
-                                  <div style={{ textAlign: 'left' }}>
-                                    <div style={{ display: 'inline-block', width: '125px' }}>
-                                      {this.props.t('Istio config')}
-                                    </div>
-
-                                    {ns.tlsStatus && (
-                                      <span>
-                                        <NamespaceMTLSStatus status={ns.tlsStatus.status} />
-                                      </span>
-                                    )}
-
-                                    {this.props.istioAPIEnabled ? this.renderIstioConfigStatus(ns) : 'N/A'}
-                                  </div>
-
-                                  {ns.status && (
-                                    <NamespaceStatuses
-                                      key={ns.name}
-                                      name={ns.name}
-                                      status={ns.status}
-                                      type={this.state.type}
-                                    />
-                                  )}
-
-                                  {this.state.displayMode === OverviewDisplayMode.EXPAND && (
-                                    <ControlPlaneNamespaceStatus
-                                      outboundTrafficPolicy={this.state.outboundPolicyMode}
-                                      namespace={ns}
-                                    ></ControlPlaneNamespaceStatus>
-                                  )}
-
-                                  {this.state.displayMode === OverviewDisplayMode.EXPAND && (
-                                    <TLSInfo
-                                      certificatesInformationIndicators={
-                                        serverConfig.kialiFeatureFlags.certificatesInformationIndicators.enabled
-                                      }
-                                      version={this.props.minTLS}
-                                    ></TLSInfo>
-                                  )}
-                                </GridItem>
-
-                                {ns.name === serverConfig.istioNamespace && (
-                                  <GridItem md={9}>
-                                    <Grid>
-                                      {this.state.canaryUpgradeStatus && this.hasCanaryUpgradeConfigured() && (
-                                        <GridItem md={this.props.istioAPIEnabled ? 4 : 9}>
-                                          <CanaryUpgradeProgress canaryUpgradeStatus={this.state.canaryUpgradeStatus} />
-                                        </GridItem>
-                                      )}
-
-                                      {this.props.istioAPIEnabled === true && (
-                                        <GridItem md={this.hasCanaryUpgradeConfigured() ? 8 : 12}>
-                                          {this.renderCharts(ns)}
-                                        </GridItem>
-                                      )}
-                                    </Grid>
-                                  </GridItem>
-                                )}
-                              </Grid>
-                            )}
-
-                          {ns.name === serverConfig.istioNamespace &&
-                            isRemoteCluster(ns.annotations) &&
-                            this.state.displayMode === OverviewDisplayMode.EXPAND && (
-                              <div>
-                                {this.renderLabels(ns)}
-
-                                <div style={{ textAlign: 'left' }}>
-                                  <div style={{ display: 'inline-block', width: '125px' }}>
-                                    {this.props.t('Istio config')}
-                                  </div>
-
-                                  {ns.tlsStatus && (
-                                    <span>
-                                      <NamespaceMTLSStatus status={ns.tlsStatus.status} />
-                                    </span>
-                                  )}
-
-                                  {this.props.istioAPIEnabled ? this.renderIstioConfigStatus(ns) : 'N/A'}
-                                </div>
-
-                                {this.renderStatus(ns)}
-
-                                {this.state.displayMode === OverviewDisplayMode.EXPAND && (
-                                  <TLSInfo
-                                    certificatesInformationIndicators={
-                                      serverConfig.kialiFeatureFlags.certificatesInformationIndicators.enabled
-                                    }
-                                    version={this.props.minTLS}
-                                  ></TLSInfo>
-                                )}
-
-                                {this.state.displayMode === OverviewDisplayMode.EXPAND && (
-                                  <div style={{ height: '110px' }} />
-                                )}
-                              </div>
-                            )}
-
-                          {((ns.name !== serverConfig.istioNamespace &&
-                            this.state.displayMode === OverviewDisplayMode.EXPAND) ||
+                          {(this.state.displayMode === OverviewDisplayMode.EXPAND ||
                             this.state.displayMode === OverviewDisplayMode.COMPACT) && (
-                            <div>
+                            <>
                               {this.renderLabels(ns)}
 
                               <div style={{ textAlign: 'left' }}>
@@ -1269,7 +1142,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
                               {this.renderStatus(ns)}
 
                               {this.state.displayMode === OverviewDisplayMode.EXPAND && this.renderCharts(ns)}
-                            </div>
+                            </>
                           )}
                         </CardBody>
                       </Card>
@@ -1353,26 +1226,24 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
   };
 
   renderCharts = (ns: NamespaceInfo): React.ReactNode => {
-    if (ns.status) {
-      if (this.state.displayMode === OverviewDisplayMode.COMPACT) {
-        return <NamespaceStatuses key={ns.name} name={ns.name} status={ns.status} type={this.state.type} />;
-      }
-      return (
-        <OverviewCardSparklineCharts
-          key={ns.name}
-          name={ns.name}
-          annotations={ns.annotations}
-          duration={FilterHelper.currentDuration()}
-          direction={this.state.direction}
-          metrics={ns.metrics}
-          errorMetrics={ns.errorMetrics}
-          controlPlaneMetrics={ns.controlPlaneMetrics}
-          istiodResourceThresholds={this.state.istiodResourceThresholds}
-        />
-      );
-    }
-
-    return <div style={{ height: '70px' }} />;
+    return (
+      <div style={{ height: '130px' }}>
+        {ns.status ? (
+          <OverviewCardSparklineCharts
+            key={ns.name}
+            name={ns.name}
+            annotations={ns.annotations}
+            duration={FilterHelper.currentDuration()}
+            direction={this.state.direction}
+            metrics={ns.metrics}
+            errorMetrics={ns.errorMetrics}
+            istiodResourceThresholds={this.state.istiodResourceThresholds}
+          />
+        ) : (
+          <div style={{ padding: '1.5rem 0', textAlign: 'center' }}>Namespace metrics are not available</div>
+        )}
+      </div>
+    );
   };
 
   renderIstioConfigStatus = (ns: NamespaceInfo): React.ReactNode => {

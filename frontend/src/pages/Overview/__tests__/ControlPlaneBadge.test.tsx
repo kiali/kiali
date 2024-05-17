@@ -9,6 +9,6 @@ describe('ControlPlaneBadge', () => {
       <ControlPlaneBadge annotations={{ [controlPlaneAnnotation]: 'primary' }} cluster="remote" />
     );
 
-    expect(wrapper.find('IstioStatusInline').exists()).toBeFalsy();
+    expect(wrapper.find('IstioStatus').exists()).toBeFalsy();
   });
 });

@@ -6,24 +6,27 @@ import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { getKialiTheme } from 'utils/ThemeUtils';
 import {
   TargetPanelCommonProps,
+  renderNodeHeader,
   shouldRefreshData,
-  targetPanel,
-  targetPanelBody,
-  targetPanelBorder,
-  targetPanelHeading,
+  targetPanelStyle,
   targetPanelWidth
 } from './TargetPanelCommon';
 import { kialiIconDark, kialiIconLight } from 'config';
-import { KialiInstance, MeshAttr } from 'types/Mesh';
+import { KialiInstance, MeshNodeData, isExternal } from 'types/Mesh';
 import { Theme } from 'types/Common';
 import { PromisesRegistry } from 'utils/CancelablePromises';
 import * as API from '../../../services/Api';
 import * as FilterHelper from '../../../components/FilterList/FilterHelper';
 import { ApiError } from 'types/Api';
 import { KialiIcon } from 'config/KialiIcon';
-import { Tooltip } from '@patternfly/react-core';
+import { Title, TitleSizes, Tooltip } from '@patternfly/react-core';
 import { classes } from 'typestyle';
+import { descendents } from '../MeshElems';
+import { panelBodyStyle, panelHeadingStyle, panelStyle } from 'pages/Graph/SummaryPanelStyle';
+import { t } from 'utils/I18nUtils';
 import { UNKNOWN } from 'types/Graph';
+
+type TargetPanelClusterProps = TargetPanelCommonProps;
 
 type TargetPanelClusterState = {
   clusterNode?: Node<NodeModel, any>;
@@ -40,7 +43,7 @@ const kialiIconStyle = kialiStyle({
   marginRight: '0.25rem'
 });
 
-export class TargetPanelCluster extends React.Component<TargetPanelCommonProps, TargetPanelClusterState> {
+export class TargetPanelCluster extends React.Component<TargetPanelClusterProps, TargetPanelClusterState> {
   static readonly panelStyle = {
     backgroundColor: PFColors.BackgroundColor100,
     height: '100%',
@@ -52,78 +55,89 @@ export class TargetPanelCluster extends React.Component<TargetPanelCommonProps, 
 
   private promises = new PromisesRegistry();
 
-  constructor(props: TargetPanelCommonProps) {
+  constructor(props: TargetPanelClusterProps) {
     super(props);
 
     const clusterNode = this.props.target.elem as Node<NodeModel, any>;
     this.state = { ...defaultState, clusterNode: clusterNode };
   }
 
-  static getDerivedStateFromProps(
+  static getDerivedStateFromProps: React.GetDerivedStateFromProps<TargetPanelCommonProps, TargetPanelClusterState> = (
     props: TargetPanelCommonProps,
     state: TargetPanelClusterState
-  ): TargetPanelClusterState | null {
+  ) => {
     // if the target (i.e. clusterBox) has changed, then init the state
     return props.target.elem !== state.clusterNode
       ? ({ clusterNode: props.target.elem, loading: true } as TargetPanelClusterState)
       : null;
-  }
+  };
 
-  componentDidMount() {
+  componentDidMount(): void {
     this.load();
   }
 
-  componentDidUpdate(prevProps: TargetPanelCommonProps) {
+  componentDidUpdate(prevProps: TargetPanelClusterProps): void {
     if (shouldRefreshData(prevProps, this.props)) {
       this.load();
     }
   }
 
-  componentWillUnmount() {
+  componentWillUnmount(): void {
     this.promises.cancelAll();
   }
 
-  render() {
+  render(): React.ReactNode {
     if (this.state.loading || !this.state.clusterNode) {
       return null;
     }
 
-    const clusterData = this.state.clusterNode.getData()[MeshAttr.infraData] || {
+    const data = this.state.clusterNode.getData() as MeshNodeData;
+    const clusterData = data.infraData ?? {
       accessible: false,
       isKialiHome: false,
-      name: UNKNOWN
+      name: data.infraName
     };
-    const version = this.state.clusterNode.getData()[MeshAttr.version];
+    const version = data.version;
 
     return (
-      <div id="target-panel-cluster" className={classes(targetPanelBorder, targetPanel)}>
-        <div id="target-panel-cluster-heading" className={targetPanelHeading}>
-          {clusterData.isKialiHome && (
-            <Tooltip content="Kiali home cluster">
-              <KialiIcon.Star />
-            </Tooltip>
-          )}
-          <PFBadge badge={PFBadges.Cluster} size="sm" style={{ marginLeft: '0.225rem', marginBottom: '0.125rem' }} />
-          {clusterData.name}
+      <div id="target-panel-cluster" className={classes(panelStyle, targetPanelStyle)}>
+        <div id="target-panel-cluster-heading" className={panelHeadingStyle}>
+          <Title headingLevel="h5" size={TitleSizes.lg}>
+            {clusterData.isKialiHome && (
+              <Tooltip content={t('Kiali home cluster')}>
+                <span style={{ marginRight: '0.5rem' }}>
+                  <KialiIcon.Star />
+                </span>
+              </Tooltip>
+            )}
+            {!isExternal(data.cluster) && <PFBadge badge={PFBadges.Cluster} size="global" />}
+            {clusterData.name}
+          </Title>
         </div>
-        <div className={targetPanelBody}>
-          {clusterData.accessible && this.renderKialiLinks(clusterData.kialiInstances)}
-          {version && (
-            <>
-              {`Version: `}
-              {version}
-              <br />
-            </>
-          )}
-          {`Network: `}
-          {clusterData.network ? clusterData.network : 'n/a'}
-          <br />
-          {`API Endpoint: `}
-          {clusterData.apiEndpoint ? clusterData.apiEndpoint : 'n/a'}
-          <br />
-          {`Secret Name: `}
-          {clusterData.secretName ? clusterData.secretName : 'n/a'}
-        </div>
+        {isExternal(data.cluster) ? (
+          <div className={panelBodyStyle}>
+            {descendents(this.state.clusterNode)
+              .sort((n1, n2) => {
+                const name1 = (n1.getData() as MeshNodeData).infraName.toLowerCase();
+                const name2 = (n2.getData() as MeshNodeData).infraName.toLowerCase();
+                return name1 < name2 ? -1 : 1;
+              })
+              .map(n => {
+                return renderNodeHeader(n.getData() as MeshNodeData, { nameOnly: true, smallSize: true });
+              })}
+          </div>
+        ) : (
+          <div className={panelBodyStyle}>
+            {clusterData.accessible && this.renderKialiLinks(clusterData.kialiInstances)}
+            {`${t('Version')}: ${version || UNKNOWN}`}
+            <br />
+            {`${t('Network')}: ${clusterData.network || t('n/a')}`}
+            <br />
+            {`${t('API Endpoint')}: ${clusterData.apiEndpoint || t('n/a')}`}
+            <br />
+            {`${t('Secret Name')}: ${clusterData.secretName || t('n/a')}`}
+          </div>
+        )}
       </div>
     );
   }
@@ -155,7 +169,7 @@ export class TargetPanelCluster extends React.Component<TargetPanelCommonProps, 
 
   private renderKialiLinks = (kialiInstances: KialiInstance[]): React.ReactNode => {
     const kialiIcon = getKialiTheme() === Theme.DARK ? kialiIconDark : kialiIconLight;
-    return kialiInstances.map(instance => {
+    return kialiInstances?.map(instance => {
       if (instance.url.length !== 0) {
         return (
           <span>

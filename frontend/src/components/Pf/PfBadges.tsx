@@ -19,6 +19,7 @@ export const PFBadges: { [key: string]: PFBadgeType } = Object.freeze({
   Cluster: { badge: 'C', tt: 'Cluster', style: { backgroundColor: PFColors.Blue300 } } as PFBadgeType,
   ClusterRBACConfig: { badge: 'CRC', tt: 'Cluster RBAC Configuration' } as PFBadgeType,
   Container: { badge: 'C', tt: 'Container', style: { backgroundColor: PFColors.Blue300 } } as PFBadgeType,
+  DataPlane: { badge: 'DP', tt: 'Data Plane' } as PFBadgeType,
   DestinationRule: { badge: 'DR', tt: 'Destination Rule' } as PFBadgeType,
   EnvoyFilter: { badge: 'EF', tt: 'Envoy Filter' } as PFBadgeType,
   ExternalService: { badge: 'ES', tt: 'External Service' } as PFBadgeType,

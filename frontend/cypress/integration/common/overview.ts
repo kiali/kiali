@@ -160,14 +160,6 @@ Then(
   }
 );
 
-Then('user sees the memory chart', () => {
-  cy.get('div[data-test="memory-chart"]').should('exist');
-});
-
-Then('user sees the cpu chart', () => {
-  cy.get('div[data-test="cpu-chart"]').should('exist');
-});
-
 Then('there should be a {string} application indicator in the namespace', function (healthStatus: string) {
   cy.get(`[data-test=${this.targetNamespace}-EXPAND] [data-test=overview-app-health]`)
     .find('span')
@@ -244,24 +236,6 @@ When('user hovers over the MinTLS locker', () => {
 Then('the toggle on the right side of the {string} namespace card exists', (ns: string) => {
   ensureKialiFinishedLoading();
   cy.get(`div[data-test^="${ns}"]`).should('exist');
-});
-
-Then('the user sees the certificates information', () => {
-  cy.get('[data-test="lockerCA"]').trigger('mouseenter').get('[role="tooltip"]').contains('Valid From');
-});
-
-// We will suppose that the min TLS Version was not set
-// So we verify the default
-Then('the minimum TLS version', () => {
-  cy.get('[data-test="label-TLS"]').contains('N/A');
-});
-
-Then('the user sees no information related to canary upgrades', () => {
-  cy.get('[data-test="canary-upgrade"]').should('not.exist');
-});
-
-Then('the user sees information related to canary upgrades', () => {
-  cy.get('[data-test="canary-upgrade"]').should('exist');
 });
 
 Then('user sees the {string} cluster badge in the Kiali header', (name: string) => {

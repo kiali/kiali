@@ -2,7 +2,7 @@ import * as React from 'react';
 import { SVGIconProps } from '@patternfly/react-icons/dist/js/createIcon';
 import * as API from '../../services/Api';
 import * as AlertUtils from '../../utils/AlertUtils';
-import { I18N_NAMESPACE, TimeInMilliseconds } from '../../types/Common';
+import { TimeInMilliseconds } from '../../types/Common';
 import { ComponentStatus, Status } from '../../types/IstioStatus';
 import { MessageType } from '../../types/MessageCenter';
 import { Namespace } from '../../types/Namespace';
@@ -21,7 +21,7 @@ import { connectRefresh } from '../Refresh/connectRefresh';
 import { kialiStyle } from 'styles/StyleUtils';
 import { IconProps, createIcon } from 'config/KialiIcon';
 import { Link } from 'react-router-dom';
-import { WithTranslation, withTranslation } from 'react-i18next';
+import { useKialiTranslation } from 'utils/I18nUtils';
 
 type ReduxStateProps = {
   namespaces?: Namespace[];
@@ -41,11 +41,11 @@ type StatusIcons = {
 };
 
 type Props = ReduxStateProps &
-  ReduxDispatchProps &
-  WithTranslation & {
+  ReduxDispatchProps & {
     cluster?: string;
     icons?: StatusIcons;
     lastRefreshAt: TimeInMilliseconds;
+    location?: string;
   };
 
 const ValidToColor = {
@@ -71,7 +71,7 @@ const iconStyle = kialiStyle({
   verticalAlign: '-0.125rem'
 });
 
-const meshLinkStyle = kialiStyle({
+export const meshLinkStyle = kialiStyle({
   display: 'flex',
   justifyContent: 'center',
   marginTop: '0.75rem',
@@ -82,59 +82,57 @@ const meshLinkStyle = kialiStyle({
   }
 });
 
-export class IstioStatusComponent extends React.Component<Props> {
-  componentDidMount(): void {
-    this.props.refreshNamespaces();
-    this.fetchStatus();
-  }
+export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
+  const { t } = useKialiTranslation();
 
-  componentDidUpdate(prevProps: Readonly<Props>): void {
-    if (this.props.lastRefreshAt !== prevProps.lastRefreshAt) {
-      this.fetchStatus();
-    }
-  }
+  const { cluster, namespaces, setIstioStatus, refreshNamespaces, lastRefreshAt } = props;
 
-  fetchStatus = (): void => {
-    API.getIstioStatus(this.props.cluster)
+  React.useEffect(() => {
+    refreshNamespaces();
+  }, [refreshNamespaces]);
+
+  const fetchStatus = React.useCallback((): void => {
+    API.getIstioStatus(cluster)
       .then(response => {
-        this.props.setIstioStatus(response.data);
+        setIstioStatus(response.data);
       })
       .catch(error => {
         // User without namespaces can't have access to mTLS information. Reduce severity to info.
-        const informative = this.props.namespaces && this.props.namespaces.length < 1;
+        const informative = namespaces && namespaces.length < 1;
 
         if (informative) {
-          AlertUtils.addError(this.props.t('Istio deployment status disabled.'), error, 'default', MessageType.INFO);
+          AlertUtils.addError(t('Istio deployment status disabled.'), error, 'default', MessageType.INFO);
         } else {
-          AlertUtils.addError(
-            this.props.t('Error fetching Istio deployment status.'),
-            error,
-            'default',
-            MessageType.ERROR
-          );
+          AlertUtils.addError(t('Error fetching Istio deployment status.'), error, 'default', MessageType.ERROR);
         }
       });
-  };
+  }, [cluster, namespaces, setIstioStatus, t]);
 
-  tooltipContent = (): React.ReactNode => {
+  React.useEffect(() => {
+    fetchStatus();
+  }, [lastRefreshAt, fetchStatus]);
+
+  const tooltipContent = (): React.ReactNode => {
     return (
       <>
-        <IstioStatusList status={this.props.status} />
-        <div className={meshLinkStyle}>
-          <span>{this.props.t('More info at')}</span>
-          <Link to="/mesh">{this.props.t('Mesh page')}</Link>
-        </div>
+        <IstioStatusList status={props.status} />
+        {!props.location?.endsWith('/mesh') && (
+          <div className={meshLinkStyle}>
+            <span>{t('More info at')}</span>
+            <Link to="/mesh">{t('Mesh page')}</Link>
+          </div>
+        )}
       </>
     );
   };
 
-  tooltipColor = (): string => {
+  const tooltipColor = (): string => {
     let coreUnhealthy = false;
     let addonUnhealthy = false;
     let notReady = false;
 
-    Object.keys(this.props.status ?? {}).forEach((compKey: string) => {
-      const { status, is_core } = this.props.status[compKey];
+    Object.keys(props.status ?? {}).forEach((compKey: string) => {
+      const { status, is_core } = props.status[compKey];
       const isNotReady: boolean = status === Status.NotReady;
       const isUnhealthy: boolean = status !== Status.Healthy && !isNotReady;
 
@@ -150,48 +148,46 @@ export class IstioStatusComponent extends React.Component<Props> {
     return ValidToColor[`${coreUnhealthy}-${addonUnhealthy}-${notReady}`];
   };
 
-  healthyComponents = (): boolean => {
-    return this.props.status.reduce((healthy: boolean, compStatus: ComponentStatus) => {
+  const healthyComponents = (): boolean => {
+    return props.status.reduce((healthy: boolean, compStatus: ComponentStatus) => {
       return healthy && compStatus.status === Status.Healthy;
     }, true);
   };
 
-  render(): React.ReactNode {
-    if (!this.healthyComponents()) {
-      const icons = this.props.icons ? { ...defaultIcons, ...this.props.icons } : defaultIcons;
-      const iconColor = this.tooltipColor();
-      let icon = ResourcesFullIcon;
-      let dataTest = 'istio-status';
+  if (!healthyComponents()) {
+    const icons = props.icons ? { ...defaultIcons, ...props.icons } : defaultIcons;
+    const iconColor = tooltipColor();
+    let icon = ResourcesFullIcon;
+    let dataTest = 'istio-status';
 
-      if (iconColor === PFColors.Danger) {
-        icon = icons.ErrorIcon;
-        dataTest = `${dataTest}-danger`;
-      } else if (iconColor === PFColors.Warning) {
-        icon = icons.WarningIcon;
-        dataTest = `${dataTest}-warning`;
-      } else if (iconColor === PFColors.Info) {
-        icon = icons.InfoIcon;
-        dataTest = `${dataTest}-info`;
-      } else if (iconColor === PFColors.Success) {
-        icon = icons.HealthyIcon;
-        dataTest = `${dataTest}-success`;
-      }
-
-      const iconProps: IconProps = {
-        className: iconStyle,
-        dataTest: dataTest
-      };
-
-      return (
-        <Tooltip position={TooltipPosition.left} enableFlip={true} content={this.tooltipContent()} maxWidth="25rem">
-          {createIcon(iconProps, icon, iconColor)}
-        </Tooltip>
-      );
+    if (iconColor === PFColors.Danger) {
+      icon = icons.ErrorIcon;
+      dataTest = `${dataTest}-danger`;
+    } else if (iconColor === PFColors.Warning) {
+      icon = icons.WarningIcon;
+      dataTest = `${dataTest}-warning`;
+    } else if (iconColor === PFColors.Info) {
+      icon = icons.InfoIcon;
+      dataTest = `${dataTest}-info`;
+    } else if (iconColor === PFColors.Success) {
+      icon = icons.HealthyIcon;
+      dataTest = `${dataTest}-success`;
     }
 
-    return null;
+    const iconProps: IconProps = {
+      className: iconStyle,
+      dataTest: dataTest
+    };
+
+    return (
+      <Tooltip position={TooltipPosition.top} enableFlip={true} content={tooltipContent()} maxWidth="25rem">
+        {createIcon(iconProps, icon, iconColor)}
+      </Tooltip>
+    );
   }
-}
+
+  return null;
+};
 
 const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
   status: istioStatusSelector(state),
@@ -205,6 +201,4 @@ const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => ({
   }
 });
 
-export const IstioStatus = connectRefresh(
-  connect(mapStateToProps, mapDispatchToProps)(withTranslation(I18N_NAMESPACE)(IstioStatusComponent))
-);
+export const IstioStatus = connectRefresh(connect(mapStateToProps, mapDispatchToProps)(IstioStatusComponent));

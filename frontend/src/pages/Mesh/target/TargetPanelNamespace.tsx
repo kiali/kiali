@@ -1,14 +1,7 @@
 import * as React from 'react';
 import { ElementModel, GraphElement, Node, NodeModel } from '@patternfly/react-topology';
 import { kialiStyle } from 'styles/StyleUtils';
-import {
-  TargetPanelCommonProps,
-  shouldRefreshData,
-  targetPanel,
-  targetPanelBody,
-  targetPanelBorder,
-  targetPanelHR
-} from './TargetPanelCommon';
+import { TargetPanelCommonProps, shouldRefreshData, targetPanelHR, targetPanelStyle } from './TargetPanelCommon';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { Card, CardBody, CardHeader, Label, Title, TitleSizes, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { Paths, serverConfig } from 'config';
@@ -45,7 +38,7 @@ import { TLSStatus } from 'types/TLSStatus';
 import * as FilterHelper from '../../../components/FilterList/FilterHelper';
 import { ControlPlaneMetricsMap, Metric } from 'types/Metrics';
 import { classes } from 'typestyle';
-import { panelHeadingStyle } from 'pages/Graph/SummaryPanelStyle';
+import { panelBodyStyle, panelHeadingStyle, panelStyle } from 'pages/Graph/SummaryPanelStyle';
 
 type TargetPanelNamespaceProps = TargetPanelCommonProps;
 
@@ -85,7 +78,8 @@ const direction: DirectionType = 'outbound';
 const cardGridStyle = kialiStyle({
   textAlign: 'center',
   marginTop: 0,
-  marginBottom: '0.5rem'
+  marginBottom: '0.5rem',
+  boxShadow: 'none'
 });
 
 const namespaceNameStyle = kialiStyle({
@@ -157,13 +151,8 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
     );
 
     return (
-      <div className={classes(targetPanelBorder, targetPanel)}>
-        <Card
-          isCompact={true}
-          className={cardGridStyle}
-          data-test={`${ns}-mesh-target`}
-          style={!this.props.istioAPIEnabled && !this.hasCanaryUpgradeConfigured() ? { height: '96%' } : {}}
-        >
+      <div className={classes(panelStyle, targetPanelStyle)}>
+        <Card id="target-panel-namespace" isCompact={true} className={cardGridStyle} data-test={`${ns}-mesh-target`}>
           <CardHeader
             className={panelHeadingStyle}
             actions={{ actions: <>{namespaceActions}</>, hasNoOffset: false, className: undefined }}
@@ -182,9 +171,9 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
               {nsInfo.cluster}
             </div>
           </CardHeader>
-          <CardBody>
+          <CardBody className={panelBodyStyle}>
             {isControlPlane && !isRemoteCluster(nsInfo.annotations) && (
-              <div className={targetPanelBody}>
+              <>
                 {this.renderLabels(nsInfo)}
 
                 <div style={{ textAlign: 'left' }}>
@@ -198,22 +187,27 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
                 )}
 
                 {isControlPlane && (
-                  <div>
-                    {targetPanelHR()}
+                  <>
                     {this.state.canaryUpgradeStatus && this.hasCanaryUpgradeConfigured() && (
-                      <div>
+                      <>
                         {targetPanelHR}
                         <CanaryUpgradeProgress canaryUpgradeStatus={this.state.canaryUpgradeStatus} />
-                      </div>
+                      </>
                     )}
-                    <div>{this.props.istioAPIEnabled && <div>{this.renderCharts()}</div>}</div>
-                  </div>
+
+                    {this.props.istioAPIEnabled && (
+                      <>
+                        {targetPanelHR}
+                        {this.renderCharts()}
+                      </>
+                    )}
+                  </>
                 )}
-              </div>
+              </>
             )}
 
             {isControlPlane && isRemoteCluster(nsInfo.annotations) && (
-              <div className={targetPanelBody}>
+              <>
                 {this.renderLabels(nsInfo)}
 
                 <div style={{ textAlign: 'left' }}>
@@ -231,11 +225,11 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
                 {this.renderStatus()}
 
                 <div style={{ height: '110px' }} />
-              </div>
+              </>
             )}
 
             {!isControlPlane && (
-              <div className={targetPanelBody}>
+              <>
                 {this.renderLabels(nsInfo)}
 
                 <div style={{ textAlign: 'left' }}>
@@ -251,9 +245,9 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
 
                 {this.renderStatus()}
 
-                {targetPanelHR()}
+                {targetPanelHR}
                 {this.renderCharts()}
-              </div>
+              </>
             )}
           </CardBody>
         </Card>
@@ -263,12 +257,8 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
 
   private getLoading = (): React.ReactNode => {
     return (
-      <div className={classes(targetPanelBorder, targetPanel)}>
-        <Card
-          isCompact={true}
-          className={cardGridStyle}
-          style={!this.props.istioAPIEnabled && !this.hasCanaryUpgradeConfigured() ? { height: '96%' } : {}}
-        >
+      <div className={classes(panelStyle, targetPanelStyle)}>
+        <Card isCompact={true} className={cardGridStyle}>
           <CardHeader className={panelHeadingStyle}>
             <Title headingLevel="h5" size={TitleSizes.lg}>
               <span className={namespaceNameStyle}>
@@ -579,7 +569,7 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
     return namespaceActions;
   };
 
-  private renderNamespaceBadges(ns: NamespaceInfo, tooltip: boolean): JSX.Element {
+  private renderNamespaceBadges(ns: NamespaceInfo, tooltip: boolean): React.ReactNode {
     const isControlPlane = this.isControlPlane();
     return (
       <>
@@ -616,7 +606,7 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
     );
   }
 
-  private renderLabels(ns: NamespaceInfo): JSX.Element {
+  private renderLabels(ns: NamespaceInfo): React.ReactNode {
     const labelsLength = ns.labels ? `${Object.entries(ns.labels).length}` : 'No';
 
     const labelContent = ns.labels ? (
@@ -648,7 +638,7 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
     return labelContent;
   }
 
-  private renderIstioConfigStatus(ns: NamespaceInfo): JSX.Element {
+  private renderIstioConfigStatus(ns: NamespaceInfo): React.ReactNode {
     let validations: ValidationStatus = { errors: 0, namespace: ns.name, objectCount: 0, warnings: 0 };
 
     if (!!ns.validations) {
@@ -840,9 +830,10 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
     FilterHelper.handleError(`${message}: ${API.getErrorString(error)}`);
   }
 
-  private renderCharts(): JSX.Element {
+  private renderCharts(): React.ReactNode {
     if (this.state.status) {
       const namespace = this.state.targetNamespace!;
+
       return (
         <OverviewCardSparklineCharts
           key={namespace}
@@ -858,10 +849,10 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
       );
     }
 
-    return <div style={{ height: '70px' }} />;
+    return <div style={{ padding: '1.5rem 0', textAlign: 'center' }}>Namespace metrics are not available</div>;
   }
 
-  private renderStatus(): JSX.Element {
+  private renderStatus(): React.ReactNode {
     const targetPage = switchType(healthType, Paths.APPLICATIONS, Paths.SERVICES, Paths.WORKLOADS);
     const namespace = this.state.targetNamespace!;
     const status = this.state.status;

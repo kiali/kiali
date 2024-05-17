@@ -35,7 +35,7 @@ import { HistoryManager, URLParam } from 'app/History';
 import { TourStop } from 'components/Tour/TourStop';
 import { getFocusSelector, unsetFocusSelector } from 'utils/SearchParamUtils';
 import { meshComponentFactory } from './components/meshComponentFactory';
-import { MeshData } from './MeshPage';
+import { MeshData, MeshRefs } from './MeshPage';
 import { MeshInfraType, MeshTarget } from 'types/Mesh';
 import { MeshHighlighter } from './MeshHighlighter';
 import {
@@ -96,8 +96,7 @@ const TopologyContent: React.FC<{
   meshData: MeshData;
   onEdgeTap?: (edge: Edge<EdgeModel>) => void;
   onNodeTap?: (node: Node<NodeModel>) => void;
-  onReady: (controller: any) => void;
-  onResize?: () => void;
+  onReady: (refs: MeshRefs) => void;
   setLayout: (val: LayoutName) => void;
   setTarget: (meshTarget: MeshTarget) => void;
   setUpdateTime: (val: TimeInMilliseconds) => void;
@@ -111,7 +110,6 @@ const TopologyContent: React.FC<{
   onEdgeTap,
   onNodeTap,
   onReady,
-  onResize,
   setLayout: _setLayoutName,
   setTarget,
   setUpdateTime,
@@ -196,11 +194,7 @@ const TopologyContent: React.FC<{
         controller.getGraph().fit(FIT_PADDING);
       }, 0);
     }
-
-    if (onResize) {
-      onResize();
-    }
-  }, [onResize, controller]);
+  }, [controller]);
 
   //
   // layoutEnd handling
@@ -417,7 +411,7 @@ const TopologyContent: React.FC<{
 
     if (initialGraph) {
       console.debug('mesh onReady');
-      onReady(controller);
+      onReady({ controller: controller, setSelectedIds: setSelectedIds });
     }
 
     // notify that the graph has been updated
@@ -574,8 +568,7 @@ export const Mesh: React.FC<{
   meshData: MeshData;
   onEdgeTap?: (edge: Edge<EdgeModel>) => void;
   onNodeTap?: (node: Node<NodeModel>) => void;
-  onReady: (controller: any) => void;
-  onResize: () => void;
+  onReady: (refs: MeshRefs) => void;
   setLayout: (layout: Layout) => void;
   setTarget: (meshTarget: MeshTarget) => void;
   setUpdateTime: (val: TimeInMilliseconds) => void;
@@ -587,7 +580,6 @@ export const Mesh: React.FC<{
   onEdgeTap,
   onNodeTap,
   onReady,
-  onResize,
   setLayout,
   setTarget,
   setUpdateTime,
@@ -643,7 +635,6 @@ export const Mesh: React.FC<{
         layoutName={getLayoutName(layout)}
         onEdgeTap={onEdgeTap}
         onNodeTap={onNodeTap}
-        onResize={onResize}
         onReady={onReady}
         setLayout={setLayoutByName}
         setTarget={setTarget}

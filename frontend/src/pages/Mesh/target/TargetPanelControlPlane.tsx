@@ -1,17 +1,14 @@
 import * as React from 'react';
 import { Node, NodeModel } from '@patternfly/react-topology';
-import { kialiStyle } from 'styles/StyleUtils';
 import {
   TargetPanelCommonProps,
-  getHealthStatus,
+  nodeStyle,
+  renderNodeHeader,
   shouldRefreshData,
-  targetPanel,
-  targetPanelBody,
-  targetPanelBorder,
-  targetPanelHR
+  targetPanelHR,
+  targetPanelStyle
 } from './TargetPanelCommon';
-import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
-import { Card, CardBody, CardHeader, Title, TitleSizes } from '@patternfly/react-core';
+import { Title, TitleSizes } from '@patternfly/react-core';
 import { serverConfig } from 'config';
 import { CanaryUpgradeStatus, OutboundTrafficPolicy } from 'types/IstioObjects';
 import { NamespaceInfo, NamespaceStatus } from 'types/NamespaceInfo';
@@ -35,16 +32,15 @@ import * as FilterHelper from '../../../components/FilterList/FilterHelper';
 import { NodeData } from '../MeshElems';
 import { ControlPlaneMetricsMap, Metric } from 'types/Metrics';
 import { classes } from 'typestyle';
-import { panelHeadingStyle } from 'pages/Graph/SummaryPanelStyle';
+import { panelBodyStyle, panelHeadingStyle, panelStyle } from 'pages/Graph/SummaryPanelStyle';
 import { MeshMTLSStatus } from 'components/MTls/MeshMTLSStatus';
-import { WithTranslation, withTranslation } from 'react-i18next';
-import { I18N_NAMESPACE } from 'types/Common';
+import { t } from 'utils/I18nUtils';
+import { UNKNOWN } from 'types/Graph';
 
-type TargetPanelControlPlaneProps = TargetPanelCommonProps &
-  WithTranslation & {
-    meshStatus: string;
-    minTLS: string;
-  };
+type TargetPanelControlPlaneProps = TargetPanelCommonProps & {
+  meshStatus: string;
+  minTLS: string;
+};
 
 type TargetPanelControlPlaneState = {
   canaryUpgradeStatus?: CanaryUpgradeStatus;
@@ -76,18 +72,7 @@ const defaultState: TargetPanelControlPlaneState = {
 // TODO: Should these remain fixed values?
 const direction: DirectionType = 'outbound';
 
-const cardGridStyle = kialiStyle({
-  marginBottom: '0.5rem',
-  marginTop: 0,
-  textAlign: 'center'
-});
-
-const nodeStyle = kialiStyle({
-  alignItems: 'center',
-  display: 'flex'
-});
-
-class TargetPanelControlPlaneComponent extends React.Component<
+export class TargetPanelControlPlane extends React.Component<
   TargetPanelControlPlaneProps,
   TargetPanelControlPlaneState
 > {
@@ -137,73 +122,50 @@ class TargetPanelControlPlaneComponent extends React.Component<
     const data = this.state.controlPlaneNode?.getData() as NodeData;
 
     return (
-      <div className={classes(targetPanelBorder, targetPanel)}>
-        <Card
-          isCompact={true}
-          className={cardGridStyle}
-          data-test={`${data.infraName}-mesh-target`}
-          style={!this.props.istioAPIEnabled && !this.hasCanaryUpgradeConfigured() ? { height: '96%' } : {}}
-        >
-          <CardHeader className={panelHeadingStyle}>
-            <Title headingLevel="h5" size={TitleSizes.lg}>
-              <span className={nodeStyle}>
-                <PFBadge badge={PFBadges.Istio} size="global" />
-                {data.infraName}
-                {getHealthStatus(data, this.props.t)}
-              </span>
-            </Title>
-            <span className={nodeStyle}>
-              <PFBadge badge={PFBadges.Namespace} size="sm" />
-              {data.namespace}
-            </span>
-            <span className={nodeStyle}>
-              <PFBadge badge={PFBadges.Cluster} size="sm" />
-              {data.cluster}
-            </span>
-          </CardHeader>
-          <CardBody>
-            <div className={targetPanelBody}>
-              {data.version && (
-                <div style={{ textAlign: 'left' }}>
-                  {`Version: `}
-                  {data.version}
-                  <br />
-                </div>
+      <div
+        id="target-panel-control-plane"
+        data-test={`${data.infraName}-mesh-target`}
+        className={classes(panelStyle, targetPanelStyle)}
+      >
+        <div className={panelHeadingStyle}>{renderNodeHeader(data, {})}</div>
+
+        <div className={panelBodyStyle}>
+          <div style={{ textAlign: 'left' }}>{`${t('Version')}: ${data.version || UNKNOWN}`}</div>
+
+          <div style={{ textAlign: 'left' }}>
+            <MeshMTLSStatus />
+          </div>
+
+          <ControlPlaneNamespaceStatus
+            outboundTrafficPolicy={this.state.outboundPolicyMode}
+            namespace={nsInfo}
+          ></ControlPlaneNamespaceStatus>
+
+          <TLSInfo
+            certificatesInformationIndicators={serverConfig.kialiFeatureFlags.certificatesInformationIndicators.enabled}
+            version={this.props.minTLS}
+          ></TLSInfo>
+
+          {!isRemoteCluster(nsInfo.annotations) && (
+            <>
+              {this.state.canaryUpgradeStatus && this.hasCanaryUpgradeConfigured() && (
+                <>
+                  {targetPanelHR}
+                  <CanaryUpgradeProgress canaryUpgradeStatus={this.state.canaryUpgradeStatus} />
+                </>
               )}
-              <div style={{ textAlign: 'left' }}>
-                <div>
-                  <MeshMTLSStatus />
-                </div>
-              </div>
 
-              <ControlPlaneNamespaceStatus
-                outboundTrafficPolicy={this.state.outboundPolicyMode}
-                namespace={nsInfo}
-              ></ControlPlaneNamespaceStatus>
-
-              <TLSInfo
-                certificatesInformationIndicators={
-                  serverConfig.kialiFeatureFlags.certificatesInformationIndicators.enabled
-                }
-                version={this.props.minTLS}
-              ></TLSInfo>
-
-              {!isRemoteCluster(nsInfo.annotations) && (
-                <div>
-                  {targetPanelHR()}
-                  {this.state.canaryUpgradeStatus && this.hasCanaryUpgradeConfigured() && (
-                    <div>
-                      {targetPanelHR}
-                      <CanaryUpgradeProgress canaryUpgradeStatus={this.state.canaryUpgradeStatus} />
-                    </div>
-                  )}
-                  <div>{this.props.istioAPIEnabled && <div>{this.renderCharts()}</div>}</div>
-                </div>
+              {this.props.istioAPIEnabled && (
+                <>
+                  {targetPanelHR}
+                  {this.renderCharts()}
+                </>
               )}
-            </div>
-          </CardBody>
-        </Card>
-        <div className={targetPanelBody}>
+            </>
+          )}
+
+          {targetPanelHR}
+          <span>{`${t('Configuration')}:`}</span>
           <pre>{JSON.stringify(data.infraData, null, 2)}</pre>
         </div>
       </div>
@@ -212,20 +174,14 @@ class TargetPanelControlPlaneComponent extends React.Component<
 
   private getLoading = (): React.ReactNode => {
     return (
-      <div className={classes(targetPanelBorder, targetPanel)}>
-        <Card
-          isCompact={true}
-          className={cardGridStyle}
-          style={!this.props.istioAPIEnabled && !this.hasCanaryUpgradeConfigured() ? { height: '96%' } : {}}
-        >
-          <CardHeader className={panelHeadingStyle}>
-            <Title headingLevel="h5" size={TitleSizes.lg}>
-              <span className={nodeStyle}>
-                <span>Loading...</span>
-              </span>
-            </Title>
-          </CardHeader>
-        </Card>
+      <div className={classes(panelStyle, targetPanelStyle)}>
+        <div className={panelHeadingStyle}>
+          <Title headingLevel="h5" size={TitleSizes.lg}>
+            <span className={nodeStyle}>
+              <span>{t('Loading...')}</span>
+            </span>
+          </Title>
+        </div>
       </div>
     );
   };
@@ -252,6 +208,7 @@ class TargetPanelControlPlaneComponent extends React.Component<
         const cluster = data.cluster;
         const namespace = data.namespace;
         const nsInfo = result.data.find(ns => ns.cluster === cluster && ns.name === namespace);
+
         if (!nsInfo) {
           AlertUtils.add(`Failed to find |${cluster}:${namespace}| in GetNamespaces() result`);
           this.setState({ ...defaultState, loading: false });
@@ -293,7 +250,7 @@ class TargetPanelControlPlaneComponent extends React.Component<
     this.setState({ loading: true });
   };
 
-  private fetchCanariesStatus(): Promise<void> {
+  private fetchCanariesStatus = async (): Promise<void> => {
     if (!this.isControlPlane()) {
       return Promise.resolve();
     }
@@ -312,10 +269,11 @@ class TargetPanelControlPlaneComponent extends React.Component<
       .catch(error => {
         AlertUtils.addError('Error fetching namespace canary upgrade status.', error, 'default', MessageType.ERROR);
       });
-  }
+  };
 
-  private fetchHealthStatus(): Promise<void> {
+  private fetchHealthStatus = async (): Promise<void> => {
     const data = this.state.controlPlaneNode!.getData() as NodeData;
+
     return API.getClustersAppHealth(data.namespace, this.props.duration, data.cluster)
       .then(results => {
         const nsStatus: NamespaceStatus = {
@@ -327,6 +285,7 @@ class TargetPanelControlPlaneComponent extends React.Component<
         };
 
         const rs = results[data.namespace];
+
         Object.keys(rs).forEach(item => {
           const health: Health = rs[item];
           const status = health.getGlobalStatus();
@@ -346,9 +305,9 @@ class TargetPanelControlPlaneComponent extends React.Component<
         this.setState({ status: nsStatus });
       })
       .catch(err => this.handleApiError('Could not fetch namespace health', err));
-  }
+  };
 
-  private fetchIstiodResourceThresholds(): Promise<void> {
+  private fetchIstiodResourceThresholds = async (): Promise<void> => {
     if (!this.isControlPlane()) {
       return Promise.resolve();
     }
@@ -360,9 +319,9 @@ class TargetPanelControlPlaneComponent extends React.Component<
       .catch(error => {
         AlertUtils.addError('Error fetching Istiod resource thresholds.', error, 'default', MessageType.ERROR);
       });
-  }
+  };
 
-  private fetchMetrics(): Promise<void> {
+  private fetchMetrics = async (): Promise<void> => {
     const rateParams = computePrometheusRateParams(this.props.duration, 10);
     const options: IstioMetricsOptions = {
       filters: ['request_count', 'request_error_count'],
@@ -372,6 +331,7 @@ class TargetPanelControlPlaneComponent extends React.Component<
       direction: direction,
       reporter: direction === 'inbound' ? 'destination' : 'source'
     };
+
     const data = this.state.controlPlaneNode!.getData() as NodeData;
 
     return API.getNamespaceMetrics(data.namespace, options, data.cluster)
@@ -387,6 +347,7 @@ class TargetPanelControlPlaneComponent extends React.Component<
             istiod_process_cpu: rs.data.process_cpu_seconds_total,
             istiod_process_mem: rs.data.process_resident_memory_bytes
           };
+
           this.setState({
             controlPlaneMetrics: controlPlaneMetrics,
             errorMetrics: errorMetrics,
@@ -400,14 +361,15 @@ class TargetPanelControlPlaneComponent extends React.Component<
         }
       })
       .catch(err => this.handleApiError('Could not fetch namespace metrics', err));
-  }
+  };
 
-  private fetchTLS(): Promise<void> {
+  private fetchTLS = async (): Promise<void> => {
     if (!this.isControlPlane()) {
       return Promise.resolve();
     }
 
     const data = this.state.controlPlaneNode!.getData() as NodeData;
+
     return API.getNamespaceTls(data.namespace, data.cluster)
       .then(rs => {
         this.setState({
@@ -419,9 +381,9 @@ class TargetPanelControlPlaneComponent extends React.Component<
         });
       })
       .catch(err => this.handleApiError('Could not fetch namespace TLS status', err));
-  }
+  };
 
-  private fetchOutboundTrafficPolicyMode(): Promise<void> {
+  private fetchOutboundTrafficPolicyMode = async (): Promise<void> => {
     if (!this.isControlPlane()) {
       return Promise.resolve();
     }
@@ -433,20 +395,21 @@ class TargetPanelControlPlaneComponent extends React.Component<
       .catch(error => {
         AlertUtils.addError('Error fetching Mesh OutboundTrafficPolicy.Mode.', error, 'default', MessageType.ERROR);
       });
-  }
+  };
 
   private isControlPlane = (): boolean => {
     const data = this.state.controlPlaneNode!.getData() as NodeData;
     return data.namespace === serverConfig.istioNamespace;
   };
 
-  private handleApiError(message: string, error: ApiError): void {
+  private handleApiError = (message: string, error: ApiError): void => {
     FilterHelper.handleError(`${message}: ${API.getErrorString(error)}`);
-  }
+  };
 
-  private renderCharts(): JSX.Element {
+  private renderCharts = (): React.ReactNode => {
     if (this.state.status) {
       const data = this.state.controlPlaneNode!.getData() as NodeData;
+
       return (
         <OverviewCardSparklineCharts
           key={data.namespace}
@@ -462,8 +425,6 @@ class TargetPanelControlPlaneComponent extends React.Component<
       );
     }
 
-    return <div style={{ height: '70px' }} />;
-  }
+    return <div style={{ padding: '1.5rem 0', textAlign: 'center' }}>Control plane metrics are not available</div>;
+  };
 }
-
-export const TargetPanelControlPlane = withTranslation(I18N_NAMESPACE)(TargetPanelControlPlaneComponent);

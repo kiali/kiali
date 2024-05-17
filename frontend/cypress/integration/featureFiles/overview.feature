@@ -71,7 +71,7 @@ Feature: Kiali Overview page
     When user selects "Last 10m" time range
     And user selects "Outbound" traffic direction
     Then user sees the "alpha" namespace with "outbound" traffic "10m"
-
+  
   @error-rates-app
   @bookinfo-app
   Scenario: The healthy status of a logical mesh application is reported in the overview of a namespace
@@ -80,7 +80,7 @@ Feature: Kiali Overview page
     Then there should be a "healthy" application indicator in the namespace
     And the "healthy" application indicator should list the application
 
-  @error-rates-app
+  @sleep-app
   Scenario: The idle status of a logical mesh application is reported in the overview of a namespace
     Given an idle application in the cluster
     When I fetch the overview of the cluster
@@ -103,20 +103,10 @@ Feature: Kiali Overview page
     And the "degraded" application indicator should list the application
 
   @error-rates-app
-  Scenario: The canary upgrade information is not present when there is no canary configured
-    Then the user sees no information related to canary upgrades
-
-  @error-rates-app
   Scenario: The Istio panel should be visible in the control panel
     Then user sees the "istio-system" namespace card
     And user does not see any cluster badge in the "istio-system" namespace card
     And user sees the "Control plane" label in the "istio-system" namespace card
-    And user sees the "Outbound policy" label in the "istio-system" namespace card
-    Then the toggle on the right side of the "istio-system" namespace card exists
-
-  Scenario: The control plane metrics should be present
-    Then user sees the memory chart
-    And user sees the cpu chart
 
   @multi-cluster
   Scenario: The badge for local cluster should be visible
@@ -128,8 +118,6 @@ Feature: Kiali Overview page
     And user sees the "istio-system" namespace card in cluster "west"
     And user sees the "Control plane" label in both "istio-system" namespace cards
     And user sees the "Remote Cluster" label in the "west" "istio-system" namespace card
-    And user sees the "Outbound policy" label in the "east" "istio-system" namespace card
-    And user does not see the "Outbound policy" label in the "west" "istio-system" namespace card
     And the toggle on the right side of both "istio-system" namespace cards exists
     And Istio config should not be available for the "west" "istio-system" 
     And health should be different for "east" and "west" "istio-system"
@@ -168,7 +156,6 @@ Feature: Kiali Overview page
     Then user sees a "LIST" "bookinfo" namespace
     And the "Cluster" column "appears"
     And cluster badges for "east" and "west" cluster are visible in the LIST view
-    And Control Plane metrics should be visible for cluster "east"
 
   #this scenario refers to a bug (https://github.com/kiali/kiali/issues/6504) which is not resolved at the time of writing the scenario
   # this scenario refers to a bug (https://github.com/kiali/kiali/issues/6504) 

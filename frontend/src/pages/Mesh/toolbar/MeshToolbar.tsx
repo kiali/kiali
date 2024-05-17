@@ -10,7 +10,6 @@ import {
 } from '@patternfly/react-core';
 import { connect } from 'react-redux';
 import { KialiAppState } from '../../../store/Store';
-import { KialiDispatch } from '../../../types/Redux';
 import { TourStop } from 'components/Tour/TourStop';
 import { KialiIcon } from 'config/KialiIcon';
 import { kialiStyle } from 'styles/StyleUtils';
@@ -20,6 +19,7 @@ import { MeshFind } from './MeshFind';
 import { MeshTourStops } from '../MeshHelpTour';
 import { MeshReset } from './MeshReset';
 import { TimeDurationComponent } from 'components/Time/TimeDurationComponent';
+import { useKialiTranslation } from 'utils/I18nUtils';
 
 type ReduxProps = {
   target: MeshTarget | null;
@@ -37,53 +37,47 @@ const helpStyle = kialiStyle({
   alignSelf: 'center'
 });
 
-class MeshToolbarComponent extends React.PureComponent<MeshToolbarProps> {
-  static contextTypes = {
-    router: () => null
-  };
+export const MeshToolbarComponent: React.FC<MeshToolbarProps> = (props: MeshToolbarProps) => {
+  const { t } = useKialiTranslation();
 
-  render() {
-    return (
-      <>
-        <Toolbar style={{ width: '100%' }}>
-          <ToolbarGroup aria-label="mesh settings" style={{ margin: 0, alignItems: 'flex-start' }}>
-            <ToolbarItem>
-              <MeshFind controller={this.props.controller} elementsChanged={this.props.elementsChanged} />
-            </ToolbarItem>
+  return (
+    <>
+      <Toolbar style={{ width: '100%' }}>
+        <ToolbarGroup aria-label={t('mesh settings')} style={{ margin: 0, alignItems: 'flex-start' }}>
+          <ToolbarItem>
+            <MeshFind controller={props.controller} elementsChanged={props.elementsChanged} />
+          </ToolbarItem>
 
-            <ToolbarItem style={{ marginLeft: 'auto', alignSelf: 'center' }}>
-              <Tooltip key={'mesh-tour-help-ot'} position={TooltipPosition.right} content="Shortcuts and tips...">
-                <TourStop info={MeshTourStops.Shortcuts}>
-                  <Button
-                    id="mesh-tour"
-                    variant={ButtonVariant.link}
-                    className={helpStyle}
-                    onClick={this.props.onToggleHelp}
-                    isInline
-                  >
-                    <KialiIcon.Help />
-                    <span style={{ marginLeft: '5px' }}>Help</span>
-                  </Button>
-                </TourStop>
-              </Tooltip>
-              <MeshReset />
-            </ToolbarItem>
-            <ToolbarItem>
-              <TimeDurationComponent id="mesh_time_range" disabled={this.props.disabled} supportsReplay={false} />
-            </ToolbarItem>
-          </ToolbarGroup>
-        </Toolbar>
-      </>
-    );
-  }
-}
+          <ToolbarItem style={{ marginLeft: 'auto', alignSelf: 'center' }}>
+            <Tooltip key={'mesh-tour-help-ot'} position={TooltipPosition.right} content={t('Shortcuts and tips...')}>
+              <TourStop info={MeshTourStops.Shortcuts}>
+                <Button
+                  id="mesh-tour"
+                  variant={ButtonVariant.link}
+                  className={helpStyle}
+                  onClick={props.onToggleHelp}
+                  isInline
+                >
+                  <KialiIcon.Help />
+                  <span style={{ marginLeft: '5px' }}>Help</span>
+                </Button>
+              </TourStop>
+            </Tooltip>
+            <MeshReset />
+          </ToolbarItem>
+          <ToolbarItem>
+            <TourStop info={MeshTourStops.TimeRange}>
+              <TimeDurationComponent id="mesh_time_range" disabled={props.disabled} supportsReplay={false} />
+            </TourStop>
+          </ToolbarItem>
+        </ToolbarGroup>
+      </Toolbar>
+    </>
+  );
+};
 
-const mapStateToProps = (state: KialiAppState) => ({
+const mapStateToProps = (state: KialiAppState): ReduxProps => ({
   target: state.mesh.target
 });
 
-const mapDispatchToProps = (_dispatch: KialiDispatch) => {
-  return {};
-};
-
-export const MeshToolbar = connect(mapStateToProps, mapDispatchToProps)(MeshToolbarComponent);
+export const MeshToolbar = connect(mapStateToProps)(MeshToolbarComponent);

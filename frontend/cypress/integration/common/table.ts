@@ -1,5 +1,6 @@
 import { Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import { TableDefinition } from 'cypress-cucumber-preprocessor';
+import { MeshCluster } from '../../../src/types/Mesh';
 
 enum SortOrder {
   Ascending = 'ascending',
@@ -210,15 +211,17 @@ export const checkHealthIndicatorInTable = (
     : `${targetNamespace}_${targetRowItemName}`;
 
   // cy.getBySel(`VirtualItem_Ns${selector}]`).find('span').filter(`.icon-${healthStatus}`).should('exist');
-  // Fetch the cluster info from /api/clusters
+  // Fetch the cluster info from /api/config
   // TODO: Move this somewhere else since other tests will most likely need this info as well.
   // VirtualItem_Clustercluster-default_Nsbookinfo_details
   // VirtualItem_Clustercluster-default_Nsbookinfo_productpage
-  cy.request('/api/clusters').then(response => {
+  cy.request('/api/config').then(response => {
     cy.wrap(response.isOkStatusCode).should('be.true');
-    cy.wrap(response.body).should('have.length', 1);
 
-    const cluster = response.body[0].name;
+    const clusters: { [key: string]: MeshCluster } = response.body.clusters;
+    const clusterNames = Object.keys(clusters);
+    cy.wrap(clusterNames).should('have.length', 1);
+    const cluster = clusterNames[0];
 
     cy.getBySel(`VirtualItem_Cluster${cluster}_Ns${selector}`)
       .find('span')
@@ -237,11 +240,13 @@ export const checkHealthStatusInTable = (
     ? `${targetNamespace}_${targetType}_${targetRowItemName}`
     : `${targetNamespace}_${targetRowItemName}`;
 
-  cy.request('/api/clusters').then(response => {
+  cy.request('/api/config').then(response => {
     cy.wrap(response.isOkStatusCode).should('be.true');
-    cy.wrap(response.body).should('have.length', 1);
 
-    const cluster = response.body[0].name;
+    const clusters: { [key: string]: MeshCluster } = response.body.clusters;
+    const clusterNames = Object.keys(clusters);
+    cy.wrap(clusterNames).should('have.length', 1);
+    const cluster = clusterNames[0];
 
     cy.get(
       `[data-test=VirtualItem_Cluster${cluster}_Ns${selector}] td:first-child span[class=pf-v5-c-icon__content]`

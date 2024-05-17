@@ -4,10 +4,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"golang.org/x/exp/slices"
 
 	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/tests/integration/utils/kiali"
 	"github.com/kiali/kiali/tests/integration/utils/kube"
@@ -17,8 +15,9 @@ func TestRemoteKialiShownInClustersResponse(t *testing.T) {
 	require := require.New(t)
 
 	// Get the number of clusters before we start.
-	originalClusters, err := kiali.Clusters()
+	kialiConfig, _, err := kiali.KialiConfig()
 	require.NoError(err)
+	originalClusters := kialiConfig.Clusters
 
 	ctx := contextWithTestingDeadline(t)
 	dynamicClient := kube.NewDynamicClient(t)
@@ -48,12 +47,13 @@ func TestRemoteKialiShownInClustersResponse(t *testing.T) {
 	require.NoError(instance.UpdateConfig(ctx, conf))
 	require.NoError(instance.Restart(ctx))
 
-	clusters, err := kiali.Clusters()
+	kialiConfig, _, err = kiali.KialiConfig()
 	require.NoError(err)
+	clusters := kialiConfig.Clusters
 
 	// Ensure the inaccessible cluster/kiali instance is shown in the clusters response.
 	require.Greater(len(clusters), len(originalClusters))
 
-	inaccessibleIdx := slices.IndexFunc(clusters, func(c kubernetes.Cluster) bool { return c.Name == "inaccessible" })
-	require.NotEqualf(-1, inaccessibleIdx, "inaccessible cluster not found in clusters response")
+	inaccessible := clusters["inaccessible"]
+	require.NotNil(inaccessible, "inaccessible cluster not found in clusters response")
 }

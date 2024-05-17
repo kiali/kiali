@@ -10,6 +10,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"runtime"
+	"sort"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -19,7 +20,6 @@ import (
 	apps_v1 "k8s.io/api/apps/v1"
 	core_v1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	api_runtime "k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd/api"
 
@@ -27,6 +27,7 @@ import (
 	"github.com/kiali/kiali/business/authentication"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/mesh"
 	"github.com/kiali/kiali/status"
@@ -34,6 +35,12 @@ import (
 
 // Setup mock
 func setupMocks(t *testing.T) *mesh.AppenderGlobalInfo {
+	assert := assert.New(t)
+	require := require.New(t)
+	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = "cluster-primary"
+	config.Set(conf)
+
 	istiodDeployment := apps_v1.Deployment{
 		ObjectMeta: v1.ObjectMeta{
 			Name:      "istiod",
@@ -42,21 +49,17 @@ func setupMocks(t *testing.T) *mesh.AppenderGlobalInfo {
 		},
 		Spec: apps_v1.DeploymentSpec{
 			Template: core_v1.PodTemplateSpec{
-				ObjectMeta: v1.ObjectMeta{
-					Name:      "istiod",
-					Namespace: "istio-system",
-					Labels:    map[string]string{"app": "istiod"},
-				},
 				Spec: core_v1.PodSpec{
 					Containers: []core_v1.Container{
 						{
+							Name: "discovery",
 							Env: []core_v1.EnvVar{
 								{
 									Name:  "CLUSTER_ID",
-									Value: "East",
+									Value: conf.KubernetesConfig.ClusterName,
 								},
-								{
-									Name:  "PILOT_SCOPE_GATEWAY_TO_NAMESPACE",
+								core_v1.EnvVar{
+									Name:  "EXTERNAL_ISTIOD",
 									Value: "true",
 								},
 							},
@@ -98,7 +101,7 @@ trustDomain: cluster.local
 		},
 	}
 
-	objects := []api_runtime.Object{
+	primaryClient := kubetest.NewFakeK8sClient(
 		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
 		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "data-plane-1"}},
 		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "data-plane-2"}},
@@ -106,35 +109,50 @@ trustDomain: cluster.local
 		&istioConfigMap,
 		&sidecarConfigMap,
 		&kialiSvc,
-	}
-
-	assert := assert.New(t)
-	require := require.New(t)
-	conf := config.NewConfig()
-	conf.InCluster = false
-	conf.KubernetesConfig.ClusterName = "East"
-	config.Set(conf)
-
-	k8s := kubetest.NewFakeK8sClient(objects...)
-	k8s.KubeClusterInfo = kubernetes.ClusterInfo{
+	)
+	primaryClient.KubeClusterInfo = kubernetes.ClusterInfo{
 		ClientConfig: &rest.Config{
 			Host: "http://127.0.0.2:9443",
 		},
 	}
+	remoteClient := kubetest.NewFakeK8sClient(
+		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{
+			Name:        "istio-system",
+			Annotations: map[string]string{business.IstioControlPlaneClustersLabel: conf.KubernetesConfig.ClusterName},
+		}},
+		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "data-plane-3"}},
+		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "data-plane-4"}},
+	)
+	clients := map[string]kubernetes.ClientInterface{
+		conf.KubernetesConfig.ClusterName: primaryClient,
+		"cluster-remote":                  remoteClient,
+	}
+	factory := kubetest.NewK8SClientFactoryMock(nil)
+	factory.SetClients(clients)
 
-	//mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
-	business.SetupBusinessLayer(t, k8s, *conf)
-	clients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: k8s}
+	mockClientFactory := kubetest.NewK8SClientFactoryMock(nil)
+	mockClientFactory.SetClients(clients)
+	cache := cache.NewTestingCacheWithFactory(t, mockClientFactory, *conf)
+	business.WithKialiCache(cache)
+	business.SetWithBackends(mockClientFactory, nil)
 	layer := business.NewWithBackends(clients, clients, nil, nil)
 	meshSvc := layer.Mesh
 
-	//r := httptest.NewRequest("GET", "http://kiali.url.local/", nil)
+	meshDef, err := meshSvc.GetMesh(context.TODO())
+	require.NoError(err)
+	require.Len(meshDef.ControlPlanes, 1)
+	require.Len(meshDef.ControlPlanes[0].ManagedClusters, 2)
+
 	a, err := meshSvc.GetClusters()
+	sort.Slice(a, func(i, j int) bool {
+		return a[i].Name < a[j].Name
+	})
 	require.Nil(err, "GetClusters returned error: %v", err)
 
 	require.NotNil(a, "GetClusters returned nil")
-	require.Len(a, 1, "GetClusters didn't resolve the Kiali cluster")
-	assert.Equal("East", a[0].Name, "Unexpected cluster name")
+	require.Len(a, 2, "GetClusters didn't resolve the Primnary and Remote clusters")
+	assert.Equal("cluster-primary", a[0].Name, "Unexpected primary cluster name")
+	assert.Equal("cluster-remote", a[1].Name, "Unexpected remote cluster name")
 	assert.True(a[0].IsKialiHome, "Kiali cluster not properly marked as such")
 	assert.Equal("http://127.0.0.2:9443", a[0].ApiEndpoint)
 	assert.Equal("kialiNetwork", a[0].Network)
@@ -247,7 +265,7 @@ func TestMeshGraph(t *testing.T) {
 	var fut func(ctx context.Context, globalInfo *mesh.AppenderGlobalInfo, o mesh.Options) (int, interface{})
 
 	mr := mux.NewRouter()
-	mr.HandleFunc("/api/mesh", http.HandlerFunc(
+	mr.HandleFunc("/api/mesh/graph", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
 			context := authentication.SetAuthInfoContext(r.Context(), &api.AuthInfo{Token: "test"})
 			code, config := fut(context, globalInfo, mesh.NewOptions(r.WithContext(context)))
@@ -258,7 +276,7 @@ func TestMeshGraph(t *testing.T) {
 	defer ts.Close()
 
 	fut = graphMesh
-	url := ts.URL + "/api/mesh?queryTime=1523364075"
+	url := ts.URL + "/api/mesh/graph?queryTime=1523364075"
 	resp, err := http.Get(url)
 	if err != nil {
 		t.Fatal(err)

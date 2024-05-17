@@ -100,14 +100,12 @@ export const MeshHelpFind: React.FC<MeshHelpFindProps> = (props: MeshHelpFindPro
   const nodeColumns: ThProps[] = [{ title: 'Expression' }, { title: 'Notes' }];
 
   const nodeRows: IRow[] = [
-    { cells: ['cluster <op> <clusterName>'] },
+    { cells: ['cluster <op> <clusterName>', 'nodes within the matching clusters'] },
     { cells: ['label:<label> <op> <value>', '<label> is a k8s label on the service, workload, etc'] },
     { cells: ['name <op> <string>', 'tests against infraName'] },
-    { cells: ['namespace <op> <namespaceName>'] },
-    { cells: ['node <op> <nodeType>', 'nodeType: box | infra'] },
-    { cells: ['type <op> <infraType>', 'infraType: cluster | istiod | kiali | metricsStore | traceStore'] },
-    { cells: ['healthy', 'is not degraded or failing.'] },
-    { cells: ['outofmesh'] }
+    { cells: ['namespace <op> <namespaceName>', 'nodes within the matching namespaces'] },
+    { cells: ['type <op> <infraType>', 'infraType: dataplane | istiod | kiali | metricStore | traceStore'] },
+    { cells: ['healthy', 'is not degraded or failing.'] }
   ];
 
   const noteColumns: ThProps[] = [{ title: 'Usage Note', width: 10 }];
