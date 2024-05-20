@@ -47,6 +47,8 @@ export type ListenerForm = {
   port: string;
   protocol: string;
   sSelectorLabels: string;
+  tlsCertName: string;
+  tlsMode: string;
 };
 
 const validListeners = (listeners: Listener[]): boolean => {
@@ -73,7 +75,7 @@ export class K8sGatewayForm extends React.Component<Props, K8sGatewayState> {
     this.state = initK8sGateway();
   }
 
-  componentDidMount() {
+  componentDidMount(): void {
     this.setState(this.props.k8sGateway);
   }
 
@@ -85,7 +87,7 @@ export class K8sGatewayForm extends React.Component<Props, K8sGatewayState> {
     this.setState({ addresses: addresses }, () => this.props.onChange(this.state));
   };
 
-  onChangeGatewayClass = (_event: React.FormEvent, value: string) => {
+  onChangeGatewayClass = (_event: React.FormEvent, value: string): void => {
     this.setState(
       {
         gatewayClass: value
@@ -94,7 +96,7 @@ export class K8sGatewayForm extends React.Component<Props, K8sGatewayState> {
     );
   };
 
-  render() {
+  render(): React.ReactNode {
     return (
       <>
         {serverConfig.gatewayAPIClasses.length > 1 && (

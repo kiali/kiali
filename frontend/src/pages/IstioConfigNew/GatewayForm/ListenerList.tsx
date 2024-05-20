@@ -5,7 +5,7 @@ import { PFColors } from '../../../components/Pf/PfColors';
 import { Button, ButtonVariant } from '@patternfly/react-core';
 import { Listener } from '../../../types/IstioObjects';
 import { ListenerForm } from '../K8sGatewayForm';
-import { ListenerBuilder, allowedRoutes, protocols } from './ListenerBuilder';
+import { ListenerBuilder, allowedRoutes, protocols, tlsModes } from './ListenerBuilder';
 import { KialiIcon } from 'config/KialiIcon';
 
 type ListenerListProps = {
@@ -55,9 +55,9 @@ const columns: ThProps[] = [
   }
 ];
 
-export const addSelectorLabels = (value: string) => {
+export const addSelectorLabels = (value: string): {} => {
   if (value.length === 0) {
-    return;
+    return {};
   }
 
   value = value.trim();
@@ -97,6 +97,8 @@ export const ListenerList: React.FC<ListenerListProps> = (props: ListenerListPro
       isHostValid: false,
       from: allowedRoutes[0],
       isLabelSelectorValid: false,
+      tlsMode: tlsModes[0],
+      tlsCertName: '',
       sSelectorLabels: ''
     };
 

@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { isK8sGatewayHostValid } from '../../../utils/IstioConfigUtils';
-import { Button, ButtonVariant, FormSelect, FormSelectOption, TextInput } from '@patternfly/react-core';
+import { Button, ButtonVariant, FormGroup, FormSelect, FormSelectOption, TextInput } from '@patternfly/react-core';
 import { isValid } from '../../../utils/Common';
 import { ListenerForm } from '../K8sGatewayForm';
 import { Td, Tr } from '@patternfly/react-table';
@@ -16,14 +16,18 @@ type ListenerBuilderProps = {
 };
 
 // Only HTTPRoute is supported in Istio
-export const protocols = ['HTTP'];
+export const protocols = ['HTTP', 'HTTPS'];
 export const allowedRoutes = ['All', 'Selector', 'Same'];
+export const tlsModes = ['Terminate'];
 
 export const isValidName = (name: string): boolean => {
   return name !== undefined && name.length > 0;
 };
 
 export const isValidHostname = (hostname: string): boolean => {
+  if (!hostname) {
+    return true;
+  }
   return hostname !== undefined && hostname.length > 0 && isK8sGatewayHostValid(hostname);
 };
 
@@ -78,83 +82,135 @@ export const ListenerBuilder: React.FC<ListenerBuilderProps> = (props: ListenerB
     props.onChange(l, props.index);
   };
 
+  const onAddTlsMode = (_event: React.FormEvent, value: string): void => {
+    const listener = props.listener;
+    listener.tlsMode = value.trim();
+
+    props.onChange(listener, props.index);
+  };
+
+  const onAddTlsCert = (_event: React.FormEvent, value: string): void => {
+    const listener = props.listener;
+    listener.tlsCertName = value.trim();
+
+    props.onChange(listener, props.index);
+  };
+
+  const showTls = props.listener.protocol === 'HTTPS';
+
   return (
-    <Tr>
-      <Td>
-        <TextInput
-          value={props.listener.name}
-          type="text"
-          id={`addName_${props.index}`}
-          aria-describedby="add name"
-          onChange={onAddName}
-          validated={isValid(isValidName(props.listener.name))}
-        />
-      </Td>
+    <>
+      <Tr>
+        <Td>
+          <TextInput
+            value={props.listener.name}
+            type="text"
+            id={`addName_${props.index}`}
+            aria-describedby="add name"
+            onChange={onAddName}
+            validated={isValid(isValidName(props.listener.name))}
+          />
+        </Td>
 
-      <Td>
-        <TextInput
-          value={props.listener.hostname}
-          type="text"
-          id={`addHostname_${props.index}`}
-          aria-describedby="add hostname"
-          name="addHostname"
-          onChange={onAddHostname}
-          validated={isValid(isValidHostname(props.listener.hostname))}
-        />
-      </Td>
+        <Td>
+          <TextInput
+            value={props.listener.hostname}
+            type="text"
+            id={`addHostname_${props.index}`}
+            aria-describedby="add hostname"
+            name="addHostname"
+            onChange={onAddHostname}
+            validated={isValid(isValidHostname(props.listener.hostname))}
+          />
+        </Td>
 
-      <Td>
-        <TextInput
-          value={props.listener.port}
-          type="text"
-          id={`addPort_${props.index}`}
-          placeholder="80"
-          aria-describedby="add port"
-          name="addPortNumber"
-          onChange={onAddPort}
-          validated={isValid(isValidPort(props.listener.port))}
-        />
-      </Td>
+        <Td>
+          <TextInput
+            value={props.listener.port}
+            type="text"
+            id={`addPort_${props.index}`}
+            placeholder="80"
+            aria-describedby="add port"
+            name="addPortNumber"
+            onChange={onAddPort}
+            validated={isValid(isValidPort(props.listener.port))}
+          />
+        </Td>
 
-      <Td>
-        <FormSelect
-          value={props.listener.protocol}
-          id={`addPortProtocol_${props.index}`}
-          name="addPortProtocol"
-          onChange={onAddProtocol}
-        >
-          {protocols.map((option, index) => (
-            <FormSelectOption isDisabled={false} key={`p_${index}`} value={option} label={option} />
-          ))}
-        </FormSelect>
-      </Td>
+        <Td>
+          <FormSelect
+            value={props.listener.protocol}
+            id={`addPortProtocol_${props.index}`}
+            name="addPortProtocol"
+            onChange={onAddProtocol}
+          >
+            {protocols.map((option, index) => (
+              <FormSelectOption isDisabled={false} key={`p_${index}`} value={option} label={option} />
+            ))}
+          </FormSelect>
+        </Td>
 
-      <Td>
-        <FormSelect value={props.listener.from} id={`addFrom_${props.index}`} name="addFrom" onChange={onAddFrom}>
-          {allowedRoutes.map((option, index) => (
-            <FormSelectOption isDisabled={false} key={`p_${index}`} value={option} label={option} />
-          ))}
-        </FormSelect>
-      </Td>
+        <Td>
+          <FormSelect value={props.listener.from} id={`addFrom_${props.index}`} name="addFrom" onChange={onAddFrom}>
+            {allowedRoutes.map((option, index) => (
+              <FormSelectOption isDisabled={false} key={`p_${index}`} value={option} label={option} />
+            ))}
+          </FormSelect>
+        </Td>
 
-      <Td>
-        <TextInput
-          id={`addSelectorLabels_${props.index}`}
-          name="addSelectorLabels"
-          onChange={onAddSelectorLabels}
-          validated={isValid(isValidSelector(props.listener.sSelectorLabels))}
-        />
-      </Td>
+        <Td>
+          <TextInput
+            id={`addSelectorLabels_${props.index}`}
+            name="addSelectorLabels"
+            onChange={onAddSelectorLabels}
+            validated={isValid(isValidSelector(props.listener.sSelectorLabels))}
+          />
+        </Td>
+        <Td>
+          <Button
+            id={`deleteBtn_${props.index}`}
+            variant={ButtonVariant.link}
+            icon={<KialiIcon.Trash />}
+            style={{ padding: 0 }}
+            onClick={() => props.onRemoveListener(props.index)}
+          />
+        </Td>
+      </Tr>
+      <Tr>
+        <Td>
+          {showTls && (
+            <FormGroup label="TLS Mode" isRequired={true} fieldId="addTlsMode" style={{ margin: '0.5rem 0' }}>
+              <FormSelect value={props.listener.tlsMode} id="addTlsMode" name="addTlsMode" onChange={onAddTlsMode}>
+                {tlsModes.map((option, index) => (
+                  <FormSelectOption isDisabled={false} key={`p_${index}`} value={option} label={option} />
+                ))}
+              </FormSelect>
+            </FormGroup>
+          )}
 
-      <Td>
-        <Button
-          id={`deleteBtn_${props.index}`}
-          variant={ButtonVariant.link}
-          icon={<KialiIcon.Trash />}
-          style={{ padding: 0 }}
-          onClick={() => props.onRemoveListener(props.index)}
-        />
-      </Td>
-    </Tr>
+          {showTls && props.listener.tlsMode === 'Terminate' && (
+            <>
+              <FormGroup
+                label="TLS Certificate"
+                style={{ margin: '0.5rem 0' }}
+                isRequired={true}
+                fieldId="server-certificate"
+              >
+                <TextInput
+                  value={props.listener.tlsCertName}
+                  isRequired={true}
+                  type="text"
+                  id="tls-certificate"
+                  aria-describedby="server-certificate"
+                  name="tls-certificate"
+                  onChange={onAddTlsCert}
+                  validated={isValid(props.listener.tlsCertName.length > 0)}
+                />
+              </FormGroup>
+            </>
+          )}
+        </Td>
+      </Tr>
+    </>
   );
 };
