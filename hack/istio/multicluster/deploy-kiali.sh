@@ -78,7 +78,7 @@ deploy_kiali() {
       echo "Pushing the dev image [${image_to_push}] to the cluster [${cluster_name}]..."
       ${DORP} push --tls-verify=false ${image_to_push}
     fi
-    helm_args+=("--set deployment.image_name=localhost/kiali/kiali --set deployment.image_version=dev")
+    helm_args+=("--set deployment.image_name=localhost:5000/kiali/kiali --set deployment.image_version=dev")
   fi
 
 
