@@ -72,7 +72,7 @@ deploy_kiali() {
       helm_args+=('--set deployment.image_pull_policy="Never"')
     else
       local image_to_tag="quay.io/kiali/kiali:dev"
-      local image_to_push="${minikube_ip}:5000/kiali/kiali:dev"
+      local image_to_push="$(minikube -p ${cluster_name} ip):5000/kiali/kiali:dev"
       echo "Tagging the dev image [${image_to_tag}] -> [${image_to_push}]..."
       ${DORP} tag ${image_to_tag} ${image_to_push}
       echo "Pushing the dev image [${image_to_push}] to the cluster [${cluster_name}]..."
