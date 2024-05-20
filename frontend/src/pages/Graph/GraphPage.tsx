@@ -375,15 +375,15 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
     if (urlTrace !== this.props.trace?.traceID) {
       this.props.setTraceId(urlTrace);
     }
+
+    // Ensure we initialize the graph. We wait for the toolbar to render and
+    // ensure all redux props are updated with URL settings.
+    // That in turn ensures the initial fetchParams are correct.
+    setTimeout(() => this.loadGraphDataFromBackend(), 0);
   }
 
   componentDidUpdate(prev: GraphPageProps): void {
     const curr = this.props;
-
-    // Ensure we initialize the graph. We wait for the first update so that
-    // the toolbar can render and ensure all redux props are updated with URL
-    // settings. That in turn ensures the initial fetchParams are correct.
-    const isInitialLoad = !this.state.graphData.timestamp;
 
     const activeNamespacesChanged = !arrayEquals(
       prev.activeNamespaces,
@@ -396,7 +396,6 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
       this.props.onNamespaceChange();
     }
     if (
-      isInitialLoad ||
       activeNamespacesChanged ||
       prev.boxByCluster !== curr.boxByCluster ||
       prev.boxByNamespace !== curr.boxByNamespace ||
