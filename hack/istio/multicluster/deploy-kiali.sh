@@ -70,15 +70,16 @@ deploy_kiali() {
       echo "Pushing the images into the cluster..."
       make -e DORP="${DORP}" -e CLUSTER_TYPE="kind" -e KIND_NAME="${cluster_name}" CLUSTER_REPO=localhost cluster-push-kiali
       helm_args+=('--set deployment.image_pull_policy="Never"')
+      helm_args+=("--set deployment.image_name=localhost/kiali/kiali --set deployment.image_version=dev")
     else
       local image_to_tag="quay.io/kiali/kiali:dev"
-      local image_to_push="${minikube_ip}:5000/kiali/kiali:dev"
+      local image_to_push="$(minikube -p ${cluster_name} ip):5000/kiali/kiali:dev"
       echo "Tagging the dev image [${image_to_tag}] -> [${image_to_push}]..."
       ${DORP} tag ${image_to_tag} ${image_to_push}
       echo "Pushing the dev image [${image_to_push}] to the cluster [${cluster_name}]..."
       ${DORP} push --tls-verify=false ${image_to_push}
+      helm_args+=("--set deployment.image_name=localhost:5000/kiali/kiali --set deployment.image_version=dev")
     fi
-    helm_args+=("--set deployment.image_name=localhost/kiali/kiali --set deployment.image_version=dev")
   fi
 
 
