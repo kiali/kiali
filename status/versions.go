@@ -42,7 +42,7 @@ const (
 )
 
 func getVersions() {
-	components := getKubernetesVersions()
+	components := getKubernetesVersion()
 
 	components = append(components, istioVersion, prometheusVersion)
 
@@ -294,7 +294,7 @@ func prometheusVersion() (*ExternalServiceInfo, error) {
 	return nil, err
 }
 
-func getKubernetesVersions() []externalService {
+func getKubernetesVersion() []externalService {
 	k8sVersions := []externalService{}
 
 	// Use the Kiali Service Account client to get the Kubernetes version
