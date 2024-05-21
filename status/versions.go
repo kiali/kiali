@@ -310,14 +310,14 @@ func getKubernetesVersions() []externalService {
 
 		if err != nil {
 			k8sVersions = append(k8sVersions, func() (*ExternalServiceInfo, error) { return nil, err })
+		} else {
+			k8sVersions = append(k8sVersions, func() (*ExternalServiceInfo, error) {
+				return &ExternalServiceInfo{
+					Name:    fmt.Sprintf("%s-%s", "Kubernetes", clusterName),
+					Version: serverVersion.GitVersion,
+				}, nil
+			})
 		}
-
-		k8sVersions = append(k8sVersions, func() (*ExternalServiceInfo, error) {
-			return &ExternalServiceInfo{
-				Name:    fmt.Sprintf("%s-%s", "Kubernetes", clusterName),
-				Version: serverVersion.GitVersion,
-			}, nil
-		})
 	}
 
 	return k8sVersions
