@@ -21,8 +21,8 @@ Feature: Kiali Mesh page
     Then user "does not see" mesh tour
 
   Scenario: See mesh
-    Then user sees mesh side panel
-    And user sees expected mesh infra
+    When user sees mesh side panel
+    Then user sees expected mesh infra
 
   Scenario: Test istiod
     When user selects mesh node with label "istiod"

@@ -84,7 +84,7 @@ export type MeshData = {
 // MeshRefs are passed back from the graph when it is ready, to allow for
 // other components, or test code, to manipulate the graph programatically.
 export type MeshRefs = {
-  controller: Controller;
+  getController: () => Controller;
   setSelectedIds: (values: string[]) => void;
 };
 
@@ -220,7 +220,7 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
         <FlexView className={conStyle} column={true}>
           <div>
             <MeshToolbar
-              controller={this.state.meshRefs?.controller}
+              controller={this.state.meshRefs?.getController()}
               disabled={this.state.meshData.isLoading}
               elementsChanged={this.state.meshData.elementsChanged}
               onToggleHelp={this.toggleHelp}

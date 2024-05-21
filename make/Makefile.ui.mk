@@ -21,6 +21,9 @@ yarn-start:
 cypress-run:
 	@cd ${ROOTDIR}/frontend && yarn cypress:run --headless --config numTestsKeptInMemory=0,video=false
 
+cypress-selected:
+	@cd ${ROOTDIR}/frontend && yarn cypress:run:selected --headless --config numTestsKeptInMemory=0,video=false
+
 ## cypress-gui: Opens the cypress GUI letting you pick which frontend integration tests to run locally.
 cypress-gui:
 	@cd ${ROOTDIR}/frontend && yarn cypress
