@@ -19,10 +19,12 @@ Before(() => {
 });
 
 When('user closes mesh tour', () => {
+  cy.waitForReact();
   cy.get('div[role="dialog"]').find('button[aria-label="Close"]').click();
 });
 
 When('user opens mesh tour', () => {
+  cy.waitForReact();
   cy.get('button#mesh-tour').click();
 });
 
@@ -32,7 +34,7 @@ When('user selects cluster mesh node', () => {
     .should('have.length', 1)
     .getCurrentState()
     .then(state => {
-      const controller = state.meshRefs.controller as Visualization;
+      const controller = state.meshRefs.getController() as Visualization;
       assert.isTrue(controller.hasGraph());
       const { nodes } = elems(controller);
       const node = nodes.find(n => (n.getData() as MeshNodeData).infraType === MeshInfraType.CLUSTER);
@@ -48,7 +50,7 @@ When('user selects mesh node with label {string}', (label: string) => {
     .should('have.length', 1)
     .getCurrentState()
     .then(state => {
-      const controller = state.meshRefs.controller as Visualization;
+      const controller = state.meshRefs.getController() as Visualization;
       assert.isTrue(controller.hasGraph());
       const { nodes } = elems(controller);
       const node = nodes.find(n => n.getLabel() === label);
@@ -58,12 +60,24 @@ When('user selects mesh node with label {string}', (label: string) => {
     });
 });
 
+When('user sees mesh side panel', () => {
+  cy.waitForReact();
+  cy.get('#loading_kiali_spinner').should('not.exist');
+  cy.get('#target-panel-mesh')
+    .should('be.visible')
+    .within(div => {
+      cy.contains('Mesh Name: Istio Mesh');
+    });
+});
+
 Then('user sees cluster side panel', () => {
+  cy.waitForReact();
   cy.get('#loading_kiali_spinner').should('not.exist');
   cy.get('#target-panel-cluster').should('be.visible');
 });
 
 Then('user sees control plane side panel', () => {
+  cy.waitForReact();
   cy.get('#loading_kiali_spinner').should('not.exist');
   cy.get('#target-panel-control-plane')
     .should('be.visible')
@@ -80,6 +94,7 @@ Then('user sees control plane side panel', () => {
 });
 
 Then('user sees data plane side panel', () => {
+  cy.waitForReact();
   cy.get('#loading_kiali_spinner').should('not.exist');
   cy.get('#target-panel-data-plane')
     .should('be.visible')
@@ -94,7 +109,7 @@ Then('user sees expected mesh infra', () => {
     .should('have.length', 1)
     .getCurrentState()
     .then(state => {
-      const controller = state.meshRefs.controller;
+      const controller = state.meshRefs.getController() as Visualization;
       assert.isTrue(controller.hasGraph());
       const { nodes, edges } = elems(controller);
       assert.equal(nodes.length, 8, 'Unexpected number of infra nodes');
@@ -109,16 +124,8 @@ Then('user sees expected mesh infra', () => {
     });
 });
 
-Then('user sees mesh side panel', () => {
-  cy.get('#loading_kiali_spinner').should('not.exist');
-  cy.get('#target-panel-mesh')
-    .should('be.visible')
-    .within(div => {
-      cy.contains('Mesh Name: Istio Mesh');
-    });
-});
-
 Then('user {string} mesh tour', (action: string) => {
+  cy.waitForReact();
   if (action === 'sees') {
     cy.get('div[role="dialog"]').find('span').contains('Shortcuts').should('exist');
   } else {
@@ -127,6 +134,7 @@ Then('user {string} mesh tour', (action: string) => {
 });
 
 Then('user sees {string} namespace side panel', (name: string) => {
+  cy.waitForReact();
   cy.get('#loading_kiali_spinner').should('not.exist');
   cy.get('#target-panel-namespace')
     .should('be.visible')
@@ -136,6 +144,7 @@ Then('user sees {string} namespace side panel', (name: string) => {
 });
 
 Then('user sees {string} node side panel', (name: string) => {
+  cy.waitForReact();
   cy.get('#loading_kiali_spinner').should('not.exist');
   cy.get('#target-panel-node')
     .should('be.visible')

@@ -411,7 +411,7 @@ const TopologyContent: React.FC<{
 
     if (initialGraph) {
       console.debug('mesh onReady');
-      onReady({ controller: controller, setSelectedIds: setSelectedIds });
+      onReady({ getController: () => controller, setSelectedIds: setSelectedIds });
     }
 
     // notify that the graph has been updated
