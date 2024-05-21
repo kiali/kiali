@@ -519,16 +519,37 @@ Then('the AuthorizationPolicy should have a {string}', function (healthStatus: s
   ).hasCssVar('color', `--pf-v5-global--${healthStatus}-color--100`);
 });
 
+function waitUntilConfigIsVisible(attempt: number, crdInstanceName: string, crdName: string, namespace: string):void {
+  if (attempt === 0) {
+    return;
+  }
+  cy.request('GET', `${Cypress.config('baseUrl')}/api/istio/config?refresh=0`);
+  cy.get('[data-test="refresh-button"]').click();
+  ensureKialiFinishedLoading();
+  let found = false;
+  cy.get('tr')
+    .each($row => {
+      console.log($row);
+      const dataTestAttr = $row[0].attributes.getNamedItem('data-test');
+      if (dataTestAttr !== null) {
+        if (dataTestAttr.value === `VirtualItem_Ns${namespace}_${crdName.toLowerCase()}_${crdInstanceName}`) {
+          found = true;
+        }
+      }
+    })
+    .then(() => {
+      if (!found) {
+        cy.wait(40000);
+        waitUntilConfigIsVisible(attempt - 1, crdInstanceName, crdName, namespace);
+      }
+    });
+}
+
 Then(
   'the {string} {string} of the {string} namespace should have a {string}',
   (crdInstanceName: string, crdName: string, namespace: string, healthStatus: string) => {
-    cy.request('GET', `${Cypress.config('baseUrl')}/api/istio/config?refresh=0`);
-    cy.get('[data-test="refresh-button"]').click();
-    ensureKialiFinishedLoading();
-
-    cy.get(`[data-test=VirtualItem_Ns${namespace}_${crdName.toLowerCase()}_${crdInstanceName}] span.pf-v5-c-icon`, {
-      timeout: 40000
-    })
+    waitUntilConfigIsVisible(3, crdInstanceName, crdName, namespace);
+    cy.get(`[data-test=VirtualItem_Ns${namespace}_${crdName.toLowerCase()}_${crdInstanceName}] span.pf-v5-c-icon`)
       .should('be.visible')
       .hasCssVar('color', `--pf-v5-global--${healthStatus}-color--100`);
   }
