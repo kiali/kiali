@@ -90,7 +90,7 @@ func ParseAppenders(o graph.TelemetryOptions) (appenders []graph.Appender, final
 	}
 	if _, ok := requestedAppenders[WorkloadEntryAppenderName]; ok || o.Appenders.All {
 		a := WorkloadEntryAppender{
-			GraphType: o.GraphType,
+			AccessibleNamespaces: o.AccessibleNamespaces,
 		}
 		appenders = append(appenders, a)
 	}
@@ -192,7 +192,9 @@ func ParseAppenders(o graph.TelemetryOptions) (appenders []graph.Appender, final
 	}
 
 	// The finalizer order is important
-	// always run the outsider finalizer
+
+	// always run the outsider finalizer first, this alloes other finalizers to
+	// utilize graph.isInaccessible and graph.isOutside metatdata values.
 	finalizers = append(finalizers, &OutsiderAppender{
 		AccessibleNamespaces: o.AccessibleNamespaces,
 		Namespaces:           o.Namespaces,

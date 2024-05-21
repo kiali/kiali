@@ -17,7 +17,7 @@ const WorkloadEntryAppenderName = "workloadEntry"
 // labels on both the trafficMap node and the WorkloadEntry object being equivalent.
 // A workload can have multiple matches.
 type WorkloadEntryAppender struct {
-	GraphType string
+	AccessibleNamespaces graph.AccessibleNamespaces
 }
 
 // Name implements Appender
@@ -27,7 +27,7 @@ func (a WorkloadEntryAppender) Name() string {
 
 // IsFinalizer implements Appender
 func (a WorkloadEntryAppender) IsFinalizer() bool {
-	return true
+	return false
 }
 
 // AppendGraph implements Appender
@@ -56,6 +56,11 @@ func (a WorkloadEntryAppender) applyWorkloadEntries(trafficMap graph.TrafficMap,
 			continue
 		}
 
+		// Skip if the node is not accesible to the user, because we can't query for the config
+		if !a.isAccessible(n.Cluster, n.Namespace) {
+			continue
+		}
+
 		istioCfg, err := globalInfo.Business.IstioConfig.GetIstioConfigListForNamespace(context.TODO(), n.Cluster, n.Namespace, business.IstioConfigCriteria{
 			IncludeWorkloadEntries: true,
 		})
@@ -77,4 +82,11 @@ func (a WorkloadEntryAppender) applyWorkloadEntries(trafficMap graph.TrafficMap,
 			}
 		}
 	}
+}
+
+// returns true if we have access to the cluster-specific namespace
+func (a *WorkloadEntryAppender) isAccessible(cluster, namespace string) bool {
+	key := graph.GetClusterSensitiveKey(cluster, namespace)
+	_, ok := a.AccessibleNamespaces[key]
+	return ok
 }

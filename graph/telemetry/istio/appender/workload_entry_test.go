@@ -3,6 +3,7 @@ package appender_test
 import (
 	"sort"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
@@ -129,9 +130,17 @@ func TestWorkloadEntry(t *testing.T) {
 	globalInfo := graph.NewAppenderGlobalInfo()
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo(appNamespace)
+	key := graph.GetClusterSensitiveKey(testCluster, appNamespace)
 
 	// Run the appender...
-	a := appender.WorkloadEntryAppender{}
+	a := appender.WorkloadEntryAppender{
+		AccessibleNamespaces: graph.AccessibleNamespaces{
+			key: &graph.AccessibleNamespace{
+				Cluster:           testCluster,
+				CreationTimestamp: time.Now(),
+				Name:              appNamespace,
+			}},
+	}
 	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
 
 	assert.Equal(5, len(trafficMap))
@@ -200,9 +209,17 @@ func TestWorkloadEntryAppLabelNotMatching(t *testing.T) {
 	globalInfo := graph.NewAppenderGlobalInfo()
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo(appNamespace)
+	key := graph.GetClusterSensitiveKey(testCluster, appNamespace)
 
 	// Run the appender...
-	a := appender.WorkloadEntryAppender{}
+	a := appender.WorkloadEntryAppender{
+		AccessibleNamespaces: graph.AccessibleNamespaces{
+			key: &graph.AccessibleNamespace{
+				Cluster:           testCluster,
+				CreationTimestamp: time.Now(),
+				Name:              appNamespace,
+			}},
+	}
 	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
 
 	assert.Equal(5, len(trafficMap))
@@ -279,9 +296,17 @@ func TestMultipleWorkloadEntryForSameWorkload(t *testing.T) {
 	globalInfo := graph.NewAppenderGlobalInfo()
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo(appNamespace)
+	key := graph.GetClusterSensitiveKey(testCluster, appNamespace)
 
 	// Run the appender...
-	a := appender.WorkloadEntryAppender{}
+	a := appender.WorkloadEntryAppender{
+		AccessibleNamespaces: graph.AccessibleNamespaces{
+			key: &graph.AccessibleNamespace{
+				Cluster:           testCluster,
+				CreationTimestamp: time.Now(),
+				Name:              appNamespace,
+			}},
+	}
 	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
 
 	assert.Equal(5, len(trafficMap))
@@ -340,9 +365,17 @@ func TestWorkloadWithoutWorkloadEntries(t *testing.T) {
 	globalInfo := graph.NewAppenderGlobalInfo()
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo(appNamespace)
+	key := graph.GetClusterSensitiveKey(testCluster, appNamespace)
 
 	// Run the appender...
-	a := appender.WorkloadEntryAppender{}
+	a := appender.WorkloadEntryAppender{
+		AccessibleNamespaces: graph.AccessibleNamespaces{
+			key: &graph.AccessibleNamespace{
+				Cluster:           testCluster,
+				CreationTimestamp: time.Now(),
+				Name:              appNamespace,
+			}},
+	}
 	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
 
 	assert.Equal(5, len(trafficMap))
@@ -361,4 +394,39 @@ func TestWorkloadWithoutWorkloadEntries(t *testing.T) {
 	workloadV3Node, found := trafficMap[workloadV3ID]
 	assert.True(found)
 	assert.NotContains(workloadV3Node.Metadata, graph.HasWorkloadEntry)
+}
+
+// TestKiali7305 tests the scenario where the node is inaccessible
+func TestWEKiali7305(t *testing.T) {
+	assert := require.New(t)
+
+	businessLayer := setupBusinessLayer(t, &core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: appNamespace}})
+
+	// VersionedApp graph
+	trafficMap := make(map[string]*graph.Node)
+
+	// v1 Workload
+	n0, _ := graph.NewNode("inaccessibleCluster", appNamespace, appName, appNamespace, "ratings-v1", appName, "v1", graph.GraphTypeVersionedApp)
+	trafficMap[n0.ID] = n0
+
+	assert.Equal(1, len(trafficMap))
+
+	globalInfo := graph.NewAppenderGlobalInfo()
+	globalInfo.Business = businessLayer
+	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
+	key := graph.GetClusterSensitiveKey(testCluster, appNamespace)
+
+	// Run the appender...
+	a := appender.WorkloadEntryAppender{
+		AccessibleNamespaces: graph.AccessibleNamespaces{
+			key: &graph.AccessibleNamespace{
+				Cluster:           testCluster,
+				CreationTimestamp: time.Now(),
+				Name:              appNamespace,
+			}},
+	}
+	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
+
+	// No changes, just validating an accessibility check
+	assert.Equal(1, len(trafficMap))
 }

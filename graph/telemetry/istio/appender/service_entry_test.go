@@ -198,7 +198,9 @@ func TestServiceEntry(t *testing.T) {
 				Cluster:           config.DefaultClusterID,
 				CreationTimestamp: time.Now(),
 				Name:              "testNamespace",
-			}}}
+			}},
+		GraphType: graph.GraphTypeVersionedApp,
+	}
 	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
 
 	assert.Equal(6, len(trafficMap))
@@ -316,7 +318,9 @@ func TestServiceEntryExportAll(t *testing.T) {
 				Cluster:           config.DefaultClusterID,
 				CreationTimestamp: time.Now(),
 				Name:              "testNamespace",
-			}}}
+			}},
+		GraphType: graph.GraphTypeVersionedApp,
+	}
 	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
 
 	assert.Equal(6, len(trafficMap))
@@ -428,7 +432,9 @@ func TestServiceEntryExportNamespaceFound(t *testing.T) {
 				Cluster:           config.DefaultClusterID,
 				CreationTimestamp: time.Now(),
 				Name:              "testNamespace",
-			}}}
+			}},
+		GraphType: graph.GraphTypeVersionedApp,
+	}
 	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
 
 	assert.Equal(6, len(trafficMap))
@@ -540,7 +546,9 @@ func TestServiceEntryExportDefinitionNamespace(t *testing.T) {
 				Cluster:           config.DefaultClusterID,
 				CreationTimestamp: time.Now(),
 				Name:              "testNamespace",
-			}}}
+			}},
+		GraphType: graph.GraphTypeVersionedApp,
+	}
 	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
 
 	assert.Equal(6, len(trafficMap))
@@ -652,7 +660,9 @@ func TestServiceEntryExportNamespaceNotFound(t *testing.T) {
 				Cluster:           config.DefaultClusterID,
 				CreationTimestamp: time.Now(),
 				Name:              "testNamespace",
-			}}}
+			}},
+		GraphType: graph.GraphTypeVersionedApp,
+	}
 	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
 
 	assert.Equal(7, len(trafficMap))
@@ -769,7 +779,9 @@ func TestKiali7153_1(t *testing.T) {
 				Cluster:           config.DefaultClusterID,
 				CreationTimestamp: time.Now(),
 				Name:              "otherNamespace"},
-		}}
+		},
+		GraphType: graph.GraphTypeVersionedApp,
+	}
 	a.AppendGraph(trafficMap, globalInfo, testNamespaceInfo)
 
 	assert.Equal(6, len(trafficMap))
@@ -865,7 +877,7 @@ func TestDisjointMulticlusterEntries(t *testing.T) {
 	globalInfo := graph.NewAppenderGlobalInfo()
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo("namespace")
-	key := graph.GetClusterSensitiveKey(config.DefaultClusterID, "testNamespace")
+	key := graph.GetClusterSensitiveKey(config.DefaultClusterID, "namespace")
 
 	a := ServiceEntryAppender{
 		AccessibleNamespaces: graph.AccessibleNamespaces{
@@ -873,7 +885,9 @@ func TestDisjointMulticlusterEntries(t *testing.T) {
 				Cluster:           config.DefaultClusterID,
 				CreationTimestamp: time.Now(),
 				Name:              "namespace",
-			}}}
+			}},
+		GraphType: graph.GraphTypeVersionedApp,
+	}
 	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
 
 	// Assertions
@@ -1015,7 +1029,9 @@ func TestServiceEntrySameHostMatchNamespace(t *testing.T) {
 				Cluster:           config.DefaultClusterID,
 				CreationTimestamp: time.Now(),
 				Name:              "testNamespace",
-			}}}
+			}},
+		GraphType: graph.GraphTypeVersionedApp,
+	}
 	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
 
 	assert.Equal(3, len(trafficMap))
@@ -1135,7 +1151,7 @@ func TestServiceEntrySameHostNoMatchNamespace(t *testing.T) {
 	globalInfo := graph.NewAppenderGlobalInfo()
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo("otherNamespace")
-	key := graph.GetClusterSensitiveKey(config.DefaultClusterID, "testNamespace")
+	key := graph.GetClusterSensitiveKey(config.DefaultClusterID, "otherNamespace")
 
 	// Run the appender...
 	a := ServiceEntryAppender{
@@ -1144,7 +1160,9 @@ func TestServiceEntrySameHostNoMatchNamespace(t *testing.T) {
 				Cluster:           config.DefaultClusterID,
 				CreationTimestamp: time.Now(),
 				Name:              "otherNamespace",
-			}}}
+			}},
+		GraphType: graph.GraphTypeVersionedApp,
+	}
 	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
 
 	assert.Equal(4, len(trafficMap))
@@ -1254,7 +1272,9 @@ func TestServiceEntryMultipleEdges(t *testing.T) {
 				Cluster:           config.DefaultClusterID,
 				CreationTimestamp: time.Now(),
 				Name:              "testNamespace",
-			}}}
+			}},
+		GraphType: graph.GraphTypeVersionedApp,
+	}
 	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
 
 	assert.Equal(3, len(trafficMap))
@@ -1279,4 +1299,47 @@ func TestServiceEntryMultipleEdges(t *testing.T) {
 	assert.Equal(true, v2NodeFound)
 	assert.Equal(0, len(v2Node.Edges))
 	assert.Equal(nil, v2Node.Metadata[graph.IsServiceEntry])
+}
+
+// TestKiali7305 tests the scenario where the requesting node is actually inaccessible
+func TestSEKiali7305(t *testing.T) {
+	assert := assert.New(t)
+
+	businessLayer := setupServiceEntries(t, "testNamespace", nil)
+
+	// VersionedApp graph
+	trafficMap := make(map[string]*graph.Node)
+
+	// testNode
+	n0, _ := graph.NewNode("InaccessibleCluster", graph.Unknown, "test", "testNamespace", "test-v1", "test", "v1", graph.GraphTypeVersionedApp)
+
+	// NotSE serviceNode
+	n1, _ := graph.NewNode(config.DefaultClusterID, "testNamespace", "NotSE", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
+
+	trafficMap[n0.ID] = n0
+	trafficMap[n1.ID] = n1
+
+	n0.AddEdge(n1).Metadata[graph.ProtocolKey] = graph.HTTP.Name
+
+	assert.Equal(2, len(trafficMap))
+
+	globalInfo := graph.NewAppenderGlobalInfo()
+	globalInfo.Business = businessLayer
+	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
+	key := graph.GetClusterSensitiveKey(config.DefaultClusterID, "testNamespace")
+
+	// Run the appender...
+	a := ServiceEntryAppender{
+		AccessibleNamespaces: graph.AccessibleNamespaces{
+			key: &graph.AccessibleNamespace{
+				Cluster:           config.DefaultClusterID,
+				CreationTimestamp: time.Now(),
+				Name:              "testNamespace",
+			}},
+		GraphType: graph.GraphTypeVersionedApp,
+	}
+	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
+
+	// unchanged, we were just testing access checking during appender processing
+	assert.Equal(2, len(trafficMap))
 }
