@@ -16,6 +16,7 @@ import {
   HTTPRouteDestination,
   IstioObject,
   K8sGateway,
+  K8sGatewayTLS,
   K8sHTTPHeaderFilter,
   K8sHTTPMatch,
   K8sHTTPRequestMirrorFilter,
@@ -1878,7 +1879,8 @@ export const buildK8sGateway = (
               matchLabels: s.allowedRoutes.namespaces.selector?.matchLabels
             }
           }
-        }
+        },
+        tls: getTLS(s.tls)
       })),
       addresses: state.addresses.map(s => ({
         type: s.type,
@@ -2150,4 +2152,16 @@ export const addLabels = (istioObject: IstioObject, value: { [key: string]: stri
 
 export const addAnnotations = (istioObject: IstioObject, value: { [key: string]: string }): void => {
   istioObject.metadata.annotations = value;
+};
+
+export const getTLS = (tls?: K8sGatewayTLS): K8sGatewayTLS | undefined => {
+  if (!tls) {
+    return undefined;
+  }
+  return {
+    certificateRefs: tls.certificateRefs.map(c => ({
+      kind: 'Secret',
+      name: c.name
+    }))
+  };
 };

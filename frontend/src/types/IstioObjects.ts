@@ -783,6 +783,7 @@ export interface Listener {
   name: string;
   port: number;
   protocol: string;
+  tls?: K8sGatewayTLS;
 }
 
 export interface Address {
@@ -842,6 +843,16 @@ export interface K8sGatewaySpec {
   addresses?: Address[];
   gatewayClassName: string;
   listeners?: Listener[];
+}
+
+export interface K8sGatewayTLS {
+  certificateRefs: K8sGatewayTLSCertRef[];
+}
+
+export interface K8sGatewayTLSCertRef {
+  group?: string;
+  kind: string;
+  name: string;
 }
 
 export interface K8sGRPCRouteSpec extends K8sCommonRouteSpec {

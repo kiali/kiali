@@ -5,7 +5,7 @@ import { PFColors } from '../../../components/Pf/PfColors';
 import { Button, ButtonVariant } from '@patternfly/react-core';
 import { Listener } from '../../../types/IstioObjects';
 import { ListenerForm } from '../K8sGatewayForm';
-import { ListenerBuilder, allowedRoutes, protocols, tlsModes } from './ListenerBuilder';
+import { ListenerBuilder, allowedRoutes, protocols, tlsModes, protocolsCert, tlsModesCert } from './ListenerBuilder';
 import { KialiIcon } from 'config/KialiIcon';
 
 type ListenerListProps = {
@@ -98,7 +98,7 @@ export const ListenerList: React.FC<ListenerListProps> = (props: ListenerListPro
       from: allowedRoutes[0],
       isLabelSelectorValid: false,
       tlsMode: tlsModes[0],
-      tlsCertName: '',
+      tlsCert: '',
       sSelectorLabels: ''
     };
 
@@ -155,6 +155,17 @@ export const ListenerList: React.FC<ListenerListProps> = (props: ListenerListPro
       protocol: listenerForm.protocol,
       allowedRoutes: { namespaces: { from: listenerForm.from, selector: { matchLabels: selector } } }
     };
+
+    if (protocolsCert.includes(listenerForm.protocol) && tlsModesCert.includes(listenerForm.tlsMode)) {
+      listener.tls = {
+        certificateRefs: [
+          {
+            kind: 'Secret',
+            name: listenerForm.tlsCert
+          }
+        ]
+      };
+    }
 
     return listener;
   };

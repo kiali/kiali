@@ -3,7 +3,7 @@ import { FormGroup, FormSelect, FormSelectOption } from '@patternfly/react-core'
 import { AddressList } from './GatewayForm/AddressList';
 import { Address, Listener, MAX_PORT, MIN_PORT } from '../../types/IstioObjects';
 import { ListenerList } from './GatewayForm/ListenerList';
-import { isValidHostname, isValidName } from './GatewayForm/ListenerBuilder';
+import { isValidHostname, isValidName, isValidTLS } from './GatewayForm/ListenerBuilder';
 import { isValidAddress } from './GatewayForm/AddressBuilder';
 import { serverConfig } from '../../config';
 
@@ -47,7 +47,7 @@ export type ListenerForm = {
   port: string;
   protocol: string;
   sSelectorLabels: string;
-  tlsCertName: string;
+  tlsCert: string;
   tlsMode: string;
 };
 
@@ -58,7 +58,8 @@ const validListeners = (listeners: Listener[]): boolean => {
       typeof e.port !== 'undefined' &&
       e.port >= MIN_PORT &&
       e.port <= MAX_PORT &&
-      isValidHostname(e.hostname)
+      isValidHostname(e.hostname) &&
+      isValidTLS(e.protocol, e.tls)
     );
   });
 };

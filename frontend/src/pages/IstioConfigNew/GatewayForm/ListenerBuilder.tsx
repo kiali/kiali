@@ -5,7 +5,7 @@ import { isValid } from '../../../utils/Common';
 import { ListenerForm } from '../K8sGatewayForm';
 import { Td, Tr } from '@patternfly/react-table';
 import { addSelectorLabels } from './ListenerList';
-import { MAX_PORT, MIN_PORT } from '../../../types/IstioObjects';
+import { K8sGatewayTLS, MAX_PORT, MIN_PORT } from '../../../types/IstioObjects';
 import { KialiIcon } from 'config/KialiIcon';
 
 type ListenerBuilderProps = {
@@ -17,18 +17,35 @@ type ListenerBuilderProps = {
 
 // Only HTTPRoute is supported in Istio
 export const protocols = ['HTTP', 'HTTPS'];
+// protocols which could require certificate
+export const protocolsCert = ['HTTPS'];
 export const allowedRoutes = ['All', 'Selector', 'Same'];
 export const tlsModes = ['Terminate'];
+// TLS mode which require ceritificate cuttently one
+export const tlsModesCert = ['Terminate'];
 
 export const isValidName = (name: string): boolean => {
   return name !== undefined && name.length > 0;
 };
 
 export const isValidHostname = (hostname: string): boolean => {
-  if (!hostname) {
+  return hostname !== undefined && hostname.length > 0 && isK8sGatewayHostValid(hostname);
+};
+
+export const isValidTLS = (protocol: string, tls?: K8sGatewayTLS): boolean => {
+  const tlsRequired = protocolsCert.includes(protocol);
+  if (!tls || !tlsRequired) {
     return true;
   }
-  return hostname !== undefined && hostname.length > 0 && isK8sGatewayHostValid(hostname);
+
+  for (const cert of tls.certificateRefs) {
+    const certsValid = tlsRequired ? cert.name !== undefined && cert.name.length > 0 : true;
+    if (!certsValid) {
+      return false;
+    }
+  }
+
+  return true;
 };
 
 export const isValidPort = (port: string): boolean => {
@@ -91,12 +108,12 @@ export const ListenerBuilder: React.FC<ListenerBuilderProps> = (props: ListenerB
 
   const onAddTlsCert = (_event: React.FormEvent, value: string): void => {
     const listener = props.listener;
-    listener.tlsCertName = value.trim();
+    listener.tlsCert = value.trim();
 
     props.onChange(listener, props.index);
   };
 
-  const showTls = props.listener.protocol === 'HTTPS';
+  const showTls = protocolsCert.includes(props.listener.protocol);
 
   return (
     <>
@@ -176,9 +193,9 @@ export const ListenerBuilder: React.FC<ListenerBuilderProps> = (props: ListenerB
           />
         </Td>
       </Tr>
-      <Tr>
-        <Td>
-          {showTls && (
+      {showTls && (
+        <Tr>
+          <Td>
             <FormGroup label="TLS Mode" isRequired={true} fieldId="addTlsMode" style={{ margin: '0.5rem 0' }}>
               <FormSelect value={props.listener.tlsMode} id="addTlsMode" name="addTlsMode" onChange={onAddTlsMode}>
                 {tlsModes.map((option, index) => (
@@ -186,31 +203,32 @@ export const ListenerBuilder: React.FC<ListenerBuilderProps> = (props: ListenerB
                 ))}
               </FormSelect>
             </FormGroup>
-          )}
-
-          {showTls && props.listener.tlsMode === 'Terminate' && (
-            <>
-              <FormGroup
-                label="TLS Certificate"
-                style={{ margin: '0.5rem 0' }}
+          </Td>
+        </Tr>
+      )}
+      {showTls && tlsModesCert.includes(props.listener.tlsMode) && (
+        <Tr>
+          <Td>
+            <FormGroup
+              label="TLS Certificate"
+              style={{ margin: '0.5rem 0' }}
+              isRequired={true}
+              fieldId="server-certificate"
+            >
+              <TextInput
+                value={props.listener.tlsCert}
                 isRequired={true}
-                fieldId="server-certificate"
-              >
-                <TextInput
-                  value={props.listener.tlsCertName}
-                  isRequired={true}
-                  type="text"
-                  id="tls-certificate"
-                  aria-describedby="server-certificate"
-                  name="tls-certificate"
-                  onChange={onAddTlsCert}
-                  validated={isValid(props.listener.tlsCertName.length > 0)}
-                />
-              </FormGroup>
-            </>
-          )}
-        </Td>
-      </Tr>
+                type="text"
+                id="tls-certificate"
+                aria-describedby="server-certificate"
+                name="tls-certificate"
+                onChange={onAddTlsCert}
+                validated={isValid(props.listener.tlsCert.length > 0)}
+              />
+            </FormGroup>
+          </Td>
+        </Tr>
+      )}
     </>
   );
 };
