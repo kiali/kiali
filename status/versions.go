@@ -42,11 +42,9 @@ const (
 )
 
 func getVersions() {
-	components := []externalService{
-		istioVersion,
-		prometheusVersion,
-		kubernetesVersion,
-	}
+	components := getKubernetesVersions()
+
+	components = append(components, istioVersion, prometheusVersion)
 
 	if config.Get().ExternalServices.Grafana.Enabled {
 		components = append(components, grafanaVersion)
@@ -296,22 +294,31 @@ func prometheusVersion() (*ExternalServiceInfo, error) {
 	return nil, err
 }
 
-func kubernetesVersion() (*ExternalServiceInfo, error) {
+func getKubernetesVersions() []externalService {
+	k8sVersions := []externalService{}
+
 	// Use the Kiali Service Account client to get the Kubernetes version
 	// since the status endpoint does not have a user token.
 	cf, err := kubernetes.GetClientFactory()
 	if err != nil {
-		return nil, err
+		return append(k8sVersions, func() (*ExternalServiceInfo, error) { return nil, err })
 	}
 
-	// TODO: Support multi-primary
-	serverVersion, err := cf.GetSAHomeClusterClient().GetServerVersion()
-	if err != nil {
-		return nil, err
+	// Loop through all SA clients to get Kubernetes versions of all clusters
+	for clusterName, saClient := range cf.GetSAClients() {
+		serverVersion, err := saClient.GetServerVersion()
+
+		if err != nil {
+			k8sVersions = append(k8sVersions, func() (*ExternalServiceInfo, error) { return nil, err })
+		}
+
+		k8sVersions = append(k8sVersions, func() (*ExternalServiceInfo, error) {
+			return &ExternalServiceInfo{
+				Name:    fmt.Sprintf("%s-%s", "Kubernetes", clusterName),
+				Version: serverVersion.GitVersion,
+			}, nil
+		})
 	}
 
-	return &ExternalServiceInfo{
-		Name:    "Kubernetes",
-		Version: serverVersion.GitVersion,
-	}, nil
+	return k8sVersions
 }

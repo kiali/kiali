@@ -36,21 +36,24 @@ export const TargetPanelMesh: React.FC<TargetPanelMeshProps> = (props: TargetPan
     const clusterDataPlanes = dataPlaneNodes.filter(node => node.getData().cluster === clusterData.cluster);
 
     return (
-      <div style={{ marginBottom: '1rem' }}>
+      <div key={clusterData.id} style={{ marginBottom: '1rem' }}>
         {renderNodeHeader(clusterData, { nameOnly: true, smallSize: false, hideBadge: clusterData.isExternal })}
         <div className={infoStyle}>
-          {!clusterData.isExternal && `${t('Version')}: ${clusterData.version || UNKNOWN}`}
+          {!clusterData.isExternal && `${t('Kubernetes')}: ${clusterData.version || UNKNOWN}`}
           {infraNodes
             .filter(node => node.getData().cluster === clusterData.cluster)
             .sort((in1, in2) => {
               const data1 = in1.getData() as MeshNodeData;
               const data2 = in2.getData() as MeshNodeData;
+
               if (data1.infraType === MeshInfraType.ISTIOD) {
                 return -1;
               }
+
               if (data2.infraType === MeshInfraType.ISTIOD) {
                 return 1;
               }
+
               return data1.infraName.toLowerCase() < data2.infraName.toLowerCase() ? -1 : 1;
             })
             .map(node => renderInfraNodeSummary(node.getData()))}
@@ -62,7 +65,7 @@ export const TargetPanelMesh: React.FC<TargetPanelMeshProps> = (props: TargetPan
 
   const renderInfraNodeSummary = (nodeData: MeshNodeData): React.ReactNode => {
     return (
-      <div className={summaryStyle}>
+      <div key={nodeData.id} className={summaryStyle}>
         {renderNodeHeader(nodeData, { nameOnly: true, smallSize: true })}
         <div className={infoStyle}>
           <div>{`${t('Version')}: ${nodeData.version || UNKNOWN}`}</div>
@@ -76,7 +79,7 @@ export const TargetPanelMesh: React.FC<TargetPanelMeshProps> = (props: TargetPan
 
   const renderDataPlaneSummary = (nodeData: MeshNodeData, showCanaryInfo: boolean): React.ReactNode => {
     return (
-      <div className={summaryStyle}>
+      <div key={nodeData.id} className={summaryStyle}>
         {renderNodeHeader(nodeData, { nameOnly: true, smallSize: true })}
         <div className={infoStyle}>
           {showCanaryInfo && (
