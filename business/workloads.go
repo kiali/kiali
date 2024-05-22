@@ -1896,12 +1896,15 @@ func (in *WorkloadService) isWorkloadEnrolled(ctx context.Context, workload mode
 	}
 
 	// Is the namespace labeled?
-	ns, ok := in.cache.GetNamespace(workload.Cluster, in.userClients[workload.Cluster].GetToken(), workload.Namespace)
-	waypointName, ok := ns.Labels[config.WaypointUseLabel]
+	ns, found := in.cache.GetNamespace(workload.Cluster, in.userClients[workload.Cluster].GetToken(), workload.Namespace)
 
-	if ok {
-		found = true
-		waypointNames = append(waypointNames, models.Waypoint{Name: waypointName, Type: "namespace"})
+	if found {
+		waypointName, ok := ns.Labels[config.WaypointUseLabel]
+
+		if ok {
+			found = true
+			waypointNames = append(waypointNames, models.Waypoint{Name: waypointName, Type: "namespace"})
+		}
 	}
 
 	var services []models.ServiceOverview
