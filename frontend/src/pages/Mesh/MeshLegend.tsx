@@ -12,7 +12,7 @@ export interface MeshLegendProps {
 }
 
 const legendBoxStyle = kialiStyle({
-  width: '220px',
+  width: '225px',
   backgroundColor: PFColors.BackgroundColor100,
   border: `1px solid ${PFColors.BorderColor100}`,
   overflowY: 'auto',
