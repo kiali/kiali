@@ -1927,7 +1927,7 @@ func (in *WorkloadService) isWorkloadEnrolled(ctx context.Context, workload mode
 	}
 	if len(services) > 0 {
 		for _, svc := range services {
-			waypointName, ok = svc.Labels[config.WaypointUseLabel]
+			waypointName, ok := svc.Labels[config.WaypointUseLabel]
 			if ok {
 				found = true
 				waypointNames = append(waypointNames, models.Waypoint{Name: waypointName, Type: "service"})
