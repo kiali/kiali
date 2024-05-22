@@ -1083,3 +1083,199 @@ func TestGetWorkloadMultiCluster(t *testing.T) {
 	assert.Equal("east", workload.Cluster)
 	assert.Contains(workload.Annotations, "unique-to-east")
 }
+
+// TestValidateWaypoint where the pod is enrolled
+func TestValidateWaypoint(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	// Setup mocks
+	kubeObjs := []runtime.Object{
+		&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}},
+	}
+
+	for _, obj := range FakeWaypointPod() {
+		o := obj
+		kubeObjs = append(kubeObjs, &o)
+	}
+
+	for _, obj := range FakeWaypointNamespaceEnrolledPods(true) {
+		o := obj
+		kubeObjs = append(kubeObjs, &o)
+	}
+
+	k8s := kubetest.NewFakeK8sClient(kubeObjs...)
+	k8s.OpenShift = true
+	SetupBusinessLayer(t, k8s, *conf)
+	svc := setupWorkloadService(k8s, conf)
+
+	// Get waypoint proxy
+	criteria := WorkloadCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", WorkloadName: "waypoint", WorkloadType: "", IncludeServices: false}
+	workload, err := svc.GetWorkload(context.TODO(), criteria)
+
+	require.NoError(err)
+	require.NotNil(workload)
+
+	assert.Equal(1, len(workload.Pods))
+	assert.True(workload.Pods[0].IsWaypoint())
+
+	// Get waypoint proxy
+	criteriaDetails := WorkloadCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", WorkloadName: "details", WorkloadType: "", IncludeServices: false}
+	workloadDetails, errDetails := svc.GetWorkload(context.TODO(), criteriaDetails)
+
+	require.NoError(errDetails)
+	require.NotNil(workloadDetails)
+
+	assert.Equal(1, len(workloadDetails.Pods))
+	assert.Equal(1, len(workloadDetails.WaypointWorkloads))
+	assert.Equal("waypoint", workloadDetails.WaypointWorkloads[0].Name)
+
+	// productPage should not have a waypoint
+	criteriaProductPage := WorkloadCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", WorkloadName: "productpage", WorkloadType: "", IncludeServices: false}
+	workloadProductPage, errProductPage := svc.GetWorkload(context.TODO(), criteriaProductPage)
+
+	require.NoError(errProductPage)
+	require.NotNil(workloadProductPage)
+
+	assert.Equal(1, len(workloadProductPage.Pods))
+	assert.Equal(0, len(workloadProductPage.WaypointWorkloads))
+}
+
+// TestValidateWaypointNS where the namespace is enrolled, not the pod
+func TestValidateWaypointNS(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	waypointLabel := conf.IstioLabels.AmbientWaypointUseLabel
+
+	// Setup mocks
+	kubeObjs := []runtime.Object{
+		&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace", Labels: map[string]string{waypointLabel: "waypoint"}}},
+	}
+
+	for _, obj := range FakeWaypointPod() {
+		o := obj
+		kubeObjs = append(kubeObjs, &o)
+	}
+
+	for _, obj := range FakeWaypointNamespaceEnrolledPods(false) {
+		o := obj
+		kubeObjs = append(kubeObjs, &o)
+	}
+
+	// cache
+	clientFactory := kubetest.NewK8SClientFactoryMock(nil)
+	clients := map[string]kubernetes.ClientInterface{
+		"": kubetest.NewFakeK8sClient(
+			&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace", Labels: map[string]string{waypointLabel: "waypoint"}}},
+		),
+	}
+	clientFactory.SetClients(clients)
+	cache := cache.NewTestingCacheWithFactory(t, clientFactory, *conf)
+	kialiCache = cache
+
+	k8s := kubetest.NewFakeK8sClient(kubeObjs...)
+	k8s.OpenShift = true
+	SetupBusinessLayer(t, k8s, *conf)
+	svc := setupWorkloadService(k8s, conf)
+
+	// Get waypoint proxy
+	criteria := WorkloadCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", WorkloadName: "waypoint", WorkloadType: "", IncludeServices: false}
+	workload, err := svc.GetWorkload(context.TODO(), criteria)
+
+	require.NoError(err)
+	require.NotNil(workload)
+
+	assert.Equal(1, len(workload.Pods))
+	assert.True(workload.Pods[0].IsWaypoint())
+
+	// Get waypoint proxy
+	criteriaDetails := WorkloadCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", WorkloadName: "details", WorkloadType: "", IncludeServices: false}
+	workloadDetails, errDetails := svc.GetWorkload(context.TODO(), criteriaDetails)
+
+	require.NoError(errDetails)
+	require.NotNil(workloadDetails)
+
+	assert.Equal(1, len(workloadDetails.Pods))
+	assert.Equal(1, len(workloadDetails.WaypointWorkloads))
+	assert.Equal("waypoint", workloadDetails.WaypointWorkloads[0].Name)
+
+	// productPage should have also a waypoint
+	criteriaProductPage := WorkloadCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", WorkloadName: "productpage", WorkloadType: "", IncludeServices: false}
+	workloadProductPage, errProductPage := svc.GetWorkload(context.TODO(), criteriaProductPage)
+
+	require.NoError(errProductPage)
+	require.NotNil(workloadProductPage)
+
+	assert.Equal(1, len(workloadProductPage.Pods))
+	assert.Equal(1, len(workloadProductPage.WaypointWorkloads))
+	assert.Equal("waypoint", workloadProductPage.WaypointWorkloads[0].Name)
+}
+
+// TestValidateWaypoint where the service is enrolled
+func TestValidateWaypointService(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	// Setup mocks
+	kubeObjs := []runtime.Object{
+		&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}},
+	}
+
+	for _, obj := range FakeWaypointPod() {
+		o := obj
+		kubeObjs = append(kubeObjs, &o)
+	}
+
+	for _, obj := range FakeWaypointNamespaceEnrolledPods(false) {
+		o := obj
+		kubeObjs = append(kubeObjs, &o)
+	}
+
+	for _, obj := range FakeWaypointNServiceEnrolledPods() {
+		o := obj
+		kubeObjs = append(kubeObjs, &o)
+	}
+
+	k8s := kubetest.NewFakeK8sClient(kubeObjs...)
+	k8s.OpenShift = true
+	SetupBusinessLayer(t, k8s, *conf)
+	svc := setupWorkloadService(k8s, conf)
+
+	// Get waypoint proxy
+	criteria := WorkloadCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", WorkloadName: "waypoint", WorkloadType: "", IncludeServices: false}
+	workload, err := svc.GetWorkload(context.TODO(), criteria)
+
+	require.NoError(err)
+	require.NotNil(workload)
+
+	assert.Equal(1, len(workload.Pods))
+	assert.True(workload.Pods[0].IsWaypoint())
+
+	// Get waypoint proxy
+	criteriaDetails := WorkloadCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", WorkloadName: "details", WorkloadType: "", IncludeServices: false}
+	workloadDetails, errDetails := svc.GetWorkload(context.TODO(), criteriaDetails)
+
+	require.NoError(errDetails)
+	require.NotNil(workloadDetails)
+
+	assert.Equal(1, len(workloadDetails.Pods))
+	assert.Equal(1, len(workloadDetails.WaypointWorkloads))
+	assert.Equal("waypoint", workloadDetails.WaypointWorkloads[0].Name)
+
+	// productPage should not have a waypoint
+	criteriaProductPage := WorkloadCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", WorkloadName: "productpage", WorkloadType: "", IncludeServices: false}
+	workloadProductPage, errProductPage := svc.GetWorkload(context.TODO(), criteriaProductPage)
+
+	require.NoError(errProductPage)
+	require.NotNil(workloadProductPage)
+
+	assert.Equal(1, len(workloadProductPage.Pods))
+	assert.Equal(0, len(workloadProductPage.WaypointWorkloads))
+}

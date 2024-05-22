@@ -274,6 +274,10 @@ func FakeIstioAnnotations() map[string]string {
 	return map[string]string{"sidecar.istio.io/status": "{\"version\":\"\",\"initContainers\":[\"istio-init\",\"enable-core-dump\"],\"containers\":[\"istio-proxy\"],\"volumes\":[\"istio-envoy\",\"istio-certs\"]}"}
 }
 
+func FakeIstioAmbientAnnotations() map[string]string {
+	return map[string]string{"ambient.istio.io/redirection": "enabled", "sidecar.istio.io/status": "{\"version\":\"\",\"initContainers\":[\"istio-init\",\"enable-core-dump\"],\"containers\":[\"istio-proxy\"],\"volumes\":[\"istio-envoy\",\"istio-certs\"]}"}
+}
+
 func FakeNamespace(name string) *core_v1.Namespace {
 	return &core_v1.Namespace{
 		ObjectMeta: meta_v1.ObjectMeta{

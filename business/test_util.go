@@ -896,6 +896,97 @@ func FakeZtunnelPods() []core_v1.Pod {
 	}
 }
 
+func FakeWaypointPod() []core_v1.Pod {
+	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
+	return []core_v1.Pod{
+		{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:              "waypoint",
+				Namespace:         "Namespace",
+				CreationTimestamp: meta_v1.NewTime(t1),
+				Labels:            map[string]string{config.WaypointLabel: config.WaypointLabelValue},
+				Annotations:       kubetest.FakeIstioAnnotations(),
+			},
+			Spec: core_v1.PodSpec{
+				Containers: []core_v1.Container{
+					{Name: "waypoint-dcd74f8b4-nf7jc", Image: "whatever"},
+				},
+				InitContainers: []core_v1.Container{
+					{Name: "istio-init", Image: "gcr.io/istio-release/proxyv2:1.22.0-distroless"},
+				},
+			},
+		},
+	}
+}
+
+func FakeWaypointNamespaceEnrolledPods(waypoint bool) []core_v1.Pod {
+	conf := config.NewConfig()
+
+	appLabel := conf.IstioLabels.AppLabelName
+	versionLabel := conf.IstioLabels.VersionLabelName
+	waypointLabel := conf.IstioLabels.AmbientWaypointUseLabel
+
+	wpLabels := map[string]string{appLabel: "details", versionLabel: "v1"}
+	if waypoint {
+		wpLabels = map[string]string{appLabel: "details", versionLabel: "v1", waypointLabel: "waypoint"}
+	}
+
+	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
+	return []core_v1.Pod{
+		{ObjectMeta: meta_v1.ObjectMeta{
+			Name:              "details",
+			Namespace:         "Namespace",
+			CreationTimestamp: meta_v1.NewTime(t1),
+			Labels:            wpLabels,
+			Annotations:       kubetest.FakeIstioAmbientAnnotations(),
+		},
+			Spec: core_v1.PodSpec{
+				Containers: []core_v1.Container{
+					{Name: "details", Image: "whatever"},
+				},
+				InitContainers: []core_v1.Container{
+					{Name: "istio-init", Image: "docker.io/istio/proxy_init:0.7.1"},
+				},
+			},
+		},
+		{ObjectMeta: meta_v1.ObjectMeta{
+			Name:              "productpage",
+			Namespace:         "Namespace",
+			CreationTimestamp: meta_v1.NewTime(t1),
+			Labels:            map[string]string{appLabel: "productpage", versionLabel: "v1"},
+			Annotations:       kubetest.FakeIstioAmbientAnnotations(),
+		},
+			Spec: core_v1.PodSpec{
+				Containers: []core_v1.Container{
+					{Name: "productpage", Image: "whatever"},
+				},
+				InitContainers: []core_v1.Container{
+					{Name: "istio-init", Image: "docker.io/istio/proxy_init:0.7.1"},
+				},
+			},
+		},
+	}
+}
+
+func FakeWaypointNServiceEnrolledPods() []core_v1.Service {
+	conf := config.NewConfig()
+	waypointLabel := conf.IstioLabels.AmbientWaypointUseLabel
+
+	return []core_v1.Service{
+		{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "details",
+				Namespace: "Namespace",
+				Labels:    map[string]string{"app": "details", waypointLabel: "waypoint"},
+			},
+			Spec: core_v1.ServiceSpec{
+				Selector: map[string]string{"app": "details"},
+			},
+		},
+	}
+
+}
+
 func FakeZtunnelDaemonSet() []apps_v1.DaemonSet {
 	conf := config.NewConfig()
 	conf.KubernetesConfig.ExcludeWorkloads = []string{}
