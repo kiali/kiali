@@ -202,7 +202,7 @@ class TourStopComponent extends React.PureComponent<TourStopProps> {
               isVisible={true}
               onHidden={this.onHidden}
               position={info.position}
-              shouldClose={(_event, _) => this.shouldClose(_)}
+              shouldClose={(_event, _) => this.shouldClose()}
             >
               <>{children}</>
             </Popover>
