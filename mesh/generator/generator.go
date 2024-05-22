@@ -72,7 +72,8 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalIn
 	for _, cp := range meshDef.ControlPlanes {
 		// add control plane cluster if not already added
 		if _, ok := clusterMap[cp.Cluster.Name]; !ok {
-			_, _, err := addInfra(meshMap, mesh.InfraTypeCluster, cp.Cluster.Name, "", cp.Cluster.Name, cp.Cluster, esVersions[cp.Cluster.Name], false, "", false)
+			k8sVersion := esVersions[fmt.Sprintf("%s-%s", "Kubernetes", cp.Cluster.Name)]
+			_, _, err := addInfra(meshMap, mesh.InfraTypeCluster, cp.Cluster.Name, "", cp.Cluster.Name, cp.Cluster, k8sVersion, false, "", false)
 			mesh.CheckError(err)
 			clusterMap[cp.Cluster.Name] = true
 		}
