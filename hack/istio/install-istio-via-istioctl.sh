@@ -568,7 +568,6 @@ apiVersion: telemetry.istio.io/v1alpha1
 kind: Telemetry
 metadata:
   name: mesh-default
-  namespace: ${NAMESPACE}
 spec:
   tracing:
     - providers:
