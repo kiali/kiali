@@ -105,8 +105,8 @@ type KubeCache interface {
 
 	GetK8sGateway(namespace, name string) (*gatewayapi_v1.Gateway, error)
 	GetK8sGateways(namespace, labelSelector string) ([]*gatewayapi_v1.Gateway, error)
-	GetK8sGRPCRoute(namespace, name string) (*gatewayapi_v1alpha2.GRPCRoute, error)
-	GetK8sGRPCRoutes(namespace, labelSelector string) ([]*gatewayapi_v1alpha2.GRPCRoute, error)
+	GetK8sGRPCRoute(namespace, name string) (*gatewayapi_v1.GRPCRoute, error)
+	GetK8sGRPCRoutes(namespace, labelSelector string) ([]*gatewayapi_v1.GRPCRoute, error)
 	GetK8sHTTPRoute(namespace, name string) (*gatewayapi_v1.HTTPRoute, error)
 	GetK8sHTTPRoutes(namespace, labelSelector string) ([]*gatewayapi_v1.HTTPRoute, error)
 	GetK8sReferenceGrant(namespace, name string) (*gatewayapi_v1beta1.ReferenceGrant, error)
@@ -146,7 +146,7 @@ type cacheLister struct {
 	envoyFilterLister       istionet_v1alpha3_listers.EnvoyFilterLister
 	gatewayLister           istionet_v1beta1_listers.GatewayLister
 	k8sgatewayLister        k8s_v1_listers.GatewayLister
-	k8sgrpcrouteLister      k8s_v1alpha2_listers.GRPCRouteLister
+	k8sgrpcrouteLister      k8s_v1_listers.GRPCRouteLister
 	k8shttprouteLister      k8s_v1_listers.HTTPRouteLister
 	k8sreferencegrantLister k8s_v1beta1_listers.ReferenceGrantLister
 	k8stcprouteLister       k8s_v1alpha2_listers.TCPRouteLister
@@ -421,8 +421,8 @@ func (c *kubeCache) createGatewayInformers(namespace string) gateway.SharedInfor
 		c.hasGatewayAPIStarted = true
 
 		if c.client.IsExpGatewayAPI() {
-			lister.k8sgrpcrouteLister = sharedInformers.Gateway().V1alpha2().GRPCRoutes().Lister()
-			lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Gateway().V1alpha2().GRPCRoutes().Informer().HasSynced)
+			lister.k8sgrpcrouteLister = sharedInformers.Gateway().V1().GRPCRoutes().Lister()
+			lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Gateway().V1().GRPCRoutes().Informer().HasSynced)
 
 			lister.k8stcprouteLister = sharedInformers.Gateway().V1alpha2().TCPRoutes().Lister()
 			lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Gateway().V1alpha2().TCPRoutes().Informer().HasSynced)
@@ -1643,7 +1643,7 @@ func (c *kubeCache) GetK8sGateways(namespace, labelSelector string) ([]*gatewaya
 	return retK8sGateways, nil
 }
 
-func (c *kubeCache) GetK8sGRPCRoute(namespace, name string) (*gatewayapi_v1alpha2.GRPCRoute, error) {
+func (c *kubeCache) GetK8sGRPCRoute(namespace, name string) (*gatewayapi_v1.GRPCRoute, error) {
 	if err := checkIstioAPIsExist(c.client); err != nil {
 		return nil, err
 	}
@@ -1665,7 +1665,7 @@ func (c *kubeCache) GetK8sGRPCRoute(namespace, name string) (*gatewayapi_v1alpha
 	return retG, nil
 }
 
-func (c *kubeCache) GetK8sGRPCRoutes(namespace, labelSelector string) ([]*gatewayapi_v1alpha2.GRPCRoute, error) {
+func (c *kubeCache) GetK8sGRPCRoutes(namespace, labelSelector string) ([]*gatewayapi_v1.GRPCRoute, error) {
 	if err := checkIstioAPIsExist(c.client); err != nil {
 		return nil, err
 	}
@@ -1674,7 +1674,7 @@ func (c *kubeCache) GetK8sGRPCRoutes(namespace, labelSelector string) ([]*gatewa
 	if err != nil {
 		return nil, err
 	}
-	k8sGRPCRoutes := []*gatewayapi_v1alpha2.GRPCRoute{}
+	k8sGRPCRoutes := []*gatewayapi_v1.GRPCRoute{}
 	// Read lock will prevent the cache from being refreshed while we are reading from the lister
 	// but it won't prevent other routines from reading from the lister.
 	defer c.cacheLock.RUnlock()
@@ -1704,7 +1704,7 @@ func (c *kubeCache) GetK8sGRPCRoutes(namespace, labelSelector string) ([]*gatewa
 		}
 	}
 
-	var retK8sGRPCRoutes []*gatewayapi_v1alpha2.GRPCRoute
+	var retK8sGRPCRoutes []*gatewayapi_v1.GRPCRoute
 	for _, hr := range k8sGRPCRoutes {
 		hrCopy := hr.DeepCopy()
 		hrCopy.Kind = kubernetes.K8sGRPCRouteType

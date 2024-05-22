@@ -195,7 +195,7 @@ var (
 		Telemetries:      TelemetryGroupV1Alpha1.Group,
 
 		K8sGateways:        K8sNetworkingGroupVersionV1.Group,
-		K8sGRPCRoutes:      K8sNetworkingGroupVersionV1Alpha2.Group,
+		K8sGRPCRoutes:      K8sNetworkingGroupVersionV1.Group,
 		K8sHTTPRoutes:      K8sNetworkingGroupVersionV1.Group,
 		K8sReferenceGrants: K8sNetworkingGroupVersionV1.Group,
 		K8sTCPRoutes:       K8sNetworkingGroupVersionV1Alpha2.Group,

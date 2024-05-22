@@ -195,7 +195,7 @@ func (in *IstioConfigService) getIstioConfigList(ctx context.Context, cluster st
 		Telemetries:      []*v1alpha1.Telemetry{},
 
 		K8sGateways:        []*k8s_networking_v1.Gateway{},
-		K8sGRPCRoutes:      []*k8s_networking_v1alpha2.GRPCRoute{},
+		K8sGRPCRoutes:      []*k8s_networking_v1.GRPCRoute{},
 		K8sHTTPRoutes:      []*k8s_networking_v1.HTTPRoute{},
 		K8sReferenceGrants: []*k8s_networking_v1beta1.ReferenceGrant{},
 		K8sTCPRoutes:       []*k8s_networking_v1alpha2.TCPRoute{},
@@ -507,10 +507,10 @@ func (in *IstioConfigService) GetIstioConfigDetails(ctx context.Context, cluster
 			istioConfigDetail.K8sGateway.APIVersion = kubernetes.K8sApiNetworkingVersionV1
 		}
 	case kubernetes.K8sGRPCRoutes:
-		istioConfigDetail.K8sGRPCRoute, err = in.userClients[cluster].GatewayAPI().GatewayV1alpha2().GRPCRoutes(namespace).Get(ctx, object, getOpts)
+		istioConfigDetail.K8sGRPCRoute, err = in.userClients[cluster].GatewayAPI().GatewayV1().GRPCRoutes(namespace).Get(ctx, object, getOpts)
 		if err == nil {
 			istioConfigDetail.K8sGRPCRoute.Kind = kubernetes.K8sActualGRPCRouteType
-			istioConfigDetail.K8sGRPCRoute.APIVersion = kubernetes.K8sApiNetworkingVersionV1Alpha2
+			istioConfigDetail.K8sGRPCRoute.APIVersion = kubernetes.K8sApiNetworkingVersionV1
 		}
 	case kubernetes.K8sHTTPRoutes:
 		istioConfigDetail.K8sHTTPRoute, err = in.userClients[cluster].GatewayAPI().GatewayV1().HTTPRoutes(namespace).Get(ctx, object, getOpts)
@@ -636,7 +636,7 @@ func (in *IstioConfigService) DeleteIstioConfigDetail(ctx context.Context, clust
 	case kubernetes.K8sGateways:
 		err = userClient.GatewayAPI().GatewayV1().Gateways(namespace).Delete(ctx, name, delOpts)
 	case kubernetes.K8sGRPCRoutes:
-		err = userClient.GatewayAPI().GatewayV1alpha2().GRPCRoutes(namespace).Delete(ctx, name, delOpts)
+		err = userClient.GatewayAPI().GatewayV1().GRPCRoutes(namespace).Delete(ctx, name, delOpts)
 	case kubernetes.K8sHTTPRoutes:
 		err = userClient.GatewayAPI().GatewayV1().HTTPRoutes(namespace).Delete(ctx, name, delOpts)
 	case kubernetes.K8sReferenceGrants:
@@ -718,8 +718,8 @@ func (in *IstioConfigService) UpdateIstioConfigDetail(ctx context.Context, clust
 		istioConfigDetail.K8sGateway = &k8s_networking_v1.Gateway{}
 		istioConfigDetail.K8sGateway, err = userClient.GatewayAPI().GatewayV1().Gateways(namespace).Patch(ctx, name, patchType, bytePatch, patchOpts)
 	case kubernetes.K8sGRPCRoutes:
-		istioConfigDetail.K8sGRPCRoute = &k8s_networking_v1alpha2.GRPCRoute{}
-		istioConfigDetail.K8sGRPCRoute, err = userClient.GatewayAPI().GatewayV1alpha2().GRPCRoutes(namespace).Patch(ctx, name, patchType, bytePatch, patchOpts)
+		istioConfigDetail.K8sGRPCRoute = &k8s_networking_v1.GRPCRoute{}
+		istioConfigDetail.K8sGRPCRoute, err = userClient.GatewayAPI().GatewayV1().GRPCRoutes(namespace).Patch(ctx, name, patchType, bytePatch, patchOpts)
 	case kubernetes.K8sHTTPRoutes:
 		istioConfigDetail.K8sHTTPRoute = &k8s_networking_v1.HTTPRoute{}
 		istioConfigDetail.K8sHTTPRoute, err = userClient.GatewayAPI().GatewayV1().HTTPRoutes(namespace).Patch(ctx, name, patchType, bytePatch, patchOpts)

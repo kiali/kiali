@@ -77,7 +77,9 @@ Before({ tags: '@gateway-api' }, () => {
     if (result.code !== 0) {
       cy.log('Gateway API not found. Enabling it now.');
 
-      cy.exec('kubectl kustomize "github.com/kubernetes-sigs/gateway-api/config/crd/experimental?ref=v1.0.0" | kubectl apply -f -;')
+      cy.exec(
+        'kubectl kustomize "github.com/kubernetes-sigs/gateway-api/config/crd/experimental?ref=v1.1.0" | kubectl apply -f -;'
+      )
         .its('code')
         .should('eq', 0);
     }
