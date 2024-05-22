@@ -43,7 +43,7 @@ const ServiceEntryAppenderName = "serviceEntry"
 // telemetry produces only one "se-service" node with the wilcard host as the destination_service_name.
 type ServiceEntryAppender struct {
 	AccessibleNamespaces graph.AccessibleNamespaces
-	GraphType            string // This appender does not operate on service graphs because it adds workload nodes.
+	GraphType            string
 }
 
 // Name implements Appender
@@ -106,6 +106,10 @@ func (a ServiceEntryAppender) AppendGraph(trafficMap graph.TrafficMap, globalInf
 
 // loadServiceEntryHosts loads serviceEntry hosts for the provided cluster and namespace. Returns true if any are found, otherwise false.
 func (a ServiceEntryAppender) loadServiceEntryHosts(cluster, namespace string, globalInfo *graph.AppenderGlobalInfo) bool {
+	if !a.isAccessible(cluster, namespace) {
+		return false
+	}
+
 	// get the cached hosts for this cluster:namespace, otherwise add to the cache
 	serviceEntryHosts, found := getServiceEntryHosts(cluster, namespace, globalInfo)
 	if !found {
@@ -271,6 +275,13 @@ func (a ServiceEntryAppender) getServiceEntry(cluster, namespace, serviceName st
 	}
 
 	return nil, false
+}
+
+// returns true if we have access to the cluster-specific namespace
+func (a *ServiceEntryAppender) isAccessible(cluster, namespace string) bool {
+	key := graph.GetClusterSensitiveKey(cluster, namespace)
+	_, ok := a.AccessibleNamespaces[key]
+	return ok
 }
 
 func isExportedToNamespace(se *v1beta1.ServiceEntry, namespace string) bool {
