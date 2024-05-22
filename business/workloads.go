@@ -1896,9 +1896,9 @@ func (in *WorkloadService) isWorkloadEnrolled(ctx context.Context, workload mode
 	}
 
 	// Is the namespace labeled?
-	ns, found := in.cache.GetNamespace(workload.Cluster, in.userClients[workload.Cluster].GetToken(), workload.Namespace)
+	ns, foundNS := in.cache.GetNamespace(workload.Cluster, in.userClients[workload.Cluster].GetToken(), workload.Namespace)
 
-	if found {
+	if foundNS {
 		waypointName, ok := ns.Labels[config.WaypointUseLabel]
 
 		if ok {
