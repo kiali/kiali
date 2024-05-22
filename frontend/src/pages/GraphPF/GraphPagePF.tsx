@@ -359,15 +359,15 @@ class GraphPagePFComponent extends React.Component<GraphPagePropsPF, GraphPageSt
     } else {
       HistoryManager.setParam(URLParam.GRAPH_LAYOUT, this.props.layout.name);
     }
+
+    // Ensure we initialize the graph. We wait for the toolbar to render and
+    // ensure all redux props are updated with URL settings.
+    // That in turn ensures the initial fetchParams are correct.
+    setTimeout(() => this.loadGraphDataFromBackend(), 0);
   }
 
   componentDidUpdate(prev: GraphPagePropsPF): void {
     const curr = this.props;
-
-    // Ensure we initialize the graph. We wait for the first update so that
-    // the toolbar can render and ensure all redux props are updated with URL
-    // settings. That in turn ensures the initial fetchParams are correct.
-    const isInitialLoad = !this.state.graphData.timestamp;
 
     if (curr.summaryData?.summaryType === 'graph') {
       this.controller = curr.summaryData.summaryTarget;
@@ -383,8 +383,8 @@ class GraphPagePFComponent extends React.Component<GraphPagePropsPF, GraphPageSt
     if (activeNamespacesChanged) {
       this.props.onNamespaceChange();
     }
+
     if (
-      isInitialLoad ||
       activeNamespacesChanged ||
       prev.boxByCluster !== curr.boxByCluster ||
       prev.boxByNamespace !== curr.boxByNamespace ||

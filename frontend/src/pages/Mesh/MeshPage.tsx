@@ -11,6 +11,7 @@ import {
   durationSelector,
   meshFindValueSelector,
   meshHideValueSelector,
+  meshWideMTLSEnabledSelector,
   refreshIntervalSelector
 } from '../../store/Selectors';
 import { KialiAppState } from '../../store/Store';
@@ -42,41 +43,45 @@ import { MeshThunkActions } from 'actions/MeshThunkActions';
 import { toRangeString } from 'components/Time/Utils';
 import { HistoryManager, URLParam } from 'app/History';
 
-type ReduxProps = {
+type ReduxStateProps = {
   activeTour?: TourInfo;
   duration: DurationInSeconds;
-  endTour: () => void;
   findValue: string;
   hideValue: string;
-  istioAPIEnabled: boolean;
   isPageVisible: boolean;
+  istioAPIEnabled: boolean;
   kiosk: string;
   layout: Layout;
   mtlsEnabled: boolean;
-  onReady: (controller: Controller) => void;
   refreshInterval: IntervalInMilliseconds;
+  showLegend: boolean;
+  showOutOfMesh: boolean;
+  target: MeshTarget | null;
+};
+
+type ReduxDispatchProps = {
+  endTour: () => void;
+  onReady: (controller: Controller) => void;
   setDefinition: (meshDefinition: MeshDefinition) => void;
   setLayout: (layout: Layout) => void;
   setTarget: (target: MeshTarget) => void;
   setUpdateTime: (val: TimeInMilliseconds) => void;
-  showLegend: boolean;
-  showOutOfMesh: boolean;
   startTour: ({ info, stop }) => void;
-  target: MeshTarget | null;
   toggleLegend: () => void;
 };
 
-type MeshPageProps = ReduxProps & {
-  lastRefreshAt: TimeInMilliseconds; // redux by way of ConnectRefresh
-};
+type MeshPageProps = ReduxStateProps &
+  ReduxDispatchProps & {
+    lastRefreshAt: TimeInMilliseconds; // redux by way of ConnectRefresh
+  };
 
 export type MeshData = {
   elements: DecoratedMeshElements;
   elementsChanged: boolean; // true if current elements differ from previous fetch, can be used as an optimization.
   errorMessage?: string;
   fetchParams: MeshFetchParams;
-  isLoading: boolean;
   isError?: boolean;
+  isLoading: boolean;
   name: string;
   timestamp: TimeInMilliseconds;
 };
@@ -126,7 +131,7 @@ const meshLegendStyle = kialiStyle({
   overflow: 'hidden'
 });
 
-const MeshErrorBoundaryFallback = () => {
+const MeshErrorBoundaryFallback = (): JSX.Element => {
   return (
     <div className={meshContainerStyle}>
       <EmptyMeshLayout isError={true} isMiniMesh={false} />
@@ -158,7 +163,7 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
     };
   }
 
-  componentDidMount() {
+  componentDidMount(): void {
     // Let URL override current redux state at mount time. Update URL with unset params.
     const urlLayout = HistoryManager.getParam(URLParam.MESH_LAYOUT);
 
@@ -174,18 +179,17 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
     this.meshDataSource.on('loadStart', this.handleMeshDataSourceStart);
     this.meshDataSource.on('fetchError', this.handleMeshDataSourceError);
     this.meshDataSource.on('fetchSuccess', this.handleMeshDataSourceSuccess);
+
+    // Ensure we initialize the mesh. We wait for the toolbar to render
+    // and ensure all redux props are updated with URL settings.
+    // That in turn ensures the initial fetchParams are correct.
+    setTimeout(() => this.loadMeshFromBackend(), 0);
   }
 
-  componentDidUpdate(prev: MeshPageProps) {
+  componentDidUpdate(prev: MeshPageProps): void {
     const curr = this.props;
 
-    // Ensure we initialize the mesh. We wait for the first update so that
-    // the toolbar can render and ensure all redux props are updated with URL
-    // settings. That in turn ensures the initial fetchParams are correct.
-    const isInitialLoad = !this.state.meshData.timestamp;
-
     if (
-      isInitialLoad ||
       prev.duration !== curr.duration ||
       (prev.findValue !== curr.findValue && curr.findValue.includes('label:')) ||
       (prev.hideValue !== curr.hideValue && curr.hideValue.includes('label:')) ||
@@ -203,14 +207,14 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
     }
   }
 
-  componentWillUnmount() {
+  componentWillUnmount(): void {
     // Disconnect from mesh data source updates
     this.meshDataSource.removeListener('loadStart', this.handleMeshDataSourceStart);
     this.meshDataSource.removeListener('fetchError', this.handleMeshDataSourceError);
     this.meshDataSource.removeListener('fetchSuccess', this.handleMeshDataSourceSuccess);
   }
 
-  render() {
+  render(): React.ReactNode {
     const conStyle = isKioskMode() ? kioskContainerStyle : containerStyle;
     const isEmpty = !(this.state.meshData.elements.nodes && Object.keys(this.state.meshData.elements.nodes).length > 0);
     const isReady = !(isEmpty || this.state.meshData.isError);
@@ -218,14 +222,12 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
     return (
       <>
         <FlexView className={conStyle} column={true}>
-          <div>
-            <MeshToolbar
-              controller={this.state.meshRefs?.getController()}
-              disabled={this.state.meshData.isLoading}
-              elementsChanged={this.state.meshData.elementsChanged}
-              onToggleHelp={this.toggleHelp}
-            />
-          </div>
+          <MeshToolbar
+            controller={this.state.meshRefs?.getController()}
+            disabled={this.state.meshData.isLoading}
+            elementsChanged={this.state.meshData.elementsChanged}
+            onToggleHelp={this.toggleHelp}
+          />
           <FlexView grow={true} className={`${meshWrapperDivStyle}`}>
             <ErrorBoundary
               ref={this.errorBoundaryRef}
@@ -235,11 +237,13 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
               {this.props.showLegend && (
                 <MeshLegend className={meshLegendStyle} closeLegend={this.props.toggleLegend} />
               )}
+
               {isReady && (
                 <Chip className={`${meshChip} ${meshBackground}`} isReadOnly={true}>
                   {this.displayTimeRange()}
                 </Chip>
               )}
+
               <div id="mesh-container" className={meshContainerStyle}>
                 <EmptyMeshLayout
                   action={this.handleEmptyMeshAction}
@@ -259,6 +263,7 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
                 </EmptyMeshLayout>
               </div>
             </ErrorBoundary>
+
             {this.props.target && (
               <TargetPanel
                 duration={this.props.duration}
@@ -277,15 +282,15 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
   }
 
   // TODO Focus...
-  private onFocus = (focusNode: FocusNode) => {
+  private onFocus = (focusNode: FocusNode): void => {
     console.debug(`onFocus(${focusNode})`);
   };
 
-  private handleReady = (refs: MeshRefs) => {
+  private handleReady = (refs: MeshRefs): void => {
     this.setState({ meshRefs: refs });
   };
 
-  private handleEmptyMeshAction = () => {
+  private handleEmptyMeshAction = (): void => {
     this.loadMeshFromBackend();
   };
 
@@ -294,8 +299,9 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
     meshTimestamp: TimeInSeconds,
     elements: DecoratedMeshElements,
     fetchParams: MeshFetchParams
-  ) => {
+  ): void => {
     const prevElements = this.state.meshData.elements;
+
     this.setState({
       meshData: {
         elements: elements,
@@ -306,11 +312,13 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
         timestamp: meshTimestamp * 1000
       }
     });
+
     this.props.setDefinition(this.meshDataSource.meshDefinition);
   };
 
-  private handleMeshDataSourceError = (errorMessage: string | null, fetchParams: MeshFetchParams) => {
+  private handleMeshDataSourceError = (errorMessage: string | null, fetchParams: MeshFetchParams): void => {
     const prevElements = this.state.meshData.elements;
+
     this.setState({
       meshData: {
         elements: EMPTY_MESH_DATA,
@@ -325,7 +333,7 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
     });
   };
 
-  private handleMeshDataSourceStart = (isPreviousDataInvalid: boolean, fetchParams: MeshFetchParams) => {
+  private handleMeshDataSourceStart = (isPreviousDataInvalid: boolean, fetchParams: MeshFetchParams): void => {
     this.setState({
       meshData: {
         elements: isPreviousDataInvalid ? EMPTY_MESH_DATA : this.state.meshData.elements,
@@ -338,10 +346,11 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
     });
   };
 
-  private toggleHelp = () => {
+  private toggleHelp = (): void => {
     if (this.props.showLegend) {
       this.props.toggleLegend();
     }
+
     if (this.props.activeTour) {
       this.props.endTour();
     } else {
@@ -350,14 +359,14 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
     }
   };
 
-  private loadMeshFromBackend = () => {
+  private loadMeshFromBackend = (): void => {
     this.meshDataSource.fetchMeshData({
       includeHealth: true,
       includeLabels: this.props.findValue.includes('label:') || this.props.hideValue.includes('label:')
     });
   };
 
-  private notifyError = (error: Error, _componentStack: string) => {
+  private notifyError = (error: Error, _componentStack: string): void => {
     AlertUtils.add(`There was an error when rendering the mesh: ${error.message}, please try a different layout`);
   };
 
@@ -387,6 +396,7 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
     const sameIds =
       this.nodeOrEdgeArrayHasSameIds(nextElements.nodes, prevElements.nodes) &&
       this.nodeOrEdgeArrayHasSameIds(nextElements.edges, prevElements.edges);
+
     return !sameIds;
   };
 
@@ -409,7 +419,7 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
   };
 }
 
-const mapStateToProps = (state: KialiAppState) => ({
+const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
   activeTour: state.tourState.activeTour,
   duration: durationSelector(state),
   findValue: meshFindValueSelector(state),
@@ -418,12 +428,14 @@ const mapStateToProps = (state: KialiAppState) => ({
   isPageVisible: state.globalState.isPageVisible,
   kiosk: state.globalState.kiosk,
   layout: state.mesh.layout,
+  mtlsEnabled: meshWideMTLSEnabledSelector(state),
   refreshInterval: refreshIntervalSelector(state),
   showLegend: state.mesh.toolbarState.showLegend,
+  showOutOfMesh: state.graph.toolbarState.showOutOfMesh,
   target: state.mesh.target
 });
 
-const mapDispatchToProps = (dispatch: KialiDispatch) => ({
+const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => ({
   endTour: bindActionCreators(TourActions.endTour, dispatch),
   onReady: (controller: Controller) => dispatch(MeshThunkActions.meshReady(controller)),
   setDefinition: bindActionCreators(MeshActions.setDefinition, dispatch),
@@ -431,7 +443,7 @@ const mapDispatchToProps = (dispatch: KialiDispatch) => ({
   setTarget: bindActionCreators(MeshActions.setTarget, dispatch),
   setUpdateTime: bindActionCreators(MeshActions.setUpdateTime, dispatch),
   startTour: bindActionCreators(TourActions.startTour, dispatch),
-  toggleMeshLegend: bindActionCreators(MeshToolbarActions.toggleLegend, dispatch)
+  toggleLegend: bindActionCreators(MeshToolbarActions.toggleLegend, dispatch)
 });
 
 export const MeshPage = connectRefresh(connect(mapStateToProps, mapDispatchToProps)(MeshPageComponent));
