@@ -519,7 +519,7 @@ Then('the AuthorizationPolicy should have a {string}', function (healthStatus: s
   ).hasCssVar('color', `--pf-v5-global--${healthStatus}-color--100`);
 });
 
-function waitUntilConfigIsVisible(attempt: number, crdInstanceName: string, crdName: string, namespace: string):void {
+function waitUntilConfigIsVisible(attempt: number, crdInstanceName: string, crdName: string, namespace: string): void {
   if (attempt === 0) {
     return;
   }
@@ -560,9 +560,15 @@ After({ tags: '@istio-config and @crd-validation' }, () => {
     failOnNonZeroExit: false
   });
 
-  cy.exec('kubectl delete Gateways,VirtualServices foo foo-route bar -n bookinfo', { failOnNonZeroExit: false });
-  cy.exec('kubectl delete Gateways,VirtualServices foo foo-route bar -n sleep', { failOnNonZeroExit: false });
-  cy.exec('kubectl delete Gateways,VirtualServices foo foo-route bar -n istio-system', { failOnNonZeroExit: false });
+  cy.exec('kubectl delete gateways.networking.istio.io,Gateways,VirtualServices foo foo-route bar -n bookinfo', {
+    failOnNonZeroExit: false
+  });
+  cy.exec('kubectl delete gateways.networking.istio.io,Gateways,VirtualServices foo foo-route bar -n sleep', {
+    failOnNonZeroExit: false
+  });
+  cy.exec('kubectl delete gateways.networking.istio.io,Gateways,VirtualServices foo foo-route bar -n istio-system', {
+    failOnNonZeroExit: false
+  });
 });
 
 Then('user sees all the Istio Config toggles', () => {
