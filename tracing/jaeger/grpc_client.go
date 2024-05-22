@@ -27,10 +27,12 @@ type JaegerGRPCClient struct {
 	IgnoreCluster    bool
 }
 
-func NewGRPCJaegerClient(cc model.QueryServiceClient) (jaegerClient *JaegerGRPCClient, err error) {
+func NewGRPCJaegerClient(ctx context.Context, cc model.QueryServiceClient) (jaegerClient *JaegerGRPCClient, err error) {
 
 	conf := config.Get()
-	ctx := context.Background()
+	if ctx == nil {
+		ctx = context.Background()
+	}
 
 	var jaegerService string
 	var ignoreCluster bool

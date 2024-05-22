@@ -15,6 +15,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/metadata"
 	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/kiali/kiali/config"
@@ -134,6 +135,11 @@ func newClient(ctx context.Context, cfg *config.Config, token string) (*Client, 
 	address := fmt.Sprintf("%s:%s", u.Hostname(), port)
 	log.Tracef("%s GRPC client info: address=%s, auth.type=%s", cfgTracing.Provider, address, auth.Type)
 
+	if len(cfgTracing.CustomHeaders) > 0 {
+		log.Tracef("Adding [%v] custom headers to Tracing client", len(cfgTracing.CustomHeaders))
+		ctx = metadata.NewOutgoingContext(ctx, metadata.New(cfgTracing.CustomHeaders))
+	}
+
 	if cfgTracing.UseGRPC && cfgTracing.Provider != config.TempoProvider {
 
 		var client GRPCClientInterface
@@ -150,7 +156,7 @@ func newClient(ctx context.Context, cfg *config.Config, token string) (*Client, 
 		conn, err := grpc.Dial(address, opts...)
 		if err == nil {
 			cc := model.NewQueryServiceClient(conn)
-			client, err = jaeger.NewGRPCJaegerClient(cc)
+			client, err = jaeger.NewGRPCJaegerClient(ctx, cc)
 			if err != nil {
 				return nil, err
 			}
@@ -165,7 +171,7 @@ func newClient(ctx context.Context, cfg *config.Config, token string) (*Client, 
 		// Legacy HTTP client
 		log.Tracef("Using legacy HTTP client for Tracing: url=%v, auth.type=%s", u, auth.Type)
 		timeout := time.Duration(config.Get().ExternalServices.Tracing.QueryTimeout) * time.Second
-		transport, err := httputil.CreateTransport(&auth, &http.Transport{}, timeout, nil)
+		transport, err := httputil.CreateTransport(&auth, &http.Transport{}, timeout, cfgTracing.CustomHeaders)
 		if err != nil {
 			return nil, err
 		}
@@ -192,7 +198,7 @@ func newClient(ctx context.Context, cfg *config.Config, token string) (*Client, 
 					dialOps = append(dialOps, grpc.WithTransportCredentials(insecure.NewCredentials()))
 				}
 				grpcAddress := fmt.Sprintf("%s:%d", u.Hostname(), cfg.ExternalServices.Tracing.GrpcPort)
-				clientConn, _ := grpc.Dial(grpcAddress, dialOps...)
+				clientConn, _ := grpc.DialContext(ctx, grpcAddress, dialOps...)
 				streamClient, err := tempo.NewgRPCClient(client, u, clientConn)
 				if err != nil {
 					log.Errorf("Error creating gRPC Tempo Client %s", err.Error())
