@@ -204,29 +204,27 @@ export const ListenerBuilder: React.FC<ListenerBuilderProps> = (props: ListenerB
               </FormSelect>
             </FormGroup>
           </Td>
-        </Tr>
-      )}
-      {showTls && tlsModesCert.includes(props.listener.tlsMode) && (
-        <Tr>
-          <Td colSpan={2}>
-            <FormGroup
-              label="TLS Certificate"
-              style={{ margin: '0.5rem 0' }}
-              isRequired={true}
-              fieldId="server-certificate"
-            >
-              <TextInput
-                value={props.listener.tlsCert}
+          {tlsModesCert.includes(props.listener.tlsMode) && (
+            <Td colSpan={4}>
+              <FormGroup
+                label="TLS Certificate"
+                style={{ margin: '0.5rem 0' }}
                 isRequired={true}
-                type="text"
-                id="tls-certificate"
-                aria-describedby="server-certificate"
-                name="tls-certificate"
-                onChange={onAddTlsCert}
-                validated={isValid(props.listener.tlsCert.length > 0)}
-              />
-            </FormGroup>
-          </Td>
+                fieldId="server-certificate"
+              >
+                <TextInput
+                  value={props.listener.tlsCert}
+                  isRequired={true}
+                  type="text"
+                  id="tls-certificate"
+                  aria-describedby="server-certificate"
+                  name="tls-certificate"
+                  onChange={onAddTlsCert}
+                  validated={isValid(props.listener.tlsCert.length > 0)}
+                />
+              </FormGroup>
+            </Td>
+          )}
         </Tr>
       )}
     </>
