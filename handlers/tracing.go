@@ -282,7 +282,7 @@ func readQuery(values url.Values) (models.TracingQuery, error) {
 	// 'cluster' in tags is used to query in tracing by cluster in multi-cluster mode
 	// while 'Cluster' in models.TracingQuery can have default cluster
 	if values.Get("clusterName") != "" {
-		q.Tags["cluster"] = values.Get("clusterName")
+		q.Tags["istio.cluster_id"] = values.Get("clusterName")
 	}
 
 	return q, nil

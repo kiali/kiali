@@ -56,7 +56,7 @@ func NewJaegerClient(client http.Client, baseURL *url.URL) (jaegerClient *Jaeger
 	// if cluster exists in tags, use it
 	query := models.TracingQuery{}
 	tags := map[string]string{
-		"cluster": conf.KubernetesConfig.ClusterName,
+		"istio.cluster_id": conf.KubernetesConfig.ClusterName,
 	}
 	query.Tags = tags
 	query.End = time.Now()
@@ -161,7 +161,7 @@ func prepareQuery(u *url.URL, jaegerServiceName string, query models.TracingQuer
 	var tags = util.CopyStringMap(query.Tags)
 
 	if ignoreCluster {
-		delete(tags, "cluster")
+		delete(tags, "istio.cluster_id")
 	}
 	if len(tags) > 0 {
 		// Tags must be json encoded
@@ -178,7 +178,7 @@ func prepareQuery(u *url.URL, jaegerServiceName string, query models.TracingQuer
 		q.Set("limit", strconv.Itoa(query.Limit))
 	}
 	u.RawQuery = q.Encode()
-	log.Debugf("Prepared Jaeger query: %v", u)
+	log.Infof("Prepared Jaeger query: %v", u)
 }
 
 func makeRequest(client http.Client, endpoint string, body io.Reader) (response []byte, status int, err error) {
