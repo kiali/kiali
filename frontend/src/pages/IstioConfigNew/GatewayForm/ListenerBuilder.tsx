@@ -32,7 +32,7 @@ export const isValidHostname = (hostname: string): boolean => {
   return hostname !== undefined && hostname.length > 0 && isK8sGatewayHostValid(hostname);
 };
 
-export const isValidTLS = (protocol: string, tls?: K8sGatewayTLS): boolean => {
+export const isValidTLS = (protocol: string, tls: K8sGatewayTLS | null): boolean => {
   const tlsRequired = protocolsCert.includes(protocol);
   if (!tls || !tlsRequired) {
     return true;
@@ -195,8 +195,8 @@ export const ListenerBuilder: React.FC<ListenerBuilderProps> = (props: ListenerB
       </Tr>
       {showTls && (
         <Tr>
-          <Td>
-            <FormGroup label="TLS Mode" isRequired={true} fieldId="addTlsMode" style={{ margin: '0.5rem 0' }}>
+          <Td colSpan={2}>
+            <FormGroup label="TLS Mode" fieldId="addTlsMode" style={{ margin: '0.5rem 0' }}>
               <FormSelect value={props.listener.tlsMode} id="addTlsMode" name="addTlsMode" onChange={onAddTlsMode}>
                 {tlsModes.map((option, index) => (
                   <FormSelectOption isDisabled={false} key={`p_${index}`} value={option} label={option} />
@@ -208,7 +208,7 @@ export const ListenerBuilder: React.FC<ListenerBuilderProps> = (props: ListenerB
       )}
       {showTls && tlsModesCert.includes(props.listener.tlsMode) && (
         <Tr>
-          <Td>
+          <Td colSpan={2}>
             <FormGroup
               label="TLS Certificate"
               style={{ margin: '0.5rem 0' }}

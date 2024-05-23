@@ -110,7 +110,8 @@ export const ListenerList: React.FC<ListenerListProps> = (props: ListenerListPro
       port: 70000,
       name: '',
       protocol: protocols[0],
-      allowedRoutes: { namespaces: { from: allowedRoutes[0], selector: { matchLabels: {} } } }
+      allowedRoutes: { namespaces: { from: allowedRoutes[0], selector: { matchLabels: {} } } },
+      tls: null
     };
 
     const lf = props.listeners;
@@ -153,7 +154,8 @@ export const ListenerList: React.FC<ListenerListProps> = (props: ListenerListPro
       port: Number(listenerForm.port),
       name: listenerForm.name,
       protocol: listenerForm.protocol,
-      allowedRoutes: { namespaces: { from: listenerForm.from, selector: { matchLabels: selector } } }
+      allowedRoutes: { namespaces: { from: listenerForm.from, selector: { matchLabels: selector } } },
+      tls: null
     };
 
     if (protocolsCert.includes(listenerForm.protocol) && tlsModesCert.includes(listenerForm.tlsMode)) {

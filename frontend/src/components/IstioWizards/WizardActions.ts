@@ -983,7 +983,8 @@ export const buildIstioConfig = (wProps: ServiceWizardProps, wState: ServiceWiza
                         matchLabels: {}
                       }
                     }
-                  }
+                  },
+                  tls: null
                 }
               ]
             }
@@ -2154,9 +2155,9 @@ export const addAnnotations = (istioObject: IstioObject, value: { [key: string]:
   istioObject.metadata.annotations = value;
 };
 
-export const getTLS = (tls?: K8sGatewayTLS): K8sGatewayTLS | undefined => {
+export const getTLS = (tls?: K8sGatewayTLS | null): K8sGatewayTLS | null => {
   if (!tls) {
-    return undefined;
+    return null;
   }
   return {
     certificateRefs: tls.certificateRefs.map(c => ({
