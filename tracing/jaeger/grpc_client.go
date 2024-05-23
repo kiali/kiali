@@ -37,47 +37,45 @@ func NewGRPCJaegerClient(ctx context.Context, cc model.QueryServiceClient) (jaeg
 	var jaegerService string
 	var ignoreCluster bool
 
-	if err == nil {
-		var services *model.GetServicesResponse
-		services, err = cc.GetServices(ctx, &model.GetServicesRequest{})
-		if err != nil {
-			log.Errorf("Error getting services")
-		} else {
-			for _, service := range services.Services {
-				if !strings.Contains(service, "istio") && !strings.Contains(service, "jaeger") {
-					jaegerService = service
-					break
-				}
+	var services *model.GetServicesResponse
+	services, err = cc.GetServices(ctx, &model.GetServicesRequest{})
+	if err != nil {
+		log.Errorf("Error getting services")
+	} else {
+		for _, service := range services.Services {
+			if !strings.Contains(service, "istio") && !strings.Contains(service, "jaeger") {
+				jaegerService = service
+				break
 			}
-			end := time.Now()
-			tags := map[string]string{
-				"cluster": conf.KubernetesConfig.ClusterName,
-			}
-			findTracesRQ := &model.FindTracesRequest{
-				Query: &model.TraceQueryParameters{
-					ServiceName:  jaegerService,
-					StartTimeMin: timestamppb.New(end.Add(-10 * time.Minute)),
-					StartTimeMax: timestamppb.New(end),
-					Tags:         tags,
-					DurationMin:  durationpb.New(0),
-					SearchDepth:  int32(10),
-				},
-			}
-			stream, err := cc.FindTraces(context.TODO(), findTracesRQ)
-			if err != nil {
-				err = fmt.Errorf("GetAppTraces, Tracing GRPC client error: %v", err)
-				return nil, err
-			}
-
-			tracesMap, err := readSpansStream(stream)
-			if tracesMap != nil && err == nil && len(tracesMap) == 0 || err != nil {
-				log.Debugf("Error getting query for tracing. cluster tags will be disabled.")
-				ignoreCluster = true
-			} else {
-				ignoreCluster = false
-			}
-			return &JaegerGRPCClient{JaegergRPCClient: cc, IgnoreCluster: ignoreCluster}, nil
 		}
+		end := time.Now()
+		tags := map[string]string{
+			"cluster": conf.KubernetesConfig.ClusterName,
+		}
+		findTracesRQ := &model.FindTracesRequest{
+			Query: &model.TraceQueryParameters{
+				ServiceName:  jaegerService,
+				StartTimeMin: timestamppb.New(end.Add(-10 * time.Minute)),
+				StartTimeMax: timestamppb.New(end),
+				Tags:         tags,
+				DurationMin:  durationpb.New(0),
+				SearchDepth:  int32(10),
+			},
+		}
+		stream, err := cc.FindTraces(context.TODO(), findTracesRQ)
+		if err != nil {
+			err = fmt.Errorf("GetAppTraces, Tracing GRPC client error: %v", err)
+			return nil, err
+		}
+
+		tracesMap, err := readSpansStream(stream)
+		if tracesMap != nil && err == nil && len(tracesMap) == 0 || err != nil {
+			log.Debugf("Error getting query for tracing. cluster tags will be disabled.")
+			ignoreCluster = true
+		} else {
+			ignoreCluster = false
+		}
+		return &JaegerGRPCClient{JaegergRPCClient: cc, IgnoreCluster: ignoreCluster}, nil
 	}
 	return nil, err
 }
