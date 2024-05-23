@@ -9,10 +9,10 @@ import { config } from './Config';
 import { icons } from './Icons';
 
 // Logos
-import kialiLogoLight from '../assets/img/logo-lightbkg.svg';
-import kialiLogoDark from '../assets/img/logo-darkbkg.svg';
-import kialiIconLight from '../assets/img/icon-lightbkg.svg';
-import kialiIconDark from '../assets/img/icon-darkbkg.svg';
+import kialiLogoLight from '../assets/img/kiali/logo-lightbkg.svg';
+import kialiLogoDark from '../assets/img/kiali/logo-darkbkg.svg';
+import kialiIconLight from '../assets/img/kiali/icon-lightbkg.svg';
+import kialiIconDark from '../assets/img/kiali/icon-darkbkg.svg';
 
 // Paths
 import { Paths } from './Paths';

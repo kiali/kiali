@@ -543,7 +543,7 @@ const TopologyContent: React.FC<{
                       controller.getGraph().layout();
                     }
                   },
-                  legend: false, // Actual Legend is still TODO...
+                  legend: true,
                   legendIcon: <MapIcon />,
                   legendTip: 'Legend',
                   legendCallback: () => {

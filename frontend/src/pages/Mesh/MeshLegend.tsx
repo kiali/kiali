@@ -4,117 +4,103 @@ import { legendData, MeshLegendItem, MeshLegendItemRow } from './MeshLegendData'
 import { Button, ButtonVariant, Tooltip } from '@patternfly/react-core';
 import { PFColors } from 'components/Pf/PfColors';
 import { KialiIcon } from 'config/KialiIcon';
+import { useKialiTranslation } from 'utils/I18nUtils';
 
-// This is just a shell, Legend is a TODO!!!!!
-
-export interface MeshLegendProps {
-  className?: string;
+interface MeshLegendProps {
   closeLegend: () => void;
 }
 
-const width = '190px';
+const legendBoxStyle = kialiStyle({
+  width: '225px',
+  backgroundColor: PFColors.BackgroundColor100,
+  border: `1px solid ${PFColors.BorderColor100}`,
+  overflowY: 'auto',
+  zIndex: 3
+});
 
-export class MeshLegend extends React.Component<MeshLegendProps> {
-  render(): React.ReactNode {
-    const legendBoxStyle = kialiStyle({
-      backgroundColor: PFColors.BackgroundColor100,
-      border: `1px solid ${PFColors.BorderColor100}`,
-      margin: '0 0 3.25em 0',
-      overflow: 'hidden',
-      overflowY: 'auto',
-      padding: '1em 0.5em 1em 1em',
-      zIndex: 3
-    });
+const headerStyle = kialiStyle({
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  borderBottom: `1px solid ${PFColors.BorderColor100}`,
+  padding: '0.5rem 0 0.5rem 1rem',
+  fontWeight: 'bold'
+});
 
-    const headerStyle = kialiStyle({
-      width: width
-    });
+const bodyStyle = kialiStyle({
+  padding: '0 0.5rem 1rem 1rem'
+});
 
-    const bodyStyle = kialiStyle({
-      height: 'auto',
-      width: width
-    });
+const keyStyle = kialiStyle({
+  minWidth: '70px',
+  width: '70px'
+});
 
-    const closeBoxStyle = kialiStyle({
-      float: 'right',
-      margin: '-7px -5px 0 -10px'
-    });
+const legendItemStyle = kialiStyle({
+  display: 'flex',
+  flexDirection: 'row',
+  alignItems: 'center',
+  padding: '0.25rem 0.25rem 0 0.25rem'
+});
 
+const legendItemLabelStyle = kialiStyle({
+  fontWeight: 'normal'
+});
+
+const legendColumnHeadingStyle = kialiStyle({
+  fontWeight: 'bold',
+  paddingTop: '1.25rem'
+});
+
+const legendLogoStyle = kialiStyle({
+  width: '2rem',
+  height: '2rem',
+  marginBottom: '0.125rem'
+});
+
+export const MeshLegend: React.FC<MeshLegendProps> = (props: MeshLegendProps) => {
+  const { t } = useKialiTranslation();
+
+  const renderGraphLegendList = (legendData: MeshLegendItem[]): React.ReactNode => {
     return (
-      <div className={legendBoxStyle} data-test="graph-legend">
-        <div className={`${headerStyle}`}>
-          <span>Legend</span>
-          <span className={closeBoxStyle}>
-            <Tooltip content="Close Legend">
-              <Button id="legend_close" variant={ButtonVariant.plain} onClick={this.props.closeLegend}>
-                <KialiIcon.Close />
-              </Button>
-            </Tooltip>
-          </span>
-        </div>
-
-        <div className={bodyStyle}>
-          <div>{this.renderGraphLegendList(legendData)}</div>
-        </div>
-      </div>
-    );
-  }
-
-  renderGraphLegendList = (legendData: MeshLegendItem[]): React.ReactNode => {
-    const legendColumnHeadingStyle = kialiStyle({
-      fontWeight: 'bold',
-      paddingTop: '1.25em'
-    });
-
-    const aStyle = kialiStyle({
-      height: '100%'
-    });
-
-    return (
-      <div className={aStyle}>
+      <>
         {legendData.map((legendItem: MeshLegendItem) => (
           <div key={legendItem.title} className={legendColumnHeadingStyle}>
-            {legendItem.title}
+            {t(legendItem.title)}
 
-            {this.renderLegendRowItems(legendItem.data)}
+            {legendItem.data.map((legendItemRow: MeshLegendItemRow) =>
+              renderLegendIconAndLabel(legendItemRow, legendItem.isLogo)
+            )}
           </div>
         ))}
-      </div>
+      </>
     );
   };
 
-  renderLegendRowItems = (legendData: MeshLegendItemRow[]): React.ReactNode => {
-    return (
-      <>{legendData.map((legendItemRow: MeshLegendItemRow) => MeshLegend.renderLegendIconAndLabel(legendItemRow))}</>
-    );
-  };
-
-  static renderLegendIconAndLabel = (legendItemRow: MeshLegendItemRow): React.ReactNode => {
-    const keyWidth = '70px';
-
-    const keyStyle = kialiStyle({
-      minWidth: keyWidth,
-      width: keyWidth
-    });
-
-    const legendItemStyle = kialiStyle({
-      display: 'flex',
-      flexDirection: 'row',
-      padding: '5px 5px 0 5px'
-    });
-
-    const legendItemLabelStyle = kialiStyle({
-      fontWeight: 'normal'
-    });
-
+  const renderLegendIconAndLabel = (legendItemRow: MeshLegendItemRow, isLogo?: boolean): React.ReactNode => {
     return (
       <div key={legendItemRow.icon} className={legendItemStyle}>
         <span className={keyStyle}>
-          <img alt={legendItemRow.label} src={legendItemRow.icon} />
+          <img alt={legendItemRow.label} src={legendItemRow.icon} className={isLogo ? legendLogoStyle : ''} />
         </span>
 
-        <span className={legendItemLabelStyle}>{legendItemRow.label}</span>
+        <span className={legendItemLabelStyle}>{t(legendItemRow.label)}</span>
       </div>
     );
   };
-}
+
+  return (
+    <div className={legendBoxStyle} data-test="graph-legend">
+      <div className={headerStyle}>
+        <span>{t('Legend')}</span>
+        <Tooltip content={t('Close Legend')}>
+          <Button id="legend_close" variant={ButtonVariant.plain} onClick={props.closeLegend}>
+            <KialiIcon.Close />
+          </Button>
+        </Tooltip>
+      </div>
+
+      <div className={bodyStyle}>{renderGraphLegendList(legendData)}</div>
+    </div>
+  );
+};

@@ -198,13 +198,6 @@ const graphBackground = kialiStyle({
   backgroundColor: PFColors.BackgroundColor100
 });
 
-const graphLegendStyle = kialiStyle({
-  right: '0',
-  bottom: '10px',
-  position: 'absolute',
-  overflow: 'hidden'
-});
-
 const GraphErrorBoundaryFallback = (): React.ReactElement => {
   return (
     <div className={graphContainerStyle}>
@@ -460,9 +453,7 @@ class GraphPagePFComponent extends React.Component<GraphPagePropsPF, GraphPageSt
               onError={this.notifyError}
               fallBackComponent={<GraphErrorBoundaryFallback />}
             >
-              {this.props.showLegend && (
-                <GraphLegendPF className={graphLegendStyle} closeLegend={this.props.toggleLegend} />
-              )}
+              {this.props.showLegend && <GraphLegendPF closeLegend={this.props.toggleLegend} />}
               {isReady && (
                 <Chip
                   className={`${graphTimeRange} ${this.props.replayActive ? replayBackground : graphBackground}`}

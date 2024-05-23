@@ -9,12 +9,13 @@ import { KialiIcon } from 'config/KialiIcon';
 import { TourActions } from 'actions/TourActions';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from 'components/Pf/PfColors';
+import { t } from 'utils/I18nUtils';
 
 export interface TourStopInfo {
   description?: string; // displayed as the tour stop body
   distance?: number; // distance from target, default=25
-  isValid?: boolean; // internal use, leave unset
   htmlDescription?: React.ReactNode;
+  isValid?: boolean; // internal use, leave unset
   name: string; // displayed in the tour stop header.
   position?: PopoverPosition;
 }
@@ -25,25 +26,35 @@ export interface TourInfo {
 }
 
 const stopNumberStyle = kialiStyle({
-  borderRadius: '20px',
+  borderRadius: '1rem',
   backgroundColor: PFColors.Blue300,
-  padding: '2px 6px',
-  marginRight: '10px',
+  display: 'inline-block',
+  width: '1.5rem',
+  textAlign: 'center',
+  marginRight: '0.5rem',
   color: PFColors.White
 });
 
-type ReduxProps = {
-  activeTour?: TourInfo;
+type ReduxStateProps = {
   activeStop?: number;
+  activeTour?: TourInfo;
+};
 
+type ReduxDispatchProps = {
   endTour: () => void;
   setStop: (stop: number) => void;
 };
 
-type TourStopProps = ReduxProps & {
-  children?: React.ReactNode;
-  info: TourStopInfo | TourStopInfo[];
-};
+type TourStopProps = ReduxStateProps &
+  ReduxDispatchProps & {
+    children?: React.ReactNode;
+    info: TourStopInfo | TourStopInfo[];
+  };
+
+const buttonsStyle = kialiStyle({
+  display: 'flex',
+  justifyContent: 'space-between'
+});
 
 export function getNextTourStop(
   activeTour: TourInfo,
@@ -63,6 +74,7 @@ export function getNextTourStop(
       }
     }
   }
+
   return undefined;
 }
 
@@ -83,36 +95,34 @@ class TourStopComponent extends React.PureComponent<TourStopProps> {
     return getNextTourStop(this.props.activeTour!, this.props.activeStop!, direction);
   };
 
-  private setStop = (stop: number) => {
+  private setStop = (stop: number): void => {
     this.props.setStop(stop);
   };
 
-  private backButton = () => {
+  private backButton = (): React.ReactNode => {
     const stop = this.getStop('back');
+
     return (
       <Button isDisabled={stop === undefined} variant={ButtonVariant.secondary} onClick={() => this.setStop(stop!)}>
-        <KialiIcon.AngleLeft /> Back
+        <KialiIcon.AngleLeft /> {t('Back')}
       </Button>
     );
   };
 
-  private nextButton = () => {
-    const right = kialiStyle({
-      float: 'right'
-    });
+  private nextButton = (): React.ReactNode => {
     const stop = this.getStop('forward');
 
     if (stop === undefined) {
       return (
-        <Button className={right} variant={ButtonVariant.primary} onClick={this.props.endTour}>
-          Done
+        <Button variant={ButtonVariant.primary} onClick={this.props.endTour}>
+          {t('Done')}
         </Button>
       );
     }
 
     return (
-      <Button className={right} variant={ButtonVariant.primary} onClick={() => this.setStop(stop!)}>
-        Next <KialiIcon.AngleRight />
+      <Button variant={ButtonVariant.primary} onClick={() => this.setStop(stop!)}>
+        {t('Next')} <KialiIcon.AngleRight />
       </Button>
     );
   };
@@ -122,40 +132,42 @@ class TourStopComponent extends React.PureComponent<TourStopProps> {
       const name = tsi.name;
       const isActive =
         this.props.activeTour !== undefined && name === this.props.activeTour.stops[this.props.activeStop!].name;
+
       if (isActive) {
         return tsi;
       }
     }
+
     return undefined;
   };
 
   // This is here to workaround what seems to be a bug.  As far as I know when isVisible is set then outside clicks should not hide
   // the Popover, but it seems to be happening in certain scenarios. So, if the Popover is still valid, unhide it immediately.
-  private onHidden = () => {
+  private onHidden = (): void => {
     if (this.activeInfo()) {
       this.forceUpdate();
     }
   };
 
-  private onResize = () => {
+  private onResize = (): void => {
     if (this.activeInfo()) {
       this.forceUpdate();
     }
   };
 
-  private shouldClose = _ => {
+  private shouldClose = (): void => {
     this.props.endTour();
   };
 
-  componentDidMount() {
+  componentDidMount(): void {
     this.tourStopInfo.forEach(ti => (ti.isValid = true));
   }
 
-  componentWillUnmount() {
+  componentWillUnmount(): void {
     this.tourStopInfo.forEach(ti => (ti.isValid = false));
   }
 
-  render() {
+  render(): React.ReactNode {
     const info = this.activeInfo();
     const offset = info && info.distance ? info.distance : 25;
     const children = this.props.children;
@@ -173,10 +185,10 @@ class TourStopComponent extends React.PureComponent<TourStopProps> {
               onResize={this.onResize}
             />
             <Popover
-              bodyContent={info.description ? info.description : info.htmlDescription}
+              bodyContent={info.description ? t(info.description) : info.htmlDescription}
               distance={offset}
               footerContent={
-                <div>
+                <div className={buttonsStyle}>
                   {this.backButton()}
                   {this.nextButton()}
                 </div>
@@ -184,13 +196,13 @@ class TourStopComponent extends React.PureComponent<TourStopProps> {
               headerContent={
                 <div>
                   <span className={stopNumberStyle}>{this.props.activeStop! + 1}</span>
-                  <span>{info.name}</span>
+                  <span>{t(info.name)}</span>
                 </div>
               }
               isVisible={true}
               onHidden={this.onHidden}
               position={info.position}
-              shouldClose={(_event, _) => this.shouldClose(_)}
+              shouldClose={(_event, _) => this.shouldClose()}
             >
               <>{children}</>
             </Popover>
@@ -203,12 +215,12 @@ class TourStopComponent extends React.PureComponent<TourStopProps> {
   }
 }
 
-const mapStateToProps = (state: KialiAppState) => ({
+const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
   activeTour: state.tourState.activeTour,
   activeStop: state.tourState.activeStop
 });
 
-const mapDispatchToProps = (dispatch: KialiDispatch) => {
+const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => {
   return {
     endTour: bindActionCreators(TourActions.endTour, dispatch),
     setStop: bindActionCreators(TourActions.setStop, dispatch)

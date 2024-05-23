@@ -124,13 +124,6 @@ const meshBackground = kialiStyle({
   backgroundColor: PFColors.BackgroundColor100
 });
 
-const meshLegendStyle = kialiStyle({
-  right: '0',
-  bottom: '10px',
-  position: 'absolute',
-  overflow: 'hidden'
-});
-
 const MeshErrorBoundaryFallback = (): JSX.Element => {
   return (
     <div className={meshContainerStyle}>
@@ -234,9 +227,7 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
               onError={this.notifyError}
               fallBackComponent={<MeshErrorBoundaryFallback />}
             >
-              {this.props.showLegend && (
-                <MeshLegend className={meshLegendStyle} closeLegend={this.props.toggleLegend} />
-              )}
+              {this.props.showLegend && <MeshLegend closeLegend={this.props.toggleLegend} />}
 
               {isReady && (
                 <Chip className={`${meshChip} ${meshBackground}`} isReadOnly={true}>

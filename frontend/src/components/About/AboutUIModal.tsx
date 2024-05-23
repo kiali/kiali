@@ -10,13 +10,14 @@ import {
   ButtonVariant,
   Alert
 } from '@patternfly/react-core';
-import kialiIconAbout from '../../assets/img/icon-aboutbkg.svg';
+import kialiIconAbout from '../../assets/img/kiali/icon-aboutbkg.svg';
 import { Status, StatusKey } from '../../types/StatusState';
 import { config, kialiLogoDark } from '../../config';
 import { kialiStyle } from 'styles/StyleUtils';
 import { KialiIcon } from 'config/KialiIcon';
 import { ReactComponent as IstioLogo } from '../../assets/img/mesh/istio.svg';
 import { Link } from 'react-router-dom';
+import { PFColors } from 'components/Pf/PfColors';
 
 type AboutUIModalProps = {
   isOpen: boolean;
@@ -34,7 +35,12 @@ const iconStyle = kialiStyle({
   height: '1rem',
   marginBottom: '-2px',
   marginRight: '0.5rem',
-  marginTop: '1rem'
+  marginTop: '1rem',
+  $nest: {
+    '& path': {
+      fill: PFColors.Link
+    }
+  }
 });
 
 const textContentStyle = kialiStyle({
@@ -50,7 +56,7 @@ const websiteStyle = kialiStyle({
 });
 
 export const AboutUIModal: React.FC<AboutUIModalProps> = (props: AboutUIModalProps) => {
-  const renderMeshLink = () => {
+  const renderMeshLink = (): React.ReactNode => {
     if (config?.about?.mesh) {
       return (
         <Link id="mesh" to={config.about.mesh.url} onClick={props.onClose}>
@@ -63,7 +69,7 @@ export const AboutUIModal: React.FC<AboutUIModalProps> = (props: AboutUIModalPro
     return null;
   };
 
-  const renderProjectLink = () => {
+  const renderProjectLink = (): React.ReactNode => {
     if (config?.about?.project) {
       return (
         <Button component="a" href={config.about.project.url} variant={ButtonVariant.link} target="_blank" isInline>
@@ -76,7 +82,7 @@ export const AboutUIModal: React.FC<AboutUIModalProps> = (props: AboutUIModalPro
     return null;
   };
 
-  const renderWebsiteLink = (): JSX.Element | null => {
+  const renderWebsiteLink = (): React.ReactNode => {
     if (config?.about?.website) {
       return (
         <Button
