@@ -1,9 +1,9 @@
 import * as React from 'react';
 import { Tooltip, TooltipPosition } from '@patternfly/react-core';
-import fullIcon from '../../assets/img/mtls-status-full.svg';
-import hollowIcon from '../../assets/img/mtls-status-partial.svg';
-import fullIconDark from '../../assets/img/mtls-status-full-dark.svg';
-import hollowIconDark from '../../assets/img/mtls-status-partial-dark.svg';
+import fullIcon from '../../assets/img/mtls/mtls-status-full.svg';
+import hollowIcon from '../../assets/img/mtls/mtls-status-partial.svg';
+import fullIconDark from '../../assets/img/mtls/mtls-status-full-dark.svg';
+import hollowIconDark from '../../assets/img/mtls/mtls-status-partial-dark.svg';
 import { useKialiTheme } from 'utils/ThemeUtils';
 import { Theme } from 'types/Common';
 

@@ -3,8 +3,8 @@ import dataPlaneImage from '../../assets/img/mesh/node-dataplane.svg';
 import infraNodeImage from '../../assets/img/mesh/node-infra.svg';
 
 // Node Colors
-import nodeColorHealthyImage from '../../assets/img/legend-pf/node-color-healthy.svg';
-import nodeColorDangerImage from '../../assets/img/legend-pf/node-color-danger.svg';
+import nodeColorHealthyImage from '../../assets/img/mesh/node-color-healthy.svg';
+import nodeColorDangerImage from '../../assets/img/mesh/node-color-danger.svg';
 
 // Edges
 import edgeSuccessImage from '../../assets/img/mesh/edge-healthy.svg';
@@ -23,47 +23,48 @@ import { t } from 'utils/I18nUtils';
 
 export interface MeshLegendItem {
   data: MeshLegendItemRow[];
+  isLogo?: boolean;
   title: string;
 }
 
 export interface MeshLegendItemRow {
   icon: string;
   label: string;
-  logo: boolean;
 }
 
 export const legendData: MeshLegendItem[] = [
   {
     title: t('Node Shapes'),
     data: [
-      { label: t('Infra node'), icon: infraNodeImage, logo: false },
-      { label: t('Data Plane'), icon: dataPlaneImage, logo: false }
+      { label: t('Infra node'), icon: infraNodeImage },
+      { label: t('Data Plane'), icon: dataPlaneImage }
     ]
   },
   {
     title: t('Node Colors'),
     data: [
-      { label: t('Healthy'), icon: nodeColorHealthyImage, logo: false },
-      { label: t('Unhealthy'), icon: nodeColorDangerImage, logo: false }
+      { label: t('Healthy'), icon: nodeColorHealthyImage },
+      { label: t('Unhealthy'), icon: nodeColorDangerImage }
     ]
   },
   {
     title: t('Edges'),
     data: [
-      { label: t('Failure'), icon: edgeDangerImage, logo: false },
-      { label: t('Healthy'), icon: edgeSuccessImage, logo: false }
+      { label: t('Failure'), icon: edgeDangerImage },
+      { label: t('Healthy'), icon: edgeSuccessImage }
     ]
   },
   {
     title: t('Node Background'),
+    isLogo: true,
     data: [
-      { label: t('Data Plane'), icon: dataplane, logo: true },
-      { label: t('Grafana'), icon: grafanaLogo, logo: true },
-      { label: t('Jaeger'), icon: jaegerLogo, logo: true },
-      { label: t('Kiali'), icon: kialiLogo, logo: true },
-      { label: t('Istio'), icon: istioLogo, logo: true },
-      { label: t('Prometheus'), icon: prometheusLogo, logo: true },
-      { label: t('Tempo'), icon: tempoLogo, logo: true }
+      { label: t('Data Plane'), icon: dataplane },
+      { label: 'Grafana', icon: grafanaLogo },
+      { label: 'Jaeger', icon: jaegerLogo },
+      { label: 'Kiali', icon: kialiLogo },
+      { label: 'Istio', icon: istioLogo },
+      { label: 'Prometheus', icon: prometheusLogo },
+      { label: 'Tempo', icon: tempoLogo }
     ]
   }
 ];

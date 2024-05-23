@@ -1,6 +1,5 @@
+import React from 'react';
 import deepFreeze from 'deep-freeze';
-import solidPinIcon from '../assets/img/solid-pin.png';
-import hollowPinIcon from '../assets/img/hollow-pin.png';
 import {
   ArrowAltCircleRightIcon,
   BanIcon,
@@ -16,9 +15,6 @@ import {
   VirtualMachineIcon,
   WrenchIcon
 } from '@patternfly/react-icons';
-import React from 'react';
-
-export { solidPinIcon, hollowPinIcon };
 
 export type IconType = {
   ascii?: string;

@@ -10,7 +10,7 @@ import {
   ButtonVariant,
   Alert
 } from '@patternfly/react-core';
-import kialiIconAbout from '../../assets/img/icon-aboutbkg.svg';
+import kialiIconAbout from '../../assets/img/kiali/icon-aboutbkg.svg';
 import { Status, StatusKey } from '../../types/StatusState';
 import { config, kialiLogoDark } from '../../config';
 import { kialiStyle } from 'styles/StyleUtils';
@@ -50,7 +50,7 @@ const websiteStyle = kialiStyle({
 });
 
 export const AboutUIModal: React.FC<AboutUIModalProps> = (props: AboutUIModalProps) => {
-  const renderMeshLink = () => {
+  const renderMeshLink = (): React.ReactNode => {
     if (config?.about?.mesh) {
       return (
         <Link id="mesh" to={config.about.mesh.url} onClick={props.onClose}>
@@ -63,7 +63,7 @@ export const AboutUIModal: React.FC<AboutUIModalProps> = (props: AboutUIModalPro
     return null;
   };
 
-  const renderProjectLink = () => {
+  const renderProjectLink = (): React.ReactNode => {
     if (config?.about?.project) {
       return (
         <Button component="a" href={config.about.project.url} variant={ButtonVariant.link} target="_blank" isInline>
@@ -76,7 +76,7 @@ export const AboutUIModal: React.FC<AboutUIModalProps> = (props: AboutUIModalPro
     return null;
   };
 
-  const renderWebsiteLink = (): JSX.Element | null => {
+  const renderWebsiteLink = (): React.ReactNode => {
     if (config?.about?.website) {
       return (
         <Button

@@ -6,8 +6,7 @@ import { PFColors } from 'components/Pf/PfColors';
 import { KialiIcon } from 'config/KialiIcon';
 import { useKialiTranslation } from 'utils/I18nUtils';
 
-export interface MeshLegendProps {
-  className?: string;
+interface MeshLegendProps {
   closeLegend: () => void;
 }
 
@@ -69,22 +68,20 @@ export const MeshLegend: React.FC<MeshLegendProps> = (props: MeshLegendProps) =>
           <div key={legendItem.title} className={legendColumnHeadingStyle}>
             {t(legendItem.title)}
 
-            {legendItem.data.map((legendItemRow: MeshLegendItemRow) => renderLegendIconAndLabel(legendItemRow))}
+            {legendItem.data.map((legendItemRow: MeshLegendItemRow) =>
+              renderLegendIconAndLabel(legendItemRow, legendItem.isLogo)
+            )}
           </div>
         ))}
       </>
     );
   };
 
-  const renderLegendIconAndLabel = (legendItemRow: MeshLegendItemRow): React.ReactNode => {
+  const renderLegendIconAndLabel = (legendItemRow: MeshLegendItemRow, isLogo?: boolean): React.ReactNode => {
     return (
       <div key={legendItemRow.icon} className={legendItemStyle}>
         <span className={keyStyle}>
-          <img
-            alt={legendItemRow.label}
-            src={legendItemRow.icon}
-            className={legendItemRow.logo ? legendLogoStyle : ''}
-          />
+          <img alt={legendItemRow.label} src={legendItemRow.icon} className={isLogo ? legendLogoStyle : ''} />
         </span>
 
         <span className={legendItemLabelStyle}>{t(legendItemRow.label)}</span>

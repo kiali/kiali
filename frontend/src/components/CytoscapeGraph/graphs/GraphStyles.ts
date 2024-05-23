@@ -15,8 +15,8 @@ import {
   UNKNOWN
 } from '../../../types/Graph';
 import { icons, serverConfig } from '../../../config';
-import NodeImageTopology from '../../../assets/img/node-background-topology.png';
-import NodeImageKey from '../../../assets/img/node-background-key.png';
+import NodeImageTopology from '../../../assets/img/graph/node-background-topology.png';
+import NodeImageKey from '../../../assets/img/graph/node-background-key.png';
 import { decoratedEdgeData, decoratedNodeData } from '../CytoscapeGraphUtils';
 import _ from 'lodash';
 import * as Cy from 'cytoscape';
@@ -89,8 +89,27 @@ type contentType = {
   text: string;
 };
 
+interface GraphStyleOptions {
+  autoungrabify: boolean;
+  autounselectify: boolean;
+  wheelSensitivity: number;
+}
+
+type IHAlign = 'left' | 'center' | 'right';
+type IVAlign = 'top' | 'center' | 'bottom';
+
+interface CytoscapeNodeHtmlParams {
+  cssClass?: string;
+  halign?: IHAlign;
+  halignBox?: IHAlign;
+  query?: string;
+  tpl?: (d: any) => string;
+  valign?: IVAlign;
+  valignBox?: IVAlign;
+}
+
 // Puts a little more space between icons when a badge has multiple icons
-const badgeMargin = (existingIcons: string) =>
+const badgeMargin = (existingIcons: string): string =>
   existingIcons === '' ? kialiStyle({ marginLeft: '1px' }) : kialiStyle({ marginRight: '2px' });
 
 const badgesDefault = kialiStyle({
@@ -157,10 +176,11 @@ export class GraphStyles {
   // Our node color choices are defined by UX here:
   // - https://github.com/kiali/kiali/issues/2435#issuecomment-404640317
   // - https://github.com/kiali/kiali/issues/3675#issuecomment-807403919
-  private static setRuntimeColors = () => {
+  private static setRuntimeColors = (): void => {
     if (GraphStyles.runtimeColorsSet) {
       return;
     }
+
     GraphStyles.runtimeColorsSet = true;
 
     EdgeColor = PFColorVals.Success;
@@ -184,7 +204,7 @@ export class GraphStyles {
     NodeColorFillHoverFailure = PFColorVals.Red50;
   };
 
-  static options() {
+  static options(): GraphStyleOptions {
     return { wheelSensitivity: 0.1, autounselectify: false, autoungrabify: true };
   }
 
@@ -192,7 +212,7 @@ export class GraphStyles {
     return ele.cy().scratch(CytoscapeGlobalScratchNamespace);
   };
 
-  static getNodeLabel(ele: Cy.NodeSingular) {
+  static getNodeLabel(ele: Cy.NodeSingular): string {
     const cyGlobal = GraphStyles.getCyGlobalData(ele);
     const settings = serverConfig.kialiFeatureFlags.uiDefaults.graph.settings;
     const zoom = ele.cy().zoom();
@@ -472,7 +492,7 @@ export class GraphStyles {
     return `<div class="${labelDefault}" style="${labelStyle}">${badges}${contentSpan}</div>`;
   }
 
-  static htmlNodeLabels(cy: Cy.Core) {
+  static htmlNodeLabels(cy: Cy.Core): CytoscapeNodeHtmlParams[] {
     return [
       {
         query: 'node[^isBox]:visible', // leaf nodes

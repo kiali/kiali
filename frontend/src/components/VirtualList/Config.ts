@@ -315,4 +315,4 @@ const conf: Config = {
   workloads: workloads
 };
 
-export const config: Config = deepFreeze(conf);
+export const config: Config = deepFreeze(conf) as typeof conf;
