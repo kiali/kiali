@@ -65,7 +65,7 @@ Feature: Kiali Istio Config wizard
     And user types "443" in the "addPort_0" input
     And user chooses "HTTPS" mode from the "addPortProtocol_0" select
     And the preview button should be disabled
-    And user types "cert" in the "tls-certificate_0" input
+    And user types "cert" in the "tlsCert_0" input
     And user previews the configuration
     And user creates the istio config
     Then the "K8sGateway" "k8sapigateway" should be listed in "bookinfo" namespace

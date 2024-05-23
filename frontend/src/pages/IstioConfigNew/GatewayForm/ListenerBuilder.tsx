@@ -197,7 +197,12 @@ export const ListenerBuilder: React.FC<ListenerBuilderProps> = (props: ListenerB
         <Tr>
           <Td colSpan={2}>
             <FormGroup label="TLS Mode" fieldId="addTlsMode" style={{ margin: '0.5rem 0' }}>
-              <FormSelect value={props.listener.tlsMode} id="addTlsMode" name="addTlsMode" onChange={onAddTlsMode}>
+              <FormSelect
+                value={props.listener.tlsMode}
+                id="addTlsMode_${props.index}"
+                name="addTlsMode"
+                onChange={onAddTlsMode}
+              >
                 {tlsModes.map((option, index) => (
                   <FormSelectOption isDisabled={false} key={`p_${index}`} value={option} label={option} />
                 ))}
@@ -216,7 +221,7 @@ export const ListenerBuilder: React.FC<ListenerBuilderProps> = (props: ListenerB
                   value={props.listener.tlsCert}
                   isRequired={true}
                   type="text"
-                  id="tls-certificate"
+                  id="tlsCert_${props.index}"
                   aria-describedby="server-certificate"
                   name="tls-certificate"
                   onChange={onAddTlsCert}
