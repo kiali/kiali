@@ -17,6 +17,7 @@ import { kialiStyle } from 'styles/StyleUtils';
 import { KialiIcon } from 'config/KialiIcon';
 import { ReactComponent as IstioLogo } from '../../assets/img/mesh/istio.svg';
 import { Link } from 'react-router-dom';
+import { PFColors } from 'components/Pf/PfColors';
 
 type AboutUIModalProps = {
   isOpen: boolean;
@@ -34,7 +35,12 @@ const iconStyle = kialiStyle({
   height: '1rem',
   marginBottom: '-2px',
   marginRight: '0.5rem',
-  marginTop: '1rem'
+  marginTop: '1rem',
+  $nest: {
+    '& path': {
+      fill: PFColors.Link
+    }
+  }
 });
 
 const textContentStyle = kialiStyle({
