@@ -199,7 +199,7 @@ export const ListenerBuilder: React.FC<ListenerBuilderProps> = (props: ListenerB
             <FormGroup label="TLS Mode" fieldId="addTlsMode" style={{ margin: '0.5rem 0' }}>
               <FormSelect
                 value={props.listener.tlsMode}
-                id="addTlsMode_${props.index}"
+                id={`addTlsMode_${props.index}`}
                 name="addTlsMode"
                 onChange={onAddTlsMode}
               >
@@ -221,7 +221,7 @@ export const ListenerBuilder: React.FC<ListenerBuilderProps> = (props: ListenerB
                   value={props.listener.tlsCert}
                   isRequired={true}
                   type="text"
-                  id="tlsCert_${props.index}"
+                  id={`tlsCert_${props.index}`}
                   aria-describedby="server-certificate"
                   name="tls-certificate"
                   onChange={onAddTlsCert}
