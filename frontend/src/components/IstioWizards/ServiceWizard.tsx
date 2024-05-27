@@ -39,6 +39,7 @@ import {
   ServiceWizardState,
   WIZARD_FAULT_INJECTION,
   WIZARD_K8S_REQUEST_ROUTING,
+  WIZARD_K8S_GRPC_REQUEST_ROUTING,
   WIZARD_REQUEST_ROUTING,
   WIZARD_REQUEST_TIMEOUTS,
   WIZARD_TCP_TRAFFIC_SHIFTING,
@@ -51,6 +52,7 @@ import { GatewaySelector, GatewaySelectorState } from './GatewaySelector';
 import { K8sGatewaySelector, K8sGatewaySelectorState } from './K8sGatewaySelector';
 import { VirtualServiceHosts } from './VirtualServiceHosts';
 import { K8sRouteHosts } from './K8sRouteHosts';
+import { K8sGRPCRouteHosts } from './K8sGRPCRouteHosts';
 import {
   DestinationRule,
   Gateway,
@@ -171,6 +173,9 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
           isMainWizardValid = true;
           break;
         case WIZARD_K8S_REQUEST_ROUTING:
+          isMainWizardValid = false;
+          break;
+        case WIZARD_K8S_GRPC_REQUEST_ROUTING:
           isMainWizardValid = false;
           break;
         // By default no rules is a no valid scenario
@@ -342,6 +347,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
       case WIZARD_TRAFFIC_SHIFTING:
       case WIZARD_TCP_TRAFFIC_SHIFTING:
       case WIZARD_K8S_REQUEST_ROUTING:
+      case WIZARD_K8S_GRPC_REQUEST_ROUTING:
       case WIZARD_REQUEST_ROUTING:
       case WIZARD_FAULT_INJECTION:
       case WIZARD_REQUEST_TIMEOUTS:
@@ -869,6 +875,14 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
             />
           )}
 
+          {this.props.type === WIZARD_K8S_GRPC_REQUEST_ROUTING && (
+            <K8sRequestRouting
+              subServices={this.props.subServices}
+              initRules={getInitK8sRules(this.props.k8sHTTPRoutes)}
+              onChange={this.onK8sRulesChange}
+            />
+          )}
+
           {this.props.type === WIZARD_FAULT_INJECTION && (
             <FaultInjection
               initFaultInjectionRoute={getInitFaultInjectionRoute(
@@ -1000,6 +1014,46 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
                 <Tab eventKey={0} title={'K8s HTTPRoute Hosts'}>
                   <div style={{ marginTop: '20px' }}>
                     <K8sRouteHosts
+                      valid={this.state.valid.k8sRouteHosts}
+                      k8sRouteHosts={this.state.k8sRouteHosts}
+                      gateway={this.state.gateway}
+                      onK8sRouteHostsChange={this.onK8sRouteHosts}
+                    />
+                  </div>
+                </Tab>
+
+                <Tab eventKey={1} title={'K8s Gateways'} data-test={'K8s Gateways'}>
+                  <div style={{ marginTop: '20px', marginBottom: '10px' }}>
+                    <K8sGatewaySelector
+                      serviceName={this.props.serviceName}
+                      hasGateway={hasK8sGateway(this.props.k8sHTTPRoutes)}
+                      gateway={k8sGatewaySelected}
+                      k8sGateways={this.props.k8sGateways}
+                      k8sRouteHosts={this.state.k8sRouteHosts}
+                      onGatewayChange={this.onK8sGateway}
+                    />
+                  </div>
+                </Tab>
+              </Tabs>
+            </ExpandableSection>
+          )}
+
+          {this.props.type === WIZARD_K8S_GRPC_REQUEST_ROUTING && (
+            <ExpandableSection
+              className={advancedOptionsStyle}
+              isExpanded={this.state.showAdvanced}
+              toggleText={`${this.state.showAdvanced ? 'Hide' : 'Show'} Advanced Options`}
+              contentId={`${this.state.showAdvanced ? 'hide' : 'show'}_advanced_options`}
+              onToggle={() => {
+                this.setState({
+                  showAdvanced: !this.state.showAdvanced
+                });
+              }}
+            >
+              <Tabs isFilled={true} activeKey={this.state.advancedTabKey} onSelect={this.advancedHandleTabClick}>
+                <Tab eventKey={0} title={'K8s HTTPRoute Hosts'}>
+                  <div style={{ marginTop: '20px' }}>
+                    <K8sGRPCRouteHosts
                       valid={this.state.valid.k8sRouteHosts}
                       k8sRouteHosts={this.state.k8sRouteHosts}
                       gateway={this.state.gateway}

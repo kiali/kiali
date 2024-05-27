@@ -21,6 +21,7 @@ import {
   WIZARD_REQUEST_TIMEOUTS,
   WIZARD_TCP_TRAFFIC_SHIFTING,
   WIZARD_K8S_REQUEST_ROUTING,
+  WIZARD_K8S_GRPC_REQUEST_ROUTING,
   WIZARD_EDIT_ANNOTATIONS
 } from './WizardActions';
 import { MessageType } from '../../types/MessageCenter';
@@ -88,7 +89,7 @@ const ServiceWizardDropdownComponent: React.FC<Props> = (props: Props) => {
     return hasMeshWorkloads;
   };
 
-  const hideConfirmDelete = () => {
+  const hideConfirmDelete = (): void => {
     setShowConfirmDelete(false);
   };
 
@@ -103,7 +104,7 @@ const ServiceWizardDropdownComponent: React.FC<Props> = (props: Props) => {
     });
   };
 
-  const onAction = (key: string) => {
+  const onAction = (key: string): void => {
     const updateLabel = getWizardUpdateLabel(props.virtualServices, props.k8sHTTPRoutes);
 
     switch (key) {
@@ -112,6 +113,7 @@ const ServiceWizardDropdownComponent: React.FC<Props> = (props: Props) => {
       case WIZARD_TRAFFIC_SHIFTING:
       case WIZARD_TCP_TRAFFIC_SHIFTING:
       case WIZARD_K8S_REQUEST_ROUTING:
+      case WIZARD_K8S_GRPC_REQUEST_ROUTING:
       case WIZARD_REQUEST_TIMEOUTS: {
         setShowWizard(true);
         setWizardType(key);
@@ -131,22 +133,22 @@ const ServiceWizardDropdownComponent: React.FC<Props> = (props: Props) => {
     }
   };
 
-  const onActionsSelect = () => {
+  const onActionsSelect = (): void => {
     setIsActionsOpen(!isActionsOpen);
   };
 
-  const onActionsToggle = (isOpen: boolean) => {
+  const onActionsToggle = (isOpen: boolean): void => {
     setIsActionsOpen(isOpen);
   };
 
-  const onClose = (changed: boolean) => {
+  const onClose = (changed: boolean): void => {
     setShowWizard(false);
     if (changed) {
       props.onChange();
     }
   };
 
-  const onDelete = () => {
+  const onDelete = (): void => {
     setIsDeleting(true);
     hideConfirmDelete();
 
@@ -166,7 +168,7 @@ const ServiceWizardDropdownComponent: React.FC<Props> = (props: Props) => {
       });
   };
 
-  const renderDropdownItems = () => {
+  const renderDropdownItems = (): React.ReactNode[] => {
     return [
       <ServiceWizardActionsDropdownGroup
         key="service_wizard_actions_dropdown_group"
@@ -182,15 +184,15 @@ const ServiceWizardDropdownComponent: React.FC<Props> = (props: Props) => {
     ];
   };
 
-  const onChangeAnnotations = (annotations: { [key: string]: string }) => {
+  const onChangeAnnotations = (annotations: { [key: string]: string }): void => {
     const jsonInjectionPatch = buildAnnotationPatch(annotations);
 
     API.updateService(props.namespace, props.serviceName, jsonInjectionPatch, 'json', props.cluster)
       .then(_ => {
-        AlertUtils.add('Service ' + props.serviceName + ' updated', 'default', MessageType.SUCCESS);
+        AlertUtils.add(`Service ${props.serviceName} updated`, 'default', MessageType.SUCCESS);
       })
       .catch(error => {
-        AlertUtils.addError('Could not update service ' + props.serviceName, error);
+        AlertUtils.addError(`Could not update service ${props.serviceName}`, error);
       })
       .finally(() => {
         setShowAnnotationsWizard(false);
@@ -201,7 +203,7 @@ const ServiceWizardDropdownComponent: React.FC<Props> = (props: Props) => {
   const hasMeshWorkloads = checkHasMeshWorkloads();
   const toolTipMsgActions = !hasMeshWorkloads
     ? 'There are not Workloads with sidecar for this service'
-    : 'There are not Workloads with ' + appLabelName + ' and ' + versionLabelName + ' labels';
+    : `There are not Workloads with ${appLabelName} and ${versionLabelName} labels`;
 
   const validWorkloads = getValidWorkloads();
   const validActions = hasMeshWorkloads && validWorkloads;
@@ -278,7 +280,7 @@ const ServiceWizardDropdownComponent: React.FC<Props> = (props: Props) => {
   );
 };
 
-const mapStateToProps = (state: KialiAppState) => ({
+const mapStateToProps = (state: KialiAppState): ReduxProps => ({
   istioAPIEnabled: state.statusState.istioEnvironment.istioAPIEnabled
 });
 

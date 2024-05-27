@@ -6,6 +6,7 @@ import { canDelete, ResourcePermissions } from 'types/Permissions';
 import {
   SERVICE_WIZARD_ACTIONS,
   WIZARD_K8S_REQUEST_ROUTING,
+  WIZARD_K8S_GRPC_REQUEST_ROUTING,
   WIZARD_EDIT_ANNOTATIONS,
   WIZARD_TITLES,
   WizardAction,
@@ -44,11 +45,11 @@ const dividerStyle = kialiStyle({
 export const ServiceWizardActionsDropdownGroup: React.FunctionComponent<Props> = (props: Props) => {
   const updateLabel = getWizardUpdateLabel(props.virtualServices, props.k8sHTTPRoutes);
 
-  const hasTrafficRouting = () => {
+  const hasTrafficRouting = (): boolean => {
     return hasServiceDetailsTrafficRouting(props.virtualServices, props.destinationRules, props.k8sHTTPRoutes);
   };
 
-  const handleActionClick = (eventKey: string) => {
+  const handleActionClick = (eventKey: string): void => {
     if (props.onAction) {
       props.onAction(eventKey as WizardAction, updateLabel.length === 0 ? 'create' : 'update');
     }
@@ -67,7 +68,10 @@ export const ServiceWizardActionsDropdownGroup: React.FunctionComponent<Props> =
   };
 
   const actionItems = SERVICE_WIZARD_ACTIONS.map(eventKey => {
-    const isGatewayAPIEnabled = eventKey === WIZARD_K8S_REQUEST_ROUTING ? serverConfig.gatewayAPIEnabled : true;
+    const isGatewayAPIEnabled =
+      eventKey === WIZARD_K8S_REQUEST_ROUTING || eventKey === WIZARD_K8S_GRPC_REQUEST_ROUTING
+        ? serverConfig.gatewayAPIEnabled
+        : true;
 
     const enabledItem =
       isGatewayAPIEnabled &&
@@ -93,7 +97,7 @@ export const ServiceWizardActionsDropdownGroup: React.FunctionComponent<Props> =
     if (!enabledItem) {
       return (
         <Tooltip
-          key={'tooltip_' + eventKey}
+          key={`tooltip_${eventKey}`}
           position={TooltipPosition.left}
           content={<>{getDropdownItemTooltipMessage(!isGatewayAPIEnabled)}</>}
         >
@@ -144,7 +148,7 @@ export const ServiceWizardActionsDropdownGroup: React.FunctionComponent<Props> =
   if (deleteDisabled) {
     deleteDropdownItem = (
       <Tooltip
-        key={'tooltip_' + DELETE_TRAFFIC_ROUTING}
+        key={`tooltip_${DELETE_TRAFFIC_ROUTING}`}
         position={TooltipPosition.left}
         content={<>{getDropdownItemTooltipMessage(false)}</>}
       >

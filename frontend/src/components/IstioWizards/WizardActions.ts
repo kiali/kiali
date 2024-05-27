@@ -69,6 +69,7 @@ export const WIZARD_FAULT_INJECTION = 'fault_injection';
 export const WIZARD_REQUEST_TIMEOUTS = 'request_timeouts';
 
 export const WIZARD_K8S_REQUEST_ROUTING = 'k8s_request_routing';
+export const WIZARD_K8S_GRPC_REQUEST_ROUTING = 'k8s_grpc_request_routing';
 
 export const WIZARD_ENABLE_AUTO_INJECTION = 'enable_auto_injection';
 export const WIZARD_DISABLE_AUTO_INJECTION = 'disable_auto_injection';
@@ -81,7 +82,8 @@ export const SERVICE_WIZARD_ACTIONS = [
   WIZARD_TRAFFIC_SHIFTING,
   WIZARD_TCP_TRAFFIC_SHIFTING,
   WIZARD_REQUEST_TIMEOUTS,
-  WIZARD_K8S_REQUEST_ROUTING
+  WIZARD_K8S_REQUEST_ROUTING,
+  WIZARD_K8S_GRPC_REQUEST_ROUTING
 ];
 
 export type WizardAction =
@@ -90,7 +92,8 @@ export type WizardAction =
   | 'traffic_shifting'
   | 'tcp_traffic_shifting'
   | 'request_timeouts'
-  | 'k8s_request_routing';
+  | 'k8s_request_routing'
+  | 'k8s_grpc_request_routing';
 export type WizardMode = 'create' | 'update';
 
 export const WIZARD_TITLES = {
@@ -99,7 +102,8 @@ export const WIZARD_TITLES = {
   [WIZARD_TRAFFIC_SHIFTING]: 'Traffic Shifting',
   [WIZARD_TCP_TRAFFIC_SHIFTING]: 'TCP Traffic Shifting',
   [WIZARD_REQUEST_TIMEOUTS]: 'Request Timeouts',
-  [WIZARD_K8S_REQUEST_ROUTING]: 'K8s Gateway API Routing'
+  [WIZARD_K8S_REQUEST_ROUTING]: 'K8s HTTP Routing',
+  [WIZARD_K8S_GRPC_REQUEST_ROUTING]: 'K8s GRPC Routing'
 };
 
 export type ServiceWizardProps = {
@@ -535,7 +539,7 @@ export const buildIstioConfig = (wProps: ServiceWizardProps, wState: ServiceWiza
     wProps.gateways.concat(wProps.k8sGateways)
   );
 
-  if (wProps.type !== WIZARD_K8S_REQUEST_ROUTING) {
+  if (wProps.type !== WIZARD_K8S_REQUEST_ROUTING && wProps.type !== WIZARD_K8S_GRPC_REQUEST_ROUTING) {
     wizardDR = {
       kind: 'DestinationRule',
       apiVersion: ISTIO_NETWORKING_VERSION,
@@ -1007,6 +1011,111 @@ export const buildIstioConfig = (wProps: ServiceWizardProps, wState: ServiceWiza
         : [wProps.serviceName];
     switch (wProps.type) {
       case WIZARD_K8S_REQUEST_ROUTING: {
+        // parentRefs to K8sGateway
+        if (wState.k8sGateway && wState.k8sGateway.addGateway) {
+          wizardK8sHTTPRoute.spec.parentRefs = [];
+          if (wState.k8sGateway.newGateway) {
+            const namespaceAndName = fullNewGatewayName.split('/');
+            const gwNamespace = namespaceAndName[0];
+            const gwName = namespaceAndName[1];
+            wizardK8sHTTPRoute.spec.parentRefs.push({
+              name: gwName,
+              namespace: gwNamespace
+            });
+          } else if (wState.k8sGateway.selectedGateway.length > 0) {
+            const namespaceAndName = wState.k8sGateway.selectedGateway.split('/');
+            const gwNamespace = namespaceAndName[0];
+            const gwName = namespaceAndName[1];
+            wizardK8sHTTPRoute.spec.parentRefs.push({
+              name: gwName,
+              namespace: gwNamespace
+            });
+          }
+        }
+        if (wState.k8sRules && wState.k8sRules.length > 0) {
+          wizardK8sHTTPRoute.spec.rules = [];
+          wState.k8sRules.forEach(rule => {
+            if (rule.matches.length > 0 || rule.filters.length > 0) {
+              wizardK8sHTTPRoute!.spec!.rules!.push({
+                matches: [buildK8sHTTPRouteMatch(rule.matches)],
+                filters: buildK8sHTTPRouteFilter(rule.filters),
+                backendRefs: rule.backendRefs
+              });
+            } else {
+              wizardK8sHTTPRoute!.spec!.rules!.push({
+                backendRefs: rule.backendRefs
+              });
+            }
+          });
+        }
+        break;
+      }
+    }
+  }
+  if (wProps.type === WIZARD_K8S_GRPC_REQUEST_ROUTING) {
+    let k8sRouteName = wProps.serviceName;
+    if (
+      wProps.k8sHTTPRoutes &&
+      wProps.k8sHTTPRoutes.length === 1 &&
+      wProps.k8sHTTPRoutes[0].metadata.name !== k8sRouteName
+    ) {
+      k8sRouteName = wProps.k8sHTTPRoutes[0].metadata.name;
+    }
+
+    wizardK8sGW =
+      wState.k8sGateway && wState.k8sGateway.addGateway && wState.k8sGateway.newGateway
+        ? {
+            kind: 'Gateway',
+            apiVersion: GATEWAY_NETWORKING_VERSION,
+            metadata: {
+              namespace: wProps.namespace,
+              name: fullNewGatewayName.substr(wProps.namespace.length + 1),
+              labels: {
+                [KIALI_WIZARD_LABEL]: wProps.type,
+                app: fullNewGatewayName.substr(wProps.namespace.length + 1)
+              }
+            },
+            spec: {
+              gatewayClassName: wState.k8sGateway.gatewayClass,
+              listeners: [
+                {
+                  name: 'default',
+                  // here gwHosts for K8s API Gateway contains single host
+                  hostname: wState.k8sGateway.gwHosts,
+                  port: wState.k8sGateway.port,
+                  protocol: 'HTTP',
+                  allowedRoutes: {
+                    namespaces: {
+                      from: 'All',
+                      selector: {
+                        matchLabels: {}
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        : undefined;
+
+    wizardK8sHTTPRoute = {
+      kind: 'HTTPRoute',
+      apiVersion: GATEWAY_NETWORKING_VERSION,
+      metadata: {
+        namespace: wProps.namespace,
+        name: k8sRouteName,
+        labels: {
+          [KIALI_WIZARD_LABEL]: wProps.type
+        }
+      },
+      spec: {}
+    };
+    wizardK8sHTTPRoute.spec.hostnames =
+      wState.k8sRouteHosts.length > 1 || (wState.k8sRouteHosts.length === 1 && wState.k8sRouteHosts[0].length > 0)
+        ? wState.k8sRouteHosts
+        : [wProps.serviceName];
+    switch (wProps.type) {
+      case WIZARD_K8S_GRPC_REQUEST_ROUTING: {
         // parentRefs to K8sGateway
         if (wState.k8sGateway && wState.k8sGateway.addGateway) {
           wizardK8sHTTPRoute.spec.parentRefs = [];
