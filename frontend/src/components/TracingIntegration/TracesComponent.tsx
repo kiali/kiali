@@ -39,6 +39,7 @@ type ReduxProps = {
   provider?: string;
   selectedTrace?: JaegerTrace;
   timeRange: TimeRange;
+  timeout?: number;
   urlTracing: string;
 };
 
@@ -140,6 +141,7 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
       target: this.props.target,
       targetKind: this.props.targetKind,
       spanLimit: this.state.querySettings.limit,
+      timeout: this.props.timeout,
       tags: JSON.stringify(this.getTags())
     };
     // If percentil filter is set fetch only traces above the specified percentile
@@ -360,7 +362,8 @@ const mapStateToProps = (state: KialiAppState): ReduxProps => {
     provider: state.tracingState.info?.provider,
     selectedTrace: state.tracingState.selectedTrace,
     timeRange: timeRangeSelector(state),
-    urlTracing: state.tracingState.info ? state.tracingState.info.url : ''
+    urlTracing: state.tracingState.info ? state.tracingState.info.url : '',
+    timeout: state.tracingState.info?.timeout
   };
 };
 

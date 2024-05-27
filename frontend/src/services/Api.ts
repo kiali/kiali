@@ -1,4 +1,4 @@
-import axios, { AxiosHeaders } from 'axios';
+import axios, { AxiosHeaders, AxiosRequestConfig } from 'axios';
 import { config } from '../config';
 import { LoginSession } from '../store/Store';
 import { App, AppQuery } from '../types/App';
@@ -122,15 +122,20 @@ const newRequest = <P>(
   method: HTTP_VERBS,
   url: string,
   queryParams: unknown,
-  data: unknown
+  data: unknown,
+  timeout?: number
 ): Promise<ApiResponse<P>> => {
-  return axios.request<P>({
+  let config: AxiosRequestConfig = {
     method: method,
     url: apiProxy ? `${apiProxy}/${url}` : url,
     data: apiProxy ? JSON.stringify(data) : data,
     headers: getHeaders() as AxiosHeaders,
     params: queryParams
-  });
+  };
+  if (timeout) {
+    config = { ...config, timeout: timeout };
+  }
+  return axios.request<P>(config);
 };
 
 /** Requests */
@@ -786,7 +791,8 @@ export const getAppTraces = (
   namespace: string,
   app: string,
   params: TracingQuery,
-  cluster?: string
+  cluster?: string,
+  timeout?: number
 ): Promise<ApiResponse<TracingResponse>> => {
   const queryParams: QueryParams<TracingQuery> = { ...params };
 
@@ -794,14 +800,15 @@ export const getAppTraces = (
     queryParams.clusterName = cluster;
   }
 
-  return newRequest<TracingResponse>(HTTP_VERBS.GET, urls.appTraces(namespace, app), queryParams, {});
+  return newRequest<TracingResponse>(HTTP_VERBS.GET, urls.appTraces(namespace, app), queryParams, {}, timeout);
 };
 
 export const getServiceTraces = (
   namespace: string,
   service: string,
   params: TracingQuery,
-  cluster?: string
+  cluster?: string,
+  timeout?: number
 ): Promise<ApiResponse<TracingResponse>> => {
   const queryParams: QueryParams<TracingQuery> = { ...params };
 
@@ -809,14 +816,15 @@ export const getServiceTraces = (
     queryParams.clusterName = cluster;
   }
 
-  return newRequest<TracingResponse>(HTTP_VERBS.GET, urls.serviceTraces(namespace, service), queryParams, {});
+  return newRequest<TracingResponse>(HTTP_VERBS.GET, urls.serviceTraces(namespace, service), queryParams, {}, timeout);
 };
 
 export const getWorkloadTraces = (
   namespace: string,
   workload: string,
   params: TracingQuery,
-  cluster?: string
+  cluster?: string,
+  timeout?: number
 ): Promise<ApiResponse<TracingResponse>> => {
   const queryParams: QueryParams<TracingQuery> = { ...params };
 
@@ -824,7 +832,13 @@ export const getWorkloadTraces = (
     queryParams.clusterName = cluster;
   }
 
-  return newRequest<TracingResponse>(HTTP_VERBS.GET, urls.workloadTraces(namespace, workload), queryParams, {});
+  return newRequest<TracingResponse>(
+    HTTP_VERBS.GET,
+    urls.workloadTraces(namespace, workload),
+    queryParams,
+    {},
+    timeout
+  );
 };
 
 export const getErrorTraces = (

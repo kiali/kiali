@@ -11,6 +11,7 @@ type TracingInfo struct {
 	Integration          bool               `json:"integration"`
 	Provider             string             `json:"provider"`
 	TempoConfig          config.TempoConfig `json:"tempoConfig"`
+	Timeout              int                `json:"timeout"`
 	URL                  string             `json:"url"`
 	NamespaceSelector    bool               `json:"namespaceSelector"`
 	WhiteListIstioSystem []string           `json:"whiteListIstioSystem"`
