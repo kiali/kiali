@@ -25,6 +25,7 @@ func GetTracingInfo(w http.ResponseWriter, r *http.Request) {
 			Integration:          tracingConfig.InClusterURL != "",
 			Provider:             string(tracingConfig.Provider),
 			TempoConfig:          tracingConfig.TempoConfig,
+			Timeout:              tracingConfig.QueryTimeout,
 			URL:                  tracingConfig.URL,
 			NamespaceSelector:    tracingConfig.NamespaceSelector,
 			WhiteListIstioSystem: tracingConfig.WhiteListIstioSystem,

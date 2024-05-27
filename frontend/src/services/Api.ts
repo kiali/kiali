@@ -828,6 +828,11 @@ export const getWorkloadTraces = (
 ): Promise<ApiResponse<TracingResponse>> => {
   const queryParams: QueryParams<TracingQuery> = { ...params };
 
+  // Default is 30, time out is expected to be higher than default
+  if (timeout && timeout > 30) {
+    // Specified in secongs, API needs ms
+    timeout = timeout * 1000;
+  }
   if (cluster) {
     queryParams.clusterName = cluster;
   }
