@@ -57,6 +57,7 @@ import {
   DestinationRule,
   Gateway,
   K8sGateway,
+  K8sGRPCRoute,
   K8sHTTPRoute,
   PeerAuthentication,
   PeerAuthenticationMutualTLSMode,
@@ -356,6 +357,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
         const gw = this.state.previews!.gw;
         const k8sgateway = this.state.previews!.k8sgateway;
         const k8shttproute = this.state.previews!.k8shttproute;
+        const k8sgrpcroute = this.state.previews!.k8sgrpcroute;
         const pa = this.state.previews!.pa;
 
         // Gateway is only created when user has explicit selected this option
@@ -413,6 +415,18 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
             );
           }
 
+          if (k8sgrpcroute) {
+            promises.push(
+              API.updateIstioConfigDetail(
+                this.props.namespace,
+                'k8sgrpcroutes',
+                k8sgrpcroute.metadata.name,
+                JSON.stringify(k8sgrpcroute),
+                this.props.cluster
+              )
+            );
+          }
+
           if (dr) {
             this.handlePeerAuthnUpdate(pa, dr, promises);
           }
@@ -446,6 +460,17 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
                 this.props.namespace,
                 'k8shttproutes',
                 JSON.stringify(k8shttproute),
+                this.props.cluster
+              )
+            );
+          }
+
+          if (k8sgrpcroute) {
+            promises.push(
+              API.createIstioConfigDetail(
+                this.props.namespace,
+                'k8sgrpcroutes',
+                JSON.stringify(k8sgrpcroute),
                 this.props.cluster
               )
             );
@@ -721,6 +746,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
     const pa = items.filter(it => it.type === 'peerauthentications')[0];
     const vs = items.filter(it => it.type === 'virtualservice')[0];
     const k8shttproute = items.filter(it => it.type === 'k8shttproute')[0];
+    const k8sgrpcroute = items.filter(it => it.type === 'k8sgrpcroute')[0];
 
     const previews: WizardPreviews = {
       dr: dr ? (dr.items[0] as DestinationRule) : undefined,
@@ -728,7 +754,8 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
       k8sgateway: k8sgateway ? (k8sgateway.items[0] as K8sGateway) : undefined,
       pa: pa ? (pa.items[0] as PeerAuthentication) : undefined,
       vs: vs ? (vs.items[0] as VirtualService) : undefined,
-      k8shttproute: k8shttproute ? (k8shttproute.items[0] as K8sHTTPRoute) : undefined
+      k8shttproute: k8shttproute ? (k8shttproute.items[0] as K8sHTTPRoute) : undefined,
+      k8sgrpcroute: k8shttproute ? (k8sgrpcroute.items[0] as K8sGRPCRoute) : undefined
     };
 
     this.setState({ previews, showPreview: false, showWizard: false, confirmationModal: true });
@@ -752,6 +779,10 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
 
       if (this.state.previews.k8shttproute) {
         items.push({ type: 'k8shttproute', items: [this.state.previews.k8shttproute], title: 'K8s HTTPRoute' });
+      }
+
+      if (this.state.previews.k8sgrpcroute) {
+        items.push({ type: 'k8sgrpcroute', items: [this.state.previews.k8sgrpcroute], title: 'K8s GRPCRoute' });
       }
 
       if (this.state.previews.pa) {
