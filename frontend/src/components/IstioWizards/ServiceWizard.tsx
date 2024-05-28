@@ -190,7 +190,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
       }
 
       const initVsHosts = getInitHosts(this.props.virtualServices);
-      const initK8sRoutes = getInitK8sHosts(this.props.k8sHTTPRoutes);
+      const initK8sRoutes = getInitK8sHosts(this.props.k8sHTTPRoutes, this.props.k8sGRPCRoutes);
 
       const [initMtlsMode, initClientCertificate, initPrivateKey, initCaCertificates] = getInitTlsMode(
         this.props.destinationRules
@@ -284,8 +284,8 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
         gateway.addMesh = isMesh;
       }
 
-      if (hasK8sGateway(this.props.k8sHTTPRoutes)) {
-        const gatewaySelected = getInitK8sGateway(this.props.k8sHTTPRoutes);
+      if (hasK8sGateway(this.props.k8sHTTPRoutes, this.props.k8sGRPCRoutes)) {
+        const gatewaySelected = getInitK8sGateway(this.props.k8sHTTPRoutes, this.props.k8sGRPCRoutes);
         k8sGateway.addGateway = true;
         k8sGateway.selectedGateway = gatewaySelected;
       }
@@ -768,7 +768,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
 
   render(): React.ReactNode {
     const [gatewaySelected, isMesh] = getInitGateway(this.props.virtualServices);
-    const k8sGatewaySelected = getInitK8sGateway(this.props.k8sHTTPRoutes);
+    const k8sGatewaySelected = getInitK8sGateway(this.props.k8sHTTPRoutes, this.props.k8sGRPCRoutes);
 
     const titleAction =
       this.props.type.length > 0
@@ -998,7 +998,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
             </ExpandableSection>
           )}
 
-          {this.props.type === WIZARD_K8S_REQUEST_ROUTING && (
+          {(this.props.type === WIZARD_K8S_REQUEST_ROUTING || this.props.type === WIZARD_K8S_GRPC_REQUEST_ROUTING) && (
             <ExpandableSection
               className={advancedOptionsStyle}
               isExpanded={this.state.showAdvanced}
@@ -1011,57 +1011,30 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
               }}
             >
               <Tabs isFilled={true} activeKey={this.state.advancedTabKey} onSelect={this.advancedHandleTabClick}>
-                <Tab eventKey={0} title={'K8s HTTPRoute Hosts'}>
-                  <div style={{ marginTop: '20px' }}>
-                    <K8sRouteHosts
-                      valid={this.state.valid.k8sRouteHosts}
-                      k8sRouteHosts={this.state.k8sRouteHosts}
-                      gateway={this.state.gateway}
-                      onK8sRouteHostsChange={this.onK8sRouteHosts}
-                    />
-                  </div>
-                </Tab>
-
-                <Tab eventKey={1} title={'K8s Gateways'} data-test={'K8s Gateways'}>
-                  <div style={{ marginTop: '20px', marginBottom: '10px' }}>
-                    <K8sGatewaySelector
-                      serviceName={this.props.serviceName}
-                      hasGateway={hasK8sGateway(this.props.k8sHTTPRoutes)}
-                      gateway={k8sGatewaySelected}
-                      k8sGateways={this.props.k8sGateways}
-                      k8sRouteHosts={this.state.k8sRouteHosts}
-                      onGatewayChange={this.onK8sGateway}
-                    />
-                  </div>
-                </Tab>
-              </Tabs>
-            </ExpandableSection>
-          )}
-
-          {this.props.type === WIZARD_K8S_GRPC_REQUEST_ROUTING && (
-            <ExpandableSection
-              className={advancedOptionsStyle}
-              isExpanded={this.state.showAdvanced}
-              toggleText={`${this.state.showAdvanced ? 'Hide' : 'Show'} Advanced Options`}
-              contentId={`${this.state.showAdvanced ? 'hide' : 'show'}_advanced_options`}
-              onToggle={() => {
-                this.setState({
-                  showAdvanced: !this.state.showAdvanced
-                });
-              }}
-            >
-              <Tabs isFilled={true} activeKey={this.state.advancedTabKey} onSelect={this.advancedHandleTabClick}>
-                <Tab eventKey={0} title={'K8s HTTPRoute Hosts'}>
-                  <div style={{ marginTop: '20px' }}>
-                    <K8sGRPCRouteHosts
-                      valid={this.state.valid.k8sRouteHosts}
-                      k8sRouteHosts={this.state.k8sRouteHosts}
-                      gateway={this.state.gateway}
-                      onK8sRouteHostsChange={this.onK8sRouteHosts}
-                    />
-                  </div>
-                </Tab>
-
+                {this.props.type === WIZARD_K8S_REQUEST_ROUTING && (
+                  <Tab eventKey={0} title={'K8s HTTPRoute Hosts'}>
+                    <div style={{ marginTop: '20px' }}>
+                      <K8sRouteHosts
+                        valid={this.state.valid.k8sRouteHosts}
+                        k8sRouteHosts={this.state.k8sRouteHosts}
+                        gateway={this.state.gateway}
+                        onK8sRouteHostsChange={this.onK8sRouteHosts}
+                      />
+                    </div>
+                  </Tab>
+                )}
+                {this.props.type === WIZARD_K8S_GRPC_REQUEST_ROUTING && (
+                  <Tab eventKey={0} title={'K8s GRPCRoute Hosts'}>
+                    <div style={{ marginTop: '20px' }}>
+                      <K8sGRPCRouteHosts
+                        valid={this.state.valid.k8sRouteHosts}
+                        k8sRouteHosts={this.state.k8sRouteHosts}
+                        gateway={this.state.gateway}
+                        onK8sRouteHostsChange={this.onK8sRouteHosts}
+                      />
+                    </div>
+                  </Tab>
+                )}
                 <Tab eventKey={1} title={'K8s Gateways'} data-test={'K8s Gateways'}>
                   <div style={{ marginTop: '20px', marginBottom: '10px' }}>
                     <K8sGatewaySelector

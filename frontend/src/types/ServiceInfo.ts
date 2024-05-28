@@ -3,6 +3,7 @@ import {
   DestinationRule,
   getWizardUpdateLabel,
   K8sHTTPRoute,
+  K8sGRPCRoute,
   ObjectCheck,
   ObjectValidation,
   ServiceEntry,
@@ -72,6 +73,7 @@ export interface ServiceDetailsInfo {
   istioAmbient: boolean;
   istioPermissions: ResourcePermissions;
   istioSidecar: boolean;
+  k8sGRPCRoutes: K8sGRPCRoute[];
   k8sHTTPRoutes: K8sHTTPRoute[];
   namespaceMTLS?: TLSStatus;
   service: Service;

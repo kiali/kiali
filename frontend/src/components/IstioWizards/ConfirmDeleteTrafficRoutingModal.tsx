@@ -1,14 +1,15 @@
 import React from 'react';
 import { Button, ButtonVariant, Modal, ModalVariant } from '@patternfly/react-core';
-import { DestinationRuleC, K8sHTTPRoute, VirtualService } from '../../types/IstioObjects';
+import { DestinationRuleC, K8sGRPCRoute, K8sHTTPRoute, VirtualService } from '../../types/IstioObjects';
 
 type Props = {
   destinationRules: DestinationRuleC[];
-  virtualServices: VirtualService[];
-  k8sHTTPRoutes: K8sHTTPRoute[];
   isOpen: boolean;
+  k8sGRPCRoutes: K8sGRPCRoute[];
+  k8sHTTPRoutes: K8sHTTPRoute[];
   onCancel: () => void;
   onConfirm: () => void;
+  virtualServices: VirtualService[];
 };
 
 export const ConfirmDeleteTrafficRoutingModal: React.FunctionComponent<Props> = props => {
@@ -16,7 +17,7 @@ export const ConfirmDeleteTrafficRoutingModal: React.FunctionComponent<Props> = 
     return drs.filter(dr => !!dr.hasPeerAuthentication()).length > 0;
   }
 
-  function getDeleteMessage() {
+  function getDeleteMessage(): React.ReactNode {
     const deleteMessage = 'Are you sure you want to delete ?';
     const deleteItems: JSX.Element[] = [];
 
@@ -52,6 +53,14 @@ export const ConfirmDeleteTrafficRoutingModal: React.FunctionComponent<Props> = 
           )}'`
         : '';
     deleteItems.push(<div key={`delete_item_${++i}`}>{k8sHTTPRouteMessage}</div>);
+
+    let k8sGRPCRouteMessage =
+      props.k8sGRPCRoutes.length > 0
+        ? `K8s GRPCRoute${props.k8sGRPCRoutes.length > 1 ? 's' : ''}: '${props.k8sGRPCRoutes.map(
+            k8sr => k8sr.metadata.name
+          )}'`
+        : '';
+    deleteItems.push(<div key={`delete_item_${++i}`}>{k8sGRPCRouteMessage}</div>);
 
     return (
       <>

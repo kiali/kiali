@@ -23,7 +23,7 @@ export class K8sGRPCRouteHosts extends React.Component<Props> {
     const k8sRouteHosts = this.props.k8sRouteHosts.length > 0 ? this.props.k8sRouteHosts.join(',') : '';
     return (
       <Form isHorizontal={true}>
-        <FormGroup label="K8s HTTPRoute Hosts" fieldId="advanced-k8sRouteHosts">
+        <FormGroup label="K8s GRPCRoute Hosts" fieldId="advanced-k8sRouteHosts">
           <TextInput
             value={k8sRouteHosts}
             id="advanced-k8sRouteHosts"

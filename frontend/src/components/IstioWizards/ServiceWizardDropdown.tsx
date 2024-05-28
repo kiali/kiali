@@ -5,6 +5,7 @@ import {
   DestinationRule,
   DestinationRuleC,
   getWizardUpdateLabel,
+  K8sGRPCRoute,
   K8sHTTPRoute,
   PeerAuthentication,
   VirtualService
@@ -46,6 +47,7 @@ type Props = ReduxProps & {
   destinationRules: DestinationRule[];
   gateways: string[];
   istioPermissions: ResourcePermissions;
+  k8sGRPCRoutes: K8sGRPCRoute[];
   k8sGateways: string[];
   k8sHTTPRoutes: K8sHTTPRoute[];
   namespace: string;

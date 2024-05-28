@@ -16,6 +16,7 @@ import {
   HTTPRouteDestination,
   IstioObject,
   K8sGateway,
+  K8sGRPCRoute,
   K8sHTTPHeaderFilter,
   K8sHTTPMatch,
   K8sHTTPRequestMirrorFilter,
@@ -112,6 +113,7 @@ export type ServiceWizardProps = {
   destinationRules: DestinationRule[];
   gateways: string[];
   istioAPIEnabled: boolean;
+  k8sGRPCRoutes: K8sGRPCRoute[];
   k8sGateways: string[];
   k8sHTTPRoutes: K8sHTTPRoute[];
   namespace: string;
@@ -143,6 +145,7 @@ export type WizardPreviews = {
   dr?: DestinationRule;
   gw?: Gateway;
   k8sgateway?: K8sGateway;
+  k8sgrpcroute?: K8sGRPCRoute;
   k8shttproute?: K8sHTTPRoute;
   pa?: PeerAuthentication;
   vs?: VirtualService;
@@ -1577,7 +1580,7 @@ export const hasGateway = (virtualServices: VirtualService[]): boolean => {
   return false;
 };
 
-export const hasK8sGateway = (k8sHTTPRoutes: K8sHTTPRoute[]): boolean => {
+export const hasK8sGateway = (k8sHTTPRoutes: K8sHTTPRoute[], k8sGRPCRoutes: K8sGRPCRoute[]): boolean => {
   // We need to if sentence, otherwise a potential undefined is not well handled
   if (
     k8sHTTPRoutes &&
@@ -1585,6 +1588,15 @@ export const hasK8sGateway = (k8sHTTPRoutes: K8sHTTPRoute[]): boolean => {
     k8sHTTPRoutes[0] &&
     k8sHTTPRoutes[0].spec.parentRefs &&
     k8sHTTPRoutes[0].spec.parentRefs.length > 0
+  ) {
+    return true;
+  }
+  if (
+    k8sGRPCRoutes &&
+    k8sGRPCRoutes.length === 1 &&
+    k8sGRPCRoutes[0] &&
+    k8sGRPCRoutes[0].spec.parentRefs &&
+    k8sGRPCRoutes[0].spec.parentRefs.length > 0
   ) {
     return true;
   }
@@ -1598,7 +1610,8 @@ export const getInitHosts = (virtualServices: VirtualService[]): string[] => {
   return [];
 };
 
-export const getInitK8sHosts = (k8sHTTPRoutes: K8sHTTPRoute[]): string[] => {
+export const getInitK8sHosts = (k8sHTTPRoutes: K8sHTTPRoute[], k8sGRPCRoutes: K8sGRPCRoute[]): string[] => {
+  const result = new Set<string>();
   if (
     k8sHTTPRoutes &&
     k8sHTTPRoutes.length === 1 &&
@@ -1606,9 +1619,22 @@ export const getInitK8sHosts = (k8sHTTPRoutes: K8sHTTPRoute[]): string[] => {
     k8sHTTPRoutes[0].spec.hostnames &&
     k8sHTTPRoutes[0].spec.hostnames.length > 0
   ) {
-    return k8sHTTPRoutes[0].spec.hostnames;
+    k8sHTTPRoutes[0].spec.hostnames.forEach(value => {
+      result.add(value);
+    });
   }
-  return [];
+  if (
+    k8sGRPCRoutes &&
+    k8sGRPCRoutes.length === 1 &&
+    k8sGRPCRoutes[0] &&
+    k8sGRPCRoutes[0].spec.hostnames &&
+    k8sGRPCRoutes[0].spec.hostnames.length > 0
+  ) {
+    k8sGRPCRoutes[0].spec.hostnames.forEach(value => {
+      result.add(value);
+    });
+  }
+  return Array.from(result);
 };
 
 // VirtualServices added from the Kiali Wizard only support to add a single gateway
@@ -1638,7 +1664,7 @@ export const getInitGateway = (virtualServices: VirtualService[]): [string, bool
 // HTTPRoutes added from the Kiali Wizard only support to add a single K8s API gateway
 // mesh gateway is not supported yet.
 // This method returns a gateway selected by the user
-export const getInitK8sGateway = (k8sHTTPRoutes: K8sHTTPRoute[]): string => {
+export const getInitK8sGateway = (k8sHTTPRoutes: K8sHTTPRoute[], k8sGRPCRoutes: K8sGRPCRoute[]): string => {
   if (
     k8sHTTPRoutes &&
     k8sHTTPRoutes.length === 1 &&
@@ -1648,6 +1674,17 @@ export const getInitK8sGateway = (k8sHTTPRoutes: K8sHTTPRoute[]): string => {
   ) {
     const name = k8sHTTPRoutes[0].spec.parentRefs[0].name;
     const namespace = k8sHTTPRoutes[0].spec.parentRefs[0].namespace;
+    return `${namespace !== '' ? `${namespace}/` : ''}${name}`;
+  }
+  if (
+    k8sGRPCRoutes &&
+    k8sGRPCRoutes.length === 1 &&
+    k8sGRPCRoutes[0] &&
+    k8sGRPCRoutes[0].spec.parentRefs &&
+    k8sGRPCRoutes[0].spec.parentRefs.length > 0
+  ) {
+    const name = k8sGRPCRoutes[0].spec.parentRefs[0].name;
+    const namespace = k8sGRPCRoutes[0].spec.parentRefs[0].namespace;
     return `${namespace !== '' ? `${namespace}/` : ''}${name}`;
   }
   return '';
