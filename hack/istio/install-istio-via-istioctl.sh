@@ -473,10 +473,10 @@ if [ "${NETWORK}" != "" ]; then
   NETWORK_OPTION="--set values.global.network=${NETWORK}"
 fi
 
-ZIPKIN_SERVICE_OPTION="--set values.meshConfig.extensionProviders[0].zipkin.service=zipkin.${NAMESPACE}.svc.cluster.local"
-if [[ "${CUSTOM_INSTALL_SETTINGS}" == *"values.meshConfig.extensionProviders[0].zipkin.service"* ]]; then
-  echo "Custom settings are set: ${CUSTOM_INSTALL_SETTINGS}"
-  ZIPKIN_SERVICE_OPTION=""
+DEFAULT_ZIPKIN_SERVICE_OPTION="--set values.meshConfig.defaultConfig.tracing.zipkin.address=zipkin.${NAMESPACE}:9411"
+if [[ "${CUSTOM_INSTALL_SETTINGS}" == *"values.meshConfig.defaultConfig.tracing.zipkin.address"* ]]; then
+  echo "Custom zipkin address set. Not setting default zipkin address."
+  DEFAULT_ZIPKIN_SERVICE_OPTION=""
 fi
 
 for s in \
@@ -489,9 +489,8 @@ for s in \
    "--set values.gateways.istio-egressgateway.enabled=${ISTIO_EGRESSGATEWAY_ENABLED}" \
    "--set values.gateways.istio-ingressgateway.enabled=${ISTIO_INGRESSGATEWAY_ENABLED}" \
    "--set values.meshConfig.enableTracing=true" \
-   "--set values.meshConfig.extensionProviders[0].name=zipkin" \
-   "${ZIPKIN_SERVICE_OPTION}" \
-   "--set values.meshConfig.extensionProviders[0].zipkin.port=9411" \
+   "--set values.meshConfig.defaultConfig.tracing.sampling=100.0" \
+   "${DEFAULT_ZIPKIN_SERVICE_OPTION}" \
    "--set values.meshConfig.accessLogFile=/dev/stdout" \
    "${CNI_OPTIONS}" \
    "${MESH_ID_OPTION}" \
@@ -561,20 +560,6 @@ else
       sleep 10
     done
   done
-
-  # Enable tracing.
-  ${CLIENT_EXE} apply -f - <<EOF
-apiVersion: telemetry.istio.io/v1alpha1
-kind: Telemetry
-metadata:
-  name: mesh-default
-  namespace: ${NAMESPACE}
-spec:
-  tracing:
-    - providers:
-        - name: "zipkin"
-      randomSamplingPercentage: 100.00
-EOF
 
   if [ "${K8S_GATEWAY_API_ENABLED}" == "true" ]; then
     if [ "${K8S_GATEWAY_API_VERSION}" == "" ]; then
