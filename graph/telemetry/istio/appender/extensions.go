@@ -28,6 +28,7 @@ type ExtensionsAppender struct {
 	GraphType        string
 	IncludeIdleEdges bool
 	QueryTime        int64 // unix time in seconds
+	Rates            graph.RequestedRates
 }
 
 // Name implements Appender
@@ -42,7 +43,7 @@ func (a ExtensionsAppender) IsFinalizer() bool {
 
 // AppendGraph implements Appender
 func (a ExtensionsAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
-	log.Info("In Extensions")
+	log.Info("In Extensions") // todo: remove
 
 	cfg := config.Get()
 	if len(cfg.Extensions) == 0 {
@@ -71,61 +72,83 @@ func (a ExtensionsAppender) appendGraph(trafficMap graph.TrafficMap, ext config.
 	rootID, _, _ := graph.Id(ext.RootCluster, ext.RootNamespace, ext.RootService, "", "", "", ext.RootVersion, a.GraphType)
 	rootNode, found := trafficMap[rootID]
 	if !found {
+		// todo: debug level
 		log.Infof("Extension [%s] did not find root node in traffic map [%s:%s:%s]", ext.Name, ext.RootCluster, ext.RootNamespace, ext.RootService)
 		return
 	}
 	log.Infof("Extension [%s] found root node [%+v]", ext.Name, rootNode)
 
-	//
-	// Request Traffic (HTTP, gRPC)
-	//
-
-	// Grab all of the extension traffic for the time period, regardless of reporters or namespaces, in one shot.  This is a departure
-	// from the usual approach, but until it proves too heavy, let's give it a try...
-	groupBy := "dest_cluster, dest_namespace, dest_service, dest_version, flags, protocol, security, source_cluster, source_namespace, source_service, source_version, status_code"
 	idleCondition := "> 0"
 	if a.IncludeIdleEdges {
 		idleCondition = ""
 	}
-	metric := "kiali_ext_requests_total"
 
-	query := fmt.Sprintf(`sum(rate(%s{extension="%s"} [%vs])) by (%s) %s`,
-		metric,
-		ext.Name,
-		int(a.Duration.Seconds()), // range duration for the query
-		groupBy,
-		idleCondition)
-	log.Infof("Extension requests query [%s]", query)
-	vector := promQuery(query, time.Unix(a.QueryTime, 0), client.GetContext(), client.API(), a)
-	a.appendTrafficMap(trafficMap, ext, &vector, metric)
+	//
+	// Request Traffic (HTTP, gRPC)
+	//
+	if a.Rates.Http == graph.RateRequests || a.Rates.Grpc == graph.RateRequests {
+		// Grab all of the extension traffic for the time period, regardless of reporters or namespaces, in one shot.  This is a departure
+		// from the usual approach, but until it proves too heavy, let's give it a try...
+		groupBy := "dest_cluster, dest_namespace, dest_service, dest_version, flags, protocol, security, source_cluster, source_namespace, source_service, source_version, status_code"
+		metric := "kiali_ext_requests_total"
+
+		query := fmt.Sprintf(`sum(rate(%s{extension="%s"} [%vs])) by (%s) %s`,
+			metric,
+			ext.Name,
+			int(a.Duration.Seconds()), // range duration for the query
+			groupBy,
+			idleCondition)
+		log.Infof("Extension requests query [%s]", query)
+		vector := promQuery(query, time.Unix(a.QueryTime, 0), client.GetContext(), client.API(), a)
+		a.appendTrafficMap(trafficMap, &vector, metric)
+	}
 
 	//
 	// TCP Traffic
 	//
+	if a.Rates.Tcp != graph.RateNone {
+		var metrics []string
 
-	// Grab all of the extension traffic for the time period, regardless of reporters or namespaces, in one shot.  This is a departure
-	// from the usual approach, but until it proves too heavy, let's give it a try...
-	groupBy = "dest_cluster, dest_namespace, dest_service, dest_version, flags, security, source_cluster, source_namespace, source_service, source_version"
-	metric = "kiali_ext_tcp_sent_total"
+		switch a.Rates.Tcp {
+		case graph.RateReceived:
+			metrics = []string{"kiali_ext_tcp_received_total"}
+		case graph.RateSent:
+			metrics = []string{"kiali_ext_tcp_sent_total"}
+		case graph.RateTotal:
+			metrics = []string{"kiali_ext_tcp_received_total", "kiali_ext_tcp_sent_total"}
+		default:
+			metrics = []string{}
+		}
 
-	query = fmt.Sprintf(`sum(rate(%s{extension="%s"} [%vs])) by (%s) %s`,
-		metric,
-		ext.Name,
-		int(a.Duration.Seconds()), // range duration for the query
-		groupBy,
-		idleCondition)
-	log.Infof("Extension tcp query [%s]", query)
-	vector = promQuery(query, time.Unix(a.QueryTime, 0), client.GetContext(), client.API(), a)
-	a.appendTrafficMap(trafficMap, ext, &vector, metric)
+		for _, metric := range metrics {
+
+			// Grab all of the extension traffic for the time period, regardless of reporters or namespaces, in one shot.  This is a departure
+			// from the usual approach, but until it proves too heavy, let's give it a try...
+			groupBy := "dest_cluster, dest_namespace, dest_service, dest_version, flags, security, source_cluster, source_namespace, source_service, source_version"
+
+			query := fmt.Sprintf(`sum(rate(%s{extension="%s"} [%vs])) by (%s) %s`,
+				metric,
+				ext.Name,
+				int(a.Duration.Seconds()), // range duration for the query
+				groupBy,
+				idleCondition)
+			log.Infof("Extension tcp query [%s]", query)
+			vector := promQuery(query, time.Unix(a.QueryTime, 0), client.GetContext(), client.API(), a)
+			a.appendTrafficMap(trafficMap, &vector, metric)
+		}
+	}
 }
 
-func (a ExtensionsAppender) appendTrafficMap(trafficMap graph.TrafficMap, ext config.ExtensionConfig, vector *model.Vector, metric string) {
+func (a ExtensionsAppender) appendTrafficMap(trafficMap graph.TrafficMap, vector *model.Vector, metric string) {
 	isRequests := true
 	protocol := ""
 	if strings.HasPrefix(metric, "kiali_ext_tcp") {
 		isRequests = false
 		protocol = graph.TCP.Name
 	}
+
+	skipRequestsGrpc := isRequests && a.Rates.Grpc != graph.RateRequests
+	skipRequestsHttp := isRequests && a.Rates.Http != graph.RateRequests
 
 	for _, s := range *vector {
 		val := float64(s.Value)
@@ -176,6 +199,10 @@ func (a ExtensionsAppender) appendTrafficMap(trafficMap graph.TrafficMap, ext co
 
 			protocol = string(lProtocol)
 			code = string(lCode)
+
+			if skipRequestsGrpc && protocol == graph.GRPC.Name || skipRequestsHttp && protocol == graph.HTTP.Name {
+				continue
+			}
 		}
 
 		a.addTraffic(trafficMap, metric, val, protocol, code, flags, sourceCluster, sourceNs, sourceSvc, sourceVer, destCluster, destNs, destSvc, destVer)
@@ -194,18 +221,18 @@ func (a ExtensionsAppender) addTraffic(trafficMap graph.TrafficMap, metric strin
 		return
 	}
 
-	// Extensions maygenerate duplicate metrics by reporting from both the source and destination. To avoid
+	// Extensions may generate duplicate metrics by reporting from both the source and destination. To avoid
 	// processing the same information twice we keep track of the time series applied to a particular edge. The
 	// edgeTSHash incorporates information about the time series' source, destination and metric information,
 	// and uses that unique TS has to protect against applying the same intomation twice.
 	edgeTSHash := fmt.Sprintf("%x", md5.Sum([]byte(fmt.Sprintf("%s:%s:%s:%s:%s:%s", metric, source.Metadata[tsHash], dest.Metadata[tsHash], code, flags, destSvc))))
 
-	a.addEdgeTraffic(trafficMap, val, protocol, code, flags, destSvc, source, dest, edgeTSHash)
+	a.addEdgeTraffic(val, protocol, code, flags, destSvc, source, dest, edgeTSHash)
 }
 
 // addEdgeTraffic uses edgeTSHash that the metric information has not been applied to the edge. Returns true
 // if the the metric information is applied, false if it determined to be a duplicate.
-func (a ExtensionsAppender) addEdgeTraffic(trafficMap graph.TrafficMap, val float64, protocol, code, flags, host string, source, dest *graph.Node, edgeTSHash string) bool {
+func (a ExtensionsAppender) addEdgeTraffic(val float64, protocol, code, flags, host string, source, dest *graph.Node, edgeTSHash string) bool {
 	var edge *graph.Edge
 	for _, e := range source.Edges {
 		if dest.ID == e.Dest.ID && e.Metadata[graph.ProtocolKey] == protocol {
@@ -247,43 +274,3 @@ func (a ExtensionsAppender) addNode(trafficMap graph.TrafficMap, cluster, servic
 func timeSeriesHash(cluster, serviceNs, service, workloadNs, workload, app, version string) string {
 	return fmt.Sprintf("%x", md5.Sum([]byte(fmt.Sprintf("%s:%s:%s:%s:%s:%s:%s", cluster, serviceNs, service, workloadNs, workload, app, version))))
 }
-
-/*
-	for _, s := range *vector {
-		m := s.Metric
-		lAddress, addressOk := m["address"]
-		lDestSite, destSiteOk := m["destSite"]
-		lProtocol, protocolOk := m["protocol"]
-
-		log.Info("Found Flow %s", m.String)
-		if !addressOk || !destSiteOk || !protocolOk {
-			log.Warningf("Extensions appender appendTrafficMap: Skipping %s, missing expected labels", m.String())
-			continue
-		}
-
-		val := float64(s.Value)
-
-		// Should not happen but if NaN for any reason, Just skip it
-		if math.IsNaN(val) {
-			continue
-		}
-
-		address := string(lAddress)
-		destSite := string(lDestSite)
-		protocol := string(lProtocol)
-
-		destSvc := strings.Split(address, `:`)[0]
-		destSvcNamespace := strings.Split(destSite, `@`)[0]
-
-		destNodeID, destNodeType, _ := graph.Id(ext.Source_node_cluster, destSvcNamespace, destSvc, "", "", "", "", a.GraphType)
-		destNode, found := trafficMap[destNodeID]
-		if !found {
-			log.Info("Added Dest Node %s", destNodeID)
-			destNode = graph.NewNodeExplicit(destNodeID, ext.Source_node_cluster, destSvcNamespace, "", "", "", destSvc, destNodeType, a.GraphType)
-			trafficMap[destNodeID] = destNode
-		}
-		edge := sourceNode.AddEdge(destNode)
-		edge.Metadata[graph.ProtocolKey] = protocol
-		graph.AddToMetadata(protocol, val, "", "", "skupper", sourceNode.Metadata, destNode.Metadata, edge.Metadata)
-	}
-*/
