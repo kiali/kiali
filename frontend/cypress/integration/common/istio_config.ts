@@ -529,7 +529,6 @@ function waitUntilConfigIsVisible(attempt: number, crdInstanceName: string, crdN
   let found = false;
   cy.get('tr')
     .each($row => {
-      console.log($row);
       const dataTestAttr = $row[0].attributes.getNamedItem('data-test');
       if (dataTestAttr !== null) {
         if (dataTestAttr.value === `VirtualItem_Ns${namespace}_${crdName.toLowerCase()}_${crdInstanceName}`) {
