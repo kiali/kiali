@@ -10,6 +10,8 @@
 SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
 source ${SCRIPT_DIR}/env.sh $*
 
+set -euo pipefail
+
 if [ "${BOOKINFO_ENABLED}" != "true" ]; then
   echo "Will not install bookinfo demo"
   return 0
