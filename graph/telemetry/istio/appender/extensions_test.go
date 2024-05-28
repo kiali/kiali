@@ -42,24 +42,38 @@ func TestExtension(t *testing.T) {
 	root, _ := graph.NewNode(extConfig.RootCluster, extConfig.RootNamespace, extConfig.RootService, "", "", "", extConfig.RootVersion, graph.GraphTypeVersionedApp)
 	trafficMap[root.ID] = root
 
+	root, ok := trafficMap[root.ID]
+	assert.Equal(true, ok)
+	assert.Equal(graph.NodeTypeService, root.NodeType)
+	assert.Equal(extConfig.RootCluster, root.Cluster)
+	assert.Equal(extConfig.RootNamespace, root.Namespace)
+	assert.Equal(extConfig.RootService, root.Service)
+	assert.Equal(0, len(root.Edges))
+
 	duration, _ := time.ParseDuration("60s")
 	appender := ExtensionsAppender{
 		Duration:         duration,
 		GraphType:        graph.GraphTypeVersionedApp,
 		IncludeIdleEdges: false,
 		QueryTime:        time.Now().Unix(),
+		Rates: graph.RequestedRates{
+			Http: graph.RateRequests,
+			Grpc: graph.RateNone,
+			Tcp:  graph.RateSent,
+		},
 	}
 	appender.appendGraph(trafficMap, extConfig, client)
 
-	root, ok := trafficMap[root.ID]
+	root, ok = trafficMap[root.ID]
 	assert.Equal(true, ok)
+	assert.Equal(graph.NodeTypeService, root.NodeType)
 	assert.Equal(extConfig.RootCluster, root.Cluster)
 	assert.Equal(extConfig.RootNamespace, root.Namespace)
 	assert.Equal(extConfig.RootService, root.Service)
 	assert.Equal(2, len(root.Edges))
-	protocol0, ok := root.Edges[0].Metadata[graph.ProtocolKey]
+	protocol0 := root.Edges[0].Metadata[graph.ProtocolKey]
 	assert.Contains([]string{"http", "tcp"}, protocol0)
-	protocol1, ok := root.Edges[1].Metadata[graph.ProtocolKey]
+	protocol1 := root.Edges[1].Metadata[graph.ProtocolKey]
 	assert.Contains([]string{"http", "tcp"}, protocol1)
 	assert.True(protocol0 != protocol1)
 }
@@ -116,7 +130,7 @@ func setupExtensionMock(t *testing.T, extConfig config.ExtensionConfig) (*promet
 func setupMockedExt(t *testing.T) (*prometheus.Client, *prometheustest.PromAPIMock) {
 	conf := config.NewConfig()
 	conf.Extensions = []config.ExtensionConfig{
-		config.ExtensionConfig{
+		{
 			Enabled:       true,
 			Name:          "extension-name",
 			RootCluster:   "root-cluster",
