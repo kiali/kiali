@@ -132,9 +132,13 @@ const newRequest = <P>(
     headers: getHeaders() as AxiosHeaders,
     params: queryParams
   };
-  if (timeout) {
+  // Default is 30, time out is expected to be higher than default
+  if (timeout && timeout > 30) {
+    // Specified in secongs, API needs ms
+    timeout = timeout * 1000;
     config = { ...config, timeout: timeout };
   }
+
   return axios.request<P>(config);
 };
 
@@ -832,20 +836,13 @@ export const getWorkloadTraces = (
     queryParams.clusterName = cluster;
   }
 
-  // Default is 30, time out is expected to be higher than default
-  if (timeout && timeout > 30) {
-    // Specified in secongs, API needs ms
-    timeout = timeout * 1000;
-    return newRequest<TracingResponse>(
-      HTTP_VERBS.GET,
-      urls.workloadTraces(namespace, workload),
-      queryParams,
-      {},
-      timeout
-    );
-  }
-
-  return newRequest<TracingResponse>(HTTP_VERBS.GET, urls.workloadTraces(namespace, workload), queryParams, {});
+  return newRequest<TracingResponse>(
+    HTTP_VERBS.GET,
+    urls.workloadTraces(namespace, workload),
+    queryParams,
+    {},
+    timeout
+  );
 };
 
 export const getErrorTraces = (
