@@ -249,7 +249,7 @@ func (oc OtelHTTPClient) prepareTraceQL(u *url.URL, tracingServiceName string, q
 
 	if len(query.Tags) > 0 {
 		for k, v := range query.Tags {
-			if k != "cluster" && oc.ClusterTag {
+			if k != config.IstioClusterTag && oc.ClusterTag {
 				tag := TraceQL{operator1: "." + k, operand: EQUAL, operator2: v}
 				queryPart = TraceQL{operator1: queryPart, operand: AND, operator2: tag}
 			}

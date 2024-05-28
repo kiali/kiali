@@ -93,6 +93,10 @@ const (
 	FeatureLogView FeatureName = "logs-tab"
 )
 
+const (
+	IstioClusterTag string = "istio.cluster_id"
+)
+
 func (fn FeatureName) IsValid() error {
 	switch fn {
 	case FeatureLogView:
