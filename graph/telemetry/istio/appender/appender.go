@@ -199,6 +199,7 @@ func ParseAppenders(o graph.TelemetryOptions) (appenders []graph.Appender, final
 		GraphType:        o.GraphType,
 		IncludeIdleEdges: o.IncludeIdleEdges,
 		QueryTime:        o.QueryTime,
+		Rates:            o.Rates,
 	})
 
 	// always run the outsider finalizer next, this allows other finalizers to

@@ -389,14 +389,14 @@ func addTraffic(trafficMap graph.TrafficMap, metric string, inject bool, val flo
 			return
 		}
 		injectedService.Metadata[graph.IsInjected] = true
-		if addEdgeTraffic(trafficMap, val, protocol, code, flags, host, source, injectedService, edgeTSHash, o) {
+		if addEdgeTraffic(val, protocol, code, flags, host, source, injectedService, edgeTSHash) {
 			addToDestServices(injectedService.Metadata, destCluster, destSvcNs, destSvcName)
 
-			addEdgeTraffic(trafficMap, val, protocol, code, flags, host, injectedService, dest, edgeTSHash, o)
+			addEdgeTraffic(val, protocol, code, flags, host, injectedService, dest, edgeTSHash)
 			addToDestServices(dest.Metadata, destCluster, destSvcNs, destSvcName)
 		}
 	} else {
-		if addEdgeTraffic(trafficMap, val, protocol, code, flags, host, source, dest, edgeTSHash, o) {
+		if addEdgeTraffic(val, protocol, code, flags, host, source, dest, edgeTSHash) {
 			addToDestServices(dest.Metadata, destCluster, destSvcNs, destSvcName)
 		}
 	}
@@ -404,7 +404,7 @@ func addTraffic(trafficMap graph.TrafficMap, metric string, inject bool, val flo
 
 // addEdgeTraffic uses edgeTSHash that the metric information has not been applied to the edge. Returns true
 // if the the metric information is applied, false if it determined to be a duplicate.
-func addEdgeTraffic(trafficMap graph.TrafficMap, val float64, protocol, code, flags, host string, source, dest *graph.Node, edgeTSHash string, o graph.TelemetryOptions) bool {
+func addEdgeTraffic(val float64, protocol, code, flags, host string, source, dest *graph.Node, edgeTSHash string) bool {
 	var edge *graph.Edge
 	for _, e := range source.Edges {
 		if dest.ID == e.Dest.ID && e.Metadata[graph.ProtocolKey] == protocol {
