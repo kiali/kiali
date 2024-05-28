@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Divider, DropdownGroup, DropdownItem, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { serverConfig } from 'config';
-import { DestinationRule, getWizardUpdateLabel, K8sHTTPRoute, VirtualService } from 'types/IstioObjects';
+import { DestinationRule, getWizardUpdateLabel, K8sHTTPRoute, K8sGRPCRoute, VirtualService } from 'types/IstioObjects';
 import { canDelete, ResourcePermissions } from 'types/Permissions';
 import {
   SERVICE_WIZARD_ACTIONS,
@@ -23,6 +23,7 @@ type Props = {
   destinationRules: DestinationRule[];
   isDisabled?: boolean;
   istioPermissions: ResourcePermissions;
+  k8sGRPCRoutes: K8sGRPCRoute[];
   k8sHTTPRoutes: K8sHTTPRoute[];
   onAction?: (key: WizardAction, mode: WizardMode) => void;
   onDelete?: (key: string) => void;
@@ -43,7 +44,7 @@ const dividerStyle = kialiStyle({
 });
 
 export const ServiceWizardActionsDropdownGroup: React.FunctionComponent<Props> = (props: Props) => {
-  const updateLabel = getWizardUpdateLabel(props.virtualServices, props.k8sHTTPRoutes);
+  const updateLabel = getWizardUpdateLabel(props.virtualServices, props.k8sHTTPRoutes, props.k8sGRPCRoutes);
 
   const hasTrafficRouting = (): boolean => {
     return hasServiceDetailsTrafficRouting(props.virtualServices, props.destinationRules, props.k8sHTTPRoutes);

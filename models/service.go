@@ -88,6 +88,7 @@ type ServiceDetails struct {
 	Endpoints          Endpoints                                `json:"endpoints"`
 	IstioPermissions   ResourcePermissions                      `json:"istioPermissions"`
 	IstioSidecar       bool                                     `json:"istioSidecar"`
+	K8sGRPCRoutes      []*k8s_networking_v1.GRPCRoute           `json:"k8sGRPCRoutes"`
 	K8sHTTPRoutes      []*k8s_networking_v1.HTTPRoute           `json:"k8sHTTPRoutes"`
 	K8sReferenceGrants []*k8s_networking_v1beta1.ReferenceGrant `json:"k8sReferenceGrants"`
 	Service            Service                                  `json:"service"`

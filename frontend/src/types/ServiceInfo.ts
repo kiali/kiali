@@ -100,7 +100,11 @@ export interface ServiceUpdateQuery {
 }
 
 export const getServiceDetailsUpdateLabel = (serviceDetails: ServiceDetailsInfo | null): string => {
-  return getWizardUpdateLabel(serviceDetails?.virtualServices ?? null, serviceDetails?.k8sHTTPRoutes ?? null);
+  return getWizardUpdateLabel(
+    serviceDetails?.virtualServices ?? null,
+    serviceDetails?.k8sHTTPRoutes ?? null,
+    serviceDetails?.k8sGRPCRoutes ?? null
+  );
 };
 
 export function hasServiceDetailsTrafficRouting(serviceDetails: ServiceDetailsInfo | null): boolean;

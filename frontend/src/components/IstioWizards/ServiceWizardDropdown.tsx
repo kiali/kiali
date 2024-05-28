@@ -107,7 +107,7 @@ const ServiceWizardDropdownComponent: React.FC<Props> = (props: Props) => {
   };
 
   const onAction = (key: string): void => {
-    const updateLabel = getWizardUpdateLabel(props.virtualServices, props.k8sHTTPRoutes);
+    const updateLabel = getWizardUpdateLabel(props.virtualServices, props.k8sHTTPRoutes, props.k8sGRPCRoutes);
 
     switch (key) {
       case WIZARD_REQUEST_ROUTING:
@@ -158,6 +158,7 @@ const ServiceWizardDropdownComponent: React.FC<Props> = (props: Props) => {
       props.virtualServices,
       DestinationRuleC.fromDrArray(props.destinationRules),
       props.k8sHTTPRoutes,
+      props.k8sGRPCRoutes,
       props.cluster
     )
       .then(_results => {
@@ -178,6 +179,7 @@ const ServiceWizardDropdownComponent: React.FC<Props> = (props: Props) => {
         virtualServices={props.virtualServices}
         destinationRules={props.destinationRules}
         k8sHTTPRoutes={props.k8sHTTPRoutes || []}
+        k8sGRPCRoutes={props.k8sGRPCRoutes || []}
         annotations={props.annotations}
         istioPermissions={props.istioPermissions}
         onAction={onAction}
@@ -263,6 +265,7 @@ const ServiceWizardDropdownComponent: React.FC<Props> = (props: Props) => {
         destinationRules={props.destinationRules}
         gateways={props.gateways}
         k8sGateways={props.k8sGateways}
+        k8sGRPCRoutes={props.k8sGRPCRoutes}
         k8sHTTPRoutes={props.k8sHTTPRoutes}
         peerAuthentications={props.peerAuthentications}
         tlsStatus={props.tlsStatus}
@@ -273,6 +276,7 @@ const ServiceWizardDropdownComponent: React.FC<Props> = (props: Props) => {
       <ConfirmDeleteTrafficRoutingModal
         destinationRules={DestinationRuleC.fromDrArray(props.destinationRules)}
         virtualServices={props.virtualServices}
+        k8sGRPCRoutes={props.k8sGRPCRoutes}
         k8sHTTPRoutes={props.k8sHTTPRoutes}
         isOpen={showConfirmDelete}
         onCancel={hideConfirmDelete}

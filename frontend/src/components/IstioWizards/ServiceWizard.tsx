@@ -1039,7 +1039,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
                   <div style={{ marginTop: '20px', marginBottom: '10px' }}>
                     <K8sGatewaySelector
                       serviceName={this.props.serviceName}
-                      hasGateway={hasK8sGateway(this.props.k8sHTTPRoutes)}
+                      hasGateway={hasK8sGateway(this.props.k8sHTTPRoutes, this.props.k8sGRPCRoutes)}
                       gateway={k8sGatewaySelected}
                       k8sGateways={this.props.k8sGateways}
                       k8sRouteHosts={this.state.k8sRouteHosts}
