@@ -1,9 +1,8 @@
 name: Release test suite images
 
 on:
-  push:
-    tags:
-      - 'v*'
+  release:
+    types: [published]
 jobs:
   initialize:
     name: Initialize
@@ -58,7 +57,7 @@ jobs:
     - name: Update integration test image in quay
       run: |
         docker push quay.io/${{ needs.initialize.outputs.quay_org }}/kiali-int-tests:${{ needs.initialize.outputs.images_tag }}
-    
+
     - name: Pull new cypress test image
       run: |
         docker pull quay.io/${{ needs.initialize.outputs.quay_org }}/kiali-cypress-tests:${{ github.ref_name }}
