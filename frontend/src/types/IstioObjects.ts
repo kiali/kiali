@@ -783,7 +783,7 @@ export interface Listener {
   name: string;
   port: number;
   protocol: string;
-  tls: K8sGatewayTLS | null;
+  tls?: K8sGatewayTLS | null;
 }
 
 export interface Address {
@@ -801,7 +801,7 @@ export interface LabelSelector {
 
 export interface FromNamespaces {
   from: string;
-  selector: LabelSelector;
+  selector?: LabelSelector;
 }
 
 export interface ParentRef {
@@ -853,6 +853,7 @@ export interface K8sGatewayTLSCertRef {
   group?: string;
   kind: string;
   name: string;
+  namespace?: string;
 }
 
 export interface K8sGRPCRouteSpec extends K8sCommonRouteSpec {

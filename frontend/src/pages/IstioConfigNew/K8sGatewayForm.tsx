@@ -2,8 +2,8 @@ import * as React from 'react';
 import { FormGroup, FormSelect, FormSelectOption } from '@patternfly/react-core';
 import { AddressList } from './GatewayForm/AddressList';
 import { Address, Listener, MAX_PORT, MIN_PORT } from '../../types/IstioObjects';
-import { ListenerList } from './GatewayForm/ListenerList';
-import { isValidHostname, isValidName, isValidTLS } from './GatewayForm/ListenerBuilder';
+import { addSelectorLabels, ListenerList } from './GatewayForm/ListenerList';
+import { isValidHostname, isValidName, isValidTLS, SELECTOR } from './GatewayForm/ListenerBuilder';
 import { isValidAddress } from './GatewayForm/AddressBuilder';
 import { serverConfig } from '../../config';
 
@@ -34,7 +34,10 @@ export const initK8sGateway = (): K8sGatewayState => ({
 
 export const isK8sGatewayStateValid = (g: K8sGatewayState): boolean => {
   return (
-    g.listeners.length > 0 && validListeners(g.listeners) && (g.addresses.length === 0 || validAddresses(g.addresses))
+    g.listeners.length > 0 &&
+    validListeners(g.listeners) &&
+    validListenerForms(g.listenersForm) &&
+    (g.addresses.length === 0 || validAddresses(g.addresses))
   );
 };
 
@@ -61,6 +64,12 @@ const validListeners = (listeners: Listener[]): boolean => {
       isValidHostname(e.hostname) &&
       isValidTLS(e.protocol, e.tls)
     );
+  });
+};
+
+const validListenerForms = (listenersForm: ListenerForm[]): boolean => {
+  return listenersForm.every((e: ListenerForm) => {
+    return e.from === SELECTOR ? addSelectorLabels(e.sSelectorLabels)[0] : true;
   });
 };
 

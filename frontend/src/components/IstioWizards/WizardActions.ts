@@ -25,6 +25,7 @@ import {
   K8sHTTPRouteMatch,
   K8sHTTPRouteRequestRedirect,
   K8sReferenceGrant,
+  Listener,
   LoadBalancerSettings,
   Operation,
   OutlierDetection,
@@ -1868,27 +1869,43 @@ export const buildK8sGateway = (
     spec: {
       // Default for istio scenarios, user may change it editing YAML
       gatewayClassName: state.gatewayClass,
-      listeners: state.listeners.map(s => ({
-        name: s.name,
-        port: s.port,
-        protocol: s.protocol,
-        hostname: s.hostname,
-        allowedRoutes: {
-          namespaces: {
-            from: s.allowedRoutes.namespaces.from,
-            selector: {
-              matchLabels: s.allowedRoutes.namespaces.selector?.matchLabels
+      listeners: state.listeners.map(s => {
+        const listener: Listener = {
+          name: s.name,
+          port: s.port,
+          protocol: s.protocol,
+          hostname: s.hostname,
+          allowedRoutes: {
+            namespaces: {
+              from: s.allowedRoutes.namespaces.from
             }
           }
-        },
-        tls: getTLS(s.tls)
-      })),
-      addresses: state.addresses.map(s => ({
-        type: s.type,
-        value: s.value
-      }))
+        };
+
+        if (s.allowedRoutes.namespaces.from === 'Selector' && s.allowedRoutes.namespaces.selector?.matchLabels) {
+          listener.allowedRoutes.namespaces.selector = {
+            matchLabels: s.allowedRoutes!.namespaces.selector?.matchLabels
+          };
+        }
+
+        const tls = getTLS(s.tls);
+
+        if (tls) {
+          listener.tls = tls;
+        }
+
+        return listener;
+      })
     }
   };
+
+  if (state.addresses.length > 0) {
+    k8sGateway.spec.addresses = state.addresses.map(s => ({
+      type: s.type,
+      value: s.value
+    }));
+  }
+
   addLabels(k8sGateway, labels);
   addAnnotations(k8sGateway, annotations);
 

@@ -19,10 +19,10 @@ type ListenerBuilderProps = {
 export const protocols = ['HTTP', 'HTTPS'];
 // protocols which could require certificate
 export const protocolsCert = ['HTTPS'];
-export const allowedRoutes = ['All', 'Selector', 'Same'];
-export const tlsModes = ['Terminate'];
-// TLS mode which require ceritificate cuttently one
-export const tlsModesCert = ['Terminate'];
+export const SELECTOR = 'Selector';
+export const allowedRoutes = ['All', SELECTOR, 'Same'];
+export const TERMINATE = 'Terminate';
+export const tlsModes = [TERMINATE];
 
 export const isValidName = (name: string): boolean => {
   return name !== undefined && name.length > 0;
@@ -32,7 +32,7 @@ export const isValidHostname = (hostname: string): boolean => {
   return hostname !== undefined && hostname.length > 0 && isK8sGatewayHostValid(hostname);
 };
 
-export const isValidTLS = (protocol: string, tls: K8sGatewayTLS | null): boolean => {
+export const isValidTLS = (protocol: string, tls?: K8sGatewayTLS | null): boolean => {
   const tlsRequired = protocolsCert.includes(protocol);
   if (!tls || !tlsRequired) {
     return true;
@@ -53,7 +53,7 @@ export const isValidPort = (port: string): boolean => {
 };
 
 export const isValidSelector = (selector: string): boolean => {
-  return selector.length === 0 || typeof addSelectorLabels(selector) !== 'undefined';
+  return selector.length === 0 || addSelectorLabels(selector)[0];
 };
 
 export const ListenerBuilder: React.FC<ListenerBuilderProps> = (props: ListenerBuilderProps) => {
@@ -179,6 +179,7 @@ export const ListenerBuilder: React.FC<ListenerBuilderProps> = (props: ListenerB
           <TextInput
             id={`addSelectorLabels_${props.index}`}
             name="addSelectorLabels"
+            isDisabled={props.listener.from !== SELECTOR}
             onChange={onAddSelectorLabels}
             validated={isValid(isValidSelector(props.listener.sSelectorLabels))}
           />
@@ -209,7 +210,7 @@ export const ListenerBuilder: React.FC<ListenerBuilderProps> = (props: ListenerB
               </FormSelect>
             </FormGroup>
           </Td>
-          {(props.listener.tlsMode === tlsMode.TERMINATE && (
+          {props.listener.tlsMode === TERMINATE && (
             <Td colSpan={4}>
               <FormGroup
                 label="TLS Certificate"

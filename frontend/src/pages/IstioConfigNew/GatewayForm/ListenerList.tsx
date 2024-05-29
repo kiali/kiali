@@ -5,7 +5,7 @@ import { PFColors } from '../../../components/Pf/PfColors';
 import { Button, ButtonVariant } from '@patternfly/react-core';
 import { Listener } from '../../../types/IstioObjects';
 import { ListenerForm } from '../K8sGatewayForm';
-import { ListenerBuilder, allowedRoutes, protocols, tlsModes, protocolsCert, tlsModesCert } from './ListenerBuilder';
+import { ListenerBuilder, allowedRoutes, protocols, tlsModes, protocolsCert, TERMINATE } from './ListenerBuilder';
 import { KialiIcon } from 'config/KialiIcon';
 
 type ListenerListProps = {
@@ -55,11 +55,12 @@ const columns: ThProps[] = [
   }
 ];
 
-export const addSelectorLabels = (value: string): {} => {
+export const addSelectorLabels = (value: string): [boolean, {}] => {
   if (value.length === 0) {
-    return {};
+    return [true, {}];
   }
 
+  let result = true;
   value = value.trim();
   const labels: string[] = value.split(',');
 
@@ -69,22 +70,25 @@ export const addSelectorLabels = (value: string): {} => {
   for (let i = 0; i < labels.length; i++) {
     const label = labels[i];
     if (label.indexOf('=') < 0) {
+      result = false;
       break;
     }
 
     const splitLabel: string[] = label.split('=');
     if (splitLabel.length !== 2) {
+      result = false;
       break;
     }
 
     if (splitLabel[0].trim().length === 0 || splitLabel[1].trim().length === 0) {
+      result = false;
       break;
     }
 
     selector[splitLabel[0].trim()] = splitLabel[1].trim();
   }
 
-  return selector;
+  return [result, selector];
 };
 
 export const ListenerList: React.FC<ListenerListProps> = (props: ListenerListProps) => {
@@ -147,7 +151,7 @@ export const ListenerList: React.FC<ListenerListProps> = (props: ListenerListPro
     if (listenerForm.port.length === 0 || isNaN(Number(listenerForm.port))) return;
     if (listenerForm.hostname.length === 0) return;
 
-    const selector = addSelectorLabels(listenerForm.sSelectorLabels) || {};
+    const selector = addSelectorLabels(listenerForm.sSelectorLabels)[1] || {};
 
     const listener: Listener = {
       hostname: listenerForm.hostname,
@@ -158,7 +162,7 @@ export const ListenerList: React.FC<ListenerListProps> = (props: ListenerListPro
       tls: null
     };
 
-    if (protocolsCert.includes(listenerForm.protocol) && tlsModesCert.includes(listenerForm.tlsMode)) {
+    if (protocolsCert.includes(listenerForm.protocol) && listenerForm.tlsMode === TERMINATE) {
       listener.tls = {
         certificateRefs: [
           {
