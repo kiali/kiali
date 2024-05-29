@@ -38,10 +38,10 @@ endif
 container-build-int-tests:
 ifeq ($(DORP),docker)
 	@echo Building container image for Kiali integration tests using docker
-	docker build --pull -t ${INT_TESTS_QUAY_TAG} -f tests/integration/Dockerfile .
+	docker build --pull -t ${INT_TESTS_QUAY_TAG} --build-arg="GO_VERSION=${GO_VERSION_KIALI}" -f tests/integration/Dockerfile .
 else
 	@echo Building container image for Kiali integration tests using podman
-	podman build --pull -t ${INT_TESTS_QUAY_TAG} -f tests/integration/Dockerfile .
+	podman build --pull -t ${INT_TESTS_QUAY_TAG} --build-arg="GO_VERSION=${GO_VERSION_KIALI}" -f tests/integration/Dockerfile .
 endif
 
 ## container-build-cypress-tests: Build Kiali cypress tests container image
