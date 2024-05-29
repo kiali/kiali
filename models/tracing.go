@@ -6,6 +6,10 @@ import (
 	"github.com/kiali/kiali/config"
 )
 
+const (
+	IstioClusterTag string = "istio.cluster_id"
+)
+
 type TracingInfo struct {
 	Enabled              bool               `json:"enabled"`
 	Integration          bool               `json:"integration"`
