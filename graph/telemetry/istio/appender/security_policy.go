@@ -124,6 +124,19 @@ func (a SecurityPolicyAppender) appendGraph(trafficMap graph.TrafficMap, namespa
 			query = fmt.Sprintf(`%s OR (%s)`, query, tcpReceivedQuery)
 		}
 	}
+	// Waypoint proxies data
+	waypointReceivedQuery := fmt.Sprintf(`sum(rate(%s{reporter="waypoint",source_workload_namespace!="%v",destination_service_namespace="%v"}[%vs])) by (%s) > 0`,
+		"istio_requests_total",
+		namespace,
+		namespace,
+		int(duration.Seconds()), // range duration for the query
+		groupBy)
+	if query == "" {
+		query = fmt.Sprintf(`(%s)`, waypointReceivedQuery)
+	} else {
+		query = fmt.Sprintf(`%s OR (%s)`, query, waypointReceivedQuery)
+	}
+
 	outVector := promQuery(query, time.Unix(a.QueryTime, 0), client.GetContext(), client.API(), a)
 
 	// 2) query for requests originating from a workload inside of the namespace
@@ -184,6 +197,18 @@ func (a SecurityPolicyAppender) appendGraph(trafficMap graph.TrafficMap, namespa
 			query = fmt.Sprintf(`%s OR (%s)`, query, tcpReceivedQuery)
 		}
 	}
+	// Waypoint
+	waypointQuery := fmt.Sprintf(`sum(rate(%s{reporter="waypoint",source_workload_namespace="%v"}[%vs])) by (%s) > 0`,
+		"istio_requests_total",
+		namespace,
+		int(duration.Seconds()), // range duration for the query
+		groupBy)
+	if query == "" {
+		query = fmt.Sprintf(`(%s)`, waypointQuery)
+	} else {
+		query = fmt.Sprintf(`%s OR (%s)`, query, waypointQuery)
+	}
+
 	inVector := promQuery(query, time.Unix(a.QueryTime, 0), client.GetContext(), client.API(), a)
 
 	// create map to quickly look up securityPolicy
