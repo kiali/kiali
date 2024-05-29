@@ -39,7 +39,7 @@ export const isValidTLS = (protocol: string, tls: K8sGatewayTLS | null): boolean
   }
 
   for (const cert of tls.certificateRefs) {
-    const certsValid = tlsRequired ? cert.name !== undefined && cert.name.length > 0 : true;
+    const certsValid = tlsRequired ? cert.name?.length > 0 : true;
     if (!certsValid) {
       return false;
     }
