@@ -209,7 +209,7 @@ export const ListenerBuilder: React.FC<ListenerBuilderProps> = (props: ListenerB
               </FormSelect>
             </FormGroup>
           </Td>
-          {tlsModesCert.includes(props.listener.tlsMode) && (
+          {(props.listener.tlsMode === tlsMode.TERMINATE && (
             <Td colSpan={4}>
               <FormGroup
                 label="TLS Certificate"
