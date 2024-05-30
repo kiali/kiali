@@ -53,7 +53,7 @@ export const isValidPort = (port: string): boolean => {
 };
 
 export const isValidSelector = (selector: string): boolean => {
-  return selector.length === 0 || addSelectorLabels(selector)[0];
+  return addSelectorLabels(selector)[0];
 };
 
 export const ListenerBuilder: React.FC<ListenerBuilderProps> = (props: ListenerBuilderProps) => {
