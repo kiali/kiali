@@ -114,8 +114,7 @@ export const ListenerList: React.FC<ListenerListProps> = (props: ListenerListPro
       port: 70000,
       name: '',
       protocol: protocols[0],
-      allowedRoutes: { namespaces: { from: allowedRoutes[0], selector: { matchLabels: {} } } },
-      tls: null
+      allowedRoutes: { namespaces: { from: allowedRoutes[0] } }
     };
 
     const lf = props.listeners;
