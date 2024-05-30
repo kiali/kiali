@@ -34,6 +34,21 @@ func TestParseIstioRawVersion(t *testing.T) {
 			version:    "1.1.99",
 		},
 		{
+			rawVersion: "OSSM_3.0.0-tp.1-ed90e14d3473bc3fe54f98298eb16664002d14d1-Clean",
+			name:       "OpenShift Service Mesh",
+			version:    "3.0.0-tp.1",
+		},
+		{
+			rawVersion: "OSSM_3.3.3-tp.10-ed90e14d3473bc3fe54f98298eb16664002d14d1-Clean",
+			name:       "OpenShift Service Mesh",
+			version:    "3.3.3-tp.10",
+		},
+		{
+			rawVersion: "OSSM_3.0.0-ed90e14d3473bc3fe54f98298eb16664002d14d1-Clean",
+			name:       "OpenShift Service Mesh",
+			version:    "3.0.0",
+		},
+		{
 			rawVersion: "foo-istio-1.2.3-bar",
 			name:       "Istio",
 			version:    "1.2.3",
