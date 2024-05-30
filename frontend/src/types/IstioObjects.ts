@@ -783,7 +783,7 @@ export interface Listener {
   name: string;
   port: number;
   protocol: string;
-  tls?: K8sGatewayTLS | null;
+  tls?: K8sGatewayTLS;
 }
 
 export interface Address {

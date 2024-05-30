@@ -32,7 +32,7 @@ export const isValidHostname = (hostname: string): boolean => {
   return hostname !== undefined && hostname.length > 0 && isK8sGatewayHostValid(hostname);
 };
 
-export const isValidTLS = (protocol: string, tls?: K8sGatewayTLS | null): boolean => {
+export const isValidTLS = (protocol: string, tls?: K8sGatewayTLS): boolean => {
   const tlsRequired = protocolsCert.includes(protocol);
   if (!tls || !tlsRequired) {
     return true;
