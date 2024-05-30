@@ -25,7 +25,7 @@ var (
 	// Example Istio dev version is:
 	//   1.5-alpha.dbd2aca8887fb42c2bb358417621a78de372f906-dbd2aca8887fb42c2bb358417621a78de372f906-Clean
 	//   1.10-dev-65a124dc2ab69f91331298fbf6d9b4335abcf0fd-Clean
-	ossmVersionExpr          = regexp.MustCompile(`(?:OSSM_|openshift-service-mesh-)([0-9]+\.[0-9]+\.[0-9]+)`)
+	ossmVersionExpr          = regexp.MustCompile(`(?:OSSM_|openshift-service-mesh-)([0-9]+\.[0-9]+\.[0-9]+(?:-tp\.[0-9]+)?)`)
 	istioDevVersionExpr      = regexp.MustCompile(`(\d+\.\d+)-alpha\.([[:alnum:]]+)-.*|(\d+\.\d+)-dev-([[:alnum:]]+)-.*`)
 	istioRCVersionExpr       = regexp.MustCompile(`(\d+\.\d+.\d+)-((?:alpha|beta|rc|RC)\.\d+)`)
 	istioSnapshotVersionExpr = regexp.MustCompile(`istio-release-([0-9]+\.[0-9]+)(-[0-9]{8})`)
