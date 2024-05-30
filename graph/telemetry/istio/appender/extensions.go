@@ -69,11 +69,10 @@ func (a ExtensionsAppender) appendGraph(trafficMap graph.TrafficMap, ext config.
 	// Look for the extension's root node in the current traffic map (eg the skupper-router for the defined site).  If found, then we
 	// will query the extension metrics for extension traffic from the root.  Otherwise, skip extenstion traffic because this
 	// graph has no traffic to the root. (maybe a todo option: to always show extension traffic, based on an appender option)
-	rootID, _, _ := graph.Id(ext.RootCluster, ext.RootNamespace, ext.RootService, "", "", "", ext.RootVersion, a.GraphType)
-	rootNode, found := trafficMap[rootID]
+	rootNode, found := a.findRootNode(trafficMap, ext)
 	if !found {
 		// todo: debug level
-		log.Infof("Extension [%s] did not find root node in traffic map [%s:%s:%s]", ext.Name, ext.RootCluster, ext.RootNamespace, ext.RootService)
+		log.Infof("Extension [%s] did not find root node in traffic map [%s:%s:%s]", ext.Name, ext.RootCluster, ext.RootNamespace, ext.RootName)
 		return
 	}
 	log.Infof("Extension [%s] found root node [%+v]", ext.Name, rootNode)
@@ -269,6 +268,32 @@ func (a ExtensionsAppender) addNode(trafficMap graph.TrafficMap, cluster, servic
 	}
 	node.Metadata["tsHash"] = timeSeriesHash(cluster, serviceNs, service, "", "", "", version)
 	return node, found, nil
+}
+
+// findRootNode tries to match the a configured root node to an actual node in the traffic graph.  Because
+// the node type can vary, it tries to match name in this order:
+//
+//	"workload" in order to match on a workload or versionedApp node
+//	"app"      in order to match on an app node
+//	"service"  in order to match on a service or service entry node
+func (a ExtensionsAppender) findRootNode(trafficMap graph.TrafficMap, ext config.ExtensionConfig) (*graph.Node, bool) {
+	// workload name
+	rootID, _, _ := graph.Id(ext.RootCluster, "", "", ext.RootNamespace, ext.RootName, "", "", a.GraphType)
+	if rootNode, found := trafficMap[rootID]; found {
+		return rootNode, found
+	}
+	// app name
+	rootID, _, _ = graph.Id(ext.RootCluster, "", "", ext.RootNamespace, "", ext.RootName, "", a.GraphType)
+	if rootNode, found := trafficMap[rootID]; found {
+		return rootNode, found
+	}
+	// service name
+	rootID, _, _ = graph.Id(ext.RootCluster, ext.RootNamespace, ext.RootName, "", "", "", "", a.GraphType)
+	if rootNode, found := trafficMap[rootID]; found {
+		return rootNode, found
+	}
+
+	return nil, false
 }
 
 func timeSeriesHash(cluster, serviceNs, service, workloadNs, workload, app, version string) string {
