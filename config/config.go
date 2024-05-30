@@ -475,10 +475,9 @@ type DiscoverySelectorsConfig struct {
 type ExtensionConfig struct {
 	Enabled       bool   `yaml:"enabled,omitempty"`
 	Name          string `yaml:"name"`           // same name used in metrics "extension" attribute
-	RootCluster   string `yaml:"root_cluster"`   // root of mesh connection, e.g. skupper router cluster
-	RootNamespace string `yaml:"root_namespace"` // root of mesh connection, e.g. skupper router namespace
-	RootService   string `yaml:"root_service"`   // root of mesh connection, e.g. skupper router service name
-	RootVersion   string `yaml:"root_version"`   // root of mesh connection, e.g. skupper router service version
+	RootCluster   string `yaml:"root_cluster"`   // mesh root node cluster, e.g. skupper router cluster
+	RootNamespace string `yaml:"root_namespace"` // mesh root node namespace, e.g. skupper router namespace
+	RootName      string `yaml:"root_name"`      // mesh root node workload/service/app name, e.g. skupper router name
 }
 
 // GraphFindOption defines a single Graph Find/Hide Option
