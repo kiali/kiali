@@ -181,7 +181,9 @@ export const ListenerBuilder: React.FC<ListenerBuilderProps> = (props: ListenerB
             name="addSelectorLabels"
             isDisabled={props.listener.from !== SELECTOR}
             onChange={onAddSelectorLabels}
-            validated={isValid(isValidSelector(props.listener.sSelectorLabels))}
+            validated={isValid(
+              props.listener.from === SELECTOR ? isValidSelector(props.listener.sSelectorLabels) : undefined
+            )}
           />
         </Td>
         <Td>
