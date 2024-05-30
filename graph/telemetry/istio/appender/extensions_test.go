@@ -27,8 +27,7 @@ func TestExtension(t *testing.T) {
 		Name:          "extension-name",
 		RootCluster:   "root-cluster",
 		RootNamespace: "root-namespace",
-		RootService:   "root-service",
-		RootVersion:   "root-version",
+		RootName:      "root-name",
 	}
 
 	client, _, err := setupExtensionMock(t, extConfig)
@@ -39,7 +38,7 @@ func TestExtension(t *testing.T) {
 
 	// start with traffic map containing only the extension's root service
 	trafficMap := graph.NewTrafficMap()
-	root, _ := graph.NewNode(extConfig.RootCluster, extConfig.RootNamespace, extConfig.RootService, "", "", "", extConfig.RootVersion, graph.GraphTypeVersionedApp)
+	root, _ := graph.NewNode(extConfig.RootCluster, extConfig.RootNamespace, extConfig.RootName, "", "", "", "", graph.GraphTypeVersionedApp)
 	trafficMap[root.ID] = root
 
 	root, ok := trafficMap[root.ID]
@@ -47,7 +46,7 @@ func TestExtension(t *testing.T) {
 	assert.Equal(graph.NodeTypeService, root.NodeType)
 	assert.Equal(extConfig.RootCluster, root.Cluster)
 	assert.Equal(extConfig.RootNamespace, root.Namespace)
-	assert.Equal(extConfig.RootService, root.Service)
+	assert.Equal(extConfig.RootName, root.Service)
 	assert.Equal(0, len(root.Edges))
 
 	duration, _ := time.ParseDuration("60s")
@@ -69,7 +68,7 @@ func TestExtension(t *testing.T) {
 	assert.Equal(graph.NodeTypeService, root.NodeType)
 	assert.Equal(extConfig.RootCluster, root.Cluster)
 	assert.Equal(extConfig.RootNamespace, root.Namespace)
-	assert.Equal(extConfig.RootService, root.Service)
+	assert.Equal(extConfig.RootName, root.Service)
 	assert.Equal(2, len(root.Edges))
 	protocol0 := root.Edges[0].Metadata[graph.ProtocolKey]
 	assert.Contains([]string{"http", "tcp"}, protocol0)
@@ -83,8 +82,7 @@ func setupExtensionMock(t *testing.T, extConfig config.ExtensionConfig) (*promet
 	q0m0 := model.Metric{
 		"source_cluster":   model.LabelValue(extConfig.RootCluster),
 		"source_namespace": model.LabelValue(extConfig.RootNamespace),
-		"source_service":   model.LabelValue(extConfig.RootService),
-		"source_version":   model.LabelValue(extConfig.RootVersion),
+		"source_service":   model.LabelValue(extConfig.RootName),
 		"dest_cluster":     "remote-cluster",
 		"dest_namespace":   "remote-namespace",
 		"dest_service":     "remote-service",
@@ -104,8 +102,7 @@ func setupExtensionMock(t *testing.T, extConfig config.ExtensionConfig) (*promet
 	q1m0 := model.Metric{
 		"source_cluster":   model.LabelValue(extConfig.RootCluster),
 		"source_namespace": model.LabelValue(extConfig.RootNamespace),
-		"source_service":   model.LabelValue(extConfig.RootService),
-		"source_version":   model.LabelValue(extConfig.RootVersion),
+		"source_service":   model.LabelValue(extConfig.RootName),
 		"dest_cluster":     "remote-cluster",
 		"dest_namespace":   "remote-namespace",
 		"dest_service":     "remote-tcp-service",
@@ -135,7 +132,7 @@ func setupMockedExt(t *testing.T) (*prometheus.Client, *prometheustest.PromAPIMo
 			Name:          "extension-name",
 			RootCluster:   "root-cluster",
 			RootNamespace: "root-namespace",
-			RootService:   "root-service",
+			RootName:      "root-service",
 		},
 	}
 	config.Set(conf)
