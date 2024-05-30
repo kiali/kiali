@@ -25,7 +25,6 @@ import {
   K8sHTTPRouteMatch,
   K8sHTTPRouteRequestRedirect,
   K8sReferenceGrant,
-  Listener,
   LoadBalancerSettings,
   Operation,
   OutlierDetection,
@@ -984,8 +983,7 @@ export const buildIstioConfig = (wProps: ServiceWizardProps, wState: ServiceWiza
                         matchLabels: {}
                       }
                     }
-                  },
-                  tls: null
+                  }
                 }
               ]
             }
@@ -1869,33 +1867,7 @@ export const buildK8sGateway = (
     spec: {
       // Default for istio scenarios, user may change it editing YAML
       gatewayClassName: state.gatewayClass,
-      listeners: state.listeners.map(s => {
-        const listener: Listener = {
-          name: s.name,
-          port: s.port,
-          protocol: s.protocol,
-          hostname: s.hostname,
-          allowedRoutes: {
-            namespaces: {
-              from: s.allowedRoutes.namespaces.from
-            }
-          }
-        };
-
-        if (s.allowedRoutes.namespaces.from === 'Selector' && s.allowedRoutes.namespaces.selector?.matchLabels) {
-          listener.allowedRoutes.namespaces.selector = {
-            matchLabels: s.allowedRoutes!.namespaces.selector?.matchLabels
-          };
-        }
-
-        const tls = getTLS(s.tls);
-
-        if (tls) {
-          listener.tls = tls;
-        }
-
-        return listener;
-      })
+      listeners: state.listeners
     }
   };
 

@@ -5,7 +5,15 @@ import { PFColors } from '../../../components/Pf/PfColors';
 import { Button, ButtonVariant } from '@patternfly/react-core';
 import { Listener } from '../../../types/IstioObjects';
 import { ListenerForm } from '../K8sGatewayForm';
-import { ListenerBuilder, allowedRoutes, protocols, tlsModes, protocolsCert, TERMINATE } from './ListenerBuilder';
+import {
+  ListenerBuilder,
+  allowedRoutes,
+  protocols,
+  tlsModes,
+  protocolsCert,
+  TERMINATE,
+  SELECTOR
+} from './ListenerBuilder';
 import { KialiIcon } from 'config/KialiIcon';
 
 type ListenerListProps = {
@@ -157,9 +165,12 @@ export const ListenerList: React.FC<ListenerListProps> = (props: ListenerListPro
       port: Number(listenerForm.port),
       name: listenerForm.name,
       protocol: listenerForm.protocol,
-      allowedRoutes: { namespaces: { from: listenerForm.from, selector: { matchLabels: selector } } },
-      tls: null
+      allowedRoutes: { namespaces: { from: listenerForm.from } }
     };
+
+    if (listenerForm.from === SELECTOR) {
+      listener.allowedRoutes.namespaces.selector = { matchLabels: selector };
+    }
 
     if (protocolsCert.includes(listenerForm.protocol) && listenerForm.tlsMode === TERMINATE) {
       listener.tls = {
