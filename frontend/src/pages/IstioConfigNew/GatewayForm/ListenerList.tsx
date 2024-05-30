@@ -57,7 +57,7 @@ const columns: ThProps[] = [
 
 export const addSelectorLabels = (value: string): [boolean, {}] => {
   if (value.length === 0) {
-    return [true, {}];
+    return [false, {}];
   }
 
   let result = true;
