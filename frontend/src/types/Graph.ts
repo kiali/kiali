@@ -2,7 +2,6 @@ import { Namespace } from './Namespace';
 import { AppenderString, DurationInSeconds, TimeInSeconds } from './Common';
 import { Health } from './Health';
 import { HealthAnnotationType } from './HealthAnnotation';
-import { t } from 'utils/I18nUtils';
 
 export interface Layout {
   name: string;
@@ -197,7 +196,7 @@ export enum NodeType {
 }
 
 export const CLUSTER_DEFAULT = 'Kubernetes'; // Istio default cluster, typically indicates a single-cluster env
-export const UNKNOWN = t('unknown');
+export const UNKNOWN = 'unknown';
 
 export interface NodeParamsType {
   aggregate?: string;

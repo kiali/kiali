@@ -15,6 +15,7 @@ import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { homeCluster } from 'config';
 import { KialiPageLink } from 'components/Link/KialiPageLink';
 import { kialiStyle } from 'styles/StyleUtils';
+import { t } from 'utils/I18nUtils';
 
 interface LinkInfo {
   displayName: string;
@@ -107,7 +108,7 @@ export const getLink = (
     nodeType = nodeData.nodeType;
   }
 
-  let displayName = 'unknown';
+  let displayName = t('unknown');
   let link: string | undefined;
   let key: string | undefined;
 
