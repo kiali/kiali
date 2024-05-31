@@ -180,6 +180,10 @@ if [ "${AUTO_INJECTION}" == "false" -a "${MANUAL_INJECTION}" == "false" ]; then
   do
     if [ "${n}" == "ztunnel" ]; then
       AMBIENT_ENABLED="true"
+      # Verify Gateway API
+      echo "Verifying that Gateway API is installed; if it is not then it will be installed now."
+      $CLIENT_EXE get crd gateways.gateway.networking.k8s.io &> /dev/null || \
+        { $CLIENT_EXE kustomize "github.com/kubernetes-sigs/gateway-api/config/crd/experimental?ref=v1.1.0" | $CLIENT_EXE apply -f -; }
       break
     fi
   done
@@ -211,7 +215,11 @@ if [ "${BOOKINFO_YAML}" == "" ]; then
   BOOKINFO_YAML="${ISTIO_DIR}/samples/bookinfo/platform/kube/bookinfo.yaml"
 fi
 if [ "${GATEWAY_YAML}" == "" ]; then
-  GATEWAY_YAML="${ISTIO_DIR}/samples/bookinfo/networking/bookinfo-gateway.yaml"
+  if [ "${AMBIENT_ENABLED}" == "true" ]; then
+    GATEWAY_YAML="${ISTIO_DIR}/samples/bookinfo/gateway-api/bookinfo-gateway.yaml"
+  else
+    GATEWAY_YAML="${ISTIO_DIR}/samples/bookinfo/networking/bookinfo-gateway.yaml"
+  fi
 fi
 
 # If we are to delete, remove everything and exit immediately after
@@ -276,10 +284,17 @@ else
     $ISTIOCTL kube-inject -f ${BOOKINFO_YAML} | $CLIENT_EXE apply -n ${NAMESPACE} -f -
   else
     $CLIENT_EXE apply -n ${NAMESPACE} -f ${BOOKINFO_YAML}
+    if [ "${AMBIENT_ENABLED}" == "true" ]; then
+      $CLIENT_EXE apply -f "${ISTIO_DIR}/samples/bookinfo/platform/kube/bookinfo-versions.yaml"
+    fi
   fi
 fi
 
 $CLIENT_EXE apply -n ${NAMESPACE} -f ${GATEWAY_YAML}
+
+if [ "${AMBIENT_ENABLED}" == "true" ]; then
+  $CLIENT_EXE annotate gateway bookinfo-gateway networking.istio.io/service-type=ClusterIP --namespace=${NAMESPACE}
+fi
 
 if [ "${MONGO_ENABLED}" == "true" ]; then
   echo "Installing Mongo DB and a ratings service that uses it"
@@ -362,13 +377,9 @@ if [ "${AMBIENT_ENABLED}" == "true" ]; then
   ${CLIENT_EXE} label namespace ${NAMESPACE} istio.io/dataplane-mode=ambient
   # It could also be applied to service account
   if [ "${WAYPOINT}" == "true" ]; then
-    # Verify Gateway API
-    echo "Verifying that Gateway API is installed; if it is not then it will be installed now."
-    $CLIENT_EXE get crd gateways.gateway.networking.k8s.io &> /dev/null || \
-      { $CLIENT_EXE kustomize "github.com/kubernetes-sigs/gateway-api/config/crd/experimental?ref=v1.1.0" | $CLIENT_EXE apply -f -; }
     # Create Waypoint proxy
     echo "Create Waypoint proxy"
-    ${ISTIOCTL} x waypoint apply -n ${NAMESPACE}
+    ${ISTIOCTL} x waypoint apply -n ${NAMESPACE} --enroll-namespace
   fi
 else
   if [ "${AUTO_INJECTION}" == "false" -a "${MANUAL_INJECTION}" == "false" ]; then
@@ -393,42 +404,48 @@ if [ "${TRAFFIC_GENERATOR_ENABLED}" == "true" ]; then
     # Check your "minikube tunnel" and/or Istio mesh config i.e. meshConfig.outboundTrafficPolicy.mode=REGISTRY_ONLY
     # if you experiment some weird behaviour compared with the CI results
 
-    # for now, we only support minikube k8s environments and maybe a good guess otherwise (e.g. for kind clusters)
-    if minikube -p ${MINIKUBE_PROFILE} status > /dev/null 2>&1 ; then
-      INGRESS_HOST=$(minikube -p ${MINIKUBE_PROFILE} ip)
-      INGRESS_PORT=$($CLIENT_EXE -n ${ISTIO_NAMESPACE} get service istio-ingressgateway -o jsonpath='{.spec.ports[?(@.name=="http2")].nodePort}')
-      INGRESS_ROUTE=$INGRESS_HOST:$INGRESS_PORT
-
-      echo "Wait for productpage to come up to see if it is accessible via minikube ingress"
-      $CLIENT_EXE wait pods --all -n ${NAMESPACE} --for=condition=Ready --timeout=5m
-      if curl --fail http://${INGRESS_ROUTE}/productpage &> /dev/null; then
-        echo "Traffic Generator will use the Kubernetes (minikube) ingress route of: ${INGRESS_ROUTE}"
-      else
-        INGRESS_HOST="productpage.${NAMESPACE}"
-        INGRESS_PORT="9080"
-        INGRESS_ROUTE=$INGRESS_HOST:$INGRESS_PORT
-        echo "Ingress does not seem to work. Falling back to using the internal productpage endpoint: ${INGRESS_ROUTE}"
-      fi
+    if [ "${AMBIENT_ENABLED}" == "true" ]; then
+      INGRESS_ROUTE="bookinfo-gateway-istio.${NAMESPACE}"
     else
-      echo "Failed to get minikube ip. If you are using minikube, make sure it is up and your profile is defined properly (--minikube-profile option)"
-      echo "Will try to get the ingressgateway IP in case you are running 'kind' and we can access it directly."
-      INGRESS_HOST=$($CLIENT_EXE get service -n ${ISTIO_NAMESPACE} istio-ingressgateway -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
-      INGRESS_PORT="80"
-      INGRESS_ROUTE=$INGRESS_HOST:$INGRESS_PORT
-      echo "Wait for productpage to come up to see if it is accessible via ingress"
-      $CLIENT_EXE wait pods --all -n ${NAMESPACE} --for=condition=Ready --timeout=5m
-      if curl --fail http://${INGRESS_ROUTE}/productpage &> /dev/null; then
-        echo "Traffic Generator will use the Kubernetes (loadBalancer) route of: ${INGRESS_ROUTE}"
-      else
-        INGRESS_HOST="productpage.${NAMESPACE}"
-        INGRESS_PORT="9080"
+      # for now, we only support minikube k8s environments and maybe a good guess otherwise (e.g. for kind clusters)
+      if minikube -p ${MINIKUBE_PROFILE} status > /dev/null 2>&1 ; then
+        INGRESS_HOST=$(minikube -p ${MINIKUBE_PROFILE} ip)
+        INGRESS_PORT=$($CLIENT_EXE -n ${ISTIO_NAMESPACE} get service istio-ingressgateway -o jsonpath='{.spec.ports[?(@.name=="http2")].nodePort}')
         INGRESS_ROUTE=$INGRESS_HOST:$INGRESS_PORT
-        echo "Ingress loadBalancer does not seem to work. Falling back to using the internal productpage endpoint: ${INGRESS_ROUTE}"
+
+        echo "Wait for productpage to come up to see if it is accessible via minikube ingress"
+        $CLIENT_EXE wait pods --all -n ${NAMESPACE} --for=condition=Ready --timeout=5m
+        if curl --fail http://${INGRESS_ROUTE}/productpage &> /dev/null; then
+          echo "Traffic Generator will use the Kubernetes (minikube) ingress route of: ${INGRESS_ROUTE}"
+        else
+          INGRESS_HOST="productpage.${NAMESPACE}"
+          INGRESS_PORT="9080"
+          INGRESS_ROUTE=$INGRESS_HOST:$INGRESS_PORT
+          echo "Ingress does not seem to work. Falling back to using the internal productpage endpoint: ${INGRESS_ROUTE}"
+        fi
+      else
+        echo "Failed to get minikube ip. If you are using minikube, make sure it is up and your profile is defined properly (--minikube-profile option)"
+        echo "Will try to get the ingressgateway IP in case you are running 'kind' and we can access it directly."
+        INGRESS_HOST=$($CLIENT_EXE get service -n ${ISTIO_NAMESPACE} istio-ingressgateway -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+        INGRESS_PORT="80"
+        INGRESS_ROUTE=$INGRESS_HOST:$INGRESS_PORT
+        echo "Wait for productpage to come up to see if it is accessible via ingress"
+        $CLIENT_EXE wait pods --all -n ${NAMESPACE} --for=condition=Ready --timeout=5m
+        if curl --fail http://${INGRESS_ROUTE}/productpage &> /dev/null; then
+          echo "Traffic Generator will use the Kubernetes (loadBalancer) route of: ${INGRESS_ROUTE}"
+        else
+          INGRESS_HOST="productpage.${NAMESPACE}"
+          INGRESS_PORT="9080"
+          INGRESS_ROUTE=$INGRESS_HOST:$INGRESS_PORT
+          echo "Ingress loadBalancer does not seem to work. Falling back to using the internal productpage endpoint: ${INGRESS_ROUTE}"
+        fi
       fi
     fi
   fi
 
   if [ "${INGRESS_ROUTE}" != "" ] ; then
+    echo "Ingress route: http://${INGRESS_ROUTE}/productpage"
+
     if [ "${IS_OPENSHIFT}" == "true" ]; then
       $CLIENT_EXE adm policy add-scc-to-user anyuid -z default -n ${NAMESPACE}
     fi
@@ -444,25 +461,6 @@ if [ "${TRAFFIC_GENERATOR_ENABLED}" == "true" ]; then
       curl ${url} | $CLIENT_EXE apply --validate=false -n ${NAMESPACE} -f -
     fi
 
-    if [ "${AMBIENT_ENABLED}" == "true" ]; then
-      cat <<AUTHPOLICY | $CLIENT_EXE -n ${NAMESPACE} apply -f -
-apiVersion: security.istio.io/v1beta1
-kind: AuthorizationPolicy
-metadata:
- name: productpage-viewer
-spec:
- selector:
-   matchLabels:
-     app: productpage
- action: ALLOW
- rules:
- - from:
-   - source:
-       principals:
-       - cluster.local/ns/${NAMESPACE}/sa/default
-       - cluster.local/ns/${ISTIO_NAMESPACE}/sa/istio-ingressgateway-service-account
-AUTHPOLICY
-    fi
   fi
 fi
 
