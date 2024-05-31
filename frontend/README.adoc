@@ -133,36 +133,34 @@ The way to adapt a React component to the i18n framework depends on its type:
 
 - **React class:**
 
-Use the `withTranslation` high order component. More info link:https://react.i18next.com/latest/withtranslation-hoc[here]
+Use the `t` function imported from `utils/i18nUtils`. **Important:** Don't import the `t` function from 'i18next' library; always import it from `utils/i18nUtils`.
 
-You must embed the React class with the `withTranslation` function (similar to redux connect function):
-
-[source, typescript]
-----
-export const Menu = withTranslation(I18N_NAMESPACE)(MenuComponent);
-----
-
-Also, `WithTranslation` props must be added to the React class properties in order to include the `t` translation function (like Redux properties)
+Any label (variable or string literal) can be translated with the `t` function within the component.
 
 [source, typescript]
 ----
-type MenuProps = WithTranslation & {
-   ...
+import { t } from 'utils/I18nUtils';
+
+title = t('Traffic Graph');
+----
+
+In some React classes, labels are not translated on initial load or when the language changes. If this happens, add the language to Redux properties to force the component to re-render when the language is updated.
+
+[source, typescript]
+----
+type ReduxProps = {
+  language: string;
 };
-----
 
-Then you will be able to use the `t` function, like any other React class property, to translate any label (variable or string literal).
-[source, typescript]
-----
-<h1>{this.props.t(title)}</h1>
+const mapStateToProps = (state: KialiAppState): ReduxProps => ({
+  language: languageSelector(state)
+});
 ----
 
 
 - **React hook:**
 
-Use the `useTranslation` hook to get the `t` translation function. More info link:https://react.i18next.com/latest/usetranslation-hook[here]. 
-
-Any label (variable or string literal) can be translated with the`t` function within the component.
+Use the `useKialiTranslation` hook from `utils/i18nUtils` to get the `t` translation function. This is simply a wrapper for the `useTranslation` hook that includes the Kiali namespace. More info link:https://react.i18next.com/latest/usetranslation-hook[here].
 
 [source, typescript]
 ----
@@ -173,18 +171,18 @@ const { t } = useKialiTranslation();
 
 - **External variable:**
 
-String literals that are stored in a variable defined outside of a React component cannot be translated directly. Instead, the translation has to be done when the variable is used within the React component (class or hook).
+String literals that are stored in a variable defined outside of a React component cannot be translated directly. Instead, the translation has to be done when the variable is used within the React component (class, hook or external function).
 
-The problem is that the i18n parser can't extract labels from variables, only from literals. To indicate to the i18n parser to add that kind of string literal to the locale file, use the`ì18n.t` function. Note that `i18n.t` does not perform any translation, it returns the same string literal at runtime (only for development purposes).
+The problem is that the i18n parser can't extract labels from variables, only from literals. To indicate to the i18n parser to add that kind of string literal to the locale file, use the `t` function imported from `utils/i18nUtils`. Note that in this context, the `t` function does not perform any translation; it returns the same string literal at runtime, so it is used for development purposes only.
 
 [source, typescript]
 ----
-import { i18n } from 'i18n';
+import { t } from 'utils/I18nUtils';
 
 const overviewTypes = {
-  app: i18n.t('Apps'),
-  workload: i18n.t('Workloads'),
-  service: i18n.t('Services')
+  app: t('Apps'),
+  workload: t('Workloads'),
+  service: t('Services')
 };
 
 
@@ -200,25 +198,23 @@ const Example: React.FC<Props> = (props: Props) => {
 
 - **External function:**
 
-External functions declared outside of React components cannot use the `t` function directly. Instead, it must be passed as an input parameter (`TFunction` type must be imported from the `react-i18next` library, it will fail if imported from `i18next` library):
+External functions can use the `t` function imported from `utils/i18nUtils` to perform the translations like in React classes or external variables.
 
 [source, typescript]
 ----
-import { TFunction, useTranslation } from 'react-i18next';
+import { t } from 'utils/I18nUtils';
 
-const externalFunction = (t: TFunction): React.ReactNode => {
+const externalFunction = (): React.ReactNode => {
   return (
     ...
-      <div>{t('Issuer:')}</div>
+      <div>{`${t('Label')}:`}</div>
     ...
   )
 }
 
 const Example: React.FC<Props> = (props: Props) => {
-  const { t } = useKialiTranslation();
-
   return (
-    <Tooltip position={TooltipPosition.top} content={externalFunction(t)}>
+    <Tooltip position={TooltipPosition.top} content={externalFunction()}>
     ...
     </Tooltip>
   )
@@ -252,42 +248,11 @@ When a statement is different in singular and plural, you can use `defaultValue_
 
 [source, typescript]
 ----
-labelsInfo = this.props.t('{{count}} label', {
+labelsInfo = t('{{count}} label', {
         count: labelsLength,
         defaultValue_one: '{{count}} label',
         defaultValue_other: '{{count}} labels'
       });
-----
-
-**Additional i18n notes:**
-
-- Always add namespace variable `I18N_NAMESPACE` to any React component translation configuration (`withTranslation` or `useTranslation`).
-[source, typescript]
-----
-export const Menu = withTranslation(I18N_NAMESPACE)(MenuComponent);
-
-const { t } = useKialiTranslation();
-----
-
-- Always import the i18n variable from `i18n`, not from `i18next` or `react-i18next` libraries
-[source, typescript]
-----
-import { i18n } from 'i18n';
-----
-
-- If the React class component contains static methods, you have to use the`hoistNonReactStatics` library to copy static methods to translated components
-[source, typescript]
-----
-const OverviewToolbarI18n = hoistNonReactStatics(
-  withTranslation(I18N_NAMESPACE)(OverviewToolbarComponent),
-  OverviewToolbarComponent
-);
-----
-
-- If you need the translated class component to include a React reference to access DOM nodes, use `{ withRef: true }` option:
-[source, typescript]
-----
-export const StatefulFilters = withTranslation(I18N_NAMESPACE, { withRef: true })(StatefulFilters);
 ----
 
 === Integration Testing
