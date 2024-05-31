@@ -88,3 +88,8 @@ Feature: Kiali Workload Details page
   @bookinfo-app
   Scenario: See Envoy metrics for a workload
     Then the user sees the metrics tab
+
+  @ambient
+  Scenario: See ztunnel label for workload
+    Then user sees "ztunnel" badge
+    Then the user cannot see the "missing-sidecar" badge for "details-v1" workload in "bookinfo" namespace

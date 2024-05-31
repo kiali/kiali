@@ -127,7 +127,7 @@ Feature: Kiali Workloads page
   @multi-cluster
   Scenario: The column related to cluster name should be visible
     When user selects the "bookinfo" namespace
-    Then the "Cluster" column "appears" 
+    Then the "Cluster" column "appears"
     And an entry for "east" cluster should be in the table
     And an entry for "west" cluster should be in the table
 
@@ -138,3 +138,8 @@ Feature: Kiali Workloads page
     Then the list is sorted by column "Cluster" in "ascending" order
     When user sorts the list by column "Cluster" in "descending" order
     Then the list is sorted by column "Cluster" in "descending" order
+
+  @ambient
+  Scenario: Out of mesh
+    When user selects the "sleep" namespace
+    Then user sees "Out of mesh" in the table

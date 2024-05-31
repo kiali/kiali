@@ -318,3 +318,10 @@ Then('Control Plane metrics should be visible for cluster {string}', (cluster: s
   cy.getBySel(`VirtualItem_Cluster${cluster}_istio-system`).find('[data-test="cpu-chart"]');
   cy.getBySel(`VirtualItem_Cluster${cluster}_istio-system`).find('[data-test="memory-chart"]');
 });
+
+Then(
+  'badge for {string} is visible in the LIST view in cluster {string} and namespace {string}',
+  (label: string, cluster: string, ns: string) => {
+    cy.getBySel(`VirtualItem_Cluster${cluster}_${ns}`).contains(label).should('be.visible');
+  }
+);

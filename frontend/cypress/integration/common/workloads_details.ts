@@ -185,3 +185,18 @@ Then('the user can see the {string} span link', (link: string) => {
 
   cy.get('ul[role=menu]').contains(link);
 });
+
+Then('user sees {string} badge', (badge: string) => {
+  cy.getBySel('workload-description-card').within(() => {
+    cy.get('.pf-v5-c-label__content').contains(badge);
+  });
+});
+
+Then(
+  'the user cannot see the {string} badge for {string} workload in {string} namespace',
+  (badge: string, workload: string, ns: string) => {
+    cy.getBySel('workload-description-card').within(() => {
+      cy.get(`[data-test="${badge}-badge-for-${workload}-workload-in-${ns}-namespace"]`).should('not.exist');
+    });
+  }
+);

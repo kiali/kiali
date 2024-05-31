@@ -19,6 +19,9 @@ Options:
 -a|--auth-strategy <anonymous|token>
     Auth stategy to use for Kiali.
     Default: anonymous
+-ab|--ambient
+    Install Istio Ambient profile
+    Default: Not set
 -dorp|--docker-or-podman <docker|podman>
     What to use when building images.
     Default: docker
@@ -33,7 +36,7 @@ Options:
     and which kind of multicluster environment to setup.
     Default: <none>
 -t|--tempo
-    If Tempo will be installed as a the tracing platform
+    If Tempo will be installed as the tracing platform
     instead of Jaeger
 HELP
 }
@@ -48,6 +51,7 @@ while [[ $# -gt 0 ]]; do
   key="$1"
   case $key in
     -a|--auth-strategy)           AUTH_STRATEGY="$2";         shift;shift; ;;
+    -ab|--ambient)                AMBIENT="true";             shift;shift; ;;
     -dorp|--docker-or-podman)     DORP="$2";                  shift;shift; ;;
     -h|--help)                    helpmsg;                    exit 1       ;;
     -iv|--istio-version)          ISTIO_VERSION="$2";         shift;shift; ;;
@@ -128,14 +132,22 @@ infomsg "Downloading istio"
 "${SCRIPT_DIR}"/istio/download-istio.sh ${DOWNLOAD_ISTIO_VERSION_ARG}
 
 setup_kind_singlecluster() {
+
   "${SCRIPT_DIR}"/start-kind.sh --name ci --image "${KIND_NODE_IMAGE}"
 
   infomsg "Installing istio"
   if [[ "${ISTIO_VERSION}" == *-dev ]]; then
     local hub_arg="--image-hub default"
   fi
-  
-  "${SCRIPT_DIR}"/istio/install-istio-via-istioctl.sh --reduce-resources true --client-exe-path "$(which kubectl)" -cn "cluster-default" -mid "mesh-default" -net "network-default" -gae "true" ${hub_arg:-}
+
+  if [ -n "${AMBIENT}" ]; then
+      infomsg "Installing Istio with Ambient profile"
+      # -net is giving issues trying to access the services inside the cluster with HTTP code 56
+      # At least with Ambient 1.21
+      "${SCRIPT_DIR}"/istio/install-istio-via-istioctl.sh --reduce-resources true --client-exe-path "$(which kubectl)" -cn "cluster-default" -mid "mesh-default" -gae true ${hub_arg:-} -cp ambient
+  else
+    "${SCRIPT_DIR}"/istio/install-istio-via-istioctl.sh --reduce-resources true --client-exe-path "$(which kubectl)" -cn "cluster-default" -mid "mesh-default" -net "network-default" -gae true ${hub_arg:-}
+  fi
 
   infomsg "Pushing the images into the cluster..."
   make -e DORP="${DORP}" -e CLUSTER_TYPE="kind" -e KIND_NAME="ci" cluster-push-kiali
@@ -151,6 +163,7 @@ setup_kind_singlecluster() {
 
   infomsg "Installing kiali server via Helm"
   infomsg "Chart to be installed: $(ls -1 ${HELM_CHARTS_DIR}/_output/charts/kiali-server-*.tgz)"
+
   # The grafana and tracing urls need to be set for backend e2e tests
   # but they don't need to be accessible outside the cluster.
   # Need a single dashboard set for grafana.
@@ -174,7 +187,7 @@ setup_kind_singlecluster() {
     --set health_config.rate[0].tolerance[0].failure=100 \
     kiali-server \
     "${HELM_CHARTS_DIR}"/_output/charts/kiali-server-*.tgz
-  
+
   # Helm chart doesn't support passing in service opts so patch them after the helm deploy.
   kubectl patch service kiali -n istio-system --type=json -p='[{"op": "replace", "path": "/spec/ports/0/port", "value":80}]'
   kubectl wait --for=jsonpath='{.status.loadBalancer.ingress}' -n istio-system service/kiali

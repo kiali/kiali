@@ -110,7 +110,7 @@ Feature: Kiali Overview page
 
   @multi-cluster
   Scenario: The badge for local cluster should be visible
-    Then user sees the "east" cluster badge in the Kiali header 
+    Then user sees the "east" cluster badge in the Kiali header
 
   @multi-cluster
   Scenario: Istio panels for both clusters should be visible and have the control panel label
@@ -119,14 +119,14 @@ Feature: Kiali Overview page
     And user sees the "Control plane" label in both "istio-system" namespace cards
     And user sees the "Remote Cluster" label in the "west" "istio-system" namespace card
     And the toggle on the right side of both "istio-system" namespace cards exists
-    And Istio config should not be available for the "west" "istio-system" 
+    And Istio config should not be available for the "west" "istio-system"
     And health should be different for "east" and "west" "istio-system"
 
   @multi-cluster
   Scenario: See "bookinfo" in "east" and "west" clusters
     Then user sees the "bookinfo" namespace card in cluster "east"
     And user sees the "bookinfo" namespace card in cluster "west"
-    And Istio config should not be available for the "west" "bookinfo" 
+    And Istio config should not be available for the "west" "bookinfo"
     And health should be different for "east" and "west" "bookinfo"
 
   @multi-cluster
@@ -158,7 +158,7 @@ Feature: Kiali Overview page
     And cluster badges for "east" and "west" cluster are visible in the LIST view
 
   #this scenario refers to a bug (https://github.com/kiali/kiali/issues/6504) which is not resolved at the time of writing the scenario
-  # this scenario refers to a bug (https://github.com/kiali/kiali/issues/6504) 
+  # this scenario refers to a bug (https://github.com/kiali/kiali/issues/6504)
   @multi-cluster
   @skip
   Scenario: The new Cluster column should be visible and sortable when changing to list view
@@ -172,3 +172,21 @@ Feature: Kiali Overview page
   Scenario: There should be two control plane cards for each cluster
     Then user sees the "Control plane" label in the "east" "istio-system" namespace card
     Then user sees the "Control plane" label in the "west" "istio-system" namespace card
+
+  @ambient
+  Scenario: Istio panels for cluster should be visible and have the ambient label
+    Then user sees the "Control plane" label in the "istio-system" namespace card
+    Then user sees the "Ambient" label in the "istio-system" namespace card
+
+  @ambient
+  Scenario: See ambient badge in the COMPACT view
+    When user clicks in the "COMPACT" view
+    Then user sees a "COMPACT" "bookinfo" namespace
+    Then user sees the "bookinfo" namespace card
+    And user sees the "Ambient" label in the "istio-system" namespace card
+
+  @ambient
+  Scenario: See ambient badge in the LIST view
+    When user clicks in the "LIST" view
+    Then user sees a "LIST" "istio-system" namespace
+    And badge for "Ambient" is visible in the LIST view in cluster "cluster-default" and namespace "istio-system"

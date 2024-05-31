@@ -7,6 +7,7 @@ source ${HACK_SCRIPT_DIR}/functions.sh
 
 
 : ${CLIENT_EXE:=oc}
+: ${AMBIENT_ENABLED:="false"}
 : ${ARCH:=amd64}
 : ${DELETE_DEMO:=false}
 : ${ENABLE_INJECTION:=true}
@@ -18,6 +19,7 @@ source ${HACK_SCRIPT_DIR}/functions.sh
 : ${DISTRIBUTE_DEMO:=false}
 : ${CLUSTER1_CONTEXT=east}
 : ${CLUSTER2_CONTEXT=west}
+: ${WAYPOINT:="false"}
 
 while [ $# -gt 0 ]; do
   key="$1"
@@ -54,6 +56,10 @@ while [ $# -gt 0 ]; do
       CLUSTER2_CONTEXT="$2"
       shift;shift
       ;;
+    -w|--waypoint)
+      WAYPOINT="$2"
+      shift;shift
+      ;;
     -h|--help)
       cat <<HELPMSG
 Valid command line arguments:
@@ -65,6 +71,7 @@ Valid command line arguments:
   -dd|--distribute-demo 'true' or 'false'. If 'true' alpha namespace will be created on east cluster, beta and gamma namespaces on west cluster.
   -c1|--cluster1: context name of the cluster 1. Doesn't do anything if --distribute-demo is set to false (default: east)
   -c2|--cluster2: context name of the cluster 2. Doesn't do anything if --distribute-demo is set to false (default: west)
+  -w|--waypoint: Create a waypoint proxy per namespace (When ISTIO_INJECTION=false) (default: false)
   -h|--help: this text
   -s|--source: demo file source. For example: file:///home/me/demos Default: https://raw.githubusercontent.com/kiali/demos/master
 HELPMSG
@@ -154,16 +161,50 @@ else
   fi
 fi
 
-if [ "${ENABLE_INJECTION}" == "true" ]; then
- if [ "${DISTRIBUTE_DEMO}" == "true" ]; then
-    ${CLIENT_EXE} label namespace ${NAMESPACE_ALPHA} istio-injection=enabled --context ${CLUSTER1_CONTEXT}
-    ${CLIENT_EXE} label namespace ${NAMESPACE_BETA} istio-injection=enabled  --context ${CLUSTER2_CONTEXT}
-    ${CLIENT_EXE} label namespace ${NAMESPACE_GAMMA} istio-injection=enabled  --context ${CLUSTER2_CONTEXT}
-  else
-    ${CLIENT_EXE} label namespace ${NAMESPACE_ALPHA} istio-injection=enabled
-    ${CLIENT_EXE} label namespace ${NAMESPACE_BETA} istio-injection=enabled
-    ${CLIENT_EXE} label namespace ${NAMESPACE_GAMMA} istio-injection=enabled
+if [ "${ENABLE_INJECTION}" == "false" ]; then
+  for n in $(${CLIENT_EXE} get daemonset --all-namespaces -o jsonpath='{.items[*].metadata.name}')
+  do
+    if [ "${n}" == "ztunnel" ]; then
+      AMBIENT_ENABLED="true"
+      echo "AMBIENT_ENABLED=${AMBIENT_ENABLED}"
+      break
+    fi
+  done
+  if [ "${AMBIENT_ENABLED}" == "false" ] && [ "${WAYPOINT}" == "true" ]; then
+   echo "Waypoint proxy cannot be installed as Ambient is not enabled."
+   exit 1
   fi
+fi
+
+ISTIO_INJECTION=""
+if [ "${AMBIENT_ENABLED}" == "true" ]; then
+  ISTIO_INJECTION="istio.io/dataplane-mode=ambient"
+  # It could also be applied to service account
+  if [ "${WAYPOINT}" == "true" ]; then
+    # Verify Gateway API
+    echo "Verifying that Gateway API is installed; if it is not then it will be installed now."
+    $CLIENT_EXE get crd gateways.gateway.networking.k8s.io &> /dev/null || \
+      { $CLIENT_EXE kustomize "github.com/kubernetes-sigs/gateway-api/config/crd/experimental?ref=v1.0.0" | $CLIENT_EXE apply -f -; }
+    # Create Waypoint proxy
+    echo "Create Waypoint proxy"
+    ${ISTIOCTL} x waypoint apply -n ${NAMESPACE_ALPHA}
+    ${ISTIOCTL} x waypoint apply -n ${NAMESPACE_BETA}
+    ${ISTIOCTL} x waypoint apply -n ${NAMESPACE_GAMMA}
+  fi
+else
+  if [ "${ENABLE_INJECTION}" == "true" ]; then
+    ISTIO_INJECTION="istio-injection=enabled"
+  fi
+fi
+
+if [ "${DISTRIBUTE_DEMO}" == "true" ]; then
+    ${CLIENT_EXE} label namespace ${NAMESPACE_ALPHA} ${ISTIO_INJECTION} --context ${CLUSTER1_CONTEXT}
+    ${CLIENT_EXE} label namespace ${NAMESPACE_BETA} ${ISTIO_INJECTION}  --context ${CLUSTER2_CONTEXT}
+    ${CLIENT_EXE} label namespace ${NAMESPACE_GAMMA} ${ISTIO_INJECTION}  --context ${CLUSTER2_CONTEXT}
+  else
+    ${CLIENT_EXE} label namespace ${NAMESPACE_ALPHA} ${ISTIO_INJECTION}
+    ${CLIENT_EXE} label namespace ${NAMESPACE_BETA} ${ISTIO_INJECTION}
+    ${CLIENT_EXE} label namespace ${NAMESPACE_GAMMA} ${ISTIO_INJECTION}
 fi
 
 # For OpenShift 4.11, adds default service account in the current ns to use as a user

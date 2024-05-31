@@ -8,6 +8,7 @@ infomsg() {
 BACKEND="backend"
 BACKEND_EXTERNAL_CONTROLPLANE="backend-external-controlplane"
 FRONTEND="frontend"
+FRONTEND_AMBIENT="frontend-ambient"
 FRONTEND_PRIMARY_REMOTE="frontend-primary-remote"
 FRONTEND_MULTI_PRIMARY="frontend-multi-primary"
 FRONTEND_TEMPO="frontend-tempo"
@@ -44,8 +45,8 @@ while [[ $# -gt 0 ]]; do
       ;;
     -ts|--test-suite)
       TEST_SUITE="${2}"
-      if [ "${TEST_SUITE}" != "${BACKEND}" -a "${TEST_SUITE}" != "${BACKEND_EXTERNAL_CONTROLPLANE}" -a "${TEST_SUITE}" != "${FRONTEND}" -a "${TEST_SUITE}" != "${FRONTEND_PRIMARY_REMOTE}" -a "${TEST_SUITE}" != "${FRONTEND_MULTI_PRIMARY}" -a "${TEST_SUITE}" != "${FRONTEND_TEMPO}" ]; then
-        echo "--test-suite option must be one of '${BACKEND}', '${BACKEND_EXTERNAL_CONTROLPLANE}', '${FRONTEND}', '${FRONTEND_PRIMARY_REMOTE}', or '${FRONTEND_MULTI_PRIMARY}' or '${FRONTEND_TEMPO}'"
+      if [ "${TEST_SUITE}" != "${BACKEND}" -a "${TEST_SUITE}" != "${BACKEND_EXTERNAL_CONTROLPLANE}" -a "${TEST_SUITE}" != "${FRONTEND}" -a "${TEST_SUITE}" != "${FRONTEND_AMBIENT}" -a "${TEST_SUITE}" != "${FRONTEND_PRIMARY_REMOTE}" -a "${TEST_SUITE}" != "${FRONTEND_MULTI_PRIMARY}" -a "${TEST_SUITE}" != "${FRONTEND_TEMPO}" ]; then
+        echo "--test-suite option must be one of '${BACKEND}', '${BACKEND_EXTERNAL_CONTROLPLANE}', '${FRONTEND}', '${FRONTEND_PRIMARY_REMOTE}', or '${FRONTEND_MULTI_PRIMARY}', or '${FRONTEND_AMBIENT}' or '${FRONTEND_TEMPO}'"
         exit 1
       fi
       shift;shift
@@ -62,7 +63,7 @@ Valid command line arguments:
   -to|--tests-only <true|false>
     If true, only run the tests and skip the setup.
     Default: false
-  -ts|--test-suite <${BACKEND}|${BACKEND_EXTERNAL_CONTROLPLANE}|${FRONTEND}|${FRONTEND_PRIMARY_REMOTE}|${FRONTEND_MULTI_PRIMARY}|${FRONTEND_TEMPO}>
+  -ts|--test-suite <${BACKEND}|${BACKEND_EXTERNAL_CONTROLPLANE}|${FRONTEND}|${FRONTEND_AMBIENT}|${FRONTEND_PRIMARY_REMOTE}|${FRONTEND_MULTI_PRIMARY}|${FRONTEND_TEMPO}>
     Which test suite to run.
     Default: ${BACKEND}
   -h|--help:
@@ -182,6 +183,41 @@ ensureKialiTracesReady() {
   done
 }
 
+ensureBookinfoGraphReady() {
+  infomsg "Waiting for Kiali to have graph data"
+  local start_time=$(date +%s)
+  local end_time=$((start_time + 120))
+
+  # Authenticate first
+  local kiali_token=$(kubectl -n istio-system create token kiali)
+  auth=$(curl --cookie-jar cookies.txt "${KIALI_URL}/api/authenticate" \
+          -H 'Accept: application/json, text/plain, */*' \
+          -H 'Content-Type: application/x-www-form-urlencoded' \
+          --request POST \
+          --data-raw "token=${kiali_token}")
+
+  local graph_url="${KIALI_URL}/api/namespaces/graph?duration=120s&graphType=versionedApp&includeIdleEdges=false&injectServiceNodes=true&boxBy=cluster,namespace,app&waypoints=false&appenders=deadNode,istio,serviceEntry,meshCheck,workloadEntry,health,ambient&rateGrpc=requests&rateHttp=requests&rateTcp=sent&namespaces=bookinfo"
+  infomsg "Graph url: ${graph_url}"
+  while true; do
+    result=$(curl -k -s --fail "$graph_url" \
+        -H 'Accept: application/json, text/plain, */*' \
+        -H 'Content-Type: application/json' -b cookies.txt | jq -r '.elements.nodes')
+
+    if [ "$result" == "[]" ]; then
+      local now=$(date +%s)
+      if [ "${now}" -gt "${end_time}" ]; then
+        echo "Timed out waiting for Kiali to get any graph data"
+        break
+      fi
+      sleep 1
+    else
+      sleep 5
+      break
+    fi
+
+  done
+}
+
 ensureMulticlusterApplicationsAreHealthy() {
   local start_time=$(date +%s)
   local timeout=300
@@ -285,6 +321,31 @@ elif [ "${TEST_SUITE}" == "${FRONTEND}" ]; then
 
   cd "${SCRIPT_DIR}"/../frontend
   yarn run cypress:run
+elif [ "${TEST_SUITE}" == "${FRONTEND_AMBIENT}" ]; then
+  ensureCypressInstalled
+
+  if [ "${TESTS_ONLY}" == "false" ]; then
+    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy token ${ISTIO_VERSION_ARG} --ambient true
+
+    ISTIO_INGRESS_IP="$(kubectl get svc istio-ingressgateway -n istio-system -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')"
+    # Install demo apps
+    "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl" -g "${ISTIO_INGRESS_IP}" --ambient true
+  fi
+
+  ensureKialiServerReady
+  ensureBookinfoGraphReady
+
+  export CYPRESS_BASE_URL="${KIALI_URL}"
+  export CYPRESS_NUM_TESTS_KEPT_IN_MEMORY=0
+  # Recorded video is unusable due to low resources in CI: https://github.com/cypress-io/cypress/issues/4722
+  export CYPRESS_VIDEO=false
+
+  if [ "${SETUP_ONLY}" == "true" ]; then
+    exit 0
+  fi
+
+  cd "${SCRIPT_DIR}"/../frontend
+  yarn run cypress:run:ambient
 elif [ "${TEST_SUITE}" == "${FRONTEND_PRIMARY_REMOTE}" ]; then
   ensureCypressInstalled
   
