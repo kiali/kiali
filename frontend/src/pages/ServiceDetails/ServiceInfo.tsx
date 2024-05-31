@@ -25,7 +25,7 @@ import {
   vsToIstioItems,
   gwToIstioItems,
   seToIstioItems,
-  k8sHTTPRouteToIstioItems,
+  k8sRouteToIstioItems,
   validationKey,
   k8sGwToIstioItems
 } from '../../types/IstioConfigList';
@@ -195,10 +195,11 @@ class ServiceInfoComponent extends React.Component<Props, ServiceInfoState> {
           )
         : [];
     const k8sGwIstioConfigItems =
-      this.props?.k8sGateways && this.props.serviceDetails?.k8sHTTPRoutes
+      this.props?.k8sGateways && (this.props.serviceDetails?.k8sHTTPRoutes || this.props.serviceDetails?.k8sGRPCRoutes)
         ? k8sGwToIstioItems(
             this.props?.k8sGateways,
             this.props.serviceDetails.k8sHTTPRoutes,
+            this.props.serviceDetails.k8sGRPCRoutes,
             this.props.serviceDetails.validations,
             this.props.cluster
           )
@@ -211,15 +212,26 @@ class ServiceInfoComponent extends React.Component<Props, ServiceInfoState> {
         )
       : [];
     const k8sHTTPRouteIstioConfigItems = this.props.serviceDetails?.k8sHTTPRoutes
-      ? k8sHTTPRouteToIstioItems(
+      ? k8sRouteToIstioItems(
           this.props.serviceDetails.k8sHTTPRoutes,
+          this.props.serviceDetails.validations,
+          this.props.cluster
+        )
+      : [];
+    const k8sGRPCRouteIstioConfigItems = this.props.serviceDetails?.k8sGRPCRoutes
+      ? k8sRouteToIstioItems(
+          this.props.serviceDetails.k8sGRPCRoutes,
           this.props.serviceDetails.validations,
           this.props.cluster
         )
       : [];
     const istioConfigItems = seIstioConfigItems.concat(
       gwIstioConfigItems.concat(
-        k8sGwIstioConfigItems.concat(vsIstioConfigItems.concat(drIstioConfigItems.concat(k8sHTTPRouteIstioConfigItems)))
+        k8sGwIstioConfigItems.concat(
+          vsIstioConfigItems.concat(
+            drIstioConfigItems.concat(k8sHTTPRouteIstioConfigItems.concat(k8sGRPCRouteIstioConfigItems))
+          )
+        )
       )
     );
 

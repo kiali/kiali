@@ -45,7 +45,8 @@ import {
   WIZARD_TCP_TRAFFIC_SHIFTING,
   WIZARD_TITLES,
   WIZARD_TRAFFIC_SHIFTING,
-  WizardPreviews
+  WizardPreviews,
+  getInitK8sGRPCRules
 } from './WizardActions';
 import { MessageType } from '../../types/MessageCenter';
 import { GatewaySelector, GatewaySelectorState } from './GatewaySelector';
@@ -909,7 +910,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
           {this.props.type === WIZARD_K8S_GRPC_REQUEST_ROUTING && (
             <K8sRequestRouting
               subServices={this.props.subServices}
-              initRules={getInitK8sRules(this.props.k8sHTTPRoutes)}
+              initRules={getInitK8sGRPCRules(this.props.k8sGRPCRoutes)}
               onChange={this.onK8sRulesChange}
             />
           )}

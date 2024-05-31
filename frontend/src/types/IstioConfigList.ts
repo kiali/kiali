@@ -433,6 +433,7 @@ export const gwToIstioItems = (
 export const k8sGwToIstioItems = (
   gws: K8sGateway[],
   k8srs: K8sHTTPRoute[],
+  k8sgrpcrs: K8sGRPCRoute[],
   validations: Validations,
   cluster?: string
 ): IstioConfigItem[] => {
@@ -445,6 +446,16 @@ export const k8sGwToIstioItems = (
   const entryName = `${typeNameProto.charAt(0).toLowerCase()}${typeNameProto.slice(1)}`;
 
   k8srs.forEach(k8sr => {
+    k8sr.spec.parentRefs?.forEach(parentRef => {
+      if (!parentRef.namespace) {
+        k8sGateways.add(`${k8sr.metadata.namespace}/${parentRef.name}`);
+      } else {
+        k8sGateways.add(`${parentRef.namespace}/${parentRef.name}`);
+      }
+    });
+  });
+
+  k8sgrpcrs.forEach(k8sr => {
     k8sr.spec.parentRefs?.forEach(parentRef => {
       if (!parentRef.namespace) {
         k8sGateways.add(`${k8sr.metadata.namespace}/${parentRef.name}`);
@@ -504,8 +515,8 @@ export const seToIstioItems = (see: ServiceEntry[], validations: Validations, cl
   return istioItems;
 };
 
-export const k8sHTTPRouteToIstioItems = (
-  routes: K8sHTTPRoute[],
+export const k8sRouteToIstioItems = (
+  routes: K8sHTTPRoute[] | K8sGRPCRoute[],
   validations: Validations,
   cluster?: string
 ): IstioConfigItem[] => {

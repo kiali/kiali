@@ -47,7 +47,12 @@ export const ServiceWizardActionsDropdownGroup: React.FunctionComponent<Props> =
   const updateLabel = getWizardUpdateLabel(props.virtualServices, props.k8sHTTPRoutes, props.k8sGRPCRoutes);
 
   const hasTrafficRouting = (): boolean => {
-    return hasServiceDetailsTrafficRouting(props.virtualServices, props.destinationRules, props.k8sHTTPRoutes);
+    return hasServiceDetailsTrafficRouting(
+      props.virtualServices,
+      props.destinationRules,
+      props.k8sHTTPRoutes,
+      props.k8sGRPCRoutes
+    );
   };
 
   const handleActionClick = (eventKey: string): void => {

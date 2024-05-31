@@ -16,7 +16,10 @@ import {
   HTTPRouteDestination,
   IstioObject,
   K8sGateway,
+  K8sGRPCHeaderMatch,
+  K8sGRPCMethodMatch,
   K8sGRPCRoute,
+  K8sGRPCRouteMatch,
   K8sHTTPHeaderFilter,
   K8sHTTPMatch,
   K8sHTTPRequestMirrorFilter,
@@ -312,6 +315,51 @@ const buildK8sHTTPRouteMatch = (matches: string[]): K8sHTTPRouteMatch => {
   return matchRoute;
 };
 
+const buildK8sGRPCRouteMatch = (matches: string[]): K8sGRPCRouteMatch => {
+  const matchRoute: K8sGRPCRouteMatch = {};
+  const matchHeaders: K8sGRPCHeaderMatch[] = [];
+  const matchMethods: K8sGRPCMethodMatch[] = [];
+
+  matches
+    .filter(match => match.startsWith(HEADERS))
+    .forEach(match => {
+      // match follows format:  headers [<header-name>] <op> <value>
+      const i0 = match.indexOf('[');
+      const j0 = match.indexOf(']');
+      const headerName = match.substring(i0 + 1, j0).trim();
+      const i1 = match.indexOf(' ', j0 + 1);
+      const j1 = match.indexOf(' ', i1 + 1);
+      const op = match.substring(i1 + 1, j1).trim();
+      const value = match.substring(j1 + 1).trim();
+      matchHeaders.push({
+        name: headerName,
+        type: op,
+        value: value
+      });
+    });
+  // Method
+  matches
+    .filter(match => match.startsWith(QUERY_PARAMS))
+    .forEach(match => {
+      // match follows format: <name> <op> <value>
+      const i = match.indexOf(' ');
+      const j = match.indexOf(' ', i + 1);
+      const k = match.indexOf(' ', j + 1);
+      const service = match.substring(i, j).trim();
+      const op = match.substring(j + 1, k).trim();
+      const value = match.substring(k + 1).trim();
+      matchMethods.push({ service: service, type: op, method: value });
+    });
+  if (matchHeaders.length > 0) {
+    matchRoute.headers = matchHeaders;
+  }
+  if (matchMethods.length > 0) {
+    // should be only one method
+    matchRoute.method = matchMethods[0];
+  }
+  return matchRoute;
+};
+
 const buildK8sHTTPRouteFilter = (filters: string[]): K8sHTTPRouteFilter[] => {
   const routeFilter: K8sHTTPRouteFilter[] = [];
   filters
@@ -429,6 +477,21 @@ const parseHttpMatchRequest = (httpMatchRequest: HTTPMatchRequest): string[] => 
   return matches;
 };
 
+const parseK8sGRPCMatchRequest = (grpcRouteMatch: K8sGRPCRouteMatch): string[] => {
+  const matches: string[] = [];
+  // Headers
+  if (grpcRouteMatch.headers) {
+    grpcRouteMatch.headers.forEach(header => {
+      matches.push(`headers [${header.name}] ${header.type} ${header.value}`);
+    });
+  }
+  if (grpcRouteMatch.method) {
+    matches.push(`method ${grpcRouteMatch.method}`);
+  }
+
+  return matches;
+};
+
 const parseK8sHTTPMatchRequest = (httpRouteMatch: K8sHTTPRouteMatch): string[] => {
   const matches: string[] = [];
   if (httpRouteMatch.path) {
@@ -531,6 +594,7 @@ export const buildIstioConfig = (wProps: ServiceWizardProps, wState: ServiceWiza
     drName = wProps.destinationRules[0].metadata.name;
   }
   let wizardK8sHTTPRoute: K8sHTTPRoute | undefined = undefined;
+  let wizardK8sGRPCRoute: K8sGRPCRoute | undefined = undefined;
   let wizardDR: DestinationRule | undefined = undefined;
   let wizardVS: VirtualService | undefined = undefined;
   let wizardGW: Gateway | undefined;
@@ -1058,11 +1122,11 @@ export const buildIstioConfig = (wProps: ServiceWizardProps, wState: ServiceWiza
   if (wProps.type === WIZARD_K8S_GRPC_REQUEST_ROUTING) {
     let k8sRouteName = wProps.serviceName;
     if (
-      wProps.k8sHTTPRoutes &&
-      wProps.k8sHTTPRoutes.length === 1 &&
-      wProps.k8sHTTPRoutes[0].metadata.name !== k8sRouteName
+      wProps.k8sGRPCRoutes &&
+      wProps.k8sGRPCRoutes.length === 1 &&
+      wProps.k8sGRPCRoutes[0].metadata.name !== k8sRouteName
     ) {
-      k8sRouteName = wProps.k8sHTTPRoutes[0].metadata.name;
+      k8sRouteName = wProps.k8sGRPCRoutes[0].metadata.name;
     }
 
     wizardK8sGW =
@@ -1101,8 +1165,8 @@ export const buildIstioConfig = (wProps: ServiceWizardProps, wState: ServiceWiza
           }
         : undefined;
 
-    wizardK8sHTTPRoute = {
-      kind: 'HTTPRoute',
+    wizardK8sGRPCRoute = {
+      kind: 'GRPCRoute',
       apiVersion: GATEWAY_NETWORKING_VERSION,
       metadata: {
         namespace: wProps.namespace,
@@ -1113,7 +1177,7 @@ export const buildIstioConfig = (wProps: ServiceWizardProps, wState: ServiceWiza
       },
       spec: {}
     };
-    wizardK8sHTTPRoute.spec.hostnames =
+    wizardK8sGRPCRoute.spec.hostnames =
       wState.k8sRouteHosts.length > 1 || (wState.k8sRouteHosts.length === 1 && wState.k8sRouteHosts[0].length > 0)
         ? wState.k8sRouteHosts
         : [wProps.serviceName];
@@ -1121,12 +1185,12 @@ export const buildIstioConfig = (wProps: ServiceWizardProps, wState: ServiceWiza
       case WIZARD_K8S_GRPC_REQUEST_ROUTING: {
         // parentRefs to K8sGateway
         if (wState.k8sGateway && wState.k8sGateway.addGateway) {
-          wizardK8sHTTPRoute.spec.parentRefs = [];
+          wizardK8sGRPCRoute.spec.parentRefs = [];
           if (wState.k8sGateway.newGateway) {
             const namespaceAndName = fullNewGatewayName.split('/');
             const gwNamespace = namespaceAndName[0];
             const gwName = namespaceAndName[1];
-            wizardK8sHTTPRoute.spec.parentRefs.push({
+            wizardK8sGRPCRoute.spec.parentRefs.push({
               name: gwName,
               namespace: gwNamespace
             });
@@ -1134,23 +1198,22 @@ export const buildIstioConfig = (wProps: ServiceWizardProps, wState: ServiceWiza
             const namespaceAndName = wState.k8sGateway.selectedGateway.split('/');
             const gwNamespace = namespaceAndName[0];
             const gwName = namespaceAndName[1];
-            wizardK8sHTTPRoute.spec.parentRefs.push({
+            wizardK8sGRPCRoute.spec.parentRefs.push({
               name: gwName,
               namespace: gwNamespace
             });
           }
         }
         if (wState.k8sRules && wState.k8sRules.length > 0) {
-          wizardK8sHTTPRoute.spec.rules = [];
+          wizardK8sGRPCRoute.spec.rules = [];
           wState.k8sRules.forEach(rule => {
             if (rule.matches.length > 0 || rule.filters.length > 0) {
-              wizardK8sHTTPRoute!.spec!.rules!.push({
-                matches: [buildK8sHTTPRouteMatch(rule.matches)],
-                filters: buildK8sHTTPRouteFilter(rule.filters),
+              wizardK8sGRPCRoute!.spec!.rules!.push({
+                matches: [buildK8sGRPCRouteMatch(rule.matches)],
                 backendRefs: rule.backendRefs
               });
             } else {
-              wizardK8sHTTPRoute!.spec!.rules!.push({
+              wizardK8sGRPCRoute!.spec!.rules!.push({
                 backendRefs: rule.backendRefs
               });
             }
@@ -1166,7 +1229,8 @@ export const buildIstioConfig = (wProps: ServiceWizardProps, wState: ServiceWiza
     gw: wizardGW,
     k8sgateway: wizardK8sGW,
     pa: wizardPA,
-    k8shttproute: wizardK8sHTTPRoute
+    k8shttproute: wizardK8sHTTPRoute,
+    k8sgrpcroute: wizardK8sGRPCRoute
   };
 };
 
@@ -1385,6 +1449,37 @@ export const getInitK8sRules = (httpRoutes: K8sHTTPRoute[]): K8sRule[] => {
       }
       if (httpRoute.backendRefs) {
         httpRoute.backendRefs.forEach(bRef => {
+          rule.backendRefs.push({
+            name: bRef.name,
+            weight: !bRef.weight || bRef.weight === 1 ? 100 : bRef.weight,
+            port: !bRef.port ? 80 : bRef.port
+          });
+        });
+      }
+
+      // Not adding a rule if it has empty routes, probably this means that an existing service was removed
+      if (rule.backendRefs && rule.backendRefs.length > 0) {
+        rules.push(rule);
+      }
+    });
+  }
+  return rules;
+};
+
+export const getInitK8sGRPCRules = (grpcRoutes: K8sGRPCRoute[]): K8sRule[] => {
+  const rules: K8sRule[] = [];
+  if (grpcRoutes && grpcRoutes.length === 1 && grpcRoutes[0].spec.rules) {
+    grpcRoutes[0].spec.rules.forEach(grpcRoute => {
+      const rule: K8sRule = {
+        matches: [],
+        filters: [],
+        backendRefs: []
+      };
+      if (grpcRoute.matches) {
+        grpcRoute.matches.forEach(m => (rule.matches = rule.matches.concat(parseK8sGRPCMatchRequest(m))));
+      }
+      if (grpcRoute.backendRefs) {
+        grpcRoute.backendRefs.forEach(bRef => {
           rule.backendRefs.push({
             name: bRef.name,
             weight: !bRef.weight || bRef.weight === 1 ? 100 : bRef.weight,
