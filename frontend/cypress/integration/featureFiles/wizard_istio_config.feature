@@ -53,6 +53,25 @@ Feature: Kiali Istio Config wizard
 
   @gateway-api
   @bookinfo-app
+  Scenario: Create a K8s Gateway HTTPS scenario
+    When user deletes k8sgateway named "k8sapigateway" and the resource is no longer available
+    And user clicks in the "K8sGateway" Istio config actions
+    And user sees the "Create K8sGateway" config wizard
+    And user adds listener
+    And user types "k8sapigateway" in the "name" input
+    And user types "listener" in the "addName_0" input
+    And user checks validation of the hostname "addHostname_0" input
+    And user types "website.com" in the "addHostname_0" input
+    And user types "443" in the "addPort_0" input
+    And user chooses "HTTPS" mode from the "addPortProtocol_0" select
+    And the preview button should be disabled
+    And user types "cert" in the "tlsCert_0" input
+    And user previews the configuration
+    And user creates the istio config
+    Then the "K8sGateway" "k8sapigateway" should be listed in "bookinfo" namespace
+
+  @gateway-api
+  @bookinfo-app
   Scenario: Create a K8s Reference Grant scenario
     When user deletes k8sreferencegrant named "k8srefgrant" and the resource is no longer available
     And user clicks in the "K8sReferenceGrant" Istio config actions

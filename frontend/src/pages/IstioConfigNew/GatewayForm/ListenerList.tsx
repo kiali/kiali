@@ -5,7 +5,15 @@ import { PFColors } from '../../../components/Pf/PfColors';
 import { Button, ButtonVariant } from '@patternfly/react-core';
 import { Listener } from '../../../types/IstioObjects';
 import { ListenerForm } from '../K8sGatewayForm';
-import { ListenerBuilder, allowedRoutes, protocols } from './ListenerBuilder';
+import {
+  ListenerBuilder,
+  allowedRoutes,
+  protocols,
+  tlsModes,
+  protocolsCert,
+  TERMINATE,
+  SELECTOR
+} from './ListenerBuilder';
 import { KialiIcon } from 'config/KialiIcon';
 
 type ListenerListProps = {
@@ -55,11 +63,12 @@ const columns: ThProps[] = [
   }
 ];
 
-export const addSelectorLabels = (value: string) => {
+export const addSelectorLabels = (value: string): [boolean, {}] => {
   if (value.length === 0) {
-    return;
+    return [false, {}];
   }
 
+  let result = true;
   value = value.trim();
   const labels: string[] = value.split(',');
 
@@ -69,22 +78,25 @@ export const addSelectorLabels = (value: string) => {
   for (let i = 0; i < labels.length; i++) {
     const label = labels[i];
     if (label.indexOf('=') < 0) {
+      result = false;
       break;
     }
 
     const splitLabel: string[] = label.split('=');
     if (splitLabel.length !== 2) {
+      result = false;
       break;
     }
 
     if (splitLabel[0].trim().length === 0 || splitLabel[1].trim().length === 0) {
+      result = false;
       break;
     }
 
     selector[splitLabel[0].trim()] = splitLabel[1].trim();
   }
 
-  return selector;
+  return [result, selector];
 };
 
 export const ListenerList: React.FC<ListenerListProps> = (props: ListenerListProps) => {
@@ -97,6 +109,8 @@ export const ListenerList: React.FC<ListenerListProps> = (props: ListenerListPro
       isHostValid: false,
       from: allowedRoutes[0],
       isLabelSelectorValid: false,
+      tlsMode: tlsModes[0],
+      tlsCert: '',
       sSelectorLabels: ''
     };
 
@@ -108,7 +122,7 @@ export const ListenerList: React.FC<ListenerListProps> = (props: ListenerListPro
       port: 70000,
       name: '',
       protocol: protocols[0],
-      allowedRoutes: { namespaces: { from: allowedRoutes[0], selector: { matchLabels: {} } } }
+      allowedRoutes: { namespaces: { from: allowedRoutes[0] } }
     };
 
     const lf = props.listeners;
@@ -144,15 +158,30 @@ export const ListenerList: React.FC<ListenerListProps> = (props: ListenerListPro
     if (listenerForm.port.length === 0 || isNaN(Number(listenerForm.port))) return;
     if (listenerForm.hostname.length === 0) return;
 
-    const selector = addSelectorLabels(listenerForm.sSelectorLabels) || {};
+    const selector = addSelectorLabels(listenerForm.sSelectorLabels)[1] || {};
 
     const listener: Listener = {
       hostname: listenerForm.hostname,
       port: Number(listenerForm.port),
       name: listenerForm.name,
       protocol: listenerForm.protocol,
-      allowedRoutes: { namespaces: { from: listenerForm.from, selector: { matchLabels: selector } } }
+      allowedRoutes: { namespaces: { from: listenerForm.from } }
     };
+
+    if (listenerForm.from === SELECTOR) {
+      listener.allowedRoutes.namespaces.selector = { matchLabels: selector };
+    }
+
+    if (protocolsCert.includes(listenerForm.protocol) && listenerForm.tlsMode === TERMINATE) {
+      listener.tls = {
+        certificateRefs: [
+          {
+            kind: 'Secret',
+            name: listenerForm.tlsCert
+          }
+        ]
+      };
+    }
 
     return listener;
   };

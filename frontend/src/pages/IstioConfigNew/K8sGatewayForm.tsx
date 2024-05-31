@@ -2,8 +2,8 @@ import * as React from 'react';
 import { FormGroup, FormSelect, FormSelectOption } from '@patternfly/react-core';
 import { AddressList } from './GatewayForm/AddressList';
 import { Address, Listener, MAX_PORT, MIN_PORT } from '../../types/IstioObjects';
-import { ListenerList } from './GatewayForm/ListenerList';
-import { isValidHostname, isValidName } from './GatewayForm/ListenerBuilder';
+import { addSelectorLabels, ListenerList } from './GatewayForm/ListenerList';
+import { isValidHostname, isValidName, isValidTLS, SELECTOR } from './GatewayForm/ListenerBuilder';
 import { isValidAddress } from './GatewayForm/AddressBuilder';
 import { serverConfig } from '../../config';
 
@@ -34,7 +34,10 @@ export const initK8sGateway = (): K8sGatewayState => ({
 
 export const isK8sGatewayStateValid = (g: K8sGatewayState): boolean => {
   return (
-    g.listeners.length > 0 && validListeners(g.listeners) && (g.addresses.length === 0 || validAddresses(g.addresses))
+    g.listeners.length > 0 &&
+    validListeners(g.listeners) &&
+    validListenerForms(g.listenersForm) &&
+    (g.addresses.length === 0 || validAddresses(g.addresses))
   );
 };
 
@@ -47,6 +50,8 @@ export type ListenerForm = {
   port: string;
   protocol: string;
   sSelectorLabels: string;
+  tlsCert: string;
+  tlsMode: string;
 };
 
 const validListeners = (listeners: Listener[]): boolean => {
@@ -56,8 +61,15 @@ const validListeners = (listeners: Listener[]): boolean => {
       typeof e.port !== 'undefined' &&
       e.port >= MIN_PORT &&
       e.port <= MAX_PORT &&
-      isValidHostname(e.hostname)
+      isValidHostname(e.hostname) &&
+      isValidTLS(e.protocol, e.tls)
     );
+  });
+};
+
+const validListenerForms = (listenersForm: ListenerForm[]): boolean => {
+  return listenersForm.every((e: ListenerForm) => {
+    return e.from === SELECTOR ? addSelectorLabels(e.sSelectorLabels)[0] : true;
   });
 };
 
@@ -73,7 +85,7 @@ export class K8sGatewayForm extends React.Component<Props, K8sGatewayState> {
     this.state = initK8sGateway();
   }
 
-  componentDidMount() {
+  componentDidMount(): void {
     this.setState(this.props.k8sGateway);
   }
 
@@ -85,7 +97,7 @@ export class K8sGatewayForm extends React.Component<Props, K8sGatewayState> {
     this.setState({ addresses: addresses }, () => this.props.onChange(this.state));
   };
 
-  onChangeGatewayClass = (_event: React.FormEvent, value: string) => {
+  onChangeGatewayClass = (_event: React.FormEvent, value: string): void => {
     this.setState(
       {
         gatewayClass: value
@@ -94,7 +106,7 @@ export class K8sGatewayForm extends React.Component<Props, K8sGatewayState> {
     );
   };
 
-  render() {
+  render(): React.ReactNode {
     return (
       <>
         {serverConfig.gatewayAPIClasses.length > 1 && (

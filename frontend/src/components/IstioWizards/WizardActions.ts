@@ -1866,26 +1866,17 @@ export const buildK8sGateway = (
     spec: {
       // Default for istio scenarios, user may change it editing YAML
       gatewayClassName: state.gatewayClass,
-      listeners: state.listeners.map(s => ({
-        name: s.name,
-        port: s.port,
-        protocol: s.protocol,
-        hostname: s.hostname,
-        allowedRoutes: {
-          namespaces: {
-            from: s.allowedRoutes.namespaces.from,
-            selector: {
-              matchLabels: s.allowedRoutes.namespaces.selector?.matchLabels
-            }
-          }
-        }
-      })),
-      addresses: state.addresses.map(s => ({
-        type: s.type,
-        value: s.value
-      }))
+      listeners: state.listeners
     }
   };
+
+  if (state.addresses.length > 0) {
+    k8sGateway.spec.addresses = state.addresses.map(s => ({
+      type: s.type,
+      value: s.value
+    }));
+  }
+
   addLabels(k8sGateway, labels);
   addAnnotations(k8sGateway, annotations);
 
