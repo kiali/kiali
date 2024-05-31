@@ -26,7 +26,7 @@ import { SortField } from '../../types/SortFilters';
 import { NamespaceInfo } from '../../types/NamespaceInfo';
 import * as FilterHelper from '../FilterList/FilterHelper';
 import * as Sorts from '../../pages/Overview/Sorts';
-import { StatefulFiltersComponent } from '../Filters/StatefulFilters';
+import { StatefulFiltersRef } from '../Filters/StatefulFilters';
 import { kialiStyle } from 'styles/StyleUtils';
 import { SortableTh } from 'components/SimpleTable';
 
@@ -58,7 +58,7 @@ type VirtualListProps<R> = ReduxProps & {
   hiddenColumns?: string[];
   rows: R[];
   sort?: (sortField: SortField<NamespaceInfo>, isAscending: boolean) => void;
-  statefulProps?: React.RefObject<StatefulFiltersComponent>;
+  statefulProps?: StatefulFiltersRef;
   type: string;
 };
 
@@ -72,7 +72,7 @@ type VirtualListState<R extends RenderResource> = {
 };
 
 class VirtualListComponent<R extends RenderResource> extends React.Component<VirtualListProps<R>, VirtualListState<R>> {
-  private statefulFilters: React.RefObject<StatefulFiltersComponent> = React.createRef();
+  private statefulFilters: StatefulFiltersRef = React.createRef();
 
   constructor(props: VirtualListProps<R>) {
     super(props);

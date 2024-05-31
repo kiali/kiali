@@ -4,8 +4,7 @@ import * as React from 'react';
 import { OutboundTrafficPolicy } from 'types/IstioObjects';
 import { NamespaceInfo } from '../../types/NamespaceInfo';
 import { infoStyle } from './OverviewCardControlPlaneNamespace';
-import { useTranslation } from 'react-i18next';
-import { I18N_NAMESPACE } from 'types/Common';
+import { useKialiTranslation } from 'utils/I18nUtils';
 
 type Props = {
   namespace: NamespaceInfo;
@@ -13,7 +12,7 @@ type Props = {
 };
 
 export const ControlPlaneNamespaceStatus: React.FC<Props> = (props: Props) => {
-  const { t } = useTranslation(I18N_NAMESPACE);
+  const { t } = useKialiTranslation();
 
   let maxProxyPushTime: number | undefined = undefined;
 

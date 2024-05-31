@@ -38,8 +38,10 @@ import { labelFilter } from './CommonFilters';
 import { history, HistoryManager } from 'app/History';
 import { serverConfig } from 'config';
 import { PFColors } from '../Pf/PfColors';
-import { WithTranslation, withTranslation } from 'react-i18next';
-import { I18N_NAMESPACE } from 'types/Common';
+import { t } from 'utils/I18nUtils';
+import { connect } from 'react-redux';
+import { KialiAppState } from 'store/Store';
+import { languageSelector } from 'store/Selectors';
 
 const toolbarStyle = kialiStyle({
   padding: 0,
@@ -67,7 +69,12 @@ const filterSelectStyle = kialiStyle({
   overflow: 'auto'
 });
 
-type StatefulFiltersProps = WithTranslation & {
+type ReduxProps = {
+  language: string;
+};
+
+type StatefulFiltersProps = ReduxProps & {
+  children?: React.ReactNode;
   childrenFirst?: boolean;
   initialFilters: FilterType[];
   initialToggles?: ToggleType[];
@@ -170,6 +177,8 @@ const paddingStyle = kialiStyle({
   padding: '0 0.5rem 0.5rem 0.5rem',
   width: '100%'
 });
+
+export type StatefulFiltersRef = React.RefObject<StatefulFiltersComponent>;
 
 export class StatefulFiltersComponent extends React.Component<StatefulFiltersProps, StatefulFiltersState> {
   private promises = new PromisesRegistry();
@@ -446,7 +455,7 @@ export class StatefulFiltersComponent extends React.Component<StatefulFiltersPro
               id="typeahead-select-input"
               autoComplete="off"
               onKeyDown={this.onTypeaheadInputKeyDown}
-              placeholder={this.props.t(this.state.currentFilterType.placeholder)}
+              placeholder={t(this.state.currentFilterType.placeholder)}
               role="combobox"
               isExpanded={this.state.isFilterValueOpen}
               aria-controls="select-typeahead-listbox"
@@ -473,14 +482,14 @@ export class StatefulFiltersComponent extends React.Component<StatefulFiltersPro
                   key={filter.id}
                   value={filter.id}
                   isFocused={this.state.focusedItemIndex === index}
-                  label={this.props.t(filter.title)}
+                  label={t(filter.title)}
                 >
-                  {this.props.t(filter.title)}
+                  {t(filter.title)}
                 </SelectOption>
               ))
             ) : (
               <SelectOption id="filter_no_results" key="filter_no_results" value="no_results" isDisabled={true}>
-                {this.props.t('No results found')}
+                {t('No results found')}
               </SelectOption>
             )}
           </SelectList>
@@ -495,7 +504,7 @@ export class StatefulFiltersComponent extends React.Component<StatefulFiltersPro
           isExpanded={this.state.isFilterValueOpen}
           isFullWidth
         >
-          {this.props.t(this.state.currentFilterType.placeholder)}
+          {t(this.state.currentFilterType.placeholder)}
         </MenuToggle>
       );
 
@@ -515,7 +524,7 @@ export class StatefulFiltersComponent extends React.Component<StatefulFiltersPro
           <SelectList>
             {currentFilterType.filterValues.map(filter => (
               <SelectOption id={filter.id} key={filter.id} value={filter.id}>
-                {this.props.t(filter.title)}
+                {t(filter.title)}
               </SelectOption>
             ))}
           </SelectList>
@@ -540,7 +549,7 @@ export class StatefulFiltersComponent extends React.Component<StatefulFiltersPro
           type={currentFilterType.filterType as TextInputTypes}
           value={currentValue}
           aria-label="Filter Input Value"
-          placeholder={this.props.t(currentFilterType.placeholder)}
+          placeholder={t(currentFilterType.placeholder)}
           onChange={(_event, value) => this.updateCurrentValue(value)}
           onKeyDown={e => this.onValueKeyDown(e)}
           style={{ width: 'auto' }}
@@ -591,7 +600,7 @@ export class StatefulFiltersComponent extends React.Component<StatefulFiltersPro
         isExpanded={this.state.isFilterTypeOpen}
         isFullWidth
       >
-        {this.props.t(currentFilterType.category)}
+        {t(currentFilterType.category)}
       </MenuToggle>
     );
 
@@ -603,7 +612,7 @@ export class StatefulFiltersComponent extends React.Component<StatefulFiltersPro
         isExpanded={this.state.isFilterValueOpen}
         isFullWidth
       >
-        {this.props.t(activeFilters.op)}
+        {t(activeFilters.op)}
       </MenuToggle>
     );
 
@@ -620,10 +629,10 @@ export class StatefulFiltersComponent extends React.Component<StatefulFiltersPro
                     .filter(af => af.category === ft.category)
                     .map(af => ({
                       key: af.value,
-                      node: this.props.t(af.value)
+                      node: t(af.value)
                     }))}
                   deleteChip={this.removeFilter}
-                  categoryName={{ key: ft.category, name: this.props.t(ft.category) }}
+                  categoryName={{ key: ft.category, name: t(ft.category) }}
                 >
                   {i === 0 && (
                     <Select
@@ -642,7 +651,7 @@ export class StatefulFiltersComponent extends React.Component<StatefulFiltersPro
                             value={option.category}
                             isSelected={option.category === currentFilterType.category}
                           >
-                            {this.props.t(option.category)}
+                            {t(option.category)}
                           </SelectOption>
                         ))}
                       </SelectList>
@@ -697,7 +706,7 @@ export class StatefulFiltersComponent extends React.Component<StatefulFiltersPro
                         value={'or'}
                         isSelected={activeFilters.op === 'or'}
                       >
-                        {this.props.t('or')}
+                        {t('or')}
                       </SelectOption>
                       <SelectOption
                         id={'filter_and'}
@@ -705,7 +714,7 @@ export class StatefulFiltersComponent extends React.Component<StatefulFiltersPro
                         value={'and'}
                         isSelected={activeFilters.op === 'and'}
                       >
-                        {this.props.t('and')}
+                        {t('and')}
                       </SelectOption>
                     </SelectList>
                   </Select>
@@ -720,4 +729,8 @@ export class StatefulFiltersComponent extends React.Component<StatefulFiltersPro
   }
 }
 
-export const StatefulFilters = withTranslation(I18N_NAMESPACE, { withRef: true })(StatefulFiltersComponent);
+const mapStateToProps = (state: KialiAppState): ReduxProps => ({
+  language: languageSelector(state)
+});
+
+export const StatefulFilters = connect(mapStateToProps, null, null, { forwardRef: true })(StatefulFiltersComponent);

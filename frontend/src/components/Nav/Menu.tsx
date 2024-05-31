@@ -10,8 +10,7 @@ import { kialiStyle } from 'styles/StyleUtils';
 import { ExternalServiceInfo } from '../../types/StatusState';
 import { KialiIcon } from 'config/KialiIcon';
 import { GetTracingUrlProvider } from '../../utils/tracing/UrlProviders';
-import { WithTranslation, withTranslation } from 'react-i18next';
-import { I18N_NAMESPACE } from 'types/Common';
+import { t } from 'utils/I18nUtils';
 
 const externalLinkStyle = kialiStyle({
   $nest: {
@@ -42,7 +41,7 @@ const ExternalLink = ({ href, name }: { href: string; name: string }): React.Rea
   </NavItem>
 );
 
-type MenuProps = WithTranslation & {
+type MenuProps = {
   externalServices: ExternalServiceInfo[];
   isNavOpen: boolean;
   location: any;
@@ -52,7 +51,7 @@ type MenuState = {
   activeItem: string;
 };
 
-class MenuComponent extends React.Component<MenuProps, MenuState> {
+export class Menu extends React.Component<MenuProps, MenuState> {
   static contextTypes = {
     router: (): null => null
   };
@@ -107,20 +106,20 @@ class MenuComponent extends React.Component<MenuProps, MenuState> {
         let title = item.title;
 
         if (item.id === 'tracing') {
-          return tracingUrl && <ExternalLink key={item.to} href={tracingUrl} name={this.props.t(title)} />;
+          return tracingUrl && <ExternalLink key={item.to} href={tracingUrl} name={t(title)} />;
         }
 
         if (
           (item.id === 'traffic_graph_cy' && !graphEnablePatternfly) ||
           (item.id === 'traffic_graph_pf' && !graphEnableCytoscape)
         ) {
-          title = this.props.t('Traffic Graph');
+          title = t('Traffic Graph');
         }
 
         return (
           <NavItem isActive={activeMenuItem === item} key={item.to}>
             <Link id={item.id} to={item.to} onClick={() => history.push(item.to)}>
-              {this.props.t(title)}
+              {t(title)}
             </Link>
           </NavItem>
         );
@@ -135,5 +134,3 @@ class MenuComponent extends React.Component<MenuProps, MenuState> {
     );
   }
 }
-
-export const Menu = withTranslation(I18N_NAMESPACE)(MenuComponent);

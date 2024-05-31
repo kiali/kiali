@@ -4,8 +4,7 @@ import { ComponentStatus, Status } from '../../types/IstioStatus';
 import { IstioComponentStatus } from './IstioComponentStatus';
 import { PFColors } from '../Pf/PfColors';
 import { kialiStyle } from 'styles/StyleUtils';
-import { useTranslation } from 'react-i18next';
-import { I18N_NAMESPACE } from 'types/Common';
+import { useKialiTranslation } from 'utils/I18nUtils';
 
 type Props = {
   status: ComponentStatus[];
@@ -18,7 +17,7 @@ const listStyle = kialiStyle({
 });
 
 export const IstioStatusList: React.FC<Props> = (props: Props) => {
-  const { t } = useTranslation(I18N_NAMESPACE);
+  const { t } = useKialiTranslation();
 
   const nonhealthyComponents = (): ComponentStatus[] => {
     return props.status.filter((c: ComponentStatus) => c.status !== Status.Healthy);

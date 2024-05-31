@@ -20,7 +20,7 @@ import { NamespaceMTLSStatus } from '../MTls/NamespaceMTLSStatus';
 import { ValidationSummary } from '../Validations/ValidationSummary';
 import { OverviewCardSparklineCharts } from '../../pages/Overview/OverviewCardSparklineCharts';
 import { OverviewToolbar } from '../../pages/Overview/OverviewToolbar';
-import { StatefulFiltersComponent } from '../Filters/StatefulFilters';
+import { StatefulFiltersRef } from '../Filters/StatefulFilters';
 import { IstioObjectLink, GetIstioObjectUrl, infoStyle } from '../Link/IstioObjectLink';
 import { labelFilter } from 'components/Filters/CommonFilters';
 import { labelFilter as NsLabelFilter } from '../../pages/Overview/Filters';
@@ -344,7 +344,7 @@ export const labels: Renderer<SortResource | NamespaceInfo> = (
   _: Resource,
   __: PFBadgeType,
   ___?: Health,
-  statefulFilter?: React.RefObject<StatefulFiltersComponent>
+  statefulFilter?: StatefulFiltersRef
 ) => {
   let path = window.location.pathname;
   path = path.substring(path.lastIndexOf('/console') + '/console'.length + 1);

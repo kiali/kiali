@@ -4,8 +4,6 @@ import { serverConfig } from '../../config';
 import { AmbientBadge } from '../../components/Ambient/AmbientBadge';
 import { RemoteClusterBadge } from './RemoteClusterBadge';
 import { isRemoteCluster } from './OverviewCardControlPlaneNamespace';
-import { useTranslation } from 'react-i18next';
-import { I18N_NAMESPACE } from 'types/Common';
 import { Link, useLocation } from 'react-router-dom';
 import { IstioStatus, meshLinkStyle } from 'components/IstioStatus/IstioStatus';
 import {
@@ -14,6 +12,7 @@ import {
   ExclamationTriangleIcon,
   MinusCircleIcon
 } from '@patternfly/react-icons';
+import { useKialiTranslation } from 'utils/I18nUtils';
 
 type Props = {
   annotations?: { [key: string]: string };
@@ -21,7 +20,7 @@ type Props = {
 };
 
 export const ControlPlaneBadge: React.FC<Props> = (props: Props) => {
-  const { t } = useTranslation(I18N_NAMESPACE);
+  const { t } = useKialiTranslation();
   const { pathname } = useLocation();
 
   // Remote clusters do not have istio status because istio is not running there

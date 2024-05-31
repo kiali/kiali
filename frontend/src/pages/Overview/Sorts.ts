@@ -1,18 +1,18 @@
 import { SortField } from '../../types/SortFilters';
 import { NamespaceInfo } from '../../types/NamespaceInfo';
-import { i18n } from 'i18n';
+import { t } from 'utils/I18nUtils';
 
 export const sortFields: SortField<NamespaceInfo>[] = [
   {
     id: 'namespace',
-    title: i18n.t('Name'),
+    title: t('Name'),
     isNumeric: false,
     param: 'ns',
     compare: (a: NamespaceInfo, b: NamespaceInfo): number => a.name.localeCompare(b.name)
   },
   {
     id: 'health',
-    title: i18n.t('Health'),
+    title: t('Health'),
     isNumeric: false,
     param: 'h',
     compare: (a: NamespaceInfo, b: NamespaceInfo): number => {
@@ -37,7 +37,7 @@ export const sortFields: SortField<NamespaceInfo>[] = [
   },
   {
     id: 'mtls',
-    title: i18n.t('mTLS'),
+    title: t('mTLS'),
     isNumeric: false,
     param: 'm',
     compare: (a: NamespaceInfo, b: NamespaceInfo): number => {
@@ -55,7 +55,7 @@ export const sortFields: SortField<NamespaceInfo>[] = [
   },
   {
     id: 'config',
-    title: i18n.t('Istio Config'),
+    title: t('Istio Config'),
     isNumeric: false,
     param: 'ic',
     compare: (a: NamespaceInfo, b: NamespaceInfo): number => {
@@ -92,7 +92,7 @@ export const sortFields: SortField<NamespaceInfo>[] = [
   },
   {
     id: 'cluster',
-    title: i18n.t('Cluster'),
+    title: t('Cluster'),
     isNumeric: false,
     param: 'cl',
     compare: (a: NamespaceInfo, b: NamespaceInfo): number => {

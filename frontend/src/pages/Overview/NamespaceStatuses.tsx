@@ -5,8 +5,7 @@ import { OverviewType } from './OverviewToolbar';
 import { NamespaceStatus } from '../../types/NamespaceInfo';
 import { switchType } from './OverviewHelper';
 import { Paths } from '../../config';
-import { useTranslation } from 'react-i18next';
-import { I18N_NAMESPACE } from 'types/Common';
+import { useKialiTranslation } from 'utils/I18nUtils';
 
 type Props = {
   name: string;
@@ -15,7 +14,7 @@ type Props = {
 };
 
 export const NamespaceStatuses: React.FC<Props> = (props: Props) => {
-  const { t } = useTranslation(I18N_NAMESPACE);
+  const { t } = useKialiTranslation();
   const targetPage = switchType(props.type, Paths.APPLICATIONS, Paths.SERVICES, Paths.WORKLOADS);
   const name = props.name;
   const status = props.status;

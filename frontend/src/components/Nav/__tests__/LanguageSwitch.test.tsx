@@ -9,6 +9,8 @@ import { serverConfig, setServerConfig } from 'config/ServerConfig';
 
 const i18nServerConfig = Object.assign({}, serverConfig);
 
+const delay = (ms: number): Promise<void> => new Promise(res => setTimeout(res, ms));
+
 describe('Language switch', () => {
   beforeAll(() => {
     setServerConfig(i18nServerConfig);
@@ -20,7 +22,7 @@ describe('Language switch', () => {
     expect(shallowToJson(wrapper)).toMatchSnapshot();
   });
 
-  it('changes to english language', () => {
+  it('changes to english language', async () => {
     const wrapper = mount(<LanguageSwitchComponent language={Language.CHINESE} />);
 
     // click menu toggle
@@ -32,10 +34,13 @@ describe('Language switch', () => {
       .findWhere(node => node.type() === 'button')
       .simulate('click');
 
+    // wait a few ms for the language to be modified
+    await delay(100);
+
     expect(store.getState().globalState.language).toBe(Language.ENGLISH);
   });
 
-  it('changes to chinese language', () => {
+  it('changes to chinese language', async () => {
     const wrapper = mount(<LanguageSwitchComponent language={Language.ENGLISH} />);
 
     // click menu toggle
@@ -46,6 +51,9 @@ describe('Language switch', () => {
       .findWhere(node => node.key() === 'Chinese')
       .findWhere(node => node.type() === 'button')
       .simulate('click');
+
+    // wait a few ms for the language to be modified
+    await delay(100);
 
     expect(store.getState().globalState.language).toBe(Language.CHINESE);
   });

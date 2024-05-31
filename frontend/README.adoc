@@ -166,7 +166,7 @@ Any label (variable or string literal) can be translated with the`t` function wi
 
 [source, typescript]
 ----
-const { t } = useTranslation(I18N_NAMESPACE);
+const { t } = useKialiTranslation();
 
 <h1>{t(title)}</h1>
 ----
@@ -189,7 +189,7 @@ const overviewTypes = {
 
 
 const Example: React.FC<Props> = (props: Props) => {
-  const { t } = useTranslation(I18N_NAMESPACE);
+  const { t } = useKialiTranslation();
 
   return (
     <span>{t(overviewTypes.app)}</span>
@@ -215,7 +215,7 @@ const externalFunction = (t: TFunction): React.ReactNode => {
 }
 
 const Example: React.FC<Props> = (props: Props) => {
-  const { t } = useTranslation(I18N_NAMESPACE);
+  const { t } = useKialiTranslation();
 
   return (
     <Tooltip position={TooltipPosition.top} content={externalFunction(t)}>
@@ -266,7 +266,7 @@ labelsInfo = this.props.t('{{count}} label', {
 ----
 export const Menu = withTranslation(I18N_NAMESPACE)(MenuComponent);
 
-const { t } = useTranslation(I18N_NAMESPACE);
+const { t } = useKialiTranslation();
 ----
 
 - Always import the i18n variable from `i18n`, not from `i18next` or `react-i18next` libraries
@@ -287,7 +287,7 @@ const OverviewToolbarI18n = hoistNonReactStatics(
 - If you need the translated class component to include a React reference to access DOM nodes, use `{ withRef: true }` option:
 [source, typescript]
 ----
-export const StatefulFilters = withTranslation(I18N_NAMESPACE, { withRef: true })(StatefulFiltersComponent);
+export const StatefulFilters = withTranslation(I18N_NAMESPACE, { withRef: true })(StatefulFilters);
 ----
 
 === Integration Testing
