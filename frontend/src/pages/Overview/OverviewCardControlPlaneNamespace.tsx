@@ -8,8 +8,7 @@ import { Card, CardBody, Flex, FlexItem, Grid, GridItem, Tooltip, TooltipPositio
 import { KialiIcon } from 'config/KialiIcon';
 import { kialiStyle } from 'styles/StyleUtils';
 import { IstiodResourceThresholds } from 'types/IstioStatus';
-import { useTranslation } from 'react-i18next';
-import { I18N_NAMESPACE } from 'types/Common';
+import { useKialiTranslation } from 'utils/I18nUtils';
 
 export const infoStyle = kialiStyle({
   marginLeft: '0.25rem'
@@ -48,7 +47,7 @@ const showMetrics = (metrics: Metric[] | undefined): boolean => {
 };
 
 export const OverviewCardControlPlaneNamespace: React.FC<ControlPlaneProps> = (props: ControlPlaneProps) => {
-  const { t } = useTranslation(I18N_NAMESPACE);
+  const { t } = useKialiTranslation();
 
   let memorySeries: VCLine<RichDataPoint>[] = [];
   let cpuSeries: VCLine<RichDataPoint>[] = [];

@@ -3,7 +3,7 @@ import { Tr } from '@patternfly/react-table';
 import { Resource, IstioTypes, hasHealth, RenderResource } from './Config';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 import { Health } from '../../types/Health';
-import { StatefulFiltersComponent } from '../Filters/StatefulFilters';
+import { StatefulFiltersRef } from '../Filters/StatefulFilters';
 import { actionRenderer } from './Renderers';
 import { CSSProperties } from 'react';
 
@@ -14,7 +14,7 @@ type VirtualItemProps = {
   config: Resource;
   index: number;
   item: RenderResource;
-  statefulFilterProps?: React.RefObject<StatefulFiltersComponent>;
+  statefulFilterProps?: StatefulFiltersRef;
   style?: CSSProperties;
 };
 

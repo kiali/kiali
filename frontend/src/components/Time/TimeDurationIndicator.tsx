@@ -3,7 +3,7 @@ import { kialiStyle } from 'styles/StyleUtils';
 import { Button, Tooltip } from '@patternfly/react-core';
 import { config } from '../../config';
 import { KialiIcon } from '../../config/KialiIcon';
-import { DurationInSeconds, guardTimeRange, I18N_NAMESPACE, TimeRange } from '../../types/Common';
+import { DurationInSeconds, guardTimeRange, TimeRange } from '../../types/Common';
 import { getName, getRefreshIntervalName } from '../../utils/RateIntervals';
 import { KialiAppState } from '../../store/Store';
 import { durationSelector, refreshIntervalSelector, timeRangeSelector } from '../../store/Selectors';
@@ -12,7 +12,7 @@ import { history, HistoryManager } from '../../app/History';
 import { KialiDispatch } from '../../types/Redux';
 import { bindActionCreators } from 'redux';
 import { UserSettingsActions } from '../../actions/UserSettingsActions';
-import { WithTranslation, withTranslation } from 'react-i18next';
+import { t } from 'utils/I18nUtils';
 
 type ReduxStateProps = {
   duration: DurationInSeconds;
@@ -24,8 +24,7 @@ type ReduxDispatchProps = {
   setDuration: (duration: DurationInSeconds) => void;
 };
 
-type Props = WithTranslation &
-  ReduxStateProps &
+type Props = ReduxStateProps &
   ReduxDispatchProps & {
     isDuration?: boolean;
     onClick?: () => void;
@@ -54,25 +53,22 @@ class TimeDurationIndicatorComponent extends React.PureComponent<Props> {
     if (this.props.isDuration) {
       return getName(this.props.duration);
     } else {
-      return guardTimeRange(this.props.timeRange, getName, () => `(${this.props.t('custom')})`);
+      return guardTimeRange(this.props.timeRange, getName, () => `(${t('custom')})`);
     }
   };
 
   timeDurationDetailLabel = (): React.ReactNode => {
-    return this.props.isDuration ? this.props.t('Current duration') : this.props.t('Current time range');
+    return this.props.isDuration ? t('Current duration') : t('Current time range');
   };
 
   timeDurationDetail = (): string => {
     if (this.props.isDuration) {
-      return `${this.props.t('Last')} ${getName(this.props.duration)}`;
+      return `${t('Last')} ${getName(this.props.duration)}`;
     } else {
       return guardTimeRange(
         this.props.timeRange,
-        d => `${this.props.t('Last')} ${getName(d)}`,
-        b =>
-          `${new Date(b.from!).toLocaleString()} ${this.props.t('to')} ${
-            b.to ? new Date(b.to).toLocaleString() : this.props.t('now')
-          }`
+        d => `${t('Last')} ${getName(d)}`,
+        b => `${new Date(b.from!).toLocaleString()} ${t('to')} ${b.to ? new Date(b.to).toLocaleString() : t('now')}`
       );
     }
   };
@@ -84,11 +80,11 @@ class TimeDurationIndicatorComponent extends React.PureComponent<Props> {
         maxWidth={'50em'}
         content={
           <>
-            <p>Select the time range of shown data, and the refresh interval.</p>
+            <p>{t('Select the time range of shown data, and the refresh interval.')}</p>
             <p style={{ whiteSpace: 'nowrap' }}>
               {this.timeDurationDetailLabel()}: {this.timeDurationDetail()}
               <br />
-              Current refresh interval: {config.toolbar.refreshInterval[this.props.refreshInterval]}
+              {`${t('Current refresh interval')}: ${t(config.toolbar.refreshInterval[this.props.refreshInterval])}`}
             </p>
           </>
         }
@@ -114,7 +110,4 @@ const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => {
   };
 };
 
-export const TimeDurationIndicator = connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(withTranslation(I18N_NAMESPACE)(TimeDurationIndicatorComponent));
+export const TimeDurationIndicator = connect(mapStateToProps, mapDispatchToProps)(TimeDurationIndicatorComponent);

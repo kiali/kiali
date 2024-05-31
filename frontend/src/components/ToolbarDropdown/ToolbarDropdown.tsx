@@ -9,8 +9,6 @@ import {
   TooltipPosition
 } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
-import { useTranslation } from 'react-i18next';
-import { I18N_NAMESPACE } from 'types/Common';
 
 const dropdownTitle = kialiStyle({
   alignSelf: 'center',
@@ -25,7 +23,7 @@ type ToolbarDropdownProps = {
   label: string;
   nameDropdown?: string;
   onToggle?: (isOpen: boolean) => void;
-  options: object;
+  options: { [k: string]: string } | string[];
   tooltip?: string;
   tooltipPosition?: TooltipPosition;
   value?: number | string;
@@ -33,8 +31,6 @@ type ToolbarDropdownProps = {
 
 export const ToolbarDropdown: React.FC<ToolbarDropdownProps> = (props: ToolbarDropdownProps) => {
   const [isOpen, setIsOpen] = React.useState<boolean>(false);
-
-  const { t } = useTranslation(I18N_NAMESPACE);
 
   const onKeyChanged = (_event?: React.MouseEvent<Element, MouseEvent>, selection?: string | number): void => {
     if (selection) {
@@ -58,7 +54,7 @@ export const ToolbarDropdown: React.FC<ToolbarDropdownProps> = (props: ToolbarDr
       isDisabled={props.disabled}
       className={props.className}
     >
-      {t(props.label)}
+      {props.label}
     </MenuToggle>
   );
 
@@ -84,7 +80,7 @@ export const ToolbarDropdown: React.FC<ToolbarDropdownProps> = (props: ToolbarDr
               isSelected={key === String(props.value)}
               value={`${key}`}
             >
-              {t(props.options[key])}
+              {props.options[key]}
             </SelectOption>
           );
         })}

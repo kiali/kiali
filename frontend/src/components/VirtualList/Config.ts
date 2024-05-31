@@ -7,8 +7,7 @@ import * as Renderers from './Renderers';
 import { Health } from '../../types/Health';
 import { isIstioNamespace } from 'config/ServerConfig';
 import { NamespaceInfo } from '../../types/NamespaceInfo';
-import * as React from 'react';
-import { StatefulFiltersComponent } from '../Filters/StatefulFilters';
+import { StatefulFiltersRef } from '../Filters/StatefulFilters';
 import { PFBadges, PFBadgeType } from '../../components/Pf/PfBadges';
 import { isGateway, isWaypoint } from '../../helpers/LabelFilterHelper';
 
@@ -20,7 +19,7 @@ export type Renderer<R extends RenderResource> = (
   config: Resource,
   badge: PFBadgeType,
   health?: Health,
-  statefulFilter?: React.RefObject<StatefulFiltersComponent>
+  statefulFilter?: StatefulFiltersRef
 ) => JSX.Element | undefined;
 
 // Health type guard

@@ -16,7 +16,7 @@ import {
   EmptyStateHeader
 } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
-import { FilterSelected, StatefulFiltersComponent } from '../../components/Filters/StatefulFilters';
+import { FilterSelected, StatefulFiltersRef } from '../../components/Filters/StatefulFilters';
 import * as FilterHelper from '../../components/FilterList/FilterHelper';
 import * as API from '../../services/Api';
 import {
@@ -43,6 +43,7 @@ import { KialiAppState } from '../../store/Store';
 import { connect } from 'react-redux';
 import {
   durationSelector,
+  languageSelector,
   meshWideMTLSStatusSelector,
   minTLSVersionSelector,
   refreshIntervalSelector
@@ -52,7 +53,7 @@ import { switchType } from './OverviewHelper';
 import * as Sorts from './Sorts';
 import * as Filters from './Filters';
 import { ValidationSummary } from '../../components/Validations/ValidationSummary';
-import { DurationInSeconds, I18N_NAMESPACE, IntervalInMilliseconds } from 'types/Common';
+import { DurationInSeconds, IntervalInMilliseconds } from 'types/Common';
 import { Paths, isMultiCluster, serverConfig } from '../../config';
 import { PFColors } from '../../components/Pf/PfColors';
 import { VirtualList } from '../../components/VirtualList/VirtualList';
@@ -72,8 +73,8 @@ import { ControlPlaneVersionBadge } from './ControlPlaneVersionBadge';
 import { AmbientBadge } from '../../components/Ambient/AmbientBadge';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { ApiError } from 'types/Api';
-import { WithTranslation, withTranslation } from 'react-i18next';
 import { IstioConfigList } from 'types/IstioConfigList';
+import { t } from 'utils/I18nUtils';
 
 const gridStyleCompact = kialiStyle({
   backgroundColor: PFColors.BackgroundColor200,
@@ -96,14 +97,6 @@ const cardGridStyle = kialiStyle({
   marginTop: 0,
   marginBottom: '0.5rem'
 });
-
-/*
-const cardControlPlaneGridStyle = kialiStyle({
-  textAlign: 'center',
-  marginTop: 0,
-  marginBottom: '0.5rem'
-});
-*/
 
 const emptyStateStyle = kialiStyle({
   height: '300px',
@@ -157,16 +150,17 @@ type ReduxProps = {
   duration: DurationInSeconds;
   istioAPIEnabled: boolean;
   kiosk: string;
+  language: string;
   meshStatus: string;
   minTLS: string;
   navCollapse: boolean;
   refreshInterval: IntervalInMilliseconds;
 };
 
-type OverviewProps = WithTranslation & ReduxProps & {};
+type OverviewProps = ReduxProps;
 
 export class OverviewPageComponent extends React.Component<OverviewProps, State> {
-  private sFOverviewToolbar: React.RefObject<StatefulFiltersComponent> = React.createRef();
+  private sFOverviewToolbar: StatefulFiltersRef = React.createRef();
   private promises = new PromisesRegistry();
 
   // Grafana promise is only invoked by componentDidMount() no need to repeat it on componentDidUpdate()
@@ -1127,9 +1121,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
                               {this.renderLabels(ns)}
 
                               <div style={{ textAlign: 'left' }}>
-                                <div style={{ display: 'inline-block', width: '125px' }}>
-                                  {this.props.t('Istio config')}
-                                </div>
+                                <div style={{ display: 'inline-block', width: '125px' }}>{t('Istio config')}</div>
 
                                 {ns.tlsStatus && (
                                   <span>
@@ -1184,13 +1176,13 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
 
     if (ns.labels) {
       const labelsLength = Object.entries(ns.labels).length;
-      labelsInfo = this.props.t('{{count}} label', {
+      labelsInfo = t('{{count}} label', {
         count: labelsLength,
         defaultValue_one: '{{count}} label',
         defaultValue_other: '{{count}} labels'
       });
     } else {
-      labelsInfo = this.props.t('No labels');
+      labelsInfo = t('No labels');
     }
 
     const labelContent = ns.labels ? (
@@ -1289,21 +1281,21 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
 
     switch (targetPage) {
       case Paths.APPLICATIONS:
-        text = this.props.t('{{count}} application', {
+        text = t('{{count}} application', {
           count: nbItems,
           defaultValueOne: '{{count}} application',
           defaultValueOther: '{{count}} applications'
         });
         break;
       case Paths.SERVICES:
-        text = this.props.t('{{count}} service', {
+        text = t('{{count}} service', {
           count: nbItems,
           defaultValueOne: '{{count}} service',
           defaultValueOther: '{{count}} services'
         });
         break;
       case Paths.WORKLOADS:
-        text = this.props.t('{{count}} workload', {
+        text = t('{{count}} workload', {
           count: nbItems,
           defaultValueOne: '{{count}} workload',
           defaultValueOther: '{{count}} workloads'
@@ -1428,8 +1420,9 @@ const mapStateToProps = (state: KialiAppState): ReduxProps => ({
   kiosk: state.globalState.kiosk,
   meshStatus: meshWideMTLSStatusSelector(state),
   minTLS: minTLSVersionSelector(state),
+  language: languageSelector(state),
   navCollapse: state.userSettings.interface.navCollapse,
   refreshInterval: refreshIntervalSelector(state)
 });
 
-export const OverviewPage = connect(mapStateToProps)(withTranslation(I18N_NAMESPACE)(OverviewPageComponent));
+export const OverviewPage = connect(mapStateToProps)(OverviewPageComponent);

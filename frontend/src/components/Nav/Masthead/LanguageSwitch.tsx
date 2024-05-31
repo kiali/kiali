@@ -4,11 +4,11 @@ import { Dropdown, DropdownItem, DropdownList, MenuToggle, MenuToggleElement, To
 import { KialiIcon } from 'config/KialiIcon';
 import { GlobalActions } from 'actions/GlobalActions';
 import { store } from 'store/ConfigStore';
-import { I18N_NAMESPACE, Language } from 'types/Common';
+import { Language } from 'types/Common';
 import { KialiAppState } from 'store/Store';
 import { connect } from 'react-redux';
-import { useTranslation } from 'react-i18next';
 import { i18n } from 'i18n';
+import { useKialiTranslation } from 'utils/I18nUtils';
 
 const menuToggleStyle = kialiStyle({
   marginTop: '0.25rem',
@@ -36,7 +36,7 @@ type LanguageSwitchProps = {
 export const LanguageSwitchComponent: React.FC<LanguageSwitchProps> = ({ language }) => {
   const [isDropdownOpen, setIsDropdownOpen] = React.useState<boolean>(false);
 
-  const { t } = useTranslation(I18N_NAMESPACE);
+  const { t } = useKialiTranslation();
 
   const languageItems: React.ReactNode[] = [
     <DropdownItem key="English" onClick={() => switchLanguage(Language.ENGLISH)}>
@@ -51,8 +51,7 @@ export const LanguageSwitchComponent: React.FC<LanguageSwitchProps> = ({ languag
   ];
 
   const switchLanguage = (language: string): void => {
-    i18n.changeLanguage(language);
-    store.dispatch(GlobalActions.setLanguage(language));
+    i18n.changeLanguage(language).then(() => store.dispatch(GlobalActions.setLanguage(language)));
   };
 
   const onDropdownSelect = (): void => {

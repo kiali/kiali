@@ -8,6 +8,7 @@ import { DurationDropdownComponent } from '../DurationDropdown/DurationDropdown'
 import { RefreshComponent } from '../Refresh/Refresh';
 import { TimeRangeComp } from './TimeRangeComponent';
 import { kioskDurationAction, kioskTimeRangeAction } from '../Kiosk/KioskActions';
+import { useKialiTranslation } from 'utils/I18nUtils';
 
 interface Props {
   customDuration: boolean;
@@ -17,8 +18,10 @@ interface Props {
   onConfirm?: () => void;
 }
 
-export function TimeDurationModal(props: Props) {
+export const TimeDurationModal: React.FC<Props> = (props: Props) => {
   const dispatch = useKialiDispatch();
+  const { t, i18n } = useKialiTranslation();
+
   const reduxDuration = useKialiSelector(state => state.userSettings.duration);
   const reduxRefreshInterval = useKialiSelector(state => state.userSettings.refreshInterval);
   const reduxTimeRange = useKialiSelector(state => state.userSettings.timeRange);
@@ -27,7 +30,7 @@ export function TimeDurationModal(props: Props) {
   const [refreshInterval, setRefreshInterval] = React.useState(reduxRefreshInterval);
   const [timeRange, setTimeRange] = React.useState(reduxTimeRange);
 
-  function handleCancel() {
+  const handleCancel = (): void => {
     // reset the dialog
     setDuration(reduxDuration);
     setRefreshInterval(reduxRefreshInterval);
@@ -37,10 +40,11 @@ export function TimeDurationModal(props: Props) {
     if (props.onCancel) {
       props.onCancel();
     }
-  }
+  };
 
-  function handleConfirm() {
+  const handleConfirm = (): void => {
     dispatch(UserSettingsActions.setRefreshInterval(refreshInterval));
+
     if (!props.customDuration) {
       dispatch(UserSettingsActions.setDuration(duration));
       kioskDurationAction(duration);
@@ -52,62 +56,65 @@ export function TimeDurationModal(props: Props) {
     if (props.onConfirm) {
       props.onConfirm();
     }
-  }
+  };
 
-  function handleSetDuration(d: DurationInSeconds) {
+  const handleSetDuration = (d: DurationInSeconds): void => {
     setDuration(d);
-  }
+  };
 
-  function handleSetRefreshInterval(r: IntervalInMilliseconds) {
+  const handleSetRefreshInterval = (r: IntervalInMilliseconds): void => {
     setRefreshInterval(r);
-  }
+  };
 
-  function handleSetTimeRange(r: TimeRange) {
+  const handleSetTimeRange = (r: TimeRange): void => {
     setTimeRange(r);
-  }
+  };
 
   return (
     <Modal
-      aria-label="time-duration"
+      aria-label={t('Time duration')}
       variant={ModalVariant.small}
       width={700}
       isOpen={props.isOpen}
       showClose={false}
       actions={[
         <Button key="confirm" variant="primary" onClick={handleConfirm}>
-          Confirm
+          {t('Confirm')}
         </Button>,
+
         <Button key="cancel" variant="link" onClick={handleCancel}>
-          Cancel
+          {t('Cancel')}
         </Button>
       ]}
       position="top"
     >
       <Form isHorizontal={true}>
         {props.customDuration ? (
-          <FormGroup label="Time range" fieldId="drform-time-range">
+          <FormGroup label={t('Time range')} fieldId="drform-time-range">
             <div style={{ display: 'flex' }}>
-              <TimeRangeComp timeRange={timeRange} setTimeRange={handleSetTimeRange} tooltip={'Time range'} />
+              <TimeRangeComp timeRange={timeRange} setTimeRange={handleSetTimeRange} tooltip={t('Time range')} />
             </div>
           </FormGroup>
         ) : (
-          <FormGroup label="Duration" fieldId="drform-duration">
+          <FormGroup label={t('Duration')} fieldId="drform-duration">
             <DurationDropdownComponent
               id={'drform-duration-dd'}
               disabled={false}
               duration={duration}
-              prefix="Last"
+              prefix={t('Last')}
               setDuration={handleSetDuration}
-              tooltip="Traffic metrics per refresh"
+              tooltip={t('Traffic metrics per refresh')}
               tooltipPosition={TooltipPosition.top}
             />
           </FormGroup>
         )}
-        <FormGroup label="Refresh interval" fieldId="drform-refresh">
+
+        <FormGroup label={t('Refresh interval')} fieldId="drform-refresh">
           <RefreshComponent
             id="drform-metrics-refresh"
             hideLabel={true}
             hideRefreshButton={true}
+            language={i18n.language}
             refreshInterval={refreshInterval}
             setRefreshInterval={handleSetRefreshInterval}
           />
@@ -115,4 +122,4 @@ export function TimeDurationModal(props: Props) {
       </Form>
     </Modal>
   );
-}
+};

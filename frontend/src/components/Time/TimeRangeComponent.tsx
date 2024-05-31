@@ -6,8 +6,7 @@ import {
   guardTimeRange,
   TimeRange,
   durationToBounds,
-  isEqualTimeRange,
-  I18N_NAMESPACE
+  isEqualTimeRange
 } from '../../types/Common';
 import { ToolbarDropdown } from '../ToolbarDropdown/ToolbarDropdown';
 import { serverConfig, humanDurations } from '../../config/ServerConfig';
@@ -20,7 +19,7 @@ import { UserSettingsActions } from '../../actions/UserSettingsActions';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { kialiStyle } from 'styles/StyleUtils';
-import { WithTranslation, withTranslation } from 'react-i18next';
+import { t } from 'utils/I18nUtils';
 
 type ReduxStateProps = {
   timeRange: TimeRange;
@@ -31,8 +30,7 @@ type ReduxDispatchProps = {
 };
 
 type Props = ReduxStateProps &
-  ReduxDispatchProps &
-  WithTranslation & {
+  ReduxDispatchProps & {
     manageURL?: boolean;
     tooltip: string;
   };
@@ -41,7 +39,7 @@ const labelStyle = kialiStyle({
   margin: '0.25rem 0.25rem 0 0.25rem'
 });
 
-export class TimeRangeCompClass extends React.Component<Props> {
+export class TimeRangeComp extends React.Component<Props> {
   constructor(props: Props) {
     super(props);
     const range = retrieveTimeRange();
@@ -111,8 +109,8 @@ export class TimeRangeCompClass extends React.Component<Props> {
   }
 
   renderDuration = (d?: DurationInSeconds): React.ReactNode => {
-    const durations = humanDurations(serverConfig, this.props.t('Last'), undefined);
-    const options = { custom: this.props.t('Custom'), ...durations };
+    const durations = humanDurations(serverConfig, t('Last'), undefined);
+    const options = { custom: t('Custom'), ...durations };
     const value = d ?? 'custom';
 
     return (
@@ -157,7 +155,5 @@ const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => {
     setTimeRange: bindActionCreators(UserSettingsActions.setTimeRange, dispatch)
   };
 };
-
-export const TimeRangeComp = withTranslation(I18N_NAMESPACE)(TimeRangeCompClass);
 
 export const TimeRangeComponent = connect(mapStateToProps, mapDispatchToProps)(TimeRangeComp);

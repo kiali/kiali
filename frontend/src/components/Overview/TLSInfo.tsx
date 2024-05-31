@@ -7,8 +7,7 @@ import { istioCertsInfoSelector } from '../../store/Selectors';
 import { CertsInfo } from '../../types/CertsInfo';
 import { connect } from 'react-redux';
 import { infoStyle } from '../../pages/Overview/OverviewCardControlPlaneNamespace';
-import { TFunction, useTranslation } from 'react-i18next';
-import { I18N_NAMESPACE } from 'types/Common';
+import { t, useKialiTranslation } from 'utils/I18nUtils';
 
 type ReduxProps = {
   certsInfo: CertsInfo[];
@@ -21,22 +20,22 @@ type Props = ReduxProps & {
 
 const lockIconStyle = kialiStyle({ marginLeft: '0.25rem' });
 
-const showCerts = (certs: CertsInfo[], t: TFunction): React.ReactNode => {
+const showCerts = (certs: CertsInfo[]): React.ReactNode => {
   if (certs) {
     let rows = certs.map(item => {
       return (
         <div key={'showCerts'}>
           <div style={{ display: 'inline-block', width: '125px', whiteSpace: 'nowrap' }}>From {item.issuer}</div>
           <div>
-            <div>{t('Issuer:')}</div>
+            <div>{`${t('Issuer')}:`}</div>
             <div>{item.secretName}</div>
           </div>
           <div>
-            <div>{t('Valid From:')}</div>
+            <div>{`${t('Valid From')}:`}</div>
             <div>{item.notAfter}</div>
           </div>
           <div>
-            <div>{t('Valid To:')}</div>
+            <div>{`${t('Valid To')}:`}</div>
             <div>{item.notBefore}</div>
           </div>
         </div>
@@ -50,10 +49,8 @@ const showCerts = (certs: CertsInfo[], t: TFunction): React.ReactNode => {
 };
 
 const LockIcon = (props: Props): React.ReactElement => {
-  const { t } = useTranslation(I18N_NAMESPACE);
-
   return props.certificatesInformationIndicators === true ? (
-    <Tooltip position={TooltipPosition.top} content={showCerts(props.certsInfo, t)}>
+    <Tooltip position={TooltipPosition.top} content={showCerts(props.certsInfo)}>
       <div data-test={'lockerCA'}>
         <KialiIcon.MtlsLock className={lockIconStyle} />
       </div>
@@ -64,7 +61,7 @@ const LockIcon = (props: Props): React.ReactElement => {
 };
 
 const TLSInfoComponent: React.FC<Props> = (props: Props) => {
-  const { t } = useTranslation(I18N_NAMESPACE);
+  const { t } = useKialiTranslation();
 
   return (
     <div style={{ textAlign: 'left' }}>

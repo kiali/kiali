@@ -1,4 +1,4 @@
-import { i18n } from 'i18n';
+import { t } from 'utils/I18nUtils';
 import {
   ActiveFiltersInfo,
   FILTER_ACTION_APPEND,
@@ -12,8 +12,8 @@ import { MTLSStatuses } from '../../types/TLSStatus';
 import { TextInputTypes } from '@patternfly/react-core';
 
 export const nameFilter: RunnableFilter<NamespaceInfo> = {
-  category: i18n.t('Namespace'),
-  placeholder: i18n.t('Filter by Namespace'),
+  category: t('Namespace'),
+  placeholder: t('Filter by Namespace'),
   filterType: TextInputTypes.text,
   action: FILTER_ACTION_APPEND,
   filterValues: [],
@@ -22,21 +22,21 @@ export const nameFilter: RunnableFilter<NamespaceInfo> = {
 };
 
 export const mtlsValues: FilterValue[] = [
-  { id: 'enabled', title: i18n.t('Enabled') },
-  { id: 'partiallyEnabled', title: i18n.t('Partially Enabled') },
-  { id: 'disabled', title: i18n.t('Disabled') }
+  { id: 'enabled', title: t('Enabled') },
+  { id: 'partiallyEnabled', title: t('Partially Enabled') },
+  { id: 'disabled', title: t('Disabled') }
 ];
 
 const statusMap = new Map<string, string>([
-  [MTLSStatuses.ENABLED, i18n.t('Enabled')],
-  [MTLSStatuses.PARTIALLY, i18n.t('Partially Enabled')],
-  [MTLSStatuses.NOT_ENABLED, i18n.t('Disabled')],
-  [MTLSStatuses.DISABLED, i18n.t('Disabled')]
+  [MTLSStatuses.ENABLED, t('Enabled')],
+  [MTLSStatuses.PARTIALLY, t('Partially Enabled')],
+  [MTLSStatuses.NOT_ENABLED, t('Disabled')],
+  [MTLSStatuses.DISABLED, t('Disabled')]
 ]);
 
 export const mtlsFilter: RunnableFilter<NamespaceInfo> = {
-  category: i18n.t('mTLS'),
-  placeholder: i18n.t('Filter by mTLS'),
+  category: t('mTLS'),
+  placeholder: t('Filter by mTLS'),
   filterType: AllFilterTypes.select,
   action: FILTER_ACTION_APPEND,
   filterValues: mtlsValues,
@@ -46,8 +46,8 @@ export const mtlsFilter: RunnableFilter<NamespaceInfo> = {
 };
 
 export const labelFilter: RunnableFilter<NamespaceInfo> = {
-  category: i18n.t('Namespace Label'),
-  placeholder: i18n.t('Filter by Namespace Label'),
+  category: t('Namespace Label'),
+  placeholder: t('Filter by Namespace Label'),
   filterType: AllFilterTypes.nsLabel,
   action: FILTER_ACTION_APPEND,
   filterValues: [],
@@ -122,8 +122,8 @@ const summarizeHealthFilters = (healthFilters: ActiveFiltersInfo): HealthFilters
 };
 
 export const healthFilter: RunnableFilter<NamespaceInfo> = {
-  category: i18n.t('Health'),
-  placeholder: i18n.t('Filter by Application Health'),
+  category: t('Health'),
+  placeholder: t('Filter by Application Health'),
   filterType: AllFilterTypes.select,
   action: FILTER_ACTION_APPEND,
   filterValues: healthValues,

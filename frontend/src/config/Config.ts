@@ -1,6 +1,6 @@
 import deepFreeze from 'deep-freeze';
 import { UNIT_TIME, MILLISECONDS } from '../types/Common';
-import { i18n } from 'i18n';
+import { t } from 'utils/I18nUtils';
 
 // We assume this is always defined in the .env file
 const documentationUrl = process.env.REACT_APP_KIALI_DOC_URL!;
@@ -23,19 +23,19 @@ const conf = {
     },
     /** Options in refresh */
     refreshInterval: {
-      0: i18n.t('Pause'),
-      10000: i18n.t('Every 10s'),
-      15000: i18n.t('Every 15s'),
-      30000: i18n.t('Every 30s'),
-      60000: i18n.t('Every 1m'),
-      300000: i18n.t('Every 5m'),
-      900000: i18n.t('Every 15m')
+      0: t('Pause'),
+      10000: t('Every 10s'),
+      15000: t('Every 15s'),
+      30000: t('Every 30s'),
+      60000: t('Every 1m'),
+      300000: t('Every 5m'),
+      900000: t('Every 15m')
     },
     /** Graphs layouts types */
     graphLayouts: {
-      'kiali-grid': i18n.t('Grid'),
-      'kiali-concentric': i18n.t('Concentric'),
-      'kiali-dagre': i18n.t('Dagre')
+      'kiali-grid': t('Grid'),
+      'kiali-concentric': t('Concentric'),
+      'kiali-dagre': t('Dagre')
     }
   },
   /** About Tracing Configuration*/
@@ -51,7 +51,7 @@ const conf = {
         500: 500
       },
       statusCode: {
-        none: i18n.t('none'),
+        none: t('none'),
         200: '200',
         400: '400',
         401: '401',
@@ -70,11 +70,11 @@ const conf = {
   about: {
     mesh: {
       url: '/mesh',
-      linkText: i18n.t('Visit the Mesh page')
+      linkText: t('Visit the Mesh page')
     },
     project: {
       url: 'https://github.com/kiali',
-      linkText: i18n.t('Kiali on GitHub')
+      linkText: t('Kiali on GitHub')
     },
     website: {
       url: 'https://www.kiali.io', // Without www, we get an SSL error

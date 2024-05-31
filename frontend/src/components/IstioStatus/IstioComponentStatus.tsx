@@ -10,8 +10,7 @@ import {
 import { Split, SplitItem } from '@patternfly/react-core';
 import { IconProps, createIcon } from 'config/KialiIcon';
 import { kialiStyle } from 'styles/StyleUtils';
-import { useTranslation } from 'react-i18next';
-import { I18N_NAMESPACE } from 'types/Common';
+import { useKialiTranslation } from 'utils/I18nUtils';
 
 type Props = {
   componentStatus: ComponentStatus;
@@ -50,7 +49,7 @@ const splitItemStyle = kialiStyle({
 });
 
 export const IstioComponentStatus: React.FC<Props> = (props: Props) => {
-  const { t } = useTranslation(I18N_NAMESPACE);
+  const { t } = useKialiTranslation();
 
   const renderIcon = (status: Status, isCore: boolean): React.ReactNode => {
     let compIcon = validToIcon[`${status === Status.Healthy}-${isCore}`];

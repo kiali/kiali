@@ -3,7 +3,6 @@ import { mount } from 'enzyme';
 import { StatefulFiltersComponent } from '../StatefulFilters';
 import { istioSidecarFilter, labelFilter } from '../CommonFilters';
 import { ActiveFilter, DEFAULT_LABEL_OPERATION } from '../../../types/Filters';
-import { i18n } from 'i18n';
 
 const labelValue = 'app:details';
 const filterActive: ActiveFilter = { category: labelFilter.category, value: labelValue };
@@ -13,9 +12,7 @@ describe('StatefulFilters', () => {
     const stFilter = new StatefulFiltersComponent({
       initialFilters: [],
       onFilterChange: () => {},
-      t: (key: string) => key,
-      tReady: true,
-      i18n: i18n
+      language: 'en'
     });
 
     stFilter.filterAdded(labelFilter, labelValue);
@@ -28,9 +25,7 @@ describe('StatefulFilters', () => {
       <StatefulFiltersComponent
         onFilterChange={jest.fn()}
         initialFilters={[labelFilter, istioSidecarFilter]}
-        t={(key: string) => key}
-        tReady={true}
-        i18n={i18n}
+        language="en"
       />
     ).instance() as StatefulFiltersComponent;
 

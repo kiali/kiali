@@ -68,11 +68,11 @@ const hideValue = (state: KialiAppState): string => state.graph.toolbarState.hid
 
 export const hideValueSelector = createIdentitySelector(hideValue);
 
-const meshFindValue = (state: KialiAppState) => state.mesh.toolbarState.findValue;
+const meshFindValue = (state: KialiAppState): string => state.mesh.toolbarState.findValue;
 
 export const meshFindValueSelector = createIdentitySelector(meshFindValue);
 
-const meshHideValue = (state: KialiAppState) => state.mesh.toolbarState.hideValue;
+const meshHideValue = (state: KialiAppState): string => state.mesh.toolbarState.hideValue;
 
 export const meshHideValueSelector = createIdentitySelector(meshHideValue);
 
@@ -123,3 +123,7 @@ export const istioStatusSelector = createIdentitySelector(istioStatus);
 const istioCertsInfo = (state: KialiAppState): CertsInfo[] => state.istioCertsInfo;
 
 export const istioCertsInfoSelector = createIdentitySelector(istioCertsInfo);
+
+const language = (state: KialiAppState): string => state.globalState.language;
+
+export const languageSelector = createIdentitySelector(language);

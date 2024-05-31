@@ -225,8 +225,13 @@ class AuthenticationControllerComponent extends React.Component<
     if (uiDefaults) {
       // Set I18n language
       let language = store.getState().globalState.language || uiDefaults.i18n.language;
-      i18n.changeLanguage(language);
-      store.dispatch(GlobalActions.setLanguage(language));
+
+      // Set language to default English value to force React re-render on language change
+      store.dispatch(GlobalActions.setLanguage('en'));
+
+      i18n.changeLanguage(language).then(() => {
+        store.dispatch(GlobalActions.setLanguage(language));
+      });
 
       // Duration (aka metricsPerRefresh)
       if (uiDefaults.metricsPerRefresh) {

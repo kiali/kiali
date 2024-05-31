@@ -2,7 +2,7 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 import { KialiDispatch } from 'types/Redux';
 import { KialiAppState } from '../../store/Store';
-import { refreshIntervalSelector } from '../../store/Selectors';
+import { languageSelector, refreshIntervalSelector } from '../../store/Selectors';
 import { config } from '../../config';
 import { IntervalInMilliseconds } from '../../types/Common';
 import { UserSettingsActions } from '../../actions/UserSettingsActions';
@@ -13,21 +13,26 @@ import { TooltipPosition } from '@patternfly/react-core';
 import { triggerRefresh } from '../../hooks/refresh';
 import { isKioskMode } from '../../utils/SearchParamUtils';
 import { kioskRefreshAction } from '../Kiosk/KioskActions';
+import { t, tMap } from 'utils/I18nUtils';
 
-type ReduxProps = {
+type ReduxStateProps = {
+  language: string;
   refreshInterval: IntervalInMilliseconds;
+};
+
+type ReduxDispatchProps = {
   setRefreshInterval: (refreshInterval: IntervalInMilliseconds) => void;
 };
 
 type ComponentProps = {
-  id: string;
   disabled?: boolean;
   hideLabel?: boolean;
   hideRefreshButton?: boolean;
+  id: string;
   manageURL?: boolean;
 };
 
-type Props = ComponentProps & ReduxProps;
+type Props = ComponentProps & ReduxStateProps & ReduxDispatchProps;
 
 const REFRESH_INTERVALS = config.toolbar.refreshInterval;
 
@@ -38,38 +43,43 @@ export class RefreshComponent extends React.PureComponent<Props> {
     // Let URL override current redux state at construction time
     if (props.manageURL) {
       let refreshInterval = HistoryManager.getNumericParam(URLParam.REFRESH_INTERVAL);
+
       if (refreshInterval === undefined) {
         refreshInterval = props.refreshInterval;
       }
+
       if (refreshInterval !== props.refreshInterval) {
         props.setRefreshInterval(refreshInterval);
       }
+
       HistoryManager.setParam(URLParam.REFRESH_INTERVAL, String(refreshInterval));
     }
   }
 
-  componentDidUpdate() {
+  componentDidUpdate(): void {
     // ensure redux state and URL are aligned
     if (this.props.manageURL) {
       HistoryManager.setParam(URLParam.REFRESH_INTERVAL, String(this.props.refreshInterval));
     }
   }
 
-  render() {
+  render(): React.ReactNode {
     if (this.props.refreshInterval !== undefined) {
       const { hideLabel } = this.props;
       return (
         <>
           {!hideLabel && <label style={{ paddingRight: '0.5em', marginLeft: '1.5em' }}>Refreshing</label>}
+
           <ToolbarDropdown
             id={this.props.id}
             handleSelect={value => this.updateRefreshInterval(Number(value))}
             value={String(this.props.refreshInterval)}
-            label={REFRESH_INTERVALS[this.props.refreshInterval]}
-            options={REFRESH_INTERVALS}
-            tooltip={'Refresh interval'}
+            label={t(REFRESH_INTERVALS[this.props.refreshInterval])}
+            options={tMap(REFRESH_INTERVALS)}
+            tooltip={t('Refresh interval')}
             tooltipPosition={TooltipPosition.left}
           />
+
           {this.props.hideRefreshButton || (
             <RefreshButton handleRefresh={triggerRefresh} disabled={this.props.disabled} />
           )}
@@ -80,19 +90,21 @@ export class RefreshComponent extends React.PureComponent<Props> {
     }
   }
 
-  private updateRefreshInterval = (refreshInterval: IntervalInMilliseconds) => {
+  private updateRefreshInterval = (refreshInterval: IntervalInMilliseconds): void => {
     this.props.setRefreshInterval(refreshInterval); // notify redux of the change
+
     if (isKioskMode()) {
       kioskRefreshAction(refreshInterval);
     }
   };
 }
 
-const mapStateToProps = (state: KialiAppState) => ({
+const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
+  language: languageSelector(state),
   refreshInterval: refreshIntervalSelector(state)
 });
 
-const mapDispatchToProps = (dispatch: KialiDispatch) => {
+const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => {
   return {
     setRefreshInterval: (refresh: IntervalInMilliseconds) => {
       dispatch(UserSettingsActions.setRefreshInterval(refresh));

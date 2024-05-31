@@ -1,4 +1,4 @@
-import { i18n } from 'i18n';
+import { t } from 'utils/I18nUtils';
 
 export enum Status {
   Healthy = 'Healthy',
@@ -9,11 +9,11 @@ export enum Status {
 }
 
 export const statusMsg = {
-  [Status.Healthy]: i18n.t('Healthy'),
-  [Status.NotFound]: i18n.t('Not found'),
-  [Status.NotReady]: i18n.t('Not ready'),
-  [Status.Unhealthy]: i18n.t('Not healthy'),
-  [Status.Unreachable]: i18n.t('Unreachable')
+  [Status.Healthy]: t('Healthy'),
+  [Status.NotFound]: t('Not found'),
+  [Status.NotReady]: t('Not ready'),
+  [Status.Unhealthy]: t('Not healthy'),
+  [Status.Unreachable]: t('Unreachable')
 };
 
 export interface ComponentStatus {
