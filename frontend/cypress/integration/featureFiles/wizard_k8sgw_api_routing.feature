@@ -1,19 +1,19 @@
 @wizard-k8sgw-api-routing
 # don't change first line of this file - the tag is used for the test scripts to identify the test suite
 
-Feature: Service Details Wizard: K8s Gateway API Routing
+Feature: Service Details Wizard: K8s HTTP Routing
 
-  User navigates to the service details page and open the Kiali Wizard to generate a K8s Gateway API Routing scenario.
+  User navigates to the service details page and open the Kiali Wizard to generate a K8s HTTP Routing scenario.
 
   Background:
     Given user is at administrator perspective
 
   @gateway-api
   @bookinfo-app
-  Scenario: Create a K8s Gateway API Routing scenario
+  Scenario: Create a K8s HTTP Routing scenario
     When user opens the namespace "bookinfo" and "reviews" service details page
-    And user clicks in the "K8s Gateway API Routing" actions
-    And user sees the "Create K8s Gateway API Routing" wizard
+    And user clicks in the "K8s HTTP Routing" actions
+    And user sees the "Create K8s HTTP Routing" wizard
     And user clicks in the "Request Matching" tab
     And user clicks in the "headers" request matching dropdown
     And user types "end-user" in the matching header input
@@ -39,10 +39,10 @@ Feature: Service Details Wizard: K8s Gateway API Routing
 
   @gateway-api
   @bookinfo-app
-  Scenario: Update a K8s Gateway API Routing scenario
+  Scenario: Update a K8s HTTP Routing scenario
     When user opens the namespace "bookinfo" and "reviews" service details page
-    And user clicks in the "K8s Gateway API Routing" actions
-    And user sees the "Update K8s Gateway API Routing" wizard
+    And user clicks in the "K8s HTTP Routing" actions
+    And user sees the "Update K8s HTTP Routing" wizard
     And user clicks on "Show" Advanced Options
     And user clicks in the "K8s Gateways" tab
     And user clicks on Add Gateway
