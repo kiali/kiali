@@ -54,6 +54,7 @@ import { K8sGatewaySelector, K8sGatewaySelectorState } from './K8sGatewaySelecto
 import { VirtualServiceHosts } from './VirtualServiceHosts';
 import { K8sRouteHosts } from './K8sRouteHosts';
 import { K8sGRPCRouteHosts } from './K8sGRPCRouteHosts';
+import { HTTP, GRPC } from './K8sRequestRouting/K8sMatchBuilder';
 import {
   DestinationRule,
   Gateway,
@@ -756,7 +757,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
       pa: pa ? (pa.items[0] as PeerAuthentication) : undefined,
       vs: vs ? (vs.items[0] as VirtualService) : undefined,
       k8shttproute: k8shttproute ? (k8shttproute.items[0] as K8sHTTPRoute) : undefined,
-      k8sgrpcroute: k8shttproute ? (k8sgrpcroute.items[0] as K8sGRPCRoute) : undefined
+      k8sgrpcroute: k8sgrpcroute ? (k8sgrpcroute.items[0] as K8sGRPCRoute) : undefined
     };
 
     this.setState({ previews, showPreview: false, showWizard: false, confirmationModal: true });
@@ -903,6 +904,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
             <K8sRequestRouting
               subServices={this.props.subServices}
               initRules={getInitK8sRules(this.props.k8sHTTPRoutes)}
+              protocol={HTTP}
               onChange={this.onK8sRulesChange}
             />
           )}
@@ -911,6 +913,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
             <K8sRequestRouting
               subServices={this.props.subServices}
               initRules={getInitK8sGRPCRules(this.props.k8sGRPCRoutes)}
+              protocol={GRPC}
               onChange={this.onK8sRulesChange}
             />
           )}

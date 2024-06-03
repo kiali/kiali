@@ -10,55 +10,48 @@ import { K8sFilterBuilder } from './K8sFilterBuilder';
 import { K8sFilters } from './K8sFilters';
 
 type Props = {
-  // K8sMatchBuilder props
+  // K8sRuleBuilder props
+  backendRefs: K8sRouteBackendRef[];
   category: string;
-  operator: string;
-  headerName: string;
-  queryParamName: string;
-  matchValue: string;
-  isValid: boolean;
-  onSelectCategory: (category: string) => void;
-  onHeaderNameChange: (headerName: string) => void;
-  onMatchHeaderNameChange: (headerName: string) => void;
-  onQueryParamNameChange: (matchValue: string) => void;
-  onSelectOperator: (operator: string) => void;
-  onMatchValueChange: (matchValue: string) => void;
-  onAddMatch: () => void;
-
-  // K8sMatches props
-  matches: string[];
-  onRemoveMatch: (match: string) => void;
-
-  // K8sFilters props
   filterType: string;
   filterValue: string;
+  filters: string[];
+  headerName: string;
   headerOp: string;
-  schemeOp: string;
   headerValue: string;
   hostName: string;
-  portValue: string;
-  serviceOp: string;
-  statusCodeOp: string;
-  filters: string[];
-  onSelectFilterType: (filterType: string) => void;
+  isValid: boolean;
+  matchValue: string;
+  matches: string[];
+  onAddFilter: () => void;
+  onAddMatch: () => void;
+  onAddRule: () => void;
+  onHeaderNameChange: (headerName: string) => void;
   onHeaderValueChange: (headerValue: string) => void;
   onHostNameChange: (hostName: string) => void;
+  onMatchHeaderNameChange: (headerName: string) => void;
+  onMatchValueChange: (matchValue: string) => void;
   onPortValueChange: (portValue: string) => void;
+  onQueryParamNameChange: (matchValue: string) => void;
+  onRemoveFilter: (filter: string) => void;
+  onRemoveMatch: (match: string) => void;
+  onSelectCategory: (category: string) => void;
+  onSelectFilterType: (filterType: string) => void;
+  onSelectHeaderOp: (headerOp: string) => void;
+  onSelectOperator: (operator: string) => void;
+  onSelectSchemeOp: (schemeOp: string) => void;
   onSelectServiceOp: (serviceOp: string) => void;
   onSelectStatusCodeOp: (statusCodeOp: string) => void;
-  onSelectHeaderOp: (headerOp: string) => void;
-  onSelectSchemeOp: (schemeOp: string) => void;
-  onRemoveFilter: (filter: string) => void;
-  onAddFilter: () => void;
-
-  subServices: ServiceOverview[];
   onSelectWeights: (backendRefs: K8sRouteBackendRef[]) => void;
-
-  backendRefs: K8sRouteBackendRef[];
-
-  // K8sRuleBuilder
+  operator: string;
+  portValue: string;
+  protocol: string;
+  queryParamName: string;
+  schemeOp: string;
+  serviceOp: string;
+  statusCodeOp: string;
+  subServices: ServiceOverview[];
   validationMsg: string;
-  onAddRule: () => void;
 };
 
 type State = {
@@ -78,7 +71,7 @@ const validationStyle = kialiStyle({
 });
 
 export class K8sRuleBuilder extends React.Component<Props, State> {
-  constructor(props) {
+  constructor(props: Props) {
     super(props);
     this.state = {
       isWorkloadSelector: false,
@@ -86,19 +79,19 @@ export class K8sRuleBuilder extends React.Component<Props, State> {
     };
   }
 
-  onWorkloadsToggle = () => {
+  onWorkloadsToggle = (): void => {
     this.setState({
       isWorkloadSelector: !this.state.isWorkloadSelector
     });
   };
 
-  ruleHandleTabClick = (_event, tabIndex) => {
+  ruleHandleTabClick = (_event: React.MouseEvent, tabIndex: number): void => {
     this.setState({
       ruleTabKey: tabIndex
     });
   };
 
-  render() {
+  render(): React.ReactNode {
     return (
       <>
         <Tabs isFilled={true} activeKey={this.state.ruleTabKey} onSelect={this.ruleHandleTabClick}>

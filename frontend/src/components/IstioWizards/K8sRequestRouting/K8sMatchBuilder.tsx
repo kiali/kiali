@@ -17,22 +17,29 @@ type K8sMatchBuilderProps = {
   headerName: string;
   isValid: boolean;
   matchValue: string;
-  onSelectCategory: (category: string) => void;
-  onMatchHeaderNameChange: (headerName: string) => void;
-  onQueryParamNameChange: (queryParamName: string) => void;
-  onSelectOperator: (operator: string) => void;
-  onMatchValueChange: (matchValue: string) => void;
   onAddMatch: () => void;
+  onMatchHeaderNameChange: (headerName: string) => void;
+  onMatchValueChange: (matchValue: string) => void;
+  onQueryParamNameChange: (queryParamName: string) => void;
+  onSelectCategory: (category: string) => void;
+  onSelectOperator: (operator: string) => void;
   operator: string;
+  protocol: string;
   queryParamName: string;
 };
+
+export const HTTP = 'HTTP';
+export const GRPC = 'GRPC';
 
 export const PATH = 'path';
 export const HEADERS = 'headers';
 export const QUERY_PARAMS = 'queryParams';
 export const METHOD = 'method';
 
-const matchOptions: string[] = [PATH, HEADERS, QUERY_PARAMS, METHOD];
+const matchOptions = {
+  [HTTP]: [PATH, HEADERS, QUERY_PARAMS, METHOD],
+  [GRPC]: [HEADERS, METHOD]
+};
 
 export const EXACT = 'Exact';
 export const PREFIX = 'PathPrefix';
@@ -40,13 +47,20 @@ export const REGEX = 'RegularExpression';
 export const GET = 'GET';
 
 const allOptions = {
-  [PATH]: [EXACT, PREFIX, REGEX],
-  [HEADERS]: [EXACT, REGEX],
-  [QUERY_PARAMS]: [EXACT, REGEX],
-  [METHOD]: ['CONNECT', 'DELETE', GET, 'HEAD', 'OPTIONS', 'PATCH', 'POST', 'PUT', 'TRACE']
+  [HTTP]: {
+    [PATH]: [EXACT, PREFIX, REGEX],
+    [HEADERS]: [EXACT, REGEX],
+    [QUERY_PARAMS]: [EXACT, REGEX],
+    [METHOD]: ['CONNECT', 'DELETE', GET, 'HEAD', 'OPTIONS', 'PATCH', 'POST', 'PUT', 'TRACE']
+  },
+  [GRPC]: {
+    [HEADERS]: [EXACT, REGEX],
+    [METHOD]: [EXACT, REGEX]
+  }
 };
 
 const placeholderText = {
+  [METHOD]: 'Method service...',
   [PATH]: 'Path value...',
   [HEADERS]: 'Header value...',
   [QUERY_PARAMS]: 'Query param value...'
@@ -56,7 +70,7 @@ export const K8sMatchBuilder: React.FC<K8sMatchBuilderProps> = (props: K8sMatchB
   const [isMatchDropdown, setIsMatchDropdown] = React.useState<boolean>(false);
   const [isOperatorDropdown, setIsOperatorDropdown] = React.useState<boolean>(false);
 
-  const renderOpOptions: string[] = allOptions[props.category];
+  const renderOpOptions: string[] = allOptions[props.protocol][props.category];
 
   return (
     <InputGroup>
@@ -76,16 +90,16 @@ export const K8sMatchBuilder: React.FC<K8sMatchBuilderProps> = (props: K8sMatchB
           onOpenChange={(isOpen: boolean) => setIsMatchDropdown(isOpen)}
         >
           <DropdownList>
-            {matchOptions.map((mode, index) => (
+            {matchOptions[props.protocol].map((mode, index) => (
               <DropdownItem
-                key={mode + '_' + index}
+                key={`${mode}_${index}`}
                 value={mode}
                 component="button"
                 onClick={() => {
                   props.onSelectCategory(mode);
                   setIsMatchDropdown(!isMatchDropdown);
                 }}
-                data-test={'requestmatching-header-' + mode}
+                data-test={`requestmatching-header-${mode}`}
               >
                 {mode}
               </DropdownItem>
@@ -100,6 +114,15 @@ export const K8sMatchBuilder: React.FC<K8sMatchBuilderProps> = (props: K8sMatchB
           value={props.headerName}
           onChange={(_, value) => props.onMatchHeaderNameChange(value)}
           placeholder="Header name..."
+        />
+      )}
+
+      {props.category === METHOD && props.protocol === GRPC && (
+        <TextInput
+          id="method-name-id"
+          value={props.headerName}
+          onChange={(_, value) => props.onMatchHeaderNameChange(value)}
+          placeholder="Method name..."
         />
       )}
 
@@ -130,14 +153,14 @@ export const K8sMatchBuilder: React.FC<K8sMatchBuilderProps> = (props: K8sMatchB
           <DropdownList>
             {renderOpOptions.map((op, index) => (
               <DropdownItem
-                key={op + '_' + index}
+                key={`${op}_${index}`}
                 value={op}
                 component="button"
                 onClick={() => {
                   props.onSelectOperator(op);
                   setIsOperatorDropdown(!isOperatorDropdown);
                 }}
-                data-test={'requestmatching-match-' + op}
+                data-test={`requestmatching-match-${op}`}
               >
                 {op}
               </DropdownItem>
@@ -146,15 +169,28 @@ export const K8sMatchBuilder: React.FC<K8sMatchBuilderProps> = (props: K8sMatchB
         </Dropdown>
       </InputGroupItem>
 
-      <InputGroupItem isFill>
-        <TextInput
-          id="match-value-id"
-          value={props.matchValue}
-          onChange={(_, value) => props.onMatchValueChange(value)}
-          placeholder={placeholderText[props.category]}
-          isDisabled={props.category === METHOD}
-        />
-      </InputGroupItem>
+      {props.protocol === GRPC && (
+        <InputGroupItem isFill>
+          <TextInput
+            id="match-value-id"
+            value={props.matchValue}
+            onChange={(_, value) => props.onMatchValueChange(value)}
+            placeholder={placeholderText[props.category]}
+          />
+        </InputGroupItem>
+      )}
+
+      {props.protocol === HTTP && (
+        <InputGroupItem isFill>
+          <TextInput
+            id="match-value-id"
+            value={props.matchValue}
+            onChange={(_, value) => props.onMatchValueChange(value)}
+            placeholder={placeholderText[props.category]}
+            isDisabled={props.category === METHOD}
+          />
+        </InputGroupItem>
+      )}
 
       <InputGroupItem>
         <Button

@@ -515,8 +515,8 @@ export const seToIstioItems = (see: ServiceEntry[], validations: Validations, cl
   return istioItems;
 };
 
-export const k8sRouteToIstioItems = (
-  routes: K8sHTTPRoute[] | K8sGRPCRoute[],
+export const k8sHTTPRouteToIstioItems = (
+  routes: K8sHTTPRoute[],
   validations: Validations,
   cluster?: string
 ): IstioConfigItem[] => {
@@ -541,6 +541,38 @@ export const k8sRouteToIstioItems = (
     };
 
     item[entryName] = route;
+    istioItems.push(item);
+  });
+
+  return istioItems;
+};
+
+export const k8sGRPCRouteToIstioItems = (
+  grpcRoutes: K8sGRPCRoute[],
+  validations: Validations,
+  cluster?: string
+): IstioConfigItem[] => {
+  const istioItems: IstioConfigItem[] = [];
+  const hasValidations = (vKey: string): ObjectValidation => validations.k8sgrpcroute && validations.k8sgrpcroute[vKey];
+
+  const typeNameProtoGRPC = dicIstioType['k8sgrpcroutes']; // ex. serviceEntries -> ServiceEntry
+  const typeNameGRPC = typeNameProtoGRPC.toLowerCase(); // ex. ServiceEntry -> serviceentry
+  const entryNameGRPC = `${typeNameProtoGRPC.charAt(0).toLowerCase()}${typeNameProtoGRPC.slice(1)}`;
+
+  grpcRoutes.forEach(route => {
+    const vKey = validationKey(route.metadata.name, route.metadata.namespace);
+
+    const item = {
+      cluster: cluster,
+      namespace: route.metadata.namespace ?? '',
+      type: typeNameGRPC,
+      name: route.metadata.name,
+      creationTimestamp: route.metadata.creationTimestamp,
+      resourceVersion: route.metadata.resourceVersion,
+      validation: hasValidations(vKey) ? validations.k8sgrpcroute[vKey] : undefined
+    };
+
+    item[entryNameGRPC] = route;
     istioItems.push(item);
   });
 

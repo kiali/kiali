@@ -25,7 +25,8 @@ import {
   vsToIstioItems,
   gwToIstioItems,
   seToIstioItems,
-  k8sRouteToIstioItems,
+  k8sHTTPRouteToIstioItems,
+  k8sGRPCRouteToIstioItems,
   validationKey,
   k8sGwToIstioItems
 } from '../../types/IstioConfigList';
@@ -212,14 +213,14 @@ class ServiceInfoComponent extends React.Component<Props, ServiceInfoState> {
         )
       : [];
     const k8sHTTPRouteIstioConfigItems = this.props.serviceDetails?.k8sHTTPRoutes
-      ? k8sRouteToIstioItems(
+      ? k8sHTTPRouteToIstioItems(
           this.props.serviceDetails.k8sHTTPRoutes,
           this.props.serviceDetails.validations,
           this.props.cluster
         )
       : [];
     const k8sGRPCRouteIstioConfigItems = this.props.serviceDetails?.k8sGRPCRoutes
-      ? k8sRouteToIstioItems(
+      ? k8sGRPCRouteToIstioItems(
           this.props.serviceDetails.k8sGRPCRoutes,
           this.props.serviceDetails.validations,
           this.props.cluster
