@@ -32,7 +32,7 @@ Given('user opens the namespace {string} and {string} service details page', (na
 
 Given(
   'user opens the namespace {string} and the {string} {string} service details page',
-  (namespace: string, cluster:string, service: string) => {
+  (namespace: string, cluster: string, service: string) => {
     cy.visit(`${url}/namespaces/${namespace}/services/${service}?refresh=0&clusterName=${cluster}`);
   }
 );
@@ -115,10 +115,13 @@ Then('user sees the generated {string} objects located in the {string} cluster',
     .contains(cluster);
 });
 
-Then('user does not see the generated {string} objects located in the {string} cluster', (svc: string, cluster: string) => {
-  cy.getBySel(`VirtualItem_Cluster${cluster}_Nsbookinfo_destinationrule_${svc}`).should('not.exist');
-  cy.getBySel(`VirtualItem_Cluster${cluster}_Nsbookinfo_virtualservice_${svc}`).should('not.exist');
-});
+Then(
+  'user does not see the generated {string} objects located in the {string} cluster',
+  (svc: string, cluster: string) => {
+    cy.getBySel(`VirtualItem_Cluster${cluster}_Nsbookinfo_destinationrule_${svc}`).should('not.exist');
+    cy.getBySel(`VirtualItem_Cluster${cluster}_Nsbookinfo_virtualservice_${svc}`).should('not.exist');
+  }
+);
 
 Then(
   'the {string} {string} should be listed in {string} {string} namespace',
