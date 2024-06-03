@@ -84,7 +84,7 @@ Valid command line arguments:
   -s|--source: demo file source. For example: file:///home/me/demos Default: https://raw.githubusercontent.com/kiali/demos/master
   -sg|--show-gui: do not install anything, but bring up the travel agency GUI in a browser window
   -h|--help: this text
-  -w|--waypoint: Add waypoint proxy
+  -w|--waypoint: Add waypoint proxy for Ambient namespaces
 HELPMSG
       exit 1
       ;;
@@ -103,24 +103,7 @@ if [ "${SHOW_GUI}" == "true" ]; then
   exit 0
 fi
 
-for n in $(${CLIENT_EXE} get daemonset --all-namespaces -o jsonpath='{.items[*].metadata.name}')
-do
-   if [ "${n}" == "ztunnel" ]; then
-     AMBIENT_ENABLED="true"
-     # Verify Gateway API
-     echo "Verifying that Gateway API is installed; if it is not then it will be installed now."
-     $CLIENT_EXE get crd gateways.gateway.networking.k8s.io &> /dev/null || \
-       { $CLIENT_EXE kustomize "github.com/kubernetes-sigs/gateway-api/config/crd/experimental?ref=v1.1.0" | $CLIENT_EXE apply -f -; }
-     break
-   fi
-done
-if [ "${AMBIENT_ENABLED}" == "false" ] && [ "${WAYPOINT}" == "true" ]; then
- echo "Waypoint proxy cannot be installed as Ambient is not enabled."
- exit 1
-fi
-
 echo Will deploy Travel Agency using these settings:
-echo AMBIENT_ENABLED=${AMBIENT_ENABLED}
 echo CLIENT_EXE=${CLIENT_EXE}
 echo DELETE_DEMO=${DELETE_DEMO}
 echo ENABLE_INJECTION=${ENABLE_INJECTION}
@@ -139,7 +122,6 @@ fi
 
 echo "IS_OPENSHIFT=${IS_OPENSHIFT}"
 
-
 # If we are to delete, remove everything and exit immediately after
 if [ "${DELETE_DEMO}" == "true" ]; then
   echo "Deleting Travel Agency Demo (the envoy filters, if previously created, will remain)"
@@ -154,6 +136,23 @@ if [ "${DELETE_DEMO}" == "true" ]; then
   ${CLIENT_EXE} delete namespace ${NAMESPACE_CONTROL}
   exit 0
 fi
+
+for n in $(${CLIENT_EXE} get daemonset --all-namespaces -o jsonpath='{.items[*].metadata.name}')
+do
+   if [ "${n}" == "ztunnel" ]; then
+     AMBIENT_ENABLED="true"
+     # Verify Gateway API
+     echo "Verifying that Gateway API is installed; if it is not then it will be installed now."
+     $CLIENT_EXE get crd gateways.gateway.networking.k8s.io &> /dev/null || \
+       { $CLIENT_EXE kustomize "github.com/kubernetes-sigs/gateway-api/config/crd/experimental?ref=v1.1.0" | $CLIENT_EXE apply -f -; }
+     break
+   fi
+done
+if [ "${AMBIENT_ENABLED}" == "false" ] && [ "${WAYPOINT}" == "true" ]; then
+ echo "Waypoint proxy cannot be installed as Ambient is not enabled."
+ exit 1
+fi
+echo AMBIENT_ENABLED=${AMBIENT_ENABLED}
 
 # Create and prepare the demo namespaces
 
@@ -252,6 +251,49 @@ fi
 ${CLIENT_EXE} apply -f <(curl -L "${SOURCE}/travels/travel_agency.yaml") -n ${NAMESPACE_AGENCY}
 ${CLIENT_EXE} apply -f <(curl -L "${SOURCE}/travels/travel_portal.yaml") -n ${NAMESPACE_PORTAL}
 ${CLIENT_EXE} apply -f <(curl -L "${SOURCE}/travels/travel_control.yaml") -n ${NAMESPACE_CONTROL}
+
+if [ "${WAYPOINT}" == "true" ]; then
+  # Create Waypoint proxy
+  echo "Create Waypoint proxies per namespace"
+
+  if [ "${ISTIO_DIR}" == "" ]; then
+    # Go to the main output directory and try to find an Istio there.
+    HACK_SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
+    OUTPUT_DIR="${OUTPUT_DIR:-${HACK_SCRIPT_DIR}/../../_output}"
+    ALL_ISTIOS=$(ls -dt1 ${OUTPUT_DIR}/istio-*)
+    if [ "$?" != "0" ]; then
+      ${HACK_SCRIPT_DIR}/download-istio.sh
+      if [ "$?" != "0" ]; then
+        echo "ERROR: You do not have Istio installed and it cannot be downloaded"
+        exit 1
+      fi
+    fi
+    # use the Istio release that was last downloaded (that's the -t option to ls)
+    ISTIO_DIR=$(ls -dt1 ${OUTPUT_DIR}/istio-* | head -n1)
+
+    if [ ! -d "${ISTIO_DIR}" ]; then
+       echo "ERROR: Istio cannot be found at: ${ISTIO_DIR}"
+       exit 1
+    fi
+
+    echo "Istio is found here: ${ISTIO_DIR}"
+    if [[ -x "${ISTIO_DIR}/bin/istioctl" ]]; then
+      echo "istioctl is found here: ${ISTIO_DIR}/bin/istioctl"
+      ISTIOCTL="${ISTIO_DIR}/bin/istioctl"
+      ${ISTIOCTL} version
+    else
+      echo "ERROR: istioctl is NOT found at ${ISTIO_DIR}/bin/istioctl"
+      exit 1
+    fi
+
+  fi
+
+  for NS in ${AMBIENT_NS}
+  do
+    ${ISTIOCTL} x waypoint apply -n ${NS} --enroll-namespace
+    echo "Create Waypoint proxy for ${NS}"
+  done
+fi
 
 # Set up metric classification
 

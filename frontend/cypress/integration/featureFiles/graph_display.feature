@@ -287,12 +287,14 @@ Feature: Kiali Graph page - Display menu
   Scenario: User sees tcp traffic
     When user graphs "bookinfo" namespaces
     Then user sees the "bookinfo" namespace
+    Then user opens traffic menu
+    And user "disables" "http" traffic option
     Then 6 edges appear in the graph
 
   @ambient
-  Scenario: User sees no http traffic
+  Scenario: User sees http traffic
     When user graphs "bookinfo" namespaces
     Then user sees the "bookinfo" namespace
     Then user opens traffic menu
     And user "disables" "tcp" traffic option
-    Then user sees empty graph
+    Then 2 edges appear in the graph

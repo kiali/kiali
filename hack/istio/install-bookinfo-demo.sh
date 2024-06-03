@@ -374,7 +374,7 @@ $CLIENT_EXE get pods -n ${NAMESPACE}
 
 if [ "${AMBIENT_ENABLED}" == "true" ]; then
   echo "Sidecar injection was not performed. Ambient support will be enabled."
-  ${CLIENT_EXE} label namespace ${NAMESPACE} istio.io/dataplane-mode=ambient
+  ${CLIENT_EXE} label namespace ${NAMESPACE} istio.io/dataplane-mode=ambient istio.io/dataplane-mode=ambient
   # It could also be applied to service account
   if [ "${WAYPOINT}" == "true" ]; then
     # Create Waypoint proxy
