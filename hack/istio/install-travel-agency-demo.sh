@@ -288,7 +288,7 @@ if [ "${WAYPOINT}" == "true" ]; then
 
   fi
 
-  for NS in ${AMBIENT_NS}
+  for NS in "${AMBIENT_NS[@]}"
   do
     ${ISTIOCTL} x waypoint apply -n ${NS} --enroll-namespace
     echo "Create Waypoint proxy for ${NS}"
