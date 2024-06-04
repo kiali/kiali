@@ -85,9 +85,9 @@ export class K8sRuleBuilder extends React.Component<Props, State> {
     });
   };
 
-  ruleHandleTabClick = (_event: React.MouseEvent, tabIndex: number): void => {
+  ruleHandleTabClick = (_event: React.MouseEvent, tabIndex: string | number): void => {
     this.setState({
-      ruleTabKey: tabIndex
+      ruleTabKey: tabIndex as number
     });
   };
 
