@@ -1,4 +1,4 @@
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: policy
@@ -8,14 +8,14 @@ spec:
     matchLabels:
       app: productpage
   rules:
-    - from:
-        - source:
-            principals: ["cluster.local/ns/default/sa/bookinfo-productpage"]
-      to:
-        - operation:
-            methods: ["GET"]
+  - from:
+    - source:
+        principals: ["cluster.local/ns/default/sa/bookinfo-productpage"]
+    to:
+    - operation:
+        methods: ["GET"]
 ---
-apiVersion: "networking.istio.io/v1beta1"
+apiVersion: "networking.istio.io/v1"
 kind: "DestinationRule"
 metadata:
   name: "disable-mtls"
@@ -26,7 +26,7 @@ spec:
     tls:
       mode: DISABLE
 ---
-apiVersion: "security.istio.io/v1beta1"
+apiVersion: "security.istio.io/v1"
 kind: "PeerAuthentication"
 metadata:
   name: "default"
@@ -35,7 +35,7 @@ spec:
   mtls:
     mode: STRICT
 ---
-apiVersion: "networking.istio.io/v1beta1"
+apiVersion: "networking.istio.io/v1"
 kind: "DestinationRule"
 metadata:
   name: "default"

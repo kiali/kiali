@@ -19,7 +19,7 @@ func TestVirtualServiceHasRequestTimeout(t *testing.T) {
 		"Has timeout": {
 			expectedTimeout: true,
 			vsYAML: []byte(`
-apiVersion: networking.istio.io/v1alpha3
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: reviews
@@ -37,7 +37,7 @@ spec:
 		"No timeout": {
 			expectedTimeout: false,
 			vsYAML: []byte(`
-apiVersion: networking.istio.io/v1alpha3
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: reviews
@@ -54,7 +54,7 @@ spec:
 		"Multiple timeouts": {
 			expectedTimeout: true,
 			vsYAML: []byte(`
-apiVersion: networking.istio.io/v1alpha3
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: reviews
@@ -100,7 +100,7 @@ func TestVirtualServiceHasFaultInjection(t *testing.T) {
 		"Has fault": {
 			expectedFaultInjection: true,
 			vsYAML: []byte(`
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: ratings
@@ -130,7 +130,7 @@ spec:
 		"No fault": {
 			expectedFaultInjection: false,
 			vsYAML: []byte(`
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: ratings
@@ -155,7 +155,7 @@ spec:
 		"Multiple faults": {
 			expectedFaultInjection: true,
 			vsYAML: []byte(`
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: ratings
@@ -213,7 +213,7 @@ func TestVirtualServiceHasTrafficShifting(t *testing.T) {
 		"Has traffic shifting": {
 			expectedTrafficShifting: true,
 			vsYAML: []byte(`
-apiVersion: networking.istio.io/v1alpha3
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: reviews-route
@@ -235,7 +235,7 @@ spec:
 		"Single destination with no weight": {
 			expectedTrafficShifting: false,
 			vsYAML: []byte(`
-apiVersion: networking.istio.io/v1alpha3
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: reviews-route
@@ -251,7 +251,7 @@ spec:
 		"Single destination with weight": {
 			expectedTrafficShifting: false,
 			vsYAML: []byte(`
-apiVersion: networking.istio.io/v1alpha3
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: reviews-route
@@ -269,7 +269,7 @@ spec:
 		"No routes": {
 			expectedTrafficShifting: false,
 			vsYAML: []byte(`
-apiVersion: networking.istio.io/v1alpha3
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: reviews-route
@@ -304,7 +304,7 @@ func TestVirtualServiceHasTCPTrafficShifting(t *testing.T) {
 		"Has traffic shifting": {
 			expectedTCPTrafficShifting: true,
 			vsYAML: []byte(`
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: tcp-echo-route
@@ -332,7 +332,7 @@ spec:
 		"Single destination with no weight": {
 			expectedTCPTrafficShifting: false,
 			vsYAML: []byte(`
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: tcp-echo-route
@@ -353,7 +353,7 @@ spec:
 		"Single destination with weight": {
 			expectedTCPTrafficShifting: false,
 			vsYAML: []byte(`
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: tcp-echo-route
@@ -375,7 +375,7 @@ spec:
 		"No routes": {
 			expectedTCPTrafficShifting: false,
 			vsYAML: []byte(`
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: tcp-echo-route
@@ -410,7 +410,7 @@ func TestVirtualServiceHasRequestRouting(t *testing.T) {
 		"Has http request routing": {
 			expectedRequestRouting: true,
 			vsYAML: []byte(`
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: reviews-route
@@ -426,7 +426,7 @@ spec:
 		"Has tcp request routing": {
 			expectedRequestRouting: true,
 			vsYAML: []byte(`
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: reviews-route
@@ -442,7 +442,7 @@ spec:
 		"Has tls request routing": {
 			expectedRequestRouting: true,
 			vsYAML: []byte(`
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: reviews-route
@@ -458,7 +458,7 @@ spec:
 		"Has multiple forms of request routing": {
 			expectedRequestRouting: true,
 			vsYAML: []byte(`
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: reviews-route
@@ -482,7 +482,7 @@ spec:
 		"Has no request routing": {
 			expectedRequestRouting: false,
 			vsYAML: []byte(`
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: reviews-route
@@ -494,7 +494,7 @@ spec:
 		"Has no request routing but has other options": {
 			expectedRequestRouting: false,
 			vsYAML: []byte(`
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: reviews-route
@@ -532,7 +532,7 @@ func TestVirtualServiceHasMirroring(t *testing.T) {
 			expectedMirroring: true,
 			vsYAML: []byte(`
 kind: VirtualService
-apiVersion: networking.istio.io/v1alpha3
+apiVersion: networking.istio.io/v1
 metadata:
   name: reviews  
 spec:
@@ -558,7 +558,7 @@ spec:
 		"No mirroring": {
 			expectedMirroring: false,
 			vsYAML: []byte(`
-apiVersion: networking.istio.io/v1alpha3
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: reviews

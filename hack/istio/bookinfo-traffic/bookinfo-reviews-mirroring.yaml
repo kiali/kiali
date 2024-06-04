@@ -2,8 +2,7 @@
 # Note that if you comment out the two mirror/mirrorPercentage fields, you will only see traffic to reviews:v1.
 #
 # last tested on Istio 1.10
----
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: reviews-mirroring-vs
@@ -22,7 +21,7 @@ spec:
     mirrorPercentage:
       value: 100.0
 ---
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: reviews-mirroring-dr

@@ -72,7 +72,7 @@ func TestHasMatchingReferenceGrant(t *testing.T) {
 
 func createVirtualService(namespace string, hosts []string) *networking_v1beta1.VirtualService {
 	vsYaml := []byte(`
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: virtual-service 

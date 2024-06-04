@@ -1,48 +1,48 @@
-apiVersion: networking.istio.io/v1alpha3
+apiVersion: networking.istio.io/v1
 kind: ServiceEntry
 metadata:
   name: foo-dev
   namespace: istio-system
 spec:
   endpoints:
-    # ip is a vm/service outside the cluster
-    - address: 10.15.1.121
+  # ip is a vm/service outside the cluster
+  - address: 10.15.1.121
   exportTo:
-    - "."
+  - "."
   hosts:
-    - foo-dev.istio-system.svc.cluster.local
-    - foo-dev.bookinfo.svc.cluster.local
+  - foo-dev.istio-system.svc.cluster.local
+  - foo-dev.bookinfo.svc.cluster.local
   location: MESH_EXTERNAL
   ports:
-    - name: http
-      number: 49000
-      protocol: HTTP
+  - name: http
+    number: 49000
+    protocol: HTTP
   resolution: STATIC
 ---
-apiVersion: networking.istio.io/v1alpha3
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: foo-dev
   namespace: istio-system
 spec:
   hosts:
-    - foo-dev.example.com
+  - foo-dev.example.com
   gateways:
-    - foo-dev
+  - foo-dev
   http:
-    - name: foo-svc
-      match:
-        - uri:
-            prefix: /foo
-      rewrite:
-        uri: "/foo"
-      route:
-        - destination:
-            host: foo-dev.istio-system.svc.cluster.local
-            port:
-              number: 49000
+  - name: foo-svc
+    match:
+    - uri:
+        prefix: /foo
+    rewrite:
+      uri: "/foo"
+    route:
+    - destination:
+        host: foo-dev.istio-system.svc.cluster.local
+        port:
+          number: 49000
 ---
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: allow-foo
@@ -53,20 +53,20 @@ spec:
     matchLabels:
       app: istio-ingressgateway
   rules:
-    - to:
-        - operation:
-            hosts:
-              - "foo-dev.example.com"
-              - "foo-dev.istio-system.svc.cluster.local"
-            paths:
-              - "/foo"
-      when:
-        - key: request.headers[x-token]
-          notValues:
-            - "fooreader"
+  - to:
+    - operation:
+        hosts:
+        - "foo-dev.example.com"
+        - "foo-dev.istio-system.svc.cluster.local"
+        paths:
+        - "/foo"
+    when:
+    - key: request.headers[x-token]
+      notValues:
+      - "fooreader"
 ---
 kind: DestinationRule
-apiVersion: networking.istio.io/v1alpha3
+apiVersion: networking.istio.io/v1
 metadata:
   name: foo-dev
   namespace: istio-system
@@ -76,18 +76,18 @@ spec:
     tls:
       mode: ISTIO_MUTUAL
   subsets:
-    - name: v1
-      labels:
-        version: v1
-    - name: v2
-      labels:
-        version: v2
-    - name: v3
-      labels:
-        version: v3
+  - name: v1
+    labels:
+      version: v1
+  - name: v2
+    labels:
+      version: v2
+  - name: v3
+    labels:
+      version: v3
 ---
 kind: Sidecar
-apiVersion: networking.istio.io/v1alpha3
+apiVersion: networking.istio.io/v1
 metadata:
   name: foo-sidecar
   namespace: istio-system
@@ -96,6 +96,6 @@ spec:
     labels:
       app: istio-ingressgateway
   egress:
-    - hosts:
-        - istio-system/foo-dev.istio-system.svc.cluster.local
-        - istio-system/foo-service
+  - hosts:
+    - istio-system/foo-dev.istio-system.svc.cluster.local
+    - istio-system/foo-service

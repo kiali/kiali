@@ -1,4 +1,4 @@
-apiVersion: "networking.istio.io/v1beta1"
+apiVersion: "networking.istio.io/v1"
 kind: "DestinationRule"
 metadata:
   name: dr_bookinfo2_to_1
@@ -6,4 +6,4 @@ metadata:
 spec:
   host: "*.local"
   exportTo:
-    - bookinfo
+  - bookinfo

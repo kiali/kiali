@@ -1,4 +1,4 @@
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: ratings-policy
@@ -6,11 +6,11 @@ metadata:
 spec:
   action: DENY
   rules:
-    - from:
-        - source:
-            principals:
-              - cluster.local/ns/default/sa/bookinfo-wrong
-              - cluster.local/ns/bookinfo/sa/bookinfo-details
+  - from:
+    - source:
+        principals:
+        - cluster.local/ns/default/sa/bookinfo-wrong
+        - cluster.local/ns/bookinfo/sa/bookinfo-details
   selector:
     matchLabels:
       app: ratings

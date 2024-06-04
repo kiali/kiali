@@ -19,7 +19,7 @@ if [ -z "$ingress_output" ]; then
 fi
 
 ${CLIENT_EXE} --context "${CLUSTER1_CONTEXT}" apply -f - <<EOF
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: zipkin-ingress
@@ -39,7 +39,7 @@ spec:
 EOF
 
 ${CLIENT_EXE} --context "${CLUSTER1_CONTEXT}" apply -f - <<EOF
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: Gateway
 metadata:
   name: zipkin-gateway

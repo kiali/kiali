@@ -202,7 +202,7 @@ sed  -i'.bk' \
 INGRESS_IP=$(kubectl get service istio-ingressgateway --context="${CTX_EXTERNAL_CLUSTER}" -n istio-system -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')
 
 cat <<EOF > ${MANIFEST_DIR}/external-istiod-gw.yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: Gateway
 metadata:
   name: external-istiod-gw
@@ -230,7 +230,7 @@ spec:
       hosts:
       - $EXTERNAL_ISTIOD_ADDR
 ---
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
    name: external-istiod-vs
@@ -256,7 +256,7 @@ spec:
           port:
             number: 443
 ---
-apiVersion: networking.istio.io/v1alpha3
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: external-istiod-dr

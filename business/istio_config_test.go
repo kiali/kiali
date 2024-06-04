@@ -175,19 +175,19 @@ func TestGetIstioConfigDetails(t *testing.T) {
 	istioConfigDetails, err = configService.GetIstioConfigDetails(context.TODO(), conf.KubernetesConfig.ClusterName, "test", "virtualservices", "reviews")
 	assert.Equal("reviews", istioConfigDetails.VirtualService.Name)
 	assert.Equal("VirtualService", istioConfigDetails.VirtualService.Kind)
-	assert.Equal("networking.istio.io/v1beta1", istioConfigDetails.VirtualService.APIVersion)
+	assert.Equal("networking.istio.io/v1", istioConfigDetails.VirtualService.APIVersion)
 	assert.Nil(err)
 
 	istioConfigDetails, err = configService.GetIstioConfigDetails(context.TODO(), conf.KubernetesConfig.ClusterName, "test", "destinationrules", "reviews-dr")
 	assert.Equal("reviews-dr", istioConfigDetails.DestinationRule.Name)
 	assert.Equal("DestinationRule", istioConfigDetails.DestinationRule.Kind)
-	assert.Equal("networking.istio.io/v1beta1", istioConfigDetails.DestinationRule.APIVersion)
+	assert.Equal("networking.istio.io/v1", istioConfigDetails.DestinationRule.APIVersion)
 	assert.Nil(err)
 
 	istioConfigDetails, err = configService.GetIstioConfigDetails(context.TODO(), conf.KubernetesConfig.ClusterName, "test", "serviceentries", "googleapis")
 	assert.Equal("googleapis", istioConfigDetails.ServiceEntry.Name)
 	assert.Equal("ServiceEntry", istioConfigDetails.ServiceEntry.Kind)
-	assert.Equal("networking.istio.io/v1beta1", istioConfigDetails.ServiceEntry.APIVersion)
+	assert.Equal("networking.istio.io/v1", istioConfigDetails.ServiceEntry.APIVersion)
 	assert.Nil(err)
 
 	istioConfigDetails, err = configService.GetIstioConfigDetails(context.TODO(), conf.KubernetesConfig.ClusterName, "test", "rules-bad", "stdio")

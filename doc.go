@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/business/authentication"
 	"github.com/kiali/kiali/graph/config/cytoscape"
 	"github.com/kiali/kiali/kubernetes"
@@ -78,11 +79,20 @@ type LoggingParam struct {
 	Level ProxyLogLevel `json:"level"`
 }
 
-// swagger:parameters istioConfigList workloadList workloadDetails workloadUpdate serviceDetails serviceUpdate appSpans serviceSpans workloadSpans appTraces serviceTraces workloadTraces errorTraces workloadValidations appList serviceMetrics aggregateMetrics appMetrics workloadMetrics istioConfigDetails istioConfigDetailsSubtype istioConfigDelete istioConfigDeleteSubtype istioConfigUpdate istioConfigUpdateSubtype serviceList appDetails graphAggregate graphAggregateByService graphApp graphAppVersion graphNamespace graphService graphWorkload namespaceMetrics customDashboard appDashboard serviceDashboard workloadDashboard istioConfigCreate istioConfigCreateSubtype namespaceUpdate namespaceTls podDetails podLogs namespaceValidations podProxyDump podProxyResource podProxyLogging
-type NamespaceParam struct {
+// swagger:parameters istioConfigList workloadDetails workloadUpdate serviceDetails serviceUpdate appSpans serviceSpans workloadSpans appTraces serviceTraces workloadTraces errorTraces workloadValidations serviceMetrics aggregateMetrics appMetrics workloadMetrics istioConfigDetails istioConfigDetailsSubtype istioConfigDelete istioConfigDeleteSubtype istioConfigUpdate istioConfigUpdateSubtype appDetails graphAggregate graphAggregateByService graphApp graphAppVersion graphNamespace graphService graphWorkload namespaceMetrics customDashboard appDashboard serviceDashboard workloadDashboard istioConfigCreate istioConfigCreateSubtype namespaceUpdate namespaceTls podDetails podLogs namespaceValidations podProxyDump podProxyResource podProxyLogging namespaceInfo
+type NamespacePathParam struct {
 	// The namespace name.
 	//
 	// in: path
+	// required: true
+	Name string `json:"namespace"`
+}
+
+// swagger:parameters serviceList appList workloadList
+type NamespaceQueryParam struct {
+	// The namespace name.
+	//
+	// in: query
 	// required: true
 	Name string `json:"namespace"`
 }
@@ -794,6 +804,34 @@ type MetricsStatsQueryBody struct {
 type MetricsStatsResponse struct {
 	// in: body
 	Body models.MetricsStats
+}
+
+// Response of the tracing info query
+// swagger:response tracingInfoResponse
+type TracingInfoResponse struct {
+	// in: body
+	Body models.TracingInfo
+}
+
+// Response of the cluster namespace health query
+// swagger:response clustersNamespaceHealthResponse
+type ClustersNamespaceHealthResponse struct {
+	// in: body
+	Body models.ClustersNamespaceHealth
+}
+
+// Response of the mesh query
+// swagger:response meshResponse
+type MeshResponse struct {
+	// in: body
+	Body business.Mesh
+}
+
+// Response of the cluster TLS query
+// swagger:response clusterTlsResponse
+type ClusterTlsResponse struct {
+	// in: body
+	Body models.MTLSStatus
 }
 
 // swagger:enum ProxyLogLevel

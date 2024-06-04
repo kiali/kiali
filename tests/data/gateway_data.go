@@ -10,7 +10,7 @@ func CreateEmptyGateway(name, namespace string, selector map[string]string) *net
 	gw.Name = name
 	gw.Namespace = namespace
 	gw.Kind = "Gateway"
-	gw.APIVersion = "networking.istio.io/v1beta1"
+	gw.APIVersion = "networking.istio.io/v1"
 	gw.Spec.Selector = selector
 	return &gw
 }
