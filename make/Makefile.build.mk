@@ -22,7 +22,7 @@ clean-all: clean clean-ui
 	@rm -rf ${OUTDIR}
 
 ## go-check: Check if the go version installed is supported by Kiali
-go-check: .check_go_version
+go-check: check_go_version
 	@GO=${GO} hack/check_go_version.sh "${GO_VERSION_KIALI}"
 	@$(eval GO_ACTUAL_VERSION ?= $(shell ${GO} version | grep -Eo  '[0-9]+\.[0-9]+\.[0-9]+'))
 	@echo "Using actual Go version of: ${GO_ACTUAL_VERSION}"
@@ -97,3 +97,10 @@ lint-install:
 # doc.go is ommited for linting, because it generates lots of warnings.
 lint:
 	golangci-lint run -c ./.github/workflows/config/.golangci.yml
+
+# Go check
+check_go_version:
+	@if [ "$(GO_MOD_VERSION)" != "$(GO_VERSION_KIALI)" ]; then \
+		echo "Kiali Go version ${GO_VERSION_KIALI} different than go.mod ${GO_MOD_VERSION}"; \
+		exit 1; \
+	fi

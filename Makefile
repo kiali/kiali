@@ -242,9 +242,3 @@ help: Makefile
 	  echo "======================================="; \
 	  exit 1; \
 	fi
-
-.check_go_version:
-	@if [ "$(GO_MOD_VERSION)" != "$(GO_VERSION_KIALI)" ]; then \
-		echo "Kiali Go version ${GO_VERSION_KIALI} different than go.mod ${GO_MOD_VERSION}"; \
-		exit 1; \
-	fi
