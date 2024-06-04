@@ -32,9 +32,9 @@ GOFMT ?= $(shell ${GO} env GOROOT)/bin/gofmt
 GO_MOD_VERSION = $(shell sed -En 's/^go[[:space:]]+([[:digit:].]+)/\1/p' go.mod)
 GO_VERSION_KIALI = 1.22.1
 GO_TEST_FLAGS ?=
-all: check_version
+all: check_go_version
 
-check_version:
+check_go_version:
 	@if [ "$(GO_MOD_VERSION)" != "$(GO_VERSION_KIALI)" ]; then \
 		echo "Kiali Go version ${GO_VERSION_KIALI} different than go.mod ${GO_MOD_VERSION}"; \
 		exit 1; \
