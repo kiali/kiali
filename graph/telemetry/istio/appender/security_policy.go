@@ -64,7 +64,7 @@ func (a SecurityPolicyAppender) appendGraph(trafficMap graph.TrafficMap, namespa
 	groupBy := "source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,source_principal,destination_cluster,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,destination_principal,connection_security_policy"
 	var query string
 	if a.Rates.Grpc == graph.RateRequests || a.Rates.Http == graph.RateRequests {
-		requestsQuery := fmt.Sprintf(`sum(rate(%s{reporter="destination",source_workload_namespace!="%v",destination_service_namespace="%v"}[%vs])) by (%s) > 0`,
+		requestsQuery := fmt.Sprintf(`sum(rate(%s{reporter=~"destination|waypoint",source_workload_namespace!="%v",destination_service_namespace="%v"}[%vs])) by (%s) > 0`,
 			"istio_requests_total",
 			namespace,
 			namespace,
@@ -73,7 +73,7 @@ func (a SecurityPolicyAppender) appendGraph(trafficMap graph.TrafficMap, namespa
 		query = fmt.Sprintf(`(%s)`, requestsQuery)
 	}
 	if a.Rates.Grpc == graph.RateSent || a.Rates.Grpc == graph.RateTotal {
-		grpcSentQuery := fmt.Sprintf(`sum(rate(%s{reporter="destination",source_workload_namespace!="%v",destination_service_namespace="%v"}[%vs])) by (%s) > 0`,
+		grpcSentQuery := fmt.Sprintf(`sum(rate(%s{reporter=~"destination|waypoint",source_workload_namespace!="%v",destination_service_namespace="%v"}[%vs])) by (%s) > 0`,
 			"istio_request_messages_total",
 			namespace,
 			namespace,
@@ -86,7 +86,7 @@ func (a SecurityPolicyAppender) appendGraph(trafficMap graph.TrafficMap, namespa
 		}
 	}
 	if a.Rates.Grpc == graph.RateReceived || a.Rates.Grpc == graph.RateTotal {
-		grpcReceivedQuery := fmt.Sprintf(`sum(rate(%s{reporter="destination",source_workload_namespace!="%v",destination_service_namespace="%v"}[%vs])) by (%s) > 0`,
+		grpcReceivedQuery := fmt.Sprintf(`sum(rate(%s{reporter=~"destination|waypoint",source_workload_namespace!="%v",destination_service_namespace="%v"}[%vs])) by (%s) > 0`,
 			"istio_response_messages_total",
 			namespace,
 			namespace,
@@ -124,25 +124,13 @@ func (a SecurityPolicyAppender) appendGraph(trafficMap graph.TrafficMap, namespa
 			query = fmt.Sprintf(`%s OR (%s)`, query, tcpReceivedQuery)
 		}
 	}
-	// Waypoint proxies data
-	waypointReceivedQuery := fmt.Sprintf(`sum(rate(%s{reporter="waypoint",source_workload_namespace!="%v",destination_service_namespace="%v"}[%vs])) by (%s) > 0`,
-		"istio_requests_total",
-		namespace,
-		namespace,
-		int(duration.Seconds()), // range duration for the query
-		groupBy)
-	if query == "" {
-		query = fmt.Sprintf(`(%s)`, waypointReceivedQuery)
-	} else {
-		query = fmt.Sprintf(`%s OR (%s)`, query, waypointReceivedQuery)
-	}
 
 	outVector := promQuery(query, time.Unix(a.QueryTime, 0), client.GetContext(), client.API(), a)
 
 	// 2) query for requests originating from a workload inside of the namespace
 	query = ""
 	if a.Rates.Grpc == graph.RateRequests || a.Rates.Http == graph.RateRequests {
-		requestsQuery := fmt.Sprintf(`sum(rate(%s{reporter="destination",source_workload_namespace="%v"}[%vs])) by (%s) > 0`,
+		requestsQuery := fmt.Sprintf(`sum(rate(%s{reporter=~"destination|waypoint",source_workload_namespace="%v"}[%vs])) by (%s) > 0`,
 			"istio_requests_total",
 			namespace,
 			int(duration.Seconds()), // range duration for the query
@@ -150,7 +138,7 @@ func (a SecurityPolicyAppender) appendGraph(trafficMap graph.TrafficMap, namespa
 		query = fmt.Sprintf(`(%s)`, requestsQuery)
 	}
 	if a.Rates.Grpc == graph.RateSent || a.Rates.Grpc == graph.RateTotal {
-		grpcSentQuery := fmt.Sprintf(`sum(rate(%s{reporter="destination",source_workload_namespace="%v"}[%vs])) by (%s) > 0`,
+		grpcSentQuery := fmt.Sprintf(`sum(rate(%s{reporter=~"destination|waypoint",source_workload_namespace="%v"}[%vs])) by (%s) > 0`,
 			"istio_request_messages_total",
 			namespace,
 			int(duration.Seconds()), // range duration for the query
@@ -162,7 +150,7 @@ func (a SecurityPolicyAppender) appendGraph(trafficMap graph.TrafficMap, namespa
 		}
 	}
 	if a.Rates.Grpc == graph.RateReceived || a.Rates.Grpc == graph.RateTotal {
-		grpcReceivedQuery := fmt.Sprintf(`sum(rate(%s{reporter="destination",source_workload_namespace="%v"}[%vs])) by (%s) > 0`,
+		grpcReceivedQuery := fmt.Sprintf(`sum(rate(%s{reporter=~"destination|waypoint",source_workload_namespace="%v"}[%vs])) by (%s) > 0`,
 			"istio_response_messages_total",
 			namespace,
 			int(duration.Seconds()), // range duration for the query
@@ -196,17 +184,6 @@ func (a SecurityPolicyAppender) appendGraph(trafficMap graph.TrafficMap, namespa
 		} else {
 			query = fmt.Sprintf(`%s OR (%s)`, query, tcpReceivedQuery)
 		}
-	}
-	// Waypoint
-	waypointQuery := fmt.Sprintf(`sum(rate(%s{reporter="waypoint",source_workload_namespace="%v"}[%vs])) by (%s) > 0`,
-		"istio_requests_total",
-		namespace,
-		int(duration.Seconds()), // range duration for the query
-		groupBy)
-	if query == "" {
-		query = fmt.Sprintf(`(%s)`, waypointQuery)
-	} else {
-		query = fmt.Sprintf(`%s OR (%s)`, query, waypointQuery)
 	}
 
 	inVector := promQuery(query, time.Unix(a.QueryTime, 0), client.GetContext(), client.API(), a)
