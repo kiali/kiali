@@ -1,5 +1,19 @@
 #/bin/bash
 
+function value_in_array {
+    local value="$1"
+    shift
+    local array=("$@")
+
+    for element in "${array[@]}"; do
+        if [[ "$element" == "$value" ]]; then
+            return 0
+        fi
+    done
+
+    return 1
+}
+
 # This deploys the travel agency demo
 
 HACK_SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
@@ -15,6 +29,9 @@ source ${HACK_SCRIPT_DIR}/functions.sh
 : ${NAMESPACE_PORTAL:=travel-portal}
 : ${SHOW_GUI:=false}
 : ${SOURCE:="https://raw.githubusercontent.com/kiali/demos/master"}
+: ${WAYPOINT:=false}
+
+: ${AMBIENT_ENABLED=false} # the script will set this to true only if Ambient is enabled and no sidecars are injected
 
 while [ $# -gt 0 ]; do
   key="$1"
@@ -27,6 +44,10 @@ while [ $# -gt 0 ]; do
       DELETE_DEMO="$2"
       shift;shift
       ;;
+    -di|--disable-injection)
+      DISABLE_INJECTION="$2"
+      shift;shift
+      ;;
     -ei|--enable-injection)
       ENABLE_INJECTION="$2"
       shift;shift
@@ -36,9 +57,9 @@ while [ $# -gt 0 ]; do
       shift;shift
       ;;
     -in|--istio-namespace)
-￼￼    ISTIO_NAMESPACE="$2"
-￼￼    shift;shift
-￼￼    ;;
+      ISTIO_NAMESPACE="$2"
+      shift;shift
+      ;;
     -s|--source)
       SOURCE="$2"
       shift;shift
@@ -47,17 +68,23 @@ while [ $# -gt 0 ]; do
       SHOW_GUI="$2"
       shift;shift
       ;;
+    -w|--waypoint)
+      WAYPOINT="$2"
+      shift;shift
+      ;;
     -h|--help)
       cat <<HELPMSG
 Valid command line arguments:
   -c|--client: either 'oc' or 'kubectl'
   -d|--delete: either 'true' or 'false'. If 'true' the travel agency demo will be deleted, not installed.
-  -ei|--enable-injection: either 'true' or 'false' (default is true). If 'true' auto-inject proxies for the workloads.
+  -di|--disable-injection: Comma separated list of namespaces to include in Ambient. Ex. --ambient=travel-agency.
+  -ei|--enable-injection: either 'true' or 'false' or 'mix' (default is true). If 'true' auto-inject proxies for the workloads.
   -eo|--enable-operation-metrics: either 'true' or 'false' (default is false).
   -in|--istio-namespace <name>: Where the Istio control plane is installed (default: istio-system).
   -s|--source: demo file source. For example: file:///home/me/demos Default: https://raw.githubusercontent.com/kiali/demos/master
   -sg|--show-gui: do not install anything, but bring up the travel agency GUI in a browser window
   -h|--help: this text
+  -w|--waypoint: Add waypoint proxy for Ambient namespaces
 HELPMSG
       exit 1
       ;;
@@ -86,6 +113,7 @@ echo NAMESPACE_AGENCY=${NAMESPACE_AGENCY}
 echo NAMESPACE_CONTROL=${NAMESPACE_CONTROL}
 echo NAMESPACE_PORTAL=${NAMESPACE_PORTAL}
 echo SOURCE=${SOURCE}
+echo WAYPOINT=${WAYPOINT}
 
 IS_OPENSHIFT="false"
 if [[ "${CLIENT_EXE}" = *"oc" ]]; then
@@ -93,7 +121,6 @@ if [[ "${CLIENT_EXE}" = *"oc" ]]; then
 fi
 
 echo "IS_OPENSHIFT=${IS_OPENSHIFT}"
-
 
 # If we are to delete, remove everything and exit immediately after
 if [ "${DELETE_DEMO}" == "true" ]; then
@@ -110,12 +137,37 @@ if [ "${DELETE_DEMO}" == "true" ]; then
   exit 0
 fi
 
+for n in $(${CLIENT_EXE} get daemonset --all-namespaces -o jsonpath='{.items[*].metadata.name}')
+do
+   if [ "${n}" == "ztunnel" ]; then
+     AMBIENT_ENABLED="true"
+     # Verify Gateway API
+     echo "Verifying that Gateway API is installed; if it is not then it will be installed now."
+     $CLIENT_EXE get crd gateways.gateway.networking.k8s.io &> /dev/null || \
+       { $CLIENT_EXE kustomize "github.com/kubernetes-sigs/gateway-api/config/crd/experimental?ref=v1.1.0" | $CLIENT_EXE apply -f -; }
+     break
+   fi
+done
+if [ "${AMBIENT_ENABLED}" == "false" ] && [ "${WAYPOINT}" == "true" ]; then
+ echo "Waypoint proxy cannot be installed as Ambient is not enabled."
+ exit 1
+fi
+echo AMBIENT_ENABLED=${AMBIENT_ENABLED}
+
 # Create and prepare the demo namespaces
+
+IFS=',' read -r -a AMBIENT_NS <<< ${DISABLE_INJECTION}
 
 if ! ${CLIENT_EXE} get namespace ${NAMESPACE_AGENCY} 2>/dev/null; then
   ${CLIENT_EXE} create namespace ${NAMESPACE_AGENCY}
-  if [ "${ENABLE_INJECTION}" == "true" ]; then
-    ${CLIENT_EXE} label namespace ${NAMESPACE_AGENCY} istio-injection=enabled
+  value_in_array "${NAMESPACE_AGENCY}" "${AMBIENT_NS[@]}"
+  in_array=$?
+  if [[ "${AMBIENT_ENABLED}" == "true" && $in_array -eq 0 ]]; then
+      ${CLIENT_EXE} label namespace ${NAMESPACE_AGENCY} istio.io/dataplane-mode=ambient
+  else
+    if [ "${ENABLE_INJECTION}" == "true" ]; then
+      ${CLIENT_EXE} label namespace ${NAMESPACE_AGENCY} istio-injection=enabled
+    fi
   fi
   if [ "${IS_OPENSHIFT}" == "true" ]; then
     cat <<NAD | $CLIENT_EXE -n ${NAMESPACE_AGENCY} create -f -
@@ -129,8 +181,14 @@ fi
 
 if ! ${CLIENT_EXE} get namespace ${NAMESPACE_PORTAL} 2>/dev/null; then
   ${CLIENT_EXE} create namespace ${NAMESPACE_PORTAL}
-  if [ "${ENABLE_INJECTION}" == "true" ]; then
-    ${CLIENT_EXE} label namespace ${NAMESPACE_PORTAL} istio-injection=enabled
+  value_in_array "${NAMESPACE_PORTAL}" "${AMBIENT_NS[@]}"
+  in_array=$?
+  if [[ "${AMBIENT_ENABLED}" == "true" && $in_array -eq 0 ]]; then
+        ${CLIENT_EXE} label namespace ${NAMESPACE_PORTAL} istio.io/dataplane-mode=ambient
+    else
+      if [ "${ENABLE_INJECTION}" == "true" ]; then
+        ${CLIENT_EXE} label namespace ${NAMESPACE_PORTAL} istio-injection=enabled
+      fi
   fi
   if [ "${IS_OPENSHIFT}" == "true" ]; then
     cat <<NAD | $CLIENT_EXE -n ${NAMESPACE_PORTAL} create -f -
@@ -144,8 +202,14 @@ fi
 
 if ! ${CLIENT_EXE} get namespace ${NAMESPACE_CONTROL} 2>/dev/null; then
   ${CLIENT_EXE} create namespace ${NAMESPACE_CONTROL}
-  if [ "${ENABLE_INJECTION}" == "true" ]; then
-    ${CLIENT_EXE} label namespace ${NAMESPACE_CONTROL} istio-injection=enabled
+  value_in_array "${NAMESPACE_CONTROL}" "${AMBIENT_NS[@]}"
+  in_array=$?
+  if [[ "${AMBIENT_ENABLED}" == "true" && $in_array -eq 0 ]]; then
+     ${CLIENT_EXE} label namespace ${NAMESPACE_CONTROL} istio.io/dataplane-mode=ambient
+  else
+    if [ "${ENABLE_INJECTION}" == "true" ]; then
+      ${CLIENT_EXE} label namespace ${NAMESPACE_CONTROL} istio-injection=enabled
+    fi
   fi
   if [ "${IS_OPENSHIFT}" == "true" ]; then
     cat <<NAD | $CLIENT_EXE -n ${NAMESPACE_CONTROL} create -f -
@@ -187,6 +251,49 @@ fi
 ${CLIENT_EXE} apply -f <(curl -L "${SOURCE}/travels/travel_agency.yaml") -n ${NAMESPACE_AGENCY}
 ${CLIENT_EXE} apply -f <(curl -L "${SOURCE}/travels/travel_portal.yaml") -n ${NAMESPACE_PORTAL}
 ${CLIENT_EXE} apply -f <(curl -L "${SOURCE}/travels/travel_control.yaml") -n ${NAMESPACE_CONTROL}
+
+if [ "${WAYPOINT}" == "true" ]; then
+  # Create Waypoint proxy
+  echo "Create Waypoint proxies per namespace"
+
+  if [ "${ISTIO_DIR}" == "" ]; then
+    # Go to the main output directory and try to find an Istio there.
+    HACK_SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
+    OUTPUT_DIR="${OUTPUT_DIR:-${HACK_SCRIPT_DIR}/../../_output}"
+    ALL_ISTIOS=$(ls -dt1 ${OUTPUT_DIR}/istio-*)
+    if [ "$?" != "0" ]; then
+      ${HACK_SCRIPT_DIR}/download-istio.sh
+      if [ "$?" != "0" ]; then
+        echo "ERROR: You do not have Istio installed and it cannot be downloaded"
+        exit 1
+      fi
+    fi
+    # use the Istio release that was last downloaded (that's the -t option to ls)
+    ISTIO_DIR=$(ls -dt1 ${OUTPUT_DIR}/istio-* | head -n1)
+
+    if [ ! -d "${ISTIO_DIR}" ]; then
+       echo "ERROR: Istio cannot be found at: ${ISTIO_DIR}"
+       exit 1
+    fi
+
+    echo "Istio is found here: ${ISTIO_DIR}"
+    if [[ -x "${ISTIO_DIR}/bin/istioctl" ]]; then
+      echo "istioctl is found here: ${ISTIO_DIR}/bin/istioctl"
+      ISTIOCTL="${ISTIO_DIR}/bin/istioctl"
+      ${ISTIOCTL} version
+    else
+      echo "ERROR: istioctl is NOT found at ${ISTIO_DIR}/bin/istioctl"
+      exit 1
+    fi
+
+  fi
+
+  for NS in "${AMBIENT_NS[@]}"
+  do
+    ${ISTIOCTL} x waypoint apply -n ${NS} --enroll-namespace
+    echo "Create Waypoint proxy for ${NS}"
+  done
+fi
 
 # Set up metric classification
 
