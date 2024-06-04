@@ -22,7 +22,7 @@ clean-all: clean clean-ui
 	@rm -rf ${OUTDIR}
 
 ## go-check: Check if the go version installed is supported by Kiali
-go-check: check_go_version
+go-check: .check_go_version
 	@GO=${GO} hack/check_go_version.sh "${GO_VERSION_KIALI}"
 	@$(eval GO_ACTUAL_VERSION ?= $(shell ${GO} version | grep -Eo  '[0-9]+\.[0-9]+\.[0-9]+'))
 	@echo "Using actual Go version of: ${GO_ACTUAL_VERSION}"
