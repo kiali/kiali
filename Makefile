@@ -29,8 +29,16 @@ VERSION_LABEL ?= ${VERSION}
 # The go commands and the minimum Go version that must be used to build the app.
 GO ?= go
 GOFMT ?= $(shell ${GO} env GOROOT)/bin/gofmt
+GO_MOD_VERSION = $(shell sed -En 's/^go[[:space:]]+([[:digit:].]+)/\1/p' go.mod)
 GO_VERSION_KIALI = 1.22.1
 GO_TEST_FLAGS ?=
+all: check_version
+
+check_version:
+	@if [ "$(GO_MOD_VERSION)" != "$(GO_VERSION_KIALI)" ]; then \
+		echo "Kiali Go version ${GO_VERSION_KIALI} different than go.mod ${GO_MOD_VERSION}"; \
+		exit 1; \
+	fi
 
 # Identifies the Kiali container image that will be built.
 IMAGE_ORG ?= kiali
