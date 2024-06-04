@@ -151,7 +151,7 @@ jobs:
       if: ${{ env.release_type != 'skip' }}
       id: go_version
       run: |
-        GO_VERSION=$(sed -rn 's/^GO_VERSION_KIALI \= (.*)/\1/p' Makefile)
+        GO_VERSION=$(sed -rn 's/^go[[:space:]]+([[:digit:].]+)/\1/p' go.mod)
 
         # Remove any pre release identifier (ie: "-SNAPSHOT")
         GO_VERSION=${GO_VERSION%-*}
