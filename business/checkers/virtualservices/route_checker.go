@@ -3,8 +3,8 @@ package virtualservices
 import (
 	"fmt"
 
-	api_networking_v1beta1 "istio.io/api/networking/v1beta1"
-	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	api_networking_v1 "istio.io/api/networking/v1"
+	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
@@ -12,7 +12,7 @@ import (
 
 type RouteChecker struct {
 	Namespaces     []string
-	VirtualService *networking_v1beta1.VirtualService
+	VirtualService *networking_v1.VirtualService
 }
 
 // Check returns both an array of IstioCheck and a boolean indicating if the current route rule is valid.
@@ -133,7 +133,7 @@ func (route RouteChecker) checkTlsRoutes() ([]*models.IstioCheck, bool) {
 	return validations, valid
 }
 
-func (route RouteChecker) trackHttpSubset(routeIdx int, kind string, destinationWeights []*api_networking_v1beta1.HTTPRouteDestination, checks *[]*models.IstioCheck) {
+func (route RouteChecker) trackHttpSubset(routeIdx int, kind string, destinationWeights []*api_networking_v1.HTTPRouteDestination, checks *[]*models.IstioCheck) {
 	subsetCollitions := map[string][]int{}
 
 	for destWeightIdx, destinationWeight := range destinationWeights {
@@ -156,7 +156,7 @@ func (route RouteChecker) trackHttpSubset(routeIdx int, kind string, destination
 	appendSubsetDuplicity(routeIdx, kind, subsetCollitions, checks)
 }
 
-func (route RouteChecker) trackTcpTlsSubset(routeIdx int, kind string, destinationWeights []*api_networking_v1beta1.RouteDestination, checks *[]*models.IstioCheck) {
+func (route RouteChecker) trackTcpTlsSubset(routeIdx int, kind string, destinationWeights []*api_networking_v1.RouteDestination, checks *[]*models.IstioCheck) {
 	subsetCollitions := map[string][]int{}
 
 	for destWeightIdx, destinationWeight := range destinationWeights {

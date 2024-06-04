@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/util/yaml"
 
-	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 
 	"github.com/kiali/kiali/models"
 )
@@ -80,7 +80,7 @@ spec:
 		t.Run(name, func(t *testing.T) {
 			assert := assert.New(t)
 
-			var vs networking_v1beta1.VirtualService
+			var vs networking_v1.VirtualService
 			assert.NoError(yaml.Unmarshal(tc.vsYAML, &vs))
 
 			assert.Equal(models.HasVSRequestTimeout(&vs), tc.expectedTimeout)
@@ -88,7 +88,7 @@ spec:
 	}
 
 	// Testing nil case
-	var vs *networking_v1beta1.VirtualService
+	var vs *networking_v1.VirtualService
 	assert.False(t, models.HasVSRequestTimeout(vs))
 }
 
@@ -193,7 +193,7 @@ spec:
 		t.Run(name, func(t *testing.T) {
 			assert := assert.New(t)
 
-			var vs networking_v1beta1.VirtualService
+			var vs networking_v1.VirtualService
 			assert.NoError(yaml.Unmarshal(tc.vsYAML, &vs))
 
 			assert.Equal(models.HasVSFaultInjection(&vs), tc.expectedFaultInjection)
@@ -201,7 +201,7 @@ spec:
 	}
 
 	// Testing nil case
-	var vs *networking_v1beta1.VirtualService
+	var vs *networking_v1.VirtualService
 	assert.False(t, models.HasVSFaultInjection(vs))
 }
 
@@ -284,7 +284,7 @@ spec:
 		t.Run(name, func(t *testing.T) {
 			assert := assert.New(t)
 
-			var vs networking_v1beta1.VirtualService
+			var vs networking_v1.VirtualService
 			assert.NoError(yaml.Unmarshal(tc.vsYAML, &vs))
 
 			assert.Equal(models.HasVSTrafficShifting(&vs), tc.expectedTrafficShifting)
@@ -292,7 +292,7 @@ spec:
 	}
 
 	// Testing nil case
-	var vs *networking_v1beta1.VirtualService
+	var vs *networking_v1.VirtualService
 	assert.False(t, models.HasVSTrafficShifting(vs))
 }
 
@@ -390,7 +390,7 @@ spec:
 		t.Run(name, func(t *testing.T) {
 			assert := assert.New(t)
 
-			var vs networking_v1beta1.VirtualService
+			var vs networking_v1.VirtualService
 			assert.NoError(yaml.Unmarshal(tc.vsYAML, &vs))
 
 			assert.Equal(models.HasVSTCPTrafficShifting(&vs), tc.expectedTCPTrafficShifting)
@@ -398,7 +398,7 @@ spec:
 	}
 
 	// Testing nil case
-	var vs *networking_v1beta1.VirtualService
+	var vs *networking_v1.VirtualService
 	assert.False(t, models.HasVSTCPTrafficShifting(vs))
 }
 
@@ -511,7 +511,7 @@ spec:
 		t.Run(name, func(t *testing.T) {
 			assert := assert.New(t)
 
-			var vs networking_v1beta1.VirtualService
+			var vs networking_v1.VirtualService
 			assert.NoError(yaml.Unmarshal(tc.vsYAML, &vs))
 
 			assert.Equal(models.HasVSRequestRouting(&vs), tc.expectedRequestRouting)
@@ -519,7 +519,7 @@ spec:
 	}
 
 	// Testing nil case
-	var vs *networking_v1beta1.VirtualService
+	var vs *networking_v1.VirtualService
 	assert.False(t, models.HasVSRequestRouting(vs))
 }
 
@@ -578,7 +578,7 @@ spec:
 		t.Run(name, func(t *testing.T) {
 			assert := assert.New(t)
 
-			var vs networking_v1beta1.VirtualService
+			var vs networking_v1.VirtualService
 			assert.NoError(yaml.Unmarshal(tc.vsYAML, &vs))
 
 			assert.Equal(models.HasVSMirroring(&vs), tc.expectedMirroring)

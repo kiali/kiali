@@ -8,8 +8,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
-	security_v1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
+	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
+	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
@@ -37,13 +37,13 @@ func TestTlsPerfNsDr(t *testing.T) {
 
 	testPerfScenario(MTLSPartiallyEnabled, nss, drs, pss, false, t)
 	testPerfScenario(MTLSEnabled, nss, drs, pss, true, t)
-	testPerfScenario(MTLSEnabled, nss, []*networking_v1beta1.DestinationRule{}, pss, true, t)
+	testPerfScenario(MTLSEnabled, nss, []*networking_v1.DestinationRule{}, pss, true, t)
 }
 
-func preparePerfScenario(numNs, numDr int) ([]core_v1.Namespace, []*security_v1beta1.PeerAuthentication, []*networking_v1beta1.DestinationRule) {
+func preparePerfScenario(numNs, numDr int) ([]core_v1.Namespace, []*security_v1.PeerAuthentication, []*networking_v1.DestinationRule) {
 	nss := []core_v1.Namespace{}
-	pss := []*security_v1beta1.PeerAuthentication{}
-	drs := []*networking_v1beta1.DestinationRule{}
+	pss := []*security_v1.PeerAuthentication{}
+	drs := []*networking_v1.DestinationRule{}
 
 	fmt.Printf("TLS perf test. Num NS: %d DR per NS: %d\n", numNs, numDr)
 	i := 0
@@ -64,7 +64,7 @@ func preparePerfScenario(numNs, numDr int) ([]core_v1.Namespace, []*security_v1b
 	return nss, pss, drs
 }
 
-func testPerfScenario(exStatus string, namespaces []core_v1.Namespace, drs []*networking_v1beta1.DestinationRule, ps []*security_v1beta1.PeerAuthentication, autoMtls bool, t *testing.T) {
+func testPerfScenario(exStatus string, namespaces []core_v1.Namespace, drs []*networking_v1.DestinationRule, ps []*security_v1.PeerAuthentication, autoMtls bool, t *testing.T) {
 	assert := assert.New(t)
 
 	conf := config.NewConfig()

@@ -1,7 +1,7 @@
 package checkers
 
 import (
-	"istio.io/client-go/pkg/apis/telemetry/v1alpha1"
+	telemetry_v1 "istio.io/client-go/pkg/apis/telemetry/v1"
 
 	"github.com/kiali/kiali/models"
 )
@@ -10,7 +10,7 @@ const TelemetryCheckerType = "telemetry"
 
 type TelemetryChecker struct {
 	Namespaces  models.Namespaces
-	Telemetries []*v1alpha1.Telemetry
+	Telemetries []*telemetry_v1.Telemetry
 }
 
 // An Object Checker runs all checkers for an specific object type (i.e.: pod, route rule,...)

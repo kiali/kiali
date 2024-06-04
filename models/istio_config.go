@@ -2,10 +2,10 @@ package models
 
 import (
 	extentions_v1alpha1 "istio.io/client-go/pkg/apis/extensions/v1alpha1"
+	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
-	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
-	security_v1beta "istio.io/client-go/pkg/apis/security/v1beta1"
-	"istio.io/client-go/pkg/apis/telemetry/v1alpha1"
+	security_v1 "istio.io/client-go/pkg/apis/security/v1"
+	telemetry_v1 "istio.io/client-go/pkg/apis/telemetry/v1"
 	k8s_networking_v1 "sigs.k8s.io/gateway-api/apis/v1"
 	k8s_networking_v1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 	k8s_networking_v1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
@@ -15,16 +15,16 @@ import (
 // This type is used for returning a response of IstioConfigList
 // swagger:model IstioConfigList
 type IstioConfigList struct {
-	DestinationRules []*networking_v1beta1.DestinationRule `json:"destinationRules"`
-	EnvoyFilters     []*networking_v1alpha3.EnvoyFilter    `json:"envoyFilters"`
-	Gateways         []*networking_v1beta1.Gateway         `json:"gateways"`
-	ServiceEntries   []*networking_v1beta1.ServiceEntry    `json:"serviceEntries"`
-	Sidecars         []*networking_v1beta1.Sidecar         `json:"sidecars"`
-	VirtualServices  []*networking_v1beta1.VirtualService  `json:"virtualServices"`
-	WorkloadEntries  []*networking_v1beta1.WorkloadEntry   `json:"workloadEntries"`
-	WorkloadGroups   []*networking_v1beta1.WorkloadGroup   `json:"workloadGroups"`
-	WasmPlugins      []*extentions_v1alpha1.WasmPlugin     `json:"wasmPlugins"`
-	Telemetries      []*v1alpha1.Telemetry                 `json:"telemetries"`
+	DestinationRules []*networking_v1.DestinationRule   `json:"destinationRules"`
+	EnvoyFilters     []*networking_v1alpha3.EnvoyFilter `json:"envoyFilters"`
+	Gateways         []*networking_v1.Gateway           `json:"gateways"`
+	ServiceEntries   []*networking_v1.ServiceEntry      `json:"serviceEntries"`
+	Sidecars         []*networking_v1.Sidecar           `json:"sidecars"`
+	VirtualServices  []*networking_v1.VirtualService    `json:"virtualServices"`
+	WorkloadEntries  []*networking_v1.WorkloadEntry     `json:"workloadEntries"`
+	WorkloadGroups   []*networking_v1.WorkloadGroup     `json:"workloadGroups"`
+	WasmPlugins      []*extentions_v1alpha1.WasmPlugin  `json:"wasmPlugins"`
+	Telemetries      []*telemetry_v1.Telemetry          `json:"telemetries"`
 
 	K8sGateways        []*k8s_networking_v1.Gateway             `json:"k8sGateways"`
 	K8sGRPCRoutes      []*k8s_networking_v1.GRPCRoute           `json:"k8sGRPCRoutes"`
@@ -33,10 +33,10 @@ type IstioConfigList struct {
 	K8sTCPRoutes       []*k8s_networking_v1alpha2.TCPRoute      `json:"k8sTCPRoutes"`
 	K8sTLSRoutes       []*k8s_networking_v1alpha2.TLSRoute      `json:"k8sTLSRoutes"`
 
-	AuthorizationPolicies  []*security_v1beta.AuthorizationPolicy   `json:"authorizationPolicies"`
-	PeerAuthentications    []*security_v1beta.PeerAuthentication    `json:"peerAuthentications"`
-	RequestAuthentications []*security_v1beta.RequestAuthentication `json:"requestAuthentications"`
-	IstioValidations       IstioValidations                         `json:"validations"`
+	AuthorizationPolicies  []*security_v1.AuthorizationPolicy   `json:"authorizationPolicies"`
+	PeerAuthentications    []*security_v1.PeerAuthentication    `json:"peerAuthentications"`
+	RequestAuthentications []*security_v1.RequestAuthentication `json:"requestAuthentications"`
+	IstioValidations       IstioValidations                     `json:"validations"`
 }
 
 func (i *IstioConfigList) ConvertToResponse() {
@@ -47,34 +47,34 @@ func (i *IstioConfigList) ConvertToResponse() {
 	// we can't just put all the slices into a new generic slice as putting
 	// them in that slice would cause them to no longer be nil.
 	if i.DestinationRules == nil {
-		i.DestinationRules = []*networking_v1beta1.DestinationRule{}
+		i.DestinationRules = []*networking_v1.DestinationRule{}
 	}
 	if i.EnvoyFilters == nil {
 		i.EnvoyFilters = []*networking_v1alpha3.EnvoyFilter{}
 	}
 	if i.Gateways == nil {
-		i.Gateways = []*networking_v1beta1.Gateway{}
+		i.Gateways = []*networking_v1.Gateway{}
 	}
 	if i.ServiceEntries == nil {
-		i.ServiceEntries = []*networking_v1beta1.ServiceEntry{}
+		i.ServiceEntries = []*networking_v1.ServiceEntry{}
 	}
 	if i.Sidecars == nil {
-		i.Sidecars = []*networking_v1beta1.Sidecar{}
+		i.Sidecars = []*networking_v1.Sidecar{}
 	}
 	if i.VirtualServices == nil {
-		i.VirtualServices = []*networking_v1beta1.VirtualService{}
+		i.VirtualServices = []*networking_v1.VirtualService{}
 	}
 	if i.WorkloadEntries == nil {
-		i.WorkloadEntries = []*networking_v1beta1.WorkloadEntry{}
+		i.WorkloadEntries = []*networking_v1.WorkloadEntry{}
 	}
 	if i.WorkloadGroups == nil {
-		i.WorkloadGroups = []*networking_v1beta1.WorkloadGroup{}
+		i.WorkloadGroups = []*networking_v1.WorkloadGroup{}
 	}
 	if i.WasmPlugins == nil {
 		i.WasmPlugins = []*extentions_v1alpha1.WasmPlugin{}
 	}
 	if i.Telemetries == nil {
-		i.Telemetries = []*v1alpha1.Telemetry{}
+		i.Telemetries = []*telemetry_v1.Telemetry{}
 	}
 
 	if i.K8sGateways == nil {
@@ -97,13 +97,13 @@ func (i *IstioConfigList) ConvertToResponse() {
 	}
 
 	if i.AuthorizationPolicies == nil {
-		i.AuthorizationPolicies = []*security_v1beta.AuthorizationPolicy{}
+		i.AuthorizationPolicies = []*security_v1.AuthorizationPolicy{}
 	}
 	if i.PeerAuthentications == nil {
-		i.PeerAuthentications = []*security_v1beta.PeerAuthentication{}
+		i.PeerAuthentications = []*security_v1.PeerAuthentication{}
 	}
 	if i.RequestAuthentications == nil {
-		i.RequestAuthentications = []*security_v1beta.RequestAuthentication{}
+		i.RequestAuthentications = []*security_v1.RequestAuthentication{}
 	}
 }
 
@@ -114,19 +114,19 @@ type IstioConfigDetails struct {
 	Namespace  Namespace `json:"namespace"`
 	ObjectType string    `json:"objectType"`
 
-	AuthorizationPolicy   *security_v1beta.AuthorizationPolicy   `json:"authorizationPolicy"`
-	DestinationRule       *networking_v1beta1.DestinationRule    `json:"destinationRule"`
-	EnvoyFilter           *networking_v1alpha3.EnvoyFilter       `json:"envoyFilter"`
-	Gateway               *networking_v1beta1.Gateway            `json:"gateway"`
-	PeerAuthentication    *security_v1beta.PeerAuthentication    `json:"peerAuthentication"`
-	RequestAuthentication *security_v1beta.RequestAuthentication `json:"requestAuthentication"`
-	ServiceEntry          *networking_v1beta1.ServiceEntry       `json:"serviceEntry"`
-	Sidecar               *networking_v1beta1.Sidecar            `json:"sidecar"`
-	VirtualService        *networking_v1beta1.VirtualService     `json:"virtualService"`
-	WorkloadEntry         *networking_v1beta1.WorkloadEntry      `json:"workloadEntry"`
-	WorkloadGroup         *networking_v1beta1.WorkloadGroup      `json:"workloadGroup"`
-	WasmPlugin            *extentions_v1alpha1.WasmPlugin        `json:"wasmPlugin"`
-	Telemetry             *v1alpha1.Telemetry                    `json:"telemetry"`
+	AuthorizationPolicy   *security_v1.AuthorizationPolicy   `json:"authorizationPolicy"`
+	DestinationRule       *networking_v1.DestinationRule     `json:"destinationRule"`
+	EnvoyFilter           *networking_v1alpha3.EnvoyFilter   `json:"envoyFilter"`
+	Gateway               *networking_v1.Gateway             `json:"gateway"`
+	PeerAuthentication    *security_v1.PeerAuthentication    `json:"peerAuthentication"`
+	RequestAuthentication *security_v1.RequestAuthentication `json:"requestAuthentication"`
+	ServiceEntry          *networking_v1.ServiceEntry        `json:"serviceEntry"`
+	Sidecar               *networking_v1.Sidecar             `json:"sidecar"`
+	VirtualService        *networking_v1.VirtualService      `json:"virtualService"`
+	WorkloadEntry         *networking_v1.WorkloadEntry       `json:"workloadEntry"`
+	WorkloadGroup         *networking_v1.WorkloadGroup       `json:"workloadGroup"`
+	WasmPlugin            *extentions_v1alpha1.WasmPlugin    `json:"wasmPlugin"`
+	Telemetry             *telemetry_v1.Telemetry            `json:"telemetry"`
 
 	K8sGateway        *k8s_networking_v1.Gateway             `json:"k8sGateway"`
 	K8sGRPCRoute      *k8s_networking_v1.GRPCRoute           `json:"k8sGRPCRoute"`
@@ -288,25 +288,25 @@ func (configList IstioConfigList) FilterIstioConfigs(nss []string) *IstioConfigs
 		if filtered[ns] == nil {
 			filtered[ns] = new(IstioConfigList)
 			filtered[ns].IstioValidations = IstioValidations{}
-			filtered[ns].DestinationRules = []*networking_v1beta1.DestinationRule{}
+			filtered[ns].DestinationRules = []*networking_v1.DestinationRule{}
 			filtered[ns].EnvoyFilters = []*networking_v1alpha3.EnvoyFilter{}
-			filtered[ns].Gateways = []*networking_v1beta1.Gateway{}
+			filtered[ns].Gateways = []*networking_v1.Gateway{}
 			filtered[ns].K8sGateways = []*k8s_networking_v1.Gateway{}
 			filtered[ns].K8sGRPCRoutes = []*k8s_networking_v1.GRPCRoute{}
 			filtered[ns].K8sHTTPRoutes = []*k8s_networking_v1.HTTPRoute{}
 			filtered[ns].K8sReferenceGrants = []*k8s_networking_v1beta1.ReferenceGrant{}
 			filtered[ns].K8sTCPRoutes = []*k8s_networking_v1alpha2.TCPRoute{}
 			filtered[ns].K8sTLSRoutes = []*k8s_networking_v1alpha2.TLSRoute{}
-			filtered[ns].VirtualServices = []*networking_v1beta1.VirtualService{}
-			filtered[ns].ServiceEntries = []*networking_v1beta1.ServiceEntry{}
-			filtered[ns].Sidecars = []*networking_v1beta1.Sidecar{}
-			filtered[ns].WorkloadEntries = []*networking_v1beta1.WorkloadEntry{}
-			filtered[ns].WorkloadGroups = []*networking_v1beta1.WorkloadGroup{}
-			filtered[ns].AuthorizationPolicies = []*security_v1beta.AuthorizationPolicy{}
-			filtered[ns].PeerAuthentications = []*security_v1beta.PeerAuthentication{}
-			filtered[ns].RequestAuthentications = []*security_v1beta.RequestAuthentication{}
+			filtered[ns].VirtualServices = []*networking_v1.VirtualService{}
+			filtered[ns].ServiceEntries = []*networking_v1.ServiceEntry{}
+			filtered[ns].Sidecars = []*networking_v1.Sidecar{}
+			filtered[ns].WorkloadEntries = []*networking_v1.WorkloadEntry{}
+			filtered[ns].WorkloadGroups = []*networking_v1.WorkloadGroup{}
+			filtered[ns].AuthorizationPolicies = []*security_v1.AuthorizationPolicy{}
+			filtered[ns].PeerAuthentications = []*security_v1.PeerAuthentication{}
+			filtered[ns].RequestAuthentications = []*security_v1.RequestAuthentication{}
 			filtered[ns].WasmPlugins = []*extentions_v1alpha1.WasmPlugin{}
-			filtered[ns].Telemetries = []*v1alpha1.Telemetry{}
+			filtered[ns].Telemetries = []*telemetry_v1.Telemetry{}
 		}
 		for _, dr := range configList.DestinationRules {
 			if dr.Namespace == ns {

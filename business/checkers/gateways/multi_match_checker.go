@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"strings"
 
-	api_networking_v1beta1 "istio.io/api/networking/v1beta1"
-	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	api_networking_v1 "istio.io/api/networking/v1"
+	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 
 	"k8s.io/apimachinery/pkg/labels"
 
@@ -17,7 +17,7 @@ import (
 
 type MultiMatchChecker struct {
 	Cluster         string
-	Gateways        []*networking_v1beta1.Gateway
+	Gateways        []*networking_v1.Gateway
 	existingList    map[string][]Host
 	hostRegexpCache map[string]regexp.Regexp
 }
@@ -118,7 +118,7 @@ func createError(gatewayRuleName, namespace, cluster string, serverIndex, hostIn
 	return models.IstioValidations{key: rrValidation}
 }
 
-func parsePortAndHostnames(serverDef *api_networking_v1beta1.Server) []Host {
+func parsePortAndHostnames(serverDef *api_networking_v1.Server) []Host {
 	var port int
 	if serverDef.Port != nil {
 		if n, e := intutil.Convert(serverDef.Port.Number); e == nil {

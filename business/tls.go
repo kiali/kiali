@@ -3,7 +3,7 @@ package business
 import (
 	"context"
 
-	security_v1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
+	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
@@ -96,7 +96,7 @@ func (in *TLSService) NamespaceWidemTLSStatus(ctx context.Context, namespace, cl
 
 	pas := kubernetes.FilterByNamespace(istioConfigList.PeerAuthentications, namespace)
 	if config.IsRootNamespace(namespace) {
-		pas = []*security_v1beta1.PeerAuthentication{}
+		pas = []*security_v1.PeerAuthentication{}
 	}
 	drs := kubernetes.FilterByNamespaces(istioConfigList.DestinationRules, nss)
 
@@ -144,7 +144,7 @@ func (in *TLSService) ClusterWideNSmTLSStatus(ctx context.Context, nss []string,
 	for _, namespace := range nss {
 		pas := kubernetes.FilterByNamespace(istioConfigList.PeerAuthentications, namespace)
 		if config.IsRootNamespace(namespace) {
-			pas = []*security_v1beta1.PeerAuthentication{}
+			pas = []*security_v1.PeerAuthentication{}
 		}
 
 		mtlsStatus := mtls.MtlsStatus{

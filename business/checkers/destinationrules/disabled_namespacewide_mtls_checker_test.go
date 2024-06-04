@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
-	security_v1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
+	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
+	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
@@ -25,7 +25,7 @@ func TestDRNSWideDisablingTLSPolicyPermissive(t *testing.T) {
 		data.CreateEmptyDestinationRule("bookinfo", "disable-mtls", "*.bookinfo.svc.cluster.local"))
 
 	mTlsDetails := kubernetes.MTLSDetails{
-		PeerAuthentications: []*security_v1beta1.PeerAuthentication{
+		PeerAuthentications: []*security_v1.PeerAuthentication{
 			data.CreateEmptyPeerAuthentication("default", "bookinfo", data.CreateMTLS("PERMISSIVE")),
 		},
 	}
@@ -45,7 +45,7 @@ func TestDRNSWideDisablingTLSPolicyDisable(t *testing.T) {
 		data.CreateEmptyDestinationRule("bookinfo", "disable-mtls", "*.bookinfo.svc.cluster.local"))
 
 	mTlsDetails := kubernetes.MTLSDetails{
-		PeerAuthentications: []*security_v1beta1.PeerAuthentication{
+		PeerAuthentications: []*security_v1.PeerAuthentication{
 			data.CreateEmptyPeerAuthentication("default", "bookinfo", data.CreateMTLS("DISABLE")),
 		},
 	}
@@ -66,10 +66,10 @@ func TestDRNSWideDisablingTLSPolicyPermissiveMeshStrict(t *testing.T) {
 		data.CreateEmptyDestinationRule("bookinfo", "disable-mtls", "*.bookinfo.svc.cluster.local"))
 
 	mTlsDetails := kubernetes.MTLSDetails{
-		PeerAuthentications: []*security_v1beta1.PeerAuthentication{
+		PeerAuthentications: []*security_v1.PeerAuthentication{
 			data.CreateEmptyPeerAuthentication("default", "bookinfo", data.CreateMTLS("PERMISSIVE")),
 		},
-		MeshPeerAuthentications: []*security_v1beta1.PeerAuthentication{
+		MeshPeerAuthentications: []*security_v1.PeerAuthentication{
 			data.CreateEmptyMeshPeerAuthentication("default", data.CreateMTLS("STRICT")),
 		},
 	}
@@ -86,7 +86,7 @@ func TestDRNSWideDisablingTLSPolicyStrict(t *testing.T) {
 		data.CreateEmptyDestinationRule("bookinfo", "disable-mtls", "*.bookinfo.svc.cluster.local"))
 
 	mTlsDetails := kubernetes.MTLSDetails{
-		PeerAuthentications: []*security_v1beta1.PeerAuthentication{
+		PeerAuthentications: []*security_v1.PeerAuthentication{
 			data.CreateEmptyPeerAuthentication("default", "bookinfo", data.CreateMTLS("STRICT")),
 		},
 	}
@@ -104,7 +104,7 @@ func TestDRNSWideDisablingTLSMeshPolicyStrict(t *testing.T) {
 		data.CreateEmptyDestinationRule("bookinfo", "disable-mtls", "*.bookinfo.svc.cluster.local"))
 
 	mTlsDetails := kubernetes.MTLSDetails{
-		MeshPeerAuthentications: []*security_v1beta1.PeerAuthentication{
+		MeshPeerAuthentications: []*security_v1.PeerAuthentication{
 			data.CreateEmptyMeshPeerAuthentication("default", data.CreateMTLS("STRICT")),
 		},
 	}
@@ -122,7 +122,7 @@ func TestDRNSWideDisablingTLSMeshPolicyPermissive(t *testing.T) {
 		data.CreateEmptyDestinationRule("bookinfo", "disable-mtls", "*.bookinfo.svc.cluster.local"))
 
 	mTlsDetails := kubernetes.MTLSDetails{
-		MeshPeerAuthentications: []*security_v1beta1.PeerAuthentication{
+		MeshPeerAuthentications: []*security_v1.PeerAuthentication{
 			data.CreateEmptyMeshPeerAuthentication("default", data.CreateMTLS("PERMISSIVE")),
 		},
 	}
@@ -164,13 +164,13 @@ func TestMtlsStrictNsDisable(t *testing.T) {
 	destinationRule := data.AddTrafficPolicyToDestinationRule(data.CreateDisabledMTLSTrafficPolicyForDestinationRules(), data.CreateEmptyDestinationRule("bookinfo", "dr-mtls-disabled", "*.bookinfo.svc.cluster.local"))
 
 	mTlsDetails := kubernetes.MTLSDetails{
-		MeshPeerAuthentications: []*security_v1beta1.PeerAuthentication{
+		MeshPeerAuthentications: []*security_v1.PeerAuthentication{
 			data.CreateEmptyMeshPeerAuthentication("default", data.CreateMTLS("STRICT")),
 		},
-		PeerAuthentications: []*security_v1beta1.PeerAuthentication{
+		PeerAuthentications: []*security_v1.PeerAuthentication{
 			data.CreateEmptyPeerAuthentication("disable-bookinfo", "bookinfo", data.CreateMTLS("DISABLE")),
 		},
-		DestinationRules: []*networking_v1beta1.DestinationRule{
+		DestinationRules: []*networking_v1.DestinationRule{
 			data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(), data.CreateEmptyDestinationRule("istio-system", "dr-mtls", "*.local")),
 		},
 	}
@@ -179,7 +179,7 @@ func TestMtlsStrictNsDisable(t *testing.T) {
 	testNoDisabledMtlsValidationsFound(t, destinationRule, mTlsDetails, true)
 }
 
-func testNoDisabledMtlsValidationsFound(t *testing.T, destinationRule *networking_v1beta1.DestinationRule, mTLSDetails kubernetes.MTLSDetails, autoMtls bool) {
+func testNoDisabledMtlsValidationsFound(t *testing.T, destinationRule *networking_v1.DestinationRule, mTLSDetails kubernetes.MTLSDetails, autoMtls bool) {
 	conf := config.NewConfig()
 	config.Set(conf)
 
@@ -196,7 +196,7 @@ func testNoDisabledMtlsValidationsFound(t *testing.T, destinationRule *networkin
 	assert.True(valid)
 }
 
-func testDisabledMtlsValidationsFound(t *testing.T, validationId string, destinationRule *networking_v1beta1.DestinationRule, mTLSDetails kubernetes.MTLSDetails, autoMtls bool) {
+func testDisabledMtlsValidationsFound(t *testing.T, validationId string, destinationRule *networking_v1.DestinationRule, mTLSDetails kubernetes.MTLSDetails, autoMtls bool) {
 	conf := config.NewConfig()
 	config.Set(conf)
 

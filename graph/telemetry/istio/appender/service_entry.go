@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	"istio.io/client-go/pkg/apis/networking/v1beta1"
+	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
@@ -284,7 +284,7 @@ func (a *ServiceEntryAppender) isAccessible(cluster, namespace string) bool {
 	return ok
 }
 
-func isExportedToNamespace(se *v1beta1.ServiceEntry, namespace string) bool {
+func isExportedToNamespace(se *networking_v1.ServiceEntry, namespace string) bool {
 	if se.Spec.ExportTo == nil {
 		return true
 	}

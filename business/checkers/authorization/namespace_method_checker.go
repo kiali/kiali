@@ -5,8 +5,8 @@ import (
 	"regexp"
 	"strings"
 
-	api_security_v1beta "istio.io/api/security/v1beta1"
-	security_v1beta "istio.io/client-go/pkg/apis/security/v1beta1"
+	api_security_v1 "istio.io/api/security/v1"
+	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/util/httputil"
@@ -15,7 +15,7 @@ import (
 var methodMatcher = regexp.MustCompile(`^((\/[a-zA-Z\.]+)+)(\/[a-zA-Z]+)$`)
 
 type NamespaceMethodChecker struct {
-	AuthorizationPolicy *security_v1beta.AuthorizationPolicy
+	AuthorizationPolicy *security_v1.AuthorizationPolicy
 	Namespaces          models.NamespaceNames
 }
 
@@ -40,7 +40,7 @@ func (ap NamespaceMethodChecker) Check() ([]*models.IstioCheck, bool) {
 	return checks, valid
 }
 
-func (ap NamespaceMethodChecker) validateFromField(ruleIdx int, from []*api_security_v1beta.Rule_From) ([]*models.IstioCheck, bool) {
+func (ap NamespaceMethodChecker) validateFromField(ruleIdx int, from []*api_security_v1.Rule_From) ([]*models.IstioCheck, bool) {
 	if len(from) == 0 {
 		return nil, true
 	}
@@ -72,7 +72,7 @@ func (ap NamespaceMethodChecker) validateFromField(ruleIdx int, from []*api_secu
 	return checks, valid
 }
 
-func (ap NamespaceMethodChecker) validateToField(ruleIdx int, to []*api_security_v1beta.Rule_To) ([]*models.IstioCheck, bool) {
+func (ap NamespaceMethodChecker) validateToField(ruleIdx int, to []*api_security_v1.Rule_To) ([]*models.IstioCheck, bool) {
 	if len(to) == 0 {
 		return nil, true
 	}

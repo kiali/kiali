@@ -6847,8 +6847,7 @@ codes between message types.)
 
 > <!-- crd generation tags
 +cue-gen:AuthorizationPolicy:groupName:security.istio.io
-+cue-gen:AuthorizationPolicy:version:v1beta1
-+cue-gen:AuthorizationPolicy:storageVersion
++cue-gen:AuthorizationPolicy:version:v1
 +cue-gen:AuthorizationPolicy:annotations:helm.sh/resource-policy=keep
 +cue-gen:AuthorizationPolicy:labels:app=istio-pilot,chart=istio,istio=security,heritage=Tiller,release=istio
 +cue-gen:AuthorizationPolicy:subresource:status
@@ -6864,12 +6863,12 @@ Populated by the system. Read-only. Null for lists. More info: https://git.k8s.i
 
 <!-- go code generation tags
 +kubetype-gen
-+kubetype-gen:groupVersion=security.istio.io/v1beta1
++kubetype-gen:groupVersion=security.istio.io/v1
 +genclient
 +k8s:deepcopy-gen=true
 >
 <!-- istio code generation tags
-+istio.io/sync-start
++istio.io/sync-from:security/v1beta1/authorization_policy.proto
 >
   
 
@@ -7342,8 +7341,7 @@ It has configuration for all the clusters/namespaces associated with it.
 
 > <!-- crd generation tags
 +cue-gen:DestinationRule:groupName:networking.istio.io
-+cue-gen:DestinationRule:version:v1beta1
-+cue-gen:DestinationRule:storageVersion
++cue-gen:DestinationRule:version:v1
 +cue-gen:DestinationRule:annotations:helm.sh/resource-policy=keep
 +cue-gen:DestinationRule:labels:app=istio-pilot,chart=istio,heritage=Tiller,release=istio
 +cue-gen:DestinationRule:subresource:status
@@ -7359,7 +7357,7 @@ Populated by the system. Read-only. Null for lists. More info: https://git.k8s.i
 
 <!-- go code generation tags
 +kubetype-gen
-+kubetype-gen:groupVersion=networking.istio.io/v1beta1
++kubetype-gen:groupVersion=networking.istio.io/v1
 +genclient
 +k8s:deepcopy-gen=true
 >
@@ -9722,7 +9720,7 @@ Reason of `UnsupportedValue`.
 
 Policy to allow mTLS traffic for all workloads under namespace `foo`:
 ```yaml
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: PeerAuthentication
 metadata:
 
@@ -9740,7 +9738,7 @@ For mesh level, put the policy in root-namespace according to your Istio install
 Policies to allow both mTLS and plaintext traffic for all workloads under namespace `foo`, but
 require mTLS for workload `finance`.
 ```yaml
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: PeerAuthentication
 metadata:
 
@@ -9753,7 +9751,7 @@ mtls:
 mode: PERMISSIVE
 
 
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: PeerAuthentication
 metadata:
 
@@ -9773,7 +9771,7 @@ Policy that enables strict mTLS for all `finance` workloads, but leaves the port
 plaintext. Note the port value in the `portLevelMtls` field refers to the port
 of the workload, not the port of the Kubernetes service.
 ```yaml
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: PeerAuthentication
 metadata:
 
@@ -9795,7 +9793,7 @@ mode: DISABLE
 Policy that inherits mTLS mode from namespace (or mesh) settings, and disables
 mTLS for workload port `8080`.
 ```yaml
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: PeerAuthentication
 metadata:
 
@@ -9817,8 +9815,7 @@ mode: DISABLE
 
 <!-- crd generation tags
 +cue-gen:PeerAuthentication:groupName:security.istio.io
-+cue-gen:PeerAuthentication:version:v1beta1
-+cue-gen:PeerAuthentication:storageVersion
++cue-gen:PeerAuthentication:version:v1
 +cue-gen:PeerAuthentication:annotations:helm.sh/resource-policy=keep
 +cue-gen:PeerAuthentication:labels:app=istio-pilot,chart=istio,istio=security,heritage=Tiller,release=istio
 +cue-gen:PeerAuthentication:subresource:status
@@ -9834,12 +9831,12 @@ Populated by the system. Read-only. Null for lists. More info: https://git.k8s.i
 
 <!-- go code generation tags
 +kubetype-gen
-+kubetype-gen:groupVersion=security.istio.io/v1beta1
++kubetype-gen:groupVersion=security.istio.io/v1
 +genclient
 +k8s:deepcopy-gen=true
 >
 <!-- istio code generation tags
-+istio.io/sync-start
++istio.io/sync-from:security/v1beta1/peer_authentication.proto
 >
   
 
@@ -10446,8 +10443,7 @@ subset: v1
 
 <!-- crd generation tags
 +cue-gen:RequestAuthentication:groupName:security.istio.io
-+cue-gen:RequestAuthentication:version:v1beta1
-+cue-gen:RequestAuthentication:storageVersion
++cue-gen:RequestAuthentication:version:v1
 +cue-gen:RequestAuthentication:annotations:helm.sh/resource-policy=keep
 +cue-gen:RequestAuthentication:labels:app=istio-pilot,chart=istio,istio=security,heritage=Tiller,release=istio
 +cue-gen:RequestAuthentication:subresource:status
@@ -10458,12 +10454,12 @@ subset: v1
 
 <!-- go code generation tags
 +kubetype-gen
-+kubetype-gen:groupVersion=security.istio.io/v1beta1
++kubetype-gen:groupVersion=security.istio.io/v1
 +genclient
 +k8s:deepcopy-gen=true
 >
 <!-- istio code generation tags
-+istio.io/sync-start
++istio.io/sync-from:security/v1beta1/request_authentication.proto
 >
   
 
@@ -10797,8 +10793,7 @@ Invalid values include:
 
 > <!-- crd generation tags
 +cue-gen:ServiceEntry:groupName:networking.istio.io
-+cue-gen:ServiceEntry:version:v1beta1
-+cue-gen:ServiceEntry:storageVersion
++cue-gen:ServiceEntry:version:v1
 +cue-gen:ServiceEntry:annotations:helm.sh/resource-policy=keep
 +cue-gen:ServiceEntry:labels:app=istio-pilot,chart=istio,heritage=Tiller,release=istio
 +cue-gen:ServiceEntry:subresource:status
@@ -10818,7 +10813,7 @@ Populated by the system. Read-only. Null for lists. More info: https://git.k8s.i
 
 <!-- go code generation tags
 +kubetype-gen
-+kubetype-gen:groupVersion=networking.istio.io/v1beta1
++kubetype-gen:groupVersion=networking.istio.io/v1
 +genclient
 +k8s:deepcopy-gen=true
 >
@@ -11007,8 +11002,7 @@ Populated by the system. Read-only. Null for lists. More info: https://git.k8s.i
 
 > <!-- crd generation tags
 +cue-gen:Sidecar:groupName:networking.istio.io
-+cue-gen:Sidecar:version:v1beta1
-+cue-gen:Sidecar:storageVersion
++cue-gen:Sidecar:version:v1
 +cue-gen:Sidecar:annotations:helm.sh/resource-policy=keep
 +cue-gen:Sidecar:labels:app=istio-pilot,chart=istio,heritage=Tiller,release=istio
 +cue-gen:Sidecar:subresource:status
@@ -11019,7 +11013,7 @@ Populated by the system. Read-only. Null for lists. More info: https://git.k8s.i
 
 <!-- go code generation tags
 +kubetype-gen
-+kubetype-gen:groupVersion=networking.istio.io/v1beta1
++kubetype-gen:groupVersion=networking.istio.io/v1
 +genclient
 +k8s:deepcopy-gen=true
 >
@@ -11347,12 +11341,13 @@ could choose to use a TCPRoute with a TLS listener.
 
 > <!-- go code generation tags
 +kubetype-gen
-+kubetype-gen:groupVersion=telemetry.istio.io/v1alpha1
++kubetype-gen:groupVersion=telemetry.istio.io/v1
 +genclient
 +k8s:deepcopy-gen=true
 >
+>
 <!-- istio code generation tags
-+istio.io/sync-start
++istio.io/sync-from:telemetry/v1alpha1/telemetry.proto
 >
   
 
@@ -11652,8 +11647,7 @@ This is used for returning the token
 
 > <!-- crd generation tags
 +cue-gen:VirtualService:groupName:networking.istio.io
-+cue-gen:VirtualService:version:v1beta1
-+cue-gen:VirtualService:storageVersion
++cue-gen:VirtualService:version:v1
 +cue-gen:VirtualService:annotations:helm.sh/resource-policy=keep
 +cue-gen:VirtualService:labels:app=istio-pilot,chart=istio,heritage=Tiller,release=istio
 +cue-gen:VirtualService:subresource:status
@@ -11671,7 +11665,7 @@ Populated by the system. Read-only. Null for lists. More info: https://git.k8s.i
 
 <!-- go code generation tags
 +kubetype-gen
-+kubetype-gen:groupVersion=networking.istio.io/v1beta1
++kubetype-gen:groupVersion=networking.istio.io/v1
 +genclient
 +k8s:deepcopy-gen=true
 >
@@ -11838,8 +11832,7 @@ Populated by the system. Read-only. Null for lists. More info: https://git.k8s.i
 
 > <!-- crd generation tags
 +cue-gen:WorkloadEntry:groupName:networking.istio.io
-+cue-gen:WorkloadEntry:version:v1beta1
-+cue-gen:WorkloadEntry:storageVersion
++cue-gen:WorkloadEntry:version:v1
 +cue-gen:WorkloadEntry:annotations:helm.sh/resource-policy=keep
 +cue-gen:WorkloadEntry:labels:app=istio-pilot,chart=istio,heritage=Tiller,release=istio
 +cue-gen:WorkloadEntry:subresource:status
@@ -11855,7 +11848,7 @@ Populated by the system. Read-only. Null for lists. More info: https://git.k8s.i
 
 <!-- go code generation tags
 +kubetype-gen
-+kubetype-gen:groupVersion=networking.istio.io/v1beta1
++kubetype-gen:groupVersion=networking.istio.io/v1
 +genclient
 +k8s:deepcopy-gen=true
 >
@@ -11899,8 +11892,7 @@ Populated by the system. Read-only. Null for lists. More info: https://git.k8s.i
 
 > <!-- crd generation tags
 +cue-gen:WorkloadGroup:groupName:networking.istio.io
-+cue-gen:WorkloadGroup:version:v1beta1
-+cue-gen:WorkloadGroup:storageVersion
++cue-gen:WorkloadGroup:version:v1
 +cue-gen:WorkloadGroup:labels:app=istio-pilot,chart=istio,heritage=Tiller,release=istio
 +cue-gen:WorkloadGroup:subresource:status
 +cue-gen:WorkloadGroup:scope:Namespaced
@@ -11914,7 +11906,7 @@ Populated by the system. Read-only. Null for lists. More info: https://git.k8s.i
 
 <!-- go code generation tags
 +kubetype-gen
-+kubetype-gen:groupVersion=networking.istio.io/v1beta1
++kubetype-gen:groupVersion=networking.istio.io/v1
 +genclient
 +k8s:deepcopy-gen=true
 >

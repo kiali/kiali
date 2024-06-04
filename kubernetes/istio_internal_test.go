@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	api_security_v1beta1 "istio.io/api/security/v1beta1"
-	security_v1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
+	api_security_v1 "istio.io/api/security/v1"
+	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 
 	"github.com/kiali/kiali/config"
 )
@@ -144,14 +144,14 @@ func TestPolicyHasMTLSEnabledPermissiveMode(t *testing.T) {
 	assert.Equal(t, "PERMISSIVE", mode)
 }
 
-func createMtls(mode string) *api_security_v1beta1.PeerAuthentication_MutualTLS {
-	mtls := &api_security_v1beta1.PeerAuthentication_MutualTLS{}
-	mtls.Mode = api_security_v1beta1.PeerAuthentication_MutualTLS_Mode(api_security_v1beta1.PeerAuthentication_MutualTLS_Mode_value[mode])
+func createMtls(mode string) *api_security_v1.PeerAuthentication_MutualTLS {
+	mtls := &api_security_v1.PeerAuthentication_MutualTLS{}
+	mtls.Mode = api_security_v1.PeerAuthentication_MutualTLS_Mode(api_security_v1.PeerAuthentication_MutualTLS_Mode_value[mode])
 	return mtls
 }
 
-func createPeerAuthn(name, namespace string, mtls *api_security_v1beta1.PeerAuthentication_MutualTLS) *security_v1beta1.PeerAuthentication {
-	pa := &security_v1beta1.PeerAuthentication{}
+func createPeerAuthn(name, namespace string, mtls *api_security_v1.PeerAuthentication_MutualTLS) *security_v1.PeerAuthentication {
+	pa := &security_v1.PeerAuthentication{}
 	pa.Name = name
 	pa.Namespace = namespace
 	pa.Spec.Mtls = mtls

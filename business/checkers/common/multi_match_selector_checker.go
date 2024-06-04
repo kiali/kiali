@@ -1,8 +1,8 @@
 package common
 
 import (
-	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
-	security_v1beta "istio.io/client-go/pkg/apis/security/v1beta1"
+	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
+	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/models"
@@ -18,7 +18,7 @@ type GenericMultiMatchChecker struct {
 	skipSelSubj           bool
 }
 
-func PeerAuthenticationMultiMatchChecker(cluster, subjectType string, pa []*security_v1beta.PeerAuthentication, workloadsPerNamespace map[string]models.WorkloadList) GenericMultiMatchChecker {
+func PeerAuthenticationMultiMatchChecker(cluster, subjectType string, pa []*security_v1.PeerAuthentication, workloadsPerNamespace map[string]models.WorkloadList) GenericMultiMatchChecker {
 	keys := []models.IstioValidationKey{}
 	selectors := make(map[int]map[string]string, len(pa))
 	for i, p := range pa {
@@ -46,7 +46,7 @@ func PeerAuthenticationMultiMatchChecker(cluster, subjectType string, pa []*secu
 	}
 }
 
-func RequestAuthenticationMultiMatchChecker(cluster, subjectType string, ra []*security_v1beta.RequestAuthentication, workloadsPerNamespace map[string]models.WorkloadList) GenericMultiMatchChecker {
+func RequestAuthenticationMultiMatchChecker(cluster, subjectType string, ra []*security_v1.RequestAuthentication, workloadsPerNamespace map[string]models.WorkloadList) GenericMultiMatchChecker {
 	keys := []models.IstioValidationKey{}
 	selectors := make(map[int]map[string]string, len(ra))
 	for i, r := range ra {
@@ -75,7 +75,7 @@ func RequestAuthenticationMultiMatchChecker(cluster, subjectType string, ra []*s
 	}
 }
 
-func SidecarSelectorMultiMatchChecker(cluster, subjectType string, sc []*networking_v1beta1.Sidecar, workloadsPerNamespace map[string]models.WorkloadList) GenericMultiMatchChecker {
+func SidecarSelectorMultiMatchChecker(cluster, subjectType string, sc []*networking_v1.Sidecar, workloadsPerNamespace map[string]models.WorkloadList) GenericMultiMatchChecker {
 	keys := []models.IstioValidationKey{}
 	selectors := make(map[int]map[string]string, len(sc))
 	i := 0

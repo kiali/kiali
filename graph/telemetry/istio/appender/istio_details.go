@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	k8s_networking_v1 "sigs.k8s.io/gateway-api/apis/v1"
 
@@ -229,7 +229,7 @@ func addLabels(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo
 	}
 }
 
-func decorateMatchingGateways(cluster string, gwCrd *networking_v1beta1.Gateway, gatewayNodeMapping map[*models.WorkloadListItem][]*graph.Node, nodeMetadataKey graph.MetadataKey) {
+func decorateMatchingGateways(cluster string, gwCrd *networking_v1.Gateway, gatewayNodeMapping map[*models.WorkloadListItem][]*graph.Node, nodeMetadataKey graph.MetadataKey) {
 	gwSelector := labels.Set(gwCrd.Spec.Selector).AsSelector()
 	for gw, nodes := range gatewayNodeMapping {
 		if gw.Cluster != cluster {
@@ -399,8 +399,8 @@ func (a IstioAppender) getGatewayAPIWorkloads(globalInfo *graph.AppenderGlobalIn
 	return managedWorkloads
 }
 
-func (a IstioAppender) getIstioGatewayResources(globalInfo *graph.AppenderGlobalInfo) map[string][]*networking_v1beta1.Gateway {
-	retVal := map[string][]*networking_v1beta1.Gateway{}
+func (a IstioAppender) getIstioGatewayResources(globalInfo *graph.AppenderGlobalInfo) map[string][]*networking_v1.Gateway {
+	retVal := map[string][]*networking_v1.Gateway{}
 	for key, an := range a.AccessibleNamespaces {
 		istioCfg, err := globalInfo.Business.IstioConfig.GetIstioConfigListForNamespace(context.TODO(), an.Cluster, an.Name, business.IstioConfigCriteria{
 			IncludeGateways: true,

@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
-	security_v1beta "istio.io/client-go/pkg/apis/security/v1beta1"
+	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
+	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
@@ -13,10 +13,10 @@ import (
 	"github.com/kiali/kiali/tests/data"
 )
 
-func prepareTestForPeerAuth(pa *security_v1beta.PeerAuthentication, drs []*networking_v1beta1.DestinationRule) models.IstioReferences {
+func prepareTestForPeerAuth(pa *security_v1.PeerAuthentication, drs []*networking_v1.DestinationRule) models.IstioReferences {
 	drReferences := PeerAuthReferences{
 		MTLSDetails: kubernetes.MTLSDetails{
-			PeerAuthentications: []*security_v1beta.PeerAuthentication{pa},
+			PeerAuthentications: []*security_v1.PeerAuthentication{pa},
 			DestinationRules:    drs,
 			EnabledAutoMtls:     false,
 		},
@@ -183,7 +183,7 @@ func TestNamespacePeerAuthWorkloadReferences(t *testing.T) {
 	assert.Equal(references.WorkloadReferences[0].Namespace, "bookinfo")
 }
 
-func getPADestinationRules(t *testing.T, namespace string) []*networking_v1beta1.DestinationRule {
+func getPADestinationRules(t *testing.T, namespace string) []*networking_v1.DestinationRule {
 	loader := yamlFixtureLoader("peer-auth-drs.yaml")
 	err := loader.Load()
 	if err != nil {
@@ -193,7 +193,7 @@ func getPADestinationRules(t *testing.T, namespace string) []*networking_v1beta1
 	return loader.FindDestinationRuleIn(namespace)
 }
 
-func getPeerAuth(t *testing.T, name, namespace string) *security_v1beta.PeerAuthentication {
+func getPeerAuth(t *testing.T, name, namespace string) *security_v1.PeerAuthentication {
 	loader := yamlFixtureLoader("peer-auth-drs.yaml")
 	err := loader.Load()
 	if err != nil {

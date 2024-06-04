@@ -4,15 +4,15 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
-	security_v1beta "istio.io/client-go/pkg/apis/security/v1beta1"
+	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
+	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
 )
 
-func prepareTestForAuthPolicy(ap *security_v1beta.AuthorizationPolicy, vs *networking_v1beta1.VirtualService, se *networking_v1beta1.ServiceEntry) models.IstioReferences {
+func prepareTestForAuthPolicy(ap *security_v1.AuthorizationPolicy, vs *networking_v1.VirtualService, se *networking_v1.ServiceEntry) models.IstioReferences {
 	drReferences := AuthorizationPolicyReferences{
 		Namespace: "bookinfo",
 		Namespaces: models.Namespaces{
@@ -20,9 +20,9 @@ func prepareTestForAuthPolicy(ap *security_v1beta.AuthorizationPolicy, vs *netwo
 			{Name: "bookinfo2"},
 			{Name: "bookinfo3"},
 		},
-		AuthorizationPolicies: []*security_v1beta.AuthorizationPolicy{ap},
-		ServiceEntries:        []*networking_v1beta1.ServiceEntry{se},
-		VirtualServices:       []*networking_v1beta1.VirtualService{vs},
+		AuthorizationPolicies: []*security_v1.AuthorizationPolicy{ap},
+		ServiceEntries:        []*networking_v1.ServiceEntry{se},
+		VirtualServices:       []*networking_v1.VirtualService{vs},
 		WorkloadsPerNamespace: map[string]models.WorkloadList{
 			"istio-system": data.CreateWorkloadList("istio-system",
 				data.CreateWorkloadListItem("istiod", map[string]string{"app": "istio-ingressgateway"}),
@@ -90,7 +90,7 @@ func TestAuthPolicyNoReferences(t *testing.T) {
 	assert.Empty(references.ObjectReferences)
 }
 
-func getAuthPolicy(t *testing.T) *security_v1beta.AuthorizationPolicy {
+func getAuthPolicy(t *testing.T) *security_v1.AuthorizationPolicy {
 	loader := yamlFixtureLoader("auth-policy.yaml")
 	err := loader.Load()
 	if err != nil {
@@ -100,7 +100,7 @@ func getAuthPolicy(t *testing.T) *security_v1beta.AuthorizationPolicy {
 	return loader.FindAuthorizationPolicy("allow-foo", "istio-system")
 }
 
-func getAPVirtualService(t *testing.T) *networking_v1beta1.VirtualService {
+func getAPVirtualService(t *testing.T) *networking_v1.VirtualService {
 	loader := yamlFixtureLoader("auth-policy.yaml")
 	err := loader.Load()
 	if err != nil {
@@ -110,7 +110,7 @@ func getAPVirtualService(t *testing.T) *networking_v1beta1.VirtualService {
 	return loader.FindVirtualService("foo-dev", "istio-system")
 }
 
-func getAPServiceEntry(t *testing.T) *networking_v1beta1.ServiceEntry {
+func getAPServiceEntry(t *testing.T) *networking_v1.ServiceEntry {
 	loader := yamlFixtureLoader("auth-policy.yaml")
 	err := loader.Load()
 	if err != nil {
@@ -120,8 +120,8 @@ func getAPServiceEntry(t *testing.T) *networking_v1beta1.ServiceEntry {
 	return loader.FindServiceEntry("foo-dev", "istio-system")
 }
 
-func fakeServiceEntry() *networking_v1beta1.ServiceEntry {
-	serviceEntry := networking_v1beta1.ServiceEntry{}
+func fakeServiceEntry() *networking_v1.ServiceEntry {
+	serviceEntry := networking_v1.ServiceEntry{}
 	serviceEntry.Name = "googleapis"
 	serviceEntry.Namespace = "test"
 	serviceEntry.Spec.Hosts = []string{

@@ -1,7 +1,7 @@
 package checkers
 
 import (
-	security_v1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
+	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 
 	"github.com/kiali/kiali/business/checkers/workloads"
 	"github.com/kiali/kiali/models"
@@ -10,7 +10,7 @@ import (
 const WorkloadCheckerType = "workload"
 
 type WorkloadChecker struct {
-	AuthorizationPolicies []*security_v1beta1.AuthorizationPolicy
+	AuthorizationPolicies []*security_v1.AuthorizationPolicy
 	WorkloadsPerNamespace map[string]models.WorkloadList
 	Cluster               string
 }

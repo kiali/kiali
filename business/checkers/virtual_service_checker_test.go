@@ -4,18 +4,18 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
 )
 
-func prepareTestForVirtualService(vs *networking_v1beta1.VirtualService) models.IstioValidations {
-	vss := []*networking_v1beta1.VirtualService{vs}
+func prepareTestForVirtualService(vs *networking_v1.VirtualService) models.IstioValidations {
+	vss := []*networking_v1.VirtualService{vs}
 
 	// Setup mocks
-	destinationList := []*networking_v1beta1.DestinationRule{
+	destinationList := []*networking_v1.DestinationRule{
 		data.CreateTestDestinationRule("bookinfo", "reviewsrule", "reviews"),
 	}
 
@@ -81,7 +81,7 @@ func TestVirtualServiceMultipleIstioObjects(t *testing.T) {
 	assert := assert.New(t)
 
 	// Setup mocks
-	destinationList := []*networking_v1beta1.DestinationRule{
+	destinationList := []*networking_v1.DestinationRule{
 		data.CreateTestDestinationRule("bookinfo", "reviewsrule1", "reviews"),
 	}
 
@@ -108,7 +108,7 @@ func TestVirtualServiceMultipleIstioObjects(t *testing.T) {
 	assert.Len(validation.Checks, 2)
 }
 
-func fakeVirtualServices() *networking_v1beta1.VirtualService {
+func fakeVirtualServices() *networking_v1.VirtualService {
 	validVirtualService := data.AddHttpRoutesToVirtualService(data.CreateHttpRouteDestination("reviews", "v1", 55),
 		data.AddHttpRoutesToVirtualService(data.CreateHttpRouteDestination("reviews", "v2", 45),
 			data.CreateEmptyVirtualService("reviews-well", "bookinfo", []string{"reviews.prod.svc.cluster.local"}),
@@ -118,7 +118,7 @@ func fakeVirtualServices() *networking_v1beta1.VirtualService {
 	return validVirtualService
 }
 
-func fakeVirtualServicesMultipleChecks() *networking_v1beta1.VirtualService {
+func fakeVirtualServicesMultipleChecks() *networking_v1.VirtualService {
 	virtualService := data.CreateEmptyVirtualService("reviews-multiple", "bookinfo", []string{})
 	validVirtualService := data.AddHttpRoutesToVirtualService(data.CreateHttpRouteDestination("reviews", "v1", 55), virtualService)
 	validVirtualService = data.AddTcpRoutesToVirtualService(data.CreateTcpRoute("reviews", "v2", 55),
@@ -128,7 +128,7 @@ func fakeVirtualServicesMultipleChecks() *networking_v1beta1.VirtualService {
 	return validVirtualService
 }
 
-func fakeVirtualServiceMixedChecker() *networking_v1beta1.VirtualService {
+func fakeVirtualServiceMixedChecker() *networking_v1.VirtualService {
 	validVirtualService := data.AddHttpRoutesToVirtualService(data.CreateHttpRouteDestination("reviews", "v4", 05),
 		data.CreateEmptyVirtualService("reviews-mixed", "bookinfo", []string{}),
 	)
@@ -137,6 +137,6 @@ func fakeVirtualServiceMixedChecker() *networking_v1beta1.VirtualService {
 	return validVirtualService
 }
 
-func fakeVirtualServiceMultipleIstioObjects() []*networking_v1beta1.VirtualService {
-	return []*networking_v1beta1.VirtualService{fakeVirtualServiceMixedChecker(), fakeVirtualServicesMultipleChecks()}
+func fakeVirtualServiceMultipleIstioObjects() []*networking_v1.VirtualService {
+	return []*networking_v1.VirtualService{fakeVirtualServiceMixedChecker(), fakeVirtualServicesMultipleChecks()}
 }

@@ -1,7 +1,7 @@
 package checkers
 
 import (
-	security_v1beta "istio.io/client-go/pkg/apis/security/v1beta1"
+	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 
 	"github.com/kiali/kiali/business/checkers/common"
 	"github.com/kiali/kiali/models"
@@ -10,7 +10,7 @@ import (
 const RequestAuthenticationCheckerType = "requestauthentication"
 
 type RequestAuthenticationChecker struct {
-	RequestAuthentications []*security_v1beta.RequestAuthentication
+	RequestAuthentications []*security_v1.RequestAuthentication
 	WorkloadsPerNamespace  map[string]models.WorkloadList
 	Cluster                string
 }
@@ -28,7 +28,7 @@ func (m RequestAuthenticationChecker) Check() models.IstioValidations {
 }
 
 // runChecks runs all the individual checks for a single mesh policy and appends the result into validations.
-func (m RequestAuthenticationChecker) runChecks(requestAuthn *security_v1beta.RequestAuthentication) models.IstioValidations {
+func (m RequestAuthenticationChecker) runChecks(requestAuthn *security_v1.RequestAuthentication) models.IstioValidations {
 	requestAuthnName := requestAuthn.Name
 	key, rrValidation := EmptyValidValidation(requestAuthnName, requestAuthn.Namespace, RequestAuthenticationCheckerType, m.Cluster)
 	matchLabels := make(map[string]string)
