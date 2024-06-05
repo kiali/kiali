@@ -7,13 +7,13 @@ import { getTimeRangeMicros } from 'utils/tracing/TracingHelper';
 import { transformTraceData } from 'utils/tracing/TraceTransform';
 
 export type FetchOptions = {
-  namespace: string;
   cluster?: string;
-  target: string;
-  targetKind: TargetKind;
+  minDuration?: number;
+  namespace: string;
   spanLimit: number;
   tags: string;
-  minDuration?: number;
+  target: string;
+  targetKind: TargetKind;
 };
 
 export class TracesFetcher {
@@ -24,7 +24,7 @@ export class TracesFetcher {
     private onErrors: (err: JaegerError[]) => void
   ) {}
 
-  fetch = (o: FetchOptions, oldTraces: JaegerTrace[]) => {
+  fetch = (o: FetchOptions, oldTraces: JaegerTrace[]): void => {
     const range = getTimeRangeMicros();
     if (range.to) {
       // Closed time frame (looking in past)
@@ -73,7 +73,7 @@ export class TracesFetcher {
       });
   };
 
-  resetLastFetchTime() {
+  resetLastFetchTime(): void {
     this.lastFetchMicros = undefined;
   }
 }

@@ -64,6 +64,8 @@ func NewServer() *Server {
 		MinVersion: tls.VersionTLS12,
 		NextProtos: []string{"h2", "http/1.1"},
 	}
+	
+	writeTimeout := conf.Server.WriteTimeout * time.Second
 
 	// create the server definition that will handle both console and api server traffic
 	httpServer := &http.Server{
