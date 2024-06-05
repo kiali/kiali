@@ -743,6 +743,12 @@ func buildNodeTrafficMap(cluster, namespace string, n *graph.Node, o graph.Telem
 		var metrics []string
 		groupBy := "source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,response_flags"
 
+		inboundReporter := "destination"
+		outboutReporter := "source"
+		if strings.HasPrefix(n.Workload, "waypoint") {
+			inboundReporter = "source"
+			outboutReporter = "destination"
+		}
 		// L4 telemetry is backwards, see https://github.com/istio/istio/issues/32399
 		switch o.Rates.Tcp {
 		case graph.RateReceived:
@@ -760,8 +766,9 @@ func buildNodeTrafficMap(cluster, namespace string, n *graph.Node, o graph.Telem
 
 			switch n.NodeType {
 			case graph.NodeTypeWorkload:
-				query = fmt.Sprintf(`sum(rate(%s{reporter="destination"%s,destination_workload_namespace="%s",destination_workload="%s"} [%vs])) by (%s) %s`,
+				query = fmt.Sprintf(`sum(rate(%s{reporter="%s"%s,destination_workload_namespace="%s",destination_workload="%s"} [%vs])) by (%s) %s`,
 					metric,
+					inboundReporter,
 					destCluster,
 					namespace,
 					n.Workload,
@@ -770,8 +777,9 @@ func buildNodeTrafficMap(cluster, namespace string, n *graph.Node, o graph.Telem
 					idleCondition)
 			case graph.NodeTypeApp:
 				if graph.IsOK(n.Version) {
-					query = fmt.Sprintf(`sum(rate(%s{reporter="destination"%s,destination_service_namespace="%s",destination_canonical_service="%s",destination_canonical_revision="%s"} [%vs])) by (%s) %s`,
+					query = fmt.Sprintf(`sum(rate(%s{reporter="%s"%s,destination_service_namespace="%s",destination_canonical_service="%s",destination_canonical_revision="%s"} [%vs])) by (%s) %s`,
 						metric,
+						inboundReporter,
 						destCluster,
 						namespace,
 						n.App,
@@ -780,8 +788,9 @@ func buildNodeTrafficMap(cluster, namespace string, n *graph.Node, o graph.Telem
 						groupBy,
 						idleCondition)
 				} else {
-					query = fmt.Sprintf(`sum(rate(%s{reporter="destination"%s,destination_service_namespace="%s",destination_canonical_service="%s"} [%vs])) by (%s) %s`,
+					query = fmt.Sprintf(`sum(rate(%s{reporter="%s"%s,destination_service_namespace="%s",destination_canonical_service="%s"} [%vs])) by (%s) %s`,
 						metric,
+						inboundReporter,
 						destCluster,
 						namespace,
 						n.App,
@@ -791,8 +800,9 @@ func buildNodeTrafficMap(cluster, namespace string, n *graph.Node, o graph.Telem
 				}
 			case graph.NodeTypeService:
 				// TODO: Do we need to handle requests from unknown in a special way (like in HTTP above)? Not sure how tcp is reported from unknown.
-				query = fmt.Sprintf(`sum(rate(%s{reporter="destination"%s,destination_service_namespace="%s",destination_service=~"^%s\\.%s\\..*$"} [%vs])) by (%s) %s`,
+				query = fmt.Sprintf(`sum(rate(%s{reporter="%s"%s,destination_service_namespace="%s",destination_service=~"^%s\\.%s\\..*$"} [%vs])) by (%s) %s`,
 					metric,
+					inboundReporter,
 					destCluster,
 					namespace,
 					n.Service,
@@ -809,8 +819,9 @@ func buildNodeTrafficMap(cluster, namespace string, n *graph.Node, o graph.Telem
 			// 2) query for outbound traffic
 			switch n.NodeType {
 			case graph.NodeTypeWorkload:
-				query = fmt.Sprintf(`sum(rate(%s{reporter="source"%s,source_workload_namespace="%s",source_workload="%s"} [%vs])) by (%s) %s`,
+				query = fmt.Sprintf(`sum(rate(%s{reporter="%s"%s,source_workload_namespace="%s",source_workload="%s"} [%vs])) by (%s) %s`,
 					metric,
+					outboutReporter,
 					sourceCluster,
 					namespace,
 					n.Workload,
@@ -819,8 +830,9 @@ func buildNodeTrafficMap(cluster, namespace string, n *graph.Node, o graph.Telem
 					idleCondition)
 			case graph.NodeTypeApp:
 				if graph.IsOK(n.Version) {
-					query = fmt.Sprintf(`sum(rate(%s{reporter="source"%s,source_workload_namespace="%s",source_canonical_service="%s",source_canonical_revision="%s"} [%vs])) by (%s) %s`,
+					query = fmt.Sprintf(`sum(rate(%s{reporter="%s"%s,source_workload_namespace="%s",source_canonical_service="%s",source_canonical_revision="%s"} [%vs])) by (%s) %s`,
 						metric,
+						outboutReporter,
 						sourceCluster,
 						namespace,
 						n.App,
@@ -829,8 +841,9 @@ func buildNodeTrafficMap(cluster, namespace string, n *graph.Node, o graph.Telem
 						groupBy,
 						idleCondition)
 				} else {
-					query = fmt.Sprintf(`sum(rate(%s{reporter="source"%s,source_workload_namespace="%s",source_canonical_service="%s"} [%vs])) by (%s) %s`,
+					query = fmt.Sprintf(`sum(rate(%s{reporter="%s"%s,source_workload_namespace="%s",source_canonical_service="%s"} [%vs])) by (%s) %s`,
 						metric,
+						outboutReporter,
 						sourceCluster,
 						namespace,
 						n.App,
