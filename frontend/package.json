@@ -40,6 +40,7 @@
     "build:prod": "sh -ac '. ./.env.downstream; npm run build:kiali'",
     "precypress:run:junit": "npm run cypress:delete:reports",
     "cypress": "cypress open -e TAGS=\"not @multi-cluster and not @ambient\"",
+    "cypress:ambient": "cypress open -e TAGS=\"@ambient\"",
     "cypress:multi-cluster": "cypress open -e TAGS=\"@multi-cluster and not @multi-primary\"",
     "cypress:multi-primary": "cypress open -e TAGS=\"@multi-cluster and @multi-primary\"",
     "cypress:perf": "cypress open --config-file cypress-perf.config.ts",
