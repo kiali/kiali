@@ -411,11 +411,12 @@ Frontend development guidelines (styles, i18n, etc.) can be found link:./fronten
 
 The Kiali project will periodically upgrade to a newer version of Go. These are the steps that need to be performed in order for the Kiali build to use a different version of Go:
 
-1. In the top link:./Makefile[Makefile], change the value of the variable `GO_VERSION_KIALI` to the new Go version (use a z-stream version: "x.y.z").
-2. Run `go mod edit -go=x.y` where "x" and "y" are the major/minor versions of the Go version being used.
-3. Run `go mod tidy -v`
-4. Run `make clean build build-ui test` to ensure everything builds correctly. If any problems occur, obviously you must fix them.
-5. Commit the changes to your working branch, create a PR, and make sure everything builds and works before merging the PR.
+1. Run `go mod edit -go=x.y` where "x" and "y" are the major/minor versions of the Go version being used.
+2. Run `go mod tidy -v`
+3. Run `make clean build build-ui test` to ensure everything builds correctly. If any problems occur, obviously you must fix them.
+4. Commit the changes to your working branch, create a PR, and make sure everything builds and works before merging the PR.
+
+The Makefile and some Github Actions will check the go version from the go.mod file.
 
 === Procedure to check and update patternfly versions
 

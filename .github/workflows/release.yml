@@ -23,7 +23,6 @@ jobs:
       branch_version: ${{ env.branch_version }}
       next_version: ${{ env.next_version }}
       quay_tag: ${{ env.quay_tag }}
-      go_version: ${{ env.go_version }}
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -147,17 +146,6 @@ jobs:
 
         echo "quay_tag=$QUAY_TAG" >> $GITHUB_ENV
 
-    - name: Determine go version
-      if: ${{ env.release_type != 'skip' }}
-      id: go_version
-      run: |
-        GO_VERSION=$(sed -rn 's/^GO_VERSION_KIALI \= (.*)/\1/p' Makefile)
-
-        # Remove any pre release identifier (ie: "-SNAPSHOT")
-        GO_VERSION=${GO_VERSION%-*}
-
-        echo "go_version=$GO_VERSION" >> $GITHUB_ENV
-
     - name: Cleanup
       run: rm bump.py minor.py
 
@@ -172,8 +160,6 @@ jobs:
         echo "Branch version: ${{ env.branch_version }}"
 
         echo "Quay tag: ${{ env.quay_tag }}"
-
-        echo "Go version: ${{ env.go_version }}"
 
   build_backend:
     name: Build backend
@@ -203,7 +189,6 @@ jobs:
       NEXT_VERSION: ${{ needs.initialize.outputs.next_version }}
       RELEASE_BRANCH: ${{ github.ref_name }}
       QUAY_TAG: ${{ needs.initialize.outputs.quay_tag }}
-      GO_VERSION: ${{ needs.initialize.outputs.go_version }}
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -222,7 +207,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v5
       with:
-        go-version: ${{ env.GO_VERSION }}
+        go-version-file: go.mod
         cache: true
         cache-dependency-path: go.sum
 

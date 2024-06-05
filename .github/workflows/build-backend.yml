@@ -16,20 +16,10 @@ jobs:
       with:
         ref: ${{ inputs.build_branch }}
 
-    - name: Determine go version
-      id: go_version
-      run: |
-        GO_VERSION=$(sed -rn 's/^GO_VERSION_KIALI \= (.*)/\1/p' Makefile)
-
-        # Remove any pre release identifier (ie: "-SNAPSHOT")
-        GO_VERSION=${GO_VERSION%-*}
-        echo $GO_VERSION
-        echo "go_version=$GO_VERSION" >> $GITHUB_ENV
-
     - name: Set up Go
       uses: actions/setup-go@v5
       with:
-        go-version: ${{ env.go_version }}
+        go-version-file: go.mod
         cache: true
         cache-dependency-path: go.sum
     - name: Lint Install
