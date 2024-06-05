@@ -239,7 +239,7 @@ else
 
     if [ "${INSTALL_ISTIO}" == "true" ]; then
       echo -e "Installing istio \n"
-      ${SCRIPT_DIR}/../install-istio-via-istioctl.sh -c ${CLIENT_EXE} -a "prometheus grafana" -s values.meshConfig.extensionProviders[0].zipkin.service="tempo-cr-distributor.tempo.svc.cluster.local"
+            ${SCRIPT_DIR}/../install-istio-via-istioctl.sh -c ${CLIENT_EXE} -a "prometheus grafana" -s values.meshConfig.defaultConfig.tracing.zipkin.address="tempo-cr-distributor.tempo:9411"
     fi
 
     if [ "${INSTALL_KIALI}" == "true" ]; then

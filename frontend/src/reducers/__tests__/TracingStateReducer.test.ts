@@ -8,8 +8,7 @@ const initialState: TracingState = {
     url: '',
     namespaceSelector: true,
     provider: 'jaeger',
-    whiteListIstioSystem: [],
-    timeout: 5
+    whiteListIstioSystem: []
   }
 };
 
@@ -33,8 +32,7 @@ describe('TracingState reducer', () => {
           integration: true,
           namespaceSelector: true,
           provider: 'jaeger',
-          whiteListIstioSystem: [],
-          timeout: 5
+          whiteListIstioSystem: []
         })
       )
     ).toEqual(expectedState);

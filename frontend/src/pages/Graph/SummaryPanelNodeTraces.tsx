@@ -24,7 +24,6 @@ import { KialiIcon } from 'config/KialiIcon';
 type ReduxStateProps = {
   kiosk: string;
   selectedTrace?: JaegerTrace;
-  timeout?: number;
 };
 
 type ReduxDispatchProps = {
@@ -121,10 +120,10 @@ class SummaryPanelNodeTracesComponent extends React.Component<Props, State> {
     const d = this.props.nodeData;
 
     const promise = d.workload
-      ? API.getWorkloadTraces(d.namespace, d.workload, params, d.cluster, this.props.timeout)
+      ? API.getWorkloadTraces(d.namespace, d.workload, params, d.cluster)
       : d.service
-      ? API.getServiceTraces(d.namespace, d.service, params, d.cluster, this.props.timeout)
-      : API.getAppTraces(d.namespace, d.app!, params, d.cluster, this.props.timeout);
+      ? API.getServiceTraces(d.namespace, d.service, params, d.cluster)
+      : API.getAppTraces(d.namespace, d.app!, params, d.cluster);
 
     this.promises.cancelAll();
 
@@ -228,8 +227,7 @@ class SummaryPanelNodeTracesComponent extends React.Component<Props, State> {
 
 const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
   kiosk: state.globalState.kiosk,
-  selectedTrace: state.tracingState.selectedTrace,
-  timeout: state.tracingState.info?.timeout
+  selectedTrace: state.tracingState.selectedTrace
 });
 
 const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => ({

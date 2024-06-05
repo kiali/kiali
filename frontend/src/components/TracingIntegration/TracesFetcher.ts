@@ -15,7 +15,6 @@ export type FetchOptions = {
   tags: string;
   target: string;
   targetKind: TargetKind;
-  timeout?: number;
 };
 
 export class TracesFetcher {
@@ -48,7 +47,7 @@ export class TracesFetcher {
         : o.targetKind === 'service'
         ? API.getServiceTraces
         : API.getWorkloadTraces;
-    apiCall(o.namespace, o.target, q, o.cluster, o.timeout)
+    apiCall(o.namespace, o.target, q, o.cluster)
       .then(response => {
         const newTraces = response.data.data
           ? (response.data.data

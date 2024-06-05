@@ -87,8 +87,8 @@ func NewServer(controlPlaneMonitor business.ControlPlaneMonitor,
 	// and ask for any profile to extend to those number of seconds you specify, which could be larger than 30s.
 	// To limit the damage this may cause with large write timeouts, we only increase the timeout to 1 minute.
 	// TODO: We could make this configurable in the future. See: https://github.com/kiali/kiali/pull/7108#issuecomment-1932982697
-	writeTimeout := 30 * time.Second
-	if conf.Server.Profiler.Enabled {
+	writeTimeout := conf.Server.Timeout * time.Second
+	if conf.Server.Profiler.Enabled && writeTimeout < 60 {
 		writeTimeout = 1 * time.Minute
 	}
 

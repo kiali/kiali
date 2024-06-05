@@ -9,7 +9,6 @@ export interface TracingInfo {
   integration: boolean;
   namespaceSelector: boolean;
   provider: string;
-  timeout: number;
   url: string;
   whiteListIstioSystem: string[];
 }
