@@ -8,6 +8,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"time"
 
 	"gopkg.in/yaml.v2"
 
@@ -166,6 +167,7 @@ type Server struct {
 	WebRoot                    string        `yaml:"web_root,omitempty"`
 	WebHistoryMode             string        `yaml:"web_history_mode,omitempty"`
 	WebSchema                  string        `yaml:"web_schema,omitempty"`
+	WriteTimeout               time.Duration `yaml:"write_timeout,omitempty"`
 }
 
 // Auth provides authentication data for external services
@@ -897,6 +899,7 @@ func NewConfig() (c *Config) {
 			WebRoot:                    "/",
 			WebHistoryMode:             "browser",
 			WebSchema:                  "",
+			WriteTimeout:               30,
 		},
 	}
 

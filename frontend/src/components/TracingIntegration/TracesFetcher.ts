@@ -8,13 +8,13 @@ import { transformTraceData } from 'utils/tracing/TraceTransform';
 import { isMultiCluster } from '../../config';
 
 export type FetchOptions = {
-  namespace: string;
   cluster?: string;
-  target: string;
-  targetKind: TargetKind;
+  minDuration?: number;
+  namespace: string;
   spanLimit: number;
   tags: string;
-  minDuration?: number;
+  target: string;
+  targetKind: TargetKind;
 };
 
 export class TracesFetcher {
@@ -25,7 +25,7 @@ export class TracesFetcher {
     private onErrors: (err: TracingError[]) => void
   ) {}
 
-  fetch = (o: FetchOptions, oldTraces: JaegerTrace[]) => {
+  fetch = (o: FetchOptions, oldTraces: JaegerTrace[]): void => {
     const range = getTimeRangeMicros();
     if (range.to) {
       // Closed time frame (looking in past)
@@ -79,7 +79,7 @@ export class TracesFetcher {
       });
   };
 
-  resetLastFetchTime() {
+  resetLastFetchTime(): void {
     this.lastFetchMicros = undefined;
   }
 }
