@@ -162,12 +162,12 @@ type Server struct {
 	Port                       int           `yaml:",omitempty"`
 	Profiler                   Profiler      `yaml:"profiler,omitempty"`
 	StaticContentRootDirectory string        `yaml:"static_content_root_directory,omitempty"`
-	Timeout                    time.Duration `yaml:"timeout,omitempty"`
 	WebFQDN                    string        `yaml:"web_fqdn,omitempty"`
 	WebPort                    string        `yaml:"web_port,omitempty"`
 	WebRoot                    string        `yaml:"web_root,omitempty"`
 	WebHistoryMode             string        `yaml:"web_history_mode,omitempty"`
 	WebSchema                  string        `yaml:"web_schema,omitempty"`
+	WriteTimeout               time.Duration `yaml:"write_timeout,omitempty"`
 }
 
 // Auth provides authentication data for external services
@@ -895,11 +895,11 @@ func NewConfig() (c *Config) {
 			},
 			Port:                       20001,
 			StaticContentRootDirectory: "/opt/kiali/console",
-			Timeout:                    30,
 			WebFQDN:                    "",
 			WebRoot:                    "/",
 			WebHistoryMode:             "browser",
 			WebSchema:                  "",
+			WriteTimeout:               30,
 		},
 	}
 
