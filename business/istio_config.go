@@ -975,7 +975,7 @@ func (in *IstioConfigService) GetIstioConfigPermissions(ctx context.Context, nam
 			*/
 			go func(ctx context.Context, namespace string, wg *sync.WaitGroup, networkingPermissions *models.ResourcesPermissions) {
 				defer wg.Done()
-				canCreate, canUpdate, canDelete := getPermissionsApi(ctx, k8s, cluster, namespace, kubernetes.NetworkingGroupVersionV1Beta1.Group, allResources)
+				canCreate, canUpdate, canDelete := getPermissionsApi(ctx, k8s, cluster, namespace, kubernetes.NetworkingGroupVersionV1.Group, allResources)
 				for _, rs := range newNetworkingConfigTypes {
 					networkingRP[rs] = &models.ResourcePermissions{
 						Create: canCreate,

@@ -113,12 +113,6 @@ var (
 	}
 	ApiNetworkingVersionV1Alpha3 = NetworkingGroupVersionV1Alpha3.Group + "/" + NetworkingGroupVersionV1Alpha3.Version
 
-	NetworkingGroupVersionV1Beta1 = schema.GroupVersion{
-		Group:   "networking.istio.io",
-		Version: "v1beta1",
-	}
-	ApiNetworkingVersionV1Beta1 = NetworkingGroupVersionV1Beta1.Group + "/" + NetworkingGroupVersionV1Beta1.Version
-
 	NetworkingGroupVersionV1 = schema.GroupVersion{
 		Group:   "networking.istio.io",
 		Version: "v1",
