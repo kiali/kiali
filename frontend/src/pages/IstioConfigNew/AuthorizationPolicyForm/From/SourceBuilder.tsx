@@ -5,7 +5,7 @@ import { isValidIp } from '../../../../utils/IstioConfigUtils';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from '../../../../components/Pf/PfColors';
 import { isValid } from 'utils/Common';
-import { SimpleTable } from 'components/SimpleTable';
+import { SimpleTable } from 'components/Table/SimpleTable';
 import { KialiIcon } from 'config/KialiIcon';
 
 type Props = {
@@ -212,7 +212,7 @@ export class SourceBuilder extends React.Component<Props, State> {
     return sourceRows;
   };
 
-  render() {
+  render(): React.ReactNode {
     return (
       <>
         <SimpleTable label="Source Builder" columns={columns} rows={this.rows()} />

@@ -3,7 +3,6 @@ import { Label, Flex, FlexItem, Tooltip, Toolbar, ToolbarItem } from '@patternfl
 
 import { homeCluster, serverConfig } from '../../../config';
 import { IstioStatus } from '../../IstioStatus/IstioStatus';
-import { PfSpinner } from '../../PfSpinner';
 import { UserDropdown } from './UserDropdown';
 import { HelpDropdown } from './HelpDropdown';
 import { MessageCenterTrigger } from '../../../components/MessageCenter/MessageCenterTrigger';
@@ -11,6 +10,7 @@ import { ThemeSwitch } from './ThemeSwitch';
 import { LanguageSwitch } from './LanguageSwitch';
 import { KialiIcon } from 'config/KialiIcon';
 import { useKialiTranslation } from 'utils/I18nUtils';
+import { PfSpinner } from 'components/Pf/PfSpinner';
 
 export const MastheadItems: React.FC = () => {
   const { t } = useKialiTranslation();

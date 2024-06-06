@@ -7,7 +7,7 @@ import { Labels } from '../../components/Label/Labels';
 import { kialiStyle } from 'styles/StyleUtils';
 import { LocalTime } from '../../components/Time/LocalTime';
 import { renderAPILogo } from '../../components/Logo/Logos';
-import { TextOrLink } from '../../components/TextOrLink';
+import { TextOrLink } from '../../components/Link/TextOrLink';
 import { KialiIcon } from '../../config/KialiIcon';
 import { HealthIndicator } from '../../components/Health/HealthIndicator';
 import { PFBadge, PFBadges } from '../../components/Pf/PfBadges';

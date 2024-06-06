@@ -37,3 +37,12 @@ export const isValid = (isValid?: boolean, isWarning?: boolean): validationType 
   }
   return isWarning ? 'warning' : 'error';
 };
+
+export const download = (text: string, fileName: string): void => {
+  const element = document.createElement('a');
+  const file = new Blob([text], { type: 'text/plain' });
+  element.href = URL.createObjectURL(file);
+  element.download = fileName;
+  document.body.appendChild(element); // Required for this to work in FireFox
+  element.click();
+};

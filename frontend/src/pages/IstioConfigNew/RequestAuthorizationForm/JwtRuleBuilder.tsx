@@ -6,7 +6,7 @@ import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from '../../../components/Pf/PfColors';
 import { isValidUrl } from '../../../utils/IstioConfigUtils';
 import { KialiIcon } from 'config/KialiIcon';
-import { SimpleTable } from 'components/SimpleTable';
+import { SimpleTable } from 'components/Table/SimpleTable';
 
 type Props = {
   onAddJwtRule: (rule: JWTRule) => void;
@@ -295,7 +295,7 @@ export class JwtRuleBuilder extends React.Component<Props, State> {
     return jwtRuleRows;
   };
 
-  render() {
+  render(): React.ReactNode {
     return (
       <>
         <SimpleTable label="JWT Rule Builder" columns={columns} rows={this.rows()} />

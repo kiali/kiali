@@ -28,7 +28,7 @@ import * as FilterHelper from '../FilterList/FilterHelper';
 import * as Sorts from '../../pages/Overview/Sorts';
 import { StatefulFiltersRef } from '../Filters/StatefulFilters';
 import { kialiStyle } from 'styles/StyleUtils';
-import { SortableTh } from 'components/SimpleTable';
+import { SortableTh } from 'components/Table/SimpleTable';
 
 const virtualListStyle = kialiStyle({
   padding: '1.25rem',

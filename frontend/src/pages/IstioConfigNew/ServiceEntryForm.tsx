@@ -17,7 +17,7 @@ import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from '../../components/Pf/PfColors';
 import { isValid } from 'utils/Common';
 import { KialiIcon } from 'config/KialiIcon';
-import { SimpleTable } from 'components/SimpleTable';
+import { SimpleTable } from 'components/Table/SimpleTable';
 
 export const SERVICE_ENTRY = 'ServiceEntry';
 export const SERVICE_ENTRIES = 'serviceentries';
@@ -73,8 +73,8 @@ type Props = {
 };
 
 type FormPort = {
-  number: string;
   name: string;
+  number: string;
   protocol: string;
   targetPort: string;
 };
@@ -382,7 +382,7 @@ export class ServiceEntryForm extends React.Component<Props, ServiceEntryState> 
     }));
   };
 
-  render() {
+  render(): React.ReactNode {
     return (
       <>
         <FormGroup label="Hosts" isRequired={true} fieldId="hosts">

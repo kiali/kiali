@@ -6,7 +6,7 @@ import { languageSelector, refreshIntervalSelector } from '../../store/Selectors
 import { config } from '../../config';
 import { IntervalInMilliseconds } from '../../types/Common';
 import { UserSettingsActions } from '../../actions/UserSettingsActions';
-import { ToolbarDropdown } from '../ToolbarDropdown/ToolbarDropdown';
+import { ToolbarDropdown } from '../Dropdown/ToolbarDropdown';
 import { RefreshButton } from './RefreshButton';
 import { HistoryManager, URLParam } from 'app/History';
 import { TooltipPosition } from '@patternfly/react-core';

@@ -5,7 +5,7 @@ import { ThProps, IRow } from '@patternfly/react-table';
 import { kialiStyle } from 'styles/StyleUtils';
 import { SimpleTabs } from 'components/Tab/SimpleTabs';
 import { PFColors } from 'components/Pf/PfColors';
-import { SimpleTable } from 'components/SimpleTable';
+import { SimpleTable } from 'components/Table/SimpleTable';
 
 export interface MeshHelpFindProps {
   children: React.ReactNode;
@@ -48,7 +48,7 @@ export const MeshHelpFind: React.FC<MeshHelpFindProps> = (props: MeshHelpFindPro
   // Incrementing mock counter to force a re-render in React hooks
   const [, forceUpdate] = React.useReducer(x => x + 1, 0);
 
-  const onResize = () => {
+  const onResize = (): void => {
     forceUpdate();
   };
 

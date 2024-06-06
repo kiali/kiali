@@ -8,7 +8,7 @@ import { Button, ButtonVariant, TooltipPosition } from '@patternfly/react-core';
 import { getDefaultWeights } from './WizardActions';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { KialiIcon } from 'config/KialiIcon';
-import { SimpleTable } from 'components/SimpleTable';
+import { SimpleTable } from 'components/Table/SimpleTable';
 
 type Props = {
   initWeights: WorkloadWeight[];
@@ -51,7 +51,7 @@ export class TrafficShifting extends React.Component<Props, State> {
     };
   }
 
-  componentDidMount() {
+  componentDidMount(): void {
     this.resetState();
   }
 
@@ -200,7 +200,7 @@ export class TrafficShifting extends React.Component<Props, State> {
     );
   };
 
-  render() {
+  render(): React.ReactNode {
     const isValid = this.checkTotalWeight();
 
     const workloadColumns: ThProps[] = [

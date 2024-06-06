@@ -4,9 +4,10 @@
 import { PFColors } from 'components/Pf/PfColors';
 import React from 'react';
 import { kialiStyle } from 'styles/StyleUtils';
+import { useKialiTranslation } from 'utils/I18nUtils';
 
 // rgb in [0,255] bounds
-export type Color = { r: number; g: number; b: number };
+export type Color = { b: number; g: number; r: number };
 export type ColorMap = Color[];
 
 type HeatMapProps = {
@@ -47,6 +48,8 @@ export const healthColorMap: ColorMap = [
 ];
 
 export const HeatMap: React.FC<HeatMapProps> = (props: HeatMapProps) => {
+  const { t } = useKialiTranslation();
+
   const getGridStyle = (): React.CSSProperties => {
     if (props.displayMode === 'compact') {
       return {
@@ -70,7 +73,7 @@ export const HeatMap: React.FC<HeatMapProps> = (props: HeatMapProps) => {
     };
   };
 
-  const getCellColors = (value: number): { color: PFColors; backgroundColor: string } => {
+  const getCellColors = (value: number): { backgroundColor: string; color: PFColors } => {
     const { from, to } = props.dataRange;
     const clamped = Math.max(from, Math.min(to, value));
     const ratio = (clamped - from) / (to - from); // e.g. 0.8 | 0 | 1
@@ -126,7 +129,7 @@ export const HeatMap: React.FC<HeatMapProps> = (props: HeatMapProps) => {
                   className={cellStyle}
                   style={{ backgroundColor: props.colorUndefined, color: PFColors.Black1000 }}
                 >
-                  {!isCompact && 'n/a'}
+                  {!isCompact && t('n/a')}
                 </div>
               );
             })}

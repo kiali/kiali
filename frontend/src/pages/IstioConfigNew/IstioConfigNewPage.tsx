@@ -90,7 +90,7 @@ import {
 import { ConfigPreviewItem, IstioConfigPreview } from 'components/IstioConfigPreview/IstioConfigPreview';
 import { isValid } from 'utils/Common';
 import { ClusterDropdown } from './ClusterDropdown';
-import { NamespaceDropdown } from '../../components/NamespaceDropdown';
+import { NamespaceDropdown } from '../../components/Dropdown/NamespaceDropdown';
 import { Labels } from '../../components/Label/Labels';
 import { WizardLabels } from '../../components/IstioWizards/WizardLabels';
 import { isParentKiosk, kioskContextMenuAction } from 'components/Kiosk/KioskActions';
@@ -750,10 +750,11 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
           <IstioConfigPreview
             isOpen={this.state.showPreview}
             items={this.state.itemsPreview}
+            downloadPrefix={this.props.objectType}
             title={'Preview new istio objects'}
             opTarget={'create'}
             disableAction={!canCreate}
-            ns={this.props.activeNamespaces.join(',')}
+            ns={this.props.activeNamespaces.map(n => n.name).join(',')}
             onConfirm={items =>
               this.setState({ showPreview: false, itemsPreview: items }, () => this.onIstioResourceCreate())
             }

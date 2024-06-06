@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Node, NodeModel } from '@patternfly/react-topology';
-import { TargetPanelCommonProps, nodeStyle, targetPanelHR, targetPanelStyle } from './TargetPanelCommon';
+import { TargetPanelCommonProps, nodeStyle, targetPanelStyle } from './TargetPanelCommon';
 import { classes } from 'typestyle';
 import { MeshNodeData } from 'types/Mesh';
 import { panelBodyStyle, panelHeadingStyle, panelStyle } from 'pages/Graph/SummaryPanelStyle';
@@ -10,11 +10,13 @@ import { ExpandableRowContent, Table, Tbody, Td, Th, Thead, Tr } from '@patternf
 import { NamespaceInfo } from 'types/NamespaceInfo';
 import { TargetPanelDataPlaneNamespace } from './TargetPanelDataPlaneNamespace';
 import { serverConfig } from 'config';
-import { t } from 'utils/I18nUtils';
+import { useKialiTranslation } from 'utils/I18nUtils';
 import { ControlPlaneVersionBadge } from 'pages/Overview/ControlPlaneVersionBadge';
 
 export const TargetPanelDataPlane: React.FC<TargetPanelCommonProps> = (props: TargetPanelCommonProps) => {
   const [expanded, setExpanded] = React.useState<string[]>([]);
+
+  const { t } = useKialiTranslation();
 
   const isExpanded = (ns: NamespaceInfo): boolean => {
     return expanded.includes(ns.name);
@@ -63,17 +65,20 @@ export const TargetPanelDataPlane: React.FC<TargetPanelCommonProps> = (props: Ta
     <div id="target-panel-data-plane" className={classes(panelStyle, targetPanelStyle)}>
       <div className={panelHeadingStyle}>{renderDataPlaneHeader(data)}</div>
       <div className={panelBodyStyle}>
-        <Table aria-label="dataplane-table" variant="compact">
+        <Table aria-label={t('Dataplane table')} variant="compact">
           <Thead>
             <Tr>
               <Th />
-              <Th>Namespace</Th>
+              <Th>{t('Namespace')}</Th>
             </Tr>
           </Thead>
+
           {(data.infraData as NamespaceInfo[])
             .filter(ns => ns.name !== serverConfig.istioNamespace)
             .sort((ns1, ns2) => (ns1.name < ns2.name ? -1 : 1))
             .map((ns, i) => {
+              const namespaceData = data.infraData.find((id: NamespaceInfo) => id.name === ns.name);
+
               return (
                 <Tbody key={ns.name} isExpanded={isExpanded(ns)}>
                   <Tr>
@@ -85,13 +90,16 @@ export const TargetPanelDataPlane: React.FC<TargetPanelCommonProps> = (props: Ta
                         expandId: `ns-${ns.name}`
                       }}
                     />
-                    <Td dataLabel="Namespace">{ns.name}</Td>
+
+                    <Td dataLabel={t('Namespace')}>{ns.name}</Td>
                   </Tr>
+
                   <Tr isExpanded={isExpanded(ns)}>
                     <Td dataLabel={`detail-${ns}`} noPadding={true} colSpan={2}>
                       <ExpandableRowContent>
                         <TargetPanelDataPlaneNamespace
                           duration={props.duration}
+                          namespaceData={namespaceData}
                           istioAPIEnabled={props.istioAPIEnabled}
                           isExpanded={isExpanded(ns)}
                           kiosk={props.kiosk}
@@ -100,15 +108,6 @@ export const TargetPanelDataPlane: React.FC<TargetPanelCommonProps> = (props: Ta
                           targetNamespace={ns.name}
                           updateTime={props.updateTime}
                         />
-                        {targetPanelHR}
-                        <span>{`${t('Configuration')}:`}</span>
-                        <pre>
-                          {JSON.stringify(
-                            data.infraData.find((id: NamespaceInfo) => id.name === ns.name),
-                            null,
-                            2
-                          )}
-                        </pre>
                       </ExpandableRowContent>
                     </Td>
                   </Tr>

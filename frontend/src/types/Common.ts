@@ -28,6 +28,8 @@ export const enum Language {
   ENGLISH = 'en'
 }
 
+export type Json = string | number | boolean | null | Json[] | { [key: string]: Json };
+
 export type TargetKind = 'app' | 'service' | 'workload';
 
 export const MILLISECONDS = 1000;

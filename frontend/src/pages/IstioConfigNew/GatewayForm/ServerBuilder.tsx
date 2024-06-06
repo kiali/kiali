@@ -17,7 +17,7 @@ import { isValid } from 'utils/Common';
 import { isValidPort } from './ListenerBuilder';
 import { kialiStyle } from 'styles/StyleUtils';
 import { KialiIcon } from 'config/KialiIcon';
-import { SimpleTable } from 'components/SimpleTable';
+import { SimpleTable } from 'components/Table/SimpleTable';
 
 type ServerBuilderProps = {
   index: number;

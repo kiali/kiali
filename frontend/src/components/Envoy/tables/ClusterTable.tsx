@@ -11,7 +11,7 @@ import { PFColors } from 'components/Pf/PfColors';
 import { KialiIcon } from 'config/KialiIcon';
 import { kialiStyle } from 'styles/StyleUtils';
 import { isParentKiosk } from '../../Kiosk/KioskActions';
-import { SortableTh } from 'components/SimpleTable';
+import { SortableTh } from 'components/Table/SimpleTable';
 import { t } from 'utils/I18nUtils';
 
 export class ClusterTable implements SummaryTable {

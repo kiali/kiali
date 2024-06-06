@@ -36,6 +36,7 @@ import { panelBodyStyle, panelHeadingStyle, panelStyle } from 'pages/Graph/Summa
 import { MeshMTLSStatus } from 'components/MTls/MeshMTLSStatus';
 import { t } from 'utils/I18nUtils';
 import { UNKNOWN } from 'types/Graph';
+import { TargetPanelConfigTable } from './TargetPanelConfigTable';
 
 type TargetPanelControlPlaneProps = TargetPanelCommonProps & {
   meshStatus: string;
@@ -130,11 +131,9 @@ export class TargetPanelControlPlane extends React.Component<
         <div className={panelHeadingStyle}>{renderNodeHeader(data, {})}</div>
 
         <div className={panelBodyStyle}>
-          <div style={{ textAlign: 'left' }}>{`${t('Version')}: ${data.version || UNKNOWN}`}</div>
+          <div>{t('Version: {{version}}', { version: data.version || t(UNKNOWN) })}</div>
 
-          <div style={{ textAlign: 'left' }}>
-            <MeshMTLSStatus />
-          </div>
+          <MeshMTLSStatus />
 
           <ControlPlaneNamespaceStatus
             outboundTrafficPolicy={this.state.outboundPolicyMode}
@@ -165,8 +164,8 @@ export class TargetPanelControlPlane extends React.Component<
           )}
 
           {targetPanelHR}
-          <span>{`${t('Configuration')}:`}</span>
-          <pre>{JSON.stringify(data.infraData, null, 2)}</pre>
+
+          <TargetPanelConfigTable configData={data.infraData} targetName={data.infraName} width="40%" />
         </div>
       </div>
     );

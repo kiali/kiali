@@ -4,12 +4,15 @@ import { TargetPanelCommonProps, renderNodeHeader, targetPanelStyle } from './Ta
 import { MeshNodeData, isExternal } from 'types/Mesh';
 import { classes } from 'typestyle';
 import { panelBodyStyle, panelHeadingStyle, panelStyle } from 'pages/Graph/SummaryPanelStyle';
-import { t } from 'utils/I18nUtils';
+import { useKialiTranslation } from 'utils/I18nUtils';
 import { UNKNOWN } from 'types/Graph';
+import { TargetPanelConfigTable } from './TargetPanelConfigTable';
 
 type TargetPanelNodeProps = TargetPanelCommonProps;
 
 export const TargetPanelNode: React.FC<TargetPanelNodeProps> = (props: TargetPanelNodeProps) => {
+  const { t } = useKialiTranslation();
+
   const node = props.target.elem as Node<NodeModel, any>;
 
   if (!node) {
@@ -22,9 +25,9 @@ export const TargetPanelNode: React.FC<TargetPanelNodeProps> = (props: TargetPan
     <div id="target-panel-node" className={classes(panelStyle, targetPanelStyle)}>
       <div className={panelHeadingStyle}>{renderNodeHeader(data, { nameOnly: isExternal(data.cluster) })}</div>
       <div className={panelBodyStyle}>
-        <div style={{ textAlign: 'left' }}>{`${t('Version')}: ${data.version || UNKNOWN}`}</div>
-        <span>{`${t('Configuration')}:`}</span>
-        <pre>{JSON.stringify(data.infraData, null, 2)}</pre>
+        <span>{t('Version: {{version}}', { version: data.version || t(UNKNOWN) })}</span>
+
+        <TargetPanelConfigTable configData={data.infraData} targetName={data.infraName} width="40%" />
       </div>
     </div>
   );

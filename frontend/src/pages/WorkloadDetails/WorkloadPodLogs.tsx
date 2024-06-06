@@ -31,7 +31,7 @@ import { addError, addSuccess } from 'utils/AlertUtils';
 import { AccessLog, LogEntry, LogType, Pod, PodLogs } from '../../types/IstioObjects';
 import { getPodLogs, getWorkloadSpans, setPodEnvoyProxyLogLevel } from '../../services/Api';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
-import { ToolbarDropdown } from '../../components/ToolbarDropdown/ToolbarDropdown';
+import { ToolbarDropdown } from '../../components/Dropdown/ToolbarDropdown';
 import { evalTimeRange, isEqualTimeRange, TimeInMilliseconds, TimeInSeconds, TimeRange } from '../../types/Common';
 import { RenderComponentScroll } from '../../components/Nav/Page';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
@@ -524,7 +524,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
 
           {this.state.containerOptions!.map((c, i) => {
             return (
-              <>
+              <React.Fragment key={i}>
                 <Checkbox
                   id={`container-${c.displayName}`}
                   key={`c-d-${i}`}
@@ -573,7 +573,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                     </Tooltip>
                   </>
                 )}
-              </>
+              </React.Fragment>
             );
           })}
         </FormGroup>

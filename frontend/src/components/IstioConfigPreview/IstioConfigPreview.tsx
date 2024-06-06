@@ -31,6 +31,8 @@ import { EditResources } from './EditResources';
 import { cloneDeep } from 'lodash';
 import { PFColors } from '../Pf/PfColors';
 import _ from 'lodash';
+import { download } from 'utils/Common';
+import { t } from 'utils/I18nUtils';
 
 export type IstioConfigItem =
   | AuthorizationPolicy
@@ -52,6 +54,7 @@ export interface ConfigPreviewItem {
 interface Props {
   actions?: any;
   disableAction?: boolean;
+  downloadPrefix: string;
   isOpen: boolean;
   items: ConfigPreviewItem[];
   ns: string;
@@ -59,10 +62,11 @@ interface Props {
   onConfirm: (items: ConfigPreviewItem[]) => void;
   onKeyPress?: (e: any) => void;
   opTarget: string;
-  title?: string;
+  title: string;
 }
 
 interface State {
+  copied: boolean;
   items: ConfigPreviewItem[];
   mainTab: string;
   modalOpen: boolean;
@@ -71,8 +75,12 @@ interface State {
 
 const separator = '\n---\n\n';
 
+const downloadButtonStyle = kialiStyle({
+  marginLeft: '0.5rem'
+});
+
 const iconStyle = kialiStyle({
-  marginLeft: '6px'
+  marginLeft: '0.25rem'
 });
 
 // From react-patternfly library (not exported in the library)
@@ -83,13 +91,16 @@ export class IstioConfigPreview extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
     const newIstioPage = window.location.pathname.split('/')[2] === 'istio';
+
     this.state = {
+      copied: false,
       mainTab: this.props.items.length > 0 ? this.props.items[0].title.toLocaleLowerCase().replace(/\s/g, '') : '',
       newIstioPage: newIstioPage,
       items: cloneDeep(this.props.items),
       modalOpen: this.props.isOpen
     };
   }
+
   componentDidUpdate(prevProps: Props): void {
     if (!_.isEqual(prevProps.items, this.props.items) || prevProps.isOpen !== this.props.isOpen) {
       this.setStateValues(this.props.items);
@@ -104,23 +115,18 @@ export class IstioConfigPreview extends React.Component<Props, State> {
     });
   };
 
-  trafficToText = (): string => {
-    let trafficPoliciesYaml = '';
-    this.state.items.map(obj => {
-      trafficPoliciesYaml += obj.items.map(item => jsYaml.safeDump(item, safeDumpOptions)).join(separator);
-      trafficPoliciesYaml += separator;
-      return undefined;
-    });
-    return trafficPoliciesYaml;
-  };
+  getPreviewYaml = (): string => {
+    let previewYaml = '';
 
-  downloadTraffic = (): void => {
-    const element = document.createElement('a');
-    const file = new Blob([this.trafficToText()], { type: 'text/plain' });
-    element.href = URL.createObjectURL(file);
-    element.download = `trafficPolicies_${this.props.ns}.yaml`;
-    document.body.appendChild(element); // Required for this to work in FireFox
-    element.click();
+    this.state.items.forEach((obj: ConfigPreviewItem, index: number) => {
+      previewYaml += obj.items.map(item => jsYaml.safeDump(item, safeDumpOptions)).join(separator);
+
+      if (index !== this.state.items.length - 1) {
+        previewYaml += separator;
+      }
+    });
+
+    return previewYaml;
   };
 
   onConfirm = (): void => {
@@ -135,12 +141,14 @@ export class IstioConfigPreview extends React.Component<Props, State> {
         ? it.title === title && it.items.find(t => t.metadata.namespace === object.metadata.namespace)
         : it.title === title
     );
+
     const config = items[ind];
     config.items[
       this.state.newIstioPage
         ? config.items.findIndex(fi => fi.metadata.namespace === object.metadata.namespace)
         : index
     ] = object;
+
     items[ind] = config;
     this.setState({ items });
   };
@@ -153,7 +161,9 @@ export class IstioConfigPreview extends React.Component<Props, State> {
             it => it.title === item.title
           )
         : [];
+
     const propItems = filterItems.length > 0 ? filterItems[0].items : [];
+
     return (
       <Tab eventKey={key} key={`${key}_tab_preview`} title={item.title}>
         <EditResources
@@ -176,12 +186,14 @@ export class IstioConfigPreview extends React.Component<Props, State> {
 
   groupItems = (list: ConfigPreviewItem[] = this.state.items): ConfigPreviewItem[] => {
     const types = _.uniq(list.map(item => item.type));
+
     const itemsGrouped: ConfigPreviewItem[] = types.map(type => {
       const filtered = list.filter(it => it.type === type);
       const item: ConfigPreviewItem = { type: type, title: filtered[0].title, items: [] };
       filtered.map(f => item.items.push(f.items[0]));
       return item;
     });
+
     return itemsGrouped;
   };
 
@@ -189,10 +201,10 @@ export class IstioConfigPreview extends React.Component<Props, State> {
     return (
       <Modal
         width={'75%'}
-        title={this.props.title ? this.props.title : 'Preview Traffic Policies '}
+        title={this.props.title}
         isOpen={this.state.modalOpen}
         onClose={this.props.onClose}
-        onKeyPress={e => (this.props.onKeyPress ? this.props.onKeyPress(e) : {})}
+        onKeyDown={e => (this.props.onKeyPress ? this.props.onKeyPress(e) : {})}
         actions={
           this.props.actions
             ? this.props.actions
@@ -204,10 +216,10 @@ export class IstioConfigPreview extends React.Component<Props, State> {
                   onClick={this.onConfirm}
                   data-test={this.props.opTarget}
                 >
-                  {this.props.opTarget && this.props.opTarget[0].toUpperCase() + this.props.opTarget.substr(1)}
+                  {t(this.props.opTarget[0]?.toUpperCase() + this.props.opTarget?.substring(1))}
                 </Button>,
                 <Button key="cancel" variant={ButtonVariant.secondary} onClick={this.props.onClose}>
-                  Cancel
+                  {t('Cancel')}
                 </Button>
               ]
         }
@@ -219,26 +231,34 @@ export class IstioConfigPreview extends React.Component<Props, State> {
             })}
           >
             <ToolbarItem>
-              <Tooltip content={<>Copy all resources</>}>
-                <CopyToClipboard text={this.trafficToText()}>
-                  <Button variant={ButtonVariant.link} aria-label="Copy" isInline>
+              <Tooltip
+                content={<>{this.state.copied ? t('Copied') : t('Copy all resources')}</>}
+                onTooltipHidden={() => this.setState({ copied: false })}
+              >
+                <CopyToClipboard text={this.getPreviewYaml()}>
+                  <Button
+                    variant={ButtonVariant.link}
+                    aria-label={t('Copy')}
+                    isInline
+                    onClick={() => this.setState({ copied: true })}
+                  >
                     <KialiIcon.Copy />
-                    <span className={iconStyle}>Copy</span>
+                    <span className={iconStyle}>{t('Copy')}</span>
                   </Button>
                 </CopyToClipboard>
               </Tooltip>
             </ToolbarItem>
             <ToolbarItem>
-              <Tooltip content={<>Download all resources in a file</>}>
+              <Tooltip content={<>{t('Download all resources in a file')}</>}>
                 <Button
                   variant={ButtonVariant.link}
                   isInline
-                  aria-label="Download"
-                  className={kialiStyle({ marginLeft: '0.5em' })}
-                  onClick={() => this.downloadTraffic()}
+                  aria-label={t('Download')}
+                  className={downloadButtonStyle}
+                  onClick={() => download(this.getPreviewYaml(), `${this.props.downloadPrefix}_${this.props.ns}.yaml`)}
                 >
                   <KialiIcon.Download />
-                  <span className={iconStyle}>Download</span>
+                  <span className={iconStyle}>{t('Download')}</span>
                 </Button>
               </Tooltip>
             </ToolbarItem>
@@ -256,7 +276,7 @@ export class IstioConfigPreview extends React.Component<Props, State> {
         )}
         {this.props.disableAction && (
           <div className={kialiStyle({ color: PFColors.Danger })}>
-            User does not have enough permission for this action.
+            {t('User does not have enough permission for this action.')}
           </div>
         )}
       </Modal>

@@ -5,13 +5,14 @@ import { ThProps, IRow } from '@patternfly/react-table';
 import { kialiStyle } from 'styles/StyleUtils';
 import { SimpleTabs } from 'components/Tab/SimpleTabs';
 import { PFColors } from 'components/Pf/PfColors';
-import { SimpleTable } from 'components/SimpleTable';
+import { SimpleTable } from 'components/Table/SimpleTable';
 
 export interface GraphHelpFindProps {
   children: React.ReactNode;
   className?: string;
   onClose: () => void;
 }
+
 const height = 'auto';
 const maxHeight = '34rem';
 const maxWidth = '37rem';
@@ -47,7 +48,7 @@ export const GraphHelpFind: React.FC<GraphHelpFindProps> = (props: GraphHelpFind
   // Incrementing mock counter to force a re-render in React hooks
   const [, forceUpdate] = React.useReducer(x => x + 1, 0);
 
-  const onResize = () => {
+  const onResize = (): void => {
     forceUpdate();
   };
 

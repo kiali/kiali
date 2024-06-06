@@ -4,7 +4,7 @@ import { Card, CardBody, CardHeader, Title, TitleSizes, Tooltip, TooltipPosition
 import { kialiStyle } from 'styles/StyleUtils';
 import { Labels } from '../../components/Label/Labels';
 import { LocalTime } from '../../components/Time/LocalTime';
-import { TextOrLink } from '../../components/TextOrLink';
+import { TextOrLink } from '../../components/Link/TextOrLink';
 import { renderAPILogo, renderRuntimeLogo } from '../../components/Logo/Logos';
 import * as H from '../../types/Health';
 import { KialiIcon } from '../../config/KialiIcon';

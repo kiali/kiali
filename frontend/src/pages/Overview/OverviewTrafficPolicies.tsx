@@ -313,6 +313,8 @@ export class OverviewTrafficPolicies extends React.Component<OverviewTrafficPoli
               this.props.opTarget !== 'delete' &&
               this.state.authorizationPolicies.length > 0
             }
+            title={'Preview Traffic Policies'}
+            downloadPrefix="trafficPolicies"
             disableAction={this.state.disableOp}
             onClose={this.onHideConfirmModal}
             onConfirm={this.onConfirmPreviewPoliciesModal}

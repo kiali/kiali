@@ -20,6 +20,7 @@ import { meshWideMTLSStatusSelector, minTLSVersionSelector } from 'store/Selecto
 import { NodeData } from '../MeshElems';
 import { TargetPanelDataPlane } from './TargetPanelDataPlane';
 import { TargetPanelControlPlane } from './TargetPanelControlPlane';
+import { useKialiTranslation } from 'utils/I18nUtils';
 
 type ReduxProps = {
   kiosk: string;
@@ -56,8 +57,8 @@ const toggleTargetPanelStyle = kialiStyle({
   borderRadius: '3px',
   bottom: 0,
   cursor: 'pointer',
-  left: '-1.6em',
-  minWidth: '5em',
+  left: '-1.4rem',
+  minWidth: '4.5rem',
   position: 'absolute',
   textAlign: 'center',
   transform: 'rotate(-90deg)',
@@ -67,6 +68,7 @@ const toggleTargetPanelStyle = kialiStyle({
 export const TargetPanelComponent: React.FC<TargetPanelProps> = (props: TargetPanelProps) => {
   const [isCollapsed, setIsCollapsed] = React.useState<boolean>(false);
 
+  const { t } = useKialiTranslation();
   const { target } = props;
 
   React.useEffect(() => setIsCollapsed(false), [target.elem]);
@@ -79,6 +81,7 @@ export const TargetPanelComponent: React.FC<TargetPanelProps> = (props: TargetPa
         const elem = target.elem as GraphElement<ElementModel, any>;
         const data = elem.getData() as NodeData;
         const boxType: BoxByType = data.isBox as BoxByType;
+
         switch (boxType) {
           case BoxByType.CLUSTER:
             return (
@@ -120,6 +123,7 @@ export const TargetPanelComponent: React.FC<TargetPanelProps> = (props: TargetPa
       case 'node':
         const elem = target.elem as GraphElement<ElementModel, any>;
         const data = elem.getData() as NodeData;
+
         switch (data.infraType) {
           case MeshInfraType.ISTIOD:
             return (
@@ -171,7 +175,6 @@ export const TargetPanelComponent: React.FC<TargetPanelProps> = (props: TargetPa
   }
 
   const mainTopStyle = isCollapsed ? collapsedStyle : expandedStyle;
-  // const target: MeshTarget = props.target;
   const tourStops = [MeshTourStops.TargetPanel, MeshTourStops.Mesh];
 
   return (
@@ -181,14 +184,15 @@ export const TargetPanelComponent: React.FC<TargetPanelProps> = (props: TargetPa
           <div className={classes(toggleTargetPanelStyle)} onClick={togglePanel}>
             {isCollapsed ? (
               <>
-                <KialiIcon.AngleDoubleUp /> Show
+                <KialiIcon.AngleDoubleUp /> {t('Show')}
               </>
             ) : (
               <>
-                <KialiIcon.AngleDoubleDown /> Hide
+                <KialiIcon.AngleDoubleDown /> {t('Hide')}
               </>
             )}
           </div>
+
           {getTargetPanel(target)}
         </div>
       </div>

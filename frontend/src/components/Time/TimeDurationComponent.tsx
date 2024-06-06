@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import { DurationDropdown } from '../DurationDropdown/DurationDropdown';
+import { DurationDropdown } from '../Dropdown/DurationDropdown';
 import { Refresh } from 'components/Refresh/Refresh';
 import { KialiAppState } from 'store/Store';
 import { durationSelector, replayActiveSelector } from 'store/Selectors';

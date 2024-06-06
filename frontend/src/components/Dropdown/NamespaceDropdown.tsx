@@ -15,19 +15,19 @@ import {
   DropdownList,
   Checkbox
 } from '@patternfly/react-core';
-import { KialiAppState } from '../store/Store';
-import { activeNamespacesSelector, namespaceFilterSelector, namespaceItemsSelector } from '../store/Selectors';
-import { NamespaceActions } from '../actions/NamespaceAction';
-import { NamespaceThunkActions } from '../actions/NamespaceThunkActions';
-import { Namespace } from '../types/Namespace';
-import { HistoryManager, URLParam } from '../app/History';
+import { KialiAppState } from '../../store/Store';
+import { activeNamespacesSelector, namespaceFilterSelector, namespaceItemsSelector } from '../../store/Selectors';
+import { NamespaceActions } from '../../actions/NamespaceAction';
+import { NamespaceThunkActions } from '../../actions/NamespaceThunkActions';
+import { Namespace } from '../../types/Namespace';
+import { HistoryManager, URLParam } from '../../app/History';
 import {
   BoundingClientAwareComponent,
   PropertyType
-} from './BoundingClientAwareComponent/BoundingClientAwareComponent';
+} from '../BoundingClientAwareComponent/BoundingClientAwareComponent';
 import { KialiIcon } from 'config/KialiIcon';
-import { TourStop } from './Tour/TourStop';
-import { GraphTourStops } from '../pages/Graph/GraphHelpTour';
+import { TourStop } from '../Tour/TourStop';
+import { GraphTourStops } from '../../pages/Graph/GraphHelpTour';
 
 interface ReduxStateProps {
   activeNamespaces: Namespace[];

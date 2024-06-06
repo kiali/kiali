@@ -15,7 +15,7 @@ import {
 import { isSidecarHostValid } from '../../utils/IstioConfigUtils';
 import { isValid } from 'utils/Common';
 import { KialiIcon } from 'config/KialiIcon';
-import { SimpleTable } from 'components/SimpleTable';
+import { SimpleTable } from 'components/Table/SimpleTable';
 
 const columns: ThProps[] = [
   {
@@ -52,8 +52,8 @@ export type SidecarState = {
   addWorkloadSelector: boolean;
   egressHosts: EgressHost[];
   validEgressHost: boolean;
-  workloadSelectorValid: boolean;
   workloadSelectorLabels: string;
+  workloadSelectorValid: boolean;
 };
 
 export const isSidecarStateValid = (s: SidecarState): boolean => {
@@ -83,7 +83,7 @@ export class SidecarForm extends React.Component<Props, SidecarState> {
     this.state = initSidecar('');
   }
 
-  componentDidMount() {
+  componentDidMount(): void {
     this.setState(this.props.sidecar);
   }
 
@@ -220,7 +220,7 @@ export class SidecarForm extends React.Component<Props, SidecarState> {
       ]);
   };
 
-  render() {
+  render(): React.ReactNode {
     return (
       <>
         <FormGroup label="Workload Selector" fieldId="workloadSelectorSwitch">

@@ -13,7 +13,7 @@ import { WorkloadWeight } from '../TrafficShifting';
 import { Abort, Delay, HTTPRetry } from '../../../types/IstioObjects';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { ROUTE_RULES_TOOLTIP, wizardTooltip } from '../WizardHelp';
-import { SimpleTable } from 'components/SimpleTable';
+import { SimpleTable } from 'components/Table/SimpleTable';
 
 export enum MOVE_TYPE {
   UP,
@@ -30,8 +30,8 @@ export type Rule = {
 };
 
 type RulesProps = {
-  onRemoveRule: (index: number) => void;
   onMoveRule: (index: number, move: MOVE_TYPE) => void;
+  onRemoveRule: (index: number) => void;
   rules: Rule[];
 };
 
@@ -49,7 +49,7 @@ const noRulesStyle = kialiStyle({
 
 export const Rules: React.FC<RulesProps> = (props: RulesProps) => {
   const matchAllIndex = (rules: Rule[]): number => {
-    let matchAll: number = -1;
+    let matchAll = -1;
 
     for (let index = 0; index < rules.length; index++) {
       const rule = rules[index];
@@ -109,7 +109,7 @@ export const Rules: React.FC<RulesProps> = (props: RulesProps) => {
     }
   ];
 
-  let isValid: boolean = true;
+  let isValid = true;
 
   const matchAll: number = matchAllIndex(props.rules);
 

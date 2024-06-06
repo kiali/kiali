@@ -61,7 +61,7 @@ export interface WorkloadHealthResponse {
 export const TRAFFICSTATUS = t('Traffic Status');
 
 const createTrafficTitle = (time: string): string => {
-  return `${TRAFFICSTATUS} (${t('Last')} ${time})`;
+  return t('{{trafficStatus}} (Last {{duration}})', { trafficStatus: TRAFFICSTATUS, duration: time });
 };
 
 /*
