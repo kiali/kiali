@@ -4,7 +4,10 @@ import (
 	"context"
 
 	"github.com/kiali/kiali/business"
+	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/grafana"
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/prometheus"
 )
 
@@ -16,10 +19,14 @@ type AppenderVendorInfo map[string]interface{}
 // is initially empty.
 type AppenderGlobalInfo struct {
 	Business         *business.Layer
-	Context          context.Context
+	ClientFactory    kubernetes.ClientFactory
+	Config           *config.Config
+	Grafana          *grafana.Service
+	KialiCache       cache.KialiCache
 	MeshStatusGetter MeshStatusGetter
 	PromClient       *prometheus.Client
-	Vendor           AppenderVendorInfo // telemetry vendor's global info
+
+	Vendor AppenderVendorInfo // telemetry vendor's global info
 }
 
 // AppenderNamespaceInfo caches information relevant to a single namespace. It allows

@@ -717,7 +717,7 @@ func NewConfig() (c *Config) {
 				IstiodPodMonitoringPort:           15014,
 				IstiodPollingIntervalSeconds:      20,
 				RootNamespace:                     "istio-system",
-				UrlServiceVersion:                 "http://istiod.istio-system:15014/version",
+				UrlServiceVersion:                 "",
 				GatewayAPIClasses:                 []GatewayAPIClass{},
 			},
 			Prometheus: PrometheusConfig{

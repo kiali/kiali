@@ -129,13 +129,12 @@ func NewConfig(meshMap mesh.MeshMap, o mesh.ConfigOptions) (result Config) {
 	})
 
 	elements := Elements{nodes, edges}
-	meshName := mesh.StatusGetter().Status["Mesh Version"]
-	if meshName == "" {
-		meshName = "Istio Mesh"
+	if o.MeshName == "" {
+		o.MeshName = "Unknown"
 	}
 	result = Config{
 		Elements:  elements,
-		MeshName:  meshName,
+		MeshName:  o.MeshName,
 		Timestamp: o.QueryTime,
 	}
 	return result

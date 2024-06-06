@@ -20,7 +20,7 @@ import (
 func TestDrawPathProperly(t *testing.T) {
 	conf := new(config.Config)
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(kubetest.NewFakeK8sClient())
-	router, _ := NewRouter(conf, nil, mockClientFactory, nil, nil, nil)
+	router, _ := NewRouter(conf, nil, mockClientFactory, nil, nil, nil, nil)
 	testRoute(router, "Root", "GET", t)
 }
 
@@ -46,7 +46,7 @@ func TestWebRootRedirect(t *testing.T) {
 	conf.Server.WebRoot = "/test"
 
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(kubetest.NewFakeK8sClient())
-	router, _ := NewRouter(conf, nil, mockClientFactory, nil, nil, nil)
+	router, _ := NewRouter(conf, nil, mockClientFactory, nil, nil, nil, nil)
 	ts := httptest.NewServer(router)
 	defer ts.Close()
 
@@ -69,7 +69,7 @@ func TestSimpleRoute(t *testing.T) {
 	conf := new(config.Config)
 
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(kubetest.NewFakeK8sClient())
-	router, _ := NewRouter(conf, nil, mockClientFactory, nil, nil, nil)
+	router, _ := NewRouter(conf, nil, mockClientFactory, nil, nil, nil, nil)
 	ts := httptest.NewServer(router)
 	defer ts.Close()
 
@@ -88,7 +88,7 @@ func TestProfilerRoute(t *testing.T) {
 	conf.Server.Profiler.Enabled = true
 
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(kubetest.NewFakeK8sClient())
-	router, _ := NewRouter(conf, nil, mockClientFactory, nil, nil, nil)
+	router, _ := NewRouter(conf, nil, mockClientFactory, nil, nil, nil, nil)
 	ts := httptest.NewServer(router)
 	defer ts.Close()
 
@@ -120,7 +120,7 @@ func TestDisabledProfilerRoute(t *testing.T) {
 	conf.Server.Profiler.Enabled = false
 
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(kubetest.NewFakeK8sClient())
-	router, _ := NewRouter(conf, nil, mockClientFactory, nil, nil, nil)
+	router, _ := NewRouter(conf, nil, mockClientFactory, nil, nil, nil, nil)
 	ts := httptest.NewServer(router)
 	defer ts.Close()
 
@@ -157,7 +157,7 @@ func TestRedirectWithSetWebRootKeepsParams(t *testing.T) {
 	conf.Server.WebRoot = "/test"
 
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(kubetest.NewFakeK8sClient())
-	router, _ := NewRouter(conf, nil, mockClientFactory, nil, nil, nil)
+	router, _ := NewRouter(conf, nil, mockClientFactory, nil, nil, nil, nil)
 	ts := httptest.NewServer(router)
 	defer ts.Close()
 

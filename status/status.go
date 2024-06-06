@@ -2,24 +2,24 @@
 package status
 
 import (
+	"context"
 	"strings"
-	"sync"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/grafana"
+	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/kubernetes/cache"
+	"github.com/kiali/kiali/models"
 )
 
 const (
 	name             = "Kiali"
-	ContainerVersion = name + " container version"
-	CoreVersion      = name + " version"
-	MeshName         = "Mesh name"
-	MeshVersion      = "Mesh version"
-	CoreCommitHash   = name + " commit hash"
-	State            = name + " state"
-	ClusterMTLS      = "Istio mTLS"
-	StateRunning     = "running"
-	DisabledFeatures = "Disabled features"
-	MTLSVersion      = "mTLS Version"
+	containerVersion = name + " container version"
+	coreVersion      = name + " version"
+	coreCommitHash   = name + " commit hash"
+	state            = name + " state"
+	stateRunning     = "running"
+	disabledFeatures = "Disabled features"
 )
 
 // IstioEnvironment describes the Istio implementation environment
@@ -41,7 +41,7 @@ type StatusInfo struct {
 	//
 	// required: true
 	// swagger:allOf
-	ExternalServices []ExternalServiceInfo `json:"externalServices"`
+	ExternalServices []models.ExternalServiceInfo `json:"externalServices"`
 	// An array of warningMessages. CAUTION: Please read the doc comments the in AddWarningMessages func.
 	// items.example: Istio version 0.7.1 is not supported, the version should be 0.8.0
 	// swagger:allOf
@@ -52,87 +52,36 @@ type StatusInfo struct {
 	IstioEnvironment *IstioEnvironment `json:"istioEnvironment"`
 }
 
-// info is a global var that contains information about Kiali status and what external services are available
-var info StatusInfo
-
-// global lock to prevent panic when multiple goroutines to write map
-var rw sync.RWMutex
-
-// Status response model
-// This is used for returning a response of Kiali Status
-// swagger:model externalServiceInfo
-type ExternalServiceInfo struct {
-	// The name of the service
-	//
-	// required: true
-	// example: Istio
-	Name string `json:"name"`
-
-	// The installed version of the service
-	//
-	// required: false
-	// example: 0.8.0
-	Version string `json:"version,omitempty"`
-
-	// The service url
-	//
-	// required: false
-	// example: jaeger-query-istio-system.127.0.0.1.nip.io
-	Url string `json:"url,omitempty"`
-
-	TempoConfig config.TempoConfig `json:"tempoConfig,omitempty"`
-}
-
-func init() {
-	info = StatusInfo{Status: make(map[string]string)}
-	info.Status[State] = StateRunning
-}
-
-// Put adds or replaces status info for the provided name. Any previous setting is returned.
-func Put(name, value string) (previous string, hasPrevious bool) {
-	rw.Lock()
-	defer rw.Unlock()
-	previous, hasPrevious = info.Status[name]
-	info.Status[name] = value
-	return previous, hasPrevious
-}
-
-// GetStatus get status with name, it is read safe.
-func GetStatus(name string) (previous string, hasPrevious bool) {
-	rw.RLock()
-	defer rw.RUnlock()
-	previous, hasPrevious = info.Status[name]
-	return previous, hasPrevious
-}
-
-// AddWarningMessages add warning messages to status
+// addWarningMessages add warning messages to status
 // CAUTION: Currently, the UI assumes that the only messages passed to this
 // function are the result of Istio version checks (see the istioVersion func of versions.go file)
 // and the UI will show any logged warnings in the About dialog. Furthermore, the UI assumes the
 // array will contain a single message.
 // If in the future other kind of warnings need to be logged, please adjust UI code as needed.
-func AddWarningMessages(warningMessages string) {
-	info.WarningMessages = append(info.WarningMessages, warningMessages)
-}
+// func addWarningMessages(warningMessages string) {
+// 	info.WarningMessages = append(info.WarningMessages, warningMessages)
+// }
 
 // Get returns a copy of the current status info.
-func Get() (status StatusInfo) {
-	info.ExternalServices = []ExternalServiceInfo{}
-	info.WarningMessages = []string{}
-
-	cfg := config.Get()
-	if len(cfg.KialiFeatureFlags.DisabledFeatures) > 0 {
-		Put(DisabledFeatures, strings.Join(cfg.KialiFeatureFlags.DisabledFeatures, ","))
+func Get(ctx context.Context, conf *config.Config, clientFactory kubernetes.ClientFactory, cache cache.KialiCache, grafana *grafana.Service) StatusInfo {
+	buildInfo := cache.GetBuildInfo()
+	info := StatusInfo{
+		ExternalServices: []models.ExternalServiceInfo{},
+		IstioEnvironment: &IstioEnvironment{
+			IstioAPIEnabled: conf.ExternalServices.Istio.IstioAPIEnabled,
+		},
+		Status: map[string]string{
+			containerVersion: buildInfo.ContainerVersion,
+			coreVersion:      buildInfo.Version,
+			coreCommitHash:   buildInfo.CommitHash,
+			disabledFeatures: strings.Join(conf.KialiFeatureFlags.DisabledFeatures, ","),
+			state:            stateRunning,
+		},
+		// TODO: Do we need warning messages anymore?
+		WarningMessages: []string{},
 	}
 
-	getVersions()
-
-	// we only need to get the IstioEnvironment one time - its content is static and will never change
-	if info.IstioEnvironment == nil {
-		info.IstioEnvironment = &IstioEnvironment{
-			IstioAPIEnabled: cfg.ExternalServices.Istio.IstioAPIEnabled,
-		}
-	}
+	info.ExternalServices = getVersions(ctx, conf, clientFactory, grafana)
 
 	return info
 }

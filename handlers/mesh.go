@@ -5,6 +5,9 @@ import (
 	"net/http"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/grafana"
+	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/mesh"
 	"github.com/kiali/kiali/mesh/api"
 )
@@ -67,14 +70,25 @@ func GetMesh(w http.ResponseWriter, r *http.Request) {
 }
 
 // MeshGraph is a REST http.HandlerFunc handling graph generation for the mesh
-func MeshGraph(w http.ResponseWriter, r *http.Request) {
-	defer handlePanic(w)
+func MeshGraph(conf *config.Config, clientFactory kubernetes.ClientFactory, cache cache.KialiCache, grafana *grafana.Service) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		defer handlePanic(w)
 
-	o := mesh.NewOptions(r)
+		o := mesh.NewOptions(r)
 
-	business, err := getBusiness(r)
-	mesh.CheckError(err)
+		business, err := getBusiness(r)
+		mesh.CheckError(err)
 
-	code, payload := api.GraphMesh(r.Context(), business, o)
-	respond(w, code, payload)
+		meshInfo, err := business.Mesh.GetMesh(r.Context())
+		mesh.CheckError(err)
+
+		// Assuming that all controlplanes are part of the same mesh,
+		// just use the first one.
+		if len(meshInfo.ControlPlanes) > 0 {
+			o.MeshName = meshInfo.ControlPlanes[0].Config.DefaultConfig.MeshId
+		}
+
+		code, payload := api.GraphMesh(r.Context(), business, o, clientFactory, cache, conf, grafana)
+		respond(w, code, payload)
+	}
 }

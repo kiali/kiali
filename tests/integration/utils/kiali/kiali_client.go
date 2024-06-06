@@ -526,9 +526,9 @@ func getRequestAndUnmarshalInto[T any](url string, response *T) (int, error) {
 	return code, nil
 }
 
-func Mesh() (*business.Mesh, error) {
+func Mesh() (*models.Mesh, error) {
 	url := fmt.Sprintf("%s/api/mesh", client.kialiURL)
-	mesh := new(business.Mesh)
+	mesh := new(models.Mesh)
 	_, err := getRequestAndUnmarshalInto(url, mesh)
 	if err != nil {
 		return nil, err

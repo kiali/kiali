@@ -693,18 +693,20 @@ trustDomain: cluster.local
 	require.NoError(err)
 	require.Len(mesh.ControlPlanes, 2)
 
-	controlPlane_1_18 := business.FindOrFail(t, mesh.ControlPlanes, func(c business.ControlPlane) bool {
+	controlPlane_1_18 := business.FindOrFail(t, mesh.ControlPlanes, func(c models.ControlPlane) bool {
 		return c.Revision == "1-18-0"
 	})
 	require.False(*controlPlane_1_18.Config.EnableAutoMtls)
 	require.Len(controlPlane_1_18.ManagedClusters, 1)
 
-	controlPlane_1_19 := business.FindOrFail(t, mesh.ControlPlanes, func(c business.ControlPlane) bool {
+	controlPlane_1_19 := business.FindOrFail(t, mesh.ControlPlanes, func(c models.ControlPlane) bool {
 		return c.Revision == "1-19-0"
 	})
 	require.True(*controlPlane_1_19.Config.EnableAutoMtls)
 	require.Len(controlPlane_1_19.ManagedClusters, 1)
 
+	// Neeed to call Setup again to clear the cached mesh object.
+	business.SetupBusinessLayer(t, k8s, *conf)
 	// Test for setting the configmap name explicitly due to regression: https://github.com/kiali/kiali/issues/6669
 	conf.ExternalServices.Istio.ConfigMapName = istio_1_19_ConfigMap.Name
 	config.Set(conf)
@@ -915,10 +917,10 @@ trustDomain: cluster.local
 	require.Len(mesh.ControlPlanes[0].ManagedClusters, 1)
 	require.Len(mesh.ControlPlanes[1].ManagedClusters, 1)
 
-	eastControlPlane := business.FindOrFail(t, mesh.ControlPlanes, func(c business.ControlPlane) bool {
+	eastControlPlane := business.FindOrFail(t, mesh.ControlPlanes, func(c models.ControlPlane) bool {
 		return c.Cluster.Name == "east"
 	})
-	westControlPlane := business.FindOrFail(t, mesh.ControlPlanes, func(c business.ControlPlane) bool {
+	westControlPlane := business.FindOrFail(t, mesh.ControlPlanes, func(c models.ControlPlane) bool {
 		return c.Cluster.Name == "west"
 	})
 
@@ -990,10 +992,10 @@ trustDomain: cluster.local
 	require.Len(mesh.ControlPlanes[0].ManagedClusters, 2)
 	require.Len(mesh.ControlPlanes[1].ManagedClusters, 2)
 
-	eastControlPlane := business.FindOrFail(t, mesh.ControlPlanes, func(c business.ControlPlane) bool {
+	eastControlPlane := business.FindOrFail(t, mesh.ControlPlanes, func(c models.ControlPlane) bool {
 		return c.Cluster.Name == "east"
 	})
-	westControlPlane := business.FindOrFail(t, mesh.ControlPlanes, func(c business.ControlPlane) bool {
+	westControlPlane := business.FindOrFail(t, mesh.ControlPlanes, func(c models.ControlPlane) bool {
 		return c.Cluster.Name == "west"
 	})
 
@@ -1077,10 +1079,10 @@ trustDomain: cluster.local
 	require.NoError(err)
 	require.Len(mesh.ControlPlanes, 2)
 
-	controlPlane := business.FindOrFail(t, mesh.ControlPlanes, func(c business.ControlPlane) bool {
+	controlPlane := business.FindOrFail(t, mesh.ControlPlanes, func(c models.ControlPlane) bool {
 		return c.Cluster.Name == "controlplane" && c.ID == "controlplane"
 	})
-	extControlPlane := business.FindOrFail(t, mesh.ControlPlanes, func(c business.ControlPlane) bool {
+	extControlPlane := business.FindOrFail(t, mesh.ControlPlanes, func(c models.ControlPlane) bool {
 		return c.Cluster.Name == "controlplane" && c.ID == "dataplane"
 	})
 	require.Len(controlPlane.ManagedClusters, 1)

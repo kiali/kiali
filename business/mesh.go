@@ -15,6 +15,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/log"
@@ -31,67 +32,8 @@ const (
 	IstioControlPlaneClustersLabel = "topology.istio.io/controlPlaneClusters"
 )
 
-// Mesh is one or more controlplanes (primaries) managing a dataPlane across one or more clusters.
-// There can be multiple primaries on a single cluster when istio revisions are used. A single
-// primary can also manage multiple clusters (primary-remote deployment).
-type Mesh struct {
-	// ControlPlanes that share the same mesh ID.
-	ControlPlanes []ControlPlane
-}
-
-// ControlPlane manages the dataPlane for one or more kube clusters.
-// It's expected to manage the cluster that it is deployed in.
-// It has configuration for all the clusters/namespaces associated with it.
-type ControlPlane struct {
-	// Cluster the kube cluster that the controlplane is running on.
-	Cluster *kubernetes.Cluster
-
-	// Config
-	Config ControlPlaneConfiguration
-
-	// ExternalControlPlane indicates if the controlplane is managing an external cluster.
-	ExternalControlPlane bool
-
-	// ID is the control plane ID as known by istiod.
-	ID string
-
-	// IstiodName is the control plane name
-	IstiodName string
-
-	// IstiodNamespace is the namespace name of the deployed control plane
-	IstiodNamespace string
-
-	// ManagedClusters are the clusters that this controlplane manages.
-	// This could include the cluster that the controlplane is running on.
-	ManagedClusters []*kubernetes.Cluster
-
-	// ManagesExternal indicates if the controlplane manages an external cluster.
-	// It could also manage the cluster that it is running on.
-	ManagesExternal bool
-
-	// Revision is the revision of the controlplane.
-	// Can be empty when it's the default revision.
-	Revision string
-}
-
-// ControlPlaneConfiguration is the configuration for the controlPlane and any associated dataPlane.
-type ControlPlaneConfiguration struct {
-	// IsGatewayToNamespace specifies the PILOT_SCOPE_GATEWAY_TO_NAMESPACE environment variable in Control Plane
-	// This is not currently used by the frontend so excluding it from the API response.
-	IsGatewayToNamespace bool `json:"-"`
-
-	// OutboundTrafficPolicy is the outbound traffic policy for the controlplane.
-	OutboundTrafficPolicy models.OutboundPolicy
-
-	// Network is the name of the network that the controlplane is using.
-	Network string
-
-	// IstioMeshConfig comes from the istio configmap.
-	kubernetes.IstioMeshConfig
-}
-
 // gets the mesh configuration for a controlplane from a variety of sources.
-func getControlPlaneConfiguration(kubeCache cache.KubeCache, namespace string, name string) (*ControlPlaneConfiguration, error) {
+func getControlPlaneConfiguration(kubeCache cache.KubeCache, namespace string, name string) (*models.ControlPlaneConfiguration, error) {
 	cfg, err := kubeCache.GetConfigMap(namespace, name)
 	if err != nil {
 		return nil, err
@@ -102,9 +44,41 @@ func getControlPlaneConfiguration(kubeCache cache.KubeCache, namespace string, n
 		return nil, err
 	}
 
-	return &ControlPlaneConfiguration{
+	return &models.ControlPlaneConfiguration{
 		IstioMeshConfig: *istioConfigMapInfo,
 	}, nil
+}
+
+const (
+	AllowAny = "ALLOW_ANY"
+)
+
+// MeshService is a support service for retrieving data about the mesh environment
+// when Istio is installed with multi-cluster enabled. Prefer initializing this
+// type via the NewMeshService function.
+type MeshService struct {
+	conf                config.Config
+	homeClusterSAClient kubernetes.ClientInterface
+	kialiCache          cache.KialiCache
+	kialiSAClients      map[string]kubernetes.ClientInterface
+	namespaceService    NamespaceService
+}
+
+type meshTrafficPolicyConfig struct {
+	OutboundTrafficPolicy struct {
+		Mode string `yaml:"mode,omitempty"`
+	} `yaml:"outboundTrafficPolicy,omitempty"`
+}
+
+// NewMeshService initializes a new MeshService structure with the given k8s clients.
+func NewMeshService(kialiSAClients map[string]kubernetes.ClientInterface, cache cache.KialiCache, namespaceService NamespaceService, conf config.Config) MeshService {
+	return MeshService{
+		conf:                conf,
+		homeClusterSAClient: kialiSAClients[conf.KubernetesConfig.ClusterName],
+		kialiCache:          cache,
+		kialiSAClients:      kialiSAClients,
+		namespaceService:    namespaceService,
+	}
 }
 
 // IsRemoteCluster determines if the cluster has a controlplane or if it's a remote cluster without one.
@@ -128,19 +102,23 @@ func (in *MeshService) IsRemoteCluster(ctx context.Context, cluster string) bool
 
 // GetMesh gathers information about the mesh and controlplanes running in the mesh
 // from various sources e.g. istio configmap, istiod deployment envvars, etc.
-func (in *MeshService) GetMesh(ctx context.Context) (*Mesh, error) {
+func (in *MeshService) GetMesh(ctx context.Context) (*models.Mesh, error) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GetMesh",
 		observability.Attribute("package", "business"),
 	)
 	defer end()
 
+	if mesh, ok := in.kialiCache.GetMesh(); ok {
+		return mesh, nil
+	}
+
 	clusters, err := in.GetClusters()
 	if err != nil {
 		return nil, fmt.Errorf("unable to get mesh clusters: %w", err)
 	}
 
-	mesh := &Mesh{}
+	mesh := &models.Mesh{}
 	var remoteClusters []*kubernetes.Cluster
 	for _, cluster := range clusters {
 		// We can't get anything from an inaccessible cluster.
@@ -168,7 +146,7 @@ func (in *MeshService) GetMesh(ctx context.Context) (*Mesh, error) {
 
 		for _, istiod := range istiods {
 			log.Debugf("Found controlplane [%s/%s] on cluster [%s].", istiod.Name, istiod.Namespace, cluster.Name)
-			controlPlane := ControlPlane{
+			controlPlane := models.ControlPlane{
 				Cluster:         &cluster,
 				IstiodName:      istiod.Name,
 				IstiodNamespace: istiod.Namespace,
@@ -203,17 +181,34 @@ func (in *MeshService) GetMesh(ctx context.Context) (*Mesh, error) {
 				// It's an "external controlplane".
 				controlPlane.ExternalControlPlane = true
 			}
+
+			// Even if we fail to get the version we should still return the controlplane object.
+			func() {
+				saClient := in.kialiSAClients[cluster.Name]
+				if saClient == nil {
+					log.Warningf("Unable to get service account client for cluster [%s].", cluster.Name)
+					return
+				}
+
+				versionInfo, err := istio.GetVersion(ctx, &in.conf, saClient, kubeCache, controlPlane.Revision, controlPlane.IstiodNamespace)
+				if err != nil {
+					log.Warningf("Unable to get version info for controlplane [%s/%s] on cluster [%s]. Err: %s", controlPlane.IstiodName, controlPlane.IstiodNamespace, cluster.Name, err)
+					return
+				}
+				controlPlane.Version = versionInfo
+			}()
+
 			mesh.ControlPlanes = append(mesh.ControlPlanes, controlPlane)
 		}
 	}
 
 	// Convert to Pointers so we can edit them directly later.
-	controlPlanes := make([]*ControlPlane, len(mesh.ControlPlanes))
+	controlPlanes := make([]*models.ControlPlane, len(mesh.ControlPlanes))
 	for i := range mesh.ControlPlanes {
 		controlPlanes[i] = &mesh.ControlPlanes[i]
 	}
 	// Convert to map.
-	controlPlanesByClusterName := map[string][]*ControlPlane{}
+	controlPlanesByClusterName := map[string][]*models.ControlPlane{}
 	for _, cp := range controlPlanes {
 		// Need the id not the cluster name.
 		controlPlanesByClusterName[cp.ID] = append(controlPlanesByClusterName[cp.ID], cp)
@@ -280,6 +275,8 @@ func (in *MeshService) GetMesh(ctx context.Context) (*Mesh, error) {
 		}
 	}
 
+	in.kialiCache.SetMesh(mesh)
+
 	return mesh, nil
 }
 
@@ -306,38 +303,6 @@ func IstioConfigMapName(conf config.Config, revision string) string {
 // Only use this when env.Value is a boolean string e.g. "true" or "false".
 func envVarIsSet(key string, env core_v1.EnvVar) bool {
 	return env.Name == key && env.Value == "true"
-}
-
-const (
-	AllowAny = "ALLOW_ANY"
-)
-
-// MeshService is a support service for retrieving data about the mesh environment
-// when Istio is installed with multi-cluster enabled. Prefer initializing this
-// type via the NewMeshService function.
-type MeshService struct {
-	conf                config.Config
-	homeClusterSAClient kubernetes.ClientInterface
-	kialiCache          cache.KialiCache
-	kialiSAClients      map[string]kubernetes.ClientInterface
-	namespaceService    NamespaceService
-}
-
-type meshTrafficPolicyConfig struct {
-	OutboundTrafficPolicy struct {
-		Mode string `yaml:"mode,omitempty"`
-	} `yaml:"outboundTrafficPolicy,omitempty"`
-}
-
-// NewMeshService initializes a new MeshService structure with the given k8s clients.
-func NewMeshService(kialiSAClients map[string]kubernetes.ClientInterface, cache cache.KialiCache, namespaceService NamespaceService, conf config.Config) MeshService {
-	return MeshService{
-		conf:                conf,
-		homeClusterSAClient: kialiSAClients[conf.KubernetesConfig.ClusterName],
-		kialiCache:          cache,
-		kialiSAClients:      kialiSAClients,
-		namespaceService:    namespaceService,
-	}
 }
 
 // GetClusters resolves the Kubernetes clusters that are hosting the mesh. Resolution

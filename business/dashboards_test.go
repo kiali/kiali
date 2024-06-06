@@ -1,12 +1,14 @@
 package business
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/config/dashboards"
+	"github.com/kiali/kiali/grafana"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/models"
@@ -18,10 +20,10 @@ func setupService(namespace string, dashboards []dashboards.MonitoringDashboard)
 	for _, d := range dashboards {
 		cfg.CustomDashboards = append(cfg.CustomDashboards, d)
 	}
-	config.Set(cfg)
 	prom := new(pmock.PromClientMock)
 	ns := models.Namespace{Name: namespace}
-	service := NewDashboardsService(&ns, nil)
+	grafana := grafana.NewService(cfg, kubetest.NewFakeK8sClient())
+	service := NewDashboardsService(cfg, grafana, &ns, nil)
 	service.promClient = prom
 	return service, prom
 }
@@ -57,7 +59,7 @@ func TestGetDashboard(t *testing.T) {
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
 	SetWithBackends(mockClientFactory, nil)
 
-	dashboard, err := service.GetDashboard(query, "dashboard1")
+	dashboard, err := service.GetDashboard(context.Background(), query, "dashboard1")
 
 	assert.Nil(err)
 	assert.Equal("Dashboard 1", dashboard.Title)
@@ -96,7 +98,7 @@ func TestGetDashboardFromKialiNamespace(t *testing.T) {
 	prom.MockMetric("my_metric_1_1", expectedLabels, &query.RangeQuery, 10)
 	prom.MockHistogram("my_metric_1_2", expectedLabels, &query.RangeQuery, 11, 12)
 
-	dashboard, err := service.GetDashboard(query, "dashboard1")
+	dashboard, err := service.GetDashboard(context.Background(), query, "dashboard1")
 
 	assert.Nil(err)
 	assert.Equal("Dashboard 1", dashboard.Title)
@@ -269,9 +271,9 @@ func TestBuildIstioDashboard(t *testing.T) {
 
 	// Setup mocks
 	conf := config.NewConfig()
-	config.Set(conf)
 	ns := models.Namespace{Name: "my-namespace"}
-	service := NewDashboardsService(&ns, nil)
+	grafana := grafana.NewService(conf, kubetest.NewFakeK8sClient())
+	service := NewDashboardsService(conf, grafana, &ns, nil)
 
 	dashboard := service.BuildIstioDashboard(fakeMetrics(), "inbound")
 

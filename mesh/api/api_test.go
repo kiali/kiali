@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -26,10 +25,12 @@ import (
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/business/authentication"
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/grafana"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/mesh"
+	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/status"
 )
 
@@ -58,7 +59,7 @@ func setupMocks(t *testing.T) *mesh.AppenderGlobalInfo {
 									Name:  "CLUSTER_ID",
 									Value: conf.KubernetesConfig.ClusterName,
 								},
-								core_v1.EnvVar{
+								{
 									Name:  "EXTERNAL_ISTIOD",
 									Value: "true",
 								},
@@ -170,9 +171,9 @@ trustDomain: cluster.local
 func mockMeshGraph(t *testing.T) (*mesh.AppenderGlobalInfo, error) {
 	globalInfo := setupMocks(t)
 
-	mesh.StatusGetter = func() status.StatusInfo {
+	mesh.StatusGetter = func(context.Context, *config.Config, kubernetes.ClientFactory, cache.KialiCache, *grafana.Service) status.StatusInfo {
 		return status.StatusInfo{
-			ExternalServices: []status.ExternalServiceInfo{},
+			ExternalServices: []models.ExternalServiceInfo{},
 		}
 	}
 
@@ -219,40 +220,6 @@ func respond(w http.ResponseWriter, code int, payload interface{}) {
 	_, _ = w.Write(response)
 }
 
-// Helper method that tests the objects are equal and if they aren't will
-// unmarshal them into a json object and diff them. This way the output of the failure
-// is actually useful. Otherwise printing the byte slice results is incomprehensible.
-func assertObjectsEqual(t *testing.T, expected, actual []byte) {
-	if !assert.ObjectsAreEqual(expected, actual) {
-		t.Log("Actual response does not equal expected golden copy. If you've updated the golden copy, ensure it ends with a newline.")
-		t.Fail()
-
-		var (
-			ev any
-			av any
-		)
-		err := func() error {
-			if err := json.Unmarshal(expected, &ev); err != nil {
-				t.Logf("Failed to unmarshal expected value: %s", err)
-				return err
-			}
-
-			if err := json.Unmarshal(actual, &av); err != nil {
-				t.Logf("Failed to unmarshal actual value: %s", err)
-				return err
-			}
-
-			return nil
-		}()
-		if err != nil {
-			t.Logf("Failed to unmarshal expected or actual value. Falling back to string comparison.\nExpected: %s\nActual: %s", string(expected), string(actual))
-			return
-		}
-
-		t.Logf("Diff: %s", cmp.Diff(ev, av))
-	}
-}
-
 func TestMeshGraph(t *testing.T) {
 	globalInfo, err := mockMeshGraph(t)
 	if err != nil {
@@ -288,9 +255,9 @@ func TestMeshGraph(t *testing.T) {
 	}
 	expected = expected[:len(expected)-1] // remove EOF byte
 
-	if !assert.ObjectsAreEqual(expected, actual) {
-		fmt.Printf("Actual:\n%s", actual)
-		assertObjectsEqual(t, expected, actual)
+	if !assert.JSONEq(t, string(expected), string(actual)) {
+		// The diff is more readable using cmp
+		t.Logf("%s", cmp.Diff(string(expected), string(actual)))
 	}
 	assert.Equal(t, 200, resp.StatusCode)
 }
