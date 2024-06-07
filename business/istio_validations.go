@@ -148,6 +148,7 @@ func (in *IstioValidationsService) getAllObjectCheckers(istioConfigList models.I
 		checkers.RequestAuthenticationChecker{RequestAuthentications: istioConfigList.RequestAuthentications, WorkloadsPerNamespace: workloadsPerNamespace, Cluster: cluster},
 		checkers.WorkloadChecker{AuthorizationPolicies: rbacDetails.AuthorizationPolicies, WorkloadsPerNamespace: workloadsPerNamespace, Cluster: cluster},
 		checkers.K8sGatewayChecker{K8sGateways: istioConfigList.K8sGateways, Cluster: cluster, GatewayClasses: in.businessLayer.IstioConfig.GatewayAPIClasses(cluster)},
+		checkers.K8sGRPCRouteChecker{K8sGRPCRoutes: istioConfigList.K8sGRPCRoutes, K8sGateways: istioConfigList.K8sGateways, K8sReferenceGrants: istioConfigList.K8sReferenceGrants, Namespaces: namespaces, RegistryServices: registryServices, Cluster: cluster},
 		checkers.K8sHTTPRouteChecker{K8sHTTPRoutes: istioConfigList.K8sHTTPRoutes, K8sGateways: istioConfigList.K8sGateways, K8sReferenceGrants: istioConfigList.K8sReferenceGrants, Namespaces: namespaces, RegistryServices: registryServices, Cluster: cluster},
 		checkers.K8sReferenceGrantChecker{K8sReferenceGrants: istioConfigList.K8sReferenceGrants, Namespaces: namespaces, Cluster: cluster},
 		checkers.WasmPluginChecker{WasmPlugins: istioConfigList.WasmPlugins, Namespaces: namespaces},
@@ -270,7 +271,9 @@ func (in *IstioValidationsService) GetIstioObjectValidations(ctx context.Context
 		}
 		referenceChecker = references.K8sGatewayReferences{K8sGateways: istioConfigList.K8sGateways, K8sHTTPRoutes: istioConfigList.K8sHTTPRoutes}
 	case kubernetes.K8sGRPCRoutes:
-		// Validation on K8sGRPCRoutes is not expected
+		grpcRouteChecker := checkers.K8sGRPCRouteChecker{Cluster: cluster, K8sGRPCRoutes: istioConfigList.K8sGRPCRoutes, K8sGateways: istioConfigList.K8sGateways, K8sReferenceGrants: istioConfigList.K8sReferenceGrants, Namespaces: namespaces, RegistryServices: registryServices}
+		objectCheckers = []ObjectChecker{noServiceChecker, grpcRouteChecker}
+		referenceChecker = references.K8sGRPCRouteReferences{K8sGRPCRoutes: istioConfigList.K8sGRPCRoutes, Namespaces: namespaces, K8sReferenceGrants: istioConfigList.K8sReferenceGrants}
 	case kubernetes.K8sHTTPRoutes:
 		httpRouteChecker := checkers.K8sHTTPRouteChecker{Cluster: cluster, K8sHTTPRoutes: istioConfigList.K8sHTTPRoutes, K8sGateways: istioConfigList.K8sGateways, K8sReferenceGrants: istioConfigList.K8sReferenceGrants, Namespaces: namespaces, RegistryServices: registryServices}
 		objectCheckers = []ObjectChecker{noServiceChecker, httpRouteChecker}
@@ -471,6 +474,7 @@ func (in *IstioValidationsService) fetchIstioConfigList(ctx context.Context, rVa
 		IncludeAuthorizationPolicies:  true,
 		IncludePeerAuthentications:    true,
 		IncludeK8sHTTPRoutes:          true,
+		IncludeK8sGRPCRoutes:          true,
 		IncludeK8sGateways:            true,
 		IncludeK8sReferenceGrants:     true,
 	}
@@ -502,6 +506,9 @@ func (in *IstioValidationsService) fetchIstioConfigList(ctx context.Context, rVa
 
 	// All K8sHTTPRoutes
 	rValue.K8sHTTPRoutes = append(rValue.K8sHTTPRoutes, istioConfigList.K8sHTTPRoutes...)
+
+	// All K8sGRPCRoutes
+	rValue.K8sGRPCRoutes = append(rValue.K8sGRPCRoutes, istioConfigList.K8sGRPCRoutes...)
 
 	// All K8sReferenceGrants
 	rValue.K8sReferenceGrants = append(rValue.K8sReferenceGrants, istioConfigList.K8sReferenceGrants...)

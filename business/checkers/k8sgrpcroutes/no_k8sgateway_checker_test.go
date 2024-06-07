@@ -1,4 +1,4 @@
-package k8shttproutes
+package k8sgrpcroutes
 
 import (
 	"testing"
@@ -19,7 +19,7 @@ func TestMissingK8sGateway(t *testing.T) {
 	config.Set(conf)
 
 	checker := NoK8sGatewayChecker{
-		K8sHTTPRoute: data.CreateHTTPRoute("route", "bookinfo", "gatewayapi", []string{"bookinfo"}),
+		K8sGRPCRoute: data.CreateGRPCRoute("route", "bookinfo", "gatewayapi", []string{"bookinfo"}),
 		GatewayNames: make(map[string]struct{}),
 	}
 
@@ -36,8 +36,8 @@ func TestMissingK8sGateways(t *testing.T) {
 	config.Set(conf)
 
 	checker := NoK8sGatewayChecker{
-		K8sHTTPRoute: data.AddParentRefToHTTPRoute("gateway2", "bookinfo2",
-			data.CreateHTTPRoute("route", "bookinfo", "gatewayapi", []string{"bookinfo"})),
+		K8sGRPCRoute: data.AddParentRefToGRPCRoute("gateway2", "bookinfo2",
+			data.CreateGRPCRoute("route", "bookinfo", "gatewayapi", []string{"bookinfo"})),
 		GatewayNames: make(map[string]struct{}),
 	}
 
@@ -59,8 +59,8 @@ func TestValidAndMissingK8sGateway(t *testing.T) {
 	var empty struct{}
 
 	checker := NoK8sGatewayChecker{
-		K8sHTTPRoute: data.AddParentRefToHTTPRoute("correctgw", "bookinfo2",
-			data.CreateHTTPRoute("route", "bookinfo", "gatewayapi", []string{"bookinfo"})),
+		K8sGRPCRoute: data.AddParentRefToGRPCRoute("correctgw", "bookinfo2",
+			data.CreateGRPCRoute("route", "bookinfo", "gatewayapi", []string{"bookinfo"})),
 		GatewayNames: map[string]struct{}{"correctgw": empty},
 	}
 
@@ -77,7 +77,7 @@ func TestFoundK8sGateway(t *testing.T) {
 	config.Set(conf)
 
 	checker := NoK8sGatewayChecker{
-		K8sHTTPRoute: data.CreateHTTPRoute("route", "bookinfo", "my-gateway", []string{"bookinfo"}),
+		K8sGRPCRoute: data.CreateGRPCRoute("route", "bookinfo", "my-gateway", []string{"bookinfo"}),
 		GatewayNames: kubernetes.K8sGatewayNames([]*k8s_networking_v1.Gateway{
 			data.CreateEmptyK8sGateway("my-gateway", "bookinfo"),
 		}),

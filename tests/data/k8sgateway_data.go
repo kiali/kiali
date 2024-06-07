@@ -55,6 +55,53 @@ func AddBackendRefToHTTPRoute(name, namespace string, rt *k8s_networking_v1.HTTP
 	return rt
 }
 
+func CreateEmptyGRPCRoute(name string, namespace string, hosts []string) *k8s_networking_v1.GRPCRoute {
+	vs := k8s_networking_v1.GRPCRoute{}
+	vs.Name = name
+	vs.Namespace = namespace
+	for _, host := range hosts {
+		vs.Spec.Hostnames = append(vs.Spec.Hostnames, k8s_networking_v1.Hostname(host))
+	}
+	return &vs
+}
+
+func CreateGRPCRoute(name string, namespace string, gateway string, hosts []string) *k8s_networking_v1.GRPCRoute {
+	return AddParentRefToGRPCRoute(gateway, namespace, CreateEmptyGRPCRoute(name, namespace, hosts))
+}
+
+func AddParentRefToGRPCRoute(name, namespace string, rt *k8s_networking_v1.GRPCRoute) *k8s_networking_v1.GRPCRoute {
+	ns := k8s_networking_v1.Namespace(namespace)
+	group := k8s_networking_v1.Group(kubernetes.K8sNetworkingGroupVersionV1.Group)
+	kind := k8s_networking_v1.Kind(kubernetes.K8sActualGatewayType)
+	rt.Spec.ParentRefs = append(rt.Spec.ParentRefs, k8s_networking_v1.ParentReference{
+		Name:      k8s_networking_v1.ObjectName(name),
+		Namespace: &ns,
+		Group:     &group,
+		Kind:      &kind})
+	return rt
+}
+
+func AddBackendRefToGRPCRoute(name, namespace string, rt *k8s_networking_v1.GRPCRoute) *k8s_networking_v1.GRPCRoute {
+	kind := k8s_networking_v1.Kind("Service")
+	var ns k8s_networking_v1.Namespace
+	if namespace != "" {
+		ns = k8s_networking_v1.Namespace(namespace)
+	}
+	backendRef := k8s_networking_v1.GRPCBackendRef{
+		BackendRef: k8s_networking_v1.BackendRef{
+			BackendObjectReference: k8s_networking_v1.BackendObjectReference{
+				Kind:      &kind,
+				Name:      k8s_networking_v1.ObjectName(name),
+				Namespace: &ns,
+			},
+		},
+	}
+	rule := k8s_networking_v1.GRPCRouteRule{}
+	rule.BackendRefs = append(rule.BackendRefs, backendRef)
+	rt.Spec.Rules = append(rt.Spec.Rules, rule)
+	return rt
+}
+
 func CreateEmptyK8sGateway(name, namespace string) *k8s_networking_v1.Gateway {
 	gw := k8s_networking_v1.Gateway{}
 	gw.Name = name

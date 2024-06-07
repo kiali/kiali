@@ -272,14 +272,14 @@ var checkDescriptors = map[string]IstioCheck{
 		Message:  "Namespace is not found or is not accessible",
 		Severity: ErrorSeverity,
 	},
-	"k8shttproutes.nohost.namenotfound": {
+	"k8sroutes.nohost.namenotfound": {
 		Code:     "KIA1402",
 		Message:  "BackendRef on rule doesn't have a valid service (Service name not found)",
 		Severity: ErrorSeverity,
 	},
-	"k8shttproutes.nok8sgateway": {
+	"k8sroutes.nok8sgateway": {
 		Code:     "KIA1401",
-		Message:  "HTTPRoute is pointing to a non-existent K8s gateway",
+		Message:  "Route is pointing to a non-existent K8s gateway",
 		Severity: ErrorSeverity,
 	},
 	"peerauthentication.mtls.destinationrulemissing": {
