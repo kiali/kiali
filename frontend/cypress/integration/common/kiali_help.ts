@@ -17,7 +17,7 @@ Then('user sees the {string} modal', (title: string) => {
 });
 
 Then('user sees information about {int} clusters', (numOfClusters: number) => {
-  cy.get('td[data-label="Configuration"]')
+  cy.get('td[data-label="Attribute"]')
     .contains('clusters')
     .parent()
     .find('td[data-label="Value"]')
