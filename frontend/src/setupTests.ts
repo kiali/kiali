@@ -18,10 +18,17 @@ window.SVGPathElement = () => {};
 window.customElements = () => {};
 window.customElements.define = () => {};
 
+const tFunction = (key: string, parameters: { [key: string]: string }): string => {
+  const params = JSON.stringify(parameters) ?? '{}';
+
+  return params !== '{}' ? `${key} ${params}` : key;
+};
+
 const i18n = {
-  t: (key: string) => key,
+  t: tFunction,
   language: 'en',
-  changeLanguage: () => Promise.resolve({})
+  changeLanguage: () => Promise.resolve({}),
+  isInitialized: true
 };
 
 // mock i18n and react-i18n translation functions
@@ -31,7 +38,7 @@ jest.mock('i18n', () => ({
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (key: string) => key,
+    t: tFunction,
     i18n: i18n
   })
 }));

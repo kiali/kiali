@@ -1,5 +1,39 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`HealthDetails renders deployments failure 1`] = `<Fragment />`;
+exports[`HealthDetails renders deployments failure 1`] = `
+<Fragment>
+  <div
+    key="0"
+  >
+    Traffic Status (Last {{duration}}) {"duration":"1m"} 
+    <ul
+      style={
+        Object {
+          "listStyleType": "none",
+        }
+      }
+    >
+      <li
+        key="0"
+      >
+        <span
+          style={
+            Object {
+              "marginRight": "0.5rem",
+            }
+          }
+        >
+          <Icon
+            className="icon-failure kiali_f1h37jb8"
+          >
+            <ExclamationCircleIcon />
+          </Icon>
+        </span>
+        Inbound: 100.00%
+      </li>
+    </ul>
+  </div>
+</Fragment>
+`;
 
 exports[`HealthDetails renders healthy 1`] = `<Fragment />`;

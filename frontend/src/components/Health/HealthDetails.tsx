@@ -129,7 +129,7 @@ export const HealthDetails: React.FC<HealthDetailsProps> = (props: HealthDetails
   };
 
   const renderChildren = (item: H.HealthItem, idx: number): React.ReactNode => {
-    return item.title.startsWith(H.TRAFFICSTATUS) ? (
+    return item.type === H.HealthItemType.TRAFFIC_STATUS ? (
       renderErrorRate(item, idx)
     ) : (
       <div key={idx}>

@@ -3,10 +3,9 @@ import { IRow, ThProps } from '@patternfly/react-table';
 import { kialiStyle } from 'styles/StyleUtils';
 import { useKialiTranslation } from 'utils/I18nUtils';
 import { SimpleTable } from './SimpleTable';
-import { Json } from 'types/Common';
 
 interface JsonTableProps {
-  jsonData?: Json;
+  jsonData?: { [key: string]: string };
   label: string;
   width: string;
 }

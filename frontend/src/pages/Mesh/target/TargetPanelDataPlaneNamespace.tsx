@@ -32,12 +32,11 @@ import * as FilterHelper from '../../../components/FilterList/FilterHelper';
 import { panelBodyStyle, panelHeadingStyle } from 'pages/Graph/SummaryPanelStyle';
 import { Metric } from 'types/Metrics';
 import { t } from 'utils/I18nUtils';
-import { Json } from 'types/Common';
 import { TargetPanelConfigTable } from './TargetPanelConfigTable';
 
 type TargetPanelDataPlaneNamespaceProps = Omit<TargetPanelCommonProps, 'target'> & {
   isExpanded: boolean;
-  namespaceData: Json;
+  namespaceData: { [key: string]: string };
   targetCluster: string;
   targetNamespace: string;
 };

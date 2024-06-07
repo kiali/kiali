@@ -5,7 +5,6 @@ import { useKialiTranslation } from 'utils/I18nUtils';
 import { JsonTable } from 'components/Table/JsonTable';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
 import { KialiIcon } from 'config/KialiIcon';
-import { Json } from 'types/Common';
 import { download } from 'utils/Common';
 
 const configTitleStyle = kialiStyle({
@@ -22,7 +21,7 @@ const downloadButtonStyle = kialiStyle({
 });
 
 interface TargetPanelConfigTableProps {
-  configData: Json;
+  configData: { [key: string]: string };
   targetName: string;
   width: string;
 }

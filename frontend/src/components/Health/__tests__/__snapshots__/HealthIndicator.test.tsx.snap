@@ -35,6 +35,7 @@ exports[`HealthIndicator proxy status section renders the degraded workloads 1`]
                     "priority": 3,
                   },
                   "title": "Pod Status",
+                  "type": "pod_status",
                 },
                 Object {
                   "children": Array [
@@ -68,7 +69,8 @@ exports[`HealthIndicator proxy status section renders the degraded workloads 1`]
                     "name": "No health information",
                     "priority": 0,
                   },
-                  "title": "Traffic Status (Last 10m)",
+                  "title": "Traffic Status (Last {{duration}}) {\\"duration\\":\\"10m\\"}",
+                  "type": "traffic_status",
                 },
               ],
               "statusConfig": Object {
@@ -80,7 +82,7 @@ exports[`HealthIndicator proxy status section renders the degraded workloads 1`]
                   "priority": 0,
                 },
                 "threshold": undefined,
-                "title": "Traffic Status (Last 10m)",
+                "title": "Traffic Status (Last {{duration}}) {\\"duration\\":\\"10m\\"}",
                 "value": -1,
               },
             },
@@ -151,6 +153,7 @@ exports[`HealthIndicator renders healthy 1`] = `
                     "priority": 1,
                   },
                   "title": "Pod Status",
+                  "type": "pod_status",
                 },
                 Object {
                   "children": Array [
@@ -184,7 +187,8 @@ exports[`HealthIndicator renders healthy 1`] = `
                     "name": "No health information",
                     "priority": 0,
                   },
-                  "title": "Traffic Status (Last 10m)",
+                  "title": "Traffic Status (Last {{duration}}) {\\"duration\\":\\"10m\\"}",
+                  "type": "traffic_status",
                 },
               ],
               "statusConfig": Object {
@@ -196,7 +200,7 @@ exports[`HealthIndicator renders healthy 1`] = `
                   "priority": 0,
                 },
                 "threshold": undefined,
-                "title": "Traffic Status (Last 10m)",
+                "title": "Traffic Status (Last {{duration}}) {\\"duration\\":\\"10m\\"}",
                 "value": -1,
               },
             },
