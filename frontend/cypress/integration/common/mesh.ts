@@ -112,9 +112,10 @@ Then('user sees expected mesh infra', () => {
       const controller = state.meshRefs.getController() as Visualization;
       assert.isTrue(controller.hasGraph());
       const { nodes, edges } = elems(controller);
-      assert.equal(nodes.length, 8, 'Unexpected number of infra nodes');
-      assert.equal(edges.length, 5, 'Unexpected number of infra edges');
       const nodeNames = nodes.map(n => n.getLabel());
+      const nodesLength = nodeNames.some(n => n === 'External Deployments') ? 9 : 8;
+      assert.equal(nodes.length, nodesLength, 'Unexpected number of infra nodes');
+      assert.equal(edges.length, 5, 'Unexpected number of infra edges');
       assert.isTrue(nodeNames.some(n => n === 'Data Plane'));
       assert.isTrue(nodeNames.some(n => n === 'Grafana'));
       assert.isTrue(nodeNames.some(n => n.startsWith('istiod')));
