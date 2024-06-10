@@ -150,10 +150,14 @@ func UpdateConditionWithError(k8sgw *k8s_networking_v1.Gateway) *k8s_networking_
 }
 
 func CreateReferenceGrant(name string, namespace string, fromNamespace string) *k8s_networking_v1beta1.ReferenceGrant {
+	return CreateReferenceGrantByKind(name, namespace, fromNamespace, kubernetes.K8sActualHTTPRouteType)
+}
+
+func CreateReferenceGrantByKind(name string, namespace string, fromNamespace string, kind k8s_networking_v1.Kind) *k8s_networking_v1beta1.ReferenceGrant {
 	rg := k8s_networking_v1beta1.ReferenceGrant{}
 	rg.Name = name
 	rg.Namespace = namespace
-	rg.Spec.From = append(rg.Spec.From, k8s_networking_v1beta1.ReferenceGrantFrom{Kind: kubernetes.K8sActualHTTPRouteType, Group: k8s_networking_v1beta1.GroupName, Namespace: k8s_networking_v1.Namespace(fromNamespace)})
+	rg.Spec.From = append(rg.Spec.From, k8s_networking_v1beta1.ReferenceGrantFrom{Kind: kind, Group: k8s_networking_v1beta1.GroupName, Namespace: k8s_networking_v1.Namespace(fromNamespace)})
 	rg.Spec.To = append(rg.Spec.To, k8s_networking_v1beta1.ReferenceGrantTo{Kind: kubernetes.ServiceType})
 	return &rg
 }

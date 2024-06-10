@@ -1,6 +1,7 @@
 package k8sgrpcroutes
 
 import (
+	"github.com/kiali/kiali/kubernetes"
 	"testing"
 
 	k8s_networking_v1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
@@ -25,7 +26,7 @@ func TestValidRefHost(t *testing.T) {
 
 	vals, valid := NoHostChecker{
 		RegistryServices:   append(registryService1, registryService2...),
-		K8sReferenceGrants: []*k8s_networking_v1beta1.ReferenceGrant{data.CreateReferenceGrant("grant", "bookinfo", "bookinfo2")},
+		K8sReferenceGrants: []*k8s_networking_v1beta1.ReferenceGrant{data.CreateReferenceGrantByKind("grant", "bookinfo", "bookinfo2", kubernetes.K8sActualGRPCRouteType)},
 		K8sGRPCRoute:       data.AddBackendRefToGRPCRoute("reviews", "bookinfo", data.CreateGRPCRoute("route", "bookinfo2", "gatewayapi", []string{"bookinfo"})),
 	}.Check()
 
@@ -68,7 +69,7 @@ func TestWrongGrant(t *testing.T) {
 
 	vals, valid := NoHostChecker{
 		RegistryServices:   append(registryService1, registryService2...),
-		K8sReferenceGrants: []*k8s_networking_v1beta1.ReferenceGrant{data.CreateReferenceGrant("grant", "bookinfo", "bookinfo")},
+		K8sReferenceGrants: []*k8s_networking_v1beta1.ReferenceGrant{data.CreateReferenceGrantByKind("grant", "bookinfo", "bookinfo", kubernetes.K8sActualGRPCRouteType)},
 		K8sGRPCRoute:       data.AddBackendRefToGRPCRoute("reviews", "bookinfo", data.CreateGRPCRoute("route", "bookinfo2", "gatewayapi", []string{"bookinfo"})),
 	}.Check()
 
@@ -92,7 +93,7 @@ func TestValidRefHostDefaultNs(t *testing.T) {
 
 	vals, valid := NoHostChecker{
 		RegistryServices:   append(registryService1, registryService2...),
-		K8sReferenceGrants: []*k8s_networking_v1beta1.ReferenceGrant{data.CreateReferenceGrant("grant", "bookinfo", "bookinfo2")},
+		K8sReferenceGrants: []*k8s_networking_v1beta1.ReferenceGrant{data.CreateReferenceGrantByKind("grant", "bookinfo", "bookinfo2", kubernetes.K8sActualGRPCRouteType)},
 		K8sGRPCRoute:       data.AddBackendRefToGRPCRoute("reviews", "", data.CreateGRPCRoute("route", "bookinfo", "gatewayapi", []string{"bookinfo"})),
 	}.Check()
 
@@ -112,7 +113,7 @@ func TestInvalidRefHostDefaultNs(t *testing.T) {
 
 	vals, valid := NoHostChecker{
 		RegistryServices:   append(registryService1, registryService2...),
-		K8sReferenceGrants: []*k8s_networking_v1beta1.ReferenceGrant{data.CreateReferenceGrant("grant", "bookinfo", "bookinfo2")},
+		K8sReferenceGrants: []*k8s_networking_v1beta1.ReferenceGrant{data.CreateReferenceGrantByKind("grant", "bookinfo", "bookinfo2", kubernetes.K8sActualGRPCRouteType)},
 		K8sGRPCRoute:       data.AddBackendRefToGRPCRoute("reviews", "", data.CreateGRPCRoute("route", "bookinfo2", "gatewayapi", []string{"bookinfo"})),
 	}.Check()
 
@@ -136,7 +137,7 @@ func TestNoValidRefHost(t *testing.T) {
 
 	vals, valid := NoHostChecker{
 		RegistryServices:   append(registryService1, registryService2...),
-		K8sReferenceGrants: []*k8s_networking_v1beta1.ReferenceGrant{data.CreateReferenceGrant("grant", "bookinfo", "bookinfo2")},
+		K8sReferenceGrants: []*k8s_networking_v1beta1.ReferenceGrant{data.CreateReferenceGrantByKind("grant", "bookinfo", "bookinfo2", kubernetes.K8sActualGRPCRouteType)},
 		K8sGRPCRoute:       data.AddBackendRefToGRPCRoute("ratings", "bookinfo", data.AddBackendRefToGRPCRoute("reviews", "bookinfo", data.CreateGRPCRoute("route", "bookinfo2", "gatewayapi", []string{"bookinfo2"}))),
 	}.Check()
 
@@ -164,7 +165,7 @@ func TestInvalidRefHostFQDN(t *testing.T) {
 
 	vals, valid := NoHostChecker{
 		RegistryServices:   append(registryService1, registryService2...),
-		K8sReferenceGrants: []*k8s_networking_v1beta1.ReferenceGrant{data.CreateReferenceGrant("grant", "bookinfo", "bookinfo2")},
+		K8sReferenceGrants: []*k8s_networking_v1beta1.ReferenceGrant{data.CreateReferenceGrantByKind("grant", "bookinfo", "bookinfo2", kubernetes.K8sActualGRPCRouteType)},
 		K8sGRPCRoute:       data.AddBackendRefToGRPCRoute("reviews.bookinfo.svc.cluster.local", "", data.CreateGRPCRoute("route", "bookinfo2", "gatewayapi", []string{"bookinfo"})),
 	}.Check()
 

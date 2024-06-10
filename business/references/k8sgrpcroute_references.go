@@ -74,24 +74,6 @@ func (n K8sGRPCRouteReferences) getConfigReferences(rt *k8s_networking_v1.GRPCRo
 	return result
 }
 
-func (n K8sGRPCRouteReferences) getAllK8sGateways(rt *k8s_networking_v1.GRPCRoute) []models.IstioReference {
-	allGateways := make([]models.IstioReference, 0)
-
-	if len(rt.Spec.ParentRefs) > 0 {
-		for _, parentRef := range rt.Spec.ParentRefs {
-			if string(parentRef.Name) != "" && string(*parentRef.Kind) == kubernetes.K8sActualGatewayType && string(*parentRef.Group) == kubernetes.K8sNetworkingGroupVersionV1.Group {
-				namespace := rt.Namespace
-				if parentRef.Namespace != nil && string(*parentRef.Namespace) != "" {
-					namespace = string(*parentRef.Namespace)
-				}
-				allGateways = append(allGateways, getK8sGatewayReference(string(parentRef.Name), namespace))
-			}
-		}
-	}
-
-	return allGateways
-}
-
 func (n K8sGRPCRouteReferences) getAllK8sReferenceGrants(rt *k8s_networking_v1.GRPCRoute) []models.IstioReference {
 	allGrants := make([]models.IstioReference, 0)
 	for _, rGrant := range n.K8sReferenceGrants {

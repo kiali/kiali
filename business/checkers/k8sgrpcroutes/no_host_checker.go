@@ -32,7 +32,7 @@ func (n NoHostChecker) Check() ([]*models.IstioCheck, bool) {
 				namespace = string(*ref.Namespace)
 			}
 			fqdn := kubernetes.GetHost(string(ref.Name), namespace, n.Namespaces.GetNames())
-			//service name should not be set in fqdn format
+			// service name should not be set in fqdn format
 			// if the grpc route is referencing to a service from the same namespace, then service should exist there
 			// if the grpc route is referencing to a service from other namespace, then a ReferenceGrant should exist to cross namespace reference, and the service should exist in remote namespace
 			if strings.Contains(string(ref.Name), ".") ||
