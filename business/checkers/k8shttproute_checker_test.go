@@ -41,7 +41,7 @@ func TestWithoutK8sGateway(t *testing.T) {
 
 	route1 := vals[models.IstioValidationKey{ObjectType: "k8shttproute", Namespace: "bookinfo", Name: "route1"}]
 	assert.False(route1.Valid)
-	assert.NoError(validations.ConfirmIstioCheckMessage("k8routes.nok8sgateway", route1.Checks[0]))
+	assert.NoError(validations.ConfirmIstioCheckMessage("k8sroutes.nok8sgateway", route1.Checks[0]))
 	route2 := vals[models.IstioValidationKey{ObjectType: "k8shttproute", Namespace: "bookinfo", Name: "route2"}]
 	assert.False(route2.Valid)
 	assert.NoError(validations.ConfirmIstioCheckMessage("k8sroutes.nok8sgateway", route2.Checks[0]))
