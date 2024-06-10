@@ -20,9 +20,9 @@ spec:
     value: "google.com"
 ---
 apiVersion: gateway.networking.k8s.io/v1
-kind: HTTPRoute
+kind: GRPCRoute
 metadata:
-  name: httprouteservices
+  name: grpcprouteservices
   namespace: bookinfo
 spec:
   parentRefs:
@@ -31,9 +31,16 @@ spec:
   hostnames: ["bookinfo-istio-system"]
   rules:
   - matches:
-    - path:
-        type: PathPrefix
-        value: /get
-    backendRefs:
-    - name: wrong
-      port: 8000
+    - method:
+        service: "foo"
+      headers:
+      - name: my-header
+        value: some-value
+        type: Exact
+    filters:
+    - type: RequestHeaderModifier
+      requestHeaderModifier:
+        add:
+        - name: my-added-header
+          value: added-value
+        remove: [my-removed-header]
