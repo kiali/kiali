@@ -10,6 +10,7 @@ import (
 type K8sGatewayReferences struct {
 	K8sGateways   []*k8s_networking_v1.Gateway
 	K8sHTTPRoutes []*k8s_networking_v1.HTTPRoute
+	K8sGRPCRoutes []*k8s_networking_v1.GRPCRoute
 }
 
 func (g K8sGatewayReferences) References() models.IstioReferencesMap {
@@ -33,6 +34,17 @@ func (g K8sGatewayReferences) getConfigReferences(gw *k8s_networking_v1.Gateway)
 			for _, pr := range rt.Spec.ParentRefs {
 				if string(pr.Name) == gw.Name && string(*pr.Kind) == kubernetes.K8sActualGatewayType && string(*pr.Group) == kubernetes.K8sNetworkingGroupVersionV1.Group {
 					ref := models.IstioReference{Name: rt.Name, Namespace: rt.Namespace, ObjectType: models.ObjectTypeSingular[kubernetes.K8sHTTPRoutes]}
+					result = append(result, ref)
+				}
+			}
+		}
+	}
+
+	for _, rt := range g.K8sGRPCRoutes {
+		if len(rt.Spec.ParentRefs) > 0 {
+			for _, pr := range rt.Spec.ParentRefs {
+				if string(pr.Name) == gw.Name && string(*pr.Kind) == kubernetes.K8sActualGatewayType && string(*pr.Group) == kubernetes.K8sNetworkingGroupVersionV1.Group {
+					ref := models.IstioReference{Name: rt.Name, Namespace: rt.Namespace, ObjectType: models.ObjectTypeSingular[kubernetes.K8sGRPCRoutes]}
 					result = append(result, ref)
 				}
 			}
