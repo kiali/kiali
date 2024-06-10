@@ -187,11 +187,20 @@ func FilterGatewaysByVirtualServices(allGws []*networking_v1.Gateway, allVs []*n
 	return gateways
 }
 
-func FilterK8sGatewaysByHTTPRoutes(allGws []*k8s_networking_v1.Gateway, allRoutes []*k8s_networking_v1.HTTPRoute) []*k8s_networking_v1.Gateway {
+func FilterK8sGatewaysByRoutes(allGws []*k8s_networking_v1.Gateway, httpRoutes []*k8s_networking_v1.HTTPRoute, grpcRoutes []*k8s_networking_v1.GRPCRoute) []*k8s_networking_v1.Gateway {
 	var empty struct{}
 	gateways := []*k8s_networking_v1.Gateway{}
 	gatewayNames := make(map[string]struct{})
-	for _, route := range allRoutes {
+	for _, route := range httpRoutes {
+		for _, pRef := range route.Spec.ParentRefs {
+			if pRef.Namespace != nil && *pRef.Namespace != "" {
+				gatewayNames[fmt.Sprintf("%s/%s", *pRef.Namespace, pRef.Name)] = empty
+			} else {
+				gatewayNames[fmt.Sprintf("%s/%s", route.Namespace, pRef.Name)] = empty
+			}
+		}
+	}
+	for _, route := range grpcRoutes {
 		for _, pRef := range route.Spec.ParentRefs {
 			if pRef.Namespace != nil && *pRef.Namespace != "" {
 				gatewayNames[fmt.Sprintf("%s/%s", *pRef.Namespace, pRef.Name)] = empty
