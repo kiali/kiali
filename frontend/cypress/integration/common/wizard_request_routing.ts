@@ -82,6 +82,9 @@ When('user clicks in the {string} actions', (action: string) => {
     case 'K8s HTTP Routing':
       actionId = 'k8s_request_routing';
       break;
+    case 'K8s GRPC Routing':
+      actionId = 'k8s_grpc_request_routing';
+      break;
     case 'Delete Traffic Routing':
       actionId = 'delete_traffic_routing';
       break;

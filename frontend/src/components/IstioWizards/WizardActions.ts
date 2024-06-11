@@ -64,7 +64,7 @@ import { ServiceEntryState } from '../../pages/IstioConfigNew/ServiceEntryForm';
 import { K8sRouteBackendRef } from './K8sTrafficShifting';
 import { QUERY_PARAMS, PATH, HEADERS, METHOD } from './K8sRequestRouting/K8sMatchBuilder';
 import { ServiceOverview } from '../../types/ServiceList';
-import { ADD, SET, REQ_MOD, REQ_RED, REQ_MIR } from './K8sRequestRouting/K8sFilterBuilder';
+import { ADD, SET, REQ_MOD, RESP_MOD, REQ_RED, REQ_MIR } from './K8sRequestRouting/K8sFilterBuilder';
 
 export const WIZARD_TRAFFIC_SHIFTING = 'traffic_shifting';
 export const WIZARD_TCP_TRAFFIC_SHIFTING = 'tcp_traffic_shifting';
@@ -363,7 +363,7 @@ const buildK8sGRPCRouteMatch = (matches: string[]): K8sGRPCRouteMatch => {
 const buildK8sHTTPRouteFilter = (filters: string[]): K8sHTTPRouteFilter[] => {
   const routeFilter: K8sHTTPRouteFilter[] = [];
   filters
-    .filter(filter => filter.startsWith(REQ_MOD))
+    .filter(filter => filter.startsWith(REQ_MOD) || filter.startsWith(RESP_MOD))
     .forEach(filter => {
       const requestHeaderModifier: K8sHTTPHeaderFilter = {};
       // match follows format:  requestHeaderModifier [<header-name>] <add/set/remove> <value/null>
@@ -395,7 +395,11 @@ const buildK8sHTTPRouteFilter = (filters: string[]): K8sHTTPRouteFilter[] => {
         }
       }
 
-      routeFilter.push({ type: 'RequestHeaderModifier', requestHeaderModifier: requestHeaderModifier });
+      if (filter.startsWith(REQ_MOD)) {
+        routeFilter.push({ type: 'RequestHeaderModifier', requestHeaderModifier: requestHeaderModifier });
+      } else if (filter.startsWith(RESP_MOD)) {
+        routeFilter.push({ type: 'ResponseHeaderModifier', responseHeaderModifier: requestHeaderModifier });
+      }
     });
 
   filters
@@ -519,6 +523,11 @@ const parseK8sHTTPRouteFilter = (httpRouteFilter: K8sHTTPRouteFilter): string[] 
   let matches: string[] = [];
   if (httpRouteFilter.requestHeaderModifier) {
     matches = matches.concat(parseK8sHTTPHeaderFilter('requestHeaderModifier', httpRouteFilter.requestHeaderModifier));
+  }
+  if (httpRouteFilter.responseHeaderModifier) {
+    matches = matches.concat(
+      parseK8sHTTPHeaderFilter('responseHeaderModifier', httpRouteFilter.responseHeaderModifier)
+    );
   }
   if (httpRouteFilter.requestRedirect) {
     matches = matches.concat(parseK8sHTTPRouteRequestRedirect(httpRouteFilter.requestRedirect));
@@ -1210,6 +1219,7 @@ export const buildIstioConfig = (wProps: ServiceWizardProps, wState: ServiceWiza
             if (rule.matches.length > 0 || rule.filters.length > 0) {
               wizardK8sGRPCRoute!.spec!.rules!.push({
                 matches: [buildK8sGRPCRouteMatch(rule.matches)],
+                filters: buildK8sHTTPRouteFilter(rule.filters),
                 backendRefs: rule.backendRefs
               });
             } else {

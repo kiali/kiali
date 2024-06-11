@@ -888,6 +888,7 @@ export interface K8sTLSRouteSpec extends K8sCommonRouteSpec {
 // rest of attributes used by k8s gateway objects
 export interface K8sGRPCRouteRule {
   backendRefs?: K8sRouteBackendRef[];
+  filters?: K8sHTTPRouteFilter[];
   matches?: K8sGRPCRouteMatch[];
 }
 
@@ -938,6 +939,7 @@ export interface K8sHTTPRouteFilter {
   requestHeaderModifier?: K8sHTTPHeaderFilter;
   requestMirror?: K8sHTTPRequestMirrorFilter;
   requestRedirect?: K8sHTTPRouteRequestRedirect;
+  responseHeaderModifier?: K8sHTTPHeaderFilter;
   type?: string;
 }
 
