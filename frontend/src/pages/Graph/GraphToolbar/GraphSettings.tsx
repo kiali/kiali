@@ -29,7 +29,8 @@ import {
   itemStyleWithoutInfo,
   menuStyle,
   menuEntryStyle,
-  titleStyle
+  titleStyle,
+  redInfoStyle
 } from 'styles/DropdownStyles';
 import { INITIAL_GRAPH_STATE } from 'reducers/GraphDataState';
 import { KialiDispatch } from 'types/Redux';
@@ -85,6 +86,7 @@ interface DisplayOptionType {
   isDisabled?: boolean;
   labelText: string;
   onChange?: () => void;
+  style?: string;
   tooltip?: React.ReactNode;
 }
 
@@ -646,8 +648,10 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
         isChecked: showWaypoints,
         labelText: 'Waypoint Proxies',
         onChange: toggleWaypoints,
+        style: redInfoStyle,
         tooltip: (
           <div style={{ textAlign: 'left' }}>
+            <div>[Feature under development]</div>
             <div>Show waypoint proxies workloads.</div>
             <div>
               When enabled in an Ambient environment, include waypoint proxy telemetry in the graph. Waypoint nodes will
@@ -863,7 +867,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
 
               {!!item.tooltip && (
                 <Tooltip key={`tooltip_${item.id}`} position={TooltipPosition.right} content={item.tooltip}>
-                  <KialiIcon.Info className={infoStyle} />
+                  <KialiIcon.Info className={item.style ? item.style : infoStyle} />
                 </Tooltip>
               )}
 

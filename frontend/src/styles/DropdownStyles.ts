@@ -45,6 +45,11 @@ export const infoStyle = kialiStyle({
   marginLeft: '0.375rem'
 });
 
+export const redInfoStyle = kialiStyle({
+  marginLeft: '0.375rem',
+  color: 'darkred'
+});
+
 export const groupMenuStyle = kialiStyle({
   textAlign: 'left'
 });
