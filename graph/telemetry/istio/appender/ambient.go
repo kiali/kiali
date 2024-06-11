@@ -70,7 +70,7 @@ func (a AmbientAppender) handleWaypoints(trafficMap graph.TrafficMap, globalInfo
 		if remove {
 			graphEdge := []*graph.Edge{}
 			for _, edge := range n.Edges {
-				if edge.Dest.App != WaypointSuffix && edge.Source.App != WaypointSuffix {
+				if !strings.HasSuffix(edge.Dest.App, WaypointSuffix) && !strings.HasSuffix(edge.Source.App, WaypointSuffix) {
 					graphEdge = append(graphEdge, edge)
 				}
 			}
