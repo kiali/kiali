@@ -1,8 +1,6 @@
 package appender
 
 import (
-	"strings"
-
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/log"
@@ -43,46 +41,55 @@ func (a AmbientAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *gr
 
 func (a AmbientAppender) handleWaypoints(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo) {
 
-	for name, n := range trafficMap {
+	// To identify the waypoint edges
+	waypoinList := []string{}
 
+	for _, n := range trafficMap {
 		// It could be a waypoint proxy
-		if strings.HasSuffix(name, WaypointSuffix) {
-			var workloadName string
-			if n.Workload != "" {
-				workloadName = n.Workload
+		var workloadName string
+		if n.Workload != "" {
+			workloadName = n.Workload
+		} else {
+			workloadName = n.App
+		}
+		workload, found := getWorkload(n.Cluster, n.Namespace, workloadName, globalInfo)
+		if !found {
+			log.Errorf("Error getting waypoint proxy: Workload %s was not found", n.Workload)
+			continue
+		}
+		if workload.Labels[config.WaypointLabel] == config.WaypointLabelValue {
+			waypoinList = append(waypoinList, workload.Name)
+			if !a.ShowWaypoints {
+				delete(trafficMap, n.ID)
+				break
 			} else {
-				workloadName = n.App
-			}
-			workload, found := getWorkload(n.Cluster, n.Namespace, workloadName, globalInfo)
-			if !found {
-				log.Errorf("Error getting waypoint proxy: Workload %s was not found", n.Workload)
-				continue
-			}
-			for k, l := range workload.Labels {
-				if k == config.WaypointLabel && l == config.WaypointLabelValue {
-					if !a.ShowWaypoints {
-						delete(trafficMap, n.ID)
-						break
-					} else {
-						n.Metadata[graph.IsWaypoint] = true
-						n.Metadata[graph.IsOutOfMesh] = false
-						break
-					}
-				}
+				n.Metadata[graph.IsWaypoint] = true
+				n.Metadata[graph.IsOutOfMesh] = false
+				break
 			}
 		}
-
+	}
+	for _, n := range trafficMap {
 		graphEdge := []*graph.Edge{}
 		for _, edge := range n.Edges {
-			if !strings.HasSuffix(edge.Dest.App, WaypointSuffix) {
+			if !contains(waypoinList, edge.Dest.App) {
 				// When we don't show waypoints
 				// We hide one edge direction from the waypoints
 				// To prevent infinite loops on highlight
-				if a.ShowWaypoints || (!a.ShowWaypoints && !strings.HasSuffix(edge.Source.App, WaypointSuffix)) {
+				if a.ShowWaypoints || (!a.ShowWaypoints && !contains(waypoinList, edge.Source.App)) {
 					graphEdge = append(graphEdge, edge)
 				}
 			}
 		}
 		n.Edges = graphEdge
 	}
+}
+
+func contains(slice []string, str string) bool {
+	for _, v := range slice {
+		if v == str {
+			return true
+		}
+	}
+	return false
 }
