@@ -131,7 +131,7 @@ func TestRemoveWaypoint(t *testing.T) {
 
 	// Run the appender...
 
-	a := AmbientAppender{Waypoints: false}
+	a := AmbientAppender{ShowWaypoints: false}
 	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
 
 	assert.Equal(4, len(trafficMap))
@@ -155,7 +155,7 @@ func TestIsWaypoint(t *testing.T) {
 
 	// Run the appender...
 
-	a := AmbientAppender{Waypoints: true}
+	a := AmbientAppender{ShowWaypoints: true}
 	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
 
 	assert.Equal(5, len(trafficMap))

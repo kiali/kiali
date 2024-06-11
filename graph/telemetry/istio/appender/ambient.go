@@ -11,6 +11,11 @@ import (
 const AmbientAppenderName = "ambient"
 const WaypointSuffix = "waypoint"
 
+// AmbientAppender adds all the Ambient logic to the graph
+// handleWaypoint Identifies the waypoint proxies
+// based on the name (Optmization) and verifies by getting the workload
+// and then, checking the labels
+// handleWaypoint removes the waypoint proxies when ShowWaypoint is false
 type AmbientAppender struct {
 	ShowWaypoints bool
 }
@@ -33,10 +38,10 @@ func (a AmbientAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *gr
 
 	log.Trace("Running ambient appender")
 
-	a.handleWaypoints(trafficMap, globalInfo, !a.Waypoints)
+	a.handleWaypoints(trafficMap, globalInfo)
 }
 
-func (a AmbientAppender) handleWaypoints(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, remove bool) {
+func (a AmbientAppender) handleWaypoints(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo) {
 
 	for name, n := range trafficMap {
 
@@ -55,7 +60,7 @@ func (a AmbientAppender) handleWaypoints(trafficMap graph.TrafficMap, globalInfo
 			}
 			for k, l := range workload.Labels {
 				if k == config.WaypointLabel && l == config.WaypointLabelValue {
-					if remove {
+					if !a.ShowWaypoints {
 						delete(trafficMap, n.ID)
 						break
 					} else {
