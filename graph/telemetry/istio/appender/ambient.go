@@ -81,5 +81,17 @@ func (a AmbientAppender) handleWaypoints(trafficMap graph.TrafficMap, globalInfo
 			}
 			n.Edges = graphEdge
 		}
+
+		// This is to show just one waypoint direction in the graph
+		// To avoid confusion with the lines and to avoid highlight infinite loops redirection
+		if a.ShowWaypoints {
+			graphEdge := []*graph.Edge{}
+			for _, edge := range n.Edges {
+				if !strings.HasSuffix(edge.Dest.App, WaypointSuffix) {
+					graphEdge = append(graphEdge, edge)
+				}
+			}
+			n.Edges = graphEdge
+		}
 	}
 }
