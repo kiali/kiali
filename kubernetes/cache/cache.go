@@ -93,7 +93,7 @@ type kialiCacheImpl struct {
 	kubeCache map[string]KubeCache
 
 	// There's only ever one mesh but we want to reuse the store machinery
-	// so using a store here but there should only ever be one key.
+	// so using a store here but only key  should be  kialiCacheMeshKey
 	meshStore store.Store[string, *models.Mesh]
 
 	// Store the namespaces per token + cluster as a map[string]namespace where string is the namespace name
