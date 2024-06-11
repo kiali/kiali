@@ -129,9 +129,6 @@ func NewConfig(meshMap mesh.MeshMap, o mesh.ConfigOptions) (result Config) {
 	})
 
 	elements := Elements{nodes, edges}
-	if o.MeshName == "" {
-		o.MeshName = "Unknown"
-	}
 	result = Config{
 		Elements:  elements,
 		MeshName:  o.MeshName,

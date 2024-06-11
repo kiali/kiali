@@ -299,7 +299,8 @@
             },
             "defaultConfig": {
               "MeshId": ""
-            }
+            },
+            "TrustDomain": "cluster.local"
           },
           "version": "Unknown"
         }
@@ -378,6 +379,6 @@
       }
     ]
   },
-  "meshName": "Unknown",
+  "meshName": "",
   "timestamp": 1523364075
 }
