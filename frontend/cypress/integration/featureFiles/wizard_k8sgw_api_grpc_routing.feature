@@ -33,7 +33,7 @@ Feature: Service Details Wizard: K8s GRPC Routing
   @gateway-api
   @bookinfo-app
   Scenario: See a GRPCRoute generated
-    When user clicks in the "Istio Config" table "GRPC" badge "reviews" name row link
+    When user clicks in the "Istio Config" table "gRPC" badge "reviews" name row link
     Then user sees the "kind: GRPCRoute" regex in the editor
     And user sees the "bookinfo" "reviews" "service" reference
 
