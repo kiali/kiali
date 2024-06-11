@@ -25,14 +25,14 @@ import {
 import { CopyToClipboard } from 'react-copy-to-clipboard';
 import { kialiStyle } from 'styles/StyleUtils';
 import { KialiIcon } from '../../config/KialiIcon';
-import { safeDumpOptions } from '../../types/IstioConfigDetails';
-import { jsYaml } from '../../types/AceValidations';
+import { yamlDumpOptions } from '../../types/IstioConfigDetails';
 import { EditResources } from './EditResources';
 import { cloneDeep } from 'lodash';
 import { PFColors } from '../Pf/PfColors';
 import _ from 'lodash';
 import { download } from 'utils/Common';
 import { t } from 'utils/I18nUtils';
+import { dump } from 'js-yaml';
 
 export type IstioConfigItem =
   | AuthorizationPolicy
@@ -119,7 +119,7 @@ export class IstioConfigPreview extends React.Component<Props, State> {
     let previewYaml = '';
 
     this.state.items.forEach((obj: ConfigPreviewItem, index: number) => {
-      previewYaml += obj.items.map(item => jsYaml.safeDump(item, safeDumpOptions)).join(separator);
+      previewYaml += obj.items.map(item => dump(item, yamlDumpOptions)).join(separator);
 
       if (index !== this.state.items.length - 1) {
         previewYaml += separator;

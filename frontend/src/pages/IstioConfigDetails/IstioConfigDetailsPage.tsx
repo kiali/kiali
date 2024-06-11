@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Prompt } from 'react-router-dom';
-import { aceOptions, IstioConfigDetails, IstioConfigId, safeDumpOptions } from '../../types/IstioConfigDetails';
+import { aceOptions, IstioConfigDetails, IstioConfigId, yamlDumpOptions } from '../../types/IstioConfigDetails';
 import * as AlertUtils from '../../utils/AlertUtils';
 import * as API from '../../services/Api';
 import AceEditor from 'react-ace';
@@ -14,7 +14,6 @@ import {
 } from '../../types/IstioObjects';
 import {
   AceValidations,
-  jsYaml,
   parseHelpAnnotations,
   parseKialiValidations,
   parseLine,
@@ -55,6 +54,7 @@ import { basicTabStyle } from 'styles/TabStyles';
 import { istioAceEditorStyle } from 'styles/AceEditorStyle';
 import { Theme } from 'types/Common';
 import { ApiError, ApiResponse } from 'types/Api';
+import { dump, loadAll } from 'js-yaml';
 
 const rightToolbarStyle = kialiStyle({
   zIndex: 500
@@ -76,7 +76,7 @@ interface IstioConfigDetailsState {
   originalIstioObjectDetails?: IstioConfigDetails;
   originalIstioValidations?: ObjectValidation;
   selectedEditorLine?: string;
-  yamlModified?: string;
+  yamlModified: string;
   yamlValidations?: AceValidations;
 }
 
@@ -116,7 +116,8 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
       isModified: false,
       isRemoved: false,
       currentTab: activeTab(tabName, this.defaultTab()),
-      isExpanded: false
+      isExpanded: false,
+      yamlModified: ''
     };
 
     this.aceEditorRef = React.createRef();
@@ -288,9 +289,9 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
   };
 
   onUpdate = (): void => {
-    jsYaml.safeLoadAll(this.state.yamlModified, (objectModified: object) => {
+    loadAll(this.state.yamlModified, objectModified => {
       const jsonPatch = JSON.stringify(
-        mergeJsonPatch(objectModified, getIstioObject(this.state.istioObjectDetails))
+        mergeJsonPatch(objectModified as object, getIstioObject(this.state.istioObjectDetails))
       ).replace(new RegExp('(,null)+]', 'g'), ']');
 
       API.updateIstioConfigDetail(
@@ -385,7 +386,7 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
     }
 
     const istioObject = getIstioObject(this.state.istioObjectDetails);
-    return istioObject ? jsYaml.safeDump(istioObject, safeDumpOptions) : '';
+    return istioObject ? dump(istioObject, yamlDumpOptions) : '';
   };
 
   getStatusMessages = (istioConfigDetails?: IstioConfigDetails): ValidationMessage[] => {

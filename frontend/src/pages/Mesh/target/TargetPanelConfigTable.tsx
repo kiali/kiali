@@ -2,10 +2,12 @@ import * as React from 'react';
 import { kialiStyle } from 'styles/StyleUtils';
 import { Button, ButtonVariant, Tooltip } from '@patternfly/react-core';
 import { useKialiTranslation } from 'utils/I18nUtils';
-import { JsonTable } from 'components/Table/JsonTable';
+import { ConfigTable } from 'components/Table/ConfigTable';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
 import { KialiIcon } from 'config/KialiIcon';
 import { download } from 'utils/Common';
+import { dump } from 'js-yaml';
+import { yamlDumpOptions } from 'types/IstioConfigDetails';
 
 const configTitleStyle = kialiStyle({
   display: 'flex',
@@ -31,7 +33,7 @@ export const TargetPanelConfigTable: React.FC<TargetPanelConfigTableProps> = (pr
 
   const { t } = useKialiTranslation();
 
-  const copyText = JSON.stringify(props.configData, null, 2);
+  const copyText = dump(props.configData, yamlDumpOptions);
 
   return (
     <>
@@ -56,7 +58,7 @@ export const TargetPanelConfigTable: React.FC<TargetPanelConfigTableProps> = (pr
               isInline
               aria-label={t('Download')}
               className={downloadButtonStyle}
-              onClick={() => download(copyText, `configuration_${props.targetName}.json`)}
+              onClick={() => download(copyText, `configuration_${props.targetName}.yaml`)}
             >
               <KialiIcon.Download />
               <span className={iconStyle}>{t('Download')}</span>
@@ -65,7 +67,7 @@ export const TargetPanelConfigTable: React.FC<TargetPanelConfigTableProps> = (pr
         </div>
       </div>
 
-      <JsonTable label={t('Configuration')} jsonData={props.configData} width={props.width} />
+      <ConfigTable label={t('Configuration')} configData={props.configData} width={props.width} />
     </>
   );
 };

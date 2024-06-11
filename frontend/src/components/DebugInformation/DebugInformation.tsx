@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
-import beautify from 'json-beautify';
 import { serverConfig } from '../../config';
 import { ComputedServerConfig } from '../../config/ServerConfig';
 import { KialiAppState } from '../../store/Store';
@@ -15,7 +14,7 @@ import {
   ModalVariant,
   Tab
 } from '@patternfly/react-core';
-import { aceOptions } from '../../types/IstioConfigDetails';
+import { aceOptions, yamlDumpOptions } from '../../types/IstioConfigDetails';
 import AceEditor from 'react-ace';
 import { ParameterizedTabs } from '../Tab/Tabs';
 import { AuthConfig } from '../../types/Auth';
@@ -27,9 +26,10 @@ import { kialiStyle } from 'styles/StyleUtils';
 import ReactAce from 'react-ace/lib/ace';
 import { classes } from 'typestyle';
 import { usePreviousValue } from 'utils/ReactUtils';
-import { JsonTable } from 'components/Table/JsonTable';
+import { ConfigTable } from 'components/Table/ConfigTable';
 import { useKialiTranslation } from 'utils/I18nUtils';
 import { download } from 'utils/Common';
+import { dump } from 'js-yaml';
 
 enum CopyStatus {
   NOT_COPIED, // We haven't copied the current output
@@ -114,11 +114,7 @@ const DebugInformationComponent: React.FC<DebugInformationProps> = (props: Debug
 
     for (const key in serverConfig) {
       if (propsToShow.includes(key)) {
-        if (typeof serverConfig[key] === 'string') {
-          kialiConfig[key] = serverConfig[key];
-        } else {
-          kialiConfig[key] = JSON.stringify(serverConfig[key]);
-        }
+        kialiConfig[key] = serverConfig[key];
       }
     }
     // Order config items
@@ -152,7 +148,7 @@ const DebugInformationComponent: React.FC<DebugInformationProps> = (props: Debug
   };
 
   const downloadFile = (): void => {
-    const fileName = `debug_${currentTab === 'kialiConfig' ? 'kiali_config' : 'additional_state'}.json`;
+    const fileName = `debug_${currentTab === 'kialiConfig' ? 'kiali_config' : 'additional_state'}.yaml`;
 
     download(copyText, fileName);
   };
@@ -199,14 +195,19 @@ const DebugInformationComponent: React.FC<DebugInformationProps> = (props: Debug
 
   debugInformation = filterDebugInformation(debugInformation);
 
-  const debugInformationText = beautify(debugInformation, parseConfig, 2);
+  // skip invalid regex not allowed by js-yaml dump
+  const debugInformationText = dump(debugInformation, {
+    replacer: parseConfig,
+    skipInvalid: true,
+    ...yamlDumpOptions
+  });
 
-  const copyText = currentTab === 'kialiConfig' ? JSON.stringify(config, null, 2) : debugInformationText;
+  const copyText = currentTab === 'kialiConfig' ? dump(config, yamlDumpOptions) : debugInformationText;
 
   const renderTabs = (): React.ReactNode[] => {
     const kialiConfig = (
       <Tab eventKey={0} title={t('Kiali Config')} key="kialiConfig">
-        <JsonTable label={t('Debug Information')} jsonData={config} width="30%" />
+        <ConfigTable label={t('Debug Information')} configData={config} width="30%" />
       </Tab>
     );
 
