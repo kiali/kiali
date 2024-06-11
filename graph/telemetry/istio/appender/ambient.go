@@ -12,7 +12,7 @@ const AmbientAppenderName = "ambient"
 const WaypointSuffix = "waypoint"
 
 type AmbientAppender struct {
-	Waypoints bool
+	ShowWaypoints bool
 }
 
 // Name implements Appender
