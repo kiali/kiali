@@ -227,7 +227,7 @@ func TestMeshGraph(t *testing.T) {
 		return
 	}
 
-	globalInfo.MeshStatusGetter = &fakeMeshStatusGetter{}
+	globalInfo.IstioStatusGetter = &fakeMeshStatusGetter{}
 
 	var fut func(ctx context.Context, globalInfo *mesh.AppenderGlobalInfo, o mesh.Options) (int, interface{})
 

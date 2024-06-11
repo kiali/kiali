@@ -44,7 +44,7 @@ func GraphMesh(
 	globalInfo.Config = conf
 	globalInfo.Grafana = grafana
 	globalInfo.KialiCache = kialiCache
-	globalInfo.MeshStatusGetter = &business.IstioStatus
+	globalInfo.IstioStatusGetter = &business.IstioStatus
 
 	code, config = graphMesh(ctx, globalInfo, o)
 

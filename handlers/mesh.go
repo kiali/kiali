@@ -85,7 +85,12 @@ func MeshGraph(conf *config.Config, clientFactory kubernetes.ClientFactory, cach
 		// Assuming that all controlplanes are part of the same mesh,
 		// just use the first one.
 		if len(meshInfo.ControlPlanes) > 0 {
-			o.MeshName = meshInfo.ControlPlanes[0].Config.DefaultConfig.MeshId
+			meshId := meshInfo.ControlPlanes[0].Config.DefaultConfig.MeshId
+			if meshId == "" {
+				// MeshId defaults to trust domain in istio if not set.
+				meshId = meshInfo.ControlPlanes[0].Config.TrustDomain
+			}
+			o.MeshName = meshId
 		}
 
 		code, payload := api.GraphMesh(r.Context(), business, o, clientFactory, cache, conf, grafana)

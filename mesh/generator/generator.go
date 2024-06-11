@@ -96,7 +96,7 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalIn
 
 		// get istio status components (istiod, grafana, prometheus, tracing)
 		var istioStatus kubernetes.IstioComponentStatus
-		istioStatus, err = gi.MeshStatusGetter.GetStatus(ctx, cp.Cluster.Name)
+		istioStatus, err = gi.IstioStatusGetter.GetStatus(ctx, cp.Cluster.Name)
 		mesh.CheckError(err)
 
 		// convert istio status slice into map

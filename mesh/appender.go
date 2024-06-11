@@ -18,13 +18,13 @@ type AppenderVendorInfo map[string]interface{}
 // can re-use the information.  A new instance is generated for graph and
 // is initially empty.
 type AppenderGlobalInfo struct {
-	Business         *business.Layer
-	ClientFactory    kubernetes.ClientFactory
-	Config           *config.Config
-	Grafana          *grafana.Service
-	KialiCache       cache.KialiCache
-	MeshStatusGetter MeshStatusGetter
-	PromClient       *prometheus.Client
+	Business          *business.Layer
+	ClientFactory     kubernetes.ClientFactory
+	Config            *config.Config
+	Grafana           *grafana.Service
+	IstioStatusGetter IstioStatusGetter
+	KialiCache        cache.KialiCache
+	PromClient        *prometheus.Client
 
 	Vendor AppenderVendorInfo // telemetry vendor's global info
 }
@@ -66,7 +66,7 @@ type Appender interface {
 	Name() string
 }
 
-// MeshStatusGetter gets the status of the mesh graph components
-type MeshStatusGetter interface {
+// IstioStatusGetter gets the status of the mesh graph components
+type IstioStatusGetter interface {
 	GetStatus(ctx context.Context, cluster string) (kubernetes.IstioComponentStatus, error)
 }
