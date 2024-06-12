@@ -213,6 +213,8 @@ start_kind() {
   cat <<EOF | ${KIND_EXE} create cluster --name "${NAME}" --config -
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
+networking:
+  ipFamily: ipv4
 $(echo_keycloak_kubeadm_config)
 nodes:
   - role: control-plane
