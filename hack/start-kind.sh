@@ -234,7 +234,14 @@ config_metallb() {
   local subnet
   # we always use docker today, but we'll leave this here just in case in the future Kind and podman play nice
   if [ "${DORP}" == "docker" ]; then
-    subnet=$(docker network inspect kind --format '{{(index .IPAM.Config 1).Subnet}}')
+    # loop through all known subnets in the kind network and pick out the IPv4 subnet, ignoring any IPv6 that might be in the list
+    local network_count="$(docker network inspect kind | jq '.[0].IPAM.Config | length')"
+    for ((i=0; i<network_count; i++)); do
+      subnet=$(docker network inspect kind --format '{{(index .IPAM.Config '$i').Subnet}}' 2> /dev/null)
+      if [[ -n $subnet && $subnet != *:* && $subnet == *\.* ]]; then
+        break
+      fi
+    done
   else
     subnet=$(podman network inspect kind --format '{{ (index (index (index .plugins 0).ipam.ranges 1) 1).subnet }}')
   fi
