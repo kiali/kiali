@@ -211,7 +211,7 @@ func ParseAppenders(o graph.TelemetryOptions) (appenders []graph.Appender, final
 			}
 		}
 		a := AmbientAppender{
-			Waypoints: waypoints,
+			ShowWaypoints: waypoints,
 		}
 		appenders = append(appenders, a)
 	}

@@ -80,7 +80,7 @@ func (a ResponseTimeAppender) appendGraph(trafficMap graph.TrafficMap, namespace
 		// 1) Incoming: query destination telemetry to capture namespace services' incoming traffic
 		// note - the query order is important as both queries may have overlapping results for edges within
 		//        the namespace.  This query uses destination proxy and so must come first.
-		query := fmt.Sprintf(`sum(rate(%s{reporter="destination",destination_service_namespace="%s"}[%vs])) by (%s) / sum(rate(%s{reporter="destination",destination_service_namespace="%s"}[%vs])) by (%s) > 0`,
+		query := fmt.Sprintf(`sum(rate(%s{reporter=~"destination|waypoint",destination_service_namespace="%s"}[%vs])) by (%s) / sum(rate(%s{reporter=~"destination|waypoint",destination_service_namespace="%s"}[%vs])) by (%s) > 0`,
 			"istio_request_duration_milliseconds_sum",
 			namespace,
 			int(duration.Seconds()), // range duration for the query
@@ -93,7 +93,7 @@ func (a ResponseTimeAppender) appendGraph(trafficMap graph.TrafficMap, namespace
 		a.populateResponseTimeMap(responseTimeMap, &incomingVector)
 
 		// 2) Outgoing: query source telemetry to capture namespace workloads' outgoing traffic
-		query = fmt.Sprintf(`sum(rate(%s{reporter="source",source_workload_namespace="%s"}[%vs])) by (%s) / sum(rate(%s{reporter="source",source_workload_namespace="%s"}[%vs])) by (%s) > 0`,
+		query = fmt.Sprintf(`sum(rate(%s{reporter=~"source|waypoint",source_workload_namespace="%s"}[%vs])) by (%s) / sum(rate(%s{reporter=~"source|waypoint",source_workload_namespace="%s"}[%vs])) by (%s) > 0`,
 			"istio_request_duration_milliseconds_sum",
 			namespace,
 			int(duration.Seconds()), // range duration for the query
@@ -114,7 +114,7 @@ func (a ResponseTimeAppender) appendGraph(trafficMap graph.TrafficMap, namespace
 		// 1) Incoming: query destination telemetry to capture namespace services' incoming traffic
 		// note - the query order is important as both queries may have overlapping results for edges within
 		//        the namespace.  This query uses destination proxy and so must come first.
-		query := fmt.Sprintf(`histogram_quantile(%.2f, sum(rate(%s{reporter="destination",destination_service_namespace="%s"}[%vs])) by (%s)) > 0`,
+		query := fmt.Sprintf(`histogram_quantile(%.2f, sum(rate(%s{reporter=~"destination|waypoint",destination_service_namespace="%s"}[%vs])) by (%s)) > 0`,
 			quantile,
 			"istio_request_duration_milliseconds_bucket",
 			namespace,
@@ -124,7 +124,7 @@ func (a ResponseTimeAppender) appendGraph(trafficMap graph.TrafficMap, namespace
 		a.populateResponseTimeMap(responseTimeMap, &incomingVector)
 
 		// 2) Outgoing: query source telemetry to capture namespace workloads' outgoing traffic
-		query = fmt.Sprintf(`histogram_quantile(%.2f, sum(rate(%s{reporter="source",source_workload_namespace="%s"}[%vs])) by (%s)) > 0`,
+		query = fmt.Sprintf(`histogram_quantile(%.2f, sum(rate(%s{reporter=~"source|waypoint",source_workload_namespace="%s"}[%vs])) by (%s)) > 0`,
 			quantile,
 			"istio_request_duration_milliseconds_bucket",
 			namespace,

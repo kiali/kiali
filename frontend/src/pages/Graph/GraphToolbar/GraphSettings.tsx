@@ -36,6 +36,7 @@ import { KialiDispatch } from 'types/Redux';
 import { KialiCrippledFeatures } from 'types/ServerConfig';
 import { getCrippledFeatures } from 'services/Api';
 import { serverConfig } from '../../../config';
+import { PFColors } from 'components/Pf/PfColors';
 
 type ReduxStateProps = {
   boxByCluster: boolean;
@@ -80,11 +81,13 @@ type GraphSettingsProps = ReduxStateProps &
 type GraphSettingsState = { crippledFeatures?: KialiCrippledFeatures; isOpen: boolean };
 
 interface DisplayOptionType {
+  iconColor?: string;
   id: string;
   isChecked: boolean;
   isDisabled?: boolean;
   labelText: string;
   onChange?: () => void;
+  iconClassName?: string;
   tooltip?: React.ReactNode;
 }
 
@@ -642,12 +645,14 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
 
     if (serverConfig.ambientEnabled) {
       visibilityOptions.push({
+        iconColor: PFColors.Warning,
         id: 'filterWaypoints',
         isChecked: showWaypoints,
         labelText: 'Waypoint Proxies',
         onChange: toggleWaypoints,
         tooltip: (
           <div style={{ textAlign: 'left' }}>
+            <div>[Feature under development]</div>
             <div>Show waypoint proxies workloads.</div>
             <div>
               When enabled in an Ambient environment, include waypoint proxy telemetry in the graph. Waypoint nodes will
@@ -747,7 +752,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
             <div key={edgeLabelOption.id} className={menuEntryStyle}>
               <label
                 key={edgeLabelOption.id}
-                className={!!edgeLabelOption.tooltip ? itemStyleWithInfo : itemStyleWithoutInfo}
+                className={edgeLabelOption.tooltip ? itemStyleWithInfo : itemStyleWithoutInfo}
               >
                 <Checkbox
                   id={edgeLabelOption.id}
@@ -761,13 +766,16 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
                 />
               </label>
 
-              {!!edgeLabelOption.tooltip && (
+              {edgeLabelOption.tooltip && (
                 <Tooltip
                   key={`tooltip_${edgeLabelOption.id}`}
                   position={TooltipPosition.right}
                   content={edgeLabelOption.tooltip}
                 >
-                  <KialiIcon.Info className={infoStyle} />
+                  <KialiIcon.Info
+                    className={edgeLabelOption.iconClassName ?? infoStyle}
+                    color={edgeLabelOption.iconColor}
+                  />
                 </Tooltip>
               )}
 
@@ -777,7 +785,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
                     <div key={rtOption.id} className={menuEntryStyle}>
                       <label
                         key={rtOption.id}
-                        className={!!rtOption.tooltip ? itemStyleWithInfo : itemStyleWithoutInfo}
+                        className={rtOption.tooltip ? itemStyleWithInfo : itemStyleWithoutInfo}
                         style={{ paddingLeft: '2rem' }}
                       >
                         <Radio
@@ -794,13 +802,16 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
                         />
                       </label>
 
-                      {!!rtOption.tooltip && (
+                      {rtOption.tooltip && (
                         <Tooltip
                           key={`tooltip_${rtOption.id}`}
                           position={TooltipPosition.right}
                           content={rtOption.tooltip}
                         >
-                          <KialiIcon.Info className={infoStyle} />
+                          <KialiIcon.Info
+                            className={edgeLabelOption.iconClassName ?? infoStyle}
+                            color={edgeLabelOption.iconColor}
+                          />
                         </Tooltip>
                       )}
                     </div>
@@ -814,7 +825,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
                     <div key={throughputOption.id} className={menuEntryStyle}>
                       <label
                         key={throughputOption.id}
-                        className={!!throughputOption.tooltip ? itemStyleWithInfo : itemStyleWithoutInfo}
+                        className={throughputOption.tooltip ? itemStyleWithInfo : itemStyleWithoutInfo}
                         style={{ paddingLeft: '2rem' }}
                       >
                         <Radio
@@ -831,13 +842,16 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
                         />
                       </label>
 
-                      {!!throughputOption.tooltip && (
+                      {throughputOption.tooltip && (
                         <Tooltip
                           key={`tooltip_${throughputOption.id}`}
                           position={TooltipPosition.right}
                           content={throughputOption.tooltip}
                         >
-                          <KialiIcon.Info className={infoStyle} />
+                          <KialiIcon.Info
+                            className={throughputOption.iconClassName ?? infoStyle}
+                            color={throughputOption.iconColor}
+                          />
                         </Tooltip>
                       )}
                     </div>
@@ -851,7 +865,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
 
           {visibilityOptions.map((item: DisplayOptionType) => (
             <div key={item.id} className={menuEntryStyle}>
-              <label key={item.id} className={!!item.tooltip ? itemStyleWithInfo : itemStyleWithoutInfo}>
+              <label key={item.id} className={item.tooltip ? itemStyleWithInfo : itemStyleWithoutInfo}>
                 <Checkbox
                   id={item.id}
                   isChecked={item.isChecked}
@@ -861,9 +875,9 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
                 />
               </label>
 
-              {!!item.tooltip && (
+              {item.tooltip && (
                 <Tooltip key={`tooltip_${item.id}`} position={TooltipPosition.right} content={item.tooltip}>
-                  <KialiIcon.Info className={infoStyle} />
+                  <KialiIcon.Info className={item.iconClassName ?? infoStyle} color={item.iconColor} />
                 </Tooltip>
               )}
 
@@ -873,7 +887,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
                     <div key={scoringOption.id} className={menuEntryStyle}>
                       <label
                         key={scoringOption.id}
-                        className={!!scoringOption.tooltip ? itemStyleWithInfo : itemStyleWithoutInfo}
+                        className={scoringOption.tooltip ? itemStyleWithInfo : itemStyleWithoutInfo}
                         style={{ paddingLeft: '2rem' }}
                       >
                         <Checkbox
@@ -888,13 +902,16 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
                         />
                       </label>
 
-                      {!!scoringOption.tooltip && (
+                      {scoringOption.tooltip && (
                         <Tooltip
                           key={`tooltip_${scoringOption.id}`}
                           position={TooltipPosition.right}
                           content={scoringOption.tooltip}
                         >
-                          <KialiIcon.Info className={infoStyle} />
+                          <KialiIcon.Info
+                            className={scoringOption.iconClassName ?? infoStyle}
+                            color={scoringOption.iconColor}
+                          />
                         </Tooltip>
                       )}
                     </div>
@@ -908,7 +925,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
 
           {badgeOptions.map((item: DisplayOptionType) => (
             <div key={item.id} className={menuEntryStyle}>
-              <label key={item.id} className={!!item.tooltip ? itemStyleWithInfo : itemStyleWithoutInfo}>
+              <label key={item.id} className={item.tooltip ? itemStyleWithInfo : itemStyleWithoutInfo}>
                 <Checkbox
                   id={item.id}
                   isChecked={item.isChecked}
@@ -918,9 +935,9 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
                 />
               </label>
 
-              {!!item.tooltip && (
+              {item.tooltip && (
                 <Tooltip key={`tooltip_${item.id}`} position={TooltipPosition.right} content={item.tooltip}>
-                  <KialiIcon.Info className={infoStyle} />
+                  <KialiIcon.Info className={item.iconClassName ?? infoStyle} color={item.iconColor} />
                 </Tooltip>
               )}
             </div>
