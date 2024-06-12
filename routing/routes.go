@@ -6,6 +6,7 @@ import (
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/business/authentication"
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/grafana"
 	"github.com/kiali/kiali/handlers"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/cache"
@@ -37,6 +38,7 @@ func NewRoutes(
 	traceClientLoader func() tracing.ClientInterface,
 	cpm business.ControlPlaneMonitor,
 	authController authentication.AuthController,
+	grafana *grafana.Service,
 ) (r *Routes) {
 	r = new(Routes)
 
@@ -74,7 +76,7 @@ func NewRoutes(
 			"Root",
 			"GET",
 			"/api",
-			handlers.Root,
+			handlers.Root(conf, clientFactory, kialiCache, grafana),
 			false,
 		},
 		// swagger:route GET /authenticate auth authenticate
@@ -172,7 +174,7 @@ func NewRoutes(
 			"Status",
 			"GET",
 			"/api/status",
-			handlers.Root,
+			handlers.Root(conf, clientFactory, kialiCache, grafana),
 			true,
 		},
 		// swagger:route GET /config kiali getConfig
@@ -865,7 +867,7 @@ func NewRoutes(
 			"ServiceDashboard",
 			"GET",
 			"/api/namespaces/{namespace}/services/{service}/dashboard",
-			handlers.ServiceDashboard,
+			handlers.ServiceDashboard(conf, grafana),
 			true,
 		},
 		// swagger:route GET /namespaces/{namespace}/apps/{app}/dashboard apps appDashboard
@@ -886,7 +888,7 @@ func NewRoutes(
 			"AppDashboard",
 			"GET",
 			"/api/namespaces/{namespace}/apps/{app}/dashboard",
-			handlers.AppDashboard,
+			handlers.AppDashboard(conf, grafana),
 			true,
 		},
 		// swagger:route GET /namespaces/{namespace}/workloads/{workload}/dashboard workloads workloadDashboard
@@ -907,7 +909,7 @@ func NewRoutes(
 			"WorkloadDashboard",
 			"GET",
 			"/api/namespaces/{namespace}/workloads/{workload}/dashboard",
-			handlers.WorkloadDashboard,
+			handlers.WorkloadDashboard(conf, grafana),
 			true,
 		},
 		// swagger:route GET /namespaces/{namespace}/customdashboard/{dashboard} dashboards customDashboard
@@ -928,7 +930,7 @@ func NewRoutes(
 			"CustomDashboard",
 			"GET",
 			"/api/namespaces/{namespace}/customdashboard/{dashboard}",
-			handlers.CustomDashboard,
+			handlers.CustomDashboard(conf, grafana),
 			true,
 		},
 		// swagger:route GET /namespaces/{namespace}/metrics namespaces namespaceMetrics
@@ -1305,7 +1307,7 @@ func NewRoutes(
 			"MeshGraph",
 			"GET",
 			"/api/mesh/graph",
-			handlers.MeshGraph,
+			handlers.MeshGraph(conf, clientFactory, kialiCache, grafana),
 			true,
 		},
 		// swagger:route GET /grafana integrations grafanaInfo
@@ -1327,7 +1329,7 @@ func NewRoutes(
 			"GrafanaURL",
 			"GET",
 			"/api/grafana",
-			handlers.GetGrafanaInfo,
+			handlers.GetGrafanaInfo(conf, grafana),
 			true,
 		},
 		// swagger:route GET /tracing integrations tracingInfo

@@ -3,9 +3,7 @@ export enum StatusKey {
   KIALI_CORE_COMMIT_HASH = 'Kiali commit hash',
   KIALI_CORE_VERSION = 'Kiali version',
   KIALI_CONTAINER_VERSION = 'Kiali container version',
-  KIALI_STATE = 'Kiali state',
-  MESH_NAME = 'Mesh name',
-  MESH_VERSION = 'Mesh version'
+  KIALI_STATE = 'Kiali state'
 }
 
 export type Status = { [K in StatusKey]?: string };

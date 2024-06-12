@@ -1,33 +1,127 @@
-package business
+package grafana
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/config/dashboards"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
-	"github.com/kiali/kiali/status"
 	"github.com/kiali/kiali/util/httputil"
 )
 
-type dashboardSupplier func(string, string, *config.Auth) ([]byte, int, error)
+// Service provides discovery and info about Grafana.
+type Service struct {
+	conf                *config.Config
+	homeClusterSAClient kubernetes.ClientInterface
+	routeLock           sync.RWMutex
+	routeURL            *string
+}
 
-var GrafanaDashboardSupplier = findDashboard
+// NewService creates a new Grafana service.
+func NewService(conf *config.Config, homeClusterSAClient kubernetes.ClientInterface) *Service {
+	s := &Service{
+		conf:                conf,
+		homeClusterSAClient: homeClusterSAClient,
+	}
+
+	routeURL := s.discover(context.TODO())
+	if routeURL != "" {
+		s.routeURL = &routeURL
+	}
+
+	return s
+}
+
+func (s *Service) URL(ctx context.Context) string {
+	grafanaConf := s.conf.ExternalServices.Grafana
+
+	// If Grafana is disabled in the configuration return an empty string and avoid discovery
+	if !grafanaConf.Enabled {
+		return ""
+	}
+	if grafanaConf.URL != "" || grafanaConf.InClusterURL == "" {
+		return grafanaConf.URL
+	}
+	s.routeLock.RLock()
+	if s.routeURL != nil {
+		defer s.routeLock.RUnlock()
+		return *s.routeURL
+	}
+	s.routeLock.RUnlock()
+	return s.discover(ctx)
+}
+
+// DiscoverGrafana will return the Grafana URL if it has been configured,
+// or will try to retrieve it if an OpenShift Route is defined.
+func (s *Service) discover(ctx context.Context) string {
+	s.routeLock.Lock()
+	defer s.routeLock.Unlock()
+	// Try to get service and namespace from in-cluster URL, to discover route
+	routeURL := ""
+	if inClusterURL := s.conf.ExternalServices.Grafana.InClusterURL; inClusterURL != "" {
+		parsedURL, err := url.Parse(inClusterURL)
+		if err == nil {
+			parts := strings.Split(parsedURL.Hostname(), ".")
+			if len(parts) >= 2 {
+				routeURL, err = s.discoverServiceURL(ctx, parts[1], parts[0])
+				if err != nil {
+					log.Debugf("[GRAFANA] URL discovery failed: %v", err)
+				}
+				s.routeURL = &routeURL
+			}
+		}
+	}
+	return routeURL
+}
+
+func (s *Service) discoverServiceURL(ctx context.Context, ns, service string) (url string, err error) {
+	log.Debugf("[%s] URL discovery for service '%s', namespace '%s'...", strings.ToUpper(service), service, ns)
+	url = ""
+	// If the client is not openshift return and avoid discover
+	if !s.homeClusterSAClient.IsOpenShift() {
+		log.Debugf("[%s] Client is not Openshift, discovery url is only supported in Openshift", strings.ToUpper(service))
+		return
+	}
+
+	// Assuming service name == route name
+	route, err := s.homeClusterSAClient.GetRoute(ctx, ns, service)
+	if err != nil {
+		log.Debugf("[%s] Discovery failed: %v", strings.ToUpper(service), err)
+		return
+	}
+
+	host := route.Spec.Host
+	if route.Spec.TLS != nil {
+		url = "https://" + host
+	} else {
+		url = "http://" + host
+	}
+	log.Infof("[%s] URL discovered for %s: %s", strings.ToUpper(service), service, url)
+	return
+}
+
+type DashboardSupplierFunc func(string, string, *config.Auth) ([]byte, int, error)
+
+var DashboardSupplier = findDashboard
 
 // GetGrafanaInfo returns the Grafana URL and other info, the HTTP status code (int) and eventually an error
-func GetGrafanaInfo(dashboardSupplier dashboardSupplier) (*models.GrafanaInfo, int, error) {
-	grafanaConfig := config.Get().ExternalServices.Grafana
+func (s *Service) Info(ctx context.Context, dashboardSupplier DashboardSupplierFunc) (*models.GrafanaInfo, int, error) {
+	grafanaConfig := s.conf.ExternalServices.Grafana
 	if !grafanaConfig.Enabled {
 		return nil, http.StatusNoContent, nil
 	}
-	conn, code, err := getGrafanaConnectionInfo(&grafanaConfig)
+
+	conn, code, err := s.getGrafanaConnectionInfo(ctx)
 	if err != nil {
 		return nil, code, err
 	}
@@ -63,13 +157,13 @@ func GetGrafanaInfo(dashboardSupplier dashboardSupplier) (*models.GrafanaInfo, i
 }
 
 // GetGrafanaLinks returns the links to Grafana dashboards and other info, the HTTP status code (int) and eventually an error
-func GetGrafanaLinks(linksSpec []dashboards.MonitoringDashboardExternalLink) ([]models.ExternalLink, int, error) {
-	grafanaConfig := config.Get().ExternalServices.Grafana
+func (s *Service) Links(ctx context.Context, linksSpec []dashboards.MonitoringDashboardExternalLink) ([]models.ExternalLink, int, error) {
+	grafanaConfig := s.conf.ExternalServices.Grafana
 	if !grafanaConfig.Enabled {
 		return nil, 0, nil
 	}
 
-	connectionInfo, code, err := getGrafanaConnectionInfo(&grafanaConfig)
+	connectionInfo, code, err := s.getGrafanaConnectionInfo(ctx)
 	if err != nil {
 		return nil, code, err
 	}
@@ -77,10 +171,10 @@ func GetGrafanaLinks(linksSpec []dashboards.MonitoringDashboardExternalLink) ([]
 		log.Tracef("Skip checking Grafana links as Grafana is not configured")
 		return nil, 0, nil
 	}
-	return getGrafanaLinks(connectionInfo, linksSpec, GrafanaDashboardSupplier)
+	return getGrafanaLinks(connectionInfo, linksSpec, DashboardSupplier)
 }
 
-func getGrafanaLinks(conn grafanaConnectionInfo, linksSpec []dashboards.MonitoringDashboardExternalLink, dashboardSupplier dashboardSupplier) ([]models.ExternalLink, int, error) {
+func getGrafanaLinks(conn grafanaConnectionInfo, linksSpec []dashboards.MonitoringDashboardExternalLink, dashboardSupplier DashboardSupplierFunc) ([]models.ExternalLink, int, error) {
 	// Call Grafana REST API to get dashboard urls
 	linksOut := []models.ExternalLink{}
 	for _, linkSpec := range linksSpec {
@@ -110,11 +204,12 @@ type grafanaConnectionInfo struct {
 	auth              *config.Auth
 }
 
-func getGrafanaConnectionInfo(cfg *config.GrafanaConfig) (grafanaConnectionInfo, int, error) {
-	externalURL := status.DiscoverGrafana()
+func (s *Service) getGrafanaConnectionInfo(ctx context.Context) (grafanaConnectionInfo, int, error) {
+	externalURL := s.URL(ctx)
 	if externalURL == "" {
 		return grafanaConnectionInfo{}, http.StatusServiceUnavailable, errors.New("grafana URL is not set in Kiali configuration")
 	}
+	cfg := s.conf.ExternalServices.Grafana
 
 	// Check if URL is valid
 	_, err := url.ParseRequestURI(externalURL)
@@ -145,7 +240,7 @@ func getGrafanaConnectionInfo(cfg *config.GrafanaConfig) (grafanaConnectionInfo,
 	}, 0, nil
 }
 
-func getDashboardPath(name string, conn grafanaConnectionInfo, dashboardSupplier dashboardSupplier) (string, error) {
+func getDashboardPath(name string, conn grafanaConnectionInfo, dashboardSupplier DashboardSupplierFunc) (string, error) {
 	body, code, err := dashboardSupplier(conn.inClusterURL, url.PathEscape(name), conn.auth)
 	if err != nil {
 		return "", err

@@ -3,6 +3,10 @@ package handlers
 import (
 	"net/http"
 
+	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/grafana"
+	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/status"
 )
 
@@ -14,10 +18,8 @@ func Healthz(w http.ResponseWriter, r *http.Request) {
 }
 
 // Root provides basic status of the server.
-func Root(w http.ResponseWriter, r *http.Request) {
-	getStatus(w, r)
-}
-
-func getStatus(w http.ResponseWriter, r *http.Request) {
-	RespondWithJSONIndent(w, http.StatusOK, status.Get())
+func Root(conf *config.Config, clientFactory kubernetes.ClientFactory, cache cache.KialiCache, grafana *grafana.Service) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		RespondWithJSONIndent(w, http.StatusOK, status.Get(r.Context(), conf, clientFactory, cache, grafana))
+	}
 }

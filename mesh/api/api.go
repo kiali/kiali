@@ -6,7 +6,11 @@ import (
 	"net/http"
 
 	"github.com/kiali/kiali/business"
+	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/grafana"
 	"github.com/kiali/kiali/graph"
+	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/mesh"
 	"github.com/kiali/kiali/mesh/config/cytoscape"
@@ -15,21 +19,32 @@ import (
 )
 
 // GraphMesh generates a mesh graph using the provided options
-func GraphMesh(ctx context.Context, business *business.Layer, o mesh.Options) (code int, config interface{}) {
+func GraphMesh(
+	ctx context.Context,
+	business *business.Layer,
+	o mesh.Options,
+	clientFactory kubernetes.ClientFactory,
+	kialiCache cache.KialiCache,
+	conf *config.Config,
+	grafana *grafana.Service,
+) (code int, config interface{}) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GraphNamespaces",
 		observability.Attribute("package", "api"),
 	)
 	defer end()
 	// time how long it takes to generate this graph
-	//promtimer := internalmetrics.GetMeshGraphGenerationTimePrometheusTimer()
-	//defer promtimer.ObserveDuration()
+	// promtimer := internalmetrics.GetMeshGraphGenerationTimePrometheusTimer()
+	// defer promtimer.ObserveDuration()
 
 	// Create a 'global' object to store the business. Global only to the request.
 	globalInfo := mesh.NewAppenderGlobalInfo()
 	globalInfo.Business = business
-	globalInfo.MeshStatusGetter = &business.IstioStatus
-	globalInfo.Context = ctx
+	globalInfo.ClientFactory = clientFactory
+	globalInfo.Config = conf
+	globalInfo.Grafana = grafana
+	globalInfo.KialiCache = kialiCache
+	globalInfo.IstioStatusGetter = &business.IstioStatus
 
 	code, config = graphMesh(ctx, globalInfo, o)
 
@@ -38,7 +53,6 @@ func GraphMesh(ctx context.Context, business *business.Layer, o mesh.Options) (c
 
 // graphMesh provides a test hook that accepts mock clients
 func graphMesh(ctx context.Context, globalInfo *mesh.AppenderGlobalInfo, o mesh.Options) (code int, config interface{}) {
-
 	meshMap := generator.BuildMeshMap(ctx, o, globalInfo)
 	code, config = generateGraph(meshMap, o)
 

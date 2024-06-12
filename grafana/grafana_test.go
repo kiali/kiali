@@ -1,6 +1,7 @@
-package business
+package grafana_test
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"testing"
@@ -8,6 +9,8 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/grafana"
+	"github.com/kiali/kiali/kubernetes/kubetest"
 )
 
 var dashboardsConfig = []config.GrafanaDashboardConfig{
@@ -31,9 +34,13 @@ func genDashboard(path string) []map[string]interface{} {
 func TestGetGrafanaInfoDisabled(t *testing.T) {
 	conf := config.NewConfig()
 	conf.ExternalServices.Grafana.Enabled = false
-	config.Set(conf)
 
-	info, code, err := GetGrafanaInfo(buildDashboardSupplier(genDashboard("/some_path"), 200, "whatever", t))
+	grafana := grafana.NewService(conf, kubetest.NewFakeK8sClient())
+
+	info, code, err := grafana.Info(
+		context.Background(),
+		buildDashboardSupplier(genDashboard("/some_path"), 200, "whatever", t),
+	)
 	assert.Nil(t, err)
 	assert.Equal(t, http.StatusNoContent, code)
 	assert.Nil(t, info)
@@ -44,9 +51,13 @@ func TestGetGrafanaInfoExternal(t *testing.T) {
 	conf.ExternalServices.Grafana.InClusterURL = ""
 	conf.ExternalServices.Grafana.URL = "http://grafana-external:3001"
 	conf.ExternalServices.Grafana.Dashboards = dashboardsConfig
-	config.Set(conf)
 
-	info, code, err := GetGrafanaInfo(buildDashboardSupplier(genDashboard("/some_path"), 200, "http://grafana-external:3001", t))
+	grafana := grafana.NewService(conf, kubetest.NewFakeK8sClient())
+
+	info, code, err := grafana.Info(
+		context.Background(),
+		buildDashboardSupplier(genDashboard("/some_path"), 200, "http://grafana-external:3001", t),
+	)
 
 	assert.Nil(t, err)
 	assert.Equal(t, http.StatusOK, code)
@@ -59,9 +70,13 @@ func TestGetGrafanaInfoInCluster(t *testing.T) {
 	conf.ExternalServices.Grafana.URL = "http://grafana-external:3001"
 	conf.ExternalServices.Grafana.Dashboards = dashboardsConfig
 	conf.ExternalServices.Grafana.InClusterURL = "http://grafana.istio-system:3001"
-	config.Set(conf)
 
-	info, code, err := GetGrafanaInfo(buildDashboardSupplier(genDashboard("/some_path"), 200, "http://grafana.istio-system:3001", t))
+	grafana := grafana.NewService(conf, kubetest.NewFakeK8sClient())
+
+	info, code, err := grafana.Info(
+		context.Background(),
+		buildDashboardSupplier(genDashboard("/some_path"), 200, "http://grafana.istio-system:3001", t),
+	)
 
 	assert.Nil(t, err)
 	assert.Equal(t, http.StatusOK, code)
@@ -74,9 +89,13 @@ func TestGetGrafanaInfoGetError(t *testing.T) {
 	conf.ExternalServices.Grafana.InClusterURL = ""
 	conf.ExternalServices.Grafana.URL = "http://grafana-external:3001"
 	conf.ExternalServices.Grafana.Dashboards = dashboardsConfig
-	config.Set(conf)
 
-	_, code, err := GetGrafanaInfo(buildDashboardSupplier(anError, 401, "http://grafana-external:3001", t))
+	grafana := grafana.NewService(conf, kubetest.NewFakeK8sClient())
+
+	_, code, err := grafana.Info(
+		context.Background(),
+		buildDashboardSupplier(anError, 401, "http://grafana-external:3001", t),
+	)
 
 	assert.Equal(t, "error from Grafana (401): unauthorized", err.Error())
 	assert.Equal(t, 503, code)
@@ -87,9 +106,13 @@ func TestGetGrafanaInfoInvalidDashboard(t *testing.T) {
 	conf.ExternalServices.Grafana.InClusterURL = ""
 	conf.ExternalServices.Grafana.URL = "http://grafana-external:3001"
 	conf.ExternalServices.Grafana.Dashboards = dashboardsConfig
-	config.Set(conf)
 
-	_, code, err := GetGrafanaInfo(buildDashboardSupplier("unexpected response", 200, "http://grafana-external:3001", t))
+	grafana := grafana.NewService(conf, kubetest.NewFakeK8sClient())
+
+	_, code, err := grafana.Info(
+		context.Background(),
+		buildDashboardSupplier("unexpected response", 200, "http://grafana-external:3001", t),
+	)
 
 	assert.NotNil(t, err)
 	assert.Contains(t, err.Error(), "json: cannot unmarshal")
@@ -101,9 +124,13 @@ func TestGetGrafanaInfoWithoutLeadingSlashPath(t *testing.T) {
 	conf.ExternalServices.Grafana.InClusterURL = ""
 	conf.ExternalServices.Grafana.URL = "http://grafana-external:3001"
 	conf.ExternalServices.Grafana.Dashboards = dashboardsConfig
-	config.Set(conf)
 
-	info, code, err := GetGrafanaInfo(buildDashboardSupplier(genDashboard("some_path"), 200, "http://grafana-external:3001", t))
+	grafana := grafana.NewService(conf, kubetest.NewFakeK8sClient())
+
+	info, code, err := grafana.Info(
+		context.Background(),
+		buildDashboardSupplier(genDashboard("some_path"), 200, "http://grafana-external:3001", t),
+	)
 
 	assert.Nil(t, err)
 	assert.Equal(t, http.StatusOK, code)
@@ -116,9 +143,13 @@ func TestGetGrafanaInfoWithTrailingSlashURL(t *testing.T) {
 	conf.ExternalServices.Grafana.InClusterURL = ""
 	conf.ExternalServices.Grafana.URL = "http://grafana-external:3001/"
 	conf.ExternalServices.Grafana.Dashboards = dashboardsConfig
-	config.Set(conf)
 
-	info, code, err := GetGrafanaInfo(buildDashboardSupplier(genDashboard("/some_path"), 200, "http://grafana-external:3001/", t))
+	grafana := grafana.NewService(conf, kubetest.NewFakeK8sClient())
+
+	info, code, err := grafana.Info(
+		context.Background(),
+		buildDashboardSupplier(genDashboard("/some_path"), 200, "http://grafana-external:3001/", t),
+	)
 
 	assert.Nil(t, err)
 	assert.Equal(t, http.StatusOK, code)
@@ -131,9 +162,13 @@ func TestGetGrafanaInfoWithQueryParams(t *testing.T) {
 	conf.ExternalServices.Grafana.InClusterURL = ""
 	conf.ExternalServices.Grafana.URL = "http://grafana-external:3001/?orgId=1"
 	conf.ExternalServices.Grafana.Dashboards = dashboardsConfig
-	config.Set(conf)
 
-	info, code, err := GetGrafanaInfo(buildDashboardSupplier(genDashboard("/some_path"), 200, "http://grafana-external:3001/?orgId=1", t))
+	grafana := grafana.NewService(conf, kubetest.NewFakeK8sClient())
+
+	info, code, err := grafana.Info(
+		context.Background(),
+		buildDashboardSupplier(genDashboard("/some_path"), 200, "http://grafana-external:3001/?orgId=1", t),
+	)
 
 	assert.Nil(t, err)
 	assert.Equal(t, http.StatusOK, code)
@@ -147,15 +182,20 @@ func TestGetGrafanaInfoWithAbsoluteDashboardURL(t *testing.T) {
 	conf.ExternalServices.Grafana.URL = "/system/grafana/"
 	conf.ExternalServices.Grafana.Dashboards = dashboardsConfig
 	conf.ExternalServices.Grafana.InClusterURL = "http://grafana.istio-system:3001"
-	config.Set(conf)
-	info, code, err := GetGrafanaInfo(buildDashboardSupplier(genDashboard("/system/grafana/some_path"), 200, "http://grafana.istio-system:3001", t))
+
+	grafana := grafana.NewService(conf, kubetest.NewFakeK8sClient())
+
+	info, code, err := grafana.Info(
+		context.Background(),
+		buildDashboardSupplier(genDashboard("/system/grafana/some_path"), 200, "http://grafana.istio-system:3001", t),
+	)
 	assert.Nil(t, err)
 	assert.Equal(t, http.StatusOK, code)
 	assert.Len(t, info.ExternalLinks, 1)
 	assert.Equal(t, "/system/grafana/some_path", info.ExternalLinks[0].URL)
 }
 
-func buildDashboardSupplier(jSon interface{}, code int, expectURL string, t *testing.T) dashboardSupplier {
+func buildDashboardSupplier(jSon interface{}, code int, expectURL string, t *testing.T) grafana.DashboardSupplierFunc {
 	return func(url, _ string, _ *config.Auth) ([]byte, int, error) {
 		assert.Equal(t, expectURL, url)
 		bytes, err := json.Marshal(jSon)

@@ -11,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/grafana"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
@@ -18,11 +19,23 @@ import (
 	"github.com/kiali/kiali/prometheus"
 )
 
+func NewAppService(businessLayer *Layer, conf *config.Config, prom prometheus.ClientInterface, grafana *grafana.Service, userClients map[string]kubernetes.ClientInterface) AppService {
+	return AppService{
+		businessLayer: businessLayer,
+		conf:          conf,
+		grafana:       grafana,
+		prom:          prom,
+		userClients:   userClients,
+	}
+}
+
 // AppService deals with fetching Workloads group by "app" label, which will be identified as an "application"
 type AppService struct {
+	businessLayer *Layer
+	conf          *config.Config
+	grafana       *grafana.Service
 	prom          prometheus.ClientInterface
 	userClients   map[string]kubernetes.ClientInterface
-	businessLayer *Layer
 }
 
 type AppCriteria struct {
@@ -230,11 +243,10 @@ func (in *AppService) GetAppList(ctx context.Context, criteria AppCriteria) (mod
 	}()
 
 	// Combine namespace data
-	conf := config.Get()
 	for resultCh := range resultsCh {
 		if resultCh.err != nil {
 			// Return failure if we are in single cluster
-			if resultCh.cluster == conf.KubernetesConfig.ClusterName && len(in.userClients) == 1 {
+			if resultCh.cluster == in.conf.KubernetesConfig.ClusterName && len(in.userClients) == 1 {
 				log.Errorf("Error fetching Applications for local cluster %s: %s", resultCh.cluster, resultCh.err)
 				return models.AppList{}, resultCh.err
 			} else {
@@ -369,29 +381,29 @@ func (in *AppService) GetAppDetails(ctx context.Context, criteria AppCriteria) (
 		return *appInstance, kubernetes.NewNotFound(criteria.AppName, "Kiali", "App")
 	}
 
-	(*appInstance).Workloads = make([]models.WorkloadItem, len(appDetails.Workloads))
+	appInstance.Workloads = make([]models.WorkloadItem, len(appDetails.Workloads))
 	for i, wkd := range appDetails.Workloads {
-		(*appInstance).Workloads[i] = models.WorkloadItem{WorkloadName: wkd.Name, IstioSidecar: wkd.IstioSidecar, Labels: wkd.Labels, IstioAmbient: wkd.IstioAmbient, ServiceAccountNames: wkd.Pods.ServiceAccounts()}
+		appInstance.Workloads[i] = models.WorkloadItem{WorkloadName: wkd.Name, IstioSidecar: wkd.IstioSidecar, Labels: wkd.Labels, IstioAmbient: wkd.IstioAmbient, ServiceAccountNames: wkd.Pods.ServiceAccounts()}
 	}
 
-	(*appInstance).ServiceNames = make([]string, len(appDetails.Services))
+	appInstance.ServiceNames = make([]string, len(appDetails.Services))
 	for i, svc := range appDetails.Services {
-		(*appInstance).ServiceNames[i] = svc.Name
+		appInstance.ServiceNames[i] = svc.Name
 	}
 
 	pods := models.Pods{}
 	for _, workload := range appDetails.Workloads {
 		pods = append(pods, workload.Pods...)
 	}
-	(*appInstance).Runtimes = NewDashboardsService(ns, nil).GetCustomDashboardRefs(criteria.Namespace, criteria.AppName, "", pods)
+	appInstance.Runtimes = NewDashboardsService(in.conf, in.grafana, ns, nil).GetCustomDashboardRefs(criteria.Namespace, criteria.AppName, "", pods)
 	if criteria.IncludeHealth {
-		(*appInstance).Health, err = in.businessLayer.Health.GetAppHealth(ctx, criteria.Namespace, criteria.Cluster, criteria.AppName, criteria.RateInterval, criteria.QueryTime, appDetails)
+		appInstance.Health, err = in.businessLayer.Health.GetAppHealth(ctx, criteria.Namespace, criteria.Cluster, criteria.AppName, criteria.RateInterval, criteria.QueryTime, appDetails)
 		if err != nil {
 			log.Errorf("Error fetching Health in namespace %s for app %s: %s", criteria.Namespace, criteria.AppName, err)
 		}
 	}
 
-	(*appInstance).Cluster = appDetails.cluster
+	appInstance.Cluster = appDetails.cluster
 
 	return *appInstance, nil
 }
@@ -407,9 +419,7 @@ type appDetails struct {
 // NamespaceApps is a map of app_name and cluster x AppDetails
 type namespaceApps = map[string]*appDetails
 
-func castAppDetails(allEntities namespaceApps, ss *models.ServiceList, w *models.Workload, cluster string) {
-	appLabel := config.Get().IstioLabels.AppLabelName
-
+func castAppDetails(appLabel string, allEntities namespaceApps, ss *models.ServiceList, w *models.Workload, cluster string) {
 	if app, ok := w.Labels[appLabel]; ok {
 		if appEntities, ok := allEntities[app]; ok {
 			appEntities.Workloads = append(appEntities.Workloads, w)
@@ -444,11 +454,10 @@ func castAppDetails(allEntities namespaceApps, ss *models.ServiceList, w *models
 func (in *AppService) fetchNamespaceApps(ctx context.Context, namespace string, cluster string, appName string) (namespaceApps, error) {
 	var ss *models.ServiceList
 	var ws models.Workloads
-	cfg := config.Get()
 
 	appNameSelector := ""
 	if appName != "" {
-		selector := labels.Set(map[string]string{cfg.IstioLabels.AppLabelName: appName})
+		selector := labels.Set(map[string]string{in.conf.IstioLabels.AppLabelName: appName})
 		appNameSelector = selector.String()
 	}
 
@@ -478,7 +487,7 @@ func (in *AppService) fetchNamespaceApps(ctx context.Context, namespace string, 
 		if err != nil {
 			return nil, err
 		}
-		castAppDetails(allEntities, ss, w, cluster)
+		castAppDetails(in.conf.IstioLabels.AppLabelName, allEntities, ss, w, cluster)
 	}
 
 	return allEntities, nil

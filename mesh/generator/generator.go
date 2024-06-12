@@ -40,7 +40,7 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalIn
 	meshMap := mesh.NewMeshMap()
 
 	// get the current status info to determine versions
-	statusInfo := mesh.StatusGetter()
+	statusInfo := mesh.StatusGetter(ctx, gi.Config, gi.ClientFactory, gi.KialiCache, gi.Grafana)
 	esVersions := make(map[string]string)
 	for _, es := range statusInfo.ExternalServices {
 		esVersions[es.Name] = es.Version
@@ -73,6 +73,9 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalIn
 		// add control plane cluster if not already added
 		if _, ok := clusterMap[cp.Cluster.Name]; !ok {
 			k8sVersion := esVersions[fmt.Sprintf("%s-%s", "Kubernetes", cp.Cluster.Name)]
+			if k8sVersion == "" {
+				k8sVersion = "Unknown"
+			}
 			_, _, err := addInfra(meshMap, mesh.InfraTypeCluster, cp.Cluster.Name, "", cp.Cluster.Name, cp.Cluster, k8sVersion, false, "", false)
 			mesh.CheckError(err)
 			clusterMap[cp.Cluster.Name] = true
@@ -91,15 +94,9 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalIn
 
 		name := cp.IstiodName
 
-		version := esVersions["Istio"]
-		if isCanary {
-			// for canary upgrade the version is the revision name with '.' instead of '-'
-			version = strings.Replace(cp.Revision, "-", ".", -1)
-		}
-
 		// get istio status components (istiod, grafana, prometheus, tracing)
 		var istioStatus kubernetes.IstioComponentStatus
-		istioStatus, err = gi.MeshStatusGetter.GetStatus(ctx, cp.Cluster.Name)
+		istioStatus, err = gi.IstioStatusGetter.GetStatus(ctx, cp.Cluster.Name)
 		mesh.CheckError(err)
 
 		// convert istio status slice into map
@@ -116,6 +113,10 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalIn
 			}
 		}
 
+		version := "Unknown"
+		if cp.Version != nil {
+			version = cp.Version.Version
+		}
 		istiod, _, err := addInfra(meshMap, mesh.InfraTypeIstiod, cp.Cluster.Name, cp.IstiodNamespace, name, cp.Config, version, false, healthData[cp.IstiodName], false)
 		mesh.CheckError(err)
 

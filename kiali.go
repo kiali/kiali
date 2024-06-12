@@ -42,10 +42,10 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
 	"github.com/kiali/kiali/server"
-	"github.com/kiali/kiali/status"
 	"github.com/kiali/kiali/tracing"
 	"github.com/kiali/kiali/util"
 )
@@ -100,10 +100,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-	status.Put(status.CoreVersion, version)
-	status.Put(status.CoreCommitHash, commitHash)
-	status.Put(status.ContainerVersion, determineContainerVersion(version))
-
 	// prepare our internal metrics so Prometheus can scrape them
 	internalmetrics.RegisterInternalMetrics()
 
@@ -119,6 +115,13 @@ func main() {
 		log.Fatalf("Error initializing Kiali Cache. Details: %s", err)
 	}
 	defer cache.Stop()
+
+	cache.SetBuildInfo(models.BuildInfo{
+		CommitHash:       commitHash,
+		ContainerVersion: determineContainerVersion(version),
+		GoVersion:        goVersion,
+		Version:          version,
+	})
 
 	namespaceService := business.NewNamespaceService(clientFactory.GetSAClients(), clientFactory.GetSAClients(), cache, cfg)
 	meshService := business.NewMeshService(clientFactory.GetSAClients(), cache, namespaceService, *cfg)

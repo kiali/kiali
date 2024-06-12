@@ -1,6 +1,7 @@
 package business
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"strings"
@@ -8,6 +9,7 @@ import (
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/config/dashboards"
+	"github.com/kiali/kiali/grafana"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus"
@@ -17,29 +19,31 @@ const defaultNamespaceLabel = "namespace"
 
 // DashboardsService deals with fetching dashboards from config
 type DashboardsService struct {
-	promClient      prometheus.ClientInterface
+	conf            *config.Config
 	dashboards      map[string]dashboards.MonitoringDashboard
-	promConfig      config.PrometheusConfig
 	globalNamespace string
+	grafana         *grafana.Service
 	namespaceLabel  string
-	CustomEnabled   bool
+	promClient      prometheus.ClientInterface
+	promConfig      config.PrometheusConfig
+
+	CustomEnabled bool
 }
 
 // NewDashboardsService initializes this business service
-func NewDashboardsService(namespace *models.Namespace, workload *models.Workload) *DashboardsService {
-	cfg := config.Get()
-	customEnabled := cfg.ExternalServices.CustomDashboards.Enabled
-	prom := cfg.ExternalServices.Prometheus
-	if customEnabled && cfg.ExternalServices.CustomDashboards.Prometheus.URL != "" {
-		prom = cfg.ExternalServices.CustomDashboards.Prometheus
+func NewDashboardsService(conf *config.Config, grafana *grafana.Service, namespace *models.Namespace, workload *models.Workload) *DashboardsService {
+	customEnabled := conf.ExternalServices.CustomDashboards.Enabled
+	prom := conf.ExternalServices.Prometheus
+	if customEnabled && conf.ExternalServices.CustomDashboards.Prometheus.URL != "" {
+		prom = conf.ExternalServices.CustomDashboards.Prometheus
 	}
-	nsLabel := cfg.ExternalServices.CustomDashboards.NamespaceLabel
+	nsLabel := conf.ExternalServices.CustomDashboards.NamespaceLabel
 	if nsLabel == "" {
 		nsLabel = "namespace"
 	}
 
 	// Overwrite Custom dashboards defined at Namespace level
-	builtInDashboards := cfg.CustomDashboards
+	builtInDashboards := conf.CustomDashboards
 	if namespace != nil {
 		nsDashboards := dashboards.GetNamespaceMonitoringDashboards(namespace.Name, namespace.Annotations)
 		builtInDashboards = dashboards.AddMonitoringDashboards(builtInDashboards, nsDashboards)
@@ -50,9 +54,11 @@ func NewDashboardsService(namespace *models.Namespace, workload *models.Workload
 	}
 
 	return &DashboardsService{
+		conf:            conf,
 		CustomEnabled:   customEnabled,
+		grafana:         grafana,
 		promConfig:      prom,
-		globalNamespace: cfg.Deployment.Namespace,
+		globalNamespace: conf.Deployment.Namespace,
 		namespaceLabel:  nsLabel,
 		dashboards:      builtInDashboards.OrganizeByName(),
 	}
@@ -127,7 +133,7 @@ func (in *DashboardsService) resolveReferences(dashboard *dashboards.MonitoringD
 }
 
 // GetDashboard returns a dashboard filled-in with target data
-func (in *DashboardsService) GetDashboard(params models.DashboardQuery, template string) (*models.MonitoringDashboard, error) {
+func (in *DashboardsService) GetDashboard(ctx context.Context, params models.DashboardQuery, template string) (*models.MonitoringDashboard, error) {
 	promClient, err := in.prom()
 	if err != nil {
 		return nil, err
@@ -208,7 +214,7 @@ func (in *DashboardsService) GetDashboard(params models.DashboardQuery, template
 	var externalLinks []models.ExternalLink
 	go func() {
 		defer wg.Done()
-		links, _, err := GetGrafanaLinks(dashboard.ExternalLinks)
+		links, _, err := in.grafana.Links(ctx, dashboard.ExternalLinks)
 		if err != nil {
 			log.Errorf("Error while getting Grafana links: %v", err)
 		}

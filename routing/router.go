@@ -17,6 +17,7 @@ import (
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/business/authentication"
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/grafana"
 	"github.com/kiali/kiali/handlers"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/cache"
@@ -27,7 +28,15 @@ import (
 )
 
 // NewRouter creates the router with all API routes and the static files handler
-func NewRouter(conf *config.Config, kialiCache cache.KialiCache, clientFactory kubernetes.ClientFactory, prom kialiprometheus.ClientInterface, traceClientLoader func() tracing.ClientInterface, cpm business.ControlPlaneMonitor) (*mux.Router, error) {
+func NewRouter(
+	conf *config.Config,
+	kialiCache cache.KialiCache,
+	clientFactory kubernetes.ClientFactory,
+	prom kialiprometheus.ClientInterface,
+	traceClientLoader func() tracing.ClientInterface,
+	cpm business.ControlPlaneMonitor,
+	grafana *grafana.Service,
+) (*mux.Router, error) {
 	webRoot := conf.Server.WebRoot
 	webRootWithSlash := webRoot + "/"
 
@@ -101,7 +110,7 @@ func NewRouter(conf *config.Config, kialiCache cache.KialiCache, clientFactory k
 	}
 
 	// Build our API server routes and install them.
-	apiRoutes := NewRoutes(conf, kialiCache, clientFactory, prom, traceClientLoader, cpm, authController)
+	apiRoutes := NewRoutes(conf, kialiCache, clientFactory, prom, traceClientLoader, cpm, authController, grafana)
 	authenticationHandler := handlers.NewAuthenticationHandler(*conf, authController, clientFactory.GetSAHomeClusterClient())
 
 	allRoutes := apiRoutes.Routes

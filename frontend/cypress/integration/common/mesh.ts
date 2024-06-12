@@ -66,7 +66,13 @@ When('user sees mesh side panel', () => {
   cy.get('#target-panel-mesh')
     .should('be.visible')
     .within(div => {
-      cy.contains('Mesh Name: Istio Mesh');
+      // Get the name of the mesh from the API.
+      cy.request('api/mesh/graph').then(resp => {
+        expect(resp.status).to.eq(200);
+        expect(resp.body.meshName).to.not.equal(undefined);
+        expect(resp.body.meshName).to.not.equal('');
+        cy.contains(`Mesh Name: ${resp.body.meshName}`);
+      });
     });
 });
 

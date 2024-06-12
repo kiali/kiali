@@ -38,6 +38,7 @@ type CommonOptions struct {
 type ConfigOptions struct {
 	BoxBy string
 	CommonOptions
+	MeshName string
 }
 
 type RequestedAppenders struct {

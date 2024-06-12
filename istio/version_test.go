@@ -1,7 +1,21 @@
-package status
+package istio
 
 import (
+	"context"
+	"io"
+	"net/http"
+	"net/http/httptest"
+	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/require"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/kubernetes/cache"
+	"github.com/kiali/kiali/kubernetes/kubetest"
 )
 
 func TestParseIstioRawVersion(t *testing.T) {
@@ -116,7 +130,7 @@ func TestParseIstioRawVersion(t *testing.T) {
 	}
 
 	for _, versionToTest := range versionsToTest {
-		p := parseIstioRawVersion(versionToTest.rawVersion)
+		p := parseRawIstioVersion(versionToTest.rawVersion)
 		if p.Name != versionToTest.name {
 			t.Errorf("Cannot validate [%+v] - name is incorrect: %+v", versionToTest, p)
 		}
@@ -124,4 +138,97 @@ func TestParseIstioRawVersion(t *testing.T) {
 			t.Errorf("Cannot validate [%+v] - version is incorrect: %+v", versionToTest, p)
 		}
 	}
+}
+
+type fakeForwarder struct {
+	kubernetes.ClientInterface
+	testURL string
+}
+
+func joinURL(base, path string) string {
+	base = strings.TrimSuffix(base, "/")
+	path = strings.TrimPrefix(path, "/")
+	return base + "/" + path
+}
+
+func (f *fakeForwarder) ForwardGetRequest(namespace, podName string, destinationPort int, path string) ([]byte, error) {
+	resp, err := http.Get(joinURL(f.testURL, path))
+	if err != nil {
+		return nil, err
+	}
+
+	defer resp.Body.Close()
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	return body, nil
+}
+
+func istiodTestServer(t *testing.T) *httptest.Server {
+	t.Helper()
+	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if _, err := w.Write([]byte(`1.22.0-aaf597fbfae607adf4bb4e77538a7ea98995328a-Clean`)); err != nil {
+			t.Fatalf("Error writing response: %s", err)
+		}
+	}))
+	t.Cleanup(testServer.Close)
+	return testServer
+}
+
+func runningIstiodPod() *corev1.Pod {
+	return &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "istiod-123",
+			Namespace: "istio-system",
+			Labels: map[string]string{
+				"app":          "istiod",
+				"istio.io/rev": "default",
+			},
+		},
+		Status: corev1.PodStatus{
+			Phase: corev1.PodRunning,
+		},
+	}
+}
+
+func TestGetVersionRemoteCluster(t *testing.T) {
+	require := require.New(t)
+
+	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = "test-cluster"
+
+	testServer := istiodTestServer(t)
+
+	clients := map[string]kubernetes.ClientInterface{
+		"test-cluster": kubetest.NewFakeK8sClient(),
+		"remote-cluster": kubetest.NewFakeK8sClient(
+			runningIstiodPod(),
+			&corev1.Service{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "istiod",
+					Namespace: "istio-system",
+					Labels: map[string]string{
+						"app":          "istiod",
+						"istio.io/rev": "default",
+					},
+				},
+			},
+			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "istio-system"}},
+		),
+	}
+
+	clients["remote-cluster"] = &fakeForwarder{
+		ClientInterface: clients["remote-cluster"],
+		testURL:         testServer.URL,
+	}
+	factory := kubetest.NewFakeClientFactory(conf, clients)
+	cache := cache.NewTestingCacheWithFactory(t, factory, *conf)
+	kubeCache, err := cache.GetKubeCache("remote-cluster")
+	require.NoError(err)
+
+	version, err := GetVersion(context.Background(), conf, clients["remote-cluster"], kubeCache, "default", "istio-system")
+	require.NoError(err)
+	require.Equal("1.22.0", version.Version)
 }

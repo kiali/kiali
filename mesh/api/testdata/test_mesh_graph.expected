@@ -17,7 +17,7 @@
       },
       {
         "data": {
-          "id": "63477ebaf31eccdd960ec1d9ff35b478",
+          "id": "21aa3cd669c2462251e58d3b19149ace",
           "cluster": "cluster-primary",
           "infraName": "cluster-primary",
           "infraType": "cluster",
@@ -41,7 +41,8 @@
             "secretName": "",
             "accessible": true
           },
-          "isBox": "cluster"
+          "isBox": "cluster",
+          "version": "Unknown"
         }
       },
       {
@@ -68,7 +69,7 @@
       {
         "data": {
           "id": "d1c7a41aefa12a640ebeb0e57c079e8e",
-          "parent": "63477ebaf31eccdd960ec1d9ff35b478",
+          "parent": "21aa3cd669c2462251e58d3b19149ace",
           "cluster": "cluster-primary",
           "infraName": "istio-system",
           "infraType": "namespace",
@@ -192,7 +193,7 @@
       {
         "data": {
           "id": "a1c47185abeae268a8280338027e20a5",
-          "parent": "63477ebaf31eccdd960ec1d9ff35b478",
+          "parent": "21aa3cd669c2462251e58d3b19149ace",
           "cluster": "cluster-primary",
           "infraName": "Data Plane",
           "infraType": "dataplane",
@@ -271,13 +272,13 @@
             "IstiodPollingIntervalSeconds": 20,
             "Registry": null,
             "RootNamespace": "istio-system",
-            "UrlServiceVersion": "http://istiod.istio-system:15014/version"
+            "UrlServiceVersion": ""
           }
         }
       },
       {
         "data": {
-          "id": "e0de428cc2c4c6381c3f8082a615f25d",
+          "id": "e99df577d74ca59cfb453ccbaa84c3c1",
           "parent": "d1c7a41aefa12a640ebeb0e57c079e8e",
           "cluster": "cluster-primary",
           "infraName": "istiod",
@@ -298,8 +299,10 @@
             },
             "defaultConfig": {
               "MeshId": ""
-            }
-          }
+            },
+            "TrustDomain": "cluster.local"
+          },
+          "version": "Unknown"
         }
       },
       {
@@ -348,9 +351,9 @@
       },
       {
         "data": {
-          "id": "8e54c055e5da60e7a310ab5f8bc0aa3d",
+          "id": "a5c68927026a2e26f3a320eb35bed889",
           "source": "cdf7185cca90872db8b743e7a5b36ef0",
-          "target": "e0de428cc2c4c6381c3f8082a615f25d"
+          "target": "e99df577d74ca59cfb453ccbaa84c3c1"
         }
       },
       {
@@ -362,20 +365,20 @@
       },
       {
         "data": {
-          "id": "988fc84000271532ec53aac83a7a8b39",
-          "source": "e0de428cc2c4c6381c3f8082a615f25d",
+          "id": "8cd4f303ae3c07eae8e4731b5cc983df",
+          "source": "e99df577d74ca59cfb453ccbaa84c3c1",
           "target": "6514e7140e9a0c07ca296b90cf22cf9f"
         }
       },
       {
         "data": {
-          "id": "5d4c6712e449af9af6ce0719cd42eda8",
-          "source": "e0de428cc2c4c6381c3f8082a615f25d",
+          "id": "f62bb8bce93b9ae739b0c61f02c269d1",
+          "source": "e99df577d74ca59cfb453ccbaa84c3c1",
           "target": "a1c47185abeae268a8280338027e20a5"
         }
       }
     ]
   },
-  "meshName": "Istio Mesh",
+  "meshName": "",
   "timestamp": 1523364075
 }

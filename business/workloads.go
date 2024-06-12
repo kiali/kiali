@@ -26,6 +26,7 @@ import (
 
 	"github.com/kiali/kiali/business/checkers"
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/grafana"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/log"
@@ -34,7 +35,14 @@ import (
 	"github.com/kiali/kiali/prometheus"
 )
 
-func NewWorkloadService(userClients map[string]kubernetes.ClientInterface, prom prometheus.ClientInterface, cache cache.KialiCache, layer *Layer, config *config.Config) *WorkloadService {
+func NewWorkloadService(
+	userClients map[string]kubernetes.ClientInterface,
+	prom prometheus.ClientInterface,
+	cache cache.KialiCache,
+	layer *Layer,
+	config *config.Config,
+	grafana *grafana.Service,
+) *WorkloadService {
 	excludedWorkloads := make(map[string]bool)
 	for _, w := range config.KubernetesConfig.ExcludeWorkloads {
 		excludedWorkloads[w] = true
@@ -59,6 +67,7 @@ type WorkloadService struct {
 	// The global kiali config.
 	config            *config.Config
 	excludedWorkloads map[string]bool
+	grafana           *grafana.Service
 	prom              prometheus.ClientInterface
 	userClients       map[string]kubernetes.ClientInterface
 }
@@ -376,7 +385,7 @@ func (in *WorkloadService) GetWorkload(ctx context.Context, criteria WorkloadCri
 		conf := in.config
 		app := workload.Labels[conf.IstioLabels.AppLabelName]
 		version := workload.Labels[conf.IstioLabels.VersionLabelName]
-		runtimes = NewDashboardsService(ns, workload).GetCustomDashboardRefs(criteria.Namespace, app, version, workload.Pods)
+		runtimes = NewDashboardsService(in.config, in.grafana, ns, workload).GetCustomDashboardRefs(criteria.Namespace, app, version, workload.Pods)
 	}()
 
 	if criteria.IncludeServices {
@@ -2232,7 +2241,6 @@ func (in *WorkloadService) streamParsedLogs(cluster, namespace string, names []s
 
 // StreamPodLogs streams pod logs to an HTTP Response given the provided options
 func (in *WorkloadService) StreamPodLogs(cluster, namespace, name string, opts *LogOptions, w http.ResponseWriter) error {
-
 	names := []string{}
 	if opts.LogType == models.LogTypeZtunnel {
 		// First, get ztunnel namespace and containers

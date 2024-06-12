@@ -20,7 +20,12 @@ import (
 	"github.com/kiali/kiali/util"
 )
 
-const ambientCheckExpirationTime = 10 * time.Minute
+const (
+	ambientCheckExpirationTime = 10 * time.Minute
+	meshExpirationTime         = 10 * time.Second
+)
+
+const kialiCacheMeshKey = "mesh"
 
 // KialiCache stores both kube objects and non-kube related data such as pods' proxy status.
 // It is exclusively used by the business layer where it's expected to be a singleton.
@@ -28,13 +33,20 @@ const ambientCheckExpirationTime = 10 * time.Minute
 // to so it uses the kiali service account token instead of a user token. Access to
 // the objects returned by the cache should be filtered/restricted to the user's
 // token access but the cache returns objects without any filtering or restrictions.
+// TODO: Consider removing the interface altogether in favor of just exporting the struct.
 type KialiCache interface {
+	GetBuildInfo() models.BuildInfo
+	// SetBuildInfo is not threadsafe. Expected to just be called once at startup.
+	SetBuildInfo(buildInfo models.BuildInfo)
 
 	// GetClusters returns the list of clusters that the cache knows about.
 	// This gets set by the mesh service.
 	GetClusters() []kubernetes.Cluster
 	GetKubeCaches() map[string]KubeCache
 	GetKubeCache(cluster string) (KubeCache, error)
+
+	GetMesh() (*models.Mesh, bool)
+	SetMesh(*models.Mesh)
 
 	// GetNamespace returns a namespace from the in memory cache if it exists.
 	GetNamespace(cluster string, token string, name string) (models.Namespace, bool)
@@ -71,12 +83,18 @@ type KialiCache interface {
 
 type kialiCacheImpl struct {
 	ambientChecksPerCluster store.Store[string, bool]
-	cleanup                 func()
-	conf                    config.Config
+	// This isn't expected to change so it's not protected by a mutex.
+	buildInfo models.BuildInfo
+	cleanup   func()
+	conf      config.Config
 
 	clientFactory kubernetes.ClientFactory
 	// Maps a cluster name to a KubeCache
 	kubeCache map[string]KubeCache
+
+	// There's only ever one mesh but we want to reuse the store machinery
+	// so using a store here but only key  should be  kialiCacheMeshKey
+	meshStore store.Store[string, *models.Mesh]
 
 	// Store the namespaces per token + cluster as a map[string]namespace where string is the namespace name
 	// so you can easily deref the namespace in GetNamespace and SetNamespace. The downside to this is that
@@ -108,6 +126,7 @@ func NewKialiCache(clientFactory kubernetes.ClientFactory, cfg config.Config) (K
 		clientFactory:           clientFactory,
 		conf:                    cfg,
 		kubeCache:               make(map[string]KubeCache),
+		meshStore:               store.NewExpirationStore(ctx, store.New[string, *models.Mesh](), util.AsPtr(meshExpirationTime), nil),
 		namespaceStore:          store.NewExpirationStore(ctx, store.New[namespacesKey, map[string]models.Namespace](), &namespaceKeyTTL, nil),
 		refreshDuration:         time.Duration(cfg.KubernetesConfig.CacheDuration) * time.Second,
 		proxyStatusStore:        store.New[string, *kubernetes.ProxyStatus](),
@@ -175,6 +194,14 @@ func (c *kialiCacheImpl) SetClusters(clusters []kubernetes.Cluster) {
 	c.clusters = clusters
 }
 
+func (c *kialiCacheImpl) GetMesh() (*models.Mesh, bool) {
+	return c.meshStore.Get(kialiCacheMeshKey)
+}
+
+func (c *kialiCacheImpl) SetMesh(mesh *models.Mesh) {
+	c.meshStore.Set(kialiCacheMeshKey, mesh)
+}
+
 // IsAmbientEnabled checks if the istio Ambient profile was enabled
 // by checking if the ztunnel daemonset exists on the cluster.
 func (in *kialiCacheImpl) IsAmbientEnabled(cluster string) bool {
@@ -211,7 +238,6 @@ func (in *kialiCacheImpl) IsAmbientEnabled(cluster string) bool {
 
 // GetZtunnelPods returns the pods list from ztunnel daemonset
 func (in *kialiCacheImpl) GetZtunnelPods(cluster string) []v1.Pod {
-
 	ztunnelPods := []v1.Pod{}
 	kubeCache, err := in.GetKubeCache(cluster)
 	if err != nil {
@@ -321,6 +347,14 @@ func (c *kialiCacheImpl) SetNamespace(token string, namespace models.Namespace) 
 
 	ns[namespace.Name] = namespace
 	c.namespaceStore.Set(key, ns)
+}
+
+func (c *kialiCacheImpl) GetBuildInfo() models.BuildInfo {
+	return c.buildInfo
+}
+
+func (c *kialiCacheImpl) SetBuildInfo(buildInfo models.BuildInfo) {
+	c.buildInfo = buildInfo
 }
 
 // Interface guard for kiali cache impl

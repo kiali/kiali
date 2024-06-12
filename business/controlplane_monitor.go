@@ -19,6 +19,7 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/models"
 )
 
 // ControlPlaneMonitor is an interface for the control plane monitor.
@@ -72,7 +73,7 @@ func (p *controlPlaneMonitor) RefreshIstioCache(ctx context.Context) error {
 	}
 
 	// Get the list of controlplanes we are polling.
-	revisionsPerCluster := map[string][]ControlPlane{}
+	revisionsPerCluster := map[string][]models.ControlPlane{}
 	for _, controlPlane := range mesh.ControlPlanes {
 		clusterName := controlPlane.Cluster.Name
 		revisionsPerCluster[clusterName] = append(revisionsPerCluster[clusterName], controlPlane)

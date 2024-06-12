@@ -217,6 +217,7 @@ type IstioMeshConfig struct {
 	DefaultConfig struct {
 		MeshId string `yaml:"meshId"`
 	} `yaml:"defaultConfig" json:"defaultConfig"`
+	TrustDomain string `yaml:"trustDomain,omitempty"`
 }
 
 // MTLSDetails is a wrapper to group all Istio objects related to non-local mTLS configurations
