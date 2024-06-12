@@ -340,10 +340,10 @@ func (lt *LoginToken) Obfuscate() {
 
 // IstioLabels holds configuration about the labels required by Istio
 type IstioLabels struct {
-	AmbientNamespaceLabel      string
-	AmbientNamespaceLabelValue string
-	AmbientWaypointLabel       string
-	AmbientWaypointLabelValue  string
+	AmbientNamespaceLabel      string `yaml:"ambient_namespace_label,omitempty" json:"ambientNamespaceLabel"`
+	AmbientNamespaceLabelValue string `yaml:"ambient_namespace_label_value,omitempty" json:"ambientNamespaceLabelValue"`
+	AmbientWaypointLabel       string `yaml:"ambient_waypoint_label,omitempty" json:"ambientWaypointLabel"`
+	AmbientWaypointLabelValue  string `yaml:"ambient_waypoint_label_value,omitempty" json:"ambientWaypointLabelValue"`
 	AppLabelName               string `yaml:"app_label_name,omitempty" json:"appLabelName"`
 	InjectionLabelName         string `yaml:"injection_label,omitempty" json:"injectionLabelName"`
 	InjectionLabelRev          string `yaml:"injection_label_rev,omitempty" json:"injectionLabelRev"`

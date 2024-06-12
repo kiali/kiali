@@ -91,6 +91,8 @@ export const healthConfig = {
   istioIdentityDomain: 'svc.cluster.local',
   istioNamespace: 'istio-system',
   istioLabels: {
+    ambientNamespaceLabel: 'istio.io/dataplane-mode',
+    ambientNamespaceLabelValue: 'ambient',
     ambientWaypointLabel: 'gateway.istio.io/managed',
     ambientWaypointLabelValue: 'istio.io-mesh-controller',
     appLabelName: 'app',
