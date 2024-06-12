@@ -835,6 +835,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
           <IstioConfigPreview
             isOpen={this.state.showPreview}
             title={titleAction}
+            downloadPrefix={this.props.type}
             ns={this.props.namespace}
             opTarget={this.props.update ? 'update' : 'create'}
             disableAction={!this.props.createOrUpdate}

@@ -17,7 +17,7 @@ import { IstioTypes } from '../VirtualList/Config';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFBadge } from '../Pf/PfBadges';
 import { IstioObjectLink } from '../Link/IstioObjectLink';
-import { SimpleTable } from 'components/SimpleTable';
+import { SimpleTable } from 'components/Table/SimpleTable';
 
 type IstioConfigCardProps = {
   items: IstioConfigItem[];

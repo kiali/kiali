@@ -8,7 +8,7 @@ import {
   durationToBounds,
   isEqualTimeRange
 } from '../../types/Common';
-import { ToolbarDropdown } from '../ToolbarDropdown/ToolbarDropdown';
+import { ToolbarDropdown } from '../Dropdown/ToolbarDropdown';
 import { serverConfig, humanDurations } from '../../config/ServerConfig';
 import { retrieveTimeRange, storeTimeRange } from './TimeRangeHelper';
 import { DateTimePicker } from './DateTimePicker';

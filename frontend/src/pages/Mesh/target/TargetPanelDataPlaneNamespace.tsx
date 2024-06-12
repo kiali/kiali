@@ -32,9 +32,11 @@ import * as FilterHelper from '../../../components/FilterList/FilterHelper';
 import { panelBodyStyle, panelHeadingStyle } from 'pages/Graph/SummaryPanelStyle';
 import { Metric } from 'types/Metrics';
 import { t } from 'utils/I18nUtils';
+import { TargetPanelConfigTable } from './TargetPanelConfigTable';
 
 type TargetPanelDataPlaneNamespaceProps = Omit<TargetPanelCommonProps, 'target'> & {
   isExpanded: boolean;
+  namespaceData: { [key: string]: string };
   targetCluster: string;
   targetNamespace: string;
 };
@@ -82,6 +84,13 @@ const namespaceNameStyle = kialiStyle({
   verticalAlign: 'middle',
   whiteSpace: 'nowrap',
   textOverflow: 'ellipsis'
+});
+
+const titleStyle = kialiStyle({
+  display: 'inline-block',
+  textAlign: 'left',
+  width: '125px',
+  whiteSpace: 'nowrap'
 });
 
 export class TargetPanelDataPlaneNamespace extends React.Component<
@@ -136,7 +145,7 @@ export class TargetPanelDataPlaneNamespace extends React.Component<
               {this.renderNamespaceBadges(nsInfo, true)}
             </span>
           </Title>
-          <div style={{ textAlign: 'left', paddingBottom: 3 }}>
+          <div style={{ textAlign: 'left', paddingBottom: '0.25rem' }}>
             <PFBadge badge={PFBadges.Cluster} position={TooltipPosition.right} />
             {nsInfo.cluster}
           </div>
@@ -145,21 +154,31 @@ export class TargetPanelDataPlaneNamespace extends React.Component<
           {this.renderLabels(nsInfo)}
 
           <div style={{ textAlign: 'left' }}>
-            <div style={{ display: 'inline-block', width: '125px' }}>Istio config</div>
+            <span className={titleStyle}>{t('Istio config')}</span>
 
             {nsInfo.tlsStatus && (
               <span>
                 <NamespaceMTLSStatus status={nsInfo.tlsStatus.status} />
               </span>
             )}
+
             {this.props.istioAPIEnabled ? this.renderIstioConfigStatus(nsInfo) : 'N/A'}
           </div>
 
           {this.renderStatus()}
 
           {targetPanelHR}
+
           {this.renderCharts('inbound')}
           {this.renderCharts('outbound')}
+
+          {targetPanelHR}
+
+          <TargetPanelConfigTable
+            configData={this.props.namespaceData}
+            targetName={this.props.targetNamespace}
+            width="30%"
+          />
         </CardBody>
       </Card>
     );
@@ -478,10 +497,7 @@ export class TargetPanelDataPlaneNamespace extends React.Component<
     }
 
     const mainLink = (
-      <div
-        style={{ display: 'inline-block', width: '125px', whiteSpace: 'nowrap' }}
-        data-test={`overview-type-${healthType}`}
-      >
+      <div className={titleStyle} data-test={`overview-type-${healthType}`}>
         {text}
       </div>
     );

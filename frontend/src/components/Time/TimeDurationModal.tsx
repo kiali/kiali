@@ -4,7 +4,7 @@ import { UserSettingsActions } from '../../actions/UserSettingsActions';
 import { HistoryManager, URLParam } from '../../app/History';
 import { useKialiDispatch, useKialiSelector } from '../../hooks/redux';
 import { DurationInSeconds, IntervalInMilliseconds, TimeRange } from '../../types/Common';
-import { DurationDropdownComponent } from '../DurationDropdown/DurationDropdown';
+import { DurationDropdownComponent } from '../Dropdown/DurationDropdown';
 import { RefreshComponent } from '../Refresh/Refresh';
 import { TimeRangeComp } from './TimeRangeComponent';
 import { kioskDurationAction, kioskTimeRangeAction } from '../Kiosk/KioskActions';

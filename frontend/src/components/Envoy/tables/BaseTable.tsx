@@ -8,11 +8,11 @@ import { ActiveFiltersInfo, FilterType } from '../../../types/Filters';
 import { StatefulFilters } from '../../Filters/StatefulFilters';
 import { ResourceSorts } from '../EnvoyDetails';
 import { Namespace } from '../../../types/Namespace';
-import { ToolbarDropdown } from '../../ToolbarDropdown/ToolbarDropdown';
+import { ToolbarDropdown } from '../../Dropdown/ToolbarDropdown';
 import { PFBadge, PFBadges } from '../../Pf/PfBadges';
 import { TooltipPosition } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
-import { SimpleTable } from 'components/SimpleTable';
+import { SimpleTable } from 'components/Table/SimpleTable';
 
 export interface SummaryTable {
   availableFilters: () => FilterType[];
@@ -29,7 +29,7 @@ const iconStyle = kialiStyle({
   alignSelf: 'center'
 });
 
-export function SummaryTableRenderer<T extends SummaryTable>() {
+export function SummaryTableRenderer<T extends SummaryTable>(): typeof React.Component {
   interface SummaryTableProps<T> {
     onSort: (resource: string, columnIndex: number, sortByDirection: SortByDirection) => void;
     pod: string;
@@ -55,7 +55,7 @@ export function SummaryTableRenderer<T extends SummaryTable>() {
       });
     };
 
-    render() {
+    render(): React.ReactNode {
       return (
         <>
           <StatefulFilters
@@ -105,7 +105,7 @@ export const SummaryTableBuilder = (
   routeLinkHandler: () => void,
   kiosk: string,
   workload?: string
-) => {
+): [typeof React.Component, ClusterTable | ListenerTable | RouteTable] => {
   let writerComp, writerProps;
 
   switch (resource) {

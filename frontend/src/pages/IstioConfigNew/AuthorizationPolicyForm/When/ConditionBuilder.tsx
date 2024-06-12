@@ -6,7 +6,7 @@ import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from '../../../../components/Pf/PfColors';
 import { isValidIp } from '../../../../utils/IstioConfigUtils';
 import { isValid } from 'utils/Common';
-import { SimpleTable } from 'components/SimpleTable';
+import { SimpleTable } from 'components/Table/SimpleTable';
 import { KialiIcon } from 'config/KialiIcon';
 
 export type Condition = {
@@ -220,7 +220,7 @@ export class ConditionBuilder extends React.Component<Props, State> {
     ];
   };
 
-  render() {
+  render(): React.ReactNode {
     const [validKey, validValues, validNotValues, validText] = this.isValidCondition();
     const validCondition = validKey && validValues && validNotValues;
 

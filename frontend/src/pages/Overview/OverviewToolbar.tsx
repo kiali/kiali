@@ -7,7 +7,7 @@ import { UserSettingsActions } from '../../actions/UserSettingsActions';
 import { HistoryManager, URLParam } from '../../app/History';
 import { StatefulFilters, StatefulFiltersRef } from '../../components/Filters/StatefulFilters';
 import * as FilterHelper from '../../components/FilterList/FilterHelper';
-import { ToolbarDropdown } from '../../components/ToolbarDropdown/ToolbarDropdown';
+import { ToolbarDropdown } from '../../components/Dropdown/ToolbarDropdown';
 import { KialiAppState } from '../../store/Store';
 import { durationSelector, languageSelector, refreshIntervalSelector } from '../../store/Selectors';
 import { IntervalInMilliseconds, DurationInSeconds } from '../../types/Common';

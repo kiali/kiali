@@ -17,7 +17,7 @@ import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from '../../components/Pf/PfColors';
 import { isValid } from 'utils/Common';
 import { KialiIcon } from 'config/KialiIcon';
-import { SimpleTable } from 'components/SimpleTable';
+import { SimpleTable } from 'components/Table/SimpleTable';
 
 const noPortMtlsStyle = kialiStyle({
   marginTop: '1rem',
@@ -97,7 +97,7 @@ export class PeerAuthenticationForm extends React.Component<Props, PeerAuthentic
     };
   }
 
-  componentDidMount() {
+  componentDidMount(): void {
     this.setState({
       addWorkloadSelector: this.props.peerAuthentication.addWorkloadSelector,
       workloadSelectorValid: this.props.peerAuthentication.workloadSelectorValid,
@@ -109,7 +109,7 @@ export class PeerAuthenticationForm extends React.Component<Props, PeerAuthentic
     });
   }
 
-  onChangeWorkloadSelector = (_event, _: boolean) => {
+  onChangeWorkloadSelector = (_event: React.FormEvent, _: boolean): void => {
     this.setState(
       prevState => {
         return {
@@ -120,7 +120,7 @@ export class PeerAuthenticationForm extends React.Component<Props, PeerAuthentic
     );
   };
 
-  onChangeAddPortMtls = (_event, _: boolean) => {
+  onChangeAddPortMtls = (_event: React.FormEvent, _: boolean): void => {
     this.setState(
       prevState => {
         return {
@@ -131,7 +131,7 @@ export class PeerAuthenticationForm extends React.Component<Props, PeerAuthentic
     );
   };
 
-  addWorkloadLabels = (_event, value: string) => {
+  addWorkloadLabels = (_event: React.FormEvent, value: string): void => {
     if (value.length === 0) {
       this.setState(
         {
@@ -140,8 +140,10 @@ export class PeerAuthenticationForm extends React.Component<Props, PeerAuthentic
         },
         () => this.onPeerAuthenticationChange()
       );
+
       return;
     }
+
     value = value.trim();
     const labels: string[] = value.split(',');
     let isValid = true;
@@ -176,11 +178,11 @@ export class PeerAuthenticationForm extends React.Component<Props, PeerAuthentic
     );
   };
 
-  onPeerAuthenticationChange = () => {
+  onPeerAuthenticationChange = (): void => {
     this.props.onChange(this.state);
   };
 
-  onMutualTlsChange = (_event, value) => {
+  onMutualTlsChange = (_event: React.FormEvent, value: string): void => {
     this.setState(
       {
         mtls: value
@@ -189,7 +191,7 @@ export class PeerAuthenticationForm extends React.Component<Props, PeerAuthentic
     );
   };
 
-  onAddPortNumber = (_event, value: string) => {
+  onAddPortNumber = (_event: React.FormEvent, value: string): void => {
     this.setState(
       prevState => {
         return {
@@ -203,7 +205,7 @@ export class PeerAuthenticationForm extends React.Component<Props, PeerAuthentic
     );
   };
 
-  onAddPortMtlsMode = (_event, value: string) => {
+  onAddPortMtlsMode = (_event: React.FormEvent, value: string): void => {
     this.setState(
       prevState => {
         return {
@@ -217,7 +219,7 @@ export class PeerAuthenticationForm extends React.Component<Props, PeerAuthentic
     );
   };
 
-  onAddPortMtls = () => {
+  onAddPortMtls = (): void => {
     this.setState(
       prevState => {
         prevState.portLevelMtls.push(prevState.addNewPortMtls);
@@ -233,7 +235,7 @@ export class PeerAuthenticationForm extends React.Component<Props, PeerAuthentic
     );
   };
 
-  onRemovePortMtls = (rowIndex: number) => {
+  onRemovePortMtls = (rowIndex: number): void => {
     this.setState(
       prevState => {
         prevState.portLevelMtls.splice(rowIndex, 1);
@@ -298,7 +300,7 @@ export class PeerAuthenticationForm extends React.Component<Props, PeerAuthentic
       ]);
   };
 
-  render() {
+  render(): React.ReactNode {
     return (
       <>
         <FormGroup label="Workload Selector" fieldId="workloadSelectorSwitch">

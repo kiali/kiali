@@ -71,7 +71,8 @@ export const aceOptions: AceOptions = {
   showPrintMargin: false
 };
 
-export const safeDumpOptions = {
+export const yamlDumpOptions = {
+  noArrayIndent: true,
   styles: {
     '!!null': 'canonical' // dump null as ~
   }

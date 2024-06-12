@@ -7,7 +7,7 @@ import { getDefaultBackendRefs } from './WizardActions';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { ServiceOverview } from '../../types/ServiceList';
 import { KialiIcon } from 'config/KialiIcon';
-import { SimpleTable } from 'components/SimpleTable';
+import { SimpleTable } from 'components/Table/SimpleTable';
 
 type Props = {
   initRefs: K8sRouteBackendRef[];
@@ -55,7 +55,7 @@ export class K8sTrafficShifting extends React.Component<Props, State> {
     };
   }
 
-  componentDidMount() {
+  componentDidMount(): void {
     this.resetState();
   }
 
@@ -95,7 +95,7 @@ export class K8sTrafficShifting extends React.Component<Props, State> {
     );
   };
 
-  render() {
+  render(): React.ReactNode {
     const columns: ThProps[] = [
       {
         title: 'Destination Service',

@@ -27,15 +27,15 @@ const showCerts = (certs: CertsInfo[]): React.ReactNode => {
         <div key={'showCerts'}>
           <div style={{ display: 'inline-block', width: '125px', whiteSpace: 'nowrap' }}>From {item.issuer}</div>
           <div>
-            <div>{`${t('Issuer')}:`}</div>
+            <div>{t('Issuer:')}</div>
             <div>{item.secretName}</div>
           </div>
           <div>
-            <div>{`${t('Valid From')}:`}</div>
+            <div>{t('Valid From:')}</div>
             <div>{item.notAfter}</div>
           </div>
           <div>
-            <div>{`${t('Valid To')}:`}</div>
+            <div>{t('Valid To:')}</div>
             <div>{item.notBefore}</div>
           </div>
         </div>

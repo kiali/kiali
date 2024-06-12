@@ -3,7 +3,7 @@ import { Condition } from './ConditionBuilder';
 import { IRow, ThProps } from '@patternfly/react-table';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from '../../../../components/Pf/PfColors';
-import { SimpleTable } from 'components/SimpleTable';
+import { SimpleTable } from 'components/Table/SimpleTable';
 import { Button, ButtonVariant } from '@patternfly/react-core';
 import { KialiIcon } from 'config/KialiIcon';
 

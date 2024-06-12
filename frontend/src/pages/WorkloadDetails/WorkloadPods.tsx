@@ -19,7 +19,7 @@ import { KialiIcon } from '../../config/KialiIcon';
 import { LocalTime } from '../../components/Time/LocalTime';
 import { Labels } from '../../components/Label/Labels';
 import { PFBadge, PFBadges } from '../../components/Pf/PfBadges';
-import { SimpleTable } from 'components/SimpleTable';
+import { SimpleTable } from 'components/Table/SimpleTable';
 
 type WorkloadPodsProps = {
   namespace: string;

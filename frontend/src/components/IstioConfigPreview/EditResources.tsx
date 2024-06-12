@@ -1,67 +1,52 @@
 import * as React from 'react';
 import { IstioConfigItem } from './IstioConfigPreview';
-import { jsYaml } from '../../types/AceValidations';
-import AceEditor from 'react-ace';
 import { Tab, Tabs } from '@patternfly/react-core';
-import { EditorPreview } from './EditorPreview';
-import { safeDumpOptions } from '../../types/IstioConfigDetails';
-import _ from 'lodash';
+import { EditorPreview, PolicyItem } from './EditorPreview';
+import { yamlDumpOptions } from '../../types/IstioConfigDetails';
+import { isEqual } from 'lodash-es';
+import { dump } from 'js-yaml';
 
 interface Props {
-  items: IstioConfigItem[];
-  orig: IstioConfigItem[];
   isIstioNew?: boolean;
-  onChange: (obj, index) => void;
+  items: IstioConfigItem[];
+  onChange: (obj: PolicyItem, index: number) => void;
+  orig: IstioConfigItem[];
 }
 
-interface State {
-  resourceTab: number;
-}
+export const EditResources: React.FC<Props> = (props: Props) => {
+  const [resourceTab, setResourceTab] = React.useState<number>(0);
 
-export class EditResources extends React.Component<Props, State> {
-  aceEditorRef: React.RefObject<AceEditor>;
-  constructor(props: Props) {
-    super(props);
-    this.state = { resourceTab: 0 };
-    this.aceEditorRef = React.createRef();
-  }
-
-  render() {
-    return (
-      <Tabs activeKey={this.state.resourceTab} onSelect={(_, tab) => this.setState({ resourceTab: Number(tab) })}>
-        {this.props.items
-          .sort((a, b) =>
-            this.props.isIstioNew
-              ? a.metadata.namespace!.localeCompare(b.metadata.namespace!)
-              : a.metadata.name.localeCompare(b.metadata.name)
-          )
-          .map((item, i) => {
-            return (
-              <Tab
-                eventKey={i}
-                key={i}
-                title={
-                  <>
-                    {this.props.isIstioNew ? item.metadata.namespace : item.metadata.name}{' '}
-                    {!_.isEqual(
-                      item,
-                      this.props.orig.filter(it =>
-                        this.props.isIstioNew
-                          ? it.metadata.namespace === item.metadata.namespace
-                          : it.metadata.name === item.metadata.name
-                      )[0]
-                    ) && '*'}
-                  </>
-                }
-              >
-                <EditorPreview
-                  yaml={jsYaml.safeDump(item, safeDumpOptions)}
-                  onChange={obj => this.props.onChange(obj, i)}
-                />
-              </Tab>
-            );
-          })}
-      </Tabs>
-    );
-  }
-}
+  return (
+    <Tabs activeKey={resourceTab} onSelect={(_, tab) => setResourceTab(Number(tab))}>
+      {props.items
+        .sort((a, b) =>
+          props.isIstioNew
+            ? a.metadata.namespace!.localeCompare(b.metadata.namespace!)
+            : a.metadata.name.localeCompare(b.metadata.name)
+        )
+        .map((item, i) => {
+          return (
+            <Tab
+              eventKey={i}
+              key={i}
+              title={
+                <>
+                  {props.isIstioNew ? item.metadata.namespace : item.metadata.name}{' '}
+                  {!isEqual(
+                    item,
+                    props.orig.filter(it =>
+                      props.isIstioNew
+                        ? it.metadata.namespace === item.metadata.namespace
+                        : it.metadata.name === item.metadata.name
+                    )[0]
+                  ) && '*'}
+                </>
+              }
+            >
+              <EditorPreview yaml={dump(item, yamlDumpOptions)} onChange={obj => props.onChange(obj, i)} />
+            </Tab>
+          );
+        })}
+    </Tabs>
+  );
+};

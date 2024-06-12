@@ -123,10 +123,10 @@ interface NodeHeaderOptions {
   smallSize?: boolean;
 }
 
-export function renderNodeHeader(
+export const renderNodeHeader = (
   data: MeshNodeData,
   options: NodeHeaderOptions = { nameOnly: false, smallSize: false, hideBadge: false }
-): React.ReactNode {
+): React.ReactNode => {
   let pfBadge = PFBadges.Unknown;
 
   switch (data.infraType) {
@@ -160,7 +160,9 @@ export function renderNodeHeader(
       <Title headingLevel="h5" size={options.smallSize ? TitleSizes.md : TitleSizes.lg}>
         <span className={nodeStyle}>
           {!options.hideBadge && <PFBadge badge={pfBadge} size={options.smallSize ? 'sm' : 'global'} />}
+
           {data.infraName}
+
           {renderHealthStatus(data)}
         </span>
       </Title>
@@ -170,6 +172,7 @@ export function renderNodeHeader(
             <PFBadge badge={PFBadges.Namespace} size="sm" />
             {data.namespace}
           </span>
+
           <span className={nodeStyle}>
             <PFBadge badge={PFBadges.Cluster} size="sm" />
             {data.cluster}
@@ -178,4 +181,4 @@ export function renderNodeHeader(
       )}
     </React.Fragment>
   );
-}
+};

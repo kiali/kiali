@@ -12,6 +12,9 @@ i18next
 
     fallbackLng: 'en',
 
+    // as we use only one namespace, set with unused character to allow translated strings ends with : (default nsSeparator value)
+    nsSeparator: '|',
+
     interpolation: {
       escapeValue: false // react already safes from xss => https://www.i18next.com/translation-function/interpolation#unescape
     }

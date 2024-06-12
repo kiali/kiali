@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { IRow, ThProps } from '@patternfly/react-table';
 import { Button, ButtonVariant, FormSelect, FormSelectOption, TextInput } from '@patternfly/react-core';
-import { SimpleTable } from 'components/SimpleTable';
+import { SimpleTable } from 'components/Table/SimpleTable';
 import { KialiIcon } from 'config/KialiIcon';
 
 type Props = {
@@ -169,7 +169,7 @@ export class OperationBuilder extends React.Component<Props, State> {
     return operatorRows;
   };
 
-  render() {
+  render(): React.ReactNode {
     return (
       <>
         <SimpleTable label="Operation Builder" columns={columns} rows={this.rows()} />

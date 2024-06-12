@@ -1,6 +1,6 @@
 import React from 'react';
 import { Title, TitleSizes } from '@patternfly/react-core';
-import { NamespaceDropdown } from '../NamespaceDropdown';
+import { NamespaceDropdown } from '../Dropdown/NamespaceDropdown';
 import { kialiStyle } from 'styles/StyleUtils';
 import { KialiIcon } from '../../config/KialiIcon';
 import { KialiAppState } from '../../store/Store';
@@ -41,7 +41,7 @@ const actionsToolbarStyle = kialiStyle({
 });
 
 const DefaultSecondaryMastheadComponent: React.FC<Props> = (props: Props) => {
-  const showTitle = (): { title: React.ReactNode; disabled: boolean } => {
+  const showTitle = (): { disabled: boolean; title: React.ReactNode } => {
     let path = window.location.pathname;
 
     path = path.substring(path.lastIndexOf('/console') + '/console'.length + 1);

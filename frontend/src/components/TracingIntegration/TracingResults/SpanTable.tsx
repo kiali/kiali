@@ -28,7 +28,7 @@ import { history } from 'app/History';
 import { isParentKiosk, kioskContextMenuAction } from '../../Kiosk/KioskActions';
 import { TracingUrlProvider } from 'types/Tracing';
 import { KialiIcon } from 'config/KialiIcon';
-import { SimpleTable, SortableTh } from 'components/SimpleTable';
+import { SimpleTable, SortableTh } from 'components/Table/SimpleTable';
 
 type ReduxProps = {
   loadMetricsStats: (queries: MetricsStatsQuery[], isCompact: boolean) => void;

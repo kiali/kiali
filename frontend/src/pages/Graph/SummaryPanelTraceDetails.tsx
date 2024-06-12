@@ -14,7 +14,7 @@ import { findChildren, findParent, formatDuration } from 'utils/tracing/TracingH
 import { decoratedNodeData } from 'components/CytoscapeGraph/CytoscapeGraphUtils';
 import { FocusAnimation } from 'components/CytoscapeGraph/FocusAnimation';
 import { FormattedTraceInfo, shortIDStyle } from 'components/TracingIntegration/TracingResults/FormattedTraceInfo';
-import { SimplerSelect } from 'components/SimplerSelect';
+import { SimpleSelect } from 'components/Select/SimpleSelect';
 import { summaryFont, summaryTitle } from './SummaryPanelCommon';
 import { NodeParamsType, GraphType, SummaryData, NodeAttr } from 'types/Graph';
 import { KialiDispatch } from 'types/Redux';
@@ -195,7 +195,7 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
             <div className={pStyle}>
               <div>
                 <strong>{pluralize(spans.length, 'span')}</strong> on this node
-                <SimplerSelect
+                <SimpleSelect
                   selected={currentSpan?.operationName}
                   className={spanSelectStyle}
                   onSelect={key => {
@@ -214,7 +214,7 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
                       );
                     })}
                   </SelectList>
-                </SimplerSelect>
+                </SimpleSelect>
               </div>
             </div>
           )}

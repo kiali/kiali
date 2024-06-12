@@ -10,7 +10,7 @@ import { Tooltip } from '@patternfly/react-core';
 import { PFColors } from 'components/Pf/PfColors';
 import { KialiIcon } from 'config/KialiIcon';
 import { kialiStyle } from 'styles/StyleUtils';
-import { SortableTh } from 'components/SimpleTable';
+import { SortableTh } from 'components/Table/SimpleTable';
 
 export class ListenerTable implements SummaryTable {
   namespace: string;

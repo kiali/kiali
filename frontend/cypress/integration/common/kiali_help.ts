@@ -1,4 +1,5 @@
 import { When, Then, DataTable } from '@badeball/cypress-cucumber-preprocessor';
+import { load } from 'js-yaml';
 
 Then('user can see all of the Help dropdown options', (options: DataTable) => {
   const names = options.raw()[0];
@@ -21,11 +22,11 @@ Then('details about the certificates are displayed without an error', () => {
 });
 
 Then('user sees information about {int} clusters', (numOfClusters: number) => {
-  cy.get('td[data-label="Configuration"]')
+  cy.get('td[data-label="Attribute"]')
     .contains('clusters')
     .parent()
     .find('td[data-label="Value"]')
     .then($td => {
-      expect(Object.keys(JSON.parse($td.get(0).innerText)).length).to.eq(numOfClusters);
+      expect(Object.keys(load($td.get(0).innerText)).length).to.eq(numOfClusters);
     });
 });

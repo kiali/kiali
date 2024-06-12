@@ -1,37 +1,35 @@
 import { HelpMessage, ObjectCheck, ObjectValidation } from './IstioObjects';
 import { Annotation } from 'react-ace/types';
 import { IMarker } from 'react-ace';
-import { YAMLException } from 'js-yaml';
+import { YAMLException, loadAll } from 'js-yaml';
 import {
   istioValidationErrorStyle,
   istioValidationInfoStyle,
   istioValidationWarningStyle
 } from 'styles/AceEditorStyle';
 
-export const jsYaml = require('js-yaml');
-
 export interface AceValidations {
-  markers: Array<IMarker>;
   annotations: Array<Annotation>;
+  markers: Array<IMarker>;
 }
 
 interface AceCheck {
-  marker: IMarker;
   annotation: Annotation;
+  marker: IMarker;
 }
 
 interface AceMarker {
-  startRow: number;
-  startCol: number;
-  endRow: number;
   endCol: number;
+  endRow: number;
   position: number;
+  startCol: number;
+  startRow: number;
 }
 
 interface YamlPosition {
+  col: number;
   position: number;
   row: number;
-  col: number;
 }
 
 const numRows = (yaml: string): number => {
@@ -202,7 +200,7 @@ const parseMarker = (
   return aceMarker;
 };
 
-const getSeverityClassName = (severity: string) => {
+const getSeverityClassName = (severity: string): string => {
   switch (severity) {
     case 'error':
       return istioValidationErrorStyle;
@@ -228,7 +226,7 @@ const parseCheck = (yaml: string, check: ObjectCheck): AceCheck => {
     row: 0,
     column: 0,
     type: severity,
-    text: (check.code ? check.code + ' ' : '') + check.message
+    text: (check.code ? `${check.code} ` : '') + check.message
   };
   let aceMarker = {
     startRow: 0,
@@ -300,7 +298,7 @@ export const parseYamlValidations = (yamlInput: string): AceValidations => {
     annotations: []
   };
   try {
-    jsYaml.safeLoadAll(yamlInput);
+    loadAll(yamlInput);
   } catch (e) {
     if (e instanceof YAMLException) {
       const row = e.mark && e.mark.line ? e.mark.line : 0;

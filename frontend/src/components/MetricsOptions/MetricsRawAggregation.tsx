@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Aggregator } from 'types/MetricsOptions';
 
 import { URLParam, HistoryManager } from '../../app/History';
-import { ToolbarDropdown } from '../ToolbarDropdown/ToolbarDropdown';
+import { ToolbarDropdown } from '../Dropdown/ToolbarDropdown';
 
 interface Props {
   onChanged: (aggregator: Aggregator) => void;
@@ -22,9 +22,11 @@ export class MetricsRawAggregation extends React.Component<Props> {
 
   static initialAggregator = (): Aggregator => {
     const opParam = HistoryManager.getParam(URLParam.AGGREGATOR);
+
     if (opParam !== undefined) {
       return opParam as Aggregator;
     }
+
     return 'sum';
   };
 
@@ -33,13 +35,13 @@ export class MetricsRawAggregation extends React.Component<Props> {
     this.aggregator = MetricsRawAggregation.initialAggregator();
   }
 
-  onAggregatorChanged = (aggregator: string) => {
+  onAggregatorChanged = (aggregator: string): void => {
     HistoryManager.setParam(URLParam.AGGREGATOR, aggregator);
     this.aggregator = aggregator as Aggregator;
     this.props.onChanged(this.aggregator);
   };
 
-  render() {
+  render(): React.ReactNode {
     return (
       <ToolbarDropdown
         id={'metrics_filter_aggregator'}

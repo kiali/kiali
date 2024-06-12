@@ -59,7 +59,10 @@ export const OverviewCardDataPlaneNamespace: React.FC<Props> = (props: Props) =>
             style={{ paddingTop: '0.5rem' }}
             data-test={`sparkline-${props.direction.toLowerCase()}-duration-${getName(props.duration).toLowerCase()}`}
           >
-            {`${t(props.direction)} ${t('traffic')}, ${getName(props.duration).toLowerCase()}`}
+            {t('{{direction}} traffic, {{duration}}', {
+              direction: t(props.direction),
+              duration: getName(props.duration).toLowerCase()
+            })}
           </div>
 
           <SparklineChart
@@ -77,7 +80,9 @@ export const OverviewCardDataPlaneNamespace: React.FC<Props> = (props: Props) =>
       )}
 
       {series.length === 0 && (
-        <div className={noTrafficStyle}>{`${t('No')} ${t(props.direction.toLowerCase())} ${t('traffic')}`}</div>
+        <div className={noTrafficStyle}>
+          {t('No {{direction}} traffic', { direction: props.direction.toLowerCase() })}
+        </div>
       )}
     </div>
   );

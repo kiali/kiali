@@ -4,7 +4,7 @@ import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from '../../../../components/Pf/PfColors';
 import { Button, ButtonVariant } from '@patternfly/react-core';
 import { KialiIcon } from 'config/KialiIcon';
-import { SimpleTable } from 'components/SimpleTable';
+import { SimpleTable } from 'components/Table/SimpleTable';
 
 type OperationListProps = {
   onRemoveTo: (index: number) => void;

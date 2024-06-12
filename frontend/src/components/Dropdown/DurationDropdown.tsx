@@ -1,4 +1,4 @@
-import { ToolbarDropdown } from '../ToolbarDropdown/ToolbarDropdown';
+import { ToolbarDropdown } from './ToolbarDropdown';
 import { serverConfig, humanDurations } from '../../config/ServerConfig';
 import * as React from 'react';
 import { DurationInSeconds } from '../../types/Common';

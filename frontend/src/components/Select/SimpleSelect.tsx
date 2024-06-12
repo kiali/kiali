@@ -1,12 +1,12 @@
 import * as React from 'react';
 import { MenuToggle, MenuToggleElement, Select, SelectProps } from '@patternfly/react-core';
 
-type SimplerSelectProps = Omit<Omit<Omit<Omit<SelectProps, 'isOpen'>, 'onSelect'>, 'onOpenChange'>, 'toggle'> & {
+type SimpleSelectProps = Omit<Omit<Omit<Omit<SelectProps, 'isOpen'>, 'onSelect'>, 'onOpenChange'>, 'toggle'> & {
   onOpenChange?: (isOpen: boolean) => void;
   onSelect?: (value?: string | number) => void;
 };
 
-export const SimplerSelect: React.FC<SimplerSelectProps> = (props: SimplerSelectProps) => {
+export const SimpleSelect: React.FC<SimpleSelectProps> = (props: SimpleSelectProps) => {
   const [isOpen, setIsOpen] = React.useState(false);
 
   const toggle = (toggleRef: React.Ref<MenuToggleElement>) => (

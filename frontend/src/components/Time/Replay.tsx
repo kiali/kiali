@@ -6,7 +6,7 @@ import { KialiAppState } from 'store/Store';
 import { replayQueryTimeSelector, durationSelector } from 'store/Selectors';
 import { Tooltip, ButtonVariant, Button, Text } from '@patternfly/react-core';
 import { DurationInSeconds, IntervalInMilliseconds, TimeInMilliseconds } from 'types/Common';
-import { ToolbarDropdown } from 'components/ToolbarDropdown/ToolbarDropdown';
+import { ToolbarDropdown } from 'components/Dropdown/ToolbarDropdown';
 import { UserSettingsActions } from 'actions/UserSettingsActions';
 import { Slider } from 'components/IstioWizards/Slider/Slider';
 import { KialiIcon } from 'config/KialiIcon';
@@ -18,16 +18,20 @@ import { DateTimePicker } from './DateTimePicker';
 import _ from 'lodash';
 import { history, HistoryManager, URLParam } from 'app/History';
 
-type ReduxProps = {
+type ReduxStateProps = {
   duration: DurationInSeconds;
   replayQueryTime: TimeInMilliseconds;
+};
+
+type ReduxDispatchProps = {
   setReplayQueryTime: (replayQueryTime: TimeInMilliseconds) => void;
   toggleReplayActive: () => void;
 };
 
-type ReplayProps = ReduxProps & {
-  id: string;
-};
+type ReplayProps = ReduxStateProps &
+  ReduxDispatchProps & {
+    id: string;
+  };
 
 type ReplayWindow = {
   interval: IntervalInMilliseconds;
@@ -202,7 +206,7 @@ class ReplayComponent extends React.PureComponent<ReplayProps, ReplayState> {
     };
   }
 
-  componentDidUpdate(_prevProps: ReplayProps, prevState: ReplayState) {
+  componentDidUpdate(_prevProps: ReplayProps, prevState: ReplayState): void {
     const isCustomStartChange = this.state.isCustomStartTime !== prevState.isCustomStartTime;
     const isIntervalChange = this.state.replayWindow.interval !== prevState.replayWindow.interval;
 
@@ -226,7 +230,7 @@ class ReplayComponent extends React.PureComponent<ReplayProps, ReplayState> {
     }
   }
 
-  componentWillUnmount() {
+  componentWillUnmount(): void {
     HistoryManager.deleteParam(URLParam.GRAPH_REPLAY_INTERVAL, true);
     HistoryManager.deleteParam(URLParam.GRAPH_REPLAY_START, true);
 
@@ -235,7 +239,7 @@ class ReplayComponent extends React.PureComponent<ReplayProps, ReplayState> {
     }
   }
 
-  render() {
+  render(): React.ReactNode {
     if (!this.state.replayWindow.startTime) {
       return null;
     }
@@ -362,7 +366,7 @@ class ReplayComponent extends React.PureComponent<ReplayProps, ReplayState> {
     const elapsedMin: number = Math.floor((elapsedTime / 1000 - elapsedSec) / 60);
     const zeroPadSec: string = elapsedSec < 10 ? '0' : '';
     const zeroPadMin: string = elapsedMin < 10 ? '0' : '';
-    const elapsed: string = `${zeroPadMin}${elapsedMin}:${zeroPadSec}${elapsedSec}`;
+    const elapsed = `${zeroPadMin}${elapsedMin}:${zeroPadSec}${elapsedSec}`;
 
     return elapsed;
   };
@@ -495,12 +499,12 @@ class ReplayComponent extends React.PureComponent<ReplayProps, ReplayState> {
   };
 }
 
-const mapStateToProps = (state: KialiAppState) => ({
+const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
   duration: durationSelector(state),
   replayQueryTime: replayQueryTimeSelector(state)
 });
 
-const mapDispatchToProps = (dispatch: KialiDispatch) => ({
+const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => ({
   setReplayQueryTime: bindActionCreators(UserSettingsActions.setReplayQueryTime, dispatch),
   toggleReplayActive: bindActionCreators(UserSettingsActions.toggleReplayActive, dispatch)
 });

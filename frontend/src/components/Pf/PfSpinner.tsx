@@ -1,7 +1,7 @@
 import React from 'react';
 import { Spinner } from '@patternfly/react-core';
 import { connect } from 'react-redux';
-import { KialiAppState } from '../store/Store';
+import { KialiAppState } from 'store/Store';
 
 type PfSpinnerProps = {
   isLoading?: boolean;

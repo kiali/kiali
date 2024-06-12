@@ -15,7 +15,7 @@ describe('HealthDetails', () => {
     const health = new ServiceHealth(
       'bookinfo',
       'reviews',
-      { inbound: {}, outbound: {}, healthAnnotations: {} },
+      { inbound: { http: { '200': 1 } }, outbound: { http: { '200': 1 } }, healthAnnotations: {} },
       { rateInterval: 60, hasSidecar: true, hasAmbient: false }
     );
 
@@ -27,7 +27,7 @@ describe('HealthDetails', () => {
     const health = new ServiceHealth(
       'bookinfo',
       'reviews',
-      { inbound: {}, outbound: {}, healthAnnotations: {} },
+      { inbound: { http: { '500': 1 } }, outbound: { http: { '500': 1 } }, healthAnnotations: {} },
       { rateInterval: 60, hasSidecar: true, hasAmbient: false }
     );
 

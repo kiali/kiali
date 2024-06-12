@@ -12,7 +12,7 @@ import {
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { ROUTE_RULES_TOOLTIP, wizardTooltip } from '../WizardHelp';
 import { K8sRouteBackendRef } from '../K8sTrafficShifting';
-import { SimpleTable } from 'components/SimpleTable';
+import { SimpleTable } from 'components/Table/SimpleTable';
 
 export enum MOVE_TYPE {
   UP,
@@ -45,7 +45,7 @@ const noRulesStyle = kialiStyle({
 
 export const K8sRules: React.FC<K8sRuleProps> = (props: K8sRuleProps) => {
   const matchAllIndex = (k8sRules: K8sRule[]): number => {
-    let matchAll: number = -1;
+    let matchAll = -1;
 
     for (let index = 0; index < k8sRules.length; index++) {
       const rule = k8sRules[index];
@@ -108,7 +108,7 @@ export const K8sRules: React.FC<K8sRuleProps> = (props: K8sRuleProps) => {
     }
   ];
 
-  let isValid: boolean = true;
+  let isValid = true;
 
   const matchAll: number = matchAllIndex(props.k8sRules);
 

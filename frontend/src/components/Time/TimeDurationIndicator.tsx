@@ -53,7 +53,7 @@ class TimeDurationIndicatorComponent extends React.PureComponent<Props> {
     if (this.props.isDuration) {
       return getName(this.props.duration);
     } else {
-      return guardTimeRange(this.props.timeRange, getName, () => `(${t('custom')})`);
+      return guardTimeRange(this.props.timeRange, getName, () => t('custom'));
     }
   };
 
@@ -63,12 +63,16 @@ class TimeDurationIndicatorComponent extends React.PureComponent<Props> {
 
   timeDurationDetail = (): string => {
     if (this.props.isDuration) {
-      return `${t('Last')} ${getName(this.props.duration)}`;
+      return t('Last {{duration}}', { duration: getName(this.props.duration) });
     } else {
       return guardTimeRange(
         this.props.timeRange,
-        d => `${t('Last')} ${getName(d)}`,
-        b => `${new Date(b.from!).toLocaleString()} ${t('to')} ${b.to ? new Date(b.to).toLocaleString() : t('now')}`
+        d => t('Last {{duration}}', { duration: getName(d) }),
+        b => {
+          const oldDate = new Date(b.from!).toLocaleString();
+          const newDate = b.to ? new Date(b.to).toLocaleString() : t('now');
+          return t('{{oldDate}} to {{newDate}}', { oldDate, newDate });
+        }
       );
     }
   };
@@ -84,7 +88,9 @@ class TimeDurationIndicatorComponent extends React.PureComponent<Props> {
             <p style={{ whiteSpace: 'nowrap' }}>
               {this.timeDurationDetailLabel()}: {this.timeDurationDetail()}
               <br />
-              {`${t('Current refresh interval')}: ${t(config.toolbar.refreshInterval[this.props.refreshInterval])}`}
+              {t('Current refresh interval: {{refreshInterval}}', {
+                refreshInterval: t(config.toolbar.refreshInterval[this.props.refreshInterval])
+              })}
             </p>
           </>
         }

@@ -4,7 +4,7 @@ import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from '../../../components/Pf/PfColors';
 import * as React from 'react';
 import { formatJwtField } from './JwtRuleBuilder';
-import { SimpleTable } from 'components/SimpleTable';
+import { SimpleTable } from 'components/Table/SimpleTable';
 import { Button, ButtonVariant } from '@patternfly/react-core';
 import { KialiIcon } from 'config/KialiIcon';
 

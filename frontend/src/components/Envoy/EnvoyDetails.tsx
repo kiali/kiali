@@ -24,7 +24,7 @@ import { Namespace } from 'types/Namespace';
 import { kialiStyle } from 'styles/StyleUtils';
 import AceEditor from 'react-ace';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
-import { ToolbarDropdown } from 'components/ToolbarDropdown/ToolbarDropdown';
+import { ToolbarDropdown } from 'components/Dropdown/ToolbarDropdown';
 import { activeTab } from '../../components/Tab/Tabs';
 import { KialiIcon } from 'config/KialiIcon';
 import { aceOptions } from 'types/IstioConfigDetails';
@@ -125,11 +125,11 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
     };
   }
 
-  componentDidMount() {
+  componentDidMount(): void {
     this.fetchContent();
   }
 
-  componentDidUpdate(_prevProps: EnvoyDetailsProps, prevState: EnvoyDetailsState) {
+  componentDidUpdate(_prevProps: EnvoyDetailsProps, prevState: EnvoyDetailsState): void {
     const currentTabIndex = envoyTabs.indexOf(activeTab(tabName, defaultTab));
 
     if (this.state.pod.name !== prevState.pod.name || this.state.resource !== prevState.resource) {
@@ -276,7 +276,7 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
     FilterSelected.resetFilters();
   };
 
-  render() {
+  render(): React.ReactNode {
     const builder = SummaryTableBuilder(
       this.state.resource,
       this.state.config,

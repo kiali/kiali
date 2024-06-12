@@ -18,7 +18,7 @@ import { connect } from 'react-redux';
 import { isParentKiosk, kioskContextMenuAction } from '../Kiosk/KioskActions';
 import { isMultiCluster } from 'config';
 import { getParamsSeparator } from '../../utils/SearchParamUtils';
-import { SimpleTable, SortableTh } from 'components/SimpleTable';
+import { SimpleTable, SortableTh } from 'components/Table/SimpleTable';
 
 export interface TrafficListItem {
   badge: PFBadgeType;
