@@ -94,7 +94,7 @@ start_image_registry_daemon() {
   # see: https://kind.sigs.k8s.io/docs/user/local-registry/
   if [ "${ENABLE_IMAGE_REGISTRY}" == "true" ]; then
     if [ "$(${DORP} inspect -f '{{.State.Running}}' ${KIND_IMAGE_REGISTRY_NAME} 2>/dev/null || true)" != "true" ]; then
-      ${DORP} run -d --restart=always -p "127.0.0.1:${KIND_IMAGE_REGISTRY_PORT}:5000" --name "${KIND_IMAGE_REGISTRY_NAME}" --network bridge registry:2
+      ${DORP} run --sysctl=net.ipv6.conf.all.disable_ipv6=1 -d --restart=always -p "127.0.0.1:${KIND_IMAGE_REGISTRY_PORT}:5000" --name "${KIND_IMAGE_REGISTRY_NAME}" --network bridge registry:2
       infomsg "An image registry daemon has started."
     else
       infomsg "An image registry daemon appears to already be running; this existing daemon will be used."
@@ -159,6 +159,8 @@ start_kind() {
   cat <<EOF | ${KIND_EXE} create cluster --name "${NAME}" --config -
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
+networking:
+  ipFamily: ipv4
 nodes:
   - role: control-plane
     ${NODE_IMAGE_LINE}
@@ -176,9 +178,26 @@ config_metallb() {
   local subnet
   # we always use docker today, but we'll leave this here just in case in the future Kind and podman play nice
   if [ "${DORP}" == "docker" ]; then
-    subnet=$(docker network inspect kind --format '{{(index .IPAM.Config 0).Subnet}}')
+    # loop through all known subnets in the kind network and pick out the IPv4 subnet, ignoring any IPv6 that might be in the list
+    local subnets_count="$(docker network inspect kind | jq '.[0].IPAM.Config | length')"
+    infomsg "There are [$subnets_count] subnets in the kind network"
+    for ((i=0; i<subnets_count; i++)); do
+      subnet=$(docker network inspect kind --format '{{(index .IPAM.Config '$i').Subnet}}' 2> /dev/null)
+      if [[ -n $subnet && $subnet != *:* && $subnet == *\.* ]]; then
+        infomsg "Using subnet [$subnet]"
+        break
+      else
+        infomsg "Ignoring subnet [$subnet]"
+        subnet=""
+      fi
+    done
   else
-    subnet=$(podman network inspect kind --format '{{ (index (index (index .plugins 0).ipam.ranges 1) 0).subnet }}')
+    subnet=$(podman network inspect kind --format '{{ (index (index (index .plugins 0).ipam.ranges 1) 1).subnet }}' 2>/dev/null)
+  fi
+
+  if [ -z "$subnet" ]; then
+    infomsg "There does not appear to be any IPv4 subnets configured"
+    exit 1
   fi
 
   infomsg "Wait for MetalLB controller to be ready"
