@@ -232,6 +232,9 @@ config_metallb() {
   local subnet
   # we always use docker today, but we'll leave this here just in case in the future Kind and podman play nice
   if [ "${DORP}" == "docker" ]; then
+    echo "TODO 1=================="
+    docker network inspect kind
+    echo "TODO 2=================="
     subnet=$(docker network inspect kind --format '{{(index .IPAM.Config 0).Subnet}}')
   else
     subnet=$(podman network inspect kind --format '{{ (index (index (index .plugins 0).ipam.ranges 1) 0).subnet }}')
