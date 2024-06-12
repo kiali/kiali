@@ -248,7 +248,12 @@ config_metallb() {
       fi
     done
   else
-    subnet=$(podman network inspect kind --format '{{ (index (index (index .plugins 0).ipam.ranges 1) 1).subnet }}')
+    subnet=$(podman network inspect kind --format '{{ (index (index (index .plugins 0).ipam.ranges 1) 1).subnet }}' 2>/dev/null)
+  fi
+
+  if [ -z "$subnet" ]; then
+    infomsg "There does not appear to be any IPv4 subnets configured"
+    exit 1
   fi
 
   infomsg "Wait for MetalLB controller to be ready"
