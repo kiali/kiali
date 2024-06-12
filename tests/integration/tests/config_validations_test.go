@@ -193,7 +193,7 @@ func TestK8sHTTPRoutesServicesError(t *testing.T) {
 	require.Equal("k8shttproute", config.IstioValidation.ObjectType)
 	require.NotEmpty(config.IstioValidation.Checks)
 	require.Equal(models.ErrorSeverity, config.IstioValidation.Checks[0].Severity)
-	require.Equal("BackendRef on rule doesn't have a valid service (Service name not found)", config.IstioValidation.Checks[0].Message)
+	require.Equal("Reference doesn't have a valid service (Service name not found)", config.IstioValidation.Checks[0].Message)
 }
 
 func TestK8sGRPCRoutesGatewaysError(t *testing.T) {

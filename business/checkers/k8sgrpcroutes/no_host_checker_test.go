@@ -27,7 +27,7 @@ func TestValidRefHost(t *testing.T) {
 	vals, valid := NoHostChecker{
 		RegistryServices:   append(registryService1, registryService2...),
 		K8sReferenceGrants: []*k8s_networking_v1beta1.ReferenceGrant{data.CreateReferenceGrantByKind("grant", "bookinfo", "bookinfo2", kubernetes.K8sActualGRPCRouteType)},
-		K8sGRPCRoute:       data.AddBackendRefToGRPCRoute("reviews", "bookinfo", data.CreateGRPCRoute("route", "bookinfo2", "gatewayapi", []string{"bookinfo"})),
+		K8sGRPCRoute:       data.AddServiceParentRefToGRPCRoute("reviews", "bookinfo", data.AddBackendRefToGRPCRoute("reviews", "bookinfo", data.CreateGRPCRoute("route", "bookinfo2", "gatewayapi", []string{"bookinfo"}))),
 	}.Check()
 
 	assert.True(valid)
@@ -46,15 +46,18 @@ func TestMissingGrant(t *testing.T) {
 
 	vals, valid := NoHostChecker{
 		RegistryServices: append(registryService1, registryService2...),
-		K8sGRPCRoute:     data.AddBackendRefToGRPCRoute("reviews", "bookinfo", data.CreateGRPCRoute("route", "bookinfo2", "gatewayapi", []string{"bookinfo"})),
+		K8sGRPCRoute:     data.AddServiceParentRefToGRPCRoute("reviews", "bookinfo", data.AddBackendRefToGRPCRoute("reviews", "bookinfo", data.CreateGRPCRoute("route", "bookinfo2", "gatewayapi", []string{"bookinfo"}))),
 	}.Check()
 
 	assert.False(valid)
 	assert.NotEmpty(vals)
-	assert.Len(vals, 1)
+	assert.Len(vals, 2)
 	assert.Equal(models.ErrorSeverity, vals[0].Severity)
 	assert.NoError(validations.ConfirmIstioCheckMessage("k8sroutes.nohost.namenotfound", vals[0]))
-	assert.Equal("spec/rules[0]/backendRefs[0]/name", vals[0].Path)
+	assert.Equal("spec/parentRefs[1]/name", vals[0].Path)
+	assert.Equal(models.ErrorSeverity, vals[1].Severity)
+	assert.NoError(validations.ConfirmIstioCheckMessage("k8sroutes.nohost.namenotfound", vals[1]))
+	assert.Equal("spec/rules[0]/backendRefs[0]/name", vals[1].Path)
 }
 
 func TestWrongGrant(t *testing.T) {
@@ -70,15 +73,18 @@ func TestWrongGrant(t *testing.T) {
 	vals, valid := NoHostChecker{
 		RegistryServices:   append(registryService1, registryService2...),
 		K8sReferenceGrants: []*k8s_networking_v1beta1.ReferenceGrant{data.CreateReferenceGrantByKind("grant", "bookinfo", "bookinfo", kubernetes.K8sActualGRPCRouteType)},
-		K8sGRPCRoute:       data.AddBackendRefToGRPCRoute("reviews", "bookinfo", data.CreateGRPCRoute("route", "bookinfo2", "gatewayapi", []string{"bookinfo"})),
+		K8sGRPCRoute:       data.AddServiceParentRefToGRPCRoute("reviews", "bookinfo", data.AddBackendRefToGRPCRoute("reviews", "bookinfo", data.CreateGRPCRoute("route", "bookinfo2", "gatewayapi", []string{"bookinfo"}))),
 	}.Check()
 
 	assert.False(valid)
 	assert.NotEmpty(vals)
-	assert.Len(vals, 1)
+	assert.Len(vals, 2)
 	assert.Equal(models.ErrorSeverity, vals[0].Severity)
 	assert.NoError(validations.ConfirmIstioCheckMessage("k8sroutes.nohost.namenotfound", vals[0]))
-	assert.Equal("spec/rules[0]/backendRefs[0]/name", vals[0].Path)
+	assert.Equal("spec/parentRefs[1]/name", vals[0].Path)
+	assert.Equal(models.ErrorSeverity, vals[1].Severity)
+	assert.NoError(validations.ConfirmIstioCheckMessage("k8sroutes.nohost.namenotfound", vals[1]))
+	assert.Equal("spec/rules[0]/backendRefs[0]/name", vals[1].Path)
 }
 
 func TestValidRefHostDefaultNs(t *testing.T) {
@@ -94,7 +100,7 @@ func TestValidRefHostDefaultNs(t *testing.T) {
 	vals, valid := NoHostChecker{
 		RegistryServices:   append(registryService1, registryService2...),
 		K8sReferenceGrants: []*k8s_networking_v1beta1.ReferenceGrant{data.CreateReferenceGrantByKind("grant", "bookinfo", "bookinfo2", kubernetes.K8sActualGRPCRouteType)},
-		K8sGRPCRoute:       data.AddBackendRefToGRPCRoute("reviews", "", data.CreateGRPCRoute("route", "bookinfo", "gatewayapi", []string{"bookinfo"})),
+		K8sGRPCRoute:       data.AddServiceParentRefToGRPCRoute("reviews", "", data.AddBackendRefToGRPCRoute("reviews", "", data.CreateGRPCRoute("route", "bookinfo", "gatewayapi", []string{"bookinfo"}))),
 	}.Check()
 
 	assert.True(valid)
@@ -114,15 +120,18 @@ func TestInvalidRefHostDefaultNs(t *testing.T) {
 	vals, valid := NoHostChecker{
 		RegistryServices:   append(registryService1, registryService2...),
 		K8sReferenceGrants: []*k8s_networking_v1beta1.ReferenceGrant{data.CreateReferenceGrantByKind("grant", "bookinfo", "bookinfo2", kubernetes.K8sActualGRPCRouteType)},
-		K8sGRPCRoute:       data.AddBackendRefToGRPCRoute("reviews", "", data.CreateGRPCRoute("route", "bookinfo2", "gatewayapi", []string{"bookinfo"})),
+		K8sGRPCRoute:       data.AddServiceParentRefToGRPCRoute("reviews", "", data.AddBackendRefToGRPCRoute("reviews", "", data.CreateGRPCRoute("route", "bookinfo2", "gatewayapi", []string{"bookinfo"}))),
 	}.Check()
 
 	assert.False(valid)
 	assert.NotEmpty(vals)
-	assert.Len(vals, 1)
+	assert.Len(vals, 2)
 	assert.Equal(models.ErrorSeverity, vals[0].Severity)
 	assert.NoError(validations.ConfirmIstioCheckMessage("k8sroutes.nohost.namenotfound", vals[0]))
-	assert.Equal("spec/rules[0]/backendRefs[0]/name", vals[0].Path)
+	assert.Equal("spec/parentRefs[1]/name", vals[0].Path)
+	assert.Equal(models.ErrorSeverity, vals[1].Severity)
+	assert.NoError(validations.ConfirmIstioCheckMessage("k8sroutes.nohost.namenotfound", vals[1]))
+	assert.Equal("spec/rules[0]/backendRefs[0]/name", vals[1].Path)
 }
 
 func TestNoValidRefHost(t *testing.T) {
@@ -138,19 +147,22 @@ func TestNoValidRefHost(t *testing.T) {
 	vals, valid := NoHostChecker{
 		RegistryServices:   append(registryService1, registryService2...),
 		K8sReferenceGrants: []*k8s_networking_v1beta1.ReferenceGrant{data.CreateReferenceGrantByKind("grant", "bookinfo", "bookinfo2", kubernetes.K8sActualGRPCRouteType)},
-		K8sGRPCRoute:       data.AddBackendRefToGRPCRoute("ratings", "bookinfo", data.AddBackendRefToGRPCRoute("reviews", "bookinfo", data.CreateGRPCRoute("route", "bookinfo2", "gatewayapi", []string{"bookinfo2"}))),
+		K8sGRPCRoute:       data.AddServiceParentRefToGRPCRoute("ratings", "bookinfo", data.AddBackendRefToGRPCRoute("ratings", "bookinfo", data.AddBackendRefToGRPCRoute("reviews", "bookinfo", data.CreateGRPCRoute("route", "bookinfo2", "gatewayapi", []string{"bookinfo2"})))),
 	}.Check()
 
 	assert.False(valid)
 	assert.NotEmpty(vals)
-	assert.Len(vals, 2)
+	assert.Len(vals, 3)
 	assert.Equal(models.ErrorSeverity, vals[0].Severity)
 	assert.NoError(validations.ConfirmIstioCheckMessage("k8sroutes.nohost.namenotfound", vals[0]))
-	assert.Equal("spec/rules[0]/backendRefs[0]/name", vals[0].Path)
+	assert.Equal("spec/parentRefs[1]/name", vals[0].Path)
 
 	assert.Equal(models.ErrorSeverity, vals[1].Severity)
 	assert.NoError(validations.ConfirmIstioCheckMessage("k8sroutes.nohost.namenotfound", vals[1]))
-	assert.Equal("spec/rules[1]/backendRefs[0]/name", vals[1].Path)
+	assert.Equal("spec/rules[0]/backendRefs[0]/name", vals[1].Path)
+	assert.Equal(models.ErrorSeverity, vals[2].Severity)
+	assert.NoError(validations.ConfirmIstioCheckMessage("k8sroutes.nohost.namenotfound", vals[2]))
+	assert.Equal("spec/rules[1]/backendRefs[0]/name", vals[2].Path)
 }
 
 func TestInvalidRefHostFQDN(t *testing.T) {
@@ -166,13 +178,16 @@ func TestInvalidRefHostFQDN(t *testing.T) {
 	vals, valid := NoHostChecker{
 		RegistryServices:   append(registryService1, registryService2...),
 		K8sReferenceGrants: []*k8s_networking_v1beta1.ReferenceGrant{data.CreateReferenceGrantByKind("grant", "bookinfo", "bookinfo2", kubernetes.K8sActualGRPCRouteType)},
-		K8sGRPCRoute:       data.AddBackendRefToGRPCRoute("reviews.bookinfo.svc.cluster.local", "", data.CreateGRPCRoute("route", "bookinfo2", "gatewayapi", []string{"bookinfo"})),
+		K8sGRPCRoute:       data.AddServiceParentRefToGRPCRoute("reviews.bookinfo.svc.cluster.local", "", data.AddBackendRefToGRPCRoute("reviews.bookinfo.svc.cluster.local", "", data.CreateGRPCRoute("route", "bookinfo2", "gatewayapi", []string{"bookinfo"}))),
 	}.Check()
 
 	assert.False(valid)
 	assert.NotEmpty(vals)
-	assert.Len(vals, 1)
+	assert.Len(vals, 2)
 	assert.Equal(models.ErrorSeverity, vals[0].Severity)
 	assert.NoError(validations.ConfirmIstioCheckMessage("k8sroutes.nohost.namenotfound", vals[0]))
-	assert.Equal("spec/rules[0]/backendRefs[0]/name", vals[0].Path)
+	assert.Equal("spec/parentRefs[1]/name", vals[0].Path)
+	assert.Equal(models.ErrorSeverity, vals[1].Severity)
+	assert.NoError(validations.ConfirmIstioCheckMessage("k8sroutes.nohost.namenotfound", vals[1]))
+	assert.Equal("spec/rules[0]/backendRefs[0]/name", vals[1].Path)
 }
