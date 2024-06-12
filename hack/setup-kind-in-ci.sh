@@ -86,6 +86,8 @@ infomsg "Kind cluster to be created with name [ci]"
 cat <<EOF | kind create cluster --name ci --config -
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
+networking:
+  ipFamily: ipv4
 nodes:
   - role: control-plane
     ${NODE_IMAGE_LINE}
@@ -100,7 +102,24 @@ lb_addr_range="255.70-255.84"
 
 kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.13.5/config/manifests/metallb-native.yaml
 
-subnet=$(${DORP} network inspect kind --format '{{(index .IPAM.Config 0).Subnet}}')
+# loop through all known subnets in the kind network and pick out the IPv4 subnet, ignoring any IPv6 that might be in the list
+subnets_count="$(${DORP} network inspect kind | jq '.[0].IPAM.Config | length')"
+infomsg "There are [$subnets_count] subnets in the kind network"
+for ((i=0; i<subnets_count; i++)); do
+  subnet=$(${DORP} network inspect kind --format '{{(index .IPAM.Config '$i').Subnet}}' 2> /dev/null)
+  if [[ -n $subnet && $subnet != *:* && $subnet == *\.* ]]; then
+    infomsg "Using subnet [$subnet]"
+    break
+  else
+    infomsg "Ignoring subnet [$subnet]"
+    subnet=""
+  fi
+done
+if [ -z "$subnet" ]; then
+  infomsg "There does not appear to be any IPv4 subnets configured"
+  exit 1
+fi
+
 subnet_trimmed=$(echo "${subnet}" | sed -E 's/([0-9]+\.[0-9]+)\.[0-9]+\..*/\1/')
 first_ip="${subnet_trimmed}.$(echo "${lb_addr_range}" | cut -d '-' -f 1)"
 last_ip="${subnet_trimmed}.$(echo "${lb_addr_range}" | cut -d '-' -f 2)"
