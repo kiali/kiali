@@ -64,7 +64,7 @@ func NewServer() *Server {
 		MinVersion: tls.VersionTLS12,
 		NextProtos: []string{"h2", "http/1.1"},
 	}
-	
+
 	writeTimeout := conf.Server.WriteTimeout * time.Second
 
 	// create the server definition that will handle both console and api server traffic
@@ -72,7 +72,7 @@ func NewServer() *Server {
 		Addr:         fmt.Sprintf("%v:%v", conf.Server.Address, conf.Server.Port),
 		TLSConfig:    tlsConfig,
 		ReadTimeout:  30 * time.Second,
-		WriteTimeout: 30 * time.Second,
+		WriteTimeout: writeTimeout,
 	}
 
 	// return our new Server
