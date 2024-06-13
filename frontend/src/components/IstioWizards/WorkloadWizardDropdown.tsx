@@ -21,27 +21,27 @@ import { renderDisabledDropdownOption } from 'utils/DropdownUtils';
 interface Props {
   namespace: string;
   onChange: () => void;
-  workload: Workload;
   statusState: StatusState;
+  workload: Workload;
 }
 
 export const WorkloadWizardDropdown: React.FC<Props> = (props: Props) => {
   const [isActionsOpen, setIsActionsOpen] = React.useState<boolean>(false);
   const [showWizard, setShowWizard] = React.useState<boolean>(false);
 
-  const onActionsSelect = () => {
+  const onActionsSelect = (): void => {
     setIsActionsOpen(!isActionsOpen);
   };
 
-  const onActionsToggle = (isOpen: boolean) => {
+  const onActionsToggle = (isOpen: boolean): void => {
     setIsActionsOpen(isOpen);
   };
 
-  const onWizardToggle = (isOpen: boolean) => {
+  const onWizardToggle = (isOpen: boolean): void => {
     setShowWizard(isOpen);
   };
 
-  const onAction = (key: string) => {
+  const onAction = (key: string): void => {
     switch (key) {
       case WIZARD_ENABLE_AUTO_INJECTION:
       case WIZARD_DISABLE_AUTO_INJECTION:
@@ -58,10 +58,10 @@ export const WorkloadWizardDropdown: React.FC<Props> = (props: Props) => {
           props.workload.cluster
         )
           .then(_ => {
-            AlertUtils.add('Workload ' + props.workload.name + ' updated', 'default', MessageType.SUCCESS);
+            AlertUtils.add(`Workload ${props.workload.name} updated`, 'default', MessageType.SUCCESS);
           })
           .catch(error => {
-            AlertUtils.addError('Could not update workload ' + props.workload.name, error);
+            AlertUtils.addError(`Could not update workload ${props.workload.name}`, error);
           })
           .finally(() => {
             setShowWizard(false);
@@ -73,7 +73,7 @@ export const WorkloadWizardDropdown: React.FC<Props> = (props: Props) => {
     }
   };
 
-  const onChangeAnnotations = (annotations: { [key: string]: string }) => {
+  const onChangeAnnotations = (annotations: { [key: string]: string }): void => {
     const jsonInjectionPatch = buildAnnotationPatch(annotations);
 
     API.updateWorkload(
@@ -85,10 +85,10 @@ export const WorkloadWizardDropdown: React.FC<Props> = (props: Props) => {
       props.workload.cluster
     )
       .then(_ => {
-        AlertUtils.add('Workload ' + props.workload.name + ' updated', 'default', MessageType.SUCCESS);
+        AlertUtils.add(`Workload ${props.workload.name} updated`, 'default', MessageType.SUCCESS);
       })
       .catch(error => {
-        AlertUtils.addError('Could not update workload ' + props.workload.name, error);
+        AlertUtils.addError(`Could not update workload ${props.workload.name}`, error);
       })
       .finally(() => {
         setShowWizard(false);
@@ -99,7 +99,7 @@ export const WorkloadWizardDropdown: React.FC<Props> = (props: Props) => {
   const renderDropdownItems = (): JSX.Element[] => {
     const items: JSX.Element[] = [];
 
-    if (serverConfig.kialiFeatureFlags.istioInjectionAction) {
+    if (serverConfig.kialiFeatureFlags.istioInjectionAction && !props.workload.istioAmbient) {
       const enableAction = (
         <DropdownItem
           data-test={WIZARD_ENABLE_AUTO_INJECTION}

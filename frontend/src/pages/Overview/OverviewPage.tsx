@@ -810,7 +810,16 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
     // RBAC allow more fine granularity but Kiali won't check that in detail.
 
     if (serverConfig.istioNamespace !== nsInfo.name) {
-      if (serverConfig.kialiFeatureFlags.istioInjectionAction && !serverConfig.kialiFeatureFlags.istioUpgradeAction) {
+      if (
+        !(
+          serverConfig.ambientEnabled &&
+          nsInfo.labels &&
+          nsInfo.labels[serverConfig.istioLabels.ambientNamespaceLabel] ===
+            serverConfig.istioLabels.ambientNamespaceLabelValue
+        ) &&
+        serverConfig.kialiFeatureFlags.istioInjectionAction &&
+        !serverConfig.kialiFeatureFlags.istioUpgradeAction
+      ) {
         namespaceActions.push({
           isGroup: false,
           isSeparator: true

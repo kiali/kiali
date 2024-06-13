@@ -2,6 +2,8 @@ import { DurationInSeconds } from './Common';
 import { MeshCluster } from './Mesh';
 
 export type IstioLabelKey =
+  | 'ambientNamespaceLabel'
+  | 'ambientNamespaceLabelValue'
   | 'ambientWaypointLabel'
   | 'ambientWaypointLabelValue'
   | 'appLabelName'
