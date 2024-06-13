@@ -82,6 +82,10 @@ type WorkloadItem struct {
 	// List of service accounts involved in this application
 	// required: true
 	ServiceAccountNames []string `json:"serviceAccountNames"`
+
+	// List of waypoint proxy workloads, if any, for Ambient
+	// required: true
+	WaypointWorkloads []string `json:"waypointWorloads"`
 }
 
 type App struct {

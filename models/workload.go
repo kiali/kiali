@@ -135,6 +135,9 @@ type WorkloadListItem struct {
 
 	// Health
 	Health WorkloadHealth `json:"health,omitempty"`
+
+	// Names of the waypoint proxy workloads, if any
+	WaypointWorkloads []string `json:"waypointWorkloads"`
 }
 
 type WorkloadOverviews []*WorkloadListItem

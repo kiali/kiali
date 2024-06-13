@@ -1284,6 +1284,11 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 			if pod.HasIstioSidecar() && !w.IsGateway() && config.Get().ExternalServices.Istio.IstioAPIEnabled {
 				pod.ProxyStatus = in.businessLayer.ProxyStatus.GetPodProxyStatus(cluster, namespace, pod.Name)
 			}
+
+		}
+		if w.IstioAmbient && w.Labels[config.WaypointLabel] != config.WaypointLabelValue {
+			// If Ambient is enabled for pod, check if has any Waypoint proxy
+			w.WaypointWorkloads = in.getWaypointForWorkload(ctx, namespace, *w)
 		}
 
 		if cnFound {
@@ -1884,7 +1889,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 
 // Get the Waypoint proxy for a workload
 func (in *WorkloadService) getWaypointForWorkload(ctx context.Context, namespace string, workload models.Workload) []models.Workload {
-	wlist, err := in.fetchWorkloads(ctx, namespace, "")
+	wlist, err := in.fetchWorkloads(ctx, namespace, fmt.Sprintf("%s=%s", config.WaypointLabel, config.WaypointLabelValue))
 	if err != nil {
 		log.Errorf("Error fetching workloads")
 		return nil
@@ -1893,22 +1898,20 @@ func (in *WorkloadService) getWaypointForWorkload(ctx context.Context, namespace
 	var workloadslist []models.Workload
 	// Get service Account name for each pod from the workload
 	for _, wk := range wlist {
-		if wk.Labels[config.WaypointLabel] == "istio.io-mesh-controller" {
-			for _, pod := range wk.Pods {
-				if pod.Labels["istio.io/gateway-name"] == "namespace" {
-					workloadslist = append(workloadslist, *wk)
-					break
-				} else {
-					// Get waypoint workloads from a service account
-					sa := pod.Annotations["istio.io/for-service-account"]
-					for _, workloadDef := range workload.Pods {
-						if workloadDef.ServiceAccountName == sa {
-							workloadslist = append(workloadslist, *wk)
-							break
-						}
+		for _, pod := range wk.Pods {
+			if pod.Labels["istio.io/gateway-name"] == "namespace" {
+				workloadslist = append(workloadslist, *wk)
+				break
+			} else {
+				// Get waypoint workloads from a service account
+				sa := pod.Annotations["istio.io/for-service-account"]
+				for _, workloadDef := range workload.Pods {
+					if workloadDef.ServiceAccountName == sa {
+						workloadslist = append(workloadslist, *wk)
+						break
 					}
-
 				}
+
 			}
 		}
 	}
