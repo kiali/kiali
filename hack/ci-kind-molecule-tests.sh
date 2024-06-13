@@ -382,6 +382,8 @@ else
   cat <<EOF | ${KIND_EXE} create cluster --name ${KIND_NAME} --config -
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
+networking:
+  ipFamily: ipv4
 nodes:
   - role: control-plane
     ${KIND_NODE_IMAGE}
@@ -400,7 +402,23 @@ EOF
   #  subnet=$(podman network inspect kind --format '{{ (index (index (index .plugins 0).ipam.ranges 1) 0).subnet }}')
   #fi
   # TODO the above if-stmt assumes podman works with KinD which it doesn't - we always use docker for KinD, so use docker to inspect network
-  subnet=$(docker network inspect kind --format '{{(index .IPAM.Config 0).Subnet}}')
+  # loop through all known subnets in the kind network and pick out the IPv4 subnet, ignoring any IPv6 that might be in the list
+  subnets_count="$(docker network inspect kind | jq '.[0].IPAM.Config | length')"
+  infomsg "There are [$subnets_count] subnets in the kind network"
+  for ((i=0; i<subnets_count; i++)); do
+    subnet=$(docker network inspect kind --format '{{(index .IPAM.Config '$i').Subnet}}' 2> /dev/null)
+    if [[ -n $subnet && $subnet != *:* && $subnet == *\.* ]]; then
+      infomsg "Using subnet [$subnet]"
+      break
+    else
+      infomsg "Ignoring subnet [$subnet]"
+      subnet=""
+    fi
+  done
+  if [ -z "$subnet" ]; then
+    infomsg "There does not appear to be any IPv4 subnets configured"
+    exit 1
+  fi
 
   infomsg "Wait for MetalLB controller to be ready"
   ${CLIENT_EXE} rollout status deployment controller -n metallb-system
