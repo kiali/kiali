@@ -6,14 +6,17 @@ import { ensureKialiFinishedLoading } from './transition';
 When('user opens the context menu of the {string} service node', (svcName: string) => {
   ensureKialiFinishedLoading();
   cy.waitForReact();
-
-  cy.getReact('CytoscapeGraph')
+  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false } } })
     .should('have.length', '1')
-    .getCurrentState()
-    .then(state => {
-      const node = state.cy.nodes(`[nodeType="service"][service="${svcName}"]`);
-      node.emit('cxttapstart');
-      cy.wrap(node).as('contextNode');
+    .then(() => {
+      cy.getReact('CytoscapeGraph')
+        .should('have.length', '1')
+        .getCurrentState()
+        .then(state => {
+          const node = state.cy.nodes(`[nodeType="service"][service="${svcName}"]`);
+          node.emit('cxttapstart');
+          cy.wrap(node).as('contextNode');
+        });
     });
 });
 
@@ -21,36 +24,38 @@ When(
   'user opens the context menu of the {string} service node on the {string} cluster',
   (svcName: string, cluster: string) => {
     ensureKialiFinishedLoading();
-
     cy.waitForReact();
-
-    cy.getReact('CytoscapeGraph')
+    cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false } } })
       .should('have.length', '1')
-      .getCurrentState()
-      // Using should we can retry until the node is found.
-      // It could be that a node has not yet appeared on the traffic map
-      // because traffic hasn't made it to the node yet. So, we retry
-      // and refresh the traffic map until it shows up.
-      .should(state => {
-        const node = state.cy.nodes(
-          `[nodeType="service"][service="${svcName}"][cluster="${cluster}"][namespace="bookinfo"]`
-        );
-        if (node.length === 0) {
-          Cypress.$('[data-test="refresh-button"]').trigger('click');
-          throw new Error(`service Node ${svcName} in namespace bookinfo in cluster ${cluster} not found`);
-        }
-        expect(node.length).to.equal(1);
-      })
-      .then(state => {
-        // Wait for the last "click" to finish before continuing.
-        ensureKialiFinishedLoading();
-        const node = state.cy.nodes(
-          `[nodeType="service"][service="${svcName}"][cluster="${cluster}"][namespace="bookinfo"]`
-        );
-        expect(node.length).to.equal(1);
-        node.emit('cxttapstart');
-        cy.wrap(node).as('contextNode');
-        cy.getBySel('graph-node-context-menu').should('be.visible');
+      .then(() => {
+        cy.getReact('CytoscapeGraph')
+          .should('have.length', '1')
+          .getCurrentState()
+          // Using should we can retry until the node is found.
+          // It could be that a node has not yet appeared on the traffic map
+          // because traffic hasn't made it to the node yet. So, we retry
+          // and refresh the traffic map until it shows up.
+          .should(state => {
+            const node = state.cy.nodes(
+              `[nodeType="service"][service="${svcName}"][cluster="${cluster}"][namespace="bookinfo"]`
+            );
+            if (node.length === 0) {
+              Cypress.$('[data-test="refresh-button"]').trigger('click');
+              throw new Error(`service Node ${svcName} in namespace bookinfo in cluster ${cluster} not found`);
+            }
+            expect(node.length).to.equal(1);
+          })
+          .then(state => {
+            // Wait for the last "click" to finish before continuing.
+            ensureKialiFinishedLoading();
+            const node = state.cy.nodes(
+              `[nodeType="service"][service="${svcName}"][cluster="${cluster}"][namespace="bookinfo"]`
+            );
+            expect(node.length).to.equal(1);
+            node.emit('cxttapstart');
+            cy.wrap(node).as('contextNode');
+            cy.getBySel('graph-node-context-menu').should('be.visible');
+          });
       });
   }
 );
