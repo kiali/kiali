@@ -46,7 +46,7 @@ When(
       url: `api/clusters/services?namespaces=${namespace}`,
       qs: { clusterName: cluster, istioResources: true, onlyDefinitions: false }
     }).then(response => {
-      cy.wrap(response).its('status').should('eq', 200);
+      expect(response.status).to.eq(200);
       const svc = response.body.services.find(
         s => s.name === service && s.namespace === namespace && s.cluster === cluster
       );
