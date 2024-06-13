@@ -545,8 +545,6 @@ func (c Clustering) IsZero() bool {
 }
 
 type FeatureFlagClustering struct {
-	// TODO: Deprecate this in favor of Clustering.Clusters.
-	Clustering         `yaml:",inline"`
 	EnableExecProvider bool `yaml:"enable_exec_provider,omitempty" json:"enable_exec_provider"`
 }
 
@@ -1094,16 +1092,6 @@ func Unmarshal(yamlString string) (conf *Config, err error) {
 		} else if !errors.Is(err, os.ErrNotExist) {
 			log.Errorf("Failed reading secret file [%s]: %v", fullFileName, err)
 		}
-	}
-
-	// Copy over feature flags that have been upgraded to the new format.
-	// TODO: Remove when we no longer support the old format.
-	if conf.Clustering.Clusters == nil && conf.KialiFeatureFlags.Clustering.Clusters != nil {
-		conf.Clustering.Clusters = conf.KialiFeatureFlags.Clustering.Clusters
-	}
-
-	if conf.Clustering.KialiURLs == nil && conf.KialiFeatureFlags.Clustering.KialiURLs != nil {
-		conf.Clustering.KialiURLs = conf.KialiFeatureFlags.Clustering.KialiURLs
 	}
 
 	return

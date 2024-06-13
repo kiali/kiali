@@ -1285,7 +1285,7 @@ func TestAddingKialiInstanceToExistingClusterDoesntAddNewCluster(t *testing.T) {
 	require := require.New(t)
 	conf := config.NewConfig()
 	conf.KubernetesConfig.ClusterName = "Kubernetes"
-	conf.KialiFeatureFlags.Clustering.KialiURLs = []config.KialiURL{{
+	conf.Clustering.KialiURLs = []config.KialiURL{{
 		InstanceName: "kiali",
 		Namespace:    "istio-system",
 		ClusterName:  conf.KubernetesConfig.ClusterName,
