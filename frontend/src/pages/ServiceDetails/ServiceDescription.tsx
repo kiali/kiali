@@ -71,6 +71,7 @@ export const ServiceDescription: React.FC<ServiceInfoDescriptionProps> = (props:
             istioSidecar: wk.istioSidecar,
             istioAmbient: wk.istioAmbient,
             serviceAccountNames: wk.serviceAccountNames,
+            waypointWorkloads: wk.waypointWorkloads,
             labels: wk.labels ?? {}
           });
         });
@@ -167,7 +168,12 @@ export const ServiceDescription: React.FC<ServiceInfoDescriptionProps> = (props:
           </span>
 
           {props.serviceDetails?.workloads?.every(wk => wk.istioAmbient) && (
-            <AmbientLabel tooltip={true} waypoint={false} />
+            <AmbientLabel
+              tooltip={true}
+              waypoint={props.serviceDetails?.workloads?.every(
+                wk => wk.waypointWorkloads && wk.waypointWorkloads.length > 0
+              )}
+            />
           )}
         </Title>
 

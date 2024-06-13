@@ -9,10 +9,11 @@ export interface AppId {
 }
 
 export interface AppWorkload {
-  istioSidecar: boolean;
   istioAmbient: boolean;
+  istioSidecar: boolean;
   labels: { [key: string]: string };
   serviceAccountNames: string[];
+  waypointWorkloads?: string[];
   workloadName: string;
 }
 
