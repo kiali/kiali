@@ -107,21 +107,23 @@ export const getNodeMetrics = (
   filters: Array<string>,
   direction: Direction,
   reporter: Reporter,
+  includeAmbient?: boolean,
   requestProtocol?: string,
   quantiles?: Array<string>,
   byLabels?: Array<string>
 ): Promise<ApiResponse<M.IstioMetricsMap>> => {
   const options: IstioMetricsOptions = {
-    queryTime: props.queryTime,
-    duration: props.duration,
-    step: props.step,
-    rateInterval: props.rateInterval,
-    filters: filters,
-    quantiles: quantiles,
     byLabels: byLabels,
     direction: direction,
+    duration: props.duration,
+    filters: filters,
+    includeAmbient: !!includeAmbient,
+    quantiles: quantiles,
+    queryTime: props.queryTime,
+    rateInterval: props.rateInterval,
     reporter: reporter,
-    requestProtocol: requestProtocol
+    requestProtocol: requestProtocol,
+    step: props.step
   };
 
   switch (nodeMetricType) {

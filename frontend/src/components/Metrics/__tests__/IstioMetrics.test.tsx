@@ -110,6 +110,7 @@ describe('Metrics for a service', () => {
                 object="svc"
                 objectType={MetricsObjectTypes.SERVICE}
                 direction={'inbound'}
+                includeAmbient={false}
               />
             )}
           />
@@ -129,6 +130,7 @@ describe('Metrics for a service', () => {
           object="svc"
           objectType={MetricsObjectTypes.SERVICE}
           direction={'inbound'}
+          includeAmbient={false}
           lastRefreshAt={Date.now()}
         />
       )
@@ -158,6 +160,7 @@ describe('Metrics for a service', () => {
           object="svc"
           objectType={MetricsObjectTypes.SERVICE}
           direction={'inbound'}
+          includeAmbient={false}
           lastRefreshAt={Date.now()}
         />
       )
@@ -198,6 +201,7 @@ describe('Inbound Metrics for a workload', () => {
               object="svc"
               objectType={MetricsObjectTypes.WORKLOAD}
               direction={'inbound'}
+              includeAmbient={false}
             />
           )}
         />
@@ -216,6 +220,7 @@ describe('Inbound Metrics for a workload', () => {
           object="wkd"
           objectType={MetricsObjectTypes.WORKLOAD}
           direction={'inbound'}
+          includeAmbient={false}
           lastRefreshAt={Date.now()}
         />
       )
@@ -245,6 +250,7 @@ describe('Inbound Metrics for a workload', () => {
           object="wkd"
           objectType={MetricsObjectTypes.WORKLOAD}
           direction={'inbound'}
+          includeAmbient={false}
           lastRefreshAt={Date.now()}
         />
       )

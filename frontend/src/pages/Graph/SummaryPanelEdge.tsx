@@ -40,6 +40,7 @@ import { Edge } from '@patternfly/react-topology';
 import { classes } from 'typestyle';
 import { panelBodyStyle, panelHeadingStyle, panelStyle } from './SummaryPanelStyle';
 import { ApiResponse } from 'types/Api';
+import { serverConfig } from 'config';
 
 type SummaryPanelEdgeMetricsState = {
   errRates: Datapoint[];
@@ -362,8 +363,12 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
     const isPF = !!props.data.isPF;
     const edge = this.props.data.summaryTarget;
     const edgeData = isPF ? (edge as Edge).getData() : decoratedEdgeData(edge);
-    const sourceData = isPF ? (edge as Edge).getSource().getData() : decoratedNodeData(edge.source());
-    const destData = isPF ? (edge as Edge).getTarget().getData() : decoratedNodeData(edge.target());
+    const sourceData = isPF
+      ? ((edge as Edge).getSource().getData() as DecoratedGraphNodeData)
+      : decoratedNodeData(edge.source());
+    const destData = isPF
+      ? ((edge as Edge).getTarget().getData() as DecoratedGraphNodeData)
+      : decoratedNodeData(edge.target());
     const sourceMetricType = getNodeMetricType(sourceData);
     const destMetricType = getNodeMetricType(destData);
     const protocol = edgeData.protocol;
@@ -424,6 +429,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
         filtersRps,
         direction,
         reporterRps,
+        serverConfig.ambientEnabled, // TODO change to "metricsNodeData.isAmbient" when it is set for this node type
         protocol,
         quantiles,
         byLabels
@@ -444,6 +450,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
         filters,
         direction,
         reporter,
+        serverConfig.ambientEnabled, // TODO change to "metricsNodeData.isAmbient" when it is set for this node type
         undefined, // streams (tcp, grpc-messages) use dedicated metrics (i.e. no request_protocol label)
         quantiles,
         byLabels
@@ -464,6 +471,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
         filtersTCP,
         direction,
         reporterTCP,
+        undefined, // TCP metrics include ambient by default (ztunnel already uses source/dest reporting)
         undefined, // streams (tcp, grpc-messages) use dedicated metrics (i.e. no request_protocol label)
         quantiles,
         byLabels

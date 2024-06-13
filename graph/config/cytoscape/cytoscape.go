@@ -111,6 +111,7 @@ type NodeData struct {
 	HasTrafficShifting    bool                `json:"hasTrafficShifting,omitempty"`    // true (vs has traffic shifting) | false
 	HasVS                 *VSInfo             `json:"hasVS,omitempty"`                 // it can be empty if there is a VS without hostnames
 	HasWorkloadEntry      []graph.WEInfo      `json:"hasWorkloadEntry,omitempty"`      // static workload entry information | empty if there are no workload entries
+	IsAmbient             bool                `json:"isAmbient,omitempty"`             // true (captured by ambient) | false
 	IsBox                 string              `json:"isBox,omitempty"`                 // set for NodeTypeBox, current values: [ 'app', 'cluster', 'namespace' ]
 	IsDead                bool                `json:"isDead,omitempty"`                // true (has no pods) | false
 	IsGateway             *GWInfo             `json:"isGateway,omitempty"`             // Istio ingress/egress gateway information
@@ -271,6 +272,11 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 		// set annotations, if available
 		if val, ok := n.Metadata[graph.HasHealthConfig]; ok {
 			nd.HasHealthConfig = val.(map[string]string)
+		}
+
+		// node captured by ambient
+		if val, ok := n.Metadata[graph.IsAmbient]; ok {
+			nd.IsAmbient = val.(bool)
 		}
 
 		// node may have deployment but no pods running)

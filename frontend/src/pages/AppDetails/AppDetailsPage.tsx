@@ -24,6 +24,7 @@ import { ErrorSection } from '../../components/ErrorSection/ErrorSection';
 import { connectRefresh } from '../../components/Refresh/connectRefresh';
 import { history, HistoryManager } from 'app/History';
 import { basicTabStyle } from 'styles/TabStyles';
+import { serverConfig } from 'config';
 
 type AppDetailsState = {
   app?: App;
@@ -170,13 +171,14 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
     const inTab = (
       <Tab title="Inbound Metrics" eventKey={2} key={'Inbound Metrics'}>
         <IstioMetrics
+          cluster={this.state.cluster}
           data-test="inbound-metrics-component"
+          direction={'inbound'}
+          includeAmbient={serverConfig.ambientEnabled} // TODO: replace this with actual `isAmbient` when supported for app
           lastRefreshAt={this.props.lastRefreshAt}
           namespace={this.props.appId.namespace}
           object={this.props.appId.app}
           objectType={MetricsObjectTypes.APP}
-          cluster={this.state.cluster}
-          direction={'inbound'}
         />
       </Tab>
     );
@@ -184,13 +186,14 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
     const outTab = (
       <Tab title="Outbound Metrics" eventKey={3} key={'Outbound Metrics'}>
         <IstioMetrics
+          cluster={this.state.cluster}
           data-test="outbound-metrics-component"
+          direction={'outbound'}
+          includeAmbient={serverConfig.ambientEnabled} // TODO: replace this with actual `isAmbient` when supported for app
           lastRefreshAt={this.props.lastRefreshAt}
           namespace={this.props.appId.namespace}
           object={this.props.appId.app}
           objectType={MetricsObjectTypes.APP}
-          cluster={this.state.cluster}
-          direction={'outbound'}
         />
       </Tab>
     );

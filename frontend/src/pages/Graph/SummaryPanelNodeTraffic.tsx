@@ -34,6 +34,7 @@ import { decoratedNodeData } from '../../components/CytoscapeGraph/CytoscapeGrap
 import { KialiIcon } from 'config/KialiIcon';
 import { edgesOut, nodesIn, select } from 'pages/GraphPF/GraphPFElems';
 import { ApiResponse } from 'types/Api';
+import { serverConfig } from 'config';
 
 type SummaryPanelNodeMetricsState = {
   grpcErrorCountIn: Datapoint[];
@@ -128,7 +129,7 @@ export class SummaryPanelNodeTraffic extends React.Component<SummaryPanelNodePro
   updateCharts(props: SummaryPanelNodeProps): void {
     const isPF = !!props.data.isPF;
     const node = props.data.summaryTarget;
-    const nodeData = isPF ? node.getData() : decoratedNodeData(node);
+    const nodeData = isPF ? (node.getData() as DecoratedGraphNodeData) : decoratedNodeData(node);
     const nodeMetricType = getNodeMetricType(nodeData);
     const isGrpcRequests = this.isGrpcRequests();
 
@@ -161,8 +162,7 @@ export class SummaryPanelNodeTraffic extends React.Component<SummaryPanelNodePro
         const filtersRps = ['request_count', 'request_error_count'];
 
         // use dest metrics for inbound, except for service nodes which need source metrics to capture source errors
-        const reporter: Reporter =
-          nodeData.nodeType === NodeType.SERVICE && nodeData.isIstio ? 'source' : 'destination';
+        let reporter: Reporter = nodeData.nodeType === NodeType.SERVICE && nodeData.isIstio ? 'source' : 'destination';
 
         // For special service dest nodes we want to narrow the data to only TS with 'unknown' workloads (see the related
         // comparator in getNodeDatapoints).
@@ -181,6 +181,7 @@ export class SummaryPanelNodeTraffic extends React.Component<SummaryPanelNodePro
           filtersRps,
           'inbound',
           reporter,
+          serverConfig.ambientEnabled, // TODO change to "nodeData.isAmbient" when it is set for all relevant node types
           undefined,
           undefined,
           byLabelsRps
@@ -213,6 +214,7 @@ export class SummaryPanelNodeTraffic extends React.Component<SummaryPanelNodePro
             filtersStream,
             'inbound',
             'source',
+            serverConfig.ambientEnabled, // TODO change to "nodeData.isAmbient" when it is set for all relevant node types
             undefined,
             undefined,
             byLabelsStream
@@ -261,6 +263,7 @@ export class SummaryPanelNodeTraffic extends React.Component<SummaryPanelNodePro
           filters,
           'outbound',
           reporter,
+          serverConfig.ambientEnabled, // TODO change to "nodeData.isAmbient" when it is set for all relevant node types
           undefined,
           undefined,
           byLabels

@@ -36,6 +36,7 @@ import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { descendents, edgesIn, edgesInOut, edgesOut, elems, select, selectOr } from 'pages/GraphPF/GraphPFElems';
 import { panelHeadingStyle, panelStyle } from './SummaryPanelStyle';
 import { ApiResponse } from 'types/Api';
+import { serverConfig } from 'config';
 
 type SummaryPanelNamespaceBoxMetricsState = {
   grpcReceivedIn: Datapoint[];
@@ -668,6 +669,7 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
           direction: 'inbound',
           duration: props.duration,
           filters: filters,
+          includeAmbient: serverConfig.ambientEnabled, // TODO change to "nodeData.isAmbient" when it is set for this node type
           queryTime: props.queryTime,
           rateInterval: props.rateInterval,
           reporter: 'destination',
@@ -682,6 +684,7 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
           direction: 'outbound',
           duration: props.duration,
           filters: filters,
+          includeAmbient: serverConfig.ambientEnabled, // TODO change to "nodeData.isAmbient" when it is set for this node type
           queryTime: props.queryTime,
           rateInterval: props.rateInterval,
           reporter: 'source',

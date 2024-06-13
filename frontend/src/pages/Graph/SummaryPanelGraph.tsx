@@ -710,6 +710,7 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
         byLabels: ['request_protocol'], // ignored by prom if it doesn't exist
         direction: 'inbound',
         duration: props.duration,
+        includeAmbient: serverConfig.ambientEnabled,
         filters: filters,
         queryTime: props.queryTime,
         rateInterval: props.rateInterval,
@@ -722,6 +723,7 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
         direction: 'outbound',
         duration: props.duration,
         filters: filters,
+        includeAmbient: serverConfig.ambientEnabled,
         queryTime: props.queryTime,
         rateInterval: props.rateInterval,
         reporter: 'source',

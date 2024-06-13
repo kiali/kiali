@@ -40,12 +40,20 @@ func (lb *MetricsLabelsBuilder) Add(key, value string) *MetricsLabelsBuilder {
 	return lb
 }
 
+func (lb *MetricsLabelsBuilder) AddOp(key, value, op string) *MetricsLabelsBuilder {
+	lb.labelsKV = append(lb.labelsKV, fmt.Sprintf(`%s%s"%s"`, key, op, value))
+	return lb
+}
+
 func (lb *MetricsLabelsBuilder) addSided(partialKey, value, side string) *MetricsLabelsBuilder {
 	lb.labelsKV = append(lb.labelsKV, fmt.Sprintf(`%s_%s="%s"`, side, partialKey, value))
 	return lb
 }
 
-func (lb *MetricsLabelsBuilder) Reporter(name string) *MetricsLabelsBuilder {
+func (lb *MetricsLabelsBuilder) Reporter(name string, includeAmbient bool) *MetricsLabelsBuilder {
+	if includeAmbient {
+		return lb.AddOp("reporter", fmt.Sprintf("%s|%s", name, "waypoint"), "=~")
+	}
 	return lb.Add("reporter", name)
 }
 

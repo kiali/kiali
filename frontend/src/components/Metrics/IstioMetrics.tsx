@@ -55,6 +55,7 @@ type ObjectId = {
 type IstioMetricsProps = ObjectId &
   RouteComponentProps<{}> & {
     direction: Direction;
+    includeAmbient: boolean;
     objectType: MetricsObjectTypes;
   } & {
     lastRefreshAt: TimeInMilliseconds;
@@ -104,8 +105,9 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
 
   private initOptions(settings: MetricsSettings): IstioMetricsOptions {
     const options: IstioMetricsOptions = {
-      reporter: MetricsReporter.initialReporter(this.props.direction),
-      direction: this.props.direction
+      direction: this.props.direction,
+      includeAmbient: this.props.includeAmbient,
+      reporter: MetricsReporter.initialReporter(this.props.direction)
     };
 
     const defaultLabels = [
