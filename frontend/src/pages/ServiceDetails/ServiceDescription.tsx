@@ -12,6 +12,7 @@ import { KialiIcon } from '../../config/KialiIcon';
 import { HealthIndicator } from '../../components/Health/HealthIndicator';
 import { PFBadge, PFBadges } from '../../components/Pf/PfBadges';
 import { DetailDescription } from '../../components/DetailDescription/DetailDescription';
+import { AmbientLabel } from '../../components/Ambient/AmbientLabel';
 
 interface ServiceInfoDescriptionProps {
   namespace: string;
@@ -164,6 +165,10 @@ export const ServiceDescription: React.FC<ServiceInfoDescriptionProps> = (props:
           <span className={healthIconStyle}>
             <HealthIndicator id={serviceName} health={props.serviceDetails ? props.serviceDetails.health : undefined} />
           </span>
+
+          {props.serviceDetails?.workloads?.every(wk => wk.istioAmbient) && (
+            <AmbientLabel tooltip={true} waypoint={false} />
+          )}
         </Title>
 
         {props.serviceDetails?.service.cluster && isMultiCluster && (
