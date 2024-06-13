@@ -137,11 +137,11 @@ var (
 	}
 	K8sApiNetworkingVersionV1 = K8sNetworkingGroupVersionV1.Group + "/" + K8sNetworkingGroupVersionV1.Version
 
-	SecurityGroupVersion = schema.GroupVersion{
+	SecurityGroupVersionV1 = schema.GroupVersion{
 		Group:   "security.istio.io",
-		Version: "v1beta1",
+		Version: "v1",
 	}
-	ApiSecurityVersion = SecurityGroupVersion.Group + "/" + SecurityGroupVersion.Version
+	ApiSecurityVersionV1 = SecurityGroupVersionV1.Group + "/" + SecurityGroupVersionV1.Version
 
 	ExtensionGroupVersionV1Alpha1 = schema.GroupVersion{
 		Group:   "extensions.istio.io",
@@ -151,7 +151,7 @@ var (
 
 	TelemetryGroupV1 = schema.GroupVersion{
 		Group:   "telemetry.istio.io",
-		Version: "v1alpha1",
+		Version: "v1",
 	}
 	ApiTelemetryV1 = TelemetryGroupV1.Group + "/" + TelemetryGroupV1.Version
 
@@ -201,9 +201,9 @@ var (
 		K8sTCPRoutes:       K8sNetworkingGroupVersionV1Alpha2.Group,
 		K8sTLSRoutes:       K8sNetworkingGroupVersionV1Alpha2.Group,
 
-		AuthorizationPolicies:  SecurityGroupVersion.Group,
-		PeerAuthentications:    SecurityGroupVersion.Group,
-		RequestAuthentications: SecurityGroupVersion.Group,
+		AuthorizationPolicies:  SecurityGroupVersionV1.Group,
+		PeerAuthentications:    SecurityGroupVersionV1.Group,
+		RequestAuthentications: SecurityGroupVersionV1.Group,
 	}
 )
 

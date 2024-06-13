@@ -582,19 +582,19 @@ func (in *IstioConfigService) GetIstioConfigDetails(ctx context.Context, cluster
 		istioConfigDetail.AuthorizationPolicy, err = in.userClients[cluster].Istio().SecurityV1().AuthorizationPolicies(namespace).Get(ctx, object, getOpts)
 		if err == nil {
 			istioConfigDetail.AuthorizationPolicy.Kind = kubernetes.AuthorizationPoliciesType
-			istioConfigDetail.AuthorizationPolicy.APIVersion = kubernetes.ApiSecurityVersion
+			istioConfigDetail.AuthorizationPolicy.APIVersion = kubernetes.ApiSecurityVersionV1
 		}
 	case kubernetes.PeerAuthentications:
 		istioConfigDetail.PeerAuthentication, err = in.userClients[cluster].Istio().SecurityV1().PeerAuthentications(namespace).Get(ctx, object, getOpts)
 		if err == nil {
 			istioConfigDetail.PeerAuthentication.Kind = kubernetes.PeerAuthenticationsType
-			istioConfigDetail.PeerAuthentication.APIVersion = kubernetes.ApiSecurityVersion
+			istioConfigDetail.PeerAuthentication.APIVersion = kubernetes.ApiSecurityVersionV1
 		}
 	case kubernetes.RequestAuthentications:
 		istioConfigDetail.RequestAuthentication, err = in.userClients[cluster].Istio().SecurityV1().RequestAuthentications(namespace).Get(ctx, object, getOpts)
 		if err == nil {
 			istioConfigDetail.RequestAuthentication.Kind = kubernetes.RequestAuthenticationsType
-			istioConfigDetail.RequestAuthentication.APIVersion = kubernetes.ApiSecurityVersion
+			istioConfigDetail.RequestAuthentication.APIVersion = kubernetes.ApiSecurityVersionV1
 		}
 	default:
 		err = fmt.Errorf("object type not found: %v", objectType)
@@ -999,7 +999,7 @@ func (in *IstioConfigService) GetIstioConfigPermissions(ctx context.Context, nam
 
 			go func(ctx context.Context, namespace string, wg *sync.WaitGroup, securityPermissions *models.ResourcesPermissions) {
 				defer wg.Done()
-				canCreate, canUpdate, canDelete := getPermissionsApi(ctx, k8s, cluster, namespace, kubernetes.SecurityGroupVersion.Group, allResources)
+				canCreate, canUpdate, canDelete := getPermissionsApi(ctx, k8s, cluster, namespace, kubernetes.SecurityGroupVersionV1.Group, allResources)
 				for _, rs := range newSecurityConfigTypes {
 					securityRP[rs] = &models.ResourcePermissions{
 						Create: canCreate,
