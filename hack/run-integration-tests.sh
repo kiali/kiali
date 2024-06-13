@@ -355,6 +355,7 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_PRIMARY_REMOTE}" ]; then
 
   ensureKialiServerReady
   ensureMulticlusterApplicationsAreHealthy
+  ensureBookinfoGraphReady
 
   export CYPRESS_BASE_URL="${KIALI_URL}"
   export CYPRESS_CLUSTER1_CONTEXT="kind-east"
