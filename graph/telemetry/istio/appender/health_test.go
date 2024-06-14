@@ -16,6 +16,7 @@ import (
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
+	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/kubernetes/kubetest"
@@ -503,6 +504,8 @@ func TestErrorCausesPanic(t *testing.T) {
 	const panicErrMsg = "test error! This should cause a panic"
 	cache = &cacheWithServicesError{KialiCache: cache, kubeCache: &servicesError{KubeCache: cache.GetKubeCaches()[conf.KubernetesConfig.ClusterName], errorMsg: panicErrMsg}}
 	business.WithKialiCache(cache)
+	discovery := istio.NewDiscovery(map[string]kubernetes.ClientInterface{config.DefaultClusterID: k8s}, cache, conf)
+	business.WithDiscovery(discovery)
 
 	prom := new(prometheustest.PromClientMock)
 	prom.MockNamespaceServicesRequestRates("testNamespace", "0s", time.Unix(0, 0), model.Vector{})
@@ -559,6 +562,8 @@ func TestMultiClusterHealthConfig(t *testing.T) {
 	conf.KubernetesConfig.ClusterName = "east"
 	config.Set(conf)
 	cache := cache.NewTestingCacheWithFactory(t, factory, *conf)
+	discovery := istio.NewDiscovery(factory.GetSAClients(), cache, conf)
+	business.WithDiscovery(discovery)
 	business.WithKialiCache(cache)
 
 	prom := new(prometheustest.PromClientMock)

@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
 
 	"github.com/gorilla/mux"
-	"golang.org/x/exp/slices"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
@@ -91,8 +91,10 @@ func ClustersWorkloads(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for _, ns := range nss {
-		criteria := business.WorkloadCriteria{Cluster: p.ClusterName, Namespace: ns, IncludeHealth: p.IncludeHealth,
-			IncludeIstioResources: p.IncludeIstioResources, RateInterval: p.RateInterval, QueryTime: p.QueryTime}
+		criteria := business.WorkloadCriteria{
+			Cluster: p.ClusterName, Namespace: ns, IncludeHealth: p.IncludeHealth,
+			IncludeIstioResources: p.IncludeIstioResources, RateInterval: p.RateInterval, QueryTime: p.QueryTime,
+		}
 
 		if p.IncludeHealth {
 			rateInterval, err := adjustRateInterval(r.Context(), businessLayer, ns, p.RateInterval, p.QueryTime, p.ClusterName)
@@ -121,9 +123,11 @@ func WorkloadDetails(w http.ResponseWriter, r *http.Request) {
 	p := workloadParams{}
 	p.extract(r)
 
-	criteria := business.WorkloadCriteria{Namespace: p.Namespace, WorkloadName: p.WorkloadName,
+	criteria := business.WorkloadCriteria{
+		Namespace: p.Namespace, WorkloadName: p.WorkloadName,
 		WorkloadType: p.WorkloadType, IncludeIstioResources: true, IncludeServices: true, IncludeHealth: p.IncludeHealth, RateInterval: p.RateInterval,
-		QueryTime: p.QueryTime, Cluster: p.ClusterName}
+		QueryTime: p.QueryTime, Cluster: p.ClusterName,
+	}
 
 	// Get business layer
 	business, err := getBusiness(r)

@@ -47,7 +47,7 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalIn
 	}
 
 	// start by adding istio control planes and the mesh clusters
-	meshDef, err := gi.Business.Mesh.GetMesh(ctx)
+	meshDef, err := gi.Discovery.Mesh(ctx)
 	graph.CheckError(err)
 
 	namespaces, err := gi.Business.Namespace.GetNamespaces(ctx)
@@ -117,7 +117,11 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalIn
 		if cp.Version != nil {
 			version = cp.Version.Version
 		}
-		istiod, _, err := addInfra(meshMap, mesh.InfraTypeIstiod, cp.Cluster.Name, cp.IstiodNamespace, name, cp.Config, version, false, healthData[cp.IstiodName], false)
+		infraData := map[string]any{
+			"config":   cp.Config,
+			"revision": cp.Revision,
+		}
+		istiod, _, err := addInfra(meshMap, mesh.InfraTypeIstiod, cp.Cluster.Name, cp.IstiodNamespace, name, infraData, version, false, healthData[cp.IstiodName], false)
 		mesh.CheckError(err)
 
 		// add the managed namespaces by cluster and narrowed, if necessary, by revision
@@ -150,7 +154,8 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalIn
 
 			isDataPlaneCanary := isCanary && cp.Revision == canaryStatus.UpgradeVersion
 
-			dp, _, err := addInfra(meshMap, mesh.InfraTypeDataPlane, cluster, "", "Data Plane", namespaces, cp.Revision, false, "", isDataPlaneCanary)
+			// TODO: Fix version for data plane.
+			dp, _, err := addInfra(meshMap, mesh.InfraTypeDataPlane, cluster, "", "Data Plane", namespaces, "", false, "", isDataPlaneCanary)
 			graph.CheckError(err)
 
 			istiod.AddEdge(dp)

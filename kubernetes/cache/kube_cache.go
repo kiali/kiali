@@ -3,10 +3,9 @@ package cache
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"sync"
 	"time"
-
-	"golang.org/x/exp/slices"
 
 	extentions_v1alpha1 "istio.io/client-go/pkg/apis/extensions/v1alpha1"
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
@@ -66,6 +65,7 @@ type KubeCache interface {
 	// using the Kiali Service Account client.
 	Client() kubernetes.ClientInterface
 
+	GetConfigMaps(namespace, labelSelector string) ([]core_v1.ConfigMap, error)
 	GetConfigMap(namespace, name string) (*core_v1.ConfigMap, error)
 	GetDaemonSets(namespace string) ([]apps_v1.DaemonSet, error)
 	GetDaemonSet(namespace, name string) (*apps_v1.DaemonSet, error)
@@ -500,6 +500,52 @@ func (c *kubeCache) GetConfigMap(namespace, name string) (*core_v1.ConfigMap, er
 	return retCM, nil
 }
 
+// GetConfigMaps returns list of configmaps filtered by the labelSelector.
+func (c *kubeCache) GetConfigMaps(namespace string, labelSelector string) ([]core_v1.ConfigMap, error) {
+	// Read lock will prevent the cache from being refreshed while we are reading from the lister
+	// but it won't prevent other routines from reading from the lister.
+	defer c.cacheLock.RUnlock()
+	c.cacheLock.RLock()
+
+	selector, err := labels.Parse(labelSelector)
+	if err != nil {
+		return nil, err
+	}
+
+	configMaps := []*core_v1.ConfigMap{}
+	if namespace == metav1.NamespaceAll {
+		if c.clusterScoped {
+			configMaps, err = c.clusterCacheLister.configMapLister.List(selector)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			for _, nsCacheLister := range c.nsCacheLister {
+				configMapsNamespaced, err := nsCacheLister.configMapLister.List(selector)
+				if err != nil {
+					return nil, err
+				}
+				configMaps = append(configMaps, configMapsNamespaced...)
+			}
+		}
+	} else {
+		configMaps, err = c.getCacheLister(namespace).configMapLister.ConfigMaps(namespace).List(selector)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	log.Tracef("[Kiali Cache] Get [resource: ConfigMap] for [namespace: %s] = %d", namespace, len(configMaps))
+
+	var retConfigMaps []core_v1.ConfigMap
+	for _, cc := range configMaps {
+		c := cc.DeepCopy()
+		c.Kind = kubernetes.ConfigMapType
+		retConfigMaps = append(retConfigMaps, *c)
+	}
+	return retConfigMaps, nil
+}
+
 func (c *kubeCache) GetDaemonSets(namespace string) ([]apps_v1.DaemonSet, error) {
 	// Read lock will prevent the cache from being refreshed while we are reading from the lister
 	// but it won't prevent other routines from reading from the lister.
@@ -554,10 +600,11 @@ func (c *kubeCache) GetDaemonSetsWithSelector(namespace string, selectorLabels m
 			}
 		} else {
 			for _, nsCacheLister := range c.nsCacheLister {
-				daemonSets, err = nsCacheLister.daemonSetLister.List(labels.Everything())
+				daemonSetsNS, err := nsCacheLister.daemonSetLister.List(labels.Everything())
 				if err != nil {
 					return nil, err
 				}
+				daemonSets = append(daemonSets, daemonSetsNS...)
 			}
 		}
 	} else {

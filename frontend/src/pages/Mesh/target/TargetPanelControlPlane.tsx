@@ -122,6 +122,10 @@ export class TargetPanelControlPlane extends React.Component<
     const nsInfo = this.state.nsInfo;
     const data = this.state.controlPlaneNode?.getData() as NodeData;
 
+    // Controlplane infradata is structured: {config: configuration, revision: string}
+    const config = data.infraData?.config;
+    const revision = data.infraData?.revision;
+
     return (
       <div
         id="target-panel-control-plane"
@@ -133,7 +137,7 @@ export class TargetPanelControlPlane extends React.Component<
         <div className={panelBodyStyle}>
           <div>{t('Version: {{version}}', { version: data.version || t(UNKNOWN) })}</div>
 
-          <MeshMTLSStatus />
+          <MeshMTLSStatus cluster={data.cluster} revision={revision} />
 
           <ControlPlaneNamespaceStatus
             outboundTrafficPolicy={this.state.outboundPolicyMode}
@@ -165,7 +169,7 @@ export class TargetPanelControlPlane extends React.Component<
 
           {targetPanelHR}
 
-          <TargetPanelConfigTable configData={data.infraData} targetName={data.infraName} width="40%" />
+          <TargetPanelConfigTable configData={config} targetName={data.infraName} width="40%" />
         </div>
       </div>
     );

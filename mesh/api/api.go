@@ -9,6 +9,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/grafana"
 	"github.com/kiali/kiali/graph"
+	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/log"
@@ -27,6 +28,7 @@ func GraphMesh(
 	kialiCache cache.KialiCache,
 	conf *config.Config,
 	grafana *grafana.Service,
+	discovery *istio.Discovery,
 ) (code int, config interface{}) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GraphNamespaces",
@@ -42,6 +44,7 @@ func GraphMesh(
 	globalInfo.Business = business
 	globalInfo.ClientFactory = clientFactory
 	globalInfo.Config = conf
+	globalInfo.Discovery = discovery
 	globalInfo.Grafana = grafana
 	globalInfo.KialiCache = kialiCache
 	globalInfo.IstioStatusGetter = &business.IstioStatus

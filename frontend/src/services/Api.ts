@@ -223,12 +223,11 @@ export const getClustersMetrics = (
   return newRequest<MetricsPerNamespace>(HTTP_VERBS.GET, urls.clustersMetrics(), queryParams, {});
 };
 
-export const getMeshTls = (cluster?: string): Promise<ApiResponse<TLSStatus>> => {
-  const queryParams: ClusterParam = {};
-
-  if (cluster) {
-    queryParams.clusterName = cluster;
-  }
+export const getMeshTls = (cluster: string, revision: string): Promise<ApiResponse<TLSStatus>> => {
+  const queryParams = {
+    cluster,
+    revision
+  };
 
   return newRequest<TLSStatus>(HTTP_VERBS.GET, urls.meshTls(), queryParams, {});
 };

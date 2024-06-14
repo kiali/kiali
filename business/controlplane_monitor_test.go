@@ -17,8 +17,10 @@ import (
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
+	"github.com/kiali/kiali/models"
 )
 
 func TestRegistryServices(t *testing.T) {
@@ -95,8 +97,8 @@ func runningIstiodPod() *core_v1.Pod {
 			Name:      "istiod-123",
 			Namespace: "istio-system",
 			Labels: map[string]string{
-				"app":              "istiod",
-				IstioRevisionLabel: "default",
+				"app":                     "istiod",
+				models.IstioRevisionLabel: "default",
 			},
 		},
 		Status: core_v1.PodStatus{
@@ -127,8 +129,8 @@ func TestCanConnectToIstiod(t *testing.T) {
 	cf := kubetest.NewK8SClientFactoryMock(fakeForwarder)
 	k8sclients := make(map[string]kubernetes.ClientInterface)
 	k8sclients[conf.KubernetesConfig.ClusterName] = fakeForwarder
-	mesh := NewWithBackends(k8sclients, k8sclients, nil, nil).Mesh
-	cpm := NewControlPlaneMonitor(cache, cf, *conf, &mesh)
+	discovery := istio.NewDiscovery(k8sclients, cache, conf)
+	cpm := NewControlPlaneMonitor(cache, cf, *conf, discovery)
 
 	status, err := cpm.CanConnectToIstiod(fakeForwarder)
 	require.NoError(err)
@@ -153,8 +155,8 @@ func TestConnectToIstiodExternalURL(t *testing.T) {
 	cf := kubetest.NewK8SClientFactoryMock(k8s)
 	k8sclients := make(map[string]kubernetes.ClientInterface)
 	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
-	mesh := NewWithBackends(k8sclients, k8sclients, nil, nil).Mesh
-	cpm := NewControlPlaneMonitor(cache, cf, *conf, &mesh)
+	discovery := istio.NewDiscovery(k8sclients, cache, conf)
+	cpm := NewControlPlaneMonitor(cache, cf, *conf, discovery)
 
 	status, err := cpm.CanConnectToIstiod(k8s)
 	require.NoError(err)
@@ -179,8 +181,8 @@ func TestConnectToIstiodWithRevisionExternalURL(t *testing.T) {
 	cf := kubetest.NewK8SClientFactoryMock(k8s)
 	k8sclients := make(map[string]kubernetes.ClientInterface)
 	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
-	mesh := NewWithBackends(k8sclients, k8sclients, nil, nil).Mesh
-	cpm := NewControlPlaneMonitor(cache, cf, *conf, &mesh)
+	discovery := istio.NewDiscovery(k8sclients, cache, conf)
+	cpm := NewControlPlaneMonitor(cache, cf, *conf, discovery)
 
 	status, err := cpm.CanConnectToIstiodForRevision(k8s, "default")
 	require.NoError(err)
@@ -216,8 +218,8 @@ func TestCanConnectToUnreachableIstiod(t *testing.T) {
 	cf := kubetest.NewK8SClientFactoryMock(fakeForwarder)
 	k8sclients := make(map[string]kubernetes.ClientInterface)
 	k8sclients[conf.KubernetesConfig.ClusterName] = fakeForwarder
-	mesh := NewWithBackends(k8sclients, k8sclients, nil, nil).Mesh
-	cpm := NewControlPlaneMonitor(cache, cf, *conf, &mesh)
+	discovery := istio.NewDiscovery(k8sclients, cache, conf)
+	cpm := NewControlPlaneMonitor(cache, cf, *conf, discovery)
 
 	status, err := cpm.CanConnectToIstiod(fakeForwarder)
 	require.NoError(err)
@@ -227,7 +229,7 @@ func TestCanConnectToUnreachableIstiod(t *testing.T) {
 
 func fakeIstiodWithRevision(cluster string, revision string, manageExternal bool) *apps_v1.Deployment {
 	deployment := fakeIstiodDeployment(cluster, manageExternal)
-	deployment.Labels[IstioRevisionLabel] = revision
+	deployment.Labels[models.IstioRevisionLabel] = revision
 	deployment.Name = "istiod-" + revision
 	return deployment
 }
@@ -257,8 +259,8 @@ func fakeIstiodDeployment(cluster string, manageExternal bool) *apps_v1.Deployme
 			Name:      "istiod",
 			Namespace: "istio-system",
 			Labels: map[string]string{
-				"app":              "istiod",
-				IstioRevisionLabel: "default",
+				"app":                     "istiod",
+				models.IstioRevisionLabel: "default",
 			},
 		},
 		Spec: apps_v1.DeploymentSpec{
@@ -305,6 +307,9 @@ trustDomain: cluster.local
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "istio",
 			Namespace: "istio-system",
+			Labels: map[string]string{
+				models.IstioRevisionLabel: "default",
+			},
 		},
 		Data: map[string]string{"mesh": configMapData},
 	}
@@ -329,8 +334,8 @@ trustDomain: cluster.local
 	cf := kubetest.NewK8SClientFactoryMock(fakeForwarder)
 	k8sclients := make(map[string]kubernetes.ClientInterface)
 	k8sclients[conf.KubernetesConfig.ClusterName] = fakeForwarder
-	mesh := NewWithBackends(k8sclients, k8sclients, nil, nil).Mesh
-	cpm := NewControlPlaneMonitor(cache, cf, *conf, &mesh)
+	discovery := istio.NewDiscovery(k8sclients, cache, conf)
+	cpm := NewControlPlaneMonitor(cache, cf, *conf, discovery)
 
 	assert.Nil(cache.GetRegistryStatus(conf.KubernetesConfig.ClusterName))
 	err := cpm.RefreshIstioCache(context.TODO())
@@ -358,8 +363,8 @@ func TestCancelingContextEndsPolling(t *testing.T) {
 	cf := kubetest.NewK8SClientFactoryMock(k8s)
 	k8sclients := make(map[string]kubernetes.ClientInterface)
 	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
-	mesh := NewWithBackends(k8sclients, k8sclients, nil, nil).Mesh
-	cpm := NewControlPlaneMonitor(cache, cf, *conf, &mesh)
+	discovery := istio.NewDiscovery(k8sclients, cache, conf)
+	cpm := NewControlPlaneMonitor(cache, cf, *conf, discovery)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
@@ -383,6 +388,9 @@ trustDomain: cluster.local
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "istio",
 			Namespace: "istio-system",
+			Labels: map[string]string{
+				models.IstioRevisionLabel: "default",
+			},
 		},
 		Data: map[string]string{"mesh": configMapData},
 	}
@@ -408,8 +416,8 @@ trustDomain: cluster.local
 	cf := kubetest.NewK8SClientFactoryMock(fakeForwarder)
 	k8sclients := make(map[string]kubernetes.ClientInterface)
 	k8sclients[conf.KubernetesConfig.ClusterName] = fakeForwarder
-	mesh := NewWithBackends(k8sclients, k8sclients, nil, nil).Mesh
-	cpm := NewControlPlaneMonitor(cache, cf, *conf, &mesh)
+	discovery := istio.NewDiscovery(k8sclients, cache, conf)
+	cpm := NewControlPlaneMonitor(cache, cf, *conf, discovery)
 	// Make this really low so that we get something sooner.
 	cpm.pollingInterval = time.Millisecond * 1
 
@@ -446,9 +454,9 @@ func TestRefreshIstioCacheWithMultipleRevisions(t *testing.T) {
 	defaultIstiod := fakeIstiodDeployment(conf.KubernetesConfig.ClusterName, false)
 	istiod_1_19 := fakeIstiodWithRevision(conf.KubernetesConfig.ClusterName, "1-19-0", false)
 	defaultPod := runningIstiodPod()
-	defaultPod.Labels[IstioRevisionLabel] = "default"
+	defaultPod.Labels[models.IstioRevisionLabel] = "default"
 	istiod_1_19_pod := runningIstiodPod()
-	istiod_1_19_pod.Labels[IstioRevisionLabel] = "1-19-0"
+	istiod_1_19_pod.Labels[models.IstioRevisionLabel] = "1-19-0"
 
 	k8s := kubetest.NewFakeK8sClient(
 		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "istio-system"}},
@@ -471,8 +479,8 @@ func TestRefreshIstioCacheWithMultipleRevisions(t *testing.T) {
 	cf := kubetest.NewK8SClientFactoryMock(fakeForwarder)
 	k8sclients := make(map[string]kubernetes.ClientInterface)
 	k8sclients[conf.KubernetesConfig.ClusterName] = fakeForwarder
-	mesh := NewWithBackends(k8sclients, k8sclients, nil, nil).Mesh
-	cpm := NewControlPlaneMonitor(cache, cf, *conf, &mesh)
+	discovery := istio.NewDiscovery(k8sclients, cache, conf)
+	cpm := NewControlPlaneMonitor(cache, cf, *conf, discovery)
 
 	defaultStatuses, err := cpm.CanConnectToIstiodForRevision(fakeForwarder, "default")
 	require.NoError(err)

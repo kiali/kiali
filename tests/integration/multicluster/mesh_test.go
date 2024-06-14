@@ -5,34 +5,28 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/kiali/kiali/business"
-	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/mesh/config/cytoscape"
 	"github.com/kiali/kiali/tests/integration/utils/kiali"
+	"github.com/kiali/kiali/util/sliceutil"
 )
 
 // Expected to be run with setup-external-controlplane.sh
+// TODO: Move this to a frontend mesh page test.
 func TestMeshShowsExternalControlPlane(t *testing.T) {
 	require := require.New(t)
 
-	mesh, err := kiali.Mesh()
+	mesh, err := kiali.MeshGraph()
 	require.NoError(err)
 
-	require.Len(mesh.ControlPlanes, 2)
-
-	// Manages the controlplane cluster.
-	controlPlane := business.FindOrFail(t, mesh.ControlPlanes, func(c models.ControlPlane) bool {
-		return c.IstiodName == "istiod" && c.IstiodNamespace == "istio-system" && c.Cluster.Name == "Kubernetes"
-	})
-	require.Len(controlPlane.ManagedClusters, 1)
-	require.Equal("Kubernetes", controlPlane.ManagedClusters[0].Name)
-
-	// Manages the external clusters.
-	externalControlPlane := business.FindOrFail(t, mesh.ControlPlanes, func(c models.ControlPlane) bool {
-		return c.IstiodName == "istiod" && c.IstiodNamespace == "external-istiod" && c.Cluster.Name == "Kubernetes"
+	istiodNodes := sliceutil.Filter(mesh.Elements.Nodes, func(node *cytoscape.NodeWrapper) bool {
+		return node.Data.InfraType == "istiod"
 	})
 
-	require.Equal("dataplane", externalControlPlane.ID)
-	require.True(externalControlPlane.ExternalControlPlane)
-	require.Len(externalControlPlane.ManagedClusters, 1)
-	require.Equal("dataplane", externalControlPlane.ManagedClusters[0].Name)
+	require.Len(istiodNodes, 2)
+	for _, node := range istiodNodes {
+		require.Equal(node.Data.Cluster, "Kubernetes")
+	}
+
+	// TODO: When this is a mesh page test, need to ensure that there's two controlplanes
+	// the "external" controlplane is managing the dataplane on the "remote" cluster.
 }

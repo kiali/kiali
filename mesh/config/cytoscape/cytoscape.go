@@ -34,6 +34,7 @@ type NodeData struct {
 	InfraType string `json:"infraType"`
 	Namespace string `json:"namespace"`
 	NodeType  string `json:"nodeType"`
+
 	// Other Fields
 	HasInfra       bool        `json:"-"`                        // for local when generating boxes
 	HealthData     interface{} `json:"healthData"`               // data to calculate health status from configurations

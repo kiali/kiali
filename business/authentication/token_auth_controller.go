@@ -12,6 +12,7 @@ import (
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/log"
@@ -26,6 +27,7 @@ import (
 // in requests to the Kubernetes API.
 type tokenAuthController struct {
 	conf          *config.Config
+	discovery     *istio.Discovery
 	kialiCache    cache.KialiCache
 	clientFactory kubernetes.ClientFactory
 	// SessionStore persists the session between HTTP requests.
@@ -41,12 +43,19 @@ type tokenSessionPayload struct {
 // NewTokenAuthController initializes a new controller for handling token authentication, with the
 // given persistor and the given businessInstantiator. The businessInstantiator can be nil and
 // the initialized contoller will use the business.Get function.
-func NewTokenAuthController(persistor SessionPersistor, clientFactory kubernetes.ClientFactory, kialiCache cache.KialiCache, conf *config.Config) *tokenAuthController {
+func NewTokenAuthController(
+	persistor SessionPersistor,
+	clientFactory kubernetes.ClientFactory,
+	kialiCache cache.KialiCache,
+	conf *config.Config,
+	discovery *istio.Discovery,
+) *tokenAuthController {
 	return &tokenAuthController{
 		clientFactory: clientFactory,
+		conf:          conf,
+		discovery:     discovery,
 		SessionStore:  persistor,
 		kialiCache:    kialiCache,
-		conf:          conf,
 	}
 }
 
@@ -78,7 +87,7 @@ func (c tokenAuthController) Authenticate(r *http.Request, w http.ResponseWriter
 		return nil, fmt.Errorf("could not get the clients: %w", err)
 	}
 
-	namespaceService := business.NewNamespaceService(clients, c.clientFactory.GetSAClients(), c.kialiCache, c.conf)
+	namespaceService := business.NewNamespaceService(clients, c.clientFactory.GetSAClients(), c.kialiCache, c.conf, c.discovery)
 
 	// Using the namespaces API to check if token is valid. In Kubernetes, the version API seems to allow
 	// anonymous access, so it's not feasible to use the version API for token verification.
@@ -131,7 +140,7 @@ func (c tokenAuthController) ValidateSession(r *http.Request, w http.ResponseWri
 		return nil, fmt.Errorf("could create user clients from token: %w", err)
 	}
 
-	namespaceService := business.NewNamespaceService(clients, c.clientFactory.GetSAClients(), c.kialiCache, c.conf)
+	namespaceService := business.NewNamespaceService(clients, c.clientFactory.GetSAClients(), c.kialiCache, c.conf, c.discovery)
 	_, err = namespaceService.GetNamespaces(r.Context())
 	if err != nil {
 		// The Kubernetes API rejected the token.

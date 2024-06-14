@@ -14,6 +14,7 @@ import (
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/grafana"
+	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/log"
@@ -27,6 +28,7 @@ type Server struct {
 	conf                *config.Config
 	controlPlaneMonitor business.ControlPlaneMonitor
 	clientFactory       kubernetes.ClientFactory
+	discovery           *istio.Discovery
 	grafana             *grafana.Service
 	httpServer          *http.Server
 	kialiCache          cache.KialiCache
@@ -44,10 +46,11 @@ func NewServer(controlPlaneMonitor business.ControlPlaneMonitor,
 	conf *config.Config,
 	prom prometheus.ClientInterface,
 	traceClientLoader func() tracing.ClientInterface,
+	discovery *istio.Discovery,
 ) (*Server, error) {
 	grafana := grafana.NewService(conf, clientFactory.GetSAHomeClusterClient())
 	// create a router that will route all incoming API server requests to different handlers
-	router, err := routing.NewRouter(conf, cache, clientFactory, prom, traceClientLoader, controlPlaneMonitor, grafana)
+	router, err := routing.NewRouter(conf, cache, clientFactory, prom, traceClientLoader, controlPlaneMonitor, grafana, discovery)
 	if err != nil {
 		return nil, err
 	}
@@ -107,6 +110,7 @@ func NewServer(controlPlaneMonitor business.ControlPlaneMonitor,
 		conf:                conf,
 		clientFactory:       clientFactory,
 		controlPlaneMonitor: controlPlaneMonitor,
+		discovery:           discovery,
 		grafana:             grafana,
 		httpServer:          httpServer,
 		kialiCache:          cache,
@@ -122,7 +126,7 @@ func NewServer(controlPlaneMonitor business.ControlPlaneMonitor,
 
 // Start HTTP server asynchronously. TLS may be active depending on the global configuration.
 func (s *Server) Start() {
-	business.Start(s.clientFactory, s.controlPlaneMonitor, s.kialiCache, s.prom, s.traceClientLoader, s.grafana)
+	business.Start(s.clientFactory, s.controlPlaneMonitor, s.kialiCache, s.discovery, s.prom, s.traceClientLoader, s.grafana)
 
 	log.Infof("Server endpoint will start at [%v%v]", s.httpServer.Addr, s.conf.Server.WebRoot)
 	log.Infof("Server endpoint will serve static content from [%v]", s.conf.Server.StaticContentRootDirectory)

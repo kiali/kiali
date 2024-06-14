@@ -22,8 +22,9 @@ import (
 )
 
 type IstioValidationsService struct {
-	userClients   map[string]kubernetes.ClientInterface
 	businessLayer *Layer
+	discovery     meshDiscovery
+	userClients   map[string]kubernetes.ClientInterface
 }
 
 type ObjectChecker interface {
@@ -83,7 +84,7 @@ func (in *IstioValidationsService) GetValidations(ctx context.Context, cluster, 
 	var rbacDetails kubernetes.RBACDetails
 	var registryServices []*kubernetes.RegistryService
 
-	wg.Add(4) // We need to add these here to make sure we don't execute wg.Wait() before scheduler has started goroutines
+	wg.Add(3) // We need to add these here to make sure we don't execute wg.Wait() before scheduler has started goroutines
 	if service != "" {
 		wg.Add(1)
 	}
@@ -100,7 +101,9 @@ func (in *IstioValidationsService) GetValidations(ctx context.Context, cluster, 
 
 	go in.fetchServiceAccounts(ctx, &serviceAccounts, errChan, &wg)
 
-	go in.fetchNonLocalmTLSConfigs(&mtlsDetails, cluster, errChan, &wg)
+	if err := in.fetchNonLocalmTLSConfigs(&mtlsDetails, cluster); err != nil {
+		return nil, err
+	}
 	if service != "" {
 		go in.fetchServices(ctx, &services, cluster, namespace, errChan, &wg)
 	}
@@ -183,7 +186,7 @@ func (in *IstioValidationsService) GetIstioObjectValidations(ctx context.Context
 
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
 	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
-	if _, err = in.businessLayer.Namespace.GetClusterNamespace(ctx, namespace, cluster); err != nil {
+	if _, err := in.businessLayer.Namespace.GetClusterNamespace(ctx, namespace, cluster); err != nil {
 		return nil, istioReferences, err
 	}
 
@@ -195,12 +198,14 @@ func (in *IstioValidationsService) GetIstioObjectValidations(ctx context.Context
 	errChan := make(chan error, 1)
 
 	// Get all the Istio objects from a Namespace and all gateways from every namespace
-	wg.Add(4)
+	wg.Add(3)
 
 	go in.fetchIstioConfigList(ctx, &istioConfigList, &mtlsDetails, &rbacDetails, cluster, namespace, errChan, &wg)
 	go in.fetchAllWorkloads(ctx, &workloadsPerNamespace, cluster, &namespaces, errChan, &wg)
 	go in.fetchServiceAccounts(ctx, &serviceAccounts, errChan, &wg)
-	go in.fetchNonLocalmTLSConfigs(&mtlsDetails, cluster, errChan, &wg)
+	if err := in.fetchNonLocalmTLSConfigs(&mtlsDetails, cluster); err != nil {
+		return nil, nil, err
+	}
 
 	if istioApiEnabled {
 		criteria := RegistryCriteria{AllNamespaces: true, Cluster: cluster}
@@ -602,35 +607,24 @@ func (in *IstioValidationsService) isExportedObjectIncluded(exportTo []string, a
 	return false
 }
 
-func (in *IstioValidationsService) fetchNonLocalmTLSConfigs(mtlsDetails *kubernetes.MTLSDetails, cluster string, errChan chan error, wg *sync.WaitGroup) {
-	defer wg.Done()
-	if len(errChan) > 0 {
-		return
+func (in *IstioValidationsService) fetchNonLocalmTLSConfigs(mtlsDetails *kubernetes.MTLSDetails, cluster string) error {
+	mesh, err := in.discovery.Mesh(context.TODO())
+	if err != nil {
+		return err
 	}
 
-	cfg := config.Get()
-	// TODO: Handle multi-primary instead of only using home cluster.
-	kubeCache, err := kialiCache.GetKubeCache(cfg.KubernetesConfig.ClusterName)
-	if err != nil {
-		return
+	// TODO: Multi-primary support
+	for _, controlPlane := range mesh.ControlPlanes {
+		if controlPlane.Cluster.IsKialiHome {
+			mtlsDetails.EnabledAutoMtls = controlPlane.Config.GetEnableAutoMtls()
+		}
 	}
 
-	istioConfig, err := kubeCache.GetConfigMap(cfg.IstioNamespace, IstioConfigMapName(*cfg, ""))
-	if err != nil {
-		errChan <- err
-		return
-	}
-
-	icm, err := kubernetes.GetIstioConfigMap(istioConfig)
-	if err != nil {
-		errChan <- err
-	} else {
-		mtlsDetails.EnabledAutoMtls = icm.GetEnableAutoMtls()
-	}
+	return nil
 }
 
 func (in *IstioValidationsService) isGatewayToNamespace() bool {
-	mesh, err := in.businessLayer.Mesh.GetMesh(context.TODO())
+	mesh, err := in.discovery.Mesh(context.TODO())
 	if err != nil {
 		log.Errorf("Error getting mesh config: %s", err)
 		return false

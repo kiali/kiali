@@ -39,6 +39,7 @@ import (
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/log"
@@ -123,9 +124,8 @@ func main() {
 		Version:          version,
 	})
 
-	namespaceService := business.NewNamespaceService(clientFactory.GetSAClients(), clientFactory.GetSAClients(), cache, cfg)
-	meshService := business.NewMeshService(clientFactory.GetSAClients(), cache, namespaceService, *cfg)
-	cpm := business.NewControlPlaneMonitor(cache, clientFactory, *cfg, &meshService)
+	discovery := istio.NewDiscovery(clientFactory.GetSAClients(), cache, cfg)
+	cpm := business.NewControlPlaneMonitor(cache, clientFactory, *cfg, discovery)
 
 	// This context is used for polling and for creating some high level clients like tracing.
 	ctx, cancel := context.WithCancel(context.Background())
@@ -165,7 +165,7 @@ func main() {
 	}
 
 	// Start listening to requests
-	server, err := server.NewServer(cpm, clientFactory, cache, cfg, prom, tracingLoader)
+	server, err := server.NewServer(cpm, clientFactory, cache, cfg, prom, tracingLoader, discovery)
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -23,6 +23,7 @@ import (
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/log"
@@ -113,21 +114,23 @@ func (e badOidcRequest) Error() string {
 // for simpler setups.
 type OpenIdAuthController struct {
 	// SessionStore persists the session between HTTP requests.
-	SessionStore  SessionPersistor
-	kialiCache    cache.KialiCache
 	clientFactory kubernetes.ClientFactory
+	discovery     *istio.Discovery
+	kialiCache    cache.KialiCache
 	conf          *config.Config
+	SessionStore  SessionPersistor
 }
 
 // NewOpenIdAuthController initializes a new controller for handling openid authentication, with the
 // given persistor and the given businessInstantiator. The businessInstantiator can be nil and
 // the initialized contoller will use the business.Get function.
-func NewOpenIdAuthController(persistor SessionPersistor, kialiCache cache.KialiCache, clientFactory kubernetes.ClientFactory, conf *config.Config) *OpenIdAuthController {
+func NewOpenIdAuthController(persistor SessionPersistor, kialiCache cache.KialiCache, clientFactory kubernetes.ClientFactory, conf *config.Config, discovery *istio.Discovery) *OpenIdAuthController {
 	return &OpenIdAuthController{
-		SessionStore:  persistor,
-		kialiCache:    kialiCache,
 		clientFactory: clientFactory,
 		conf:          conf,
+		discovery:     discovery,
+		kialiCache:    kialiCache,
+		SessionStore:  persistor,
 	}
 }
 
@@ -232,7 +235,7 @@ func (c OpenIdAuthController) ValidateSession(r *http.Request, w http.ResponseWr
 			return nil, fmt.Errorf("unable to create a Kubernetes client from the auth token: %w", err)
 		}
 
-		namespaceService := business.NewNamespaceService(userClients, c.clientFactory.GetSAClients(), c.kialiCache, c.conf)
+		namespaceService := business.NewNamespaceService(userClients, c.clientFactory.GetSAClients(), c.kialiCache, c.conf, c.discovery)
 		_, err = namespaceService.GetNamespaces(r.Context())
 		if err != nil {
 			log.Warningf("Token error!: %v", err)
@@ -274,7 +277,7 @@ func (c OpenIdAuthController) authenticateWithAuthorizationCodeFlow(r *http.Requ
 	webRoot := c.conf.Server.WebRoot
 	webRootWithSlash := webRoot + "/"
 
-	flow := openidFlowHelper{kialiCache: c.kialiCache, conf: c.conf, clientFactory: c.clientFactory}
+	flow := openidFlowHelper{kialiCache: c.kialiCache, conf: c.conf, clientFactory: c.clientFactory, discovery: c.discovery}
 	flow.
 		extractOpenIdCallbackParams(r).
 		checkOpenIdAuthorizationCodeFlowParams().
@@ -467,9 +470,10 @@ type openidFlowHelper struct {
 	// as a consequence of a failure of a new authentication attempt (i.e if the Error field is not nil).
 	ShouldTerminateSession bool
 
-	kialiCache    cache.KialiCache
 	clientFactory kubernetes.ClientFactory
 	conf          *config.Config
+	discovery     *istio.Discovery
+	kialiCache    cache.KialiCache
 }
 
 // callbackCleanup deletes the nonce cookie that was generated during the redirection from Kiali to
@@ -618,7 +622,7 @@ func (p *openidFlowHelper) checkUserPrivileges() *openidFlowHelper {
 			apiToken = p.AccessToken
 			p.UseAccessToken = true
 		}
-		httpStatus, errMsg, detailedError := verifyOpenIdUserAccess(apiToken, p.clientFactory, p.kialiCache, p.conf)
+		httpStatus, errMsg, detailedError := verifyOpenIdUserAccess(apiToken, p.clientFactory, p.kialiCache, p.conf, p.discovery)
 		if httpStatus != http.StatusOK {
 			p.Error = &AuthenticationFailureError{
 				HttpStatus: httpStatus,
@@ -1359,14 +1363,14 @@ func validateOpenIdTokenInHouse(openIdParams *openidFlowHelper) error {
 
 // verifyOpenIdUserAccess checks that the provided token has enough privileges on the cluster to
 // allow a login to Kiali.
-func verifyOpenIdUserAccess(token string, clientFactory kubernetes.ClientFactory, kialiCache cache.KialiCache, conf *config.Config) (int, string, error) {
+func verifyOpenIdUserAccess(token string, clientFactory kubernetes.ClientFactory, kialiCache cache.KialiCache, conf *config.Config, discovery *istio.Discovery) (int, string, error) {
 	authInfo := &api.AuthInfo{Token: token}
 	userClients, err := clientFactory.GetClients(authInfo)
 	if err != nil {
 		return http.StatusInternalServerError, "Unable to create a Kubernetes client from the auth token", err
 	}
 
-	namespaceService := business.NewNamespaceService(userClients, clientFactory.GetSAClients(), kialiCache, conf)
+	namespaceService := business.NewNamespaceService(userClients, clientFactory.GetSAClients(), kialiCache, conf, discovery)
 
 	// Using the namespaces API to check if token is valid. In Kubernetes, the version API seems to allow
 	// anonymous access, so it's not feasible to use the version API for token verification.

@@ -16,6 +16,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/kubernetes/kubetest"
@@ -347,6 +348,7 @@ func TestGetNamespaceServicesHealthMultiCluster(t *testing.T) {
 	prom := new(prometheustest.PromClientMock)
 	prom.On("GetNamespaceServicesRequestRates", "tutorial", conf.KubernetesConfig.ClusterName, mock.AnythingOfType("string"), mock.AnythingOfType("time.Time")).Return(serviceRates, nil)
 	prom.On("GetNamespaceServicesRequestRates", "tutorial", "west", mock.AnythingOfType("string"), mock.AnythingOfType("time.Time")).Return(serviceRates, nil)
+	discovery = istio.NewDiscovery(clients, cache, conf)
 
 	layer := NewWithBackends(clients, clients, prom, nil)
 

@@ -10,8 +10,9 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus"
 )
 
@@ -48,7 +49,7 @@ type PublicConfig struct {
 	AccessibleNamespaces []string                      `json:"accessibleNamespaces,omitempty"`
 	AuthStrategy         string                        `json:"authStrategy,omitempty"`
 	AmbientEnabled       bool                          `json:"ambientEnabled,omitempty"`
-	Clusters             map[string]kubernetes.Cluster `json:"clusters,omitempty"`
+	Clusters             map[string]models.KubeCluster `json:"clusters,omitempty"`
 	Deployment           DeploymentConfig              `json:"deployment,omitempty"`
 	GatewayAPIClasses    []config.GatewayAPIClass      `json:"gatewayAPIClasses,omitempty"`
 	GatewayAPIEnabled    bool                          `json:"gatewayAPIEnabled,omitempty"`
@@ -67,76 +68,78 @@ type PublicConfig struct {
 }
 
 // Config is a REST http.HandlerFunc serving up the Kiali configuration made public to clients.
-func Config(w http.ResponseWriter, r *http.Request) {
-	defer handlePanic(w)
+func Config(conf *config.Config, discovery *istio.Discovery) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		defer handlePanic(w)
 
-	// Note that determine the Prometheus config at request time because it is not
-	// guaranteed to remain the same during the Kiali lifespan.
-	promConfig := getPrometheusConfig()
-	conf := config.Get()
-	publicConfig := PublicConfig{
-		AccessibleNamespaces: conf.Deployment.AccessibleNamespaces,
-		AuthStrategy:         conf.Auth.Strategy,
-		Clusters:             make(map[string]kubernetes.Cluster),
-		Deployment: DeploymentConfig{
-			ViewOnlyMode: conf.Deployment.ViewOnlyMode,
-		},
-		InstallationTag: conf.InstallationTag,
-		IstioAnnotations: IstioAnnotations{
-			AmbientAnnotation:        config.AmbientAnnotation,
-			AmbientAnnotationEnabled: config.AmbientAnnotationEnabled,
-			IstioInjectionAnnotation: conf.ExternalServices.Istio.IstioInjectionAnnotation,
-		},
-		HealthConfig:        conf.HealthConfig,
-		IstioStatusEnabled:  conf.ExternalServices.Istio.ComponentStatuses.Enabled,
-		IstioIdentityDomain: conf.ExternalServices.Istio.IstioIdentityDomain,
-		IstioNamespace:      conf.IstioNamespace,
-		IstioLabels:         conf.IstioLabels,
-		IstioConfigMap:      conf.ExternalServices.Istio.ConfigMapName,
-		IstioCanaryRevision: IstioCanaryRevision{
-			Current: conf.ExternalServices.Istio.IstioCanaryRevision.Current,
-			Upgrade: conf.ExternalServices.Istio.IstioCanaryRevision.Upgrade,
-		},
-		KialiFeatureFlags: conf.KialiFeatureFlags,
-		LogLevel:          log.GetLogLevel(),
-		Prometheus: PrometheusConfig{
-			GlobalScrapeInterval: promConfig.GlobalScrapeInterval,
-			StorageTsdbRetention: promConfig.StorageTsdbRetention,
-		},
-	}
+		// Note that determine the Prometheus config at request time because it is not
+		// guaranteed to remain the same during the Kiali lifespan.
+		promConfig := getPrometheusConfig()
+		conf := config.Get()
+		publicConfig := PublicConfig{
+			AccessibleNamespaces: conf.Deployment.AccessibleNamespaces,
+			AuthStrategy:         conf.Auth.Strategy,
+			Clusters:             make(map[string]models.KubeCluster),
+			Deployment: DeploymentConfig{
+				ViewOnlyMode: conf.Deployment.ViewOnlyMode,
+			},
+			InstallationTag: conf.InstallationTag,
+			IstioAnnotations: IstioAnnotations{
+				AmbientAnnotation:        config.AmbientAnnotation,
+				AmbientAnnotationEnabled: config.AmbientAnnotationEnabled,
+				IstioInjectionAnnotation: conf.ExternalServices.Istio.IstioInjectionAnnotation,
+			},
+			HealthConfig:        conf.HealthConfig,
+			IstioStatusEnabled:  conf.ExternalServices.Istio.ComponentStatuses.Enabled,
+			IstioIdentityDomain: conf.ExternalServices.Istio.IstioIdentityDomain,
+			IstioNamespace:      conf.IstioNamespace,
+			IstioLabels:         conf.IstioLabels,
+			// IstioConfigMap:      conf.ExternalServices.Istio.ConfigMapName,
+			IstioCanaryRevision: IstioCanaryRevision{
+				Current: conf.ExternalServices.Istio.IstioCanaryRevision.Current,
+				Upgrade: conf.ExternalServices.Istio.IstioCanaryRevision.Upgrade,
+			},
+			KialiFeatureFlags: conf.KialiFeatureFlags,
+			LogLevel:          log.GetLogLevel(),
+			Prometheus: PrometheusConfig{
+				GlobalScrapeInterval: promConfig.GlobalScrapeInterval,
+				StorageTsdbRetention: promConfig.StorageTsdbRetention,
+			},
+		}
 
-	// The following code fetches the cluster info. Cluster info is not critical.
-	// It's even possible that it cannot be resolved (because of Istio not being with MC turned on).
-	// Because of these two reasons, let's simply ignore errors in the following code.
-	err := func() error {
-		layer, err := getBusiness(r)
+		// The following code fetches the cluster info. Cluster info is not critical.
+		// It's even possible that it cannot be resolved (because of Istio not being with MC turned on).
+		// Because of these two reasons, let's simply ignore errors in the following code.
+		err := func() error {
+			layer, err := getBusiness(r)
+			if err != nil {
+				return err
+			}
+
+			// @TODO hardcoded home cluster
+			publicConfig.GatewayAPIEnabled = layer.IstioConfig.IsGatewayAPI(conf.KubernetesConfig.ClusterName)
+			publicConfig.AmbientEnabled = layer.IstioConfig.IsAmbientEnabled(conf.KubernetesConfig.ClusterName)
+			publicConfig.GatewayAPIClasses = layer.IstioConfig.GatewayAPIClasses(conf.KubernetesConfig.ClusterName)
+
+			// Fetch the list of all clusters in the mesh
+			// One usage of this data is to cross-link Kiali instances, when possible.
+			clusters, err := discovery.Clusters()
+			if err != nil {
+				return fmt.Errorf("failure while listing clusters in the mesh: %w", err)
+			}
+
+			for _, cluster := range clusters {
+				publicConfig.Clusters[cluster.Name] = cluster
+			}
+
+			return nil
+		}()
 		if err != nil {
-			return err
+			log.Warningf("Unable to resolve cluster info: %s", err)
 		}
 
-		// @TODO hardcoded home cluster
-		publicConfig.GatewayAPIEnabled = layer.IstioConfig.IsGatewayAPI(conf.KubernetesConfig.ClusterName)
-		publicConfig.AmbientEnabled = layer.IstioConfig.IsAmbientEnabled(conf.KubernetesConfig.ClusterName)
-		publicConfig.GatewayAPIClasses = layer.IstioConfig.GatewayAPIClasses(conf.KubernetesConfig.ClusterName)
-
-		// Fetch the list of all clusters in the mesh
-		// One usage of this data is to cross-link Kiali instances, when possible.
-		clusters, err := layer.Mesh.GetClusters()
-		if err != nil {
-			return fmt.Errorf("failure while listing clusters in the mesh: %w", err)
-		}
-
-		for _, cluster := range clusters {
-			publicConfig.Clusters[cluster.Name] = cluster
-		}
-
-		return nil
-	}()
-	if err != nil {
-		log.Warningf("Unable to resolve cluster info: %s", err)
+		RespondWithJSONIndent(w, http.StatusOK, publicConfig)
 	}
-
-	RespondWithJSONIndent(w, http.StatusOK, publicConfig)
 }
 
 type PrometheusPartialConfig struct {

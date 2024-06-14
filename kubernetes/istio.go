@@ -11,8 +11,6 @@ import (
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 	istio "istio.io/client-go/pkg/clientset/versioned"
-	core_v1 "k8s.io/api/core/v1"
-	k8syaml "k8s.io/apimachinery/pkg/util/yaml"
 	k8s_networking_v1 "sigs.k8s.io/gateway-api/apis/v1"
 	gatewayapiclient "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned"
 
@@ -135,31 +133,6 @@ func (in *K8SClient) SetProxyLogLevel(namespace, pod, level string) error {
 	}
 
 	return err
-}
-
-func GetIstioConfigMap(istioConfig *core_v1.ConfigMap) (*IstioMeshConfig, error) {
-	meshConfig := &IstioMeshConfig{}
-
-	// Used for test cases
-	if istioConfig == nil || istioConfig.Data == nil {
-		return meshConfig, nil
-	}
-
-	var err error
-	meshConfigYaml, ok := istioConfig.Data["mesh"]
-	log.Tracef("meshConfig: %v", meshConfigYaml)
-	if !ok {
-		errMsg := "GetIstioConfigMap: Cannot find Istio mesh configuration [%v]."
-		log.Warningf(errMsg, istioConfig)
-		return nil, fmt.Errorf(errMsg, istioConfig)
-	}
-
-	err = k8syaml.Unmarshal([]byte(meshConfigYaml), &meshConfig)
-	if err != nil {
-		log.Warningf("GetIstioConfigMap: Cannot read Istio mesh configuration.")
-		return nil, err
-	}
-	return meshConfig, nil
 }
 
 // ServiceEntryHostnames returns a list of hostnames defined in the ServiceEntries Specs. Key in the resulting map is the protocol (in lowercase) + hostname

@@ -2,11 +2,11 @@ package handlers
 
 import (
 	"net/http"
+	"slices"
 	"strconv"
 	"strings"
 
 	"github.com/gorilla/mux"
-	"golang.org/x/exp/slices"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/models"

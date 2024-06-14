@@ -192,8 +192,8 @@ func setupAppMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheustest.Pr
 	ts := httptest.NewServer(mr)
 	t.Cleanup(ts.Close)
 
-	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
-	business.SetWithBackends(mockClientFactory, prom)
+	business.SetupBusinessLayer(t, k8s, *config.Get())
+	business.WithProm(prom)
 
 	return ts, xapi, k8s
 }

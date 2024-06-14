@@ -249,12 +249,12 @@ func TestFilterByNamespaces(t *testing.T) {
 	objects := []*networking_v1.DestinationRule{obj1, obj2, obj3}
 	namespaces := []string{"ns1", "ns3"}
 
-	filtered := FilterByNamespaces(objects, namespaces)
+	filtered := FilterByNamespaceNames(objects, namespaces)
 	expected := []*networking_v1.DestinationRule{obj1, obj3}
 	assert.EqualValues(expected, filtered)
 
 	emptyObjects := []*networking_v1.DestinationRule{}
-	emptyFiltered := FilterByNamespaces(emptyObjects, namespaces)
+	emptyFiltered := FilterByNamespaceNames(emptyObjects, namespaces)
 	assert.Empty(emptyFiltered)
 }
 

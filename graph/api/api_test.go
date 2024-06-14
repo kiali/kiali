@@ -25,6 +25,7 @@ import (
 	"github.com/kiali/kiali/business/authentication"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
+	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/kubernetes/kubetest"
@@ -51,10 +52,7 @@ func setupMocked(t *testing.T) (*prometheus.Client, *prometheustest.PromAPIMock)
 	}
 	client.Inject(api)
 
-	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
-	business.SetWithBackends(mockClientFactory, nil)
-	cache := cache.NewTestingCache(t, k8s, *conf)
-	business.WithKialiCache(cache)
+	business.SetupBusinessLayer(t, k8s, *conf)
 
 	return client, api
 }
@@ -90,7 +88,9 @@ func setupMockedWithIstioComponentNamespaces(t *testing.T, meshId string, userCl
 	mockClientFactory.SetClients(userClients)
 
 	cache := cache.NewTestingCacheWithFactory(t, mockClientFactory, *testConfig)
+	discovery := istio.NewDiscovery(userClients, cache, testConfig)
 
+	business.WithDiscovery(discovery)
 	business.WithKialiCache(cache)
 	business.SetWithBackends(mockClientFactory, nil)
 

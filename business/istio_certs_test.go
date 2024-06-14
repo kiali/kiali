@@ -1,6 +1,7 @@
 package business
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -12,38 +13,38 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
+	"github.com/kiali/kiali/models"
 )
 
+type fakeMeshDiscovery struct {
+	mesh models.Mesh
+}
+
+func (fmd *fakeMeshDiscovery) Mesh(ctx context.Context) (*models.Mesh, error) {
+	return &fmd.mesh, nil
+}
+
 func TestCertificatesInformationIndicatorsDisabled(t *testing.T) {
-	k8s := new(kubetest.K8SClientMock)
+	k8s := kubetest.NewFakeK8sClient()
+	discovery := &fakeMeshDiscovery{}
 
 	conf := config.NewConfig()
 	conf.KialiFeatureFlags.CertificatesInformationIndicators.Enabled = false
-	config.Set(conf)
 
-	k8s.On("IsOpenShift").Return(false)
-	k8s.On("IsGatewayAPI").Return(false)
-
-	clients := make(map[string]kubernetes.ClientInterface)
-	clients[conf.KubernetesConfig.ClusterName] = k8s
-
-	layer := NewWithBackends(clients, clients, nil, nil)
-	ics := layer.IstioCerts
-
-	certs, _ := ics.GetCertsInfo()
+	ics := NewIstioCertsService(conf, discovery, k8s)
+	certs, _ := ics.GetCertsInfo(context.TODO())
 
 	assert.Len(t, certs, 0)
 }
 
 func TestIstioCASecret(t *testing.T) {
-	k8s := new(kubetest.K8SClientMock)
-
 	conf := config.NewConfig()
-	config.Set(conf)
 
-	secret := core_v1.Secret{
+	discovery := &fakeMeshDiscovery{}
+	secret := &core_v1.Secret{
 		ObjectMeta: v1.ObjectMeta{
-			Name: "istio-ca-secret",
+			Name:      "istio-ca-secret",
+			Namespace: "istio-system",
 		},
 		Data: map[string][]byte{
 			"ca-cert.pem": []byte(`-----BEGIN CERTIFICATE-----
@@ -66,19 +67,14 @@ V/InYncUvcXt0M4JJSUJi/u6VBKSYYDIHt3mk9Le2qlMQuHkOQ1ZcuEOM2CU/KtO
 -----END CERTIFICATE-----`),
 		},
 	}
+	k8s := kubetest.NewFakeK8sClient(
+		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
+		secret,
+	)
 
-	k8s.On("GetConfigMap", conf.IstioNamespace, "istio").Return(&core_v1.ConfigMap{}, nil)
-	k8s.On("IsOpenShift").Return(false)
-	k8s.On("IsGatewayAPI").Return(false)
-	k8s.On("GetSecret", conf.IstioNamespace, "cacerts").Return(&core_v1.Secret{}, kubernetes.NewNotFound("cacerts", "v1", "Secret"))
-	k8s.On("GetSecret", conf.IstioNamespace, "istio-ca-secret").Return(&secret, nil)
+	ics := NewIstioCertsService(conf, discovery, k8s)
 
-	clients := make(map[string]kubernetes.ClientInterface)
-	clients[conf.KubernetesConfig.ClusterName] = k8s
-	layer := NewWithBackends(clients, clients, nil, nil)
-	ics := layer.IstioCerts
-
-	certs, _ := ics.GetCertsInfo()
+	certs, _ := ics.GetCertsInfo(context.TODO())
 
 	assert.Len(t, certs, 1)
 	assert.Equal(t, "O=cluster.local", certs[0].Issuer)
@@ -91,13 +87,22 @@ V/InYncUvcXt0M4JJSUJi/u6VBKSYYDIHt3mk9Le2qlMQuHkOQ1ZcuEOM2CU/KtO
 	assert.Empty(t, certs[0].Error)
 }
 
+type forbiddenSecretClient struct {
+	kubernetes.ClientInterface
+}
+
+func (fsc *forbiddenSecretClient) GetSecret(namespace, name string) (*core_v1.Secret, error) {
+	if name == "cacerts" {
+		return nil, kubernetes.NewNotFound(name, "Secret", "secrets")
+	}
+
+	return nil, errors.NewForbidden(schema.GroupResource{Group: "", Resource: "Secret"}, "istio-ca-secret", nil)
+}
+
 func TestIstioCASecretForbiddenError(t *testing.T) {
-	k8s := new(kubetest.K8SClientMock)
-
 	conf := config.NewConfig()
-	config.Set(conf)
 
-	secret := core_v1.Secret{
+	secret := &core_v1.Secret{
 		ObjectMeta: v1.ObjectMeta{
 			Name: "istio-ca-secret",
 		},
@@ -122,21 +127,14 @@ V/InYncUvcXt0M4JJSUJi/u6VBKSYYDIHt3mk9Le2qlMQuHkOQ1ZcuEOM2CU/KtO
 -----END CERTIFICATE-----`),
 		},
 	}
+	k8s := &forbiddenSecretClient{kubetest.NewFakeK8sClient(
+		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
+		secret,
+	)}
 
-	k8s.On("GetConfigMap", conf.IstioNamespace, "istio").Return(&core_v1.ConfigMap{}, nil)
-	k8s.On("IsOpenShift").Return(false)
-	k8s.On("IsGatewayAPI").Return(false)
-	k8s.On("GetSecret", conf.IstioNamespace, "cacerts").Return(&core_v1.Secret{}, kubernetes.NewNotFound("cacerts", "v1", "Secret"))
+	ics := NewIstioCertsService(conf, &fakeMeshDiscovery{}, k8s)
 
-	forbiddenError := errors.NewForbidden(schema.GroupResource{Group: "", Resource: "Secret"}, "istio-ca-secret", nil)
-	k8s.On("GetSecret", conf.IstioNamespace, "istio-ca-secret").Return(&secret, forbiddenError)
-
-	clients := make(map[string]kubernetes.ClientInterface)
-	clients[conf.KubernetesConfig.ClusterName] = k8s
-	layer := NewWithBackends(clients, clients, nil, nil)
-	ics := layer.IstioCerts
-
-	certs, _ := ics.GetCertsInfo()
+	certs, _ := ics.GetCertsInfo(context.TODO())
 
 	assert.Len(t, certs, 1)
 	assert.False(t, certs[0].Accessible)
@@ -144,14 +142,12 @@ V/InYncUvcXt0M4JJSUJi/u6VBKSYYDIHt3mk9Le2qlMQuHkOQ1ZcuEOM2CU/KtO
 }
 
 func TestIstioCACertsSecret(t *testing.T) {
-	k8s := new(kubetest.K8SClientMock)
-
 	conf := config.NewConfig()
-	config.Set(conf)
 
-	secret := core_v1.Secret{
+	secret := &core_v1.Secret{
 		ObjectMeta: v1.ObjectMeta{
-			Name: "cacerts",
+			Name:      "cacerts",
+			Namespace: "istio-system",
 		},
 		Data: map[string][]byte{
 			"ca-cert.pem": []byte(`-----BEGIN CERTIFICATE-----
@@ -188,17 +184,14 @@ cdLzuNyDoeWOHU7mx52TuTwj3eObtQM+hlI=
 		},
 	}
 
-	k8s.On("GetConfigMap", conf.IstioNamespace, "istio").Return(&core_v1.ConfigMap{}, nil)
-	k8s.On("IsOpenShift").Return(false)
-	k8s.On("IsGatewayAPI").Return(false)
-	k8s.On("GetSecret", conf.IstioNamespace, "cacerts").Return(&secret, nil)
+	k8s := kubetest.NewFakeK8sClient(
+		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
+		secret,
+	)
 
-	clients := make(map[string]kubernetes.ClientInterface)
-	clients[conf.KubernetesConfig.ClusterName] = k8s
-	layer := NewWithBackends(clients, clients, nil, nil)
-	ics := layer.IstioCerts
+	ics := NewIstioCertsService(conf, &fakeMeshDiscovery{}, k8s)
 
-	certs, _ := ics.GetCertsInfo()
+	certs, _ := ics.GetCertsInfo(context.TODO())
 
 	assert.Len(t, certs, 1)
 	assert.Equal(t, "CN=Root CA,O=Istio", certs[0].Issuer)
@@ -212,30 +205,34 @@ cdLzuNyDoeWOHU7mx52TuTwj3eObtQM+hlI=
 }
 
 func TestChironSecrets(t *testing.T) {
-	config.Set(config.NewConfig())
-	k8s := new(kubetest.K8SClientMock)
 	conf := config.NewConfig()
 
-	istioConfigMap := core_v1.ConfigMap{
-		ObjectMeta: v1.ObjectMeta{
-			Name: "istio",
-		},
-		Data: map[string]string{
-			"mesh": `certificates:
-- dnsNames:
-  - example1.istio-system.svc
-  - example1.istio-system
-  secretName: dns.example1-service-account
-- dnsNames:
-  - example2.istio-system.svc
-  - example2.istio-system
-  secretName: dns.example2-service-account`,
+	discovery := &fakeMeshDiscovery{
+		mesh: models.Mesh{
+			ControlPlanes: []models.ControlPlane{{
+				Cluster: &models.KubeCluster{Name: conf.KubernetesConfig.ClusterName, IsKialiHome: true},
+				Config: models.ControlPlaneConfiguration{
+					IstioMeshConfig: models.IstioMeshConfig{
+						Certificates: []models.Certificate{
+							{
+								SecretName: "dns.example1-service-account",
+								DNSNames:   []string{"example1.istio-system.svc", "example1.istio-system"},
+							},
+							{
+								SecretName: "dns.example2-service-account",
+								DNSNames:   []string{"example2.istio-system.svc", "example2.istio-system"},
+							},
+						},
+					},
+				},
+			}},
 		},
 	}
 
 	example1secret := core_v1.Secret{
 		ObjectMeta: v1.ObjectMeta{
-			Name: "dns.example1-service-account",
+			Name:      "dns.example1-service-account",
+			Namespace: "istio-system",
 		},
 		Data: map[string][]byte{
 			"cert-chain.pem": []byte(`-----BEGIN CERTIFICATE-----
@@ -282,7 +279,8 @@ iMXzPzS/OeYyKQ==
 
 	example2secret := core_v1.Secret{
 		ObjectMeta: v1.ObjectMeta{
-			Name: "dns.example2-service-account",
+			Name:      "dns.example2-service-account",
+			Namespace: "istio-system",
 		},
 		Data: map[string][]byte{
 			"cert-chain.pem": []byte(`-----BEGIN CERTIFICATE-----
@@ -327,18 +325,15 @@ iMXzPzS/OeYyKQ==
 		},
 	}
 
-	k8s.On("GetConfigMap", conf.IstioNamespace, "istio").Return(&istioConfigMap, nil)
-	k8s.On("IsOpenShift").Return(false)
-	k8s.On("IsGatewayAPI").Return(false)
-	k8s.On("GetSecret", conf.IstioNamespace, "dns.example1-service-account").Return(&example1secret, nil)
-	k8s.On("GetSecret", conf.IstioNamespace, "dns.example2-service-account").Return(&example2secret, nil)
+	k8s := kubetest.NewFakeK8sClient(
+		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
+		&example1secret,
+		&example2secret,
+	)
 
-	clients := make(map[string]kubernetes.ClientInterface)
-	clients[conf.KubernetesConfig.ClusterName] = k8s
-	layer := NewWithBackends(clients, clients, nil, nil)
-	ics := layer.IstioCerts
+	ics := NewIstioCertsService(conf, discovery, k8s)
 
-	certs, _ := ics.GetCertsInfo()
+	certs, _ := ics.GetCertsInfo(context.TODO())
 
 	assert.Len(t, certs, 2)
 	assert.Equal(t, certs[0].SecretName, "dns.example1-service-account")
@@ -346,30 +341,34 @@ iMXzPzS/OeYyKQ==
 }
 
 func TestChironSecretsError(t *testing.T) {
-	config.Set(config.NewConfig())
-	k8s := new(kubetest.K8SClientMock)
 	conf := config.NewConfig()
 
-	istioConfigMap := core_v1.ConfigMap{
-		ObjectMeta: v1.ObjectMeta{
-			Name: "istio",
-		},
-		Data: map[string]string{
-			"mesh": `certificates:
-- dnsNames:
-  - example1.istio-system.svc
-  - example1.istio-system
-  secretName: dns.example1-service-account
-- dnsNames:
-  - example2.istio-system.svc
-  - example2.istio-system
-  secretName: dns.example2-service-account`,
+	discovery := &fakeMeshDiscovery{
+		mesh: models.Mesh{
+			ControlPlanes: []models.ControlPlane{{
+				Cluster: &models.KubeCluster{Name: conf.KubernetesConfig.ClusterName, IsKialiHome: true},
+				Config: models.ControlPlaneConfiguration{
+					IstioMeshConfig: models.IstioMeshConfig{
+						Certificates: []models.Certificate{
+							{
+								SecretName: "dns.example1-service-account",
+								DNSNames:   []string{"example1.istio-system.svc", "example1.istio-system"},
+							},
+							{
+								SecretName: "dns.example2-service-account",
+								DNSNames:   []string{"example2.istio-system.svc", "example2.istio-system"},
+							},
+						},
+					},
+				},
+			}},
 		},
 	}
 
 	example1secret := core_v1.Secret{
 		ObjectMeta: v1.ObjectMeta{
-			Name: "dns.example1-service-account",
+			Name:      "dns.example1-service-account",
+			Namespace: "istio-system",
 		},
 		Data: map[string][]byte{
 			"cert-chain.pem": []byte(`-----BEGIN CERTIFICATE-----
@@ -414,18 +413,14 @@ iMXzPzS/OeYyKQ==
 		},
 	}
 
-	k8s.On("GetConfigMap", conf.IstioNamespace, "istio").Return(&istioConfigMap, nil)
-	k8s.On("IsOpenShift").Return(false)
-	k8s.On("IsGatewayAPI").Return(false)
-	k8s.On("GetSecret", conf.IstioNamespace, "dns.example1-service-account").Return(&example1secret, nil)
-	k8s.On("GetSecret", conf.IstioNamespace, "dns.example2-service-account").Return(&core_v1.Secret{}, kubernetes.NewNotFound("cacerts", "v1", "Secret"))
+	k8s := kubetest.NewFakeK8sClient(
+		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
+		&example1secret,
+	)
 
-	clients := make(map[string]kubernetes.ClientInterface)
-	clients[conf.KubernetesConfig.ClusterName] = k8s
-	layer := NewWithBackends(clients, clients, nil, nil)
-	ics := layer.IstioCerts
+	ics := NewIstioCertsService(conf, discovery, k8s)
 
-	_, err := ics.GetCertsInfo()
+	_, err := ics.GetCertsInfo(context.TODO())
 
 	assert.Error(t, err)
 }

@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -162,18 +163,18 @@ func TestNamespaceInfo(t *testing.T) {
 	assert.Equal(t, 200, resp.StatusCode, string(actual))
 }
 
+type notRemote struct{}
+
+func (n *notRemote) IsRemoteCluster(context.Context, string) bool { return false }
+
 func setupNamespaceMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheustest.PromAPIMock) {
 	client, xapi := setupMocked(t)
 
 	mr := mux.NewRouter()
-	mr.HandleFunc("/api/namespaces/{namespace}/metrics", http.HandlerFunc(
-		func(w http.ResponseWriter, r *http.Request) {
-			context := authentication.SetAuthInfoContext(r.Context(), &api.AuthInfo{Token: "test"})
-			getNamespaceMetrics(w, r.WithContext(context), func() (*prometheus.Client, error) {
-				return client, nil
-			})
-		}))
-
+	mr.HandleFunc("/api/namespaces/{namespace}/metrics", WithAuthInfo(
+		&api.AuthInfo{Token: "test"},
+		NamespaceMetrics(func() (*prometheus.Client, error) { return client, nil }, &notRemote{}),
+	))
 	ts := httptest.NewServer(mr)
 	t.Cleanup(ts.Close)
 	return ts, xapi

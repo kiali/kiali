@@ -118,7 +118,7 @@ func AppDashboard(conf *config.Config, grafana *grafana.Service) http.HandlerFun
 		app := vars["app"]
 		cluster := clusterNameFromQuery(r.URL.Query())
 
-		metricsService, namespaceInfo := createMetricsServiceForNamespace(w, r, defaultPromClientSupplier, models.Namespace{Name: namespace, Cluster: cluster})
+		metricsService, namespaceInfo := createMetricsServiceForNamespace(w, r, DefaultPromClientSupplier, models.Namespace{Name: namespace, Cluster: cluster})
 		if metricsService == nil {
 			// any returned value nil means error & response already written
 			return
@@ -151,7 +151,7 @@ func ServiceDashboard(conf *config.Config, grafana *grafana.Service) http.Handle
 		queryParams := r.URL.Query()
 		cluster := clusterNameFromQuery(queryParams)
 
-		metricsService, namespaceInfo := createMetricsServiceForNamespace(w, r, defaultPromClientSupplier, models.Namespace{Name: namespace, Cluster: cluster})
+		metricsService, namespaceInfo := createMetricsServiceForNamespace(w, r, DefaultPromClientSupplier, models.Namespace{Name: namespace, Cluster: cluster})
 		if metricsService == nil {
 			// any returned value nil means error & response already written
 			return
@@ -201,7 +201,7 @@ func WorkloadDashboard(conf *config.Config, grafana *grafana.Service) http.Handl
 		workload := vars["workload"]
 		cluster := clusterNameFromQuery(r.URL.Query())
 
-		metricsService, namespaceInfo := createMetricsServiceForNamespace(w, r, defaultPromClientSupplier, models.Namespace{Name: namespace, Cluster: cluster})
+		metricsService, namespaceInfo := createMetricsServiceForNamespace(w, r, DefaultPromClientSupplier, models.Namespace{Name: namespace, Cluster: cluster})
 		if metricsService == nil {
 			// any returned value nil means error & response already written
 			return

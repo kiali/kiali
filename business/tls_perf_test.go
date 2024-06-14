@@ -16,6 +16,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
+	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
 )
 
@@ -81,18 +82,28 @@ func testPerfScenario(exStatus string, namespaces []core_v1.Namespace, drs []*ne
 
 	k8s := kubetest.NewFakeK8sClient(objs...)
 	SetupBusinessLayer(t, k8s, *conf)
+	discovery := &fakeMeshDiscovery{
+		mesh: models.Mesh{
+			ControlPlanes: []models.ControlPlane{{
+				IstiodNamespace: conf.IstioNamespace,
+				Revision:        "default",
+				Cluster:         &models.KubeCluster{Name: conf.KubernetesConfig.ClusterName},
+				Config: models.ControlPlaneConfiguration{
+					IstioMeshConfig: models.IstioMeshConfig{
+						EnableAutoMtls: &autoMtls,
+					},
+				},
+			}},
+		},
+	}
+	WithDiscovery(discovery)
 
 	k8sclients := make(map[string]kubernetes.ClientInterface)
 	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
 
 	tlsService := NewWithBackends(k8sclients, k8sclients, nil, nil).TLS
-	tlsService.enabledAutoMtls = &autoMtls
 
-	nss := []string{}
-	for _, ns := range namespaces {
-		nss = append(nss, ns.Name)
-	}
-	statuses, err := tlsService.ClusterWideNSmTLSStatus(context.TODO(), nss, conf.KubernetesConfig.ClusterName)
+	statuses, err := tlsService.ClusterWideNSmTLSStatus(context.TODO(), models.CastNamespaceCollection(namespaces, conf.KubernetesConfig.ClusterName), conf.KubernetesConfig.ClusterName)
 	assert.NoError(err)
 	assert.NotEmpty(statuses)
 	for _, status := range statuses {
