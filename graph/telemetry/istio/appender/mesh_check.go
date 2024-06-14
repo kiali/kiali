@@ -88,10 +88,12 @@ func (a *MeshCheckAppender) applyMeshChecks(trafficMap graph.TrafficMap, globalI
 			continue
 		}
 
+		if hasIstioAmbient || n.Metadata[graph.IsWaypoint] == true {
+			n.Metadata[graph.IsAmbient] = true
+		}
 		if !hasIstioSidecar && !hasIstioAmbient && n.Metadata[graph.IsWaypoint] != true {
 			n.Metadata[graph.IsOutOfMesh] = true
 		}
-
 	}
 }
 

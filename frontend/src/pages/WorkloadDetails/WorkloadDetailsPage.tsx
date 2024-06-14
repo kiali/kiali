@@ -201,12 +201,13 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
       <Tab title="Inbound Metrics" eventKey={3} key="Inbound Metrics">
         <IstioMetrics
           data-test="inbound-metrics-component"
+          direction="inbound"
+          includeAmbient={!!this.state.workload?.istioAmbient}
           lastRefreshAt={this.props.lastRefreshAt}
           namespace={this.props.workloadId.namespace}
           object={this.props.workloadId.workload}
           cluster={this.state.cluster}
           objectType={MetricsObjectTypes.WORKLOAD}
-          direction="inbound"
         />
       </Tab>
     );
@@ -216,12 +217,13 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
       <Tab title="Outbound Metrics" eventKey={4} key="Outbound Metrics">
         <IstioMetrics
           data-test="outbound-metrics-component"
+          direction="outbound"
+          includeAmbient={!!this.state.workload?.istioAmbient}
           lastRefreshAt={this.props.lastRefreshAt}
           namespace={this.props.workloadId.namespace}
           object={this.props.workloadId.workload}
           cluster={this.state.cluster}
           objectType={MetricsObjectTypes.WORKLOAD}
-          direction="outbound"
         />
       </Tab>
     );

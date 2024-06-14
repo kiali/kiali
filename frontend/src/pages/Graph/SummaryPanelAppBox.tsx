@@ -3,7 +3,14 @@ import { ExternalLinkAltIcon } from '@patternfly/react-icons';
 import { Node } from '@patternfly/react-topology';
 import { InOutRateTableGrpc, InOutRateTableHttp } from '../../components/SummaryPanel/InOutRateTable';
 import { RequestChart, StreamChart } from '../../components/SummaryPanel/RpsChart';
-import { NodeAttr, NodeType, Protocol, SummaryPanelPropType, TrafficRate } from '../../types/Graph';
+import {
+  DecoratedGraphNodeData,
+  NodeAttr,
+  NodeType,
+  Protocol,
+  SummaryPanelPropType,
+  TrafficRate
+} from '../../types/Graph';
 import { getAccumulatedTrafficRateGrpc, getAccumulatedTrafficRateHttp } from '../../utils/TrafficRate';
 import { renderBadgedLink, renderHealth } from './SummaryLink';
 import {
@@ -27,7 +34,7 @@ import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { edgesIn, edgesOut, select, selectAnd, selectOr } from 'pages/GraphPF/GraphPFElems';
 import { classes } from 'typestyle';
 import { panelBodyStyle, panelHeadingStyle, panelStyle } from './SummaryPanelStyle';
-import { isMultiCluster } from 'config';
+import { isMultiCluster, serverConfig } from 'config';
 import {
   Dropdown,
   DropdownGroup,
@@ -283,7 +290,7 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
   private updateCharts = (props: SummaryPanelPropType): void => {
     const isPF = !!this.props.data.isPF;
     const appBox = props.data.summaryTarget;
-    const nodeData = isPF ? appBox.getData() : decoratedNodeData(appBox);
+    const nodeData = isPF ? (appBox.getData() as DecoratedGraphNodeData) : decoratedNodeData(appBox);
     const nodeMetricType = getNodeMetricType(nodeData);
     const isGrpcRequests = this.isGrpcRequests();
 
@@ -311,6 +318,7 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
         filtersRps,
         'inbound',
         'destination',
+        serverConfig.ambientEnabled, // TODO change to nodeData.isAmbient when it is set for all node types
         undefined,
         undefined,
         ['request_protocol']
@@ -338,6 +346,7 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
           filtersStream,
           'inbound',
           'source',
+          serverConfig.ambientEnabled, // TODO change to "nodeData.isAmbient" when it is set for this node type
           undefined,
           undefined,
           byLabelsStream
@@ -380,6 +389,7 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
           filters,
           'outbound',
           reporter,
+          serverConfig.ambientEnabled, // TODO change to "nodeData.isAmbient" when it is set for this node type
           undefined,
           undefined,
           byLabels

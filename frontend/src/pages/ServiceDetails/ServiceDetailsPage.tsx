@@ -34,6 +34,7 @@ import { connectRefresh } from '../../components/Refresh/connectRefresh';
 import { history, HistoryManager } from 'app/History';
 import { durationSelector } from 'store/Selectors';
 import { basicTabStyle } from 'styles/TabStyles';
+import { serverConfig } from 'config';
 
 type ServiceDetailsState = {
   cluster?: string;
@@ -189,12 +190,13 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
     const inTab = (
       <Tab eventKey={2} title="Inbound Metrics" key="Inbound Metrics">
         <IstioMetrics
+          cluster={this.state.cluster}
+          direction={'inbound'}
+          includeAmbient={serverConfig.ambientEnabled} // TODO: replace this with actual `isAmbient` when supported for service
           lastRefreshAt={this.props.lastRefreshAt}
           namespace={this.props.serviceId.namespace}
           object={this.props.serviceId.service}
           objectType={MetricsObjectTypes.SERVICE}
-          cluster={this.state.cluster}
-          direction={'inbound'}
         />
       </Tab>
     );

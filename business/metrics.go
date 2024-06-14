@@ -29,7 +29,7 @@ func (in *MetricsService) GetMetrics(q models.IstioMetricsQuery, scaler func(n s
 func createMetricsLabelsBuilder(q *models.IstioMetricsQuery) *MetricsLabelsBuilder {
 	lb := NewMetricsLabelsBuilder(q.Direction)
 	if q.Reporter != "both" {
-		lb.Reporter(q.Reporter)
+		lb.Reporter(q.Reporter, q.IncludeAmbient)
 	}
 
 	namespaceSet := false

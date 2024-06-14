@@ -424,12 +424,13 @@ export class TargetPanelDataPlaneNamespace extends React.Component<
   private fetchMetrics = async (direction: DirectionType): Promise<void> => {
     const rateParams = computePrometheusRateParams(this.props.duration, 10);
     const options: IstioMetricsOptions = {
-      filters: ['request_count', 'request_error_count'],
-      duration: this.props.duration,
-      step: rateParams.step,
-      rateInterval: rateParams.rateInterval,
       direction: direction,
-      reporter: direction === 'inbound' ? 'destination' : 'source'
+      duration: this.props.duration,
+      filters: ['request_count', 'request_error_count'],
+      includeAmbient: serverConfig.ambientEnabled,
+      rateInterval: rateParams.rateInterval,
+      reporter: direction === 'inbound' ? 'destination' : 'source',
+      step: rateParams.step
     };
     const cluster = this.props.targetCluster;
     const namespace = this.props.targetNamespace;

@@ -413,12 +413,13 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
     const rateParams = computePrometheusRateParams(duration, 10);
 
     const options: IstioMetricsOptions = {
-      filters: ['request_count', 'request_error_count'],
-      duration: duration,
-      step: rateParams.step,
-      rateInterval: rateParams.rateInterval,
       direction: direction,
-      reporter: direction === 'inbound' ? 'destination' : 'source'
+      duration: duration,
+      filters: ['request_count', 'request_error_count'],
+      includeAmbient: serverConfig.ambientEnabled,
+      rateInterval: rateParams.rateInterval,
+      reporter: direction === 'inbound' ? 'destination' : 'source',
+      step: rateParams.step
     };
 
     return API.getClustersMetrics(
