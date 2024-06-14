@@ -55,7 +55,7 @@ export const tooltipMsgType = {
 
 type tooltipMsg = typeof tooltipMsgType[keyof typeof tooltipMsgType];
 
-const AmbientComponent = 'Ambient';
+const AmbientComponent = 'ambient';
 
 export const AmbientLabel: React.FC<AmbientLabelProps> = (props: AmbientLabelProps) => {
   const msg = props.tooltip
