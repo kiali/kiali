@@ -17,7 +17,7 @@ import { MissingAuthPolicy } from 'components/MissingAuthPolicy/MissingAuthPolic
 import { hasMissingAuthPolicy } from 'utils/IstioConfigUtils';
 import { DetailDescription } from '../../components/DetailDescription/DetailDescription';
 import { isGateway, isWaypoint } from '../../helpers/LabelFilterHelper';
-import { AmbientLabel } from '../../components/Ambient/AmbientLabel';
+import { AmbientLabel, tooltipMsgType } from '../../components/Ambient/AmbientLabel';
 import { validationKey } from '../../types/IstioConfigList';
 
 type WorkloadDescriptionProps = {
@@ -181,7 +181,10 @@ export const WorkloadDescription: React.FC<WorkloadDescriptionProps> = (props: W
             )}
 
           {props.workload && props.workload.isAmbient && !isWaypoint(props.workload.labels) && (
-            <AmbientLabel tooltip={true} waypoint={props.workload.waypointWorkloads?.length > 0 ? true : false} />
+            <AmbientLabel
+              tooltip={tooltipMsgType.workload}
+              waypoint={props.workload.waypointWorkloads?.length > 0 ? true : true}
+            />
           )}
 
           {props.workload &&
