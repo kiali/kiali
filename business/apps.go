@@ -392,9 +392,18 @@ func (in *AppService) GetAppDetails(ctx context.Context, criteria AppCriteria) (
 	}
 
 	pods := models.Pods{}
+	isAmbient := true
+
 	for _, workload := range appDetails.Workloads {
 		pods = append(pods, workload.Pods...)
+		if !workload.IsAmbient {
+			isAmbient = false
+		}
 	}
+	if len(appDetails.Workloads) == 0 {
+		isAmbient = false
+	}
+
 	appInstance.Runtimes = NewDashboardsService(in.conf, in.grafana, ns, nil).GetCustomDashboardRefs(criteria.Namespace, criteria.AppName, "", pods)
 	if criteria.IncludeHealth {
 		appInstance.Health, err = in.businessLayer.Health.GetAppHealth(ctx, criteria.Namespace, criteria.Cluster, criteria.AppName, criteria.RateInterval, criteria.QueryTime, appDetails)
@@ -402,7 +411,7 @@ func (in *AppService) GetAppDetails(ctx context.Context, criteria AppCriteria) (
 			log.Errorf("Error fetching Health in namespace %s for app %s: %s", criteria.Namespace, criteria.AppName, err)
 		}
 	}
-
+	appInstance.IsAmbient = isAmbient
 	appInstance.Cluster = appDetails.cluster
 
 	return *appInstance, nil

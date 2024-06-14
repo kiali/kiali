@@ -576,10 +576,17 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, cluster, namespace,
 	}
 
 	wo := models.WorkloadOverviews{}
+	isAmbient := true
 	for _, w := range ws {
 		wi := &models.WorkloadListItem{}
 		wi.ParseWorkload(w)
 		wo = append(wo, wi)
+		if !w.IsAmbient {
+			isAmbient = false
+		}
+	}
+	if len(ws) == 0 {
+		isAmbient = false
 	}
 
 	serviceOverviews := make([]*models.ServiceOverview, 0)
@@ -636,6 +643,7 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, cluster, namespace,
 		// On ServiceEntries cases the Service name is the hostname
 		s.ServiceEntries = kubernetes.FilterServiceEntriesByHostname(istioConfigList.ServiceEntries, s.Service.Name)
 	}
+	s.IsAmbient = isAmbient
 
 	return &s, nil
 }

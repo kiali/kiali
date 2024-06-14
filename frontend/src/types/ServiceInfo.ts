@@ -48,7 +48,6 @@ export interface WorkloadOverview {
   resourceVersion: string;
   serviceAccountNames: string[];
   type: string;
-  waypointWorkloads?: string[];
 }
 
 export interface Service {

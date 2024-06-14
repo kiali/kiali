@@ -13,13 +13,13 @@ export interface AppWorkload {
   istioSidecar: boolean;
   labels: { [key: string]: string };
   serviceAccountNames: string[];
-  waypointWorkloads?: string[];
   workloadName: string;
 }
 
 export interface App {
   cluster?: string;
   health: AppHealthResponse;
+  isAmbient: boolean;
   name: string;
   namespace: Namespace;
   runtimes: Runtime[];

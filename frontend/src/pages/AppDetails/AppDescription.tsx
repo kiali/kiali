@@ -45,12 +45,7 @@ export const AppDescription: React.FC<AppDescriptionProps> = (props: AppDescript
             <HealthIndicator id={props.app.name} health={props.health} />
           </span>
 
-          {props.app.workloads.every(wk => wk.isAmbient) && (
-            <AmbientLabel
-              tooltip={true}
-              waypoint={props.app.workloads.every(wk => wk.waypointWorkloads && wk.waypointWorkloads.length > 0)}
-            />
-          )}
+          {props.app.isAmbient && <AmbientLabel tooltip={true} />}
         </Title>
 
         {props.app.cluster && isMultiCluster && (

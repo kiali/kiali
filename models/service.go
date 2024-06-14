@@ -87,6 +87,7 @@ type ServiceDetails struct {
 	DestinationRules   []*networking_v1.DestinationRule         `json:"destinationRules"`
 	Endpoints          Endpoints                                `json:"endpoints"`
 	IstioPermissions   ResourcePermissions                      `json:"istioPermissions"`
+	IsAmbient          bool                                     `json:"isAmbient"`
 	IstioSidecar       bool                                     `json:"istioSidecar"`
 	K8sGRPCRoutes      []*k8s_networking_v1.GRPCRoute           `json:"k8sGRPCRoutes"`
 	K8sHTTPRoutes      []*k8s_networking_v1.HTTPRoute           `json:"k8sHTTPRoutes"`
