@@ -202,7 +202,7 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
         <IstioMetrics
           data-test="inbound-metrics-component"
           direction="inbound"
-          includeAmbient={!!this.state.workload?.istioAmbient}
+          includeAmbient={!!this.state.workload?.isAmbient}
           lastRefreshAt={this.props.lastRefreshAt}
           namespace={this.props.workloadId.namespace}
           object={this.props.workloadId.workload}
@@ -218,7 +218,7 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
         <IstioMetrics
           data-test="outbound-metrics-component"
           direction="outbound"
-          includeAmbient={!!this.state.workload?.istioAmbient}
+          includeAmbient={!!this.state.workload?.isAmbient}
           lastRefreshAt={this.props.lastRefreshAt}
           namespace={this.props.workloadId.namespace}
           object={this.props.workloadId.workload}
