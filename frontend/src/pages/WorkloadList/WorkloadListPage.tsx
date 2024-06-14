@@ -118,12 +118,12 @@ class WorkloadListPageComponent extends FilterComponent.Component<
         appLabel: deployment.appLabel,
         versionLabel: deployment.versionLabel,
         istioSidecar: deployment.istioSidecar,
-        istioAmbient: deployment.istioAmbient,
+        isAmbient: deployment.isAmbient,
         additionalDetailSample: deployment.additionalDetailSample,
         health: WorkloadHealth.fromJson(deployment.namespace, deployment.name, deployment.health, {
           rateInterval: this.props.duration,
           hasSidecar: deployment.istioSidecar,
-          hasAmbient: deployment.istioAmbient
+          hasAmbient: deployment.isAmbient
         }),
         labels: deployment.labels,
         istioReferences: sortIstioReferences(deployment.istioReferences, true),

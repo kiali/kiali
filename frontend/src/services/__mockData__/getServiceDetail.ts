@@ -27,7 +27,7 @@ export const SERVICE_DETAILS: ServiceDetailsInfo = {
     additionalDetails: []
   },
   istioSidecar: true,
-  istioAmbient: false,
+  isAmbient: false,
   endpoints: [
     {
       addresses: [

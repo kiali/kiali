@@ -32,7 +32,7 @@ export const hasMissingSidecar = (r: SortResource): boolean => {
 };
 
 export const noAmbientLabels = (r: SortResource): boolean => {
-  return !isIstioNamespace(r.namespace) && !r.istioAmbient;
+  return !isIstioNamespace(r.namespace) && !r.isAmbient;
 };
 
 export type ResourceType<R extends RenderResource> = {

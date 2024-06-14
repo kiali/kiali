@@ -41,7 +41,7 @@ interface EndpointAddress {
 
 export interface WorkloadOverview {
   createdAt: string;
-  istioAmbient: boolean;
+  isAmbient: boolean;
   istioSidecar: boolean;
   labels?: { [key: string]: string };
   name: string;
@@ -71,7 +71,7 @@ export interface ServiceDetailsInfo {
   destinationRules: DestinationRule[];
   endpoints?: Endpoints[];
   health?: ServiceHealth;
-  istioAmbient: boolean;
+  isAmbient: boolean;
   istioPermissions: ResourcePermissions;
   istioSidecar: boolean;
   k8sGRPCRoutes: K8sGRPCRoute[];

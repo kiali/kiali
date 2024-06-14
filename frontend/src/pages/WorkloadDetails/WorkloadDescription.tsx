@@ -168,7 +168,7 @@ export const WorkloadDescription: React.FC<WorkloadDescriptionProps> = (props: W
 
           {props.workload &&
             !props.workload.istioSidecar &&
-            !props.workload.istioAmbient &&
+            !props.workload.isAmbient &&
             !isWaypoint(props.workload.labels) && (
               <MissingSidecar
                 dataTest={`missing-sidecar-badge-for-${workload.name}-workload-in-${props.namespace}-namespace`}
@@ -180,7 +180,7 @@ export const WorkloadDescription: React.FC<WorkloadDescriptionProps> = (props: W
               />
             )}
 
-          {props.workload && props.workload.istioAmbient && !isWaypoint(props.workload.labels) && (
+          {props.workload && props.workload.isAmbient && !isWaypoint(props.workload.labels) && (
             <AmbientLabel tooltip={true} waypoint={props.workload.waypointWorkloads?.length > 0 ? true : false} />
           )}
 

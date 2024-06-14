@@ -9,7 +9,7 @@ export interface AppId {
 }
 
 export interface AppWorkload {
-  istioAmbient: boolean;
+  isAmbient: boolean;
   istioSidecar: boolean;
   labels: { [key: string]: string };
   serviceAccountNames: string[];

@@ -310,7 +310,7 @@ func (in *SvcService) buildKubernetesServices(svcs []core_v1.Service, pods []cor
 			Name:                   item.Name,
 			Namespace:              item.Namespace,
 			IstioSidecar:           hasSidecar,
-			IstioAmbient:           hasAmbient,
+			IsAmbient:              hasAmbient,
 			AppLabel:               appLabel,
 			AdditionalDetailSample: models.GetFirstAdditionalIcon(&conf, item.ObjectMeta.Annotations),
 			Health:                 models.EmptyServiceHealth(),

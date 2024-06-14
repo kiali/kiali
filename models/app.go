@@ -48,7 +48,7 @@ type AppListItem struct {
 	// Define if any pod has the Ambient annotation
 	// required: true
 	// example: true
-	IstioAmbient bool `json:"istioAmbient"`
+	IsAmbient bool `json:"isAmbient"`
 
 	// Labels for App
 	Labels map[string]string `json:"labels"`
@@ -74,7 +74,7 @@ type WorkloadItem struct {
 	// Define if belongs to a namespace labeled as ambient
 	// required: true
 	// example: true
-	IstioAmbient bool `json:"istioAmbient"`
+	IsAmbient bool `json:"isAmbient"`
 
 	// Labels for Workload
 	Labels map[string]string `json:"labels"`

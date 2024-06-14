@@ -87,10 +87,10 @@ type WorkloadListItem struct {
 	// example: true
 	IstioSidecar bool `json:"istioSidecar"`
 
-	// Define if Pods related to this Workload has an IstioAmbient deployed
+	// Define if Pods related to this Workload has an IsAmbient deployed
 	// required: true
 	// example: true
-	IstioAmbient bool `json:"istioAmbient"`
+	IsAmbient bool `json:"isAmbient"`
 
 	// Additional item sample, such as type of api being served (graphql, grpc, rest)
 	// example: rest
@@ -192,7 +192,7 @@ func (workload *WorkloadListItem) ParseWorkload(w *Workload) {
 	workload.CreatedAt = w.CreatedAt
 	workload.ResourceVersion = w.ResourceVersion
 	workload.IstioSidecar = w.HasIstioSidecar()
-	workload.IstioAmbient = w.HasIstioAmbient()
+	workload.IsAmbient = w.HasIstioAmbient()
 	workload.Labels = w.Labels
 	workload.PodCount = len(w.Pods)
 	workload.ServiceAccountNames = w.Pods.ServiceAccounts()
@@ -438,7 +438,7 @@ func (workload *Workload) ParsePods(controllerName string, controllerType string
 func (workload *Workload) SetPods(pods []core_v1.Pod) {
 	workload.Pods.Parse(pods)
 	workload.IstioSidecar = workload.HasIstioSidecar()
-	workload.IstioAmbient = workload.HasIstioAmbient()
+	workload.IsAmbient = workload.HasIstioAmbient()
 }
 
 func (workload *Workload) SetServices(svcs *ServiceList) {

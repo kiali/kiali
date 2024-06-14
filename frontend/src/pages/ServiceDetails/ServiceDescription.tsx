@@ -69,7 +69,7 @@ export const ServiceDescription: React.FC<ServiceInfoDescriptionProps> = (props:
           workloads.push({
             workloadName: wk.name,
             istioSidecar: wk.istioSidecar,
-            istioAmbient: wk.istioAmbient,
+            isAmbient: wk.isAmbient,
             serviceAccountNames: wk.serviceAccountNames,
             waypointWorkloads: wk.waypointWorkloads,
             labels: wk.labels ?? {}
@@ -167,7 +167,7 @@ export const ServiceDescription: React.FC<ServiceInfoDescriptionProps> = (props:
             <HealthIndicator id={serviceName} health={props.serviceDetails ? props.serviceDetails.health : undefined} />
           </span>
 
-          {props.serviceDetails?.workloads?.every(wk => wk.istioAmbient) && (
+          {props.serviceDetails?.workloads?.every(wk => wk.isAmbient) && (
             <AmbientLabel
               tooltip={true}
               waypoint={props.serviceDetails?.workloads?.every(

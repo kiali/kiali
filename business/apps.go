@@ -175,7 +175,7 @@ func (in *AppService) GetClusterAppList(ctx context.Context, criteria AppCriteri
 			}
 		}
 		for _, w := range valueApp.Workloads {
-			if appItem.IstioAmbient = w.HasIstioAmbient(); !appItem.IstioAmbient {
+			if appItem.IsAmbient = w.HasIstioAmbient(); !appItem.IsAmbient {
 				break
 			}
 		}
@@ -330,7 +330,7 @@ func (in *AppService) GetAppList(ctx context.Context, criteria AppCriteria) (mod
 				}
 			}
 			for _, w := range valueApp.Workloads {
-				if appItem.IstioAmbient = w.HasIstioAmbient(); !appItem.IstioAmbient {
+				if appItem.IsAmbient = w.HasIstioAmbient(); !appItem.IsAmbient {
 					break
 				}
 			}
@@ -383,7 +383,7 @@ func (in *AppService) GetAppDetails(ctx context.Context, criteria AppCriteria) (
 
 	appInstance.Workloads = make([]models.WorkloadItem, len(appDetails.Workloads))
 	for i, wkd := range appDetails.Workloads {
-		appInstance.Workloads[i] = models.WorkloadItem{WorkloadName: wkd.Name, IstioSidecar: wkd.IstioSidecar, Labels: wkd.Labels, IstioAmbient: wkd.IstioAmbient, ServiceAccountNames: wkd.Pods.ServiceAccounts()}
+		appInstance.Workloads[i] = models.WorkloadItem{WorkloadName: wkd.Name, IstioSidecar: wkd.IstioSidecar, Labels: wkd.Labels, IsAmbient: wkd.IsAmbient, ServiceAccountNames: wkd.Pods.ServiceAccounts()}
 	}
 
 	appInstance.ServiceNames = make([]string, len(appDetails.Services))

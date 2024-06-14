@@ -204,7 +204,7 @@ const DetailDescriptionComponent: React.FC<Props> = (props: Props) => {
         </Tooltip>
 
         {((!workload.istioSidecar &&
-          !workload.istioAmbient &&
+          !workload.isAmbient &&
           !isWaypoint(workload.labels) &&
           serverConfig.ambientEnabled) ||
           (!workload.istioSidecar && !serverConfig.ambientEnabled)) && (
@@ -275,7 +275,7 @@ const DetailDescriptionComponent: React.FC<Props> = (props: Props) => {
             <span style={{ marginLeft: '0.5rem' }}>{createIcon(sub.status)}</span>
           </Tooltip>
 
-          {((!workload.istioSidecar && !workload.istioAmbient && serverConfig.ambientEnabled) ||
+          {((!workload.istioSidecar && !workload.isAmbient && serverConfig.ambientEnabled) ||
             (!workload.istioSidecar && !serverConfig.ambientEnabled)) && (
             <MissingSidecar
               namespace={props.namespace}
