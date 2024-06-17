@@ -3,19 +3,19 @@ package authorization
 import (
 	"fmt"
 
-	api_security_v1beta "istio.io/api/security/v1beta1"
-	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
-	security_v1beta "istio.io/client-go/pkg/apis/security/v1beta1"
+	api_security_v1 "istio.io/api/security/v1"
+	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
+	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
 
 type NoHostChecker struct {
-	AuthorizationPolicy *security_v1beta.AuthorizationPolicy
+	AuthorizationPolicy *security_v1.AuthorizationPolicy
 	Namespaces          models.Namespaces
 	ServiceEntries      map[string][]string
-	VirtualServices     []*networking_v1beta1.VirtualService
+	VirtualServices     []*networking_v1.VirtualService
 	RegistryServices    []*kubernetes.RegistryService
 	PolicyAllowAny      bool
 }
@@ -44,7 +44,7 @@ func (n NoHostChecker) Check() ([]*models.IstioCheck, bool) {
 	return checks, valid
 }
 
-func (n NoHostChecker) validateHost(ruleIdx int, to []*api_security_v1beta.Rule_To) ([]*models.IstioCheck, bool) {
+func (n NoHostChecker) validateHost(ruleIdx int, to []*api_security_v1.Rule_To) ([]*models.IstioCheck, bool) {
 	if len(to) == 0 {
 		return nil, true
 	}

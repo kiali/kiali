@@ -1,13 +1,13 @@
 package models
 
 import (
-	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 
 	"github.com/kiali/kiali/kubernetes"
 )
 
 // IsValidHost returns true if VirtualService hosts applies to the service
-func IsVSValidHost(vs *networking_v1beta1.VirtualService, namespace string, serviceName string) bool {
+func IsVSValidHost(vs *networking_v1.VirtualService, namespace string, serviceName string) bool {
 	if serviceName == "" {
 		return false
 	}
@@ -16,7 +16,7 @@ func IsVSValidHost(vs *networking_v1beta1.VirtualService, namespace string, serv
 }
 
 // HasVSRequestTimeout determines if the spec has an http timeout set.
-func HasVSRequestTimeout(vs *networking_v1beta1.VirtualService) bool {
+func HasVSRequestTimeout(vs *networking_v1.VirtualService) bool {
 	if vs == nil {
 		return false
 	}
@@ -29,7 +29,7 @@ func HasVSRequestTimeout(vs *networking_v1beta1.VirtualService) bool {
 }
 
 // HasFaultInjection determines if the spec has http fault injection set.
-func HasVSFaultInjection(vs *networking_v1beta1.VirtualService) bool {
+func HasVSFaultInjection(vs *networking_v1.VirtualService) bool {
 	if vs == nil {
 		return false
 	}
@@ -44,7 +44,7 @@ func HasVSFaultInjection(vs *networking_v1beta1.VirtualService) bool {
 // HasTrafficShifting determines if the spec has http traffic shifting set.
 // If there are routes with multiple destinations then it is assumed that
 // the spec has traffic shifting regardless of weights.
-func HasVSTrafficShifting(vs *networking_v1beta1.VirtualService) bool {
+func HasVSTrafficShifting(vs *networking_v1.VirtualService) bool {
 	if vs == nil {
 		return false
 	}
@@ -62,7 +62,7 @@ func HasVSTrafficShifting(vs *networking_v1beta1.VirtualService) bool {
 // HasTCPTrafficShifting determines if the spec has tcp traffic shifting set.
 // If there are routes with multiple destinations then it is assumed that
 // the spec has traffic shifting regardless of weights.
-func HasVSTCPTrafficShifting(vs *networking_v1beta1.VirtualService) bool {
+func HasVSTCPTrafficShifting(vs *networking_v1.VirtualService) bool {
 	if vs == nil {
 		return false
 	}
@@ -78,7 +78,7 @@ func HasVSTCPTrafficShifting(vs *networking_v1beta1.VirtualService) bool {
 }
 
 // IsValidHost returns true if VirtualService hosts applies to the service
-func HasVSRequestRouting(vs *networking_v1beta1.VirtualService) bool {
+func HasVSRequestRouting(vs *networking_v1.VirtualService) bool {
 	if vs == nil {
 		return false
 	}
@@ -101,7 +101,7 @@ func HasVSRequestRouting(vs *networking_v1beta1.VirtualService) bool {
 }
 
 // HasMirroring determines if the spec has a mirror set.
-func HasVSMirroring(vs *networking_v1beta1.VirtualService) bool {
+func HasVSMirroring(vs *networking_v1.VirtualService) bool {
 	if vs == nil {
 		return false
 	}

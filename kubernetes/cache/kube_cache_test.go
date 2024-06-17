@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 	apps_v1 "k8s.io/api/apps/v1"
 	core_v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -179,7 +179,7 @@ func TestConcurrentAccessDuringRefresh(t *testing.T) {
 
 func TestGetSidecar(t *testing.T) {
 	ns := &core_v1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "testing-ns"}}
-	sidecar := &networking_v1beta1.Sidecar{}
+	sidecar := &networking_v1.Sidecar{}
 	sidecar.Name = "moto-sidecar"
 	sidecar.Namespace = "testing-ns"
 	sidecar.Labels = map[string]string{
@@ -196,42 +196,42 @@ func TestGetSidecar(t *testing.T) {
 		resourceType    string
 		namespace       string
 		expectedErr     error
-		expectedObjects []*networking_v1beta1.Sidecar
+		expectedObjects []*networking_v1.Sidecar
 	}{
 		"With selector that matches": {
 			selector:        "app=bookinfo",
 			resourceType:    kubernetes.Sidecars,
 			expectedErr:     nil,
-			expectedObjects: []*networking_v1beta1.Sidecar{sidecar},
+			expectedObjects: []*networking_v1.Sidecar{sidecar},
 		},
 		"With selector that doesn't match": {
 			selector:        "app=anotherapp",
 			resourceType:    kubernetes.Sidecars,
 			expectedErr:     nil,
-			expectedObjects: []*networking_v1beta1.Sidecar{},
+			expectedObjects: []*networking_v1.Sidecar{},
 		},
 		"Without selector": {
 			resourceType:    kubernetes.Sidecars,
 			expectedErr:     nil,
-			expectedObjects: []*networking_v1beta1.Sidecar{sidecar},
+			expectedObjects: []*networking_v1.Sidecar{sidecar},
 		},
 		"With unparseable selector": {
 			selector:        "unpar$ablestr!ng!",
 			resourceType:    kubernetes.Sidecars,
 			expectedErr:     fmt.Errorf("Any"),
-			expectedObjects: []*networking_v1beta1.Sidecar{},
+			expectedObjects: []*networking_v1.Sidecar{},
 		},
 		"With unknown type": {
 			selector:        "unpar$ablestr!ng!",
 			resourceType:    "unknowntype",
 			expectedErr:     fmt.Errorf("Any"),
-			expectedObjects: []*networking_v1beta1.Sidecar{},
+			expectedObjects: []*networking_v1.Sidecar{},
 		},
 		"Uncached namespace returns empty": {
 			namespace:       "uncachednamespace",
 			resourceType:    kubernetes.Sidecars,
 			expectedErr:     nil,
-			expectedObjects: []*networking_v1beta1.Sidecar{},
+			expectedObjects: []*networking_v1.Sidecar{},
 		},
 	}
 
@@ -261,7 +261,7 @@ func TestGetAndListReturnKindInfo(t *testing.T) {
 	assert := assert.New(t)
 	require := require.New(t)
 	ns := &core_v1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "test"}}
-	vs := &networking_v1beta1.VirtualService{
+	vs := &networking_v1.VirtualService{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "vs", Namespace: "test",
 		},
@@ -325,12 +325,12 @@ func ListingIstioObjectsWorksAcrossNamespacesWhenNamespaceScoped(t *testing.T) {
 
 	nsAlpha := &core_v1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "alpha"}}
 	nsBeta := &core_v1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "beta"}}
-	vsAlpha := &networking_v1beta1.VirtualService{
+	vsAlpha := &networking_v1.VirtualService{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "test-alpha", Namespace: "alpha",
 		},
 	}
-	vsBeta := &networking_v1beta1.VirtualService{
+	vsBeta := &networking_v1.VirtualService{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "test-beta", Namespace: "beta",
 		},

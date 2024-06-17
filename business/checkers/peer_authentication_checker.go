@@ -1,7 +1,7 @@
 package checkers
 
 import (
-	security_v1beta "istio.io/client-go/pkg/apis/security/v1beta1"
+	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 
 	"github.com/kiali/kiali/business/checkers/common"
 	"github.com/kiali/kiali/business/checkers/peerauthentications"
@@ -13,7 +13,7 @@ import (
 const PeerAuthenticationCheckerType = "peerauthentication"
 
 type PeerAuthenticationChecker struct {
-	PeerAuthentications   []*security_v1beta.PeerAuthentication
+	PeerAuthentications   []*security_v1.PeerAuthentication
 	MTLSDetails           kubernetes.MTLSDetails
 	WorkloadsPerNamespace map[string]models.WorkloadList
 	Cluster               string
@@ -32,7 +32,7 @@ func (m PeerAuthenticationChecker) Check() models.IstioValidations {
 }
 
 // runChecks runs all the individual checks for a single mesh policy and appends the result into validations.
-func (m PeerAuthenticationChecker) runChecks(peerAuthn *security_v1beta.PeerAuthentication) models.IstioValidations {
+func (m PeerAuthenticationChecker) runChecks(peerAuthn *security_v1.PeerAuthentication) models.IstioValidations {
 	peerAuthnName := peerAuthn.Name
 	key, rrValidation := EmptyValidValidation(peerAuthnName, peerAuthn.Namespace, PeerAuthenticationCheckerType, m.Cluster)
 

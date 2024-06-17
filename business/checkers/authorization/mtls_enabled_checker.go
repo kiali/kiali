@@ -3,9 +3,9 @@ package authorization
 import (
 	"fmt"
 
-	api_security_v1beta "istio.io/api/security/v1beta1"
-	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
-	security_v1beta "istio.io/client-go/pkg/apis/security/v1beta1"
+	api_security_v1 "istio.io/api/security/v1"
+	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
+	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 
 	"k8s.io/apimachinery/pkg/labels"
 
@@ -17,9 +17,9 @@ import (
 const objectType = "authorizationpolicy"
 
 type MtlsEnabledChecker struct {
-	AuthorizationPolicies []*security_v1beta.AuthorizationPolicy
+	AuthorizationPolicies []*security_v1.AuthorizationPolicy
 	MtlsDetails           kubernetes.MTLSDetails
-	ServiceEntries        []networking_v1beta1.ServiceEntry
+	ServiceEntries        []networking_v1.ServiceEntry
 	RegistryServices      []*kubernetes.RegistryService
 }
 
@@ -56,7 +56,7 @@ func (c MtlsEnabledChecker) Check() models.IstioValidations {
 	return validations
 }
 
-func needsMtls(ap *security_v1beta.AuthorizationPolicy) (bool, []string) {
+func needsMtls(ap *security_v1.AuthorizationPolicy) (bool, []string) {
 	paths := make([]string, 0)
 	if len(ap.Spec.Rules) == 0 {
 		return false, nil
@@ -76,7 +76,7 @@ func needsMtls(ap *security_v1beta.AuthorizationPolicy) (bool, []string) {
 	return len(paths) > 0, paths
 }
 
-func fromNeedsMtls(froms []*api_security_v1beta.Rule_From, ruleNum int) (bool, []string) {
+func fromNeedsMtls(froms []*api_security_v1.Rule_From, ruleNum int) (bool, []string) {
 	paths := make([]string, 0)
 
 	for _, from := range froms {
@@ -104,7 +104,7 @@ func fromNeedsMtls(froms []*api_security_v1beta.Rule_From, ruleNum int) (bool, [
 	return len(paths) > 0, paths
 }
 
-func conditionNeedsMtls(conditions []*api_security_v1beta.Condition, ruleNum int) (bool, []string) {
+func conditionNeedsMtls(conditions []*api_security_v1.Condition, ruleNum int) (bool, []string) {
 	var keysWithMtls = [3]string{"source.namespace", "source.principal", "connection.sni"}
 	paths := make([]string, 0)
 

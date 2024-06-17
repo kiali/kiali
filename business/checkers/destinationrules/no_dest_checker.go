@@ -3,7 +3,7 @@ package destinationrules
 import (
 	"strconv"
 
-	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/kubernetes"
@@ -13,9 +13,9 @@ import (
 type NoDestinationChecker struct {
 	Namespaces            models.Namespaces
 	WorkloadsPerNamespace map[string]models.WorkloadList
-	DestinationRule       *networking_v1beta1.DestinationRule
-	VirtualServices       []*networking_v1beta1.VirtualService
-	ServiceEntries        []*networking_v1beta1.ServiceEntry
+	DestinationRule       *networking_v1.DestinationRule
+	VirtualServices       []*networking_v1.VirtualService
+	ServiceEntries        []*networking_v1.ServiceEntry
 	RegistryServices      []*kubernetes.RegistryService
 	PolicyAllowAny        bool
 }
@@ -157,8 +157,8 @@ func (n NoDestinationChecker) isSubsetReferenced(host string, subset string) boo
 	return false
 }
 
-func (n NoDestinationChecker) getVirtualServices(virtualServiceHost string, virtualServiceSubset string) ([]*networking_v1beta1.VirtualService, bool) {
-	vss := make([]*networking_v1beta1.VirtualService, 0, len(n.VirtualServices))
+func (n NoDestinationChecker) getVirtualServices(virtualServiceHost string, virtualServiceSubset string) ([]*networking_v1.VirtualService, bool) {
+	vss := make([]*networking_v1.VirtualService, 0, len(n.VirtualServices))
 
 	for _, virtualService := range n.VirtualServices {
 

@@ -1,5 +1,4 @@
----
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: virtual-service-reviews
@@ -7,24 +6,24 @@ metadata:
     kiali_wizard: request_timeouts
 spec:
   hosts:
-    - reviews
+  - reviews
   http:
-    - route:
-        - destination:
-            host: reviews
-            subset: v1
-          weight: 33
-        - destination:
-            host: reviews
-            subset: v2
-          weight: 33
-        - destination:
-            host: reviews
-            subset: v3
-          weight: 34
-      timeout: 2s
+  - route:
+    - destination:
+        host: reviews
+        subset: v1
+      weight: 33
+    - destination:
+        host: reviews
+        subset: v2
+      weight: 33
+    - destination:
+        host: reviews
+        subset: v3
+      weight: 34
+    timeout: 2s
 ---
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: destination-rule-reviews

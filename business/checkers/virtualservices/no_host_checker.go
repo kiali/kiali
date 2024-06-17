@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
@@ -12,7 +12,7 @@ import (
 
 type NoHostChecker struct {
 	Namespaces        models.Namespaces
-	VirtualService    *networking_v1beta1.VirtualService
+	VirtualService    *networking_v1.VirtualService
 	ServiceEntryHosts map[string][]string
 	RegistryServices  []*kubernetes.RegistryService
 	PolicyAllowAny    bool

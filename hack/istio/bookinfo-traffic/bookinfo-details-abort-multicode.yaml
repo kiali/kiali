@@ -3,8 +3,7 @@
 # Those requests whose request-id does not match any regex definition below will be OK.
 #
 # last tested on Istio 1.10
----
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: details-abort-vs
@@ -56,7 +55,7 @@ spec:
         host: details
         subset: details-abort-dr-subset-v1
 ---
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: details-abort-dr

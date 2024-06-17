@@ -1,8 +1,8 @@
 package references
 
 import (
-	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
-	security_v1beta "istio.io/client-go/pkg/apis/security/v1beta1"
+	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
+	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
@@ -11,10 +11,10 @@ import (
 type ServiceEntryReferences struct {
 	Namespace             string
 	Namespaces            models.Namespaces
-	ServiceEntries        []*networking_v1beta1.ServiceEntry
-	Sidecars              []*networking_v1beta1.Sidecar
-	AuthorizationPolicies []*security_v1beta.AuthorizationPolicy
-	DestinationRules      []*networking_v1beta1.DestinationRule
+	ServiceEntries        []*networking_v1.ServiceEntry
+	Sidecars              []*networking_v1.Sidecar
+	AuthorizationPolicies []*security_v1.AuthorizationPolicy
+	DestinationRules      []*networking_v1.DestinationRule
 	RegistryServices      []*kubernetes.RegistryService
 }
 
@@ -33,7 +33,7 @@ func (n ServiceEntryReferences) References() models.IstioReferencesMap {
 
 }
 
-func (n ServiceEntryReferences) getConfigReferences(se *networking_v1beta1.ServiceEntry) []models.IstioReference {
+func (n ServiceEntryReferences) getConfigReferences(se *networking_v1.ServiceEntry) []models.IstioReference {
 	result := make([]models.IstioReference, 0)
 	for _, dr := range n.DestinationRules {
 		fqdn := kubernetes.GetHost(dr.Spec.Host, dr.Namespace, n.Namespaces.GetNames())
@@ -76,7 +76,7 @@ func (n ServiceEntryReferences) getConfigReferences(se *networking_v1beta1.Servi
 	return result
 }
 
-func (n ServiceEntryReferences) getAuthPoliciesReferences(se *networking_v1beta1.ServiceEntry) []models.IstioReference {
+func (n ServiceEntryReferences) getAuthPoliciesReferences(se *networking_v1.ServiceEntry) []models.IstioReference {
 	result := make([]models.IstioReference, 0)
 	for _, ap := range n.AuthorizationPolicies {
 		namespace := ap.Namespace
@@ -107,7 +107,7 @@ func (n ServiceEntryReferences) getAuthPoliciesReferences(se *networking_v1beta1
 	return result
 }
 
-func (n ServiceEntryReferences) getServiceReferences(se *networking_v1beta1.ServiceEntry) []models.ServiceReference {
+func (n ServiceEntryReferences) getServiceReferences(se *networking_v1.ServiceEntry) []models.ServiceReference {
 	result := make([]models.ServiceReference, 0)
 	keys := make(map[string]bool)
 	allServices := make([]models.ServiceReference, 0)

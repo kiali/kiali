@@ -1,16 +1,16 @@
-apiVersion: networking.istio.io/v1alpha3
+apiVersion: networking.istio.io/v1
 kind: ServiceEntry
 metadata:
   name: external-svc-https
   namespace: bookinfo
 spec:
   hosts:
-    - api.dropboxapi.com
-    - www.googleapis.com
-    - api.facebook.com
+  - api.dropboxapi.com
+  - www.googleapis.com
+  - api.facebook.com
   location: MESH_EXTERNAL
   ports:
-    - number: 443
-      name: https
-      protocol: TLS
+  - number: 443
+    name: https
+    protocol: TLS
   resolution: DNS

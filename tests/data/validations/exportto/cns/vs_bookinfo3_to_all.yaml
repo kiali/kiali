@@ -1,10 +1,10 @@
 kind: VirtualService
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 metadata:
   name: vs_bookinfo3_to_all
   namespace: bookinfo3
 spec:
   hosts:
-    - '*'
+  - '*'
   exportTo:
-    - '*'
+  - '*'

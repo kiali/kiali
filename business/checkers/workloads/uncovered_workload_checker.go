@@ -1,7 +1,7 @@
 package workloads
 
 import (
-	security_v1beta "istio.io/client-go/pkg/apis/security/v1beta1"
+	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/config"
@@ -11,7 +11,7 @@ import (
 type UncoveredWorkloadChecker struct {
 	Workload              models.WorkloadListItem
 	Namespace             string
-	AuthorizationPolicies []*security_v1beta.AuthorizationPolicy
+	AuthorizationPolicies []*security_v1.AuthorizationPolicy
 }
 
 func (ucw UncoveredWorkloadChecker) Check() ([]*models.IstioCheck, bool) {

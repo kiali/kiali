@@ -9,16 +9,16 @@ import (
 	"golang.org/x/exp/slices"
 
 	extentions_v1alpha1 "istio.io/client-go/pkg/apis/extensions/v1alpha1"
+	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
-	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
-	security_v1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
-	"istio.io/client-go/pkg/apis/telemetry/v1alpha1"
+	security_v1 "istio.io/client-go/pkg/apis/security/v1"
+	telemetry_v1 "istio.io/client-go/pkg/apis/telemetry/v1"
 	istio "istio.io/client-go/pkg/informers/externalversions"
 	istioext_v1alpha1_listers "istio.io/client-go/pkg/listers/extensions/v1alpha1"
+	istionet_v1_listers "istio.io/client-go/pkg/listers/networking/v1"
 	istionet_v1alpha3_listers "istio.io/client-go/pkg/listers/networking/v1alpha3"
-	istionet_v1beta1_listers "istio.io/client-go/pkg/listers/networking/v1beta1"
-	istiosec_v1beta1_listers "istio.io/client-go/pkg/listers/security/v1beta1"
-	istiotelem_v1alpha1_listers "istio.io/client-go/pkg/listers/telemetry/v1alpha1"
+	istiosec_v1_listers "istio.io/client-go/pkg/listers/security/v1"
+	istiotelem_v1_listers "istio.io/client-go/pkg/listers/telemetry/v1"
 	apps_v1 "k8s.io/api/apps/v1"
 	core_v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -82,26 +82,26 @@ type KubeCache interface {
 	GetPods(namespace, labelSelector string) ([]core_v1.Pod, error)
 	GetReplicaSets(namespace string) ([]apps_v1.ReplicaSet, error)
 
-	GetDestinationRule(namespace, name string) (*networking_v1beta1.DestinationRule, error)
-	GetDestinationRules(namespace, labelSelector string) ([]*networking_v1beta1.DestinationRule, error)
+	GetDestinationRule(namespace, name string) (*networking_v1.DestinationRule, error)
+	GetDestinationRules(namespace, labelSelector string) ([]*networking_v1.DestinationRule, error)
 	GetEnvoyFilter(namespace, name string) (*networking_v1alpha3.EnvoyFilter, error)
 	GetEnvoyFilters(namespace, labelSelector string) ([]*networking_v1alpha3.EnvoyFilter, error)
-	GetGateway(namespace, name string) (*networking_v1beta1.Gateway, error)
-	GetGateways(namespace, labelSelector string) ([]*networking_v1beta1.Gateway, error)
-	GetServiceEntry(namespace, name string) (*networking_v1beta1.ServiceEntry, error)
-	GetServiceEntries(namespace, labelSelector string) ([]*networking_v1beta1.ServiceEntry, error)
-	GetSidecar(namespace, name string) (*networking_v1beta1.Sidecar, error)
-	GetSidecars(namespace, labelSelector string) ([]*networking_v1beta1.Sidecar, error)
-	GetVirtualService(namespace, name string) (*networking_v1beta1.VirtualService, error)
-	GetVirtualServices(namespace, labelSelector string) ([]*networking_v1beta1.VirtualService, error)
-	GetWorkloadEntry(namespace, name string) (*networking_v1beta1.WorkloadEntry, error)
-	GetWorkloadEntries(namespace, labelSelector string) ([]*networking_v1beta1.WorkloadEntry, error)
-	GetWorkloadGroup(namespace, name string) (*networking_v1beta1.WorkloadGroup, error)
-	GetWorkloadGroups(namespace, labelSelector string) ([]*networking_v1beta1.WorkloadGroup, error)
+	GetGateway(namespace, name string) (*networking_v1.Gateway, error)
+	GetGateways(namespace, labelSelector string) ([]*networking_v1.Gateway, error)
+	GetServiceEntry(namespace, name string) (*networking_v1.ServiceEntry, error)
+	GetServiceEntries(namespace, labelSelector string) ([]*networking_v1.ServiceEntry, error)
+	GetSidecar(namespace, name string) (*networking_v1.Sidecar, error)
+	GetSidecars(namespace, labelSelector string) ([]*networking_v1.Sidecar, error)
+	GetVirtualService(namespace, name string) (*networking_v1.VirtualService, error)
+	GetVirtualServices(namespace, labelSelector string) ([]*networking_v1.VirtualService, error)
+	GetWorkloadEntry(namespace, name string) (*networking_v1.WorkloadEntry, error)
+	GetWorkloadEntries(namespace, labelSelector string) ([]*networking_v1.WorkloadEntry, error)
+	GetWorkloadGroup(namespace, name string) (*networking_v1.WorkloadGroup, error)
+	GetWorkloadGroups(namespace, labelSelector string) ([]*networking_v1.WorkloadGroup, error)
 	GetWasmPlugin(namespace, name string) (*extentions_v1alpha1.WasmPlugin, error)
 	GetWasmPlugins(namespace, labelSelector string) ([]*extentions_v1alpha1.WasmPlugin, error)
-	GetTelemetry(namespace, name string) (*v1alpha1.Telemetry, error)
-	GetTelemetries(namespace, labelSelector string) ([]*v1alpha1.Telemetry, error)
+	GetTelemetry(namespace, name string) (*telemetry_v1.Telemetry, error)
+	GetTelemetries(namespace, labelSelector string) ([]*telemetry_v1.Telemetry, error)
 
 	GetK8sGateway(namespace, name string) (*gatewayapi_v1.Gateway, error)
 	GetK8sGateways(namespace, labelSelector string) ([]*gatewayapi_v1.Gateway, error)
@@ -116,12 +116,12 @@ type KubeCache interface {
 	GetK8sTLSRoute(namespace, name string) (*gatewayapi_v1alpha2.TLSRoute, error)
 	GetK8sTLSRoutes(namespace, labelSelector string) ([]*gatewayapi_v1alpha2.TLSRoute, error)
 
-	GetAuthorizationPolicy(namespace, name string) (*security_v1beta1.AuthorizationPolicy, error)
-	GetAuthorizationPolicies(namespace, labelSelector string) ([]*security_v1beta1.AuthorizationPolicy, error)
-	GetPeerAuthentication(namespace, name string) (*security_v1beta1.PeerAuthentication, error)
-	GetPeerAuthentications(namespace, labelSelector string) ([]*security_v1beta1.PeerAuthentication, error)
-	GetRequestAuthentication(namespace, name string) (*security_v1beta1.RequestAuthentication, error)
-	GetRequestAuthentications(namespace, labelSelector string) ([]*security_v1beta1.RequestAuthentication, error)
+	GetAuthorizationPolicy(namespace, name string) (*security_v1.AuthorizationPolicy, error)
+	GetAuthorizationPolicies(namespace, labelSelector string) ([]*security_v1.AuthorizationPolicy, error)
+	GetPeerAuthentication(namespace, name string) (*security_v1.PeerAuthentication, error)
+	GetPeerAuthentications(namespace, labelSelector string) ([]*security_v1.PeerAuthentication, error)
+	GetRequestAuthentication(namespace, name string) (*security_v1.RequestAuthentication, error)
+	GetRequestAuthentications(namespace, labelSelector string) ([]*security_v1.RequestAuthentication, error)
 }
 
 // cacheLister combines a bunch of lister types into one.
@@ -141,25 +141,25 @@ type cacheLister struct {
 	cachesSynced []cache.InformerSynced
 
 	// Istio listers
-	authzLister             istiosec_v1beta1_listers.AuthorizationPolicyLister
-	destinationRuleLister   istionet_v1beta1_listers.DestinationRuleLister
+	authzLister             istiosec_v1_listers.AuthorizationPolicyLister
+	destinationRuleLister   istionet_v1_listers.DestinationRuleLister
 	envoyFilterLister       istionet_v1alpha3_listers.EnvoyFilterLister
-	gatewayLister           istionet_v1beta1_listers.GatewayLister
+	gatewayLister           istionet_v1_listers.GatewayLister
 	k8sgatewayLister        k8s_v1_listers.GatewayLister
 	k8sgrpcrouteLister      k8s_v1_listers.GRPCRouteLister
 	k8shttprouteLister      k8s_v1_listers.HTTPRouteLister
 	k8sreferencegrantLister k8s_v1beta1_listers.ReferenceGrantLister
 	k8stcprouteLister       k8s_v1alpha2_listers.TCPRouteLister
 	k8stlsrouteLister       k8s_v1alpha2_listers.TLSRouteLister
-	peerAuthnLister         istiosec_v1beta1_listers.PeerAuthenticationLister
-	requestAuthnLister      istiosec_v1beta1_listers.RequestAuthenticationLister
-	serviceEntryLister      istionet_v1beta1_listers.ServiceEntryLister
-	sidecarLister           istionet_v1beta1_listers.SidecarLister
-	telemetryLister         istiotelem_v1alpha1_listers.TelemetryLister
-	virtualServiceLister    istionet_v1beta1_listers.VirtualServiceLister
+	peerAuthnLister         istiosec_v1_listers.PeerAuthenticationLister
+	requestAuthnLister      istiosec_v1_listers.RequestAuthenticationLister
+	serviceEntryLister      istionet_v1_listers.ServiceEntryLister
+	sidecarLister           istionet_v1_listers.SidecarLister
+	telemetryLister         istiotelem_v1_listers.TelemetryLister
+	virtualServiceLister    istionet_v1_listers.VirtualServiceLister
 	wasmPluginLister        istioext_v1alpha1_listers.WasmPluginLister
-	workloadEntryLister     istionet_v1beta1_listers.WorkloadEntryLister
-	workloadGroupLister     istionet_v1beta1_listers.WorkloadGroupLister
+	workloadEntryLister     istionet_v1_listers.WorkloadEntryLister
+	workloadGroupLister     istionet_v1_listers.WorkloadGroupLister
 }
 
 // kubeCache is a local cache of kube objects. Manages informers and listers.
@@ -357,44 +357,44 @@ func (c *kubeCache) createIstioInformers(namespace string) istio.SharedInformerF
 	lister := c.getCacheLister(namespace)
 
 	if c.client.IsIstioAPI() {
-		lister.authzLister = sharedInformers.Security().V1beta1().AuthorizationPolicies().Lister()
-		lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Security().V1beta1().AuthorizationPolicies().Informer().HasSynced)
+		lister.authzLister = sharedInformers.Security().V1().AuthorizationPolicies().Lister()
+		lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Security().V1().AuthorizationPolicies().Informer().HasSynced)
 
-		lister.destinationRuleLister = sharedInformers.Networking().V1beta1().DestinationRules().Lister()
-		lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Networking().V1beta1().DestinationRules().Informer().HasSynced)
+		lister.destinationRuleLister = sharedInformers.Networking().V1().DestinationRules().Lister()
+		lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Networking().V1().DestinationRules().Informer().HasSynced)
 
 		lister.envoyFilterLister = sharedInformers.Networking().V1alpha3().EnvoyFilters().Lister()
 		lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Networking().V1alpha3().EnvoyFilters().Informer().HasSynced)
 
-		lister.gatewayLister = sharedInformers.Networking().V1beta1().Gateways().Lister()
-		lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Networking().V1beta1().Gateways().Informer().HasSynced)
+		lister.gatewayLister = sharedInformers.Networking().V1().Gateways().Lister()
+		lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Networking().V1().Gateways().Informer().HasSynced)
 
-		lister.peerAuthnLister = sharedInformers.Security().V1beta1().PeerAuthentications().Lister()
-		lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Security().V1beta1().PeerAuthentications().Informer().HasSynced)
+		lister.peerAuthnLister = sharedInformers.Security().V1().PeerAuthentications().Lister()
+		lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Security().V1().PeerAuthentications().Informer().HasSynced)
 
-		lister.requestAuthnLister = sharedInformers.Security().V1beta1().RequestAuthentications().Lister()
-		lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Security().V1beta1().RequestAuthentications().Informer().HasSynced)
+		lister.requestAuthnLister = sharedInformers.Security().V1().RequestAuthentications().Lister()
+		lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Security().V1().RequestAuthentications().Informer().HasSynced)
 
-		lister.serviceEntryLister = sharedInformers.Networking().V1beta1().ServiceEntries().Lister()
-		lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Networking().V1beta1().ServiceEntries().Informer().HasSynced)
+		lister.serviceEntryLister = sharedInformers.Networking().V1().ServiceEntries().Lister()
+		lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Networking().V1().ServiceEntries().Informer().HasSynced)
 
-		lister.sidecarLister = sharedInformers.Networking().V1beta1().Sidecars().Lister()
-		lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Networking().V1beta1().Sidecars().Informer().HasSynced)
+		lister.sidecarLister = sharedInformers.Networking().V1().Sidecars().Lister()
+		lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Networking().V1().Sidecars().Informer().HasSynced)
 
-		lister.telemetryLister = sharedInformers.Telemetry().V1alpha1().Telemetries().Lister()
+		lister.telemetryLister = sharedInformers.Telemetry().V1().Telemetries().Lister()
 		lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Telemetry().V1alpha1().Telemetries().Informer().HasSynced)
 
-		lister.virtualServiceLister = sharedInformers.Networking().V1beta1().VirtualServices().Lister()
-		lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Networking().V1beta1().VirtualServices().Informer().HasSynced)
+		lister.virtualServiceLister = sharedInformers.Networking().V1().VirtualServices().Lister()
+		lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Networking().V1().VirtualServices().Informer().HasSynced)
 
 		lister.wasmPluginLister = sharedInformers.Extensions().V1alpha1().WasmPlugins().Lister()
 		lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Extensions().V1alpha1().WasmPlugins().Informer().HasSynced)
 
-		lister.workloadEntryLister = sharedInformers.Networking().V1beta1().WorkloadEntries().Lister()
-		lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Networking().V1beta1().WorkloadEntries().Informer().HasSynced)
+		lister.workloadEntryLister = sharedInformers.Networking().V1().WorkloadEntries().Lister()
+		lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Networking().V1().WorkloadEntries().Informer().HasSynced)
 
-		lister.workloadGroupLister = sharedInformers.Networking().V1beta1().WorkloadGroups().Lister()
-		lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Networking().V1beta1().WorkloadGroups().Informer().HasSynced)
+		lister.workloadGroupLister = sharedInformers.Networking().V1().WorkloadGroups().Lister()
+		lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Networking().V1().WorkloadGroups().Informer().HasSynced)
 	}
 
 	return sharedInformers
@@ -896,7 +896,7 @@ func (c *kubeCache) GetReplicaSets(namespace string) ([]apps_v1.ReplicaSet, erro
 	return result, nil
 }
 
-func (c *kubeCache) GetDestinationRule(namespace, name string) (*networking_v1beta1.DestinationRule, error) {
+func (c *kubeCache) GetDestinationRule(namespace, name string) (*networking_v1.DestinationRule, error) {
 	if err := checkIstioAPIsExist(c.client); err != nil {
 		return nil, err
 	}
@@ -916,7 +916,7 @@ func (c *kubeCache) GetDestinationRule(namespace, name string) (*networking_v1be
 	return retDR, nil
 }
 
-func (c *kubeCache) GetDestinationRules(namespace, labelSelector string) ([]*networking_v1beta1.DestinationRule, error) {
+func (c *kubeCache) GetDestinationRules(namespace, labelSelector string) ([]*networking_v1.DestinationRule, error) {
 	if err := checkIstioAPIsExist(c.client); err != nil {
 		return nil, err
 	}
@@ -931,7 +931,7 @@ func (c *kubeCache) GetDestinationRules(namespace, labelSelector string) ([]*net
 	defer c.cacheLock.RUnlock()
 	c.cacheLock.RLock()
 
-	drs := []*networking_v1beta1.DestinationRule{}
+	drs := []*networking_v1.DestinationRule{}
 	if namespace == metav1.NamespaceAll {
 		if c.clusterScoped {
 			drs, err = c.clusterCacheLister.destinationRuleLister.List(selector)
@@ -955,7 +955,7 @@ func (c *kubeCache) GetDestinationRules(namespace, labelSelector string) ([]*net
 	}
 
 	// Do not modify what is returned by the lister since that is shared and will cause data races.
-	var retDRs []*networking_v1beta1.DestinationRule
+	var retDRs []*networking_v1.DestinationRule
 	for _, dr := range drs {
 		d := dr.DeepCopy()
 		d.Kind = kubernetes.DestinationRuleType
@@ -1031,7 +1031,7 @@ func (c *kubeCache) GetEnvoyFilters(namespace, labelSelector string) ([]*network
 	return retEnvoyFilters, nil
 }
 
-func (c *kubeCache) GetGateway(namespace, name string) (*networking_v1beta1.Gateway, error) {
+func (c *kubeCache) GetGateway(namespace, name string) (*networking_v1.Gateway, error) {
 	if err := checkIstioAPIsExist(c.client); err != nil {
 		return nil, err
 	}
@@ -1050,7 +1050,7 @@ func (c *kubeCache) GetGateway(namespace, name string) (*networking_v1beta1.Gate
 	return retGW, nil
 }
 
-func (c *kubeCache) GetGateways(namespace, labelSelector string) ([]*networking_v1beta1.Gateway, error) {
+func (c *kubeCache) GetGateways(namespace, labelSelector string) ([]*networking_v1.Gateway, error) {
 	if err := checkIstioAPIsExist(c.client); err != nil {
 		return nil, err
 	}
@@ -1065,7 +1065,7 @@ func (c *kubeCache) GetGateways(namespace, labelSelector string) ([]*networking_
 	defer c.cacheLock.RUnlock()
 	c.cacheLock.RLock()
 
-	gateways := []*networking_v1beta1.Gateway{}
+	gateways := []*networking_v1.Gateway{}
 	if namespace == metav1.NamespaceAll {
 		if c.clusterScoped {
 			gateways, err = c.clusterCacheLister.gatewayLister.List(selector)
@@ -1088,7 +1088,7 @@ func (c *kubeCache) GetGateways(namespace, labelSelector string) ([]*networking_
 		}
 	}
 
-	var retGateways []*networking_v1beta1.Gateway
+	var retGateways []*networking_v1.Gateway
 	for _, gw := range gateways {
 		g := gw.DeepCopy()
 		g.Kind = kubernetes.GatewayType
@@ -1097,7 +1097,7 @@ func (c *kubeCache) GetGateways(namespace, labelSelector string) ([]*networking_
 	return retGateways, nil
 }
 
-func (c *kubeCache) GetServiceEntry(namespace, name string) (*networking_v1beta1.ServiceEntry, error) {
+func (c *kubeCache) GetServiceEntry(namespace, name string) (*networking_v1.ServiceEntry, error) {
 	if err := checkIstioAPIsExist(c.client); err != nil {
 		return nil, err
 	}
@@ -1116,7 +1116,7 @@ func (c *kubeCache) GetServiceEntry(namespace, name string) (*networking_v1beta1
 	return retSE, nil
 }
 
-func (c *kubeCache) GetServiceEntries(namespace, labelSelector string) ([]*networking_v1beta1.ServiceEntry, error) {
+func (c *kubeCache) GetServiceEntries(namespace, labelSelector string) ([]*networking_v1.ServiceEntry, error) {
 	if err := checkIstioAPIsExist(c.client); err != nil {
 		return nil, err
 	}
@@ -1131,7 +1131,7 @@ func (c *kubeCache) GetServiceEntries(namespace, labelSelector string) ([]*netwo
 	defer c.cacheLock.RUnlock()
 	c.cacheLock.RLock()
 
-	serviceEntries := []*networking_v1beta1.ServiceEntry{}
+	serviceEntries := []*networking_v1.ServiceEntry{}
 	if namespace == metav1.NamespaceAll {
 		if c.clusterScoped {
 			serviceEntries, err = c.clusterCacheLister.serviceEntryLister.List(selector)
@@ -1154,7 +1154,7 @@ func (c *kubeCache) GetServiceEntries(namespace, labelSelector string) ([]*netwo
 		}
 	}
 
-	var retSEs []*networking_v1beta1.ServiceEntry
+	var retSEs []*networking_v1.ServiceEntry
 	for _, se := range serviceEntries {
 		s := se.DeepCopy()
 		s.Kind = kubernetes.ServiceEntryType
@@ -1163,7 +1163,7 @@ func (c *kubeCache) GetServiceEntries(namespace, labelSelector string) ([]*netwo
 	return retSEs, nil
 }
 
-func (c *kubeCache) GetSidecar(namespace, name string) (*networking_v1beta1.Sidecar, error) {
+func (c *kubeCache) GetSidecar(namespace, name string) (*networking_v1.Sidecar, error) {
 	if err := checkIstioAPIsExist(c.client); err != nil {
 		return nil, err
 	}
@@ -1182,7 +1182,7 @@ func (c *kubeCache) GetSidecar(namespace, name string) (*networking_v1beta1.Side
 	return retSC, nil
 }
 
-func (c *kubeCache) GetSidecars(namespace, labelSelector string) ([]*networking_v1beta1.Sidecar, error) {
+func (c *kubeCache) GetSidecars(namespace, labelSelector string) ([]*networking_v1.Sidecar, error) {
 	if err := checkIstioAPIsExist(c.client); err != nil {
 		return nil, err
 	}
@@ -1197,7 +1197,7 @@ func (c *kubeCache) GetSidecars(namespace, labelSelector string) ([]*networking_
 	defer c.cacheLock.RUnlock()
 	c.cacheLock.RLock()
 
-	sidecars := []*networking_v1beta1.Sidecar{}
+	sidecars := []*networking_v1.Sidecar{}
 	if namespace == metav1.NamespaceAll {
 		if c.clusterScoped {
 			sidecars, err = c.clusterCacheLister.sidecarLister.List(selector)
@@ -1220,7 +1220,7 @@ func (c *kubeCache) GetSidecars(namespace, labelSelector string) ([]*networking_
 		}
 	}
 
-	var retSC []*networking_v1beta1.Sidecar
+	var retSC []*networking_v1.Sidecar
 	for _, sc := range sidecars {
 		s := sc.DeepCopy()
 		s.Kind = kubernetes.SidecarType
@@ -1229,7 +1229,7 @@ func (c *kubeCache) GetSidecars(namespace, labelSelector string) ([]*networking_
 	return retSC, nil
 }
 
-func (c *kubeCache) GetVirtualService(namespace, name string) (*networking_v1beta1.VirtualService, error) {
+func (c *kubeCache) GetVirtualService(namespace, name string) (*networking_v1.VirtualService, error) {
 	if err := checkIstioAPIsExist(c.client); err != nil {
 		return nil, err
 	}
@@ -1248,7 +1248,7 @@ func (c *kubeCache) GetVirtualService(namespace, name string) (*networking_v1bet
 	return retVS, nil
 }
 
-func (c *kubeCache) GetVirtualServices(namespace, labelSelector string) ([]*networking_v1beta1.VirtualService, error) {
+func (c *kubeCache) GetVirtualServices(namespace, labelSelector string) ([]*networking_v1.VirtualService, error) {
 	if err := checkIstioAPIsExist(c.client); err != nil {
 		return nil, err
 	}
@@ -1263,7 +1263,7 @@ func (c *kubeCache) GetVirtualServices(namespace, labelSelector string) ([]*netw
 	defer c.cacheLock.RUnlock()
 	c.cacheLock.RLock()
 
-	vs := []*networking_v1beta1.VirtualService{}
+	vs := []*networking_v1.VirtualService{}
 	if namespace == metav1.NamespaceAll {
 		if c.clusterScoped {
 			vs, err = c.clusterCacheLister.virtualServiceLister.List(selector)
@@ -1286,7 +1286,7 @@ func (c *kubeCache) GetVirtualServices(namespace, labelSelector string) ([]*netw
 		}
 	}
 
-	var retVS []*networking_v1beta1.VirtualService
+	var retVS []*networking_v1.VirtualService
 	for _, v := range vs {
 		vv := v.DeepCopy()
 		vv.Kind = kubernetes.VirtualServiceType
@@ -1295,7 +1295,7 @@ func (c *kubeCache) GetVirtualServices(namespace, labelSelector string) ([]*netw
 	return retVS, nil
 }
 
-func (c *kubeCache) GetWorkloadEntry(namespace, name string) (*networking_v1beta1.WorkloadEntry, error) {
+func (c *kubeCache) GetWorkloadEntry(namespace, name string) (*networking_v1.WorkloadEntry, error) {
 	if err := checkIstioAPIsExist(c.client); err != nil {
 		return nil, err
 	}
@@ -1314,7 +1314,7 @@ func (c *kubeCache) GetWorkloadEntry(namespace, name string) (*networking_v1beta
 	return retWE, nil
 }
 
-func (c *kubeCache) GetWorkloadEntries(namespace, labelSelector string) ([]*networking_v1beta1.WorkloadEntry, error) {
+func (c *kubeCache) GetWorkloadEntries(namespace, labelSelector string) ([]*networking_v1.WorkloadEntry, error) {
 	if err := checkIstioAPIsExist(c.client); err != nil {
 		return nil, err
 	}
@@ -1329,7 +1329,7 @@ func (c *kubeCache) GetWorkloadEntries(namespace, labelSelector string) ([]*netw
 	defer c.cacheLock.RUnlock()
 	c.cacheLock.RLock()
 
-	workloadEntries := []*networking_v1beta1.WorkloadEntry{}
+	workloadEntries := []*networking_v1.WorkloadEntry{}
 	if namespace == metav1.NamespaceAll {
 		if c.clusterScoped {
 			workloadEntries, err = c.clusterCacheLister.workloadEntryLister.List(selector)
@@ -1352,7 +1352,7 @@ func (c *kubeCache) GetWorkloadEntries(namespace, labelSelector string) ([]*netw
 		}
 	}
 
-	var retWE []*networking_v1beta1.WorkloadEntry
+	var retWE []*networking_v1.WorkloadEntry
 	for _, w := range workloadEntries {
 		ww := w.DeepCopy()
 		ww.Kind = kubernetes.WorkloadEntryType
@@ -1361,7 +1361,7 @@ func (c *kubeCache) GetWorkloadEntries(namespace, labelSelector string) ([]*netw
 	return retWE, nil
 }
 
-func (c *kubeCache) GetWorkloadGroup(namespace, name string) (*networking_v1beta1.WorkloadGroup, error) {
+func (c *kubeCache) GetWorkloadGroup(namespace, name string) (*networking_v1.WorkloadGroup, error) {
 	if err := checkIstioAPIsExist(c.client); err != nil {
 		return nil, err
 	}
@@ -1380,7 +1380,7 @@ func (c *kubeCache) GetWorkloadGroup(namespace, name string) (*networking_v1beta
 	return retWG, nil
 }
 
-func (c *kubeCache) GetWorkloadGroups(namespace, labelSelector string) ([]*networking_v1beta1.WorkloadGroup, error) {
+func (c *kubeCache) GetWorkloadGroups(namespace, labelSelector string) ([]*networking_v1.WorkloadGroup, error) {
 	if err := checkIstioAPIsExist(c.client); err != nil {
 		return nil, err
 	}
@@ -1395,7 +1395,7 @@ func (c *kubeCache) GetWorkloadGroups(namespace, labelSelector string) ([]*netwo
 	defer c.cacheLock.RUnlock()
 	c.cacheLock.RLock()
 
-	workloadGroups := []*networking_v1beta1.WorkloadGroup{}
+	workloadGroups := []*networking_v1.WorkloadGroup{}
 	if namespace == metav1.NamespaceAll {
 		if c.clusterScoped {
 			workloadGroups, err = c.clusterCacheLister.workloadGroupLister.List(selector)
@@ -1418,7 +1418,7 @@ func (c *kubeCache) GetWorkloadGroups(namespace, labelSelector string) ([]*netwo
 		}
 	}
 
-	var retWG []*networking_v1beta1.WorkloadGroup
+	var retWG []*networking_v1.WorkloadGroup
 	for _, w := range workloadGroups {
 		ww := w.DeepCopy()
 		ww.Kind = kubernetes.WorkloadGroupType
@@ -1493,7 +1493,7 @@ func (c *kubeCache) GetWasmPlugins(namespace, labelSelector string) ([]*extentio
 	return retWP, nil
 }
 
-func (c *kubeCache) GetTelemetry(namespace, name string) (*v1alpha1.Telemetry, error) {
+func (c *kubeCache) GetTelemetry(namespace, name string) (*telemetry_v1.Telemetry, error) {
 	if err := checkIstioAPIsExist(c.client); err != nil {
 		return nil, err
 	}
@@ -1512,7 +1512,7 @@ func (c *kubeCache) GetTelemetry(namespace, name string) (*v1alpha1.Telemetry, e
 	return retT, nil
 }
 
-func (c *kubeCache) GetTelemetries(namespace, labelSelector string) ([]*v1alpha1.Telemetry, error) {
+func (c *kubeCache) GetTelemetries(namespace, labelSelector string) ([]*telemetry_v1.Telemetry, error) {
 	if err := checkIstioAPIsExist(c.client); err != nil {
 		return nil, err
 	}
@@ -1527,7 +1527,7 @@ func (c *kubeCache) GetTelemetries(namespace, labelSelector string) ([]*v1alpha1
 	defer c.cacheLock.RUnlock()
 	c.cacheLock.RLock()
 
-	telemetries := []*v1alpha1.Telemetry{}
+	telemetries := []*telemetry_v1.Telemetry{}
 	if namespace == metav1.NamespaceAll {
 		if c.clusterScoped {
 			telemetries, err = c.clusterCacheLister.telemetryLister.List(selector)
@@ -1550,7 +1550,7 @@ func (c *kubeCache) GetTelemetries(namespace, labelSelector string) ([]*v1alpha1
 		}
 	}
 
-	var retTelemetries []*v1alpha1.Telemetry
+	var retTelemetries []*telemetry_v1.Telemetry
 	for _, t := range telemetries {
 		tt := t.DeepCopy()
 		tt.Kind = kubernetes.TelemetryType
@@ -1993,7 +1993,7 @@ func (c *kubeCache) GetK8sTLSRoutes(namespace, labelSelector string) ([]*gateway
 	return retK8sTLSRoutes, nil
 }
 
-func (c *kubeCache) GetAuthorizationPolicy(namespace, name string) (*security_v1beta1.AuthorizationPolicy, error) {
+func (c *kubeCache) GetAuthorizationPolicy(namespace, name string) (*security_v1.AuthorizationPolicy, error) {
 	if err := checkIstioAPIsExist(c.client); err != nil {
 		return nil, err
 	}
@@ -2012,7 +2012,7 @@ func (c *kubeCache) GetAuthorizationPolicy(namespace, name string) (*security_v1
 	return retAP, nil
 }
 
-func (c *kubeCache) GetAuthorizationPolicies(namespace, labelSelector string) ([]*security_v1beta1.AuthorizationPolicy, error) {
+func (c *kubeCache) GetAuthorizationPolicies(namespace, labelSelector string) ([]*security_v1.AuthorizationPolicy, error) {
 	if err := checkIstioAPIsExist(c.client); err != nil {
 		return nil, err
 	}
@@ -2027,7 +2027,7 @@ func (c *kubeCache) GetAuthorizationPolicies(namespace, labelSelector string) ([
 	defer c.cacheLock.RUnlock()
 	c.cacheLock.RLock()
 
-	authorizationPolicies := []*security_v1beta1.AuthorizationPolicy{}
+	authorizationPolicies := []*security_v1.AuthorizationPolicy{}
 	if namespace == metav1.NamespaceAll {
 		if c.clusterScoped {
 			authorizationPolicies, err = c.clusterCacheLister.authzLister.List(selector)
@@ -2050,7 +2050,7 @@ func (c *kubeCache) GetAuthorizationPolicies(namespace, labelSelector string) ([
 		}
 	}
 
-	var retAuthorizationPolicies []*security_v1beta1.AuthorizationPolicy
+	var retAuthorizationPolicies []*security_v1.AuthorizationPolicy
 	for _, ap := range authorizationPolicies {
 		apCopy := ap.DeepCopy()
 		apCopy.Kind = kubernetes.AuthorizationPoliciesType
@@ -2059,7 +2059,7 @@ func (c *kubeCache) GetAuthorizationPolicies(namespace, labelSelector string) ([
 	return retAuthorizationPolicies, nil
 }
 
-func (c *kubeCache) GetPeerAuthentication(namespace, name string) (*security_v1beta1.PeerAuthentication, error) {
+func (c *kubeCache) GetPeerAuthentication(namespace, name string) (*security_v1.PeerAuthentication, error) {
 	if err := checkIstioAPIsExist(c.client); err != nil {
 		return nil, err
 	}
@@ -2078,7 +2078,7 @@ func (c *kubeCache) GetPeerAuthentication(namespace, name string) (*security_v1b
 	return retPA, nil
 }
 
-func (c *kubeCache) GetPeerAuthentications(namespace, labelSelector string) ([]*security_v1beta1.PeerAuthentication, error) {
+func (c *kubeCache) GetPeerAuthentications(namespace, labelSelector string) ([]*security_v1.PeerAuthentication, error) {
 	if err := checkIstioAPIsExist(c.client); err != nil {
 		return nil, err
 	}
@@ -2093,7 +2093,7 @@ func (c *kubeCache) GetPeerAuthentications(namespace, labelSelector string) ([]*
 	defer c.cacheLock.RUnlock()
 	c.cacheLock.RLock()
 
-	peerAuthentications := []*security_v1beta1.PeerAuthentication{}
+	peerAuthentications := []*security_v1.PeerAuthentication{}
 	if namespace == metav1.NamespaceAll {
 		if c.clusterScoped {
 			peerAuthentications, err = c.clusterCacheLister.peerAuthnLister.List(selector)
@@ -2116,7 +2116,7 @@ func (c *kubeCache) GetPeerAuthentications(namespace, labelSelector string) ([]*
 		}
 	}
 
-	var retPeerAuthentications []*security_v1beta1.PeerAuthentication
+	var retPeerAuthentications []*security_v1.PeerAuthentication
 	for _, pa := range peerAuthentications {
 		paCopy := pa.DeepCopy()
 		paCopy.Kind = kubernetes.PeerAuthenticationsType
@@ -2125,7 +2125,7 @@ func (c *kubeCache) GetPeerAuthentications(namespace, labelSelector string) ([]*
 	return retPeerAuthentications, nil
 }
 
-func (c *kubeCache) GetRequestAuthentication(namespace, name string) (*security_v1beta1.RequestAuthentication, error) {
+func (c *kubeCache) GetRequestAuthentication(namespace, name string) (*security_v1.RequestAuthentication, error) {
 	if err := checkIstioAPIsExist(c.client); err != nil {
 		return nil, err
 	}
@@ -2144,7 +2144,7 @@ func (c *kubeCache) GetRequestAuthentication(namespace, name string) (*security_
 	return retRA, nil
 }
 
-func (c *kubeCache) GetRequestAuthentications(namespace, labelSelector string) ([]*security_v1beta1.RequestAuthentication, error) {
+func (c *kubeCache) GetRequestAuthentications(namespace, labelSelector string) ([]*security_v1.RequestAuthentication, error) {
 	if err := checkIstioAPIsExist(c.client); err != nil {
 		return nil, err
 	}
@@ -2159,7 +2159,7 @@ func (c *kubeCache) GetRequestAuthentications(namespace, labelSelector string) (
 	defer c.cacheLock.RUnlock()
 	c.cacheLock.RLock()
 
-	requestAuthentications := []*security_v1beta1.RequestAuthentication{}
+	requestAuthentications := []*security_v1.RequestAuthentication{}
 	if namespace == metav1.NamespaceAll {
 		if c.clusterScoped {
 			requestAuthentications, err = c.clusterCacheLister.requestAuthnLister.List(selector)
@@ -2182,7 +2182,7 @@ func (c *kubeCache) GetRequestAuthentications(namespace, labelSelector string) (
 		}
 	}
 
-	var retRequestAuthentications []*security_v1beta1.RequestAuthentication
+	var retRequestAuthentications []*security_v1.RequestAuthentication
 	for _, ra := range requestAuthentications {
 		raCopy := ra.DeepCopy()
 		raCopy.Kind = kubernetes.RequestAuthenticationsType

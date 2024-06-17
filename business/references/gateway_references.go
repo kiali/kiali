@@ -1,7 +1,7 @@
 package references
 
 import (
-	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 
 	"k8s.io/apimachinery/pkg/labels"
 
@@ -10,8 +10,8 @@ import (
 )
 
 type GatewayReferences struct {
-	Gateways              []*networking_v1beta1.Gateway
-	VirtualServices       []*networking_v1beta1.VirtualService
+	Gateways              []*networking_v1.Gateway
+	VirtualServices       []*networking_v1.VirtualService
 	WorkloadsPerNamespace map[string]models.WorkloadList
 }
 
@@ -32,7 +32,7 @@ func (n GatewayReferences) References() models.IstioReferencesMap {
 	return result
 }
 
-func (n GatewayReferences) getWorkloadReferences(gw *networking_v1beta1.Gateway) []models.WorkloadReference {
+func (n GatewayReferences) getWorkloadReferences(gw *networking_v1.Gateway) []models.WorkloadReference {
 	result := make([]models.WorkloadReference, 0)
 	selector := labels.SelectorFromSet(gw.Spec.Selector)
 
@@ -48,7 +48,7 @@ func (n GatewayReferences) getWorkloadReferences(gw *networking_v1beta1.Gateway)
 	return result
 }
 
-func (n GatewayReferences) getConfigReferences(gw *networking_v1beta1.Gateway) []models.IstioReference {
+func (n GatewayReferences) getConfigReferences(gw *networking_v1.Gateway) []models.IstioReference {
 	keys := make(map[string]bool)
 	result := make([]models.IstioReference, 0)
 	allVSs := make([]models.IstioReference, 0)
@@ -91,7 +91,7 @@ func (n GatewayReferences) getConfigReferences(gw *networking_v1beta1.Gateway) [
 	return result
 }
 
-func isGatewayListed(gw *networking_v1beta1.Gateway, gateways []string, namespace string) bool {
+func isGatewayListed(gw *networking_v1.Gateway, gateways []string, namespace string) bool {
 	hostname := kubernetes.ParseGatewayAsHost(gw.Name, gw.Namespace)
 	for _, gate := range gateways {
 		gwHostname := kubernetes.ParseGatewayAsHost(gate, namespace)

@@ -1,20 +1,18 @@
 [
   {
     "kind": "ServiceEntry",
-    "apiVersion": "networking.istio.io/v1beta1",
+    "apiVersion": "networking.istio.io/v1",
     "metadata": {
       "name": "zone-msn-com",
       "namespace": "electronic-shop",
       "resourceVersion": "47974",
       "creationTimestamp": "2021-11-24T10:12:53Z",
       "annotations": {
-        "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"networking.istio.io/v1beta1\",\"kind\":\"ServiceEntry\",\"metadata\":{\"annotations\":{},\"name\":\"zone-msn-com\",\"namespace\":\"electronic-shop\"},\"spec\":{\"hosts\":[\"*.msn.com\"],\"location\":\"MESH_EXTERNAL\",\"ports\":[{\"name\":\"http-port\",\"number\":80,\"protocol\":\"HTTP\",\"targetPort\":443},{\"name\":\"https\",\"number\":443,\"protocol\":\"HTTPS\"}],\"resolution\":\"NONE\"}}\n"
+        "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"networking.istio.io/v1\",\"kind\":\"ServiceEntry\",\"metadata\":{\"annotations\":{},\"name\":\"zone-msn-com\",\"namespace\":\"electronic-shop\"},\"spec\":{\"hosts\":[\"*.msn.com\"],\"location\":\"MESH_EXTERNAL\",\"ports\":[{\"name\":\"http-port\",\"number\":80,\"protocol\":\"HTTP\",\"targetPort\":443},{\"name\":\"https\",\"number\":443,\"protocol\":\"HTTPS\"}],\"resolution\":\"NONE\"}}\n"
       }
     },
     "spec": {
-      "hosts": [
-        "*.msn.com"
-      ],
+      "hosts": ["*.msn.com"],
       "ports": [
         {
           "name": "http-port",
@@ -32,20 +30,18 @@
   },
   {
     "kind": "ServiceEntry",
-    "apiVersion": "networking.istio.io/v1beta1",
+    "apiVersion": "networking.istio.io/v1",
     "metadata": {
       "name": "www-bookdepository-com",
       "namespace": "electronic-shop",
       "resourceVersion": "51137",
       "creationTimestamp": "2021-11-24T10:23:13Z",
       "annotations": {
-        "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"networking.istio.io/v1beta1\",\"kind\":\"ServiceEntry\",\"metadata\":{\"annotations\":{},\"name\":\"www-bookdepository-com\",\"namespace\":\"electronic-shop\"},\"spec\":{\"hosts\":[\"www.bookdepository.com\"],\"location\":\"MESH_EXTERNAL\",\"ports\":[{\"name\":\"http-port\",\"number\":80,\"protocol\":\"HTTP\",\"targetPort\":443},{\"name\":\"https\",\"number\":443,\"protocol\":\"HTTPS\"}],\"resolution\":\"DNS\"}}\n"
+        "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"networking.istio.io/v1\",\"kind\":\"ServiceEntry\",\"metadata\":{\"annotations\":{},\"name\":\"www-bookdepository-com\",\"namespace\":\"electronic-shop\"},\"spec\":{\"hosts\":[\"www.bookdepository.com\"],\"location\":\"MESH_EXTERNAL\",\"ports\":[{\"name\":\"http-port\",\"number\":80,\"protocol\":\"HTTP\",\"targetPort\":443},{\"name\":\"https\",\"number\":443,\"protocol\":\"HTTPS\"}],\"resolution\":\"DNS\"}}\n"
       }
     },
     "spec": {
-      "hosts": [
-        "www.bookdepository.com"
-      ],
+      "hosts": ["www.bookdepository.com"],
       "ports": [
         {
           "name": "http-port",

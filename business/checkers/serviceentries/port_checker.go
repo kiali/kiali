@@ -3,14 +3,14 @@ package serviceentries
 import (
 	"fmt"
 
-	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
 
 type PortChecker struct {
-	ServiceEntry *networking_v1beta1.ServiceEntry
+	ServiceEntry *networking_v1.ServiceEntry
 }
 
 func (p PortChecker) Check() ([]*models.IstioCheck, bool) {

@@ -1,169 +1,169 @@
 kind: VirtualService
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 metadata:
   name: reviews1
   namespace: bookinfo
 spec:
   hosts:
-    - 'reviews.prod.svc.cluster.local'
+  - 'reviews.prod.svc.cluster.local'
   gateways:
-    - istio-system/gateway
-    - mesh
+  - istio-system/gateway
+  - mesh
   http:
-    - match:
-        - gateways:
-            - valid-gateway
-            - gateway1
-        - uri:
-            exact: /static
-      route:
-        - destination:
-            host: reviews.bookinfo.svc.cluster.local
-            subset: v1
-          weight: 33
-        - destination:
-            host: reviews2
-            subset: v2
-          weight: 65
-        - destination:
-            host: reviews2
-            subset: v2
-            weight: 2
+  - match:
+    - gateways:
+      - valid-gateway
+      - gateway1
+    - uri:
+        exact: /static
+    route:
+    - destination:
+        host: reviews.bookinfo.svc.cluster.local
+        subset: v1
+      weight: 33
+    - destination:
+        host: reviews2
+        subset: v2
+      weight: 65
+    - destination:
+        host: reviews2
+        subset: v2
+        weight: 2
   tls:
-    - match:
-        - port: 443
-          sniHosts:
-            - reviews.bookinfo.com
-      route:
-        - destination:
-            host: reviews3.bookinfo3.svc.cluster.local
+  - match:
+    - port: 443
+      sniHosts:
+      - reviews.bookinfo.com
+    route:
+    - destination:
+        host: reviews3.bookinfo3.svc.cluster.local
 ---
 kind: VirtualService
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 metadata:
   name: reviews2
   namespace: bookinfo
 spec:
   hosts:
-    - 'reviews.prod.svc.cluster.local'
+  - 'reviews.prod.svc.cluster.local'
   gateways:
-    - gateway1
-    - bookinfo2/gateway2
-    - mesh
+  - gateway1
+  - bookinfo2/gateway2
+  - mesh
   http:
-    - match:
-        - gateways:
-            - valid-gateway
-            - istio-system/gateway
-        - uri:
-            exact: /static
-      route:
-        - destination:
-            host: reviews.bookinfo.svc.cluster.local
-            subset: v1
-          weight: 33
-        - destination:
-            host: reviews2
-            subset: v2
-          weight: 65
-        - destination:
-            host: reviews2
-            subset: v2
-            weight: 2
+  - match:
+    - gateways:
+      - valid-gateway
+      - istio-system/gateway
+    - uri:
+        exact: /static
+    route:
+    - destination:
+        host: reviews.bookinfo.svc.cluster.local
+        subset: v1
+      weight: 33
+    - destination:
+        host: reviews2
+        subset: v2
+      weight: 65
+    - destination:
+        host: reviews2
+        subset: v2
+        weight: 2
   tls:
-    - match:
-        - port: 443
-          sniHosts:
-            - reviews.bookinfo.com
-      route:
-        - destination:
-            host: reviews3.bookinfo3.svc.cluster.local
+  - match:
+    - port: 443
+      sniHosts:
+      - reviews.bookinfo.com
+    route:
+    - destination:
+        host: reviews3.bookinfo3.svc.cluster.local
 ---
 kind: VirtualService
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 metadata:
   name: reviews3
   namespace: bookinfo
 spec:
   hosts:
-    - 'reviews.prod.svc.cluster.local'
+  - 'reviews.prod.svc.cluster.local'
   gateways:
-    - gateway1
-    - bookinfo2/gateway2
-    - mesh
+  - gateway1
+  - bookinfo2/gateway2
+  - mesh
   http:
-    - match:
-        - gateways:
-            - valid-gateway
-            - gateway1
-        - uri:
-            exact: /static
-      route:
-        - destination:
-            host: reviews.bookinfo.svc.cluster.local
-            subset: v1
-          weight: 33
-        - destination:
-            host: reviews2
-            subset: v2
-          weight: 65
-        - destination:
-            host: reviews2
-            subset: v2
-            weight: 2
+  - match:
+    - gateways:
+      - valid-gateway
+      - gateway1
+    - uri:
+        exact: /static
+    route:
+    - destination:
+        host: reviews.bookinfo.svc.cluster.local
+        subset: v1
+      weight: 33
+    - destination:
+        host: reviews2
+        subset: v2
+      weight: 65
+    - destination:
+        host: reviews2
+        subset: v2
+        weight: 2
   tls:
-    - match:
-        - gateways:
-            - istio-system/gateway
-            - valid-gateway2
-        - port: 443
-          sniHosts:
-            - reviews.bookinfo.com
-      route:
-        - destination:
-            host: reviews3.bookinfo3.svc.cluster.local
+  - match:
+    - gateways:
+      - istio-system/gateway
+      - valid-gateway2
+    - port: 443
+      sniHosts:
+      - reviews.bookinfo.com
+    route:
+    - destination:
+        host: reviews3.bookinfo3.svc.cluster.local
 ---
 ---
 kind: VirtualService
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 metadata:
   name: reviews4
   namespace: bookinfo
 spec:
   hosts:
-    - 'reviews.prod.svc.cluster.local'
+  - 'reviews.prod.svc.cluster.local'
   gateways:
-    - gateway1
-    - bookinfo2/gateway2
-    - mesh
+  - gateway1
+  - bookinfo2/gateway2
+  - mesh
   http:
-    - match:
-        - gateways:
-            - valid-gateway
-            - bookinfo2/gateway
-        - uri:
-            exact: /static
-      route:
-        - destination:
-            host: reviews.bookinfo.svc.cluster.local
-            subset: v1
-          weight: 33
-        - destination:
-            host: reviews2
-            subset: v2
-          weight: 65
-        - destination:
-            host: reviews2
-            subset: v2
-            weight: 2
+  - match:
+    - gateways:
+      - valid-gateway
+      - bookinfo2/gateway
+    - uri:
+        exact: /static
+    route:
+    - destination:
+        host: reviews.bookinfo.svc.cluster.local
+        subset: v1
+      weight: 33
+    - destination:
+        host: reviews2
+        subset: v2
+      weight: 65
+    - destination:
+        host: reviews2
+        subset: v2
+        weight: 2
   tls:
-    - match:
-        - gateways:
-            - valid-gateway
-            - valid-gateway2
-        - port: 443
-          sniHosts:
-            - reviews.bookinfo.com
-      route:
-        - destination:
-            host: reviews3.bookinfo3.svc.cluster.local
+  - match:
+    - gateways:
+      - valid-gateway
+      - valid-gateway2
+    - port: 443
+      sniHosts:
+      - reviews.bookinfo.com
+    route:
+    - destination:
+        host: reviews3.bookinfo3.svc.cluster.local

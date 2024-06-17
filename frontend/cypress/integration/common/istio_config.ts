@@ -43,7 +43,7 @@ const singularize = (word: string): string => {
 
 const minimalAuthorizationPolicy = (name: string, namespace: string): string => {
   return `{
-    "apiVersion": "security.istio.io/v1beta1",
+    "apiVersion": "security.istio.io/v1",
     "kind": "AuthorizationPolicy",
     "metadata": {
         "name": "${name}",
@@ -54,7 +54,7 @@ const minimalAuthorizationPolicy = (name: string, namespace: string): string => 
 
 const minimalDestinationRule = (name: string, namespace: string, host: string): string => {
   return `{
-    "apiVersion": "networking.istio.io/v1alpha3",
+    "apiVersion": "networking.istio.io/v1",
     "kind": "DestinationRule",
     "metadata": {
         "name": "${name}",
@@ -68,7 +68,7 @@ const minimalDestinationRule = (name: string, namespace: string, host: string): 
 
 const minimalVirtualService = (name: string, namespace: string, routeName: string, routeHost: string): string => {
   return `{
-    "apiVersion": "networking.istio.io/v1alpha3",
+    "apiVersion": "networking.istio.io/v1",
     "kind": "VirtualService",
     "metadata": {
       "name": "${name}",
@@ -93,7 +93,7 @@ const minimalVirtualService = (name: string, namespace: string, routeName: strin
 
 const minimalPeerAuthentication = (name: string, namespace: string): string => {
   return `{
-    "apiVersion": "security.istio.io/v1beta1",
+    "apiVersion": "security.istio.io/v1",
     "kind": "PeerAuthentication",
     "metadata": {
         "name": "${name}",
@@ -104,7 +104,7 @@ const minimalPeerAuthentication = (name: string, namespace: string): string => {
 
 const minimalGateway = (name: string, namespace: string, hosts: string, port: number, labelsString: string): string => {
   return `{
-      "apiVersion": "networking.istio.io/v1alpha3",
+      "apiVersion": "networking.istio.io/v1",
       "kind": "Gateway",
       "metadata": {
         "name": "${name}",
@@ -131,7 +131,7 @@ const minimalGateway = (name: string, namespace: string, hosts: string, port: nu
 
 const minimalSidecar = (name: string, namespace: string, hosts: string): string => {
   return `{
-      "apiVersion": "networking.istio.io/v1alpha3",
+      "apiVersion": "networking.istio.io/v1",
       "kind": "Sidecar",
       "metadata": {
         "name": "${name}",

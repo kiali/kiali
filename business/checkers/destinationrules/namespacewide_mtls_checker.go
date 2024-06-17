@@ -1,14 +1,14 @@
 package destinationrules
 
 import (
-	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
 
 type NamespaceWideMTLSChecker struct {
-	DestinationRule *networking_v1beta1.DestinationRule
+	DestinationRule *networking_v1.DestinationRule
 	MTLSDetails     kubernetes.MTLSDetails
 }
 
