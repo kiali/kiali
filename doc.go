@@ -1,7 +1,6 @@
 package main
 
 import (
-	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/business/authentication"
 	"github.com/kiali/kiali/graph/config/cytoscape"
 	"github.com/kiali/kiali/kubernetes"
@@ -824,7 +823,7 @@ type ClustersNamespaceHealthResponse struct {
 // swagger:response meshResponse
 type MeshResponse struct {
 	// in: body
-	Body business.Mesh
+	Body models.Mesh
 }
 
 // Response of the cluster TLS query
