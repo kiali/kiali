@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
@@ -23,7 +23,7 @@ type NameNamespace struct {
 // It returns a validation
 func TestMTLSMeshWideEnabledDRWithoutTrafficPolicyExportedWith(t *testing.T) {
 	mTLSDetails := kubernetes.MTLSDetails{
-		DestinationRules: []*networking_v1beta1.DestinationRule{
+		DestinationRules: []*networking_v1.DestinationRule{
 			// Mesh-wide DR enabling mTLS communication
 			data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
 				data.CreateEmptyDestinationRule("istio-system", "default", "*.local")),
@@ -34,12 +34,12 @@ func TestMTLSMeshWideEnabledDRWithoutTrafficPolicyExportedWith(t *testing.T) {
 		},
 	}
 
-	destinationRules := []*networking_v1beta1.DestinationRule{
+	destinationRules := []*networking_v1.DestinationRule{
 		// Subject DR that doesn't specify any trafficPolicy
 		data.CreateEmptyDestinationRule("bookinfo", "reviews", "reviews"),
 	}
 
-	edr := []*networking_v1beta1.DestinationRule{
+	edr := []*networking_v1.DestinationRule{
 		data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
 			data.CreateEmptyDestinationRule("bookinfo2", "reviews", "reviews.bookinfo.svc.cluster.local")),
 	}
@@ -59,7 +59,7 @@ func TestMTLSMeshWideEnabledDRWithoutTrafficPolicyExportedWith(t *testing.T) {
 // It returns a validation
 func TestMTLSMeshWideEnabledDRWithoutTrafficPolicyExportedWithout(t *testing.T) {
 	mTLSDetails := kubernetes.MTLSDetails{
-		DestinationRules: []*networking_v1beta1.DestinationRule{
+		DestinationRules: []*networking_v1.DestinationRule{
 			// Mesh-wide DR enabling mTLS communication
 			data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
 				data.CreateEmptyDestinationRule("istio-system", "default", "*.local")),
@@ -70,12 +70,12 @@ func TestMTLSMeshWideEnabledDRWithoutTrafficPolicyExportedWithout(t *testing.T) 
 		},
 	}
 
-	destinationRules := []*networking_v1beta1.DestinationRule{
+	destinationRules := []*networking_v1.DestinationRule{
 		// Subject DR that doesn't specify any trafficPolicy
 		data.CreateEmptyDestinationRule("bookinfo", "reviews", "reviews"),
 	}
 
-	edr := []*networking_v1beta1.DestinationRule{
+	edr := []*networking_v1.DestinationRule{
 		data.CreateEmptyDestinationRule("bookinfo2", "reviews", "reviews.bookinfo.svc.cluster.local"),
 	}
 
@@ -95,7 +95,7 @@ func TestMTLSMeshWideEnabledDRWithoutTrafficPolicyExportedWithout(t *testing.T) 
 // It returns a validation
 func TestMTLSMeshWideEnabledDRWithoutmTLSOptionsExportedWithout(t *testing.T) {
 	mTLSDetails := kubernetes.MTLSDetails{
-		DestinationRules: []*networking_v1beta1.DestinationRule{
+		DestinationRules: []*networking_v1.DestinationRule{
 			// Mesh-wide DR enabling mTLS communication
 			data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
 				data.CreateEmptyDestinationRule("bookinfo", "default", "*.local")),
@@ -104,13 +104,13 @@ func TestMTLSMeshWideEnabledDRWithoutmTLSOptionsExportedWithout(t *testing.T) {
 		},
 	}
 
-	destinationRules := []*networking_v1beta1.DestinationRule{
+	destinationRules := []*networking_v1.DestinationRule{
 		// Subject DR that specify trafficPolicy but no mTLS options
 		data.AddTrafficPolicyToDestinationRule(data.CreateLoadBalancerTrafficPolicyForDestinationRules(),
 			data.CreateEmptyDestinationRule("bookinfo", "reviews", "reviews")),
 	}
 
-	edr := []*networking_v1beta1.DestinationRule{
+	edr := []*networking_v1.DestinationRule{
 		// Subject DR that specify trafficPolicy but no mTLS options
 		data.AddTrafficPolicyToDestinationRule(data.CreateLoadBalancerTrafficPolicyForDestinationRules(),
 			data.CreateEmptyDestinationRule("bookinfo2", "reviews", "reviews.bookinfo.svc.cluster.local")),
@@ -130,7 +130,7 @@ func TestMTLSMeshWideEnabledDRWithoutmTLSOptionsExportedWithout(t *testing.T) {
 // It returns a validation
 func TestMTLSMeshWideEnabledDRWithoutmTLSOptionsExportedWith(t *testing.T) {
 	mTLSDetails := kubernetes.MTLSDetails{
-		DestinationRules: []*networking_v1beta1.DestinationRule{
+		DestinationRules: []*networking_v1.DestinationRule{
 			// Mesh-wide DR enabling mTLS communication
 			data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
 				data.CreateEmptyDestinationRule("bookinfo", "default", "*.local")),
@@ -139,13 +139,13 @@ func TestMTLSMeshWideEnabledDRWithoutmTLSOptionsExportedWith(t *testing.T) {
 		},
 	}
 
-	destinationRules := []*networking_v1beta1.DestinationRule{
+	destinationRules := []*networking_v1.DestinationRule{
 		// Subject DR that specify trafficPolicy but no mTLS options
 		data.AddTrafficPolicyToDestinationRule(data.CreateLoadBalancerTrafficPolicyForDestinationRules(),
 			data.CreateEmptyDestinationRule("bookinfo", "reviews", "reviews")),
 	}
 
-	edr := []*networking_v1beta1.DestinationRule{
+	edr := []*networking_v1.DestinationRule{
 		// Subject DR that specify trafficPolicy but no mTLS options
 		data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
 			data.CreateEmptyDestinationRule("bookinfo2", "reviews", "reviews.bookinfo.svc.cluster.local")),
@@ -165,7 +165,7 @@ func TestMTLSMeshWideEnabledDRWithoutmTLSOptionsExportedWith(t *testing.T) {
 // It returns a validation
 func TestMTLSMeshWideEnabledDRWithoutPortLevelmTLSOptionsExportedWithout(t *testing.T) {
 	mTLSDetails := kubernetes.MTLSDetails{
-		DestinationRules: []*networking_v1beta1.DestinationRule{
+		DestinationRules: []*networking_v1.DestinationRule{
 			// Mesh-wide DR enabling mTLS communication
 			data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
 				data.CreateEmptyDestinationRule("bookinfo", "default", "*.local")),
@@ -174,13 +174,13 @@ func TestMTLSMeshWideEnabledDRWithoutPortLevelmTLSOptionsExportedWithout(t *test
 		},
 	}
 
-	destinationRules := []*networking_v1beta1.DestinationRule{
+	destinationRules := []*networking_v1.DestinationRule{
 		// Subject DR that specify trafficPolicy but no mTLS options
 		data.AddTrafficPolicyToDestinationRule(data.CreatePortLevelTrafficPolicyForDestinationRules(),
 			data.CreateEmptyDestinationRule("bookinfo", "reviews", "reviews")),
 	}
 
-	edr := []*networking_v1beta1.DestinationRule{
+	edr := []*networking_v1.DestinationRule{
 		// Subject DR that specify trafficPolicy but no mTLS options
 		data.AddTrafficPolicyToDestinationRule(data.CreatePortLevelTrafficPolicyForDestinationRules(),
 			data.CreateEmptyDestinationRule("bookinfo2", "reviews", "reviews.bookinfo.svc.cluster.local")),
@@ -201,7 +201,7 @@ func TestMTLSMeshWideEnabledDRWithoutPortLevelmTLSOptionsExportedWithout(t *test
 // It returns a validation
 func TestMTLSMeshWideEnabledDRWithoutPortLevelmTLSOptionsExportedWith(t *testing.T) {
 	mTLSDetails := kubernetes.MTLSDetails{
-		DestinationRules: []*networking_v1beta1.DestinationRule{
+		DestinationRules: []*networking_v1.DestinationRule{
 			// Mesh-wide DR enabling mTLS communication
 			data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
 				data.CreateEmptyDestinationRule("bookinfo", "default", "*.local")),
@@ -210,13 +210,13 @@ func TestMTLSMeshWideEnabledDRWithoutPortLevelmTLSOptionsExportedWith(t *testing
 		},
 	}
 
-	destinationRules := []*networking_v1beta1.DestinationRule{
+	destinationRules := []*networking_v1.DestinationRule{
 		// Subject DR that specify trafficPolicy but no mTLS options
 		data.AddTrafficPolicyToDestinationRule(data.CreatePortLevelTrafficPolicyForDestinationRules(),
 			data.CreateEmptyDestinationRule("bookinfo", "reviews", "reviews")),
 	}
 
-	edr := []*networking_v1beta1.DestinationRule{
+	edr := []*networking_v1.DestinationRule{
 		// Subject DR that specify trafficPolicy with mTLS options
 		data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
 			data.CreateEmptyDestinationRule("bookinfo2", "reviews", "reviews.bookinfo.svc.cluster.local")),
@@ -236,7 +236,7 @@ func TestMTLSMeshWideEnabledDRWithoutPortLevelmTLSOptionsExportedWith(t *testing
 // It doesn't return any validation
 func TestMTLSMeshWideEnabledDRWithTrafficPolicyExportedWith(t *testing.T) {
 	mTLSDetails := kubernetes.MTLSDetails{
-		DestinationRules: []*networking_v1beta1.DestinationRule{
+		DestinationRules: []*networking_v1.DestinationRule{
 			// Mesh-wide DR enabling mTLS communication
 			data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
 				data.CreateEmptyDestinationRule("bookinfo", "default", "*.local")),
@@ -245,13 +245,13 @@ func TestMTLSMeshWideEnabledDRWithTrafficPolicyExportedWith(t *testing.T) {
 		},
 	}
 
-	destinationRules := []*networking_v1beta1.DestinationRule{
+	destinationRules := []*networking_v1.DestinationRule{
 		// Subject DR that specify TrafficPolicy
 		data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
 			data.CreateEmptyDestinationRule("bookinfo", "reviews", "reviews")),
 	}
 
-	edr := []*networking_v1beta1.DestinationRule{
+	edr := []*networking_v1.DestinationRule{
 		// Subject DR that specify TrafficPolicy
 		data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
 			data.CreateEmptyDestinationRule("bookinfo2", "reviews", "reviews.bookinfo.svc.cluster.local")),
@@ -266,7 +266,7 @@ func TestMTLSMeshWideEnabledDRWithTrafficPolicyExportedWith(t *testing.T) {
 // It doesn't return any validation
 func TestMTLSMeshWideEnabledDRWithTrafficPolicyExportedWithout(t *testing.T) {
 	mTLSDetails := kubernetes.MTLSDetails{
-		DestinationRules: []*networking_v1beta1.DestinationRule{
+		DestinationRules: []*networking_v1.DestinationRule{
 			// Mesh-wide DR enabling mTLS communication
 			data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
 				data.CreateEmptyDestinationRule("bookinfo", "default", "*.local")),
@@ -275,13 +275,13 @@ func TestMTLSMeshWideEnabledDRWithTrafficPolicyExportedWithout(t *testing.T) {
 		},
 	}
 
-	destinationRules := []*networking_v1beta1.DestinationRule{
+	destinationRules := []*networking_v1.DestinationRule{
 		// Subject DR that specify TrafficPolicy
 		data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
 			data.CreateEmptyDestinationRule("bookinfo", "reviews", "reviews")),
 	}
 
-	edr := []*networking_v1beta1.DestinationRule{
+	edr := []*networking_v1.DestinationRule{
 		// Subject DR that doesn't specify TrafficPolicy
 		data.CreateEmptyDestinationRule("bookinfo2", "reviews", "reviews.bookinfo.svc.cluster.local"),
 	}
@@ -298,7 +298,7 @@ func TestMTLSMeshWideEnabledDRWithTrafficPolicyExportedWithout(t *testing.T) {
 // It doesn't return any validation
 func TestMTLSMeshWideEnabledDRWithPortLevelTLSTrafficPolicyExportedWithout(t *testing.T) {
 	mTLSDetails := kubernetes.MTLSDetails{
-		DestinationRules: []*networking_v1beta1.DestinationRule{
+		DestinationRules: []*networking_v1.DestinationRule{
 			// Mesh-wide DR enabling mTLS communication
 			data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
 				data.CreateEmptyDestinationRule("bookinfo", "default", "*.local")),
@@ -307,13 +307,13 @@ func TestMTLSMeshWideEnabledDRWithPortLevelTLSTrafficPolicyExportedWithout(t *te
 		},
 	}
 
-	destinationRules := []*networking_v1beta1.DestinationRule{
+	destinationRules := []*networking_v1.DestinationRule{
 		// Subject DR that specify TrafficPolicy
 		data.AddTrafficPolicyToDestinationRule(data.CreateTLSPortLevelTrafficPolicyForDestinationRules(),
 			data.CreateEmptyDestinationRule("bookinfo", "reviews", "reviews")),
 	}
 
-	edr := []*networking_v1beta1.DestinationRule{
+	edr := []*networking_v1.DestinationRule{
 		data.CreateEmptyDestinationRule("bookinfo2", "reviews2", "*.bookinfo.svc.cluster.local"),
 	}
 
@@ -329,7 +329,7 @@ func TestMTLSMeshWideEnabledDRWithPortLevelTLSTrafficPolicyExportedWithout(t *te
 // It doesn't return any validation
 func TestMTLSMeshWideEnabledDRWithPortLevelTLSTrafficPolicyExportedWith(t *testing.T) {
 	mTLSDetails := kubernetes.MTLSDetails{
-		DestinationRules: []*networking_v1beta1.DestinationRule{
+		DestinationRules: []*networking_v1.DestinationRule{
 			// Mesh-wide DR enabling mTLS communication
 			data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
 				data.CreateEmptyDestinationRule("bookinfo", "default", "*.local")),
@@ -338,13 +338,13 @@ func TestMTLSMeshWideEnabledDRWithPortLevelTLSTrafficPolicyExportedWith(t *testi
 		},
 	}
 
-	destinationRules := []*networking_v1beta1.DestinationRule{
+	destinationRules := []*networking_v1.DestinationRule{
 		// Subject DR that specify TrafficPolicy
 		data.AddTrafficPolicyToDestinationRule(data.CreateTLSPortLevelTrafficPolicyForDestinationRules(),
 			data.CreateEmptyDestinationRule("bookinfo", "reviews", "reviews")),
 	}
 
-	edr := []*networking_v1beta1.DestinationRule{
+	edr := []*networking_v1.DestinationRule{
 		data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
 			data.CreateEmptyDestinationRule("bookinfo2", "reviews2", "*.bookinfo.svc.cluster.local")),
 	}
@@ -358,7 +358,7 @@ func TestMTLSMeshWideEnabledDRWithPortLevelTLSTrafficPolicyExportedWith(t *testi
 // It returns a validation
 func TestNamespacemTLSEnabledDRWithoutTrafficPolicyExportedWithout(t *testing.T) {
 	mTLSDetails := kubernetes.MTLSDetails{
-		DestinationRules: []*networking_v1beta1.DestinationRule{
+		DestinationRules: []*networking_v1.DestinationRule{
 			// Namespace-wide DR enabling mTLS communication
 			data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
 				data.CreateEmptyDestinationRule("bookinfo", "default", "*.bookinfo.svc.cluster.local")),
@@ -367,12 +367,12 @@ func TestNamespacemTLSEnabledDRWithoutTrafficPolicyExportedWithout(t *testing.T)
 		},
 	}
 
-	destinationRules := []*networking_v1beta1.DestinationRule{
+	destinationRules := []*networking_v1.DestinationRule{
 		// Subject DR that doesn't specify any trafficPolicy
 		data.CreateEmptyDestinationRule("bookinfo", "reviews", "reviews"),
 	}
 
-	edr := []*networking_v1beta1.DestinationRule{
+	edr := []*networking_v1.DestinationRule{
 		// Subject DR that doesn't specify any trafficPolicy
 		data.CreateEmptyDestinationRule("bookinfo2", "reviews2", "reviews.bookinfo.svc.cluster.local"),
 	}
@@ -392,7 +392,7 @@ func TestNamespacemTLSEnabledDRWithoutTrafficPolicyExportedWithout(t *testing.T)
 // It returns a validation
 func TestNamespacemTLSEnabledDRWithoutTrafficPolicyExportedWith(t *testing.T) {
 	mTLSDetails := kubernetes.MTLSDetails{
-		DestinationRules: []*networking_v1beta1.DestinationRule{
+		DestinationRules: []*networking_v1.DestinationRule{
 			// Namespace-wide DR enabling mTLS communication
 			data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
 				data.CreateEmptyDestinationRule("bookinfo", "default", "*.bookinfo.svc.cluster.local")),
@@ -401,12 +401,12 @@ func TestNamespacemTLSEnabledDRWithoutTrafficPolicyExportedWith(t *testing.T) {
 		},
 	}
 
-	destinationRules := []*networking_v1beta1.DestinationRule{
+	destinationRules := []*networking_v1.DestinationRule{
 		// Subject DR that doesn't specify any trafficPolicy
 		data.CreateEmptyDestinationRule("bookinfo", "reviews", "reviews"),
 	}
 
-	edr := []*networking_v1beta1.DestinationRule{
+	edr := []*networking_v1.DestinationRule{
 		data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
 			data.CreateEmptyDestinationRule("bookinfo2", "reviews", "*.bookinfo.svc.cluster.local")),
 	}
@@ -425,7 +425,7 @@ func TestNamespacemTLSEnabledDRWithoutTrafficPolicyExportedWith(t *testing.T) {
 // It returns a validation
 func TestNamespacemTLSEnabledDRWithoutmTLSOptionsExportedOther(t *testing.T) {
 	mTLSDetails := kubernetes.MTLSDetails{
-		DestinationRules: []*networking_v1beta1.DestinationRule{
+		DestinationRules: []*networking_v1.DestinationRule{
 			// Namespace-wide DR enabling mTLS communication
 			data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
 				data.CreateEmptyDestinationRule("bookinfo", "default", "*.bookinfo.svc.cluster.local")),
@@ -434,13 +434,13 @@ func TestNamespacemTLSEnabledDRWithoutmTLSOptionsExportedOther(t *testing.T) {
 		},
 	}
 
-	destinationRules := []*networking_v1beta1.DestinationRule{
+	destinationRules := []*networking_v1.DestinationRule{
 		// Subject DR that specify trafficPolicy but no mTLS options
 		data.AddTrafficPolicyToDestinationRule(data.CreateLoadBalancerTrafficPolicyForDestinationRules(),
 			data.CreateEmptyDestinationRule("bookinfo", "reviews", "reviews")),
 	}
 
-	edr := []*networking_v1beta1.DestinationRule{
+	edr := []*networking_v1.DestinationRule{
 		// Subject DR refers to itself
 		data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
 			data.CreateEmptyDestinationRule("bookinfo2", "reviews", "reviews.bookinfo2.svc.cluster.local")),
@@ -460,7 +460,7 @@ func TestNamespacemTLSEnabledDRWithoutmTLSOptionsExportedOther(t *testing.T) {
 // It doesn't return any validation
 func TestNamespacemTLSEnabledDRWithTrafficPolicyExportedWith(t *testing.T) {
 	mTLSDetails := kubernetes.MTLSDetails{
-		DestinationRules: []*networking_v1beta1.DestinationRule{
+		DestinationRules: []*networking_v1.DestinationRule{
 			// Namespace-wide DR enabling mTLS communication
 			data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
 				data.CreateEmptyDestinationRule("bookinfo", "default", "*.local")),
@@ -469,13 +469,13 @@ func TestNamespacemTLSEnabledDRWithTrafficPolicyExportedWith(t *testing.T) {
 		},
 	}
 
-	destinationRules := []*networking_v1beta1.DestinationRule{
+	destinationRules := []*networking_v1.DestinationRule{
 		// Subject DR that specify trafficPolicy and mTLS options
 		data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
 			data.CreateEmptyDestinationRule("bookinfo", "reviews", "reviews")),
 	}
 
-	edr := []*networking_v1beta1.DestinationRule{
+	edr := []*networking_v1.DestinationRule{
 		// Subject DR that specify trafficPolicy and mTLS options
 		data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
 			data.CreateEmptyDestinationRule("bookinfo2", "reviews2", "reviews.bookinfo.svc.cluster.local")),
@@ -490,7 +490,7 @@ func TestNamespacemTLSEnabledDRWithTrafficPolicyExportedWith(t *testing.T) {
 // It doesn't return any validation
 func TestNamespacemTLSEnabledDRWithTrafficPolicyExportedWithout(t *testing.T) {
 	mTLSDetails := kubernetes.MTLSDetails{
-		DestinationRules: []*networking_v1beta1.DestinationRule{
+		DestinationRules: []*networking_v1.DestinationRule{
 			// Namespace-wide DR enabling mTLS communication
 			data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
 				data.CreateEmptyDestinationRule("bookinfo", "default", "*.local")),
@@ -499,13 +499,13 @@ func TestNamespacemTLSEnabledDRWithTrafficPolicyExportedWithout(t *testing.T) {
 		},
 	}
 
-	destinationRules := []*networking_v1beta1.DestinationRule{
+	destinationRules := []*networking_v1.DestinationRule{
 		// Subject DR that specify trafficPolicy and mTLS options
 		data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
 			data.CreateEmptyDestinationRule("bookinfo", "reviews", "reviews")),
 	}
 
-	edr := []*networking_v1beta1.DestinationRule{
+	edr := []*networking_v1.DestinationRule{
 		data.CreateEmptyDestinationRule("bookinfo2", "reviews2", "*.bookinfo.svc.cluster.local"),
 	}
 
@@ -521,19 +521,19 @@ func TestNamespacemTLSEnabledDRWithTrafficPolicyExportedWithout(t *testing.T) {
 // It doesn't return any validation
 func TestCrossNamespaceProtectionExported(t *testing.T) {
 	mTLSDetails := kubernetes.MTLSDetails{
-		DestinationRules: []*networking_v1beta1.DestinationRule{
+		DestinationRules: []*networking_v1.DestinationRule{
 			// Namespace-wide DR enabling mTLS communication
 			data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
 				data.CreateEmptyDestinationRule("bookinfo", "default", "*.bookinfo.svc.cluster.local")),
 		},
 	}
 
-	destinationRules := []*networking_v1beta1.DestinationRule{
+	destinationRules := []*networking_v1.DestinationRule{
 		data.AddTrafficPolicyToDestinationRule(data.CreateLoadBalancerTrafficPolicyForDestinationRules(),
 			data.CreateEmptyDestinationRule("other", "reviews", "reviews.other.svc.cluster.local")),
 	}
 
-	edr := []*networking_v1beta1.DestinationRule{
+	edr := []*networking_v1.DestinationRule{
 		data.AddTrafficPolicyToDestinationRule(data.CreateLoadBalancerTrafficPolicyForDestinationRules(),
 			data.CreateEmptyDestinationRule("other2", "reviews", "reviews.other2.svc.cluster.local")),
 	}
@@ -546,20 +546,20 @@ func TestCrossNamespaceProtectionExported(t *testing.T) {
 // It doesn't return any validation
 func TestCrossNamespaceServiceEntryProtectionExported(t *testing.T) {
 	mTLSDetails := kubernetes.MTLSDetails{
-		DestinationRules: []*networking_v1beta1.DestinationRule{
+		DestinationRules: []*networking_v1.DestinationRule{
 			// Namespace-wide DR enabling mTLS communication
 			data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
 				data.CreateEmptyDestinationRule("bookinfo", "default", "*.bookinfo.svc.cluster.local")),
 		},
 	}
 
-	destinationRules := []*networking_v1beta1.DestinationRule{
+	destinationRules := []*networking_v1.DestinationRule{
 		// Subject DR that specify trafficPolicy and mTLS options
 		data.AddTrafficPolicyToDestinationRule(data.CreateLoadBalancerTrafficPolicyForDestinationRules(),
 			data.CreateEmptyDestinationRule("other", "service-entry-dr", "wikipedia.org")),
 	}
 
-	edr := []*networking_v1beta1.DestinationRule{
+	edr := []*networking_v1.DestinationRule{
 		// Subject DR that specify trafficPolicy and mTLS options
 		data.AddTrafficPolicyToDestinationRule(data.CreateLoadBalancerTrafficPolicyForDestinationRules(),
 			data.CreateEmptyDestinationRule("other2", "service-entry-dr2", "wikipedia.org")),
@@ -568,7 +568,7 @@ func TestCrossNamespaceServiceEntryProtectionExported(t *testing.T) {
 	testValidationsNotAddedExported(t, destinationRules, edr, mTLSDetails, "service-entry-dr", "other")
 }
 
-func testValidationAddedExported(t *testing.T, destinationRules []*networking_v1beta1.DestinationRule, exportedDestinationRules []*networking_v1beta1.DestinationRule, mTLSDetails kubernetes.MTLSDetails, nameNamespaces []NameNamespace) *models.IstioValidation {
+func testValidationAddedExported(t *testing.T, destinationRules []*networking_v1.DestinationRule, exportedDestinationRules []*networking_v1.DestinationRule, mTLSDetails kubernetes.MTLSDetails, nameNamespaces []NameNamespace) *models.IstioValidation {
 	assert := assert.New(t)
 
 	vals := TrafficPolicyChecker{
@@ -597,7 +597,7 @@ func testValidationAddedExported(t *testing.T, destinationRules []*networking_v1
 	return &result
 }
 
-func testValidationsNotAddedExported(t *testing.T, destinationRules []*networking_v1beta1.DestinationRule, exportedDestinationRules []*networking_v1beta1.DestinationRule, mTLSDetails kubernetes.MTLSDetails, name string, namespace string) {
+func testValidationsNotAddedExported(t *testing.T, destinationRules []*networking_v1.DestinationRule, exportedDestinationRules []*networking_v1.DestinationRule, mTLSDetails kubernetes.MTLSDetails, name string, namespace string) {
 	assert := assert.New(t)
 
 	vals := TrafficPolicyChecker{

@@ -4,14 +4,14 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
 )
 
-func prepareTestForDestinationRule(dr *networking_v1beta1.DestinationRule, vs *networking_v1beta1.VirtualService) models.IstioReferences {
+func prepareTestForDestinationRule(dr *networking_v1.DestinationRule, vs *networking_v1.VirtualService) models.IstioReferences {
 	drReferences := DestinationRuleReferences{
 		Namespace: "bookinfo",
 		Namespaces: models.Namespaces{
@@ -19,8 +19,8 @@ func prepareTestForDestinationRule(dr *networking_v1beta1.DestinationRule, vs *n
 			{Name: "bookinfo2"},
 			{Name: "bookinfo3"},
 		},
-		DestinationRules: []*networking_v1beta1.DestinationRule{dr},
-		VirtualServices:  []*networking_v1beta1.VirtualService{vs},
+		DestinationRules: []*networking_v1.DestinationRule{dr},
+		VirtualServices:  []*networking_v1.VirtualService{vs},
 		WorkloadsPerNamespace: map[string]models.WorkloadList{
 			"test-namespace": data.CreateWorkloadList("test-namespace",
 				data.CreateWorkloadListItem("reviewsv1", appVersionLabel("reviews", "v1")),
@@ -28,7 +28,7 @@ func prepareTestForDestinationRule(dr *networking_v1beta1.DestinationRule, vs *n
 				data.CreateWorkloadListItem("reviewsv3", appVersionLabel("reviews", "v3")),
 				data.CreateWorkloadListItem("reviewsv4", appVersionLabel("reviews", "v4"))),
 		},
-		ServiceEntries:   []*networking_v1beta1.ServiceEntry{fakeServiceEntry()},
+		ServiceEntries:   []*networking_v1.ServiceEntry{fakeServiceEntry()},
 		RegistryServices: data.CreateFakeRegistryServicesLabels("reviews", "test-namespace"),
 	}
 	return *drReferences.References()[models.IstioReferenceKey{ObjectType: "destinationrule", Namespace: dr.Namespace, Name: dr.Name}]
@@ -75,7 +75,7 @@ func TestDestinationRuleNoReferences(t *testing.T) {
 	assert.Empty(references.WorkloadReferences)
 }
 
-func fakeDestinationRule(t *testing.T) *networking_v1beta1.DestinationRule {
+func fakeDestinationRule(t *testing.T) *networking_v1.DestinationRule {
 	loader := yamlFixtureLoader("destination-rule.yaml")
 	err := loader.Load()
 	if err != nil {
@@ -85,7 +85,7 @@ func fakeDestinationRule(t *testing.T) *networking_v1beta1.DestinationRule {
 	return loader.FindDestinationRule("reviews", "test-namespace")
 }
 
-func getVirtualService(t *testing.T) *networking_v1beta1.VirtualService {
+func getVirtualService(t *testing.T) *networking_v1.VirtualService {
 	loader := yamlFixtureLoader("destination-rule.yaml")
 	err := loader.Load()
 	if err != nil {

@@ -232,7 +232,7 @@ minikube_install_basic_demo() {
 
   infomsg "Creating Istio ServiceEntry resource for MySQL access"
   cat <<EOM | ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} -n bookinfo apply -f -
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: ServiceEntry
 metadata:
   name: mysqldb.test
@@ -343,7 +343,7 @@ openshift_install_basic_demo() {
 
   infomsg "Creating Istio ServiceEntry resource for MySQL access"
   cat <<EOM | ${CLIENT_EXE} -n bookinfo apply -f -
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: ServiceEntry
 metadata:
   name: mysqldb.test

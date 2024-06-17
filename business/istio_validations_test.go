@@ -7,8 +7,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
-	security_v1beta "istio.io/client-go/pkg/apis/security/v1beta1"
+	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
+	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 	apps_v1 "k8s.io/api/apps/v1"
 	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -161,7 +161,7 @@ func TestFilterExportToNamespacesVS(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
 
-	var currentIstioObjects []*networking_v1beta1.VirtualService
+	var currentIstioObjects []*networking_v1.VirtualService
 	vs1to3 := loadVirtualService("vs_bookinfo1_to_2_3.yaml", t)
 	currentIstioObjects = append(currentIstioObjects, vs1to3)
 	vs1tothis := loadVirtualService("vs_bookinfo1_to_this.yaml", t)
@@ -178,7 +178,7 @@ func TestFilterExportToNamespacesVS(t *testing.T) {
 	currentIstioObjects = append(currentIstioObjects, vs3towrong)
 	v := mockEmptyValidationService(t)
 	filteredVSs := v.filterVSExportToNamespaces(models.Namespaces{models.Namespace{Name: "bookinfo"}, models.Namespace{Name: "bookinfo2"}, models.Namespace{Name: "bookinfo3"}, models.Namespace{Name: "default"}}, "bookinfo", "", currentIstioObjects)
-	var expectedVS []*networking_v1beta1.VirtualService
+	var expectedVS []*networking_v1.VirtualService
 	expectedVS = append(expectedVS, vs1tothis)
 	expectedVS = append(expectedVS, vs2to1)
 	expectedVS = append(expectedVS, vs3toall)
@@ -199,7 +199,7 @@ func TestAmbientFilterExportToNamespacesVS(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
 
-	var currentIstioObjects []*networking_v1beta1.VirtualService
+	var currentIstioObjects []*networking_v1.VirtualService
 	vs1to3 := loadVirtualService("vs_bookinfo1_to_2_3.yaml", t)
 	currentIstioObjects = append(currentIstioObjects, vs1to3)
 	vs1tothis := loadVirtualService("vs_bookinfo1_to_this.yaml", t)
@@ -216,7 +216,7 @@ func TestAmbientFilterExportToNamespacesVS(t *testing.T) {
 	currentIstioObjects = append(currentIstioObjects, vs3towrong)
 	v := mockAmbientValidationService(t)
 	filteredVSs := v.filterVSExportToNamespaces(models.Namespaces{models.Namespace{Name: "bookinfo", IsAmbient: true}, models.Namespace{Name: "bookinfo2"}, models.Namespace{Name: "bookinfo3"}, models.Namespace{Name: "default"}}, "bookinfo2", "", currentIstioObjects)
-	var expectedVS []*networking_v1beta1.VirtualService
+	var expectedVS []*networking_v1.VirtualService
 	expectedVS = append(expectedVS, vs2tothis)
 	expectedVS = append(expectedVS, vs3to2)
 	expectedVS = append(expectedVS, vs3toall)
@@ -237,7 +237,7 @@ func TestFilterExportToNamespacesDR(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
 
-	var currentIstioObjects []*networking_v1beta1.DestinationRule
+	var currentIstioObjects []*networking_v1.DestinationRule
 	dr1to3 := loadDestinationRule("dr_bookinfo1_to_2_3.yaml", t)
 	currentIstioObjects = append(currentIstioObjects, dr1to3)
 	dr1tothis := loadDestinationRule("dr_bookinfo1_to_this.yaml", t)
@@ -254,7 +254,7 @@ func TestFilterExportToNamespacesDR(t *testing.T) {
 	currentIstioObjects = append(currentIstioObjects, dr3towrong)
 	v := mockEmptyValidationService(t)
 	filteredDRs := v.filterDRExportToNamespaces(models.Namespaces{models.Namespace{Name: "bookinfo"}, models.Namespace{Name: "bookinfo2"}, models.Namespace{Name: "bookinfo3"}, models.Namespace{Name: "default"}}, "bookinfo", "", currentIstioObjects)
-	var expectedDR []*networking_v1beta1.DestinationRule
+	var expectedDR []*networking_v1.DestinationRule
 	expectedDR = append(expectedDR, dr1tothis)
 	expectedDR = append(expectedDR, dr2to1)
 	expectedDR = append(expectedDR, dr3toall)
@@ -275,7 +275,7 @@ func TestAmbientFilterExportToNamespacesDR(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
 
-	var currentIstioObjects []*networking_v1beta1.DestinationRule
+	var currentIstioObjects []*networking_v1.DestinationRule
 	dr1to3 := loadDestinationRule("dr_bookinfo1_to_2_3.yaml", t)
 	currentIstioObjects = append(currentIstioObjects, dr1to3)
 	dr1tothis := loadDestinationRule("dr_bookinfo1_to_this.yaml", t)
@@ -292,7 +292,7 @@ func TestAmbientFilterExportToNamespacesDR(t *testing.T) {
 	currentIstioObjects = append(currentIstioObjects, dr3towrong)
 	v := mockAmbientValidationService(t)
 	filteredDRs := v.filterDRExportToNamespaces(models.Namespaces{models.Namespace{Name: "bookinfo", IsAmbient: true}, models.Namespace{Name: "bookinfo2"}, models.Namespace{Name: "bookinfo3"}, models.Namespace{Name: "default"}}, "bookinfo2", "", currentIstioObjects)
-	var expectedDR []*networking_v1beta1.DestinationRule
+	var expectedDR []*networking_v1.DestinationRule
 	expectedDR = append(expectedDR, dr2tothis)
 	expectedDR = append(expectedDR, dr3to2)
 	expectedDR = append(expectedDR, dr3toall)
@@ -313,7 +313,7 @@ func TestFilterExportToNamespacesSE(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
 
-	var currentIstioObjects []*networking_v1beta1.ServiceEntry
+	var currentIstioObjects []*networking_v1.ServiceEntry
 	se1to3 := loadServiceEntry("se_bookinfo1_to_2_3.yaml", t)
 	currentIstioObjects = append(currentIstioObjects, se1to3)
 	se1tothis := loadServiceEntry("se_bookinfo1_to_this.yaml", t)
@@ -330,7 +330,7 @@ func TestFilterExportToNamespacesSE(t *testing.T) {
 	currentIstioObjects = append(currentIstioObjects, se3towrong)
 	v := mockEmptyValidationService(t)
 	filteredSEs := v.filterSEExportToNamespaces(models.Namespaces{models.Namespace{Name: "bookinfo"}, models.Namespace{Name: "bookinfo2"}, models.Namespace{Name: "bookinfo3"}, models.Namespace{Name: "default"}}, "bookinfo", "", currentIstioObjects)
-	var expectedSE []*networking_v1beta1.ServiceEntry
+	var expectedSE []*networking_v1.ServiceEntry
 	expectedSE = append(expectedSE, se1tothis)
 	expectedSE = append(expectedSE, se2to1)
 	expectedSE = append(expectedSE, se3toall)
@@ -351,7 +351,7 @@ func TestAmbientFilterExportToNamespacesSE(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
 
-	var currentIstioObjects []*networking_v1beta1.ServiceEntry
+	var currentIstioObjects []*networking_v1.ServiceEntry
 	se1to3 := loadServiceEntry("se_bookinfo1_to_2_3.yaml", t)
 	currentIstioObjects = append(currentIstioObjects, se1to3)
 	se1tothis := loadServiceEntry("se_bookinfo1_to_this.yaml", t)
@@ -368,7 +368,7 @@ func TestAmbientFilterExportToNamespacesSE(t *testing.T) {
 	currentIstioObjects = append(currentIstioObjects, se3towrong)
 	v := mockAmbientValidationService(t)
 	filteredSEs := v.filterSEExportToNamespaces(models.Namespaces{models.Namespace{Name: "bookinfo", IsAmbient: true}, models.Namespace{Name: "bookinfo2"}, models.Namespace{Name: "bookinfo3"}, models.Namespace{Name: "default"}}, "bookinfo2", "", currentIstioObjects)
-	var expectedSE []*networking_v1beta1.ServiceEntry
+	var expectedSE []*networking_v1.ServiceEntry
 	expectedSE = append(expectedSE, se2tothis)
 	expectedSE = append(expectedSE, se3to2)
 	expectedSE = append(expectedSE, se3toall)
@@ -569,13 +569,13 @@ func fakeEmptyIstioConfigList() *models.IstioConfigList {
 func fakeIstioConfigList() *models.IstioConfigList {
 	istioConfigList := models.IstioConfigList{}
 
-	istioConfigList.VirtualServices = []*networking_v1beta1.VirtualService{
+	istioConfigList.VirtualServices = []*networking_v1.VirtualService{
 		data.AddHttpRoutesToVirtualService(data.CreateHttpRouteDestination("product", "v1", -1),
 			data.AddTcpRoutesToVirtualService(data.CreateTcpRoute("product2", "v1", -1),
 				data.CreateEmptyVirtualService("product-vs", "test", []string{"product"}))),
 	}
 
-	istioConfigList.DestinationRules = []*networking_v1beta1.DestinationRule{
+	istioConfigList.DestinationRules = []*networking_v1.DestinationRule{
 		data.AddSubsetToDestinationRule(data.CreateSubset("v1", "v1"), data.CreateEmptyDestinationRule("test", "product-dr", "product")),
 		data.CreateEmptyDestinationRule("test", "customer-dr", "customer"),
 	}
@@ -585,15 +585,15 @@ func fakeIstioConfigList() *models.IstioConfigList {
 	return &istioConfigList
 }
 
-func fakeMeshPolicies() []*security_v1beta.PeerAuthentication {
-	return []*security_v1beta.PeerAuthentication{
+func fakeMeshPolicies() []*security_v1.PeerAuthentication {
+	return []*security_v1.PeerAuthentication{
 		data.CreateEmptyMeshPeerAuthentication("default", nil),
 		data.CreateEmptyMeshPeerAuthentication("test", nil),
 	}
 }
 
-func fakePolicies() []*security_v1beta.PeerAuthentication {
-	return []*security_v1beta.PeerAuthentication{
+func fakePolicies() []*security_v1.PeerAuthentication {
+	return []*security_v1.PeerAuthentication{
 		data.CreateEmptyPeerAuthentication("default", "bookinfo", nil),
 		data.CreateEmptyPeerAuthentication("test", "foo", nil),
 	}
@@ -657,8 +657,8 @@ func fakePods() *core_v1.PodList {
 	}
 }
 
-func getGateway(name, namespace string) []*networking_v1beta1.Gateway {
-	return []*networking_v1beta1.Gateway{
+func getGateway(name, namespace string) []*networking_v1.Gateway {
+	return []*networking_v1.Gateway{
 		data.AddServerToGateway(data.CreateServer([]string{"valid"}, 80, "http", "http"),
 			data.CreateEmptyGateway(name, namespace, map[string]string{
 				"app": "real",
@@ -666,7 +666,7 @@ func getGateway(name, namespace string) []*networking_v1beta1.Gateway {
 	}
 }
 
-func loadVirtualService(file string, t *testing.T) *networking_v1beta1.VirtualService {
+func loadVirtualService(file string, t *testing.T) *networking_v1.VirtualService {
 	loader := yamlFixtureLoaderFor(file)
 	err := loader.Load()
 	if err != nil {
@@ -675,7 +675,7 @@ func loadVirtualService(file string, t *testing.T) *networking_v1beta1.VirtualSe
 	return loader.GetResources().VirtualServices[0]
 }
 
-func loadDestinationRule(file string, t *testing.T) *networking_v1beta1.DestinationRule {
+func loadDestinationRule(file string, t *testing.T) *networking_v1.DestinationRule {
 	loader := yamlFixtureLoaderFor(file)
 	err := loader.Load()
 	if err != nil {
@@ -684,7 +684,7 @@ func loadDestinationRule(file string, t *testing.T) *networking_v1beta1.Destinat
 	return loader.GetResources().DestinationRules[0]
 }
 
-func loadServiceEntry(file string, t *testing.T) *networking_v1beta1.ServiceEntry {
+func loadServiceEntry(file string, t *testing.T) *networking_v1.ServiceEntry {
 	loader := yamlFixtureLoaderFor(file)
 	err := loader.Load()
 	if err != nil {

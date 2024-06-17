@@ -16,7 +16,7 @@ import (
 
 	"github.com/nitishm/engarde/pkg/parser"
 	osapps_v1 "github.com/openshift/api/apps/v1"
-	security_v1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
+	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 	apps_v1 "k8s.io/api/apps/v1"
 	batch_v1 "k8s.io/api/batch/v1"
 	core_v1 "k8s.io/api/core/v1"
@@ -139,7 +139,7 @@ func (in *WorkloadService) isWorkloadValid(workloadType string) bool {
 }
 
 // @TODO do validations per cluster
-func (in *WorkloadService) getWorkloadValidations(authpolicies []*security_v1beta1.AuthorizationPolicy, workloadsPerNamespace map[string]models.WorkloadList) models.IstioValidations {
+func (in *WorkloadService) getWorkloadValidations(authpolicies []*security_v1.AuthorizationPolicy, workloadsPerNamespace map[string]models.WorkloadList) models.IstioValidations {
 	validations := checkers.WorkloadChecker{
 		AuthorizationPolicies: authpolicies,
 		WorkloadsPerNamespace: workloadsPerNamespace,
@@ -180,7 +180,7 @@ func (in *WorkloadService) GetWorkloadList(ctx context.Context, criteria Workloa
 	}
 
 	var ws models.Workloads
-	// var authpolicies []*security_v1beta1.AuthorizationPolicy
+	// var authpolicies []*security_v1.AuthorizationPolicy
 	var err error
 
 	nFetches := 1

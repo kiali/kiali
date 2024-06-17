@@ -5,14 +5,14 @@ import (
 	"regexp"
 	"strings"
 
-	api_security_v1beta "istio.io/api/security/v1beta1"
-	security_v1beta "istio.io/client-go/pkg/apis/security/v1beta1"
+	api_security_v1 "istio.io/api/security/v1"
+	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 
 	"github.com/kiali/kiali/models"
 )
 
 type PrincipalsChecker struct {
-	AuthorizationPolicy *security_v1beta.AuthorizationPolicy
+	AuthorizationPolicy *security_v1.AuthorizationPolicy
 	Cluster             string
 	ServiceAccounts     map[string][]string
 }
@@ -37,7 +37,7 @@ func (pc PrincipalsChecker) Check() ([]*models.IstioCheck, bool) {
 	return checks, valid
 }
 
-func (pc PrincipalsChecker) validateFromField(ruleIdx int, from []*api_security_v1beta.Rule_From) ([]*models.IstioCheck, bool) {
+func (pc PrincipalsChecker) validateFromField(ruleIdx int, from []*api_security_v1.Rule_From) ([]*models.IstioCheck, bool) {
 	if len(from) == 0 {
 		return nil, true
 	}

@@ -23,7 +23,7 @@ metadata:
     istio-injection: "enabled"
 spec: {}
 ---
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: testrule
@@ -31,13 +31,13 @@ metadata:
 spec:
   host: reviews.bookinfo.svc.cluster.local
   subsets:
-    - labels:
-        version: v2
-      name: v2
+  - labels:
+      version: v2
+    name: v2
   exportTo:
-    - '.'
+  - '.'
 ---
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: testrule
@@ -45,13 +45,13 @@ metadata:
 spec:
   host: reviews
   subsets:
-    - labels:
-        version: v1
-      name: v1
+  - labels:
+      version: v1
+    name: v1
   exportTo:
-    - bookinfo
+  - bookinfo
 ---
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: testrule
@@ -59,31 +59,31 @@ metadata:
 spec:
   host: reviews
   subsets:
-    - labels:
-        version: v3
-      name: v3
+  - labels:
+      version: v3
+    name: v3
   exportTo:
-    - '*'
+  - '*'
 ---
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: reviews-vs
   namespace: bookinfo
 spec:
   hosts:
-    - reviews.bookinfo.svc.cluster.local
+  - reviews.bookinfo.svc.cluster.local
   http:
-    - route:
-        - destination:
-            host: reviews.bookinfo2.svc.cluster.local
-            subset: v1
-          weight: 33
-        - destination:
-            host: reviews.bookinfo.svc.cluster.local
-            subset: v2
-          weight: 33
-        - destination:
-            host: reviews.bookinfo3.svc.cluster.local
-            subset: v3
-          weight: 34
+  - route:
+    - destination:
+        host: reviews.bookinfo2.svc.cluster.local
+        subset: v1
+      weight: 33
+    - destination:
+        host: reviews.bookinfo.svc.cluster.local
+        subset: v2
+      weight: 33
+    - destination:
+        host: reviews.bookinfo3.svc.cluster.local
+        subset: v3
+      weight: 34

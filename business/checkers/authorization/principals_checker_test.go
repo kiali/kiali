@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	security_v1beta "istio.io/client-go/pkg/apis/security/v1beta1"
+	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/models"
@@ -133,6 +133,6 @@ func TestEmptyServiceAccount(t *testing.T) {
 	assert.Equal("spec/rules[0]/from[0]/source/principals[0]", vals[0].Path)
 }
 
-func authPolicyWithPrincipals(principalsList []string) *security_v1beta.AuthorizationPolicy {
+func authPolicyWithPrincipals(principalsList []string) *security_v1.AuthorizationPolicy {
 	return data.CreateAuthorizationPolicyWithPrincipals("auth-policy", "bookinfo", principalsList)
 }

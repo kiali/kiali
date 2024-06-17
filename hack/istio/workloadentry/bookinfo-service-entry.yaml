@@ -1,26 +1,26 @@
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: ServiceEntry
 metadata:
   name: ratings
   namespace: bookinfo
 spec:
   addresses:
-    - ${RATINGS_V1_POD_IP}
+  - ${RATINGS_V1_POD_IP}
   hosts:
-    - ratings
-    - ratings.bookinfo.svc.cluster.local
+  - ratings
+  - ratings.bookinfo.svc.cluster.local
   location: MESH_INTERNAL
   resolution: STATIC
   ports:
-    - number: 9080
-      name: http
-      protocol: HTTP
-      targetPort: 9080
+  - number: 9080
+    name: http
+    protocol: HTTP
+    targetPort: 9080
   workloadSelector:
     labels:
       app: ratings
 ---
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: WorkloadEntry
 metadata:
   name: ratings-v1

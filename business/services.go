@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 	apps_v1 "k8s.io/api/apps/v1"
 	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -200,7 +200,7 @@ func (in *SvcService) getServiceListForCluster(ctx context.Context, criteria Ser
 	return services, nil
 }
 
-func getVSKialiScenario(vs []*networking_v1beta1.VirtualService) string {
+func getVSKialiScenario(vs []*networking_v1.VirtualService) string {
 	scenario := ""
 	for _, v := range vs {
 		if scenario, ok := v.Labels["kiali_wizard"]; ok {
@@ -210,7 +210,7 @@ func getVSKialiScenario(vs []*networking_v1beta1.VirtualService) string {
 	return scenario
 }
 
-func getDRKialiScenario(dr []*networking_v1beta1.DestinationRule) string {
+func getDRKialiScenario(dr []*networking_v1.DestinationRule) string {
 	scenario := ""
 	for _, d := range dr {
 		if scenario, ok := d.Labels["kiali_wizard"]; ok {

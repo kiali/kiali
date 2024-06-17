@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	security_v1beta "istio.io/client-go/pkg/apis/security/v1beta1"
+	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
@@ -65,14 +65,14 @@ func TestToMethodWrongHTTP(t *testing.T) {
 	}
 }
 
-func sourceNamespaceAuthPolicy(nss []string) *security_v1beta.AuthorizationPolicy {
+func sourceNamespaceAuthPolicy(nss []string) *security_v1.AuthorizationPolicy {
 	methods := []string{"GET", "PUT", "PATCH"}
 	selector := map[string]string{"app": "details"}
 	hosts := []string{"details"}
 	return data.CreateAuthorizationPolicy(nss, methods, hosts, selector)
 }
 
-func toMethodsAuthPolicy(methods []string) *security_v1beta.AuthorizationPolicy {
+func toMethodsAuthPolicy(methods []string) *security_v1.AuthorizationPolicy {
 	nss := []string{"bookinfo"}
 	selector := map[string]string{"app": "details"}
 	hosts := []string{"details"}

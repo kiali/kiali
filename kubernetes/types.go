@@ -1,8 +1,8 @@
 package kubernetes
 
 import (
-	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
-	security_v1beta "istio.io/client-go/pkg/apis/security/v1beta1"
+	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
+	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
@@ -113,6 +113,12 @@ var (
 	}
 	ApiNetworkingVersionV1Alpha3 = NetworkingGroupVersionV1Alpha3.Group + "/" + NetworkingGroupVersionV1Alpha3.Version
 
+	NetworkingGroupVersionV1 = schema.GroupVersion{
+		Group:   "networking.istio.io",
+		Version: "v1",
+	}
+	ApiNetworkingVersionV1 = NetworkingGroupVersionV1.Group + "/" + NetworkingGroupVersionV1.Version
+
 	K8sNetworkingGroupVersionV1Alpha2 = schema.GroupVersion{
 		Group:   "gateway.networking.k8s.io",
 		Version: "v1alpha2",
@@ -131,17 +137,11 @@ var (
 	}
 	K8sApiNetworkingVersionV1 = K8sNetworkingGroupVersionV1.Group + "/" + K8sNetworkingGroupVersionV1.Version
 
-	NetworkingGroupVersionV1Beta1 = schema.GroupVersion{
-		Group:   "networking.istio.io",
-		Version: "v1beta1",
-	}
-	ApiNetworkingVersionV1Beta1 = NetworkingGroupVersionV1Beta1.Group + "/" + NetworkingGroupVersionV1Beta1.Version
-
-	SecurityGroupVersion = schema.GroupVersion{
+	SecurityGroupVersionV1 = schema.GroupVersion{
 		Group:   "security.istio.io",
-		Version: "v1beta1",
+		Version: "v1",
 	}
-	ApiSecurityVersion = SecurityGroupVersion.Group + "/" + SecurityGroupVersion.Version
+	ApiSecurityVersionV1 = SecurityGroupVersionV1.Group + "/" + SecurityGroupVersionV1.Version
 
 	ExtensionGroupVersionV1Alpha1 = schema.GroupVersion{
 		Group:   "extensions.istio.io",
@@ -149,11 +149,11 @@ var (
 	}
 	ApiExtensionV1Alpha1 = ExtensionGroupVersionV1Alpha1.Group + "/" + ExtensionGroupVersionV1Alpha1.Version
 
-	TelemetryGroupV1Alpha1 = schema.GroupVersion{
+	TelemetryGroupV1 = schema.GroupVersion{
 		Group:   "telemetry.istio.io",
-		Version: "v1alpha1",
+		Version: "v1",
 	}
-	ApiTelemetryV1Alpha1 = TelemetryGroupV1Alpha1.Group + "/" + TelemetryGroupV1Alpha1.Version
+	ApiTelemetryV1 = TelemetryGroupV1.Group + "/" + TelemetryGroupV1.Version
 
 	PluralType = map[string]string{
 		// Networking
@@ -183,16 +183,16 @@ var (
 	}
 
 	ResourceTypesToAPI = map[string]string{
-		DestinationRules: NetworkingGroupVersionV1Beta1.Group,
+		DestinationRules: NetworkingGroupVersionV1.Group,
 		EnvoyFilters:     NetworkingGroupVersionV1Alpha3.Group,
-		Gateways:         NetworkingGroupVersionV1Beta1.Group,
-		ServiceEntries:   NetworkingGroupVersionV1Beta1.Group,
-		Sidecars:         NetworkingGroupVersionV1Beta1.Group,
-		VirtualServices:  NetworkingGroupVersionV1Beta1.Group,
-		WorkloadEntries:  NetworkingGroupVersionV1Beta1.Group,
-		WorkloadGroups:   NetworkingGroupVersionV1Beta1.Group,
+		Gateways:         NetworkingGroupVersionV1.Group,
+		ServiceEntries:   NetworkingGroupVersionV1.Group,
+		Sidecars:         NetworkingGroupVersionV1.Group,
+		VirtualServices:  NetworkingGroupVersionV1.Group,
+		WorkloadEntries:  NetworkingGroupVersionV1.Group,
+		WorkloadGroups:   NetworkingGroupVersionV1.Group,
 		WasmPlugins:      ExtensionGroupVersionV1Alpha1.Group,
-		Telemetries:      TelemetryGroupV1Alpha1.Group,
+		Telemetries:      TelemetryGroupV1.Group,
 
 		K8sGateways:        K8sNetworkingGroupVersionV1.Group,
 		K8sGRPCRoutes:      K8sNetworkingGroupVersionV1.Group,
@@ -201,9 +201,9 @@ var (
 		K8sTCPRoutes:       K8sNetworkingGroupVersionV1Alpha2.Group,
 		K8sTLSRoutes:       K8sNetworkingGroupVersionV1Alpha2.Group,
 
-		AuthorizationPolicies:  SecurityGroupVersion.Group,
-		PeerAuthentications:    SecurityGroupVersion.Group,
-		RequestAuthentications: SecurityGroupVersion.Group,
+		AuthorizationPolicies:  SecurityGroupVersionV1.Group,
+		PeerAuthentications:    SecurityGroupVersionV1.Group,
+		RequestAuthentications: SecurityGroupVersionV1.Group,
 	}
 )
 
@@ -222,15 +222,15 @@ type IstioMeshConfig struct {
 
 // MTLSDetails is a wrapper to group all Istio objects related to non-local mTLS configurations
 type MTLSDetails struct {
-	DestinationRules        []*networking_v1beta1.DestinationRule `json:"destinationrules"`
-	MeshPeerAuthentications []*security_v1beta.PeerAuthentication `json:"meshpeerauthentications"`
-	PeerAuthentications     []*security_v1beta.PeerAuthentication `json:"peerauthentications"`
-	EnabledAutoMtls         bool                                  `json:"enabledautomtls"`
+	DestinationRules        []*networking_v1.DestinationRule  `json:"destinationrules"`
+	MeshPeerAuthentications []*security_v1.PeerAuthentication `json:"meshpeerauthentications"`
+	PeerAuthentications     []*security_v1.PeerAuthentication `json:"peerauthentications"`
+	EnabledAutoMtls         bool                              `json:"enabledautomtls"`
 }
 
 // RBACDetails is a wrapper for objects related to Istio RBAC (Role Based Access Control)
 type RBACDetails struct {
-	AuthorizationPolicies []*security_v1beta.AuthorizationPolicy `json:"authorizationpolicies"`
+	AuthorizationPolicies []*security_v1.AuthorizationPolicy `json:"authorizationpolicies"`
 }
 
 type ProxyStatus struct {

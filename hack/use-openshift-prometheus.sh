@@ -223,7 +223,7 @@ EOM
     ${OC} patch ${tel_name} -n ${ISTIO_NAMESPACE} --type=merge -p '{"spec":{"metrics":[{"providers":[{"name":"prometheus"}]}]}}'
   else
     cat <<EOM | ${OC} apply -n ${ISTIO_NAMESPACE} -f -
-apiVersion: telemetry.istio.io/v1alpha1
+apiVersion: telemetry.istio.io/v1
 kind: Telemetry
 metadata:
   name: enable-prometheus-metrics

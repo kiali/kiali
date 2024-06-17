@@ -4,21 +4,21 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
 )
 
-func prepareTestForSidecar(sc *networking_v1beta1.Sidecar, vs *networking_v1beta1.VirtualService, se *networking_v1beta1.ServiceEntry) models.IstioReferences {
+func prepareTestForSidecar(sc *networking_v1.Sidecar, vs *networking_v1.VirtualService, se *networking_v1.ServiceEntry) models.IstioReferences {
 	drReferences := SidecarReferences{
 		Namespace: "istio-system",
 		Namespaces: models.Namespaces{
 			{Name: "istio-system"},
 		},
-		Sidecars:       []*networking_v1beta1.Sidecar{sc},
-		ServiceEntries: []*networking_v1beta1.ServiceEntry{se},
+		Sidecars:       []*networking_v1.Sidecar{sc},
+		ServiceEntries: []*networking_v1.ServiceEntry{se},
 		WorkloadsPerNamespace: map[string]models.WorkloadList{
 			"istio-system": data.CreateWorkloadList("istio-system",
 				data.CreateWorkloadListItem("istiod", map[string]string{"app": "istio-ingressgateway"}),
@@ -85,7 +85,7 @@ func TestSidecarNoReferences(t *testing.T) {
 	assert.Empty(references.ObjectReferences)
 }
 
-func getSidecar(t *testing.T) *networking_v1beta1.Sidecar {
+func getSidecar(t *testing.T) *networking_v1.Sidecar {
 	loader := yamlFixtureLoader("auth-policy.yaml")
 	err := loader.Load()
 	if err != nil {

@@ -1,4 +1,4 @@
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: PeerAuthentication
 metadata:
   name: default
@@ -7,7 +7,7 @@ spec:
   mtls:
     mode: PERMISSIVE
 ---
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: PeerAuthentication
 metadata:
   name: default-policy
@@ -16,7 +16,7 @@ spec:
   mtls:
     mode: STRICT
 ---
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: PeerAuthentication
 metadata:
   name: details-policy
@@ -28,7 +28,7 @@ spec:
   mtls:
     mode: DISABLE
 ---
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: PeerAuthentication
 metadata:
   name: ratings-policy
@@ -40,7 +40,7 @@ spec:
   mtls:
     mode: PERMISSIVE
 ---
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: mtls-strict-namespace
@@ -51,7 +51,7 @@ spec:
     tls:
       mode: MUTUAL
 ---
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: ratings-mtls
@@ -62,7 +62,7 @@ spec:
     tls:
       mode: DISABLE
 ---
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: details-mtls
@@ -81,16 +81,16 @@ metadata:
     service: ratings
 spec:
   ports:
-    - name: http
-      port: 9080
-      protocol: TCP
-      targetPort: 9080
+  - name: http
+    port: 9080
+    protocol: TCP
+    targetPort: 9080
   selector:
     app: ratings
   sessionAffinity: None
   type: ClusterIP
 ---
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: policy
@@ -98,10 +98,10 @@ metadata:
 spec:
   action: DENY
   rules:
-    - from:
-        - source:
-            principals:
-              - cluster.local/ns/default/sa/bookinfo-details
+  - from:
+    - source:
+        principals:
+        - cluster.local/ns/default/sa/bookinfo-details
   selector:
     matchLabels:
       app: ratings

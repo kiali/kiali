@@ -7,9 +7,9 @@ import (
 	"strings"
 	"time"
 
-	api_networking_v1beta1 "istio.io/api/networking/v1beta1"
-	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
-	security_v1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
+	api_networking_v1 "istio.io/api/networking/v1"
+	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
+	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 	istio "istio.io/client-go/pkg/clientset/versioned"
 	core_v1 "k8s.io/api/core/v1"
 	k8syaml "k8s.io/apimachinery/pkg/util/yaml"
@@ -164,7 +164,7 @@ func GetIstioConfigMap(istioConfig *core_v1.ConfigMap) (*IstioMeshConfig, error)
 
 // ServiceEntryHostnames returns a list of hostnames defined in the ServiceEntries Specs. Key in the resulting map is the protocol (in lowercase) + hostname
 // exported for test
-func ServiceEntryHostnames(serviceEntries []*networking_v1beta1.ServiceEntry) map[string][]string {
+func ServiceEntryHostnames(serviceEntries []*networking_v1.ServiceEntry) map[string][]string {
 	hostnames := make(map[string][]string)
 
 	for _, v := range serviceEntries {
@@ -204,7 +204,7 @@ func mapPortToVirtualServiceProtocol(proto string) string {
 }
 
 // ValidatePort parses the Istio Port definition and validates the naming scheme
-func ValidatePort(portDef *api_networking_v1beta1.Port) bool {
+func ValidatePort(portDef *api_networking_v1.Port) bool {
 	if portDef == nil {
 		return false
 	}
@@ -212,7 +212,7 @@ func ValidatePort(portDef *api_networking_v1beta1.Port) bool {
 }
 
 // ValidateServicePort parses the Istio Port definition and validates the naming scheme
-func ValidateServicePort(portDef *api_networking_v1beta1.ServicePort) bool {
+func ValidateServicePort(portDef *api_networking_v1.ServicePort) bool {
 	if portDef == nil {
 		return false
 	}
@@ -265,7 +265,7 @@ func MatchPortAppProtocolWithValidProtocols(appProtocol *string) bool {
 }
 
 // GatewayNames extracts the gateway names for easier matching
-func GatewayNames(gateways []*networking_v1beta1.Gateway) map[string]struct{} {
+func GatewayNames(gateways []*networking_v1.Gateway) map[string]struct{} {
 	var empty struct{}
 	names := make(map[string]struct{})
 	for _, gw := range gateways {
@@ -284,12 +284,12 @@ func K8sGatewayNames(gateways []*k8s_networking_v1.Gateway) map[string]struct{} 
 	return names
 }
 
-func PeerAuthnHasStrictMTLS(peerAuthn *security_v1beta1.PeerAuthentication) bool {
+func PeerAuthnHasStrictMTLS(peerAuthn *security_v1.PeerAuthentication) bool {
 	_, mode := PeerAuthnHasMTLSEnabled(peerAuthn)
 	return mode == "STRICT"
 }
 
-func PeerAuthnHasMTLSEnabled(peerAuthn *security_v1beta1.PeerAuthentication) (bool, string) {
+func PeerAuthnHasMTLSEnabled(peerAuthn *security_v1.PeerAuthentication) (bool, string) {
 	// It is no globally enabled when has targets
 	if peerAuthn.Spec.Selector != nil && len(peerAuthn.Spec.Selector.MatchLabels) >= 0 {
 		return false, ""
@@ -297,7 +297,7 @@ func PeerAuthnHasMTLSEnabled(peerAuthn *security_v1beta1.PeerAuthentication) (bo
 	return PeerAuthnMTLSMode(peerAuthn)
 }
 
-func PeerAuthnMTLSMode(peerAuthn *security_v1beta1.PeerAuthentication) (bool, string) {
+func PeerAuthnMTLSMode(peerAuthn *security_v1.PeerAuthentication) (bool, string) {
 	// It is globally enabled when mtls is in STRICT mode
 	if peerAuthn.Spec.Mtls != nil {
 		mode := peerAuthn.Spec.Mtls.Mode.String()
@@ -306,27 +306,27 @@ func PeerAuthnMTLSMode(peerAuthn *security_v1beta1.PeerAuthentication) (bool, st
 	return false, ""
 }
 
-func DestinationRuleHasMeshWideMTLSEnabled(destinationRule *networking_v1beta1.DestinationRule) (bool, string) {
+func DestinationRuleHasMeshWideMTLSEnabled(destinationRule *networking_v1.DestinationRule) (bool, string) {
 	// Following the suggested procedure to enable mesh-wide mTLS, host might be '*.local':
 	// https://istio.io/docs/tasks/security/authn-policy/#globally-enabling-istio-mutual-tls
 	return DestinationRuleHasMTLSEnabledForHost("*.local", destinationRule)
 }
 
-func DestinationRuleHasNamespaceWideMTLSEnabled(namespace string, destinationRule *networking_v1beta1.DestinationRule) (bool, string) {
+func DestinationRuleHasNamespaceWideMTLSEnabled(namespace string, destinationRule *networking_v1.DestinationRule) (bool, string) {
 	// Following the suggested procedure to enable namespace-wide mTLS, host might be '*.namespace.svc.cluster.local'
 	// https://istio.io/docs/tasks/security/authn-policy/#namespace-wide-policy
 	nsHost := fmt.Sprintf("*.%s.%s", namespace, config.Get().ExternalServices.Istio.IstioIdentityDomain)
 	return DestinationRuleHasMTLSEnabledForHost(nsHost, destinationRule)
 }
 
-func DestinationRuleHasMTLSEnabledForHost(expectedHost string, destinationRule *networking_v1beta1.DestinationRule) (bool, string) {
+func DestinationRuleHasMTLSEnabledForHost(expectedHost string, destinationRule *networking_v1.DestinationRule) (bool, string) {
 	if destinationRule.Spec.Host == "" || destinationRule.Spec.Host != expectedHost {
 		return false, ""
 	}
 	return DestinationRuleHasMTLSEnabled(destinationRule)
 }
 
-func DestinationRuleHasMTLSEnabled(destinationRule *networking_v1beta1.DestinationRule) (bool, string) {
+func DestinationRuleHasMTLSEnabled(destinationRule *networking_v1.DestinationRule) (bool, string) {
 	if destinationRule.Spec.TrafficPolicy != nil && destinationRule.Spec.TrafficPolicy.Tls != nil {
 		mode := destinationRule.Spec.TrafficPolicy.Tls.Mode.String()
 		return mode == "ISTIO_MUTUAL", mode

@@ -7,7 +7,7 @@ metadata:
     istio-injection: "enabled"
 spec: {}
 ---
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: testrule
@@ -15,29 +15,29 @@ metadata:
 spec:
   host: reviews.bookinfo
   subsets:
-    - name: v1
-      labels:
-        version: v1
-    - name: v2
-      labels:
-        version: v2
+  - name: v1
+    labels:
+      version: v1
+  - name: v2
+    labels:
+      version: v2
 ---
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: reviews-vs
   namespace: bookinfo
 spec:
   hosts:
-    - reviews.bookinfo
+  - reviews.bookinfo
   http:
-    - route:
-        - destination:
-            host: reviews.bookinfo
-            subset: not-v1
-          weight: 55
-    - route:
-        - destination:
-            host: reviews.bookinfo.svc.cluster.local
-            subset: not-v2
-          weight: 45
+  - route:
+    - destination:
+        host: reviews.bookinfo
+        subset: not-v1
+      weight: 55
+  - route:
+    - destination:
+        host: reviews.bookinfo.svc.cluster.local
+        subset: not-v2
+      weight: 45

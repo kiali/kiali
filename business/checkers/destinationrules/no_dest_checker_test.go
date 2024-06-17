@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	api_networking_v1beta1 "istio.io/api/networking/v1beta1"
-	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	api_networking_v1 "istio.io/api/networking/v1"
+	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
@@ -237,7 +237,7 @@ func TestNoMatchingSubset(t *testing.T) {
 		},
 		RegistryServices: data.CreateFakeRegistryServicesLabels("reviews", "test-namespace"),
 		DestinationRule:  data.CreateTestDestinationRule("test-namespace", "name", "reviews"),
-		VirtualServices: []*networking_v1beta1.VirtualService{data.AddHttpRoutesToVirtualService(data.CreateHttpRouteDestination("reviews", "v1", 55),
+		VirtualServices: []*networking_v1.VirtualService{data.AddHttpRoutesToVirtualService(data.CreateHttpRouteDestination("reviews", "v1", 55),
 			data.AddHttpRoutesToVirtualService(data.CreateHttpRouteDestination("reviews", "v2", 45),
 				data.CreateEmptyVirtualService("reviews", "test-namespace", []string{"reviews"}),
 			),
@@ -257,13 +257,13 @@ func TestNoMatchingSubsetWithMoreLabels(t *testing.T) {
 
 	assert := assert.New(t)
 
-	s1 := &api_networking_v1beta1.Subset{
+	s1 := &api_networking_v1.Subset{
 		Name: "reviewsv2",
 		Labels: map[string]string{
 			"version": "v2",
 		},
 	}
-	s2 := &api_networking_v1beta1.Subset{
+	s2 := &api_networking_v1.Subset{
 		Name: "reviewsv1",
 		Labels: map[string]string{
 			"version": "v1",
@@ -281,7 +281,7 @@ func TestNoMatchingSubsetWithMoreLabels(t *testing.T) {
 		},
 		RegistryServices: data.CreateFakeRegistryServicesLabels("reviews", "test-namespace"),
 		DestinationRule:  dr,
-		VirtualServices: []*networking_v1beta1.VirtualService{data.AddHttpRoutesToVirtualService(data.CreateHttpRouteDestination("reviews", "reviewsv1", 55),
+		VirtualServices: []*networking_v1.VirtualService{data.AddHttpRoutesToVirtualService(data.CreateHttpRouteDestination("reviews", "reviewsv1", 55),
 			data.AddHttpRoutesToVirtualService(data.CreateHttpRouteDestination("reviews", "reviewsv2", 100),
 				data.CreateEmptyVirtualService("reviews", "test-namespace", []string{"reviews"}),
 			),
@@ -315,7 +315,7 @@ func TestSubsetNotReferenced(t *testing.T) {
 		},
 		RegistryServices: data.CreateFakeRegistryServicesLabels("reviews", "test-namespace"),
 		DestinationRule:  dr,
-		VirtualServices:  []*networking_v1beta1.VirtualService{},
+		VirtualServices:  []*networking_v1.VirtualService{},
 	}.Check()
 
 	assert.True(valid)
@@ -347,7 +347,7 @@ func TestSubsetReferenced(t *testing.T) {
 		},
 		RegistryServices: data.CreateFakeRegistryServicesLabels("reviews", "test-namespace"),
 		DestinationRule:  dr,
-		VirtualServices:  []*networking_v1beta1.VirtualService{vs},
+		VirtualServices:  []*networking_v1.VirtualService{vs},
 	}.Check()
 
 	assert.False(valid)
@@ -383,7 +383,7 @@ func TestSubsetPresentMatchingNotReferenced(t *testing.T) {
 		},
 		RegistryServices: data.CreateFakeRegistryServicesLabels("reviews", "bookinfo"),
 		DestinationRule:  dr,
-		VirtualServices:  []*networking_v1beta1.VirtualService{vs},
+		VirtualServices:  []*networking_v1.VirtualService{vs},
 	}.Check()
 
 	assert.True(valid)
@@ -412,7 +412,7 @@ func TestWronglyReferenced(t *testing.T) {
 		},
 		RegistryServices: data.CreateFakeRegistryServicesLabels("reviews", "test-namespace"),
 		DestinationRule:  dr,
-		VirtualServices:  []*networking_v1beta1.VirtualService{vs},
+		VirtualServices:  []*networking_v1.VirtualService{vs},
 	}.Check()
 
 	assert.True(valid)
@@ -461,7 +461,7 @@ func TestSNIProxyExample(t *testing.T) {
 		data.CreateEmptyMeshExternalServiceEntry("sni-proxy", "test", []string{"sni-proxy.local"}))
 
 	vals, valid := NoDestinationChecker{
-		ServiceEntries:  []*networking_v1beta1.ServiceEntry{se},
+		ServiceEntries:  []*networking_v1.ServiceEntry{se},
 		DestinationRule: dr,
 	}.Check()
 
@@ -480,7 +480,7 @@ func TestWildcardServiceEntry(t *testing.T) {
 		data.CreateEmptyMeshExternalServiceEntry("sni-proxy", "test", []string{"*.local"}))
 
 	vals, valid := NoDestinationChecker{
-		ServiceEntries:  []*networking_v1beta1.ServiceEntry{se},
+		ServiceEntries:  []*networking_v1.ServiceEntry{se},
 		DestinationRule: dr,
 	}.Check()
 
@@ -498,7 +498,7 @@ func TestExportedInternalServiceEntry(t *testing.T) {
 	se := data.CreateEmptyMeshInternalServiceEntry("details-se", "bookinfo3", []string{"details.bookinfo2.svc.cluster.local"})
 
 	vals, valid := NoDestinationChecker{
-		ServiceEntries:  []*networking_v1beta1.ServiceEntry{se},
+		ServiceEntries:  []*networking_v1.ServiceEntry{se},
 		DestinationRule: dr,
 	}.Check()
 
@@ -516,7 +516,7 @@ func TestWildcardExportedInternalServiceEntry(t *testing.T) {
 	se := data.CreateEmptyMeshInternalServiceEntry("details-se", "bookinfo3", []string{"*.bookinfo2.svc.cluster.local"})
 
 	vals, valid := NoDestinationChecker{
-		ServiceEntries:  []*networking_v1beta1.ServiceEntry{se},
+		ServiceEntries:  []*networking_v1.ServiceEntry{se},
 		DestinationRule: dr,
 	}.Check()
 
@@ -534,7 +534,7 @@ func TestExportedInternalServiceEntryFail(t *testing.T) {
 	se := data.CreateEmptyMeshInternalServiceEntry("details-se", "bookinfo3", []string{"details.bookinfo3.svc.cluster.local"})
 
 	vals, valid := NoDestinationChecker{
-		ServiceEntries:  []*networking_v1beta1.ServiceEntry{se},
+		ServiceEntries:  []*networking_v1.ServiceEntry{se},
 		DestinationRule: dr,
 	}.Check()
 
@@ -555,7 +555,7 @@ func TestWildcardExportedInternalServiceEntryFail(t *testing.T) {
 	se := data.CreateEmptyMeshInternalServiceEntry("details-se", "bookinfo3", []string{"*.bookinfo3.svc.cluster.local"})
 
 	vals, valid := NoDestinationChecker{
-		ServiceEntries:  []*networking_v1beta1.ServiceEntry{se},
+		ServiceEntries:  []*networking_v1.ServiceEntry{se},
 		DestinationRule: dr,
 	}.Check()
 
@@ -576,7 +576,7 @@ func TestExportedNonFQDNInternalServiceEntryFail(t *testing.T) {
 	se := data.CreateEmptyMeshInternalServiceEntry("details-se", "bookinfo3", []string{"details"})
 
 	vals, valid := NoDestinationChecker{
-		ServiceEntries:  []*networking_v1beta1.ServiceEntry{se},
+		ServiceEntries:  []*networking_v1.ServiceEntry{se},
 		DestinationRule: dr,
 	}.Check()
 
@@ -589,7 +589,7 @@ func TestExportedNonFQDNInternalServiceEntryFail(t *testing.T) {
 	dr = data.CreateEmptyDestinationRule("bookinfo", "details", "details")
 
 	vals, valid = NoDestinationChecker{
-		ServiceEntries:  []*networking_v1beta1.ServiceEntry{se},
+		ServiceEntries:  []*networking_v1.ServiceEntry{se},
 		DestinationRule: dr,
 	}.Check()
 
@@ -610,7 +610,7 @@ func TestExportedExternalServiceEntry(t *testing.T) {
 	se := data.CreateEmptyMeshExternalServiceEntry("details-se", "bookinfo3", []string{"www.myhost.com"})
 
 	vals, valid := NoDestinationChecker{
-		ServiceEntries:  []*networking_v1beta1.ServiceEntry{se},
+		ServiceEntries:  []*networking_v1.ServiceEntry{se},
 		DestinationRule: dr,
 	}.Check()
 
@@ -628,7 +628,7 @@ func TestExportedExternalServiceEntryFail(t *testing.T) {
 	se := data.CreateEmptyMeshExternalServiceEntry("details-se", "bookinfo3", []string{"www.myhost.com"})
 
 	vals, valid := NoDestinationChecker{
-		ServiceEntries:  []*networking_v1beta1.ServiceEntry{se},
+		ServiceEntries:  []*networking_v1.ServiceEntry{se},
 		DestinationRule: dr,
 		PolicyAllowAny:  true,
 	}.Check()
@@ -742,7 +742,7 @@ func TestServiceEntryLabelsMatchSubsets(t *testing.T) {
 	se := data.AddEndpointToServiceEntry("details.bookinfo.svc.cluster.local", "cluster", "global", data.CreateEmptyMeshInternalServiceEntry("details-se", "bookinfo", []string{"details.bookinfo.svc.cluster.local"}))
 
 	vals, valid := NoDestinationChecker{
-		ServiceEntries:  []*networking_v1beta1.ServiceEntry{se},
+		ServiceEntries:  []*networking_v1.ServiceEntry{se},
 		DestinationRule: dr,
 	}.Check()
 
@@ -760,7 +760,7 @@ func TestServiceEntryLabelsNoMatchingSubsets(t *testing.T) {
 	se := data.AddEndpointToServiceEntry("details.bookinfo.svc.cluster.local", "cluster", "wrong", data.CreateEmptyMeshInternalServiceEntry("details-se", "bookinfo", []string{"details.bookinfo.svc.cluster.local"}))
 
 	vals, _ := NoDestinationChecker{
-		ServiceEntries:  []*networking_v1beta1.ServiceEntry{se},
+		ServiceEntries:  []*networking_v1.ServiceEntry{se},
 		DestinationRule: dr,
 	}.Check()
 

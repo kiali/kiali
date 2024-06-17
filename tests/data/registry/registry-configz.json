@@ -1,7 +1,7 @@
 [
   {
     "kind": "DestinationRule",
-    "apiVersion": "networking.istio.io/v1beta1",
+    "apiVersion": "networking.istio.io/v1",
     "metadata": {
       "name": "mysqldb",
       "namespace": "travel-agency",
@@ -37,7 +37,7 @@
   },
   {
     "kind": "DestinationRule",
-    "apiVersion": "networking.istio.io/v1beta1",
+    "apiVersion": "networking.istio.io/v1",
     "metadata": {
       "name": "travels",
       "namespace": "travel-agency",
@@ -1792,7 +1792,7 @@
   },
   {
     "kind": "Gateway",
-    "apiVersion": "networking.istio.io/v1beta1",
+    "apiVersion": "networking.istio.io/v1",
     "metadata": {
       "name": "bookinfo-gateway",
       "namespace": "default",
@@ -1808,9 +1808,7 @@
       },
       "servers": [
         {
-          "hosts": [
-            "*"
-          ],
+          "hosts": ["*"],
           "port": {
             "name": "http",
             "number": 80,
@@ -1822,7 +1820,7 @@
   },
   {
     "kind": "Sidecar",
-    "apiVersion": "networking.istio.io/v1beta1",
+    "apiVersion": "networking.istio.io/v1",
     "metadata": {
       "name": "flights-v1",
       "namespace": "travel-agency",
@@ -1852,7 +1850,7 @@
   },
   {
     "kind": "Sidecar",
-    "apiVersion": "networking.istio.io/v1beta1",
+    "apiVersion": "networking.istio.io/v1",
     "metadata": {
       "name": "mysqldb-v1",
       "namespace": "travel-agency",
@@ -1865,9 +1863,7 @@
     "spec": {
       "egress": [
         {
-          "hosts": [
-            "istio-system/*"
-          ]
+          "hosts": ["istio-system/*"]
         }
       ],
       "workloadSelector": {
@@ -1880,7 +1876,7 @@
   },
   {
     "kind": "Sidecar",
-    "apiVersion": "networking.istio.io/v1beta1",
+    "apiVersion": "networking.istio.io/v1",
     "metadata": {
       "name": "mysqldb-v2",
       "namespace": "travel-agency",
@@ -1893,9 +1889,7 @@
     "spec": {
       "egress": [
         {
-          "hosts": [
-            "istio-system/*"
-          ]
+          "hosts": ["istio-system/*"]
         }
       ],
       "workloadSelector": {
@@ -1908,7 +1902,7 @@
   },
   {
     "kind": "Sidecar",
-    "apiVersion": "networking.istio.io/v1beta1",
+    "apiVersion": "networking.istio.io/v1",
     "metadata": {
       "name": "travels-v2",
       "namespace": "travel-agency",
@@ -1940,7 +1934,7 @@
   },
   {
     "kind": "Sidecar",
-    "apiVersion": "networking.istio.io/v1beta1",
+    "apiVersion": "networking.istio.io/v1",
     "metadata": {
       "name": "travels-v3",
       "namespace": "travel-agency",
@@ -1972,7 +1966,7 @@
   },
   {
     "kind": "Sidecar",
-    "apiVersion": "networking.istio.io/v1beta1",
+    "apiVersion": "networking.istio.io/v1",
     "metadata": {
       "name": "cars-v1",
       "namespace": "travel-agency",
@@ -2002,7 +1996,7 @@
   },
   {
     "kind": "Sidecar",
-    "apiVersion": "networking.istio.io/v1beta1",
+    "apiVersion": "networking.istio.io/v1",
     "metadata": {
       "name": "discounts-v1",
       "namespace": "travel-agency",
@@ -2015,9 +2009,7 @@
     "spec": {
       "egress": [
         {
-          "hosts": [
-            "istio-system/*"
-          ]
+          "hosts": ["istio-system/*"]
         }
       ],
       "workloadSelector": {
@@ -2030,7 +2022,7 @@
   },
   {
     "kind": "Sidecar",
-    "apiVersion": "networking.istio.io/v1beta1",
+    "apiVersion": "networking.istio.io/v1",
     "metadata": {
       "name": "mysqldb-v3",
       "namespace": "travel-agency",
@@ -2043,9 +2035,7 @@
     "spec": {
       "egress": [
         {
-          "hosts": [
-            "istio-system/*"
-          ]
+          "hosts": ["istio-system/*"]
         }
       ],
       "workloadSelector": {
@@ -2058,7 +2048,7 @@
   },
   {
     "kind": "Sidecar",
-    "apiVersion": "networking.istio.io/v1beta1",
+    "apiVersion": "networking.istio.io/v1",
     "metadata": {
       "name": "travels-v1",
       "namespace": "travel-agency",
@@ -2090,7 +2080,7 @@
   },
   {
     "kind": "Sidecar",
-    "apiVersion": "networking.istio.io/v1beta1",
+    "apiVersion": "networking.istio.io/v1",
     "metadata": {
       "name": "hotels-v1",
       "namespace": "travel-agency",
@@ -2120,7 +2110,7 @@
   },
   {
     "kind": "Sidecar",
-    "apiVersion": "networking.istio.io/v1beta1",
+    "apiVersion": "networking.istio.io/v1",
     "metadata": {
       "name": "insurances-v1",
       "namespace": "travel-agency",
@@ -2150,7 +2140,7 @@
   },
   {
     "kind": "VirtualService",
-    "apiVersion": "networking.istio.io/v1beta1",
+    "apiVersion": "networking.istio.io/v1",
     "metadata": {
       "name": "bookinfo",
       "namespace": "default",
@@ -2161,12 +2151,8 @@
       }
     },
     "spec": {
-      "gateways": [
-        "bookinfo-gateway"
-      ],
-      "hosts": [
-        "*"
-      ],
+      "gateways": ["bookinfo-gateway"],
+      "hosts": ["*"],
       "http": [
         {
           "match": [
@@ -2212,7 +2198,7 @@
   },
   {
     "kind": "VirtualService",
-    "apiVersion": "networking.istio.io/v1beta1",
+    "apiVersion": "networking.istio.io/v1",
     "metadata": {
       "name": "mysqldb",
       "namespace": "travel-agency",
@@ -2223,9 +2209,7 @@
       }
     },
     "spec": {
-      "hosts": [
-        "mysqldb.travel-agency.svc.cluster.local"
-      ],
+      "hosts": ["mysqldb.travel-agency.svc.cluster.local"],
       "tcp": [
         {
           "route": [
@@ -2257,7 +2241,7 @@
   },
   {
     "kind": "VirtualService",
-    "apiVersion": "networking.istio.io/v1beta1",
+    "apiVersion": "networking.istio.io/v1",
     "metadata": {
       "name": "travels",
       "namespace": "travel-agency",
@@ -2268,9 +2252,7 @@
       }
     },
     "spec": {
-      "hosts": [
-        "travels.travel-agency.svc.cluster.local"
-      ],
+      "hosts": ["travels.travel-agency.svc.cluster.local"],
       "http": [
         {
           "route": [
@@ -2302,7 +2284,7 @@
   },
   {
     "kind": "AuthorizationPolicy",
-    "apiVersion": "security.istio.io/v1beta1",
+    "apiVersion": "security.istio.io/v1",
     "metadata": {
       "name": "mysqldb-v3",
       "namespace": "travel-agency",
@@ -2318,9 +2300,7 @@
           "from": [
             {
               "source": {
-                "principals": [
-                  "cluster.local/ns/travel-agency/sa/default"
-                ]
+                "principals": ["cluster.local/ns/travel-agency/sa/default"]
               }
             }
           ]
@@ -2336,7 +2316,7 @@
   },
   {
     "kind": "AuthorizationPolicy",
-    "apiVersion": "security.istio.io/v1beta1",
+    "apiVersion": "security.istio.io/v1",
     "metadata": {
       "name": "travels-v1",
       "namespace": "travel-agency",
@@ -2352,9 +2332,7 @@
           "from": [
             {
               "source": {
-                "principals": [
-                  "cluster.local/ns/travel-portal/sa/default"
-                ]
+                "principals": ["cluster.local/ns/travel-portal/sa/default"]
               }
             }
           ]
@@ -2370,7 +2348,7 @@
   },
   {
     "kind": "AuthorizationPolicy",
-    "apiVersion": "security.istio.io/v1beta1",
+    "apiVersion": "security.istio.io/v1",
     "metadata": {
       "name": "travels-v2",
       "namespace": "travel-agency",
@@ -2386,9 +2364,7 @@
           "from": [
             {
               "source": {
-                "principals": [
-                  "cluster.local/ns/travel-portal/sa/default"
-                ]
+                "principals": ["cluster.local/ns/travel-portal/sa/default"]
               }
             }
           ]
@@ -2404,7 +2380,7 @@
   },
   {
     "kind": "AuthorizationPolicy",
-    "apiVersion": "security.istio.io/v1beta1",
+    "apiVersion": "security.istio.io/v1",
     "metadata": {
       "name": "travels-v3",
       "namespace": "travel-agency",
@@ -2420,9 +2396,7 @@
           "from": [
             {
               "source": {
-                "principals": [
-                  "cluster.local/ns/travel-portal/sa/default"
-                ]
+                "principals": ["cluster.local/ns/travel-portal/sa/default"]
               }
             }
           ]
@@ -2438,7 +2412,7 @@
   },
   {
     "kind": "AuthorizationPolicy",
-    "apiVersion": "security.istio.io/v1beta1",
+    "apiVersion": "security.istio.io/v1",
     "metadata": {
       "name": "mysqldb-v2",
       "namespace": "travel-agency",
@@ -2454,9 +2428,7 @@
           "from": [
             {
               "source": {
-                "principals": [
-                  "cluster.local/ns/travel-agency/sa/default"
-                ]
+                "principals": ["cluster.local/ns/travel-agency/sa/default"]
               }
             }
           ]
@@ -2472,7 +2444,7 @@
   },
   {
     "kind": "AuthorizationPolicy",
-    "apiVersion": "security.istio.io/v1beta1",
+    "apiVersion": "security.istio.io/v1",
     "metadata": {
       "name": "discounts-v1",
       "namespace": "travel-agency",
@@ -2488,9 +2460,7 @@
           "from": [
             {
               "source": {
-                "principals": [
-                  "cluster.local/ns/travel-agency/sa/default"
-                ]
+                "principals": ["cluster.local/ns/travel-agency/sa/default"]
               }
             }
           ]
@@ -2506,7 +2476,7 @@
   },
   {
     "kind": "AuthorizationPolicy",
-    "apiVersion": "security.istio.io/v1beta1",
+    "apiVersion": "security.istio.io/v1",
     "metadata": {
       "name": "cars-v1",
       "namespace": "travel-agency",
@@ -2522,9 +2492,7 @@
           "from": [
             {
               "source": {
-                "principals": [
-                  "cluster.local/ns/travel-agency/sa/default"
-                ]
+                "principals": ["cluster.local/ns/travel-agency/sa/default"]
               }
             }
           ]
@@ -2540,7 +2508,7 @@
   },
   {
     "kind": "AuthorizationPolicy",
-    "apiVersion": "security.istio.io/v1beta1",
+    "apiVersion": "security.istio.io/v1",
     "metadata": {
       "name": "hotels-v1",
       "namespace": "travel-agency",
@@ -2556,9 +2524,7 @@
           "from": [
             {
               "source": {
-                "principals": [
-                  "cluster.local/ns/travel-agency/sa/default"
-                ]
+                "principals": ["cluster.local/ns/travel-agency/sa/default"]
               }
             }
           ]
@@ -2574,7 +2540,7 @@
   },
   {
     "kind": "AuthorizationPolicy",
-    "apiVersion": "security.istio.io/v1beta1",
+    "apiVersion": "security.istio.io/v1",
     "metadata": {
       "name": "flights-v1",
       "namespace": "travel-agency",
@@ -2590,9 +2556,7 @@
           "from": [
             {
               "source": {
-                "principals": [
-                  "cluster.local/ns/travel-agency/sa/default"
-                ]
+                "principals": ["cluster.local/ns/travel-agency/sa/default"]
               }
             }
           ]
@@ -2608,7 +2572,7 @@
   },
   {
     "kind": "AuthorizationPolicy",
-    "apiVersion": "security.istio.io/v1beta1",
+    "apiVersion": "security.istio.io/v1",
     "metadata": {
       "name": "insurances-v1",
       "namespace": "travel-agency",
@@ -2624,9 +2588,7 @@
           "from": [
             {
               "source": {
-                "principals": [
-                  "cluster.local/ns/travel-agency/sa/default"
-                ]
+                "principals": ["cluster.local/ns/travel-agency/sa/default"]
               }
             }
           ]
@@ -2642,7 +2604,7 @@
   },
   {
     "kind": "AuthorizationPolicy",
-    "apiVersion": "security.istio.io/v1beta1",
+    "apiVersion": "security.istio.io/v1",
     "metadata": {
       "name": "mysqldb-v1",
       "namespace": "travel-agency",
@@ -2658,9 +2620,7 @@
           "from": [
             {
               "source": {
-                "principals": [
-                  "cluster.local/ns/travel-agency/sa/default"
-                ]
+                "principals": ["cluster.local/ns/travel-agency/sa/default"]
               }
             }
           ]
@@ -2676,7 +2636,7 @@
   },
   {
     "kind": "AuthorizationPolicy",
-    "apiVersion": "security.istio.io/v1beta1",
+    "apiVersion": "security.istio.io/v1",
     "metadata": {
       "name": "deny-all-travel-agency",
       "namespace": "travel-agency",

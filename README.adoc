@@ -445,7 +445,7 @@ The operator will create a Route or Ingress by default (see the Kiali CR setting
 [source,yaml]
 ----
 ---
-apiVersion: networking.istio.io/v1alpha3
+apiVersion: networking.istio.io/v1
 kind: Gateway
 metadata:
   name: kiali-gateway
@@ -470,7 +470,7 @@ spec:
     hosts: [<your-host>]
 ...
 ---
-apiVersion: networking.istio.io/v1alpha3
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: kiali-virtualservice
@@ -488,7 +488,7 @@ spec:
       weight: 100
 ...
 ---
-apiVersion: networking.istio.io/v1alpha3
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: kiali-destinationrule

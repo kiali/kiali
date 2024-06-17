@@ -1,8 +1,8 @@
 package references
 
 import (
-	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
-	security_v1beta "istio.io/client-go/pkg/apis/security/v1beta1"
+	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
+	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 
 	"k8s.io/apimachinery/pkg/labels"
 
@@ -12,11 +12,11 @@ import (
 )
 
 type AuthorizationPolicyReferences struct {
-	AuthorizationPolicies []*security_v1beta.AuthorizationPolicy
+	AuthorizationPolicies []*security_v1.AuthorizationPolicy
 	Namespace             string
 	Namespaces            models.Namespaces
-	ServiceEntries        []*networking_v1beta1.ServiceEntry
-	VirtualServices       []*networking_v1beta1.VirtualService
+	ServiceEntries        []*networking_v1.ServiceEntry
+	VirtualServices       []*networking_v1.VirtualService
 	RegistryServices      []*kubernetes.RegistryService
 	WorkloadsPerNamespace map[string]models.WorkloadList
 }
@@ -90,7 +90,7 @@ func (n AuthorizationPolicyReferences) getConfigReferences(host kubernetes.Host)
 	return result
 }
 
-func (n AuthorizationPolicyReferences) getWorkloadReferences(ap *security_v1beta.AuthorizationPolicy) []models.WorkloadReference {
+func (n AuthorizationPolicyReferences) getWorkloadReferences(ap *security_v1.AuthorizationPolicy) []models.WorkloadReference {
 	result := make([]models.WorkloadReference, 0)
 	if ap.Spec.Selector != nil {
 		selector := labels.SelectorFromSet(ap.Spec.Selector.MatchLabels)

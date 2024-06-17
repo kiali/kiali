@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -67,7 +67,7 @@ func TestParseRegistryServices(t *testing.T) {
 	conf.KubernetesConfig.ClusterName = config.DefaultClusterID
 	config.Set(conf)
 
-	serviceEntries := []*networking_v1beta1.ServiceEntry{}
+	serviceEntries := []*networking_v1.ServiceEntry{}
 	configzFile := "../tests/data/registry/services-configz.json"
 	configz, err := os.ReadFile(configzFile)
 	require.NoError(err)
