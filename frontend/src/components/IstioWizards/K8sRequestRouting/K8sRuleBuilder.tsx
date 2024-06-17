@@ -23,6 +23,8 @@ type Props = {
   isValid: boolean;
   matchValue: string;
   matches: string[];
+  methodName: string;
+  methodService: string;
   onAddFilter: () => void;
   onAddMatch: () => void;
   onAddRule: () => void;
@@ -30,6 +32,8 @@ type Props = {
   onHeaderValueChange: (headerValue: string) => void;
   onHostNameChange: (hostName: string) => void;
   onMatchHeaderNameChange: (headerName: string) => void;
+  onMatchMethodNameChange: (methodName: string) => void;
+  onMatchMethodServiceChange: (methodService: string) => void;
   onMatchValueChange: (matchValue: string) => void;
   onPortValueChange: (portValue: string) => void;
   onQueryParamNameChange: (matchValue: string) => void;

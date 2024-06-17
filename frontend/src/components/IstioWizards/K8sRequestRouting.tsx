@@ -2,7 +2,7 @@ import * as React from 'react';
 import { K8sRules, MOVE_TYPE, K8sRule } from './K8sRequestRouting/K8sRules';
 import { K8sRuleBuilder } from './K8sRequestRouting/K8sRuleBuilder';
 import { K8sRouteBackendRef } from './K8sTrafficShifting';
-import { EXACT, PATH, METHOD, GET, HEADERS, QUERY_PARAMS } from './K8sRequestRouting/K8sMatchBuilder';
+import { EXACT, PATH, METHOD, GET, HEADERS, QUERY_PARAMS, GRPC } from './K8sRequestRouting/K8sMatchBuilder';
 import { getDefaultBackendRefs, getDefaultService } from './WizardActions';
 import { ServiceOverview } from '../../types/ServiceList';
 import { REMOVE, REQ_MOD, RESP_MOD, SET, HTTP, SC301, REQ_RED, REQ_MIR } from './K8sRequestRouting/K8sFilterBuilder';
@@ -28,6 +28,8 @@ type State = {
   k8sRules: K8sRule[];
   matchValue: string;
   matches: string[];
+  methodName: string;
+  methodService: string;
   operator: string;
   portValue: string;
   queryParamName: string;
@@ -40,6 +42,8 @@ type State = {
 const MSG_SAME_MATCHING = 'A Rule with same matching criteria is already added.';
 const MSG_HEADER_NAME_NON_EMPTY = 'Header name must be non empty';
 const MSG_HEADER_VALUE_NON_EMPTY = 'Header value must be non empty';
+const MSG_METHOD_NAME_NON_EMPTY = 'Method name must be non empty';
+const MSG_METHOD_SERVICE_NON_EMPTY = 'Method service must be non empty';
 const MSG_HOSTNAME_NON_EMPTY = 'Hostname is incorrect';
 const MSG_PORT_NON_EMPTY = 'Port is incorrect';
 const MSG_QUERY_NAME_NON_EMPTY = 'Query name must be non empty';
@@ -56,6 +60,8 @@ export class K8sRequestRouting extends React.Component<Props, State> {
       headerName: '',
       queryParamName: '',
       matchValue: '',
+      methodName: '',
+      methodService: '',
       k8sRules: this.props.initRules,
       validationMsg: '',
       filterValue: '',
@@ -111,6 +117,8 @@ export class K8sRequestRouting extends React.Component<Props, State> {
         newMatch = `${prevState.category} [${prevState.headerName}] ${prevState.operator} ${prevState.matchValue}`;
       } else if (prevState.category === QUERY_PARAMS) {
         newMatch = `${prevState.category} ${prevState.queryParamName} ${prevState.operator} ${prevState.matchValue}`;
+      } else if (prevState.category === METHOD || this.props.protocol === GRPC) {
+        newMatch = `${prevState.category} ${prevState.methodName} ${prevState.operator} ${prevState.methodService}`;
       } else {
         newMatch = `${prevState.category} ${prevState.operator}`;
       }
@@ -149,6 +157,8 @@ export class K8sRequestRouting extends React.Component<Props, State> {
             filters: prevState.filters,
             headerName: prevState.headerName,
             matchValue: prevState.matchValue,
+            methodName: prevState.methodName,
+            methodService: prevState.methodService,
             k8sRules: prevState.k8sRules,
             validationMsg: ''
           };
@@ -158,6 +168,8 @@ export class K8sRequestRouting extends React.Component<Props, State> {
             filters: prevState.filters,
             headerName: prevState.headerName,
             matchValue: prevState.matchValue,
+            methodName: prevState.methodName,
+            methodService: prevState.methodService,
             k8sRules: prevState.k8sRules,
             validationMsg: MSG_SAME_MATCHING
           };
@@ -203,12 +215,40 @@ export class K8sRequestRouting extends React.Component<Props, State> {
     });
   };
 
-  onHeaderNameChange = (headerName: string): void => {
+  onMatchMethodNameChange = (methodName: string): void => {
     let validationMsg = '';
-    if (!headerName) {
+    if (!methodName && !!this.state.matchValue) {
+      validationMsg = MSG_METHOD_NAME_NON_EMPTY;
+    }
+    if (!this.state.matchValue && !!methodName) {
+      validationMsg = MSG_METHOD_SERVICE_NON_EMPTY;
+    }
+    this.setState({
+      methodName: methodName,
+      validationMsg: validationMsg
+    });
+  };
+
+  onMatchMethodServiceChange = (methodService: string): void => {
+    let validationMsg = '';
+    if (methodService !== '' && !this.state.methodName) {
       validationMsg = MSG_HEADER_NAME_NON_EMPTY;
     }
-    if (!this.state.headerValue && this.state.headerOp !== REMOVE) {
+    if (!methodService && !!this.state.methodName) {
+      validationMsg = MSG_METHOD_SERVICE_NON_EMPTY;
+    }
+    this.setState({
+      methodService: methodService,
+      validationMsg: validationMsg
+    });
+  };
+
+  onHeaderNameChange = (headerName: string): void => {
+    let validationMsg = '';
+    if (headerName === '' && !!this.state.headerValue) {
+      validationMsg = MSG_HEADER_NAME_NON_EMPTY;
+    }
+    if (headerName !== '' && !this.state.headerValue && this.state.headerOp !== REMOVE) {
       validationMsg = MSG_HEADER_VALUE_NON_EMPTY;
     }
     this.setState({
@@ -330,10 +370,10 @@ export class K8sRequestRouting extends React.Component<Props, State> {
   onHeaderValueChange = (headerValue: string): void => {
     let validationMsg = '';
     if ((this.state.filterType === REQ_MOD || this.state.filterType === RESP_MOD) && this.state.headerOp !== REMOVE) {
-      if (!this.state.headerName) {
+      if (headerValue !== '' && !this.state.headerName) {
         validationMsg = MSG_HEADER_NAME_NON_EMPTY;
       }
-      if (!headerValue) {
+      if (!headerValue && !!this.state.headerName) {
         validationMsg = MSG_HEADER_VALUE_NON_EMPTY;
       }
     }
@@ -383,6 +423,8 @@ export class K8sRequestRouting extends React.Component<Props, State> {
           headerName={this.state.headerName}
           queryParamName={this.state.queryParamName}
           matchValue={this.state.matchValue}
+          methodName={this.state.methodName}
+          methodService={this.state.methodService}
           isValid={this.state.validationMsg === ''}
           protocol={this.props.protocol}
           onSelectCategory={(category: string) => {
@@ -395,6 +437,8 @@ export class K8sRequestRouting extends React.Component<Props, State> {
           }}
           onHeaderNameChange={this.onHeaderNameChange}
           onMatchHeaderNameChange={this.onMatchHeaderNameChange}
+          onMatchMethodNameChange={this.onMatchMethodNameChange}
+          onMatchMethodServiceChange={this.onMatchMethodServiceChange}
           onQueryParamNameChange={this.onQueryParamNameChange}
           onSelectOperator={(operator: string) => this.setState({ operator: operator })}
           onMatchValueChange={this.onMatchValueChange}

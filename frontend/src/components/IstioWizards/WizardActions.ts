@@ -339,7 +339,7 @@ const buildK8sGRPCRouteMatch = (matches: string[]): K8sGRPCRouteMatch => {
     });
   // Method
   matches
-    .filter(match => match.startsWith(QUERY_PARAMS))
+    .filter(match => match.startsWith(METHOD))
     .forEach(match => {
       // match follows format: <name> <op> <value>
       const i = match.indexOf(' ');
@@ -490,7 +490,9 @@ const parseK8sGRPCMatchRequest = (grpcRouteMatch: K8sGRPCRouteMatch): string[] =
     });
   }
   if (grpcRouteMatch.method) {
-    matches.push(`method ${grpcRouteMatch.method}`);
+    matches.push(
+      `method ${grpcRouteMatch.method.method} ${grpcRouteMatch.method.type} ${grpcRouteMatch.method.service}`
+    );
   }
 
   return matches;

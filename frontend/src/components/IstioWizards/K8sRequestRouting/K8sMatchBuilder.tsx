@@ -17,8 +17,12 @@ type K8sMatchBuilderProps = {
   headerName: string;
   isValid: boolean;
   matchValue: string;
+  methodName: string;
+  methodService: string;
   onAddMatch: () => void;
   onMatchHeaderNameChange: (headerName: string) => void;
+  onMatchMethodNameChange: (methodName: string) => void;
+  onMatchMethodServiceChange: (methodService: string) => void;
   onMatchValueChange: (matchValue: string) => void;
   onQueryParamNameChange: (queryParamName: string) => void;
   onSelectCategory: (category: string) => void;
@@ -120,8 +124,8 @@ export const K8sMatchBuilder: React.FC<K8sMatchBuilderProps> = (props: K8sMatchB
       {props.category === METHOD && props.protocol === GRPC && (
         <TextInput
           id="method-name-id"
-          value={props.headerName}
-          onChange={(_, value) => props.onMatchHeaderNameChange(value)}
+          value={props.methodName}
+          onChange={(_, value) => props.onMatchMethodNameChange(value)}
           placeholder="Method name..."
         />
       )}
@@ -169,12 +173,23 @@ export const K8sMatchBuilder: React.FC<K8sMatchBuilderProps> = (props: K8sMatchB
         </Dropdown>
       </InputGroupItem>
 
-      {props.protocol === GRPC && (
+      {props.protocol === GRPC && props.category !== METHOD && (
         <InputGroupItem isFill>
           <TextInput
             id="match-value-id"
             value={props.matchValue}
             onChange={(_, value) => props.onMatchValueChange(value)}
+            placeholder={placeholderText[props.category]}
+          />
+        </InputGroupItem>
+      )}
+
+      {props.protocol === GRPC && props.category === METHOD && (
+        <InputGroupItem isFill>
+          <TextInput
+            id="method-service-id"
+            value={props.methodService}
+            onChange={(_, value) => props.onMatchMethodServiceChange(value)}
             placeholder={placeholderText[props.category]}
           />
         </InputGroupItem>
@@ -195,7 +210,7 @@ export const K8sMatchBuilder: React.FC<K8sMatchBuilderProps> = (props: K8sMatchB
       <InputGroupItem>
         <Button
           variant={ButtonVariant.secondary}
-          disabled={!props.isValid}
+          isDisabled={!props.isValid}
           onClick={props.onAddMatch}
           data-test="add-match"
         >
