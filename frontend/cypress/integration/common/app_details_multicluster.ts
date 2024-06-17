@@ -60,16 +60,12 @@ Then(
 
 Then('user sees {string} from a remote {string} cluster', (type: string, cluster: string) => {
   cy.waitForReact();
-  cy.getReact('MiniGraphCardComponent', { state: { graphData: { isLoading: false } } })
+  cy.getReact('CytoscapeGraph')
     .should('have.length', '1')
-    .then(() => {
-      cy.getReact('CytoscapeGraph')
-        .should('have.length', '1')
-        .getCurrentState()
-        .then(state => {
-          const apps = state.cy.nodes(`[cluster="${cluster}"][nodeType="${type}"][namespace="bookinfo"]`).length;
-          assert.isAbove(apps, 0);
-        });
+    .getCurrentState()
+    .then(state => {
+      const apps = state.cy.nodes(`[cluster="${cluster}"][nodeType="${type}"][namespace="bookinfo"]`).length;
+      assert.isAbove(apps, 0);
     });
 });
 
