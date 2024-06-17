@@ -7248,6 +7248,7 @@ It has configuration for all the clusters/namespaces associated with it.
 | ManagedClusters | [][Cluster](#cluster)| `[]*Cluster` |  | | ManagedClusters are the clusters that this controlplane manages.</br>This could include the cluster that the controlplane is running on. |  |
 | ManagesExternal | boolean| `bool` |  | | ManagesExternal indicates if the controlplane manages an external cluster.</br>It could also manage the cluster that it is running on. |  |
 | Revision | string| `string` |  | | Revision is the revision of the controlplane.</br>Can be empty when it's the default revision. |  |
+| Version | [ExternalServiceInfo](#external-service-info)| `ExternalServiceInfo` |  | |  |  |
 
 
 
@@ -7269,6 +7270,7 @@ It has configuration for all the clusters/namespaces associated with it.
 | MeshMTLS | [interface{}](#interface)| `interface{}` |  | |  |  |
 | Network | string| `string` |  | | Network is the name of the network that the controlplane is using. |  |
 | OutboundTrafficPolicy | [OutboundPolicy](#outbound-policy)| `OutboundPolicy` |  | |  |  |
+| TrustDomain | string| `string` |  | |  |  |
 
 
 
@@ -9450,29 +9452,6 @@ primary can also manage multiple clusters (primary-remote deployment).
 ### <span id="namespace"></span> Namespace
 
 
-> A Namespace provide a scope for names
-This type is used to describe a set of objects.
-  
-
-
-
-
-
-**Properties**
-
-| Name | Type | Go type | Required | Default | Description | Example |
-|------|------|---------|:--------:| ------- |-------------|---------|
-| Annotations | map of string| `map[string]string` |  | | Specific annotations used in Kiali |  |
-| Cluster | string| `string` | ✓ | | The name of the cluster | `east` |
-| IsAmbient | boolean| `bool` | ✓ | | If has the Ambient annotations |  |
-| Labels | map of string| `map[string]string` |  | | Labels for Namespace |  |
-| Name | string| `string` | ✓ | | The id of the namespace. | `istio-system` |
-
-
-
-### <span id="namespace"></span> Namespace
-
-
 > This validation is based off of the corresponding Kubernetes validation:
 https://github.com/kubernetes/apimachinery/blob/02cfb53916346d085a6c6c7c66f882e3c6b0eca6/pkg/util/validation/validation.go#L187
 
@@ -9497,6 +9476,29 @@ Invalid values include:
 | Name | Type | Go type | Default | Description | Example |
 |------|------|---------| ------- |-------------|---------|
 | Namespace | string| string | | This validation is based off of the corresponding Kubernetes validation:</br>https://github.com/kubernetes/apimachinery/blob/02cfb53916346d085a6c6c7c66f882e3c6b0eca6/pkg/util/validation/validation.go#L187</br></br>This is used for Namespace name validation here:</br>https://github.com/kubernetes/apimachinery/blob/02cfb53916346d085a6c6c7c66f882e3c6b0eca6/pkg/api/validation/generic.go#L63</br></br>Valid values include:</br></br>"example"</br></br>Invalid values include:</br></br>"example.com" - "." is an invalid character</br></br>+kubebuilder:validation:Pattern=`^[a-z0-9]([-a-z0-9]*[a-z0-9])?$`</br>+kubebuilder:validation:MinLength=1</br>+kubebuilder:validation:MaxLength=63 |  |
+
+
+
+### <span id="namespace"></span> Namespace
+
+
+> A Namespace provide a scope for names
+This type is used to describe a set of objects.
+  
+
+
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| Annotations | map of string| `map[string]string` |  | | Specific annotations used in Kiali |  |
+| Cluster | string| `string` | ✓ | | The name of the cluster | `east` |
+| IsAmbient | boolean| `bool` | ✓ | | If has the Ambient annotations |  |
+| Labels | map of string| `map[string]string` |  | | Labels for Namespace |  |
+| Name | string| `string` | ✓ | | The id of the namespace. | `istio-system` |
 
 
 
@@ -9555,6 +9557,7 @@ Invalid values include:
 | HasWorkloadEntry | [][WEInfo](#w-e-info)| `[]*WEInfo` |  | |  |  |
 | HealthData | [interface{}](#interface)| `interface{}` |  | |  |  |
 | ID | string| `string` |  | | Cytoscape Fields |  |
+| IsAmbient | boolean| `bool` |  | |  |  |
 | IsBox | string| `string` |  | |  |  |
 | IsDead | boolean| `bool` |  | |  |  |
 | IsIdle | boolean| `bool` |  | |  |  |
