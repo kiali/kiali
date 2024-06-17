@@ -8,6 +8,11 @@ type AmbientLabelProps = {
   waypoint?: boolean;
 };
 
+const l4Message = (
+  <>
+    Workload is captured by <b>ztunnel</b> to provide a secure overlay layer with layer 4 capabilities
+  </>
+);
 export const tooltipMsgType = {
   service: (
     <div>
@@ -29,7 +34,7 @@ export const tooltipMsgType = {
       <ul>
         <li>
           <PFBadge key="ztunnel" badge={PFBadges.Ztunnel} size="sm" />
-          Traffic is redirected throw ztunnel to provide a secure overlay layer and layer 4 capabilities
+          {l4Message}
         </li>
       </ul>
     </div>
@@ -40,11 +45,11 @@ export const tooltipMsgType = {
       <ul>
         <li>
           <PFBadge key="ztunnel" badge={PFBadges.Ztunnel} size="sm" />
-          Traffic is redirected throw ztunnel to provide a secure overlay layer and layer 4 capabilities
+          {l4Message}
         </li>
         <li>
           <PFBadge key="waypoint" badge={PFBadges.Waypoint} size="sm" />
-          Traffic is redirected throw a waypoint proxy to provide layer 7 processing.
+          Workload is captured by a <b>waypoint proxy</b> to provide layer 7 processing.
         </li>
       </ul>
     </div>
