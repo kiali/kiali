@@ -193,29 +193,33 @@ Given(
   (name: string, type: string, cluster: string) => {
     Step(this, 'user sees a minigraph');
     cy.waitForReact();
-    cy.getReact('CytoscapeGraph')
+    cy.getReact('MiniGraphCardComponent', { state: { graphData: { isLoading: false } } })
       .should('have.length', '1')
-      .then($graph => {
-        cy.wrap($graph)
-          .getProps()
-          .then(props => {
-            const graphType = props.graphData.fetchParams.graphType;
-            const { nodeType, isBox } = nodeInfo(type, graphType);
+      .then(() => {
+        cy.getReact('CytoscapeGraph')
+          .should('have.length', '1')
+          .then($graph => {
             cy.wrap($graph)
-              .getCurrentState()
-              .then(state => {
-                cy.wrap(
-                  state.cy
-                    .nodes()
-                    .some(
-                      node =>
-                        node.data('nodeType') === nodeType &&
-                        node.data('namespace') === 'bookinfo' &&
-                        node.data(type) === name &&
-                        node.data('cluster') === cluster &&
-                        node.data('isBox') === isBox
-                    )
-                ).should('be.true');
+              .getProps()
+              .then(props => {
+                const graphType = props.graphData.fetchParams.graphType;
+                const { nodeType, isBox } = nodeInfo(type, graphType);
+                cy.wrap($graph)
+                  .getCurrentState()
+                  .then(state => {
+                    cy.wrap(
+                      state.cy
+                        .nodes()
+                        .some(
+                          node =>
+                            node.data('nodeType') === nodeType &&
+                            node.data('namespace') === 'bookinfo' &&
+                            node.data(type) === name &&
+                            node.data('cluster') === cluster &&
+                            node.data('isBox') === isBox
+                        )
+                    ).should('be.true');
+                  });
               });
           });
       });
@@ -226,31 +230,35 @@ When(
   'user clicks on the {string} {string} from the {string} cluster in the graph',
   (name: string, type: string, cluster: string) => {
     cy.waitForReact();
-    cy.getReact('CytoscapeGraph')
+    cy.getReact('MiniGraphCardComponent', { state: { graphData: { isLoading: false } } })
       .should('have.length', '1')
-      .then($graph => {
-        cy.wrap($graph)
-          .getProps()
-          .then(props => {
-            const graphType = props.graphData.fetchParams.graphType;
+      .then(() => {
+        cy.getReact('CytoscapeGraph')
+          .should('have.length', '1')
+          .then($graph => {
             cy.wrap($graph)
-              .getCurrentState()
-              .then(state => {
-                const node = state.cy
-                  .nodes()
-                  .toArray()
-                  .find(node => {
-                    const { nodeType, isBox } = nodeInfo(type, graphType);
-                    return (
-                      node.data('nodeType') === nodeType &&
-                      node.data('namespace') === 'bookinfo' &&
-                      node.data(type) === name &&
-                      node.data('cluster') === cluster &&
-                      node.data('isBox') === isBox &&
-                      !node.data('isInaccessible')
-                    );
+              .getProps()
+              .then(props => {
+                const graphType = props.graphData.fetchParams.graphType;
+                cy.wrap($graph)
+                  .getCurrentState()
+                  .then(state => {
+                    const node = state.cy
+                      .nodes()
+                      .toArray()
+                      .find(node => {
+                        const { nodeType, isBox } = nodeInfo(type, graphType);
+                        return (
+                          node.data('nodeType') === nodeType &&
+                          node.data('namespace') === 'bookinfo' &&
+                          node.data(type) === name &&
+                          node.data('cluster') === cluster &&
+                          node.data('isBox') === isBox &&
+                          !node.data('isInaccessible')
+                        );
+                      });
+                    node.emit('tap');
                   });
-                node.emit('tap');
               });
           });
       });

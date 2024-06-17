@@ -117,17 +117,21 @@ Then('user does not see graph traffic menu', () => {
 
 Then('user {string} {string} traffic', (action: string, protocol: string) => {
   cy.waitForReact();
-  cy.getReact('CytoscapeGraph')
+  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false } } })
     .should('have.length', '1')
-    .getCurrentState()
-    .then(state => {
-      const numEdges = state.cy.edges(`[protocol = "${protocol}"]`).length;
+    .then(() => {
+      cy.getReact('CytoscapeGraph')
+        .should('have.length', '1')
+        .getCurrentState()
+        .then(state => {
+          const numEdges = state.cy.edges(`[protocol = "${protocol}"]`).length;
 
-      if (action === 'sees') {
-        assert.isAbove(numEdges, 0);
-      } else {
-        assert.equal(numEdges, 0);
-      }
+          if (action === 'sees') {
+            assert.isAbove(numEdges, 0);
+          } else {
+            assert.equal(numEdges, 0);
+          }
+        });
     });
 });
 
@@ -215,11 +219,15 @@ Then('user sees selected graph refresh {string}', (refresh: string) => {
 
 Then('user sees a {string} graph', graphType => {
   cy.waitForReact();
-  cy.getReact('CytoscapeGraph')
+  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false } } })
     .should('have.length', '1')
-    .getCurrentState()
-    .then(state => {
-      const globalScratch: CytoscapeGlobalScratchData = state.cy.scratch(CytoscapeGlobalScratchNamespace);
-      assert.equal(globalScratch.graphType, graphType);
+    .then(() => {
+      cy.getReact('CytoscapeGraph')
+        .should('have.length', '1')
+        .getCurrentState()
+        .then(state => {
+          const globalScratch: CytoscapeGlobalScratchData = state.cy.scratch(CytoscapeGlobalScratchNamespace);
+          assert.equal(globalScratch.graphType, graphType);
+        });
     });
 });

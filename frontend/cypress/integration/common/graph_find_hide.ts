@@ -30,19 +30,23 @@ Then('user sees unhealthy workloads highlighted on the graph', () => {
     }
   ];
   cy.waitForReact();
-  cy.getReact('CytoscapeGraph')
+  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false } } })
     .should('have.length', '1')
-    .getCurrentState()
-    .then(state => {
-      const unhealthyNodes = state.cy
-        .nodes()
-        .filter((node: any) => node.classes().includes('find'))
-        .map((node: any) => ({
-          app: node.data('app'),
-          version: node.data('version'),
-          namespace: node.data('namespace')
-        }));
-      expect(unhealthyNodes).to.include.deep.members(expectedUnhealthyNodes);
+    .then(() => {
+      cy.getReact('CytoscapeGraph')
+        .should('have.length', '1')
+        .getCurrentState()
+        .then(state => {
+          const unhealthyNodes = state.cy
+            .nodes()
+            .filter((node: any) => node.classes().includes('find'))
+            .map((node: any) => ({
+              app: node.data('app'),
+              version: node.data('version'),
+              namespace: node.data('namespace')
+            }));
+          expect(unhealthyNodes).to.include.deep.members(expectedUnhealthyNodes);
+        });
     });
 });
 
@@ -50,11 +54,15 @@ Then('user sees nothing highlighted on the graph', () => {
   cy.contains('Loading Graph').should('not.exist');
 
   cy.waitForReact();
-  cy.getReact('CytoscapeGraph')
+  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false } } })
     .should('have.length', '1')
-    .getCurrentState()
-    .then(state => {
-      expect(state.cy.nodes().filter((node: any) => node.classes().includes('find')).length).to.equal(0);
+    .then(() => {
+      cy.getReact('CytoscapeGraph')
+        .should('have.length', '1')
+        .getCurrentState()
+        .then(state => {
+          expect(state.cy.nodes().filter((node: any) => node.classes().includes('find')).length).to.equal(0);
+        });
     });
 });
 
@@ -66,16 +74,20 @@ When('user hides unhealthy workloads', () => {
 
 Then('user sees no unhealthy workloads on the graph', () => {
   cy.waitForReact();
-  cy.getReact('CytoscapeGraph')
+  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false } } })
     .should('have.length', '1')
-    .getCurrentState()
-    .then(state => {
-      const noUnhealthy = state.cy
-        .nodes()
-        // Unhealthy boxes are fine.
-        .every((node: any) => node.data('healthStatus') !== 'Failure' || node.data('nodeType') === 'box');
+    .then(() => {
+      cy.getReact('CytoscapeGraph')
+        .should('have.length', '1')
+        .getCurrentState()
+        .then(state => {
+          const noUnhealthy = state.cy
+            .nodes()
+            // Unhealthy boxes are fine.
+            .every((node: any) => node.data('healthStatus') !== 'Failure' || node.data('nodeType') === 'box');
 
-      expect(noUnhealthy).to.equal(true);
+          expect(noUnhealthy).to.equal(true);
+        });
     });
 });
 
@@ -99,16 +111,19 @@ When('user selects the preset hide option {string}', (option: string) => {
 
 Then('user sees no healthy workloads on the graph', () => {
   cy.waitForReact();
-
-  cy.getReact('CytoscapeGraph')
+  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false } } })
     .should('have.length', '1')
-    .getCurrentState()
-    .then(state => {
-      const noHealthy = state.cy
-        .nodes()
-        .every((node: any) => node.data('healthStatus') !== 'Healthy' || node.data('nodeType') === 'box');
+    .then(() => {
+      cy.getReact('CytoscapeGraph')
+        .should('have.length', '1')
+        .getCurrentState()
+        .then(state => {
+          const noHealthy = state.cy
+            .nodes()
+            .every((node: any) => node.data('healthStatus') !== 'Healthy' || node.data('nodeType') === 'box');
 
-      expect(noHealthy).to.equal(true);
+          expect(noHealthy).to.equal(true);
+        });
     });
 });
 
