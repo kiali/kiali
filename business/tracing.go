@@ -14,6 +14,7 @@ import (
 	"github.com/kiali/kiali/tracing"
 	"github.com/kiali/kiali/tracing/jaeger/model"
 	jaegerModels "github.com/kiali/kiali/tracing/jaeger/model/json"
+	"github.com/kiali/kiali/util"
 )
 
 type (
@@ -103,7 +104,7 @@ func (in *TracingService) GetServiceSpans(ctx context.Context, ns, service strin
 }
 
 func operationSpanFilter(ns, service string) SpanFilter {
-	fqService := service + "." + ns
+	fqService := util.BuildNameNSKey(service, ns)
 	// Filter out app spans based on operation name.
 	// For envoy traces, operation name is like "service-name.namespace.svc.cluster.local:8000/*"
 	return func(span *jaegerModels.Span) bool {

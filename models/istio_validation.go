@@ -5,6 +5,7 @@ import (
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/util"
 )
 
 // NamespaceValidations represents a set of IstioValidations grouped by namespace
@@ -522,7 +523,7 @@ func (iv IstioValidations) MarshalJSON() ([]byte, error) {
 		if !ok {
 			out[k.ObjectType] = make(map[string]*IstioValidation)
 		}
-		out[k.ObjectType][k.Name+"."+k.Namespace] = v
+		out[k.ObjectType][util.BuildNameNSKey(k.Name, k.Namespace)] = v
 	}
 	return json.Marshal(out)
 }

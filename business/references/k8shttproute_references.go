@@ -6,6 +6,7 @@ import (
 
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/util"
 )
 
 type K8sHTTPRouteReferences struct {
@@ -51,9 +52,10 @@ func (n K8sHTTPRouteReferences) getServiceReferences(rt *k8s_networking_v1.HTTPR
 
 	// filter unique references
 	for _, sv := range allServices {
-		if !keys[sv.Name+"."+sv.Namespace] {
+		key := util.BuildNameNSKey(sv.Name, sv.Namespace)
+		if !keys[key] {
 			result = append(result, sv)
-			keys[sv.Name+"."+sv.Namespace] = true
+			keys[key] = true
 		}
 	}
 	return result
@@ -65,9 +67,10 @@ func (n K8sHTTPRouteReferences) getConfigReferences(rt *k8s_networking_v1.HTTPRo
 	allGateways := getAllK8sGateways(rt.Spec.ParentRefs, rt.Namespace)
 	// filter unique references
 	for _, gw := range allGateways {
-		if !keys[gw.Name+"."+gw.Namespace+"/"+gw.ObjectType] {
+		key := util.BuildNameNSTypeKey(gw.Name, gw.Namespace, gw.ObjectType)
+		if !keys[key] {
 			result = append(result, gw)
-			keys[gw.Name+"."+gw.Namespace+"/"+gw.ObjectType] = true
+			keys[key] = true
 		}
 	}
 	result = append(result, n.getAllK8sReferenceGrants(rt)...)
@@ -77,15 +80,13 @@ func (n K8sHTTPRouteReferences) getConfigReferences(rt *k8s_networking_v1.HTTPRo
 func getAllK8sGateways(prs []k8s_networking_v1.ParentReference, ns string) []models.IstioReference {
 	allGateways := make([]models.IstioReference, 0)
 
-	if len(prs) > 0 {
-		for _, parentRef := range prs {
-			if string(parentRef.Name) != "" && string(*parentRef.Kind) == kubernetes.K8sActualGatewayType && string(*parentRef.Group) == kubernetes.K8sNetworkingGroupVersionV1.Group {
-				namespace := ns
-				if parentRef.Namespace != nil && string(*parentRef.Namespace) != "" {
-					namespace = string(*parentRef.Namespace)
-				}
-				allGateways = append(allGateways, getK8sGatewayReference(string(parentRef.Name), namespace))
+	for _, parentRef := range prs {
+		if string(parentRef.Name) != "" && string(*parentRef.Kind) == kubernetes.K8sActualGatewayType && string(*parentRef.Group) == kubernetes.K8sNetworkingGroupVersionV1.Group {
+			namespace := ns
+			if parentRef.Namespace != nil && string(*parentRef.Namespace) != "" {
+				namespace = string(*parentRef.Namespace)
 			}
+			allGateways = append(allGateways, getK8sGatewayReference(string(parentRef.Name), namespace))
 		}
 	}
 

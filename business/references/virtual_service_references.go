@@ -6,6 +6,7 @@ import (
 
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/util"
 )
 
 type VirtualServiceReferences struct {
@@ -88,9 +89,10 @@ func (n VirtualServiceReferences) getServiceReferences(vs *networking_v1.Virtual
 	}
 	// filter unique references
 	for _, sv := range allServices {
-		if !keys[sv.Name+"."+sv.Namespace] {
+		key := util.BuildNameNSKey(sv.Name, sv.Namespace)
+		if !keys[key] {
 			result = append(result, sv)
-			keys[sv.Name+"."+sv.Namespace] = true
+			keys[key] = true
 		}
 	}
 	return result
@@ -102,25 +104,28 @@ func (n VirtualServiceReferences) getConfigReferences(vs *networking_v1.VirtualS
 	allGateways := getAllGateways(vs)
 	// filter unique references
 	for _, gw := range allGateways {
-		if !keys[gw.Name+"."+gw.Namespace+"/"+gw.ObjectType] {
+		key := util.BuildNameNSTypeKey(gw.Name, gw.Namespace, gw.ObjectType)
+		if !keys[key] {
 			result = append(result, gw)
-			keys[gw.Name+"."+gw.Namespace+"/"+gw.ObjectType] = true
+			keys[key] = true
 		}
 	}
 	allDRs := n.getAllDestinationRules(vs)
 	// filter unique references
 	for _, dr := range allDRs {
-		if !keys[dr.Name+"."+dr.Namespace+"/"+dr.ObjectType] {
+		key := util.BuildNameNSTypeKey(dr.Name, dr.Namespace, dr.ObjectType)
+		if !keys[key] {
 			result = append(result, dr)
-			keys[dr.Name+"."+dr.Namespace+"/"+dr.ObjectType] = true
+			keys[key] = true
 		}
 	}
 	allAuthPolicies := n.getAuthPolicies(vs)
 	// filter unique references
 	for _, ap := range allAuthPolicies {
-		if !keys[ap.Name+"."+ap.Namespace+"/"+ap.ObjectType] {
+		key := util.BuildNameNSTypeKey(ap.Name, ap.Namespace, ap.ObjectType)
+		if !keys[key] {
 			result = append(result, ap)
-			keys[ap.Name+"."+ap.Namespace+"/"+ap.ObjectType] = true
+			keys[key] = true
 		}
 	}
 	return result

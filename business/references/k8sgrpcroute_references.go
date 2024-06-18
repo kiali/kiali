@@ -6,6 +6,7 @@ import (
 
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/util"
 )
 
 type K8sGRPCRouteReferences struct {
@@ -51,9 +52,10 @@ func (n K8sGRPCRouteReferences) getServiceReferences(rt *k8s_networking_v1.GRPCR
 
 	// filter unique references
 	for _, sv := range allServices {
-		if !keys[sv.Name+"."+sv.Namespace] {
+		key := util.BuildNameNSKey(sv.Name, sv.Namespace)
+		if !keys[key] {
 			result = append(result, sv)
-			keys[sv.Name+"."+sv.Namespace] = true
+			keys[key] = true
 		}
 	}
 	return result
@@ -65,9 +67,10 @@ func (n K8sGRPCRouteReferences) getConfigReferences(rt *k8s_networking_v1.GRPCRo
 	allGateways := getAllK8sGateways(rt.Spec.ParentRefs, rt.Namespace)
 	// filter unique references
 	for _, gw := range allGateways {
-		if !keys[gw.Name+"."+gw.Namespace+"/"+gw.ObjectType] {
+		key := util.BuildNameNSTypeKey(gw.Name, gw.Namespace, gw.ObjectType)
+		if !keys[key] {
 			result = append(result, gw)
-			keys[gw.Name+"."+gw.Namespace+"/"+gw.ObjectType] = true
+			keys[key] = true
 		}
 	}
 	result = append(result, n.getAllK8sReferenceGrants(rt)...)

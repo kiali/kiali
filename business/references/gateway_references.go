@@ -7,6 +7,7 @@ import (
 
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/util"
 )
 
 type GatewayReferences struct {
@@ -83,9 +84,10 @@ func (n GatewayReferences) getConfigReferences(gw *networking_v1.Gateway) []mode
 	}
 	// filter unique references
 	for _, vs := range allVSs {
-		if !keys[vs.Name+"."+vs.Namespace+"/"+vs.ObjectType] {
+		key := util.BuildNameNSTypeKey(vs.Name, vs.Namespace, vs.ObjectType)
+		if !keys[key] {
 			result = append(result, vs)
-			keys[vs.Name+"."+vs.Namespace+"/"+vs.ObjectType] = true
+			keys[key] = true
 		}
 	}
 	return result
