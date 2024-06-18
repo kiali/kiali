@@ -54,7 +54,7 @@ export const ConfirmDeleteTrafficRoutingModal: React.FunctionComponent<Props> = 
         : '';
     deleteItems.push(<div key={`delete_item_${++i}`}>{k8sHTTPRouteMessage}</div>);
 
-    let k8sGRPCRouteMessage =
+    const k8sGRPCRouteMessage =
       props.k8sGRPCRoutes.length > 0
         ? `K8s GRPCRoute${props.k8sGRPCRoutes.length > 1 ? 's' : ''}: '${props.k8sGRPCRoutes.map(
             k8sr => k8sr.metadata.name
