@@ -7,6 +7,7 @@ import (
 
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/util"
 )
 
 type DestinationRuleReferences struct {
@@ -196,9 +197,10 @@ func (n DestinationRuleReferences) getConfigReferences(dr *networking_v1.Destina
 	}
 	// filter unique references
 	for _, cf := range allConfigs {
-		if !keys[cf.Name+"."+cf.Namespace+"/"+cf.ObjectType] {
+		key := util.BuildNameNSTypeKey(cf.Name, cf.Namespace, cf.ObjectType)
+		if !keys[key] {
 			result = append(result, cf)
-			keys[cf.Name+"."+cf.Namespace+"/"+cf.ObjectType] = true
+			keys[key] = true
 		}
 	}
 	return result

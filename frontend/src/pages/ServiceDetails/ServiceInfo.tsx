@@ -26,6 +26,7 @@ import {
   gwToIstioItems,
   seToIstioItems,
   k8sHTTPRouteToIstioItems,
+  k8sGRPCRouteToIstioItems,
   validationKey,
   k8sGwToIstioItems
 } from '../../types/IstioConfigList';
@@ -46,25 +47,29 @@ import { triggerRefresh } from '../../hooks/refresh';
 import { serverConfig } from 'config';
 import { MiniGraphCardPF } from 'pages/GraphPF/MiniGraphCardPF';
 
-interface Props extends ServiceId {
+type ReduxProps = {
+  duration: DurationInSeconds;
+  istioAPIEnabled: boolean;
+};
+
+interface Props extends ServiceId, ReduxProps {
   cluster?: string;
   duration: DurationInSeconds;
-  serviceDetails?: ServiceDetailsInfo;
   gateways: Gateway[];
+  istioAPIEnabled: boolean;
   k8sGateways: K8sGateway[];
   peerAuthentications: PeerAuthentication[];
+  serviceDetails?: ServiceDetailsInfo;
   validations: Validations;
-  istioAPIEnabled: boolean;
 }
 
 type ServiceInfoState = {
-  tabHeight?: number;
-
+  showConfirmDeleteTrafficRouting: boolean;
   // Wizards related
   showWizard: boolean;
-  wizardType: string;
+  tabHeight?: number;
   updateMode: boolean;
-  showConfirmDeleteTrafficRouting: boolean;
+  wizardType: string;
 };
 
 const fullHeightStyle = kialiStyle({
@@ -86,28 +91,28 @@ class ServiceInfoComponent extends React.Component<Props, ServiceInfoState> {
     };
   }
 
-  componentDidMount() {
+  componentDidMount(): void {
     this.fetchBackend();
   }
 
-  componentDidUpdate(prev: Props) {
+  componentDidUpdate(prev: Props): void {
     if (prev.duration !== this.props.duration || prev.serviceDetails !== this.props.serviceDetails) {
       this.fetchBackend();
     }
   }
 
-  goToMetrics = (e: GraphEdgeTapEvent) => {
+  goToMetrics = (e: GraphEdgeTapEvent): void => {
     if (e.source !== e.target) {
       const direction = e.source === this.props.service ? 'outbound' : 'inbound';
       const destination = direction === 'inbound' ? 'source_canonical_service' : 'destination_canonical_service';
       const urlParams = new URLSearchParams(history.location.search);
       urlParams.set('tab', 'metrics');
-      urlParams.set(URLParam.BY_LABELS, destination + '=' + (e.source === this.props.service ? e.target : e.source));
-      history.replace(history.location.pathname + '?' + urlParams.toString());
+      urlParams.set(URLParam.BY_LABELS, `${destination}=${e.source === this.props.service ? e.target : e.source}`);
+      history.replace(`${history.location.pathname}?${urlParams.toString()}`);
     }
   };
 
-  private fetchBackend = () => {
+  private fetchBackend = (): void => {
     if (!this.props.serviceDetails) {
       return;
     }
@@ -130,7 +135,7 @@ class ServiceInfoComponent extends React.Component<Props, ServiceInfoState> {
     return undefined;
   }
 
-  private handleWizardClose = (changed: boolean) => {
+  private handleWizardClose = (changed: boolean): void => {
     this.setState({
       showWizard: false
     });
@@ -140,7 +145,7 @@ class ServiceInfoComponent extends React.Component<Props, ServiceInfoState> {
     }
   };
 
-  private handleConfirmDeleteServiceTrafficRouting = () => {
+  private handleConfirmDeleteServiceTrafficRouting = (): void => {
     this.setState({
       showConfirmDeleteTrafficRouting: false
     });
@@ -154,11 +159,11 @@ class ServiceInfoComponent extends React.Component<Props, ServiceInfoState> {
       });
   };
 
-  private handleDeleteTrafficRouting = (_key: string) => {
+  private handleDeleteTrafficRouting = (_key: string): void => {
     this.setState({ showConfirmDeleteTrafficRouting: true });
   };
 
-  private handleLaunchWizard = (action: WizardAction, mode: WizardMode) => {
+  private handleLaunchWizard = (action: WizardAction, mode: WizardMode): void => {
     this.setState({
       showWizard: true,
       wizardType: action,
@@ -166,7 +171,7 @@ class ServiceInfoComponent extends React.Component<Props, ServiceInfoState> {
     });
   };
 
-  render() {
+  render(): React.ReactNode {
     const vsIstioConfigItems = this.props.serviceDetails?.virtualServices
       ? vsToIstioItems(
           this.props.serviceDetails.virtualServices,
@@ -191,10 +196,11 @@ class ServiceInfoComponent extends React.Component<Props, ServiceInfoState> {
           )
         : [];
     const k8sGwIstioConfigItems =
-      this.props?.k8sGateways && this.props.serviceDetails?.k8sHTTPRoutes
+      this.props?.k8sGateways && (this.props.serviceDetails?.k8sHTTPRoutes || this.props.serviceDetails?.k8sGRPCRoutes)
         ? k8sGwToIstioItems(
             this.props?.k8sGateways,
             this.props.serviceDetails.k8sHTTPRoutes,
+            this.props.serviceDetails.k8sGRPCRoutes,
             this.props.serviceDetails.validations,
             this.props.cluster
           )
@@ -213,9 +219,20 @@ class ServiceInfoComponent extends React.Component<Props, ServiceInfoState> {
           this.props.cluster
         )
       : [];
+    const k8sGRPCRouteIstioConfigItems = this.props.serviceDetails?.k8sGRPCRoutes
+      ? k8sGRPCRouteToIstioItems(
+          this.props.serviceDetails.k8sGRPCRoutes,
+          this.props.serviceDetails.validations,
+          this.props.cluster
+        )
+      : [];
     const istioConfigItems = seIstioConfigItems.concat(
       gwIstioConfigItems.concat(
-        k8sGwIstioConfigItems.concat(vsIstioConfigItems.concat(drIstioConfigItems.concat(k8sHTTPRouteIstioConfigItems)))
+        k8sGwIstioConfigItems.concat(
+          vsIstioConfigItems.concat(
+            drIstioConfigItems.concat(k8sHTTPRouteIstioConfigItems.concat(k8sGRPCRouteIstioConfigItems))
+          )
+        )
       )
     );
 
@@ -290,6 +307,7 @@ class ServiceInfoComponent extends React.Component<Props, ServiceInfoState> {
           destinationRules={this.props.serviceDetails?.destinationRules || []}
           gateways={getGatewaysAsList(filterAutogeneratedGateways(this.props.gateways))}
           k8sGateways={getK8sGatewaysAsList(this.props.k8sGateways)}
+          k8sGRPCRoutes={this.props.serviceDetails?.k8sGRPCRoutes || []}
           k8sHTTPRoutes={this.props.serviceDetails?.k8sHTTPRoutes || []}
           peerAuthentications={this.props.peerAuthentications}
           tlsStatus={this.props.serviceDetails?.namespaceMTLS}
@@ -301,6 +319,7 @@ class ServiceInfoComponent extends React.Component<Props, ServiceInfoState> {
             destinationRules={DestinationRuleC.fromDrArray(this.props.serviceDetails!.destinationRules)}
             virtualServices={this.props.serviceDetails!.virtualServices}
             k8sHTTPRoutes={this.props.serviceDetails!.k8sHTTPRoutes}
+            k8sGRPCRoutes={this.props.serviceDetails!.k8sGRPCRoutes}
             isOpen={true}
             onCancel={() => this.setState({ showConfirmDeleteTrafficRouting: false })}
             onConfirm={this.handleConfirmDeleteServiceTrafficRouting}
@@ -311,7 +330,7 @@ class ServiceInfoComponent extends React.Component<Props, ServiceInfoState> {
   }
 }
 
-const mapStateToProps = (state: KialiAppState) => ({
+const mapStateToProps = (state: KialiAppState): ReduxProps => ({
   duration: durationSelector(state),
   istioAPIEnabled: state.statusState.istioEnvironment.istioAPIEnabled
 });

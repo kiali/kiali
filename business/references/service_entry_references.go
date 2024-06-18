@@ -6,6 +6,7 @@ import (
 
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/util"
 )
 
 type ServiceEntryReferences struct {
@@ -120,9 +121,10 @@ func (n ServiceEntryReferences) getServiceReferences(se *networking_v1.ServiceEn
 	}
 	// filter unique references
 	for _, s := range allServices {
-		if !keys[s.Name+"."+s.Namespace] {
+		key := util.BuildNameNSKey(s.Name, s.Namespace)
+		if !keys[key] {
 			result = append(result, s)
-			keys[s.Name+"."+s.Namespace] = true
+			keys[key] = true
 		}
 	}
 	return result

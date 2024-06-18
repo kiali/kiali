@@ -16,6 +16,7 @@ import {
   DestinationRule,
   Gateway,
   K8sGateway,
+  K8sGRPCRoute,
   K8sHTTPRoute,
   K8sReferenceGrant,
   PeerAuthentication,
@@ -41,6 +42,7 @@ export type IstioConfigItem =
   | PeerAuthentication
   | Gateway
   | K8sGateway
+  | K8sGRPCRoute
   | K8sHTTPRoute
   | K8sReferenceGrant
   | VirtualService;

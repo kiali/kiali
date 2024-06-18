@@ -187,11 +187,20 @@ func FilterGatewaysByVirtualServices(allGws []*networking_v1.Gateway, allVs []*n
 	return gateways
 }
 
-func FilterK8sGatewaysByHTTPRoutes(allGws []*k8s_networking_v1.Gateway, allRoutes []*k8s_networking_v1.HTTPRoute) []*k8s_networking_v1.Gateway {
+func FilterK8sGatewaysByRoutes(allGws []*k8s_networking_v1.Gateway, httpRoutes []*k8s_networking_v1.HTTPRoute, grpcRoutes []*k8s_networking_v1.GRPCRoute) []*k8s_networking_v1.Gateway {
 	var empty struct{}
 	gateways := []*k8s_networking_v1.Gateway{}
 	gatewayNames := make(map[string]struct{})
-	for _, route := range allRoutes {
+	for _, route := range httpRoutes {
+		for _, pRef := range route.Spec.ParentRefs {
+			if pRef.Namespace != nil && *pRef.Namespace != "" {
+				gatewayNames[fmt.Sprintf("%s/%s", *pRef.Namespace, pRef.Name)] = empty
+			} else {
+				gatewayNames[fmt.Sprintf("%s/%s", route.Namespace, pRef.Name)] = empty
+			}
+		}
+	}
+	for _, route := range grpcRoutes {
 		for _, pRef := range route.Spec.ParentRefs {
 			if pRef.Namespace != nil && *pRef.Namespace != "" {
 				gatewayNames[fmt.Sprintf("%s/%s", *pRef.Namespace, pRef.Name)] = empty
@@ -502,6 +511,39 @@ func FilterK8sHTTPRoutesByService(allRoutes []*k8s_networking_v1.HTTPRoute, refe
 					if string(backendRef.Name) != "" && FilterByHost(string(backendRef.Name), backendRefNamespace, serviceName, namespace) &&
 						// a reference grant should exist to reference service namespace to route namespace, or they are in the same namespace
 						(HasMatchingReferenceGrant(route.Namespace, namespace, K8sActualHTTPRouteType, ServiceType, referenceGrants) || route.Namespace == namespace) {
+						appendRoute = true
+					}
+				}
+			}
+		}
+		if !appendRoute {
+			for _, hostname := range route.Spec.Hostnames {
+				if FilterByHost(string(hostname), route.Namespace, serviceName, namespace) {
+					appendRoute = true
+				}
+			}
+		}
+		if appendRoute {
+			filtered = append(filtered, route)
+		}
+	}
+	return filtered
+}
+
+func FilterK8sGRPCRoutesByService(allRoutes []*k8s_networking_v1.GRPCRoute, referenceGrants []*k8s_networking_v1beta1.ReferenceGrant, namespace string, serviceName string) []*k8s_networking_v1.GRPCRoute {
+	filtered := []*k8s_networking_v1.GRPCRoute{}
+	for _, route := range allRoutes {
+		appendRoute := serviceName == ""
+		if !appendRoute {
+			for _, rule := range route.Spec.Rules {
+				for _, backendRef := range rule.BackendRefs {
+					backendRefNamespace := route.Namespace
+					if backendRef.Namespace != nil {
+						backendRefNamespace = string(*backendRef.Namespace)
+					}
+					if string(backendRef.Name) != "" && FilterByHost(string(backendRef.Name), backendRefNamespace, serviceName, namespace) &&
+						// a reference grant should exist to reference service namespace to route namespace, or they are in the same namespace
+						(HasMatchingReferenceGrant(route.Namespace, namespace, K8sActualGRPCRouteType, ServiceType, referenceGrants) || route.Namespace == namespace) {
 						appendRoute = true
 					}
 				}

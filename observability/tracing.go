@@ -24,6 +24,7 @@ import (
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/util"
 )
 
 const (
@@ -42,7 +43,7 @@ type EndFunc func()
 
 // TracerName is the name of the global kiali Trace.
 func TracerName() string {
-	return TracingService + "." + config.Get().Deployment.Namespace
+	return util.BuildNameNSKey(TracingService, config.Get().Deployment.Namespace)
 }
 
 // InitTracer initalizes a TracerProvider that exports to jaeger.

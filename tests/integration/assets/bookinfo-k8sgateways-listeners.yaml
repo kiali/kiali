@@ -1,4 +1,4 @@
-apiVersion: gateway.networking.k8s.io/v1beta1
+apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
   name: gatewayapilnr
@@ -8,15 +8,15 @@ metadata:
 spec:
   gatewayClassName: istio
   listeners:
-    - name: default
-      hostname: "bookinfo-istio-system"
-      port: 80
-      protocol: HTTP
-      allowedRoutes:
-        namespaces:
-          from: All
+  - name: default
+    hostname: "bookinfo-istio-system"
+    port: 80
+    protocol: HTTP
+    allowedRoutes:
+      namespaces:
+        from: All
 ---
-apiVersion: gateway.networking.k8s.io/v1beta1
+apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
   name: gatewayapilnr2
@@ -26,10 +26,10 @@ metadata:
 spec:
   gatewayClassName: istio
   listeners:
-    - name: default
-      hostname: "bookinfo-istio-system"
-      port: 80
-      protocol: HTTP
-      allowedRoutes:
-        namespaces:
-          from: All
+  - name: default
+    hostname: "bookinfo-istio-system"
+    port: 80
+    protocol: HTTP
+    allowedRoutes:
+      namespaces:
+        from: All

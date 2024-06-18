@@ -433,6 +433,7 @@ export const gwToIstioItems = (
 export const k8sGwToIstioItems = (
   gws: K8sGateway[],
   k8srs: K8sHTTPRoute[],
+  k8sgrpcrs: K8sGRPCRoute[],
   validations: Validations,
   cluster?: string
 ): IstioConfigItem[] => {
@@ -445,6 +446,16 @@ export const k8sGwToIstioItems = (
   const entryName = `${typeNameProto.charAt(0).toLowerCase()}${typeNameProto.slice(1)}`;
 
   k8srs.forEach(k8sr => {
+    k8sr.spec.parentRefs?.forEach(parentRef => {
+      if (!parentRef.namespace) {
+        k8sGateways.add(`${k8sr.metadata.namespace}/${parentRef.name}`);
+      } else {
+        k8sGateways.add(`${parentRef.namespace}/${parentRef.name}`);
+      }
+    });
+  });
+
+  k8sgrpcrs.forEach(k8sr => {
     k8sr.spec.parentRefs?.forEach(parentRef => {
       if (!parentRef.namespace) {
         k8sGateways.add(`${k8sr.metadata.namespace}/${parentRef.name}`);
@@ -530,6 +541,38 @@ export const k8sHTTPRouteToIstioItems = (
     };
 
     item[entryName] = route;
+    istioItems.push(item);
+  });
+
+  return istioItems;
+};
+
+export const k8sGRPCRouteToIstioItems = (
+  grpcRoutes: K8sGRPCRoute[],
+  validations: Validations,
+  cluster?: string
+): IstioConfigItem[] => {
+  const istioItems: IstioConfigItem[] = [];
+  const hasValidations = (vKey: string): ObjectValidation => validations.k8sgrpcroute && validations.k8sgrpcroute[vKey];
+
+  const typeNameProtoGRPC = dicIstioType['k8sgrpcroutes']; // ex. serviceEntries -> ServiceEntry
+  const typeNameGRPC = typeNameProtoGRPC.toLowerCase(); // ex. ServiceEntry -> serviceentry
+  const entryNameGRPC = `${typeNameProtoGRPC.charAt(0).toLowerCase()}${typeNameProtoGRPC.slice(1)}`;
+
+  grpcRoutes.forEach(route => {
+    const vKey = validationKey(route.metadata.name, route.metadata.namespace);
+
+    const item = {
+      cluster: cluster,
+      namespace: route.metadata.namespace ?? '',
+      type: typeNameGRPC,
+      name: route.metadata.name,
+      creationTimestamp: route.metadata.creationTimestamp,
+      resourceVersion: route.metadata.resourceVersion,
+      validation: hasValidations(vKey) ? validations.k8sgrpcroute[vKey] : undefined
+    };
+
+    item[entryNameGRPC] = route;
     istioItems.push(item);
   });
 

@@ -8,6 +8,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/util"
 )
 
 type PeerAuthReferences struct {
@@ -84,9 +85,10 @@ func (n PeerAuthReferences) getConfigReferences(peerAuthn *security_v1.PeerAuthe
 	}
 	// filter unique references
 	for _, dr := range allDRs {
-		if !keys[dr.Name+"."+dr.Namespace] {
+		key := util.BuildNameNSKey(dr.Name, dr.Namespace)
+		if !keys[key] {
 			result = append(result, dr)
-			keys[dr.Name+"."+dr.Namespace] = true
+			keys[key] = true
 		}
 	}
 	return result

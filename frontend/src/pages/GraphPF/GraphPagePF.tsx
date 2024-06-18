@@ -523,6 +523,7 @@ class GraphPagePFComponent extends React.Component<GraphPagePropsPF, GraphPageSt
           destinationRules={this.state.wizardsData.serviceDetails?.destinationRules || []}
           gateways={this.state.wizardsData.gateways || []}
           k8sGateways={this.state.wizardsData.k8sGateways || []}
+          k8sGRPCRoutes={this.state.wizardsData.serviceDetails?.k8sGRPCRoutes || []}
           k8sHTTPRoutes={this.state.wizardsData.serviceDetails?.k8sHTTPRoutes || []}
           peerAuthentications={this.state.wizardsData.peerAuthentications || []}
           tlsStatus={this.state.wizardsData.serviceDetails?.namespaceMTLS}
@@ -535,6 +536,7 @@ class GraphPagePFComponent extends React.Component<GraphPagePropsPF, GraphPageSt
             destinationRules={DestinationRuleC.fromDrArray(this.state.wizardsData.serviceDetails!.destinationRules)}
             virtualServices={this.state.wizardsData.serviceDetails!.virtualServices}
             k8sHTTPRoutes={this.state.wizardsData.serviceDetails!.k8sHTTPRoutes}
+            k8sGRPCRoutes={this.state.wizardsData.serviceDetails!.k8sGRPCRoutes}
             onCancel={() => this.setState({ showConfirmDeleteTrafficRouting: false })}
             onConfirm={this.handleConfirmDeleteServiceTrafficRouting}
           />

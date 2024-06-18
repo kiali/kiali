@@ -111,7 +111,7 @@ export class K8sTrafficShifting extends React.Component<Props, State> {
       return {
         cells: [
           <div>
-            <PFBadge badge={PFBadges.Workload} position={TooltipPosition.top} />
+            <PFBadge badge={PFBadges.Service} position={TooltipPosition.top} />
             {service.name}
           </div>,
 

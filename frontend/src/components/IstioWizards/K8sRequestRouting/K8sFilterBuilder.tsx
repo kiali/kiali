@@ -17,22 +17,23 @@ import { kialiStyle } from 'styles/StyleUtils';
 
 type K8sFilterBuilderProps = {
   filterType: string;
-  headerOp: string;
   headerName: string;
+  headerOp: string;
   headerValue: string;
   hostName: string;
   isValid: boolean;
-  onSelectFilterType: (filterType: string) => void;
+  onAddFilter: () => void;
   onHeaderNameChange: (headerName: string) => void;
   onHeaderValueChange: (headerValue: string) => void;
   onHostNameChange: (hostName: string) => void;
   onPortValueChange: (portValue: string) => void;
-  onSelectServiceOp: (serviceOp: string) => void;
-  onSelectStatusCodeOp: (statusCodeOp: string) => void;
+  onSelectFilterType: (filterType: string) => void;
   onSelectHeaderOp: (headerOp: string) => void;
   onSelectSchemeOp: (schemeOp: string) => void;
-  onAddFilter: () => void;
+  onSelectServiceOp: (serviceOp: string) => void;
+  onSelectStatusCodeOp: (statusCodeOp: string) => void;
   portValue: string;
+  protocol: string;
   schemeOp: string;
   serviceOp: string;
   statusCodeOp: string;
@@ -46,13 +47,17 @@ export const REQ_RED = 'requestRedirect';
 export const URL_REW = 'URLRewrite';
 export const EXT_REF = 'extensionRef';
 
-export const HTTP = 'http';
+export const HTTP = 'HTTP';
+export const GRPC = 'GRPC';
 export const HTTPS = 'https';
 
 export const SC301 = '301';
 export const SC302 = '302';
 
-const filterOptions: string[] = [REQ_MOD, REQ_RED, REQ_MIR];
+const filterOptions = {
+  [HTTP]: [REQ_MOD, RESP_MOD, REQ_RED, REQ_MIR],
+  [GRPC]: [REQ_MOD, RESP_MOD, REQ_MIR]
+};
 const schemeOptions: string[] = [HTTP, HTTPS];
 const statusOptions: string[] = [SC301, SC302];
 
@@ -96,16 +101,16 @@ export const K8sFilterBuilder: React.FC<K8sFilterBuilderProps> = (props: K8sFilt
           onOpenChange={(isOpen: boolean) => setIsFilterDropdown(isOpen)}
         >
           <DropdownList>
-            {filterOptions.map((mode, index) => (
+            {filterOptions[props.protocol].map((mode, index) => (
               <DropdownItem
-                key={mode + '_' + index}
+                key={`${mode}_${index}`}
                 value={mode}
                 component="button"
                 onClick={() => {
                   props.onSelectFilterType(mode);
                   setIsFilterDropdown(!isFilterDropdown);
                 }}
-                data-test={'filtering-type-' + mode}
+                data-test={`filtering-type-${mode}`}
               >
                 {mode}
               </DropdownItem>
@@ -132,14 +137,14 @@ export const K8sFilterBuilder: React.FC<K8sFilterBuilderProps> = (props: K8sFilt
           <DropdownList>
             {renderFilterOptions.map((op, index) => (
               <DropdownItem
-                key={op + '_' + index}
+                key={`${op}_${index}`}
                 value={op}
                 component="button"
                 onClick={() => {
                   props.onSelectHeaderOp(op);
                   setIsHeaderDropdown(!isHeaderDropdown);
                 }}
-                data-test={'header-type-' + op}
+                data-test={`header-type-${op}`}
               >
                 {op}
               </DropdownItem>
@@ -184,14 +189,14 @@ export const K8sFilterBuilder: React.FC<K8sFilterBuilderProps> = (props: K8sFilt
           <DropdownList>
             {schemeOptions.map((op, index) => (
               <DropdownItem
-                key={op + '_' + index}
+                key={`${op}_${index}`}
                 value={op}
                 component="button"
                 onClick={() => {
                   props.onSelectSchemeOp(op);
                   setIsSchemeDropdown(!isSchemeDropdown);
                 }}
-                data-test={'scheme-' + op}
+                data-test={`scheme-${op}`}
               >
                 {op}
               </DropdownItem>
@@ -236,14 +241,14 @@ export const K8sFilterBuilder: React.FC<K8sFilterBuilderProps> = (props: K8sFilt
           <DropdownList>
             {statusOptions.map((op, index) => (
               <DropdownItem
-                key={op + '_' + index}
+                key={`${op}_${index}`}
                 value={op}
                 component="button"
                 onClick={() => {
                   props.onSelectStatusCodeOp(op);
                   setIsStatusCodeDropdown(!isStatusCodeDropdown);
                 }}
-                data-test={'status-code-' + op}
+                data-test={`status-code-${op}`}
               >
                 {op}
               </DropdownItem>
@@ -270,16 +275,16 @@ export const K8sFilterBuilder: React.FC<K8sFilterBuilderProps> = (props: K8sFilt
           <DropdownList>
             {props.subServices.map((so, index) => (
               <DropdownItem
-                key={so.name + '_' + index}
-                value={so.name + ':' + getServicePort(so.ports)}
+                key={`${so.name}_${index}`}
+                value={`${so.name}:${getServicePort(so.ports)}`}
                 component="button"
                 onClick={() => {
-                  props.onSelectServiceOp(so.name + ':' + getServicePort(so.ports));
+                  props.onSelectServiceOp(`${so.name}:${getServicePort(so.ports)}`);
                   setIsServiceDropdown(!isServiceDropdown);
                 }}
-                data-test={'service-' + so.name}
+                data-test={`service-${so.name}`}
               >
-                {so.name + ':' + getServicePort(so.ports)}
+                {`${so.name}:${getServicePort(so.ports)}`}
               </DropdownItem>
             ))}
           </DropdownList>

@@ -100,6 +100,7 @@ class MiniGraphCardPFComponent extends React.Component<MiniGraphCardPropsPF, Min
             virtualServices={this.props.serviceDetails.virtualServices || []}
             destinationRules={this.props.serviceDetails.destinationRules || []}
             k8sHTTPRoutes={this.props.serviceDetails.k8sHTTPRoutes || []}
+            k8sGRPCRoutes={this.props.serviceDetails.k8sGRPCRoutes || []}
             istioPermissions={this.props.serviceDetails.istioPermissions}
             onAction={this.handleLaunchWizard}
             onDelete={this.handleDeleteTrafficRouting}

@@ -24,6 +24,7 @@ import (
 	"github.com/kiali/kiali/tracing/jaeger"
 	"github.com/kiali/kiali/tracing/jaeger/model"
 	"github.com/kiali/kiali/tracing/tempo"
+	"github.com/kiali/kiali/util"
 	"github.com/kiali/kiali/util/grpcutil"
 	"github.com/kiali/kiali/util/httputil"
 )
@@ -270,7 +271,7 @@ func (in *Client) GetServiceStatus() (bool, error) {
 func BuildTracingServiceName(namespace, app string) string {
 	conf := config.Get()
 	if conf.ExternalServices.Tracing.NamespaceSelector {
-		return app + "." + namespace
+		return util.BuildNameNSKey(app, namespace)
 	}
 	return app
 }

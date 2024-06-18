@@ -2,16 +2,17 @@ import * as React from 'react';
 import { K8sRules, MOVE_TYPE, K8sRule } from './K8sRequestRouting/K8sRules';
 import { K8sRuleBuilder } from './K8sRequestRouting/K8sRuleBuilder';
 import { K8sRouteBackendRef } from './K8sTrafficShifting';
-import { EXACT, PATH, METHOD, GET, HEADERS, QUERY_PARAMS } from './K8sRequestRouting/K8sMatchBuilder';
+import { EXACT, PATH, METHOD, GET, HEADERS, QUERY_PARAMS, GRPC } from './K8sRequestRouting/K8sMatchBuilder';
 import { getDefaultBackendRefs, getDefaultService } from './WizardActions';
 import { ServiceOverview } from '../../types/ServiceList';
 import { REMOVE, REQ_MOD, RESP_MOD, SET, HTTP, SC301, REQ_RED, REQ_MIR } from './K8sRequestRouting/K8sFilterBuilder';
 import { isServerHostValid } from '../../utils/IstioConfigUtils';
 
 type Props = {
-  subServices: ServiceOverview[];
   initRules: K8sRule[];
   onChange: (valid: boolean, k8sRules: K8sRule[]) => void;
+  protocol: string;
+  subServices: ServiceOverview[];
 };
 
 type State = {
@@ -25,20 +26,24 @@ type State = {
   headerValue: string;
   hostName: string;
   k8sRules: K8sRule[];
-  matches: string[];
   matchValue: string;
+  matches: string[];
+  methodName: string;
+  methodService: string;
   operator: string;
   portValue: string;
   queryParamName: string;
   schemeOp: string;
-  statusCodeOp: string;
   serviceOp: string;
+  statusCodeOp: string;
   validationMsg: string;
 };
 
 const MSG_SAME_MATCHING = 'A Rule with same matching criteria is already added.';
 const MSG_HEADER_NAME_NON_EMPTY = 'Header name must be non empty';
 const MSG_HEADER_VALUE_NON_EMPTY = 'Header value must be non empty';
+const MSG_METHOD_NAME_NON_EMPTY = 'Method name must be non empty';
+const MSG_METHOD_SERVICE_NON_EMPTY = 'Method service must be non empty';
 const MSG_HOSTNAME_NON_EMPTY = 'Hostname is incorrect';
 const MSG_PORT_NON_EMPTY = 'Port is incorrect';
 const MSG_QUERY_NAME_NON_EMPTY = 'Query name must be non empty';
@@ -48,13 +53,15 @@ export class K8sRequestRouting extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
-      category: PATH,
+      category: HEADERS,
       operator: EXACT,
       backendRefs: getDefaultBackendRefs(this.props.subServices),
       matches: [],
       headerName: '',
       queryParamName: '',
       matchValue: '',
+      methodName: '',
+      methodService: '',
       k8sRules: this.props.initRules,
       validationMsg: '',
       filterValue: '',
@@ -70,7 +77,7 @@ export class K8sRequestRouting extends React.Component<Props, State> {
     };
   }
 
-  isMatchesIncluded = (k8sRules: K8sRule[], k8sRule: K8sRule) => {
+  isMatchesIncluded = (k8sRules: K8sRule[], k8sRule: K8sRule): boolean => {
     let found = false;
     for (let i = 0; i < k8sRules.length; i++) {
       const item = k8sRules[i];
@@ -91,7 +98,7 @@ export class K8sRequestRouting extends React.Component<Props, State> {
       return false;
     }
     const matchAll: number = this.matchAllIndex(k8sRules);
-    let isValid: boolean = true;
+    let isValid = true;
     for (let index = 0; index < this.state.k8sRules.length; index++) {
       isValid = matchAll === -1 || index <= matchAll;
       if (!isValid) {
@@ -101,19 +108,19 @@ export class K8sRequestRouting extends React.Component<Props, State> {
     return isValid;
   };
 
-  onAddMatch = () => {
+  onAddMatch = (): void => {
     this.setState(prevState => {
       let newMatch: string;
       if (prevState.category === PATH) {
-        newMatch = prevState.category + ' ' + prevState.operator + ' ' + prevState.matchValue;
+        newMatch = `${prevState.category} ${prevState.operator} ${prevState.matchValue}`;
       } else if (prevState.category === HEADERS) {
-        newMatch =
-          prevState.category + ' [' + prevState.headerName + '] ' + prevState.operator + ' ' + prevState.matchValue;
+        newMatch = `${prevState.category} [${prevState.headerName}] ${prevState.operator} ${prevState.matchValue}`;
       } else if (prevState.category === QUERY_PARAMS) {
-        newMatch =
-          prevState.category + ' ' + prevState.queryParamName + ' ' + prevState.operator + ' ' + prevState.matchValue;
+        newMatch = `${prevState.category} ${prevState.queryParamName} ${prevState.operator} ${prevState.matchValue}`;
+      } else if (prevState.category === METHOD || this.props.protocol === GRPC) {
+        newMatch = `${prevState.category} ${prevState.methodName} ${prevState.operator} ${prevState.methodService}`;
       } else {
-        newMatch = prevState.category + ' ' + prevState.operator;
+        newMatch = `${prevState.category} ${prevState.operator}`;
       }
       if (!prevState.matches.includes(newMatch)) {
         prevState.matches.push(newMatch);
@@ -127,7 +134,7 @@ export class K8sRequestRouting extends React.Component<Props, State> {
     });
   };
 
-  onAddK8sRule = () => {
+  onAddK8sRule = (): void => {
     this.setState(
       prevState => {
         const newBackendRefs: K8sRouteBackendRef[] = [];
@@ -150,6 +157,8 @@ export class K8sRequestRouting extends React.Component<Props, State> {
             filters: prevState.filters,
             headerName: prevState.headerName,
             matchValue: prevState.matchValue,
+            methodName: prevState.methodName,
+            methodService: prevState.methodService,
             k8sRules: prevState.k8sRules,
             validationMsg: ''
           };
@@ -159,6 +168,8 @@ export class K8sRequestRouting extends React.Component<Props, State> {
             filters: prevState.filters,
             headerName: prevState.headerName,
             matchValue: prevState.matchValue,
+            methodName: prevState.methodName,
+            methodService: prevState.methodService,
             k8sRules: prevState.k8sRules,
             validationMsg: MSG_SAME_MATCHING
           };
@@ -168,7 +179,7 @@ export class K8sRequestRouting extends React.Component<Props, State> {
     );
   };
 
-  onRemoveMatch = (matchToRemove: string) => {
+  onRemoveMatch = (matchToRemove: string): void => {
     this.setState(prevState => {
       return {
         matches: prevState.matches.filter(m => matchToRemove !== m),
@@ -177,7 +188,7 @@ export class K8sRequestRouting extends React.Component<Props, State> {
     });
   };
 
-  onRemoveRule = (index: number) => {
+  onRemoveRule = (index: number): void => {
     this.setState(
       prevState => {
         prevState.k8sRules.splice(index, 1);
@@ -190,7 +201,7 @@ export class K8sRequestRouting extends React.Component<Props, State> {
     );
   };
 
-  onMatchHeaderNameChange = (headerName: string) => {
+  onMatchHeaderNameChange = (headerName: string): void => {
     let validationMsg = '';
     if (!headerName && !!this.state.matchValue) {
       validationMsg = MSG_HEADER_NAME_NON_EMPTY;
@@ -204,12 +215,40 @@ export class K8sRequestRouting extends React.Component<Props, State> {
     });
   };
 
-  onHeaderNameChange = (headerName: string) => {
+  onMatchMethodNameChange = (methodName: string): void => {
     let validationMsg = '';
-    if (!headerName) {
+    if (!methodName && !!this.state.matchValue) {
+      validationMsg = MSG_METHOD_NAME_NON_EMPTY;
+    }
+    if (!this.state.matchValue && !!methodName) {
+      validationMsg = MSG_METHOD_SERVICE_NON_EMPTY;
+    }
+    this.setState({
+      methodName: methodName,
+      validationMsg: validationMsg
+    });
+  };
+
+  onMatchMethodServiceChange = (methodService: string): void => {
+    let validationMsg = '';
+    if (methodService !== '' && !this.state.methodName) {
       validationMsg = MSG_HEADER_NAME_NON_EMPTY;
     }
-    if (!this.state.headerValue && this.state.headerOp !== REMOVE) {
+    if (!methodService && !!this.state.methodName) {
+      validationMsg = MSG_METHOD_SERVICE_NON_EMPTY;
+    }
+    this.setState({
+      methodService: methodService,
+      validationMsg: validationMsg
+    });
+  };
+
+  onHeaderNameChange = (headerName: string): void => {
+    let validationMsg = '';
+    if (headerName === '' && !!this.state.headerValue) {
+      validationMsg = MSG_HEADER_NAME_NON_EMPTY;
+    }
+    if (headerName !== '' && !this.state.headerValue && this.state.headerOp !== REMOVE) {
       validationMsg = MSG_HEADER_VALUE_NON_EMPTY;
     }
     this.setState({
@@ -218,7 +257,7 @@ export class K8sRequestRouting extends React.Component<Props, State> {
     });
   };
 
-  onQueryParamNameChange = (queryParamName: string) => {
+  onQueryParamNameChange = (queryParamName: string): void => {
     let validationMsg = '';
     if (this.state.matchValue !== '' && queryParamName === '') {
       validationMsg = MSG_QUERY_NAME_NON_EMPTY;
@@ -232,7 +271,7 @@ export class K8sRequestRouting extends React.Component<Props, State> {
     });
   };
 
-  onMatchValueChange = (matchValue: string) => {
+  onMatchValueChange = (matchValue: string): void => {
     let validationMsg = '';
     if (this.state.category === HEADERS) {
       if (this.state.headerName === '' && matchValue !== '') {
@@ -257,14 +296,14 @@ export class K8sRequestRouting extends React.Component<Props, State> {
     });
   };
 
-  onSelectWeights = (backendRefs: K8sRouteBackendRef[]) => {
+  onSelectWeights = (backendRefs: K8sRouteBackendRef[]): void => {
     this.setState({
       backendRefs: backendRefs,
       validationMsg: ''
     });
   };
 
-  onMoveRule = (index: number, move: MOVE_TYPE) => {
+  onMoveRule = (index: number, move: MOVE_TYPE): void => {
     this.setState(
       prevState => {
         const sourceRule = prevState.k8sRules[index];
@@ -281,7 +320,7 @@ export class K8sRequestRouting extends React.Component<Props, State> {
   };
 
   matchAllIndex = (k8sRules: K8sRule[]): number => {
-    let matchAll: number = -1;
+    let matchAll = -1;
     for (let index = 0; index < k8sRules.length; index++) {
       const rule = k8sRules[index];
       if (rule.matches.length === 0) {
@@ -292,7 +331,7 @@ export class K8sRequestRouting extends React.Component<Props, State> {
     return matchAll;
   };
 
-  componentDidMount() {
+  componentDidMount(): void {
     if (this.props.initRules.length > 0) {
       this.setState(
         {
@@ -303,7 +342,7 @@ export class K8sRequestRouting extends React.Component<Props, State> {
     }
   }
 
-  onAddFilter = () => {
+  onAddFilter = (): void => {
     this.setState(prevState => {
       let newFilter = '';
       if (this.state.filterType === REQ_MOD || this.state.filterType === RESP_MOD) {
@@ -328,13 +367,13 @@ export class K8sRequestRouting extends React.Component<Props, State> {
     });
   };
 
-  onHeaderValueChange = (headerValue: string) => {
+  onHeaderValueChange = (headerValue: string): void => {
     let validationMsg = '';
     if ((this.state.filterType === REQ_MOD || this.state.filterType === RESP_MOD) && this.state.headerOp !== REMOVE) {
-      if (!this.state.headerName) {
+      if (headerValue !== '' && !this.state.headerName) {
         validationMsg = MSG_HEADER_NAME_NON_EMPTY;
       }
-      if (!headerValue) {
+      if (!headerValue && !!this.state.headerName) {
         validationMsg = MSG_HEADER_VALUE_NON_EMPTY;
       }
     }
@@ -344,7 +383,7 @@ export class K8sRequestRouting extends React.Component<Props, State> {
     });
   };
 
-  onHostNameChange = (hostName: string) => {
+  onHostNameChange = (hostName: string): void => {
     let validationMsg = '';
     if (!hostName || !isServerHostValid(hostName, false)) {
       validationMsg = MSG_HOSTNAME_NON_EMPTY;
@@ -355,7 +394,7 @@ export class K8sRequestRouting extends React.Component<Props, State> {
     });
   };
 
-  onPortValueChange = (portValue: string) => {
+  onPortValueChange = (portValue: string): void => {
     let validationMsg = '';
     if (!portValue || isNaN(Number(portValue))) {
       validationMsg = MSG_PORT_NON_EMPTY;
@@ -366,7 +405,7 @@ export class K8sRequestRouting extends React.Component<Props, State> {
     });
   };
 
-  onRemoveFilter = (filterToRemove: string) => {
+  onRemoveFilter = (filterToRemove: string): void => {
     this.setState(prevState => {
       return {
         filters: prevState.filters.filter(m => filterToRemove !== m),
@@ -375,7 +414,7 @@ export class K8sRequestRouting extends React.Component<Props, State> {
     });
   };
 
-  render() {
+  render(): React.ReactNode {
     return (
       <>
         <K8sRuleBuilder
@@ -384,17 +423,22 @@ export class K8sRequestRouting extends React.Component<Props, State> {
           headerName={this.state.headerName}
           queryParamName={this.state.queryParamName}
           matchValue={this.state.matchValue}
+          methodName={this.state.methodName}
+          methodService={this.state.methodService}
           isValid={this.state.validationMsg === ''}
+          protocol={this.props.protocol}
           onSelectCategory={(category: string) => {
             this.setState(_ => {
               return {
                 category: category,
-                operator: category === METHOD ? GET : EXACT
+                operator: category === METHOD && this.props.protocol === HTTP ? GET : EXACT
               };
             });
           }}
           onHeaderNameChange={this.onHeaderNameChange}
           onMatchHeaderNameChange={this.onMatchHeaderNameChange}
+          onMatchMethodNameChange={this.onMatchMethodNameChange}
+          onMatchMethodServiceChange={this.onMatchMethodServiceChange}
           onQueryParamNameChange={this.onQueryParamNameChange}
           onSelectOperator={(operator: string) => this.setState({ operator: operator })}
           onMatchValueChange={this.onMatchValueChange}

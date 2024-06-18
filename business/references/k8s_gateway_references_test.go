@@ -20,18 +20,23 @@ func TestK8sGatewayReferences(t *testing.T) {
 
 	r1 := data.CreateHTTPRoute("details", "bookinfo", gw.Name, []string{})
 	r2 := data.CreateEmptyHTTPRoute("httpbin", "default", []string{})
+	r3 := data.CreateGRPCRoute("details", "bookinfo", gw.Name, []string{})
+	r4 := data.CreateEmptyGRPCRoute("grpcbin", "default", []string{})
 
 	gatewayReferences := K8sGatewayReferences{
 		K8sGateways:   []*k8s_networking_v1.Gateway{gw},
 		K8sHTTPRoutes: []*k8s_networking_v1.HTTPRoute{r1, r2},
+		K8sGRPCRoutes: []*k8s_networking_v1.GRPCRoute{r3, r4},
 	}
 
 	references := gatewayReferences.References()
 	gateway := references[models.IstioReferenceKey{ObjectType: "k8sgateway", Namespace: "bookinfo", Name: "bookinfo"}]
 
-	assert.Len(gateway.ObjectReferences, 1)
+	assert.Len(gateway.ObjectReferences, 2)
 	assert.Equal(gateway.ObjectReferences[0].Name, "details")
 	assert.Equal(gateway.ObjectReferences[0].Namespace, "bookinfo")
+	assert.Equal(gateway.ObjectReferences[1].Name, "details")
+	assert.Equal(gateway.ObjectReferences[1].Namespace, "bookinfo")
 }
 
 func TestK8sGatewayNoReferences(t *testing.T) {
@@ -42,10 +47,12 @@ func TestK8sGatewayNoReferences(t *testing.T) {
 	gw := data.CreateEmptyK8sGateway("bookinfo", "bookinfo")
 
 	r := data.CreateEmptyHTTPRoute("httpbin", "default", []string{})
+	r2 := data.CreateEmptyGRPCRoute("grpcbin", "default", []string{})
 
 	gatewayReferences := K8sGatewayReferences{
 		K8sGateways:   []*k8s_networking_v1.Gateway{gw},
 		K8sHTTPRoutes: []*k8s_networking_v1.HTTPRoute{r},
+		K8sGRPCRoutes: []*k8s_networking_v1.GRPCRoute{r2},
 	}
 
 	references := gatewayReferences.References()

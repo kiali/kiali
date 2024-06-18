@@ -32,6 +32,7 @@ import {
   VirtualService,
   DestinationRuleC,
   K8sHTTPRoute,
+  K8sGRPCRoute,
   OutboundTrafficPolicy,
   CanaryUpgradeStatus,
   PodLogsQuery,
@@ -1200,6 +1201,7 @@ export function deleteServiceTrafficRouting(
   virtualServices: VirtualService[],
   destinationRules: DestinationRuleC[],
   k8sHTTPRouteList: K8sHTTPRoute[],
+  k8sGRPCRouteList: K8sGRPCRoute[],
   cluster?: string
 ): Promise<ApiResponse<string>[]>;
 
@@ -1209,11 +1211,13 @@ export function deleteServiceTrafficRouting(
   vsOrSvc: VirtualService[] | ServiceDetailsInfo,
   destinationRules?: DestinationRuleC[],
   k8sHTTPRouteList?: K8sHTTPRoute[],
+  k8sGRPCRouteList?: K8sGRPCRoute[],
   cluster?: string
 ): Promise<ApiResponse<string>[]> {
   let vsList: VirtualService[];
   let drList: DestinationRuleC[];
-  let routeList: K8sHTTPRoute[];
+  let httpRouteList: K8sHTTPRoute[];
+  let grpcRouteList: K8sGRPCRoute[];
   const deletePromises: Promise<ApiResponse<string>>[] = [];
 
   if (isServiceDetailsInfo(vsOrSvc)) {
@@ -1225,11 +1229,13 @@ export function deleteServiceTrafficRouting(
   if ('virtualServices' in vsOrSvc) {
     vsList = vsOrSvc.virtualServices;
     drList = DestinationRuleC.fromDrArray(vsOrSvc.destinationRules);
-    routeList = vsOrSvc.k8sHTTPRoutes ?? [];
+    httpRouteList = vsOrSvc.k8sHTTPRoutes ?? [];
+    grpcRouteList = vsOrSvc.k8sGRPCRoutes ?? [];
   } else {
     vsList = vsOrSvc;
     drList = destinationRules ?? [];
-    routeList = k8sHTTPRouteList ?? [];
+    httpRouteList = k8sHTTPRouteList ?? [];
+    grpcRouteList = k8sGRPCRouteList ?? [];
   }
 
   vsList.forEach(vs => {
@@ -1238,12 +1244,17 @@ export function deleteServiceTrafficRouting(
     );
   });
 
-  routeList.forEach(k8sr => {
+  httpRouteList.forEach(k8sr => {
     deletePromises.push(
       deleteIstioConfigDetail(k8sr.metadata.namespace ?? '', 'k8shttproutes', k8sr.metadata.name, cluster)
     );
   });
 
+  grpcRouteList.forEach(k8sr => {
+    deletePromises.push(
+      deleteIstioConfigDetail(k8sr.metadata.namespace ?? '', 'k8sgrpcroutes', k8sr.metadata.name, cluster)
+    );
+  });
   drList.forEach(dr => {
     deletePromises.push(
       deleteIstioConfigDetail(dr.metadata.namespace ?? '', 'destinationrules', dr.metadata.name, cluster)

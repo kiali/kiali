@@ -26,3 +26,11 @@ func CopyStringMap(originalMap map[string]string) map[string]string {
 
 	return copyMap
 }
+
+func BuildNameNSKey(name string, namespace string) string {
+	return name + "." + namespace
+}
+
+func BuildNameNSTypeKey(name string, namespace string, objType string) string {
+	return BuildNameNSKey(name, namespace) + "/" + objType
+}

@@ -163,7 +163,7 @@ func TestK8sHTTPRoutesGatewaysError(t *testing.T) {
 	require.Equal("k8shttproute", config.IstioValidation.ObjectType)
 	require.NotEmpty(config.IstioValidation.Checks)
 	require.Equal(models.ErrorSeverity, config.IstioValidation.Checks[0].Severity)
-	require.Equal("HTTPRoute is pointing to a non-existent K8s gateway", config.IstioValidation.Checks[0].Message)
+	require.Equal("Route is pointing to a non-existent K8s gateway", config.IstioValidation.Checks[0].Message)
 }
 
 func TestK8sHTTPRoutesServicesError(t *testing.T) {
@@ -191,6 +191,61 @@ func TestK8sHTTPRoutesServicesError(t *testing.T) {
 	require.False(config.IstioValidation.Valid)
 	require.Equal(name, config.IstioValidation.Name)
 	require.Equal("k8shttproute", config.IstioValidation.ObjectType)
+	require.NotEmpty(config.IstioValidation.Checks)
+	require.Equal(models.ErrorSeverity, config.IstioValidation.Checks[0].Severity)
+	require.Equal("BackendRef on rule doesn't have a valid service (Service name not found)", config.IstioValidation.Checks[0].Message)
+}
+
+func TestK8sGRPCRoutesGatewaysError(t *testing.T) {
+	name := "grpcroute"
+	require := require.New(t)
+	filePath := path.Join(cmd.KialiProjectRoot, kiali.ASSETS+"/bookinfo-k8sgrpcroutes-gateways.yaml")
+	defer utils.DeleteFile(filePath, kiali.BOOKINFO)
+	require.True(utils.ApplyFile(filePath, kiali.BOOKINFO))
+
+	config, err := getConfigDetails(kiali.BOOKINFO, name, kubernetes.K8sGRPCRoutes, true, require)
+
+	require.NoError(err)
+	require.NotNil(config)
+	require.Equal(kubernetes.K8sGRPCRoutes, config.ObjectType)
+	require.Equal(kiali.BOOKINFO, config.Namespace.Name)
+	require.NotNil(config.K8sGRPCRoute)
+	require.Equal(name, config.K8sGRPCRoute.Name)
+	require.Equal(kiali.BOOKINFO, config.K8sGRPCRoute.Namespace)
+	require.NotNil(config.IstioValidation)
+	require.False(config.IstioValidation.Valid)
+	require.Equal(name, config.IstioValidation.Name)
+	require.Equal("k8sgrpcroute", config.IstioValidation.ObjectType)
+	require.NotEmpty(config.IstioValidation.Checks)
+	require.Equal(models.ErrorSeverity, config.IstioValidation.Checks[0].Severity)
+	require.Equal("Route is pointing to a non-existent K8s gateway", config.IstioValidation.Checks[0].Message)
+}
+
+func TestK8sGRPCRoutesServicesError(t *testing.T) {
+	name := "grpcrouteservices"
+	require := require.New(t)
+	filePath := path.Join(cmd.KialiProjectRoot, kiali.ASSETS+"/bookinfo-k8sgrpcroutes-services.yaml")
+	defer utils.DeleteFile(filePath, kiali.BOOKINFO)
+	require.True(utils.ApplyFile(filePath, kiali.BOOKINFO))
+
+	// flaky test fix, make sure that K8sGateway is created and available
+	config, err := getConfigDetails(kiali.BOOKINFO, "gatewayapiservices", kubernetes.K8sGateways, true, require)
+	require.NoError(err)
+	require.NotNil(config)
+
+	config, err = getConfigDetails(kiali.BOOKINFO, name, kubernetes.K8sGRPCRoutes, true, require)
+
+	require.NoError(err)
+	require.NotNil(config)
+	require.Equal(kubernetes.K8sGRPCRoutes, config.ObjectType)
+	require.Equal(kiali.BOOKINFO, config.Namespace.Name)
+	require.NotNil(config.K8sGRPCRoute)
+	require.Equal(name, config.K8sGRPCRoute.Name)
+	require.Equal(kiali.BOOKINFO, config.K8sGRPCRoute.Namespace)
+	require.NotNil(config.IstioValidation)
+	require.False(config.IstioValidation.Valid)
+	require.Equal(name, config.IstioValidation.Name)
+	require.Equal("k8sgrpcroute", config.IstioValidation.ObjectType)
 	require.NotEmpty(config.IstioValidation.Checks)
 	require.Equal(models.ErrorSeverity, config.IstioValidation.Checks[0].Severity)
 	require.Equal("BackendRef on rule doesn't have a valid service (Service name not found)", config.IstioValidation.Checks[0].Message)

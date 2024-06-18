@@ -147,7 +147,7 @@ export const K8sRules: React.FC<K8sRuleProps> = (props: K8sRuleProps) => {
             rule.backendRefs.map((bRef, i) => {
               return (
                 <div key={`br_${order}_${bRef.name}_${i}`}>
-                  <PFBadge badge={PFBadges.Workload} position={TooltipPosition.top} />
+                  <PFBadge badge={PFBadges.Service} position={TooltipPosition.top} />
                   {bRef.name} ({bRef.weight}% routed traffic)
                 </div>
               );

@@ -829,6 +829,13 @@ func (in *IstioConfigService) CreateIstioConfigDetail(ctx context.Context, clust
 			return istioConfigDetail, api_errors.NewBadRequest(err.Error())
 		}
 		istioConfigDetail.K8sHTTPRoute, err = userClient.GatewayAPI().GatewayV1().HTTPRoutes(namespace).Create(ctx, istioConfigDetail.K8sHTTPRoute, createOpts)
+	case kubernetes.K8sGRPCRoutes:
+		istioConfigDetail.K8sGRPCRoute = &k8s_networking_v1.GRPCRoute{}
+		err = json.Unmarshal(body, istioConfigDetail.K8sGRPCRoute)
+		if err != nil {
+			return istioConfigDetail, api_errors.NewBadRequest(err.Error())
+		}
+		istioConfigDetail.K8sGRPCRoute, err = userClient.GatewayAPI().GatewayV1().GRPCRoutes(namespace).Create(ctx, istioConfigDetail.K8sGRPCRoute, createOpts)
 	case kubernetes.K8sReferenceGrants:
 		istioConfigDetail.K8sReferenceGrant = &k8s_networking_v1beta1.ReferenceGrant{}
 		err = json.Unmarshal(body, istioConfigDetail.K8sReferenceGrant)

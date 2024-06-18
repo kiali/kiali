@@ -684,12 +684,17 @@ export interface VirtualService extends IstioObject {
 
 export const getWizardUpdateLabel = (
   vs: VirtualService | VirtualService[] | null,
-  k8sr: K8sHTTPRoute | K8sHTTPRoute[] | null
+  k8sr: K8sHTTPRoute | K8sHTTPRoute[] | null,
+  k8sgrpcr: K8sGRPCRoute | K8sGRPCRoute[] | null
 ): string => {
   let label = getVirtualServiceUpdateLabel(vs);
 
   if (label === '') {
-    label = getK8sHTTPRouteUpdateLabel(k8sr);
+    label = getK8sRouteUpdateLabel(k8sr);
+  }
+
+  if (label === '') {
+    label = getK8sRouteUpdateLabel(k8sgrpcr);
   }
 
   return label;
@@ -717,23 +722,23 @@ export const getVirtualServiceUpdateLabel = (vs: VirtualService | VirtualService
   }
 };
 
-export const getK8sHTTPRouteUpdateLabel = (k8sr: K8sHTTPRoute | K8sHTTPRoute[] | null): string => {
+export const getK8sRouteUpdateLabel = (k8sr: IstioObject | IstioObject[] | null): string => {
   if (!k8sr) {
     return '';
   }
 
-  let k8sHTTPRoute: K8sHTTPRoute | null = null;
+  let k8sRoute: IstioObject | null = null;
 
   if ('length' in k8sr) {
     if (k8sr.length === 1) {
-      k8sHTTPRoute = k8sr[0];
+      k8sRoute = k8sr[0];
     }
   } else {
-    k8sHTTPRoute = k8sr;
+    k8sRoute = k8sr;
   }
 
-  if (k8sHTTPRoute && k8sHTTPRoute.metadata.labels && k8sHTTPRoute.metadata.labels[KIALI_WIZARD_LABEL]) {
-    return k8sHTTPRoute.metadata.labels[KIALI_WIZARD_LABEL];
+  if (k8sRoute && k8sRoute.metadata.labels && k8sRoute.metadata.labels[KIALI_WIZARD_LABEL]) {
+    return k8sRoute.metadata.labels[KIALI_WIZARD_LABEL];
   } else {
     return '';
   }
@@ -883,6 +888,7 @@ export interface K8sTLSRouteSpec extends K8sCommonRouteSpec {
 // rest of attributes used by k8s gateway objects
 export interface K8sGRPCRouteRule {
   backendRefs?: K8sRouteBackendRef[];
+  filters?: K8sHTTPRouteFilter[];
   matches?: K8sGRPCRouteMatch[];
 }
 
@@ -933,6 +939,7 @@ export interface K8sHTTPRouteFilter {
   requestHeaderModifier?: K8sHTTPHeaderFilter;
   requestMirror?: K8sHTTPRequestMirrorFilter;
   requestRedirect?: K8sHTTPRouteRequestRedirect;
+  responseHeaderModifier?: K8sHTTPHeaderFilter;
   type?: string;
 }
 

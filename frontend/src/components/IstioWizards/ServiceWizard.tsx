@@ -39,22 +39,27 @@ import {
   ServiceWizardState,
   WIZARD_FAULT_INJECTION,
   WIZARD_K8S_REQUEST_ROUTING,
+  WIZARD_K8S_GRPC_REQUEST_ROUTING,
   WIZARD_REQUEST_ROUTING,
   WIZARD_REQUEST_TIMEOUTS,
   WIZARD_TCP_TRAFFIC_SHIFTING,
   WIZARD_TITLES,
   WIZARD_TRAFFIC_SHIFTING,
-  WizardPreviews
+  WizardPreviews,
+  getInitK8sGRPCRules
 } from './WizardActions';
 import { MessageType } from '../../types/MessageCenter';
 import { GatewaySelector, GatewaySelectorState } from './GatewaySelector';
 import { K8sGatewaySelector, K8sGatewaySelectorState } from './K8sGatewaySelector';
 import { VirtualServiceHosts } from './VirtualServiceHosts';
 import { K8sRouteHosts } from './K8sRouteHosts';
+import { K8sGRPCRouteHosts } from './K8sGRPCRouteHosts';
+import { HTTP, GRPC } from './K8sRequestRouting/K8sMatchBuilder';
 import {
   DestinationRule,
   Gateway,
   K8sGateway,
+  K8sGRPCRoute,
   K8sHTTPRoute,
   PeerAuthentication,
   PeerAuthenticationMutualTLSMode,
@@ -173,6 +178,9 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
         case WIZARD_K8S_REQUEST_ROUTING:
           isMainWizardValid = false;
           break;
+        case WIZARD_K8S_GRPC_REQUEST_ROUTING:
+          isMainWizardValid = false;
+          break;
         // By default no rules is a no valid scenario
         case WIZARD_REQUEST_ROUTING:
           isMainWizardValid = false;
@@ -185,7 +193,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
       }
 
       const initVsHosts = getInitHosts(this.props.virtualServices);
-      const initK8sRoutes = getInitK8sHosts(this.props.k8sHTTPRoutes);
+      const initK8sRoutes = getInitK8sHosts(this.props.k8sHTTPRoutes, this.props.k8sGRPCRoutes);
 
       const [initMtlsMode, initClientCertificate, initPrivateKey, initCaCertificates] = getInitTlsMode(
         this.props.destinationRules
@@ -279,8 +287,8 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
         gateway.addMesh = isMesh;
       }
 
-      if (hasK8sGateway(this.props.k8sHTTPRoutes)) {
-        const gatewaySelected = getInitK8sGateway(this.props.k8sHTTPRoutes);
+      if (hasK8sGateway(this.props.k8sHTTPRoutes, this.props.k8sGRPCRoutes)) {
+        const gatewaySelected = getInitK8sGateway(this.props.k8sHTTPRoutes, this.props.k8sGRPCRoutes);
         k8sGateway.addGateway = true;
         k8sGateway.selectedGateway = gatewaySelected;
       }
@@ -342,6 +350,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
       case WIZARD_TRAFFIC_SHIFTING:
       case WIZARD_TCP_TRAFFIC_SHIFTING:
       case WIZARD_K8S_REQUEST_ROUTING:
+      case WIZARD_K8S_GRPC_REQUEST_ROUTING:
       case WIZARD_REQUEST_ROUTING:
       case WIZARD_FAULT_INJECTION:
       case WIZARD_REQUEST_TIMEOUTS:
@@ -350,6 +359,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
         const gw = this.state.previews!.gw;
         const k8sgateway = this.state.previews!.k8sgateway;
         const k8shttproute = this.state.previews!.k8shttproute;
+        const k8sgrpcroute = this.state.previews!.k8sgrpcroute;
         const pa = this.state.previews!.pa;
 
         // Gateway is only created when user has explicit selected this option
@@ -407,6 +417,18 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
             );
           }
 
+          if (k8sgrpcroute) {
+            promises.push(
+              API.updateIstioConfigDetail(
+                this.props.namespace,
+                'k8sgrpcroutes',
+                k8sgrpcroute.metadata.name,
+                JSON.stringify(k8sgrpcroute),
+                this.props.cluster
+              )
+            );
+          }
+
           if (dr) {
             this.handlePeerAuthnUpdate(pa, dr, promises);
           }
@@ -440,6 +462,17 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
                 this.props.namespace,
                 'k8shttproutes',
                 JSON.stringify(k8shttproute),
+                this.props.cluster
+              )
+            );
+          }
+
+          if (k8sgrpcroute) {
+            promises.push(
+              API.createIstioConfigDetail(
+                this.props.namespace,
+                'k8sgrpcroutes',
+                JSON.stringify(k8sgrpcroute),
                 this.props.cluster
               )
             );
@@ -715,6 +748,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
     const pa = items.filter(it => it.type === 'peerauthentications')[0];
     const vs = items.filter(it => it.type === 'virtualservice')[0];
     const k8shttproute = items.filter(it => it.type === 'k8shttproute')[0];
+    const k8sgrpcroute = items.filter(it => it.type === 'k8sgrpcroute')[0];
 
     const previews: WizardPreviews = {
       dr: dr ? (dr.items[0] as DestinationRule) : undefined,
@@ -722,7 +756,8 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
       k8sgateway: k8sgateway ? (k8sgateway.items[0] as K8sGateway) : undefined,
       pa: pa ? (pa.items[0] as PeerAuthentication) : undefined,
       vs: vs ? (vs.items[0] as VirtualService) : undefined,
-      k8shttproute: k8shttproute ? (k8shttproute.items[0] as K8sHTTPRoute) : undefined
+      k8shttproute: k8shttproute ? (k8shttproute.items[0] as K8sHTTPRoute) : undefined,
+      k8sgrpcroute: k8sgrpcroute ? (k8sgrpcroute.items[0] as K8sGRPCRoute) : undefined
     };
 
     this.setState({ previews, showPreview: false, showWizard: false, confirmationModal: true });
@@ -748,6 +783,10 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
         items.push({ type: 'k8shttproute', items: [this.state.previews.k8shttproute], title: 'K8s HTTPRoute' });
       }
 
+      if (this.state.previews.k8sgrpcroute) {
+        items.push({ type: 'k8sgrpcroute', items: [this.state.previews.k8sgrpcroute], title: 'K8s GRPCRoute' });
+      }
+
       if (this.state.previews.pa) {
         items.push({ type: 'peerauthentications', items: [this.state.previews.pa], title: 'Peer Authentication' });
       }
@@ -762,7 +801,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
 
   render(): React.ReactNode {
     const [gatewaySelected, isMesh] = getInitGateway(this.props.virtualServices);
-    const k8sGatewaySelected = getInitK8sGateway(this.props.k8sHTTPRoutes);
+    const k8sGatewaySelected = getInitK8sGateway(this.props.k8sHTTPRoutes, this.props.k8sGRPCRoutes);
 
     const titleAction =
       this.props.type.length > 0
@@ -865,6 +904,16 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
             <K8sRequestRouting
               subServices={this.props.subServices}
               initRules={getInitK8sRules(this.props.k8sHTTPRoutes)}
+              protocol={HTTP}
+              onChange={this.onK8sRulesChange}
+            />
+          )}
+
+          {this.props.type === WIZARD_K8S_GRPC_REQUEST_ROUTING && (
+            <K8sRequestRouting
+              subServices={this.props.subServices}
+              initRules={getInitK8sGRPCRules(this.props.k8sGRPCRoutes)}
+              protocol={GRPC}
               onChange={this.onK8sRulesChange}
             />
           )}
@@ -984,7 +1033,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
             </ExpandableSection>
           )}
 
-          {this.props.type === WIZARD_K8S_REQUEST_ROUTING && (
+          {(this.props.type === WIZARD_K8S_REQUEST_ROUTING || this.props.type === WIZARD_K8S_GRPC_REQUEST_ROUTING) && (
             <ExpandableSection
               className={advancedOptionsStyle}
               isExpanded={this.state.showAdvanced}
@@ -997,22 +1046,35 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
               }}
             >
               <Tabs isFilled={true} activeKey={this.state.advancedTabKey} onSelect={this.advancedHandleTabClick}>
-                <Tab eventKey={0} title={'K8s HTTPRoute Hosts'}>
-                  <div style={{ marginTop: '20px' }}>
-                    <K8sRouteHosts
-                      valid={this.state.valid.k8sRouteHosts}
-                      k8sRouteHosts={this.state.k8sRouteHosts}
-                      gateway={this.state.gateway}
-                      onK8sRouteHostsChange={this.onK8sRouteHosts}
-                    />
-                  </div>
-                </Tab>
-
+                {this.props.type === WIZARD_K8S_REQUEST_ROUTING && (
+                  <Tab eventKey={0} title={'K8s HTTPRoute Hosts'}>
+                    <div style={{ marginTop: '20px' }}>
+                      <K8sRouteHosts
+                        valid={this.state.valid.k8sRouteHosts}
+                        k8sRouteHosts={this.state.k8sRouteHosts}
+                        gateway={this.state.gateway}
+                        onK8sRouteHostsChange={this.onK8sRouteHosts}
+                      />
+                    </div>
+                  </Tab>
+                )}
+                {this.props.type === WIZARD_K8S_GRPC_REQUEST_ROUTING && (
+                  <Tab eventKey={0} title={'K8s GRPCRoute Hosts'}>
+                    <div style={{ marginTop: '20px' }}>
+                      <K8sGRPCRouteHosts
+                        valid={this.state.valid.k8sRouteHosts}
+                        k8sRouteHosts={this.state.k8sRouteHosts}
+                        gateway={this.state.gateway}
+                        onK8sRouteHostsChange={this.onK8sRouteHosts}
+                      />
+                    </div>
+                  </Tab>
+                )}
                 <Tab eventKey={1} title={'K8s Gateways'} data-test={'K8s Gateways'}>
                   <div style={{ marginTop: '20px', marginBottom: '10px' }}>
                     <K8sGatewaySelector
                       serviceName={this.props.serviceName}
-                      hasGateway={hasK8sGateway(this.props.k8sHTTPRoutes)}
+                      hasGateway={hasK8sGateway(this.props.k8sHTTPRoutes, this.props.k8sGRPCRoutes)}
                       gateway={k8sGatewaySelected}
                       k8sGateways={this.props.k8sGateways}
                       k8sRouteHosts={this.state.k8sRouteHosts}
