@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/clientcmd/api"
@@ -37,11 +38,39 @@ func TestGetMeshGraph(t *testing.T) {
 	require := require.New(t)
 
 	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = "Kubernetes"
 	kubernetes.SetConfig(t, *conf)
 
 	clients := map[string]kubernetes.ClientInterface{
 		conf.KubernetesConfig.ClusterName: kubetest.NewFakeK8sClient(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: conf.IstioNamespace}},
+			// Ideally we wouldn't need to set all this stuff up here but there's not a good way
+			// mock out the business.IstioStatus service since it's a struct.
+			&appsv1.Deployment{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "istiod",
+					Namespace: conf.IstioNamespace,
+					Labels: map[string]string{
+						"app":          "istiod",
+						"istio.io/rev": "default",
+					},
+				},
+				Spec: appsv1.DeploymentSpec{
+					Template: corev1.PodTemplateSpec{
+						ObjectMeta: metav1.ObjectMeta{
+							Labels: map[string]string{"app": "istiod", "istio.io/rev": "default"},
+						},
+					},
+				},
+			},
+			&corev1.ConfigMap{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "istio",
+					Namespace: conf.IstioNamespace,
+					Labels:    map[string]string{"istio.io/rev": "default"},
+				},
+				Data: map[string]string{"mesh": ""},
+			},
 		),
 	}
 	cf := kubetest.NewFakeClientFactory(conf, clients)

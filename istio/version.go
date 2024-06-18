@@ -198,7 +198,7 @@ func GetVersion(ctx context.Context, conf *config.Config, client kubernetes.Clie
 		return parseRawIstioVersion(rawVersion), nil
 	}
 
-	istiods, err := getHealthyIstiodPods(kubeCache, revision, namespace)
+	istiods, err := GetHealthyIstiodPods(kubeCache, revision, namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -212,7 +212,7 @@ func GetVersion(ctx context.Context, conf *config.Config, client kubernetes.Clie
 	slices.SortFunc(istiods, func(a, b *corev1.Pod) int {
 		return a.CreationTimestamp.Time.Compare(b.CreationTimestamp.Time)
 	})
-	istiod := getLatestPod(istiods)
+	istiod := GetLatestPod(istiods)
 
 	resp, err := client.ForwardGetRequest(istiod.Namespace, istiod.Name, conf.ExternalServices.Istio.IstiodPodMonitoringPort, "/version")
 	if err != nil {
@@ -220,40 +220,4 @@ func GetVersion(ctx context.Context, conf *config.Config, client kubernetes.Clie
 	}
 
 	return parseRawIstioVersion(string(resp)), nil
-}
-
-func getHealthyIstiodPods(kubeCache cache.KubeCache, revision string, namespace string) ([]*corev1.Pod, error) {
-	podLabels := map[string]string{
-		"app":          "istiod",
-		"istio.io/rev": revision,
-	}
-
-	istiods, err := kubeCache.GetPods(namespace, labels.Set(podLabels).String())
-	if err != nil {
-		return nil, err
-	}
-
-	healthyIstiods := make([]*corev1.Pod, 0, len(istiods))
-	for i, istiod := range istiods {
-		if istiod.Status.Phase == corev1.PodRunning {
-			healthyIstiods = append(healthyIstiods, &istiods[i])
-		}
-	}
-
-	return healthyIstiods, nil
-}
-
-func getLatestPod(pods []*corev1.Pod) *corev1.Pod {
-	if len(pods) == 0 {
-		return nil
-	}
-
-	latestPod := pods[0]
-	for _, pod := range pods {
-		if pod.CreationTimestamp.After(latestPod.CreationTimestamp.Time) {
-			latestPod = pod
-		}
-	}
-
-	return latestPod
 }

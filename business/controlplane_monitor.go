@@ -11,8 +11,6 @@ import (
 	"sync"
 	"time"
 
-	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/kiali/kiali/config"
@@ -28,8 +26,6 @@ import (
 // out portforwarding and polling.
 type ControlPlaneMonitor interface {
 	PollIstiodForProxyStatus(ctx context.Context)
-	CanConnectToIstiod(client kubernetes.ClientInterface) (kubernetes.IstioComponentStatus, error)
-	CanConnectToIstiodForRevision(client kubernetes.ClientInterface, revision string) (kubernetes.IstioComponentStatus, error)
 	// RefreshIstioCache should update the kiali cache's istio related stores.
 	RefreshIstioCache(ctx context.Context) error
 }
@@ -97,6 +93,15 @@ func (p *controlPlaneMonitor) RefreshIstioCache(ctx context.Context) error {
 		interval := p.pollingInterval / 2
 
 		for _, controlPlane := range controlPlanes {
+			if controlPlane.Status != kubernetes.ComponentHealthy {
+				log.Warningf("Skipping controlplane [%s] in cluster [%s] because it is not healthy.", controlPlane.Revision, cluster)
+				if controlPlane.Status == kubernetes.ComponentUnreachable {
+					log.Warningf("unable to proxy Istiod pods. " +
+						"Make sure your Kubernetes API server has access to the Istio control plane through 8080 port")
+				}
+				continue
+			}
+
 			pstatus, err := p.getProxyStatusWithRetry(ctx, interval, client, controlPlane.Revision, controlPlane.IstiodNamespace)
 			if err != nil {
 				log.Warningf("Unable to get proxy status from istiod for revision: [%s] and cluster: [%s]. Proxy status may be stale: %s", controlPlane.Revision, client.ClusterInfo().Name, err)
@@ -110,12 +115,22 @@ func (p *controlPlaneMonitor) RefreshIstioCache(ctx context.Context) error {
 		if len(controlPlanes) > 0 {
 			// Since it doesn't matter what revision we choose, just choose the first one.
 			controlPlane := controlPlanes[0]
+			if controlPlane.Status != kubernetes.ComponentHealthy {
+				log.Warningf("Skipping controlplane [%s] in cluster [%s] because it is not healthy.", controlPlane.Revision, cluster)
+				if controlPlane.Status == kubernetes.ComponentUnreachable {
+					log.Warningf("unable to proxy Istiod pods. " +
+						"Make sure your Kubernetes API server has access to the Istio control plane through 8080 port")
+				}
+				continue
+			}
+
 			status := &kubernetes.RegistryStatus{}
 			services, err := p.getServicesWithRetry(ctx, interval, client, controlPlane.Revision, controlPlane.IstiodNamespace)
 			if err != nil {
 				log.Warningf("Unable to get registry services from istiod for revision: [%s] and cluster: [%s]. Registry services may be stale: %s", controlPlane.Revision, client.ClusterInfo().Name, err)
 				continue
 			}
+
 			status.Services = services
 			registryStatus[cluster] = status
 		}
@@ -231,30 +246,14 @@ func getRequest(url string) ([]byte, error) {
 }
 
 func (p *controlPlaneMonitor) getIstiodDebugStatus(client kubernetes.ClientInterface, revision string, namespace string, debugPath string) (map[string][]byte, error) {
-	// Check if the kube-api has proxy access to pods in the istio-system
-	// https://github.com/kiali/kiali/issues/3494#issuecomment-772486224
-	status, err := p.canConnectToIstiodForRevision(client, revision, namespace)
+	kubeCache, err := p.cache.GetKubeCache(client.ClusterInfo().Name)
 	if err != nil {
-		return nil, fmt.Errorf("unable to connect to Istiod pods on cluster [%s] for revision [%s]: %s", client.ClusterInfo().Name, revision, err.Error())
+		return nil, err
 	}
 
-	istiodReachable := false
-	for _, istiodStatus := range status {
-		if istiodStatus.Status != kubernetes.ComponentUnreachable {
-			istiodReachable = true
-			break
-		}
-	}
-	if !istiodReachable {
-		return nil, fmt.Errorf("unable to proxy Istiod pods. " +
-			"Make sure your Kubernetes API server has access to the Istio control plane through 8080 port")
-	}
-
-	var healthyIstiods kubernetes.IstioComponentStatus
-	for _, istiod := range status {
-		if istiod.Status == kubernetes.ComponentHealthy {
-			healthyIstiods = append(healthyIstiods, istiod)
-		}
+	healthyIstiods, err := istio.GetHealthyIstiodPods(kubeCache, revision, namespace)
+	if err != nil {
+		return nil, err
 	}
 
 	wg := sync.WaitGroup{}
@@ -303,116 +302,6 @@ func (p *controlPlaneMonitor) getIstiodDebugStatus(client kubernetes.ClientInter
 	} else {
 		return nil, errors.New(errs)
 	}
-}
-
-// CanConnectToIstiod checks if Kiali can reach the istiod pod(s) via port
-// fowarding through the k8s api server or via http if the registry is
-// configured with a remote url. An error does not indicate that istiod
-// cannot be reached. The kubernetes.IstioComponentStatus must be checked.
-func (p *controlPlaneMonitor) CanConnectToIstiodForRevision(client kubernetes.ClientInterface, revision string) (kubernetes.IstioComponentStatus, error) {
-	return p.canConnectToIstiodForRevision(client, revision, p.conf.IstioNamespace)
-}
-
-// CanConnectToIstiod checks if Kiali can reach the istiod pod(s) via port
-// fowarding through the k8s api server or via http if the registry is
-// configured with a remote url. An error does not indicate that istiod
-// cannot be reached. The kubernetes.IstioComponentStatus must be checked.
-func (p *controlPlaneMonitor) canConnectToIstiodForRevision(client kubernetes.ClientInterface, revision string, namespace string) (kubernetes.IstioComponentStatus, error) {
-	if p.conf.ExternalServices.Istio.Registry != nil && p.conf.ExternalServices.Istio.Registry.IstiodURL != "" {
-		istiodURL := p.conf.ExternalServices.Istio.Registry.IstiodURL
-		// Being able to hit /debug doesn't necessarily mean we are authorized to hit the others.
-		url := joinURL(istiodURL, "/debug")
-		if _, err := getRequest(url); err != nil {
-			log.Warningf("Kiali can't connect to remote Istiod: %s", err)
-			return kubernetes.IstioComponentStatus{{Name: istiodURL, Status: kubernetes.ComponentUnreachable, IsCore: true}}, nil
-		}
-		return kubernetes.IstioComponentStatus{{Name: istiodURL, Status: kubernetes.ComponentHealthy, IsCore: true}}, nil
-	}
-
-	kubeCache, err := p.cache.GetKubeCache(client.ClusterInfo().Name)
-	if err != nil {
-		return nil, err
-	}
-
-	podLabels := map[string]string{
-		"app":                     "istiod",
-		models.IstioRevisionLabel: revision,
-	}
-	istiods, err := kubeCache.GetPods(namespace, labels.Set(podLabels).String())
-	if err != nil {
-		return nil, err
-	}
-
-	healthyIstiods := make([]*corev1.Pod, 0, len(istiods))
-	for i, istiod := range istiods {
-		if istiod.Status.Phase == corev1.PodRunning {
-			healthyIstiods = append(healthyIstiods, &istiods[i])
-		}
-	}
-
-	wg := sync.WaitGroup{}
-	wg.Add(len(healthyIstiods))
-	syncChan := make(chan kubernetes.ComponentStatus, len(healthyIstiods))
-
-	for _, istiod := range healthyIstiods {
-		go func(name, namespace string) {
-			defer wg.Done()
-
-			status := kubernetes.ComponentHealthy
-			// The 8080 port is not accessible from outside of the pod. However, it is used for kubernetes to do the live probes.
-			// Using the proxy method to make sure that K8s API has access to the Istio Control Plane namespace.
-			// By proxying one Istiod, we ensure that the following connection is allowed:
-			// Kiali -> K8s API (proxy) -> istiod
-			// This scenario is not obvious for private clusters (like GKE private cluster)
-			_, err := client.ForwardGetRequest(namespace, name, 8080, "/ready")
-			if err != nil {
-				log.Warningf("Unable to get ready status of istiod: %s/%s. Err: %s", namespace, name, err)
-				status = kubernetes.ComponentUnreachable
-			}
-
-			syncChan <- kubernetes.ComponentStatus{
-				Name:      name,
-				Namespace: namespace,
-				Status:    status,
-				IsCore:    true,
-			}
-		}(istiod.Name, istiod.Namespace)
-	}
-
-	wg.Wait()
-	close(syncChan)
-	ics := kubernetes.IstioComponentStatus{}
-	for componentStatus := range syncChan {
-		ics.Merge(kubernetes.IstioComponentStatus{componentStatus})
-	}
-
-	return ics, nil
-}
-
-func (p *controlPlaneMonitor) CanConnectToIstiod(client kubernetes.ClientInterface) (kubernetes.IstioComponentStatus, error) {
-	if p.conf.ExternalServices.Istio.Registry != nil && p.conf.ExternalServices.Istio.Registry.IstiodURL != "" {
-		istiodURL := p.conf.ExternalServices.Istio.Registry.IstiodURL
-		// Being able to hit /debug doesn't necessarily mean we are authorized to hit the others.
-		url := joinURL(istiodURL, "/debug")
-		if _, err := getRequest(url); err != nil {
-			log.Warningf("Kiali can't connect to remote Istiod: %s", err)
-			return kubernetes.IstioComponentStatus{{Name: istiodURL, Status: kubernetes.ComponentUnreachable, IsCore: true}}, nil
-		}
-		return kubernetes.IstioComponentStatus{{Name: istiodURL, Status: kubernetes.ComponentHealthy, IsCore: true}}, nil
-	}
-
-	kubeCache, err := p.cache.GetKubeCache(client.ClusterInfo().Name)
-	if err != nil {
-		return nil, err
-	}
-
-	// Find the rev label for the controlplane that is set in the config.
-	istiod, err := kubeCache.GetDeployment(p.conf.IstioNamespace, p.conf.ExternalServices.Istio.IstiodDeploymentName)
-	if err != nil {
-		return nil, err
-	}
-
-	return p.CanConnectToIstiodForRevision(client, istiod.Labels[models.IstioRevisionLabel])
 }
 
 func parseProxyStatus(statuses map[string][]byte) ([]*kubernetes.ProxyStatus, error) {

@@ -10,6 +10,7 @@ import (
 	"golang.org/x/exp/maps"
 
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	k8syaml "k8s.io/apimachinery/pkg/util/yaml"
@@ -51,6 +52,12 @@ func parseIstioConfigMap(istioConfig *corev1.ConfigMap) (*models.IstioMeshConfig
 	if err := k8syaml.Unmarshal([]byte(meshConfigYaml), meshConfig); err != nil {
 		log.Warningf("parseIstioConfigMap: Cannot read Istio mesh configuration.")
 		return nil, err
+	}
+
+	// Set some defaults if they are not set.
+	// TODO: Ideally we'd just display the raw yaml.
+	if meshConfig.OutboundTrafficPolicy.Mode == "" {
+		meshConfig.OutboundTrafficPolicy.Mode = "ALLOW_ANY"
 	}
 
 	return meshConfig, nil
@@ -280,6 +287,19 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 						controlPlane.ID = env.Value
 					}
 				}
+				controlPlane.Resources = containers[0].Resources
+				if memoryLimit := controlPlane.Resources.Limits.Memory(); memoryLimit != nil {
+					if thresholds := controlPlane.Thresholds; thresholds == nil {
+						controlPlane.Thresholds = &models.IstiodThresholds{}
+					}
+					controlPlane.Thresholds.Memory = float64(memoryLimit.ScaledValue(resource.Mega))
+				}
+				if cpuLimit := controlPlane.Resources.Limits.Cpu(); cpuLimit != nil {
+					if thresholds := controlPlane.Thresholds; thresholds == nil {
+						controlPlane.Thresholds = &models.IstiodThresholds{}
+					}
+					controlPlane.Thresholds.CPU = cpuLimit.AsApproximateFloat64()
+				}
 			}
 
 			// If the cluster id set on the controlplane matches the cluster's id then it manages the cluster it is deployed on.
@@ -305,6 +325,14 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 				}
 				controlPlane.Version = versionInfo
 			}()
+
+			// Get the status for the control plane.
+			status, err := in.canConnectToIstiodForRevision(controlPlane)
+			if err != nil {
+				log.Warningf("Unable to get status for controlplane [%s/%s] on cluster [%s]. Err: %s", controlPlane.IstiodName, controlPlane.IstiodNamespace, cluster.Name, err)
+			} else {
+				controlPlane.Status = status.Status
+			}
 
 			mesh.ControlPlanes = append(mesh.ControlPlanes, controlPlane)
 		}
@@ -569,4 +597,54 @@ func (in *Discovery) resolveNetwork(clusterName string) string {
 	}
 
 	return network
+}
+
+// canConnectToIstiodForRevision checks if Kiali can reach the istiod pod(s) via port
+// fowarding through the k8s api server or via http if the registry is
+// configured with a remote url. An error does not indicate that istiod
+// cannot be reached. The kubernetes.IstioComponentStatus must be checked.
+func (in *Discovery) canConnectToIstiodForRevision(controlPlane models.ControlPlane) (*kubernetes.ComponentStatus, error) {
+	client := in.kialiSAClients[controlPlane.Cluster.Name]
+	if client == nil {
+		return nil, fmt.Errorf("unable to get service account client for cluster [%s]", controlPlane.Cluster.Name)
+	}
+
+	kubeCache, err := in.kialiCache.GetKubeCache(client.ClusterInfo().Name)
+	if err != nil {
+		return nil, err
+	}
+
+	istiodPods, err := GetHealthyIstiodPods(kubeCache, controlPlane.Revision, controlPlane.IstiodNamespace)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(istiodPods) == 0 {
+		return nil, fmt.Errorf("no healthy istiod pods found for revision [%s]", controlPlane.Revision)
+	}
+
+	// Assuming that all pods are running the same version, we only need to get the version from one healthy istiod pod.
+	// Sort by creation time stamp to return the "latest" pod.
+	slices.SortFunc(istiodPods, func(a, b *corev1.Pod) int {
+		return a.CreationTimestamp.Time.Compare(b.CreationTimestamp.Time)
+	})
+	istiodPod := GetLatestPod(istiodPods)
+	status := kubernetes.ComponentHealthy
+	// The 8080 port is not accessible from outside of the pod. However, it is used for kubernetes to do the live probes.
+	// Using the proxy method to make sure that K8s API has access to the Istio Control Plane namespace.
+	// By proxying one Istiod, we ensure that the following connection is allowed:
+	// Kiali -> K8s API (proxy) -> istiod
+	// This scenario is not obvious for private clusters (like GKE private cluster)
+	if _, err := client.ForwardGetRequest(istiodPod.Namespace, istiodPod.Name, 8080, "/ready"); err != nil {
+		log.Warningf("Unable to get ready status of istiod: %s/%s. Err: %s", istiodPod.Namespace, istiodPod.Name, err)
+		status = kubernetes.ComponentUnreachable
+	}
+
+	return &kubernetes.ComponentStatus{
+		Cluster:   controlPlane.Cluster.Name,
+		Name:      controlPlane.IstiodName,
+		Namespace: controlPlane.IstiodNamespace,
+		Status:    status,
+		IsCore:    true,
+	}, nil
 }

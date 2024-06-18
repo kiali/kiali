@@ -37,10 +37,6 @@ func TestGetClusterInfoFromIstiod(t *testing.T) {
 										Name:  "CLUSTER_ID",
 										Value: "east",
 									},
-									{
-										Name:  "PILOT_SCOPE_GATEWAY_TO_NAMESPACE",
-										Value: "true",
-									},
 								},
 							},
 						},
@@ -49,11 +45,10 @@ func TestGetClusterInfoFromIstiod(t *testing.T) {
 			},
 		},
 	)
-	clusterID, pilotScope, err := kubernetes.ClusterInfoFromIstiod(*conf, k8s)
+	clusterID, err := kubernetes.ClusterNameFromIstiod(*conf, k8s)
 	require.NoError(err)
 
 	assert.Equal("east", clusterID)
-	assert.True(pilotScope)
 }
 
 func TestGetClusterInfoFromIstiodFails(t *testing.T) {
@@ -81,6 +76,112 @@ func TestGetClusterInfoFromIstiodFails(t *testing.T) {
 			},
 		},
 	)
-	_, _, err := kubernetes.ClusterInfoFromIstiod(*conf, k8s)
+	_, err := kubernetes.ClusterNameFromIstiod(*conf, k8s)
 	require.Error(err)
+}
+
+func TestClusterNameFromIstiodUsesConfigWhenSet(t *testing.T) {
+	require := require.New(t)
+
+	conf := config.NewConfig()
+	conf.ExternalServices.Istio.IstiodDeploymentName = "different-istiod"
+	k8s := kubetest.NewFakeK8sClient(
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "istio-system"}},
+		&apps_v1.Deployment{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "istiod",
+				Namespace: "istio-system",
+			},
+			Spec: apps_v1.DeploymentSpec{
+				Template: core_v1.PodTemplateSpec{
+					Spec: core_v1.PodSpec{
+						Containers: []core_v1.Container{
+							{
+								Name: "istiod",
+								// In reality both should have the same cluster id but want to test that the config is used.
+								Env: []core_v1.EnvVar{{Name: "CLUSTER_ID", Value: "east"}},
+							},
+						},
+					},
+				},
+			},
+		},
+		&apps_v1.Deployment{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "different-istiod",
+				Namespace: "istio-system",
+			},
+			Spec: apps_v1.DeploymentSpec{
+				Template: core_v1.PodTemplateSpec{
+					Spec: core_v1.PodSpec{
+						Containers: []core_v1.Container{
+							{
+								Name: "istiod",
+								Env:  []core_v1.EnvVar{{Name: "CLUSTER_ID", Value: "west"}},
+							},
+						},
+					},
+				},
+			},
+		},
+	)
+
+	clusterName, err := kubernetes.ClusterNameFromIstiod(*conf, k8s)
+	require.NoError(err)
+
+	require.Equal("west", clusterName)
+}
+
+func TestClusterNameFromIstiodResolvesClusterWithoutConfig(t *testing.T) {
+	require := require.New(t)
+
+	conf := config.NewConfig()
+	conf.ExternalServices.Istio.IstiodDeploymentName = ""
+	k8s := kubetest.NewFakeK8sClient(
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "istio-system"}},
+		&apps_v1.Deployment{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "istiod",
+				Namespace: "istio-system",
+				Labels:    map[string]string{"app": "istiod"},
+			},
+			Spec: apps_v1.DeploymentSpec{
+				Template: core_v1.PodTemplateSpec{
+					Spec: core_v1.PodSpec{
+						Containers: []core_v1.Container{
+							{
+								Name: "istiod",
+								// In reality both should have the same cluster id but want to test that the config is used.
+								Env: []core_v1.EnvVar{{Name: "CLUSTER_ID", Value: "east"}},
+							},
+						},
+					},
+				},
+			},
+		},
+		&apps_v1.Deployment{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "different-istiod",
+				Namespace: "istio-system",
+				Labels:    map[string]string{"app": "istiod"},
+			},
+			Spec: apps_v1.DeploymentSpec{
+				Template: core_v1.PodTemplateSpec{
+					Spec: core_v1.PodSpec{
+						Containers: []core_v1.Container{
+							{
+								Name: "istiod",
+								Env:  []core_v1.EnvVar{{Name: "CLUSTER_ID", Value: "west"}},
+							},
+						},
+					},
+				},
+			},
+		},
+	)
+
+	clusterName, err := kubernetes.ClusterNameFromIstiod(*conf, k8s)
+	require.NoError(err)
+
+	require.Equal("west", clusterName)
 }

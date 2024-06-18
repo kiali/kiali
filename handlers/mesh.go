@@ -12,28 +12,6 @@ import (
 	"github.com/kiali/kiali/mesh/api"
 )
 
-func OutboundTrafficPolicyMode(w http.ResponseWriter, r *http.Request) {
-	business, err := getBusiness(r)
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-
-	otp, _ := business.Mesh.OutboundTrafficPolicy()
-	RespondWithJSON(w, http.StatusOK, otp)
-}
-
-func IstiodResourceThresholds(w http.ResponseWriter, r *http.Request) {
-	business, err := getBusiness(r)
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-
-	irt, _ := business.Mesh.IstiodResourceThresholds()
-	RespondWithJSON(w, http.StatusOK, irt)
-}
-
 func IstiodCanariesStatus(w http.ResponseWriter, r *http.Request) {
 	business, err := getBusiness(r)
 	if err != nil {

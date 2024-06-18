@@ -2,7 +2,6 @@ package business
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -19,6 +18,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/models"
 )
@@ -107,152 +107,6 @@ func runningIstiodPod() *core_v1.Pod {
 	}
 }
 
-func TestCanConnectToIstiod(t *testing.T) {
-	assert := assert.New(t)
-	require := require.New(t)
-
-	conf := config.NewConfig()
-
-	testServer := istiodTestServer(t)
-	fakeForwarder := &fakeForwarder{
-		ClientInterface: kubetest.NewFakeK8sClient(
-			runningIstiodPod(),
-			fakeIstiodDeployment(conf.KubernetesConfig.ClusterName, false),
-			fakeIstioConfigMap("default"),
-			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "istio-system"}},
-		),
-		testURL: testServer.URL,
-	}
-
-	cache := SetupBusinessLayer(t, fakeForwarder, *conf)
-
-	cf := kubetest.NewK8SClientFactoryMock(fakeForwarder)
-	k8sclients := make(map[string]kubernetes.ClientInterface)
-	k8sclients[conf.KubernetesConfig.ClusterName] = fakeForwarder
-	discovery := istio.NewDiscovery(k8sclients, cache, conf)
-	cpm := NewControlPlaneMonitor(cache, cf, *conf, discovery)
-
-	status, err := cpm.CanConnectToIstiod(fakeForwarder)
-	require.NoError(err)
-	require.Len(status, 1)
-	assert.Equal(kubernetes.ComponentHealthy, status[0].Status)
-}
-
-func TestConnectToIstiodExternalURL(t *testing.T) {
-	assert := assert.New(t)
-	require := require.New(t)
-
-	testServer := istiodTestServer(t)
-
-	conf := config.NewConfig()
-	conf.ExternalServices.Istio.Registry = &config.RegistryConfig{
-		IstiodURL: testServer.URL,
-	}
-
-	k8s := kubetest.NewFakeK8sClient(runningIstiodPod())
-	cache := SetupBusinessLayer(t, k8s, *conf)
-
-	cf := kubetest.NewK8SClientFactoryMock(k8s)
-	k8sclients := make(map[string]kubernetes.ClientInterface)
-	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
-	discovery := istio.NewDiscovery(k8sclients, cache, conf)
-	cpm := NewControlPlaneMonitor(cache, cf, *conf, discovery)
-
-	status, err := cpm.CanConnectToIstiod(k8s)
-	require.NoError(err)
-	require.Len(status, 1)
-	assert.Equal(kubernetes.ComponentHealthy, status[0].Status)
-}
-
-func TestConnectToIstiodWithRevisionExternalURL(t *testing.T) {
-	assert := assert.New(t)
-	require := require.New(t)
-
-	testServer := istiodTestServer(t)
-
-	conf := config.NewConfig()
-	conf.ExternalServices.Istio.Registry = &config.RegistryConfig{
-		IstiodURL: testServer.URL,
-	}
-
-	k8s := kubetest.NewFakeK8sClient(runningIstiodPod())
-	cache := SetupBusinessLayer(t, k8s, *conf)
-
-	cf := kubetest.NewK8SClientFactoryMock(k8s)
-	k8sclients := make(map[string]kubernetes.ClientInterface)
-	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
-	discovery := istio.NewDiscovery(k8sclients, cache, conf)
-	cpm := NewControlPlaneMonitor(cache, cf, *conf, discovery)
-
-	status, err := cpm.CanConnectToIstiodForRevision(k8s, "default")
-	require.NoError(err)
-	require.Len(status, 1)
-	assert.Equal(kubernetes.ComponentHealthy, status[0].Status)
-}
-
-type badForwarder struct {
-	kubernetes.ClientInterface
-}
-
-func (f *badForwarder) ForwardGetRequest(namespace, podName string, destinationPort int, path string) ([]byte, error) {
-	return nil, fmt.Errorf("unable to forward request")
-}
-
-func TestCanConnectToUnreachableIstiod(t *testing.T) {
-	assert := assert.New(t)
-	require := require.New(t)
-
-	conf := config.NewConfig()
-
-	fakeForwarder := &badForwarder{
-		ClientInterface: kubetest.NewFakeK8sClient(
-			runningIstiodPod(),
-			fakeIstiodDeployment(conf.KubernetesConfig.ClusterName, false),
-			fakeIstioConfigMap("default"),
-			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "istio-system"}},
-		),
-	}
-
-	cache := SetupBusinessLayer(t, fakeForwarder, *conf)
-
-	cf := kubetest.NewK8SClientFactoryMock(fakeForwarder)
-	k8sclients := make(map[string]kubernetes.ClientInterface)
-	k8sclients[conf.KubernetesConfig.ClusterName] = fakeForwarder
-	discovery := istio.NewDiscovery(k8sclients, cache, conf)
-	cpm := NewControlPlaneMonitor(cache, cf, *conf, discovery)
-
-	status, err := cpm.CanConnectToIstiod(fakeForwarder)
-	require.NoError(err)
-	require.Len(status, 1)
-	assert.Equal(kubernetes.ComponentUnreachable, status[0].Status)
-}
-
-func fakeIstiodWithRevision(cluster string, revision string, manageExternal bool) *apps_v1.Deployment {
-	deployment := fakeIstiodDeployment(cluster, manageExternal)
-	deployment.Labels[models.IstioRevisionLabel] = revision
-	deployment.Name = "istiod-" + revision
-	return deployment
-}
-
-func fakeIstioConfigMap(revision string) *core_v1.ConfigMap {
-	const configMapData = `accessLogFile: /dev/stdout
-enableAutoMtls: true
-rootNamespace: istio-system
-trustDomain: cluster.local
-`
-	configMapName := "istio"
-	if revision != "default" {
-		configMapName = "istio-" + revision
-	}
-	return &core_v1.ConfigMap{
-		ObjectMeta: meta_v1.ObjectMeta{
-			Name:      configMapName,
-			Namespace: "istio-system",
-		},
-		Data: map[string]string{"mesh": configMapData},
-	}
-}
-
 func fakeIstiodDeployment(cluster string, manageExternal bool) *apps_v1.Deployment {
 	deployment := &apps_v1.Deployment{
 		ObjectMeta: meta_v1.ObjectMeta{
@@ -296,13 +150,7 @@ func TestRefreshIstioCache(t *testing.T) {
 
 	conf := config.NewConfig()
 	conf.KubernetesConfig.ClusterName = "Kubernetes"
-	kubernetes.SetConfig(t, *conf)
 
-	const configMapData = `accessLogFile: /dev/stdout
-enableAutoMtls: true
-rootNamespace: istio-system
-trustDomain: cluster.local
-`
 	istioConfigMap := &core_v1.ConfigMap{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "istio",
@@ -311,7 +159,7 @@ trustDomain: cluster.local
 				models.IstioRevisionLabel: "default",
 			},
 		},
-		Data: map[string]string{"mesh": configMapData},
+		Data: map[string]string{"mesh": ""},
 	}
 
 	k8s := kubetest.NewFakeK8sClient(
@@ -329,11 +177,10 @@ trustDomain: cluster.local
 		testURL:         testServer.URL,
 	}
 
-	cache := SetupBusinessLayer(t, fakeForwarder, *conf)
-
-	cf := kubetest.NewK8SClientFactoryMock(fakeForwarder)
 	k8sclients := make(map[string]kubernetes.ClientInterface)
 	k8sclients[conf.KubernetesConfig.ClusterName] = fakeForwarder
+	cf := kubetest.NewFakeClientFactory(conf, k8sclients)
+	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
 	discovery := istio.NewDiscovery(k8sclients, cache, conf)
 	cpm := NewControlPlaneMonitor(cache, cf, *conf, discovery)
 
@@ -357,12 +204,9 @@ func TestCancelingContextEndsPolling(t *testing.T) {
 	conf := config.NewConfig()
 	kubernetes.SetConfig(t, *conf)
 
-	k8s := kubetest.NewFakeK8sClient()
-	cache := SetupBusinessLayer(t, k8s, *conf)
-
-	cf := kubetest.NewK8SClientFactoryMock(k8s)
-	k8sclients := make(map[string]kubernetes.ClientInterface)
-	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
+	k8sclients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: kubetest.NewFakeK8sClient()}
+	cf := kubetest.NewFakeClientFactory(conf, k8sclients)
+	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
 	discovery := istio.NewDiscovery(k8sclients, cache, conf)
 	cpm := NewControlPlaneMonitor(cache, cf, *conf, discovery)
 
@@ -377,13 +221,7 @@ func TestPollingPopulatesCache(t *testing.T) {
 	require := require.New(t)
 
 	conf := config.NewConfig()
-	kubernetes.SetConfig(t, *conf)
 
-	const configMapData = `accessLogFile: /dev/stdout
-enableAutoMtls: true
-rootNamespace: istio-system
-trustDomain: cluster.local
-`
 	istioConfigMap := &core_v1.ConfigMap{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "istio",
@@ -392,7 +230,7 @@ trustDomain: cluster.local
 				models.IstioRevisionLabel: "default",
 			},
 		},
-		Data: map[string]string{"mesh": configMapData},
+		Data: map[string]string{"mesh": ""},
 	}
 
 	testServer := istiodTestServer(t)
@@ -411,11 +249,10 @@ trustDomain: cluster.local
 		testURL:         testServer.URL,
 	}
 
-	cache := SetupBusinessLayer(t, fakeForwarder, *conf)
-
-	cf := kubetest.NewK8SClientFactoryMock(fakeForwarder)
 	k8sclients := make(map[string]kubernetes.ClientInterface)
 	k8sclients[conf.KubernetesConfig.ClusterName] = fakeForwarder
+	cf := kubetest.NewFakeClientFactory(conf, k8sclients)
+	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
 	discovery := istio.NewDiscovery(k8sclients, cache, conf)
 	cpm := NewControlPlaneMonitor(cache, cf, *conf, discovery)
 	// Make this really low so that we get something sooner.
@@ -441,56 +278,5 @@ trustDomain: cluster.local
 				return
 			}
 		}
-	}
-}
-
-func TestRefreshIstioCacheWithMultipleRevisions(t *testing.T) {
-	require := require.New(t)
-
-	conf := config.NewConfig()
-	conf.KubernetesConfig.ClusterName = "Kubernetes"
-	kubernetes.SetConfig(t, *conf)
-
-	defaultIstiod := fakeIstiodDeployment(conf.KubernetesConfig.ClusterName, false)
-	istiod_1_19 := fakeIstiodWithRevision(conf.KubernetesConfig.ClusterName, "1-19-0", false)
-	defaultPod := runningIstiodPod()
-	defaultPod.Labels[models.IstioRevisionLabel] = "default"
-	istiod_1_19_pod := runningIstiodPod()
-	istiod_1_19_pod.Labels[models.IstioRevisionLabel] = "1-19-0"
-
-	k8s := kubetest.NewFakeK8sClient(
-		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "istio-system"}},
-		defaultIstiod,
-		istiod_1_19,
-		fakeIstioConfigMap("default"),
-		fakeIstioConfigMap("1-19-0"),
-	)
-	// RefreshIstioCache relies on this being set.
-	k8s.KubeClusterInfo.Name = conf.KubernetesConfig.ClusterName
-
-	testServer := istiodTestServer(t)
-	fakeForwarder := &fakeForwarder{
-		ClientInterface: k8s,
-		testURL:         testServer.URL,
-	}
-
-	cache := SetupBusinessLayer(t, fakeForwarder, *conf)
-
-	cf := kubetest.NewK8SClientFactoryMock(fakeForwarder)
-	k8sclients := make(map[string]kubernetes.ClientInterface)
-	k8sclients[conf.KubernetesConfig.ClusterName] = fakeForwarder
-	discovery := istio.NewDiscovery(k8sclients, cache, conf)
-	cpm := NewControlPlaneMonitor(cache, cf, *conf, discovery)
-
-	defaultStatuses, err := cpm.CanConnectToIstiodForRevision(fakeForwarder, "default")
-	require.NoError(err)
-	for _, status := range defaultStatuses {
-		require.NotEqual(istiod_1_19_pod.Name, status.Name)
-	}
-
-	istiod_1_19_statuses, err := cpm.CanConnectToIstiodForRevision(fakeForwarder, "1-19-0")
-	require.NoError(err)
-	for _, status := range istiod_1_19_statuses {
-		require.NotEqual(istiod_1_19_pod.Name, status.Name)
 	}
 }

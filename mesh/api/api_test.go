@@ -192,7 +192,7 @@ func mockMeshGraph(t *testing.T) (*mesh.AppenderGlobalInfo, error) {
 type fakeMeshStatusGetter struct{}
 
 // mock GetStatus function to obtain fake graph component status
-func (f *fakeMeshStatusGetter) GetStatus(ctx context.Context, cluster string) (kubernetes.IstioComponentStatus, error) {
+func (f *fakeMeshStatusGetter) GetStatus(ctx context.Context) (kubernetes.IstioComponentStatus, error) {
 	return kubernetes.IstioComponentStatus{
 		kubernetes.ComponentStatus{
 			Name:   "istiod",

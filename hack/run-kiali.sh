@@ -366,7 +366,7 @@ if [ -z "${PROMETHEUS_URL:-}" ]; then
       warnmsg "Cannot auto-discover Prometheus on Kubernetes. If you exposed it, you can specify the Prometheus URL via --prometheus-url. For now, this session will attempt to port-forward to it."
       prom_remote_port="$(${CLIENT_EXE} get service -n ${ISTIO_NAMESPACE} prometheus -o jsonpath='{.spec.ports[0].targetPort}')"
       if [ "$?" != "0" -o -z "${prom_remote_port}" ]; then
-        warnmsg "Cannot auto-discover Prometheus port on Kubernetes. If you exposed it, you can specify the Prometheus URL via --prometheus-url. For now, this session will attempt to port-forward to it."
+        warnmsg "Failed to port forward. Cannot auto-discover Prometheus port on Kubernetes. If you exposed it, you can specify the Prometheus URL via --prometheus-url. For now, this session will attempt to port-forward to it."
       else
         prom_local_port="$(echo ${LOCAL_REMOTE_PORTS_PROMETHEUS} | cut -d ':' -f 1)"
         LOCAL_REMOTE_PORTS_PROMETHEUS="${prom_local_port}:${prom_remote_port}"

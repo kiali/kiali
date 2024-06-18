@@ -2,6 +2,11 @@ package istio_test
 
 import (
 	"context"
+	"fmt"
+	"io"
+	"net/http"
+	"net/http/httptest"
+	"net/url"
 	"slices"
 	"strings"
 	"testing"
@@ -10,6 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 	apps_v1 "k8s.io/api/apps/v1"
 	core_v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/rest"
@@ -971,4 +977,448 @@ trustDomain: cluster.local
 	require.True(discovery.IsRemoteCluster(context.Background(), "remote"))
 	require.False(discovery.IsRemoteCluster(context.Background(), "east"))
 	require.True(discovery.IsRemoteCluster(context.Background(), "non-existant"))
+}
+
+func TestIstiodResourceThresholds(t *testing.T) {
+	conf := config.NewConfig()
+	istiodAppLabels := map[string]string{
+		"app":                     "istiod",
+		models.IstioRevisionLabel: "default",
+	}
+
+	testCases := map[string]struct {
+		istiodConatiner core_v1.Container
+		istiodMeta      v1.ObjectMeta
+		expected        *models.IstiodThresholds
+		expectedErr     error
+	}{
+		"istiod with no limits": {
+			istiodMeta: v1.ObjectMeta{
+				Name:      "istiod",
+				Namespace: "istio-system",
+				Labels:    istiodAppLabels,
+			},
+			istiodConatiner: core_v1.Container{
+				Name: "istiod",
+			},
+			expected: &models.IstiodThresholds{
+				CPU:    0,
+				Memory: 0,
+			},
+		},
+		"istiod with limits": {
+			istiodMeta: v1.ObjectMeta{
+				Name:      "istiod",
+				Namespace: "istio-system",
+				Labels:    istiodAppLabels,
+			},
+			istiodConatiner: core_v1.Container{
+				Name: "istiod",
+				Resources: core_v1.ResourceRequirements{
+					Limits: core_v1.ResourceList{
+						core_v1.ResourceCPU:    resource.MustParse("1000m"),
+						core_v1.ResourceMemory: resource.MustParse("1G"),
+					},
+				},
+			},
+			expected: &models.IstiodThresholds{
+				CPU:    1,
+				Memory: 1000,
+			},
+		},
+		"istiod with binary limits": {
+			istiodMeta: v1.ObjectMeta{
+				Name:      "istiod",
+				Namespace: "istio-system",
+				Labels:    istiodAppLabels,
+			},
+			istiodConatiner: core_v1.Container{
+				Name: "istiod",
+				Resources: core_v1.ResourceRequirements{
+					Limits: core_v1.ResourceList{
+						core_v1.ResourceCPU:    resource.MustParse("14m"),
+						core_v1.ResourceMemory: resource.MustParse("1Gi"),
+					},
+				},
+			},
+			expected: &models.IstiodThresholds{
+				CPU: 0.014,
+				// Rounded
+				Memory: 1074,
+			},
+		},
+		"istiod with cpu numeral": {
+			istiodMeta: v1.ObjectMeta{
+				Name:      "istiod",
+				Namespace: "istio-system",
+				Labels:    istiodAppLabels,
+			},
+			istiodConatiner: core_v1.Container{
+				Name: "istiod",
+				Resources: core_v1.ResourceRequirements{
+					Limits: core_v1.ResourceList{
+						core_v1.ResourceCPU: resource.MustParse("1.5"),
+					},
+				},
+			},
+			expected: &models.IstiodThresholds{
+				CPU: 1.5,
+			},
+		},
+		"istiod with only cpu limits": {
+			istiodMeta: v1.ObjectMeta{
+				Name:      "istiod",
+				Namespace: "istio-system",
+				Labels:    istiodAppLabels,
+			},
+			istiodConatiner: core_v1.Container{
+				Name: "istiod",
+				Resources: core_v1.ResourceRequirements{
+					Limits: core_v1.ResourceList{
+						core_v1.ResourceCPU: resource.MustParse("1000m"),
+					},
+				},
+			},
+			expected: &models.IstiodThresholds{
+				CPU: 1,
+			},
+		},
+		"istiod with only memory limits": {
+			istiodMeta: v1.ObjectMeta{
+				Name:      "istiod",
+				Namespace: "istio-system",
+				Labels:    istiodAppLabels,
+			},
+			istiodConatiner: core_v1.Container{
+				Name: "istiod",
+				Resources: core_v1.ResourceRequirements{
+					Limits: core_v1.ResourceList{
+						core_v1.ResourceMemory: resource.MustParse("1G"),
+					},
+				},
+			},
+			expected: &models.IstiodThresholds{
+				Memory: 1000,
+			},
+		},
+		"istiod in a different namespace": {
+			istiodMeta: v1.ObjectMeta{
+				Name:      "istiod",
+				Namespace: "istio-system-2",
+				Labels:    istiodAppLabels,
+			},
+			istiodConatiner: core_v1.Container{
+				Name: "istiod",
+				Resources: core_v1.ResourceRequirements{
+					Limits: core_v1.ResourceList{
+						core_v1.ResourceMemory: resource.MustParse("1G"),
+					},
+				},
+			},
+			expectedErr: fmt.Errorf("istiod deployment not found"),
+		},
+		"Missing limits": {
+			istiodMeta: v1.ObjectMeta{
+				Name:      "istiod",
+				Namespace: "istio-system",
+				Labels:    istiodAppLabels,
+			},
+			istiodConatiner: core_v1.Container{
+				Name:      "istiod",
+				Resources: core_v1.ResourceRequirements{},
+			},
+			expected: &models.IstiodThresholds{},
+		},
+		"Missing resources": {
+			istiodMeta: v1.ObjectMeta{
+				Name:      "istiod",
+				Namespace: "istio-system",
+				Labels:    istiodAppLabels,
+			},
+			istiodConatiner: core_v1.Container{
+				Name: "istiod",
+			},
+			expected: &models.IstiodThresholds{},
+		},
+	}
+
+	for name, testCase := range testCases {
+		t.Run(name, func(t *testing.T) {
+			require := require.New(t)
+			istiodDeployment := &apps_v1.Deployment{
+				ObjectMeta: testCase.istiodMeta,
+				Spec: apps_v1.DeploymentSpec{
+					Template: core_v1.PodTemplateSpec{
+						Spec: core_v1.PodSpec{
+							Containers: []core_v1.Container{
+								testCase.istiodConatiner,
+							},
+						},
+					},
+				},
+			}
+			k8s := kubetest.NewFakeK8sClient(
+				&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
+				istiodDeployment,
+				&core_v1.ConfigMap{
+					ObjectMeta: v1.ObjectMeta{
+						Name:      "istio",
+						Namespace: "istio-system",
+						Labels:    map[string]string{models.IstioRevisionLabel: "default"},
+					},
+					Data: map[string]string{"mesh": ""},
+				},
+			)
+
+			clients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: k8s}
+			cache := cache.NewTestingCacheWithClients(t, clients, *conf)
+			discovery := istio.NewDiscovery(clients, cache, conf)
+
+			mesh, err := discovery.Mesh(context.Background())
+			if testCase.expectedErr != nil {
+				require.Error(err)
+				// End the test early if we expect an error.
+				return
+			}
+			require.NoError(err)
+			require.Len(mesh.ControlPlanes, 1)
+			require.Equal(testCase.expected, mesh.ControlPlanes[0].Thresholds)
+		})
+	}
+}
+
+func istiodTestServer(t *testing.T) *httptest.Server {
+	t.Helper()
+	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var file string
+		switch r.URL.Path {
+		case "/debug/registryz":
+			file = "../tests/data/registry/registry-registryz.json"
+		case "/debug/syncz":
+			file = "../tests/data/registry/registry-syncz.json"
+		case "/debug":
+			w.WriteHeader(http.StatusOK)
+			return
+		case "/ready":
+			w.WriteHeader(http.StatusOK)
+			return
+		default:
+			w.WriteHeader(http.StatusInternalServerError)
+			t.Fatalf("Unexpected request path: %s", r.URL.Path)
+			return
+		}
+		if _, err := w.Write(kubernetes.ReadFile(t, file)); err != nil {
+			t.Fatalf("Error writing response: %s", err)
+		}
+	}))
+	t.Cleanup(testServer.Close)
+	return testServer
+}
+
+func fakeIstioConfigMap(revision string) *core_v1.ConfigMap {
+	const configMapData = `accessLogFile: /dev/stdout
+enableAutoMtls: true
+rootNamespace: istio-system
+trustDomain: cluster.local
+`
+	configMapName := "istio"
+	if revision != "default" {
+		configMapName = "istio-" + revision
+	}
+	return &core_v1.ConfigMap{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      configMapName,
+			Namespace: "istio-system",
+			Labels:    map[string]string{models.IstioRevisionLabel: revision},
+		},
+		Data: map[string]string{"mesh": configMapData},
+	}
+}
+
+type fakeForwarder struct {
+	kubernetes.ClientInterface
+	testURL string
+}
+
+func (f *fakeForwarder) ForwardGetRequest(namespace, podName string, destinationPort int, path string) ([]byte, error) {
+	url, _ := url.JoinPath(f.testURL, path)
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, err
+	}
+
+	defer resp.Body.Close()
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	return body, nil
+}
+
+func runningIstiodPod(revision string) *core_v1.Pod {
+	return &core_v1.Pod{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      "istiod-123" + "-" + revision,
+			Namespace: "istio-system",
+			Labels: map[string]string{
+				"app":                     "istiod",
+				models.IstioRevisionLabel: revision,
+			},
+		},
+		Status: core_v1.PodStatus{
+			Phase: core_v1.PodRunning,
+		},
+	}
+}
+
+func TestCanConnectToIstiod(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+
+	conf := config.NewConfig()
+
+	testServer := istiodTestServer(t)
+	fakeForwarder := &fakeForwarder{
+		ClientInterface: kubetest.NewFakeK8sClient(
+			runningIstiodPod("default"),
+			fakeIstiodDeployment(conf.KubernetesConfig.ClusterName, false),
+			fakeIstioConfigMap("default"),
+			&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
+		),
+		testURL: testServer.URL,
+	}
+
+	k8sclients := make(map[string]kubernetes.ClientInterface)
+	k8sclients[conf.KubernetesConfig.ClusterName] = fakeForwarder
+	cache := cache.NewTestingCacheWithClients(t, k8sclients, *conf)
+	discovery := istio.NewDiscovery(k8sclients, cache, conf)
+
+	mesh, err := discovery.Mesh(context.Background())
+	require.NoError(err)
+	require.Len(mesh.ControlPlanes, 1)
+	assert.Equal(kubernetes.ComponentHealthy, mesh.ControlPlanes[0].Status)
+}
+
+type badForwarder struct {
+	kubernetes.ClientInterface
+}
+
+func (f *badForwarder) ForwardGetRequest(namespace, podName string, destinationPort int, path string) ([]byte, error) {
+	return nil, fmt.Errorf("unable to forward request")
+}
+
+func TestCanConnectToUnreachableIstiod(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+
+	conf := config.NewConfig()
+
+	fakeForwarder := &badForwarder{
+		ClientInterface: kubetest.NewFakeK8sClient(
+			runningIstiodPod("default"),
+			fakeIstiodDeployment(conf.KubernetesConfig.ClusterName, false),
+			fakeIstioConfigMap("default"),
+			&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
+		),
+	}
+
+	k8sclients := make(map[string]kubernetes.ClientInterface)
+	k8sclients[conf.KubernetesConfig.ClusterName] = fakeForwarder
+	cache := cache.NewTestingCacheWithClients(t, k8sclients, *conf)
+	discovery := istio.NewDiscovery(k8sclients, cache, conf)
+
+	mesh, err := discovery.Mesh(context.Background())
+	require.NoError(err)
+	require.Len(mesh.ControlPlanes, 1)
+	assert.Equal(kubernetes.ComponentUnreachable, mesh.ControlPlanes[0].Status)
+}
+
+func fakeIstiodWithRevision(cluster string, revision string, manageExternal bool) *apps_v1.Deployment {
+	deployment := fakeIstiodDeployment(cluster, manageExternal)
+	deployment.Labels[models.IstioRevisionLabel] = revision
+	deployment.Name = "istiod-" + revision
+	return deployment
+}
+
+func TestUpdateStatusMultipleRevsWithoutHealthyPods(t *testing.T) {
+	require := require.New(t)
+
+	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = "Kubernetes"
+
+	defaultIstiod := fakeIstiodDeployment(conf.KubernetesConfig.ClusterName, false)
+	istiod_1_19 := fakeIstiodWithRevision(conf.KubernetesConfig.ClusterName, "1-19-0", false)
+
+	k8s := kubetest.NewFakeK8sClient(
+		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
+		defaultIstiod,
+		istiod_1_19,
+		fakeIstioConfigMap("default"),
+		fakeIstioConfigMap("1-19-0"),
+	)
+	// RefreshIstioCache relies on this being set.
+	k8s.KubeClusterInfo.Name = conf.KubernetesConfig.ClusterName
+
+	testServer := istiodTestServer(t)
+	fakeForwarder := &fakeForwarder{
+		ClientInterface: k8s,
+		testURL:         testServer.URL,
+	}
+
+	k8sclients := make(map[string]kubernetes.ClientInterface)
+	k8sclients[conf.KubernetesConfig.ClusterName] = fakeForwarder
+	cache := cache.NewTestingCacheWithClients(t, k8sclients, *conf)
+	discovery := istio.NewDiscovery(k8sclients, cache, conf)
+
+	mesh, err := discovery.Mesh(context.Background())
+	require.NoError(err)
+	require.Len(mesh.ControlPlanes, 2)
+
+	require.Equal("", mesh.ControlPlanes[0].Status)
+	require.Equal("", mesh.ControlPlanes[1].Status)
+}
+
+func TestUpdateStatusMultipleHealthyRevs(t *testing.T) {
+	require := require.New(t)
+
+	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = "Kubernetes"
+
+	defaultIstiod := fakeIstiodDeployment(conf.KubernetesConfig.ClusterName, false)
+	istiod_1_19 := fakeIstiodWithRevision(conf.KubernetesConfig.ClusterName, "1-19-0", false)
+	defaultPod := runningIstiodPod("default")
+	defaultPod.Labels[models.IstioRevisionLabel] = "default"
+	istiod_1_19_pod := runningIstiodPod("1-19-0")
+	istiod_1_19_pod.Labels[models.IstioRevisionLabel] = "1-19-0"
+
+	k8s := kubetest.NewFakeK8sClient(
+		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
+		defaultIstiod,
+		istiod_1_19,
+		fakeIstioConfigMap("default"),
+		fakeIstioConfigMap("1-19-0"),
+		defaultPod,
+		istiod_1_19_pod,
+	)
+	// RefreshIstioCache relies on this being set.
+	k8s.KubeClusterInfo.Name = conf.KubernetesConfig.ClusterName
+
+	testServer := istiodTestServer(t)
+	fakeForwarder := &fakeForwarder{
+		ClientInterface: k8s,
+		testURL:         testServer.URL,
+	}
+
+	k8sclients := make(map[string]kubernetes.ClientInterface)
+	k8sclients[conf.KubernetesConfig.ClusterName] = fakeForwarder
+	cache := cache.NewTestingCacheWithClients(t, k8sclients, *conf)
+	discovery := istio.NewDiscovery(k8sclients, cache, conf)
+
+	mesh, err := discovery.Mesh(context.Background())
+	require.NoError(err)
+	require.Len(mesh.ControlPlanes, 2)
+
+	require.Equal(kubernetes.ComponentHealthy, mesh.ControlPlanes[0].Status)
+	require.Equal(kubernetes.ComponentHealthy, mesh.ControlPlanes[1].Status)
 }

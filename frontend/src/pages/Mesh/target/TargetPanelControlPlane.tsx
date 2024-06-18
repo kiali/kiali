@@ -10,7 +10,7 @@ import {
 } from './TargetPanelCommon';
 import { Title, TitleSizes } from '@patternfly/react-core';
 import { serverConfig } from 'config';
-import { CanaryUpgradeStatus, OutboundTrafficPolicy } from 'types/IstioObjects';
+import { CanaryUpgradeStatus } from 'types/IstioObjects';
 import { NamespaceInfo, NamespaceStatus } from 'types/NamespaceInfo';
 import { isRemoteCluster } from 'pages/Overview/OverviewCardControlPlaneNamespace';
 import { DirectionType } from 'pages/Overview/OverviewToolbar';
@@ -26,7 +26,6 @@ import { ApiError } from 'types/Api';
 import { DEGRADED, FAILURE, HEALTHY, Health, NOT_READY } from 'types/Health';
 import * as AlertUtils from '../../../utils/AlertUtils';
 import { MessageType } from 'types/MessageCenter';
-import { IstiodResourceThresholds } from 'types/IstioStatus';
 import { TLSStatus, nsWideMTLSStatus } from 'types/TLSStatus';
 import * as FilterHelper from '../../../components/FilterList/FilterHelper';
 import { NodeData } from '../MeshElems';
@@ -48,11 +47,9 @@ type TargetPanelControlPlaneState = {
   controlPlaneMetrics?: ControlPlaneMetricsMap;
   controlPlaneNode?: Node<NodeModel, any>;
   errorMetrics?: Metric[];
-  istiodResourceThresholds?: IstiodResourceThresholds;
   loading: boolean;
   metrics?: Metric[];
   nsInfo?: NamespaceInfo;
-  outboundPolicyMode?: OutboundTrafficPolicy;
   status?: NamespaceStatus;
   tlsStatus?: TLSStatus;
 };
@@ -62,10 +59,8 @@ const defaultState: TargetPanelControlPlaneState = {
   controlPlaneMetrics: undefined,
   controlPlaneNode: undefined,
   errorMetrics: undefined,
-  istiodResourceThresholds: undefined,
   loading: false,
   nsInfo: undefined,
-  outboundPolicyMode: undefined,
   status: undefined,
   tlsStatus: undefined
 };
@@ -123,8 +118,7 @@ export class TargetPanelControlPlane extends React.Component<
     const data = this.state.controlPlaneNode?.getData() as NodeData;
 
     // Controlplane infradata is structured: {config: configuration, revision: string}
-    const config = data.infraData?.config;
-    const revision = data.infraData?.revision;
+    const { config, revision } = data.infraData;
 
     return (
       <div
@@ -140,7 +134,7 @@ export class TargetPanelControlPlane extends React.Component<
           <MeshMTLSStatus cluster={data.cluster} revision={revision} />
 
           <ControlPlaneNamespaceStatus
-            outboundTrafficPolicy={this.state.outboundPolicyMode}
+            outboundTrafficPolicy={config.OutboundTrafficPolicy}
             namespace={nsInfo}
           ></ControlPlaneNamespaceStatus>
 
@@ -222,9 +216,7 @@ export class TargetPanelControlPlane extends React.Component<
           .registerAll(`promises-${data.cluster}:${data.namespace}`, [
             this.fetchCanariesStatus(),
             this.fetchHealthStatus(),
-            this.fetchIstiodResourceThresholds(),
             this.fetchMetrics(),
-            this.fetchOutboundTrafficPolicyMode(),
             this.fetchTLS()
           ])
           .then(_ => {
@@ -310,20 +302,6 @@ export class TargetPanelControlPlane extends React.Component<
       .catch(err => this.handleApiError('Could not fetch namespace health', err));
   };
 
-  private fetchIstiodResourceThresholds = async (): Promise<void> => {
-    if (!this.isControlPlane()) {
-      return Promise.resolve();
-    }
-
-    return API.getIstiodResourceThresholds()
-      .then(response => {
-        this.setState({ istiodResourceThresholds: response.data });
-      })
-      .catch(error => {
-        AlertUtils.addError('Error fetching Istiod resource thresholds.', error, 'default', MessageType.ERROR);
-      });
-  };
-
   private fetchMetrics = async (): Promise<void> => {
     const rateParams = computePrometheusRateParams(this.props.duration, 10);
     const options: IstioMetricsOptions = {
@@ -387,20 +365,6 @@ export class TargetPanelControlPlane extends React.Component<
       .catch(err => this.handleApiError('Could not fetch namespace TLS status', err));
   };
 
-  private fetchOutboundTrafficPolicyMode = async (): Promise<void> => {
-    if (!this.isControlPlane()) {
-      return Promise.resolve();
-    }
-
-    return API.getOutboundTrafficPolicyMode()
-      .then(response => {
-        this.setState({ outboundPolicyMode: { mode: response.data.mode } });
-      })
-      .catch(error => {
-        AlertUtils.addError('Error fetching Mesh OutboundTrafficPolicy.Mode.', error, 'default', MessageType.ERROR);
-      });
-  };
-
   private isControlPlane = (): boolean => {
     const data = this.state.controlPlaneNode!.getData() as NodeData;
     return data.namespace === serverConfig.istioNamespace;
@@ -413,6 +377,7 @@ export class TargetPanelControlPlane extends React.Component<
   private renderCharts = (): React.ReactNode => {
     if (this.state.status) {
       const data = this.state.controlPlaneNode!.getData() as NodeData;
+      const { thresholds } = data.infraData;
 
       return (
         <OverviewCardSparklineCharts
@@ -424,7 +389,7 @@ export class TargetPanelControlPlane extends React.Component<
           metrics={this.state.metrics}
           errorMetrics={this.state.errorMetrics}
           controlPlaneMetrics={this.state.controlPlaneMetrics}
-          istiodResourceThresholds={this.state.istiodResourceThresholds}
+          istiodResourceThresholds={thresholds}
         />
       );
     }

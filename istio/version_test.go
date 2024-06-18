@@ -5,7 +5,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"strings"
+	"net/url"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -145,14 +145,9 @@ type fakeForwarder struct {
 	testURL string
 }
 
-func joinURL(base, path string) string {
-	base = strings.TrimSuffix(base, "/")
-	path = strings.TrimPrefix(path, "/")
-	return base + "/" + path
-}
-
 func (f *fakeForwarder) ForwardGetRequest(namespace, podName string, destinationPort int, path string) ([]byte, error) {
-	resp, err := http.Get(joinURL(f.testURL, path))
+	url, _ := url.JoinPath(f.testURL, path)
+	resp, err := http.Get(url)
 	if err != nil {
 		return nil, err
 	}

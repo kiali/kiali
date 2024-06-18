@@ -1,6 +1,7 @@
 package models
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -46,9 +47,20 @@ type ControlPlane struct {
 	// It could also manage the cluster that it is running on.
 	ManagesExternal bool
 
+	// Resources are the resources that the controlplane is using.
+	Resources corev1.ResourceRequirements
+
 	// Revision is the revision of the controlplane.
 	// Can be empty when it's the default revision.
 	Revision string
+
+	// Status is the status of the controlplane as reported by kiali.
+	// It includes the deployment status and whether kiali can connect
+	// to the controlplane or not.
+	Status string
+
+	// Thresholds is the thresholds for the controlplane.
+	Thresholds *IstiodThresholds
 
 	// Version is the version of the controlplane.
 	Version *ExternalServiceInfo
@@ -59,9 +71,6 @@ type ControlPlaneConfiguration struct {
 	// IsGatewayToNamespace specifies the PILOT_SCOPE_GATEWAY_TO_NAMESPACE environment variable in Control Plane
 	// This is not currently used by the frontend so excluding it from the API response.
 	IsGatewayToNamespace bool `json:"-"`
-
-	// OutboundTrafficPolicy is the outbound traffic policy for the controlplane.
-	OutboundTrafficPolicy OutboundPolicy
 
 	// Network is the name of the network that the controlplane is using.
 	Network string
@@ -86,7 +95,8 @@ type IstioMeshConfig struct {
 	DefaultConfig struct {
 		MeshId string `yaml:"meshId"`
 	} `yaml:"defaultConfig" json:"defaultConfig"`
-	TrustDomain string `yaml:"trustDomain,omitempty"`
+	OutboundTrafficPolicy OutboundPolicy `yaml:"outboundTrafficPolicy,omitempty"`
+	TrustDomain           string         `yaml:"trustDomain,omitempty"`
 }
 
 func (imc IstioMeshConfig) GetEnableAutoMtls() bool {
