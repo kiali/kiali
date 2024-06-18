@@ -57,8 +57,10 @@ export type NodeData = DecoratedGraphNodeData & {
   badgeTextColor?: string;
   column?: number;
   component?: React.ReactNode;
+  hasSpans?: Span[];
   icon?: React.ReactNode;
   isFind?: boolean;
+  isFocus?: boolean;
   isHighlighted?: boolean;
   isSelected?: boolean;
   isUnhighlighted?: boolean;

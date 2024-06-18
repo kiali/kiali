@@ -67,7 +67,6 @@ import { HistoryManager, URLParam } from 'app/History';
 import { tcpTimerConfig, timerConfig } from 'components/CytoscapeGraph/TrafficAnimation/AnimationTimerConfig';
 import { TourStop } from 'components/Tour/TourStop';
 import { GraphTourStops } from 'pages/Graph/GraphHelpTour';
-import { getFocusSelector, unsetFocusSelector } from 'utils/SearchParamUtils';
 
 let initialLayout = false;
 let requestFit = false;
@@ -109,6 +108,7 @@ const TopologyContent: React.FC<{
   controller: Controller;
   edgeLabels: EdgeLabelMode[];
   edgeMode: EdgeMode;
+  focusNode?: FocusNode;
   graphData: GraphData;
   highlighter: GraphHighlighterPF;
   isMiniGraph: boolean;
@@ -130,6 +130,7 @@ const TopologyContent: React.FC<{
   controller,
   edgeLabels,
   edgeMode,
+  focusNode,
   graphData,
   highlighter,
   isMiniGraph,
@@ -279,22 +280,6 @@ const TopologyContent: React.FC<{
       fitView();
     }
   }, [fitView]);
-
-  //
-  // TODO: Maybe add this back if we have popovers that behave badly
-  // layoutPosition Change  handling
-  //
-  /*
-        const onLayoutPositionChange = React.useCallback(() => {
-          if (controller && controller.hasGraph()) {
-            //hide popovers on pan / zoom
-            const popover = document.querySelector('[aria-labelledby="popover-decorator-header"]');
-            if (popover) {
-              (popover as HTMLElement).style.display = 'none';
-            }
-          }
-        }, [controller]);
-        */
 
   //
   // Set detail levels for graph (control zoom-sensitive labels)
@@ -476,18 +461,6 @@ const TopologyContent: React.FC<{
       // set decorators
       nodes.forEach(n => setNodeAttachments(n, graphSettings));
 
-      let focusNodeId = getFocusSelector();
-      if (focusNodeId) {
-        const focusNode = nodes.find(n => n.getId() === focusNodeId);
-        if (focusNode) {
-          const data = focusNode.getData() as NodeData;
-          data.isSelected = true;
-          setSelectedIds([focusNode.getId()]);
-          focusNode.setData({ ...(focusNode.getData() as NodeData) });
-        }
-        unsetFocusSelector();
-      }
-
       // pre-select node if provided
       const graphNode = graphData.fetchParams.node;
       if (graphNode) {
@@ -559,6 +532,30 @@ const TopologyContent: React.FC<{
     setSelectedIds,
     setUpdateTime
   ]);
+
+  React.useEffect(() => {
+    if (focusNode) {
+      const { nodes } = elems(controller);
+      const node = nodes.find(n => n.getId() === focusNode.id);
+      if (node) {
+        const data = node.getData() as NodeData;
+        // select node if needed
+        if (focusNode.isSelected) {
+          data.isSelected = true;
+          setSelectedIds([node.getId()]);
+          node.setData({ ...(node.getData() as NodeData) });
+        }
+        // flash node
+        for (let i = 0; i < 10; ++i) {
+          setTimeout(() => {
+            const data = node.getData() as NodeData;
+            data.isFocus = !data.isFocus;
+            node.setData({ ...(node.getData() as NodeData) });
+          }, i * 500);
+        }
+      }
+    }
+  }, [controller, focusNode, setSelectedIds]);
 
   //TODO REMOVE THESE DEBUGGING MESSAGES...
   // Leave them for now, they are just good for understanding state changes while we develop this PFT graph.
@@ -828,6 +825,7 @@ export const GraphPF: React.FC<{
 }> = ({
   edgeLabels,
   edgeMode,
+  focusNode,
   graphData,
   isMiniGraph,
   layout,
@@ -896,6 +894,7 @@ export const GraphPF: React.FC<{
         controller={controller}
         edgeLabels={edgeLabels}
         edgeMode={edgeMode}
+        focusNode={focusNode}
         graphData={graphData}
         highlighter={highlighter!}
         isMiniGraph={isMiniGraph}

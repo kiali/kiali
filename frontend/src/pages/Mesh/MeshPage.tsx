@@ -17,7 +17,7 @@ import {
 import { KialiAppState } from '../../store/Store';
 import { PFColors } from 'components/Pf/PfColors';
 import { TourActions } from 'actions/TourActions';
-import { isKioskMode, getFocusSelector } from 'utils/SearchParamUtils';
+import { isKioskMode } from 'utils/SearchParamUtils';
 import { Chip } from '@patternfly/react-core';
 import { EMPTY_MESH_DATA, MeshDataSource, MeshFetchParams } from '../../services/MeshDataSource';
 import { KialiDispatch } from 'types/Redux';
@@ -32,7 +32,7 @@ import {
   MeshDefinition,
   MeshTarget
 } from 'types/Mesh';
-import { FocusNode, Mesh, getLayoutByName } from './Mesh';
+import { Mesh, getLayoutByName } from './Mesh';
 import { MeshActions } from 'actions/MeshActions';
 import { MeshLegend } from './MeshLegend';
 import { MeshToolbarActions } from 'actions/MeshToolbarActions';
@@ -134,14 +134,11 @@ const MeshErrorBoundaryFallback = (): JSX.Element => {
 
 class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
   private readonly errorBoundaryRef: any;
-  private focusNode?: FocusNode;
   private meshDataSource: MeshDataSource;
 
   constructor(props: MeshPageProps) {
     super(props);
     this.errorBoundaryRef = React.createRef();
-    const focusNodeId = getFocusSelector();
-    this.focusNode = focusNodeId ? { id: focusNodeId, isSelected: true } : undefined;
     this.meshDataSource = new MeshDataSource();
 
     this.state = {
@@ -244,13 +241,7 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
                   isLoading={this.state.meshData.isLoading}
                   isMiniMesh={false}
                 >
-                  <Mesh
-                    {...this.props}
-                    focusNode={this.focusNode}
-                    isMiniMesh={false}
-                    meshData={this.state.meshData}
-                    onReady={this.handleReady}
-                  />
+                  <Mesh {...this.props} isMiniMesh={false} meshData={this.state.meshData} onReady={this.handleReady} />
                 </EmptyMeshLayout>
               </div>
             </ErrorBoundary>
@@ -260,7 +251,6 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
                 duration={this.props.duration}
                 isPageVisible={this.props.isPageVisible}
                 istioAPIEnabled={this.props.istioAPIEnabled}
-                onFocus={this.onFocus}
                 refreshInterval={this.props.refreshInterval}
                 target={this.props.target}
                 updateTime={this.state.meshData.timestamp / 1000}
@@ -271,11 +261,6 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
       </>
     );
   }
-
-  // TODO Focus...
-  private onFocus = (focusNode: FocusNode): void => {
-    console.debug(`onFocus(${focusNode})`);
-  };
 
   private handleReady = (refs: MeshRefs): void => {
     this.setState({ meshRefs: refs });

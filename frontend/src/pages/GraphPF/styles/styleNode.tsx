@@ -58,19 +58,25 @@ const StyleNodeComponent: React.FC<StyleNodeProps> = ({ element, ...rest }) => {
   const ShapeComponent = getShapeComponent(element);
 
   const ColorFind = PFColors.Gold400;
+  const ColorFocus = PFColors.Blue200;
   const ColorSpan = PFColors.Purple200;
   const OverlayOpacity = 0.3;
   const OverlayWidth = 40;
 
-  const traceOverlayStyle = kialiStyle({
-    strokeWidth: OverlayWidth,
-    stroke: ColorSpan,
-    strokeOpacity: OverlayOpacity
-  });
-
   const findOverlayStyle = kialiStyle({
     strokeWidth: OverlayWidth,
     stroke: ColorFind,
+    strokeOpacity: OverlayOpacity
+  });
+
+  const focusOverlayStyle = kialiStyle({
+    strokeWidth: OverlayWidth,
+    stroke: ColorFocus
+  });
+
+  const traceOverlayStyle = kialiStyle({
+    strokeWidth: OverlayWidth,
+    stroke: ColorSpan,
     strokeOpacity: OverlayOpacity
   });
 
@@ -109,6 +115,7 @@ const StyleNodeComponent: React.FC<StyleNodeProps> = ({ element, ...rest }) => {
         <ShapeComponent className={traceOverlayStyle} width={width} height={height} element={element} />
       )}
       {data.isFind && <ShapeComponent className={findOverlayStyle} width={width} height={height} element={element} />}
+      {data.isFocus && <ShapeComponent className={focusOverlayStyle} width={width} height={height} element={element} />}
       <DefaultNode
         element={element}
         {...rest}

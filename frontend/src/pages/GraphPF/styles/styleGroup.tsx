@@ -3,6 +3,7 @@ import {
   DefaultGroup,
   Node,
   observer,
+  Rect,
   ScaleDetailsLevel,
   ShapeProps,
   WithSelectionProps
@@ -10,8 +11,12 @@ import {
 import { useDetailsLevel } from '@patternfly/react-topology';
 import { PFColors } from 'components/Pf/PfColors';
 import React from 'react';
+import { kialiStyle } from 'styles/StyleUtils';
 
 const ICON_PADDING = 20;
+
+const ColorFocus = PFColors.Blue200;
+const OverlayWidth = 40;
 
 export enum DataTypes {
   Default
@@ -26,6 +31,11 @@ type StyleGroupProps = {
   getCollapsedShape?: (node: Node) => React.FC<ShapeProps>;
   onCollapseChange?: (group: Node, collapsed: boolean) => void;
 } & WithSelectionProps;
+
+const focusOverlayStyle = kialiStyle({
+  strokeWidth: OverlayWidth,
+  stroke: ColorFocus
+});
 
 const StyleGroupComponent: React.FC<StyleGroupProps> = ({
   collapsedHeight = 75,
@@ -71,8 +81,20 @@ const StyleGroupComponent: React.FC<StyleGroupProps> = ({
     );
   };
 
+  const boxRef = React.useRef<Rect | null>(null);
+  boxRef.current = element.getBounds();
+
   return (
     <g style={{ opacity: opacity }} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
+      {data.isFocus && (
+        <rect
+          className={focusOverlayStyle}
+          x={boxRef.current.x}
+          y={boxRef.current.y}
+          width={boxRef.current.width}
+          height={boxRef.current.height}
+        />
+      )}
       <DefaultGroup
         element={element}
         collapsedWidth={collapsedWidth}
