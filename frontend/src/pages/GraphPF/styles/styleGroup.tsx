@@ -33,6 +33,7 @@ type StyleGroupProps = {
 } & WithSelectionProps;
 
 const focusOverlayStyle = kialiStyle({
+  fillOpacity: 0,
   strokeWidth: OverlayWidth,
   stroke: ColorFocus
 });
