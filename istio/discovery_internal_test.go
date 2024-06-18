@@ -9,6 +9,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/kubernetes/cache"
+	"github.com/kiali/kiali/kubernetes/kubetest"
+	"github.com/kiali/kiali/models"
 )
 
 func TestGetIstioConfigMap(t *testing.T) {
@@ -59,71 +63,99 @@ discoverySelectors:
 
 func TestIstioConfigMapName(t *testing.T) {
 	testCases := map[string]struct {
-		conf     *config.Config
-		revision string
-		expected string
+		configMapName string
+		configMap     *corev1.ConfigMap
+		expectErr     bool
 	}{
 		"ConfigMapName is empty and revision is default": {
-			conf: &config.Config{
-				ExternalServices: config.ExternalServices{
-					Istio: config.IstioConfig{
-						ConfigMapName: "",
-					},
+			configMapName: "",
+			configMap: &corev1.ConfigMap{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "istio",
+					Namespace: "istio-system",
+					Labels:    map[string]string{models.IstioRevisionLabel: "default"},
 				},
+				Data: map[string]string{"mesh": ""},
 			},
-			revision: "default",
-			expected: "istio",
 		},
 		"ConfigMapName is empty and revision is v1": {
-			conf: &config.Config{
-				ExternalServices: config.ExternalServices{
-					Istio: config.IstioConfig{
-						ConfigMapName: "",
-					},
+			configMapName: "",
+			configMap: &corev1.ConfigMap{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "istio-v1",
+					Namespace: "istio-system",
+					Labels:    map[string]string{models.IstioRevisionLabel: "v1"},
 				},
+				Data: map[string]string{"mesh": ""},
 			},
-			revision: "v1",
-			expected: "istio-v1",
 		},
 		"ConfigMapName is set and revision is default": {
-			conf: &config.Config{
-				ExternalServices: config.ExternalServices{
-					Istio: config.IstioConfig{
-						ConfigMapName: "my-istio-config",
-					},
+			configMapName: "my-istio-config",
+			configMap: &corev1.ConfigMap{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "istio",
+					Namespace: "istio-system",
+					Labels:    map[string]string{models.IstioRevisionLabel: "default"},
 				},
+				Data: map[string]string{"mesh": ""},
 			},
-			revision: "default",
-			expected: "my-istio-config",
+			// An error occurs because the configMapName setting takes precedence over the revision label
+			expectErr: true,
 		},
 		"ConfigMapName is set and revision is v2": {
-			conf: &config.Config{
-				ExternalServices: config.ExternalServices{
-					Istio: config.IstioConfig{
-						ConfigMapName: "my-istio-config",
-					},
+			configMapName: "my-istio-config",
+			configMap: &corev1.ConfigMap{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "istio-v2",
+					Namespace: "istio-system",
+					Labels:    map[string]string{models.IstioRevisionLabel: "v2"},
 				},
+				Data: map[string]string{"mesh": ""},
 			},
-			revision: "v2",
-			expected: "my-istio-config",
+			// An error occurs because the configMapName setting takes precedence over the revision label
+			expectErr: true,
 		},
 		"ConfigMapName is set and revision is empty": {
-			conf: &config.Config{
-				ExternalServices: config.ExternalServices{
-					Istio: config.IstioConfig{
-						ConfigMapName: "my-istio-config",
-					},
+			configMapName: "my-istio-config",
+			configMap: &corev1.ConfigMap{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "istio",
+					Namespace: "istio-system",
 				},
+				Data: map[string]string{"mesh": ""},
 			},
-			revision: "",
-			expected: "my-istio-config",
+			// An error occurs because the configMapName setting takes precedence over the revision label
+			expectErr: true,
 		},
 	}
 
 	for desc, tc := range testCases {
 		t.Run(desc, func(t *testing.T) {
-			result := istioConfigMapName(tc.conf, tc.revision)
-			assert.Equal(t, tc.expected, result)
+			require := require.New(t)
+			conf := config.NewConfig()
+			conf.ExternalServices.Istio.ConfigMapName = tc.configMapName
+			k8s := kubetest.NewFakeK8sClient(
+				&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "istio-system"}},
+				tc.configMap,
+			)
+
+			clients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: k8s}
+			cache := cache.NewTestingCacheWithClients(t, clients, *conf)
+			discovery := NewDiscovery(clients, cache, conf)
+			kubeCache, err := cache.GetKubeCache(conf.KubernetesConfig.ClusterName)
+			require.NoError(err)
+
+			controlPlane := &models.ControlPlane{
+				Cluster:         &models.KubeCluster{Name: conf.KubernetesConfig.ClusterName},
+				IstiodNamespace: "istio-system",
+				Revision:        tc.configMap.Labels[models.IstioRevisionLabel],
+			}
+			_, err = discovery.getControlPlaneConfiguration(kubeCache, controlPlane)
+			if tc.expectErr {
+				require.Error(err)
+			} else {
+				require.NoError(err)
+			}
 		})
 	}
 }

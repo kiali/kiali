@@ -8,7 +8,6 @@ export interface MeshCluster {
   isKialiHome: boolean;
   kialiInstances: KialiInstance[];
   name: string;
-  network: string;
   secretName: string;
 }
 

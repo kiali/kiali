@@ -709,7 +709,7 @@ func NewConfig() (c *Config) {
 				IstioAPIEnabled:                   true,
 				IstioIdentityDomain:               "svc.cluster.local",
 				IstioInjectionAnnotation:          "sidecar.istio.io/inject",
-				IstioSidecarInjectorConfigMapName: "istio-sidecar-injector",
+				IstioSidecarInjectorConfigMapName: "",
 				IstioSidecarAnnotation:            "sidecar.istio.io/status",
 				IstiodDeploymentName:              "",
 				IstiodPodMonitoringPort:           15014,

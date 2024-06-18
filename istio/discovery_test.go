@@ -339,7 +339,7 @@ func TestResolveKialiControlPlaneClusterIsCached(t *testing.T) {
 	check.Equal("KialiCluster", result[0].Name)
 }
 
-func TestGetMesh(t *testing.T) {
+func TestMesh(t *testing.T) {
 	istiodDeployment := &apps_v1.Deployment{
 		ObjectMeta: v1.ObjectMeta{
 			Name:      "istiod",
@@ -363,6 +363,15 @@ trustDomain: cluster.local
 		},
 		Data: map[string]string{"mesh": configMapData},
 	}
+	sideCarConfigMap := &core_v1.ConfigMap{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      "istio-sidecar-injector",
+			Namespace: "istio-system",
+		},
+		Data: map[string]string{
+			"values": "{ \"global\": { \"network\": \"kialiNetwork\" } }",
+		},
+	}
 
 	require := require.New(t)
 	conf := config.NewConfig()
@@ -370,6 +379,7 @@ trustDomain: cluster.local
 		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
 		istiodDeployment,
 		istioConfigMap,
+		sideCarConfigMap,
 	)
 	cache := cache.NewTestingCache(t, k8s, *conf)
 
@@ -380,6 +390,146 @@ trustDomain: cluster.local
 	require.Len(mesh.ControlPlanes, 1)
 	require.True(*mesh.ControlPlanes[0].Config.EnableAutoMtls)
 	require.Len(mesh.ControlPlanes[0].ManagedClusters, 1)
+	require.Equal("kialiNetwork", mesh.ControlPlanes[0].Config.Network)
+}
+
+func TestMeshResolvesNetwork(t *testing.T) {
+	cases := map[string]struct {
+		expectedNetwork              string
+		objects                      []runtime.Object
+		sideCarInjectorConfigMap     *core_v1.ConfigMap
+		sideCarInjectorConfigMapName string
+		sideCarConfigMapYAML         string
+	}{
+		"Network from sidecar injector configmap": {
+			expectedNetwork: "kialiNetwork",
+			sideCarInjectorConfigMap: &core_v1.ConfigMap{
+				ObjectMeta: v1.ObjectMeta{
+					Name:      "istio-sidecar-injector",
+					Namespace: "istio-system",
+				},
+				Data: map[string]string{
+					"values": `{"global": {"network": "kialiNetwork"}}`,
+				},
+			},
+		},
+		"Sidecar injector configmap set in kiali config": {
+			expectedNetwork: "kialiNetwork",
+			sideCarInjectorConfigMap: &core_v1.ConfigMap{
+				ObjectMeta: v1.ObjectMeta{
+					Name:      "istio-sidecar-injector",
+					Namespace: "istio-system",
+				},
+				Data: map[string]string{
+					"values": `{"global": {"network": "kialiNetwork"}}`,
+				},
+			},
+			sideCarInjectorConfigMapName: "istio-sidecar-injector",
+		},
+		"bad sidecar injector configmap json returns empty string": {
+			expectedNetwork: "",
+			sideCarInjectorConfigMap: &core_v1.ConfigMap{
+				ObjectMeta: v1.ObjectMeta{
+					Name:      "istio-sidecar-injector",
+					Namespace: "istio-system",
+				},
+				Data: map[string]string{
+					"values": "bad json",
+				},
+			},
+		},
+		"bad sidecar injector configmap global json returns empty string": {
+			expectedNetwork: "",
+			sideCarInjectorConfigMap: &core_v1.ConfigMap{
+				ObjectMeta: v1.ObjectMeta{
+					Name:      "istio-sidecar-injector",
+					Namespace: "istio-system",
+				},
+				Data: map[string]string{
+					"values": `{"global": "bad json"}`,
+				},
+			},
+		},
+		"sidecar injector configmap without global key returns empty string": {
+			expectedNetwork: "",
+			sideCarInjectorConfigMap: &core_v1.ConfigMap{
+				ObjectMeta: v1.ObjectMeta{
+					Name:      "istio-sidecar-injector",
+					Namespace: "istio-system",
+				},
+				Data: map[string]string{
+					"values": `{}`,
+				},
+			},
+		},
+		"sidecar injector configmap without global.network key returns empty string": {
+			expectedNetwork: "",
+			sideCarInjectorConfigMap: &core_v1.ConfigMap{
+				ObjectMeta: v1.ObjectMeta{
+					Name:      "istio-sidecar-injector",
+					Namespace: "istio-system",
+				},
+				Data: map[string]string{
+					"values": `{"global": {}}`,
+				},
+			},
+		},
+		"sidecar injector configmap with bad network key returns empty string": {
+			expectedNetwork: "",
+			sideCarInjectorConfigMap: &core_v1.ConfigMap{
+				ObjectMeta: v1.ObjectMeta{
+					Name:      "istio-sidecar-injector",
+					Namespace: "istio-system",
+				},
+				Data: map[string]string{
+					"values": `{"global": {"network": 1}}`,
+				},
+			},
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			require := require.New(t)
+			conf := config.NewConfig()
+			conf.ExternalServices.Istio.IstioSidecarInjectorConfigMapName = tc.sideCarInjectorConfigMapName
+
+			istiodDeployment := &apps_v1.Deployment{
+				ObjectMeta: v1.ObjectMeta{
+					Name:      "istiod",
+					Namespace: "istio-system",
+					Labels: map[string]string{
+						"app":                     "istiod",
+						models.IstioRevisionLabel: "default",
+					},
+				},
+			}
+			istioConfigMap := &core_v1.ConfigMap{
+				ObjectMeta: v1.ObjectMeta{
+					Name:      "istio",
+					Namespace: "istio-system",
+					Labels:    map[string]string{models.IstioRevisionLabel: "default"},
+				},
+				Data: map[string]string{"mesh": ""},
+			}
+
+			k8s := kubetest.NewFakeK8sClient(
+				&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
+				istiodDeployment,
+				istioConfigMap,
+				tc.sideCarInjectorConfigMap,
+			)
+			cache := cache.NewTestingCache(t, k8s, *conf)
+
+			clients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: k8s}
+			discovery := istio.NewDiscovery(clients, cache, conf)
+			mesh, err := discovery.Mesh(context.TODO())
+			require.NoError(err)
+			require.Len(mesh.ControlPlanes, 1)
+			require.Len(mesh.ControlPlanes[0].ManagedClusters, 1)
+			require.Equal(tc.expectedNetwork, mesh.ControlPlanes[0].Config.Network)
+		})
+	}
 }
 
 func TestGetMeshMultipleRevisions(t *testing.T) {

@@ -131,8 +131,6 @@ export class TargetPanelCluster extends React.Component<TargetPanelClusterProps,
             {clusterData.accessible && this.renderKialiLinks(clusterData.kialiInstances)}
             {t('Version: {{version}}', { version: version || t(UNKNOWN) })}
             <br />
-            {t('Network: {{network}}', { network: clusterData.network || t('n/a') })}
-            <br />
             {t('API Endpoint: {{apiEndpoint}}', { apiEndpoint: clusterData.apiEndpoint || t('n/a') })}
             <br />
             {t('Secret Name: {{secretName}}', { secretName: clusterData.secretName || t('n/a') })}
