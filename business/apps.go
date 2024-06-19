@@ -392,16 +392,13 @@ func (in *AppService) GetAppDetails(ctx context.Context, criteria AppCriteria) (
 	}
 
 	pods := models.Pods{}
-	isAmbient := true
+	isAmbient := len(appDetails.Workloads) > 0
 
 	for _, workload := range appDetails.Workloads {
 		pods = append(pods, workload.Pods...)
 		if !workload.IsAmbient {
 			isAmbient = false
 		}
-	}
-	if len(appDetails.Workloads) == 0 {
-		isAmbient = false
 	}
 
 	appInstance.Runtimes = NewDashboardsService(in.conf, in.grafana, ns, nil).GetCustomDashboardRefs(criteria.Namespace, criteria.AppName, "", pods)
