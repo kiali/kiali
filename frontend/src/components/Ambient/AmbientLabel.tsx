@@ -24,7 +24,7 @@ export const tooltipMsgType = {
   app: (
     <div>
       <div>Ambient Mesh</div>
-      <div>All the App Workloads are in Ambient Mesh.</div>
+      <div>All of this App's Workloads are in the Ambient Mesh.</div>
       <div>For more details, see the Workloads detail</div>
     </div>
   ),
