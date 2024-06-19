@@ -48,8 +48,8 @@ func (n NoHostChecker) checkReference(refNamespace *k8s_networking_v1.Namespace,
 	}
 	fqdn := kubernetes.GetHost(string(refName), namespace, n.Namespaces.GetNames())
 	//service name should not be set in fqdn format
-	// if the http route is referencing to a service from the same namespace, then service should exist there
-	// if the http route is referencing to a service from other namespace, then a ReferenceGrant should exist to cross namespace reference, and the service should exist in remote namespace
+	// if the grpc route is referencing to a service from the same namespace, then service should exist there
+	// if the grpc route is referencing to a service from other namespace, then a ReferenceGrant should exist to cross namespace reference, and the service should exist in remote namespace
 	if strings.Contains(string(refName), ".") ||
 		(namespace == n.K8sGRPCRoute.Namespace && !n.checkDestination(fqdn.String(), namespace)) ||
 		(namespace != n.K8sGRPCRoute.Namespace && (!n.checkReferenceGrant(n.K8sGRPCRoute.Namespace, namespace) || !n.checkDestination(fqdn.String(), namespace))) {
