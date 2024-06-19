@@ -576,7 +576,7 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, cluster, namespace,
 	}
 
 	wo := models.WorkloadOverviews{}
-	isAmbient := true
+	isAmbient := len(ws) > 0
 	for _, w := range ws {
 		wi := &models.WorkloadListItem{}
 		wi.ParseWorkload(w)
@@ -584,9 +584,6 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, cluster, namespace,
 		if !w.IsAmbient {
 			isAmbient = false
 		}
-	}
-	if len(ws) == 0 {
-		isAmbient = false
 	}
 
 	serviceOverviews := make([]*models.ServiceOverview, 0)
