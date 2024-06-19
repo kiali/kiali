@@ -1887,7 +1887,35 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 	return wl, kubernetes.NewNotFound(criteria.WorkloadName, "Kiali", "Workload")
 }
 
-// Get the Waypoint proxy for a workload
+// Get the Waypoint proxies for a workload
+func (in *WorkloadService) getWaypointsForWorkload(ctx context.Context, namespace string, workload models.Workload) []models.Workload {
+	nsWaypoints, err := in.fetchWorkloads(ctx, namespace, fmt.Sprintf("%s=%s", config.WaypointLabel, config.WaypointLabelValue))
+	if err != nil {
+		log.Errorf("Error fetching namespace waypoints: %v", err)
+		return nil
+	}
+
+	var waypoints []models.Workload
+	// Get service Account name for each pod from the workload
+	for _, nsWaypoint := range nsWaypoints {
+		for _, pod := range nsWaypoint.Pods {
+			if pod.Labels["istio.io/gateway-name"] == "namespace" {
+				waypoints = append(waypoints, *nsWaypoint)
+				break
+			} else {
+				// Get waypoint workloads from a service account
+				sa := pod.Annotations["istio.io/for-service-account"]
+				for _, pod := range workload.Pods {
+					if pod.ServiceAccountName == sa {
+						waypoints = append(waypoints, *nsWaypoint)
+						break
+					}
+				}
+			}
+		}
+	}
+	return waypoints
+}
 func (in *WorkloadService) getWaypointForWorkload(ctx context.Context, namespace string, workload models.Workload) []models.Workload {
 	wlist, err := in.fetchWorkloads(ctx, namespace, fmt.Sprintf("%s=%s", config.WaypointLabel, config.WaypointLabelValue))
 	if err != nil {
