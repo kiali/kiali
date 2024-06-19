@@ -4,7 +4,6 @@ import { kialiStyle } from 'styles/StyleUtils';
 import { KialiIcon } from 'config/KialiIcon';
 import { KialiAppState } from 'store/Store';
 import { TourStop } from 'components/Tour/TourStop';
-import { FocusNode } from 'pages/GraphPF/GraphPF';
 import { classes } from 'typestyle';
 import { PFColors } from 'components/Pf/PfColors';
 import { MeshInfraType, MeshTarget, MeshType } from 'types/Mesh';
@@ -31,7 +30,6 @@ type ReduxProps = {
 type TargetPanelProps = ReduxProps &
   TargetPanelCommonProps & {
     isPageVisible: boolean;
-    onFocus?: (focusNode: FocusNode) => void;
   };
 
 const mainStyle = kialiStyle({

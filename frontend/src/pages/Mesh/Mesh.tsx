@@ -33,7 +33,6 @@ import { layoutFactory } from './layouts/layoutFactory';
 import { TimeInMilliseconds } from 'types/Common';
 import { HistoryManager, URLParam } from 'app/History';
 import { TourStop } from 'components/Tour/TourStop';
-import { getFocusSelector, unsetFocusSelector } from 'utils/SearchParamUtils';
 import { meshComponentFactory } from './components/meshComponentFactory';
 import { MeshData, MeshRefs } from './MeshPage';
 import { MeshInfraType, MeshTarget } from 'types/Mesh';
@@ -79,12 +78,6 @@ export function getLayoutByName(layoutName: string): Layout {
     default:
       return KialiDagreGraph.getLayout();
   }
-}
-
-// TODO: Implement some sort of focus when provided
-export interface FocusNode {
-  id: string;
-  isSelected?: boolean;
 }
 
 // The is the main graph rendering component
@@ -388,21 +381,6 @@ const TopologyContent: React.FC<{
 
       // set decorators
       nodes.forEach(n => setNodeAttachments(n));
-
-      const focusNodeId = getFocusSelector();
-      if (focusNodeId) {
-        const focusNode = nodes.find(n => n.getId() === focusNodeId);
-        if (focusNode) {
-          const data = focusNode.getData() as NodeData;
-          data.isSelected = true;
-          setSelectedIds([focusNode.getId()]);
-          focusNode.setData({ ...(focusNode.getData() as NodeData) });
-        }
-        unsetFocusSelector();
-      }
-
-      // pre-select node if provided
-      // - Currently no pre-selection
     };
 
     const initialGraph = !controller.hasGraph();
@@ -562,7 +540,6 @@ const TopologyContent: React.FC<{
 };
 
 export const Mesh: React.FC<{
-  focusNode?: FocusNode;
   isMiniMesh: boolean;
   layout: Layout;
   meshData: MeshData;

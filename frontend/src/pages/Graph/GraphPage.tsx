@@ -421,7 +421,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
       this.loadGraphDataFromBackend();
     }
 
-    if (!!this.focusSelector) {
+    if (this.focusSelector) {
       this.focusSelector = undefined;
       unsetFocusSelector();
     }
