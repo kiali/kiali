@@ -1287,7 +1287,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 
 		}
 		if w.IsAmbient && w.Labels[config.WaypointLabel] != config.WaypointLabelValue {
-			// If Ambient is enabled for pod, check if has any Waypoint proxy
+			// If Ambient is enabled for workload, check if it has a Waypoint proxy
 			w.WaypointWorkloads = in.getWaypointForWorkload(ctx, namespace, *w)
 		}
 
