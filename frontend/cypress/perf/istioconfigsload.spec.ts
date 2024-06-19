@@ -23,7 +23,7 @@ describe('Istio Configs performance tests', () => {
     it('Measures All Namespaces Istio Configs load time', { defaultCommandTimeout: Cypress.env('timeout') }, () => {
       measureListsLoadTime(
         'All Namespaces Istio Configs',
-        Cypress.env(baselines).configListAdd,
+        Cypress.env(baselines).configListAll,
         configsUrlAllNamespaces
       );
     });
