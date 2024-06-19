@@ -17,7 +17,7 @@ export const tooltipMsgType = {
   service: (
     <div>
       <div>Ambient Mesh</div>
-      <div>All the Service Workloads are in Ambient Mesh.</div>
+      <div>All of this Service's Workloads are in the Ambient Mesh.</div>
       <div>For more details, see the Workloads detail</div>
     </div>
   ),
