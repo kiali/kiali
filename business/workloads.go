@@ -1288,7 +1288,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 		}
 		if w.IsAmbient && w.Labels[config.WaypointLabel] != config.WaypointLabelValue {
 			// If Ambient is enabled for workload, check if it has a Waypoint proxy
-			w.WaypointWorkloads = in.getWaypointForWorkload(ctx, namespace, *w)
+			w.WaypointWorkloads = in.getWaypointsForWorkload(ctx, namespace, *w)
 		}
 
 		if cnFound {
@@ -1865,7 +1865,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 			}
 			// If Ambient is enabled for pod, check if has any Waypoint proxy
 			if pod.AmbientEnabled() {
-				w.WaypointWorkloads = in.getWaypointForWorkload(ctx, criteria.Namespace, w)
+				w.WaypointWorkloads = in.getWaypointsForWorkload(ctx, criteria.Namespace, w)
 			}
 			// If the pod is a waypoint proxy, check if it is attached to a namespace or to a service account, and get the affected workloads
 			if pod.IsWaypoint() {
@@ -1915,35 +1915,6 @@ func (in *WorkloadService) getWaypointsForWorkload(ctx context.Context, namespac
 		}
 	}
 	return waypoints
-}
-func (in *WorkloadService) getWaypointForWorkload(ctx context.Context, namespace string, workload models.Workload) []models.Workload {
-	wlist, err := in.fetchWorkloads(ctx, namespace, fmt.Sprintf("%s=%s", config.WaypointLabel, config.WaypointLabelValue))
-	if err != nil {
-		log.Errorf("Error fetching workloads")
-		return nil
-	}
-
-	var workloadslist []models.Workload
-	// Get service Account name for each pod from the workload
-	for _, wk := range wlist {
-		for _, pod := range wk.Pods {
-			if pod.Labels["istio.io/gateway-name"] == "namespace" {
-				workloadslist = append(workloadslist, *wk)
-				break
-			} else {
-				// Get waypoint workloads from a service account
-				sa := pod.Annotations["istio.io/for-service-account"]
-				for _, workloadDef := range workload.Pods {
-					if workloadDef.ServiceAccountName == sa {
-						workloadslist = append(workloadslist, *wk)
-						break
-					}
-				}
-
-			}
-		}
-	}
-	return workloadslist
 }
 
 // Return the list of workloads binded to a service account, valid when the waypoint proxy is applied to a service account
