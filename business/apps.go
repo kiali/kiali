@@ -175,7 +175,7 @@ func (in *AppService) GetClusterAppList(ctx context.Context, criteria AppCriteri
 			}
 		}
 		for _, w := range valueApp.Workloads {
-			if appItem.IstioAmbient = w.HasIstioAmbient(); !appItem.IstioAmbient {
+			if appItem.IsAmbient = w.HasIstioAmbient(); !appItem.IsAmbient {
 				break
 			}
 		}
@@ -330,7 +330,7 @@ func (in *AppService) GetAppList(ctx context.Context, criteria AppCriteria) (mod
 				}
 			}
 			for _, w := range valueApp.Workloads {
-				if appItem.IstioAmbient = w.HasIstioAmbient(); !appItem.IstioAmbient {
+				if appItem.IsAmbient = w.HasIstioAmbient(); !appItem.IsAmbient {
 					break
 				}
 			}
@@ -383,7 +383,7 @@ func (in *AppService) GetAppDetails(ctx context.Context, criteria AppCriteria) (
 
 	appInstance.Workloads = make([]models.WorkloadItem, len(appDetails.Workloads))
 	for i, wkd := range appDetails.Workloads {
-		appInstance.Workloads[i] = models.WorkloadItem{WorkloadName: wkd.Name, IstioSidecar: wkd.IstioSidecar, Labels: wkd.Labels, IstioAmbient: wkd.IstioAmbient, ServiceAccountNames: wkd.Pods.ServiceAccounts()}
+		appInstance.Workloads[i] = models.WorkloadItem{WorkloadName: wkd.Name, IstioSidecar: wkd.IstioSidecar, Labels: wkd.Labels, IsAmbient: wkd.IsAmbient, ServiceAccountNames: wkd.Pods.ServiceAccounts()}
 	}
 
 	appInstance.ServiceNames = make([]string, len(appDetails.Services))
@@ -392,9 +392,15 @@ func (in *AppService) GetAppDetails(ctx context.Context, criteria AppCriteria) (
 	}
 
 	pods := models.Pods{}
+	isAmbient := len(appDetails.Workloads) > 0
+
 	for _, workload := range appDetails.Workloads {
 		pods = append(pods, workload.Pods...)
+		if !workload.IsAmbient {
+			isAmbient = false
+		}
 	}
+
 	appInstance.Runtimes = NewDashboardsService(in.conf, in.grafana, ns, nil).GetCustomDashboardRefs(criteria.Namespace, criteria.AppName, "", pods)
 	if criteria.IncludeHealth {
 		appInstance.Health, err = in.businessLayer.Health.GetAppHealth(ctx, criteria.Namespace, criteria.Cluster, criteria.AppName, criteria.RateInterval, criteria.QueryTime, appDetails)
@@ -402,7 +408,7 @@ func (in *AppService) GetAppDetails(ctx context.Context, criteria AppCriteria) (
 			log.Errorf("Error fetching Health in namespace %s for app %s: %s", criteria.Namespace, criteria.AppName, err)
 		}
 	}
-
+	appInstance.IsAmbient = isAmbient
 	appInstance.Cluster = appDetails.cluster
 
 	return *appInstance, nil

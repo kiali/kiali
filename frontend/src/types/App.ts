@@ -9,8 +9,8 @@ export interface AppId {
 }
 
 export interface AppWorkload {
+  isAmbient: boolean;
   istioSidecar: boolean;
-  istioAmbient: boolean;
   labels: { [key: string]: string };
   serviceAccountNames: string[];
   workloadName: string;
@@ -19,6 +19,7 @@ export interface AppWorkload {
 export interface App {
   cluster?: string;
   health: AppHealthResponse;
+  isAmbient: boolean;
   name: string;
   namespace: Namespace;
   runtimes: Runtime[];

@@ -936,7 +936,7 @@ export const getServiceDetail = async (
       info.health = ServiceHealth.fromJson(namespace, service, info.health, {
         rateInterval: rateInterval ?? 600,
         hasSidecar: info.istioSidecar,
-        hasAmbient: info.istioAmbient
+        hasAmbient: info.isAmbient
       });
     }
 

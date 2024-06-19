@@ -9,6 +9,8 @@ import { Validation } from 'components/Validations/Validation';
 import { Title, TitleSizes, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { t } from 'utils/I18nUtils';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
+import { AmbientLabel, tooltipMsgType } from '../../../components/Ambient/AmbientLabel';
+import { serverConfig } from '../../../config';
 
 export interface TargetPanelCommonProps {
   duration: DurationInSeconds;
@@ -164,6 +166,7 @@ export const renderNodeHeader = (
           {data.infraName}
 
           {renderHealthStatus(data)}
+          {serverConfig.ambientEnabled && data.infraType === MeshInfraType.ISTIOD && <AmbientLabel tooltip={tooltipMsgType.mesh} />}
         </span>
       </Title>
       {!options.nameOnly && (

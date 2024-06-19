@@ -99,7 +99,7 @@ export const WorkloadWizardDropdown: React.FC<Props> = (props: Props) => {
   const renderDropdownItems = (): JSX.Element[] => {
     const items: JSX.Element[] = [];
 
-    if (serverConfig.kialiFeatureFlags.istioInjectionAction && !props.workload.istioAmbient) {
+    if (serverConfig.kialiFeatureFlags.istioInjectionAction && !props.workload.isAmbient) {
       const enableAction = (
         <DropdownItem
           data-test={WIZARD_ENABLE_AUTO_INJECTION}

@@ -12,7 +12,7 @@ export interface ServiceOverview {
   additionalDetailSample?: AdditionalItem;
   cluster?: string;
   health: ServiceHealth;
-  istioAmbient: boolean;
+  isAmbient: boolean;
   istioReferences: ObjectReference[];
   istioSidecar: boolean;
   kialiWizard: string;

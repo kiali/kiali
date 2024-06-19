@@ -67,7 +67,7 @@ func (a *MeshCheckAppender) applyMeshChecks(trafficMap graph.TrafficMap, globalI
 		case graph.NodeTypeWorkload:
 			if workload, found := getWorkload(n.Cluster, n.Namespace, n.Workload, globalInfo); found {
 				hasIstioSidecar = workload.IstioSidecar
-				hasIstioAmbient = workload.IstioAmbient
+				hasIstioAmbient = workload.IsAmbient
 			}
 		case graph.NodeTypeApp:
 			workloads := getAppWorkloads(n.Cluster, n.Namespace, n.App, n.Version, globalInfo)
@@ -76,7 +76,7 @@ func (a *MeshCheckAppender) applyMeshChecks(trafficMap graph.TrafficMap, globalI
 					if !workload.IstioSidecar {
 						hasIstioSidecar = false
 					}
-					if !workload.IstioAmbient {
+					if !workload.IsAmbient {
 						hasIstioAmbient = false
 					}
 					if !hasIstioSidecar && !hasIstioAmbient {

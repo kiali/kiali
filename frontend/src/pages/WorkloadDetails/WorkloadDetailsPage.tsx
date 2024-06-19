@@ -125,7 +125,7 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
             {
               rateInterval: this.props.duration,
               hasSidecar: details.data.istioSidecar,
-              hasAmbient: details.data.istioAmbient
+              hasAmbient: details.data.isAmbient
             }
           )
         });
@@ -202,7 +202,7 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
         <IstioMetrics
           data-test="inbound-metrics-component"
           direction="inbound"
-          includeAmbient={!!this.state.workload?.istioAmbient}
+          includeAmbient={!!this.state.workload?.isAmbient}
           lastRefreshAt={this.props.lastRefreshAt}
           namespace={this.props.workloadId.namespace}
           object={this.props.workloadId.workload}
@@ -218,7 +218,7 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
         <IstioMetrics
           data-test="outbound-metrics-component"
           direction="outbound"
-          includeAmbient={!!this.state.workload?.istioAmbient}
+          includeAmbient={!!this.state.workload?.isAmbient}
           lastRefreshAt={this.props.lastRefreshAt}
           namespace={this.props.workloadId.namespace}
           object={this.props.workloadId.workload}
@@ -266,7 +266,7 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
   }
 
   private hasIstioSidecars(workload: Workload): boolean {
-    let hasIstioSidecars: boolean = false;
+    let hasIstioSidecars = false;
 
     if (workload.pods.length > 0) {
       workload.pods.forEach(pod => {
@@ -328,7 +328,7 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
     return this.staticTabs().concat(this.runtimeTabs());
   }
 
-  render() {
+  render(): React.ReactElement {
     // set default to true: all dynamic tabs (unlisted below) are for runtimes dashboards, which uses custom time
     let useCustomTime = true;
 

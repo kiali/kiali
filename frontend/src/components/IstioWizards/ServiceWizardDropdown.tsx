@@ -83,7 +83,7 @@ const ServiceWizardDropdownComponent: React.FC<Props> = (props: Props) => {
         break;
       }
       // Check for Ambient if in Ambient Mesh
-      if (serverConfig.ambientEnabled && props.workloads[i].istioAmbient) {
+      if (serverConfig.ambientEnabled && props.workloads[i].isAmbient) {
         hasMeshWorkloads = true;
         break;
       }
@@ -107,6 +107,7 @@ const ServiceWizardDropdownComponent: React.FC<Props> = (props: Props) => {
   };
 
   const onAction = (key: string): void => {
+
     const updateLabel = getWizardUpdateLabel(props.virtualServices, props.k8sHTTPRoutes, props.k8sGRPCRoutes);
 
     switch (key) {

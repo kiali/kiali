@@ -14,7 +14,7 @@ export interface Workload {
   cluster?: string;
   createdAt: string;
   health?: WorkloadHealthResponse;
-  istioAmbient: boolean;
+  isAmbient: boolean;
   istioInjectionAnnotation?: boolean;
   istioSidecar: boolean;
   labels: { [key: string]: string };
@@ -36,7 +36,7 @@ export const emptyWorkload: Workload = {
   appLabel: false,
   availableReplicas: 0,
   createdAt: '',
-  istioAmbient: false,
+  isAmbient: false,
   istioSidecar: true, // true until proven otherwise
   labels: {},
   name: '',
@@ -67,7 +67,7 @@ export interface WorkloadListItem {
   appLabel: boolean;
   cluster?: string;
   health: WorkloadHealth;
-  istioAmbient: boolean;
+  isAmbient: boolean;
   istioReferences: ObjectReference[];
   istioSidecar: boolean;
   labels: { [key: string]: string };

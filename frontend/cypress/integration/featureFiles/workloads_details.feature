@@ -90,6 +90,6 @@ Feature: Kiali Workload Details page
     Then the user sees the metrics tab
 
   @ambient
-  Scenario: See ztunnel label for workload
-    Then user sees "ztunnel" badge
+  Scenario: See ambient label for workload
+    Then user sees "ambient" badge
     Then the user cannot see the "missing-sidecar" badge for "details-v1" workload in "bookinfo" namespace

@@ -70,7 +70,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
     this.fetchApp();
   }
 
-  componentDidUpdate(prevProps: AppDetailsProps) {
+  componentDidUpdate(prevProps: AppDetailsProps): void {
     // when linking from one cluster's app to another cluster's app, cluster in state should be changed
     const cluster = HistoryManager.getClusterName() || this.state.cluster;
     const currentTab = activeTab(tabName, defaultTab);
@@ -104,7 +104,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
           health: AppHealth.fromJson(this.props.appId.namespace, this.props.appId.app, details.data.health, {
             rateInterval: this.props.duration,
             hasSidecar: details.data.workloads.some(w => w.istioSidecar),
-            hasAmbient: details.data.workloads.some(w => w.istioAmbient)
+            hasAmbient: details.data.workloads.some(w => w.isAmbient)
           })
         });
       })
@@ -242,7 +242,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
     return this.staticTabs().concat(this.runtimeTabs());
   }
 
-  render() {
+  render(): React.ReactElement {
     // set default to true: all dynamic tabs (unlisted below) are for runtimes dashboards, which uses custom time
     let useCustomTime = true;
     switch (this.state.currentTab) {
@@ -284,7 +284,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
   }
 }
 
-const mapStateToProps = (state: KialiAppState) => ({
+const mapStateToProps = (state: KialiAppState): ReduxProps => ({
   duration: durationSelector(state),
   timeRange: timeRangeSelector(state),
   tracingInfo: state.tracingState.info

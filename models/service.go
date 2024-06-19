@@ -27,7 +27,7 @@ type ServiceOverview struct {
 	// Check if it has Ambient enabled
 	// required: true
 	// example: true
-	IstioAmbient bool `json:"istioAmbient"`
+	IsAmbient bool `json:"isAmbient"`
 	// Has label app
 	// required: true
 	// example: true
@@ -87,6 +87,7 @@ type ServiceDetails struct {
 	DestinationRules   []*networking_v1.DestinationRule         `json:"destinationRules"`
 	Endpoints          Endpoints                                `json:"endpoints"`
 	IstioPermissions   ResourcePermissions                      `json:"istioPermissions"`
+	IsAmbient          bool                                     `json:"isAmbient"`
 	IstioSidecar       bool                                     `json:"istioSidecar"`
 	K8sGRPCRoutes      []*k8s_networking_v1.GRPCRoute           `json:"k8sGRPCRoutes"`
 	K8sHTTPRoutes      []*k8s_networking_v1.HTTPRoute           `json:"k8sHTTPRoutes"`

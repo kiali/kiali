@@ -8,6 +8,7 @@ import { kialiStyle } from 'styles/StyleUtils';
 import * as H from '../../types/Health';
 import { HealthIndicator } from '../../components/Health/HealthIndicator';
 import { PFBadge, PFBadges } from '../../components/Pf/PfBadges';
+import { AmbientLabel, tooltipMsgType } from '../../components/Ambient/AmbientLabel';
 
 type AppDescriptionProps = {
   app?: App;
@@ -43,6 +44,8 @@ export const AppDescription: React.FC<AppDescriptionProps> = (props: AppDescript
           <span className={healthIconStyle}>
             <HealthIndicator id={props.app.name} health={props.health} />
           </span>
+
+          {props.app.isAmbient && <AmbientLabel tooltip={tooltipMsgType.app} />}
         </Title>
 
         {props.app.cluster && isMultiCluster && (

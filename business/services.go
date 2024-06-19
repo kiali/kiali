@@ -310,7 +310,7 @@ func (in *SvcService) buildKubernetesServices(svcs []core_v1.Service, pods []cor
 			Name:                   item.Name,
 			Namespace:              item.Namespace,
 			IstioSidecar:           hasSidecar,
-			IstioAmbient:           hasAmbient,
+			IsAmbient:              hasAmbient,
 			AppLabel:               appLabel,
 			AdditionalDetailSample: models.GetFirstAdditionalIcon(&conf, item.ObjectMeta.Annotations),
 			Health:                 models.EmptyServiceHealth(),
@@ -576,10 +576,14 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, cluster, namespace,
 	}
 
 	wo := models.WorkloadOverviews{}
+	isAmbient := len(ws) > 0
 	for _, w := range ws {
 		wi := &models.WorkloadListItem{}
 		wi.ParseWorkload(w)
 		wo = append(wo, wi)
+		if !w.IsAmbient {
+			isAmbient = false
+		}
 	}
 
 	serviceOverviews := make([]*models.ServiceOverview, 0)
@@ -636,6 +640,7 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, cluster, namespace,
 		// On ServiceEntries cases the Service name is the hostname
 		s.ServiceEntries = kubernetes.FilterServiceEntriesByHostname(istioConfigList.ServiceEntries, s.Service.Name)
 	}
+	s.IsAmbient = isAmbient
 
 	return &s, nil
 }
