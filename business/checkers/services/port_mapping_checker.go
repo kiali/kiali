@@ -48,7 +48,7 @@ func (p PortMappingChecker) Check() ([]*models.IstioCheck, bool) {
 		return validations, len(validations) == 0
 	}
 	// Ignoring waypoint Services as auto-generated
-	if p.isWaypoint(p.Service) {
+	if config.IsWaypoint(p.Service.Labels) {
 		log.Tracef("Skipping Port matching check for waypoint Service %s from Namespace %s", p.Service.Name, p.Service.Namespace)
 		return validations, len(validations) == 0
 	}
@@ -63,11 +63,6 @@ func (p PortMappingChecker) hasMatchingPodsWithSidecar(service v1.Service) bool 
 	sPods := models.Pods{}
 	sPods.Parse(kubernetes.FilterPodsByService(&service, p.Pods))
 	return sPods.HasIstioSidecar()
-}
-
-// IsWaypoint returns true if the service is a waypoint proxy
-func (p PortMappingChecker) isWaypoint(service v1.Service) bool {
-	return service.Labels[config.WaypointLabel] == config.WaypointLabelValue
 }
 
 func (p PortMappingChecker) findMatchingDeployment(selectors map[string]string) *apps_v1.Deployment {

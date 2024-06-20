@@ -14,9 +14,7 @@ type Pods []*Pod
 
 const AmbientAnnotation = "ambient.istio.io/redirection"
 const AmbientAnnotationEnabled = "enabled"
-const WaypointLabel = "gateway.istio.io/managed"
 const IstioProxy = "istio-proxy"
-const WaypointLabelValue = "istio.io-mesh-controller"
 
 // Pod holds a subset of v1.Pod data that is meaningful in Kiali
 type Pod struct {
@@ -218,7 +216,7 @@ func (pod *Pod) AmbientEnabled() bool {
 
 // IsWaypoint returns true if the pod is a waypoint proxy
 func (pod *Pod) IsWaypoint() bool {
-	return pod.Labels[config.WaypointLabel] == config.WaypointLabelValue
+	return config.IsWaypoint(pod.Labels)
 }
 
 // HasNativeSidecar returns true if the pod has istio-proxy init containers

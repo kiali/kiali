@@ -57,7 +57,7 @@ func (a AmbientAppender) handleWaypoints(trafficMap graph.TrafficMap, globalInfo
 			log.Tracef("Error getting waypoint proxy: Workload %s was not found", n.Workload)
 			continue
 		}
-		if workload.Labels[config.WaypointLabel] == config.WaypointLabelValue {
+		if config.IsWaypoint(workload.Labels) {
 			waypoinList = append(waypoinList, workload.Name)
 			if !a.ShowWaypoints {
 				delete(trafficMap, n.ID)
