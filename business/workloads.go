@@ -1286,7 +1286,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 			}
 
 		}
-		if w.IsAmbient && w.Labels[config.WaypointLabel] != config.WaypointLabelValue {
+		if w.IsAmbient && !config.IsWaypoint(w.Labels) {
 			// If Ambient is enabled for workload, check if it has a Waypoint proxy
 			w.WaypointWorkloads = in.getWaypointsForWorkload(ctx, namespace, *w)
 		}
@@ -1928,7 +1928,7 @@ func (in *WorkloadService) listWaypointWorkloadsForSA(ctx context.Context, names
 	var workloadslist []models.Workload
 	// Get service Account name for each pod from the workload
 	for _, workload := range wlist {
-		if workload.Labels[config.WaypointLabel] != "istio.io-mesh-controller" {
+		if !config.IsWaypoint(workload.Labels) {
 			for _, pod := range workload.Pods {
 				if pod.ServiceAccountName == sa {
 					workloadslist = append(workloadslist, *workload)
@@ -1951,7 +1951,7 @@ func (in *WorkloadService) listWaypointWorkloadsForNamespace(ctx context.Context
 	var workloadslist []models.Workload
 	// Get service Account name for each pod from the workload
 	for _, workload := range wlist {
-		if workload.Labels[config.WaypointLabel] != "istio.io-mesh-controller" {
+		if !config.IsWaypoint(workload.Labels) {
 			workloadslist = append(workloadslist, *workload)
 		}
 	}

@@ -1168,6 +1168,11 @@ func IsFeatureDisabled(featureName FeatureName) bool {
 	return false
 }
 
+// IsWaypoint returns true if the labels contain a waypoint proxy
+func IsWaypoint(labels map[string]string) bool {
+	return labels[WaypointLabel] == WaypointLabelValue
+}
+
 // GetSafeClusterName checks the input value provides a default cluster name if it's empty
 func GetSafeClusterName(cluster string) string {
 	if cluster == "" {

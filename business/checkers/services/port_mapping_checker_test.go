@@ -20,7 +20,7 @@ func TestPortMappingMatch(t *testing.T) {
 	assert := assert.New(t)
 
 	pmc := PortMappingChecker{
-		Service:     getService(9080, "http", nil, "test-namespace", "app"),
+		Service:     getService(9080, "http", nil, "test-namespace", "app", "labelName1"),
 		Deployments: getDeployment(9080),
 		Pods:        getPods(true),
 	}
@@ -36,7 +36,7 @@ func TestTargetPortMappingMatch(t *testing.T) {
 
 	assert := assert.New(t)
 
-	service := getService(9080, "http", nil, "test-namespace", "app")
+	service := getService(9080, "http", nil, "test-namespace", "app", "labelName1")
 	service.Spec.Ports[0].TargetPort = intstr.FromInt(8080)
 
 	/*
@@ -74,7 +74,7 @@ func TestPortMappingMismatch(t *testing.T) {
 	assert := assert.New(t)
 
 	pmc := PortMappingChecker{
-		Service:     getService(9080, "http", nil, "test-namespace", "app"),
+		Service:     getService(9080, "http", nil, "test-namespace", "app", "labelName1"),
 		Deployments: getDeployment(8080),
 		Pods:        getPods(true),
 	}
@@ -86,6 +86,23 @@ func TestPortMappingMismatch(t *testing.T) {
 	assert.Equal("spec/ports[0]", vals[0].Path)
 }
 
+func TestPortMappingSkipWaypoint(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	assert := assert.New(t)
+
+	pmc := PortMappingChecker{
+		Service:     getService(9080, "http", nil, "test-namespace", config.WaypointLabel, config.WaypointLabelValue),
+		Deployments: getDeployment(8080),
+		Pods:        getPods(false),
+	}
+
+	vals, valid := pmc.Check()
+	assert.True(valid)
+	assert.Empty(vals)
+}
+
 func TestPortMappingNoMismatchIstio(t *testing.T) {
 	// As per KIALI-2454
 	conf := config.NewConfig()
@@ -94,7 +111,7 @@ func TestPortMappingNoMismatchIstio(t *testing.T) {
 	assert := assert.New(t)
 
 	pmc := PortMappingChecker{
-		Service:     getService(9080, "http", nil, "istio-system", "app"),
+		Service:     getService(9080, "http", nil, "istio-system", "app", "labelName1"),
 		Deployments: getDeployment(8080),
 		Pods:        getPods(true),
 	}
@@ -111,7 +128,7 @@ func TestServicePortNaming(t *testing.T) {
 	assert := assert.New(t)
 
 	pmc := PortMappingChecker{
-		Service:     getService(9080, "http2foo", nil, "test-namespace", "app"),
+		Service:     getService(9080, "http2foo", nil, "test-namespace", "app", "labelName1"),
 		Deployments: getDeployment(9080),
 		Pods:        getPods(true),
 	}
@@ -130,7 +147,7 @@ func TestServicePortNamingIstioSystem(t *testing.T) {
 	assert := assert.New(t)
 
 	pmc := PortMappingChecker{
-		Service:     getService(9080, "http2foo", nil, "istio-system", "app"),
+		Service:     getService(9080, "http2foo", nil, "istio-system", "app", "labelName1"),
 		Deployments: getDeployment(9080),
 		Pods:        getPods(true),
 	}
@@ -149,7 +166,7 @@ func TestServicePortNamingWizard(t *testing.T) {
 	assert := assert.New(t)
 
 	pmc := PortMappingChecker{
-		Service:     getService(9080, "status-port", nil, "test-namespace", "kiali_wizard"),
+		Service:     getService(9080, "status-port", nil, "test-namespace", "kiali_wizard", "labelName1"),
 		Deployments: getDeployment(9080),
 		Pods:        getPods(true),
 	}
@@ -167,7 +184,7 @@ func TestServicePortAppProtocol(t *testing.T) {
 
 	appProtocol := "mysql-wrong"
 	pmc := PortMappingChecker{
-		Service:     getService(9080, "database", &appProtocol, "test-namespace", "app"),
+		Service:     getService(9080, "database", &appProtocol, "test-namespace", "app", "labelName1"),
 		Deployments: getDeployment(9080),
 		Pods:        getPods(true),
 	}
@@ -180,7 +197,7 @@ func TestServicePortAppProtocol(t *testing.T) {
 
 	appProtocol = "mysql"
 	pmc = PortMappingChecker{
-		Service:     getService(9080, "database", &appProtocol, "test-namespace", "app"),
+		Service:     getService(9080, "database", &appProtocol, "test-namespace", "app", "labelName1"),
 		Deployments: getDeployment(9080),
 		Pods:        getPods(true),
 	}
@@ -197,7 +214,7 @@ func TestServicePortNamingWithoutSidecar(t *testing.T) {
 	assert := assert.New(t)
 
 	pmc := PortMappingChecker{
-		Service:     getService(9080, "http2foo", nil, "test-namespace", "app"),
+		Service:     getService(9080, "http2foo", nil, "test-namespace", "app", "labelName1"),
 		Deployments: getDeployment(9080),
 		Pods:        getPods(false),
 	}
@@ -207,13 +224,13 @@ func TestServicePortNamingWithoutSidecar(t *testing.T) {
 	assert.Empty(vals)
 }
 
-func getService(servicePort int32, portName string, appProtocol *string, namespace string, labelKey string) v1.Service {
+func getService(servicePort int32, portName string, appProtocol *string, namespace string, labelKey string, labelValue string) v1.Service {
 	return v1.Service{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "service1",
 			Namespace: namespace,
 			Labels: map[string]string{
-				labelKey: "labelName1"},
+				labelKey: labelValue},
 		},
 		Spec: v1.ServiceSpec{
 			Ports: []v1.ServicePort{

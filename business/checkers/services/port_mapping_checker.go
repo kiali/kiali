@@ -47,6 +47,11 @@ func (p PortMappingChecker) Check() ([]*models.IstioCheck, bool) {
 		log.Tracef("Skipping Port matching check for Service %s from Istio Namespace %s", p.Service.Name, p.Service.Namespace)
 		return validations, len(validations) == 0
 	}
+	// Ignoring waypoint Services as auto-generated
+	if config.IsWaypoint(p.Service.Labels) {
+		log.Tracef("Skipping Port matching check for waypoint Service %s from Namespace %s", p.Service.Name, p.Service.Namespace)
+		return validations, len(validations) == 0
+	}
 	if deployment := p.findMatchingDeployment(p.Service.Spec.Selector); deployment != nil {
 		p.matchPorts(&p.Service, deployment, &validations)
 	}
