@@ -22,31 +22,42 @@ func (n NoHostChecker) Check() ([]*models.IstioCheck, bool) {
 	validations := make([]*models.IstioCheck, 0)
 	valid := true
 
+	for i, ref := range n.K8sGRPCRoute.Spec.ParentRefs {
+		if ref.Kind == nil || string(*ref.Kind) != kubernetes.ServiceType {
+			continue
+		}
+		valid = n.checkReference(ref.Namespace, ref.Name, &validations, fmt.Sprintf("spec/parentRefs[%d]/name", i)) && valid
+	}
+
 	for k, grpcRoute := range n.K8sGRPCRoute.Spec.Rules {
 		for i, ref := range grpcRoute.BackendRefs {
 			if ref.Kind == nil || string(*ref.Kind) != "Service" {
 				continue
 			}
-			namespace := n.K8sGRPCRoute.Namespace
-			if ref.Namespace != nil && string(*ref.Namespace) != "" {
-				namespace = string(*ref.Namespace)
-			}
-			fqdn := kubernetes.GetHost(string(ref.Name), namespace, n.Namespaces.GetNames())
-			// service name should not be set in fqdn format
-			// if the grpc route is referencing to a service from the same namespace, then service should exist there
-			// if the grpc route is referencing to a service from other namespace, then a ReferenceGrant should exist to cross namespace reference, and the service should exist in remote namespace
-			if strings.Contains(string(ref.Name), ".") ||
-				(namespace == n.K8sGRPCRoute.Namespace && !n.checkDestination(fqdn.String(), namespace)) ||
-				(namespace != n.K8sGRPCRoute.Namespace && (!n.checkReferenceGrant(n.K8sGRPCRoute.Namespace, namespace) || !n.checkDestination(fqdn.String(), namespace))) {
-				path := fmt.Sprintf("spec/rules[%d]/backendRefs[%d]/name", k, i)
-				validation := models.Build("k8sroutes.nohost.namenotfound", path)
-				validations = append(validations, &validation)
-				valid = false
-			}
+			valid = n.checkReference(ref.Namespace, ref.Name, &validations, fmt.Sprintf("spec/rules[%d]/backendRefs[%d]/name", k, i)) && valid
 		}
 	}
 
 	return validations, valid
+}
+
+func (n NoHostChecker) checkReference(refNamespace *k8s_networking_v1.Namespace, refName k8s_networking_v1.ObjectName, validations *[]*models.IstioCheck, location string) bool {
+	namespace := n.K8sGRPCRoute.Namespace
+	if refNamespace != nil && string(*refNamespace) != "" {
+		namespace = string(*refNamespace)
+	}
+	fqdn := kubernetes.GetHost(string(refName), namespace, n.Namespaces.GetNames())
+	//service name should not be set in fqdn format
+	// if the grpc route is referencing to a service from the same namespace, then service should exist there
+	// if the grpc route is referencing to a service from other namespace, then a ReferenceGrant should exist to cross namespace reference, and the service should exist in remote namespace
+	if strings.Contains(string(refName), ".") ||
+		(namespace == n.K8sGRPCRoute.Namespace && !n.checkDestination(fqdn.String(), namespace)) ||
+		(namespace != n.K8sGRPCRoute.Namespace && (!n.checkReferenceGrant(n.K8sGRPCRoute.Namespace, namespace) || !n.checkDestination(fqdn.String(), namespace))) {
+		validation := models.Build("k8sroutes.nohost.namenotfound", location)
+		*validations = append(*validations, &validation)
+		return false
+	}
+	return true
 }
 
 func (n NoHostChecker) checkDestination(sHost string, itemNamespace string) bool {

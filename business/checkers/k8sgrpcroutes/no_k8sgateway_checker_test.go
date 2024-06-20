@@ -36,7 +36,7 @@ func TestMissingK8sGateways(t *testing.T) {
 	config.Set(conf)
 
 	checker := NoK8sGatewayChecker{
-		K8sGRPCRoute: data.AddParentRefToGRPCRoute("gateway2", "bookinfo2",
+		K8sGRPCRoute: data.AddGatewayParentRefToGRPCRoute("gateway2", "bookinfo2",
 			data.CreateGRPCRoute("route", "bookinfo", "gatewayapi", []string{"bookinfo"})),
 		GatewayNames: make(map[string]struct{}),
 	}
@@ -59,7 +59,7 @@ func TestValidAndMissingK8sGateway(t *testing.T) {
 	var empty struct{}
 
 	checker := NoK8sGatewayChecker{
-		K8sGRPCRoute: data.AddParentRefToGRPCRoute("correctgw", "bookinfo2",
+		K8sGRPCRoute: data.AddGatewayParentRefToGRPCRoute("correctgw", "bookinfo2",
 			data.CreateGRPCRoute("route", "bookinfo", "gatewayapi", []string{"bookinfo"})),
 		GatewayNames: map[string]struct{}{"correctgw": empty},
 	}

@@ -19,13 +19,25 @@ func CreateEmptyHTTPRoute(name string, namespace string, hosts []string) *k8s_ne
 }
 
 func CreateHTTPRoute(name string, namespace string, gateway string, hosts []string) *k8s_networking_v1.HTTPRoute {
-	return AddParentRefToHTTPRoute(gateway, namespace, CreateEmptyHTTPRoute(name, namespace, hosts))
+	return AddGatewayParentRefToHTTPRoute(gateway, namespace, CreateEmptyHTTPRoute(name, namespace, hosts))
 }
 
-func AddParentRefToHTTPRoute(name, namespace string, rt *k8s_networking_v1.HTTPRoute) *k8s_networking_v1.HTTPRoute {
+func AddGatewayParentRefToHTTPRoute(name, namespace string, rt *k8s_networking_v1.HTTPRoute) *k8s_networking_v1.HTTPRoute {
 	ns := k8s_networking_v1.Namespace(namespace)
 	group := k8s_networking_v1.Group(kubernetes.K8sNetworkingGroupVersionV1.Group)
 	kind := k8s_networking_v1.Kind(kubernetes.K8sActualGatewayType)
+	rt.Spec.ParentRefs = append(rt.Spec.ParentRefs, k8s_networking_v1.ParentReference{
+		Name:      k8s_networking_v1.ObjectName(name),
+		Namespace: &ns,
+		Group:     &group,
+		Kind:      &kind})
+	return rt
+}
+
+func AddServiceParentRefToHTTPRoute(name, namespace string, rt *k8s_networking_v1.HTTPRoute) *k8s_networking_v1.HTTPRoute {
+	ns := k8s_networking_v1.Namespace(namespace)
+	group := k8s_networking_v1.Group("core")
+	kind := k8s_networking_v1.Kind(kubernetes.ServiceType)
 	rt.Spec.ParentRefs = append(rt.Spec.ParentRefs, k8s_networking_v1.ParentReference{
 		Name:      k8s_networking_v1.ObjectName(name),
 		Namespace: &ns,
@@ -66,13 +78,25 @@ func CreateEmptyGRPCRoute(name string, namespace string, hosts []string) *k8s_ne
 }
 
 func CreateGRPCRoute(name string, namespace string, gateway string, hosts []string) *k8s_networking_v1.GRPCRoute {
-	return AddParentRefToGRPCRoute(gateway, namespace, CreateEmptyGRPCRoute(name, namespace, hosts))
+	return AddGatewayParentRefToGRPCRoute(gateway, namespace, CreateEmptyGRPCRoute(name, namespace, hosts))
 }
 
-func AddParentRefToGRPCRoute(name, namespace string, rt *k8s_networking_v1.GRPCRoute) *k8s_networking_v1.GRPCRoute {
+func AddGatewayParentRefToGRPCRoute(name, namespace string, rt *k8s_networking_v1.GRPCRoute) *k8s_networking_v1.GRPCRoute {
 	ns := k8s_networking_v1.Namespace(namespace)
 	group := k8s_networking_v1.Group(kubernetes.K8sNetworkingGroupVersionV1.Group)
 	kind := k8s_networking_v1.Kind(kubernetes.K8sActualGatewayType)
+	rt.Spec.ParentRefs = append(rt.Spec.ParentRefs, k8s_networking_v1.ParentReference{
+		Name:      k8s_networking_v1.ObjectName(name),
+		Namespace: &ns,
+		Group:     &group,
+		Kind:      &kind})
+	return rt
+}
+
+func AddServiceParentRefToGRPCRoute(name, namespace string, rt *k8s_networking_v1.GRPCRoute) *k8s_networking_v1.GRPCRoute {
+	ns := k8s_networking_v1.Namespace(namespace)
+	group := k8s_networking_v1.Group("core")
+	kind := k8s_networking_v1.Kind(kubernetes.ServiceType)
 	rt.Spec.ParentRefs = append(rt.Spec.ParentRefs, k8s_networking_v1.ParentReference{
 		Name:      k8s_networking_v1.ObjectName(name),
 		Namespace: &ns,

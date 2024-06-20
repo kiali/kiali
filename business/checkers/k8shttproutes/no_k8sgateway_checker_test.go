@@ -36,7 +36,7 @@ func TestMissingK8sGateways(t *testing.T) {
 	config.Set(conf)
 
 	checker := NoK8sGatewayChecker{
-		K8sHTTPRoute: data.AddParentRefToHTTPRoute("gateway2", "bookinfo2",
+		K8sHTTPRoute: data.AddGatewayParentRefToHTTPRoute("gateway2", "bookinfo2",
 			data.CreateHTTPRoute("route", "bookinfo", "gatewayapi", []string{"bookinfo"})),
 		GatewayNames: make(map[string]struct{}),
 	}
@@ -59,7 +59,7 @@ func TestValidAndMissingK8sGateway(t *testing.T) {
 	var empty struct{}
 
 	checker := NoK8sGatewayChecker{
-		K8sHTTPRoute: data.AddParentRefToHTTPRoute("correctgw", "bookinfo2",
+		K8sHTTPRoute: data.AddGatewayParentRefToHTTPRoute("correctgw", "bookinfo2",
 			data.CreateHTTPRoute("route", "bookinfo", "gatewayapi", []string{"bookinfo"})),
 		GatewayNames: map[string]struct{}{"correctgw": empty},
 	}
