@@ -94,7 +94,7 @@ func Config(conf *config.Config, discovery *istio.Discovery) http.HandlerFunc {
 			IstioIdentityDomain: conf.ExternalServices.Istio.IstioIdentityDomain,
 			IstioNamespace:      conf.IstioNamespace,
 			IstioLabels:         conf.IstioLabels,
-			// IstioConfigMap:      conf.ExternalServices.Istio.ConfigMapName,
+			IstioConfigMap:      conf.ExternalServices.Istio.ConfigMapName,
 			IstioCanaryRevision: IstioCanaryRevision{
 				Current: conf.ExternalServices.Istio.IstioCanaryRevision.Current,
 				Upgrade: conf.ExternalServices.Istio.IstioCanaryRevision.Upgrade,

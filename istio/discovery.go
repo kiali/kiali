@@ -183,6 +183,10 @@ func (in *Discovery) Clusters() ([]models.KubeCluster, error) {
 
 	clusters := maps.Values(clustersByName)
 
+	if len(clusters) == 0 {
+		log.Warning("No clusters found. This likely means that Kiali is misconfigured. Ensure that kiali is configured to access at least one cluster.")
+	}
+
 	// TODO: Separate KialiInstance from Cluster model.
 	for idx := range clusters {
 		cluster := &clusters[idx]

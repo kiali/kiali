@@ -704,7 +704,7 @@ func NewConfig() (c *Config) {
 						},
 					},
 				},
-				// ConfigMapName:                     "istio",
+				ConfigMapName:                     "",
 				EnvoyAdminLocalPort:               15000,
 				IstioAPIEnabled:                   true,
 				IstioIdentityDomain:               "svc.cluster.local",
