@@ -72,7 +72,7 @@ func Config(conf *config.Config, discovery *istio.Discovery) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer handlePanic(w)
 
-		// Note that determine the Prometheus config at request time because it is not
+		// Note that we determine the Prometheus config at request time because it is not
 		// guaranteed to remain the same during the Kiali lifespan.
 		promConfig := getPrometheusConfig()
 		conf := config.Get()
