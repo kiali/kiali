@@ -8,6 +8,36 @@ import (
 )
 
 const (
+	// Networking
+	DestinationRuleType = "DestinationRule"
+	GatewayType         = "Gateway"
+	EnvoyFilterType     = "EnvoyFilter"
+	SidecarType         = "Sidecar"
+	ServiceEntryType    = "ServiceEntry"
+	VirtualServiceType  = "VirtualService"
+	WorkloadEntryType   = "WorkloadEntry"
+	WorkloadGroupType   = "WorkloadGroup"
+	WasmPluginType      = "WasmPlugin"
+	TelemetryType       = "Telemetry"
+
+	// K8s Networking
+	K8sGatewayType        = "Gateway"
+	K8sGatewayClassType   = "GatewayClass"
+	K8sGRPCRouteType      = "GRPCRoute"
+	K8sHTTPRouteType      = "HTTPRoute"
+	K8sReferenceGrantType = "ReferenceGrant"
+	K8sTCPRouteType       = "TCPRoute"
+	K8sTLSRouteType       = "TLSRoute"
+
+	// Authorization PeerAuthentications
+	AuthorizationPoliciesType = "AuthorizationPolicy"
+
+	// Peer Authentications
+	PeerAuthenticationsType = "PeerAuthentication"
+
+	// Request Authentications
+	RequestAuthenticationsType = "RequestAuthentication"
+
 	// Kubernetes Controllers
 	ConfigMapType             = "ConfigMap"
 	CronJobType               = "CronJob"
@@ -25,71 +55,69 @@ const (
 
 var (
 	// Networking
-
-	DestinationRules    = NetworkingGroupVersionV1.WithKind(DestinationRuleType)
-	DestinationRuleType = "DestinationRule"
-
-	Gateways    = NetworkingGroupVersionV1.WithKind(GatewayType)
-	GatewayType = "Gateway"
-
-	EnvoyFilters    = NetworkingGroupVersionV1Alpha3.WithKind(EnvoyFilterType)
-	EnvoyFilterType = "EnvoyFilter"
-
-	Sidecars    = NetworkingGroupVersionV1.WithKind(SidecarType)
-	SidecarType = "Sidecar"
-
+	DestinationRules = NetworkingGroupVersionV1.WithKind(DestinationRuleType)
+	Gateways         = NetworkingGroupVersionV1.WithKind(GatewayType)
+	EnvoyFilters     = NetworkingGroupVersionV1Alpha3.WithKind(EnvoyFilterType)
+	Sidecars         = NetworkingGroupVersionV1.WithKind(SidecarType)
 	ServiceEntries   = NetworkingGroupVersionV1.WithKind(ServiceEntryType)
-	ServiceEntryType = "ServiceEntry"
-
-	VirtualServices    = NetworkingGroupVersionV1.WithKind(VirtualServiceType)
-	VirtualServiceType = "VirtualService"
-
-	WorkloadEntries   = NetworkingGroupVersionV1.WithKind(WorkloadEntryType)
-	WorkloadEntryType = "WorkloadEntry"
-
-	WorkloadGroups    = NetworkingGroupVersionV1.WithKind(WorkloadGroupType)
-	WorkloadGroupType = "WorkloadGroup"
-
-	WasmPlugins    = ExtensionGroupVersionV1Alpha1.WithKind(WasmPluginType)
-	WasmPluginType = "WasmPlugin"
-
-	Telemetries   = TelemetryGroupV1.WithKind(TelemetryType)
-	TelemetryType = "Telemetry"
+	VirtualServices  = NetworkingGroupVersionV1.WithKind(VirtualServiceType)
+	WorkloadEntries  = NetworkingGroupVersionV1.WithKind(WorkloadEntryType)
+	WorkloadGroups   = NetworkingGroupVersionV1.WithKind(WorkloadGroupType)
+	WasmPlugins      = ExtensionGroupVersionV1Alpha1.WithKind(WasmPluginType)
+	Telemetries      = TelemetryGroupV1.WithKind(TelemetryType)
 
 	// K8s Networking
-
-	K8sGateways    = K8sNetworkingGroupVersionV1.WithKind(K8sGatewayType)
-	K8sGatewayType = "Gateway"
-
-	K8sGatewayClasses   = K8sNetworkingGroupVersionV1.WithKind(K8sGatewayClassType)
-	K8sGatewayClassType = "GatewayClass"
-
-	K8sGRPCRoutes    = K8sNetworkingGroupVersionV1.WithKind(K8sGRPCRouteType)
-	K8sGRPCRouteType = "GRPCRoute"
-
-	K8sHTTPRoutes    = K8sNetworkingGroupVersionV1.WithKind(K8sHTTPRouteType)
-	K8sHTTPRouteType = "HTTPRoute"
-
-	K8sReferenceGrants    = K8sNetworkingGroupVersionV1.WithKind(K8sReferenceGrantType)
-	K8sReferenceGrantType = "ReferenceGrant"
-
-	K8sTCPRoutes    = K8sNetworkingGroupVersionV1Alpha2.WithKind(K8sTCPRouteType)
-	K8sTCPRouteType = "TCPRoute"
-
-	K8sTLSRoutes    = K8sNetworkingGroupVersionV1Alpha2.WithKind(K8sTLSRouteType)
-	K8sTLSRouteType = "TLSRoute"
+	K8sGateways        = K8sNetworkingGroupVersionV1.WithKind(K8sGatewayType)
+	K8sGatewayClasses  = K8sNetworkingGroupVersionV1.WithKind(K8sGatewayClassType)
+	K8sGRPCRoutes      = K8sNetworkingGroupVersionV1.WithKind(K8sGRPCRouteType)
+	K8sHTTPRoutes      = K8sNetworkingGroupVersionV1.WithKind(K8sHTTPRouteType)
+	K8sReferenceGrants = K8sNetworkingGroupVersionV1.WithKind(K8sReferenceGrantType)
+	K8sTCPRoutes       = K8sNetworkingGroupVersionV1Alpha2.WithKind(K8sTCPRouteType)
+	K8sTLSRoutes       = K8sNetworkingGroupVersionV1Alpha2.WithKind(K8sTLSRouteType)
 
 	// Authorization PeerAuthentications
-	AuthorizationPolicies     = SecurityGroupVersionV1.WithKind(AuthorizationPoliciesType)
-	AuthorizationPoliciesType = "AuthorizationPolicy"
+	AuthorizationPolicies = SecurityGroupVersionV1.WithKind(AuthorizationPoliciesType)
 
 	// Peer Authentications
-	PeerAuthentications     = SecurityGroupVersionV1.WithKind(PeerAuthenticationsType)
-	PeerAuthenticationsType = "PeerAuthentication"
+	PeerAuthentications = SecurityGroupVersionV1.WithKind(PeerAuthenticationsType)
 
 	// Request Authentications
-	RequestAuthentications     = SecurityGroupVersionV1.WithKind(RequestAuthenticationsType)
-	RequestAuthenticationsType = "RequestAuthentication"
+	RequestAuthentications = SecurityGroupVersionV1.WithKind(RequestAuthenticationsType)
+
+	// Kubernetes Controllers
+	ConfigMaps             = CoreGroupVersionV1.WithKind(ConfigMapType)
+	CronJobs               = BatchGroupVersionV1.WithKind(CronJobType)
+	DaemonSets             = AppsGroupVersionV1.WithKind(DaemonSetType)
+	Deployments            = AppsGroupVersionV1.WithKind(DeploymentType)
+	DeploymentConfigs      = AppsOpenShiftGroupVersionV1.WithKind(DeploymentConfigType)
+	Endpoints              = CoreGroupVersionV1.WithKind(EndpointsType)
+	Jobs                   = BatchGroupVersionV1.WithKind(JobType)
+	Pods                   = CoreGroupVersionV1.WithKind(PodType)
+	ReplicationControllers = CoreGroupVersionV1.WithKind(ReplicationControllerType)
+	ReplicaSets            = AppsGroupVersionV1.WithKind(ReplicaSetType)
+	Services               = CoreGroupVersionV1.WithKind(ServiceType)
+	StatefulSets           = AppsGroupVersionV1.WithKind(StatefulSetType)
+
+	// Group Versions
+	CoreGroupVersionV1 = schema.GroupVersion{
+		Group:   "",
+		Version: "v1",
+	}
+
+	BatchGroupVersionV1 = schema.GroupVersion{
+		Group:   "batch",
+		Version: "v1",
+	}
+
+	AppsGroupVersionV1 = schema.GroupVersion{
+		Group:   "apps",
+		Version: "v1",
+	}
+
+	AppsOpenShiftGroupVersionV1 = schema.GroupVersion{
+		Group:   "apps.openshift.io",
+		Version: "v1",
+	}
 
 	NetworkingGroupVersionV1Alpha3 = schema.GroupVersion{
 		Group:   "networking.istio.io",
@@ -131,6 +159,7 @@ var (
 		Version: "v1",
 	}
 
+	// Resources
 	ResourceTypesToAPI = map[string]schema.GroupVersionKind{
 		DestinationRules.String(): DestinationRules,
 		EnvoyFilters.String():     EnvoyFilters,

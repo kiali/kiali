@@ -644,6 +644,7 @@ func (c *kubeCache) GetConfigMap(namespace, name string) (*core_v1.ConfigMap, er
 	// Do not modify what is returned by the lister since that is shared and will cause data races.
 	retCM := cfg.DeepCopy()
 	retCM.Kind = kubernetes.ConfigMapType
+	retCM.APIVersion = kubernetes.ConfigMaps.GroupVersion().String()
 	return retCM, nil
 }
 
@@ -709,6 +710,7 @@ func (c *kubeCache) GetDaemonSets(namespace string) ([]apps_v1.DaemonSet, error)
 		// Do not modify what is returned by the lister since that is shared and will cause data races.
 		d := ds.DeepCopy()
 		d.Kind = kubernetes.DaemonSetType
+		d.APIVersion = kubernetes.DaemonSets.GroupVersion().String()
 		retSets = append(retSets, *d)
 	}
 	return retSets, nil
@@ -728,6 +730,7 @@ func (c *kubeCache) GetDaemonSet(namespace, name string) (*apps_v1.DaemonSet, er
 	// Do not modify what is returned by the lister since that is shared and will cause data races.
 	retDS := ds.DeepCopy()
 	retDS.Kind = kubernetes.DaemonSetType
+	retDS.APIVersion = kubernetes.DaemonSets.GroupVersion().String()
 	return retDS, nil
 }
 
@@ -777,6 +780,7 @@ func (c *kubeCache) GetDaemonSetsWithSelector(namespace string, selectorLabels m
 			// Do not modify what is returned by the lister since that is shared and will cause data races.
 			svc := ds.DeepCopy()
 			svc.Kind = kubernetes.DaemonSetType
+			svc.APIVersion = kubernetes.DaemonSets.GroupVersion().String()
 			retDS = append(retDS, svc)
 		}
 	}
@@ -799,6 +803,7 @@ func (c *kubeCache) GetDeployments(namespace string) ([]apps_v1.Deployment, erro
 		// Do not modify what is returned by the lister since that is shared and will cause data races.
 		d := deployment.DeepCopy()
 		d.Kind = kubernetes.DeploymentType
+		d.APIVersion = kubernetes.Deployments.GroupVersion().String()
 		retDeployments = append(retDeployments, *d)
 	}
 	return retDeployments, nil
@@ -842,6 +847,7 @@ func (c *kubeCache) GetDeploymentsWithSelector(namespace string, labelSelector s
 	for _, ds := range deployments {
 		d := ds.DeepCopy()
 		d.Kind = kubernetes.DeploymentType
+		d.APIVersion = kubernetes.Deployments.GroupVersion().String()
 		retDeployments = append(retDeployments, *d)
 	}
 	return retDeployments, nil
@@ -861,6 +867,7 @@ func (c *kubeCache) GetDeployment(namespace, name string) (*apps_v1.Deployment, 
 	// Do not modify what is returned by the lister since that is shared and will cause data races.
 	retDep := deployment.DeepCopy()
 	retDep.Kind = kubernetes.DeploymentType
+	retDep.APIVersion = kubernetes.Deployments.GroupVersion().String()
 	return retDep, nil
 }
 
@@ -878,6 +885,7 @@ func (c *kubeCache) GetEndpoints(namespace, name string) (*core_v1.Endpoints, er
 	// Do not modify what is returned by the lister since that is shared and will cause data races.
 	retEnd := endpoints.DeepCopy()
 	retEnd.Kind = kubernetes.EndpointsType
+	retEnd.APIVersion = kubernetes.Endpoints.GroupVersion().String()
 	return retEnd, nil
 }
 
@@ -897,6 +905,7 @@ func (c *kubeCache) GetStatefulSets(namespace string) ([]apps_v1.StatefulSet, er
 		// Do not modify what is returned by the lister since that is shared and will cause data races.
 		s := ss.DeepCopy()
 		s.Kind = kubernetes.StatefulSetType
+		s.APIVersion = kubernetes.StatefulSets.GroupVersion().String()
 		retSets = append(retSets, *s)
 	}
 	return retSets, nil
@@ -916,6 +925,7 @@ func (c *kubeCache) GetStatefulSet(namespace, name string) (*apps_v1.StatefulSet
 	// Do not modify what is returned by the lister since that is shared and will cause data races.
 	retSet := statefulSet.DeepCopy()
 	retSet.Kind = kubernetes.StatefulSetType
+	retSet.APIVersion = kubernetes.StatefulSets.GroupVersion().String()
 	return retSet, nil
 }
 
@@ -960,6 +970,7 @@ func (c *kubeCache) GetServices(namespace string, labelSelector string) ([]core_
 	for _, ss := range services {
 		s := ss.DeepCopy()
 		s.Kind = kubernetes.ServiceType
+		s.APIVersion = kubernetes.Services.GroupVersion().String()
 		retServices = append(retServices, *s)
 	}
 	return retServices, nil
@@ -987,6 +998,7 @@ func (c *kubeCache) GetServicesBySelectorLabels(namespace string, selectorLabels
 			// Do not modify what is returned by the lister since that is shared and will cause data races.
 			svc := service.DeepCopy()
 			svc.Kind = kubernetes.ServiceType
+			svc.APIVersion = kubernetes.Services.GroupVersion().String()
 			retServices = append(retServices, *svc)
 		}
 	}
@@ -1007,6 +1019,7 @@ func (c *kubeCache) GetService(namespace, name string) (*core_v1.Service, error)
 	// Do not modify what is returned by the lister since that is shared and will cause data races.
 	retSvc := service.DeepCopy()
 	retSvc.Kind = kubernetes.ServiceType
+	retSvc.APIVersion = kubernetes.Services.GroupVersion().String()
 	return retSvc, nil
 }
 
@@ -1031,6 +1044,7 @@ func (c *kubeCache) GetPods(namespace, labelSelector string) ([]core_v1.Pod, err
 		// Do not modify what is returned by the lister since that is shared and will cause data races.
 		p := pod.DeepCopy()
 		p.Kind = kubernetes.PodType
+		p.APIVersion = kubernetes.Pods.GroupVersion().String()
 		retPods = append(retPods, *p)
 	}
 	return retPods, nil
@@ -1082,6 +1096,7 @@ func (c *kubeCache) GetReplicaSets(namespace string) ([]apps_v1.ReplicaSet, erro
 			// Do not modify what is returned by the lister since that is shared and will cause data races.
 			rs := activeRS.DeepCopy()
 			rs.Kind = kubernetes.ReplicaSetType
+			rs.APIVersion = kubernetes.ReplicaSets.GroupVersion().String()
 			result[i] = *rs
 			i = i + 1
 		}
