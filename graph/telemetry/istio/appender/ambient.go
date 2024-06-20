@@ -52,8 +52,8 @@ func (a AmbientAppender) handleWaypoints(trafficMap graph.TrafficMap, globalInfo
 		} else {
 			workloadName = n.App
 		}
-		workload, found := getWorkload(n.Cluster, n.Namespace, workloadName, globalInfo)
-		if !found {
+		workload, err := getWorkloadItem(n.Cluster, n.Namespace, workloadName, globalInfo)
+		if err != nil {
 			log.Tracef("Error getting waypoint proxy: Workload %s was not found", n.Workload)
 			continue
 		}
