@@ -2,30 +2,30 @@ import * as React from 'react';
 import { WorkloadOverview } from '../../types/ServiceInfo';
 import { Rules, MOVE_TYPE, Rule } from './RequestRouting/Rules';
 import { RuleBuilder } from './RequestRouting/RuleBuilder';
-import { ANYTHING, EXACT, HEADERS, PRESENCE, REGEX } from './RequestRouting/MatchBuilder';
+import { EXACT, HEADERS } from './RequestRouting/MatchBuilder';
 import { MSG_WEIGHTS_NOT_VALID, WorkloadWeight } from './TrafficShifting';
 import { getDefaultWeights } from './WizardActions';
 import { FaultInjectionRoute } from './FaultInjection';
 import { TimeoutRetryRoute } from './RequestTimeouts';
 
 type Props = {
-  serviceName: string;
-  workloads: WorkloadOverview[];
   initRules: Rule[];
   onChange: (valid: boolean, rules: Rule[]) => void;
+  serviceName: string;
+  workloads: WorkloadOverview[];
 };
 
 type State = {
   category: string;
-  operator: string;
-  workloadWeights: WorkloadWeight[];
-  matches: string[];
+  faultInjectionRoute: FaultInjectionRoute;
   headerName: string;
   matchValue: string;
-  faultInjectionRoute: FaultInjectionRoute;
-  timeoutRetryRoute: TimeoutRetryRoute;
+  matches: string[];
+  operator: string;
   rules: Rule[];
+  timeoutRetryRoute: TimeoutRetryRoute;
   validationMsg: string;
+  workloadWeights: WorkloadWeight[];
 };
 
 const MSG_SAME_MATCHING = 'A Rule with same matching criteria is already added.';
@@ -37,7 +37,7 @@ export class RequestRouting extends React.Component<Props, State> {
     super(props);
     this.state = {
       category: HEADERS,
-      operator: PRESENCE,
+      operator: EXACT,
       workloadWeights: getDefaultWeights(this.props.workloads),
       faultInjectionRoute: {
         workloads: [],
@@ -79,7 +79,7 @@ export class RequestRouting extends React.Component<Props, State> {
     };
   }
 
-  isMatchesIncluded = (rules: Rule[], rule: Rule) => {
+  isMatchesIncluded = (rules: Rule[], rule: Rule): boolean => {
     let found = false;
     for (let i = 0; i < rules.length; i++) {
       const item = rules[i];
@@ -100,7 +100,7 @@ export class RequestRouting extends React.Component<Props, State> {
       return false;
     }
     const matchAll: number = this.matchAllIndex(rules);
-    let isValid: boolean = true;
+    let isValid = true;
     for (let index = 0; index < this.state.rules.length; index++) {
       isValid = matchAll === -1 || index <= matchAll;
       if (!isValid) {
@@ -110,21 +110,15 @@ export class RequestRouting extends React.Component<Props, State> {
     return isValid;
   };
 
-  onAddMatch = () => {
+  onAddMatch = (): void => {
     this.setState(prevState => {
-      let newMatch: string;
       if (this.state.matchValue !== '') {
-        newMatch =
-          prevState.category +
-          (prevState.category === HEADERS ? ' [' + prevState.headerName + '] ' : ' ') +
-          prevState.operator +
-          ' ' +
-          prevState.matchValue;
-      } else {
-        newMatch = prevState.category + ' [' + prevState.headerName + '] ' + REGEX + ' ' + ANYTHING;
-      }
-      if (!prevState.matches.includes(newMatch)) {
-        prevState.matches.push(newMatch);
+        const newMatch = `${prevState.category}${prevState.category === HEADERS ? ` [${prevState.headerName}] ` : ' '}${
+          prevState.operator
+        } ${prevState.matchValue}`;
+        if (!prevState.matches.includes(newMatch)) {
+          prevState.matches.push(newMatch);
+        }
       }
       return {
         matches: prevState.matches,
@@ -134,7 +128,7 @@ export class RequestRouting extends React.Component<Props, State> {
     });
   };
 
-  onAddRule = () => {
+  onAddRule = (): void => {
     this.setState(
       prevState => {
         const newWorkloadWeights: WorkloadWeight[] = [];
@@ -190,7 +184,7 @@ export class RequestRouting extends React.Component<Props, State> {
     );
   };
 
-  onRemoveMatch = (matchToRemove: string) => {
+  onRemoveMatch = (matchToRemove: string): void => {
     this.setState(prevState => {
       return {
         matches: prevState.matches.filter(m => matchToRemove !== m),
@@ -199,7 +193,7 @@ export class RequestRouting extends React.Component<Props, State> {
     });
   };
 
-  onRemoveRule = (index: number) => {
+  onRemoveRule = (index: number): void => {
     this.setState(
       prevState => {
         prevState.rules.splice(index, 1);
@@ -212,12 +206,12 @@ export class RequestRouting extends React.Component<Props, State> {
     );
   };
 
-  onHeaderNameChange = (headerName: string) => {
+  onHeaderNameChange = (headerName: string): void => {
     let validationMsg = '';
     if (this.state.matchValue !== '' && headerName === '') {
       validationMsg = MSG_HEADER_NAME_NON_EMPTY;
     }
-    if (this.state.matchValue === '' && headerName !== '' && this.state.operator !== PRESENCE) {
+    if (this.state.matchValue === '' && headerName !== '') {
       validationMsg = MSG_HEADER_VALUE_NON_EMPTY;
     }
     this.setState({
@@ -226,7 +220,7 @@ export class RequestRouting extends React.Component<Props, State> {
     });
   };
 
-  onMatchValueChange = (matchValue: string) => {
+  onMatchValueChange = (matchValue: string): void => {
     let validationMsg = '';
     if (this.state.category === HEADERS) {
       if (this.state.headerName === '' && matchValue !== '') {
@@ -245,14 +239,14 @@ export class RequestRouting extends React.Component<Props, State> {
     });
   };
 
-  onSelectWeights = (valid: boolean, workloads: WorkloadWeight[]) => {
+  onSelectWeights = (valid: boolean, workloads: WorkloadWeight[]): void => {
     this.setState({
       workloadWeights: workloads,
       validationMsg: !valid ? MSG_WEIGHTS_NOT_VALID : ''
     });
   };
 
-  onMoveRule = (index: number, move: MOVE_TYPE) => {
+  onMoveRule = (index: number, move: MOVE_TYPE): void => {
     this.setState(
       prevState => {
         const sourceRule = prevState.rules[index];
@@ -269,7 +263,7 @@ export class RequestRouting extends React.Component<Props, State> {
   };
 
   matchAllIndex = (rules: Rule[]): number => {
-    let matchAll: number = -1;
+    let matchAll = -1;
     for (let index = 0; index < rules.length; index++) {
       const rule = rules[index];
       if (rule.matches.length === 0) {
@@ -280,7 +274,7 @@ export class RequestRouting extends React.Component<Props, State> {
     return matchAll;
   };
 
-  componentDidMount() {
+  componentDidMount(): void {
     if (this.props.initRules.length > 0) {
       this.setState(
         {
@@ -291,7 +285,7 @@ export class RequestRouting extends React.Component<Props, State> {
     }
   }
 
-  render() {
+  render(): React.ReactNode {
     return (
       <>
         <RuleBuilder
@@ -302,10 +296,9 @@ export class RequestRouting extends React.Component<Props, State> {
           isValid={this.state.validationMsg === ''}
           onSelectCategory={(category: string) => {
             this.setState(prevState => {
-              // PRESENCE operator only applies to HEADERS
               return {
                 category: category,
-                operator: prevState.operator === PRESENCE && category !== HEADERS ? EXACT : prevState.operator
+                operator: prevState.operator
               };
             });
           }}

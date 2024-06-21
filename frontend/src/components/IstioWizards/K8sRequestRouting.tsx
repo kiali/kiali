@@ -110,20 +110,22 @@ export class K8sRequestRouting extends React.Component<Props, State> {
 
   onAddMatch = (): void => {
     this.setState(prevState => {
-      let newMatch: string;
-      if (prevState.category === PATH) {
-        newMatch = `${prevState.category} ${prevState.operator} ${prevState.matchValue}`;
-      } else if (prevState.category === HEADERS) {
-        newMatch = `${prevState.category} [${prevState.headerName}] ${prevState.operator} ${prevState.matchValue}`;
-      } else if (prevState.category === QUERY_PARAMS) {
-        newMatch = `${prevState.category} ${prevState.queryParamName} ${prevState.operator} ${prevState.matchValue}`;
-      } else if (prevState.category === METHOD || this.props.protocol === GRPC) {
-        newMatch = `${prevState.category} ${prevState.methodName} ${prevState.operator} ${prevState.methodService}`;
-      } else {
-        newMatch = `${prevState.category} ${prevState.operator}`;
-      }
-      if (!prevState.matches.includes(newMatch)) {
-        prevState.matches.push(newMatch);
+      if (this.state.matchValue !== '') {
+        let newMatch: string;
+        if (prevState.category === PATH) {
+          newMatch = `${prevState.category} ${prevState.operator} ${prevState.matchValue}`;
+        } else if (prevState.category === HEADERS) {
+          newMatch = `${prevState.category} [${prevState.headerName}] ${prevState.operator} ${prevState.matchValue}`;
+        } else if (prevState.category === QUERY_PARAMS) {
+          newMatch = `${prevState.category} ${prevState.queryParamName} ${prevState.operator} ${prevState.matchValue}`;
+        } else if (prevState.category === METHOD || this.props.protocol === GRPC) {
+          newMatch = `${prevState.category} ${prevState.methodName} ${prevState.operator} ${prevState.methodService}`;
+        } else {
+          newMatch = `${prevState.category} ${prevState.operator}`;
+        }
+        if (!prevState.matches.includes(newMatch)) {
+          prevState.matches.push(newMatch);
+        }
       }
       return {
         matches: prevState.matches,
