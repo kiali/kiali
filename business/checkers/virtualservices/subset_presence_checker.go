@@ -3,7 +3,7 @@ package virtualservices
 import (
 	"fmt"
 
-	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
@@ -11,8 +11,8 @@ import (
 
 type SubsetPresenceChecker struct {
 	Namespaces       []string
-	DestinationRules []*networking_v1beta1.DestinationRule
-	VirtualService   *networking_v1beta1.VirtualService
+	DestinationRules []*networking_v1.DestinationRule
+	VirtualService   *networking_v1.VirtualService
 }
 
 func (checker SubsetPresenceChecker) Check() ([]*models.IstioCheck, bool) {
@@ -108,8 +108,8 @@ func (checker SubsetPresenceChecker) subsetPresent(host string, subset string) b
 	return false
 }
 
-func (checker SubsetPresenceChecker) getDestinationRules(virtualServiceHost string) ([]*networking_v1beta1.DestinationRule, bool) {
-	drs := make([]*networking_v1beta1.DestinationRule, 0, len(checker.DestinationRules))
+func (checker SubsetPresenceChecker) getDestinationRules(virtualServiceHost string) ([]*networking_v1.DestinationRule, bool) {
+	drs := make([]*networking_v1.DestinationRule, 0, len(checker.DestinationRules))
 
 	for _, destinationRule := range checker.DestinationRules {
 		host := destinationRule.Spec.Host
@@ -126,7 +126,7 @@ func (checker SubsetPresenceChecker) getDestinationRules(virtualServiceHost stri
 	return drs, len(drs) > 0
 }
 
-func hasSubsetDefined(destinationRule *networking_v1beta1.DestinationRule, subsetTarget string) bool {
+func hasSubsetDefined(destinationRule *networking_v1.DestinationRule, subsetTarget string) bool {
 	for _, subset := range destinationRule.Spec.Subsets {
 		if subset == nil {
 			continue

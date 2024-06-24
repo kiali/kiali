@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	security_v1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
+	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/models"
@@ -80,10 +80,10 @@ func TestUnCoveredWorkloads(t *testing.T) {
 		workloadListNS1().Workloads[3])
 
 	//case4 - no authorization policy found
-	testFailure(assert, ns2, []*security_v1beta1.AuthorizationPolicy{}, workloadListNS2().Workloads[0])
+	testFailure(assert, ns2, []*security_v1.AuthorizationPolicy{}, workloadListNS2().Workloads[0])
 }
 
-func testFailure(assert *assert.Assertions, ns string, authpolicies []*security_v1beta1.AuthorizationPolicy, workload models.WorkloadListItem) {
+func testFailure(assert *assert.Assertions, ns string, authpolicies []*security_v1.AuthorizationPolicy, workload models.WorkloadListItem) {
 	vals, valid := UncoveredWorkloadChecker{
 		Workload:              workload,
 		Namespace:             ns,
@@ -115,8 +115,8 @@ func workloadListNS2() models.WorkloadList {
 	return data.CreateWorkloadList(ns2, wlitems...)
 }
 
-func authorizationPoliciesNS1() []*security_v1beta1.AuthorizationPolicy {
-	auths := []*security_v1beta1.AuthorizationPolicy{
+func authorizationPoliciesNS1() []*security_v1.AuthorizationPolicy {
+	auths := []*security_v1.AuthorizationPolicy{
 		data.CreateAuthorizationPolicyWithMetaAndSelector("auth-policy1", ns1, map[string]string{"app": "ratings", "version": "v1"}),
 		data.CreateAuthorizationPolicyWithMetaAndSelector("auth-policy2", ns1, map[string]string{"app": "productpage", "version": "v1"}),
 		data.CreateAuthorizationPolicyWithMetaAndSelector("auth-policy3", ns1, map[string]string{"app": "details", "version": "v3"}),
@@ -124,8 +124,8 @@ func authorizationPoliciesNS1() []*security_v1beta1.AuthorizationPolicy {
 	return auths
 }
 
-func variedAuthPolicies1() []*security_v1beta1.AuthorizationPolicy {
-	auths := []*security_v1beta1.AuthorizationPolicy{
+func variedAuthPolicies1() []*security_v1.AuthorizationPolicy {
+	auths := []*security_v1.AuthorizationPolicy{
 		data.CreateEmptyMeshAuthorizationPolicy("test-root"),
 	}
 	auths = append(auths, authorizationPoliciesNS1()...)
@@ -133,8 +133,8 @@ func variedAuthPolicies1() []*security_v1beta1.AuthorizationPolicy {
 	return auths
 }
 
-func variedAuthPolicies2() []*security_v1beta1.AuthorizationPolicy {
-	auths := []*security_v1beta1.AuthorizationPolicy{
+func variedAuthPolicies2() []*security_v1.AuthorizationPolicy {
+	auths := []*security_v1.AuthorizationPolicy{
 		data.CreateEmptyAuthorizationPolicy("test-ns", ns2),
 	}
 	auths = append(auths, authorizationPoliciesNS1()...)
@@ -142,8 +142,8 @@ func variedAuthPolicies2() []*security_v1beta1.AuthorizationPolicy {
 	return auths
 }
 
-func variedAuthPolicies3() []*security_v1beta1.AuthorizationPolicy {
-	auths := []*security_v1beta1.AuthorizationPolicy{
+func variedAuthPolicies3() []*security_v1.AuthorizationPolicy {
+	auths := []*security_v1.AuthorizationPolicy{
 		data.CreateAuthorizationPolicyWithMetaAndSelector("test-root2", "istio-system", map[string]string{"app": "wrong", "version": "v4"}),
 	}
 	auths = append(auths, authorizationPoliciesNS1()...)

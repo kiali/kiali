@@ -28,8 +28,7 @@
 # After you create these Istio objects, look in Kiali's bookinfo graph between the
 # reviews and ratings services to see this new traffic going to the external service.
 ##########
----
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: ServiceEntry
 metadata:
   name: external-service-foo-se
@@ -47,13 +46,13 @@ spec:
     ports:
       http-ext: 9080
 ---
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: external-service-foo-vs
 spec:
   hosts:
-    - ratings
+  - ratings
   http:
   - route:
     - destination:
@@ -64,7 +63,7 @@ spec:
         host: foo.bookinfo.ext
       weight: 100
 ---
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: external-service-foo-dr

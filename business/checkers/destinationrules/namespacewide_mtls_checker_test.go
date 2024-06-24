@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	security_v1beta "istio.io/client-go/pkg/apis/security/v1beta1"
+	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
@@ -25,7 +25,7 @@ func TestMTLSNshWideDREnabledWithNsPolicyPermissive(t *testing.T) {
 		data.CreateEmptyDestinationRule("bookinfo", "dr-mtls", "*.bookinfo.svc.cluster.local"))
 
 	mTlsDetails := kubernetes.MTLSDetails{
-		PeerAuthentications: []*security_v1beta.PeerAuthentication{
+		PeerAuthentications: []*security_v1.PeerAuthentication{
 			data.CreateEmptyPeerAuthentication("default", "bookinfo", data.CreateMTLS("PERMISSIVE")),
 		},
 	}
@@ -47,7 +47,7 @@ func TestMTLSNsWideDREnabledWithPolicy(t *testing.T) {
 		data.CreateEmptyDestinationRule("bookinfo", "dr-mtls", "*.bookinfo.svc.cluster.local"))
 
 	mTlsDetails := kubernetes.MTLSDetails{
-		PeerAuthentications: []*security_v1beta.PeerAuthentication{
+		PeerAuthentications: []*security_v1.PeerAuthentication{
 			data.CreateEmptyPeerAuthentication("default", "bookinfo", data.CreateMTLS("STRICT")),
 		},
 	}
@@ -71,7 +71,7 @@ func TestMTLSNsWideDREnabledWithMeshPolicy(t *testing.T) {
 		data.CreateEmptyDestinationRule("bookinfo", "dr-mtls", "*.bookinfo.svc.cluster.local"))
 
 	mTlsDetails := kubernetes.MTLSDetails{
-		MeshPeerAuthentications: []*security_v1beta.PeerAuthentication{
+		MeshPeerAuthentications: []*security_v1.PeerAuthentication{
 			data.CreateEmptyMeshPeerAuthentication("default", data.CreateMTLS("STRICT")),
 		},
 	}

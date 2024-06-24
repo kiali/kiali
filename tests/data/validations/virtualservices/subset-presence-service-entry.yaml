@@ -7,25 +7,25 @@ metadata:
     istio-injection: "enabled"
 spec: {}
 ---
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: ServiceEntry
 metadata:
   name: orahub
   namespace: istio-trials
 spec:
   hosts:
-    - orahub.oci.oraclecorp.com
+  - orahub.oci.oraclecorp.com
   ports:
-    - number: 80
-      name: http-0
-      protocol: HTTP
-    - number: 443
-      name: tls-0
-      protocol: TLS
+  - number: 80
+    name: http-0
+    protocol: HTTP
+  - number: 443
+    name: tls-0
+    protocol: TLS
   resolution: DNS
   location: MESH_EXTERNAL
 ---
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: originate-tls-for-orahub
@@ -33,70 +33,70 @@ metadata:
 spec:
   host: orahub.oci.oraclecorp.com
   subsets:
-    - name: tls-origination
-      trafficPolicy:
-        loadBalancer:
-          simple: ROUND_ROBIN
-        portLevelSettings:
-          - port:
-              number: 443
-            tls:
-              sni: orahub.oci.oraclecorp.com
-              mode: SIMPLE
-    - name: tls-passthrough
+  - name: tls-origination
+    trafficPolicy:
+      loadBalancer:
+        simple: ROUND_ROBIN
+      portLevelSettings:
+      - port:
+          number: 443
+        tls:
+          sni: orahub.oci.oraclecorp.com
+          mode: SIMPLE
+  - name: tls-passthrough
 ---
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: orahub-vs
   namespace: istio-trials
 spec:
   hosts:
-    - orahub.oci.oraclecorp.com
+  - orahub.oci.oraclecorp.com
   gateways:
-    - my-egress-gw
-    - mesh
+  - my-egress-gw
+  - mesh
   http:
-    - match:
-        - gateways:
-            - mesh
-          port: 80
-      route:
-        - destination:
-            host: istio-egressgateway.istio-system.svc.cluster.local
-            port:
-              number: 80
-    - match:
-        - gateways:
-            - my-egress-gw
-          port: 80
-      route:
-        - destination:
-            subset: tls-origination
-            host: orahub.oci.oraclecorp.com
-            port:
-              number: 443
+  - match:
+    - gateways:
+      - mesh
+      port: 80
+    route:
+    - destination:
+        host: istio-egressgateway.istio-system.svc.cluster.local
+        port:
+          number: 80
+  - match:
+    - gateways:
+      - my-egress-gw
+      port: 80
+    route:
+    - destination:
+        subset: tls-origination
+        host: orahub.oci.oraclecorp.com
+        port:
+          number: 443
   tls:
-    - match:
-        - gateways:
-            - mesh
-          port: 443
-          sniHosts:
-            - orahub.oci.oraclecorp.com
-      route:
-        - destination:
-            host: istio-egressgateway.istio-system.svc.cluster.local
-            port:
-              number: 443
-    - match:
-        - gateways:
-            - my-egress-gw
-          port: 443
-          sniHosts:
-            - orahub.oci.oraclecorp.com
-      route:
-        - destination:
-            subset: tls-passthrough
-            host: orahub.oci.oraclecorp.com
-            port:
-              number: 443
+  - match:
+    - gateways:
+      - mesh
+      port: 443
+      sniHosts:
+      - orahub.oci.oraclecorp.com
+    route:
+    - destination:
+        host: istio-egressgateway.istio-system.svc.cluster.local
+        port:
+          number: 443
+  - match:
+    - gateways:
+      - my-egress-gw
+      port: 443
+      sniHosts:
+      - orahub.oci.oraclecorp.com
+    route:
+    - destination:
+        subset: tls-passthrough
+        host: orahub.oci.oraclecorp.com
+        port:
+          number: 443

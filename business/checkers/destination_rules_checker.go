@@ -1,7 +1,7 @@
 package checkers
 
 import (
-	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 
 	"github.com/kiali/kiali/business/checkers/common"
 	"github.com/kiali/kiali/business/checkers/destinationrules"
@@ -12,9 +12,9 @@ import (
 const DestinationRuleCheckerType = "destinationrule"
 
 type DestinationRulesChecker struct {
-	DestinationRules []*networking_v1beta1.DestinationRule
+	DestinationRules []*networking_v1.DestinationRule
 	MTLSDetails      kubernetes.MTLSDetails
-	ServiceEntries   []*networking_v1beta1.ServiceEntry
+	ServiceEntries   []*networking_v1.ServiceEntry
 	Namespaces       models.Namespaces
 	Cluster          string
 }
@@ -56,7 +56,7 @@ func (in DestinationRulesChecker) runIndividualChecks() models.IstioValidations 
 	return validations
 }
 
-func (in DestinationRulesChecker) runChecks(destinationRule *networking_v1beta1.DestinationRule) models.IstioValidations {
+func (in DestinationRulesChecker) runChecks(destinationRule *networking_v1.DestinationRule) models.IstioValidations {
 	destinationRuleName := destinationRule.Name
 	key, rrValidation := EmptyValidValidation(destinationRuleName, destinationRule.Namespace, DestinationRuleCheckerType, in.Cluster)
 

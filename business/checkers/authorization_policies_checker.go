@@ -1,8 +1,8 @@
 package checkers
 
 import (
-	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
-	security_v1beta "istio.io/client-go/pkg/apis/security/v1beta1"
+	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
+	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 
 	"github.com/kiali/kiali/business/checkers/authorization"
 	"github.com/kiali/kiali/business/checkers/common"
@@ -19,9 +19,9 @@ type AuthorizationPolicyChecker struct {
 	PolicyAllowAny        bool
 	RegistryServices      []*kubernetes.RegistryService
 	ServiceAccounts       map[string][]string
-	ServiceEntries        []*networking_v1beta1.ServiceEntry
-	AuthorizationPolicies []*security_v1beta.AuthorizationPolicy
-	VirtualServices       []*networking_v1beta1.VirtualService
+	ServiceEntries        []*networking_v1.ServiceEntry
+	AuthorizationPolicies []*security_v1.AuthorizationPolicy
+	VirtualServices       []*networking_v1.VirtualService
 	WorkloadsPerNamespace map[string]models.WorkloadList
 }
 
@@ -44,7 +44,7 @@ func (a AuthorizationPolicyChecker) Check() models.IstioValidations {
 }
 
 // runChecks runs all the individual checks for a single mesh policy and appends the result into validations.
-func (a AuthorizationPolicyChecker) runChecks(authPolicy *security_v1beta.AuthorizationPolicy) models.IstioValidations {
+func (a AuthorizationPolicyChecker) runChecks(authPolicy *security_v1.AuthorizationPolicy) models.IstioValidations {
 	policyName := authPolicy.Name
 	key, rrValidation := EmptyValidValidation(policyName, authPolicy.Namespace, AuthorizationPolicyCheckerType, a.Cluster)
 	serviceHosts := kubernetes.ServiceEntryHostnames(a.ServiceEntries)

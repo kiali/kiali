@@ -183,10 +183,11 @@ export type WorkloadWizardState = {
 export const KIALI_WIZARD_LABEL = 'kiali_wizard';
 export const KIALI_RELATED_LABEL = 'kiali_wizard_related';
 
-// Wizard don't operate with EnvoyFilters so they can use the v1beta1 version
-export const ISTIO_NETWORKING_VERSION = 'networking.istio.io/v1beta1';
-export const ISTIO_SECURITY_VERSION = 'security.istio.io/v1beta1';
-export const GATEWAY_NETWORKING_VERSION = 'gateway.networking.k8s.io/v1';
+// Wizard don't operate with EnvoyFilters so they can use the v1 version
+const ISTIO_NETWORKING_VERSION = 'networking.istio.io/v1';
+const ISTIO_SECURITY_VERSION = 'security.istio.io/v1';
+const GATEWAY_NETWORKING_VERSION = 'gateway.networking.k8s.io/v1';
+const GATEWAY_NETWORKING_VERSION_BETA = 'gateway.networking.k8s.io/v1beta1';
 
 export const fqdnServiceName = (serviceName: string, namespace: string): string => {
   return `${serviceName}.${namespace}.${serverConfig.istioIdentityDomain}`;
@@ -1719,7 +1720,7 @@ export const buildGraphSidecars = (namespace: string, graph: GraphDefinition): S
 export const buildGraphAuthorizationPolicy = (namespace: string, graph: GraphDefinition): AuthorizationPolicy[] => {
   const denyAll: AuthorizationPolicy = {
     kind: 'AuthorizationPolicy',
-    apiVersion: 'security.istio.io/v1beta1',
+    apiVersion: 'security.istio.io/v1',
     metadata: {
       name: `deny-all-${namespace}`,
       namespace: namespace,
@@ -1892,7 +1893,7 @@ export const buildK8sReferenceGrant = (
 ): K8sReferenceGrant => {
   const k8sReferenceGrant: K8sReferenceGrant = {
     kind: 'ReferenceGrant',
-    apiVersion: GATEWAY_NETWORKING_VERSION,
+    apiVersion: GATEWAY_NETWORKING_VERSION_BETA,
     metadata: {
       name: name,
       namespace: namespace,

@@ -62,7 +62,7 @@ create_traffic_shifting_rules() {
   echo "==== CREATING TRAFFIC SHIFTING RULES FOR REVIEWS SERVICE FOR CLUSTER [${cluster_context}]"
   # This is done to enforce traffic to all reviews workloads (there were ocassions where traffic was not being routed to v3 or v2)
   cat <<EOF | ${CLIENT_EXE} --context ${cluster_context} apply -f -
-apiVersion: networking.istio.io/v1alpha3
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: reviews
@@ -88,7 +88,7 @@ EOF
 
   cat <<EOF | ${CLIENT_EXE} --context ${cluster_context} apply -f -
 kind: DestinationRule
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 metadata:
   name: reviews
   namespace: ${BOOKINFO_NAMESPACE}

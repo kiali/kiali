@@ -375,7 +375,7 @@ func istioMetadata(metadata *kubernetes.EnvoyMetadata) string {
 }
 
 func renderConfig(configPath string) string {
-	if strings.HasPrefix(configPath, "/apis/networking.istio.io/v1alpha3/namespaces/") {
+	if strings.HasPrefix(configPath, "/apis/networking.istio.io/v1/namespaces/") {
 		parts := strings.Split(configPath, "/")
 		if len(parts) != 8 {
 			return ""

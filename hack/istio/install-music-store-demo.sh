@@ -79,7 +79,7 @@ install_mstore_app() {
   export MUSIC_STORE_BACKEND=http://$GATEWAY_URL/api
 
   cat <<EOF | $CLIENT_EXE apply -f -
-apiVersion: networking.istio.io/v1alpha3
+apiVersion: networking.istio.io/v1
 kind: Gateway
 metadata:
   name: music-store
@@ -95,7 +95,7 @@ spec:
       hosts:
         - "*"
 ---
-apiVersion: networking.istio.io/v1alpha3
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: music-store-ui

@@ -1,4 +1,4 @@
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: virtual-service-reviews
@@ -6,28 +6,28 @@ metadata:
     kiali_wizard: fault_injection
 spec:
   hosts:
-    - reviews.bookinfo.svc.cluster.local
+  - reviews.bookinfo.svc.cluster.local
   http:
-    - fault:
-        delay:
-          fixedDelay: 5s
-          percentage:
-            value: 100
-      route:
-        - destination:
-            host: reviews.bookinfo.svc.cluster.local
-            subset: v1
-          weight: 33
-        - destination:
-            host: reviews.bookinfo.svc.cluster.local
-            subset: v2
-          weight: 33
-        - destination:
-            host: reviews.bookinfo.svc.cluster.local
-            subset: v3
-          weight: 34
+  - fault:
+      delay:
+        fixedDelay: 5s
+        percentage:
+          value: 100
+    route:
+    - destination:
+        host: reviews.bookinfo.svc.cluster.local
+        subset: v1
+      weight: 33
+    - destination:
+        host: reviews.bookinfo.svc.cluster.local
+        subset: v2
+      weight: 33
+    - destination:
+        host: reviews.bookinfo.svc.cluster.local
+        subset: v3
+      weight: 34
 ---
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: destination-rule-reviews

@@ -1,5 +1,5 @@
 kind: DestinationRule
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 metadata:
   name: reviews
   namespace: test-namespace
@@ -9,34 +9,34 @@ spec:
     tls:
       mode: ISTIO_MUTUAL
   subsets:
-    - name: v1
-      labels:
-        version: v1
-    - name: v2
-      labels:
-        version: v2
-    - name: v3
-      labels:
-        version: v3
+  - name: v1
+    labels:
+      version: v1
+  - name: v2
+    labels:
+      version: v2
+  - name: v3
+    labels:
+      version: v3
 ---
 kind: VirtualService
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 metadata:
   name: reviews
   namespace: test-namespace
 spec:
   hosts:
-    - reviews.test-namespace.svc.cluster.local
+  - reviews.test-namespace.svc.cluster.local
   http:
-    - route:
-        - destination:
-            host: reviews.test-namespace.svc.cluster.local
-          weight: 30
-        - destination:
-            host: reviews
-            subset: v2
-          weight: 30
-        - destination:
-            host: reviews.test-namespace
-            subset: not-exist
-          weight: 40
+  - route:
+    - destination:
+        host: reviews.test-namespace.svc.cluster.local
+      weight: 30
+    - destination:
+        host: reviews
+        subset: v2
+      weight: 30
+    - destination:
+        host: reviews.test-namespace
+        subset: not-exist
+      weight: 40

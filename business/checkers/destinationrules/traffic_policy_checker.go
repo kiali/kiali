@@ -3,14 +3,14 @@ package destinationrules
 import (
 	"fmt"
 
-	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
 
 type TrafficPolicyChecker struct {
-	DestinationRules []*networking_v1beta1.DestinationRule
+	DestinationRules []*networking_v1.DestinationRule
 	MTLSDetails      kubernetes.MTLSDetails
 }
 
@@ -50,8 +50,8 @@ func (t TrafficPolicyChecker) Check() models.IstioValidations {
 	return validations
 }
 
-func (t TrafficPolicyChecker) drsWithNonLocalmTLSEnabled() []*networking_v1beta1.DestinationRule {
-	mtlsDrs := make([]*networking_v1beta1.DestinationRule, 0)
+func (t TrafficPolicyChecker) drsWithNonLocalmTLSEnabled() []*networking_v1.DestinationRule {
+	mtlsDrs := make([]*networking_v1.DestinationRule, 0)
 	for _, dr := range t.MTLSDetails.DestinationRules {
 		fqdn := kubernetes.ParseHost(dr.Spec.Host, dr.Namespace)
 		if isNonLocalmTLSForServiceEnabled(dr, fqdn.String()) {
@@ -61,8 +61,8 @@ func (t TrafficPolicyChecker) drsWithNonLocalmTLSEnabled() []*networking_v1beta1
 	return mtlsDrs
 }
 
-func sameHostDestinationRules(dr *networking_v1beta1.DestinationRule, mdrs []*networking_v1beta1.DestinationRule, edrs []*networking_v1beta1.DestinationRule) []*networking_v1beta1.DestinationRule {
-	shdrs := make([]*networking_v1beta1.DestinationRule, 0, len(mdrs)+len(edrs))
+func sameHostDestinationRules(dr *networking_v1.DestinationRule, mdrs []*networking_v1.DestinationRule, edrs []*networking_v1.DestinationRule) []*networking_v1.DestinationRule {
+	shdrs := make([]*networking_v1.DestinationRule, 0, len(mdrs)+len(edrs))
 	drHost := kubernetes.ParseHost(dr.Spec.Host, dr.Namespace)
 
 	for _, mdr := range mdrs {
@@ -88,16 +88,16 @@ func sameHostDestinationRules(dr *networking_v1beta1.DestinationRule, mdrs []*ne
 	return shdrs
 }
 
-func hasTrafficPolicy(dr *networking_v1beta1.DestinationRule) bool {
+func hasTrafficPolicy(dr *networking_v1.DestinationRule) bool {
 	return dr.Spec.TrafficPolicy != nil
 }
 
-func hasTLSSettings(dr *networking_v1beta1.DestinationRule) bool {
+func hasTLSSettings(dr *networking_v1.DestinationRule) bool {
 	return hasTrafficPolicyTLS(dr) || hasPortTLS(dr)
 }
 
 // hasPortTLS returns true when there is one port that specifies any TLS settings
-func hasPortTLS(dr *networking_v1beta1.DestinationRule) bool {
+func hasPortTLS(dr *networking_v1.DestinationRule) bool {
 	if dr.Spec.TrafficPolicy != nil {
 		for _, portLevel := range dr.Spec.TrafficPolicy.PortLevelSettings {
 			if portLevel.Tls != nil {
@@ -109,14 +109,14 @@ func hasPortTLS(dr *networking_v1beta1.DestinationRule) bool {
 }
 
 // hasTrafficPolicyTLS returns true when there is a trafficPolicy specifying any tls mode
-func hasTrafficPolicyTLS(dr *networking_v1beta1.DestinationRule) bool {
+func hasTrafficPolicyTLS(dr *networking_v1.DestinationRule) bool {
 	if dr.Spec.TrafficPolicy != nil && dr.Spec.TrafficPolicy.Tls != nil {
 		return true
 	}
 	return false
 }
 
-func buildDestinationRuleValidation(dr *networking_v1beta1.DestinationRule, checks models.IstioCheck, valid bool, refKeys []models.IstioValidationKey) *models.IstioValidation {
+func buildDestinationRuleValidation(dr *networking_v1.DestinationRule, checks models.IstioCheck, valid bool, refKeys []models.IstioValidationKey) *models.IstioValidation {
 	validation := &models.IstioValidation{
 		Name:       dr.Name,
 		ObjectType: DestinationRulesCheckerType,

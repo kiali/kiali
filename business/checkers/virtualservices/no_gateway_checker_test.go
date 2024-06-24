@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
@@ -117,7 +117,7 @@ func TestFoundGateway(t *testing.T) {
 	config.Set(conf)
 
 	virtualService := data.AddGatewaysToVirtualService([]string{"my-gateway", "mesh"}, data.CreateVirtualService())
-	gatewayNames := kubernetes.GatewayNames([]*networking_v1beta1.Gateway{
+	gatewayNames := kubernetes.GatewayNames([]*networking_v1.Gateway{
 		data.CreateEmptyGateway("my-gateway", "test", make(map[string]string)),
 	})
 
@@ -137,7 +137,7 @@ func TestFoundRemoteGateway(t *testing.T) {
 	config.Set(conf)
 
 	virtualService := data.AddGatewaysToVirtualService([]string{"remote/my-gateway", "mesh"}, data.CreateVirtualService())
-	gatewayNames := kubernetes.GatewayNames([]*networking_v1beta1.Gateway{
+	gatewayNames := kubernetes.GatewayNames([]*networking_v1.Gateway{
 		data.CreateEmptyGateway("my-gateway", "remote", make(map[string]string)),
 	})
 
@@ -157,7 +157,7 @@ func TestFoundGatewayTwoPartNaming(t *testing.T) {
 	config.Set(conf)
 
 	virtualService := data.AddGatewaysToVirtualService([]string{"my-gateway.test", "mesh"}, data.CreateVirtualService())
-	gatewayNames := kubernetes.GatewayNames([]*networking_v1beta1.Gateway{
+	gatewayNames := kubernetes.GatewayNames([]*networking_v1.Gateway{
 		data.CreateEmptyGateway("my-gateway", "test", make(map[string]string)),
 	})
 
@@ -180,7 +180,7 @@ func TestFQDNFoundGateway(t *testing.T) {
 	config.Set(conf)
 
 	virtualService := data.AddGatewaysToVirtualService([]string{"my-gateway.test.svc.cluster.local", "mesh"}, data.CreateVirtualService())
-	gatewayNames := kubernetes.GatewayNames([]*networking_v1beta1.Gateway{
+	gatewayNames := kubernetes.GatewayNames([]*networking_v1.Gateway{
 		data.CreateEmptyGateway("my-gateway", "test", make(map[string]string)),
 	})
 
@@ -204,7 +204,7 @@ func TestFQDNFoundOtherNamespaceGateway(t *testing.T) {
 
 	// virtualService is in "test" namespace
 	virtualService := data.AddGatewaysToVirtualService([]string{"my-gateway.istio-system.svc.cluster.local", "mesh"}, data.CreateVirtualService())
-	gatewayNames := kubernetes.GatewayNames([]*networking_v1beta1.Gateway{
+	gatewayNames := kubernetes.GatewayNames([]*networking_v1.Gateway{
 		data.CreateEmptyGateway("my-gateway", "istio-system", make(map[string]string)),
 	})
 
@@ -228,7 +228,7 @@ func TestNewIstioGatewayNameFormat(t *testing.T) {
 
 	// virtualService is in "test" namespace
 	virtualService := data.AddGatewaysToVirtualService([]string{"istio-system/my-gateway"}, data.CreateVirtualService())
-	gatewayNames := kubernetes.GatewayNames([]*networking_v1beta1.Gateway{
+	gatewayNames := kubernetes.GatewayNames([]*networking_v1.Gateway{
 		data.CreateEmptyGateway("my-gateway", "istio-system", make(map[string]string)),
 	})
 

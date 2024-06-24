@@ -13,7 +13,7 @@ import (
 	routescheme "github.com/openshift/client-go/route/clientset/versioned/scheme"
 	userfake "github.com/openshift/client-go/user/clientset/versioned/fake"
 	userscheme "github.com/openshift/client-go/user/clientset/versioned/scheme"
-	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 	istio "istio.io/client-go/pkg/clientset/versioned"
 	istiofake "istio.io/client-go/pkg/clientset/versioned/fake"
 	istioscheme "istio.io/client-go/pkg/clientset/versioned/scheme"
@@ -85,7 +85,7 @@ func NewFakeK8sClient(objects ...runtime.Object) *FakeK8sClient {
 		projectObjects    []runtime.Object
 		userObjects       []runtime.Object
 		oAuthObjects      []runtime.Object
-		istioGateways     []*networking_v1beta1.Gateway
+		istioGateways     []*networking_v1.Gateway
 	)
 
 	for _, obj := range objects {
@@ -94,7 +94,7 @@ func NewFakeK8sClient(objects ...runtime.Object) *FakeK8sClient {
 		case isKubeResource(o):
 			kubeObjects = append(kubeObjects, o)
 		case isIstioResource(o):
-			if gw, ok := o.(*networking_v1beta1.Gateway); ok {
+			if gw, ok := o.(*networking_v1.Gateway); ok {
 				istioGateways = append(istioGateways, gw)
 			} else {
 				istioObjects = append(istioObjects, o)
@@ -125,7 +125,7 @@ func NewFakeK8sClient(objects ...runtime.Object) *FakeK8sClient {
 
 	// These are created separately because the fake clientset guesses the resource name based on the Kind.
 	for _, gw := range istioGateways {
-		if _, err := istioClient.NetworkingV1beta1().Gateways(gw.Namespace).Create(context.TODO(), gw, metav1.CreateOptions{}); err != nil {
+		if _, err := istioClient.NetworkingV1().Gateways(gw.Namespace).Create(context.TODO(), gw, metav1.CreateOptions{}); err != nil {
 			panic(err)
 		}
 	}

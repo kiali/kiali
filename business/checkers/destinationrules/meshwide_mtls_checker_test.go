@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
-	security_v1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
+	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
+	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
@@ -21,7 +21,7 @@ func TestMTLSMeshWideDREnabledWithNoMeshPolicy(t *testing.T) {
 		data.CreateEmptyDestinationRule("istio-system", "dr-mtls", "*.local"))
 
 	mTlsDetails := kubernetes.MTLSDetails{
-		MeshPeerAuthentications: []*security_v1beta1.PeerAuthentication{},
+		MeshPeerAuthentications: []*security_v1.PeerAuthentication{},
 	}
 
 	testReturnsAValidation(t, destinationRule, mTlsDetails)
@@ -35,7 +35,7 @@ func TestMTLSMeshWideDREnabledWithMeshPolicyDisabled(t *testing.T) {
 		data.CreateEmptyDestinationRule("istio-system", "dr-mtls", "*.local"))
 
 	mTlsDetails := kubernetes.MTLSDetails{
-		MeshPeerAuthentications: []*security_v1beta1.PeerAuthentication{
+		MeshPeerAuthentications: []*security_v1.PeerAuthentication{
 			data.CreateEmptyMeshPeerAuthentication("default", data.CreateMTLS("PERMISSIVE")),
 		},
 	}
@@ -51,7 +51,7 @@ func TestMTLSMeshWideDREnabledWithMeshPolicy(t *testing.T) {
 		data.CreateEmptyDestinationRule("istio-system", "dr-mtls", "*.local"))
 
 	mTlsDetails := kubernetes.MTLSDetails{
-		MeshPeerAuthentications: []*security_v1beta1.PeerAuthentication{
+		MeshPeerAuthentications: []*security_v1.PeerAuthentication{
 			data.CreateEmptyMeshPeerAuthentication("default", data.CreateMTLS("STRICT")),
 		},
 	}
@@ -67,7 +67,7 @@ func TestMTLSNamespaceWideDREnabledWithMeshPolicy(t *testing.T) {
 		data.CreateEmptyDestinationRule("istio-system", "dr-mtls", "*.istio-system.svc.cluster.local"))
 
 	mTlsDetails := kubernetes.MTLSDetails{
-		MeshPeerAuthentications: []*security_v1beta1.PeerAuthentication{
+		MeshPeerAuthentications: []*security_v1.PeerAuthentication{
 			data.CreateEmptyMeshPeerAuthentication("default", data.CreateMTLS("STRICT")),
 		},
 	}
@@ -83,7 +83,7 @@ func TestMTLSNamespaceWideDREnabledWithMeshPolicyDisabled(t *testing.T) {
 		data.CreateEmptyDestinationRule("istio-system", "dr-mtls", "*.istio-system.svc.cluster.local"))
 
 	mTlsDetails := kubernetes.MTLSDetails{
-		MeshPeerAuthentications: []*security_v1beta1.PeerAuthentication{
+		MeshPeerAuthentications: []*security_v1.PeerAuthentication{
 			data.CreateEmptyMeshPeerAuthentication("default", data.CreateMTLS("PERMISSIVE")),
 		},
 	}
@@ -98,7 +98,7 @@ func TestMTLSDRDisabledWithMeshPolicy(t *testing.T) {
 	destinationRule := data.CreateEmptyDestinationRule("istio-system", "dr-mtls", "*.istio-system.svc.cluster.local")
 
 	mTlsDetails := kubernetes.MTLSDetails{
-		MeshPeerAuthentications: []*security_v1beta1.PeerAuthentication{
+		MeshPeerAuthentications: []*security_v1.PeerAuthentication{
 			data.CreateEmptyMeshPeerAuthentication("default", data.CreateMTLS("STRICT")),
 		},
 	}
@@ -113,7 +113,7 @@ func TestMTLSDRDisabledWithMeshPolicyDisabled(t *testing.T) {
 	destinationRule := data.CreateEmptyDestinationRule("istio-system", "dr-mtls", "*.istio-system.svc.cluster.local")
 
 	mTlsDetails := kubernetes.MTLSDetails{
-		MeshPeerAuthentications: []*security_v1beta1.PeerAuthentication{
+		MeshPeerAuthentications: []*security_v1.PeerAuthentication{
 			data.CreateEmptyMeshPeerAuthentication("default", data.CreateMTLS("PERMISSIVE")),
 		},
 	}
@@ -121,7 +121,7 @@ func TestMTLSDRDisabledWithMeshPolicyDisabled(t *testing.T) {
 	testNoValidationsFound(t, destinationRule, mTlsDetails)
 }
 
-func testReturnsAValidation(t *testing.T, destinationRule *networking_v1beta1.DestinationRule, mTLSDetails kubernetes.MTLSDetails) {
+func testReturnsAValidation(t *testing.T, destinationRule *networking_v1.DestinationRule, mTLSDetails kubernetes.MTLSDetails) {
 	assert := assert.New(t)
 
 	vals, valid := MeshWideMTLSChecker{
@@ -140,7 +140,7 @@ func testReturnsAValidation(t *testing.T, destinationRule *networking_v1beta1.De
 	assert.NoError(validations.ConfirmIstioCheckMessage("destinationrules.mtls.meshpolicymissing", validation))
 }
 
-func testNoValidationsFound(t *testing.T, destinationRule *networking_v1beta1.DestinationRule, mTLSDetails kubernetes.MTLSDetails) {
+func testNoValidationsFound(t *testing.T, destinationRule *networking_v1.DestinationRule, mTLSDetails kubernetes.MTLSDetails) {
 	assert := assert.New(t)
 
 	validations, valid := MeshWideMTLSChecker{

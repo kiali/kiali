@@ -1,4 +1,4 @@
-apiVersion: "security.istio.io/v1beta1"
+apiVersion: "security.istio.io/v1"
 kind: "PeerAuthentication"
 metadata:
   name: "disable-mesh-mtls"
@@ -7,7 +7,7 @@ spec:
   mtls:
     mode: DISABLE
 ---
-apiVersion: "networking.istio.io/v1alpha3"
+apiVersion: "networking.istio.io/v1"
 kind: "DestinationRule"
 metadata:
   name: "disable-mtls"
@@ -18,7 +18,7 @@ spec:
     tls:
       mode: DISABLE
 ---
-apiVersion: "security.istio.io/v1beta1"
+apiVersion: "security.istio.io/v1"
 kind: "PeerAuthentication"
 metadata:
   name: "strict-namespace-mtls"
@@ -27,7 +27,7 @@ spec:
   mtls:
     mode: STRICT
 ---
-apiVersion: "networking.istio.io/v1alpha3"
+apiVersion: "networking.istio.io/v1"
 kind: "DestinationRule"
 metadata:
   name: "enable-namespace"
@@ -38,7 +38,7 @@ spec:
     tls:
       mode: ISTIO_MUTUAL
 ---
-apiVersion: "security.istio.io/v1beta1"
+apiVersion: "security.istio.io/v1"
 kind: "PeerAuthentication"
 metadata:
   name: "strict-mesh-mtls"
@@ -47,7 +47,7 @@ spec:
   mtls:
     mode: STRICT
 ---
-apiVersion: "networking.istio.io/v1alpha3"
+apiVersion: "networking.istio.io/v1"
 kind: "DestinationRule"
 metadata:
   name: "enable-mtls"
@@ -58,7 +58,7 @@ spec:
     tls:
       mode: ISTIO_MUTUAL
 ---
-apiVersion: "security.istio.io/v1beta1"
+apiVersion: "security.istio.io/v1"
 kind: "PeerAuthentication"
 metadata:
   name: "disable-namespace-mtls"
@@ -67,7 +67,7 @@ spec:
   mtls:
     mode: DISABLE
 ---
-apiVersion: "networking.istio.io/v1alpha3"
+apiVersion: "networking.istio.io/v1"
 kind: "DestinationRule"
 metadata:
   name: "disable-namespace"
@@ -78,7 +78,7 @@ spec:
     tls:
       mode: DISABLE
 ---
-apiVersion: "security.istio.io/v1beta1"
+apiVersion: "security.istio.io/v1"
 kind: "PeerAuthentication"
 metadata:
   name: "permissive-mesh-mtls"
@@ -90,7 +90,7 @@ spec:
   mtls:
     mode: PERMISSIVE
 ---
-apiVersion: "security.istio.io/v1beta1"
+apiVersion: "security.istio.io/v1"
 kind: "PeerAuthentication"
 metadata:
   name: "permissive-namespace-mtls"

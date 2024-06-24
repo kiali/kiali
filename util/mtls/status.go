@@ -1,8 +1,8 @@
 package mtls
 
 import (
-	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
-	security_v1beta "istio.io/client-go/pkg/apis/security/v1beta1"
+	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
+	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/kubernetes"
@@ -16,8 +16,8 @@ const (
 )
 
 type MtlsStatus struct {
-	PeerAuthentications []*security_v1beta.PeerAuthentication
-	DestinationRules    []*networking_v1beta1.DestinationRule
+	PeerAuthentications []*security_v1.PeerAuthentication
+	DestinationRules    []*networking_v1.DestinationRule
 	MatchingLabels      labels.Labels
 	AutoMtlsEnabled     bool
 	AllowPermissive     bool

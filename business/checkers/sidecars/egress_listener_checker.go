@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
@@ -12,7 +12,7 @@ import (
 )
 
 type EgressHostChecker struct {
-	Sidecar          *networking_v1beta1.Sidecar
+	Sidecar          *networking_v1.Sidecar
 	ServiceEntries   map[string][]string
 	RegistryServices []*kubernetes.RegistryService
 }

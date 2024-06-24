@@ -1,7 +1,7 @@
 package checkers
 
 import (
-	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 
 	"github.com/kiali/kiali/business/checkers/common"
 	"github.com/kiali/kiali/business/checkers/virtualservices"
@@ -13,8 +13,8 @@ const VirtualCheckerType = "virtualservice"
 type VirtualServiceChecker struct {
 	Namespaces       models.Namespaces
 	Cluster          string
-	VirtualServices  []*networking_v1beta1.VirtualService
-	DestinationRules []*networking_v1beta1.DestinationRule
+	VirtualServices  []*networking_v1.VirtualService
+	DestinationRules []*networking_v1.DestinationRule
 }
 
 // An Object Checker runs all checkers for an specific object type (i.e.: pod, route rule,...)
@@ -57,7 +57,7 @@ func (in VirtualServiceChecker) runGroupChecks() models.IstioValidations {
 }
 
 // runChecks runs all the individual checks for a single virtual service and appends the result into validations.
-func (in VirtualServiceChecker) runChecks(virtualService *networking_v1beta1.VirtualService) models.IstioValidations {
+func (in VirtualServiceChecker) runChecks(virtualService *networking_v1.VirtualService) models.IstioValidations {
 	virtualServiceName := virtualService.Name
 	key, rrValidation := EmptyValidValidation(virtualServiceName, virtualService.Namespace, VirtualCheckerType, in.Cluster)
 

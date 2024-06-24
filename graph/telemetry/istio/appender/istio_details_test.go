@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	api_networking_v1beta1 "istio.io/api/networking/v1beta1"
-	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	api_networking_v1 "istio.io/api/networking/v1"
+	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -51,13 +51,13 @@ func TestCBAll(t *testing.T) {
 	conf.ExternalServices.Istio.IstioAPIEnabled = false
 	config.Set(conf)
 
-	dRule := &networking_v1beta1.DestinationRule{}
+	dRule := &networking_v1.DestinationRule{}
 	dRule.Name = "dRule-1"
 	dRule.Namespace = "testNamespace"
 	dRule.Spec.Host = "ratings"
-	dRule.Spec.TrafficPolicy = &api_networking_v1beta1.TrafficPolicy{
-		ConnectionPool: &api_networking_v1beta1.ConnectionPoolSettings{
-			Http: &api_networking_v1beta1.ConnectionPoolSettings_HTTPSettings{
+	dRule.Spec.TrafficPolicy = &api_networking_v1.TrafficPolicy{
+		ConnectionPool: &api_networking_v1.ConnectionPoolSettings{
+			Http: &api_networking_v1.ConnectionPoolSettings_HTTPSettings{
 				MaxRequestsPerConnection: 30,
 			},
 		},
@@ -111,15 +111,15 @@ func TestCBSubset(t *testing.T) {
 	conf.ExternalServices.Istio.IstioAPIEnabled = false
 	config.Set(conf)
 
-	dRule := &networking_v1beta1.DestinationRule{}
+	dRule := &networking_v1.DestinationRule{}
 	dRule.Name = "dRule-1"
 	dRule.Namespace = "testNamespace"
 	dRule.Spec.Host = "ratings"
-	dRule.Spec.Subsets = []*api_networking_v1beta1.Subset{
+	dRule.Spec.Subsets = []*api_networking_v1.Subset{
 		{
-			TrafficPolicy: &api_networking_v1beta1.TrafficPolicy{
-				ConnectionPool: &api_networking_v1beta1.ConnectionPoolSettings{
-					Http: &api_networking_v1beta1.ConnectionPoolSettings_HTTPSettings{
+			TrafficPolicy: &api_networking_v1.TrafficPolicy{
+				ConnectionPool: &api_networking_v1.ConnectionPoolSettings{
+					Http: &api_networking_v1.ConnectionPoolSettings_HTTPSettings{
 						MaxRequestsPerConnection: 30,
 					},
 				},
@@ -177,15 +177,15 @@ func TestCBSubset(t *testing.T) {
 //	config.Set(config.NewConfig())
 //
 //	k8s := kubetest.NewK8SClientMock()
-//	vService := &networking_v1beta1.VirtualService{}
+//	vService := &networking_v1.VirtualService{}
 //	vService.Name = "vService-1"
 //	vService.Namespace = "testNamespace"
 //	vService.Spec.Hosts = []string{"ratings"}
-//	vService.Spec.Http = []*api_networking_v1beta1.HTTPRoute{
+//	vService.Spec.Http = []*api_networking_v1.HTTPRoute{
 //		{
-//			Route: []*api_networking_v1beta1.HTTPRouteDestination{
+//			Route: []*api_networking_v1.HTTPRouteDestination{
 //				{
-//					Destination: &api_networking_v1beta1.Destination{
+//					Destination: &api_networking_v1.Destination{
 //						Host: "foo",
 //					},
 //				},
@@ -246,21 +246,21 @@ func TestCBSubset(t *testing.T) {
 //	config.Set(config.NewConfig())
 //
 //	k8s := kubetest.NewK8SClientMock()
-//	vService := &networking_v1beta1.VirtualService{}
+//	vService := &networking_v1.VirtualService{}
 //	vService.Name = "vService-1"
 //	vService.Namespace = "testNamespace"
 //	vService.Spec.Hosts = []string{"ratings"}
-//	vService.Spec.Http = []*api_networking_v1beta1.HTTPRoute{
+//	vService.Spec.Http = []*api_networking_v1.HTTPRoute{
 //		{
-//			Route: []*api_networking_v1beta1.HTTPRouteDestination{
+//			Route: []*api_networking_v1.HTTPRouteDestination{
 //				{
-//					Destination: &api_networking_v1beta1.Destination{
+//					Destination: &api_networking_v1.Destination{
 //						Host: "foo",
 //					},
 //					Weight: 20,
 //				},
 //				{
-//					Destination: &api_networking_v1beta1.Destination{
+//					Destination: &api_networking_v1.Destination{
 //						Host: "bar",
 //					},
 //					Weight: 80,

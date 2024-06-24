@@ -1,8 +1,8 @@
 package references
 
 import (
-	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
-	security_v1beta "istio.io/client-go/pkg/apis/security/v1beta1"
+	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
+	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
@@ -11,9 +11,9 @@ import (
 type VirtualServiceReferences struct {
 	Namespace             string
 	Namespaces            models.Namespaces
-	VirtualServices       []*networking_v1beta1.VirtualService
-	DestinationRules      []*networking_v1beta1.DestinationRule
-	AuthorizationPolicies []*security_v1beta.AuthorizationPolicy
+	VirtualServices       []*networking_v1.VirtualService
+	DestinationRules      []*networking_v1.DestinationRule
+	AuthorizationPolicies []*security_v1.AuthorizationPolicy
 }
 
 func (n VirtualServiceReferences) References() models.IstioReferencesMap {
@@ -30,7 +30,7 @@ func (n VirtualServiceReferences) References() models.IstioReferencesMap {
 	return result
 }
 
-func (n VirtualServiceReferences) getServiceReferences(vs *networking_v1beta1.VirtualService) []models.ServiceReference {
+func (n VirtualServiceReferences) getServiceReferences(vs *networking_v1.VirtualService) []models.ServiceReference {
 	keys := make(map[string]bool)
 	allServices := make([]models.ServiceReference, 0)
 	result := make([]models.ServiceReference, 0)
@@ -96,7 +96,7 @@ func (n VirtualServiceReferences) getServiceReferences(vs *networking_v1beta1.Vi
 	return result
 }
 
-func (n VirtualServiceReferences) getConfigReferences(vs *networking_v1beta1.VirtualService) []models.IstioReference {
+func (n VirtualServiceReferences) getConfigReferences(vs *networking_v1.VirtualService) []models.IstioReference {
 	keys := make(map[string]bool)
 	result := make([]models.IstioReference, 0)
 	allGateways := getAllGateways(vs)
@@ -126,7 +126,7 @@ func (n VirtualServiceReferences) getConfigReferences(vs *networking_v1beta1.Vir
 	return result
 }
 
-func (n VirtualServiceReferences) getAllDestinationRules(virtualService *networking_v1beta1.VirtualService) []models.IstioReference {
+func (n VirtualServiceReferences) getAllDestinationRules(virtualService *networking_v1.VirtualService) []models.IstioReference {
 	allDRs := make([]models.IstioReference, 0)
 	for _, dr := range n.DestinationRules {
 		if len(virtualService.Spec.Http) > 0 {
@@ -195,7 +195,7 @@ func (n VirtualServiceReferences) getAllDestinationRules(virtualService *network
 	return allDRs
 }
 
-func getAllGateways(vs *networking_v1beta1.VirtualService) []models.IstioReference {
+func getAllGateways(vs *networking_v1.VirtualService) []models.IstioReference {
 	allGateways := make([]models.IstioReference, 0)
 	namespace := vs.Namespace
 	if len(vs.Spec.Gateways) > 0 {
@@ -242,7 +242,7 @@ func getGatewayReferences(gateways []string, namespace string) []models.IstioRef
 	return result
 }
 
-func (n VirtualServiceReferences) getAuthPolicies(vs *networking_v1beta1.VirtualService) []models.IstioReference {
+func (n VirtualServiceReferences) getAuthPolicies(vs *networking_v1.VirtualService) []models.IstioReference {
 	result := make([]models.IstioReference, 0)
 	for _, ap := range n.AuthorizationPolicies {
 		namespace := ap.Namespace

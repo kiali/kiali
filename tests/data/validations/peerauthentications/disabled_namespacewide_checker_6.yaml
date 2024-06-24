@@ -1,4 +1,4 @@
-apiVersion: "security.istio.io/v1beta1"
+apiVersion: "security.istio.io/v1"
 kind: "PeerAuthentication"
 metadata:
   name: "disable-mtls-bookinfo"
@@ -7,7 +7,7 @@ spec:
   mtls:
     mode: DISABLE
 ---
-apiVersion: "security.istio.io/v1beta1"
+apiVersion: "security.istio.io/v1"
 kind: "PeerAuthentication"
 metadata:
   name: "mtls-mesh"
@@ -16,7 +16,7 @@ spec:
   mtls:
     mode: STRICT
 ---
-apiVersion: "networking.istio.io/v1alpha3"
+apiVersion: "networking.istio.io/v1"
 kind: "DestinationRule"
 metadata:
   name: "enable-mesh-mtls"
@@ -27,7 +27,7 @@ spec:
     tls:
       mode: ISTIO_MUTUAL
 ---
-apiVersion: "networking.istio.io/v1alpha3"
+apiVersion: "networking.istio.io/v1"
 kind: "DestinationRule"
 metadata:
   name: "bookinfo-disable-mtls"

@@ -1,34 +1,34 @@
 kind: VirtualService
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 metadata:
   name: test
   namespace: default
 spec:
   hosts:
-    - '*'
+  - '*'
   gateways:
-    - valid-gateway
+  - valid-gateway
   http:
-    - match:
-        - gateways:
-            - valid-gateway
-        - uri:
-            exact: /static        
-      route:
-        - destination:
-            host: test
-            port:
-              number: 9080
-    - match:
-        - gateways:
-            - valid-gateway
-            - istio-system/non-existent-bookinfo-gateway        
-        - uri:            
-            exact: /login
-        - uri:
-            exact: /logout       
-      route:
-        - destination:
-            host: test
-            port:
-              number: 9080
+  - match:
+    - gateways:
+      - valid-gateway
+    - uri:
+        exact: /static
+    route:
+    - destination:
+        host: test
+        port:
+          number: 9080
+  - match:
+    - gateways:
+      - valid-gateway
+      - istio-system/non-existent-bookinfo-gateway
+    - uri:
+        exact: /login
+    - uri:
+        exact: /logout
+    route:
+    - destination:
+        host: test
+        port:
+          number: 9080

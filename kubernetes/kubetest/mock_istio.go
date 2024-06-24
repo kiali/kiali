@@ -3,7 +3,7 @@ package kubetest
 import (
 	"context"
 
-	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 	istio "istio.io/client-go/pkg/clientset/versioned"
 	istio_fake "istio.io/client-go/pkg/clientset/versioned/fake"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -21,8 +21,8 @@ func (o *K8SClientMock) MockIstio(objects ...runtime.Object) {
 	// Invoking a NewSimpleClientset() stores a wrong "gatewais" entry, that logic is not even the istio.io but
 	// in the k8s.io/apimachinery, so the workaround is to invoke "Create" for those objects with problems
 	for _, ob := range objects {
-		if gw, ok := ob.(*networking_v1beta1.Gateway); ok {
-			_, err := o.istioClientset.NetworkingV1beta1().Gateways(gw.Namespace).Create(context.TODO(), gw, v1.CreateOptions{})
+		if gw, ok := ob.(*networking_v1.Gateway); ok {
+			_, err := o.istioClientset.NetworkingV1().Gateways(gw.Namespace).Create(context.TODO(), gw, v1.CreateOptions{})
 			if err != nil {
 				log.Errorf("Error initializing Gateways in MockIstio: %s", err)
 			}

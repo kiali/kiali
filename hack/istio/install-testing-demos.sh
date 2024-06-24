@@ -146,7 +146,7 @@ if [ "${DELETE_DEMOS}" != "true" ]; then
     elif [ -v GATEWAY_HOST ]; then
       gateway_yaml=$(mktemp)
       cat << EOF > "${gateway_yaml}"
-apiVersion: networking.istio.io/v1alpha3
+apiVersion: networking.istio.io/v1
 kind: Gateway
 metadata:
   name: bookinfo-gateway
@@ -161,7 +161,7 @@ spec:
     hosts:
     - "${GATEWAY_HOST}"
 ---
-apiVersion: networking.istio.io/v1alpha3
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: bookinfo

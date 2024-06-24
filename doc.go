@@ -78,11 +78,20 @@ type LoggingParam struct {
 	Level ProxyLogLevel `json:"level"`
 }
 
-// swagger:parameters istioConfigList workloadList workloadDetails workloadUpdate serviceDetails serviceUpdate appSpans serviceSpans workloadSpans appTraces serviceTraces workloadTraces errorTraces workloadValidations appList serviceMetrics aggregateMetrics appMetrics workloadMetrics istioConfigDetails istioConfigDetailsSubtype istioConfigDelete istioConfigDeleteSubtype istioConfigUpdate istioConfigUpdateSubtype serviceList appDetails graphAggregate graphAggregateByService graphApp graphAppVersion graphNamespace graphService graphWorkload namespaceMetrics customDashboard appDashboard serviceDashboard workloadDashboard istioConfigCreate istioConfigCreateSubtype namespaceUpdate namespaceTls podDetails podLogs namespaceValidations podProxyDump podProxyResource podProxyLogging
-type NamespaceParam struct {
+// swagger:parameters istioConfigList workloadDetails workloadUpdate serviceDetails serviceUpdate appSpans serviceSpans workloadSpans appTraces serviceTraces workloadTraces errorTraces workloadValidations serviceMetrics aggregateMetrics appMetrics workloadMetrics istioConfigDetails istioConfigDetailsSubtype istioConfigDelete istioConfigDeleteSubtype istioConfigUpdate istioConfigUpdateSubtype appDetails graphAggregate graphAggregateByService graphApp graphAppVersion graphNamespace graphService graphWorkload namespaceMetrics customDashboard appDashboard serviceDashboard workloadDashboard istioConfigCreate istioConfigCreateSubtype namespaceUpdate namespaceTls podDetails podLogs namespaceValidations podProxyDump podProxyResource podProxyLogging namespaceInfo
+type NamespacePathParam struct {
 	// The namespace name.
 	//
 	// in: path
+	// required: true
+	Name string `json:"namespace"`
+}
+
+// swagger:parameters serviceList appList workloadList
+type NamespaceQueryParam struct {
+	// The namespace name.
+	//
+	// in: query
 	// required: true
 	Name string `json:"namespace"`
 }
@@ -549,7 +558,7 @@ type InternalError struct {
 // A Internal is the error message that means something has gone wrong
 //
 // swagger:response serviceUnavailableError
-type serviceUnavailableError struct {
+type ServiceUnavailableError struct {
 	// in: body
 	Body struct {
 		// HTTP status code
@@ -562,14 +571,14 @@ type serviceUnavailableError struct {
 
 // HTTP status code 200 and statusInfo model in data
 // swagger:response statusInfo
-type swaggStatusInfoResp struct {
+type SwaggStatusInfoResp struct {
 	// in:body
 	Body status.StatusInfo
 }
 
 // HTTP status code 200 and userGenerated model in data
 // swagger:response userSessionData
-type swaggTokenGeneratedResp struct {
+type SwaggTokenGeneratedResp struct {
 	// in:body
 	Body authentication.UserSessionData
 }
@@ -611,14 +620,14 @@ type AppListResponse struct {
 
 // namespaceAppHealthResponse is a map of app name x health
 // swagger:response namespaceAppHealthResponse
-type namespaceAppHealthResponse struct {
+type NamespaceAppHealthResponse struct {
 	// in:body
 	Body models.NamespaceAppHealth
 }
 
 // namespaceResponse is a basic namespace
 // swagger:response namespaceResponse
-type namespaceResponse struct {
+type NamespaceResponse struct {
 	// in:body
 	Body models.Namespace
 }
@@ -763,7 +772,7 @@ type NameIstioValidation map[string]models.IstioValidation
 
 // Return caller permissions per namespace and Istio Config type
 // swagger:response istioConfigPermissions
-type swaggIstioConfigPermissions struct {
+type SwaggIstioConfigPermissions struct {
 	// in:body
 	Body models.IstioConfigPermissions
 }
@@ -794,6 +803,34 @@ type MetricsStatsQueryBody struct {
 type MetricsStatsResponse struct {
 	// in: body
 	Body models.MetricsStats
+}
+
+// Response of the tracing info query
+// swagger:response tracingInfoResponse
+type TracingInfoResponse struct {
+	// in: body
+	Body models.TracingInfo
+}
+
+// Response of the cluster namespace health query
+// swagger:response clustersNamespaceHealthResponse
+type ClustersNamespaceHealthResponse struct {
+	// in: body
+	Body models.ClustersNamespaceHealth
+}
+
+// Response of the mesh query
+// swagger:response meshResponse
+type MeshResponse struct {
+	// in: body
+	Body models.Mesh
+}
+
+// Response of the cluster TLS query
+// swagger:response clusterTlsResponse
+type ClusterTlsResponse struct {
+	// in: body
+	Body models.MTLSStatus
 }
 
 // swagger:enum ProxyLogLevel

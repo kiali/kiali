@@ -1,26 +1,26 @@
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: ServiceEntry
 metadata:
   name: ratings
   namespace: bookinfo
 spec:
   addresses:
-    - 2.2.2.2
-    - 3.3.3.3
+  - 2.2.2.2
+  - 3.3.3.3
   hosts:
-    - ratings
+  - ratings
   location: MESH_INTERNAL
   resolution: STATIC
   ports:
-    - number: 9080
-      name: http
-      protocol: HTTP
-      targetPort: 9080
+  - number: 9080
+    name: http
+    protocol: HTTP
+    targetPort: 9080
   workloadSelector:
     labels:
       app: ratings
 ---
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: WorkloadEntry
 metadata:
   name: ratings-v2
@@ -34,7 +34,7 @@ spec:
   ports:
     http: 9080
 ---
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: WorkloadEntry
 metadata:
   name: ratings-v1
@@ -48,65 +48,65 @@ spec:
   ports:
     http: 9080
 ---
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: ServiceEntry
 metadata:
   name: ratings-external
   namespace: bookinfo
 spec:
   hosts:
-    - ratings
+  - ratings
   location: MESH_EXTERNAL # External entries are not considered
   resolution: STATIC
   ports:
-    - number: 9080
-      name: http
-      protocol: HTTP
-      targetPort: 9080
+  - number: 9080
+    name: http
+    protocol: HTTP
+    targetPort: 9080
 ---
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: ServiceEntry
 metadata:
   name: ratings-wrong-labels
   namespace: bookinfo
 spec:
   addresses:
-    - 2.2.2.2
+  - 2.2.2.2
   hosts:
-    - ratings
+  - ratings
   location: MESH_INTERNAL
   resolution: STATIC
   ports:
-    - number: 9080
-      name: http
-      protocol: HTTP
-      targetPort: 9080
+  - number: 9080
+    name: http
+    protocol: HTTP
+    targetPort: 9080
   workloadSelector:
     labels:
       app: ratings-bogus # There are no workloads associated
 ---
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: ServiceEntry
 metadata:
   name: ratings-unmatching-address
   namespace: bookinfo
 spec:
   addresses:
-    - 4.4.4.4 # This IP is not in any WorkloadEntry. It needs 2.2.2.2 to work.
+  - 4.4.4.4 # This IP is not in any WorkloadEntry. It needs 2.2.2.2 to work.
   hosts:
-    - ratings
+  - ratings
   location: MESH_INTERNAL
   resolution: STATIC
   ports:
-    - number: 9080
-      name: http
-      protocol: HTTP
-      targetPort: 9080
+  - number: 9080
+    name: http
+    protocol: HTTP
+    targetPort: 9080
   workloadSelector:
     labels:
       app: ratings-unmatching
 ---
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: WorkloadEntry
 metadata:
   name: ratings-unmatching-v1
@@ -120,47 +120,47 @@ spec:
   ports:
     http: 9080
 ---
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: ServiceEntry
 metadata:
   name: ratings-missing
   namespace: bookinfo
 spec:
   addresses:
-    - 2.2.2.2 # should have 3.3.3.3 as well
+  - 2.2.2.2 # should have 3.3.3.3 as well
   hosts:
-    - ratings
+  - ratings
   location: MESH_INTERNAL
   resolution: STATIC
   ports:
-    - number: 9080
-      name: http
-      protocol: HTTP
-      targetPort: 9080
+  - number: 9080
+    name: http
+    protocol: HTTP
+    targetPort: 9080
   workloadSelector:
     labels:
       app: ratings
 ---
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: ServiceEntry
 metadata:
   name: ratings-surplus
   namespace: bookinfo
 spec:
   addresses:
-    - 2.2.2.2
-    - 3.3.3.3
-    - 4.4.4.4
-    - 5.5.5.5
+  - 2.2.2.2
+  - 3.3.3.3
+  - 4.4.4.4
+  - 5.5.5.5
   hosts:
-    - ratings
+  - ratings
   location: MESH_INTERNAL
   resolution: STATIC
   ports:
-    - number: 9080
-      name: http
-      protocol: HTTP
-      targetPort: 9080
+  - number: 9080
+    name: http
+    protocol: HTTP
+    targetPort: 9080
   workloadSelector:
     labels:
       app: ratings

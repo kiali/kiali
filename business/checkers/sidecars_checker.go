@@ -1,7 +1,7 @@
 package checkers
 
 import (
-	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 
 	"github.com/kiali/kiali/business/checkers/common"
 	"github.com/kiali/kiali/business/checkers/sidecars"
@@ -12,8 +12,8 @@ import (
 const SidecarCheckerType = "sidecar"
 
 type SidecarChecker struct {
-	Sidecars              []*networking_v1beta1.Sidecar
-	ServiceEntries        []*networking_v1beta1.ServiceEntry
+	Sidecars              []*networking_v1.Sidecar
+	ServiceEntries        []*networking_v1.ServiceEntry
 	Namespaces            models.Namespaces
 	WorkloadsPerNamespace map[string]models.WorkloadList
 	RegistryServices      []*kubernetes.RegistryService
@@ -53,7 +53,7 @@ func (s SidecarChecker) runIndividualChecks() models.IstioValidations {
 	return validations
 }
 
-func (s SidecarChecker) runChecks(sidecar *networking_v1beta1.Sidecar) models.IstioValidations {
+func (s SidecarChecker) runChecks(sidecar *networking_v1.Sidecar) models.IstioValidations {
 	policyName := sidecar.Name
 	key, rrValidation := EmptyValidValidation(policyName, sidecar.Namespace, SidecarCheckerType, s.Cluster)
 	serviceHosts := kubernetes.ServiceEntryHostnames(s.ServiceEntries)

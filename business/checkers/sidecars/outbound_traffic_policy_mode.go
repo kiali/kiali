@@ -1,13 +1,13 @@
 package sidecars
 
 import (
-	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 
 	"github.com/kiali/kiali/models"
 )
 
 type OutboundTrafficPolicyModeChecker struct {
-	Sidecar *networking_v1beta1.Sidecar
+	Sidecar *networking_v1.Sidecar
 }
 
 func (c OutboundTrafficPolicyModeChecker) Check() ([]*models.IstioCheck, bool) {

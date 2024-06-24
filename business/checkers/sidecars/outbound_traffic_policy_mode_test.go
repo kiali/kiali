@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"istio.io/api/networking/v1beta1"
+	api_networking_v1 "istio.io/api/networking/v1"
 
 	"github.com/kiali/kiali/tests/data"
 )
@@ -23,7 +23,7 @@ func TestOutboundTrafficPolicyModeCheck(t *testing.T) {
 	assert.True(valid)
 
 	// OutboundTrafficPolicy with no mode defined is ambiguous (it is still valid though)
-	sc.Spec.OutboundTrafficPolicy = &v1beta1.OutboundTrafficPolicy{}
+	sc.Spec.OutboundTrafficPolicy = &api_networking_v1.OutboundTrafficPolicy{}
 	vals, valid = OutboundTrafficPolicyModeChecker{
 		Sidecar: sc,
 	}.Check()
@@ -32,8 +32,8 @@ func TestOutboundTrafficPolicyModeCheck(t *testing.T) {
 	assert.True(valid)
 
 	// OutboundTrafficPolicy with mode defined with the default value is ambiguous (it is still valid though)
-	sc.Spec.OutboundTrafficPolicy = &v1beta1.OutboundTrafficPolicy{
-		Mode: v1beta1.OutboundTrafficPolicy_Mode(0),
+	sc.Spec.OutboundTrafficPolicy = &api_networking_v1.OutboundTrafficPolicy{
+		Mode: api_networking_v1.OutboundTrafficPolicy_Mode(0),
 	}
 	vals, valid = OutboundTrafficPolicyModeChecker{
 		Sidecar: sc,
@@ -43,8 +43,8 @@ func TestOutboundTrafficPolicyModeCheck(t *testing.T) {
 	assert.True(valid)
 
 	// OutboundTrafficPolicy with mode defined with a non-default value is clear and unambiguous.
-	sc.Spec.OutboundTrafficPolicy = &v1beta1.OutboundTrafficPolicy{
-		Mode: v1beta1.OutboundTrafficPolicy_Mode(1),
+	sc.Spec.OutboundTrafficPolicy = &api_networking_v1.OutboundTrafficPolicy{
+		Mode: api_networking_v1.OutboundTrafficPolicy_Mode(1),
 	}
 	vals, valid = OutboundTrafficPolicyModeChecker{
 		Sidecar: sc,

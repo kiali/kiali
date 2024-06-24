@@ -1,8 +1,7 @@
 # All requests to ratings:v1 will be delayed.
 #
 # last tested on Istio 1.10
----
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: ratings-delay-vs
@@ -21,7 +20,7 @@ spec:
         percentage:
           value: 100
 ---
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: ratings-delay-dr
