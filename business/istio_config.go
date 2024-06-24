@@ -522,7 +522,7 @@ func (in *IstioConfigService) GetIstioConfigDetails(ctx context.Context, cluster
 		istioConfigDetail.K8sReferenceGrant, err = in.userClients[cluster].GatewayAPI().GatewayV1beta1().ReferenceGrants(namespace).Get(ctx, object, getOpts)
 		if err == nil {
 			istioConfigDetail.K8sReferenceGrant.Kind = kubernetes.K8sActualReferenceGrantType
-			istioConfigDetail.K8sReferenceGrant.APIVersion = kubernetes.K8sApiNetworkingVersionV1
+			istioConfigDetail.K8sReferenceGrant.APIVersion = kubernetes.K8sApiNetworkingVersionV1Beta1
 		}
 	case kubernetes.K8sTCPRoutes:
 		istioConfigDetail.K8sTCPRoute, err = in.userClients[cluster].GatewayAPI().GatewayV1alpha2().TCPRoutes(namespace).Get(ctx, object, getOpts)
