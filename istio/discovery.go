@@ -23,12 +23,19 @@ import (
 )
 
 const (
-	DefaultRevisionLabel           = "default"
-	IstiodClusterIDEnvKey          = "CLUSTER_ID"
-	IstiodExternalEnvKey           = "EXTERNAL_ISTIOD"
-	IstiodScopeGatewayEnvKey       = "PILOT_SCOPE_GATEWAY_TO_NAMESPACE"
-	IstioInjectionLabel            = "istio-injection"
-	IstioControlPlaneClustersLabel = "topology.istio.io/controlPlaneClusters"
+	istioControlPlaneClustersLabel = "topology.istio.io/controlPlaneClusters"
+	istiodAppNameLabelKey          = "app"
+	istiodAppNameLabelValue        = "istiod"
+	istiodClusterIDEnvKey          = "CLUSTER_ID"
+	istiodExternalEnvKey           = "EXTERNAL_ISTIOD"
+	istiodScopeGatewayEnvKey       = "PILOT_SCOPE_GATEWAY_TO_NAMESPACE"
+)
+
+const (
+	// DefaultRevisionLabel is the value for the default revision.
+	DefaultRevisionLabel = "default"
+	// IstioInjectionLabel is the value for the istio injection label on a namespace.
+	IstioInjectionLabel = "istio-injection"
 )
 
 func parseIstioConfigMap(istioConfig *corev1.ConfigMap) (*models.IstioMeshConfig, error) {
@@ -236,7 +243,7 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 		}
 
 		// If there's an istiod on it, then it's a controlplane cluster. Otherwise it is a remote cluster.
-		istiods, err := kubeCache.GetDeploymentsWithSelector(metav1.NamespaceAll, "app=istiod")
+		istiods, err := kubeCache.GetDeploymentsWithSelector(metav1.NamespaceAll, istiodAppNameLabelKey+"="+istiodAppNameLabelValue)
 		if err != nil {
 			return nil, err
 		}
@@ -265,11 +272,11 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 			if containers := istiod.Spec.Template.Spec.Containers; len(containers) > 0 {
 				for _, env := range istiod.Spec.Template.Spec.Containers[0].Env {
 					switch {
-					case kubernetes.EnvVarIsTrue(IstiodExternalEnvKey, env):
+					case kubernetes.EnvVarIsTrue(istiodExternalEnvKey, env):
 						controlPlane.ManagesExternal = true
-					case kubernetes.EnvVarIsTrue(IstiodScopeGatewayEnvKey, env):
+					case kubernetes.EnvVarIsTrue(istiodScopeGatewayEnvKey, env):
 						controlPlane.Config.IsGatewayToNamespace = true
-					case env.Name == IstiodClusterIDEnvKey:
+					case env.Name == istiodClusterIDEnvKey:
 						controlPlane.ID = env.Value
 					}
 				}
@@ -348,7 +355,7 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 		// There's no control plane annotation for the config clusters that are being managed by an external controlplane.
 		// Find the control plane namespace i.e. the namespace with the controlplane annotation.
 		controlPlaneNamespaceIdx := slices.IndexFunc(namespaces, func(namespace corev1.Namespace) bool {
-			_, ok := namespace.Annotations[IstioControlPlaneClustersLabel]
+			_, ok := namespace.Annotations[istioControlPlaneClustersLabel]
 			return ok
 		})
 		if controlPlaneNamespaceIdx == -1 {
@@ -358,7 +365,7 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 
 		namespace := namespaces[controlPlaneNamespaceIdx]
 
-		if controlClusters := namespace.Annotations[IstioControlPlaneClustersLabel]; controlClusters != "" {
+		if controlClusters := namespace.Annotations[istioControlPlaneClustersLabel]; controlClusters != "" {
 			// First check for '*' which means all controlplane clusters that are part of the mesh
 			// and can manage external controlplanes will be able to manage this remote cluster.
 			if controlClusters == "*" {

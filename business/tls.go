@@ -11,7 +11,6 @@ import (
 	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/cache"
-	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/observability"
 	"github.com/kiali/kiali/util/mtls"
@@ -104,7 +103,6 @@ func (in *TLSService) MeshWidemTLSStatus(ctx context.Context, cluster string, re
 }
 
 func (in *TLSService) NamespaceWidemTLSStatus(ctx context.Context, namespace, cluster string) (models.MTLSStatus, error) {
-	log.Info("Entering NamespaceWidemTLSStatus")
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "NamespaceWidemTLSStatus",
 		observability.Attribute("package", "business"),
@@ -146,7 +144,6 @@ func (in *TLSService) NamespaceWidemTLSStatus(ctx context.Context, namespace, cl
 		AllowPermissive:     false,
 	}
 
-	log.Info("Leaving NamespaceWidemTLSStatus")
 	return models.MTLSStatus{
 		Status:          mtlsStatus.NamespaceMtlsStatus(namespace).OverallStatus,
 		AutoMTLSEnabled: mtlsStatus.AutoMtlsEnabled,
