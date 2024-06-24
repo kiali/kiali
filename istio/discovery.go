@@ -207,7 +207,7 @@ func (in *Discovery) Clusters() ([]models.KubeCluster, error) {
 // from various sources e.g. istio configmap, istiod deployment envvars, etc.
 func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 	var end observability.EndFunc
-	ctx, end = observability.StartSpan(ctx, "GetMesh",
+	ctx, end = observability.StartSpan(ctx, "Mesh",
 		observability.Attribute("package", "business"),
 	)
 	defer end()
