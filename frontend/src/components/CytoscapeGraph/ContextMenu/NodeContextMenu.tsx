@@ -368,6 +368,9 @@ export const clickHandler = (o: ContextMenuOption, kiosk: string): void => {
 };
 
 export const getOptions = (node: DecoratedGraphNodeData, tracingInfo?: TracingInfo): ContextMenuOption[] => {
+  if (node.isInaccessible) {
+    return [];
+  }
   const linkParams = getLinkParamsForNode(node);
   if (!linkParams) {
     return [];
