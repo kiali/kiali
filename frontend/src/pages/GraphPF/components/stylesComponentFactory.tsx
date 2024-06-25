@@ -37,16 +37,16 @@ const doubleTapHandler = (node: GraphElement, kiosk: string): void => {
 };
 
 const nodeContextMenu = (node: GraphElement, kiosk: string): React.ReactElement[] => {
-  const options = getOptions(node.getData());
-  const optionsPF = options.map(o => o as ContextMenuOptionPF);
   const nodeData = node.getData() as DecoratedGraphNodeData;
-  if (
-    !(
-      nodeData.isInaccessible ||
-      nodeData.isServiceEntry ||
-      (nodeData.nodeType === NodeType.BOX && nodeData.isBox !== BoxByType.APP)
-    )
-  ) {
+
+  if (nodeData.isInaccessible) {
+    return [];
+  }
+
+  const options = getOptions(nodeData);
+  const optionsPF = options.map(o => o as ContextMenuOptionPF);
+
+  if (!(nodeData.isServiceEntry || (nodeData.nodeType === NodeType.BOX && nodeData.isBox !== BoxByType.APP))) {
     optionsPF.unshift(
       nodeData.isOutside
         ? ({

@@ -25,8 +25,8 @@ import { getServiceDetailsUpdateLabel, hasServiceDetailsTrafficRouting } from '.
 
 type ReduxProps = {
   duration: DurationInSeconds;
-  tracingInfo?: TracingInfo;
   kiosk: string;
+  tracingInfo?: TracingInfo;
   updateTime: TimeInMilliseconds;
 };
 
@@ -70,7 +70,7 @@ const hrStyle = kialiStyle({
 });
 
 type Props = NodeContextMenuProps & ReduxProps;
-type LinkParams = { namespace: string; type: string; name: string; cluster?: string };
+type LinkParams = { cluster?: string; name: string; namespace: string; type: string };
 
 function getLinkParamsForNode(node: DecoratedGraphNodeData): LinkParams | undefined {
   let cluster = node.cluster;
@@ -106,10 +106,10 @@ function getLinkParamsForNode(node: DecoratedGraphNodeData): LinkParams | undefi
   return type && name ? { namespace, type, name, cluster } : undefined;
 }
 
-export function NodeContextMenuComponent(props: Props) {
+export function NodeContextMenuComponent(props: Props): React.ReactElement | null {
   const [serviceDetails, gateways, peerAuthentications, isServiceDetailsLoading] = useServiceDetailForGraphNode(
     props,
-    true,
+    !props.isInaccessible,
     props.duration,
     props.updateTime
   );
@@ -126,7 +126,7 @@ export function NodeContextMenuComponent(props: Props) {
     }
   }
 
-  function createMenuItem(href: string, title: string, target: string = '_self', external: boolean = false) {
+  function createMenuItem(href: string, title: string, target = '_self', external = false): React.ReactElement {
     const commonLinkProps = {
       className: contextMenuItemLink,
       children: title,
@@ -166,11 +166,11 @@ export function NodeContextMenuComponent(props: Props) {
     );
   }
 
-  function onClick(_e: React.MouseEvent<HTMLAnchorElement>) {
+  function onClick(_e: React.MouseEvent<HTMLAnchorElement>): void {
     props.contextMenu.hide(0);
   }
 
-  function handleClickWizard(e: React.MouseEvent<HTMLAnchorElement>, eventKey: WizardAction) {
+  function handleClickWizard(e: React.MouseEvent<HTMLAnchorElement>, eventKey: WizardAction): void {
     e.preventDefault();
     props.contextMenu.hide(0);
 
@@ -186,7 +186,7 @@ export function NodeContextMenuComponent(props: Props) {
     }
   }
 
-  function handleDeleteTrafficRouting(e: React.MouseEvent<HTMLAnchorElement>) {
+  function handleDeleteTrafficRouting(e: React.MouseEvent<HTMLAnchorElement>): void {
     e.preventDefault();
     props.contextMenu.hide(0);
 
@@ -195,7 +195,7 @@ export function NodeContextMenuComponent(props: Props) {
     }
   }
 
-  function renderHeader() {
+  function renderHeader(): React.ReactElement {
     return (
       <>
         {props.isBox ? getTitle(props.isBox) : getTitle(props.nodeType)}
@@ -210,7 +210,7 @@ export function NodeContextMenuComponent(props: Props) {
     );
   }
 
-  function renderWizardActionItem(eventKey: string) {
+  function renderWizardActionItem(eventKey: string): React.ReactElement {
     const enabledItem =
       !hasServiceDetailsTrafficRouting(serviceDetails) ||
       (hasServiceDetailsTrafficRouting(serviceDetails) && updateLabel === eventKey);
@@ -229,7 +229,7 @@ export function NodeContextMenuComponent(props: Props) {
       );
     } else {
       return (
-        <div key={eventKey} className={contextMenuItem} data-test={eventKey + '_action'}>
+        <div key={eventKey} className={contextMenuItem} data-test={`${eventKey}_action`}>
           <a
             href="#"
             rel="noreferrer noopener"
@@ -243,7 +243,7 @@ export function NodeContextMenuComponent(props: Props) {
     }
   }
 
-  function renderDeleteTrafficRoutingItem() {
+  function renderDeleteTrafficRoutingItem(): React.ReactElement {
     if (
       !canDelete(serviceDetails?.istioPermissions) ||
       !hasServiceDetailsTrafficRouting(serviceDetails) /*|| props.isDisabled*/
@@ -272,7 +272,7 @@ export function NodeContextMenuComponent(props: Props) {
     }
   }
 
-  function renderWizardsItems() {
+  function renderWizardsItems(): React.ReactElement | null {
     if (isServiceDetailsLoading) {
       return (
         <>
@@ -300,7 +300,7 @@ export function NodeContextMenuComponent(props: Props) {
     return null;
   }
 
-  function renderFullContextMenu(linkParams: LinkParams) {
+  function renderFullContextMenu(linkParams: LinkParams): React.ReactElement {
     // The getOptionsFromLinkParams function can potentially return a blank list if the
     // node associated to the context menu is for a remote cluster with no accessible Kialis.
     // That would lead to an empty menu. Here, we assume that whoever is the host/parent component,
@@ -324,15 +324,19 @@ export function NodeContextMenuComponent(props: Props) {
     );
   }
 
+  if (props.isInaccessible) {
+    props.contextMenu.disable();
+    return null;
+  }
+
   // render()
   if (props.isHover) {
     return <div className={contextMenu}>{renderHeader()}</div>;
   }
 
   const linkParams = getLinkParamsForNode(props);
-
-  // Disable context menu if we are dealing with an aggregate (currently has no detail) or an inaccessible node
-  if (!linkParams || props.isInaccessible) {
+  // Disable context menu if we are dealing with an aggregate (currently has no detail)
+  if (!linkParams) {
     props.contextMenu.disable();
     return null;
   }
@@ -345,13 +349,13 @@ const getTracingURL = (namespace: string, namespaceSelector: boolean, tracingURL
 };
 
 export type ContextMenuOption = {
-  text: string;
-  url: string;
   external?: boolean;
   target?: string;
+  text: string;
+  url: string;
 };
 
-export const clickHandler = (o: ContextMenuOption, kiosk: string) => {
+export const clickHandler = (o: ContextMenuOption, kiosk: string): void => {
   if (o.external) {
     window.open(o.url, o.target);
   } else {
@@ -364,6 +368,9 @@ export const clickHandler = (o: ContextMenuOption, kiosk: string) => {
 };
 
 export const getOptions = (node: DecoratedGraphNodeData, tracingInfo?: TracingInfo): ContextMenuOption[] => {
+  if (node.isInaccessible) {
+    return [];
+  }
   const linkParams = getLinkParamsForNode(node);
   if (!linkParams) {
     return [];
@@ -377,7 +384,7 @@ const getOptionsFromLinkParams = (linkParams: LinkParams, tracingInfo?: TracingI
   let detailsPageUrl = `/namespaces/${namespace}/${type}/${name}`;
   let concat = '?';
   if (cluster && isMultiCluster) {
-    detailsPageUrl += '?clusterName=' + cluster;
+    detailsPageUrl += `?clusterName=${cluster}`;
     concat = '&';
   }
 
@@ -411,7 +418,7 @@ const getOptionsFromLinkParams = (linkParams: LinkParams, tracingInfo?: TracingI
   return options;
 };
 
-const mapStateToProps = (state: KialiAppState) => ({
+const mapStateToProps = (state: KialiAppState): ReduxProps => ({
   duration: durationSelector(state),
   updateTime: state.graph.updateTime,
   tracingInfo: state.tracingState.info,
