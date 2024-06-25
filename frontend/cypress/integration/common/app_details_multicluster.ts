@@ -60,7 +60,6 @@ Then(
 
 Then('user sees {string} from a remote {string} cluster', (type: string, cluster: string) => {
   cy.waitForReact();
-
   cy.getReact('CytoscapeGraph')
     .should('have.length', '1')
     .getCurrentState()

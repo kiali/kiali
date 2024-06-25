@@ -145,32 +145,35 @@ Then('the display menu has default settings', () => {
 
 Then('the graph reflects default settings', () => {
   cy.waitForReact();
-
-  cy.getReact('CytoscapeGraph')
+  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false } } })
     .should('have.length', '1')
-    .getCurrentState()
-    .then(state => {
-      // no nonDefault edge label info
-      let numEdges = state.cy.edges(`[?responseTime],[?throughput]`).length;
-      assert.equal(numEdges, 0);
+    .then(() => {
+      cy.getReact('CytoscapeGraph')
+        .should('have.length', '1')
+        .getCurrentState()
+        .then(state => {
+          // no nonDefault edge label info
+          let numEdges = state.cy.edges(`[?responseTime],[?throughput]`).length;
+          assert.equal(numEdges, 0);
 
-      // no idle edges, mtls
-      numEdges = state.cy.edges(`[^hasTraffic],[isMTLS > 0]`).length;
-      assert.equal(numEdges, 0);
+          // no idle edges, mtls
+          numEdges = state.cy.edges(`[^hasTraffic],[isMTLS > 0]`).length;
+          assert.equal(numEdges, 0);
 
-      // boxes
-      let numNodes = state.cy.nodes(`[isBox = "app"]`).length;
-      assert.isAbove(numNodes, 0);
-      numNodes = state.cy.nodes(`[isBox = "namespace"]`).length;
-      assert.isAbove(numNodes, 0);
+          // boxes
+          let numNodes = state.cy.nodes(`[isBox = "app"]`).length;
+          assert.isAbove(numNodes, 0);
+          numNodes = state.cy.nodes(`[isBox = "namespace"]`).length;
+          assert.isAbove(numNodes, 0);
 
-      // service nodes
-      numNodes = state.cy.nodes(`[nodeType = "service"]`).length;
-      assert.isAbove(numNodes, 0);
+          // service nodes
+          numNodes = state.cy.nodes(`[nodeType = "service"]`).length;
+          assert.isAbove(numNodes, 0);
 
-      // a variety of not-found tests
-      numNodes = state.cy.nodes(`[isBox = "cluster"],[?isIdle],[?rank],[nodeType = "operation"]`).length;
-      assert.equal(numNodes, 0);
+          // a variety of not-found tests
+          numNodes = state.cy.nodes(`[isBox = "cluster"],[?isIdle],[?rank],[nodeType = "operation"]`).length;
+          assert.equal(numNodes, 0);
+        });
     });
 });
 
@@ -190,13 +193,16 @@ Then('user sees {string} edge labels', (el: string) => {
   }
 
   cy.waitForReact();
-
-  cy.getReact('CytoscapeGraph')
+  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false } } })
     .should('have.length', '1')
-    .getCurrentState()
-    .then(state => {
-      const numEdges = state.cy.edges(`[${rate}" > 0]`).length;
-      assert.isAbove(numEdges, 0);
+    .then(() => {
+      cy.getReact('CytoscapeGraph')
+        .should('have.length', '1')
+        .getCurrentState()
+        .then(state => {
+          const numEdges = state.cy.edges(`[${rate}" > 0]`).length;
+          assert.isAbove(numEdges, 0);
+        });
     });
 });
 
@@ -208,13 +214,16 @@ Then('user does not see {string} boxing', (boxByType: string) => {
   validateInput(`boxBy${boxByType}`, 'does not appear');
 
   cy.waitForReact();
-
-  cy.getReact('CytoscapeGraph')
+  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false } } })
     .should('have.length', '1')
-    .getCurrentState()
-    .then(state => {
-      const numBoxes = state.cy.nodes(`[isBox = "${boxByType.toLowerCase()}"]`).length;
-      assert.equal(numBoxes, 0);
+    .then(() => {
+      cy.getReact('CytoscapeGraph')
+        .should('have.length', '1')
+        .getCurrentState()
+        .then(state => {
+          const numBoxes = state.cy.nodes(`[isBox = "${boxByType.toLowerCase()}"]`).length;
+          assert.equal(numBoxes, 0);
+        });
     });
 });
 
@@ -229,21 +238,24 @@ Then('idle edges {string} in the graph', (action: string) => {
   validateInput('filterIdleEdges', action);
 
   cy.waitForReact();
-
-  cy.getReact('CytoscapeGraph')
+  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false } } })
     .should('have.length', '1')
-    .getCurrentState()
-    .then(state => {
-      const numEdges = state.cy.edges(`[hasTraffic]`).length;
-      const numIdleEdges = state.cy.edges(`[^hasTraffic]`).length;
+    .then(() => {
+      cy.getReact('CytoscapeGraph')
+        .should('have.length', '1')
+        .getCurrentState()
+        .then(state => {
+          const numEdges = state.cy.edges(`[hasTraffic]`).length;
+          const numIdleEdges = state.cy.edges(`[^hasTraffic]`).length;
 
-      if (action === 'appear') {
-        assert.isAbove(numEdges, 0);
-        assert.isAtLeast(numIdleEdges, 0);
-      } else {
-        assert.isAbove(numEdges, 0);
-        assert.equal(numIdleEdges, 0);
-      }
+          if (action === 'appear') {
+            assert.isAbove(numEdges, 0);
+            assert.isAtLeast(numIdleEdges, 0);
+          } else {
+            assert.isAbove(numEdges, 0);
+            assert.equal(numIdleEdges, 0);
+          }
+        });
     });
 });
 
@@ -251,17 +263,20 @@ Then('idle nodes {string} in the graph', (action: string) => {
   validateInput('filterIdleNodes', action);
 
   cy.waitForReact();
-
-  cy.getReact('CytoscapeGraph')
+  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false } } })
     .should('have.length', '1')
-    .getCurrentState()
-    .then(state => {
-      const numNodes = state.cy.nodes(`[?isIdle]`).length;
-      if (action === 'appear') {
-        assert.equal(numNodes, 16);
-      } else {
-        assert.equal(numNodes, 0);
-      }
+    .then(() => {
+      cy.getReact('CytoscapeGraph')
+        .should('have.length', '1')
+        .getCurrentState()
+        .then(state => {
+          const numNodes = state.cy.nodes(`[?isIdle]`).length;
+          if (action === 'appear') {
+            assert.equal(numNodes, 16);
+          } else {
+            assert.equal(numNodes, 0);
+          }
+        });
     });
 });
 
@@ -269,17 +284,20 @@ Then('ranks {string} in the graph', (action: string) => {
   validateInput('rank', action);
 
   cy.waitForReact();
-
-  cy.getReact('CytoscapeGraph')
+  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false } } })
     .should('have.length', '1')
-    .getCurrentState()
-    .then(state => {
-      const numNodes = state.cy.nodes(`[rank > 0]`).length;
-      if (action === 'appear') {
-        assert.isAbove(numNodes, 0);
-      } else {
-        assert.equal(numNodes, 0);
-      }
+    .then(() => {
+      cy.getReact('CytoscapeGraph')
+        .should('have.length', '1')
+        .getCurrentState()
+        .then(state => {
+          const numNodes = state.cy.nodes(`[rank > 0]`).length;
+          if (action === 'appear') {
+            assert.isAbove(numNodes, 0);
+          } else {
+            assert.equal(numNodes, 0);
+          }
+        });
     });
 });
 
@@ -287,13 +305,16 @@ Then('user does not see service nodes', () => {
   validateInput('filterServiceNodes', 'do not appear');
 
   cy.waitForReact();
-
-  cy.getReact('CytoscapeGraph')
+  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false } } })
     .should('have.length', '1')
-    .getCurrentState()
-    .then(state => {
-      const numBoxes = state.cy.nodes(`[nodeType = "service"][^isOutside]`).length;
-      assert.equal(numBoxes, 0);
+    .then(() => {
+      cy.getReact('CytoscapeGraph')
+        .should('have.length', '1')
+        .getCurrentState()
+        .then(state => {
+          const numBoxes = state.cy.nodes(`[nodeType = "service"][^isOutside]`).length;
+          assert.equal(numBoxes, 0);
+        });
     });
 });
 
@@ -301,17 +322,20 @@ Then('security {string} in the graph', (action: string) => {
   validateInput('filterSecurity', action);
 
   cy.waitForReact();
-
-  cy.getReact('CytoscapeGraph')
+  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false } } })
     .should('have.length', '1')
-    .getCurrentState()
-    .then(state => {
-      const numEdges = state.cy.edges(`[isMTLS > 0]`).length;
-      if (action === 'appears') {
-        assert.isAbove(numEdges, 0);
-      } else {
-        assert.equal(numEdges, 0);
-      }
+    .then(() => {
+      cy.getReact('CytoscapeGraph')
+        .should('have.length', '1')
+        .getCurrentState()
+        .then(state => {
+          const numEdges = state.cy.edges(`[isMTLS > 0]`).length;
+          if (action === 'appears') {
+            assert.isAbove(numEdges, 0);
+          } else {
+            assert.equal(numEdges, 0);
+          }
+        });
     });
 });
 
@@ -353,16 +377,19 @@ Then('the {string} option should {string} and {string}', (option: string, option
 
 Then('only a single cluster box should be visible', () => {
   cy.waitForReact();
-
-  cy.getReact('CytoscapeGraph')
+  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false } } })
     .should('have.length', '1')
-    .getCurrentState()
-    .then(state => {
-      const clusterBoxes = state.cy.nodes(`[isBox = "cluster"]`).length;
-      assert.equal(clusterBoxes, 0);
+    .then(() => {
+      cy.getReact('CytoscapeGraph')
+        .should('have.length', '1')
+        .getCurrentState()
+        .then(state => {
+          const clusterBoxes = state.cy.nodes(`[isBox = "cluster"]`).length;
+          assert.equal(clusterBoxes, 0);
 
-      const namespaceBoxes = state.cy.nodes(`[isBox = "namespace"][namespace = "bookinfo"]`).length;
-      assert.equal(namespaceBoxes, 1);
+          const namespaceBoxes = state.cy.nodes(`[isBox = "namespace"][namespace = "bookinfo"]`).length;
+          assert.equal(namespaceBoxes, 1);
+        });
     });
 });
 
@@ -427,20 +454,23 @@ Then(
   'user double-clicks on the {string} {string} from the {string} cluster in the main graph',
   (name: string, type: string, cluster: string) => {
     cy.waitForReact();
-
-    cy.getReact('CytoscapeGraph')
+    cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false } } })
       .should('have.length', '1')
-      .getCurrentState()
-      .then(state => {
-        let node;
-        if (type === 'app') {
-          node = state.cy.nodes(`[app="${name}"][cluster="${cluster}"][isBox="app"]`);
-        } else if (type === 'service') {
-          node = state.cy.nodes(`[nodeType="service"][cluster="${cluster}"][app="${name}"]`);
-        }
-        // none of the standard cytoscape.js events for double-clicks were not working unfortunately
-        node.emit('tap');
-        node.emit('tap');
+      .then(() => {
+        cy.getReact('CytoscapeGraph')
+          .should('have.length', '1')
+          .getCurrentState()
+          .then(state => {
+            let node;
+            if (type === 'app') {
+              node = state.cy.nodes(`[app="${name}"][cluster="${cluster}"][isBox="app"]`);
+            } else if (type === 'service') {
+              node = state.cy.nodes(`[nodeType="service"][cluster="${cluster}"][app="${name}"]`);
+            }
+            // none of the standard cytoscape.js events for double-clicks were not working unfortunately
+            node.emit('tap');
+            node.emit('tap');
+          });
       });
   }
 );
@@ -459,13 +489,16 @@ When('user {string} {string} traffic option', (action: string, option: string) =
 
 Then('{int} edges appear in the graph', (edges: number) => {
   cy.waitForReact();
-
-  cy.getReact('CytoscapeGraph')
+  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false } } })
     .should('have.length', '1')
-    .getCurrentState()
-    .then(state => {
-      const numEdges = state.cy.edges(`[hasTraffic]`).length;
-      // It can be more, depending on the service version redirection
-      assert.isAtLeast(numEdges, edges);
+    .then(() => {
+      cy.getReact('CytoscapeGraph')
+        .should('have.length', '1')
+        .getCurrentState()
+        .then(state => {
+          const numEdges = state.cy.edges(`[hasTraffic]`).length;
+          // It can be more, depending on the service version redirection
+          assert.isAtLeast(numEdges, edges);
+        });
     });
 });
