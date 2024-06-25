@@ -15,7 +15,8 @@ const WaypointSuffix = "waypoint"
 // and then, checking the labels
 // handleWaypoint removes the waypoint proxies when ShowWaypoint is false
 type AmbientAppender struct {
-	ShowWaypoints bool
+	AccessibleNamespaces graph.AccessibleNamespaces
+	ShowWaypoints        bool
 }
 
 // Name implements Appender
@@ -45,6 +46,11 @@ func (a AmbientAppender) handleWaypoints(trafficMap graph.TrafficMap, globalInfo
 	waypoinList := []string{}
 
 	for _, n := range trafficMap {
+		// skip if the node is not in an accessible namespace, we can't do the checking
+		if !a.nodeOK(n) {
+			continue
+		}
+
 		// It could be a waypoint proxy
 		var workloadName string
 		if n.Workload != "" {
@@ -83,6 +89,13 @@ func (a AmbientAppender) handleWaypoints(trafficMap graph.TrafficMap, globalInfo
 		}
 		n.Edges = graphEdge
 	}
+}
+
+// nodeOK returns true if we have access to its workload info
+func (a *AmbientAppender) nodeOK(node *graph.Node) bool {
+	key := graph.GetClusterSensitiveKey(node.Cluster, node.Namespace)
+	_, ok := a.AccessibleNamespaces[key]
+	return ok
 }
 
 func contains(slice []string, str string) bool {

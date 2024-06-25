@@ -103,13 +103,13 @@ function getLinkParamsForNode(node: DecoratedGraphNodeData): LinkParams | undefi
       break;
   }
 
-  return type && name && name !== 'unknown' ? { namespace, type, name, cluster } : undefined;
+  return type && name ? { namespace, type, name, cluster } : undefined;
 }
 
 export function NodeContextMenuComponent(props: Props): React.ReactElement | null {
   const [serviceDetails, gateways, peerAuthentications, isServiceDetailsLoading] = useServiceDetailForGraphNode(
     props,
-    true,
+    !props.isInaccessible,
     props.duration,
     props.updateTime
   );
@@ -324,15 +324,19 @@ export function NodeContextMenuComponent(props: Props): React.ReactElement | nul
     );
   }
 
+  if (props.isInaccessible) {
+    props.contextMenu.disable();
+    return null;
+  }
+
   // render()
   if (props.isHover) {
     return <div className={contextMenu}>{renderHeader()}</div>;
   }
 
   const linkParams = getLinkParamsForNode(props);
-
-  // Disable context menu if we are dealing with an aggregate (currently has no detail) or an inaccessible node
-  if (!linkParams || props.isInaccessible) {
+  // Disable context menu if we are dealing with an aggregate (currently has no detail)
+  if (!linkParams) {
     props.contextMenu.disable();
     return null;
   }
