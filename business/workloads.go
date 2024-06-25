@@ -1925,7 +1925,7 @@ func (in *WorkloadService) isWorkloadEnrolled(ctx context.Context, workload mode
 	} else {
 		services = workload.Services
 	}
-	if services != nil && len(services) > 0 {
+	if len(services) > 0 {
 		for _, svc := range services {
 			waypointName, ok = svc.Labels[config.WaypointUseLabel]
 			if ok {
@@ -1940,7 +1940,7 @@ func (in *WorkloadService) isWorkloadEnrolled(ctx context.Context, workload mode
 
 // Get the Waypoint proxy for a workload
 // TODO: We might use the cache to improve performance
-func (in *WorkloadService) getWaypointForWorkload(ctx context.Context, namespace string, workload models.Workload) []models.Workload {
+func (in *WorkloadService) getWaypointsForWorkload(ctx context.Context, namespace string, workload models.Workload) []models.Workload {
 	var workloadslist []models.Workload
 
 	// Get Waypoint list names
@@ -1959,7 +1959,6 @@ func (in *WorkloadService) getWaypointForWorkload(ctx context.Context, namespace
 		if wkd != nil {
 			workloadslist = append(workloadslist, *wkd)
 		}
-		return workloadslist
 	}
 
 	return workloadslist
@@ -1977,16 +1976,11 @@ func (in *WorkloadService) listWaypointWorkloads(ctx context.Context, name, clus
 
 	var workloadslist []models.Workload
 	// Get service Account name for each pod from the workload
-<<<<<<< HEAD
-	for _, workload := range wlist {
-		if !config.IsWaypoint(workload.Labels) {
-			workloadslist = append(workloadslist, *workload)
-=======
+
 	for _, ns := range nslist {
 		workloadList, err := in.fetchWorkloads(ctx, ns.Name, "")
 		if err != nil {
-			log.Errorf("Error fetching workloads for namespace %s", ns)
->>>>>>> cf683f32d (Identify waypoint proxies)
+			log.Errorf("Error fetching workloads for namespace %s", ns.Name)
 		}
 		for _, wk := range workloadList {
 			// Is there any annotation that disables?
