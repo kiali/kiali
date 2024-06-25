@@ -145,11 +145,6 @@ export class CytoscapeContextMenuWrapper extends React.PureComponent<Props> {
       return;
     }
 
-    // Is valid data?
-    if (target.data().namespace === 'unknown') {
-      return;
-    }
-
     // hide any existing context menu
     this.hideContextMenu(isHover);
 
