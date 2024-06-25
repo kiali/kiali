@@ -9,7 +9,7 @@ func IstioCerts(w http.ResponseWriter, r *http.Request) {
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	certs, err := business.IstioCerts.GetCertsInfo()
+	certs, err := business.IstioCerts.GetCertsInfo(r.Context())
 	if err != nil {
 		handleErrorResponse(w, err)
 		return

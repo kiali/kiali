@@ -40,7 +40,6 @@ export enum MeshNodeType {
   INFRA = 'infra'
 }
 
-// TODO
 export type MeshNodeHealthData = string;
 
 // Node data expected from server

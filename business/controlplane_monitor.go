@@ -16,6 +16,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/log"
@@ -33,13 +34,13 @@ type ControlPlaneMonitor interface {
 	RefreshIstioCache(ctx context.Context) error
 }
 
-func NewControlPlaneMonitor(cache cache.KialiCache, clientFactory kubernetes.ClientFactory, conf config.Config, meshService *MeshService) *controlPlaneMonitor {
+func NewControlPlaneMonitor(cache cache.KialiCache, clientFactory kubernetes.ClientFactory, conf config.Config, discovery *istio.Discovery) *controlPlaneMonitor {
 	return &controlPlaneMonitor{
 		cache:           cache,
 		clientFactory:   clientFactory,
 		conf:            conf,
+		discovery:       discovery,
 		pollingInterval: time.Duration(conf.ExternalServices.Istio.IstiodPollingIntervalSeconds) * time.Second,
-		meshService:     meshService,
 	}
 }
 
@@ -55,7 +56,7 @@ type controlPlaneMonitor struct {
 	// these directly from the client factory rather than passing in a static list.
 	clientFactory   kubernetes.ClientFactory
 	conf            config.Config
-	meshService     *MeshService
+	discovery       *istio.Discovery
 	pollingInterval time.Duration
 }
 
@@ -67,7 +68,7 @@ func (p *controlPlaneMonitor) RefreshIstioCache(ctx context.Context) error {
 	ctx, cancel := context.WithTimeout(ctx, p.pollingInterval)
 	defer cancel()
 
-	mesh, err := p.meshService.GetMesh(ctx)
+	mesh, err := p.discovery.Mesh(ctx)
 	if err != nil {
 		return fmt.Errorf("unable to get mesh when refreshing istio cache: %s", err)
 	}
@@ -334,10 +335,9 @@ func (p *controlPlaneMonitor) canConnectToIstiodForRevision(client kubernetes.Cl
 	}
 
 	podLabels := map[string]string{
-		"app":              "istiod",
-		IstioRevisionLabel: revision,
+		"app":                     "istiod",
+		models.IstioRevisionLabel: revision,
 	}
-
 	istiods, err := kubeCache.GetPods(namespace, labels.Set(podLabels).String())
 	if err != nil {
 		return nil, err
@@ -412,7 +412,7 @@ func (p *controlPlaneMonitor) CanConnectToIstiod(client kubernetes.ClientInterfa
 		return nil, err
 	}
 
-	return p.CanConnectToIstiodForRevision(client, istiod.Labels[IstioRevisionLabel])
+	return p.CanConnectToIstiodForRevision(client, istiod.Labels[models.IstioRevisionLabel])
 }
 
 func parseProxyStatus(statuses map[string][]byte) ([]*kubernetes.ProxyStatus, error) {

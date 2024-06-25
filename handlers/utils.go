@@ -21,7 +21,7 @@ type promClientSupplier func() (*prometheus.Client, error)
 
 const defaultPatchType = "merge"
 
-var defaultPromClientSupplier = prometheus.NewClient
+var DefaultPromClientSupplier = prometheus.NewClient
 
 func checkNamespaceAccess(ctx context.Context, nsServ business.NamespaceService, namespace string, cluster string) (*models.Namespace, error) {
 	return nsServ.GetClusterNamespace(ctx, namespace, cluster)

@@ -7,6 +7,8 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/util/sliceutil"
 )
 
 // NamespaceTls is the API to get namespace-wide mTLS status
@@ -36,9 +38,11 @@ func NamespaceTls(w http.ResponseWriter, r *http.Request) {
 func ClustersTls(w http.ResponseWriter, r *http.Request) {
 	params := r.URL.Query()
 	namespaces := params.Get("namespaces") // csl of namespaces
-	nss := []string{}
+	namespaceNamesFromQuery := map[string]struct{}{}
 	if len(namespaces) > 0 {
-		nss = strings.Split(namespaces, ",")
+		for _, name := range strings.Split(namespaces, ",") {
+			namespaceNamesFromQuery[name] = struct{}{}
+		}
 	}
 	cluster := clusterNameFromQuery(params)
 
@@ -49,13 +53,21 @@ func ClustersTls(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if len(nss) == 0 {
-		loadedNamespaces, _ := business.Namespace.GetClusterNamespaces(r.Context(), cluster)
-		for _, ns := range loadedNamespaces {
-			nss = append(nss, ns.Name)
-		}
+	namespaceModels, err := business.Namespace.GetClusterNamespaces(r.Context(), cluster)
+	if err != nil {
+		log.Error(err)
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
 	}
-	status, err := business.TLS.ClusterWideNSmTLSStatus(r.Context(), nss, cluster)
+
+	if len(namespaceNamesFromQuery) != 0 {
+		// Filter out the namespaces included in the query param that don't exist in the cluster.
+		namespaceModels = sliceutil.Filter(namespaceModels, func(ns models.Namespace) bool {
+			_, found := namespaceNamesFromQuery[ns.Name]
+			return found
+		})
+	}
+	status, err := business.TLS.ClusterWideNSmTLSStatus(r.Context(), namespaceModels, cluster)
 	if err != nil {
 		log.Error(err)
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
@@ -76,23 +88,13 @@ func MeshTls(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cluster := clusterNameFromQuery(r.URL.Query())
-
-	// Get all the namespaces
-	namespaces, err := business.Namespace.GetClusterNamespaces(ctx, cluster)
-	if err != nil {
-		log.Error(err)
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-
-	// Get all namespace names
-	nsNames := make([]string, 0, len(namespaces))
-	for _, ns := range namespaces {
-		nsNames = append(nsNames, ns.Name)
+	revision := r.URL.Query().Get("revision")
+	if revision == "" {
+		revision = "default"
 	}
 
 	// Get mtls status given the whole namespaces
-	globalmTLSStatus, err := business.TLS.MeshWidemTLSStatus(ctx, nsNames, cluster)
+	globalmTLSStatus, err := business.TLS.MeshWidemTLSStatus(ctx, cluster, revision)
 	if err != nil {
 		log.Error(err)
 		RespondWithError(w, http.StatusInternalServerError, err.Error())

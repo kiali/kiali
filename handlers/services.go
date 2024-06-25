@@ -3,12 +3,12 @@ package handlers
 import (
 	"io"
 	"net/http"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
 
 	"github.com/gorilla/mux"
-	"golang.org/x/exp/slices"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/models"

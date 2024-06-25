@@ -19,6 +19,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/grafana"
 	"github.com/kiali/kiali/handlers"
+	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/log"
@@ -36,6 +37,7 @@ func NewRouter(
 	traceClientLoader func() tracing.ClientInterface,
 	cpm business.ControlPlaneMonitor,
 	grafana *grafana.Service,
+	discovery *istio.Discovery,
 ) (*mux.Router, error) {
 	webRoot := conf.Server.WebRoot
 	webRootWithSlash := webRoot + "/"
@@ -90,9 +92,9 @@ func NewRouter(
 
 	var authController authentication.AuthController
 	if strategy == config.AuthStrategyToken {
-		authController = authentication.NewTokenAuthController(persistor, clientFactory, kialiCache, conf)
+		authController = authentication.NewTokenAuthController(persistor, clientFactory, kialiCache, conf, discovery)
 	} else if strategy == config.AuthStrategyOpenId {
-		authController = authentication.NewOpenIdAuthController(persistor, kialiCache, clientFactory, conf)
+		authController = authentication.NewOpenIdAuthController(persistor, kialiCache, clientFactory, conf, discovery)
 	} else if strategy == config.AuthStrategyOpenshift {
 		openshiftOAuthService, err := business.NewOpenshiftOAuthService(context.TODO(), conf, clientFactory.GetSAClients(), clientFactory)
 		if err != nil {
@@ -110,7 +112,7 @@ func NewRouter(
 	}
 
 	// Build our API server routes and install them.
-	apiRoutes := NewRoutes(conf, kialiCache, clientFactory, prom, traceClientLoader, cpm, authController, grafana)
+	apiRoutes := NewRoutes(conf, kialiCache, clientFactory, prom, traceClientLoader, cpm, authController, grafana, discovery)
 	authenticationHandler := handlers.NewAuthenticationHandler(*conf, authController, clientFactory.GetSAHomeClusterClient())
 
 	allRoutes := apiRoutes.Routes

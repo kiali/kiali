@@ -6,6 +6,7 @@ import (
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/grafana"
+	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/prometheus"
@@ -21,6 +22,7 @@ type AppenderGlobalInfo struct {
 	Business          *business.Layer
 	ClientFactory     kubernetes.ClientFactory
 	Config            *config.Config
+	Discovery         *istio.Discovery
 	Grafana           *grafana.Service
 	IstioStatusGetter IstioStatusGetter
 	KialiCache        cache.KialiCache

@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -23,7 +24,7 @@ import (
 
 // AppMetrics is the API handler to fetch metrics to be displayed, related to an app-label grouping
 func AppMetrics(w http.ResponseWriter, r *http.Request) {
-	getAppMetrics(w, r, defaultPromClientSupplier)
+	getAppMetrics(w, r, DefaultPromClientSupplier)
 }
 
 // getAppMetrics (mock-friendly version)
@@ -57,7 +58,7 @@ func getAppMetrics(w http.ResponseWriter, r *http.Request, promSupplier promClie
 
 // WorkloadMetrics is the API handler to fetch metrics to be displayed, related to a single workload
 func WorkloadMetrics(w http.ResponseWriter, r *http.Request) {
-	getWorkloadMetrics(w, r, defaultPromClientSupplier)
+	getWorkloadMetrics(w, r, DefaultPromClientSupplier)
 }
 
 // getWorkloadMetrics (mock-friendly version)
@@ -91,7 +92,7 @@ func getWorkloadMetrics(w http.ResponseWriter, r *http.Request, promSupplier pro
 
 // ServiceMetrics is the API handler to fetch metrics to be displayed, related to a single service
 func ServiceMetrics(w http.ResponseWriter, r *http.Request) {
-	getServiceMetrics(w, r, defaultPromClientSupplier)
+	getServiceMetrics(w, r, DefaultPromClientSupplier)
 }
 
 // getServiceMetrics (mock-friendly version)
@@ -125,7 +126,7 @@ func getServiceMetrics(w http.ResponseWriter, r *http.Request, promSupplier prom
 
 // AggregateMetrics is the API handler to fetch metrics to be displayed, related to a single aggregate
 func AggregateMetrics(w http.ResponseWriter, r *http.Request) {
-	getAggregateMetrics(w, r, defaultPromClientSupplier)
+	getAggregateMetrics(w, r, DefaultPromClientSupplier)
 }
 
 // getServiceMetrics (mock-friendly version)
@@ -165,97 +166,31 @@ func getAggregateMetrics(w http.ResponseWriter, r *http.Request, promSupplier pr
 	RespondWithJSON(w, http.StatusOK, metrics)
 }
 
-// NamespaceMetrics is the API handler to fetch metrics to be displayed, related to all
-// services in the namespace
-func NamespaceMetrics(w http.ResponseWriter, r *http.Request) {
-	getNamespaceMetrics(w, r, defaultPromClientSupplier)
+type remoteClusterIdentifier interface {
+	IsRemoteCluster(context.Context, string) bool
 }
 
-// getServiceMetrics (mock-friendly version)
-func getNamespaceMetrics(w http.ResponseWriter, r *http.Request, promSupplier promClientSupplier) {
-	business, err := getBusiness(r)
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-
-	vars := mux.Vars(r)
-	namespace := vars["namespace"]
-	cluster := clusterNameFromQuery(r.URL.Query())
-
-	metricsService, namespaceInfo := createMetricsServiceForNamespaceMC(w, r, promSupplier, namespace)
-	if metricsService == nil {
-		// any returned value nil means error & response already written
-		return
-	}
-	oldestNs := GetOldestNamespace(namespaceInfo)
-
-	params := models.IstioMetricsQuery{Cluster: cluster, Namespace: namespace}
-
-	err = extractIstioMetricsQueryParams(r, &params, oldestNs)
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-
-	metrics, err := metricsService.GetMetrics(params, nil)
-	if err != nil {
-		RespondWithError(w, http.StatusServiceUnavailable, err.Error())
-		return
-	}
-
-	if isRemoteCluster := business.Mesh.IsRemoteCluster(r.Context(), cluster); !isRemoteCluster && namespace == config.Get().IstioNamespace {
-		controlPlaneMetrics, err := metricsService.GetControlPlaneMetrics(params, nil)
+// NamespaceMetrics is the API handler to fetch metrics to be displayed, related to all
+// services in the namespace
+func NamespaceMetrics(promSupplier promClientSupplier, discovery remoteClusterIdentifier) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		_, err := getBusiness(r)
 		if err != nil {
-			RespondWithError(w, http.StatusServiceUnavailable, err.Error())
+			RespondWithError(w, http.StatusInternalServerError, err.Error())
 			return
 		}
 
-		for k, v := range controlPlaneMetrics {
-			metrics[k] = v
+		vars := mux.Vars(r)
+		namespace := vars["namespace"]
+		cluster := clusterNameFromQuery(r.URL.Query())
+
+		metricsService, namespaceInfo := createMetricsServiceForNamespaceMC(w, r, promSupplier, namespace)
+		if metricsService == nil {
+			// any returned value nil means error & response already written
+			return
 		}
-	}
+		oldestNs := GetOldestNamespace(namespaceInfo)
 
-	RespondWithJSON(w, http.StatusOK, metrics)
-}
-
-// ClustersMetrics is the API handler to fetch metrics to be displayed, related to all
-// services in provided namespaces of given cluster
-func ClustersMetrics(w http.ResponseWriter, r *http.Request) {
-	getClustersMetrics(w, r, defaultPromClientSupplier)
-}
-
-// getClustersMetrics (mock-friendly version)
-func getClustersMetrics(w http.ResponseWriter, r *http.Request, promSupplier promClientSupplier) {
-	query := r.URL.Query()
-	namespaces := query.Get("namespaces") // csl of namespaces
-	nss := []string{}
-	if len(namespaces) > 0 {
-		nss = strings.Split(namespaces, ",")
-	}
-	cluster := clusterNameFromQuery(query)
-
-	business, err := getBusiness(r)
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-	if len(nss) == 0 {
-		loadedNamespaces, _ := business.Namespace.GetClusterNamespaces(r.Context(), cluster)
-		for _, ns := range loadedNamespaces {
-			nss = append(nss, ns.Name)
-		}
-	}
-
-	metricsService, namespaceInfo := createMetricsServiceForClusterMC(w, r, promSupplier, cluster, nss)
-	if metricsService == nil {
-		// any returned value nil means error & response already written
-		return
-	}
-	oldestNs := GetOldestNamespace(namespaceInfo)
-
-	result := models.MetricsPerNamespace{}
-	for _, namespace := range nss {
 		params := models.IstioMetricsQuery{Cluster: cluster, Namespace: namespace}
 
 		err = extractIstioMetricsQueryParams(r, &params, oldestNs)
@@ -270,7 +205,7 @@ func getClustersMetrics(w http.ResponseWriter, r *http.Request, promSupplier pro
 			return
 		}
 
-		if isRemoteCluster := business.Mesh.IsRemoteCluster(r.Context(), cluster); !isRemoteCluster && namespace == config.Get().IstioNamespace {
+		if isRemoteCluster := discovery.IsRemoteCluster(r.Context(), cluster); !isRemoteCluster && namespace == config.Get().IstioNamespace {
 			controlPlaneMetrics, err := metricsService.GetControlPlaneMetrics(params, nil)
 			if err != nil {
 				RespondWithError(w, http.StatusServiceUnavailable, err.Error())
@@ -282,14 +217,78 @@ func getClustersMetrics(w http.ResponseWriter, r *http.Request, promSupplier pro
 			}
 		}
 
+		RespondWithJSON(w, http.StatusOK, metrics)
+	}
+}
+
+// ClustersMetrics is the API handler to fetch metrics to be displayed, related to all
+// services in provided namespaces of given cluster
+func ClustersMetrics(promSupplier promClientSupplier, discovery remoteClusterIdentifier) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		query := r.URL.Query()
+		namespaces := query.Get("namespaces") // csl of namespaces
+		nss := []string{}
+		if len(namespaces) > 0 {
+			nss = strings.Split(namespaces, ",")
+		}
+		cluster := clusterNameFromQuery(query)
+
+		business, err := getBusiness(r)
 		if err != nil {
-			RespondWithError(w, http.StatusServiceUnavailable, err.Error())
+			RespondWithError(w, http.StatusInternalServerError, err.Error())
 			return
 		}
-		result[namespace] = metrics
-	}
+		if len(nss) == 0 {
+			loadedNamespaces, _ := business.Namespace.GetClusterNamespaces(r.Context(), cluster)
+			for _, ns := range loadedNamespaces {
+				nss = append(nss, ns.Name)
+			}
+		}
 
-	RespondWithJSON(w, http.StatusOK, result)
+		metricsService, namespaceInfo := createMetricsServiceForClusterMC(w, r, promSupplier, cluster, nss)
+		if metricsService == nil {
+			// any returned value nil means error & response already written
+			return
+		}
+		oldestNs := GetOldestNamespace(namespaceInfo)
+
+		result := models.MetricsPerNamespace{}
+		for _, namespace := range nss {
+			params := models.IstioMetricsQuery{Cluster: cluster, Namespace: namespace}
+
+			err = extractIstioMetricsQueryParams(r, &params, oldestNs)
+			if err != nil {
+				RespondWithError(w, http.StatusBadRequest, err.Error())
+				return
+			}
+
+			metrics, err := metricsService.GetMetrics(params, nil)
+			if err != nil {
+				RespondWithError(w, http.StatusServiceUnavailable, err.Error())
+				return
+			}
+
+			if isRemoteCluster := discovery.IsRemoteCluster(r.Context(), cluster); !isRemoteCluster && namespace == config.Get().IstioNamespace {
+				controlPlaneMetrics, err := metricsService.GetControlPlaneMetrics(params, nil)
+				if err != nil {
+					RespondWithError(w, http.StatusServiceUnavailable, err.Error())
+					return
+				}
+
+				for k, v := range controlPlaneMetrics {
+					metrics[k] = v
+				}
+			}
+
+			if err != nil {
+				RespondWithError(w, http.StatusServiceUnavailable, err.Error())
+				return
+			}
+			result[namespace] = metrics
+		}
+
+		RespondWithJSON(w, http.StatusOK, result)
+	}
 }
 
 func extractIstioMetricsQueryParams(r *http.Request, q *models.IstioMetricsQuery, namespaceInfo *models.Namespace) error {
@@ -435,7 +434,7 @@ func MetricsStats(w http.ResponseWriter, r *http.Request) {
 		RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	metricsService, queries, warns := prepareStatsQueries(w, r, raw.Queries, defaultPromClientSupplier)
+	metricsService, queries, warns := prepareStatsQueries(w, r, raw.Queries, DefaultPromClientSupplier)
 	if len(queries) == 0 && warns != nil {
 		// All queries failed to be adjusted => return an error
 		handleErrorResponse(w, warns)

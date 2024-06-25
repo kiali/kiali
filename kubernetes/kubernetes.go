@@ -525,3 +525,9 @@ func (in *K8SClient) GetTokenSubject(authInfo *api.AuthInfo) (string, error) {
 		return result.Status.User.Username, nil
 	}
 }
+
+// EnvVarIsTrue tests if both the key is set and the value is true.
+// Only use this when env.Value is a boolean string e.g. "true" or "false".
+func EnvVarIsTrue(key string, env core_v1.EnvVar) bool {
+	return env.Name == key && env.Value == "true"
+}

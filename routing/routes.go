@@ -8,6 +8,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/grafana"
 	"github.com/kiali/kiali/handlers"
+	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/prometheus"
@@ -39,6 +40,7 @@ func NewRoutes(
 	cpm business.ControlPlaneMonitor,
 	authController authentication.AuthController,
 	grafana *grafana.Service,
+	discovery *istio.Discovery,
 ) (r *Routes) {
 	r = new(Routes)
 
@@ -193,7 +195,7 @@ func NewRoutes(
 			"Config",
 			"GET",
 			"/api/config",
-			handlers.Config,
+			handlers.Config(conf, discovery),
 			true,
 		},
 		// swagger:route GET /crippled kiali getCrippledFeatures
@@ -951,7 +953,7 @@ func NewRoutes(
 			"NamespaceMetrics",
 			"GET",
 			"/api/namespaces/{namespace}/metrics",
-			handlers.NamespaceMetrics,
+			handlers.NamespaceMetrics(handlers.DefaultPromClientSupplier, discovery),
 			true,
 		},
 		// swagger:route GET /clusters/health cluster namespaces Health
@@ -993,7 +995,7 @@ func NewRoutes(
 			"NamespaceValidationSummary",
 			"GET",
 			"/api/namespaces/{namespace}/validations",
-			handlers.NamespaceValidationSummary,
+			handlers.NamespaceValidationSummary(discovery),
 			true,
 		},
 		// swagger:route GET /istio/validations namespaces namespacesValidations
@@ -1015,27 +1017,6 @@ func NewRoutes(
 			"GET",
 			"/api/istio/validations",
 			handlers.ConfigValidationSummary,
-			true,
-		},
-		// swagger:route GET /mesh mesh configuration
-		// ---
-		// Get Mesh status and configuration
-		//
-		//     Produces:
-		//     - application/json
-		//
-		//     Schemes: http, https
-		//
-		// responses:
-		//      200: meshResponse
-		//      400: badRequestError
-		//      500: internalError
-		//
-		{
-			"Mesh",
-			"GET",
-			"/api/mesh",
-			handlers.GetMesh,
 			true,
 		},
 		// swagger:route GET /mesh/tls tls meshTls
@@ -1307,7 +1288,7 @@ func NewRoutes(
 			"MeshGraph",
 			"GET",
 			"/api/mesh/graph",
-			handlers.MeshGraph(conf, clientFactory, kialiCache, grafana),
+			handlers.MeshGraph(conf, clientFactory, kialiCache, grafana, discovery),
 			true,
 		},
 		// swagger:route GET /grafana integrations grafanaInfo
@@ -1477,7 +1458,7 @@ func NewRoutes(
 			"ClustersMetrics",
 			"GET",
 			"/api/clusters/metrics",
-			handlers.ClustersMetrics,
+			handlers.ClustersMetrics(handlers.DefaultPromClientSupplier, discovery),
 			true,
 		},
 		// swagger:route POST /stats/metrics stats metricsStats

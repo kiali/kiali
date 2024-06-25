@@ -7,6 +7,7 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 )
@@ -54,46 +55,48 @@ func NamespaceInfo(w http.ResponseWriter, r *http.Request) {
 
 // NamespaceValidationSummary is the API handler to fetch validations summary to be displayed.
 // It is related to all the Istio Objects within the namespace
-func NamespaceValidationSummary(w http.ResponseWriter, r *http.Request) {
-	query := r.URL.Query()
-	vars := mux.Vars(r)
-	namespace := vars["namespace"]
+func NamespaceValidationSummary(discovery *istio.Discovery) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		query := r.URL.Query()
+		vars := mux.Vars(r)
+		namespace := vars["namespace"]
 
-	cluster := clusterNameFromQuery(query)
+		cluster := clusterNameFromQuery(query)
 
-	business, err := getBusiness(r)
-	if err != nil {
-		log.Error(err)
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
+		business, err := getBusiness(r)
+		if err != nil {
+			log.Error(err)
+			RespondWithError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
 
-	var validationSummary models.IstioValidationSummary
-	istioConfigValidationResults := models.IstioValidations{}
-	var errValidations error
+		var validationSummary models.IstioValidationSummary
+		istioConfigValidationResults := models.IstioValidations{}
+		var errValidations error
 
-	// If cluster is not set, is because we need a unified validations view (E.g. in the Summary graph)
-	clusters, _ := business.Mesh.GetClusters()
-	if len(clusters) == 1 {
-		istioConfigValidationResults, errValidations = business.Validations.GetValidations(r.Context(), cluster, namespace, "", "")
-	} else {
-		for _, cl := range clusters {
-			_, errNs := business.Namespace.GetClusterNamespace(r.Context(), namespace, cl.Name)
-			if errNs == nil {
-				clusterIstioConfigValidationResults, _ := business.Validations.GetValidations(r.Context(), cl.Name, namespace, "", "")
-				istioConfigValidationResults = istioConfigValidationResults.MergeValidations(clusterIstioConfigValidationResults)
+		// If cluster is not set, is because we need a unified validations view (E.g. in the Summary graph)
+		clusters, _ := discovery.Clusters()
+		if len(clusters) == 1 {
+			istioConfigValidationResults, errValidations = business.Validations.GetValidations(r.Context(), cluster, namespace, "", "")
+		} else {
+			for _, cl := range clusters {
+				_, errNs := business.Namespace.GetClusterNamespace(r.Context(), namespace, cl.Name)
+				if errNs == nil {
+					clusterIstioConfigValidationResults, _ := business.Validations.GetValidations(r.Context(), cl.Name, namespace, "", "")
+					istioConfigValidationResults = istioConfigValidationResults.MergeValidations(clusterIstioConfigValidationResults)
+				}
 			}
 		}
-	}
 
-	if errValidations != nil {
-		log.Error(errValidations)
-		RespondWithError(w, http.StatusInternalServerError, errValidations.Error())
-	} else {
-		validationSummary = *istioConfigValidationResults.SummarizeValidation(namespace, cluster)
-	}
+		if errValidations != nil {
+			log.Error(errValidations)
+			RespondWithError(w, http.StatusInternalServerError, errValidations.Error())
+		} else {
+			validationSummary = *istioConfigValidationResults.SummarizeValidation(namespace, cluster)
+		}
 
-	RespondWithJSON(w, http.StatusOK, validationSummary)
+		RespondWithJSON(w, http.StatusOK, validationSummary)
+	}
 }
 
 // ConfigValidationSummary is the API handler to fetch validations summary to be displayed.

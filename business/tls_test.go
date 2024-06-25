@@ -16,15 +16,19 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
+	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
 	"github.com/kiali/kiali/util"
 )
+
+var injectionEnabledLabel = map[string]string{IstioInjectionLabel: "enabled"}
 
 func TestMeshStatusEnabled(t *testing.T) {
 	assert := assert.New(t)
 
 	conf := config.NewConfig()
 	conf.Deployment.ClusterWideAccess = true
+	conf.IstioNamespace = "istio-system"
 	kubernetes.SetConfig(t, *conf)
 
 	pa := fakeStrictMeshPeerAuthentication("default")
@@ -32,24 +36,37 @@ func TestMeshStatusEnabled(t *testing.T) {
 		data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
 			data.CreateEmptyDestinationRule("test", "default", "*.local")),
 	}
-
 	objs := []runtime.Object{
-		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "test"}},
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "test", Labels: injectionEnabledLabel}},
 		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "istio-system"}},
-		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "default"}},
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "default", Labels: injectionEnabledLabel}},
 	}
 	objs = append(objs, kubernetes.ToRuntimeObjects(pa)...)
 	objs = append(objs, kubernetes.ToRuntimeObjects(dr)...)
 
 	k8s := kubetest.NewFakeK8sClient(objs...)
 	SetupBusinessLayer(t, k8s, *conf)
+	discovery := &fakeMeshDiscovery{
+		mesh: models.Mesh{
+			ControlPlanes: []models.ControlPlane{{
+				IstiodNamespace: conf.IstioNamespace,
+				Revision:        "default",
+				Cluster:         &models.KubeCluster{Name: conf.KubernetesConfig.ClusterName},
+				Config: models.ControlPlaneConfiguration{
+					IstioMeshConfig: models.IstioMeshConfig{
+						EnableAutoMtls: util.AsPtr(false),
+					},
+				},
+			}},
+		},
+	}
+	WithDiscovery(discovery)
 
 	k8sclients := make(map[string]kubernetes.ClientInterface)
 	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
 
 	tlsService := NewWithBackends(k8sclients, k8sclients, nil, nil).TLS
-	tlsService.enabledAutoMtls = util.AsPtr(false)
-	status, err := tlsService.MeshWidemTLSStatus(context.TODO(), []string{"test"}, conf.KubernetesConfig.ClusterName)
+	status, err := tlsService.MeshWidemTLSStatus(context.TODO(), conf.KubernetesConfig.ClusterName, "default")
 
 	assert.NoError(err)
 	assert.Equal(MTLSEnabled, status.Status)
@@ -66,22 +83,36 @@ func TestMeshStatusEnabledAutoMtls(t *testing.T) {
 	dr := []*networking_v1.DestinationRule{}
 
 	objs := []runtime.Object{
-		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "test"}},
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "test", Labels: injectionEnabledLabel}},
 		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "istio-system"}},
-		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "default"}},
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "default", Labels: injectionEnabledLabel}},
 	}
 	objs = append(objs, kubernetes.ToRuntimeObjects(pa)...)
 	objs = append(objs, kubernetes.ToRuntimeObjects(dr)...)
 
 	k8s := kubetest.NewFakeK8sClient(objs...)
 	SetupBusinessLayer(t, k8s, *conf)
+	discovery := &fakeMeshDiscovery{
+		mesh: models.Mesh{
+			ControlPlanes: []models.ControlPlane{{
+				IstiodNamespace: conf.IstioNamespace,
+				Revision:        "default",
+				Cluster:         &models.KubeCluster{Name: conf.KubernetesConfig.ClusterName},
+				Config: models.ControlPlaneConfiguration{
+					IstioMeshConfig: models.IstioMeshConfig{
+						EnableAutoMtls: util.AsPtr(true),
+					},
+				},
+			}},
+		},
+	}
+	WithDiscovery(discovery)
 
 	k8sclients := make(map[string]kubernetes.ClientInterface)
 	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
 
 	tlsService := NewWithBackends(k8sclients, k8sclients, nil, nil).TLS
-	tlsService.enabledAutoMtls = util.AsPtr(true)
-	status, err := tlsService.MeshWidemTLSStatus(context.TODO(), []string{"test"}, conf.KubernetesConfig.ClusterName)
+	status, err := tlsService.MeshWidemTLSStatus(context.TODO(), conf.KubernetesConfig.ClusterName, "default")
 
 	assert.NoError(err)
 	assert.Equal(MTLSEnabled, status.Status)
@@ -101,22 +132,36 @@ func TestMeshStatusPartiallyEnabled(t *testing.T) {
 	}
 
 	objs := []runtime.Object{
-		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "test"}},
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "test", Labels: injectionEnabledLabel}},
 		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "istio-system"}},
-		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "default"}},
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "default", Labels: injectionEnabledLabel}},
 	}
 	objs = append(objs, kubernetes.ToRuntimeObjects(pa)...)
 	objs = append(objs, kubernetes.ToRuntimeObjects(dr)...)
 
 	k8s := kubetest.NewFakeK8sClient(objs...)
 	SetupBusinessLayer(t, k8s, *conf)
+	discovery := &fakeMeshDiscovery{
+		mesh: models.Mesh{
+			ControlPlanes: []models.ControlPlane{{
+				IstiodNamespace: conf.IstioNamespace,
+				Revision:        "default",
+				Cluster:         &models.KubeCluster{Name: conf.KubernetesConfig.ClusterName},
+				Config: models.ControlPlaneConfiguration{
+					IstioMeshConfig: models.IstioMeshConfig{
+						EnableAutoMtls: util.AsPtr(false),
+					},
+				},
+			}},
+		},
+	}
+	WithDiscovery(discovery)
 
 	k8sclients := make(map[string]kubernetes.ClientInterface)
 	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
 
 	tlsService := NewWithBackends(k8sclients, k8sclients, nil, nil).TLS
-	tlsService.enabledAutoMtls = util.AsPtr(false)
-	status, err := tlsService.MeshWidemTLSStatus(context.TODO(), []string{"test"}, conf.KubernetesConfig.ClusterName)
+	status, err := tlsService.MeshWidemTLSStatus(context.TODO(), conf.KubernetesConfig.ClusterName, "default")
 
 	assert.NoError(err)
 	assert.Equal(MTLSPartiallyEnabled, status.Status)
@@ -129,7 +174,7 @@ func TestMeshStatusNotEnabled(t *testing.T) {
 	conf.Deployment.ClusterWideAccess = true
 	kubernetes.SetConfig(t, *conf)
 
-	ns := &core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "test"}}
+	ns := &core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "test", Labels: injectionEnabledLabel}}
 	pa := []*security_v1.PeerAuthentication{}
 	dr := []*networking_v1.DestinationRule{
 		data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
@@ -141,13 +186,27 @@ func TestMeshStatusNotEnabled(t *testing.T) {
 
 	k8s := kubetest.NewFakeK8sClient(objs...)
 	SetupBusinessLayer(t, k8s, *conf)
+	discovery := &fakeMeshDiscovery{
+		mesh: models.Mesh{
+			ControlPlanes: []models.ControlPlane{{
+				IstiodNamespace: conf.IstioNamespace,
+				Revision:        "default",
+				Cluster:         &models.KubeCluster{Name: conf.KubernetesConfig.ClusterName},
+				Config: models.ControlPlaneConfiguration{
+					IstioMeshConfig: models.IstioMeshConfig{
+						EnableAutoMtls: util.AsPtr(false),
+					},
+				},
+			}},
+		},
+	}
+	WithDiscovery(discovery)
 
 	k8sclients := make(map[string]kubernetes.ClientInterface)
 	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
 
 	tlsService := NewWithBackends(k8sclients, k8sclients, nil, nil).TLS
-	tlsService.enabledAutoMtls = util.AsPtr(false)
-	status, err := tlsService.MeshWidemTLSStatus(context.TODO(), []string{ns.Name}, conf.KubernetesConfig.ClusterName)
+	status, err := tlsService.MeshWidemTLSStatus(context.TODO(), conf.KubernetesConfig.ClusterName, "default")
 
 	assert.NoError(err)
 	assert.Equal(MTLSNotEnabled, status.Status)
@@ -166,22 +225,36 @@ func TestMeshStatusDisabled(t *testing.T) {
 			data.CreateEmptyDestinationRule("istio-system", "default", "*.local")),
 	}
 	objs := []runtime.Object{
-		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "test"}},
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "test", Labels: injectionEnabledLabel}},
 		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "istio-system"}},
-		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "default"}},
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "default", Labels: injectionEnabledLabel}},
 	}
 	objs = append(objs, kubernetes.ToRuntimeObjects(pa)...)
 	objs = append(objs, kubernetes.ToRuntimeObjects(dr)...)
 
 	k8s := kubetest.NewFakeK8sClient(objs...)
 	SetupBusinessLayer(t, k8s, *conf)
+	discovery := &fakeMeshDiscovery{
+		mesh: models.Mesh{
+			ControlPlanes: []models.ControlPlane{{
+				IstiodNamespace: conf.IstioNamespace,
+				Revision:        "default",
+				Cluster:         &models.KubeCluster{Name: conf.KubernetesConfig.ClusterName},
+				Config: models.ControlPlaneConfiguration{
+					IstioMeshConfig: models.IstioMeshConfig{
+						EnableAutoMtls: util.AsPtr(false),
+					},
+				},
+			}},
+		},
+	}
+	WithDiscovery(discovery)
 
 	k8sclients := make(map[string]kubernetes.ClientInterface)
 	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
 
 	tlsService := NewWithBackends(k8sclients, k8sclients, nil, nil).TLS
-	tlsService.enabledAutoMtls = util.AsPtr(false)
-	status, err := tlsService.MeshWidemTLSStatus(context.TODO(), []string{"test"}, conf.KubernetesConfig.ClusterName)
+	status, err := tlsService.MeshWidemTLSStatus(context.TODO(), conf.KubernetesConfig.ClusterName, "default")
 
 	assert.NoError(err)
 	assert.Equal(MTLSDisabled, status.Status)
@@ -193,16 +266,30 @@ func TestMeshStatusNotEnabledAutoMtls(t *testing.T) {
 	conf.Deployment.ClusterWideAccess = true
 	kubernetes.SetConfig(t, *conf)
 
-	ns := &core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "test"}}
+	ns := &core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "test", Labels: injectionEnabledLabel}}
 	k8s := kubetest.NewFakeK8sClient(ns)
 	SetupBusinessLayer(t, k8s, *conf)
+	discovery := &fakeMeshDiscovery{
+		mesh: models.Mesh{
+			ControlPlanes: []models.ControlPlane{{
+				IstiodNamespace: conf.IstioNamespace,
+				Revision:        "default",
+				Cluster:         &models.KubeCluster{Name: conf.KubernetesConfig.ClusterName},
+				Config: models.ControlPlaneConfiguration{
+					IstioMeshConfig: models.IstioMeshConfig{
+						EnableAutoMtls: util.AsPtr(true),
+					},
+				},
+			}},
+		},
+	}
+	WithDiscovery(discovery)
 
 	k8sclients := make(map[string]kubernetes.ClientInterface)
 	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
 
 	tlsService := NewWithBackends(k8sclients, k8sclients, nil, nil).TLS
-	tlsService.enabledAutoMtls = util.AsPtr(true)
-	status, err := tlsService.MeshWidemTLSStatus(context.TODO(), []string{ns.Name}, conf.KubernetesConfig.ClusterName)
+	status, err := tlsService.MeshWidemTLSStatus(context.TODO(), conf.KubernetesConfig.ClusterName, "default")
 
 	assert.NoError(err)
 	assert.Equal(MTLSNotEnabled, status.Status)
@@ -326,17 +413,31 @@ func TestNamespaceHasDestinationRuleEnabledDifferentNs(t *testing.T) {
 	conf.Deployment.AccessibleNamespaces = []string{"**"}
 	kubernetes.SetConfig(t, *conf)
 	SetupBusinessLayer(t, k8s, *conf)
+	discovery := &fakeMeshDiscovery{
+		mesh: models.Mesh{
+			ControlPlanes: []models.ControlPlane{{
+				IstiodNamespace: conf.IstioNamespace,
+				Revision:        "default",
+				Cluster:         &models.KubeCluster{Name: conf.KubernetesConfig.ClusterName},
+				Config: models.ControlPlaneConfiguration{
+					IstioMeshConfig: models.IstioMeshConfig{
+						EnableAutoMtls: util.AsPtr(false),
+					},
+				},
+			}},
+		},
+	}
+	WithDiscovery(discovery)
 
 	k8sclients := make(map[string]kubernetes.ClientInterface)
 	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
 	tlsService := NewWithBackends(k8sclients, k8sclients, nil, nil).TLS
-	tlsService.enabledAutoMtls = util.AsPtr(false)
 	status, err := tlsService.NamespaceWidemTLSStatus(context.TODO(), "bookinfo", conf.KubernetesConfig.ClusterName)
 
 	assert.NoError(err)
 	assert.Equal(MTLSEnabled, status.Status)
 
-	statuses, err := tlsService.ClusterWideNSmTLSStatus(context.TODO(), []string{"bookinfo"}, conf.KubernetesConfig.ClusterName)
+	statuses, err := tlsService.ClusterWideNSmTLSStatus(context.TODO(), []models.Namespace{{Name: "bookinfo", Labels: injectionEnabledLabel}}, conf.KubernetesConfig.ClusterName)
 	assert.NoError(err)
 	assert.NotEmpty(statuses)
 	for _, status := range statuses {
@@ -350,24 +451,42 @@ func testNamespaceScenario(exStatus string, drs []*networking_v1.DestinationRule
 	conf.Deployment.ClusterWideAccess = true
 	kubernetes.SetConfig(t, *conf)
 
-	var objs []runtime.Object
+	objs := []runtime.Object{
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "bookinfo", Labels: injectionEnabledLabel}},
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "foo", Labels: injectionEnabledLabel}},
+	}
 	objs = append(objs, kubernetes.ToRuntimeObjects(ps)...)
 	objs = append(objs, kubernetes.ToRuntimeObjects(drs)...)
 	objs = append(objs, kubernetes.ToRuntimeObjects(fakeProjects())...)
 	k8s := kubetest.NewFakeK8sClient(objs...)
 	k8s.OpenShift = true
-	SetupBusinessLayer(t, k8s, *conf)
 
 	k8sclients := make(map[string]kubernetes.ClientInterface)
 	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
+	SetupBusinessLayer(t, k8s, *conf)
+	discovery := &fakeMeshDiscovery{
+		mesh: models.Mesh{
+			ControlPlanes: []models.ControlPlane{{
+				IstiodNamespace: conf.IstioNamespace,
+				Revision:        "default",
+				Cluster:         &models.KubeCluster{Name: conf.KubernetesConfig.ClusterName},
+				Config: models.ControlPlaneConfiguration{
+					IstioMeshConfig: models.IstioMeshConfig{
+						EnableAutoMtls: &autoMtls,
+					},
+				},
+			}},
+		},
+	}
+	WithDiscovery(discovery)
+
 	tlsService := NewWithBackends(k8sclients, k8sclients, nil, nil).TLS
-	tlsService.enabledAutoMtls = &autoMtls
 	status, err := tlsService.NamespaceWidemTLSStatus(context.TODO(), "bookinfo", conf.KubernetesConfig.ClusterName)
 
 	assert.NoError(err)
 	assert.Equal(exStatus, status.Status)
 
-	statuses, err := tlsService.ClusterWideNSmTLSStatus(context.TODO(), []string{"bookinfo"}, conf.KubernetesConfig.ClusterName)
+	statuses, err := tlsService.ClusterWideNSmTLSStatus(context.TODO(), []models.Namespace{{Name: "bookinfo", Labels: injectionEnabledLabel}}, conf.KubernetesConfig.ClusterName)
 	assert.NoError(err)
 	assert.NotEmpty(statuses)
 	for _, status := range statuses {
@@ -379,12 +498,14 @@ func fakeProjects() []*osproject_v1.Project {
 	return []*osproject_v1.Project{
 		{
 			ObjectMeta: meta_v1.ObjectMeta{
-				Name: "bookinfo",
+				Name:   "bookinfo",
+				Labels: injectionEnabledLabel,
 			},
 		},
 		{
 			ObjectMeta: meta_v1.ObjectMeta{
-				Name: "foo",
+				Name:   "foo",
+				Labels: injectionEnabledLabel,
 			},
 		},
 	}

@@ -41,7 +41,7 @@ type KialiCache interface {
 
 	// GetClusters returns the list of clusters that the cache knows about.
 	// This gets set by the mesh service.
-	GetClusters() []kubernetes.Cluster
+	GetClusters() []models.KubeCluster
 	GetKubeCaches() map[string]KubeCache
 	GetKubeCache(cluster string) (KubeCache, error)
 
@@ -68,7 +68,7 @@ type KialiCache interface {
 	ProxyStatusCache
 
 	// SetClusters sets the list of clusters that the cache knows about.
-	SetClusters([]kubernetes.Cluster)
+	SetClusters([]models.KubeCluster)
 
 	// SetNamespaces sets the in memory cache of namespaces.
 	// We cache all namespaces for cluster + token.
@@ -93,7 +93,7 @@ type kialiCacheImpl struct {
 	kubeCache map[string]KubeCache
 
 	// There's only ever one mesh but we want to reuse the store machinery
-	// so using a store here but only key  should be  kialiCacheMeshKey
+	// so using a store here but the only key should be kialiCacheMeshKey.
 	meshStore store.Store[string, *models.Mesh]
 
 	// Store the namespaces per token + cluster as a map[string]namespace where string is the namespace name
@@ -113,7 +113,7 @@ type kialiCacheImpl struct {
 	registryStatusStore store.Store[string, *kubernetes.RegistryStatus]
 
 	// Info about the kube clusters that the cache knows about.
-	clusters    []kubernetes.Cluster
+	clusters    []models.KubeCluster
 	clusterLock sync.RWMutex
 }
 
@@ -182,13 +182,13 @@ func (c *kialiCacheImpl) Stop() {
 	wg.Wait()
 }
 
-func (c *kialiCacheImpl) GetClusters() []kubernetes.Cluster {
+func (c *kialiCacheImpl) GetClusters() []models.KubeCluster {
 	defer c.clusterLock.RUnlock()
 	c.clusterLock.RLock()
 	return c.clusters
 }
 
-func (c *kialiCacheImpl) SetClusters(clusters []kubernetes.Cluster) {
+func (c *kialiCacheImpl) SetClusters(clusters []models.KubeCluster) {
 	defer c.clusterLock.Unlock()
 	c.clusterLock.Lock()
 	c.clusters = clusters

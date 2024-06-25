@@ -612,12 +612,12 @@ func mapWorkloadSelector(workloadSelector string) map[string]string {
 	return workloadLabels
 }
 
-// FilterByNamespaces filters a list of runtime.Objects by the provided namespaces.
+// FilterByNamespaceNames filters a list of runtime.Objects by the provided namespace names.
 // If the object's namespace is not in the provided list of namespaces, the object
 // is filtered out.
-func FilterByNamespaces[T runtime.Object](objects []T, namespaces []string) []T {
+func FilterByNamespaceNames[T runtime.Object](objects []T, namespaceNames []string) []T {
 	namespaceSet := make(map[string]bool)
-	for _, ns := range namespaces {
+	for _, ns := range namespaceNames {
 		namespaceSet[ns] = true
 	}
 

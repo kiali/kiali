@@ -12,6 +12,7 @@ import (
 	"github.com/kiali/kiali/graph/config/cytoscape"
 	"github.com/kiali/kiali/handlers"
 	"github.com/kiali/kiali/log"
+	meshcyto "github.com/kiali/kiali/mesh/config/cytoscape"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/status"
 	"github.com/kiali/kiali/tracing/jaeger/model"
@@ -526,15 +527,15 @@ func getRequestAndUnmarshalInto[T any](url string, response *T) (int, error) {
 	return code, nil
 }
 
-func Mesh() (*models.Mesh, error) {
-	url := fmt.Sprintf("%s/api/mesh", client.kialiURL)
-	mesh := new(models.Mesh)
-	_, err := getRequestAndUnmarshalInto(url, mesh)
+func MeshGraph() (*meshcyto.Config, error) {
+	url := fmt.Sprintf("%s/api/mesh/graph", client.kialiURL)
+	meshGraph := new(meshcyto.Config)
+	_, err := getRequestAndUnmarshalInto(url, meshGraph)
 	if err != nil {
 		return nil, err
 	}
 
-	return mesh, nil
+	return meshGraph, nil
 }
 
 func IstioApiEnabled() (bool, error) {

@@ -87,11 +87,20 @@ func TestGatewayValidationScopesToNamespaceWhenGatewayToNamespaceSet(t *testing.
 		istiodDeploymentName              = "istiod-1-19-0"
 	)
 	conf := config.NewConfig()
-	conf.ExternalServices.Istio.ConfigMapName = istioConfigMapName
+	// conf.ExternalServices.Istio.ConfigMapName = istioConfigMapName
 	conf.ExternalServices.Istio.IstioSidecarInjectorConfigMapName = istioSidecarInjectorConfigMapName
 	conf.ExternalServices.Istio.IstiodDeploymentName = istiodDeploymentName
 	config.Set(conf)
-	revConfigMap := &core_v1.ConfigMap{ObjectMeta: meta_v1.ObjectMeta{Name: istioConfigMapName, Namespace: "istio-system"}}
+	revConfigMap := &core_v1.ConfigMap{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      istioConfigMapName,
+			Namespace: "istio-system",
+			Labels: map[string]string{
+				models.IstioRevisionLabel: "1-19-0",
+			},
+		},
+		Data: map[string]string{"mesh": ""},
+	}
 	injectorConfigMap := &core_v1.ConfigMap{ObjectMeta: meta_v1.ObjectMeta{Name: istioSidecarInjectorConfigMapName, Namespace: "istio-system"}}
 	istioSystemNamespace := &core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "istio-system"}}
 
@@ -100,8 +109,8 @@ func TestGatewayValidationScopesToNamespaceWhenGatewayToNamespaceSet(t *testing.
 			Name:      istiodDeploymentName,
 			Namespace: "istio-system",
 			Labels: map[string]string{
-				IstioRevisionLabel: "1-19-0",
-				"app":              "istiod",
+				models.IstioRevisionLabel: "1-19-0",
+				"app":                     "istiod",
 			},
 		},
 		Spec: apps_v1.DeploymentSpec{
@@ -451,7 +460,7 @@ func mockMultiNamespaceGatewaysValidationService(t *testing.T, cfg config.Config
 
 	k8sclients := make(map[string]kubernetes.ClientInterface)
 	k8sclients[cfg.KubernetesConfig.ClusterName] = k8s
-	return IstioValidationsService{userClients: k8sclients, businessLayer: NewWithBackends(k8sclients, k8sclients, nil, nil)}
+	return IstioValidationsService{discovery: discovery, userClients: k8sclients, businessLayer: NewWithBackends(k8sclients, k8sclients, nil, nil)}
 }
 
 func mockCombinedValidationService(t *testing.T, istioConfigList *models.IstioConfigList, services []string) IstioValidationsService {
@@ -500,7 +509,7 @@ func mockCombinedValidationService(t *testing.T, istioConfigList *models.IstioCo
 
 	k8sclients := make(map[string]kubernetes.ClientInterface)
 	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
-	return IstioValidationsService{userClients: k8sclients, businessLayer: NewWithBackends(k8sclients, k8sclients, nil, nil)}
+	return IstioValidationsService{discovery: discovery, userClients: k8sclients, businessLayer: NewWithBackends(k8sclients, k8sclients, nil, nil)}
 }
 
 func mockAmbientValidationService(t *testing.T) IstioValidationsService {

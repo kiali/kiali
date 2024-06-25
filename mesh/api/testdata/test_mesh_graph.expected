@@ -255,7 +255,7 @@
                 }
               ]
             },
-            "ConfigMapName": "istio",
+            "ConfigMapName": "",
             "EnvoyAdminLocalPort": 15000,
             "GatewayAPIClasses": [],
             "IstioAPIEnabled": true,
@@ -287,20 +287,23 @@
           "nodeType": "infra",
           "healthData": "Healthy",
           "infraData": {
-            "OutboundTrafficPolicy": {
-              "mode": ""
+            "config": {
+              "OutboundTrafficPolicy": {
+                "mode": ""
+              },
+              "Network": "",
+              "DisableMixerHttpReports": false,
+              "DiscoverySelectors": null,
+              "EnableAutoMtls": true,
+              "MeshMTLS": {
+                "MinProtocolVersion": ""
+              },
+              "defaultConfig": {
+                "MeshId": ""
+              },
+              "TrustDomain": "cluster.local"
             },
-            "Network": "",
-            "DisableMixerHttpReports": false,
-            "DiscoverySelectors": null,
-            "EnableAutoMtls": true,
-            "MeshMTLS": {
-              "MinProtocolVersion": ""
-            },
-            "defaultConfig": {
-              "MeshId": ""
-            },
-            "TrustDomain": "cluster.local"
+            "revision": "default"
           },
           "version": "Unknown"
         }

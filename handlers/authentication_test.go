@@ -16,6 +16,7 @@ import (
 
 	"github.com/kiali/kiali/business/authentication"
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/kubernetes/kubetest"
@@ -35,8 +36,9 @@ func TestStrategyTokenAuthentication(t *testing.T) {
 	k8s.OpenShift = true
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
 	cache := cache.NewTestingCacheWithFactory(t, mockClientFactory, *cfg)
+	discovery := istio.NewDiscovery(mockClientFactory.Clients, cache, cfg)
 
-	authController := authentication.NewTokenAuthController(authentication.NewCookieSessionPersistor(cfg), mockClientFactory, cache, cfg)
+	authController := authentication.NewTokenAuthController(authentication.NewCookieSessionPersistor(cfg), mockClientFactory, cache, cfg, discovery)
 
 	clockTime := time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC)
 	util.Clock = util.ClockMock{Time: clockTime}
@@ -74,8 +76,9 @@ func TestStrategyTokenFails(t *testing.T) {
 	rejectClient := &rejectClient{k8s}
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(rejectClient)
 	cache := cache.NewTestingCacheWithFactory(t, mockClientFactory, *cfg)
+	discovery := istio.NewDiscovery(mockClientFactory.Clients, cache, cfg)
 
-	authController := authentication.NewTokenAuthController(authentication.NewCookieSessionPersistor(cfg), mockClientFactory, cache, cfg)
+	authController := authentication.NewTokenAuthController(authentication.NewCookieSessionPersistor(cfg), mockClientFactory, cache, cfg, discovery)
 	// Send a request
 	form := url.Values{}
 	form.Add("token", "dummy")
@@ -101,7 +104,8 @@ func TestLogoutWhenNoSession(t *testing.T) {
 	k8s := kubetest.NewFakeK8sClient()
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
 	cache := cache.NewTestingCacheWithFactory(t, mockClientFactory, *conf)
-	authController := authentication.NewTokenAuthController(authentication.NewCookieSessionPersistor(conf), mockClientFactory, cache, conf)
+	discovery := istio.NewDiscovery(mockClientFactory.Clients, cache, conf)
+	authController := authentication.NewTokenAuthController(authentication.NewCookieSessionPersistor(conf), mockClientFactory, cache, conf, discovery)
 
 	Logout(conf, authController)(responseRecorder, request)
 
@@ -126,7 +130,8 @@ func TestLogout(t *testing.T) {
 	k8s := kubetest.NewFakeK8sClient()
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
 	cache := cache.NewTestingCacheWithFactory(t, mockClientFactory, *conf)
-	authController := authentication.NewTokenAuthController(authentication.NewCookieSessionPersistor(conf), mockClientFactory, cache, conf)
+	discovery := istio.NewDiscovery(mockClientFactory.Clients, cache, conf)
+	authController := authentication.NewTokenAuthController(authentication.NewCookieSessionPersistor(conf), mockClientFactory, cache, conf, discovery)
 
 	responseRecorder := httptest.NewRecorder()
 	Logout(conf, authController)(responseRecorder, request)

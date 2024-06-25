@@ -3,7 +3,6 @@ package kubernetes
 import (
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 	security_v1 "istio.io/client-go/pkg/apis/security/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 )
@@ -207,19 +206,6 @@ var (
 	}
 )
 
-type IstioMeshConfig struct {
-	DisableMixerHttpReports bool                    `yaml:"disableMixerHttpReports,omitempty"`
-	DiscoverySelectors      []*metav1.LabelSelector `yaml:"discoverySelectors,omitempty"`
-	EnableAutoMtls          *bool                   `yaml:"enableAutoMtls,omitempty"`
-	MeshMTLS                struct {
-		MinProtocolVersion string `yaml:"minProtocolVersion"`
-	} `yaml:"meshMtls"`
-	DefaultConfig struct {
-		MeshId string `yaml:"meshId"`
-	} `yaml:"defaultConfig" json:"defaultConfig"`
-	TrustDomain string `yaml:"trustDomain,omitempty"`
-}
-
 // MTLSDetails is a wrapper to group all Istio objects related to non-local mTLS configurations
 type MTLSDetails struct {
 	DestinationRules        []*networking_v1.DestinationRule  `json:"destinationrules"`
@@ -298,13 +284,6 @@ type IstioService struct {
 
 type RegistryStatus struct {
 	Services []*RegistryService
-}
-
-func (imc IstioMeshConfig) GetEnableAutoMtls() bool {
-	if imc.EnableAutoMtls == nil {
-		return true
-	}
-	return *imc.EnableAutoMtls
 }
 
 func GetPatchType(patchType string) types.PatchType {

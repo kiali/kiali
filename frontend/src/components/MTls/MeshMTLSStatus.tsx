@@ -25,7 +25,9 @@ type ReduxProps = {
 };
 
 type Props = ReduxProps & {
+  cluster: string;
   lastRefreshAt: TimeInMilliseconds;
+  revision: string;
 };
 
 const statusDescriptors = new Map<string, StatusDescriptor>([
@@ -90,7 +92,7 @@ class MeshMTLSStatusComponent extends React.Component<Props> {
 
   fetchStatus = (): void => {
     // leaving empty cluster param here, home cluster will be used by default
-    API.getMeshTls()
+    API.getMeshTls(this.props.cluster, this.props.revision)
       .then(response => {
         return this.props.setMeshTlsStatus(response.data);
       })

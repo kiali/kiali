@@ -24,6 +24,7 @@ import (
 // NamespaceService deals with fetching k8sClients namespaces / OpenShift projects and convert to kiali model
 type NamespaceService struct {
 	conf                   *config.Config
+	discovery              meshDiscovery
 	hasProjects            bool
 	homeClusterUserClient  kubernetes.ClientInterface
 	isAccessibleNamespaces map[string]bool
@@ -45,7 +46,13 @@ func IsAccessibleError(err error) bool {
 	return isAccessibleError
 }
 
-func NewNamespaceService(userClients map[string]kubernetes.ClientInterface, kialiSAClients map[string]kubernetes.ClientInterface, cache cache.KialiCache, conf *config.Config) NamespaceService {
+func NewNamespaceService(
+	userClients map[string]kubernetes.ClientInterface,
+	kialiSAClients map[string]kubernetes.ClientInterface,
+	cache cache.KialiCache,
+	conf *config.Config,
+	discovery meshDiscovery,
+) NamespaceService {
 	var hasProjects bool
 
 	homeClusterName := conf.KubernetesConfig.ClusterName
@@ -63,6 +70,7 @@ func NewNamespaceService(userClients map[string]kubernetes.ClientInterface, kial
 
 	return NamespaceService{
 		conf:                   conf,
+		discovery:              discovery,
 		hasProjects:            hasProjects,
 		homeClusterUserClient:  userClients[homeClusterName],
 		isAccessibleNamespaces: isAccessibleNamespaces,
@@ -79,6 +87,29 @@ func (in *NamespaceService) GetClusterList() []string {
 		clusterList = append(clusterList, cluster)
 	}
 	return clusterList
+}
+
+// Swallows all errors.
+func (in *NamespaceService) getDiscoverySelectors(ctx context.Context) []*meta_v1.LabelSelector {
+	mesh, err := in.discovery.Mesh(ctx)
+	if err != nil {
+		log.Errorf("Will not process discoverySelectors due to a failure to get mesh controlplane information: %v", err)
+		return nil
+	}
+
+	// Add all the discovery selectors together for all control planes.
+	var discoverySelectors []*meta_v1.LabelSelector
+	for _, controlPlane := range mesh.ControlPlanes {
+		discoverySelectors = append(discoverySelectors, controlPlane.Config.DiscoverySelectors...)
+	}
+
+	if len(discoverySelectors) > 0 {
+		log.Tracef("Istio discovery selectors: %+v", discoverySelectors)
+	} else {
+		log.Tracef("No Istio discovery selectors defined.")
+	}
+
+	return discoverySelectors
 }
 
 // Returns a list of the given namespaces / projects
@@ -107,27 +138,8 @@ func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Namespa
 		return namespaces, nil
 	}
 
-	var discoverySelectors []*meta_v1.LabelSelector
-	homeClusterCache, err := in.kialiCache.GetKubeCache(in.conf.KubernetesConfig.ClusterName)
-	if err != nil {
-		log.Errorf("Will not process discoverySelectors due to a failure to get the Kiali cache: %v", err)
-	} else {
-		// determine what the discoverySelectors are by examining the Istio ConfigMap
-		if icm, err := homeClusterCache.GetConfigMap(in.conf.IstioNamespace, IstioConfigMapName(*in.conf, "")); err == nil {
-			if ic, err2 := kubernetes.GetIstioConfigMap(icm); err2 == nil {
-				discoverySelectors = ic.DiscoverySelectors
-			} else {
-				log.Errorf("Will not process discoverySelectors due to a failure to get the Istio ConfigMap: %v", err2)
-			}
-		} else {
-			log.Errorf("Will not process discoverySelectors due to a failure to parse the Istio ConfigMap: %v", err)
-		}
-	}
-	if len(discoverySelectors) > 0 {
-		log.Tracef("Istio discovery selectors: %+v", discoverySelectors)
-	} else {
-		log.Tracef("No Istio discovery selectors defined.")
-	}
+	discoverySelectors := in.getDiscoverySelectors(ctx)
+	// Need to do per revision discovery selectors.
 
 	// Let's explain the four different filters along with accessible namespaces (aka AN).
 	//

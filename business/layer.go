@@ -5,6 +5,7 @@ import (
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/grafana"
+	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/prometheus"
@@ -35,6 +36,7 @@ type Layer struct {
 // Global clientfactory and prometheus clients.
 var (
 	clientFactory       kubernetes.ClientFactory
+	discovery           meshDiscovery
 	grafanaService      *grafana.Service
 	kialiCache          cache.KialiCache
 	poller              ControlPlaneMonitor
@@ -48,11 +50,13 @@ func Start(
 	cf kubernetes.ClientFactory,
 	controlPlaneMonitor ControlPlaneMonitor,
 	cache cache.KialiCache,
+	disc meshDiscovery,
 	prom prometheus.ClientInterface,
 	traceClientLoader func() tracing.ClientInterface,
 	grafana *grafana.Service,
 ) {
 	clientFactory = cf
+	discovery = disc
 	grafanaService = grafana
 	kialiCache = cache
 	poller = controlPlaneMonitor
@@ -90,7 +94,7 @@ func SetWithBackends(cf kubernetes.ClientFactory, prom prometheus.ClientInterfac
 // Note that the client passed here should *not* be the Kiali ServiceAccount client.
 // It should be the user client based on the logged in user's token.
 func NewWithBackends(userClients map[string]kubernetes.ClientInterface, kialiSAClients map[string]kubernetes.ClientInterface, prom prometheus.ClientInterface, traceClient tracing.ClientInterface) *Layer {
-	return newLayer(userClients, kialiSAClients, prom, traceClient, kialiCache, config.Get(), grafanaService)
+	return newLayer(userClients, kialiSAClients, prom, traceClient, kialiCache, config.Get(), grafanaService, discovery)
 }
 
 func newLayer(
@@ -101,6 +105,7 @@ func newLayer(
 	cache cache.KialiCache,
 	conf *config.Config,
 	grafana *grafana.Service,
+	discovery meshDiscovery,
 ) *Layer {
 	temporaryLayer := &Layer{}
 
@@ -111,16 +116,16 @@ func newLayer(
 	temporaryLayer.Health = HealthService{prom: prom, businessLayer: temporaryLayer, userClients: userClients}
 	temporaryLayer.IstioConfig = IstioConfigService{config: *conf, userClients: userClients, kialiCache: cache, businessLayer: temporaryLayer, controlPlaneMonitor: poller}
 	temporaryLayer.IstioStatus = NewIstioStatusService(userClients, temporaryLayer, poller)
-	temporaryLayer.IstioCerts = IstioCertsService{k8s: userClients[homeClusterName], businessLayer: temporaryLayer}
-	temporaryLayer.Namespace = NewNamespaceService(userClients, kialiSAClients, cache, conf)
-	temporaryLayer.Mesh = NewMeshService(kialiSAClients, cache, temporaryLayer.Namespace, *conf)
+	temporaryLayer.IstioCerts = NewIstioCertsService(conf, discovery, userClients[homeClusterName])
+	temporaryLayer.Namespace = NewNamespaceService(userClients, kialiSAClients, cache, conf, discovery)
+	temporaryLayer.Mesh = NewMeshService(kialiSAClients, cache, temporaryLayer.Namespace, conf, discovery)
 	temporaryLayer.ProxyStatus = ProxyStatusService{kialiSAClients: kialiSAClients, kialiCache: cache, businessLayer: temporaryLayer}
 	// Out of order because it relies on ProxyStatus
 	temporaryLayer.ProxyLogging = ProxyLoggingService{userClients: userClients, proxyStatus: &temporaryLayer.ProxyStatus}
 	temporaryLayer.RegistryStatus = RegistryStatusService{kialiCache: cache}
-	temporaryLayer.TLS = TLSService{userClients: userClients, kialiCache: cache, businessLayer: temporaryLayer}
+	temporaryLayer.TLS = TLSService{discovery: discovery, userClients: userClients, kialiCache: cache, businessLayer: temporaryLayer}
 	temporaryLayer.Svc = SvcService{config: *conf, kialiCache: cache, businessLayer: temporaryLayer, prom: prom, userClients: userClients}
-	temporaryLayer.Validations = IstioValidationsService{userClients: userClients, businessLayer: temporaryLayer}
+	temporaryLayer.Validations = IstioValidationsService{discovery: discovery, userClients: userClients, businessLayer: temporaryLayer}
 	temporaryLayer.Workload = *NewWorkloadService(userClients, prom, cache, temporaryLayer, conf, grafana)
 
 	temporaryLayer.Tracing = NewTracingService(conf, traceClient, &temporaryLayer.Svc, &temporaryLayer.Workload)
@@ -138,6 +143,7 @@ func NewLayer(
 	traceClient tracing.ClientInterface,
 	cpm ControlPlaneMonitor,
 	grafana *grafana.Service,
+	discovery *istio.Discovery,
 	authInfo *api.AuthInfo,
 ) (*Layer, error) {
 	userClients, err := cf.GetClients(authInfo)
@@ -146,5 +152,5 @@ func NewLayer(
 	}
 
 	kialiSAClients := cf.GetSAClients()
-	return newLayer(userClients, kialiSAClients, prom, traceClient, cache, conf, grafana), nil
+	return newLayer(userClients, kialiSAClients, prom, traceClient, cache, conf, grafana, discovery), nil
 }
