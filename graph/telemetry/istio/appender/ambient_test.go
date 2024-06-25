@@ -1,6 +1,7 @@
 package appender
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -174,7 +175,14 @@ func TestRemoveWaypoint(t *testing.T) {
 
 	// Run the appender...
 
-	a := AmbientAppender{ShowWaypoints: false}
+	a := AmbientAppender{
+		AccessibleNamespaces: map[string]*graph.AccessibleNamespace{
+			fmt.Sprintf("%s:%s", defaultCluster, appNamespace): {
+				Cluster: defaultCluster,
+				Name:    appNamespace,
+			},
+		},
+		ShowWaypoints: false}
 	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
 
 	assert.Equal(4, len(trafficMap))
@@ -198,7 +206,14 @@ func TestIsWaypoint(t *testing.T) {
 
 	// Run the appender...
 
-	a := AmbientAppender{ShowWaypoints: true}
+	a := AmbientAppender{
+		AccessibleNamespaces: map[string]*graph.AccessibleNamespace{
+			fmt.Sprintf("%s:%s", defaultCluster, appNamespace): {
+				Cluster: defaultCluster,
+				Name:    appNamespace,
+			},
+		},
+		ShowWaypoints: true}
 	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
 
 	assert.Equal(5, len(trafficMap))
@@ -228,7 +243,14 @@ func TestIsWaypointExcludedNs(t *testing.T) {
 
 	// Run the appender...
 
-	a := AmbientAppender{ShowWaypoints: true}
+	a := AmbientAppender{
+		AccessibleNamespaces: map[string]*graph.AccessibleNamespace{
+			fmt.Sprintf("%s:%s", defaultCluster, appNamespace): {
+				Cluster: defaultCluster,
+				Name:    appNamespace,
+			},
+		},
+		ShowWaypoints: true}
 
 	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
 
