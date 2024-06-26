@@ -1869,14 +1869,8 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 			}
 			// If the pod is a waypoint proxy, check if it is attached to a namespace or to a service account, and get the affected workloads
 			if pod.IsWaypoint() {
-				// Get waypoint workloads from a namespace
-				if pod.Labels["istio.io/gateway-name"] == "namespace" {
-					w.WaypointWorkloads = append(w.WaypointWorkloads, in.listWaypointWorkloadsForNamespace(ctx, criteria.Namespace)...)
-				} else {
-					// Get waypoint workloads from a service account
-					sa := pod.Annotations["istio.io/for-service-account"]
-					w.WaypointWorkloads = append(w.WaypointWorkloads, in.listWaypointWorkloadsForSA(ctx, criteria.Namespace, sa)...)
-				}
+				// Get waypoint workloads
+				w.WaypointWorkloads = append(w.WaypointWorkloads, in.listWaypointWorkloads(ctx, pod.Name, criteria.Cluster)...)
 			}
 		}
 
@@ -1887,74 +1881,124 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 	return wl, kubernetes.NewNotFound(criteria.WorkloadName, "Kiali", "Workload")
 }
 
-// Get the Waypoint proxies for a workload
-func (in *WorkloadService) getWaypointsForWorkload(ctx context.Context, namespace string, workload models.Workload) []models.Workload {
-	nsWaypoints, err := in.fetchWorkloads(ctx, namespace, fmt.Sprintf("%s=%s", config.WaypointLabel, config.WaypointLabelValue))
-	if err != nil {
-		log.Errorf("Error fetching namespace waypoints: %v", err)
-		return nil
+// Check the waypoint name if a pod is enrolled
+func (in *WorkloadService) isWorkloadEnrolled(ctx context.Context, workload models.Workload) ([]models.Waypoint, bool) {
+	found := false
+	waypointNames := make([]models.Waypoint, 0)
+
+	// Is the pod labeled?
+	for _, pod := range workload.Pods {
+		waypointName, ok := pod.Labels[config.WaypointUseLabel]
+		if ok {
+			found = true
+			waypointNames = append(waypointNames, models.Waypoint{Name: waypointName, Type: "pod"})
+		}
 	}
 
-	var waypoints []models.Workload
-	// Get service Account name for each pod from the workload
-	for _, nsWaypoint := range nsWaypoints {
-		for _, pod := range nsWaypoint.Pods {
-			if pod.Labels["istio.io/gateway-name"] == "namespace" {
-				waypoints = append(waypoints, *nsWaypoint)
-				break
-			} else {
-				// Get waypoint workloads from a service account
-				sa := pod.Annotations["istio.io/for-service-account"]
-				for _, pod := range workload.Pods {
-					if pod.ServiceAccountName == sa {
-						waypoints = append(waypoints, *nsWaypoint)
-						break
-					}
-				}
+	// Is the namespace labeled?
+	ns, foundNS := in.cache.GetNamespace(workload.Cluster, in.userClients[workload.Cluster].GetToken(), workload.Namespace)
+
+	if foundNS {
+		waypointName, ok := ns.Labels[config.WaypointUseLabel]
+
+		if ok {
+			found = true
+			waypointNames = append(waypointNames, models.Waypoint{Name: waypointName, Type: "namespace"})
+		}
+	}
+
+	var services []models.ServiceOverview
+	// Is the service labeled?
+	if len(workload.Services) == 0 {
+		serviceCriteria := ServiceCriteria{
+			Cluster:                workload.Cluster,
+			Namespace:              workload.Namespace,
+			ServiceSelector:        labels.Set(workload.Labels).String(),
+			IncludeHealth:          false,
+			IncludeOnlyDefinitions: true,
+		}
+		svc, err := in.businessLayer.Svc.GetServiceList(ctx, serviceCriteria)
+		if err != nil {
+			log.Errorf("Error fetching services %s", err.Error())
+		}
+		services = svc.Services
+	} else {
+		services = workload.Services
+	}
+	if len(services) > 0 {
+		for _, svc := range services {
+			waypointName, ok := svc.Labels[config.WaypointUseLabel]
+			if ok {
+				found = true
+				waypointNames = append(waypointNames, models.Waypoint{Name: waypointName, Type: "service"})
 			}
 		}
 	}
-	return waypoints
+
+	return waypointNames, found
 }
 
-// Return the list of workloads binded to a service account, valid when the waypoint proxy is applied to a service account
-// TODO: This is scoped by namespace
-func (in *WorkloadService) listWaypointWorkloadsForSA(ctx context.Context, namespace string, sa string) []models.Workload {
-	wlist, err := in.fetchWorkloads(ctx, namespace, "")
-	if err != nil {
-		log.Errorf("Error fetching workloads")
+// Get the Waypoint proxy for a workload
+// TODO: We might use the cache to improve performance
+func (in *WorkloadService) getWaypointsForWorkload(ctx context.Context, namespace string, workload models.Workload) []models.Workload {
+	var workloadslist []models.Workload
+
+	// Get Waypoint list names
+	waypoints, found := in.isWorkloadEnrolled(ctx, workload)
+	if !found {
+		return workloadslist
 	}
 
-	var workloadslist []models.Workload
-	// Get service Account name for each pod from the workload
-	for _, workload := range wlist {
-		if !config.IsWaypoint(workload.Labels) {
-			for _, pod := range workload.Pods {
-				if pod.ServiceAccountName == sa {
-					workloadslist = append(workloadslist, *workload)
-					break
-
-				}
-			}
+	for _, waypoint := range waypoints {
+		// TODO: Can the waypoint be on a different ns?
+		wkd, err := in.fetchWorkload(ctx, WorkloadCriteria{Cluster: workload.Cluster, Namespace: namespace, WorkloadName: waypoint.Name, WorkloadType: ""})
+		if err != nil {
+			log.Errorf("Error fetching workloads %s", err.Error())
+			return nil
+		}
+		if wkd != nil {
+			workloadslist = append(workloadslist, *wkd)
 		}
 	}
+
 	return workloadslist
 }
 
 // Return the list of workloads when the waypoint proxy is applied per namespace
-func (in *WorkloadService) listWaypointWorkloadsForNamespace(ctx context.Context, namespace string) []models.Workload {
-	wlist, err := in.fetchWorkloads(ctx, namespace, "")
-	if err != nil {
-		log.Errorf("Error fetching workloads")
+func (in *WorkloadService) listWaypointWorkloads(ctx context.Context, name, cluster string) []models.Workload {
+
+	// Get all the workloads for a namespaces labeled
+	labelSelector := fmt.Sprintf("%s=%s", config.WaypointUseLabel, name)
+	nslist, errNs := in.userClients[cluster].GetNamespaces(labelSelector)
+	if errNs != nil {
+		log.Errorf("Error fetching namespaces by selector %s", labelSelector)
 	}
 
 	var workloadslist []models.Workload
 	// Get service Account name for each pod from the workload
-	for _, workload := range wlist {
-		if !config.IsWaypoint(workload.Labels) {
-			workloadslist = append(workloadslist, *workload)
+
+	for _, ns := range nslist {
+		workloadList, err := in.fetchWorkloads(ctx, ns.Name, "")
+		if err != nil {
+			log.Errorf("Error fetching workloads for namespace %s", ns.Name)
 		}
+		for _, wk := range workloadList {
+			// Is there any annotation that disables?
+			workloadslist = append(workloadslist, *wk)
+		}
+
 	}
+
+	// Get annotated workloads
+	wlist, err := in.fetchWorkloads(ctx, meta_v1.NamespaceAll, labelSelector)
+	if err != nil {
+		log.Errorf("Error fetching workloads for namespace label selector %s", labelSelector)
+	}
+	for _, workload := range wlist {
+		// Is there any annotation that disables?
+		workloadslist = append(workloadslist, *workload)
+	}
+
 	return workloadslist
 }
 

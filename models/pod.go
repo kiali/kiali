@@ -35,6 +35,11 @@ type Pod struct {
 	ServiceAccountName  string            `json:"serviceAccountName"`
 }
 
+type Waypoint struct {
+	Name string
+	Type string
+}
+
 // Reference holds some information on the pod creator
 type Reference struct {
 	Name string `json:"name"`
