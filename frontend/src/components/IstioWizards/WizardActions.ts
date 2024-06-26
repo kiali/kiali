@@ -65,6 +65,7 @@ import { K8sRouteBackendRef } from './K8sTrafficShifting';
 import { QUERY_PARAMS, PATH, HEADERS, METHOD } from './K8sRequestRouting/K8sMatchBuilder';
 import { ServiceOverview } from '../../types/ServiceList';
 import { ADD, SET, REQ_MOD, RESP_MOD, REQ_RED, REQ_MIR } from './K8sRequestRouting/K8sFilterBuilder';
+import { ANYTHING, PRESENCE } from './RequestRouting/MatchBuilder';
 
 export const WIZARD_TRAFFIC_SHIFTING = 'traffic_shifting';
 export const WIZARD_TCP_TRAFFIC_SHIFTING = 'tcp_traffic_shifting';
@@ -207,7 +208,7 @@ const buildHTTPMatchRequest = (matches: string[]): HTTPMatchRequest[] => {
   const matchHeaders: HTTPMatchRequest = { headers: {} };
   // Headers are grouped
   matches
-    .filter(match => match.startsWith('headers'))
+    .filter(match => match.startsWith(HEADERS))
     .forEach(match => {
       // match follows format:  headers [<header-name>] <op> <value>
       const i0 = match.indexOf('[');
@@ -217,14 +218,18 @@ const buildHTTPMatchRequest = (matches: string[]): HTTPMatchRequest[] => {
       const j1 = match.indexOf(' ', i1 + 1);
       const op = match.substring(i1 + 1, j1).trim();
       const value = match.substring(j1 + 1).trim();
-      matchHeaders.headers![headerName] = { [op]: value };
+      if (op === PRESENCE) {
+        matchHeaders.headers![headerName] = {};
+      } else {
+        matchHeaders.headers![headerName] = { [op]: value };
+      }
     });
   if (Object.keys(matchHeaders.headers || {}).length > 0) {
     matchRequests.push(matchHeaders);
   }
   // Rest of matches
   matches
-    .filter(match => !match.startsWith('headers'))
+    .filter(match => !match.startsWith(HEADERS))
     .forEach(match => {
       // match follows format: <name> <op> <value>
       const i = match.indexOf(' ');
@@ -444,7 +449,10 @@ const buildK8sHTTPRouteFilter = (filters: string[]): K8sHTTPRouteFilter[] => {
   return routeFilter;
 };
 
-const parseStringMatch = (value: StringMatch): string => {
+const parseStringMatch = (value: StringMatch | string): string => {
+  if (typeof value === 'string') {
+    return `${PRESENCE} ${ANYTHING}`;
+  }
   if (value.exact) {
     return `exact ${value.exact}`;
   }
@@ -463,7 +471,11 @@ const parseHttpMatchRequest = (httpMatchRequest: HTTPMatchRequest): string[] => 
   if (httpMatchRequest.headers) {
     Object.keys(httpMatchRequest.headers).forEach(headerName => {
       const value = httpMatchRequest.headers![headerName];
-      matches.push(`headers [${headerName}] ${parseStringMatch(value)}`);
+      if (Object.keys(value).length === 0) {
+        matches.push(`headers [${headerName}] ${parseStringMatch(ANYTHING)}`);
+      } else {
+        matches.push(`headers [${headerName}] ${parseStringMatch(value)}`);
+      }
     });
   }
   if (httpMatchRequest.uri) {

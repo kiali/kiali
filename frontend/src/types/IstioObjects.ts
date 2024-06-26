@@ -625,7 +625,7 @@ export interface Destination {
 export interface HTTPMatchRequest {
   authority?: StringMatch;
   gateways?: string[];
-  headers?: { [key: string]: StringMatch };
+  headers?: { [key: string]: StringMatch | string };
   ignoreUriCase?: boolean;
   method?: StringMatch;
   name?: string;

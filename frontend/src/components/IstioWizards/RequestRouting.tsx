@@ -2,7 +2,7 @@ import * as React from 'react';
 import { WorkloadOverview } from '../../types/ServiceInfo';
 import { Rules, MOVE_TYPE, Rule } from './RequestRouting/Rules';
 import { RuleBuilder } from './RequestRouting/RuleBuilder';
-import { EXACT, HEADERS } from './RequestRouting/MatchBuilder';
+import { ANYTHING, EXACT, HEADERS, PRESENCE } from './RequestRouting/MatchBuilder';
 import { MSG_WEIGHTS_NOT_VALID, WorkloadWeight } from './TrafficShifting';
 import { getDefaultWeights } from './WizardActions';
 import { FaultInjectionRoute } from './FaultInjection';
@@ -31,6 +31,7 @@ type State = {
 const MSG_SAME_MATCHING = 'A Rule with same matching criteria is already added.';
 const MSG_HEADER_NAME_NON_EMPTY = 'Header name must be non empty';
 const MSG_HEADER_VALUE_NON_EMPTY = 'Header value must be non empty';
+const MSG_VALUE_NON_EMPTY = 'Value must be non empty';
 
 export class RequestRouting extends React.Component<Props, State> {
   constructor(props: Props) {
@@ -112,18 +113,41 @@ export class RequestRouting extends React.Component<Props, State> {
 
   onAddMatch = (): void => {
     this.setState(prevState => {
-      if (this.state.matchValue !== '') {
-        const newMatch = `${prevState.category}${prevState.category === HEADERS ? ` [${prevState.headerName}] ` : ' '}${
-          prevState.operator
-        } ${prevState.matchValue}`;
-        if (!prevState.matches.includes(newMatch)) {
-          prevState.matches.push(newMatch);
+      let newMatch = '';
+      let validationMsg = '';
+      if (prevState.operator === PRESENCE && prevState.category === HEADERS) {
+        // presence requires only header name
+        if (prevState.headerName === '') {
+          validationMsg = MSG_HEADER_NAME_NON_EMPTY;
+        } else {
+          newMatch = `${prevState.category}${prevState.category === HEADERS ? ` [${prevState.headerName}] ` : ' '}${
+            prevState.operator
+          } ${ANYTHING}`;
         }
+      } else {
+        if (this.state.matchValue !== '') {
+          newMatch = `${prevState.category}${prevState.category === HEADERS ? ` [${prevState.headerName}] ` : ' '}${
+            prevState.operator
+          } ${prevState.matchValue}`;
+        } else {
+          if (prevState.category === HEADERS) {
+            // header value required
+            validationMsg = MSG_HEADER_VALUE_NON_EMPTY;
+          } else {
+            // all other values required
+            validationMsg = MSG_VALUE_NON_EMPTY;
+          }
+        }
+      }
+
+      if (newMatch !== '' && !prevState.matches.includes(newMatch)) {
+        prevState.matches.push(newMatch);
       }
       return {
         matches: prevState.matches,
         headerName: '',
-        matchValue: ''
+        matchValue: '',
+        validationMsg: validationMsg
       };
     });
   };
@@ -211,7 +235,7 @@ export class RequestRouting extends React.Component<Props, State> {
     if (this.state.matchValue !== '' && headerName === '') {
       validationMsg = MSG_HEADER_NAME_NON_EMPTY;
     }
-    if (this.state.matchValue === '' && headerName !== '') {
+    if (this.state.matchValue === '' && headerName !== '' && this.state.operator !== PRESENCE) {
       validationMsg = MSG_HEADER_VALUE_NON_EMPTY;
     }
     this.setState({
@@ -229,8 +253,7 @@ export class RequestRouting extends React.Component<Props, State> {
       if (this.state.headerName !== '' && matchValue === '') {
         validationMsg = MSG_HEADER_VALUE_NON_EMPTY;
       }
-    }
-    if (matchValue === '') {
+    } else if (matchValue === '') {
       validationMsg = '';
     }
     this.setState({
@@ -295,15 +318,16 @@ export class RequestRouting extends React.Component<Props, State> {
           matchValue={this.state.matchValue}
           isValid={this.state.validationMsg === ''}
           onSelectCategory={(category: string) => {
+            // PRESENCE operator only applies to HEADERS
             this.setState(prevState => {
               return {
                 category: category,
-                operator: prevState.operator
+                operator: prevState.operator === PRESENCE && category !== HEADERS ? EXACT : prevState.operator
               };
             });
           }}
           onHeaderNameChange={this.onHeaderNameChange}
-          onSelectOperator={(operator: string) => this.setState({ operator: operator })}
+          onSelectOperator={(operator: string) => this.setState({ operator: operator, validationMsg: '' })}
           onMatchValueChange={this.onMatchValueChange}
           onAddMatch={this.onAddMatch}
           matches={this.state.matches}
