@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { BrowserRouter as Router } from 'react-router-dom';
+import { BrowserRouter as Router } from 'react-router-dom-v5-compat';
 import { Provider } from 'react-redux';
 import { shallowToJson } from 'enzyme-to-json';
 import { mount, shallow, ReactWrapper } from 'enzyme';

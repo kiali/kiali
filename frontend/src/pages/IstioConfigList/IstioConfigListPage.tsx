@@ -35,7 +35,7 @@ interface ReduxProps {
   istioAPIEnabled: boolean;
 }
 
-type IstioConfigListPageProps = ReduxProps & FilterComponent.State<IstioConfigItem>;
+type IstioConfigListPageProps = ReduxProps;
 
 type IstioConfigListPageState = FilterComponent.State<IstioConfigItem>;
 
@@ -239,4 +239,4 @@ const mapStateToProps = (state: KialiAppState): ReduxProps => ({
   istioAPIEnabled: state.statusState.istioEnvironment.istioAPIEnabled
 });
 
-export const IstioConfigListPage = connect(mapStateToProps, null)(IstioConfigListPageComponent);
+export const IstioConfigListPage = connect(mapStateToProps)(IstioConfigListPageComponent);

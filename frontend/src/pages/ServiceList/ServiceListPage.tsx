@@ -32,7 +32,7 @@ type ReduxProps = {
   duration: DurationInSeconds;
 };
 
-type ServiceListPageProps = ReduxProps & FilterComponent.Props<ServiceListItem>;
+type ServiceListPageProps = ReduxProps;
 
 class ServiceListPageComponent extends FilterComponent.Component<
   ServiceListPageProps,

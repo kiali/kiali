@@ -16,7 +16,7 @@ export interface State<R> {
   listItems: R[];
 }
 
-export abstract class Component<P extends Props<R>, S extends State<R>, R> extends React.Component<P, S> {
+export abstract class Component<P, S extends State<R>, R> extends React.Component<P, S> {
   abstract sortItemList(listItems: R[], sortField: SortField<R>, isAscending: boolean): R[];
   abstract updateListItems(resetPagination?: boolean): void;
 

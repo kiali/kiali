@@ -4,7 +4,7 @@ import { serverConfig } from '../../config';
 import { AmbientBadge } from '../../components/Ambient/AmbientBadge';
 import { RemoteClusterBadge } from './RemoteClusterBadge';
 import { isRemoteCluster } from './OverviewCardControlPlaneNamespace';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom-v5-compat';
 import { IstioStatus, meshLinkStyle } from 'components/IstioStatus/IstioStatus';
 import {
   CheckCircleIcon,

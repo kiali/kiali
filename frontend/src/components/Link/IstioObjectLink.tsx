@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { isMultiCluster, Paths } from '../../config';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router-dom-v5-compat';
 import { IstioTypes } from '../VirtualList/Config';
 import { PFBadge } from 'components/Pf/PfBadges';
 import { Tooltip, TooltipPosition } from '@patternfly/react-core';

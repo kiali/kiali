@@ -128,20 +128,22 @@ const DebugInformationComponent: React.FC<DebugInformationProps> = (props: Debug
     setConfig(kialiConfig);
   }, []);
 
-  const prevAppState = usePreviousValue(props.appState);
+  const { appState, isOpen } = props;
+
+  const prevAppState = usePreviousValue(appState);
 
   React.useEffect(() => {
-    if (prevAppState !== props.appState && copyStatus === CopyStatus.COPIED) {
+    if (prevAppState !== appState && copyStatus === CopyStatus.COPIED) {
       setCopyStatus(CopyStatus.OLD_COPY);
     }
-  }, [prevAppState, props.appState, copyStatus]);
+  }, [prevAppState, appState, copyStatus]);
 
   React.useEffect(() => {
-    if (props.isOpen) {
+    if (isOpen) {
       setCopyStatus(CopyStatus.NOT_COPIED);
       setCurrentTab(defaultTab);
     }
-  }, [props.isOpen]);
+  }, [isOpen]);
 
   const copyCallback = (_text: string, result: boolean): void => {
     setCopyStatus(result ? CopyStatus.COPIED : CopyStatus.NOT_COPIED);
