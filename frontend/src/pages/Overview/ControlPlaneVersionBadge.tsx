@@ -2,7 +2,7 @@ import { Label, Tooltip } from '@patternfly/react-core';
 import { meshLinkStyle } from 'components/IstioStatus/IstioStatus';
 import * as React from 'react';
 import { useLocation } from 'react-router';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router-dom-v5-compat';
 import { useKialiTranslation } from 'utils/I18nUtils';
 
 type Props = {

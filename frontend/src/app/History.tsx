@@ -1,6 +1,7 @@
 import { createBrowserHistory, createMemoryHistory, createHashHistory } from 'history';
 import { toValidDuration } from '../config/ServerConfig';
 import { BoundsInMilliseconds } from 'types/Common';
+import { RouteObject, createBrowserRouter, createHashRouter, createMemoryRouter } from 'react-router-dom-v5-compat';
 
 const createHistory = (baseName: string): any => {
   return process.env.TEST_RUNNER
@@ -9,6 +10,18 @@ const createHistory = (baseName: string): any => {
     ? createHashHistory()
     : createBrowserHistory({ basename: baseName });
 };
+
+const createRouter = (routes: RouteObject[], baseName: string): any => {
+  return process.env.TEST_RUNNER
+    ? createMemoryRouter(routes, { basename: baseName })
+    : historyMode === 'hash'
+    ? createHashRouter(routes, { basename: baseName })
+    : createBrowserRouter(routes, { basename: baseName });
+};
+
+const webRoot = (window as any).WEB_ROOT ? (window as any).WEB_ROOT : undefined;
+const rootBaseName = webRoot && webRoot !== '/' ? `${webRoot}/console` : '/console';
+const historyMode = (window as any).HISTORY_MODE ? (window as any).HISTORY_MODE : 'browser';
 
 /**
  * Some platforms set a different basename for each page (e.g., Openshift Console)
@@ -20,12 +33,17 @@ export const setHistory = (baseName: string): void => {
   history = createHistory(baseName);
 };
 
-const webRoot = (window as any).WEB_ROOT ? (window as any).WEB_ROOT : undefined;
-const baseName = webRoot && webRoot !== '/' ? `${webRoot}/console` : '/console';
-const historyMode = (window as any).HISTORY_MODE ? (window as any).HISTORY_MODE : 'browser';
-let history = createHistory(baseName);
+export const setRouter = (routes: RouteObject[], baseName?: string): void => {
+  router = createRouter(routes, baseName ?? rootBaseName);
+};
+
+let history = createHistory(rootBaseName);
 
 export { history };
+
+let router = createRouter([{ element: <></> }], rootBaseName);
+
+export { router };
 
 export enum URLParam {
   AGGREGATOR = 'aggregator',
@@ -99,7 +117,7 @@ export class HistoryManager {
   static setParam = (name: URLParam | string, value: string): void => {
     const urlParams = new URLSearchParams(history.location.search);
     urlParams.set(name, value);
-    history.replace(`${history.location.pathname}?${urlParams.toString()}`);
+    // router.navigate(`${window.location.pathname}?${urlParams.toString()}`, { replace: true });
   };
 
   static getParam = (name: URLParam | string, urlParams?: URLSearchParams): string | undefined => {
@@ -148,9 +166,9 @@ export class HistoryManager {
     });
 
     if (historyReplace) {
-      history.replace(`${history.location.pathname}?${urlParams.toString()}`);
+      router.navigate(`${history.location.pathname}?${urlParams.toString()}`, { replace: true });
     } else {
-      history.push(`${history.location.pathname}?${urlParams.toString()}`);
+      router.navigate(`${history.location.pathname}?${urlParams.toString()}`);
     }
   };
 

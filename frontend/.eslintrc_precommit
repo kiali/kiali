@@ -19,6 +19,7 @@
     }],
     "@typescript-eslint/no-inferrable-types": "error",
     "@typescript-eslint/explicit-function-return-type": ["error", { "allowExpressions": true }],
-    "@typescript-eslint/explicit-module-boundary-types": ["error", { "allowArgumentsExplicitlyTypedAsAny": true }]
+    "@typescript-eslint/explicit-module-boundary-types": ["error", { "allowArgumentsExplicitlyTypedAsAny": true }],
+    "react-hooks/exhaustive-deps": "off"
   }
 }

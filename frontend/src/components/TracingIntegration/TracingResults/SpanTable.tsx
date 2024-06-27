@@ -21,7 +21,7 @@ import { buildQueriesFromSpans } from 'utils/tracing/TraceStats';
 import { getParamsSeparator, getSpanId } from '../../../utils/SearchParamUtils';
 import { kialiStyle } from 'styles/StyleUtils';
 import { formatDuration, isErrorTag } from 'utils/tracing/TracingHelper';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router-dom-v5-compat';
 import { responseFlags } from 'utils/ResponseFlags';
 import { renderMetricsComparison } from './StatsComparison';
 import { history } from 'app/History';

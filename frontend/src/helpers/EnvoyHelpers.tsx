@@ -2,7 +2,7 @@ import * as React from 'react';
 import { IstioObjectLink } from '../components/Link/IstioObjectLink';
 import { Namespace } from '../types/Namespace';
 import { Paths } from '../config';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router-dom-v5-compat';
 import { EnvoySummary, Host } from '../types/IstioObjects';
 import { ActiveFilter, ActiveFiltersInfo } from '../types/Filters';
 import { FilterSelected } from '../components/Filters/StatefulFilters';
@@ -55,24 +55,24 @@ export const serviceLink = (
   host: Host,
   namespaces: Namespace[] | undefined,
   podNamespace: string,
-  simpleSvc: boolean = false,
+  simpleSvc = false,
   isParentKiosk: boolean
 ): JSX.Element | string => {
-  let to: string = '/namespaces/';
+  let to = '/namespaces/';
   let linkText: string = host.service;
-  let showLink: boolean = false;
+  let showLink = false;
 
   const hasSimpleServiceForm = host.service.split('.').length === 1 && host.service !== '*';
   // Show link if simple service names are allowed,
   // and the service is no * and has no domains,subdomains
   if (host.service && !host.namespace && simpleSvc && hasSimpleServiceForm) {
-    to += podNamespace + '/' + Paths.SERVICES + '/' + host.service;
+    to += `${podNamespace}/${Paths.SERVICES}/${host.service}`;
     showLink = true;
   } else if (host.service && host.namespace && namespaces) {
-    to += host.namespace + '/' + Paths.SERVICES + '/' + host.service;
-    linkText += '.' + host.namespace;
+    to += `${host.namespace}/${Paths.SERVICES}/${host.service}`;
+    linkText += `.${host.namespace}`;
     if (host.cluster) {
-      linkText += '.' + host.cluster;
+      linkText += `.${host.cluster}`;
     }
     // Show link if the namespace matches to one in the list of available namespaces
     showLink = namespaces.findIndex((namespace: Namespace): boolean => namespace.name === host.namespace) >= 0;

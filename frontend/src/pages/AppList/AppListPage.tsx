@@ -29,7 +29,7 @@ type ReduxProps = {
   duration: DurationInSeconds;
 };
 
-type AppListPageProps = ReduxProps & FilterComponent.Props<AppListItem>;
+type AppListPageProps = ReduxProps;
 
 class AppListPageComponent extends FilterComponent.Component<AppListPageProps, AppListPageState, AppListItem> {
   private promises = new PromisesRegistry();

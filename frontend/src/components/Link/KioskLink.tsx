@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router-dom-v5-compat';
 import { isParentKiosk, kioskContextMenuAction } from '../Kiosk/KioskActions';
 import { KialiAppState } from '../../store/Store';
 import { connect } from 'react-redux';
