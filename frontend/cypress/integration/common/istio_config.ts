@@ -148,7 +148,7 @@ const minimalSidecar = (name: string, namespace: string, hosts: string): string 
 }`;
 };
 
-const minimalK8Gateway = (
+const minimalK8sGateway = (
   name: string,
   namespace: string,
   hostname: string,
@@ -186,6 +186,34 @@ const minimalK8Gateway = (
           "addresses": []
         }
       }`;
+};
+
+const minimalK8sReferenceGrant = (name: string, namespace: string, fromNamespace: string): string => {
+  return `{
+  "kind": "ReferenceGrant",
+  "apiVersion": "gateway.networking.k8s.io/v1beta1",
+  "metadata": {
+    "name": "${name}",
+    "namespace": "${namespace}",
+    "labels": {},
+    "annotations": {}
+  },
+  "spec": {
+    "from": [
+      {
+        "kind": "HTTPRoute",
+        "group": "gateway.networking.k8s.io",
+        "namespace": "${fromNamespace}"
+      }
+    ],
+    "to": [
+      {
+        "kind": "Service",
+        "group": ""
+      }
+    ]
+  }
+}`;
 };
 
 Given('a {string} AuthorizationPolicy in the {string} namespace', function (name: string, namespace: string) {
@@ -391,17 +419,24 @@ When('user filters for config {string}', (configName: string) => {
 });
 
 When(
-  'there is a {string} K8Gateway in the {string} namespace for {string} host using {string} protocol on port {string} and {string} gatewayClassName',
+  'there is a {string} K8sGateway in the {string} namespace for {string} host using {string} protocol on port {string} and {string} gatewayClassName',
   (name: string, ns: string, host: string, protocol: string, port: string, gatewayClassName: string) => {
-    cy.exec(`echo '${minimalK8Gateway(name, ns, host, protocol, port, gatewayClassName)}' | kubectl apply -f  -`);
+    cy.exec(`echo '${minimalK8sGateway(name, ns, host, protocol, port, gatewayClassName)}' | kubectl apply -f  -`);
   }
 );
 
 When(
-  'user adds a {string} listener with {string} host using {string} protocol on port {string} to the {string} K8Gateway in the {string} namespace',
+  'there is a {string} K8sReferenceGrant in the {string} namespace pointing from {string} namespace',
+  (name: string, ns: string, fromNs: string) => {
+    cy.exec(`echo '${minimalK8sReferenceGrant(name, ns, fromNs)}' | kubectl apply -f  -`);
+  }
+);
+
+When(
+  'user adds a {string} listener with {string} host using {string} protocol on port {string} to the {string} K8sGateway in the {string} namespace',
   (listener: string, host: string, protocol: string, port: string, name: string, ns: string) => {
     cy.exec(
-      `kubectl patch Gateway ${name} -n ${ns} --type=json -p '{"spec":{"listeners":[{"name":"${listener}","port":${port},"protocol":"${protocol}","hostname":"${host}","allowedRoutes":{"namespaces":{"from":"All","selector":{"matchLabels":{}}}}}]}}'`
+      `kubectl patch Gateway ${name} -n ${ns} --type=merge -p '{"spec":{"listeners":[{"name":"${listener}","port":${port},"protocol":"${protocol}","hostname":"${host}","allowedRoutes":{"namespaces":{"from":"All","selector":{"matchLabels":{}}}}}]}}'`
     );
   }
 );
@@ -611,7 +646,7 @@ Then(
 );
 
 Then(
-  'the {string} K8Gateway in the {string} namespace has an address with a {string} type and a {string} value',
+  'the {string} K8sGateway in the {string} namespace has an address with a {string} type and a {string} value',
   (name: string, ns: string, type: string, value: string) => {
     cy.exec(
       `kubectl patch Gateway ${name} -n ${ns} --type=merge -p '{"spec":{"addresses":[{"type": "${type}","value":"${value}"}]}}'`
