@@ -65,6 +65,7 @@ KIALI_VERSION="dev"
 MONGONS="mongons"
 MONGOSKUPPERNS="mongoskupperns"
 MYSQLNS="mysqlns"
+MYSQLSKUPPERNS="mysqlskupperns"
 OPENSHIFT1_API=""
 OPENSHIFT1_USERNAME="kiali"
 OPENSHIFT1_PASSWORD="kiali"
@@ -72,7 +73,9 @@ OPENSHIFT2_API=""
 OPENSHIFT2_USERNAME="kiali"
 OPENSHIFT2_PASSWORD="kiali"
 SKUPPER_EXE="${OUTPUT_DIR}/skupper"
-SKUPPER_TOKEN_FILE="${OUTPUT_DIR}/skupper.token"
+SKUPPER_TOKEN_FILE_MONGO="${OUTPUT_DIR}/skupper-mongo.token"
+SKUPPER_TOKEN_FILE_MYSQL="${OUTPUT_DIR}/skupper-mysql.token"
+SKUPPER_TOKEN_FILE_EW="${OUTPUT_DIR}/skupper-eastwest.token"
 VALIDATE_ENVIRONMENT="true"
 
 # Process command line args
@@ -85,10 +88,14 @@ while [ $# -gt 0 ]; do
     delete)                   _CMD="delete"                        ;shift ;;
     iprom)                    _CMD="iprom"                         ;shift ;;
     kui)                      _CMD="kui"                           ;shift ;;
-    smetrics)                 _CMD="smetrics"                      ;shift ;;
-    sprom)                    _CMD="sprom"                         ;shift ;;
+    bui)                      _CMD="bui"                           ;shift ;;
+    smetricsmongo)            _CMD="smetricsmongo"                 ;shift ;;
+    smetricsmysql)            _CMD="smetricsmysql"                 ;shift ;;
+    sprommongo)               _CMD="sprommongo"                    ;shift ;;
+    sprommysql)               _CMD="sprommysql"                    ;shift ;;
     sstatus)                  _CMD="sstatus"                       ;shift ;;
-    sui)                      _CMD="sui"                           ;shift ;;
+    suimongo)                 _CMD="suimongo"                      ;shift ;;
+    suimysql)                 _CMD="suimysql"                      ;shift ;;
     -c|--client)              CLIENT_EXE="$2"                ;shift;shift ;;
     -ct|--cluster-type)       CLUSTER_TYPE="$2"              ;shift;shift ;;
     -ewd|--east-west-demo)    INSTALL_EAST_WEST_DEMO="$2"    ;shift;shift ;;
@@ -144,10 +151,14 @@ Valid commands:
   delete: Uninstalls the demo by shutting down the two minikube clusters or removing resources from OpenShift
   iprom: Open a browser window to the Istio Prometheus UI
   kui: Open a browser window to the Kiali UI
-  smetrics: Dumps the live metrics from the Skupper metrics endpoint
-  sprom: Open a browser window to the Skupper Prometheus UI
+  bui: Open a browser window to the Bookinfo UI
+  smetricsmongo: Dumps the live metrics from the Mongo Skupper metrics endpoint
+  smetricsmysql: Dumps the live metrics from the MySQL Skupper metrics endpoint
+  sprommongo: Open a browser window to the Skupper Prometheus UI with the Mongo metrics
+  sprommysql: Open a browser window to the Skupper Prometheus UI with the MySQL metrics
   sstatus: Prints the Skupper status for both ends of the pipe
-  sui: Open a browser window to the Skupper UI
+  suimongo: Open a browser window to the Mongo Skupper UI
+  suimysql: Open a browser window to the MySQL Skupper UI
 HELPMSG
       exit 1
       ;;
@@ -219,18 +230,18 @@ minikube_install_basic_demo() {
   infomsg "Exposing Prometheus UI via LoadBalancer ..."
   ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} -n istio-system patch svc prometheus --type=merge --patch '{"spec":{"type":"LoadBalancer"}}'
 
+  infomsg "Exposing Bookinfo UI via LoadBalancer ..."
+  ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} -n bookinfo patch svc productpage --type=merge --patch '{"spec":{"type":"LoadBalancer"}}'
+
   infomsg "Installing MySQL in [${CLUSTER2_DB}] cluster"
   ${CLIENT_EXE} --context ${CLUSTER2_DB} create namespace ${MYSQLNS}
   ${CLIENT_EXE} --context ${CLUSTER2_DB} -n ${MYSQLNS} apply -f ${OUTPUT_DIR}/istio-*/samples/bookinfo/platform/kube/bookinfo-mysql.yaml
-  ${CLIENT_EXE} --context ${CLUSTER2_DB} -n ${MYSQLNS} patch svc mysqldb --type=merge --patch '{"spec":{"type":"LoadBalancer"}}'
-  MYSQL_IP="$(${CLIENT_EXE} --context ${CLUSTER2_DB} -n ${MYSQLNS} get svc mysqldb -o jsonpath='{.status.loadBalancer.ingress[0].ip}')"
-  infomsg "MySQL available at IP: ${MYSQL_IP}"
 
   infomsg "Installing Mongo in [${CLUSTER2_DB}] cluster"
   ${CLIENT_EXE} --context ${CLUSTER2_DB} create namespace ${MONGONS}
   ${CLIENT_EXE} --context ${CLUSTER2_DB} -n ${MONGONS} apply -f ${OUTPUT_DIR}/istio-*/samples/bookinfo/platform/kube/bookinfo-db.yaml
 
-  infomsg "Creating Istio ServiceEntry resource for MySQL access"
+  infomsg "Creating Istio ServiceEntry resource for MySQL access - this will not be fully configured yet"
   cat <<EOM | ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} -n bookinfo apply -f -
 apiVersion: networking.istio.io/v1
 kind: ServiceEntry
@@ -238,9 +249,9 @@ metadata:
   name: mysqldb.test
 spec:
   addresses:
-  - "${MYSQL_IP}"
+  - "127.0.0.1"
   endpoints:
-  - address: "${MYSQL_IP}"
+  - address: "127.0.0.1"
   hosts:
   - mysqldb.test
   location: MESH_EXTERNAL
@@ -251,37 +262,52 @@ spec:
     protocol: TCP
 EOM
 
-  infomsg "Creating ratings-v2-mysql app and pointing it to the MySQL server in the [${CLUSTER2_DB}] cluster"
+  infomsg "Creating ratings-v2-mysql app - this will use MySQL but will not be correctly configured yet"
   ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} -n bookinfo apply -f ${OUTPUT_DIR}/istio-*/samples/bookinfo/platform/kube/bookinfo-ratings-v2-mysql.yaml
-  ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} -n bookinfo set env deployment/ratings-v2-mysql MYSQL_DB_HOST="${MYSQL_IP}"
 
   infomsg "Creating ratings-v2 app - this will use Mongo but will not be correctly configured yet"
   ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} -n bookinfo apply -f ${OUTPUT_DIR}/istio-*/samples/bookinfo/platform/kube/bookinfo-ratings-v2.yaml
 }
 
-# minikube_install_skupper will create the Skupper pipe so Bookinfo access talk to the Mongo database on the db cluster.
+# minikube_install_skupper will create the Skupper pipe so Bookinfo access talk to the databases on the db cluster.
 # This function should only be executed after the minikube_install_basic_demo function successfully completes.
 minikube_install_skupper() {
+  # create a link to Mongo
   infomsg "Creating the Skupper link so Bookinfo can access Mongo"
-  rm -f "${SKUPPER_TOKEN_FILE}"
+  rm -f "${SKUPPER_TOKEN_FILE_MONGO}"
   ${SKUPPER_EXE} --context ${CLUSTER2_DB} -n ${MONGONS} init
   ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} create namespace ${MONGOSKUPPERNS}
   ${SKUPPER_EXE} --context ${CLUSTER1_ISTIO} -n ${MONGOSKUPPERNS} init --enable-console --enable-flow-collector
-  ${SKUPPER_EXE} --context ${CLUSTER1_ISTIO} -n ${MONGOSKUPPERNS} token create "${SKUPPER_TOKEN_FILE}"
-  ${SKUPPER_EXE} --context ${CLUSTER2_DB} -n ${MONGONS} link create "${SKUPPER_TOKEN_FILE}"
+  ${SKUPPER_EXE} --context ${CLUSTER1_ISTIO} -n ${MONGOSKUPPERNS} token create "${SKUPPER_TOKEN_FILE_MONGO}"
+  ${SKUPPER_EXE} --context ${CLUSTER2_DB} -n ${MONGONS} link create "${SKUPPER_TOKEN_FILE_MONGO}"
   ${SKUPPER_EXE} --context ${CLUSTER2_DB} -n ${MONGONS} expose deployment/mongodb-v1 --port 27017
-
   infomsg "Wait for the mongodb-v1 service to be created by Skupper in the [${CLUSTER1_ISTIO}] cluster"
   while ! ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} -n ${MONGOSKUPPERNS} get svc mongodb-v1 &> /dev/null ; do echo -n '.'; sleep 1; done; echo
-
   SKUPPER_MONGO_IP="$(${CLIENT_EXE} --context ${CLUSTER1_ISTIO} -n ${MONGOSKUPPERNS} get svc mongodb-v1 -o jsonpath='{.spec.clusterIPs[0]}')"
   infomsg "Mongo IP over the Skupper link: ${SKUPPER_MONGO_IP}"
-
   infomsg "Configuring Bookinfo ratings-v2 to talk to Mongo over the Skupper link"
   ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} -n bookinfo set env deployment/ratings-v2 MONGO_DB_URL="mongodb://${SKUPPER_MONGO_IP}:27017/test"
-
-  infomsg "Exposing Skupper Prometheus so its UI can be accessed"
+  infomsg "Exposing Mongo Skupper Prometheus so its UI can be accessed"
   ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} -n ${MONGOSKUPPERNS} patch svc skupper-prometheus --type=merge --patch '{"spec":{"type":"LoadBalancer"}}'
+
+  # create a link to MySQL
+  infomsg "Creating the Skupper link so Bookinfo can access MySQL"
+  rm -f "${SKUPPER_TOKEN_FILE_MYSQL}"
+  ${SKUPPER_EXE} --context ${CLUSTER2_DB} -n ${MYSQLNS} init
+  ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} create namespace ${MYSQLSKUPPERNS}
+  ${SKUPPER_EXE} --context ${CLUSTER1_ISTIO} -n ${MYSQLSKUPPERNS} init --enable-console --enable-flow-collector
+  ${SKUPPER_EXE} --context ${CLUSTER1_ISTIO} -n ${MYSQLSKUPPERNS} token create "${SKUPPER_TOKEN_FILE_MYSQL}"
+  ${SKUPPER_EXE} --context ${CLUSTER2_DB} -n ${MYSQLNS} link create "${SKUPPER_TOKEN_FILE_MYSQL}"
+  ${SKUPPER_EXE} --context ${CLUSTER2_DB} -n ${MYSQLNS} expose deployment/mysqldb-v1 --port 3306
+  infomsg "Wait for the mysqldb-v1 service to be created by Skupper in the [${CLUSTER1_ISTIO}] cluster"
+  while ! ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} -n ${MYSQLSKUPPERNS} get svc mysqldb-v1 &> /dev/null ; do echo -n '.'; sleep 1; done; echo
+  SKUPPER_MYSQL_IP="$(${CLIENT_EXE} --context ${CLUSTER1_ISTIO} -n ${MYSQLSKUPPERNS} get svc mysqldb-v1 -o jsonpath='{.spec.clusterIPs[0]}')"
+  infomsg "MySQL IP over the Skupper link: ${SKUPPER_MYSQL_IP}"
+  infomsg "Configuring Bookinfo ratings-v2-mysql to talk to MySQL over the Skupper link via the ServiceEntry"
+  ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} -n bookinfo set env deployment/ratings-v2-mysql MYSQL_DB_HOST="${SKUPPER_MYSQL_IP}"
+  ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} -n bookinfo patch serviceentry mysqldb.test --type='json' -p='[{"op": "replace", "path": "/spec/addresses/0", "value": "'${SKUPPER_MYSQL_IP}'"}, {"op": "replace", "path": "/spec/endpoints/0/address", "value": "'${SKUPPER_MYSQL_IP}'"}]'
+  infomsg "Exposing MySQL Skupper Prometheus so its UI can be accessed"
+  ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} -n ${MYSQLSKUPPERNS} patch svc skupper-prometheus --type=merge --patch '{"spec":{"type":"LoadBalancer"}}'
 }
 
 # openshift_install_basic_demo will install the two databases, Istio, Kiali, and Bookinfo demo in the two existing OpenShift clusters.
@@ -317,7 +343,6 @@ openshift_install_basic_demo() {
     helm upgrade --install --namespace istio-system --version ${KIALI_VERSION} --set auth.strategy=anonymous kiali-server kiali/kiali-server
   fi
 
-
   infomsg "Exposing Prometheus UI via Route ..."
   ${CLIENT_EXE} -n istio-system expose svc prometheus
 
@@ -327,12 +352,6 @@ openshift_install_basic_demo() {
   infomsg "Installing MySQL in [${CLUSTER2_DB}] cluster"
   ${CLIENT_EXE} create namespace ${MYSQLNS}
   ${CLIENT_EXE} -n ${MYSQLNS} apply -f ${OUTPUT_DIR}/istio-*/samples/bookinfo/platform/kube/bookinfo-mysql.yaml
-  ${CLIENT_EXE} -n ${MYSQLNS} patch svc mysqldb --type=merge --patch '{"spec":{"type":"NodePort"}}'
-  MYSQL_NODENAME="$(${CLIENT_EXE} -n ${MYSQLNS} get pod -l app=mysqldb -o jsonpath='{..spec.nodeName}')"
-  NODE_HOSTNAME="$(${CLIENT_EXE} get node ${MYSQL_NODENAME} -o jsonpath='{..metadata.labels.kubernetes\.io/hostname}')"
-  MYSQL_IP="$(getent hosts ${NODE_HOSTNAME} | awk '{print $1}')"
-  MYSQL_PORT="$(${CLIENT_EXE} -n ${MYSQLNS} get svc mysqldb -o jsonpath='{.spec.ports[0].nodePort}')"
-  infomsg "MySQL available at nodeIP:nodePort: ${MYSQL_IP}:${MYSQL_PORT}"
 
   infomsg "Installing Mongo in [${CLUSTER2_DB}] cluster"
   ${CLIENT_EXE} create namespace ${MONGONS}
@@ -341,7 +360,7 @@ openshift_install_basic_demo() {
   # LOGIN TO CLUSTER 1
   openshift_login ${CLUSTER1_ISTIO}
 
-  infomsg "Creating Istio ServiceEntry resource for MySQL access"
+  infomsg "Creating Istio ServiceEntry resource for MySQL access - this will not be fully configured yet"
   cat <<EOM | ${CLIENT_EXE} -n bookinfo apply -f -
 apiVersion: networking.istio.io/v1
 kind: ServiceEntry
@@ -349,65 +368,81 @@ metadata:
   name: mysqldb.test
 spec:
   addresses:
-  - "${MYSQL_IP}"
+  - "127.0.0.1"
   endpoints:
-  - address: "${MYSQL_IP}"
+  - address: "127.0.0.1"
   hosts:
   - mysqldb.test
   location: MESH_EXTERNAL
   resolution: STATIC
   ports:
-  - number: ${MYSQL_PORT}
+  - number: 3306
     name: tcp
     protocol: TCP
 EOM
 
-  infomsg "Creating ratings-v2-mysql app and pointing it to the MySQL server in the [${CLUSTER2_DB}] cluster"
+  infomsg "Creating ratings-v2-mysql app - this will use MySQL but will not be correctly configured yet"
   ${CLIENT_EXE} -n bookinfo apply -f ${OUTPUT_DIR}/istio-*/samples/bookinfo/platform/kube/bookinfo-ratings-v2-mysql.yaml
-  ${CLIENT_EXE} -n bookinfo set env deployment/ratings-v2-mysql MYSQL_DB_HOST="${MYSQL_IP}" MYSQL_DB_PORT="${MYSQL_PORT}"
 
   infomsg "Creating ratings-v2 app - this will use Mongo but will not be correctly configured yet"
   ${CLIENT_EXE} -n bookinfo apply -f ${OUTPUT_DIR}/istio-*/samples/bookinfo/platform/kube/bookinfo-ratings-v2.yaml
 }
 
-# openshift_install_skupper will create the Skupper pipe so Bookinfo access talk to the Mongo database on the db cluster.
+# openshift_install_skupper will create the Skupper pipe so Bookinfo access talk to the databases on the db cluster.
 # This function should only be executed after the openshift_install_basic_demo function successfully completes.
 openshift_install_skupper() {
+  # create a link to Mongo
   infomsg "Creating the Skupper link so Bookinfo can access Mongo"
-  rm -f "${SKUPPER_TOKEN_FILE}"
-
+  rm -f "${SKUPPER_TOKEN_FILE_MONGO}"
   # LOGIN TO CLUSTER 2
   openshift_login ${CLUSTER2_DB}
-
   ${SKUPPER_EXE} -n ${MONGONS} init
-
   # LOGIN TO CLUSTER 1
   openshift_login ${CLUSTER1_ISTIO}
-
   ${CLIENT_EXE} create namespace ${MONGOSKUPPERNS}
   ${SKUPPER_EXE} -n ${MONGOSKUPPERNS} init --enable-console --enable-flow-collector
-  ${SKUPPER_EXE} -n ${MONGOSKUPPERNS} token create "${SKUPPER_TOKEN_FILE}"
-
+  ${SKUPPER_EXE} -n ${MONGOSKUPPERNS} token create "${SKUPPER_TOKEN_FILE_MONGO}"
   # LOGIN TO CLUSTER 2
   openshift_login ${CLUSTER2_DB}
-
-  ${SKUPPER_EXE} -n ${MONGONS} link create "${SKUPPER_TOKEN_FILE}"
+  ${SKUPPER_EXE} -n ${MONGONS} link create "${SKUPPER_TOKEN_FILE_MONGO}"
   ${SKUPPER_EXE} -n ${MONGONS} expose deployment/mongodb-v1 --port 27017
-
   # LOGIN TO CLUSTER 1
   openshift_login ${CLUSTER1_ISTIO}
-
   infomsg "Wait for the mongodb-v1 service to be created by Skupper in the [${CLUSTER1_ISTIO}] cluster"
   while ! ${CLIENT_EXE} -n ${MONGOSKUPPERNS} get svc mongodb-v1 &> /dev/null ; do echo -n '.'; sleep 1; done; echo
-
   SKUPPER_MONGO_IP="$(${CLIENT_EXE} -n ${MONGOSKUPPERNS} get svc mongodb-v1 -o jsonpath='{.spec.clusterIPs[0]}')"
   infomsg "Mongo IP over the Skupper link: ${SKUPPER_MONGO_IP}"
-
   infomsg "Configuring Bookinfo ratings-v2 to talk to Mongo over the Skupper link"
   ${CLIENT_EXE} -n bookinfo set env deployment/ratings-v2 MONGO_DB_URL="mongodb://${SKUPPER_MONGO_IP}:27017/test"
-
-  infomsg "Exposing Skupper Prometheus so its UI can be accessed"
+  infomsg "Exposing Mongo Skupper Prometheus so its UI can be accessed"
   ${CLIENT_EXE} -n ${MONGOSKUPPERNS} expose svc skupper-prometheus
+
+  # create a link to MySQL
+  infomsg "Creating the Skupper link so Bookinfo can access MySQL"
+  rm -f "${SKUPPER_TOKEN_FILE_MYSQL}"
+  # LOGIN TO CLUSTER 2
+  openshift_login ${CLUSTER2_DB}
+  ${SKUPPER_EXE} -n ${MYSQLNS} init
+  # LOGIN TO CLUSTER 1
+  openshift_login ${CLUSTER1_ISTIO}
+  ${CLIENT_EXE} create namespace ${MYSQLSKUPPERNS}
+  ${SKUPPER_EXE} -n ${MYSQLSKUPPERNS} init --enable-console --enable-flow-collector
+  ${SKUPPER_EXE} -n ${MYSQLSKUPPERNS} token create "${SKUPPER_TOKEN_FILE_MYSQL}"
+  # LOGIN TO CLUSTER 2
+  openshift_login ${CLUSTER2_DB}
+  ${SKUPPER_EXE} -n ${MYSQLNS} link create "${SKUPPER_TOKEN_FILE_MYSQL}"
+  ${SKUPPER_EXE} -n ${MYSQLNS} expose deployment/mysqldb-v1 --port 3306
+  # LOGIN TO CLUSTER 1
+  openshift_login ${CLUSTER1_ISTIO}
+  infomsg "Wait for the mysqldb-v1 service to be created by Skupper in the [${CLUSTER1_ISTIO}] cluster"
+  while ! ${CLIENT_EXE} -n ${MYSQLSKUPPERNS} get svc mysqldb-v1 &> /dev/null ; do echo -n '.'; sleep 1; done; echo
+  SKUPPER_MYSQL_IP="$(${CLIENT_EXE} -n ${MYSQLSKUPPERNS} get svc mysqldb-v1 -o jsonpath='{.spec.clusterIPs[0]}')"
+  infomsg "MySQL IP over the Skupper link: ${SKUPPER_MYSQL_IP}"
+  infomsg "Configuring Bookinfo ratings-v2-mysql to talk to MySQL over the Skupper link via the ServiceEntry"
+  ${CLIENT_EXE} -n bookinfo set env deployment/ratings-v2-mysql MYSQL_DB_HOST="${SKUPPER_MYSQL_IP}"
+  ${CLIENT_EXE} -n bookinfo patch serviceentry mysqldb.test --type='json' -p='[{"op": "replace", "path": "/spec/addresses/0", "value": "'${SKUPPER_MYSQL_IP}'"}, {"op": "replace", "path": "/spec/endpoints/0/address", "value": "'${SKUPPER_MYSQL_IP}'"}]'
+  infomsg "Exposing MySQL Skupper Prometheus so its UI can be accessed"
+  ${CLIENT_EXE} -n ${MYSQLSKUPPERNS} expose svc skupper-prometheus
 }
 
 minikube_install_east_west_demo() {
@@ -419,9 +454,9 @@ minikube_install_east_west_demo() {
   ${SKUPPER_EXE} --context ${CLUSTER1_ISTIO} -n ${NAMESPACE_WEST} init --enable-console --enable-flow-collector
   ${SKUPPER_EXE} --context ${CLUSTER2_DB} -n ${NAMESPACE_EAST} init
 
-  rm -r "${SKUPPER_TOKEN_FILE}"
-  ${SKUPPER_EXE} --context ${CLUSTER1_ISTIO} -n ${NAMESPACE_WEST} token create "${SKUPPER_TOKEN_FILE}"
-  ${SKUPPER_EXE} --context ${CLUSTER2_DB} -n ${NAMESPACE_EAST} link create "${SKUPPER_TOKEN_FILE}"
+  rm -r "${SKUPPER_TOKEN_FILE_EW}"
+  ${SKUPPER_EXE} --context ${CLUSTER1_ISTIO} -n ${NAMESPACE_WEST} token create "${SKUPPER_TOKEN_FILE_EW}"
+  ${SKUPPER_EXE} --context ${CLUSTER2_DB} -n ${NAMESPACE_EAST} link create "${SKUPPER_TOKEN_FILE_EW}"
 
   ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} -n ${NAMESPACE_WEST} create deployment frontend --image quay.io/skupper/hello-world-frontend
   ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} -n ${NAMESPACE_WEST} patch deployment frontend --type=json -p='[{"op": "add", "path": "/spec/template/metadata/labels/version", "value":"1"}]'
@@ -468,9 +503,9 @@ openshift_install_east_west_demo() {
   openshift_login ${CLUSTER1_ISTIO} && ${SKUPPER_EXE} -n ${NAMESPACE_WEST} init --enable-console --enable-flow-collector
   openshift_login ${CLUSTER2_DB} && ${SKUPPER_EXE} -n ${NAMESPACE_EAST} init
 
-  rm -r "${SKUPPER_TOKEN_FILE}"
-  openshift_login ${CLUSTER1_ISTIO} && ${SKUPPER_EXE} -n ${NAMESPACE_WEST} token create "${SKUPPER_TOKEN_FILE}"
-  openshift_login ${CLUSTER2_DB} && ${SKUPPER_EXE} -n ${NAMESPACE_EAST} link create "${SKUPPER_TOKEN_FILE}"
+  rm -r "${SKUPPER_TOKEN_FILE_EW}"
+  openshift_login ${CLUSTER1_ISTIO} && ${SKUPPER_EXE} -n ${NAMESPACE_WEST} token create "${SKUPPER_TOKEN_FILE_EW}"
+  openshift_login ${CLUSTER2_DB} && ${SKUPPER_EXE} -n ${NAMESPACE_EAST} link create "${SKUPPER_TOKEN_FILE_EW}"
 
   openshift_login ${CLUSTER1_ISTIO} && ${CLIENT_EXE} -n ${NAMESPACE_WEST} create deployment frontend --image quay.io/skupper/hello-world-frontend
   ${CLIENT_EXE} -n ${NAMESPACE_WEST} patch deployment frontend --type=json -p='[{"op": "add", "path": "/spec/template/metadata/labels/version", "value":"1"}]'
@@ -666,8 +701,10 @@ elif [ "$_CMD" == "delete" ]; then
       ${CLIENT_EXE} get namespace bookinfo 2>/dev/null && ${HACK_SCRIPTS_DIR}/istio/install-bookinfo-demo.sh -c ${CLIENT_EXE} --delete-bookinfo true
       infomsg "Uninstalling Istio ..."
       ${CLIENT_EXE} get namespace istio-system 2>/dev/null && ${HACK_SCRIPTS_DIR}/istio/install-istio-via-istioctl.sh -c ${CLIENT_EXE} --delete-istio true
-      infomsg "Uninstalling Skupper pipe ..."
+      infomsg "Uninstalling Mongo Skupper pipe ..."
       ${CLIENT_EXE} get namespace ${MONGOSKUPPERNS} 2>/dev/null && ${CLIENT_EXE} delete namespace ${MONGOSKUPPERNS}
+      infomsg "Uninstalling MySQL Skupper pipe ..."
+      ${CLIENT_EXE} get namespace ${MYSQLSKUPPERNS} 2>/dev/null && ${CLIENT_EXE} delete namespace ${MYSQLSKUPPERNS}
 
       infomsg "Uninstalling ${NAMESPACE_WEST} namespace ..."
       ${CLIENT_EXE} get namespace ${NAMESPACE_WEST} 2>/dev/null && ${CLIENT_EXE} delete namespace ${NAMESPACE_WEST}
@@ -711,25 +748,46 @@ elif [ "$_CMD" == "kui" ]; then
     *) errormsg "Invalid cluster type" && exit 1 ;;
   esac
 
-elif [ "$_CMD" == "smetrics" ]; then
+elif [ "$_CMD" == "bui" ]; then
+
+  confirm_cluster_is_up "${CLUSTER1_ISTIO}"
+  infomsg "Opening browser tab to the Bookinfo UI"
+
+  case ${CLUSTER_TYPE} in
+    minikube) open_browser http://$(${CLIENT_EXE} --context ${CLUSTER1_ISTIO} -n bookinfo get svc productpage -ojsonpath='{.status.loadBalancer.ingress[0].ip}'):9080 ;;
+    openshift) open_browser http://$(${CLIENT_EXE} -n bookinfo get route productpage -ojsonpath='{.spec.host}') ;;
+    *) errormsg "Invalid cluster type" && exit 1 ;;
+  esac
+
+elif [ "$_CMD" == "smetricsmongo" -o "$_CMD" == "smetricsmysql" ]; then
+
+  case "${_CMD}" in
+    smetricsmongo) _skupper_ns="${MONGOSKUPPERNS}" ;;
+    smetricsmysql) _skupper_ns="${MYSQLSKUPPERNS}" ;;
+  esac
 
   confirm_cluster_is_up "${CLUSTER1_ISTIO}"
   infomsg "Dumping live metrics from the Skupper service controller"
 
   case ${CLUSTER_TYPE} in
-    minikube) ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} exec -it -n ${MONGOSKUPPERNS} -c service-controller deploy/skupper-service-controller -- curl -k https://localhost:8010/api/v1alpha1/metrics/ ;;
-    openshift) ${CLIENT_EXE} exec -it -n ${MONGOSKUPPERNS} -c service-controller deploy/skupper-service-controller -- curl -k https://localhost:8010/api/v1alpha1/metrics/ ;;
+    minikube) ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} exec -it -n ${_skupper_ns} -c service-controller deploy/skupper-service-controller -- curl -k https://localhost:8010/api/v1alpha1/metrics/ ;;
+    openshift) ${CLIENT_EXE} exec -it -n ${_skupper_ns} -c service-controller deploy/skupper-service-controller -- curl -k https://localhost:8010/api/v1alpha1/metrics/ ;;
     *) errormsg "Invalid cluster type" && exit 1 ;;
   esac
 
-elif [ "$_CMD" == "sprom" ]; then
+elif [ "$_CMD" == "sprommongo" -o "$_CMD" == "sprommysql" ]; then
+
+  case "${_CMD}" in
+    sprommongo) _skupper_ns="${MONGOSKUPPERNS}" ;;
+    sprommysql) _skupper_ns="${MYSQLSKUPPERNS}" ;;
+  esac
 
   confirm_cluster_is_up "${CLUSTER1_ISTIO}"
-  infomsg "Opening browser tab to the Skupper Prometheus UI"
+  infomsg "Opening browser tab to the Skupper Prometheus UI found in namespace [${_skupper_ns}]"
 
   case ${CLUSTER_TYPE} in
-    minikube) open_browser http://$(${CLIENT_EXE} --context ${CLUSTER1_ISTIO} -n ${MONGOSKUPPERNS} get svc skupper-prometheus -ojsonpath='{.status.loadBalancer.ingress[0].ip}'):9090 ;;
-    openshift) open_browser http://$(${CLIENT_EXE} -n ${MONGOSKUPPERNS} get route skupper-prometheus -ojsonpath='{.spec.host}') ;;
+    minikube) open_browser http://$(${CLIENT_EXE} --context ${CLUSTER1_ISTIO} -n ${_skupper_ns} get svc skupper-prometheus -ojsonpath='{.status.loadBalancer.ingress[0].ip}'):9090 ;;
+    openshift) open_browser http://$(${CLIENT_EXE} -n ${_skupper_ns} get route skupper-prometheus -ojsonpath='{.spec.host}') ;;
     *) errormsg "Invalid cluster type" && exit 1 ;;
   esac
 
@@ -738,7 +796,7 @@ elif [ "$_CMD" == "sstatus" ]; then
   confirm_cluster_is_up "${CLUSTER2_DB}"
   skupper_ui_username="admin"
 
-  infomsg "Status of Skupper link on [${CLUSTER2_DB}] cluster:"
+  infomsg "Status of Mongo Skupper link on [${CLUSTER2_DB}] cluster:"
 
   case ${CLUSTER_TYPE} in
     minikube) ${SKUPPER_EXE} --context ${CLUSTER2_DB} -n ${MONGONS} link status ;;
@@ -747,7 +805,7 @@ elif [ "$_CMD" == "sstatus" ]; then
   esac
 
   confirm_cluster_is_up "${CLUSTER1_ISTIO}"
-  infomsg "Status of Skupper link on [${CLUSTER1_ISTIO}] cluster:"
+  infomsg "Status of Mongo Skupper link on [${CLUSTER1_ISTIO}] cluster:"
 
   case ${CLUSTER_TYPE} in
     minikube) ${SKUPPER_EXE} --context ${CLUSTER1_ISTIO} -n ${MONGOSKUPPERNS} link status ;;
@@ -783,18 +841,23 @@ elif [ "$_CMD" == "sstatus" ]; then
     infomsg "East-West Demo Skupper UI URL (USERNAME=[${skupper_ui_username}], PASSWORD=[${east_west_demo_spass}]): ${east_west_demo_sui}"
   fi
 
-elif [ "$_CMD" == "sui" ]; then
+elif [ "$_CMD" == "suimongo" -o "$_CMD" == "suimysql" ]; then
+
+  case "${_CMD}" in
+    suimongo) _skupper_ns="${MONGOSKUPPERNS}" ;;
+    suimysql) _skupper_ns="${MYSQLSKUPPERNS}" ;;
+  esac
 
   confirm_cluster_is_up "${CLUSTER1_ISTIO}"
   skupper_ui_username="admin"
 
   case ${CLUSTER_TYPE} in
     minikube)
-      PASSWORD="$(${CLIENT_EXE} --context ${CLUSTER1_ISTIO} get secret -n ${MONGOSKUPPERNS} skupper-console-users -ojsonpath={.data.${skupper_ui_username}} | base64 -d)"
-      open_browser https://$(${CLIENT_EXE} --context ${CLUSTER1_ISTIO} -n ${MONGOSKUPPERNS} get svc skupper -ojsonpath='{.status.loadBalancer.ingress[0].ip}'):8010 ;;
+      PASSWORD="$(${CLIENT_EXE} --context ${CLUSTER1_ISTIO} get secret -n ${_skupper_ns} skupper-console-users -ojsonpath={.data.${skupper_ui_username}} | base64 -d)"
+      open_browser https://$(${CLIENT_EXE} --context ${CLUSTER1_ISTIO} -n ${_skupper_ns} get svc skupper -ojsonpath='{.status.loadBalancer.ingress[0].ip}'):8010 ;;
     openshift)
-      PASSWORD="$(${CLIENT_EXE} get secret -n ${MONGOSKUPPERNS} skupper-console-users -ojsonpath={.data.${skupper_ui_username}} | base64 -d)"
-      open_browser https://$(${CLIENT_EXE} -n ${MONGOSKUPPERNS} get route skupper -ojsonpath='{.spec.host}') ;;
+      PASSWORD="$(${CLIENT_EXE} get secret -n ${_skupper_ns} skupper-console-users -ojsonpath={.data.${skupper_ui_username}} | base64 -d)"
+      open_browser https://$(${CLIENT_EXE} -n ${_skupper_ns} get route skupper -ojsonpath='{.spec.host}') ;;
     *) errormsg "Invalid cluster type" && exit 1 ;;
   esac
 
