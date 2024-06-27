@@ -213,7 +213,7 @@ minikube_install_basic_demo() {
     if ! helm repo update kiali 2> /dev/null; then
       helm repo add kiali https://kiali.org/helm-charts
     fi
-    helm --kube-context ${CLUSTER1_ISTIO} upgrade --install --namespace istio-system --version ${KIALI_VERSION} --set auth.strategy=anonymous kiali-server kiali/kiali-server
+    helm --kube-context ${CLUSTER1_ISTIO} upgrade --install --namespace istio-system --version ${KIALI_VERSION} --set auth.strategy=anonymous --set deployment.service_type=LoadBalancer kiali-server kiali/kiali-server
   fi
 
   infomsg "Exposing Prometheus UI via LoadBalancer ..."
