@@ -7,11 +7,13 @@ import (
 	"time"
 
 	"github.com/prometheus/common/model"
+	"golang.org/x/exp/maps"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus"
+	"github.com/kiali/kiali/util/sliceutil"
 )
 
 const (
@@ -29,6 +31,7 @@ type ExtensionsAppender struct {
 	IncludeIdleEdges bool
 	QueryTime        int64 // unix time in seconds
 	Rates            graph.RequestedRates
+	ShowUnrooted     bool
 }
 
 // Name implements Appender
@@ -58,25 +61,28 @@ func (a ExtensionsAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo 
 
 	// Process the extensions defined in the config
 	for _, extension := range cfg.Extensions {
+		log.Infof("Extension %s", extension) // todo: remove
 		if !extension.Enabled {
 			continue
 		}
+		log.Infof("Running Extension %s", extension) // todo: remove
 		a.appendGraph(trafficMap, extension, globalInfo.PromClient)
 	}
 }
 
 func (a ExtensionsAppender) appendGraph(trafficMap graph.TrafficMap, ext config.ExtensionConfig, client *prometheus.Client) {
-	// Look for the extension's root node in the current traffic map (eg the skupper-router for the defined site).  If found, then we
-	// will query the extension metrics for extension traffic from the root.  Otherwise, skip extenstion traffic because this
-	// graph has no traffic to the root. (maybe a todo option: to always show extension traffic, based on an appender option)
-	rootNode, found := a.findRootNode(trafficMap, ext)
-	if !found {
-		// todo: debug level
-		log.Infof("Extension [%s] did not find root node in traffic map [%s:%s:%s]", ext.Name, ext.RootCluster, ext.RootNamespace, ext.RootName)
-		return
-	}
-	log.Infof("Extension [%s] found root node [%+v]", ext.Name, rootNode)
-
+	/*
+		// Look for the extension's root node in the current traffic map (eg the skupper-router for the defined site).  If found, then we
+		// will query the extension metrics for extension traffic from the root.  Otherwise, skip extenstion traffic because this
+		// graph has no traffic to the root. (maybe a todo option: to always show extension traffic, based on an appender option)
+		rootNode, found := a.findRootNode(trafficMap, ext)
+		if !found {
+			// todo: debug level
+			log.Infof("Extension [%s] did not find root node in traffic map [%s:%s:%s]", ext.Name, ext.RootCluster, ext.RootNamespace, ext.RootName)
+			return
+		}
+		log.Infof("Extension [%s] found root node [%+v]", ext.Name, rootNode)
+	*/
 	idleCondition := "> 0"
 	if a.IncludeIdleEdges {
 		idleCondition = ""
@@ -88,7 +94,7 @@ func (a ExtensionsAppender) appendGraph(trafficMap graph.TrafficMap, ext config.
 	if a.Rates.Http == graph.RateRequests || a.Rates.Grpc == graph.RateRequests {
 		// Grab all of the extension traffic for the time period, regardless of reporters or namespaces, in one shot.  This is a departure
 		// from the usual approach, but until it proves too heavy, let's give it a try...
-		groupBy := "dest_cluster, dest_namespace, dest_service, dest_version, flags, protocol, security, source_cluster, source_namespace, source_service, source_version, status_code"
+		groupBy := "dest_cluster, dest_namespace, dest_name, flags, protocol, security, source_cluster, source_is_root, source_namespace, source_name, status_code"
 		metric := "kiali_ext_requests_total"
 
 		query := fmt.Sprintf(`sum(rate(%s{extension="%s"} [%vs])) by (%s) %s`,
@@ -123,7 +129,7 @@ func (a ExtensionsAppender) appendGraph(trafficMap graph.TrafficMap, ext config.
 
 			// Grab all of the extension traffic for the time period, regardless of reporters or namespaces, in one shot.  This is a departure
 			// from the usual approach, but until it proves too heavy, let's give it a try...
-			groupBy := "dest_cluster, dest_namespace, dest_service, dest_version, flags, security, source_cluster, source_namespace, source_service, source_version"
+			groupBy := "dest_cluster, dest_namespace, dest_name, flags, security, source_cluster, source_is_root, source_namespace, source_name"
 
 			query := fmt.Sprintf(`sum(rate(%s{extension="%s"} [%vs])) by (%s) %s`,
 				metric,
@@ -153,37 +159,35 @@ func (a ExtensionsAppender) appendTrafficMap(trafficMap graph.TrafficMap, vector
 		val := float64(s.Value)
 
 		m := s.Metric
+		log.Infof("Processing TS %s", m.String()) // todo: remove
 		lSourceCluster, sourceClusterOk := m["source_cluster"]
+		lSourceIsRoot, sourceIsRootOk := m["source_is_root"]
 		lSourceNs, sourceNsOk := m["source_namespace"]
-		lSourceSvc, sourceSvcOk := m["source_service"]
-		lSourceVer, sourceVerOk := m["source_version"]
+		lSourceName, sourceNameOk := m["source_name"]
 		lDestCluster, destClusterOk := m["dest_cluster"]
 		lDestNs, destNsOk := m["dest_namespace"]
-		lDestSvc, destSvcOk := m["dest_service"]
-		lDestVer, destVerOk := m["dest_version"]
+		lDestName, destNameOk := m["dest_name"]
 
-		if !sourceClusterOk || !sourceNsOk || !sourceSvcOk || !sourceVerOk || !destClusterOk || !destNsOk || !destSvcOk || !destVerOk {
+		if !sourceClusterOk || !sourceIsRootOk || !sourceNsOk || !sourceNameOk || !destClusterOk || !destNsOk || !destNameOk {
 			log.Warningf("Skipping %s, missing expected TS labels", m.String())
 			continue
 		}
 
 		sourceCluster := string(lSourceCluster)
+		sourceIsRoot := string(lSourceIsRoot)
 		sourceNs := string(lSourceNs)
-		sourceSvc := string(lSourceSvc)
-		sourceVer := string(lSourceVer)
+		sourceName := string(lSourceName)
 		destCluster := string(lDestCluster)
 		destNs := string(lDestNs)
-		destSvc := string(lDestSvc)
-		destVer := string(lDestVer)
+		destName := string(lDestName)
 
 		flags := ""
 		if isRequests || protocol == graph.TCP.Name {
 			lFlags, flagsOk := m["flags"]
-			if !flagsOk {
-				log.Warningf("Skipping %s, missing expected TS labels", m.String())
-				continue
+			// "flags" is optional in the TS, if not supplied just leave it empty
+			if flagsOk {
+				flags = string(lFlags)
 			}
-			flags = string(lFlags)
 		}
 
 		var code string
@@ -204,17 +208,17 @@ func (a ExtensionsAppender) appendTrafficMap(trafficMap graph.TrafficMap, vector
 			}
 		}
 
-		a.addTraffic(trafficMap, metric, val, protocol, code, flags, sourceCluster, sourceNs, sourceSvc, sourceVer, destCluster, destNs, destSvc, destVer)
+		a.addTraffic(trafficMap, metric, val, protocol, code, flags, sourceCluster, sourceIsRoot, sourceNs, sourceName, destCluster, destNs, destName)
 	}
 }
 
-func (a ExtensionsAppender) addTraffic(trafficMap graph.TrafficMap, metric string, val float64, protocol, code, flags, sourceCluster, sourceNs, sourceSvc, sourceVer, destCluster, destNs, destSvc, destVer string) {
-	source, _, err := a.addNode(trafficMap, sourceCluster, sourceNs, sourceSvc, sourceVer, a.GraphType)
+func (a ExtensionsAppender) addTraffic(trafficMap graph.TrafficMap, metric string, val float64, protocol, code, flags, sourceCluster, sourceIsRoot, sourceNs, sourceName, destCluster, destNs, destName string) {
+	source, _, err := a.addNode(trafficMap, sourceIsRoot == "true", sourceCluster, sourceNs, sourceName, a.GraphType)
 	if err != nil {
 		log.Warningf("Skipping extension addTraffic (source) in extension, %s", err)
 		return
 	}
-	dest, _, err := a.addNode(trafficMap, destCluster, destNs, destSvc, destVer, a.GraphType)
+	dest, _, err := a.addNode(trafficMap, false, destCluster, destNs, destName, a.GraphType)
 	if err != nil {
 		log.Warningf("Skipping extension addTraffic (dest), %s", err)
 		return
@@ -224,9 +228,70 @@ func (a ExtensionsAppender) addTraffic(trafficMap graph.TrafficMap, metric strin
 	// processing the same information twice we keep track of the time series applied to a particular edge. The
 	// edgeTSHash incorporates information about the time series' source, destination and metric information,
 	// and uses that unique TS has to protect against applying the same intomation twice.
-	edgeTSHash := fmt.Sprintf("%x", md5.Sum([]byte(fmt.Sprintf("%s:%s:%s:%s:%s:%s", metric, source.Metadata[tsHash], dest.Metadata[tsHash], code, flags, destSvc))))
+	edgeTSHash := fmt.Sprintf("%x", md5.Sum([]byte(fmt.Sprintf("%s:%s:%s:%s:%s:%s", metric, source.Metadata[tsHash], dest.Metadata[tsHash], code, flags, destName))))
 
-	a.addEdgeTraffic(val, protocol, code, flags, destSvc, source, dest, edgeTSHash)
+	a.addEdgeTraffic(val, protocol, code, flags, destName, source, dest, edgeTSHash)
+}
+
+func (a ExtensionsAppender) addNode(trafficMap graph.TrafficMap, isRoot bool, cluster, namespace, name, graphType string) (*graph.Node, bool, error) {
+	id, nodeType, err := graph.Id(cluster, namespace, name, "", "", "", "", graphType)
+	if err != nil {
+		return nil, false, err
+	}
+	log.Infof("addNode id=%s, nodeType=%s", id, nodeType) // todo: remove
+	node, found := trafficMap[id]
+	if !found {
+		log.Infof("not found") // todo: remove
+		if isRoot {
+			log.Infof("is root") // todo: remove
+			// The supplied source information did not exactly match a node in the graph, see if we can make a good "guess"
+			node, found = a.findRootNode(trafficMap, cluster, namespace, name)
+			if found {
+				log.Infof("findRootNode found root!") // todo: remove
+			} else {
+				log.Infof("findRootNode found no root") // todo: remove
+				if a.ShowUnrooted {
+					log.Infof("add unrooted node") // todo: remove
+				} else {
+					return nil, false, fmt.Errorf("no root node found matching is_source_root=true, id=%s", id)
+				}
+			}
+		}
+		if !found {
+			log.Infof("adding node...") // todo: remove
+			namespace := namespace
+			newNode := graph.NewNodeExplicit(id, cluster, namespace, "", "", "", name, nodeType, a.GraphType)
+			node = newNode
+			trafficMap[id] = node
+		}
+	}
+	log.Infof("added node...") // todo: remove
+	node.Metadata["tsHash"] = timeSeriesHash(cluster, namespace, name, "", "", "", "")
+	return node, found, nil
+}
+
+// findRootNode tries to match a root node flagged in the metrics to an actual "leaf" node in the traffic graph.
+// TODO: This needs work or maybe just needs to go away.  It should maybe somehow involve version.
+func (a ExtensionsAppender) findRootNode(trafficMap graph.TrafficMap, cluster, namespace, name string) (*graph.Node, bool) {
+	roots := sliceutil.Filter(maps.Values(trafficMap), func(n *graph.Node) bool {
+		match := n.Cluster == cluster && n.Namespace == namespace && (n.Service == name || n.App == name || n.Workload == name)
+		log.Infof("match1 n.Cluster == %s && n.Namespace == %s && (n.Service == %s || n.App == %s || n.Workload == %s) = %s", cluster, namespace, name, name, name, match) // todo: remove
+		return n.Cluster == cluster && n.Namespace == namespace && (n.Service == name || n.App == name || n.Workload == name)
+	})
+	if len(roots) > 0 {
+		return roots[0], true
+	}
+
+	roots = sliceutil.Filter(maps.Values(trafficMap), func(n *graph.Node) bool {
+		match := n.Namespace == namespace && (n.Service == name || n.App == name || n.Workload == name)
+		log.Infof("match2 n.Namespace == %s && (n.Service == %s || n.App == %s || n.Workload == %s) = %s", namespace, name, name, name, match) // todo: remove
+		return n.Namespace == namespace && (n.Service == name || n.App == name || n.Workload == name)
+	})
+	if len(roots) > 0 {
+		return roots[0], true
+	}
+
+	return nil, false
 }
 
 // addEdgeTraffic uses edgeTSHash that the metric information has not been applied to the edge. Returns true
@@ -252,48 +317,6 @@ func (a ExtensionsAppender) addEdgeTraffic(val float64, protocol, code, flags, h
 	}
 
 	return false
-}
-
-func (a ExtensionsAppender) addNode(trafficMap graph.TrafficMap, cluster, serviceNs, service, version, graphType string) (*graph.Node, bool, error) {
-	id, nodeType, err := graph.Id(cluster, serviceNs, service, "", "", "", version, graphType)
-	if err != nil {
-		return nil, false, err
-	}
-	node, found := trafficMap[id]
-	if !found {
-		namespace := serviceNs
-		newNode := graph.NewNodeExplicit(id, cluster, namespace, "", "", version, service, nodeType, a.GraphType)
-		node = newNode
-		trafficMap[id] = node
-	}
-	node.Metadata["tsHash"] = timeSeriesHash(cluster, serviceNs, service, "", "", "", version)
-	return node, found, nil
-}
-
-// findRootNode tries to match the a configured root node to an actual node in the traffic graph.  Because
-// the node type can vary, it tries to match name in this order:
-//
-//	"workload" in order to match on a workload or versionedApp node
-//	"app"      in order to match on an app node
-//	"service"  in order to match on a service or service entry node
-func (a ExtensionsAppender) findRootNode(trafficMap graph.TrafficMap, ext config.ExtensionConfig) (*graph.Node, bool) {
-	// workload name
-	rootID, _, _ := graph.Id(ext.RootCluster, "", "", ext.RootNamespace, ext.RootName, "", "", a.GraphType)
-	if rootNode, found := trafficMap[rootID]; found {
-		return rootNode, found
-	}
-	// app name
-	rootID, _, _ = graph.Id(ext.RootCluster, "", "", ext.RootNamespace, "", ext.RootName, "", a.GraphType)
-	if rootNode, found := trafficMap[rootID]; found {
-		return rootNode, found
-	}
-	// service name
-	rootID, _, _ = graph.Id(ext.RootCluster, ext.RootNamespace, ext.RootName, "", "", "", "", a.GraphType)
-	if rootNode, found := trafficMap[rootID]; found {
-		return rootNode, found
-	}
-
-	return nil, false
 }
 
 func timeSeriesHash(cluster, serviceNs, service, workloadNs, workload, app, version string) string {
