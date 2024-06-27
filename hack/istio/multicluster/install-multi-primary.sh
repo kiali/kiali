@@ -42,8 +42,14 @@ create_crossnetwork_gateway() {
   if [ ! -z "${ISTIO_TAG}" ]; then
     local image_tag_arg="--set tag=${ISTIO_TAG}"
   fi
+  
   local gateway_yaml="$("${GEN_GATEWAY_SCRIPT}" --mesh "${MESH_ID}" --cluster "${clustername}" --network "${network}")"
-  printf "%s" "${gateway_yaml}" | "${ISTIOCTL}" install ${image_hub_arg} ${image_tag_arg:-} -y -f -
+  local profile_flag=""
+  if [ "${IS_OPENSHIFT}" == "true" ] || [ "${KIALI_AUTH_STRATEGY}" == "openshift" ]; then
+    profile_flag="--set profile=openshift"
+  fi
+
+  printf "%s" "${gateway_yaml}" | "${ISTIOCTL}" install ${profile_flag} ${image_hub_arg} ${image_tag_arg:-} -y -f -
   if [ "$?" != "0" ]; then
     echo "Failed to install crossnetwork gateway on cluster [${clustername}]"
     exit 1
@@ -241,8 +247,8 @@ source ${SCRIPT_DIR}/split-bookinfo.sh
 
 # Install Kiali if enabled
 if [ "${KIALI_ENABLED}" == "true" ]; then
-  if [ -z "${KEYCLOAK_ADDRESS}" ]; then
-    echo "Keycloak is not available for this cluster setup. Switching Kial to 'anonymous' mode."
+  if [ -z "${KEYCLOAK_ADDRESS}" ] && [ "${MANAGE_MINIKUBE}" == "true" ]; then
+    echo "Keycloak is not available for this cluster setup. Switching Kiali to 'anonymous' mode."
     export KIALI_AUTH_STRATEGY="anonymous"
   fi
   source ${SCRIPT_DIR}/deploy-kiali.sh

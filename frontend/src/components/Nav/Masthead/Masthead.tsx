@@ -51,7 +51,7 @@ export const MastheadItems: React.FC = () => {
                 <LanguageSwitch />
               </FlexItem>
             )}
-            <FlexItem>
+            <FlexItem data-test="user-dropdown">
               <UserDropdown />
             </FlexItem>
           </Flex>

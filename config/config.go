@@ -39,8 +39,6 @@ const (
 	AuthStrategyOpenId    = "openid"
 	AuthStrategyHeader    = "header"
 
-	TokenCookieName = "kiali-token"
-
 	// These constants are used for external services auth (Prometheus, Grafana ...) ; not for Kiali auth
 	AuthTypeBasic  = "basic"
 	AuthTypeBearer = "bearer"
@@ -1223,7 +1221,7 @@ func Validate(cfg Config) error {
 
 	// Check the ciphering key for sessions
 	signingKey := cfg.LoginToken.SigningKey
-	if err := ValidateSigningKey(signingKey, auth.Strategy); err != nil {
+	if err := validateSigningKey(signingKey, auth.Strategy); err != nil {
 		return err
 	}
 
@@ -1258,7 +1256,7 @@ func Validate(cfg Config) error {
 	return nil
 }
 
-func ValidateSigningKey(signingKey string, authStrategy string) error {
+func validateSigningKey(signingKey string, authStrategy string) error {
 	if authStrategy != AuthStrategyAnonymous {
 		if len(signingKey) != 16 && len(signingKey) != 24 && len(signingKey) != 32 {
 			return errors.New("signing key for sessions must be 16, 24 or 32 bytes length")

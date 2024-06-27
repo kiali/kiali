@@ -44,13 +44,25 @@ export const SessionTimeout: React.FC<SessionTimeoutProps> = (props: SessionTime
     <Button autoFocus={true} variant={ButtonVariant.primary} onClick={props.onDismiss}>
       OK
     </Button>,
-    <Button key="confirm" variant={ButtonVariant.secondary} onClick={props.onLogout}>
+    <Button
+      data-test="session-timeout-logout-btn"
+      key="confirm"
+      variant={ButtonVariant.secondary}
+      onClick={props.onLogout}
+    >
       Log Out
     </Button>
   ];
 
   return (
-    <Modal isOpen={props.show} onClose={defaultAction} actions={buttons} title="Session Timeout" width="40%">
+    <Modal
+      data-test="session-timeout-modal"
+      isOpen={props.show}
+      onClose={defaultAction}
+      actions={buttons}
+      title="Session Timeout"
+      width="40%"
+    >
       <span>
         <KialiIcon.Warning size="xl" color={PFColors.Warning} />
       </span>

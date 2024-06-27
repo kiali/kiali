@@ -59,7 +59,7 @@ func (o *K8SClientFactoryMock) GetClient(authInfo *api.AuthInfo, cluster string)
 }
 
 // Business Methods
-func (o *K8SClientFactoryMock) GetClients(authInfo *api.AuthInfo) (map[string]kubernetes.ClientInterface, error) {
+func (o *K8SClientFactoryMock) GetClients(map[string]*api.AuthInfo) (map[string]kubernetes.ClientInterface, error) {
 	o.lock.RLock()
 	defer o.lock.RUnlock()
 	return o.Clients, nil

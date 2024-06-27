@@ -38,11 +38,26 @@ type AuthController interface {
 	// ValidateSession restores a session previously created by the Authenticate function. The validity of
 	// the restored should be verified as much as possible by the implementing controllers.
 	// If the session is still valid, a populated UserSessionData is returned. Otherwise, nil is returned.
-	ValidateSession(r *http.Request, w http.ResponseWriter) (*UserSessionData, error)
+	ValidateSession(r *http.Request, w http.ResponseWriter) (UserSessions, error)
 
 	// TerminateSession performs the needed procedures to terminate an existing session. If there is no
 	// active session, nothing is performed. If there is some invalid session, it is cleared.
 	TerminateSession(r *http.Request, w http.ResponseWriter) error
+}
+
+// UserSessionsData is a map of cluster to UserSessionData.
+// It is used to store the user session data for each cluster
+// since each cluster can have its own unique session.
+// In some instances the auth info will be the same across all clusters
+// but in other instances the auth info could be unique across clusters.
+type UserSessions map[string]*UserSessionData
+
+func (u UserSessions) GetAuthInfos() map[string]*api.AuthInfo {
+	authInfos := make(map[string]*api.AuthInfo)
+	for cluster, session := range u {
+		authInfos[cluster] = session.AuthInfo
+	}
+	return authInfos
 }
 
 // UserSessionData userSessionData
@@ -92,4 +107,8 @@ func (e *AuthenticationFailureError) Error() string {
 	}
 
 	return e.Reason
+}
+
+func nonceCookieName(cluster string) string {
+	return NonceCookieName + "-" + cluster
 }

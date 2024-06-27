@@ -158,7 +158,8 @@ func TestClientCreatedWithClusterInfo(t *testing.T) {
 	assert.Contains(saClients[conf.KubernetesConfig.ClusterName].ClusterInfo().Name, conf.KubernetesConfig.ClusterName)
 
 	// User clients
-	userClients, err := clientFactory.GetClients(api.NewAuthInfo())
+	authInfo := map[string]*api.AuthInfo{testClusterName: api.NewAuthInfo(), conf.KubernetesConfig.ClusterName: api.NewAuthInfo()}
+	userClients, err := clientFactory.GetClients(authInfo)
 	require.NoError(err)
 
 	require.Contains(userClients, testClusterName)
@@ -187,8 +188,7 @@ func TestClientCreatedWithAuthStrategyAnonymous(t *testing.T) {
 	clientFactory := NewTestingClientFactory(t)
 
 	// Create a single initial test clients
-	authInfo := api.NewAuthInfo()
-	authInfo.Token = testUserToken
+	authInfo := map[string]*api.AuthInfo{testClusterName: {Token: testUserToken}}
 
 	// User clients
 	userClients, err := clientFactory.GetClients(authInfo)
@@ -219,8 +219,7 @@ func TestClientCreatedWithAuthStrategyOpenIdAndDisableRBAC(t *testing.T) {
 	clientFactory := NewTestingClientFactory(t)
 
 	// Create a single initial test clients
-	authInfo := api.NewAuthInfo()
-	authInfo.Token = testUserToken
+	authInfo := map[string]*api.AuthInfo{testClusterName: {Token: testUserToken}}
 
 	// User clients
 	userClients, err := clientFactory.GetClients(authInfo)
@@ -250,8 +249,7 @@ func TestClientCreatedWithAuthStrategyOpenIdAndDisableRBACFalse(t *testing.T) {
 	clientFactory := NewTestingClientFactory(t)
 
 	// Create a single initial test clients
-	authInfo := api.NewAuthInfo()
-	authInfo.Token = testUserToken
+	authInfo := map[string]*api.AuthInfo{testClusterName: {Token: testUserToken}}
 
 	// User clients
 	userClients, err := clientFactory.GetClients(authInfo)

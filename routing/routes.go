@@ -3,11 +3,13 @@ package routing
 import (
 	"net/http"
 
+	"golang.org/x/exp/maps"
+
 	"github.com/kiali/kiali/business"
-	"github.com/kiali/kiali/business/authentication"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/grafana"
 	"github.com/kiali/kiali/handlers"
+	"github.com/kiali/kiali/handlers/authentication"
 	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/cache"
@@ -35,9 +37,9 @@ func NewRoutes(
 	conf *config.Config,
 	kialiCache cache.KialiCache,
 	clientFactory kubernetes.ClientFactory,
+	cpm business.ControlPlaneMonitor,
 	prom prometheus.ClientInterface,
 	traceClientLoader func() tracing.ClientInterface,
-	cpm business.ControlPlaneMonitor,
 	authController authentication.AuthController,
 	grafana *grafana.Service,
 	discovery *istio.Discovery,
@@ -157,7 +159,7 @@ func NewRoutes(
 			"AuthenticationInfo",
 			"GET",
 			"/api/auth/info",
-			handlers.AuthenticationInfo(conf, authController),
+			handlers.AuthenticationInfo(conf, authController, maps.Keys(clientFactory.GetSAClients())),
 			false,
 		},
 		// swagger:route GET /status status getStatus
@@ -1141,7 +1143,7 @@ func NewRoutes(
 			"GraphNamespaces",
 			"GET",
 			"/api/namespaces/graph",
-			handlers.GraphNamespaces,
+			handlers.GraphNamespaces(conf, kialiCache, clientFactory, prom, cpm, traceClientLoader, grafana, discovery),
 			true,
 		},
 		// swagger:route GET /namespaces/{namespace}/aggregates/{aggregate}/{aggregateValue}/graph graphs graphAggregate
@@ -1162,7 +1164,7 @@ func NewRoutes(
 			"GraphAggregate",
 			"GET",
 			"/api/namespaces/{namespace}/aggregates/{aggregate}/{aggregateValue}/graph",
-			handlers.GraphNode,
+			handlers.GraphNode(conf, kialiCache, clientFactory, prom, cpm, traceClientLoader, grafana, discovery),
 			true,
 		},
 		// swagger:route GET /namespaces/{namespace}/aggregates/{aggregate}/{aggregateValue}/{service}/graph graphs graphAggregateByService
@@ -1183,7 +1185,7 @@ func NewRoutes(
 			"GraphAggregateByService",
 			"GET",
 			"/api/namespaces/{namespace}/aggregates/{aggregate}/{aggregateValue}/{service}/graph",
-			handlers.GraphNode,
+			handlers.GraphNode(conf, kialiCache, clientFactory, prom, cpm, traceClientLoader, grafana, discovery),
 			true,
 		},
 		// swagger:route GET /namespaces/{namespace}/applications/{app}/versions/{version}/graph graphs graphAppVersion
@@ -1204,7 +1206,7 @@ func NewRoutes(
 			"GraphAppVersion",
 			"GET",
 			"/api/namespaces/{namespace}/applications/{app}/versions/{version}/graph",
-			handlers.GraphNode,
+			handlers.GraphNode(conf, kialiCache, clientFactory, prom, cpm, traceClientLoader, grafana, discovery),
 			true,
 		},
 		// swagger:route GET /namespaces/{namespace}/applications/{app}/graph graphs graphApp
@@ -1225,7 +1227,7 @@ func NewRoutes(
 			"GraphApp",
 			"GET",
 			"/api/namespaces/{namespace}/applications/{app}/graph",
-			handlers.GraphNode,
+			handlers.GraphNode(conf, kialiCache, clientFactory, prom, cpm, traceClientLoader, grafana, discovery),
 			true,
 		},
 		// swagger:route GET /namespaces/{namespace}/services/{service}/graph graphs graphService
@@ -1246,7 +1248,7 @@ func NewRoutes(
 			"GraphService",
 			"GET",
 			"/api/namespaces/{namespace}/services/{service}/graph",
-			handlers.GraphNode,
+			handlers.GraphNode(conf, kialiCache, clientFactory, prom, cpm, traceClientLoader, grafana, discovery),
 			true,
 		},
 		// swagger:route GET /namespaces/{namespace}/workloads/{workload}/graph graphs graphWorkload
@@ -1267,7 +1269,7 @@ func NewRoutes(
 			"GraphWorkload",
 			"GET",
 			"/api/namespaces/{namespace}/workloads/{workload}/graph",
-			handlers.GraphNode,
+			handlers.GraphNode(conf, kialiCache, clientFactory, prom, cpm, traceClientLoader, grafana, discovery),
 			true,
 		},
 		// swagger:route GET /mesh/graph meshGraph
@@ -1288,7 +1290,7 @@ func NewRoutes(
 			"MeshGraph",
 			"GET",
 			"/api/mesh/graph",
-			handlers.MeshGraph(conf, clientFactory, kialiCache, grafana, discovery),
+			handlers.MeshGraph(conf, clientFactory, kialiCache, grafana, prom, traceClientLoader, discovery, cpm),
 			true,
 		},
 		// swagger:route GET /grafana integrations grafanaInfo

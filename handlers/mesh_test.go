@@ -19,6 +19,9 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/kubernetes/kubetest"
+	"github.com/kiali/kiali/prometheus"
+	"github.com/kiali/kiali/prometheus/prometheustest"
+	"github.com/kiali/kiali/tracing"
 )
 
 // Fails if resp status is non-200
@@ -52,8 +55,15 @@ func TestGetMeshGraph(t *testing.T) {
 	business.WithKialiCache(cache)
 	business.WithDiscovery(discovery)
 
-	authInfo := &api.AuthInfo{Token: "test"}
-	handler := handlers.MeshGraph(conf, cf, cache, grafana, discovery)
+	xapi := new(prometheustest.PromAPIMock)
+	prom, err := prometheus.NewClient()
+	require.NoError(err)
+	prom.Inject(xapi)
+	cpm := &business.FakeControlPlaneMonitor{}
+	traceLoader := func() tracing.ClientInterface { return nil }
+
+	authInfo := map[string]*api.AuthInfo{conf.KubernetesConfig.ClusterName: {Token: "test"}}
+	handler := handlers.MeshGraph(conf, cf, cache, grafana, prom, traceLoader, discovery, cpm)
 	server := httptest.NewServer(handlers.WithAuthInfo(authInfo, handler))
 	t.Cleanup(server.Close)
 

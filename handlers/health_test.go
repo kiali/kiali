@@ -17,7 +17,6 @@ import (
 	"k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/kiali/kiali/business"
-	"github.com/kiali/kiali/business/authentication"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/prometheus/prometheustest"
@@ -95,11 +94,12 @@ func setupClustersHealthEndpoint(t *testing.T, k8s *kubetest.FakeK8sClient) (*ht
 
 	mr := mux.NewRouter()
 
+	authInfo := map[string]*api.AuthInfo{conf.KubernetesConfig.ClusterName: {Token: "test"}}
 	mr.HandleFunc("/api/clusters/health", http.HandlerFunc(
-		func(w http.ResponseWriter, r *http.Request) {
-			context := authentication.SetAuthInfoContext(r.Context(), &api.AuthInfo{Token: "test"})
-			ClustersHealth(w, r.WithContext(context))
-		}))
+		WithAuthInfo(authInfo, func(w http.ResponseWriter, r *http.Request) {
+			ClustersHealth(w, r)
+		})),
+	)
 
 	ts := httptest.NewServer(mr)
 	t.Cleanup(ts.Close)

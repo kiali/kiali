@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	v1 "k8s.io/api/core/v1"
 	k8s_errors "k8s.io/apimachinery/pkg/api/errors"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -61,7 +62,8 @@ func TestTokenAuthControllerRejectsUserWithoutPrivilegesInAnyNamespace(t *testin
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
 	cache := cache.NewTestingCacheWithFactory(t, mockClientFactory, *conf)
 	discovery := istio.NewDiscovery(mockClientFactory.Clients, cache, conf)
-	controller := NewTokenAuthController(NewCookieSessionPersistor(conf), mockClientFactory, cache, conf, discovery)
+	controller, err := NewTokenAuthController(mockClientFactory, cache, conf, discovery)
+	require.NoError(t, err)
 	sData, err := controller.Authenticate(request, rr)
 
 	assert.Nil(t, sData)
@@ -87,7 +89,8 @@ func TestTokenAuthControllerRejectsInvalidToken(t *testing.T) {
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(forbiddenClient{k8s})
 	cache := cache.NewTestingCacheWithFactory(t, mockClientFactory, *conf)
 	discovery := istio.NewDiscovery(mockClientFactory.Clients, cache, conf)
-	controller := NewTokenAuthController(NewCookieSessionPersistor(conf), mockClientFactory, cache, conf, discovery)
+	controller, err := NewTokenAuthController(mockClientFactory, cache, conf, discovery)
+	require.NoError(t, err)
 
 	requestBody := strings.NewReader("token=Foo")
 	request := httptest.NewRequest(http.MethodPost, "/api/authenticate", requestBody)
@@ -111,11 +114,13 @@ func TestTokenAuthControllerRejectsEmptyToken(t *testing.T) {
 	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 
 	conf := config.NewConfig()
+	conf.LoginToken.SigningKey = "kiali67890123456"
 	k8s := kubetest.NewFakeK8sClient()
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
 	cache := cache.NewTestingCacheWithFactory(t, mockClientFactory, *conf)
 	discovery := istio.NewDiscovery(mockClientFactory.Clients, cache, conf)
-	controller := NewTokenAuthController(NewCookieSessionPersistor(conf), mockClientFactory, cache, conf, discovery)
+	controller, err := NewTokenAuthController(mockClientFactory, cache, conf, discovery)
+	require.NoError(t, err)
 
 	rr := httptest.NewRecorder()
 	sData, err := controller.Authenticate(request, rr)
@@ -143,13 +148,17 @@ func TestTokenAuthControllerValidatesSessionCorrectly(t *testing.T) {
 
 	assert.Nil(t, err)
 	assert.NotNil(t, sData)
-	assert.Equal(t, testToken, sData.AuthInfo.Token)
-	assert.Equal(t, "k8s_user", sData.Username)
-	assert.Equal(t, time.Date(2021, 12, 1, 0, 0, 1, 0, time.UTC), sData.ExpiresOn)
+	session := sData[config.Get().KubernetesConfig.ClusterName]
+	require.NotNil(t, session)
+	assert.Equal(t, testToken, session.AuthInfo.Token)
+	assert.Equal(t, "k8s_user", session.Username)
+	assert.Equal(t, time.Date(2021, 12, 1, 0, 0, 1, 0, time.UTC), session.ExpiresOn)
 }
 
 func TestTokenAuthControllerValidatesSessionWithoutActiveSession(t *testing.T) {
+	require := require.New(t)
 	conf := config.NewConfig()
+	conf.LoginToken.SigningKey = "kiali67890123456"
 	config.Set(conf)
 	request := httptest.NewRequest(http.MethodGet, "/api/get", nil)
 
@@ -159,12 +168,12 @@ func TestTokenAuthControllerValidatesSessionWithoutActiveSession(t *testing.T) {
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
 	cache := cache.NewTestingCacheWithFactory(t, mockClientFactory, *conf)
 	discovery := istio.NewDiscovery(mockClientFactory.Clients, cache, conf)
+	controller, err := NewTokenAuthController(mockClientFactory, cache, conf, discovery)
+	require.NoError(err)
 
-	controller := NewTokenAuthController(NewCookieSessionPersistor(conf), mockClientFactory, cache, conf, discovery)
 	sData, err := controller.ValidateSession(request, rr)
-
-	assert.Nil(t, err)
-	assert.Nil(t, sData)
+	require.ErrorIs(err, ErrSessionNotFound)
+	require.Nil(sData)
 }
 
 type forbiddenClient struct {
@@ -175,7 +184,7 @@ func (f forbiddenClient) GetNamespaces(labelSelector string) ([]v1.Namespace, er
 	return nil, k8s_errors.NewForbidden(schema.GroupResource{Group: "v1", Resource: "namespaces"}, "", errors.New("err"))
 }
 
-func TestTokenAuthControllerValidatesSessionForUserWithMissingPrivileges(t *testing.T) {
+func TestTokenAuthControllerDoesNotValidateSessionForUserWithMissingPrivileges(t *testing.T) {
 	rr, _, _, controller := createValidSession(t)
 	response := rr.Result()
 
@@ -195,7 +204,7 @@ func TestTokenAuthControllerValidatesSessionForUserWithMissingPrivileges(t *test
 	rr = httptest.NewRecorder()
 	sData, err := controller.ValidateSession(request, rr)
 
-	assert.Nil(t, err)
+	assert.Error(t, err)
 	assert.Nil(t, sData)
 }
 
@@ -208,6 +217,7 @@ func createValidSession(t *testing.T) (*httptest.ResponseRecorder, *UserSessionD
 	conf := config.NewConfig()
 	conf.LoginToken.SigningKey = "kiali67890123456"
 	conf.LoginToken.ExpirationSeconds = 1
+	// conf.KubernetesConfig.ClusterName =
 	config.Set(conf)
 
 	// Returning some namespace when a cluster API call is made should have the result of
@@ -223,7 +233,8 @@ func createValidSession(t *testing.T) (*httptest.ResponseRecorder, *UserSessionD
 	cache := cache.NewTestingCacheWithFactory(t, mockClientFactory, *conf)
 	discovery := istio.NewDiscovery(mockClientFactory.Clients, cache, conf)
 
-	controller := NewTokenAuthController(NewCookieSessionPersistor(conf), mockClientFactory, cache, conf, discovery)
+	controller, err := NewTokenAuthController(mockClientFactory, cache, conf, discovery)
+	require.NoError(t, err)
 
 	sData, err := controller.Authenticate(request, rr)
 	if err != nil {

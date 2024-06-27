@@ -32,11 +32,6 @@ import (
 )
 
 const (
-	// OpenIdNonceCookieName is the cookie name used to store a nonce code
-	// when user is starting authentication with the external server. This code
-	// is used to mitigate replay attacks.
-	OpenIdNonceCookieName = config.TokenCookieName + "-openid-nonce"
-
 	// OpenIdServerCAFile is a certificate file used to connect to the OpenID server.
 	// This is for cases when the authentication server is using TLS with a self-signed
 	// certificate.
@@ -118,20 +113,25 @@ type OpenIdAuthController struct {
 	discovery     *istio.Discovery
 	kialiCache    cache.KialiCache
 	conf          *config.Config
-	SessionStore  SessionPersistor
+	SessionStore  SessionPersistor[oidcSessionPayload]
 }
 
 // NewOpenIdAuthController initializes a new controller for handling openid authentication, with the
 // given persistor and the given businessInstantiator. The businessInstantiator can be nil and
 // the initialized contoller will use the business.Get function.
-func NewOpenIdAuthController(persistor SessionPersistor, kialiCache cache.KialiCache, clientFactory kubernetes.ClientFactory, conf *config.Config, discovery *istio.Discovery) *OpenIdAuthController {
+func NewOpenIdAuthController(kialiCache cache.KialiCache, clientFactory kubernetes.ClientFactory, conf *config.Config, discovery *istio.Discovery) (*OpenIdAuthController, error) {
+	store, err := NewCookieSessionPersistor[oidcSessionPayload](conf)
+	if err != nil {
+		return nil, err
+	}
+
 	return &OpenIdAuthController{
+		SessionStore:  store,
+		kialiCache:    kialiCache,
 		clientFactory: clientFactory,
 		conf:          conf,
 		discovery:     discovery,
-		kialiCache:    kialiCache,
-		SessionStore:  persistor,
-	}
+	}, nil
 }
 
 // Authenticate was the entry point to handle OpenId authentication using the implicit flow. Support
@@ -182,20 +182,16 @@ func (c OpenIdAuthController) PostRoutes(router *mux.Router) {
 // the id_token is performed if Kiali is not configured to use the access_token. Also, if RBAC is enabled,
 // a privilege check is performed to verify that the user still has privileges to use Kiali.
 // If the session is still valid, a populated UserSessionData is returned. Otherwise, nil is returned.
-func (c OpenIdAuthController) ValidateSession(r *http.Request, w http.ResponseWriter) (*UserSessionData, error) {
+func (c OpenIdAuthController) ValidateSession(r *http.Request, w http.ResponseWriter) (UserSessions, error) {
 	// Restore a previously started session.
-	sPayload := oidcSessionPayload{}
-	sData, err := c.SessionStore.ReadSession(r, w, &sPayload)
+	sData, err := c.SessionStore.ReadSession(r, w, c.conf.KubernetesConfig.ClusterName)
 	if err != nil {
 		log.Warningf("Could not read the session: %v", err)
-		return nil, nil
-	}
-	if sData == nil {
-		return nil, nil
+		return nil, err
 	}
 
 	// The OpenId token must be present in the session
-	if len(sPayload.Token) == 0 {
+	if len(sData.Payload.Token) == 0 {
 		log.Warning("Session is invalid: the OIDC token is absent")
 		return nil, nil
 	}
@@ -206,7 +202,7 @@ func (c OpenIdAuthController) ValidateSession(r *http.Request, w http.ResponseWr
 	// and these sanity checks must be skipped.
 	if c.conf.Auth.OpenId.ApiToken != "access_token" {
 		// Parse the sid claim (id_token) to check that the sub claim matches to the configured "username" claim of the id_token
-		parsedOidcToken, err := jwt.ParseSigned(sPayload.Token)
+		parsedOidcToken, err := jwt.ParseSigned(sData.Payload.Token)
 		if err != nil {
 			log.Warningf("Cannot parse sid claim of the OIDC token!: %v", err)
 			return nil, fmt.Errorf("cannot parse sid claim of the OIDC token: %w", err)
@@ -219,17 +215,23 @@ func (c OpenIdAuthController) ValidateSession(r *http.Request, w http.ResponseWr
 			return nil, fmt.Errorf("cannot parse the payload of the id_token: %w", err)
 		}
 
-		if userClaim, ok := claims[c.conf.Auth.OpenId.UsernameClaim]; ok && sPayload.Subject != userClaim {
+		if userClaim, ok := claims[c.conf.Auth.OpenId.UsernameClaim]; ok && sData.Payload.Subject != userClaim {
 			log.Warning("Kiali token rejected because of subject claim mismatch")
 			return nil, nil
 		}
 	}
 
-	var token string
+	userSessions := make(UserSessions)
 	if !c.conf.Auth.OpenId.DisableRBAC {
 		// If RBAC is ENABLED, check that the user has privileges on the cluster.
-		authInfo := &api.AuthInfo{Token: sPayload.Token}
-		userClients, err := c.clientFactory.GetClients(authInfo)
+		for cluster := range c.clientFactory.GetSAClients() {
+			userSessions[cluster] = &UserSessionData{
+				ExpiresOn: sData.ExpiresOn,
+				Username:  sData.Payload.Subject,
+				AuthInfo:  &api.AuthInfo{Token: sData.Payload.Token},
+			}
+		}
+		userClients, err := c.clientFactory.GetClients(userSessions.GetAuthInfos())
 		if err != nil {
 			log.Warningf("Could not get the business layer!!: %v", err)
 			return nil, fmt.Errorf("unable to create a Kubernetes client from the auth token: %w", err)
@@ -239,30 +241,31 @@ func (c OpenIdAuthController) ValidateSession(r *http.Request, w http.ResponseWr
 		_, err = namespaceService.GetNamespaces(r.Context())
 		if err != nil {
 			log.Warningf("Token error!: %v", err)
-			return nil, nil
+			return nil, err
 		}
-
-		token = sPayload.Token
 	} else {
 		// If RBAC is off, it's assumed that the kubernetes cluster will reject the OpenId token.
 		// Instead, we use the Kiali token and this has the side effect that all users will share the
 		// same privileges.
-		token = c.clientFactory.GetSAHomeClusterClient().GetToken()
+		token := c.clientFactory.GetSAHomeClusterClient().GetToken()
+		for cluster := range c.clientFactory.GetSAClients() {
+			userSessions[cluster] = &UserSessionData{
+				ExpiresOn: sData.ExpiresOn,
+				Username:  sData.Payload.Subject,
+				AuthInfo:  &api.AuthInfo{Token: token},
+			}
+		}
 	}
 
-	// Internal header used to propagate the subject of the request for audit purposes
-	r.Header.Add("Kiali-User", sPayload.Subject)
+	// Internal header used to propagate the subject of the request for audit purpose
+	r.Header.Add("Kiali-User", sData.Payload.Subject)
 
-	return &UserSessionData{
-		ExpiresOn: sData.ExpiresOn,
-		Username:  sPayload.Subject,
-		AuthInfo:  &api.AuthInfo{Token: token},
-	}, nil
+	return userSessions, nil
 }
 
 // TerminateSession unconditionally terminates any existing session without any validation.
 func (c OpenIdAuthController) TerminateSession(r *http.Request, w http.ResponseWriter) error {
-	c.SessionStore.TerminateSession(r, w)
+	c.SessionStore.TerminateSession(r, w, c.conf.KubernetesConfig.ClusterName)
 	return nil
 }
 
@@ -300,7 +303,7 @@ func (c OpenIdAuthController) authenticateWithAuthorizationCodeFlow(r *http.Requ
 			fallbackHandler.ServeHTTP(w, r)
 		} else {
 			if flow.ShouldTerminateSession {
-				c.SessionStore.TerminateSession(r, w)
+				c.SessionStore.TerminateSession(r, w, c.conf.KubernetesConfig.ClusterName)
 			}
 			log.Warningf("Authentication rejected: %s", flow.Error.Error())
 			http.Redirect(w, r, fmt.Sprintf("%s?openid_error=%s", webRootWithSlash, url.QueryEscape(flow.Error.Error())), http.StatusFound)
@@ -369,7 +372,7 @@ func (c OpenIdAuthController) redirectToAuthServerHandler(w http.ResponseWriter,
 		Expires:  expirationTime,
 		HttpOnly: true,
 		Secure:   secureFlag,
-		Name:     OpenIdNonceCookieName,
+		Name:     nonceCookieName(c.conf.KubernetesConfig.ClusterName),
 		Path:     c.conf.Server.WebRoot,
 		SameSite: http.SameSiteLaxMode,
 		Value:    nonceCode,
@@ -393,7 +396,7 @@ func (c OpenIdAuthController) redirectToAuthServerHandler(w http.ResponseWriter,
 	// Although this "binds" the id_token returned by the IdP with the CSRF mitigation, this should be OK
 	// because we are including a "secret" key (i.e. should an attacker steal the nonce code, he still needs to know
 	// the Kiali's signing key).
-	csrfHash := sha256.Sum224([]byte(fmt.Sprintf("%s+%s+%s", nonceCode, nowTime.UTC().Format("060102150405"), getSigningKey(c.conf))))
+	csrfHash := sha256.Sum224([]byte(fmt.Sprintf("%s+%s+%s", nonceCode, nowTime.UTC().Format("060102150405"), c.conf.LoginToken.SigningKey)))
 
 	// Send redirection to browser
 	responseType := "code" // Request for the "authorization code" flow
@@ -488,7 +491,7 @@ func (p *openidFlowHelper) callbackCleanup(r *http.Request, w http.ResponseWrite
 
 	// Delete the nonce cookie since we no longer need it.
 	deleteNonceCookie := http.Cookie{
-		Name:     OpenIdNonceCookieName,
+		Name:     nonceCookieName(p.conf.KubernetesConfig.ClusterName),
 		Expires:  time.Unix(0, 0),
 		HttpOnly: true,
 		Secure:   secureFlag,
@@ -514,7 +517,7 @@ func (p *openidFlowHelper) extractOpenIdCallbackParams(r *http.Request) *openidF
 
 	// Get the nonce code hash
 	var nonceCookie *http.Cookie
-	if nonceCookie, err = r.Cookie(OpenIdNonceCookieName); err == nil {
+	if nonceCookie, err = r.Cookie(nonceCookieName(p.conf.KubernetesConfig.ClusterName)); err == nil {
 		p.Nonce = nonceCookie.Value
 
 		hash := sha256.Sum224([]byte(nonceCookie.Value))
@@ -637,16 +640,22 @@ func (p *openidFlowHelper) checkUserPrivileges() *openidFlowHelper {
 }
 
 // createSession asks the SessionPersistor to start a session.
-func (p *openidFlowHelper) createSession(r *http.Request, w http.ResponseWriter, sessionStore SessionPersistor) *oidcSessionPayload {
+func (p *openidFlowHelper) createSession(r *http.Request, w http.ResponseWriter, sessionStore SessionPersistor[oidcSessionPayload]) *oidcSessionPayload {
 	// Do nothing if there was an error in previous flow steps.
 	if p.Error != nil {
 		return nil
 	}
 
 	sPayload := buildSessionPayload(p)
-	err := sessionStore.CreateSession(r, w, config.AuthStrategyOpenId, p.ExpiresOn, sPayload)
+	sessionData, err := NewSessionData(p.conf.KubernetesConfig.ClusterName, config.AuthStrategyOpenId, p.ExpiresOn, sPayload)
 	if err != nil {
 		p.Error = err
+		return nil
+	}
+
+	if err := sessionStore.CreateSession(r, w, *sessionData); err != nil {
+		p.Error = err
+		return nil
 	}
 
 	return sPayload
@@ -751,7 +760,7 @@ func (p *openidFlowHelper) validateOpenIdState() *openidFlowHelper {
 	separator := strings.LastIndexByte(state, '-')
 	if separator != -1 {
 		csrfToken, timestamp := state[:separator], state[separator+1:]
-		csrfHash := sha256.Sum224([]byte(fmt.Sprintf("%s+%s+%s", p.Nonce, timestamp, getSigningKey(p.conf))))
+		csrfHash := sha256.Sum224([]byte(fmt.Sprintf("%s+%s+%s", p.Nonce, timestamp, p.conf.LoginToken.SigningKey)))
 
 		if fmt.Sprintf("%x", csrfHash) != csrfToken {
 			p.Error = &AuthenticationFailureError{
@@ -954,7 +963,7 @@ func createHttpClient(conf *config.Config, toUrl string) (*http.Client, error) {
 func isOpenIdCodeFlowPossible(conf *config.Config) bool {
 	// Kiali's signing key length must be 16, 24 or 32 bytes in order to be able to use
 	// encoded cookies.
-	switch len(getSigningKey(conf)) {
+	switch len(conf.LoginToken.SigningKey) {
 	case 16, 24, 32:
 	default:
 		log.Warningf("Cannot use OpenId authorization code flow because signing key is not 16, 24 nor 32 bytes long")
@@ -1365,10 +1374,12 @@ func validateOpenIdTokenInHouse(openIdParams *openidFlowHelper) error {
 // allow a login to Kiali.
 func verifyOpenIdUserAccess(token string, clientFactory kubernetes.ClientFactory, kialiCache cache.KialiCache, conf *config.Config, discovery *istio.Discovery) (int, string, error) {
 	authInfo := &api.AuthInfo{Token: token}
-	userClients, err := clientFactory.GetClients(authInfo)
+	// TODO: Multicluster
+	userClient, err := clientFactory.GetClient(authInfo, conf.KubernetesConfig.ClusterName)
 	if err != nil {
 		return http.StatusInternalServerError, "Unable to create a Kubernetes client from the auth token", err
 	}
+	userClients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: userClient}
 
 	namespaceService := business.NewNamespaceService(userClients, clientFactory.GetSAClients(), kialiCache, conf, discovery)
 
@@ -1386,3 +1397,6 @@ func verifyOpenIdUserAccess(token string, clientFactory kubernetes.ClientFactory
 
 	return http.StatusOK, "", nil
 }
+
+// Interface guard to ensure that headerAuthController implements the AuthController interface.
+var _ AuthController = &OpenIdAuthController{}

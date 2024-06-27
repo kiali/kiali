@@ -25,10 +25,11 @@ function namespacesPerCluster(namespaces: Namespace[]): Map<string, string[]> {
 
 export const INITIAL_NAMESPACE_STATE: NamespaceState = {
   activeNamespaces: [],
+  filter: '',
   isFetching: false,
   items: [],
   lastUpdated: undefined,
-  filter: ''
+  namespacesPerCluster: new Map<string, string[]>()
 };
 
 export const NamespaceStateReducer = (

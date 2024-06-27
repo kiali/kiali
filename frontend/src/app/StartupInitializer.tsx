@@ -39,15 +39,20 @@ class InitializerComponent extends React.Component<InitializerComponentProps, In
     try {
       const authConfig = await API.getAuthInfo();
       authenticationConfig.authorizationEndpoint = authConfig.data.authorizationEndpoint;
+      authenticationConfig.authorizationEndpointPerCluster = authConfig.data.authorizationEndpointPerCluster;
       authenticationConfig.logoutEndpoint = authConfig.data.logoutEndpoint;
       authenticationConfig.logoutRedirect = authConfig.data.logoutRedirect;
       authenticationConfig.strategy = authConfig.data.strategy;
 
       if (authConfig.data.sessionInfo.expiresOn && authConfig.data.sessionInfo.username) {
-        this.props.setInitialAuthentication({
+        const intialInfo = {
           username: authConfig.data.sessionInfo.username,
           expiresOn: authConfig.data.sessionInfo.expiresOn
-        });
+        };
+        if (authConfig.data.sessionInfo.clusterInfo !== undefined) {
+          intialInfo['clusterInfo'] = authConfig.data.sessionInfo.clusterInfo;
+        }
+        this.props.setInitialAuthentication(intialInfo);
       }
 
       this.props.onInitializationFinished();

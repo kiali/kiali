@@ -116,6 +116,19 @@ Then('user fills in a valid password', () => {
   }
 });
 
+Then('user fills in a valid password for {string} cluster', (cluster: string) => {
+  if (auth_strategy === 'openshift') {
+    const username = Cypress.env(`${cluster.toUpperCase()}_USERNAME`);
+    const password = Cypress.env(`${cluster.toUpperCase()}_PASSWD`);
+    cy.log(`Log in as user with valid password: ${username}`);
+
+    cy.get('#inputUsername').clear().type(`${username}`);
+
+    cy.get('#inputPassword').type(`${password}`);
+    cy.get('button[type="submit"]').click();
+  }
+});
+
 Then('user sees the Overview page', () => {
   cy.url().should('include', 'overview');
 });
@@ -134,9 +147,50 @@ Then('the error description is in the url', () => {
   cy.url().should('include', 'openshift_error');
 });
 
+Then('user sees the {string} clusters in the profile dropdown', (clusters: string) => {
+  cy.getBySel('user-dropdown').click();
+  clusters.split(',').forEach(cluster => {
+    cy.getBySel('user-dropdown').contains(cluster).should('be.visible');
+  });
+});
+
+Then('user clicks the {string} cluster in the profile dropdown', (cluster: string) => {
+  cy.getBySel('user-dropdown').then($button => {
+    if ($button.attr('aria-expanded') === 'false') {
+      cy.wrap($button).click();
+    }
+  });
+  cy.getBySel('user-dropdown').contains(`Login to ${cluster}`).should('be.visible').click();
+});
+
+Then('user session is expiring soon', () => {
+  cy.intercept('GET', '**/api/auth/info', req => {
+    req.continue(res => {
+      res.body.sessionInfo.expiresOn = new Date(Date.now() + 10000).toISOString();
+    });
+  });
+});
+
+Then('user sees the session timeout modal', () => {
+  cy.getBySel('session-timeout-modal').should('be.visible');
+});
+
+Then('user clicks logout on the session timeout modal', () => {
+  cy.getBySel('session-timeout-logout-btn').should('be.visible').click();
+});
+
 Before({ tags: '@openshift' }, function () {
   if (auth_strategy !== 'openshift') {
     cy.log('Not running on Openshift, skipping openshift tests');
+    this.skip();
+  }
+});
+
+Before({ tags: '@requireslogin' }, function () {
+  if (auth_strategy === 'anonymous') {
+    cy.log(
+      "You are using 'anonymous' auth strategy. This test requires an auth strategy that has some form of login and 'anonymous' does not. Skipping this test"
+    );
     this.skip();
   }
 });

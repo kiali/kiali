@@ -20,10 +20,8 @@ import (
 	core_v1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/kiali/kiali/business"
-	"github.com/kiali/kiali/business/authentication"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/grafana"
 	"github.com/kiali/kiali/istio"
@@ -138,13 +136,11 @@ trustDomain: cluster.local
 	factory := kubetest.NewK8SClientFactoryMock(nil)
 	factory.SetClients(clients)
 
-	mockClientFactory := kubetest.NewK8SClientFactoryMock(nil)
-	mockClientFactory.SetClients(clients)
-	cache := cache.NewTestingCacheWithFactory(t, mockClientFactory, *conf)
+	cache := cache.NewTestingCacheWithFactory(t, factory, *conf)
 	discovery := istio.NewDiscovery(clients, cache, conf)
 	business.WithDiscovery(discovery)
 	business.WithKialiCache(cache)
-	business.SetWithBackends(mockClientFactory, nil)
+	business.SetWithBackends(factory, nil)
 	layer := business.NewWithBackends(clients, clients, nil, nil)
 
 	meshDef, err := discovery.Mesh(context.TODO())
@@ -238,20 +234,15 @@ func TestMeshGraph(t *testing.T) {
 
 	globalInfo.IstioStatusGetter = &fakeMeshStatusGetter{}
 
-	var fut func(ctx context.Context, globalInfo *mesh.AppenderGlobalInfo, o mesh.Options) (int, interface{})
-
 	mr := mux.NewRouter()
-	mr.HandleFunc("/api/mesh/graph", http.HandlerFunc(
-		func(w http.ResponseWriter, r *http.Request) {
-			context := authentication.SetAuthInfoContext(r.Context(), &api.AuthInfo{Token: "test"})
-			code, config := fut(context, globalInfo, mesh.NewOptions(r.WithContext(context)))
-			respond(w, code, config)
-		}))
+	mr.HandleFunc("/api/mesh/graph", func(w http.ResponseWriter, r *http.Request) {
+		code, config := graphMesh(r.Context(), globalInfo, mesh.NewOptions(r, &globalInfo.Business.Namespace))
+		respond(w, code, config)
+	})
 
 	ts := httptest.NewServer(mr)
 	defer ts.Close()
 
-	fut = graphMesh
 	url := ts.URL + "/api/mesh/graph?queryTime=1523364075"
 	resp, err := http.Get(url)
 	if err != nil {

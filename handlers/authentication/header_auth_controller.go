@@ -1,6 +1,8 @@
 package authentication
 
 import (
+	"errors"
+	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -22,7 +24,7 @@ import (
 type headerAuthController struct {
 	homeClusterSAClient kubernetes.ClientInterface
 	// SessionStore persists the session between HTTP requests.
-	SessionStore SessionPersistor
+	SessionStore SessionPersistor[headerSessionPayload]
 }
 
 // headerSessionPayload is a helper type used as session data storage. An instance
@@ -39,11 +41,16 @@ type headerSessionPayload struct {
 // NewHeaderAuthController initializes a new controller for allowing already authenticated requests, with the
 // given persistor and the given businessInstantiator. The businessInstantiator can be nil and
 // the initialized controller will use the business.Get function.
-func NewHeaderAuthController(persistor SessionPersistor, homeClusterSAClient kubernetes.ClientInterface) *headerAuthController {
+func NewHeaderAuthController(conf *config.Config, homeClusterSAClient kubernetes.ClientInterface) (*headerAuthController, error) {
+	store, err := NewCookieSessionPersistor[headerSessionPayload](conf)
+	if err != nil {
+		return nil, err
+	}
+
 	return &headerAuthController{
 		homeClusterSAClient: homeClusterSAClient,
-		SessionStore:        persistor,
-	}
+		SessionStore:        store,
+	}, nil
 }
 
 // Authenticate handles an HTTP request that contains credentials passed in HTTP headers.
@@ -56,7 +63,7 @@ func (c headerAuthController) Authenticate(r *http.Request, w http.ResponseWrite
 	authInfo := c.getTokenStringFromHeader(r)
 
 	if authInfo == nil || authInfo.Token == "" {
-		c.SessionStore.TerminateSession(r, w)
+		c.SessionStore.TerminateSession(r, w, config.Get().KubernetesConfig.ClusterName)
 		return nil, &AuthenticationFailureError{
 			HttpStatus: http.StatusUnauthorized,
 			Reason:     "Token is missing",
@@ -82,8 +89,12 @@ func (c headerAuthController) Authenticate(r *http.Request, w http.ResponseWrite
 
 	// Create the session
 	timeExpire := util.Clock.Now().Add(time.Second * time.Duration(config.Get().LoginToken.ExpirationSeconds))
-	err = c.SessionStore.CreateSession(r, w, config.AuthStrategyHeader, timeExpire, headerSessionPayload{Token: authInfo.Token, Subject: tokenSubject})
+	sessionData, err := NewSessionData(config.Get().KubernetesConfig.ClusterName, config.AuthStrategyHeader, timeExpire, &headerSessionPayload{Token: authInfo.Token, Subject: tokenSubject})
 	if err != nil {
+		return nil, err
+	}
+
+	if err := c.SessionStore.CreateSession(r, w, *sessionData); err != nil {
 		return nil, err
 	}
 
@@ -96,20 +107,20 @@ func (c headerAuthController) Authenticate(r *http.Request, w http.ResponseWrite
 
 // ValidateSession checks if credentials are available in HTTP headers. If they are present, a populated
 // UserSessionData is returned. Otherwise, nil is returned.
-func (c headerAuthController) ValidateSession(r *http.Request, w http.ResponseWriter) (*UserSessionData, error) {
+func (c headerAuthController) ValidateSession(r *http.Request, w http.ResponseWriter) (UserSessions, error) {
 	log.Tracef("Using header for authentication, Url: [%s]", r.URL.String())
 
-	sPayload := headerSessionPayload{}
-	sData, err := c.SessionStore.ReadSession(r, w, &sPayload)
-	if err != nil {
+	sData, err := c.SessionStore.ReadSession(r, w, config.Get().KubernetesConfig.ClusterName)
+	if err != nil && !errors.Is(err, ErrSessionNotFound) {
 		log.Warningf("Could not read the session: %v", err)
 		return nil, err
 	}
 
+	// If session cookie is not found try to read the token from the headers.
 	authInfo := c.getTokenStringFromHeader(r)
 	if authInfo == nil || authInfo.Token == "" {
 		// No token in HTTP headers, means no session.
-		return nil, nil
+		return nil, fmt.Errorf("session %w: no token in HTTP headers and kiali cookie not present", ErrSessionNotFound)
 	}
 
 	// A token in HTTP headers means there is a valid session, even if our cookies have
@@ -123,19 +134,21 @@ func (c headerAuthController) ValidateSession(r *http.Request, w http.ResponseWr
 		subject = ""
 	} else {
 		expiration = sData.ExpiresOn
-		subject = sPayload.Subject
+		subject = sData.Payload.Subject
 	}
 
-	return &UserSessionData{
-		ExpiresOn: expiration,
-		Username:  subject,
-		AuthInfo:  authInfo,
+	return UserSessions{
+		config.Get().KubernetesConfig.ClusterName: &UserSessionData{
+			ExpiresOn: expiration,
+			Username:  subject,
+			AuthInfo:  authInfo,
+		},
 	}, nil
 }
 
 // TerminateSession unconditionally terminates any existing session without any validation.
 func (c headerAuthController) TerminateSession(r *http.Request, w http.ResponseWriter) error {
-	c.SessionStore.TerminateSession(r, w)
+	c.SessionStore.TerminateSession(r, w, config.Get().KubernetesConfig.ClusterName)
 	return nil
 }
 
@@ -179,3 +192,6 @@ func (c headerAuthController) getTokenStringFromHeader(r *http.Request) *api.Aut
 
 	return authInfo
 }
+
+// Interface guard to ensure that headerAuthController implements the AuthController interface.
+var _ AuthController = &headerAuthController{}

@@ -6,7 +6,6 @@ package business
 */
 
 import (
-	"slices"
 	"testing"
 
 	"github.com/kiali/kiali/config"
@@ -70,14 +69,4 @@ func WithControlPlaneMonitor(cpm ControlPlaneMonitor) {
 // WithDiscovery is a testing func that lets you replace the global discovery var.
 func WithDiscovery(disc meshDiscovery) {
 	discovery = disc
-}
-
-// FindOrFail will find an element in a slice or fail the test.
-func FindOrFail[T any](t *testing.T, s []T, f func(T) bool) T {
-	t.Helper()
-	idx := slices.IndexFunc(s, f)
-	if idx == -1 {
-		t.Fatal("Element not in slice")
-	}
-	return s[idx]
 }

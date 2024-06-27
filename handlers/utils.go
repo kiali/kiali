@@ -10,11 +10,16 @@ import (
 	"k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/kiali/kiali/business"
-	"github.com/kiali/kiali/business/authentication"
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/grafana"
+	"github.com/kiali/kiali/handlers/authentication"
+	"github.com/kiali/kiali/istio"
+	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus"
+	"github.com/kiali/kiali/tracing"
 )
 
 type promClientSupplier func() (*prometheus.Client, error)
@@ -145,10 +150,10 @@ func createMetricsServiceForNamespaces(w http.ResponseWriter, r *http.Request, p
 }
 
 // getAuthInfo retrieves the token from the request's context
-func getAuthInfo(r *http.Request) (*api.AuthInfo, error) {
+func getAuthInfo(r *http.Request) (map[string]*api.AuthInfo, error) {
 	authInfoContext := authentication.GetAuthInfoContext(r.Context())
 	if authInfoContext != nil {
-		if authInfo, ok := authInfoContext.(*api.AuthInfo); ok {
+		if authInfo, ok := authInfoContext.(map[string]*api.AuthInfo); ok {
 			return authInfo, nil
 		} else {
 			return nil, errors.New("authInfo is not of type *api.AuthInfo")
@@ -176,4 +181,28 @@ func clusterNameFromQuery(queryParams url.Values) string {
 		cluster = config.Get().KubernetesConfig.ClusterName
 	}
 	return cluster
+}
+
+func getLayer(
+	r *http.Request,
+	conf *config.Config,
+	kialiCache cache.KialiCache,
+	clientFactory kubernetes.ClientFactory,
+	cpm business.ControlPlaneMonitor,
+	prom prometheus.ClientInterface,
+	traceClientLoader func() tracing.ClientInterface,
+	grafana *grafana.Service,
+	discovery *istio.Discovery,
+) (*business.Layer, error) {
+	authInfo, err := getAuthInfo(r)
+	if err != nil {
+		return nil, err
+	}
+
+	layer, err := business.NewLayer(conf, kialiCache, clientFactory, prom, traceClientLoader(), cpm, grafana, discovery, authInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	return layer, nil
 }
