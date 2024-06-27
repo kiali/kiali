@@ -2,7 +2,7 @@ import * as React from 'react';
 import { K8sRules, MOVE_TYPE, K8sRule } from './K8sRequestRouting/K8sRules';
 import { K8sRuleBuilder } from './K8sRequestRouting/K8sRuleBuilder';
 import { K8sRouteBackendRef } from './K8sTrafficShifting';
-import { EXACT, PATH, METHOD, GET, HEADERS, QUERY_PARAMS, GRPC } from './K8sRequestRouting/K8sMatchBuilder';
+import { EXACT, PATH, METHOD, GET, HEADERS, QUERY_PARAMS } from './K8sRequestRouting/K8sMatchBuilder';
 import { getDefaultBackendRefs, getDefaultService } from './WizardActions';
 import { ServiceOverview } from '../../types/ServiceList';
 import { REMOVE, REQ_MOD, RESP_MOD, SET, HTTP, SC301, REQ_RED, REQ_MIR } from './K8sRequestRouting/K8sFilterBuilder';
@@ -48,6 +48,7 @@ const MSG_HOSTNAME_NON_EMPTY = 'Hostname is incorrect';
 const MSG_PORT_NON_EMPTY = 'Port is incorrect';
 const MSG_QUERY_NAME_NON_EMPTY = 'Query name must be non empty';
 const MSG_QUERY_VALUE_NON_EMPTY = 'Query value must be non empty';
+const MSG_VALUE_NON_EMPTY = 'Value must be non empty';
 
 export class K8sRequestRouting extends React.Component<Props, State> {
   constructor(props: Props) {
@@ -110,23 +111,37 @@ export class K8sRequestRouting extends React.Component<Props, State> {
 
   onAddMatch = (): void => {
     this.setState(prevState => {
-      let newMatch: string;
-      if (prevState.category === PATH) {
-        newMatch = `${prevState.category} ${prevState.operator} ${prevState.matchValue}`;
-      } else if (prevState.category === HEADERS) {
-        newMatch = `${prevState.category} [${prevState.headerName}] ${prevState.operator} ${prevState.matchValue}`;
-      } else if (prevState.category === QUERY_PARAMS) {
-        newMatch = `${prevState.category} ${prevState.queryParamName} ${prevState.operator} ${prevState.matchValue}`;
-      } else if (prevState.category === METHOD || this.props.protocol === GRPC) {
-        newMatch = `${prevState.category} ${prevState.methodName} ${prevState.operator} ${prevState.methodService}`;
-      } else {
+      let newMatch = '';
+      let validationMsg = '';
+      if (prevState.category === METHOD && this.props.protocol === HTTP) {
         newMatch = `${prevState.category} ${prevState.operator}`;
+      } else {
+        if (this.state.matchValue !== '') {
+          if (prevState.category === PATH) {
+            newMatch = `${prevState.category} ${prevState.operator} ${prevState.matchValue}`;
+          } else if (prevState.category === HEADERS) {
+            newMatch = `${prevState.category} [${prevState.headerName}] ${prevState.operator} ${prevState.matchValue}`;
+          } else if (prevState.category === QUERY_PARAMS) {
+            newMatch = `${prevState.category} ${prevState.queryParamName} ${prevState.operator} ${prevState.matchValue}`;
+          } else {
+            // prevState.category === METHOD && this.props.protocol === GRPC
+            newMatch = `${prevState.category} ${prevState.methodName} ${prevState.operator} ${prevState.methodService}`;
+          }
+        } else {
+          if (prevState.category === HEADERS) {
+            validationMsg = MSG_HEADER_VALUE_NON_EMPTY;
+          } else {
+            // for the rest of categories display general message
+            validationMsg = MSG_VALUE_NON_EMPTY;
+          }
+        }
       }
-      if (!prevState.matches.includes(newMatch)) {
+      if (newMatch !== '' && !prevState.matches.includes(newMatch)) {
         prevState.matches.push(newMatch);
       }
       return {
         matches: prevState.matches,
+        validationMsg: validationMsg,
         headerName: '',
         queryParamName: '',
         matchValue: ''

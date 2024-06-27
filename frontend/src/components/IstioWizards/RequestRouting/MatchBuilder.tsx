@@ -14,15 +14,15 @@ import {
 
 type MatchBuilderProps = {
   category: string;
-  operator: string;
   headerName: string;
-  matchValue: string;
   isValid: boolean;
-  onSelectCategory: (category: string) => void;
-  onHeaderNameChange: (value: string) => void;
-  onSelectOperator: (operator: string) => void;
-  onMatchValueChange: (value: string) => void;
+  matchValue: string;
   onAddMatch: () => void;
+  onHeaderNameChange: (value: string) => void;
+  onMatchValueChange: (value: string) => void;
+  onSelectCategory: (category: string) => void;
+  onSelectOperator: (operator: string) => void;
+  operator: string;
 };
 
 export const HEADERS = 'headers';
@@ -38,8 +38,8 @@ export const PREFIX = 'prefix';
 export const REGEX = 'regex';
 
 // Pseudo operator
-export const PRESENCE = 'is present';
-export const ANYTHING = '^.*$';
+export const PRESENCE = 'presents';
+export const ANYTHING = '{}';
 
 const opOptions: string[] = [EXACT, PREFIX, REGEX];
 
@@ -54,7 +54,6 @@ const placeholderText = {
 export const MatchBuilder: React.FC<MatchBuilderProps> = (props: MatchBuilderProps) => {
   const [isMatchDropdown, setIsMatchDropdown] = React.useState<boolean>(false);
   const [isOperatorDropdown, setIsOperatorDropdown] = React.useState<boolean>(false);
-
   const renderOpOptions: string[] = props.category === HEADERS ? [PRESENCE, ...opOptions] : opOptions;
 
   return (
@@ -77,14 +76,14 @@ export const MatchBuilder: React.FC<MatchBuilderProps> = (props: MatchBuilderPro
           <DropdownList>
             {matchOptions.map((mode, index) => (
               <DropdownItem
-                key={mode + '_' + index}
+                key={`${mode}_${index}`}
                 value={mode}
                 component="button"
                 onClick={() => {
                   props.onSelectCategory(mode);
                   setIsMatchDropdown(!isMatchDropdown);
                 }}
-                data-test={'requestmatching-header-' + mode}
+                data-test={`requestmatching-header-${mode}`}
               >
                 {mode}
               </DropdownItem>
@@ -120,14 +119,14 @@ export const MatchBuilder: React.FC<MatchBuilderProps> = (props: MatchBuilderPro
           <DropdownList>
             {renderOpOptions.map((op, index) => (
               <DropdownItem
-                key={op + '_' + index}
+                key={`${op}_${index}`}
                 value={op}
                 component="button"
                 onClick={() => {
                   props.onSelectOperator(op);
                   setIsOperatorDropdown(!isOperatorDropdown);
                 }}
-                data-test={'requestmatching-match-' + op}
+                data-test={`requestmatching-match-${op}`}
               >
                 {op}
               </DropdownItem>
@@ -148,7 +147,7 @@ export const MatchBuilder: React.FC<MatchBuilderProps> = (props: MatchBuilderPro
       <InputGroupItem>
         <Button
           variant={ButtonVariant.secondary}
-          disabled={!props.isValid}
+          isDisabled={!props.isValid}
           onClick={props.onAddMatch}
           data-test="add-match"
         >
