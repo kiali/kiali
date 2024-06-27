@@ -116,9 +116,9 @@ func (p *controlPlaneMonitor) RefreshIstioCache(ctx context.Context) error {
 			// Since it doesn't matter what revision we choose, just choose the first one.
 			controlPlane := controlPlanes[0]
 			if controlPlane.Status != kubernetes.ComponentHealthy {
-				log.Warningf("Skipping controlplane [%s] in cluster [%s] because it is not healthy.", controlPlane.Revision, cluster)
+				log.Warningf("After choosing first revision - Skipping controlplane [%s] in cluster [%s] because it is not healthy.", controlPlane.Revision, cluster)
 				if controlPlane.Status == kubernetes.ComponentUnreachable {
-					log.Warningf("unable to proxy Istiod pods. " +
+					log.Warningf("After choosing first revision - unable to proxy Istiod pods. " +
 						"Make sure your Kubernetes API server has access to the Istio control plane through 8080 port")
 				}
 				continue
