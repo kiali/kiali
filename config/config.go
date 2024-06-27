@@ -473,11 +473,8 @@ type DiscoverySelectorsConfig struct {
 
 // ExtensionConfig provides details on a registered Extension
 type ExtensionConfig struct {
-	Enabled       bool   `yaml:"enabled,omitempty"`
-	Name          string `yaml:"name"`           // same name used in metrics "extension" attribute
-	RootCluster   string `yaml:"root_cluster"`   // mesh root node cluster, e.g. skupper router cluster
-	RootNamespace string `yaml:"root_namespace"` // mesh root node namespace, e.g. skupper router namespace
-	RootName      string `yaml:"root_name"`      // mesh root node workload/service/app name, e.g. skupper router name
+	Enabled bool   `yaml:"enabled,omitempty"`
+	Name    string `yaml:"name"` // same name used in metrics "extension" attribute
 }
 
 // GraphFindOption defines a single Graph Find/Hide Option
@@ -648,7 +645,7 @@ type Config struct {
 	Clustering               Clustering                          `yaml:"clustering,omitempty"`
 	CustomDashboards         dashboards.MonitoringDashboardsList `yaml:"custom_dashboards,omitempty"`
 	Deployment               DeploymentConfig                    `yaml:"deployment,omitempty"`
-	Extensions               []ExtensionConfig                   `yaml:"extensions,omitempty`
+	Extensions               []ExtensionConfig                   `yaml:"extensions,omitempty"`
 	ExternalServices         ExternalServices                    `yaml:"external_services,omitempty"`
 	HealthConfig             HealthConfig                        `yaml:"health_config,omitempty" json:"healthConfig,omitempty"`
 	Identity                 security.Identity                   `yaml:",omitempty"`
