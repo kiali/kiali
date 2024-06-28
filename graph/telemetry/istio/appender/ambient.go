@@ -1,9 +1,10 @@
 package appender
 
 import (
-	"github.com/kiali/kiali/config"
+	"context"
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/models"
 )
 
 const AmbientAppenderName = "ambient"
@@ -37,13 +38,16 @@ func (a AmbientAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *gr
 
 	log.Trace("Running ambient appender")
 
-	a.handleWaypoints(trafficMap, globalInfo)
+	a.handleWaypoints(trafficMap, globalInfo, namespaceInfo)
 }
 
-func (a AmbientAppender) handleWaypoints(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo) {
+// handleWaypoints remove the node and the edges to waypoints when show waypoints is not specified
+func (a AmbientAppender) handleWaypoints(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
+
+	workloadList := globalInfo.Business.Workload.GetWaypointsList(context.Background())
 
 	// To identify the waypoint edges
-	waypoinList := []string{}
+	waypointList := make(map[string]map[string]string)
 
 	for _, n := range trafficMap {
 		// skip if the node is not in an accessible namespace, we can't do the checking
@@ -58,31 +62,29 @@ func (a AmbientAppender) handleWaypoints(trafficMap graph.TrafficMap, globalInfo
 		} else {
 			workloadName = n.App
 		}
-		workload, err := getWorkloadItem(n.Cluster, n.Namespace, workloadName, globalInfo)
-		if err != nil {
-			log.Tracef("Error getting waypoint proxy: Workload %s was not found", n.Workload)
-			continue
-		}
-		if config.IsWaypoint(workload.Labels) {
-			waypoinList = append(waypoinList, workload.Name)
+		if isWaypoint(&workloadList, n.Cluster, n.Namespace, workloadName) {
+			if waypointList[n.Cluster] == nil {
+				waypointList[n.Cluster] = make(map[string]string)
+			}
+			waypointList[n.Cluster][n.Namespace] = workloadName
 			if !a.ShowWaypoints {
 				delete(trafficMap, n.ID)
-				break
 			} else {
 				n.Metadata[graph.IsWaypoint] = true
 				n.Metadata[graph.IsOutOfMesh] = false
-				break
 			}
 		}
 	}
 	for _, n := range trafficMap {
 		graphEdge := []*graph.Edge{}
 		for _, edge := range n.Edges {
-			if !contains(waypoinList, edge.Dest.App) {
+			wp := waypointList[edge.Dest.Cluster][edge.Dest.Namespace]
+			if wp != edge.Dest.App {
 				// When we don't show waypoints
 				// We hide one edge direction from the waypoints
 				// To prevent infinite loops on highlight
-				if a.ShowWaypoints || (!a.ShowWaypoints && !contains(waypoinList, edge.Source.App)) {
+				wpSource := waypointList[edge.Source.Cluster][edge.Source.Namespace]
+				if a.ShowWaypoints || (!a.ShowWaypoints && wpSource != edge.Source.App) {
 					graphEdge = append(graphEdge, edge)
 				}
 			}
@@ -98,9 +100,10 @@ func (a *AmbientAppender) nodeOK(node *graph.Node) bool {
 	return ok
 }
 
-func contains(slice []string, str string) bool {
-	for _, v := range slice {
-		if v == str {
+// isWaypoint returns true if the ns, name and cluster of a workload matches with one of the waypoints in the list
+func isWaypoint(waypointList *models.Workloads, cluster, namespace, app string) bool {
+	for _, w := range *waypointList {
+		if w.WorkloadListItem.Name == app && w.WorkloadListItem.Namespace == namespace && w.Cluster == cluster {
 			return true
 		}
 	}
