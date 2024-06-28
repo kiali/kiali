@@ -31,4 +31,4 @@ undeploy:
 
 # After changing the k8s.yaml (e.g. the metrics in the ConfigMap), this will redeploy everything and restart the pod.
 redeploy: deploy
-	kubectl rollout restart deployment -n ${DEMO_NAMESPACE}
+	kubectl rollout restart deployment -l app=demo-extension-metrics-server -n ${DEMO_NAMESPACE}
