@@ -1893,8 +1893,8 @@ func (in *WorkloadService) GetWaypointsList(ctx context.Context) models.Workload
 	labelSelector := fmt.Sprintf("%s=%s", config.WaypointLabel, config.WaypointLabelValue)
 	workloadslist := []*models.Workload{}
 
-	for k, _ := range in.userClients {
-		nslist, errNs := in.userClients[k].GetNamespaces("")
+	for cluster := range in.userClients {
+		nslist, errNs := in.userClients[cluster].GetNamespaces("")
 		if errNs != nil {
 			log.Errorf("listWaypointWorkloads: Error fetching namespaces by selector %s", labelSelector)
 		}
