@@ -1881,7 +1881,42 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 	return wl, kubernetes.NewNotFound(criteria.WorkloadName, "Kiali", "Workload")
 }
 
-// Check the waypoint name if a pod is enrolled
+// GetWaypointsList: Return the list of workloads when the waypoint proxy is applied per namespace
+func (in *WorkloadService) GetWaypointsList(ctx context.Context) models.Workloads {
+
+	if !in.cache.IsWaypointListExpired() {
+		log.Tracef("GetWaypointsList: Returning list from cache")
+		return in.cache.GetWaypointList()
+	}
+	log.Infof("GetWaypointsList: Getting waypoint list from kube client")
+	// Get all the workloads for a namespaces labeled
+	labelSelector := fmt.Sprintf("%s=%s", config.WaypointLabel, config.WaypointLabelValue)
+	workloadslist := []*models.Workload{}
+
+	for k, _ := range in.userClients {
+		nslist, errNs := in.userClients[k].GetNamespaces("")
+		if errNs != nil {
+			log.Errorf("listWaypointWorkloads: Error fetching namespaces by selector %s", labelSelector)
+		}
+
+		// Get service Account name for each pod from the workload
+		for _, ns := range nslist {
+			wkList, err := in.fetchWorkloads(ctx, ns.Name, labelSelector)
+			for _, wk := range wkList {
+				workloadslist = append(workloadslist, wk)
+			}
+
+			if err != nil {
+				log.Debugf("listWaypointWorkloads: Error fetching workloads for namespaces")
+			}
+		}
+
+	}
+	in.cache.SetWaypointList(workloadslist)
+	return workloadslist
+}
+
+// isWorkloadEnrolled Check if the pod is captured by a waypoint
 func (in *WorkloadService) isWorkloadEnrolled(ctx context.Context, workload models.Workload) ([]models.Waypoint, bool) {
 	found := false
 	waypointNames := make([]models.Waypoint, 0)
@@ -1919,7 +1954,7 @@ func (in *WorkloadService) isWorkloadEnrolled(ctx context.Context, workload mode
 		}
 		svc, err := in.businessLayer.Svc.GetServiceList(ctx, serviceCriteria)
 		if err != nil {
-			log.Errorf("Error fetching services %s", err.Error())
+			log.Debugf("isWorkloadEnrolled: Error fetching services %s", err.Error())
 		}
 		services = svc.Services
 	} else {
@@ -1953,7 +1988,7 @@ func (in *WorkloadService) getWaypointsForWorkload(ctx context.Context, namespac
 		// TODO: Can the waypoint be on a different ns?
 		wkd, err := in.fetchWorkload(ctx, WorkloadCriteria{Cluster: workload.Cluster, Namespace: namespace, WorkloadName: waypoint.Name, WorkloadType: ""})
 		if err != nil {
-			log.Errorf("Error fetching workloads %s", err.Error())
+			log.Debugf("getWaypointsForWorkload: Error fetching workloads %s", err.Error())
 			return nil
 		}
 		if wkd != nil {
@@ -1971,7 +2006,7 @@ func (in *WorkloadService) listWaypointWorkloads(ctx context.Context, name, clus
 	labelSelector := fmt.Sprintf("%s=%s", config.WaypointUseLabel, name)
 	nslist, errNs := in.userClients[cluster].GetNamespaces(labelSelector)
 	if errNs != nil {
-		log.Errorf("Error fetching namespaces by selector %s", labelSelector)
+		log.Errorf("listWaypointWorkloads: Error fetching namespaces by selector %s", labelSelector)
 	}
 
 	var workloadslist []models.Workload
@@ -1980,7 +2015,7 @@ func (in *WorkloadService) listWaypointWorkloads(ctx context.Context, name, clus
 	for _, ns := range nslist {
 		workloadList, err := in.fetchWorkloads(ctx, ns.Name, "")
 		if err != nil {
-			log.Errorf("Error fetching workloads for namespace %s", ns.Name)
+			log.Debugf("listWaypointWorkloads: Error fetching workloads for namespace %s", ns.Name)
 		}
 		for _, wk := range workloadList {
 			// Is there any annotation that disables?
@@ -1992,7 +2027,7 @@ func (in *WorkloadService) listWaypointWorkloads(ctx context.Context, name, clus
 	// Get annotated workloads
 	wlist, err := in.fetchWorkloads(ctx, meta_v1.NamespaceAll, labelSelector)
 	if err != nil {
-		log.Errorf("Error fetching workloads for namespace label selector %s", labelSelector)
+		log.Debugf("listWaypointWorkloads: Error fetching workloads for namespace label selector %s", labelSelector)
 	}
 	for _, workload := range wlist {
 		// Is there any annotation that disables?
