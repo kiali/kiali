@@ -32,7 +32,7 @@ type ReduxProps = {
   duration: DurationInSeconds;
 };
 
-type WorkloadListPageProps = ReduxProps & FilterComponent.Props<WorkloadListItem>;
+type WorkloadListPageProps = ReduxProps;
 
 class WorkloadListPageComponent extends FilterComponent.Component<
   WorkloadListPageProps,

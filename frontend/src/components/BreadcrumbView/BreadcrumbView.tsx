@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { isMultiCluster, Paths } from '../../config';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router-dom-v5-compat';
 import { Breadcrumb, BreadcrumbItem } from '@patternfly/react-core';
 import { FilterSelected } from '../Filters/StatefulFilters';
 import { dicIstioType } from '../../types/IstioConfigList';
@@ -33,11 +33,11 @@ const IstioName = 'Istio Config';
 const namespaceRegex = /namespaces\/([a-z0-9-]+)\/([\w-.]+)\/([\w-.*]+)(\/([\w-.]+))?(\/([\w-.]+))?/;
 
 export class BreadcrumbView extends React.Component<BreadCumbViewProps, BreadcrumbViewState> {
-  static capitalize = (str: string) => {
+  static capitalize = (str: string): string => {
     return str.charAt(0).toUpperCase() + str.slice(1);
   };
 
-  static istioType(rawType: string) {
+  static istioType(rawType: string): string {
     const istioType = Object.keys(dicIstioType).find(key => dicIstioType[key] === rawType);
     return istioType ? istioType : this.capitalize(rawType);
   }
@@ -54,6 +54,7 @@ export class BreadcrumbView extends React.Component<BreadCumbViewProps, Breadcru
     const istioType = match[3];
     const urlParams = new URLSearchParams(this.props.location.search);
     let itemName = page !== 'istio' ? match[3] : match[5];
+
     return {
       cluster: HistoryManager.getClusterName(urlParams),
       istioType: istioType,
@@ -74,25 +75,28 @@ export class BreadcrumbView extends React.Component<BreadCumbViewProps, Breadcru
     }
   }
 
-  cleanFilters = () => {
+  cleanFilters = (): void => {
     FilterSelected.resetFilters();
   };
 
-  isIstio = () => {
+  isIstio = (): boolean => {
     return this.state.pathItem === 'istio';
   };
 
-  getItemPage = () => {
+  getItemPage = (): string => {
     let path = `/namespaces/${this.state.namespace}/${this.state.pathItem}/${this.state.item}`;
+
     if (this.state.cluster && isMultiCluster) {
       path += `?clusterName=${this.state.cluster}`;
     }
+
     return path;
   };
 
-  render() {
+  render(): React.ReactNode {
     const { namespace, item, istioType, pathItem } = this.state;
     const isIstio = this.isIstio();
+
     const linkItem = isIstio ? (
       <BreadcrumbItem isActive={true}>{item}</BreadcrumbItem>
     ) : (
@@ -102,6 +106,7 @@ export class BreadcrumbView extends React.Component<BreadCumbViewProps, Breadcru
         </Link>
       </BreadcrumbItem>
     );
+
     return (
       <Breadcrumb>
         <BreadcrumbItem>
@@ -109,11 +114,13 @@ export class BreadcrumbView extends React.Component<BreadCumbViewProps, Breadcru
             {isIstio ? IstioName : BreadcrumbView.capitalize(pathItem)}
           </Link>
         </BreadcrumbItem>
+
         <BreadcrumbItem>
           <Link to={`/${pathItem}?namespaces=${namespace}`} onClick={this.cleanFilters}>
             Namespace: {namespace}
           </Link>
         </BreadcrumbItem>
+
         {isIstio && (
           <BreadcrumbItem>
             <Link
@@ -124,6 +131,7 @@ export class BreadcrumbView extends React.Component<BreadCumbViewProps, Breadcru
             </Link>
           </BreadcrumbItem>
         )}
+
         {linkItem}
       </Breadcrumb>
     );

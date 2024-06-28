@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router-dom-v5-compat';
 import { ExternalLinkAltIcon } from '@patternfly/react-icons';
 import { serverConfig } from '../../config';
 import { KialiAppState } from '../../store/Store';
