@@ -7,9 +7,11 @@ export type IstioLabelKey =
   | 'ambientWaypointLabel'
   | 'ambientWaypointLabelValue'
   | 'appLabelName'
-  | 'versionLabelName'
+  | 'egressGatewayLabel'
+  | 'ingressGatewayLabel'
   | 'injectionLabelName'
-  | 'injectionLabelRev';
+  | 'injectionLabelRev'
+  | 'versionLabelName';
 
 interface DeploymentConfig {
   viewOnlyMode: boolean;
