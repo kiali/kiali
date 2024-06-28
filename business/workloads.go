@@ -1916,8 +1916,8 @@ func (in *WorkloadService) GetWaypointsList(ctx context.Context) models.Workload
 	return workloadslist
 }
 
-// isWorkloadEnrolled Check if the pod is captured by a waypoint
-func (in *WorkloadService) isWorkloadEnrolled(ctx context.Context, workload models.Workload) ([]models.Waypoint, bool) {
+// isWorkloadCaptured Check if the pod is captured by a waypoint
+func (in *WorkloadService) isWorkloadCaptured(ctx context.Context, workload models.Workload) ([]models.Waypoint, bool) {
 	found := false
 	waypointNames := make([]models.Waypoint, 0)
 
@@ -1954,7 +1954,7 @@ func (in *WorkloadService) isWorkloadEnrolled(ctx context.Context, workload mode
 		}
 		svc, err := in.businessLayer.Svc.GetServiceList(ctx, serviceCriteria)
 		if err != nil {
-			log.Debugf("isWorkloadEnrolled: Error fetching services %s", err.Error())
+			log.Debugf("isWorkloadCaptured: Error fetching services %s", err.Error())
 		}
 		services = svc.Services
 	} else {
@@ -1973,19 +1973,19 @@ func (in *WorkloadService) isWorkloadEnrolled(ctx context.Context, workload mode
 	return waypointNames, found
 }
 
-// Get the Waypoint proxy for a workload
-// TODO: We might use the cache to improve performance
+// getWaypointsForWorkload Returns a list of waypoint proxies that capture a workload
+// TODO: Could be more than one? (If not, it should return just a workload)
 func (in *WorkloadService) getWaypointsForWorkload(ctx context.Context, namespace string, workload models.Workload) []models.Workload {
 	var workloadslist []models.Workload
 
 	// Get Waypoint list names
-	waypoints, found := in.isWorkloadEnrolled(ctx, workload)
+	waypoints, found := in.isWorkloadCaptured(ctx, workload)
 	if !found {
 		return workloadslist
 	}
 
 	for _, waypoint := range waypoints {
-		// TODO: Can the waypoint be on a different ns?
+		// TODO: Can the waypoint be on a different ns? (not for now)
 		wkd, err := in.fetchWorkload(ctx, WorkloadCriteria{Cluster: workload.Cluster, Namespace: namespace, WorkloadName: waypoint.Name, WorkloadType: ""})
 		if err != nil {
 			log.Debugf("getWaypointsForWorkload: Error fetching workloads %s", err.Error())
@@ -1999,7 +1999,8 @@ func (in *WorkloadService) getWaypointsForWorkload(ctx context.Context, namespac
 	return workloadslist
 }
 
-// Return the list of workloads when the waypoint proxy is applied per namespace
+// listWaypointWorkloads returns the list of workloads when the waypoint proxy is applied per namespace
+// Maybe use some cache?
 func (in *WorkloadService) listWaypointWorkloads(ctx context.Context, name, cluster string) []models.Workload {
 
 	// Get all the workloads for a namespaces labeled
@@ -2009,9 +2010,8 @@ func (in *WorkloadService) listWaypointWorkloads(ctx context.Context, name, clus
 		log.Errorf("listWaypointWorkloads: Error fetching namespaces by selector %s", labelSelector)
 	}
 
+	// Get all the workloads for that namespace
 	var workloadslist []models.Workload
-	// Get service Account name for each pod from the workload
-
 	for _, ns := range nslist {
 		workloadList, err := in.fetchWorkloads(ctx, ns.Name, "")
 		if err != nil {
