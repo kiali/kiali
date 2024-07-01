@@ -35,7 +35,7 @@ import { OverviewToolbar, OverviewDisplayMode, OverviewType, DirectionType } fro
 import { NamespaceInfo, NamespaceStatus } from '../../types/NamespaceInfo';
 import { NamespaceMTLSStatus } from '../../components/MTls/NamespaceMTLSStatus';
 import { RenderComponentScroll } from '../../components/Nav/Page';
-import { OverviewCardSparklineCharts } from './OverviewCardSparklineCharts';
+import { OverviewCardDataPlaneNamespace } from './OverviewCardDataPlaneNamespace';
 import { OverviewTrafficPolicies } from './OverviewTrafficPolicies';
 import { IstioMetricsOptions } from '../../types/MetricsOptions';
 import { computePrometheusRateParams } from '../../services/Prometheus';
@@ -1186,10 +1186,8 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
     return (
       <div style={{ height: '130px' }}>
         {ns.status ? (
-          <OverviewCardSparklineCharts
+          <OverviewCardDataPlaneNamespace
             key={ns.name}
-            name={ns.name}
-            annotations={ns.annotations}
             duration={FilterHelper.currentDuration()}
             direction={this.state.direction}
             metrics={ns.metrics}

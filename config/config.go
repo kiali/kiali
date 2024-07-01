@@ -713,7 +713,7 @@ func NewConfig() (c *Config) {
 				IstioInjectionAnnotation:          "sidecar.istio.io/inject",
 				IstioSidecarInjectorConfigMapName: "istio-sidecar-injector",
 				IstioSidecarAnnotation:            "sidecar.istio.io/status",
-				IstiodDeploymentName:              "istiod",
+				IstiodDeploymentName:              "",
 				IstiodPodMonitoringPort:           15014,
 				IstiodPollingIntervalSeconds:      20,
 				RootNamespace:                     "istio-system",

@@ -18,7 +18,7 @@ import { ControlPlaneNamespaceStatus } from 'pages/Overview/ControlPlaneNamespac
 import { PromisesRegistry } from 'utils/CancelablePromises';
 import { TLSInfo } from 'components/Overview/TLSInfo';
 import { CanaryUpgradeProgress } from 'pages/Overview/CanaryUpgradeProgress';
-import { OverviewCardSparklineCharts } from 'pages/Overview/OverviewCardSparklineCharts';
+import { OverviewCardControlPlaneNamespace } from 'pages/Overview/OverviewCardControlPlaneNamespace';
 import * as API from '../../../services/Api';
 import { IstioMetricsOptions } from 'types/MetricsOptions';
 import { computePrometheusRateParams } from 'services/Prometheus';
@@ -380,15 +380,13 @@ export class TargetPanelControlPlane extends React.Component<
       const { thresholds } = data.infraData;
 
       return (
-        <OverviewCardSparklineCharts
+        <OverviewCardControlPlaneNamespace
           key={data.namespace}
-          name={data.namespace}
-          annotations={this.state.nsInfo!.annotations}
-          duration={this.props.duration}
-          direction={direction}
-          metrics={this.state.metrics}
-          errorMetrics={this.state.errorMetrics}
-          controlPlaneMetrics={this.state.controlPlaneMetrics}
+          pilotLatency={this.state.controlPlaneMetrics?.istiod_proxy_time}
+          istiodContainerMemory={this.state.controlPlaneMetrics?.istiod_container_mem}
+          istiodContainerCpu={this.state.controlPlaneMetrics?.istiod_container_cpu}
+          istiodProcessMemory={this.state.controlPlaneMetrics?.istiod_process_mem}
+          istiodProcessCpu={this.state.controlPlaneMetrics?.istiod_process_cpu}
           istiodResourceThresholds={thresholds}
         />
       );
