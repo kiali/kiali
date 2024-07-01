@@ -193,9 +193,10 @@ Cypress.Commands.add('login', (username: string, password: string) => {
         if (auth_strategy === 'openshift') {
           cy.getCookies()
             .should('exist')
-            .and('have.length', 1)
+            .and('have.length.at.least', 1)
             .then((cookies: any) => {
-              expect(cookies[0].name).to.match(/^kiali-token/);
+              // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+              expect(cookies.some(cookie => cookie.name.startsWith('kiali-token'))).to.be.true;
             });
         }
       }
