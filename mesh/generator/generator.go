@@ -27,6 +27,16 @@ func getNamespacesByName(name string, namespaces []models.Namespace) []models.Na
 	return result
 }
 
+type componentHealthKey struct {
+	Cluster   string
+	Name      string
+	Namespace string
+}
+
+func (c componentHealthKey) String() string {
+	return c.Name + c.Namespace + c.Cluster
+}
+
 // BuildMeshMap is required by the graph/TelemetryVendor interface
 func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalInfo) mesh.MeshMap {
 	var end observability.EndFunc
@@ -74,7 +84,8 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalIn
 	// convert istio status slice into map
 	healthData := map[string]string{}
 	for _, data := range istioStatus {
-		healthData[data.Name+data.Namespace+data.Cluster] = data.Status
+		key := componentHealthKey{Name: data.Name, Namespace: data.Namespace, Cluster: data.Cluster}.String()
+		healthData[key] = data.Status
 	}
 
 	clusterMap := make(map[string]bool)
@@ -113,7 +124,8 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalIn
 			"revision":   cp.Revision,
 			"thresholds": cp.Thresholds,
 		}
-		istiod, _, err := addInfra(meshMap, mesh.InfraTypeIstiod, cp.Cluster.Name, cp.IstiodNamespace, name, infraData, version, false, healthData[cp.IstiodName+cp.IstiodNamespace+cp.Cluster.Name], false)
+		healthDataKey := componentHealthKey{Name: cp.IstiodName, Namespace: cp.IstiodNamespace, Cluster: cp.Cluster.Name}.String()
+		istiod, _, err := addInfra(meshMap, mesh.InfraTypeIstiod, cp.Cluster.Name, cp.IstiodNamespace, name, infraData, version, false, healthData[healthDataKey], false)
 		mesh.CheckError(err)
 
 		// add the managed namespaces by cluster and narrowed, if necessary, by revision
