@@ -333,6 +333,44 @@ Feature: Kiali Istio Config page
     When user selects the "sleep" namespace
     Then the "foo" "VirtualService" of the "sleep" namespace should have a "warning"
 
+  # KIA1501 is tested through GUI in wizard_istio_config.feature
+  @crd-validation
+  @bookinfo-app
+  @gateway-api
+  Scenario: KIA1502 validation
+    Given user deletes k8sgateway named "foo" and the resource is no longer available
+    And user deletes k8sgateway named "bar" and the resource is no longer available
+    When there is a "foo" K8sGateway in the "bookinfo" namespace for "google.com" host using "HTTP" protocol on port "80" and "istio" gatewayClassName  
+    And there is a "bar" K8sGateway in the "bookinfo" namespace for "secondary.com" host using "HTTP" protocol on port "9080" and "istio" gatewayClassName  
+    And the "foo" K8sGateway in the "bookinfo" namespace has an address with a "Hostname" type and a "example.com" value
+    And the "bar" K8sGateway in the "bookinfo" namespace has an address with a "Hostname" type and a "example.com" value
+    When the user refreshes the page
+    And user selects the "bookinfo" namespace
+    Then the "foo" "K8sGateway" of the "bookinfo" namespace should have a "warning"
+    And the "bar" "K8sGateway" of the "bookinfo" namespace should have a "warning"
+
+  # KIA1503 validation is not tested, as it is not possible to create a K8sGateway with duplicate listeners
+
+  @crd-validation
+  @bookinfo-app
+  @gateway-api
+  Scenario: KIA1504 validation
+    Given user deletes k8sgateway named "foo" and the resource is no longer available
+    When there is a "foo" K8sGateway in the "bookinfo" namespace for "google.com" host using "HTTP" protocol on port "80" and "nonexistentname" gatewayClassName  
+    And the user refreshes the page
+    And user selects the "bookinfo" namespace
+    Then the "foo" "K8sGateway" of the "bookinfo" namespace should have a "danger"
+
+  @crd-validation
+  @bookinfo-app
+  @gateway-api
+  Scenario: KIA1601 validation
+    Given user deletes k8sreferencegrant named "foo" and the resource is no longer available
+    When there is a "foo" K8sReferenceGrant in the "bookinfo" namespace pointing from "nonexistent" namespace
+    And the user refreshes the page
+    And user selects the "bookinfo" namespace
+    Then the "foo" "K8sReferenceGrant" of the "bookinfo" namespace should have a "danger"
+
 # TODO: KIA06xx and KIA07xx does not appear in Istio Config list page. They appear in Svc/workload lists.
 #   Thus, these validations do not belong to this feature file.
 
