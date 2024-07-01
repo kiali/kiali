@@ -648,15 +648,20 @@ func (in *IstioValidationsService) isGatewayToNamespace() bool {
 }
 
 func (in *IstioValidationsService) isPolicyAllowAny() bool {
-	allowAny := false
-	if in.businessLayer != nil {
-		if otp, err := in.businessLayer.Mesh.OutboundTrafficPolicy(); err == nil {
-			if otp.Mode == "" || otp.Mode == AllowAny {
-				return true
-			}
+	mesh, err := in.discovery.Mesh(context.TODO())
+	if err != nil {
+		log.Errorf("Error getting mesh config: %s", err)
+		return false
+	}
+
+	// TODO: Multi-primary support
+	for _, controlPlane := range mesh.ControlPlanes {
+		if controlPlane.Cluster.IsKialiHome {
+			return controlPlane.Config.OutboundTrafficPolicy.Mode == AllowAny || controlPlane.Config.OutboundTrafficPolicy.Mode == ""
 		}
 	}
-	return allowAny
+
+	return false
 }
 
 func checkExportTo(exportToNs string, namespace string, ownNs string, allNamespaces models.Namespaces) bool {

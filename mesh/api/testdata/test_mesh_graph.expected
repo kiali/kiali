@@ -267,7 +267,7 @@
             "IstioInjectionAnnotation": "sidecar.istio.io/inject",
             "IstioSidecarInjectorConfigMapName": "istio-sidecar-injector",
             "IstioSidecarAnnotation": "sidecar.istio.io/status",
-            "IstiodDeploymentName": "istiod",
+            "IstiodDeploymentName": "",
             "IstiodPodMonitoringPort": 15014,
             "IstiodPollingIntervalSeconds": 20,
             "Registry": null,
@@ -288,9 +288,6 @@
           "healthData": "Healthy",
           "infraData": {
             "config": {
-              "OutboundTrafficPolicy": {
-                "mode": ""
-              },
               "Network": "",
               "DisableMixerHttpReports": false,
               "DiscoverySelectors": null,
@@ -301,9 +298,16 @@
               "defaultConfig": {
                 "MeshId": ""
               },
+              "OutboundTrafficPolicy": {
+                "mode": "ALLOW_ANY"
+              },
               "TrustDomain": "cluster.local"
             },
-            "revision": "default"
+            "revision": "default",
+            "thresholds": {
+              "memory": 0,
+              "cpu": 0
+            }
           },
           "version": "Unknown"
         }

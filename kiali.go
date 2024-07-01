@@ -247,7 +247,7 @@ func updateConfigWithIstioInfo() {
 		}
 
 		// Try to auto-detect the cluster name
-		homeCluster, _, err = kubernetes.ClusterInfoFromIstiod(conf, cf.GetSAHomeClusterClient())
+		homeCluster, err = kubernetes.ClusterNameFromIstiod(conf, cf.GetSAHomeClusterClient())
 		if err != nil {
 			return err
 		}

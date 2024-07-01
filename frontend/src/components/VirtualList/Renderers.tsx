@@ -18,7 +18,7 @@ import { Health } from '../../types/Health';
 import { NamespaceInfo } from '../../types/NamespaceInfo';
 import { NamespaceMTLSStatus } from '../MTls/NamespaceMTLSStatus';
 import { ValidationSummary } from '../Validations/ValidationSummary';
-import { OverviewCardSparklineCharts } from '../../pages/Overview/OverviewCardSparklineCharts';
+import { OverviewCardDataPlaneNamespace } from '../../pages/Overview/OverviewCardDataPlaneNamespace';
 import { OverviewToolbar } from '../../pages/Overview/OverviewToolbar';
 import { StatefulFiltersRef } from '../Filters/StatefulFilters';
 import { IstioObjectLink, GetIstioObjectUrl, infoStyle } from '../Link/IstioObjectLink';
@@ -222,15 +222,12 @@ export const status: Renderer<NamespaceInfo> = (ns: NamespaceInfo) => {
           />
         )}
 
-        <OverviewCardSparklineCharts
+        <OverviewCardDataPlaneNamespace
           key={`${ns.name}_chart`}
-          name={ns.name}
-          annotations={ns.annotations}
           duration={FilterHelper.currentDuration()}
           direction={OverviewToolbar.currentDirectionType()}
           metrics={ns.metrics}
           errorMetrics={ns.errorMetrics}
-          controlPlaneMetrics={ns.controlPlaneMetrics}
         />
       </Td>
     );

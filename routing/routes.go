@@ -1484,42 +1484,6 @@ func NewRoutes(
 			HandlerFunc:   handlers.MetricsStats,
 			Authenticated: true,
 		},
-		// swagger:route GET /api/mesh/outbound_traffic_policy/mode
-		// ---
-		// Endpoint to get the OutboundTrafficPolicy Mode configured in the service mesh.
-		//              Produces:
-		//              - application/json
-		//
-		//              Schemes: http, https
-		//
-		// responses:
-		//              500: internalError
-		//              200: clustersResponse
-		{
-			"OutboundTrafficPolicyMode",
-			"GET",
-			"/api/mesh/outbound_traffic_policy/mode",
-			handlers.OutboundTrafficPolicyMode,
-			true,
-		},
-		// swagger:route GET /api/mesh/resources/thresholds
-		// ---
-		// Endpoint to get the IstiodResourceThresholds.
-		//              Produces:
-		//              - application/json
-		//
-		//              Schemes: http, https
-		//
-		// responses:
-		//              500: internalError
-		//              200: istiodResourceThresholds
-		{
-			"IstiodResourceThresholds",
-			"GET",
-			"/api/mesh/resources/thresholds",
-			handlers.IstiodResourceThresholds,
-			true,
-		},
 		// swagger:route GET /api/mesh/canaries/status
 		// ---
 		// Endpoint to get the IstiodCanariesStatus.

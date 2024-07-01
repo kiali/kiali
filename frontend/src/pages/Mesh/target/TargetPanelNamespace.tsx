@@ -5,7 +5,7 @@ import { TargetPanelCommonProps, shouldRefreshData, targetPanelHR, targetPanelSt
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { Card, CardBody, CardHeader, Label, Title, TitleSizes, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { Paths, serverConfig } from 'config';
-import { CanaryUpgradeStatus, OutboundTrafficPolicy, ValidationStatus } from 'types/IstioObjects';
+import { CanaryUpgradeStatus, ValidationStatus } from 'types/IstioObjects';
 import { OverviewNamespaceAction, OverviewNamespaceActions } from 'pages/Overview/OverviewNamespaceActions';
 import { NamespaceInfo, NamespaceStatus } from 'types/NamespaceInfo';
 import { isRemoteCluster } from 'pages/Overview/OverviewCardControlPlaneNamespace';
@@ -22,7 +22,7 @@ import { AmbientBadge } from 'components/Ambient/AmbientBadge';
 import { PFColors } from 'components/Pf/PfColors';
 import { ValidationSummaryLink } from 'components/Link/ValidationSummaryLink';
 import { ValidationSummary } from 'components/Validations/ValidationSummary';
-import { OverviewCardSparklineCharts } from 'pages/Overview/OverviewCardSparklineCharts';
+import { OverviewCardDataPlaneNamespace } from 'pages/Overview/OverviewCardDataPlaneNamespace';
 import * as API from '../../../services/Api';
 import { IstioMetricsOptions } from 'types/MetricsOptions';
 import { computePrometheusRateParams } from 'services/Prometheus';
@@ -33,7 +33,6 @@ import * as AlertUtils from '../../../utils/AlertUtils';
 import { MessageType } from 'types/MessageCenter';
 import { OverviewStatus } from 'pages/Overview/OverviewStatus';
 import { switchType } from 'pages/Overview/OverviewHelper';
-import { IstiodResourceThresholds } from 'types/IstioStatus';
 import { TLSStatus } from 'types/TLSStatus';
 import * as FilterHelper from '../../../components/FilterList/FilterHelper';
 import { ControlPlaneMetricsMap, Metric } from 'types/Metrics';
@@ -46,11 +45,9 @@ type TargetPanelNamespaceState = {
   canaryUpgradeStatus?: CanaryUpgradeStatus;
   controlPlaneMetrics?: ControlPlaneMetricsMap;
   errorMetrics?: Metric[];
-  istiodResourceThresholds?: IstiodResourceThresholds;
   loading: boolean;
   metrics?: Metric[];
   nsInfo?: NamespaceInfo;
-  outboundPolicyMode?: OutboundTrafficPolicy;
   status?: NamespaceStatus;
   targetCluster?: string;
   targetNamespace?: string;
@@ -62,10 +59,8 @@ const defaultState: TargetPanelNamespaceState = {
   canaryUpgradeStatus: undefined,
   controlPlaneMetrics: undefined,
   errorMetrics: undefined,
-  istiodResourceThresholds: undefined,
   loading: false,
   nsInfo: undefined,
-  outboundPolicyMode: undefined,
   status: undefined,
   targetNode: undefined,
   tlsStatus: undefined
@@ -681,7 +676,6 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
           .registerAll(`promises-${cluster}:${namespace}`, [
             this.fetchCanariesStatus(),
             this.fetchHealthStatus(),
-            this.fetchIstiodResourceThresholds(),
             this.fetchMetrics()
           ])
           .then(_ => {
@@ -766,20 +760,6 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
       .catch(err => this.handleApiError('Could not fetch namespace health', err));
   }
 
-  private fetchIstiodResourceThresholds(): Promise<void> {
-    if (!this.isControlPlane()) {
-      return Promise.resolve();
-    }
-
-    return API.getIstiodResourceThresholds()
-      .then(response => {
-        this.setState({ istiodResourceThresholds: response.data });
-      })
-      .catch(error => {
-        AlertUtils.addError('Error fetching Istiod resource thresholds.', error, 'default', MessageType.ERROR);
-      });
-  }
-
   private fetchMetrics(): Promise<void> {
     const rateParams = computePrometheusRateParams(this.props.duration, 10);
     const options: IstioMetricsOptions = {
@@ -799,25 +779,10 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
         const metrics: Metric[] = rs.data.request_count as Metric[];
         const errorMetrics: Metric[] = rs.data.request_error_count as Metric[];
 
-        if (this.isControlPlane()) {
-          const controlPlaneMetrics: ControlPlaneMetricsMap = {
-            istiod_proxy_time: rs.data.pilot_proxy_convergence_time,
-            istiod_container_cpu: rs.data.container_cpu_usage_seconds_total,
-            istiod_container_mem: rs.data.container_memory_working_set_bytes,
-            istiod_process_cpu: rs.data.process_cpu_seconds_total,
-            istiod_process_mem: rs.data.process_resident_memory_bytes
-          };
-          this.setState({
-            controlPlaneMetrics: controlPlaneMetrics,
-            errorMetrics: errorMetrics,
-            metrics: metrics
-          });
-        } else {
-          this.setState({
-            errorMetrics: errorMetrics,
-            metrics: metrics
-          });
-        }
+        this.setState({
+          errorMetrics: errorMetrics,
+          metrics: metrics
+        });
       })
       .catch(err => this.handleApiError('Could not fetch namespace metrics', err));
   }
@@ -836,16 +801,12 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
       const namespace = this.state.targetNamespace!;
 
       return (
-        <OverviewCardSparklineCharts
+        <OverviewCardDataPlaneNamespace
           key={namespace}
-          name={namespace}
-          annotations={this.state.nsInfo!.annotations}
           duration={this.props.duration}
           direction={direction}
           metrics={this.state.metrics}
           errorMetrics={this.state.errorMetrics}
-          controlPlaneMetrics={this.state.controlPlaneMetrics}
-          istiodResourceThresholds={this.state.istiodResourceThresholds}
         />
       );
     }

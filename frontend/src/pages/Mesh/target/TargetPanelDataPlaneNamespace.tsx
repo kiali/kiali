@@ -16,7 +16,7 @@ import { AmbientBadge } from 'components/Ambient/AmbientBadge';
 import { PFColors } from 'components/Pf/PfColors';
 import { ValidationSummaryLink } from 'components/Link/ValidationSummaryLink';
 import { ValidationSummary } from 'components/Validations/ValidationSummary';
-import { OverviewCardSparklineCharts } from 'pages/Overview/OverviewCardSparklineCharts';
+import { OverviewCardDataPlaneNamespace } from 'pages/Overview/OverviewCardDataPlaneNamespace';
 import * as API from '../../../services/Api';
 import { IstioMetricsOptions } from 'types/MetricsOptions';
 import { computePrometheusRateParams } from 'services/Prometheus';
@@ -26,7 +26,6 @@ import { history } from '../../../app/History';
 import * as AlertUtils from '../../../utils/AlertUtils';
 import { OverviewStatus } from 'pages/Overview/OverviewStatus';
 import { switchType } from 'pages/Overview/OverviewHelper';
-import { IstiodResourceThresholds } from 'types/IstioStatus';
 import { TLSStatus } from 'types/TLSStatus';
 import * as FilterHelper from '../../../components/FilterList/FilterHelper';
 import { panelBodyStyle, panelHeadingStyle } from 'pages/Graph/SummaryPanelStyle';
@@ -44,7 +43,6 @@ type TargetPanelDataPlaneNamespaceProps = Omit<TargetPanelCommonProps, 'target'>
 type TargetPanelDataPlaneNamespaceState = {
   errorMetricsInbound?: Metric[];
   errorMetricsOutbound?: Metric[];
-  istiodResourceThresholds?: IstiodResourceThresholds;
   loading: boolean;
   metricsInbound?: Metric[];
   metricsOutbound?: Metric[];
@@ -57,7 +55,6 @@ type TargetPanelDataPlaneNamespaceState = {
 const defaultState: TargetPanelDataPlaneNamespaceState = {
   errorMetricsInbound: undefined,
   errorMetricsOutbound: undefined,
-  istiodResourceThresholds: undefined,
   loading: false,
   metricsInbound: undefined,
   metricsOutbound: undefined,
@@ -458,15 +455,12 @@ export class TargetPanelDataPlaneNamespace extends React.Component<
       const namespace = this.props.targetNamespace;
 
       return (
-        <OverviewCardSparklineCharts
+        <OverviewCardDataPlaneNamespace
           key={`${namespace}-${direction}`}
-          name={namespace}
-          annotations={this.state.nsInfo!.annotations}
           duration={this.props.duration}
           direction={direction}
           metrics={direction === 'inbound' ? this.state.metricsInbound : this.state.metricsOutbound}
           errorMetrics={direction === 'inbound' ? this.state.errorMetricsInbound : this.state.errorMetricsOutbound}
-          istiodResourceThresholds={this.state.istiodResourceThresholds}
         />
       );
     }

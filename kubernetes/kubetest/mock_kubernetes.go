@@ -8,6 +8,7 @@ import (
 	auth_v1 "k8s.io/api/authorization/v1"
 	batch_v1 "k8s.io/api/batch/v1"
 	core_v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
 
@@ -45,7 +46,7 @@ func (o *K8SClientMock) GetDeployment(namespace string, name string) (*apps_v1.D
 	return args.Get(0).(*apps_v1.Deployment), args.Error(1)
 }
 
-func (o *K8SClientMock) GetDeployments(namespace string) ([]apps_v1.Deployment, error) {
+func (o *K8SClientMock) GetDeployments(namespace string, opts metav1.ListOptions) ([]apps_v1.Deployment, error) {
 	args := o.Called(namespace)
 	return args.Get(0).([]apps_v1.Deployment), args.Error(1)
 }

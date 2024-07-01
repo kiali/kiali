@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"regexp"
 	"slices"
-	"strings"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
@@ -26,6 +25,16 @@ func getNamespacesByName(name string, namespaces []models.Namespace) []models.Na
 		}
 	}
 	return result
+}
+
+type componentHealthKey struct {
+	Cluster   string
+	Name      string
+	Namespace string
+}
+
+func (c componentHealthKey) String() string {
+	return c.Name + c.Namespace + c.Cluster
 }
 
 // BuildMeshMap is required by the graph/TelemetryVendor interface
@@ -68,6 +77,17 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalIn
 		}
 	}
 
+	// get istio status components (istiod, grafana, prometheus, tracing)
+	istioStatus, err := gi.IstioStatusGetter.GetStatus(ctx)
+	mesh.CheckError(err)
+
+	// convert istio status slice into map
+	healthData := map[string]string{}
+	for _, data := range istioStatus {
+		key := componentHealthKey{Name: data.Name, Namespace: data.Namespace, Cluster: data.Cluster}.String()
+		healthData[key] = data.Status
+	}
+
 	clusterMap := make(map[string]bool)
 	for _, cp := range meshDef.ControlPlanes {
 		// add control plane cluster if not already added
@@ -94,34 +114,18 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalIn
 
 		name := cp.IstiodName
 
-		// get istio status components (istiod, grafana, prometheus, tracing)
-		var istioStatus kubernetes.IstioComponentStatus
-		istioStatus, err = gi.IstioStatusGetter.GetStatus(ctx, cp.Cluster.Name)
-		mesh.CheckError(err)
-
-		// convert istio status slice into map
-		healthData := make(map[string]string)
-		for _, data := range istioStatus {
-			// istiod health depends on istiod and istio-pod status (both starts with the istiod name of the control plane)
-			if strings.HasPrefix(data.Name, cp.IstiodName) {
-				// don't update if previous status is not healthy to display a problem in the mesh
-				if healthData[cp.IstiodName] == "" || healthData[cp.IstiodName] == kubernetes.ComponentHealthy {
-					healthData[cp.IstiodName] = data.Status
-				}
-			} else {
-				healthData[data.Name] = data.Status
-			}
-		}
-
 		version := "Unknown"
 		if cp.Version != nil {
 			version = cp.Version.Version
 		}
+
 		infraData := map[string]any{
-			"config":   cp.Config,
-			"revision": cp.Revision,
+			"config":     cp.Config,
+			"revision":   cp.Revision,
+			"thresholds": cp.Thresholds,
 		}
-		istiod, _, err := addInfra(meshMap, mesh.InfraTypeIstiod, cp.Cluster.Name, cp.IstiodNamespace, name, infraData, version, false, healthData[cp.IstiodName], false)
+		healthDataKey := componentHealthKey{Name: cp.IstiodName, Namespace: cp.IstiodNamespace, Cluster: cp.Cluster.Name}.String()
+		istiod, _, err := addInfra(meshMap, mesh.InfraTypeIstiod, cp.Cluster.Name, cp.IstiodNamespace, name, infraData, version, false, healthData[healthDataKey], false)
 		mesh.CheckError(err)
 
 		// add the managed namespaces by cluster and narrowed, if necessary, by revision

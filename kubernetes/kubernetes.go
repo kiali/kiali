@@ -44,6 +44,7 @@ type K8SClientInterface interface {
 	GetConfigMap(namespace, name string) (*core_v1.ConfigMap, error)
 	GetCronJobs(namespace string) ([]batch_v1.CronJob, error)
 	GetDeployment(namespace string, name string) (*apps_v1.Deployment, error)
+	GetDeployments(namespace string, opts meta_v1.ListOptions) ([]apps_v1.Deployment, error)
 	GetJobs(namespace string) ([]batch_v1.Job, error)
 	GetNamespace(namespace string) (*core_v1.Namespace, error)
 	GetNamespaces(labelSelector string) ([]core_v1.Namespace, error)
@@ -316,8 +317,8 @@ func (in *K8SClient) GetDeployment(namespace, name string) (*apps_v1.Deployment,
 
 // GetDeployments returns an array of deployments for a given namespace.
 // It returns an error on any problem.
-func (in *K8SClient) GetDeployments(namespace string) ([]apps_v1.Deployment, error) {
-	if depList, err := in.k8s.AppsV1().Deployments(namespace).List(in.ctx, emptyListOptions); err == nil {
+func (in *K8SClient) GetDeployments(namespace string, opts meta_v1.ListOptions) ([]apps_v1.Deployment, error) {
+	if depList, err := in.k8s.AppsV1().Deployments(namespace).List(in.ctx, opts); err == nil {
 		return depList.Items, nil
 	} else {
 		return []apps_v1.Deployment{}, err

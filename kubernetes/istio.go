@@ -11,6 +11,8 @@ import (
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 	istio "istio.io/client-go/pkg/clientset/versioned"
+	appsv1 "k8s.io/api/apps/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8s_networking_v1 "sigs.k8s.io/gateway-api/apis/v1"
 	gatewayapiclient "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned"
 
@@ -28,6 +30,10 @@ const (
 )
 
 type ComponentStatus struct {
+	// Cluster where this component is deployed.
+	// Can be unknown or external for external services.
+	Cluster string `json:"-"`
+
 	// Namespace where the component is deployed.
 	// This field is ignored when marshalling to JSON.
 	Namespace string `json:"-"`
@@ -307,20 +313,36 @@ func DestinationRuleHasMTLSEnabled(destinationRule *networking_v1.DestinationRul
 	return false, ""
 }
 
-// ClusterInfoFromIstiod attempts to resolve the cluster info of the "home" cluster where kiali is running
+// ClusterNameFromIstiod attempts to resolve the cluster info of the "home" cluster where kiali is running
 // by inspecting the istiod deployment. Assumes that the istiod deployment is in the same cluster as the kiali pod.
-func ClusterInfoFromIstiod(conf config.Config, k8s ClientInterface) (string, bool, error) {
+func ClusterNameFromIstiod(conf config.Config, k8s ClientInterface) (string, error) {
 	// The "cluster_id" is set in an environment variable of
 	// the "istiod" deployment. Let's try to fetch it.
-	istioDeploymentConfig := conf.ExternalServices.Istio.IstiodDeploymentName
-	istiodDeployment, err := k8s.GetDeployment(conf.IstioNamespace, istioDeploymentConfig)
-	if err != nil {
-		return "", false, err
+	var istiodDeployment *appsv1.Deployment
+	if istiodDeploymentName := conf.ExternalServices.Istio.IstiodDeploymentName; istiodDeploymentName != "" {
+		deployment, err := k8s.GetDeployment(conf.IstioNamespace, istiodDeploymentName)
+		if err != nil {
+			return "", err
+		}
+
+		istiodDeployment = deployment
+	} else {
+		istiodDeployments, err := k8s.GetDeployments(conf.IstioNamespace, metav1.ListOptions{LabelSelector: "app=istiod"})
+		if err != nil {
+			return "", err
+		}
+
+		if len(istiodDeployments) == 0 {
+			return "", fmt.Errorf("istiod deployment not found in namespace [%s]", conf.IstioNamespace)
+		}
+
+		// Just take the first one since they should all have the same cluster id.
+		istiodDeployment = &istiodDeployments[0]
 	}
 
 	istiodContainers := istiodDeployment.Spec.Template.Spec.Containers
 	if len(istiodContainers) == 0 {
-		return "", false, fmt.Errorf("istiod deployment [%s] has no containers", istioDeploymentConfig)
+		return "", fmt.Errorf("istiod deployment [%s] has no containers", istiodDeployment.Name)
 	}
 
 	clusterName := ""
@@ -331,20 +353,12 @@ func ClusterInfoFromIstiod(conf config.Config, k8s ClientInterface) (string, boo
 		}
 	}
 
-	gatewayToNamespace := false
-	for _, v := range istiodContainers[0].Env {
-		if v.Name == "PILOT_SCOPE_GATEWAY_TO_NAMESPACE" {
-			gatewayToNamespace = v.Value == "true"
-			break
-		}
-	}
-
 	if clusterName == "" {
 		// We didn't find it. This may mean that Istio is not setup with multi-cluster enabled.
-		return "", false, fmt.Errorf("istiod deployment [%s] does not have the CLUSTER_ID environment variable set", istioDeploymentConfig)
+		return "", fmt.Errorf("istiod deployment [%s] does not have the CLUSTER_ID environment variable set", istiodDeployment.Name)
 	}
 
-	return clusterName, gatewayToNamespace, nil
+	return clusterName, nil
 }
 
 func GatewayAPIClasses(ambientEnabled bool) []config.GatewayAPIClass {
