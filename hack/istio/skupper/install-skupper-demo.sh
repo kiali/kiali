@@ -308,6 +308,15 @@ minikube_install_skupper() {
   ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} -n bookinfo patch serviceentry mysqldb.test --type='json' -p='[{"op": "replace", "path": "/spec/addresses/0", "value": "'${SKUPPER_MYSQL_IP}'"}, {"op": "replace", "path": "/spec/endpoints/0/address", "value": "'${SKUPPER_MYSQL_IP}'"}]'
   infomsg "Exposing MySQL Skupper Prometheus so its UI can be accessed"
   ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} -n ${MYSQLSKUPPERNS} patch svc skupper-prometheus --type=merge --patch '{"spec":{"type":"LoadBalancer"}}'
+
+  # Get all deployments with the specified label, and patch them with another app label
+  local deployments=$(${CLIENT_EXE} --context ${CLUSTER1_ISTIO} get deployments -l "app.kubernetes.io/name=skupper-router" --all-namespaces -o jsonpath='{range .items[*]}{.metadata.namespace}:{.metadata.name}{"\n"}{end}')
+  for d in $deployments; do
+    local _ns="$(echo $d | cut -d: -f1)"
+    local _n="$(echo $d | cut -d: -f2)"
+    ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} patch deployment ${_n} -n ${_ns} -p '{"spec":{"template":{"metadata":{"labels":{"app": "skupper-router"}}}}}'
+    infomsg "Label added to deployment: ${d}"
+  done
 }
 
 # openshift_install_basic_demo will install the two databases, Istio, Kiali, and Bookinfo demo in the two existing OpenShift clusters.
@@ -443,6 +452,15 @@ openshift_install_skupper() {
   ${CLIENT_EXE} -n bookinfo patch serviceentry mysqldb.test --type='json' -p='[{"op": "replace", "path": "/spec/addresses/0", "value": "'${SKUPPER_MYSQL_IP}'"}, {"op": "replace", "path": "/spec/endpoints/0/address", "value": "'${SKUPPER_MYSQL_IP}'"}]'
   infomsg "Exposing MySQL Skupper Prometheus so its UI can be accessed"
   ${CLIENT_EXE} -n ${MYSQLSKUPPERNS} expose svc skupper-prometheus
+
+  # Get all deployments with the specified label, and patch them with another app label
+  local deployments=$(${CLIENT_EXE} get deployments -l "app.kubernetes.io/name=skupper-router" --all-namespaces -o jsonpath='{range .items[*]}{.metadata.namespace}:{.metadata.name}{"\n"}{end}')
+  for d in $deployments; do
+    local _ns="$(echo $d | cut -d: -f1)"
+    local _n="$(echo $d | cut -d: -f2)"
+    ${CLIENT_EXE} patch deployment ${_n} -n ${_ns} -p '{"spec":{"template":{"metadata":{"labels":{"app": "skupper-router"}}}}}'
+    infomsg "Label added to deployment: ${d}"
+  done
 }
 
 minikube_install_east_west_demo() {
