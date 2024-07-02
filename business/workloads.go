@@ -1286,10 +1286,6 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 			}
 
 		}
-		if w.IsAmbient && !config.IsWaypoint(w.Labels) {
-			// If Ambient is enabled for workload, check if it has a Waypoint proxy
-			w.WaypointWorkloads = in.getWaypointsForWorkload(ctx, namespace, *w)
-		}
 
 		if cnFound {
 			ws = append(ws, w)
