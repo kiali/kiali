@@ -393,17 +393,6 @@ func getWorkload(cluster, namespace, workloadName string, gi *graph.AppenderGlob
 	return nil, false
 }
 
-func getWorkloadItem(cluster, namespace, workloadName string, gi *graph.AppenderGlobalInfo) (*models.Workload, error) {
-	if workloadName == "" || workloadName == graph.Unknown {
-		return nil, fmt.Errorf("workload name or workload does not exist")
-	}
-
-	criteria := business.WorkloadCriteria{Cluster: cluster, Namespace: namespace, WorkloadName: workloadName, IncludeIstioResources: false, IncludeHealth: false}
-	wk, err := gi.Business.Workload.GetWorkload(context.TODO(), criteria)
-
-	return wk, err
-}
-
 func getAppWorkloads(cluster, namespace, app, version string, gi *graph.AppenderGlobalInfo) []models.WorkloadListItem {
 	cfg := config.Get()
 	appLabel := cfg.IstioLabels.AppLabelName
