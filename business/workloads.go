@@ -107,10 +107,10 @@ type LogEntry struct {
 }
 
 type filterOpts struct {
-	destWk string
-	destNs string
-	srcWk  string
-	srcNs  string
+	destWk regexp.Regexp
+	destNs regexp.Regexp
+	srcWk  regexp.Regexp
+	srcNs  regexp.Regexp
 }
 
 // LogOptions holds query parameter values
@@ -2293,12 +2293,17 @@ func (in *WorkloadService) StreamPodLogs(cluster, namespace, name string, opts *
 		pods := in.cache.GetZtunnelPods(cluster)
 		// This is needed for the K8S client
 		opts.PodLogOptions.Container = models.IstioProxy
+		wkDstPattern := fmt.Sprintf(`dst\.workload=("?%s"?)`, name)
+		nsDstPattern := fmt.Sprintf(`dst\.namespace=("?%s"?)`, namespace)
+		wkSrcPattern := fmt.Sprintf(`src\.workload=("?%s"?)`, name)
+		nsSrcPattern := fmt.Sprintf(`src\.namespace=("?%s"?)`, namespace)
+
 		// The ztunnel line should include the pod and the namespace
 		fs := filterOpts{
-			destWk: fmt.Sprintf("dst.workload=%s", name),
-			destNs: fmt.Sprintf("dst.namespace=%s", namespace),
-			srcWk:  fmt.Sprintf("src.workload=%s", name),
-			srcNs:  fmt.Sprintf("src.namespace=%s", namespace),
+			destWk: *regexp.MustCompile(wkDstPattern),
+			destNs: *regexp.MustCompile(nsDstPattern),
+			srcWk:  *regexp.MustCompile(wkSrcPattern),
+			srcNs:  *regexp.MustCompile(nsSrcPattern),
 		}
 		opts.filter = fs
 		for _, pod := range pods {
@@ -2313,7 +2318,7 @@ func (in *WorkloadService) StreamPodLogs(cluster, namespace, name string, opts *
 
 // AND filter
 func filterMatches(line string, filter filterOpts) bool {
-	if (strings.Contains(line, filter.destNs) && strings.Contains(line, filter.destWk)) || (strings.Contains(line, filter.srcNs) && strings.Contains(line, filter.srcWk)) {
+	if (filter.destNs.MatchString(line) && filter.destWk.MatchString(line)) || (filter.srcNs.MatchString(line) && filter.srcWk.MatchString(line)) {
 		return true
 	}
 	return false
