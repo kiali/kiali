@@ -128,7 +128,7 @@ const newRequest = <P>(
   return axios.request<P>({
     method: method,
     url: apiProxy ? `${apiProxy}/${url}` : url,
-    data: apiProxy ? JSON.stringify(data) : data,
+    data: data,
     headers: getHeaders() as AxiosHeaders,
     params: queryParams
   });
@@ -1183,7 +1183,7 @@ export const getIstioPermissions = (namespaces: string[], cluster?: string): Pro
 };
 
 export const getMetricsStats = (queries: MetricsStatsQuery[]): Promise<ApiResponse<MetricsStatsResult>> => {
-  return newRequest<MetricsStatsResult>(HTTP_VERBS.POST, urls.metricsStats, {}, { queries: queries });
+  return newRequest<MetricsStatsResult>(HTTP_VERBS.POST, urls.metricsStats, {}, JSON.stringify({ queries: queries }));
 };
 
 export function deleteServiceTrafficRouting(
