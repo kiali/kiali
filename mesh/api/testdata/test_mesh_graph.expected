@@ -37,7 +37,6 @@
               }
             ],
             "name": "cluster-primary",
-            "network": "kialiNetwork",
             "secretName": "",
             "accessible": true
           },
@@ -59,7 +58,6 @@
             "isKialiHome": false,
             "kialiInstances": null,
             "name": "cluster-remote",
-            "network": "",
             "secretName": "",
             "accessible": true
           },
@@ -265,7 +263,7 @@
             },
             "IstioIdentityDomain": "svc.cluster.local",
             "IstioInjectionAnnotation": "sidecar.istio.io/inject",
-            "IstioSidecarInjectorConfigMapName": "istio-sidecar-injector",
+            "IstioSidecarInjectorConfigMapName": "",
             "IstioSidecarAnnotation": "sidecar.istio.io/status",
             "IstiodDeploymentName": "",
             "IstiodPodMonitoringPort": 15014,
@@ -288,7 +286,7 @@
           "healthData": "Healthy",
           "infraData": {
             "config": {
-              "Network": "",
+              "Network": "kialiNetwork",
               "DisableMixerHttpReports": false,
               "DiscoverySelectors": null,
               "EnableAutoMtls": true,

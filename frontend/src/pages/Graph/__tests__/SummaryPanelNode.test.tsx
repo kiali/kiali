@@ -53,7 +53,6 @@ describe('SummaryPanelNodeComponent', () => {
         isKialiHome: true,
         kialiInstances: [],
         name: 'cluster-default',
-        network: 'test-net',
         secretName: 'test-secret'
       }
     };

@@ -141,7 +141,6 @@
   "Namespace Label": "命名空间标签",
   "Namespace: {{namespace}}": "Namespace: {{namespace}}",
   "Namespaces": "Namespaces",
-  "Network: {{network}}": "Network: {{network}}",
   "Next": "Next",
   "No {{direction}} traffic": "没有 {{direction}} traffic",
   "No cert info": "没有集群",

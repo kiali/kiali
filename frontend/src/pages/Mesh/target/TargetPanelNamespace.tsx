@@ -35,7 +35,7 @@ import { OverviewStatus } from 'pages/Overview/OverviewStatus';
 import { switchType } from 'pages/Overview/OverviewHelper';
 import { TLSStatus } from 'types/TLSStatus';
 import * as FilterHelper from '../../../components/FilterList/FilterHelper';
-import { ControlPlaneMetricsMap, Metric } from 'types/Metrics';
+import { Metric } from 'types/Metrics';
 import { classes } from 'typestyle';
 import { panelBodyStyle, panelHeadingStyle, panelStyle } from 'pages/Graph/SummaryPanelStyle';
 
@@ -43,7 +43,6 @@ type TargetPanelNamespaceProps = TargetPanelCommonProps;
 
 type TargetPanelNamespaceState = {
   canaryUpgradeStatus?: CanaryUpgradeStatus;
-  controlPlaneMetrics?: ControlPlaneMetricsMap;
   errorMetrics?: Metric[];
   loading: boolean;
   metrics?: Metric[];
@@ -57,7 +56,6 @@ type TargetPanelNamespaceState = {
 
 const defaultState: TargetPanelNamespaceState = {
   canaryUpgradeStatus: undefined,
-  controlPlaneMetrics: undefined,
   errorMetrics: undefined,
   loading: false,
   nsInfo: undefined,

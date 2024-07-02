@@ -8,7 +8,6 @@ describe('ClusterActions', () => {
     kialiInstances: [],
     secretName: '',
     apiEndpoint: '',
-    network: '',
     accessible: true
   };
 

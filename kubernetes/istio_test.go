@@ -62,6 +62,7 @@ func TestGetClusterInfoFromIstiodFails(t *testing.T) {
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:      "istiod",
 				Namespace: "istio-system",
+				Labels:    map[string]string{"app": "istiod"},
 			},
 			Spec: apps_v1.DeploymentSpec{
 				Template: core_v1.PodTemplateSpec{
@@ -92,6 +93,7 @@ func TestClusterNameFromIstiodUsesConfigWhenSet(t *testing.T) {
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:      "istiod",
 				Namespace: "istio-system",
+				Labels:    map[string]string{"app": "istiod"},
 			},
 			Spec: apps_v1.DeploymentSpec{
 				Template: core_v1.PodTemplateSpec{
@@ -111,6 +113,7 @@ func TestClusterNameFromIstiodUsesConfigWhenSet(t *testing.T) {
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:      "different-istiod",
 				Namespace: "istio-system",
+				Labels:    map[string]string{"app": "istiod"},
 			},
 			Spec: apps_v1.DeploymentSpec{
 				Template: core_v1.PodTemplateSpec{

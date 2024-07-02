@@ -12,7 +12,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
 	k8syaml "k8s.io/apimachinery/pkg/util/yaml"
 
 	"github.com/kiali/kiali/config"
@@ -24,12 +23,14 @@ import (
 )
 
 const (
-	istioControlPlaneClustersLabel = "topology.istio.io/controlPlaneClusters"
-	istiodAppNameLabelKey          = "app"
-	istiodAppNameLabelValue        = "istiod"
-	istiodClusterIDEnvKey          = "CLUSTER_ID"
-	istiodExternalEnvKey           = "EXTERNAL_ISTIOD"
-	istiodScopeGatewayEnvKey       = "PILOT_SCOPE_GATEWAY_TO_NAMESPACE"
+	istioControlPlaneClustersLabel        = "topology.istio.io/controlPlaneClusters"
+	istiodAppNameLabelKey                 = "app"
+	istiodAppNameLabelValue               = "istiod"
+	istiodClusterIDEnvKey                 = "CLUSTER_ID"
+	istiodExternalEnvKey                  = "EXTERNAL_ISTIOD"
+	istiodScopeGatewayEnvKey              = "PILOT_SCOPE_GATEWAY_TO_NAMESPACE"
+	baseIstioConfigMapName                = "istio"                  // As of 1.19 this is hardcoded in the helm charts.
+	baseIstioSidecarInjectorConfigMapName = "istio-sidecar-injector" // As of 1.19 this is hardcoded in the helm charts.
 )
 
 const (
@@ -64,31 +65,19 @@ func parseIstioConfigMap(istioConfig *corev1.ConfigMap) (*models.IstioMeshConfig
 }
 
 // gets the mesh configuration for a controlplane from the istio configmap.
-func getControlPlaneConfiguration(kubeCache cache.KubeCache, namespace string, revision string, conf *config.Config) (*models.ControlPlaneConfiguration, error) {
-	var configMap *corev1.ConfigMap
+func (in *Discovery) getControlPlaneConfiguration(kubeCache cache.KubeCache, controlPlane *models.ControlPlane) (*models.ControlPlaneConfiguration, error) {
+	var configMapName string
 	// If the config map name is explicitly set we should always use that
 	// until the config option is removed.
-	if conf.ExternalServices.Istio.ConfigMapName != "" {
-		cm, err := kubeCache.GetConfigMap(namespace, conf.ExternalServices.Istio.ConfigMapName)
-		if err != nil {
-			return nil, err
-		}
-		configMap = cm
+	if in.conf.ExternalServices.Istio.ConfigMapName != "" {
+		configMapName = in.conf.ExternalServices.Istio.ConfigMapName
 	} else {
-		selector := labels.Set(map[string]string{models.IstioRevisionLabel: revision}).AsSelector().String()
-		configMaps, err := kubeCache.GetConfigMaps(namespace, selector)
-		if err != nil {
-			return nil, err
-		}
+		configMapName = istioConfigMapName(controlPlane.Revision)
+	}
 
-		istioConfigMapName := istioConfigMapName(conf, revision)
-		idx := slices.IndexFunc(configMaps, func(cm corev1.ConfigMap) bool {
-			return cm.Name == istioConfigMapName
-		})
-		if idx == -1 {
-			return nil, fmt.Errorf("no istio configmap named [%s] found for revision [%s] in namespace [%s] and cluster [%s]", istioConfigMapName, revision, namespace, kubeCache.Client().ClusterInfo().Name)
-		}
-		configMap = &configMaps[idx]
+	configMap, err := kubeCache.GetConfigMap(controlPlane.IstiodNamespace, configMapName)
+	if err != nil {
+		return nil, err
 	}
 
 	istioConfigMapInfo, err := parseIstioConfigMap(configMap)
@@ -98,23 +87,27 @@ func getControlPlaneConfiguration(kubeCache cache.KubeCache, namespace string, r
 
 	return &models.ControlPlaneConfiguration{
 		IstioMeshConfig: *istioConfigMapInfo,
+		Network:         in.resolveNetwork(kubeCache, controlPlane),
 	}, nil
 }
 
-// istioConfigMapName guesses the istio configmap name.
-func istioConfigMapName(conf *config.Config, revision string) string {
-	if conf.ExternalServices.Istio.ConfigMapName != "" {
-		return conf.ExternalServices.Istio.ConfigMapName
-	}
-
+func revisionedConfigMapName(base string, revision string) string {
 	// If the revision is set, we should use the revisioned configmap name
-	// otherwise the hardcoded 'istio' value is used.
-	configMapName := "istio" // As of 1.19 this is hardcoded in the helm charts.
-	if revision != "default" && revision != "" {
-		configMapName = configMapName + "-" + revision
+	// otherwise the hardcoded base value is used.
+	if revision == "" || revision == DefaultRevisionLabel {
+		return base
 	}
+	return fmt.Sprintf("%s-%s", base, revision)
+}
 
-	return configMapName
+// istioConfigMapName guesses the istio configmap name.
+func istioConfigMapName(revision string) string {
+	return revisionedConfigMapName(baseIstioConfigMapName, revision)
+}
+
+// sidecarInjectorConfigMapName guesses the istio sidecar injector configmap name.
+func sidecarInjectorConfigMapName(revision string) string {
+	return revisionedConfigMapName(baseIstioSidecarInjectorConfigMapName, revision)
 }
 
 // Discovery detects istio infrastructure and configuration across clusters.
@@ -174,8 +167,6 @@ func (in *Discovery) Clusters() ([]models.KubeCluster, error) {
 		if info.ClientConfig != nil {
 			meshCluster.ApiEndpoint = info.ClientConfig.Host
 		}
-
-		meshCluster.Network = in.resolveNetwork(cluster)
 
 		if cluster == in.conf.KubernetesConfig.ClusterName {
 			meshCluster.IsKialiHome = true
@@ -270,7 +261,7 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 				Revision:        istiod.Labels[models.IstioRevisionLabel],
 			}
 
-			controlPlaneConfig, err := getControlPlaneConfiguration(kubeCache, istiod.Namespace, controlPlane.Revision, in.conf)
+			controlPlaneConfig, err := in.getControlPlaneConfiguration(kubeCache, &controlPlane)
 			if err != nil {
 				return nil, err
 			}
@@ -504,12 +495,18 @@ func appendKialiInstancesFromConfig(instances []models.KialiInstance, cfgurl con
 	return instances
 }
 
-func (in *Discovery) getNetworkFromSidecarInejctorConfigMap(kubeCache cache.KubeCache) string {
+func (in *Discovery) getNetworkFromSidecarInejctorConfigMap(kubeCache cache.KubeCache, namespace, revision string) string {
 	// Try to resolve the logical Istio's network ID of the cluster where
 	// Kiali is installed. This assumes that the mesh Control Plane is installed in the same
 	// cluster as Kiali.
-	// TODO: This doesn't take into account revisions.
-	istioSidecarConfig, err := kubeCache.GetConfigMap(in.conf.IstioNamespace, in.conf.ExternalServices.Istio.IstioSidecarInjectorConfigMapName)
+	var configMapName string
+	if in.conf.ExternalServices.Istio.IstioSidecarInjectorConfigMapName != "" {
+		configMapName = in.conf.ExternalServices.Istio.IstioSidecarInjectorConfigMapName
+	} else {
+		configMapName = sidecarInjectorConfigMapName(revision)
+	}
+
+	istioSidecarConfig, err := kubeCache.GetConfigMap(namespace, configMapName)
 	if err != nil {
 		// Don't return an error, as this may mean that Kiali is not installed along the control plane.
 		// This setup is OK, it's just that it's not within our multi-cluster assumptions.
@@ -565,23 +562,18 @@ func (in *Discovery) getNetworkFromSidecarInejctorConfigMap(kubeCache cache.Kube
 //
 // No errors are returned because we don't want to block processing of other clusters if
 // one fails. So, errors are only logged to let processing continue.
-func (in *Discovery) resolveNetwork(clusterName string) string {
-	kubeCache, err := in.kialiCache.GetKubeCache(clusterName)
-	if err != nil {
-		log.Warningf("Cannot resolve the network ID of the cluster [%s]: cannot get the kube cache: %v", clusterName, err)
-		return ""
-	}
-
-	if network := in.getNetworkFromSidecarInejctorConfigMap(kubeCache); network != "" {
+func (in *Discovery) resolveNetwork(kubeCache cache.KubeCache, controlPlane *models.ControlPlane) string {
+	clusterName := controlPlane.Cluster.Name
+	if network := in.getNetworkFromSidecarInejctorConfigMap(kubeCache, controlPlane.IstiodNamespace, controlPlane.Revision); network != "" {
 		return network
 	}
 
 	// Network id wasn't found in the config. Try to find it on the istio namespace.
 
 	// Let's assume that the istio namespace has the same name on all clusters in the mesh.
-	istioNamespace, err := in.kialiSAClients[clusterName].GetNamespace(in.conf.IstioNamespace)
+	istioNamespace, err := in.kialiSAClients[clusterName].GetNamespace(controlPlane.IstiodNamespace)
 	if err != nil {
-		log.Warningf("Cannot describe the [%s] namespace on cluster [%s]: %v", in.conf.IstioNamespace, clusterName, err)
+		log.Warningf("Cannot describe the [%s] namespace on cluster [%s]: %v", controlPlane.IstiodNamespace, clusterName, err)
 		return ""
 	}
 
@@ -592,7 +584,7 @@ func (in *Discovery) resolveNetwork(clusterName string) string {
 	// the network ID. We use that label to retrieve the network ID.
 	network, ok := istioNamespace.Labels["topology.istio.io/network"]
 	if !ok {
-		log.Debugf("Istio namespace [%s] in cluster [%s] does not have network label", in.conf.IstioNamespace, clusterName)
+		log.Debugf("Istio namespace [%s] in cluster [%s] does not have network label", controlPlane.IstiodNamespace, clusterName)
 		return ""
 	}
 

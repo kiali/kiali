@@ -121,9 +121,6 @@ type KubeCluster struct {
 	// Name specifies the CLUSTER_ID as known by the Control Plane
 	Name string `json:"name"`
 
-	// Network specifies the logical NETWORK_ID as known by the Control Plane
-	Network string `json:"network"`
-
 	// SecretName is the name of the kubernetes "remote cluster secret" that was mounted to the file system and where data of this cluster was resolved
 	SecretName string `json:"secretName"`
 
