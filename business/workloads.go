@@ -1970,7 +1970,7 @@ func (in *WorkloadService) isWorkloadCaptured(ctx context.Context, workload mode
 }
 
 // getWaypointsForWorkload Returns a list of waypoint proxies that capture a workload
-// TODO: Could be more than one? (If not, it should return just a workload)
+// It should be related with just one waypoint, but this is up to the user, it can help to detect issues in the Ambient Mesh
 func (in *WorkloadService) getWaypointsForWorkload(ctx context.Context, namespace string, workload models.Workload) []models.Workload {
 	var workloadslist []models.Workload
 
@@ -1981,7 +1981,8 @@ func (in *WorkloadService) getWaypointsForWorkload(ctx context.Context, namespac
 	}
 
 	for _, waypoint := range waypoints {
-		// TODO: Can the waypoint be on a different ns? (not for now)
+		// At the moment, it is not possible to have the waypoint in a different namespace
+		// This is expected to change in future releases
 		wkd, err := in.fetchWorkload(ctx, WorkloadCriteria{Cluster: workload.Cluster, Namespace: namespace, WorkloadName: waypoint.Name, WorkloadType: ""})
 		if err != nil {
 			log.Debugf("getWaypointsForWorkload: Error fetching workloads %s", err.Error())
