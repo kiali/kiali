@@ -4,6 +4,7 @@ import { ServerList } from './GatewayForm/ServerList';
 import { MAX_PORT, Server, ServerForm, ServerTLSSettings, MIN_PORT } from '../../types/IstioObjects';
 import { isValid } from 'utils/Common';
 import { areValidHosts } from './GatewayForm/ServerBuilder';
+import { serverConfig } from '../../config';
 
 export const GATEWAY = 'Gateway';
 export const GATEWAYS = 'gateways';
@@ -26,7 +27,7 @@ export const initGateway = (): GatewayState => ({
   addWorkloadSelector: false,
   gatewayServers: [],
   serversForm: [],
-  workloadSelectorLabels: 'istio=ingressgateway',
+  workloadSelectorLabels: serverConfig.istioLabels.ingressGatewayLabel,
   workloadSelectorValid: true
 });
 
@@ -71,7 +72,7 @@ export class GatewayForm extends React.Component<Props, GatewayState> {
     this.state = initGateway();
   }
 
-  componentDidMount() {
+  componentDidMount(): void {
     this.setState(this.props.gateway);
   }
 
@@ -126,7 +127,7 @@ export class GatewayForm extends React.Component<Props, GatewayState> {
     this.setState({ gatewayServers: servers, serversForm: serversForm }, () => this.props.onChange(this.state));
   };
 
-  render() {
+  render(): React.ReactNode {
     return (
       <>
         <FormGroup label="Workload Selector" fieldId="workloadSelectorSwitch">

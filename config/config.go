@@ -345,7 +345,9 @@ type IstioLabels struct {
 	AmbientWaypointLabelValue  string `yaml:"ambient_waypoint_label_value,omitempty" json:"ambientWaypointLabelValue"`
 	AmbientWaypointUseLabel    string `yaml:"ambient_waypoint_use_label,omitempty" json:"ambientWaypointUseLabel"`
 	AppLabelName               string `yaml:"app_label_name,omitempty" json:"appLabelName"`
-	InjectionLabelName         string `yaml:"injection_label,omitempty" json:"injectionLabelName"`
+	EgressGatewayLabel         string `yaml:"egress_gateway_label,omitempty" json:"egressGatewayLabel"`
+	IngressGatewayLabel        string `yaml:"ingress_gateway_label,omitempty" json:"ingressGatewayLabel"`
+	InjectionLabelName         string `yaml:"injection_label_name,omitempty" json:"injectionLabelName"`
 	InjectionLabelRev          string `yaml:"injection_label_rev,omitempty" json:"injectionLabelRev"`
 	VersionLabelName           string `yaml:"version_label_name,omitempty" json:"versionLabelName"`
 }
@@ -762,6 +764,8 @@ func NewConfig() (c *Config) {
 			AmbientWaypointLabelValue:  WaypointLabelValue,
 			AmbientWaypointUseLabel:    WaypointUseLabel,
 			AppLabelName:               "app",
+			EgressGatewayLabel:         "istio=egressgateway",
+			IngressGatewayLabel:        "istio=ingressgateway",
 			InjectionLabelName:         "istio-injection",
 			InjectionLabelRev:          "istio.io/rev",
 			VersionLabelName:           "version",
@@ -965,6 +969,14 @@ func (conf *Config) IsServerHTTPS() bool {
 	return conf.Identity.CertFile != "" && conf.Identity.PrivateKeyFile != ""
 }
 
+func (conf *Config) GatewayLabel(labelConfig string) []string {
+	label := strings.Split(labelConfig, "=")
+	if len(label) == 2 {
+		return label
+	}
+	return []string{"", ""}
+}
+
 // Get the global Config
 func Get() (conf *Config) {
 	rwMutex.RLock()
@@ -1000,7 +1012,7 @@ func (conf Config) String() (str string) {
 	obf := conf.Obfuscate()
 	str, err := Marshal(&obf)
 	if err != nil {
-		str = fmt.Sprintf("Failed to marshal config to string. err=%v", err)
+		str = fmt.Sprintf("Failed to marsx`hal config to string. err=%v", err)
 		log.Debugf(str)
 	}
 
