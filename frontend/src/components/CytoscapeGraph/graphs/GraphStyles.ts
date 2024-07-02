@@ -243,7 +243,7 @@ export class GraphStyles {
     const isOutside = node.isOutside;
     const isWaypoint = node.isWaypoint || '';
 
-    // Badges portion of label...
+    // Icon Badges portion of label...
 
     let badges = '';
     if (cyGlobal.showOutOfMesh && node.isOutOfMesh) {
@@ -333,8 +333,7 @@ export class GraphStyles {
       contentStyle += 'display:none;';
     }
 
-    const content: string[] = [];
-    const newContent: contentType[] = [];
+    const content: contentType[] = [];
 
     // append namespace if necessary
     if (
@@ -345,8 +344,7 @@ export class GraphStyles {
       !isNamespaceBoxed &&
       isBox !== BoxByType.NAMESPACE
     ) {
-      content.push(`(${namespace})`);
-      newContent.push({ pfBadge: PFBadges.Namespace, text: namespace });
+      content.push({ pfBadge: PFBadges.Namespace, text: namespace });
     }
 
     // append cluster if necessary
@@ -357,70 +355,61 @@ export class GraphStyles {
       !isBoxed &&
       isBox !== BoxByType.CLUSTER
     ) {
-      content.push(`(${cluster})`);
-      newContent.push({ pfBadge: PFBadges.Cluster, text: cluster });
+      content.push({ pfBadge: PFBadges.Cluster, text: cluster });
     }
 
     switch (nodeType) {
       case NodeType.AGGREGATE:
-        content.unshift(node.aggregateValue!);
-        newContent.unshift({ text: node.aggregateValue! });
+        content.unshift({ text: node.aggregateValue! });
         break;
       case NodeType.APP:
         if (isAppBoxed) {
           if (cyGlobal.graphType === GraphType.APP) {
-            content.unshift(app);
-            newContent.unshift({ text: app });
+            content.unshift({ text: app });
           } else if (version && version !== UNKNOWN) {
-            content.unshift(version);
-            newContent.unshift({ text: version });
+            content.unshift({ text: version });
           } else {
-            content.unshift(workload ? workload : app);
-            newContent.unshift({ text: workload ? workload : app });
+            content.unshift({ text: workload ? workload : app });
           }
         } else {
           if (cyGlobal.graphType === GraphType.APP || version === UNKNOWN) {
-            content.unshift(app);
-            newContent.unshift({ text: app });
+            content.unshift({ text: app });
           } else {
-            content.unshift(version);
-            newContent.unshift({ text: version });
-            content.unshift(app);
-            newContent.unshift({ text: app });
+            content.unshift({ text: version });
+            content.unshift({ text: app });
           }
         }
         break;
       case NodeType.BOX:
         switch (isBox) {
           case BoxByType.APP:
-            content.unshift(app);
-            newContent.unshift({ pfBadge: PFBadges.App, text: app });
+            content.unshift({ pfBadge: PFBadges.App, text: app });
             break;
           case BoxByType.CLUSTER:
-            content.unshift(node.cluster);
-            newContent.unshift({ pfBadge: PFBadges.Cluster, text: node.cluster });
+            content.unshift({ pfBadge: PFBadges.Cluster, text: node.cluster });
             break;
           case BoxByType.NAMESPACE:
-            content.unshift(node.namespace);
-            newContent.unshift({ pfBadge: PFBadges.Namespace, text: node.namespace });
+            content.unshift({ pfBadge: PFBadges.Namespace, text: node.namespace });
             break;
         }
         break;
       case NodeType.SERVICE:
-        content.unshift(service);
-        newContent.unshift({ text: service });
+        content.unshift({ text: service });
         break;
       case NodeType.UNKNOWN:
-        content.unshift(UNKNOWN);
-        newContent.unshift({ text: UNKNOWN });
+        content.unshift({ text: UNKNOWN });
         break;
       case NodeType.WORKLOAD:
-        content.unshift(workload);
-        newContent.unshift({ text: workload });
+        content.unshift({ text: workload });
         break;
       default:
-        content.unshift('error');
-        newContent.unshift({ text: 'error' });
+        content.unshift({ text: 'error' });
+    }
+
+    if (node.isExtension) {
+      const extBadge = PFBadges.Extension;
+      extBadge.tt = `${extBadge.tt}: ${node.isExtension}`;
+      content[0].pfBadge = extBadge;
     }
 
     let contentClasses = `${contentDefault}`;
@@ -443,7 +432,7 @@ export class GraphStyles {
       let appBoxStyle = isBox === BoxByType.APP ? `font-size: ${settings.fontLabel}px;` : '';
 
       let contentDivs = '';
-      newContent.forEach(c => {
+      content.forEach(c => {
         let contentPfBadge = '';
         if (!!c.pfBadge) {
           const pfBadgeStyle = kialiStyle(c.pfBadge.style as NestedCSSProperties);
@@ -480,7 +469,7 @@ export class GraphStyles {
     }
 
     let contentDivs = '';
-    newContent.forEach(c => {
+    content.forEach(c => {
       let contentPfBadge = '';
       if (!!c.pfBadge) {
         const pfBadgeStyle = kialiStyle(c.pfBadge.style as NestedCSSProperties);

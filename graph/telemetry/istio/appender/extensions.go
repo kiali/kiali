@@ -66,11 +66,11 @@ func (a ExtensionsAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo 
 			continue
 		}
 		log.Infof("Running Extension %s", extension) // todo: remove
-		a.appendGraph(trafficMap, extension, globalInfo.PromClient)
+		a.appendGraph(extension, trafficMap, globalInfo.PromClient)
 	}
 }
 
-func (a ExtensionsAppender) appendGraph(trafficMap graph.TrafficMap, ext config.ExtensionConfig, client *prometheus.Client) {
+func (a ExtensionsAppender) appendGraph(ext config.ExtensionConfig, trafficMap graph.TrafficMap, client *prometheus.Client) {
 	/*
 		// Look for the extension's root node in the current traffic map (eg the skupper-router for the defined site).  If found, then we
 		// will query the extension metrics for extension traffic from the root.  Otherwise, skip extenstion traffic because this
@@ -105,7 +105,7 @@ func (a ExtensionsAppender) appendGraph(trafficMap graph.TrafficMap, ext config.
 			idleCondition)
 		log.Infof("Extension requests query [%s]", query)
 		vector := promQuery(query, time.Unix(a.QueryTime, 0), client.GetContext(), client.API(), a)
-		a.appendTrafficMap(trafficMap, &vector, metric)
+		a.appendTrafficMap(ext, trafficMap, &vector, metric)
 	}
 
 	//
@@ -139,12 +139,12 @@ func (a ExtensionsAppender) appendGraph(trafficMap graph.TrafficMap, ext config.
 				idleCondition)
 			log.Infof("Extension tcp query [%s]", query)
 			vector := promQuery(query, time.Unix(a.QueryTime, 0), client.GetContext(), client.API(), a)
-			a.appendTrafficMap(trafficMap, &vector, metric)
+			a.appendTrafficMap(ext, trafficMap, &vector, metric)
 		}
 	}
 }
 
-func (a ExtensionsAppender) appendTrafficMap(trafficMap graph.TrafficMap, vector *model.Vector, metric string) {
+func (a ExtensionsAppender) appendTrafficMap(ext config.ExtensionConfig, trafficMap graph.TrafficMap, vector *model.Vector, metric string) {
 	isRequests := true
 	protocol := ""
 	if strings.HasPrefix(metric, "kiali_ext_tcp") {
@@ -208,17 +208,17 @@ func (a ExtensionsAppender) appendTrafficMap(trafficMap graph.TrafficMap, vector
 			}
 		}
 
-		a.addTraffic(trafficMap, metric, val, protocol, code, flags, sourceCluster, sourceIsRoot, sourceNs, sourceName, destCluster, destNs, destName)
+		a.addTraffic(ext, trafficMap, metric, val, protocol, code, flags, sourceCluster, sourceIsRoot, sourceNs, sourceName, destCluster, destNs, destName)
 	}
 }
 
-func (a ExtensionsAppender) addTraffic(trafficMap graph.TrafficMap, metric string, val float64, protocol, code, flags, sourceCluster, sourceIsRoot, sourceNs, sourceName, destCluster, destNs, destName string) {
-	source, _, err := a.addNode(trafficMap, sourceIsRoot == "true", sourceCluster, sourceNs, sourceName, a.GraphType)
+func (a ExtensionsAppender) addTraffic(ext config.ExtensionConfig, trafficMap graph.TrafficMap, metric string, val float64, protocol, code, flags, sourceCluster, sourceIsRoot, sourceNs, sourceName, destCluster, destNs, destName string) {
+	source, _, err := a.addNode(ext, trafficMap, sourceIsRoot == "true", sourceCluster, sourceNs, sourceName, a.GraphType)
 	if err != nil {
 		log.Warningf("Skipping extension addTraffic (source) in extension, %s", err)
 		return
 	}
-	dest, _, err := a.addNode(trafficMap, false, destCluster, destNs, destName, a.GraphType)
+	dest, _, err := a.addNode(ext, trafficMap, false, destCluster, destNs, destName, a.GraphType)
 	if err != nil {
 		log.Warningf("Skipping extension addTraffic (dest), %s", err)
 		return
@@ -233,7 +233,7 @@ func (a ExtensionsAppender) addTraffic(trafficMap graph.TrafficMap, metric strin
 	a.addEdgeTraffic(val, protocol, code, flags, destName, source, dest, edgeTSHash)
 }
 
-func (a ExtensionsAppender) addNode(trafficMap graph.TrafficMap, isRoot bool, cluster, namespace, name, graphType string) (*graph.Node, bool, error) {
+func (a ExtensionsAppender) addNode(ext config.ExtensionConfig, trafficMap graph.TrafficMap, isRoot bool, cluster, namespace, name, graphType string) (*graph.Node, bool, error) {
 	id, nodeType, err := graph.Id(cluster, namespace, name, "", "", "", "", graphType)
 	if err != nil {
 		return nil, false, err
@@ -266,6 +266,7 @@ func (a ExtensionsAppender) addNode(trafficMap graph.TrafficMap, isRoot bool, cl
 		}
 	}
 	log.Infof("added node...") // todo: remove
+	node.Metadata[graph.IsExtension] = ext.Name
 	node.Metadata["tsHash"] = timeSeriesHash(cluster, namespace, name, "", "", "", "")
 	return node, found, nil
 }

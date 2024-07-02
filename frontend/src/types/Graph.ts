@@ -410,6 +410,7 @@ export interface GraphNodeData {
   isAmbient?: boolean;
   isBox?: string;
   isDead?: boolean;
+  isExtension?: string;
   isGateway?: {
     egressInfo?: {
       hostnames?: string[];
@@ -619,6 +620,8 @@ export const NodeAttr = {
   id: 'id',
   isBox: 'isBox',
   isDead: 'isDead',
+  isExtension: 'isExtension',
+  isGateway: 'isGateway',
   isIdle: 'isIdle',
   isInaccessible: 'isInaccessible',
   isIstio: 'isIstio',

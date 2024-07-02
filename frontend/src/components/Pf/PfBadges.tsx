@@ -22,6 +22,7 @@ export const PFBadges: { [key: string]: PFBadgeType } = Object.freeze({
   DataPlane: { badge: 'DP', tt: 'Data Plane' } as PFBadgeType,
   DestinationRule: { badge: 'DR', tt: 'Destination Rule' } as PFBadgeType,
   EnvoyFilter: { badge: 'EF', tt: 'Envoy Filter' } as PFBadgeType,
+  Extension: { badge: 'E', tt: 'Extension', style: { backgroundColor: PFColors.Black400 } } as PFBadgeType,
   ExternalService: { badge: 'ES', tt: 'External Service' } as PFBadgeType,
   FaultInjectionAbort: {
     badge: 'FI',
