@@ -745,6 +745,20 @@ func TestGetZtunnelPodLogsProxy(t *testing.T) {
 	assert.Equal("details.bookinfo.svc.cluster.local", entry.AccessLog.RequestedServer)
 	assert.Equal(int64(1712917911078), entry.TimestampUnix)
 
+	podLogsQuotes := callStreamPodLogs(svc, "travel-agency", "cars-v1-6c869ff769-4hk27", &LogOptions{Duration: &duration, LogType: models.LogTypeZtunnel, PodLogOptions: core_v1.PodLogOptions{Container: "details"}, MaxLines: &maxLines})
+	require.Equal(2, len(podLogsQuotes.Entries))
+	entryQuotes := podLogsQuotes.Entries[0]
+
+	assert.Equal("[ztunnel] src.addr=10.244.0.118:51405 src.workload=\"cars-v1-6c869ff769-4hk27\" src.namespace=\"travel-agency\" src.identity=\"spiffe://cluster.local/ns/travel-agency/sa/default\" dst.addr=10.244.0.117:3306 dst.hbone_addr=10.244.0.117:3306 dst.service=\"mysqldb.travel-agency.svc.cluster.local\" dst.workload=\"mysqldb-v1-64bc584fdc-bb5vw\" dst.namespace=\"travel-agency\" dst.identity=\"spiffe://cluster.local/ns/travel-agency/sa/default\" direction=\"inbound\" bytes_sent=250 bytes_recv=206 duration=\"1ms\"\n", entryQuotes.Message)
+	assert.Equal("2024-07-02 13:41:03.203", entryQuotes.Timestamp)
+	assert.NotNil(entryQuotes.AccessLog)
+	assert.Equal("206", entryQuotes.AccessLog.BytesReceived)
+	assert.Equal("250", entryQuotes.AccessLog.BytesSent)
+	assert.Equal("1ms\n", entryQuotes.AccessLog.Duration)
+	assert.Equal("spiffe://cluster.local/ns/travel-agency/sa/default", entryQuotes.AccessLog.UpstreamCluster)
+	assert.Equal("mysqldb.travel-agency.svc.cluster.local", entryQuotes.AccessLog.RequestedServer)
+	assert.Equal(int64(1719927663203), entryQuotes.TimestampUnix)
+
 }
 
 func TestDuplicatedControllers(t *testing.T) {
