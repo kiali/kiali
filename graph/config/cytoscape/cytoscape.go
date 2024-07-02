@@ -114,6 +114,7 @@ type NodeData struct {
 	IsAmbient             bool                `json:"isAmbient,omitempty"`             // true (captured by ambient) | false
 	IsBox                 string              `json:"isBox,omitempty"`                 // set for NodeTypeBox, current values: [ 'app', 'cluster', 'namespace' ]
 	IsDead                bool                `json:"isDead,omitempty"`                // true (has no pods) | false
+	IsExtension           string              `json:"isExtension,omitempty"`           // set for Extension nodes, to the extension name
 	IsGateway             *GWInfo             `json:"isGateway,omitempty"`             // Istio ingress/egress gateway information
 	IsIdle                bool                `json:"isIdle,omitempty"`                // true | false
 	IsInaccessible        bool                `json:"isInaccessible,omitempty"`        // true if the node exists in an inaccessible namespace
@@ -284,19 +285,9 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 			nd.IsDead = val.(bool)
 		}
 
-		// node may be idle
-		if val, ok := n.Metadata[graph.IsIdle]; ok {
-			nd.IsIdle = val.(bool)
-		}
-
-		// node may be a root
-		if val, ok := n.Metadata[graph.IsRoot]; ok {
-			nd.IsRoot = val.(bool)
-		}
-
-		// node is not accessible to the current user
-		if val, ok := n.Metadata[graph.IsInaccessible]; ok {
-			nd.IsInaccessible = val.(bool)
+		// node added via registered extension
+		if val, ok := n.Metadata[graph.IsExtension]; ok {
+			nd.IsExtension = val.(string)
 		}
 
 		// node may represent an Istio Ingress Gateway
@@ -331,6 +322,21 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 			}
 
 			nd.IsK8sGatewayAPI = true
+		}
+
+		// node may be idle
+		if val, ok := n.Metadata[graph.IsIdle]; ok {
+			nd.IsIdle = val.(bool)
+		}
+
+		// node may be a root
+		if val, ok := n.Metadata[graph.IsRoot]; ok {
+			nd.IsRoot = val.(bool)
+		}
+
+		// node is not accessible to the current user
+		if val, ok := n.Metadata[graph.IsInaccessible]; ok {
+			nd.IsInaccessible = val.(bool)
 		}
 
 		// node may have a circuit breaker

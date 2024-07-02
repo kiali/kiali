@@ -48,10 +48,22 @@ const getTooltip = (tooltip: React.ReactNode, nodeData: GraphNodeData): React.Re
   );
 };
 
+const addExtensionBadge = (nodeData: GraphNodeData, reactNode: React.ReactNode): React.ReactNode => {
+  return nodeData.isExtension ? (
+    <>
+      <PFBadge badge={PFBadges.Extension} size="sm" tooltip={`${PFBadges.Extension.tt}: ${nodeData.isExtension}`} />
+      {reactNode}
+    </>
+  ) : (
+    reactNode
+  );
+};
+
 export const getBadge = (nodeData: GraphNodeData, nodeType?: NodeType): React.ReactNode => {
   switch (nodeType ?? nodeData.nodeType) {
     case NodeType.AGGREGATE:
-      return (
+      return addExtensionBadge(
+        nodeData,
         <PFBadge
           badge={PFBadges.Operation}
           size="sm"
@@ -59,41 +71,63 @@ export const getBadge = (nodeData: GraphNodeData, nodeType?: NodeType): React.Re
         />
       );
     case NodeType.APP:
-      return <PFBadge badge={PFBadges.App} size="sm" tooltip={getTooltip(PFBadges.App.tt!, nodeData)} />;
+      return addExtensionBadge(
+        nodeData,
+        <PFBadge badge={PFBadges.App} size="sm" tooltip={getTooltip(PFBadges.App.tt!, nodeData)} />
+      );
     case NodeType.BOX:
       switch (nodeData.isBox) {
         case BoxByType.APP:
-          return <PFBadge badge={PFBadges.App} size="sm" tooltip={getTooltip(PFBadges.App.tt!, nodeData)} />;
+          return addExtensionBadge(
+            nodeData,
+            <PFBadge badge={PFBadges.App} size="sm" tooltip={getTooltip(PFBadges.App.tt!, nodeData)} />
+          );
         case BoxByType.CLUSTER:
-          return <PFBadge badge={PFBadges.Cluster} size="sm" tooltip={getTooltip(PFBadges.Cluster.tt!, nodeData)} />;
+          return addExtensionBadge(
+            nodeData,
+            <PFBadge badge={PFBadges.Cluster} size="sm" tooltip={getTooltip(PFBadges.Cluster.tt!, nodeData)} />
+          );
         case BoxByType.NAMESPACE:
-          return (
+          return addExtensionBadge(
+            nodeData,
             <PFBadge badge={PFBadges.Namespace} size="sm" tooltip={getTooltip(PFBadges.Namespace.tt!, nodeData)} />
           );
         default:
-          return <PFBadge badge={PFBadges.Unknown} size="sm" />;
+          return addExtensionBadge(nodeData, <PFBadge badge={PFBadges.Unknown} size="sm" />);
       }
     case NodeType.SERVICE:
-      return !!nodeData.isServiceEntry ? (
-        <PFBadge
-          badge={PFBadges.ServiceEntry}
-          size="sm"
-          tooltip={getTooltip(
-            nodeData.isServiceEntry.location === 'MESH_EXTERNAL' ? 'External Service Entry' : 'Internal Service Entry',
-            nodeData
-          )}
-        />
-      ) : (
-        <PFBadge badge={PFBadges.Service} size="sm" tooltip={getTooltip(PFBadges.Service.tt!, nodeData)} />
+      return addExtensionBadge(
+        nodeData,
+        !!nodeData.isServiceEntry ? (
+          <PFBadge
+            badge={PFBadges.ServiceEntry}
+            size="sm"
+            tooltip={getTooltip(
+              nodeData.isServiceEntry.location === 'MESH_EXTERNAL'
+                ? 'External Service Entry'
+                : 'Internal Service Entry',
+              nodeData
+            )}
+          />
+        ) : (
+          <PFBadge badge={PFBadges.Service} size="sm" tooltip={getTooltip(PFBadges.Service.tt!, nodeData)} />
+        )
       );
     case NodeType.WORKLOAD:
-      return nodeData.hasWorkloadEntry ? (
-        <PFBadge badge={PFBadges.WorkloadEntry} size="sm" tooltip={getTooltip(PFBadges.WorkloadEntry.tt!, nodeData)} />
-      ) : (
-        <PFBadge badge={PFBadges.Workload} size="sm" tooltip={getTooltip(PFBadges.Workload.tt!, nodeData)} />
+      return addExtensionBadge(
+        nodeData,
+        nodeData.hasWorkloadEntry ? (
+          <PFBadge
+            badge={PFBadges.WorkloadEntry}
+            size="sm"
+            tooltip={getTooltip(PFBadges.WorkloadEntry.tt!, nodeData)}
+          />
+        ) : (
+          <PFBadge badge={PFBadges.Workload} size="sm" tooltip={getTooltip(PFBadges.Workload.tt!, nodeData)} />
+        )
       );
     default:
-      return <PFBadge badge={PFBadges.Unknown} size="sm" />;
+      return addExtensionBadge(nodeData, <PFBadge badge={PFBadges.Unknown} size="sm" />);
   }
 };
 

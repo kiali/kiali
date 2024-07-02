@@ -68,6 +68,8 @@ export const decorateGraphData = (graphData: GraphElements, duration: number): D
       isAmbient: undefined,
       isBox: undefined,
       isDead: undefined,
+      isExtension: undefined,
+      isGateway: undefined,
       isIdle: undefined,
       isInaccessible: undefined,
       isIstio: undefined,
