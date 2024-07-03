@@ -192,7 +192,7 @@
       },
       {
         "data": {
-          "id": "a1c47185abeae268a8280338027e20a5",
+          "id": "dcde5f73ea6b0522e798ae9ba99a98c8",
           "parent": "21aa3cd669c2462251e58d3b19149ace",
           "cluster": "cluster-primary",
           "infraName": "Data Plane",
@@ -215,7 +215,8 @@
               "labels": null,
               "annotations": null
             }
-          ]
+          ],
+          "version": "default"
         }
       },
       {
@@ -314,7 +315,7 @@
       },
       {
         "data": {
-          "id": "6514e7140e9a0c07ca296b90cf22cf9f",
+          "id": "3281222bbd167f16bcc4206ff60f37e8",
           "parent": "1aabe556f7e14438273ef43c7bce6148",
           "cluster": "cluster-remote",
           "infraName": "Data Plane",
@@ -337,7 +338,8 @@
               "labels": null,
               "annotations": null
             }
-          ]
+          ],
+          "version": "default"
         }
       }
     ],
@@ -372,16 +374,16 @@
       },
       {
         "data": {
-          "id": "8cd4f303ae3c07eae8e4731b5cc983df",
+          "id": "b9e434f3ed6a9cbc6c1be531769476c3",
           "source": "e99df577d74ca59cfb453ccbaa84c3c1",
-          "target": "6514e7140e9a0c07ca296b90cf22cf9f"
+          "target": "3281222bbd167f16bcc4206ff60f37e8"
         }
       },
       {
         "data": {
-          "id": "f62bb8bce93b9ae739b0c61f02c269d1",
+          "id": "05fa6313fb424577ab82fe41e762ade8",
           "source": "e99df577d74ca59cfb453ccbaa84c3c1",
-          "target": "a1c47185abeae268a8280338027e20a5"
+          "target": "dcde5f73ea6b0522e798ae9ba99a98c8"
         }
       }
     ]
