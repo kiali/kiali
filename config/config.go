@@ -741,7 +741,7 @@ func NewConfig() (c *Config) {
 					Type: AuthTypeNone,
 				},
 				CustomHeaders:        map[string]string{},
-				Enabled:              true,
+				Enabled:              false,
 				GrpcPort:             9095,
 				InClusterURL:         "http://tracing.istio-system:16685/jaeger",
 				IsCore:               false,
