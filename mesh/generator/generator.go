@@ -37,6 +37,11 @@ func (c componentHealthKey) String() string {
 	return c.Name + c.Namespace + c.Cluster
 }
 
+type clusterRevisionKey struct {
+	Cluster  string
+	Revision string
+}
+
 // BuildMeshMap is required by the graph/TelemetryVendor interface
 func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalInfo) mesh.MeshMap {
 	var end observability.EndFunc
@@ -128,8 +133,12 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalIn
 		istiod, _, err := addInfra(meshMap, mesh.InfraTypeIstiod, cp.Cluster.Name, cp.IstiodNamespace, name, infraData, version, false, healthData[healthDataKey], false)
 		mesh.CheckError(err)
 
+		managedClusters := make(map[string]struct{})
+		for _, mc := range cp.ManagedClusters {
+			managedClusters[mc.Name] = struct{}{}
+		}
 		// add the managed namespaces by cluster and narrowed, if necessary, by revision
-		dataplaneMap := make(map[string][]models.Namespace)
+		dataplaneMap := make(map[clusterRevisionKey][]models.Namespace)
 		cpNamespaces := namespaces
 		if isCanary {
 			cpNamespaces = canaryPending
@@ -138,15 +147,22 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalIn
 			}
 		}
 		for _, ns := range cpNamespaces {
-			clusterNamespaces := dataplaneMap[ns.Cluster]
+			nsRev := ns.Labels["istio.io/rev"]
+			if nsRev == "" {
+				nsRev = "default"
+			}
+			key := clusterRevisionKey{Cluster: ns.Cluster, Revision: nsRev}
+			clusterNamespaces := dataplaneMap[key]
 			if clusterNamespaces == nil {
 				clusterNamespaces = []models.Namespace{}
 			}
-			if !config.IsIstioNamespace(ns.Name) {
-				dataplaneMap[ns.Cluster] = append(clusterNamespaces, ns)
+
+			_, managesCluster := managedClusters[ns.Cluster]
+			if cp.IstiodNamespace != ns.Name && cp.Revision == nsRev && managesCluster {
+				dataplaneMap[key] = append(clusterNamespaces, ns)
 			}
 		}
-		for cluster, namespaces := range dataplaneMap {
+		for clusterrev, namespaces := range dataplaneMap {
 			// sort namespaces by cluster,name. This is more for test data consistency than anything else, but it doesn't hurt
 			slices.SortFunc(namespaces, func(a, b models.Namespace) int {
 				clusterComp := cmp.Compare(a.Cluster, b.Cluster)
@@ -158,8 +174,8 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalIn
 
 			isDataPlaneCanary := isCanary && cp.Revision == canaryStatus.UpgradeVersion
 
-			// TODO: Fix version for data plane.
-			dp, _, err := addInfra(meshMap, mesh.InfraTypeDataPlane, cluster, "", "Data Plane", namespaces, "", false, "", isDataPlaneCanary)
+			// Note that version here is not the actual istio version, but the revision of the control plane that is managing this dataplane.
+			dp, _, err := addInfra(meshMap, mesh.InfraTypeDataPlane, clusterrev.Cluster, "", "Data Plane", namespaces, cp.Revision, false, "", isDataPlaneCanary)
 			graph.CheckError(err)
 
 			istiod.AddEdge(dp)
