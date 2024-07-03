@@ -157,7 +157,7 @@ const DebugInformationComponent: React.FC<DebugInformationProps> = (props: Debug
     setCopyStatus(CopyStatus.NOT_COPIED);
   };
 
-  const parseConfig = (key: string, value: any): any | null => {
+  const parseConfig = (key: string, value: unkown): unkown | null => {
     // We have to patch some runtime properties  we don't want to serialize
     if (propsToPatch.includes(key)) {
       return null;
