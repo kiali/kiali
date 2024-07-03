@@ -230,7 +230,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
             return nameFilters.length === 0 || nameFilters.some(f => ns.name.includes(f.value));
           })
           .map(ns => {
-            const previous = this.state.namespaces.find(prev => prev.name === ns.name);
+            const previous = this.state.namespaces.find(prev => prev.name === ns.name && prev.cluster === ns.cluster);
 
             return {
               name: ns.name,
