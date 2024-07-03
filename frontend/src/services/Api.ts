@@ -125,10 +125,13 @@ const newRequest = <P>(
   queryParams: unknown,
   data: unknown
 ): Promise<ApiResponse<P>> => {
+  // stringify request data that is not already stringified
+  const requestData = typeof data !== 'string' ? JSON.stringify(data) : data;
+
   return axios.request<P>({
     method: method,
     url: apiProxy ? `${apiProxy}/${url}` : url,
-    data: apiProxy ? JSON.stringify(data) : data,
+    data: requestData,
     headers: getHeaders() as AxiosHeaders,
     params: queryParams
   });
