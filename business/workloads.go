@@ -1877,14 +1877,14 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 	return wl, kubernetes.NewNotFound(criteria.WorkloadName, "Kiali", "Workload")
 }
 
-// GetWaypointsList: Return the list of workloads when the waypoint proxy is applied per namespace
-func (in *WorkloadService) GetWaypointsList(ctx context.Context) models.Workloads {
+// GetWaypoints: Return the list of workloads when the waypoint proxy is applied per namespace
+func (in *WorkloadService) GetWaypoints(ctx context.Context) models.Workloads {
 
 	if !in.cache.IsWaypointListExpired() {
-		log.Tracef("GetWaypointsList: Returning list from cache")
+		log.Tracef("GetWaypoints: Returning list from cache")
 		return in.cache.GetWaypointList()
 	}
-	log.Infof("GetWaypointsList: Getting waypoint list from kube client")
+
 	labelSelector := fmt.Sprintf("%s=%s", config.WaypointLabel, config.WaypointLabelValue)
 	waypoints := []*models.Workload{}
 
@@ -1904,8 +1904,8 @@ func (in *WorkloadService) GetWaypointsList(ctx context.Context) models.Workload
 		}
 
 	}
-	in.cache.SetWaypointList(workloadslist)
-	return workloadslist
+	in.cache.SetWaypointList(waypoints)
+	return waypoints
 }
 
 // isWorkloadCaptured Check if the pod is captured by a waypoint

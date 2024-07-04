@@ -45,7 +45,7 @@ func (a AmbientAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *gr
 // handleWaypoints remove the node and the edges to waypoints when show waypoints is not specified
 func (a AmbientAppender) handleWaypoints(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
 
-	workloadList := globalInfo.Business.Workload.GetWaypointsList(context.Background())
+	workloadList := globalInfo.Business.Workload.GetWaypoints(context.Background())
 
 	// To identify the waypoint edges
 	waypointMap := make(map[string]map[string]string)
@@ -64,10 +64,10 @@ func (a AmbientAppender) handleWaypoints(trafficMap graph.TrafficMap, globalInfo
 			workloadName = n.App
 		}
 		if isWaypoint(&workloadList, n.Cluster, n.Namespace, workloadName) {
-			if waypointList[n.Cluster] == nil {
-				waypointList[n.Cluster] = make(map[string]string)
+			if waypointMap[n.Cluster] == nil {
+				waypointMap[n.Cluster] = make(map[string]string)
 			}
-			waypointList[n.Cluster][n.Namespace] = workloadName
+			waypointMap[n.Cluster][n.Namespace] = workloadName
 			if !a.ShowWaypoints {
 				delete(trafficMap, n.ID)
 			} else {
@@ -79,12 +79,12 @@ func (a AmbientAppender) handleWaypoints(trafficMap graph.TrafficMap, globalInfo
 	for _, n := range trafficMap {
 		graphEdge := []*graph.Edge{}
 		for _, edge := range n.Edges {
-			wp := waypointList[edge.Dest.Cluster][edge.Dest.Namespace]
+			wp := waypointMap[edge.Dest.Cluster][edge.Dest.Namespace]
 			if wp != edge.Dest.App {
 				// When we don't show waypoints
 				// We hide one edge direction from the waypoints
 				// To prevent infinite loops on highlight
-				wpSource := waypointList[edge.Source.Cluster][edge.Source.Namespace]
+				wpSource := waypointMap[edge.Source.Cluster][edge.Source.Namespace]
 				if a.ShowWaypoints || (!a.ShowWaypoints && wpSource != edge.Source.App) {
 					graphEdge = append(graphEdge, edge)
 				}
