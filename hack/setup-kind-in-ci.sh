@@ -235,6 +235,7 @@ setup_kind_tempo() {
     --set deployment.service_type="LoadBalancer" \
     --set external_services.grafana.url="http://grafana.istio-system:3000" \
     --set external_services.grafana.dashboards[0].name="Istio Mesh Dashboard" \
+    --set external_services.tracing.enabled="true" \
     --set external_services.tracing.provider="tempo" \
     --set external_services.tracing.url="http://tempo-cr-query-frontend.tempo:3200" \
     --set external_services.tracing.in_cluster_url="http://tempo-cr-query-frontend.tempo:3200" \
