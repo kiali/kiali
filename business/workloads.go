@@ -1886,7 +1886,7 @@ func (in *WorkloadService) GetWaypointsList(ctx context.Context) models.Workload
 	}
 	log.Infof("GetWaypointsList: Getting waypoint list from kube client")
 	labelSelector := fmt.Sprintf("%s=%s", config.WaypointLabel, config.WaypointLabelValue)
-	workloadslist := []*models.Workload{}
+	waypoints := []*models.Workload{}
 
 	for cluster := range in.userClients {
 		nslist, errNs := in.userClients[cluster].GetNamespaces("")
