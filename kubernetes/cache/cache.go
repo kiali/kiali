@@ -287,18 +287,18 @@ func (in *kialiCacheImpl) GetZtunnelPods(cluster string) []v1.Pod {
 
 // GetWaypointList Returns a list of waypoint proxies by cluster and namespace
 func (c *kialiCacheImpl) GetWaypointList() models.Workloads {
-	return c.waypointList.WaypointList
+	return c.waypointList.Waypoints
 }
 
 // SetWaypointList Modifies the list of waypoint proxies by cluster and namespace
 func (c *kialiCacheImpl) SetWaypointList(wpList models.Workloads) {
-	c.waypointList.WaypointList = wpList
-	c.waypointList.LastUpdated = time.Now()
+	c.waypointList.Waypoints = wpList
+	c.waypointList.LastUpdate = time.Now()
 }
 
 func (c *kialiCacheImpl) IsWaypointListExpired() bool {
 	currentTime := time.Now()
-	expirationTime := c.waypointList.LastUpdated.Add(waypointExpirationTime)
+	expirationTime := c.waypointList.LastUpdate.Add(waypointExpirationTime)
 	return currentTime.After(expirationTime)
 }
 
