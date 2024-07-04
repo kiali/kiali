@@ -2,6 +2,7 @@ package models
 
 import (
 	"strconv"
+	"time"
 
 	osapps_v1 "github.com/openshift/api/apps/v1"
 	apps_v1 "k8s.io/api/apps/v1"
@@ -47,6 +48,11 @@ const (
 	LogTypeWaypoint LogType = "waypoint"
 	LogTypeZtunnel  LogType = "ztunnel"
 )
+
+type WaypointStore struct {
+	LastUpdate time.Time
+	Waypoints  Workloads
+}
 
 // WorkloadListItem has the necessary information to display the console workload list
 type WorkloadListItem struct {

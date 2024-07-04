@@ -23,9 +23,11 @@ import (
 const (
 	ambientCheckExpirationTime = 10 * time.Minute
 	meshExpirationTime         = 10 * time.Second
+	waypointExpirationTime     = 1 * time.Minute
 )
 
 const kialiCacheMeshKey = "mesh"
+const ztunnelApp = "ztunnel"
 
 // KialiCache stores both kube objects and non-kube related data such as pods' proxy status.
 // It is exclusively used by the business layer where it's expected to be a singleton.
@@ -54,8 +56,13 @@ type KialiCache interface {
 	// GetNamespaces returns all namespaces for the cluster/token from the in memory cache.
 	GetNamespaces(cluster string, token string) ([]models.Namespace, bool)
 
-	// Returns a list of ztunnel pods from the ztunnel daemonset
+	// GetZtunnelPods returns a list of ztunnel pods from the ztunnel daemonset
 	GetZtunnelPods(cluster string) []v1.Pod
+
+	// GetWaypointList returns a list of waypoint proxies workloads by cluster and namespace
+	GetWaypointList() models.Workloads
+	SetWaypointList(models.Workloads)
+	IsWaypointListExpired() bool
 
 	// IsAmbientEnabled checks if the istio Ambient profile was enabled
 	// by checking if the ztunnel daemonset exists on the cluster.
@@ -111,6 +118,8 @@ type kialiCacheImpl struct {
 	proxyStatusStore store.Store[string, *kubernetes.ProxyStatus]
 	// RegistryStatusStore stores the registry status and should be key'd off of the cluster name.
 	registryStatusStore store.Store[string, *kubernetes.RegistryStatus]
+
+	waypointList models.WaypointStore
 
 	// Info about the kube clusters that the cache knows about.
 	clusters    []models.KubeCluster
@@ -214,7 +223,7 @@ func (in *kialiCacheImpl) IsAmbientEnabled(cluster string) bool {
 		}
 
 		selector := map[string]string{
-			"app": "ztunnel",
+			"app": ztunnelApp,
 		}
 		daemonsets, err := kubeCache.GetDaemonSetsWithSelector(metav1.NamespaceAll, selector)
 		if err != nil {
@@ -246,7 +255,7 @@ func (in *kialiCacheImpl) GetZtunnelPods(cluster string) []v1.Pod {
 
 	}
 	selector := map[string]string{
-		"app": "ztunnel",
+		"app": ztunnelApp,
 	}
 	daemonsets, err := kubeCache.GetDaemonSetsWithSelector(metav1.NamespaceAll, selector)
 	if err != nil {
@@ -268,12 +277,29 @@ func (in *kialiCacheImpl) GetZtunnelPods(cluster string) []v1.Pod {
 	}
 
 	for _, pod := range dsPods {
-		if strings.Contains(pod.Name, "ztunnel") {
+		if strings.Contains(pod.Name, ztunnelApp) {
 			ztunnelPods = append(ztunnelPods, pod)
 		}
 	}
 
 	return ztunnelPods
+}
+
+// GetWaypointList Returns a list of waypoint proxies by cluster and namespace
+func (c *kialiCacheImpl) GetWaypointList() models.Workloads {
+	return c.waypointList.Waypoints
+}
+
+// SetWaypointList Modifies the list of waypoint proxies by cluster and namespace
+func (c *kialiCacheImpl) SetWaypointList(wpList models.Workloads) {
+	c.waypointList.Waypoints = wpList
+	c.waypointList.LastUpdate = time.Now()
+}
+
+func (c *kialiCacheImpl) IsWaypointListExpired() bool {
+	currentTime := time.Now()
+	expirationTime := c.waypointList.LastUpdate.Add(waypointExpirationTime)
+	return currentTime.After(expirationTime)
 }
 
 type namespacesKey struct {
