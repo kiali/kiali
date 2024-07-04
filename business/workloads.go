@@ -1895,14 +1895,12 @@ func (in *WorkloadService) GetWaypointsList(ctx context.Context) models.Workload
 		}
 
 		for _, ns := range nslist {
-			wkList, err := in.fetchWorkloads(ctx, ns.Name, labelSelector)
-			for _, wk := range wkList {
-				workloadslist = append(workloadslist, wk)
-			}
-
+			nsWaypoints, err := in.fetchWorkloads(ctx, ns.Name, labelSelector)
 			if err != nil {
-				log.Debugf("listWaypointWorkloads: Error fetching workloads for namespaces")
+				log.Debugf("GetWaypoints: Error fetching workloads for namespace %s, labelSelector %s", ns, labelSelector)
+				continue
 			}
+			waypoints = append(waypoints, nsWaypoints...)
 		}
 
 	}
