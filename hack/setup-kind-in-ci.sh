@@ -178,6 +178,7 @@ setup_kind_singlecluster() {
     --set deployment.service_type="LoadBalancer" \
     --set external_services.grafana.url="http://grafana.istio-system:3000" \
     --set external_services.grafana.dashboards[0].name="Istio Mesh Dashboard" \
+    --set external_services.tracing.enabled="true" \
     --set external_services.tracing.url="http://tracing.istio-system:16685/jaeger" \
     --set health_config.rate[0].kind="service" \
     --set health_config.rate[0].name="y-server" \
