@@ -117,7 +117,7 @@ Feature: Kiali Istio Config page
   @crd-validation
   @bookinfo-app
   Scenario: KIA0104 validation
-    Given there is not a "bookinfo" VirtualService in the "bookinfo" namespace
+    Given there is not a "bookinfo" "VirtualService" in the "bookinfo" namespace
     Given a "foo" AuthorizationPolicy in the "bookinfo" namespace
     And the AuthorizationPolicy has a to-operation rule with "missing.hostname" host
     When the user refreshes the page
@@ -145,6 +145,8 @@ Feature: Kiali Istio Config page
     And user selects the "sleep" namespace
     Then the "foo" "DestinationRule" of the "sleep" namespace should have a "warning"
     And the "bar" "DestinationRule" of the "sleep" namespace should have a "warning"
+    And there is not a "foo" "DestinationRule" in the "sleep" namespace
+    And there is not a "bar" "DestinationRule" in the "sleep" namespace
 
   @crd-validation
   @bookinfo-app
@@ -154,6 +156,7 @@ Feature: Kiali Istio Config page
     When the user refreshes the page
     And user selects the "sleep" namespace
     Then the "foo" "DestinationRule" of the "sleep" namespace should have a "warning"
+    And there is not a "foo" "DestinationRule" in the "sleep" namespace
 
   @crd-validation
   @bookinfo-app
@@ -164,6 +167,7 @@ Feature: Kiali Istio Config page
     And there is a "foo-route" VirtualService in the "sleep" namespace with a "foo-route" http-route to host "sleep" and subset "v1"
     When user selects the "sleep" namespace
     Then the "foo" "DestinationRule" of the "sleep" namespace should have a "danger"
+    And there is not a "foo" "DestinationRule" in the "sleep" namespace
 
   @crd-validation
   @bookinfo-app
@@ -175,6 +179,7 @@ Feature: Kiali Istio Config page
     And the PeerAuthentication has "STRICT" mtls mode
     When user selects the "sleep" namespace
     Then the "disable-mtls" "DestinationRule" of the "sleep" namespace should have a "danger"
+    And there is not a "disable-mtls" "DestinationRule" in the "sleep" namespace
 
   @crd-validation
   @bookinfo-app
@@ -186,6 +191,7 @@ Feature: Kiali Istio Config page
     And the PeerAuthentication has "STRICT" mtls mode
     When user selects the "sleep" namespace
     Then the "disable-mtls" "DestinationRule" of the "sleep" namespace should have a "danger"
+    And there is not a "disable-mtls" "DestinationRule" in the "sleep" namespace
 
   @crd-validation
   @bookinfo-app
@@ -195,6 +201,7 @@ Feature: Kiali Istio Config page
     And the DestinationRule has a "v1" subset for "" labels
     When user selects the "sleep" namespace
     Then the "foo" "DestinationRule" of the "sleep" namespace should have a "warning"
+    And there is not a "foo" "DestinationRule" in the "sleep" namespace
 
   @crd-validation
   @bookinfo-app
@@ -234,6 +241,7 @@ Feature: Kiali Istio Config page
     And the PeerAuthentication has "DISABLE" mtls mode
     When user selects the "sleep" namespace
     Then the "default" "PeerAuthentication" of the "sleep" namespace should have a "danger"
+    And there is not a "enable-mtls" "DestinationRule" in the "sleep" namespace
 
   @crd-validation
   @bookinfo-app
@@ -245,6 +253,7 @@ Feature: Kiali Istio Config page
     And the PeerAuthentication has "DISABLE" mtls mode
     When user selects the "istio-system" namespace
     Then the "default" "PeerAuthentication" of the "istio-system" namespace should have a "danger"
+    And there is not a "enable-mtls" "DestinationRule" in the "sleep" namespace
 
   @crd-validation
   @bookinfo-app
@@ -276,6 +285,7 @@ Feature: Kiali Istio Config page
   @sleep-app
   Scenario: KIA1102 validation
     Given there is a "foo" VirtualService in the "sleep" namespace with a "foo-route" http-route to host "sleep"
+    And there is not a "foo" "DestinationRule" in the "sleep" namespace
     And the VirtualService applies to "sleep" hosts
     And the VirtualService references "foo" gateways
     When user selects the "sleep" namespace
@@ -312,6 +322,7 @@ Feature: Kiali Istio Config page
     And the DestinationRule has a "v1" subset for "version=v1" labels
     When user selects the "sleep" namespace
     Then the "foo" "VirtualService" of the "sleep" namespace should have a "warning"
+    And there is not a "foo" "DestinationRule" in the "sleep" namespace
 
   @crd-validation
   @bookinfo-app
@@ -330,8 +341,48 @@ Feature: Kiali Istio Config page
   @sleep-app
   Scenario: KIA1107 validation
     Given there is a "foo" VirtualService in the "sleep" namespace with a "foo-route" http-route to host "sleep" and subset "v1"
+    And there is not a "foo" "DestinationRule" in the "sleep" namespace
+    And there is not a "foo" "Gateway" in the "sleep" namespace
     When user selects the "sleep" namespace
     Then the "foo" "VirtualService" of the "sleep" namespace should have a "warning"
+
+  # KIA1501 is tested through GUI in wizard_istio_config.feature
+  @crd-validation
+  @bookinfo-app
+  @gateway-api
+  Scenario: KIA1502 validation
+    Given user deletes k8sgateway named "foo" and the resource is no longer available
+    And user deletes k8sgateway named "bar" and the resource is no longer available
+    When there is a "foo" K8sGateway in the "bookinfo" namespace for "google.com" host using "HTTP" protocol on port "80" and "istio" gatewayClassName
+    And there is a "bar" K8sGateway in the "bookinfo" namespace for "secondary.com" host using "HTTP" protocol on port "9080" and "istio" gatewayClassName
+    And the "foo" K8sGateway in the "bookinfo" namespace has an address with a "Hostname" type and a "example.com" value
+    And the "bar" K8sGateway in the "bookinfo" namespace has an address with a "Hostname" type and a "example.com" value
+    When the user refreshes the page
+    And user selects the "bookinfo" namespace
+    Then the "foo" "K8sGateway" of the "bookinfo" namespace should have a "warning"
+    And the "bar" "K8sGateway" of the "bookinfo" namespace should have a "warning"
+
+  # KIA1503 validation is not tested, as it is not possible to create a K8sGateway with duplicate listeners
+
+  @crd-validation
+  @bookinfo-app
+  @gateway-api
+  Scenario: KIA1504 validation
+    Given user deletes k8sgateway named "foo" and the resource is no longer available
+    When there is a "foo" K8sGateway in the "bookinfo" namespace for "google.com" host using "HTTP" protocol on port "80" and "nonexistentname" gatewayClassName
+    And the user refreshes the page
+    And user selects the "bookinfo" namespace
+    Then the "foo" "K8sGateway" of the "bookinfo" namespace should have a "danger"
+
+  @crd-validation
+  @bookinfo-app
+  @gateway-api
+  Scenario: KIA1601 validation
+    Given user deletes k8sreferencegrant named "foo" and the resource is no longer available
+    When there is a "foo" K8sReferenceGrant in the "bookinfo" namespace pointing from "nonexistent" namespace
+    And the user refreshes the page
+    And user selects the "bookinfo" namespace
+    Then the "foo" "K8sReferenceGrant" of the "bookinfo" namespace should have a "danger"
 
 # TODO: KIA06xx and KIA07xx does not appear in Istio Config list page. They appear in Svc/workload lists.
 #   Thus, these validations do not belong to this feature file.

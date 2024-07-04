@@ -148,6 +148,74 @@ const minimalSidecar = (name: string, namespace: string, hosts: string): string 
 }`;
 };
 
+const minimalK8sGateway = (
+  name: string,
+  namespace: string,
+  hostname: string,
+  protocol: string,
+  port: string,
+  gatewayClassName: string
+): string => {
+  return `{
+        "kind": "Gateway",
+        "apiVersion": "gateway.networking.k8s.io/v1",
+        "metadata": {
+          "name": "${name}",
+          "namespace": "${namespace}",
+          "labels": {},
+          "annotations": {}
+        },
+        "spec": {
+          "gatewayClassName": "${gatewayClassName}",
+          "listeners": [
+            {
+              "name": "foo",
+              "port": ${port},
+              "protocol": "${protocol}",
+              "hostname": "${hostname}",
+              "allowedRoutes": {
+                "namespaces": {
+                  "from": "All",
+                  "selector": {
+                    "matchLabels": {}
+                  }
+                }
+              }
+            }
+          ],
+          "addresses": []
+        }
+      }`;
+};
+
+const minimalK8sReferenceGrant = (name: string, namespace: string, fromNamespace: string): string => {
+  return `{
+  "kind": "ReferenceGrant",
+  "apiVersion": "gateway.networking.k8s.io/v1beta1",
+  "metadata": {
+    "name": "${name}",
+    "namespace": "${namespace}",
+    "labels": {},
+    "annotations": {}
+  },
+  "spec": {
+    "from": [
+      {
+        "kind": "HTTPRoute",
+        "group": "gateway.networking.k8s.io",
+        "namespace": "${fromNamespace}"
+      }
+    ],
+    "to": [
+      {
+        "kind": "Service",
+        "group": ""
+      }
+    ]
+  }
+}`;
+};
+
 Given('a {string} AuthorizationPolicy in the {string} namespace', function (name: string, namespace: string) {
   cy.exec(`kubectl delete AuthorizationPolicy ${name} -n ${namespace}`, { failOnNonZeroExit: false });
   cy.exec(`echo '${minimalAuthorizationPolicy(name, namespace)}' | kubectl apply -f -`);
@@ -247,9 +315,12 @@ Given(
   }
 );
 
-Given('there is not a {string} VirtualService in the {string} namespace', (vsName: string, namespace: string) => {
-  cy.exec(`kubectl delete VirtualService ${vsName} -n ${namespace}`, { failOnNonZeroExit: false });
-});
+Given(
+  'there is not a {string} {string} in the {string} namespace',
+  (configType: string, configName: string, namespace: string) => {
+    cy.exec(`kubectl delete ${configName} ${configType} -n ${namespace}`, { failOnNonZeroExit: false });
+  }
+);
 
 Given('the DestinationRule enables mTLS', function () {
   cy.exec(
@@ -349,6 +420,29 @@ When('user filters for config {string}', (configName: string) => {
   cy.get('button#filter_select_value-toggle').click();
   cy.contains('div#filter_select_value button', configName).click();
 });
+
+When(
+  'there is a {string} K8sGateway in the {string} namespace for {string} host using {string} protocol on port {string} and {string} gatewayClassName',
+  (name: string, ns: string, host: string, protocol: string, port: string, gatewayClassName: string) => {
+    cy.exec(`echo '${minimalK8sGateway(name, ns, host, protocol, port, gatewayClassName)}' | kubectl apply -f  -`);
+  }
+);
+
+When(
+  'there is a {string} K8sReferenceGrant in the {string} namespace pointing from {string} namespace',
+  (name: string, ns: string, fromNs: string) => {
+    cy.exec(`echo '${minimalK8sReferenceGrant(name, ns, fromNs)}' | kubectl apply -f  -`);
+  }
+);
+
+When(
+  'user adds a {string} listener with {string} host using {string} protocol on port {string} to the {string} K8sGateway in the {string} namespace',
+  (listener: string, host: string, protocol: string, port: string, name: string, ns: string) => {
+    cy.exec(
+      `kubectl patch Gateway ${name} -n ${ns} --type=merge -p '{"spec":{"listeners":[{"name":"${listener}","port":${port},"protocol":"${protocol}","hostname":"${host}","allowedRoutes":{"namespaces":{"from":"All","selector":{"matchLabels":{}}}}}]}}'`
+    );
+  }
+);
 
 Then('user sees all the Istio Config objects in the bookinfo namespace', () => {
   // There should be two Istio Config objects in the bookinfo namespace
@@ -554,7 +648,16 @@ Then(
   }
 );
 
-After({ tags: '@istio-config and @crd-validation' }, () => {
+Then(
+  'the {string} K8sGateway in the {string} namespace has an address with a {string} type and a {string} value',
+  (name: string, ns: string, type: string, value: string) => {
+    cy.exec(
+      `kubectl patch Gateway ${name} -n ${ns} --type=merge -p '{"spec":{"addresses":[{"type": "${type}","value":"${value}"}]}}'`
+    );
+  }
+);
+
+After({ tags: '@istio-page and @crd-validation' }, () => {
   cy.exec('kubectl delete PeerAuthentications,DestinationRules,AuthorizationPolicies,Sidecars --all --all-namespaces', {
     failOnNonZeroExit: false
   });
