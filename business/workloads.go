@@ -1885,7 +1885,6 @@ func (in *WorkloadService) GetWaypointsList(ctx context.Context) models.Workload
 		return in.cache.GetWaypointList()
 	}
 	log.Infof("GetWaypointsList: Getting waypoint list from kube client")
-	// Get all the workloads for a namespaces labeled
 	labelSelector := fmt.Sprintf("%s=%s", config.WaypointLabel, config.WaypointLabelValue)
 	workloadslist := []*models.Workload{}
 
