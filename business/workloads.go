@@ -1894,7 +1894,6 @@ func (in *WorkloadService) GetWaypointsList(ctx context.Context) models.Workload
 			log.Errorf("GetWaypoints: Error fetching namespaces for cluster %s", cluster)
 		}
 
-		// Get service Account name for each pod from the workload
 		for _, ns := range nslist {
 			wkList, err := in.fetchWorkloads(ctx, ns.Name, labelSelector)
 			for _, wk := range wkList {
