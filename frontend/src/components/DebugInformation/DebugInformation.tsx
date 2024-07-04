@@ -157,7 +157,7 @@ const DebugInformationComponent: React.FC<DebugInformationProps> = (props: Debug
     setCopyStatus(CopyStatus.NOT_COPIED);
   };
 
-  const parseConfig = (key: string, value: string): string | null => {
+  const parseConfig = (key: string, value: unknown): unknown | null => {
     // We have to patch some runtime properties  we don't want to serialize
     if (propsToPatch.includes(key)) {
       return null;
@@ -197,6 +197,7 @@ const DebugInformationComponent: React.FC<DebugInformationProps> = (props: Debug
 
   // skip invalid regex not allowed by js-yaml dump
   const debugInformationText = dump(debugInformation, {
+    noRefs: true,
     replacer: parseConfig,
     skipInvalid: true,
     ...yamlDumpOptions
