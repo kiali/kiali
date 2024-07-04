@@ -120,6 +120,7 @@ func (in *Instance) GetConfig(ctx context.Context) (*config.Config, error) {
 	}
 
 	currentConfig, err := config.Unmarshal(cm.Data["config.yaml"])
+	currentConfig.ExternalServices.Tracing.Enabled = true
 	if err != nil {
 		return nil, err
 	}
