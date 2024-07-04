@@ -315,9 +315,12 @@ Given(
   }
 );
 
-Given('there is not a {string} VirtualService in the {string} namespace', (vsName: string, namespace: string) => {
-  cy.exec(`kubectl delete VirtualService ${vsName} -n ${namespace}`, { failOnNonZeroExit: false });
-});
+Given(
+  'there is not a {string} {string} in the {string} namespace',
+  (configType: string, configName: string, namespace: string) => {
+    cy.exec(`kubectl delete ${configName} ${configType} -n ${namespace}`, { failOnNonZeroExit: false });
+  }
+);
 
 Given('the DestinationRule enables mTLS', function () {
   cy.exec(
