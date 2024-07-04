@@ -50,8 +50,8 @@ const (
 )
 
 type WaypointStore struct {
-	WaypointList Workloads
-	LastUpdated  time.Time
+	LastUpdate  time.Time
+	Waypoints Workloads
 }
 
 // WorkloadListItem has the necessary information to display the console workload list
