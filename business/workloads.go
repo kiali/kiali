@@ -1891,7 +1891,7 @@ func (in *WorkloadService) GetWaypointsList(ctx context.Context) models.Workload
 	for cluster := range in.userClients {
 		nslist, errNs := in.userClients[cluster].GetNamespaces("")
 		if errNs != nil {
-			log.Errorf("listWaypointWorkloads: Error fetching namespaces by selector %s", labelSelector)
+			log.Errorf("GetWaypoints: Error fetching namespaces for cluster %s", cluster)
 		}
 
 		// Get service Account name for each pod from the workload
