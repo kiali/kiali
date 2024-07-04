@@ -48,7 +48,7 @@ func (a AmbientAppender) handleWaypoints(trafficMap graph.TrafficMap, globalInfo
 	workloadList := globalInfo.Business.Workload.GetWaypointsList(context.Background())
 
 	// To identify the waypoint edges
-	waypointList := make(map[string]map[string]string)
+	waypointMap := make(map[string]map[string]string)
 
 	for _, n := range trafficMap {
 		// skip if the node is not in an accessible namespace, we can't do the checking
