@@ -974,7 +974,7 @@ func (conf *Config) GatewayLabel(labelConfig string) []string {
 	if len(label) == 2 {
 		return label
 	}
-	return []string{"", ""}
+	return []string{}
 }
 
 // Get the global Config
@@ -1012,7 +1012,7 @@ func (conf Config) String() (str string) {
 	obf := conf.Obfuscate()
 	str, err := Marshal(&obf)
 	if err != nil {
-		str = fmt.Sprintf("Failed to marsx`hal config to string. err=%v", err)
+		str = fmt.Sprintf("Failed to marshal config to string. err=%v", err)
 		log.Debugf(str)
 	}
 
@@ -1263,6 +1263,14 @@ func Validate(cfg Config) error {
 	cfgTracing := cfg.ExternalServices.Tracing
 	if cfgTracing.Enabled && cfgTracing.Provider != JaegerProvider && cfgTracing.Provider != TempoProvider {
 		return fmt.Errorf("error in configuration options for the external services tracing provider. Invalid provider type [%s]", cfgTracing.Provider)
+	}
+
+	if len(cfg.GatewayLabel(cfg.IstioLabels.IngressGatewayLabel)) != 2 {
+		return fmt.Errorf("error parsing key=value configuration. Invalid ingress gateway label [%s]", cfg.IstioLabels.IngressGatewayLabel)
+	}
+
+	if len(cfg.GatewayLabel(cfg.IstioLabels.EgressGatewayLabel)) != 2 {
+		return fmt.Errorf("error parsing key=value configuration. Invalid egress gateway label [%s]", cfg.IstioLabels.EgressGatewayLabel)
 	}
 
 	return nil
