@@ -32,6 +32,9 @@ fi
 
 deploy_kiali() {
   local helm_args=()
+  #Enable tracing
+  helm_args+=("--set external_services.tracing.enabled=true")
+
   if [ "${IS_OPENSHIFT}" == "true" ]; then
     helm_args+=("--disable-openapi-validation")
     if [ "${KIALI_USE_DEV_IMAGE}" == "true" ]; then

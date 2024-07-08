@@ -39,6 +39,7 @@ func setupMocks(t *testing.T) *mesh.AppenderGlobalInfo {
 	require := require.New(t)
 	conf := config.NewConfig()
 	conf.KubernetesConfig.ClusterName = "cluster-primary"
+	conf.ExternalServices.Tracing.Enabled = true
 	config.Set(conf)
 
 	istiodDeployment := apps_v1.Deployment{
