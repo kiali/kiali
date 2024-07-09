@@ -1,0 +1,71 @@
+{
+  "apiVersion": "v1",
+  "kind": "Namespace",
+  "metadata": {
+    "annotations": {
+      "openshift.io/description": "",
+      "openshift.io/display-name": "",
+      "openshift.io/requester": "hhovsepy",
+      "openshift.io/sa.scc.mcs": "s0:c26,c0",
+      "openshift.io/sa.scc.supplemental-groups": "1000650000/10000",
+      "openshift.io/sa.scc.uid-range": "1000650000/10000"
+    },
+    "creationTimestamp": "2024-07-08T08:03:12Z",
+    "deletionTimestamp": "2024-07-09T14:37:24Z",
+    "labels": {
+      "kiali.io/member-of": "istio-system",
+      "kubernetes.io/metadata.name": "istio-system",
+      "pod-security.kubernetes.io/audit": "privileged",
+      "pod-security.kubernetes.io/audit-version": "v1.24",
+      "pod-security.kubernetes.io/warn": "privileged",
+      "pod-security.kubernetes.io/warn-version": "v1.24",
+      "topology.istio.io/network": ""
+    },
+    "name": "istio-system",
+    "resourceVersion": "2304073",
+    "uid": "278f8b93-45ef-4039-a8bc-3187e36ae5ec"
+  },
+  "spec": {
+    "finalizers": []
+  },
+  "status": {
+    "conditions": [
+      {
+        "lastTransitionTime": "2024-07-09T14:37:30Z",
+        "message": "All resources successfully discovered",
+        "reason": "ResourcesDiscovered",
+        "status": "False",
+        "type": "NamespaceDeletionDiscoveryFailure"
+      },
+      {
+        "lastTransitionTime": "2024-07-09T14:37:30Z",
+        "message": "All legacy kube types successfully parsed",
+        "reason": "ParsedGroupVersions",
+        "status": "False",
+        "type": "NamespaceDeletionGroupVersionParsingFailure"
+      },
+      {
+        "lastTransitionTime": "2024-07-09T14:37:30Z",
+        "message": "All content successfully deleted, may be waiting on finalization",
+        "reason": "ContentDeleted",
+        "status": "False",
+        "type": "NamespaceDeletionContentFailure"
+      },
+      {
+        "lastTransitionTime": "2024-07-09T14:37:30Z",
+        "message": "Some resources are remaining: services. has 1 resource instances",
+        "reason": "SomeResourcesRemain",
+        "status": "True",
+        "type": "NamespaceContentRemaining"
+      },
+      {
+        "lastTransitionTime": "2024-07-09T14:37:30Z",
+        "message": "Some content in the namespace has finalizers remaining: service.kubernetes.io/load-balancer-cleanup in 1 resource instances",
+        "reason": "SomeFinalizersRemain",
+        "status": "True",
+        "type": "NamespaceFinalizersRemaining"
+      }
+    ],
+    "phase": "Terminating"
+  }
+}

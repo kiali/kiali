@@ -322,12 +322,9 @@ Given(
   }
 );
 
-Given(
-  'there is not a {string} Gateway in the {string} namespace',
-  (configName: string, namespace: string) => {
-    cy.exec(`kubectl delete gateway.networking.istio.io ${configName} -n ${namespace}`, { failOnNonZeroExit: false });
-  }
-);
+Given('there is not a {string} Gateway in the {string} namespace', (configName: string, namespace: string) => {
+  cy.exec(`kubectl delete gateway.networking.istio.io ${configName} -n ${namespace}`, { failOnNonZeroExit: false });
+});
 
 Given('the DestinationRule enables mTLS', function () {
   cy.exec(
