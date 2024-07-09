@@ -101,7 +101,7 @@ Since the discovery selectors act as a way to separate multiple Kiali deployment
 
 ## Discovery Selector Kiali Config Option
 
-A new configuration option will be added that will mimic the Istio discovery selectors configuration option. Using the configuration option, users will be able to specify which namespaces Kiali should be scoped to. Having a config option within Kiali has the advantage of not relying on autodiscovery of the Istio controlplanes. In cases where Kiali temporarily cannot access the control plane configuration, Kiali does not need to fail since it will rely on its own discovery selectors to scope itself. The configuration option needs to provide enough flexibility for users to specify different discovery selectors for each cluster in multi-primary scenarios.
+A new configuration option will be added that will mimic the Istio `discoverySelectors` configuration option. Using the configuration option, users will be able to similarly scope Kiali to the defined set of namespaces. Having a config option within Kiali has the advantage of not relying on auto-discovery via the Istio control plane. Kiali does not need to fail if it cannot, even temporarily, access the control plane configuration, because it can rely on its own discovery selectors configuration. The configuration option needs to provide enough flexibility for users to specify different discovery selectors for each cluster in multi-primary scenarios.
 
 Kiali would add a top level `discoverySelectors` config option where you can specify a `map[string]labelselector` where the key is the cluster name that the discovery selector will apply to.
 
