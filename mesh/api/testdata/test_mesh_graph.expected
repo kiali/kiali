@@ -141,7 +141,6 @@
             "GrpcPort": 9095,
             "InClusterURL": "http://tracing.istio-system:16685/jaeger",
             "IsCore": false,
-            "IsCheckUrlAuthenticated": false,
             "Provider": "jaeger",
             "TempoConfig": {},
             "NamespaceSelector": true,
@@ -183,7 +182,6 @@
             "HealthCheckUrl": "",
             "InClusterURL": "http://grafana.istio-system:3000",
             "IsCore": false,
-            "IsCheckUrlAuthenticated": false,
             "URL": ""
           },
           "isExternal": true,
