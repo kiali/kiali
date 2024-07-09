@@ -211,9 +211,9 @@ Feature: Kiali Istio Config page
     Given there is a "foo" Gateway on "bookinfo" namespace for "productpage.local" hosts on HTTP port 80 with "app=productpage" labels selector
     And there is a "foo" Gateway on "sleep" namespace for "*" hosts on HTTP port 80 with "app=productpage" labels selector
     When user selects the "sleep" namespace
-    Then the "foo" "Gateway" of the "bookinfo" namespace should have a "warning"
-    And the "foo" "Gateway" of the "sleep" namespace should have a "warning"
-    And there is not a "foo" "Gateway" in the "sleep" namespace
+    Then the "foo" "gateway.networking.istio.io" of the "bookinfo" namespace should have a "warning"
+    And the "foo" "gateway.networking.istio.io" of the "sleep" namespace should have a "warning"
+    And there is not a "foo" "gateway.networking.istio.io" in the "sleep" namespace
 
   @crd-validation
   @bookinfo-app
@@ -222,9 +222,9 @@ Feature: Kiali Istio Config page
     Given there is a "foo" Gateway on "bookinfo" namespace for "productpage.local" hosts on HTTP port 80 with "app=productpage" labels selector
     And there is a "foo" Gateway on "sleep" namespace for "productpage.local" hosts on HTTP port 80 with "app=productpage" labels selector
     When user selects the "sleep" namespace
-    Then the "foo" "Gateway" of the "bookinfo" namespace should have a "warning"
-    And the "foo" "Gateway" of the "sleep" namespace should have a "warning"
-    And there is not a "foo" "Gateway" in the "sleep" namespace
+    Then the "foo" "gateway.networking.istio.io" of the "bookinfo" namespace should have a "warning"
+    And the "foo" "gateway.networking.istio.io" of the "sleep" namespace should have a "warning"
+    And there is not a "foo" "gateway.networking.istio.io" in the "sleep" namespace
 
   @crd-validation
   @bookinfo-app
@@ -232,8 +232,8 @@ Feature: Kiali Istio Config page
   Scenario: KIA0302 validation
     Given there is a "foo" Gateway on "sleep" namespace for "foo.local" hosts on HTTP port 80 with "app=foo" labels selector
     When user selects the "sleep" namespace
-    Then the "foo" "Gateway" of the "sleep" namespace should have a "warning"
-    And there is not a "foo" "Gateway" in the "sleep" namespace
+    Then the "foo" "gateway.networking.istio.io" of the "sleep" namespace should have a "warning"
+    And there is not a "foo" "gateway.networking.istio.io" in the "sleep" namespace
 
   @crd-validation
   @bookinfo-app
@@ -288,11 +288,12 @@ Feature: Kiali Istio Config page
   @bookinfo-app
   @sleep-app
   Scenario: KIA1102 validation
-    Given there is not a "foo" "Gateway" in the "sleep" namespace
+    Given there is not a "foo" "gateway.networking.istio.io" in the "sleep" namespace
     And there is not a "foo" "DestinationRule" in the "sleep" namespace
     And there is a "foo" VirtualService in the "sleep" namespace with a "foo-route" http-route to host "sleep"
     And the VirtualService applies to "sleep" hosts
     And the VirtualService references "foo" gateways
+    When the user refreshes the page
     When user selects the "sleep" namespace
     Then the "foo" "VirtualService" of the "sleep" namespace should have a "danger"
 
@@ -347,7 +348,7 @@ Feature: Kiali Istio Config page
   Scenario: KIA1107 validation
     Given there is a "foo" VirtualService in the "sleep" namespace with a "foo-route" http-route to host "sleep" and subset "v1"
     And there is not a "foo" "DestinationRule" in the "sleep" namespace
-    And there is not a "foo" "Gateway" in the "sleep" namespace
+    And there is not a "foo" "gateway.networking.istio.io" in the "sleep" namespace
     When user selects the "sleep" namespace
     Then the "foo" "VirtualService" of the "sleep" namespace should have a "warning"
 
