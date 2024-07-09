@@ -317,8 +317,8 @@ Given(
 
 Given(
   'there is not a {string} {string} in the {string} namespace',
-  (configType: string, configName: string, namespace: string) => {
-    cy.exec(`kubectl delete ${configName} ${configType} -n ${namespace}`, { failOnNonZeroExit: false });
+  (configName: string, configType: string, namespace: string) => {
+    cy.exec(`kubectl delete ${configType} ${configName} -n ${namespace}`, { failOnNonZeroExit: false });
   }
 );
 
