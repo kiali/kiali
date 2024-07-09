@@ -220,14 +220,13 @@ type CustomDashboardsConfig struct {
 
 // GrafanaConfig describes configuration used for Grafana links
 type GrafanaConfig struct {
-	Auth                    Auth                     `yaml:"auth"`
-	Dashboards              []GrafanaDashboardConfig `yaml:"dashboards"`
-	Enabled                 bool                     `yaml:"enabled"` // Enable or disable Grafana support in Kiali
-	HealthCheckUrl          string                   `yaml:"health_check_url,omitempty"`
-	InClusterURL            string                   `yaml:"in_cluster_url"`
-	IsCheckUrlAuthenticated bool                     `yaml:"is_check_url_authenticated"`
-	IsCore                  bool                     `yaml:"is_core,omitempty"`
-	URL                     string                   `yaml:"url"`
+	Auth           Auth                     `yaml:"auth"`
+	Dashboards     []GrafanaDashboardConfig `yaml:"dashboards"`
+	Enabled        bool                     `yaml:"enabled"` // Enable or disable Grafana support in Kiali
+	HealthCheckUrl string                   `yaml:"health_check_url,omitempty"`
+	InClusterURL   string                   `yaml:"in_cluster_url"`
+	IsCore         bool                     `yaml:"is_core,omitempty"`
+	URL            string                   `yaml:"url"`
 }
 
 type GrafanaDashboardConfig struct {
@@ -250,22 +249,21 @@ type TempoConfig struct {
 
 // TracingConfig describes configuration used for tracing links
 type TracingConfig struct {
-	Auth                    Auth              `yaml:"auth"`
-	CustomHeaders           map[string]string `yaml:"custom_headers,omitempty"`
-	Enabled                 bool              `yaml:"enabled"` // Enable Tracing in Kiali
-	HealthCheckUrl          string            `yaml:"health_check_url,omitempty"`
-	GrpcPort                int               `yaml:"grpc_port,omitempty"`
-	InClusterURL            string            `yaml:"in_cluster_url"`
-	IsCore                  bool              `yaml:"is_core,omitempty"`
-	IsCheckUrlAuthenticated bool              `yaml:"is_check_url_authenticated"`
-	Provider                TracingProvider   `yaml:"provider,omitempty"` // jaeger | tempo
-	TempoConfig             TempoConfig       `yaml:"tempo_config,omitempty"`
-	NamespaceSelector       bool              `yaml:"namespace_selector"`
-	QueryScope              map[string]string `yaml:"query_scope,omitempty"`
-	QueryTimeout            int               `yaml:"query_timeout,omitempty"`
-	URL                     string            `yaml:"url"`
-	UseGRPC                 bool              `yaml:"use_grpc"`
-	WhiteListIstioSystem    []string          `yaml:"whitelist_istio_system"`
+	Auth                 Auth              `yaml:"auth"`
+	CustomHeaders        map[string]string `yaml:"custom_headers,omitempty"`
+	Enabled              bool              `yaml:"enabled"` // Enable Tracing in Kiali
+	HealthCheckUrl       string            `yaml:"health_check_url,omitempty"`
+	GrpcPort             int               `yaml:"grpc_port,omitempty"`
+	InClusterURL         string            `yaml:"in_cluster_url"`
+	IsCore               bool              `yaml:"is_core,omitempty"`
+	Provider             TracingProvider   `yaml:"provider,omitempty"` // jaeger | tempo
+	TempoConfig          TempoConfig       `yaml:"tempo_config,omitempty"`
+	NamespaceSelector    bool              `yaml:"namespace_selector"`
+	QueryScope           map[string]string `yaml:"query_scope,omitempty"`
+	QueryTimeout         int               `yaml:"query_timeout,omitempty"`
+	URL                  string            `yaml:"url"`
+	UseGRPC              bool              `yaml:"use_grpc"`
+	WhiteListIstioSystem []string          `yaml:"whitelist_istio_system"`
 }
 
 // RegistryConfig contains configuration for connecting to an external istiod.
@@ -683,10 +681,9 @@ func NewConfig() (c *Config) {
 				Auth: Auth{
 					Type: AuthTypeNone,
 				},
-				Enabled:                 true,
-				InClusterURL:            "http://grafana.istio-system:3000",
-				IsCheckUrlAuthenticated: false,
-				IsCore:                  false,
+				Enabled:      true,
+				InClusterURL: "http://grafana.istio-system:3000",
+				IsCore:       false,
 			},
 			Istio: IstioConfig{
 				ComponentStatuses: ComponentStatuses{
@@ -745,20 +742,19 @@ func NewConfig() (c *Config) {
 				Auth: Auth{
 					Type: AuthTypeNone,
 				},
-				CustomHeaders:           map[string]string{},
-				Enabled:                 false,
-				GrpcPort:                9095,
-				InClusterURL:            "http://tracing.istio-system:16685/jaeger",
-				IsCore:                  false,
-				IsCheckUrlAuthenticated: false,
-				Provider:                JaegerProvider,
-				NamespaceSelector:       true,
-				QueryScope:              map[string]string{},
-				QueryTimeout:            5,
-				TempoConfig:             TempoConfig{},
-				URL:                     "",
-				UseGRPC:                 true,
-				WhiteListIstioSystem:    []string{"jaeger-query", "istio-ingressgateway"},
+				CustomHeaders:        map[string]string{},
+				Enabled:              false,
+				GrpcPort:             9095,
+				InClusterURL:         "http://tracing.istio-system:16685/jaeger",
+				IsCore:               false,
+				Provider:             JaegerProvider,
+				NamespaceSelector:    true,
+				QueryScope:           map[string]string{},
+				QueryTimeout:         5,
+				TempoConfig:          TempoConfig{},
+				URL:                  "",
+				UseGRPC:              true,
+				WhiteListIstioSystem: []string{"jaeger-query", "istio-ingressgateway"},
 			},
 		},
 		IstioLabels: IstioLabels{
