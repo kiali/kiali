@@ -183,6 +183,7 @@ func (m GenericMultiMatchChecker) buildSelectorLessSubjectValidations(subjects [
 		validations.MergeValidations(
 			models.IstioValidations{
 				*subjectWithIndex.Key: &models.IstioValidation{
+					Cluster:    m.Cluster,
 					Name:       subjectWithIndex.Key.Name,
 					ObjectType: subjectWithIndex.Key.ObjectType,
 					Valid:      false,
@@ -218,7 +219,7 @@ func (m GenericMultiMatchChecker) multiMatchSubjects() ReferenceMap {
 	workloadSubjects := ReferenceMap{}
 
 	for i, s := range m.Keys {
-		subjectKey := models.BuildKey(m.SubjectType, s.Name, s.Namespace)
+		subjectKey := models.BuildKey(m.SubjectType, s.Name, s.Namespace, m.Cluster)
 
 		selector := labels.SelectorFromSet(m.Selectors[i])
 		if selector.Empty() {
@@ -231,7 +232,7 @@ func (m GenericMultiMatchChecker) multiMatchSubjects() ReferenceMap {
 					continue
 				}
 
-				workloadKey := models.BuildKey(w.Type, w.Name, wls.Namespace)
+				workloadKey := models.BuildKey(w.Type, w.Name, wls.Namespace, m.Cluster)
 				workloadSubjects.Add(workloadKey, subjectKey)
 			}
 		}
@@ -278,6 +279,7 @@ func (m GenericMultiMatchChecker) buildMultipleSubjectValidation(scs []models.Is
 		checks := models.Build("generic.multimatch.selector", m.Path)
 		validation := models.IstioValidations{
 			sck: &models.IstioValidation{
+				Cluster:    m.Cluster,
 				Name:       sck.Name,
 				ObjectType: m.SubjectType,
 				Valid:      false,

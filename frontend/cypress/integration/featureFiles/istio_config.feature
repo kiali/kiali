@@ -108,7 +108,8 @@ Feature: Kiali Istio Config page
   @crd-validation
   @bookinfo-app
   Scenario: KIA0102 validation
-    Given a "foo" AuthorizationPolicy in the "bookinfo" namespace
+    Given a "enable-mtls" DestinationRule in the "bookinfo" namespace for "*.bookinfo.svc.cluster.local" host
+    And a "foo" AuthorizationPolicy in the "bookinfo" namespace
     And the AuthorizationPolicy has a to-operation rule with "non-fully-qualified-grpc" method
     When the user refreshes the page
     And user selects the "bookinfo" namespace
@@ -212,6 +213,7 @@ Feature: Kiali Istio Config page
     When user selects the "sleep" namespace
     Then the "foo" "Gateway" of the "bookinfo" namespace should have a "warning"
     And the "foo" "Gateway" of the "sleep" namespace should have a "warning"
+    And there is not a "foo" "Gateway" in the "sleep" namespace
 
   @crd-validation
   @bookinfo-app
@@ -222,6 +224,7 @@ Feature: Kiali Istio Config page
     When user selects the "sleep" namespace
     Then the "foo" "Gateway" of the "bookinfo" namespace should have a "warning"
     And the "foo" "Gateway" of the "sleep" namespace should have a "warning"
+    And there is not a "foo" "Gateway" in the "sleep" namespace
 
   @crd-validation
   @bookinfo-app
@@ -230,6 +233,7 @@ Feature: Kiali Istio Config page
     Given there is a "foo" Gateway on "sleep" namespace for "foo.local" hosts on HTTP port 80 with "app=foo" labels selector
     When user selects the "sleep" namespace
     Then the "foo" "Gateway" of the "sleep" namespace should have a "warning"
+    And there is not a "foo" "Gateway" in the "sleep" namespace
 
   @crd-validation
   @bookinfo-app
@@ -284,9 +288,9 @@ Feature: Kiali Istio Config page
   @bookinfo-app
   @sleep-app
   Scenario: KIA1102 validation
-    Given there is a "foo" VirtualService in the "sleep" namespace with a "foo-route" http-route to host "sleep"
+    Given there is not a "foo" "Gateway" in the "sleep" namespace
     And there is not a "foo" "DestinationRule" in the "sleep" namespace
-    And there is not a "foo" "Gateway" in the "sleep" namespace
+    And there is a "foo" VirtualService in the "sleep" namespace with a "foo-route" http-route to host "sleep"
     And the VirtualService applies to "sleep" hosts
     And the VirtualService references "foo" gateways
     When user selects the "sleep" namespace

@@ -269,7 +269,7 @@ func testMtlsCheckerPresent(scenario string, t *testing.T, autoMtls bool) {
 		ObjectType: "authorizationpolicy",
 		Name:       "policy",
 		Namespace:  "bookinfo",
-	}, models.ErrorSeverity, "spec/rules[0]/source/principals", "authorizationpolicy.mtls.needstobeenabled")
+	}, models.ErrorSeverity, "spec/rules[0]/from[0]/source/principals", "authorizationpolicy.mtls.needstobeenabled")
 }
 
 func yamlFixtureLoaderFor(file string) *validations.YamlFixtureLoader {

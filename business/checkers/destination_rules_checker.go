@@ -37,7 +37,7 @@ func (in DestinationRulesChecker) runGroupChecks() models.IstioValidations {
 		destinationrules.MultiMatchChecker{Namespaces: in.Namespaces, ServiceEntries: seHosts, DestinationRules: in.DestinationRules, Cluster: in.Cluster},
 	}
 
-	enabledDRCheckers = append(enabledDRCheckers, destinationrules.TrafficPolicyChecker{DestinationRules: in.DestinationRules, MTLSDetails: in.MTLSDetails})
+	enabledDRCheckers = append(enabledDRCheckers, destinationrules.TrafficPolicyChecker{DestinationRules: in.DestinationRules, MTLSDetails: in.MTLSDetails, Cluster: in.Cluster})
 
 	for _, checker := range enabledDRCheckers {
 		validations = validations.MergeValidations(checker.Check())
