@@ -351,7 +351,7 @@ Given('the PeerAuthentication has {string} mtls mode', function (mtlsMode: strin
 Given(
   'there is a {string} Gateway on {string} namespace for {string} hosts on HTTP port {int} with {string} labels selector',
   function (name: string, namespace: string, hosts: string, port: number, labels: string) {
-    cy.exec(`kubectl delete Gateway ${name} -n ${namespace}`, { failOnNonZeroExit: false });
+    cy.exec(`kubectl delete gateway.networking.istio.io ${name} -n ${namespace}`, { failOnNonZeroExit: false });
     cy.exec(`echo '${minimalGateway(name, namespace, hosts, port, labels)}' | kubectl apply -f -`);
 
     this.targetNamespace = namespace;
