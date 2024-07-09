@@ -82,11 +82,11 @@ func tracingVersion(conf *config.Config) (*models.ExternalServiceInfo, error) {
 	if product.Url != "" {
 		// try to determine version by querying
 		if tracingConfig.Provider == config.JaegerProvider {
-			auth := config.Auth{}
+			var auth *config.Auth
 			if tracingConfig.IsCheckUrlAuthenticated {
-				auth = tracingConfig.Auth
+				auth = &tracingConfig.Auth
 			}
-			body, statusCode, _, err := httputil.HttpGet(product.Url, &auth, 10*time.Second, nil, nil)
+			body, statusCode, _, err := httputil.HttpGet(product.Url, auth, 10*time.Second, nil, nil)
 			if err != nil || statusCode > 399 {
 				log.Infof("jaeger version check failed: url=[%v], code=[%v]", product.Url, statusCode)
 			} else {
