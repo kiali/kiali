@@ -138,6 +138,7 @@ func grafanaVersion(ctx context.Context, grafana *grafana.Service, grafanaConfig
 	product := models.ExternalServiceInfo{}
 	product.Name = "Grafana"
 	product.Url = grafana.URL(ctx)
+	grafanaConfig := config.Get().ExternalServices.Grafana
 	if product.Url != "" {
 		// try to determine version by querying
 		url := fmt.Sprintf("%s/api/frontend/settings", product.Url)
