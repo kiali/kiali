@@ -99,6 +99,30 @@ TODO: external controlplane
 
 Since the discovery selectors act as a way to separate multiple Kiali deployments from one another, when Kiali relies on autodiscovering the Istio discovery selectors and it cannot auto discover them, the Kiali server will fail to start and/or panic rather than potentially show out of scope data. In a multi-primary deployment, if one primary cannot be reached then that cluster will be considered inaccessible.
 
+## Discovery Selector Kiali Config Option
+
+A new configuration option will be added that will mimic the Istio discovery selectors configuration option. Using the configuration option, users will be able to specify which namespaces Kiali should be scoped to. Having a config option within Kiali has the advantage of not relying on autodiscovery of the Istio controlplanes. In cases where Kiali temporarily cannot access the control plane configuration, Kiali does not need to fail since it will rely on its own discovery selectors to scope itself. The configuration option needs to provide enough flexibility for users to specify different discovery selectors for each cluster in multi-primary scenarios.
+
+Kiali would add a top level `discoverySelectors` config option where you can specify a `map[string]labelselector` where the key is the cluster name that the discovery selector will apply to.
+
+```yaml
+discoverySelectors:
+  cluster_name:
+    - labelselector:
+```
+
+For multi-primary with different discovery selectors:
+
+```yaml
+discoverySelectors:
+  east:
+    - matchLabels:
+        team: backend
+  west:
+    - matchLabels:
+        team: api
+```
+
 # Roadmap
 
 - [ ] Add discovery selector support
