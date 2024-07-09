@@ -82,7 +82,11 @@ func tracingVersion(conf *config.Config) (*models.ExternalServiceInfo, error) {
 	if product.Url != "" {
 		// try to determine version by querying
 		if tracingConfig.Provider == config.JaegerProvider {
-			body, statusCode, _, err := httputil.HttpGet(product.Url, nil, 10*time.Second, nil, nil)
+			auth := config.Auth{}
+			if tracingConfig.IsCheckUrlAuthenticated {
+				auth = tracingConfig.Auth
+			}
+			body, statusCode, _, err := httputil.HttpGet(product.Url, &auth, 10*time.Second, nil, nil)
 			if err != nil || statusCode > 399 {
 				log.Infof("jaeger version check failed: url=[%v], code=[%v]", product.Url, statusCode)
 			} else {
@@ -134,10 +138,15 @@ func grafanaVersion(ctx context.Context, grafana *grafana.Service) (*models.Exte
 	product := models.ExternalServiceInfo{}
 	product.Name = "Grafana"
 	product.Url = grafana.URL(ctx)
+	grafanaConfig := config.Get().ExternalServices.Grafana
 	if product.Url != "" {
 		// try to determine version by querying
 		url := fmt.Sprintf("%s/api/frontend/settings", product.Url)
-		body, statusCode, _, err := httputil.HttpGet(url, nil, 10*time.Second, nil, nil)
+		auth := config.Auth{}
+		if grafanaConfig.IsCheckUrlAuthenticated {
+			auth = grafanaConfig.Auth
+		}
+		body, statusCode, _, err := httputil.HttpGet(url, &auth, 10*time.Second, nil, nil)
 		if err != nil || statusCode > 399 {
 			log.Infof("grafana version check failed: url=[%v], code=[%v]", url, statusCode)
 		} else {
