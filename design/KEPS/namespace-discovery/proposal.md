@@ -125,6 +125,50 @@ discoverySelectors:
         team: api
 ```
 
+## No cluster wide access
+
+Kiali relies on `deployment.accessible_namespaces` when `deployment.cluster_wide_access = false` to know which namespaces the server should create a kube cache for. The operator also uses `deployment.accessible_namespaces` to create a `Role/RoleBinding` for the Kiali server's Service Account giving the Kiali server access to that namespace. In order for the operator to create RBAC rules for the Kiali server, the operator will need to reconcile the discovery selectors with namespaces that exist in the cluster. The operator can take what is set in `deployment.discovery_selectors` and set the Kiali server's `deployment.discovery_selectors` config field to be the result of this reconcilation. For example:
+
+```yaml
+spec:
+  deployment:
+    cluster_wide_access: false
+    discovery_selectors:
+      - matchLabels:
+          team: backend
+```
+
+would be translated into the Kiali config as:
+
+```yaml
+spec:
+  deployment:
+    cluster_wide_access: false
+    discovery_selectors:
+      - matchLabels:
+          kubernetes.io/metadata.name: backend-app1
+      - matchLabels:
+          kubernetes.io/metadata.name: backend-app2
+```
+
+An alternative is to keep `deployment.accessible_namespaces` and make it an "internal" field that only the operator sets and not users.
+
+```yaml
+spec:
+  deployment:
+    accessible_namespaces:
+      - backend-app1
+      - backend-app2
+    cluster_wide_access: false
+    discovery_selectors:
+      - matchLabels:
+          team: backend
+```
+
+The Kiali server could also lazily start kube caches whenever they are first accessed rather than relying on the operator to tell it which namespaces it has access to but the operator will already need to reconcile the namespaces in order to create a RBAC rules for the server in that namespace. Therefore it would be simpler for the operator to pass in the list of namespaces to the server.
+
+Note that this won't work in multi-cluster scenarios since the operator has no access to the external clusters. Because of this, setting `deployment.cluster_wide_access = false` is unsupported for multi-cluster deployments.
+
 # Roadmap
 
 - [ ] Add discovery selector support
