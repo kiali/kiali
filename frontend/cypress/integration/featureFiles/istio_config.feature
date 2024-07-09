@@ -286,6 +286,7 @@ Feature: Kiali Istio Config page
   Scenario: KIA1102 validation
     Given there is a "foo" VirtualService in the "sleep" namespace with a "foo-route" http-route to host "sleep"
     And there is not a "foo" "DestinationRule" in the "sleep" namespace
+    And there is not a "foo" "Gateway" in the "sleep" namespace
     And the VirtualService applies to "sleep" hosts
     And the VirtualService references "foo" gateways
     When user selects the "sleep" namespace
