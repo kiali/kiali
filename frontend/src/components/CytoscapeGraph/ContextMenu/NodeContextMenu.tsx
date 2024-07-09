@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import { Link, useNavigate } from 'react-router-dom-v5-compat';
 import { kialiStyle } from 'styles/StyleUtils';
 import { Spinner, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { ExternalLinkAltIcon } from '@patternfly/react-icons';
@@ -112,7 +111,6 @@ const getLinkParamsForNode = (node: DecoratedGraphNodeData): LinkParams | undefi
 
 export const NodeContextMenuComponent: React.FC<Props> = (props: Props) => {
   const { t } = useKialiTranslation();
-  const navigate = useNavigate();
 
   const [serviceDetails, gateways, peerAuthentications, isServiceDetailsLoading] = useServiceDetailForGraphNode(
     props,
@@ -154,8 +152,7 @@ export const NodeContextMenuComponent: React.FC<Props> = (props: Props) => {
       // otherwise the kiosk=true will keep the links inside Kiali
       if (isParentKiosk(props.kiosk)) {
         item = (
-          <Link
-            to={''}
+          <a
             onClick={() => {
               kioskContextMenuAction(href);
             }}
@@ -164,7 +161,7 @@ export const NodeContextMenuComponent: React.FC<Props> = (props: Props) => {
           />
         );
       } else {
-        item = <Link to={href} {...commonLinkProps} onClick={() => onClick(href)} />;
+        item = <a {...commonLinkProps} onClick={() => onClick(href)} />;
       }
     }
 
@@ -177,7 +174,7 @@ export const NodeContextMenuComponent: React.FC<Props> = (props: Props) => {
 
   const onClick = (href: string): void => {
     props.contextMenu.hide(0);
-    navigate(href);
+    router.navigate(href);
   };
 
   const handleClickWizard = (e: React.MouseEvent<HTMLAnchorElement>, eventKey: WizardAction): void => {

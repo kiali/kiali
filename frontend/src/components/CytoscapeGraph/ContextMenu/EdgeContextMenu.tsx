@@ -12,14 +12,12 @@ const contextMenu = kialiStyle({
   textAlign: 'left'
 });
 
-export class EdgeContextMenu extends React.PureComponent<EdgeContextMenuProps> {
-  render() {
-    return (
-      <div className={contextMenu}>
-        {getTitle(`Edge (${prettyProtocol(this.props.protocol)})`)}
-        {renderBadgedName(decoratedNodeData((this.props.element as EdgeSingular).source()), 'From:  ')}
-        {renderBadgedName(decoratedNodeData((this.props.element as EdgeSingular).target()), 'To:        ')}
-      </div>
-    );
-  }
-}
+export const EdgeContextMenu: React.FC<EdgeContextMenuProps> = (props: EdgeContextMenuProps) => {
+  return (
+    <div className={contextMenu}>
+      {getTitle(`Edge (${prettyProtocol(props.protocol)})`)}
+      {renderBadgedName(decoratedNodeData((props.element as EdgeSingular).source()), 'From:  ')}
+      {renderBadgedName(decoratedNodeData((props.element as EdgeSingular).target()), 'To:        ')}
+    </div>
+  );
+};

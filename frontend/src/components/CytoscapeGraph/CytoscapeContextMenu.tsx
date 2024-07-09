@@ -76,7 +76,7 @@ export class CytoscapeContextMenuWrapper extends React.PureComponent<Props> {
     document.removeEventListener('mouseup', this.handleDocumentMouseUp);
   }
 
-  render(): React.ReactElement {
+  render(): React.ReactNode {
     return (
       <div className="hidden">
         <div ref={this.contextMenuRef} />
@@ -88,9 +88,11 @@ export class CytoscapeContextMenuWrapper extends React.PureComponent<Props> {
   connectCy = (cy: Cy.Core): void => {
     cy.on('cxttapstart', 'node,edge', (event: Cy.EventObject) => {
       event.preventDefault();
+
       if (event.target) {
         this.handleContextMenu(event.target, false);
       }
+
       return false;
     });
   };
@@ -106,6 +108,7 @@ export class CytoscapeContextMenuWrapper extends React.PureComponent<Props> {
 
   hideContextMenu = (isHover: boolean | undefined): void => {
     const currentContextMenu = this.getCurrentContextMenu();
+
     if (currentContextMenu) {
       if (!isHover || this.isHover) {
         currentContextMenu.hide(0); // hide it in 0ms
@@ -120,7 +123,9 @@ export class CytoscapeContextMenuWrapper extends React.PureComponent<Props> {
       // Ignore mouseup of right button
       return;
     }
+
     const currentContextMenu: Instance | undefined = this.getCurrentContextMenu();
+
     if (currentContextMenu) {
       // Allow interaction in our popper component (Selecting and copying) without it disappearing
       if (event.target && currentContextMenu.popper.contains(event.target as Node)) {
@@ -187,15 +192,12 @@ export class CytoscapeContextMenuWrapper extends React.PureComponent<Props> {
       );
     }
 
-    const contextMenuRouter = createRouter(
-      [
-        {
-          element: menuComponent,
-          children: pathRoutes
-        }
-      ],
-      '/console'
-    );
+    const contextMenuRouter = createRouter([
+      {
+        element: menuComponent,
+        children: pathRoutes
+      }
+    ]);
 
     const result = (
       <Provider store={store}>
@@ -209,6 +211,7 @@ export class CytoscapeContextMenuWrapper extends React.PureComponent<Props> {
     ReactDOM.render(result, content, () => {
       this.setCurrentContextMenu(tippyInstance);
       tippyInstance.show();
+
       // Schedule the removal of the contextmenu listener after finishing with the show procedure, so we can
       // interact with the popper content e.g. select and copy (with right click) values from it.
       setTimeout(() => {
@@ -236,11 +239,13 @@ export class CytoscapeContextMenuWrapper extends React.PureComponent<Props> {
   private handleContextMenuEvent = (event: MouseEvent): boolean => {
     // Disable the context menu in popper
     const currentContextMenu = this.getCurrentContextMenu();
+
     if (currentContextMenu) {
       if (event.target && currentContextMenu.popper.contains(event.target as Node)) {
         event.preventDefault();
       }
     }
+
     return true;
   };
 

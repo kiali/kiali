@@ -98,7 +98,6 @@
     "react-copy-to-clipboard": "5.x",
     "react-datepicker": "3.8.0",
     "react-dom": "^17.0.1",
-    "react-error-boundary": "^4.0.13",
     "react-flexview": "4.0.3",
     "react-i18next": "^11.7.3",
     "react-redux": "7.2.2",

@@ -78,7 +78,6 @@ const navMenuItems: MenuItem[] = [
 ];
 
 const pathRoutes: RouteObject[] = [
-  { index: true, element: <Navigate to={'/overview'} replace /> },
   {
     path: '/overview',
     element: <OverviewPage />
@@ -174,7 +173,8 @@ const pathRoutes: RouteObject[] = [
   {
     path: `/${Paths.MESH}`,
     element: <MeshPage />
-  }
+  },
+  { path: '*', element: <Navigate to={'/overview'} replace /> }
 ];
 
 export { navMenuItems, pathRoutes };

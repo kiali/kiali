@@ -2,12 +2,14 @@ import { toValidDuration } from '../config/ServerConfig';
 import { BoundsInMilliseconds } from 'types/Common';
 import { RouteObject, createBrowserRouter, createHashRouter, createMemoryRouter } from 'react-router-dom-v5-compat';
 
-export const createRouter = (routes: RouteObject[], basename: string): any => {
+export const createRouter = (routes: RouteObject[], basename?: string): any => {
+  const baseName = basename ?? rootBasename;
+
   return process.env.TEST_RUNNER
-    ? createMemoryRouter(routes, { basename })
+    ? createMemoryRouter(routes, { basename: baseName })
     : historyMode === 'hash'
-    ? createHashRouter(routes, { basename })
-    : createBrowserRouter(routes, { basename });
+    ? createHashRouter(routes, { basename: baseName })
+    : createBrowserRouter(routes, { basename: baseName });
 };
 
 const webRoot = (window as any).WEB_ROOT ? (window as any).WEB_ROOT : undefined;
@@ -21,7 +23,7 @@ const historyMode = (window as any).HISTORY_MODE ? (window as any).HISTORY_MODE 
  * This method is not used in standalone Kiali application
  */
 export const setRouter = (routes: RouteObject[], basename?: string): void => {
-  router = createRouter(routes, basename ?? rootBasename);
+  router = createRouter(routes, basename);
 };
 
 let router = createRouter([{ element: <></> }], rootBasename);
