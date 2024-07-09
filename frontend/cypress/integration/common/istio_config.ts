@@ -322,6 +322,13 @@ Given(
   }
 );
 
+Given(
+  'there is not a {string} Gateway in the {string} namespace',
+  (configName: string, namespace: string) => {
+    cy.exec(`kubectl delete gateway.networking.istio.io ${configName} -n ${namespace}`, { failOnNonZeroExit: false });
+  }
+);
+
 Given('the DestinationRule enables mTLS', function () {
   cy.exec(
     `kubectl patch DestinationRule ${this.targetDestinationRule} -n ${this.targetNamespace} --type=merge -p '{"spec":{"trafficPolicy":{"tls": {"mode": "ISTIO_MUTUAL"}} }}'`
