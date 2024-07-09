@@ -13,7 +13,7 @@ import {
   ToolbarItem
 } from '@patternfly/react-core';
 import { Edge, EdgeModel, Node, NodeModel } from '@patternfly/react-topology';
-import { URLParam, history } from '../../app/History';
+import { URLParam, location, router } from '../../app/History';
 import { GraphDataSource } from '../../services/GraphDataSource';
 import { DecoratedGraphElements, EdgeMode, GraphEvent, GraphType, Layout, NodeType } from '../../types/Graph';
 import { GraphUrlParams, makeNodeGraphUrlFromParams } from 'components/Nav/NavUtils';
@@ -47,6 +47,7 @@ type ReduxDispatchProps = {
   setUpdateTime: (val: TimeInMilliseconds) => void;
   updateSummary: (event: GraphEvent) => void;
 };
+
 type ReduxProps = ReduxDispatchProps & {
   kiosk: string;
 };
@@ -235,7 +236,7 @@ class MiniGraphCardPFComponent extends React.Component<MiniGraphCardPropsPF, Min
     const nodeType = nodeData.nodeType;
 
     if (source.getId() !== target.getId()) {
-      const urlParams = new URLSearchParams(history.location.search);
+      const urlParams = new URLSearchParams(location.getSearch());
 
       switch (nodeType) {
         case NodeType.APP: {
@@ -260,7 +261,7 @@ class MiniGraphCardPFComponent extends React.Component<MiniGraphCardPropsPF, Min
         }
       }
 
-      history.replace(`${history.location.pathname}?&{urlParams.toString()}`);
+      router.navigate(`${location.getPathname()}?&{urlParams.toString()}`, { replace: true });
     }
   };
 
@@ -303,7 +304,7 @@ class MiniGraphCardPFComponent extends React.Component<MiniGraphCardPropsPF, Min
     if (isParentKiosk(this.props.kiosk)) {
       kioskContextMenuAction(href);
     } else {
-      history.push(href);
+      router.navigate(href);
     }
   };
 
@@ -350,7 +351,7 @@ class MiniGraphCardPFComponent extends React.Component<MiniGraphCardPropsPF, Min
     if (isParentKiosk(this.props.kiosk)) {
       kioskContextMenuAction(graphUrl);
     } else {
-      history.push(graphUrl);
+      router.navigate(graphUrl);
     }
   };
 
@@ -388,7 +389,7 @@ class MiniGraphCardPFComponent extends React.Component<MiniGraphCardPropsPF, Min
     };
 
     // To ensure updated components get the updated URL, update the URL first and then the state
-    history.push(makeNodeGraphUrlFromParams(urlParams, true));
+    router.navigate(makeNodeGraphUrlFromParams(urlParams, true));
   };
 
   private toggleTimeOptionsVisibility = (): void => {

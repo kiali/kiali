@@ -8,29 +8,32 @@ import { KialiDispatch } from 'types/Redux';
 import { bindActionCreators } from 'redux';
 import { UserSettingsActions } from '../../actions/UserSettingsActions';
 import { connect } from 'react-redux';
-import { HistoryManager, URLParam } from '../../app/History';
-import { history } from '../../app/History';
+import { HistoryManager, URLParam, location } from '../../app/History';
 import { TooltipPosition } from '@patternfly/react-core';
 import { isKioskMode } from '../../utils/SearchParamUtils';
 import { kioskDurationAction } from '../Kiosk/KioskActions';
 
-type ReduxProps = {
+type ReduxStateProps = {
   duration: DurationInSeconds;
+};
+
+type ReduxDispatchProps = {
   setDuration: (duration: DurationInSeconds) => void;
 };
 
-type DurationDropdownProps = ReduxProps & {
-  disabled?: boolean;
-  id: string;
-  nameDropdown?: string;
-  prefix?: string;
-  suffix?: string;
-  tooltip?: string;
-  tooltipPosition?: TooltipPosition;
-};
+type DurationDropdownProps = ReduxStateProps &
+  ReduxDispatchProps & {
+    disabled?: boolean;
+    id: string;
+    nameDropdown?: string;
+    prefix?: string;
+    suffix?: string;
+    tooltip?: string;
+    tooltipPosition?: TooltipPosition;
+  };
 
 export const DurationDropdownComponent: React.FC<DurationDropdownProps> = (props: DurationDropdownProps) => {
-  const updateDurationInterval = (duration: number) => {
+  const updateDurationInterval = (duration: number): void => {
     props.setDuration(duration); // notify redux of the change
 
     if (isKioskMode()) {
@@ -55,33 +58,37 @@ export const DurationDropdownComponent: React.FC<DurationDropdownProps> = (props
   );
 };
 
-const withURLAwareness = (DurationDropdownComponent: React.FC<DurationDropdownProps>) => {
+const withURLAwareness = (
+  DurationDropdownComponent: React.FC<DurationDropdownProps>
+): React.ComponentClass<DurationDropdownProps> => {
   return class extends React.Component<DurationDropdownProps> {
     constructor(props: DurationDropdownProps) {
       super(props);
-      const urlParams = new URLSearchParams(history.location.search);
+      const urlParams = new URLSearchParams(location.getSearch());
       const urlDuration = HistoryManager.getDuration(urlParams);
+
       if (urlDuration !== undefined && urlDuration !== props.duration) {
         props.setDuration(urlDuration);
       }
+
       HistoryManager.setParam(URLParam.DURATION, String(props.duration));
     }
 
-    componentDidUpdate() {
+    componentDidUpdate(): void {
       HistoryManager.setParam(URLParam.DURATION, String(this.props.duration));
     }
 
-    render() {
+    render(): React.ReactNode {
       return <DurationDropdownComponent {...this.props} />;
     }
   };
 };
 
-const mapStateToProps = (state: KialiAppState) => ({
+const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
   duration: durationSelector(state)
 });
 
-const mapDispatchToProps = (dispatch: KialiDispatch) => {
+const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => {
   return {
     setDuration: bindActionCreators(UserSettingsActions.setDuration, dispatch)
   };

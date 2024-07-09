@@ -2,7 +2,6 @@ import { jest } from '@jest/globals';
 import { configure } from 'enzyme';
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
 import jsdom from 'jsdom';
-import { Location } from 'history';
 
 import 'jest-canvas-mock';
 
@@ -42,21 +41,3 @@ jest.mock('react-i18next', () => ({
     i18n: i18n
   })
 }));
-
-// mock useLocation function from react-router-dom
-const mockModule = jest.requireActual('react-router-dom');
-
-const mockUseLocation = (): Location => ({
-  pathname: '/another-route',
-  search: '',
-  hash: '',
-  state: null
-});
-
-jest.mock('react-router-dom', () => {
-  return {
-    // @ts-ignore
-    ...mockModule,
-    useLocation: mockUseLocation
-  };
-});

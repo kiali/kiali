@@ -58,7 +58,7 @@ import { Paths, isMultiCluster, serverConfig } from '../../config';
 import { PFColors } from '../../components/Pf/PfColors';
 import { VirtualList } from '../../components/VirtualList/VirtualList';
 import { OverviewNamespaceAction, OverviewNamespaceActions } from './OverviewNamespaceActions';
-import { history, HistoryManager, URLParam } from '../../app/History';
+import { router, HistoryManager, URLParam } from '../../app/History';
 import * as AlertUtils from '../../utils/AlertUtils';
 import { MessageType } from '../../types/MessageCenter';
 import { CanaryUpgradeStatus, ValidationStatus } from '../../types/IstioObjects';
@@ -690,7 +690,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
       // Nothing to do on default case
     }
 
-    history.push(destination);
+    router.navigate(destination);
   };
 
   getNamespaceActions = (nsInfo: NamespaceInfo): OverviewNamespaceAction[] => {

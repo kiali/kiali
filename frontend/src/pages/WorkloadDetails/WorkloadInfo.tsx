@@ -15,7 +15,7 @@ import { isIstioNamespace, serverConfig } from '../../config/ServerConfig';
 import { IstioConfigList, toIstioItems } from '../../types/IstioConfigList';
 import { WorkloadPods } from './WorkloadPods';
 import { GraphEdgeTapEvent } from '../../components/CytoscapeGraph/CytoscapeGraph';
-import { history, URLParam } from '../../app/History';
+import { location, router, URLParam } from '../../app/History';
 import { MiniGraphCard } from '../../components/CytoscapeGraph/MiniGraphCard';
 import { IstioConfigCard } from '../../components/IstioConfigCard/IstioConfigCard';
 import { MiniGraphCardPF } from 'pages/GraphPF/MiniGraphCardPF';
@@ -77,21 +77,26 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
     if (!this.props.workload) {
       return;
     }
+
     this.graphDataSource.fetchForWorkload(
       this.props.duration,
       this.props.namespace,
       this.props.workload.name,
       this.props.workload.cluster
     );
+
     this.setState({
       validations: this.workloadValidations(this.props.workload)
     });
+
     const labels = this.props.workload.labels;
     const wkLabels: string[] = [];
+
     Object.keys(labels).forEach(key => {
       const label = `${key}${labels[key] ? `=${labels[key]}` : ''}`;
       wkLabels.push(label);
     });
+
     const workloadSelector = wkLabels.join(',');
 
     API.getIstioConfig(
@@ -115,25 +120,30 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
       severity: ValidationTypes.Warning,
       path: ''
     };
+
     const noAppLabel: ObjectCheck = { message: 'Pod has no app label', severity: ValidationTypes.Warning, path: '' };
     const noVersionLabel: ObjectCheck = {
       message: 'Pod has no version label',
       severity: ValidationTypes.Warning,
       path: ''
     };
+
     const pendingPod: ObjectCheck = { message: 'Pod is in Pending Phase', severity: ValidationTypes.Warning, path: '' };
     const unknownPod: ObjectCheck = { message: 'Pod is in Unknown Phase', severity: ValidationTypes.Warning, path: '' };
     const failedPod: ObjectCheck = { message: 'Pod is in Failed Phase', severity: ValidationTypes.Error, path: '' };
+
     const failingPodContainer: ObjectCheck = {
       message: 'Pod has failing container',
       severity: ValidationTypes.Warning,
       path: ''
     };
+
     const failingPodIstioContainer: ObjectCheck = {
       message: 'Pod has failing Istio container',
       severity: ValidationTypes.Warning,
       path: ''
     };
+
     const failingPodAppContainer: ObjectCheck = {
       message: 'Pod has failing app container',
       severity: ValidationTypes.Warning,
@@ -150,6 +160,7 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
 
     if (workload.pods.length > 0) {
       validations.pod = {};
+
       workload.pods.forEach(pod => {
         validations.pod[pod.name] = {
           name: pod.name,
@@ -157,6 +168,7 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
           valid: true,
           checks: []
         };
+
         if (!isIstioNamespace(this.props.namespace) && !isGateway(this.props.workload?.labels || {})) {
           if (!isWaypoint) {
             if (!pod.istioContainers || pod.istioContainers.length === 0) {
@@ -213,6 +225,7 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
           default:
           // Pod healthy
         }
+
         // If statusReason is present
         if (pod.statusReason) {
           validations.pod[pod.name].checks.push({
@@ -221,9 +234,11 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
             path: ''
           });
         }
+
         validations.pod[pod.name].valid = validations.pod[pod.name].checks.length === 0;
       });
     }
+
     return validations;
   }
 
@@ -231,22 +246,26 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
     if (e.source !== e.target && this.props.workload) {
       const direction = e.source === this.props.workload.name ? 'outbound' : 'inbound';
       const destination = direction === 'inbound' ? 'source_canonical_service' : 'destination_canonical_service';
-      const urlParams = new URLSearchParams(history.location.search);
+
+      const urlParams = new URLSearchParams(location.getSearch());
       urlParams.set('tab', direction === 'inbound' ? 'in_metrics' : 'out_metrics');
       urlParams.set(
         URLParam.BY_LABELS,
         `${destination}=${e.source === this.props.workload.name ? e.target : e.source}`
       );
-      history.replace(`${history.location.pathname}?${urlParams.toString()}`);
+
+      router.navigate(`${location.getPathname()}?${urlParams.toString()}`, { replace: true });
     }
   };
 
   render(): React.ReactNode {
     const workload = this.props.workload;
     const pods = workload?.pods || [];
+
     const istioConfigItems = this.state.workloadIstioConfig
       ? toIstioItems(this.state.workloadIstioConfig, workload?.cluster || '')
       : [];
+
     // Helper to iterate at same time on workloadIstioConfig resources and validations
     const wkIstioTypes = [
       { field: 'gateways', validation: 'gateway' },
@@ -256,11 +275,13 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
       { field: 'authorizationPolicies', validation: 'authorizationpolicy' },
       { field: 'peerAuthentications', validation: 'peerauthentication' }
     ];
+
     if (this.state.workloadIstioConfig?.validations) {
       const typeNames: { [key: string]: string[] } = {};
       wkIstioTypes.forEach(wkIstioType => {
         if (this.state.workloadIstioConfig && this.state.workloadIstioConfig.validations[wkIstioType.validation]) {
           typeNames[wkIstioType.validation] = [];
+
           this.state.workloadIstioConfig[wkIstioType.field]?.forEach(r =>
             typeNames[wkIstioType.validation].push(r.metadata.name)
           );
@@ -290,6 +311,7 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
                     namespace={this.props.namespace}
                   />
                 </StackItem>
+
                 <StackItem>
                   <WorkloadPods
                     namespace={this.props.namespace}
@@ -298,6 +320,7 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
                     validations={this.state.validations?.pod || {}}
                   />
                 </StackItem>
+
                 <StackItem style={{ paddingBottom: '20px' }}>
                   <IstioConfigCard
                     name={this.props.workload ? this.props.workload.name : ''}
@@ -306,6 +329,7 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
                 </StackItem>
               </Stack>
             </GridItem>
+
             {includeMiniGraphCy && (
               <GridItem span={miniGraphSpan}>
                 <MiniGraphCard
@@ -315,6 +339,7 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
                 />
               </GridItem>
             )}
+
             {includeMiniGraphPF && (
               <GridItem span={miniGraphSpan}>
                 <MiniGraphCardPF dataSource={this.graphDataSource} />

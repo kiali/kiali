@@ -16,7 +16,7 @@ import { serverConfig } from 'config';
 import { PFColors } from 'components/Pf/PfColors';
 import { DateTimePicker } from './DateTimePicker';
 import _ from 'lodash';
-import { history, HistoryManager, URLParam } from 'app/History';
+import { HistoryManager, URLParam, location } from 'app/History';
 
 type ReduxStateProps = {
   duration: DurationInSeconds;
@@ -179,7 +179,7 @@ class ReplayComponent extends React.PureComponent<ReplayProps, ReplayState> {
     // Let URL set initial state at construction time.
     // Note, URLParam.GRAPH_REPLAY_START is only set for custom start times
     let interval = defaultReplayInterval;
-    const urlParams = new URLSearchParams(history.location.search);
+    const urlParams = new URLSearchParams(location.getSearch());
     const urlReplayInterval = HistoryManager.getParam(URLParam.GRAPH_REPLAY_INTERVAL, urlParams);
 
     if (!!urlReplayInterval) {

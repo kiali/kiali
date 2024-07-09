@@ -27,7 +27,7 @@ import { ErrorSection } from '../../components/ErrorSection/ErrorSection';
 import { ErrorMsg } from '../../types/ErrorMsg';
 import { connectRefresh } from '../../components/Refresh/connectRefresh';
 import { isWaypoint } from '../../helpers/LabelFilterHelper';
-import { history, HistoryManager } from 'app/History';
+import { HistoryManager } from 'app/History';
 import { basicTabStyle } from 'styles/TabStyles';
 
 type WorkloadDetailsState = {
@@ -142,9 +142,9 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
       });
   };
 
-  private staticTabs(): JSX.Element[] {
+  private staticTabs(): React.ReactNode[] {
     const hasPods = this.state.workload?.pods.length;
-    const tabsArray: JSX.Element[] = [];
+    const tabsArray: React.ReactNode[] = [];
 
     const overTab = (
       <Tab title="Overview" eventKey={0} key="Overview">
@@ -282,8 +282,8 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
     return hasIstioSidecars;
   }
 
-  private runtimeTabs(): JSX.Element[] {
-    const tabs: JSX.Element[] = [];
+  private runtimeTabs(): React.ReactNode[] {
+    const tabs: React.ReactNode[] = [];
 
     if (this.state.workload) {
       const app = this.state.workload.labels[serverConfig.istioLabels.appLabelName];
@@ -323,12 +323,12 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
     return tabs;
   }
 
-  private renderTabs(): JSX.Element[] {
+  private renderTabs(): React.ReactNode[] {
     // PF4 Tabs doesn't support static tabs followed of an array of tabs created dynamically.
     return this.staticTabs().concat(this.runtimeTabs());
   }
 
-  render(): React.ReactElement {
+  render(): React.ReactNode {
     // set default to true: all dynamic tabs (unlisted below) are for runtimes dashboards, which uses custom time
     let useCustomTime = true;
 
@@ -357,11 +357,7 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
 
     return (
       <>
-        <RenderHeader
-          location={history.location}
-          rightToolbar={<TimeControl customDuration={useCustomTime} />}
-          actionsToolbar={actionsToolbar}
-        />
+        <RenderHeader rightToolbar={<TimeControl customDuration={useCustomTime} />} actionsToolbar={actionsToolbar} />
 
         {this.state.error && <ErrorSection error={this.state.error} />}
 

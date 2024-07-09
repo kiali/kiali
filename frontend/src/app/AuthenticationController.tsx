@@ -17,6 +17,7 @@ import { setServerConfig, serverConfig, humanDurations } from '../config/ServerC
 import { AuthStrategy } from '../types/Auth';
 import { TracingInfo } from '../types/TracingInfo';
 import { LoginActions } from '../actions/LoginActions';
+import { location, router } from './History';
 import { NamespaceActions } from 'actions/NamespaceAction';
 import { Namespace } from 'types/Namespace';
 import { UserSettingsActions } from 'actions/UserSettingsActions';
@@ -30,9 +31,6 @@ import { PromisesRegistry } from '../utils/CancelablePromises';
 import { GlobalActions } from '../actions/GlobalActions';
 import { getKialiTheme } from 'utils/ThemeUtils';
 import { i18n } from 'i18n';
-import { t } from 'utils/I18nUtils';
-import { router } from './History';
-import { useLocation } from 'react-router-dom-v5-compat';
 
 interface ReduxStateProps {
   authenticated: boolean;
@@ -67,27 +65,34 @@ enum LoginStage {
   LOGGED_IN_AT_LOAD
 }
 
-const postLoginErrorMsg = t(`Kiali failed to initialize. Please ensure that services
-    Kiali depends on, such as Prometheus, are healthy and reachable by Kiali then refresh your browser.`);
+interface AuthenticationControllerState {
+  isPostLoginError: boolean;
+  stage: LoginStage;
+}
 
-const AuthenticationControllerComponent: React.FC<AuthenticationControllerProps> = (
-  props: AuthenticationControllerProps
-) => {
-  const [isPostLoginError, setIsPostLoginError] = React.useState<boolean>(false);
-  const [stage, setStage] = React.useState<LoginStage>(
-    props.authenticated ? LoginStage.LOGGED_IN_AT_LOAD : LoginStage.LOGIN
-  );
-
-  const { pathname, search } = useLocation();
+class AuthenticationControllerComponent extends React.Component<
+  AuthenticationControllerProps,
+  AuthenticationControllerState
+> {
+  static readonly PostLoginErrorMsg = `Kiali failed to initialize. Please ensure that services
+    Kiali depends on, such as Prometheus, are healthy and reachable by Kiali then refresh your browser.`;
 
   // How long to wait for the post-login actions to complete
   // before transitioning to the "Loading" page.
-  const postLoginMSTillTransition = 3000;
-  const promises = new PromisesRegistry();
+  private readonly postLoginMSTillTransition = 3000;
+  private promises = new PromisesRegistry();
 
-  React.useEffect(() => {
-    if (stage === LoginStage.LOGGED_IN_AT_LOAD) {
-      doPostLoginActions();
+  constructor(props: AuthenticationControllerProps) {
+    super(props);
+    this.state = {
+      isPostLoginError: false,
+      stage: this.props.authenticated ? LoginStage.LOGGED_IN_AT_LOAD : LoginStage.LOGIN
+    };
+  }
+
+  componentDidMount(): void {
+    if (this.state.stage === LoginStage.LOGGED_IN_AT_LOAD) {
+      this.doPostLoginActions();
     } else {
       let dispatchLoginCycleOnLoad = false;
 
@@ -101,66 +106,88 @@ const AuthenticationControllerComponent: React.FC<AuthenticationControllerProps>
       }
 
       if (dispatchLoginCycleOnLoad) {
-        props.checkCredentials();
+        this.props.checkCredentials();
 
         // This state shows the initializing screen while doing the login cycle. This
         // prevents from briefly showing the login form while the trip to the back-end completes.
-        setStage(LoginStage.LOGGED_IN_AT_LOAD);
+        this.setState({
+          stage: LoginStage.LOGGED_IN_AT_LOAD
+        });
       } else {
-        props.setLandingRoute(pathname + search);
+        this.props.setLandingRoute(location.getPathname() + location.getSearch());
       }
     }
 
-    setDocLayout();
+    this.setDocLayout();
+  }
 
-    // returned function will be called on component unmount
-    return () => {
-      promises.cancelAll();
-    };
-  }, []);
+  componentDidUpdate(
+    prevProps: Readonly<AuthenticationControllerProps>,
+    _prevState: Readonly<AuthenticationControllerState>
+  ): void {
+    if (!prevProps.authenticated && this.props.authenticated) {
+      this.setState({ stage: LoginStage.POST_LOGIN });
+      this.doPostLoginActions();
+    } else if (prevProps.authenticated && !this.props.authenticated) {
+      this.setState({ stage: LoginStage.LOGIN });
+    }
 
-  const { authenticated, isLoginError } = props;
+    if (!prevProps.isLoginError && this.props.isLoginError) {
+      this.setState({ stage: LoginStage.LOGIN });
+    }
 
-  React.useEffect(() => {
-    if (authenticated) {
-      setStage(LoginStage.POST_LOGIN);
-      doPostLoginActions();
+    this.setDocLayout();
+  }
+
+  componentWillUnmount(): void {
+    this.promises.cancelAll();
+  }
+
+  render(): React.ReactNode {
+    if (this.state.stage === LoginStage.LOGGED_IN) {
+      return this.props.protectedAreaComponent;
+    } else if (this.state.stage === LoginStage.LOGGED_IN_AT_LOAD) {
+      return !this.state.isPostLoginError ? (
+        <InitializingScreen />
+      ) : (
+        <InitializingScreen errorMsg={AuthenticationControllerComponent.PostLoginErrorMsg} />
+      );
+    } else if (this.state.stage === LoginStage.POST_LOGIN) {
+      // For OAuth/OpenID auth strategies, show/keep the initializing screen unless there
+      // is an error.
+      if (!this.state.isPostLoginError && isAuthStrategyOAuth()) {
+        return <InitializingScreen />;
+      }
+
+      return !this.state.isPostLoginError
+        ? this.props.publicAreaComponent(true)
+        : this.props.publicAreaComponent(false, AuthenticationControllerComponent.PostLoginErrorMsg);
     } else {
-      setStage(LoginStage.LOGIN);
+      return this.props.publicAreaComponent(false);
     }
+  }
 
-    setDocLayout();
-  }, [authenticated]);
-
-  React.useEffect(() => {
-    if (isLoginError) {
-      setStage(LoginStage.LOGIN);
-    }
-
-    setDocLayout();
-  }, [isLoginError]);
-
-  const doPostLoginActions = async (): Promise<void> => {
+  private doPostLoginActions = async (): Promise<void> => {
     const postLoginTimer = setTimeout(() => {
-      setStage(LoginStage.LOGGED_IN_AT_LOAD);
-    }, postLoginMSTillTransition);
+      this.setState({ stage: LoginStage.LOGGED_IN_AT_LOAD });
+    }, this.postLoginMSTillTransition);
 
     try {
-      const getNamespaces = promises.register('getNamespaces', API.getNamespaces());
-      const getServerConfig = promises.register('getServerConfig', API.getServerConfig());
+      const getNamespaces = this.promises.register('getNamespaces', API.getNamespaces());
+      const getServerConfig = this.promises.register('getServerConfig', API.getServerConfig());
 
-      const getStatusPromise = promises
+      const getStatusPromise = this.promises
         .register('getStatus', API.getStatus())
-        .then(response => processServerStatus(response.data))
+        .then(response => this.processServerStatus(response.data))
         .catch(error => {
           AlertUtils.addError('Error fetching server status.', error, 'default', MessageType.WARNING);
         });
 
-      const getTracingInfoPromise = promises
+      const getTracingInfoPromise = this.promises
         .register('getTracingInfo', API.getTracingInfo())
-        .then(response => props.setTracingInfo(response.data))
+        .then(response => this.props.setTracingInfo(response.data))
         .catch(error => {
-          props.setTracingInfo(null);
+          this.props.setTracingInfo(null);
           AlertUtils.addError(
             'Could not fetch Tracing info. Turning off Tracing integration.',
             error,
@@ -171,29 +198,28 @@ const AuthenticationControllerComponent: React.FC<AuthenticationControllerProps>
 
       const configs = await Promise.all([getNamespaces, getServerConfig, getStatusPromise, getTracingInfoPromise]);
 
-      props.setNamespaces(configs[0].data, new Date());
+      this.props.setNamespaces(configs[0].data, new Date());
       setServerConfig(configs[1].data);
-      applyUIDefaults();
+      this.applyUIDefaults();
 
-      if (props.landingRoute) {
-        router.navigate(props.landingRoute, { replace: true });
-        props.setLandingRoute(undefined);
+      if (this.props.landingRoute) {
+        router.navigate(this.props.landingRoute, { replace: true });
+        this.props.setLandingRoute(undefined);
       }
 
-      setStage(LoginStage.LOGGED_IN);
+      this.setState({ stage: LoginStage.LOGGED_IN });
     } catch (err) {
       console.error('Error on post-login actions.', err);
 
       // Transitioning to LOGGED_IN_AT_LOAD so that the user will see the "Loading..."
       // screen instead of being stuck at the "login" page after a post-login error.
-      setIsPostLoginError(true);
-      setStage(LoginStage.LOGGED_IN_AT_LOAD);
+      this.setState({ isPostLoginError: true, stage: LoginStage.LOGGED_IN_AT_LOAD });
     } finally {
       clearTimeout(postLoginTimer);
     }
   };
 
-  const applyUIDefaults = (): void => {
+  private applyUIDefaults = (): void => {
     const uiDefaults = serverConfig.kialiFeatureFlags.uiDefaults;
 
     if (uiDefaults) {
@@ -220,7 +246,7 @@ const AuthenticationControllerComponent: React.FC<AuthenticationControllerProps>
         }
 
         if (metricsPerRefresh > 0) {
-          props.setDuration(metricsPerRefresh);
+          this.props.setDuration(metricsPerRefresh);
           console.debug(
             `Setting UI Default: metricsPerRefresh [${uiDefaults.metricsPerRefresh}=${metricsPerRefresh}s]`
           );
@@ -240,7 +266,7 @@ const AuthenticationControllerComponent: React.FC<AuthenticationControllerProps>
         }
 
         if (refreshInterval >= 0) {
-          props.setRefreshInterval(refreshInterval);
+          this.props.setRefreshInterval(refreshInterval);
           console.debug(`Setting UI Default: refreshInterval [${uiDefaults.refreshInterval}=${refreshInterval}ms]`);
         } else {
           console.debug(`Ignoring invalid UI Default: refreshInterval [${uiDefaults.refreshInterval}]`);
@@ -263,7 +289,7 @@ const AuthenticationControllerComponent: React.FC<AuthenticationControllerProps>
         }
 
         if (activeNamespaces.length > 0) {
-          props.setActiveNamespaces(activeNamespaces);
+          this.props.setActiveNamespaces(activeNamespaces);
           console.debug(`Setting UI Default: namespaces ${JSON.stringify(activeNamespaces.map(ns => ns.name))}`);
         }
       }
@@ -286,11 +312,11 @@ const AuthenticationControllerComponent: React.FC<AuthenticationControllerProps>
         rates.push(TrafficRate.TCP_GROUP, tcpRate);
       }
 
-      props.setTrafficRates(rates);
+      this.props.setTrafficRates(rates);
     }
   };
 
-  const setDocLayout = (): void => {
+  private setDocLayout = (): void => {
     // Set theme
     const theme = getKialiTheme();
     if (theme === Theme.DARK) {
@@ -306,11 +332,11 @@ const AuthenticationControllerComponent: React.FC<AuthenticationControllerProps>
     store.dispatch(GlobalActions.setKiosk(getKioskMode()));
   };
 
-  const processServerStatus = (status: StatusState): void => {
-    props.statusRefresh(status);
+  private processServerStatus = (status: StatusState): void => {
+    this.props.statusRefresh(status);
 
     if (status.status[StatusKey.DISABLED_FEATURES]) {
-      props.addMessage(
+      this.props.addMessage(
         `The following features are disabled: ${status.status[StatusKey.DISABLED_FEATURES]}`,
         '',
         'default',
@@ -319,29 +345,7 @@ const AuthenticationControllerComponent: React.FC<AuthenticationControllerProps>
       );
     }
   };
-
-  let renderComponent: React.ReactNode;
-
-  if (stage === LoginStage.LOGGED_IN) {
-    renderComponent = props.protectedAreaComponent;
-  } else if (stage === LoginStage.LOGGED_IN_AT_LOAD) {
-    renderComponent = !isPostLoginError ? <InitializingScreen /> : <InitializingScreen errorMsg={postLoginErrorMsg} />;
-  } else if (stage === LoginStage.POST_LOGIN) {
-    // For OAuth/OpenID auth strategies, show/keep the initializing screen unless there
-    // is an error.
-    if (!isPostLoginError && isAuthStrategyOAuth()) {
-      renderComponent = <InitializingScreen />;
-    }
-
-    renderComponent = !isPostLoginError
-      ? props.publicAreaComponent(true)
-      : props.publicAreaComponent(false, postLoginErrorMsg);
-  } else {
-    renderComponent = props.publicAreaComponent(false);
-  }
-
-  return <>{renderComponent}</>;
-};
+}
 
 const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
   authenticated: state.authentication.status === LoginStatus.loggedIn,

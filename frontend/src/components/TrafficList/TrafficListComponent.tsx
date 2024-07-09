@@ -8,7 +8,7 @@ import * as FilterComponent from '../FilterList/FilterComponent';
 import { ThresholdStatus, NA } from 'types/Health';
 import { NodeType, hasProtocolTraffic, ProtocolTraffic } from 'types/Graph';
 import { getTrafficHealth } from 'types/ErrorRate';
-import { history, URLParam } from 'app/History';
+import { location, URLParam } from 'app/History';
 import { sortFields } from './FiltersAndSorts';
 import { SortField } from 'types/SortFilters';
 import { PFBadgeType, PFBadge, PFBadges } from 'components/Pf/PfBadges';
@@ -374,7 +374,8 @@ class TrafficList extends FilterComponent.Component<
     }
 
     const metricsDirection = item.direction === 'inbound' ? 'in_metrics' : 'out_metrics';
-    let metrics = `${history.location.pathname}${getParamsSeparator(history.location.pathname)}tab=${metricsDirection}`;
+    const pathname = location.getPathname();
+    let metrics = `${pathname}${getParamsSeparator(pathname)}tab=${metricsDirection}`;
 
     switch (item.node.type) {
       case NodeType.APP:

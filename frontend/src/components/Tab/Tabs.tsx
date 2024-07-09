@@ -1,12 +1,13 @@
 import * as React from 'react';
 import { TabProps, Tabs } from '@patternfly/react-core';
-import { history } from '../../app/History';
+import { location, router } from '../../app/History';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from 'components/Pf/PfColors';
 import { classes } from 'typestyle';
 
 type TabsProps = {
   activeTab: string;
+  className?: string;
   defaultTab: string;
   id: string;
   mountOnEnter?: boolean;
@@ -15,11 +16,10 @@ type TabsProps = {
   tabMap: { [key: string]: number };
   tabName?: string;
   unmountOnExit?: boolean;
-  className?: string;
 };
 
 export const activeTab = (tabName: string, defaultTab: string): string => {
-  return new URLSearchParams(history.location.search).get(tabName) || defaultTab;
+  return new URLSearchParams(location.getSearch()).get(tabName) || defaultTab;
 };
 
 const tabStyle = kialiStyle({
@@ -28,9 +28,11 @@ const tabStyle = kialiStyle({
 
 type TabElement = React.ReactElement<TabProps, React.JSXElementConstructor<TabProps>>;
 
+type TabMap = { [key: number]: string };
+
 export class ParameterizedTabs extends React.Component<TabsProps> {
-  private indexMap: { [key: number]: string };
-  private tabLinks: { [key: number]: string };
+  private indexMap: TabMap;
+  private tabLinks: TabMap;
 
   constructor(props: TabsProps) {
     super(props);
@@ -43,15 +45,16 @@ export class ParameterizedTabs extends React.Component<TabsProps> {
     this.tabLinks = this.buildTabLinks();
   }
 
-  buildIndexMap() {
+  buildIndexMap(): TabMap {
     return Object.keys(this.props.tabMap).reduce((result: { [i: number]: string }, name: string) => {
       result[this.tabIndexOf(name)] = name;
       return result;
     }, {});
   }
 
-  buildTabLinks() {
-    const tabLinks: { [key: number]: string } = {};
+  buildTabLinks(): TabMap {
+    const tabLinks: TabMap = {};
+
     React.Children.forEach(this.props.children, child => {
       const childComp = child as React.ReactElement<TabProps>;
 
@@ -59,31 +62,32 @@ export class ParameterizedTabs extends React.Component<TabsProps> {
         tabLinks[childComp.props.eventKey] = childComp.props.href;
       }
     });
+
     return tabLinks;
   }
 
-  tabIndexOf(tabName: string) {
+  tabIndexOf(tabName: string): number {
     return this.props.tabMap[tabName];
   }
 
-  tabNameOf(index: number) {
+  tabNameOf(index: number): string {
     return this.indexMap[index];
   }
 
-  activeIndex = () => {
+  activeIndex = (): number => {
     return this.tabIndexOf(this.props.activeTab);
   };
 
-  isLinkTab = (index: number) => {
+  isLinkTab = (index: number): boolean => {
     return this.tabLinks[index] != null;
   };
 
-  tabSelectHandler = (tabKey: string) => {
-    const urlParams = new URLSearchParams(history.location.search);
+  tabSelectHandler = (tabKey: string): void => {
+    const urlParams = new URLSearchParams(location.getSearch());
 
     if (!!this.props.tabName) {
       urlParams.set(this.props.tabName, tabKey);
-      history.push(history.location.pathname + '?' + urlParams.toString());
+      router.navigate(`${location.getPathname()}?${urlParams.toString()}`);
     }
 
     if (this.props.postHandler) {
@@ -95,13 +99,13 @@ export class ParameterizedTabs extends React.Component<TabsProps> {
     });
   };
 
-  tabTransitionHandler = (tabKey: number) => {
+  tabTransitionHandler = (tabKey: number): void => {
     const tabName = this.tabNameOf(tabKey);
     this.tabSelectHandler(tabName);
     this.props.onSelect(tabName);
   };
 
-  render() {
+  render(): React.ReactNode {
     return (
       <Tabs
         id={this.props.id}

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { BrowserRouter as Router } from 'react-router-dom-v5-compat';
+import { MemoryRouter } from 'react-router-dom-v5-compat';
 import { Provider } from 'react-redux';
 import { shallowToJson } from 'enzyme-to-json';
 import { mount, shallow, ReactWrapper } from 'enzyme';
@@ -57,9 +57,9 @@ let mounted: ReactWrapper<any, any> | null;
 const mountPage = (): void => {
   mounted = mount(
     <Provider store={store}>
-      <Router>
+      <MemoryRouter>
         <OverviewPage />
-      </Router>
+      </MemoryRouter>
     </Provider>
   );
 };

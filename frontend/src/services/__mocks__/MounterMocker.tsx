@@ -2,7 +2,7 @@ import * as React from 'react';
 import * as API from '../Api';
 import { mount, ReactWrapper } from 'enzyme';
 import { Provider } from 'react-redux';
-import { MemoryRouter, Route } from 'react-router';
+import { MemoryRouter } from 'react-router-dom-v5-compat';
 import { store } from '../../store/ConfigStore';
 
 export class MounterMocker {
@@ -53,9 +53,7 @@ export class MounterMocker {
   mountWithStore = (elem: JSX.Element): MounterMocker => {
     this.toMount = (
       <Provider store={store}>
-        <MemoryRouter>
-          <Route render={props => React.cloneElement(elem, props)} />
-        </MemoryRouter>
+        <MemoryRouter>{elem}</MemoryRouter>
       </Provider>
     );
 

@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { history } from '../../app/History';
 import { serverConfig } from '../../config';
 import { NEW_ISTIO_RESOURCE } from '../../pages/IstioConfigNew/IstioConfigNewPage';
 import { K8SGATEWAY } from '../../pages/IstioConfigNew/K8sGatewayForm';
@@ -15,14 +14,18 @@ import {
 } from '@patternfly/react-core';
 import { useKialiSelector } from 'hooks/redux';
 import { isParentKiosk, kioskContextMenuAction } from 'components/Kiosk/KioskActions';
+import { useKialiTranslation } from 'utils/I18nUtils';
+import { useNavigate } from 'react-router-dom-v5-compat';
 
 type ActionItem = {
-  action: JSX.Element;
+  action: React.ReactElement;
   name: string;
 };
 
 export const IstioActionsNamespaceDropdown: React.FC = () => {
   const kiosk = useKialiSelector(state => state.globalState.kiosk);
+  const { t } = useKialiTranslation();
+  const navigate = useNavigate();
 
   const [dropdownOpen, setDropdownOpen] = React.useState<boolean>(false);
 
@@ -40,7 +43,7 @@ export const IstioActionsNamespaceDropdown: React.FC = () => {
     if (isParentKiosk(kiosk)) {
       kioskContextMenuAction(newUrl);
     } else {
-      history.push(newUrl);
+      navigate(newUrl);
     }
   };
 
@@ -65,7 +68,7 @@ export const IstioActionsNamespaceDropdown: React.FC = () => {
   const dropdownItems = [
     <DropdownGroup
       key={'group_create'}
-      label={'Create'}
+      label={t('Create')}
       className={groupMenuStyle}
       children={dropdownItemsRaw.map(r => r.action)}
     />
@@ -83,7 +86,7 @@ export const IstioActionsNamespaceDropdown: React.FC = () => {
           data-test="istio-actions-toggle"
           isExpanded={dropdownOpen}
         >
-          Actions
+          {t('Actions')}
         </MenuToggle>
       )}
       isOpen={dropdownOpen}

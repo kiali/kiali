@@ -5,7 +5,7 @@ import { kialiStyle } from 'styles/StyleUtils';
 
 import { KialiAppState } from 'store/Store';
 import { TracingThunkActions } from 'actions/TracingThunkActions';
-import { history, URLParam } from '../../app/History';
+import { router, URLParam } from '../../app/History';
 import * as API from '../../services/Api';
 import * as AlertUtils from '../../utils/AlertUtils';
 import { JaegerTrace } from 'types/TracingInfo';
@@ -214,7 +214,7 @@ class SummaryPanelNodeTracesComponent extends React.Component<Props, State> {
             if (isParentKiosk(this.props.kiosk)) {
               kioskContextMenuAction(tracesDetailsURL);
             } else {
-              history.push(tracesDetailsURL);
+              router.navigate(tracesDetailsURL);
             }
           }}
         >

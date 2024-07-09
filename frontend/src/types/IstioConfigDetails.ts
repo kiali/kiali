@@ -27,11 +27,11 @@ import {
 } from './IstioObjects';
 import { AceOptions } from 'react-ace/types';
 
-export interface IstioConfigId {
+export type IstioConfigId = {
   namespace: string;
   object: string;
   objectType: string;
-}
+};
 
 export interface IstioConfigDetails {
   authorizationPolicy: AuthorizationPolicy;

@@ -8,7 +8,7 @@ import { getName, getRefreshIntervalName } from '../../utils/RateIntervals';
 import { KialiAppState } from '../../store/Store';
 import { durationSelector, refreshIntervalSelector, timeRangeSelector } from '../../store/Selectors';
 import { connect } from 'react-redux';
-import { history, HistoryManager } from '../../app/History';
+import { HistoryManager, location } from '../../app/History';
 import { KialiDispatch } from '../../types/Redux';
 import { bindActionCreators } from 'redux';
 import { UserSettingsActions } from '../../actions/UserSettingsActions';
@@ -41,7 +41,7 @@ class TimeDurationIndicatorComponent extends React.PureComponent<Props> {
 
     // This is needed to initialise the component using the parameters in the URL.
     // If we don't set the state, we lost the value if we click in other tabs and go back
-    const urlParams = new URLSearchParams(history.location.search);
+    const urlParams = new URLSearchParams(location.getSearch());
     const urlDuration = HistoryManager.getDuration(urlParams);
 
     if (urlDuration !== undefined && urlDuration !== props.duration) {

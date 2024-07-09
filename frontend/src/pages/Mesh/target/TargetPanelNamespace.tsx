@@ -28,7 +28,7 @@ import { IstioMetricsOptions } from 'types/MetricsOptions';
 import { computePrometheusRateParams } from 'services/Prometheus';
 import { ApiError } from 'types/Api';
 import { DEGRADED, FAILURE, HEALTHY, Health, NOT_READY } from 'types/Health';
-import { history } from '../../../app/History';
+import { router } from '../../../app/History';
 import * as AlertUtils from '../../../utils/AlertUtils';
 import { MessageType } from 'types/MessageCenter';
 import { OverviewStatus } from 'pages/Overview/OverviewStatus';
@@ -156,9 +156,11 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
                   <PFBadge badge={PFBadges.Namespace} />
                   {ns}
                 </span>
+
                 {this.renderNamespaceBadges(nsInfo, true)}
               </span>
             </Title>
+
             <div style={{ textAlign: 'left', paddingBottom: 3 }}>
               <PFBadge badge={PFBadges.Cluster} position={TooltipPosition.right} />
               {nsInfo.cluster}
@@ -702,7 +704,7 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
     this.setState({ loading: true });
   };
 
-  private fetchCanariesStatus(): Promise<void> {
+  private fetchCanariesStatus = async (): Promise<void> => {
     if (!this.isControlPlane()) {
       return Promise.resolve();
     }
@@ -721,9 +723,9 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
       .catch(error => {
         AlertUtils.addError('Error fetching namespace canary upgrade status.', error, 'default', MessageType.ERROR);
       });
-  }
+  };
 
-  private fetchHealthStatus(): Promise<void> {
+  private fetchHealthStatus = async (): Promise<void> => {
     const cluster = this.state.targetCluster!;
     const namespace = this.state.targetNamespace!;
     return API.getClustersAppHealth(namespace, this.props.duration, cluster!)
@@ -756,9 +758,9 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
         this.setState({ status: nsStatus });
       })
       .catch(err => this.handleApiError('Could not fetch namespace health', err));
-  }
+  };
 
-  private fetchMetrics(): Promise<void> {
+  private fetchMetrics = async (): Promise<void> => {
     const rateParams = computePrometheusRateParams(this.props.duration, 10);
     const options: IstioMetricsOptions = {
       direction: direction,
@@ -769,6 +771,7 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
       reporter: direction === 'inbound' ? 'destination' : 'source',
       step: rateParams.step
     };
+
     const cluster = this.state.targetCluster!;
     const namespace = this.state.targetNamespace!;
 
@@ -783,16 +786,16 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
         });
       })
       .catch(err => this.handleApiError('Could not fetch namespace metrics', err));
-  }
+  };
 
   private isControlPlane = (): boolean => {
     const namespace = this.state.targetNamespace!;
     return namespace === serverConfig.istioNamespace;
   };
 
-  private handleApiError(message: string, error: ApiError): void {
+  private handleApiError = (message: string, error: ApiError): void => {
     FilterHelper.handleError(`${message}: ${API.getErrorString(error)}`);
-  }
+  };
 
   private renderCharts(): React.ReactNode {
     if (this.state.status) {
@@ -812,7 +815,7 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
     return <div style={{ padding: '1.5rem 0', textAlign: 'center' }}>Namespace metrics are not available</div>;
   }
 
-  private renderStatus(): React.ReactNode {
+  private renderStatus = (): React.ReactNode => {
     const targetPage = switchType(healthType, Paths.APPLICATIONS, Paths.SERVICES, Paths.WORKLOADS);
     const namespace = this.state.targetNamespace!;
     const status = this.state.status;
@@ -905,7 +908,7 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
         </span>
       </div>
     );
-  }
+  };
 
   private show = (showType: Show, namespace: string, graphType: string): void => {
     let destination = '';
@@ -929,6 +932,7 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
       default:
       // Nothing to do on default case
     }
-    history.push(destination);
+
+    router.navigate(destination);
   };
 }

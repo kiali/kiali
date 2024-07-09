@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useParams } from 'react-router';
+import { useParams } from 'react-router-dom-v5-compat';
 import { IstioConfigNewPage } from 'pages/IstioConfigNew/IstioConfigNewPage';
 
 /**
@@ -7,8 +7,8 @@ import { IstioConfigNewPage } from 'pages/IstioConfigNew/IstioConfigNewPage';
  * Some platforms where Kiali is deployed reuse IstioConfigNewPage but
  * do not work with react-router params (like Openshift Console)
  */
-export const IstioConfigNewRoute = () => {
+export const IstioConfigNewRoute: React.FC = () => {
   const { objectType } = useParams<{ objectType: string }>();
 
-  return <IstioConfigNewPage objectType={objectType}></IstioConfigNewPage>;
+  return <IstioConfigNewPage objectType={objectType!}></IstioConfigNewPage>;
 };

@@ -49,4 +49,9 @@ setRouter([
   }
 ]);
 
+// redirect to the router basename /console from the root pathname /
+if (window.location.pathname === '/') {
+  router.navigate('/');
+}
+
 ReactDOM.render(<RouterProvider router={router} />, document.getElementById('root') as HTMLElement);

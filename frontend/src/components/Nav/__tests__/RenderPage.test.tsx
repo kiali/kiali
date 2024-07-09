@@ -1,86 +1,62 @@
 import * as React from 'react';
 import { mount } from 'enzyme';
 import { NavigationComponent } from '../Navigation';
-import { createMemoryHistory } from 'history';
 import { ExternalServiceInfo } from '../../../types/StatusState';
-import { RouterProvider, createMemoryRouter } from 'react-router-dom-v5-compat';
+import { Navigate, RouterProvider, createMemoryRouter } from 'react-router-dom-v5-compat';
+import { defaultRoute, pathRoutes } from 'routes';
+import { Provider } from 'react-redux';
+import { store } from 'store/ConfigStore';
+import { LoginActions } from 'actions/LoginActions';
 
-const history = createMemoryHistory();
+const session = {
+  expiresOn: '2018-05-29 21:51:40.186179601 +0200 CEST m=+36039.431579761',
+  username: 'admin'
+};
+
+const externalServicesInfo: ExternalServiceInfo[] = [];
+
+const router = createMemoryRouter([
+  {
+    element: (
+      <NavigationComponent
+        navCollapsed={false}
+        setNavCollapsed={() => {}}
+        tracingUrl={''}
+        externalServices={externalServicesInfo}
+      />
+    ),
+    children: [...pathRoutes, { index: true, element: <Navigate to={defaultRoute} replace /> }]
+  }
+]);
 
 describe('RenderPage isGraph prop', () => {
   it('be sure that RenderPage isGraph is true', () => {
-    const graph = {
-      pathname: '/graph',
-      search: '',
-      state: undefined,
-      hash: ''
-    };
-    history.push(graph);
-    const externalServicesInfo: ExternalServiceInfo[] = [];
-    // const wrapper = shallow(
-    //   <NavigationComponent
-    //     history={history}
-    //     location={graph}
-    //     match={{ url: '', params: {}, path: '/graph', isExact: true }}
-    //     navCollapsed={false}
-    //     setNavCollapsed={() => {}}
-    //     tracingUrl={''}
-    //     externalServices={externalServicesInfo}
-    //   />
-    // ).dive();
-    const router = createMemoryRouter([
-      {
-        element: (
-          <NavigationComponent
-            navCollapsed={false}
-            setNavCollapsed={() => {}}
-            tracingUrl={''}
-            externalServices={externalServicesInfo}
-          />
-        )
-      }
-    ]);
-    router.navigate('/graph');
-    const wrapper = mount(<RouterProvider router={router} />);
-    console.log(wrapper.debug());
+    // we need a user session to render the navigation component
+    store.dispatch(LoginActions.loginSuccess(session));
+
+    router.navigate('/graph/namespaces');
+
+    const wrapper = mount(
+      <Provider store={store}>
+        <RouterProvider router={router} />
+      </Provider>
+    );
+
     expect(wrapper.find('RenderPage').prop('isGraph')).toEqual(true);
   });
 
   it('be sure that RenderPage isGraph is false in other pages', () => {
-    const overview = {
-      pathname: '/overview',
-      search: '',
-      state: undefined,
-      hash: ''
-    };
-    history.push(overview);
-    const externalServicesInfo: ExternalServiceInfo[] = [];
-    // const wrapper = shallow(
-    //   <NavigationComponent
-    //     history={history}
-    //     location={overview}
-    //     match={{ url: '', params: {}, path: '/overview', isExact: true }}
-    //     navCollapsed={false}
-    //     setNavCollapsed={() => {}}
-    //     tracingUrl={''}
-    //     externalServices={externalServicesInfo}
-    //   />
-    // ).dive();
-    const router = createMemoryRouter([
-      {
-        element: (
-          <NavigationComponent
-            navCollapsed={false}
-            setNavCollapsed={() => {}}
-            tracingUrl={''}
-            externalServices={externalServicesInfo}
-          />
-        )
-      }
-    ]);
+    // we need a user session to render the navigation component
+    store.dispatch(LoginActions.loginSuccess(session));
+
     router.navigate('/overview');
-    const wrapper = mount(<RouterProvider router={router} />);
-    console.log(wrapper.debug());
+
+    const wrapper = mount(
+      <Provider store={store}>
+        <RouterProvider router={router} />
+      </Provider>
+    );
+
     expect(wrapper.find('RenderPage').prop('isGraph')).toEqual(false);
   });
 });

@@ -1,17 +1,18 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import * as Cy from 'cytoscape';
-import { Router } from 'react-router';
+import { Navigate, RouterProvider } from 'react-router-dom-v5-compat';
 import tippy, { Instance } from 'tippy.js';
 import { DecoratedGraphEdgeData, DecoratedGraphNodeData } from '../../types/Graph';
 import { PeerAuthentication } from '../../types/IstioObjects';
 import { ServiceDetailsInfo } from '../../types/ServiceInfo';
 import { Provider } from 'react-redux';
 import { store } from '../../store/ConfigStore';
-import { history } from '../../app/History';
+import { createRouter } from '../../app/History';
 import { getOptions } from './ContextMenu/NodeContextMenu';
 import { WizardAction, WizardMode } from '../IstioWizards/WizardActions';
 import { Theme } from 'types/Common';
+import { defaultRoute, pathRoutes } from 'routes';
 
 export type EdgeContextMenuProps = DecoratedGraphEdgeData & ContextMenuProps;
 export type EdgeContextMenuComponentType = React.ComponentType<EdgeContextMenuProps>;
@@ -84,7 +85,7 @@ export class CytoscapeContextMenuWrapper extends React.PureComponent<Props> {
   }
 
   // Add cy listener for context menu events on nodes and edges
-  connectCy(cy: Cy.Core): void {
+  connectCy = (cy: Cy.Core): void => {
     cy.on('cxttapstart', 'node,edge', (event: Cy.EventObject) => {
       event.preventDefault();
       if (event.target) {
@@ -92,18 +93,18 @@ export class CytoscapeContextMenuWrapper extends React.PureComponent<Props> {
       }
       return false;
     });
-  }
+  };
 
   // Connects cy to this component
-  handleContextMenu(elem: Cy.NodeSingular | Cy.EdgeSingular, isHover: boolean): void {
+  handleContextMenu = (elem: Cy.NodeSingular | Cy.EdgeSingular, isHover: boolean): void => {
     const contextMenuType = elem.isNode() ? this.props.contextMenuNodeComponent : this.props.contextMenuEdgeComponent;
 
     if (contextMenuType) {
       this.makeContextMenu(contextMenuType, elem, isHover, elem.isNode());
     }
-  }
+  };
 
-  hideContextMenu(isHover: boolean | undefined): void {
+  hideContextMenu = (isHover: boolean | undefined): void => {
     const currentContextMenu = this.getCurrentContextMenu();
     if (currentContextMenu) {
       if (!isHover || this.isHover) {
@@ -112,7 +113,7 @@ export class CytoscapeContextMenuWrapper extends React.PureComponent<Props> {
         ReactDOM.unmountComponentAtNode(this.contextMenuRef.current as HTMLDivElement);
       }
     }
-  }
+  };
 
   private handleDocumentMouseUp = (event: MouseEvent): void => {
     if (event.button === 2) {
@@ -130,12 +131,12 @@ export class CytoscapeContextMenuWrapper extends React.PureComponent<Props> {
     }
   };
 
-  private makeContextMenu(
+  private makeContextMenu = (
     ContextMenuComponentType: ContextMenuComponentType,
     target: Cy.NodeSingular | Cy.EdgeSingular,
     isHover: boolean,
     isNode: boolean
-  ): void {
+  ): void => {
     // Don't let a hover trump a non-hover context menu
     if (isHover && this.isHover === false) {
       return;
@@ -151,6 +152,7 @@ export class CytoscapeContextMenuWrapper extends React.PureComponent<Props> {
     // Prevent the tippy content from picking up the right-click when we are moving it over to the edge/node
     this.addContextMenuEventListener();
     const content = this.contextMenuRef.current;
+
     const tippyInstance = tippy(
       (target as any).popperRef(), // Using an extension, popperRef is not in base definition
       {
@@ -171,6 +173,7 @@ export class CytoscapeContextMenuWrapper extends React.PureComponent<Props> {
     let menuComponent = (
       <ContextMenuComponentType element={target} contextMenu={tippyInstance} isHover={isHover} {...target.data()} />
     );
+
     if (isNode) {
       menuComponent = (
         <ContextMenuComponentType
@@ -184,9 +187,19 @@ export class CytoscapeContextMenuWrapper extends React.PureComponent<Props> {
       );
     }
 
+    const contextMenuRouter = createRouter(
+      [
+        {
+          element: menuComponent,
+          children: [...pathRoutes, { index: true, element: <Navigate to={defaultRoute} replace /> }]
+        }
+      ],
+      '/console'
+    );
+
     const result = (
       <Provider store={store}>
-        <Router history={history}>{menuComponent}</Router>
+        <RouterProvider router={contextMenuRouter} />
       </Provider>
     );
 
@@ -202,23 +215,23 @@ export class CytoscapeContextMenuWrapper extends React.PureComponent<Props> {
         this.removeContextMenuEventListener();
       }, 0);
     });
-  }
+  };
 
-  private getCurrentContextMenu(): Instance | undefined {
+  private getCurrentContextMenu = (): Instance | undefined => {
     return this.contextMenuRef?.current?._contextMenu;
-  }
+  };
 
-  private setCurrentContextMenu(current: TippyInstance): void {
+  private setCurrentContextMenu = (current: TippyInstance): void => {
     this.contextMenuRef!.current!._contextMenu = current;
-  }
+  };
 
-  private addContextMenuEventListener(): void {
+  private addContextMenuEventListener = (): void => {
     document.addEventListener('contextmenu', this.handleContextMenuEvent);
-  }
+  };
 
-  private removeContextMenuEventListener(): void {
+  private removeContextMenuEventListener = (): void => {
     document.removeEventListener('contextmenu', this.handleContextMenuEvent);
-  }
+  };
 
   private handleContextMenuEvent = (event: MouseEvent): boolean => {
     // Disable the context menu in popper
@@ -231,7 +244,7 @@ export class CytoscapeContextMenuWrapper extends React.PureComponent<Props> {
     return true;
   };
 
-  private tippyDistance(_target: Cy.NodeSingular | Cy.EdgeSingular): number {
+  private tippyDistance = (_target: Cy.NodeSingular | Cy.EdgeSingular): number => {
     return 10;
-  }
+  };
 }

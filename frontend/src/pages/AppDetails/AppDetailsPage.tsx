@@ -22,7 +22,7 @@ import { RenderHeader } from '../../components/Nav/Page/RenderHeader';
 import { ErrorMsg } from '../../types/ErrorMsg';
 import { ErrorSection } from '../../components/ErrorSection/ErrorSection';
 import { connectRefresh } from '../../components/Refresh/connectRefresh';
-import { history, HistoryManager } from 'app/History';
+import { HistoryManager } from 'app/History';
 import { basicTabStyle } from 'styles/TabStyles';
 import { serverConfig } from 'config';
 
@@ -50,6 +50,7 @@ type AppDetailsProps = ReduxProps & {
 const tabName = 'tab';
 const defaultTab = 'info';
 const tracesTabName = 'traces';
+const nextTabIndex = 5;
 const paramToTab: { [key: string]: number } = {
   info: 0,
   traffic: 1,
@@ -57,7 +58,6 @@ const paramToTab: { [key: string]: number } = {
   out_metrics: 3,
   traces: 4
 };
-const nextTabIndex = 5;
 
 class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
   constructor(props: AppDetailsProps) {
@@ -118,10 +118,11 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
       });
   };
 
-  private runtimeTabs(): JSX.Element[] {
+  private runtimeTabs(): React.ReactNode[] {
     let tabOffset = 0;
 
-    const tabs: JSX.Element[] = [];
+    const tabs: React.ReactNode[] = [];
+
     if (this.state.app) {
       this.state.app.runtimes.forEach(runtime => {
         runtime.dashboardRefs.forEach(dashboard => {
@@ -139,6 +140,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
                 />
               </Tab>
             );
+
             tabs.push(tab);
             tabOffset++;
           }
@@ -149,7 +151,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
     return tabs;
   }
 
-  private staticTabs(): JSX.Element[] {
+  private staticTabs(): React.ReactNode[] {
     const overTab = (
       <Tab title="Overview" eventKey={0} key={'Overview'}>
         <AppInfo app={this.state.app} duration={this.props.duration} health={this.state.health} />
@@ -199,7 +201,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
     );
 
     // Default tabs
-    const tabsArray: JSX.Element[] = [overTab, trafficTab, inTab, outTab];
+    const tabsArray: React.ReactNode[] = [overTab, trafficTab, inTab, outTab];
 
     // Conditional Traces tab
     if (this.props.tracingInfo && this.props.tracingInfo.enabled) {
@@ -237,12 +239,12 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
     return tabsArray;
   }
 
-  private renderTabs(): JSX.Element[] {
+  private renderTabs(): React.ReactNode[] {
     // PF Tabs doesn't support static tabs followed of an array of tabs created dynamically.
     return this.staticTabs().concat(this.runtimeTabs());
   }
 
-  render(): React.ReactElement {
+  render(): React.ReactNode {
     // set default to true: all dynamic tabs (unlisted below) are for runtimes dashboards, which uses custom time
     let useCustomTime = true;
     switch (this.state.currentTab) {
@@ -258,7 +260,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
     }
     return (
       <>
-        <RenderHeader location={history.location} rightToolbar={<TimeControl customDuration={useCustomTime} />} />
+        <RenderHeader rightToolbar={<TimeControl customDuration={useCustomTime} />} />
 
         {this.state.error && <ErrorSection error={this.state.error} />}
 

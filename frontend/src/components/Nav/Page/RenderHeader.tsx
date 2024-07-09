@@ -39,10 +39,6 @@ type ReduxProps = {
 type RenderHeaderProps = ReduxProps & {
   actionsToolbar?: React.ReactNode;
   children?: React.ReactNode;
-  location?: {
-    pathname: string;
-    search: string;
-  };
   rightToolbar?: React.ReactNode;
 };
 
@@ -52,15 +48,13 @@ const RenderHeaderComponent: React.FC<RenderHeaderProps> = (props: RenderHeaderP
   return isKiosk(props.kiosk) ? null : (
     <>
       <div className={containerStyle}>
-        {props.location && (
-          <div className={breadcrumbMargin}>
-            <div className={breadcrumbStyle}>
-              <BreadcrumbView location={props.location} />
+        <div className={breadcrumbMargin}>
+          <div className={breadcrumbStyle}>
+            <BreadcrumbView />
 
-              {props.rightToolbar && <div className={rightToolbarStyle}>{props.rightToolbar}</div>}
-            </div>
+            {props.rightToolbar && <div className={rightToolbarStyle}>{props.rightToolbar}</div>}
           </div>
-        )}
+        </div>
 
         {props.children}
       </div>
@@ -70,7 +64,7 @@ const RenderHeaderComponent: React.FC<RenderHeaderProps> = (props: RenderHeaderP
   );
 };
 
-const mapStateToProps = (state: KialiAppState) => ({
+const mapStateToProps = (state: KialiAppState): ReduxProps => ({
   kiosk: state.globalState.kiosk
 });
 

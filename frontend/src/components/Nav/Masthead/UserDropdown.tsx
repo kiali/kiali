@@ -24,7 +24,7 @@ import {
   MenuToggleElement
 } from '@patternfly/react-core';
 
-type ReduxProps = {
+type ReduxStateProps = {
   clusters?: string[];
   session?: LoginSession;
 };
@@ -34,7 +34,7 @@ type ReduxDispatchProps = {
   logout: () => void;
 };
 
-type UserProps = ReduxProps & ReduxDispatchProps;
+type UserProps = ReduxStateProps & ReduxDispatchProps;
 
 type UserState = {
   checkSessionTimerId?: Timer;
@@ -130,13 +130,13 @@ class UserDropdownComponent extends React.Component<UserProps, UserState> {
     });
   };
 
-  onDropdownSelect = (_event: any): void => {
+  onDropdownSelect = (): void => {
     this.setState({
       isDropdownOpen: !this.state.isDropdownOpen
     });
   };
 
-  render(): JSX.Element {
+  render(): React.ReactNode {
     const { isDropdownOpen } = this.state;
 
     const clusterIsInSessionInfo = (cluster: string): boolean =>
@@ -242,7 +242,7 @@ class UserDropdownComponent extends React.Component<UserProps, UserState> {
   };
 }
 
-const mapStateToProps = (state: KialiAppState): ReduxProps => ({
+const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
   clusters: Array.from(namespacesPerClusterSelector(state).keys()),
   session: state.authentication.session
 });

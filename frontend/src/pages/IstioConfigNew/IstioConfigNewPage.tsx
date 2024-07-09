@@ -41,7 +41,7 @@ import { PromisesRegistry } from '../../utils/CancelablePromises';
 import * as API from '../../services/Api';
 import { IstioPermissions } from '../../types/IstioConfigDetails';
 import * as AlertUtils from '../../utils/AlertUtils';
-import { history } from '../../app/History';
+import { router } from '../../app/History';
 import {
   buildAuthorizationPolicy,
   buildGateway,
@@ -486,7 +486,7 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
       if (isParentKiosk(this.props.kiosk)) {
         kioskContextMenuAction(backUrl);
       } else {
-        history.push(backUrl);
+        router.navigate(backUrl);
       }
     });
   };
@@ -606,6 +606,7 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
         <div>
           <DefaultSecondaryMasthead showClusterSelector={false} hideNamespaceSelector={true} />
         </div>
+
         <RenderContent>
           <Form className={formPadding} isHorizontal={true}>
             <FormGroup label="Namespaces" isRequired={true} fieldId="namespaces">
@@ -618,6 +619,7 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
                 </FormHelperText>
               )}
             </FormGroup>
+
             {isMultiCluster && (
               <FormGroup label="Clusters" isRequired={true} fieldId="clusters">
                 <ClusterDropdown />
@@ -630,6 +632,7 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
                 )}
               </FormGroup>
             )}
+
             <FormGroup label="Name" isRequired={true} fieldId="name">
               <TextInput
                 value={this.state.name}
@@ -649,42 +652,51 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
                 </FormHelperText>
               )}
             </FormGroup>
+
             {this.props.objectType === AUTHORIZACION_POLICY && (
               <AuthorizationPolicyForm
                 authorizationPolicy={this.state.authorizationPolicy}
                 onChange={this.onChangeAuthorizationPolicy}
               />
             )}
+
             {this.props.objectType === GATEWAY && (
               <GatewayForm gateway={this.state.gateway} onChange={this.onChangeGateway} />
             )}
+
             {this.props.objectType === K8SGATEWAY && (
               <K8sGatewayForm k8sGateway={this.state.k8sGateway} onChange={this.onChangeK8sGateway} />
             )}
+
             {this.props.objectType === K8S_REFERENCE_GRANT && (
               <K8sReferenceGrantForm
                 k8sReferenceGrant={this.state.k8sReferenceGrant}
                 onChange={this.onChangeK8sReferenceGrant}
               />
             )}
+
             {this.props.objectType === PEER_AUTHENTICATION && (
               <PeerAuthenticationForm
                 peerAuthentication={this.state.peerAuthentication}
                 onChange={this.onChangePeerAuthentication}
               />
             )}
+
             {this.props.objectType === REQUEST_AUTHENTICATION && (
               <RequestAuthenticationForm
                 requestAuthentication={this.state.requestAuthentication}
                 onChange={this.onChangeRequestAuthentication}
               />
             )}
+
             {this.props.objectType === SERVICE_ENTRY && (
               <ServiceEntryForm serviceEntry={this.state.serviceEntry} onChange={this.onChangeServiceEntry} />
             )}
+
             {this.props.objectType === SIDECAR && (
               <SidecarForm sidecar={this.state.sidecar} onChange={this.onChangeSidecar} />
             )}
+
             <FormGroup fieldId="labels" label="Labels">
               <div className={editStyle}>
                 <Labels labels={this.state.labels} expanded={true} />
@@ -709,6 +721,7 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
                 canEdit={true}
               />
             </FormGroup>
+
             <FormGroup fieldId="annotations" label="Annotations">
               <div className={editStyle}>
                 <Labels labels={this.state.annotations} type={'annotations'} expanded={true} />
@@ -733,6 +746,7 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
                 canEdit={true}
               />
             </FormGroup>
+
             <ActionGroup>
               <Button
                 variant={ButtonVariant.primary}
@@ -747,6 +761,7 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
               </Button>
             </ActionGroup>
           </Form>
+
           <IstioConfigPreview
             isOpen={this.state.showPreview}
             items={this.state.itemsPreview}

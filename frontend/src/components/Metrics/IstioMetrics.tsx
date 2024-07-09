@@ -2,7 +2,6 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { KialiDispatch } from 'types/Redux';
-import { RouteComponentProps, withRouter } from 'react-router';
 import { Card, CardBody, Checkbox, Toolbar, ToolbarGroup, ToolbarItem } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
 import * as API from 'services/Api';
@@ -17,7 +16,7 @@ import { MetricsSettings, LabelsSettings } from '../MetricsOptions/MetricsSettin
 import { MetricsSettingsDropdown } from '../MetricsOptions/MetricsSettingsDropdown';
 import { MetricsReporter } from '../MetricsOptions/MetricsReporter';
 import { TimeDurationModal } from '../Time/TimeDurationModal';
-import { history, URLParam } from 'app/History';
+import { location, router, URLParam } from 'app/History';
 import { MetricsObjectTypes } from 'types/Metrics';
 import { GrafanaInfo } from 'types/GrafanaInfo';
 import { MessageType } from 'types/MessageCenter';
@@ -52,14 +51,13 @@ type ObjectId = {
   object: string;
 };
 
-type IstioMetricsProps = ObjectId &
-  RouteComponentProps<{}> & {
-    direction: Direction;
-    includeAmbient: boolean;
-    objectType: MetricsObjectTypes;
-  } & {
-    lastRefreshAt: TimeInMilliseconds;
-  };
+type IstioMetricsProps = ObjectId & {
+  direction: Direction;
+  includeAmbient: boolean;
+  objectType: MetricsObjectTypes;
+} & {
+  lastRefreshAt: TimeInMilliseconds;
+};
 
 type ReduxStateProps = {
   kiosk: string;
@@ -213,6 +211,7 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
         if (response.status === 204) {
           return undefined;
         }
+
         return response.data;
       });
     }
@@ -273,7 +272,7 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
       if (isParentKiosk(this.props.kiosk)) {
         kioskContextMenuAction(traceUrl);
       } else {
-        history.push(traceUrl);
+        router.navigate(traceUrl);
       }
     }
   };
@@ -290,7 +289,7 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
   }
 
   render(): React.ReactNode {
-    const urlParams = new URLSearchParams(history.location.search);
+    const urlParams = new URLSearchParams(location.getSearch());
     const expandedChart = urlParams.get('expand') ?? undefined;
 
     // 20px (card margin) + 24px (card padding) + 51px (toolbar) + 15px (toolbar padding) + 24px (card padding) + 20px (card margin)
@@ -336,16 +335,16 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
   }
 
   private onSpans = (checked: boolean): void => {
-    const urlParams = new URLSearchParams(history.location.search);
+    const urlParams = new URLSearchParams(location.getSearch());
     urlParams.set(URLParam.SHOW_SPANS, String(checked));
-    history.replace(`${history.location.pathname}?${urlParams.toString()}`);
+    router.navigate(`${location.getPathname()}?${urlParams.toString()}`, { replace: true });
     this.setState({ showSpans: !this.state.showSpans });
   };
 
   private onTrendlines = (checked: boolean): void => {
-    const urlParams = new URLSearchParams(history.location.search);
+    const urlParams = new URLSearchParams(location.getSearch());
     urlParams.set(URLParam.SHOW_TRENDLINES, String(checked));
-    history.replace(`${history.location.pathname}?${urlParams.toString()}`);
+    router.navigate(`${location.getPathname()}?${urlParams.toString()}`, { replace: true });
     this.setState({ showTrendlines: !this.state.showTrendlines });
   };
 
@@ -429,14 +428,14 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
   }
 
   private expandHandler = (expandedChart?: string): void => {
-    const urlParams = new URLSearchParams(history.location.search);
+    const urlParams = new URLSearchParams(location.getSearch());
     urlParams.delete('expand');
 
     if (expandedChart) {
       urlParams.set('expand', expandedChart);
     }
 
-    history.push(`${history.location.pathname}?${urlParams.toString()}`);
+    router.navigate(`${location.getPathname()}?${urlParams.toString()}`);
   };
 }
 
@@ -455,6 +454,4 @@ const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => {
   };
 };
 
-export const IstioMetrics = withRouter<RouteComponentProps<{}> & IstioMetricsProps, any>(
-  connect(mapStateToProps, mapDispatchToProps)(IstioMetricsComponent)
-);
+export const IstioMetrics = connect(mapStateToProps, mapDispatchToProps)(IstioMetricsComponent);

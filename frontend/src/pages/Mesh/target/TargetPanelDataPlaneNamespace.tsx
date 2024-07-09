@@ -22,7 +22,7 @@ import { IstioMetricsOptions } from 'types/MetricsOptions';
 import { computePrometheusRateParams } from 'services/Prometheus';
 import { ApiError } from 'types/Api';
 import { DEGRADED, FAILURE, HEALTHY, Health, NOT_READY } from 'types/Health';
-import { history } from '../../../app/History';
+import { router } from '../../../app/History';
 import * as AlertUtils from '../../../utils/AlertUtils';
 import { OverviewStatus } from 'pages/Overview/OverviewStatus';
 import { switchType } from 'pages/Overview/OverviewHelper';
@@ -429,6 +429,7 @@ export class TargetPanelDataPlaneNamespace extends React.Component<
       reporter: direction === 'inbound' ? 'destination' : 'source',
       step: rateParams.step
     };
+
     const cluster = this.props.targetCluster;
     const namespace = this.props.targetNamespace;
 
@@ -582,6 +583,7 @@ export class TargetPanelDataPlaneNamespace extends React.Component<
       default:
       // Nothing to do on default case
     }
-    history.push(destination);
+
+    router.navigate(destination);
   };
 }

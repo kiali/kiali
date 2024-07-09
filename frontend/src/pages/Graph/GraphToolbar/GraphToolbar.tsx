@@ -31,7 +31,7 @@ import {
   RankMode,
   NodeAttr
 } from '../../../types/Graph';
-import { history, HistoryManager, URLParam } from '../../../app/History';
+import { router, HistoryManager, URLParam, location } from '../../../app/History';
 import { Namespace, namespacesFromString, namespacesToString } from '../../../types/Namespace';
 import { KialiDispatch } from '../../../types/Redux';
 import { NamespaceActions } from '../../../actions/NamespaceAction';
@@ -96,7 +96,7 @@ class GraphToolbarComponent extends React.PureComponent<GraphToolbarProps> {
   constructor(props: GraphToolbarProps) {
     super(props);
     // Let URL override current redux state at construction time. Update URL as needed.
-    const urlParams = new URLSearchParams(history.location.search);
+    const urlParams = new URLSearchParams(location.getSearch());
 
     const urlEdgeLabels = HistoryManager.getParam(URLParam.GRAPH_EDGE_LABEL, urlParams);
     if (!!urlEdgeLabels) {
@@ -279,7 +279,7 @@ class GraphToolbarComponent extends React.PureComponent<GraphToolbarProps> {
       if (isParentKiosk(this.props.kiosk)) {
         kioskContextMenuAction(returnUrl);
       } else {
-        history.push(returnUrl);
+        router.navigate(returnUrl);
       }
 
       return;
@@ -296,7 +296,7 @@ class GraphToolbarComponent extends React.PureComponent<GraphToolbarProps> {
     if (isParentKiosk(this.props.kiosk)) {
       kioskContextMenuAction(returnUrl);
     } else {
-      history.push(returnUrl);
+      router.navigate(returnUrl);
     }
   };
 }

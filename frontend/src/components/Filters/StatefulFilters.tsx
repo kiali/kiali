@@ -35,7 +35,7 @@ import { kialiStyle } from 'styles/StyleUtils';
 import { LabelFilters } from './LabelFilter';
 import { arrayEquals } from 'utils/Common';
 import { labelFilter } from './CommonFilters';
-import { history, HistoryManager } from 'app/History';
+import { HistoryManager, location } from 'app/History';
 import { serverConfig } from 'config';
 import { PFColors } from '../Pf/PfColors';
 import { t } from 'utils/I18nUtils';
@@ -140,7 +140,7 @@ export class Toggles {
     Toggles.numChecked = 0;
 
     // Prefer URL settings
-    const urlParams = new URLSearchParams(history.location.search);
+    const urlParams = new URLSearchParams(location.getSearch());
 
     toggles.forEach(t => {
       const urlIsChecked = HistoryManager.getBooleanParam(`${t.name}Toggle`, urlParams);
@@ -438,7 +438,7 @@ export class StatefulFiltersComponent extends React.Component<StatefulFiltersPro
     }
 
     if (currentFilterType.filterType === AllFilterTypes.typeAhead) {
-      const typeaheadToggle = (toggleRef: React.Ref<MenuToggleElement>): React.ReactElement => (
+      const typeaheadToggle = (toggleRef: React.Ref<MenuToggleElement>): React.ReactNode => (
         <MenuToggle
           id="filter_select_value-toggle"
           ref={toggleRef}
@@ -496,7 +496,7 @@ export class StatefulFiltersComponent extends React.Component<StatefulFiltersPro
         </Select>
       );
     } else if (currentFilterType.filterType === AllFilterTypes.select) {
-      const selectToggle = (toggleRef: React.Ref<MenuToggleElement>): React.ReactElement => (
+      const selectToggle = (toggleRef: React.Ref<MenuToggleElement>): React.ReactNode => (
         <MenuToggle
           id="filter_select_value-toggle"
           ref={toggleRef}
@@ -591,7 +591,7 @@ export class StatefulFiltersComponent extends React.Component<StatefulFiltersPro
       this.state.activeFilters.filters.some(f => f.category === labelFilter.category) ||
       this.state.currentFilterType.filterType === AllFilterTypes.label;
 
-    const filterTypeToggle = (toggleRef: React.Ref<MenuToggleElement>): React.ReactElement => (
+    const filterTypeToggle = (toggleRef: React.Ref<MenuToggleElement>): React.ReactNode => (
       <MenuToggle
         id="filter_select_type-toggle"
         className={formSelectStyle}
@@ -604,7 +604,7 @@ export class StatefulFiltersComponent extends React.Component<StatefulFiltersPro
       </MenuToggle>
     );
 
-    const filterValueToggle = (toggleRef: React.Ref<MenuToggleElement>): React.ReactElement => (
+    const filterValueToggle = (toggleRef: React.Ref<MenuToggleElement>): React.ReactNode => (
       <MenuToggle
         id="filter_select_value-toggle"
         ref={toggleRef}
