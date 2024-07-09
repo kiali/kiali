@@ -1,9 +1,9 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import { globalStyle } from 'styles/GlobalStyle';
-import { Navigate, RouterProvider } from 'react-router-dom-v5-compat';
+import { RouterProvider } from 'react-router-dom-v5-compat';
 import { router, setRouter } from 'app/History';
-import { defaultRoute, pathRoutes } from 'routes';
+import { pathRoutes } from 'routes';
 import { App } from 'app/App';
 import cssVariables from './styles/variables.module.scss';
 import '@patternfly/patternfly/patternfly.css';
@@ -45,7 +45,7 @@ document.body.classList.add(globalStyle);
 setRouter([
   {
     element: <App />,
-    children: [...pathRoutes, { index: true, element: <Navigate to={defaultRoute} replace /> }]
+    children: pathRoutes
   }
 ]);
 

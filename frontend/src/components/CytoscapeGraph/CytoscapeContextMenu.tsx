@@ -1,7 +1,7 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import * as Cy from 'cytoscape';
-import { Navigate, RouterProvider } from 'react-router-dom-v5-compat';
+import { RouterProvider } from 'react-router-dom-v5-compat';
 import tippy, { Instance } from 'tippy.js';
 import { DecoratedGraphEdgeData, DecoratedGraphNodeData } from '../../types/Graph';
 import { PeerAuthentication } from '../../types/IstioObjects';
@@ -12,7 +12,7 @@ import { createRouter } from '../../app/History';
 import { getOptions } from './ContextMenu/NodeContextMenu';
 import { WizardAction, WizardMode } from '../IstioWizards/WizardActions';
 import { Theme } from 'types/Common';
-import { defaultRoute, pathRoutes } from 'routes';
+import { pathRoutes } from 'routes';
 
 export type EdgeContextMenuProps = DecoratedGraphEdgeData & ContextMenuProps;
 export type EdgeContextMenuComponentType = React.ComponentType<EdgeContextMenuProps>;
@@ -191,7 +191,7 @@ export class CytoscapeContextMenuWrapper extends React.PureComponent<Props> {
       [
         {
           element: menuComponent,
-          children: [...pathRoutes, { index: true, element: <Navigate to={defaultRoute} replace /> }]
+          children: pathRoutes
         }
       ],
       '/console'

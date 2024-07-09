@@ -2,8 +2,8 @@ import * as React from 'react';
 import { mount } from 'enzyme';
 import { NavigationComponent } from '../Navigation';
 import { ExternalServiceInfo } from '../../../types/StatusState';
-import { Navigate, RouterProvider, createMemoryRouter } from 'react-router-dom-v5-compat';
-import { defaultRoute, pathRoutes } from 'routes';
+import { RouterProvider, createMemoryRouter } from 'react-router-dom-v5-compat';
+import { pathRoutes } from 'routes';
 import { Provider } from 'react-redux';
 import { store } from 'store/ConfigStore';
 import { LoginActions } from 'actions/LoginActions';
@@ -25,7 +25,7 @@ const router = createMemoryRouter([
         externalServices={externalServicesInfo}
       />
     ),
-    children: [...pathRoutes, { index: true, element: <Navigate to={defaultRoute} replace /> }]
+    children: pathRoutes
   }
 ]);
 

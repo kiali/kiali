@@ -16,7 +16,7 @@ import { IstioConfigNewRoute } from 'routes/IstioConfigNewRoute';
 import { GraphRoutePF } from 'routes/GraphRoutePF';
 import { GraphPagePF } from 'pages/GraphPF/GraphPagePF';
 import { t } from 'utils/I18nUtils';
-import { RouteObject } from 'react-router-dom-v5-compat';
+import { Navigate, RouteObject } from 'react-router-dom-v5-compat';
 
 /**
  * Return array of objects that describe vertical menu
@@ -77,9 +77,8 @@ const navMenuItems: MenuItem[] = [
   }
 ];
 
-const defaultRoute = '/overview';
-
 const pathRoutes: RouteObject[] = [
+  { index: true, element: <Navigate to={'/overview'} replace /> },
   {
     path: '/overview',
     element: <OverviewPage />
@@ -178,4 +177,4 @@ const pathRoutes: RouteObject[] = [
   }
 ];
 
-export { defaultRoute, navMenuItems, pathRoutes };
+export { navMenuItems, pathRoutes };

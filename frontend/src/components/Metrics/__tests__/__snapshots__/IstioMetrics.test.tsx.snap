@@ -34,7 +34,7 @@ exports[`Inbound Metrics for a workload renders initial layout 1`] = `
     <Connect(IstioMetricsComponent)
       direction="inbound"
       includeAmbient={false}
-      lastRefreshAt={1720526433992}
+      lastRefreshAt={1720526431902}
       namespace="ns"
       object="svc"
       objectType={1}

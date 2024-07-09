@@ -2,16 +2,16 @@ import { toValidDuration } from '../config/ServerConfig';
 import { BoundsInMilliseconds } from 'types/Common';
 import { RouteObject, createBrowserRouter, createHashRouter, createMemoryRouter } from 'react-router-dom-v5-compat';
 
-export const createRouter = (routes: RouteObject[], baseName: string): any => {
+export const createRouter = (routes: RouteObject[], basename: string): any => {
   return process.env.TEST_RUNNER
-    ? createMemoryRouter(routes, { basename: baseName })
+    ? createMemoryRouter(routes, { basename })
     : historyMode === 'hash'
-    ? createHashRouter(routes, { basename: baseName })
-    : createBrowserRouter(routes, { basename: baseName });
+    ? createHashRouter(routes, { basename })
+    : createBrowserRouter(routes, { basename });
 };
 
 const webRoot = (window as any).WEB_ROOT ? (window as any).WEB_ROOT : undefined;
-const rootBaseName = webRoot && webRoot !== '/' ? `${webRoot}/console` : '/console';
+const rootBasename = webRoot && webRoot !== '/' ? `${webRoot}/console` : '/console';
 const historyMode = (window as any).HISTORY_MODE ? (window as any).HISTORY_MODE : 'browser';
 
 /**
@@ -20,11 +20,11 @@ const historyMode = (window as any).HISTORY_MODE ? (window as any).HISTORY_MODE 
  * routes to a different page within Kiali in these platforms.
  * This method is not used in standalone Kiali application
  */
-export const setRouter = (routes: RouteObject[], baseName?: string): void => {
-  router = createRouter(routes, baseName ?? rootBaseName);
+export const setRouter = (routes: RouteObject[], basename?: string): void => {
+  router = createRouter(routes, basename ?? rootBasename);
 };
 
-let router = createRouter([{ element: <></> }], rootBaseName);
+let router = createRouter([{ element: <></> }], rootBasename);
 
 const location = {
   getPathname: (): string => {

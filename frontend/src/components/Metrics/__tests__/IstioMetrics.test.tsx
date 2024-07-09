@@ -102,7 +102,7 @@ describe('Metrics for a service', () => {
       <Provider store={store}>
         <MemoryRouter>
           <IstioMetrics
-            lastRefreshAt={Date.now()}
+            lastRefreshAt={1720526431902}
             namespace="ns"
             object="svc"
             objectType={MetricsObjectTypes.SERVICE}
@@ -126,7 +126,7 @@ describe('Metrics for a service', () => {
           objectType={MetricsObjectTypes.SERVICE}
           direction={'inbound'}
           includeAmbient={false}
-          lastRefreshAt={Date.now()}
+          lastRefreshAt={1720526431902}
         />
       )
       .run(done, wrapper => {
@@ -156,7 +156,7 @@ describe('Metrics for a service', () => {
           objectType={MetricsObjectTypes.SERVICE}
           direction={'inbound'}
           includeAmbient={false}
-          lastRefreshAt={Date.now()}
+          lastRefreshAt={1720526431902}
         />
       )
       .run(done, wrapper => {
@@ -189,7 +189,7 @@ describe('Inbound Metrics for a workload', () => {
       <Provider store={store}>
         <MemoryRouter>
           <IstioMetrics
-            lastRefreshAt={Date.now()}
+            lastRefreshAt={1720526431902}
             namespace="ns"
             object="svc"
             objectType={MetricsObjectTypes.WORKLOAD}
@@ -213,7 +213,7 @@ describe('Inbound Metrics for a workload', () => {
           objectType={MetricsObjectTypes.WORKLOAD}
           direction={'inbound'}
           includeAmbient={false}
-          lastRefreshAt={Date.now()}
+          lastRefreshAt={1720526431902}
         />
       )
       .run(done, wrapper => {
@@ -243,7 +243,7 @@ describe('Inbound Metrics for a workload', () => {
           objectType={MetricsObjectTypes.WORKLOAD}
           direction={'inbound'}
           includeAmbient={false}
-          lastRefreshAt={Date.now()}
+          lastRefreshAt={1720526431902}
         />
       )
       .run(done, wrapper => {
