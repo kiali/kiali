@@ -33,7 +33,7 @@ Controlplane A discovery selector:
 
 ```yaml
 discoverySelectors:
-   - matchLabels:
+  - matchLabels:
       team: api
 ```
 
@@ -41,7 +41,7 @@ Controlplane B discovery selector:
 
 ```yaml
 discoverySelectors:
-   - matchLabels:
+  - matchLabels:
       team: backend
 ```
 
@@ -49,9 +49,9 @@ Kiali discovery selector:
 
 ```yaml
 discoverySelectors:
-   - matchLabels:
+  - matchLabels:
       team: backend
-   - matchLabels:
+  - matchLabels:
       team: api
 ```
 
@@ -61,7 +61,7 @@ Cluster A discovery selector:
 
 ```yaml
 discoverySelectors:
-   - matchLabels:
+  - matchLabels:
       team: api
 ```
 
@@ -69,7 +69,7 @@ Cluster B discovery selector:
 
 ```yaml
 discoverySelectors:
-   - matchLabels:
+  - matchLabels:
       team: backend
 ```
 
@@ -77,7 +77,7 @@ Kiali discovery selector cluster A:
 
 ```yaml
 discoverySelectors:
-   - matchLabels:
+  - matchLabels:
       team: api
 ```
 
@@ -85,7 +85,7 @@ Kiali discovery selector cluster B:
 
 ```yaml
 discoverySelectors:
-   - matchLabels:
+  - matchLabels:
       team: backend
 ```
 
