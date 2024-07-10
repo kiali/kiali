@@ -329,6 +329,11 @@ openshift_install_basic_demo() {
   infomsg "Installing Bookinfo demo ..."
   ${HACK_SCRIPTS_DIR}/istio/install-bookinfo-demo.sh -c ${CLIENT_EXE} --traffic-generator --wait-timeout 5m
 
+  infomsg "Updating Bookinfo traffic-generator route ..."
+  ${CLIENT_EXE} patch configmap traffic-generator-config -n bookinfo --type merge -p '{"data":{"route":"http://productpage:9080/productpage"}}'
+  infomsg "Restarting Bookinfo traffic-generator pod ..."
+  ${CLIENT_EXE} delete pod -n bookinfo -l app=kiali-traffic-generator
+
   infomsg "Logging into the image registry..."
   eval $(make --directory "${ROOT_DIR}" -e OC="$(which ${CLIENT_EXE})" CLUSTER_TYPE=openshift cluster-status | grep "Image Registry login:" | sed 's/Image Registry login: \(.*\)$/\1/')
 
