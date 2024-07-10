@@ -412,7 +412,7 @@ openshift_install_skupper() {
   SKUPPER_MYSQL_IP="$(${CLIENT_EXE} -n ${MYSQLSKUPPERNS} get svc mysqldb-v1 -o jsonpath='{.spec.clusterIPs[0]}')"
   infomsg "MySQL IP over the Skupper link: ${SKUPPER_MYSQL_IP}"
   infomsg "Configuring Bookinfo ratings-v2-mysql to talk to MySQL over the Skupper link"
-  ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} -n bookinfo set env deployment/ratings-v2-mysql MYSQL_DB_URL="mysqldb://${SKUPPER_MYSQL_IP}:3306/test"
+  ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} -n bookinfo set env deployment/ratings-v2-mysql MYSQL_DB_HOST="${SKUPPER_MYSQL_IP}"
   infomsg "Exposing MySQL Skupper Prometheus so its UI can be accessed"
   ${CLIENT_EXE} -n ${MYSQLSKUPPERNS} expose svc skupper-prometheus
 
