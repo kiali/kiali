@@ -387,6 +387,7 @@ openshift_install_skupper() {
   # LOGIN TO CLUSTER 1
   openshift_login ${CLUSTER1_ISTIO}
   ${CLIENT_EXE} create namespace ${MONGOSKUPPERNS}
+  ${CLIENT_EXE} label namespace ${MONGOSKUPPERNS} istio-injection=enabled --overwrite
   ${SKUPPER_EXE} -n ${MONGOSKUPPERNS} init --enable-console --enable-flow-collector
   ${SKUPPER_EXE} -n ${MONGOSKUPPERNS} token create "${SKUPPER_TOKEN_FILE_MONGO}"
   # LOGIN TO CLUSTER 2
@@ -413,6 +414,7 @@ openshift_install_skupper() {
   # LOGIN TO CLUSTER 1
   openshift_login ${CLUSTER1_ISTIO}
   ${CLIENT_EXE} create namespace ${MYSQLSKUPPERNS}
+  ${CLIENT_EXE} label namespace ${MYSQLSKUPPERNS} istio-injection=enabled --overwrite
   ${SKUPPER_EXE} -n ${MYSQLSKUPPERNS} init --enable-console --enable-flow-collector
   ${SKUPPER_EXE} -n ${MYSQLSKUPPERNS} token create "${SKUPPER_TOKEN_FILE_MYSQL}"
   # LOGIN TO CLUSTER 2
