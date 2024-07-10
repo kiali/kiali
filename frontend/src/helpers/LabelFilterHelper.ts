@@ -1,6 +1,7 @@
 import { AppListItem } from '../types/AppList';
 import { WorkloadListItem } from '../types/Workload';
 import { ServiceListItem } from '../types/ServiceList';
+import { serverConfig } from '../config';
 
 type itemsType = AppListItem | ServiceListItem | WorkloadListItem;
 
@@ -8,7 +9,7 @@ type itemsType = AppListItem | ServiceListItem | WorkloadListItem;
  OR Operation for labels
 */
 const orLabelOperation = (labels: { [key: string]: string }, filters: string[]): boolean => {
-  const { keys, keyValues } = getKeyAndValues(filters);
+  const { keyValues, keys } = getKeyAndValues(filters);
 
   // Get all keys of labels
   const labelKeys = Object.keys(labels);
@@ -44,9 +45,9 @@ const orLabelOperation = (labels: { [key: string]: string }, filters: string[]):
 
 const andLabelOperation = (labels: { [key: string]: string }, filters: string[]): boolean => {
   // We expect this label is ok for the filters with And Operation
-  let filterOkForLabel: boolean = true;
+  let filterOkForLabel = true;
 
-  const { keys, keyValues } = getKeyAndValues(filters);
+  const { keyValues, keys } = getKeyAndValues(filters);
 
   // Get all keys of labels
   const labelKeys = Object.keys(labels);
@@ -83,24 +84,38 @@ const andLabelOperation = (labels: { [key: string]: string }, filters: string[])
   return filterOkForLabel;
 };
 
-const filterLabelByOp = (labels: { [key: string]: string }, filters: string[], op: string = 'or'): boolean => {
+const filterLabelByOp = (labels: { [key: string]: string }, filters: string[], op = 'or'): boolean => {
   return op === 'or' ? orLabelOperation(labels, filters) : andLabelOperation(labels, filters);
 };
 
-export const filterByLabel = (items: itemsType[], filter: string[], op: string = 'or'): itemsType[] => {
+export const filterByLabel = (items: itemsType[], filter: string[], op = 'or'): itemsType[] => {
   return filter.length === 0 ? items : items.filter(item => filterLabelByOp(item.labels, filter, op));
 };
 
-const getKeyAndValues = (filters: string[]): { keys: string[]; keyValues: string[] } => {
+const getKeyAndValues = (filters: string[]): { keyValues: string[]; keys: string[] } => {
   // keys => List of filters with only Label Presence
   // keyValues => List of filters with Label and value
   const keys = filters.filter(f => !f.includes('='));
   const keyValues = filters.filter(f => f.includes('='));
-  return { keys, keyValues };
+  return { keyValues, keys };
+};
+
+export const getGatewayLabels = (labelConfig: string): string[] => {
+  const label = labelConfig.split('=');
+  if (label.length === 2) {
+    return label;
+  }
+  return ['', ''];
 };
 
 export const isGateway = (labels: { [key: string]: string }): boolean => {
-  return labels && 'istio' in labels && (labels['istio'] === 'ingressgateway' || labels['istio'] === 'egressgateway');
+  const ingress = getGatewayLabels(serverConfig.istioLabels.ingressGatewayLabel);
+  const egress = getGatewayLabels(serverConfig.istioLabels.egressGatewayLabel);
+  return (
+    labels &&
+    ((ingress[0] in labels && labels[ingress[0]] === ingress[1]) ||
+      (egress[0] in labels && labels[egress[0]] === egress[1]))
+  );
 };
 
 export const isWaypoint = (labels: { [key: string]: string }): boolean => {
