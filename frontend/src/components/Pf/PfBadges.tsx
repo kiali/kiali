@@ -6,7 +6,7 @@ import { PFColors } from './PfColors';
 export type PFBadgeType = {
   badge: string;
   style?: React.CSSProperties;
-  tt?: React.ReactFragment;
+  tt?: React.ReactNode;
 };
 
 // PF Badges used by Kiali, keep alphabetized
@@ -140,7 +140,7 @@ export const PFBadge: React.FC<PFBadgeProps> = (props: PFBadgeProps) => {
   const key = props.keyValue || `pfbadge-${props.badge.badge}`;
   const ttKey = `tt-${key}`;
   const style = { ...props.badge.style, ...props.style };
-  const tooltip = props.tooltip || props.badge.tt;
+  const tt = props.tooltip ?? props.badge.tt;
   const className = props.size === 'sm' ? kialiBadgeSmall : kialiBadge;
 
   const badge = (
@@ -149,10 +149,10 @@ export const PFBadge: React.FC<PFBadgeProps> = (props: PFBadgeProps) => {
     </Badge>
   );
 
-  return !tooltip ? (
+  return !tt ? (
     badge
   ) : (
-    <Tooltip content={<>{tooltip}</>} id={ttKey} key={ttKey} position={props.position || TooltipPosition.auto}>
+    <Tooltip content={<>{tt}</>} id={ttKey} key={ttKey} position={props.position || TooltipPosition.auto}>
       {badge}
     </Tooltip>
   );

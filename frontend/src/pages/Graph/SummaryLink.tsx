@@ -49,9 +49,10 @@ const getTooltip = (tooltip: React.ReactNode, nodeData: GraphNodeData): React.Re
 };
 
 const addExtensionBadge = (nodeData: GraphNodeData, reactNode: React.ReactNode): React.ReactNode => {
+  const tt = `Extension: ${nodeData.isExtension}`;
   return nodeData.isExtension ? (
     <>
-      <PFBadge badge={PFBadges.Extension} size="sm" tooltip={`${PFBadges.Extension.tt}: ${nodeData.isExtension}`} />
+      <PFBadge badge={PFBadges.Extension} size="sm" tooltip={tt} />
       {reactNode}
     </>
   ) : (
