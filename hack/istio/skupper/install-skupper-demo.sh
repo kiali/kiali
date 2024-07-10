@@ -58,6 +58,7 @@ OUTPUT_DIR="${ROOT_DIR}/_output"
 
 CLIENT_EXE="kubectl"
 CLUSTER_TYPE="minikube"
+DELETE_MINIKUBE="true"
 HACK_SCRIPTS_DIR="${ROOT_DIR}/hack"
 INSTALL_EAST_WEST_DEMO="no"
 KIALI_DEV_BUILD="true"
@@ -98,6 +99,7 @@ while [ $# -gt 0 ]; do
     suimysql)                 _CMD="suimysql"                      ;shift ;;
     -c|--client)              CLIENT_EXE="$2"                ;shift;shift ;;
     -ct|--cluster-type)       CLUSTER_TYPE="$2"              ;shift;shift ;;
+    -dm|--delete-minikube)    DELETE_MINIKUBE="$2"           ;shift;shift ;;
     -ewd|--east-west-demo)    INSTALL_EAST_WEST_DEMO="$2"    ;shift;shift ;;
     -kdb|--kiali-dev-build)   KIALI_DEV_BUILD="$2"           ;shift;shift ;;
     -kv|--kiali-version)      KIALI_VERSION="$2"             ;shift;shift ;;
@@ -116,6 +118,11 @@ Valid command line arguments:
                                            If "minikube", this script creates its own clusters.
                                            If "openshift", the clusters must be started already.
                                            Default: "minikube"
+  -dm|--delete-minikube <true|false>: If true and you are using minikube, the minikube clusters will
+                                      be deleted completely. If false, only the things this script
+                                      installs will be deleted but the minikube clusters will be left running.
+                                      This option is only used with the delete command.
+                                      Default: true
   -ewd|--east-west-demo [yes|no|partial]: The east-west demo is the basic Skupper demo. See: https://skupper.io/start/
                                           If this value is "no", the east-west demo will not be installed.
                                           If this value is "yes", the east-west demo will be installed and all
@@ -190,22 +197,24 @@ download_istio() {
 # It will not install Skupper, so the ratings-v2 app will not work after this function is run because it cannot access Mongo.
 # Execute the minikube_install_skupper function after this function finishes.
 minikube_install_basic_demo() {
-  if ${HACK_SCRIPTS_DIR}/k8s-minikube.sh --minikube-profile ${CLUSTER2_DB} status &>/dev/null ; then
-    errormsg "There appears to already be a minikube cluster running with profile [${CLUSTER2_DB}]. Aborting."
-    exit 1
-  fi
-  if ${HACK_SCRIPTS_DIR}/k8s-minikube.sh --minikube-profile ${CLUSTER1_ISTIO} status &>/dev/null ; then
-    errormsg "There appears to already be a minikube cluster running with profile [${CLUSTER1_ISTIO}]. Aborting."
-    exit 1
-  fi
 
   download_istio
 
-  infomsg "Installing cluster [${CLUSTER2_DB}] ..."
-  ${HACK_SCRIPTS_DIR}/k8s-minikube.sh --load-balancer-addrs '70-89' --minikube-profile ${CLUSTER2_DB} --minikube-flags '--network mk-demo' start
+  if ${HACK_SCRIPTS_DIR}/k8s-minikube.sh --minikube-profile ${CLUSTER2_DB} status &>/dev/null ; then
+    infomsg "There appears to already be a minikube cluster running with profile [${CLUSTER2_DB}]. It will be used."
+    ${CLIENT_EXE} config use-context ${CLUSTER2_DB}
+  else
+    infomsg "Installing cluster [${CLUSTER2_DB}] ..."
+    ${HACK_SCRIPTS_DIR}/k8s-minikube.sh --load-balancer-addrs '70-89' --minikube-profile ${CLUSTER2_DB} --minikube-flags '--network mk-demo' start
+  fi
 
-  infomsg "Installing cluster [${CLUSTER1_ISTIO}] ..."
-  ${HACK_SCRIPTS_DIR}/k8s-minikube.sh --load-balancer-addrs '50-69' --minikube-profile ${CLUSTER1_ISTIO} --minikube-flags '--network mk-demo' start
+  if ${HACK_SCRIPTS_DIR}/k8s-minikube.sh --minikube-profile ${CLUSTER1_ISTIO} status &>/dev/null ; then
+    infomsg "There appears to already be a minikube cluster running with profile [${CLUSTER1_ISTIO}]. It will be used."
+    ${CLIENT_EXE} config use-context ${CLUSTER1_ISTIO}
+  else
+    infomsg "Installing cluster [${CLUSTER1_ISTIO}] ..."
+    ${HACK_SCRIPTS_DIR}/k8s-minikube.sh --load-balancer-addrs '50-69' --minikube-profile ${CLUSTER1_ISTIO} --minikube-flags '--network mk-demo' start
+  fi
 
   infomsg "Installing Istio ..."
   ${HACK_SCRIPTS_DIR}/istio/install-istio-via-istioctl.sh -c ${CLIENT_EXE} -s values.meshConfig.outboundTrafficPolicy.mode=REGISTRY_ONLY
@@ -223,7 +232,7 @@ minikube_install_basic_demo() {
     if [ "${KIALI_DEV_BUILD}" == "true" ]; then
       local make_build_targets="build build-ui"
     fi
-    make --directory "${ROOT_DIR}" -e OC="$(which ${CLIENT_EXE})" -e CLUSTER_TYPE=minikube -e MINIKUBE_PROFILE=${CLUSTER1_ISTIO} SERVICE_TYPE=LoadBalancer ${make_build_targets:-} cluster-push operator-create kiali-create
+    make --directory "${ROOT_DIR}" -e OC="$(which ${CLIENT_EXE})" CLUSTER_TYPE=minikube MINIKUBE_PROFILE=${CLUSTER1_ISTIO} SERVICE_TYPE=LoadBalancer ${make_build_targets:-} cluster-push operator-create kiali-create
   else
     infomsg "Installing Kiali [${KIALI_VERSION}] via Helm ..."
     if ! helm repo update kiali 2> /dev/null; then
@@ -321,14 +330,14 @@ openshift_install_basic_demo() {
   ${HACK_SCRIPTS_DIR}/istio/install-bookinfo-demo.sh -c ${CLIENT_EXE} --traffic-generator --wait-timeout 5m
 
   infomsg "Logging into the image registry..."
-  eval $(make --directory "${ROOT_DIR}" -e OC="$(which ${CLIENT_EXE})" -e CLUSTER_TYPE=openshift cluster-status | grep "Image Registry login:" | sed 's/Image Registry login: \(.*\)$/\1/')
+  eval $(make --directory "${ROOT_DIR}" -e OC="$(which ${CLIENT_EXE})" CLUSTER_TYPE=openshift cluster-status | grep "Image Registry login:" | sed 's/Image Registry login: \(.*\)$/\1/')
 
   if [ "${KIALI_VERSION}" == "dev" ]; then
     infomsg "Installing Kiali ..."
     if [ "${KIALI_DEV_BUILD}" == "true" ]; then
       local make_build_targets="build build-ui"
     fi
-    make --directory "${ROOT_DIR}" -e OC="$(which ${CLIENT_EXE})" -e CLUSTER_TYPE=openshift ${make_build_targets:-} cluster-push operator-create kiali-create
+    make --directory "${ROOT_DIR}" -e OC="$(which ${CLIENT_EXE})" CLUSTER_TYPE=openshift ${make_build_targets:-} cluster-push operator-create kiali-create
   else
     infomsg "Installing Kiali [${KIALI_VERSION}] via Helm ..."
     if ! helm repo update kiali 2> /dev/null; then
@@ -663,10 +672,42 @@ elif [ "$_CMD" == "delete" ]; then
 
   case ${CLUSTER_TYPE} in
     minikube)
-      infomsg "Shutting down [${CLUSTER2_DB}] cluster..."
-      ${HACK_SCRIPTS_DIR}/k8s-minikube.sh delete --minikube-profile ${CLUSTER2_DB}
-      infomsg "Shutting down [${CLUSTER1_ISTIO}] cluster..."
-      ${HACK_SCRIPTS_DIR}/k8s-minikube.sh delete --minikube-profile ${CLUSTER1_ISTIO}
+      if [ "${DELETE_MINIKUBE}" == "true" ]; then
+        infomsg "Will delete both minikube clusters..."
+        infomsg "Shutting down [${CLUSTER2_DB}] cluster..."
+        ${HACK_SCRIPTS_DIR}/k8s-minikube.sh delete --minikube-profile ${CLUSTER2_DB}
+        infomsg "Shutting down [${CLUSTER1_ISTIO}] cluster..."
+        ${HACK_SCRIPTS_DIR}/k8s-minikube.sh delete --minikube-profile ${CLUSTER1_ISTIO}
+      else
+        infomsg "Was told not to delete minikube clusters; installed resources will be deleted but clusters will remain running."
+
+        infomsg "Uninstalling Kiali ..."
+        make --directory "${ROOT_DIR}" -e OC="$(which ${CLIENT_EXE})" CLUSTER_TYPE=minikube MINIKUBE_PROFILE=${CLUSTER1_ISTIO} operator-delete
+
+        # ignore any errors while deleting, just try to delete everything
+        set +e
+        infomsg "Uninstalling Bookinfo demo ..."
+        ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} get namespace bookinfo 2>/dev/null && ${HACK_SCRIPTS_DIR}/istio/install-bookinfo-demo.sh -c ${CLIENT_EXE} -mp ${CLUSTER1_ISTIO} --delete-bookinfo true
+        infomsg "Uninstalling Istio ..."
+        # hack script used to install istio doesn't support telling it which minikube profile to use so just switch context to ensure we talk to the right one
+        ${CLIENT_EXE} config use-context ${CLUSTER1_ISTIO}
+        ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} get namespace istio-system 2>/dev/null && ${HACK_SCRIPTS_DIR}/istio/install-istio-via-istioctl.sh -c ${CLIENT_EXE} --delete-istio true
+        infomsg "Uninstalling Mongo Skupper pipe ..."
+        ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} get namespace ${MONGOSKUPPERNS} 2>/dev/null && ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} delete namespace ${MONGOSKUPPERNS}
+        infomsg "Uninstalling MySQL Skupper pipe ..."
+        ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} get namespace ${MYSQLSKUPPERNS} 2>/dev/null && ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} delete namespace ${MYSQLSKUPPERNS}
+
+        infomsg "Uninstalling ${NAMESPACE_WEST} namespace ..."
+        ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} get namespace ${NAMESPACE_WEST} 2>/dev/null && ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} delete namespace ${NAMESPACE_WEST}
+
+        infomsg "Uninstalling the databases ..."
+        ${CLIENT_EXE} --context ${CLUSTER2_DB} get namespace ${MYSQLNS} 2>/dev/null && ${CLIENT_EXE} --context ${CLUSTER2_DB} delete namespace ${MYSQLNS}
+        ${CLIENT_EXE} --context ${CLUSTER2_DB} get namespace ${MONGONS} 2>/dev/null && ${CLIENT_EXE} --context ${CLUSTER2_DB} delete namespace ${MONGONS}
+
+        infomsg "Uninstalling ${NAMESPACE_EAST} namespace ..."
+        ${CLIENT_EXE} --context ${CLUSTER2_DB} get namespace ${NAMESPACE_EAST} 2>/dev/null && ${CLIENT_EXE} --context ${CLUSTER2_DB} delete namespace ${NAMESPACE_EAST}
+        set -e
+      fi
       ;;
 
     openshift)
@@ -674,7 +715,7 @@ elif [ "$_CMD" == "delete" ]; then
       openshift_login ${CLUSTER1_ISTIO}
 
       infomsg "Uninstalling Kiali ..."
-      make --directory "${ROOT_DIR}" -e OC="$(which ${CLIENT_EXE})" -e CLUSTER_TYPE=openshift operator-delete
+      make --directory "${ROOT_DIR}" -e OC="$(which ${CLIENT_EXE})" CLUSTER_TYPE=openshift operator-delete
 
       # ignore any errors while deleting, just try to delete everything
       set +e
