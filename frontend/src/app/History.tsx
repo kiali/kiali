@@ -12,9 +12,9 @@ export const createRouter = (routes: RouteObject[], basename?: string): any => {
     : createBrowserRouter(routes, { basename: baseName });
 };
 
-const webRoot = (window as any).WEB_ROOT ? (window as any).WEB_ROOT : undefined;
-const rootBasename = webRoot && webRoot !== '/' ? `${webRoot}/console` : '/console';
-const historyMode = (window as any).HISTORY_MODE ? (window as any).HISTORY_MODE : 'browser';
+export const webRoot = (window as any).WEB_ROOT ?? '/';
+const rootBasename = webRoot !== '/' ? `${webRoot}/console` : '/console';
+const historyMode = (window as any).HISTORY_MODE ?? 'browser';
 
 /**
  * Some platforms set a different basename for each page (e.g., Openshift Console)

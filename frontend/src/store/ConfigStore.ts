@@ -25,11 +25,11 @@ import { INITIAL_METRICS_STATS_STATE } from '../reducers/MetricsStatsState';
 import { INITIAL_ISTIO_CERTS_INFO_STATE } from 'reducers/IstioCertsInfoState';
 import { KialiAppAction } from 'actions/KialiAppAction';
 import { INITIAL_MESH_STATE } from 'reducers/MeshDataState';
+import { webRoot } from 'app/History';
 
 declare const window;
 
-const webRoot = (window as any).WEB_ROOT ? (window as any).WEB_ROOT : undefined;
-const persistKey = `kiali-${webRoot && webRoot !== '/' ? webRoot.substring(1) : 'root'}`;
+const persistKey = `kiali-${webRoot !== '/' ? webRoot.substring(1) : 'root'}`;
 
 // Needed to be able to whitelist fields but allowing to keep an initialState
 const whitelistInputWithInitialState = (

@@ -2,7 +2,7 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import { globalStyle } from 'styles/GlobalStyle';
 import { RouterProvider } from 'react-router-dom-v5-compat';
-import { router, setRouter } from 'app/History';
+import { router, setRouter, webRoot } from 'app/History';
 import { pathRoutes } from 'routes';
 import { App } from 'app/App';
 import cssVariables from './styles/variables.module.scss';
@@ -49,8 +49,8 @@ setRouter([
   }
 ]);
 
-// redirect to the router basename /console from the root pathname /
-if (window.location.pathname === '/') {
+// redirect to the router basename /console from the web root pathname
+if (window.location.pathname === webRoot) {
   router.navigate('/');
 }
 
