@@ -85,6 +85,11 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
     this.promises.cancelAll();
   }
 
+  onSort = (): void => {
+    // force list update on sorting
+    this.setState({});
+  };
+
   sortItemList(
     apps: IstioConfigItem[],
     sortField: SortField<IstioConfigItem>,
@@ -220,7 +225,7 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
         />
 
         <RenderContent>
-          <VirtualList rows={this.state.listItems} hiddenColumns={hiddenColumns} type="istio">
+          <VirtualList rows={this.state.listItems} hiddenColumns={hiddenColumns} sort={this.onSort} type="istio">
             <StatefulFilters
               initialFilters={IstioConfigListFilters.availableFilters}
               initialToggles={this.props.istioAPIEnabled ? this.initialToggles : undefined}

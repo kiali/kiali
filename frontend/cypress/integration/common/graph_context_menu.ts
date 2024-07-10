@@ -93,10 +93,16 @@ Then('user should see {string} cluster parameter in links in the context menu', 
 });
 
 Then(
-  'user should see the {string} cluster parameter in the {string} link in the context menu',
+  'user should see the {string} cluster parameter in the url when clicking the {string} link in the context menu',
   (cluster: string, linkText: string) => {
     cy.get(`[data-test="graph-node-context-menu"]`).within(() => {
-      cy.get('a').contains(linkText).should('have.attr', 'href').and('include', `clusterName=${cluster}`);
+      cy.get('a')
+        .contains(linkText)
+        .click()
+        .then(() => {
+          cy.url().should('include', `clusterName=${cluster}`);
+          cy.go('back');
+        });
     });
   }
 );
