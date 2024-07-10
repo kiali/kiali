@@ -214,7 +214,7 @@ minikube_install_basic_demo() {
   ${HACK_SCRIPTS_DIR}/istio/install-bookinfo-demo.sh -c ${CLIENT_EXE} --minikube-profile ${CLUSTER1_ISTIO} --traffic-generator --wait-timeout 5m
 
   infomsg "Updating Bookinfo traffic-generator route ..."
-  ${CLIENT_EXE} -n bookinfo get cm traffic-generator-config -o yaml | sed 's/route:.*/route: http:\/\/productpage:9080\/productpage/g' | ${CLIENT_EXE} replace -f -
+  ${CLIENT_EXE} patch configmap traffic-generator-config -n bookinfo --type merge -p '{"data":{"route":"http://productpage:9080/productpage"}}'
   infomsg "Restarting Bookinfo traffic-generator pod ..."
   ${CLIENT_EXE} -n bookinfo get pods --no-headers=true | awk '/kiali-traffic-generator.*/{print $1}'| xargs  ${CLIENT_EXE} -n bookinfo delete pod
 
