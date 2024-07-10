@@ -87,6 +87,8 @@ const defaultServerConfig: ComputedServerConfig = {
     ambientWaypointLabel: 'gateway.istio.io/managed',
     ambientWaypointLabelValue: 'istio.io-mesh-controller',
     appLabelName: 'app',
+    egressGatewayLabel: 'istio=egressgateway',
+    ingressGatewayLabel: 'istio=ingressgateway',
     injectionLabelName: 'istio-injection',
     injectionLabelRev: 'istio.io/rev',
     versionLabelName: 'version'

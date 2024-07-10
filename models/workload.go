@@ -467,11 +467,17 @@ func (workload *Workload) HasIstioSidecar() bool {
 
 // IsGateway return true if the workload is Ingress or Egress Gateway
 func (workload *Workload) IsGateway() bool {
+	conf := config.Get()
 	if workload.Type == "Deployment" {
 		if labelValue, ok := workload.Labels["operator.istio.io/component"]; ok && (labelValue == "IngressGateways" || labelValue == "EgressGateways") {
 			return true
 		}
-		if labelValue, ok := workload.Labels["istio"]; ok && (labelValue == "ingressgateway" || labelValue == "egressgateway") {
+		ingressLabel := conf.GatewayLabel(conf.IstioLabels.IngressGatewayLabel)
+		if labelValue, ok := workload.Labels[ingressLabel[0]]; ok && labelValue == ingressLabel[1] {
+			return true
+		}
+		egressLabel := conf.GatewayLabel(conf.IstioLabels.EgressGatewayLabel)
+		if labelValue, ok := workload.Labels[egressLabel[0]]; ok && labelValue == egressLabel[1] {
 			return true
 		}
 	}
