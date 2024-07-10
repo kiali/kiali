@@ -59,6 +59,15 @@ type jaegerResponseVersion struct {
 	Version string `json:"gitVersion"`
 }
 
+type tempoResponseVersion struct {
+	Version   string `json:"version"`
+	Revision  string `json:"revision"`
+	Branch    string `json:"branch"`
+	BuildUser string `json:"buildUser"`
+	BuildDate string `json:"buildDate"`
+	GoVersion string `json:"goVersion"`
+}
+
 func tracingVersion(conf *config.Config) (*models.ExternalServiceInfo, error) {
 	tracingConfig := conf.ExternalServices.Tracing
 
@@ -91,8 +100,21 @@ func tracingVersion(conf *config.Config) (*models.ExternalServiceInfo, error) {
 					product.Version = jaegerV.Version
 				}
 			}
+		} else {
+			// Tempo
+			if tracingConfig.Provider == config.TempoProvider {
+				body, statusCode, _, err := httputil.HttpGet(fmt.Sprintf("%s/api/status/buildinfo", product.Url), nil, 10*time.Second, nil, nil)
+				if err != nil || statusCode > 399 {
+					log.Infof("tempo version check failed: url=[%v], code=[%v]", product.Url, statusCode)
+				} else {
+					tempoV := new(tempoResponseVersion)
+					err = json.Unmarshal(body, &tempoV)
+					if err == nil {
+						product.Version = tempoV.Version
+					}
+				}
+			}
 		}
-		// TODO determine version for Tempo
 	}
 
 	product.TempoConfig = tracingConfig.TempoConfig
