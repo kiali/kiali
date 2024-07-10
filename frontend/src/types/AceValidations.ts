@@ -144,7 +144,15 @@ const parseMarker = (
 
   // Find start of the spec part first, this should skip the whole metadata part
   if (startsFrom < 0) {
-    tokenPos = yaml.indexOf('spec:', tokenPos);
+    // Use a regular expression to find 'spec:', ignore 'f:spec:' which comes in 'managedFields:'
+    const regex = /\b(?<!f:)spec:/g;
+    const match = regex.exec(yaml.slice(tokenPos < 0 ? 0 : tokenPos));
+
+    if (match) {
+      tokenPos = match.index + tokenPos;
+    } else {
+      tokenPos = -1;
+    }
   }
 
   // Find initial token position

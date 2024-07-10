@@ -79,6 +79,7 @@ func multipleVirtualServiceCheck(virtualService *networking_v1.VirtualService, v
 	key := models.IstioValidationKey{Name: virtualServiceName, Namespace: virtualService.Namespace, ObjectType: "virtualservice", Cluster: cluster}
 	checks := models.Build("virtualservices.singlehost", "spec/hosts")
 	rrValidation := &models.IstioValidation{
+		Cluster:    cluster,
 		Name:       virtualServiceName,
 		ObjectType: "virtualservice",
 		Valid:      true,

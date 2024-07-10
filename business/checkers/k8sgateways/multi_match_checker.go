@@ -62,6 +62,7 @@ func createError(gatewayRuleName string, ruleCode string, namespace string, clus
 	key := models.IstioValidationKey{Name: gatewayRuleName, Namespace: namespace, ObjectType: K8sGatewayCheckerType, Cluster: cluster}
 	checks := models.Build(ruleCode, path)
 	rrValidation := &models.IstioValidation{
+		Cluster:    cluster,
 		Name:       gatewayRuleName,
 		ObjectType: K8sGatewayCheckerType,
 		Valid:      true,

@@ -228,7 +228,7 @@ func (in *SvcService) buildServiceList(cluster string, namespace string, svcs []
 		validations = in.getServiceValidations(svcs, deployments, pods)
 	}
 
-	kubernetesServices := in.buildKubernetesServices(svcs, pods, istioConfigList, criteria.IncludeOnlyDefinitions)
+	kubernetesServices := in.buildKubernetesServices(svcs, pods, istioConfigList, criteria.IncludeOnlyDefinitions, cluster)
 	services = append(services, kubernetesServices...)
 	// Add cluster to each kube service
 	for i := range services {
@@ -239,12 +239,12 @@ func (in *SvcService) buildServiceList(cluster string, namespace string, svcs []
 	// TODO: Registry services are not associated to a cluster. They can have multiple clusters under
 	// "clusterVIPs". We need to decide how to handle this.
 	rSvcs = kubernetes.FilterRegistryServicesByServices(rSvcs, svcs)
-	registryServices := in.buildRegistryServices(rSvcs, istioConfigList)
+	registryServices := in.buildRegistryServices(rSvcs, istioConfigList, cluster)
 	services = append(services, registryServices...)
 	return &models.ServiceList{Namespace: namespace, Services: services, Validations: validations}
 }
 
-func (in *SvcService) buildKubernetesServices(svcs []core_v1.Service, pods []core_v1.Pod, istioConfigList models.IstioConfigList, onlyDefinitions bool) []models.ServiceOverview {
+func (in *SvcService) buildKubernetesServices(svcs []core_v1.Service, pods []core_v1.Pod, istioConfigList models.IstioConfigList, onlyDefinitions bool, cluster string) []models.ServiceOverview {
 	services := make([]models.ServiceOverview, len(svcs))
 	conf := in.config
 
@@ -270,30 +270,30 @@ func (in *SvcService) buildKubernetesServices(svcs []core_v1.Service, pods []cor
 			svcK8sGateways := kubernetes.FilterK8sGatewaysByRoutes(istioConfigList.K8sGateways, svcK8sHTTPRoutes, svcK8sGRPCRoutes)
 
 			for _, vs := range svcVirtualServices {
-				ref := models.BuildKey(vs.Kind, vs.Name, vs.Namespace)
+				ref := models.BuildKey(vs.Kind, vs.Name, vs.Namespace, cluster)
 				svcReferences = append(svcReferences, &ref)
 			}
 			for _, dr := range svcDestinationRules {
-				ref := models.BuildKey(dr.Kind, dr.Name, dr.Namespace)
+				ref := models.BuildKey(dr.Kind, dr.Name, dr.Namespace, cluster)
 				svcReferences = append(svcReferences, &ref)
 			}
 			for _, gw := range svcGateways {
-				ref := models.BuildKey(gw.Kind, gw.Name, gw.Namespace)
+				ref := models.BuildKey(gw.Kind, gw.Name, gw.Namespace, cluster)
 				svcReferences = append(svcReferences, &ref)
 			}
 			for _, gw := range svcK8sGateways {
 				// Should be K8s type to generate correct link
-				ref := models.BuildKey(kubernetes.K8sGatewayType, gw.Name, gw.Namespace)
+				ref := models.BuildKey(kubernetes.K8sGatewayType, gw.Name, gw.Namespace, cluster)
 				svcReferences = append(svcReferences, &ref)
 			}
 			for _, route := range svcK8sGRPCRoutes {
 				// Should be K8s type to generate correct link
-				ref := models.BuildKey(kubernetes.K8sGRPCRouteType, route.Name, route.Namespace)
+				ref := models.BuildKey(kubernetes.K8sGRPCRouteType, route.Name, route.Namespace, cluster)
 				svcReferences = append(svcReferences, &ref)
 			}
 			for _, route := range svcK8sHTTPRoutes {
 				// Should be K8s type to generate correct link
-				ref := models.BuildKey(kubernetes.K8sHTTPRouteType, route.Name, route.Namespace)
+				ref := models.BuildKey(kubernetes.K8sHTTPRouteType, route.Name, route.Namespace, cluster)
 				svcReferences = append(svcReferences, &ref)
 			}
 			svcReferences = FilterUniqueIstioReferences(svcReferences)
@@ -342,7 +342,7 @@ func filterIstioServiceByClusterId(clusterId string, item *kubernetes.RegistrySe
 	return false
 }
 
-func (in *SvcService) buildRegistryServices(rSvcs []*kubernetes.RegistryService, istioConfigList models.IstioConfigList) []models.ServiceOverview {
+func (in *SvcService) buildRegistryServices(rSvcs []*kubernetes.RegistryService, istioConfigList models.IstioConfigList, cluster string) []models.ServiceOverview {
 	services := []models.ServiceOverview{}
 	conf := in.config
 
@@ -388,19 +388,19 @@ func (in *SvcService) buildRegistryServices(rSvcs []*kubernetes.RegistryService,
 		svcGateways := kubernetes.FilterGatewaysByVirtualServices(istioConfigList.Gateways, svcVirtualServices)
 		svcReferences := make([]*models.IstioValidationKey, 0)
 		for _, se := range svcServiceEntries {
-			ref := models.BuildKey(se.Kind, se.Name, se.Namespace)
+			ref := models.BuildKey(se.Kind, se.Name, se.Namespace, cluster)
 			svcReferences = append(svcReferences, &ref)
 		}
 		for _, vs := range svcVirtualServices {
-			ref := models.BuildKey(vs.Kind, vs.Name, vs.Namespace)
+			ref := models.BuildKey(vs.Kind, vs.Name, vs.Namespace, cluster)
 			svcReferences = append(svcReferences, &ref)
 		}
 		for _, dr := range svcDestinationRules {
-			ref := models.BuildKey(dr.Kind, dr.Name, dr.Namespace)
+			ref := models.BuildKey(dr.Kind, dr.Name, dr.Namespace, cluster)
 			svcReferences = append(svcReferences, &ref)
 		}
 		for _, gw := range svcGateways {
-			ref := models.BuildKey(gw.Kind, gw.Name, gw.Namespace)
+			ref := models.BuildKey(gw.Kind, gw.Name, gw.Namespace, cluster)
 			svcReferences = append(svcReferences, &ref)
 		}
 		svcReferences = FilterUniqueIstioReferences(svcReferences)

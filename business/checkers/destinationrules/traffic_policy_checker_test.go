@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
@@ -243,6 +244,7 @@ func testValidationAdded(t *testing.T, destinationRules []*networking_v1.Destina
 	assert := assert.New(t)
 
 	vals := TrafficPolicyChecker{
+		Cluster:          config.DefaultClusterID,
 		DestinationRules: destinationRules,
 		MTLSDetails:      mTLSDetails,
 	}.Check()
@@ -250,7 +252,7 @@ func testValidationAdded(t *testing.T, destinationRules []*networking_v1.Destina
 	assert.NotEmpty(vals)
 	assert.Equal(1, len(vals))
 
-	validation, ok := vals[models.BuildKey(DestinationRulesCheckerType, "reviews", "bookinfo")]
+	validation, ok := vals[models.BuildKey(DestinationRulesCheckerType, "reviews", "bookinfo", config.DefaultClusterID)]
 	assert.True(ok)
 	assert.True(validation.Valid)
 
@@ -267,12 +269,13 @@ func testValidationsNotAdded(t *testing.T, destinationRules []*networking_v1.Des
 	assert := assert.New(t)
 
 	vals := TrafficPolicyChecker{
+		Cluster:          config.DefaultClusterID,
 		DestinationRules: destinationRules,
 		MTLSDetails:      mTLSDetails,
 	}.Check()
 
 	assert.Empty(vals)
-	validation, ok := vals[models.BuildKey(DestinationRulesCheckerType, "reviews", "bookinfo")]
+	validation, ok := vals[models.BuildKey(DestinationRulesCheckerType, "reviews", "bookinfo", config.DefaultClusterID)]
 
 	assert.False(ok)
 	assert.Nil(validation)
@@ -283,7 +286,7 @@ func presentReferences(t *testing.T, validation models.IstioValidation, ns strin
 	assert.True(len(validation.References) > 0)
 
 	for _, sn := range serviceNames {
-		refKey := models.IstioValidationKey{ObjectType: "destinationrule", Namespace: ns, Name: sn}
+		refKey := models.IstioValidationKey{ObjectType: "destinationrule", Namespace: ns, Name: sn, Cluster: config.DefaultClusterID}
 		assert.Contains(validation.References, refKey)
 	}
 }

@@ -96,7 +96,7 @@ func TestParseRegistryServices(t *testing.T) {
 		ServiceEntries: serviceEntries,
 	}
 
-	parsedServices := svc.buildRegistryServices(registryServices, istioConfigList)
+	parsedServices := svc.buildRegistryServices(registryServices, istioConfigList, config.DefaultClusterID)
 	require.Equal(3, len(parsedServices))
 	assert.Equal(1, len(parsedServices[0].IstioReferences))
 	assert.Equal(1, len(parsedServices[1].IstioReferences))

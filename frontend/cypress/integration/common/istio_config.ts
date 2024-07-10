@@ -317,10 +317,14 @@ Given(
 
 Given(
   'there is not a {string} {string} in the {string} namespace',
-  (configType: string, configName: string, namespace: string) => {
-    cy.exec(`kubectl delete ${configName} ${configType} -n ${namespace}`, { failOnNonZeroExit: false });
+  (configName: string, configType: string, namespace: string) => {
+    cy.exec(`kubectl delete ${configType} ${configName} -n ${namespace}`, { failOnNonZeroExit: false });
   }
 );
+
+Given('there is not a {string} Gateway in the {string} namespace', (configName: string, namespace: string) => {
+  cy.exec(`kubectl delete gateway.networking.istio.io ${configName} -n ${namespace}`, { failOnNonZeroExit: false });
+});
 
 Given('the DestinationRule enables mTLS', function () {
   cy.exec(
@@ -351,7 +355,7 @@ Given('the PeerAuthentication has {string} mtls mode', function (mtlsMode: strin
 Given(
   'there is a {string} Gateway on {string} namespace for {string} hosts on HTTP port {int} with {string} labels selector',
   function (name: string, namespace: string, hosts: string, port: number, labels: string) {
-    cy.exec(`kubectl delete Gateway ${name} -n ${namespace}`, { failOnNonZeroExit: false });
+    cy.exec(`kubectl delete gateway.networking.istio.io ${name} -n ${namespace}`, { failOnNonZeroExit: false });
     cy.exec(`echo '${minimalGateway(name, namespace, hosts, port, labels)}' | kubectl apply -f -`);
 
     this.targetNamespace = namespace;
