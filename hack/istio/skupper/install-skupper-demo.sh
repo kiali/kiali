@@ -216,7 +216,7 @@ minikube_install_basic_demo() {
   infomsg "Updating Bookinfo traffic-generator route ..."
   ${CLIENT_EXE} patch configmap traffic-generator-config -n bookinfo --type merge -p '{"data":{"route":"http://productpage:9080/productpage"}}'
   infomsg "Restarting Bookinfo traffic-generator pod ..."
-  ${CLIENT_EXE} kubectl delete pod -n bookinfo -l app=kiali-traffic-generator
+  ${CLIENT_EXE} delete pod -n bookinfo -l app=kiali-traffic-generator
 
   if [ "${KIALI_VERSION}" == "dev" ]; then
     infomsg "Installing Kiali ..."
