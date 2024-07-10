@@ -23,6 +23,7 @@ import { isAuthStrategyOAuth } from '../../config/AuthenticationConfig';
 import { KialiDispatch } from '../../types/Redux';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from 'components/Pf/PfColors';
+import { webRoot } from 'app/History';
 
 interface ReduxProps {
   message: string;
@@ -96,7 +97,7 @@ export class LoginPageComponent extends React.Component<LoginProps, LoginState> 
       // If we are using OpenShift or OpenId strategy, take the user back to the authorization endpoint
       window.location.href = authenticationConfig.authorizationEndpoint!;
     } else if (authenticationConfig.strategy === AuthStrategy.header) {
-      window.location.href = (window as any).WEB_ROOT ? (window as any).WEB_ROOT : '/';
+      window.location.href = webRoot;
     } else if (authenticationConfig.strategy === AuthStrategy.token) {
       if (this.state.password.trim().length !== 0 && this.props.authenticate) {
         this.props.authenticate('', this.state.password);

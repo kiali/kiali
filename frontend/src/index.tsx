@@ -50,7 +50,11 @@ setRouter([
 ]);
 
 // redirect to the router basename /console from the web root pathname
-if (window.location.pathname === webRoot) {
+if (
+  window.location.pathname === '/' ||
+  window.location.pathname === webRoot ||
+  window.location.pathname === `${webRoot}/`
+) {
   router.navigate('/');
 }
 
