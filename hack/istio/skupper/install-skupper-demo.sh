@@ -208,10 +208,15 @@ minikube_install_basic_demo() {
   ${HACK_SCRIPTS_DIR}/k8s-minikube.sh --load-balancer-addrs '50-69' --minikube-profile ${CLUSTER1_ISTIO} --minikube-flags '--network mk-demo' start
 
   infomsg "Installing Istio ..."
-  ${HACK_SCRIPTS_DIR}/istio/install-istio-via-istioctl.sh -c ${CLIENT_EXE}
+  ${HACK_SCRIPTS_DIR}/istio/install-istio-via-istioctl.sh -c ${CLIENT_EXE} -s values.meshConfig.outboundTrafficPolicy.mode=REGISTRY_ONLY
 
   infomsg "Installing Bookinfo demo ..."
   ${HACK_SCRIPTS_DIR}/istio/install-bookinfo-demo.sh -c ${CLIENT_EXE} --minikube-profile ${CLUSTER1_ISTIO} --traffic-generator --wait-timeout 5m
+
+  infomsg "Updating Bookinfo traffic-generator route ..."
+  ${CLIENT_EXE} -n bookinfo get cm traffic-generator-config -o yaml | sed 's/route:.*/route: http:\/\/productpage:9080\/productpage/g' | ${CLIENT_EXE} replace -f -
+  infomsg "Restarting Bookinfo traffic-generator pod ..."
+  ${CLIENT_EXE} -n bookinfo get pods --no-headers=true | awk '/kiali-traffic-generator.*/{print $1}'| xargs  ${CLIENT_EXE} -n bookinfo delete pod
 
   if [ "${KIALI_VERSION}" == "dev" ]; then
     infomsg "Installing Kiali ..."
@@ -241,27 +246,6 @@ minikube_install_basic_demo() {
   ${CLIENT_EXE} --context ${CLUSTER2_DB} create namespace ${MONGONS}
   ${CLIENT_EXE} --context ${CLUSTER2_DB} -n ${MONGONS} apply -f ${OUTPUT_DIR}/istio-*/samples/bookinfo/platform/kube/bookinfo-db.yaml
 
-  infomsg "Creating Istio ServiceEntry resource for MySQL access - this will not be fully configured yet"
-  cat <<EOM | ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} -n bookinfo apply -f -
-apiVersion: networking.istio.io/v1
-kind: ServiceEntry
-metadata:
-  name: mysqldb.test
-spec:
-  addresses:
-  - "127.0.0.1"
-  endpoints:
-  - address: "127.0.0.1"
-  hosts:
-  - mysqldb.test
-  location: MESH_EXTERNAL
-  resolution: STATIC
-  ports:
-  - number: 3306
-    name: tcp
-    protocol: TCP
-EOM
-
   infomsg "Creating ratings-v2-mysql app - this will use MySQL but will not be correctly configured yet"
   ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} -n bookinfo apply -f ${OUTPUT_DIR}/istio-*/samples/bookinfo/platform/kube/bookinfo-ratings-v2-mysql.yaml
 
@@ -277,6 +261,7 @@ minikube_install_skupper() {
   rm -f "${SKUPPER_TOKEN_FILE_MONGO}"
   ${SKUPPER_EXE} --context ${CLUSTER2_DB} -n ${MONGONS} init
   ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} create namespace ${MONGOSKUPPERNS}
+  ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} label namespace ${MONGOSKUPPERNS} istio-injection=enabled --overwrite
   ${SKUPPER_EXE} --context ${CLUSTER1_ISTIO} -n ${MONGOSKUPPERNS} init --enable-console --enable-flow-collector
   ${SKUPPER_EXE} --context ${CLUSTER1_ISTIO} -n ${MONGOSKUPPERNS} token create "${SKUPPER_TOKEN_FILE_MONGO}"
   ${SKUPPER_EXE} --context ${CLUSTER2_DB} -n ${MONGONS} link create "${SKUPPER_TOKEN_FILE_MONGO}"
@@ -295,6 +280,7 @@ minikube_install_skupper() {
   rm -f "${SKUPPER_TOKEN_FILE_MYSQL}"
   ${SKUPPER_EXE} --context ${CLUSTER2_DB} -n ${MYSQLNS} init
   ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} create namespace ${MYSQLSKUPPERNS}
+  ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} label namespace ${MYSQLSKUPPERNS} istio-injection=enabled --overwrite
   ${SKUPPER_EXE} --context ${CLUSTER1_ISTIO} -n ${MYSQLSKUPPERNS} init --enable-console --enable-flow-collector
   ${SKUPPER_EXE} --context ${CLUSTER1_ISTIO} -n ${MYSQLSKUPPERNS} token create "${SKUPPER_TOKEN_FILE_MYSQL}"
   ${SKUPPER_EXE} --context ${CLUSTER2_DB} -n ${MYSQLNS} link create "${SKUPPER_TOKEN_FILE_MYSQL}"
@@ -303,9 +289,8 @@ minikube_install_skupper() {
   while ! ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} -n ${MYSQLSKUPPERNS} get svc mysqldb-v1 &> /dev/null ; do echo -n '.'; sleep 1; done; echo
   SKUPPER_MYSQL_IP="$(${CLIENT_EXE} --context ${CLUSTER1_ISTIO} -n ${MYSQLSKUPPERNS} get svc mysqldb-v1 -o jsonpath='{.spec.clusterIPs[0]}')"
   infomsg "MySQL IP over the Skupper link: ${SKUPPER_MYSQL_IP}"
-  infomsg "Configuring Bookinfo ratings-v2-mysql to talk to MySQL over the Skupper link via the ServiceEntry"
-  ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} -n bookinfo set env deployment/ratings-v2-mysql MYSQL_DB_HOST="${SKUPPER_MYSQL_IP}"
-  ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} -n bookinfo patch serviceentry mysqldb.test --type='json' -p='[{"op": "replace", "path": "/spec/addresses/0", "value": "'${SKUPPER_MYSQL_IP}'"}, {"op": "replace", "path": "/spec/endpoints/0/address", "value": "'${SKUPPER_MYSQL_IP}'"}]'
+  infomsg "Configuring Bookinfo ratings-v2-mysql to talk to MySQL over the Skupper link"
+  ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} -n bookinfo set env deployment/ratings-v2-mysql MYSQL_DB_URL="mysqldb://${SKUPPER_MYSQL_IP}:3306/mysql"
   infomsg "Exposing MySQL Skupper Prometheus so its UI can be accessed"
   ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} -n ${MYSQLSKUPPERNS} patch svc skupper-prometheus --type=merge --patch '{"spec":{"type":"LoadBalancer"}}'
 
@@ -330,7 +315,7 @@ openshift_install_basic_demo() {
   openshift_login ${CLUSTER1_ISTIO}
 
   infomsg "Installing Istio ..."
-  ${HACK_SCRIPTS_DIR}/istio/install-istio-via-istioctl.sh -c ${CLIENT_EXE}
+  ${HACK_SCRIPTS_DIR}/istio/install-istio-via-istioctl.sh -c ${CLIENT_EXE} -s values.meshConfig.outboundTrafficPolicy.mode=REGISTRY_ONLY
 
   infomsg "Installing Bookinfo demo ..."
   ${HACK_SCRIPTS_DIR}/istio/install-bookinfo-demo.sh -c ${CLIENT_EXE} --traffic-generator --wait-timeout 5m
@@ -368,27 +353,6 @@ openshift_install_basic_demo() {
 
   # LOGIN TO CLUSTER 1
   openshift_login ${CLUSTER1_ISTIO}
-
-  infomsg "Creating Istio ServiceEntry resource for MySQL access - this will not be fully configured yet"
-  cat <<EOM | ${CLIENT_EXE} -n bookinfo apply -f -
-apiVersion: networking.istio.io/v1
-kind: ServiceEntry
-metadata:
-  name: mysqldb.test
-spec:
-  addresses:
-  - "127.0.0.1"
-  endpoints:
-  - address: "127.0.0.1"
-  hosts:
-  - mysqldb.test
-  location: MESH_EXTERNAL
-  resolution: STATIC
-  ports:
-  - number: 3306
-    name: tcp
-    protocol: TCP
-EOM
 
   infomsg "Creating ratings-v2-mysql app - this will use MySQL but will not be correctly configured yet"
   ${CLIENT_EXE} -n bookinfo apply -f ${OUTPUT_DIR}/istio-*/samples/bookinfo/platform/kube/bookinfo-ratings-v2-mysql.yaml
@@ -447,9 +411,8 @@ openshift_install_skupper() {
   while ! ${CLIENT_EXE} -n ${MYSQLSKUPPERNS} get svc mysqldb-v1 &> /dev/null ; do echo -n '.'; sleep 1; done; echo
   SKUPPER_MYSQL_IP="$(${CLIENT_EXE} -n ${MYSQLSKUPPERNS} get svc mysqldb-v1 -o jsonpath='{.spec.clusterIPs[0]}')"
   infomsg "MySQL IP over the Skupper link: ${SKUPPER_MYSQL_IP}"
-  infomsg "Configuring Bookinfo ratings-v2-mysql to talk to MySQL over the Skupper link via the ServiceEntry"
-  ${CLIENT_EXE} -n bookinfo set env deployment/ratings-v2-mysql MYSQL_DB_HOST="${SKUPPER_MYSQL_IP}"
-  ${CLIENT_EXE} -n bookinfo patch serviceentry mysqldb.test --type='json' -p='[{"op": "replace", "path": "/spec/addresses/0", "value": "'${SKUPPER_MYSQL_IP}'"}, {"op": "replace", "path": "/spec/endpoints/0/address", "value": "'${SKUPPER_MYSQL_IP}'"}]'
+  infomsg "Configuring Bookinfo ratings-v2-mysql to talk to MySQL over the Skupper link"
+  ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} -n bookinfo set env deployment/ratings-v2-mysql MYSQL_DB_URL="mysqldb://${SKUPPER_MYSQL_IP}:3306/test"
   infomsg "Exposing MySQL Skupper Prometheus so its UI can be accessed"
   ${CLIENT_EXE} -n ${MYSQLSKUPPERNS} expose svc skupper-prometheus
 
