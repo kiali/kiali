@@ -152,6 +152,7 @@ func createError(errorText, namespace, destinationRuleName, cluster string, vali
 	key := models.IstioValidationKey{Name: destinationRuleName, Namespace: namespace, ObjectType: DestinationRulesCheckerType, Cluster: cluster}
 	checks := models.Build(errorText, "spec/host")
 	rrValidation := &models.IstioValidation{
+		Cluster:    cluster,
 		Name:       destinationRuleName,
 		ObjectType: DestinationRulesCheckerType,
 		Valid:      valid,

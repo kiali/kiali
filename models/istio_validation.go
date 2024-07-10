@@ -386,8 +386,8 @@ func Build(checkId string, path string) IstioCheck {
 	return check
 }
 
-func BuildKey(objectType, name, namespace string) IstioValidationKey {
-	return IstioValidationKey{ObjectType: objectType, Namespace: namespace, Name: name}
+func BuildKey(objectType, name, namespace, cluster string) IstioValidationKey {
+	return IstioValidationKey{Cluster: cluster, ObjectType: objectType, Namespace: namespace, Name: name}
 }
 
 func CheckMessage(checkId string) string {

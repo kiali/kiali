@@ -107,6 +107,7 @@ func createError(gatewayRuleName, namespace, cluster string, serverIndex, hostIn
 	checks := models.Build("gateways.multimatch",
 		"spec/servers["+strconv.Itoa(serverIndex)+"]/hosts["+strconv.Itoa(hostIndex)+"]")
 	rrValidation := &models.IstioValidation{
+		Cluster:    cluster,
 		Name:       gatewayRuleName,
 		ObjectType: GatewayCheckerType,
 		Valid:      true,

@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
@@ -572,6 +573,7 @@ func testValidationAddedExported(t *testing.T, destinationRules []*networking_v1
 	assert := assert.New(t)
 
 	vals := TrafficPolicyChecker{
+		Cluster:          config.DefaultClusterID,
 		DestinationRules: append(destinationRules, exportedDestinationRules...),
 		MTLSDetails:      mTLSDetails,
 	}.Check()
@@ -581,7 +583,7 @@ func testValidationAddedExported(t *testing.T, destinationRules []*networking_v1
 
 	result := models.IstioValidation{}
 	for _, nameNamespace := range nameNamespaces {
-		validation, ok := vals[models.BuildKey(DestinationRulesCheckerType, nameNamespace.Name, nameNamespace.Namespace)]
+		validation, ok := vals[models.BuildKey(DestinationRulesCheckerType, nameNamespace.Name, nameNamespace.Namespace, config.DefaultClusterID)]
 		assert.True(ok)
 		assert.True(validation.Valid)
 
@@ -601,12 +603,13 @@ func testValidationsNotAddedExported(t *testing.T, destinationRules []*networkin
 	assert := assert.New(t)
 
 	vals := TrafficPolicyChecker{
+		Cluster:          config.DefaultClusterID,
 		DestinationRules: append(destinationRules, exportedDestinationRules...),
 		MTLSDetails:      mTLSDetails,
 	}.Check()
 
 	assert.Empty(vals)
-	validation, ok := vals[models.BuildKey(DestinationRulesCheckerType, name, namespace)]
+	validation, ok := vals[models.BuildKey(DestinationRulesCheckerType, name, namespace, config.DefaultClusterID)]
 
 	assert.False(ok)
 	assert.Nil(validation)
@@ -616,7 +619,7 @@ func notPresentReferences(t *testing.T, validation models.IstioValidation, ns st
 	assert := assert.New(t)
 
 	for _, sn := range serviceNames {
-		refKey := models.IstioValidationKey{ObjectType: "destinationrule", Namespace: ns, Name: sn}
+		refKey := models.IstioValidationKey{ObjectType: "destinationrule", Namespace: ns, Name: sn, Cluster: config.DefaultClusterID}
 		assert.NotContains(validation.References, refKey)
 	}
 }

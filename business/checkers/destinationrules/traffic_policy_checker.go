@@ -10,6 +10,7 @@ import (
 )
 
 type TrafficPolicyChecker struct {
+	Cluster          string
 	DestinationRules []*networking_v1.DestinationRule
 	MTLSDetails      kubernetes.MTLSDetails
 }
@@ -32,14 +33,14 @@ func (t TrafficPolicyChecker) Check() models.IstioValidations {
 		// Invalid if there isn't trafficPolicy specified or trafficPolicy doesn't specify TLSSettings
 		if !hasTrafficPolicy(dr) || !hasTLSSettings(dr) {
 			check := models.Build("destinationrules.trafficpolicy.notlssettings", "spec/trafficPolicy")
-			key := models.BuildKey(DestinationRulesCheckerType, dr.Name, dr.Namespace)
+			key := models.BuildKey(DestinationRulesCheckerType, dr.Name, dr.Namespace, t.Cluster)
 
 			refKeys := make([]models.IstioValidationKey, 0, len(refdMtls))
 			for _, dr := range drSameHosts {
-				refKeys = append(refKeys, models.BuildKey(DestinationRulesCheckerType, dr.Name, dr.Namespace))
+				refKeys = append(refKeys, models.BuildKey(DestinationRulesCheckerType, dr.Name, dr.Namespace, t.Cluster))
 			}
 
-			validation := buildDestinationRuleValidation(dr, check, true, refKeys)
+			validation := buildDestinationRuleValidation(dr, check, true, refKeys, t.Cluster)
 
 			if _, exists := validations[key]; !exists {
 				validations.MergeValidations(models.IstioValidations{key: validation})
@@ -116,8 +117,9 @@ func hasTrafficPolicyTLS(dr *networking_v1.DestinationRule) bool {
 	return false
 }
 
-func buildDestinationRuleValidation(dr *networking_v1.DestinationRule, checks models.IstioCheck, valid bool, refKeys []models.IstioValidationKey) *models.IstioValidation {
+func buildDestinationRuleValidation(dr *networking_v1.DestinationRule, checks models.IstioCheck, valid bool, refKeys []models.IstioValidationKey, cluster string) *models.IstioValidation {
 	validation := &models.IstioValidation{
+		Cluster:    cluster,
 		Name:       dr.Name,
 		ObjectType: DestinationRulesCheckerType,
 		Valid:      valid,

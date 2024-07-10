@@ -18,6 +18,7 @@ const objectType = "authorizationpolicy"
 
 type MtlsEnabledChecker struct {
 	AuthorizationPolicies []*security_v1.AuthorizationPolicy
+	Cluster               string
 	MtlsDetails           kubernetes.MTLSDetails
 	ServiceEntries        []networking_v1.ServiceEntry
 	RegistryServices      []*kubernetes.RegistryService
@@ -36,7 +37,7 @@ func (c MtlsEnabledChecker) Check() models.IstioValidations {
 		if !receiveMtlsTraffic {
 			if need, paths := needsMtls(ap); need {
 				checks := make([]*models.IstioCheck, 0)
-				key := models.BuildKey(objectType, ap.Name, ap.Namespace)
+				key := models.BuildKey(objectType, ap.Name, ap.Namespace, c.Cluster)
 
 				for _, path := range paths {
 					check := models.Build("authorizationpolicy.mtls.needstobeenabled", path)
@@ -44,6 +45,7 @@ func (c MtlsEnabledChecker) Check() models.IstioValidations {
 				}
 
 				validations.MergeValidations(models.IstioValidations{key: &models.IstioValidation{
+					Cluster:    c.Cluster,
 					Name:       ap.Namespace,
 					ObjectType: objectType,
 					Valid:      false,
@@ -79,7 +81,7 @@ func needsMtls(ap *security_v1.AuthorizationPolicy) (bool, []string) {
 func fromNeedsMtls(froms []*api_security_v1.Rule_From, ruleNum int) (bool, []string) {
 	paths := make([]string, 0)
 
-	for _, from := range froms {
+	for fromNum, from := range froms {
 		if from == nil {
 			continue
 		}
@@ -89,16 +91,16 @@ func fromNeedsMtls(froms []*api_security_v1.Rule_From, ruleNum int) (bool, []str
 		}
 
 		if len(from.Source.Principals) > 0 {
-			paths = append(paths, fmt.Sprintf("spec/rules[%d]/source/principals", ruleNum))
+			paths = append(paths, fmt.Sprintf("spec/rules[%d]/from[%d]/source/principals", ruleNum, fromNum))
 		}
 		if len(from.Source.NotPrincipals) > 0 {
-			paths = append(paths, fmt.Sprintf("spec/rules[%d]/source/notPrincipals", ruleNum))
+			paths = append(paths, fmt.Sprintf("spec/rules[%d]/from[%d]/source/notPrincipals", ruleNum, fromNum))
 		}
 		if len(from.Source.Namespaces) > 0 {
-			paths = append(paths, fmt.Sprintf("spec/rules[%d]/source/namespaces", ruleNum))
+			paths = append(paths, fmt.Sprintf("spec/rules[%d]/from[%d]/source/namespaces", ruleNum, fromNum))
 		}
 		if len(from.Source.NotNamespaces) > 0 {
-			paths = append(paths, fmt.Sprintf("spec/rules[%d]/source/notNamespaces", ruleNum))
+			paths = append(paths, fmt.Sprintf("spec/rules[%d]/from[%d]/source/notNamespaces", ruleNum, fromNum))
 		}
 	}
 	return len(paths) > 0, paths
