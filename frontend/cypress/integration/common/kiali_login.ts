@@ -134,7 +134,7 @@ Then('user sees the Overview page', () => {
 });
 
 Then('the server will return a login error', () => {
-  cy.intercept({ url: `${Cypress.config('baseUrl')}/*`, query: { code: '*' } }, req => {
+  cy.intercept({ url: `${Cypress.config('baseUrl')}/api/auth/callback*`, query: { code: '*' } }, req => {
     req.query['code'] = 'invalidcode';
   });
 });
