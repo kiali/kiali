@@ -73,6 +73,7 @@ OPENSHIFT1_PASSWORD="kiali"
 OPENSHIFT2_API=""
 OPENSHIFT2_USERNAME="kiali"
 OPENSHIFT2_PASSWORD="kiali"
+SINGLE_ROUTER="false"
 SKUPPER_EXE="${OUTPUT_DIR}/skupper"
 SKUPPER_TOKEN_FILE_MONGO="${OUTPUT_DIR}/skupper-mongo.token"
 SKUPPER_TOKEN_FILE_MYSQL="${OUTPUT_DIR}/skupper-mysql.token"
@@ -109,6 +110,7 @@ while [ $# -gt 0 ]; do
     -os2a|--openshift2-api)   OPENSHIFT2_API="$2"            ;shift;shift ;;
     -os2u|--openshift2-user)  OPENSHIFT2_USERNAME="$2"       ;shift;shift ;;
     -os2p|--openshift2-pass)  OPENSHIFT2_PASSWORD="$2"       ;shift;shift ;;
+    -sr|--single-router)      SINGLE_ROUTER="$2"             ;shift;shift ;;
     -ve|--validate-env)       VALIDATE_ENVIRONMENT="$2"      ;shift;shift ;;
     -h|--help)
       cat <<HELPMSG
@@ -148,6 +150,9 @@ Valid command line arguments:
   -os2a|--openshift2-api <api URL>: The URL to the second OpenShift API server.
   -os2u|--openshift2-user <username>: The username of the user for the second OpenShift cluster. (default: kiali)
   -os2p|--openshift2-pass <password>: The password of the user for the second OpenShift cluster. (default: kiali)
+  -sr|--single-router <true|false>: If true, there will be one router to supply access to both databases.
+                                    If false, there will be two routers - one for each database (mongo and mysql).
+                                    Default: false
   -ve|--validate-env <true|false>: if true, check that the environment has everything we need. Set this to false
                                    to speed up initialization of the script at the expense of not being able to
                                    fail-fast on obvious errors (default: true)
@@ -176,6 +181,16 @@ HELPMSG
   esac
 done
 
+# SET SOME VARIABLES BASED ON COMMAND LINE OPTIONS
+
+if [ "${SINGLE_ROUTER}" == "true" ]; then
+  # there will only be one router to be placed in a single namespace on each end of the pipe - both mongo and mysql will be in that single namespace
+  MONGONS="database"
+  MYSQLNS="database"
+  MONGOSKUPPERNS="skupperns"
+  MYSQLSKUPPERNS="skupperns"
+fi
+
 #
 # FUNCTIONS TO DO THE IMPORTANT STUFF
 #
@@ -194,7 +209,7 @@ download_istio() {
 }
 
 # minikube_install_basic_demo will install the two minikube clusters, the two databases, Istio, Kiali, and Bookinfo demo.
-# It will not install Skupper, so the ratings-v2 app will not work after this function is run because it cannot access Mongo.
+# It will not install Skupper, so the ratings apps will not work after this function is run because it cannot access the databases.
 # Execute the minikube_install_skupper function after this function finishes.
 minikube_install_basic_demo() {
 
@@ -248,11 +263,11 @@ minikube_install_basic_demo() {
   ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} -n bookinfo patch svc productpage --type=merge --patch '{"spec":{"type":"LoadBalancer"}}'
 
   infomsg "Installing MySQL in [${CLUSTER2_DB}] cluster"
-  ${CLIENT_EXE} --context ${CLUSTER2_DB} create namespace ${MYSQLNS}
+  ${CLIENT_EXE} --context ${CLUSTER2_DB} get namespace ${MYSQLNS} 2>/dev/null || ${CLIENT_EXE} --context ${CLUSTER2_DB} create namespace ${MYSQLNS}
   ${CLIENT_EXE} --context ${CLUSTER2_DB} -n ${MYSQLNS} apply -f ${OUTPUT_DIR}/istio-*/samples/bookinfo/platform/kube/bookinfo-mysql.yaml
 
   infomsg "Installing Mongo in [${CLUSTER2_DB}] cluster"
-  ${CLIENT_EXE} --context ${CLUSTER2_DB} create namespace ${MONGONS}
+  ${CLIENT_EXE} --context ${CLUSTER2_DB} get namespace ${MONGONS} 2>/dev/null || ${CLIENT_EXE} --context ${CLUSTER2_DB} create namespace ${MONGONS}
   ${CLIENT_EXE} --context ${CLUSTER2_DB} -n ${MONGONS} apply -f ${OUTPUT_DIR}/istio-*/samples/bookinfo/platform/kube/bookinfo-db.yaml
 
   infomsg "Creating ratings-v2-mysql app - this will use MySQL but will not be correctly configured yet"
@@ -269,11 +284,13 @@ minikube_install_skupper() {
   infomsg "Creating the Skupper link so Bookinfo can access Mongo"
   rm -f "${SKUPPER_TOKEN_FILE_MONGO}"
   ${SKUPPER_EXE} --context ${CLUSTER2_DB} -n ${MONGONS} init
-  ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} create namespace ${MONGOSKUPPERNS}
+  ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} get namespace ${MONGOSKUPPERNS} 2>/dev/null || ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} create namespace ${MONGOSKUPPERNS}
   ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} label namespace ${MONGOSKUPPERNS} istio-injection=enabled --overwrite
-  ${SKUPPER_EXE} --context ${CLUSTER1_ISTIO} -n ${MONGOSKUPPERNS} init --enable-console --enable-flow-collector
+  ${SKUPPER_EXE} --context ${CLUSTER1_ISTIO} -n ${MONGOSKUPPERNS} init --enable-console --enable-flow-collector --router-service-annotations "extension.kiali.io/ui-url=mazz"
   ${SKUPPER_EXE} --context ${CLUSTER1_ISTIO} -n ${MONGOSKUPPERNS} token create "${SKUPPER_TOKEN_FILE_MONGO}"
+  # skupper link will connect both ends of the pipe (the skupper-routers on each end of the pipe will be "linked")
   ${SKUPPER_EXE} --context ${CLUSTER2_DB} -n ${MONGONS} link create "${SKUPPER_TOKEN_FILE_MONGO}"
+  # skupper expose sets up a service on the client side pipe to mimic the service-side service; you can expose multiple services per router
   ${SKUPPER_EXE} --context ${CLUSTER2_DB} -n ${MONGONS} expose deployment/mongodb-v1 --port 27017
   infomsg "Wait for the mongodb-v1 service to be created by Skupper in the [${CLUSTER1_ISTIO}] cluster"
   while ! ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} -n ${MONGOSKUPPERNS} get svc mongodb-v1 &> /dev/null ; do echo -n '.'; sleep 1; done; echo
@@ -286,13 +303,18 @@ minikube_install_skupper() {
 
   # create a link to MySQL
   infomsg "Creating the Skupper link so Bookinfo can access MySQL"
-  rm -f "${SKUPPER_TOKEN_FILE_MYSQL}"
-  ${SKUPPER_EXE} --context ${CLUSTER2_DB} -n ${MYSQLNS} init
-  ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} create namespace ${MYSQLSKUPPERNS}
-  ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} label namespace ${MYSQLSKUPPERNS} istio-injection=enabled --overwrite
-  ${SKUPPER_EXE} --context ${CLUSTER1_ISTIO} -n ${MYSQLSKUPPERNS} init --enable-console --enable-flow-collector
-  ${SKUPPER_EXE} --context ${CLUSTER1_ISTIO} -n ${MYSQLSKUPPERNS} token create "${SKUPPER_TOKEN_FILE_MYSQL}"
-  ${SKUPPER_EXE} --context ${CLUSTER2_DB} -n ${MYSQLNS} link create "${SKUPPER_TOKEN_FILE_MYSQL}"
+  # we only have to init a second router if we were told not to have a single router
+  if [ "${SINGLE_ROUTER}" != "true" ]; then
+    rm -f "${SKUPPER_TOKEN_FILE_MYSQL}"
+    ${SKUPPER_EXE} --context ${CLUSTER2_DB} -n ${MYSQLNS} init
+    ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} get namespace ${MYSQLSKUPPERNS} 2>/dev/null || ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} create namespace ${MYSQLSKUPPERNS}
+    ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} label namespace ${MYSQLSKUPPERNS} istio-injection=enabled --overwrite
+    ${SKUPPER_EXE} --context ${CLUSTER1_ISTIO} -n ${MYSQLSKUPPERNS} init --enable-console --enable-flow-collector --router-service-annotations "extension.kiali.io/ui-url=mazz"
+    ${SKUPPER_EXE} --context ${CLUSTER1_ISTIO} -n ${MYSQLSKUPPERNS} token create "${SKUPPER_TOKEN_FILE_MYSQL}"
+    # skupper link will connect both ends of the pipe (the skupper-routers on each end of the pipe will be "linked")
+    ${SKUPPER_EXE} --context ${CLUSTER2_DB} -n ${MYSQLNS} link create "${SKUPPER_TOKEN_FILE_MYSQL}"
+  fi
+  # skupper expose sets up a service on the client side pipe to mimic the service-side service; you can expose multiple services per router
   ${SKUPPER_EXE} --context ${CLUSTER2_DB} -n ${MYSQLNS} expose deployment/mysqldb-v1 --port 3306
   infomsg "Wait for the mysqldb-v1 service to be created by Skupper in the [${CLUSTER1_ISTIO}] cluster"
   while ! ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} -n ${MYSQLSKUPPERNS} get svc mysqldb-v1 &> /dev/null ; do echo -n '.'; sleep 1; done; echo
@@ -314,7 +336,7 @@ minikube_install_skupper() {
 }
 
 # openshift_install_basic_demo will install the two databases, Istio, Kiali, and Bookinfo demo in the two existing OpenShift clusters.
-# It will not install Skupper, so the ratings-v2 app will not work after this function is run because it cannot access Mongo.
+# It will not install Skupper, so the ratings apps will not work after this function is run because it cannot access the databases.
 # Execute the openshift_install_skupper function after this function finishes.
 openshift_install_basic_demo() {
 
@@ -358,11 +380,11 @@ openshift_install_basic_demo() {
   openshift_login ${CLUSTER2_DB}
 
   infomsg "Installing MySQL in [${CLUSTER2_DB}] cluster"
-  ${CLIENT_EXE} create namespace ${MYSQLNS}
+  ${CLIENT_EXE} get namespace ${MYSQLNS} 2>/dev/null || ${CLIENT_EXE} create namespace ${MYSQLNS}
   ${CLIENT_EXE} -n ${MYSQLNS} apply -f ${OUTPUT_DIR}/istio-*/samples/bookinfo/platform/kube/bookinfo-mysql.yaml
 
   infomsg "Installing Mongo in [${CLUSTER2_DB}] cluster"
-  ${CLIENT_EXE} create namespace ${MONGONS}
+  ${CLIENT_EXE} get namespace ${MONGONS} 2>/dev/null || ${CLIENT_EXE} create namespace ${MONGONS}
   ${CLIENT_EXE} -n ${MONGONS} apply -f ${OUTPUT_DIR}/istio-*/samples/bookinfo/platform/kube/bookinfo-db.yaml
 
   # LOGIN TO CLUSTER 1
@@ -386,13 +408,16 @@ openshift_install_skupper() {
   ${SKUPPER_EXE} -n ${MONGONS} init
   # LOGIN TO CLUSTER 1
   openshift_login ${CLUSTER1_ISTIO}
-  ${CLIENT_EXE} create namespace ${MONGOSKUPPERNS}
-  ${CLIENT_EXE} label namespace ${MONGOSKUPPERNS} istio-injection=enabled --overwrite
-  ${SKUPPER_EXE} -n ${MONGOSKUPPERNS} init --enable-console --enable-flow-collector
+  ${CLIENT_EXE} get namespace ${MONGOSKUPPERNS} 2>/dev/null || ${CLIENT_EXE} create namespace ${MONGOSKUPPERNS}
+  # TODO: RIGHT NOW SKUPPER DOES NOT WORK IN OPENSHIFT WHEN INSIDE THE MESH
+  ${CLIENT_EXE} label namespace ${MONGOSKUPPERNS} istio-injection=disabled --overwrite
+  ${SKUPPER_EXE} -n ${MONGOSKUPPERNS} init --enable-console --enable-flow-collector --router-service-annotations "extension.kiali.io/ui-url=mazz"
   ${SKUPPER_EXE} -n ${MONGOSKUPPERNS} token create "${SKUPPER_TOKEN_FILE_MONGO}"
   # LOGIN TO CLUSTER 2
   openshift_login ${CLUSTER2_DB}
+  # skupper link will connect both ends of the pipe (the skupper-routers on each end of the pipe will be "linked")
   ${SKUPPER_EXE} -n ${MONGONS} link create "${SKUPPER_TOKEN_FILE_MONGO}"
+  # skupper expose sets up a service on the client side pipe to mimic the service-side service; you can expose multiple services per router
   ${SKUPPER_EXE} -n ${MONGONS} expose deployment/mongodb-v1 --port 27017
   # LOGIN TO CLUSTER 1
   openshift_login ${CLUSTER1_ISTIO}
@@ -407,19 +432,28 @@ openshift_install_skupper() {
 
   # create a link to MySQL
   infomsg "Creating the Skupper link so Bookinfo can access MySQL"
-  rm -f "${SKUPPER_TOKEN_FILE_MYSQL}"
-  # LOGIN TO CLUSTER 2
-  openshift_login ${CLUSTER2_DB}
-  ${SKUPPER_EXE} -n ${MYSQLNS} init
-  # LOGIN TO CLUSTER 1
-  openshift_login ${CLUSTER1_ISTIO}
-  ${CLIENT_EXE} create namespace ${MYSQLSKUPPERNS}
-  ${CLIENT_EXE} label namespace ${MYSQLSKUPPERNS} istio-injection=enabled --overwrite
-  ${SKUPPER_EXE} -n ${MYSQLSKUPPERNS} init --enable-console --enable-flow-collector
-  ${SKUPPER_EXE} -n ${MYSQLSKUPPERNS} token create "${SKUPPER_TOKEN_FILE_MYSQL}"
-  # LOGIN TO CLUSTER 2
-  openshift_login ${CLUSTER2_DB}
-  ${SKUPPER_EXE} -n ${MYSQLNS} link create "${SKUPPER_TOKEN_FILE_MYSQL}"
+  # we only have to init a second router if we were told not to have a single router
+  if [ "${SINGLE_ROUTER}" != "true" ]; then
+    rm -f "${SKUPPER_TOKEN_FILE_MYSQL}"
+    # LOGIN TO CLUSTER 2
+    openshift_login ${CLUSTER2_DB}
+    ${SKUPPER_EXE} -n ${MYSQLNS} init
+    # LOGIN TO CLUSTER 1
+    openshift_login ${CLUSTER1_ISTIO}
+    ${CLIENT_EXE} get namespace ${MYSQLSKUPPERNS} 2>/dev/null || ${CLIENT_EXE} create namespace ${MYSQLSKUPPERNS}
+    # TODO: RIGHT NOW SKUPPER DOES NOT WORK IN OPENSHIFT WHEN INSIDE THE MESH
+    ${CLIENT_EXE} label namespace ${MYSQLSKUPPERNS} istio-injection=disabled --overwrite
+    ${SKUPPER_EXE} -n ${MYSQLSKUPPERNS} init --enable-console --enable-flow-collector --router-service-annotations "extension.kiali.io/ui-url=mazz"
+    ${SKUPPER_EXE} -n ${MYSQLSKUPPERNS} token create "${SKUPPER_TOKEN_FILE_MYSQL}"
+    # LOGIN TO CLUSTER 2
+    openshift_login ${CLUSTER2_DB}
+    # skupper link will connect both ends of the pipe (the skupper-routers on each end of the pipe will be "linked")
+    ${SKUPPER_EXE} -n ${MYSQLNS} link create "${SKUPPER_TOKEN_FILE_MYSQL}"
+  else
+    # LOGIN TO CLUSTER 2
+    openshift_login ${CLUSTER2_DB}
+  fi
+  # skupper expose sets up a service on the client side pipe to mimic the service-side service; you can expose multiple services per router
   ${SKUPPER_EXE} -n ${MYSQLNS} expose deployment/mysqldb-v1 --port 3306
   # LOGIN TO CLUSTER 1
   openshift_login ${CLUSTER1_ISTIO}
@@ -430,7 +464,7 @@ openshift_install_skupper() {
   infomsg "Configuring Bookinfo ratings-v2-mysql to talk to MySQL over the Skupper link"
   ${CLIENT_EXE} -n bookinfo set env deployment/ratings-v2-mysql MYSQL_DB_HOST="${SKUPPER_MYSQL_IP}"
   infomsg "Exposing MySQL Skupper Prometheus so its UI can be accessed"
-  ${CLIENT_EXE} -n ${MYSQLSKUPPERNS} expose svc skupper-prometheus
+  ${CLIENT_EXE} -n ${MYSQLSKUPPERNS} get route skupper-prometheus 2>/dev/null || ${CLIENT_EXE} -n ${MYSQLSKUPPERNS} expose svc skupper-prometheus
 
   # Get all deployments with the specified label, and patch them with another app label
   local deployments=$(${CLIENT_EXE} get deployments -l "app.kubernetes.io/name=skupper-router" --all-namespaces -o jsonpath='{range .items[*]}{.metadata.namespace}:{.metadata.name}{"\n"}{end}')
@@ -822,14 +856,22 @@ elif [ "$_CMD" == "sprommongo" -o "$_CMD" == "sprommysql" ]; then
 
 elif [ "$_CMD" == "sstatus" ]; then
 
-  confirm_cluster_is_up "${CLUSTER2_DB}"
   skupper_ui_username="admin"
 
+  confirm_cluster_is_up "${CLUSTER2_DB}"
   infomsg "Status of Mongo Skupper link on [${CLUSTER2_DB}] cluster:"
 
   case ${CLUSTER_TYPE} in
     minikube) ${SKUPPER_EXE} --context ${CLUSTER2_DB} -n ${MONGONS} link status ;;
     openshift) ${SKUPPER_EXE} -n ${MONGONS} link status ;;
+    *) errormsg "Invalid cluster type" && exit 1 ;;
+  esac
+
+  infomsg "Status of MySQL Skupper link on [${CLUSTER2_DB}] cluster:"
+
+  case ${CLUSTER_TYPE} in
+    minikube) ${SKUPPER_EXE} --context ${CLUSTER2_DB} -n ${MYSQLNS} link status ;;
+    openshift) ${SKUPPER_EXE} -n ${MYSQLNS} link status ;;
     *) errormsg "Invalid cluster type" && exit 1 ;;
   esac
 
@@ -839,6 +881,14 @@ elif [ "$_CMD" == "sstatus" ]; then
   case ${CLUSTER_TYPE} in
     minikube) ${SKUPPER_EXE} --context ${CLUSTER1_ISTIO} -n ${MONGOSKUPPERNS} link status ;;
     openshift) ${SKUPPER_EXE} -n ${MONGOSKUPPERNS} link status ;;
+    *) errormsg "Invalid cluster type" && exit 1 ;;
+  esac
+
+  infomsg "Status of MySQL Skupper link on [${CLUSTER1_ISTIO}] cluster:"
+
+  case ${CLUSTER_TYPE} in
+    minikube) ${SKUPPER_EXE} --context ${CLUSTER1_ISTIO} -n ${MYSQLSKUPPERNS} link status ;;
+    openshift) ${SKUPPER_EXE} -n ${MYSQLSKUPPERNS} link status ;;
     *) errormsg "Invalid cluster type" && exit 1 ;;
   esac
 
