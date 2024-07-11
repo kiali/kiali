@@ -26,7 +26,7 @@ func getVersions(ctx context.Context, conf *config.Config, clientFactory kuberne
 	}
 
 	if conf.ExternalServices.Grafana.Enabled {
-		gv, err := grafanaVersion(ctx, grafana)
+		gv, err := grafanaVersion(ctx, grafana, conf.ExternalServices.Grafana, clientFactory.GetSAHomeClusterClient())
 		if err != nil {
 			log.Infof("Error getting Grafana version: %v", err)
 		} else {
@@ -37,7 +37,7 @@ func getVersions(ctx context.Context, conf *config.Config, clientFactory kuberne
 	}
 
 	if conf.ExternalServices.Tracing.Enabled {
-		tv, err := tracingVersion(conf)
+		tv, err := tracingVersion(conf, clientFactory.GetSAHomeClusterClient())
 		if err != nil {
 			log.Infof("Error getting Tracing version: %v", err)
 		} else {
@@ -68,7 +68,7 @@ type tempoResponseVersion struct {
 	GoVersion string `json:"goVersion"`
 }
 
-func tracingVersion(conf *config.Config) (*models.ExternalServiceInfo, error) {
+func tracingVersion(conf *config.Config, homeClusterSAClient kubernetes.ClientInterface) (*models.ExternalServiceInfo, error) {
 	tracingConfig := conf.ExternalServices.Tracing
 
 	if !tracingConfig.Enabled {
@@ -82,7 +82,11 @@ func tracingVersion(conf *config.Config) (*models.ExternalServiceInfo, error) {
 	if product.Url != "" {
 		// try to determine version by querying
 		if tracingConfig.Provider == config.JaegerProvider {
-			body, statusCode, _, err := httputil.HttpGet(product.Url, nil, 10*time.Second, nil, nil)
+			auth := tracingConfig.Auth
+			if auth.UseKialiToken {
+				auth.Token = homeClusterSAClient.GetToken()
+			}
+			body, statusCode, _, err := httputil.HttpGet(product.Url, &auth, 10*time.Second, nil, nil)
 			if err != nil || statusCode > 399 {
 				log.Infof("jaeger version check failed: url=[%v], code=[%v]", product.Url, statusCode)
 			} else {
@@ -130,14 +134,20 @@ type grafanaResponseVersion struct {
 	BuildInfo grafanaBuildInfo `json:"buildInfo"`
 }
 
-func grafanaVersion(ctx context.Context, grafana *grafana.Service) (*models.ExternalServiceInfo, error) {
+func grafanaVersion(ctx context.Context, grafana *grafana.Service, grafanaConfig config.GrafanaConfig, homeClusterSAClient kubernetes.ClientInterface) (*models.ExternalServiceInfo, error) {
 	product := models.ExternalServiceInfo{}
 	product.Name = "Grafana"
 	product.Url = grafana.URL(ctx)
 	if product.Url != "" {
 		// try to determine version by querying
 		url := fmt.Sprintf("%s/api/frontend/settings", product.Url)
-		body, statusCode, _, err := httputil.HttpGet(url, nil, 10*time.Second, nil, nil)
+		// Be sure to copy config.Auth and not modify the existing
+		auth := grafanaConfig.Auth
+		if auth.UseKialiToken {
+			auth.Token = homeClusterSAClient.GetToken()
+		}
+		body, statusCode, _, err := httputil.HttpGet(url, &auth, 10*time.Second, nil, nil)
+
 		if err != nil || statusCode > 399 {
 			log.Infof("grafana version check failed: url=[%v], code=[%v]", url, statusCode)
 		} else {
