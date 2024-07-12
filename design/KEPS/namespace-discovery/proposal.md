@@ -28,22 +28,23 @@ Provide a new list of "discovery selectors" in the same way that [Istio itself h
 spec:
   deployment:
     discovery_selectors:
-    - match_labels:
-        abc: def
-        uvw: xyz
-    - match_labels:
-        org: accounting
-      match_expressions:
-      - key: tier
-        operator: In
-        values: ["production"]
-      - key: region
-        operator: NotIn
-        values: ["east"]
-    - match_expressions:
-      - key: country
-        operator: In
-        values: ["us", "ca"]
+      global:
+      - match_labels:
+          abc: def
+          uvw: xyz
+      - match_labels:
+          org: accounting
+        match_expressions:
+        - key: tier
+          operator: In
+          values: ["production"]
+        - key: region
+          operator: NotIn
+          values: ["east"]
+      - match_expressions:
+        - key: country
+          operator: In
+          values: ["us", "ca"]
 ```
 
 ## Istio Discovery Selectors
