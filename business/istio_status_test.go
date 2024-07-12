@@ -81,8 +81,8 @@ func TestComponentNotRunning(t *testing.T) {
 
 	for _, ds := range dss {
 		d := fakeDeploymentWithStatus(
-			"istio-egressgateway",
-			map[string]string{"app": "istio-egressgateway", "istio": "egressgateway"},
+			"istio=egressgateway",
+			map[string]string{"istio": "egressgateway"},
 			ds,
 		)
 		wl := &models.Workload{}
@@ -95,8 +95,8 @@ func TestComponentRunning(t *testing.T) {
 	assert := assert.New(t)
 
 	d := fakeDeploymentWithStatus(
-		"istio-egressgateway",
-		map[string]string{"app": "istio-egressgateway"},
+		"istio=egressgateway",
+		map[string]string{"istio": "egressgateway"},
 		apps_v1.DeploymentStatus{
 			Replicas:            2,
 			AvailableReplicas:   2,
@@ -142,8 +142,8 @@ func mockAddOnsCalls(t *testing.T, objects []runtime.Object, _ bool, overrideAdd
 
 func sampleIstioComponent() ([]runtime.Object, bool, bool) {
 	deployment := fakeDeploymentWithStatus(
-		"istio-egressgateway",
-		map[string]string{"app": "istio-egressgateway"},
+		"istio=egressgateway",
+		map[string]string{"istio": "egressgateway"},
 		apps_v1.DeploymentStatus{
 			Replicas:            2,
 			AvailableReplicas:   2,
@@ -188,6 +188,7 @@ func TestGrafanaWorking(t *testing.T) {
 	k8s, grafanaCalls, promCalls := mockAddOnsCalls(t, objs, b1, b2)
 
 	conf := config.Get()
+	config.Set(conf)
 
 	// Set global cache var
 	SetupBusinessLayer(t, k8s, *conf)
@@ -214,8 +215,8 @@ func TestGrafanaDisabled(t *testing.T) {
 
 	objects := []runtime.Object{
 		fakeDeploymentWithStatus(
-			"istio-egressgateway",
-			map[string]string{"app": "istio-egressgateway"},
+			"istio=egressgateway",
+			map[string]string{"istio": "egressgateway"},
 			apps_v1.DeploymentStatus{
 				Replicas:            2,
 				AvailableReplicas:   2,
@@ -242,16 +243,15 @@ func TestGrafanaDisabled(t *testing.T) {
 
 	// Requests to Tracing and Prometheus performed once
 	assert.Equal(1, *promCalls)
-
 	// Grafana is disabled
 	assertNotPresent(assert, icsl, "grafana")
 
 	// Two Istio components are missing
-	assertComponent(assert, icsl, "istio-ingressgateway", kubernetes.ComponentNotFound, true)
+	assertComponent(assert, icsl, "istio=ingressgateway", kubernetes.ComponentNotFound, true)
 	assertComponent(assert, icsl, "istiod", kubernetes.ComponentNotFound, true)
 
 	// The rest of the components are healthy
-	assertComponent(assert, icsl, "istio-egressgateway", kubernetes.ComponentHealthy, false)
+	assertComponent(assert, icsl, "istio=egressgateway", kubernetes.ComponentHealthy, false)
 	assertComponent(assert, icsl, "prometheus", kubernetes.ComponentHealthy, false)
 	assertComponent(assert, icsl, "tracing", kubernetes.ComponentHealthy, false)
 	assertComponent(assert, icsl, "custom dashboards", kubernetes.ComponentHealthy, false)
@@ -262,8 +262,8 @@ func TestGrafanaNotWorking(t *testing.T) {
 	grafanaCalls, prometheusCalls := 0, 0
 	objects := []runtime.Object{
 		fakeDeploymentWithStatus(
-			"istio-egressgateway",
-			map[string]string{"app": "istio-egressgateway"},
+			"istio=egressgateway",
+			map[string]string{"istio": "egressgateway"},
 			apps_v1.DeploymentStatus{
 				Replicas:            2,
 				AvailableReplicas:   2,
@@ -303,10 +303,10 @@ func TestGrafanaNotWorking(t *testing.T) {
 	// Grafana and two Istio comps missing
 	assertComponent(assert, icsl, "grafana", kubernetes.ComponentUnreachable, false)
 	assertComponent(assert, icsl, "istiod", kubernetes.ComponentNotFound, true)
-	assertComponent(assert, icsl, "istio-ingressgateway", kubernetes.ComponentNotFound, true)
+	assertComponent(assert, icsl, "istio=ingressgateway", kubernetes.ComponentNotFound, true)
 
 	// The rest of the components are healthy
-	assertComponent(assert, icsl, "istio-egressgateway", kubernetes.ComponentHealthy, false)
+	assertComponent(assert, icsl, "istio=egressgateway", kubernetes.ComponentHealthy, false)
 	assertComponent(assert, icsl, "prometheus", kubernetes.ComponentHealthy, false)
 	assertComponent(assert, icsl, "tracing", kubernetes.ComponentHealthy, false)
 	assertComponent(assert, icsl, "custom dashboards", kubernetes.ComponentHealthy, false)
@@ -422,7 +422,7 @@ func TestDefaults(t *testing.T) {
 	assert := assert.New(t)
 
 	objects := []runtime.Object{
-		fakeDeploymentWithStatus("istio-egressgateway", map[string]string{"app": "istio-egressgateway", "istio": "egressgateway"}, unhealthyStatus),
+		fakeDeploymentWithStatus("istio=egressgateway", map[string]string{"istio": "egressgateway"}, unhealthyStatus),
 		fakeDeploymentWithStatus("istiod", map[string]string{"app": "istiod", "istio": "pilot"}, healthyStatus),
 	}
 
@@ -438,7 +438,7 @@ func TestDefaults(t *testing.T) {
 	SetupBusinessLayer(t, k8s, *conf)
 	discovery := &fakeMeshDiscovery{
 		mesh: models.Mesh{
-			ControlPlanes: []models.ControlPlane{{Cluster: &models.KubeCluster{Name: conf.KubernetesConfig.ClusterName}, Status: kubernetes.ComponentHealthy}},
+			ControlPlanes: []models.ControlPlane{{Cluster: &models.KubeCluster{Name: conf.KubernetesConfig.ClusterName}, IstiodName: "istiod", Status: kubernetes.ComponentHealthy}},
 		},
 	}
 	WithDiscovery(discovery)
@@ -451,8 +451,8 @@ func TestDefaults(t *testing.T) {
 	assert.NoError(err)
 
 	// Two istio components are not found or unhealthy
-	assertComponent(assert, icsl, "istio-ingressgateway", kubernetes.ComponentNotFound, true)
-	assertComponent(assert, icsl, "istio-egressgateway", kubernetes.ComponentUnhealthy, false)
+	assertComponent(assert, icsl, "istio=ingressgateway", kubernetes.ComponentNotFound, true)
+	assertComponent(assert, icsl, "istio=egressgateway", kubernetes.ComponentUnhealthy, false)
 
 	// The rest of the components are healthy
 	assertComponent(assert, icsl, "istiod", kubernetes.ComponentHealthy, true)
@@ -470,7 +470,7 @@ func TestNonDefaults(t *testing.T) {
 	assert := assert.New(t)
 
 	objects := []runtime.Object{
-		fakeDeploymentWithStatus("istio-egressgateway", map[string]string{"app": "istio-egressgateway", "istio": "egressgateway"}, unhealthyStatus),
+		fakeDeploymentWithStatus("istio=egressgateway", map[string]string{"istio": "egressgateway"}, unhealthyStatus),
 		fakeDeploymentWithStatus("istiod", map[string]string{"app": "istiod", "istio": "pilot"}, healthyStatus),
 	}
 
@@ -486,8 +486,8 @@ func TestNonDefaults(t *testing.T) {
 		Enabled: true,
 		Components: []config.ComponentStatus{
 			{AppLabel: "istiod", IsCore: false},
-			{AppLabel: "istio-egressgateway", IsCore: false},
-			{AppLabel: "istio-ingressgateway", IsCore: false},
+			{AppLabel: "istio=egressgateway", IsCore: false},
+			{AppLabel: "istio=ingressgateway", IsCore: false},
 		},
 	}
 	config.Set(conf)
@@ -496,7 +496,7 @@ func TestNonDefaults(t *testing.T) {
 	SetupBusinessLayer(t, k8s, *conf)
 	discovery := &fakeMeshDiscovery{
 		mesh: models.Mesh{
-			ControlPlanes: []models.ControlPlane{{Cluster: &models.KubeCluster{Name: conf.KubernetesConfig.ClusterName}, Status: kubernetes.ComponentHealthy}},
+			ControlPlanes: []models.ControlPlane{{Cluster: &models.KubeCluster{Name: conf.KubernetesConfig.ClusterName}, IstiodName: "istiod", Status: kubernetes.ComponentHealthy}},
 		},
 	}
 	WithDiscovery(discovery)
@@ -509,8 +509,8 @@ func TestNonDefaults(t *testing.T) {
 	assert.NoError(error)
 
 	// Two istio components are not found or unhealthy
-	assertComponent(assert, icsl, "istio-ingressgateway", kubernetes.ComponentNotFound, false)
-	assertComponent(assert, icsl, "istio-egressgateway", kubernetes.ComponentUnhealthy, false)
+	assertComponent(assert, icsl, "istio=ingressgateway", kubernetes.ComponentNotFound, false)
+	assertComponent(assert, icsl, "istio=egressgateway", kubernetes.ComponentUnhealthy, false)
 
 	// The rest of the components are healthy
 	assertComponent(assert, icsl, "istiod", kubernetes.ComponentHealthy, false)
@@ -530,7 +530,7 @@ func TestIstiodNotReady(t *testing.T) {
 	assert := assert.New(t)
 
 	objects := []runtime.Object{
-		fakeDeploymentWithStatus("istio-egressgateway", map[string]string{"app": "istio-egressgateway", "istio": "egressgateway"}, unhealthyStatus),
+		fakeDeploymentWithStatus("istio=egressgateway", map[string]string{"istio": "egressgateway"}, unhealthyStatus),
 		fakeDeploymentWithStatus("istiod", map[string]string{"app": "istiod", "istio": "pilot"}, notReadyStatus),
 	}
 
@@ -542,8 +542,8 @@ func TestIstiodNotReady(t *testing.T) {
 		Enabled: true,
 		Components: []config.ComponentStatus{
 			{AppLabel: "istiod", IsCore: true},
-			{AppLabel: "istio-egressgateway", IsCore: false},
-			{AppLabel: "istio-ingressgateway", IsCore: false},
+			{AppLabel: "istio=egressgateway", IsCore: false},
+			{AppLabel: "istio=ingressgateway", IsCore: false},
 		},
 	}
 	config.Set(conf)
@@ -552,7 +552,7 @@ func TestIstiodNotReady(t *testing.T) {
 	SetupBusinessLayer(t, k8s, *conf)
 	discovery := &fakeMeshDiscovery{
 		mesh: models.Mesh{
-			ControlPlanes: []models.ControlPlane{{Cluster: &models.KubeCluster{Name: conf.KubernetesConfig.ClusterName}, Status: ""}},
+			ControlPlanes: []models.ControlPlane{{Cluster: &models.KubeCluster{Name: conf.KubernetesConfig.ClusterName}, IstiodName: "istiod", Status: ""}},
 		},
 	}
 	WithDiscovery(discovery)
@@ -565,8 +565,8 @@ func TestIstiodNotReady(t *testing.T) {
 	assert.NoError(error)
 
 	// Three istio components are unhealthy, not found or not ready
-	assertComponent(assert, icsl, "istio-ingressgateway", kubernetes.ComponentNotFound, false)
-	assertComponent(assert, icsl, "istio-egressgateway", kubernetes.ComponentUnhealthy, false)
+	assertComponent(assert, icsl, "istio=ingressgateway", kubernetes.ComponentNotFound, false)
+	assertComponent(assert, icsl, "istio=egressgateway", kubernetes.ComponentUnhealthy, false)
 	assertComponent(assert, icsl, "istiod", kubernetes.ComponentNotReady, true)
 
 	// The rest of the components are healthy
@@ -589,7 +589,7 @@ func TestCustomizedAppLabel(t *testing.T) {
 	assert := assert.New(t)
 
 	objects := []runtime.Object{
-		fakeDeploymentWithStatus("istio-egressgateway", map[string]string{"app": "istio-egressgateway", "istio": "egressgateway"}, unhealthyStatus),
+		fakeDeploymentWithStatus("istio=egressgateway", map[string]string{"istio": "egressgateway"}, unhealthyStatus),
 		fakeDeploymentWithStatus("istiod", map[string]string{"app": "istiod", "istio": "pilot"}, healthyStatus),
 	}
 
@@ -606,8 +606,8 @@ func TestCustomizedAppLabel(t *testing.T) {
 		Enabled: true,
 		Components: []config.ComponentStatus{
 			{AppLabel: "istiod", IsCore: false},
-			{AppLabel: "istio-egressgateway", IsCore: false},
-			{AppLabel: "istio-ingressgateway", IsCore: false},
+			{AppLabel: "istio=egressgateway", IsCore: false},
+			{AppLabel: "istio=ingressgateway", IsCore: false},
 		},
 	}
 	config.Set(conf)
@@ -616,7 +616,7 @@ func TestCustomizedAppLabel(t *testing.T) {
 	SetupBusinessLayer(t, k8s, *conf)
 	discovery := &fakeMeshDiscovery{
 		mesh: models.Mesh{
-			ControlPlanes: []models.ControlPlane{{Cluster: &models.KubeCluster{Name: conf.KubernetesConfig.ClusterName}, Status: kubernetes.ComponentHealthy}},
+			ControlPlanes: []models.ControlPlane{{Cluster: &models.KubeCluster{Name: conf.KubernetesConfig.ClusterName}, IstiodName: "istiod", Status: kubernetes.ComponentHealthy}},
 		},
 	}
 	WithDiscovery(discovery)
@@ -629,8 +629,8 @@ func TestCustomizedAppLabel(t *testing.T) {
 	assert.NoError(error)
 
 	// Two istio components are not found or unhealthy
-	assertComponent(assert, icsl, "istio-ingressgateway", kubernetes.ComponentNotFound, false)
-	assertComponent(assert, icsl, "istio-egressgateway", kubernetes.ComponentUnhealthy, false)
+	assertComponent(assert, icsl, "istio=ingressgateway", kubernetes.ComponentNotFound, false)
+	assertComponent(assert, icsl, "istio=egressgateway", kubernetes.ComponentUnhealthy, false)
 
 	// The rest of the components are healthy
 	assertComponent(assert, icsl, "istiod", kubernetes.ComponentHealthy, false)
@@ -648,8 +648,8 @@ func TestDaemonSetComponentHealthy(t *testing.T) {
 	assert := assert.New(t)
 
 	objects := []runtime.Object{
-		fakeDaemonSetWithStatus("istio-ingressgateway", map[string]string{"app": "istio-ingressgateway", "istio": "ingressgateway"}, healthyDaemonSetStatus),
-		fakeDeploymentWithStatus("istio-egressgateway", map[string]string{"app": "istio-egressgateway", "istio": "egressgateway"}, unhealthyStatus),
+		fakeDaemonSetWithStatus("istio=ingressgateway", map[string]string{"istio": "ingressgateway"}, healthyDaemonSetStatus),
+		fakeDeploymentWithStatus("istio=egressgateway", map[string]string{"istio": "egressgateway"}, unhealthyStatus),
 		fakeDeploymentWithStatus("istiod", map[string]string{"app": "istiod", "istio": "pilot"}, healthyStatus),
 	}
 
@@ -666,8 +666,8 @@ func TestDaemonSetComponentHealthy(t *testing.T) {
 		Enabled: true,
 		Components: []config.ComponentStatus{
 			{AppLabel: "istiod", IsCore: false},
-			{AppLabel: "istio-egressgateway", IsCore: false},
-			{AppLabel: "istio-ingressgateway", IsCore: false},
+			{AppLabel: "istio=egressgateway", IsCore: false},
+			{AppLabel: "istio=ingressgateway", IsCore: false},
 		},
 	}
 	config.Set(conf)
@@ -676,7 +676,7 @@ func TestDaemonSetComponentHealthy(t *testing.T) {
 	SetupBusinessLayer(t, k8s, *conf)
 	discovery := &fakeMeshDiscovery{
 		mesh: models.Mesh{
-			ControlPlanes: []models.ControlPlane{{Cluster: &models.KubeCluster{Name: conf.KubernetesConfig.ClusterName}, Status: kubernetes.ComponentHealthy}},
+			ControlPlanes: []models.ControlPlane{{Cluster: &models.KubeCluster{Name: conf.KubernetesConfig.ClusterName}, IstiodName: "istiod", Status: kubernetes.ComponentHealthy}},
 		},
 	}
 	WithDiscovery(discovery)
@@ -689,10 +689,10 @@ func TestDaemonSetComponentHealthy(t *testing.T) {
 	assert.NoError(error)
 
 	// One istio components is unhealthy
-	assertComponent(assert, icsl, "istio-egressgateway", kubernetes.ComponentUnhealthy, false)
+	assertComponent(assert, icsl, "istio=egressgateway", kubernetes.ComponentUnhealthy, false)
 
 	// The rest of the components are healthy
-	assertComponent(assert, icsl, "istio-ingressgateway", kubernetes.ComponentHealthy, false)
+	assertComponent(assert, icsl, "istio=ingressgateway", kubernetes.ComponentHealthy, false)
 	assertComponent(assert, icsl, "istiod", kubernetes.ComponentHealthy, false)
 	assertComponent(assert, icsl, "grafana", kubernetes.ComponentHealthy, false)
 	assertComponent(assert, icsl, "prometheus", kubernetes.ComponentHealthy, false)
@@ -709,8 +709,8 @@ func TestDaemonSetComponentUnhealthy(t *testing.T) {
 	assert := assert.New(t)
 
 	objects := []runtime.Object{
-		fakeDaemonSetWithStatus("istio-ingressgateway", map[string]string{"app": "istio-ingressgateway", "istio": "ingressgateway"}, unhealthyDaemonSetStatus),
-		fakeDeploymentWithStatus("istio-egressgateway", map[string]string{"app": "istio-egressgateway", "istio": "egressgateway"}, unhealthyStatus),
+		fakeDaemonSetWithStatus("istio=ingressgateway", map[string]string{"istio": "ingressgateway"}, unhealthyDaemonSetStatus),
+		fakeDeploymentWithStatus("istio=egressgateway", map[string]string{"istio": "egressgateway"}, unhealthyStatus),
 		fakeDeploymentWithStatus("istiod", map[string]string{"app": "istiod", "istio": "pilot"}, healthyStatus),
 	}
 
@@ -722,8 +722,8 @@ func TestDaemonSetComponentUnhealthy(t *testing.T) {
 		Enabled: true,
 		Components: []config.ComponentStatus{
 			{AppLabel: "istiod", IsCore: false},
-			{AppLabel: "istio-egressgateway", IsCore: false},
-			{AppLabel: "istio-ingressgateway", IsCore: false},
+			{AppLabel: "istio=egressgateway", IsCore: false},
+			{AppLabel: "istio=ingressgateway", IsCore: false},
 		},
 	}
 	config.Set(conf)
@@ -732,7 +732,7 @@ func TestDaemonSetComponentUnhealthy(t *testing.T) {
 	SetupBusinessLayer(t, k8s, *conf)
 	discovery := &fakeMeshDiscovery{
 		mesh: models.Mesh{
-			ControlPlanes: []models.ControlPlane{{Cluster: &models.KubeCluster{Name: conf.KubernetesConfig.ClusterName}, Status: kubernetes.ComponentHealthy}},
+			ControlPlanes: []models.ControlPlane{{Cluster: &models.KubeCluster{Name: conf.KubernetesConfig.ClusterName}, IstiodName: "istiod", Status: kubernetes.ComponentHealthy}},
 		},
 	}
 	WithDiscovery(discovery)
@@ -745,8 +745,8 @@ func TestDaemonSetComponentUnhealthy(t *testing.T) {
 	assert.NoError(error)
 
 	// Two istio components are unhealthy
-	assertComponent(assert, icsl, "istio-ingressgateway", kubernetes.ComponentUnhealthy, false)
-	assertComponent(assert, icsl, "istio-egressgateway", kubernetes.ComponentUnhealthy, false)
+	assertComponent(assert, icsl, "istio=ingressgateway", kubernetes.ComponentUnhealthy, false)
+	assertComponent(assert, icsl, "istio=egressgateway", kubernetes.ComponentUnhealthy, false)
 
 	// The rest of the components are healthy
 	assertComponent(assert, icsl, "istiod", kubernetes.ComponentHealthy, false)
