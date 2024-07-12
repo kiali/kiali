@@ -91,7 +91,7 @@ discoverySelectors:
 
 The same rules for multiple revisions in a multi-cluster deployment would still apply.
 
-Primary-remote deployments would behave the same as single cluster where the remote cluster is scoped to the primary controlplane's discovery selectors.
+Primary-remote deployments would behave the same as single cluster where the remote cluster is scoped to the primary control plane's discovery selectors.
 
 TODO: external control plane
 
