@@ -23,7 +23,28 @@ Currently, the Kiali Server and Operator have many different ways to configure w
 
 # Solution
 
-Provide a new list of "discovery selectors" in the same way that Istio itself has discovery selectors. Kiali will re-use the Istio Discovery Selectors it retreives from the control plane's `istio` configmap. Kiali will also have a new config option `deployment.discovery_selectors` that, when specified, will be used instead of the control plane's Istio Discovery Selectors.
+Provide a new list of "discovery selectors" in the same way that [Istio itself has discovery selectors](https://istio.io/latest/docs/reference/config/istio.mesh.v1alpha1/#MeshConfig). Kiali will re-use the Istio Discovery Selectors it retrieves from the control plane's `istio` configmap. Kiali will also have a new config option `deployment.discovery_selectors` that, when specified, will be used instead of the control plane's Istio Discovery Selectors. It will support an array of [Kubernetes set-based selectors](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#resources-that-support-set-based-requirements) just like Istio Discovery Selectors.  For example:
+```yaml
+spec:
+  deployment:
+    discovery_selectors:
+    - match_labels:
+        abc: def
+        uvw: xyz
+    - match_labels:
+        org: accounting
+      match_expressions:
+      - key: tier
+        operator: In
+        values: ["production"]
+      - key: region
+        operator: NotIn
+        values: ["east"]
+    - match_expressions:
+      - key: country
+        operator: In
+        values: ["us", "ca"]
+```
 
 ## Istio Discovery Selectors
 
@@ -48,10 +69,10 @@ discoverySelectors:
 Kiali discovery selector:
 
 ```yaml
-discoverySelectors:
-  - matchLabels:
+discovery_selectors:
+  - match_labels:
       team: backend
-  - matchLabels:
+  - match_labels:
       team: api
 ```
 
@@ -76,16 +97,16 @@ discoverySelectors:
 Kiali discovery selector cluster A:
 
 ```yaml
-discoverySelectors:
-  - matchLabels:
+discovery_selectors:
+  - match_labels:
       team: api
 ```
 
 Kiali discovery selector cluster B:
 
 ```yaml
-discoverySelectors:
-  - matchLabels:
+discovery_selectors:
+  - match_labels:
       team: backend
 ```
 
@@ -106,22 +127,22 @@ A new configuration option will be added that will mimic the Istio `discoverySel
 Kiali would add a `deployment.discovery_selectors` config option where you can specify global discovery selectors or cluster specific overrides `map[string]labelselector` where the key is the cluster name that the discovery selector will apply to. Cluster specific overrides will take precedence over the global option for that cluster.
 
 ```yaml
-discoverySelectors:
+discovery_selectors:
   global:
-    - labelSelector:
+  - <array of label selectors>
   cluster_name:
-    - labelSelector:
+  - <array of label selectors>
 ```
 
 For multi-primary with different discovery selectors:
 
 ```yaml
-discoverySelectors:
+discovery_selectors:
   east:
-    - matchLabels:
+    - match_labels:
         team: backend
   west:
-    - matchLabels:
+    - match_labels:
         team: api
 ```
 
@@ -134,7 +155,7 @@ spec:
   deployment:
     cluster_wide_access: false
     discovery_selectors:
-      - matchLabels:
+      - match_labels:
           team: backend
 ```
 
@@ -145,9 +166,9 @@ spec:
   deployment:
     cluster_wide_access: false
     discovery_selectors:
-      - matchLabels:
+      - match_labels:
           kubernetes.io/metadata.name: backend-app1
-      - matchLabels:
+      - match_labels:
           kubernetes.io/metadata.name: backend-app2
 ```
 
@@ -161,7 +182,7 @@ spec:
       - backend-app2
     cluster_wide_access: false
     discovery_selectors:
-      - matchLabels:
+      - match_labels:
           team: backend
 ```
 
