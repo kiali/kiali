@@ -70,6 +70,7 @@ Kiali discovery selector:
 
 ```yaml
 discovery_selectors:
+  global:
   - match_labels:
       team: backend
   - match_labels:
@@ -98,6 +99,7 @@ Kiali discovery selector cluster A:
 
 ```yaml
 discovery_selectors:
+  global:
   - match_labels:
       team: api
 ```
@@ -106,6 +108,7 @@ Kiali discovery selector cluster B:
 
 ```yaml
 discovery_selectors:
+  global:
   - match_labels:
       team: backend
 ```
@@ -155,6 +158,7 @@ spec:
   deployment:
     cluster_wide_access: false
     discovery_selectors:
+      global:
       - match_labels:
           team: backend
 ```
@@ -166,6 +170,7 @@ spec:
   deployment:
     cluster_wide_access: false
     discovery_selectors:
+      global:
       - match_labels:
           kubernetes.io/metadata.name: backend-app1
       - match_labels:
@@ -182,6 +187,7 @@ spec:
       - backend-app2
     cluster_wide_access: false
     discovery_selectors:
+      global:
       - match_labels:
           team: backend
 ```
