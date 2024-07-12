@@ -93,7 +93,7 @@ The same rules for multiple revisions in a multi-cluster deployment would still 
 
 Primary-remote deployments would behave the same as single cluster where the remote cluster is scoped to the primary controlplane's discovery selectors.
 
-TODO: external controlplane
+TODO: external control plane
 
 ### Failure scenarios
 
