@@ -23,13 +23,13 @@ Currently, the Kiali Server and Operator have many different ways to configure w
 
 # Solution
 
-Provide a new list of "discovery selectors" in the same way that Istio itself has discovery selectors. Kiali will re-use the Istio Discovery Selectors it retreive's from the controlplanes `istio` configmap. Kiali will also have a new config option `deployment.discovery_selectors` that when specificed will be used instead of the controlplane's Istio Discovery Selectors.
+Provide a new list of "discovery selectors" in the same way that Istio itself has discovery selectors. Kiali will re-use the Istio Discovery Selectors it retreive's from the control plane's `istio` configmap. Kiali will also have a new config option `deployment.discovery_selectors` that, when specified, will be used instead of the control plane's Istio Discovery Selectors.
 
 ## Istio Discovery Selectors
 
-Kiali already autodiscovers the istio controlplanes. Discovery selectors for the istio controlplane can be found by looking at the controlplane's `istio` configmap under `mesh.discoverySelectors`. Kiali will read this configmap and if discovery selectors have been set, Kiali will scope itself to the namespaces selected by the discovery selectors. In cases where there are multiple controlplanes e.g. with revisioned upgrades, Kiali will read both discovery selectors and OR the two together scoping itself to the disjoint of the two sets. For example:
+Kiali already autodiscovers the istio control planes. Discovery selectors for the istio control plane can be found by looking at the control plane's `istio` configmap under `mesh.discoverySelectors`. Kiali will read this configmap and if discovery selectors have been set, Kiali will scope itself to the namespaces selected by the discovery selectors. In cases where there are multiple control planes, for example with revisioned upgrades, Kiali will read both discovery selectors and OR the two together scoping itself to the disjoint of the two sets. For example:
 
-Controlplane A discovery selector:
+Control plane A discovery selector:
 
 ```yaml
 discoverySelectors:
