@@ -37,7 +37,7 @@ discoverySelectors:
       team: api
 ```
 
-Controlplane B discovery selector:
+Control plane B discovery selector:
 
 ```yaml
 discoverySelectors:
