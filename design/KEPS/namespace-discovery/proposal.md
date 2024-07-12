@@ -97,7 +97,7 @@ TODO: external control plane
 
 ### Failure scenarios
 
-Since the discovery selectors act as a way to separate multiple Kiali deployments from one another, when Kiali relies on autodiscovering the Istio discovery selectors and it cannot auto discover them, the Kiali server will fail to start and/or panic rather than potentially show out of scope data. In a multi-primary deployment, if one primary cannot be reached then that cluster will be considered inaccessible.
+Discovery selectors act as a way to separate multiple Kiali deployments from one another. Kiali relies on autodiscovering the Istio discovery selectors, but when it cannot auto discover them the Kiali server will fail to start, and/or panic, rather than potentially show out of scope data. In a multi-primary deployment, if one primary cannot be reached then that cluster will be considered inaccessible.
 
 ## Discovery Selector Kiali Config Option
 
