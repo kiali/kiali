@@ -133,7 +133,44 @@ infomsg "Downloading istio"
 
 setup_kind_singlecluster() {
 
-  "${SCRIPT_DIR}"/start-kind.sh --name ci --image "${KIND_NODE_IMAGE}"
+  local certs_dir
+
+  if [ "${AUTH_STRATEGY}" == "openid" ]; then
+    echo "Auth strategy is open id"
+      certs_dir=$(mktemp -d)
+      KEYCLOAK_CERTS_DIR="${certs_dir}"/keycloak
+      mkdir -p "${certs_dir}"/keycloak
+      auth_flags=()
+      local keycloak_ip
+
+      "${SCRIPT_DIR}/keycloak.sh" -kcd "${KEYCLOAK_CERTS_DIR}" create-ca
+
+      docker network create kind || true
+
+      # Given: 172.18.0.0/16 this should return 172.18
+      beginning_subnet_octets=$(docker network inspect kind --format '{{(index .IPAM.Config 0).Subnet}}' | cut -d'.' -f1,2)
+      lb_range_start="255.70"
+      lb_range_end="255.84"
+
+      KEYCLOAK_ADDRESS="${beginning_subnet_octets}.${lb_range_start}"
+
+      echo "==== START KIND FOR CLUSTER"
+      "${SCRIPT_DIR}"/start-kind.sh \
+            --name "ci" \
+            --load-balancer-range "${lb_range_start}-${lb_range_end}" \
+            --image "${KIND_NODE_IMAGE}" \
+            --enable-keycloak true \
+            --keycloak-certs-dir "${KEYCLOAK_CERTS_DIR}" \
+            --keycloak-issuer-uri "https://${KEYCLOAK_ADDRESS}/realms/kube"
+      "${SCRIPT_DIR}/keycloak.sh" -kcd "${KEYCLOAK_CERTS_DIR}" -kip "${KEYCLOAK_ADDRESS}" deploy
+
+      keycloak_ip_cl=$(kubectl get svc keycloak -n keycloak -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')
+            auth_flags+=(--keycloak-address "${keycloak_ip_cl}")
+            auth_flags+=(--certs-dir "${certs_dir}")
+
+  else
+    "${SCRIPT_DIR}"/start-kind.sh --name ci --image "${KIND_NODE_IMAGE}"
+  fi
 
   infomsg "Installing istio"
   if [[ "${ISTIO_VERSION}" == *-dev ]]; then
@@ -164,6 +201,21 @@ setup_kind_singlecluster() {
   infomsg "Installing kiali server via Helm"
   infomsg "Chart to be installed: $(ls -1 ${HELM_CHARTS_DIR}/_output/charts/kiali-server-*.tgz)"
 
+
+  if [ "${AUTH_STRATEGY}" == "openid" ]; then
+
+    infomsg "openid auth strategy. Preparing secrets"
+    # These need to exist prior to installing Kiali.
+    # Create secret with the oidc secret
+    kubectl create configmap kiali-cabundle --from-file="openid-server-ca.crt=${certs_dir}/keycloak/root-ca.pem" -n istio-system
+    kubectl create secret generic kiali --from-literal="oidc-secret=kube-client-secret" -n istio-system
+    kubectl create clusterrolebinding kiali-user-viewer --clusterrole=kiali-viewer --user=oidc:kiali
+
+    ISSUER_URI="https://${keycloak_ip_cl}/realms/kube"
+ fi
+
+infomsg "Installing Kiali charts"
+
   # The grafana and tracing urls need to be set for backend e2e tests
   # but they don't need to be accessible outside the cluster.
   # Need a single dashboard set for grafana.
@@ -171,6 +223,10 @@ setup_kind_singlecluster() {
     --namespace istio-system \
     --wait \
     --set auth.strategy="${AUTH_STRATEGY}" \
+    --set auth.openid.client_id="kube" \
+    --set-string auth.openid.issuer_uri="${ISSUER_URI}" \
+    --set auth.openid.insecure_skip_verify_tls="false" \
+    --set auth.openid.username_claim="preferred_username" \
     --set deployment.logger.log_level="trace" \
     --set deployment.image_name=localhost/kiali/kiali \
     --set deployment.image_version=dev \
@@ -192,6 +248,46 @@ setup_kind_singlecluster() {
   # Helm chart doesn't support passing in service opts so patch them after the helm deploy.
   kubectl patch service kiali -n istio-system --type=json -p='[{"op": "replace", "path": "/spec/ports/0/port", "value":80}]'
   kubectl wait --for=jsonpath='{.status.loadBalancer.ingress}' -n istio-system service/kiali
+
+  if [ "${AUTH_STRATEGY}" == "openid" ]; then
+    infomsg "User role for Kiali ${keycloak_ip_cl}"
+    # Get a token from keycloak to use the admin api
+    TOKEN_KEY=$(curl -k -X POST https://"${keycloak_ip_cl}"/realms/master/protocol/openid-connect/token \
+             -d grant_type=password \
+             -d client_id=admin-cli \
+             -d username=admin \
+             -d password=admin \
+             -d scope=openid \
+             -d response_type=id_token | jq -r '.access_token')
+
+    infomsg "Replacing the Kiali redirect URL with the minikube IP"
+
+    # Replace the redirect URI with the minikube ip. Create the realm.
+    local KIALI_SVC_LB_IP
+    KIALI_SVC_LB_IP=$(kubectl get svc kiali -o=jsonpath='{.status.loadBalancer.ingress[0].ip}' -n istio-system)
+    jq ".clients[] |= if .clientId == \"kube\" then .redirectUris = [\"http://${KIALI_SVC_LB_IP}/kiali/*\"] else . end" < "${SCRIPT_DIR}"/istio/multicluster/realm-export-template.json | curl -k -L https://"${keycloak_ip}"/admin/realms -H "Authorization: Bearer $TOKEN_KEY" -H "Content-Type: application/json" -X POST -d @-
+
+    # Create the kiali user
+    curl -k -L https://"${keycloak_ip_cl}"/admin/realms/kube/users -H "Authorization: Bearer $TOKEN_KEY" -d '{"username": "kiali", "enabled": true, "credentials": [{"type": "password", "value": "kiali"}]}' -H 'Content-Type: application/json'
+
+    # Create a clusterrole and clusterrolebinding so that the kiali oidc user can view and edit resources in kiali.
+    helm template --show-only "templates/role.yaml" --set deployment.instance_name=kiali-testing-user --set auth.strategy=anonymous kiali-server "${KIALI_SERVER_HELM_CHARTS}" | kubectl apply -f -
+    kubectl apply -f - <<EOF
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+name: kiali-testing-user
+roleRef:
+apiGroup: rbac.authorization.k8s.io
+kind: ClusterRole
+name: kiali-testing-user
+subjects:
+- apiGroup: rbac.authorization.k8s.io
+kind: User
+name: oidc:kiali
+EOF
+
+  fi
 }
 
 setup_kind_tempo() {
