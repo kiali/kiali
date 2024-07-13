@@ -20,6 +20,8 @@ const (
 	ExtensionsAppenderName string            = "extensions"
 	tsHash                 graph.MetadataKey = "tsHash"
 	tsHashMap              graph.MetadataKey = "tsHashMap"
+	urlAnnotation          string            = "ext.kiali.io/url"
+	urlNotFound            string            = "_urlnotfound_"
 )
 
 // ExtensionsAppender looks for configured extensions and adds extension traffic to the graph, as needed.  This is
@@ -27,11 +29,13 @@ const (
 // Name: extensions
 type ExtensionsAppender struct {
 	Duration         time.Duration
+	globalInfo       *graph.AppenderGlobalInfo
 	GraphType        string
 	IncludeIdleEdges bool
 	QueryTime        int64 // unix time in seconds
 	Rates            graph.RequestedRates
 	ShowUnrooted     bool
+	urls             map[string]string // map rootNode id to link url
 }
 
 // Name implements Appender
@@ -59,6 +63,9 @@ func (a ExtensionsAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo 
 		graph.CheckError(err)
 	}
 
+	a.globalInfo = globalInfo
+	a.urls = map[string]string{}
+
 	// Process the extensions defined in the config
 	for _, extension := range cfg.Extensions {
 		log.Infof("Extension %s", extension) // todo: remove
@@ -66,23 +73,13 @@ func (a ExtensionsAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo 
 			continue
 		}
 		log.Infof("Running Extension %s", extension) // todo: remove
-		a.appendGraph(extension, trafficMap, globalInfo.PromClient)
+		a.appendGraph(extension, trafficMap)
 	}
 }
 
-func (a ExtensionsAppender) appendGraph(ext config.ExtensionConfig, trafficMap graph.TrafficMap, client *prometheus.Client) {
-	/*
-		// Look for the extension's root node in the current traffic map (eg the skupper-router for the defined site).  If found, then we
-		// will query the extension metrics for extension traffic from the root.  Otherwise, skip extenstion traffic because this
-		// graph has no traffic to the root. (maybe a todo option: to always show extension traffic, based on an appender option)
-		rootNode, found := a.findRootNode(trafficMap, ext)
-		if !found {
-			// todo: debug level
-			log.Infof("Extension [%s] did not find root node in traffic map [%s:%s:%s]", ext.Name, ext.RootCluster, ext.RootNamespace, ext.RootName)
-			return
-		}
-		log.Infof("Extension [%s] found root node [%+v]", ext.Name, rootNode)
-	*/
+func (a ExtensionsAppender) appendGraph(ext config.ExtensionConfig, trafficMap graph.TrafficMap) {
+	client := a.globalInfo.PromClient
+
 	idleCondition := "> 0"
 	if a.IncludeIdleEdges {
 		idleCondition = ""
@@ -213,7 +210,8 @@ func (a ExtensionsAppender) appendTrafficMap(ext config.ExtensionConfig, traffic
 }
 
 func (a ExtensionsAppender) addTraffic(ext config.ExtensionConfig, trafficMap graph.TrafficMap, metric string, val float64, protocol, code, flags, sourceCluster, sourceIsRoot, sourceNs, sourceName, destCluster, destNs, destName string) {
-	source, _, err := a.addNode(ext, trafficMap, sourceIsRoot == "true", sourceCluster, sourceNs, sourceName, a.GraphType)
+	isRoot := sourceIsRoot == "true"
+	source, _, err := a.addNode(ext, trafficMap, isRoot, sourceCluster, sourceNs, sourceName, a.GraphType)
 	if err != nil {
 		log.Warningf("Skipping extension addTraffic (source) in extension, %s", err)
 		return
@@ -222,6 +220,20 @@ func (a ExtensionsAppender) addTraffic(ext config.ExtensionConfig, trafficMap gr
 	if err != nil {
 		log.Warningf("Skipping extension addTraffic (dest), %s", err)
 		return
+	}
+
+	if isRoot {
+		url := a.getUrl(ext, source)
+		if url != urlNotFound {
+			source.Metadata[graph.IsExtension] = &graph.ExtInfo{
+				URL:  url,
+				Name: ext.Name,
+			}
+			dest.Metadata[graph.IsExtension] = &graph.ExtInfo{
+				URL:  url,
+				Name: ext.Name,
+			}
+		}
 	}
 
 	// Extensions may generate duplicate metrics by reporting from both the source and destination. To avoid
@@ -266,7 +278,9 @@ func (a ExtensionsAppender) addNode(ext config.ExtensionConfig, trafficMap graph
 		}
 	}
 	log.Infof("added node...") // todo: remove
-	node.Metadata[graph.IsExtension] = ext.Name
+	node.Metadata[graph.IsExtension] = &graph.ExtInfo{
+		Name: ext.Name,
+	}
 	node.Metadata["tsHash"] = timeSeriesHash(cluster, namespace, name, "", "", "", "")
 	return node, found, nil
 }
@@ -293,6 +307,33 @@ func (a ExtensionsAppender) findRootNode(trafficMap graph.TrafficMap, cluster, n
 	}
 
 	return nil, false
+}
+
+func (a ExtensionsAppender) getUrl(ext config.ExtensionConfig, source *graph.Node) string {
+	// first, try and autodiscover an existing route
+	routeUrl := a.globalInfo.Business.Svc.GetServiceRouteURL(a.globalInfo.Context, source.Cluster, source.Namespace, source.Service)
+	if routeUrl != "" {
+		return routeUrl
+	}
+
+	// otherwise, look for the annotation on the source service, or if that fails, a service named after the extension
+	rootSvcName := source.Service
+	if rootSvcName == "" {
+		rootSvcName = source.App
+	}
+	for _, svcName := range []string{rootSvcName, ext.Name} {
+		svc, err := a.globalInfo.Business.Svc.GetService(a.globalInfo.Context, source.Cluster, source.Namespace, svcName)
+		if err != nil {
+			log.Debugf("No extension root node service found [%s][%s][%s]", source.Cluster, source.Namespace, svcName)
+			continue
+		}
+		if url, found := svc.Annotations[urlAnnotation]; found {
+			return url
+		}
+		log.Debugf("No url annotation found for extension root node service [%s][%s][%s]", source.Cluster, source.Namespace, svcName)
+	}
+
+	return urlNotFound
 }
 
 // addEdgeTraffic uses edgeTSHash that the metric information has not been applied to the edge. Returns true

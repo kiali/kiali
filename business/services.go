@@ -773,3 +773,35 @@ func (in *SvcService) GetServiceAppName(ctx context.Context, cluster, namespace,
 	app := svc.Selectors[appLabelName]
 	return app, nil
 }
+
+// GetServiceRouteURL returns "" for non-OpenShift, or if the route can not be found
+func (in *SvcService) GetServiceRouteURL(ctx context.Context, cluster, namespace, service string) (url string) {
+	url = ""
+	userClient, found := in.userClients[cluster]
+
+	if !found {
+		log.Debugf("userClient not found for cluster [%s]", cluster)
+		return
+	}
+
+	if !userClient.IsOpenShift() {
+		log.Debugf("[%s] Client is not Openshift, route url is only supported in Openshift", cluster)
+		return
+	}
+
+	// Assuming service name == route name
+	route, err := userClient.GetRoute(ctx, namespace, service)
+	if err != nil {
+		log.Debugf("[%s][%s][%s] ServiceRouteURL discovery failed: %v", cluster, namespace, service, err)
+		return
+	}
+
+	host := route.Spec.Host
+	if route.Spec.TLS != nil {
+		url = "https://" + host
+	} else {
+		url = "http://" + host
+	}
+
+	return
+}

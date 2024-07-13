@@ -114,7 +114,7 @@ type NodeData struct {
 	IsAmbient             bool                `json:"isAmbient,omitempty"`             // true (captured by ambient) | false
 	IsBox                 string              `json:"isBox,omitempty"`                 // set for NodeTypeBox, current values: [ 'app', 'cluster', 'namespace' ]
 	IsDead                bool                `json:"isDead,omitempty"`                // true (has no pods) | false
-	IsExtension           string              `json:"isExtension,omitempty"`           // set for Extension nodes, to the extension name
+	IsExtension           *graph.ExtInfo      `json:"isExtension,omitempty"`           // set for Extension nodes, with extension info
 	IsGateway             *GWInfo             `json:"isGateway,omitempty"`             // Istio ingress/egress gateway information
 	IsIdle                bool                `json:"isIdle,omitempty"`                // true | false
 	IsInaccessible        bool                `json:"isInaccessible,omitempty"`        // true if the node exists in an inaccessible namespace
@@ -293,7 +293,7 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 
 		// node added via registered extension
 		if val, ok := n.Metadata[graph.IsExtension]; ok {
-			nd.IsExtension = val.(string)
+			nd.IsExtension = val.(*graph.ExtInfo)
 		}
 
 		// node may represent an Istio Ingress Gateway

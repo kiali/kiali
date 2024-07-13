@@ -63,6 +63,13 @@ type ServiceName struct {
 	Name      string `json:"name"`
 }
 
+// ExtInfo contains client-side info about the extension
+type ExtInfo struct {
+	Name string `json:"name,omitempty"`
+	// URL is an optional URL that links to the extension's own external UI
+	URL string `json:"url,omitempty"`
+}
+
 // WEInfo provides static information about a workload entry
 // associated with a workload node.
 type WEInfo struct {
