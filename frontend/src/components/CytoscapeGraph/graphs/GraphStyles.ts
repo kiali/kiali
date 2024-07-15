@@ -408,7 +408,7 @@ export class GraphStyles {
 
     if (node.isExtension) {
       const extBadge = PFBadges.Extension;
-      extBadge.tt = `${extBadge.tt}: ${node.isExtension}`;
+      extBadge.tt = `${extBadge.tt}: ${node.isExtension.name}`;
       content[0].pfBadge = extBadge;
     }
 

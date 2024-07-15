@@ -16,6 +16,7 @@ import { homeCluster } from 'config';
 import { KialiPageLink } from 'components/Link/KialiPageLink';
 import { kialiStyle } from 'styles/StyleUtils';
 import { t } from 'utils/I18nUtils';
+import { ExternalLinkAltIcon } from '@patternfly/react-icons';
 
 interface LinkInfo {
   displayName: string;
@@ -49,14 +50,22 @@ const getTooltip = (tooltip: React.ReactNode, nodeData: GraphNodeData): React.Re
 };
 
 const addExtensionBadge = (nodeData: GraphNodeData, reactNode: React.ReactNode): React.ReactNode => {
-  const tt = `Extension: ${nodeData.isExtension}`;
-  return nodeData.isExtension ? (
-    <>
+  if (!nodeData.isExtension) {
+    return reactNode;
+  }
+
+  const ext = nodeData.isExtension;
+  const tt = (
+    <div>
+      {t('Extension')}: {ext.name}
+    </div>
+  );
+
+  return (
+    <span>
       <PFBadge badge={PFBadges.Extension} size="sm" tooltip={tt} />
       {reactNode}
-    </>
-  ) : (
-    reactNode
+    </span>
   );
 };
 
@@ -196,15 +205,36 @@ export const getLink = (
     }
   }
 
-  if (link && !nodeData.isInaccessible) {
-    return (
-      <KialiPageLink key={key} href={link} cluster={cluster}>
-        {displayName}
-      </KialiPageLink>
+  let extLink;
+  if (nodeData.isExtension?.url) {
+    const ext = nodeData.isExtension;
+    const text = link && !nodeData.isInaccessible ? `, ` : `${displayName} `;
+    extLink = (
+      <a
+        id={`extLink_${ext.name}`}
+        title={`View in ${ext.name} UI`}
+        href={ext.url}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        {text}
+        <ExternalLinkAltIcon />
+      </a>
     );
   }
 
-  return <span key={key}>{displayName}</span>;
+  if (link && !nodeData.isInaccessible) {
+    return (
+      <>
+        <KialiPageLink key={key} href={link} cluster={cluster}>
+          {displayName}
+        </KialiPageLink>
+        {extLink}
+      </>
+    );
+  }
+
+  return extLink ? extLink : <span key={key}>{displayName}</span>;
 };
 
 export const renderBadgedHost = (host: string): React.ReactNode => {
