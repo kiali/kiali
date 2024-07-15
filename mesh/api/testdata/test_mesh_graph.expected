@@ -230,33 +230,12 @@
           "infraData": {
             "ComponentStatuses": {
               "Enabled": true,
-              "Components": [
-                {
-                  "AppLabel": "istio-egressgateway",
-                  "IsCore": false,
-                  "IsProxy": true,
-                  "IsMultiCluster": false,
-                  "Namespace": ""
-                },
-                {
-                  "AppLabel": "istio-ingressgateway",
-                  "IsCore": true,
-                  "IsProxy": true,
-                  "IsMultiCluster": false,
-                  "Namespace": ""
-                },
-                {
-                  "AppLabel": "istiod",
-                  "IsCore": true,
-                  "IsProxy": false,
-                  "IsMultiCluster": false,
-                  "Namespace": ""
-                }
-              ]
+              "Components": null
             },
             "ConfigMapName": "",
             "EnvoyAdminLocalPort": 15000,
             "GatewayAPIClasses": [],
+            "GatewayNamespace": "",
             "IstioAPIEnabled": true,
             "IstioCanaryRevision": {
               "Current": "",
