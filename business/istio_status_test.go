@@ -471,7 +471,9 @@ func TestNonDefaults(t *testing.T) {
 	assert := assert.New(t)
 
 	objects := []runtime.Object{
-		fakeDeploymentWithStatus("istio=egressgateway", map[string]string{"istio": "egressgateway"}, unhealthyStatus),
+		fakeDeploymentWithStatus("istio=egressgateway", map[string]string{"istio": "egressgateway"}, healthyStatus),
+		fakeDeploymentWithStatus("istio=ingressgateway", map[string]string{"istio": "ingressgateway"}, healthyStatus),
+		fakeDeploymentWithStatus("istio=eastwestgateway", map[string]string{"app": "istio-eastwestgateway"}, healthyStatus),
 		fakeDeploymentWithStatus("istiod", map[string]string{"app": "istiod", "istio": "pilot"}, healthyStatus),
 	}
 
@@ -485,10 +487,9 @@ func TestNonDefaults(t *testing.T) {
 	conf := config.Get()
 	conf.ExternalServices.Istio.ComponentStatuses = config.ComponentStatuses{
 		Enabled: true,
+		// ComponentStatus is used for custom eastwestgateway component
 		Components: []config.ComponentStatus{
-			{AppLabel: "istiod", IsCore: false},
-			{AppLabel: "istio=egressgateway", IsCore: false},
-			{AppLabel: "istio=ingressgateway", IsCore: false},
+			{AppLabel: "istio-eastwestgateway", IsCore: false, IsMultiCluster: true},
 		},
 	}
 	config.Set(conf)
@@ -509,12 +510,14 @@ func TestNonDefaults(t *testing.T) {
 	icsl, error := iss.GetStatus(context.TODO())
 	assert.NoError(error)
 
-	// Two istio components are not found or unhealthy
-	assertComponent(assert, icsl, "istio=ingressgateway", kubernetes.ComponentNotFound, false)
-	assertComponent(assert, icsl, "istio=egressgateway", kubernetes.ComponentUnhealthy, false)
+	// All Istio components are healthy
+	assertComponent(assert, icsl, "istio=ingressgateway", kubernetes.ComponentHealthy, true)
+	assertComponent(assert, icsl, "istio=egressgateway", kubernetes.ComponentHealthy, false)
+	// ComponentStatus was used for custom eastwestgateway
+	assertComponent(assert, icsl, "istio=eastwestgateway", kubernetes.ComponentHealthy, false)
 
 	// The rest of the components are healthy
-	assertComponent(assert, icsl, "istiod", kubernetes.ComponentHealthy, false)
+	assertComponent(assert, icsl, "istiod", kubernetes.ComponentHealthy, true)
 	assertComponent(assert, icsl, "grafana", kubernetes.ComponentHealthy, false)
 	assertComponent(assert, icsl, "prometheus", kubernetes.ComponentHealthy, false)
 	assertComponent(assert, icsl, "tracing", kubernetes.ComponentHealthy, false)
@@ -541,11 +544,6 @@ func TestIstiodNotReady(t *testing.T) {
 	conf.IstioLabels.AppLabelName = "app.kubernetes.io/name"
 	conf.ExternalServices.Istio.ComponentStatuses = config.ComponentStatuses{
 		Enabled: true,
-		Components: []config.ComponentStatus{
-			{AppLabel: "istiod", IsCore: true},
-			{AppLabel: "istio=egressgateway", IsCore: false},
-			{AppLabel: "istio=ingressgateway", IsCore: false},
-		},
 	}
 	config.Set(conf)
 
@@ -553,7 +551,7 @@ func TestIstiodNotReady(t *testing.T) {
 	SetupBusinessLayer(t, k8s, *conf)
 	discovery := &fakeMeshDiscovery{
 		mesh: models.Mesh{
-			ControlPlanes: []models.ControlPlane{{Cluster: &models.KubeCluster{Name: conf.KubernetesConfig.ClusterName}, IstiodName: "istiod", Status: ""}},
+			ControlPlanes: []models.ControlPlane{{Cluster: &models.KubeCluster{Name: conf.KubernetesConfig.ClusterName}, IstiodName: "istiod", Status: kubernetes.ComponentNotReady}},
 		},
 	}
 	WithDiscovery(discovery)
@@ -566,7 +564,7 @@ func TestIstiodNotReady(t *testing.T) {
 	assert.NoError(error)
 
 	// Three istio components are unhealthy, not found or not ready
-	assertComponent(assert, icsl, "istio=ingressgateway", kubernetes.ComponentNotFound, false)
+	assertComponent(assert, icsl, "istio=ingressgateway", kubernetes.ComponentNotFound, true)
 	assertComponent(assert, icsl, "istio=egressgateway", kubernetes.ComponentUnhealthy, false)
 	assertComponent(assert, icsl, "istiod", kubernetes.ComponentNotReady, true)
 
@@ -605,11 +603,6 @@ func TestCustomizedAppLabel(t *testing.T) {
 	conf.IstioLabels.AppLabelName = "app.kubernetes.io/name"
 	conf.ExternalServices.Istio.ComponentStatuses = config.ComponentStatuses{
 		Enabled: true,
-		Components: []config.ComponentStatus{
-			{AppLabel: "istiod", IsCore: false},
-			{AppLabel: "istio=egressgateway", IsCore: false},
-			{AppLabel: "istio=ingressgateway", IsCore: false},
-		},
 	}
 	config.Set(conf)
 
@@ -630,11 +623,11 @@ func TestCustomizedAppLabel(t *testing.T) {
 	assert.NoError(error)
 
 	// Two istio components are not found or unhealthy
-	assertComponent(assert, icsl, "istio=ingressgateway", kubernetes.ComponentNotFound, false)
+	assertComponent(assert, icsl, "istio=ingressgateway", kubernetes.ComponentNotFound, true)
 	assertComponent(assert, icsl, "istio=egressgateway", kubernetes.ComponentUnhealthy, false)
 
 	// The rest of the components are healthy
-	assertComponent(assert, icsl, "istiod", kubernetes.ComponentHealthy, false)
+	assertComponent(assert, icsl, "istiod", kubernetes.ComponentHealthy, true)
 	assertComponent(assert, icsl, "grafana", kubernetes.ComponentHealthy, false)
 	assertComponent(assert, icsl, "prometheus", kubernetes.ComponentHealthy, false)
 	assertComponent(assert, icsl, "tracing", kubernetes.ComponentHealthy, false)
@@ -665,11 +658,6 @@ func TestDaemonSetComponentHealthy(t *testing.T) {
 	conf.IstioLabels.AppLabelName = "app.kubernetes.io/name"
 	conf.ExternalServices.Istio.ComponentStatuses = config.ComponentStatuses{
 		Enabled: true,
-		Components: []config.ComponentStatus{
-			{AppLabel: "istiod", IsCore: false},
-			{AppLabel: "istio=egressgateway", IsCore: false},
-			{AppLabel: "istio=ingressgateway", IsCore: false},
-		},
 	}
 	config.Set(conf)
 
@@ -693,8 +681,8 @@ func TestDaemonSetComponentHealthy(t *testing.T) {
 	assertComponent(assert, icsl, "istio=egressgateway", kubernetes.ComponentUnhealthy, false)
 
 	// The rest of the components are healthy
-	assertComponent(assert, icsl, "istio=ingressgateway", kubernetes.ComponentHealthy, false)
-	assertComponent(assert, icsl, "istiod", kubernetes.ComponentHealthy, false)
+	assertComponent(assert, icsl, "istio=ingressgateway", kubernetes.ComponentHealthy, true)
+	assertComponent(assert, icsl, "istiod", kubernetes.ComponentHealthy, true)
 	assertComponent(assert, icsl, "grafana", kubernetes.ComponentHealthy, false)
 	assertComponent(assert, icsl, "prometheus", kubernetes.ComponentHealthy, false)
 	assertComponent(assert, icsl, "tracing", kubernetes.ComponentHealthy, false)
@@ -721,11 +709,6 @@ func TestDaemonSetComponentUnhealthy(t *testing.T) {
 	conf.IstioLabels.AppLabelName = "app.kubernetes.io/name"
 	conf.ExternalServices.Istio.ComponentStatuses = config.ComponentStatuses{
 		Enabled: true,
-		Components: []config.ComponentStatus{
-			{AppLabel: "istiod", IsCore: false},
-			{AppLabel: "istio=egressgateway", IsCore: false},
-			{AppLabel: "istio=ingressgateway", IsCore: false},
-		},
 	}
 	config.Set(conf)
 
@@ -746,11 +729,11 @@ func TestDaemonSetComponentUnhealthy(t *testing.T) {
 	assert.NoError(error)
 
 	// Two istio components are unhealthy
-	assertComponent(assert, icsl, "istio=ingressgateway", kubernetes.ComponentUnhealthy, false)
+	assertComponent(assert, icsl, "istio=ingressgateway", kubernetes.ComponentUnhealthy, true)
 	assertComponent(assert, icsl, "istio=egressgateway", kubernetes.ComponentUnhealthy, false)
 
 	// The rest of the components are healthy
-	assertComponent(assert, icsl, "istiod", kubernetes.ComponentHealthy, false)
+	assertComponent(assert, icsl, "istiod", kubernetes.ComponentHealthy, true)
 	assertComponent(assert, icsl, "grafana", kubernetes.ComponentHealthy, false)
 	assertComponent(assert, icsl, "prometheus", kubernetes.ComponentHealthy, false)
 	assertComponent(assert, icsl, "tracing", kubernetes.ComponentHealthy, false)
