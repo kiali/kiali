@@ -163,7 +163,7 @@ create_apikey() {
 
 DEFAULT_APIKEY_NAME="${USER}-apikey"
 DEFAULT_NAME_PREFIX="${USER}"
-DEFAULT_OPENSHIFT_VERSION="$(ibmcloud ks versions --show-version OpenShift -q | sort | tail -n1)"
+DEFAULT_OPENSHIFT_VERSION="$(ibmcloud ks versions --show-version OpenShift -q | sort | tail -n1 | sed 's/ (default)$//')"
 DEFAULT_PLUGIN_INSTALL="true"
 DEFAULT_PLUGIN_UPDATE="true"
 DEFAULT_REGION="us-east"
