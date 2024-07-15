@@ -227,8 +227,10 @@ subjects:
   name: oidc:kiali
 EOF
 
-    # Create a clusterrolebinding in the west cluster so that the kiali oidc user can view resources in kiali.
-    kubectl apply --context "${CLUSTER2_CONTEXT}" -f - <<EOF
+    if [ "${SINGLE_KIALI}" != "true" ]; then
+
+      # Create a clusterrolebinding in the west cluster so that the kiali oidc user can view resources in kiali.
+      kubectl apply --context "${CLUSTER2_CONTEXT}" -f - <<EOF
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
@@ -242,6 +244,9 @@ subjects:
   kind: User
   name: oidc:kiali
 EOF
+
+    fi
+
   fi
 }
 
