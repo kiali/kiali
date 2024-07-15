@@ -70,9 +70,11 @@ MYSQLSKUPPERNS="mysqlskupperns"
 OPENSHIFT1_API=""
 OPENSHIFT1_USERNAME="kiali"
 OPENSHIFT1_PASSWORD="kiali"
+OPENSHIFT1_TOKEN=""
 OPENSHIFT2_API=""
 OPENSHIFT2_USERNAME="kiali"
 OPENSHIFT2_PASSWORD="kiali"
+OPENSHIFT2_TOKEN=""
 SINGLE_ROUTER="false"
 SKUPPER_EXE="${OUTPUT_DIR}/skupper"
 SKUPPER_TOKEN_FILE_MONGO="${OUTPUT_DIR}/skupper-mongo.token"
@@ -107,9 +109,11 @@ while [ $# -gt 0 ]; do
     -os1a|--openshift1-api)   OPENSHIFT1_API="$2"            ;shift;shift ;;
     -os1u|--openshift1-user)  OPENSHIFT1_USERNAME="$2"       ;shift;shift ;;
     -os1p|--openshift1-pass)  OPENSHIFT1_PASSWORD="$2"       ;shift;shift ;;
+    -os1t|--openshift1-token) OPENSHIFT1_TOKEN="$2"          ;shift;shift ;;
     -os2a|--openshift2-api)   OPENSHIFT2_API="$2"            ;shift;shift ;;
     -os2u|--openshift2-user)  OPENSHIFT2_USERNAME="$2"       ;shift;shift ;;
     -os2p|--openshift2-pass)  OPENSHIFT2_PASSWORD="$2"       ;shift;shift ;;
+    -os2t|--openshift2-token) OPENSHIFT2_TOKEN="$2"          ;shift;shift ;;
     -sr|--single-router)      SINGLE_ROUTER="$2"             ;shift;shift ;;
     -ve|--validate-env)       VALIDATE_ENVIRONMENT="$2"      ;shift;shift ;;
     -h|--help)
@@ -147,9 +151,11 @@ Valid command line arguments:
   -os1a|--openshift1-api <api URL>: The URL to the first OpenShift API server.
   -os1u|--openshift1-user <username>: The username of the user for the first OpenShift cluster. (default: kiali)
   -os1p|--openshift1-pass <password>: The password of the user for the first OpenShift cluster. (default: kiali)
+  -oslt|--openshift1-token <token>: If specified, OpenShift login will be done via token, ignoring username/password.
   -os2a|--openshift2-api <api URL>: The URL to the second OpenShift API server.
   -os2u|--openshift2-user <username>: The username of the user for the second OpenShift cluster. (default: kiali)
   -os2p|--openshift2-pass <password>: The password of the user for the second OpenShift cluster. (default: kiali)
+  -os2t|--openshift2-token <token>: If specified, OpenShift login will be done via token, ignoring username/password.
   -sr|--single-router <true|false>: If true, there will be one router to supply access to both databases.
                                     If false, there will be two routers - one for each database (mongo and mysql).
                                     Default: false
@@ -603,9 +609,16 @@ openshift_login() {
   local cluster_name="${1}"
   case ${cluster_name} in
     ${CLUSTER1_ISTIO})
-      if ! ${CLIENT_EXE} login --server "${OPENSHIFT1_API}" -u "${OPENSHIFT1_USERNAME}" -p "${OPENSHIFT1_PASSWORD}" &> /dev/null ; then
-        errormsg "Cannot log into OpenShift cluster #1 [${OPENSHIFT1_API}]. Make sure the credentials for user [${OPENSHIFT1_USERNAME}] is correct."
-        exit 1
+      if [ -z "${OPENSHIFT1_TOKEN}" ]; then
+        if ! ${CLIENT_EXE} login --server "${OPENSHIFT1_API}" -u "${OPENSHIFT1_USERNAME}" -p "${OPENSHIFT1_PASSWORD}" &> /dev/null ; then
+          errormsg "Cannot log into OpenShift cluster #1 [${OPENSHIFT1_API}]. Make sure the credentials for user [${OPENSHIFT1_USERNAME}] is correct."
+          exit 1
+        fi
+      else
+        if ! ${CLIENT_EXE} login --server "${OPENSHIFT1_API}" --token "${OPENSHIFT1_TOKEN}" &> /dev/null ; then
+          errormsg "Cannot log into OpenShift cluster #1 [${OPENSHIFT1_API}]. Make sure --openshift1-token is correct."
+          exit 1
+        fi
       fi
       if ! (${CLIENT_EXE} whoami --show-server | grep -q ${OPENSHIFT1_API}); then
         errormsg "The login did not seem to work: [$(${CLIENT_EXE} whoami --show-server)] does not seem to be cluster #1 [${OPENSHIFT1_API}]"
@@ -613,9 +626,16 @@ openshift_login() {
       fi
       ;;
     ${CLUSTER2_DB})
-      if ! ${CLIENT_EXE} login --server "${OPENSHIFT2_API}" -u "${OPENSHIFT2_USERNAME}" -p "${OPENSHIFT2_PASSWORD}" &> /dev/null ; then
-        errormsg "Cannot log into OpenShift cluster #2 [${OPENSHIFT2_API}]. Make sure the credentials for user [${OPENSHIFT2_USERNAME}] is correct."
-        exit 1
+      if [ -z "${OPENSHIFT2_TOKEN}" ]; then
+        if ! ${CLIENT_EXE} login --server "${OPENSHIFT2_API}" -u "${OPENSHIFT2_USERNAME}" -p "${OPENSHIFT2_PASSWORD}" &> /dev/null ; then
+          errormsg "Cannot log into OpenShift cluster #2 [${OPENSHIFT2_API}]. Make sure the credentials for user [${OPENSHIFT2_USERNAME}] is correct."
+          exit 1
+        fi
+      else
+        if ! ${CLIENT_EXE} login --server "${OPENSHIFT2_API}" --token "${OPENSHIFT2_TOKEN}" &> /dev/null ; then
+          errormsg "Cannot log into OpenShift cluster #2 [${OPENSHIFT2_API}]. Make sure --openshift2-token is correct."
+          exit 1
+        fi
       fi
       if ! (${CLIENT_EXE} whoami --show-server | grep -q ${OPENSHIFT2_API}); then
         errormsg "The login did not seem to work: [$(${CLIENT_EXE} whoami --show-server)] does not seem to be cluster #2 [${OPENSHIFT2_API}]"
