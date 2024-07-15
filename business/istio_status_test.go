@@ -414,8 +414,9 @@ func TestNoIstioComponentFoundError(t *testing.T) {
 	clients[conf.KubernetesConfig.ClusterName] = k8s
 
 	iss := NewWithBackends(clients, clients, nil, mockJaeger()).IstioStatus
-	_, error := iss.GetStatus(context.TODO())
-	assert.Error(error)
+	icsl, error := iss.GetStatus(context.TODO())
+	assert.NoError(error)
+	assertComponent(assert, icsl, "istiod", kubernetes.ComponentNotFound, true)
 }
 
 func TestDefaults(t *testing.T) {
