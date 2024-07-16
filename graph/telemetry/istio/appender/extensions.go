@@ -20,7 +20,7 @@ const (
 	ExtensionsAppenderName string            = "extensions"
 	tsHash                 graph.MetadataKey = "tsHash"
 	tsHashMap              graph.MetadataKey = "tsHashMap"
-	urlAnnotation          string            = "extension.kiali.io/ui_url"
+	urlAnnotation          string            = "extension.kiali.io/ui-url"
 	urlNotFound            string            = "_urlnotfound_"
 )
 
