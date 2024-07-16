@@ -149,8 +149,8 @@ func (a ExtensionsAppender) appendTrafficMap(ext config.ExtensionConfig, traffic
 		protocol = graph.TCP.Name
 	}
 
-	skipRequestsGrpc := isRequests && a.Rates.Grpc != graph.RateRequests
-	skipRequestsHttp := isRequests && a.Rates.Http != graph.RateRequests
+	skipRequestsGrpc := !isRequests || a.Rates.Grpc != graph.RateRequests
+	skipRequestsHttp := !isRequests || a.Rates.Http != graph.RateRequests
 
 	for _, s := range *vector {
 		val := float64(s.Value)
@@ -322,11 +322,7 @@ func (a ExtensionsAppender) getUrl(ext config.ExtensionConfig, source *graph.Nod
 	}
 
 	// otherwise, look for the annotation on the source service, or if that fails, a service named after the extension
-	rootSvcName := source.Service
-	if rootSvcName == "" {
-		rootSvcName = source.App
-	}
-	for _, svcName := range []string{rootSvcName, ext.Name} {
+	for _, svcName := range []string{name, ext.Name} {
 		svc, err := a.globalInfo.Business.Svc.GetService(a.globalInfo.Context, source.Cluster, source.Namespace, svcName)
 		if err != nil {
 			log.Debugf("No extension root node service found [%s][%s][%s]", source.Cluster, source.Namespace, svcName)

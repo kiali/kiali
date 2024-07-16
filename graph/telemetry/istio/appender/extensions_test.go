@@ -6,52 +6,66 @@ import (
 
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
+	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/prometheus/prometheustest"
 )
 
+const (
+	extName       = "extension-name"
+	extUrl        = "http://extension.test"
+	rootCluster   = "root-cluster"
+	rootNamespace = "root-namespace"
+	rootName      = "root-name"
+)
+
 func TestExtension(t *testing.T) {
 	assert := assert.New(t)
 
-	// Set config
-	extConfig := config.ExtensionConfig{
-		Enabled:       true,
-		Name:          "extension-name",
-		RootCluster:   "root-cluster",
-		RootNamespace: "root-namespace",
-		RootName:      "root-name",
-	}
-
-	client, _, err := setupExtensionMock(t, extConfig)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-
 	// start with traffic map containing only the extension's root service
 	trafficMap := graph.NewTrafficMap()
-	root, _ := graph.NewNode(extConfig.RootCluster, extConfig.RootNamespace, extConfig.RootName, "", "", "", "", graph.GraphTypeVersionedApp)
+	root, _ := graph.NewNode(rootCluster, rootNamespace, rootName, "", "", "", "", graph.GraphTypeVersionedApp)
 	trafficMap[root.ID] = root
 
 	root, ok := trafficMap[root.ID]
 	assert.Equal(true, ok)
 	assert.Equal(graph.NodeTypeService, root.NodeType)
-	assert.Equal(extConfig.RootCluster, root.Cluster)
-	assert.Equal(extConfig.RootNamespace, root.Namespace)
-	assert.Equal(extConfig.RootName, root.Service)
+	assert.Equal(rootCluster, root.Cluster)
+	assert.Equal(rootNamespace, root.Namespace)
+	assert.Equal(rootName, root.Service)
 	assert.Equal(0, len(root.Edges))
 
+	// Set config
+	extConfig := config.ExtensionConfig{
+		Enabled: true,
+		Name:    extName,
+	}
+
+	// setup mocks
+	client, _, businessLayer, err := setupExtensionMock(t)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
 	duration, _ := time.ParseDuration("60s")
+	globalInfo := graph.NewAppenderGlobalInfo()
+	globalInfo.Business = businessLayer
+	globalInfo.PromClient = client
+
 	appender := ExtensionsAppender{
 		Duration:         duration,
+		globalInfo:       globalInfo,
 		GraphType:        graph.GraphTypeVersionedApp,
 		IncludeIdleEdges: false,
 		QueryTime:        time.Now().Unix(),
@@ -60,36 +74,45 @@ func TestExtension(t *testing.T) {
 			Grpc: graph.RateNone,
 			Tcp:  graph.RateSent,
 		},
+		ShowUnrooted: true,
+		urls:         map[string]string{},
 	}
-	appender.appendGraph(trafficMap, extConfig, client)
+
+	// run appender
+	appender.appendGraph(extConfig, trafficMap)
 
 	root, ok = trafficMap[root.ID]
 	assert.Equal(true, ok)
 	assert.Equal(graph.NodeTypeService, root.NodeType)
-	assert.Equal(extConfig.RootCluster, root.Cluster)
-	assert.Equal(extConfig.RootNamespace, root.Namespace)
-	assert.Equal(extConfig.RootName, root.Service)
+	assert.Equal(rootCluster, root.Cluster)
+	assert.Equal(rootNamespace, root.Namespace)
+	assert.Equal(rootName, root.Service)
 	assert.Equal(2, len(root.Edges))
 	protocol0 := root.Edges[0].Metadata[graph.ProtocolKey]
 	assert.Contains([]string{"http", "tcp"}, protocol0)
 	protocol1 := root.Edges[1].Metadata[graph.ProtocolKey]
 	assert.Contains([]string{"http", "tcp"}, protocol1)
 	assert.True(protocol0 != protocol1)
+	ext, ok := root.Metadata[graph.IsExtension]
+	assert.True(ok)
+	assert.Equal(extName, ext.(*graph.ExtInfo).Name)
+	assert.Equal(extUrl, ext.(*graph.ExtInfo).URL)
 }
 
-func setupExtensionMock(t *testing.T, extConfig config.ExtensionConfig) (*prometheus.Client, *prometheustest.PromAPIMock, error) {
-	q0 := `round(sum(rate(kiali_ext_requests_total{extension="extension-name"} [60s])) by (dest_cluster, dest_namespace, dest_service, dest_version, flags, protocol, security, source_cluster, source_namespace, source_service, source_version, status_code) > 0,0.001)`
+func setupExtensionMock(t *testing.T) (*prometheus.Client, *prometheustest.PromAPIMock, *business.Layer, error) {
+	q0 := `round(sum(rate(kiali_ext_requests_total{extension="extension-name"} [60s])) by (dest_cluster, dest_namespace, dest_name, flags, protocol, security, source_cluster, source_is_root, source_namespace, source_name, status_code) > 0,0.001)`
 	q0m0 := model.Metric{
-		"source_cluster":   model.LabelValue(extConfig.RootCluster),
-		"source_namespace": model.LabelValue(extConfig.RootNamespace),
-		"source_service":   model.LabelValue(extConfig.RootName),
+		"source_cluster":   model.LabelValue(rootCluster),
+		"source_namespace": model.LabelValue(rootNamespace),
+		"source_name":      model.LabelValue(rootName),
+		"source_is_root":   model.LabelValue("true"),
 		"dest_cluster":     "remote-cluster",
 		"dest_namespace":   "remote-namespace",
-		"dest_service":     "remote-service",
-		"dest_version":     "latest",
+		"dest_name":        "remote-service",
 		"protocol":         "http",
 		"status_code":      "200",
 		"flags":            "-",
+		"security":         "tls",
 	}
 	v0 := model.Vector{
 		&model.Sample{
@@ -98,16 +121,17 @@ func setupExtensionMock(t *testing.T, extConfig config.ExtensionConfig) (*promet
 		},
 	}
 
-	q1 := `round(sum(rate(kiali_ext_tcp_sent_total{extension="extension-name"} [60s])) by (dest_cluster, dest_namespace, dest_service, dest_version, flags, security, source_cluster, source_namespace, source_service, source_version) > 0,0.001)`
+	q1 := `round(sum(rate(kiali_ext_tcp_sent_total{extension="extension-name"} [60s])) by (dest_cluster, dest_namespace, dest_name, flags, security, source_cluster, source_is_root, source_namespace, source_name) > 0,0.001)`
 	q1m0 := model.Metric{
-		"source_cluster":   model.LabelValue(extConfig.RootCluster),
-		"source_namespace": model.LabelValue(extConfig.RootNamespace),
-		"source_service":   model.LabelValue(extConfig.RootName),
+		"source_cluster":   model.LabelValue(rootCluster),
+		"source_namespace": model.LabelValue(rootNamespace),
+		"source_name":      model.LabelValue(rootName),
+		"source_is_root":   model.LabelValue("true"),
 		"dest_cluster":     "remote-cluster",
 		"dest_namespace":   "remote-namespace",
-		"dest_service":     "remote-tcp-service",
-		"dest_version":     "latest",
+		"dest_name":        "remote-tcp-service",
 		"flags":            "-",
+		"security":         "tls",
 	}
 	v1 := model.Vector{
 		&model.Sample{
@@ -116,42 +140,49 @@ func setupExtensionMock(t *testing.T, extConfig config.ExtensionConfig) (*promet
 		},
 	}
 
-	client, api := setupMockedExt(t)
+	client, api, businessLayer := setupMockedExt(t)
 
 	mockQuery(api, q0, &v0)
 	mockQuery(api, q1, &v1)
 
-	return client, api, nil
+	return client, api, businessLayer, nil
 }
 
-func setupMockedExt(t *testing.T) (*prometheus.Client, *prometheustest.PromAPIMock) {
+func setupMockedExt(t *testing.T) (*prometheus.Client, *prometheustest.PromAPIMock, *business.Layer) {
+	t.Helper()
+
 	conf := config.NewConfig()
 	conf.Extensions = []config.ExtensionConfig{
 		{
-			Enabled:       true,
-			Name:          "extension-name",
-			RootCluster:   "root-cluster",
-			RootNamespace: "root-namespace",
-			RootName:      "root-service",
+			Enabled: true,
+			Name:    "extension-name",
 		},
 	}
+	conf.KubernetesConfig.ClusterName = rootCluster
 	config.Set(conf)
 
-	k8s := kubetest.NewFakeK8sClient(
-		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "bookinfo"}},
-	)
-
-	api := new(prometheustest.PromAPIMock)
-	client, err := prometheus.NewClient()
+	promApi := new(prometheustest.PromAPIMock)
+	promClient, err := prometheus.NewClient()
 	if err != nil {
 		t.Fatal(err)
 	}
-	client.Inject(api)
+	promClient.Inject(promApi)
+
+	k8s := kubetest.NewFakeK8sClient(
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: rootNamespace}},
+		&core_v1.Service{ObjectMeta: meta_v1.ObjectMeta{Name: extName, Namespace: rootNamespace, Annotations: map[string]string{"extension.kiali.io/ui_url": extUrl}}},
+	)
+	authInfo := map[string]*api.AuthInfo{conf.KubernetesConfig.ClusterName: {Token: "test"}}
 
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
 	business.SetWithBackends(mockClientFactory, nil)
 	cache := cache.NewTestingCache(t, k8s, *conf)
 	business.WithKialiCache(cache)
+	discovery := istio.NewDiscovery(mockClientFactory.Clients, cache, conf)
+	business.WithDiscovery(discovery)
 
-	return client, api
+	businessLayer, err := business.NewLayer(conf, cache, mockClientFactory, promClient, nil, nil, nil, discovery, authInfo)
+	require.NoError(t, err)
+
+	return promClient, promApi, businessLayer
 }
