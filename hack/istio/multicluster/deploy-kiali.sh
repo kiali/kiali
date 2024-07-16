@@ -225,31 +225,16 @@ deploy_kiali() {
     else
       curl -k -L https://"${KEYCLOAK_ADDRESS}"/admin/realms/kube/users -H "Authorization: Bearer $TOKEN_KEY" -d '{"username": "kiali", "enabled": true, "credentials": [{"type": "password", "value": "kiali"}]}' -H 'Content-Type: application/json'
     fi
-    # Create a clusterrole and clusterrolebinding so that the kiali oidc user can view and edit resources in kiali.
-    # It needs read-write permissions for the tests to create and delete resources so we have to do
-    # this helm templating to create the role with write permissions since only when you are using
-    # anonymous auth do you get a role with write permissions. For testing we want a role that does
-    # potentially all the things kiali can do so that's why we reuse the kiali role rather than
-    # having to maintain a whole separate role just for the testing user.
-    helm template --show-only "templates/role.yaml" --set deployment.instance_name=kiali-testing-user --set auth.strategy=anonymous kiali-server "${KIALI_SERVER_HELM_CHARTS}" | kubectl apply --context "${CLUSTER1_CONTEXT}" -f -
-    helm template --show-only "templates/role.yaml" --set deployment.instance_name=kiali-testing-user --set auth.strategy=anonymous kiali-server "${KIALI_SERVER_HELM_CHARTS}" | kubectl apply --context "${CLUSTER2_CONTEXT}" -f -
 
-    if [ "${USE_GROUPS}" == "true" ]; then
-     kubectl apply --context "${CLUSTER1_CONTEXT}" -f - <<EOF
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
- name: kiali-testing-user
-roleRef:
- apiGroup: rbac.authorization.k8s.io
- kind: ClusterRole
- name: kiali-testing-user
-subjects:
-- apiGroup: rbac.authorization.k8s.io
- kind: Group
- name: oidc:default
-EOF
-    else
+    if [ "${SINGLE_KIALI}" != "true" ]; then
+      # Create a clusterrole and clusterrolebinding so that the kiali oidc user can view and edit resources in kiali.
+      # It needs read-write permissions for the tests to create and delete resources so we have to do
+      # this helm templating to create the role with write permissions since only when you are using
+      # anonymous auth do you get a role with write permissions. For testing we want a role that does
+      # potentially all the things kiali can do so that's why we reuse the kiali role rather than
+      # having to maintain a whole separate role just for the testing user.
+      helm template --show-only "templates/role.yaml" --set deployment.instance_name=kiali-testing-user --set auth.strategy=anonymous kiali-server "${KIALI_SERVER_HELM_CHARTS}" | kubectl apply --context "${CLUSTER1_CONTEXT}" -f -
+      helm template --show-only "templates/role.yaml" --set deployment.instance_name=kiali-testing-user --set auth.strategy=anonymous kiali-server "${KIALI_SERVER_HELM_CHARTS}" | kubectl apply --context "${CLUSTER2_CONTEXT}" -f -
 
       kubectl apply --context "${CLUSTER1_CONTEXT}" -f - <<EOF
 apiVersion: rbac.authorization.k8s.io/v1
@@ -265,9 +250,6 @@ subjects:
   kind: User
   name: oidc:kiali
 EOF
-    fi
-
-    if [ "${SINGLE_CLUSTER}" != "true" ]; then
 
       # Create a clusterrolebinding in the west cluster so that the kiali oidc user can view resources in kiali.
       kubectl apply --context "${CLUSTER2_CONTEXT}" -f - <<EOF
