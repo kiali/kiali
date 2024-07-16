@@ -77,6 +77,9 @@ NETWORK2_ID="network-west"
 # Deploy a single kiali or a kiali per cluster
 SINGLE_KIALI="${SINGLE_KIALI:-true}"
 
+# Use groups for OpenId authorization (single cluster)
+USE_GROUPS="${USE_GROUPS:-false}"
+
 # Create kiali remote secrets so kiali can access the different clusters
 # When left empty, this will be true if SINGLE_KIALI is true or false otherwise.
 KIALI_CREATE_REMOTE_CLUSTER_SECRETS="${KIALI_CREATE_REMOTE_CLUSTER_SECRETS:-}"
@@ -337,6 +340,10 @@ while [[ $# -gt 0 ]]; do
       SINGLE_KIALI="$2"
       shift;shift
       ;;
+    -ug|--use-groups)
+      USE_GROUPS="$2"
+      shift;shift
+      ;;
     -h|--help)
       cat <<HELPMSG
 Valid command line arguments:
@@ -395,6 +402,7 @@ Valid command line arguments:
   -n2|--network2 <id>: When Istio is installed in cluster 2, it will be part of the network with this given name.
                        If this is left as empty string, it will be the same as --network1. (Default: "")
   -sk|--single-kiali <bool>: If "true", a single kiali will be deployed for the whole mesh. (Default: true)
+  -ug|--use-groups <bool>: If using Group for autentication. Just for single cluster and OpenID. (Default: false)
   -h|--help: this message
 HELPMSG
       exit 1
@@ -607,6 +615,7 @@ MESH_ID=$MESH_ID
 NETWORK1_ID=$NETWORK1_ID
 NETWORK2_ID=$NETWORK2_ID
 SINGLE_KIALI=$SINGLE_KIALI
+USE_GROUPS=$USE_GROUPS
 === SETTINGS ===
 EOM
 
