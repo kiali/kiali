@@ -77,6 +77,9 @@ NETWORK2_ID="network-west"
 # Deploy a single kiali or a kiali per cluster
 SINGLE_KIALI="${SINGLE_KIALI:-true}"
 
+# Deploy just in one cluster
+SINGLE_CLUSTER="${SINGLE_CLUSTER:-false}"
+
 # Use groups for OpenId authorization (single cluster)
 USE_GROUPS="${USE_GROUPS:-false}"
 
@@ -336,6 +339,10 @@ while [[ $# -gt 0 ]]; do
       NETWORK2_ID="$2"
       shift;shift
       ;;
+    -sk|--single-cluster)
+      SINGLE_CLUSTER="$2"
+      shift;shift
+      ;;
     -sk|--single-kiali)
       SINGLE_KIALI="$2"
       shift;shift
@@ -401,6 +408,7 @@ Valid command line arguments:
   -n1|--network1 <id>: When Istio is installed in cluster 1, it will be part of the network with this given name. (Default: network-default)
   -n2|--network2 <id>: When Istio is installed in cluster 2, it will be part of the network with this given name.
                        If this is left as empty string, it will be the same as --network1. (Default: "")
+  -sc|--single-cluster <bool>: If "true", perform action just in CLUSTER 1. (Default: false)
   -sk|--single-kiali <bool>: If "true", a single kiali will be deployed for the whole mesh. (Default: true)
   -ug|--use-groups <bool>: If using Group for autentication. Just for single cluster and OpenID. (Default: false)
   -h|--help: this message
@@ -571,7 +579,8 @@ export BOOKINFO_ENABLED \
        MESH_ID \
        NETWORK1_ID \
        NETWORK2_ID \
-       SINGLE_KIALI
+       SINGLE_KIALI \
+       SINGLE_CLUSTER
 
 cat <<EOM
 === SETTINGS ===
@@ -614,6 +623,7 @@ MINIKUBE_MEMORY=$MINIKUBE_MEMORY
 MESH_ID=$MESH_ID
 NETWORK1_ID=$NETWORK1_ID
 NETWORK2_ID=$NETWORK2_ID
+SINGLE_CLUSTER=$SINGLE_CLUSTER
 SINGLE_KIALI=$SINGLE_KIALI
 USE_GROUPS=$USE_GROUPS
 === SETTINGS ===

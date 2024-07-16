@@ -238,7 +238,7 @@ setup_kind_singlecluster() {
 
       "${SCRIPT_DIR}"/istio/multicluster/deploy-kiali.sh \
         --cluster1-context "kind-ci" \
-        --single-kiali "true" \
+        --single-cluster "true" \
         --kiali-create-remote-cluster-secrets "false" \
         --cluster1-name "ci" \
         --manage-kind true \

@@ -267,7 +267,7 @@ subjects:
 EOF
     fi
 
-    if [ "${SINGLE_KIALI}" != "true" ]; then
+    if [ "${SINGLE_CLUSTER}" != "true" ]; then
 
       # Create a clusterrolebinding in the west cluster so that the kiali oidc user can view resources in kiali.
       kubectl apply --context "${CLUSTER2_CONTEXT}" -f - <<EOF
