@@ -294,7 +294,7 @@ minikube_install_skupper() {
   ${SKUPPER_EXE} --context ${CLUSTER2_DB} -n ${MONGONS} init
   ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} get namespace ${MONGOSKUPPERNS} 2>/dev/null || ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} create namespace ${MONGOSKUPPERNS}
   ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} label namespace ${MONGOSKUPPERNS} istio-injection=enabled --overwrite
-  ${SKUPPER_EXE} --context ${CLUSTER1_ISTIO} -n ${MONGOSKUPPERNS} init --enable-console --enable-flow-collector --router-service-annotations "extension.kiali.io/ui-url=mazz"
+  ${SKUPPER_EXE} --context ${CLUSTER1_ISTIO} -n ${MONGOSKUPPERNS} init --enable-console --enable-flow-collector
   ${SKUPPER_EXE} --context ${CLUSTER1_ISTIO} -n ${MONGOSKUPPERNS} token create "${SKUPPER_TOKEN_FILE_MONGO}"
   # skupper link will connect both ends of the pipe (the skupper-routers on each end of the pipe will be "linked")
   ${SKUPPER_EXE} --context ${CLUSTER2_DB} -n ${MONGONS} link create "${SKUPPER_TOKEN_FILE_MONGO}"
@@ -317,7 +317,7 @@ minikube_install_skupper() {
     ${SKUPPER_EXE} --context ${CLUSTER2_DB} -n ${MYSQLNS} init
     ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} get namespace ${MYSQLSKUPPERNS} 2>/dev/null || ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} create namespace ${MYSQLSKUPPERNS}
     ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} label namespace ${MYSQLSKUPPERNS} istio-injection=enabled --overwrite
-    ${SKUPPER_EXE} --context ${CLUSTER1_ISTIO} -n ${MYSQLSKUPPERNS} init --enable-console --enable-flow-collector --router-service-annotations "extension.kiali.io/ui-url=mazz"
+    ${SKUPPER_EXE} --context ${CLUSTER1_ISTIO} -n ${MYSQLSKUPPERNS} init --enable-console --enable-flow-collector
     ${SKUPPER_EXE} --context ${CLUSTER1_ISTIO} -n ${MYSQLSKUPPERNS} token create "${SKUPPER_TOKEN_FILE_MYSQL}"
     # skupper link will connect both ends of the pipe (the skupper-routers on each end of the pipe will be "linked")
     ${SKUPPER_EXE} --context ${CLUSTER2_DB} -n ${MYSQLNS} link create "${SKUPPER_TOKEN_FILE_MYSQL}"
@@ -420,7 +420,7 @@ openshift_install_skupper() {
   ${CLIENT_EXE} get namespace ${MONGOSKUPPERNS} 2>/dev/null || ${CLIENT_EXE} create namespace ${MONGOSKUPPERNS}
   # TODO: RIGHT NOW SKUPPER DOES NOT WORK IN OPENSHIFT WHEN INSIDE THE MESH
   ${CLIENT_EXE} label namespace ${MONGOSKUPPERNS} istio-injection=disabled --overwrite
-  ${SKUPPER_EXE} -n ${MONGOSKUPPERNS} init --enable-console --enable-flow-collector --router-service-annotations "extension.kiali.io/ui-url=mazz"
+  ${SKUPPER_EXE} -n ${MONGOSKUPPERNS} init --enable-console --enable-flow-collector
   ${SKUPPER_EXE} -n ${MONGOSKUPPERNS} token create "${SKUPPER_TOKEN_FILE_MONGO}"
   # LOGIN TO CLUSTER 2
   openshift_login ${CLUSTER2_DB}
@@ -452,7 +452,7 @@ openshift_install_skupper() {
     ${CLIENT_EXE} get namespace ${MYSQLSKUPPERNS} 2>/dev/null || ${CLIENT_EXE} create namespace ${MYSQLSKUPPERNS}
     # TODO: RIGHT NOW SKUPPER DOES NOT WORK IN OPENSHIFT WHEN INSIDE THE MESH
     ${CLIENT_EXE} label namespace ${MYSQLSKUPPERNS} istio-injection=disabled --overwrite
-    ${SKUPPER_EXE} -n ${MYSQLSKUPPERNS} init --enable-console --enable-flow-collector --router-service-annotations "extension.kiali.io/ui-url=mazz"
+    ${SKUPPER_EXE} -n ${MYSQLSKUPPERNS} init --enable-console --enable-flow-collector
     ${SKUPPER_EXE} -n ${MYSQLSKUPPERNS} token create "${SKUPPER_TOKEN_FILE_MYSQL}"
     # LOGIN TO CLUSTER 2
     openshift_login ${CLUSTER2_DB}
