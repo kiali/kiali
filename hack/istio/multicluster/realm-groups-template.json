@@ -674,7 +674,7 @@
         "acr",
         "profile",
         "roles",
-        "groups",
+        "group",
         "email"
       ],
       "optionalClientScopes": [
@@ -835,7 +835,7 @@
     },
     {
       "id": "db3f56d3-14ce-46e7-a115-e1d7ec98aa2f",
-      "name": "groups",
+      "name": "group",
       "description": "",
       "protocol": "openid-connect",
       "attributes": {
@@ -847,7 +847,7 @@
       "protocolMappers": [
         {
           "id": "0edf7cfa-2d9a-45bf-bfe0-354fef75b3d8",
-          "name": "groups",
+          "name": "group",
           "protocol": "openid-connect",
           "protocolMapper": "oidc-usermodel-client-role-mapper",
           "consentRequired": false,
@@ -856,7 +856,7 @@
             "userinfo.token.claim": "true",
             "id.token.claim": "true",
             "access.token.claim": "true",
-            "claim.name": "groups",
+            "claim.name": "group",
             "jsonType.label": "String",
             "usermodel.clientRoleMapping.clientId": "kube"
           }
@@ -1312,7 +1312,7 @@
         },
         {
           "id": "efacfd88-1fe3-45ad-a405-9efdd90940a5",
-          "name": "groups",
+          "name": "group",
           "protocol": "openid-connect",
           "protocolMapper": "oidc-usermodel-realm-role-mapper",
           "consentRequired": false,
@@ -1322,7 +1322,7 @@
             "user.attribute": "foo",
             "id.token.claim": "true",
             "access.token.claim": "true",
-            "claim.name": "groups",
+            "claim.name": "group",
             "jsonType.label": "String"
           }
         }
@@ -1336,7 +1336,7 @@
     "roles",
     "web-origins",
     "acr",
-    "groups"
+    "group"
   ],
   "defaultOptionalClientScopes": [
     "offline_access",

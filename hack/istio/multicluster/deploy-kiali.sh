@@ -162,7 +162,7 @@ deploy_kiali() {
         "--set auth.openid.scopes[0]=openid"
         "--set auth.openid.scopes[1]=profile"
         "--set auth.openid.scopes[2]=email"
-        "--set auth.openid.scopes[3]=groups"
+        "--set auth.openid.scopes[3]=group"
       )
   fi
   
@@ -226,7 +226,7 @@ deploy_kiali() {
       curl -k -L https://"${KEYCLOAK_ADDRESS}"/admin/realms/kube/users -H "Authorization: Bearer $TOKEN_KEY" -d '{"username": "kiali", "enabled": true, "credentials": [{"type": "password", "value": "kiali"}]}' -H 'Content-Type: application/json'
     fi
 
-    if [ "${SINGLE_KIALI}" != "true" ]; then
+    if [ "${SINGLE_CLUSTER}" != "true" ]; then
       # Create a clusterrole and clusterrolebinding so that the kiali oidc user can view and edit resources in kiali.
       # It needs read-write permissions for the tests to create and delete resources so we have to do
       # this helm templating to create the role with write permissions since only when you are using
