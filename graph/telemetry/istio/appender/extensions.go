@@ -20,7 +20,7 @@ const (
 	ExtensionsAppenderName string            = "extensions"
 	tsHash                 graph.MetadataKey = "tsHash"
 	tsHashMap              graph.MetadataKey = "tsHashMap"
-	urlAnnotation          string            = "ext.kiali.io/url"
+	urlAnnotation          string            = "extension.kiali.io/ui_url"
 	urlNotFound            string            = "_urlnotfound_"
 )
 
@@ -68,11 +68,11 @@ func (a ExtensionsAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo 
 
 	// Process the extensions defined in the config
 	for _, extension := range cfg.Extensions {
-		log.Infof("Extension %s", extension) // todo: remove
+		log.Infof("Extension %s", extension.Name) // todo: remove
 		if !extension.Enabled {
 			continue
 		}
-		log.Infof("Running Extension %s", extension) // todo: remove
+		log.Infof("Running Extension %s", extension.Name) // todo: remove
 		a.appendGraph(extension, trafficMap)
 	}
 }
@@ -290,7 +290,7 @@ func (a ExtensionsAppender) addNode(ext config.ExtensionConfig, trafficMap graph
 func (a ExtensionsAppender) findRootNode(trafficMap graph.TrafficMap, cluster, namespace, name string) (*graph.Node, bool) {
 	roots := sliceutil.Filter(maps.Values(trafficMap), func(n *graph.Node) bool {
 		match := n.Cluster == cluster && n.Namespace == namespace && (n.Service == name || n.App == name || n.Workload == name)
-		log.Infof("match1 n.Cluster == %s && n.Namespace == %s && (n.Service == %s || n.App == %s || n.Workload == %s) = %s", cluster, namespace, name, name, name, match) // todo: remove
+		log.Infof("match1 n.Cluster == %s && n.Namespace == %s && (n.Service == %s || n.App == %s || n.Workload == %s) = %v", cluster, namespace, name, name, name, match) // todo: remove
 		return n.Cluster == cluster && n.Namespace == namespace && (n.Service == name || n.App == name || n.Workload == name)
 	})
 	if len(roots) > 0 {
@@ -299,7 +299,7 @@ func (a ExtensionsAppender) findRootNode(trafficMap graph.TrafficMap, cluster, n
 
 	roots = sliceutil.Filter(maps.Values(trafficMap), func(n *graph.Node) bool {
 		match := n.Namespace == namespace && (n.Service == name || n.App == name || n.Workload == name)
-		log.Infof("match2 n.Namespace == %s && (n.Service == %s || n.App == %s || n.Workload == %s) = %s", namespace, name, name, name, match) // todo: remove
+		log.Infof("match2 n.Namespace == %s && (n.Service == %s || n.App == %s || n.Workload == %s) = %v", namespace, name, name, name, match) // todo: remove
 		return n.Namespace == namespace && (n.Service == name || n.App == name || n.Workload == name)
 	})
 	if len(roots) > 0 {
@@ -310,8 +310,13 @@ func (a ExtensionsAppender) findRootNode(trafficMap graph.TrafficMap, cluster, n
 }
 
 func (a ExtensionsAppender) getUrl(ext config.ExtensionConfig, source *graph.Node) string {
+	name := source.Service
+	if name == "" {
+		name = source.App
+	}
+
 	// first, try and autodiscover an existing route
-	routeUrl := a.globalInfo.Business.Svc.GetServiceRouteURL(a.globalInfo.Context, source.Cluster, source.Namespace, source.Service)
+	routeUrl := a.globalInfo.Business.Svc.GetServiceRouteURL(a.globalInfo.Context, source.Cluster, source.Namespace, name)
 	if routeUrl != "" {
 		return routeUrl
 	}
