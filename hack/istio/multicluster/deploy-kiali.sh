@@ -162,7 +162,7 @@ deploy_kiali() {
         "--set auth.openid.scopes[0]=openid"
         "--set auth.openid.scopes[1]=profile"
         "--set auth.openid.scopes[2]=email"
-        "--set auth.openid.scopes[3]=group"
+        "--set auth.openid.scopes[3]=groups"
       )
   fi
   

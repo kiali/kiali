@@ -674,7 +674,7 @@
         "acr",
         "profile",
         "roles",
-        "group",
+        "groups",
         "email"
       ],
       "optionalClientScopes": [
@@ -835,7 +835,7 @@
     },
     {
       "id": "db3f56d3-14ce-46e7-a115-e1d7ec98aa2f",
-      "name": "group",
+      "name": "groups",
       "description": "",
       "protocol": "openid-connect",
       "attributes": {
@@ -846,19 +846,17 @@
       },
       "protocolMappers": [
         {
-          "id": "0edf7cfa-2d9a-45bf-bfe0-354fef75b3d8",
-          "name": "group",
+          "id": "d95a5fef-2a54-443f-9875-58f7bb88c4a7",
+          "name": "groups",
           "protocol": "openid-connect",
-          "protocolMapper": "oidc-usermodel-client-role-mapper",
+          "protocolMapper": "oidc-group-membership-mapper",
           "consentRequired": false,
           "config": {
-            "multivalued": "true",
-            "userinfo.token.claim": "true",
+            "full.path": "false",
             "id.token.claim": "true",
             "access.token.claim": "true",
-            "claim.name": "group",
-            "jsonType.label": "String",
-            "usermodel.clientRoleMapping.clientId": "kube"
+            "claim.name": "groups",
+            "userinfo.token.claim": "true"
           }
         }
       ]
@@ -1312,7 +1310,7 @@
         },
         {
           "id": "efacfd88-1fe3-45ad-a405-9efdd90940a5",
-          "name": "group",
+          "name": "groups",
           "protocol": "openid-connect",
           "protocolMapper": "oidc-usermodel-realm-role-mapper",
           "consentRequired": false,
@@ -1322,7 +1320,7 @@
             "user.attribute": "foo",
             "id.token.claim": "true",
             "access.token.claim": "true",
-            "claim.name": "group",
+            "claim.name": "groups",
             "jsonType.label": "String"
           }
         }
@@ -1336,7 +1334,7 @@
     "roles",
     "web-origins",
     "acr",
-    "group"
+    "groups"
   ],
   "defaultOptionalClientScopes": [
     "offline_access",
@@ -1397,14 +1395,14 @@
         "subComponents": {},
         "config": {
           "allowed-protocol-mapper-types": [
-            "oidc-sha256-pairwise-sub-mapper",
-            "saml-role-list-mapper",
-            "oidc-full-name-mapper",
-            "oidc-address-mapper",
-            "saml-user-property-mapper",
             "oidc-usermodel-attribute-mapper",
+            "saml-role-list-mapper",
+            "saml-user-attribute-mapper",
+            "saml-user-property-mapper",
             "oidc-usermodel-property-mapper",
-            "saml-user-attribute-mapper"
+            "oidc-address-mapper",
+            "oidc-sha256-pairwise-sub-mapper",
+            "oidc-full-name-mapper"
           ]
         }
       },
@@ -1459,14 +1457,14 @@
         "subComponents": {},
         "config": {
           "allowed-protocol-mapper-types": [
-            "oidc-usermodel-property-mapper",
-            "oidc-sha256-pairwise-sub-mapper",
-            "oidc-usermodel-attribute-mapper",
-            "saml-role-list-mapper",
-            "oidc-address-mapper",
             "saml-user-attribute-mapper",
+            "saml-user-property-mapper",
+            "oidc-address-mapper",
+            "oidc-usermodel-attribute-mapper",
             "oidc-full-name-mapper",
-            "saml-user-property-mapper"
+            "oidc-sha256-pairwise-sub-mapper",
+            "saml-role-list-mapper",
+            "oidc-usermodel-property-mapper"
           ]
         }
       }
