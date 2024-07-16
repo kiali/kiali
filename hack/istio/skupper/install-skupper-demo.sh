@@ -254,6 +254,8 @@ minikube_install_basic_demo() {
       local make_build_targets="build build-ui"
     fi
     make --directory "${ROOT_DIR}" -e OC="$(which ${CLIENT_EXE})" CLUSTER_TYPE=minikube MINIKUBE_PROFILE=${CLUSTER1_ISTIO} SERVICE_TYPE=LoadBalancer ${make_build_targets:-} cluster-push operator-create kiali-create
+    ${CLIENT_EXE} patch kiali kiali -n kiali-operator --type merge -p '{"spec":{"extensions":[{"enabled":true,"name":"skupper"}]}}'
+
   else
     infomsg "Installing Kiali [${KIALI_VERSION}] via Helm ..."
     if ! helm repo update kiali 2> /dev/null; then
@@ -371,6 +373,7 @@ openshift_install_basic_demo() {
       local make_build_targets="build build-ui"
     fi
     make --directory "${ROOT_DIR}" -e OC="$(which ${CLIENT_EXE})" CLUSTER_TYPE=openshift ${make_build_targets:-} cluster-push operator-create kiali-create
+    ${CLIENT_EXE} patch kiali kiali -n kiali-operator --type merge -p '{"spec":{"extensions":[{"enabled":true,"name":"skupper"}]}}'
   else
     infomsg "Installing Kiali [${KIALI_VERSION}] via Helm ..."
     if ! helm repo update kiali 2> /dev/null; then
