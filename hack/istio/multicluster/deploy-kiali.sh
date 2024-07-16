@@ -57,7 +57,7 @@ deploy_kiali() {
     ${CLIENT_EXE} create configmap kiali-cabundle --from-file="openid-server-ca.crt=${KEYCLOAK_CERTS_DIR}/root-ca.pem" -n "${ISTIO_NAMESPACE}"
     ${CLIENT_EXE} create secret generic kiali --from-literal="oidc-secret=kube-client-secret" -n istio-system
     if [ "${USE_GROUPS}" == "true" ]; then
-      ${CLIENT_EXE} create clusterrolebinding kiali-user-viewer --clusterrole=kiali-viewer --group=oidc:default
+      ${CLIENT_EXE} create clusterrolebinding kiali-group-viewer --clusterrole=kiali-viewer --group=oidc:default
     else
       ${CLIENT_EXE} create clusterrolebinding kiali-user-viewer --clusterrole=kiali-viewer --user=oidc:kiali
     fi
