@@ -28,7 +28,7 @@ Provide a new list of "discovery selectors" in the same way that [Istio itself h
 spec:
   deployment:
     discovery_selectors:
-      global:
+      default:
       - match_labels:
           abc: def
           uvw: xyz
@@ -71,7 +71,7 @@ Kiali discovery selector:
 
 ```yaml
 discovery_selectors:
-  global:
+  default:
   - match_labels:
       team: backend
   - match_labels:
@@ -100,7 +100,7 @@ Kiali discovery selector cluster A:
 
 ```yaml
 discovery_selectors:
-  global:
+  default:
   - match_labels:
       team: api
 ```
@@ -109,7 +109,7 @@ Kiali discovery selector cluster B:
 
 ```yaml
 discovery_selectors:
-  global:
+  default:
   - match_labels:
       team: backend
 ```
@@ -128,11 +128,11 @@ Discovery selectors act as a way to separate multiple Kiali deployments from one
 
 A new configuration option will be added that will mimic the Istio `discoverySelectors` configuration option. Using the configuration option, users will be able to similarly scope Kiali to the defined set of namespaces. This configuration option would take precedence over the autodiscovered control plane discovery selectors. Having a config option within Kiali has the advantage of not relying on auto-discovery via the Istio control plane. Kiali does not need to fail if it cannot, even temporarily, access the control plane configuration, because it can rely on its own discovery selectors configuration. The configuration option needs to provide enough flexibility for users to specify different discovery selectors for each cluster in multi-primary scenarios.
 
-Kiali would add a `deployment.discovery_selectors` config option where you can specify global discovery selectors or cluster specific overrides `map[string]labelselector` where the key is the cluster name that the discovery selector will apply to. Cluster specific overrides will take precedence over the global option for that cluster.
+Kiali would add a `deployment.discovery_selectors` config option where you can specify a default set of discovery selectors and additional cluster-specific overrides `map[string]labelselector` where the key is the cluster name that the discovery selector will apply to. Cluster specific overrides will take precedence over the defaults.
 
 ```yaml
 discovery_selectors:
-  global:
+  default:
   - <array of label selectors>
   cluster_name:
   - <array of label selectors>
@@ -159,7 +159,7 @@ spec:
   deployment:
     cluster_wide_access: false
     discovery_selectors:
-      global:
+      default:
       - match_labels:
           team: backend
 ```
@@ -171,7 +171,7 @@ spec:
   deployment:
     cluster_wide_access: false
     discovery_selectors:
-      global:
+      default:
       - match_labels:
           kubernetes.io/metadata.name: backend-app1
       - match_labels:
@@ -188,7 +188,7 @@ spec:
       - backend-app2
     cluster_wide_access: false
     discovery_selectors:
-      global:
+      default:
       - match_labels:
           team: backend
 ```
