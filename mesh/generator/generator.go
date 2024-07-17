@@ -97,7 +97,7 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalIn
 	clusterMap := make(map[string]bool)
 	for _, cp := range meshDef.ControlPlanes {
 		// Check if istio namespace is accessible for that cluster
-		cpKey := fmt.Sprintf("%s:%s", cp.Cluster.Name, cp.IstiodNamespace)
+		cpKey := mesh.GetClusterSensitiveKey(cp.Cluster.Name, cp.IstiodNamespace)
 		if o.AccessibleNamespaces[cpKey] == nil {
 			log.Tracef("No access for control plane %s in %s cluster", cp.IstiodNamespace, cp.Cluster.Name)
 			continue
