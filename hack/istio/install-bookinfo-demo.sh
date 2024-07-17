@@ -430,6 +430,14 @@ if [ "${TRAFFIC_GENERATOR_ENABLED}" == "true" ]; then
       fi
     fi
   fi
+  # # Do not create traffic generator until all pods are ready
+  echo "Waiting till all pods are ready before installing the traffic generator"
+  $CLIENT_EXE -n ${NAMESPACE} wait --for condition=Available deployment/details-v1 --timeout=5m
+  $CLIENT_EXE -n ${NAMESPACE} wait --for condition=Available deployment/productpage-v1 --timeout=5m
+  $CLIENT_EXE -n ${NAMESPACE} wait --for condition=Available deployment/ratings-v1 --timeout=5m
+  $CLIENT_EXE -n ${NAMESPACE} wait --for condition=Available deployment/reviews-v1 --timeout=5m
+  $CLIENT_EXE -n ${NAMESPACE} wait --for condition=Available deployment/reviews-v2 --timeout=5m
+  $CLIENT_EXE -n ${NAMESPACE} wait --for condition=Available deployment/reviews-v3 --timeout=5m
 
   if [ "${INGRESS_ROUTE}" != "" ] ; then
     if [ "${IS_OPENSHIFT}" == "true" ]; then
