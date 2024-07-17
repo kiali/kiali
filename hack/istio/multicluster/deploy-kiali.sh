@@ -156,14 +156,6 @@ deploy_kiali() {
     kiali_route_url="https://kiali-${ISTIO_NAMESPACE}.$(kubectl get ingresses.config/cluster -o jsonpath='{.spec.domain}')"
     helm_args+=("--set kiali_route_url=${kiali_route_url}")
   fi
-
-  if [ "${USE_GROUPS}" == "true" ]; then
-    helm_args+=(
-        "--set auth.openid.scopes[0]=openid"
-        "--set auth.openid.scopes[1]=profile"
-        "--set auth.openid.scopes[2]=email"
-      )
-  fi
   
   helm_command='helm upgrade --install
     ${helm_args[@]}
