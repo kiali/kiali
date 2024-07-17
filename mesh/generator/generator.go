@@ -4,6 +4,7 @@ import (
 	"cmp"
 	"context"
 	"crypto/md5"
+	"errors"
 	"fmt"
 	"regexp"
 	"slices"
@@ -64,6 +65,19 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalIn
 	// start by adding istio control planes and the mesh clusters
 	meshDef, err := gi.Discovery.Mesh(ctx)
 	graph.CheckError(err)
+
+	// Mesh map is just allowed to users with access to any control plane
+	hasAnyCPAccess := false
+	for _, v := range meshDef.ControlPlanes {
+		clusterKey := mesh.GetClusterSensitiveKey(v.Cluster.Name, v.IstiodNamespace)
+		if o.AccessibleNamespaces[clusterKey] != nil {
+			hasAnyCPAccess = true
+			break
+		}
+	}
+	if !hasAnyCPAccess {
+		graph.CheckError(errors.New("user doesn't have access to the control plane"))
+	}
 
 	namespaces, err := gi.Business.Namespace.GetNamespaces(ctx)
 	graph.CheckError(err)
