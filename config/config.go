@@ -689,6 +689,10 @@ func NewConfig() (c *Config) {
 			Istio: IstioConfig{
 				ComponentStatuses: ComponentStatuses{
 					Enabled: true,
+					// Leaving default Components values empty
+					// Istio components are auto discovered and status is checked
+					// Components config is left for custom components status check
+					Components: []ComponentStatus{},
 				},
 				ConfigMapName:                     "",
 				EnvoyAdminLocalPort:               15000,

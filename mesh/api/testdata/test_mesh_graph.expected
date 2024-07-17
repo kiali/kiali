@@ -230,7 +230,7 @@
           "infraData": {
             "ComponentStatuses": {
               "Enabled": true,
-              "Components": null
+              "Components": []
             },
             "ConfigMapName": "",
             "EnvoyAdminLocalPort": 15000,
