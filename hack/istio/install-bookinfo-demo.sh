@@ -330,15 +330,15 @@ if [ "${MYSQL_ENABLED}" == "true" ]; then
   MYSQL_SERVICE_YAML="${ISTIO_DIR}/samples/bookinfo/platform/kube/bookinfo-ratings-v2-mysql.yaml"
 
   if [ "${ARCH}" == "ppc64le" ]; then
-    sed  "s;docker.io/istio.*;quay.io/maistra/examples-bookinfo-mysqldb:2.0.0-ibm-p;g" ${MYSQL_DB_YAML} > ${ISTIO_DIR}/samples/bookinfo/platform/kube/bookinfo-mysql-ppc64le.yaml
+    sed  "s;docker.io/istio.*;quay.io/maistra/examples-bookinfo-mysqldb:2.5.0-ibm-p;g" ${MYSQL_DB_YAML} > ${ISTIO_DIR}/samples/bookinfo/platform/kube/bookinfo-mysql-ppc64le.yaml
     MYSQL_DB_YAML="${ISTIO_DIR}/samples/bookinfo/platform/kube/bookinfo-mysql-ppc64le.yaml"
-    sed  "s;docker.io/istio.*;quay.io/maistra/examples-bookinfo-ratings-v2:2.0.0-ibm-p;g" ${MYSQL_SERVICE_YAML} > ${ISTIO_DIR}/samples/bookinfo/platform/kube/bookinfo-ratings-v2-mysql-ppc64le.yaml
+    sed  "s;docker.io/istio.*;quay.io/maistra/examples-bookinfo-ratings-v2:2.5.0-ibm-p;g" ${MYSQL_SERVICE_YAML} > ${ISTIO_DIR}/samples/bookinfo/platform/kube/bookinfo-ratings-v2-mysql-ppc64le.yaml
     MYSQL_SERVICE_YAML="${ISTIO_DIR}/samples/bookinfo/platform/kube/bookinfo-ratings-v2-mysql-ppc64le.yaml"
   fi
   if [ "${ARCH}" == "s390x" ]; then
-    sed  "s;docker.io/istio.*;quay.io/maistra/examples-bookinfo-mysqldb:2.0.0-ibm-z;g" ${MYSQL_DB_YAML} > ${ISTIO_DIR}/samples/bookinfo/platform/kube/bookinfo-mysql-s390x.yaml
+    sed  "s;docker.io/istio.*;quay.io/maistra/examples-bookinfo-mysqldb:2.5.0-ibm-z;g" ${MYSQL_DB_YAML} > ${ISTIO_DIR}/samples/bookinfo/platform/kube/bookinfo-mysql-s390x.yaml
     MYSQL_DB_YAML="${ISTIO_DIR}/samples/bookinfo/platform/kube/bookinfo-mysql-s390x.yaml"
-    sed  "s;docker.io/istio.*;quay.io/maistra/examples-bookinfo-ratings-v2:2.0.0-ibm-z;g" ${MYSQL_SERVICE_YAML} > ${ISTIO_DIR}/samples/bookinfo/platform/kube/bookinfo-ratings-v2-mysql-s390x.yaml
+    sed  "s;docker.io/istio.*;quay.io/maistra/examples-bookinfo-ratings-v2:2.5.0-ibm-z;g" ${MYSQL_SERVICE_YAML} > ${ISTIO_DIR}/samples/bookinfo/platform/kube/bookinfo-ratings-v2-mysql-s390x.yaml
     MYSQL_SERVICE_YAML="${ISTIO_DIR}/samples/bookinfo/platform/kube/bookinfo-ratings-v2-mysql-s390x.yaml"
   fi
 
