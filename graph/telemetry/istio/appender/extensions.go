@@ -321,6 +321,12 @@ func (a ExtensionsAppender) getUrl(ext config.ExtensionConfig, source *graph.Nod
 		return routeUrl
 	}
 
+	// there is no route with the same name as the source root node. Next see if there is a route with the same name as the extension itself
+	routeUrl = a.globalInfo.Business.Svc.GetServiceRouteURL(a.globalInfo.Context, source.Cluster, source.Namespace, ext.Name)
+	if routeUrl != "" {
+		return routeUrl
+	}
+
 	// otherwise, look for the annotation on the source service, or if that fails, a service named after the extension
 	for _, svcName := range []string{name, ext.Name} {
 		svc, err := a.globalInfo.Business.Svc.GetService(a.globalInfo.Context, source.Cluster, source.Namespace, svcName)
