@@ -51,7 +51,7 @@ One major alternative to the proposed solution was to re-use Istio metrics. The 
 - Pros:
 
   - The biggest pro is that we can re-use the code that we already have for Istio metrics. This prevents us from having to write new code that does nearly the same thing, for our own metrics. It also prevents additional queries to Prometheus.
-  - We can still extend the istio metrics with additional attributes.
+  - We can still extend the Istio metrics with additional attributes.
 
 - Cons:
   - Extensions may not logically be able to supply all of the required attributes, and may have to “fudge” values. Note that extensions may be more service-oriented than workload oriented.
