@@ -67,15 +67,7 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalIn
 	graph.CheckError(err)
 
 	// Mesh map is just allowed to users with access to any control plane
-	hasAnyCPAccess := false
-	for _, v := range meshDef.ControlPlanes {
-		clusterKey := mesh.GetClusterSensitiveKey(v.Cluster.Name, v.IstiodNamespace)
-		if _, ok := o.AccessibleNamespaces[clusterKey]; !ok {
-			hasAnyCPAccess = true
-			break
-		}
-	}
-	if !hasAnyCPAccess {
+	if len(meshDef.ControlPlanes) == 0 {
 		graph.CheckError(errors.New("user doesn't have access to the control plane"))
 	}
 
