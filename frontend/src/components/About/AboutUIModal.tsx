@@ -12,7 +12,7 @@ import {
 } from '@patternfly/react-core';
 import kialiIconAbout from '../../assets/img/kiali/icon-aboutbkg.svg';
 import { Status, StatusKey } from '../../types/StatusState';
-import { config, homeCluster, kialiLogoDark, serverConfig } from '../../config';
+import { config, kialiLogoDark, serverConfig } from '../../config';
 import { kialiStyle } from 'styles/StyleUtils';
 import { KialiIcon } from 'config/KialiIcon';
 import { ReactComponent as IstioLogo } from '../../assets/img/mesh/istio.svg';
@@ -142,7 +142,7 @@ export const AboutUIModal: React.FC<AboutUIModalProps> = (props: AboutUIModalPro
       )}
 
       <TextContent className={textContentStyle}>
-        {homeCluster?.name && serverConfig.controlPlaneClusters.includes(homeCluster?.name) && (
+        {serverConfig.controlPlaneClusters.length > 0 && (
           <>
             <Title headingLevel="h3" size={TitleSizes.xl} style={{ padding: '2.5rem 0 0 0', marginBottom: '0' }}>
               Components
