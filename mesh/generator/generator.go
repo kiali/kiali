@@ -70,7 +70,7 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalIn
 	hasAnyCPAccess := false
 	for _, v := range meshDef.ControlPlanes {
 		clusterKey := mesh.GetClusterSensitiveKey(v.Cluster.Name, v.IstiodNamespace)
-		if o.AccessibleNamespaces[clusterKey] != nil {
+		if _, ok := o.AccessibleNamespaces[clusterKey]; !ok {
 			hasAnyCPAccess = true
 			break
 		}
