@@ -170,7 +170,7 @@ spec:
 
 ## Kiali Extension UI URL linking
 
-While the intent of Kiali extensions is to be able to extend the Kiali graph beyond the mesh, the information about those extended services will be limited. Users may want to investigate further. If An Extension provide has its own console UI, it can ensure that the Kiali user can link to that UI. For extension nodes, the graph side panel will provide a link to the external UI, if discovered. There are two mechanisms:
+While the intent of Kiali extensions is to be able to extend the Kiali graph beyond the mesh, the information about those extended services will be limited. Users may want to investigate further. If an Extension provider has its own console UI, it can ensure that the Kiali user can link to that UI. For extension nodes, the graph side panel will provide a link to the external UI, if discovered. There are two mechanisms:
 
 ### OpenShift Routes
 
