@@ -59,7 +59,7 @@ One major alternative to the proposed solution was to re-use Istio metrics. The 
   - Extensions may not be required to supply all of the fields we expect from Istio.
   - Extensions could be disabled/unregistered, and have any metrics ignored. Note that for any bulk queries (possibly outside the graph code), it may not be possible to filter out extension metrics.
   - It’s a bit weird to tell the extending parties to supply Istio metrics, when they aren’t Istio.
-  - The attribute names are not as simple as I’d like them to be.
+  - The attribute names are not as simple as we would like them to be.
   - We lose some control over the extension handling. The biggest pro above may also be the biggest liability, we may just find that integrating metrics is too pervasive when seemingly our goal is to just add some inaccessible service nodes to the graph.
   - Istio’s histogram metrics use terrible bucketing.
 
