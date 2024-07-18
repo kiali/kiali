@@ -46,7 +46,7 @@ Kiali will continue to work with only a single metrics back-end (e.g. Prometheus
 
 ### Investigation of re-using Istio Metrics
 
-One major alternative to the proposed solution was to re-use Istio metrics. The pros and cons of that approach are listed below. After evaluation, it was decided that the cons outweighed the pros. In particular, the istio metricsare complex and would be more difficult to provide by the extensions. Also, it is safer to be disconnected from the Istio APIs and reply on our own.
+One major alternative to the proposed solution was to re-use Istio metrics. The pros and cons of that approach are listed below. After evaluation, it was decided that the cons outweighed the pros. In particular, the Istio metrics are complex and would be more difficult to provide by the extensions. Also, it is safer to be disconnected from the Istio APIs and rely on our own.
 
 - Pros:
 
