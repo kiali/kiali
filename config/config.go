@@ -279,6 +279,7 @@ type IstioConfig struct {
 	ConfigMapName                     string              `yaml:"config_map_name,omitempty"`
 	EnvoyAdminLocalPort               int                 `yaml:"envoy_admin_local_port,omitempty"`
 	GatewayAPIClasses                 []GatewayAPIClass   `yaml:"gateway_api_classes,omitempty"`
+	GatewayNamespace                  string              `yaml:"gateway_namespace,omitempty"`
 	IstioAPIEnabled                   bool                `yaml:"istio_api_enabled"`
 	IstioCanaryRevision               IstioCanaryRevision `yaml:"istio_canary_revision,omitempty"`
 	IstioIdentityDomain               string              `yaml:"istio_identity_domain,omitempty"`
@@ -688,23 +689,10 @@ func NewConfig() (c *Config) {
 			Istio: IstioConfig{
 				ComponentStatuses: ComponentStatuses{
 					Enabled: true,
-					Components: []ComponentStatus{
-						{
-							AppLabel: "istio-egressgateway",
-							IsCore:   false,
-							IsProxy:  true,
-						},
-						{
-							AppLabel: "istio-ingressgateway",
-							IsCore:   true,
-							IsProxy:  true,
-						},
-						{
-							AppLabel: "istiod",
-							IsCore:   true,
-							IsProxy:  false,
-						},
-					},
+					// Leaving default Components values empty
+					// Istio components are auto discovered and status is checked
+					// Components config is left for custom components status check
+					Components: []ComponentStatus{},
 				},
 				ConfigMapName:                     "",
 				EnvoyAdminLocalPort:               15000,
@@ -719,6 +707,7 @@ func NewConfig() (c *Config) {
 				RootNamespace:                     "istio-system",
 				UrlServiceVersion:                 "",
 				GatewayAPIClasses:                 []GatewayAPIClass{},
+				GatewayNamespace:                  "",
 			},
 			Prometheus: PrometheusConfig{
 				Auth: Auth{

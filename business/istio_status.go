@@ -2,7 +2,6 @@ package business
 
 import (
 	"context"
-	"fmt"
 	"sync"
 	"time"
 
@@ -72,10 +71,7 @@ func (iss *IstioStatusService) getIstioComponentStatus(ctx context.Context, clus
 		return kubernetes.IstioComponentStatus{}, err
 	}
 
-	deploymentStatus, err := iss.getStatusOf(workloads)
-	if err != nil {
-		return kubernetes.IstioComponentStatus{}, err
-	}
+	deploymentStatus := iss.getStatusOf(workloads, cluster)
 
 	mesh, err := iss.discovery.Mesh(ctx)
 	if err != nil {
@@ -94,8 +90,56 @@ func (iss *IstioStatusService) getIstioComponentStatus(ctx context.Context, clus
 			})
 		}
 	}
+	if len(istiodStatus) == 0 {
+		istiodStatus = append(istiodStatus, kubernetes.ComponentStatus{
+			Cluster:   cluster,
+			Name:      "istiod",
+			Namespace: iss.conf.IstioNamespace,
+			Status:    kubernetes.ComponentNotFound,
+			IsCore:    true,
+		})
+	}
+	deploymentStatus = deploymentStatus.Merge(istiodStatus)
+	deploymentStatus = deploymentStatus.Merge(iss.getGatewaysStatus(ctx, cluster))
 
-	return deploymentStatus.Merge(istiodStatus), nil
+	return deploymentStatus, nil
+}
+
+func (iss *IstioStatusService) getGatewaysStatus(ctx context.Context, cluster string) kubernetes.IstioComponentStatus {
+	// Fetching gateway workloads from gateway namespace
+	namespace := iss.conf.ExternalServices.Istio.GatewayNamespace
+	if namespace == "" {
+		namespace = iss.conf.IstioNamespace
+	}
+	var gatewaysStatus kubernetes.IstioComponentStatus
+	updateGatewayStatus := func(label string, isCore bool) {
+		// keep the label in status name, to align with ComponentStatuses
+		wls, err := iss.workloads.fetchWorkloadsFromCluster(ctx, cluster, namespace, label)
+		if err == nil && len(wls) != 0 {
+			for _, wl := range wls {
+				status := GetWorkloadStatus(*wl)
+				gatewaysStatus = append(gatewaysStatus, kubernetes.ComponentStatus{
+					Cluster:   cluster,
+					Name:      label,
+					Namespace: namespace,
+					Status:    status,
+					IsCore:    isCore,
+				})
+			}
+		} else {
+			gatewaysStatus = append(gatewaysStatus, kubernetes.ComponentStatus{
+				Cluster:   cluster,
+				Name:      label,
+				Namespace: namespace,
+				Status:    kubernetes.ComponentNotFound,
+				IsCore:    isCore,
+			})
+		}
+	}
+	updateGatewayStatus(iss.conf.IstioLabels.IngressGatewayLabel, true)
+	updateGatewayStatus(iss.conf.IstioLabels.EgressGatewayLabel, false)
+
+	return gatewaysStatus
 }
 
 func (iss *IstioStatusService) getComponentNamespacesWorkloads(ctx context.Context, cluster string) ([]*models.Workload, error) {
@@ -170,7 +214,7 @@ func istioCoreComponents(conf *config.Config) map[string]config.ComponentStatus 
 	return components
 }
 
-func (iss *IstioStatusService) getStatusOf(workloads []*models.Workload) (kubernetes.IstioComponentStatus, error) {
+func (iss *IstioStatusService) getStatusOf(workloads []*models.Workload, cluster string) kubernetes.IstioComponentStatus {
 	statusComponents := istioCoreComponents(iss.conf)
 	isc := kubernetes.IstioComponentStatus{}
 	cf := map[string]bool{}
@@ -199,10 +243,16 @@ func (iss *IstioStatusService) getStatusOf(workloads []*models.Workload) (kubern
 		status := GetWorkloadStatus(*workload)
 		// Add status
 		isc = append(isc, kubernetes.ComponentStatus{
-			Cluster: workload.Cluster,
-			Name:    workload.Name,
-			Status:  status,
-			IsCore:  stat.IsCore,
+			Cluster: cluster,
+			Namespace: func() string {
+				if stat.Namespace != "" {
+					return stat.Namespace
+				}
+				return workload.Namespace
+			}(),
+			Name:   workload.Name,
+			Status: status,
+			IsCore: stat.IsCore,
 		})
 
 	}
@@ -214,6 +264,13 @@ func (iss *IstioStatusService) getStatusOf(workloads []*models.Workload) (kubern
 			if number, mfound := mcf[comp]; !mfound || number < len(iss.userClients) { // multicluster components should exist on all clusters
 				componentNotFound += 1
 				isc = append(isc, kubernetes.ComponentStatus{
+					Cluster: cluster,
+					Namespace: func() string {
+						if stat.Namespace != "" {
+							return stat.Namespace
+						}
+						return iss.conf.IstioNamespace
+					}(),
 					Name:   comp,
 					Status: kubernetes.ComponentNotFound,
 					IsCore: stat.IsCore,
@@ -222,15 +279,7 @@ func (iss *IstioStatusService) getStatusOf(workloads []*models.Workload) (kubern
 		}
 	}
 
-	// When all the deployments are missing,
-	// Warn users that their kiali config might be wrong
-	if componentNotFound == len(statusComponents) {
-		return isc, fmt.Errorf(
-			"Kiali is unable to find any Istio deployment in namespace %s. Are you sure the Istio namespace is configured correctly in Kiali?",
-			config.Get().IstioNamespace)
-	}
-
-	return isc, nil
+	return isc
 }
 
 func GetWorkloadStatus(wl models.Workload) string {

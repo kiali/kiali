@@ -22,11 +22,12 @@ func IstioStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if cluster := r.URL.Query().Get("clusterName"); cluster != "" {
-		istioStatus = sliceutil.Filter(istioStatus, func(status kubernetes.ComponentStatus) bool {
-			return status.Cluster == cluster
-		})
-	}
+	queryParams := r.URL.Query()
+	cluster := clusterNameFromQuery(queryParams)
+
+	istioStatus = sliceutil.Filter(istioStatus, func(status kubernetes.ComponentStatus) bool {
+		return status.Cluster == cluster
+	})
 
 	RespondWithJSON(w, http.StatusOK, istioStatus)
 }

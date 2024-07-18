@@ -1526,8 +1526,8 @@ func TestUpdateStatusMultipleRevsWithoutHealthyPods(t *testing.T) {
 	require.NoError(err)
 	require.Len(mesh.ControlPlanes, 2)
 
-	require.Equal("", mesh.ControlPlanes[0].Status)
-	require.Equal("", mesh.ControlPlanes[1].Status)
+	require.Equal(kubernetes.ComponentNotReady, mesh.ControlPlanes[0].Status)
+	require.Equal(kubernetes.ComponentNotReady, mesh.ControlPlanes[1].Status)
 }
 
 func TestUpdateStatusMultipleHealthyRevs(t *testing.T) {

@@ -321,6 +321,9 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 			status, err := in.canConnectToIstiodForRevision(controlPlane)
 			if err != nil {
 				log.Warningf("Unable to get status for controlplane [%s/%s] on cluster [%s]. Err: %s", controlPlane.IstiodName, controlPlane.IstiodNamespace, cluster.Name, err)
+				if status != nil {
+					controlPlane.Status = status.Status
+				}
 			} else {
 				controlPlane.Status = status.Status
 			}
@@ -612,7 +615,14 @@ func (in *Discovery) canConnectToIstiodForRevision(controlPlane models.ControlPl
 	}
 
 	if len(istiodPods) == 0 {
-		return nil, fmt.Errorf("no healthy istiod pods found for revision [%s]", controlPlane.Revision)
+		// aligned with GetWorkloadStatus logic (DesiredReplicas == 0), show 'Not Ready' when 0 istiod pods
+		return &kubernetes.ComponentStatus{
+			Cluster:   controlPlane.Cluster.Name,
+			Name:      controlPlane.IstiodName,
+			Namespace: controlPlane.IstiodNamespace,
+			Status:    kubernetes.ComponentNotReady,
+			IsCore:    true,
+		}, fmt.Errorf("no healthy istiod pods found for revision [%s]", controlPlane.Revision)
 	}
 
 	// Assuming that all pods are running the same version, we only need to get the version from one healthy istiod pod.
