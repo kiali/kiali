@@ -277,8 +277,8 @@ type RegistryConfig struct {
 type IstioConfig struct {
 	ComponentStatuses                 ComponentStatuses   `yaml:"component_status,omitempty"`
 	ConfigMapName                     string              `yaml:"config_map_name,omitempty"`
-	EnvoyAdminLocalPort               int                 `yaml:"envoy_admin_local_port,omitempty"`
 	EgressGatewayNamespace            string              `yaml:"egress_gateway_namespace,omitempty"`
+	EnvoyAdminLocalPort               int                 `yaml:"envoy_admin_local_port,omitempty"`
 	GatewayAPIClasses                 []GatewayAPIClass   `yaml:"gateway_api_classes,omitempty"`
 	IngressGatewayNamespace           string              `yaml:"ingress_gateway_namespace,omitempty"`
 	IstioAPIEnabled                   bool                `yaml:"istio_api_enabled"`
