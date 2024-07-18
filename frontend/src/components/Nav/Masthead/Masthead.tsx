@@ -74,10 +74,12 @@ export const MastheadItems: React.FC = () => {
               <ThemeSwitch />
             </FlexItem>
 
-            <FlexItem>
-              <IstioStatus location={MASTHEAD} />
-            </FlexItem>
-
+            {homeCluster?.name && serverConfig.controlPlaneClusters.includes(homeCluster?.name) && (
+              <FlexItem>
+                <IstioStatus location={MASTHEAD} />
+              </FlexItem>
+            )}
+            
             <FlexItem className={messageCenterStyle}>
               <MessageCenterTrigger />
             </FlexItem>

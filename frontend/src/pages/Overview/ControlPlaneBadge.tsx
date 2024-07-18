@@ -51,18 +51,20 @@ export const ControlPlaneBadge: React.FC<Props> = (props: Props) => {
         <AmbientBadge tooltip={t('Istio Ambient ztunnel detected in the Control plane')}></AmbientBadge>
       )}
 
-      {!isRemoteCluster(props.annotations) && (
-        <IstioStatus
-          icons={{
-            ErrorIcon: ExclamationCircleIcon,
-            HealthyIcon: CheckCircleIcon,
-            InfoIcon: MinusCircleIcon,
-            WarningIcon: ExclamationTriangleIcon
-          }}
-          cluster={props.cluster}
-          location={pathname}
-        />
-      )}
+      {!isRemoteCluster(props.annotations) &&
+        props.cluster &&
+        serverConfig.controlPlaneClusters.includes(props.cluster) && (
+          <IstioStatus
+            icons={{
+              ErrorIcon: ExclamationCircleIcon,
+              HealthyIcon: CheckCircleIcon,
+              InfoIcon: MinusCircleIcon,
+              WarningIcon: ExclamationTriangleIcon
+            }}
+            cluster={props.cluster}
+            location={pathname}
+          />
+        )}
     </>
   );
 };
