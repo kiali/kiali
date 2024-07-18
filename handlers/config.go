@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strings"
@@ -50,6 +51,7 @@ type PublicConfig struct {
 	AuthStrategy         string                        `json:"authStrategy,omitempty"`
 	AmbientEnabled       bool                          `json:"ambientEnabled,omitempty"`
 	Clusters             map[string]models.KubeCluster `json:"clusters,omitempty"`
+	ControlPlaneClusters []string                      `json:"controlPlaneClusters,omitempty"`
 	Deployment           DeploymentConfig              `json:"deployment,omitempty"`
 	GatewayAPIClasses    []config.GatewayAPIClass      `json:"gatewayAPIClasses,omitempty"`
 	GatewayAPIEnabled    bool                          `json:"gatewayAPIEnabled,omitempty"`
@@ -80,6 +82,7 @@ func Config(conf *config.Config, discovery *istio.Discovery) http.HandlerFunc {
 			AccessibleNamespaces: conf.Deployment.AccessibleNamespaces,
 			AuthStrategy:         conf.Auth.Strategy,
 			Clusters:             make(map[string]models.KubeCluster),
+			ControlPlaneClusters: []string{},
 			Deployment: DeploymentConfig{
 				ViewOnlyMode: conf.Deployment.ViewOnlyMode,
 			},
@@ -130,6 +133,12 @@ func Config(conf *config.Config, discovery *istio.Discovery) http.HandlerFunc {
 
 			for _, cluster := range clusters {
 				publicConfig.Clusters[cluster.Name] = cluster
+				// Check if there is access to the cluster control plane for Mesh features
+				// TODO: conf.IstioNamespace is valid for all the clusters?
+				ns, err := layer.Namespace.GetClusterNamespace(context.TODO(), conf.IstioNamespace, cluster.Name)
+				if err == nil && ns != nil {
+					publicConfig.ControlPlaneClusters = append(publicConfig.ControlPlaneClusters, cluster.Name)
+				}
 			}
 
 			return nil
