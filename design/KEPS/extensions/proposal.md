@@ -42,7 +42,7 @@ The Extension metrics are defined below. These are **Kiali-specific** metrics th
 
 _Note that there was some consideration for making the Kiali-specific metrics OTel metrics, but the OTel metric spec does not yet seem suitable. The extension framework could support OTel in the future, if it becomes desirable._
 
-Kiali will continue to work with only a single metrics back-end (e.g. prometheus instance). The Istio metrics and extension metrics must reside in this single metrics repository. How this is accomplished is outside the scope of this KEP, but if the extension also utilizes Prometheus, it is fairly typical to use Prometheus Federation to import the extension metrics.
+Kiali will continue to work with only a single metrics back-end (e.g. Prometheus instance). The Istio metrics and extension metrics must reside in this single metrics repository. How this is accomplished is outside the scope of this KEP, but if the extension also utilizes Prometheus, it is fairly typical to use Prometheus Federation to import the extension metrics.
 
 ### Investigation of re-using Istio Metrics
 
