@@ -174,7 +174,7 @@ While the intent of Kiali extensions is to be able to extend the Kiali graph bey
 
 ### OpenShift Routes
 
-On OpenShift, Kiali will look for an OpenShift route on the service named the same as the external service (or app) node. Failing that match, Kiali will look for an OpenShift route on a service named for the extension itself. If no routes are found, it will fall back to the Annotation approach.
+On OpenShift, Kiali will look for an OpenShift route named the same as the external service (or app) node. Failing that match, Kiali will look for an OpenShift route named for the extension itself. If no routes are found, it will fall back to the annotation approach.
 
 ### Annotation
 
