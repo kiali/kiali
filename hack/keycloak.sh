@@ -97,7 +97,6 @@ EOF
   # create certificate signing request
   openssl req -new -key "${KEYCLOAK_CERTS_DIR}"/key.pem -out "${KEYCLOAK_CERTS_DIR}"/csr.pem \
     -subj "/CN=kube-ca" \
-    -addext "subjectAltName = IP:${KEYCLOAK_EXTERNAL_ADDRESS}" \
     -sha256 -config "${KEYCLOAK_CERTS_DIR}"/req.cnf
 
   # create certificate
