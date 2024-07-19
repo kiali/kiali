@@ -13,7 +13,7 @@ export const createRouter = (routes: RouteObject[], basename?: string): any => {
 };
 
 export const webRoot = (window as any).WEB_ROOT ?? '/';
-const rootBasename = webRoot !== '/' ? `${webRoot}/console` : '/console';
+export const rootBasename = webRoot !== '/' ? `${webRoot}/console` : '/console';
 const historyMode = (window as any).HISTORY_MODE ?? 'browser';
 
 /**
