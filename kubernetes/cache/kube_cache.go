@@ -416,14 +416,14 @@ func (c *kubeCache) createGatewayInformers(namespace string) gateway.SharedInfor
 		lister.k8shttprouteLister = sharedInformers.Gateway().V1().HTTPRoutes().Lister()
 		lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Gateway().V1().HTTPRoutes().Informer().HasSynced)
 
+		lister.k8sgrpcrouteLister = sharedInformers.Gateway().V1().GRPCRoutes().Lister()
+		lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Gateway().V1().GRPCRoutes().Informer().HasSynced)
+
 		lister.k8sreferencegrantLister = sharedInformers.Gateway().V1beta1().ReferenceGrants().Lister()
 		lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Gateway().V1beta1().ReferenceGrants().Informer().HasSynced)
 		c.hasGatewayAPIStarted = true
 
 		if c.client.IsExpGatewayAPI() {
-			lister.k8sgrpcrouteLister = sharedInformers.Gateway().V1().GRPCRoutes().Lister()
-			lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Gateway().V1().GRPCRoutes().Informer().HasSynced)
-
 			lister.k8stcprouteLister = sharedInformers.Gateway().V1alpha2().TCPRoutes().Lister()
 			lister.cachesSynced = append(lister.cachesSynced, sharedInformers.Gateway().V1alpha2().TCPRoutes().Informer().HasSynced)
 
@@ -1726,7 +1726,7 @@ func (c *kubeCache) GetK8sGRPCRoutes(namespace, labelSelector string) ([]*gatewa
 	// but it won't prevent other routines from reading from the lister.
 	defer c.cacheLock.RUnlock()
 	c.cacheLock.RLock()
-	if !c.isK8sExpGatewayListerInit(namespace) {
+	if !c.isK8sGatewayListerInit(namespace) {
 		return k8sGRPCRoutes, nil
 	}
 	if namespace == metav1.NamespaceAll {

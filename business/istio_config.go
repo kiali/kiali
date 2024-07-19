@@ -264,7 +264,7 @@ func (in *IstioConfigService) getIstioConfigList(ctx context.Context, cluster st
 		}
 	}
 
-	if userClient.IsExpGatewayAPI() && criteria.Include(kubernetes.K8sGRPCRoutes) {
+	if userClient.IsGatewayAPI() && criteria.Include(kubernetes.K8sGRPCRoutes) {
 		istioConfigList.K8sGRPCRoutes, err = kubeCache.GetK8sGRPCRoutes(namespace, criteria.LabelSelector)
 		if err != nil {
 			return nil, err

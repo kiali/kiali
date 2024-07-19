@@ -2,16 +2,18 @@ package k8sgrpcroutes
 
 import (
 	"fmt"
-
 	k8s_networking_v1 "sigs.k8s.io/gateway-api/apis/v1"
 
+	"github.com/kiali/kiali/business/checkers/k8shttproutes"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
 
 type NoK8sGatewayChecker struct {
+	Cluster      string
+	GatewayNames map[string]k8s_networking_v1.Gateway
 	K8sGRPCRoute *k8s_networking_v1.GRPCRoute
-	GatewayNames map[string]struct{}
+	Namespaces   models.Namespaces
 }
 
 // Check validates that the GRPCRoute is pointing to an existing Gateway
@@ -34,22 +36,9 @@ func (s NoK8sGatewayChecker) ValidateGRPCRouteGateways(validations *[]*models.Is
 				if parentRef.Namespace != nil && string(*parentRef.Namespace) != "" {
 					namespace = string(*parentRef.Namespace)
 				}
-				valid = s.checkGateway(string(parentRef.Name), namespace, validations, fmt.Sprintf("spec/parentRefs[%d]/name/%s", index, string(parentRef.Name))) && valid
+				valid = k8shttproutes.CheckGateway(string(parentRef.Name), namespace, s.K8sGRPCRoute.Namespace, s.Cluster, s.GatewayNames, s.Namespaces, validations, fmt.Sprintf("spec/parentRefs[%d]/name/%s", index, string(parentRef.Name))) && valid
 			}
 		}
 	}
 	return valid
-}
-
-func (s NoK8sGatewayChecker) checkGateway(name, namespace string, validations *[]*models.IstioCheck, location string) bool {
-	hostname := kubernetes.ParseGatewayAsHost(name, namespace)
-	for gw := range s.GatewayNames {
-		gwHostname := kubernetes.ParseHost(gw, namespace)
-		if found := kubernetes.FilterByHost(hostname.String(), hostname.Namespace, gw, gwHostname.Namespace); found {
-			return true
-		}
-	}
-	validation := models.Build("k8sroutes.nok8sgateway", location)
-	*validations = append(*validations, &validation)
-	return false
 }

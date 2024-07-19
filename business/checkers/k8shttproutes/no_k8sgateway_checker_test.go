@@ -20,7 +20,7 @@ func TestMissingK8sGateway(t *testing.T) {
 
 	checker := NoK8sGatewayChecker{
 		K8sHTTPRoute: data.CreateHTTPRoute("route", "bookinfo", "gatewayapi", []string{"bookinfo"}),
-		GatewayNames: make(map[string]struct{}),
+		GatewayNames: make(map[string]k8s_networking_v1.Gateway),
 	}
 
 	vals, valid := checker.Check()
@@ -38,7 +38,7 @@ func TestMissingK8sGateways(t *testing.T) {
 	checker := NoK8sGatewayChecker{
 		K8sHTTPRoute: data.AddGatewayParentRefToHTTPRoute("gateway2", "bookinfo2",
 			data.CreateHTTPRoute("route", "bookinfo", "gatewayapi", []string{"bookinfo"})),
-		GatewayNames: make(map[string]struct{}),
+		GatewayNames: make(map[string]k8s_networking_v1.Gateway),
 	}
 
 	vals, valid := checker.Check()
@@ -56,12 +56,12 @@ func TestValidAndMissingK8sGateway(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
 
-	var empty struct{}
-
 	checker := NoK8sGatewayChecker{
 		K8sHTTPRoute: data.AddGatewayParentRefToHTTPRoute("correctgw", "bookinfo2",
 			data.CreateHTTPRoute("route", "bookinfo", "gatewayapi", []string{"bookinfo"})),
-		GatewayNames: map[string]struct{}{"correctgw": empty},
+		GatewayNames: kubernetes.K8sGatewayNames([]*k8s_networking_v1.Gateway{
+			data.CreateEmptyK8sGateway("correctgw", "bookinfo"),
+		}),
 	}
 
 	vals, valid := checker.Check()
@@ -86,4 +86,90 @@ func TestFoundK8sGateway(t *testing.T) {
 	vals, valid := checker.Check()
 	assert.True(valid)
 	assert.Empty(vals)
+}
+
+func TestFoundSharedK8sGateway(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	checker := NoK8sGatewayChecker{
+		K8sHTTPRoute: data.AddGatewayParentRefToHTTPRoute("sharedgw", "gwns",
+			data.CreateEmptyHTTPRoute("route", "bookinfo", []string{"bookinfo"})),
+		GatewayNames: kubernetes.K8sGatewayNames([]*k8s_networking_v1.Gateway{
+			data.AddListenerToK8sGateway(data.CreateSharedListener("test", "host.com", 80, "http"),
+				data.CreateEmptyK8sGateway("sharedgw", "gwns")),
+		}),
+		Namespaces: models.Namespaces{data.CreateSharedNamespace("bookinfo")},
+	}
+
+	vals, valid := checker.Check()
+	assert.True(valid)
+	assert.Empty(vals)
+}
+
+func TestWrongNSSharedK8sGatewayError(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	checker := NoK8sGatewayChecker{
+		K8sHTTPRoute: data.AddGatewayParentRefToHTTPRoute("sharedgw", "gwnswrong",
+			data.CreateEmptyHTTPRoute("route", "bookinfo", []string{"bookinfo"})),
+		GatewayNames: kubernetes.K8sGatewayNames([]*k8s_networking_v1.Gateway{
+			data.AddListenerToK8sGateway(data.CreateSharedListener("test", "host.com", 80, "http"),
+				data.CreateEmptyK8sGateway("sharedgw", "gwns")),
+		}),
+		Namespaces: models.Namespaces{data.CreateSharedNamespace("bookinfo")},
+	}
+
+	vals, valid := checker.Check()
+	assert.False(valid)
+	assert.NotEmpty(vals)
+	assert.Equal(models.ErrorSeverity, vals[0].Severity)
+	assert.NoError(validations.ConfirmIstioCheckMessage("k8sroutes.nok8sgateway", vals[0]))
+}
+
+func TestSharedK8sGatewayWrongNSError(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	checker := NoK8sGatewayChecker{
+		K8sHTTPRoute: data.AddGatewayParentRefToHTTPRoute("sharedgw", "gwns",
+			data.CreateEmptyHTTPRoute("route", "bookinfo", []string{"bookinfo"})),
+		GatewayNames: kubernetes.K8sGatewayNames([]*k8s_networking_v1.Gateway{
+			data.AddListenerToK8sGateway(data.CreateSharedListener("test", "host.com", 80, "http"),
+				data.CreateEmptyK8sGateway("sharedgw", "gwnswrong")),
+		}),
+		Namespaces: models.Namespaces{data.CreateSharedNamespace("bookinfo")},
+	}
+
+	vals, valid := checker.Check()
+	assert.False(valid)
+	assert.NotEmpty(vals)
+	assert.Equal(models.ErrorSeverity, vals[0].Severity)
+	assert.NoError(validations.ConfirmIstioCheckMessage("k8sroutes.nok8sgateway", vals[0]))
+}
+
+func TestNotSharedNSK8sGatewayError(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	checker := NoK8sGatewayChecker{
+		K8sHTTPRoute: data.AddGatewayParentRefToHTTPRoute("sharedgw", "gwns",
+			data.CreateEmptyHTTPRoute("route", "bookinfo", []string{"bookinfo"})),
+		GatewayNames: kubernetes.K8sGatewayNames([]*k8s_networking_v1.Gateway{
+			data.AddListenerToK8sGateway(data.CreateSharedListener("test", "host.com", 80, "http"),
+				data.CreateEmptyK8sGateway("sharedgw", "gwns")),
+		}),
+		Namespaces: models.Namespaces{models.Namespace{Name: "bookinfo"}},
+	}
+
+	vals, valid := checker.Check()
+	assert.False(valid)
+	assert.NotEmpty(vals)
+	assert.Equal(models.ErrorSeverity, vals[0].Severity)
+	assert.NoError(validations.ConfirmIstioCheckMessage("k8sroutes.nok8sgateway", vals[0]))
 }
