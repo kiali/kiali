@@ -106,13 +106,12 @@ func (iss *IstioStatusService) getIstioComponentStatus(ctx context.Context, clus
 }
 
 func (iss *IstioStatusService) getGatewaysStatus(ctx context.Context, cluster string) kubernetes.IstioComponentStatus {
-	// Fetching gateway workloads from gateway namespace
-	namespace := iss.conf.ExternalServices.Istio.GatewayNamespace
-	if namespace == "" {
-		namespace = iss.conf.IstioNamespace
-	}
 	var gatewaysStatus kubernetes.IstioComponentStatus
-	updateGatewayStatus := func(label string, isCore bool) {
+	updateGatewayStatus := func(label string, isCore bool, namespace string) {
+		// Fetching gateway workloads from gateway namespace
+		if namespace == "" {
+			namespace = iss.conf.IstioNamespace
+		}
 		// keep the label in status name, to align with ComponentStatuses
 		wls, err := iss.workloads.fetchWorkloadsFromCluster(ctx, cluster, namespace, label)
 		if err == nil && len(wls) != 0 {
@@ -136,8 +135,8 @@ func (iss *IstioStatusService) getGatewaysStatus(ctx context.Context, cluster st
 			})
 		}
 	}
-	updateGatewayStatus(iss.conf.IstioLabels.IngressGatewayLabel, true)
-	updateGatewayStatus(iss.conf.IstioLabels.EgressGatewayLabel, false)
+	updateGatewayStatus(iss.conf.IstioLabels.IngressGatewayLabel, true, iss.conf.ExternalServices.Istio.IngressGatewayNamespace)
+	updateGatewayStatus(iss.conf.IstioLabels.EgressGatewayLabel, false, iss.conf.ExternalServices.Istio.EgressGatewayNamespace)
 
 	return gatewaysStatus
 }
@@ -261,7 +260,10 @@ func (iss *IstioStatusService) getStatusOf(workloads []*models.Workload, cluster
 	componentNotFound := 0
 	for comp, stat := range statusComponents {
 		if _, found := cf[comp]; !found {
-			if number, mfound := mcf[comp]; !mfound || number < len(iss.userClients) { // multicluster components should exist on all clusters
+			// @TODO for remote cluster
+			// multicluster components should exist on all clusters
+			// !mfound || number < len(iss.userClients)
+			if _, mfound := mcf[comp]; !mfound {
 				componentNotFound += 1
 				isc = append(isc, kubernetes.ComponentStatus{
 					Cluster: cluster,

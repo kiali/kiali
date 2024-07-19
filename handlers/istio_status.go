@@ -26,7 +26,8 @@ func IstioStatus(w http.ResponseWriter, r *http.Request) {
 	cluster := clusterNameFromQuery(queryParams)
 
 	istioStatus = sliceutil.Filter(istioStatus, func(status kubernetes.ComponentStatus) bool {
-		return status.Cluster == cluster
+		// empty Cluster for addons
+		return status.Cluster == "" || status.Cluster == cluster
 	})
 
 	RespondWithJSON(w, http.StatusOK, istioStatus)

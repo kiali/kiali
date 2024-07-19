@@ -235,7 +235,8 @@
             "ConfigMapName": "",
             "EnvoyAdminLocalPort": 15000,
             "GatewayAPIClasses": [],
-            "GatewayNamespace": "",
+            "EgressGatewayNamespace": "",
+            "IngressGatewayNamespace": "",
             "IstioAPIEnabled": true,
             "IstioCanaryRevision": {
               "Current": "",

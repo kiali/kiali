@@ -277,9 +277,10 @@ type RegistryConfig struct {
 type IstioConfig struct {
 	ComponentStatuses                 ComponentStatuses   `yaml:"component_status,omitempty"`
 	ConfigMapName                     string              `yaml:"config_map_name,omitempty"`
+	EgressGatewayNamespace            string              `yaml:"egress_gateway_namespace,omitempty"`
 	EnvoyAdminLocalPort               int                 `yaml:"envoy_admin_local_port,omitempty"`
 	GatewayAPIClasses                 []GatewayAPIClass   `yaml:"gateway_api_classes,omitempty"`
-	GatewayNamespace                  string              `yaml:"gateway_namespace,omitempty"`
+	IngressGatewayNamespace           string              `yaml:"ingress_gateway_namespace,omitempty"`
 	IstioAPIEnabled                   bool                `yaml:"istio_api_enabled"`
 	IstioCanaryRevision               IstioCanaryRevision `yaml:"istio_canary_revision,omitempty"`
 	IstioIdentityDomain               string              `yaml:"istio_identity_domain,omitempty"`
@@ -695,7 +696,9 @@ func NewConfig() (c *Config) {
 					Components: []ComponentStatus{},
 				},
 				ConfigMapName:                     "",
+				EgressGatewayNamespace:            "",
 				EnvoyAdminLocalPort:               15000,
+				IngressGatewayNamespace:           "",
 				IstioAPIEnabled:                   true,
 				IstioIdentityDomain:               "svc.cluster.local",
 				IstioInjectionAnnotation:          "sidecar.istio.io/inject",
@@ -707,7 +710,6 @@ func NewConfig() (c *Config) {
 				RootNamespace:                     "istio-system",
 				UrlServiceVersion:                 "",
 				GatewayAPIClasses:                 []GatewayAPIClass{},
-				GatewayNamespace:                  "",
 			},
 			Prometheus: PrometheusConfig{
 				Auth: Auth{
