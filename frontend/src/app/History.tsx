@@ -135,39 +135,11 @@ export class HistoryManager {
     return p !== undefined ? p === 'true' : undefined;
   };
 
-  static deleteParam = (name: URLParam, historyReplace?: boolean): void => {
+  static deleteParam = (name: URLParam): void => {
     const urlParams = new URLSearchParams(location.getSearch());
     urlParams.delete(name);
 
-    if (historyReplace) {
-      router.navigate(`${location.getPathname()}?${urlParams.toString()}`, { replace: true });
-    } else {
-      router.navigate(`${location.getPathname()}?${urlParams.toString()}`);
-    }
-  };
-
-  static setParams = (params: URLParamValue[], paramAction?: ParamAction, historyReplace?: boolean): void => {
-    const urlParams = new URLSearchParams(location.getSearch());
-
-    if (params.length > 0 && paramAction === ParamAction.APPEND) {
-      params.forEach(param => urlParams.delete(param.name));
-    }
-
-    params.forEach(param => {
-      if (param.value === '') {
-        urlParams.delete(param.name);
-      } else if (paramAction === ParamAction.APPEND) {
-        urlParams.append(param.name, param.value);
-      } else {
-        urlParams.set(param.name, param.value);
-      }
-    });
-
-    if (historyReplace) {
-      router.navigate(`${location.getPathname()}?${urlParams.toString()}`, { replace: true });
-    } else {
-      router.navigate(`${location.getPathname()}?${urlParams.toString()}`);
-    }
+    router.navigate(`${location.getPathname()}?${urlParams.toString()}`, { replace: true });
   };
 
   static getClusterName = (urlParams?: URLSearchParams): string | undefined => {
@@ -203,6 +175,7 @@ export class HistoryManager {
 
     if (from) {
       const to = HistoryManager.getNumericParam(URLParam.TO, urlParams);
+
       // "to" can be undefined (stands for "now")
       return {
         from: from,

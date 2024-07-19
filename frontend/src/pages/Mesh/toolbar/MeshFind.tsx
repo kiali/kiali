@@ -191,14 +191,14 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
     // ensure redux state and URL are aligned
     if (findChanged) {
       if (!this.props.findValue) {
-        HistoryManager.deleteParam(URLParam.MESH_FIND, true);
+        HistoryManager.deleteParam(URLParam.MESH_FIND);
       } else {
         HistoryManager.setParam(URLParam.MESH_FIND, this.props.findValue);
       }
     }
     if (hideChanged) {
       if (!this.props.hideValue) {
-        HistoryManager.deleteParam(URLParam.MESH_HIDE, true);
+        HistoryManager.deleteParam(URLParam.MESH_HIDE);
       } else {
         HistoryManager.setParam(URLParam.MESH_HIDE, this.props.hideValue);
       }

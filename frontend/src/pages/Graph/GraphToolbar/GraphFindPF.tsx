@@ -260,14 +260,14 @@ class GraphFindPFComponent extends React.Component<GraphFindProps, GraphFindStat
     // ensure redux state and URL are aligned
     if (findChanged) {
       if (!this.props.findValue) {
-        HistoryManager.deleteParam(URLParam.GRAPH_FIND, true);
+        HistoryManager.deleteParam(URLParam.GRAPH_FIND);
       } else {
         HistoryManager.setParam(URLParam.GRAPH_FIND, this.props.findValue);
       }
     }
     if (hideChanged) {
       if (!this.props.hideValue) {
-        HistoryManager.deleteParam(URLParam.GRAPH_HIDE, true);
+        HistoryManager.deleteParam(URLParam.GRAPH_HIDE);
       } else {
         HistoryManager.setParam(URLParam.GRAPH_HIDE, this.props.hideValue);
       }
