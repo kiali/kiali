@@ -44,11 +44,13 @@ export const ControlPlaneBadge: React.FC<Props> = (props: Props) => {
           {t('Control plane')}
         </Label>
       </Tooltip>
+
       {isRemoteCluster(props.annotations) && <RemoteClusterBadge />}
+
       {serverConfig.ambientEnabled && (
         <AmbientBadge tooltip={t('Istio Ambient ztunnel detected in the Control plane')}></AmbientBadge>
       )}
-      // @TODO for remote cluster
+
       {!isRemoteCluster(props.annotations) && (
         <IstioStatus
           icons={{
