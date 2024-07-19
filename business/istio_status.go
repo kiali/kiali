@@ -260,7 +260,10 @@ func (iss *IstioStatusService) getStatusOf(workloads []*models.Workload, cluster
 	componentNotFound := 0
 	for comp, stat := range statusComponents {
 		if _, found := cf[comp]; !found {
-			if number, mfound := mcf[comp]; !mfound || number < len(iss.userClients) { // multicluster components should exist on all clusters
+			// @TODO for remote cluster
+			// multicluster components should exist on all clusters
+			// !mfound || number < len(iss.userClients)
+			if _, mfound := mcf[comp]; !mfound {
 				componentNotFound += 1
 				isc = append(isc, kubernetes.ComponentStatus{
 					Cluster: cluster,
