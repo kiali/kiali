@@ -1,12 +1,12 @@
 package data
 
 import (
-	"github.com/kiali/kiali/models"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8s_networking_v1 "sigs.k8s.io/gateway-api/apis/v1"
 	k8s_networking_v1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/models"
 )
 
 func CreateEmptyHTTPRoute(name string, namespace string, hosts []string) *k8s_networking_v1.HTTPRoute {
