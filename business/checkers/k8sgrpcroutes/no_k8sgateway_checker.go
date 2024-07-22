@@ -2,6 +2,7 @@ package k8sgrpcroutes
 
 import (
 	"fmt"
+
 	k8s_networking_v1 "sigs.k8s.io/gateway-api/apis/v1"
 
 	"github.com/kiali/kiali/business/checkers/k8shttproutes"
