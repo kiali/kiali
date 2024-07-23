@@ -48,6 +48,12 @@ func TestNoIstiod(t *testing.T) {
 
 func servicesListNoRegistryServices(t *testing.T) {
 	require := require.New(t)
+
+	defer func() {
+    	deleteSe := utils.DeleteFile("../assets/bookinfo-service-entry-external.yaml", "bookinfo")
+		require.True(deleteSe)
+	}()
+
 	serviceList, err := kiali.ServicesList(kiali.BOOKINFO)
 
 	require.NoError(err)
@@ -67,10 +73,7 @@ func servicesListNoRegistryServices(t *testing.T) {
 	// Now, create a Service Entry (Part of th
 	require.NotNil(serviceList.Validations)
 	require.Equal(kiali.BOOKINFO, serviceList.Namespace.Name)
-
-	// Cleanup
-	deleteSe := utils.DeleteFile("../assets/bookinfo-service-entry-external.yaml", "bookinfo")
-	require.True(deleteSe)
+	
 }
 
 func noProxyStatus(t *testing.T) {
