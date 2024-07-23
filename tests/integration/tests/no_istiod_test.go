@@ -2,57 +2,44 @@ package tests
 
 import (
 	"context"
-	"fmt"
 	"testing"
-
-	"github.com/stretchr/testify/require"
-	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/client-go/dynamic"
-	"k8s.io/client-go/kubernetes"
 
 	k8s "github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/tests/integration/utils"
 	"github.com/kiali/kiali/tests/integration/utils/kiali"
 	"github.com/kiali/kiali/tests/integration/utils/kube"
+	"github.com/stretchr/testify/require"
 )
 
-const kialiNamespace = "istio-system"
-
-func update_istio_api_enabled(ctx context.Context, t *testing.T, value bool, kubeClientSet kubernetes.Interface, dynamicClient dynamic.Interface, kialiCRDExists bool) {
-	require := require.New(t)
-
-	kialiPodName := kube.GetKialiPodName(ctx, kubeClientSet, kialiNamespace, t)
-
-	if kialiCRDExists {
-		registryPatch := []byte(fmt.Sprintf(`{"spec": {"external_services": {"istio": {"istio_api_enabled": %t}}}}`, value))
-		kube.UpdateKialiCR(ctx, dynamicClient, kubeClientSet, kialiNamespace, "istio_api_enabled", registryPatch, t)
-	} else {
-		config, cm := kube.GetKialiConfigMap(ctx, kubeClientSet, kialiNamespace, "kiali", t)
-		config.ExternalServices.Istio.IstioAPIEnabled = value
-		kube.UpdateKialiConfigMap(ctx, kubeClientSet, kialiNamespace, config, cm, t)
-	}
-
-	// Restart Kiali pod to pick up the new config.
-	if !kialiCRDExists {
-		require.NoError(kube.DeleteKialiPod(ctx, kubeClientSet, kialiNamespace, kialiPodName))
-	}
-	require.NoError(kube.DeleteKialiPod(ctx, kubeClientSet, kialiNamespace, kialiPodName))
-	require.NoError(kube.RestartKialiPod(ctx, kubeClientSet, kialiNamespace, kialiPodName))
-}
-
 func TestNoIstiod(t *testing.T) {
+	require := require.New(t)
 	kubeClientSet := kube.NewKubeClient(t)
 	dynamicClient := kube.NewDynamicClient(t)
-	ctx := context.TODO()
 
-	kialiCRDExists := false
-	_, err := kubeClientSet.Discovery().RESTClient().Get().AbsPath("/apis/kiali.io").DoRaw(ctx)
-	if !kubeerrors.IsNotFound(err) {
-		kialiCRDExists = true
+	ctx := context.Background()
+	if deadline, ok := t.Deadline(); ok {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithDeadline(ctx, deadline)
+		t.Cleanup(cancel)
 	}
 
-	defer update_istio_api_enabled(ctx, t, true, kubeClientSet, dynamicClient, kialiCRDExists)
-	update_istio_api_enabled(ctx, t, false, kubeClientSet, dynamicClient, kialiCRDExists)
+	instance, err := kiali.NewInstance(ctx, kubeClientSet, dynamicClient)
+	require.NoError(err)
+
+	cfg, err := instance.GetConfig(ctx)
+	require.NoError(err)
+
+	defer func() {
+		cfg.ExternalServices.Istio.IstioAPIEnabled = true
+		require.NoError(instance.UpdateConfig(ctx, cfg))
+		require.NoError(instance.Restart(ctx))
+	}()
+
+	// Disable Istio API
+	cfg.ExternalServices.Istio.IstioAPIEnabled = false
+	require.NoError(instance.UpdateConfig(ctx, cfg))
+	require.NoError(instance.Restart(ctx))
+
 	t.Run("ServicesListNoRegistryServices", servicesListNoRegistryServices)
 	t.Run("NoProxyStatus", noProxyStatus)
 	t.Run("istioStatus", istioStatus)
