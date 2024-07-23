@@ -81,7 +81,7 @@ SINGLE_KIALI="${SINGLE_KIALI:-true}"
 SINGLE_CLUSTER="${SINGLE_CLUSTER:-false}"
 
 # Use groups for OpenId authorization (single cluster)
-USE_GROUPS="${USE_GROUPS:-false}"
+GROUPS="${GROUPS:-}"
 
 # Create kiali remote secrets so kiali can access the different clusters
 # When left empty, this will be true if SINGLE_KIALI is true or false otherwise.
@@ -210,6 +210,10 @@ while [[ $# -gt 0 ]]; do
     -dorp|--docker-or-podman)
       [ "${2:-}" != "docker" -a "${2:-}" != "podman" ] && echo "-dorp must be 'docker' or 'podman'" && exit 1
       DORP="$2"
+      shift;shift
+      ;;
+    -g|--groups)
+      GROUPS="$2"
       shift;shift
       ;;
     -gr|--gateway-required)
@@ -347,10 +351,6 @@ while [[ $# -gt 0 ]]; do
       SINGLE_KIALI="$2"
       shift;shift
       ;;
-    -ug|--use-groups)
-      USE_GROUPS="$2"
-      shift;shift
-      ;;
     -h|--help)
       cat <<HELPMSG
 Valid command line arguments:
@@ -368,6 +368,7 @@ Valid command line arguments:
   -c2u|--cluster2-username <name>: If cluster2 is OpenShift, this is the username used to log in (Default: kiali)
   -cd|--certs-dir <dir>: Directory where the keycloak certs are located. (Default: /tmp/istio-multicluster-certs)
   -dorp|--docker-or-podman <docker|podman>: What image registry client to use (Default: podman)
+  -g|--groups <string>: If using Group for authentication, a comma separated group list. Just for OpenID.
   -gr|--gateway-required <bool>: If a gateway is required to cross between networks, set this to true
   -id|--istio-dir <dir>: Where Istio has already been downloaded. If not found, this script aborts.
   -in|--istio-namespace <name>: Where the Istio control plane is installed (default: istio-system).
@@ -410,7 +411,6 @@ Valid command line arguments:
                        If this is left as empty string, it will be the same as --network1. (Default: "")
   -sc|--single-cluster <bool>: If "true", perform action just in CLUSTER 1. (Default: false)
   -sk|--single-kiali <bool>: If "true", a single kiali will be deployed for the whole mesh. (Default: true)
-  -ug|--use-groups <bool>: If using Group for autentication. Just for single cluster and OpenID. (Default: false)
   -h|--help: this message
 HELPMSG
       exit 1
@@ -625,7 +625,7 @@ NETWORK1_ID=$NETWORK1_ID
 NETWORK2_ID=$NETWORK2_ID
 SINGLE_CLUSTER=$SINGLE_CLUSTER
 SINGLE_KIALI=$SINGLE_KIALI
-USE_GROUPS=$USE_GROUPS
+GROUPS=$GROUPS
 === SETTINGS ===
 EOM
 
