@@ -43,7 +43,7 @@ import { timeRangeSelector } from '../../store/Selectors';
 import { PFColors, PFColorVal } from 'components/Pf/PfColors';
 import { AccessLogModal } from 'components/Envoy/AccessLogModal';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
-import { history, URLParam } from 'app/History';
+import { location, router, URLParam } from 'app/History';
 import { Span, TracingQuery } from 'types/Tracing';
 import moment from 'moment';
 import { formatDuration } from 'utils/tracing/TracingHelper';
@@ -253,7 +253,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
     super(props);
     this.logsRef = React.createRef();
 
-    const urlParams = new URLSearchParams(history.location.search);
+    const urlParams = new URLSearchParams(location.getSearch());
     const showSpans = urlParams.get(URLParam.SHOW_SPANS);
     const showZtunnel = urlParams.get(URLParam.SHOW_ZTUNNEL);
 
@@ -505,9 +505,9 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
   }
 
   private toggleSpans = (checked: boolean): void => {
-    const urlParams = new URLSearchParams(history.location.search);
+    const urlParams = new URLSearchParams(location.getSearch());
     urlParams.set(URLParam.SHOW_SPANS, String(checked));
-    history.replace(`${history.location.pathname}?${urlParams.toString()}`);
+    router.navigate(`${location.getPathname()}?${urlParams.toString()}`, { replace: true });
 
     this.setState({ showSpans: !this.state.showSpans });
   };
@@ -587,9 +587,9 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
   };
 
   private toggleZtunnel = (): void => {
-    const urlParams = new URLSearchParams(history.location.search);
+    const urlParams = new URLSearchParams(location.getSearch());
     urlParams.set(URLParam.SHOW_ZTUNNEL, String(!this.state.showZtunnel));
-    history.replace(`${history.location.pathname}?${urlParams.toString()}`);
+    router.navigate(`${location.getPathname()}?${urlParams.toString()}`, { replace: true });
 
     this.setState({ showZtunnel: !this.state.showZtunnel });
   };
@@ -890,7 +890,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
     if (isParentKiosk(this.props.kiosk)) {
       kioskContextMenuAction(link);
     } else {
-      history.push(link);
+      router.navigate(link);
     }
   };
 

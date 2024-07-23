@@ -1,5 +1,5 @@
 import { camelCase } from 'lodash';
-import { history, URLParam, HistoryManager } from '../../app/History';
+import { URLParam, HistoryManager, router, location } from '../../app/History';
 import { config } from '../../config';
 import {
   ActiveFilter,
@@ -17,12 +17,12 @@ export const perPageOptions: number[] = [5, 10, 15];
 const defaultDuration = 600;
 const defaultRefreshInterval = config.toolbar.defaultRefreshInterval;
 
-export const handleError = (error: string) => {
+export const handleError = (error: string): void => {
   AlertUtils.add(error);
 };
 
 export const getFiltersFromURL = (filterTypes: FilterType[]): ActiveFiltersInfo => {
-  const urlParams = new URLSearchParams(history.location.search);
+  const urlParams = new URLSearchParams(location.getSearch());
   const activeFilters: ActiveFilter[] = [];
   filterTypes.forEach(filter => {
     urlParams.getAll(camelCase(filter.category)).forEach(value => {
@@ -40,42 +40,51 @@ export const getFiltersFromURL = (filterTypes: FilterType[]): ActiveFiltersInfo 
 };
 
 export const setFiltersToURL = (filterTypes: FilterType[], filters: ActiveFiltersInfo): ActiveFiltersInfo => {
-  const urlParams = new URLSearchParams(history.location.search);
+  const urlParams = new URLSearchParams(location.getSearch());
+
   filterTypes.forEach(type => {
     urlParams.delete(camelCase(type.category));
   });
+
   // Remove manually the special Filter opLabel
   urlParams.delete('opLabel');
   const cleanFilters: ActiveFilter[] = [];
 
   filters.filters.forEach(activeFilter => {
     const filterType = filterTypes.find(filter => filter.category === activeFilter.category);
+
     if (!filterType) {
       return;
     }
+
     cleanFilters.push(activeFilter);
     urlParams.append(camelCase(filterType.category), activeFilter.value);
   });
+
   urlParams.append(ID_LABEL_OPERATION, filters.op);
+
   // Resetting pagination when filters change
-  history.push(history.location.pathname + '?' + urlParams.toString());
+  router.navigate(`${location.getPathname()}?${urlParams.toString()}`);
   return { filters: cleanFilters, op: filters.op || DEFAULT_LABEL_OPERATION };
 };
 
 export const filtersMatchURL = (filterTypes: FilterType[], filters: ActiveFiltersInfo): boolean => {
   // This can probably be improved and/or simplified?
   const fromFilters: Map<string, string[]> = new Map<string, string[]>();
+
   filters.filters.forEach(activeFilter => {
     const existingValue = fromFilters.get(activeFilter.category) || [];
     fromFilters.set(activeFilter.category, existingValue.concat(activeFilter.value));
   });
 
   const fromURL: Map<string, string[]> = new Map<string, string[]>();
-  const urlParams = new URLSearchParams(history.location.search);
+  const urlParams = new URLSearchParams(location.getSearch());
+
   filterTypes.forEach(filter => {
     const values = urlParams.getAll(camelCase(filter.category));
+
     if (values.length > 0) {
-      const existing = fromURL.get(camelCase(filter.category)) || [];
+      const existing = fromURL.get(camelCase(filter.category)) ?? [];
       fromURL.set(filter.category, existing.concat(values));
     }
   });
@@ -83,9 +92,12 @@ export const filtersMatchURL = (filterTypes: FilterType[], filters: ActiveFilter
   if (fromFilters.size !== fromURL.size) {
     return false;
   }
+
   let equalFilters = true;
+
   fromFilters.forEach((filterValues, filterName) => {
-    const aux = fromURL.get(filterName) || [];
+    const aux = fromURL.get(filterName) ?? [];
+
     equalFilters =
       equalFilters && filterValues.every(value => aux.includes(value)) && filterValues.length === aux.length;
   });
@@ -94,7 +106,7 @@ export const filtersMatchURL = (filterTypes: FilterType[], filters: ActiveFilter
 };
 
 export const isCurrentSortAscending = (): boolean => {
-  return (HistoryManager.getParam(URLParam.DIRECTION) || 'asc') === 'asc';
+  return (HistoryManager.getParam(URLParam.DIRECTION) ?? 'asc') === 'asc';
 };
 
 export const currentDuration = (): number => {
@@ -103,18 +115,21 @@ export const currentDuration = (): number => {
 
 export const currentRefreshInterval = (): number => {
   const refreshInterval = HistoryManager.getNumericParam(URLParam.REFRESH_INTERVAL);
+
   if (refreshInterval === undefined) {
     return defaultRefreshInterval;
   }
+
   return refreshInterval;
 };
 
 export const currentSortField = <T>(sortFields: SortField<T>[]): SortField<T> => {
   const queriedSortedField = HistoryManager.getParam(URLParam.SORT) || sortFields[0].param;
+
   return (
     sortFields.find(sortField => {
       return sortField.param === queriedSortedField;
-    }) || sortFields[0]
+    }) ?? sortFields[0]
   );
 };
 
@@ -128,14 +143,16 @@ export const compareNullable = <T>(a: T | undefined, b: T | undefined, safeComp:
   return safeComp(a, b);
 };
 
-export const runFilters = <T>(items: T[], filters: RunnableFilter<T>[], active: ActiveFiltersInfo) => {
+export const runFilters = <T>(items: T[], filters: RunnableFilter<T>[], active: ActiveFiltersInfo): T[] => {
   return filters.reduce((i, f) => runOneFilter(i, f, active), items);
 };
 
-const runOneFilter = <T>(items: T[], filter: RunnableFilter<T>, active: ActiveFiltersInfo) => {
+const runOneFilter = <T>(items: T[], filter: RunnableFilter<T>, active: ActiveFiltersInfo): T[] => {
   const relatedActive = { filters: active.filters.filter(af => af.category === filter.category), op: active.op };
+
   if (relatedActive.filters.length) {
     return items.filter(item => filter.run(item, relatedActive));
   }
+
   return items;
 };

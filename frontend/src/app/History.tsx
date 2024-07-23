@@ -1,14 +1,20 @@
-import { createBrowserHistory, createMemoryHistory, createHashHistory } from 'history';
 import { toValidDuration } from '../config/ServerConfig';
 import { BoundsInMilliseconds } from 'types/Common';
+import { RouteObject, createBrowserRouter, createHashRouter, createMemoryRouter } from 'react-router-dom-v5-compat';
 
-const createHistory = (baseName: string): any => {
+export const createRouter = (routes: RouteObject[], basename?: string): any => {
+  const baseName = basename ?? rootBasename;
+
   return process.env.TEST_RUNNER
-    ? createMemoryHistory()
+    ? createMemoryRouter(routes, { basename: baseName })
     : historyMode === 'hash'
-    ? createHashHistory()
-    : createBrowserHistory({ basename: baseName });
+    ? createHashRouter(routes, { basename: baseName })
+    : createBrowserRouter(routes, { basename: baseName });
 };
+
+export const webRoot = (window as any).WEB_ROOT ?? '/';
+export const rootBasename = webRoot !== '/' ? `${webRoot}/console` : '/console';
+const historyMode = (window as any).HISTORY_MODE ?? 'browser';
 
 /**
  * Some platforms set a different basename for each page (e.g., Openshift Console)
@@ -16,16 +22,23 @@ const createHistory = (baseName: string): any => {
  * routes to a different page within Kiali in these platforms.
  * This method is not used in standalone Kiali application
  */
-export const setHistory = (baseName: string): void => {
-  history = createHistory(baseName);
+export const setRouter = (routes: RouteObject[], basename?: string): void => {
+  router = createRouter(routes, basename);
 };
 
-const webRoot = (window as any).WEB_ROOT ? (window as any).WEB_ROOT : undefined;
-const baseName = webRoot && webRoot !== '/' ? `${webRoot}/console` : '/console';
-const historyMode = (window as any).HISTORY_MODE ? (window as any).HISTORY_MODE : 'browser';
-let history = createHistory(baseName);
+let router = createRouter([{ element: <></> }], rootBasename);
 
-export { history };
+const location = {
+  getPathname: (): string => {
+    return router.state.location.pathname.replace(router.basename, '');
+  },
+
+  getSearch: (): string => {
+    return router.state.location.search;
+  }
+};
+
+export { router, location };
 
 export enum URLParam {
   AGGREGATOR = 'aggregator',
@@ -97,15 +110,17 @@ export enum ParamAction {
 
 export class HistoryManager {
   static setParam = (name: URLParam | string, value: string): void => {
-    const urlParams = new URLSearchParams(history.location.search);
+    const urlParams = new URLSearchParams(location.getSearch());
     urlParams.set(name, value);
-    history.replace(`${history.location.pathname}?${urlParams.toString()}`);
+
+    router.navigate(`${location.getPathname()}?${urlParams.toString()}`, { replace: true });
   };
 
   static getParam = (name: URLParam | string, urlParams?: URLSearchParams): string | undefined => {
     if (!urlParams) {
-      urlParams = new URLSearchParams(history.location.search);
+      urlParams = new URLSearchParams(location.getSearch());
     }
+
     const p = urlParams.get(name);
     return p !== null ? p : undefined;
   };
@@ -120,73 +135,54 @@ export class HistoryManager {
     return p !== undefined ? p === 'true' : undefined;
   };
 
-  static deleteParam = (name: URLParam, historyReplace?: boolean): void => {
-    const urlParams = new URLSearchParams(history.location.search);
+  static deleteParam = (name: URLParam): void => {
+    const urlParams = new URLSearchParams(location.getSearch());
     urlParams.delete(name);
-    if (historyReplace) {
-      history.replace(`${history.location.pathname}?${urlParams.toString()}`);
-    } else {
-      history.push(`${history.location.pathname}?${urlParams.toString()}`);
-    }
-  };
 
-  static setParams = (params: URLParamValue[], paramAction?: ParamAction, historyReplace?: boolean): void => {
-    const urlParams = new URLSearchParams(history.location.search);
-
-    if (params.length > 0 && paramAction === ParamAction.APPEND) {
-      params.forEach(param => urlParams.delete(param.name));
-    }
-
-    params.forEach(param => {
-      if (param.value === '') {
-        urlParams.delete(param.name);
-      } else if (paramAction === ParamAction.APPEND) {
-        urlParams.append(param.name, param.value);
-      } else {
-        urlParams.set(param.name, param.value);
-      }
-    });
-
-    if (historyReplace) {
-      history.replace(`${history.location.pathname}?${urlParams.toString()}`);
-    } else {
-      history.push(`${history.location.pathname}?${urlParams.toString()}`);
-    }
+    router.navigate(`${location.getPathname()}?${urlParams.toString()}`, { replace: true });
   };
 
   static getClusterName = (urlParams?: URLSearchParams): string | undefined => {
     if (!urlParams) {
-      urlParams = new URLSearchParams(history.location.search);
+      urlParams = new URLSearchParams(location.getSearch());
     }
+
     return urlParams.get(URLParam.CLUSTERNAME) || undefined;
   };
 
   static getDuration = (urlParams?: URLSearchParams): number | undefined => {
     const duration = HistoryManager.getNumericParam(URLParam.DURATION, urlParams);
+
     if (duration) {
       return toValidDuration(Number(duration));
     }
+
     return undefined;
   };
 
   static getRangeDuration = (urlParams?: URLSearchParams): number | undefined => {
     const rangeDuration = HistoryManager.getNumericParam(URLParam.RANGE_DURATION, urlParams);
+
     if (rangeDuration) {
       return toValidDuration(Number(rangeDuration));
     }
+
     return undefined;
   };
 
   static getTimeBounds = (urlParams?: URLSearchParams): BoundsInMilliseconds | undefined => {
     const from = HistoryManager.getNumericParam(URLParam.FROM, urlParams);
+
     if (from) {
       const to = HistoryManager.getNumericParam(URLParam.TO, urlParams);
+
       // "to" can be undefined (stands for "now")
       return {
         from: from,
         to: to
       };
     }
+
     return undefined;
   };
 }

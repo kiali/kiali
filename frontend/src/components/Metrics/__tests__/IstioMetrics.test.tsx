@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { shallow } from 'enzyme';
 import { Provider } from 'react-redux';
-import { MemoryRouter, Route } from 'react-router';
+import { MemoryRouter } from 'react-router-dom-v5-compat';
 import { shallowToJson } from 'enzyme-to-json';
 import { IstioMetrics } from '../IstioMetrics';
 import * as API from '../../../services/Api';
@@ -101,18 +101,13 @@ describe('Metrics for a service', () => {
     const wrapper = shallow(
       <Provider store={store}>
         <MemoryRouter>
-          <Route
-            render={props => (
-              <IstioMetrics
-                {...props}
-                lastRefreshAt={Date.now()}
-                namespace="ns"
-                object="svc"
-                objectType={MetricsObjectTypes.SERVICE}
-                direction={'inbound'}
-                includeAmbient={false}
-              />
-            )}
+          <IstioMetrics
+            lastRefreshAt={1720526431902}
+            namespace="ns"
+            object="svc"
+            objectType={MetricsObjectTypes.SERVICE}
+            direction={'inbound'}
+            includeAmbient={false}
           />
         </MemoryRouter>
       </Provider>
@@ -131,7 +126,7 @@ describe('Metrics for a service', () => {
           objectType={MetricsObjectTypes.SERVICE}
           direction={'inbound'}
           includeAmbient={false}
-          lastRefreshAt={Date.now()}
+          lastRefreshAt={1720526431902}
         />
       )
       .run(done, wrapper => {
@@ -161,7 +156,7 @@ describe('Metrics for a service', () => {
           objectType={MetricsObjectTypes.SERVICE}
           direction={'inbound'}
           includeAmbient={false}
-          lastRefreshAt={Date.now()}
+          lastRefreshAt={1720526431902}
         />
       )
       .run(done, wrapper => {
@@ -192,19 +187,16 @@ describe('Inbound Metrics for a workload', () => {
   it('renders initial layout', () => {
     const wrapper = shallow(
       <Provider store={store}>
-        <Route
-          render={props => (
-            <IstioMetrics
-              {...props}
-              lastRefreshAt={Date.now()}
-              namespace="ns"
-              object="svc"
-              objectType={MetricsObjectTypes.WORKLOAD}
-              direction={'inbound'}
-              includeAmbient={false}
-            />
-          )}
-        />
+        <MemoryRouter>
+          <IstioMetrics
+            lastRefreshAt={1720526431902}
+            namespace="ns"
+            object="svc"
+            objectType={MetricsObjectTypes.WORKLOAD}
+            direction={'inbound'}
+            includeAmbient={false}
+          />
+        </MemoryRouter>
       </Provider>
     );
     expect(shallowToJson(wrapper)).toMatchSnapshot();
@@ -221,7 +213,7 @@ describe('Inbound Metrics for a workload', () => {
           objectType={MetricsObjectTypes.WORKLOAD}
           direction={'inbound'}
           includeAmbient={false}
-          lastRefreshAt={Date.now()}
+          lastRefreshAt={1720526431902}
         />
       )
       .run(done, wrapper => {
@@ -251,7 +243,7 @@ describe('Inbound Metrics for a workload', () => {
           objectType={MetricsObjectTypes.WORKLOAD}
           direction={'inbound'}
           includeAmbient={false}
-          lastRefreshAt={Date.now()}
+          lastRefreshAt={1720526431902}
         />
       )
       .run(done, wrapper => {

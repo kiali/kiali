@@ -3,7 +3,7 @@ import { LoginActions } from '../LoginActions';
 import { LoginStatus } from '../../store/Store';
 
 const session = {
-  expiresOn: '018-05-29 21:51:40.186179601 +0200 CEST m=+36039.431579761',
+  expiresOn: '2018-05-29 21:51:40.186179601 +0200 CEST m=+36039.431579761',
   username: 'admin'
 };
 

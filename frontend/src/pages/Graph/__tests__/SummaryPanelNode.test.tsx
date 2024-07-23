@@ -2,7 +2,7 @@ import * as React from 'react';
 import { DecoratedGraphNodeData, GraphNodeData, GraphType, NodeType } from '../../../types/Graph';
 import { mount } from 'enzyme';
 import { SummaryPanelNodeComponent, SummaryPanelNodeComponentProps } from '../SummaryPanelNode';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter } from 'react-router-dom-v5-compat';
 import { ExpandableSection } from '@patternfly/react-core';
 import { store } from '../../../store/ConfigStore';
 import { Provider } from 'react-redux';

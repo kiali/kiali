@@ -4,7 +4,7 @@ import { bindActionCreators } from 'redux';
 import { connect } from 'react-redux';
 import FlexView from 'react-flexview';
 import { kialiStyle } from 'styles/StyleUtils';
-import { history } from '../../app/History';
+import { router } from '../../app/History';
 import { DurationInSeconds, IntervalInMilliseconds, TimeInMilliseconds, TimeInSeconds } from '../../types/Common';
 import { MessageType } from '../../types/MessageCenter';
 import { Namespace } from '../../types/Namespace';
@@ -194,25 +194,25 @@ const containerStyle = kialiStyle({
 
 const kioskContainerStyle = kialiStyle({
   minHeight: '350px',
-  height: 'calc(100vh - 10px)' // View height minus top bar height
+  height: 'calc(100vh - 0.5rem)' // View height minus top bar height
 });
 
-const cytoscapeGraphContainerStyle = kialiStyle({ flex: '1', minWidth: '350px', zIndex: 0, paddingRight: '5px' });
+const cytoscapeGraphContainerStyle = kialiStyle({ flex: '1', minWidth: '350px', zIndex: 0, paddingRight: '0.25rem' });
 const cytoscapeGraphWrapperDivStyle = kialiStyle({
   position: 'relative',
   backgroundColor: PFColors.BackgroundColor200
 });
 const cytoscapeToolbarWrapperDivStyle = kialiStyle({
   position: 'absolute',
-  bottom: '5px',
+  bottom: '0.25rem',
   zIndex: 2,
   borderStyle: 'hidden'
 });
 
 const graphTimeRange = kialiStyle({
   position: 'absolute',
-  top: '10px',
-  left: '10px',
+  top: '0.5rem',
+  left: '0.5rem',
   width: 'auto',
   zIndex: 2
 });
@@ -227,7 +227,7 @@ const graphBackground = kialiStyle({
 
 const graphLegendStyle = kialiStyle({
   right: '0',
-  bottom: '10px',
+  bottom: '0.5rem',
   position: 'absolute',
   overflow: 'hidden'
 });
@@ -265,6 +265,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
     const serviceOk = service && service !== UNKNOWN;
     const workload = props.workload;
     const workloadOk = workload && workload !== UNKNOWN;
+
     if (!aggregateOk && !aggregateValueOk && !appOk && !namespaceOk && !serviceOk && !workloadOk) {
       // @ts-ignore
       return;
@@ -272,6 +273,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
 
     let nodeType: NodeType;
     let version: string | undefined;
+
     if (aggregateOk) {
       nodeType = NodeType.AGGREGATE;
       version = '';
@@ -282,6 +284,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
       nodeType = NodeType.SERVICE;
       version = '';
     }
+
     return {
       aggregate: aggregate!,
       aggregateValue: aggregateValue!,
@@ -299,9 +302,11 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
     if (prevNode === node) {
       return false;
     }
+
     if ((prevNode && !node) || (!prevNode && node)) {
       return true;
     }
+
     if (prevNode && node) {
       const nodeAggregateHasChanged =
         prevNode.aggregate !== node.aggregate || prevNode.aggregateValue !== node.aggregateValue;
@@ -310,6 +315,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
       const nodeVersionHasChanged = prevNode.version !== node.version;
       const nodeTypeHasChanged = prevNode.nodeType !== node.nodeType;
       const nodeWorkloadHasChanged = prevNode.workload !== node.workload;
+
       return (
         nodeAggregateHasChanged ||
         nodeAppHasChanged ||
@@ -319,6 +325,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
         nodeTypeHasChanged
       );
     }
+
     return false;
   }
 
@@ -363,6 +370,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
     // is for a node graph.  When setting the node here it is available for the
     // loadGraphFromBackend() call.
     const urlNode = GraphPageComponent.getNodeParamsFromProps(this.props);
+
     if (GraphPageComponent.isNodeChanged(urlNode, this.props.node)) {
       // add the node namespace if necessary, but don't lose previously selected namespaces
       if (urlNode && !this.props.activeNamespaces.map(ns => ns.name).includes(urlNode.namespace.name)) {
@@ -449,15 +457,19 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
 
   render(): React.ReactNode {
     let conStyle = containerStyle;
+
     if (isKioskMode()) {
       conStyle = kioskContainerStyle;
     }
+
     const isEmpty = !(
       this.state.graphData.elements.nodes && Object.keys(this.state.graphData.elements.nodes).length > 0
     );
+
     const isReady = !(isEmpty || this.state.graphData.isError);
     const isReplayReady = this.props.replayActive && !!this.props.replayQueryTime;
     const cy = this.cytoscapeGraphRef && this.cytoscapeGraphRef.current ? this.cytoscapeGraphRef.current.getCy() : null;
+
     return (
       <>
         <FlexView className={conStyle} column={true}>
@@ -519,6 +531,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
                 </div>
               )}
             </ErrorBoundary>
+
             {isReady && this.props.summaryData && (
               <SummaryPanel
                 data={this.props.summaryData}
@@ -536,6 +549,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
             )}
           </FlexView>
         </FlexView>
+
         <ServiceWizard
           show={this.state.wizardsData.showWizard}
           type={this.state.wizardsData.wizardType}
@@ -560,6 +574,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
           onClose={this.handleWizardClose}
           istioAPIEnabled={this.props.istioAPIEnabled}
         />
+
         {this.state.showConfirmDeleteTrafficRouting && (
           <ConfirmDeleteTrafficRoutingModal
             isOpen={true}
@@ -586,6 +601,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
     fetchParams: FetchParams
   ): void => {
     const prevElements = this.state.graphData.elements;
+
     this.setState({
       graphData: {
         elements: elements,
@@ -595,6 +611,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
         timestamp: graphTimestamp * 1000
       }
     });
+
     this.props.setGraphDefinition(this.graphDataSource.graphDefinition);
   };
 
@@ -655,6 +672,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
       );
       return;
     }
+
     if (event.isIdle) {
       AlertUtils.add(
         `An idle node has no node-specific traffic and can not provide a node detail graph.`,
@@ -663,6 +681,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
       );
       return;
     }
+
     if (event.isOutside && this.props.setActiveNamespaces) {
       this.props.setActiveNamespaces([{ name: event.namespace }]);
       return;
@@ -673,6 +692,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
     // the case.
     let sameNode = false;
     const node = this.state.graphData.fetchParams.node;
+
     if (node) {
       sameNode = node && node.nodeType === event.nodeType;
       switch (event.nodeType) {
@@ -731,7 +751,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
     };
 
     // To ensure updated components get the updated URL, update the URL first and then the state
-    history.push(makeNodeGraphUrlFromParams(urlParams));
+    router.navigate(makeNodeGraphUrlFromParams(urlParams));
   };
 
   // This allows us to navigate to the service details page when zoomed in on nodes
@@ -739,9 +759,11 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
     const makeAppDetailsPageUrl = (namespace: string, nodeType: string, name?: string): string => {
       return `/namespaces/${namespace}/${nodeType}/${name}`;
     };
+
     const nodeType = targetNode.nodeType;
     let urlNodeType = `${targetNode.nodeType}s`;
     let name = targetNode.app;
+
     if (nodeType === 'service') {
       name = targetNode.service;
     } else if (nodeType === 'workload') {
@@ -749,15 +771,19 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
     } else {
       urlNodeType = 'applications';
     }
+
     let detailsPageUrl = makeAppDetailsPageUrl(targetNode.namespace.name, urlNodeType, name);
+
     if (targetNode.cluster && isMultiCluster) {
       detailsPageUrl = `${detailsPageUrl}?clusterName=${targetNode.cluster}`;
     }
+
     if (isParentKiosk(this.props.kiosk)) {
       kioskContextMenuAction(detailsPageUrl);
     } else {
-      history.push(detailsPageUrl);
+      router.navigate(detailsPageUrl);
     }
+
     return;
   };
 
@@ -791,6 +817,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
           showWizard: false
         }
       }));
+
       triggerRefresh();
     } else {
       this.setState(prevState => ({
@@ -830,6 +857,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
     if (this.props.showLegend) {
       this.props.toggleLegend();
     }
+
     if (this.props.activeTour) {
       this.props.endTour();
     } else {

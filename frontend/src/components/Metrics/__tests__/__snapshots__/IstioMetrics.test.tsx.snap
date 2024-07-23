@@ -30,9 +30,16 @@ exports[`Inbound Metrics for a workload renders initial layout 1`] = `
     }
   }
 >
-  <Route
-    render={[Function]}
-  />
+  <MemoryRouter>
+    <Connect(IstioMetricsComponent)
+      direction="inbound"
+      includeAmbient={false}
+      lastRefreshAt={1720526431902}
+      namespace="ns"
+      object="svc"
+      objectType={1}
+    />
+  </MemoryRouter>
 </ContextProvider>
 `;
 
@@ -67,8 +74,13 @@ exports[`Metrics for a service renders initial layout 1`] = `
   }
 >
   <MemoryRouter>
-    <Route
-      render={[Function]}
+    <Connect(IstioMetricsComponent)
+      direction="inbound"
+      includeAmbient={false}
+      lastRefreshAt={1720526431902}
+      namespace="ns"
+      object="svc"
+      objectType={0}
     />
   </MemoryRouter>
 </ContextProvider>

@@ -29,7 +29,7 @@ type ReduxProps = {
   duration: DurationInSeconds;
 };
 
-type AppListPageProps = ReduxProps & FilterComponent.Props<AppListItem>;
+type AppListPageProps = ReduxProps;
 
 class AppListPageComponent extends FilterComponent.Component<AppListPageProps, AppListPageState, AppListItem> {
   private promises = new PromisesRegistry();
@@ -73,6 +73,11 @@ class AppListPageComponent extends FilterComponent.Component<AppListPageProps, A
   componentWillUnmount(): void {
     this.promises.cancelAll();
   }
+
+  onSort = (): void => {
+    // force list update on sorting
+    this.setState({});
+  };
 
   sortItemList(items: AppListItem[], sortField: SortField<AppListItem>, isAscending: boolean): AppListItem[] {
     // Chain promises, as there may be an ongoing fetch/refresh and sort can be called after UI interaction
@@ -148,13 +153,15 @@ class AppListPageComponent extends FilterComponent.Component<AppListPageProps, A
     return (
       <>
         <RefreshNotifier onTick={this.updateListItems} />
+
         <DefaultSecondaryMasthead
           rightToolbar={
             <TimeDurationComponent key={'DurationDropdown'} id="app-list-duration-dropdown" disabled={false} />
           }
         />
+
         <RenderContent>
-          <VirtualList rows={this.state.listItems} hiddenColumns={hiddenColumns} type="applications">
+          <VirtualList rows={this.state.listItems} hiddenColumns={hiddenColumns} sort={this.onSort} type="applications">
             <StatefulFilters
               initialFilters={AppListFilters.availableFilters}
               initialToggles={this.initialToggles}

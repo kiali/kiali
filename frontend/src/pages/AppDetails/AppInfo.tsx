@@ -8,7 +8,7 @@ import { GraphDataSource } from 'services/GraphDataSource';
 import { AppHealth } from 'types/Health';
 import { kialiStyle } from 'styles/StyleUtils';
 import { GraphEdgeTapEvent } from '../../components/CytoscapeGraph/CytoscapeGraph';
-import { history, URLParam } from '../../app/History';
+import { location, router, URLParam } from '../../app/History';
 import { MiniGraphCard } from '../../components/CytoscapeGraph/MiniGraphCard';
 import { serverConfig } from 'config';
 import { MiniGraphCardPF } from 'pages/GraphPF/MiniGraphCardPF';
@@ -35,20 +35,21 @@ export class AppInfo extends React.Component<AppInfoProps, AppInfoState> {
     this.state = {};
   }
 
-  componentDidMount() {
+  componentDidMount(): void {
     this.fetchBackend();
   }
 
-  componentDidUpdate(prev: AppInfoProps) {
+  componentDidUpdate(prev: AppInfoProps): void {
     if (this.props.duration !== prev.duration || this.props.app !== prev.app) {
       this.fetchBackend();
     }
   }
 
-  private fetchBackend = () => {
+  private fetchBackend = (): void => {
     if (!this.props.app) {
       return;
     }
+
     this.graphDataSource.fetchForVersionedApp(
       this.props.duration,
       this.props.app.namespace.name,
@@ -57,18 +58,18 @@ export class AppInfo extends React.Component<AppInfoProps, AppInfoState> {
     );
   };
 
-  goToMetrics = (e: GraphEdgeTapEvent) => {
+  goToMetrics = (e: GraphEdgeTapEvent): void => {
     if (e.source !== e.target && this.props.app) {
       const direction = e.source === this.props.app.name ? 'outbound' : 'inbound';
       const destination = direction === 'inbound' ? 'source_canonical_service' : 'destination_canonical_service';
-      const urlParams = new URLSearchParams(history.location.search);
+      const urlParams = new URLSearchParams(location.getSearch());
       urlParams.set('tab', direction === 'inbound' ? 'in_metrics' : 'out_metrics');
-      urlParams.set(URLParam.BY_LABELS, destination + '=' + (e.source === this.props.app.name ? e.target : e.source));
-      history.replace(history.location.pathname + '?' + urlParams.toString());
+      urlParams.set(URLParam.BY_LABELS, `${destination}=${e.source === this.props.app.name ? e.target : e.source}`);
+      router.navigate(`${location.getPathname()}?${urlParams.toString()}`, { replace: true });
     }
   };
 
-  render() {
+  render(): React.ReactNode {
     // RenderComponentScroll handles height to provide an inner scroll combined with tabs
     // This height needs to be propagated to minigraph to proper resize in height
     // Graph resizes correctly on width
@@ -83,6 +84,7 @@ export class AppInfo extends React.Component<AppInfoProps, AppInfoState> {
           <GridItem span={4}>
             <AppDescription app={this.props.app} health={this.props.health} />
           </GridItem>
+
           {includeMiniGraphCy && (
             <GridItem span={miniGraphSpan}>
               <MiniGraphCard
@@ -92,6 +94,7 @@ export class AppInfo extends React.Component<AppInfoProps, AppInfoState> {
               />
             </GridItem>
           )}
+
           {includeMiniGraphPF && (
             <GridItem span={miniGraphSpan}>
               <MiniGraphCardPF dataSource={this.graphDataSource} />

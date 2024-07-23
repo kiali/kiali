@@ -26,7 +26,7 @@ import { TimeInMilliseconds } from 'types/Common';
 import { KialiDispatch } from 'types/Redux';
 import { AutoComplete } from 'utils/AutoComplete';
 import { HEALTHY, NA, NOT_READY } from 'types/Health';
-import { history, HistoryManager, URLParam } from '../../../app/History';
+import { location, HistoryManager, URLParam } from '../../../app/History';
 import { isValid } from 'utils/Common';
 import { descendents, elems, SelectAnd, SelectExp, selectOr, SelectOr } from 'pages/GraphPF/GraphPFElems';
 import { FIT_PADDING } from 'pages/GraphPF/GraphPF';
@@ -37,21 +37,25 @@ import { MeshToolbarActions } from 'actions/MeshToolbarActions';
 import { MeshFindOptions } from './MeshFindOptions';
 import { MeshHelpFind } from '../MeshHelpFind';
 
-type ReduxProps = {
+type ReduxStateProps = {
   findValue: string;
   hideValue: string;
   layout: Layout;
-  setFindValue: (val: string) => void;
-  setHideValue: (val: string) => void;
   showFindHelp: boolean;
-  toggleFindHelp: () => void;
   updateTime: TimeInMilliseconds;
 };
 
-type MeshFindProps = ReduxProps & {
-  controller?: Controller;
-  elementsChanged: boolean;
+type ReduxDispatchProps = {
+  setFindValue: (val: string) => void;
+  setHideValue: (val: string) => void;
+  toggleFindHelp: () => void;
 };
+
+type MeshFindProps = ReduxStateProps &
+  ReduxDispatchProps & {
+    controller?: Controller;
+    elementsChanged: boolean;
+  };
 
 type MeshFindState = {
   findError?: string;
@@ -96,7 +100,7 @@ const operands: string[] = ['cluster', 'healthy', 'inaccessible', 'name', 'names
 
 export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindState> {
   static contextTypes = {
-    router: () => null
+    router: (): null => null
   };
 
   private findAutoComplete: AutoComplete;
@@ -116,8 +120,9 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
     let hideValue = props.hideValue ? props.hideValue : '';
 
     // Let URL override current redux state at construction time. Update URL as needed.
-    const urlParams = new URLSearchParams(history.location.search);
+    const urlParams = new URLSearchParams(location.getSearch());
     const urlFind = HistoryManager.getParam(URLParam.MESH_FIND, urlParams);
+
     if (!!urlFind) {
       if (urlFind !== findValue) {
         findValue = urlFind;
@@ -126,7 +131,9 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
     } else if (!!findValue) {
       HistoryManager.setParam(URLParam.MESH_FIND, findValue);
     }
+
     const urlHide = HistoryManager.getParam(URLParam.MESH_HIDE, urlParams);
+
     if (!!urlHide) {
       if (urlHide !== hideValue) {
         hideValue = urlHide;
@@ -146,7 +153,7 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
   // We only update on a change to the find/hide values, or a mesh change.  Although we use other props
   // in processing (layout, etc), a change to those settings will generate a mesh change, so we
   // wait for the mesh change to do the update.
-  shouldComponentUpdate(nextProps: MeshFindProps, nextState: MeshFindState) {
+  shouldComponentUpdate(nextProps: MeshFindProps, nextState: MeshFindState): boolean {
     const controllerChanged = this.props.controller !== nextProps.controller;
     const findChanged = this.props.findValue !== nextProps.findValue;
     const hideChanged = this.props.hideValue !== nextProps.hideValue;
@@ -170,7 +177,7 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
   // Note that we may have redux hide/find values set at mount-time. But because the toolbar mounts prior to
   // the mesh loading, we can't perform this mesh "post-processing" until we have a valid controller.  But the
   // find/hide processing will be initiated externally (processMeshUpdate) when the mesh is ready.
-  componentDidUpdate(prevProps: MeshFindProps) {
+  componentDidUpdate(prevProps: MeshFindProps): void {
     if (!this.props.controller) {
       this.findElements = undefined;
       this.hiddenElements = undefined;
@@ -184,14 +191,14 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
     // ensure redux state and URL are aligned
     if (findChanged) {
       if (!this.props.findValue) {
-        HistoryManager.deleteParam(URLParam.MESH_FIND, true);
+        HistoryManager.deleteParam(URLParam.MESH_FIND);
       } else {
         HistoryManager.setParam(URLParam.MESH_FIND, this.props.findValue);
       }
     }
     if (hideChanged) {
       if (!this.props.hideValue) {
-        HistoryManager.deleteParam(URLParam.MESH_HIDE, true);
+        HistoryManager.deleteParam(URLParam.MESH_HIDE);
       } else {
         HistoryManager.setParam(URLParam.MESH_HIDE, this.props.hideValue);
       }
@@ -216,7 +223,7 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
     }
   }
 
-  render() {
+  render(): React.ReactNode {
     return (
       <TourStop info={MeshTourStops.Find}>
         <Form className={thinGroupStyle}>
@@ -246,6 +253,7 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
                 )}
               </FormGroup>
             </GridItem>
+
             <GridItem span={1}>
               <FormGroup className={meshFindStyle}>
                 <MeshFindOptions kind="find" onSelect={this.updateFindOption} />
@@ -262,6 +270,7 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
                 )}
               </FormGroup>
             </GridItem>
+
             <GridItem span={5}>
               <FormGroup>
                 <TextInput
@@ -287,6 +296,7 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
                 )}
               </FormGroup>
             </GridItem>
+
             <GridItem span={1}>
               <FormGroup className={meshFindStyle}>
                 <MeshFindOptions kind="hide" onSelect={this.updateHideOption} />
@@ -305,6 +315,7 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
             </GridItem>
           </Grid>
         </Form>
+
         {this.props.showFindHelp ? (
           <MeshHelpFind onClose={this.toggleFindHelp}>
             <Button
@@ -332,21 +343,23 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
     );
   }
 
-  private toggleFindHelp = () => {
+  private toggleFindHelp = (): void => {
     this.props.toggleFindHelp();
   };
 
-  private checkSpecialKeyFind = event => {
+  private checkSpecialKeyFind = (event: React.KeyboardEvent): void => {
     const keyCode = event.keyCode ? event.keyCode : event.which;
     switch (keyCode) {
       case 9: // tab (autocomplete)
         event.preventDefault();
         const next = this.findAutoComplete.next();
+
         if (!!next) {
           this.findInputRef.value = next;
           this.findInputRef.scrollLeft = this.findInputRef.scrollWidth;
           this.setState({ findInputValue: next, findError: undefined });
         }
+
         break;
       case 13: // return (submit)
         event.preventDefault();
@@ -357,17 +370,18 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
     }
   };
 
-  private updateFindOption = key => {
+  private updateFindOption = (key: string): void => {
     this.setFind(key);
   };
 
-  private updateFind = val => {
+  private updateFind = (val: string): void => {
     if ('' === val) {
       this.setFind('');
     } else {
       const diff = Math.abs(val.length - this.state.findInputValue.length);
       this.findAutoComplete.setInput(val, [' ', '!']);
       this.setState({ findInputValue: val, findError: undefined });
+
       // submit if length change is greater than a single key, assume browser suggestion clicked or user paste
       if (diff > 1) {
         this.props.setFindValue(val);
@@ -375,35 +389,39 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
     }
   };
 
-  private setFind = val => {
+  private setFind = (val: string): void => {
     // TODO: when TextInput refs are fixed in PF4 then use the ref and remove the direct HTMLElement usage
     this.findInputRef.value = val;
     const htmlInputElement: HTMLInputElement = document.getElementById('MESH_FIND') as HTMLInputElement;
+
     if (htmlInputElement !== null) {
       htmlInputElement.value = val;
     }
+
     this.findAutoComplete.setInput(val);
     this.setState({ findInputValue: val, findError: undefined });
     this.props.setFindValue(val);
   };
 
-  private submitFind = () => {
+  private submitFind = (): void => {
     if (this.props.findValue !== this.state.findInputValue) {
       this.props.setFindValue(this.state.findInputValue);
     }
   };
 
-  private checkSpecialKeyHide = event => {
+  private checkSpecialKeyHide = (event: React.KeyboardEvent): void => {
     const keyCode = event.keyCode ? event.keyCode : event.which;
     switch (keyCode) {
       case 9: // tab (autocomplete)
         event.preventDefault();
         const next = this.hideAutoComplete.next();
+
         if (!!next) {
           this.hideInputRef.value = next;
           this.hideInputRef.scrollLeft = this.hideInputRef.scrollWidth;
           this.setState({ hideInputValue: next, hideError: undefined });
         }
+
         break;
       case 13: // return (submit)
         event.preventDefault();
@@ -414,17 +432,18 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
     }
   };
 
-  private updateHideOption = key => {
+  private updateHideOption = (key: string): void => {
     this.setHide(key);
   };
 
-  private updateHide = val => {
+  private updateHide = (val: string): void => {
     if ('' === val) {
       this.setHide('');
     } else {
       const diff = Math.abs(val.length - this.state.hideInputValue.length);
       this.hideAutoComplete.setInput(val, [' ', '!']);
       this.setState({ hideInputValue: val, hideError: undefined });
+
       // submit if length change is greater than a single key, assume browser suggestion clicked or user paste
       if (diff > 1) {
         this.props.setHideValue(val);
@@ -432,33 +451,36 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
     }
   };
 
-  private submitHide = () => {
+  private submitHide = (): void => {
     if (this.props.hideValue !== this.state.hideInputValue) {
       this.props.setHideValue(this.state.hideInputValue);
     }
   };
 
-  private setHide = val => {
+  private setHide = (val: string): void => {
     // TODO: when TextInput refs are fixed in PF4 then use the ref and remove the direct HTMLElement usage
     this.hideInputRef.value = val;
     const htmlInputElement: HTMLInputElement = document.getElementById('MESH_HIDE') as HTMLInputElement;
+
     if (htmlInputElement !== null) {
       htmlInputElement.value = val;
     }
+
     this.hideAutoComplete.setInput(val);
     this.setState({ hideInputValue: val, hideError: undefined });
     this.props.setHideValue(val);
   };
 
   // All edges have the graph as a parent
-  private unhideElement(g: Graph, e: GraphElement) {
+  private unhideElement = (g: Graph, e: GraphElement): void => {
     e.setVisible(true);
+
     if (!e.hasParent()) {
       g.appendChild(e);
     }
-  }
+  };
 
-  private handleHide = (controller: Controller, meshChanged: boolean) => {
+  private handleHide = (controller: Controller, meshChanged: boolean): void => {
     const selector = this.parseValue(this.props.hideValue, false);
     const checkRemovals = selector.nodeSelector || selector.edgeSelector;
     const mesh = controller.getGraph();
@@ -471,6 +493,7 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
       needLayout = true;
       this.hiddenElements.forEach(e => this.unhideElement(mesh, e));
     }
+
     this.hiddenElements = undefined;
 
     // select the new hide-hits
@@ -522,6 +545,7 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
 
       const finalNodes = nodes.filter(n => !n.isVisible()) as GraphElement[];
       const finalEdges = edges.filter(e => !e.isVisible()) as GraphElement[];
+
       // we need to remove edges completely because an invisible edge is not
       // ignored by layout (I don't know why, nodes are ignored)
       finalEdges.forEach(e => e.remove());
@@ -535,7 +559,7 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
     }
   };
 
-  private handleFind = (controller: Controller) => {
+  private handleFind = (controller: Controller): void => {
     const selector = this.parseValue(this.props.findValue, true);
     console.debug(`Mesh Find selector=[${JSON.stringify(selector)}]`);
 
@@ -544,6 +568,7 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
       const data = e.getData() as MeshNodeData | MeshEdgeData;
       e.setData({ ...data, isFind: false });
     });
+
     this.findElements = undefined;
 
     // add new find-hits
@@ -551,12 +576,15 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
       const { nodes, edges } = elems(controller);
       let findNodes = [] as GraphElement[];
       let findEdges = [] as GraphElement[];
+
       if (selector.nodeSelector) {
         findNodes = selectOr(nodes, selector.nodeSelector);
       }
+
       if (selector.edgeSelector) {
         findEdges = selectOr(edges, selector.edgeSelector);
       }
+
       this.findElements = findNodes.concat(findEdges);
       this.findElements.forEach(e => {
         const data = e.getData() as MeshNodeData | MeshEdgeData;
@@ -573,13 +601,14 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
       const hideError = !!error ? `Hide: ${error}` : undefined;
       this.setState({ hideError: hideError });
     }
+
     return undefined;
   }
 
   private parseValue = (
     val: string,
     isFind: boolean
-  ): { nodeSelector: SelectOr | undefined; edgeSelector: SelectOr | undefined } => {
+  ): { edgeSelector: SelectOr | undefined; nodeSelector: SelectOr | undefined } => {
     let preparedVal = this.prepareValue(val);
     if (!preparedVal) {
       return { nodeSelector: undefined, edgeSelector: undefined };
@@ -603,6 +632,7 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
         if (!parsedExpression) {
           return { nodeSelector: undefined, edgeSelector: undefined };
         }
+
         if (!target) {
           target = parsedExpression.target;
         } else if (target !== parsedExpression.target) {
@@ -646,7 +676,7 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
     val = val.replace(/ +(?= )/g, '');
 
     // remove unnecessary mnemonic qualifiers on unary operators (e.g. 'has cb' -> 'cb').
-    val = ' ' + val;
+    val = ` ${val}`;
     val = val.replace(/ is /gi, ' ');
     val = val.replace(/ has /gi, ' ');
     val = val.replace(/ !\s*is /gi, ' ! ');
@@ -674,6 +704,7 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
     isFind: boolean
   ): ParsedExpression | undefined => {
     let op;
+
     if (expression.includes('!=')) {
       op = '!=';
     } else if (expression.includes('!*=')) {
@@ -701,6 +732,7 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
     } else if (expression.includes('!')) {
       op = '!';
     }
+
     if (!op) {
       if (expression.split(' ').length > 1) {
         return this.setError(`No valid operator found in expression`, isFind);
@@ -711,6 +743,7 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
     }
 
     const tokens = expression.split(op);
+
     if (op === '!') {
       const unaryExpression = this.parseUnaryFindExpression(tokens[1].trim(), true);
       return unaryExpression ? unaryExpression : this.setError(`Invalid Node or Edge operand`, isFind);
@@ -845,7 +878,7 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
   };
 }
 
-const mapStateToProps = (state: KialiAppState) => ({
+const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
   findValue: meshFindValueSelector(state),
   hideValue: meshHideValueSelector(state),
   layout: state.mesh.layout,
@@ -853,7 +886,7 @@ const mapStateToProps = (state: KialiAppState) => ({
   updateTime: state.mesh.updateTime
 });
 
-const mapDispatchToProps = (dispatch: KialiDispatch) => {
+const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => {
   return {
     setFindValue: bindActionCreators(MeshToolbarActions.setFindValue, dispatch),
     setHideValue: bindActionCreators(MeshToolbarActions.setHideValue, dispatch),

@@ -17,6 +17,11 @@ import { ResourcePermissions } from './Permissions';
 import { KIALI_WIZARD_LABEL } from '../components/IstioWizards/WizardActions';
 import { ServiceOverview } from './ServiceList';
 
+export type ServiceId = {
+  namespace: string;
+  service: string;
+};
+
 export interface ServicePort {
   appProtocol?: string;
   istioProtocol: string;

@@ -1,55 +1,62 @@
 import * as React from 'react';
-import { shallow } from 'enzyme';
+import { mount } from 'enzyme';
 import { NavigationComponent } from '../Navigation';
-import { createMemoryHistory } from 'history';
 import { ExternalServiceInfo } from '../../../types/StatusState';
+import { RouterProvider, createMemoryRouter } from 'react-router-dom-v5-compat';
+import { pathRoutes } from 'routes';
+import { Provider } from 'react-redux';
+import { store } from 'store/ConfigStore';
+import { LoginActions } from 'actions/LoginActions';
 
-const history = createMemoryHistory();
+const session = {
+  expiresOn: '2018-05-29 21:51:40.186179601 +0200 CEST m=+36039.431579761',
+  username: 'admin'
+};
 
-describe('RenderPage isGraph prop', () => {
-  it('be sure that RenderPage isGraph is true', () => {
-    const graph = {
-      pathname: '/graph',
-      search: '',
-      state: undefined,
-      hash: ''
-    };
-    history.push(graph);
-    const externalServicesInfo: ExternalServiceInfo[] = [];
-    const wrapper = shallow(
+const externalServicesInfo: ExternalServiceInfo[] = [];
+
+const router = createMemoryRouter([
+  {
+    element: (
       <NavigationComponent
-        history={history}
-        location={graph}
-        match={{ url: '', params: {}, path: '/graph', isExact: true }}
         navCollapsed={false}
         setNavCollapsed={() => {}}
         tracingUrl={''}
         externalServices={externalServicesInfo}
       />
-    ).dive();
+    ),
+    children: pathRoutes
+  }
+]);
+
+describe('RenderPage isGraph prop', () => {
+  it('be sure that RenderPage isGraph is true', () => {
+    // we need a user session to render the navigation component
+    store.dispatch(LoginActions.loginSuccess(session));
+
+    router.navigate('/graph/namespaces');
+
+    const wrapper = mount(
+      <Provider store={store}>
+        <RouterProvider router={router} />
+      </Provider>
+    );
+
     expect(wrapper.find('RenderPage').prop('isGraph')).toEqual(true);
   });
 
   it('be sure that RenderPage isGraph is false in other pages', () => {
-    const overview = {
-      pathname: '/overview',
-      search: '',
-      state: undefined,
-      hash: ''
-    };
-    history.push(overview);
-    const externalServicesInfo: ExternalServiceInfo[] = [];
-    const wrapper = shallow(
-      <NavigationComponent
-        history={history}
-        location={overview}
-        match={{ url: '', params: {}, path: '/overview', isExact: true }}
-        navCollapsed={false}
-        setNavCollapsed={() => {}}
-        tracingUrl={''}
-        externalServices={externalServicesInfo}
-      />
-    ).dive();
+    // we need a user session to render the navigation component
+    store.dispatch(LoginActions.loginSuccess(session));
+
+    router.navigate('/overview');
+
+    const wrapper = mount(
+      <Provider store={store}>
+        <RouterProvider router={router} />
+      </Provider>
+    );
+
     expect(wrapper.find('RenderPage').prop('isGraph')).toEqual(false);
   });
 });

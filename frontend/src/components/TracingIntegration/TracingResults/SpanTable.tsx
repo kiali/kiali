@@ -21,10 +21,10 @@ import { buildQueriesFromSpans } from 'utils/tracing/TraceStats';
 import { getParamsSeparator, getSpanId } from '../../../utils/SearchParamUtils';
 import { kialiStyle } from 'styles/StyleUtils';
 import { formatDuration, isErrorTag } from 'utils/tracing/TracingHelper';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router-dom-v5-compat';
 import { responseFlags } from 'utils/ResponseFlags';
 import { renderMetricsComparison } from './StatsComparison';
-import { history } from 'app/History';
+import { router } from 'app/History';
 import { isParentKiosk, kioskContextMenuAction } from '../../Kiosk/KioskActions';
 import { TracingUrlProvider } from 'types/Tracing';
 import { KialiIcon } from 'config/KialiIcon';
@@ -231,7 +231,7 @@ class SpanTableComponent extends React.Component<Props, State> {
           if (parentKiosk) {
             kioskContextMenuAction(href);
           } else {
-            history.push(href);
+            router.navigate(href);
           }
         }
       },
@@ -242,7 +242,7 @@ class SpanTableComponent extends React.Component<Props, State> {
           if (parentKiosk) {
             kioskContextMenuAction(href);
           } else {
-            history.push(href);
+            router.navigate(href);
           }
         }
       }
@@ -263,7 +263,7 @@ class SpanTableComponent extends React.Component<Props, State> {
             if (parentKiosk) {
               kioskContextMenuAction(href);
             } else {
-              history.push(href);
+              router.navigate(href);
             }
           }
         },
@@ -274,7 +274,7 @@ class SpanTableComponent extends React.Component<Props, State> {
             if (parentKiosk) {
               kioskContextMenuAction(href);
             } else {
-              history.push(href);
+              router.navigate(href);
             }
           }
         },
@@ -285,7 +285,7 @@ class SpanTableComponent extends React.Component<Props, State> {
             if (parentKiosk) {
               kioskContextMenuAction(href);
             } else {
-              history.push(href);
+              router.navigate(href);
             }
           }
         }

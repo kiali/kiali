@@ -34,23 +34,29 @@ export const MastheadItems: React.FC = () => {
                 </Tooltip>
               )}
             </FlexItem>
+
             <FlexItem style={{ marginLeft: '1rem' }}>
               <ThemeSwitch />
             </FlexItem>
+
             <FlexItem>
               <IstioStatus location={'masthead'} />
             </FlexItem>
+
             <FlexItem style={{ marginRight: 0 }}>
               <MessageCenterTrigger />
             </FlexItem>
+
             <FlexItem style={{ marginRight: '0.75rem' }}>
               <HelpDropdown />
             </FlexItem>
+
             {serverConfig.kialiFeatureFlags.uiDefaults?.i18n?.showSelector && (
               <FlexItem>
                 <LanguageSwitch />
               </FlexItem>
             )}
+
             <FlexItem data-test="user-dropdown">
               <UserDropdown />
             </FlexItem>

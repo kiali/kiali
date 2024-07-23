@@ -31,7 +31,7 @@ import {
   RankMode,
   NodeAttr
 } from '../../../types/Graph';
-import { history, HistoryManager, URLParam } from '../../../app/History';
+import { router, HistoryManager, URLParam, location } from '../../../app/History';
 import { Namespace, namespacesFromString, namespacesToString } from '../../../types/Namespace';
 import { KialiDispatch } from '../../../types/Redux';
 import { NamespaceActions } from '../../../actions/NamespaceAction';
@@ -96,7 +96,7 @@ class GraphToolbarComponent extends React.PureComponent<GraphToolbarProps> {
   constructor(props: GraphToolbarProps) {
     super(props);
     // Let URL override current redux state at construction time. Update URL as needed.
-    const urlParams = new URLSearchParams(history.location.search);
+    const urlParams = new URLSearchParams(location.getSearch());
 
     const urlEdgeLabels = HistoryManager.getParam(URLParam.GRAPH_EDGE_LABEL, urlParams);
     if (!!urlEdgeLabels) {
@@ -157,7 +157,7 @@ class GraphToolbarComponent extends React.PureComponent<GraphToolbarProps> {
     // ensure redux state and URL are aligned
     if (String(prevProps.edgeLabels) !== String(this.props.edgeLabels)) {
       if (this.props.edgeLabels?.length === 0) {
-        HistoryManager.deleteParam(URLParam.GRAPH_EDGE_LABEL, true);
+        HistoryManager.deleteParam(URLParam.GRAPH_EDGE_LABEL);
       } else {
         HistoryManager.setParam(URLParam.GRAPH_EDGE_LABEL, String(this.props.edgeLabels));
       }
@@ -165,7 +165,7 @@ class GraphToolbarComponent extends React.PureComponent<GraphToolbarProps> {
 
     if (String(prevProps.rankBy) !== String(this.props.rankBy)) {
       if (this.props.rankBy?.length === 0) {
-        HistoryManager.deleteParam(URLParam.GRAPH_RANK_BY, true);
+        HistoryManager.deleteParam(URLParam.GRAPH_RANK_BY);
       } else {
         HistoryManager.setParam(URLParam.GRAPH_RANK_BY, String(this.props.rankBy));
       }
@@ -173,7 +173,7 @@ class GraphToolbarComponent extends React.PureComponent<GraphToolbarProps> {
 
     if (namespacesToString(prevProps.activeNamespaces) !== namespacesToString(this.props.activeNamespaces)) {
       if (this.props.activeNamespaces?.length === 0) {
-        HistoryManager.deleteParam(URLParam.NAMESPACES, true);
+        HistoryManager.deleteParam(URLParam.NAMESPACES);
       } else {
         HistoryManager.setParam(URLParam.NAMESPACES, namespacesToString(this.props.activeNamespaces));
       }
@@ -181,7 +181,7 @@ class GraphToolbarComponent extends React.PureComponent<GraphToolbarProps> {
 
     if (String(prevProps.replayActive) !== String(this.props.replayActive)) {
       if (this.props.replayActive === INITIAL_USER_SETTINGS_STATE.replayActive) {
-        HistoryManager.deleteParam(URLParam.GRAPH_REPLAY_ACTIVE, true);
+        HistoryManager.deleteParam(URLParam.GRAPH_REPLAY_ACTIVE);
       } else {
         HistoryManager.setParam(URLParam.GRAPH_REPLAY_ACTIVE, String(this.props.replayActive));
       }
@@ -189,7 +189,7 @@ class GraphToolbarComponent extends React.PureComponent<GraphToolbarProps> {
 
     if (String(prevProps.trafficRates) !== String(this.props.trafficRates)) {
       if (this.props.trafficRates?.length === 0) {
-        HistoryManager.deleteParam(URLParam.GRAPH_TRAFFIC, true);
+        HistoryManager.deleteParam(URLParam.GRAPH_TRAFFIC);
       } else {
         HistoryManager.setParam(URLParam.GRAPH_TRAFFIC, String(this.props.trafficRates));
       }
@@ -279,7 +279,7 @@ class GraphToolbarComponent extends React.PureComponent<GraphToolbarProps> {
       if (isParentKiosk(this.props.kiosk)) {
         kioskContextMenuAction(returnUrl);
       } else {
-        history.push(returnUrl);
+        router.navigate(returnUrl);
       }
 
       return;
@@ -296,7 +296,7 @@ class GraphToolbarComponent extends React.PureComponent<GraphToolbarProps> {
     if (isParentKiosk(this.props.kiosk)) {
       kioskContextMenuAction(returnUrl);
     } else {
-      history.push(returnUrl);
+      router.navigate(returnUrl);
     }
   };
 }

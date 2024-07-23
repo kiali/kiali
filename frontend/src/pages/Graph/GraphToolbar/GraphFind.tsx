@@ -30,35 +30,39 @@ import { KialiDispatch } from 'types/Redux';
 import { AutoComplete } from 'utils/AutoComplete';
 import { HEALTHY, NA, NOT_READY } from 'types/Health';
 import { GraphFindOptions } from './GraphFindOptions';
-import { history, HistoryManager, URLParam } from '../../../app/History';
+import { location, HistoryManager, URLParam } from '../../../app/History';
 import { isValid } from 'utils/Common';
 import { serverConfig } from '../../../config';
 
-type ReduxProps = {
+type ReduxStateProps = {
   edgeLabels: EdgeLabelMode[];
   edgeMode: EdgeMode;
   findValue: string;
   hideValue: string;
   layout: Layout;
   namespaceLayout: Layout;
-  setEdgeLabels: (vals: EdgeLabelMode[]) => void;
-  setFindValue: (val: string) => void;
-  setHideValue: (val: string) => void;
   showFindHelp: boolean;
   showIdleNodes: boolean;
   showRank: boolean;
   showSecurity: boolean;
+  updateTime: TimeInMilliseconds;
+};
+
+type ReduxDispatchProps = {
+  setEdgeLabels: (vals: EdgeLabelMode[]) => void;
+  setFindValue: (val: string) => void;
+  setHideValue: (val: string) => void;
   toggleFindHelp: () => void;
   toggleGraphSecurity: () => void;
   toggleIdleNodes: () => void;
   toggleRank: () => void;
-  updateTime: TimeInMilliseconds;
 };
 
-type GraphFindProps = ReduxProps & {
-  cy: any;
-  elementsChanged: boolean;
-};
+type GraphFindProps = ReduxStateProps &
+  ReduxDispatchProps & {
+    cy: any;
+    elementsChanged: boolean;
+  };
 
 type GraphFindState = {
   findError?: string;
@@ -151,7 +155,7 @@ const operands: string[] = [
 
 export class GraphFindComponent extends React.Component<GraphFindProps, GraphFindState> {
   static contextTypes = {
-    router: () => null
+    router: (): null => null
   };
 
   private findAutoComplete: AutoComplete;
@@ -171,8 +175,9 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
     let hideValue = props.hideValue ? props.hideValue : '';
 
     // Let URL override current redux state at construction time. Update URL as needed.
-    const urlParams = new URLSearchParams(history.location.search);
+    const urlParams = new URLSearchParams(location.getSearch());
     const urlFind = HistoryManager.getParam(URLParam.GRAPH_FIND, urlParams);
+
     if (!!urlFind) {
       if (urlFind !== findValue) {
         findValue = urlFind;
@@ -182,11 +187,14 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
       HistoryManager.setParam(URLParam.GRAPH_FIND, findValue);
     } else {
       const autoSelect = serverConfig.kialiFeatureFlags.uiDefaults.graph.findOptions.find(opt => opt.autoSelect);
+
       if (autoSelect) {
         props.setFindValue(autoSelect.expression);
       }
     }
+
     const urlHide = HistoryManager.getParam(URLParam.GRAPH_HIDE, urlParams);
+
     if (!!urlHide) {
       if (urlHide !== hideValue) {
         hideValue = urlHide;
@@ -196,6 +204,7 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
       HistoryManager.setParam(URLParam.GRAPH_HIDE, hideValue);
     } else {
       const autoSelect = serverConfig.kialiFeatureFlags.uiDefaults.graph.hideOptions.find(opt => opt.autoSelect);
+
       if (autoSelect) {
         props.setHideValue(autoSelect.expression);
       }
@@ -211,7 +220,7 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
   // We only update on a change to the find/hide values, or a graph change.  Although we use other props
   // in processing (layout, etc), a change to those settings will generate a graph change, so we
   // wait for the graph change to do the update.
-  shouldComponentUpdate(nextProps: GraphFindProps, nextState: GraphFindState) {
+  shouldComponentUpdate(nextProps: GraphFindProps, nextState: GraphFindState): boolean {
     const cyChanged = this.props.cy !== nextProps.cy;
     const edgeModeChanged = this.props.edgeMode !== nextProps.edgeMode;
     const findChanged = this.props.findValue !== nextProps.findValue;
@@ -237,7 +246,7 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
   // Note that we may have redux hide/find values set at mount-time. But because the toolbar mounts prior to
   // the graph loading, we can't perform this graph "post-processing" until we have a valid cy graph.  But the
   // find/hide processing will be initiated externally (CytoscapeGraph:processgraphUpdate) when the graph is ready.
-  componentDidUpdate(prevProps: GraphFindProps) {
+  componentDidUpdate(prevProps: GraphFindProps): void {
     if (!this.props.cy) {
       this.hiddenElements = undefined;
       this.removedElements = undefined;
@@ -253,14 +262,15 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
     // ensure redux state and URL are aligned
     if (findChanged) {
       if (!this.props.findValue) {
-        HistoryManager.deleteParam(URLParam.GRAPH_FIND, true);
+        HistoryManager.deleteParam(URLParam.GRAPH_FIND);
       } else {
         HistoryManager.setParam(URLParam.GRAPH_FIND, this.props.findValue);
       }
     }
+
     if (hideChanged) {
       if (!this.props.hideValue) {
-        HistoryManager.deleteParam(URLParam.GRAPH_HIDE, true);
+        HistoryManager.deleteParam(URLParam.GRAPH_HIDE);
       } else {
         HistoryManager.setParam(URLParam.GRAPH_HIDE, this.props.hideValue);
       }
@@ -291,7 +301,7 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
     }
   }
 
-  render() {
+  render(): React.ReactNode {
     return (
       <TourStop info={GraphTourStops.Find}>
         <Form className={thinGroupStyle}>
@@ -321,6 +331,7 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
                 )}
               </FormGroup>
             </GridItem>
+
             <GridItem span={1}>
               <FormGroup className={graphFindStyle}>
                 <GraphFindOptions kind="find" onSelect={this.updateFindOption} />
@@ -337,6 +348,7 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
                 )}
               </FormGroup>
             </GridItem>
+
             <GridItem span={5}>
               <FormGroup>
                 <TextInput
@@ -362,6 +374,7 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
                 )}
               </FormGroup>
             </GridItem>
+
             <GridItem span={1}>
               <FormGroup className={graphFindStyle}>
                 <GraphFindOptions kind="hide" onSelect={this.updateHideOption} />
@@ -380,6 +393,7 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
             </GridItem>
           </Grid>
         </Form>
+
         {this.props.showFindHelp ? (
           <GraphHelpFind onClose={this.toggleFindHelp}>
             <Button
@@ -407,21 +421,23 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
     );
   }
 
-  private toggleFindHelp = () => {
+  private toggleFindHelp = (): void => {
     this.props.toggleFindHelp();
   };
 
-  private checkSpecialKeyFind = event => {
+  private checkSpecialKeyFind = (event: React.KeyboardEvent): void => {
     const keyCode = event.keyCode ? event.keyCode : event.which;
     switch (keyCode) {
       case 9: // tab (autocomplete)
         event.preventDefault();
         const next = this.findAutoComplete.next();
+
         if (!!next) {
           this.findInputRef.value = next;
           this.findInputRef.scrollLeft = this.findInputRef.scrollWidth;
           this.setState({ findInputValue: next, findError: undefined });
         }
+
         break;
       case 13: // return (submit)
         event.preventDefault();
@@ -432,11 +448,11 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
     }
   };
 
-  private updateFindOption = key => {
+  private updateFindOption = (key: string): void => {
     this.setFind(key);
   };
 
-  private updateFind = val => {
+  private updateFind = (val: string): void => {
     if ('' === val) {
       this.setFind('');
     } else {
@@ -450,35 +466,39 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
     }
   };
 
-  private setFind = val => {
+  private setFind = (val: string): void => {
     // TODO: when TextInput refs are fixed in PF4 then use the ref and remove the direct HTMLElement usage
     this.findInputRef.value = val;
     const htmlInputElement: HTMLInputElement = document.getElementById('graph_find') as HTMLInputElement;
+
     if (htmlInputElement !== null) {
       htmlInputElement.value = val;
     }
+
     this.findAutoComplete.setInput(val);
     this.setState({ findInputValue: val, findError: undefined });
     this.props.setFindValue(val);
   };
 
-  private submitFind = () => {
+  private submitFind = (): void => {
     if (this.props.findValue !== this.state.findInputValue) {
       this.props.setFindValue(this.state.findInputValue);
     }
   };
 
-  private checkSpecialKeyHide = event => {
+  private checkSpecialKeyHide = (event: React.KeyboardEvent): void => {
     const keyCode = event.keyCode ? event.keyCode : event.which;
     switch (keyCode) {
       case 9: // tab (autocomplete)
         event.preventDefault();
         const next = this.hideAutoComplete.next();
+
         if (!!next) {
           this.hideInputRef.value = next;
           this.hideInputRef.scrollLeft = this.hideInputRef.scrollWidth;
           this.setState({ hideInputValue: next, hideError: undefined });
         }
+
         break;
       case 13: // return (submit)
         event.preventDefault();
@@ -489,17 +509,18 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
     }
   };
 
-  private updateHideOption = key => {
+  private updateHideOption = (key: string): void => {
     this.setHide(key);
   };
 
-  private updateHide = val => {
+  private updateHide = (val: string): void => {
     if ('' === val) {
       this.setHide('');
     } else {
       const diff = Math.abs(val.length - this.state.hideInputValue.length);
       this.hideAutoComplete.setInput(val, [' ', '!']);
       this.setState({ hideInputValue: val, hideError: undefined });
+
       // submit if length change is greater than a single key, assume browser suggestion clicked or user paste
       if (diff > 1) {
         this.props.setHideValue(val);
@@ -507,19 +528,21 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
     }
   };
 
-  private submitHide = () => {
+  private submitHide = (): void => {
     if (this.props.hideValue !== this.state.hideInputValue) {
       this.props.setHideValue(this.state.hideInputValue);
     }
   };
 
-  private setHide = val => {
+  private setHide = (val: string): void => {
     // TODO: when TextInput refs are fixed in PF4 then use the ref and remove the direct HTMLElement usage
     this.hideInputRef.value = val;
     const htmlInputElement: HTMLInputElement = document.getElementById('graph_hide') as HTMLInputElement;
+
     if (htmlInputElement !== null) {
       htmlInputElement.value = val;
     }
+
     this.hideAutoComplete.setInput(val);
     this.setState({ hideInputValue: val, hideError: undefined });
     this.props.setHideValue(val);
@@ -531,7 +554,7 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
     graphChanged: boolean,
     graphElementsChanged: boolean,
     edgeModeChanged: boolean
-  ) => {
+  ): void => {
     const selector = this.parseValue(this.props.hideValue, false);
     const checkRemovals = selector || this.props.edgeMode !== EdgeMode.ALL;
 
@@ -590,8 +613,10 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
       this.removedElements = cy.remove(hiddenElements);
       // now subtract any boxes that no longer have children. this is iterative as boxes may be nested
       let done = false;
+
       while (!done) {
         const emptyBoxes = cy.$('$node[isBox]').subtract(cy.$('$node[isBox] > :inside'));
+
         if (emptyBoxes.length > 0) {
           this.removedElements = this.removedElements.add(cy.remove(emptyBoxes));
         } else {
@@ -603,6 +628,7 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
     cy.endBatch();
 
     const hasRemovedElements: boolean = !!this.removedElements && this.removedElements.length > 0;
+
     if (hideChanged || (hasRemovedElements && graphElementsChanged) || edgeModeChanged) {
       cy.emit('kiali-zoomignore', [true]);
       CytoscapeGraphUtils.runLayout(cy, this.props.layout, this.props.namespaceLayout).then(() => {
@@ -611,17 +637,19 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
     }
   };
 
-  private handleFind = (cy: any) => {
+  private handleFind = (cy: any): void => {
     const selector = this.parseValue(this.props.findValue, true);
     console.debug(`Find selector=[${selector}]`);
 
     cy.startBatch();
     // unhighlight old find-hits
     cy.elements('*.find').removeClass('find');
+
     if (selector) {
       // add new find-hits
       cy.elements(selector).addClass('find');
     }
+
     cy.endBatch();
   };
 
@@ -633,6 +661,7 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
       const hideError = !!error ? `Hide: ${error}` : undefined;
       this.setState({ hideError: hideError });
     }
+
     return undefined;
   }
 
@@ -657,6 +686,7 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
         if (!parsedExpression) {
           return undefined;
         }
+
         selector = this.appendSelector(selector, parsedExpression, isFind);
         if (!selector) {
           return undefined;
@@ -675,7 +705,7 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
     val = val.replace(/ +(?= )/g, '');
 
     // remove unnecessary mnemonic qualifiers on unary operators (e.g. 'has cb' -> 'cb').
-    val = ' ' + val;
+    val = ` ${val}`;
     val = val.replace(/ is /gi, ' ');
     val = val.replace(/ has /gi, ' ');
     val = val.replace(/ !\s*is /gi, ' ! ');
@@ -703,6 +733,7 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
     isFind: boolean
   ): ParsedExpression | undefined => {
     let op;
+
     if (expression.includes('!=')) {
       op = '!=';
     } else if (expression.includes('!*=')) {
@@ -730,6 +761,7 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
     } else if (expression.includes('!')) {
       op = '!';
     }
+
     if (!op) {
       if (expression.split(' ').length > 1) {
         return this.setError(`No valid operator found in expression`, isFind);
@@ -774,13 +806,16 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
       }
       case 'name': {
         const isNegation = op.startsWith('!');
+
         if (conjunctive) {
           return this.setError(`Can not use 'AND' with 'name' operand`, isFind);
         }
+
         const agg = `[${NodeAttr.aggregateValue} ${op} "${val}"]`;
         const app = `[${NodeAttr.app} ${op} "${val}"]`;
         const svc = `[${NodeAttr.service} ${op} "${val}"]`;
         const wl = `[${NodeAttr.workload} ${op} "${val}"]`;
+
         return { target: 'node', selector: isNegation ? `${agg}${app}${svc}${wl}` : `${agg},${app},${svc},${wl}` };
       }
       case 'node':
@@ -799,6 +834,7 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
           default:
             break; // no-op
         }
+
         switch (nodeType) {
           case NodeType.AGGREGATE:
           case NodeType.APP:
@@ -812,6 +848,7 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
               isFind
             );
         }
+
         return undefined;
       case 'ns':
       case 'namespace':
@@ -829,6 +866,7 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
         if (Number.isNaN(valAsNum) || valAsNum < 1 || valAsNum > 100) {
           return this.setError(`Invalid rank range [${val}]. Expected a number between 1..100`, isFind);
         }
+
         const s = this.getNumericSelector(NodeAttr.rank, op, val, expression, isFind);
         return s ? { target: 'node', selector: s } : undefined;
       }
@@ -896,6 +934,7 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
             EdgeLabelMode.RESPONSE_TIME_P95
           ]);
         }
+
         const s = this.getNumericSelector(EdgeAttr.responseTime, op, val, expression, isFind);
         return s ? { target: 'edge', selector: s } : undefined;
       }
@@ -904,6 +943,7 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
           AlertUtils.addSuccess('Enabling "Security" display option for this graph find/hide expression');
           this.props.toggleGraphSecurity();
         }
+
         return { target: 'edge', selector: `[${EdgeAttr.sourcePrincipal} ${op} "${val}"]` };
       case 'tcp': {
         const s = this.getNumericSelector(EdgeAttr.tcp, op, val, expression, isFind);
@@ -918,6 +958,7 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
             EdgeLabelMode.THROUGHPUT_REQUEST
           ]);
         }
+
         const s = this.getNumericSelector(EdgeAttr.throughput, op, val, expression, isFind);
         return s ? { target: 'edge', selector: s } : undefined;
       }
@@ -1060,6 +1101,7 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
           AlertUtils.addSuccess('Enabling "Security" display option for graph find/hide expression');
           this.props.toggleGraphSecurity();
         }
+
         return { target: 'edge', selector: isNegation ? `[${EdgeAttr.isMTLS} <= 0]` : `[${EdgeAttr.isMTLS} > 0]` };
       case 'traffic': {
         return { target: 'edge', selector: isNegation ? `[^${EdgeAttr.hasTraffic}]` : `[?${EdgeAttr.hasTraffic}]` };
@@ -1083,14 +1125,16 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
     if (!selector) {
       return parsedExpression.target + parsedExpression.selector;
     }
+
     if (!selector.startsWith(parsedExpression.target)) {
       return this.setError('Invalid expression. Can not AND node and edge criteria.', isFind);
     }
+
     return selector + parsedExpression.selector;
   };
 }
 
-const mapStateToProps = (state: KialiAppState) => ({
+const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
   edgeLabels: edgeLabelsSelector(state),
   edgeMode: edgeModeSelector(state),
   findValue: findValueSelector(state),
@@ -1104,7 +1148,7 @@ const mapStateToProps = (state: KialiAppState) => ({
   updateTime: state.graph.updateTime
 });
 
-const mapDispatchToProps = (dispatch: KialiDispatch) => {
+const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => {
   return {
     setEdgeLabels: bindActionCreators(GraphToolbarActions.setEdgeLabels, dispatch),
     setFindValue: bindActionCreators(GraphToolbarActions.setFindValue, dispatch),

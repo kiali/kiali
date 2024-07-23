@@ -22,7 +22,7 @@ import { MessageType } from 'types/MessageCenter';
 import { store } from 'store/ConfigStore';
 import { NamespaceActions } from 'actions/NamespaceAction';
 import { GraphUrlParams, makeNodeGraphUrlFromParams } from 'components/Nav/NavUtils';
-import { history } from '../../../app/History';
+import { router } from '../../../app/History';
 import { GraphNodeDoubleTapEvent } from 'components/CytoscapeGraph/CytoscapeGraph';
 import { isMultiCluster, serverConfig } from '../../../config';
 import { isParentKiosk, kioskContextMenuAction } from 'components/Kiosk/KioskActions';
@@ -201,7 +201,7 @@ const handleDoubleTap = (doubleTapNode: GraphElement, kiosk: string): void => {
   if (isParentKiosk(kiosk)) {
     kioskContextMenuAction(nodeGraphUrl);
   } else {
-    history.push(nodeGraphUrl);
+    router.navigate(nodeGraphUrl);
   }
 };
 
@@ -231,7 +231,7 @@ const handleDoubleTapSameNode = (targetNode: NodeParamsType, kiosk: string): voi
   if (isParentKiosk(kiosk)) {
     kioskContextMenuAction(detailsPageUrl);
   } else {
-    history.push(detailsPageUrl);
+    router.navigate(detailsPageUrl);
   }
 };
 

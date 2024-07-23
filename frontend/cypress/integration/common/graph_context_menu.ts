@@ -1,5 +1,4 @@
 import { Then, When } from '@badeball/cypress-cucumber-preprocessor';
-import { clusterParameterExists } from './navigation';
 import { ensureKialiFinishedLoading } from './transition';
 
 // Single cluster only.
@@ -80,23 +79,32 @@ Then('user should see the {string} wizard', (wizardKey: string) => {
   cy.get(`[data-test=${wizardKey}_modal]`).should('exist');
 });
 
-Then('user should see {string} cluster parameter in links in the context menu', (exists: string) => {
-  let present = true;
-
-  if (exists === 'no') {
-    present = false;
+Then(
+  'user should see no cluster parameter in the url when clicking the {string} link in the context menu',
+  (linkText: string) => {
+    cy.get(`[data-test="graph-node-context-menu"]`).within(() => {
+      cy.get('a')
+        .contains(linkText)
+        .click()
+        .then(() => {
+          cy.url().should('not.include', 'clusterName=');
+          cy.go('back');
+        });
+    });
   }
-
-  cy.get(`[data-test="graph-node-context-menu"]`).within(() => {
-    clusterParameterExists(present);
-  });
-});
+);
 
 Then(
-  'user should see the {string} cluster parameter in the {string} link in the context menu',
+  'user should see the {string} cluster parameter in the url when clicking the {string} link in the context menu',
   (cluster: string, linkText: string) => {
     cy.get(`[data-test="graph-node-context-menu"]`).within(() => {
-      cy.get('a').contains(linkText).should('have.attr', 'href').and('include', `clusterName=${cluster}`);
+      cy.get('a')
+        .contains(linkText)
+        .click()
+        .then(() => {
+          cy.url().should('include', `clusterName=${cluster}`);
+          cy.go('back');
+        });
     });
   }
 );

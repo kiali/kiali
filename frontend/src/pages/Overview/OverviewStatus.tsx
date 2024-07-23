@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Tooltip, TooltipPosition } from '@patternfly/react-core';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router-dom-v5-compat';
 import { Status } from '../../types/Health';
 import { Paths } from '../../config';
 import { ActiveFilter, DEFAULT_LABEL_OPERATION } from '../../types/Filters';

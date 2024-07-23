@@ -17,7 +17,7 @@ import { setServerConfig, serverConfig, humanDurations } from '../config/ServerC
 import { AuthStrategy } from '../types/Auth';
 import { TracingInfo } from '../types/TracingInfo';
 import { LoginActions } from '../actions/LoginActions';
-import { history } from './History';
+import { location, router } from './History';
 import { NamespaceActions } from 'actions/NamespaceAction';
 import { Namespace } from 'types/Namespace';
 import { UserSettingsActions } from 'actions/UserSettingsActions';
@@ -114,7 +114,7 @@ class AuthenticationControllerComponent extends React.Component<
           stage: LoginStage.LOGGED_IN_AT_LOAD
         });
       } else {
-        this.props.setLandingRoute(history.location.pathname + history.location.search);
+        this.props.setLandingRoute(location.getPathname() + location.getSearch());
       }
     }
 
@@ -203,7 +203,7 @@ class AuthenticationControllerComponent extends React.Component<
       this.applyUIDefaults();
 
       if (this.props.landingRoute) {
-        history.replace(this.props.landingRoute);
+        router.navigate(this.props.landingRoute, { replace: true });
         this.props.setLandingRoute(undefined);
       }
 

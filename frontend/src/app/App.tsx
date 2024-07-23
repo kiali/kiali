@@ -2,13 +2,11 @@ import axios from 'axios';
 import * as React from 'react';
 import { PersistGate } from 'redux-persist/lib/integration/react';
 import { Provider } from 'react-redux';
-import { Router, withRouter } from 'react-router-dom';
 import * as Visibility from 'visibilityjs';
 import { GlobalActions } from '../actions/GlobalActions';
 import { Navigation } from '../components/Nav/Navigation';
 import { persistor, store } from '../store/ConfigStore';
 import { AuthenticationController } from './AuthenticationController';
-import { history } from './History';
 import { InitializingScreen } from './InitializingScreen';
 import { StartupInitializer } from './StartupInitializer';
 import { LoginPage } from '../pages/Login/LoginPage';
@@ -30,12 +28,12 @@ if (Visibility.hidden()) {
   store.dispatch(GlobalActions.setPageVisibilityVisible());
 }
 
-const getIsLoadingState = () => {
+const getIsLoadingState = (): boolean => {
   const state = store.getState();
   return state && state.globalState.loadingCounter > 0;
 };
 
-const decrementLoadingCounter = () => {
+const decrementLoadingCounter = (): void => {
   if (getIsLoadingState()) {
     store.dispatch(GlobalActions.decrementLoadingCounter());
   }
@@ -83,49 +81,25 @@ axios.interceptors.response.use(
   }
 );
 
-type AppState = {
-  isInitialized: boolean;
+export const App: React.FC = () => {
+  const [isInitialized, setIsInitialized] = React.useState<boolean>(false);
+
+  return (
+    <React.Suspense fallback={<InitializingScreen />}>
+      <Provider store={store}>
+        <PersistGate loading={<InitializingScreen />} persistor={persistor}>
+          {isInitialized ? (
+            <AuthenticationController
+              publicAreaComponent={(isPostLoginPerforming: boolean, errorMsg?: string) => (
+                <LoginPage isPostLoginPerforming={isPostLoginPerforming} postLoginErrorMsg={errorMsg} />
+              )}
+              protectedAreaComponent={<Navigation />}
+            />
+          ) : (
+            <StartupInitializer onInitializationFinished={() => setIsInitialized(true)} />
+          )}
+        </PersistGate>
+      </Provider>
+    </React.Suspense>
+  );
 };
-
-export class App extends React.Component<{}, AppState> {
-  private protectedArea: React.ReactNode;
-
-  constructor(props: {}) {
-    super(props);
-    this.state = {
-      isInitialized: false
-    };
-
-    const Navigator = withRouter(Navigation);
-    this.protectedArea = (
-      <Router history={history}>
-        <Navigator />
-      </Router>
-    );
-  }
-
-  render() {
-    return (
-      <React.Suspense fallback={<InitializingScreen />}>
-        <Provider store={store}>
-          <PersistGate loading={<InitializingScreen />} persistor={persistor}>
-            {this.state.isInitialized ? (
-              <AuthenticationController
-                publicAreaComponent={(isPostLoginPerforming: boolean, errorMsg?: string) => (
-                  <LoginPage isPostLoginPerforming={isPostLoginPerforming} postLoginErrorMsg={errorMsg} />
-                )}
-                protectedAreaComponent={this.protectedArea}
-              />
-            ) : (
-              <StartupInitializer onInitializationFinished={this.initializationFinishedHandler} />
-            )}
-          </PersistGate>
-        </Provider>
-      </React.Suspense>
-    );
-  }
-
-  private initializationFinishedHandler = () => {
-    this.setState({ isInitialized: true });
-  };
-}

@@ -81,13 +81,13 @@ type GraphSettingsProps = ReduxStateProps &
 type GraphSettingsState = { crippledFeatures?: KialiCrippledFeatures; isOpen: boolean };
 
 interface DisplayOptionType {
+  iconClassName?: string;
   iconColor?: string;
   id: string;
   isChecked: boolean;
   isDisabled?: boolean;
   labelText: string;
   onChange?: () => void;
-  iconClassName?: string;
   tooltip?: React.ReactNode;
 }
 
@@ -319,7 +319,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
     }
 
     if (curr === paramDefault) {
-      HistoryManager.deleteParam(param, true);
+      HistoryManager.deleteParam(param);
     } else {
       HistoryManager.setParam(param, String(curr));
     }

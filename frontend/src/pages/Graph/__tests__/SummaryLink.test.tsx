@@ -3,7 +3,7 @@ import { renderBadgedLink } from '../SummaryLink';
 import { GraphNodeData, NodeType } from '../../../types/Graph';
 import { PFBadge, PFBadges } from '../../../components/Pf/PfBadges';
 import { mount } from 'enzyme';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter } from 'react-router-dom-v5-compat';
 import { store } from '../../../store/ConfigStore';
 import { Provider } from 'react-redux';
 import { serverConfig, setServerConfig } from '../../../config/ServerConfig';

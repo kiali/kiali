@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { TimeInMilliseconds } from '../../types/Common';
 import { useRefreshInterval } from '../../hooks/refresh';
 
-interface Props {
+interface RefreshProps {
   onTick: (timestamp: TimeInMilliseconds) => void;
 }
 
@@ -12,19 +12,19 @@ interface Props {
 // refresh interval has elapsed). Class components wanting to watch for these
 // global refresh events should use this <RefreshNotifier onTick={yourCallBack}> component.
 // For function components, use the useRefreshInterval() hook.
-export function RefreshNotifier({ onTick }: Props) {
-  const refreshing = useRefreshInterval();
+export const RefreshNotifier = ({ onTick }: RefreshProps): null => {
+  const { previousRefreshAt, lastRefreshAt } = useRefreshInterval();
 
   useEffect(() => {
-    if (refreshing.previousRefreshAt !== refreshing.lastRefreshAt) {
+    if (previousRefreshAt !== lastRefreshAt) {
       // We only want to notify when a refresh happens. At mount, previousRefreshAt == lastRefreshAt.
       // So, we notify only when both values are different.
-      onTick(refreshing.lastRefreshAt);
+      onTick(lastRefreshAt);
 
       // NOTE: This won't handle well the case when props.onTick changes. If that happens,
       // this will immediately call props.onTick, even if a refresh hasn't been fired.
     }
-  }, [onTick, refreshing.previousRefreshAt, refreshing.lastRefreshAt]);
+  }, [onTick, previousRefreshAt, lastRefreshAt]);
 
   return null;
-}
+};

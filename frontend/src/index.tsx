@@ -1,7 +1,10 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import { App } from './app/App';
 import { globalStyle } from 'styles/GlobalStyle';
+import { RouterProvider } from 'react-router-dom-v5-compat';
+import { rootBasename, router, setRouter } from 'app/History';
+import { pathRoutes } from 'routes';
+import { App } from 'app/App';
 import cssVariables from './styles/variables.module.scss';
 import '@patternfly/patternfly/patternfly.css';
 import '@patternfly/patternfly/patternfly-charts.css';
@@ -39,4 +42,16 @@ Date.prototype.toLocaleStringWithConditionalDate = function () {
 document.body.classList.add(cssVariables.style);
 document.body.classList.add(globalStyle);
 
-ReactDOM.render(<App />, document.getElementById('root') as HTMLElement);
+setRouter([
+  {
+    element: <App />,
+    children: pathRoutes
+  }
+]);
+
+// redirect to the router basename if the pathname does not include it
+if (!window.location.pathname.includes(rootBasename)) {
+  router.navigate('/', { replace: true });
+}
+
+ReactDOM.render(<RouterProvider router={router} />, document.getElementById('root') as HTMLElement);

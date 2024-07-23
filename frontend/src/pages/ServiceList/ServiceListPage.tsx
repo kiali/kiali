@@ -32,7 +32,7 @@ type ReduxProps = {
   duration: DurationInSeconds;
 };
 
-type ServiceListPageProps = ReduxProps & FilterComponent.Props<ServiceListItem>;
+type ServiceListPageProps = ReduxProps;
 
 class ServiceListPageComponent extends FilterComponent.Component<
   ServiceListPageProps,
@@ -80,6 +80,11 @@ class ServiceListPageComponent extends FilterComponent.Component<
   componentWillUnmount(): void {
     this.promises.cancelAll();
   }
+
+  onSort = (): void => {
+    // force list update on sorting
+    this.setState({});
+  };
 
   sortItemList(
     services: ServiceListItem[],
@@ -208,7 +213,7 @@ class ServiceListPageComponent extends FilterComponent.Component<
         />
 
         <RenderContent>
-          <VirtualList rows={this.state.listItems} hiddenColumns={hiddenColumns} type="services">
+          <VirtualList rows={this.state.listItems} hiddenColumns={hiddenColumns} sort={this.onSort} type="services">
             <StatefulFilters
               initialFilters={ServiceListFilters.availableFilters}
               initialToggles={this.initialToggles}

@@ -32,7 +32,7 @@ type ReduxProps = {
   duration: DurationInSeconds;
 };
 
-type WorkloadListPageProps = ReduxProps & FilterComponent.Props<WorkloadListItem>;
+type WorkloadListPageProps = ReduxProps;
 
 class WorkloadListPageComponent extends FilterComponent.Component<
   WorkloadListPageProps,
@@ -81,6 +81,11 @@ class WorkloadListPageComponent extends FilterComponent.Component<
     this.promises.cancelAll();
   }
 
+  onSort = (): void => {
+    // force list update on sorting
+    this.setState({});
+  };
+
   sortItemList(
     workloads: WorkloadListItem[],
     sortField: SortField<WorkloadListItem>,
@@ -108,7 +113,7 @@ class WorkloadListPageComponent extends FilterComponent.Component<
     }
   }
 
-  getDeploymentItems = (data: ClusterWorkloadsResponse): WorkloadListItem[] => {
+  getDeploymentItems(data: ClusterWorkloadsResponse): WorkloadListItem[] {
     if (data.workloads) {
       return data.workloads.map(deployment => ({
         cluster: deployment.cluster,
@@ -135,7 +140,7 @@ class WorkloadListPageComponent extends FilterComponent.Component<
     }
 
     return [];
-  };
+  }
 
   fetchWorkloads(
     clusters: string[],
@@ -204,7 +209,7 @@ class WorkloadListPageComponent extends FilterComponent.Component<
         />
 
         <RenderContent>
-          <VirtualList rows={this.state.listItems} hiddenColumns={hiddenColumns} type="workloads">
+          <VirtualList rows={this.state.listItems} hiddenColumns={hiddenColumns} sort={this.onSort} type="workloads">
             <StatefulFilters
               initialFilters={WorkloadListFilters.availableFilters}
               initialToggles={this.initialToggles}

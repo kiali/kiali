@@ -16,7 +16,7 @@ import { serverConfig } from 'config';
 import { PFColors } from 'components/Pf/PfColors';
 import { DateTimePicker } from './DateTimePicker';
 import _ from 'lodash';
-import { history, HistoryManager, URLParam } from 'app/History';
+import { HistoryManager, URLParam, location } from 'app/History';
 
 type ReduxStateProps = {
   duration: DurationInSeconds;
@@ -179,7 +179,7 @@ class ReplayComponent extends React.PureComponent<ReplayProps, ReplayState> {
     // Let URL set initial state at construction time.
     // Note, URLParam.GRAPH_REPLAY_START is only set for custom start times
     let interval = defaultReplayInterval;
-    const urlParams = new URLSearchParams(history.location.search);
+    const urlParams = new URLSearchParams(location.getSearch());
     const urlReplayInterval = HistoryManager.getParam(URLParam.GRAPH_REPLAY_INTERVAL, urlParams);
 
     if (!!urlReplayInterval) {
@@ -231,8 +231,8 @@ class ReplayComponent extends React.PureComponent<ReplayProps, ReplayState> {
   }
 
   componentWillUnmount(): void {
-    HistoryManager.deleteParam(URLParam.GRAPH_REPLAY_INTERVAL, true);
-    HistoryManager.deleteParam(URLParam.GRAPH_REPLAY_START, true);
+    HistoryManager.deleteParam(URLParam.GRAPH_REPLAY_INTERVAL);
+    HistoryManager.deleteParam(URLParam.GRAPH_REPLAY_START);
 
     if (this.state.refresherRef) {
       clearInterval(this.state.refresherRef);
@@ -408,13 +408,13 @@ class ReplayComponent extends React.PureComponent<ReplayProps, ReplayState> {
 
     // ensure redux state and URL are aligned
     if (replayWindow.interval === defaultReplayInterval) {
-      HistoryManager.deleteParam(URLParam.GRAPH_REPLAY_INTERVAL, true);
+      HistoryManager.deleteParam(URLParam.GRAPH_REPLAY_INTERVAL);
     } else if (replayWindow.interval !== this.state.replayWindow.interval) {
       HistoryManager.setParam(URLParam.GRAPH_REPLAY_INTERVAL, String(replayWindow.interval));
     }
 
     if (!this.state.isCustomStartTime || !replayWindow.startTime) {
-      HistoryManager.deleteParam(URLParam.GRAPH_REPLAY_START, true);
+      HistoryManager.deleteParam(URLParam.GRAPH_REPLAY_START);
     } else if (replayWindow.startTime !== this.state.replayWindow.startTime) {
       HistoryManager.setParam(URLParam.GRAPH_REPLAY_START, String(replayWindow.startTime));
     }

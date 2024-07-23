@@ -35,7 +35,7 @@ interface ReduxProps {
   istioAPIEnabled: boolean;
 }
 
-type IstioConfigListPageProps = ReduxProps & FilterComponent.State<IstioConfigItem>;
+type IstioConfigListPageProps = ReduxProps;
 
 type IstioConfigListPageState = FilterComponent.State<IstioConfigItem>;
 
@@ -84,6 +84,11 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
   componentWillUnmount(): void {
     this.promises.cancelAll();
   }
+
+  onSort = (): void => {
+    // force list update on sorting
+    this.setState({});
+  };
 
   sortItemList(
     apps: IstioConfigItem[],
@@ -220,7 +225,7 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
         />
 
         <RenderContent>
-          <VirtualList rows={this.state.listItems} hiddenColumns={hiddenColumns} type="istio">
+          <VirtualList rows={this.state.listItems} hiddenColumns={hiddenColumns} sort={this.onSort} type="istio">
             <StatefulFilters
               initialFilters={IstioConfigListFilters.availableFilters}
               initialToggles={this.props.istioAPIEnabled ? this.initialToggles : undefined}
@@ -239,4 +244,4 @@ const mapStateToProps = (state: KialiAppState): ReduxProps => ({
   istioAPIEnabled: state.statusState.istioEnvironment.istioAPIEnabled
 });
 
-export const IstioConfigListPage = connect(mapStateToProps, null)(IstioConfigListPageComponent);
+export const IstioConfigListPage = connect(mapStateToProps)(IstioConfigListPageComponent);

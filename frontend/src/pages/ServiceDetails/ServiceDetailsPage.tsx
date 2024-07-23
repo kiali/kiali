@@ -2,7 +2,6 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 import { Tab } from '@patternfly/react-core';
 
-import { ServiceId } from '../../types/ServiceId';
 import { IstioMetrics } from '../../components/Metrics/IstioMetrics';
 import { MetricsObjectTypes } from '../../types/Metrics';
 import { KialiAppState } from '../../store/Store';
@@ -15,7 +14,7 @@ import { TrafficDetails } from 'components/TrafficList/TrafficDetails';
 import * as API from '../../services/Api';
 import * as AlertUtils from '../../utils/AlertUtils';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
-import { getServiceWizardLabel, ServiceDetailsInfo } from '../../types/ServiceInfo';
+import { ServiceId, getServiceWizardLabel, ServiceDetailsInfo } from '../../types/ServiceInfo';
 import {
   Gateway,
   K8sGateway,
@@ -31,7 +30,7 @@ import { RenderHeader } from '../../components/Nav/Page/RenderHeader';
 import { ErrorMsg } from '../../types/ErrorMsg';
 import { ErrorSection } from '../../components/ErrorSection/ErrorSection';
 import { connectRefresh } from '../../components/Refresh/connectRefresh';
-import { history, HistoryManager } from 'app/History';
+import { HistoryManager } from 'app/History';
 import { durationSelector } from 'store/Selectors';
 import { basicTabStyle } from 'styles/TabStyles';
 import { serverConfig } from 'config';
@@ -112,6 +111,7 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
     if (!cluster) {
       cluster = this.state.cluster;
     }
+
     this.promises.cancelAll();
     this.promises
       .register(
@@ -160,7 +160,7 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
       });
   };
 
-  private renderTabs(): JSX.Element[] {
+  private renderTabs(): React.ReactNode[] {
     const overTab = (
       <Tab eventKey={0} title="Overview" key="Overview">
         <ServiceInfo
@@ -175,6 +175,7 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
         />
       </Tab>
     );
+
     const trafficTab = (
       <Tab eventKey={1} title="Traffic" key={trafficTabName}>
         <TrafficDetails
@@ -201,7 +202,7 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
       </Tab>
     );
 
-    const tabsArray: JSX.Element[] = [overTab, trafficTab, inTab];
+    const tabsArray: React.ReactNode[] = [overTab, trafficTab, inTab];
 
     if (this.props.tracingInfo && this.props.tracingInfo.enabled && this.props.tracingInfo.integration) {
       tabsArray.push(
@@ -220,8 +221,9 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
     return tabsArray;
   }
 
-  render(): JSX.Element {
+  render(): React.ReactNode {
     let useCustomTime = false;
+
     switch (this.state.currentTab) {
       case 'info':
       case 'traffic':
@@ -232,6 +234,7 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
         useCustomTime = true;
         break;
     }
+
     const actionsToolbar = this.state.serviceDetails ? (
       <ServiceWizardDropdown
         namespace={this.props.serviceId.namespace}
@@ -257,12 +260,10 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
 
     return (
       <>
-        <RenderHeader
-          location={history.location}
-          rightToolbar={<TimeControl customDuration={useCustomTime} />}
-          actionsToolbar={actionsToolbar}
-        />
+        <RenderHeader rightToolbar={<TimeControl customDuration={useCustomTime} />} actionsToolbar={actionsToolbar} />
+
         {this.state.error && <ErrorSection error={this.state.error} />}
+
         {!this.state.error && (
           <ParameterizedTabs
             id="basic-tabs"

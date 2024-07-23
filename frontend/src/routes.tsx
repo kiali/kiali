@@ -1,4 +1,4 @@
-import { MenuItem, Path } from './types/Routes';
+import { MenuItem } from './types/Routes';
 import { Paths } from './config';
 import { WorkloadListPage } from './pages/WorkloadList/WorkloadListPage';
 import { ServiceListPage } from './pages/ServiceList/ServiceListPage';
@@ -16,6 +16,7 @@ import { IstioConfigNewRoute } from 'routes/IstioConfigNewRoute';
 import { GraphRoutePF } from 'routes/GraphRoutePF';
 import { GraphPagePF } from 'pages/GraphPF/GraphPagePF';
 import { t } from 'utils/I18nUtils';
+import { Navigate, RouteObject } from 'react-router-dom-v5-compat';
 
 /**
  * Return array of objects that describe vertical menu
@@ -76,105 +77,104 @@ const navMenuItems: MenuItem[] = [
   }
 ];
 
-const defaultRoute = '/overview';
-
-const pathRoutes: Path[] = [
+const pathRoutes: RouteObject[] = [
   {
     path: '/overview',
-    component: OverviewPage
+    element: <OverviewPage />
   },
   {
     path: `/graph/node/namespaces/:namespace/${Paths.AGGREGATES}/:aggregate/:aggregateValue`,
-    component: GraphRoute
+    element: <GraphRoute />
   },
   {
     path: `/graph/node/namespaces/:namespace/${Paths.APPLICATIONS}/:app/versions/:version`,
-    component: GraphRoute
+    element: <GraphRoute />
   },
   {
     path: `/graph/node/namespaces/:namespace/${Paths.APPLICATIONS}/:app`,
-    component: GraphRoute
+    element: <GraphRoute />
   },
   {
     path: `/graph/node/namespaces/:namespace/${Paths.SERVICES}/:service`,
-    component: GraphRoute
+    element: <GraphRoute />
   },
   {
     path: `/graph/node/namespaces/:namespace/${Paths.WORKLOADS}/:workload`,
-    component: GraphRoute
+    element: <GraphRoute />
   },
   {
     path: '/graph/namespaces',
-    component: GraphPage
+    element: <GraphPage />
   },
   {
     path: `/graphpf/node/namespaces/:namespace/${Paths.AGGREGATES}/:aggregate/:aggregateValue`,
-    component: GraphRoutePF
+    element: <GraphRoutePF />
   },
   {
     path: `/graphpf/node/namespaces/:namespace/${Paths.APPLICATIONS}/:app/versions/:version`,
-    component: GraphRoutePF
+    element: <GraphRoutePF />
   },
   {
     path: `/graphpf/node/namespaces/:namespace/${Paths.APPLICATIONS}/:app`,
-    component: GraphRoutePF
+    element: <GraphRoutePF />
   },
   {
     path: `/graphpf/node/namespaces/:namespace/${Paths.SERVICES}/:service`,
-    component: GraphRoutePF
+    element: <GraphRoutePF />
   },
   {
     path: `/graphpf/node/namespaces/:namespace/${Paths.WORKLOADS}/:workload`,
-    component: GraphRoutePF
+    element: <GraphRoutePF />
   },
   {
     path: '/graphpf/namespaces',
-    component: GraphPagePF
+    element: <GraphPagePF />
   },
   {
     path: `/namespaces/:namespace/${Paths.SERVICES}/:service`,
-    component: ServiceDetailsRoute
+    element: <ServiceDetailsRoute />
   },
   {
     path: `/namespaces/:namespace/${Paths.ISTIO}/:objectType/:object`,
-    component: IstioConfigDetailsRoute
+    element: <IstioConfigDetailsRoute />
   },
   {
     path: `/${Paths.SERVICES}`,
-    component: ServiceListPage
+    element: <ServiceListPage />
   },
   {
     path: `/${Paths.APPLICATIONS}`,
-    component: AppListPage
+    element: <AppListPage />
   },
   {
     path: `/namespaces/:namespace/${Paths.APPLICATIONS}/:app`,
-    component: AppDetailsRoute
+    element: <AppDetailsRoute />
   },
   {
     path: `/${Paths.WORKLOADS}`,
-    component: WorkloadListPage
+    element: <WorkloadListPage />
   },
   {
     path: `/namespaces/:namespace/${Paths.WORKLOADS}/:workload`,
-    component: WorkloadDetailsRoute
+    element: <WorkloadDetailsRoute />
   },
   {
     path: `/${Paths.ISTIO}/new/:objectType`,
-    component: IstioConfigNewRoute
+    element: <IstioConfigNewRoute />
   },
   {
     path: `/${Paths.ISTIO}`,
-    component: IstioConfigListPage
+    element: <IstioConfigListPage />
   },
   {
     path: `/${Paths.TRACING}`,
-    component: undefined
+    element: <></>
   },
   {
     path: `/${Paths.MESH}`,
-    component: MeshPage
-  }
+    element: <MeshPage />
+  },
+  { path: '*', element: <Navigate to={'/overview'} replace /> }
 ];
 
-export { defaultRoute, navMenuItems, pathRoutes };
+export { navMenuItems, pathRoutes };

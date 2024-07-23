@@ -2,11 +2,11 @@ import { Namespace } from './Namespace';
 import { Runtime } from './Workload';
 import { AppHealthResponse } from '../types/Health';
 
-export interface AppId {
+export type AppId = {
   app: string;
   cluster?: string;
   namespace: string;
-}
+};
 
 export interface AppWorkload {
   isAmbient: boolean;

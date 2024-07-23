@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import { RouteComponentProps, withRouter } from 'react-router';
 import {
   Toolbar,
   ToolbarGroup,
@@ -14,7 +13,7 @@ import {
 } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
 import { serverConfig } from '../../config/ServerConfig';
-import { history, HistoryManager, URLParam } from '../../app/History';
+import { router, HistoryManager, URLParam, location } from '../../app/History';
 import * as API from '../../services/Api';
 import { KialiAppState } from '../../store/Store';
 import { TimeRange, evalTimeRange, TimeInMilliseconds, isEqualTimeRange } from '../../types/Common';
@@ -52,7 +51,7 @@ type MetricsState = {
   tabHeight: number;
 };
 
-type CustomMetricsProps = RouteComponentProps<{}> & {
+type CustomMetricsProps = {
   app: string;
   embedded?: boolean;
   height?: number;
@@ -216,7 +215,7 @@ class CustomMetricsComponent extends React.Component<Props, MetricsState> {
       if (isParentKiosk(this.props.kiosk)) {
         kioskContextMenuAction(traceUrl);
       } else {
-        history.push(traceUrl);
+        router.navigate(traceUrl);
       }
     }
   };
@@ -243,7 +242,7 @@ class CustomMetricsComponent extends React.Component<Props, MetricsState> {
   };
 
   render(): React.ReactNode {
-    const urlParams = new URLSearchParams(history.location.search);
+    const urlParams = new URLSearchParams(location.getSearch());
     const expandedChart = urlParams.get('expand') || undefined;
 
     // 20px (card margin) + 24px (card padding) + 51px (toolbar) + 15px (toolbar padding) + 24px (card padding) + 20px (card margin)
@@ -298,10 +297,10 @@ class CustomMetricsComponent extends React.Component<Props, MetricsState> {
   }
 
   private onSpans = (checked: boolean): void => {
-    const urlParams = new URLSearchParams(history.location.search);
+    const urlParams = new URLSearchParams(location.getSearch());
     urlParams.set(URLParam.SHOW_SPANS, String(checked));
 
-    history.replace(`${history.location.pathname}?${urlParams.toString()}`);
+    router.navigate(`${location.getPathname()}?${urlParams.toString()}`, { replace: true });
     this.setState({ showSpans: !this.state.showSpans });
   };
 
@@ -365,14 +364,14 @@ class CustomMetricsComponent extends React.Component<Props, MetricsState> {
   };
 
   private expandHandler = (expandedChart?: string): void => {
-    const urlParams = new URLSearchParams(history.location.search);
+    const urlParams = new URLSearchParams(location.getSearch());
     urlParams.delete('expand');
 
     if (expandedChart) {
       urlParams.set('expand', expandedChart);
     }
 
-    history.push(`${history.location.pathname}?${urlParams.toString()}`);
+    router.navigate(`${location.getPathname()}?${urlParams.toString()}`);
   };
 
   private toggleTimeOptionsVisibility = (): void => {
@@ -394,6 +393,4 @@ const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => {
   };
 };
 
-export const CustomMetrics = withRouter<RouteComponentProps<{}> & CustomMetricsProps, any>(
-  connect(mapStateToProps, mapDispatchToProps)(CustomMetricsComponent)
-);
+export const CustomMetrics = connect(mapStateToProps, mapDispatchToProps)(CustomMetricsComponent);

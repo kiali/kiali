@@ -12,7 +12,7 @@ import {
 } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
 import isEqual from 'lodash/isEqual';
-import { history, URLParam } from '../../app/History';
+import { location, router, URLParam } from '../../app/History';
 import { MetricsSettings, Quantiles, allQuantiles, LabelsSettings } from './MetricsSettings';
 import {
   mergeLabelFilter,
@@ -55,8 +55,9 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
     this.state = { ...settings, isOpen: false, allSelected: false };
   }
 
-  checkSelected = () => {
+  checkSelected = (): void => {
     let allSelected = true;
+
     this.state.labelsSettings.forEach(lblSetting => {
       if (lblSetting.checked === false) {
         allSelected = false;
@@ -72,7 +73,7 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
     this.setState({ allSelected: allSelected });
   };
 
-  componentDidUpdate(prevProps: Props) {
+  componentDidUpdate(prevProps: Props): void {
     // TODO Move the sync of URL and state to a global place
     const changeDirection = prevProps.direction !== this.props.direction;
     const settings = retrieveMetricsSettings();
@@ -92,11 +93,11 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
     }
   }
 
-  private onToggle = isOpen => {
+  private onToggle = (isOpen: boolean): void => {
     this.setState({ isOpen: isOpen });
   };
 
-  onGroupingChanged = (label: PromLabel, checked: boolean) => {
+  onGroupingChanged = (label: PromLabel, checked: boolean): void => {
     const objLbl = this.state.labelsSettings.get(label);
 
     if (objLbl) {
@@ -116,7 +117,7 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
     );
   };
 
-  onLabelsFiltersChanged = (label: PromLabel, value: string, checked: boolean, singleSelection: boolean) => {
+  onLabelsFiltersChanged = (label: PromLabel, value: string, checked: boolean, singleSelection: boolean): void => {
     const newValues = mergeLabelFilter(this.state.labelsSettings, label, value, checked, singleSelection);
     this.updateLabelsSettingsURL(newValues);
 
@@ -126,9 +127,9 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
     });
   };
 
-  updateLabelsSettingsURL = (labelsSettings: LabelsSettings) => {
+  updateLabelsSettingsURL = (labelsSettings: LabelsSettings): void => {
     // E.g.: bylbl=version=v1,v2,v4
-    const urlParams = new URLSearchParams(history.location.search);
+    const urlParams = new URLSearchParams(location.getSearch());
     urlParams.delete(URLParam.BY_LABELS);
 
     labelsSettings.forEach((lbl, name) => {
@@ -136,33 +137,34 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
         const filters = Object.keys(lbl.values)
           .filter(k => lbl.values[k])
           .join(',');
+
         if (filters) {
-          urlParams.append(URLParam.BY_LABELS, name + '=' + filters);
+          urlParams.append(URLParam.BY_LABELS, `${name}=${filters}`);
         } else {
           urlParams.append(URLParam.BY_LABELS, name);
         }
       }
     });
 
-    history.replace(history.location.pathname + '?' + urlParams.toString());
+    router.navigate(`${location.getPathname()}?${urlParams.toString()}`, { replace: true });
   };
 
-  onHistogramAverageChanged = (checked: boolean) => {
-    const urlParams = new URLSearchParams(history.location.search);
+  onHistogramAverageChanged = (checked: boolean): void => {
+    const urlParams = new URLSearchParams(location.getSearch());
     urlParams.set(URLParam.SHOW_AVERAGE, String(checked));
-    history.replace(history.location.pathname + '?' + urlParams.toString());
+    router.navigate(`${location.getPathname()}?${urlParams.toString()}`, { replace: true });
 
     this.setState({ showAverage: checked }, () => this.props.onChanged(this.state));
   };
 
-  onHistogramOptionsChanged = (quantile: Quantiles, checked: boolean) => {
+  onHistogramOptionsChanged = (quantile: Quantiles, checked: boolean): void => {
     const newQuantiles = checked
       ? [quantile].concat(this.state.showQuantiles)
       : this.state.showQuantiles.filter(q => quantile !== q);
 
-    const urlParams = new URLSearchParams(history.location.search);
+    const urlParams = new URLSearchParams(location.getSearch());
     urlParams.set(URLParam.QUANTILES, newQuantiles.join(' '));
-    history.replace(history.location.pathname + '?' + urlParams.toString());
+    router.navigate(`${location.getPathname()}?${urlParams.toString()}`, { replace: true });
 
     this.setState({ showQuantiles: newQuantiles }, () => this.props.onChanged(this.state));
   };
@@ -188,17 +190,17 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
     );
   };
 
-  onBulkAll = () => {
+  onBulkAll = (): void => {
     this.bulkUpdate(true);
     this.setState({ allSelected: true });
   };
 
-  onBulkNone = () => {
+  onBulkNone = (): void => {
     this.bulkUpdate(false);
     this.setState({ allSelected: false });
   };
 
-  render() {
+  render(): React.ReactNode {
     const hasHistograms = this.props.hasHistograms;
     const hasLabels = this.state.labelsSettings.size > 0;
 
@@ -225,7 +227,7 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
     );
   }
 
-  renderBulkSelector(): JSX.Element {
+  renderBulkSelector(): React.ReactNode {
     return (
       <div>
         <div className={itemStyleWithoutInfo}>
@@ -249,14 +251,14 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
     );
   }
 
-  renderLabelOptions(): JSX.Element {
+  renderLabelOptions(): React.ReactNode {
     const displayGroupingLabels: any[] = [];
 
     this.state.labelsSettings.forEach((lblObj, promName) => {
       const labelsHTML =
         lblObj.checked && lblObj.values
           ? Object.keys(lblObj.values).map(val => (
-              <div key={'groupings_' + promName + '_' + val} className={secondLevelStyle}>
+              <div key={`groupings_${promName}_${val}`} className={secondLevelStyle}>
                 {lblObj.singleSelection ? (
                   <Radio
                     isChecked={lblObj.values[val]}
@@ -283,7 +285,7 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
           : null;
 
       displayGroupingLabels.push(
-        <div key={'groupings_' + promName}>
+        <div key={`groupings_${promName}`}>
           <label>
             <Checkbox
               id={lblObj.displayName}
@@ -307,7 +309,7 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
     );
   }
 
-  renderHistogramOptions(): JSX.Element {
+  renderHistogramOptions(): React.ReactNode {
     const displayHistogramOptions = [
       <div key="histo_avg">
         <label>
@@ -325,7 +327,7 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
       allQuantiles.map((o, idx) => {
         const checked = this.state.showQuantiles.includes(o);
         return (
-          <div key={'histo_' + idx}>
+          <div key={`histo_${idx}`}>
             <label>
               <Checkbox
                 id={o}
@@ -346,6 +348,7 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
         <label className={classes(titleLabelStyle, titleStyle, labelStyle)} style={{ paddingRight: '0.5rem' }}>
           Histograms:
         </label>
+
         <Tooltip
           key="tooltip_histograms"
           position={TooltipPosition.right}

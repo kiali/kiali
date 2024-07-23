@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router-dom-v5-compat';
 import { connect } from 'react-redux';
 import { kialiStyle } from 'styles/StyleUtils';
 import { Tooltip, Button, ButtonVariant, pluralize } from '@patternfly/react-core';

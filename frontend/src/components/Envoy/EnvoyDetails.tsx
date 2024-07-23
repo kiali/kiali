@@ -34,7 +34,7 @@ import { DashboardRef } from 'types/Runtimes';
 import { CustomMetrics } from 'components/Metrics/CustomMetrics';
 import { serverConfig } from 'config';
 import { FilterSelected } from 'components/Filters/StatefulFilters';
-import { history } from '../../app/History';
+import { location, router } from '../../app/History';
 import {
   tabName as workloadTabName,
   defaultTab as workloadDefaultTab
@@ -153,11 +153,11 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
         activeKey: resourceIdx
       });
 
-      const mainTab = new URLSearchParams(history.location.search).get(workloadTabName) ?? workloadDefaultTab;
-      const urlParams = new URLSearchParams(history.location.search);
+      const mainTab = new URLSearchParams(location.getSearch()).get(workloadTabName) ?? workloadDefaultTab;
+      const urlParams = new URLSearchParams(location.getSearch());
       urlParams.set(tabName, targetResource);
       urlParams.set(workloadTabName, mainTab);
-      history.push(`${history.location.pathname}?${urlParams.toString()}`);
+      router.navigate(`${location.getPathname()}?${urlParams.toString()}`);
     }
   };
 

@@ -12,7 +12,7 @@ import {
   MenuToggleElement,
   ToolbarItem
 } from '@patternfly/react-core';
-import { history } from '../../app/History';
+import { router } from '../../app/History';
 import { GraphDataSource } from '../../services/GraphDataSource';
 import { DecoratedGraphElements, EdgeMode, GraphType, NodeType } from '../../types/Graph';
 import { CytoscapeGraph, GraphEdgeTapEvent, GraphNodeTapEvent } from './CytoscapeGraph';
@@ -157,6 +157,7 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
           >
             <CardTitle style={{ float: 'left' }}>{intervalTitle}</CardTitle>
           </CardHeader>
+
           <CardBody>
             <div style={{ height: '100%' }}>
               <CytoscapeGraph
@@ -200,6 +201,7 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
             </div>
           </CardBody>
         </Card>
+
         <TimeDurationModal
           customDuration={false}
           isOpen={this.state.isTimeOptionsOpen}
@@ -210,9 +212,9 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
     );
   }
 
-  private setCytoscapeGraph(cytoscapeGraph: any): void {
+  private setCytoscapeGraph = (cytoscapeGraph: any): void => {
     this.cytoscapeGraphRef.current = cytoscapeGraph;
-  }
+  };
 
   private handleLaunchWizard = (key: WizardAction, mode: WizardMode): void => {
     this.onGraphActionsToggle(false);
@@ -236,6 +238,7 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
 
     // If we are already on the details page of the tapped node, do nothing.
     const displayedNode = this.props.dataSource.fetchParameters.node;
+
     // Minigraph will consider box nodes as app
     const eNodeType = e.nodeType === 'box' && e.isBox ? e.isBox : e.workload ? 'workload' : e.nodeType;
     const isSameResource =
@@ -266,7 +269,7 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
     if (isParentKiosk(this.props.kiosk)) {
       kioskContextMenuAction(href);
     } else {
-      history.push(href);
+      router.navigate(href);
     }
   };
 
@@ -313,7 +316,7 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
     if (isParentKiosk(this.props.kiosk)) {
       kioskContextMenuAction(graphUrl);
     } else {
-      history.push(graphUrl);
+      router.navigate(graphUrl);
     }
   };
 
@@ -350,7 +353,7 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
     };
 
     // To ensure updated components get the updated URL, update the URL first and then the state
-    history.push(makeNodeGraphUrlFromParams(urlParams));
+    router.navigate(makeNodeGraphUrlFromParams(urlParams));
   };
 
   private toggleTimeOptionsVisibility = (): void => {

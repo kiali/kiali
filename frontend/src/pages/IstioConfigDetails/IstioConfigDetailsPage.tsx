@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Prompt } from 'react-router-dom';
+// import { Prompt } from 'react-router-dom';
 import { aceOptions, IstioConfigDetails, IstioConfigId, yamlDumpOptions } from '../../types/IstioConfigDetails';
 import * as AlertUtils from '../../utils/AlertUtils';
 import * as API from '../../services/Api';
@@ -22,7 +22,7 @@ import {
 import { IstioActionDropdown } from '../../components/IstioActions/IstioActionsDropdown';
 import { RenderComponentScroll } from '../../components/Nav/Page';
 import { IstioActionButtons } from '../../components/IstioActions/IstioActionsButtons';
-import { history, HistoryManager } from '../../app/History';
+import { HistoryManager, router } from '../../app/History';
 import { Paths } from '../../config';
 import { MessageType } from '../../types/MessageCenter';
 import { getIstioObject, mergeJsonPatch } from '../../utils/IstioConfigUtils';
@@ -259,7 +259,7 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
     if (isParentKiosk(this.props.kiosk)) {
       kioskContextMenuAction(backUrl);
     } else {
-      history.push(backUrl);
+      router.navigate(backUrl);
     }
   };
 
@@ -620,7 +620,6 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
         <RefreshNotifier onTick={this.onRefresh} />
 
         <RenderHeader
-          location={history.location}
           rightToolbar={<Refresh id="config_details_refresh" hideLabel={true} />}
           actionsToolbar={!this.state.error ? this.renderActions() : undefined}
         />
@@ -651,6 +650,7 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
           <RenderComponentScroll>{this.renderEditor()}</RenderComponentScroll>
         )}
 
+        {/* TODO Enable Prompt
         <Prompt
           message={location => {
             if (this.state.isModified) {
@@ -664,7 +664,7 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
             }
             return true;
           }}
-        />
+        /> */}
       </>
     );
   }
