@@ -4,11 +4,12 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	k8s "github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/tests/integration/utils"
 	"github.com/kiali/kiali/tests/integration/utils/kiali"
 	"github.com/kiali/kiali/tests/integration/utils/kube"
-	"github.com/stretchr/testify/require"
 )
 
 func TestNoIstiod(t *testing.T) {
@@ -73,7 +74,7 @@ func servicesListNoRegistryServices(t *testing.T) {
 	// Now, create a Service Entry (Part of th
 	require.NotNil(serviceList.Validations)
 	require.Equal(kiali.BOOKINFO, serviceList.Namespace.Name)
-	
+
 }
 
 func noProxyStatus(t *testing.T) {
