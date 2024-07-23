@@ -55,16 +55,16 @@ Control plane A discovery selector:
 
 ```yaml
 discoverySelectors:
-  - matchLabels:
-      team: api
+- matchLabels:
+    team: api
 ```
 
 Control plane B discovery selector:
 
 ```yaml
 discoverySelectors:
-  - matchLabels:
-      team: backend
+- matchLabels:
+    team: backend
 ```
 
 Kiali discovery selector:
@@ -84,16 +84,16 @@ Cluster A discovery selector:
 
 ```yaml
 discoverySelectors:
-  - matchLabels:
-      team: api
+- matchLabels:
+    team: api
 ```
 
 Cluster B discovery selector:
 
 ```yaml
 discoverySelectors:
-  - matchLabels:
-      team: backend
+- matchLabels:
+    team: backend
 ```
 
 Kiali discovery selector cluster A:
@@ -134,18 +134,20 @@ Kiali would add a `deployment.discovery_selectors` config option where you can s
 discovery_selectors:
   default:
   - <array of label selectors>
-  cluster_name:
-  - <array of label selectors>
+  overrides:
+    cluster_name:
+    - <array of label selectors>
 ```
 
-For multi-primary with different discovery selectors:
+For multi-primary with different discovery selectors (note: there is no `default` section; each primary is its own overrides):
 
 ```yaml
 discovery_selectors:
-  east:
+  overrides:
+    east:
     - match_labels:
         team: backend
-  west:
+    west:
     - match_labels:
         team: api
 ```
@@ -184,8 +186,8 @@ An alternative is to keep `deployment.accessible_namespaces` and make it an "int
 spec:
   deployment:
     accessible_namespaces:
-      - backend-app1
-      - backend-app2
+    - backend-app1
+    - backend-app2
     cluster_wide_access: false
     discovery_selectors:
       default:
