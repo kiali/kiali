@@ -81,7 +81,7 @@ SINGLE_KIALI="${SINGLE_KIALI:-true}"
 SINGLE_CLUSTER="${SINGLE_CLUSTER:-false}"
 
 # Use groups for OpenId authorization (single cluster)
-GROUPS="${GROUPS:-}"
+AUTH_GROUPS=${AUTH_GROUPS:-}
 
 # Create kiali remote secrets so kiali can access the different clusters
 # When left empty, this will be true if SINGLE_KIALI is true or false otherwise.
@@ -212,8 +212,8 @@ while [[ $# -gt 0 ]]; do
       DORP="$2"
       shift;shift
       ;;
-    -g|--groups)
-      GROUPS="$2"
+    -ag|--auth-groups)
+      AUTH_GROUPS="$2"
       shift;shift
       ;;
     -gr|--gateway-required)
@@ -368,7 +368,7 @@ Valid command line arguments:
   -c2u|--cluster2-username <name>: If cluster2 is OpenShift, this is the username used to log in (Default: kiali)
   -cd|--certs-dir <dir>: Directory where the keycloak certs are located. (Default: /tmp/istio-multicluster-certs)
   -dorp|--docker-or-podman <docker|podman>: What image registry client to use (Default: podman)
-  -g|--groups <string>: If using Group for authentication, a comma separated group list. Just for OpenID.
+  -ag|--auth-groups <string>: If using Group for authentication, a comma separated groups list. Just for OpenID.
   -gr|--gateway-required <bool>: If a gateway is required to cross between networks, set this to true
   -id|--istio-dir <dir>: Where Istio has already been downloaded. If not found, this script aborts.
   -in|--istio-namespace <name>: Where the Istio control plane is installed (default: istio-system).
@@ -558,6 +558,7 @@ export BOOKINFO_ENABLED \
        CLUSTER2_USER \
        CROSSNETWORK_GATEWAY_REQUIRED \
        DORP \
+       AUTH_GROUPS \
        IS_OPENSHIFT \
        ISTIO_DIR \
        ISTIO_NAMESPACE \
@@ -625,7 +626,7 @@ NETWORK1_ID=$NETWORK1_ID
 NETWORK2_ID=$NETWORK2_ID
 SINGLE_CLUSTER=$SINGLE_CLUSTER
 SINGLE_KIALI=$SINGLE_KIALI
-GROUPS=$GROUPS
+AUTH_GROUPS=$AUTH_GROUPS
 === SETTINGS ===
 EOM
 

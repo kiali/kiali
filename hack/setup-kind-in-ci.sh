@@ -247,7 +247,7 @@ setup_kind_singlecluster() {
         -kas "${AUTH_STRATEGY}" \
         -kudi true \
         -kshc "${HELM_CHARTS_DIR}"/_output/charts/kiali-server-*.tgz \
-        -ug true
+        -ag "default"
   else
      # Helm chart doesn't support passing in service opts so patch them after the helm deploy.
       kubectl patch service kiali -n istio-system --type=json -p='[{"op": "replace", "path": "/spec/ports/0/port", "value":80}]'

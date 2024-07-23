@@ -56,8 +56,12 @@ deploy_kiali() {
     # Create secret with the oidc secret
     ${CLIENT_EXE} create configmap kiali-cabundle --from-file="openid-server-ca.crt=${KEYCLOAK_CERTS_DIR}/root-ca.pem" -n "${ISTIO_NAMESPACE}"
     ${CLIENT_EXE} create secret generic kiali --from-literal="oidc-secret=kube-client-secret" -n istio-system
-    if [ "${GROUPS}" != "" ]; then
-      ${CLIENT_EXE} create clusterrolebinding kiali-group-viewer --clusterrole=kiali-viewer --group=oidc:default
+    if [ "${AUTH_GROUPS}" != "" ]; then
+      IFS=','
+      read -ra GROUP_LIST <<< "${AUTH_GROUPS}"
+      for group in "${GROUP_LIST[@]}"; do
+        ${CLIENT_EXE} create clusterrolebinding kiali-group-viewer --clusterrole=kiali-viewer --group=oidc:"$group"
+      done
     else
       ${CLIENT_EXE} create clusterrolebinding kiali-user-viewer --clusterrole=kiali-viewer --user=oidc:kiali
     fi
@@ -156,7 +160,7 @@ deploy_kiali() {
     kiali_route_url="https://kiali-${ISTIO_NAMESPACE}.$(kubectl get ingresses.config/cluster -o jsonpath='{.spec.domain}')"
     helm_args+=("--set kiali_route_url=${kiali_route_url}")
   fi
-  
+
   helm_command='helm upgrade --install
     ${helm_args[@]}
     --namespace ${ISTIO_NAMESPACE}
@@ -175,6 +179,9 @@ deploy_kiali() {
     --set server.web_port=${web_port}
     kiali-server
     ${KIALI_SERVER_HELM_CHARTS}'
+
+echo "HELM ARGS"
+echo ${helm_command}
 
   eval $helm_command
   if [ "${KIALI_AUTH_STRATEGY}" == "openshift" ]; then
@@ -206,8 +213,8 @@ deploy_kiali() {
     jq ".clients[] |= if .clientId == \"kube\" then .redirectUris = [\"http://${KIALI_SVC_LB_IP}/kiali/*\"] else . end" < "${SCRIPT_DIR}"/realm-export-template.json | curl -k -L https://"${KEYCLOAK_ADDRESS}"/admin/realms -H "Authorization: Bearer $TOKEN_KEY" -H "Content-Type: application/json" -X POST -d @-
 
     # Create the kiali user
-    if [ "${GROUPS}" != "" ]; then
-      curl -k -L https://"${KEYCLOAK_ADDRESS}"/admin/realms/kube/users -H "Authorization: Bearer $TOKEN_KEY" -d '{"username": "kiali", "enabled": true, "credentials": [{"type": "password", "value": "kiali"}], "groups": ["default"]}' -H 'Content-Type: application/json'
+    if [ "${AUTH_GROUPS}" != "" ]; then
+      curl -k -L https://"${KEYCLOAK_ADDRESS}"/admin/realms/kube/users -H "Authorization: Bearer $TOKEN_KEY" -d '{"username": "kiali", "enabled": true, "credentials": [{"type": "password", "value": "kiali"}], "groups": [ '"$AUTH_GROUPS"' ]}' -H 'Content-Type: application/json'
     else
       curl -k -L https://"${KEYCLOAK_ADDRESS}"/admin/realms/kube/users -H "Authorization: Bearer $TOKEN_KEY" -d '{"username": "kiali", "enabled": true, "credentials": [{"type": "password", "value": "kiali"}]}' -H 'Content-Type: application/json'
     fi
