@@ -1,89 +1,92 @@
 import * as React from 'react';
 import { KialiDispatch } from 'types/Redux';
 import { connect } from 'react-redux';
-import { Badge, Button, ButtonVariant } from '@patternfly/react-core';
+import { Button, ButtonVariant, NotificationBadge, NotificationBadgeVariant } from '@patternfly/react-core';
 import { KialiAppState } from '../../store/Store';
 import { MessageType, NotificationGroup, NotificationMessage } from '../../types/MessageCenter';
 import { MessageCenterThunkActions } from '../../actions/MessageCenterThunkActions';
 import { KialiIcon } from 'config/KialiIcon';
 import { kialiStyle } from 'styles/StyleUtils';
+import { useKialiTranslation } from 'utils/I18nUtils';
 
-type PropsType = {
+type ReduxStateProps = {
+  badgeDanger: boolean;
   newMessagesCount: number;
   systemErrorsCount: number;
-  badgeDanger: boolean;
+};
+
+type ReduxDispatchProps = {
   toggleMessageCenter: () => void;
   toggleSystemErrorsCenter: () => void;
 };
 
+type MessageCenterTriggerProps = ReduxStateProps & ReduxDispatchProps;
+
 const systemErrorCountStyle = kialiStyle({
-  marginRight: '0.3em',
-  paddingTop: '0.1em'
+  marginLeft: '0.5rem'
 });
 
-class MessageCenterTriggerComponent extends React.PureComponent<PropsType, {}> {
-  render() {
-    return (
-      <>
-        {this.renderSystemErrorBadge()}
-        {this.renderMessageCenterBadge()}
-      </>
-    );
-  }
+const MessageCenterTriggerComponent: React.FC<MessageCenterTriggerProps> = (props: MessageCenterTriggerProps) => {
+  const { t } = useKialiTranslation();
 
-  private renderSystemErrorBadge = () => {
-    if (this.props.systemErrorsCount === 0) {
+  const renderSystemErrorBadge = (): React.ReactNode => {
+    if (props.systemErrorsCount === 0) {
       return null;
     }
 
     return (
       <Button
         id={'icon_warning'}
-        aria-label={'SystemError'}
-        onClick={this.props.toggleSystemErrorsCenter}
+        aria-label={t('System Error')}
+        onClick={props.toggleSystemErrorsCenter}
         variant={ButtonVariant.plain}
       >
-        <KialiIcon.Warning className={systemErrorCountStyle} />
-        {this.props.systemErrorsCount}
-        {this.props.systemErrorsCount === 1 ? ' Open Issue' : ' Open Issues'}
+        <KialiIcon.Warning />
+
+        <span className={systemErrorCountStyle}>
+          {t('{{count}} Open Issue', {
+            count: props.systemErrorsCount,
+            defaultValue_one: '{{count}} Open Issue',
+            defaultValue_other: '{{count}} Open Issues'
+          })}
+        </span>
       </Button>
     );
   };
 
-  private renderMessageCenterBadge = () => {
-    const bell = kialiStyle({
-      position: 'relative',
-      right: '5px',
-      top: '2px'
-    });
-    const count = kialiStyle({
-      position: 'relative',
-      top: '2px',
-      verticalAlign: '0.125em'
-    });
+  const renderMessageCenterBadge = (): React.ReactNode => {
+    let notificationVariant = NotificationBadgeVariant.read;
+
+    if (props.newMessagesCount > 0) {
+      if (props.badgeDanger) {
+        notificationVariant = NotificationBadgeVariant.attention;
+      } else {
+        notificationVariant = NotificationBadgeVariant.unread;
+      }
+    }
 
     return (
-      <Button
-        id={'bell_icon_warning'}
-        aria-label={'Notifications'}
-        onClick={this.props.toggleMessageCenter}
-        variant={ButtonVariant.plain}
-      >
-        <KialiIcon.Bell className={bell} />
-        {this.props.newMessagesCount > 0 && (
-          <Badge className={`${count} ${this.props.badgeDanger ? ' badge-danger' : ''}`}>
-            {this.props.newMessagesCount > 0 ? this.props.newMessagesCount : ' '}
-          </Badge>
-        )}
-      </Button>
+      <NotificationBadge
+        variant={notificationVariant}
+        onClick={props.toggleMessageCenter}
+        aria-label={t('Notification badge')}
+        count={props.newMessagesCount}
+      />
     );
   };
-}
 
-const mapStateToPropsMessageCenterTrigger = (state: KialiAppState) => {
+  return (
+    <>
+      {renderSystemErrorBadge()}
+      {renderMessageCenterBadge()}
+    </>
+  );
+};
+
+const mapStateToPropsMessageCenterTrigger = (state: KialiAppState): ReduxStateProps => {
   type MessageCenterTriggerPropsToMap = {
-    newMessagesCount: number;
     badgeDanger: boolean;
+    newMessagesCount: number;
     systemErrorsCount: number;
   };
 
@@ -116,7 +119,7 @@ const mapStateToPropsMessageCenterTrigger = (state: KialiAppState) => {
     );
 };
 
-const mapDispatchToPropsMessageCenterTrigger = (dispatch: KialiDispatch) => {
+const mapDispatchToPropsMessageCenterTrigger = (dispatch: KialiDispatch): ReduxDispatchProps => {
   return {
     toggleMessageCenter: () => dispatch(MessageCenterThunkActions.toggleMessageCenter()),
     toggleSystemErrorsCenter: () => dispatch(MessageCenterThunkActions.toggleSystemErrorsCenter())

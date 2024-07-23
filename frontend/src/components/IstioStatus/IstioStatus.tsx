@@ -67,8 +67,8 @@ const defaultIcons = {
 };
 
 const iconStyle = kialiStyle({
-  marginLeft: '0.5rem',
-  verticalAlign: '-0.125rem'
+  marginLeft: '2rem',
+  fontSize: '1rem'
 });
 
 export const meshLinkStyle = kialiStyle({
@@ -116,6 +116,7 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
     return (
       <>
         <IstioStatusList status={props.status} />
+
         {!props.location?.endsWith('/mesh') && (
           <div className={meshLinkStyle}>
             <span>{t('More info at')}</span>
@@ -180,7 +181,7 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
     };
 
     return (
-      <Tooltip position={TooltipPosition.top} enableFlip={true} content={tooltipContent()} maxWidth="25rem">
+      <Tooltip position={TooltipPosition.bottom} enableFlip={true} content={tooltipContent()} maxWidth="25rem">
         {createIcon(iconProps, icon, iconColor)}
       </Tooltip>
     );

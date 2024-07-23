@@ -11,6 +11,16 @@ import { LanguageSwitch } from './LanguageSwitch';
 import { KialiIcon } from 'config/KialiIcon';
 import { useKialiTranslation } from 'utils/I18nUtils';
 import { PfSpinner } from 'components/Pf/PfSpinner';
+import { kialiStyle } from 'styles/StyleUtils';
+
+const toolbarStyle = kialiStyle({
+  marginLeft: 'auto',
+  $nest: {
+    '& .pf-v5-svg': {
+      fontSize: '1rem'
+    }
+  }
+});
 
 export const MastheadItems: React.FC = () => {
   const { t } = useKialiTranslation();
@@ -19,7 +29,7 @@ export const MastheadItems: React.FC = () => {
     <>
       <PfSpinner />
       <Toolbar>
-        <ToolbarItem style={{ marginLeft: 'auto' }}>
+        <ToolbarItem className={toolbarStyle}>
           <Flex>
             <FlexItem align={{ default: 'alignRight' }}>
               {homeCluster?.name && (

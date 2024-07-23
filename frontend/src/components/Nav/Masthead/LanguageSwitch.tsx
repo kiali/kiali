@@ -10,13 +10,8 @@ import { connect } from 'react-redux';
 import { i18n } from 'i18n';
 import { useKialiTranslation } from 'utils/I18nUtils';
 
-const menuToggleStyle = kialiStyle({
-  marginTop: '0.25rem',
-  verticalAlign: '-0.125rem'
-});
-
 const iconStyle = kialiStyle({
-  verticalAlign: '-0.375rem',
+  verticalAlign: '-0.25rem',
   $nest: {
     '& svg': {
       width: '1.5rem',
@@ -64,10 +59,9 @@ export const LanguageSwitchComponent: React.FC<LanguageSwitchProps> = ({ languag
         toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
           <MenuToggle
             ref={toggleRef}
-            className={menuToggleStyle}
             data-test="switch-language-button"
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-            aria-label="Switch language"
+            aria-label={t('Switch language')}
             variant="plain"
             isExpanded={isDropdownOpen}
           >

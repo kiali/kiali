@@ -23,6 +23,7 @@ import {
   MenuToggle,
   MenuToggleElement
 } from '@patternfly/react-core';
+import { t } from 'utils/I18nUtils';
 
 type ReduxStateProps = {
   clusters?: string[];
@@ -206,6 +207,7 @@ class UserDropdownComponent extends React.Component<UserProps, UserState> {
                 <Divider component="li" />
               </>
             )}
+
             {isMultiCluster && loggedOutClusters.length > 0 && (
               <>
                 <DropdownGroup label="logged-out clusters" labelHeadingLevel="h3">
@@ -213,7 +215,7 @@ class UserDropdownComponent extends React.Component<UserProps, UserState> {
                     {loggedOutClusters.map(clusterInfo => {
                       return (
                         <DropdownItem key={clusterInfo.cluster} to={clusterInfo.endpoint}>
-                          Login to {clusterInfo.cluster}
+                          {t('Login to {{cluster}}', { cluster: clusterInfo.cluster })}
                         </DropdownItem>
                       );
                     })}
@@ -222,8 +224,9 @@ class UserDropdownComponent extends React.Component<UserProps, UserState> {
                 <Divider component="li" />
               </>
             )}
+
             <DropdownItem key={'user_logout_option'} onClick={this.handleLogout} isDisabled={!canLogout}>
-              Logout
+              {t('Logout')}
             </DropdownItem>
           </Dropdown>
         )}

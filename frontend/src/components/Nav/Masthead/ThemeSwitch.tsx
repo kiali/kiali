@@ -9,6 +9,7 @@ import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from 'components/Pf/PfColors';
 import { KialiIcon } from 'config/KialiIcon';
 import { classes } from 'typestyle';
+import { useKialiTranslation } from 'utils/I18nUtils';
 
 const iconStyle = kialiStyle({
   color: PFColors.Color100
@@ -62,7 +63,9 @@ type ThemeSwitchProps = {
   theme: string;
 };
 
-export const ThemeSwitchComponent: React.FC<ThemeSwitchProps> = props => {
+export const ThemeSwitchComponent: React.FC<ThemeSwitchProps> = (props: ThemeSwitchProps) => {
+  const { t } = useKialiTranslation();
+
   const darkTheme = props.theme === Theme.DARK;
 
   const handleTheme = (): void => {
@@ -73,7 +76,7 @@ export const ThemeSwitchComponent: React.FC<ThemeSwitchProps> = props => {
   };
 
   return (
-    <Tooltip position="bottom" content={<>{`Switch to ${darkTheme ? 'Light' : 'Dark'} Mode`}</>}>
+    <Tooltip position="bottom" content={<>{t('Switch to {{theme}} Mode', { theme: darkTheme ? 'Light' : 'Dark' })}</>}>
       <div>
         <Button
           variant={darkTheme ? 'secondary' : 'primary'}
