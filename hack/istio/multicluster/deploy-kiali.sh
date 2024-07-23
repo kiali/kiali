@@ -57,11 +57,13 @@ deploy_kiali() {
     ${CLIENT_EXE} create configmap kiali-cabundle --from-file="openid-server-ca.crt=${KEYCLOAK_CERTS_DIR}/root-ca.pem" -n "${ISTIO_NAMESPACE}"
     ${CLIENT_EXE} create secret generic kiali --from-literal="oidc-secret=kube-client-secret" -n istio-system
     if [ "${AUTH_GROUPS}" != "" ]; then
+      old_IFS=$IFS
       IFS=','
       read -ra GROUP_LIST <<< "${AUTH_GROUPS}"
       for group in "${GROUP_LIST[@]}"; do
         ${CLIENT_EXE} create clusterrolebinding kiali-group-viewer --clusterrole=kiali-viewer --group=oidc:"$group"
       done
+      IFS=$old_IFS
     else
       ${CLIENT_EXE} create clusterrolebinding kiali-user-viewer --clusterrole=kiali-viewer --user=oidc:kiali
     fi
@@ -164,7 +166,7 @@ deploy_kiali() {
   helm_command='helm upgrade --install
     ${helm_args[@]}
     --namespace ${ISTIO_NAMESPACE}
-    --set deployment.logger.log_level="debug" 
+    --set deployment.logger.log_level="debug"
     --set external_services.grafana.url="http://grafana.istio-system:3000"
     --set external_services.grafana.dashboards[0].name="Istio Mesh Dashboard"
     --set external_services.tracing.url="http://tracing.istio-system:16685/jaeger"
@@ -179,12 +181,6 @@ deploy_kiali() {
     --set server.web_port=${web_port}
     kiali-server
     ${KIALI_SERVER_HELM_CHARTS}'
-
-echo "HELM ARGS"
-echo ${helm_command}
-echo ${helm_args[@]}
-echo ${ISTIO_NAMESPACE}
-echo ${KIALI_SERVER_HELM_CHARTS}
 
   eval $helm_command
   if [ "${KIALI_AUTH_STRATEGY}" == "openshift" ]; then
@@ -217,7 +213,9 @@ echo ${KIALI_SERVER_HELM_CHARTS}
 
     # Create the kiali user
     if [ "${AUTH_GROUPS}" != "" ]; then
-      curl -k -L https://"${KEYCLOAK_ADDRESS}"/admin/realms/kube/users -H "Authorization: Bearer $TOKEN_KEY" -d '{"username": "kiali", "enabled": true, "credentials": [{"type": "password", "value": "kiali"}], "groups": [ '"$AUTH_GROUPS"' ]}' -H 'Content-Type: application/json'
+      quoted_groups="\"${AUTH_GROUPS//,/'","'}\""
+      json_string='{"username": "kiali", "enabled": true, "credentials": [{"type": "password", "value": "kiali"}], "groups": ['"${quoted_groups}"']}'
+      curl -k -L https://"${KEYCLOAK_ADDRESS}"/admin/realms/kube/users -H "Authorization: Bearer $TOKEN_KEY" -d "$json_string" -H 'Content-Type: application/json'
     else
       curl -k -L https://"${KEYCLOAK_ADDRESS}"/admin/realms/kube/users -H "Authorization: Bearer $TOKEN_KEY" -d '{"username": "kiali", "enabled": true, "credentials": [{"type": "password", "value": "kiali"}]}' -H 'Content-Type: application/json'
     fi
