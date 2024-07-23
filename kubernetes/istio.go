@@ -254,11 +254,10 @@ func GatewayNames(gateways []*networking_v1.Gateway) map[string]struct{} {
 }
 
 // K8sGatewayNames extracts the gateway names for easier matching
-func K8sGatewayNames(gateways []*k8s_networking_v1.Gateway) map[string]struct{} {
-	var empty struct{}
-	names := make(map[string]struct{})
+func K8sGatewayNames(gateways []*k8s_networking_v1.Gateway) map[string]k8s_networking_v1.Gateway {
+	names := make(map[string]k8s_networking_v1.Gateway)
 	for _, gw := range gateways {
-		names[ParseHost(gw.Name, gw.Namespace).String()] = empty
+		names[ParseHost(gw.Name, gw.Namespace).String()] = *gw
 	}
 	return names
 }

@@ -42,13 +42,15 @@ func (in K8sGRPCRouteChecker) runIndividualChecks() models.IstioValidations {
 	return validations
 }
 
-func (in K8sGRPCRouteChecker) runChecks(rt *k8s_networking_v1.GRPCRoute, gatewayNames map[string]struct{}) models.IstioValidations {
+func (in K8sGRPCRouteChecker) runChecks(rt *k8s_networking_v1.GRPCRoute, gatewayNames map[string]k8s_networking_v1.Gateway) models.IstioValidations {
 	key, validations := EmptyValidValidation(rt.Name, rt.Namespace, K8sGRPCRouteCheckerType, in.Cluster)
 
 	enabledCheckers := []Checker{
 		k8sgrpcroutes.NoK8sGatewayChecker{
+			Cluster:      in.Cluster,
 			K8sGRPCRoute: rt,
 			GatewayNames: gatewayNames,
+			Namespaces:   in.Namespaces,
 		},
 		k8sgrpcroutes.NoHostChecker{
 			Namespaces:         in.Namespaces,

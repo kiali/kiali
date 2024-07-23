@@ -280,7 +280,7 @@ var checkDescriptors = map[string]IstioCheck{
 	},
 	"k8sroutes.nok8sgateway": {
 		Code:     "KIA1401",
-		Message:  "Route is pointing to a non-existent K8s gateway",
+		Message:  "Route is pointing to a non-existent or inaccessible K8s gateway",
 		Severity: ErrorSeverity,
 	},
 	"peerauthentication.mtls.destinationrulemissing": {

@@ -163,7 +163,7 @@ func TestK8sHTTPRoutesGatewaysError(t *testing.T) {
 	require.Equal("k8shttproute", config.IstioValidation.ObjectType)
 	require.NotEmpty(config.IstioValidation.Checks)
 	require.Equal(models.ErrorSeverity, config.IstioValidation.Checks[0].Severity)
-	require.Equal("Route is pointing to a non-existent K8s gateway", config.IstioValidation.Checks[0].Message)
+	require.Equal("Route is pointing to a non-existent or inaccessible K8s gateway", config.IstioValidation.Checks[0].Message)
 }
 
 func TestK8sHTTPRoutesServicesError(t *testing.T) {
@@ -218,7 +218,7 @@ func TestK8sGRPCRoutesGatewaysError(t *testing.T) {
 	require.Equal("k8sgrpcroute", config.IstioValidation.ObjectType)
 	require.NotEmpty(config.IstioValidation.Checks)
 	require.Equal(models.ErrorSeverity, config.IstioValidation.Checks[0].Severity)
-	require.Equal("Route is pointing to a non-existent K8s gateway", config.IstioValidation.Checks[0].Message)
+	require.Equal("Route is pointing to a non-existent or inaccessible K8s gateway", config.IstioValidation.Checks[0].Message)
 }
 
 func TestK8sGRPCRoutesServicesError(t *testing.T) {

@@ -6,6 +6,7 @@ import (
 	k8s_networking_v1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/models"
 )
 
 func CreateEmptyHTTPRoute(name string, namespace string, hosts []string) *k8s_networking_v1.HTTPRoute {
@@ -158,6 +159,43 @@ func CreateListener(name string, hostname string, port int, protocol string) k8s
 	return listener
 }
 
+func CreateSharedListener(name string, hostname string, port int, protocol string) k8s_networking_v1.Listener {
+	hn := k8s_networking_v1.Hostname(hostname)
+	namespaceFromSelector := k8s_networking_v1.NamespacesFromSelector
+	listener := k8s_networking_v1.Listener{
+		Name:     k8s_networking_v1.SectionName(name),
+		Hostname: &hn,
+		Port:     k8s_networking_v1.PortNumber(port),
+		Protocol: k8s_networking_v1.ProtocolType(protocol),
+		AllowedRoutes: &k8s_networking_v1.AllowedRoutes{
+			Namespaces: &k8s_networking_v1.RouteNamespaces{
+				From: &namespaceFromSelector,
+				Selector: &metav1.LabelSelector{
+					MatchLabels: map[string]string{"shared-gateway-access": "true"},
+				},
+			},
+		},
+	}
+	return listener
+}
+
+func CreateSharedToAllListener(name string, hostname string, port int, protocol string) k8s_networking_v1.Listener {
+	hn := k8s_networking_v1.Hostname(hostname)
+	namespaceFromSelector := k8s_networking_v1.NamespacesFromAll
+	listener := k8s_networking_v1.Listener{
+		Name:     k8s_networking_v1.SectionName(name),
+		Hostname: &hn,
+		Port:     k8s_networking_v1.PortNumber(port),
+		Protocol: k8s_networking_v1.ProtocolType(protocol),
+		AllowedRoutes: &k8s_networking_v1.AllowedRoutes{
+			Namespaces: &k8s_networking_v1.RouteNamespaces{
+				From: &namespaceFromSelector,
+			},
+		},
+	}
+	return listener
+}
+
 func CreateGWAddress(addrType k8s_networking_v1.AddressType, value string) k8s_networking_v1.GatewayAddress {
 	address := k8s_networking_v1.GatewayAddress{
 		Type:  &addrType,
@@ -184,4 +222,8 @@ func CreateReferenceGrantByKind(name string, namespace string, fromNamespace str
 	rg.Spec.From = append(rg.Spec.From, k8s_networking_v1beta1.ReferenceGrantFrom{Kind: kind, Group: k8s_networking_v1beta1.GroupName, Namespace: k8s_networking_v1.Namespace(fromNamespace)})
 	rg.Spec.To = append(rg.Spec.To, k8s_networking_v1beta1.ReferenceGrantTo{Kind: kubernetes.ServiceType})
 	return &rg
+}
+
+func CreateSharedNamespace(name string) models.Namespace {
+	return models.Namespace{Name: name, Labels: map[string]string{"shared-gateway-access": "true"}}
 }
