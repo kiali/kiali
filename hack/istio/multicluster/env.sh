@@ -81,7 +81,7 @@ SINGLE_KIALI="${SINGLE_KIALI:-true}"
 SINGLE_CLUSTER="${SINGLE_CLUSTER:-false}"
 
 # Use groups for OpenId authorization (single cluster)
-AUTH_GROUPS=${AUTH_GROUPS:-}
+AUTH_GROUPS="${AUTH_GROUPS:-}"
 
 # Create kiali remote secrets so kiali can access the different clusters
 # When left empty, this will be true if SINGLE_KIALI is true or false otherwise.

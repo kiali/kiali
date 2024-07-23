@@ -182,6 +182,9 @@ deploy_kiali() {
 
 echo "HELM ARGS"
 echo ${helm_command}
+echo ${helm_args[@]}
+echo ${ISTIO_NAMESPACE}
+echo ${KIALI_SERVER_HELM_CHARTS}
 
   eval $helm_command
   if [ "${KIALI_AUTH_STRATEGY}" == "openshift" ]; then
