@@ -108,6 +108,26 @@ func TestFoundSharedK8sGateway(t *testing.T) {
 	assert.Empty(vals)
 }
 
+func TestFoundSharedToAllK8sGateway(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	checker := NoK8sGatewayChecker{
+		K8sGRPCRoute: data.AddGatewayParentRefToGRPCRoute("sharedgw", "gwns",
+			data.CreateEmptyGRPCRoute("route", "bookinfo", []string{"bookinfo"})),
+		GatewayNames: kubernetes.K8sGatewayNames([]*k8s_networking_v1.Gateway{
+			data.AddListenerToK8sGateway(data.CreateSharedToAllListener("test", "host.com", 80, "http"),
+				data.CreateEmptyK8sGateway("sharedgw", "gwns")),
+		}),
+		Namespaces: models.Namespaces{models.Namespace{Name: "bookinfo"}},
+	}
+
+	vals, valid := checker.Check()
+	assert.True(valid)
+	assert.Empty(vals)
+}
+
 func TestWrongNSSharedK8sGatewayError(t *testing.T) {
 	assert := assert.New(t)
 	conf := config.NewConfig()

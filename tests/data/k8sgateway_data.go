@@ -179,6 +179,23 @@ func CreateSharedListener(name string, hostname string, port int, protocol strin
 	return listener
 }
 
+func CreateSharedToAllListener(name string, hostname string, port int, protocol string) k8s_networking_v1.Listener {
+	hn := k8s_networking_v1.Hostname(hostname)
+	namespaceFromSelector := k8s_networking_v1.NamespacesFromAll
+	listener := k8s_networking_v1.Listener{
+		Name:     k8s_networking_v1.SectionName(name),
+		Hostname: &hn,
+		Port:     k8s_networking_v1.PortNumber(port),
+		Protocol: k8s_networking_v1.ProtocolType(protocol),
+		AllowedRoutes: &k8s_networking_v1.AllowedRoutes{
+			Namespaces: &k8s_networking_v1.RouteNamespaces{
+				From: &namespaceFromSelector,
+			},
+		},
+	}
+	return listener
+}
+
 func CreateGWAddress(addrType k8s_networking_v1.AddressType, value string) k8s_networking_v1.GatewayAddress {
 	address := k8s_networking_v1.GatewayAddress{
 		Type:  &addrType,
