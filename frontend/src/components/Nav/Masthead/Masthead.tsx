@@ -13,6 +13,8 @@ import { useKialiTranslation } from 'utils/I18nUtils';
 import { PfSpinner } from 'components/Pf/PfSpinner';
 import { kialiStyle } from 'styles/StyleUtils';
 
+export const MASTHEAD = 'masthead';
+
 const toolbarStyle = kialiStyle({
   marginLeft: 'auto',
   $nest: {
@@ -50,7 +52,7 @@ export const MastheadItems: React.FC = () => {
             </FlexItem>
 
             <FlexItem>
-              <IstioStatus location={'masthead'} />
+              <IstioStatus location={MASTHEAD} />
             </FlexItem>
 
             <FlexItem style={{ marginRight: 0 }}>

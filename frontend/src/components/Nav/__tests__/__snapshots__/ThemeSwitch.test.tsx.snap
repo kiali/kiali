@@ -4,7 +4,7 @@ exports[`ThemeSwitch renders dark theme 1`] = `
 <Tooltip
   content={
     <React.Fragment>
-      Switch to Light Mode
+      Switch to {{theme}} Mode {"theme":"Light"}
     </React.Fragment>
   }
   position="bottom"
@@ -36,7 +36,7 @@ exports[`ThemeSwitch renders light theme 1`] = `
 <Tooltip
   content={
     <React.Fragment>
-      Switch to Dark Mode
+      Switch to {{theme}} Mode {"theme":"Dark"}
     </React.Fragment>
   }
   position="bottom"
