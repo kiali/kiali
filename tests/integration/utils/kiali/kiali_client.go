@@ -303,6 +303,7 @@ func ServicesList(namespace string) (*ServiceListJson, error) {
 			return nil, err
 		}
 	} else {
+		log.Debugf("Error getting the services list: %s", err.Error())
 		return nil, err
 	}
 }
