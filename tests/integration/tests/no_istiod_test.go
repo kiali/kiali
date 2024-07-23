@@ -51,7 +51,7 @@ func servicesListNoRegistryServices(t *testing.T) {
 	require := require.New(t)
 
 	defer func() {
-    	deleteSe := utils.DeleteFile("../assets/bookinfo-service-entry-external.yaml", "bookinfo")
+		deleteSe := utils.DeleteFile("../assets/bookinfo-service-entry-external.yaml", "bookinfo")
 		require.True(deleteSe)
 	}()
 
