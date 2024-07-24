@@ -1,7 +1,9 @@
 package handlers
 
 import (
+	"context"
 	"net/http"
+	"strings"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
@@ -11,6 +13,7 @@ import (
 	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/mesh"
 	"github.com/kiali/kiali/mesh/api"
+	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/tracing"
 )
@@ -46,6 +49,7 @@ func MeshGraph(
 		o := mesh.NewOptions(r, &business.Namespace)
 
 		meshInfo, err := discovery.Mesh(r.Context())
+		filterAccessibleControlPlanes(r.Context(), business.Namespace, meshInfo)
 		mesh.CheckError(err)
 
 		// Assuming that all controlplanes are part of the same mesh,
@@ -61,5 +65,15 @@ func MeshGraph(
 
 		code, payload := api.GraphMesh(r.Context(), business, o, clientFactory, cache, conf, grafana, discovery)
 		respond(w, code, payload)
+	}
+}
+
+func filterAccessibleControlPlanes(ctx context.Context, namespaceService business.NamespaceService, mesh *models.Mesh) {
+	for i, cp := range mesh.ControlPlanes {
+		// Check if the user is able to access to the control plane
+		_, err := namespaceService.GetClusterNamespace(ctx, cp.IstiodNamespace, cp.Cluster.Name)
+		if err != nil && strings.Contains(err.Error(), "forbidden") {
+			mesh.ControlPlanes = append(mesh.ControlPlanes[:i], mesh.ControlPlanes[i+1:]...)
+		}
 	}
 }
