@@ -24,6 +24,29 @@ const toolbarStyle = kialiStyle({
   }
 });
 
+const themeSwitchStyle = kialiStyle({
+  marginLeft: '1.5rem',
+  marginRight: 0
+});
+
+const messageCenterStyle = kialiStyle({
+  marginRight: '0.25rem'
+});
+
+const helpDropdownStyle = kialiStyle({
+  marginRight: '0.5rem'
+});
+
+const languageSwitchStyle = kialiStyle({
+  marginRight: '0.75rem'
+});
+
+const userDropdownStyle = kialiStyle({
+  marginLeft: '0.5rem',
+  position: 'relative',
+  bottom: '0.125rem'
+});
+
 export const MastheadItems: React.FC = () => {
   const { t } = useKialiTranslation();
 
@@ -47,7 +70,7 @@ export const MastheadItems: React.FC = () => {
               )}
             </FlexItem>
 
-            <FlexItem style={{ marginLeft: '1rem' }}>
+            <FlexItem className={themeSwitchStyle}>
               <ThemeSwitch />
             </FlexItem>
 
@@ -55,21 +78,21 @@ export const MastheadItems: React.FC = () => {
               <IstioStatus location={MASTHEAD} />
             </FlexItem>
 
-            <FlexItem style={{ marginRight: 0 }}>
+            <FlexItem className={messageCenterStyle}>
               <MessageCenterTrigger />
             </FlexItem>
 
-            <FlexItem style={{ marginRight: '0.75rem' }}>
+            <FlexItem className={helpDropdownStyle}>
               <HelpDropdown />
             </FlexItem>
 
             {serverConfig.kialiFeatureFlags.uiDefaults?.i18n?.showSelector && (
-              <FlexItem>
+              <FlexItem className={languageSwitchStyle}>
                 <LanguageSwitch />
               </FlexItem>
             )}
 
-            <FlexItem data-test="user-dropdown">
+            <FlexItem data-test="user-dropdown" className={userDropdownStyle}>
               <UserDropdown />
             </FlexItem>
           </Flex>

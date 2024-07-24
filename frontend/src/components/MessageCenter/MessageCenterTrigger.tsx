@@ -26,6 +26,10 @@ const systemErrorCountStyle = kialiStyle({
   marginLeft: '0.5rem'
 });
 
+const notificationBadgeStyle = kialiStyle({
+  fontSize: '1rem'
+});
+
 const MessageCenterTriggerComponent: React.FC<MessageCenterTriggerProps> = (props: MessageCenterTriggerProps) => {
   const { t } = useKialiTranslation();
 
@@ -67,6 +71,7 @@ const MessageCenterTriggerComponent: React.FC<MessageCenterTriggerProps> = (prop
 
     return (
       <NotificationBadge
+        className={notificationBadgeStyle}
         variant={notificationVariant}
         onClick={props.toggleMessageCenter}
         aria-label={t('Notification badge')}

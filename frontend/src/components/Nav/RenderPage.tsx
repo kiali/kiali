@@ -14,11 +14,12 @@ import { Outlet } from 'react-router-dom-v5-compat';
 import { t } from 'utils/I18nUtils';
 import { pathRoutes } from 'routes';
 import { router } from 'app/History';
+import { MASTHEAD_HEIGHT } from './Navigation';
 
 const containerStyle = kialiStyle({ marginLeft: 0, marginRight: 0 });
 const containerPadding = kialiStyle({ padding: '0 20px 0 20px' });
 const containerGray = kialiStyle({ background: PFColors.BackgroundColor200, height: '100%' });
-const containerError = kialiStyle({ height: 'calc(100vh - 76px)' });
+const containerError = kialiStyle({ height: `calc(100vh - ${MASTHEAD_HEIGHT})` });
 
 // Add error boundary element to every path route
 pathRoutes.forEach(route => {

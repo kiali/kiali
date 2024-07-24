@@ -16,6 +16,7 @@ const iconStyle = kialiStyle({
 });
 
 const buttonStyle = kialiStyle({
+  fontSize: '1rem',
   $nest: {
     '&.pf-m-primary': {
       backgroundColor: PFColors.Blue400,
