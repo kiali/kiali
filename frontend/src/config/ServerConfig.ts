@@ -59,7 +59,6 @@ const defaultServerConfig: ComputedServerConfig = {
   ambientEnabled: false,
   authStrategy: '',
   clusters: {},
-  controlPlaneClusters: [],
   durations: {},
   gatewayAPIClasses: [],
   gatewayAPIEnabled: false,

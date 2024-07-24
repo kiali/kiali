@@ -11,6 +11,7 @@ import { LanguageSwitch } from './LanguageSwitch';
 import { KialiIcon } from 'config/KialiIcon';
 import { useKialiTranslation } from 'utils/I18nUtils';
 import { PfSpinner } from 'components/Pf/PfSpinner';
+import { isControlPlaneAccessible } from '../../../utils/MeshUtils';
 import { kialiStyle } from 'styles/StyleUtils';
 
 export const MASTHEAD = 'masthead';
@@ -47,6 +48,9 @@ const userDropdownStyle = kialiStyle({
   bottom: '0.125rem'
 });
 
+
+
+
 export const MastheadItems: React.FC = () => {
   const { t } = useKialiTranslation();
 
@@ -73,7 +77,7 @@ export const MastheadItems: React.FC = () => {
             <FlexItem className={themeSwitchStyle}>
               <ThemeSwitch />
             </FlexItem>
-            {serverConfig.controlPlaneClusters.length > 0 && (
+            {isControlPlaneAccessible() && (
               <FlexItem>
                 <IstioStatus location={MASTHEAD} />
               </FlexItem>

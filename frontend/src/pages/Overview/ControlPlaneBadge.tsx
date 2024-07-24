@@ -13,6 +13,7 @@ import {
   MinusCircleIcon
 } from '@patternfly/react-icons';
 import { useKialiTranslation } from 'utils/I18nUtils';
+import { isControlPlaneAccessible } from '../../utils/MeshUtils';
 
 type Props = {
   annotations?: { [key: string]: string };
@@ -51,20 +52,18 @@ export const ControlPlaneBadge: React.FC<Props> = (props: Props) => {
         <AmbientBadge tooltip={t('Istio Ambient ztunnel detected in the Control plane')}></AmbientBadge>
       )}
 
-      {!isRemoteCluster(props.annotations) &&
-        props.cluster &&
-        serverConfig.controlPlaneClusters.includes(props.cluster) && (
-          <IstioStatus
-            icons={{
-              ErrorIcon: ExclamationCircleIcon,
-              HealthyIcon: CheckCircleIcon,
-              InfoIcon: MinusCircleIcon,
-              WarningIcon: ExclamationTriangleIcon
-            }}
-            cluster={props.cluster}
-            location={pathname}
-          />
-        )}
+      {!isRemoteCluster(props.annotations) && props.cluster && isControlPlaneAccessible(props.cluster) && (
+        <IstioStatus
+          icons={{
+            ErrorIcon: ExclamationCircleIcon,
+            HealthyIcon: CheckCircleIcon,
+            InfoIcon: MinusCircleIcon,
+            WarningIcon: ExclamationTriangleIcon
+          }}
+          cluster={props.cluster}
+          location={pathname}
+        />
+      )}
     </>
   );
 };

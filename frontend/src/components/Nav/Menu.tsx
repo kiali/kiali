@@ -9,6 +9,7 @@ import { ExternalServiceInfo } from '../../types/StatusState';
 import { KialiIcon } from 'config/KialiIcon';
 import { GetTracingUrlProvider } from '../../utils/tracing/UrlProviders';
 import { t } from 'utils/I18nUtils';
+import { isControlPlaneAccessible } from '../../utils/MeshUtils';
 
 const externalLinkStyle = kialiStyle({
   $nest: {
@@ -85,7 +86,7 @@ export const Menu: React.FC<MenuProps> = (props: MenuProps) => {
         }
 
         if (item.id === 'mesh') {
-          return serverConfig.controlPlaneClusters.length > 0;
+          return isControlPlaneAccessible();
         }
 
         return true;

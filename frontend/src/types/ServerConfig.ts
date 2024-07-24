@@ -149,7 +149,6 @@ export interface ServerConfig {
   ambientEnabled: boolean;
   authStrategy: string;
   clusters: { [key: string]: MeshCluster };
-  controlPlaneClusters: Array<string>;
   deployment: DeploymentConfig;
   gatewayAPIClasses: GatewayAPIClass[];
   gatewayAPIEnabled: boolean;
