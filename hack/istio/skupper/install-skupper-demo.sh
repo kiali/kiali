@@ -420,7 +420,7 @@ openshift_install_skupper() {
   ${CLIENT_EXE} get namespace ${MONGOSKUPPERNS} 2>/dev/null || ${CLIENT_EXE} create namespace ${MONGOSKUPPERNS}
   # TODO: RIGHT NOW SKUPPER DOES NOT WORK IN OPENSHIFT WHEN INSIDE THE MESH
   ${CLIENT_EXE} label namespace ${MONGOSKUPPERNS} istio-injection=disabled --overwrite
-  ${SKUPPER_EXE} -n ${MONGOSKUPPERNS} init --enable-console --enable-flow-collector
+  ${SKUPPER_EXE} -n ${MONGOSKUPPERNS} init --enable-console --enable-flow-collector --console-auth=openshift
   ${SKUPPER_EXE} -n ${MONGOSKUPPERNS} token create "${SKUPPER_TOKEN_FILE_MONGO}"
   # LOGIN TO CLUSTER 2
   openshift_login ${CLUSTER2_DB}
@@ -452,7 +452,7 @@ openshift_install_skupper() {
     ${CLIENT_EXE} get namespace ${MYSQLSKUPPERNS} 2>/dev/null || ${CLIENT_EXE} create namespace ${MYSQLSKUPPERNS}
     # TODO: RIGHT NOW SKUPPER DOES NOT WORK IN OPENSHIFT WHEN INSIDE THE MESH
     ${CLIENT_EXE} label namespace ${MYSQLSKUPPERNS} istio-injection=disabled --overwrite
-    ${SKUPPER_EXE} -n ${MYSQLSKUPPERNS} init --enable-console --enable-flow-collector
+    ${SKUPPER_EXE} -n ${MYSQLSKUPPERNS} init --enable-console --enable-flow-collector --console-auth=openshift
     ${SKUPPER_EXE} -n ${MYSQLSKUPPERNS} token create "${SKUPPER_TOKEN_FILE_MYSQL}"
     # LOGIN TO CLUSTER 2
     openshift_login ${CLUSTER2_DB}
