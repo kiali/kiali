@@ -69,10 +69,7 @@
         "description": "${role_default-roles}",
         "composite": true,
         "composites": {
-          "realm": [
-            "offline_access",
-            "uma_authorization"
-          ]
+          "realm": ["offline_access", "uma_authorization"]
         },
         "clientRole": false,
         "containerId": "e0ac20c5-93f2-4e17-9372-174c837a2090",
@@ -97,10 +94,7 @@
           "composite": true,
           "composites": {
             "client": {
-              "realm-management": [
-                "query-users",
-                "query-groups"
-              ]
+              "realm-management": ["query-users", "query-groups"]
             }
           },
           "clientRole": true,
@@ -237,9 +231,7 @@
           "composite": true,
           "composites": {
             "client": {
-              "realm-management": [
-                "query-clients"
-              ]
+              "realm-management": ["query-clients"]
             }
           },
           "clientRole": true,
@@ -326,7 +318,17 @@
       "kube": []
     }
   },
-  "groups": [],
+  "groups": [
+    {
+      "id": "4e9aabd4-821c-42dc-b283-4b4557bcedf2",
+      "name": "default",
+      "path": "/default",
+      "attributes": {},
+      "realmRoles": [],
+      "clientRoles": {},
+      "subGroups": []
+    }
+  ],
   "defaultRole": {
     "id": "c1e7b782-836b-408e-a605-668521b6eeba",
     "name": "default-roles-kube",
@@ -335,9 +337,7 @@
     "clientRole": false,
     "containerId": "e0ac20c5-93f2-4e17-9372-174c837a2090"
   },
-  "requiredCredentials": [
-    "password"
-  ],
+  "requiredCredentials": ["password"],
   "otpPolicyType": "totp",
   "otpPolicyAlgorithm": "HmacSHA1",
   "otpPolicyInitialCounter": 0,
@@ -346,13 +346,12 @@
   "otpPolicyPeriod": 30,
   "otpPolicyCodeReusable": false,
   "otpSupportedApplications": [
+    "totpAppGoogleName",
     "totpAppFreeOTPName",
-    "totpAppGoogleName"
+    "totpAppMicrosoftAuthenticatorName"
   ],
   "webAuthnPolicyRpEntityName": "keycloak",
-  "webAuthnPolicySignatureAlgorithms": [
-    "ES256"
-  ],
+  "webAuthnPolicySignatureAlgorithms": ["ES256"],
   "webAuthnPolicyRpId": "",
   "webAuthnPolicyAttestationConveyancePreference": "not specified",
   "webAuthnPolicyAuthenticatorAttachment": "not specified",
@@ -362,9 +361,7 @@
   "webAuthnPolicyAvoidSameAuthenticatorRegister": false,
   "webAuthnPolicyAcceptableAaguids": [],
   "webAuthnPolicyPasswordlessRpEntityName": "keycloak",
-  "webAuthnPolicyPasswordlessSignatureAlgorithms": [
-    "ES256"
-  ],
+  "webAuthnPolicyPasswordlessSignatureAlgorithms": ["ES256"],
   "webAuthnPolicyPasswordlessRpId": "",
   "webAuthnPolicyPasswordlessAttestationConveyancePreference": "not specified",
   "webAuthnPolicyPasswordlessAuthenticatorAttachment": "not specified",
@@ -376,19 +373,14 @@
   "scopeMappings": [
     {
       "clientScope": "offline_access",
-      "roles": [
-        "offline_access"
-      ]
+      "roles": ["offline_access"]
     }
   ],
   "clientScopeMappings": {
     "account": [
       {
         "client": "account-console",
-        "roles": [
-          "manage-account",
-          "view-groups"
-        ]
+        "roles": ["manage-account", "view-groups"]
       }
     ]
   },
@@ -403,9 +395,7 @@
       "enabled": true,
       "alwaysDisplayInConsole": false,
       "clientAuthenticatorType": "client-secret",
-      "redirectUris": [
-        "/realms/kube/account/*"
-      ],
+      "redirectUris": ["/realms/kube/account/*"],
       "webOrigins": [],
       "notBefore": 0,
       "bearerOnly": false,
@@ -447,9 +437,7 @@
       "enabled": true,
       "alwaysDisplayInConsole": false,
       "clientAuthenticatorType": "client-secret",
-      "redirectUris": [
-        "/realms/kube/account/*"
-      ],
+      "redirectUris": ["/realms/kube/account/*"],
       "webOrigins": [],
       "notBefore": 0,
       "bearerOnly": false,
@@ -661,6 +649,7 @@
         "acr",
         "profile",
         "roles",
+        "groups",
         "email"
       ],
       "optionalClientScopes": [
@@ -720,12 +709,8 @@
       "enabled": true,
       "alwaysDisplayInConsole": false,
       "clientAuthenticatorType": "client-secret",
-      "redirectUris": [
-        "/admin/kube/console/*"
-      ],
-      "webOrigins": [
-        "+"
-      ],
+      "redirectUris": ["/admin/kube/console/*"],
+      "webOrigins": ["+"],
       "notBefore": 0,
       "bearerOnly": false,
       "consentRequired": false,
@@ -1283,6 +1268,34 @@
           }
         }
       ]
+    },
+    {
+      "id": "9fe3e717-2e5f-4df9-971b-78942c4ee3a2",
+      "name": "groups",
+      "description": "",
+      "protocol": "openid-connect",
+      "attributes": {
+        "include.in.token.scope": "true",
+        "display.on.consent.screen": "true",
+        "gui.order": "",
+        "consent.screen.text": ""
+      },
+      "protocolMappers": [
+        {
+          "id": "e348c205-fa4f-4025-85f1-72a8c2f0a983",
+          "name": "groups",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-group-membership-mapper",
+          "consentRequired": false,
+          "config": {
+            "full.path": "false",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "groups",
+            "userinfo.token.claim": "true"
+          }
+        }
+      ]
     }
   ],
   "defaultDefaultClientScopes": [
@@ -1291,7 +1304,8 @@
     "email",
     "roles",
     "web-origins",
-    "acr"
+    "acr",
+    "groups"
   ],
   "defaultOptionalClientScopes": [
     "offline_access",
@@ -1310,9 +1324,7 @@
   },
   "smtpServer": {},
   "eventsEnabled": false,
-  "eventsListeners": [
-    "jboss-logging"
-  ],
+  "eventsListeners": ["jboss-logging"],
   "enabledEventTypes": [],
   "adminEventsEnabled": false,
   "adminEventsDetailsEnabled": false,
@@ -1327,9 +1339,7 @@
         "subType": "anonymous",
         "subComponents": {},
         "config": {
-          "allow-default-scopes": [
-            "true"
-          ]
+          "allow-default-scopes": ["true"]
         }
       },
       {
@@ -1339,9 +1349,7 @@
         "subType": "authenticated",
         "subComponents": {},
         "config": {
-          "allow-default-scopes": [
-            "true"
-          ]
+          "allow-default-scopes": ["true"]
         }
       },
       {
@@ -1352,14 +1360,14 @@
         "subComponents": {},
         "config": {
           "allowed-protocol-mapper-types": [
-            "oidc-sha256-pairwise-sub-mapper",
-            "saml-role-list-mapper",
-            "oidc-usermodel-attribute-mapper",
             "saml-user-property-mapper",
+            "oidc-address-mapper",
             "oidc-full-name-mapper",
-            "oidc-usermodel-property-mapper",
+            "oidc-sha256-pairwise-sub-mapper",
+            "oidc-usermodel-attribute-mapper",
+            "saml-role-list-mapper",
             "saml-user-attribute-mapper",
-            "oidc-address-mapper"
+            "oidc-usermodel-property-mapper"
           ]
         }
       },
@@ -1370,12 +1378,8 @@
         "subType": "anonymous",
         "subComponents": {},
         "config": {
-          "host-sending-registration-request-must-match": [
-            "true"
-          ],
-          "client-uris-must-match": [
-            "true"
-          ]
+          "host-sending-registration-request-must-match": ["true"],
+          "client-uris-must-match": ["true"]
         }
       },
       {
@@ -1385,9 +1389,7 @@
         "subType": "anonymous",
         "subComponents": {},
         "config": {
-          "max-clients": [
-            "200"
-          ]
+          "max-clients": ["200"]
         }
       },
       {
@@ -1414,14 +1416,14 @@
         "subComponents": {},
         "config": {
           "allowed-protocol-mapper-types": [
-            "saml-user-attribute-mapper",
-            "oidc-usermodel-property-mapper",
             "oidc-sha256-pairwise-sub-mapper",
+            "oidc-address-mapper",
+            "saml-user-attribute-mapper",
+            "saml-user-property-mapper",
+            "oidc-usermodel-property-mapper",
             "oidc-full-name-mapper",
             "saml-role-list-mapper",
-            "oidc-address-mapper",
-            "oidc-usermodel-attribute-mapper",
-            "saml-user-property-mapper"
+            "oidc-usermodel-attribute-mapper"
           ]
         }
       }
@@ -1433,9 +1435,7 @@
         "providerId": "rsa-generated",
         "subComponents": {},
         "config": {
-          "priority": [
-            "100"
-          ]
+          "priority": ["100"]
         }
       },
       {
@@ -1444,12 +1444,8 @@
         "providerId": "hmac-generated",
         "subComponents": {},
         "config": {
-          "priority": [
-            "100"
-          ],
-          "algorithm": [
-            "HS256"
-          ]
+          "priority": ["100"],
+          "algorithm": ["HS256"]
         }
       },
       {
@@ -1458,9 +1454,7 @@
         "providerId": "aes-generated",
         "subComponents": {},
         "config": {
-          "priority": [
-            "100"
-          ]
+          "priority": ["100"]
         }
       },
       {
@@ -1469,12 +1463,8 @@
         "providerId": "rsa-enc-generated",
         "subComponents": {},
         "config": {
-          "priority": [
-            "100"
-          ],
-          "algorithm": [
-            "RSA-OAEP"
-          ]
+          "priority": ["100"],
+          "algorithm": ["RSA-OAEP"]
         }
       }
     ]
@@ -2089,9 +2079,9 @@
       "config": {}
     },
     {
-      "alias": "terms_and_conditions",
+      "alias": "TERMS_AND_CONDITIONS",
       "name": "Terms and Conditions",
-      "providerId": "terms_and_conditions",
+      "providerId": "TERMS_AND_CONDITIONS",
       "enabled": false,
       "defaultAction": false,
       "priority": 20,
@@ -2181,7 +2171,7 @@
     "cibaInterval": "5",
     "realmReusableOtpCode": "false"
   },
-  "keycloakVersion": "20.0.2",
+  "keycloakVersion": "21.1.2",
   "userManagedAccessAllowed": false,
   "clientProfiles": {
     "profiles": []

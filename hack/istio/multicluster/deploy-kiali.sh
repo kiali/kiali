@@ -56,7 +56,17 @@ deploy_kiali() {
     # Create secret with the oidc secret
     ${CLIENT_EXE} create configmap kiali-cabundle --from-file="openid-server-ca.crt=${KEYCLOAK_CERTS_DIR}/root-ca.pem" -n "${ISTIO_NAMESPACE}"
     ${CLIENT_EXE} create secret generic kiali --from-literal="oidc-secret=kube-client-secret" -n istio-system
-    ${CLIENT_EXE} create clusterrolebinding kiali-user-viewer --clusterrole=kiali-viewer --user=oidc:kiali
+    if [ "${AUTH_GROUPS}" != "" ]; then
+      old_IFS=$IFS
+      IFS=','
+      read -ra GROUP_LIST <<< "${AUTH_GROUPS}"
+      for group in "${GROUP_LIST[@]}"; do
+        ${CLIENT_EXE} create clusterrolebinding kiali-group-viewer --clusterrole=kiali-viewer --group=oidc:"$group"
+      done
+      IFS=$old_IFS
+    else
+      ${CLIENT_EXE} create clusterrolebinding kiali-user-viewer --clusterrole=kiali-viewer --user=oidc:kiali
+    fi
 
     helm_args+=(
       "--set auth.strategy=openid"
@@ -153,11 +163,10 @@ deploy_kiali() {
     helm_args+=("--set kiali_route_url=${kiali_route_url}")
   fi
 
-  
   helm_command='helm upgrade --install
     ${helm_args[@]}
     --namespace ${ISTIO_NAMESPACE}
-    --set deployment.logger.log_level="debug" 
+    --set deployment.logger.log_level="debug"
     --set external_services.grafana.url="http://grafana.istio-system:3000"
     --set external_services.grafana.dashboards[0].name="Istio Mesh Dashboard"
     --set external_services.tracing.url="http://tracing.istio-system:16685/jaeger"
@@ -199,20 +208,29 @@ deploy_kiali() {
     # Replace the redirect URI with the minikube ip. Create the realm.
     local KIALI_SVC_LB_IP
     KIALI_SVC_LB_IP=$(kubectl get svc kiali -o=jsonpath='{.status.loadBalancer.ingress[0].ip}' -n istio-system)
+
     jq ".clients[] |= if .clientId == \"kube\" then .redirectUris = [\"http://${KIALI_SVC_LB_IP}/kiali/*\"] else . end" < "${SCRIPT_DIR}"/realm-export-template.json | curl -k -L https://"${KEYCLOAK_ADDRESS}"/admin/realms -H "Authorization: Bearer $TOKEN_KEY" -H "Content-Type: application/json" -X POST -d @-
 
     # Create the kiali user
-    curl -k -L https://"${KEYCLOAK_ADDRESS}"/admin/realms/kube/users -H "Authorization: Bearer $TOKEN_KEY" -d '{"username": "kiali", "enabled": true, "credentials": [{"type": "password", "value": "kiali"}]}' -H 'Content-Type: application/json'
-  
-    # Create a clusterrole and clusterrolebinding so that the kiali oidc user can view and edit resources in kiali.
-    # It needs read-write permissions for the tests to create and delete resources so we have to do
-    # this helm templating to create the role with write permissions since only when you are using
-    # anonymous auth do you get a role with write permissions. For testing we want a role that does
-    # potentially all the things kiali can do so that's why we reuse the kiali role rather than
-    # having to maintain a whole separate role just for the testing user.
-    helm template --show-only "templates/role.yaml" --set deployment.instance_name=kiali-testing-user --set auth.strategy=anonymous kiali-server "${KIALI_SERVER_HELM_CHARTS}" | kubectl apply --context "${CLUSTER1_CONTEXT}" -f -
-    helm template --show-only "templates/role.yaml" --set deployment.instance_name=kiali-testing-user --set auth.strategy=anonymous kiali-server "${KIALI_SERVER_HELM_CHARTS}" | kubectl apply --context "${CLUSTER2_CONTEXT}" -f -
-    kubectl apply --context "${CLUSTER1_CONTEXT}" -f - <<EOF
+    if [ "${AUTH_GROUPS}" != "" ]; then
+      quoted_groups="\"${AUTH_GROUPS//,/'","'}\""
+      json_string='{"username": "kiali", "enabled": true, "credentials": [{"type": "password", "value": "kiali"}], "groups": ['"${quoted_groups}"']}'
+      curl -k -L https://"${KEYCLOAK_ADDRESS}"/admin/realms/kube/users -H "Authorization: Bearer $TOKEN_KEY" -d "$json_string" -H 'Content-Type: application/json'
+    else
+      curl -k -L https://"${KEYCLOAK_ADDRESS}"/admin/realms/kube/users -H "Authorization: Bearer $TOKEN_KEY" -d '{"username": "kiali", "enabled": true, "credentials": [{"type": "password", "value": "kiali"}]}' -H 'Content-Type: application/json'
+    fi
+
+    if [ "${SINGLE_CLUSTER}" != "true" ]; then
+      # Create a clusterrole and clusterrolebinding so that the kiali oidc user can view and edit resources in kiali.
+      # It needs read-write permissions for the tests to create and delete resources so we have to do
+      # this helm templating to create the role with write permissions since only when you are using
+      # anonymous auth do you get a role with write permissions. For testing we want a role that does
+      # potentially all the things kiali can do so that's why we reuse the kiali role rather than
+      # having to maintain a whole separate role just for the testing user.
+      helm template --show-only "templates/role.yaml" --set deployment.instance_name=kiali-testing-user --set auth.strategy=anonymous kiali-server "${KIALI_SERVER_HELM_CHARTS}" | kubectl apply --context "${CLUSTER1_CONTEXT}" -f -
+      helm template --show-only "templates/role.yaml" --set deployment.instance_name=kiali-testing-user --set auth.strategy=anonymous kiali-server "${KIALI_SERVER_HELM_CHARTS}" | kubectl apply --context "${CLUSTER2_CONTEXT}" -f -
+
+      kubectl apply --context "${CLUSTER1_CONTEXT}" -f - <<EOF
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
@@ -227,8 +245,8 @@ subjects:
   name: oidc:kiali
 EOF
 
-    # Create a clusterrolebinding in the west cluster so that the kiali oidc user can view resources in kiali.
-    kubectl apply --context "${CLUSTER2_CONTEXT}" -f - <<EOF
+      # Create a clusterrolebinding in the west cluster so that the kiali oidc user can view resources in kiali.
+      kubectl apply --context "${CLUSTER2_CONTEXT}" -f - <<EOF
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
@@ -242,6 +260,9 @@ subjects:
   kind: User
   name: oidc:kiali
 EOF
+
+    fi
+
   fi
 }
 

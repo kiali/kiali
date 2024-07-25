@@ -133,7 +133,44 @@ infomsg "Downloading istio"
 
 setup_kind_singlecluster() {
 
-  "${SCRIPT_DIR}"/start-kind.sh --name ci --image "${KIND_NODE_IMAGE}"
+  local certs_dir
+
+  if [ "${AUTH_STRATEGY}" == "openid" ]; then
+    echo "Auth strategy is open id"
+      certs_dir=$(mktemp -d)
+      KEYCLOAK_CERTS_DIR="${certs_dir}"/keycloak
+      mkdir -p "${certs_dir}"/keycloak
+      auth_flags=()
+      local keycloak_ip
+
+      "${SCRIPT_DIR}/keycloak.sh" -kcd "${KEYCLOAK_CERTS_DIR}" create-ca
+
+      docker network create kind || true
+
+      # Given: 172.18.0.0/16 this should return 172.18
+      beginning_subnet_octets=$(docker network inspect kind --format '{{(index .IPAM.Config 0).Subnet}}' | cut -d'.' -f1,2)
+      lb_range_start="255.70"
+      lb_range_end="255.84"
+
+      KEYCLOAK_ADDRESS="${beginning_subnet_octets}.${lb_range_start}"
+
+      echo "==== START KIND FOR CLUSTER"
+      "${SCRIPT_DIR}"/start-kind.sh \
+            --name "ci" \
+            --load-balancer-range "${lb_range_start}-${lb_range_end}" \
+            --image "${KIND_NODE_IMAGE}" \
+            --enable-keycloak true \
+            --keycloak-certs-dir "${KEYCLOAK_CERTS_DIR}" \
+            --keycloak-issuer-uri "https://${KEYCLOAK_ADDRESS}/realms/kube"
+      "${SCRIPT_DIR}/keycloak.sh" -kcd "${KEYCLOAK_CERTS_DIR}" -kip "${KEYCLOAK_ADDRESS}" deploy
+
+      keycloak_ip_cl=$(kubectl get svc keycloak -n keycloak -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')
+            auth_flags+=(--keycloak-address "${keycloak_ip_cl}")
+            auth_flags+=(--certs-dir "${certs_dir}")
+
+  else
+    "${SCRIPT_DIR}"/start-kind.sh --name ci --image "${KIND_NODE_IMAGE}"
+  fi
 
   infomsg "Installing istio"
   if [[ "${ISTIO_VERSION}" == *-dev ]]; then
@@ -171,6 +208,10 @@ setup_kind_singlecluster() {
     --namespace istio-system \
     --wait \
     --set auth.strategy="${AUTH_STRATEGY}" \
+    --set auth.openid.client_id="kube" \
+    --set-string auth.openid.issuer_uri="${ISSUER_URI}" \
+    --set auth.openid.insecure_skip_verify_tls="false" \
+    --set auth.openid.username_claim="preferred_username" \
     --set deployment.logger.log_level="trace" \
     --set deployment.image_name=localhost/kiali/kiali \
     --set deployment.image_version=dev \
@@ -189,9 +230,29 @@ setup_kind_singlecluster() {
     kiali-server \
     "${HELM_CHARTS_DIR}"/_output/charts/kiali-server-*.tgz
 
-  # Helm chart doesn't support passing in service opts so patch them after the helm deploy.
-  kubectl patch service kiali -n istio-system --type=json -p='[{"op": "replace", "path": "/spec/ports/0/port", "value":80}]'
-  kubectl wait --for=jsonpath='{.status.loadBalancer.ingress}' -n istio-system service/kiali
+  if [ "${AUTH_STRATEGY}" == "openid" ]; then
+        local keycloak_ip
+        keycloak_ip=$(kubectl get svc keycloak -n keycloak -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')
+        auth_flags+=(--keycloak-address "${keycloak_ip}")
+        auth_flags+=(--certs-dir "${certs_dir}")
+
+      "${SCRIPT_DIR}"/istio/multicluster/deploy-kiali.sh \
+        --cluster1-context "kind-ci" \
+        --single-cluster "true" \
+        --kiali-create-remote-cluster-secrets "false" \
+        --cluster1-name "ci" \
+        --manage-kind true \
+        ${auth_flags[@]} \
+        -dorp docker \
+        -kas "${AUTH_STRATEGY}" \
+        -kudi true \
+        -kshc "${HELM_CHARTS_DIR}"/_output/charts/kiali-server-*.tgz \
+        -ag "default"
+  else
+     # Helm chart doesn't support passing in service opts so patch them after the helm deploy.
+      kubectl patch service kiali -n istio-system --type=json -p='[{"op": "replace", "path": "/spec/ports/0/port", "value":80}]'
+      kubectl wait --for=jsonpath='{.status.loadBalancer.ingress}' -n istio-system service/kiali
+  fi
 }
 
 setup_kind_tempo() {

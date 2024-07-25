@@ -77,6 +77,12 @@ NETWORK2_ID="network-west"
 # Deploy a single kiali or a kiali per cluster
 SINGLE_KIALI="${SINGLE_KIALI:-true}"
 
+# Deploy just in one cluster
+SINGLE_CLUSTER="${SINGLE_CLUSTER:-false}"
+
+# Use groups for OpenId authorization (single cluster)
+AUTH_GROUPS="${AUTH_GROUPS:-}"
+
 # Create kiali remote secrets so kiali can access the different clusters
 # When left empty, this will be true if SINGLE_KIALI is true or false otherwise.
 KIALI_CREATE_REMOTE_CLUSTER_SECRETS="${KIALI_CREATE_REMOTE_CLUSTER_SECRETS:-}"
@@ -206,6 +212,10 @@ while [[ $# -gt 0 ]]; do
       DORP="$2"
       shift;shift
       ;;
+    -ag|--auth-groups)
+      AUTH_GROUPS="$2"
+      shift;shift
+      ;;
     -gr|--gateway-required)
       [ "${2:-}" != "true" -a "${2:-}" != "false" ] && echo "--gateway-required must be 'true' or 'false'" && exit 1
       CROSSNETWORK_GATEWAY_REQUIRED="$2"
@@ -333,6 +343,10 @@ while [[ $# -gt 0 ]]; do
       NETWORK2_ID="$2"
       shift;shift
       ;;
+    -sk|--single-cluster)
+      SINGLE_CLUSTER="$2"
+      shift;shift
+      ;;
     -sk|--single-kiali)
       SINGLE_KIALI="$2"
       shift;shift
@@ -354,6 +368,7 @@ Valid command line arguments:
   -c2u|--cluster2-username <name>: If cluster2 is OpenShift, this is the username used to log in (Default: kiali)
   -cd|--certs-dir <dir>: Directory where the keycloak certs are located. (Default: /tmp/istio-multicluster-certs)
   -dorp|--docker-or-podman <docker|podman>: What image registry client to use (Default: podman)
+  -ag|--auth-groups <string>: If using Group for authentication, a comma separated groups list. Just for OpenID.
   -gr|--gateway-required <bool>: If a gateway is required to cross between networks, set this to true
   -id|--istio-dir <dir>: Where Istio has already been downloaded. If not found, this script aborts.
   -in|--istio-namespace <name>: Where the Istio control plane is installed (default: istio-system).
@@ -394,6 +409,7 @@ Valid command line arguments:
   -n1|--network1 <id>: When Istio is installed in cluster 1, it will be part of the network with this given name. (Default: network-default)
   -n2|--network2 <id>: When Istio is installed in cluster 2, it will be part of the network with this given name.
                        If this is left as empty string, it will be the same as --network1. (Default: "")
+  -sc|--single-cluster <bool>: If "true", perform action just in CLUSTER 1. (Default: false)
   -sk|--single-kiali <bool>: If "true", a single kiali will be deployed for the whole mesh. (Default: true)
   -h|--help: this message
 HELPMSG
@@ -542,6 +558,7 @@ export BOOKINFO_ENABLED \
        CLUSTER2_USER \
        CROSSNETWORK_GATEWAY_REQUIRED \
        DORP \
+       AUTH_GROUPS \
        IS_OPENSHIFT \
        ISTIO_DIR \
        ISTIO_NAMESPACE \
@@ -563,7 +580,8 @@ export BOOKINFO_ENABLED \
        MESH_ID \
        NETWORK1_ID \
        NETWORK2_ID \
-       SINGLE_KIALI
+       SINGLE_KIALI \
+       SINGLE_CLUSTER
 
 cat <<EOM
 === SETTINGS ===
@@ -606,7 +624,9 @@ MINIKUBE_MEMORY=$MINIKUBE_MEMORY
 MESH_ID=$MESH_ID
 NETWORK1_ID=$NETWORK1_ID
 NETWORK2_ID=$NETWORK2_ID
+SINGLE_CLUSTER=$SINGLE_CLUSTER
 SINGLE_KIALI=$SINGLE_KIALI
+AUTH_GROUPS=$AUTH_GROUPS
 === SETTINGS ===
 EOM
 
