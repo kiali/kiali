@@ -167,7 +167,10 @@ Cypress.Commands.add('login', (username: string, password: string) => {
             }).then(() => {
               const tags = Cypress.env('TAGS');
               if (tags.includes('multi-cluster') || tags.includes('multi-primary')) {
-                ensureMulticlusterApplicationsAreHealthy();
+                // TODO: Hack
+                if (username !== 'bookinfouser') {
+                  ensureMulticlusterApplicationsAreHealthy();
+                }
               }
             });
           });

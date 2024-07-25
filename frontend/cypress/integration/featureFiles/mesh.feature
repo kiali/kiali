@@ -51,3 +51,11 @@ Feature: Kiali Mesh page
   Scenario: Test istio-system
     When user selects mesh node with label "istio-system"
     Then user sees "istio-system" namespace side panel
+
+  Scenario: See the Mesh menu link
+    Then user see the "mesh" menu
+
+  Scenario: See the Mesh link in the about
+    And user clicks on Help Button
+    And user clicks on About Button
+    Then user see the "mesh" link
