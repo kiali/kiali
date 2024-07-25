@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/models"
@@ -54,8 +55,29 @@ func NewMeshService(
 }
 
 func (in *MeshService) CanaryUpgradeStatus() (*models.CanaryUpgradeStatus, error) {
-	upgrade := in.conf.ExternalServices.Istio.IstioCanaryRevision.Upgrade
-	current := in.conf.ExternalServices.Istio.IstioCanaryRevision.Current
+	upgrade := ""
+	current := ""
+
+	kubeCache, err := in.kialiCache.GetKubeCache(in.homeClusterSAClient.ClusterInfo().Name)
+	if err != nil {
+		return nil, err
+	}
+
+	canaryPods, err := istio.GetHealthyIstiodPods(kubeCache, istio.CanaryRevisionLabel, in.conf.IstioNamespace)
+	if err != nil {
+		return nil, err
+	}
+	if len(canaryPods) > 0 {
+		upgrade = istio.CanaryRevisionLabel
+	}
+	currentPods, err := istio.GetHealthyIstiodPods(kubeCache, istio.DefaultRevisionLabel, in.conf.IstioNamespace)
+	if err != nil {
+		return nil, err
+	}
+	if len(currentPods) > 0 {
+		current = istio.DefaultRevisionLabel
+	}
+
 	migratedNsList := []string{}
 	pendingNsList := []string{}
 

@@ -27,11 +27,6 @@ type IstioAnnotations struct {
 	IstioInjectionAnnotation string `json:"istioInjectionAnnotation,omitempty"`
 }
 
-type IstioCanaryRevision struct {
-	Current string `json:"current,omitempty"`
-	Upgrade string `json:"upgrade,omitempty"`
-}
-
 // PrometheusConfig holds actual Prometheus configuration that is useful to Kiali.
 // All durations are in seconds.
 type PrometheusConfig struct {
@@ -56,7 +51,6 @@ type PublicConfig struct {
 	HealthConfig         config.HealthConfig           `json:"healthConfig,omitempty"`
 	InstallationTag      string                        `json:"installationTag,omitempty"`
 	IstioAnnotations     IstioAnnotations              `json:"istioAnnotations,omitempty"`
-	IstioCanaryRevision  IstioCanaryRevision           `json:"istioCanaryRevision,omitempty"`
 	IstioConfigMap       string                        `json:"istioConfigMap"`
 	IstioIdentityDomain  string                        `json:"istioIdentityDomain,omitempty"`
 	IstioLabels          config.IstioLabels            `json:"istioLabels,omitempty"`
@@ -95,12 +89,8 @@ func Config(conf *config.Config, discovery *istio.Discovery) http.HandlerFunc {
 			IstioNamespace:      conf.IstioNamespace,
 			IstioLabels:         conf.IstioLabels,
 			IstioConfigMap:      conf.ExternalServices.Istio.ConfigMapName,
-			IstioCanaryRevision: IstioCanaryRevision{
-				Current: conf.ExternalServices.Istio.IstioCanaryRevision.Current,
-				Upgrade: conf.ExternalServices.Istio.IstioCanaryRevision.Upgrade,
-			},
-			KialiFeatureFlags: conf.KialiFeatureFlags,
-			LogLevel:          log.GetLogLevel(),
+			KialiFeatureFlags:   conf.KialiFeatureFlags,
+			LogLevel:            log.GetLogLevel(),
 			Prometheus: PrometheusConfig{
 				GlobalScrapeInterval: promConfig.GlobalScrapeInterval,
 				StorageTsdbRetention: promConfig.StorageTsdbRetention,
