@@ -3,7 +3,9 @@ package handlers
 import (
 	"context"
 	"net/http"
-	"strings"
+	"slices"
+
+	"k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
@@ -72,8 +74,8 @@ func filterAccessibleControlPlanes(ctx context.Context, namespaceService busines
 	for i, cp := range mesh.ControlPlanes {
 		// Check if the user is able to access to the control plane
 		_, err := namespaceService.GetClusterNamespace(ctx, cp.IstiodNamespace, cp.Cluster.Name)
-		if err != nil && strings.Contains(err.Error(), "forbidden") {
-			mesh.ControlPlanes = append(mesh.ControlPlanes[:i], mesh.ControlPlanes[i+1:]...)
+		if err != nil && errors.IsForbidden(err) {
+			slices.Delete(mesh.ControlPlanes, i, i+1)
 		}
 	}
 }
