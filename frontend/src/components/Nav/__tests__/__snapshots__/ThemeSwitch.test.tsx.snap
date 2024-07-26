@@ -4,14 +4,14 @@ exports[`ThemeSwitch renders dark theme 1`] = `
 <Tooltip
   content={
     <React.Fragment>
-      Switch to Light Mode
+      Switch to {{theme}} Mode {"theme":"Light"}
     </React.Fragment>
   }
   position="bottom"
 >
   <div>
     <Button
-      className="kiali_f17jn9du kiali_fj999mp"
+      className="kiali_f1gb5m5k kiali_fj999mp"
       onClick={[Function]}
       variant="secondary"
     >
@@ -20,7 +20,7 @@ exports[`ThemeSwitch renders dark theme 1`] = `
       />
     </Button>
     <Button
-      className="kiali_f17jn9du kiali_fxx0nx6"
+      className="kiali_f1gb5m5k kiali_fxx0nx6"
       onClick={[Function]}
       variant="primary"
     >
@@ -36,14 +36,14 @@ exports[`ThemeSwitch renders light theme 1`] = `
 <Tooltip
   content={
     <React.Fragment>
-      Switch to Dark Mode
+      Switch to {{theme}} Mode {"theme":"Dark"}
     </React.Fragment>
   }
   position="bottom"
 >
   <div>
     <Button
-      className="kiali_f17jn9du kiali_fj999mp"
+      className="kiali_f1gb5m5k kiali_fj999mp"
       onClick={[Function]}
       variant="primary"
     >
@@ -52,7 +52,7 @@ exports[`ThemeSwitch renders light theme 1`] = `
       />
     </Button>
     <Button
-      className="kiali_f17jn9du kiali_fxx0nx6"
+      className="kiali_f1gb5m5k kiali_fxx0nx6"
       onClick={[Function]}
       variant="secondary"
     >

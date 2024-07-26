@@ -13,20 +13,23 @@ const notificationStyle = kialiStyle({
   zIndex: 500
 });
 
-type ReduxProps = {
+type ReduxStateProps = {
   groups: NotificationGroup[];
+};
 
+type ReduxDispatchProps = {
   onDismissNotification: (message: NotificationMessage, userDismissed: boolean) => void;
 };
 
-type MessageCenterProps = ReduxProps & {
-  drawerTitle: string;
-};
+type MessageCenterProps = ReduxStateProps &
+  ReduxDispatchProps & {
+    drawerTitle: string;
+  };
 
-export class MessageCenterComponent extends React.Component<MessageCenterProps> {
+export const MessageCenterComponent: React.FC<MessageCenterProps> = (props: MessageCenterProps) => {
   // Get messages that are meant to be show as notifications (Toast), appending
   // the groupId to allow to recognize the group they belong. (see onDismissNotification)
-  getNotificationMessages = (groups: NotificationGroup[]) => {
+  const getNotificationMessages = (groups: NotificationGroup[]): NotificationMessage[] => {
     return groups.reduce((messages: NotificationMessage[], group) => {
       return messages.concat(
         group.messages
@@ -36,26 +39,21 @@ export class MessageCenterComponent extends React.Component<MessageCenterProps> 
     }, []);
   };
 
-  render() {
-    return (
-      <div className={notificationStyle}>
-        <AlertDrawer title={this.props.drawerTitle} />
-        <NotificationList
-          messages={this.getNotificationMessages(this.props.groups)}
-          onDismiss={this.props.onDismissNotification}
-        />
-      </div>
-    );
-  }
-}
+  return (
+    <div className={notificationStyle}>
+      <AlertDrawer title={props.drawerTitle} />
+      <NotificationList messages={getNotificationMessages(props.groups)} onDismiss={props.onDismissNotification} />
+    </div>
+  );
+};
 
-const mapStateToProps = (state: KialiAppState) => {
+const mapStateToProps = (state: KialiAppState): ReduxStateProps => {
   return {
     groups: state.messageCenter.groups
   };
 };
 
-const mapDispatchToProps = (dispatch: KialiDispatch) => {
+const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => {
   return {
     onDismissNotification: (message, userDismissed) => {
       if (userDismissed) {

@@ -8,20 +8,15 @@ import { isUpstream } from '../../UpstreamDetector/UpstreamDetector';
 import { Status, StatusKey } from '../../../types/StatusState';
 import { config, serverConfig } from '../../../config';
 import { IstioCertsInfo } from 'components/IstioCertsInfo/IstioCertsInfo';
-import { kialiStyle } from 'styles/StyleUtils';
 import { Dropdown, DropdownItem, DropdownList, MenuToggle, MenuToggleElement } from '@patternfly/react-core';
+import { useKialiTranslation } from 'utils/I18nUtils';
 
-type HelpDropdownReduxProps = {
+type ReduxProps = {
   status: Status;
   warningMessages: string[];
 };
 
-type HelpDropdownProps = HelpDropdownReduxProps & {};
-
-const menuToggleStyle = kialiStyle({
-  marginTop: '0.25rem',
-  verticalAlign: '-0.1rem'
-});
+type HelpDropdownProps = ReduxProps;
 
 const HelpDropdownComponent: React.FC<HelpDropdownProps> = (props: HelpDropdownProps) => {
   const [isDropdownOpen, setIsDropdownOpen] = React.useState<boolean>(false);
@@ -29,12 +24,15 @@ const HelpDropdownComponent: React.FC<HelpDropdownProps> = (props: HelpDropdownP
   const [isDebugInformationOpen, setIsDebugInformationOpen] = React.useState<boolean>(false);
   const [isCertsInformationOpen, setIsCertsInformationOpen] = React.useState<boolean>(false);
 
-  const onDropdownSelect = () => {
+  const { t } = useKialiTranslation();
+
+  const onDropdownSelect = (): void => {
     setIsDropdownOpen(!isDropdownOpen);
   };
 
-  const buildDocumentationLink = () => {
+  const buildDocumentationLink = (): string => {
     const url = new URL(config.documentation.url);
+
     if (isUpstream) {
       const kialiCoreVersion = props.status[StatusKey.KIALI_CORE_VERSION] || 'unknown';
 
@@ -43,10 +41,11 @@ const HelpDropdownComponent: React.FC<HelpDropdownProps> = (props: HelpDropdownP
       url.searchParams.append('utm_campaign', kialiCoreVersion);
       url.searchParams.append('utm_content', '?-menu');
     }
+
     return url.toString();
   };
 
-  const items: JSX.Element[] = [];
+  const items: React.ReactNode[] = [];
 
   items.push(
     <DropdownItem key={'view_documentation'} onClick={() => window.open(buildDocumentationLink(), '_blank')}>
@@ -93,10 +92,9 @@ const HelpDropdownComponent: React.FC<HelpDropdownProps> = (props: HelpDropdownP
         toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
           <MenuToggle
             ref={toggleRef}
-            className={menuToggleStyle}
             data-test="about-help-button"
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-            aria-label="Help"
+            aria-label={t('Help')}
             variant="plain"
             isExpanded={isDropdownOpen}
           >
@@ -114,7 +112,7 @@ const HelpDropdownComponent: React.FC<HelpDropdownProps> = (props: HelpDropdownP
   );
 };
 
-const mapStateToProps = (state: KialiAppState) => ({
+const mapStateToProps = (state: KialiAppState): ReduxProps => ({
   status: state.statusState.status,
   warningMessages: state.statusState.warningMessages
 });
