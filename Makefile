@@ -85,6 +85,9 @@ GO_BUILD_ENVVARS = \
 # Extra build flags passed to the go compiler.
 GO_BUILD_FLAGS ?= 
 
+# Where the resulting binary will go.
+GO_BUILD_OUTPUT ?= ${GOPATH}/bin/kiali
+
 # Determine which Dockerfile is used to build the server container
 KIALI_DOCKER_FILE ?= Dockerfile-distroless
 

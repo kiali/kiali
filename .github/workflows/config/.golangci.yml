@@ -2,11 +2,15 @@ run:
   timeout: 5m
   tests: true
 issues:
+  exclude:
+  - frontend/frontend.go
   exclude-files:
   - doc.go
+  - frontend/frontend.go
   - ".*\\.pb\\.go$"
   exclude-dirs:
   - frontend
+  - local
 linters:
   enable:
   - goimports
