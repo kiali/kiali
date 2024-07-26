@@ -3,7 +3,6 @@ package handlers
 import (
 	"context"
 	"net/http"
-	"slices"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 
@@ -72,11 +71,13 @@ func MeshGraph(
 
 func filterAccessibleControlPlanes(ctx context.Context, namespaceService business.NamespaceService, mesh *models.Mesh) {
 
-	for i, cp := range mesh.ControlPlanes {
+	authorizedControlPlanes := []models.ControlPlane{}
+	for _, cp := range mesh.ControlPlanes {
 		// Check if the user is able to access to the control plane
 		_, err := namespaceService.GetClusterNamespace(ctx, cp.IstiodNamespace, cp.Cluster.Name)
-		if err != nil && errors.IsForbidden(err) {
-			mesh.ControlPlanes = slices.Delete(mesh.ControlPlanes, i, i+1)
+		if err == nil || !errors.IsForbidden(err) {
+			authorizedControlPlanes = append(authorizedControlPlanes, cp)
 		}
 	}
+	mesh.ControlPlanes = authorizedControlPlanes
 }
