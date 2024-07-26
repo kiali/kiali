@@ -24,7 +24,7 @@
 // -- This will overwrite an existing command --
 // Cypress.Commands.overwrite('visit', (originalFn, url, options) => { ... })
 
-import { BOOKINFO_USERNAME } from '../integration/common/kiali_cookie';
+const BOOKINFO_USERNAME = 'bookinfouser';
 
 declare namespace Cypress {
   interface Chainable<Subject> {
