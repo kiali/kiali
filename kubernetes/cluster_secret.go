@@ -14,6 +14,8 @@ import (
 // RemoteClusterInfo is data that identifies a cluster particpating in the mesh. Multi-cluster meshes have multiple RemoteClusterInfos.
 // Information obtained for a RemoteClusterInfo comes from remote cluster secrets.
 type RemoteClusterInfo struct {
+	// TODO: Right place for this?
+	ClusterName string
 	// Config contains information necessary to connect to the remote cluster
 	Config clientcmd.ClientConfig
 	// SecretFile is the absolute file location of the secret as found on the file system

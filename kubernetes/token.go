@@ -20,10 +20,10 @@ var (
 )
 
 // GetKialiTokenForHomeCluster returns the Kiali SA token to be used to communicate with the local data plane k8s api endpoint and the token file.
-func GetKialiTokenForHomeCluster() (string, string, error) {
+func GetKialiTokenForHomeCluster(conf *config.Config) (string, string, error) {
 	// TODO: refresh the token when it changes rather than after it expires
 	if KialiTokenForHomeCluster == "" || shouldRefreshToken() {
-		if remoteSecret, err := GetRemoteSecret(config.Get().Deployment.RemoteSecretPath); err == nil { // for experimental feature - for when data plane is in a remote cluster
+		if remoteSecret, err := GetRemoteSecret(conf.Deployment.RemoteSecretPath); err == nil { // for experimental feature - for when data plane is in a remote cluster
 			currentContextAuthInfo := remoteSecret.Contexts[remoteSecret.CurrentContext].AuthInfo
 			if authInfo, ok := remoteSecret.AuthInfos[currentContextAuthInfo]; ok {
 				KialiTokenForHomeCluster = authInfo.Token
