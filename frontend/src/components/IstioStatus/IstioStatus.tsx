@@ -23,6 +23,7 @@ import { IconProps, createIcon } from 'config/KialiIcon';
 import { Link } from 'react-router-dom-v5-compat';
 import { useKialiTranslation } from 'utils/I18nUtils';
 import { MASTHEAD } from 'components/Nav/Masthead/Masthead';
+import { isControlPlaneAccessible } from '../../utils/MeshUtils';
 
 type ReduxStateProps = {
   namespaces?: Namespace[];
@@ -118,7 +119,7 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
       <>
         <IstioStatusList status={props.status} />
 
-        {!props.location?.endsWith('/mesh') && (
+        {!props.location?.endsWith('/mesh') && isControlPlaneAccessible() && (
           <div className={meshLinkStyle}>
             <span>{t('More info at')}</span>
             <Link to="/mesh">{t('Mesh page')}</Link>
