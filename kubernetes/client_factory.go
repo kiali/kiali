@@ -280,7 +280,7 @@ func (cf *clientFactory) GetSAClients() map[string]ClientInterface {
 	return ConvertFromUserClients(cf.saClientEntries)
 }
 
-// GetClient returns a read-write client for the specified user token and cluster, creating one if necessary.
+// getClient returns a client for the specified token. Creating one if necessary.
 func (cf *clientFactory) GetClient(authInfo *api.AuthInfo, cluster string) (UserClientInterface, error) {
 	if cf.kialiConfig.IsRBACDisabled() {
 		return cf.GetSAClientAsUserClientInterface(cluster), nil
@@ -289,7 +289,7 @@ func (cf *clientFactory) GetClient(authInfo *api.AuthInfo, cluster string) (User
 	return cf.getRecycleClient(authInfo, defaultExpirationTime, cluster)
 }
 
-// GetClients returns all read-write clients for the specified user tokens, creating them as necessary.
+// getClient returns a client for the specified token. Creating one if necessary.
 func (cf *clientFactory) GetClients(authInfos map[string]*api.AuthInfo) (map[string]UserClientInterface, error) {
 	if cf.kialiConfig.IsRBACDisabled() {
 		return cf.GetSAClientsAsUserClientInterfaces(), nil

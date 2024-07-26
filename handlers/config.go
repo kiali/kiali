@@ -62,6 +62,7 @@ type PublicConfig struct {
 	KialiFeatureFlags   config.KialiFeatureFlags      `json:"kialiFeatureFlags,omitempty"`
 	LogLevel            string                        `json:"logLevel,omitempty"`
 	Prometheus          PrometheusConfig              `json:"prometheus,omitempty"`
+	RunConfig           *config.OfflineManifest       `json:"runConfig,omitempty"`
 	RunMode             config.RunMode                `json:"runMode,omitempty"`
 }
 
@@ -75,7 +76,8 @@ func Config(conf *config.Config, cache cache.KialiCache, discovery istio.MeshDis
 
 		// Note that we determine the Prometheus config at request time because it is not
 		// guaranteed to remain the same during the Kiali lifespan.
-		promConfig := getPrometheusConfig(conf, prom, logger)
+		var promConfig PrometheusConfig
+		promConfig = getPrometheusConfig(conf, prom, logger)
 		publicConfig := PublicConfig{
 			AuthStrategy:      conf.Auth.Strategy,
 			Clusters:          make(map[string]models.KubeCluster),
@@ -102,6 +104,10 @@ func Config(conf *config.Config, cache cache.KialiCache, discovery istio.MeshDis
 				StorageTsdbRetention: promConfig.StorageTsdbRetention,
 			},
 			RunMode: conf.RunMode,
+		}
+
+		if conf.RunMode == config.RunModeOffline {
+			publicConfig.RunConfig = conf.RunConfig
 		}
 
 		userClients, err := getUserClients(r, clientFactory)
@@ -152,6 +158,9 @@ func getPrometheusConfig(conf *config.Config, client prometheus.ClientInterface,
 	promConfig := PrometheusConfig{
 		GlobalScrapeInterval: defaultPrometheusGlobalScrapeInterval,
 		StorageTsdbRetention: defaultPrometheusGlobalStorageTSDBRetention,
+	}
+	if conf.RunMode == config.RunModeOffline {
+		return promConfig
 	}
 	// Check if thanosProxy
 	thanosConf := conf.ExternalServices.Prometheus.ThanosProxy
@@ -236,6 +245,11 @@ func CrippledFeatures(client prometheus.ClientInterface) http.HandlerFunc {
 
 		// assume nothing crippled on error
 		crippledFeatures := KialiCrippledFeatures{}
+		// TODO: Fix
+		if r != nil {
+			RespondWithJSONIndent(w, http.StatusOK, crippledFeatures)
+			return
+		}
 
 		existingMetrics, err := client.GetExistingMetricNames(requiredMetrics)
 		if !checkErr(err, "", logger) {
