@@ -133,7 +133,13 @@
           "cacheDuration" : 7,
           "cacheEnabled" : true,
           "cacheExpiration" : 300,
+          "customHeaders" : { },
+          "enabled": true,
+          "healthCheckUrl" : "",
+          "isCore" : false,
+          "queryScope" : { },
           "thanosProxy" : {
+            "enabled" : false,
             "retentionPeriod" : "7d",
             "scrapeInterval" : "30s"
           },

@@ -106,7 +106,8 @@ export const healthConfig = {
   istioTelemetryV2: true,
   deployment: {
     viewOnlyMode: false
-  }
+  },
+  runMode: 'app'
 } as ServerConfig;
 
 export const tolerancesDefault = [

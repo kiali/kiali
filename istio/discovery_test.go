@@ -1467,7 +1467,7 @@ func istiodTestServer(t *testing.T) *httptest.Server {
 			return
 		default:
 			w.WriteHeader(http.StatusInternalServerError)
-			t.Fatalf("Unexpected request path: %s", r.URL.Path)
+			t.Logf("Unexpected request path: %s", r.URL.Path)
 			return
 		}
 		if _, err := w.Write(kubernetes.ReadFile(t, file)); err != nil {

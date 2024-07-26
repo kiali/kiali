@@ -38,6 +38,11 @@ var supportedTimeFormats = [...]string{
 	time.StampNano,
 }
 
+// Logger returns the global logger instance.
+func Logger() *zerolog.Logger {
+	return &log.Logger
+}
+
 // InitializeLogger configures the global log level and log format.
 func InitializeLogger() zerolog.Logger {
 	zerolog.TimeFieldFormat = resolveTimeFormatFromEnv()
