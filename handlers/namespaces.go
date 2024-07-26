@@ -77,7 +77,6 @@ func NamespaceValidationSummary(
 	discovery *istio.Discovery,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-
 		query := r.URL.Query()
 		vars := mux.Vars(r)
 		namespace := vars["namespace"]
@@ -95,7 +94,7 @@ func NamespaceValidationSummary(
 		var errValidations error
 
 		// If cluster is not set, is because we need a unified validations view (E.g. in the Summary graph)
-		clusters, _ := discovery.Clusters()
+		clusters := discovery.Clusters()
 		if len(clusters) == 1 {
 			istioConfigValidationResults, errValidations = business.Validations.GetValidationsForNamespace(r.Context(), cluster, namespace)
 		} else {

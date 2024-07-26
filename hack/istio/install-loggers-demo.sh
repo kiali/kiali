@@ -14,6 +14,8 @@ NAMESPACE="loggers"
 AMBIENT_ENABLED="false"
 DELETE_DEMO="false"
 ARCH="amd64"
+AUTO_INJECTION="true"
+AUTO_INJECTION_LABEL="istio-injection=enabled"
 
 # process command line args
 while [[ $# -gt 0 ]]; do
@@ -21,6 +23,14 @@ while [[ $# -gt 0 ]]; do
   case $key in
     -a|--arch)
       ARCH="$2"
+      shift;shift
+      ;;
+    -ai|--auto-injection)
+      AUTO_INJECTION="$2"
+      shift;shift
+      ;;
+    -ail|--auto-injection-label)
+      AUTO_INJECTION_LABEL="$2"
       shift;shift
       ;;
     -c|--client-exe)
@@ -43,6 +53,8 @@ while [[ $# -gt 0 ]]; do
       cat <<HELPMSG
 Valid command line arguments:
   -a|--arch <amd64|ppc64le|s390x>: Images for given arch will be used (default: amd64).
+  -ai|--auto-injection <true|false>: If true, auto-inject sidecars (default: true).
+  -ail|--auto-injection-label <label>: Label to use for auto-injection (default: istio-injection=enabled).
   -ab|--ambient: Istio Ambient enabled
   -c|--client-exe <name>: Cluster client executable name - valid values are "kubectl" or "oc"  
   -d|--delete <true|false>: If true, uninstall logger demo. If false, install logger demo. (default: false).
@@ -86,8 +98,11 @@ if [ "${DELETE_DEMO}" == "false" ]; then
   fi
 
   if [ "$AMBIENT_ENABLED" = "true" ]; then
-      echo "Labeling namespace for Ambient"
-      $CLIENT_EXE label namespace ${NAMESPACE} istio.io/dataplane-mode=ambient --overwrite
+    echo "Labeling namespace for Ambient"
+    $CLIENT_EXE label namespace ${NAMESPACE} istio.io/dataplane-mode=ambient --overwrite
+  elif [ "${AUTO_INJECTION}" == "true" ]; then
+    echo "Labeling namespace for auto-injection"
+    $CLIENT_EXE label namespace ${NAMESPACE} "${AUTO_INJECTION_LABEL}"
   fi
 
   echo "Deploying custom logger"

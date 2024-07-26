@@ -64,6 +64,7 @@ type PublicConfig struct {
 	KialiFeatureFlags     config.KialiFeatureFlags      `json:"kialiFeatureFlags,omitempty"`
 	LogLevel              string                        `json:"logLevel,omitempty"`
 	Prometheus            PrometheusConfig              `json:"prometheus,omitempty"`
+	RunConfig             *config.OfflineManifest       `json:"runConfig,omitempty"`
 	RunMode               config.RunMode                `json:"runMode,omitempty"`
 }
 
@@ -106,6 +107,10 @@ func Config(conf *config.Config, cache cache.KialiCache, discovery istio.MeshDis
 			RunMode: conf.RunMode,
 		}
 
+		if conf.RunMode == config.RunModeOffline {
+			publicConfig.RunConfig = conf.RunConfig
+		}
+
 		userClients, err := getUserClients(r, clientFactory)
 		if err != nil {
 			RespondWithError(w, http.StatusInternalServerError, "Unable to convert session token into user client: "+err.Error())
@@ -122,11 +127,7 @@ func Config(conf *config.Config, cache cache.KialiCache, discovery istio.MeshDis
 
 		// Fetch the list of all clusters in the mesh
 		// One usage of this data is to cross-link Kiali instances, when possible.
-		clusters, err := discovery.Clusters()
-		if err != nil {
-			RespondWithError(w, http.StatusInternalServerError, "Failure while listing clusters in the mesh: "+err.Error())
-			return
-		}
+		clusters := discovery.Clusters()
 
 		for _, cluster := range clusters {
 			publicConfig.Clusters[cluster.Name] = cluster
@@ -156,6 +157,9 @@ func getPrometheusConfig(conf *config.Config, client prometheus.ClientInterface,
 	promConfig := PrometheusConfig{
 		GlobalScrapeInterval: defaultPrometheusGlobalScrapeInterval,
 		StorageTsdbRetention: defaultPrometheusGlobalStorageTSDBRetention,
+	}
+	if conf.RunMode == config.RunModeOffline {
+		return promConfig
 	}
 	// Check if thanosProxy
 	thanosConf := conf.ExternalServices.Prometheus.ThanosProxy
@@ -219,7 +223,7 @@ type KialiCrippledFeatures struct {
 	ResponseTimePercentiles bool `json:"responseTimePercentiles"`
 }
 
-func CrippledFeatures(client prometheus.ClientInterface) http.HandlerFunc {
+func CrippledFeatures(conf *config.Config, client prometheus.ClientInterface) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		logger := log.FromRequest(r)
 
@@ -240,6 +244,12 @@ func CrippledFeatures(client prometheus.ClientInterface) http.HandlerFunc {
 
 		// assume nothing crippled on error
 		crippledFeatures := KialiCrippledFeatures{}
+
+		// TODO: Getting metric names is not yet supported in offline mode.
+		if conf.RunMode == config.RunModeOffline {
+			RespondWithJSONIndent(w, http.StatusOK, crippledFeatures)
+			return
+		}
 
 		existingMetrics, err := client.GetExistingMetricNames(requiredMetrics)
 		if !checkErr(err, "", logger) {

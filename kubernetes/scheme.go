@@ -8,7 +8,8 @@ import (
 	userscheme "github.com/openshift/client-go/user/clientset/versioned/scheme"
 	extentionsv1alpha1 "istio.io/client-go/pkg/apis/extensions/v1alpha1"
 	networkingv1 "istio.io/client-go/pkg/apis/networking/v1"
-	networkingv1alpha1 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+	networkingv1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+
 	securityv1 "istio.io/client-go/pkg/apis/security/v1"
 	telemetryv1 "istio.io/client-go/pkg/apis/telemetry/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -26,7 +27,7 @@ func NewScheme() (*runtime.Scheme, error) {
 	addSchemeFuncs := []func(s *runtime.Scheme) error{
 		clientgoscheme.AddToScheme,
 		networkingv1.AddToScheme,
-		networkingv1alpha1.AddToScheme,
+		networkingv1alpha3.AddToScheme,
 		extentionsv1alpha1.AddToScheme,
 		securityv1.AddToScheme,
 		telemetryv1.AddToScheme,

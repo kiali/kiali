@@ -49,7 +49,7 @@ func newLayer(
 
 	// TODO: Modify the k8s argument to other services to pass the whole k8s map if needed
 	temporaryLayer.App = NewAppService(temporaryLayer, conf, prom, grafana, userClients)
-	temporaryLayer.Health = HealthService{conf: conf, prom: prom, businessLayer: temporaryLayer, userClients: userClients}
+	temporaryLayer.Health = NewHealthService(temporaryLayer, conf, prom, userClients)
 	temporaryLayer.IstioConfig = IstioConfigService{conf: conf, userClients: userClients, saClients: kialiSAClients, kialiCache: cache, businessLayer: temporaryLayer, controlPlaneMonitor: cpm}
 	temporaryLayer.IstioStatus = NewIstioStatusService(cache, conf, discovery, kialiSAClients[homeClusterName], &temporaryLayer.Tracing, userClients, &temporaryLayer.Workload)
 	temporaryLayer.Namespace = NewNamespaceService(cache, conf, discovery, kialiSAClients, userClients)

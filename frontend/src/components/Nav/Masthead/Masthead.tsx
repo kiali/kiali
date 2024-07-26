@@ -2,6 +2,7 @@ import * as React from 'react';
 import { Flex, FlexItem, Toolbar, ToolbarItem } from '@patternfly/react-core';
 
 import { serverConfig } from '../../../config';
+import { RunMode } from '../../../types/ServerConfig';
 import { IstioStatus } from '../../IstioStatus/IstioStatus';
 import { UserDropdown } from './UserDropdown';
 import { HelpDropdown } from './HelpDropdown';
@@ -10,6 +11,7 @@ import { ThemeSwitch } from './ThemeSwitch';
 import { LanguageSwitch } from './LanguageSwitch';
 import { PfSpinner } from 'components/Pf/PfSpinner';
 import { kialiStyle } from 'styles/StyleUtils';
+import { OfflineStatus } from './OfflineStatus';
 
 export const MASTHEAD = 'masthead';
 
@@ -49,6 +51,10 @@ const userDropdownStyle = kialiStyle({
   bottom: '0.125rem'
 });
 
+const offlineStatusStyle = kialiStyle({
+  marginRight: '2.5rem'
+});
+
 export const MastheadItems: React.FC = () => {
   return (
     <>
@@ -56,9 +62,15 @@ export const MastheadItems: React.FC = () => {
       <Toolbar>
         <ToolbarItem className={toolbarStyle}>
           <Flex>
-            <FlexItem className={istioStatusStyle}>
-              <IstioStatus location={MASTHEAD} />
-            </FlexItem>
+            {serverConfig.runMode === RunMode.OFFLINE ? (
+              <FlexItem className={offlineStatusStyle}>
+                <OfflineStatus />
+              </FlexItem>
+            ) : (
+              <FlexItem className={istioStatusStyle}>
+                <IstioStatus location={MASTHEAD} />
+              </FlexItem>
+            )}
 
             <FlexItem className={themeSwitchStyle}>
               <ThemeSwitch />
