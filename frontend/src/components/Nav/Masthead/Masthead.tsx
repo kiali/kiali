@@ -48,9 +48,6 @@ const userDropdownStyle = kialiStyle({
   bottom: '0.125rem'
 });
 
-
-
-
 export const MastheadItems: React.FC = () => {
   const { t } = useKialiTranslation();
 
