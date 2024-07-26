@@ -2,8 +2,14 @@ import { Before, After } from '@badeball/cypress-cucumber-preprocessor';
 
 const CLUSTER1_CONTEXT = Cypress.env('CLUSTER1_CONTEXT');
 const CLUSTER2_CONTEXT = Cypress.env('CLUSTER2_CONTEXT');
+const IN_OFFLINE_MODE = Cypress.env('RUN_MODE') === 'offline';
 
 const install_demoapp = (demoapp: string): void => {
+  if (IN_OFFLINE_MODE) {
+    cy.log(`In offline mode. Skipping installing demo ${demoapp}.`);
+    return;
+  }
+
   let namespaces = 'bookinfo';
   let deletion = `--delete-${demoapp}`;
   let tg = '-tg';

@@ -64,6 +64,7 @@ type PublicConfig struct {
 	KialiFeatureFlags     config.KialiFeatureFlags      `json:"kialiFeatureFlags,omitempty"`
 	LogLevel              string                        `json:"logLevel,omitempty"`
 	Prometheus            PrometheusConfig              `json:"prometheus,omitempty"`
+	RunConfig             *config.OfflineManifest       `json:"runConfig,omitempty"`
 	RunMode               config.RunMode                `json:"runMode,omitempty"`
 }
 
@@ -104,6 +105,10 @@ func Config(conf *config.Config, cache cache.KialiCache, discovery istio.MeshDis
 				StorageTsdbRetention: promConfig.StorageTsdbRetention,
 			},
 			RunMode: conf.RunMode,
+		}
+
+		if conf.RunMode == config.RunModeOffline {
+			publicConfig.RunConfig = conf.RunConfig
 		}
 
 		userClients, err := getUserClients(r, clientFactory)
@@ -156,6 +161,9 @@ func getPrometheusConfig(conf *config.Config, client prometheus.ClientInterface,
 	promConfig := PrometheusConfig{
 		GlobalScrapeInterval: defaultPrometheusGlobalScrapeInterval,
 		StorageTsdbRetention: defaultPrometheusGlobalStorageTSDBRetention,
+	}
+	if conf.RunMode == config.RunModeOffline {
+		return promConfig
 	}
 	// Check if thanosProxy
 	thanosConf := conf.ExternalServices.Prometheus.ThanosProxy
@@ -219,7 +227,7 @@ type KialiCrippledFeatures struct {
 	ResponseTimePercentiles bool `json:"responseTimePercentiles"`
 }
 
-func CrippledFeatures(client prometheus.ClientInterface) http.HandlerFunc {
+func CrippledFeatures(conf *config.Config, client prometheus.ClientInterface) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		logger := log.FromRequest(r)
 
@@ -240,6 +248,12 @@ func CrippledFeatures(client prometheus.ClientInterface) http.HandlerFunc {
 
 		// assume nothing crippled on error
 		crippledFeatures := KialiCrippledFeatures{}
+
+		// TODO: Getting metric names is not yet supported in offline mode.
+		if conf.RunMode == config.RunModeOffline {
+			RespondWithJSONIndent(w, http.StatusOK, crippledFeatures)
+			return
+		}
 
 		existingMetrics, err := client.GetExistingMetricNames(requiredMetrics)
 		if !checkErr(err, "", logger) {

@@ -220,10 +220,6 @@ func persesVersion(ctx context.Context, perses *perses.Service, conf *config.Con
 }
 
 func prometheusVersion(ctx context.Context, prom prometheus.ClientInterface) (*models.ExternalServiceInfo, error) {
-	if prom == nil {
-		return nil, fmt.Errorf("prometheus client is nil")
-	}
-
 	info, err := prom.GetBuildInfo(ctx)
 	if err != nil {
 		return nil, err
