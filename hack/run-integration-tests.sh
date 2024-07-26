@@ -13,6 +13,7 @@ FRONTEND_PRIMARY_REMOTE="frontend-primary-remote"
 FRONTEND_MULTI_PRIMARY="frontend-multi-primary"
 FRONTEND_EXTERNAL_KIALI="frontend-external-kiali"
 FRONTEND_TEMPO="frontend-tempo"
+LOCAL="local"
 HELM_CHARTS_DIR=""
 ISTIO_VERSION=""
 KEYCLOAK_LIMIT_MEMORY=""
@@ -74,8 +75,8 @@ while [[ $# -gt 0 ]]; do
       ;;
     -ts|--test-suite)
       TEST_SUITE="${2}"
-      if [ "${TEST_SUITE}" != "${BACKEND}" -a "${TEST_SUITE}" != "${BACKEND_EXTERNAL_CONTROLPLANE}" -a "${TEST_SUITE}" != "${FRONTEND}" -a "${TEST_SUITE}" != "${FRONTEND_AMBIENT}" -a "${TEST_SUITE}" != "${FRONTEND_PRIMARY_REMOTE}" -a "${TEST_SUITE}" != "${FRONTEND_MULTI_PRIMARY}" -a "${TEST_SUITE}" != "${FRONTEND_EXTERNAL_KIALI}" -a "${TEST_SUITE}" != "${FRONTEND_TEMPO}" ]; then
-        echo "--test-suite option must be one of '${BACKEND}', '${BACKEND_EXTERNAL_CONTROLPLANE}', '${FRONTEND}', '${FRONTEND_PRIMARY_REMOTE}', '${FRONTEND_MULTI_PRIMARY}', '${FRONTEND_EXTERNAL_KIALI}', '${FRONTEND_AMBIENT}' or '${FRONTEND_TEMPO}'"
+      if [ "${TEST_SUITE}" != "${BACKEND}" -a "${TEST_SUITE}" != "${BACKEND_EXTERNAL_CONTROLPLANE}" -a "${TEST_SUITE}" != "${FRONTEND}" -a "${TEST_SUITE}" != "${FRONTEND_AMBIENT}" -a "${TEST_SUITE}" != "${FRONTEND_PRIMARY_REMOTE}" -a "${TEST_SUITE}" != "${FRONTEND_MULTI_PRIMARY}" -a "${TEST_SUITE}" != "${FRONTEND_EXTERNAL_KIALI}" -a "${TEST_SUITE}" != "${FRONTEND_TEMPO}" -a "${TEST_SUITE}" != "${LOCAL}" ]; then
+        echo "--test-suite option must be one of '${BACKEND}', '${BACKEND_EXTERNAL_CONTROLPLANE}', '${FRONTEND}', '${FRONTEND_PRIMARY_REMOTE}', '${FRONTEND_MULTI_PRIMARY}', '${FRONTEND_EXTERNAL_KIALI}', '${FRONTEND_AMBIENT}', '${FRONTEND_TEMPO}' or '${LOCAL}'"
         exit 1
       fi
       shift;shift
@@ -112,7 +113,7 @@ Valid command line arguments:
   -to|--tests-only <true|false>
     If true, only run the tests and skip the setup.
     Default: false
-  -ts|--test-suite <${BACKEND}|${BACKEND_EXTERNAL_CONTROLPLANE}|${FRONTEND}|${FRONTEND_AMBIENT}|${FRONTEND_PRIMARY_REMOTE}|${FRONTEND_MULTI_PRIMARY}|${FRONTEND_EXTERNAL_KIALI}|${FRONTEND_TEMPO}>
+  -ts|--test-suite <${BACKEND}|${BACKEND_EXTERNAL_CONTROLPLANE}|${FRONTEND}|${FRONTEND_AMBIENT}|${FRONTEND_PRIMARY_REMOTE}|${FRONTEND_MULTI_PRIMARY}|${FRONTEND_EXTERNAL_KIALI}|${FRONTEND_TEMPO}|${LOCAL}>
     Which test suite to run.
     Default: ${BACKEND}
   -wv|--with-video <true|false>
@@ -578,4 +579,78 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_TEMPO}" ]; then
   cd "${SCRIPT_DIR}"/../frontend
   yarn run cypress:run:tracing
   detectRaceConditions
+elif [ "${TEST_SUITE}" == "${LOCAL}" ]; then
+  ensureCypressInstalled
+
+  GOPATH=$(go env GOPATH)
+  # Check if the kiali binary exists
+  if [ -z "${GOPATH}" ]; then
+    echo "ERROR: Unable to determine GOPATH. Please ensure Go is properly installed."
+    exit 1
+  fi
+
+  KIALI_BINARY="${GOPATH}/bin/kiali"
+  if [ ! -f "${KIALI_BINARY}" ]; then
+    echo "ERROR: Kiali binary not found at ${KIALI_BINARY}. Please build the kiali binary first."
+    exit 1
+  fi
+
+  if [ "${TESTS_ONLY}" == "false" ]; then
+    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy token --sail true --deploy-kiali false ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG}
+
+    # Install demo apps
+    "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl"
+  fi
+
+  infomsg "Setup complete."
+
+  if [ "${SETUP_ONLY}" == "true" ]; then
+    exit 0
+  fi
+
+  # Create a kiali config to turn off grafana for the tests since it's not reachable from the local Kiali.
+  # Create a temp dir for the config
+  TEMP_DIR=$(mktemp -d)
+  CONFIG_FILE="${TEMP_DIR}/kiali-config.yaml"
+  cat <<EOF > "${CONFIG_FILE}"
+deployment:
+  cluster_name_overrides:
+    kind-ci: cluster-default
+external_services:
+  grafana:
+    enabled: false
+  tracing:
+    enabled: true
+EOF
+
+  # Start Kiali locally in the background
+  infomsg "Starting Kiali locally in the background using binary: ${KIALI_BINARY}"
+  "${KIALI_BINARY}" local --without-browser --config "${CONFIG_FILE}" &
+  KIALI_PID=$!
+  
+  # Set the local Kiali URL
+  KIALI_URL="http://localhost:20001"
+
+  # Give Kiali a few seconds to be healthy.
+  sleep 5
+
+  # Check to ensure the process is still running.
+  if ! ps -p ${KIALI_PID} > /dev/null; then
+    echo "Kiali process is not running. An error must have occurred. Check the logs above."
+    exit 1
+  fi
+
+  export CYPRESS_BASE_URL="${KIALI_URL}"
+  export CYPRESS_NUM_TESTS_KEPT_IN_MEMORY=0
+  # Recorded video is unusable due to low resources in CI: https://github.com/cypress-io/cypress/issues/4722
+  export CYPRESS_VIDEO="${WITH_VIDEO}"
+
+  # Trap to ensure we clean up the Kiali process on exit
+  trap "kill ${KIALI_PID} 2>/dev/null || true" EXIT
+
+  cd "${SCRIPT_DIR}"/../frontend
+  yarn run cypress:run:smoke
+  
+  # Stop the local Kiali process
+  kill ${KIALI_PID} 2>/dev/null || true
 fi

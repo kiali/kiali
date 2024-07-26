@@ -465,6 +465,7 @@ func TestNewClientFactoryClosesRecycleWhenCTXCancelled(t *testing.T) {
 	}
 }
 
+// TODO: This test fails when you have created the /kiali-remote-cluster-secrets directory locally.
 func TestClientFactoryGetClients(t *testing.T) {
 	cases := map[string]struct {
 		auth               config.AuthConfig

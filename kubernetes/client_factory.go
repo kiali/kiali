@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"k8s.io/client-go/rest"
+	// "k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
 
 	kialiconfig "github.com/kiali/kiali/config"
@@ -93,6 +94,36 @@ func NewClientFactory(ctx context.Context, conf *kialiconfig.Config, restConf *r
 	}()
 
 	return cf, nil
+}
+
+func NewClientFactoryWithSAClients(ctx context.Context, conf kialiconfig.Config, saClients map[string]ClientInterface) (ClientFactory, error) {
+	saClientEntries := map[string]UserClientInterface{}
+	for k, v := range saClients {
+		saClientEntries[k] = v.(UserClientInterface)
+	}
+	f := &clientFactory{
+		// Create a new config based on what was gathered above but don't specify the bearer token to use
+		baseRestConfig:  &rest.Config{},
+		kialiConfig:     &conf,
+		clientEntries:   make(map[string]map[string]UserClientInterface),
+		recycleChan:     make(chan string),
+		saClientEntries: saClientEntries,
+		homeCluster:     conf.KubernetesConfig.ClusterName,
+	}
+
+	// after creating a client factory
+	// background goroutines will be watching the clients` expiration
+	// if a client is expired, it will be removed from clientEntries
+	go f.watchClients()
+
+	// Need to cleanup the recycle chan since this client factory could be transitory.
+	go func() {
+		<-ctx.Done()
+		log.Debug("Stopping client factory recycle chan")
+		close(f.recycleChan)
+	}()
+
+	return f, nil
 }
 
 // newClientFactory allows for specifying the config and expiry duration
@@ -253,7 +284,7 @@ func stripAuthInfo(restConf *rest.Config) {
 
 // newSAClient returns a new client for the given cluster. If clusterInfo is nil then a client for the local cluster is returned.
 func (cf *clientFactory) newSAClient(clusterInfo ClusterInfo) (*K8SClient, error) {
-	log.Debugf("Creating new Kiali Service Account client [%v]", clusterInfo)
+	log.Debugf("Creating new Kiali Service Account client for cluster [%s]", clusterInfo.Name)
 
 	cf.applySettings(clusterInfo.ClientConfig)
 	return NewClient(clusterInfo, cf.kialiConfig)

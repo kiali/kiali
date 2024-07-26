@@ -30,6 +30,8 @@ func (f forwarder) Start() error {
 	// It starts the port-forward
 	errCh := make(chan error, 1)
 	go func() {
+		// TODO: Need a mechanism to catch errors and retry pod forwarding
+		// with a different pod if the connection to the current pod gets closed.
 		errCh <- f.forwarder.ForwardPorts()
 	}()
 

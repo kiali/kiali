@@ -6,6 +6,8 @@ import (
 	goerrors "errors"
 	"fmt"
 	"io"
+	"os"
+	"path"
 	"reflect"
 	"strconv"
 	"strings"
@@ -669,4 +671,15 @@ func WaitForObjectCreateInCache(ctx context.Context, kubeCache client.Reader, ob
 
 		return true, nil
 	})
+}
+
+// KubeConfigDir tries to find the location of your kubeconfig.
+func KubeConfigDir() string {
+	if kubeEnv, ok := os.LookupEnv("KUBECONFIG"); ok {
+		return kubeEnv
+	}
+	if homedir, err := os.UserHomeDir(); err == nil {
+		return path.Join(homedir, ".kube/config")
+	}
+	return ""
 }

@@ -38,7 +38,7 @@ go-check:
 build: go-check check-ui
 	@echo Building...
 	${GO_BUILD_ENVVARS} ${GO} build \
-		-o ${GOPATH}/bin/kiali -ldflags "-X main.version=${VERSION} -X main.commitHash=${COMMIT_HASH} -X main.goVersion=${GO_ACTUAL_VERSION}" ${GO_BUILD_FLAGS}
+		-o ${GOPATH}/bin/kiali -ldflags "-X github.com/kiali/kiali/cmd.version=${VERSION} -X github.com/kiali/kiali/cmd.commitHash=${COMMIT_HASH} -X github.com/kiali/kiali/cmd.goVersion=${GO_ACTUAL_VERSION}" ${GO_BUILD_FLAGS}
 
 ## build-ui: Runs the yarn commands to build the frontend UI
 build-ui:
@@ -47,6 +47,12 @@ build-ui:
 ## build-ui-test: Runs the yarn commands to build the dev frontend UI and runs the UI tests
 build-ui-test: build-ui
 	@cd ${ROOTDIR}/frontend && yarn run test
+
+## run-backend: Run the backend with air for hot reloading
+# Uses .air.toml configuration file. Set KIALI_LOCAL_ARGS to append additional arguments.
+run-backend: go-check .ensure-air-exists
+	@echo "Starting Kiali backend with air (hot reloading enabled)..."
+	air -- local ${KIALI_LOCAL_ARGS}
 
 ## build-linux-multi-arch: Build Kiali binary with arch suffix for multi-arch
 build-linux-multi-arch: go-check
@@ -139,6 +145,14 @@ YQ := $(shell command -v yq 2> /dev/null)
 .ensure-yq-exists:
 ifndef YQ
 	$(error "'yq' needs to be installed to run this command. Please install 'yq' and re-run this command.")
+endif
+
+AIR := $(shell command -v air 2> /dev/null)
+## Download and install air locally if necessary.
+.ensure-air-exists:
+ifndef AIR
+	@echo "Installing air for hot reloading..."
+	${GO} install github.com/air-verse/air@latest
 endif
 
 ## Download istio-crds to testdata dir if necessary.
