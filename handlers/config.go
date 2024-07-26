@@ -59,6 +59,7 @@ type PublicConfig struct {
 	KialiFeatureFlags   config.KialiFeatureFlags      `json:"kialiFeatureFlags,omitempty"`
 	LogLevel            string                        `json:"logLevel,omitempty"`
 	Prometheus          PrometheusConfig              `json:"prometheus,omitempty"`
+	RunMode             config.RunMode                `json:"runMode,omitempty"`
 }
 
 // Config is a REST http.HandlerFunc serving up the Kiali configuration made public to clients.
@@ -95,6 +96,7 @@ func Config(conf *config.Config, discovery *istio.Discovery) http.HandlerFunc {
 				GlobalScrapeInterval: promConfig.GlobalScrapeInterval,
 				StorageTsdbRetention: promConfig.StorageTsdbRetention,
 			},
+			RunMode: conf.RunMode,
 		}
 
 		// The following code fetches the cluster info. Cluster info is not critical.

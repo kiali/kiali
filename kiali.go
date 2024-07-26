@@ -29,29 +29,27 @@ package main
 
 import (
 	"context"
+	"embed"
 	"flag"
+	"io/fs"
 	"os"
 	"os/signal"
+	"path"
 	"strings"
 	"syscall"
 
 	_ "go.uber.org/automaxprocs"
 
-	"github.com/kiali/kiali/business"
+	"github.com/kiali/kiali/cmd/local"
+	"github.com/kiali/kiali/cmd/server"
 	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/controller"
-	"github.com/kiali/kiali/grafana"
-	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
-	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/log"
-	"github.com/kiali/kiali/models"
-	"github.com/kiali/kiali/prometheus"
-	"github.com/kiali/kiali/prometheus/internalmetrics"
-	"github.com/kiali/kiali/server"
-	"github.com/kiali/kiali/tracing"
 	"github.com/kiali/kiali/util"
 )
+
+//go:embed frontend/build/*
+var folder embed.FS
 
 // Identifies the build. These are set via ldflags during the build (see Makefile).
 var (
@@ -62,10 +60,40 @@ var (
 
 // Command line arguments
 var (
-	argConfigFile = flag.String("config", "", "Path to the YAML configuration file. If not specified, environment variables will be used for configuration.")
+	argConfigFile         string
+	homeClusterContext    string
+	kubeConfig            string
+	remoteClusterContexts []string
+	openBrowser           bool
 )
 
+func kubeConfigDir() string {
+	if kubeEnv, ok := os.LookupEnv("KUBECONFIG"); ok {
+		return kubeEnv
+	}
+	if homedir, err := os.UserHomeDir(); err == nil {
+		return path.Join(homedir, ".kube/config")
+	}
+	return ""
+}
+
 func init() {
+	// Registering these flags here is only necessary because controller-runtime already registers the "kubeconfig" flag
+	// and double registering causes a panic. Creating a new default FlagSet here drops the controller-runtime flag.
+	// See this bug: https://github.com/kubernetes-sigs/controller-runtime/issues/878.
+	flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ExitOnError)
+	flag.StringVar(&argConfigFile, "config", "", "Path to the YAML configuration file. If not specified, environment variables will be used for configuration.")
+	flag.StringVar(&homeClusterContext, "home-cluster-context", "", "Sets Kiali's home cluster context in local mode.")
+	flag.StringVar(&kubeConfig, "kubeconfig", kubeConfigDir(), "Path to the kubeconfig file for Kiali to use.")
+	flag.Func("remote-cluster-contexts", "Comma separated list of remote cluster contexts.", func(flagValue string) error {
+		// Need to check for empty string because strings.Split on "" returns [""]
+		if flagValue != "" {
+			remoteClusterContexts = strings.Split(flagValue, ",")
+		}
+		return nil
+	})
+	flag.BoolVar(&openBrowser, "open-browser", true, "If true, will open the default browser after startup.")
+
 	// log everything to stderr so that it can be easily gathered by logs, separate log files are problematic with containers
 	_ = flag.Set("logtostderr", "true")
 }
@@ -74,17 +102,15 @@ func main() {
 	log.InitializeLogger()
 	util.Clock = util.RealClock{}
 
-	// process command line
 	flag.Parse()
 	validateFlags()
 
 	// log startup information
 	log.Infof("Kiali: Version: %v, Commit: %v, Go: %v", version, commitHash, goVersion)
-	log.Debugf("Kiali: Command line: [%v]", strings.Join(os.Args, " "))
 
 	// load config file if specified, otherwise, rely on environment variables to configure us
-	if *argConfigFile != "" {
-		c, err := config.LoadFromFile(*argConfigFile)
+	if argConfigFile != "" {
+		c, err := config.LoadFromFile(argConfigFile)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -94,107 +120,48 @@ func main() {
 		config.Set(config.NewConfig())
 	}
 
-	updateConfigWithIstioInfo()
-
-	conf := config.Get()
-	log.Tracef("Kiali Configuration:\n%s", conf)
-
-	if err := config.Validate(*conf); err != nil {
-		log.Fatal(err)
-	}
-
-	// prepare our internal metrics so Prometheus can scrape them
-	internalmetrics.RegisterInternalMetrics()
-
-	// Create the business package dependencies.
-	clientFactory, err := kubernetes.GetClientFactory()
+	f, err := fs.Sub(folder, "frontend/build")
 	if err != nil {
-		log.Fatalf("Failed to create client factory. Err: %s", err)
+		log.Fatalf("Error getting subfolder: %v", err)
 	}
 
-	log.Info("Initializing Kiali Cache")
-	cache, err := cache.NewKialiCache(clientFactory.GetSAClients(), *conf)
-	if err != nil {
-		log.Fatalf("Error initializing Kiali Cache. Details: %s", err)
-	}
-	defer cache.Stop()
-
-	cache.SetBuildInfo(models.BuildInfo{
-		CommitHash:       commitHash,
-		ContainerVersion: determineContainerVersion(version),
-		GoVersion:        goVersion,
-		Version:          version,
-	})
-
-	discovery := istio.NewDiscovery(clientFactory.GetSAClients(), cache, conf)
-	cpm := business.NewControlPlaneMonitor(cache, clientFactory, conf, discovery)
-
-	// This context is used for polling and for creating some high level clients like tracing.
 	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	conf := config.Get()
 
-	if conf.ExternalServices.Istio.IstioAPIEnabled {
-		cpm.PollIstiodForProxyStatus(ctx)
+	var serverStopped <-chan struct{}
+
+	switch flag.CommandLine.Arg(0) {
+	case "open":
+		// Override some settings in local mode.
+		conf.RunMode = config.RunModeLocal
+		conf.Auth.Strategy = config.AuthStrategyAnonymous
+		conf.Deployment.RemoteSecretPath = kubeConfig
+		config.Set(conf)
+		if err := config.Validate(*conf); err != nil {
+			log.Fatal(err)
+		}
+		serverStopped, err = local.Run(ctx, conf, version, commitHash, goVersion, f, homeClusterContext, remoteClusterContexts, openBrowser)
+		if err != nil {
+			log.Fatalf("Unable to run kiali locally: %s", err)
+		}
+	default:
+		if err := config.Validate(*conf); err != nil {
+			log.Fatal(err)
+		}
+		log.Tracef("Kiali Configuration:\n%s", conf)
+		clientFactory, err := kubernetes.GetClientFactory()
+		if err != nil {
+			log.Fatalf("Failed to create client factory. Err: %s", err)
+		}
+
+		serverStopped = server.Run(ctx, conf, version, commitHash, goVersion, f, clientFactory)
 	}
-
-	// Create shared prometheus client shared by all prometheus requests in the business layer.
-	prom, err := prometheus.NewClient()
-	if err != nil {
-		log.Fatalf("Error creating Prometheus client: %s", err)
-	}
-
-	// Create shared tracing client shared by all tracing requests in the business layer.
-	// Because tracing is not an essential component, we don't want to block startup
-	// of the server if the tracing client fails to initialize. tracing.NewClient will
-	// continue to retry until the client is initialized or the context is cancelled.
-	// Passing in a loader function allows the tracing client to be used once it is
-	// finally initialized.
-	var tracingClient tracing.ClientInterface
-	tracingLoader := func() tracing.ClientInterface {
-		return tracingClient
-	}
-	if conf.ExternalServices.Tracing.Enabled {
-		go func() {
-			client, err := tracing.NewClient(ctx, conf, clientFactory.GetSAHomeClusterClient().GetToken())
-			if err != nil {
-				log.Fatalf("Error creating tracing client: %s", err)
-				return
-			}
-			tracingClient = client
-		}()
-	} else {
-		log.Debug("Tracing is disabled")
-	}
-
-	grafana := grafana.NewService(conf, clientFactory.GetSAHomeClusterClient())
-
-	// Start listening to requests
-	server, err := server.NewServer(cpm, clientFactory, cache, conf, prom, tracingLoader, discovery)
-	if err != nil {
-		log.Fatal(err)
-	}
-	server.Start()
-
-	// Needs to be started after the server so that the cache is started because the controllers use the cache.
-	// Passing nil here because the tracing client is not used for validations and that is all this layer is used for.
-	// Passing the `tracingClient` above would be a race condition since it gets set in a goroutine.
-	layer, err := business.NewLayerWithSAClients(conf, cache, prom, nil, cpm, grafana, discovery, clientFactory.GetSAClients())
-	if err != nil {
-		log.Fatalf("Error creating business layer: %s", err)
-	}
-	if err := controller.Start(ctx, conf, clientFactory, cache, &layer.Validations); err != nil {
-		log.Fatalf("Error creating validations controller: %s", err)
-	}
-
-	// wait forever, or at least until we are told to exit
-	waitForTermination()
-
-	// Shutdown internal components
-	log.Info("Shutting down internal components")
-	server.Stop()
+	waitForTermination(cancel)
+	// This ensures that the Run process has fully cleaned itself up.
+	<-serverStopped
 }
 
-func waitForTermination() {
+func waitForTermination(cancel context.CancelFunc) {
 	// Channel that is notified when we are done and should exit
 	// TODO: may want to make this a package variable - other things might want to tell us to exit
 	doneChan := make(chan bool)
@@ -204,6 +171,7 @@ func waitForTermination() {
 	go func() {
 		for range signalChan {
 			log.Info("Termination Signal Received")
+			cancel()
 			doneChan <- true
 		}
 	}()
@@ -212,69 +180,11 @@ func waitForTermination() {
 }
 
 func validateFlags() {
-	if *argConfigFile != "" {
-		if _, err := os.Stat(*argConfigFile); err != nil {
+	if argConfigFile != "" {
+		if _, err := os.Stat(argConfigFile); err != nil {
 			if os.IsNotExist(err) {
-				log.Debugf("Configuration file [%v] does not exist.", *argConfigFile)
+				log.Debugf("Configuration file [%v] does not exist.", argConfigFile)
 			}
 		}
 	}
-}
-
-// determineContainerVersion will return the version of the image container.
-// It does this by looking at an ENV defined in the Dockerfile when the image is built.
-// If the ENV is not defined, the version is assumed the same as the given default value.
-func determineContainerVersion(defaultVersion string) string {
-	v := os.Getenv("KIALI_CONTAINER_VERSION")
-	if v == "" {
-		return defaultVersion
-	}
-	return v
-}
-
-// This is used to update the config with information about istio that
-// comes from the environment such as the cluster name.
-func updateConfigWithIstioInfo() {
-	conf := *config.Get()
-
-	homeCluster := conf.KubernetesConfig.ClusterName
-	if homeCluster != "" {
-		// If the cluster name is already set, we don't need to do anything
-		return
-	}
-
-	err := func() error {
-		log.Debug("Cluster name is not set. Attempting to auto-detect the cluster name from the home cluster environment.")
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
-
-		// Need to create a temporary client factory here so that we can create a client
-		// to auto-detect the istio cluster name from the environment. There's a bit of a
-		// chicken and egg problem with the client factory because the client factory
-		// uses the cluster id to keep track of all the clients. But in order to create
-		// a client to get the cluster id from the environment, you need to create a client factory.
-		// To get around that we create a temporary client factory here and then set the kiali
-		// config cluster name. We then create the global client factory later in the business
-		// package and that global client factory has the cluster id set properly.
-		cf, err := kubernetes.NewClientFactory(ctx, conf)
-		if err != nil {
-			return err
-		}
-
-		// Try to auto-detect the cluster name
-		homeCluster, err = kubernetes.ClusterNameFromIstiod(conf, cf.GetSAHomeClusterClient())
-		if err != nil {
-			return err
-		}
-
-		return nil
-	}()
-	if err != nil {
-		log.Warningf("Cannot resolve local cluster name. Err: %s. Falling back to [%s]", err, config.DefaultClusterID)
-		homeCluster = config.DefaultClusterID
-	}
-
-	log.Debugf("Auto-detected the istio cluster name to be [%s]. Updating the kiali config", homeCluster)
-	conf.KubernetesConfig.ClusterName = homeCluster
-	config.Set(&conf)
 }
