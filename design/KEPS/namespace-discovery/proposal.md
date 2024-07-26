@@ -29,19 +29,19 @@ spec:
   deployment:
     discovery_selectors:
       default:
-      - match_labels:
+      - matchLabels:
           abc: def
           uvw: xyz
-      - match_labels:
+      - matchLabels:
           org: accounting
-        match_expressions:
+        matchExpressions:
         - key: tier
           operator: In
           values: ["production"]
         - key: region
           operator: NotIn
           values: ["east"]
-      - match_expressions:
+      - matchExpressions:
         - key: country
           operator: In
           values: ["us", "ca"]
@@ -72,9 +72,9 @@ Kiali discovery selector:
 ```yaml
 discovery_selectors:
   default:
-  - match_labels:
+  - matchLabels:
       team: backend
-  - match_labels:
+  - matchLabels:
       team: api
 ```
 
@@ -101,7 +101,7 @@ Kiali discovery selector cluster A:
 ```yaml
 discovery_selectors:
   default:
-  - match_labels:
+  - matchLabels:
       team: api
 ```
 
@@ -110,7 +110,7 @@ Kiali discovery selector cluster B:
 ```yaml
 discovery_selectors:
   default:
-  - match_labels:
+  - matchLabels:
       team: backend
 ```
 
@@ -145,10 +145,10 @@ For multi-primary with different discovery selectors (note: there is no `default
 discovery_selectors:
   overrides:
     east:
-    - match_labels:
+    - matchLabels:
         team: backend
     west:
-    - match_labels:
+    - matchLabels:
         team: api
 ```
 
@@ -162,7 +162,7 @@ spec:
     cluster_wide_access: false
     discovery_selectors:
       default:
-      - match_labels:
+      - matchLabels:
           team: backend
 ```
 
@@ -174,9 +174,9 @@ spec:
     cluster_wide_access: false
     discovery_selectors:
       default:
-      - match_labels:
+      - matchLabels:
           kubernetes.io/metadata.name: backend-app1
-      - match_labels:
+      - matchLabels:
           kubernetes.io/metadata.name: backend-app2
 ```
 
@@ -191,7 +191,7 @@ spec:
     cluster_wide_access: false
     discovery_selectors:
       default:
-      - match_labels:
+      - matchLabels:
           team: backend
 ```
 
