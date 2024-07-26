@@ -11,6 +11,7 @@ Feature: Kiali Workloads page
 
   @bookinfo-app
   @core-2
+  @offline
   Scenario: See workloads table with correct info
     When user selects the "bookinfo" namespace
     Then user sees a table with headings
@@ -27,11 +28,13 @@ Feature: Kiali Workloads page
 
   @bookinfo-app
   @core-2
+  @offline
   Scenario: See all Workloads toggles
     Then user sees all the Apps toggles
 
   @bookinfo-app
   @core-2
+  @offline
   Scenario: Toggle Workloads health toggle
     When user "unchecks" toggle "health"
     Then the "Health" column "disappears"
@@ -40,6 +43,7 @@ Feature: Kiali Workloads page
 
   @bookinfo-app
   @core-2
+  @offline
   Scenario: Filter workloads table by Workloads Name
     When user selects the "bookinfo" namespace
     And user selects filter "Workload Name"
@@ -49,6 +53,7 @@ Feature: Kiali Workloads page
 
   @bookinfo-app
   @core-2
+  @offline
   Scenario: Filter workloads table by Workloads Type
     When user selects the "bookinfo" namespace
     And user selects filter "Workload Type"
@@ -57,6 +62,7 @@ Feature: Kiali Workloads page
 
   @bookinfo-app
   @core-2
+  @offline
   Scenario: Filter workloads table by sidecar
     When user selects the "bookinfo" namespace
     And user selects filter "Istio Sidecar"
@@ -65,6 +71,7 @@ Feature: Kiali Workloads page
 
   @bookinfo-app
   @core-2
+  @offline
   Scenario: Filter workloads table by Istio Config Type
     When user selects the "bookinfo" namespace
     And user selects filter "Istio Config Type"
@@ -73,6 +80,7 @@ Feature: Kiali Workloads page
 
   @bookinfo-app
   @core-2
+  @offline
   Scenario: Filter workloads table by health
     When user selects the "bookinfo" namespace
     And user selects filter "Health"
@@ -82,6 +90,7 @@ Feature: Kiali Workloads page
 
   @bookinfo-app
   @core-2
+  @offline
   Scenario: Filter workloads table by App Label
     When user selects the "bookinfo" namespace
     And user selects filter "App Label"
@@ -91,6 +100,7 @@ Feature: Kiali Workloads page
 
   @bookinfo-app
   @core-2
+  @offline
   Scenario: Filter workloads table by Version Label
     When user selects the "bookinfo" namespace
     And user selects filter "Version Label"
@@ -100,6 +110,7 @@ Feature: Kiali Workloads page
 
   @bookinfo-app
   @core-2
+  @offline
   Scenario: Filter workloads table by label
     When user selects the "bookinfo" namespace
     And user selects filter "Label"
@@ -109,6 +120,7 @@ Feature: Kiali Workloads page
 
   @bookinfo-app
   @core-2
+  @offline
   Scenario: The healthy status of a workload is reported in the list of workloads
     Given a healthy workload in the cluster
     When user selects the "bookinfo" namespace
@@ -155,6 +167,7 @@ Feature: Kiali Workloads page
     When user sorts the list by column "Cluster" in "descending" order
     Then the list is sorted by column "Cluster" in "descending" order
 
+  # TODO: offline - ambient.
   @ambient
   @skip-ossmc
   Scenario: Out of mesh

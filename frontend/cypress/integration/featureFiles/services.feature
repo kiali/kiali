@@ -8,6 +8,7 @@ Feature: Kiali Services page
   Background:
     Given user is at administrator perspective
 
+  # TODO: offline - no bookinfo VirtualService?
   @bookinfo-app
   @core-2
   Scenario: See services table with correct info
@@ -71,6 +72,7 @@ Feature: Kiali Services page
     And user filters for sidecar "Present"
     Then user sees "something" in the table
 
+  # TODO: offline - no bookinfo VirtualService?
   @bookinfo-app
   @core-2
   Scenario: Filter services table by Istio Config Type
@@ -81,6 +83,7 @@ Feature: Kiali Services page
     Then user sees "productpage" in the table
     And table length should be 1
 
+  # TODO: offline - no service health
   @bookinfo-app
   @core-2
   Scenario: Filter services table by health
@@ -119,6 +122,7 @@ Feature: Kiali Services page
     And user clicks "app=productpage" label
     Then table length should exceed 1
 
+  # TODO: offline - no service health
   @bookinfo-app
   @core-2
   Scenario: The healthy status of a service is reported in the list of services
@@ -136,6 +140,7 @@ Feature: Kiali Services page
     Then the service should be listed as "na"
     And the health status of the service should be "No health information"
 
+  # TODO: offline - no service health
   @error-rates-app
   @core-2
   Scenario: The failing status of a service is reported in the list of services
@@ -145,6 +150,7 @@ Feature: Kiali Services page
     Then the service should be listed as "failure"
     And the health status of the service should be "Failure"
 
+  # TODO: offline - no service health
   @error-rates-app
   @skip-lpinterop
   @core-2
@@ -179,6 +185,7 @@ Feature: Kiali Services page
     When user sorts the list by column "Cluster" in "descending" order
     Then the list is sorted by column "Cluster" in "descending" order
 
+  # TODO: offline - no ambient support.
   @ambient
   @skip-ossmc
   Scenario: Filter services table by health

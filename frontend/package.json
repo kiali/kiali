@@ -64,6 +64,7 @@
     "cypress:run:multi-cluster:junit": "cypress run --reporter cypress-multi-reporters --reporter-options configFile=reporter-config.json -e TAGS=\"@multi-cluster and not @multi-primary\"",
     "cypress:run:multi-primary": "cypress run -e TAGS=\"@multi-primary\"",
     "cypress:run:multi-primary:junit": "cypress run --reporter cypress-multi-reporters --reporter-options configFile=reporter-config.json -e TAGS=\"@multi-primary\"",
+    "cypress:run:offline": "cypress run -e TAGS=\"@offline\"",
     "cypress:run:perf": "cypress run --config-file cypress-perf.config.ts",
     "cypress:run:selected": "cypress run -e TAGS=\"@selected\"",
     "cypress:run:smoke": "cypress run -e TAGS=\"@smoke\"",

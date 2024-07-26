@@ -21,6 +21,15 @@ Then('user does not see any {string} in the tooltip', (status: string) => {
   });
 });
 
+Then('user sees the offline status icon', () => {
+  cy.get('[data-test="offline-status"]').should('be.visible');
+});
+
+Then('user sees the minigraph displays offline', () => {
+  cy.get('[data-test="minigraph-offline"]').should('be.visible');
+  cy.get('[data-test="minigraph-offline"]').contains('offline');
+});
+
 When(
   'user scales to {string} the {string} in namespace {string}',
   (scale: string, targetWorkload: string, targetNamespace: string) => {

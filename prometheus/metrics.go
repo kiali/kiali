@@ -211,6 +211,9 @@ func getItemRequestRates(ctx context.Context, api prom_v1.API, namespace, cluste
 	return in, out, nil
 }
 
+// TODO: All the request rate boil down to api.Query in the end.
+// TODO: Disable health rate calculations in offline mode.
+// It would be better if we could align the graph rate calculations with the health rate calculations.
 func getRequestRatesForLabel(ctx context.Context, api prom_v1.API, time time.Time, labels, ratesInterval string) (model.Vector, error) {
 	zl := log.FromContext(ctx)
 	query := fmt.Sprintf("rate(istio_requests_total{%s}[%s]) > 0", labels, ratesInterval)

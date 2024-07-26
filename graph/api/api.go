@@ -59,10 +59,7 @@ func GraphNamespaces(ctx context.Context, business *business.Layer, prom prometh
 
 // graphNamespacesIstio provides a test hook that accepts mock clients
 func graphNamespacesIstio(ctx context.Context, business *business.Layer, prom prometheus.ClientInterface, o graph.Options) (code int, graphConfig interface{}) {
-	clusters, err := business.Mesh.Clusters()
-	if err != nil {
-		graph.Error(fmt.Sprintf("Error fetching clusters: %s", err.Error()))
-	}
+	clusters := business.Mesh.Clusters()
 	// Create a 'global' object to store the business. Global only to the request.
 	globalInfo := graph.NewGlobalInfo(business, prom, config.Get(), clusters, appender.NewGlobalIstioInfo())
 
@@ -112,10 +109,7 @@ func GraphNode(ctx context.Context, business *business.Layer, prom prometheus.Cl
 // graphNodeIstio provides a test hook that accepts mock clients
 func graphNodeIstio(ctx context.Context, business *business.Layer, prom prometheus.ClientInterface, o graph.Options) (code int, graphConfig interface{}) {
 	// Create a 'global' object to store the business. Global only to the request.
-	clusters, err := business.Mesh.Clusters()
-	if err != nil {
-		graph.Error(fmt.Sprintf("Error fetching clusters: %s", err.Error()))
-	}
+	clusters := business.Mesh.Clusters()
 	globalInfo := graph.NewGlobalInfo(business, prom, config.Get(), clusters, appender.NewGlobalIstioInfo())
 	globalInfo.Business = business
 	globalInfo.PromClient = prom

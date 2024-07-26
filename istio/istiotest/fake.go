@@ -21,8 +21,8 @@ type FakeDiscovery struct {
 	MeshReturn models.Mesh
 }
 
-func (fmd *FakeDiscovery) Clusters() ([]models.KubeCluster, error) {
-	return fmd.ClustersReturn, nil
+func (fmd *FakeDiscovery) Clusters() []models.KubeCluster {
+	return fmd.ClustersReturn
 }
 
 func (fmd *FakeDiscovery) GetControlPlaneNamespaces(ctx context.Context, cluster string) []string {

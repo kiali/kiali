@@ -138,8 +138,14 @@ export interface ToleranceConfig {
 // enum for run mode
 export enum RunMode {
   APP = 'app',
-  LOCAL = 'local'
+  LOCAL = 'local',
+  OFFLINE = 'offline'
 }
+
+// Offline mode configuration based on OfflineManifest
+export type OfflineRunConfig = {
+  timestamp?: string; // RFC3339 string
+};
 
 export interface ServerConfig {
   ambientEnabled: boolean;
@@ -164,5 +170,6 @@ export interface ServerConfig {
     globalScrapeInterval?: DurationInSeconds;
     storageTsdbRetention?: DurationInSeconds;
   };
+  runConfig?: OfflineRunConfig;
   runMode: RunMode;
 }

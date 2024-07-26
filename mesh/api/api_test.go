@@ -235,11 +235,10 @@ V/InYncUvcXt0M4JJSUJi/u6VBKSYYDIHt3mk9Le2qlMQuHkOQ1ZcuEOM2CU/KtO
 	require.Len(meshDef.ControlPlanes, 1)
 	require.Len(meshDef.ControlPlanes[0].ManagedClusters, 2)
 
-	a, err := discovery.Clusters()
+	a := discovery.Clusters()
 	sort.Slice(a, func(i, j int) bool {
 		return a[i].Name < a[j].Name
 	})
-	require.Nil(err, "GetClusters returned error: %v", err)
 
 	require.NotNil(a, "GetClusters returned nil")
 	require.Len(a, 2, "GetClusters didn't resolve the Primnary and Remote clusters")

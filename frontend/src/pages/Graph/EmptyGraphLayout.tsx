@@ -17,6 +17,8 @@ import { DecoratedGraphElements } from '../../types/Graph';
 import { RefreshIntervalManual } from 'config/Config';
 import { IntervalInMilliseconds } from 'types/Common';
 import { t } from 'utils/I18nUtils';
+import { RunMode } from 'types/ServerConfig';
+import { serverConfig } from 'config';
 
 type EmptyGraphLayoutProps = {
   action?: any;
@@ -172,6 +174,28 @@ export class EmptyGraphLayout extends React.Component<EmptyGraphLayoutProps, Emp
               {(this.props.showIdleNodes && <>{t('Refresh')}</>) || <>{t('Display idle nodes')}</>}
             </Button>
           </EmptyStateFooter>
+        </EmptyState>
+      );
+    }
+
+    // TODO: Implement minigraph in offline mode.
+    if (this.props.isMiniGraph && serverConfig.runMode === RunMode.OFFLINE) {
+      return (
+        <EmptyState
+          id="empty-mini-graph"
+          data-test="minigraph-offline"
+          variant={EmptyStateVariant.lg}
+          className={emptyStateStyle}
+        >
+          <EmptyStateHeader
+            titleText={
+              <>
+                <KialiIcon.Offline /> {t('offline')}
+              </>
+            }
+            headingLevel="h5"
+          />
+          <EmptyStateBody>{t('Minigraph is currently unavailable offline.')}</EmptyStateBody>
         </EmptyState>
       );
     }
