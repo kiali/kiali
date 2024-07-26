@@ -18,8 +18,10 @@ import (
 	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/istio"
+	"github.com/kiali/kiali/istio/istiotest"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
+	"github.com/kiali/kiali/models"
 )
 
 func TestRegistryServices(t *testing.T) {
@@ -79,7 +81,7 @@ func istiodTestServer(t *testing.T) *httptest.Server {
 			return
 		default:
 			w.WriteHeader(http.StatusInternalServerError)
-			t.Fatalf("Unexpected request path: %s", r.URL.Path)
+			t.Logf("Unexpected request path: %s", r.URL.Path)
 			return
 		}
 		if _, err := w.Write(kubernetes.ReadFile(t, file)); err != nil {
@@ -150,23 +152,10 @@ func TestRefreshIstioCache(t *testing.T) {
 	conf := config.NewConfig()
 	conf.KubernetesConfig.ClusterName = "Kubernetes"
 
-	istioConfigMap := &core_v1.ConfigMap{
-		ObjectMeta: meta_v1.ObjectMeta{
-			Name:      "istio",
-			Namespace: "istio-system",
-			Labels: map[string]string{
-				config.IstioRevisionLabel: "default",
-			},
-		},
-		Data: map[string]string{"mesh": ""},
-	}
-
 	k8s := kubetest.NewFakeK8sClient(
 		runningIstiodPod(),
 		fakeIstiodDeployment(conf.KubernetesConfig.ClusterName, true),
 		kubetest.FakeNamespace("istio-system"),
-		istioConfigMap,
-		FakeCertificateConfigMap("istio-system"),
 	)
 	// RefreshIstioCache relies on this being set.
 	k8s.KubeClusterInfo.Name = conf.KubernetesConfig.ClusterName
@@ -181,9 +170,20 @@ func TestRefreshIstioCache(t *testing.T) {
 	k8sclients[conf.KubernetesConfig.ClusterName] = fakeForwarder
 	cf := kubetest.NewFakeClientFactory(conf, k8sclients)
 	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
-	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(k8sclients), cache, conf)
+	discovery := &istiotest.FakeDiscovery{
+		MeshReturn: models.Mesh{
+			ControlPlanes: []models.ControlPlane{{
+				Cluster: &models.KubeCluster{
+					Name: conf.KubernetesConfig.ClusterName,
+				},
+				IstiodName:      "istio",
+				IstiodNamespace: "istio-system",
+				Revision:        "default",
+				Status:          kubernetes.ComponentHealthy,
+			}},
+		},
+	}
 	cpm := NewControlPlaneMonitor(cache, cf, conf, discovery)
-
 	assert.Nil(cache.GetRegistryStatus(conf.KubernetesConfig.ClusterName))
 	err := cpm.RefreshIstioCache(context.TODO())
 	require.NoError(err)

@@ -376,7 +376,6 @@ func (a alice) then(h http.Handler) http.Handler {
 }
 
 func buildHttpHandlerLogger(route Route, handlerFunction http.Handler) http.Handler {
-
 	// prepare the request's logger
 	zlc := zerolog.With().Str(log.RouteLogName, route.Name)
 	if log.IsTrace() {

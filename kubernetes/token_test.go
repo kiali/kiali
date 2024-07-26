@@ -22,12 +22,11 @@ func TestIsTokenExpired(t *testing.T) {
 	assert := assert.New(t)
 	config := config.NewConfig()
 	config.Deployment.RemoteSecretPath = t.TempDir()
-	SetConfig(t, *config)
 
 	DefaultServiceAccountPath = tmpFileTokenExpired
 
 	setupFile(t, "thisisarandomtoken", tmpFileTokenExpired)
-	token, _, err := GetKialiTokenForHomeCluster()
+	token, _, err := GetKialiTokenForHomeCluster(config)
 	require.NoError(err)
 
 	assert.True(token != "")
@@ -40,14 +39,13 @@ func TestGetKialiToken(t *testing.T) {
 	assert := assert.New(t)
 	config := config.NewConfig()
 	config.Deployment.RemoteSecretPath = t.TempDir()
-	SetConfig(t, *config)
 
 	DefaultServiceAccountPath = tmpFileGetToken
 	data := "thisisarandomtoken"
 
 	setupFile(t, data, tmpFileGetToken)
 
-	token, _, err := GetKialiTokenForHomeCluster()
+	token, _, err := GetKialiTokenForHomeCluster(config)
 	require.NoError(err)
 
 	assert.Equal(data, token)
@@ -58,10 +56,9 @@ func TestGetKialiTokenRemoteCluster(t *testing.T) {
 
 	config := config.NewConfig()
 	config.Deployment.RemoteSecretPath = "testdata/remote-cluster-multiple-users.yaml"
-	SetConfig(t, *config)
 	tokenRead = time.Time{}
 
-	token, _, err := GetKialiTokenForHomeCluster()
+	token, _, err := GetKialiTokenForHomeCluster(config)
 	require.NoError(err)
 
 	require.Equal("token2", token)
