@@ -2,10 +2,10 @@ import { ServerConfig } from 'types/ServerConfig';
 import { getExpr } from '../../config/HealthConfig';
 
 export const healthConfig = {
-  accessibleNamespaces: [],
   authStrategy: '',
   ambientEnabled: false,
   clusters: {},
+  clusterWideAccess: true,
   controlPlaneClusters: [],
   gatewayAPIClasses: [],
   gatewayAPIEnabled: false,

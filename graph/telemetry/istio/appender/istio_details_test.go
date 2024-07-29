@@ -62,11 +62,11 @@ func TestCBAll(t *testing.T) {
 			},
 		},
 	}
-	k8s := kubetest.NewFakeK8sClient(dRule, &core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "testNamespace"}})
+	k8s := kubetest.NewFakeK8sClient(dRule, kubetest.FakeNamespace("testNamespace"))
 	business.SetupBusinessLayer(t, k8s, *conf)
 	k8sclients := map[string]kubernetes.ClientInterface{
 		config.DefaultClusterID: kubetest.NewFakeK8sClient(
-			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "testNamespace"}},
+			kubetest.FakeNamespace("testNamespace"),
 		),
 	}
 	businessLayer := business.NewWithBackends(k8sclients, k8sclients, nil, nil)
@@ -129,11 +129,11 @@ func TestCBSubset(t *testing.T) {
 			},
 		},
 	}
-	k8s := kubetest.NewFakeK8sClient(dRule, &core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "testNamespace"}})
+	k8s := kubetest.NewFakeK8sClient(dRule, kubetest.FakeNamespace("testNamespace"))
 	business.SetupBusinessLayer(t, k8s, *conf)
 	k8sclients := map[string]kubernetes.ClientInterface{
 		config.DefaultClusterID: kubetest.NewFakeK8sClient(
-			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "testNamespace"}},
+			kubetest.FakeNamespace("testNamespace"),
 		),
 	}
 	businessLayer := business.NewWithBackends(k8sclients, k8sclients, nil, nil)
@@ -307,11 +307,11 @@ func TestSEInAppBox(t *testing.T) {
 			},
 		},
 	}
-	k8s := kubetest.NewFakeK8sClient(svc, &core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "testNamespace"}})
+	k8s := kubetest.NewFakeK8sClient(svc, kubetest.FakeNamespace("testNamespace"))
 	business.SetupBusinessLayer(t, k8s, *conf)
 	k8sclients := map[string]kubernetes.ClientInterface{
 		config.DefaultClusterID: kubetest.NewFakeK8sClient(
-			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "testNamespace"}},
+			kubetest.FakeNamespace("testNamespace"),
 		),
 	}
 	businessLayer := business.NewWithBackends(k8sclients, k8sclients, nil, nil)

@@ -102,7 +102,7 @@ func TestGatewayValidationScopesToNamespaceWhenGatewayToNamespaceSet(t *testing.
 		Data: map[string]string{"mesh": ""},
 	}
 	injectorConfigMap := &core_v1.ConfigMap{ObjectMeta: meta_v1.ObjectMeta{Name: istioSidecarInjectorConfigMapName, Namespace: "istio-system"}}
-	istioSystemNamespace := &core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "istio-system"}}
+	istioSystemNamespace := kubetest.FakeNamespace("istio-system")
 
 	istiod_1_19_0 := &apps_v1.Deployment{
 		ObjectMeta: meta_v1.ObjectMeta{
@@ -466,7 +466,7 @@ func mockMultiNamespaceGatewaysValidationService(t *testing.T, cfg config.Config
 func mockCombinedValidationService(t *testing.T, istioConfigList *models.IstioConfigList, services []string) IstioValidationsService {
 	fakeIstioObjects := []runtime.Object{
 		&core_v1.ConfigMap{ObjectMeta: meta_v1.ObjectMeta{Name: "istio", Namespace: "istio-system"}},
-		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "wrong"}},
+		kubetest.FakeNamespace("wrong"),
 	}
 	for _, p := range fakeMeshPolicies() {
 		fakeIstioObjects = append(fakeIstioObjects, p.DeepCopyObject())
@@ -610,16 +610,8 @@ func fakePolicies() []*security_v1.PeerAuthentication {
 
 func fakeNamespaces() []core_v1.Namespace {
 	return []core_v1.Namespace{
-		{
-			ObjectMeta: meta_v1.ObjectMeta{
-				Name: "test",
-			},
-		},
-		{
-			ObjectMeta: meta_v1.ObjectMeta{
-				Name: "test2",
-			},
-		},
+		*kubetest.FakeNamespace("test"),
+		*kubetest.FakeNamespace("test2"),
 	}
 }
 

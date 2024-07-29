@@ -109,9 +109,9 @@ trustDomain: cluster.local
 	}
 
 	primaryClient := kubetest.NewFakeK8sClient(
-		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
-		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "data-plane-1"}},
-		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "data-plane-2"}},
+		kubetest.FakeNamespace("istio-system"),
+		kubetest.FakeNamespace("data-plane-1"),
+		kubetest.FakeNamespace("data-plane-2"),
 		&istiodDeployment,
 		&istioConfigMap,
 		&sidecarConfigMap,
@@ -126,9 +126,10 @@ trustDomain: cluster.local
 		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{
 			Name:        "istio-system",
 			Annotations: map[string]string{business.IstioControlPlaneClustersLabel: conf.KubernetesConfig.ClusterName},
+			Labels:      map[string]string{"kubernetes.io/metadata.name": "istio-system"},
 		}},
-		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "data-plane-3"}},
-		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "data-plane-4"}},
+		kubetest.FakeNamespace("data-plane-3"),
+		kubetest.FakeNamespace("data-plane-4"),
 	)
 	clients := map[string]kubernetes.ClientInterface{
 		conf.KubernetesConfig.ClusterName: primaryClient,

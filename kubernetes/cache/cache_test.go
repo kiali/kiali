@@ -6,7 +6,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 	apps_v1 "k8s.io/api/apps/v1"
-	core_v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/config"
@@ -39,7 +38,7 @@ func TestKubeCacheCreatedPerClient(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
 
-	ns := &core_v1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "test"}}
+	ns := kubetest.FakeNamespace("test")
 	deploymentCluster1 := &apps_v1.Deployment{ObjectMeta: metav1.ObjectMeta{Name: "deployment1", Namespace: "test"}}
 	deploymentCluster2 := &apps_v1.Deployment{ObjectMeta: metav1.ObjectMeta{Name: "deployment2", Namespace: "test"}}
 	client := kubetest.NewFakeK8sClient(ns, deploymentCluster1)
@@ -89,7 +88,7 @@ func TestIsAmbientEnabled(t *testing.T) {
 	require := require.New(t)
 	conf := config.NewConfig()
 	client := kubetest.NewFakeK8sClient(
-		&core_v1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "istio-system"}},
+		kubetest.FakeNamespace("istio-system"),
 		ztunnelDaemonSet(),
 	)
 	cache := cache.NewTestingCache(t, client, *conf)
@@ -105,7 +104,7 @@ func TestIsAmbientEnabledOutsideIstioSystem(t *testing.T) {
 	ztunnel := ztunnelDaemonSet()
 	ztunnel.Namespace = "alternate-istio-namespace"
 	client := kubetest.NewFakeK8sClient(
-		&core_v1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "alternate-istio-namespace"}},
+		kubetest.FakeNamespace("alternate-istio-namespace"),
 		ztunnel,
 	)
 	cache := cache.NewTestingCache(t, client, *conf)
@@ -119,7 +118,7 @@ func TestIsAmbientDisabled(t *testing.T) {
 	require := require.New(t)
 	conf := config.NewConfig()
 	client := kubetest.NewFakeK8sClient(
-		&core_v1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "istio-system"}},
+		kubetest.FakeNamespace("istio-system"),
 	)
 	cache := cache.NewTestingCache(t, client, *conf)
 
@@ -133,11 +132,11 @@ func TestIsAmbientMultiCluster(t *testing.T) {
 	conf := config.NewConfig()
 	conf.KubernetesConfig.ClusterName = "east"
 	east := kubetest.NewFakeK8sClient(
-		&core_v1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "istio-system"}},
+		kubetest.FakeNamespace("istio-system"),
 		ztunnelDaemonSet(),
 	)
 	west := kubetest.NewFakeK8sClient(
-		&core_v1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "istio-system"}},
+		kubetest.FakeNamespace("istio-system"),
 	)
 	clientFactory := kubetest.NewK8SClientFactoryMock(nil)
 	clientFactory.SetClients(map[string]kubernetes.ClientInterface{
@@ -154,7 +153,7 @@ func TestIsAmbientMultiCluster(t *testing.T) {
 func TestIsAmbientIsThreadSafe(t *testing.T) {
 	conf := config.NewConfig()
 	client := kubetest.NewFakeK8sClient(
-		&core_v1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "istio-system"}},
+		kubetest.FakeNamespace("istio-system"),
 		ztunnelDaemonSet(),
 	)
 	cache := cache.NewTestingCache(t, client, *conf)

@@ -43,7 +43,7 @@ func setupLabelerK8S(t *testing.T) *business.Layer {
 	config.Set(conf)
 
 	k8s := kubetest.NewFakeK8sClient(
-		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "testNamespace"}},
+		kubetest.FakeNamespace("testNamespace"),
 		&apps_v1.Deployment{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:      "test-v1",
@@ -102,7 +102,7 @@ func setupLabelerK8S(t *testing.T) *business.Layer {
 	business.SetupBusinessLayer(t, k8s, *conf)
 	k8sclients := map[string]kubernetes.ClientInterface{
 		config.DefaultClusterID: kubetest.NewFakeK8sClient(
-			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "testNamespace"}},
+			kubetest.FakeNamespace("testNamespace"),
 		),
 	}
 	businessLayer := business.NewWithBackends(k8sclients, k8sclients, nil, nil)

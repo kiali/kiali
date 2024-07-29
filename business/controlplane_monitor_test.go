@@ -165,7 +165,7 @@ func TestRefreshIstioCache(t *testing.T) {
 	k8s := kubetest.NewFakeK8sClient(
 		runningIstiodPod(),
 		fakeIstiodDeployment(conf.KubernetesConfig.ClusterName, true),
-		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "istio-system"}},
+		kubetest.FakeNamespace("istio-system"),
 		istioConfigMap,
 	)
 	// RefreshIstioCache relies on this being set.
@@ -238,7 +238,7 @@ func TestPollingPopulatesCache(t *testing.T) {
 	k8s := kubetest.NewFakeK8sClient(
 		runningIstiodPod(),
 		fakeIstiodDeployment(conf.KubernetesConfig.ClusterName, true),
-		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "istio-system"}},
+		kubetest.FakeNamespace("istio-system"),
 		istioConfigMap,
 	)
 	// RefreshIstioCache relies on this being set.

@@ -90,7 +90,7 @@ operator-create: .ensure-operator-repo-exists .ensure-operator-helm-chart-exists
     --operator-install-kiali        "${OPERATOR_INSTALL_KIALI}" \
     --operator-namespace            "${OPERATOR_NAMESPACE}" \
     --operator-watch-namespace      "${OPERATOR_WATCH_NAMESPACE}" \
-    --accessible-namespaces         "${ACCESSIBLE_NAMESPACES}" \
+    --cluster-wide-access           "${CLUSTER_WIDE_ACCESS}" \
     --auth-strategy                 "${AUTH_STRATEGY}" \
     --kiali-image-name              "${CLUSTER_KIALI_INTERNAL_NAME}" \
     --kiali-image-pull-policy       "${KIALI_IMAGE_PULL_POLICY}" \
@@ -117,7 +117,7 @@ kiali-create: .ensure-operator-repo-exists .prepare-cluster
 	${OC} get namespace ${OPERATOR_INSTALL_KIALI_CR_NAMESPACE} &> /dev/null || ${OC} create namespace ${OPERATOR_INSTALL_KIALI_CR_NAMESPACE}
 	@echo Deploy Kiali using the settings found in ${KIALI_CR_FILE}
 	cat ${KIALI_CR_FILE} | \
-ACCESSIBLE_NAMESPACES="${ACCESSIBLE_NAMESPACES}" \
+CLUSTER_WIDE_ACCESS="${CLUSTER_WIDE_ACCESS}" \
 AUTH_STRATEGY="${AUTH_STRATEGY}" \
 KIALI_EXTERNAL_SERVICES_PASSWORD="$(shell ${OC} get secrets htpasswd -n ${NAMESPACE} -o jsonpath='{.data.rawPassword}' 2>/dev/null | base64 --decode)" \
 KIALI_IMAGE_NAME="${CLUSTER_KIALI_INTERNAL_NAME}" \
