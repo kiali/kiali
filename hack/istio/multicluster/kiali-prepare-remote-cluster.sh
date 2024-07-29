@@ -104,10 +104,11 @@ create_resources_in_remote_cluster() {
     local helm_version_arg="--version ${KIALI_VERSION}"
   fi
 
-  local helm_template_output="$(${HELM} template                  \
+  local helm_template_output="$(${HELM} template            \
       ${helm_version_arg:-}                                 \
       --namespace ${REMOTE_CLUSTER_NAMESPACE}               \
       --set deployment.instance_name=${KIALI_RESOURCE_NAME} \
+      --set deployment.cluster_wide_access=true             \
       --set deployment.view_only_mode=${VIEW_ONLY}          \
       --set auth.strategy=anonymous                         \
       --show-only templates/serviceaccount.yaml             \
@@ -499,9 +500,9 @@ Valid command line arguments:
   -vo|--view-only: if 'true' then the created service account/remote secret
                    will only provide a read-only view of the remote cluster.
                    Default: "${DEFAULT_VIEW_ONLY}"
-  -eaj|--exec-auth-json: If you want to use exec auth for authentication, 
+  -eaj|--exec-auth-json: If you want to use exec auth for authentication,
                          specify ExecConfig in clientcmd/v1 in json format
-                         To use this option, kiali's 'auth.strategy' must be 
+                         To use this option, kiali's 'auth.strategy' must be
                          changed to 'anonymous'. 'yq' command is required.
                          (e.g. helm upgrade -n istio-system \\
                          --set auth.strategy="anonymous" kiali-server kiali/kiali-server)

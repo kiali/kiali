@@ -22,7 +22,7 @@ func setupWorkloads(t *testing.T) *business.Layer {
 	config.Set(conf)
 
 	k8s := kubetest.NewFakeK8sClient(
-		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "testNamespace"}},
+		kubetest.FakeNamespace("testNamespace"),
 		&apps_v1.Deployment{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:      "testPodsWithTraffic-v1",

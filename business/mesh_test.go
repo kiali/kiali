@@ -5,7 +5,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	core_v1 "k8s.io/api/core/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
@@ -56,14 +55,10 @@ func TestCanaryUpgradeConfigured(t *testing.T) {
 	k8s.On("IsOpenShift").Return(false)
 	k8s.On("IsGatewayAPI").Return(false)
 
-	migratedNamespace := core_v1.Namespace{
-		ObjectMeta: v1.ObjectMeta{Name: "travel-agency"},
-	}
+	migratedNamespace := *kubetest.FakeNamespace("travel-agency")
 	migratedNamespaces := []core_v1.Namespace{migratedNamespace}
 
-	pendingNamespace := core_v1.Namespace{
-		ObjectMeta: v1.ObjectMeta{Name: "travel-portal"},
-	}
+	pendingNamespace := *kubetest.FakeNamespace("travel-portal")
 	pendingNamespaces := []core_v1.Namespace{pendingNamespace}
 
 	k8s.On("GetNamespaces", "istio-injection=enabled").Return(pendingNamespaces, nil)

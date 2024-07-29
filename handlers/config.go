@@ -46,25 +46,25 @@ type DeploymentConfig struct {
 // PublicConfig is a subset of Kiali configuration that can be exposed to clients to
 // help them interact with the system.
 type PublicConfig struct {
-	AccessibleNamespaces []string                      `json:"accessibleNamespaces,omitempty"`
-	AuthStrategy         string                        `json:"authStrategy,omitempty"`
-	AmbientEnabled       bool                          `json:"ambientEnabled,omitempty"`
-	Clusters             map[string]models.KubeCluster `json:"clusters,omitempty"`
-	Deployment           DeploymentConfig              `json:"deployment,omitempty"`
-	GatewayAPIClasses    []config.GatewayAPIClass      `json:"gatewayAPIClasses,omitempty"`
-	GatewayAPIEnabled    bool                          `json:"gatewayAPIEnabled,omitempty"`
-	HealthConfig         config.HealthConfig           `json:"healthConfig,omitempty"`
-	InstallationTag      string                        `json:"installationTag,omitempty"`
-	IstioAnnotations     IstioAnnotations              `json:"istioAnnotations,omitempty"`
-	IstioCanaryRevision  IstioCanaryRevision           `json:"istioCanaryRevision,omitempty"`
-	IstioConfigMap       string                        `json:"istioConfigMap"`
-	IstioIdentityDomain  string                        `json:"istioIdentityDomain,omitempty"`
-	IstioLabels          config.IstioLabels            `json:"istioLabels,omitempty"`
-	IstioNamespace       string                        `json:"istioNamespace,omitempty"`
-	IstioStatusEnabled   bool                          `json:"istioStatusEnabled,omitempty"`
-	KialiFeatureFlags    config.KialiFeatureFlags      `json:"kialiFeatureFlags,omitempty"`
-	LogLevel             string                        `json:"logLevel,omitempty"`
-	Prometheus           PrometheusConfig              `json:"prometheus,omitempty"`
+	AuthStrategy        string                        `json:"authStrategy,omitempty"`
+	AmbientEnabled      bool                          `json:"ambientEnabled,omitempty"`
+	Clusters            map[string]models.KubeCluster `json:"clusters,omitempty"`
+	ClusterWideAccess   bool                          `json:"clusterWideAccess,omitempty"`
+	Deployment          DeploymentConfig              `json:"deployment,omitempty"`
+	GatewayAPIClasses   []config.GatewayAPIClass      `json:"gatewayAPIClasses,omitempty"`
+	GatewayAPIEnabled   bool                          `json:"gatewayAPIEnabled,omitempty"`
+	HealthConfig        config.HealthConfig           `json:"healthConfig,omitempty"`
+	InstallationTag     string                        `json:"installationTag,omitempty"`
+	IstioAnnotations    IstioAnnotations              `json:"istioAnnotations,omitempty"`
+	IstioCanaryRevision IstioCanaryRevision           `json:"istioCanaryRevision,omitempty"`
+	IstioConfigMap      string                        `json:"istioConfigMap"`
+	IstioIdentityDomain string                        `json:"istioIdentityDomain,omitempty"`
+	IstioLabels         config.IstioLabels            `json:"istioLabels,omitempty"`
+	IstioNamespace      string                        `json:"istioNamespace,omitempty"`
+	IstioStatusEnabled  bool                          `json:"istioStatusEnabled,omitempty"`
+	KialiFeatureFlags   config.KialiFeatureFlags      `json:"kialiFeatureFlags,omitempty"`
+	LogLevel            string                        `json:"logLevel,omitempty"`
+	Prometheus          PrometheusConfig              `json:"prometheus,omitempty"`
 }
 
 // Config is a REST http.HandlerFunc serving up the Kiali configuration made public to clients.
@@ -77,9 +77,9 @@ func Config(conf *config.Config, discovery *istio.Discovery) http.HandlerFunc {
 		promConfig := getPrometheusConfig()
 		conf := config.Get()
 		publicConfig := PublicConfig{
-			AccessibleNamespaces: conf.Deployment.AccessibleNamespaces,
-			AuthStrategy:         conf.Auth.Strategy,
-			Clusters:             make(map[string]models.KubeCluster),
+			AuthStrategy:      conf.Auth.Strategy,
+			Clusters:          make(map[string]models.KubeCluster),
+			ClusterWideAccess: conf.Deployment.ClusterWideAccess,
 			Deployment: DeploymentConfig{
 				ViewOnlyMode: conf.Deployment.ViewOnlyMode,
 			},

@@ -9,7 +9,6 @@ import (
 	api_security_v1 "istio.io/api/security/v1"
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 	security_v1 "istio.io/client-go/pkg/apis/security/v1"
-	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
@@ -37,9 +36,9 @@ func TestMeshStatusEnabled(t *testing.T) {
 			data.CreateEmptyDestinationRule("test", "default", "*.local")),
 	}
 	objs := []runtime.Object{
-		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "test", Labels: injectionEnabledLabel}},
-		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "istio-system"}},
-		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "default", Labels: injectionEnabledLabel}},
+		kubetest.FakeNamespaceWithLabels("test", injectionEnabledLabel),
+		kubetest.FakeNamespace("istio-system"),
+		kubetest.FakeNamespaceWithLabels("default", injectionEnabledLabel),
 	}
 	objs = append(objs, kubernetes.ToRuntimeObjects(pa)...)
 	objs = append(objs, kubernetes.ToRuntimeObjects(dr)...)
@@ -83,9 +82,9 @@ func TestMeshStatusEnabledAutoMtls(t *testing.T) {
 	dr := []*networking_v1.DestinationRule{}
 
 	objs := []runtime.Object{
-		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "test", Labels: injectionEnabledLabel}},
-		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "istio-system"}},
-		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "default", Labels: injectionEnabledLabel}},
+		kubetest.FakeNamespaceWithLabels("test", injectionEnabledLabel),
+		kubetest.FakeNamespace("istio-system"),
+		kubetest.FakeNamespaceWithLabels("default", injectionEnabledLabel),
 	}
 	objs = append(objs, kubernetes.ToRuntimeObjects(pa)...)
 	objs = append(objs, kubernetes.ToRuntimeObjects(dr)...)
@@ -132,9 +131,9 @@ func TestMeshStatusPartiallyEnabled(t *testing.T) {
 	}
 
 	objs := []runtime.Object{
-		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "test", Labels: injectionEnabledLabel}},
-		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "istio-system"}},
-		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "default", Labels: injectionEnabledLabel}},
+		kubetest.FakeNamespaceWithLabels("test", injectionEnabledLabel),
+		kubetest.FakeNamespace("istio-system"),
+		kubetest.FakeNamespaceWithLabels("default", injectionEnabledLabel),
 	}
 	objs = append(objs, kubernetes.ToRuntimeObjects(pa)...)
 	objs = append(objs, kubernetes.ToRuntimeObjects(dr)...)
@@ -174,7 +173,7 @@ func TestMeshStatusNotEnabled(t *testing.T) {
 	conf.Deployment.ClusterWideAccess = true
 	kubernetes.SetConfig(t, *conf)
 
-	ns := &core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "test", Labels: injectionEnabledLabel}}
+	ns := kubetest.FakeNamespaceWithLabels("test", injectionEnabledLabel)
 	pa := []*security_v1.PeerAuthentication{}
 	dr := []*networking_v1.DestinationRule{
 		data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
@@ -225,9 +224,9 @@ func TestMeshStatusDisabled(t *testing.T) {
 			data.CreateEmptyDestinationRule("istio-system", "default", "*.local")),
 	}
 	objs := []runtime.Object{
-		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "test", Labels: injectionEnabledLabel}},
-		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "istio-system"}},
-		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "default", Labels: injectionEnabledLabel}},
+		kubetest.FakeNamespaceWithLabels("test", injectionEnabledLabel),
+		kubetest.FakeNamespace("istio-system"),
+		kubetest.FakeNamespaceWithLabels("default", injectionEnabledLabel),
 	}
 	objs = append(objs, kubernetes.ToRuntimeObjects(pa)...)
 	objs = append(objs, kubernetes.ToRuntimeObjects(dr)...)
@@ -266,7 +265,7 @@ func TestMeshStatusNotEnabledAutoMtls(t *testing.T) {
 	conf.Deployment.ClusterWideAccess = true
 	kubernetes.SetConfig(t, *conf)
 
-	ns := &core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "test", Labels: injectionEnabledLabel}}
+	ns := kubetest.FakeNamespaceWithLabels("test", injectionEnabledLabel)
 	k8s := kubetest.NewFakeK8sClient(ns)
 	SetupBusinessLayer(t, k8s, *conf)
 	discovery := &fakeMeshDiscovery{
@@ -410,7 +409,7 @@ func TestNamespaceHasDestinationRuleEnabledDifferentNs(t *testing.T) {
 	k8s := kubetest.NewFakeK8sClient(objs...)
 	k8s.OpenShift = true
 	conf := config.NewConfig()
-	conf.Deployment.AccessibleNamespaces = []string{"**"}
+	conf.Deployment.ClusterWideAccess = true
 	kubernetes.SetConfig(t, *conf)
 	SetupBusinessLayer(t, k8s, *conf)
 	discovery := &fakeMeshDiscovery{
@@ -452,8 +451,8 @@ func testNamespaceScenario(exStatus string, drs []*networking_v1.DestinationRule
 	kubernetes.SetConfig(t, *conf)
 
 	objs := []runtime.Object{
-		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "bookinfo", Labels: injectionEnabledLabel}},
-		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "foo", Labels: injectionEnabledLabel}},
+		kubetest.FakeNamespaceWithLabels("bookinfo", injectionEnabledLabel),
+		kubetest.FakeNamespaceWithLabels("foo", injectionEnabledLabel),
 	}
 	objs = append(objs, kubernetes.ToRuntimeObjects(ps)...)
 	objs = append(objs, kubernetes.ToRuntimeObjects(drs)...)

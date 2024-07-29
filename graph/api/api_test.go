@@ -17,8 +17,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	core_v1 "k8s.io/api/core/v1"
-	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/kiali/kiali/business"
@@ -41,8 +39,8 @@ func setupMocked(t *testing.T) (*prometheus.Client, *prometheustest.PromAPIMock,
 	config.Set(conf)
 
 	k8s := kubetest.NewFakeK8sClient(
-		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "bookinfo"}},
-		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "tutorial"}},
+		kubetest.FakeNamespace("bookinfo"),
+		kubetest.FakeNamespace("tutorial"),
 	)
 	authInfo := map[string]*api.AuthInfo{conf.KubernetesConfig.ClusterName: {Token: "test"}}
 
@@ -3449,22 +3447,22 @@ func TestComplexGraph(t *testing.T) {
 
 	clients := map[string]kubernetes.ClientInterface{
 		"cluster-tutorial": kubetest.NewFakeK8sClient(
-			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "bookinfo"}},
-			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "istio-system"}},
-			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "tutorial"}},
-			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "istio-telemetry"}},
+			kubetest.FakeNamespace("bookinfo"),
+			kubetest.FakeNamespace("istio-system"),
+			kubetest.FakeNamespace("tutorial"),
+			kubetest.FakeNamespace("istio-telemetry"),
 		),
 		"cluster-cp": kubetest.NewFakeK8sClient(
-			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "bookinfo"}},
-			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "istio-system"}},
-			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "tutorial"}},
-			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "istio-telemetry"}},
+			kubetest.FakeNamespace("bookinfo"),
+			kubetest.FakeNamespace("istio-system"),
+			kubetest.FakeNamespace("tutorial"),
+			kubetest.FakeNamespace("istio-telemetry"),
 		),
 		"cluster-bookinfo": kubetest.NewFakeK8sClient(
-			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "bookinfo"}},
-			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "istio-system"}},
-			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "tutorial"}},
-			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "istio-telemetry"}},
+			kubetest.FakeNamespace("bookinfo"),
+			kubetest.FakeNamespace("istio-system"),
+			kubetest.FakeNamespace("tutorial"),
+			kubetest.FakeNamespace("istio-telemetry"),
 		),
 	}
 	client, xapi, err, biz := setupMockedWithIstioComponentNamespaces(t, "mesh1", clients)
@@ -3784,12 +3782,12 @@ func TestMultiClusterSourceGraph(t *testing.T) {
 
 	clients := map[string]kubernetes.ClientInterface{
 		"kukulcan": kubetest.NewFakeK8sClient(
-			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "bookinfo"}},
-			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "istio-system"}},
+			kubetest.FakeNamespace("bookinfo"),
+			kubetest.FakeNamespace("istio-system"),
 		),
 		"tzotz": kubetest.NewFakeK8sClient(
-			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "bookinfo"}},
-			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "istio-system"}},
+			kubetest.FakeNamespace("bookinfo"),
+			kubetest.FakeNamespace("istio-system"),
 		),
 	}
 	client, xapi, err, biz := setupMockedWithIstioComponentNamespaces(t, "", clients)

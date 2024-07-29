@@ -20,10 +20,12 @@ import (
 
 const IstioAPIEnabled = true
 
-func newTestingKubeCache(t *testing.T, cfg *config.Config, objects ...runtime.Object) *kubeCache {
+var NilAccessibleNamespaces []string = nil
+
+func newTestingKubeCache(t *testing.T, cfg *config.Config, accessibleNamespaces []string, objects ...runtime.Object) *kubeCache {
 	t.Helper()
 
-	kubeCache, err := NewKubeCache(kubetest.NewFakeK8sClient(objects...), *cfg)
+	kubeCache, err := NewKubeCache(kubetest.NewFakeK8sClient(objects...), *cfg, accessibleNamespaces)
 	if err != nil {
 		t.Fatalf("Unable to create kube cache for testing. Err: %s", err)
 	}
@@ -34,14 +36,8 @@ func TestNewKialiCache_isCached(t *testing.T) {
 	assert := assert.New(t)
 
 	conf := config.NewConfig()
-	conf.Deployment.AccessibleNamespaces = []string{
-		"bookinfo",
-		"a",
-		"abcdefghi",
-		"galicia",
-	}
-
-	kubeCache := newTestingKubeCache(t, conf)
+	conf.Deployment.ClusterWideAccess = false
+	kubeCache := newTestingKubeCache(t, conf, []string{"bookinfo", "a", "abcdefghi", "galicia"})
 	kubeCache.refreshDuration = 0
 
 	assert.True(kubeCache.isCached("bookinfo"))
@@ -56,7 +52,7 @@ func TestNewKialiCache_isCached(t *testing.T) {
 func TestClusterScopedCacheStopped(t *testing.T) {
 	assert := assert.New(t)
 
-	kubeCache := newTestingKubeCache(t, config.NewConfig())
+	kubeCache := newTestingKubeCache(t, config.NewConfig(), NilAccessibleNamespaces)
 
 	kubeCache.Stop()
 	select {
@@ -70,8 +66,8 @@ func TestNSScopedCacheStopped(t *testing.T) {
 	assert := assert.New(t)
 
 	cfg := config.NewConfig()
-	cfg.Deployment.AccessibleNamespaces = []string{"ns1", "ns2"}
-	kubeCache := newTestingKubeCache(t, cfg)
+	cfg.Deployment.ClusterWideAccess = false
+	kubeCache := newTestingKubeCache(t, cfg, []string{"ns1", "ns1"})
 
 	kubeCache.Stop()
 	for ns, stopCh := range kubeCache.stopNSChans {
@@ -89,7 +85,7 @@ func TestRefreshClusterScoped(t *testing.T) {
 	assert := assert.New(t)
 
 	svc := &core_v1.Service{ObjectMeta: metav1.ObjectMeta{Name: "svc1", Namespace: "ns1"}}
-	kialiCache := newTestingKubeCache(t, config.NewConfig(), svc)
+	kialiCache := newTestingKubeCache(t, config.NewConfig(), NilAccessibleNamespaces, svc)
 	kialiCache.clusterCacheLister = &cacheLister{}
 	oldLister := kialiCache.clusterCacheLister
 	kialiCache.Refresh("")
@@ -99,7 +95,7 @@ func TestRefreshClusterScoped(t *testing.T) {
 func TestRefreshMultipleTimesClusterScoped(t *testing.T) {
 	assert := assert.New(t)
 
-	kialiCache := newTestingKubeCache(t, config.NewConfig())
+	kialiCache := newTestingKubeCache(t, config.NewConfig(), NilAccessibleNamespaces)
 	kialiCache.clusterCacheLister = &cacheLister{}
 	oldLister := kialiCache.clusterCacheLister
 
@@ -112,9 +108,8 @@ func TestRefreshNSScoped(t *testing.T) {
 	assert := assert.New(t)
 
 	cfg := config.NewConfig()
-	cfg.Deployment.AccessibleNamespaces = []string{"ns1", "ns2"}
 	cfg.Deployment.ClusterWideAccess = false
-	kialiCache := newTestingKubeCache(t, cfg)
+	kialiCache := newTestingKubeCache(t, cfg, []string{"ns1", "ns1"})
 	kialiCache.nsCacheLister = map[string]*cacheLister{}
 
 	kialiCache.Refresh("ns1")
@@ -126,13 +121,13 @@ func TestRefreshNSScoped(t *testing.T) {
 // that the cache sets it.
 func TestKubeGetAndListReturnKindInfo(t *testing.T) {
 	assert := assert.New(t)
-	ns := &core_v1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "test"}}
+	ns := kubetest.FakeNamespace("test")
 	d := &apps_v1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "deployment", Namespace: "test",
 		},
 	}
-	kialiCache := newTestingKubeCache(t, config.NewConfig(), ns, d)
+	kialiCache := newTestingKubeCache(t, config.NewConfig(), NilAccessibleNamespaces, ns, d)
 	kialiCache.Refresh("test")
 
 	deploymentFromCache, err := kialiCache.GetDeployment("test", "deployment")
@@ -156,7 +151,7 @@ func TestConcurrentAccessDuringRefresh(t *testing.T) {
 		},
 	}
 
-	kialiCache := newTestingKubeCache(t, config.NewConfig(), d)
+	kialiCache := newTestingKubeCache(t, config.NewConfig(), NilAccessibleNamespaces, d)
 	// Prime the pump with a first Refresh.
 	kialiCache.Refresh("test")
 
@@ -178,7 +173,7 @@ func TestConcurrentAccessDuringRefresh(t *testing.T) {
 }
 
 func TestGetSidecar(t *testing.T) {
-	ns := &core_v1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "testing-ns"}}
+	ns := kubetest.FakeNamespace("testing-ns")
 	sidecar := &networking_v1.Sidecar{}
 	sidecar.Name = "moto-sidecar"
 	sidecar.Namespace = "testing-ns"
@@ -189,7 +184,7 @@ func TestGetSidecar(t *testing.T) {
 
 	cfg := config.NewConfig()
 
-	kubeCache := newTestingKubeCache(t, cfg, ns, sidecar)
+	kubeCache := newTestingKubeCache(t, cfg, NilAccessibleNamespaces, ns, sidecar)
 
 	cases := map[string]struct {
 		selector        string
@@ -260,7 +255,7 @@ func TestGetSidecar(t *testing.T) {
 func TestGetAndListReturnKindInfo(t *testing.T) {
 	assert := assert.New(t)
 	require := require.New(t)
-	ns := &core_v1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "test"}}
+	ns := kubetest.FakeNamespace("test")
 	vs := &networking_v1.VirtualService{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "vs", Namespace: "test",
@@ -268,7 +263,7 @@ func TestGetAndListReturnKindInfo(t *testing.T) {
 	}
 
 	cfg := config.NewConfig()
-	kialiCache := newTestingKubeCache(t, cfg, ns, vs)
+	kialiCache := newTestingKubeCache(t, cfg, NilAccessibleNamespaces, ns, vs)
 
 	vsFromCache, err := kialiCache.GetVirtualService("test", "vs")
 	require.NoError(err)
@@ -285,11 +280,11 @@ func TestUpdatingClientRefreshesCache(t *testing.T) {
 	assert := assert.New(t)
 	require := require.New(t)
 
-	ns := &core_v1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "test"}}
+	ns := kubetest.FakeNamespace("test")
 	pod := &core_v1.Pod{ObjectMeta: metav1.ObjectMeta{Name: "pod", Namespace: "test"}}
 
 	cfg := config.NewConfig()
-	kialiCache := newTestingKubeCache(t, cfg, ns, pod)
+	kialiCache := newTestingKubeCache(t, cfg, NilAccessibleNamespaces, ns, pod)
 	kialiCache.clusterCacheLister = &cacheLister{}
 
 	err := kialiCache.UpdateClient(kubetest.NewFakeK8sClient(ns, pod))
@@ -304,12 +299,12 @@ func TestUpdatingClientRefreshesCache(t *testing.T) {
 
 func TestIstioAPIDisabled(t *testing.T) {
 	assert := assert.New(t)
-	ns := &core_v1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "test"}}
+	ns := kubetest.FakeNamespace("test")
 
 	cfg := config.NewConfig()
 	fakeClient := kubetest.NewFakeK8sClient(ns)
 	fakeClient.IstioAPIEnabled = false
-	kubeCache, err := NewKubeCache(fakeClient, *cfg)
+	kubeCache, err := NewKubeCache(fakeClient, *cfg, NilAccessibleNamespaces)
 	if err != nil {
 		t.Fatalf("Unable to create kube cache for testing. Err: %s", err)
 	}
@@ -323,8 +318,8 @@ func ListingIstioObjectsWorksAcrossNamespacesWhenNamespaceScoped(t *testing.T) {
 	assert := assert.New(t)
 	require := require.New(t)
 
-	nsAlpha := &core_v1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "alpha"}}
-	nsBeta := &core_v1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "beta"}}
+	nsAlpha := kubetest.FakeNamespace("alpha")
+	nsBeta := kubetest.FakeNamespace("beta")
 	vsAlpha := &networking_v1.VirtualService{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "test-alpha", Namespace: "alpha",
@@ -337,9 +332,8 @@ func ListingIstioObjectsWorksAcrossNamespacesWhenNamespaceScoped(t *testing.T) {
 	}
 
 	cfg := config.NewConfig()
-	cfg.Deployment.AccessibleNamespaces = []string{"alpha", "beta"}
 	cfg.Deployment.ClusterWideAccess = false
-	kubeCache := newTestingKubeCache(t, cfg, nsAlpha, nsBeta, vsAlpha, vsBeta)
+	kubeCache := newTestingKubeCache(t, cfg, []string{"alpha", "beta"}, nsAlpha, nsBeta, vsAlpha, vsBeta)
 
 	vsList, err := kubeCache.GetVirtualServices("", "")
 	require.NoError(err)

@@ -164,6 +164,15 @@ type cacheLister struct {
 
 // kubeCache is a local cache of kube objects. Manages informers and listers.
 type kubeCache struct {
+	// If not cluster scoped (clusterScoped==false), these are the namespaces the cache will be watching;
+	// Kiali will not have permission to see any other namespaces in the cluster.
+	//
+	// If cluster scoped (clusterScoped==true), this cache will watch everything, even if there are discovery selectors
+	// that restrict what the server should look at. So this list is not needed and ignored when clusterScoped==true.
+	//
+	// These namespaces should be obtained by processing the discovery selectors.
+	accessibleNamespaces []string
+
 	cacheLock          sync.RWMutex
 	cfg                config.Config
 	client             kubernetes.ClientInterface
@@ -183,7 +192,7 @@ type kubeCache struct {
 }
 
 // Starts all informers. These run until context is cancelled.
-func NewKubeCache(kialiClient kubernetes.ClientInterface, cfg config.Config) (*kubeCache, error) {
+func NewKubeCache(kialiClient kubernetes.ClientInterface, cfg config.Config, accessibleNamespaces []string) (*kubeCache, error) {
 	refreshDuration := time.Duration(cfg.KubernetesConfig.CacheDuration) * time.Second
 
 	c := &kubeCache{
@@ -197,15 +206,18 @@ func NewKubeCache(kialiClient kubernetes.ClientInterface, cfg config.Config) (*k
 	}
 
 	if c.clusterScoped {
+		// note that we ignore accessibleNamespaces - if we are cluster scoped, we will watch all namespaces
 		log.Debug("[Kiali Cache] Using 'cluster' scoped Kiali Cache")
 		if err := c.startInformers(""); err != nil {
 			return nil, err
 		}
 	} else {
 		log.Debug("[Kiali Cache] Using 'namespace' scoped Kiali Cache")
+
+		c.accessibleNamespaces = accessibleNamespaces // we need to remember these - see isCached()
 		c.nsCacheLister = make(map[string]*cacheLister)
 		c.stopNSChans = make(map[string]chan struct{})
-		for _, ns := range cfg.Deployment.AccessibleNamespaces {
+		for _, ns := range c.accessibleNamespaces {
 			if err := c.startInformers(ns); err != nil {
 				return nil, err
 			}
@@ -217,8 +229,8 @@ func NewKubeCache(kialiClient kubernetes.ClientInterface, cfg config.Config) (*k
 
 // It will indicate if a namespace should have a cache
 func (c *kubeCache) isCached(namespace string) bool {
-	if namespace != "" {
-		return slices.Contains(c.cfg.Deployment.AccessibleNamespaces, namespace)
+	if !c.clusterScoped && namespace != "" {
+		return slices.Contains(c.accessibleNamespaces, namespace)
 	}
 	return false
 }

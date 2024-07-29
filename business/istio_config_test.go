@@ -11,7 +11,6 @@ import (
 	api_networking_v1 "istio.io/api/networking/v1"
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 	auth_v1 "k8s.io/api/authorization/v1"
-	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
@@ -600,7 +599,7 @@ func TestListWithAllNamespacesButNoAccessReturnsEmpty(t *testing.T) {
 	conf.KubernetesConfig.ClusterName = "Kubernetes"
 	kubernetes.SetConfig(t, *conf)
 	fakeIstioObjects := []runtime.Object{
-		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "test"}},
+		kubetest.FakeNamespace("test"),
 	}
 	fakeIstioObjects = append(fakeIstioObjects, kubernetes.ToRuntimeObjects(fakeGetGateways())...)
 	k8s := kubetest.NewFakeK8sClient(fakeIstioObjects...)
@@ -632,14 +631,21 @@ func TestListNamespaceScopedReturnsAllAccessibleNamespaces(t *testing.T) {
 
 	conf := config.NewConfig()
 	conf.KubernetesConfig.CacheTokenNamespaceDuration = 10000
-	conf.Deployment.AccessibleNamespaces = []string{"test", "test-b", "istio-system"}
+	conf.Deployment.DiscoverySelectors = config.DiscoverySelectorsConfig{
+		Default: config.DiscoverySelectorsType{
+			&config.DiscoverySelectorType{MatchLabels: map[string]string{"kubernetes.io/metadata.name": "test"}},
+			&config.DiscoverySelectorType{MatchLabels: map[string]string{"kubernetes.io/metadata.name": "test-b"}},
+			&config.DiscoverySelectorType{MatchLabels: map[string]string{"kubernetes.io/metadata.name": "istio-system"}},
+		},
+	}
+
 	conf.Deployment.ClusterWideAccess = false
 	kubernetes.SetConfig(t, *conf)
 	objects := []runtime.Object{
-		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "istio-system"}},
-		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "test"}},
-		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "test-b"}},
-		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "test-c"}},
+		kubetest.FakeNamespace("istio-system"),
+		kubetest.FakeNamespace("test"),
+		kubetest.FakeNamespace("test-b"),
+		kubetest.FakeNamespace("test-c"),
 	}
 	objects = append(objects, kubernetes.ToRuntimeObjects(fakeGetGateways())...)
 	testBGateways := fakeGetGateways()

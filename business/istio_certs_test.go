@@ -68,7 +68,7 @@ V/InYncUvcXt0M4JJSUJi/u6VBKSYYDIHt3mk9Le2qlMQuHkOQ1ZcuEOM2CU/KtO
 		},
 	}
 	k8s := kubetest.NewFakeK8sClient(
-		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
+		kubetest.FakeNamespace("istio-system"),
 		secret,
 	)
 
@@ -128,7 +128,7 @@ V/InYncUvcXt0M4JJSUJi/u6VBKSYYDIHt3mk9Le2qlMQuHkOQ1ZcuEOM2CU/KtO
 		},
 	}
 	k8s := &forbiddenSecretClient{kubetest.NewFakeK8sClient(
-		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
+		kubetest.FakeNamespace("istio-system"),
 		secret,
 	)}
 
@@ -185,7 +185,7 @@ cdLzuNyDoeWOHU7mx52TuTwj3eObtQM+hlI=
 	}
 
 	k8s := kubetest.NewFakeK8sClient(
-		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
+		kubetest.FakeNamespace("istio-system"),
 		secret,
 	)
 
@@ -326,7 +326,7 @@ iMXzPzS/OeYyKQ==
 	}
 
 	k8s := kubetest.NewFakeK8sClient(
-		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
+		kubetest.FakeNamespace("istio-system"),
 		&example1secret,
 		&example2secret,
 	)
@@ -414,7 +414,7 @@ iMXzPzS/OeYyKQ==
 	}
 
 	k8s := kubetest.NewFakeK8sClient(
-		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
+		kubetest.FakeNamespace("istio-system"),
 		&example1secret,
 	)
 

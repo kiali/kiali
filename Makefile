@@ -142,7 +142,7 @@ OPERATOR_INSTALL_KIALI_CR_NAMESPACE ?= ${OPERATOR_WATCH_NAMESPACE}
 endif
 
 # When installing Kiali to a remote cluster via make, here are some configuration settings for it.
-ACCESSIBLE_NAMESPACES ?= **
+CLUSTER_WIDE_ACCESS ?= true
 ifneq ($(CLUSTER_TYPE),openshift)
 AUTH_STRATEGY ?= anonymous
 else

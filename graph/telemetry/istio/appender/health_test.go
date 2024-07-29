@@ -483,7 +483,7 @@ func TestErrorCausesPanic(t *testing.T) {
 	trafficMap := buildAppTrafficMap()
 	objects := []runtime.Object{
 		&osproject_v1.Project{ObjectMeta: meta_v1.ObjectMeta{Name: "testNamespace"}},
-		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "testNamespace"}},
+		kubetest.FakeNamespace("testNamespace"),
 	}
 	for _, obj := range buildFakeWorkloadDeploymentsHealth(rateDefinition) {
 		o := obj
@@ -533,7 +533,7 @@ func TestMultiClusterHealthConfig(t *testing.T) {
 	trafficMap[westNode.ID] = westNode
 	objects := []runtime.Object{
 		&osproject_v1.Project{ObjectMeta: meta_v1.ObjectMeta{Name: "testNamespace"}},
-		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "testNamespace"}},
+		kubetest.FakeNamespace("testNamespace"),
 	}
 	westClient := kubetest.NewFakeK8sClient(objects...)
 	for _, obj := range buildFakeWorkloadDeploymentsHealth(rateDefinition) {
@@ -619,7 +619,7 @@ func buildFakePodsHealth(rate string) []core_v1.Pod {
 func setupHealthConfig(t *testing.T, services []core_v1.Service, deployments []apps_v1.Deployment, pods []core_v1.Pod) *business.Layer {
 	objects := []runtime.Object{
 		&osproject_v1.Project{ObjectMeta: meta_v1.ObjectMeta{Name: "testNamespace"}},
-		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "testNamespace"}},
+		kubetest.FakeNamespace("testNamespace"),
 	}
 	for _, obj := range services {
 		o := obj

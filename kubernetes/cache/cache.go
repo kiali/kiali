@@ -37,6 +37,7 @@ const (
 // to so it uses the kiali service account token instead of a user token. Access to
 // the objects returned by the cache should be filtered/restricted to the user's
 // token access but the cache returns objects without any filtering or restrictions.
+// This object keeps one KubeCache per cluster.
 // TODO: Consider removing the interface altogether in favor of just exporting the struct.
 type KialiCache interface {
 	GetBuildInfo() models.BuildInfo
@@ -145,7 +146,17 @@ func NewKialiCache(clientFactory kubernetes.ClientFactory, cfg config.Config) (K
 	}
 
 	for cluster, client := range clientFactory.GetSAClients() {
-		cache, err := NewKubeCache(client, cfg)
+		var accessibleNamespaces []string
+		if !cfg.Deployment.ClusterWideAccess {
+			// Determine what namespaces are to be accessed for the cluster.
+			// Since we do not have cluster wide access, we do not have permission to list namespaces.
+			// Therefore, we assume we can extract the list of accessible namespaces from the discovery selectors configuration.
+			// That list of accessible namespaces will be used as our base list which we then filter with discovery selectors later.
+			// Note if this is a remote cluster, that remote cluster must have the same namespaces as those in our own local
+			// cluster's accessible namespaces. This is one reason why we suggest enabling CWA for multi-cluster environments.
+			accessibleNamespaces = cfg.ExtractAccessibleNamespaceList()
+		}
+		cache, err := NewKubeCache(client, cfg, accessibleNamespaces)
 		if err != nil {
 			log.Errorf("[Kiali Cache] Error creating kube cache for cluster: [%s]. Err: %v", cluster, err)
 			return nil, err

@@ -135,7 +135,7 @@ func TestIstioConfigMapName(t *testing.T) {
 			conf := config.NewConfig()
 			conf.ExternalServices.Istio.ConfigMapName = tc.configMapName
 			k8s := kubetest.NewFakeK8sClient(
-				&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "istio-system"}},
+				kubetest.FakeNamespace("istio-system"),
 				tc.configMap,
 			)
 
