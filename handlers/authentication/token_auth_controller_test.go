@@ -12,7 +12,6 @@ import (
 	"github.com/stretchr/testify/require"
 	v1 "k8s.io/api/core/v1"
 	k8s_errors "k8s.io/apimachinery/pkg/api/errors"
-	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/kiali/kiali/config"
@@ -85,7 +84,7 @@ func TestTokenAuthControllerRejectsInvalidToken(t *testing.T) {
 
 	// Returning a forbidden error when a cluster API call is made should have the result of
 	// a rejected authentication.
-	k8s := kubetest.NewFakeK8sClient(&v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "Foo"}})
+	k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("Foo"))
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(forbiddenClient{k8s})
 	cache := cache.NewTestingCacheWithFactory(t, mockClientFactory, *conf)
 	discovery := istio.NewDiscovery(mockClientFactory.Clients, cache, conf)
@@ -222,7 +221,7 @@ func createValidSession(t *testing.T) (*httptest.ResponseRecorder, *UserSessionD
 
 	// Returning some namespace when a cluster API call is made should have the result of
 	// a successful authentication.
-	k8s := kubetest.NewFakeK8sClient(&v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "Foo"}})
+	k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("Foo"))
 
 	requestBody := strings.NewReader("token=" + testToken)
 	request := httptest.NewRequest(http.MethodPost, "/api/authenticate", requestBody)

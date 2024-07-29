@@ -210,7 +210,7 @@ func TestGetVersionRemoteCluster(t *testing.T) {
 					},
 				},
 			},
-			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "istio-system"}},
+			kubetest.FakeNamespace("istio-system"),
 		),
 	}
 

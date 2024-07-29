@@ -17,6 +17,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
+	"github.com/kiali/kiali/tests/testutils"
 )
 
 const IstioAPIEnabled = true
@@ -34,13 +35,16 @@ func newTestingKubeCache(t *testing.T, cfg *config.Config, objects ...runtime.Ob
 func TestNewKialiCache_isCached(t *testing.T) {
 	assert := assert.New(t)
 
-	conf := config.NewConfig()
-	conf.Deployment.AccessibleNamespaces = []string{
-		"bookinfo",
-		"a",
-		"abcdefghi",
-		"galicia",
-	}
+	conf := testutils.GetConfigFromYaml(t, `
+deployment:
+  cluster_wide_access: false
+  discovery_selectors:
+    default:
+    - matchLabels: {"kubernetes.io/metadata.name": "bookinfo" }
+    - matchLabels: {"kubernetes.io/metadata.name": "a" }
+    - matchLabels: {"kubernetes.io/metadata.name": "abcdefghi" }
+    - matchLabels: {"kubernetes.io/metadata.name": "galicia" }
+`)
 
 	kubeCache := newTestingKubeCache(t, conf)
 	kubeCache.refreshDuration = 0
@@ -70,8 +74,15 @@ func TestClusterScopedCacheStopped(t *testing.T) {
 func TestNSScopedCacheStopped(t *testing.T) {
 	assert := assert.New(t)
 
-	cfg := config.NewConfig()
-	cfg.Deployment.AccessibleNamespaces = []string{"ns1", "ns2"}
+	cfg := testutils.GetConfigFromYaml(t, `
+deployment:
+  cluster_wide_access: false
+  discovery_selectors:
+    default:
+    - matchLabels: {"kubernetes.io/metadata.name": "ns1" }
+    - matchLabels: {"kubernetes.io/metadata.name": "ns2" }
+`)
+
 	kubeCache := newTestingKubeCache(t, cfg)
 
 	kubeCache.Stop()
@@ -112,9 +123,14 @@ func TestRefreshMultipleTimesClusterScoped(t *testing.T) {
 func TestRefreshNSScoped(t *testing.T) {
 	assert := assert.New(t)
 
-	cfg := config.NewConfig()
-	cfg.Deployment.AccessibleNamespaces = []string{"ns1", "ns2"}
-	cfg.Deployment.ClusterWideAccess = false
+	cfg := testutils.GetConfigFromYaml(t, `
+deployment:
+  cluster_wide_access: false
+  discovery_selectors:
+    default:
+    - matchLabels: {"kubernetes.io/metadata.name": "ns1" }
+    - matchLabels: {"kubernetes.io/metadata.name": "ns2" }
+`)
 	kialiCache := newTestingKubeCache(t, cfg)
 	kialiCache.nsCacheLister = map[string]*cacheLister{}
 
@@ -127,7 +143,7 @@ func TestRefreshNSScoped(t *testing.T) {
 // that the cache sets it.
 func TestKubeGetAndListReturnKindInfo(t *testing.T) {
 	assert := assert.New(t)
-	ns := &core_v1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "test"}}
+	ns := kubetest.FakeNamespace("test")
 	d := &apps_v1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "deployment", Namespace: "test",
@@ -179,7 +195,7 @@ func TestConcurrentAccessDuringRefresh(t *testing.T) {
 }
 
 func TestGetSidecar(t *testing.T) {
-	ns := &core_v1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "testing-ns"}}
+	ns := kubetest.FakeNamespace("testing-ns")
 	sidecar := &networking_v1.Sidecar{}
 	sidecar.Name = "moto-sidecar"
 	sidecar.Namespace = "testing-ns"
@@ -261,7 +277,7 @@ func TestGetSidecar(t *testing.T) {
 func TestGetAndListReturnKindInfo(t *testing.T) {
 	assert := assert.New(t)
 	require := require.New(t)
-	ns := &core_v1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "test"}}
+	ns := kubetest.FakeNamespace("test")
 	vs := &networking_v1.VirtualService{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "vs", Namespace: "test",
@@ -286,7 +302,7 @@ func TestUpdatingClientRefreshesCache(t *testing.T) {
 	assert := assert.New(t)
 	require := require.New(t)
 
-	ns := &core_v1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "test"}}
+	ns := kubetest.FakeNamespace("test")
 	pod := &core_v1.Pod{ObjectMeta: metav1.ObjectMeta{Name: "pod", Namespace: "test"}}
 
 	cfg := config.NewConfig()
@@ -305,7 +321,7 @@ func TestUpdatingClientRefreshesCache(t *testing.T) {
 
 func TestIstioAPIDisabled(t *testing.T) {
 	assert := assert.New(t)
-	ns := &core_v1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "test"}}
+	ns := kubetest.FakeNamespace("test")
 
 	cfg := config.NewConfig()
 	fakeClient := kubetest.NewFakeK8sClient(ns)
@@ -320,12 +336,12 @@ func TestIstioAPIDisabled(t *testing.T) {
 	assert.Error(err)
 }
 
-func ListingIstioObjectsWorksAcrossNamespacesWhenNamespaceScoped(t *testing.T) {
+func TestListingIstioObjectsWorksAcrossNamespacesWhenNamespaceScoped(t *testing.T) {
 	assert := assert.New(t)
 	require := require.New(t)
 
-	nsAlpha := &core_v1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "alpha"}}
-	nsBeta := &core_v1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "beta"}}
+	nsAlpha := kubetest.FakeNamespace("alpha")
+	nsBeta := kubetest.FakeNamespace("beta")
 	vsAlpha := &networking_v1.VirtualService{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "test-alpha", Namespace: "alpha",
@@ -337,9 +353,15 @@ func ListingIstioObjectsWorksAcrossNamespacesWhenNamespaceScoped(t *testing.T) {
 		},
 	}
 
-	cfg := config.NewConfig()
-	cfg.Deployment.AccessibleNamespaces = []string{"alpha", "beta"}
-	cfg.Deployment.ClusterWideAccess = false
+	cfg := testutils.GetConfigFromYaml(t, `
+deployment:
+  cluster_wide_access: false
+  discovery_selectors:
+    default:
+    - matchLabels: {"kubernetes.io/metadata.name": "alpha" }
+    - matchLabels: {"kubernetes.io/metadata.name": "beta" }
+`)
+
 	kubeCache := newTestingKubeCache(t, cfg, nsAlpha, nsBeta, vsAlpha, vsBeta)
 
 	vsList, err := kubeCache.GetVirtualServices("", "")

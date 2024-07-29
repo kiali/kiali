@@ -7,8 +7,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	api_networking_v1 "istio.io/api/networking/v1"
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
-	core_v1 "k8s.io/api/core/v1"
-	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/kiali/kiali/business"
@@ -27,8 +25,9 @@ func setupBusinessLayer(t *testing.T, istioObjects ...runtime.Object) *business.
 	config.Set(conf)
 
 	istioObjects = append(istioObjects,
-		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "testNamespace"}},
-		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "otherNamespace"}})
+		kubetest.FakeNamespace("testNamespace"),
+		kubetest.FakeNamespace("otherNamespace"),
+	)
 	k8s := kubetest.NewFakeK8sClient(istioObjects...)
 	business.SetupBusinessLayer(t, k8s, *conf)
 	k8sclients := map[string]kubernetes.ClientInterface{
@@ -843,7 +842,7 @@ func TestDisjointMulticlusterEntries(t *testing.T) {
 		"svc1.namespace.global",
 	}
 	remoteSE.Spec.Location = api_networking_v1.ServiceEntry_MESH_INTERNAL
-	k8s := kubetest.NewFakeK8sClient(remoteSE, &core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "namespace"}})
+	k8s := kubetest.NewFakeK8sClient(remoteSE, kubetest.FakeNamespace("namespace"))
 
 	conf := config.NewConfig()
 	conf.KubernetesConfig.ClusterName = config.DefaultClusterID
@@ -853,7 +852,7 @@ func TestDisjointMulticlusterEntries(t *testing.T) {
 	business.SetupBusinessLayer(t, k8s, *conf)
 	k8sclients := map[string]kubernetes.ClientInterface{
 		config.DefaultClusterID: kubetest.NewFakeK8sClient(
-			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "namespace"}},
+			kubetest.FakeNamespace("namespace"),
 		),
 	}
 	businessLayer := business.NewWithBackends(k8sclients, k8sclients, nil, nil)
@@ -936,8 +935,8 @@ func TestServiceEntrySameHostMatchNamespace(t *testing.T) {
 	SE2.Spec.Location = api_networking_v1.ServiceEntry_MESH_EXTERNAL
 
 	k8s := kubetest.NewFakeK8sClient(
-		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "otherNamespace"}},
-		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "testNamespace"}},
+		kubetest.FakeNamespace("otherNamespace"),
+		kubetest.FakeNamespace("testNamespace"),
 		SE1,
 		SE2,
 	)
@@ -950,7 +949,7 @@ func TestServiceEntrySameHostMatchNamespace(t *testing.T) {
 	business.SetupBusinessLayer(t, k8s, *conf)
 	k8sclients := map[string]kubernetes.ClientInterface{
 		config.DefaultClusterID: kubetest.NewFakeK8sClient(
-			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "testNamespace"}},
+			kubetest.FakeNamespace("testNamespace"),
 		),
 	}
 	businessLayer := business.NewWithBackends(k8sclients, k8sclients, nil, nil)
@@ -1081,12 +1080,12 @@ func TestServiceEntrySameHostNoMatchNamespace(t *testing.T) {
 	conf.ExternalServices.Istio.IstioAPIEnabled = false
 	config.Set(conf)
 
-	istioObjects := append([]runtime.Object{SE1, SE2}, &core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "otherNamespace"}})
+	istioObjects := append([]runtime.Object{SE1, SE2}, kubetest.FakeNamespace("otherNamespace"))
 	k8s := kubetest.NewFakeK8sClient(istioObjects...)
 	business.SetupBusinessLayer(t, k8s, *conf)
 	k8sclients := map[string]kubernetes.ClientInterface{
 		config.DefaultClusterID: kubetest.NewFakeK8sClient(
-			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "otherNamespace"}},
+			kubetest.FakeNamespace("otherNamespace"),
 		),
 	}
 	businessLayer := business.NewWithBackends(k8sclients, k8sclients, nil, nil)
@@ -1372,8 +1371,8 @@ func TestSEKiali7589(t *testing.T) {
 	}
 	cluster2SE.Spec.Location = api_networking_v1.ServiceEntry_MESH_EXTERNAL
 
-	istioObjects1 := []runtime.Object{cluster1SE, &core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: namespace}}}
-	istioObjects2 := []runtime.Object{cluster2SE, &core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: namespace}}}
+	istioObjects1 := []runtime.Object{cluster1SE, kubetest.FakeNamespace(namespace)}
+	istioObjects2 := []runtime.Object{cluster2SE, kubetest.FakeNamespace(namespace)}
 
 	client1 := kubetest.NewFakeK8sClient(istioObjects1...)
 	client2 := kubetest.NewFakeK8sClient(istioObjects2...)

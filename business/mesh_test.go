@@ -24,13 +24,8 @@ func TestCanaryUpgradeNotConfigured(t *testing.T) {
 	kubernetes.SetConfig(t, *conf)
 	config.Set(conf)
 
-	migratedNamespace := core_v1.Namespace{
-		ObjectMeta: v1.ObjectMeta{Name: "travel-agency", Labels: map[string]string{"istio.io/rev": "canary"}},
-	}
-
-	pendingNamespace := core_v1.Namespace{
-		ObjectMeta: v1.ObjectMeta{Name: "travel-portal", Labels: map[string]string{"istio-injection": "enabled"}},
-	}
+	migratedNamespace := *kubetest.FakeNamespaceWithLabels("travel-agency", map[string]string{"istio.io/rev": "canary"})
+	pendingNamespace := *kubetest.FakeNamespaceWithLabels("travel-portal", map[string]string{"istio-injection": "enabled"})
 
 	// Create a MeshService and invoke IsMeshConfigured
 	k8sclients := map[string]kubernetes.ClientInterface{
@@ -67,17 +62,12 @@ func TestCanaryUpgradeConfigured(t *testing.T) {
 	kubernetes.SetConfig(t, *conf)
 	config.Set(conf)
 
-	migratedNamespace := core_v1.Namespace{
-		ObjectMeta: v1.ObjectMeta{Name: "travel-agency", Labels: map[string]string{"istio.io/rev": "canary"}},
-	}
-
-	pendingNamespace := core_v1.Namespace{
-		ObjectMeta: v1.ObjectMeta{Name: "travel-portal", Labels: map[string]string{"istio-injection": "enabled"}},
-	}
+	migratedNamespace := *kubetest.FakeNamespaceWithLabels("travel-agency", map[string]string{"istio.io/rev": "canary"})
+	pendingNamespace := *kubetest.FakeNamespaceWithLabels("travel-portal", map[string]string{"istio-injection": "enabled"})
 
 	k8sclients := map[string]kubernetes.ClientInterface{
 		conf.KubernetesConfig.ClusterName: kubetest.NewFakeK8sClient(
-			&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: conf.IstioNamespace}},
+			kubetest.FakeNamespace(conf.IstioNamespace),
 			runningIstiodPod(),
 			runningIstiodCanaryPod(),
 			&migratedNamespace,

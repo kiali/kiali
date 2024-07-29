@@ -37,6 +37,7 @@ const (
 // to so it uses the kiali service account token instead of a user token. Access to
 // the objects returned by the cache should be filtered/restricted to the user's
 // token access but the cache returns objects without any filtering or restrictions.
+// This object keeps one KubeCache per cluster.
 // TODO: Consider removing the interface altogether in favor of just exporting the struct.
 type KialiCache interface {
 	GetBuildInfo() models.BuildInfo

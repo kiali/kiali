@@ -334,11 +334,11 @@ func TestGetNamespaceServicesHealthMultiCluster(t *testing.T) {
 	clientFactory := kubetest.NewK8SClientFactoryMock(nil)
 	clients := map[string]kubernetes.ClientInterface{
 		conf.KubernetesConfig.ClusterName: kubetest.NewFakeK8sClient(
-			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "tutorial"}},
+			kubetest.FakeNamespace("tutorial"),
 			&core_v1.Service{ObjectMeta: meta_v1.ObjectMeta{Name: "httpbin", Namespace: "tutorial"}},
 		),
 		"west": kubetest.NewFakeK8sClient(
-			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "tutorial"}},
+			kubetest.FakeNamespace("tutorial"),
 			&core_v1.Service{ObjectMeta: meta_v1.ObjectMeta{Name: "httpbin", Namespace: "tutorial"}},
 		),
 	}
@@ -372,12 +372,12 @@ func TestGetNamespaceApplicationsHealthMultiCluster(t *testing.T) {
 	clientFactory := kubetest.NewK8SClientFactoryMock(nil)
 	clients := map[string]kubernetes.ClientInterface{
 		conf.KubernetesConfig.ClusterName: kubetest.NewFakeK8sClient(
-			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "tutorial"}},
+			kubetest.FakeNamespace("tutorial"),
 			&core_v1.Service{ObjectMeta: meta_v1.ObjectMeta{Name: "httpbin", Namespace: "tutorial"}},
 			&core_v1.Pod{ObjectMeta: meta_v1.ObjectMeta{Name: "httpbin", Namespace: "tutorial", Labels: map[string]string{"app": "httpbin", "version": "v1"}, Annotations: kubetest.FakeIstioAnnotations()}, Status: core_v1.PodStatus{Phase: core_v1.PodRunning}},
 		),
 		"west": kubetest.NewFakeK8sClient(
-			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "tutorial"}},
+			kubetest.FakeNamespace("tutorial"),
 			&core_v1.Service{ObjectMeta: meta_v1.ObjectMeta{Name: "httpbin", Namespace: "tutorial"}},
 			&core_v1.Pod{ObjectMeta: meta_v1.ObjectMeta{Name: "httpbin", Namespace: "tutorial", Labels: map[string]string{"app": "httpbin", "version": "v1"}, Annotations: kubetest.FakeIstioAnnotations()}, Status: core_v1.PodStatus{Phase: core_v1.PodRunning}},
 		),
@@ -413,11 +413,11 @@ func TestGetNamespaceWorkloadsHealthMultiCluster(t *testing.T) {
 	clientFactory := kubetest.NewK8SClientFactoryMock(nil)
 	clients := map[string]kubernetes.ClientInterface{
 		conf.KubernetesConfig.ClusterName: kubetest.NewFakeK8sClient(
-			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "tutorial"}},
+			kubetest.FakeNamespace("tutorial"),
 			&core_v1.Pod{ObjectMeta: meta_v1.ObjectMeta{Name: "httpbin", Namespace: "tutorial", Labels: map[string]string{"app": "httpbin", "version": "v1"}, Annotations: kubetest.FakeIstioAnnotations()}, Status: core_v1.PodStatus{Phase: core_v1.PodRunning}},
 		),
 		"west": kubetest.NewFakeK8sClient(
-			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "tutorial"}},
+			kubetest.FakeNamespace("tutorial"),
 			&core_v1.Pod{ObjectMeta: meta_v1.ObjectMeta{Name: "httpbin", Namespace: "tutorial", Labels: map[string]string{"app": "httpbin", "version": "v1"}, Annotations: kubetest.FakeIstioAnnotations()}, Status: core_v1.PodStatus{Phase: core_v1.PodRunning}},
 		),
 	}

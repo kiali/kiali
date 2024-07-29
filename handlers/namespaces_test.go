@@ -15,7 +15,6 @@ import (
 	prom_v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/clientcmd/api"
 
@@ -120,7 +119,7 @@ func TestNamespaceMetricsWithParams(t *testing.T) {
 
 func TestNamespaceMetricsInaccessibleNamespace(t *testing.T) {
 	ts, _ := setupNamespaceMetricsEndpoint(t)
-	k8s := kubetest.NewFakeK8sClient(&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "my_namespace"}})
+	k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("my_namespace"))
 	business.SetupBusinessLayer(t, &noPrivClient{k8s}, *config.NewConfig())
 
 	url := ts.URL + "/api/namespaces/my_namespace/metrics"
@@ -189,9 +188,9 @@ func setupMocked(t *testing.T) (*prometheus.Client, *prometheustest.PromAPIMock)
 	config.Set(conf)
 
 	k := kubetest.NewFakeK8sClient(
-		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "bookinfo"}},
-		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "tutorial"}},
-		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "ns"}},
+		kubetest.FakeNamespace("bookinfo"),
+		kubetest.FakeNamespace("tutorial"),
+		kubetest.FakeNamespace("ns"),
 		&osproject_v1.Project{ObjectMeta: meta_v1.ObjectMeta{Name: "bookinfo"}},
 		&osproject_v1.Project{ObjectMeta: meta_v1.ObjectMeta{Name: "tutorial"}},
 		&osproject_v1.Project{ObjectMeta: meta_v1.ObjectMeta{Name: "ns"}},

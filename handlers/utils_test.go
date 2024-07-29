@@ -9,7 +9,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	core_v1 "k8s.io/api/core/v1"
-	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/clientcmd/api"
 
@@ -43,8 +42,8 @@ func utilSetupMocks(t *testing.T, additionalObjs ...runtime.Object) promClientSu
 	conf.ExternalServices.Istio.IstioAPIEnabled = false
 	config.Set(conf)
 	objs := []runtime.Object{
-		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "ns1"}},
-		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "ns2"}},
+		kubetest.FakeNamespace("ns1"),
+		kubetest.FakeNamespace("ns2"),
 	}
 	objs = append(objs, additionalObjs...)
 	k := kubetest.NewFakeK8sClient(objs...)

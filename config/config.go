@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"gopkg.in/yaml.v2"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/config/dashboards"
 	"github.com/kiali/kiali/config/security"
@@ -376,19 +377,6 @@ type KubernetesConfig struct {
 	QPS              float32  `yaml:"qps,omitempty"`
 }
 
-// ApiConfig contains API specific configuration.
-type ApiConfig struct {
-	Namespaces ApiNamespacesConfig
-}
-
-// ApiNamespacesConfig provides a list of regex strings defining namespaces to include or exclude.
-type ApiNamespacesConfig struct {
-	Exclude              []string `yaml:"exclude,omitempty" json:"exclude"`
-	Include              []string `yaml:"include,omitempty" json:"include"`
-	LabelSelectorExclude string   `yaml:"label_selector_exclude,omitempty" json:"labelSelectorExclude"`
-	LabelSelectorInclude string   `yaml:"label_selector_include,omitempty" json:"labelSelectorInclude"`
-}
-
 // AuthConfig provides details on how users are to authenticate
 type AuthConfig struct {
 	OpenId    OpenIdConfig    `yaml:"openid,omitempty"`
@@ -423,15 +411,56 @@ type OpenIdConfig struct {
 
 // DeploymentConfig provides details on how Kiali was deployed.
 type DeploymentConfig struct {
-	AccessibleNamespaces []string `yaml:"accessible_namespaces"`
-	ClusterWideAccess    bool     `yaml:"cluster_wide_access,omitempty"`
-	InstanceName         string   `yaml:"instance_name"`
-	Namespace            string   `yaml:"namespace,omitempty"` // Kiali deployment namespace
-	ViewOnlyMode         bool     `yaml:"view_only_mode,omitempty"`
+	AccessibleNamespaces []string                 // this is no longer part of the actual config - we will generate this in Unmarshal()
+	ClusterWideAccess    bool                     `yaml:"cluster_wide_access,omitempty"`
+	DiscoverySelectors   DiscoverySelectorsConfig `yaml:"discovery_selectors,omitempty"`
+	InstanceName         string                   `yaml:"instance_name"`
+	Namespace            string                   `yaml:"namespace,omitempty"` // Kiali deployment namespace
+	ViewOnlyMode         bool                     `yaml:"view_only_mode,omitempty"`
 	// RemoteSecretPath is used to identify the remote cluster Kiali will connect to as its "local cluster".
 	// This is to support installing Kiali in the control plane, but observing only the data plane in the remote cluster.
 	// Experimental feature. See: https://github.com/kiali/kiali/issues/3002
 	RemoteSecretPath string `yaml:"remote_secret_path,omitempty"`
+}
+
+// we need to play games with a custom unmarshaller/marshaller for metav1.LabelSelector because it has no yaml struct tags so
+// it is not processing it the way we want by default (it isn't using camelCase; the fields are lowercase - e.g. matchlabels/matchexpressions)
+type DiscoverySelectorType metav1.LabelSelector
+type DiscoverySelectorsType []*DiscoverySelectorType
+
+func (dst *DiscoverySelectorType) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	// Define a temporary struct to map YAML fields to Go struct fields
+	type Alias metav1.LabelSelector
+	aux := &struct {
+		MatchLabels      map[string]string                 `yaml:"matchLabels"`
+		MatchExpressions []metav1.LabelSelectorRequirement `yaml:"matchExpressions"`
+		*Alias
+	}{
+		Alias: (*Alias)(dst),
+	}
+
+	// Unmarshal into the temporary struct
+	if err := unmarshal(&aux); err != nil {
+		return err
+	}
+
+	// Map the fields from the temporary struct to the actual fields
+	dst.MatchLabels = aux.MatchLabels
+	dst.MatchExpressions = aux.MatchExpressions
+
+	return nil
+}
+
+func (dst DiscoverySelectorType) MarshalYAML() (interface{}, error) {
+	return map[string]interface{}{
+		"matchLabels":      dst.MatchLabels,
+		"matchExpressions": dst.MatchExpressions,
+	}, nil
+}
+
+type DiscoverySelectorsConfig struct {
+	Default   DiscoverySelectorsType            `yaml:"default,omitempty"`
+	Overrides map[string]DiscoverySelectorsType `yaml:"overrides,omitempty"`
 }
 
 // GraphFindOption defines a single Graph Find/Hide Option
@@ -596,7 +625,6 @@ type Profiler struct {
 // Config defines full YAML configuration.
 type Config struct {
 	AdditionalDisplayDetails []AdditionalDisplayItem             `yaml:"additional_display_details,omitempty"`
-	API                      ApiConfig                           `yaml:"api,omitempty"`
 	Auth                     AuthConfig                          `yaml:"auth,omitempty"`
 	Clustering               Clustering                          `yaml:"clustering,omitempty"`
 	CustomDashboards         dashboards.MonitoringDashboardsList `yaml:"custom_dashboards,omitempty"`
@@ -619,19 +647,6 @@ func NewConfig() (c *Config) {
 	c = &Config{
 		InCluster:      true,
 		IstioNamespace: "istio-system",
-		API: ApiConfig{
-			Namespaces: ApiNamespacesConfig{
-				Exclude: []string{
-					"^istio-operator",
-					"^kube-.*",
-					"^openshift.*",
-					"^ibm.*",
-					"^kial-operator",
-				},
-				Include:              []string{},
-				LabelSelectorExclude: "",
-			},
-		},
 		Auth: AuthConfig{
 			Strategy: "token",
 			OpenId: OpenIdConfig{
@@ -653,12 +668,12 @@ func NewConfig() (c *Config) {
 		},
 		CustomDashboards: dashboards.GetBuiltInMonitoringDashboards(),
 		Deployment: DeploymentConfig{
-			AccessibleNamespaces: []string{"**"},
-			ClusterWideAccess:    true,
-			InstanceName:         "kiali",
-			Namespace:            "istio-system",
-			RemoteSecretPath:     "/kiali-remote-secret/kiali",
-			ViewOnlyMode:         false,
+			ClusterWideAccess:  true,
+			DiscoverySelectors: DiscoverySelectorsConfig{Default: nil, Overrides: nil},
+			InstanceName:       "kiali",
+			Namespace:          "istio-system",
+			RemoteSecretPath:   "/kiali-remote-secret/kiali",
+			ViewOnlyMode:       false,
 		},
 		ExternalServices: ExternalServices{
 			CustomDashboards: CustomDashboardsConfig{
@@ -934,18 +949,7 @@ func (conf *Config) AddHealthDefault() {
 }
 
 // AllNamespacesAccessible determines if kiali has access to all namespaces.
-// When using the operator, the operator will grant the kiali service account
-// cluster role permissions when '**' is provided in the accessible_namespaces
-// or if cluster-wide-access was explicitly requested.
 func (conf *Config) AllNamespacesAccessible() bool {
-	// look for ** in accessible namespaces first, as we have done in the past. This backwards compatible
-	// behavior will help support users who installed the server via the server helm chart.
-	for _, ns := range conf.Deployment.AccessibleNamespaces {
-		if ns == "**" {
-			return true
-		}
-	}
-	// it is still possible we are in cluster wide access mode even if accessible namespaces has been restricted
 	return conf.Deployment.ClusterWideAccess
 }
 
@@ -1038,6 +1042,19 @@ func Unmarshal(yamlString string) (conf *Config, err error) {
 	err = yaml.Unmarshal([]byte(yamlString), &conf)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse yaml data. error=%v", err)
+	}
+
+	// Determine what the accessible namespaces are. These are namespaces we must have permission to see
+	// when not in cluster-wide access mode. These are only necessary when we are not in cluster-wide access mode.
+	// We do not set this when in cluster-wide mode because in that case we have access to see everything.
+	// Note that in past versions "accessible_namespaces" came over in the yaml itself, but that is no longer the case.
+	// Accessible namespaces can now be derived from discovery selectors so long as they are specified in a specific way.
+	// See the comments found in extractAccessibleNamespaceList for more details.
+	if !conf.Deployment.ClusterWideAccess {
+		conf.Deployment.AccessibleNamespaces, err = conf.extractAccessibleNamespaceList()
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	conf.prepareDashboards()
@@ -1274,4 +1291,58 @@ func validateSigningKey(signingKey string, authStrategy string) error {
 	}
 
 	return nil
+}
+
+// extractAccessibleNamespaceList will take the default set of discovery selectors from the config and build a
+// list of namespace names by using all discovery selectors that look for matches of the label "kubernetes.io/metadata.name".
+// This means if a matchLabels wants to match a value on the label "kubernetes.io/metadata.name" or a single matchExpressions
+// wants to match key="kubernetes.io/metadata.name" with operator="In" with a single value defined, the value is assumed
+// to be an accessible namespace that will be added to the list that is returned. For example:
+//
+//	default:
+//	- matchLabels:
+//	    kubernetes.io/metadata.name: an-accessible-namespace
+//	- matchExpressions:
+//	  - key: kubernetes.io/metadata.name
+//	    operator: In
+//	    values: ["another-accessible-namespace"]
+//
+// When the Kiali Server is not in Cluster Wide Access mode, it is assumed (required, in fact) that all the
+// default discovery selectors only use match criteria as explained above.
+// This function therefore is used to obtain a list of accessible namespaces from the discovery selectors when CWA=false.
+func (config *Config) extractAccessibleNamespaceList() ([]string, error) {
+	errs := make([]string, 0)
+	namespaceNames := make([]string, 0)
+	for _, selector := range config.Deployment.DiscoverySelectors.Default {
+		if len(selector.MatchLabels) > 0 && len(selector.MatchExpressions) > 0 {
+			errs = append(errs, fmt.Sprintf("invalid accessible namespace discovery selector: one label selector cannot have both an equality-based and a set-based selector: %v", selector))
+		} else if len(selector.MatchLabels) > 1 {
+			errs = append(errs, fmt.Sprintf("invalid accessible namespace discovery selector: matchLabel selector must match one and only one label named kubernetes.io/metadata.name: %v", selector))
+		} else if len(selector.MatchExpressions) > 1 {
+			errs = append(errs, fmt.Sprintf("invalid accessible namespace discovery selectors: matchExpressions selector must match one and only one label named kubernetes.io/metadata.name using the IN operator: %v", selector))
+		} else if len(selector.MatchLabels) == 1 {
+			if namespaceName, ok := selector.MatchLabels["kubernetes.io/metadata.name"]; ok {
+				namespaceNames = append(namespaceNames, namespaceName)
+			} else {
+				errs = append(errs, fmt.Sprintf("invalid accessible namespace discovery selector: matchLabel selector must match the label named kubernetes.io/metadata.name: %v", selector))
+			}
+		} else if len(selector.MatchExpressions) == 1 {
+			expr := selector.MatchExpressions[0]
+			if len(expr.Values) == 1 {
+				if expr.Key == "kubernetes.io/metadata.name" && expr.Operator == metav1.LabelSelectorOpIn {
+					namespaceNames = append(namespaceNames, expr.Values[0])
+				} else {
+					errs = append(errs, fmt.Sprintf("invalid accessible namespace discovery selectors: matchExpressions selector must match the label named kubernetes.io/metadata.name using the IN operator: %v", selector))
+				}
+			} else {
+				errs = append(errs, fmt.Sprintf("invalid accessible namespace discovery selectors: matchExpressions selector must match one and only one value for label named kubernetes.io/metadata.name using the IN operator: %v", selector))
+			}
+		}
+	}
+
+	if len(errs) == 0 {
+		return namespaceNames, nil
+	} else {
+		return namespaceNames, errors.New(strings.Join(errs, "\n"))
+	}
 }
