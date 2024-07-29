@@ -1,14 +1,13 @@
 import * as React from 'react';
 import { Button, ButtonVariant, Modal, ModalVariant } from '@patternfly/react-core';
 import { NamespaceInfo } from '../../types/NamespaceInfo';
-import { AuthorizationPolicy, Sidecar } from 'types/IstioObjects';
+import { AuthorizationPolicy, CanaryUpgradeStatus, Sidecar } from 'types/IstioObjects';
 import { MessageType } from 'types/MessageCenter';
 import { PromisesRegistry } from 'utils/CancelablePromises';
 import { DurationInSeconds } from 'types/Common';
 import { ConfigPreviewItem, IstioConfigPreview } from 'components/IstioConfigPreview/IstioConfigPreview';
 import * as AlertUtils from 'utils/AlertUtils';
 import * as API from 'services/Api';
-import { serverConfig } from '../../config';
 import { GraphDataSource } from 'services/GraphDataSource';
 import {
   buildGraphAuthorizationPolicy,
@@ -18,6 +17,7 @@ import {
 import { AUTHORIZATION_POLICIES } from '../IstioConfigNew/AuthorizationPolicyForm';
 
 type OverviewTrafficPoliciesProps = {
+  canaryUpgradeStatus?: CanaryUpgradeStatus;
   duration: DurationInSeconds;
   hideConfirmModal: () => void;
   isOpen: boolean;
@@ -48,12 +48,23 @@ export class OverviewTrafficPolicies extends React.Component<OverviewTrafficPoli
       sidecars: [],
       loaded: this.props.opTarget === 'update',
       disableOp: true,
-      canaryVersion: this.props.kind === 'canary' ? serverConfig.istioCanaryRevision[this.props.opTarget] : ''
+      canaryVersion: this.props.kind === 'canary' ? this.getCanaryUpgradeVersion(this.props.opTarget) : ''
     };
   }
 
   confirmationModalStatus = (): boolean => {
     return this.props.kind === 'canary' || this.props.kind === 'injection';
+  };
+
+  getCanaryUpgradeVersion = (opTarget: string): string => {
+    if (this.props.canaryUpgradeStatus) {
+      if (opTarget === 'upgrade') {
+        return this.props.canaryUpgradeStatus.upgradeVersion;
+      } else if (opTarget === 'current') {
+        return this.props.canaryUpgradeStatus.currentVersion;
+      }
+    }
+    return '';
   };
 
   componentDidUpdate(prevProps: OverviewTrafficPoliciesProps): void {
@@ -63,7 +74,7 @@ export class OverviewTrafficPolicies extends React.Component<OverviewTrafficPoli
           this.fetchPermission(true);
           break;
         case 'canary':
-          this.setState({ canaryVersion: serverConfig.istioCanaryRevision[this.props.opTarget] }, () =>
+          this.setState({ canaryVersion: this.getCanaryUpgradeVersion(this.props.opTarget) }, () =>
             this.fetchPermission(true)
           );
           break;
@@ -284,7 +295,7 @@ export class OverviewTrafficPolicies extends React.Component<OverviewTrafficPoli
   };
 
   render(): React.ReactNode {
-    const canaryVersion = this.props.kind === 'canary' ? serverConfig.istioCanaryRevision[this.props.opTarget] : '';
+    const canaryVersion = this.props.kind === 'canary' ? this.getCanaryUpgradeVersion(this.props.opTarget) : '';
 
     const modalAction =
       this.props.opTarget.length > 0

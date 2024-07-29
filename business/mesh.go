@@ -2,6 +2,7 @@ package business
 
 import (
 	"fmt"
+	"slices"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/istio"
@@ -88,7 +89,7 @@ func (in *MeshService) CanaryUpgradeStatus() (*models.CanaryUpgradeStatus, error
 
 	// Get migrated and pending namespaces
 	// TODO: Support multi-primary
-	migratedNss, err := in.homeClusterSAClient.GetNamespaces(fmt.Sprintf("istio.io/rev=%s", upgrade))
+	migratedNss, err := in.homeClusterSAClient.GetNamespaces(fmt.Sprintf("%s=%s", in.conf.IstioLabels.InjectionLabelRev, upgrade))
 	if err != nil {
 		return nil, err
 	}
@@ -109,7 +110,9 @@ func (in *MeshService) CanaryUpgradeStatus() (*models.CanaryUpgradeStatus, error
 		return nil, err
 	}
 	for _, ns := range pendingNss {
-		pendingNsList = append(pendingNsList, ns.Name)
+		if !slices.Contains(pendingNsList, ns.Name) {
+			pendingNsList = append(pendingNsList, ns.Name)
+		}
 	}
 
 	status := &models.CanaryUpgradeStatus{

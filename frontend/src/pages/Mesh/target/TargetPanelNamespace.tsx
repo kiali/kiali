@@ -431,8 +431,8 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
 
       if (
         serverConfig.kialiFeatureFlags.istioUpgradeAction &&
-        serverConfig.istioCanaryRevision.upgrade &&
-        serverConfig.istioCanaryRevision.current
+        this.state.canaryUpgradeStatus?.upgradeVersion &&
+        this.state.canaryUpgradeStatus.currentVersion
       ) {
         namespaceActions.push({
           isGroup: false,
@@ -442,7 +442,7 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
         const upgradeAction = {
           isGroup: false,
           isSeparator: false,
-          title: `Upgrade to ${serverConfig.istioCanaryRevision.upgrade} revision`,
+          title: `Upgrade to ${this.state.canaryUpgradeStatus.upgradeVersion} revision`,
           action: (ns: string) => console.log(`TODO: Upgrade revision [${ns}]`)
           /*
             this.setState({
@@ -458,7 +458,7 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
         const downgradeAction = {
           isGroup: false,
           isSeparator: false,
-          title: `Downgrade to ${serverConfig.istioCanaryRevision.current} revision`,
+          title: `Downgrade to ${this.state.canaryUpgradeStatus.currentVersion} revision`,
           action: (ns: string) => console.log(`TODO: Downgrade revision [${ns}]`)
           /*
             this.setState({
@@ -474,7 +474,8 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
         if (
           nsInfo.labels &&
           ((nsInfo.labels[serverConfig.istioLabels.injectionLabelRev] &&
-            nsInfo.labels[serverConfig.istioLabels.injectionLabelRev] === serverConfig.istioCanaryRevision.current) ||
+            nsInfo.labels[serverConfig.istioLabels.injectionLabelRev] ===
+              this.state.canaryUpgradeStatus?.currentVersion) ||
             (nsInfo.labels[serverConfig.istioLabels.injectionLabelName] &&
               nsInfo.labels[serverConfig.istioLabels.injectionLabelName] === 'enabled'))
         ) {
@@ -482,7 +483,7 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
         } else if (
           nsInfo.labels &&
           nsInfo.labels[serverConfig.istioLabels.injectionLabelRev] &&
-          nsInfo.labels[serverConfig.istioLabels.injectionLabelRev] === serverConfig.istioCanaryRevision.upgrade
+          nsInfo.labels[serverConfig.istioLabels.injectionLabelRev] === this.state.canaryUpgradeStatus?.upgradeVersion
         ) {
           namespaceActions.push(downgradeAction);
         }

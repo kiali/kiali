@@ -271,6 +271,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
             this.fetchHealth(isAscending, sortField, type);
             this.fetchTLS(isAscending, sortField);
             this.fetchValidations(isAscending, sortField);
+            this.fetchCanariesStatus();
 
             if (displayMode !== OverviewDisplayMode.COMPACT) {
               this.fetchMetrics(direction);
@@ -637,6 +638,23 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
       });
   };
 
+  private fetchCanariesStatus = async (): Promise<void> => {
+    return API.getCanaryUpgradeStatus()
+      .then(response => {
+        this.setState({
+          canaryUpgradeStatus: {
+            currentVersion: response.data.currentVersion,
+            upgradeVersion: response.data.upgradeVersion,
+            migratedNamespaces: response.data.migratedNamespaces,
+            pendingNamespaces: response.data.pendingNamespaces
+          }
+        });
+      })
+      .catch(error => {
+        AlertUtils.addError('Error fetching canary upgrade status.', error, 'default', MessageType.ERROR);
+      });
+  };
+
   handleApiError = (message: string, error: ApiError): void => {
     FilterHelper.handleError(`${message}: ${API.getErrorString(error)}`);
   };
@@ -848,18 +866,13 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
 
       if (
         serverConfig.kialiFeatureFlags.istioUpgradeAction &&
-        serverConfig.istioCanaryRevision.upgrade &&
-        serverConfig.istioCanaryRevision.current
+        this.state.canaryUpgradeStatus?.upgradeVersion &&
+        this.state.canaryUpgradeStatus.currentVersion
       ) {
-        namespaceActions.push({
-          isGroup: false,
-          isSeparator: true
-        });
-
         const upgradeAction = {
           isGroup: false,
           isSeparator: false,
-          title: `Upgrade to ${serverConfig.istioCanaryRevision.upgrade} revision`,
+          title: `Upgrade to ${this.state.canaryUpgradeStatus.upgradeVersion} revision`,
           action: (ns: string) =>
             this.setState({
               opTarget: 'upgrade',
@@ -873,7 +886,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
         const downgradeAction = {
           isGroup: false,
           isSeparator: false,
-          title: `Downgrade to ${serverConfig.istioCanaryRevision.current} revision`,
+          title: `Downgrade to ${this.state.canaryUpgradeStatus.currentVersion} revision`,
           action: (ns: string) =>
             this.setState({
               opTarget: 'current',
@@ -887,16 +900,25 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
         if (
           nsInfo.labels &&
           ((nsInfo.labels[serverConfig.istioLabels.injectionLabelRev] &&
-            nsInfo.labels[serverConfig.istioLabels.injectionLabelRev] === serverConfig.istioCanaryRevision.current) ||
+            nsInfo.labels[serverConfig.istioLabels.injectionLabelRev] ===
+              this.state.canaryUpgradeStatus.currentVersion) ||
             (nsInfo.labels[serverConfig.istioLabels.injectionLabelName] &&
               nsInfo.labels[serverConfig.istioLabels.injectionLabelName] === 'enabled'))
         ) {
+          namespaceActions.push({
+            isGroup: false,
+            isSeparator: true
+          });
           namespaceActions.push(upgradeAction);
         } else if (
           nsInfo.labels &&
           nsInfo.labels[serverConfig.istioLabels.injectionLabelRev] &&
-          nsInfo.labels[serverConfig.istioLabels.injectionLabelRev] === serverConfig.istioCanaryRevision.upgrade
+          nsInfo.labels[serverConfig.istioLabels.injectionLabelRev] === this.state.canaryUpgradeStatus.upgradeVersion
         ) {
+          namespaceActions.push({
+            isGroup: false,
+            isSeparator: true
+          });
           namespaceActions.push(downgradeAction);
         }
       }
@@ -1121,6 +1143,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
         <OverviewTrafficPolicies
           opTarget={this.state.opTarget}
           isOpen={this.state.showTrafficPoliciesModal}
+          canaryUpgradeStatus={this.state.canaryUpgradeStatus}
           kind={this.state.kind}
           hideConfirmModal={this.hideTrafficManagement}
           nsTarget={this.state.nsTarget}
