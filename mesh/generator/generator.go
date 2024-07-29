@@ -8,6 +8,8 @@ import (
 	"regexp"
 	"slices"
 
+	"k8s.io/apimachinery/pkg/api/errors"
+
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/kubernetes"
@@ -44,7 +46,7 @@ type clusterRevisionKey struct {
 }
 
 // BuildMeshMap is required by the graph/TelemetryVendor interface
-func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalInfo) mesh.MeshMap {
+func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalInfo) (mesh.MeshMap, error) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "BuildMeshMap",
 		observability.Attribute("package", "generator"),
@@ -85,6 +87,9 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalIn
 
 	// get istio status components (istiod, grafana, prometheus, tracing)
 	istioStatus, err := gi.IstioStatusGetter.GetStatus(ctx)
+	if errors.IsForbidden(err) {
+		return nil, err
+	}
 	mesh.CheckError(err)
 
 	// convert istio status slice into map
@@ -245,7 +250,7 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalIn
 		f.AppendGraph(meshMap, gi, nil)
 	}
 
-	return meshMap
+	return meshMap, nil
 }
 
 func addInfra(meshMap mesh.MeshMap, infraType, cluster, namespace, name string, infraData interface{}, version string, isExternal bool, healthData string, isCanary bool) (*mesh.Node, bool, error) {

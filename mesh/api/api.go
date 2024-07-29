@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net/http"
 
+	"k8s.io/apimachinery/pkg/api/errors"
+
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/grafana"
@@ -56,7 +58,13 @@ func GraphMesh(
 
 // graphMesh provides a test hook that accepts mock clients
 func graphMesh(ctx context.Context, globalInfo *mesh.AppenderGlobalInfo, o mesh.Options) (code int, config interface{}) {
-	meshMap := generator.BuildMeshMap(ctx, o, globalInfo)
+	meshMap, err := generator.BuildMeshMap(ctx, o, globalInfo)
+	if err != nil {
+		if errors.IsForbidden(err) {
+			return http.StatusForbidden, nil
+		}
+		return http.StatusInternalServerError, nil
+	}
 	code, config = generateGraph(meshMap, o)
 
 	return code, config
