@@ -27,6 +27,9 @@ type ControlPlane struct {
 	// Config
 	Config ControlPlaneConfiguration
 
+	// Config Map
+	ConfigMap string
+
 	// ExternalControlPlane indicates if the controlplane is managing an external cluster.
 	ExternalControlPlane bool
 
