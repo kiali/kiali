@@ -36,6 +36,7 @@ import { MeshMTLSStatus } from 'components/MTls/MeshMTLSStatus';
 import { t } from 'utils/I18nUtils';
 import { UNKNOWN } from 'types/Graph';
 import { TargetPanelConfigTable } from './TargetPanelConfigTable';
+import { TargetPanelEditor } from './TargetPanelEditor';
 
 type TargetPanelControlPlaneProps = TargetPanelCommonProps & {
   meshStatus: string;
@@ -118,8 +119,8 @@ export class TargetPanelControlPlane extends React.Component<
     const data = this.state.controlPlaneNode?.getData() as NodeData;
 
     // Controlplane infradata is structured: {config: configuration, revision: string}
-    const { config, revision } = data.infraData;
 
+    const { config, revision, configMap } = data.infraData;
     return (
       <div
         id="target-panel-control-plane"
@@ -162,8 +163,8 @@ export class TargetPanelControlPlane extends React.Component<
           )}
 
           {targetPanelHR}
-
-          <TargetPanelConfigTable configData={config} targetName={data.infraName} width="40%" />
+          {configMap && <TargetPanelEditor configMap={configMap} targetName={data.infraName}></TargetPanelEditor>}
+          {!configMap && <TargetPanelConfigTable configData={config} targetName={data.infraName} width="40%" />}
         </div>
       </div>
     );

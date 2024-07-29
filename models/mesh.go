@@ -25,7 +25,7 @@ type ControlPlane struct {
 	Cluster *KubeCluster
 
 	// Config
-	Config ControlPlaneConfiguration
+	Config ControlPlaneConfiguration `yaml:"configMap,omitempty"`
 
 	// Config Map
 	ConfigMap string
@@ -71,6 +71,7 @@ type ControlPlane struct {
 
 // ControlPlaneConfiguration is the configuration for the controlPlane and any associated dataPlane.
 type ControlPlaneConfiguration struct {
+
 	// IsGatewayToNamespace specifies the PILOT_SCOPE_GATEWAY_TO_NAMESPACE environment variable in Control Plane
 	// This is not currently used by the frontend so excluding it from the API response.
 	IsGatewayToNamespace bool `json:"-"`
