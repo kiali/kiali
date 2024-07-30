@@ -19,12 +19,14 @@ const downloadButtonStyle = kialiStyle({
   marginLeft: '0.5rem'
 });
 
-interface ConfigButtonsTargetPanel {
+interface ConfigButtonsTargetPanelProps {
   copyText: string;
   targetName: string;
 }
 
-export const ConfigButtonsTargetPanel: React.FC<ConfigButtonsTargetPanel> = (props: ConfigButtonsTargetPanel) => {
+export const ConfigButtonsTargetPanel: React.FC<ConfigButtonsTargetPanelProps> = (
+  props: ConfigButtonsTargetPanelProps
+) => {
   const [copied, setCopied] = React.useState<boolean>(false);
 
   const { t } = useKialiTranslation();
