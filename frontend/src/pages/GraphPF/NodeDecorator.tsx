@@ -1,3 +1,4 @@
+import * as React from 'react';
 import { Tooltip } from '@patternfly/react-core';
 import {
   DEFAULT_DECORATOR_RADIUS,
@@ -8,7 +9,6 @@ import {
   observer
 } from '@patternfly/react-topology';
 import { IconType } from 'config/Icons';
-import React from 'react';
 
 interface Props {
   element: Node;

@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { CSSProperties } from 'react';
 import { StatusCondition, ValidationTypes } from '../../types/IstioObjects';
 import { kialiStyle } from 'styles/StyleUtils';
 import { Text, TextVariants, Tooltip, TooltipPosition } from '@patternfly/react-core';
@@ -10,7 +9,7 @@ interface ValidationSummaryProps {
   id: string;
   objectCount?: number;
   reconciledCondition?: StatusCondition;
-  style?: CSSProperties;
+  style?: React.CSSProperties;
   type: 'service' | 'istio';
   warnings: number;
 }

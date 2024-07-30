@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 import { ObjectCheck, ValidationTypes } from '../../types/IstioObjects';
 import { Validation } from './Validation';
 import { highestSeverity } from '../../types/ServiceInfo';

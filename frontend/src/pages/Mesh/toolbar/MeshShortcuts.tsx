@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 import { Chip } from '@patternfly/react-core';
 import { t } from 'utils/I18nUtils';
 

@@ -1,16 +1,16 @@
 // Clone of Slider component to workaround issue https://github.com/patternfly/patternfly-react/issues/1221
-import React from 'react';
+import * as React from 'react';
 import { sliderMirroredStyle, sliderStyle } from './SliderStyle';
 import sliderCss from './Slider.module.scss';
 import { classes } from 'typestyle';
 
 type BoundariesProps = {
-  min: number;
   max: number;
+  min: number;
+  mirrored: boolean;
   reversed: boolean;
   showBoundaries: boolean;
-  mirrored: boolean;
-  slider?: JSX.Element;
+  slider?: React.ReactNode;
 };
 
 export class Boundaries extends React.Component<BoundariesProps, {}> {
@@ -21,14 +21,14 @@ export class Boundaries extends React.Component<BoundariesProps, {}> {
     showBoundaries: false
   };
 
-  render() {
+  render(): React.ReactNode {
     const { children, min, max, reversed, showBoundaries, slider } = this.props;
 
     const minElement = <b>{min}</b>;
     const maxElement = <b>{max}</b>;
 
-    let leftBoundary: JSX.Element | null = null;
-    let rightBoundary: JSX.Element | null = null;
+    let leftBoundary: React.ReactNode = null;
+    let rightBoundary: React.ReactNode = null;
 
     if (showBoundaries) {
       if (reversed) {
