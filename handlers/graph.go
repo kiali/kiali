@@ -128,5 +128,13 @@ func respond(w http.ResponseWriter, code int, payload interface{}) {
 		RespondWithJSONIndent(w, code, payload)
 		return
 	}
+	if code == http.StatusForbidden {
+		message := ""
+		if payload != nil {
+			message = payload.(string)
+		}
+		RespondWithJSON(w, code, message)
+		return
+	}
 	RespondWithError(w, code, payload.(string))
 }

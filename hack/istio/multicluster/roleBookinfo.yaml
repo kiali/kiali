@@ -1,0 +1,94 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: kiali-bookinfo
+  namespace: bookinfo
+rules:
+  - apiGroups: [""]
+    resources:
+      - configmaps
+      - endpoints
+      - pods/log
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups: [""]
+    resources:
+      - namespaces
+      - pods
+      - replicationcontrollers
+      - services
+    verbs:
+      - get
+      - list
+      - watch
+      - patch
+  - apiGroups: [""]
+    resources:
+      - pods/portforward
+    verbs:
+      - create
+      - post
+  - apiGroups: ["extensions", "apps"]
+    resources:
+      - daemonsets
+      - deployments
+      - replicasets
+      - statefulsets
+    verbs:
+      - get
+      - list
+      - watch
+      - patch
+  - apiGroups: ["batch"]
+    resources:
+      - cronjobs
+      - jobs
+    verbs:
+      - get
+      - list
+      - watch
+      - patch
+  - apiGroups:
+      - networking.istio.io
+      - security.istio.io
+      - extensions.istio.io
+      - telemetry.istio.io
+      - gateway.networking.k8s.io
+    resources: ["*"]
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - delete
+      - patch
+  - apiGroups: ["apps.openshift.io"]
+    resources:
+      - deploymentconfigs
+    verbs:
+      - get
+      - list
+      - watch
+      - patch
+  - apiGroups: ["project.openshift.io"]
+    resources:
+      - projects
+    verbs:
+      - get
+  - apiGroups: ["route.openshift.io"]
+    resources:
+      - routes
+    verbs:
+      - get
+  - apiGroups: ["authentication.k8s.io"]
+    resources:
+      - tokenreviews
+    verbs:
+      - create
+  - apiGroups: ["oauth.openshift.io"]
+    resources:
+      - oauthclients
+    verbs:
+      - get

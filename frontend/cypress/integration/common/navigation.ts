@@ -1,4 +1,4 @@
-import { Given } from '@badeball/cypress-cucumber-preprocessor';
+import { Given, Then } from '@badeball/cypress-cucumber-preprocessor';
 import { ensureKialiFinishedLoading } from './transition';
 
 enum detailType {
@@ -98,3 +98,11 @@ export const clusterParameterExists = (present: boolean): void => {
     cy.wrap($el).should('have.attr', 'href').and(`${exist}include`, 'clusterName=');
   });
 };
+
+Then(`user doesn't see the {string} menu`, menu => {
+  cy.get('#page-sidebar').get(`#${menu}`).should('not.exist');
+});
+
+Then(`user see the {string} menu`, menu => {
+  cy.get('#page-sidebar').get(`#${menu}`).should('exist');
+});

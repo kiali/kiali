@@ -6,6 +6,7 @@ export const healthConfig = {
   authStrategy: '',
   ambientEnabled: false,
   clusters: {},
+  controlPlaneClusters: [],
   gatewayAPIClasses: [],
   gatewayAPIEnabled: false,
   logLevel: '',

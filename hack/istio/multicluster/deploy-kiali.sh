@@ -218,6 +218,7 @@ deploy_kiali() {
       curl -k -L https://"${KEYCLOAK_ADDRESS}"/admin/realms/kube/users -H "Authorization: Bearer $TOKEN_KEY" -d "$json_string" -H 'Content-Type: application/json'
     else
       curl -k -L https://"${KEYCLOAK_ADDRESS}"/admin/realms/kube/users -H "Authorization: Bearer $TOKEN_KEY" -d '{"username": "kiali", "enabled": true, "credentials": [{"type": "password", "value": "kiali"}]}' -H 'Content-Type: application/json'
+      curl -k -L https://"${KEYCLOAK_ADDRESS}"/admin/realms/kube/users -H "Authorization: Bearer $TOKEN_KEY" -d '{"username": "bookinfouser", "enabled": true, "credentials": [{"type": "password", "value": "kiali"}]}' -H 'Content-Type: application/json'
     fi
 
     if [ "${SINGLE_CLUSTER}" != "true" ]; then
@@ -259,6 +260,25 @@ subjects:
 - apiGroup: rbac.authorization.k8s.io
   kind: User
   name: oidc:kiali
+EOF
+
+      # Role to access bookinfo
+      kubectl apply --context "${CLUSTER1_CONTEXT}" -f ${SCRIPT_DIR}/roleBookinfo.yaml
+
+      # Create a rolebinding
+      kubectl apply --context "${CLUSTER1_CONTEXT}" -f - <<EOF
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+ name: kiali-bookinfo
+ namespace: bookinfo
+roleRef:
+ apiGroup: rbac.authorization.k8s.io
+ kind: Role
+ name: kiali-bookinfo
+subjects:
+- kind: User
+  name: oidc:bookinfouser
 EOF
 
     fi

@@ -20,18 +20,6 @@ exports[`When addon component has a problem the Icon shows is displayed in orang
           ]
         }
       />
-      <div
-        className="kiali_f1kewvaf"
-      >
-        <span>
-          More info at
-        </span>
-        <Link
-          to="/mesh"
-        >
-          Mesh page
-        </Link>
-      </div>
     </React.Fragment>
   }
   enableFlip={true}
@@ -67,18 +55,6 @@ exports[`When both core and addon component have problems any component is in no
           ]
         }
       />
-      <div
-        className="kiali_f1kewvaf"
-      >
-        <span>
-          More info at
-        </span>
-        <Link
-          to="/mesh"
-        >
-          Mesh page
-        </Link>
-      </div>
     </React.Fragment>
   }
   enableFlip={true}
@@ -114,18 +90,6 @@ exports[`When core component has a problem the Icon shows is displayed in Red 1`
           ]
         }
       />
-      <div
-        className="kiali_f1kewvaf"
-      >
-        <span>
-          More info at
-        </span>
-        <Link
-          to="/mesh"
-        >
-          Mesh page
-        </Link>
-      </div>
     </React.Fragment>
   }
   enableFlip={true}
@@ -161,18 +125,6 @@ exports[`When there are not-ready components mixed with other not healthy compon
           ]
         }
       />
-      <div
-        className="kiali_f1kewvaf"
-      >
-        <span>
-          More info at
-        </span>
-        <Link
-          to="/mesh"
-        >
-          Mesh page
-        </Link>
-      </div>
     </React.Fragment>
   }
   enableFlip={true}
@@ -218,18 +170,6 @@ exports[`When there are not-ready components mixed with other not healthy compon
           ]
         }
       />
-      <div
-        className="kiali_f1kewvaf"
-      >
-        <span>
-          More info at
-        </span>
-        <Link
-          to="/mesh"
-        >
-          Mesh page
-        </Link>
-      </div>
     </React.Fragment>
   }
   enableFlip={true}
@@ -265,18 +205,6 @@ exports[`When there are not-ready components mixed with other not healthy compon
           ]
         }
       />
-      <div
-        className="kiali_f1kewvaf"
-      >
-        <span>
-          More info at
-        </span>
-        <Link
-          to="/mesh"
-        >
-          Mesh page
-        </Link>
-      </div>
     </React.Fragment>
   }
   enableFlip={true}
@@ -307,18 +235,6 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
           ]
         }
       />
-      <div
-        className="kiali_f1kewvaf"
-      >
-        <span>
-          More info at
-        </span>
-        <Link
-          to="/mesh"
-        >
-          Mesh page
-        </Link>
-      </div>
     </React.Fragment>
   }
   enableFlip={true}
@@ -349,18 +265,6 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
           ]
         }
       />
-      <div
-        className="kiali_f1kewvaf"
-      >
-        <span>
-          More info at
-        </span>
-        <Link
-          to="/mesh"
-        >
-          Mesh page
-        </Link>
-      </div>
     </React.Fragment>
   }
   enableFlip={true}

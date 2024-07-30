@@ -11,6 +11,7 @@ import { LanguageSwitch } from './LanguageSwitch';
 import { KialiIcon } from 'config/KialiIcon';
 import { useKialiTranslation } from 'utils/I18nUtils';
 import { PfSpinner } from 'components/Pf/PfSpinner';
+import { isControlPlaneAccessible } from '../../../utils/MeshUtils';
 import { kialiStyle } from 'styles/StyleUtils';
 
 export const MASTHEAD = 'masthead';
@@ -73,10 +74,11 @@ export const MastheadItems: React.FC = () => {
             <FlexItem className={themeSwitchStyle}>
               <ThemeSwitch />
             </FlexItem>
-
-            <FlexItem>
-              <IstioStatus location={MASTHEAD} />
-            </FlexItem>
+            {isControlPlaneAccessible() && (
+              <FlexItem>
+                <IstioStatus location={MASTHEAD} />
+              </FlexItem>
+            )}
 
             <FlexItem className={messageCenterStyle}>
               <MessageCenterTrigger />

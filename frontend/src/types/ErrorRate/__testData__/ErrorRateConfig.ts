@@ -72,6 +72,7 @@ export const serverRateConfig = {
   authStrategy: '',
   ambientEnabled: false,
   clusters: {},
+  controlPlaneClusters: [],
   gatewayAPIClasses: [],
   gatewayAPIEnabled: false,
   logLevel: '',

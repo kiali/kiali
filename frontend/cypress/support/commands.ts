@@ -24,6 +24,8 @@
 // -- This will overwrite an existing command --
 // Cypress.Commands.overwrite('visit', (originalFn, url, options) => { ... })
 
+const BOOKINFO_USERNAME = 'bookinfouser';
+
 declare namespace Cypress {
   interface Chainable<Subject> {
     /**
@@ -167,7 +169,11 @@ Cypress.Commands.add('login', (username: string, password: string) => {
             }).then(() => {
               const tags = Cypress.env('TAGS');
               if (tags.includes('multi-cluster') || tags.includes('multi-primary')) {
-                ensureMulticlusterApplicationsAreHealthy();
+                // Don't check for west cluster
+                // if the user has access just to the east cluster
+                if (username !== BOOKINFO_USERNAME) {
+                  ensureMulticlusterApplicationsAreHealthy();
+                }
               }
             });
           });
