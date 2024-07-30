@@ -150,7 +150,7 @@ func TestIstioConfigMapName(t *testing.T) {
 				IstiodNamespace: "istio-system",
 				Revision:        tc.configMap.Labels[models.IstioRevisionLabel],
 			}
-			_, err = discovery.getControlPlaneConfiguration(kubeCache, controlPlane)
+			_, _, err = discovery.getControlPlaneConfiguration(kubeCache, controlPlane)
 			if tc.expectErr {
 				require.Error(err)
 			} else {
