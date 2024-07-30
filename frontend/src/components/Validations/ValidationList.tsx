@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 import { Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { ObjectCheck, ValidationTypes } from '../../types/IstioObjects';
 import { Validation } from './Validation';

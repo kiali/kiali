@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 import { BootstrapSlider } from './BootstrapSlider';
 import { Button, ButtonVariant, InputGroupText, TextInput, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { Boundaries } from './Boundaries';
@@ -7,37 +7,37 @@ import { MinusIcon, PlusIcon, ThumbTackIcon, MigrationIcon } from '@patternfly/r
 
 export const noop = Function.prototype;
 
-type Props = {
+type SliderProps = {
   id: string;
-  orientation: string;
-  min: number;
+  input: boolean;
+  inputFormat: string;
+  locked: boolean;
   max: number;
   maxLimit: number;
+  min: number;
+  mirrored: boolean;
+  onLock: (locked: boolean) => void;
+  onMirror: (mirror: boolean) => void;
+  onSlide: (value: number) => void;
+  onSlideStop: (value: number) => void;
+  orientation: string;
+  showLock: boolean;
+  showMirror: boolean;
+  sliderClass: string;
   step: number;
-  value: number;
   ticks: number[];
   ticks_labels: string[];
   tooltip: boolean;
   tooltipFormatter: (value: number) => string;
-  onSlide: (value: number) => void;
-  onSlideStop: (value: number) => void;
-  input: boolean;
-  sliderClass: string;
-  inputFormat: string;
-  locked: boolean;
-  showLock: boolean;
-  onLock: (locked: boolean) => void;
-  mirrored: boolean;
-  showMirror: boolean;
-  onMirror: (mirror: boolean) => void;
-};
-
-type State = {
   value: number;
-  tooltipFormat: string;
 };
 
-export class Slider extends React.Component<Props, State> {
+type SliderState = {
+  tooltipFormat: string;
+  value: number;
+};
+
+export class Slider extends React.Component<SliderProps, SliderState> {
   static defaultProps = {
     id: null,
     orientation: 'horizontal',
@@ -64,7 +64,7 @@ export class Slider extends React.Component<Props, State> {
     onMirror: noop
   };
 
-  constructor(props: Props) {
+  constructor(props: SliderProps) {
     super(props);
 
     this.state = {
@@ -73,61 +73,63 @@ export class Slider extends React.Component<Props, State> {
     };
   }
 
-  componentDidMount() {
+  componentDidMount(): void {
     // This empty setState forces a re-render which resolves an issue with initial tick_label placement
     this.setState({});
   }
 
-  componentDidUpdate(prevProps: Readonly<Props>): void {
+  componentDidUpdate(prevProps: Readonly<SliderProps>): void {
     if (prevProps.value !== this.props.value || this.state.value !== this.props.value) {
       this.setState({ value: this.props.value });
     }
   }
 
-  onSlide = value => {
+  onSlide = (value: number): void => {
     this.setState({ value }, () => this.props.onSlide(value));
   };
 
-  onSlideStop = value => {
+  onSlideStop = (value: number): void => {
     this.setState({ value }, () => this.props.onSlideStop(value));
   };
 
-  onPlus = () => {
+  onPlus = (): void => {
     const newValue = Number(this.state.value || 0);
     this.updateNewValue(newValue + 1);
   };
 
-  onMinus = () => {
+  onMinus = (): void => {
     const newValue = Number(this.state.value || 0);
     this.updateNewValue(newValue - 1);
   };
 
-  onInputChange = (value: string | number) => {
-    const newValue: number = Number(value);
+  onInputChange = (value: string | number): void => {
+    const newValue = Number(value);
     this.updateNewValue(Number.isNaN(newValue) ? 0 : newValue);
   };
 
-  updateNewValue = (newValue: number) => {
+  updateNewValue = (newValue: number): void => {
     if (newValue > this.props.max) {
       newValue = this.props.max;
     }
+
     if (newValue < 0) {
       newValue = 0;
     }
+
     this.setState({ value: newValue }, () => this.props.onSlide(newValue));
   };
 
-  onFormatChange = format => {
+  onFormatChange = (format: string): void => {
     this.setState({ tooltipFormat: format });
   };
 
-  formatter = value => {
+  formatter = (value: number): string => {
     return this.props.tooltipFormatter !== noop
       ? this.props.tooltipFormatter(value)
       : `${value} ${this.state.tooltipFormat} ${this.props.mirrored ? ' mirrored traffic' : ''}`;
   };
 
-  render() {
+  render(): React.ReactNode {
     const BSSlider = (
       <BootstrapSlider
         {...this.props}
@@ -215,7 +217,7 @@ export class Slider extends React.Component<Props, State> {
                 value={this.state.value}
                 onChange={(_event, value: string | number) => this.onInputChange(value)}
                 isDisabled={this.props.locked}
-                data-test={'input-' + this.props.id}
+                data-test={`input-${this.props.id}`}
               />
               <Button
                 className={rightButtonStyle}
@@ -228,7 +230,9 @@ export class Slider extends React.Component<Props, State> {
               <InputGroupText>{this.props.inputFormat}</InputGroupText>
             </>
           )}
+
           {this.props.showMirror ? MirrorIcon : <></>}
+
           {this.props.showLock ? LockIcon : <></>}
         </Boundaries>
       </>

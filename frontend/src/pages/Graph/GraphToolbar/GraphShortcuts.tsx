@@ -1,9 +1,9 @@
-import React from 'react';
+import * as React from 'react';
 import { Chip } from '@patternfly/react-core';
 
 interface Shortcut {
-  shortcut: string;
   description: string;
+  shortcut: string;
 }
 
 const shortcuts: Shortcut[] = [
@@ -15,21 +15,22 @@ const shortcuts: Shortcut[] = [
   { shortcut: 'Double click', description: 'Drill into a node details graph' }
 ];
 
-const makeShortcut = (shortcut: Shortcut): JSX.Element => {
+const makeShortcut = (shortcut: Shortcut): React.ReactNode => {
   return (
     <div style={{ display: 'flex', marginBottom: '10px' }}>
       <div style={{ flex: '40%' }}>
         <Chip isReadOnly>{shortcut.shortcut}</Chip>
       </div>
+
       <div style={{ flex: '60%' }}>{shortcut.description}</div>
     </div>
   );
 };
 
-export const GraphShortcuts = (): JSX.Element => (
+export const GraphShortcuts = (): React.ReactNode => (
   <>
     {shortcuts.map(
-      (s: Shortcut): JSX.Element => {
+      (s: Shortcut): React.ReactNode => {
         return makeShortcut(s);
       }
     )}

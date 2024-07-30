@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 import { SecondaryMasthead } from 'components/Nav/SecondaryMasthead';
 import { NamespaceDropdown } from 'components/Dropdown/NamespaceDropdown';
 import { kialiStyle } from 'styles/StyleUtils';

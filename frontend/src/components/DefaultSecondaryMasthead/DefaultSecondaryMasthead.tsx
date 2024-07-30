@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 import { Title, TitleSizes } from '@patternfly/react-core';
 import { NamespaceDropdown } from '../Dropdown/NamespaceDropdown';
 import { kialiStyle } from 'styles/StyleUtils';

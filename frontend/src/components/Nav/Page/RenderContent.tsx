@@ -1,5 +1,5 @@
+import * as React from 'react';
 import { PFColors } from 'components/Pf/PfColors';
-import React from 'react';
 import { kialiStyle } from 'styles/StyleUtils';
 import { RenderComponentScroll } from './RenderComponentScroll';
 
@@ -12,7 +12,7 @@ const divStyle = kialiStyle({
 });
 
 export class RenderContent extends React.Component<{ needScroll?: boolean }> {
-  render() {
+  render(): React.ReactNode {
     return (
       <RenderComponentScroll className={containerStyle}>
         <div className={divStyle}>{this.props.children}</div>

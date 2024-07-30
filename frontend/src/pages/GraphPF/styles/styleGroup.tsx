@@ -1,3 +1,4 @@
+import * as React from 'react';
 import { CubesIcon } from '@patternfly/react-icons';
 import {
   DefaultGroup,
@@ -10,7 +11,6 @@ import {
 } from '@patternfly/react-topology';
 import { useDetailsLevel } from '@patternfly/react-topology';
 import { PFColors } from 'components/Pf/PfColors';
-import React from 'react';
 import { kialiStyle } from 'styles/StyleUtils';
 
 const ICON_PADDING = 20;
