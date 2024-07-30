@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import * as React from 'react';
 import { TimeInMilliseconds } from '../../types/Common';
 import { useRefreshInterval } from '../../hooks/refresh';
 
@@ -15,7 +15,7 @@ interface RefreshProps {
 export const RefreshNotifier = ({ onTick }: RefreshProps): null => {
   const { previousRefreshAt, lastRefreshAt } = useRefreshInterval();
 
-  useEffect(() => {
+  React.useEffect(() => {
     if (previousRefreshAt !== lastRefreshAt) {
       // We only want to notify when a refresh happens. At mount, previousRefreshAt == lastRefreshAt.
       // So, we notify only when both values are different.

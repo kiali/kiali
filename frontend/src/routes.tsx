@@ -1,3 +1,4 @@
+import * as React from 'react';
 import { MenuItem } from './types/Routes';
 import { Paths } from './config';
 import { WorkloadListPage } from './pages/WorkloadList/WorkloadListPage';

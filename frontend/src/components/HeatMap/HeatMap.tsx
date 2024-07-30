@@ -1,8 +1,8 @@
 // A heatmap implementation tailored for Kiali design
 // (inspired from https://github.com/arunghosh/react-grid-heatmap (MIT), credits to @arunghosh)
 
+import * as React from 'react';
 import { PFColors } from 'components/Pf/PfColors';
-import React from 'react';
 import { kialiStyle } from 'styles/StyleUtils';
 import { useKialiTranslation } from 'utils/I18nUtils';
 

@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 import { bindActionCreators } from 'redux';
 import { KialiDispatch } from 'types/Redux';
 import { connect } from 'react-redux';

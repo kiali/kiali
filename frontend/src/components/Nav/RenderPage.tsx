@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from '../Pf/PfColors';
 import {

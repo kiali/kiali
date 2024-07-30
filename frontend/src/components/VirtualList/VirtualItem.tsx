@@ -5,7 +5,6 @@ import { PromisesRegistry } from '../../utils/CancelablePromises';
 import { Health } from '../../types/Health';
 import { StatefulFiltersRef } from '../Filters/StatefulFilters';
 import { actionRenderer } from './Renderers';
-import { CSSProperties } from 'react';
 
 type VirtualItemProps = {
   action?: JSX.Element;
@@ -15,7 +14,7 @@ type VirtualItemProps = {
   index: number;
   item: RenderResource;
   statefulFilterProps?: StatefulFiltersRef;
-  style?: CSSProperties;
+  style?: React.CSSProperties;
 };
 
 type VirtualItemState = {

@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 import { Button, ButtonVariant, Modal, ModalVariant } from '@patternfly/react-core';
 import { DestinationRuleC, K8sGRPCRoute, K8sHTTPRoute, VirtualService } from '../../types/IstioObjects';
 
