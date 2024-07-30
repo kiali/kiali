@@ -37,6 +37,9 @@ import { t } from 'utils/I18nUtils';
 import { UNKNOWN } from 'types/Graph';
 import { TargetPanelConfigTable } from './TargetPanelConfigTable';
 import { TargetPanelEditor } from './TargetPanelEditor';
+import * as yaml from 'js-yaml';
+import { dump } from 'js-yaml';
+import { yamlDumpOptions } from '../../../types/IstioConfigDetails';
 
 type TargetPanelControlPlaneProps = TargetPanelCommonProps & {
   meshStatus: string;
@@ -110,6 +113,19 @@ export class TargetPanelControlPlane extends React.Component<
     this.promises.cancelAll();
   }
 
+  convertYamlToJson(yamlString: string): unknown {
+    return yaml.load(yamlString);
+  }
+
+  getParsedYaml(configMap: Map<string, string>): string {
+    let cm = {};
+    for (const [key, value] of Object.entries(configMap)) {
+      cm[key] = this.convertYamlToJson(value);
+    }
+
+    return dump(cm, yamlDumpOptions);
+  }
+
   render(): React.ReactNode {
     if (this.state.loading || !this.state.nsInfo) {
       return this.getLoading();
@@ -119,8 +135,9 @@ export class TargetPanelControlPlane extends React.Component<
     const data = this.state.controlPlaneNode?.getData() as NodeData;
 
     // Controlplane infradata is structured: {config: configuration, revision: string}
-
     const { config, revision, configMap } = data.infraData;
+    const parsedCm = this.getParsedYaml(configMap);
+
     return (
       <div
         id="target-panel-control-plane"
@@ -163,7 +180,7 @@ export class TargetPanelControlPlane extends React.Component<
           )}
 
           {targetPanelHR}
-          {configMap && <TargetPanelEditor configMap={configMap} targetName={data.infraName}></TargetPanelEditor>}
+          {configMap && <TargetPanelEditor configMap={parsedCm} targetName={data.infraName}></TargetPanelEditor>}
           {!configMap && <TargetPanelConfigTable configData={config} targetName={data.infraName} width="40%" />}
         </div>
       </div>

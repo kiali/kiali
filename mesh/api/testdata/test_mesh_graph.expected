@@ -282,6 +282,9 @@
               },
               "TrustDomain": "cluster.local"
             },
+            "configMap": {
+              "mesh": "accessLogFile: /dev/stdout\nenableAutoMtls: true\nrootNamespace: istio-system\ntrustDomain: cluster.local\n"
+            },
             "revision": "default",
             "thresholds": {
               "memory": 0,

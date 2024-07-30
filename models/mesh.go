@@ -25,10 +25,10 @@ type ControlPlane struct {
 	Cluster *KubeCluster
 
 	// Config
-	Config ControlPlaneConfiguration `yaml:"configMap,omitempty"`
+	Config ControlPlaneConfiguration
 
 	// Config Map
-	ConfigMap string
+	ConfigMap map[string]string `yaml:"configMap,omitempty"`
 
 	// ExternalControlPlane indicates if the controlplane is managing an external cluster.
 	ExternalControlPlane bool
