@@ -49,6 +49,8 @@ type clientFactory struct {
 	// "in cluster" config. This name comes from the istio cluster id.
 	homeCluster string
 
+	kialiConfig *kialiConfig.Config
+
 	// mutex for when accessing the stored clients
 	mutex sync.RWMutex
 
@@ -92,7 +94,7 @@ func getClientFactory(conf kialiConfig.Config) (*clientFactory, error) {
 		Burst:           conf.KubernetesConfig.Burst,
 	}
 
-	return newClientFactory(&baseConfig)
+	return newClientFactory(&conf, &baseConfig)
 }
 
 // NewClientFactory creates a new client factory that can be transitory.
@@ -118,8 +120,9 @@ func NewClientFactory(ctx context.Context, conf kialiConfig.Config) (ClientFacto
 
 // newClientFactory allows for specifying the config and expiry duration
 // Mock friendly for testing purposes
-func newClientFactory(restConfig *rest.Config) (*clientFactory, error) {
+func newClientFactory(conf *kialiConfig.Config, restConfig *rest.Config) (*clientFactory, error) {
 	f := &clientFactory{
+		kialiConfig:     conf,
 		baseRestConfig:  restConfig,
 		clientEntries:   make(map[string]map[string]ClientInterface),
 		recycleChan:     make(chan string),
@@ -179,40 +182,22 @@ func (cf *clientFactory) newClient(authInfo *api.AuthInfo, expirationTime time.D
 	// So, if OpenID strategy is active, check if a proxy is configured.
 	// If there is, use it UNLESS the token is the one of the Kiali SA. If
 	// the token is the one of the Kiali SA, the proxy can be bypassed.
-	cfg := kialiConfig.Get()
-	if cfg.Auth.Strategy == kialiConfig.AuthStrategyOpenId && cfg.Auth.OpenId.ApiProxy != "" && cfg.Auth.OpenId.ApiProxyCAData != "" {
-
-		var kialiToken string
-		var err error
-
-		if cluster == cf.homeCluster {
-			kialiToken, _, err = GetKialiTokenForHomeCluster()
-		} else {
-			kialiToken, err = cf.GetSAClient(cluster).GetToken(), nil
-		}
-
+	if cf.kialiConfig.Auth.Strategy == kialiConfig.AuthStrategyOpenId && cf.kialiConfig.Auth.OpenId.ApiProxy != "" && cf.kialiConfig.Auth.OpenId.ApiProxyCAData != "" {
+		// Override the CA data on the client with the proxy CA from the Kiali config.
+		caData := cf.kialiConfig.Auth.OpenId.ApiProxyCAData
+		rootCaDecoded, err := base64.StdEncoding.DecodeString(caData)
 		if err != nil {
 			return nil, err
 		}
 
-		// User token and not Kiali SA token so use the proxy.
-		if kialiToken != authInfo.Token {
-			// Override the CA data on the client with the proxy CA from the Kiali config.
-			caData := cfg.Auth.OpenId.ApiProxyCAData
-			rootCaDecoded, err := base64.StdEncoding.DecodeString(caData)
-			if err != nil {
-				return nil, err
-			}
-
-			config.TLSClientConfig = rest.TLSClientConfig{
-				CAData: []byte(rootCaDecoded),
-			}
-			config.Host = cfg.Auth.OpenId.ApiProxy
+		config.TLSClientConfig = rest.TLSClientConfig{
+			CAData: []byte(rootCaDecoded),
 		}
+		config.Host = cf.kialiConfig.Auth.OpenId.ApiProxy
 	}
 
 	// Impersonation is valid only for header authentication strategy
-	if cfg.Auth.Strategy == kialiConfig.AuthStrategyHeader && authInfo.Impersonate != "" {
+	if cf.kialiConfig.Auth.Strategy == kialiConfig.AuthStrategyHeader && authInfo.Impersonate != "" {
 		config.Impersonate.UserName = authInfo.Impersonate
 		config.Impersonate.Groups = authInfo.ImpersonateGroups
 		config.Impersonate.Extra = authInfo.ImpersonateUserExtra
@@ -246,13 +231,8 @@ func (cf *clientFactory) newClient(authInfo *api.AuthInfo, expirationTime time.D
 		}
 
 		// Replace the Kiali SA token with the user's auth token.
-		// Only if we are not in an anonymous mode
-		// and if we don't use OpenID with RBAC is disable.
-		if !(cfg.Auth.Strategy == kialiConfig.AuthStrategyAnonymous) &&
-			!(cfg.Auth.Strategy == kialiConfig.AuthStrategyOpenId && cfg.Auth.OpenId.DisableRBAC) {
-			remoteConfig.BearerToken = authInfo.Token
-			remoteConfig.BearerTokenFile = ""
-		}
+		remoteConfig.BearerToken = authInfo.Token
+		remoteConfig.BearerTokenFile = ""
 
 		newClient, err = newClientWithRemoteClusterInfo(remoteConfig, &clusterInfo)
 		if err != nil {
@@ -296,11 +276,19 @@ func (cf *clientFactory) GetSAClients() map[string]ClientInterface {
 
 // getClient returns a client for the specified token. Creating one if necessary.
 func (cf *clientFactory) GetClient(authInfo *api.AuthInfo, cluster string) (ClientInterface, error) {
+	if cf.kialiConfig.RBACDisabled() {
+		return cf.GetSAClient(cluster), nil
+	}
+
 	return cf.getRecycleClient(authInfo, defaultExpirationTime, cluster)
 }
 
 // getClient returns a client for the specified token. Creating one if necessary.
 func (cf *clientFactory) GetClients(authInfos map[string]*api.AuthInfo) (map[string]ClientInterface, error) {
+	if cf.kialiConfig.RBACDisabled() {
+		return cf.GetSAClients(), nil
+	}
+
 	clients := make(map[string]ClientInterface)
 	for cluster, authInfo := range authInfos {
 		ci, err := cf.getRecycleClient(authInfo, defaultExpirationTime, cluster)

@@ -90,7 +90,7 @@ func (s *ExpirationStore[K, V]) checkAndRemoveExpiredKeys(ctx context.Context) <
 					}
 
 					if time.Now().After(expiration) {
-						log.Tracef("Key %v expired. Removing from store", key)
+						log.Tracef("Key '%v' expired. Removing from store", key)
 						s.Remove(key)
 					}
 				}
