@@ -37,8 +37,7 @@ import { t } from 'utils/I18nUtils';
 import { UNKNOWN } from 'types/Graph';
 import { TargetPanelConfigTable } from './TargetPanelConfigTable';
 import { TargetPanelEditor } from './TargetPanelEditor';
-import * as yaml from 'js-yaml';
-import { dump } from 'js-yaml';
+import { load, dump } from 'js-yaml';
 import { yamlDumpOptions } from '../../../types/IstioConfigDetails';
 
 type TargetPanelControlPlaneProps = TargetPanelCommonProps & {
@@ -114,7 +113,7 @@ export class TargetPanelControlPlane extends React.Component<
   }
 
   convertYamlToJson(yamlString: string): unknown {
-    return yaml.load(yamlString);
+    return load(yamlString);
   }
 
   getParsedYaml(configMap: Map<string, string>): string {
