@@ -59,7 +59,7 @@ func (in *MeshService) CanaryUpgradeStatus() (*models.CanaryUpgradeStatus, error
 	upgrade := ""
 	current := ""
 
-	kubeCache, err := in.kialiCache.GetKubeCache(in.homeClusterSAClient.ClusterInfo().Name)
+	kubeCache, err := in.kialiCache.GetKubeCache(in.conf.KubernetesConfig.ClusterName)
 	if err != nil {
 		return nil, err
 	}
