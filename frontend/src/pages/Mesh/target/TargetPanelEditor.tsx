@@ -10,7 +10,7 @@ import { aceOptions, yamlDumpOptions } from 'types/IstioConfigDetails';
 import { istioAceEditorStyle } from '../../../styles/AceEditorStyle';
 import AceEditor from 'react-ace';
 import ReactAce from 'react-ace/lib/ace';
-import { getKialiTheme } from '../../../utils/ThemeUtils';
+import { useKialiTheme } from '../../../utils/ThemeUtils';
 import { Theme } from '../../../types/Common';
 
 const configTitleStyle = kialiStyle({
@@ -32,6 +32,7 @@ interface TargetPanelEditorProps {
 }
 
 export const TargetPanelEditor: React.FC<TargetPanelEditorProps> = (props: TargetPanelEditorProps) => {
+  const darkTheme = useKialiTheme() === Theme.DARK;
   const [copied, setCopied] = React.useState<boolean>(false);
 
   const { t } = useKialiTranslation();
@@ -74,7 +75,7 @@ export const TargetPanelEditor: React.FC<TargetPanelEditorProps> = (props: Targe
       <AceEditor
         ref={aceEditorRef}
         mode="yaml"
-        theme={getKialiTheme() === Theme.DARK ? 'twilight' : 'eclipse'}
+        theme={darkTheme ? 'twilight' : 'eclipse'}
         width="100%"
         className={istioAceEditorStyle}
         wrapEnabled={true}
