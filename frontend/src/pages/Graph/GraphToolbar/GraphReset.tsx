@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 import { GraphToolbarActions } from 'actions/GraphToolbarActions';
 import { bindActionCreators } from 'redux';
 import { KialiDispatch } from 'types/Redux';
@@ -39,7 +39,7 @@ const GraphResetComponent: React.FC<GraphResetProps> = (props: GraphResetProps) 
   );
 };
 
-const mapDispatchToProps = (dispatch: KialiDispatch) => {
+const mapDispatchToProps = (dispatch: KialiDispatch): ReduxProps => {
   return {
     resetSettings: bindActionCreators(GraphToolbarActions.resetSettings, dispatch)
   };

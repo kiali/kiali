@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 import { ObjectCheck, ValidationTypes } from '../../types/IstioObjects';
 import { DEGRADED, HEALTHY, isProxyStatusSynced, mergeStatus, ProxyStatus, Status } from '../../types/Health';
 import { Tooltip, TooltipPosition } from '@patternfly/react-core';

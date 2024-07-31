@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 import { Button, Tooltip } from '@patternfly/react-core';
 import { KialiAppState } from 'store/Store';
 import { connect } from 'react-redux';
