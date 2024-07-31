@@ -179,9 +179,10 @@ EOF
     ${CLIENT_EXE} patch VirtualService bookinfo -n bookinfo --type json -p "[{\"op\": \"replace\", \"path\": \"/spec/hosts/0\", \"value\": \"${ISTIO_INGRESS_HOST}\"}]"
   fi
 
-  for namespace in bookinfo alpha beta gamma
+  for namespace in bookinfo alpha beta gamma sleep
   do
     wait_for_workloads "${namespace}"
+    ${CLIENT_EXE} get pods -n "${namespace}"
   done
 
 else
