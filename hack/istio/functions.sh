@@ -32,6 +32,7 @@ EOM
   fi
 
   if [ "${ENABLE_INJECTION}" == "true" ] || [ "${AUTO_INJECTION}" == "true" ]; then
+    ${CLIENT_EXE} wait pods -n ${ns} --for condition=Ready --timeout=60s --all
     for d in $(${CLIENT_EXE} get deployments -n ${ns} -o name)
     do
       echo "Enabling sidecar injection for deployment: ${d}"
