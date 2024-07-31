@@ -276,7 +276,7 @@ func (cf *clientFactory) GetSAClients() map[string]ClientInterface {
 
 // getClient returns a client for the specified token. Creating one if necessary.
 func (cf *clientFactory) GetClient(authInfo *api.AuthInfo, cluster string) (ClientInterface, error) {
-	if cf.kialiConfig.RBACDisabled() {
+	if cf.kialiConfig.IsRBACDisabled() {
 		return cf.GetSAClient(cluster), nil
 	}
 
@@ -285,7 +285,7 @@ func (cf *clientFactory) GetClient(authInfo *api.AuthInfo, cluster string) (Clie
 
 // getClient returns a client for the specified token. Creating one if necessary.
 func (cf *clientFactory) GetClients(authInfos map[string]*api.AuthInfo) (map[string]ClientInterface, error) {
-	if cf.kialiConfig.RBACDisabled() {
+	if cf.kialiConfig.IsRBACDisabled() {
 		return cf.GetSAClients(), nil
 	}
 

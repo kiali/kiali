@@ -11,6 +11,7 @@ import (
 	"github.com/kiali/kiali/util"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestSecretFileOverrides(t *testing.T) {
@@ -364,5 +365,65 @@ func TestValidateAuthStrategy(t *testing.T) {
 		if err := Validate(*conf); err == nil {
 			t.Errorf("Auth Strategy validation should have failed [%v]", conf.Auth.Strategy)
 		}
+	}
+}
+
+func TestIsRBACDisabled(t *testing.T) {
+	cases := map[string]struct {
+		authConfig         AuthConfig
+		expectRBACDisabled bool
+	}{
+		"anonymous should have RBAC disabled": {
+			authConfig: AuthConfig{
+				Strategy: AuthStrategyAnonymous,
+			},
+			expectRBACDisabled: true,
+		},
+		"openid with rbac disabled should have RBAC disabled": {
+			authConfig: AuthConfig{
+				Strategy: AuthStrategyOpenId,
+				OpenId: OpenIdConfig{
+					DisableRBAC: true,
+				},
+			},
+			expectRBACDisabled: true,
+		},
+		"openid with rbac enabled should have RBAC enabled": {
+			authConfig: AuthConfig{
+				Strategy: AuthStrategyOpenId,
+				OpenId: OpenIdConfig{
+					DisableRBAC: false,
+				},
+			},
+			expectRBACDisabled: false,
+		},
+		"openshift should have RBAC enabled": {
+			authConfig: AuthConfig{
+				Strategy: AuthStrategyOpenshift,
+			},
+			expectRBACDisabled: false,
+		},
+		"token should have RBAC enabled": {
+			authConfig: AuthConfig{
+				Strategy: AuthStrategyToken,
+			},
+			expectRBACDisabled: false,
+		},
+		"header should have RBAC enabled": {
+			authConfig: AuthConfig{
+				Strategy: AuthStrategyHeader,
+			},
+			expectRBACDisabled: false,
+		},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			require := require.New(t)
+
+			conf := NewConfig()
+			conf.Auth = tc.authConfig
+
+			require.Equal(tc.expectRBACDisabled, conf.IsRBACDisabled())
+		})
 	}
 }
