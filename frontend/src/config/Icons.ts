@@ -8,6 +8,7 @@ import {
   ClockIcon,
   CodeBranchIcon,
   GlobeRouteIcon,
+  InfrastructureIcon,
   LockedIcon,
   MigrationIcon,
   SecurityIcon,
@@ -143,7 +144,15 @@ const mutIcons = {
       name: 'virtual-machine',
       text: 'Workload Entry',
       type: 'pf'
-    } as IconType
+    } as IconType,
+    waypoint: {
+      ascii: 'E93D ',
+      className: 'pf-v5-pficon pf-v5-pficon-infrastructure',
+      icon: InfrastructureIcon,
+      name: 'infrastructure',
+      text: 'Waypoint Proxy',
+      type: 'pf'
+    }
   }
 };
 

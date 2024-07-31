@@ -70,6 +70,7 @@ const NodeIconRequestRouting = icons.istio.requestRouting.className; // code-bra
 const NodeIconRequestTimeout = icons.istio.requestTimeout.className; // clock
 const NodeIconTrafficShifting = icons.istio.trafficShifting.className; // share-alt
 const NodeIconWorkloadEntry = icons.istio.workloadEntry.className; // pf-icon-virtual-machine
+const NodeIconWaypoint = icons.istio.waypoint.className;
 const NodeTextColor = PFColors.Black1000;
 const NodeTextColorBox = PFColors.Black1000;
 const NodeTextBackgroundColor = PFColors.White;
@@ -240,6 +241,7 @@ export class GraphStyles {
     // const isClusterBoxed = box1Type === BoxByType.CLUSTER || box2Type === BoxByType.CLUSTER || box3Type === BoxByType.CLUSTER;
     const isMultiNamespace = cyGlobal.activeNamespaces.length > 1;
     const isOutside = node.isOutside;
+    const isWaypoint = node.isWaypoint || '';
 
     // Badges portion of label...
 
@@ -299,6 +301,9 @@ export class GraphStyles {
       } else {
         if (node.isGateway?.egressInfo?.hostnames?.length !== undefined) {
           badges = `<span class="${NodeIconGateway} ${badgeMargin(badges)}"></span> ${badges}`;
+        }
+        if (isWaypoint) {
+          badges = `<span class="${NodeIconWaypoint} ${badgeMargin(badges)}"></span> ${badges}`;
         }
       }
     }
