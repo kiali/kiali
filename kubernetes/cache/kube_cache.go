@@ -443,6 +443,59 @@ func (c *kubeCache) createKubernetesInformers(namespace string) informers.Shared
 	if namespace != "" {
 		opts = append(opts, informers.WithNamespace(namespace))
 	}
+	opts = append(
+		opts,
+		informers.WithTransform(func(obj interface{}) (interface{}, error) {
+			if pod, ok := obj.(*core_v1.Pod); ok {
+				trimmedPod := &core_v1.Pod{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:            pod.Name,
+						Namespace:       pod.Namespace,
+						Labels:          pod.Labels,
+						Annotations:     pod.Annotations,
+						OwnerReferences: pod.OwnerReferences,
+					},
+					Spec: core_v1.PodSpec{
+						Containers:         pod.Spec.Containers,
+						InitContainers:     pod.Spec.InitContainers,
+						ServiceAccountName: pod.Spec.ServiceAccountName,
+						Hostname:           pod.Spec.Hostname,
+					},
+					Status: core_v1.PodStatus{
+						Phase:                 pod.Status.Phase,
+						Message:               pod.Status.Message,
+						Reason:                pod.Status.Reason,
+						InitContainerStatuses: pod.Status.InitContainerStatuses,
+						ContainerStatuses:     pod.Status.ContainerStatuses,
+					},
+				}
+
+				return trimmedPod, nil
+			}
+			if service, ok := obj.(*core_v1.Service); ok {
+				trimmedService := &core_v1.Service{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:            service.Name,
+						Namespace:       service.Namespace,
+						Labels:          service.Labels,
+						Annotations:     service.Annotations,
+						ResourceVersion: service.ResourceVersion,
+						OwnerReferences: service.OwnerReferences,
+					},
+					Spec: core_v1.ServiceSpec{
+						Selector:     service.Spec.Selector,
+						Ports:        service.Spec.Ports,
+						Type:         service.Spec.Type,
+						ExternalName: service.Spec.ExternalName,
+						ClusterIP:    service.Spec.ClusterIP,
+					},
+				}
+
+				return trimmedService, nil
+			}
+			return obj, nil
+		}),
+	)
 
 	sharedInformers := informers.NewSharedInformerFactoryWithOptions(c.client.Kube(), c.refreshDuration, opts...)
 

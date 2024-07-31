@@ -719,27 +719,6 @@ func isAccessLogEmpty(al *parser.AccessLog) bool {
 		al.UserAgent == "")
 }
 
-func (in *WorkloadService) fetchWorkloads(ctx context.Context, namespace string, labelSelector string) (models.Workloads, error) {
-	allWls := models.Workloads{}
-	for c := range in.userClients {
-		ws, err := in.fetchWorkloadsFromCluster(ctx, c, namespace, labelSelector)
-		if err != nil {
-			if errors.IsNotFound(err) || errors.IsForbidden(err) {
-				// If a cluster is not found or not accessible, then we skip it
-				log.Debugf("Error while accessing to cluster [%s]: %s", c, err.Error())
-				continue
-			} else {
-				// On any other error, abort and return the error.
-				return nil, err
-			}
-		} else {
-			allWls = append(allWls, ws...)
-		}
-	}
-
-	return allWls, nil
-}
-
 func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluster string, namespace string, labelSelector string) (models.Workloads, error) {
 	var pods []core_v1.Pod
 	var repcon []core_v1.ReplicationController
@@ -1895,7 +1874,7 @@ func (in *WorkloadService) GetWaypoints(ctx context.Context) models.Workloads {
 		}
 
 		for _, ns := range nslist {
-			nsWaypoints, err := in.fetchWorkloads(ctx, ns.Name, labelSelector)
+			nsWaypoints, err := in.fetchWorkloadsFromCluster(ctx, cluster, ns.Name, labelSelector)
 			if err != nil {
 				log.Debugf("GetWaypoints: Error fetching workloads for namespace %s, labelSelector %s", ns.Name, labelSelector)
 				continue
@@ -2006,7 +1985,7 @@ func (in *WorkloadService) listWaypointWorkloads(ctx context.Context, name, clus
 	// Get all the workloads for that namespace
 	var workloadslist []models.Workload
 	for _, ns := range nslist {
-		workloadList, err := in.fetchWorkloads(ctx, ns.Name, "")
+		workloadList, err := in.fetchWorkloadsFromCluster(ctx, cluster, ns.Name, "")
 		if err != nil {
 			log.Debugf("listWaypointWorkloads: Error fetching workloads for namespace %s", ns.Name)
 		}
@@ -2018,7 +1997,7 @@ func (in *WorkloadService) listWaypointWorkloads(ctx context.Context, name, clus
 	}
 
 	// Get annotated workloads
-	wlist, err := in.fetchWorkloads(ctx, meta_v1.NamespaceAll, labelSelector)
+	wlist, err := in.fetchWorkloadsFromCluster(ctx, cluster, meta_v1.NamespaceAll, labelSelector)
 	if err != nil {
 		log.Debugf("listWaypointWorkloads: Error fetching workloads for namespace label selector %s", labelSelector)
 	}
