@@ -78,11 +78,18 @@ which "${DORP}" > /dev/null || (infomsg "[$DORP] is not in the PATH"; exit 1)
 
 SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
 
+if [ -n "${ISTIO_VERSION}" ]; then
+  DOWNLOAD_ISTIO_VERSION_ARG="--istio-version ${ISTIO_VERSION}"
+fi
+
+infomsg "Downloading istio"
+"${SCRIPT_DIR}"/istio/download-istio.sh ${DOWNLOAD_ISTIO_VERSION_ARG}
+
 "${SCRIPT_DIR}"/start-kind.sh --name ci --image "${KIND_NODE_IMAGE}"
 
 infomsg "Installing istio"
 # Apparently you can't set the requests to zero for the proxy so just setting them to some really low number.
-hack/istio/install-istio-via-istioctl.sh --reduce-resources true --client-exe-path "$(which kubectl)" -cn "cluster-default" -mid "mesh-default" -net "network-default"
+"${SCRIPT_DIR}"/hack/istio/install-istio-via-istioctl.sh --reduce-resources true --client-exe-path "$(which kubectl)" -cn "cluster-default" -mid "mesh-default" -net "network-default"
   
 infomsg "Pushing the images into the cluster..."
 make -e DORP="${DORP}" -e CLUSTER_TYPE="kind" -e KIND_NAME="ci" cluster-push-kiali
