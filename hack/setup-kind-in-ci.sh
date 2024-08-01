@@ -76,63 +76,9 @@ which kubectl > /dev/null || (infomsg "kubectl executable is missing"; exit 1)
 which kind > /dev/null || (infomsg "kind executable is missing"; exit 1)
 which "${DORP}" > /dev/null || (infomsg "[$DORP] is not in the PATH"; exit 1)
 
-NODE_IMAGE_LINE=""
-if [ -n "${KIND_NODE_IMAGE}" ]; then
-  NODE_IMAGE_LINE="image: ${KIND_NODE_IMAGE}"
-fi
-infomsg "Kind cluster to be created with name [ci]"
-cat <<EOF | kind create cluster --name ci --config -
-kind: Cluster
-apiVersion: kind.x-k8s.io/v1alpha4
-nodes:
-  - role: control-plane
-    ${NODE_IMAGE_LINE}
-  - role: worker
-    ${NODE_IMAGE_LINE}
-EOF
+SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
 
-# When a new cluster is created, kind automagically sets the kube context.
-
-infomsg "Create Kind LoadBalancer via MetalLB"
-lb_addr_range="255.70-255.84"
-
-kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.13.5/config/manifests/metallb-native.yaml
-
-subnet=$(${DORP} network inspect kind --format '{{(index .IPAM.Config 0).Subnet}}')
-subnet_trimmed=$(echo "${subnet}" | sed -E 's/([0-9]+\.[0-9]+)\.[0-9]+\..*/\1/')
-first_ip="${subnet_trimmed}.$(echo "${lb_addr_range}" | cut -d '-' -f 1)"
-last_ip="${subnet_trimmed}.$(echo "${lb_addr_range}" | cut -d '-' -f 2)"
-
-if [ -n "${ISTIO_VERSION}" ]; then
-  DOWNLOAD_ISTIO_VERSION_ARG="--istio-version ${ISTIO_VERSION}"
-fi
-
-infomsg "Downloading istio"
-hack/istio/download-istio.sh ${DOWNLOAD_ISTIO_VERSION_ARG}
-
-kubectl rollout status deployment controller -n metallb-system
-
-cat <<LBCONFIGMAP | kubectl apply -f -
-apiVersion: metallb.io/v1beta1
-kind: IPAddressPool
-metadata:
-  namespace: metallb-system
-  name: config
-spec:
-  addresses:
-  - ${first_ip}-${last_ip}
-LBCONFIGMAP
-
-cat <<LBCONFIGMAP | kubectl apply -f -
-apiVersion: metallb.io/v1beta1
-kind: L2Advertisement
-metadata:
-  namespace: metallb-system
-  name: l2config
-spec:
-  ipAddressPools:
-  - config
-LBCONFIGMAP
+"${SCRIPT_DIR}"/start-kind.sh --name ci --image "${KIND_NODE_IMAGE}"
 
 infomsg "Installing istio"
 # Apparently you can't set the requests to zero for the proxy so just setting them to some really low number.
