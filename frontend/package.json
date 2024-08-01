@@ -164,6 +164,7 @@
     "@babel/plugin-transform-react-jsx": "^7.22.15",
     "async": "^3.2.2",
     "json-schema": "^0.4.0",
+    "micromatch": "^4.0.7",
     "minimist": "^1.2.6",
     "nth-check": "^2.0.1",
     "postcss": "^8.4.31",
