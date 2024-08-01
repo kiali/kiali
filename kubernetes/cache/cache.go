@@ -26,8 +26,10 @@ const (
 	waypointExpirationTime     = 1 * time.Minute
 )
 
-const kialiCacheMeshKey = "mesh"
-const ztunnelApp = "ztunnel"
+const (
+	kialiCacheMeshKey = "mesh"
+	ztunnelApp        = "ztunnel"
+)
 
 // KialiCache stores both kube objects and non-kube related data such as pods' proxy status.
 // It is exclusively used by the business layer where it's expected to be a singleton.
@@ -305,6 +307,10 @@ func (c *kialiCacheImpl) IsWaypointListExpired() bool {
 type namespacesKey struct {
 	cluster string
 	token   string
+}
+
+func (n namespacesKey) String() string {
+	return fmt.Sprintf("cluster: %s\ttoken: xxx", n.cluster)
 }
 
 func (c *kialiCacheImpl) GetNamespace(cluster string, token string, namespace string) (models.Namespace, bool) {

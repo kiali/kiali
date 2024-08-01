@@ -114,6 +114,7 @@ func TestConcurrentClientExpiration(t *testing.T) {
 // TestConcurrentClientFactory test Concurrently create ClientFactory
 func TestConcurrentClientFactory(t *testing.T) {
 	require := require.New(t)
+	conf := config.NewConfig()
 	istioConfig := rest.Config{}
 	count := 100
 
@@ -125,7 +126,7 @@ func TestConcurrentClientFactory(t *testing.T) {
 	for i := 0; i < count; i++ {
 		go func() {
 			defer wg.Done()
-			_, err := newClientFactory(&istioConfig)
+			_, err := newClientFactory(conf, &istioConfig)
 			require.NoError(err)
 		}()
 	}
@@ -387,39 +388,73 @@ func setGlobalKialiSAToken(t *testing.T) {
 }
 
 func TestClientCreatedWithProxyInfo(t *testing.T) {
-	require := require.New(t)
+	cases := map[string]struct {
+		auth              config.AuthConfig
+		expectProxyConfig bool
+	}{
+		"openid with proxy defined should have proxy on client": {
+			auth: config.AuthConfig{
+				Strategy: config.AuthStrategyOpenId,
+				OpenId: config.OpenIdConfig{
+					ApiProxy:       "https://api-proxy:8443",
+					ApiProxyCAData: base64.StdEncoding.EncodeToString(proxyCAData),
+				},
+			},
+			expectProxyConfig: true,
+		},
+		"openid with rbac disabled and proxy defined should not have proxy on client": {
+			auth: config.AuthConfig{
+				Strategy: config.AuthStrategyOpenId,
+				OpenId: config.OpenIdConfig{
+					DisableRBAC:    true,
+					ApiProxy:       "https://api-proxy:8443",
+					ApiProxyCAData: base64.StdEncoding.EncodeToString(proxyCAData),
+				},
+			},
+			expectProxyConfig: false,
+		},
+		"anonymous with proxy defined should not have proxy on client": {
+			auth: config.AuthConfig{
+				Strategy: config.AuthStrategyAnonymous,
+				OpenId: config.OpenIdConfig{
+					DisableRBAC:    true,
+					ApiProxy:       "https://api-proxy:8443",
+					ApiProxyCAData: base64.StdEncoding.EncodeToString(proxyCAData),
+				},
+			},
+			expectProxyConfig: false,
+		},
+	}
 
-	cfg := config.NewConfig()
-	cfg.Deployment.RemoteSecretPath = t.TempDir() // Random dir so that the remote secret isn't read if it exists.
-	cfg.Auth.Strategy = config.AuthStrategyOpenId
-	cfg.Auth.OpenId.ApiProxyCAData = base64.StdEncoding.EncodeToString(proxyCAData)
-	cfg.Auth.OpenId.ApiProxy = "https://api-proxy:8443"
-	SetConfig(t, *cfg)
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			require := require.New(t)
 
-	clientFactory := NewTestingClientFactory(t)
+			cfg := config.NewConfig()
+			cfg.Deployment.RemoteSecretPath = t.TempDir() // Random dir so that the remote secret isn't read if it exists.
+			cfg.Auth = tc.auth
+			SetConfig(t, *cfg)
 
-	// Regular clients should have the proxy info
-	client, err := clientFactory.GetClient(api.NewAuthInfo(), cfg.KubernetesConfig.ClusterName)
-	require.NoError(err)
+			clientFactory := NewTestingClientFactory(t)
 
-	require.Equal(cfg.Auth.OpenId.ApiProxy, client.ClusterInfo().ClientConfig.Host)
-	require.Equal(proxyCAData, client.ClusterInfo().ClientConfig.CAData)
+			// Regular clients should have the proxy info
+			client, err := clientFactory.GetClient(api.NewAuthInfo(), cfg.KubernetesConfig.ClusterName)
+			require.NoError(err)
 
-	// Service account clients should not have the proxy info.
-	// Two ways to get a SA client: 1. GetClient with SA token and 2. GetSAClient
-	setGlobalKialiSAToken(t)
-	authInfo := api.NewAuthInfo()
-	authInfo.Token = KialiTokenForHomeCluster
+			if tc.expectProxyConfig {
+				require.Equal(cfg.Auth.OpenId.ApiProxy, client.ClusterInfo().ClientConfig.Host)
+				require.Equal(proxyCAData, client.ClusterInfo().ClientConfig.CAData)
+			} else {
+				require.NotEqual(cfg.Auth.OpenId.ApiProxy, client.ClusterInfo().ClientConfig.Host)
+				require.NotEqual(proxyCAData, client.ClusterInfo().ClientConfig.CAData)
+			}
 
-	client, err = clientFactory.GetClient(authInfo, cfg.KubernetesConfig.ClusterName)
-	require.NoError(err)
-
-	require.NotEqual(cfg.Auth.OpenId.ApiProxy, client.ClusterInfo().ClientConfig.Host)
-	require.NotEqual(proxyCAData, client.ClusterInfo().ClientConfig.CAData)
-
-	client = clientFactory.GetSAClient(cfg.KubernetesConfig.ClusterName)
-	require.NotEqual(cfg.Auth.OpenId.ApiProxy, client.ClusterInfo().ClientConfig.Host)
-	require.NotEqual(proxyCAData, client.ClusterInfo().ClientConfig.CAData)
+			// Service account clients should not have the proxy info.
+			client = clientFactory.GetSAClient(cfg.KubernetesConfig.ClusterName)
+			require.NotEqual(cfg.Auth.OpenId.ApiProxy, client.ClusterInfo().ClientConfig.Host)
+			require.NotEqual(proxyCAData, client.ClusterInfo().ClientConfig.CAData)
+		})
+	}
 }
 
 func TestNewClientFactoryClosesRecycleWhenCTXCancelled(t *testing.T) {
@@ -505,4 +540,70 @@ func TestClientFactoryReturnsSAClientWhenConfigClusterNameIsEmpty(t *testing.T) 
 	require.NoError(err)
 
 	require.NotNil(clientFactory.GetSAHomeClusterClient())
+}
+
+func TestClientFactoryGetClients(t *testing.T) {
+	cases := map[string]struct {
+		auth               config.AuthConfig
+		authInfo           map[string]*api.AuthInfo
+		expectClientsEqual bool
+	}{
+		"anonymous strategy returns Service Account clients": {
+			auth: config.AuthConfig{
+				Strategy: config.AuthStrategyAnonymous,
+			},
+			authInfo:           map[string]*api.AuthInfo{"cluster1": api.NewAuthInfo()},
+			expectClientsEqual: true,
+		},
+		"anonymous strategy returns Service Account clients with nil auth info": {
+			auth: config.AuthConfig{
+				Strategy: config.AuthStrategyAnonymous,
+			},
+			authInfo:           nil,
+			expectClientsEqual: true,
+		},
+		"openid with rbac disabled returns Service Account clients": {
+			auth: config.AuthConfig{
+				Strategy: config.AuthStrategyOpenId,
+				OpenId: config.OpenIdConfig{
+					DisableRBAC: true,
+				},
+			},
+			authInfo:           map[string]*api.AuthInfo{"cluster1": api.NewAuthInfo()},
+			expectClientsEqual: true,
+		},
+		"openid with rbac enabled returns user clients": {
+			auth: config.AuthConfig{
+				Strategy: config.AuthStrategyOpenId,
+				OpenId: config.OpenIdConfig{
+					DisableRBAC: false,
+				},
+			},
+			authInfo:           map[string]*api.AuthInfo{"cluster1": api.NewAuthInfo()},
+			expectClientsEqual: false,
+		},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			require := require.New(t)
+			conf := config.NewConfig()
+			conf.Auth = tc.auth
+			conf.KubernetesConfig.ClusterName = "cluster1"
+			SetConfig(t, *conf)
+
+			clientFactory := NewTestingClientFactory(t)
+			clients, err := clientFactory.GetClients(tc.authInfo)
+			require.NoError(err)
+			require.Len(clients, 1)
+
+			saClients := clientFactory.GetSAClients()
+			require.Len(saClients, 1)
+
+			if tc.expectClientsEqual {
+				require.Equal(clients["cluster1"], saClients["cluster1"])
+			} else {
+				require.NotEqual(clients["cluster1"], saClients["cluster1"])
+			}
+		})
+	}
 }

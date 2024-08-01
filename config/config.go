@@ -968,6 +968,11 @@ func (conf *Config) GatewayLabel(labelConfig string) []string {
 	return []string{}
 }
 
+func (conf *Config) IsRBACDisabled() bool {
+	return conf.Auth.Strategy == AuthStrategyAnonymous ||
+		(conf.Auth.Strategy == AuthStrategyOpenId && conf.Auth.OpenId.DisableRBAC)
+}
+
 // Get the global Config
 func Get() (conf *Config) {
 	rwMutex.RLock()

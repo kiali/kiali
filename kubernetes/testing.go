@@ -56,7 +56,7 @@ func NewTestingClientFactory(t *testing.T) *clientFactory {
 	}
 
 	clientConfig := rest.Config{}
-	client, err := newClientFactory(&clientConfig)
+	client, err := newClientFactory(config.Get(), &clientConfig)
 	if err != nil {
 		t.Fatalf("Error creating client factory: %v", err)
 	}
