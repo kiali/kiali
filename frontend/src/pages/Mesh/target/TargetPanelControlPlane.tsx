@@ -35,7 +35,6 @@ import { panelBodyStyle, panelHeadingStyle, panelStyle } from 'pages/Graph/Summa
 import { MeshMTLSStatus } from 'components/MTls/MeshMTLSStatus';
 import { t } from 'utils/I18nUtils';
 import { UNKNOWN } from 'types/Graph';
-import { TargetPanelConfigTable } from './TargetPanelConfigTable';
 import { TargetPanelEditor } from './TargetPanelEditor';
 import { load, dump } from 'js-yaml';
 import { yamlDumpOptions } from '../../../types/IstioConfigDetails';
@@ -118,11 +117,14 @@ export class TargetPanelControlPlane extends React.Component<
 
   getParsedYaml(configMap: Map<string, string>): string {
     let cm = {};
-    for (const [key, value] of Object.entries(configMap)) {
-      cm[key] = this.convertYamlToJson(value);
-    }
+    if (configMap) {
+      for (const [key, value] of Object.entries(configMap)) {
+        cm[key] = this.convertYamlToJson(value);
+      }
 
-    return dump(cm, yamlDumpOptions);
+      return dump(cm, yamlDumpOptions);
+    }
+    return '';
   }
 
   render(): React.ReactNode {
@@ -179,8 +181,9 @@ export class TargetPanelControlPlane extends React.Component<
           )}
 
           {targetPanelHR}
-          {configMap && <TargetPanelEditor configMap={parsedCm} targetName={data.infraName}></TargetPanelEditor>}
-          {!configMap && <TargetPanelConfigTable configData={config} targetName={data.infraName} width="40%" />}
+          {configMap && parsedCm && (
+            <TargetPanelEditor configMap={parsedCm} targetName={data.infraName}></TargetPanelEditor>
+          )}
         </div>
       </div>
     );
