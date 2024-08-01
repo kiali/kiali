@@ -89,7 +89,7 @@ infomsg "Downloading istio"
 
 infomsg "Installing istio"
 # Apparently you can't set the requests to zero for the proxy so just setting them to some really low number.
-"${SCRIPT_DIR}"/hack/istio/install-istio-via-istioctl.sh --reduce-resources true --client-exe-path "$(which kubectl)" -cn "cluster-default" -mid "mesh-default" -net "network-default"
+"${SCRIPT_DIR}"/istio/install-istio-via-istioctl.sh --reduce-resources true --client-exe-path "$(which kubectl)" -cn "cluster-default" -mid "mesh-default" -net "network-default"
   
 infomsg "Pushing the images into the cluster..."
 make -e DORP="${DORP}" -e CLUSTER_TYPE="kind" -e KIND_NAME="ci" cluster-push-kiali
