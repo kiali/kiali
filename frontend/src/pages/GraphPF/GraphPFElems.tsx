@@ -115,7 +115,8 @@ const badgeMap = new Map<string, IconType>()
   .set('RT', icons.istio.requestTimeout) // clock
   .set('TS', icons.istio.trafficShifting) // share-alt
   .set('VS', icons.istio.virtualService) // code-branch
-  .set('WE', icons.istio.workloadEntry); // pf-icon-virtual-machine
+  .set('WE', icons.istio.workloadEntry) // pf-icon-virtual-machine
+  .set('WA', icons.istio.waypoint); // pf icon for infrastructure
 
 const EdgeColor = PFColors.Success;
 const EdgeColorDead = PFColors.Black500;
@@ -253,6 +254,11 @@ export const setNodeLabel = (node: NodeModel, nodeMap: NodeMap, settings: GraphP
   } else {
     if (data.isGateway?.egressInfo?.hostnames?.length !== undefined) {
       data.labelIcon = <span className={`${badgeMap.get('GW')?.className}`}></span>;
+    }
+    if (data.isWaypoint) {
+      data.labelIcon = (
+        <span className={`${badgeMap.get('WA')?.className}`} style={{ marginBottom: '1px', marginLeft: '2px' }}></span>
+      );
     }
   }
 

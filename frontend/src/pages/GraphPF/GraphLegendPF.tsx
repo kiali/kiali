@@ -99,7 +99,7 @@ export const GraphLegendPF: React.FC<GraphLegendPFProps> = (props: GraphLegendPF
         </Tooltip>
       </div>
 
-      <div className={bodyStyle}>{renderGraphLegendList(legendData)}</div>
+      <div className={bodyStyle}>{renderGraphLegendList(legendData())}</div>
     </div>
   );
 };
