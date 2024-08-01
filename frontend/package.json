@@ -1,4 +1,5 @@
 {
+  "proxy": "http://localhost:20001",
   "name": "@kiali/kiali-ui",
   "version": "1.89.0",
   "description": "React UI for [Kiali](https://github.com/kiali/kiali).",
@@ -145,7 +146,7 @@
     "enzyme": "3.11.0",
     "enzyme-to-json": "3.4.4",
     "husky": "^8.0.3",
-    "i18next-parser": "^8.12.0",
+    "i18next-parser": "^9.0.1",
     "jest-canvas-mock": "2.2.0",
     "junit-report-merger": "^3.0.5",
     "mocha-junit-reporter": "^2.2.1",
