@@ -160,11 +160,10 @@ Feature: Kiali Overview page
   #this scenario refers to a bug (https://github.com/kiali/kiali/issues/6504) which is not resolved at the time of writing the scenario
   # this scenario refers to a bug (https://github.com/kiali/kiali/issues/6504)
   @multi-cluster
-  @skip
   Scenario: The new Cluster column should be visible and sortable when changing to list view
     When user clicks in the "LIST" view
     Then the "Cluster" column "appears"
-    And user sorts by "Cluster" desc
+    And user sorts by column "Cluster" desc
     Then the list is sorted by "Cluster" desc
 
   @multi-cluster

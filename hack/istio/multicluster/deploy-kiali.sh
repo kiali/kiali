@@ -219,6 +219,7 @@ deploy_kiali() {
     else
       curl -k -L https://"${KEYCLOAK_ADDRESS}"/admin/realms/kube/users -H "Authorization: Bearer $TOKEN_KEY" -d '{"username": "kiali", "enabled": true, "credentials": [{"type": "password", "value": "kiali"}]}' -H 'Content-Type: application/json'
       curl -k -L https://"${KEYCLOAK_ADDRESS}"/admin/realms/kube/users -H "Authorization: Bearer $TOKEN_KEY" -d '{"username": "bookinfouser", "enabled": true, "credentials": [{"type": "password", "value": "kiali"}]}' -H 'Content-Type: application/json'
+      curl -k -L https://"${KEYCLOAK_ADDRESS}"/admin/realms/kube/users -H "Authorization: Bearer $TOKEN_KEY" -d '{"username": "regularuser", "enabled": true, "credentials": [{"type": "password", "value": "kiali"}]}' -H 'Content-Type: application/json'
     fi
 
     if [ "${SINGLE_CLUSTER}" != "true" ]; then
