@@ -49,7 +49,6 @@ func (a AmbientAppender) handleWaypoints(trafficMap graph.TrafficMap, globalInfo
 
 	// Fetch the waypoint workloads
 	waypoints := globalInfo.Business.Workload.GetWaypoints(context.Background())
-
 	waypointNodes := make(map[string]bool)
 
 	// Flag or Delete waypoint nodes in the TrafficMap
@@ -62,6 +61,7 @@ func (a AmbientAppender) handleWaypoints(trafficMap graph.TrafficMap, globalInfo
 			waypointName = n.Service
 		}
 		if isWaypoint(&waypoints, n.Cluster, n.Namespace, waypointName) {
+
 			waypointNodes[n.ID] = true
 			if !a.ShowWaypoints {
 				delete(trafficMap, n.ID)
@@ -88,8 +88,9 @@ func (a AmbientAppender) handleWaypoints(trafficMap graph.TrafficMap, globalInfo
 
 			// Find duplicates
 			for _, edge := range n.Edges {
+				// If not show the waypoint, mark the nodes
 				if waypointNodes[edge.Dest.ID] {
-					edge.Metadata[graph.Display] = "reverse"
+					edge.Metadata[graph.Direction] = "reverse"
 				}
 			}
 		}
