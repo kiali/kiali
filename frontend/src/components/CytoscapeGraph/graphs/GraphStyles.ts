@@ -938,6 +938,9 @@ export class GraphStyles {
             return getEdgeColor(ele);
           },
           'line-style': 'solid',
+          'source-arrow-color': (ele: Cy.EdgeSingular) => {
+            return getEdgeColor(ele);
+          },
           'target-arrow-shape': 'vee',
           'target-arrow-color': (ele: Cy.EdgeSingular) => {
             return getEdgeColor(ele);
@@ -997,6 +1000,20 @@ export class GraphStyles {
           'overlay-color': PFColorVals.Purple200,
           'overlay-padding': '7px',
           'overlay-opacity': OpacityOverlay
+        }
+      },
+      {
+        selector: `edge[direction="reverse"]`,
+        style: {
+          'target-arrow-shape': 'triangle-cross',
+          'source-arrow-shape': 'triangle-cross',
+          'line-style': 'solid'
+        }
+      },
+      {
+        selector: `edge[display="hide"]`,
+        style: {
+          display: 'none'
         }
       }
     ];
