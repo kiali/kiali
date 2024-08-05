@@ -132,6 +132,8 @@ type EdgeData struct {
 	Target string `json:"target"` // child node ID
 
 	// App Fields (not required by Cytoscape)
+	Display         string          `json:"display,omitempty"`         // Used to hide edges for biderectional ones (Ambient graph simplification)
+	Direction       string          `json:"direction,omitempty"`       // Used to represent bidirectional edges (Ambient graph simplification)
 	DestPrincipal   string          `json:"destPrincipal,omitempty"`   // principal used for the edge destination
 	IsMTLS          string          `json:"isMTLS,omitempty"`          // set to the percentage of traffic using a mutual TLS connection
 	ResponseTime    string          `json:"responseTime,omitempty"`    // in millis
@@ -445,6 +447,12 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 			}
 			if e.Metadata[graph.SourcePrincipal] != nil {
 				ed.SourcePrincipal = e.Metadata[graph.SourcePrincipal].(string)
+			}
+			if e.Metadata[graph.Direction] != nil {
+				ed.Direction = e.Metadata[graph.Direction].(string)
+			}
+			if e.Metadata[graph.Display] != nil {
+				ed.Display = e.Metadata[graph.Display].(string)
 			}
 			addEdgeTelemetry(e, &ed)
 
