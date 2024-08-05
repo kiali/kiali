@@ -134,7 +134,8 @@ export class GraphHighlighterPF {
   };
 
   getNodeHighlight = (node: Node): GraphElement[] => {
-    const elems = predecessors(node).concat(successors(node));
+    let elems = [] as GraphElement[];
+    elems = predecessors(node, elems).concat(successors(node, elems));
     elems.push(node);
 
     return this.includeAncestorNodes(elems);
@@ -143,8 +144,10 @@ export class GraphHighlighterPF {
   getEdgeHighlight = (edge: Edge): GraphElement[] => {
     const source = edge.getSource();
     const target = edge.getTarget();
+    let emptyElems = [] as GraphElement[];
 
-    let elems = [edge, source, target, ...predecessors(source), ...successors(target)];
+    let elems = [] as GraphElement[];
+    elems = [edge, source, target, ...predecessors(source, emptyElems), ...successors(target, emptyElems)];
     elems = this.includeAncestorNodes(elems);
 
     return elems;
@@ -154,16 +157,17 @@ export class GraphHighlighterPF {
     // treat App boxes in a typical way, but to reduce "flashing", Namespace and Cluster
     // boxes highlight themselves and their anscestors.
     if (box.getData()[NodeAttr.isBox] === BoxByType.APP) {
+      let emptyElems = [] as GraphElement[];
       let elems: GraphElement[];
       const children = box.getChildren();
       elems = [...children];
 
       children.forEach(n => {
         elems = Array.from(
-          new Set<GraphElement>([...elems, ...predecessors(n as Node)])
+          new Set<GraphElement>([...elems, ...predecessors(n as Node, emptyElems)])
         );
         elems = Array.from(
-          new Set<GraphElement>([...elems, ...successors(n as Node)])
+          new Set<GraphElement>([...elems, ...successors(n as Node, emptyElems)])
         );
       });
 
