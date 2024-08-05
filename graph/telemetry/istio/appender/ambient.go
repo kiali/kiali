@@ -50,7 +50,7 @@ func (a AmbientAppender) handleWaypoints(trafficMap graph.TrafficMap, globalInfo
 	// Fetch the waypoint workloads
 	waypoints := globalInfo.Business.Workload.GetWaypoints(context.Background())
 
-	deletedWaypoints := make(map[string]bool)
+	waypointsNodes := make(map[string]bool)
 
 	// Flag or Delete waypoint nodes in the TrafficMap
 	for _, n := range trafficMap {
@@ -62,35 +62,41 @@ func (a AmbientAppender) handleWaypoints(trafficMap graph.TrafficMap, globalInfo
 			waypointName = n.Service
 		}
 		if isWaypoint(&waypoints, n.Cluster, n.Namespace, waypointName) {
+			waypointsNodes[n.ID] = true
 			if !a.ShowWaypoints {
-				deletedWaypoints[n.ID] = true
 				delete(trafficMap, n.ID)
 			} else {
 				n.Metadata[graph.IsOutOfMesh] = false
 				n.Metadata[graph.IsWaypoint] = true
-				n.Edges = []*graph.Edge{}
+				for _, edge := range n.Edges {
+					// Just hide so we have all the information
+					edge.Metadata[graph.Display] = "hide"
+				}
 			}
 		}
 	}
 
-	if len(deletedWaypoints) > 0 {
+	if len(waypointsNodes) > 0 {
 		for _, n := range trafficMap {
-			n.Edges = sliceutil.Filter(n.Edges, func(edge *graph.Edge) bool {
-				return !deletedWaypoints[edge.Dest.ID]
-			})
+			// Delete edges
+			if !a.ShowWaypoints {
+				n.Edges = sliceutil.Filter(n.Edges, func(edge *graph.Edge) bool {
+					return !waypointsNodes[edge.Dest.ID]
+				})
+			}
+
+			// Find duplicates
+			for _, edge := range n.Edges {
+				// If not show the waypoint, mark the nodes
+				if a.ShowWaypoints {
+					if waypointsNodes[edge.Dest.ID] {
+						edge.Metadata[graph.Direction] = "reverse"
+					}
+				}
+			}
 		}
 	}
 }
-
-/* Currently not needed as it no longer protects against an invalid backend call.
-
-// nodeOK returns true if we have access to its workload info
-func (a *AmbientAppender) nodeOK(node *graph.Node) bool {
-	key := graph.GetClusterSensitiveKey(node.Cluster, node.Namespace)
-	_, ok := a.AccessibleNamespaces[key]
-	return ok
-}
-*/
 
 // isWaypoint returns true if the ns, name and cluster of a workload matches with one of the waypoints in the list
 func isWaypoint(waypointList *models.Workloads, cluster, namespace, app string) bool {
