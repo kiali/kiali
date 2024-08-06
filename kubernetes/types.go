@@ -106,6 +106,20 @@ const (
 )
 
 var (
+	ApiCoreVersionV1 = "v1"
+
+	BatchGroupVersionV1 = schema.GroupVersion{
+		Group:   "batch",
+		Version: "v1",
+	}
+	ApiBatchVersionV1 = BatchGroupVersionV1.Group + "/" + BatchGroupVersionV1.Version
+
+	AppsGroupVersionV1 = schema.GroupVersion{
+		Group:   "apps",
+		Version: "v1",
+	}
+	ApiAppsVersionV1 = AppsGroupVersionV1.Group + "/" + AppsGroupVersionV1.Version
+
 	NetworkingGroupVersionV1Alpha3 = schema.GroupVersion{
 		Group:   "networking.istio.io",
 		Version: "v1alpha3",
