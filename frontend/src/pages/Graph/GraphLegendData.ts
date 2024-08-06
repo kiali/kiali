@@ -34,7 +34,9 @@ import badgeTrafficShiftingSourceImage from '../../assets/img/graph/node-badge-t
 import badgeTrafficSourceImage from '../../assets/img/graph/node-badge-traffic-source.svg';
 import badgeVirtualServicesImage from '../../assets/img/graph/node-badge-virtual-services.svg';
 import badgeWorkloadEntryImage from '../../assets/img/graph/node-badge-workload-entry.svg';
+import badgeWaypointImage from '../../assets/img/graph/node-badge-waypoint.svg';
 import { t } from 'utils/I18nUtils';
+import { serverConfig } from '../../config';
 
 export interface GraphLegendItem {
   data: GraphLegendItemRow[];
@@ -47,66 +49,74 @@ export interface GraphLegendItemRow {
   label: string;
 }
 
-export const legendData: GraphLegendItem[] = [
-  {
-    title: t('Node Shapes'),
-    data: [
-      { label: t('Workload'), icon: workloadImage },
-      { label: t('App'), icon: appImage },
-      { label: t('Operation'), icon: operationImage },
-      { label: t('Service'), icon: serviceImage },
-      { label: t('Service Entry'), icon: serviceEntryImage }
-    ]
-  },
-  {
-    title: t('Node Colors'),
-    data: [
-      { label: t('Normal'), icon: nodeColorNormalImage },
-      { label: t('Warn'), icon: nodeColorWarningImage },
-      { label: t('Unhealthy'), icon: nodeColorDangerImage },
-      { label: t('Idle'), icon: nodeColorIdleImage }
-    ]
-  },
-  {
-    title: t('Node Background'),
-    data: [
-      { label: t('Unselected Namespace'), icon: externalNamespaceImage },
-      { label: t('Restricted / External'), icon: restrictedNamespaceImage }
-    ]
-  },
-  {
-    title: t('Edges'),
-    data: [
-      { label: t('Failure'), icon: edgeDangerImage },
-      { label: t('Degraded'), icon: edgeWarnImage },
-      { label: t('Healthy'), icon: edgeSuccessImage },
-      { label: t('TCP Connection'), icon: edgeTcpImage },
-      { label: t('Idle'), icon: edgeIdlemage },
-      { label: t('mTLS (badge)'), icon: edgeMtlsImage }
-    ]
-  },
-  {
-    title: t('Traffic Animation'),
-    data: [
-      { label: t('Normal Request'), icon: trafficNormalImage },
-      { label: t('Failed Request'), icon: trafficFailedImage },
-      { label: t('TCP Traffic'), icon: trafficTcpImage }
-    ]
-  },
-  {
-    title: t('Node Badges'),
-    isBadge: true,
-    data: [
-      { label: t('Circuit Breaker'), icon: badgeCircuitBreakerImage },
-      { label: t('Fault Injection'), icon: badgeFaultInjectionImage },
-      { label: t('Gateway'), icon: badgeGatewaysImage },
-      { label: t('Mirroring'), icon: badgeMirroringImage },
-      { label: t('Missing Sidecar'), icon: badgeMissingSidecarImage },
-      { label: t('Request Timeout'), icon: badgeRequestTimeoutImage },
-      { label: t('Traffic Shifting / TCP Traffic Shifting'), icon: badgeTrafficShiftingSourceImage },
-      { label: t('Traffic Source'), icon: badgeTrafficSourceImage },
-      { label: t('Virtual Service / Request Routing'), icon: badgeVirtualServicesImage },
-      { label: t('Workload Entry'), icon: badgeWorkloadEntryImage }
-    ]
+export const legendData = (): GraphLegendItem[] => {
+  const nodesBadges = [
+    { label: t('Circuit Breaker'), icon: badgeCircuitBreakerImage },
+    { label: t('Fault Injection'), icon: badgeFaultInjectionImage },
+    { label: t('Gateway'), icon: badgeGatewaysImage },
+    { label: t('Mirroring'), icon: badgeMirroringImage },
+    { label: t('Missing Sidecar'), icon: badgeMissingSidecarImage },
+    { label: t('Request Timeout'), icon: badgeRequestTimeoutImage },
+    { label: t('Traffic Shifting / TCP Traffic Shifting'), icon: badgeTrafficShiftingSourceImage },
+    { label: t('Traffic Source'), icon: badgeTrafficSourceImage },
+    { label: t('Virtual Service / Request Routing'), icon: badgeVirtualServicesImage },
+    { label: t('Workload Entry'), icon: badgeWorkloadEntryImage }
+  ];
+
+  if (serverConfig.ambientEnabled) {
+    nodesBadges.push({ label: t('Waypoint'), icon: badgeWaypointImage });
   }
-];
+
+  return [
+    {
+      title: t('Node Shapes'),
+      data: [
+        { label: t('Workload'), icon: workloadImage },
+        { label: t('App'), icon: appImage },
+        { label: t('Operation'), icon: operationImage },
+        { label: t('Service'), icon: serviceImage },
+        { label: t('Service Entry'), icon: serviceEntryImage }
+      ]
+    },
+    {
+      title: t('Node Colors'),
+      data: [
+        { label: t('Normal'), icon: nodeColorNormalImage },
+        { label: t('Warn'), icon: nodeColorWarningImage },
+        { label: t('Unhealthy'), icon: nodeColorDangerImage },
+        { label: t('Idle'), icon: nodeColorIdleImage }
+      ]
+    },
+    {
+      title: t('Node Background'),
+      data: [
+        { label: t('Unselected Namespace'), icon: externalNamespaceImage },
+        { label: t('Restricted / External'), icon: restrictedNamespaceImage }
+      ]
+    },
+    {
+      title: t('Edges'),
+      data: [
+        { label: t('Failure'), icon: edgeDangerImage },
+        { label: t('Degraded'), icon: edgeWarnImage },
+        { label: t('Healthy'), icon: edgeSuccessImage },
+        { label: t('TCP Connection'), icon: edgeTcpImage },
+        { label: t('Idle'), icon: edgeIdlemage },
+        { label: t('mTLS (badge)'), icon: edgeMtlsImage }
+      ]
+    },
+    {
+      title: t('Traffic Animation'),
+      data: [
+        { label: t('Normal Request'), icon: trafficNormalImage },
+        { label: t('Failed Request'), icon: trafficFailedImage },
+        { label: t('TCP Traffic'), icon: trafficTcpImage }
+      ]
+    },
+    {
+      title: t('Node Badges'),
+      isBadge: true,
+      data: nodesBadges
+    }
+  ];
+};
