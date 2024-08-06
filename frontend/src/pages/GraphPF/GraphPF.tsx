@@ -406,10 +406,11 @@ const TopologyContent: React.FC<{
 
       // Compute edge healths one time for the graph
       assignEdgeHealth(graphData.elements.edges || [], nodeMap, graphSettings);
-
       graphData.elements.edges?.forEach(e => {
         const ed = e.data;
-        addEdge(ed as EdgeData);
+        if (ed.display !== 'hide') {
+          addEdge(ed as EdgeData);
+        }
       });
 
       const nodes = Array.from(nodeMap.values());

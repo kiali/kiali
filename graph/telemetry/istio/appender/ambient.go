@@ -87,11 +87,18 @@ func (a AmbientAppender) handleWaypoints(trafficMap graph.TrafficMap, globalInfo
 			}
 
 			// Find duplicates
-			for _, edge := range n.Edges {
+			for i, edge := range n.Edges {
 				// If not show the waypoint, mark the nodes
 				if waypointNodes[edge.Dest.ID] {
 					edge.Metadata[graph.Direction] = "reverse"
 				}
+				for j, comparedEdge := range n.Edges {
+					if i != j && edge.Dest.ID == comparedEdge.Dest.ID && edge.Metadata[graph.Display] == nil {
+						edge.Metadata[graph.Display] = "gradient"
+						comparedEdge.Metadata[graph.Display] = "hide"
+					}
+				}
+
 			}
 		}
 	}

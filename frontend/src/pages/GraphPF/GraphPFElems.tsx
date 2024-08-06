@@ -82,6 +82,8 @@ export type NodeData = DecoratedGraphNodeData & {
 };
 
 export type EdgeData = DecoratedGraphEdgeData & {
+  direction: string;
+  display: string;
   endTerminalType: EdgeTerminalType;
   hasSpans?: Span[];
   isFind?: boolean;
@@ -569,6 +571,14 @@ const getPathStyleStroke = (data: EdgeData): PFColors => {
 };
 
 const getPathStyle = (data: EdgeData): React.CSSProperties => {
+  // This is to combine just tcp and http edges
+  if (data.display === 'gradient') {
+    return {
+      filter: `drop-shadow(0 0 2px ${getPathStyleStroke(data)}) drop-shadow(0 0 2px ${getPathStyleStroke(data)})`,
+      stroke: EdgeColorTCPWithTraffic,
+      strokeWidth: 3
+    } as React.CSSProperties;
+  }
   return {
     stroke: getPathStyleStroke(data),
     strokeWidth: 3
@@ -577,10 +587,16 @@ const getPathStyle = (data: EdgeData): React.CSSProperties => {
 
 export const setEdgeOptions = (edge: EdgeModel, nodeMap: NodeMap, settings: GraphPFSettings): void => {
   const data = edge.data as EdgeData;
+
   if (data.display === 'reverse') {
     data.startTerminalType = data.protocol === Protocol.TCP ? EdgeTerminalType.square : EdgeTerminalType.directional;
   }
   data.endTerminalType = data.protocol === Protocol.TCP ? EdgeTerminalType.square : EdgeTerminalType.directional;
+
+  if (data.display !== 'hide') {
+    data.endTerminalType = data.protocol === Protocol.TCP ? EdgeTerminalType.square : EdgeTerminalType.directional;
+  }
+
   data.pathStyle = getPathStyle(data);
   data.tag = getEdgeLabel(edge, nodeMap, settings);
   data.tagStatus = getEdgeStatus(data);
