@@ -174,7 +174,6 @@ func (in *NamespaceService) getNamespacesByCluster(ctx context.Context, cluster 
 			return nil, err
 		}
 		namespaces = models.CastProjectCollection(projects, cluster)
-		namespaces = filterNamespacesWithDiscoverySelectors(namespaces, getDiscoverySelectorsForCluster(cluster, in.conf, mesh))
 	} else {
 		// Note that cluster-wide-access mode requires cluster role permission to list all namespaces.
 		if in.conf.Deployment.ClusterWideAccess {
@@ -192,7 +191,6 @@ func (in *NamespaceService) getNamespacesByCluster(ctx context.Context, cluster 
 			}
 
 			namespaces = models.CastNamespaceCollection(nss, cluster)
-			namespaces = filterNamespacesWithDiscoverySelectors(namespaces, getDiscoverySelectorsForCluster(cluster, in.conf, mesh))
 		} else {
 			// We do not have cluster wide access, so we do not have permission to list namespaces.
 			// Therefore, we assume we can extract the list of accessible namespaces from the discovery selectors configuration.
@@ -219,9 +217,10 @@ func (in *NamespaceService) getNamespacesByCluster(ctx context.Context, cluster 
 				}
 			}
 			namespaces = models.CastNamespaceCollection(k8sNamespaces, cluster)
-			namespaces = filterNamespacesWithDiscoverySelectors(namespaces, getDiscoverySelectorsForCluster(cluster, in.conf, mesh))
 		}
 	}
+
+	namespaces = filterNamespacesWithDiscoverySelectors(namespaces, getDiscoverySelectorsForCluster(cluster, in.conf, mesh))
 
 	return namespaces, nil
 }
