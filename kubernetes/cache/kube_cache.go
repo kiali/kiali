@@ -446,54 +446,64 @@ func (c *kubeCache) createKubernetesInformers(namespace string) informers.Shared
 	opts = append(
 		opts,
 		informers.WithTransform(func(obj interface{}) (interface{}, error) {
-			if pod, ok := obj.(*core_v1.Pod); ok {
+			// similarly is trimmed in istio
+			t, ok := obj.(metav1.ObjectMetaAccessor)
+			if !ok {
+				// shouldn't happen
+				return obj, nil
+			}
+			// ManagedFields is large and we never use it
+			t.GetObjectMeta().SetManagedFields(nil)
+
+			switch obj := obj.(type) {
+			case *core_v1.Pod:
 				trimmedPod := &core_v1.Pod{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:            pod.Name,
-						Namespace:       pod.Namespace,
-						Labels:          pod.Labels,
-						Annotations:     pod.Annotations,
-						OwnerReferences: pod.OwnerReferences,
+						Name:            obj.Name,
+						Namespace:       obj.Namespace,
+						Labels:          obj.Labels,
+						Annotations:     obj.Annotations,
+						OwnerReferences: obj.OwnerReferences,
 					},
 					Spec: core_v1.PodSpec{
-						Containers:         pod.Spec.Containers,
-						InitContainers:     pod.Spec.InitContainers,
-						ServiceAccountName: pod.Spec.ServiceAccountName,
-						Hostname:           pod.Spec.Hostname,
+						Containers:         obj.Spec.Containers,
+						InitContainers:     obj.Spec.InitContainers,
+						ServiceAccountName: obj.Spec.ServiceAccountName,
+						Hostname:           obj.Spec.Hostname,
 					},
 					Status: core_v1.PodStatus{
-						Phase:                 pod.Status.Phase,
-						Message:               pod.Status.Message,
-						Reason:                pod.Status.Reason,
-						InitContainerStatuses: pod.Status.InitContainerStatuses,
-						ContainerStatuses:     pod.Status.ContainerStatuses,
+						Phase:                 obj.Status.Phase,
+						Message:               obj.Status.Message,
+						Reason:                obj.Status.Reason,
+						InitContainerStatuses: obj.Status.InitContainerStatuses,
+						ContainerStatuses:     obj.Status.ContainerStatuses,
 					},
 				}
-
 				return trimmedPod, nil
-			}
-			if service, ok := obj.(*core_v1.Service); ok {
+
+			case *core_v1.Service:
 				trimmedService := &core_v1.Service{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:            service.Name,
-						Namespace:       service.Namespace,
-						Labels:          service.Labels,
-						Annotations:     service.Annotations,
-						ResourceVersion: service.ResourceVersion,
-						OwnerReferences: service.OwnerReferences,
+						Name:            obj.Name,
+						Namespace:       obj.Namespace,
+						Labels:          obj.Labels,
+						Annotations:     obj.Annotations,
+						ResourceVersion: obj.ResourceVersion,
+						OwnerReferences: obj.OwnerReferences,
 					},
 					Spec: core_v1.ServiceSpec{
-						Selector:     service.Spec.Selector,
-						Ports:        service.Spec.Ports,
-						Type:         service.Spec.Type,
-						ExternalName: service.Spec.ExternalName,
-						ClusterIP:    service.Spec.ClusterIP,
+						Selector:     obj.Spec.Selector,
+						Ports:        obj.Spec.Ports,
+						Type:         obj.Spec.Type,
+						ExternalName: obj.Spec.ExternalName,
+						ClusterIP:    obj.Spec.ClusterIP,
 					},
 				}
-
 				return trimmedService, nil
+
+			default:
+				return obj, nil
 			}
-			return obj, nil
 		}),
 	)
 
