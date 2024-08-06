@@ -55,8 +55,7 @@ func TestCanaryUpgradeNotConfigured(t *testing.T) {
 
 	check.Nil(err, "IstiodCanariesStatus failed: %s", err)
 	check.NotNil(canaryUpgradeStatus)
-	check.Equal(0, len(canaryUpgradeStatus.MigratedNamespaces))
-	check.Equal(0, len(canaryUpgradeStatus.PendingNamespaces))
+	check.Equal(0, len(canaryUpgradeStatus.NamespacesPerRevision))
 }
 
 // TestCanaryUpgradeConfigured verifies that when there is a canary upgrade in place, the migrated and pending namespaces should have namespaces
@@ -98,10 +97,10 @@ func TestCanaryUpgradeConfigured(t *testing.T) {
 	canaryUpgradeStatus, err := meshSvc.CanaryUpgradeStatus()
 
 	check.Nil(err, "IstiodCanariesStatus failed: %s", err)
-	check.Contains(canaryUpgradeStatus.MigratedNamespaces, "travel-agency")
-	check.Equal(1, len(canaryUpgradeStatus.MigratedNamespaces))
-	check.Contains(canaryUpgradeStatus.PendingNamespaces, "travel-portal")
-	check.Equal(1, len(canaryUpgradeStatus.PendingNamespaces))
+	check.Contains(canaryUpgradeStatus.NamespacesPerRevision["canary"], "travel-agency")
+	check.Equal(1, len(canaryUpgradeStatus.NamespacesPerRevision["canary"]))
+	check.Contains(canaryUpgradeStatus.NamespacesPerRevision["default"], "travel-portal")
+	check.Equal(1, len(canaryUpgradeStatus.NamespacesPerRevision["default"]))
 }
 
 func runningIstiodPod() *core_v1.Pod {
