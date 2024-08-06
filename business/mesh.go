@@ -2,13 +2,13 @@ package business
 
 import (
 	"fmt"
-	"slices"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/models"
+	"golang.org/x/exp/maps"
 )
 
 const (
@@ -56,70 +56,49 @@ func NewMeshService(
 }
 
 func (in *MeshService) CanaryUpgradeStatus() (*models.CanaryUpgradeStatus, error) {
-	upgrade := ""
-	current := ""
-
 	kubeCache, err := in.kialiCache.GetKubeCache(in.conf.KubernetesConfig.ClusterName)
 	if err != nil {
 		return nil, err
 	}
 
-	canaryPods, err := istio.GetHealthyIstiodPods(kubeCache, istio.CanaryRevisionLabel, in.conf.IstioNamespace)
+	revisions, err := istio.GetHealthyIstiodRevisions(kubeCache, in.conf.IstioNamespace)
 	if err != nil {
 		return nil, err
 	}
-	if len(canaryPods) > 0 {
-		upgrade = istio.CanaryRevisionLabel
-	}
-	currentPods, err := istio.GetHealthyIstiodPods(kubeCache, istio.DefaultRevisionLabel, in.conf.IstioNamespace)
-	if err != nil {
-		return nil, err
-	}
-	if len(currentPods) > 0 {
-		current = istio.DefaultRevisionLabel
+	namespacesPerRevision := make(map[string][]string)
+
+	if len(revisions) == 1 {
+		return &models.CanaryUpgradeStatus{
+			NamespacesPerRevision: namespacesPerRevision,
+		}, nil
 	}
 
-	migratedNsList := []string{}
-	pendingNsList := []string{}
-
-	// If there is no canary configured, return empty lists
-	if upgrade == "" {
-		return &models.CanaryUpgradeStatus{MigratedNamespaces: migratedNsList, PendingNamespaces: pendingNsList}, nil
-	}
-
-	// Get migrated and pending namespaces
-	// TODO: Support multi-primary
-	migratedNss, err := in.homeClusterSAClient.GetNamespaces(fmt.Sprintf("%s=%s", in.conf.IstioLabels.InjectionLabelRev, upgrade))
-	if err != nil {
-		return nil, err
-	}
-	for _, ns := range migratedNss {
-		migratedNsList = append(migratedNsList, ns.Name)
-	}
-
-	pendingNss, err := in.homeClusterSAClient.GetNamespaces(fmt.Sprintf("%s=enabled", in.conf.IstioLabels.InjectionLabelName))
-	if err != nil {
-		return nil, err
-	}
-	for _, ns := range pendingNss {
-		pendingNsList = append(pendingNsList, ns.Name)
-	}
-
-	pendingNss, err = in.homeClusterSAClient.GetNamespaces(fmt.Sprintf("%s=%s", in.conf.IstioLabels.InjectionLabelRev, current))
-	if err != nil {
-		return nil, err
-	}
-	for _, ns := range pendingNss {
-		if !slices.Contains(pendingNsList, ns.Name) {
-			pendingNsList = append(pendingNsList, ns.Name)
+	for _, revision := range revisions {
+		nsList := make(map[string]bool)
+		// Get namespaces for revision
+		// TODO: Support multi-primary
+		nss, err := in.homeClusterSAClient.GetNamespaces(fmt.Sprintf("%s=%s", in.conf.IstioLabels.InjectionLabelRev, revision))
+		if err != nil {
+			return nil, err
 		}
-	}
+		for _, ns := range nss {
+			nsList[ns.Name] = true
+		}
 
+		// include not revision labeled namespaces into default ones
+		if revision == istio.DefaultRevisionLabel {
+			pendingNss, err := in.homeClusterSAClient.GetNamespaces(fmt.Sprintf("%s=enabled", in.conf.IstioLabels.InjectionLabelName))
+			if err != nil {
+				return nil, err
+			}
+			for _, ns := range pendingNss {
+				nsList[ns.Name] = true
+			}
+		}
+		namespacesPerRevision[revision] = maps.Keys(nsList)
+	}
 	status := &models.CanaryUpgradeStatus{
-		CurrentVersion:     current,
-		UpgradeVersion:     upgrade,
-		MigratedNamespaces: migratedNsList,
-		PendingNamespaces:  pendingNsList,
+		NamespacesPerRevision: namespacesPerRevision,
 	}
 
 	return status, nil

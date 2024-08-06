@@ -10,6 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/kubernetes/cache"
+	"golang.org/x/exp/maps"
 )
 
 func GetHealthyIstiodPods(kubeCache cache.KubeCache, revision string, namespace string) ([]*corev1.Pod, error) {
@@ -31,6 +32,28 @@ func GetHealthyIstiodPods(kubeCache cache.KubeCache, revision string, namespace 
 	}
 
 	return healthyIstiods, nil
+}
+
+func GetHealthyIstiodRevisions(kubeCache cache.KubeCache, namespace string) ([]string, error) {
+	podLabels := map[string]string{
+		"app": "istiod",
+	}
+
+	istiods, err := kubeCache.GetPods(namespace, labels.Set(podLabels).String())
+	if err != nil {
+		return nil, err
+	}
+
+	healthyRevisions := make(map[string]bool)
+	for i, istiod := range istiods {
+		if istiod.Status.Phase == corev1.PodRunning {
+			if revision, ok := istiods[i].Labels["istio.io/rev"]; ok {
+				healthyRevisions[revision] = true
+			}
+		}
+	}
+
+	return maps.Keys(healthyRevisions), nil
 }
 
 func GetLatestPod(pods []*corev1.Pod) *corev1.Pod {
