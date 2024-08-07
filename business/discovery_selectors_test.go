@@ -250,158 +250,8 @@ func TestGetKialiDiscoverySelectors(t *testing.T) {
 	}
 }
 
-func TestGetIstioDiscoverySelectors(t *testing.T) {
-	assert.Nil(t, getIstioDiscoverySelectors(nil))
-
-	noDiscoverySelectorsCP := models.ControlPlane{
-		Config: models.ControlPlaneConfiguration{},
-	}
-	oneCP := models.ControlPlane{
-		IstiodNamespace: "istio-system-one",
-		Config: models.ControlPlaneConfiguration{
-			IstioMeshConfig: models.IstioMeshConfig{
-				DiscoverySelectors: config.DiscoverySelectorsType{
-					{
-						MatchLabels: map[string]string{
-							"label1": "labelValue1",
-						},
-					},
-					{
-						MatchExpressions: []meta_v1.LabelSelectorRequirement{
-							{
-								Key:      "label2",
-								Operator: meta_v1.LabelSelectorOpIn,
-								Values:   []string{"labelValue2"},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-	twoCP := models.ControlPlane{
-		IstiodNamespace: "istio-system-two",
-		Config: models.ControlPlaneConfiguration{
-			IstioMeshConfig: models.IstioMeshConfig{
-				DiscoverySelectors: config.DiscoverySelectorsType{
-					{
-						MatchLabels: map[string]string{
-							"label3": "labelValue3",
-						},
-					},
-					{
-						MatchExpressions: []meta_v1.LabelSelectorRequirement{
-							{
-								Key:      "label4",
-								Operator: meta_v1.LabelSelectorOpIn,
-								Values:   []string{"labelValue4"},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-
-	// namespaces we are going to test with
-	fooNamespace := models.Namespace{
-		Name: "foo",
-	}
-	istio1Namespace := models.Namespace{
-		Name:   "istio-system-one",
-		Labels: map[string]string{"kubernetes.io/metadata.name": "istio-system-one"},
-	}
-	istio2Namespace := models.Namespace{
-		Name:   "istio-system-two",
-		Labels: map[string]string{"kubernetes.io/metadata.name": "istio-system-two"},
-	}
-	oneNamespace := models.Namespace{
-		Name:   "one",
-		Labels: map[string]string{"label1": "labelValue1"},
-	}
-	twoNamespace := models.Namespace{
-		Name:   "two",
-		Labels: map[string]string{"label2": "labelValue2"},
-	}
-	threeNamespace := models.Namespace{
-		Name:   "three",
-		Labels: map[string]string{"label3": "labelValue3"},
-	}
-	fourNamespace := models.Namespace{
-		Name:   "four",
-		Labels: map[string]string{"label4": "labelValue4"},
-	}
-
-	cases := map[string]struct {
-		controlPlanes     []models.ControlPlane
-		allNamespaces     []models.Namespace
-		matchedNamespaces []models.Namespace
-	}{
-		"no control planes - no discovery selectors means match all namespaces": {
-			allNamespaces:     []models.Namespace{fooNamespace, istio1Namespace, istio2Namespace, oneNamespace, twoNamespace, threeNamespace, fourNamespace},
-			matchedNamespaces: []models.Namespace{fooNamespace, istio1Namespace, istio2Namespace, oneNamespace, twoNamespace, threeNamespace, fourNamespace},
-		},
-		"control planes with no discovery selectors - no discovery selectors means match all namespaces": {
-			controlPlanes:     []models.ControlPlane{noDiscoverySelectorsCP},
-			allNamespaces:     []models.Namespace{fooNamespace, istio1Namespace, istio2Namespace, oneNamespace, twoNamespace, threeNamespace, fourNamespace},
-			matchedNamespaces: []models.Namespace{fooNamespace, istio1Namespace, istio2Namespace, oneNamespace, twoNamespace, threeNamespace, fourNamespace},
-		},
-		"one control plane - istio1": {
-			controlPlanes:     []models.ControlPlane{oneCP},
-			allNamespaces:     []models.Namespace{fooNamespace, istio1Namespace, istio2Namespace, oneNamespace, twoNamespace, threeNamespace, fourNamespace},
-			matchedNamespaces: []models.Namespace{istio1Namespace, oneNamespace, twoNamespace},
-		},
-		"one control plane - istio2": {
-			controlPlanes:     []models.ControlPlane{twoCP},
-			allNamespaces:     []models.Namespace{fooNamespace, istio1Namespace, istio2Namespace, oneNamespace, twoNamespace, threeNamespace, fourNamespace},
-			matchedNamespaces: []models.Namespace{istio2Namespace, threeNamespace, fourNamespace},
-		},
-		"two control planes": {
-			controlPlanes:     []models.ControlPlane{oneCP, twoCP},
-			allNamespaces:     []models.Namespace{fooNamespace, istio1Namespace, istio2Namespace, oneNamespace, twoNamespace, threeNamespace, fourNamespace},
-			matchedNamespaces: []models.Namespace{istio1Namespace, istio2Namespace, oneNamespace, twoNamespace, threeNamespace, fourNamespace},
-		},
-	}
-
-	for name, tc := range cases {
-		t.Run(name, func(t *testing.T) {
-			assert := assert.New(t)
-
-			mesh := models.Mesh{
-				ControlPlanes: tc.controlPlanes,
-			}
-
-			selectors := getIstioDiscoverySelectors(&mesh)
-			filteredNamespaces := filterNamespacesWithDiscoverySelectors(tc.allNamespaces, selectors)
-			assert.Equal(tc.matchedNamespaces, filteredNamespaces)
-		})
-	}
-}
-
 func TestGetDiscoverySelectorsForCluster(t *testing.T) {
-	assert.Nil(t, getDiscoverySelectorsForCluster("cluster1", nil, nil))
-
-	// there are no discovery selectors defined in this Istio control plane
-	cpWithoutDS := models.ControlPlane{
-		IstiodNamespace: "istio-system",
-		Config:          models.ControlPlaneConfiguration{},
-	}
-
-	// there is a discovery selector defined in this Istio control plane
-	cpWithDS := models.ControlPlane{
-		IstiodNamespace: "istio-system",
-		Config: models.ControlPlaneConfiguration{
-			IstioMeshConfig: models.IstioMeshConfig{
-				DiscoverySelectors: config.DiscoverySelectorsType{
-					{
-						MatchLabels: map[string]string{
-							"label1": "labelValue1",
-						},
-					},
-				},
-			},
-		},
-	}
+	assert.Nil(t, getDiscoverySelectorsForCluster("cluster1", nil))
 
 	// config with only "cluster1" override selectors
 	overrideSelectors := config.Config{
@@ -439,35 +289,18 @@ func TestGetDiscoverySelectorsForCluster(t *testing.T) {
 
 	cases := map[string]struct {
 		clusterName       string
-		controlPlanes     []models.ControlPlane
 		config            config.Config
 		allNamespaces     []models.Namespace
 		matchedNamespaces []models.Namespace
 	}{
-		"istio discovery selectors only": {
+		"override discovery selectors - cluster has overrides so use the overrides": {
 			clusterName:       "cluster1",
-			controlPlanes:     []models.ControlPlane{cpWithDS},
-			allNamespaces:     []models.Namespace{fooNamespace, istioNamespace, oneNamespace, twoNamespace},
-			matchedNamespaces: []models.Namespace{istioNamespace, oneNamespace},
-		},
-		"istio and override discovery selectors - cluster has overrides so use the overrides": {
-			clusterName:       "cluster1",
-			controlPlanes:     []models.ControlPlane{cpWithDS},
 			config:            overrideSelectors,
 			allNamespaces:     []models.Namespace{fooNamespace, istioNamespace, oneNamespace, twoNamespace},
 			matchedNamespaces: []models.Namespace{istioNamespace, twoNamespace},
 		},
-		"istio and override discovery selectors - cluster does NOT have overrides so use the Istio as defaults": {
+		"override discovery selectors - cluster does NOT have overrides": {
 			clusterName:       "unknown-cluster",
-			controlPlanes:     []models.ControlPlane{cpWithDS},
-			config:            overrideSelectors,
-			allNamespaces:     []models.Namespace{fooNamespace, istioNamespace, oneNamespace, twoNamespace},
-			matchedNamespaces: []models.Namespace{istioNamespace, oneNamespace},
-		},
-		// the following test results in no discovery selectors being defined so all namespaces are matched
-		"no istio discovery selectors with override discovery selectors - cluster does NOT have overrides": {
-			clusterName:       "unknown-cluster",
-			controlPlanes:     []models.ControlPlane{cpWithoutDS},
 			config:            overrideSelectors,
 			allNamespaces:     []models.Namespace{fooNamespace, istioNamespace, oneNamespace, twoNamespace},
 			matchedNamespaces: []models.Namespace{fooNamespace, istioNamespace, oneNamespace, twoNamespace},
@@ -478,11 +311,7 @@ func TestGetDiscoverySelectorsForCluster(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			assert := assert.New(t)
 
-			mesh := models.Mesh{
-				ControlPlanes: tc.controlPlanes,
-			}
-
-			selectors := getDiscoverySelectorsForCluster(tc.clusterName, &tc.config, &mesh)
+			selectors := getDiscoverySelectorsForCluster(tc.clusterName, &tc.config)
 			filteredNamespaces := filterNamespacesWithDiscoverySelectors(tc.allNamespaces, selectors)
 			assert.Equal(tc.matchedNamespaces, filteredNamespaces)
 		})

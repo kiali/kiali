@@ -23,7 +23,7 @@ Currently, the Kiali Server and Operator have many different ways to configure w
 
 # Solution
 
-Provide a new list of "discovery selectors" in the same way that [Istio itself has discovery selectors](https://istio.io/latest/docs/reference/config/istio.mesh.v1alpha1/#MeshConfig). Kiali will re-use the Istio Discovery Selectors it retrieves from the control plane's `istio` configmap. Kiali will also have a new config option `deployment.discovery_selectors` that, when specified, will be used instead of the control plane's Istio Discovery Selectors. It will support an array of [Kubernetes set-based selectors](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#resources-that-support-set-based-requirements) just like Istio Discovery Selectors.  For example:
+Provide a new list of "discovery selectors" in the same way that [Istio itself has discovery selectors](https://istio.io/latest/docs/reference/config/istio.mesh.v1alpha1/#MeshConfig). Kiali will not attempt to use the Istio Discovery Selectors, but it will be configurable using the same kind of selector mechanism. Kiali will have a new config option `deployment.discovery_selectors` that, when specified, will be used to limit what namespaces Kiali will access. It will support an array of [Kubernetes equality-based and set-based selectors](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#resources-that-support-set-based-requirements) just like Istio Discovery Selectors.  For example:
 ```yaml
 spec:
   deployment:
@@ -49,84 +49,11 @@ spec:
 
 ## Istio Discovery Selectors
 
-Kiali already autodiscovers the Istio control planes. Discovery selectors for the Istio control plane can be found by looking at the control plane's `istio` configmap under `mesh.discoverySelectors`. Kiali will read this configmap and if discovery selectors have been set, Kiali will scope itself to the namespaces selected by the discovery selectors. In cases where there are multiple control planes, for example with revisioned upgrades, Kiali will read both discovery selectors and OR the two together scoping itself to the disjoint of the two sets. For example:
-
-Control plane A discovery selector:
-
-```yaml
-discoverySelectors:
-- matchLabels:
-    team: api
-```
-
-Control plane B discovery selector:
-
-```yaml
-discoverySelectors:
-- matchLabels:
-    team: backend
-```
-
-Kiali discovery selector:
-
-```yaml
-discovery_selectors:
-  default:
-  - matchLabels:
-      team: backend
-  - matchLabels:
-      team: api
-```
-
-For multi-primary cluster deployments, Kiali will scope the namespaces according to the discovery selectors defined on that cluster.
-
-Cluster A discovery selector:
-
-```yaml
-discoverySelectors:
-- matchLabels:
-    team: api
-```
-
-Cluster B discovery selector:
-
-```yaml
-discoverySelectors:
-- matchLabels:
-    team: backend
-```
-
-Kiali discovery selector cluster A:
-
-```yaml
-discovery_selectors:
-  default:
-  - matchLabels:
-      team: api
-```
-
-Kiali discovery selector cluster B:
-
-```yaml
-discovery_selectors:
-  default:
-  - matchLabels:
-      team: backend
-```
-
-The same rules for multiple revisions in a multi-cluster deployment would still apply.
-
-Primary-remote deployments would behave the same as single cluster where the remote cluster is scoped to the primary control plane's discovery selectors.
-
-TODO: external control plane
-
-### Failure scenarios
-
-Discovery selectors act as a way to separate multiple Kiali deployments from one another. Kiali relies on autodiscovering the Istio discovery selectors, but when it cannot auto discover them the Kiali server will fail to start, and/or panic, rather than potentially show out of scope data. In a multi-primary deployment, if one primary cannot be reached then that cluster will be considered inaccessible.
+Kiali currently attempts to autodiscover the Istio control planes. However, Kiali will not use the discovery selectors that have been set in Istio (the Istio meshConfig.discoverySelectors). Kiali will scope itself to the namespaces selected only by Kiali's own discovery selectors.
 
 ## Discovery Selector Kiali Config Option
 
-A new configuration option will be added that will mimic the Istio `discoverySelectors` configuration option. Using the configuration option, users will be able to similarly scope Kiali to the defined set of namespaces. This configuration option would take precedence over the autodiscovered control plane discovery selectors. Having a config option within Kiali has the advantage of not relying on auto-discovery via the Istio control plane. Kiali does not need to fail if it cannot, even temporarily, access the control plane configuration, because it can rely on its own discovery selectors configuration. The configuration option needs to provide enough flexibility for users to specify different discovery selectors for each cluster in multi-primary scenarios.
+A new configuration option will be added that will mimic the Istio `discoverySelectors` configuration option. Using the configuration option, users will be able to similarly scope Kiali to the defined set of namespaces. Having a config option within Kiali has the advantage of not relying on auto-discovery via the Istio control plane. Kiali does not need to fail if it cannot, even temporarily, access the control plane configuration, because it can rely on its own discovery selectors configuration. The configuration option needs to provide enough flexibility for users to specify different discovery selectors for each cluster in multi-primary scenarios.
 
 Kiali would add a `deployment.discovery_selectors` config option where you can specify a default set of discovery selectors and additional cluster-specific overrides `map[string]labelselector` where the key is the cluster name that the discovery selector will apply to. Cluster specific overrides will take precedence over the defaults.
 
@@ -154,7 +81,7 @@ discovery_selectors:
 
 ## No cluster wide access
 
-Kiali relies on `deployment.accessible_namespaces` when `deployment.cluster_wide_access = false` to know which namespaces the server should create a kube cache for. The operator also uses `deployment.accessible_namespaces` to create a `Role/RoleBinding` for the Kiali server's Service Account giving the Kiali server access to that namespace. In order for the operator to create RBAC rules for the Kiali server, the operator will need to reconcile the discovery selectors with namespaces that exist in the cluster. The operator can take what is set in `deployment.discovery_selectors` and set the Kiali server's `deployment.discovery_selectors` config field to be the result of this reconcilation. For example:
+Kiali relies on `deployment.accessible_namespaces.default` when `deployment.cluster_wide_access = false` to know which namespaces the server should create a kube cache for. The operator also uses `deployment.accessible_namespaces.default` to create a `Role/RoleBinding` for the Kiali server's Service Account giving the Kiali server access to that namespace. In order for the operator to create RBAC rules for the Kiali server, the operator will need to reconcile the discovery selectors with namespaces that exist in the cluster. The operator can take what is set in `deployment.discovery_selectors.default` and set the Kiali server's `deployment.discovery_selectors.default` config field to be the result of this reconcilation. For example:
 
 ```yaml
 spec:
@@ -180,7 +107,7 @@ spec:
           kubernetes.io/metadata.name: backend-app2
 ```
 
-An alternative is to keep `deployment.accessible_namespaces` and make it an "internal" field that only the operator sets and not users.
+An alternative (that has been rejected but left here for historical purposes) is to keep `deployment.accessible_namespaces` and make it an "internal" field that only the operator sets and not users.
 
 ```yaml
 spec:
@@ -203,4 +130,4 @@ Note that this won't work in multi-cluster scenarios since the operator has no a
 
 - [ ] Add discovery selector support
 - [ ] Remove deprecated mechanisms
-- [ ] TODO...
+- [ ] Document the new feature
