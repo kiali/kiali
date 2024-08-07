@@ -10,6 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/kubernetes/cache"
+
 	"golang.org/x/exp/maps"
 )
 
