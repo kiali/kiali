@@ -417,7 +417,7 @@ type OpenIdConfig struct {
 
 // DeploymentConfig provides details on how Kiali was deployed.
 type DeploymentConfig struct {
-	AccessibleNamespaces []string                 // this is no longer part of the actual config - we will generate this at initialization time
+	AccessibleNamespaces []string                 // this is no longer part of the actual config - we will generate this in Unmarshal()
 	ClusterWideAccess    bool                     `yaml:"cluster_wide_access,omitempty"`
 	DiscoverySelectors   DiscoverySelectorsConfig `yaml:"discovery_selectors,omitempty"`
 	InstanceName         string                   `yaml:"instance_name"`
@@ -1053,11 +1053,14 @@ func Unmarshal(yamlString string) (conf *Config, err error) {
 	// Determine what the accessible namespaces are. These are namespaces we must have permission to see
 	// when not in cluster-wide access mode. These are only necessary when we are not in cluster-wide access mode.
 	// We do not set this when in cluster-wide mode because in that case we have access to see everything.
-	// Note that in past versions "accessible_namespace" came over in the yaml itself, but that is no longer the case.
+	// Note that in past versions "accessible_namespaces" came over in the yaml itself, but that is no longer the case.
 	// Accessible namespaces can now be derived from discovery selectors so long as they are specified in a specific way.
 	// See the comments found in extractAccessibleNamespaceList for more details.
 	if !conf.Deployment.ClusterWideAccess {
-		conf.Deployment.AccessibleNamespaces = conf.extractAccessibleNamespaceList()
+		conf.Deployment.AccessibleNamespaces, err = conf.extractAccessibleNamespaceList()
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	conf.prepareDashboards()
@@ -1313,25 +1316,39 @@ func validateSigningKey(signingKey string, authStrategy string) error {
 // When the Kiali Server is not in Cluster Wide Access mode, it is assumed (required, in fact) that all the
 // default discovery selectors only use match criteria as explained above.
 // This function therefore is used to obtain a list of accessible namespaces from the discovery selectors when CWA=false.
-func (config *Config) extractAccessibleNamespaceList() []string {
+func (config *Config) extractAccessibleNamespaceList() ([]string, error) {
+	errs := make([]string, 0)
 	namespaceNames := make([]string, 0)
 	for _, selector := range config.Deployment.DiscoverySelectors.Default {
-		if selector.MatchLabels != nil && selector.MatchExpressions != nil {
-			continue // accessible namespaces cannot be provided through multiple labels/expressions,
-		}
-		if len(selector.MatchLabels) == 1 {
+		if len(selector.MatchLabels) > 0 && len(selector.MatchExpressions) > 0 {
+			errs = append(errs, fmt.Sprintf("invalid accessible namespace discovery selector: one label selector cannot have both an equality-based and a set-based selector: %v", selector))
+		} else if len(selector.MatchLabels) > 1 {
+			errs = append(errs, fmt.Sprintf("invalid accessible namespace discovery selector: matchLabel selector must match one and only one label named kubernetes.io/metadata.name: %v", selector))
+		} else if len(selector.MatchExpressions) > 1 {
+			errs = append(errs, fmt.Sprintf("invalid accessible namespace discovery selectors: matchExpressions selector must match one and only one label named kubernetes.io/metadata.name using the IN operator: %v", selector))
+		} else if len(selector.MatchLabels) == 1 {
 			if namespaceName, ok := selector.MatchLabels["kubernetes.io/metadata.name"]; ok {
 				namespaceNames = append(namespaceNames, namespaceName)
+			} else {
+				errs = append(errs, fmt.Sprintf("invalid accessible namespace discovery selector: matchLabel selector must match the label named kubernetes.io/metadata.name: %v", selector))
 			}
-		}
-		if len(selector.MatchExpressions) == 1 {
+		} else if len(selector.MatchExpressions) == 1 {
 			expr := selector.MatchExpressions[0]
 			if len(expr.Values) == 1 {
 				if expr.Key == "kubernetes.io/metadata.name" && expr.Operator == metav1.LabelSelectorOpIn {
 					namespaceNames = append(namespaceNames, expr.Values[0])
+				} else {
+					errs = append(errs, fmt.Sprintf("invalid accessible namespace discovery selectors: matchExpressions selector must match the label named kubernetes.io/metadata.name using the IN operator: %v", selector))
 				}
+			} else {
+				errs = append(errs, fmt.Sprintf("invalid accessible namespace discovery selectors: matchExpressions selector must match one and only one value for label named kubernetes.io/metadata.name using the IN operator: %v", selector))
 			}
 		}
 	}
-	return namespaceNames
+
+	if len(errs) == 0 {
+		return namespaceNames, nil
+	} else {
+		return namespaceNames, errors.New(strings.Join(errs, "\n"))
+	}
 }

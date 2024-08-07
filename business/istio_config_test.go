@@ -19,6 +19,7 @@ import (
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
+	"github.com/kiali/kiali/tests/testutils"
 	"github.com/kiali/kiali/tests/testutils/validations"
 )
 
@@ -629,17 +630,17 @@ func TestListNamespaceScopedReturnsAllAccessibleNamespaces(t *testing.T) {
 	assert := assert.New(t)
 	require := require.New(t)
 
-	conf := config.NewConfig()
-	conf.KubernetesConfig.CacheTokenNamespaceDuration = 10000
-	conf.Deployment.DiscoverySelectors = config.DiscoverySelectorsConfig{
-		Default: config.DiscoverySelectorsType{
-			&config.DiscoverySelectorType{MatchLabels: map[string]string{"kubernetes.io/metadata.name": "test"}},
-			&config.DiscoverySelectorType{MatchLabels: map[string]string{"kubernetes.io/metadata.name": "test-b"}},
-			&config.DiscoverySelectorType{MatchLabels: map[string]string{"kubernetes.io/metadata.name": "istio-system"}},
-		},
-	}
-
-	conf.Deployment.ClusterWideAccess = false
+	conf := testutils.GetConfigFromYaml(t, `
+kubernetes_config:
+  cache_token_namespace_duration: 10000
+deployment:
+  cluster_wide_access: false
+  discovery_selectors:
+    default:
+    - matchLabels: {"kubernetes.io/metadata.name": "test" }
+    - matchLabels: {"kubernetes.io/metadata.name": "test-b" }
+    - matchLabels: {"kubernetes.io/metadata.name": "istio-system" }
+`)
 	kubernetes.SetConfig(t, *conf)
 	objects := []runtime.Object{
 		kubetest.FakeNamespace("istio-system"),

@@ -16,6 +16,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
+	"github.com/kiali/kiali/tests/testutils"
 )
 
 const IstioAPIEnabled = true
@@ -33,9 +34,17 @@ func newTestingKubeCache(t *testing.T, cfg *config.Config, objects ...runtime.Ob
 func TestNewKialiCache_isCached(t *testing.T) {
 	assert := assert.New(t)
 
-	conf := config.NewConfig()
-	conf.Deployment.ClusterWideAccess = false
-	conf.Deployment.AccessibleNamespaces = []string{"bookinfo", "a", "abcdefghi", "galicia"}
+	conf := testutils.GetConfigFromYaml(t, `
+deployment:
+  cluster_wide_access: false
+  discovery_selectors:
+    default:
+    - matchLabels: {"kubernetes.io/metadata.name": "bookinfo" }
+    - matchLabels: {"kubernetes.io/metadata.name": "a" }
+    - matchLabels: {"kubernetes.io/metadata.name": "abcdefghi" }
+    - matchLabels: {"kubernetes.io/metadata.name": "galicia" }
+`)
+
 	kubeCache := newTestingKubeCache(t, conf)
 	kubeCache.refreshDuration = 0
 
@@ -64,9 +73,15 @@ func TestClusterScopedCacheStopped(t *testing.T) {
 func TestNSScopedCacheStopped(t *testing.T) {
 	assert := assert.New(t)
 
-	cfg := config.NewConfig()
-	cfg.Deployment.ClusterWideAccess = false
-	cfg.Deployment.AccessibleNamespaces = []string{"ns1", "ns1"}
+	cfg := testutils.GetConfigFromYaml(t, `
+deployment:
+  cluster_wide_access: false
+  discovery_selectors:
+    default:
+    - matchLabels: {"kubernetes.io/metadata.name": "ns1" }
+    - matchLabels: {"kubernetes.io/metadata.name": "ns2" }
+`)
+
 	kubeCache := newTestingKubeCache(t, cfg)
 
 	kubeCache.Stop()
@@ -107,9 +122,14 @@ func TestRefreshMultipleTimesClusterScoped(t *testing.T) {
 func TestRefreshNSScoped(t *testing.T) {
 	assert := assert.New(t)
 
-	cfg := config.NewConfig()
-	cfg.Deployment.ClusterWideAccess = false
-	cfg.Deployment.AccessibleNamespaces = []string{"ns1", "ns1"}
+	cfg := testutils.GetConfigFromYaml(t, `
+deployment:
+  cluster_wide_access: false
+  discovery_selectors:
+    default:
+    - matchLabels: {"kubernetes.io/metadata.name": "ns1" }
+    - matchLabels: {"kubernetes.io/metadata.name": "ns2" }
+`)
 	kialiCache := newTestingKubeCache(t, cfg)
 	kialiCache.nsCacheLister = map[string]*cacheLister{}
 
@@ -315,7 +335,7 @@ func TestIstioAPIDisabled(t *testing.T) {
 	assert.Error(err)
 }
 
-func ListingIstioObjectsWorksAcrossNamespacesWhenNamespaceScoped(t *testing.T) {
+func TestListingIstioObjectsWorksAcrossNamespacesWhenNamespaceScoped(t *testing.T) {
 	assert := assert.New(t)
 	require := require.New(t)
 
@@ -332,9 +352,15 @@ func ListingIstioObjectsWorksAcrossNamespacesWhenNamespaceScoped(t *testing.T) {
 		},
 	}
 
-	cfg := config.NewConfig()
-	cfg.Deployment.ClusterWideAccess = false
-	cfg.Deployment.AccessibleNamespaces = []string{"alpha", "beta"}
+	cfg := testutils.GetConfigFromYaml(t, `
+deployment:
+  cluster_wide_access: false
+  discovery_selectors:
+    default:
+    - matchLabels: {"kubernetes.io/metadata.name": "alpha" }
+    - matchLabels: {"kubernetes.io/metadata.name": "beta" }
+`)
+
 	kubeCache := newTestingKubeCache(t, cfg, nsAlpha, nsBeta, vsAlpha, vsBeta)
 
 	vsList, err := kubeCache.GetVirtualServices("", "")
