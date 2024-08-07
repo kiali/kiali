@@ -2569,10 +2569,10 @@
   resolved "https://registry.yarnpkg.com/@types/cypress-cucumber-preprocessor/-/cypress-cucumber-preprocessor-4.0.5.tgz#5c4d791e9b1f5928bcf179a496538193cb4298b4"
   integrity sha512-5+eM+RWNOW7X9JMQ4auux/HxTWxBK+Mz2wStEnnbuJr0HRLqCNJDUDvkeLtob8X74uA3L0bCFNyC2WotfJtM6Q==
 
-"@types/cytoscape@3.14.0":
-  version "3.14.0"
-  resolved "https://registry.yarnpkg.com/@types/cytoscape/-/cytoscape-3.14.0.tgz#346b5430a7a1533784bcf44fcbe6c5255b948d36"
-  integrity sha512-qOhhZFGb35457vmCu9YHqwjqleraSAEikaIFmMUPWzTC7FrwkS7VR/6ymqRHW7Z8wivHuzsZDYCoePIepd69qg==
+"@types/cytoscape@3.21.5":
+  version "3.21.5"
+  resolved "https://registry.yarnpkg.com/@types/cytoscape/-/cytoscape-3.21.5.tgz#43ea460b2809ff424225377f270750f674c27f75"
+  integrity sha512-fzYT3vqY5J4gxVXDOsCgDpm0ZdU8bQq+wCv0ucS0MSTtvQdjs3lcb2VetJiUSAd4WBgouqizI+JT1f8Yc6eY7Q==
 
 "@types/d3-array@*", "@types/d3-array@^3.0.3":
   version "3.0.5"
@@ -5101,13 +5101,10 @@ cytoscape-popper@1.0.7:
   dependencies:
     popper.js "^1.0.0"
 
-cytoscape@3.15.5:
-  version "3.15.5"
-  resolved "https://registry.yarnpkg.com/cytoscape/-/cytoscape-3.15.5.tgz#34f4d5e54ffadbbbd044d5c041f17d251e741748"
-  integrity sha512-wkF2zkwvbBvT3Gj9ZVYhxqx6TvyZIuDx7Dhdy8m0z4QmDOXteMz+9oUgV+1btaBxA1VePZRUpoz1lwJixAyyYw==
-  dependencies:
-    heap "^0.2.6"
-    lodash.debounce "^4.0.8"
+cytoscape@3.30.1:
+  version "3.30.1"
+  resolved "https://registry.yarnpkg.com/cytoscape/-/cytoscape-3.30.1.tgz#9855a284aaefbaf2628fdc6cf956ba83c0ae511b"
+  integrity sha512-TRJc3HbBPkHd50u9YfJh2FxD1lDLZ+JXnJoyBn5LkncoeuT7fapO/Hq/Ed8TdFclaKshzInge2i30bg7VKeoPQ==
 
 "d3-array@2 - 3", "d3-array@2.10.0 - 3", "d3-array@2.5.0 - 3", d3-array@3, d3-array@^3.1.6, d3-array@^3.2.0:
   version "3.2.4"
@@ -7338,11 +7335,6 @@ he@1.2.0, he@^1.2.0:
   version "1.2.0"
   resolved "https://registry.yarnpkg.com/he/-/he-1.2.0.tgz#84ae65fa7eafb165fddb61566ae14baf05664f0f"
   integrity sha512-F/1DnUGPopORZi0ni+CvrCgHQ5FyEAHRLSApuYWMmrbSwoN2Mn/7k+Gl38gJnR7yyDZk6WLXwiGod1JOWNDKGw==
-
-heap@^0.2.6:
-  version "0.2.6"
-  resolved "https://registry.yarnpkg.com/heap/-/heap-0.2.6.tgz#087e1f10b046932fc8594dd9e6d378afc9d1e5ac"
-  integrity sha1-CH4fELBGky/IWU3Z5tN4r8nR5aw=
 
 heimdalljs-logger@^0.1.10, heimdalljs-logger@^0.1.7:
   version "0.1.10"
