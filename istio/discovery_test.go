@@ -1039,6 +1039,7 @@ func TestGetClustersWorksWithNamespacedScope(t *testing.T) {
 	assert := assert.New(t)
 	conf := config.NewConfig()
 	conf.Deployment.ClusterWideAccess = false
+	conf.Deployment.AccessibleNamespaces = []string{"istio-system"}
 	conf.Deployment.DiscoverySelectors = config.DiscoverySelectorsConfig{
 		Default: config.DiscoverySelectorsType{
 			&config.DiscoverySelectorType{MatchLabels: map[string]string{"kubernetes.io/metadata.name": "istio-system"}},

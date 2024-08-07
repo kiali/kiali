@@ -146,17 +146,7 @@ func NewKialiCache(clientFactory kubernetes.ClientFactory, cfg config.Config) (K
 	}
 
 	for cluster, client := range clientFactory.GetSAClients() {
-		var accessibleNamespaces []string
-		if !cfg.Deployment.ClusterWideAccess {
-			// Determine what namespaces are to be accessed for the cluster.
-			// Since we do not have cluster wide access, we do not have permission to list namespaces.
-			// Therefore, we assume we can extract the list of accessible namespaces from the discovery selectors configuration.
-			// That list of accessible namespaces will be used as our base list which we then filter with discovery selectors later.
-			// Note if this is a remote cluster, that remote cluster must have the same namespaces as those in our own local
-			// cluster's accessible namespaces. This is one reason why we suggest enabling CWA for multi-cluster environments.
-			accessibleNamespaces = cfg.ExtractAccessibleNamespaceList()
-		}
-		cache, err := NewKubeCache(client, cfg, accessibleNamespaces)
+		cache, err := NewKubeCache(client, cfg)
 		if err != nil {
 			log.Errorf("[Kiali Cache] Error creating kube cache for cluster: [%s]. Err: %v", cluster, err)
 			return nil, err

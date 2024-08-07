@@ -197,7 +197,7 @@ func (in *NamespaceService) getNamespacesByCluster(ctx context.Context, cluster 
 			// That list of accessible namespaces will be used as our base list which we then filter with discovery selectors down below.
 			// Note if this is a remote cluster, that remote cluster must have the same namespaces as those in our own local
 			// cluster's accessible namespaces. This is one reason why we suggest enabling CWA for multi-cluster environments.
-			accessibleNamespaces := in.conf.ExtractAccessibleNamespaceList()
+			accessibleNamespaces := in.conf.Deployment.AccessibleNamespaces
 			k8sNamespaces := make([]core_v1.Namespace, 0)
 			for _, ans := range accessibleNamespaces {
 				k8sNs, err := in.userClients[cluster].GetNamespace(ans)
