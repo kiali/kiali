@@ -6,12 +6,12 @@ package istio
 // level kubernetes package.
 
 import (
+	"golang.org/x/exp/maps"
+
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/kubernetes/cache"
-
-	"golang.org/x/exp/maps"
 )
 
 func GetHealthyIstiodPods(kubeCache cache.KubeCache, revision string, namespace string) ([]*corev1.Pod, error) {
