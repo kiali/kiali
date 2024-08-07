@@ -12,14 +12,10 @@ import (
 // getDiscoverySelectorsForCluster will return the discovery selectors applicable for the named cluster.
 // If the cluster has overrides defined in the Kiali config, those overrides will be returned.
 // If there are no overrides, but default discovery selectors are defined in the Kiali config, those will be returned.
-// If there are no selectors defined in the Kiali config, the fallback will be to obtain Istio's own discovery selectors
-// (Istio's discovery selectors will be found in the given mesh argument)
-// If no discovery selectors are defined anywhere (in neither Kiali config nor Istio), nil is returned.
-// kialiConfig and mesh may be nil - if so, they are ignored.
-func getDiscoverySelectorsForCluster(cluster string, kialiConfig *config.Config, mesh *models.Mesh) (ds config.DiscoverySelectorsType) {
-	if ds = getKialiDiscoverySelectors(cluster, kialiConfig); ds == nil {
-		ds = getIstioDiscoverySelectors(mesh)
-	}
+// If there are no selectors defined in the Kiali config, nil is returned (Istio's own discovery selectors will be ignored).
+// kialiConfig argument may be nil - if so, they are ignored and nil is returned.
+func getDiscoverySelectorsForCluster(cluster string, kialiConfig *config.Config) config.DiscoverySelectorsType {
+	ds := getKialiDiscoverySelectors(cluster, kialiConfig)
 	return ds
 }
 
@@ -64,34 +60,6 @@ func getKialiDiscoverySelectors(cluster string, cfg *config.Config) config.Disco
 
 	// there are no discovery selectors configured within the Kiali config; return nil to indicate this
 	return nil
-}
-
-// getIstioDiscoverySelectors will return all discovery selectors configured in the Istio mesh config across all clusters.
-// If there are no discovery selectors configured, nil is returned.
-// If there are discovery selectors, this function will return additional selectors that selects the control plane namespaces
-// so that Kiali will be assured to always match the control plane namespaces.
-// NOTE: You probably don't want to use this func; instead, see getDiscoverySelectorsForCluster()
-func getIstioDiscoverySelectors(mesh *models.Mesh) config.DiscoverySelectorsType {
-
-	if mesh == nil {
-		return nil
-	}
-
-	selectors := make(config.DiscoverySelectorsType, 0)
-
-	for _, cp := range mesh.ControlPlanes {
-		if len(cp.Config.DiscoverySelectors) > 0 {
-			// Kiali always needs access to the control plane namespace - so add a selector for it to ensure it will always match
-			selectors = append(selectors, &config.DiscoverySelectorType{MatchLabels: map[string]string{"kubernetes.io/metadata.name": cp.IstiodNamespace}})
-			selectors = append(selectors, cp.Config.DiscoverySelectors...)
-		}
-	}
-
-	if len(selectors) == 0 {
-		return nil
-	}
-
-	return selectors
 }
 
 // filterNamespacesWithDiscoverySelectors will look at the given list of namespaces and return a list
