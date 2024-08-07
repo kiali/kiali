@@ -1015,6 +1015,22 @@ export class GraphStyles {
         style: {
           display: 'none'
         }
+      },
+      {
+        selector: `edge[display="multiple"]`,
+        style: {
+          'line-color': (ele: Cy.EdgeSingular) => {
+            return getEdgeColor(ele);
+          },
+          /**
+           * TODO: Not available yet
+          'line-outline-width': '2px',
+          'line-outline-color': (ele: Cy.EdgeSingular) => {
+            return getEdgeColor(ele);
+          },
+           **/
+          'target-arrow-shape': 'triangle-cross'
+        }
       }
     ];
   }
