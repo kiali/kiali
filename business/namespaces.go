@@ -279,6 +279,10 @@ func (in *NamespaceService) GetClusterNamespace(ctx context.Context, namespace s
 		return &ns, nil
 	}
 
+	if !in.isAccessibleNamespace(models.Namespace{Name: namespace, Cluster: cluster}) {
+		return nil, &AccessibleNamespaceError{msg: "Namespace [" + namespace + "] in cluster [" + cluster + "] is not accessible to Kiali"}
+	}
+
 	var result models.Namespace
 	if in.hasProjects {
 		project, err := client.GetProject(ctx, namespace)
@@ -297,10 +301,6 @@ func (in *NamespaceService) GetClusterNamespace(ctx context.Context, namespace s
 	// Refresh namespace in cache since we've just fetched it from the API.
 	if _, err := in.GetClusterNamespaces(ctx, cluster); err != nil {
 		log.Errorf("Unable to refresh cache for cluster [%s]: %s", cluster, err)
-	}
-
-	if !in.isAccessibleNamespace(result) {
-		return nil, &AccessibleNamespaceError{msg: "Namespace [" + namespace + "] is not accessible for Kiali"}
 	}
 
 	return &result, nil
