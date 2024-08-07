@@ -39,3 +39,18 @@ export interface SessionInfo {
   expiresOn?: string;
   username?: string;
 }
+
+export const getCSRFToken = (): string | undefined => {
+  const cookiePrefix = 'csrf-token=';
+
+  return (
+    document &&
+    document.cookie &&
+    document.cookie
+      .split(';')
+      .map(c => c.trim())
+      .filter(c => c.startsWith(cookiePrefix))
+      .map(c => c.slice(cookiePrefix.length))
+      .pop()
+  );
+};
