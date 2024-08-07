@@ -53,6 +53,6 @@ if [ -n "$yaml_unformatted" ] || [ -n "$go_unformatted" ]; then
 fi
 
 if [ -n "$i18n_files" ]; then
-  echo "New i18n statements have not been committed - the git commit is aborted."
+  echo "New i18n statements are generated but not committed - the git commit is aborted. Please include the updated translation files in the commit."
   exit 1
 fi
