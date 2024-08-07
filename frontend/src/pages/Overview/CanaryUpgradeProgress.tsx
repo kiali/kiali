@@ -13,11 +13,29 @@ export const infoStyle = kialiStyle({
   margin: '0 0 -0.125rem 0.25rem'
 });
 
-export const CanaryUpgradeProgress: React.FC<Props> = (props: Props) => {
-  const total =
-    props.canaryUpgradeStatus.migratedNamespaces.length + props.canaryUpgradeStatus.pendingNamespaces.length;
+function totalNamespaces(canaryUpgradeStatus: CanaryUpgradeStatus): number {
+  return Object.values(canaryUpgradeStatus.namespacesPerRevision).reduce(
+    (acc, namespaces) => acc + namespaces.length,
+    0
+  );
+}
 
-  const migrated = total > 0 ? (props.canaryUpgradeStatus.migratedNamespaces.length * 100) / total : 0;
+function countNonDefaultNamespaces(canaryUpgradeStatus: CanaryUpgradeStatus): number {
+  return Object.entries(canaryUpgradeStatus.namespacesPerRevision)
+    .filter(([revision]) => revision !== 'default')
+    .reduce((acc, [, namespaces]) => acc + namespaces.length, 0);
+}
+
+function joinNonDefaultRevisions(canaryUpgradeStatus: CanaryUpgradeStatus): string {
+  return Object.keys(canaryUpgradeStatus.namespacesPerRevision)
+    .filter(revision => revision !== 'default')
+    .join(', ');
+}
+
+export const CanaryUpgradeProgress: React.FC<Props> = (props: Props) => {
+  const total = totalNamespaces(props.canaryUpgradeStatus);
+
+  const migrated = total > 0 ? (countNonDefaultNamespaces(props.canaryUpgradeStatus) * 100) / total : 0;
 
   return (
     <div style={{ textAlign: 'center' }} data-test="canary-upgrade">
@@ -25,7 +43,9 @@ export const CanaryUpgradeProgress: React.FC<Props> = (props: Props) => {
 
       <Tooltip
         position={TooltipPosition.right}
-        content={`There is an in progress canary upgrade from version "${props.canaryUpgradeStatus.currentVersion}" to version "${props.canaryUpgradeStatus.upgradeVersion}"`}
+        content={`There is an in progress canary upgrade to revision "${joinNonDefaultRevisions(
+          props.canaryUpgradeStatus
+        )}"`}
       >
         <KialiIcon.Info className={infoStyle} />
       </Tooltip>
@@ -44,7 +64,7 @@ export const CanaryUpgradeProgress: React.FC<Props> = (props: Props) => {
         />
       </div>
 
-      <p>{`${props.canaryUpgradeStatus.migratedNamespaces.length} of ${total} namespaces migrated`}</p>
+      <p>{`${countNonDefaultNamespaces(props.canaryUpgradeStatus)} of ${total} namespaces migrated`}</p>
     </div>
   );
 };

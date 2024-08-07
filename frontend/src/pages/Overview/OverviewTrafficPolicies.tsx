@@ -30,10 +30,10 @@ type OverviewTrafficPoliciesProps = {
 
 type State = {
   authorizationPolicies: AuthorizationPolicy[];
-  canaryVersion: string;
   confirmationModal: boolean;
   disableOp: boolean;
   loaded: boolean;
+  selectedRevision: string;
   sidecars: Sidecar[];
 };
 
@@ -48,7 +48,7 @@ export class OverviewTrafficPolicies extends React.Component<OverviewTrafficPoli
       sidecars: [],
       loaded: this.props.opTarget === 'update',
       disableOp: true,
-      canaryVersion: this.props.kind === 'canary' ? this.getCanaryUpgradeVersion(this.props.opTarget) : ''
+      selectedRevision: this.props.kind === 'canary' ? this.getCanaryUpgradeVersion(this.props.opTarget) : ''
     };
   }
 
@@ -58,10 +58,8 @@ export class OverviewTrafficPolicies extends React.Component<OverviewTrafficPoli
 
   getCanaryUpgradeVersion = (opTarget: string): string => {
     if (this.props.canaryUpgradeStatus) {
-      if (opTarget === 'upgrade') {
-        return this.props.canaryUpgradeStatus.upgradeVersion;
-      } else if (opTarget === 'current') {
-        return this.props.canaryUpgradeStatus.currentVersion;
+      if (opTarget in this.props.canaryUpgradeStatus.namespacesPerRevision) {
+        return opTarget;
       }
     }
     return '';
@@ -74,7 +72,7 @@ export class OverviewTrafficPolicies extends React.Component<OverviewTrafficPoli
           this.fetchPermission(true);
           break;
         case 'canary':
-          this.setState({ canaryVersion: this.getCanaryUpgradeVersion(this.props.opTarget) }, () =>
+          this.setState({ selectedRevision: this.getCanaryUpgradeVersion(this.props.opTarget) }, () =>
             this.fetchPermission(true)
           );
           break;
@@ -167,7 +165,7 @@ export class OverviewTrafficPolicies extends React.Component<OverviewTrafficPoli
   };
 
   onUpgradeDowngradeIstio = (): void => {
-    const jsonPatch = buildNamespaceInjectionPatch(false, false, this.state.canaryVersion);
+    const jsonPatch = buildNamespaceInjectionPatch(false, false, this.state.selectedRevision);
 
     API.updateNamespace(this.props.nsTarget, jsonPatch, this.props.nsInfo.cluster)
       .then(_ => {
@@ -362,8 +360,8 @@ export class OverviewTrafficPolicies extends React.Component<OverviewTrafficPoli
             </>
           ) : this.props.kind === 'canary' ? (
             <>
-              You're going to {this.props.opTarget} to {this.state.canaryVersion} revision in the namespace{' '}
-              {this.props.nsTarget}. Are you sure?
+              You're going to {this.state.selectedRevision} revision in the namespace {this.props.nsTarget}. Are you
+              sure?
             </>
           ) : (
             <>
