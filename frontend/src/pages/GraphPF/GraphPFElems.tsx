@@ -572,7 +572,7 @@ const getPathStyleStroke = (data: EdgeData): PFColors => {
 
 const getPathStyle = (data: EdgeData): React.CSSProperties => {
   // This is to combine just tcp and http edges
-  if (data.display === 'gradient') {
+  if (data.display === 'multiple') {
     return {
       filter: `drop-shadow(0 0 2px ${getPathStyleStroke(data)}) drop-shadow(0 0 2px ${getPathStyleStroke(data)})`,
       stroke: EdgeColorTCPWithTraffic,

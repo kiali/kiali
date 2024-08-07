@@ -94,7 +94,7 @@ func (a AmbientAppender) handleWaypoints(trafficMap graph.TrafficMap, globalInfo
 				}
 				for j, comparedEdge := range n.Edges {
 					if i != j && edge.Dest.ID == comparedEdge.Dest.ID && edge.Metadata[graph.Display] == nil {
-						edge.Metadata[graph.Display] = "gradient"
+						edge.Metadata[graph.Display] = "multiple"
 						comparedEdge.Metadata[graph.Display] = "hide"
 					}
 				}
