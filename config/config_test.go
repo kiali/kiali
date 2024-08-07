@@ -656,7 +656,7 @@ func TestExtractAccessibleNamespaceList(t *testing.T) {
 				},
 			}
 
-			actualNamespaces := cfg.ExtractAccessibleNamespaceList()
+			actualNamespaces := cfg.extractAccessibleNamespaceList()
 			assert.Equal(tc.expectedNamespaces, actualNamespaces)
 		})
 	}

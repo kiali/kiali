@@ -417,11 +417,12 @@ type OpenIdConfig struct {
 
 // DeploymentConfig provides details on how Kiali was deployed.
 type DeploymentConfig struct {
-	ClusterWideAccess  bool                     `yaml:"cluster_wide_access,omitempty"`
-	DiscoverySelectors DiscoverySelectorsConfig `yaml:"discovery_selectors,omitempty"`
-	InstanceName       string                   `yaml:"instance_name"`
-	Namespace          string                   `yaml:"namespace,omitempty"` // Kiali deployment namespace
-	ViewOnlyMode       bool                     `yaml:"view_only_mode,omitempty"`
+	AccessibleNamespaces []string                 // this is no longer part of the actual config - we will generate this at initialization time
+	ClusterWideAccess    bool                     `yaml:"cluster_wide_access,omitempty"`
+	DiscoverySelectors   DiscoverySelectorsConfig `yaml:"discovery_selectors,omitempty"`
+	InstanceName         string                   `yaml:"instance_name"`
+	Namespace            string                   `yaml:"namespace,omitempty"` // Kiali deployment namespace
+	ViewOnlyMode         bool                     `yaml:"view_only_mode,omitempty"`
 	// RemoteSecretPath is used to identify the remote cluster Kiali will connect to as its "local cluster".
 	// This is to support installing Kiali in the control plane, but observing only the data plane in the remote cluster.
 	// Experimental feature. See: https://github.com/kiali/kiali/issues/3002
@@ -1049,6 +1050,16 @@ func Unmarshal(yamlString string) (conf *Config, err error) {
 		return nil, fmt.Errorf("failed to parse yaml data. error=%v", err)
 	}
 
+	// Determine what the accessible namespaces are. These are namespaces we must have permission to see
+	// when not in cluster-wide access mode. These are only necessary when we are not in cluster-wide access mode.
+	// We do not set this when in cluster-wide mode because in that case we have access to see everything.
+	// Note that in past versions "accessible_namespace" came over in the yaml itself, but that is no longer the case.
+	// Accessible namespaces can now be derived from discovery selectors so long as they are specified in a specific way.
+	// See the comments found in extractAccessibleNamespaceList for more details.
+	if !conf.Deployment.ClusterWideAccess {
+		conf.Deployment.AccessibleNamespaces = conf.extractAccessibleNamespaceList()
+	}
+
 	conf.prepareDashboards()
 
 	// Some config settings (such as sensitive settings like passwords) are overrideable
@@ -1285,7 +1296,7 @@ func validateSigningKey(signingKey string, authStrategy string) error {
 	return nil
 }
 
-// ExtractAccessibleNamespaceList will take the default set of discovery selectors from the config and build a
+// extractAccessibleNamespaceList will take the default set of discovery selectors from the config and build a
 // list of namespace names by using all discovery selectors that look for matches of the label "kubernetes.io/metadata.name".
 // This means if a matchLabels wants to match a value on the label "kubernetes.io/metadata.name" or a single matchExpressions
 // wants to match key="kubernetes.io/metadata.name" with operator="In" with a single value defined, the value is assumed
@@ -1302,7 +1313,7 @@ func validateSigningKey(signingKey string, authStrategy string) error {
 // When the Kiali Server is not in Cluster Wide Access mode, it is assumed (required, in fact) that all the
 // default discovery selectors only use match criteria as explained above.
 // This function therefore is used to obtain a list of accessible namespaces from the discovery selectors when CWA=false.
-func (config *Config) ExtractAccessibleNamespaceList() []string {
+func (config *Config) extractAccessibleNamespaceList() []string {
 	namespaceNames := make([]string, 0)
 	for _, selector := range config.Deployment.DiscoverySelectors.Default {
 		if selector.MatchLabels != nil && selector.MatchExpressions != nil {

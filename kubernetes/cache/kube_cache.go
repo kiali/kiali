@@ -164,15 +164,6 @@ type cacheLister struct {
 
 // kubeCache is a local cache of kube objects. Manages informers and listers.
 type kubeCache struct {
-	// If not cluster scoped (clusterScoped==false), these are the namespaces the cache will be watching;
-	// Kiali will not have permission to see any other namespaces in the cluster.
-	//
-	// If cluster scoped (clusterScoped==true), this cache will watch everything, even if there are discovery selectors
-	// that restrict what the server should look at. So this list is not needed and ignored when clusterScoped==true.
-	//
-	// These namespaces should be obtained by processing the discovery selectors.
-	accessibleNamespaces []string
-
 	cacheLock          sync.RWMutex
 	cfg                config.Config
 	client             kubernetes.ClientInterface
@@ -192,7 +183,7 @@ type kubeCache struct {
 }
 
 // Starts all informers. These run until context is cancelled.
-func NewKubeCache(kialiClient kubernetes.ClientInterface, cfg config.Config, accessibleNamespaces []string) (*kubeCache, error) {
+func NewKubeCache(kialiClient kubernetes.ClientInterface, cfg config.Config) (*kubeCache, error) {
 	refreshDuration := time.Duration(cfg.KubernetesConfig.CacheDuration) * time.Second
 
 	c := &kubeCache{
@@ -214,10 +205,15 @@ func NewKubeCache(kialiClient kubernetes.ClientInterface, cfg config.Config, acc
 	} else {
 		log.Debug("[Kiali Cache] Using 'namespace' scoped Kiali Cache")
 
-		c.accessibleNamespaces = accessibleNamespaces // we need to remember these - see isCached()
 		c.nsCacheLister = make(map[string]*cacheLister)
 		c.stopNSChans = make(map[string]chan struct{})
-		for _, ns := range c.accessibleNamespaces {
+
+		// Since we do not have cluster wide access, we do not have permission to list all namespaces.
+		// However, we know the list accessible namespaces based on the discovery selectors found in the main Kiali configuration.
+		// That list of accessible namespaces will be used as our base list which we then filter with discovery selectors later.
+		// Note if this is a remote cluster, that remote cluster must have the same namespaces as those in our own local
+		// cluster's accessible namespaces. This is one reason why we suggest enabling CWA for multi-cluster environments.
+		for _, ns := range c.cfg.Deployment.AccessibleNamespaces {
 			if err := c.startInformers(ns); err != nil {
 				return nil, err
 			}
@@ -230,7 +226,7 @@ func NewKubeCache(kialiClient kubernetes.ClientInterface, cfg config.Config, acc
 // It will indicate if a namespace should have a cache
 func (c *kubeCache) isCached(namespace string) bool {
 	if !c.clusterScoped && namespace != "" {
-		return slices.Contains(c.accessibleNamespaces, namespace)
+		return slices.Contains(c.cfg.Deployment.AccessibleNamespaces, namespace)
 	}
 	return false
 }
