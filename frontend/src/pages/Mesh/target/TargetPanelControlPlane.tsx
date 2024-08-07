@@ -203,10 +203,7 @@ export class TargetPanelControlPlane extends React.Component<
 
   private hasCanaryUpgradeConfigured = (): boolean => {
     if (this.state.canaryUpgradeStatus) {
-      if (
-        this.state.canaryUpgradeStatus.pendingNamespaces.length > 0 ||
-        this.state.canaryUpgradeStatus.migratedNamespaces.length > 0
-      ) {
+      if (Object.keys(this.state.canaryUpgradeStatus.namespacesPerRevision).length > 1) {
         return true;
       }
     }
@@ -272,10 +269,7 @@ export class TargetPanelControlPlane extends React.Component<
       .then(response => {
         this.setState({
           canaryUpgradeStatus: {
-            currentVersion: response.data.currentVersion,
-            upgradeVersion: response.data.upgradeVersion,
-            migratedNamespaces: response.data.migratedNamespaces,
-            pendingNamespaces: response.data.pendingNamespaces
+            namespacesPerRevision: response.data.namespacesPerRevision
           }
         });
       })
