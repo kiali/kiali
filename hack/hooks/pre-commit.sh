@@ -39,8 +39,20 @@ if [ -n "$yaml_unformatted" ]; then
   yamlfmt $yaml_unformatted
 fi
 
+#### I18N missing statements ####
+cd frontend
+
+yarn i18n
+
+i18n_files=$(git diff --name-only HEAD --diff-filter=M | grep -E 'translation.json')
+
 #### Git commit check ####
 if [ -n "$yaml_unformatted" ] || [ -n "$go_unformatted" ]; then
   echo "Some files have been formatted - the git commit is aborted."
+  exit 1
+fi
+
+if [ -n "$i18n_files" ]; then
+  echo "New i18n statements have not been committed - the git commit is aborted."
   exit 1
 fi
