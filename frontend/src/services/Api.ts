@@ -3,7 +3,7 @@ import { config } from '../config';
 import { LoginSession } from '../store/Store';
 import { App, AppQuery } from '../types/App';
 import { AppList, AppListQuery } from '../types/AppList';
-import { AuthInfo } from '../types/Auth';
+import { AuthInfo, getCSRFToken } from '../types/Auth';
 import { DurationInSeconds, HTTP_VERBS, Password, TimeInSeconds, UserName } from '../types/Common';
 import { DashboardModel } from 'types/Dashboards';
 import { GrafanaInfo } from '../types/GrafanaInfo';
@@ -64,6 +64,7 @@ import {
 } from '../types/Workload';
 import { CertsInfo } from 'types/CertsInfo';
 import { ApiError, ApiResponse } from 'types/Api';
+
 export const ANONYMOUS_USER = 'anonymous';
 
 interface ClusterParam {
@@ -103,10 +104,17 @@ const loginHeaders = config.login.headers;
 
 /**  Helpers to Requests */
 
-const getHeaders = (urlEncoded?: boolean): Partial<AxiosHeaders> => {
+const getHeaders = (method: HTTP_VERBS, urlEncoded: boolean): Partial<AxiosHeaders> => {
   if (apiProxy) {
     // apiProxy is used by OSSMC, which doesn't need Kiali login headers (and can cause CORS issues)
-    return { 'Content-Type': 'application/x-www-form-urlencoded' };
+    const headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
+
+    // X-CSRFToken is used only for non-GET requests
+    if (method !== HTTP_VERBS.GET) {
+      headers['X-CSRFToken'] = getCSRFToken();
+    }
+
+    return headers;
   } else if (urlEncoded) {
     return { 'Content-Type': 'application/x-www-form-urlencoded', ...loginHeaders };
   } else {
@@ -131,7 +139,7 @@ const newRequest = <P>(
     method: method,
     url: apiProxy ? `${apiProxy}/${url}` : url,
     data: requestData,
-    headers: getHeaders() as AxiosHeaders,
+    headers: getHeaders(method, false) as AxiosHeaders,
     params: queryParams
   });
 };
@@ -147,10 +155,12 @@ export const login = async (
   const params = new URLSearchParams();
   params.append('token', request.token);
 
+  const method = HTTP_VERBS.POST;
+
   const axiosRequest = {
-    method: HTTP_VERBS.POST,
+    method: method,
     url: apiProxy ? `${apiProxy}/${urls.authenticate}` : urls.authenticate,
-    headers: getHeaders(true) as AxiosHeaders,
+    headers: getHeaders(method, true) as AxiosHeaders,
     data: params
   };
 
