@@ -447,6 +447,7 @@ func TestExtractAccessibleNamespaceList(t *testing.T) {
 	cases := map[string]struct {
 		discoverySelectors DiscoverySelectorsConfig
 		expectedNamespaces []string
+		expectedError      bool
 	}{
 		"nil selectors": {
 			expectedNamespaces: []string{},
@@ -466,6 +467,7 @@ func TestExtractAccessibleNamespaceList(t *testing.T) {
 				},
 			},
 			expectedNamespaces: []string{},
+			expectedError:      true,
 		},
 		"one matchLabels but not kubernetes.io": {
 			discoverySelectors: DiscoverySelectorsConfig{
@@ -474,6 +476,7 @@ func TestExtractAccessibleNamespaceList(t *testing.T) {
 				},
 			},
 			expectedNamespaces: []string{},
+			expectedError:      true,
 		},
 		"one matchLabels": {
 			discoverySelectors: DiscoverySelectorsConfig{
@@ -482,6 +485,7 @@ func TestExtractAccessibleNamespaceList(t *testing.T) {
 				},
 			},
 			expectedNamespaces: []string{"good"},
+			expectedError:      false,
 		},
 		"ignore overrides": {
 			discoverySelectors: DiscoverySelectorsConfig{
@@ -494,6 +498,7 @@ func TestExtractAccessibleNamespaceList(t *testing.T) {
 				},
 			},
 			expectedNamespaces: []string{},
+			expectedError:      false,
 		},
 		"one matchLabels in default; ignore overrides": {
 			discoverySelectors: DiscoverySelectorsConfig{
@@ -509,6 +514,7 @@ func TestExtractAccessibleNamespaceList(t *testing.T) {
 				},
 			},
 			expectedNamespaces: []string{"good"},
+			expectedError:      false,
 		},
 		"multiple matchLabels": {
 			discoverySelectors: DiscoverySelectorsConfig{
@@ -519,6 +525,7 @@ func TestExtractAccessibleNamespaceList(t *testing.T) {
 				},
 			},
 			expectedNamespaces: []string{"one", "two", "three"},
+			expectedError:      false,
 		},
 		"one matchLabels, ignore the others - selector with both matchLabel and matchExpression is ignored": {
 			discoverySelectors: DiscoverySelectorsConfig{
@@ -537,6 +544,7 @@ func TestExtractAccessibleNamespaceList(t *testing.T) {
 				},
 			},
 			expectedNamespaces: []string{"good"},
+			expectedError:      true,
 		},
 		"two selectors - one matchExpression and one matchLabel": {
 			discoverySelectors: DiscoverySelectorsConfig{
@@ -554,6 +562,7 @@ func TestExtractAccessibleNamespaceList(t *testing.T) {
 				},
 			},
 			expectedNamespaces: []string{"good", "good2"},
+			expectedError:      false,
 		},
 		"matchExpression must be operator=In, all others are ignored": {
 			discoverySelectors: DiscoverySelectorsConfig{
@@ -595,6 +604,7 @@ func TestExtractAccessibleNamespaceList(t *testing.T) {
 				},
 			},
 			expectedNamespaces: []string{"good"},
+			expectedError:      true,
 		},
 		"cannot have multiple matchExpressions in a single selectors": {
 			discoverySelectors: DiscoverySelectorsConfig{
@@ -617,6 +627,7 @@ func TestExtractAccessibleNamespaceList(t *testing.T) {
 				},
 			},
 			expectedNamespaces: []string{"good"},
+			expectedError:      true,
 		},
 		"matchExpression must not have multiple values": {
 			discoverySelectors: DiscoverySelectorsConfig{
@@ -633,6 +644,7 @@ func TestExtractAccessibleNamespaceList(t *testing.T) {
 				},
 			},
 			expectedNamespaces: []string{},
+			expectedError:      true,
 		},
 		"matchLabels must not have multiple values": {
 			discoverySelectors: DiscoverySelectorsConfig{
@@ -643,6 +655,50 @@ func TestExtractAccessibleNamespaceList(t *testing.T) {
 				},
 			},
 			expectedNamespaces: []string{},
+			expectedError:      true,
+		},
+		"one big mess with nothing matching": {
+			discoverySelectors: DiscoverySelectorsConfig{
+				Default: DiscoverySelectorsType{
+					&DiscoverySelectorType{MatchLabels: map[string]string{"ignore-this": "one"}},
+					&DiscoverySelectorType{MatchLabels: map[string]string{"kubernetes.io/metadata.name": "one", "ignore-this": "too"}},
+					&DiscoverySelectorType{
+						MatchLabels: map[string]string{"kubernetes.io/metadata.name": "ignored"},
+						MatchExpressions: []meta_v1.LabelSelectorRequirement{
+							{
+								Key:      "kubernetes.io/metadata.name",
+								Operator: meta_v1.LabelSelectorOpIn,
+								Values:   []string{"nogood"},
+							},
+						},
+					},
+					&DiscoverySelectorType{
+						MatchExpressions: []meta_v1.LabelSelectorRequirement{
+							{
+								Key:      "kubernetes.io/metadata.name",
+								Operator: meta_v1.LabelSelectorOpIn,
+								Values:   []string{"nogood"},
+							},
+							{
+								Key:      "foo",
+								Operator: meta_v1.LabelSelectorOpIn,
+								Values:   []string{"bar"},
+							},
+						},
+					},
+					&DiscoverySelectorType{
+						MatchExpressions: []meta_v1.LabelSelectorRequirement{
+							{
+								Key:      "kubernetes.io/metadata.name",
+								Operator: meta_v1.LabelSelectorOpIn,
+								Values:   []string{"nope", "nogood-either"},
+							},
+						},
+					},
+				},
+			},
+			expectedNamespaces: []string{},
+			expectedError:      true,
 		},
 	}
 
@@ -656,7 +712,12 @@ func TestExtractAccessibleNamespaceList(t *testing.T) {
 				},
 			}
 
-			actualNamespaces := cfg.extractAccessibleNamespaceList()
+			actualNamespaces, err := cfg.extractAccessibleNamespaceList()
+			if tc.expectedError {
+				assert.NotNil(err)
+			} else {
+				assert.Nil(err)
+			}
 			assert.Equal(tc.expectedNamespaces, actualNamespaces)
 		})
 	}
