@@ -1,50 +1,42 @@
 import * as React from 'react';
 import { NotificationMessage, MessageType } from '../../types/MessageCenter';
-import { AlertVariant } from '@patternfly/react-core';
-import { AlertToast } from './AlertToast';
+import { Alert, AlertActionCloseButton, AlertGroup, AlertVariant } from '@patternfly/react-core';
 
 type NotificationListProps = {
   messages: NotificationMessage[];
-  onDismiss?: (message: NotificationMessage, userDismissed: boolean) => void;
+  onDismiss: (message: NotificationMessage, userDismissed: boolean) => void;
 };
 
-export class NotificationList extends React.PureComponent<NotificationListProps> {
-  render() {
-    return (
-      <>
-        {this.props.messages.map((message, i) => {
-          let variant: AlertVariant;
-          switch (message.type) {
-            case MessageType.SUCCESS:
-              variant = AlertVariant.success;
-              break;
-            case MessageType.WARNING:
-              variant = AlertVariant.warning;
-              break;
-            case MessageType.INFO:
-              variant = AlertVariant.info;
-              break;
-            default:
-              variant = AlertVariant.danger;
-          }
-          const onClose = this.props.onDismiss
-            ? () => {
-                this.props.onDismiss!(message, true);
-              }
-            : undefined;
-          return (
-            <AlertToast
-              key={'toast_' + message.id}
-              style={{ width: '30em', right: '0', top: `${i * 5}em`, position: 'absolute' }}
-              message={message}
-              variant={variant}
-              title={message.content}
-              onClose={onClose}
-              onTtl={onClose}
-            />
-          );
-        })}
-      </>
-    );
-  }
-}
+export const NotificationList: React.FC<NotificationListProps> = (props: NotificationListProps) => {
+  return (
+    <AlertGroup isToast isLiveRegion>
+      {props.messages.map(message => {
+        let variant: AlertVariant;
+
+        switch (message.type) {
+          case MessageType.SUCCESS:
+            variant = AlertVariant.success;
+            break;
+          case MessageType.WARNING:
+            variant = AlertVariant.warning;
+            break;
+          case MessageType.INFO:
+            variant = AlertVariant.info;
+            break;
+          default:
+            variant = AlertVariant.danger;
+        }
+
+        return (
+          <Alert
+            key={`toast_${message.id}`}
+            variant={variant}
+            title={message.content}
+            timeout={true}
+            actionClose={<AlertActionCloseButton onClose={() => props.onDismiss(message, true)} />}
+          />
+        );
+      })}
+    </AlertGroup>
+  );
+};
