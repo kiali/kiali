@@ -446,7 +446,7 @@ func (c *kubeCache) createKubernetesInformers(namespace string) informers.Shared
 	opts = append(
 		opts,
 		informers.WithTransform(func(obj interface{}) (interface{}, error) {
-			StripUnusedFields(obj)
+			obj, _ = StripUnusedFields(obj)
 
 			switch obj := obj.(type) {
 			case *core_v1.Pod:
