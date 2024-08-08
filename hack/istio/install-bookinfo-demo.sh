@@ -284,9 +284,6 @@ else
     $ISTIOCTL kube-inject -f ${BOOKINFO_YAML} | $CLIENT_EXE apply -n ${NAMESPACE} -f -
   else
     $CLIENT_EXE apply -n ${NAMESPACE} -f ${BOOKINFO_YAML}
-    if [ "${AMBIENT_ENABLED}" == "true" ]; then
-      $CLIENT_EXE apply -f "${ISTIO_DIR}/samples/bookinfo/platform/kube/bookinfo-versions.yaml"
-    fi
   fi
 fi
 
