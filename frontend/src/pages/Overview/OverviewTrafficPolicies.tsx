@@ -293,10 +293,13 @@ export class OverviewTrafficPolicies extends React.Component<OverviewTrafficPoli
   };
 
   render(): React.ReactNode {
+    console.log(this.props.opTarget);
     const canaryVersion = this.props.kind === 'canary' ? this.getCanaryUpgradeVersion(this.props.opTarget) : '';
 
     const modalAction =
-      this.props.opTarget.length > 0
+      this.props.kind === 'canary'
+        ? 'Switch'
+        : this.props.opTarget.length > 0
         ? `${this.props.opTarget.charAt(0).toLocaleUpperCase()}${this.props.opTarget.slice(1)}`
         : '';
 
@@ -360,8 +363,8 @@ export class OverviewTrafficPolicies extends React.Component<OverviewTrafficPoli
             </>
           ) : this.props.kind === 'canary' ? (
             <>
-              You're going to {this.state.selectedRevision} revision in the namespace {this.props.nsTarget}. Are you
-              sure?
+              You're going to switch to {this.state.selectedRevision} revision in the namespace {this.props.nsTarget}.
+              Are you sure?
             </>
           ) : (
             <>
