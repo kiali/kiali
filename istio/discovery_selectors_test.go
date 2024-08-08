@@ -1,4 +1,4 @@
-package business
+package istio
 
 import (
 	"testing"
@@ -11,7 +11,7 @@ import (
 )
 
 func TestGetKialiDiscoverySelectors(t *testing.T) {
-	assert.Nil(t, getKialiDiscoverySelectors("a", nil))
+	assert.Nil(t, GetKialiDiscoverySelectors("a", nil))
 
 	// config with no selectors defined
 	cfgNoSelectors := config.Config{
@@ -294,15 +294,15 @@ func TestGetKialiDiscoverySelectors(t *testing.T) {
 			config, err := config.Unmarshal(yaml)
 			assert.Nil(err)
 
-			selectors := getKialiDiscoverySelectors(tc.clusterName, config)
-			filteredNamespaces := filterNamespacesWithDiscoverySelectors(tc.allNamespaces, selectors)
+			selectors := GetKialiDiscoverySelectors(tc.clusterName, config)
+			filteredNamespaces := FilterNamespacesWithDiscoverySelectors(tc.allNamespaces, selectors)
 			assert.Equal(tc.matchedNamespaces, filteredNamespaces)
 		})
 	}
 }
 
 func TestGetDiscoverySelectorsForCluster(t *testing.T) {
-	assert.Nil(t, getDiscoverySelectorsForCluster("cluster1", nil))
+	assert.Nil(t, GetDiscoverySelectorsForCluster("cluster1", nil))
 
 	// config with only "cluster1" override selectors
 	overrideSelectors := config.Config{
@@ -362,8 +362,8 @@ func TestGetDiscoverySelectorsForCluster(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			assert := assert.New(t)
 
-			selectors := getDiscoverySelectorsForCluster(tc.clusterName, &tc.config)
-			filteredNamespaces := filterNamespacesWithDiscoverySelectors(tc.allNamespaces, selectors)
+			selectors := GetDiscoverySelectorsForCluster(tc.clusterName, &tc.config)
+			filteredNamespaces := FilterNamespacesWithDiscoverySelectors(tc.allNamespaces, selectors)
 			assert.Equal(tc.matchedNamespaces, filteredNamespaces)
 		})
 	}

@@ -9,6 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/log"
@@ -159,7 +160,6 @@ func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Namespa
 // getNamespacesByCluster returns the namespaces for the given cluster. The namespaces are filtered such
 // that only those namespaces that match discovery selectors are returned.
 func (in *NamespaceService) getNamespacesByCluster(ctx context.Context, cluster string) ([]models.Namespace, error) {
-
 	var namespaces []models.Namespace
 
 	// If we are running in OpenShift, we will use the project names since these are the list of accessible namespaces
@@ -215,7 +215,7 @@ func (in *NamespaceService) getNamespacesByCluster(ctx context.Context, cluster 
 		}
 	}
 
-	namespaces = filterNamespacesWithDiscoverySelectors(namespaces, getDiscoverySelectorsForCluster(cluster, in.conf))
+	namespaces = istio.FilterNamespacesWithDiscoverySelectors(namespaces, istio.GetDiscoverySelectorsForCluster(cluster, in.conf))
 
 	return namespaces, nil
 }
@@ -375,7 +375,7 @@ func (in *NamespaceService) getNamespacesUsingKialiSA(cluster string, labelSelec
 // This ignores cluster-wide-access mode since we can have discovery selectors even when given cluster wide access.
 // Also, this may be asking for the accessibility of a namespace in a remote cluster, in which case cluster-wide-access is moot.
 func (in *NamespaceService) isAccessibleNamespace(namespace models.Namespace) bool {
-	selectors := getDiscoverySelectorsForCluster(namespace.Cluster, in.conf)
+	selectors := istio.GetDiscoverySelectorsForCluster(namespace.Cluster, in.conf)
 	// see if the discovery selectors match the one namespace we are checking
-	return len(filterNamespacesWithDiscoverySelectors([]models.Namespace{namespace}, selectors)) == 1
+	return len(istio.FilterNamespacesWithDiscoverySelectors([]models.Namespace{namespace}, selectors)) == 1
 }

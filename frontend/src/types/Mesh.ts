@@ -51,7 +51,6 @@ export interface MeshNodeData {
   infraType: MeshInfraType;
   isAmbient?: boolean;
   isBox?: string;
-  isCanary?: boolean;
   isExternal?: boolean;
   isInaccessible?: boolean;
   isMTLS?: boolean;

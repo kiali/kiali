@@ -108,10 +108,12 @@ trustDomain: cluster.local
 		},
 	}
 
+	defaultInjection := map[string]string{models.IstioInjectionLabel: models.IstioInjectionEnabledLabelValue}
+	revLabel := map[string]string{models.IstioRevisionLabel: "default"}
 	primaryClient := kubetest.NewFakeK8sClient(
 		kubetest.FakeNamespace("istio-system"),
-		kubetest.FakeNamespace("data-plane-1"),
-		kubetest.FakeNamespace("data-plane-2"),
+		kubetest.FakeNamespaceWithLabels("data-plane-1", defaultInjection),
+		kubetest.FakeNamespaceWithLabels("data-plane-2", revLabel),
 		&istiodDeployment,
 		&istioConfigMap,
 		&sidecarConfigMap,
@@ -128,8 +130,8 @@ trustDomain: cluster.local
 			Annotations: map[string]string{business.IstioControlPlaneClustersLabel: conf.KubernetesConfig.ClusterName},
 			Labels:      map[string]string{"kubernetes.io/metadata.name": "istio-system"},
 		}},
-		kubetest.FakeNamespace("data-plane-3"),
-		kubetest.FakeNamespace("data-plane-4"),
+		kubetest.FakeNamespaceWithLabels("data-plane-3", defaultInjection),
+		kubetest.FakeNamespaceWithLabels("data-plane-4", revLabel),
 	)
 	clients := map[string]kubernetes.ClientInterface{
 		conf.KubernetesConfig.ClusterName: primaryClient,

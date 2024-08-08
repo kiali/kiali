@@ -23,7 +23,7 @@ import (
 
 const (
 	ambientCheckExpirationTime = 10 * time.Minute
-	meshExpirationTime         = 10 * time.Second
+	meshExpirationTime         = 20 * time.Second
 	waypointExpirationTime     = 1 * time.Minute
 )
 
@@ -41,6 +41,7 @@ const (
 // This object keeps one KubeCache per cluster.
 // TODO: Consider removing the interface altogether in favor of just exporting the struct.
 type KialiCache interface {
+	CanListWebhooks(cluster string) bool
 	GetBuildInfo() models.BuildInfo
 	// SetBuildInfo is not threadsafe. Expected to just be called once at startup.
 	SetBuildInfo(buildInfo models.BuildInfo)
@@ -95,9 +96,10 @@ type KialiCache interface {
 type kialiCacheImpl struct {
 	ambientChecksPerCluster store.Store[string, bool]
 	// This isn't expected to change so it's not protected by a mutex.
-	buildInfo models.BuildInfo
-	cleanup   func()
-	conf      config.Config
+	buildInfo               models.BuildInfo
+	canReadWebhookByCluster map[string]bool
+	cleanup                 func()
+	conf                    config.Config
 
 	clientFactory kubernetes.ClientFactory
 	// Maps a cluster name to a KubeCache
@@ -135,6 +137,7 @@ func NewKialiCache(clientFactory kubernetes.ClientFactory, cfg config.Config) (K
 	namespaceKeyTTL := time.Duration(cfg.KubernetesConfig.CacheTokenNamespaceDuration) * time.Second
 	kialiCacheImpl := kialiCacheImpl{
 		ambientChecksPerCluster: store.NewExpirationStore(ctx, store.New[string, bool](), util.AsPtr(ambientCheckExpirationTime), nil),
+		canReadWebhookByCluster: make(map[string]bool),
 		cleanup:                 cancel,
 		clientFactory:           clientFactory,
 		conf:                    cfg,
@@ -160,6 +163,20 @@ func NewKialiCache(clientFactory kubernetes.ClientFactory, cfg config.Config) (K
 		log.Infof("[Kiali Cache] Kube cache is active for cluster: [%s]", cluster)
 
 		kialiCacheImpl.kubeCache[cluster] = cache
+
+		// Check if the cluster can list webhooks
+		reviews, err := client.GetSelfSubjectAccessReview(ctx, "", "admissionregistration.k8s.io", "mutatingwebhookconfigurations", []string{"list"})
+		if err != nil {
+			log.Warningf("[Kiali Cache] Unable to check if kiali can read mutating webhooks to autodetect tags: %s", err)
+			kialiCacheImpl.canReadWebhookByCluster[cluster] = false
+		}
+
+		for _, review := range reviews {
+			if review.Status.Allowed {
+				kialiCacheImpl.canReadWebhookByCluster[cluster] = true
+				break
+			}
+		}
 	}
 
 	// TODO: Treat all clusters the same way.
@@ -169,6 +186,10 @@ func NewKialiCache(clientFactory kubernetes.ClientFactory, cfg config.Config) (K
 	}
 
 	return &kialiCacheImpl, nil
+}
+
+func (c *kialiCacheImpl) CanListWebhooks(cluster string) bool {
+	return c.canReadWebhookByCluster[cluster]
 }
 
 // GetKubeCaches returns a kube cache for every configured Kiali Service Account client keyed by cluster name.

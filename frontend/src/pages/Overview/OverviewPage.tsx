@@ -1336,7 +1336,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
           Object.keys(this.state.canaryUpgradeStatus!.namespacesPerRevision).map(
             revision =>
               this.state.canaryUpgradeStatus!.namespacesPerRevision[revision].includes(ns.name) && (
-                <ControlPlaneVersionBadge version={revision} isCanary={false} />
+                <ControlPlaneVersionBadge version={revision} />
               )
           )}
 

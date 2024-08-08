@@ -131,6 +131,45 @@ Then('user sees expected mesh infra', () => {
     });
 });
 
+Then(
+  'user sees {int} {string} nodes on the {string} cluster',
+  (numberOfDataplaneNodes: number, infraNodeType: MeshInfraType, cluster: string) => {
+    cy.waitForReact();
+    cy.getReact('MeshPageComponent', { state: { meshData: { isLoading: false } } })
+      .should('have.length', 1)
+      .getCurrentState()
+      .then(state => {
+        const controller = state.meshRefs.getController() as Visualization;
+        assert.isTrue(controller.hasGraph());
+        const { nodes } = elems(controller);
+        const dataplaneNodes = nodes.filter(
+          n => n.getData().infraType === infraNodeType && n.getData().cluster === cluster
+        );
+        expect(dataplaneNodes).to.have.lengthOf(numberOfDataplaneNodes);
+      });
+  }
+);
+
+Then('user sees the istiod node connected to the dataplane nodes', () => {
+  cy.waitForReact();
+  cy.getReact('MeshPageComponent', { state: { meshData: { isLoading: false } } })
+    .should('have.length', 1)
+    .getCurrentState()
+    .then(state => {
+      const controller = state.meshRefs.getController() as Visualization;
+      assert.isTrue(controller.hasGraph());
+      const { nodes } = elems(controller);
+      const istiodNode = nodes.find(n => n.getData().infraType === MeshInfraType.ISTIOD);
+      // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+      expect(istiodNode).to.exist;
+      expect(istiodNode.getSourceEdges()).to.have.lengthOf(2);
+      istiodNode.getSourceEdges().every(e => {
+        const targetNodeData = e.getTarget().getData();
+        return targetNodeData.infraType === MeshInfraType.DATAPLANE && targetNodeData.cluster === 'cluster';
+      });
+    });
+});
+
 Then('user {string} mesh tour', (action: string) => {
   cy.waitForReact();
   if (action === 'sees') {

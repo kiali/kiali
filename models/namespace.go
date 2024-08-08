@@ -69,7 +69,7 @@ func CastNamespace(ns core_v1.Namespace, cluster string) Namespace {
 	namespace.Labels = ns.Labels
 	namespace.Annotations = ns.Annotations
 
-	if ns.Labels[istioLabels.AmbientNamespaceLabel] == istioLabels.AmbientNamespaceLabelValue {
+	if label, hasLabel := ns.Labels[istioLabels.AmbientNamespaceLabel]; hasLabel && label == istioLabels.AmbientNamespaceLabelValue {
 		namespace.IsAmbient = true
 	}
 	return namespace

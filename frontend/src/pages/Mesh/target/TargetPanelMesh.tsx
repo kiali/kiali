@@ -59,7 +59,7 @@ export const TargetPanelMesh: React.FC<TargetPanelMeshProps> = (props: TargetPan
             })
             .map(node => renderInfraNodeSummary(node.getData()))}
 
-          {clusterDataPlanes.map(node => renderDataPlaneSummary(node.getData(), clusterDataPlanes.length > 1))}
+          {clusterDataPlanes.map(node => renderDataPlaneSummary(node.getData()))}
         </div>
       </div>
     );
@@ -81,18 +81,13 @@ export const TargetPanelMesh: React.FC<TargetPanelMeshProps> = (props: TargetPan
     );
   };
 
-  const renderDataPlaneSummary = (nodeData: MeshNodeData, showCanaryInfo: boolean): React.ReactNode => {
+  const renderDataPlaneSummary = (nodeData: MeshNodeData): React.ReactNode => {
     return (
       <div key={nodeData.id} className={summaryStyle}>
         {renderNodeHeader(nodeData, { nameOnly: true, smallSize: true })}
 
         <div className={infoStyle}>
-          {showCanaryInfo && (
-            <>
-              <div>{t('Canary: {{isCanary}}', { isCanary: nodeData.isCanary ?? false })}</div>
-              {nodeData.version && <div>{t('Revision: {{revision}}', { revision: nodeData.version })}</div>}
-            </>
-          )}
+          {nodeData.version && <div>{t('Revision: {{revision}}', { revision: nodeData.version })}</div>}
 
           {t('{{count}} namespace', {
             count: nodeData.infraData.length,

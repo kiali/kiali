@@ -16,7 +16,6 @@
   "Apps": "应用",
   "Attribute": "Attribute",
   "Back": "Back",
-  "Canary: {{isCanary}}": "Canary: {{isCanary}}",
   "Cancel": "Cancel",
   "Choose the traffic rates used to generate the graph. Each supported protocol offers one or more options. Unused protocols can be omitted.": "Choose the traffic rates used to generate the graph. Each supported protocol offers one or more options. Unused protocols can be omitted.",
   "Circuit Breaker": "Circuit Breaker",

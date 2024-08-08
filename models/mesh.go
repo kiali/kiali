@@ -7,7 +7,16 @@ import (
 )
 
 const (
+	// IstioRevisionLabel is the standard label key used to identify the istio revision.
 	IstioRevisionLabel = "istio.io/rev"
+	// IstioTagLabel is the standard label key used on webhooks to identify the tag.
+	IstioTagLabel = "istio.io/tag"
+	// DefaultRevisionLabel is the value for the default revision.
+	DefaultRevisionLabel = "default"
+	// IstioInjectionLabel is the key for the istio injection label on a namespace.
+	IstioInjectionLabel = "istio-injection"
+	// IstioInjectionEnabledLabelValue is the value for the istio injection label when it is enabled.
+	IstioInjectionEnabledLabelValue = "enabled"
 )
 
 // Mesh is one or more controlplanes (primaries) managing a dataPlane across one or more clusters.
@@ -16,6 +25,24 @@ const (
 type Mesh struct {
 	// ControlPlanes that share the same mesh ID.
 	ControlPlanes []ControlPlane
+	// Tags are the tags associated with the mesh.
+	Tags []Tag
+}
+
+// Tag maps a controlplane revision to a namespace label.
+// It allows you to keep your dataplane revision labels stable
+// while changing the controlplane revision so that you don't
+// need to update all your namespace labels each time you upgrade
+// your controlplane.
+type Tag struct {
+	// Cluster is the cluster that the tag is associated with.
+	Cluster string
+	// ControlPlane associated with the tag.
+	ControlPlane *ControlPlane
+	// Name is the name of the tag.
+	Name string
+	// Revision is the revision of the controlplane associated with this tag.
+	Revision string
 }
 
 // ControlPlane manages the dataPlane for one or more kube clusters.
@@ -48,6 +75,12 @@ type ControlPlane struct {
 	// It could also manage the cluster that it is running on.
 	ManagesExternal bool
 
+	// ManagedNamespaces are the namespaces that the controlplane is managing.
+	// More specifically, it is a namespace with either injection enabled
+	// or ambient enabled and it matches this controlplane's revision either
+	// directly or through a tag.
+	ManagedNamespaces []Namespace
+
 	// Resources are the resources that the controlplane is using.
 	Resources corev1.ResourceRequirements
 
@@ -60,6 +93,9 @@ type ControlPlane struct {
 	// to the controlplane or not.
 	Status string
 
+	// Tags are the tags associated with the controlplane.
+	Tags []Tag
+
 	// Thresholds is the thresholds for the controlplane.
 	Thresholds *IstiodThresholds
 
@@ -69,7 +105,6 @@ type ControlPlane struct {
 
 // ControlPlaneConfiguration is the configuration for the controlPlane and any associated dataPlane.
 type ControlPlaneConfiguration struct {
-
 	// Config Map
 	ConfigMap map[string]string `yaml:"configMap,omitempty"`
 

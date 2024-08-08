@@ -37,12 +37,7 @@ export const TargetPanelDataPlane: React.FC<TargetPanelCommonProps> = (props: Ta
           <span className={nodeStyle}>
             <PFBadge badge={PFBadges.DataPlane} size="global" />
             {data.infraName}
-            {data.version && (
-              <ControlPlaneVersionBadge
-                isCanary={data.isCanary ?? false}
-                version={data.version}
-              ></ControlPlaneVersionBadge>
-            )}
+            {data.version && <ControlPlaneVersionBadge version={data.version}></ControlPlaneVersionBadge>}
           </span>
         </Title>
         <span className={nodeStyle}>

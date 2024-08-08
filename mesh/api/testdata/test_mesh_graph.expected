@@ -204,6 +204,7 @@
               "cluster": "cluster-primary",
               "isAmbient": false,
               "labels": {
+                "istio-injection": "enabled",
                 "kubernetes.io/metadata.name": "data-plane-1"
               },
               "annotations": null
@@ -213,6 +214,7 @@
               "cluster": "cluster-primary",
               "isAmbient": false,
               "labels": {
+                "istio.io/rev": "default",
                 "kubernetes.io/metadata.name": "data-plane-2"
               },
               "annotations": null
@@ -310,6 +312,7 @@
               "cluster": "cluster-remote",
               "isAmbient": false,
               "labels": {
+                "istio-injection": "enabled",
                 "kubernetes.io/metadata.name": "data-plane-3"
               },
               "annotations": null
@@ -319,6 +322,7 @@
               "cluster": "cluster-remote",
               "isAmbient": false,
               "labels": {
+                "istio.io/rev": "default",
                 "kubernetes.io/metadata.name": "data-plane-4"
               },
               "annotations": null
