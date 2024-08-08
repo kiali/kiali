@@ -1003,7 +1003,7 @@ export class GraphStyles {
         }
       },
       {
-        selector: `edge[direction="reverse"]`,
+        selector: `edge[display="reverse"]`,
         style: {
           'target-arrow-shape': 'triangle-cross',
           'source-arrow-shape': 'triangle-cross',
