@@ -98,10 +98,13 @@ const basicAuth = (username: UserName, password: Password) => {
 };
 
 const newRequest = <P>(method: HTTP_VERBS, url: string, queryParams: any, data: any) => {
+  // stringify request data that is not already stringified
+  const requestData = typeof data !== 'string' ? JSON.stringify(data) : data;
+
   return axios.request<P>({
     method: method,
     url: apiProxy ? `${apiProxy}/${url}` : url,
-    data: apiProxy ? JSON.stringify(data) : data,
+    data: requestData,
     headers: getHeaders(method, false),
     params: queryParams
   });
