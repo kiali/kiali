@@ -1,9 +1,9 @@
-import axios, {AxiosError} from 'axios';
+import axios, { AxiosError } from 'axios';
 import { config } from '../config';
 import { LoginSession } from '../store/Store';
 import { App } from '../types/App';
 import { AppList } from '../types/AppList';
-import { AuthInfo } from '../types/Auth';
+import { AuthInfo, getCSRFToken } from '../types/Auth';
 import { DurationInSeconds, HTTP_VERBS, Password, TimeInSeconds, UserName } from '../types/Common';
 import { DashboardModel } from 'types/Dashboards';
 import { GrafanaInfo } from '../types/GrafanaInfo';
@@ -43,6 +43,7 @@ import { Span, TracingQuery } from 'types/Tracing';
 import { TLSStatus } from '../types/TLSStatus';
 import { Workload, WorkloadNamespaceResponse } from '../types/Workload';
 import { CertsInfo } from 'types/CertsInfo';
+
 export const ANONYMOUS_USER = 'anonymous';
 
 export interface Response<T> {
@@ -74,11 +75,22 @@ const loginHeaders = config.login.headers;
 
 /**  Helpers to Requests */
 
-const getHeaders = (urlEncoded?: boolean)  => {
-  if (apiProxy || urlEncoded) {
+const getHeaders = (method: HTTP_VERBS, urlEncoded: boolean) => {
+  if (apiProxy) {
+    // apiProxy is used by OSSMC, which doesn't need Kiali login headers (and can cause CORS issues)
+    const headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
+
+    // X-CSRFToken is used only for non-GET requests
+    if (method !== HTTP_VERBS.GET) {
+      headers['X-CSRFToken'] = getCSRFToken();
+    }
+
+    return headers;
+  } else if (urlEncoded) {
     return { 'Content-Type': 'application/x-www-form-urlencoded', ...loginHeaders };
+  } else {
+    return { 'Content-Type': 'application/json', ...loginHeaders };
   }
-  return { 'Content-Type': 'application/json', ...loginHeaders };
 };
 
 const basicAuth = (username: UserName, password: Password) => {
@@ -90,7 +102,7 @@ const newRequest = <P>(method: HTTP_VERBS, url: string, queryParams: any, data: 
     method: method,
     url: apiProxy ? `${apiProxy}/${url}` : url,
     data: apiProxy ? JSON.stringify(data) : data,
-    headers: getHeaders(),
+    headers: getHeaders(method, false),
     params: queryParams
   });
 };
@@ -112,10 +124,12 @@ export const login = async (
   const params = new URLSearchParams();
   params.append('token', request.token);
 
+  const method = HTTP_VERBS.POST;
+
   return axios({
-    method: HTTP_VERBS.POST,
+    method: method,
     url: apiProxy ? `${apiProxy}/${urls.authenticate}` : urls.authenticate,
-    headers: getHeaders(true),
+    headers: getHeaders(method, true),
     auth: basicAuth(request.username, request.password),
     data: params
   });
@@ -130,11 +144,13 @@ export const getAuthInfo = async () => {
 };
 
 export const checkOpenshiftAuth = async (data: any): Promise<Response<LoginSession>> => {
+  const method = HTTP_VERBS.POST;
+
   return axios.request<LoginSession>({
-    method: HTTP_VERBS.POST,
+    method: method,
     url: urls.authenticate,
     data: data,
-    headers: getHeaders(true),
+    headers: getHeaders(method, true),
     params: {}
   });
 };
