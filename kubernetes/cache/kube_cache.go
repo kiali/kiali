@@ -446,14 +446,7 @@ func (c *kubeCache) createKubernetesInformers(namespace string) informers.Shared
 	opts = append(
 		opts,
 		informers.WithTransform(func(obj interface{}) (interface{}, error) {
-			// similarly is trimmed in istio
-			t, ok := obj.(metav1.ObjectMetaAccessor)
-			if !ok {
-				// shouldn't happen
-				return obj, nil
-			}
-			// ManagedFields is large and we never use it
-			t.GetObjectMeta().SetManagedFields(nil)
+			StripUnusedFields(obj)
 
 			switch obj := obj.(type) {
 			case *core_v1.Pod:
@@ -2299,4 +2292,17 @@ func (c *kubeCache) GetRequestAuthentications(namespace, labelSelector string) (
 		retRequestAuthentications = append(retRequestAuthentications, raCopy)
 	}
 	return retRequestAuthentications, nil
+}
+
+// StripUnusedFields is the transform function for shared informers,
+// it removes unused fields from objects before they are stored in the cache to save memory.
+func StripUnusedFields(obj any) (any, error) {
+	t, ok := obj.(metav1.ObjectMetaAccessor)
+	if !ok {
+		// shouldn't happen
+		return obj, nil
+	}
+	// ManagedFields is large and we never use it
+	t.GetObjectMeta().SetManagedFields(nil)
+	return obj, nil
 }
