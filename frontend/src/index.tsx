@@ -51,7 +51,7 @@ setRouter([
 
 // redirect to the router basename if the pathname does not include it
 if (!window.location.pathname.includes(rootBasename)) {
-  router.navigate('/', { replace: true });
+  router.navigate(`/${window.location.search}`, { replace: true });
 }
 
 ReactDOM.render(<RouterProvider router={router} />, document.getElementById('root') as HTMLElement);
