@@ -180,11 +180,13 @@ export const getAuthInfo = async (): Promise<ApiResponse<AuthInfo>> => {
 };
 
 export const checkOpenshiftAuth = async (data: string): Promise<ApiResponse<LoginSession>> => {
+  const method = HTTP_VERBS.POST;
+
   return axios.request<LoginSession>({
-    method: HTTP_VERBS.POST,
+    method: method,
     url: urls.authenticate,
     data: data,
-    headers: getHeaders(true) as AxiosHeaders,
+    headers: getHeaders(method, true) as AxiosHeaders,
     params: {}
   });
 };
