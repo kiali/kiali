@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	osroutes_v1 "github.com/openshift/api/route/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -307,4 +308,43 @@ func TestMultiClusterGetServiceAppName(t *testing.T) {
 	require.NoError(err)
 
 	assert.Equal("ratings", s)
+}
+
+func TestGetServiceRouteURL(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+
+	conf := config.NewConfig()
+	conf.ExternalServices.Istio.IstioAPIEnabled = false
+	config.Set(conf)
+
+	clientFactory := kubetest.NewK8SClientFactoryMock(nil)
+	k8s := kubetest.NewFakeK8sClient(
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "bookinfo"}},
+		&core_v1.Service{ObjectMeta: meta_v1.ObjectMeta{Name: "ratings", Namespace: "bookinfo"}},
+		&osroutes_v1.Route{ObjectMeta: meta_v1.ObjectMeta{Name: "ratings", Namespace: "bookinfo"}, Spec: osroutes_v1.RouteSpec{Host: "external.com"}},
+	)
+	k8s.OpenShift = true
+	clients := map[string]kubernetes.ClientInterface{
+		conf.KubernetesConfig.ClusterName: k8s,
+	}
+	clientFactory.SetClients(clients)
+	cache := cache.NewTestingCacheWithFactory(t, clientFactory, *conf)
+	kialiCache = cache
+
+	prom, err := prometheus.NewClient()
+	require.NoError(err)
+
+	promMock := new(prometheustest.PromAPIMock)
+	promMock.SpyArgumentsAndReturnEmpty(func(mock.Arguments) {})
+	prom.Inject(promMock)
+	svc := NewWithBackends(clients, clients, prom, nil).Svc
+
+	url := svc.GetServiceRouteURL(context.TODO(), conf.KubernetesConfig.ClusterName, "bookinfo", "ratings")
+	require.NoError(err)
+	assert.Equal("http://external.com", url)
+
+	url = svc.GetServiceRouteURL(context.TODO(), conf.KubernetesConfig.ClusterName, "bookinfo", "_bogus_")
+	require.NoError(err)
+	assert.Equal("", url)
 }

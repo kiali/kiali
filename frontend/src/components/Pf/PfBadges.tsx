@@ -6,7 +6,7 @@ import { PFColors } from './PfColors';
 export type PFBadgeType = {
   badge: string;
   style?: React.CSSProperties;
-  tt?: React.ReactFragment;
+  tt?: React.ReactNode;
 };
 
 // PF Badges used by Kiali, keep alphabetized
@@ -22,6 +22,7 @@ export const PFBadges: { [key: string]: PFBadgeType } = Object.freeze({
   DataPlane: { badge: 'DP', tt: 'Data Plane' } as PFBadgeType,
   DestinationRule: { badge: 'DR', tt: 'Destination Rule' } as PFBadgeType,
   EnvoyFilter: { badge: 'EF', tt: 'Envoy Filter' } as PFBadgeType,
+  Extension: { badge: 'E', tt: 'Extension', style: { backgroundColor: PFColors.Black400 } } as PFBadgeType,
   ExternalService: { badge: 'ES', tt: 'External Service' } as PFBadgeType,
   FaultInjectionAbort: {
     badge: 'FI',
@@ -139,7 +140,7 @@ export const PFBadge: React.FC<PFBadgeProps> = (props: PFBadgeProps) => {
   const key = props.keyValue || `pfbadge-${props.badge.badge}`;
   const ttKey = `tt-${key}`;
   const style = { ...props.badge.style, ...props.style };
-  const tooltip = props.tooltip || props.badge.tt;
+  const tt = props.tooltip ?? props.badge.tt;
   const className = props.size === 'sm' ? kialiBadgeSmall : kialiBadge;
 
   const badge = (
@@ -148,10 +149,10 @@ export const PFBadge: React.FC<PFBadgeProps> = (props: PFBadgeProps) => {
     </Badge>
   );
 
-  return !tooltip ? (
+  return !tt ? (
     badge
   ) : (
-    <Tooltip content={<>{tooltip}</>} id={ttKey} key={ttKey} position={props.position || TooltipPosition.auto}>
+    <Tooltip content={<>{tt}</>} id={ttKey} key={ttKey} position={props.position || TooltipPosition.auto}>
       {badge}
     </Tooltip>
   );
