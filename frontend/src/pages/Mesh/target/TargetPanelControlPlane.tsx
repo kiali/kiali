@@ -35,7 +35,9 @@ import { panelBodyStyle, panelHeadingStyle, panelStyle } from 'pages/Graph/Summa
 import { MeshMTLSStatus } from 'components/MTls/MeshMTLSStatus';
 import { t } from 'utils/I18nUtils';
 import { UNKNOWN } from 'types/Graph';
-import { TargetPanelConfigTable } from './TargetPanelConfigTable';
+import { TargetPanelEditor } from './TargetPanelEditor';
+import { load, dump } from 'js-yaml';
+import { yamlDumpOptions } from '../../../types/IstioConfigDetails';
 
 type TargetPanelControlPlaneProps = TargetPanelCommonProps & {
   meshStatus: string;
@@ -109,6 +111,22 @@ export class TargetPanelControlPlane extends React.Component<
     this.promises.cancelAll();
   }
 
+  convertYamlToJson(yamlString: string): unknown {
+    return load(yamlString);
+  }
+
+  getParsedYaml(configMap: Map<string, string>): string {
+    let cm = {};
+    if (configMap) {
+      for (const [key, value] of Object.entries(configMap)) {
+        cm[key] = this.convertYamlToJson(value);
+      }
+
+      return dump(cm, yamlDumpOptions);
+    }
+    return '';
+  }
+
   render(): React.ReactNode {
     if (this.state.loading || !this.state.nsInfo) {
       return this.getLoading();
@@ -119,6 +137,7 @@ export class TargetPanelControlPlane extends React.Component<
 
     // Controlplane infradata is structured: {config: configuration, revision: string}
     const { config, revision } = data.infraData;
+    const parsedCm = config.ConfigMap ? this.getParsedYaml(config.ConfigMap) : '';
 
     return (
       <div
@@ -162,8 +181,7 @@ export class TargetPanelControlPlane extends React.Component<
           )}
 
           {targetPanelHR}
-
-          <TargetPanelConfigTable configData={config} targetName={data.infraName} width="40%" />
+          {parsedCm !== '' && <TargetPanelEditor configMap={parsedCm} targetName={data.infraName}></TargetPanelEditor>}
         </div>
       </div>
     );

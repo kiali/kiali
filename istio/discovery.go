@@ -76,6 +76,7 @@ func (in *Discovery) getControlPlaneConfiguration(kubeCache cache.KubeCache, con
 	}
 
 	configMap, err := kubeCache.GetConfigMap(controlPlane.IstiodNamespace, configMapName)
+
 	if err != nil {
 		return nil, err
 	}
@@ -88,6 +89,7 @@ func (in *Discovery) getControlPlaneConfiguration(kubeCache cache.KubeCache, con
 	return &models.ControlPlaneConfiguration{
 		IstioMeshConfig: *istioConfigMapInfo,
 		Network:         in.resolveNetwork(kubeCache, controlPlane),
+		ConfigMap:       configMap.Data,
 	}, nil
 }
 

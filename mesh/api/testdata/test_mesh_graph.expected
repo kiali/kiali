@@ -267,6 +267,9 @@
           "healthData": "Healthy",
           "infraData": {
             "config": {
+               "ConfigMap": {
+                          "mesh": "accessLogFile: /dev/stdout\nenableAutoMtls: true\nrootNamespace: istio-system\ntrustDomain: cluster.local\n"
+                        },
               "Network": "kialiNetwork",
               "DisableMixerHttpReports": false,
               "DiscoverySelectors": null,
