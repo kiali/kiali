@@ -133,7 +133,6 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalIn
 
 		infraData := map[string]any{
 			"config":     cp.Config,
-			"configMap":  cp.ConfigMap,
 			"revision":   cp.Revision,
 			"thresholds": cp.Thresholds,
 		}

@@ -136,8 +136,8 @@ export class TargetPanelControlPlane extends React.Component<
     const data = this.state.controlPlaneNode?.getData() as NodeData;
 
     // Controlplane infradata is structured: {config: configuration, revision: string}
-    const { config, revision, configMap } = data.infraData;
-    const parsedCm = this.getParsedYaml(configMap);
+    const { config, revision } = data.infraData;
+    const parsedCm = config.ConfigMap ? this.getParsedYaml(config.ConfigMap) : '';
 
     return (
       <div
@@ -181,9 +181,7 @@ export class TargetPanelControlPlane extends React.Component<
           )}
 
           {targetPanelHR}
-          {configMap && parsedCm && (
-            <TargetPanelEditor configMap={parsedCm} targetName={data.infraName}></TargetPanelEditor>
-          )}
+          {parsedCm != '' && <TargetPanelEditor configMap={parsedCm} targetName={data.infraName}></TargetPanelEditor>}
         </div>
       </div>
     );

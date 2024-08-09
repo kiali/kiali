@@ -65,7 +65,7 @@ func parseIstioConfigMap(istioConfig *corev1.ConfigMap) (*models.IstioMeshConfig
 }
 
 // gets the mesh configuration for a controlplane from the istio configmap.
-func (in *Discovery) getControlPlaneConfiguration(kubeCache cache.KubeCache, controlPlane *models.ControlPlane) (*models.ControlPlaneConfiguration, *corev1.ConfigMap, error) {
+func (in *Discovery) getControlPlaneConfiguration(kubeCache cache.KubeCache, controlPlane *models.ControlPlane) (*models.ControlPlaneConfiguration, error) {
 	var configMapName string
 	// If the config map name is explicitly set we should always use that
 	// until the config option is removed.
@@ -78,18 +78,19 @@ func (in *Discovery) getControlPlaneConfiguration(kubeCache cache.KubeCache, con
 	configMap, err := kubeCache.GetConfigMap(controlPlane.IstiodNamespace, configMapName)
 
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	istioConfigMapInfo, err := parseIstioConfigMap(configMap)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	return &models.ControlPlaneConfiguration{
 		IstioMeshConfig: *istioConfigMapInfo,
 		Network:         in.resolveNetwork(kubeCache, controlPlane),
-	}, configMap, nil
+		ConfigMap:       configMap.Data,
+	}, nil
 }
 
 func revisionedConfigMapName(base string, revision string) string {
@@ -262,12 +263,11 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 				Revision:        istiod.Labels[models.IstioRevisionLabel],
 			}
 
-			controlPlaneConfig, configMap, err := in.getControlPlaneConfiguration(kubeCache, &controlPlane)
+			controlPlaneConfig, err := in.getControlPlaneConfiguration(kubeCache, &controlPlane)
 			if err != nil {
 				return nil, err
 			}
 			controlPlane.Config = *controlPlaneConfig
-			controlPlane.ConfigMap = configMap.Data
 
 			if containers := istiod.Spec.Template.Spec.Containers; len(containers) > 0 {
 				for _, env := range istiod.Spec.Template.Spec.Containers[0].Env {

@@ -27,9 +27,6 @@ type ControlPlane struct {
 	// Config
 	Config ControlPlaneConfiguration
 
-	// Config Map
-	ConfigMap map[string]string `yaml:"configMap,omitempty"`
-
 	// ExternalControlPlane indicates if the controlplane is managing an external cluster.
 	ExternalControlPlane bool
 
@@ -71,6 +68,9 @@ type ControlPlane struct {
 
 // ControlPlaneConfiguration is the configuration for the controlPlane and any associated dataPlane.
 type ControlPlaneConfiguration struct {
+
+	// Config Map
+	ConfigMap map[string]string `yaml:"configMap,omitempty"`
 
 	// IsGatewayToNamespace specifies the PILOT_SCOPE_GATEWAY_TO_NAMESPACE environment variable in Control Plane
 	// This is not currently used by the frontend so excluding it from the API response.
