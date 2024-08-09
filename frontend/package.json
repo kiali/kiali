@@ -37,7 +37,7 @@
     "build": "if [ \"${KIALI_ENV}\" = \"production\" ]; then npm run build:prod; else npm run build:dev; fi",
     "build-css": "node-sass src/ --output-style compressed --include-path $npm_package_sassIncludes_src -o src/",
     "build:dev": "sh -ac '. ./.env.upstream; npm run lint && npm run build:kiali'",
-    "build:kiali": "npm run build-css && REACT_APP_VERSION=$npm_package_version REACT_APP_NAME=$npm_package_name REACT_APP_GIT_HASH=$(git rev-parse HEAD) GENERATE_SOURCEMAP=false EXTEND_ESLINT=true react-scripts build --profile",
+    "build:kiali": "npm run build-css && REACT_APP_VERSION=$npm_package_version REACT_APP_NAME=$npm_package_name REACT_APP_GIT_HASH=$(git rev-parse HEAD) GENERATE_SOURCEMAP=false EXTEND_ESLINT=true react-scripts --openssl-legacy-provider build --profile",
     "build:prod": "sh -ac '. ./.env.downstream; npm run build:kiali'",
     "precypress:run:junit": "npm run cypress:delete:reports",
     "cypress": "cypress open",
@@ -50,9 +50,9 @@
     "lintfix": "eslint --ext js,ts,tsx --fix src",
     "start": "if [ \"${KIALI_ENV}\" = \"production\" ]; then npm run start:prod; else npm run start:dev; fi",
     "start:dev": "sh -ac '. ./.env.upstream; npm run start:kiali'",
-    "start:kiali": "npm run build-css && REACT_APP_VERSION=$npm_package_version REACT_APP_NAME=$npm_package_name REACT_APP_GIT_HASH=$(git rev-parse HEAD) react-scripts start",
+    "start:kiali": "npm run build-css && REACT_APP_VERSION=$npm_package_version REACT_APP_NAME=$npm_package_name REACT_APP_GIT_HASH=$(git rev-parse HEAD) react-scripts --openssl-legacy-provider start",
     "start:prod": "sh -ac '. ./.env.downstream; npm run start:kiali'",
-    "test": "npm run build-css && tsc -p . && TEST_RUNNER=1 react-scripts test --env=jsdom __tests__",
+    "test": "npm run build-css && tsc -p . && TEST_RUNNER=1 react-scripts --openssl-legacy-provider test --env=jsdom __tests__",
     "prettier": "prettier --write \"{src/**/*.{js,jsx,ts,tsx,json,yml,css,scss},travis.yml,*.json}\""
   },
   "dependencies": {
@@ -108,7 +108,7 @@
     "@types/enzyme": "3.10.5",
     "@types/jest": "23.3.10",
     "@types/lodash": "4.14.169",
-    "@types/node": "12.12.14",
+    "@types/node": "17.0.21",
     "@types/react": "16.9.34",
     "@types/react-dom": "16.9.7",
     "@types/react-redux": "7.1.7",
@@ -127,10 +127,10 @@
     "jest-localstorage-mock": "2.4.2",
     "junit-report-merger": "^3.0.5",
     "mocha-junit-reporter": "^2.0.2",
-    "node-sass": "^7.0.1",
+    "node-sass": "^9.0.0",
     "prettier": "2.0.5",
     "pretty-quick": "2.0.1",
-    "react-scripts": "5.0.0",
+    "react-scripts": "^5.0.1",
     "redux-mock-store": "1.5.4",
     "typescript": "3.8.3"
   },
@@ -142,7 +142,7 @@
     "postcss": "^8.4.12"
   },
   "engines": {
-    "node": ">=12.22.0 && <16",
+    "node": ">=20.0.0",
     "npm": ">=6.0.0 ",
     "yarn": ">=1.0.0 "
   },

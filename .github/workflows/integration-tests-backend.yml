@@ -19,17 +19,17 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - name: Check out code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: ${{ inputs.build_branch }}
 
       - name: Set up Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v5
         with:
           go-version: 1.20.3
 
       - name: Cache Go deps
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             ~/.cache/go-build
@@ -39,7 +39,7 @@ jobs:
             ${{ runner.os }}-go-
 
       - name: Download go binary
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: kiali
           path: ~/go/bin/
@@ -48,7 +48,7 @@ jobs:
         run: chmod +x ~/go/bin/kiali
 
       - name: Download frontend build
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: build
           path: frontend/build

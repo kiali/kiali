@@ -38,7 +38,7 @@ Make sure you have the following tools:
 * link:http://git-scm.com/book/en/v2/Getting-Started-Installing-Git[git]
 * link:https://docs.docker.com/installation/[Docker] or link:https://podman.io[Podman]
 ** If you are using `podman` declare the environment variable `DORP=podman`.
-* link:https://nodejs.org[NodeJS] (Node.js >= 12.22.0 && <16 with the NPM command)
+* link:https://nodejs.org[NodeJS] (Node.js >= 20 with the NPM command)
 * link:https://classic.yarnpkg.com/[Yarn]
 * The _GNU make_ utility or any of it's alternatives
 

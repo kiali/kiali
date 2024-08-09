@@ -19,19 +19,19 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - name: Check out code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: ${{ inputs.build_branch }}
 
       - name: Setup node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: "14"
+          node-version: "20"
           cache: yarn
           cache-dependency-path: frontend/yarn.lock
 
       - name: Download go binary
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: kiali
           path: ~/go/bin/
@@ -40,7 +40,7 @@ jobs:
         run: chmod +x ~/go/bin/kiali
 
       - name: Download frontend build
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: build
           path: frontend/build
@@ -60,7 +60,7 @@ jobs:
         id: set-kiali-url
 
       - name: Run cypress integration tests
-        uses: cypress-io/github-action@v2
+        uses: cypress-io/github-action@v6
         with:
           working-directory: frontend
           command: yarn run cypress:run
@@ -78,7 +78,7 @@ jobs:
           kubectl get pods -l app.kubernetes.io/name=kiali -n istio-system -o yaml
 
       - name: Upload cypress screenshots when tests fail
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: cypress-screenshots
