@@ -36,7 +36,7 @@ Make sure you have the following tools:
 * gcc
 * link:https://docs.docker.com/installation/[Docker] or link:https://podman.io[Podman]
 ** If you are using `podman` declare the environment variable `DORP=podman`.
-* link:https://nodejs.org[NodeJS] (Node.js >= 18 with the NPM command)
+* link:https://nodejs.org[NodeJS] (Node.js >= 20 with the NPM command)
 * link:https://classic.yarnpkg.com/[Yarn]
 * The _GNU make_ utility or any of it's alternatives
 
