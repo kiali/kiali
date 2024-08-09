@@ -181,7 +181,7 @@ export class TargetPanelControlPlane extends React.Component<
           )}
 
           {targetPanelHR}
-          {parsedCm != '' && <TargetPanelEditor configMap={parsedCm} targetName={data.infraName}></TargetPanelEditor>}
+          {parsedCm !== '' && <TargetPanelEditor configMap={parsedCm} targetName={data.infraName}></TargetPanelEditor>}
         </div>
       </div>
     );
