@@ -448,9 +448,6 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 			if e.Metadata[graph.SourcePrincipal] != nil {
 				ed.SourcePrincipal = e.Metadata[graph.SourcePrincipal].(string)
 			}
-			if e.Metadata[graph.Direction] != nil {
-				ed.Direction = e.Metadata[graph.Direction].(string)
-			}
 			if e.Metadata[graph.Display] != nil {
 				ed.Display = e.Metadata[graph.Display].(string)
 			}
