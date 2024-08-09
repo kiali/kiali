@@ -1022,13 +1022,16 @@ export class GraphStyles {
           'line-color': (ele: Cy.EdgeSingular) => {
             return getEdgeColor(ele);
           },
-          /**
-           * TODO: Not available yet
-          'line-outline-width': '2px',
+
+          /*** TODO: Not available yet
+
+          'line-color': EdgeColorTCPWithTraffic,
+          'width': '1px',
+          'line-outline-width': '1px',
           'line-outline-color': (ele: Cy.EdgeSingular) => {
             return getEdgeColor(ele);
           },
-           **/
+           * **/
           'target-arrow-shape': 'triangle-cross'
         }
       }
