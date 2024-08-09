@@ -3,7 +3,7 @@
 # more details here https://github.com/kiali/kiali/tree/master/frontend/cypress
 
 # using same baseimage of node as its defined in package.json
-FROM cypress/base:18.15.0
+FROM cypress/base:20.16.0
 
 # we need to set HOME when running on OCP with random UID, otherwise the home is set to / and any writing there will fail with permission denied
 ENV HOME=/tmp/kiali
