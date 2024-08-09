@@ -19,6 +19,7 @@ import edgeWarnImage from '../../assets/img/graph/pf/edge-warn.svg';
 import edgeIdlemage from '../../assets/img/graph/pf/edge-idle.svg';
 import edgeTcpImage from '../../assets/img/graph/pf/edge-tcp.svg';
 import edgeMtlsImage from '../../assets/img/graph/mtls-badge.svg';
+import tcphttpImage from '../../assets/img/graph/pf/edge-tcp-http.svg';
 // Traffic Animation
 import trafficHealthyImage from '../../assets/img/graph/pf/traffic-healthy-request.svg';
 import trafficFailedImage from '../../assets/img/graph/pf/traffic-failed-request.svg';
@@ -63,8 +64,20 @@ export const legendData = (): GraphLegendItem[] => {
     { label: t('Workload Entry'), icon: badgeWorkloadEntryImage }
   ];
 
+  const edges = [
+    { label: t('Failure'), icon: edgeDangerImage },
+    { label: t('Degraded'), icon: edgeWarnImage },
+    { label: t('Healthy'), icon: edgeSuccessImage },
+    { label: t('TCP Connection'), icon: edgeTcpImage },
+    { label: t('Idle'), icon: edgeIdlemage },
+    { label: t('mTLS (badge)'), icon: edgeMtlsImage }
+  ];
+
   if (serverConfig.ambientEnabled) {
     nodeBadges.push({ label: t('Waypoint'), icon: badgeWaypointImage });
+    edges[6] = { label: t('mTLS (badge)'), icon: edgeMtlsImage };
+    edges[5] = { label: t('Idle'), icon: edgeIdlemage };
+    edges[4] = { label: t('TCP+HTTP telemetry'), icon: tcphttpImage };
   }
 
   return [
@@ -96,14 +109,7 @@ export const legendData = (): GraphLegendItem[] => {
     },
     {
       title: t('Edges'),
-      data: [
-        { label: t('Failure'), icon: edgeDangerImage },
-        { label: t('Degraded'), icon: edgeWarnImage },
-        { label: t('Healthy'), icon: edgeSuccessImage },
-        { label: t('TCP Connection'), icon: edgeTcpImage },
-        { label: t('Idle'), icon: edgeIdlemage },
-        { label: t('mTLS (badge)'), icon: edgeMtlsImage }
-      ]
+      data: edges
     },
     {
       title: t('Traffic Animation'),

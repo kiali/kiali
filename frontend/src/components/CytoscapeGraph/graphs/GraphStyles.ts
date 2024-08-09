@@ -1022,9 +1022,7 @@ export class GraphStyles {
           'line-color': (ele: Cy.EdgeSingular) => {
             return getEdgeColor(ele);
           },
-
           /*** TODO: Not available yet
-
           'line-color': EdgeColorTCPWithTraffic,
           'width': '1px',
           'line-outline-width': '1px',
