@@ -2,6 +2,7 @@ package cache
 
 import (
 	"fmt"
+	"reflect"
 	"testing"
 	"time"
 
@@ -344,4 +345,279 @@ func ListingIstioObjectsWorksAcrossNamespacesWhenNamespaceScoped(t *testing.T) {
 	vsList, err := kubeCache.GetVirtualServices("", "")
 	require.NoError(err)
 	assert.Len(vsList, 2)
+}
+
+func TestStripUnusedFields(t *testing.T) {
+	tests := []struct {
+		name string
+		obj  any
+		want any
+	}{
+		{
+			name: "transform pods",
+			obj: &core_v1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace:   "foo",
+					Name:        "bar",
+					Labels:      map[string]string{"a": "b"},
+					Annotations: map[string]string{"c": "d"},
+					ManagedFields: []metav1.ManagedFieldsEntry{
+						{
+							Manager: "whatever",
+						},
+					},
+				},
+			},
+			want: &core_v1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace:   "foo",
+					Name:        "bar",
+					Labels:      map[string]string{"a": "b"},
+					Annotations: map[string]string{"c": "d"},
+				},
+			},
+		},
+		{
+			name: "transform endpoints",
+			obj: &core_v1.Endpoints{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace:   "foo",
+					Name:        "bar",
+					Labels:      map[string]string{"a": "b"},
+					Annotations: map[string]string{"c": "d"},
+					ManagedFields: []metav1.ManagedFieldsEntry{
+						{
+							Manager: "whatever",
+						},
+					},
+				},
+			},
+			want: &core_v1.Endpoints{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace:   "foo",
+					Name:        "bar",
+					Labels:      map[string]string{"a": "b"},
+					Annotations: map[string]string{"c": "d"},
+				},
+			},
+		},
+		{
+			name: "transform virtual services",
+			obj: &networking_v1.VirtualService{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace:   "foo",
+					Name:        "bar",
+					Labels:      map[string]string{"a": "b"},
+					Annotations: map[string]string{"c": "d"},
+					ManagedFields: []metav1.ManagedFieldsEntry{
+						{
+							Manager: "whatever",
+						},
+					},
+				},
+			},
+			want: &networking_v1.VirtualService{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace:   "foo",
+					Name:        "bar",
+					Labels:      map[string]string{"a": "b"},
+					Annotations: map[string]string{"c": "d"},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, _ := StripUnusedFields(tt.obj)
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("StripUnusedFields: got %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestGetPodTrimmed(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+	ns := &core_v1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "test"}}
+	obj := &core_v1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:        "foo",
+			Namespace:   "test",
+			Labels:      map[string]string{"a": "b"},
+			Annotations: map[string]string{"c": "d"},
+			OwnerReferences: []metav1.OwnerReference{
+				{
+					Name: "o",
+				},
+			},
+			ManagedFields: []metav1.ManagedFieldsEntry{
+				{
+					Manager: "whatever",
+				},
+			},
+		},
+		Spec: core_v1.PodSpec{
+			Containers: []core_v1.Container{
+				{
+					Name: "test",
+				},
+			},
+			InitContainers: []core_v1.Container{
+				{
+					Name: "test",
+				},
+			},
+			ServiceAccountName: "testsa",
+			Hostname:           "host.com",
+		},
+		Status: core_v1.PodStatus{
+			Phase:   "testphase",
+			Message: "testmessage",
+			Reason:  "reason",
+			InitContainerStatuses: []core_v1.ContainerStatus{
+				{
+					Name: "initstatus",
+				},
+			},
+			ContainerStatuses: []core_v1.ContainerStatus{
+				{
+					Name: "status",
+				},
+			},
+		},
+	}
+	want := core_v1.Pod{
+		TypeMeta: metav1.TypeMeta{
+			Kind: "Pod",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:        "foo",
+			Namespace:   "test",
+			Labels:      map[string]string{"a": "b"},
+			Annotations: map[string]string{"c": "d"},
+			OwnerReferences: []metav1.OwnerReference{
+				{
+					Name: "o",
+				},
+			},
+		},
+		Spec: core_v1.PodSpec{
+			Containers: []core_v1.Container{
+				{
+					Name: "test",
+				},
+			},
+			InitContainers: []core_v1.Container{
+				{
+					Name: "test",
+				},
+			},
+			ServiceAccountName: "testsa",
+			Hostname:           "host.com",
+		},
+		Status: core_v1.PodStatus{
+			Phase:   "testphase",
+			Message: "testmessage",
+			Reason:  "reason",
+			InitContainerStatuses: []core_v1.ContainerStatus{
+				{
+					Name: "initstatus",
+				},
+			},
+			ContainerStatuses: []core_v1.ContainerStatus{
+				{
+					Name: "status",
+				},
+			},
+		},
+	}
+
+	cfg := config.NewConfig()
+	kialiCache := newTestingKubeCache(t, cfg, ns, obj)
+	kialiCache.Refresh("test")
+
+	pods, err := kialiCache.GetPods("test", "a=b")
+	require.NoError(err)
+	assert.Equal(1, len(pods))
+	if !reflect.DeepEqual(pods[0], want) {
+		t.Errorf("StripUnusedFields: got %v, want %v", pods[0], want)
+	}
+}
+
+func TestGetServiceTrimmed(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+	ns := &core_v1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "test"}}
+	obj := &core_v1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:            "foo",
+			Namespace:       "test",
+			Labels:          map[string]string{"a": "b"},
+			Annotations:     map[string]string{"c": "d"},
+			ResourceVersion: "v1",
+			OwnerReferences: []metav1.OwnerReference{
+				{
+					Name: "o",
+				},
+			},
+			ManagedFields: []metav1.ManagedFieldsEntry{
+				{
+					Manager: "whatever",
+				},
+			},
+		},
+		Spec: core_v1.ServiceSpec{
+			Selector: map[string]string{"a": "b"},
+			Ports: []core_v1.ServicePort{
+				{
+					Name: "test",
+					Port: 8080,
+				},
+			},
+			Type:         kubernetes.ServiceType,
+			ExternalName: "test",
+			ClusterIP:    "127.0.0.1",
+		},
+	}
+	want := core_v1.Service{
+		TypeMeta: metav1.TypeMeta{
+			Kind: "Service",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:            "foo",
+			Namespace:       "test",
+			Labels:          map[string]string{"a": "b"},
+			Annotations:     map[string]string{"c": "d"},
+			ResourceVersion: "v1",
+			OwnerReferences: []metav1.OwnerReference{
+				{
+					Name: "o",
+				},
+			},
+		},
+		Spec: core_v1.ServiceSpec{
+			Selector: map[string]string{"a": "b"},
+			Ports: []core_v1.ServicePort{
+				{
+					Name: "test",
+					Port: 8080,
+				},
+			},
+			Type:         kubernetes.ServiceType,
+			ExternalName: "test",
+			ClusterIP:    "127.0.0.1",
+		},
+	}
+
+	cfg := config.NewConfig()
+	kialiCache := newTestingKubeCache(t, cfg, ns, obj)
+	kialiCache.Refresh("test")
+
+	services, err := kialiCache.GetServices("test", "a=b")
+	require.NoError(err)
+	assert.Equal(1, len(services))
+	if !reflect.DeepEqual(services[0], want) {
+		t.Errorf("StripUnusedFields: got %v, want %v", services[0], want)
+	}
 }

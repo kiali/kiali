@@ -443,6 +443,62 @@ func (c *kubeCache) createKubernetesInformers(namespace string) informers.Shared
 	if namespace != "" {
 		opts = append(opts, informers.WithNamespace(namespace))
 	}
+	opts = append(
+		opts,
+		informers.WithTransform(func(obj interface{}) (interface{}, error) {
+			obj, _ = StripUnusedFields(obj)
+
+			switch obj := obj.(type) {
+			case *core_v1.Pod:
+				trimmedPod := &core_v1.Pod{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:            obj.Name,
+						Namespace:       obj.Namespace,
+						Labels:          obj.Labels,
+						Annotations:     obj.Annotations,
+						OwnerReferences: obj.OwnerReferences,
+					},
+					Spec: core_v1.PodSpec{
+						Containers:         obj.Spec.Containers,
+						InitContainers:     obj.Spec.InitContainers,
+						ServiceAccountName: obj.Spec.ServiceAccountName,
+						Hostname:           obj.Spec.Hostname,
+					},
+					Status: core_v1.PodStatus{
+						Phase:                 obj.Status.Phase,
+						Message:               obj.Status.Message,
+						Reason:                obj.Status.Reason,
+						InitContainerStatuses: obj.Status.InitContainerStatuses,
+						ContainerStatuses:     obj.Status.ContainerStatuses,
+					},
+				}
+				return trimmedPod, nil
+
+			case *core_v1.Service:
+				trimmedService := &core_v1.Service{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:            obj.Name,
+						Namespace:       obj.Namespace,
+						Labels:          obj.Labels,
+						Annotations:     obj.Annotations,
+						ResourceVersion: obj.ResourceVersion,
+						OwnerReferences: obj.OwnerReferences,
+					},
+					Spec: core_v1.ServiceSpec{
+						Selector:     obj.Spec.Selector,
+						Ports:        obj.Spec.Ports,
+						Type:         obj.Spec.Type,
+						ExternalName: obj.Spec.ExternalName,
+						ClusterIP:    obj.Spec.ClusterIP,
+					},
+				}
+				return trimmedService, nil
+
+			default:
+				return obj, nil
+			}
+		}),
+	)
 
 	sharedInformers := informers.NewSharedInformerFactoryWithOptions(c.client.Kube(), c.refreshDuration, opts...)
 
@@ -2236,4 +2292,17 @@ func (c *kubeCache) GetRequestAuthentications(namespace, labelSelector string) (
 		retRequestAuthentications = append(retRequestAuthentications, raCopy)
 	}
 	return retRequestAuthentications, nil
+}
+
+// StripUnusedFields is the transform function for shared informers,
+// it removes unused fields from objects before they are stored in the cache to save memory.
+func StripUnusedFields(obj any) (any, error) {
+	t, ok := obj.(metav1.ObjectMetaAccessor)
+	if !ok {
+		// shouldn't happen
+		return obj, nil
+	}
+	// ManagedFields is large and we never use it
+	t.GetObjectMeta().SetManagedFields(nil)
+	return obj, nil
 }
