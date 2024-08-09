@@ -9,7 +9,9 @@ import (
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 )
 
@@ -17,70 +19,118 @@ import (
 func TestCanaryUpgradeNotConfigured(t *testing.T) {
 	check := assert.New(t)
 
-	k8s := new(kubetest.K8SClientMock)
 	conf := config.NewConfig()
-	conf.ExternalServices.Istio.IstioCanaryRevision.Current = "default"
-	conf.ExternalServices.Istio.IstioCanaryRevision.Upgrade = "canary"
-
+	conf.KubernetesConfig.ClusterName = "Kubernetes"
+	kubernetes.SetConfig(t, *conf)
 	config.Set(conf)
 
-	k8s.On("IsOpenShift").Return(false)
-	k8s.On("IsGatewayAPI").Return(false)
-	k8s.On("GetNamespaces", "istio-injection=enabled").Return([]core_v1.Namespace{}, nil)
-	k8s.On("GetNamespaces", "istio.io/rev=default").Return([]core_v1.Namespace{}, nil)
-	k8s.On("GetNamespaces", "istio.io/rev=canary").Return([]core_v1.Namespace{}, nil)
+	migratedNamespace := core_v1.Namespace{
+		ObjectMeta: v1.ObjectMeta{Name: "travel-agency", Labels: map[string]string{"istio.io/rev": "canary"}},
+	}
+
+	pendingNamespace := core_v1.Namespace{
+		ObjectMeta: v1.ObjectMeta{Name: "travel-portal", Labels: map[string]string{"istio-injection": "enabled"}},
+	}
 
 	// Create a MeshService and invoke IsMeshConfigured
-	k8sclients := make(map[string]kubernetes.ClientInterface)
-	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
-	layer := business.NewWithBackends(k8sclients, k8sclients, nil, nil)
-	meshSvc := layer.Mesh
+	k8sclients := map[string]kubernetes.ClientInterface{
+		conf.KubernetesConfig.ClusterName: kubetest.NewFakeK8sClient(
+			&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: conf.IstioNamespace}},
+			runningIstiodPod(),
+			&migratedNamespace,
+			&pendingNamespace,
+		),
+	}
+
+	cf := kubetest.NewFakeClientFactory(conf, k8sclients)
+	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
+	discovery := istio.NewDiscovery(k8sclients, cache, conf)
+	nsService := business.NewNamespaceService(k8sclients, k8sclients, cache, conf, discovery)
+	business.SetupBusinessLayer(t, k8sclients[conf.KubernetesConfig.ClusterName], *conf)
+	business.WithKialiCache(cache)
+	business.WithDiscovery(discovery)
+	meshSvc := business.NewMeshService(k8sclients, cache, nsService, conf, discovery)
 
 	canaryUpgradeStatus, err := meshSvc.CanaryUpgradeStatus()
 
 	check.Nil(err, "IstiodCanariesStatus failed: %s", err)
 	check.NotNil(canaryUpgradeStatus)
+	check.Equal(0, len(canaryUpgradeStatus.NamespacesPerRevision))
 }
 
 // TestCanaryUpgradeConfigured verifies that when there is a canary upgrade in place, the migrated and pending namespaces should have namespaces
 func TestCanaryUpgradeConfigured(t *testing.T) {
 	check := assert.New(t)
 
-	k8s := new(kubetest.K8SClientMock)
 	conf := config.NewConfig()
-	conf.ExternalServices.Istio.IstioCanaryRevision.Current = "default"
-	conf.ExternalServices.Istio.IstioCanaryRevision.Upgrade = "canary"
-
+	conf.KubernetesConfig.ClusterName = "Kubernetes"
+	kubernetes.SetConfig(t, *conf)
 	config.Set(conf)
 
-	k8s.On("IsOpenShift").Return(false)
-	k8s.On("IsGatewayAPI").Return(false)
-
 	migratedNamespace := core_v1.Namespace{
-		ObjectMeta: v1.ObjectMeta{Name: "travel-agency"},
+		ObjectMeta: v1.ObjectMeta{Name: "travel-agency", Labels: map[string]string{"istio.io/rev": "canary"}},
 	}
-	migratedNamespaces := []core_v1.Namespace{migratedNamespace}
 
 	pendingNamespace := core_v1.Namespace{
-		ObjectMeta: v1.ObjectMeta{Name: "travel-portal"},
+		ObjectMeta: v1.ObjectMeta{Name: "travel-portal", Labels: map[string]string{"istio-injection": "enabled"}},
 	}
-	pendingNamespaces := []core_v1.Namespace{pendingNamespace}
 
-	k8s.On("GetNamespaces", "istio-injection=enabled").Return(pendingNamespaces, nil)
-	k8s.On("GetNamespaces", "istio.io/rev=default").Return([]core_v1.Namespace{}, nil)
-	k8s.On("GetNamespaces", "istio.io/rev=canary").Return(migratedNamespaces, nil)
+	k8sclients := map[string]kubernetes.ClientInterface{
+		conf.KubernetesConfig.ClusterName: kubetest.NewFakeK8sClient(
+			&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: conf.IstioNamespace}},
+			runningIstiodPod(),
+			runningIstiodCanaryPod(),
+			&migratedNamespace,
+			&pendingNamespace,
+		),
+	}
 
-	// Create a MeshService and invoke IsMeshConfigured
-	k8sclients := make(map[string]kubernetes.ClientInterface)
-	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
-	layer := business.NewWithBackends(k8sclients, k8sclients, nil, nil)
-	meshSvc := layer.Mesh
+	cf := kubetest.NewFakeClientFactory(conf, k8sclients)
+	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
+	discovery := istio.NewDiscovery(k8sclients, cache, conf)
+	nsService := business.NewNamespaceService(k8sclients, k8sclients, cache, conf, discovery)
+	business.SetupBusinessLayer(t, k8sclients[conf.KubernetesConfig.ClusterName], *conf)
+	business.WithKialiCache(cache)
+	business.WithDiscovery(discovery)
+	meshSvc := business.NewMeshService(k8sclients, cache, nsService, conf, discovery)
 
 	canaryUpgradeStatus, err := meshSvc.CanaryUpgradeStatus()
 
 	check.Nil(err, "IstiodCanariesStatus failed: %s", err)
-	check.Contains(canaryUpgradeStatus.MigratedNamespaces, "travel-agency")
-	check.Equal(1, len(canaryUpgradeStatus.MigratedNamespaces))
-	check.Contains(canaryUpgradeStatus.PendingNamespaces, "travel-portal")
-	check.Equal(1, len(canaryUpgradeStatus.PendingNamespaces))
+	check.Contains(canaryUpgradeStatus.NamespacesPerRevision["canary"], "travel-agency")
+	check.Equal(1, len(canaryUpgradeStatus.NamespacesPerRevision["canary"]))
+	check.Contains(canaryUpgradeStatus.NamespacesPerRevision["default"], "travel-portal")
+	check.Equal(1, len(canaryUpgradeStatus.NamespacesPerRevision["default"]))
+}
+
+func runningIstiodPod() *core_v1.Pod {
+	return &core_v1.Pod{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      "istiod-123",
+			Namespace: "istio-system",
+			Labels: map[string]string{
+				"app":          "istiod",
+				"istio.io/rev": "default",
+			},
+		},
+		Status: core_v1.PodStatus{
+			Phase: core_v1.PodRunning,
+		},
+	}
+}
+
+func runningIstiodCanaryPod() *core_v1.Pod {
+	return &core_v1.Pod{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      "istiod-456",
+			Namespace: "istio-system",
+			Labels: map[string]string{
+				"app":          "istiod",
+				"istio.io/rev": "canary",
+			},
+		},
+		Status: core_v1.PodStatus{
+			Phase: core_v1.PodRunning,
+		},
+	}
 }
