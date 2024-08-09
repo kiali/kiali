@@ -12,12 +12,12 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: ${{ inputs.build_branch }}
 
       - name: Set up Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
           # The builtin cache feature ensures that installing golangci-lint
@@ -44,7 +44,7 @@ jobs:
         run: make -e GO_TEST_FLAGS="-race" test
 
       - name: Upload go binary
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: kiali
           path: ~/go/bin/kiali
