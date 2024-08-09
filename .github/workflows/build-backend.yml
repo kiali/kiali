@@ -12,17 +12,17 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: ${{ inputs.build_branch }}
 
       - name: Set up Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v5
         with:
           go-version: 1.22.5
 
       - name: Cache Go deps
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             ~/.cache/go-build
@@ -50,7 +50,7 @@ jobs:
         run: make test-race
 
       - name: Upload go binary
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: kiali
           path: ~/go/bin/kiali

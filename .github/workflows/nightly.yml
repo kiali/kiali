@@ -26,7 +26,7 @@ jobs:
       quay_tag: ${{ steps.quay_tag.outputs.quay_tag }}
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         ref: ${{ github.event.inputs.release_branch || github.ref_name }}
 
@@ -75,17 +75,17 @@ jobs:
       QUAY_TAG: ${{ needs.initialize.outputs.quay_tag }}
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         ref: ${{ github.event.inputs.release_branch || github.ref_name }}
 
     - name: Set up Go
-      uses: actions/setup-go@v2
+      uses: actions/setup-go@v5
       with:
         go-version: 1.22.5
 
     - name: Cache Go deps
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: |
           ~/.cache/go-build
@@ -95,7 +95,7 @@ jobs:
           ${{ runner.os }}-go-
 
     - name: Download frontend build
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: build
         path: frontend/build
