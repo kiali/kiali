@@ -2,7 +2,8 @@ package models
 
 import (
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/kiali/kiali/config"
 )
 
 const (
@@ -89,10 +90,10 @@ type Certificate struct {
 }
 
 type IstioMeshConfig struct {
-	Certificates            []Certificate           `yaml:"certificates,omitempty" json:"certificates,omitempty"`
-	DisableMixerHttpReports bool                    `yaml:"disableMixerHttpReports,omitempty"`
-	DiscoverySelectors      []*metav1.LabelSelector `yaml:"discoverySelectors,omitempty"`
-	EnableAutoMtls          *bool                   `yaml:"enableAutoMtls,omitempty"`
+	Certificates            []Certificate                 `yaml:"certificates,omitempty" json:"certificates,omitempty"`
+	DisableMixerHttpReports bool                          `yaml:"disableMixerHttpReports,omitempty"`
+	DiscoverySelectors      config.DiscoverySelectorsType `yaml:"discoverySelectors,omitempty"`
+	EnableAutoMtls          *bool                         `yaml:"enableAutoMtls,omitempty"`
 	MeshMTLS                struct {
 		MinProtocolVersion string `yaml:"minProtocolVersion"`
 	} `yaml:"meshMtls"`

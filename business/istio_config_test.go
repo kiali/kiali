@@ -11,7 +11,6 @@ import (
 	api_networking_v1 "istio.io/api/networking/v1"
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 	auth_v1 "k8s.io/api/authorization/v1"
-	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
@@ -20,6 +19,7 @@ import (
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
+	"github.com/kiali/kiali/tests/testutils"
 	"github.com/kiali/kiali/tests/testutils/validations"
 )
 
@@ -600,7 +600,7 @@ func TestListWithAllNamespacesButNoAccessReturnsEmpty(t *testing.T) {
 	conf.KubernetesConfig.ClusterName = "Kubernetes"
 	kubernetes.SetConfig(t, *conf)
 	fakeIstioObjects := []runtime.Object{
-		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "test"}},
+		kubetest.FakeNamespace("test"),
 	}
 	fakeIstioObjects = append(fakeIstioObjects, kubernetes.ToRuntimeObjects(fakeGetGateways())...)
 	k8s := kubetest.NewFakeK8sClient(fakeIstioObjects...)
@@ -630,16 +630,23 @@ func TestListNamespaceScopedReturnsAllAccessibleNamespaces(t *testing.T) {
 	assert := assert.New(t)
 	require := require.New(t)
 
-	conf := config.NewConfig()
-	conf.KubernetesConfig.CacheTokenNamespaceDuration = 10000
-	conf.Deployment.AccessibleNamespaces = []string{"test", "test-b", "istio-system"}
-	conf.Deployment.ClusterWideAccess = false
+	conf := testutils.GetConfigFromYaml(t, `
+kubernetes_config:
+  cache_token_namespace_duration: 10000
+deployment:
+  cluster_wide_access: false
+  discovery_selectors:
+    default:
+    - matchLabels: {"kubernetes.io/metadata.name": "test" }
+    - matchLabels: {"kubernetes.io/metadata.name": "test-b" }
+    - matchLabels: {"kubernetes.io/metadata.name": "istio-system" }
+`)
 	kubernetes.SetConfig(t, *conf)
 	objects := []runtime.Object{
-		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "istio-system"}},
-		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "test"}},
-		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "test-b"}},
-		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "test-c"}},
+		kubetest.FakeNamespace("istio-system"),
+		kubetest.FakeNamespace("test"),
+		kubetest.FakeNamespace("test-b"),
+		kubetest.FakeNamespace("test-c"),
 	}
 	objects = append(objects, kubernetes.ToRuntimeObjects(fakeGetGateways())...)
 	testBGateways := fakeGetGateways()

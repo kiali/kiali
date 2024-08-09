@@ -7,8 +7,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
-	core_v1 "k8s.io/api/core/v1"
-	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/kiali/kiali/business"
@@ -54,7 +52,7 @@ func setupWorkloadEntries(t *testing.T) *business.Layer {
 		"app":     appName,
 		"version": "v2",
 	}
-	ns := &core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: appNamespace}}
+	ns := kubetest.FakeNamespace(appNamespace)
 	return setupBusinessLayer(t, workloadV1, workloadV2, ns)
 }
 
@@ -180,7 +178,7 @@ func TestWorkloadEntryAppLabelNotMatching(t *testing.T) {
 		"version": "v2",
 	}
 
-	ns := &core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: appNamespace}}
+	ns := kubetest.FakeNamespace(appNamespace)
 	businessLayer := setupBusinessLayer(t, workloadV1, workloadV2, ns)
 	trafficMap := workloadEntriesTrafficMap()
 
@@ -267,7 +265,7 @@ func TestMultipleWorkloadEntryForSameWorkload(t *testing.T) {
 		"version": "v2",
 	}
 
-	ns := &core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: appNamespace}}
+	ns := kubetest.FakeNamespace(appNamespace)
 	businessLayer := setupBusinessLayer(t, workloadV1A, workloadV1B, workloadV2, ns)
 	trafficMap := workloadEntriesTrafficMap()
 
@@ -337,7 +335,7 @@ func TestMultipleWorkloadEntryForSameWorkload(t *testing.T) {
 func TestWorkloadWithoutWorkloadEntries(t *testing.T) {
 	assert := require.New(t)
 
-	businessLayer := setupBusinessLayer(t, &core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: appNamespace}})
+	businessLayer := setupBusinessLayer(t, kubetest.FakeNamespace(appNamespace))
 	trafficMap := workloadEntriesTrafficMap()
 
 	assert.Equal(5, len(trafficMap))
@@ -400,7 +398,7 @@ func TestWorkloadWithoutWorkloadEntries(t *testing.T) {
 func TestWEKiali7305(t *testing.T) {
 	assert := require.New(t)
 
-	businessLayer := setupBusinessLayer(t, &core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: appNamespace}})
+	businessLayer := setupBusinessLayer(t, kubetest.FakeNamespace(appNamespace))
 
 	// VersionedApp graph
 	trafficMap := make(map[string]*graph.Node)

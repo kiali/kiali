@@ -279,9 +279,19 @@ func FakeIstioAmbientAnnotations() map[string]string {
 }
 
 func FakeNamespace(name string) *core_v1.Namespace {
+	return FakeNamespaceWithLabels(name, nil)
+}
+
+func FakeNamespaceWithLabels(name string, labels map[string]string) *core_v1.Namespace {
+	if labels == nil {
+		labels = map[string]string{}
+	}
+	// discovery selectors often match on the name, so let's make sure all our test namespaces have it
+	labels["kubernetes.io/metadata.name"] = name
 	return &core_v1.Namespace{
 		ObjectMeta: meta_v1.ObjectMeta{
-			Name: name,
+			Name:   name,
+			Labels: labels,
 		},
 	}
 }

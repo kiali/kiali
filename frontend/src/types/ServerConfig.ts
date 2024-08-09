@@ -145,10 +145,10 @@ export interface ToleranceConfig {
 */
 
 export interface ServerConfig {
-  accessibleNamespaces: Array<string>;
   ambientEnabled: boolean;
   authStrategy: string;
   clusters: { [key: string]: MeshCluster };
+  clusterWideAccess: boolean;
   deployment: DeploymentConfig;
   gatewayAPIClasses: GatewayAPIClass[];
   gatewayAPIEnabled: boolean;

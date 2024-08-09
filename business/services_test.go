@@ -33,7 +33,7 @@ func TestServiceListParsing(t *testing.T) {
 	s1 := kubetest.FakeService("Namespace", "reviews")
 	s2 := kubetest.FakeService("Namespace", "httpbin")
 	objects := []runtime.Object{
-		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "Namespace"}},
+		kubetest.FakeNamespace("Namespace"),
 		&s1,
 		&s2,
 	}
@@ -74,7 +74,7 @@ func TestParseRegistryServices(t *testing.T) {
 	require.NoError(yaml.Unmarshal(configz, &serviceEntries))
 	require.Equal(2, len(serviceEntries))
 
-	objs := []runtime.Object{&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "electronic-shop"}}}
+	objs := []runtime.Object{kubetest.FakeNamespace("electronic-shop")}
 	objs = append(objs, kubernetes.ToRuntimeObjects(serviceEntries)...)
 	k8s := kubetest.NewFakeK8sClient(objs...)
 	k8sclients := make(map[string]kubernetes.ClientInterface)
@@ -133,11 +133,11 @@ func TestGetServiceListFromMultipleClusters(t *testing.T) {
 	clientFactory := kubetest.NewK8SClientFactoryMock(nil)
 	clients := map[string]kubernetes.ClientInterface{
 		conf.KubernetesConfig.ClusterName: kubetest.NewFakeK8sClient(
-			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "bookinfo"}},
+			kubetest.FakeNamespace("bookinfo"),
 			&core_v1.Service{ObjectMeta: meta_v1.ObjectMeta{Name: "ratings-home-cluster", Namespace: "bookinfo"}},
 		),
 		"west": kubetest.NewFakeK8sClient(
-			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "bookinfo"}},
+			kubetest.FakeNamespace("bookinfo"),
 			&core_v1.Service{ObjectMeta: meta_v1.ObjectMeta{Name: "ratings-west-cluster", Namespace: "bookinfo"}},
 		),
 	}
@@ -168,11 +168,11 @@ func TestMultiClusterGetService(t *testing.T) {
 	clientFactory := kubetest.NewK8SClientFactoryMock(nil)
 	clients := map[string]kubernetes.ClientInterface{
 		conf.KubernetesConfig.ClusterName: kubetest.NewFakeK8sClient(
-			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "bookinfo"}},
+			kubetest.FakeNamespace("bookinfo"),
 			&core_v1.Service{ObjectMeta: meta_v1.ObjectMeta{Name: "ratings-home-cluster", Namespace: "bookinfo"}},
 		),
 		"west": kubetest.NewFakeK8sClient(
-			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "bookinfo"}},
+			kubetest.FakeNamespace("bookinfo"),
 			&core_v1.Service{ObjectMeta: meta_v1.ObjectMeta{Name: "ratings-west-cluster", Namespace: "bookinfo"}},
 		),
 	}
@@ -203,11 +203,11 @@ func TestMultiClusterServiceUpdate(t *testing.T) {
 	clientFactory := kubetest.NewK8SClientFactoryMock(nil)
 	clients := map[string]kubernetes.ClientInterface{
 		conf.KubernetesConfig.ClusterName: kubetest.NewFakeK8sClient(
-			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "bookinfo"}},
+			kubetest.FakeNamespace("bookinfo"),
 			&core_v1.Service{ObjectMeta: meta_v1.ObjectMeta{Name: "ratings-home-cluster", Namespace: "bookinfo"}},
 		),
 		"west": kubetest.NewFakeK8sClient(
-			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "bookinfo"}},
+			kubetest.FakeNamespace("bookinfo"),
 			&core_v1.Service{ObjectMeta: meta_v1.ObjectMeta{Name: "ratings-west-cluster", Namespace: "bookinfo"}},
 		),
 	}
@@ -245,11 +245,11 @@ func TestMultiClusterGetServiceDetails(t *testing.T) {
 	clientFactory := kubetest.NewK8SClientFactoryMock(nil)
 	clients := map[string]kubernetes.ClientInterface{
 		conf.KubernetesConfig.ClusterName: kubetest.NewFakeK8sClient(
-			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "bookinfo"}},
+			kubetest.FakeNamespace("bookinfo"),
 			&core_v1.Service{ObjectMeta: meta_v1.ObjectMeta{Name: "ratings-home-cluster", Namespace: "bookinfo"}},
 		),
 		"west": kubetest.NewFakeK8sClient(
-			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "bookinfo"}},
+			kubetest.FakeNamespace("bookinfo"),
 			&core_v1.Service{ObjectMeta: meta_v1.ObjectMeta{Name: "ratings-west-cluster", Namespace: "bookinfo"}},
 		),
 	}
@@ -280,11 +280,11 @@ func TestMultiClusterGetServiceAppName(t *testing.T) {
 	clientFactory := kubetest.NewK8SClientFactoryMock(nil)
 	clients := map[string]kubernetes.ClientInterface{
 		conf.KubernetesConfig.ClusterName: kubetest.NewFakeK8sClient(
-			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "bookinfo"}},
+			kubetest.FakeNamespace("bookinfo"),
 			&core_v1.Service{ObjectMeta: meta_v1.ObjectMeta{Name: "ratings-home-cluster", Namespace: "bookinfo"}},
 		),
 		"west": kubetest.NewFakeK8sClient(
-			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "bookinfo"}},
+			kubetest.FakeNamespace("bookinfo"),
 			&core_v1.Service{
 				ObjectMeta: meta_v1.ObjectMeta{
 					Name:      "ratings-west-cluster",

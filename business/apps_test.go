@@ -7,7 +7,6 @@ import (
 	osproject_v1 "github.com/openshift/api/project/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	core_v1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
@@ -31,7 +30,7 @@ func TestGetAppListFromDeployments(t *testing.T) {
 	config.Set(conf)
 	// Auxiliar fake* tests defined in workload_test.go
 	objects := []runtime.Object{
-		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}},
+		kubetest.FakeNamespace("Namespace"),
 		&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}},
 	}
 	for _, obj := range FakeDeployments(*conf) {

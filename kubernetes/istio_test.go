@@ -20,7 +20,7 @@ func TestGetClusterInfoFromIstiod(t *testing.T) {
 
 	conf := config.NewConfig()
 	k8s := kubetest.NewFakeK8sClient(
-		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "istio-system"}},
+		kubetest.FakeNamespace("istio-system"),
 		&apps_v1.Deployment{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:      "istiod",
@@ -57,7 +57,7 @@ func TestGetClusterInfoFromIstiodFails(t *testing.T) {
 
 	conf := config.NewConfig()
 	k8s := kubetest.NewFakeK8sClient(
-		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "istio-system"}},
+		kubetest.FakeNamespace("istio-system"),
 		&apps_v1.Deployment{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:      "istiod",
@@ -88,7 +88,7 @@ func TestClusterNameFromIstiodUsesConfigWhenSet(t *testing.T) {
 	conf := config.NewConfig()
 	conf.ExternalServices.Istio.IstiodDeploymentName = "different-istiod"
 	k8s := kubetest.NewFakeK8sClient(
-		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "istio-system"}},
+		kubetest.FakeNamespace("istio-system"),
 		&apps_v1.Deployment{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:      "istiod",
@@ -142,7 +142,7 @@ func TestClusterNameFromIstiodResolvesClusterWithoutConfig(t *testing.T) {
 	conf := config.NewConfig()
 	conf.ExternalServices.Istio.IstiodDeploymentName = ""
 	k8s := kubetest.NewFakeK8sClient(
-		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "istio-system"}},
+		kubetest.FakeNamespace("istio-system"),
 		&apps_v1.Deployment{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:      "istiod",

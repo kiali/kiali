@@ -1058,7 +1058,7 @@ func TestGetWorkloadMultiCluster(t *testing.T) {
 	clientFactory := kubetest.NewK8SClientFactoryMock(nil)
 	clients := map[string]kubernetes.ClientInterface{
 		"east": kubetest.NewFakeK8sClient(
-			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "bookinfo"}},
+			kubetest.FakeNamespace("bookinfo"),
 			&apps_v1.Deployment{
 				ObjectMeta: meta_v1.ObjectMeta{
 					Name:      "ratings-v1",
@@ -1070,7 +1070,7 @@ func TestGetWorkloadMultiCluster(t *testing.T) {
 			},
 		),
 		"west": kubetest.NewFakeK8sClient(
-			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "bookinfo"}},
+			kubetest.FakeNamespace("bookinfo"),
 			&apps_v1.Deployment{
 				ObjectMeta: meta_v1.ObjectMeta{
 					Name:      "ratings-v1",

@@ -197,6 +197,7 @@ func NewKubeCache(kialiClient kubernetes.ClientInterface, cfg config.Config) (*k
 	}
 
 	if c.clusterScoped {
+		// note that we ignore accessibleNamespaces - if we are cluster scoped, we will watch all namespaces
 		log.Debug("[Kiali Cache] Using 'cluster' scoped Kiali Cache")
 		if err := c.startInformers(""); err != nil {
 			return nil, err
@@ -205,7 +206,11 @@ func NewKubeCache(kialiClient kubernetes.ClientInterface, cfg config.Config) (*k
 		log.Debug("[Kiali Cache] Using 'namespace' scoped Kiali Cache")
 		c.nsCacheLister = make(map[string]*cacheLister)
 		c.stopNSChans = make(map[string]chan struct{})
-		for _, ns := range cfg.Deployment.AccessibleNamespaces {
+		// Since we do not have cluster wide access, we do not have permission to list all namespaces.
+		// However, we know the list of accessible namespaces based on the discovery selectors found in the main Kiali configuration.
+		// Note if this is a remote cluster, that remote cluster must have the same namespaces as those in our own local
+		// cluster's accessible namespaces. This is one reason why we suggest enabling CWA for multi-cluster environments.
+		for _, ns := range c.cfg.Deployment.AccessibleNamespaces {
 			if err := c.startInformers(ns); err != nil {
 				return nil, err
 			}
@@ -217,7 +222,7 @@ func NewKubeCache(kialiClient kubernetes.ClientInterface, cfg config.Config) (*k
 
 // It will indicate if a namespace should have a cache
 func (c *kubeCache) isCached(namespace string) bool {
-	if namespace != "" {
+	if !c.clusterScoped && namespace != "" {
 		return slices.Contains(c.cfg.Deployment.AccessibleNamespaces, namespace)
 	}
 	return false

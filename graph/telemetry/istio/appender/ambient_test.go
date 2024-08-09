@@ -80,7 +80,7 @@ func setupWorkloadEntries(t *testing.T) *business.Layer {
 			},
 		}}
 
-	ns := &core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: appNamespace}}
+	ns := kubetest.FakeNamespace(appNamespace)
 
 	k8s := kubetest.NewFakeK8sClient(k8spod1, k8spod2, k8spod3, k8spod4, k8spod5, ns)
 	conf := config.NewConfig()
