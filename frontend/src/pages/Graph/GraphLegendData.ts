@@ -19,6 +19,7 @@ import edgeWarnImage from '../../assets/img/graph/cy/edge-warn.svg';
 import edgeIdlemage from '../../assets/img/graph/cy/edge-idle.svg';
 import edgeTcpImage from '../../assets/img/graph/cy/edge-tcp.svg';
 import edgeMtlsImage from '../../assets/img/graph/mtls-badge.svg';
+import tcphttpImage from '../../assets/img/graph/cy/edge-tcp-http.svg';
 // Traffic Animation
 import trafficNormalImage from '../../assets/img/graph/cy/traffic-normal-request.svg';
 import trafficFailedImage from '../../assets/img/graph/cy/traffic-failed-request.svg';
@@ -49,22 +50,34 @@ export interface GraphLegendItemRow {
   label: string;
 }
 
-export const legendData = (): GraphLegendItem[] => {
-  const nodesBadges = [
-    { label: t('Circuit Breaker'), icon: badgeCircuitBreakerImage },
-    { label: t('Fault Injection'), icon: badgeFaultInjectionImage },
-    { label: t('Gateway'), icon: badgeGatewaysImage },
-    { label: t('Mirroring'), icon: badgeMirroringImage },
-    { label: t('Missing Sidecar'), icon: badgeMissingSidecarImage },
-    { label: t('Request Timeout'), icon: badgeRequestTimeoutImage },
-    { label: t('Traffic Shifting / TCP Traffic Shifting'), icon: badgeTrafficShiftingSourceImage },
-    { label: t('Traffic Source'), icon: badgeTrafficSourceImage },
-    { label: t('Virtual Service / Request Routing'), icon: badgeVirtualServicesImage },
-    { label: t('Workload Entry'), icon: badgeWorkloadEntryImage }
-  ];
+const nodeBadges = [
+  { label: t('Circuit Breaker'), icon: badgeCircuitBreakerImage },
+  { label: t('Fault Injection'), icon: badgeFaultInjectionImage },
+  { label: t('Gateway'), icon: badgeGatewaysImage },
+  { label: t('Mirroring'), icon: badgeMirroringImage },
+  { label: t('Missing Sidecar'), icon: badgeMissingSidecarImage },
+  { label: t('Request Timeout'), icon: badgeRequestTimeoutImage },
+  { label: t('Traffic Shifting / TCP Traffic Shifting'), icon: badgeTrafficShiftingSourceImage },
+  { label: t('Traffic Source'), icon: badgeTrafficSourceImage },
+  { label: t('Virtual Service / Request Routing'), icon: badgeVirtualServicesImage },
+  { label: t('Workload Entry'), icon: badgeWorkloadEntryImage }
+];
 
+export const edges = [
+  { label: t('Failure'), icon: edgeDangerImage },
+  { label: t('Degraded'), icon: edgeWarnImage },
+  { label: t('Healthy'), icon: edgeSuccessImage },
+  { label: t('TCP Connection'), icon: edgeTcpImage },
+  { label: t('Idle'), icon: edgeIdlemage },
+  { label: t('mTLS (badge)'), icon: edgeMtlsImage }
+];
+
+export const legendData = (): GraphLegendItem[] => {
   if (serverConfig.ambientEnabled) {
-    nodesBadges.push({ label: t('Waypoint'), icon: badgeWaypointImage });
+    nodeBadges.push({ label: t('Waypoint'), icon: badgeWaypointImage });
+    edges[6] = { label: t('mTLS (badge)'), icon: edgeMtlsImage };
+    edges[5] = { label: t('Idle'), icon: edgeIdlemage };
+    edges[4] = { label: t('TCP+HTTP telemetry'), icon: tcphttpImage };
   }
 
   return [
@@ -96,14 +109,7 @@ export const legendData = (): GraphLegendItem[] => {
     },
     {
       title: t('Edges'),
-      data: [
-        { label: t('Failure'), icon: edgeDangerImage },
-        { label: t('Degraded'), icon: edgeWarnImage },
-        { label: t('Healthy'), icon: edgeSuccessImage },
-        { label: t('TCP Connection'), icon: edgeTcpImage },
-        { label: t('Idle'), icon: edgeIdlemage },
-        { label: t('mTLS (badge)'), icon: edgeMtlsImage }
-      ]
+      data: edges
     },
     {
       title: t('Traffic Animation'),
@@ -116,7 +122,7 @@ export const legendData = (): GraphLegendItem[] => {
     {
       title: t('Node Badges'),
       isBadge: true,
-      data: nodesBadges
+      data: nodeBadges
     }
   ];
 };
