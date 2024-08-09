@@ -19,12 +19,12 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - name: Check out code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: ${{ inputs.build_branch }}
 
       - name: Set up Go
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
           # The builtin cache feature ensures that installing golangci-lint
@@ -33,7 +33,7 @@ jobs:
           cache-dependency-path: go.sum
 
       - name: Download go binary
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: kiali
           path: ~/go/bin/
@@ -42,7 +42,7 @@ jobs:
         run: chmod +x ~/go/bin/kiali
 
       - name: Download frontend build
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: build
           path: frontend/build

@@ -12,10 +12,10 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: ${{ inputs.build_branch }}
-    
+
       - name: Determine go version
         id: go_version
         run: |
@@ -24,10 +24,10 @@ jobs:
           # Remove any pre release identifier (ie: "-SNAPSHOT")
           GO_VERSION=${GO_VERSION%-*}
           echo $GO_VERSION
-          echo "go_version=$GO_VERSION" >> $GITHUB_ENV 
+          echo "go_version=$GO_VERSION" >> $GITHUB_ENV
 
       - name: Set up Go
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v5
         with:
           go-version: ${{ env.go_version }}
           cache: true
@@ -51,7 +51,7 @@ jobs:
         run: make -e GO_TEST_FLAGS="-race" test
 
       - name: Upload go binary
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: kiali
           path: ~/go/bin/kiali

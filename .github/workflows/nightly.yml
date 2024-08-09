@@ -26,7 +26,7 @@ jobs:
       quay_tag: ${{ env.quay_tag }}
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         ref: ${{ github.event.inputs.release_branch || github.ref_name }}
 
@@ -75,12 +75,12 @@ jobs:
       QUAY_TAG: ${{ needs.initialize.outputs.quay_tag }}
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         ref: ${{ github.event.inputs.release_branch || github.ref_name }}
 
     - name: Set up Go
-      uses: actions/setup-go@v4
+      uses: actions/setup-go@v5
       with:
         go-version-file: go.mod
         # The builtin cache feature ensures that installing golangci-lint
@@ -89,7 +89,7 @@ jobs:
         cache-dependency-path: go.sum
 
     - name: Download frontend build
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: build
         path: frontend/build
