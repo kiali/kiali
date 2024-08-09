@@ -15,6 +15,7 @@ func NewMetadata() Metadata {
 const (
 	Aggregate             MetadataKey = "aggregate" // the prom attribute used for aggregation
 	AggregateValue        MetadataKey = "aggregateValue"
+	Display               MetadataKey = "display"
 	DestPrincipal         MetadataKey = "destPrincipal"
 	DestServices          MetadataKey = "destServices"
 	HealthData            MetadataKey = "healthData"

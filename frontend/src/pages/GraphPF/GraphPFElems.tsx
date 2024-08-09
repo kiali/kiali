@@ -82,6 +82,8 @@ export type NodeData = DecoratedGraphNodeData & {
 };
 
 export type EdgeData = DecoratedGraphEdgeData & {
+  direction: string;
+  display: string;
   endTerminalType: EdgeTerminalType;
   hasSpans?: Span[];
   isFind?: boolean;
@@ -90,6 +92,7 @@ export type EdgeData = DecoratedGraphEdgeData & {
   isUnhighlighted?: boolean;
   onHover?: (element: GraphElement, isMouseIn: boolean) => void;
   pathStyle?: React.CSSProperties;
+  startTerminalType?: EdgeTerminalType;
   tag?: string;
   tagStatus?: NodeStatus;
 };
@@ -568,6 +571,14 @@ const getPathStyleStroke = (data: EdgeData): PFColors => {
 };
 
 const getPathStyle = (data: EdgeData): React.CSSProperties => {
+  // This is to combine just tcp and http edges
+  if (data.display === 'multiple') {
+    return {
+      filter: `drop-shadow(0 0 2px ${getPathStyleStroke(data)}) drop-shadow(0 0 2px ${getPathStyleStroke(data)})`,
+      stroke: EdgeColorTCPWithTraffic,
+      strokeWidth: 3
+    } as React.CSSProperties;
+  }
   return {
     stroke: getPathStyleStroke(data),
     strokeWidth: 3
@@ -576,8 +587,13 @@ const getPathStyle = (data: EdgeData): React.CSSProperties => {
 
 export const setEdgeOptions = (edge: EdgeModel, nodeMap: NodeMap, settings: GraphPFSettings): void => {
   const data = edge.data as EdgeData;
+  if (data.display === 'reverse') {
+    data.startTerminalType = data.protocol === Protocol.TCP ? EdgeTerminalType.square : EdgeTerminalType.directional;
+  }
 
-  data.endTerminalType = data.protocol === Protocol.TCP ? EdgeTerminalType.square : EdgeTerminalType.directional;
+  if (data.display !== 'hide') {
+    data.endTerminalType = data.protocol === Protocol.TCP ? EdgeTerminalType.square : EdgeTerminalType.directional;
+  }
   data.pathStyle = getPathStyle(data);
   data.tag = getEdgeLabel(edge, nodeMap, settings);
   data.tagStatus = getEdgeStatus(data);
@@ -764,21 +780,35 @@ export const nodesOut = (nodes: Node[]): Node[] => {
   return Array.from(new Set(result));
 };
 
-export const predecessors = (node: Node): GraphElement[] => {
+export const predecessors = (node: Node, processed: GraphElement[]): GraphElement[] => {
   let result = [] as GraphElement[];
   const targetEdges = node.getTargetEdges();
   const sourceNodes = targetEdges.map(e => e.getSource());
   result = result.concat(targetEdges, sourceNodes);
-  sourceNodes.forEach(n => (result = result.concat(predecessors(n))));
+
+  sourceNodes.forEach(n => {
+    if (processed.indexOf(n) === -1) {
+      // Processed nodes is used to avoid infinite loops
+      processed = processed.concat(n);
+      result = result.concat(predecessors(n, processed));
+    }
+  });
+
   return result;
 };
 
-export const successors = (node: Node): GraphElement[] => {
+export const successors = (node: Node, processed: GraphElement[]): GraphElement[] => {
   let result = [] as GraphElement[];
   const sourceEdges = node.getSourceEdges();
   const targetNodes = sourceEdges.map(e => e.getTarget());
   result = result.concat(sourceEdges, targetNodes);
-  targetNodes.forEach(n => (result = result.concat(successors(n))));
+  targetNodes.forEach(n => {
+    if (processed.indexOf(n) === -1) {
+      // Processed nodes is used to avoid infinite loops
+      processed = processed.concat(n);
+      result = result.concat(successors(n, processed));
+    }
+  });
   return result;
 };
 
