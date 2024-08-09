@@ -90,7 +90,7 @@ func (a AmbientAppender) handleWaypoints(trafficMap graph.TrafficMap, globalInfo
 				// If not show the waypoint, mark the nodes
 				if a.ShowWaypoints {
 					if waypointsNodes[edge.Dest.ID] {
-						edge.Metadata[graph.Direction] = "reverse"
+						edge.Metadata[graph.Display] = "reverse"
 					}
 				}
 				for j, comparedEdge := range n.Edges {

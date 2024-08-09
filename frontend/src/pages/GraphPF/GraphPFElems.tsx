@@ -92,6 +92,7 @@ export type EdgeData = DecoratedGraphEdgeData & {
   isUnhighlighted?: boolean;
   onHover?: (element: GraphElement, isMouseIn: boolean) => void;
   pathStyle?: React.CSSProperties;
+  startTerminalType?: EdgeTerminalType;
   tag?: string;
   tagStatus?: NodeStatus;
 };
@@ -586,6 +587,10 @@ const getPathStyle = (data: EdgeData): React.CSSProperties => {
 
 export const setEdgeOptions = (edge: EdgeModel, nodeMap: NodeMap, settings: GraphPFSettings): void => {
   const data = edge.data as EdgeData;
+  if (data.display === 'reverse') {
+    data.startTerminalType = data.protocol === Protocol.TCP ? EdgeTerminalType.square : EdgeTerminalType.directional;
+  }
+
   if (data.display !== 'hide') {
     data.endTerminalType = data.protocol === Protocol.TCP ? EdgeTerminalType.square : EdgeTerminalType.directional;
   }
