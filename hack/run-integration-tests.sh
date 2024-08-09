@@ -18,6 +18,7 @@ ISTIO_VERSION=""
 TEST_SUITE="${BACKEND}"
 SETUP_ONLY="false"
 TESTS_ONLY="false"
+WITH_VIDEO="false"
 
 # process command line args
 while [[ $# -gt 0 ]]; do
@@ -51,6 +52,14 @@ while [[ $# -gt 0 ]]; do
       fi
       shift;shift
       ;;
+    -wv|--with-video)
+      WITH_VIDEO="${2}"
+      if [ "${WITH_VIDEO}" != "true" -a "${WITH_VIDEO}" != "false" ]; then
+        echo "--with-video option must be one of 'true' or 'false'"
+        exit 1
+      fi
+      shift;shift
+      ;;
     -h|--help)
       cat <<HELPMSG
 Valid command line arguments:
@@ -66,6 +75,9 @@ Valid command line arguments:
   -ts|--test-suite <${BACKEND}|${BACKEND_EXTERNAL_CONTROLPLANE}|${FRONTEND}|${FRONTEND_AMBIENT}|${FRONTEND_PRIMARY_REMOTE}|${FRONTEND_MULTI_PRIMARY}|${FRONTEND_TEMPO}>
     Which test suite to run.
     Default: ${BACKEND}
+  -wv|--with-video <true|false>
+    If true, will record video for the cypress test run.
+    Default: ${WITH_VIDEO}
   -h|--help:
     This message
 
@@ -97,6 +109,7 @@ ISTIO_VERSION=$ISTIO_VERSION
 SETUP_ONLY=$SETUP_ONLY
 TESTS_ONLY=$TESTS_ONLY
 TEST_SUITE=$TEST_SUITE
+WITH_VIDEO=$WITH_VIDEO
 === SETTINGS ===
 EOM
 
@@ -313,7 +326,7 @@ elif [ "${TEST_SUITE}" == "${FRONTEND}" ]; then
   export CYPRESS_BASE_URL="${KIALI_URL}"
   export CYPRESS_NUM_TESTS_KEPT_IN_MEMORY=0
   # Recorded video is unusable due to low resources in CI: https://github.com/cypress-io/cypress/issues/4722
-  export CYPRESS_VIDEO=false
+  export CYPRESS_VIDEO="${WITH_VIDEO}"
 
   if [ "${SETUP_ONLY}" == "true" ]; then
     exit 0
@@ -338,7 +351,7 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_AMBIENT}" ]; then
   export CYPRESS_BASE_URL="${KIALI_URL}"
   export CYPRESS_NUM_TESTS_KEPT_IN_MEMORY=0
   # Recorded video is unusable due to low resources in CI: https://github.com/cypress-io/cypress/issues/4722
-  export CYPRESS_VIDEO=false
+  export CYPRESS_VIDEO="${WITH_VIDEO}"
 
   if [ "${SETUP_ONLY}" == "true" ]; then
     exit 0
@@ -361,7 +374,7 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_PRIMARY_REMOTE}" ]; then
   export CYPRESS_CLUSTER2_CONTEXT="kind-west"
   export CYPRESS_NUM_TESTS_KEPT_IN_MEMORY=0
   # Recorded video is unusable due to low resources in CI: https://github.com/cypress-io/cypress/issues/4722
-  export CYPRESS_VIDEO=false
+  export CYPRESS_VIDEO="${WITH_VIDEO}"
   export CYPRESS_USERNAME="kiali"
   export CYPRESS_PASSWD="kiali"
 
@@ -386,7 +399,7 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_MULTI_PRIMARY}" ]; then
   export CYPRESS_CLUSTER1_CONTEXT="kind-east"
   export CYPRESS_CLUSTER2_CONTEXT="kind-west"
   export CYPRESS_NUM_TESTS_KEPT_IN_MEMORY=0
-  export CYPRESS_VIDEO=false
+  export CYPRESS_VIDEO="${WITH_VIDEO}"
   export CYPRESS_AUTH_PROVIDER="keycloak"
   export CYPRESS_USERNAME="kiali"
   export CYPRESS_PASSWD="kiali"
@@ -412,7 +425,7 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_TEMPO}" ]; then
   export CYPRESS_BASE_URL="${KIALI_URL}"
   export CYPRESS_NUM_TESTS_KEPT_IN_MEMORY=0
   # Recorded video is unusable due to low resources in CI: https://github.com/cypress-io/cypress/issues/4722
-  export CYPRESS_VIDEO=false
+  export CYPRESS_VIDEO="${WITH_VIDEO}"
 
   if [ "${SETUP_ONLY}" == "true" ]; then
     exit 0
