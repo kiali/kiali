@@ -26,6 +26,23 @@ Given('user is at the {string} page', (page: string) => {
   cy.visit(`${Cypress.config('baseUrl')}/console/${page}?refresh=0`);
 });
 
+Given('user is at the {string} page for the {string} namespace', (page: string, namespace: string) => {
+  // Forcing "Pause" to not cause unhandled promises from the browser when cypress is testing
+  cy.visit(`${Cypress.config('baseUrl')}/console/${page}?refresh=0&namespaces=${namespace}`);
+});
+
+Given(
+  'user is at the Istio Config page for the {string} namespace and the {string} istio type and the {string} config in the {string} cluster',
+  (namespace: string, istioType: string, istioConfig: string, cluster: string) => {
+    // Forcing "Pause" to not cause unhandled promises from the browser when cypress is testing
+    cy.visit(
+      `${Cypress.config(
+        'baseUrl'
+      )}/console/namespaces/${namespace}/istio/${istioType}/${istioConfig}?refresh=0&clusterName=${cluster}`
+    );
+  }
+);
+
 Given(
   'user is at the details page for the {string} {string} located in the {string} cluster',
   (detail: detailType, namespacedNamed: string, cluster: string) => {
