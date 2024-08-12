@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       tag_branch:
-        description: Branch to tag, (Separate branches by commas. Ex v1.36,v1.48)
+        description: Branch to tag, (Separate branches by commas. Ex v1.65,v1.73)
         required: true
-        default: v1.48
+        default: v1.73
         type: string
 
 jobs:
