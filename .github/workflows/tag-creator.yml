@@ -16,108 +16,79 @@ jobs:
     outputs:
       branches: ${{ env.branches }}
     steps:
-      - name: Prepare script to var
-        id: script_convert
-        run: |
-          cat <<-EOF > conversor.py
-          import sys, json
+    - name: Prepare script to var
+      id: script_convert
+      run: |
+        cat <<-EOF > conversor.py
+        import sys, json
 
-          branch_arg = sys.argv[1]
-          branches = branch_arg.split(',')
+        branch_arg = sys.argv[1]
+        branches = branch_arg.split(',')
 
-          print(json.dumps(branches))
-          EOF
+        print(json.dumps(branches))
+        EOF
 
-      - name: Set Branch
-        id: branches
-        env:
-          TAG_BRANCHES: ${{ github.event.inputs.tag_branch }}
-        run: |
-          BRANCHES=$(python conversor.py $TAG_BRANCHES)
-          echo "branches=$BRANCHES" >> $GITHUB_ENV 
+    - name: Set Branch
+      id: branches
+      env:
+        TAG_BRANCHES: ${{ github.event.inputs.tag_branch }}
+      run: |
+        BRANCHES=$(python conversor.py $TAG_BRANCHES)
+        echo "branches=$BRANCHES" >> $GITHUB_ENV
   create_tag:
-    needs: [ initialize ]
+    needs: [initialize]
     runs-on: ubuntu-20.04
     strategy:
       matrix:
         branch: ${{fromJson(needs.initialize.outputs.branches)}}
     steps:
-      - name: Checkout Backend
-        uses: actions/checkout@v4
-        with:
-          ref: ${{matrix.branch}}
-      - name: Prepare scripts
-        run: |
-          cat <<-EOF > bump.py
-          import sys
-          release_type = sys.argv[1]
-          version = sys.argv[2]
-          parts = version.split('.')
-          major = int(parts[0][1:])
-          minor = int(parts[1])
-          patch = int(parts[2])
-          if release_type == 'major':
-              major = major + 1
-              minor = 0
-              patch = 0
-          elif release_type == 'minor':
-              minor = minor + 1
-              patch = 0
-          elif release_type == 'patch':
-              patch = patch + 1
-          print('.'.join(['v' + str(major), str(minor), str(patch)]))
-          EOF
+    - name: Checkout Backend
+      uses: actions/checkout@v4
+      with:
+        ref: ${{matrix.branch}}
+    - name: Prepare scripts
+      run: |
+        cat <<-EOF > bump.py
+        import sys
+        release_type = sys.argv[1]
+        version = sys.argv[2]
+        parts = version.split('.')
+        major = int(parts[0][1:])
+        minor = int(parts[1])
+        patch = int(parts[2])
+        if release_type == 'major':
+            major = major + 1
+            minor = 0
+            patch = 0
+        elif release_type == 'minor':
+            minor = minor + 1
+            patch = 0
+        elif release_type == 'patch':
+            patch = patch + 1
+        print('.'.join(['v' + str(major), str(minor), str(patch)]))
+        EOF
 
-      - name: Configure git backend
-        run: |
-          git config user.email 'kiali-dev@googlegroups.com'
+    - name: Configure git backend
+      run: |
+        git config user.email 'kiali-dev@googlegroups.com'
 
-          git config user.name 'kiali-bot'
-      - name: Create Tag in kiali/kiali
-        id: tag_kiali
-        env:
-            BRANCH: ${{matrix.branch}}
-        run: |
-          RAW_VERSION=$(sed -rn 's/^VERSION \?= (.*)/\1/p' Makefile)
+        git config user.name 'kiali-bot'
+    - name: Create Tag in kiali/kiali
+      id: tag_kiali
+      env:
+        BRANCH: ${{matrix.branch}}
+      run: |
+        RAW_VERSION=$(sed -rn 's/^VERSION \?= (.*)/\1/p' Makefile)
 
-          # Remove any pre release identifier (ie: "-SNAPSHOT")
-          RELEASE_VERSION=${RAW_VERSION%-*}
-          RELEASE_VERSION=$(python bump.py patch $RELEASE_VERSION)
+        # Remove any pre release identifier (ie: "-SNAPSHOT")
+        RELEASE_VERSION=${RAW_VERSION%-*}
+        RELEASE_VERSION=$(python bump.py patch $RELEASE_VERSION)
 
-          echo "release_version=$RELEASE_VERSION" >> $GITHUB_ENV 
+        echo "release_version=$RELEASE_VERSION" >> $GITHUB_ENV
 
-          sed -i -r "s/^VERSION \?= (.*)/VERSION \?= $RELEASE_VERSION/" Makefile
+        sed -i -r "s/^VERSION \?= (.*)/VERSION \?= $RELEASE_VERSION/" Makefile
+        sed -i -r 's/"version": (.*)/"version": "'${RELEASE_VERSION:1}'",/' frontend/package.json
 
-          if [[ $BRANCH != "v1.36" && $BRANCH != "v1.24" ]]; then
-            sed -i -r 's/"version": (.*)/"version": "'${RELEASE_VERSION:1}'",/' frontend/package.json
-            git add frontend/package.json
-          fi
-
-          git add Makefile
-          git commit -m "Release $RELEASE_VERSION"
-          git push origin && git push origin $(git rev-parse HEAD):refs/tags/$RELEASE_VERSION
-
-      # Check if version requested have the UI in our kiali/kiali-ui repo
-      - name: Checkout UI
-        if: ${{ matrix.branch == 'v1.24' || matrix.branch == 'v1.36'}}
-        uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.KIALI_TOKEN || github.token}}
-          repository: kiali/kiali-ui
-          ref: ${{matrix.branch}}
-      - name: Configure git UI
-        if: ${{ matrix.branch == 'v1.24' || matrix.branch == 'v1.36'}}
-        run: |
-          git config user.email 'kiali-dev@googlegroups.com'
-
-          git config user.name 'kiali-bot'
-      - name: Check if need old UI
-        id: check_ui_tag
-        env:
-            RELEASE_VERSION: ${{ env.release_version }}
-        if: ${{ matrix.branch == 'v1.24' || matrix.branch == 'v1.36'}}
-        run: |
-          sed -i -r 's/"version": (.*)/"version": "'${RELEASE_VERSION:1}'",/' package.json
-          git add package.json
-          git commit -m "Release $RELEASE_VERSION"
-          git push origin && git push origin $(git rev-parse HEAD):refs/tags/$RELEASE_VERSION
+        git add Makefile frontend/package.json
+        git commit -m "Release $RELEASE_VERSION"
+        git push origin && git push origin $(git rev-parse HEAD):refs/tags/$RELEASE_VERSION
