@@ -17,7 +17,6 @@ import { DirectionType } from 'pages/Overview/OverviewToolbar';
 import { ControlPlaneNamespaceStatus } from 'pages/Overview/ControlPlaneNamespaceStatus';
 import { PromisesRegistry } from 'utils/CancelablePromises';
 import { TLSInfo } from 'components/Overview/TLSInfo';
-import { CanaryUpgradeProgress } from 'pages/Overview/CanaryUpgradeProgress';
 import { OverviewCardControlPlaneNamespace } from 'pages/Overview/OverviewCardControlPlaneNamespace';
 import * as API from '../../../services/Api';
 import { IstioMetricsOptions } from 'types/MetricsOptions';
@@ -164,13 +163,6 @@ export class TargetPanelControlPlane extends React.Component<
 
           {!isRemoteCluster(nsInfo.annotations) && (
             <>
-              {this.state.canaryUpgradeStatus && this.hasCanaryUpgradeConfigured() && (
-                <>
-                  {targetPanelHR}
-                  <CanaryUpgradeProgress canaryUpgradeStatus={this.state.canaryUpgradeStatus} />
-                </>
-              )}
-
               {this.props.istioAPIEnabled && (
                 <>
                   {targetPanelHR}
@@ -199,16 +191,6 @@ export class TargetPanelControlPlane extends React.Component<
         </div>
       </div>
     );
-  };
-
-  private hasCanaryUpgradeConfigured = (): boolean => {
-    if (this.state.canaryUpgradeStatus) {
-      if (Object.keys(this.state.canaryUpgradeStatus.namespacesPerRevision).length > 1) {
-        return true;
-      }
-    }
-
-    return false;
   };
 
   private load = (): void => {

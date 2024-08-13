@@ -293,7 +293,6 @@ export class OverviewTrafficPolicies extends React.Component<OverviewTrafficPoli
   };
 
   render(): React.ReactNode {
-    console.log(this.props.opTarget);
     const canaryVersion = this.props.kind === 'canary' ? this.getCanaryUpgradeVersion(this.props.opTarget) : '';
 
     const modalAction =
