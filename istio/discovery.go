@@ -36,8 +36,6 @@ const (
 const (
 	// DefaultRevisionLabel is the value for the default revision.
 	DefaultRevisionLabel = "default"
-	// CanaryRevisionLabel is the value for the canary revision.
-	CanaryRevisionLabel = "canary"
 	// IstioInjectionLabel is the value for the istio injection label on a namespace.
 	IstioInjectionLabel = "istio-injection"
 )
