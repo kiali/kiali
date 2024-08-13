@@ -285,7 +285,7 @@ else
   else
     $CLIENT_EXE apply -n ${NAMESPACE} -f ${BOOKINFO_YAML}
     if [ "${AMBIENT_ENABLED}" == "true" ]; then
-      $CLIENT_EXE apply -f "${ISTIO_DIR}/samples/bookinfo/platform/kube/bookinfo-versions.yaml"
+      $CLIENT_EXE apply -f "${ISTIO_DIR}/samples/bookinfo/platform/kube/bookinfo-versions.yaml" -n ${NAMESPACE}
     fi
   fi
 fi
