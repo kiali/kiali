@@ -76,8 +76,9 @@ Feature: Kiali Apps List page
 
   @bookinfo-app
   @sleep-app
+  @sleep-app-scaleup-after
   Scenario: The idle status of a logical mesh application is reported in the list of applications
-    Given an idle application in the cluster
+    Given an idle sleep application in the cluster
     When I fetch the list of applications
     And user selects the "sleep" namespace
     Then the application should be listed as "idle"
