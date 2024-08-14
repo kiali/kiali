@@ -102,8 +102,9 @@ Feature: Kiali Workloads page
     Then the workload should be listed as "healthy"
 
   @sleep-app
+  @sleep-app-scaleup-after
   Scenario: The idle status of a workload is reported in the list of workloads
-    Given an idle workload in the cluster
+    Given an idle sleep workload in the cluster
     When user selects the "sleep" namespace
     Then the workload should be listed as "idle"
     And the health status of the workload should be "Not Ready"
