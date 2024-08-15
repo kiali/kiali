@@ -57,40 +57,25 @@ const (
 	// K8s Networking
 
 	K8sGateways    = "k8sgateways"
-	K8sGatewayType = "K8sGateway"
-	// K8sActualGatewayType There is a naming conflict between Istio and K8s Gateways, keeping here an actual type to show in YAML editor
-	K8sActualGatewayType = "Gateway"
-	K8sActualGateways    = "gateways"
+	K8sGatewayType = "Gateway"
 
-	K8sGatewayClasses       = "k8sgatewayclasses"
-	K8sGatewayClassType     = "GatewayClass"
-	K8sActualGatewayClasses = "gatewayclasses"
+	K8sGatewayClasses   = "k8sgatewayclasses"
+	K8sGatewayClassType = "GatewayClass"
 
-	K8sGRPCRoutes          = "k8sgrpcroutes"
-	K8sGRPCRouteType       = "K8sGRPCRoute"
-	K8sActualGRPCRouteType = "GRPCRoute"
-	K8sActualGRPCRoutes    = "grpcroutes"
+	K8sGRPCRoutes    = "k8sgrpcroutes"
+	K8sGRPCRouteType = "GRPCRoute"
 
 	K8sHTTPRoutes    = "k8shttproutes"
-	K8sHTTPRouteType = "K8sHTTPRoute"
-	// K8sActualHTTPRouteType There is a naming conflict between Istio and K8s Gateways, keeping here an actual type to show in YAML editor
-	K8sActualHTTPRouteType = "HTTPRoute"
-	K8sActualHTTPRoutes    = "httproutes"
+	K8sHTTPRouteType = "HTTPRoute"
 
-	K8sReferenceGrants          = "k8sreferencegrants"
-	K8sReferenceGrantType       = "K8sReferenceGrant"
-	K8sActualReferenceGrantType = "ReferenceGrant"
-	K8sActualReferenceGrants    = "referencegrants"
+	K8sReferenceGrants    = "k8sreferencegrants"
+	K8sReferenceGrantType = "ReferenceGrant"
 
-	K8sTCPRoutes          = "k8stcproutes"
-	K8sTCPRouteType       = "K8sTCPRoute"
-	K8sActualTCPRouteType = "TCPRoute"
-	K8sActualTCPRoutes    = "tcproutes"
+	K8sTCPRoutes    = "k8stcproutes"
+	K8sTCPRouteType = "TCPRoute"
 
-	K8sTLSRoutes          = "k8stlsroutes"
-	K8sTLSRouteType       = "K8sTLSRoute"
-	K8sActualTLSRouteType = "TLSRoute"
-	K8sActualTLSRoutes    = "tlsroutes"
+	K8sTLSRoutes    = "k8stlsroutes"
+	K8sTLSRouteType = "TLSRoute"
 
 	// Authorization PeerAuthentications
 	AuthorizationPolicies     = "authorizationpolicies"
@@ -181,28 +166,28 @@ var (
 		RequestAuthentications: RequestAuthenticationsType,
 	}
 
-	ResourceTypesToAPI = map[string]string{
-		DestinationRules: NetworkingGroupVersionV1.Group,
-		EnvoyFilters:     NetworkingGroupVersionV1Alpha3.Group,
-		Gateways:         NetworkingGroupVersionV1.Group,
-		ServiceEntries:   NetworkingGroupVersionV1.Group,
-		Sidecars:         NetworkingGroupVersionV1.Group,
-		VirtualServices:  NetworkingGroupVersionV1.Group,
-		WorkloadEntries:  NetworkingGroupVersionV1.Group,
-		WorkloadGroups:   NetworkingGroupVersionV1.Group,
-		WasmPlugins:      ExtensionGroupVersionV1Alpha1.Group,
-		Telemetries:      TelemetryGroupV1.Group,
+	ResourceTypesToAPI = map[string]schema.GroupVersionKind{
+		DestinationRules: NetworkingGroupVersionV1.WithKind(DestinationRuleType),
+		EnvoyFilters:     NetworkingGroupVersionV1Alpha3.WithKind(EnvoyFilterType),
+		Gateways:         NetworkingGroupVersionV1.WithKind(GatewayType),
+		ServiceEntries:   NetworkingGroupVersionV1.WithKind(ServiceEntryType),
+		Sidecars:         NetworkingGroupVersionV1.WithKind(SidecarType),
+		VirtualServices:  NetworkingGroupVersionV1.WithKind(VirtualServiceType),
+		WorkloadEntries:  NetworkingGroupVersionV1.WithKind(WorkloadEntryType),
+		WorkloadGroups:   NetworkingGroupVersionV1.WithKind(WorkloadGroupType),
+		WasmPlugins:      ExtensionGroupVersionV1Alpha1.WithKind(WasmPluginType),
+		Telemetries:      TelemetryGroupV1.WithKind(TelemetryType),
 
-		K8sGateways:        K8sNetworkingGroupVersionV1.Group,
-		K8sGRPCRoutes:      K8sNetworkingGroupVersionV1.Group,
-		K8sHTTPRoutes:      K8sNetworkingGroupVersionV1.Group,
-		K8sReferenceGrants: K8sNetworkingGroupVersionV1.Group,
-		K8sTCPRoutes:       K8sNetworkingGroupVersionV1Alpha2.Group,
-		K8sTLSRoutes:       K8sNetworkingGroupVersionV1Alpha2.Group,
+		K8sGateways:        K8sNetworkingGroupVersionV1.WithKind(K8sGatewayType),
+		K8sGRPCRoutes:      K8sNetworkingGroupVersionV1.WithKind(K8sGRPCRouteType),
+		K8sHTTPRoutes:      K8sNetworkingGroupVersionV1.WithKind(K8sHTTPRouteType),
+		K8sReferenceGrants: K8sNetworkingGroupVersionV1.WithKind(K8sReferenceGrantType),
+		K8sTCPRoutes:       K8sNetworkingGroupVersionV1Alpha2.WithKind(K8sTCPRouteType),
+		K8sTLSRoutes:       K8sNetworkingGroupVersionV1Alpha2.WithKind(K8sTLSRouteType),
 
-		AuthorizationPolicies:  SecurityGroupVersionV1.Group,
-		PeerAuthentications:    SecurityGroupVersionV1.Group,
-		RequestAuthentications: SecurityGroupVersionV1.Group,
+		AuthorizationPolicies:  SecurityGroupVersionV1.WithKind(AuthorizationPoliciesType),
+		PeerAuthentications:    SecurityGroupVersionV1.WithKind(PeerAuthenticationsType),
+		RequestAuthentications: SecurityGroupVersionV1.WithKind(RequestAuthenticationsType),
 	}
 )
 

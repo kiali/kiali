@@ -116,7 +116,7 @@ func (o *K8SClientMock) GetSecrets(namespace string, labelSelector string) ([]co
 	return args.Get(0).([]core_v1.Secret), args.Error(1)
 }
 
-func (o *K8SClientMock) GetSelfSubjectAccessReview(ctx context.Context, namespace, api, resourceType string, verbs []string) ([]*auth_v1.SelfSubjectAccessReview, error) {
+func (o *K8SClientMock) GetSelfSubjectAccessReview(ctx context.Context, namespace string, api, resourceType string, verbs []string) ([]*auth_v1.SelfSubjectAccessReview, error) {
 	args := o.Called(ctx, namespace, api, resourceType, verbs)
 	return args.Get(0).([]*auth_v1.SelfSubjectAccessReview), args.Error(1)
 }

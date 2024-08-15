@@ -30,9 +30,11 @@ func (s NoK8sGatewayChecker) Check() ([]*models.IstioCheck, bool) {
 func (s NoK8sGatewayChecker) ValidateGRPCRouteGateways(validations *[]*models.IstioCheck) bool {
 	valid := true
 
+	gvk := kubernetes.ResourceTypesToAPI[kubernetes.K8sGateways]
+
 	if len(s.K8sGRPCRoute.Spec.ParentRefs) > 0 {
 		for index, parentRef := range s.K8sGRPCRoute.Spec.ParentRefs {
-			if string(parentRef.Name) != "" && string(*parentRef.Kind) == kubernetes.K8sActualGatewayType && string(*parentRef.Group) == kubernetes.K8sNetworkingGroupVersionV1.Group {
+			if string(parentRef.Name) != "" && string(*parentRef.Kind) == gvk.Kind && string(*parentRef.Group) == gvk.Group {
 				namespace := s.K8sGRPCRoute.Namespace
 				if parentRef.Namespace != nil && string(*parentRef.Namespace) != "" {
 					namespace = string(*parentRef.Namespace)

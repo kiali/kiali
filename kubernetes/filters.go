@@ -514,7 +514,7 @@ func FilterK8sHTTPRoutesByService(allRoutes []*k8s_networking_v1.HTTPRoute, refe
 					}
 					if string(backendRef.Name) != "" && FilterByHost(string(backendRef.Name), backendRefNamespace, serviceName, namespace) &&
 						// a reference grant should exist to reference service namespace to route namespace, or they are in the same namespace
-						(HasMatchingReferenceGrant(route.Namespace, namespace, K8sActualHTTPRouteType, ServiceType, referenceGrants) || route.Namespace == namespace) {
+						(HasMatchingReferenceGrant(route.Namespace, namespace, K8sHTTPRouteType, ServiceType, referenceGrants) || route.Namespace == namespace) {
 						appendRoute = true
 					}
 				}
@@ -547,7 +547,7 @@ func FilterK8sGRPCRoutesByService(allRoutes []*k8s_networking_v1.GRPCRoute, refe
 					}
 					if string(backendRef.Name) != "" && FilterByHost(string(backendRef.Name), backendRefNamespace, serviceName, namespace) &&
 						// a reference grant should exist to reference service namespace to route namespace, or they are in the same namespace
-						(HasMatchingReferenceGrant(route.Namespace, namespace, K8sActualGRPCRouteType, ServiceType, referenceGrants) || route.Namespace == namespace) {
+						(HasMatchingReferenceGrant(route.Namespace, namespace, K8sGRPCRouteType, ServiceType, referenceGrants) || route.Namespace == namespace) {
 						appendRoute = true
 					}
 				}

@@ -29,9 +29,11 @@ func (g K8sGatewayReferences) References() models.IstioReferencesMap {
 func (g K8sGatewayReferences) getConfigReferences(gw *k8s_networking_v1.Gateway) []models.IstioReference {
 	result := make([]models.IstioReference, 0)
 
+	gvk := kubernetes.ResourceTypesToAPI[kubernetes.K8sGateways]
+
 	for _, rt := range g.K8sHTTPRoutes {
 		for _, pr := range rt.Spec.ParentRefs {
-			if string(pr.Name) == gw.Name && string(*pr.Kind) == kubernetes.K8sActualGatewayType && string(*pr.Group) == kubernetes.K8sNetworkingGroupVersionV1.Group {
+			if string(pr.Name) == gw.Name && string(*pr.Kind) == gvk.Kind && string(*pr.Group) == gvk.Group {
 				ref := models.IstioReference{Name: rt.Name, Namespace: rt.Namespace, ObjectType: models.ObjectTypeSingular[kubernetes.K8sHTTPRoutes]}
 				result = append(result, ref)
 			}
@@ -40,7 +42,7 @@ func (g K8sGatewayReferences) getConfigReferences(gw *k8s_networking_v1.Gateway)
 
 	for _, rt := range g.K8sGRPCRoutes {
 		for _, pr := range rt.Spec.ParentRefs {
-			if string(pr.Name) == gw.Name && string(*pr.Kind) == kubernetes.K8sActualGatewayType && string(*pr.Group) == kubernetes.K8sNetworkingGroupVersionV1.Group {
+			if string(pr.Name) == gw.Name && string(*pr.Kind) == gvk.Kind && string(*pr.Group) == gvk.Group {
 				ref := models.IstioReference{Name: rt.Name, Namespace: rt.Namespace, ObjectType: models.ObjectTypeSingular[kubernetes.K8sGRPCRoutes]}
 				result = append(result, ref)
 			}

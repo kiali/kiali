@@ -503,37 +503,37 @@ func (in *IstioConfigService) GetIstioConfigDetails(ctx context.Context, cluster
 	case kubernetes.K8sGateways:
 		istioConfigDetail.K8sGateway, err = in.userClients[cluster].GatewayAPI().GatewayV1().Gateways(namespace).Get(ctx, object, getOpts)
 		if err == nil {
-			istioConfigDetail.K8sGateway.Kind = kubernetes.K8sActualGatewayType
+			istioConfigDetail.K8sGateway.Kind = kubernetes.K8sGatewayType
 			istioConfigDetail.K8sGateway.APIVersion = kubernetes.K8sApiNetworkingVersionV1
 		}
 	case kubernetes.K8sGRPCRoutes:
 		istioConfigDetail.K8sGRPCRoute, err = in.userClients[cluster].GatewayAPI().GatewayV1().GRPCRoutes(namespace).Get(ctx, object, getOpts)
 		if err == nil {
-			istioConfigDetail.K8sGRPCRoute.Kind = kubernetes.K8sActualGRPCRouteType
+			istioConfigDetail.K8sGRPCRoute.Kind = kubernetes.K8sGRPCRouteType
 			istioConfigDetail.K8sGRPCRoute.APIVersion = kubernetes.K8sApiNetworkingVersionV1
 		}
 	case kubernetes.K8sHTTPRoutes:
 		istioConfigDetail.K8sHTTPRoute, err = in.userClients[cluster].GatewayAPI().GatewayV1().HTTPRoutes(namespace).Get(ctx, object, getOpts)
 		if err == nil {
-			istioConfigDetail.K8sHTTPRoute.Kind = kubernetes.K8sActualHTTPRouteType
+			istioConfigDetail.K8sHTTPRoute.Kind = kubernetes.K8sHTTPRouteType
 			istioConfigDetail.K8sHTTPRoute.APIVersion = kubernetes.K8sApiNetworkingVersionV1
 		}
 	case kubernetes.K8sReferenceGrants:
 		istioConfigDetail.K8sReferenceGrant, err = in.userClients[cluster].GatewayAPI().GatewayV1beta1().ReferenceGrants(namespace).Get(ctx, object, getOpts)
 		if err == nil {
-			istioConfigDetail.K8sReferenceGrant.Kind = kubernetes.K8sActualReferenceGrantType
+			istioConfigDetail.K8sReferenceGrant.Kind = kubernetes.K8sReferenceGrantType
 			istioConfigDetail.K8sReferenceGrant.APIVersion = kubernetes.K8sApiNetworkingVersionV1Beta1
 		}
 	case kubernetes.K8sTCPRoutes:
 		istioConfigDetail.K8sTCPRoute, err = in.userClients[cluster].GatewayAPI().GatewayV1alpha2().TCPRoutes(namespace).Get(ctx, object, getOpts)
 		if err == nil {
-			istioConfigDetail.K8sTCPRoute.Kind = kubernetes.K8sActualTCPRouteType
+			istioConfigDetail.K8sTCPRoute.Kind = kubernetes.K8sTCPRouteType
 			istioConfigDetail.K8sTCPRoute.APIVersion = kubernetes.K8sApiNetworkingVersionV1Alpha2
 		}
 	case kubernetes.K8sTLSRoutes:
 		istioConfigDetail.K8sTLSRoute, err = in.userClients[cluster].GatewayAPI().GatewayV1alpha2().TLSRoutes(namespace).Get(ctx, object, getOpts)
 		if err == nil {
-			istioConfigDetail.K8sTLSRoute.Kind = kubernetes.K8sActualTLSRouteType
+			istioConfigDetail.K8sTLSRoute.Kind = kubernetes.K8sTLSRouteType
 			istioConfigDetail.K8sTLSRoute.APIVersion = kubernetes.K8sApiNetworkingVersionV1Alpha2
 		}
 	case kubernetes.ServiceEntries:
@@ -608,7 +608,10 @@ func (in *IstioConfigService) GetIstioConfigDetails(ctx context.Context, cluster
 // GetIstioAPI provides the Kubernetes API that manages this Istio resource type
 // or empty string if it's not managed
 func GetIstioAPI(resourceType string) bool {
-	return kubernetes.ResourceTypesToAPI[resourceType] != ""
+	if _, ok := kubernetes.ResourceTypesToAPI[resourceType]; ok {
+		return true
+	}
+	return false
 }
 
 // DeleteIstioConfigDetail deletes the given Istio resource
@@ -1039,9 +1042,9 @@ func (in *IstioConfigService) GetIstioConfigPermissions(ctx context.Context, nam
 func getPermissions(ctx context.Context, k8s kubernetes.ClientInterface, cluster string, namespace, objectType string) (bool, bool, bool) {
 	var canCreate, canPatch, canDelete bool
 
-	if api, ok := kubernetes.ResourceTypesToAPI[objectType]; ok {
+	if gvk, ok := kubernetes.ResourceTypesToAPI[objectType]; ok {
 		resourceType := objectType
-		return getPermissionsApi(ctx, k8s, cluster, namespace, api, resourceType)
+		return getPermissionsApi(ctx, k8s, cluster, namespace, gvk.Group, resourceType)
 	}
 	return canCreate, canPatch, canDelete
 }

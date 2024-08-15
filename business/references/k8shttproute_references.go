@@ -80,8 +80,10 @@ func (n K8sHTTPRouteReferences) getConfigReferences(rt *k8s_networking_v1.HTTPRo
 func getAllK8sGateways(prs []k8s_networking_v1.ParentReference, ns string) []models.IstioReference {
 	allGateways := make([]models.IstioReference, 0)
 
+	gvk := kubernetes.ResourceTypesToAPI[kubernetes.K8sGateways]
+
 	for _, parentRef := range prs {
-		if string(parentRef.Name) != "" && string(*parentRef.Kind) == kubernetes.K8sActualGatewayType && string(*parentRef.Group) == kubernetes.K8sNetworkingGroupVersionV1.Group {
+		if string(parentRef.Name) != "" && string(*parentRef.Kind) == gvk.Kind && string(*parentRef.Group) == gvk.Group {
 			namespace := ns
 			if parentRef.Namespace != nil && string(*parentRef.Namespace) != "" {
 				namespace = string(*parentRef.Namespace)
@@ -98,7 +100,7 @@ func (n K8sHTTPRouteReferences) getAllK8sReferenceGrants(rt *k8s_networking_v1.H
 	for _, rGrant := range n.K8sReferenceGrants {
 		if len(rGrant.Spec.From) > 0 &&
 			string(rGrant.Spec.From[0].Namespace) == rt.Namespace &&
-			string(rGrant.Spec.From[0].Kind) == kubernetes.K8sActualHTTPRouteType {
+			string(rGrant.Spec.From[0].Kind) == kubernetes.ResourceTypesToAPI[kubernetes.K8sHTTPRoutes].Kind {
 			allGrants = append(allGrants, getK8sGrantReference(rGrant.Name, rGrant.Namespace))
 		}
 	}
