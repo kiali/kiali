@@ -25,8 +25,8 @@ func CreateHTTPRoute(name string, namespace string, gateway string, hosts []stri
 
 func AddGatewayParentRefToHTTPRoute(name, namespace string, rt *k8s_networking_v1.HTTPRoute) *k8s_networking_v1.HTTPRoute {
 	ns := k8s_networking_v1.Namespace(namespace)
-	group := k8s_networking_v1.Group(kubernetes.K8sNetworkingGroupVersionV1.Group)
-	kind := k8s_networking_v1.Kind(kubernetes.K8sActualGatewayType)
+	group := k8s_networking_v1.Group(kubernetes.ResourceTypesToAPI[kubernetes.K8sGatewayType].Group)
+	kind := k8s_networking_v1.Kind(kubernetes.ResourceTypesToAPI[kubernetes.K8sGatewayType].Kind)
 	rt.Spec.ParentRefs = append(rt.Spec.ParentRefs, k8s_networking_v1.ParentReference{
 		Name:      k8s_networking_v1.ObjectName(name),
 		Namespace: &ns,
@@ -84,8 +84,8 @@ func CreateGRPCRoute(name string, namespace string, gateway string, hosts []stri
 
 func AddGatewayParentRefToGRPCRoute(name, namespace string, rt *k8s_networking_v1.GRPCRoute) *k8s_networking_v1.GRPCRoute {
 	ns := k8s_networking_v1.Namespace(namespace)
-	group := k8s_networking_v1.Group(kubernetes.K8sNetworkingGroupVersionV1.Group)
-	kind := k8s_networking_v1.Kind(kubernetes.K8sActualGatewayType)
+	group := k8s_networking_v1.Group(kubernetes.ResourceTypesToAPI[kubernetes.K8sGatewayType].Group)
+	kind := k8s_networking_v1.Kind(kubernetes.ResourceTypesToAPI[kubernetes.K8sGatewayType].Kind)
 	rt.Spec.ParentRefs = append(rt.Spec.ParentRefs, k8s_networking_v1.ParentReference{
 		Name:      k8s_networking_v1.ObjectName(name),
 		Namespace: &ns,
@@ -132,8 +132,8 @@ func CreateEmptyK8sGateway(name, namespace string) *k8s_networking_v1.Gateway {
 	gw.Name = name
 	gw.Namespace = namespace
 
-	gw.Kind = kubernetes.K8sActualGatewayType
-	gw.APIVersion = kubernetes.K8sApiNetworkingVersionV1
+	gw.Kind = kubernetes.ResourceTypesToAPI[kubernetes.K8sGatewayType].Kind
+	gw.APIVersion = kubernetes.ResourceTypesToAPI[kubernetes.K8sGatewayType].Version
 	gw.Spec.GatewayClassName = "istio"
 	return &gw
 }
@@ -212,7 +212,7 @@ func UpdateConditionWithError(k8sgw *k8s_networking_v1.Gateway) *k8s_networking_
 }
 
 func CreateReferenceGrant(name string, namespace string, fromNamespace string) *k8s_networking_v1beta1.ReferenceGrant {
-	return CreateReferenceGrantByKind(name, namespace, fromNamespace, kubernetes.K8sActualHTTPRouteType)
+	return CreateReferenceGrantByKind(name, namespace, fromNamespace, k8s_networking_v1.Kind(kubernetes.ResourceTypesToAPI[kubernetes.K8sHTTPRouteType].Kind))
 }
 
 func CreateReferenceGrantByKind(name string, namespace string, fromNamespace string, kind k8s_networking_v1.Kind) *k8s_networking_v1beta1.ReferenceGrant {

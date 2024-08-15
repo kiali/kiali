@@ -22,7 +22,7 @@ func prepareTestForK8sGRPCRoute(route *k8s_networking_v1.GRPCRoute) models.Istio
 			{Name: "bookinfo3"},
 		},
 		K8sGRPCRoutes:      []*k8s_networking_v1.GRPCRoute{route},
-		K8sReferenceGrants: []*k8s_networking_v1beta1.ReferenceGrant{data.CreateReferenceGrantByKind("rg", route.Namespace, "bookinfo", kubernetes.K8sActualGRPCRouteType)},
+		K8sReferenceGrants: []*k8s_networking_v1beta1.ReferenceGrant{data.CreateReferenceGrantByKind("rg", route.Namespace, "bookinfo", kubernetes.K8sGRPCRouteType)},
 	}
 	return *routeReferences.References()[models.IstioReferenceKey{ObjectType: "k8sgrpcroute", Namespace: route.Namespace, Name: route.Name}]
 }
