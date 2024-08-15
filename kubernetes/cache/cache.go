@@ -87,6 +87,9 @@ type KialiCache interface {
 	// SetNamespace caches a specific namespace by cluster + token.
 	SetNamespace(token string, namespace models.Namespace)
 
+	// DeleteNamespace cleans up some internals when it has been detected that a namespace has been deleted.
+	DeleteNamespace(cluster string, namespace string, token string)
+
 	// Stop stops the cache and all its kube caches.
 	Stop()
 }
@@ -146,7 +149,7 @@ func NewKialiCache(clientFactory kubernetes.ClientFactory, cfg config.Config) (K
 	}
 
 	for cluster, client := range clientFactory.GetSAClients() {
-		cache, err := NewKubeCache(client, cfg)
+		cache, err := NewKubeCache(client, cfg, &kialiCacheImpl)
 		if err != nil {
 			log.Errorf("[Kiali Cache] Error creating kube cache for cluster: [%s]. Err: %v", cluster, err)
 			return nil, err
@@ -380,6 +383,20 @@ func (c *kialiCacheImpl) SetNamespace(token string, namespace models.Namespace) 
 
 	ns[namespace.Name] = namespace
 	c.namespaceStore.Set(key, ns)
+}
+
+// DeleteNamespace should be called when it has been detected that a namespace was deleted from a particular cluster.
+// This cleans up some internals related to the namespace that is now gone.
+func (c *kialiCacheImpl) DeleteNamespace(cluster string, namespace string, token string) {
+	c.namespacesLock.Lock()
+	defer c.namespacesLock.Unlock()
+
+	key := namespacesKey{cluster: cluster, token: token}
+	c.namespaceStore.Remove(key)
+
+	if kubeCache, err := c.GetKubeCache(cluster); err == nil {
+		kubeCache.StopNamespace(namespace)
+	}
 }
 
 func (c *kialiCacheImpl) GetBuildInfo() models.BuildInfo {
