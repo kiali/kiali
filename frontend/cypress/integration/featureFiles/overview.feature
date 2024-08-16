@@ -79,8 +79,9 @@ Feature: Kiali Overview page
     And the "healthy" application indicator should list the application
 
   @error-rates-app
+  @sleep-app-scaleup-after
   Scenario: The idle status of a logical mesh application is reported in the overview of a namespace
-    Given an idle application in the cluster
+    Given an idle sleep application in the cluster
     When I fetch the overview of the cluster
     Then there should be a "idle" application indicator in the namespace
     And the "idle" application indicator should list the application

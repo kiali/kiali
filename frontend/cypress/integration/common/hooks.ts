@@ -1,4 +1,4 @@
-import { Before } from '@badeball/cypress-cucumber-preprocessor';
+import { Before, After } from '@badeball/cypress-cucumber-preprocessor';
 
 function install_demoapp(demoapp: string) {
   var namespaces: string = 'bookinfo';
@@ -84,4 +84,8 @@ Before({ tags: '@error-rates-app' }, function () {
 
 Before({ tags: '@sleep-app' }, function () {
   install_demoapp('sleep');
+});
+
+After({ tags: '@sleep-app-scaleup-after' }, function () {
+  cy.exec('kubectl scale -n sleep --replicas=1 deployment/sleep');
 });
