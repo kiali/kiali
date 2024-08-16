@@ -10,14 +10,7 @@ Given('a namespace without override configuration for automatic sidecar injectio
   this.targetNamespace = 'sleep';
 
   // Make sure that the target namespace does not have override configuration
-  cy.request('PATCH', '/api/namespaces/' + this.targetNamespace, {
-    metadata: {
-      labels: {
-        'istio-injection': null,
-        'istio.io/rev': null
-      }
-    }
-  });
+  updateNamespaceDefinition(this.targetNamespace, null, null)
 });
 
 Given('a namespace which has override configuration for automatic sidecar injection', function () {
@@ -25,26 +18,12 @@ Given('a namespace which has override configuration for automatic sidecar inject
   this.istioInjection = 'enabled';
 
   // Make sure that the target namespace has some override configuration
-  cy.request('PATCH', '/api/namespaces/' + this.targetNamespace, {
-    metadata: {
-      labels: {
-        'istio-injection': this.istioInjection,
-        'istio.io/rev': null
-      }
-    }
-  });
+  updateNamespaceDefinition(this.targetNamespace, this.istioInjection, null)
 });
 
 Given('the override configuration for sidecar injection is {string}', function (enabledOrDisabled) {
   if (this.istioInjection !== enabledOrDisabled) {
-    cy.request('PATCH', '/api/namespaces/' + this.targetNamespace, {
-      metadata: {
-        labels: {
-          'istio-injection': enabledOrDisabled,
-          'istio.io/rev': null
-        }
-      }
-    });
+    updateNamespaceDefinition(this.targetNamespace, enabledOrDisabled, null)
     this.istioInjection = enabledOrDisabled;
   }
 });
@@ -60,14 +39,7 @@ Given('a workload without a sidecar', function () {
   this.workloadHasAutoInjectionOverride = false;
 
   // Make sure that injection in the namespace is turned off
-  cy.request('PATCH', '/api/namespaces/' + this.targetNamespace, {
-    metadata: {
-      labels: {
-        'istio-injection': null,
-        'istio.io/rev': null
-      }
-    }
-  });
+  updateNamespaceDefinition(this.targetNamespace, null, null)
 
   // Make sure that the workload does not have override configuration
   cy.request('PATCH', `/api/namespaces/${this.targetNamespace}/workloads/${this.targetWorkload}?type=Deployment`, {
@@ -102,14 +74,7 @@ Given('a workload with a sidecar', function () {
   this.workloadHasAutoInjectionOverride = false;
 
   // Make sure that injection in the namespace is turned on
-  cy.request('PATCH', '/api/namespaces/' + this.targetNamespace, {
-    metadata: {
-      labels: {
-        'istio-injection': 'enabled',
-        'istio.io/rev': null
-      }
-    }
-  });
+  updateNamespaceDefinition(this.targetNamespace, 'enabled', null)
 
   // Make sure that the workload does not have override configuration
   //
@@ -144,26 +109,12 @@ Given('the workload does not have override configuration for automatic sidecar i
       // To achieve the desired state of having a sidecar without override config,
       // enable injection at namespace level
       this.namespaceAutoInjectionEnabled = true;
-      cy.request('PATCH', '/api/namespaces/' + this.targetNamespace, {
-        metadata: {
-          labels: {
-            'istio-injection': 'enabled',
-            'istio.io/rev': null
-          }
-        }
-      });
+      updateNamespaceDefinition(this.targetNamespace, 'enabled', null)
     } else {
       // To achieve the desired state of no sidecar without override config,
       // disable injection at namespace level.
       this.namespaceAutoInjectionEnabled = false;
-      cy.request('PATCH', '/api/namespaces/' + this.targetNamespace, {
-        metadata: {
-          labels: {
-            'istio-injection': 'disabled',
-            'istio.io/rev': null
-          }
-        }
-      });
+      updateNamespaceDefinition(this.targetNamespace, 'disabled', null)
     }
 
     // Now, we can remove the override config at deployment level
@@ -324,11 +275,13 @@ Then('I should see the override annotation for sidecar injection in the namespac
   cy.request('GET', '/api/status').then(response => {
     expect(response.status).to.equal(200);
     const isMaistra = response.body.istioEnvironment.isMaistra;
-    const expectation = isMaistra ? 'not.exist' : 'exist';
-
-    cy.get(`[data-test=VirtualItem_${this.targetNamespace}]`)
+    
+    // do not test for maistra since it can or cannot exist due to the SMCP mode (ClusterWide or MultiTenant) That infromation is not propagated to kiali so we don't know here if that annotation should exist or not
+    if (!isMaistra) {
+      cy.get(`[data-test=VirtualItem_${this.targetNamespace}]`)
       .contains(`istio-injection=${enabled}`)
-      .should(expectation);
+      .should('exist');
+    }
   });
 });
 
@@ -360,3 +313,22 @@ Then('I should see no override annotation for sidecar injection in the workload'
     cy.wrap($card).get('[data-test="sidecar.istio.io/inject-label-container"').should('not.exist');
   });
 });
+
+
+function updateNamespaceDefinition(targetNamespace: string, injectLabel: any, revLabel: any) {
+  cy.request('GET', '/api/status').then(response => {
+    expect(response.status).to.equal(200);
+    const isMaistra = response.body.istioEnvironment.isMaistra;
+    // do not change namespace settings if env is maistra
+    if (!isMaistra) {
+      cy.request('PATCH', '/api/namespaces/' + targetNamespace, {
+        metadata: {
+          labels: {
+            'istio-injection': injectLabel,
+            'istio.io/rev': revLabel
+          }
+        }
+      });
+    }
+  });
+}
