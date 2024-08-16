@@ -24,8 +24,6 @@
 // -- This will overwrite an existing command --
 // Cypress.Commands.overwrite('visit', (originalFn, url, options) => { ... })
 
-const BOOKINFO_USERNAME = 'bookinfouser';
-
 declare namespace Cypress {
   interface Chainable<Subject> {
     /**
@@ -82,14 +80,15 @@ function ensureMulticlusterApplicationsAreHealthy(): void {
   }
 
   cy.request(
-    'api/clusters/apps?namespaces=bookinfo&clusterName=west&health=true&istioResources=true&rateInterval=60s'
+    'api/namespaces/graph?duration=60s&graphType=versionedApp&appenders=deadNode,istio,serviceEntry,meshCheck,workloadEntry,health&rateGrpc=requests&rateHttp=requests&rateTcp=sent&namespaces=bookinfo'
   ).then(resp => {
-    const has_http_200 = resp.body.applications.some(
-      app =>
-        app.name === 'reviews' &&
-        app.cluster === 'west' &&
-        app.health.requests.inbound.http !== undefined &&
-        app.health.requests.inbound.http['200'] > 0
+    const has_http_200 = resp.body.elements.nodes.some(
+      node =>
+        node.data.app === 'reviews' &&
+        node.data.cluster === 'west' &&
+        node.data.nodeType === 'app' &&
+        node.data.healthData.requests.inbound.http !== undefined &&
+        node.data.healthData.requests.inbound.http['200'] > 0
     );
     if (has_http_200) {
       cy.log("'reviews' app in 'west' cluster is healthy enough.");
@@ -169,11 +168,7 @@ Cypress.Commands.add('login', (username: string, password: string) => {
             }).then(() => {
               const tags = Cypress.env('TAGS');
               if (tags.includes('multi-cluster') || tags.includes('multi-primary')) {
-                // Don't check for west cluster
-                // if the user has access just to the east cluster
-                if (username !== BOOKINFO_USERNAME) {
-                  ensureMulticlusterApplicationsAreHealthy();
-                }
+                ensureMulticlusterApplicationsAreHealthy();
               }
             });
           });
@@ -196,7 +191,7 @@ Cypress.Commands.add('login', (username: string, password: string) => {
       cacheAcrossSpecs: true,
       validate: () => {
         // For some reason validate is needed to preserve the kiali-token-aes cookie.
-        if (auth_strategy === 'openshift') {
+        if (auth_strategy === 'openshift' || auth_strategy === 'openid') {
           cy.getCookies()
             .should('exist')
             .and('have.length.at.least', 1)

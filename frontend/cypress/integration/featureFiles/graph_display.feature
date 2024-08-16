@@ -247,19 +247,6 @@ Feature: Kiali Graph page - Display menu
     When user clicks on the "reviews-v2" workload in the "bookinfo" namespace in the "west" cluster
     Then user sees a link to the "west" cluster workload details page in the summary panel
 
-  #this is a regression to this bug (https://github.com/kiali/kiali/issues/6185)
-  #I used the sleep namespace in the Gherkin, because I feel like we might need a new demoapp for this scenario,
-  #if we don't want to change access to bookinfo namespace in the middle of the test run.
-  # TODO: Implement: https://github.com/kiali/kiali/issues/7021
-  @skip
-  @multi-cluster
-  Scenario: Remote nodes should be restricted if user does not have access rights to a remote namespace
-    When user graphs "sleep" namespaces
-    And user "is" given access rights to a "sleep" namespace located in the "east" cluster
-    And user "is not" given access rights to a "sleep" namespace located in the "west" cluster
-    And user is at the details page for the "app" "sleep/east" located in the "east" cluster
-    Then the nodes located in the "west" cluster should be restricted
-
   #inspired by this: https://github.com/kiali/kiali/pull/6469
   #in order to test this properly, Istio CRDs should be enabled in west and atleast 1 Istio object should be created there
   @multi-cluster

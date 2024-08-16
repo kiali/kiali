@@ -89,6 +89,26 @@ When(`user sorts by name desc`, () => {
   cy.get('button[data-sort-asc="true"]').click().get('#loading_kiali_spinner').should('not.exist');
 });
 
+When(`user sorts by column {string} desc`, (column: string) => {
+  cy.get(`th[data-label=${column}]`).click().get('#loading_kiali_spinner').should('not.exist');
+});
+
+When(`the list is sorted by {string} desc`, (column: string) => {
+  // This checks that every row is sorted by checking the column text and
+  // comparing it with the next row.
+  cy.get('tbody').within(() => {
+    cy.get('tr').then($rows => {
+      $rows.each((index, $row) => {
+        if (index < $rows.length - 1) {
+          const currentRow = $row.querySelector(`td[data-label="${column}"]`).textContent;
+          const nextRow = $rows[index + 1].querySelector(`td[data-label="${column}"]`).textContent;
+          expect(currentRow.localeCompare(nextRow)).to.be.at.most(0);
+        }
+      });
+    });
+  });
+});
+
 When(`user selects {string} time range`, (interval: string) => {
   cy.get('button#time_range_duration-toggle').click().get('#loading_kiali_spinner').should('not.exist');
   cy.contains('div#time_range_duration button', interval).click().get('#loading_kiali_spinner').should('not.exist');
