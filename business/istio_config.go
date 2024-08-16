@@ -485,116 +485,116 @@ func (in *IstioConfigService) GetIstioConfigDetails(ctx context.Context, cluster
 	case kubernetes.DestinationRules:
 		istioConfigDetail.DestinationRule, err = in.userClients[cluster].Istio().NetworkingV1().DestinationRules(namespace).Get(ctx, object, getOpts)
 		if err == nil {
-			istioConfigDetail.DestinationRule.Kind = kubernetes.DestinationRuleType
-			istioConfigDetail.DestinationRule.APIVersion = kubernetes.ApiNetworkingVersionV1
+			istioConfigDetail.DestinationRule.Kind = kubernetes.ResourceTypesToAPI[kubernetes.DestinationRules].Kind
+			istioConfigDetail.DestinationRule.APIVersion = kubernetes.ResourceTypesToAPI[kubernetes.DestinationRules].Version
 		}
 	case kubernetes.EnvoyFilters:
 		istioConfigDetail.EnvoyFilter, err = in.userClients[cluster].Istio().NetworkingV1alpha3().EnvoyFilters(namespace).Get(ctx, object, getOpts)
 		if err == nil {
-			istioConfigDetail.EnvoyFilter.Kind = kubernetes.EnvoyFilterType
-			istioConfigDetail.EnvoyFilter.APIVersion = kubernetes.ApiNetworkingVersionV1Alpha3
+			istioConfigDetail.EnvoyFilter.Kind = kubernetes.ResourceTypesToAPI[kubernetes.EnvoyFilters].Kind
+			istioConfigDetail.EnvoyFilter.APIVersion = kubernetes.ResourceTypesToAPI[kubernetes.EnvoyFilters].Version
 		}
 	case kubernetes.Gateways:
 		istioConfigDetail.Gateway, err = in.userClients[cluster].Istio().NetworkingV1().Gateways(namespace).Get(ctx, object, getOpts)
 		if err == nil {
-			istioConfigDetail.Gateway.Kind = kubernetes.GatewayType
-			istioConfigDetail.Gateway.APIVersion = kubernetes.ApiNetworkingVersionV1
+			istioConfigDetail.Gateway.Kind = kubernetes.ResourceTypesToAPI[kubernetes.Gateways].Kind
+			istioConfigDetail.Gateway.APIVersion = kubernetes.ResourceTypesToAPI[kubernetes.Gateways].Version
 		}
 	case kubernetes.K8sGateways:
 		istioConfigDetail.K8sGateway, err = in.userClients[cluster].GatewayAPI().GatewayV1().Gateways(namespace).Get(ctx, object, getOpts)
 		if err == nil {
-			istioConfigDetail.K8sGateway.Kind = kubernetes.K8sGatewayType
-			istioConfigDetail.K8sGateway.APIVersion = kubernetes.K8sApiNetworkingVersionV1
+			istioConfigDetail.K8sGateway.Kind = kubernetes.ResourceTypesToAPI[kubernetes.K8sGateways].Kind
+			istioConfigDetail.K8sGateway.APIVersion = kubernetes.ResourceTypesToAPI[kubernetes.K8sGateways].Version
 		}
 	case kubernetes.K8sGRPCRoutes:
 		istioConfigDetail.K8sGRPCRoute, err = in.userClients[cluster].GatewayAPI().GatewayV1().GRPCRoutes(namespace).Get(ctx, object, getOpts)
 		if err == nil {
-			istioConfigDetail.K8sGRPCRoute.Kind = kubernetes.K8sGRPCRouteType
-			istioConfigDetail.K8sGRPCRoute.APIVersion = kubernetes.K8sApiNetworkingVersionV1
+			istioConfigDetail.K8sGRPCRoute.Kind = kubernetes.ResourceTypesToAPI[kubernetes.K8sGRPCRoutes].Kind
+			istioConfigDetail.K8sGRPCRoute.APIVersion = kubernetes.ResourceTypesToAPI[kubernetes.K8sGRPCRoutes].Version
 		}
 	case kubernetes.K8sHTTPRoutes:
 		istioConfigDetail.K8sHTTPRoute, err = in.userClients[cluster].GatewayAPI().GatewayV1().HTTPRoutes(namespace).Get(ctx, object, getOpts)
 		if err == nil {
-			istioConfigDetail.K8sHTTPRoute.Kind = kubernetes.K8sHTTPRouteType
-			istioConfigDetail.K8sHTTPRoute.APIVersion = kubernetes.K8sApiNetworkingVersionV1
+			istioConfigDetail.K8sHTTPRoute.Kind = kubernetes.ResourceTypesToAPI[kubernetes.K8sHTTPRoutes].Kind
+			istioConfigDetail.K8sHTTPRoute.APIVersion = kubernetes.ResourceTypesToAPI[kubernetes.K8sHTTPRoutes].Version
 		}
 	case kubernetes.K8sReferenceGrants:
 		istioConfigDetail.K8sReferenceGrant, err = in.userClients[cluster].GatewayAPI().GatewayV1beta1().ReferenceGrants(namespace).Get(ctx, object, getOpts)
 		if err == nil {
-			istioConfigDetail.K8sReferenceGrant.Kind = kubernetes.K8sReferenceGrantType
-			istioConfigDetail.K8sReferenceGrant.APIVersion = kubernetes.K8sApiNetworkingVersionV1Beta1
+			istioConfigDetail.K8sReferenceGrant.Kind = kubernetes.ResourceTypesToAPI[kubernetes.K8sReferenceGrants].Kind
+			istioConfigDetail.K8sReferenceGrant.APIVersion = kubernetes.ResourceTypesToAPI[kubernetes.K8sReferenceGrants].Version
 		}
 	case kubernetes.K8sTCPRoutes:
 		istioConfigDetail.K8sTCPRoute, err = in.userClients[cluster].GatewayAPI().GatewayV1alpha2().TCPRoutes(namespace).Get(ctx, object, getOpts)
 		if err == nil {
-			istioConfigDetail.K8sTCPRoute.Kind = kubernetes.K8sTCPRouteType
-			istioConfigDetail.K8sTCPRoute.APIVersion = kubernetes.K8sApiNetworkingVersionV1Alpha2
+			istioConfigDetail.K8sTCPRoute.Kind = kubernetes.ResourceTypesToAPI[kubernetes.K8sTCPRoutes].Kind
+			istioConfigDetail.K8sTCPRoute.APIVersion = kubernetes.ResourceTypesToAPI[kubernetes.K8sTCPRoutes].Version
 		}
 	case kubernetes.K8sTLSRoutes:
 		istioConfigDetail.K8sTLSRoute, err = in.userClients[cluster].GatewayAPI().GatewayV1alpha2().TLSRoutes(namespace).Get(ctx, object, getOpts)
 		if err == nil {
-			istioConfigDetail.K8sTLSRoute.Kind = kubernetes.K8sTLSRouteType
-			istioConfigDetail.K8sTLSRoute.APIVersion = kubernetes.K8sApiNetworkingVersionV1Alpha2
+			istioConfigDetail.K8sTLSRoute.Kind = kubernetes.ResourceTypesToAPI[kubernetes.K8sTLSRoutes].Kind
+			istioConfigDetail.K8sTLSRoute.APIVersion = kubernetes.ResourceTypesToAPI[kubernetes.K8sTLSRoutes].Version
 		}
 	case kubernetes.ServiceEntries:
 		istioConfigDetail.ServiceEntry, err = in.userClients[cluster].Istio().NetworkingV1().ServiceEntries(namespace).Get(ctx, object, getOpts)
 		if err == nil {
-			istioConfigDetail.ServiceEntry.Kind = kubernetes.ServiceEntryType
-			istioConfigDetail.ServiceEntry.APIVersion = kubernetes.ApiNetworkingVersionV1
+			istioConfigDetail.ServiceEntry.Kind = kubernetes.ResourceTypesToAPI[kubernetes.ServiceEntries].Kind
+			istioConfigDetail.ServiceEntry.APIVersion = kubernetes.ResourceTypesToAPI[kubernetes.ServiceEntries].Version
 		}
 	case kubernetes.Sidecars:
 		istioConfigDetail.Sidecar, err = in.userClients[cluster].Istio().NetworkingV1().Sidecars(namespace).Get(ctx, object, getOpts)
 		if err == nil {
-			istioConfigDetail.Sidecar.Kind = kubernetes.SidecarType
-			istioConfigDetail.Sidecar.APIVersion = kubernetes.ApiNetworkingVersionV1
+			istioConfigDetail.Sidecar.Kind = kubernetes.ResourceTypesToAPI[kubernetes.Sidecars].Kind
+			istioConfigDetail.Sidecar.APIVersion = kubernetes.ResourceTypesToAPI[kubernetes.Sidecars].Version
 		}
 	case kubernetes.VirtualServices:
 		istioConfigDetail.VirtualService, err = in.userClients[cluster].Istio().NetworkingV1().VirtualServices(namespace).Get(ctx, object, getOpts)
 		if err == nil {
-			istioConfigDetail.VirtualService.Kind = kubernetes.VirtualServiceType
-			istioConfigDetail.VirtualService.APIVersion = kubernetes.ApiNetworkingVersionV1
+			istioConfigDetail.VirtualService.Kind = kubernetes.ResourceTypesToAPI[kubernetes.VirtualServices].Kind
+			istioConfigDetail.VirtualService.APIVersion = kubernetes.ResourceTypesToAPI[kubernetes.VirtualServices].Version
 		}
 	case kubernetes.WorkloadEntries:
 		istioConfigDetail.WorkloadEntry, err = in.userClients[cluster].Istio().NetworkingV1().WorkloadEntries(namespace).Get(ctx, object, getOpts)
 		if err == nil {
-			istioConfigDetail.WorkloadEntry.Kind = kubernetes.WorkloadEntryType
-			istioConfigDetail.WorkloadEntry.APIVersion = kubernetes.ApiNetworkingVersionV1
+			istioConfigDetail.WorkloadEntry.Kind = kubernetes.ResourceTypesToAPI[kubernetes.WorkloadEntries].Kind
+			istioConfigDetail.WorkloadEntry.APIVersion = kubernetes.ResourceTypesToAPI[kubernetes.WorkloadEntries].Version
 		}
 	case kubernetes.WorkloadGroups:
 		istioConfigDetail.WorkloadGroup, err = in.userClients[cluster].Istio().NetworkingV1().WorkloadGroups(namespace).Get(ctx, object, getOpts)
 		if err == nil {
-			istioConfigDetail.WorkloadGroup.Kind = kubernetes.WorkloadGroupType
-			istioConfigDetail.WorkloadGroup.APIVersion = kubernetes.ApiNetworkingVersionV1
+			istioConfigDetail.WorkloadGroup.Kind = kubernetes.ResourceTypesToAPI[kubernetes.WorkloadGroups].Kind
+			istioConfigDetail.WorkloadGroup.APIVersion = kubernetes.ResourceTypesToAPI[kubernetes.WorkloadGroups].Version
 		}
 	case kubernetes.WasmPlugins:
 		istioConfigDetail.WasmPlugin, err = in.userClients[cluster].Istio().ExtensionsV1alpha1().WasmPlugins(namespace).Get(ctx, object, getOpts)
 		if err == nil {
-			istioConfigDetail.WasmPlugin.Kind = kubernetes.WasmPluginType
-			istioConfigDetail.WasmPlugin.APIVersion = kubernetes.ApiExtensionV1Alpha1
+			istioConfigDetail.WasmPlugin.Kind = kubernetes.ResourceTypesToAPI[kubernetes.WasmPlugins].Kind
+			istioConfigDetail.WasmPlugin.APIVersion = kubernetes.ResourceTypesToAPI[kubernetes.WasmPlugins].Version
 		}
 	case kubernetes.Telemetries:
 		istioConfigDetail.Telemetry, err = in.userClients[cluster].Istio().TelemetryV1().Telemetries(namespace).Get(ctx, object, getOpts)
 		if err == nil {
-			istioConfigDetail.Telemetry.Kind = kubernetes.TelemetryType
-			istioConfigDetail.Telemetry.APIVersion = kubernetes.ApiTelemetryV1
+			istioConfigDetail.Telemetry.Kind = kubernetes.ResourceTypesToAPI[kubernetes.Telemetries].Kind
+			istioConfigDetail.Telemetry.APIVersion = kubernetes.ResourceTypesToAPI[kubernetes.Telemetries].Version
 		}
 	case kubernetes.AuthorizationPolicies:
 		istioConfigDetail.AuthorizationPolicy, err = in.userClients[cluster].Istio().SecurityV1().AuthorizationPolicies(namespace).Get(ctx, object, getOpts)
 		if err == nil {
-			istioConfigDetail.AuthorizationPolicy.Kind = kubernetes.AuthorizationPoliciesType
-			istioConfigDetail.AuthorizationPolicy.APIVersion = kubernetes.ApiSecurityVersionV1
+			istioConfigDetail.AuthorizationPolicy.Kind = kubernetes.ResourceTypesToAPI[kubernetes.AuthorizationPolicies].Kind
+			istioConfigDetail.AuthorizationPolicy.APIVersion = kubernetes.ResourceTypesToAPI[kubernetes.AuthorizationPolicies].Version
 		}
 	case kubernetes.PeerAuthentications:
 		istioConfigDetail.PeerAuthentication, err = in.userClients[cluster].Istio().SecurityV1().PeerAuthentications(namespace).Get(ctx, object, getOpts)
 		if err == nil {
-			istioConfigDetail.PeerAuthentication.Kind = kubernetes.PeerAuthenticationsType
-			istioConfigDetail.PeerAuthentication.APIVersion = kubernetes.ApiSecurityVersionV1
+			istioConfigDetail.PeerAuthentication.Kind = kubernetes.ResourceTypesToAPI[kubernetes.PeerAuthentications].Kind
+			istioConfigDetail.PeerAuthentication.APIVersion = kubernetes.ResourceTypesToAPI[kubernetes.PeerAuthentications].Version
 		}
 	case kubernetes.RequestAuthentications:
 		istioConfigDetail.RequestAuthentication, err = in.userClients[cluster].Istio().SecurityV1().RequestAuthentications(namespace).Get(ctx, object, getOpts)
 		if err == nil {
-			istioConfigDetail.RequestAuthentication.Kind = kubernetes.RequestAuthenticationsType
-			istioConfigDetail.RequestAuthentication.APIVersion = kubernetes.ApiSecurityVersionV1
+			istioConfigDetail.RequestAuthentication.Kind = kubernetes.ResourceTypesToAPI[kubernetes.RequestAuthentications].Kind
+			istioConfigDetail.RequestAuthentication.APIVersion = kubernetes.ResourceTypesToAPI[kubernetes.RequestAuthentications].Version
 		}
 	default:
 		err = fmt.Errorf("object type not found: %v", objectType)
