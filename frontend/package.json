@@ -37,7 +37,7 @@
     "build": "if [ \"${KIALI_ENV}\" = \"production\" ]; then npm run build:prod; else npm run build:dev; fi",
     "build-css": "node-sass src/ --output-style compressed --include-path $npm_package_sassIncludes_src -o src/",
     "build:dev": "sh -ac '. ./.env.upstream; npm run lint && npm run build:kiali'",
-    "build:kiali": "npm run build-css && REACT_APP_VERSION=$npm_package_version REACT_APP_NAME=$npm_package_name REACT_APP_GIT_HASH=$(git rev-parse HEAD) GENERATE_SOURCEMAP=false EXTEND_ESLINT=true react-scripts --openssl-legacy-provider build --profile",
+    "build:kiali": "npm run build-css && REACT_APP_VERSION=$npm_package_version REACT_APP_NAME=$npm_package_name REACT_APP_GIT_HASH=$(git rev-parse HEAD) GENERATE_SOURCEMAP=false EXTEND_ESLINT=true react-scripts build --profile",
     "build:prod": "sh -ac '. ./.env.downstream; npm run build:kiali'",
     "precypress:run:junit": "npm run cypress:delete:reports",
     "cypress": "cypress open",
@@ -50,9 +50,9 @@
     "lintfix": "eslint --ext js,ts,tsx --fix src",
     "start": "if [ \"${KIALI_ENV}\" = \"production\" ]; then npm run start:prod; else npm run start:dev; fi",
     "start:dev": "sh -ac '. ./.env.upstream; npm run start:kiali'",
-    "start:kiali": "npm run build-css && REACT_APP_VERSION=$npm_package_version REACT_APP_NAME=$npm_package_name REACT_APP_GIT_HASH=$(git rev-parse HEAD) react-scripts --openssl-legacy-provider start",
+    "start:kiali": "npm run build-css && REACT_APP_VERSION=$npm_package_version REACT_APP_NAME=$npm_package_name REACT_APP_GIT_HASH=$(git rev-parse HEAD) react-scripts start",
     "start:prod": "sh -ac '. ./.env.downstream; npm run start:kiali'",
-    "test": "npm run build-css && tsc -p . && TEST_RUNNER=1 react-scripts --openssl-legacy-provider test --env=jsdom __tests__",
+    "test": "npm run build-css && tsc -p . && TEST_RUNNER=1 react-scripts test --env=jsdom __tests__",
     "prettier": "prettier --write \"{src/**/*.{js,jsx,ts,tsx,json,yml,css,scss},travis.yml,*.json}\""
   },
   "dependencies": {
