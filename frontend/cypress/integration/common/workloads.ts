@@ -22,7 +22,8 @@ Given('a healthy workload in the cluster', function () {
   this.targetWorkload = 'productpage-v1';
 });
 
-Given('an idle workload in the cluster', function () {
+//When you use this, you need to annotate test by @sleep-app-scaleup-after to revert this change after the test
+Given('an idle sleep workload in the cluster', function () {
   this.targetNamespace = 'sleep';
   this.targetWorkload = 'sleep';
 
