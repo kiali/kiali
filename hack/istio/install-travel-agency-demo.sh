@@ -288,10 +288,19 @@ if [ "${WAYPOINT}" == "true" ]; then
 
   fi
 
+  # Create Waypoint proxy
+  is_istio_version_eq_greater_than "1.23.0"
+  version_greater=$?
+
   for NS in "${AMBIENT_NS[@]}"
   do
-    ${ISTIOCTL} x waypoint apply -n ${NS} --enroll-namespace
-    echo "Create Waypoint proxy for ${NS}"
+    if [ "${version_greater}" == "1" ]; then
+      ${ISTIOCTL} waypoint apply -n ${NS} --enroll-namespace
+      echo "Create Waypoint proxy for ${NS}"
+    else
+      ${ISTIOCTL} x waypoint apply -n ${NS} --enroll-namespace
+            echo "Create -experimental- Waypoint proxy for ${NS}"
+    fi
   done
 fi
 
