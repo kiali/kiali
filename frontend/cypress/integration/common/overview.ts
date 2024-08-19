@@ -33,7 +33,8 @@ Given('a healthy application in the remote cluster', function () {
   this.targetApp = 'ratings';
 });
 
-Given('an idle application in the cluster', function () {
+//When you use this, you need to annotate test by @sleep-app-scaleup-after to revert this change after the test
+Given('an idle sleep application in the cluster', function () {
   this.targetNamespace = 'sleep';
   this.targetApp = 'sleep';
 
