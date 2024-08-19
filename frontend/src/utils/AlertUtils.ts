@@ -1,8 +1,8 @@
 import { store } from '../store/ConfigStore';
 import { MessageType } from '../types/MessageCenter';
 import { MessageCenterActions } from '../actions/MessageCenterActions';
-import { AxiosError } from 'axios';
 import * as API from '../services/Api';
+import {ApiError} from "../types/Api";
 
 export type Message = {
   content: string;
@@ -22,7 +22,7 @@ export const addMessage = (msg: Message) => {
   );
 };
 
-export const addError = (message: string, error?: AxiosError, group?: string, type?: MessageType, detail?: string) => {
+export const addError = (message: string, error?: ApiError, group?: string, type?: MessageType, detail?: string) => {
   if (!error) {
     store.dispatch(MessageCenterActions.addMessage(message, detail ? detail : '', group, MessageType.ERROR));
     return;
@@ -36,7 +36,7 @@ export const addError = (message: string, error?: AxiosError, group?: string, ty
   });
 };
 
-export const extractAxiosError = (message: string, error: AxiosError): { content: string; detail: string } => {
+export const extractAxiosError = (message: string, error: ApiError): { content: string; detail: string } => {
   const errorString: string = API.getErrorString(error);
   const errorDetail: string = API.getErrorDetail(error);
   if (message) {

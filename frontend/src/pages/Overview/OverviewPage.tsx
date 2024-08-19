@@ -17,7 +17,6 @@ import {
   TooltipPosition
 } from '@patternfly/react-core';
 import { style } from 'typestyle';
-import { AxiosError } from 'axios';
 import { FilterSelected, StatefulFilters } from '../../components/Filters/StatefulFilters';
 import * as FilterHelper from '../../components/FilterList/FilterHelper';
 import * as API from '../../services/Api';
@@ -81,6 +80,7 @@ import { IstiodResourceThresholds } from 'types/IstioStatus';
 import TLSInfo from 'components/Overview/TLSInfo';
 import CanaryUpgradeProgress from './CanaryUpgradeProgress';
 import ControlPlaneVersionBadge from './ControlPlaneVersionBadge';
+import {ApiError} from "../../types/Api";
 
 const gridStyleCompact = style({
   backgroundColor: '#f5f5f5',
@@ -538,7 +538,7 @@ export class OverviewPage extends React.Component<OverviewProps, State> {
       });
   }
 
-  handleAxiosError(message: string, error: AxiosError) {
+  handleAxiosError(message: string, error: ApiError) {
     FilterHelper.handleError(`${message}: ${API.getErrorString(error)}`);
   }
 

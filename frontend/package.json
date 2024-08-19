@@ -62,7 +62,7 @@
     "@patternfly/react-styles": "4.48.5",
     "@patternfly/react-table": "4.67.5",
     "@patternfly/react-tokens": "4.50.5",
-    "axios": "0.21.4",
+    "axios": "1.7.4",
     "bootstrap-slider-without-jquery": "10.0.0",
     "cy-node-html-label": "2.0.0",
     "cytoscape": "3.15.5",

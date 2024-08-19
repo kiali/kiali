@@ -1,4 +1,3 @@
-import axios, { AxiosError } from 'axios';
 import { config } from '../config';
 import { LoginSession } from '../store/Store';
 import { App } from '../types/App';
@@ -43,6 +42,8 @@ import { Span, TracingQuery } from 'types/Tracing';
 import { TLSStatus } from '../types/TLSStatus';
 import { Workload, WorkloadNamespaceResponse } from '../types/Workload';
 import { CertsInfo } from 'types/CertsInfo';
+import axios from "axios";
+import {ApiError} from "../types/Api";
 export const ANONYMOUS_USER = 'anonymous';
 
 export interface Response<T> {
@@ -581,7 +582,7 @@ export const getPodEnvoyProxyResourceEntries = (namespace: string, pod: string, 
   );
 };
 
-export const getErrorString = (error: AxiosError): string => {
+export const getErrorString = (error: ApiError): string => {
   if (error && error.response) {
     if (error.response.data && error.response.data.error) {
       return error.response.data.error;
@@ -597,7 +598,7 @@ export const getErrorString = (error: AxiosError): string => {
   return '';
 };
 
-export const getErrorDetail = (error: AxiosError): string => {
+export const getErrorDetail = (error: ApiError): string => {
   if (error && error.response) {
     if (error.response.data && error.response.data.detail) {
       return error.response.data.detail;
