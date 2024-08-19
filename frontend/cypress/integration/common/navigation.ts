@@ -4,7 +4,8 @@ import { ensureKialiFinishedLoading } from './transition';
 enum detailType {
   App = 'app',
   Workload = 'workload',
-  Service = 'service'
+  Service = 'service',
+  Istio = 'istio'
 }
 
 Given('user is at the {string} list page', (page: string) => {
@@ -32,18 +33,6 @@ Given('user is at the {string} page for the {string} namespace', (page: string, 
 });
 
 Given(
-  'user is at the Istio Config page for the {string} namespace and the {string} istio type and the {string} config in the {string} cluster',
-  (namespace: string, istioType: string, istioConfig: string, cluster: string) => {
-    // Forcing "Pause" to not cause unhandled promises from the browser when cypress is testing
-    cy.visit(
-      `${Cypress.config(
-        'baseUrl'
-      )}/console/namespaces/${namespace}/istio/${istioType}/${istioConfig}?refresh=0&clusterName=${cluster}`
-    );
-  }
-);
-
-Given(
   'user is at the details page for the {string} {string} located in the {string} cluster',
   (detail: detailType, namespacedNamed: string, cluster: string) => {
     const qs = {
@@ -56,8 +45,8 @@ Given(
 
     const namespaceAndName = namespacedNamed.split('/');
     const namespace = namespaceAndName[0];
-    const name = namespaceAndName[1];
     const pageDetail = getPageDetail(detail);
+    const name = pageDetail === 'istio' ? `${namespaceAndName[1]}/${namespaceAndName[2]}` : namespaceAndName[1];
 
     if (pageDetail === 'services') {
       cy.intercept({
@@ -85,6 +74,9 @@ const getPageDetail = (detail: detailType): string => {
     case detailType.Workload:
       pageDetail = 'workloads';
       break;
+    case detailType.Istio:
+      pageDetail = 'istio';
+      break;
   }
   return pageDetail;
 };
@@ -95,8 +87,8 @@ Given(
   (detail: detailType, namespacedName: string, cluster: string) => {
     const namespaceAndName = namespacedName.split('/');
     const namespace = namespaceAndName[0];
-    const name = namespaceAndName[1];
     const pageDetail = getPageDetail(detail);
+    const name = pageDetail === 'istio' ? `${namespaceAndName[1]}/${namespaceAndName[2]}` : namespaceAndName[1];
 
     cy.url().should('include', `/namespaces/${namespace}/${pageDetail}/${name}`);
     cy.url().should('include', `clusterName=${cluster}`);

@@ -36,5 +36,5 @@ Feature: Kiali Authorization
   @multi-primary
   @authorization
   Scenario: Don't see a restricted Istio config
-    When user is at the Istio Config page for the "bookinfo" namespace and the "gateways" istio type and the "bookinfo-gateway" config in the "west" cluster
+    When user is at the details page for the "istio" "bookinfo/gateways/bookinfo-gateway" located in the "west" cluster
     Then user sees the forbidden error message
