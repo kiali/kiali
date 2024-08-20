@@ -179,6 +179,7 @@ Feature: Kiali Istio Config page
   @crd-validation
   @bookinfo-app
   @sleep-app
+  @clean-istio-namespace-resources-after
   Scenario: KIA0208 validation
     Given a "disable-mtls" DestinationRule in the "sleep" namespace for "*.sleep.svc.cluster.local" host
     And the DestinationRule disables mTLS
@@ -238,6 +239,7 @@ Feature: Kiali Istio Config page
   @crd-validation
   @bookinfo-app
   @sleep-app
+  @clean-istio-namespace-resources-after
   Scenario: KIA0506 validation
     Given a "enable-mtls" DestinationRule in the "sleep" namespace for "*.local" host
     And the DestinationRule enables mTLS
@@ -257,6 +259,7 @@ Feature: Kiali Istio Config page
 
   @crd-validation
   @bookinfo-app
+  @clean-istio-namespace-resources-after
   Scenario: KIA1006 validation
     Given there is a "default" Sidecar resource in the "istio-system" namespace that captures egress traffic for hosts "default/sleep.sleep.svc.cluster.local"
     And the Sidecar is applied to workloads with "app=grafana" labels
