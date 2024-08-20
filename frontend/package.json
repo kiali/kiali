@@ -52,7 +52,7 @@
     "start:dev": "sh -ac '. ./.env.upstream; npm run start:kiali'",
     "start:kiali": "npm run build-css && REACT_APP_VERSION=$npm_package_version REACT_APP_NAME=$npm_package_name REACT_APP_GIT_HASH=$(git rev-parse HEAD) react-scripts start",
     "start:prod": "sh -ac '. ./.env.downstream; npm run start:kiali'",
-    "test": "npm run build-css && tsc -p . && TEST_RUNNER=1 react-scripts test --env=jsdom __tests__",
+    "test": "npm run build-css && tsc -p . && TEST_RUNNER=1 react-scripts test --env=jsdom __tests__ --transformIgnorePatterns='node_modules/(?!my-library-dir)/'",
     "prettier": "prettier --write \"{src/**/*.{js,jsx,ts,tsx,json,yml,css,scss},travis.yml,*.json}\""
   },
   "dependencies": {
@@ -62,7 +62,7 @@
     "@patternfly/react-styles": "4.48.5",
     "@patternfly/react-table": "4.67.5",
     "@patternfly/react-tokens": "4.50.5",
-    "axios": "0.21.4",
+    "axios": "1.7.4",
     "bootstrap-slider-without-jquery": "10.0.0",
     "cy-node-html-label": "2.0.0",
     "cytoscape": "3.15.5",
@@ -108,6 +108,7 @@
     "@types/cytoscape": "3.14.0",
     "@types/enzyme": "3.10.5",
     "@types/jest": "23.3.10",
+    "@types/js-yaml": "^4.0.5",
     "@types/lodash": "4.14.169",
     "@types/node": "17.0.21",
     "@types/react": "16.9.34",
@@ -115,7 +116,7 @@
     "@types/react-redux": "7.1.7",
     "@types/react-router-dom": "5.1.5",
     "@wojtekmaj/enzyme-adapter-react-17": "^0.6.7",
-    "axios-mock-adapter": "1.16.0",
+    "axios-mock-adapter": "1.22.0",
     "cypress": "^10.7.0",
     "cypress-multi-reporters": "^1.6.0",
     "cypress-react-selector": "^2.3.17",
@@ -131,7 +132,7 @@
     "pretty-quick": "2.0.1",
     "react-scripts": "^5.0.1",
     "redux-mock-store": "1.5.4",
-    "typescript": "3.8.3"
+    "typescript": "4.6.4"
   },
   "resolutions": {
     "async": "^3.2.2",

@@ -27,7 +27,7 @@ describe('DetailObject test', () => {
   it('prints a nested list with all attributes in the detail', () => {
     mockRandom();
 
-    const wrapper = shallow(<DetailObject name={name} detail={detail} />);
+    const wrapper = shallow(<DetailObject name={"name"} detail={detail} />);
 
     expect(shallowToJson(wrapper)).toBeDefined();
     expect(shallowToJson(wrapper)).toMatchSnapshot();
@@ -44,7 +44,7 @@ describe('DetailObject test', () => {
   it("doesn't print excluded fields", () => {
     mockRandom();
 
-    const wrapper = shallow(<DetailObject name={name} detail={detail} exclude={['port']} />);
+    const wrapper = shallow(<DetailObject name={"name"} detail={detail} exclude={['port']} />);
 
     expect(shallowToJson(wrapper)).toBeDefined();
     expect(shallowToJson(wrapper)).toMatchSnapshot();
@@ -66,7 +66,7 @@ describe('DetailObject test', () => {
 
     mockRandom();
 
-    const wrapper = shallow(<DetailObject name={name} detail={detail} validation={validation} />);
+    const wrapper = shallow(<DetailObject name={"name"} detail={detail} validation={validation} />);
 
     expect(shallowToJson(wrapper)).toBeDefined();
     expect(shallowToJson(wrapper)).toMatchSnapshot();
@@ -85,7 +85,7 @@ describe('DetailObject test', () => {
 
     mockRandom();
 
-    const wrapper = shallow(<DetailObject name={name} detail={detail} validation={validation} />);
+    const wrapper = shallow(<DetailObject name={"name"} detail={detail} validation={validation} />);
 
     expect(shallowToJson(wrapper)).toBeDefined();
     expect(shallowToJson(wrapper)).toMatchSnapshot();

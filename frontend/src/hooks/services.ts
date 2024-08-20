@@ -4,10 +4,10 @@ import * as API from '../services/Api';
 import { DurationInSeconds, TimeInMilliseconds } from '../types/Common';
 import { ServiceDetailsInfo } from '../types/ServiceInfo';
 import { getGatewaysAsList, PeerAuthentication } from '../types/IstioObjects';
-import { AxiosError } from 'axios';
 import { DecoratedGraphNodeData, NodeType } from '../types/Graph';
 import * as AlertUtils from '../utils/AlertUtils';
 import { useState } from 'react';
+import {ApiError} from "../types/Api";
 
 export function useServiceDetail(
   namespace: string,
@@ -16,7 +16,7 @@ export function useServiceDetail(
   updateTime?: TimeInMilliseconds
 ) {
   const [isLoading, setIsLoading] = React.useState<boolean>(false);
-  const [fetchError, setFetchError] = React.useState<AxiosError | null>(null);
+  const [fetchError, setFetchError] = React.useState<ApiError | null>(null);
 
   const [serviceDetails, setServiceDetails] = React.useState<ServiceDetailsInfo | null>(null);
   const [gateways, setGateways] = React.useState<string[] | null>(null);

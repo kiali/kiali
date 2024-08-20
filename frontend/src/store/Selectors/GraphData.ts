@@ -194,7 +194,7 @@ export const decorateGraphData = (graphData: GraphElements, duration: number): D
         }
         const isIstio = isIstioNamespace(decoratedNode.data.namespace) ? true : undefined;
         // prettier-ignore
-        decoratedNode.data = { isIstio: isIstio, ...elementsDefaults.nodes, ...decoratedNode.data } as DecoratedGraphNodeData;
+        decoratedNode.data = { ...elementsDefaults.nodes, ...decoratedNode.data, isIstio: isIstio } as DecoratedGraphNodeData;
         // prettier-ignore
         return decoratedNode as DecoratedGraphNodeWrapper;
       });

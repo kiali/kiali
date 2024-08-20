@@ -106,7 +106,9 @@ const MeshPage: React.FunctionComponent = () => {
       const meshClusters = await getClusters();
       setMeshClustersList(meshClusters.data);
     } catch (e) {
-      addError('Could not fetch the list of clusters that are part of the mesh.', e);
+      if (e instanceof Error) {
+        addError('Could not fetch the list of clusters that are part of the mesh.', e);
+      }
     }
   }
 

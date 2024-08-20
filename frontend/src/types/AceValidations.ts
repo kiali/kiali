@@ -1,6 +1,7 @@
 import { HelpMessage, ObjectCheck, ObjectValidation } from './IstioObjects';
 import { Annotation } from 'react-ace/types';
 import { IMarker } from 'react-ace';
+import {YAMLException} from "js-yaml";
 
 export const jsYaml = require('js-yaml');
 
@@ -284,23 +285,25 @@ export const parseYamlValidations = (yamlInput: string): AceValidations => {
   try {
     jsYaml.safeLoadAll(yamlInput);
   } catch (e) {
-    const row = e.mark && e.mark.line ? e.mark.line : 0;
-    const col = e.mark && e.mark.column ? e.mark.column : 0;
-    const message = e.message ? e.message : '';
-    parsedValidations.markers.push({
-      startRow: row,
-      startCol: 0,
-      endRow: row + 1,
-      endCol: 0,
-      className: 'istio-validation-error',
-      type: 'fullLine'
-    });
-    parsedValidations.annotations.push({
-      row: row,
-      column: col,
-      type: 'error',
-      text: message
-    });
+    if (e instanceof YAMLException) {
+      const row = e.mark && e.mark.line ? e.mark.line : 0;
+      const col = e.mark && e.mark.column ? e.mark.column : 0;
+      const message = e.message ? e.message : '';
+      parsedValidations.markers.push({
+        startRow: row,
+        startCol: 0,
+        endRow: row + 1,
+        endCol: 0,
+        className: 'istio-validation-error',
+        type: 'fullLine'
+      });
+      parsedValidations.annotations.push({
+        row: row,
+        column: col,
+        type: 'error',
+        text: message
+      });
+    }
   }
   return parsedValidations;
 };

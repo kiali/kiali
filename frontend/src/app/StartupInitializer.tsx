@@ -6,6 +6,7 @@ import { LoginSession } from '../store/Store';
 import { KialiDispatch } from '../types/Redux';
 import InitializingScreen from './InitializingScreen';
 import authenticationConfig from '../config/AuthenticationConfig';
+import {isApiError} from "../types/Api";
 
 interface InitializerComponentProps {
   setInitialAuthentication: (session: LoginSession) => void;
@@ -48,18 +49,20 @@ class InitializerComponent extends React.Component<InitializerComponentProps, In
 
       this.props.onInitializationFinished();
     } catch (err) {
-      let errDetails: string | undefined;
-      if (err.request) {
-        const response = (err.request as XMLHttpRequest).responseText;
-        if (response.trim().length > 0) {
-          errDetails = response;
+      if (isApiError(err)) {
+        let errDetails: string | undefined;
+        if (err.request) {
+          const response = (err.request as XMLHttpRequest).responseText;
+          if (response.trim().length > 0) {
+            errDetails = response;
+          }
         }
-      }
 
-      this.setState({
-        errorMsg: API.getErrorString(err),
-        errorDetails: errDetails
-      });
+        this.setState({
+          errorMsg: API.getErrorString(err),
+          errorDetails: errDetails
+        });
+      }
     }
   };
 }
