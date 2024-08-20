@@ -167,6 +167,13 @@ func prometheusVersion(conf *config.Config, homeClusterSAClient kubernetes.Clien
 	prometheusV := new(p8sResponseVersion)
 	cfg := conf.ExternalServices.Prometheus
 
+	// If the version is specified in the thanos_proxy config, use it
+	if cfg.ThanosProxy.Version != "" {
+		product.Name = "Prometheus"
+		product.Version = cfg.ThanosProxy.Version
+		return &product, nil
+	}
+
 	// Be sure to copy config.Auth and not modify the existing
 	auth := cfg.Auth
 	if auth.UseKialiToken {

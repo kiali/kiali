@@ -192,6 +192,7 @@ type ThanosProxy struct {
 	Enabled         bool   `yaml:"enabled,omitempty"`
 	RetentionPeriod string `yaml:"retention_period,omitempty"`
 	ScrapeInterval  string `yaml:"scrape_interval,omitempty"`
+	Version         string `yaml:"version,omitempty"`
 }
 
 // PrometheusConfig describes configuration of the Prometheus component
