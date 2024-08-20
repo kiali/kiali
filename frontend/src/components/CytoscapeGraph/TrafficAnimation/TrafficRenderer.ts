@@ -341,7 +341,9 @@ export default class TrafficRenderer {
           point.renderer.render(this.context, pointInGraph);
         }
       } catch (error) {
-        console.log(`Error rendering TrafficEdge, it won't be rendered: ${error.message}`);
+        if (error instanceof Error) {
+          console.log(`Error rendering TrafficEdge, it won't be rendered: ${error.message}`);
+        }
       }
     });
   }
@@ -440,9 +442,11 @@ export default class TrafficRenderer {
       const edgeLength = this.edgeLength(edge);
       edgeLengthFactor = BASE_LENGTH / Math.max(edgeLength, 1);
     } catch (error) {
-      console.error(
-        `Error when finding the length of the edge for the traffic animation, this TrafficEdge won't be rendered: ${error.message}`
-      );
+      if (error instanceof Error) {
+        console.error(
+          `Error when finding the length of the edge for the traffic animation, this TrafficEdge won't be rendered: ${error.message}`
+        );
+      }
     }
 
     const edgeData = decoratedEdgeData(edge);

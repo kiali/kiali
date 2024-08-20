@@ -212,7 +212,7 @@ class IstioMetrics extends React.Component<Props, MetricsState> {
       })
       .catch(err => {
         AlertUtils.addMessage({
-          ...AlertUtils.extractAxiosError('Could not fetch Grafana info. Turning off links to Grafana.', err),
+          ...AlertUtils.extractApiError('Could not fetch Grafana info. Turning off links to Grafana.', err),
           group: 'default',
           type: MessageType.INFO,
           showNotification: false

@@ -3,6 +3,7 @@ import { AuthorizationPolicy, Sidecar } from 'types/IstioObjects';
 import { AceValidations, jsYaml } from '../../types/AceValidations';
 import AceEditor from 'react-ace';
 import { aceOptions } from '../../types/IstioConfigDetails';
+import {YAMLException} from "js-yaml";
 
 type PolicyItem = AuthorizationPolicy | Sidecar;
 
@@ -36,24 +37,26 @@ export class EditorPreview extends React.Component<Props, State> {
         this.props.onChange(object);
       });
     } catch (e) {
-      const row = e.mark && e.mark.line ? e.mark.line : 0;
-      const col = e.mark && e.mark.column ? e.mark.column : 0;
-      const message = e.message ? e.message : '';
-      parsedValidations.markers.push({
-        startRow: row,
-        startCol: 0,
-        endRow: row + 1,
-        endCol: 0,
-        className: 'istio-validation-error',
-        type: 'fullLine'
-      });
-      parsedValidations.annotations.push({
-        row: row,
-        column: col,
-        type: 'error',
-        text: message
-      });
-      this.setState({ parsedValidations });
+      if (e instanceof YAMLException) {
+        const row = e.mark && e.mark.line ? e.mark.line : 0;
+        const col = e.mark && e.mark.column ? e.mark.column : 0;
+        const message = e.message ? e.message : '';
+        parsedValidations.markers.push({
+          startRow: row,
+          startCol: 0,
+          endRow: row + 1,
+          endCol: 0,
+          className: 'istio-validation-error',
+          type: 'fullLine'
+        });
+        parsedValidations.annotations.push({
+          row: row,
+          column: col,
+          type: 'error',
+          text: message
+        });
+        this.setState({parsedValidations});
+      }
     }
   };
 

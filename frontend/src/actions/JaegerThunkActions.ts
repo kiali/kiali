@@ -1,11 +1,10 @@
-import { AxiosError } from 'axios';
-
 import * as AlertUtils from '../utils/AlertUtils';
 import * as API from '../services/Api';
 import { KialiDispatch } from '../types/Redux';
 import { JaegerActions } from './JaegerActions';
 import { setTraceId as setURLTraceId } from 'utils/SearchParamUtils';
 import transformTraceData from 'utils/tracing/TraceTransform';
+import {ApiError} from "../types/Api";
 
 export const JaegerThunkActions = {
   setTraceId: (traceId?: string) => {
@@ -22,12 +21,12 @@ export const JaegerThunkActions = {
             }
           })
           .catch(error => {
-            if ((error as AxiosError).response?.status === 404) {
+            if ((error as ApiError).response?.status === 404) {
               setURLTraceId(undefined);
             }
             dispatch(JaegerActions.setTrace(undefined));
             AlertUtils.addMessage({
-              ...AlertUtils.extractAxiosError('Could not fetch trace', error),
+              ...AlertUtils.extractApiError('Could not fetch trace', error),
               showNotification: false
             });
           });

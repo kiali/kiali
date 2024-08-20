@@ -2,7 +2,7 @@ import { store } from '../store/ConfigStore';
 import { MessageType } from '../types/MessageCenter';
 import { MessageCenterActions } from '../actions/MessageCenterActions';
 import * as API from '../services/Api';
-import {ApiError} from "../types/Api";
+import {ApiError, isApiError} from "../types/Api";
 
 export type Message = {
   content: string;
@@ -22,21 +22,23 @@ export const addMessage = (msg: Message) => {
   );
 };
 
-export const addError = (message: string, error?: ApiError, group?: string, type?: MessageType, detail?: string) => {
-  if (!error) {
+export const addError = (message: string, error?: Error, group?: string, type?: MessageType, detail?: string) => {
+  if (isApiError(error)) {
+    const finalType: MessageType = type ? type : MessageType.ERROR;
+    const err = extractApiError(message, error);
+    addMessage({
+      ...err,
+      group: group,
+      type: finalType
+    });
+  } else {
     store.dispatch(MessageCenterActions.addMessage(message, detail ? detail : '', group, MessageType.ERROR));
     return;
   }
-  const finalType: MessageType = type ? type : MessageType.ERROR;
-  const err = extractAxiosError(message, error);
-  addMessage({
-    ...err,
-    group: group,
-    type: finalType
-  });
+
 };
 
-export const extractAxiosError = (message: string, error: ApiError): { content: string; detail: string } => {
+export const extractApiError = (message: string, error: ApiError): { content: string; detail: string } => {
   const errorString: string = API.getErrorString(error);
   const errorDetail: string = API.getErrorDetail(error);
   if (message) {
