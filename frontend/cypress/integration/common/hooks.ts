@@ -1,4 +1,4 @@
-import { Before } from '@badeball/cypress-cucumber-preprocessor';
+import { Before, After } from '@badeball/cypress-cucumber-preprocessor';
 
 const CLUSTER1_CONTEXT = Cypress.env('CLUSTER1_CONTEXT');
 const CLUSTER2_CONTEXT = Cypress.env('CLUSTER2_CONTEXT');
@@ -118,4 +118,14 @@ Before({ tags: '@remote-istio-crds' }, () => {
         });
     }
   });
+});
+
+After({ tags: '@sleep-app-scaleup-after' }, () => {
+  cy.exec('kubectl scale -n sleep --replicas=1 deployment/sleep');
+});
+
+// remove resources created in the istio-system namespace to not influence istio instance after the test
+After({ tags: '@clean-istio-namespace-resources-after' }, function () {
+  cy.exec('kubectl -n istio-system delete PeerAuthentication default', { failOnNonZeroExit: false });
+  cy.exec('kubectl -n istio-system delete Sidecar default', { failOnNonZeroExit: false });
 });
