@@ -1,6 +1,7 @@
 package business
 
 import (
+	"context"
 	"fmt"
 
 	"golang.org/x/exp/maps"
@@ -9,6 +10,7 @@ import (
 	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/cache"
+	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 )
 
@@ -109,4 +111,23 @@ func (in *MeshService) CanaryUpgradeStatus() (*models.CanaryUpgradeStatus, error
 func (in *MeshService) IsValidCluster(cluster string) bool {
 	_, exists := in.kialiSAClients[cluster]
 	return exists
+}
+
+func (in *MeshService) GetMeshConfig() models.IstioMeshConfig {
+	mesh, err := in.discovery.Mesh(context.TODO())
+	if err != nil {
+		log.Errorf("Error getting mesh config: %s", err)
+		return models.IstioMeshConfig{}
+	}
+
+	// TODO: Multi-primary support
+	for _, controlPlane := range mesh.ControlPlanes {
+		if controlPlane.Cluster.IsKialiHome {
+			return controlPlane.Config.IstioMeshConfig
+		}
+	}
+
+	// This should not happen
+	log.Warningf("No Kiali Home cluster found while getting mesh config")
+	return models.IstioMeshConfig{}
 }

@@ -283,7 +283,10 @@
               "OutboundTrafficPolicy": {
                 "mode": "ALLOW_ANY"
               },
-              "TrustDomain": "cluster.local"
+              "TrustDomain": "cluster.local",
+              "DefaultDestinationRuleExportTo": null,
+              "DefaultServiceExportTo": null,
+              "DefaultVirtualServiceExportTo": null
             },
             "revision": "default",
             "thresholds": {

@@ -102,6 +102,10 @@ type IstioMeshConfig struct {
 	} `yaml:"defaultConfig" json:"defaultConfig"`
 	OutboundTrafficPolicy OutboundPolicy `yaml:"outboundTrafficPolicy,omitempty"`
 	TrustDomain           string         `yaml:"trustDomain,omitempty"`
+	// Default Export To fields, used when objects do not have ExportTo
+	DefaultDestinationRuleExportTo []string `yaml:"defaultDestinationRuleExportTo,omitempty"`
+	DefaultServiceExportTo         []string `yaml:"defaultServiceExportTo,omitempty"`
+	DefaultVirtualServiceExportTo  []string `yaml:"defaultVirtualServiceExportTo,omitempty"`
 }
 
 func (imc IstioMeshConfig) GetEnableAutoMtls() bool {

@@ -121,7 +121,7 @@ func (a ServiceEntryAppender) loadServiceEntryHosts(cluster, namespace string, g
 
 		// ... and then use ExportTo to decide whether the hosts are accessible to the namespace
 		for _, entry := range istioCfg.ServiceEntries {
-			if entry.Spec.Hosts != nil && isExportedToNamespace(entry, namespace) {
+			if entry.Spec.Hosts != nil && isExportedToNamespace(entry, namespace, globalInfo.Business.Mesh.GetMeshConfig().DefaultServiceExportTo) {
 				location := "MESH_EXTERNAL"
 				if entry.Spec.Location.String() == "MESH_INTERNAL" {
 					location = "MESH_INTERNAL"
@@ -310,11 +310,16 @@ func (a *ServiceEntryAppender) isAccessible(cluster, namespace string) bool {
 	return ok
 }
 
-func isExportedToNamespace(se *networking_v1.ServiceEntry, namespace string) bool {
-	if se.Spec.ExportTo == nil {
+func isExportedToNamespace(se *networking_v1.ServiceEntry, namespace string, meshExportTo []string) bool {
+	exportTo := se.Spec.ExportTo
+	if len(exportTo) == 0 {
+		// using mesh defaultExportTo values
+		exportTo = meshExportTo
+	}
+	if len(exportTo) == 0 {
 		return true
 	}
-	for _, export := range se.Spec.ExportTo {
+	for _, export := range exportTo {
 		if export == "*" {
 			return true
 		}
