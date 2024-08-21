@@ -503,6 +503,7 @@ export interface DecoratedGraphEdgeData extends GraphEdgeData {
   httpNoResponse: number;
   httpPercentErr: number;
   httpPercentReq: number;
+  isAmbient: boolean;
   // Default value -1
   isMTLS: number;
   protocol: ValidProtocols;

@@ -964,6 +964,15 @@ export class GraphStyles {
         }
       },
       {
+        selector: 'edge[isAmbient=true]',
+        css: {
+          'source-arrow-shape': 'none',
+          'source-arrow-color': (ele: Cy.EdgeSingular) => {
+            return getEdgeColor(ele);
+          }
+        }
+      },
+      {
         selector: `edge.${HighlightClass}`,
         style: {
           'font-size': `${serverConfig.kialiFeatureFlags.uiDefaults.graph.settings.fontLabel}px`

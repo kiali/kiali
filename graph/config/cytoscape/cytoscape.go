@@ -133,6 +133,7 @@ type EdgeData struct {
 
 	// App Fields (not required by Cytoscape)
 	DestPrincipal   string          `json:"destPrincipal,omitempty"`   // principal used for the edge destination
+	IsAmbient       bool            `json:"isAmbient,omitempty"`       // Show ztunnel indicator in the graph
 	IsMTLS          string          `json:"isMTLS,omitempty"`          // set to the percentage of traffic using a mutual TLS connection
 	ResponseTime    string          `json:"responseTime,omitempty"`    // in millis
 	SourcePrincipal string          `json:"sourcePrincipal,omitempty"` // principal used for the edge source
@@ -445,6 +446,9 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 			}
 			if e.Metadata[graph.SourcePrincipal] != nil {
 				ed.SourcePrincipal = e.Metadata[graph.SourcePrincipal].(string)
+			}
+			if e.Source.Metadata[graph.IsAmbient] == true || e.Dest.Metadata[graph.IsAmbient] == true {
+				ed.IsAmbient = true
 			}
 			addEdgeTelemetry(e, &ed)
 
