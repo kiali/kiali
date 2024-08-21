@@ -1,5 +1,5 @@
 import { Then } from '@badeball/cypress-cucumber-preprocessor';
-import { GraphDataSource } from '../../../src/services/GraphDataSource';
+import { GraphDataSource } from 'services/GraphDataSource';
 
 Then(`user does not see the {string} link`, link => {
   cy.get('div[role="dialog"]').get(`#${link}`).should('not.exist');

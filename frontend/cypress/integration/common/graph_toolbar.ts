@@ -1,5 +1,5 @@
 import { Before, Then, When } from '@badeball/cypress-cucumber-preprocessor';
-import { CytoscapeGlobalScratchData, CytoscapeGlobalScratchNamespace } from '../../../src/types/Graph';
+import { CytoscapeGlobalScratchData, CytoscapeGlobalScratchNamespace } from 'types/Graph';
 
 const url = '/console';
 

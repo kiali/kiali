@@ -1,6 +1,6 @@
 import { Before, Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import { Controller, Edge, Node, Visualization, isEdge, isNode } from '@patternfly/react-topology';
-import { MeshInfraType, MeshNodeData } from '../../../src/types/Mesh';
+import { MeshInfraType, MeshNodeData } from 'types/Mesh';
 
 Before(() => {
   // Copied from overview.ts.  This prevents cypress from stopping on errors unrelated to the tests.

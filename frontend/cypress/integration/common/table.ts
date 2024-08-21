@@ -1,6 +1,6 @@
 import { Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import { TableDefinition } from 'cypress-cucumber-preprocessor';
-import { MeshCluster } from '../../../src/types/Mesh';
+import { MeshCluster } from 'types/Mesh';
 
 enum SortOrder {
   Ascending = 'ascending',
