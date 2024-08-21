@@ -302,6 +302,7 @@ export class GraphStyles {
         if (node.isGateway?.egressInfo?.hostnames?.length !== undefined) {
           badges = `<span class="${NodeIconGateway} ${badgeMargin(badges)}"></span> ${badges}`;
         }
+        // A Waypoint should be mutually exclusive with being a traffic source
         if (isWaypoint) {
           badges = `<span class="${NodeIconWaypoint} ${badgeMargin(badges)}"></span> ${badges}`;
         }
