@@ -378,8 +378,16 @@ if [ "${AMBIENT_ENABLED}" == "true" ]; then
   # It could also be applied to service account
   if [ "${WAYPOINT}" == "true" ]; then
     # Create Waypoint proxy
-    echo "Create Waypoint proxy"
-    ${ISTIOCTL} x waypoint apply -n ${NAMESPACE} --enroll-namespace
+    is_istio_version_eq_greater_than "1.23.0"
+    version_greater=$?
+
+    if [ "${version_greater}" == "1" ]; then
+      echo "Create Waypoint proxy"
+      ${ISTIOCTL} waypoint apply -n ${NAMESPACE} --enroll-namespace
+    else
+      echo "Create -experimental- Waypoint proxy"
+      ${ISTIOCTL} x waypoint apply -n ${NAMESPACE} --enroll-namespace
+    fi
   fi
 else
   if [ "${AUTO_INJECTION}" == "false" -a "${MANUAL_INJECTION}" == "false" ]; then
