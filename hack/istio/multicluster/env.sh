@@ -147,11 +147,6 @@ KIALI1_WEB_SCHEMA="${KIALI1_WEB_SCHEMA:-}"
 KIALI2_WEB_FQDN="${KIALI2_WEB_FQDN:-}"
 KIALI2_WEB_SCHEMA="${KIALI2_WEB_SCHEMA:-}"
 
-# Used by the Kiali deployment functions, this declares what Kiali Server Helm Charts to use.
-# The user should set this to a tarball if a different helm chart should be used.
-# e.g. /source/helm-charts/_output/charts/kiali-server-1.64.0-SNAPSHOT.tgz
-KIALI_SERVER_HELM_CHARTS="${KIALI_SERVER_HELM_CHARTS:-kiali-server}"
-
 KIALI_BUILD_DEV_IMAGE="${KIALI_BUILD_DEV_IMAGE:-false}"
 
 # process command line args
@@ -543,6 +538,18 @@ if [ -z "${KIALI_CREATE_REMOTE_CLUSTER_SECRETS}" ]; then
   KIALI_CREATE_REMOTE_CLUSTER_SECRETS="${SINGLE_KIALI}"
 fi
 
+if [ "${KIALI_USE_DEV_IMAGE}" == "true" ]; then
+  if [ -z "${KIALI_SERVER_HELM_CHARTS:-}" ]; then
+    echo "ERROR: You must specify the Kiali Server Helm Charts (--kiali-server-helm-charts) tarball to use when using a dev image"
+    exit 1
+  else
+    # Used by the Kiali deployment functions, this declares what Kiali Server Helm Charts to use.
+    # The user should set this to a tarball if a different helm chart should be used.
+    # e.g. /source/helm-charts/_output/charts/kiali-server-1.64.0-SNAPSHOT.tgz
+    KIALI_SERVER_HELM_CHARTS="${KIALI_SERVER_HELM_CHARTS:-kiali-server}"
+  fi
+fi
+
 # Export all variables so child scripts pick them up
 export BOOKINFO_ENABLED \
        BOOKINFO_NAMESPACE \
@@ -609,6 +616,7 @@ KIALI_AUTH_STRATEGY=$KIALI_AUTH_STRATEGY
 KIALI_BUILD_DEV_IMAGE=$KIALI_BUILD_DEV_IMAGE
 KIALI_CREATE_REMOTE_CLUSTER_SECRETS=$KIALI_CREATE_REMOTE_CLUSTER_SECRETS
 KIALI_ENABLED=$KIALI_ENABLED
+KIALI_SERVER_HELM_CHARTS=$KIALI_SERVER_HELM_CHARTS
 KIALI_USE_DEV_IMAGE=$KIALI_USE_DEV_IMAGE
 KIALI1_WEB_FQDN=$KIALI1_WEB_FQDN
 KIALI1_WEB_SCHEMA=$KIALI1_WEB_SCHEMA
