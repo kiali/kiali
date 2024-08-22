@@ -95,7 +95,7 @@ CROSSNETWORK_GATEWAY_REQUIRED="true"
 MANUAL_MESH_NETWORK_CONFIG=""
 
 # Tempo instead of Jaeger
-TEMPO="false"
+TEMPO="${TEMPO:-false}"
 
 # The names of each cluster
 CLUSTER1_NAME="${CLUSTER1_NAME:-east}"
