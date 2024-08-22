@@ -26,7 +26,7 @@ Then('user sees inbound and outbound traffic information', () => {
 });
 
 Then('user sees inbound metrics information', () => {
-  cy.intercept(`${Cypress.config('baseUrl')}/api/namespaces/${NAMESPACE}/apps/${APP}/dashboard*`).as('fetchMetrics');
+  cy.intercept(`**/api/namespaces/${NAMESPACE}/apps/${APP}/dashboard*`).as('fetchMetrics');
 
   openTab('Inbound Metrics');
   cy.wait('@fetchMetrics');
@@ -45,7 +45,7 @@ Then('user sees inbound metrics information', () => {
 });
 
 Then('user sees outbound metrics information', () => {
-  cy.intercept(`${Cypress.config('baseUrl')}/api/namespaces/${NAMESPACE}/apps/${APP}/dashboard*`).as('fetchMetrics');
+  cy.intercept(`**/api/namespaces/${NAMESPACE}/apps/${APP}/dashboard*`).as('fetchMetrics');
 
   openTab('Outbound Metrics');
   cy.wait('@fetchMetrics');

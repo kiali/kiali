@@ -10,7 +10,7 @@ enum detailType {
 
 Given('user is at the {string} list page', (page: string) => {
   // enable toggles on the list pages so that they can be tested
-  cy.intercept(`${Cypress.config('baseUrl')}/api/config`, request => {
+  cy.intercept(`**/api/config`, request => {
     request.reply(response => {
       response.body['kialiFeatureFlags']['uiDefaults']['list']['showIncludeToggles'] = true;
       return response;
@@ -57,7 +57,7 @@ Given(
       }).as('waitForCall');
     }
 
-    cy.visit(`${Cypress.config('baseUrl')}/console/namespaces/${namespace}/${pageDetail}/${name}`, { qs });
+    cy.visit({ url: `${Cypress.config('baseUrl')}/console/namespaces/${namespace}/${pageDetail}/${name}`, qs });
     ensureKialiFinishedLoading();
   }
 );

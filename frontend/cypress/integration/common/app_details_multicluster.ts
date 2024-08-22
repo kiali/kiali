@@ -16,7 +16,7 @@ Then('user sees details information for the remote {string} app', (name: string)
 Then(
   'user sees {string} metrics information for the remote {string} {string}',
   (metrics: string, name: string, type: string) => {
-    cy.intercept(`${Cypress.config('baseUrl')}/api/namespaces/bookinfo/${type}s/${name}/dashboard*`).as('fetchMetrics');
+    cy.intercept(`**/api/namespaces/bookinfo/${type}s/${name}/dashboard*`).as('fetchMetrics');
 
     openTab(`${metrics} Metrics`);
     cy.wait('@fetchMetrics');
@@ -45,9 +45,7 @@ Then('user does not see any inbound and outbound traffic information', () => {
 Then(
   'user does not see {string} metrics information for the {string} {string} {string}',
   (metrics: string, cluster: string, name: string, type: string) => {
-    cy.intercept(
-      `${Cypress.config('baseUrl')}/api/namespaces/bookinfo/${type}s/${name}/dashboard*&clusterName=${cluster}*`
-    ).as('fetchMetrics');
+    cy.intercept(`**/api/namespaces/bookinfo/${type}s/${name}/dashboard*&clusterName=${cluster}*`).as('fetchMetrics');
 
     openTab(`${metrics} Metrics`);
     cy.wait('@fetchMetrics');

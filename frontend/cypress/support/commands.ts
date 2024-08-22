@@ -111,11 +111,11 @@ Cypress.Commands.add('login', (username: string, password: string) => {
           );
         }
 
-        cy.intercept('/api/namespaces').as('getNamespaces');
-        cy.intercept('/api/config').as('getConfig');
-        cy.intercept('/api/status').as('getStatus');
-        cy.intercept('/api/tracing').as('getTracing');
-        cy.intercept('/api/auth/info').as('getAuthInfo');
+        cy.intercept('**/api/namespaces').as('getNamespaces');
+        cy.intercept('**/api/config').as('getConfig');
+        cy.intercept('**/api/status').as('getStatus');
+        cy.intercept('**/api/tracing').as('getTracing');
+        cy.intercept('**/api/auth/info').as('getAuthInfo');
 
         cy.visit('/');
         const authProvider = Cypress.env('AUTH_PROVIDER');

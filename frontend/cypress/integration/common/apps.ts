@@ -74,7 +74,7 @@ When('I fetch the list of applications', () => {
 });
 
 When('user opens the namespace dropdown', () => {
-  cy.intercept(`${Cypress.config('baseUrl')}/api/namespaces/`).as('getNamespaces');
+  cy.intercept(`**/api/namespaces/`).as('getNamespaces');
   cy.get('[data-test="namespace-dropdown"]').click();
 });
 
