@@ -34,7 +34,7 @@ const mutIcons = {
   istio: {
     circuitBreaker: {
       ascii: '\uf0e7 ',
-      className: 'fa fa-bolt fa-red',
+      className: 'fa fa-bolt',
       icon: BoltIcon,
       name: 'bolt',
       text: 'Circuit Breaker',
