@@ -19,6 +19,7 @@ TEST_SUITE="${BACKEND}"
 SETUP_ONLY="false"
 TESTS_ONLY="false"
 WITH_VIDEO="false"
+TEMPO="false"
 
 # process command line args
 while [[ $# -gt 0 ]]; do
@@ -34,6 +35,10 @@ while [[ $# -gt 0 ]]; do
         echo "--setup-only option must be one of 'true' or 'false'"
         exit 1
       fi
+      shift;shift
+      ;;
+    -t|--tempo)
+      TEMPO="${2}"
       shift;shift
       ;;
     -to|--tests-only)
@@ -68,6 +73,9 @@ Valid command line arguments:
     Default: The latest release
   -so|--setup-only <true|false>
     If true, only setup the test environment and exit without running the tests.
+    Default: false
+  -t|--tempo <true|false>
+    If true, Tempo will be installed instead of Jaeger. Just for primary-remote suite
     Default: false
   -to|--tests-only <true|false>
     If true, only run the tests and skip the setup.
@@ -110,6 +118,7 @@ SETUP_ONLY=$SETUP_ONLY
 TESTS_ONLY=$TESTS_ONLY
 TEST_SUITE=$TEST_SUITE
 WITH_VIDEO=$WITH_VIDEO
+TEMPO=$TEMPO
 === SETTINGS ===
 EOM
 
@@ -363,7 +372,7 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_PRIMARY_REMOTE}" ]; then
   ensureCypressInstalled
   
   if [ "${TESTS_ONLY}" == "false" ]; then
-    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --multicluster "primary-remote" ${ISTIO_VERSION_ARG}
+    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --multicluster "primary-remote" ${ISTIO_VERSION_ARG} --tempo ${TEMPO}
   fi
 
   ensureKialiServerReady

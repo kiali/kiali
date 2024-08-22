@@ -29,6 +29,10 @@ type OtelHTTPClient struct {
 // New client
 func NewOtelClient(client http.Client, baseURL *url.URL) (otelClient *OtelHTTPClient, err error) {
 	url := *baseURL
+	// Istio adds the istio.cluster_id tag
+	// That allows to filter traces by cluster in MC environments
+	// This is a check to validate that this tag exists before use it
+	// To prevent empty tags results
 	url.Path = path.Join(url.Path, "/api/search/tags")
 	tags := false
 	r, status, _ := makeRequest(client, url.String(), nil)
@@ -41,7 +45,7 @@ func NewOtelClient(client http.Client, baseURL *url.URL) (otelClient *OtelHTTPCl
 			return nil, errMarshal
 		}
 
-		if util.InSlice(response.TagNames, "cluster") {
+		if util.InSlice(response.TagNames, models.IstioClusterTag) {
 			tags = true
 		}
 	}
@@ -249,7 +253,9 @@ func (oc OtelHTTPClient) prepareTraceQL(u *url.URL, tracingServiceName string, q
 
 	if len(query.Tags) > 0 {
 		for k, v := range query.Tags {
-			if k != models.IstioClusterTag && oc.ClusterTag {
+			if k == models.IstioClusterTag && oc.ClusterTag == false {
+				log.Tracef("Cluster tag is disabled")
+			} else {
 				tag := TraceQL{operator1: "." + k, operand: EQUAL, operator2: v}
 				queryPart = TraceQL{operator1: queryPart, operand: AND, operator2: tag}
 			}
