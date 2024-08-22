@@ -253,7 +253,7 @@ func (oc OtelHTTPClient) prepareTraceQL(u *url.URL, tracingServiceName string, q
 
 	if len(query.Tags) > 0 {
 		for k, v := range query.Tags {
-			if k == models.IstioClusterTag && oc.ClusterTag == false {
+			if k == models.IstioClusterTag && !oc.ClusterTag {
 				log.Tracef("Cluster tag is disabled")
 			} else {
 				tag := TraceQL{operator1: "." + k, operand: EQUAL, operator2: v}
