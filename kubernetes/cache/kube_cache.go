@@ -169,8 +169,8 @@ type cacheLister struct {
 // kubeCache is a local cache of kube objects. Manages informers and listers.
 type kubeCache struct {
 	cacheLock sync.RWMutex
-	// refreshLock enforces thread safety around the re-starting of informers
-	refreshLock sync.RWMutex
+	// refreshOnce enforces thread safety around the re-starting of informers
+	refreshOnce *OnceWrapper
 	cfg         config.Config
 	// the KialiCache that owns this kubeCache
 	kialiCache         KialiCache
@@ -203,6 +203,7 @@ func NewKubeCache(kialiClient kubernetes.ClientInterface, cfg config.Config, kia
 		// the operator only grants clusterroles when all namespaces are accessible.
 		clusterScoped:   cfg.AllNamespacesAccessible(),
 		refreshDuration: refreshDuration,
+		refreshOnce:     &OnceWrapper{once: &sync.Once{}},
 	}
 
 	if c.clusterScoped {
@@ -323,12 +324,16 @@ func (c *kubeCache) refresh(namespace string) error {
 	}
 
 	// We need to be thread-safe here so refreshing doesn't deadlock after a deleted namespace is re-created.
-	// Locking here ensures concurrent calls to getCacheLister doesn't deadlock
-	c.refreshLock.Lock()
-	defer c.refreshLock.Unlock()
-
-	c.stop(namespace)
-	return c.startInformers(namespace)
+	// Locking here ensures concurrent calls to getCacheLister doesn't deadlock. There tends to be a flurry
+	// of concurrent calls to getCacheLister and if at that time the namespace cache needs to be refreshed, we
+	// only want to create informers once here. This might not always create informers one time, but it helps limit
+	// the number of times informers are created and then immediately thrown away and created again.
+	defer c.refreshOnce.Reset()
+	return c.refreshOnce.Do(func() error {
+		log.Debugf("Restarting cache informers for namespace [%v]", namespace)
+		c.stop(namespace)
+		return c.startInformers(namespace)
+	})
 }
 
 // starter is a small interface around the different informer factories that
