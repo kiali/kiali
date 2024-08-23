@@ -117,7 +117,7 @@ Then('user sees Details information for Apps', () => {
 Then('user only sees the apps with the {string} name', (name: string) => {
   let count: number;
 
-  cy.request('GET', `/api/clusters/apps`).should(response => {
+  cy.request({ method: 'GET', url: `/api/clusters/apps` }).should(response => {
     count = response.body.applications.filter(item => item.name.includes(name)).length;
   });
 

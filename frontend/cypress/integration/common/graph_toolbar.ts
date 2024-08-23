@@ -141,7 +141,7 @@ Then('user sees graph duration menu', () => {
   cy.get('button#time_range_duration-toggle').invoke('attr', 'aria-expanded').should('eq', 'true');
 
   cy.get('div#time_range_duration').within(() => {
-    cy.request('GET', '/api/config').then(response => {
+    cy.request({ method: 'GET', url: '/api/config' }).then(response => {
       expect(response.status).to.equal(200);
 
       const scrapeInterval = response.body.prometheus.globalScrapeInterval;

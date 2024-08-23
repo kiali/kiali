@@ -67,7 +67,7 @@ When('user sees mesh side panel', () => {
     .should('be.visible')
     .within(div => {
       // Get the name of the mesh from the API.
-      cy.request('api/mesh/graph').then(resp => {
+      cy.request({ url: 'api/mesh/graph' }).then(resp => {
         expect(resp.status).to.eq(200);
         expect(resp.body.meshName).to.not.equal(undefined);
         expect(resp.body.meshName).to.not.equal('');
