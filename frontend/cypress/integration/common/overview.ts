@@ -121,7 +121,7 @@ When(`user selects {string} traffic direction`, (direction: string) => {
 });
 
 When('I fetch the overview of the cluster', () => {
-  cy.visit('/console/overview?refresh=0');
+  cy.visit({ url: '/console/overview?refresh=0' });
 });
 
 Then(`user sees the {string} namespace card`, (ns: string) => {

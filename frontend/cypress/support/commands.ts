@@ -117,7 +117,7 @@ Cypress.Commands.add('login', (username: string, password: string) => {
         cy.intercept('**/api/tracing').as('getTracing');
         cy.intercept('**/api/auth/info').as('getAuthInfo');
 
-        cy.visit('/');
+        cy.visit({ url: '/' });
         const authProvider = Cypress.env('AUTH_PROVIDER');
         if (authProvider !== '' && authProvider !== undefined) {
           cy.contains(authProvider).should('be.visible').click();

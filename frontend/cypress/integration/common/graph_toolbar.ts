@@ -1,8 +1,6 @@
 import { Before, Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import { CytoscapeGlobalScratchData, CytoscapeGlobalScratchNamespace } from 'types/Graph';
 
-const url = '/console';
-
 Before(() => {
   // Copied from overview.ts.  This prevents cypress from stopping on errors unrelated to the tests.
   // There can be random failures due timeouts/loadtime/framework that throw browser errors.  This
@@ -22,7 +20,7 @@ Before(() => {
 When(
   'user graphs {string} namespaces with refresh {string} and duration {string}',
   (namespaces: string, refresh: string, duration: string) => {
-    cy.visit(`${url}/graph/namespaces?refresh=${refresh}&duration=${duration}&namespaces=${namespaces}`);
+    cy.visit({ url: `/console/graph/namespaces?refresh=${refresh}&duration=${duration}&namespaces=${namespaces}` });
   }
 );
 

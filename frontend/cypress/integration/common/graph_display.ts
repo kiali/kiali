@@ -1,8 +1,6 @@
 import { Before, Given, Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import { ensureKialiFinishedLoading } from './transition';
 
-const url = '/console';
-
 Before(() => {
   // Copied from overview.ts.  This prevents cypress from stopping on errors unrelated to the tests.
   // There can be random failures due timeouts/loadtime/framework that throw browser errors.  This
@@ -23,7 +21,7 @@ When('user graphs {string} namespaces', (namespaces: string) => {
   // Forcing "Pause" to not cause unhandled promises from the browser when cypress is testing
   cy.intercept(`**/api/namespaces/graph*`).as('graphNamespaces');
 
-  cy.visit(`${url}/graph/namespaces?refresh=0&namespaces=${namespaces}`);
+  cy.visit({ url: `/console/graph/namespaces?refresh=0&namespaces=${namespaces}` });
 
   if (namespaces !== '') {
     cy.wait('@graphNamespaces');

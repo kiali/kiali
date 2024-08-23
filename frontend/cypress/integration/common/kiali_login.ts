@@ -11,7 +11,7 @@ Given('all sessions are cleared', () => {
 });
 
 Given('user opens base url', () => {
-  cy.visit('/');
+  cy.visit({ url: '/' });
   cy.log(auth_strategy);
   cy.window().then((win: any) => {
     if (auth_strategy !== 'openshift') {

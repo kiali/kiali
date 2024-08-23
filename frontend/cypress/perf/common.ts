@@ -21,7 +21,8 @@ const measureLoadTime = (name: string, baseline: number, loadUrl: string, loadEl
     .each(() => {
       // Disabling refresh so that we can see how long it takes to load the page without additional requests
       // being made due to the refresh.
-      cy.visit(loadUrl, {
+      cy.visit({
+        url: loadUrl,
         onBeforeLoad(win) {
           win.performance.mark('start');
         }

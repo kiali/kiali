@@ -23,7 +23,8 @@ describe('Graph performance tests', () => {
     it('Measures Graph load time', { defaultCommandTimeout: Cypress.env('timeout') }, () => {
       cy.intercept(`**/api/namespaces/graph*`).as('graphNamespaces');
 
-      cy.visit(graphUrl, {
+      cy.visit({
+        url: graphUrl,
         onBeforeLoad(win) {
           win.performance.mark('start');
         }

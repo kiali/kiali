@@ -70,7 +70,7 @@ Then('user sees span details', () => {
 });
 
 When('I fetch the list of applications', () => {
-  cy.visit('/console/applications?refresh=0');
+  cy.visit({ url: '/console/applications?refresh=0' });
 });
 
 When('user opens the namespace dropdown', () => {

@@ -21,7 +21,8 @@ describe('Overview performance tests', () => {
         .each(() => {
           // Disabling refresh so that we can see how long it takes to load the page without additional requests
           // being made due to the refresh.
-          cy.visit('/console/overview?refresh=0', {
+          cy.visit({
+            url: '/console/overview?refresh=0',
             onBeforeLoad(win) {
               win.performance.mark('start');
             }

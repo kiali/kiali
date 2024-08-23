@@ -18,18 +18,18 @@ Given('user is at the {string} list page', (page: string) => {
   }).as('config');
 
   // Forcing "Pause" to not cause unhandled promises from the browser when cypress is testing
-  cy.visit(`${Cypress.config('baseUrl')}/console/${page}?refresh=0`);
+  cy.visit({ url: `${Cypress.config('baseUrl')}/console/${page}?refresh=0` });
   cy.wait('@config');
 });
 
 Given('user is at the {string} page', (page: string) => {
   // Forcing "Pause" to not cause unhandled promises from the browser when cypress is testing
-  cy.visit(`${Cypress.config('baseUrl')}/console/${page}?refresh=0`);
+  cy.visit({ url: `${Cypress.config('baseUrl')}/console/${page}?refresh=0` });
 });
 
 Given('user is at the {string} page for the {string} namespace', (page: string, namespace: string) => {
   // Forcing "Pause" to not cause unhandled promises from the browser when cypress is testing
-  cy.visit(`${Cypress.config('baseUrl')}/console/${page}?refresh=0&namespaces=${namespace}`);
+  cy.visit({ url: `${Cypress.config('baseUrl')}/console/${page}?refresh=0&namespaces=${namespace}` });
 });
 
 Given(

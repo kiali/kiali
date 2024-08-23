@@ -1,13 +1,13 @@
 import { Given, Then, When } from '@badeball/cypress-cucumber-preprocessor';
 
 Given('I am on the {string} workload detail page of the {string} namespace', (workload: string, namespace: string) => {
-  cy.visit(`/console/namespaces/${namespace}/workloads/${workload}?refresh=0`);
+  cy.visit({ url: `/console/namespaces/${namespace}/workloads/${workload}?refresh=0` });
 });
 
 Given(
   'I am on the logs tab of the {string} workload detail page of the {string} namespace',
   (workload: string, namespace: string) => {
-    cy.visit(`/console/namespaces/${namespace}/workloads/${workload}?tab=logs&refresh=0`);
+    cy.visit({ url: `/console/namespaces/${namespace}/workloads/${workload}?tab=logs&refresh=0` });
   }
 );
 

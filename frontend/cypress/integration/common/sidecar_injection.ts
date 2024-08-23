@@ -233,7 +233,7 @@ Given('a workload with override configuration for automatic sidecar injection', 
 });
 
 When('I visit the overview page', () => {
-  cy.visit('/console/overview?refresh=0');
+  cy.visit({ url: '/console/overview?refresh=0' });
   cy.contains('Inbound traffic', { matchCase: false }); // Make sure data finished loading, so avoid broken tests because of a re-render
 });
 
@@ -322,7 +322,7 @@ When('I remove override configuration for sidecar injection in the namespace', f
 });
 
 function switchWorkloadSidecarInjection(enableOrDisable: string): void {
-  cy.visit(`/console/namespaces/${this.targetNamespace}/workloads/${this.targetWorkload}?refresh=0`);
+  cy.visit({ url: `/console/namespaces/${this.targetNamespace}/workloads/${this.targetWorkload}?refresh=0` });
 
   cy.get('button[data-test="workload-actions-toggle"]').should('be.visible').click();
   cy.get(`li[data-test=${enableOrDisable}_auto_injection]`).find('button').should('be.visible').click();
