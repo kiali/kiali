@@ -63,7 +63,7 @@ while [[ $# -gt 0 ]]; do
       fi
       shift;shift
       ;;
-    -t|--tempo)                   TEMPO="true";               shift;shift; ;;
+    -t|--tempo)                   TEMPO="$2";               shift;shift; ;;
     *) echo "Unknown argument: [$key]. Aborting."; helpmsg; exit 1 ;;
   esac
 done
@@ -74,6 +74,7 @@ set -e
 # set up some of our defaults
 AUTH_STRATEGY="${AUTH_STRATEGY:-anonymous}"
 DORP="${DORP:-docker}"
+TEMPO="${TEMPO:-false}"
 
 # Defaults the branch to master unless it is already set
 TARGET_BRANCH="${TARGET_BRANCH:-master}"
@@ -368,7 +369,7 @@ setup_kind_multicluster() {
     kubectl rollout status deployment prometheus -n istio-system --context kind-east
     kubectl rollout status deployment prometheus -n istio-system --context kind-west
   elif [ "${MULTICLUSTER}" == "${PRIMARY_REMOTE}" ]; then
-    "${SCRIPT_DIR}"/istio/multicluster/install-primary-remote.sh --kiali-enabled false --manage-kind true -dorp docker -t ${TEMPO} --istio-dir "${istio_dir}" ${hub_arg:-}
+    "${SCRIPT_DIR}"/istio/multicluster/install-primary-remote.sh --kiali-enabled false --manage-kind true -dorp docker -te ${TEMPO} --istio-dir "${istio_dir}" ${hub_arg:-}
     cluster1_context="kind-east"
     cluster2_context="kind-west"
     cluster1_name="east"
@@ -403,7 +404,7 @@ setup_kind_multicluster() {
     -kas "${AUTH_STRATEGY}" \
     -kudi true \
     -kshc "${HELM_CHARTS_DIR}"/_output/charts/kiali-server-*.tgz \
-    -t ${TEMPO}
+    --tempo ${TEMPO}
 }
 
 if [ -n "${MULTICLUSTER}" ]; then

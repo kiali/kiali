@@ -354,7 +354,7 @@ while [[ $# -gt 0 ]]; do
       SINGLE_KIALI="$2"
       shift;shift
       ;;
-    -t|--tempo)
+    -te|--tempo)
       TEMPO="$2"
       shift;shift
       ;;
@@ -418,7 +418,7 @@ Valid command line arguments:
                        If this is left as empty string, it will be the same as --network1. (Default: "")
   -sc|--single-cluster <bool>: If "true", perform action just in CLUSTER 1. (Default: false)
   -sk|--single-kiali <bool>: If "true", a single kiali will be deployed for the whole mesh. (Default: true)
-  -t|--tempo <bool>: If "true", Tempo instead of Jaeger will be installed. (Default: false)
+  -te|--tempo <bool>: If "true", Tempo instead of Jaeger will be installed. (Default: false)
   -h|--help: this message
 HELPMSG
       exit 1
