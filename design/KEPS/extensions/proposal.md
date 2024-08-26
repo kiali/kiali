@@ -93,7 +93,7 @@ We'd like to also support:
 | Dest_cluster     |                                                                                   |
 | Dest_namespace   |                                                                                   |
 | Dest_name        |                                                                                   |
-| Security         | none \| mTLS                                                                      |
+| Secure           | optional, true \| false (default)                                                 |
 | Status_code      |                                                                                   |
 | Flags            | optional, defaults to “”                                                          |
 
@@ -113,7 +113,7 @@ We'd like to also support:
 | Dest_cluster     |                                                                                   |
 | Dest_namespace   |                                                                                   |
 | Dest_name        |                                                                                   |
-| Security         | none \| mTLS                                                                      |
+| Secure           | optional, true \| false (default)                                                 |
 | Status_code      |                                                                                   |
 | Flags            | optional, defaults to “”                                                          |
 
@@ -131,7 +131,7 @@ We'd like to also support:
 | Dest_cluster     |                                                                                   |
 | Dest_namespace   |                                                                                   |
 | Dest_name        |                                                                                   |
-| Security         | none \| mTLS                                                                      |
+| Secure           | optional, true \| false (default)                                                 |
 | Status_code      |                                                                                   |
 | Flags            | optional, defaults to “”                                                          |
 
@@ -153,7 +153,7 @@ We'd like to also support:
 | Dest_cluster     |                                                                                   |
 | Dest_namespace   |                                                                                   |
 | Dest_name        |                                                                                   |
-| Security         | none \| mTLS                                                                      |
+| Secure           | optional, true \| false (default)                                                 |
 | Status_code      |                                                                                   |
 | Flags            | optional, defaults to “”                                                          |
 

@@ -91,7 +91,7 @@ func (a ExtensionsAppender) appendGraph(ext config.ExtensionConfig, trafficMap g
 	if a.Rates.Http == graph.RateRequests || a.Rates.Grpc == graph.RateRequests {
 		// Grab all of the extension traffic for the time period, regardless of reporters or namespaces, in one shot.  This is a departure
 		// from the usual approach, but until it proves too heavy, let's give it a try...
-		groupBy := "dest_cluster, dest_namespace, dest_name, flags, protocol, security, source_cluster, source_is_root, source_namespace, source_name, status_code"
+		groupBy := "dest_cluster, dest_namespace, dest_name, flags, protocol, secure, source_cluster, source_is_root, source_namespace, source_name, status_code"
 		metric := "kiali_ext_requests_total"
 
 		query := fmt.Sprintf(`sum(rate(%s{extension="%s"} [%vs])) by (%s) %s`,
@@ -126,7 +126,7 @@ func (a ExtensionsAppender) appendGraph(ext config.ExtensionConfig, trafficMap g
 
 			// Grab all of the extension traffic for the time period, regardless of reporters or namespaces, in one shot.  This is a departure
 			// from the usual approach, but until it proves too heavy, let's give it a try...
-			groupBy := "dest_cluster, dest_namespace, dest_name, flags, security, source_cluster, source_is_root, source_namespace, source_name"
+			groupBy := "dest_cluster, dest_namespace, dest_name, flags, secure, source_cluster, source_is_root, source_namespace, source_name"
 
 			query := fmt.Sprintf(`sum(rate(%s{extension="%s"} [%vs])) by (%s) %s`,
 				metric,
@@ -178,13 +178,20 @@ func (a ExtensionsAppender) appendTrafficMap(ext config.ExtensionConfig, traffic
 		destNs := string(lDestNs)
 		destName := string(lDestName)
 
+		// "flags" is optional in the TS, if not supplied just leave it empty
 		flags := ""
 		if isRequests || protocol == graph.TCP.Name {
 			lFlags, flagsOk := m["flags"]
-			// "flags" is optional in the TS, if not supplied just leave it empty
 			if flagsOk {
 				flags = string(lFlags)
 			}
+		}
+
+		// "secure" is optional in the TS, if not supplied just assume false
+		secure := "false"
+		lSecure, secureOk := m["secure"]
+		if secureOk {
+			secure = string(lSecure)
 		}
 
 		var code string
@@ -205,11 +212,11 @@ func (a ExtensionsAppender) appendTrafficMap(ext config.ExtensionConfig, traffic
 			}
 		}
 
-		a.addTraffic(ext, trafficMap, metric, val, protocol, code, flags, sourceCluster, sourceIsRoot, sourceNs, sourceName, destCluster, destNs, destName)
+		a.addTraffic(ext, trafficMap, metric, val, protocol, code, flags, secure, sourceCluster, sourceIsRoot, sourceNs, sourceName, destCluster, destNs, destName)
 	}
 }
 
-func (a ExtensionsAppender) addTraffic(ext config.ExtensionConfig, trafficMap graph.TrafficMap, metric string, val float64, protocol, code, flags, sourceCluster, sourceIsRoot, sourceNs, sourceName, destCluster, destNs, destName string) {
+func (a ExtensionsAppender) addTraffic(ext config.ExtensionConfig, trafficMap graph.TrafficMap, metric string, val float64, protocol, code, flags, secure, sourceCluster, sourceIsRoot, sourceNs, sourceName, destCluster, destNs, destName string) {
 	isRoot := sourceIsRoot == "true"
 	source, _, err := a.addNode(ext, trafficMap, isRoot, sourceCluster, sourceNs, sourceName, a.GraphType)
 	if err != nil {
@@ -239,10 +246,10 @@ func (a ExtensionsAppender) addTraffic(ext config.ExtensionConfig, trafficMap gr
 	// Extensions may generate duplicate metrics by reporting from both the source and destination. To avoid
 	// processing the same information twice we keep track of the time series applied to a particular edge. The
 	// edgeTSHash incorporates information about the time series' source, destination and metric information,
-	// and uses that unique TS has to protect against applying the same intomation twice.
+	// and uses that unique TS has to protect against applying the same information twice.
 	edgeTSHash := fmt.Sprintf("%x", md5.Sum([]byte(fmt.Sprintf("%s:%s:%s:%s:%s:%s", metric, source.Metadata[tsHash], dest.Metadata[tsHash], code, flags, destName))))
 
-	a.addEdgeTraffic(val, protocol, code, flags, destName, source, dest, edgeTSHash)
+	a.addEdgeTraffic(val, protocol, code, flags, secure, destName, source, dest, edgeTSHash)
 }
 
 func (a ExtensionsAppender) addNode(ext config.ExtensionConfig, trafficMap graph.TrafficMap, isRoot bool, cluster, namespace, name, graphType string) (*graph.Node, bool, error) {
@@ -342,7 +349,7 @@ func (a ExtensionsAppender) getUrl(ext config.ExtensionConfig, source *graph.Nod
 
 // addEdgeTraffic uses edgeTSHash that the metric information has not been applied to the edge. Returns true
 // if the the metric information is applied, false if it determined to be a duplicate.
-func (a ExtensionsAppender) addEdgeTraffic(val float64, protocol, code, flags, host string, source, dest *graph.Node, edgeTSHash string) bool {
+func (a ExtensionsAppender) addEdgeTraffic(val float64, protocol, code, flags, secure, host string, source, dest *graph.Node, edgeTSHash string) bool {
 	var edge *graph.Edge
 	for _, e := range source.Edges {
 		if dest.ID == e.Dest.ID && e.Metadata[graph.ProtocolKey] == protocol {
@@ -354,6 +361,10 @@ func (a ExtensionsAppender) addEdgeTraffic(val float64, protocol, code, flags, h
 		edge = source.AddEdge(dest)
 		edge.Metadata[graph.ProtocolKey] = protocol
 		edge.Metadata[tsHashMap] = make(map[string]bool)
+		if secure == "true" {
+			edge.Metadata[graph.IsMTLS] = 100 // for extensions, just assume 0 or 100% secure
+		}
+
 	}
 
 	if _, ok := edge.Metadata[tsHashMap].(map[string]bool)[edgeTSHash]; !ok {

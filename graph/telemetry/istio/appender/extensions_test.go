@@ -100,7 +100,7 @@ func TestExtension(t *testing.T) {
 }
 
 func setupExtensionMock(t *testing.T) (*prometheus.Client, *prometheustest.PromAPIMock, *business.Layer, error) {
-	q0 := `round(sum(rate(kiali_ext_requests_total{extension="extension-name"} [60s])) by (dest_cluster, dest_namespace, dest_name, flags, protocol, security, source_cluster, source_is_root, source_namespace, source_name, status_code) > 0,0.001)`
+	q0 := `round(sum(rate(kiali_ext_requests_total{extension="extension-name"} [60s])) by (dest_cluster, dest_namespace, dest_name, flags, protocol, secure, source_cluster, source_is_root, source_namespace, source_name, status_code) > 0,0.001)`
 	q0m0 := model.Metric{
 		"source_cluster":   model.LabelValue(rootCluster),
 		"source_namespace": model.LabelValue(rootNamespace),
@@ -112,7 +112,7 @@ func setupExtensionMock(t *testing.T) (*prometheus.Client, *prometheustest.PromA
 		"protocol":         "http",
 		"status_code":      "200",
 		"flags":            "-",
-		"security":         "tls",
+		"secure":           model.LabelValue("true"),
 	}
 	v0 := model.Vector{
 		&model.Sample{
@@ -121,7 +121,7 @@ func setupExtensionMock(t *testing.T) (*prometheus.Client, *prometheustest.PromA
 		},
 	}
 
-	q1 := `round(sum(rate(kiali_ext_tcp_sent_total{extension="extension-name"} [60s])) by (dest_cluster, dest_namespace, dest_name, flags, security, source_cluster, source_is_root, source_namespace, source_name) > 0,0.001)`
+	q1 := `round(sum(rate(kiali_ext_tcp_sent_total{extension="extension-name"} [60s])) by (dest_cluster, dest_namespace, dest_name, flags, secure, source_cluster, source_is_root, source_namespace, source_name) > 0,0.001)`
 	q1m0 := model.Metric{
 		"source_cluster":   model.LabelValue(rootCluster),
 		"source_namespace": model.LabelValue(rootNamespace),
@@ -131,7 +131,7 @@ func setupExtensionMock(t *testing.T) (*prometheus.Client, *prometheustest.PromA
 		"dest_namespace":   "remote-namespace",
 		"dest_name":        "remote-tcp-service",
 		"flags":            "-",
-		"security":         "tls",
+		"secure":           model.LabelValue("true"),
 	}
 	v1 := model.Vector{
 		&model.Sample{
