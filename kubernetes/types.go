@@ -1,6 +1,8 @@
 package kubernetes
 
 import (
+	"encoding/json"
+
 	extentions_v1alpha1 "istio.io/client-go/pkg/apis/extensions/v1alpha1"
 	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
 	networking_v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
@@ -265,8 +267,8 @@ type IstioService struct {
 		// ".":		Private implies namespace local config
 		// "*":		Public implies config is visible to all
 		// "~":		None implies service is visible to no one. Used for services only
-		ExportTo       map[string]bool   `json:"ExportTo,omitempty"`
-		LabelSelectors map[string]string `json:"LabelSelectors,omitempty"`
+		ExportTo       map[string]StructOrBool `json:"ExportTo,omitempty"`
+		LabelSelectors map[string]string       `json:"LabelSelectors,omitempty"`
 		// ClusterExternalAddresses and ClusterExternalPorts are not mapped into the model
 		// Kiali won't use it yet and these attributes changes between Istio 1.11.x and Istio 1.12.x and may bring conflicts
 	} `json:"Attributes,omitempty"`
@@ -282,6 +284,26 @@ type IstioService struct {
 	ClusterVIPs12 struct {
 		Addresses map[string][]string `json:"Addresses,omitempty"`
 	} `json:"clusterVIPs,omitempty"`
+}
+
+// StructOrBool is a workaround to handle the different types of values that can be in the ExportTo field.
+// As of Istio 1.20 it is a struct but in earlier versions it is a bool. The actual value is not used.
+type StructOrBool struct{}
+
+func (s *StructOrBool) UnmarshalJSON(data []byte) (err error) {
+	// First try to Unmarshal as a bool.
+	var b bool
+	if err = json.Unmarshal(data, &b); err == nil {
+		*s = struct{}{}
+	} else {
+		// If that doesn't work then try to unmarshal as a struct
+		var sb struct{}
+		if err = json.Unmarshal(data, &sb); err == nil {
+			*s = sb
+		}
+	}
+
+	return
 }
 
 type RegistryStatus struct {

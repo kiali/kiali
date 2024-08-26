@@ -231,8 +231,8 @@ func CreateFakeRegistryService(host string, namespace string, exportToNamespace 
 	registryService.Hostname = host
 	registryService.IstioService.Attributes.Namespace = namespace
 	registryService.IstioService.Attributes.Labels = labels
-	registryService.IstioService.Attributes.ExportTo = make(map[string]bool)
-	registryService.IstioService.Attributes.ExportTo[exportToNamespace] = true
+	registryService.IstioService.Attributes.ExportTo = make(map[string]StructOrBool)
+	registryService.IstioService.Attributes.ExportTo[exportToNamespace] = struct{}{}
 
 	return &registryService
 }
