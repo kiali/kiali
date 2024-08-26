@@ -35,7 +35,7 @@ Options:
     Whether to set up a multicluster environment
     and which kind of multicluster environment to setup.
     Default: <none>
--t|--tempo
+-te|--tempo
     If Tempo will be installed as the tracing platform
     instead of Jaeger
 HELP
@@ -63,7 +63,7 @@ while [[ $# -gt 0 ]]; do
       fi
       shift;shift
       ;;
-    -t|--tempo)                   TEMPO="$2";               shift;shift; ;;
+    -te|--tempo)                   TEMPO="$2";               shift;shift; ;;
     *) echo "Unknown argument: [$key]. Aborting."; helpmsg; exit 1 ;;
   esac
 done
@@ -111,6 +111,7 @@ ISTIO_VERSION=$ISTIO_VERSION
 KIND_NODE_IMAGE=$KIND_NODE_IMAGE
 MULTICLUSTER=$MULTICLUSTER
 TARGET_BRANCH=$TARGET_BRANCH
+TEMPO=$TEMPO
 === SETTINGS ===
 EOM
 
@@ -410,7 +411,7 @@ setup_kind_multicluster() {
 if [ -n "${MULTICLUSTER}" ]; then
   setup_kind_multicluster
 else
-  if [ -n "${TEMPO}" ]; then
+  if [ "${TEMPO}" == "true" ]; then
     infomsg "Installing tempo"
     setup_kind_tempo
   else
