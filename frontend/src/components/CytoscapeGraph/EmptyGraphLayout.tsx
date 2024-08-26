@@ -18,11 +18,11 @@ import { DecoratedGraphElements } from '../../types/Graph';
 type EmptyGraphLayoutProps = {
   action?: any;
   elements?: DecoratedGraphElements;
-  namespaces: Namespace[];
-  isLoading?: boolean;
-  isError: boolean;
-  isMiniGraph: boolean;
   error?: string;
+  isError: boolean;
+  isLoading?: boolean;
+  isMiniGraph: boolean;
+  namespaces: Namespace[];
   showIdleNodes: boolean;
   toggleIdleNodes: () => void;
 };
@@ -38,7 +38,7 @@ const emptyStateStyle = kialiStyle({
 type EmptyGraphLayoutState = {};
 
 export class EmptyGraphLayout extends React.Component<EmptyGraphLayoutProps, EmptyGraphLayoutState> {
-  shouldComponentUpdate(nextProps: EmptyGraphLayoutProps) {
+  shouldComponentUpdate(nextProps: EmptyGraphLayoutProps): boolean {
     const currentIsEmpty = this.props.elements === undefined || _.isEmpty(this.props.elements.nodes);
     const nextIsEmpty = nextProps.elements === undefined || _.isEmpty(nextProps.elements.nodes);
 
@@ -55,7 +55,7 @@ export class EmptyGraphLayout extends React.Component<EmptyGraphLayoutProps, Emp
     return !(!nextIsEmpty && _.isEqual(this.props.namespaces, nextProps.namespaces));
   }
 
-  namespacesText() {
+  namespacesText(): React.ReactElement | null {
     if (this.props.namespaces && this.props.namespaces.length > 0) {
       if (this.props.namespaces.length === 1) {
         return (
@@ -64,13 +64,10 @@ export class EmptyGraphLayout extends React.Component<EmptyGraphLayoutProps, Emp
           </>
         );
       } else {
-        const namespacesString =
-          this.props.namespaces
-            .slice(0, -1)
-            .map(namespace => namespace.name)
-            .join(',') +
-          ' and ' +
-          this.props.namespaces[this.props.namespaces.length - 1].name;
+        const namespacesString = `${this.props.namespaces
+          .slice(0, -1)
+          .map(namespace => namespace.name)
+          .join(',')} and ${this.props.namespaces[this.props.namespaces.length - 1].name}`;
         return (
           <>
             namespaces <b>{namespacesString}</b>
@@ -81,7 +78,7 @@ export class EmptyGraphLayout extends React.Component<EmptyGraphLayoutProps, Emp
     return null;
   }
 
-  render() {
+  render(): React.ReactNode {
     if (this.props.isError) {
       return (
         <EmptyState id="empty-graph-error" variant={EmptyStateVariant.lg} className={emptyStateStyle}>
@@ -129,6 +126,13 @@ export class EmptyGraphLayout extends React.Component<EmptyGraphLayoutProps, Emp
             {!this.props.showIdleNodes && (
               <> You can enable 'Idle Nodes' to display service mesh nodes that have yet to see any request traffic.</>
             )}
+            <p>
+              Click{' '}
+              <a href={'https://kiali.io/docs/faq/graph/#emptygraph'} target="_blank" rel="noreferrer">
+                here
+              </a>{' '}
+              to frequently asked questions about why your graph might be empty.{' '}
+            </p>
           </EmptyStateBody>
           <EmptyStateFooter>
             <Button
