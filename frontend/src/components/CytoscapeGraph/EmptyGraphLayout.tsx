@@ -131,7 +131,7 @@ export class EmptyGraphLayout extends React.Component<EmptyGraphLayoutProps, Emp
               <a href={'https://kiali.io/docs/faq/graph/#emptygraph'} target="_blank" rel="noreferrer">
                 here
               </a>{' '}
-              to frequently asked questions about why your graph might be empty.{' '}
+              to read the FAQ entry about why your graph may be empty.{' '}
             </p>
           </EmptyStateBody>
           <EmptyStateFooter>
