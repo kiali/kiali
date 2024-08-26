@@ -1019,17 +1019,12 @@ export class GraphStyles {
       {
         selector: `edge[display="multiple"]`,
         style: {
-          'line-color': (ele: Cy.EdgeSingular) => {
-            return getEdgeColor(ele);
-          },
-          /*** TODO: Not available yet
           'line-color': EdgeColorTCPWithTraffic,
-          'width': '1px',
+          width: '1px',
           'line-outline-width': '1px',
           'line-outline-color': (ele: Cy.EdgeSingular) => {
             return getEdgeColor(ele);
           },
-           * **/
           'target-arrow-shape': 'triangle-cross'
         }
       }

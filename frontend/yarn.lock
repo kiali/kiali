@@ -2569,10 +2569,10 @@
   resolved "https://registry.yarnpkg.com/@types/cypress-cucumber-preprocessor/-/cypress-cucumber-preprocessor-4.0.5.tgz#5c4d791e9b1f5928bcf179a496538193cb4298b4"
   integrity sha512-5+eM+RWNOW7X9JMQ4auux/HxTWxBK+Mz2wStEnnbuJr0HRLqCNJDUDvkeLtob8X74uA3L0bCFNyC2WotfJtM6Q==
 
-"@types/cytoscape@3.21.5":
-  version "3.21.5"
-  resolved "https://registry.yarnpkg.com/@types/cytoscape/-/cytoscape-3.21.5.tgz#43ea460b2809ff424225377f270750f674c27f75"
-  integrity sha512-fzYT3vqY5J4gxVXDOsCgDpm0ZdU8bQq+wCv0ucS0MSTtvQdjs3lcb2VetJiUSAd4WBgouqizI+JT1f8Yc6eY7Q==
+"@types/cytoscape@3.21.7":
+  version "3.21.7"
+  resolved "https://registry.yarnpkg.com/@types/cytoscape/-/cytoscape-3.21.7.tgz#8220e638624654e50bd0c3b464c01d0231331eb9"
+  integrity sha512-dP4UByJtfu5GjMJuv58yCIRxjCp4cP0Wp+Qd46L3Gom0hcV4OPmSOLqt83vArNcYRZLFCAyAk+lcC8oqQtcsqw==
 
 "@types/d3-array@*", "@types/d3-array@^3.0.3":
   version "3.0.5"
@@ -13507,7 +13507,12 @@ workerpool@6.2.1:
   resolved "https://registry.yarnpkg.com/workerpool/-/workerpool-6.2.1.tgz#46fc150c17d826b86a008e5a4508656777e9c343"
   integrity sha512-ILEIE97kDZvF9Wb9f6h5aXK4swSlKGUcOEGiIYb2OOu/IrDU9iwj0fD//SsA6E5ibwJxpEvhullJY4Sl4GcpAw==
 
+<<<<<<< HEAD
 "wrap-ansi-cjs@npm:wrap-ansi@^7.0.0":
+=======
+"wrap-ansi-cjs@npm:wrap-ansi@^7.0.0", wrap-ansi@^7.0.0:
+  name wrap-ansi-cjs
+>>>>>>> a04e9f788 (Update cytoscape library)
   version "7.0.0"
   resolved "https://registry.yarnpkg.com/wrap-ansi/-/wrap-ansi-7.0.0.tgz#67e145cff510a6a6984bdf1152911d69d2eb9e43"
   integrity sha512-YVGIj2kamLSTxw6NsZjoBxfSwsn0ycdesmc4p+Q21c5zPuZ1pl+NfxVdxPtdHvmNVOQ6XSYG4AUtyt/Fi7D16Q==
