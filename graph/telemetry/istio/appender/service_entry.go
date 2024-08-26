@@ -142,7 +142,7 @@ func (a ServiceEntryAppender) loadServiceEntryHosts(cluster, namespace string, g
 }
 
 func (a ServiceEntryAppender) applyServiceEntries(trafficMap graph.TrafficMap, nodesToCheck []*graph.Node, globalInfo *graph.AppenderGlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
-	// a map of "se-service" nodes to the "service-entry" information
+	// a map from "service-entry" information to matching "se-service" nodes
 	seMap := make(map[*serviceEntry][]*graph.Node)
 
 	for _, n := range nodesToCheck {
@@ -155,7 +155,7 @@ func (a ServiceEntryAppender) applyServiceEntries(trafficMap graph.TrafficMap, n
 				// service must match a defined host.  Note that the source namespace is assumed to be the
 				// the same as the appender namespace as all requests for the service entry should be coming
 				// from workloads in the current namespace being processed for the graph.
-				if se, ok := a.getServiceEntry(n.Cluster, n.Namespace, candidate.Service, globalInfo); ok {
+				if se, ok := a.getServiceEntry(candidate.Cluster, candidate.Namespace, candidate.Service, globalInfo); ok {
 					if nodes, ok := seMap[se]; ok {
 						seMap[se] = append(nodes, candidate)
 					} else {
@@ -171,7 +171,7 @@ func (a ServiceEntryAppender) applyServiceEntries(trafficMap graph.TrafficMap, n
 			candidate := e.Dest
 			isEgressCluster := candidate.Metadata[graph.IsEgressCluster] == true
 			if candidate.NodeType == graph.NodeTypeService && !isEgressCluster {
-				// Same matching rules as above
+				// Same matching rules as above, but SE must be available to the source node
 				if se, ok := a.getServiceEntry(n.Cluster, n.Namespace, candidate.Service, globalInfo); ok {
 					if nodes, ok := seMap[se]; ok {
 						seMap[se] = append(nodes, candidate)
