@@ -220,6 +220,7 @@
   "System Error": "System Error",
   "TCP Connection": "TCP Connection",
   "TCP Traffic": "TCP Traffic",
+  "TCP+HTTP telemetry": "TCP+HTTP telemetry",
   "The meshConfig.meshMTLS.minProtocolVersion field specifies the minimum TLS version for the TLS                   connections among Istio workloads. N/A if it was not set.": "The meshConfig.meshMTLS.minProtocolVersion field specifies the minimum TLS version for the TLS                   connections among Istio workloads. N/A if it was not set.",
   "The Side Panel shows details about the currently selected node or edge, otherwise the whole graph.": "The Side Panel shows details about the currently selected node or edge, otherwise the whole graph.",
   "The Side Panel shows details about the currently selected node or edge, otherwise the whole mesh.": "The Side Panel shows details about the currently selected node or edge, otherwise the whole mesh.",

@@ -122,7 +122,7 @@
     "@badeball/cypress-cucumber-preprocessor": "^19.2.0",
     "@bahmutov/cypress-esbuild-preprocessor": "^2.2.0",
     "@types/cypress-cucumber-preprocessor": "^4.0.5",
-    "@types/cytoscape": "3.21.5",
+    "@types/cytoscape": "3.21.7",
     "@types/deep-freeze": "^0.1.5",
     "@types/enzyme": "3.10.5",
     "@types/jest": "23.3.10",
