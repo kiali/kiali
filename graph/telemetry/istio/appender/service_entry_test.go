@@ -14,7 +14,9 @@ import (
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
+	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 )
 
@@ -30,10 +32,7 @@ func setupBusinessLayer(t *testing.T, istioObjects ...runtime.Object) *business.
 	k8s := kubetest.NewFakeK8sClient(istioObjects...)
 	business.SetupBusinessLayer(t, k8s, *conf)
 	k8sclients := map[string]kubernetes.ClientInterface{
-		config.DefaultClusterID: kubetest.NewFakeK8sClient(
-			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "testNamespace"}},
-			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "otherNamespace"}},
-		),
+		config.DefaultClusterID: k8s,
 	}
 	businessLayer := business.NewWithBackends(k8sclients, k8sclients, nil, nil)
 	return businessLayer
@@ -1342,4 +1341,120 @@ func TestSEKiali7305(t *testing.T) {
 
 	// unchanged, we were just testing access checking during appender processing
 	assert.Equal(2, len(trafficMap))
+}
+
+// TestKiali7589 tests the scenario where the edges from different clusters point to the same external "se-service".  Each cluster
+// defines its own service entries, and so each cluster should get it's own service entry node.
+func TestSEKiali7589(t *testing.T) {
+	assert := assert.New(t)
+	namespace := "testNamespace"
+
+	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = "cluster1"
+	conf.ExternalServices.Istio.IstioAPIEnabled = false
+	config.Set(conf)
+
+	// SE for cluster1
+	cluster1SE := &networking_v1.ServiceEntry{}
+	cluster1SE.Name = "cluster1SE"
+	cluster1SE.Namespace = namespace
+	cluster1SE.Spec.Hosts = []string{
+		"host1.external.com",
+	}
+	cluster1SE.Spec.Location = api_networking_v1.ServiceEntry_MESH_EXTERNAL
+
+	// duplicate SE for cluster2
+	cluster2SE := &networking_v1.ServiceEntry{}
+	cluster2SE.Name = "cluster2SE"
+	cluster2SE.Namespace = namespace
+	cluster2SE.Spec.Hosts = []string{
+		"host1.external.com",
+	}
+	cluster2SE.Spec.Location = api_networking_v1.ServiceEntry_MESH_EXTERNAL
+
+	istioObjects1 := []runtime.Object{cluster1SE, &core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: namespace}}}
+	istioObjects2 := []runtime.Object{cluster2SE, &core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: namespace}}}
+
+	client1 := kubetest.NewFakeK8sClient(istioObjects1...)
+	client2 := kubetest.NewFakeK8sClient(istioObjects2...)
+
+	clients := map[string]kubernetes.ClientInterface{
+		"cluster1": client1,
+		"cluster2": client2,
+	}
+
+	factory := kubetest.NewK8SClientFactoryMock(nil)
+	factory.SetClients(clients)
+
+	cache := cache.NewTestingCacheWithFactory(t, factory, *conf)
+	discovery := istio.NewDiscovery(clients, cache, conf)
+	business.WithDiscovery(discovery)
+	business.WithKialiCache(cache)
+	business.SetWithBackends(factory, nil)
+	businessLayer := business.NewWithBackends(clients, clients, nil, nil)
+
+	// VersionedApp graph
+	trafficMap := make(map[string]*graph.Node)
+
+	// source nodes, 1 from each cluster
+	n1, _ := graph.NewNode("cluster1", namespace, "source", namespace, "source-v1", "source", "v1", graph.GraphTypeVersionedApp)
+	n2, _ := graph.NewNode("cluster2", namespace, "source", namespace, "source-v1", "source", "v1", graph.GraphTypeVersionedApp)
+
+	// the "se-service" node, same requested external service node
+	n3, _ := graph.NewNode(graph.Unknown, graph.Unknown, "host1.external.com", "", "", "", "", graph.GraphTypeVersionedApp)
+
+	trafficMap[n1.ID] = n1
+	trafficMap[n2.ID] = n2
+	trafficMap[n3.ID] = n3
+
+	n1.AddEdge(n3).Metadata[graph.ProtocolKey] = graph.HTTP.Name
+	n2.AddEdge(n3).Metadata[graph.ProtocolKey] = graph.HTTP.Name
+
+	assert.Equal(3, len(trafficMap))
+	_, ok := trafficMap[n3.ID].Metadata[graph.IsServiceEntry]
+	assert.False(ok)
+
+	globalInfo := graph.NewAppenderGlobalInfo()
+	globalInfo.Business = businessLayer
+	namespaceInfo := graph.NewAppenderNamespaceInfo(namespace)
+	key1 := graph.GetClusterSensitiveKey("cluster1", namespace)
+	key2 := graph.GetClusterSensitiveKey("cluster2", namespace)
+
+	// Run the appender...
+	a := ServiceEntryAppender{
+		AccessibleNamespaces: graph.AccessibleNamespaces{
+			key1: &graph.AccessibleNamespace{
+				Cluster:           "cluster1",
+				CreationTimestamp: time.Now(),
+				Name:              namespace,
+			},
+			key2: &graph.AccessibleNamespace{
+				Cluster:           "cluster2",
+				CreationTimestamp: time.Now(),
+				Name:              namespace,
+			}},
+		GraphType: graph.GraphTypeVersionedApp,
+	}
+	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
+
+	// the original service node should no longer exist
+	_, ok = trafficMap[n3.ID]
+	assert.False(ok)
+	// it should be replaced by two service entries, one on each cluster
+	assert.Equal(4, len(trafficMap))
+	seID1, nt1, _ := graph.Id("cluster1", namespace, "cluster1SE", "", "", "", "", graph.GraphTypeVersionedApp)
+	seID2, nt2, _ := graph.Id("cluster2", namespace, "cluster2SE", "", "", "", "", graph.GraphTypeVersionedApp)
+	se1, ok1 := trafficMap[seID1]
+	se2, ok2 := trafficMap[seID2]
+	assert.True(ok1)
+	assert.True(ok2)
+	assert.Equal(graph.NodeTypeService, nt1)
+	assert.Equal(graph.NodeTypeService, nt2)
+	_, ok1 = se1.Metadata[graph.IsServiceEntry]
+	_, ok2 = se2.Metadata[graph.IsServiceEntry]
+	assert.True(ok1)
+	assert.True(ok2)
+	assert.Equal(1, len(n1.Edges))
+	assert.Equal(seID1, n1.Edges[0].Dest.ID)
+	assert.Equal(seID2, n2.Edges[0].Dest.ID)
 }

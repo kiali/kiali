@@ -75,12 +75,13 @@ func (a ServiceEntryAppender) AppendGraph(trafficMap graph.TrafficMap, globalInf
 		}
 
 		// for non-service nodes, look for edges to non-injected service nodes that may represent a mesh_external ServicEntry.
-		// It probably will not have cluster and namespace set, either way, we need to get this information from the source node
-		// because it is the requesting service that needs access to the ServiceEntry.
+		// It probably will not have cluster and namespace set (because it's external to the mesh, the dest_service is just a
+		// host name), either way, we need to get this information from the source node because it is the requesting service
+		// that needs access to the ServiceEntry.
 		for _, e := range n.Edges {
-			isService := e.Dest.NodeType == graph.NodeTypeService
-			isInjected := e.Dest.Metadata[graph.IsInjected] == true
-			if isService && !isInjected {
+			isDestService := e.Dest.NodeType == graph.NodeTypeService
+			isDestInjected := e.Dest.Metadata[graph.IsInjected] == true
+			if isDestService && !isDestInjected {
 				candidates[n.ID] = n
 				break
 			}
@@ -92,15 +93,15 @@ func (a ServiceEntryAppender) AppendGraph(trafficMap graph.TrafficMap, globalInf
 	}
 
 	// Otherwise, if there are SE hosts defined for the cluster:namespace, check to see if they apply to the node
-	nodesToCheck := []*graph.Node{}
+	finalCandidates := []*graph.Node{}
 	for _, n := range candidates {
 		if a.loadServiceEntryHosts(n.Cluster, n.Namespace, globalInfo) {
-			nodesToCheck = append(nodesToCheck, n)
+			finalCandidates = append(finalCandidates, n)
 		}
 	}
 
-	if len(nodesToCheck) > 0 {
-		a.applyServiceEntries(trafficMap, nodesToCheck, globalInfo, namespaceInfo)
+	if len(finalCandidates) > 0 {
+		a.applyServiceEntries(trafficMap, finalCandidates, globalInfo, namespaceInfo)
 	}
 }
 
@@ -141,19 +142,19 @@ func (a ServiceEntryAppender) loadServiceEntryHosts(cluster, namespace string, g
 	return len(serviceEntryHosts) > 0
 }
 
-func (a ServiceEntryAppender) applyServiceEntries(trafficMap graph.TrafficMap, nodesToCheck []*graph.Node, globalInfo *graph.AppenderGlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
+func (a ServiceEntryAppender) applyServiceEntries(trafficMap graph.TrafficMap, candidates []*graph.Node, globalInfo *graph.AppenderGlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
 	// a map from "service-entry" information to matching "se-service" nodes
 	seMap := make(map[*serviceEntry][]*graph.Node)
 
-	for _, n := range nodesToCheck {
+	for _, n := range candidates {
 		if n.NodeType == graph.NodeTypeService {
 			// Must be a non-egress(PassthroughCluster or BlackHoleCluster) service node
 			candidate := n
 			isEgressCluster := candidate.Metadata[graph.IsEgressCluster] == true
 			if candidate.NodeType == graph.NodeTypeService && !isEgressCluster {
-				// To match, a service entry must be exported to the source namespace, and the requested
-				// service must match a defined host.  Note that the source namespace is assumed to be the
-				// the same as the appender namespace as all requests for the service entry should be coming
+				// To match, a service entry must be exported to the candidate's cluster and namespace, and
+				// the requested service must match a defined host. Fwiw, the candidate's namespace should be the
+				// the same as the appender namespace, as all requests for the service entry should be coming
 				// from workloads in the current namespace being processed for the graph.
 				if se, ok := a.getServiceEntry(candidate.Cluster, candidate.Namespace, candidate.Service, globalInfo); ok {
 					if nodes, ok := seMap[se]; ok {
@@ -196,7 +197,15 @@ func (a ServiceEntryAppender) applyServiceEntries(trafficMap graph.TrafficMap, n
 			Namespace: se.namespace,
 		}
 		serviceEntryNode.Metadata[graph.DestServices] = graph.NewDestServicesMetadata()
+
 		for _, doomedSeServiceNode := range seServiceNodes {
+			// if the doomedSeServiceNode is no longer in the traffic map, then skip. This means
+			// it has already been converted when processing a different SE, which can happen
+			// when SE's define overlapping host information (resulting in nondeterministic SE matching)
+			if _, found := trafficMap[doomedSeServiceNode.ID]; !found {
+				continue
+			}
+
 			// aggregate node traffic
 			graph.AggregateNodeTraffic(doomedSeServiceNode, serviceEntryNode)
 			// aggregate node dest-services to capture all of the distinct requested services
@@ -205,10 +214,19 @@ func (a ServiceEntryAppender) applyServiceEntries(trafficMap graph.TrafficMap, n
 					serviceEntryNode.Metadata[graph.DestServices].(graph.DestServicesMetadata)[k] = v
 				}
 			}
-			// redirect edges leading to the doomed se-service node to the new aggregate
+			// redirect edges leading to the doomed se-service node to the new aggregate.
+			deleteDoomedSeServiceNode := true
 			for _, n := range trafficMap {
+				// note that the doomedSeServiceNode may have edges from nodes in different clusters (see Kiali7589), because
+				// it itself may have no cluster or namespace (just some host name). We need to limit this reassignment to
+				// only nodes defined on the same cluster as the SE.  Each cluster has its own SE definitions.
 				for _, edge := range n.Edges {
 					if edge.Dest.ID == doomedSeServiceNode.ID {
+						if n.Cluster != serviceEntryNode.Cluster {
+							// don't delete the doomedSeServiceNode, it still has edges
+							deleteDoomedSeServiceNode = false
+							continue
+						}
 						edge.Dest = serviceEntryNode
 					}
 				}
@@ -234,9 +252,17 @@ func (a ServiceEntryAppender) applyServiceEntries(trafficMap graph.TrafficMap, n
 				}
 				graph.AggregateEdgeTraffic(doomedEdge, aggregateEdge)
 			}
-			delete(trafficMap, doomedSeServiceNode.ID)
+
+			// remove the se-service node
+			if deleteDoomedSeServiceNode {
+				delete(trafficMap, doomedSeServiceNode.ID)
+			}
+
+			// if not done already, add the service entry node
+			if _, found := trafficMap[serviceEntryNode.ID]; !found {
+				trafficMap[serviceEntryNode.ID] = serviceEntryNode
+			}
 		}
-		trafficMap[serviceEntryNode.ID] = serviceEntryNode
 	}
 }
 
