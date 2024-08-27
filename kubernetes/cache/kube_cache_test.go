@@ -25,7 +25,7 @@ const IstioAPIEnabled = true
 func newTestingKubeCache(t *testing.T, cfg *config.Config, objects ...runtime.Object) *kubeCache {
 	t.Helper()
 
-	kubeCache, err := NewKubeCache(kubetest.NewFakeK8sClient(objects...), *cfg, &kialiCacheImpl{})
+	kubeCache, err := NewKubeCache(kubetest.NewFakeK8sClient(objects...), *cfg, nil)
 	if err != nil {
 		t.Fatalf("Unable to create kube cache for testing. Err: %s", err)
 	}
@@ -326,8 +326,7 @@ func TestIstioAPIDisabled(t *testing.T) {
 	cfg := config.NewConfig()
 	fakeClient := kubetest.NewFakeK8sClient(ns)
 	fakeClient.IstioAPIEnabled = false
-	fakeKialiCache := &kialiCacheImpl{}
-	kubeCache, err := NewKubeCache(fakeClient, *cfg, fakeKialiCache)
+	kubeCache, err := NewKubeCache(fakeClient, *cfg, nil)
 	if err != nil {
 		t.Fatalf("Unable to create kube cache for testing. Err: %s", err)
 	}

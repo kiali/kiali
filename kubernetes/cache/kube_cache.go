@@ -20,7 +20,6 @@ import (
 	istiotelem_v1_listers "istio.io/client-go/pkg/listers/telemetry/v1"
 	apps_v1 "k8s.io/api/apps/v1"
 	core_v1 "k8s.io/api/core/v1"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/informers"
@@ -166,14 +165,23 @@ type cacheLister struct {
 	workloadGroupLister     istionet_v1_listers.WorkloadGroupLister
 }
 
+// ErrorHandler is a function that will be called when the cache's informers encounter an error while watching resources.
+// This is used so we can clean up things when a namespace has been discovered to have been deleted.
+// This is ONLY used for namespace-scoped caches.
+// This will ONLY report errors when watching core k8s resources (e.g. not Istio resources)
+//
+// kc: the kube cache whose informer encountered an error
+// namespace: the namespace that the kube cache is watching
+// err: the error that occurred
+type ErrorHandler func(kc *kubeCache, namespace string, err error)
+
 // kubeCache is a local cache of kube objects. Manages informers and listers.
 type kubeCache struct {
 	cacheLock sync.RWMutex
 	// refreshOnce enforces thread safety around the re-starting of informers
-	refreshOnce *OnceWrapper
-	cfg         config.Config
-	// the KialiCache that owns this kubeCache
-	kialiCache         KialiCache
+	refreshOnce        *OnceWrapper
+	cfg                config.Config
+	errorHandler       ErrorHandler
 	client             kubernetes.ClientInterface
 	clusterCacheLister *cacheLister
 	clusterScoped      bool
@@ -191,13 +199,13 @@ type kubeCache struct {
 }
 
 // Starts all informers. These run until context is cancelled.
-func NewKubeCache(kialiClient kubernetes.ClientInterface, cfg config.Config, kialiCache KialiCache) (*kubeCache, error) {
+func NewKubeCache(kialiClient kubernetes.ClientInterface, cfg config.Config, errorHandler ErrorHandler) (*kubeCache, error) {
 	refreshDuration := time.Duration(cfg.KubernetesConfig.CacheDuration) * time.Second
 
 	c := &kubeCache{
-		cfg:        cfg,
-		kialiCache: kialiCache,
-		client:     kialiClient,
+		cfg:          cfg,
+		errorHandler: errorHandler,
+		client:       kialiClient,
 		// Only when all namespaces are accessible should the cache be cluster scoped.
 		// Otherwise, kiali may not have access to all namespaces since
 		// the operator only grants clusterroles when all namespaces are accessible.
@@ -554,10 +562,10 @@ func (c *kubeCache) createKubernetesInformers(namespace string) informers.Shared
 		}
 
 		watchErrorHandler := func(r *cache.Reflector, err error) {
-			if apierrors.IsForbidden(err) || apierrors.IsUnauthorized(err) {
-				clusterName := c.client.ClusterInfo().Name
-				log.Errorf("Namespace [%v] in cluster [%v] appears to have been deleted or Kiali is forbidden from seeing it [err=%v]. Shutting down namespace cache.", namespace, clusterName, err)
-				c.kialiCache.DeleteNamespace(clusterName, namespace, c.client.GetToken())
+			if c.errorHandler != nil {
+				c.errorHandler(c, namespace, err)
+			} else {
+				log.Errorf("Error detected when watching namespace [%v] in cluster [%v]. error: %v", namespace, c.client.ClusterInfo().Name, err)
 			}
 		}
 

@@ -10,6 +10,7 @@ import (
 	"golang.org/x/exp/maps"
 
 	v1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/config"
@@ -87,9 +88,6 @@ type KialiCache interface {
 	// SetNamespace caches a specific namespace by cluster + token.
 	SetNamespace(token string, namespace models.Namespace)
 
-	// DeleteNamespace cleans up some internals when it has been detected that a namespace has been deleted.
-	DeleteNamespace(cluster string, namespace string, token string)
-
 	// Stop stops the cache and all its kube caches.
 	Stop()
 }
@@ -149,7 +147,7 @@ func NewKialiCache(clientFactory kubernetes.ClientFactory, cfg config.Config) (K
 	}
 
 	for cluster, client := range clientFactory.GetSAClients() {
-		cache, err := NewKubeCache(client, cfg, &kialiCacheImpl)
+		cache, err := NewKubeCache(client, cfg, kialiCacheImpl.deleteNamespace)
 		if err != nil {
 			log.Errorf("[Kiali Cache] Error creating kube cache for cluster: [%s]. Err: %v", cluster, err)
 			return nil, err
@@ -385,17 +383,15 @@ func (c *kialiCacheImpl) SetNamespace(token string, namespace models.Namespace) 
 	c.namespaceStore.Set(key, ns)
 }
 
-// DeleteNamespace should be called when it has been detected that a namespace was deleted from a particular cluster.
-// This cleans up some internals related to the namespace that is now gone.
-func (c *kialiCacheImpl) DeleteNamespace(cluster string, namespace string, token string) {
-	c.namespacesLock.Lock()
-	defer c.namespacesLock.Unlock()
-
-	key := namespacesKey{cluster: cluster, token: token}
-	c.namespaceStore.Remove(key)
-
-	if kubeCache, err := c.GetKubeCache(cluster); err == nil {
-		kubeCache.StopNamespace(namespace)
+// deleteNamespace is an error handler that will clean up some internals related to the given namespace
+// if that namespace has been detected to have been deleted. This function is called by the kube cache
+// informers when they encounter an error.
+func (c *kialiCacheImpl) deleteNamespace(kc *kubeCache, namespace string, err error) {
+	if apierrors.IsForbidden(err) || apierrors.IsUnauthorized(err) {
+		cluster := kc.client.ClusterInfo().Name
+		log.Errorf("Namespace [%v] in cluster [%v] appears to have been deleted or Kiali is forbidden from seeing it [err=%v]. Shutting down namespace cache.", namespace, cluster, err)
+		c.RefreshTokenNamespaces(cluster)
+		kc.StopNamespace(namespace)
 	}
 }
 
