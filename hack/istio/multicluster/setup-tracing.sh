@@ -18,6 +18,29 @@ if [ -z "$ingress_output" ]; then
     ${CLIENT_EXE} --context "${CLUSTER1_CONTEXT}" patch Service -n istio-system istio-ingressgateway --type=json -p '[{"op": "add", "path": "/spec/ports/-", "value": {"name": "zipkin-http", "port": 9411, "protocol": "TCP", "targetPort": 8080}}]'
 fi
 
+if [ "${TEMPO}" == "true" ]; then
+${CLIENT_EXE} --context "${CLUSTER1_CONTEXT}" apply -f - <<EOF
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: zipkin-ingress
+  namespace: istio-system
+spec:
+  gateways:
+  - zipkin-gateway
+  hosts:
+  - '*'
+  http:
+  - name: zipkin-route
+    route:
+    - destination:
+        host: tempo-cr-distributor.tempo.svc.cluster.local
+        port:
+          number: 9411
+EOF
+
+else
+
 ${CLIENT_EXE} --context "${CLUSTER1_CONTEXT}" apply -f - <<EOF
 apiVersion: networking.istio.io/v1
 kind: VirtualService
@@ -37,6 +60,8 @@ spec:
         port:
           number: 9411
 EOF
+
+fi
 
 ${CLIENT_EXE} --context "${CLUSTER1_CONTEXT}" apply -f - <<EOF
 apiVersion: networking.istio.io/v1
@@ -123,3 +148,27 @@ spec:
       port: 9411
       targetPort: 9411
 EOF
+
+# For Tempo, we need a service with reference to the zipkin service,
+# Tempo is installed in a different namespace
+if [ "${TEMPO}" == "true" ]; then
+  
+${CLIENT_EXE} create ns tempo
+
+${CLIENT_EXE} --context "${CLUSTER2_CONTEXT}" apply -f - <<EOF
+apiVersion: v1
+kind: Service
+metadata:
+  name: tempo-cr-distributor
+  namespace: tempo
+spec:
+  type: ExternalName
+  externalName: zipkin.istio-system.svc.cluster.local
+  ports:
+    - name: zipkin-port
+      protocol: TCP
+      port: 9411
+      targetPort: 9411
+EOF
+
+fi
