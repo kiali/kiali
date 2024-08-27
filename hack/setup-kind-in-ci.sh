@@ -35,7 +35,7 @@ Options:
     Whether to set up a multicluster environment
     and which kind of multicluster environment to setup.
     Default: <none>
--t|--tempo
+-te|--tempo
     If Tempo will be installed as the tracing platform
     instead of Jaeger
 HELP
@@ -63,7 +63,7 @@ while [[ $# -gt 0 ]]; do
       fi
       shift;shift
       ;;
-    -t|--tempo)                   TEMPO="true";               shift;shift; ;;
+    -te|--tempo)                   TEMPO="$2";               shift;shift; ;;
     *) echo "Unknown argument: [$key]. Aborting."; helpmsg; exit 1 ;;
   esac
 done
@@ -74,6 +74,7 @@ set -e
 # set up some of our defaults
 AUTH_STRATEGY="${AUTH_STRATEGY:-anonymous}"
 DORP="${DORP:-docker}"
+TEMPO="${TEMPO:-false}"
 
 # Defaults the branch to master unless it is already set
 TARGET_BRANCH="${TARGET_BRANCH:-master}"
@@ -110,6 +111,7 @@ ISTIO_VERSION=$ISTIO_VERSION
 KIND_NODE_IMAGE=$KIND_NODE_IMAGE
 MULTICLUSTER=$MULTICLUSTER
 TARGET_BRANCH=$TARGET_BRANCH
+TEMPO=$TEMPO
 === SETTINGS ===
 EOM
 
@@ -367,8 +369,8 @@ setup_kind_multicluster() {
     cluster2_name="west"
     kubectl rollout status deployment prometheus -n istio-system --context kind-east
     kubectl rollout status deployment prometheus -n istio-system --context kind-west
-  elif [ "${MULTICLUSTER}" == "${PRIMARY_REMOTE}" ]; then 
-    "${SCRIPT_DIR}"/istio/multicluster/install-primary-remote.sh --kiali-enabled false --manage-kind true -dorp docker --istio-dir "${istio_dir}" ${hub_arg:-}
+  elif [ "${MULTICLUSTER}" == "${PRIMARY_REMOTE}" ]; then
+    "${SCRIPT_DIR}"/istio/multicluster/install-primary-remote.sh --kiali-enabled false --manage-kind true -dorp docker -te ${TEMPO} --istio-dir "${istio_dir}" ${hub_arg:-}
     cluster1_context="kind-east"
     cluster2_context="kind-west"
     cluster1_name="east"
@@ -402,13 +404,14 @@ setup_kind_multicluster() {
     -dorp docker \
     -kas "${AUTH_STRATEGY}" \
     -kudi true \
-    -kshc "${HELM_CHARTS_DIR}"/_output/charts/kiali-server-*.tgz
+    -kshc "${HELM_CHARTS_DIR}"/_output/charts/kiali-server-*.tgz \
+    --tempo ${TEMPO}
 }
 
 if [ -n "${MULTICLUSTER}" ]; then
   setup_kind_multicluster
 else
-  if [ -n "${TEMPO}" ]; then
+  if [ "${TEMPO}" == "true" ]; then
     infomsg "Installing tempo"
     setup_kind_tempo
   else
