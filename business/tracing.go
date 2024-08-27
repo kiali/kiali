@@ -50,10 +50,6 @@ func (in *TracingService) client() (tracing.ClientInterface, error) {
 }
 
 func (in *TracingService) getFilteredSpans(ns, app string, query models.TracingQuery, filter SpanFilter) ([]model.TracingSpan, error) {
-	// This is info needed for Tempo as it is not in the results by default
-	if in.conf.ExternalServices.Tracing.Provider == config.TempoProvider {
-		query.Tags["http.method"] = ".*"
-	}
 	r, err := in.GetAppTraces(ns, app, query)
 	if err != nil {
 		return []model.TracingSpan{}, err
