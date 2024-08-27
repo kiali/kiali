@@ -1,4 +1,5 @@
 @service-details
+@ossmc
 # don't change first line of this file - the tag is used for the test scripts to identify the test suite
 
 Feature: Kiali Service Details page
@@ -26,6 +27,7 @@ Feature: Kiali Service Details page
     But no cluster badge for the "service" should be visible
 
   @bookinfo-app
+  @skip-ossmc
   Scenario: See service minigraph for details app.
     Then sd::user sees a minigraph
 

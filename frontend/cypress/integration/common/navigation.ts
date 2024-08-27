@@ -9,17 +9,14 @@ enum detailType {
 }
 
 Given('user is at the {string} list page', (page: string) => {
-  // enable toggles on the list pages so that they can be tested
-  cy.intercept(`**/api/config`, request => {
-    request.reply(response => {
-      response.body['kialiFeatureFlags']['uiDefaults']['list']['showIncludeToggles'] = true;
-      return response;
-    });
-  }).as('config');
-
   // Forcing "Pause" to not cause unhandled promises from the browser when cypress is testing
   cy.visit({ url: `${Cypress.config('baseUrl')}/console/${page}?refresh=0` });
-  cy.wait('@config');
+
+  cy.request({ method: 'GET', url: `/api/config` }).then(response => {
+    response.body['kialiFeatureFlags']['uiDefaults']['list']['showIncludeToggles'] = true;
+
+    return response;
+  });
 });
 
 Given('user is at the {string} page', (page: string) => {
