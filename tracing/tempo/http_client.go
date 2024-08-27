@@ -244,7 +244,7 @@ func convertSingleTrace(traces *otelModels.Data, id string) (*model.TracingRespo
 	return &response, nil
 }
 
-// prepareTraceQL returns a query in TraceQL format
+// prepareTraceQL set the query in TraceQL format
 func (oc OtelHTTPClient) prepareTraceQL(u *url.URL, tracingServiceName string, query models.TracingQuery) {
 	q := url.Values{}
 	q.Set("start", fmt.Sprintf("%d", query.Start.Unix()))
@@ -277,6 +277,12 @@ func (oc OtelHTTPClient) prepareTraceQL(u *url.URL, tracingServiceName string, q
 	}
 	u.RawQuery = q.Encode()
 	log.Debugf("Prepared Tempo API query: %v", u)
+}
+
+// GetTraceQLQuery returns the raw query in TraceQL format
+func (oc OtelHTTPClient) GetTraceQLQuery(u *url.URL, tracingServiceName string, query models.TracingQuery) string {
+	oc.prepareTraceQL(u, tracingServiceName, query)
+	return u.RawQuery
 }
 
 func makeRequest(client http.Client, endpoint string, body io.Reader) (response []byte, status int, err error) {
