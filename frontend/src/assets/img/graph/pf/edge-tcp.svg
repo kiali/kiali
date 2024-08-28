@@ -5,7 +5,7 @@
   xmlns="http://www.w3.org/2000/svg">
   <defs>
     <marker id="square-arrow" markerWidth="20" markerHeight="20" refX="0" refY="7" orient="auto" markerUnits="strokeWidth">
-      <rect width="30" height="30" fill="#004368" />
+      <rect width="25" height="15" fill="#004368" />
     </marker>
   </defs>
   <path
