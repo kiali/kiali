@@ -238,6 +238,10 @@
             "EgressGatewayNamespace": "",
             "IngressGatewayNamespace": "",
             "IstioAPIEnabled": true,
+            "IstioCanaryRevision": {
+              "Current": "",
+              "Upgrade": ""
+            },
             "IstioIdentityDomain": "svc.cluster.local",
             "IstioInjectionAnnotation": "sidecar.istio.io/inject",
             "IstioSidecarInjectorConfigMapName": "",

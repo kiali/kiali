@@ -110,6 +110,11 @@ export interface KialiCrippledFeatures {
   responseTimePercentiles: boolean;
 }
 
+interface IstioCanaryRevision {
+  current: string;
+  upgrade: string;
+}
+
 /*
  Health Config
 */
@@ -150,6 +155,7 @@ export interface ServerConfig {
   healthConfig: HealthConfig;
   installationTag?: string;
   istioAnnotations: IstioAnnotations;
+  istioCanaryRevision: IstioCanaryRevision;
   istioIdentityDomain: string;
   istioLabels: { [key in IstioLabelKey]: string };
   istioNamespace: string;

@@ -271,7 +271,6 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
             this.fetchHealth(isAscending, sortField, type);
             this.fetchTLS(isAscending, sortField);
             this.fetchValidations(isAscending, sortField);
-            this.fetchCanariesStatus();
 
             if (displayMode !== OverviewDisplayMode.COMPACT) {
               this.fetchMetrics(direction);
@@ -638,20 +637,6 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
       });
   };
 
-  private fetchCanariesStatus = async (): Promise<void> => {
-    return API.getCanaryUpgradeStatus()
-      .then(response => {
-        this.setState({
-          canaryUpgradeStatus: {
-            namespacesPerRevision: response.data.namespacesPerRevision
-          }
-        });
-      })
-      .catch(error => {
-        AlertUtils.addError('Error fetching canary upgrade status.', error, 'default', MessageType.ERROR);
-      });
-  };
-
   handleApiError = (message: string, error: ApiError): void => {
     FilterHelper.handleError(`${message}: ${API.getErrorString(error)}`);
   };
@@ -861,31 +846,59 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
         }
       }
 
-      if (serverConfig.kialiFeatureFlags.istioUpgradeAction && this.hasCanaryUpgradeConfigured()) {
-        const revisionActions = Object.keys(this.state.canaryUpgradeStatus?.namespacesPerRevision || {})
-          .filter(revision => !this.state.canaryUpgradeStatus!.namespacesPerRevision[revision].includes(nsInfo.name))
-          .map(revision => ({
-            isGroup: false,
-            isSeparator: false,
-            title: `Switch to ${revision} revision`,
-            action: (ns: string) =>
-              this.setState({
-                opTarget: revision,
-                kind: 'canary',
-                nsTarget: ns,
-                showTrafficPoliciesModal: true,
-                clusterTarget: nsInfo.cluster
-              })
-          }));
-
+      if (
+        serverConfig.kialiFeatureFlags.istioUpgradeAction &&
+        serverConfig.istioCanaryRevision.upgrade &&
+        serverConfig.istioCanaryRevision.current
+      ) {
         namespaceActions.push({
           isGroup: false,
           isSeparator: true
         });
 
-        revisionActions.forEach(action => {
-          namespaceActions.push(action);
-        });
+        const upgradeAction = {
+          isGroup: false,
+          isSeparator: false,
+          title: `Upgrade to ${serverConfig.istioCanaryRevision.upgrade} revision`,
+          action: (ns: string) =>
+            this.setState({
+              opTarget: 'upgrade',
+              kind: 'canary',
+              nsTarget: ns,
+              showTrafficPoliciesModal: true,
+              clusterTarget: nsInfo.cluster
+            })
+        };
+
+        const downgradeAction = {
+          isGroup: false,
+          isSeparator: false,
+          title: `Downgrade to ${serverConfig.istioCanaryRevision.current} revision`,
+          action: (ns: string) =>
+            this.setState({
+              opTarget: 'current',
+              kind: 'canary',
+              nsTarget: ns,
+              showTrafficPoliciesModal: true,
+              clusterTarget: nsInfo.cluster
+            })
+        };
+
+        if (
+          nsInfo.labels &&
+          ((nsInfo.labels[serverConfig.istioLabels.injectionLabelRev] &&
+            nsInfo.labels[serverConfig.istioLabels.injectionLabelRev] === serverConfig.istioCanaryRevision.current) ||
+            (nsInfo.labels[serverConfig.istioLabels.injectionLabelName] &&
+              nsInfo.labels[serverConfig.istioLabels.injectionLabelName] === 'enabled'))
+        ) {
+          namespaceActions.push(upgradeAction);
+        } else if (
+          nsInfo.labels &&
+          nsInfo.labels[serverConfig.istioLabels.injectionLabelRev] &&
+          nsInfo.labels[serverConfig.istioLabels.injectionLabelRev] === serverConfig.istioCanaryRevision.upgrade
+        ) {
+          namespaceActions.push(downgradeAction);
+        }
       }
 
       const aps = nsInfo.istioConfig?.authorizationPolicies ?? [];
@@ -969,7 +982,10 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
 
   hasCanaryUpgradeConfigured = (): boolean => {
     if (this.state.canaryUpgradeStatus) {
-      if (Object.keys(this.state.canaryUpgradeStatus.namespacesPerRevision).length > 1) {
+      if (
+        this.state.canaryUpgradeStatus.pendingNamespaces.length > 0 ||
+        this.state.canaryUpgradeStatus.migratedNamespaces.length > 0
+      ) {
         return true;
       }
     }
@@ -1105,7 +1121,6 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
         <OverviewTrafficPolicies
           opTarget={this.state.opTarget}
           isOpen={this.state.showTrafficPoliciesModal}
-          canaryUpgradeStatus={this.state.canaryUpgradeStatus}
           kind={this.state.kind}
           hideConfirmModal={this.hideTrafficManagement}
           nsTarget={this.state.nsTarget}
@@ -1331,13 +1346,20 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
 
         {ns.name !== serverConfig.istioNamespace &&
           this.hasCanaryUpgradeConfigured() &&
-          this.state.canaryUpgradeStatus &&
-          this.state.canaryUpgradeStatus.namespacesPerRevision &&
-          Object.keys(this.state.canaryUpgradeStatus!.namespacesPerRevision).map(
-            revision =>
-              this.state.canaryUpgradeStatus!.namespacesPerRevision[revision].includes(ns.name) && (
-                <ControlPlaneVersionBadge version={revision} isCanary={false} />
-              )
+          this.state.canaryUpgradeStatus?.migratedNamespaces.includes(ns.name) && (
+            <ControlPlaneVersionBadge
+              version={this.state.canaryUpgradeStatus.upgradeVersion}
+              isCanary={true}
+            ></ControlPlaneVersionBadge>
+          )}
+
+        {ns.name !== serverConfig.istioNamespace &&
+          this.hasCanaryUpgradeConfigured() &&
+          this.state.canaryUpgradeStatus?.pendingNamespaces.includes(ns.name) && (
+            <ControlPlaneVersionBadge
+              version={this.state.canaryUpgradeStatus.currentVersion}
+              isCanary={false}
+            ></ControlPlaneVersionBadge>
           )}
 
         {ns.name === serverConfig.istioNamespace && !this.props.istioAPIEnabled && (

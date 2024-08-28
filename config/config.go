@@ -275,25 +275,31 @@ type RegistryConfig struct {
 
 // IstioConfig describes configuration used for istio links
 type IstioConfig struct {
-	ComponentStatuses                 ComponentStatuses `yaml:"component_status,omitempty"`
-	ConfigMapName                     string            `yaml:"config_map_name,omitempty"`
-	EgressGatewayNamespace            string            `yaml:"egress_gateway_namespace,omitempty"`
-	EnvoyAdminLocalPort               int               `yaml:"envoy_admin_local_port,omitempty"`
-	GatewayAPIClasses                 []GatewayAPIClass `yaml:"gateway_api_classes,omitempty"`
-	IngressGatewayNamespace           string            `yaml:"ingress_gateway_namespace,omitempty"`
-	IstioAPIEnabled                   bool              `yaml:"istio_api_enabled"`
-	IstioIdentityDomain               string            `yaml:"istio_identity_domain,omitempty"`
-	IstioInjectionAnnotation          string            `yaml:"istio_injection_annotation,omitempty"`
-	IstioSidecarInjectorConfigMapName string            `yaml:"istio_sidecar_injector_config_map_name,omitempty"`
-	IstioSidecarAnnotation            string            `yaml:"istio_sidecar_annotation,omitempty"`
-	IstiodDeploymentName              string            `yaml:"istiod_deployment_name,omitempty"`
-	IstiodPodMonitoringPort           int               `yaml:"istiod_pod_monitoring_port,omitempty"`
+	ComponentStatuses                 ComponentStatuses   `yaml:"component_status,omitempty"`
+	ConfigMapName                     string              `yaml:"config_map_name,omitempty"`
+	EgressGatewayNamespace            string              `yaml:"egress_gateway_namespace,omitempty"`
+	EnvoyAdminLocalPort               int                 `yaml:"envoy_admin_local_port,omitempty"`
+	GatewayAPIClasses                 []GatewayAPIClass   `yaml:"gateway_api_classes,omitempty"`
+	IngressGatewayNamespace           string              `yaml:"ingress_gateway_namespace,omitempty"`
+	IstioAPIEnabled                   bool                `yaml:"istio_api_enabled"`
+	IstioCanaryRevision               IstioCanaryRevision `yaml:"istio_canary_revision,omitempty"`
+	IstioIdentityDomain               string              `yaml:"istio_identity_domain,omitempty"`
+	IstioInjectionAnnotation          string              `yaml:"istio_injection_annotation,omitempty"`
+	IstioSidecarInjectorConfigMapName string              `yaml:"istio_sidecar_injector_config_map_name,omitempty"`
+	IstioSidecarAnnotation            string              `yaml:"istio_sidecar_annotation,omitempty"`
+	IstiodDeploymentName              string              `yaml:"istiod_deployment_name,omitempty"`
+	IstiodPodMonitoringPort           int                 `yaml:"istiod_pod_monitoring_port,omitempty"`
 	// IstiodPollingIntervalSeconds is how often in seconds Kiali will poll istiod(s) for
 	// proxy status and registry services. Polling is not performed if IstioAPIEnabled is false.
 	IstiodPollingIntervalSeconds int             `yaml:"istiod_polling_interval_seconds,omitempty"`
 	Registry                     *RegistryConfig `yaml:"registry,omitempty"`
 	RootNamespace                string          `yaml:"root_namespace,omitempty"`
 	UrlServiceVersion            string          `yaml:"url_service_version"`
+}
+
+type IstioCanaryRevision struct {
+	Current string `yaml:"current,omitempty"`
+	Upgrade string `yaml:"upgrade,omitempty"`
 }
 
 type ComponentStatuses struct {

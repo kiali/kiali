@@ -165,6 +165,10 @@ export const serverRateConfig = {
     ambientAnnotationEnabled: 'enabled',
     istioInjectionAnnotation: ''
   },
+  istioCanaryRevision: {
+    current: '',
+    upgrade: ''
+  },
   istioIdentityDomain: 'svc.cluster.local',
   istioNamespace: 'istio-system',
   istioLabels: {

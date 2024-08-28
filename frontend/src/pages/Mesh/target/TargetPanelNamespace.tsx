@@ -268,7 +268,10 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
 
   private hasCanaryUpgradeConfigured = (): boolean => {
     if (this.state.canaryUpgradeStatus) {
-      if (Object.keys(this.state.canaryUpgradeStatus.namespacesPerRevision).length > 1) {
+      if (
+        this.state.canaryUpgradeStatus.pendingNamespaces.length > 0 ||
+        this.state.canaryUpgradeStatus.migratedNamespaces.length > 0
+      ) {
         return true;
       }
     }
@@ -426,15 +429,22 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
         }
       }
 
-      if (serverConfig.kialiFeatureFlags.istioUpgradeAction && this.hasCanaryUpgradeConfigured()) {
-        const revisionActions = Object.keys(this.state.canaryUpgradeStatus?.namespacesPerRevision || {})
-          .filter(revision => !this.state.canaryUpgradeStatus!.namespacesPerRevision[revision].includes(nsInfo.name))
-          .map(revision => ({
-            isGroup: false,
-            isSeparator: false,
-            title: `Switch to ${revision} revision`,
-            action: (ns: string) => console.log(`TODO: Upgrade revision [${ns}]`)
-            /*
+      if (
+        serverConfig.kialiFeatureFlags.istioUpgradeAction &&
+        serverConfig.istioCanaryRevision.upgrade &&
+        serverConfig.istioCanaryRevision.current
+      ) {
+        namespaceActions.push({
+          isGroup: false,
+          isSeparator: true
+        });
+
+        const upgradeAction = {
+          isGroup: false,
+          isSeparator: false,
+          title: `Upgrade to ${serverConfig.istioCanaryRevision.upgrade} revision`,
+          action: (ns: string) => console.log(`TODO: Upgrade revision [${ns}]`)
+          /*
             this.setState({
               opTarget: 'upgrade',
               kind: 'canary',
@@ -443,16 +453,39 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
               clusterTarget: nsInfo.cluster
             })
             */
-          }));
+        };
 
-        namespaceActions.push({
+        const downgradeAction = {
           isGroup: false,
-          isSeparator: true
-        });
+          isSeparator: false,
+          title: `Downgrade to ${serverConfig.istioCanaryRevision.current} revision`,
+          action: (ns: string) => console.log(`TODO: Downgrade revision [${ns}]`)
+          /*
+            this.setState({
+              opTarget: 'current',
+              kind: 'canary',
+              nsTarget: ns,
+              showTrafficPoliciesModal: true,
+              clusterTarget: nsInfo.cluster
+            })
+            */
+        };
 
-        revisionActions.forEach(action => {
-          namespaceActions.push(action);
-        });
+        if (
+          nsInfo.labels &&
+          ((nsInfo.labels[serverConfig.istioLabels.injectionLabelRev] &&
+            nsInfo.labels[serverConfig.istioLabels.injectionLabelRev] === serverConfig.istioCanaryRevision.current) ||
+            (nsInfo.labels[serverConfig.istioLabels.injectionLabelName] &&
+              nsInfo.labels[serverConfig.istioLabels.injectionLabelName] === 'enabled'))
+        ) {
+          namespaceActions.push(upgradeAction);
+        } else if (
+          nsInfo.labels &&
+          nsInfo.labels[serverConfig.istioLabels.injectionLabelRev] &&
+          nsInfo.labels[serverConfig.istioLabels.injectionLabelRev] === serverConfig.istioCanaryRevision.upgrade
+        ) {
+          namespaceActions.push(downgradeAction);
+        }
       }
 
       const aps = nsInfo.istioConfig?.authorizationPolicies ?? [];
@@ -537,15 +570,22 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
       <>
         {isControlPlane && <ControlPlaneBadge cluster={ns.cluster} annotations={ns.annotations}></ControlPlaneBadge>}
 
-        {isControlPlane &&
+        {!isControlPlane &&
           this.hasCanaryUpgradeConfigured() &&
-          this.state.canaryUpgradeStatus &&
-          this.state.canaryUpgradeStatus.namespacesPerRevision &&
-          Object.keys(this.state.canaryUpgradeStatus!.namespacesPerRevision).map(
-            revision =>
-              !this.state.canaryUpgradeStatus!.namespacesPerRevision[revision].includes(ns.name) && (
-                <ControlPlaneVersionBadge version={revision} isCanary={false} />
-              )
+          this.state.canaryUpgradeStatus?.migratedNamespaces.includes(ns.name) && (
+            <ControlPlaneVersionBadge
+              version={this.state.canaryUpgradeStatus.upgradeVersion}
+              isCanary={true}
+            ></ControlPlaneVersionBadge>
+          )}
+
+        {!isControlPlane &&
+          this.hasCanaryUpgradeConfigured() &&
+          this.state.canaryUpgradeStatus?.pendingNamespaces.includes(ns.name) && (
+            <ControlPlaneVersionBadge
+              version={this.state.canaryUpgradeStatus.currentVersion}
+              isCanary={false}
+            ></ControlPlaneVersionBadge>
           )}
 
         {isControlPlane && !this.props.istioAPIEnabled && (
@@ -673,7 +713,10 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
       .then(response => {
         this.setState({
           canaryUpgradeStatus: {
-            namespacesPerRevision: response.data.namespacesPerRevision
+            currentVersion: response.data.currentVersion,
+            upgradeVersion: response.data.upgradeVersion,
+            migratedNamespaces: response.data.migratedNamespaces,
+            pendingNamespaces: response.data.pendingNamespaces
           }
         });
       })

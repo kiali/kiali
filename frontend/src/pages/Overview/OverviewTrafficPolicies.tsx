@@ -1,13 +1,14 @@
 import * as React from 'react';
 import { Button, ButtonVariant, Modal, ModalVariant } from '@patternfly/react-core';
 import { NamespaceInfo } from '../../types/NamespaceInfo';
-import { AuthorizationPolicy, CanaryUpgradeStatus, Sidecar } from 'types/IstioObjects';
+import { AuthorizationPolicy, Sidecar } from 'types/IstioObjects';
 import { MessageType } from 'types/MessageCenter';
 import { PromisesRegistry } from 'utils/CancelablePromises';
 import { DurationInSeconds } from 'types/Common';
 import { ConfigPreviewItem, IstioConfigPreview } from 'components/IstioConfigPreview/IstioConfigPreview';
 import * as AlertUtils from 'utils/AlertUtils';
 import * as API from 'services/Api';
+import { serverConfig } from '../../config';
 import { GraphDataSource } from 'services/GraphDataSource';
 import {
   buildGraphAuthorizationPolicy,
@@ -17,7 +18,6 @@ import {
 import { AUTHORIZATION_POLICIES } from '../IstioConfigNew/AuthorizationPolicyForm';
 
 type OverviewTrafficPoliciesProps = {
-  canaryUpgradeStatus?: CanaryUpgradeStatus;
   duration: DurationInSeconds;
   hideConfirmModal: () => void;
   isOpen: boolean;
@@ -30,10 +30,10 @@ type OverviewTrafficPoliciesProps = {
 
 type State = {
   authorizationPolicies: AuthorizationPolicy[];
+  canaryVersion: string;
   confirmationModal: boolean;
   disableOp: boolean;
   loaded: boolean;
-  selectedRevision: string;
   sidecars: Sidecar[];
 };
 
@@ -48,21 +48,12 @@ export class OverviewTrafficPolicies extends React.Component<OverviewTrafficPoli
       sidecars: [],
       loaded: this.props.opTarget === 'update',
       disableOp: true,
-      selectedRevision: this.props.kind === 'canary' ? this.getCanaryUpgradeVersion(this.props.opTarget) : ''
+      canaryVersion: this.props.kind === 'canary' ? serverConfig.istioCanaryRevision[this.props.opTarget] : ''
     };
   }
 
   confirmationModalStatus = (): boolean => {
     return this.props.kind === 'canary' || this.props.kind === 'injection';
-  };
-
-  getCanaryUpgradeVersion = (opTarget: string): string => {
-    if (this.props.canaryUpgradeStatus) {
-      if (opTarget in this.props.canaryUpgradeStatus.namespacesPerRevision) {
-        return opTarget;
-      }
-    }
-    return '';
   };
 
   componentDidUpdate(prevProps: OverviewTrafficPoliciesProps): void {
@@ -72,7 +63,7 @@ export class OverviewTrafficPolicies extends React.Component<OverviewTrafficPoli
           this.fetchPermission(true);
           break;
         case 'canary':
-          this.setState({ selectedRevision: this.getCanaryUpgradeVersion(this.props.opTarget) }, () =>
+          this.setState({ canaryVersion: serverConfig.istioCanaryRevision[this.props.opTarget] }, () =>
             this.fetchPermission(true)
           );
           break;
@@ -165,7 +156,7 @@ export class OverviewTrafficPolicies extends React.Component<OverviewTrafficPoli
   };
 
   onUpgradeDowngradeIstio = (): void => {
-    const jsonPatch = buildNamespaceInjectionPatch(false, false, this.state.selectedRevision);
+    const jsonPatch = buildNamespaceInjectionPatch(false, false, this.state.canaryVersion);
 
     API.updateNamespace(this.props.nsTarget, jsonPatch, this.props.nsInfo.cluster)
       .then(_ => {
@@ -293,12 +284,10 @@ export class OverviewTrafficPolicies extends React.Component<OverviewTrafficPoli
   };
 
   render(): React.ReactNode {
-    const canaryVersion = this.props.kind === 'canary' ? this.getCanaryUpgradeVersion(this.props.opTarget) : '';
+    const canaryVersion = this.props.kind === 'canary' ? serverConfig.istioCanaryRevision[this.props.opTarget] : '';
 
     const modalAction =
-      this.props.kind === 'canary'
-        ? 'Switch'
-        : this.props.opTarget.length > 0
+      this.props.opTarget.length > 0
         ? `${this.props.opTarget.charAt(0).toLocaleUpperCase()}${this.props.opTarget.slice(1)}`
         : '';
 
@@ -362,8 +351,8 @@ export class OverviewTrafficPolicies extends React.Component<OverviewTrafficPoli
             </>
           ) : this.props.kind === 'canary' ? (
             <>
-              You're going to switch to {this.state.selectedRevision} revision in the namespace {this.props.nsTarget}.
-              Are you sure?
+              You're going to {this.props.opTarget} to {this.state.canaryVersion} revision in the namespace{' '}
+              {this.props.nsTarget}. Are you sure?
             </>
           ) : (
             <>

@@ -3,10 +3,7 @@ package business
 import (
 	"fmt"
 
-	"golang.org/x/exp/maps"
-
 	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/models"
@@ -57,49 +54,47 @@ func NewMeshService(
 }
 
 func (in *MeshService) CanaryUpgradeStatus() (*models.CanaryUpgradeStatus, error) {
-	kubeCache, err := in.kialiCache.GetKubeCache(in.conf.KubernetesConfig.ClusterName)
+	upgrade := in.conf.ExternalServices.Istio.IstioCanaryRevision.Upgrade
+	current := in.conf.ExternalServices.Istio.IstioCanaryRevision.Current
+	migratedNsList := []string{}
+	pendingNsList := []string{}
+
+	// If there is no canary configured, return empty lists
+	if upgrade == "" {
+		return &models.CanaryUpgradeStatus{MigratedNamespaces: migratedNsList, PendingNamespaces: pendingNsList}, nil
+	}
+
+	// Get migrated and pending namespaces
+	// TODO: Support multi-primary
+	migratedNss, err := in.homeClusterSAClient.GetNamespaces(fmt.Sprintf("istio.io/rev=%s", upgrade))
 	if err != nil {
 		return nil, err
 	}
+	for _, ns := range migratedNss {
+		migratedNsList = append(migratedNsList, ns.Name)
+	}
 
-	revisions, err := istio.GetHealthyIstiodRevisions(kubeCache, in.conf.IstioNamespace)
+	pendingNss, err := in.homeClusterSAClient.GetNamespaces(fmt.Sprintf("%s=enabled", in.conf.IstioLabels.InjectionLabelName))
 	if err != nil {
 		return nil, err
 	}
-	namespacesPerRevision := make(map[string][]string)
-
-	if len(revisions) == 1 {
-		return &models.CanaryUpgradeStatus{
-			NamespacesPerRevision: namespacesPerRevision,
-		}, nil
+	for _, ns := range pendingNss {
+		pendingNsList = append(pendingNsList, ns.Name)
 	}
 
-	for _, revision := range revisions {
-		nsList := make(map[string]bool)
-		// Get namespaces for revision
-		// TODO: Support multi-primary
-		nss, err := in.homeClusterSAClient.GetNamespaces(fmt.Sprintf("%s=%s", in.conf.IstioLabels.InjectionLabelRev, revision))
-		if err != nil {
-			return nil, err
-		}
-		for _, ns := range nss {
-			nsList[ns.Name] = true
-		}
-
-		// include not revision labeled namespaces into default ones
-		if revision == istio.DefaultRevisionLabel {
-			pendingNss, err := in.homeClusterSAClient.GetNamespaces(fmt.Sprintf("%s=enabled", in.conf.IstioLabels.InjectionLabelName))
-			if err != nil {
-				return nil, err
-			}
-			for _, ns := range pendingNss {
-				nsList[ns.Name] = true
-			}
-		}
-		namespacesPerRevision[revision] = maps.Keys(nsList)
+	pendingNss, err = in.homeClusterSAClient.GetNamespaces(fmt.Sprintf("%s=%s", in.conf.IstioLabels.InjectionLabelRev, current))
+	if err != nil {
+		return nil, err
 	}
+	for _, ns := range pendingNss {
+		pendingNsList = append(pendingNsList, ns.Name)
+	}
+
 	status := &models.CanaryUpgradeStatus{
-		NamespacesPerRevision: namespacesPerRevision,
+		CurrentVersion:     current,
+		UpgradeVersion:     upgrade,
+		MigratedNamespaces: migratedNsList,
+		PendingNamespaces:  pendingNsList,
 	}
 
 	return status, nil

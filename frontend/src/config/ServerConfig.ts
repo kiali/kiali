@@ -75,6 +75,10 @@ const defaultServerConfig: ComputedServerConfig = {
     ambientAnnotationEnabled: 'enabled',
     istioInjectionAnnotation: 'sidecar.istio.io/inject'
   },
+  istioCanaryRevision: {
+    current: '',
+    upgrade: ''
+  },
   istioIdentityDomain: 'svc.cluster.local',
   istioNamespace: 'istio-system',
   istioLabels: {
