@@ -158,14 +158,6 @@
     "typescript": "^4.9.5"
   },
   "resolutions": {
-    "@babel/core": "^7.22.15",
-    "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
-    "@babel/plugin-syntax-flow": "^7.22.5",
-    "@babel/plugin-transform-react-jsx": "^7.22.15",
-    "async": "^3.2.2",
-    "json-schema": "^0.4.0",
-    "micromatch": "^4.0.7",
-    "minimist": "^1.2.6",
     "nth-check": "^2.0.1",
     "postcss": "^8.4.31"
   },
