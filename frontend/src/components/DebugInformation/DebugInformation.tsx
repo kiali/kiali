@@ -63,7 +63,6 @@ const propsToShow = [
   'gatewayAPIClasses',
   'gatewayAPIEnabled',
   'istioAnnotationsAction',
-  'istioCanaryRevision',
   'istioConfigMap',
   'istioIdentityDomain',
   'istioInjectionAction',

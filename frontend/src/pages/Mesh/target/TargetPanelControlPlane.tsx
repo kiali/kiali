@@ -17,7 +17,6 @@ import { DirectionType } from 'pages/Overview/OverviewToolbar';
 import { ControlPlaneNamespaceStatus } from 'pages/Overview/ControlPlaneNamespaceStatus';
 import { PromisesRegistry } from 'utils/CancelablePromises';
 import { TLSInfo } from 'components/Overview/TLSInfo';
-import { CanaryUpgradeProgress } from 'pages/Overview/CanaryUpgradeProgress';
 import { OverviewCardControlPlaneNamespace } from 'pages/Overview/OverviewCardControlPlaneNamespace';
 import * as API from '../../../services/Api';
 import { IstioMetricsOptions } from 'types/MetricsOptions';
@@ -164,13 +163,6 @@ export class TargetPanelControlPlane extends React.Component<
 
           {!isRemoteCluster(nsInfo.annotations) && (
             <>
-              {this.state.canaryUpgradeStatus && this.hasCanaryUpgradeConfigured() && (
-                <>
-                  {targetPanelHR}
-                  <CanaryUpgradeProgress canaryUpgradeStatus={this.state.canaryUpgradeStatus} />
-                </>
-              )}
-
               {this.props.istioAPIEnabled && (
                 <>
                   {targetPanelHR}
@@ -199,19 +191,6 @@ export class TargetPanelControlPlane extends React.Component<
         </div>
       </div>
     );
-  };
-
-  private hasCanaryUpgradeConfigured = (): boolean => {
-    if (this.state.canaryUpgradeStatus) {
-      if (
-        this.state.canaryUpgradeStatus.pendingNamespaces.length > 0 ||
-        this.state.canaryUpgradeStatus.migratedNamespaces.length > 0
-      ) {
-        return true;
-      }
-    }
-
-    return false;
   };
 
   private load = (): void => {
@@ -272,10 +251,7 @@ export class TargetPanelControlPlane extends React.Component<
       .then(response => {
         this.setState({
           canaryUpgradeStatus: {
-            currentVersion: response.data.currentVersion,
-            upgradeVersion: response.data.upgradeVersion,
-            migratedNamespaces: response.data.migratedNamespaces,
-            pendingNamespaces: response.data.pendingNamespaces
+            namespacesPerRevision: response.data.namespacesPerRevision
           }
         });
       })

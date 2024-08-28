@@ -73,17 +73,7 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalIn
 	canaryStatus, err := gi.Business.Mesh.CanaryUpgradeStatus()
 	graph.CheckError(err)
 
-	canaryMigrated := []models.Namespace{}
-	canaryPending := []models.Namespace{}
-	isCanary := mesh.IsOK(canaryStatus.CurrentVersion) && mesh.IsOK(canaryStatus.UpgradeVersion)
-	if isCanary {
-		for _, name := range canaryStatus.MigratedNamespaces {
-			canaryMigrated = append(canaryMigrated, getNamespacesByName(name, namespaces)...)
-		}
-		for _, name := range canaryStatus.PendingNamespaces {
-			canaryPending = append(canaryPending, getNamespacesByName(name, namespaces)...)
-		}
-	}
+	isCanary := len(canaryStatus.NamespacesPerRevision) > 1
 
 	// get istio status components (istiod, grafana, prometheus, tracing)
 	istioStatus, err := gi.IstioStatusGetter.GetStatus(ctx)
@@ -152,10 +142,10 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalIn
 		// add the managed namespaces by cluster and narrowed, if necessary, by revision
 		dataplaneMap := make(map[clusterRevisionKey][]models.Namespace)
 		cpNamespaces := namespaces
-		if isCanary {
-			cpNamespaces = canaryPending
-			if cp.Revision == canaryStatus.UpgradeVersion {
-				cpNamespaces = canaryMigrated
+		if isCanary && canaryStatus.NamespacesPerRevision[cp.Revision] != nil {
+			cpNamespaces = []models.Namespace{}
+			for _, ns := range canaryStatus.NamespacesPerRevision[cp.Revision] {
+				cpNamespaces = append(cpNamespaces, getNamespacesByName(ns, namespaces)...)
 			}
 		}
 		for _, ns := range cpNamespaces {
@@ -174,7 +164,7 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalIn
 				dataplaneMap[key] = append(clusterNamespaces, ns)
 			}
 		}
-		for clusterrev, namespaces := range dataplaneMap {
+		for clusterrev, dPNss := range dataplaneMap {
 			// sort namespaces by cluster,name. This is more for test data consistency than anything else, but it doesn't hurt
 			slices.SortFunc(namespaces, func(a, b models.Namespace) int {
 				clusterComp := cmp.Compare(a.Cluster, b.Cluster)
@@ -184,10 +174,10 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalIn
 				return cmp.Compare(a.Name, b.Name)
 			})
 
-			isDataPlaneCanary := isCanary && cp.Revision == canaryStatus.UpgradeVersion
+			isDataPlaneCanary := isCanary && canaryStatus.NamespacesPerRevision[cp.Revision] != nil
 
 			// Note that version here is not the actual istio version, but the revision of the control plane that is managing this dataplane.
-			dp, _, err := addInfra(meshMap, mesh.InfraTypeDataPlane, clusterrev.Cluster, "", "Data Plane", namespaces, cp.Revision, false, "", isDataPlaneCanary)
+			dp, _, err := addInfra(meshMap, mesh.InfraTypeDataPlane, clusterrev.Cluster, "", "Data Plane", dPNss, cp.Revision, false, "", isDataPlaneCanary)
 			graph.CheckError(err)
 
 			istiod.AddEdge(dp)

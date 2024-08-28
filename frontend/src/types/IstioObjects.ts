@@ -1418,10 +1418,7 @@ export interface APIKey {
 }
 
 export interface CanaryUpgradeStatus {
-  currentVersion: string;
-  migratedNamespaces: string[];
-  pendingNamespaces: string[];
-  upgradeVersion: string;
+  namespacesPerRevision: { [key: string]: string[] };
 }
 
 export const MAX_PORT = 65535;
