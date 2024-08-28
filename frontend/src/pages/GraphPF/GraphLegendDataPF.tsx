@@ -18,8 +18,11 @@ import edgeDangerImage from '../../assets/img/graph/pf/edge-danger.svg';
 import edgeWarnImage from '../../assets/img/graph/pf/edge-warn.svg';
 import edgeIdlemage from '../../assets/img/graph/pf/edge-idle.svg';
 import edgeTcpImage from '../../assets/img/graph/pf/edge-tcp.svg';
+import edgeSuccessAmbientImage from '../../assets/img/graph/pf/edge-success-ambient.svg';
+import edgeDangerAmbientImage from '../../assets/img/graph/pf/edge-danger-ambient.svg';
+import edgeWarnAmbientImage from '../../assets/img/graph/pf/edge-warn-ambient.svg';
+import edgeTcpAmbientImage from '../../assets/img/graph/pf/edge-tcp-ambient.svg';
 import edgeMtlsImage from '../../assets/img/graph/mtls-badge.svg';
-import tcphttpImage from '../../assets/img/graph/pf/edge-tcp-http.svg';
 // Traffic Animation
 import trafficHealthyImage from '../../assets/img/graph/pf/traffic-healthy-request.svg';
 import trafficFailedImage from '../../assets/img/graph/pf/traffic-failed-request.svg';
@@ -35,7 +38,6 @@ import badgeTrafficShiftingSourceImage from '../../assets/img/graph/node-badge-t
 import badgeTrafficSourceImage from '../../assets/img/graph/node-badge-traffic-source.svg';
 import badgeVirtualServicesImage from '../../assets/img/graph/node-badge-virtual-services.svg';
 import badgeWorkloadEntryImage from '../../assets/img/graph/node-badge-workload-entry.svg';
-import badgeWaypointImage from '../../assets/img/graph/node-badge-waypoint.svg';
 import { t } from 'utils/I18nUtils';
 import { serverConfig } from '../../config';
 
@@ -43,6 +45,7 @@ export interface GraphLegendItem {
   data: GraphLegendItemRow[];
   isBadge?: boolean;
   title: string;
+  help?: string;
 }
 
 export interface GraphLegendItemRow {
@@ -73,14 +76,7 @@ export const legendData = (): GraphLegendItem[] => {
     { label: t('mTLS (badge)'), icon: edgeMtlsImage }
   ];
 
-  if (serverConfig.ambientEnabled) {
-    nodeBadges.push({ label: t('Waypoint'), icon: badgeWaypointImage });
-    edges[6] = { label: t('mTLS (badge)'), icon: edgeMtlsImage };
-    edges[5] = { label: t('Idle'), icon: edgeIdlemage };
-    edges[4] = { label: t('TCP+HTTP telemetry'), icon: tcphttpImage };
-  }
-
-  return [
+  const legend: GraphLegendItem[] = [
     {
       title: t('Node Shapes'),
       data: [
@@ -110,7 +106,26 @@ export const legendData = (): GraphLegendItem[] => {
     {
       title: t('Edges'),
       data: edges
-    },
+    }
+  ];
+
+  if (serverConfig.ambientEnabled) {
+    legend.push({
+      title: t('Ambient Edges'),
+      help:
+        'Ambient TCP Telemetry is reported from ztunnel, which means the connection could be either TCP or HTTP, ' +
+        'but just TCP is reported. Ambient HTTP edges combine TCP data from ztunnel and HTTP data from Waypoint (L7 Telemetry), and include the HTTP status ' +
+        '(Failure, Degraded or Healthy)',
+      data: [
+        { label: t('Failure'), icon: edgeDangerAmbientImage },
+        { label: t('Degraded'), icon: edgeWarnAmbientImage },
+        { label: t('Healthy'), icon: edgeSuccessAmbientImage },
+        { label: t('TCP Telemetry'), icon: edgeTcpAmbientImage }
+      ]
+    });
+  }
+
+  legend.push(
     {
       title: t('Traffic Animation'),
       data: [
@@ -124,5 +139,7 @@ export const legendData = (): GraphLegendItem[] => {
       isBadge: true,
       data: nodeBadges
     }
-  ];
+  );
+
+  return legend;
 };

@@ -574,11 +574,12 @@ const getPathStyle = (data: EdgeData): React.CSSProperties => {
   // This is to combine just tcp and http edges
   if (data.display === 'multiple') {
     return {
-      filter: `drop-shadow(0 0 2px ${getPathStyleStroke(data)}) drop-shadow(0 0 2px ${getPathStyleStroke(data)})`,
-      stroke: EdgeColorTCPWithTraffic,
-      strokeWidth: 3
+      filter: `drop-shadow(0 0 1px ${getPathStyleStroke(data)}) drop-shadow(0 0 1px ${getPathStyleStroke(data)})`,
+      stroke: '#FFF',
+      strokeWidth: 2
     } as React.CSSProperties;
   }
+
   return {
     stroke: getPathStyleStroke(data),
     strokeWidth: 3
@@ -595,6 +596,10 @@ export const setEdgeOptions = (edge: EdgeModel, nodeMap: NodeMap, settings: Grap
 
   if (data.display !== 'hide') {
     data.endTerminalType = data.protocol === Protocol.TCP ? EdgeTerminalType.square : EdgeTerminalType.directional;
+  }
+
+  if (data.display === 'multiple') {
+    data.endTerminalType = EdgeTerminalType.cross;
   }
 
   data.pathStyle = getPathStyle(data);

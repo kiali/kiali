@@ -65,8 +65,12 @@ export const GraphLegendPF: React.FC<GraphLegendPFProps> = (props: GraphLegendPF
       <>
         {legendData.map((legendItem: GraphLegendItem) => (
           <div key={legendItem.title} className={legendColumnHeadingStyle}>
-            {t(legendItem.title)}
-
+            {t(legendItem.title)}{' '}
+            {legendItem.help && (
+              <Tooltip key={'help'} position="top" content={legendItem.help}>
+                <KialiIcon.Info />
+              </Tooltip>
+            )}
             {legendItem.data.map((legendItemRow: GraphLegendItemRow) =>
               renderLegendIconAndLabel(legendItemRow, legendItem.isBadge)
             )}
