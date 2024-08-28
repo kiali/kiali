@@ -166,7 +166,7 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalIn
 		}
 		for clusterrev, dPNss := range dataplaneMap {
 			// sort namespaces by cluster,name. This is more for test data consistency than anything else, but it doesn't hurt
-			slices.SortFunc(namespaces, func(a, b models.Namespace) int {
+			slices.SortFunc(dPNss, func(a, b models.Namespace) int {
 				clusterComp := cmp.Compare(a.Cluster, b.Cluster)
 				if clusterComp != 0 {
 					return clusterComp
