@@ -119,6 +119,7 @@
     "visibilityjs": "2.0.2"
   },
   "devDependencies": {
+    "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "@badeball/cypress-cucumber-preprocessor": "^19.2.0",
     "@bahmutov/cypress-esbuild-preprocessor": "^2.2.0",
     "@types/cypress-cucumber-preprocessor": "^4.0.5",
