@@ -147,7 +147,12 @@ func NewKialiCache(clientFactory kubernetes.ClientFactory, cfg config.Config) (K
 	}
 
 	for cluster, client := range clientFactory.GetSAClients() {
-		cache, err := NewKubeCache(client, cfg, kialiCacheImpl.deleteNamespace)
+		// we only need our deleteNamespace function called when an error occurs in a namespace-scoped cache
+		var errHandler ErrorHandler
+		if !cfg.Deployment.ClusterWideAccess {
+			errHandler = kialiCacheImpl.deleteNamespace
+		}
+		cache, err := NewKubeCache(client, cfg, errHandler)
 		if err != nil {
 			log.Errorf("[Kiali Cache] Error creating kube cache for cluster: [%s]. Err: %v", cluster, err)
 			return nil, err

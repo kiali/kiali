@@ -12,9 +12,9 @@ import (
 // accessible namespaces thus freeing the test authors from having to remember to do that explicitly in the test code.
 // This will provide easy-to-read failure log messages if the given yaml is malformed in some way (for easier debugging of test code).
 func GetConfigFromYaml(t *testing.T, yaml string) *config.Config {
+	t.Helper()
 	if cfg, err := config.Unmarshal(yaml); err != nil {
 		// mark the test as a failure; we'll keep going so the log will show what test failed
-		t.Helper()
 		t.Fatalf("Test provided invalid config YAML.\nERROR: %v\nYAML:%v", err, yaml)
 		return &config.Config{InstallationTag: "TEST FAILED DUE TO INVALID YAML"}
 	} else {

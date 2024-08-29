@@ -1297,7 +1297,9 @@ func validateSigningKey(signingKey string, authStrategy string) error {
 // list of namespace names by using all discovery selectors that look for matches of the label "kubernetes.io/metadata.name".
 // This means if a matchLabels wants to match a value on the label "kubernetes.io/metadata.name" or a single matchExpressions
 // wants to match key="kubernetes.io/metadata.name" with operator="In" with a single value defined, the value is assumed
-// to be an accessible namespace that will be added to the list that is returned. For example:
+// to be an accessible namespace that will be added to the list that is returned. Note you can have multiple values for
+// an "In" expression - each value will be considered an accessible namespace.
+// Examples:
 //
 //	default:
 //	- matchLabels:
@@ -1306,6 +1308,10 @@ func validateSigningKey(signingKey string, authStrategy string) error {
 //	  - key: kubernetes.io/metadata.name
 //	    operator: In
 //	    values: ["another-accessible-namespace"]
+//	- matchExpressions:
+//	  - key: kubernetes.io/metadata.name
+//	    operator: In
+//	    values: ["accessible-1", "accessible-2", "a-third-accessible-namespace"]
 //
 // When the Kiali Server is not in Cluster Wide Access mode, it is assumed (required, in fact) that all the
 // default discovery selectors only use match criteria as explained above.
@@ -1328,14 +1334,14 @@ func (config *Config) extractAccessibleNamespaceList() ([]string, error) {
 			}
 		} else if len(selector.MatchExpressions) == 1 {
 			expr := selector.MatchExpressions[0]
-			if len(expr.Values) == 1 {
+			if len(expr.Values) > 0 {
 				if expr.Key == "kubernetes.io/metadata.name" && expr.Operator == metav1.LabelSelectorOpIn {
-					namespaceNames = append(namespaceNames, expr.Values[0])
+					namespaceNames = append(namespaceNames, expr.Values...)
 				} else {
 					errs = append(errs, fmt.Sprintf("invalid accessible namespace discovery selectors: matchExpressions selector must match the label named kubernetes.io/metadata.name using the IN operator: %v", selector))
 				}
 			} else {
-				errs = append(errs, fmt.Sprintf("invalid accessible namespace discovery selectors: matchExpressions selector must match one and only one value for label named kubernetes.io/metadata.name using the IN operator: %v", selector))
+				errs = append(errs, fmt.Sprintf("invalid accessible namespace discovery selectors: matchExpressions selector must match at least one value for label named kubernetes.io/metadata.name using the IN operator: %v", selector))
 			}
 		}
 	}

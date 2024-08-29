@@ -629,7 +629,7 @@ func TestExtractAccessibleNamespaceList(t *testing.T) {
 			expectedNamespaces: []string{"good"},
 			expectedError:      true,
 		},
-		"matchExpression must not have multiple values": {
+		"matchExpression with multiple values": {
 			discoverySelectors: DiscoverySelectorsConfig{
 				Default: DiscoverySelectorsType{
 					&DiscoverySelectorType{
@@ -637,14 +637,14 @@ func TestExtractAccessibleNamespaceList(t *testing.T) {
 							{
 								Key:      "kubernetes.io/metadata.name",
 								Operator: meta_v1.LabelSelectorOpIn,
-								Values:   []string{"too-many", "values"},
+								Values:   []string{"one-ns", "two-ns", "three-ns"},
 							},
 						},
 					},
 				},
 			},
-			expectedNamespaces: []string{},
-			expectedError:      true,
+			expectedNamespaces: []string{"one-ns", "two-ns", "three-ns"},
+			expectedError:      false,
 		},
 		"matchLabels must not have multiple values": {
 			discoverySelectors: DiscoverySelectorsConfig{
@@ -683,15 +683,6 @@ func TestExtractAccessibleNamespaceList(t *testing.T) {
 								Key:      "foo",
 								Operator: meta_v1.LabelSelectorOpIn,
 								Values:   []string{"bar"},
-							},
-						},
-					},
-					&DiscoverySelectorType{
-						MatchExpressions: []meta_v1.LabelSelectorRequirement{
-							{
-								Key:      "kubernetes.io/metadata.name",
-								Operator: meta_v1.LabelSelectorOpIn,
-								Values:   []string{"nope", "nogood-either"},
 							},
 						},
 					},
