@@ -181,10 +181,14 @@ const paddingStyle = kialiStyle({
 export type StatefulFiltersRef = React.RefObject<StatefulFiltersComponent>;
 
 export class StatefulFiltersComponent extends React.Component<StatefulFiltersProps, StatefulFiltersState> {
+  private textInputRef: React.RefObject<HTMLDivElement>;
   private promises = new PromisesRegistry();
 
   constructor(props: StatefulFiltersProps) {
     super(props);
+
+    this.textInputRef = React.createRef<HTMLInputElement>();
+
     this.state = {
       activeFilters: FilterSelected.init(this.props.initialFilters),
       activeToggles: Toggles.init(this.props.initialToggles ?? []),
@@ -421,6 +425,8 @@ export class StatefulFiltersComponent extends React.Component<StatefulFiltersPro
     this.setState({
       isFilterValueOpen: !this.state.isFilterValueOpen
     });
+
+    this.textInputRef?.current?.focus();
   };
 
   onCheckboxChange = (checked: boolean, event: React.FormEvent<HTMLInputElement>): void => {
@@ -454,6 +460,7 @@ export class StatefulFiltersComponent extends React.Component<StatefulFiltersPro
               onChange={(_event, value) => this.updateCurrentValue(value)}
               id="typeahead-select-input"
               autoComplete="off"
+              innerRef={this.textInputRef}
               onKeyDown={this.onTypeaheadInputKeyDown}
               placeholder={t(this.state.currentFilterType.placeholder)}
               role="combobox"
@@ -467,14 +474,16 @@ export class StatefulFiltersComponent extends React.Component<StatefulFiltersPro
       return (
         <Select
           id="filter_select_value"
+          selected={this.state.activeFilters.filters.map(filter => filter.value)}
           onSelect={(_event, value) => this.filterValueSelected(value)}
           onOpenChange={isFilterValueOpen => this.setState({ isFilterValueOpen })}
           toggle={typeaheadToggle}
           isOpen={this.state.isFilterValueOpen}
           aria-label="Filter Select Value"
           className={filterSelectStyle}
+          shouldFocusFirstItemOnOpen={false}
         >
-          <SelectList data-test="istio-type-dropdown">
+          <SelectList isAriaMultiselectable data-test="istio-type-dropdown">
             {currentFilterType.filterValues.length > 0 ? (
               currentFilterType.filterValues.map((filter, index) => (
                 <SelectOption
@@ -511,6 +520,7 @@ export class StatefulFiltersComponent extends React.Component<StatefulFiltersPro
       return (
         <Select
           id="filter_select_value"
+          selected={FilterSelected.getSelected().filters.map(filter => filter.value)}
           onSelect={(_event, value) => {
             this.filterValueSelected(value);
             this.updateCurrentValue(value as string);
