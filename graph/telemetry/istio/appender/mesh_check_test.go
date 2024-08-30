@@ -310,7 +310,7 @@ func buildFakeWorkloadPodsAmbient() []core_v1.Pod {
 }
 
 func setupSidecarsCheckWorkloads(t *testing.T, deployments []apps_v1.Deployment, pods []core_v1.Pod) *business.Layer {
-	objects := []runtime.Object{&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "testNamespace"}}}
+	objects := []runtime.Object{kubetest.FakeNamespace("testNamespace")}
 	for _, obj := range deployments {
 		o := obj
 		objects = append(objects, &o)

@@ -27,6 +27,7 @@ import (
 	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/tests/testutils"
 	"github.com/kiali/kiali/util/slicetest"
 )
 
@@ -112,9 +113,7 @@ func TestGetClustersResolvesTheKialiCluster(t *testing.T) {
 		},
 	}
 
-	kialiNs := core_v1.Namespace{
-		ObjectMeta: v1.ObjectMeta{Name: "foo"},
-	}
+	kialiNs := kubetest.FakeNamespace("foo")
 
 	kialiSvc := []core_v1.Service{
 		{
@@ -141,7 +140,7 @@ func TestGetClustersResolvesTheKialiCluster(t *testing.T) {
 	objects := []runtime.Object{
 		&istioDeploymentMock,
 		&sidecarConfigMapMock,
-		&kialiNs,
+		kialiNs,
 	}
 
 	for _, obj := range kialiSvc {
@@ -183,12 +182,7 @@ func TestGetClustersResolvesRemoteClusters(t *testing.T) {
 	conf := config.NewConfig()
 	conf.InCluster = false
 
-	remoteNs := &core_v1.Namespace{
-		ObjectMeta: v1.ObjectMeta{
-			Labels: map[string]string{"topology.istio.io/network": "TheRemoteNetwork"},
-			Name:   conf.IstioNamespace,
-		},
-	}
+	remoteNs := kubetest.FakeNamespaceWithLabels(conf.IstioNamespace, map[string]string{"topology.istio.io/network": "TheRemoteNetwork"})
 
 	kialiSvc := &core_v1.Service{
 		ObjectMeta: v1.ObjectMeta{
@@ -317,7 +311,7 @@ func TestResolveKialiControlPlaneClusterIsCached(t *testing.T) {
 
 	// Create a MeshService and invoke GetClusters. This should cache the result.
 	k8s := kubetest.NewFakeK8sClient(
-		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "foo"}},
+		kubetest.FakeNamespace("foo"),
 		istioDeploymentMock,
 		kialiSvc,
 	)
@@ -376,7 +370,7 @@ trustDomain: cluster.local
 	require := require.New(t)
 	conf := config.NewConfig()
 	k8s := kubetest.NewFakeK8sClient(
-		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
+		kubetest.FakeNamespace("istio-system"),
 		istiodDeployment,
 		istioConfigMap,
 		sideCarConfigMap,
@@ -514,7 +508,7 @@ func TestMeshResolvesNetwork(t *testing.T) {
 			}
 
 			k8s := kubetest.NewFakeK8sClient(
-				&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
+				kubetest.FakeNamespace("istio-system"),
 				istiodDeployment,
 				istioConfigMap,
 				tc.sideCarInjectorConfigMap,
@@ -586,7 +580,7 @@ trustDomain: cluster.local
 	require := require.New(t)
 	conf := config.NewConfig()
 	k8s := kubetest.NewFakeK8sClient(
-		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
+		kubetest.FakeNamespace("istio-system"),
 		istiod_1_18_Deployment,
 		istio_1_18_ConfigMap,
 		istiod_1_19_Deployment,
@@ -650,7 +644,7 @@ trustDomain: cluster.local
 		Data: map[string]string{"mesh": configMapData},
 	}
 	k8s := kubetest.NewFakeK8sClient(
-		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
+		kubetest.FakeNamespace("istio-system"),
 		istiodDeployment,
 		istioConfigMap,
 	)
@@ -658,8 +652,9 @@ trustDomain: cluster.local
 		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{
 			Name:        "istio-system",
 			Annotations: map[string]string{business.IstioControlPlaneClustersLabel: conf.KubernetesConfig.ClusterName},
+			Labels:      map[string]string{"kubernetes.io/metadata.name": "istio-system"},
 		}},
-		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo"}},
+		kubetest.FakeNamespace("bookinfo"),
 	)
 
 	clients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: k8s, "remote": remoteClient}
@@ -700,7 +695,7 @@ trustDomain: cluster.local
 		Data: map[string]string{"mesh": configMapData},
 	}
 	eastClient := kubetest.NewFakeK8sClient(
-		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
+		kubetest.FakeNamespace("istio-system"),
 		istiodDeployment,
 		istioConfigMap,
 	)
@@ -708,8 +703,9 @@ trustDomain: cluster.local
 		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{
 			Name:        "istio-system",
 			Annotations: map[string]string{business.IstioControlPlaneClustersLabel: "*"},
+			Labels:      map[string]string{"kubernetes.io/metadata.name": "istio-system"},
 		}},
-		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo"}},
+		kubetest.FakeNamespace("bookinfo"),
 	)
 
 	clients := map[string]kubernetes.ClientInterface{"east": eastClient, "remote": remoteClient}
@@ -750,7 +746,7 @@ trustDomain: cluster.local
 		Data: map[string]string{"mesh": configMapData},
 	}
 	eastClient := kubetest.NewFakeK8sClient(
-		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
+		kubetest.FakeNamespace("istio-system"),
 		istiodDeployment,
 		istioConfigMap,
 	)
@@ -758,8 +754,9 @@ trustDomain: cluster.local
 		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{
 			Name:        "istio-system",
 			Annotations: map[string]string{business.IstioControlPlaneClustersLabel: conf.KubernetesConfig.ClusterName},
+			Labels:      map[string]string{"kubernetes.io/metadata.name": "istio-system"},
 		}},
-		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo"}},
+		kubetest.FakeNamespace("bookinfo"),
 	)
 
 	clients := map[string]kubernetes.ClientInterface{"east": eastClient, "remote": remoteClient}
@@ -792,14 +789,14 @@ trustDomain: cluster.local
 		Data: map[string]string{"mesh": configMapData},
 	}
 	eastClient := kubetest.NewFakeK8sClient(
-		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
-		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo"}},
+		kubetest.FakeNamespace("istio-system"),
+		kubetest.FakeNamespace("bookinfo"),
 		fakeIstiodDeployment("east", false),
 		istioConfigMap,
 	)
 	westClient := kubetest.NewFakeK8sClient(
-		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
-		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo"}},
+		kubetest.FakeNamespace("istio-system"),
+		kubetest.FakeNamespace("bookinfo"),
 		fakeIstiodDeployment("west", false),
 		istioConfigMap,
 	)
@@ -845,8 +842,8 @@ trustDomain: cluster.local
 		Data: map[string]string{"mesh": configMapData},
 	}
 	eastClient := kubetest.NewFakeK8sClient(
-		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
-		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo"}},
+		kubetest.FakeNamespace("istio-system"),
+		kubetest.FakeNamespace("bookinfo"),
 		fakeIstiodDeployment("east", true),
 		istioConfigMap,
 	)
@@ -854,12 +851,13 @@ trustDomain: cluster.local
 		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{
 			Name:        "istio-system",
 			Annotations: map[string]string{business.IstioControlPlaneClustersLabel: "east"},
+			Labels:      map[string]string{"kubernetes.io/metadata.name": "istio-system"},
 		}},
-		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo"}},
+		kubetest.FakeNamespace("bookinfo"),
 	)
 	westClient := kubetest.NewFakeK8sClient(
-		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
-		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo"}},
+		kubetest.FakeNamespace("istio-system"),
+		kubetest.FakeNamespace("bookinfo"),
 		fakeIstiodDeployment("west", true),
 		istioConfigMap,
 	)
@@ -867,8 +865,9 @@ trustDomain: cluster.local
 		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{
 			Name:        "istio-system",
 			Annotations: map[string]string{business.IstioControlPlaneClustersLabel: "west"},
+			Labels:      map[string]string{"kubernetes.io/metadata.name": "istio-system"},
 		}},
-		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo"}},
+		kubetest.FakeNamespace("bookinfo"),
 	)
 
 	clients := map[string]kubernetes.ClientInterface{
@@ -938,8 +937,8 @@ trustDomain: cluster.local
 	externalControlPlane.Name = "istiod"
 
 	controlPlaneClient := kubetest.NewFakeK8sClient(
-		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
-		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "external-istiod"}},
+		kubetest.FakeNamespace("istio-system"),
+		kubetest.FakeNamespace("external-istiod"),
 		fakeIstiodDeployment("controlplane", false),
 		externalControlPlane,
 		istioConfigMap,
@@ -947,16 +946,17 @@ trustDomain: cluster.local
 	)
 
 	dataPlaneClient := kubetest.NewFakeK8sClient(
-		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "external-istiod"}},
-		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo"}},
+		kubetest.FakeNamespace("external-istiod"),
+		kubetest.FakeNamespace("bookinfo"),
 	)
 
 	dataPlaneRemoteClient := kubetest.NewFakeK8sClient(
 		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{
 			Name:        "external-istiod",
 			Annotations: map[string]string{business.IstioControlPlaneClustersLabel: "dataplane"},
+			Labels:      map[string]string{"kubernetes.io/metadata.name": "external-istiod"},
 		}},
-		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo"}},
+		kubetest.FakeNamespace("bookinfo"),
 	)
 
 	clients := map[string]kubernetes.ClientInterface{
@@ -1038,9 +1038,14 @@ func TestGetClustersShowsConfiguredKialiInstances(t *testing.T) {
 func TestGetClustersWorksWithNamespacedScope(t *testing.T) {
 	require := require.New(t)
 	assert := assert.New(t)
-	conf := config.NewConfig()
-	conf.Deployment.ClusterWideAccess = false
-	conf.Deployment.AccessibleNamespaces = []string{"istio-system"}
+
+	conf := testutils.GetConfigFromYaml(t, `
+deployment:
+  cluster_wide_access: false
+  discovery_selectors:
+    default:
+    - matchLabels: {"kubernetes.io/metadata.name": "istio-system" }
+`)
 
 	kialiService := &core_v1.Service{
 		ObjectMeta: v1.ObjectMeta{
@@ -1050,7 +1055,7 @@ func TestGetClustersWorksWithNamespacedScope(t *testing.T) {
 		},
 	}
 	k8s := kubetest.NewFakeK8sClient(
-		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
+		kubetest.FakeNamespace("istio-system"),
 		kialiService,
 	)
 	clients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: k8s}
@@ -1109,7 +1114,7 @@ trustDomain: cluster.local
 		Data: map[string]string{"mesh": configMapData},
 	}
 	k8s := kubetest.NewFakeK8sClient(
-		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
+		kubetest.FakeNamespace("istio-system"),
 		istiodDeployment,
 		istioConfigMap,
 	)
@@ -1117,8 +1122,9 @@ trustDomain: cluster.local
 		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{
 			Name:        "istio-system",
 			Annotations: map[string]string{business.IstioControlPlaneClustersLabel: conf.KubernetesConfig.ClusterName},
+			Labels:      map[string]string{"kubernetes.io/metadata.name": "istio-system"},
 		}},
-		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo"}},
+		kubetest.FakeNamespace("bookinfo"),
 	)
 
 	clients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: k8s, "remote": remoteClient}
@@ -1309,7 +1315,7 @@ func TestIstiodResourceThresholds(t *testing.T) {
 				},
 			}
 			k8s := kubetest.NewFakeK8sClient(
-				&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
+				kubetest.FakeNamespace("istio-system"),
 				istiodDeployment,
 				&core_v1.ConfigMap{
 					ObjectMeta: v1.ObjectMeta{
@@ -1435,7 +1441,7 @@ func TestCanConnectToIstiod(t *testing.T) {
 			runningIstiodPod("default"),
 			fakeIstiodDeployment(conf.KubernetesConfig.ClusterName, false),
 			fakeIstioConfigMap("default"),
-			&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
+			kubetest.FakeNamespace("istio-system"),
 		),
 		testURL: testServer.URL,
 	}
@@ -1470,7 +1476,7 @@ func TestCanConnectToUnreachableIstiod(t *testing.T) {
 			runningIstiodPod("default"),
 			fakeIstiodDeployment(conf.KubernetesConfig.ClusterName, false),
 			fakeIstioConfigMap("default"),
-			&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
+			kubetest.FakeNamespace("istio-system"),
 		),
 	}
 
@@ -1502,7 +1508,7 @@ func TestUpdateStatusMultipleRevsWithoutHealthyPods(t *testing.T) {
 	istiod_1_19 := fakeIstiodWithRevision(conf.KubernetesConfig.ClusterName, "1-19-0", false)
 
 	k8s := kubetest.NewFakeK8sClient(
-		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
+		kubetest.FakeNamespace("istio-system"),
 		defaultIstiod,
 		istiod_1_19,
 		fakeIstioConfigMap("default"),
@@ -1544,7 +1550,7 @@ func TestUpdateStatusMultipleHealthyRevs(t *testing.T) {
 	istiod_1_19_pod.Labels[models.IstioRevisionLabel] = "1-19-0"
 
 	k8s := kubetest.NewFakeK8sClient(
-		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
+		kubetest.FakeNamespace("istio-system"),
 		defaultIstiod,
 		istiod_1_19,
 		fakeIstioConfigMap("default"),

@@ -34,9 +34,9 @@ func setupNamespaceService(t *testing.T, k8s kubernetes.ClientInterface, conf *c
 func setupNamespaceServiceWithNs() *kubetest.FakeK8sClient {
 	// config needs to be set by other services since those rely on the global.
 	objects := []runtime.Object{
-		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "bookinfo"}},
-		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "alpha"}},
-		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "beta"}},
+		kubetest.FakeNamespace("bookinfo"),
+		kubetest.FakeNamespace("alpha"),
+		kubetest.FakeNamespace("beta"),
 	}
 	for _, obj := range fakeNamespaces() {
 		o := obj
@@ -55,9 +55,9 @@ func setupAmbientNamespaceServiceWithNs() kubernetes.ClientInterface {
 	}
 	// config needs to be set by other services since those rely on the global.
 	objects := []runtime.Object{
-		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "bookinfo", Labels: labels}},
-		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "alpha"}},
-		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "beta"}},
+		kubetest.FakeNamespaceWithLabels("bookinfo", labels),
+		kubetest.FakeNamespace("alpha"),
+		kubetest.FakeNamespace("beta"),
 	}
 	for _, obj := range fakeNamespaces() {
 		o := obj
@@ -225,10 +225,10 @@ func TestMultiClusterGetNamespace(t *testing.T) {
 	clientFactory := kubetest.NewK8SClientFactoryMock(nil)
 	clients := map[string]kubernetes.ClientInterface{
 		"east": kubetest.NewFakeK8sClient(
-			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "bookinfo"}},
+			kubetest.FakeNamespace("bookinfo"),
 		),
 		"west": kubetest.NewFakeK8sClient(
-			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "bookinfo"}},
+			kubetest.FakeNamespace("bookinfo"),
 		),
 	}
 	clientFactory.SetClients(clients)
@@ -258,10 +258,10 @@ func TestMultiClusterGetNamespaces(t *testing.T) {
 	clientFactory := kubetest.NewK8SClientFactoryMock(nil)
 	clients := map[string]kubernetes.ClientInterface{
 		"east": kubetest.NewFakeK8sClient(
-			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "bookinfo"}},
+			kubetest.FakeNamespace("bookinfo"),
 		),
 		"west": kubetest.NewFakeK8sClient(
-			&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "bookinfo"}},
+			kubetest.FakeNamespace("bookinfo"),
 		),
 	}
 	clientFactory.SetClients(clients)

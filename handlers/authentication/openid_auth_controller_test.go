@@ -18,7 +18,6 @@ import (
 	osproject_v1 "github.com/openshift/api/project/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/config"
@@ -393,7 +392,7 @@ func TestOpenIdAuthControllerAuthenticatesCorrectlyWithAuthorizationCodeFlow(t *
 
 	// Returning some namespace when a cluster API call is made should have the result of
 	// a successful authentication.
-	k8s := kubetest.NewFakeK8sClient(&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "Foo"}})
+	k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("Foo"))
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
 	cache := cache.NewTestingCacheWithFactory(t, mockClientFactory, *conf)
 	discovery := istio.NewDiscovery(mockClientFactory.Clients, cache, conf)
@@ -478,7 +477,7 @@ func TestOpenIdCodeFlowShouldFailWithMissingIdTokenFromOpenIdServer(t *testing.T
 
 	// Returning some namespace when a cluster API call is made should have the result of
 	// a successful authentication.
-	k8s := kubetest.NewFakeK8sClient(&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "Foo"}})
+	k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("Foo"))
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
 	cache := cache.NewTestingCacheWithFactory(t, mockClientFactory, *cfg)
 	discovery := istio.NewDiscovery(mockClientFactory.Clients, cache, cfg)
@@ -551,7 +550,7 @@ func TestOpenIdCodeFlowShouldFailWithBadResponseFromTokenEndpoint(t *testing.T) 
 	cfg.Auth.OpenId.ClientId = "kiali-client"
 	config.Set(cfg)
 
-	k8s := kubetest.NewFakeK8sClient(&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "Foo"}})
+	k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("Foo"))
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
 	cache := cache.NewTestingCacheWithFactory(t, mockClientFactory, *cfg)
 	discovery := istio.NewDiscovery(mockClientFactory.Clients, cache, cfg)
@@ -624,7 +623,7 @@ func TestOpenIdCodeFlowShouldFailWithNonJsonResponse(t *testing.T) {
 	cfg.Auth.OpenId.ClientId = "kiali-client"
 	config.Set(cfg)
 
-	k8s := kubetest.NewFakeK8sClient(&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "Foo"}})
+	k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("Foo"))
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
 	cache := cache.NewTestingCacheWithFactory(t, mockClientFactory, *cfg)
 	discovery := istio.NewDiscovery(mockClientFactory.Clients, cache, cfg)
@@ -697,7 +696,7 @@ func TestOpenIdCodeFlowShouldFailWithNonJwtIdToken(t *testing.T) {
 	cfg.Auth.OpenId.ClientId = "kiali-client"
 	config.Set(cfg)
 
-	k8s := kubetest.NewFakeK8sClient(&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "Foo"}})
+	k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("Foo"))
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
 	cache := cache.NewTestingCacheWithFactory(t, mockClientFactory, *cfg)
 	discovery := istio.NewDiscovery(mockClientFactory.Clients, cache, cfg)
@@ -741,7 +740,7 @@ func TestOpenIdCodeFlowShouldRejectMissingAuthorizationCode(t *testing.T) {
 	cfg.LoginToken.ExpirationSeconds = 1
 	config.Set(cfg)
 
-	k8s := kubetest.NewFakeK8sClient(&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "Foo"}})
+	k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("Foo"))
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
 	cache := cache.NewTestingCacheWithFactory(t, mockClientFactory, *cfg)
 	discovery := istio.NewDiscovery(mockClientFactory.Clients, cache, cfg)
@@ -811,7 +810,7 @@ func TestOpenIdCodeFlowShouldFailWithIdTokenWithoutExpiration(t *testing.T) {
 	cfg.Auth.OpenId.ClientId = "kiali-client"
 	config.Set(cfg)
 
-	k8s := kubetest.NewFakeK8sClient(&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "Foo"}})
+	k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("Foo"))
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
 	cache := cache.NewTestingCacheWithFactory(t, mockClientFactory, *cfg)
 	discovery := istio.NewDiscovery(mockClientFactory.Clients, cache, cfg)
@@ -884,7 +883,7 @@ func TestOpenIdCodeFlowShouldFailWithIdTokenWithNonNumericExpClaim(t *testing.T)
 	cfg.Auth.OpenId.ClientId = "kiali-client"
 	config.Set(cfg)
 
-	k8s := kubetest.NewFakeK8sClient(&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "Foo"}})
+	k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("Foo"))
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
 	cache := cache.NewTestingCacheWithFactory(t, mockClientFactory, *cfg)
 	discovery := istio.NewDiscovery(mockClientFactory.Clients, cache, cfg)
@@ -937,7 +936,7 @@ func TestOpenIdCodeFlowShouldRejectInvalidState(t *testing.T) {
 		Value: "nonceString",
 	})
 
-	k8s := kubetest.NewFakeK8sClient(&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "Foo"}})
+	k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("Foo"))
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
 	cache := cache.NewTestingCacheWithFactory(t, mockClientFactory, *cfg)
 	discovery := istio.NewDiscovery(mockClientFactory.Clients, cache, cfg)
@@ -982,7 +981,7 @@ func TestOpenIdCodeFlowShouldRejectBadStateFormat(t *testing.T) {
 		Value: "nonceString",
 	})
 
-	k8s := kubetest.NewFakeK8sClient(&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "Foo"}})
+	k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("Foo"))
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
 	cache := cache.NewTestingCacheWithFactory(t, mockClientFactory, *cfg)
 	discovery := istio.NewDiscovery(mockClientFactory.Clients, cache, cfg)
@@ -1025,7 +1024,7 @@ func TestOpenIdCodeFlowShouldRejectMissingState(t *testing.T) {
 		Value: "nonceString",
 	})
 
-	k8s := kubetest.NewFakeK8sClient(&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "Foo"}})
+	k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("Foo"))
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
 	cache := cache.NewTestingCacheWithFactory(t, mockClientFactory, *cfg)
 	discovery := istio.NewDiscovery(mockClientFactory.Clients, cache, cfg)
@@ -1058,7 +1057,7 @@ func TestOpenIdCodeFlowShouldRejectMissingNonceCookie(t *testing.T) {
 	cfg.LoginToken.ExpirationSeconds = 1
 	config.Set(cfg)
 
-	k8s := kubetest.NewFakeK8sClient(&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "Foo"}})
+	k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("Foo"))
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
 	cache := cache.NewTestingCacheWithFactory(t, mockClientFactory, *cfg)
 	discovery := istio.NewDiscovery(mockClientFactory.Clients, cache, cfg)
@@ -1124,7 +1123,7 @@ func TestOpenIdCodeFlowShouldRejectMissingNonceInToken(t *testing.T) {
 	cfg.Auth.OpenId.ClientId = "kiali-client"
 	config.Set(cfg)
 
-	k8s := kubetest.NewFakeK8sClient(&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "Foo"}})
+	k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("Foo"))
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
 	cache := cache.NewTestingCacheWithFactory(t, mockClientFactory, *cfg)
 	discovery := istio.NewDiscovery(mockClientFactory.Clients, cache, cfg)

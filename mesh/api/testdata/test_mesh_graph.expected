@@ -203,14 +203,18 @@
               "name": "data-plane-1",
               "cluster": "cluster-primary",
               "isAmbient": false,
-              "labels": null,
+              "labels": {
+                "kubernetes.io/metadata.name": "data-plane-1"
+              },
               "annotations": null
             },
             {
               "name": "data-plane-2",
               "cluster": "cluster-primary",
               "isAmbient": false,
-              "labels": null,
+              "labels": {
+                "kubernetes.io/metadata.name": "data-plane-2"
+              },
               "annotations": null
             }
           ],
@@ -305,14 +309,18 @@
               "name": "data-plane-3",
               "cluster": "cluster-remote",
               "isAmbient": false,
-              "labels": null,
+              "labels": {
+                "kubernetes.io/metadata.name": "data-plane-3"
+              },
               "annotations": null
             },
             {
               "name": "data-plane-4",
               "cluster": "cluster-remote",
               "isAmbient": false,
-              "labels": null,
+              "labels": {
+                "kubernetes.io/metadata.name": "data-plane-4"
+              },
               "annotations": null
             }
           ],

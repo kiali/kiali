@@ -60,6 +60,9 @@ type KubeCache interface {
 	// Stop all caches
 	Stop()
 
+	// StopNamespace cleans up the namespace-scoped cache for the given namespace
+	StopNamespace(namespace string)
+
 	// Client returns the underlying client for the KubeCache.
 	// This is useful for when you want to talk directly to the kube API
 	// using the Kiali Service Account client.
@@ -162,10 +165,23 @@ type cacheLister struct {
 	workloadGroupLister     istionet_v1_listers.WorkloadGroupLister
 }
 
+// ErrorHandler is a function that will be called when the cache's informers encounter an error while watching resources.
+// This is used so we can clean up things when a namespace has been discovered to have been deleted.
+// This is ONLY used for namespace-scoped caches.
+// This will ONLY report errors when watching core k8s resources (e.g. not Istio resources)
+//
+// kc: the kube cache whose informer encountered an error
+// namespace: the namespace that the kube cache is watching
+// err: the error that occurred
+type ErrorHandler func(kc *kubeCache, namespace string, err error)
+
 // kubeCache is a local cache of kube objects. Manages informers and listers.
 type kubeCache struct {
-	cacheLock          sync.RWMutex
+	cacheLock sync.RWMutex
+	// refreshOnce enforces thread safety around the re-starting of informers
+	refreshOnce        *OnceWrapper
 	cfg                config.Config
+	errorHandler       ErrorHandler
 	client             kubernetes.ClientInterface
 	clusterCacheLister *cacheLister
 	clusterScoped      bool
@@ -183,20 +199,23 @@ type kubeCache struct {
 }
 
 // Starts all informers. These run until context is cancelled.
-func NewKubeCache(kialiClient kubernetes.ClientInterface, cfg config.Config) (*kubeCache, error) {
+func NewKubeCache(kialiClient kubernetes.ClientInterface, cfg config.Config, errorHandler ErrorHandler) (*kubeCache, error) {
 	refreshDuration := time.Duration(cfg.KubernetesConfig.CacheDuration) * time.Second
 
 	c := &kubeCache{
-		cfg:    cfg,
-		client: kialiClient,
+		cfg:          cfg,
+		errorHandler: errorHandler,
+		client:       kialiClient,
 		// Only when all namespaces are accessible should the cache be cluster scoped.
 		// Otherwise, kiali may not have access to all namespaces since
 		// the operator only grants clusterroles when all namespaces are accessible.
 		clusterScoped:   cfg.AllNamespacesAccessible(),
 		refreshDuration: refreshDuration,
+		refreshOnce:     &OnceWrapper{once: &sync.Once{}},
 	}
 
 	if c.clusterScoped {
+		// note that we ignore accessibleNamespaces - if we are cluster scoped, we will watch all namespaces
 		log.Debug("[Kiali Cache] Using 'cluster' scoped Kiali Cache")
 		if err := c.startInformers(""); err != nil {
 			return nil, err
@@ -205,7 +224,11 @@ func NewKubeCache(kialiClient kubernetes.ClientInterface, cfg config.Config) (*k
 		log.Debug("[Kiali Cache] Using 'namespace' scoped Kiali Cache")
 		c.nsCacheLister = make(map[string]*cacheLister)
 		c.stopNSChans = make(map[string]chan struct{})
-		for _, ns := range cfg.Deployment.AccessibleNamespaces {
+		// Since we do not have cluster wide access, we do not have permission to list all namespaces.
+		// However, we know the list of accessible namespaces based on the discovery selectors found in the main Kiali configuration.
+		// Note if this is a remote cluster, that remote cluster must have the same namespaces as those in our own local
+		// cluster's accessible namespaces. This is one reason why we suggest enabling CWA for multi-cluster environments.
+		for _, ns := range c.cfg.Deployment.AccessibleNamespaces {
 			if err := c.startInformers(ns); err != nil {
 				return nil, err
 			}
@@ -217,7 +240,7 @@ func NewKubeCache(kialiClient kubernetes.ClientInterface, cfg config.Config) (*k
 
 // It will indicate if a namespace should have a cache
 func (c *kubeCache) isCached(namespace string) bool {
-	if namespace != "" {
+	if !c.clusterScoped && namespace != "" {
 		return slices.Contains(c.cfg.Deployment.AccessibleNamespaces, namespace)
 	}
 	return false
@@ -270,6 +293,16 @@ func (c *kubeCache) Stop() {
 	}
 }
 
+func (c *kubeCache) StopNamespace(namespace string) {
+	log.Infof("Stopping Kiali Cache for namespace [%v]", namespace)
+	c.cacheLock.Lock()
+	defer c.cacheLock.Unlock()
+
+	if !c.clusterScoped {
+		c.stop(namespace)
+	}
+}
+
 func (c *kubeCache) stop(namespace string) {
 	if c.clusterScoped {
 		close(c.stopClusterScopedChan)
@@ -298,8 +331,17 @@ func (c *kubeCache) refresh(namespace string) error {
 		namespace = ""
 	}
 
-	c.stop(namespace)
-	return c.startInformers(namespace)
+	// We need to be thread-safe here so refreshing doesn't deadlock after a deleted namespace is re-created.
+	// Locking here ensures concurrent calls to getCacheLister doesn't deadlock. There tends to be a flurry
+	// of concurrent calls to getCacheLister and if at that time the namespace cache needs to be refreshed, we
+	// only want to create informers once here. This might not always create informers one time, but it helps limit
+	// the number of times informers are created and then immediately thrown away and created again.
+	defer c.refreshOnce.Reset()
+	return c.refreshOnce.Do(func() error {
+		log.Debugf("Restarting cache informers for namespace [%v]", namespace)
+		c.stop(namespace)
+		return c.startInformers(namespace)
+	})
 }
 
 // starter is a small interface around the different informer factories that
@@ -502,6 +544,39 @@ func (c *kubeCache) createKubernetesInformers(namespace string) informers.Shared
 
 	sharedInformers := informers.NewSharedInformerFactoryWithOptions(c.client.Kube(), c.refreshDuration, opts...)
 
+	// If this is a namespace-scoped cache, set a watch error handler on all the things we are watching.
+	// If the error is due to the client being forbidden from seeing the resource, this likely means the namespace
+	// has been deleted. In this case, we want to disable this namespace-scoped cache since it will not work for any
+	// resource. We add a watch handler on all informers because we don't know which one will be used first after
+	// the namespace deletion and we want to shut the informers down as quickly as we can.
+	if namespace != "" {
+		informersToWatchList := []cache.SharedIndexInformer{
+			sharedInformers.Apps().V1().Deployments().Informer(),
+			sharedInformers.Apps().V1().StatefulSets().Informer(),
+			sharedInformers.Apps().V1().DaemonSets().Informer(),
+			sharedInformers.Core().V1().Services().Informer(),
+			sharedInformers.Core().V1().Endpoints().Informer(),
+			sharedInformers.Core().V1().Pods().Informer(),
+			sharedInformers.Apps().V1().ReplicaSets().Informer(),
+			sharedInformers.Core().V1().ConfigMaps().Informer(),
+		}
+
+		watchErrorHandler := func(r *cache.Reflector, err error) {
+			if c.errorHandler != nil {
+				c.errorHandler(c, namespace, err)
+			} else {
+				log.Errorf("Error detected when watching namespace [%v] in cluster [%v]. error: %v", namespace, c.client.ClusterInfo().Name, err)
+			}
+		}
+
+		for _, informerToWatch := range informersToWatchList {
+			err := informerToWatch.SetWatchErrorHandler(watchErrorHandler)
+			if err != nil {
+				log.Errorf("Failed to install watch error handler for namespace [%v]; will not detect if it gets deleted", namespace)
+			}
+		}
+	}
+
 	lister := &cacheLister{
 		deploymentLister:  sharedInformers.Apps().V1().Deployments().Lister(),
 		statefulSetLister: sharedInformers.Apps().V1().StatefulSets().Lister(),
@@ -536,7 +611,23 @@ func (c *kubeCache) getCacheLister(namespace string) *cacheLister {
 	if c.clusterScoped {
 		return c.clusterCacheLister
 	}
-	return c.nsCacheLister[namespace]
+
+	lister, ok := c.nsCacheLister[namespace]
+	if !ok {
+		logPrefix := fmt.Sprintf("Kiali Cache for namespace [%v] in cluster [%v]", namespace, c.client.ClusterInfo().Name)
+		log.Debugf("%v: attempting to restart informers", logPrefix)
+		if err := c.refresh(namespace); err != nil {
+			log.Errorf("%v: restarting informers failed with error: %v", logPrefix, err)
+		}
+		lister, ok = c.nsCacheLister[namespace]
+		if ok {
+			log.Debugf("%v: successfully obtained listers", logPrefix)
+		} else {
+			// this likely means the caller is going to segfault with nil pointer; TODO return error and let callers gracefully fail
+			log.Fatalf("%v: failed to obtain listers", logPrefix)
+		}
+	}
+	return lister
 }
 
 func (c *kubeCache) GetConfigMap(namespace, name string) (*core_v1.ConfigMap, error) {

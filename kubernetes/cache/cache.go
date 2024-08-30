@@ -10,6 +10,7 @@ import (
 	"golang.org/x/exp/maps"
 
 	v1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/config"
@@ -37,6 +38,7 @@ const (
 // to so it uses the kiali service account token instead of a user token. Access to
 // the objects returned by the cache should be filtered/restricted to the user's
 // token access but the cache returns objects without any filtering or restrictions.
+// This object keeps one KubeCache per cluster.
 // TODO: Consider removing the interface altogether in favor of just exporting the struct.
 type KialiCache interface {
 	GetBuildInfo() models.BuildInfo
@@ -145,7 +147,12 @@ func NewKialiCache(clientFactory kubernetes.ClientFactory, cfg config.Config) (K
 	}
 
 	for cluster, client := range clientFactory.GetSAClients() {
-		cache, err := NewKubeCache(client, cfg)
+		// we only need our deleteNamespace function called when an error occurs in a namespace-scoped cache
+		var errHandler ErrorHandler
+		if !cfg.Deployment.ClusterWideAccess {
+			errHandler = kialiCacheImpl.deleteNamespace
+		}
+		cache, err := NewKubeCache(client, cfg, errHandler)
 		if err != nil {
 			log.Errorf("[Kiali Cache] Error creating kube cache for cluster: [%s]. Err: %v", cluster, err)
 			return nil, err
@@ -379,6 +386,18 @@ func (c *kialiCacheImpl) SetNamespace(token string, namespace models.Namespace) 
 
 	ns[namespace.Name] = namespace
 	c.namespaceStore.Set(key, ns)
+}
+
+// deleteNamespace is an error handler that will clean up some internals related to the given namespace
+// if that namespace has been detected to have been deleted. This function is called by the kube cache
+// informers when they encounter an error.
+func (c *kialiCacheImpl) deleteNamespace(kc *kubeCache, namespace string, err error) {
+	if apierrors.IsForbidden(err) || apierrors.IsUnauthorized(err) {
+		cluster := kc.client.ClusterInfo().Name
+		log.Errorf("Namespace [%v] in cluster [%v] appears to have been deleted or Kiali is forbidden from seeing it [err=%v]. Shutting down namespace cache.", namespace, cluster, err)
+		c.RefreshTokenNamespaces(cluster)
+		kc.StopNamespace(namespace)
+	}
 }
 
 func (c *kialiCacheImpl) GetBuildInfo() models.BuildInfo {

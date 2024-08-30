@@ -13,8 +13,6 @@ import (
 	prom_v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	core_v1 "k8s.io/api/core/v1"
-	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/clientcmd/api"
 
@@ -51,7 +49,7 @@ func TestWorkloadsEndpoint(t *testing.T) {
 
 	mockClock()
 
-	kubeObjects := []runtime.Object{&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "ns"}}}
+	kubeObjects := []runtime.Object{kubetest.FakeNamespace("ns")}
 	for _, obj := range business.FakeDepSyncedWithRS() {
 		o := obj
 		kubeObjects = append(kubeObjects, &o)
@@ -290,8 +288,8 @@ func TestWorkloadMetricsBadRateFunc(t *testing.T) {
 
 func TestWorkloadMetricsInaccessibleNamespace(t *testing.T) {
 	ts, _ := setupWorkloadMetricsEndpoint(t)
-	k8s := kubetest.NewFakeK8sClient(&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "ns"}},
-		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "my_namespace"}})
+	k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("ns"),
+		kubetest.FakeNamespace("my_namespace"))
 	business.SetupBusinessLayer(t, &nsForbidden{k8s, "my_namespace"}, *config.Get())
 
 	url := ts.URL + "/api/namespaces/my_namespace/workloads/my_workload/metrics"
@@ -327,7 +325,7 @@ func setupWorkloadMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheuste
 	ts := httptest.NewServer(mr)
 	t.Cleanup(ts.Close)
 
-	k8s := kubetest.NewFakeK8sClient(&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "ns"}})
+	k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("ns"))
 
 	business.SetupBusinessLayer(t, k8s, *conf)
 
