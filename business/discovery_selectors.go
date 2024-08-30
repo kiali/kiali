@@ -1,6 +1,8 @@
 package business
 
 import (
+	"regexp"
+
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 
@@ -8,6 +10,8 @@ import (
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 )
+
+var systemNamespaceRegex = regexp.MustCompile(`^(kube-.*|openshift.*|ibm.*|kiali-operator|istio-operator)`)
 
 // getDiscoverySelectorsForCluster will return the discovery selectors applicable for the named cluster.
 // If the cluster has overrides defined in the Kiali config, those overrides will be returned.
@@ -64,11 +68,21 @@ func getKialiDiscoverySelectors(cluster string, cfg *config.Config) config.Disco
 
 // filterNamespacesWithDiscoverySelectors will look at the given list of namespaces and return a list
 // containing only those namespaces that match the given discovery selectors. If there are no discoverySelectors,
-// then the full list of namespaces is returned as-is.
+// then the full list of namespaces is returned minus the system namespaces.
 func filterNamespacesWithDiscoverySelectors(namespaces []models.Namespace, discoverySelectors config.DiscoverySelectorsType) []models.Namespace {
 
 	if len(namespaces) == 0 || len(discoverySelectors) == 0 {
-		return namespaces
+		// We have no discovery selectors set. We want to provide all namespaces, but filter out system namespaces
+		// since in all likelihood the user does not want to see them. If for some reason they do want to see one or
+		// more system namespaces, the user simply needs to define their own discovery selectors to include all
+		// the namespaces they want to see, including any system namespaces.
+		var nonSystemNamespaces []models.Namespace
+		for _, ns := range namespaces {
+			if !systemNamespaceRegex.MatchString(ns.Name) {
+				nonSystemNamespaces = append(nonSystemNamespaces, ns)
+			}
+		}
+		return nonSystemNamespaces
 	}
 
 	// convert LabelSelectors to Selectors

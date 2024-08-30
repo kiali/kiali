@@ -113,6 +113,25 @@ func TestGetKialiDiscoverySelectors(t *testing.T) {
 			},
 		},
 	}
+	// config with only default selectors that match system namespaces
+	cfgSystemNamespaceSelectors := config.Config{
+		Deployment: config.DeploymentConfig{
+			DiscoverySelectors: config.DiscoverySelectorsConfig{
+				Default: config.DiscoverySelectorsType{
+					&config.DiscoverySelectorType{
+						MatchExpressions: []meta_v1.LabelSelectorRequirement{
+							{
+								Key:      "kubernetes.io/metadata.name",
+								Operator: meta_v1.LabelSelectorOpIn,
+								Values:   []string{"kube-system", "openshift-operators", "ibm-system", "kiali-operator", "istio-system"},
+							},
+						},
+					},
+				},
+				Overrides: nil,
+			},
+		},
+	}
 
 	// namespaces we are going to test with
 	fooNamespace := models.Namespace{
@@ -133,6 +152,26 @@ func TestGetKialiDiscoverySelectors(t *testing.T) {
 	fourNamespace := models.Namespace{
 		Name:   "four",
 		Labels: map[string]string{"label4": "labelValue4"},
+	}
+	systemNamespace1 := models.Namespace{
+		Name:   "kube-system",
+		Labels: map[string]string{"kubernetes.io/metadata.name": "kube-system"},
+	}
+	systemNamespace2 := models.Namespace{
+		Name:   "openshift-operators",
+		Labels: map[string]string{"kubernetes.io/metadata.name": "openshift-operators"},
+	}
+	systemNamespace3 := models.Namespace{
+		Name:   "ibm-system",
+		Labels: map[string]string{"kubernetes.io/metadata.name": "ibm-system"},
+	}
+	systemNamespace4 := models.Namespace{
+		Name:   "kiali-operator",
+		Labels: map[string]string{"kubernetes.io/metadata.name": "kiali-operator"},
+	}
+	systemNamespace5 := models.Namespace{
+		Name:   "istio-operator",
+		Labels: map[string]string{"kubernetes.io/metadata.name": "istio-system"},
 	}
 
 	cases := map[string]struct {
@@ -230,6 +269,18 @@ func TestGetKialiDiscoverySelectors(t *testing.T) {
 			clusterName:       "unknown",
 			allNamespaces:     []models.Namespace{fooNamespace, threeNamespace},
 			matchedNamespaces: []models.Namespace{},
+		},
+		"no selectors - all namespaces, filter out system namespaces": {
+			config:            cfgNoSelectors,
+			clusterName:       "unknown",
+			allNamespaces:     []models.Namespace{fooNamespace, oneNamespace, twoNamespace, threeNamespace, fourNamespace, systemNamespace1, systemNamespace2, systemNamespace3, systemNamespace4, systemNamespace5},
+			matchedNamespaces: []models.Namespace{fooNamespace, oneNamespace, twoNamespace, threeNamespace, fourNamespace},
+		},
+		"system namespace selectors - selects only system namespaces": {
+			config:            cfgSystemNamespaceSelectors,
+			clusterName:       "unknown",
+			allNamespaces:     []models.Namespace{fooNamespace, systemNamespace1, systemNamespace2, systemNamespace3, systemNamespace4, systemNamespace5},
+			matchedNamespaces: []models.Namespace{systemNamespace1, systemNamespace2, systemNamespace3, systemNamespace4, systemNamespace5},
 		},
 	}
 
