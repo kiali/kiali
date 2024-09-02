@@ -94,6 +94,9 @@ CROSSNETWORK_GATEWAY_REQUIRED="true"
 # Under some conditions, manually configuring the mesh network will be required.
 MANUAL_MESH_NETWORK_CONFIG=""
 
+# Tempo instead of Jaeger
+TEMPO="${TEMPO:-false}"
+
 # The names of each cluster
 CLUSTER1_NAME="${CLUSTER1_NAME:-east}"
 CLUSTER2_NAME="${CLUSTER2_NAME:-west}"
@@ -351,6 +354,10 @@ while [[ $# -gt 0 ]]; do
       SINGLE_KIALI="$2"
       shift;shift
       ;;
+    -te|--tempo)
+      TEMPO="$2"
+      shift;shift
+      ;;
     -h|--help)
       cat <<HELPMSG
 Valid command line arguments:
@@ -411,6 +418,7 @@ Valid command line arguments:
                        If this is left as empty string, it will be the same as --network1. (Default: "")
   -sc|--single-cluster <bool>: If "true", perform action just in CLUSTER 1. (Default: false)
   -sk|--single-kiali <bool>: If "true", a single kiali will be deployed for the whole mesh. (Default: true)
+  -te|--tempo <bool>: If "true", Tempo instead of Jaeger will be installed. (Default: false)
   -h|--help: this message
 HELPMSG
       exit 1
@@ -581,10 +589,12 @@ export BOOKINFO_ENABLED \
        NETWORK1_ID \
        NETWORK2_ID \
        SINGLE_KIALI \
-       SINGLE_CLUSTER
+       SINGLE_CLUSTER \
+       TEMPO
 
 cat <<EOM
 === SETTINGS ===
+AUTH_GROUPS=$AUTH_GROUPS
 BOOKINFO_ENABLED=$BOOKINFO_ENABLED
 BOOKINFO_NAMESPACE=$BOOKINFO_NAMESPACE
 CERTS_DIR=$CERTS_DIR
@@ -626,7 +636,7 @@ NETWORK1_ID=$NETWORK1_ID
 NETWORK2_ID=$NETWORK2_ID
 SINGLE_CLUSTER=$SINGLE_CLUSTER
 SINGLE_KIALI=$SINGLE_KIALI
-AUTH_GROUPS=$AUTH_GROUPS
+TEMPO=$TEMPO
 === SETTINGS ===
 EOM
 
