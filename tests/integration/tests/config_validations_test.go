@@ -2,6 +2,7 @@ package tests
 
 import (
 	"context"
+	"fmt"
 	"path"
 	"testing"
 	"time"
@@ -23,16 +24,16 @@ func TestDestinationRuleMultimatch(t *testing.T) {
 	defer utils.DeleteFile(filePath, kiali.BOOKINFO)
 	require.True(utils.ApplyFile(filePath, kiali.BOOKINFO))
 
+	config, err := getConfigDetails(kiali.BOOKINFO, "all.googleapis.com", kubernetes.DestinationRules, false, require)
+	require.NoError(err)
+	require.NotNil(config)
+	assertConfigDetailsValidations(*config, kiali.BOOKINFO, "destinationrule", "all.googleapis.com", "KIA0201", true, require)
+
 	configList, err := kiali.IstioConfigsList(kiali.BOOKINFO)
 
 	require.NoError(err)
 	assertConfigListValidations(*configList, kiali.BOOKINFO, "destinationrule", "all.googleapis.com", "KIA0201", true, require)
 	assertConfigListValidations(*configList, kiali.BOOKINFO, "destinationrule", "all.googleapis.com2", "KIA0201", true, require)
-
-	config, err := getConfigDetails(kiali.BOOKINFO, "all.googleapis.com", kubernetes.DestinationRules, false, require)
-	require.NoError(err)
-	require.NotNil(config)
-	assertConfigDetailsValidations(*config, kiali.BOOKINFO, "destinationrule", "all.googleapis.com", "KIA0201", true, require)
 }
 
 func TestAuthPolicyPrincipalsError(t *testing.T) {
@@ -330,12 +331,12 @@ func getConfigForNamespace(namespace, name, configType string) (*models.IstioCon
 func assertConfigListValidations(configList kiali.IstioConfigListJson, namespace, objType, objName, code string, valid bool, require *require.Assertions) {
 	require.NotEmpty(configList)
 	require.NotNil(configList.IstioValidations)
-	require.Equal(kiali.BOOKINFO, namespace)
 	require.NotNil(configList.IstioValidations[objType])
-	require.NotNil(configList.IstioValidations[objType][objName])
-	require.Equal(valid, configList.IstioValidations[objType][objName].Valid)
-	require.NotEmpty(configList.IstioValidations[objType][objName].Checks)
-	require.Equal(code, configList.IstioValidations[objType][objName].Checks[0].Code)
+	objKey := fmt.Sprintf("%s.%s", objName, namespace)
+	require.NotNil(configList.IstioValidations[objType][objKey])
+	require.Equal(valid, configList.IstioValidations[objType][objKey].Valid)
+	require.NotEmpty(configList.IstioValidations[objType][objKey].Checks)
+	require.Equal(code, configList.IstioValidations[objType][objKey].Checks[0].Code)
 }
 
 func assertConfigDetailsValidations(configDetails models.IstioConfigDetails, namespace, objType, objName, code string, valid bool, require *require.Assertions) {
