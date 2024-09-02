@@ -95,6 +95,7 @@ export type EdgeData = DecoratedGraphEdgeData & {
   startTerminalType?: EdgeTerminalType;
   tag?: string;
   tagStatus?: NodeStatus;
+  terminalStyle?: React.CSSProperties;
 };
 
 export type GraphPFSettings = {
@@ -599,10 +600,15 @@ export const setEdgeOptions = (edge: EdgeModel, nodeMap: NodeMap, settings: Grap
   }
 
   if (data.display === 'multiple') {
-    data.endTerminalType = EdgeTerminalType.cross;
+    data.terminalStyle = {
+      fill: '#FFF',
+      stroke: getPathStyleStroke(data),
+      strokeWidth: 1
+    } as React.CSSProperties;
   }
 
   data.pathStyle = getPathStyle(data);
+
   data.tag = getEdgeLabel(edge, nodeMap, settings);
   data.tagStatus = getEdgeStatus(data);
 };

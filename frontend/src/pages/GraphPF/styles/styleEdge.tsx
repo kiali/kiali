@@ -63,8 +63,8 @@ const StyleEdgeComponent: React.FC<StyleEdgeProps> = ({ element, ...rest }) => {
   const connectorClass = kialiStyle({
     $nest: {
       '& .pf-topology-connector-arrow': {
-        stroke: data.pathStyle.stroke,
-        fill: data.pathStyle.stroke
+        stroke: data.terminalStyle?.stroke ? data.terminalStyle?.stroke : data.pathStyle.stroke,
+        fill: data.terminalStyle?.fill ? data.terminalStyle?.fill : data.pathStyle.stroke
       }
     }
   });

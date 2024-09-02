@@ -68,6 +68,8 @@ func (a AmbientAppender) handleWaypoints(trafficMap graph.TrafficMap, globalInfo
 			} else {
 				n.Metadata[graph.IsOutOfMesh] = false
 				n.Metadata[graph.IsWaypoint] = true
+				// Hide one of the edges to the waypoint.
+				// Later, mark the opposite edge as reverse
 				for _, edge := range n.Edges {
 					// Just hide so we have all the information
 					edge.Metadata[graph.Display] = "hide"
@@ -85,21 +87,20 @@ func (a AmbientAppender) handleWaypoints(trafficMap graph.TrafficMap, globalInfo
 				})
 			}
 
-			// Find duplicates
 			for i, edge := range n.Edges {
-				// If not show the waypoint, mark the nodes
+				// If show the waypoint, mark the edges to be drawn bidirectionally
 				if a.ShowWaypoints {
 					if waypointNodes[edge.Dest.ID] {
 						edge.Metadata[graph.Display] = "reverse"
 					}
 				}
+				// Find duplicate edges (TCP and HTTP)
 				for j, comparedEdge := range n.Edges {
 					if i != j && edge.Dest.ID == comparedEdge.Dest.ID && edge.Metadata[graph.Display] == nil {
 						edge.Metadata[graph.Display] = "multiple"
 						comparedEdge.Metadata[graph.Display] = "hide"
 					}
 				}
-
 			}
 		}
 	}
