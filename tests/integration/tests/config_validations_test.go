@@ -24,6 +24,7 @@ func TestDestinationRuleMultimatch(t *testing.T) {
 	defer utils.DeleteFile(filePath, kiali.BOOKINFO)
 	require.True(utils.ApplyFile(filePath, kiali.BOOKINFO))
 
+	// @TODO add another test when issue #7690 is fixed with DRs exportTo: '.'
 	config, err := getConfigDetails(kiali.BOOKINFO, "all.googleapis.com", kubernetes.DestinationRules, false, require)
 	require.NoError(err)
 	require.NotNil(config)
