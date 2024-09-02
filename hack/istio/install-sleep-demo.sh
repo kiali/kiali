@@ -17,8 +17,8 @@ SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
 # ISTIO_DIR is where the Istio download is installed and thus where the sleep demo files are found.
 # CLIENT_EXE_NAME is going to either be "oc" or "kubectl"
 ISTIO_DIR=
-ARCH="amd64"
-CLIENT_EXE="oc"
+: ${ARCH:=amd64}
+: ${CLIENT_EXE:=oc}
 DELETE_SLEEP="false"
 : ${ISTIO_NAMESPACE:=istio-system}
 : ${ENABLE_INJECTION:=true}
@@ -73,6 +73,7 @@ if [[ "${CLIENT_EXE}" = *"oc" ]]; then
 fi
 
 echo "CLIENT_EXE=${CLIENT_EXE}"
+echo "ARCH=${ARCH}"
 echo "IS_OPENSHIFT=${IS_OPENSHIFT}"
 echo "IS_MAISTRA=${IS_MAISTRA}"
 
@@ -80,9 +81,9 @@ if [ "${DELETE_SLEEP}" == "true" ]; then
   set +e
 
   echo "Deleting the 'sleep' app in the 'sleep' namespace..."
-  # s390x specific images for curl in sleep.yaml (OSSM-6012)
-  if [ "${ARCH}" == "s390x" ]; then
-    sed -i.bak -E '/curlimages\/curl:8\.4\.0/! s;curlimages/curl;curlimages/curl:8.4.0;g' ${ISTIO_DIR}/samples/sleep/sleep.yaml 
+  # s390x/ppc64le specific images for curl in sleep.yaml (OSSM-6012)
+  if [ "${ARCH}" == "s390x" ] || [ "${ARCH}" == "ppc64le" ]; then
+    sed -i "s;curlimages/curl;quay.io/curl/curl:8.4.0;g" ${ISTIO_DIR}/samples/sleep/sleep.yaml
     ${CLIENT_EXE} delete -n sleep -f ${ISTIO_DIR}/samples/sleep/sleep.yaml
   else
     ${CLIENT_EXE} delete -n sleep -f ${ISTIO_DIR}/samples/sleep/sleep.yaml
@@ -139,9 +140,9 @@ users:
 SCC
   fi
 
-  if [ "${ARCH}" == "s390x" ]; then
-    echo "Using s390x specific images for curl in sleep.yaml"
-    sed -i.bak -E '/curlimages\/curl:8\.4\.0/! s;curlimages/curl;curlimages/curl:8.4.0;g' ${ISTIO_DIR}/samples/sleep/sleep.yaml 
+  if [ "${ARCH}" == "s390x" ] || [ "${ARCH}" == "ppc64le" ]; then
+    echo "Using s390x/ppc64le specific images for curl in sleep.yaml"
+    sed -i "s;curlimages/curl;quay.io/curl/curl:8.4.0;g" ${ISTIO_DIR}/samples/sleep/sleep.yaml
   fi
   ${CLIENT_EXE} apply -n sleep -f ${ISTIO_DIR}/samples/sleep/sleep.yaml
 
