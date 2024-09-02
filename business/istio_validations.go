@@ -601,25 +601,21 @@ func (in *IstioValidationsService) isExportedObjectIncluded(exportTo []string, m
 	// Ambient mode namespace does not support ExportTo, so export only to own namespace
 	if in.businessLayer.IstioConfig.IsAmbientEnabled(cluster) && allNamespaces.IsNamespaceAmbient(objectNamespace, cluster) {
 		return objectNamespace == exportedNamespace
-	} else {
-		if len(exportTo) > 0 {
-			for _, exportToNs := range exportTo {
-				// take only namespaces where it is exported to, or if it is exported to all namespaces, or export to own namespace
-				if checkExportTo(exportToNs, exportedNamespace, objectNamespace, allNamespaces) {
-					return true
-				}
+	}
+	if len(exportTo) == 0 {
+		// using mesh defaultExportTo values
+		exportTo = meshExportTo
+	}
+	if len(exportTo) > 0 {
+		for _, exportToNs := range exportTo {
+			// take only namespaces where it is exported to, or if it is exported to all namespaces, or export to own namespace
+			if checkExportTo(exportToNs, exportedNamespace, objectNamespace, allNamespaces) {
+				return true
 			}
-		} else if len(meshExportTo) > 0 {
-			for _, exportToNs := range meshExportTo {
-				// default mesh config ExportTo, similarly to object exportTo field, just can have values '*' or '.'
-				if checkExportTo(exportToNs, exportedNamespace, objectNamespace, allNamespaces) {
-					return true
-				}
-			}
-		} else {
-			// no exportTo field, means object exported to all namespaces
-			return true
 		}
+	} else {
+		// no exportTo field, means object exported to all namespaces
+		return true
 	}
 	return false
 }

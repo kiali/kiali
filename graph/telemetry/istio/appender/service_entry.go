@@ -113,6 +113,7 @@ func (a ServiceEntryAppender) loadServiceEntryHosts(cluster, namespace string, g
 
 	// get the cached hosts for this cluster:namespace, otherwise add to the cache
 	serviceEntryHosts, found := getServiceEntryHosts(cluster, namespace, globalInfo)
+	defaultServiceExportTo := globalInfo.Business.Mesh.GetMeshConfig().DefaultServiceExportTo
 	if !found {
 		istioCfg, err := globalInfo.Business.IstioConfig.GetIstioConfigList(context.TODO(), cluster, business.IstioConfigCriteria{
 			IncludeServiceEntries: true,
@@ -121,7 +122,7 @@ func (a ServiceEntryAppender) loadServiceEntryHosts(cluster, namespace string, g
 
 		// ... and then use ExportTo to decide whether the hosts are accessible to the namespace
 		for _, entry := range istioCfg.ServiceEntries {
-			if entry.Spec.Hosts != nil && isExportedToNamespace(entry, namespace, globalInfo.Business.Mesh.GetMeshConfig().DefaultServiceExportTo) {
+			if entry.Spec.Hosts != nil && isExportedToNamespace(entry, namespace, defaultServiceExportTo) {
 				location := "MESH_EXTERNAL"
 				if entry.Spec.Location.String() == "MESH_INTERNAL" {
 					location = "MESH_INTERNAL"
