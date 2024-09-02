@@ -122,7 +122,7 @@ const EdgeColor = PFColors.Success;
 const EdgeColorDead = PFColors.Black500;
 const EdgeColorDegraded = PFColors.Warning;
 const EdgeColorFailure = PFColors.Danger;
-const EdgeColorTCPWithTraffic = PFColors.Blue600;
+const EdgeColorTCPWithTraffic = PFColors.Blue500;
 
 export const getNodeStatus = (data: NodeData): NodeStatus => {
   if ((data.isBox && data.isBox !== BoxByType.APP) || data.isIdle) {
@@ -351,6 +351,8 @@ export const setNodeLabel = (node: NodeModel, nodeMap: NodeMap, settings: GraphP
 
     if (pfBadge) {
       data.badge = pfBadge.badge;
+      data.badgeColor = PFColors.BackgroundColor100;
+      data.badgeBorderColor = PFColors.Blue300;
     }
     node.label = content.shift();
     if (content.length > 0) {

@@ -266,7 +266,7 @@ const TopologyContent: React.FC<{
       // Fit padding after resize
       setTimeout(() => {
         controller.getGraph().fit(FIT_PADDING);
-      }, 0);
+      }, 250);
     }
   }, [controller]);
 
