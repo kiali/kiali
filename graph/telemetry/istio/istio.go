@@ -49,6 +49,8 @@ const (
 	tsHashMap graph.MetadataKey = "tsHashMap"
 )
 
+const ztunnelApp = "ztunnel"
+
 var grpcMetric = regexp.MustCompile(`istio_.*_messages`)
 
 // BuildNamespacesTrafficMap is required by the graph/TelemetryVendor interface
@@ -206,7 +208,7 @@ func buildNamespaceTrafficMap(ctx context.Context, namespace string, o graph.Tel
 	// TCP Byte traffic
 	if o.Rates.Tcp != graph.RateNone {
 		var metrics []string
-		groupBy := "source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,response_flags"
+		groupBy := "source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,response_flags,app"
 
 		// L4 telemetry is backwards, see https://github.com/istio/istio/issues/32399
 		switch o.Rates.Tcp {
@@ -288,6 +290,7 @@ func populateTrafficMap(trafficMap graph.TrafficMap, vector *model.Vector, metri
 		lDestWl, destWlOk := m["destination_workload"]
 		lDestApp, destAppOk := m["destination_canonical_service"]
 		lDestVer, destVerOk := m["destination_canonical_revision"]
+		lApp := m["app"]
 
 		if !sourceWlNsOk || !sourceWlOk || !sourceAppOk || !sourceVerOk || !destSvcNsOk || !destSvcOk || !destSvcNameOk || !destWlNsOk || !destWlOk || !destAppOk || !destVerOk {
 			log.Warningf("Skipping %s, missing expected TS labels", m.String())
@@ -299,6 +302,7 @@ func populateTrafficMap(trafficMap graph.TrafficMap, vector *model.Vector, metri
 		sourceApp := string(lSourceApp)
 		sourceVer := string(lSourceVer)
 		destSvc := string(lDestSvc)
+		app := string(lApp)
 
 		flags := ""
 		if isRequests || protocol == graph.TCP.Name {
@@ -360,11 +364,11 @@ func populateTrafficMap(trafficMap graph.TrafficMap, vector *model.Vector, metri
 			}
 			inject = (graph.NodeTypeService != destNodeType)
 		}
-		addTraffic(trafficMap, metric, inject, val, protocol, code, flags, host, sourceCluster, sourceWlNs, "", sourceWl, sourceApp, sourceVer, destCluster, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, o)
+		addTraffic(trafficMap, metric, inject, val, protocol, code, flags, host, sourceCluster, sourceWlNs, "", sourceWl, sourceApp, sourceVer, destCluster, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, o, app)
 	}
 }
 
-func addTraffic(trafficMap graph.TrafficMap, metric string, inject bool, val float64, protocol, code, flags, host, sourceCluster, sourceNs, sourceSvc, sourceWl, sourceApp, sourceVer, destCluster, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer string, o graph.TelemetryOptions) {
+func addTraffic(trafficMap graph.TrafficMap, metric string, inject bool, val float64, protocol, code, flags, host, sourceCluster, sourceNs, sourceSvc, sourceWl, sourceApp, sourceVer, destCluster, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer string, o graph.TelemetryOptions, app string) {
 	source, _, err := addNode(trafficMap, sourceCluster, sourceNs, sourceSvc, sourceNs, sourceWl, sourceApp, sourceVer, o)
 	if err != nil {
 		log.Warningf("Skipping addTraffic (source), %s", err)
@@ -389,14 +393,14 @@ func addTraffic(trafficMap graph.TrafficMap, metric string, inject bool, val flo
 			return
 		}
 		injectedService.Metadata[graph.IsInjected] = true
-		if addEdgeTraffic(trafficMap, val, protocol, code, flags, host, source, injectedService, edgeTSHash, o) {
+		if addEdgeTraffic(trafficMap, val, protocol, code, flags, host, source, injectedService, edgeTSHash, o, app) {
 			addToDestServices(injectedService.Metadata, destCluster, destSvcNs, destSvcName)
 
-			addEdgeTraffic(trafficMap, val, protocol, code, flags, host, injectedService, dest, edgeTSHash, o)
+			addEdgeTraffic(trafficMap, val, protocol, code, flags, host, injectedService, dest, edgeTSHash, o, app)
 			addToDestServices(dest.Metadata, destCluster, destSvcNs, destSvcName)
 		}
 	} else {
-		if addEdgeTraffic(trafficMap, val, protocol, code, flags, host, source, dest, edgeTSHash, o) {
+		if addEdgeTraffic(trafficMap, val, protocol, code, flags, host, source, dest, edgeTSHash, o, app) {
 			addToDestServices(dest.Metadata, destCluster, destSvcNs, destSvcName)
 		}
 	}
@@ -404,7 +408,7 @@ func addTraffic(trafficMap graph.TrafficMap, metric string, inject bool, val flo
 
 // addEdgeTraffic uses edgeTSHash that the metric information has not been applied to the edge. Returns true
 // if the the metric information is applied, false if it determined to be a duplicate.
-func addEdgeTraffic(trafficMap graph.TrafficMap, val float64, protocol, code, flags, host string, source, dest *graph.Node, edgeTSHash string, o graph.TelemetryOptions) bool {
+func addEdgeTraffic(trafficMap graph.TrafficMap, val float64, protocol, code, flags, host string, source, dest *graph.Node, edgeTSHash string, o graph.TelemetryOptions, app string) bool {
 	var edge *graph.Edge
 	for _, e := range source.Edges {
 		if dest.ID == e.Dest.ID && e.Metadata[graph.ProtocolKey] == protocol {
@@ -416,6 +420,9 @@ func addEdgeTraffic(trafficMap graph.TrafficMap, val float64, protocol, code, fl
 		edge = source.AddEdge(dest)
 		edge.Metadata[graph.ProtocolKey] = protocol
 		edge.Metadata[tsHashMap] = make(map[string]bool)
+	}
+	if app == ztunnelApp {
+		edge.Metadata[graph.IsAmbient] = true
 	}
 
 	if _, ok := edge.Metadata[tsHashMap].(map[string]bool)[edgeTSHash]; !ok {

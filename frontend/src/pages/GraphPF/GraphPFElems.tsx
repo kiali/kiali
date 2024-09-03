@@ -86,6 +86,7 @@ export type EdgeData = DecoratedGraphEdgeData & {
   display: string;
   endTerminalType: EdgeTerminalType;
   hasSpans?: Span[];
+  isAmbient?: boolean;
   isFind?: boolean;
   isHighlighted?: boolean;
   isSelected?: boolean;
@@ -573,7 +574,7 @@ const getPathStyleStroke = (data: EdgeData): PFColors => {
 
 const getPathStyle = (data: EdgeData): React.CSSProperties => {
   // This is to combine just tcp and http edges
-  if (data.display === 'multiple') {
+  if (data.display === 'multiple' || data.isAmbient) {
     return {
       filter: `drop-shadow(0 0 1px ${getPathStyleStroke(data)}) drop-shadow(0 0 1px ${getPathStyleStroke(data)})`,
       stroke: '#FFF',
@@ -599,7 +600,7 @@ export const setEdgeOptions = (edge: EdgeModel, nodeMap: NodeMap, settings: Grap
     data.endTerminalType = data.protocol === Protocol.TCP ? EdgeTerminalType.square : EdgeTerminalType.directional;
   }
 
-  if (data.display === 'multiple') {
+  if (data.display === 'multiple' || (data.isAmbient && data.display !== 'hide')) {
     data.terminalStyle = {
       fill: '#FFF',
       stroke: getPathStyleStroke(data),

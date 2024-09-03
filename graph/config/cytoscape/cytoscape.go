@@ -135,6 +135,7 @@ type EdgeData struct {
 	Display         string          `json:"display,omitempty"`         // Used to hide edges for biderectional ones (Ambient graph simplification)
 	Direction       string          `json:"direction,omitempty"`       // Used to represent bidirectional edges (Ambient graph simplification)
 	DestPrincipal   string          `json:"destPrincipal,omitempty"`   // principal used for the edge destination
+	IsAmbient       bool            `json:"isAmbient,omitempty"`       // If edge is from an Ambient node
 	IsMTLS          string          `json:"isMTLS,omitempty"`          // set to the percentage of traffic using a mutual TLS connection
 	ResponseTime    string          `json:"responseTime,omitempty"`    // in millis
 	SourcePrincipal string          `json:"sourcePrincipal,omitempty"` // principal used for the edge source
@@ -450,6 +451,9 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 			}
 			if e.Metadata[graph.Display] != nil {
 				ed.Display = e.Metadata[graph.Display].(string)
+			}
+			if e.Metadata[graph.IsAmbient] != nil {
+				ed.IsAmbient = e.Metadata[graph.IsAmbient].(bool)
 			}
 			addEdgeTelemetry(e, &ed)
 

@@ -10,7 +10,6 @@ import (
 )
 
 const AmbientAppenderName = "ambient"
-const WaypointSuffix = "waypoint"
 
 // AmbientAppender adds all the Ambient logic to the graph
 // handleWaypoint Identifies the waypoint proxies
@@ -88,6 +87,10 @@ func (a AmbientAppender) handleWaypoints(trafficMap graph.TrafficMap, globalInfo
 				})
 			}
 			for i, edge := range n.Edges {
+				// To draw the TCP edges different
+				if edge.Metadata[graph.IsAmbient] == true {
+					edge.Metadata[graph.IsAmbient] = true
+				}
 				// If show the waypoint, mark the edges to be drawn bidirectionally
 				if a.ShowWaypoints {
 					if waypointNodes[edge.Dest.ID] {
