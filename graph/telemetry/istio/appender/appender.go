@@ -213,6 +213,7 @@ func ParseAppenders(o graph.TelemetryOptions) (appenders []graph.Appender, final
 		}
 		a := AmbientAppender{
 			AccessibleNamespaces: o.AccessibleNamespaces,
+			Rates:                o.Rates,
 			ShowWaypoints:        waypoints,
 		}
 		appenders = append(appenders, a)

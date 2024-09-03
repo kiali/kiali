@@ -2,7 +2,6 @@ package appender
 
 import (
 	"context"
-
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
@@ -19,6 +18,7 @@ const WaypointSuffix = "waypoint"
 // handleWaypoint removes the waypoint proxies when ShowWaypoint is false
 type AmbientAppender struct {
 	AccessibleNamespaces graph.AccessibleNamespaces
+	Rates                graph.RequestedRates
 	ShowWaypoints        bool
 }
 
@@ -86,7 +86,6 @@ func (a AmbientAppender) handleWaypoints(trafficMap graph.TrafficMap, globalInfo
 					return !waypointNodes[edge.Dest.ID]
 				})
 			}
-
 			for i, edge := range n.Edges {
 				// If show the waypoint, mark the edges to be drawn bidirectionally
 				if a.ShowWaypoints {
@@ -94,11 +93,13 @@ func (a AmbientAppender) handleWaypoints(trafficMap graph.TrafficMap, globalInfo
 						edge.Metadata[graph.Display] = "reverse"
 					}
 				}
-				// Find duplicate edges (TCP and HTTP)
-				for j, comparedEdge := range n.Edges {
-					if i != j && edge.Dest.ID == comparedEdge.Dest.ID && edge.Metadata[graph.Display] == nil {
-						edge.Metadata[graph.Display] = "multiple"
-						comparedEdge.Metadata[graph.Display] = "hide"
+				if a.Rates.Http != "none" {
+					// Find duplicate edges (TCP and HTTP)
+					for j, comparedEdge := range n.Edges {
+						if i != j && edge.Dest.ID == comparedEdge.Dest.ID && edge.Metadata[graph.Display] == nil {
+							edge.Metadata[graph.Display] = "multiple"
+							comparedEdge.Metadata[graph.Display] = "hide"
+						}
 					}
 				}
 			}
