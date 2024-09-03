@@ -15,6 +15,7 @@ FRONTEND_TEMPO="frontend-tempo"
 #
 
 ISTIO_VERSION=""
+HELM_CHARTS_DIR=""
 TEST_SUITE="${BACKEND}"
 SETUP_ONLY="false"
 TESTS_ONLY="false"
@@ -25,6 +26,10 @@ TEMPO="false"
 while [[ $# -gt 0 ]]; do
   key="$1"
   case $key in
+    -hcd|--helm-charts-dir)
+      HELM_CHARTS_DIR="${2}"
+      shift;shift
+      ;;
     -iv|--istio-version)
       ISTIO_VERSION="${2}"
       shift;shift
@@ -68,6 +73,8 @@ while [[ $# -gt 0 ]]; do
     -h|--help)
       cat <<HELPMSG
 Valid command line arguments:
+  -hcd|--helm-charts-dir
+    The directory where the Helm charts are located. If not specified, the Helm charts for the target branch will be used.
   -iv|--istio-version <version>
     Which Istio version to test with. For releases, specify "#.#.#". For dev builds, specify in the form "#.#-dev"
     Default: The latest release
@@ -113,6 +120,7 @@ fi
 # print out our settings for debug purposes
 cat <<EOM
 === SETTINGS ===
+HELM_CHARTS_DIR=$HELM_CHARTS_DIR
 ISTIO_VERSION=$ISTIO_VERSION
 SETUP_ONLY=$SETUP_ONLY
 TESTS_ONLY=$TESTS_ONLY
@@ -128,6 +136,12 @@ if [ -n "${ISTIO_VERSION}" ]; then
   ISTIO_VERSION_ARG="--istio-version ${ISTIO_VERSION}"
 else
   ISTIO_VERSION_ARG=""
+fi
+
+if [ -n "${HELM_CHARTS_DIR}" ]; then
+  HELM_CHARTS_DIR_ARG="--helm-charts-dir ${HELM_CHARTS_DIR}"
+else
+  HELM_CHARTS_DIR_ARG=""
 fi
 
 # Determine where this script is and make it the cwd
@@ -271,7 +285,7 @@ ensureMulticlusterApplicationsAreHealthy() {
 infomsg "Running ${TEST_SUITE} integration tests"
 if [ "${TEST_SUITE}" == "${BACKEND}" ]; then
   if [ "${TESTS_ONLY}" == "false" ]; then
-    "${SCRIPT_DIR}"/setup-kind-in-ci.sh ${ISTIO_VERSION_ARG}
+    "${SCRIPT_DIR}"/setup-kind-in-ci.sh ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG}
 
     ISTIO_INGRESS_IP="$(kubectl get svc istio-ingressgateway -n istio-system -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')"
 
@@ -295,7 +309,7 @@ elif [ "${TEST_SUITE}" == "${BACKEND_EXTERNAL_CONTROLPLANE}" ]; then
   if [ "${TESTS_ONLY}" == "false" ]; then
     export CLUSTER1_CONTEXT=kind-controlplane
     export CLUSTER2_CONTEXT=kind-dataplane
-    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --multicluster "external-controlplane" ${ISTIO_VERSION_ARG}
+    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --multicluster "external-controlplane" ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG}
 
     ISTIO_INGRESS_IP="$(kubectl get svc istio-ingressgateway -n istio-system -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')"
 
@@ -323,7 +337,7 @@ elif [ "${TEST_SUITE}" == "${FRONTEND}" ]; then
   ensureCypressInstalled
   
   if [ "${TESTS_ONLY}" == "false" ]; then
-    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy token ${ISTIO_VERSION_ARG}
+    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy token ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG}
 
     ISTIO_INGRESS_IP="$(kubectl get svc istio-ingressgateway -n istio-system -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')"
     # Install demo apps
@@ -347,7 +361,7 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_AMBIENT}" ]; then
   ensureCypressInstalled
 
   if [ "${TESTS_ONLY}" == "false" ]; then
-    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy token ${ISTIO_VERSION_ARG} --ambient true
+    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy token ${ISTIO_VERSION_ARG} --ambient true ${HELM_CHARTS_DIR_ARG}
 
     ISTIO_INGRESS_IP="$(kubectl get svc istio-ingressgateway -n istio-system -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')"
     # Install demo apps
@@ -372,7 +386,7 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_PRIMARY_REMOTE}" ]; then
   ensureCypressInstalled
   
   if [ "${TESTS_ONLY}" == "false" ]; then
-    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --multicluster "primary-remote" ${ISTIO_VERSION_ARG} --tempo ${TEMPO}
+    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --multicluster "primary-remote" ${ISTIO_VERSION_ARG} --tempo ${TEMPO} ${HELM_CHARTS_DIR_ARG}
   fi
 
   ensureKialiServerReady
@@ -397,7 +411,7 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_MULTI_PRIMARY}" ]; then
   ensureCypressInstalled
 
   if [ "${TESTS_ONLY}" == "false" ]; then
-    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --multicluster "multi-primary" ${ISTIO_VERSION_ARG} --auth-strategy openid
+    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --multicluster "multi-primary" ${ISTIO_VERSION_ARG} --auth-strategy openid ${HELM_CHARTS_DIR_ARG}
   fi
   
   ensureKialiServerReady
@@ -423,7 +437,7 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_TEMPO}" ]; then
   ensureCypressInstalled
 
   if [ "${TESTS_ONLY}" == "false" ]; then
-    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --tempo true --auth-strategy token ${ISTIO_VERSION_ARG}
+    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --tempo true --auth-strategy token ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG}
     ISTIO_INGRESS_IP="$(kubectl get svc istio-ingressgateway -n istio-system -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')"
     # Install demo apps
     "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl" -g "${ISTIO_INGRESS_IP}"
