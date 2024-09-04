@@ -90,16 +90,20 @@ type Certificate struct {
 }
 
 type IstioMeshConfig struct {
-	Certificates            []Certificate                 `yaml:"certificates,omitempty" json:"certificates,omitempty"`
-	DisableMixerHttpReports bool                          `yaml:"disableMixerHttpReports,omitempty"`
-	DiscoverySelectors      config.DiscoverySelectorsType `yaml:"discoverySelectors,omitempty"`
-	EnableAutoMtls          *bool                         `yaml:"enableAutoMtls,omitempty"`
-	MeshMTLS                struct {
-		MinProtocolVersion string `yaml:"minProtocolVersion"`
-	} `yaml:"meshMtls"`
+	Certificates  []Certificate `yaml:"certificates,omitempty" json:"certificates,omitempty"`
 	DefaultConfig struct {
 		MeshId string `yaml:"meshId"`
 	} `yaml:"defaultConfig" json:"defaultConfig"`
+	// Default Export To fields, used when objects do not have ExportTo
+	DefaultDestinationRuleExportTo []string                      `yaml:"defaultDestinationRuleExportTo,omitempty"`
+	DefaultServiceExportTo         []string                      `yaml:"defaultServiceExportTo,omitempty"`
+	DefaultVirtualServiceExportTo  []string                      `yaml:"defaultVirtualServiceExportTo,omitempty"`
+	DisableMixerHttpReports        bool                          `yaml:"disableMixerHttpReports,omitempty"`
+	DiscoverySelectors             config.DiscoverySelectorsType `yaml:"discoverySelectors,omitempty"`
+	EnableAutoMtls                 *bool                         `yaml:"enableAutoMtls,omitempty"`
+	MeshMTLS                       struct {
+		MinProtocolVersion string `yaml:"minProtocolVersion"`
+	} `yaml:"meshMtls"`
 	OutboundTrafficPolicy OutboundPolicy `yaml:"outboundTrafficPolicy,omitempty"`
 	TrustDomain           string         `yaml:"trustDomain,omitempty"`
 }

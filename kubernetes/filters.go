@@ -331,6 +331,10 @@ func FilterByRegistryService(namespace string, hostname string, registryService 
 	// but for a first iteration if it's found in the registry it will be considered "valid" to reduce the number of false validation errors
 	if hostname == registryService.Hostname {
 		exportTo := registryService.IstioService.Attributes.ExportTo
+		// TODO
+		// if len(exportTo) == 0 {
+		// exportTo = Mesh.GetMeshConfig().DefaultServiceExportTo
+		// }
 		if len(exportTo) > 0 {
 			for exportToNs := range exportTo {
 				// take only namespaces where it is exported to, exported to the own namespace, or if it is exported to all namespaces
