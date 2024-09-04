@@ -93,9 +93,10 @@ type MetricsJson struct {
 var client = *NewKialiClient()
 
 const (
-	BOOKINFO = "bookinfo"
-	ASSETS   = "tests/integration/assets"
-	TIMEOUT  = 10 * time.Second
+	BOOKINFO        = "bookinfo"
+	ASSETS          = "tests/integration/assets"
+	TIMEOUT         = 10 * time.Second
+	TRACING_TIMEOUT = 60 * time.Second
 )
 
 func NewKialiClient() (c *KialiClient) {
@@ -324,7 +325,7 @@ func ServiceDetails(name, namespace string) (*ServiceDetailsJson, int, error) {
 }
 
 func Traces(objectType, name, namespace string) (*jaeger.JaegerResponse, int, error) {
-	body, code, _, err := httpGETWithRetry(fmt.Sprintf("%s/api/namespaces/%s/%s/%s/traces?startMicros=%d&tags=&limit=100", client.kialiURL, namespace, objectType, name, TimeSince()), client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
+	body, code, _, err := httpGETWithRetry(fmt.Sprintf("%s/api/namespaces/%s/%s/%s/traces?startMicros=%d&tags=&limit=100", client.kialiURL, namespace, objectType, name, TimeSince()), client.GetAuth(), TRACING_TIMEOUT, nil, client.kialiCookies)
 	log.Debugf("Traces response: %s", body)
 	if err == nil {
 		traces := new(jaeger.JaegerResponse)
@@ -340,7 +341,7 @@ func Traces(objectType, name, namespace string) (*jaeger.JaegerResponse, int, er
 }
 
 func Spans(objectType, name, namespace string) ([]jaeger.JaegerSpan, int, error) {
-	body, code, _, err := httpGETWithRetry(fmt.Sprintf("%s/api/namespaces/%s/%s/%s/spans?startMicros=%d&tags=&limit=100", client.kialiURL, namespace, objectType, name, TimeSince()), client.GetAuth(), TIMEOUT, nil, client.kialiCookies)
+	body, code, _, err := httpGETWithRetry(fmt.Sprintf("%s/api/namespaces/%s/%s/%s/spans?startMicros=%d&tags=&limit=100", client.kialiURL, namespace, objectType, name, TimeSince()), client.GetAuth(), TRACING_TIMEOUT, nil, client.kialiCookies)
 	if err == nil {
 		spans := []jaeger.JaegerSpan{}
 		err = json.Unmarshal(body, &spans)
