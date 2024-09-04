@@ -51,8 +51,9 @@ func getVersions(ctx context.Context, conf *config.Config, clientFactory kuberne
 }
 
 type p8sResponseVersion struct {
-	Version  string `json:"version"`
-	Revision string `json:"revision"`
+	Data struct {
+		Version string `json:"version"`
+	} `json:"data"`
 }
 
 type jaegerResponseVersion struct {
@@ -173,12 +174,13 @@ func prometheusVersion(conf *config.Config, homeClusterSAClient kubernetes.Clien
 		auth.Token = homeClusterSAClient.GetToken()
 	}
 
-	body, _, _, err := httputil.HttpGet(cfg.URL+"/version", &auth, 10*time.Second, nil, nil)
+	// see https://prometheus.io/docs/prometheus/latest/querying/api/#build-information
+	body, _, _, err := httputil.HttpGet(cfg.URL+"/api/v1/status/buildinfo", &auth, 10*time.Second, nil, nil)
 	if err == nil {
 		err = json.Unmarshal(body, &prometheusV)
 		if err == nil {
 			product.Name = "Prometheus"
-			product.Version = prometheusV.Version
+			product.Version = prometheusV.Data.Version
 			return &product, nil
 		}
 	}
