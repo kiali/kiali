@@ -486,6 +486,7 @@ export interface DecoratedGraphNodeData extends GraphNodeData {
 
 // Edge data after decorating at fetch-time (what is mainly used by ui code)
 export interface DecoratedGraphEdgeData extends GraphEdgeData {
+  display: string;
   grpc: number;
   grpcErr: number;
   grpcNoResponse: number;
