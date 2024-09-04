@@ -83,15 +83,13 @@ func (a AmbientAppender) handleWaypoints(trafficMap graph.TrafficMap, globalInfo
 				n.Edges = sliceutil.Filter(n.Edges, func(edge *graph.Edge) bool {
 					return !waypointsNodes[edge.Dest.ID]
 				})
+				continue
 			}
 
 			// Find duplicates
 			for _, edge := range n.Edges {
-				// If not show the waypoint, mark the nodes
-				if a.ShowWaypoints {
-					if waypointsNodes[edge.Dest.ID] {
-						edge.Metadata[graph.Display] = "reverse"
-					}
+				if waypointsNodes[edge.Dest.ID] {
+					edge.Metadata[graph.Display] = "reverse"
 				}
 			}
 		}
