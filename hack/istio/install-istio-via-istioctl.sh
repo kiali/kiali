@@ -359,6 +359,12 @@ if [ "${IS_OPENSHIFT}" == "true" ]; then
   fi
 fi
 
+# If Ambient profile, disable ipv6; this is broken on minikube when not using docker driver (TODO: make ipv6 optional)
+if [ "${CONFIG_PROFILE}" == "ambient" ]; then
+  CNI_OPTIONS="${CNI_OPTIONS} --set values.cni.ambient.ipv6=false"
+  echo "Disabling Ambient CNI IPv6"
+fi
+
 MTLS_OPTIONS="--set values.meshConfig.enableAutoMtls=${MTLS}"
 
 NATIVE_SIDECARS_OPTIONS="--set values.pilot.env.ENABLE_NATIVE_SIDECARS=${ENABLE_NATIVE_SIDECARS}"
