@@ -241,6 +241,68 @@ func TestAmbientFilterExportToNamespacesVS(t *testing.T) {
 	assert.EqualValues(expectedKeys, filteredKeys)
 }
 
+func TestFilterVSMeshExportToThis(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	var currentIstioObjects []*networking_v1.VirtualService
+	vs1tothis := loadVirtualService("vs_bookinfo1_to_this.yaml", t)
+	currentIstioObjects = append(currentIstioObjects, vs1tothis)
+	vs1not := loadVirtualService("vs_bookinfo1_not_exported.yaml", t)
+	currentIstioObjects = append(currentIstioObjects, vs1not)
+	vs2not := loadVirtualService("vs_bookinfo2_not_exported.yaml", t)
+	currentIstioObjects = append(currentIstioObjects, vs2not)
+	vs3toall := loadVirtualService("vs_bookinfo3_to_all.yaml", t)
+	currentIstioObjects = append(currentIstioObjects, vs3toall)
+	v := mockEmptyValidationService(t, ".")
+	filteredVSs := v.filterVSExportToNamespaces(models.Namespaces{models.Namespace{Name: "bookinfo"}, models.Namespace{Name: "bookinfo2"}, models.Namespace{Name: "bookinfo3"}, models.Namespace{Name: "default"}}, "bookinfo", "", currentIstioObjects)
+	var expectedVS []*networking_v1.VirtualService
+	expectedVS = append(expectedVS, vs1tothis)
+	expectedVS = append(expectedVS, vs1not)
+	expectedVS = append(expectedVS, vs3toall)
+	filteredKeys := []string{}
+	for _, vs := range filteredVSs {
+		filteredKeys = append(filteredKeys, fmt.Sprintf("%s/%s", vs.Name, vs.Namespace))
+	}
+	expectedKeys := []string{}
+	for _, vs := range expectedVS {
+		expectedKeys = append(expectedKeys, fmt.Sprintf("%s/%s", vs.Name, vs.Namespace))
+	}
+	assert.EqualValues(filteredKeys, expectedKeys)
+}
+
+func TestFilterVSMeshExportToAll(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	var currentIstioObjects []*networking_v1.VirtualService
+	vs1tothis := loadVirtualService("vs_bookinfo1_to_this.yaml", t)
+	currentIstioObjects = append(currentIstioObjects, vs1tothis)
+	vs1not := loadVirtualService("vs_bookinfo1_not_exported.yaml", t)
+	currentIstioObjects = append(currentIstioObjects, vs1not)
+	vs2not := loadVirtualService("vs_bookinfo2_not_exported.yaml", t)
+	currentIstioObjects = append(currentIstioObjects, vs2not)
+	vs3toall := loadVirtualService("vs_bookinfo3_to_all.yaml", t)
+	currentIstioObjects = append(currentIstioObjects, vs3toall)
+	v := mockEmptyValidationService(t, "*")
+	filteredVSs := v.filterVSExportToNamespaces(models.Namespaces{models.Namespace{Name: "bookinfo"}, models.Namespace{Name: "bookinfo2"}, models.Namespace{Name: "bookinfo3"}, models.Namespace{Name: "default"}}, "bookinfo2", "", currentIstioObjects)
+	var expectedVS []*networking_v1.VirtualService
+	expectedVS = append(expectedVS, vs1not)
+	expectedVS = append(expectedVS, vs2not)
+	expectedVS = append(expectedVS, vs3toall)
+	filteredKeys := []string{}
+	for _, vs := range filteredVSs {
+		filteredKeys = append(filteredKeys, fmt.Sprintf("%s/%s", vs.Name, vs.Namespace))
+	}
+	expectedKeys := []string{}
+	for _, vs := range expectedVS {
+		expectedKeys = append(expectedKeys, fmt.Sprintf("%s/%s", vs.Name, vs.Namespace))
+	}
+	assert.EqualValues(filteredKeys, expectedKeys)
+}
+
 func TestFilterExportToNamespacesDR(t *testing.T) {
 	assert := assert.New(t)
 	conf := config.NewConfig()
@@ -317,6 +379,68 @@ func TestAmbientFilterExportToNamespacesDR(t *testing.T) {
 	assert.EqualValues(expectedKeys, filteredKeys)
 }
 
+func TestFilterDRMeshExportToThis(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	var currentIstioObjects []*networking_v1.DestinationRule
+	dr1tothis := loadDestinationRule("dr_bookinfo1_to_this.yaml", t)
+	currentIstioObjects = append(currentIstioObjects, dr1tothis)
+	dr1not := loadDestinationRule("dr_bookinfo1_not_exported.yaml", t)
+	currentIstioObjects = append(currentIstioObjects, dr1not)
+	dr2not := loadDestinationRule("dr_bookinfo2_not_exported.yaml", t)
+	currentIstioObjects = append(currentIstioObjects, dr2not)
+	dr3toall := loadDestinationRule("dr_bookinfo3_to_all.yaml", t)
+	currentIstioObjects = append(currentIstioObjects, dr3toall)
+	v := mockEmptyValidationService(t, ".")
+	filteredDRs := v.filterDRExportToNamespaces(models.Namespaces{models.Namespace{Name: "bookinfo"}, models.Namespace{Name: "bookinfo2"}, models.Namespace{Name: "bookinfo3"}, models.Namespace{Name: "default"}}, "bookinfo", "", currentIstioObjects)
+	var expectedDR []*networking_v1.DestinationRule
+	expectedDR = append(expectedDR, dr1tothis)
+	expectedDR = append(expectedDR, dr1not)
+	expectedDR = append(expectedDR, dr3toall)
+	filteredKeys := []string{}
+	for _, dr := range filteredDRs {
+		filteredKeys = append(filteredKeys, fmt.Sprintf("%s/%s", dr.Name, dr.Namespace))
+	}
+	expectedKeys := []string{}
+	for _, dr := range expectedDR {
+		expectedKeys = append(expectedKeys, fmt.Sprintf("%s/%s", dr.Name, dr.Namespace))
+	}
+	assert.EqualValues(expectedKeys, filteredKeys)
+}
+
+func TestFilterDRMeshExportToAll(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	var currentIstioObjects []*networking_v1.DestinationRule
+	dr1tothis := loadDestinationRule("dr_bookinfo1_to_this.yaml", t)
+	currentIstioObjects = append(currentIstioObjects, dr1tothis)
+	dr1not := loadDestinationRule("dr_bookinfo1_not_exported.yaml", t)
+	currentIstioObjects = append(currentIstioObjects, dr1not)
+	dr2not := loadDestinationRule("dr_bookinfo2_not_exported.yaml", t)
+	currentIstioObjects = append(currentIstioObjects, dr2not)
+	dr3toall := loadDestinationRule("dr_bookinfo3_to_all.yaml", t)
+	currentIstioObjects = append(currentIstioObjects, dr3toall)
+	v := mockEmptyValidationService(t, "*")
+	filteredDRs := v.filterDRExportToNamespaces(models.Namespaces{models.Namespace{Name: "bookinfo"}, models.Namespace{Name: "bookinfo2"}, models.Namespace{Name: "bookinfo3"}, models.Namespace{Name: "default"}}, "bookinfo2", "", currentIstioObjects)
+	var expectedDR []*networking_v1.DestinationRule
+	expectedDR = append(expectedDR, dr1not)
+	expectedDR = append(expectedDR, dr2not)
+	expectedDR = append(expectedDR, dr3toall)
+	filteredKeys := []string{}
+	for _, dr := range filteredDRs {
+		filteredKeys = append(filteredKeys, fmt.Sprintf("%s/%s", dr.Name, dr.Namespace))
+	}
+	expectedKeys := []string{}
+	for _, dr := range expectedDR {
+		expectedKeys = append(expectedKeys, fmt.Sprintf("%s/%s", dr.Name, dr.Namespace))
+	}
+	assert.EqualValues(expectedKeys, filteredKeys)
+}
+
 func TestFilterExportToNamespacesSE(t *testing.T) {
 	assert := assert.New(t)
 	conf := config.NewConfig()
@@ -382,6 +506,68 @@ func TestAmbientFilterExportToNamespacesSE(t *testing.T) {
 	expectedSE = append(expectedSE, se3to2)
 	expectedSE = append(expectedSE, se3toall)
 	expectedSE = append(expectedSE, se3towrong)
+	filteredKeys := []string{}
+	for _, se := range filteredSEs {
+		filteredKeys = append(filteredKeys, fmt.Sprintf("%s/%s", se.Name, se.Namespace))
+	}
+	expectedKeys := []string{}
+	for _, se := range expectedSE {
+		expectedKeys = append(expectedKeys, fmt.Sprintf("%s/%s", se.Name, se.Namespace))
+	}
+	assert.EqualValues(expectedKeys, filteredKeys)
+}
+
+func TestFilterSEMeshExportToThis(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	var currentIstioObjects []*networking_v1.ServiceEntry
+	se1tothis := loadServiceEntry("se_bookinfo1_to_this.yaml", t)
+	currentIstioObjects = append(currentIstioObjects, se1tothis)
+	se1not := loadServiceEntry("se_bookinfo1_not_exported.yaml", t)
+	currentIstioObjects = append(currentIstioObjects, se1not)
+	se2not := loadServiceEntry("se_bookinfo2_not_exported.yaml", t)
+	currentIstioObjects = append(currentIstioObjects, se2not)
+	se3toall := loadServiceEntry("se_bookinfo3_to_all.yaml", t)
+	currentIstioObjects = append(currentIstioObjects, se3toall)
+	v := mockEmptyValidationService(t, ".")
+	filteredSEs := v.filterSEExportToNamespaces(models.Namespaces{models.Namespace{Name: "bookinfo"}, models.Namespace{Name: "bookinfo2"}, models.Namespace{Name: "bookinfo3"}, models.Namespace{Name: "default"}}, "bookinfo", "", currentIstioObjects)
+	var expectedSE []*networking_v1.ServiceEntry
+	expectedSE = append(expectedSE, se1tothis)
+	expectedSE = append(expectedSE, se1not)
+	expectedSE = append(expectedSE, se3toall)
+	filteredKeys := []string{}
+	for _, se := range filteredSEs {
+		filteredKeys = append(filteredKeys, fmt.Sprintf("%s/%s", se.Name, se.Namespace))
+	}
+	expectedKeys := []string{}
+	for _, se := range expectedSE {
+		expectedKeys = append(expectedKeys, fmt.Sprintf("%s/%s", se.Name, se.Namespace))
+	}
+	assert.EqualValues(expectedKeys, filteredKeys)
+}
+
+func TestFilterSEMeshExportToAll(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	var currentIstioObjects []*networking_v1.ServiceEntry
+	se1tothis := loadServiceEntry("se_bookinfo1_to_this.yaml", t)
+	currentIstioObjects = append(currentIstioObjects, se1tothis)
+	se1not := loadServiceEntry("se_bookinfo1_not_exported.yaml", t)
+	currentIstioObjects = append(currentIstioObjects, se1not)
+	se2not := loadServiceEntry("se_bookinfo2_not_exported.yaml", t)
+	currentIstioObjects = append(currentIstioObjects, se2not)
+	se3toall := loadServiceEntry("se_bookinfo3_to_all.yaml", t)
+	currentIstioObjects = append(currentIstioObjects, se3toall)
+	v := mockEmptyValidationService(t, "*")
+	filteredSEs := v.filterSEExportToNamespaces(models.Namespaces{models.Namespace{Name: "bookinfo"}, models.Namespace{Name: "bookinfo2"}, models.Namespace{Name: "bookinfo3"}, models.Namespace{Name: "default"}}, "bookinfo2", "", currentIstioObjects)
+	var expectedSE []*networking_v1.ServiceEntry
+	expectedSE = append(expectedSE, se1not)
+	expectedSE = append(expectedSE, se2not)
+	expectedSE = append(expectedSE, se3toall)
 	filteredKeys := []string{}
 	for _, se := range filteredSEs {
 		filteredKeys = append(filteredKeys, fmt.Sprintf("%s/%s", se.Name, se.Namespace))
@@ -542,11 +728,38 @@ func mockAmbientValidationService(t *testing.T) IstioValidationsService {
 	return IstioValidationsService{userClients: clients, businessLayer: NewWithBackends(clients, clients, nil, nil)}
 }
 
-func mockEmptyValidationService(t *testing.T) IstioValidationsService {
+func mockEmptyValidationService(t *testing.T, exportToValue ...string) IstioValidationsService {
+	configMapData := `accessLogFile: /dev/stdout
+enableAutoMtls: true
+rootNamespace: istio-system
+trustDomain: cluster.local
+`
+	if len(exportToValue) != 0 {
+		configMapData += `
+defaultDestinationRuleExportTo:
+- '` + exportToValue[0] + `'
+defaultServiceExportTo:
+- '` + exportToValue[0] + `'
+defaultVirtualServiceExportTo:
+- '` + exportToValue[0] + `'
+`
+	}
+	istioConfigMap := core_v1.ConfigMap{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "istio",
+			Namespace: "istio-system",
+			Labels: map[string]string{
+				models.IstioRevisionLabel: "default",
+			},
+		},
+		Data: map[string]string{"mesh": configMapData},
+	}
+
 	objects := []runtime.Object{
 		fakeDaemonSetWithStatus("istio-ingressgateway", map[string]string{"app": "istio-ingressgateway", "istio": "ingressgateway"}, unhealthyDaemonSetStatus),
 		fakeDeploymentWithStatus("istio-egressgateway", map[string]string{"app": "istio-egressgateway", "istio": "egressgateway"}, unhealthyStatus),
 		fakeDeploymentWithStatus("istiod", map[string]string{"app": "istiod", "istio": "pilot"}, healthyStatus),
+		&istioConfigMap,
 	}
 
 	k8s, _, _ := mockAddOnsCalls(t, objects, true, false)
