@@ -62,7 +62,7 @@ func (a AmbientAppender) handleWaypoints(trafficMap graph.TrafficMap, globalInfo
 			waypointName = n.Service
 		}
 		if isWaypoint(&waypoints, n.Cluster, n.Namespace, waypointName) {
-			waypointsNodes[n.ID] = true
+			waypointNodes[n.ID] = true
 			if !a.ShowWaypoints {
 				delete(trafficMap, n.ID)
 			} else {
@@ -76,19 +76,19 @@ func (a AmbientAppender) handleWaypoints(trafficMap graph.TrafficMap, globalInfo
 		}
 	}
 
-	if len(waypointsNodes) > 0 {
+	if len(waypointNodes) > 0 {
 		for _, n := range trafficMap {
 			// Delete edges
 			if !a.ShowWaypoints {
 				n.Edges = sliceutil.Filter(n.Edges, func(edge *graph.Edge) bool {
-					return !waypointsNodes[edge.Dest.ID]
+					return !waypointNodes[edge.Dest.ID]
 				})
 				continue
 			}
 
 			// Find duplicates
 			for _, edge := range n.Edges {
-				if waypointsNodes[edge.Dest.ID] {
+				if waypointNodes[edge.Dest.ID] {
 					edge.Metadata[graph.Display] = "reverse"
 				}
 			}
