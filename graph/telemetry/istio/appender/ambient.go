@@ -50,7 +50,7 @@ func (a AmbientAppender) handleWaypoints(trafficMap graph.TrafficMap, globalInfo
 	// Fetch the waypoint workloads
 	waypoints := globalInfo.Business.Workload.GetWaypoints(context.Background())
 
-	waypointsNodes := make(map[string]bool)
+	waypointNodes := make(map[string]bool)
 
 	// Flag or Delete waypoint nodes in the TrafficMap
 	for _, n := range trafficMap {
