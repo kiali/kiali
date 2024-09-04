@@ -1,6 +1,7 @@
 package appender
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -18,9 +19,18 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/kubernetes/kubetest"
+	"github.com/kiali/kiali/models"
 )
 
-func setupBusinessLayer(t *testing.T, istioObjects ...runtime.Object) *business.Layer {
+type fakeMeshDiscovery struct {
+	mesh models.Mesh
+}
+
+func (fmd *fakeMeshDiscovery) Mesh(ctx context.Context) (*models.Mesh, error) {
+	return &fmd.mesh, nil
+}
+
+func setupBusinessLayer(t *testing.T, meshExportTo []string, istioObjects ...runtime.Object) *business.Layer {
 	conf := config.NewConfig()
 	conf.KubernetesConfig.ClusterName = config.DefaultClusterID
 	conf.ExternalServices.Istio.IstioAPIEnabled = false
@@ -31,14 +41,32 @@ func setupBusinessLayer(t *testing.T, istioObjects ...runtime.Object) *business.
 		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "otherNamespace"}})
 	k8s := kubetest.NewFakeK8sClient(istioObjects...)
 	business.SetupBusinessLayer(t, k8s, *conf)
-	k8sclients := map[string]kubernetes.ClientInterface{
-		config.DefaultClusterID: k8s,
+
+	k8sclients := make(map[string]kubernetes.ClientInterface)
+	k8sclients[config.Get().KubernetesConfig.ClusterName] = k8s
+
+	if len(meshExportTo) != 0 {
+		discovery := &fakeMeshDiscovery{
+			mesh: models.Mesh{
+				ControlPlanes: []models.ControlPlane{{
+					Cluster: &models.KubeCluster{Name: config.DefaultClusterID, IsKialiHome: true},
+					Config: models.ControlPlaneConfiguration{
+						IstioMeshConfig: models.IstioMeshConfig{
+							DefaultServiceExportTo:         []string{meshExportTo[0]},
+							DefaultDestinationRuleExportTo: []string{meshExportTo[0]},
+							DefaultVirtualServiceExportTo:  []string{meshExportTo[0]},
+						},
+					},
+				}},
+			},
+		}
+		business.WithDiscovery(discovery)
 	}
 	businessLayer := business.NewWithBackends(k8sclients, k8sclients, nil, nil)
 	return businessLayer
 }
 
-func setupServiceEntries(t *testing.T, namespace string, exportTo []string) *business.Layer {
+func setupServiceEntries(t *testing.T, namespace string, exportTo []string, meshExportTo []string) *business.Layer {
 	externalSE := &networking_v1.ServiceEntry{}
 	externalSE.Name = "externalSE"
 	externalSE.Namespace = namespace
@@ -58,7 +86,7 @@ func setupServiceEntries(t *testing.T, namespace string, exportTo []string) *bus
 	}
 	internalSE.Spec.Location = api_networking_v1.ServiceEntry_MESH_INTERNAL
 
-	return setupBusinessLayer(t, externalSE, internalSE)
+	return setupBusinessLayer(t, meshExportTo, externalSE, internalSE)
 }
 
 func serviceEntriesTrafficMap() map[string]*graph.Node {
@@ -132,7 +160,7 @@ func serviceEntriesTrafficMap() map[string]*graph.Node {
 func TestServiceEntry(t *testing.T) {
 	assert := assert.New(t)
 
-	businessLayer := setupServiceEntries(t, "testNamespace", nil)
+	businessLayer := setupServiceEntries(t, "testNamespace", nil, nil)
 	trafficMap := serviceEntriesTrafficMap()
 
 	assert.Equal(8, len(trafficMap))
@@ -252,7 +280,7 @@ func TestServiceEntry(t *testing.T) {
 func TestServiceEntryExportAll(t *testing.T) {
 	assert := assert.New(t)
 
-	businessLayer := setupServiceEntries(t, "testNamespace", []string{"*"})
+	businessLayer := setupServiceEntries(t, "testNamespace", []string{"*"}, nil)
 	trafficMap := serviceEntriesTrafficMap()
 
 	assert.Equal(8, len(trafficMap))
@@ -366,7 +394,7 @@ func TestServiceEntryExportAll(t *testing.T) {
 func TestServiceEntryExportNamespaceFound(t *testing.T) {
 	assert := assert.New(t)
 
-	businessLayer := setupServiceEntries(t, "testNamespace", []string{"fooNamespace", "testNamespace"})
+	businessLayer := setupServiceEntries(t, "testNamespace", []string{"fooNamespace", "testNamespace"}, nil)
 	trafficMap := serviceEntriesTrafficMap()
 
 	assert.Equal(8, len(trafficMap))
@@ -480,7 +508,235 @@ func TestServiceEntryExportNamespaceFound(t *testing.T) {
 func TestServiceEntryExportDefinitionNamespace(t *testing.T) {
 	assert := assert.New(t)
 
-	businessLayer := setupServiceEntries(t, "testNamespace", []string{"."})
+	businessLayer := setupServiceEntries(t, "testNamespace", []string{"."}, nil)
+	trafficMap := serviceEntriesTrafficMap()
+
+	assert.Equal(8, len(trafficMap))
+
+	testID, _, _ := graph.Id(config.DefaultClusterID, graph.Unknown, "test", "testNamespace", "test-v1", "test", "v1", graph.GraphTypeVersionedApp)
+	testNode, found0 := trafficMap[testID]
+	assert.Equal(true, found0)
+	assert.Equal(1, len(testNode.Edges))
+	assert.Equal(nil, testNode.Metadata[graph.IsServiceEntry])
+
+	notSEServiceID, _, _ := graph.Id(config.DefaultClusterID, "testNamespace", "NotSE", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
+	notSEServiceNode, found1 := trafficMap[notSEServiceID]
+	assert.Equal(true, found1)
+	assert.Equal(1, len(notSEServiceNode.Edges))
+	assert.Equal(nil, notSEServiceNode.Metadata[graph.IsServiceEntry])
+
+	notSEAppID, _, _ := graph.Id(config.DefaultClusterID, "testNamespace", "NotSE", "testNamespace", "NotSE-v1", "NotSE", "v1", graph.GraphTypeVersionedApp)
+	notSEAppNode, found2 := trafficMap[notSEAppID]
+	assert.Equal(true, found2)
+	assert.Equal(5, len(notSEAppNode.Edges))
+	assert.Equal(nil, notSEAppNode.Metadata[graph.IsServiceEntry])
+
+	externalSEHost1ServiceID, _, _ := graph.Id(config.DefaultClusterID, "testNamespace", "host1.external.com", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
+	externalSEHost1ServiceNode, found3 := trafficMap[externalSEHost1ServiceID]
+	assert.Equal(true, found3)
+	assert.Equal(0, len(externalSEHost1ServiceNode.Edges))
+	assert.Equal(nil, externalSEHost1ServiceNode.Metadata[graph.IsServiceEntry])
+
+	externalSEHost2ServiceID, _, _ := graph.Id(config.DefaultClusterID, "testNamespace", "host2.external.com", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
+	externalSEHost2ServiceNode, found4 := trafficMap[externalSEHost2ServiceID]
+	assert.Equal(true, found4)
+	assert.Equal(0, len(externalSEHost2ServiceNode.Edges))
+	assert.Equal(nil, externalSEHost2ServiceNode.Metadata[graph.IsServiceEntry])
+
+	externalHostXServiceID, _, _ := graph.Id(config.DefaultClusterID, "testNamespace", "hostX.external.com", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
+	externalHostXServiceNode, found5 := trafficMap[externalHostXServiceID]
+	assert.Equal(true, found5)
+	assert.Equal(0, len(externalHostXServiceNode.Edges))
+	assert.Equal(nil, externalHostXServiceNode.Metadata[graph.IsServiceEntry])
+
+	internalSEHost1ServiceID, _, _ := graph.Id(config.DefaultClusterID, "testNamespace", "internalHost1", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
+	internalSEHost1ServiceNode, found6 := trafficMap[internalSEHost1ServiceID]
+	assert.Equal(true, found6)
+	assert.Equal(0, len(internalSEHost1ServiceNode.Edges))
+	assert.Equal(nil, internalSEHost1ServiceNode.Metadata[graph.IsServiceEntry])
+
+	internalSEHost2ServiceID, _, _ := graph.Id(config.DefaultClusterID, "testNamespace", "internalHost2", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
+	internalSEHost2ServiceNode, found7 := trafficMap[internalSEHost2ServiceID]
+	assert.Equal(true, found7)
+	assert.Equal(0, len(internalSEHost2ServiceNode.Edges))
+	assert.Equal(nil, internalSEHost2ServiceNode.Metadata[graph.IsServiceEntry])
+
+	globalInfo := graph.NewAppenderGlobalInfo()
+	globalInfo.Business = businessLayer
+	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
+	key := graph.GetClusterSensitiveKey(config.DefaultClusterID, "testNamespace")
+
+	// Run the appender...
+	a := ServiceEntryAppender{
+		AccessibleNamespaces: graph.AccessibleNamespaces{
+			key: &graph.AccessibleNamespace{
+				Cluster:           config.DefaultClusterID,
+				CreationTimestamp: time.Now(),
+				Name:              "testNamespace",
+			}},
+		GraphType: graph.GraphTypeVersionedApp,
+	}
+	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
+
+	assert.Equal(6, len(trafficMap))
+
+	testID, _, _ = graph.Id(config.DefaultClusterID, graph.Unknown, "test", "testNamespace", "test-v1", "test", "v1", graph.GraphTypeVersionedApp)
+	testNode, found0 = trafficMap[testID]
+	assert.Equal(true, found0)
+	assert.Equal(1, len(testNode.Edges))
+	assert.Equal(nil, testNode.Metadata[graph.IsServiceEntry])
+
+	notSEServiceID, _, _ = graph.Id(config.DefaultClusterID, "testNamespace", "NotSE", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
+	notSEServiceNode, found1 = trafficMap[notSEServiceID]
+	assert.Equal(true, found1)
+	assert.Equal(1, len(notSEServiceNode.Edges))
+	assert.Equal(nil, notSEServiceNode.Metadata[graph.IsServiceEntry])
+
+	notSEAppID, _, _ = graph.Id(config.DefaultClusterID, "testNamespace", "NotSE", "testNamespace", "NotSE-v1", "NotSE", "v1", graph.GraphTypeVersionedApp)
+	notSEAppNode, found2 = trafficMap[notSEAppID]
+	assert.Equal(true, found2)
+	assert.Equal(4, len(notSEAppNode.Edges))
+	assert.Equal(nil, notSEAppNode.Metadata[graph.IsServiceEntry])
+
+	externalSEServiceEntryID, _, _ := graph.Id(config.DefaultClusterID, "testNamespace", "externalSE", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
+	externalSEServiceEntryNode, found3 := trafficMap[externalSEServiceEntryID]
+	assert.Equal(true, found3)
+	assert.Equal(0, len(externalSEServiceEntryNode.Edges))
+	assert.Equal("MESH_EXTERNAL", externalSEServiceEntryNode.Metadata[graph.IsServiceEntry].(*graph.SEInfo).Location)
+	assert.Equal(2, len(externalSEServiceEntryNode.Metadata[graph.DestServices].(graph.DestServicesMetadata)))
+
+	externalHostXServiceID, _, _ = graph.Id(config.DefaultClusterID, "testNamespace", "hostX.external.com", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
+	externalHostXServiceNode, found4 = trafficMap[externalHostXServiceID]
+	assert.Equal(true, found4)
+	assert.Equal(0, len(externalHostXServiceNode.Edges))
+	assert.Equal(nil, externalHostXServiceNode.Metadata[graph.IsServiceEntry])
+
+	internalSEServiceEntryID, _, _ := graph.Id(config.DefaultClusterID, "testNamespace", "internalSE", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
+	internalSEServiceEntryNode, found5 := trafficMap[internalSEServiceEntryID]
+	assert.Equal(true, found5)
+	assert.Equal(0, len(internalSEServiceEntryNode.Edges))
+	assert.Equal("MESH_INTERNAL", internalSEServiceEntryNode.Metadata[graph.IsServiceEntry].(*graph.SEInfo).Location)
+	assert.Equal(2, len(internalSEServiceEntryNode.Metadata[graph.DestServices].(graph.DestServicesMetadata)))
+}
+
+func TestServiceEntryMeshExportDefinitionNamespace(t *testing.T) {
+	assert := assert.New(t)
+
+	businessLayer := setupServiceEntries(t, "testNamespace", nil, []string{"."})
+	trafficMap := serviceEntriesTrafficMap()
+
+	assert.Equal(8, len(trafficMap))
+
+	testID, _, _ := graph.Id(config.DefaultClusterID, graph.Unknown, "test", "testNamespace", "test-v1", "test", "v1", graph.GraphTypeVersionedApp)
+	testNode, found0 := trafficMap[testID]
+	assert.Equal(true, found0)
+	assert.Equal(1, len(testNode.Edges))
+	assert.Equal(nil, testNode.Metadata[graph.IsServiceEntry])
+
+	notSEServiceID, _, _ := graph.Id(config.DefaultClusterID, "testNamespace", "NotSE", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
+	notSEServiceNode, found1 := trafficMap[notSEServiceID]
+	assert.Equal(true, found1)
+	assert.Equal(1, len(notSEServiceNode.Edges))
+	assert.Equal(nil, notSEServiceNode.Metadata[graph.IsServiceEntry])
+
+	notSEAppID, _, _ := graph.Id(config.DefaultClusterID, "testNamespace", "NotSE", "testNamespace", "NotSE-v1", "NotSE", "v1", graph.GraphTypeVersionedApp)
+	notSEAppNode, found2 := trafficMap[notSEAppID]
+	assert.Equal(true, found2)
+	assert.Equal(5, len(notSEAppNode.Edges))
+	assert.Equal(nil, notSEAppNode.Metadata[graph.IsServiceEntry])
+
+	externalSEHost1ServiceID, _, _ := graph.Id(config.DefaultClusterID, "testNamespace", "host1.external.com", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
+	externalSEHost1ServiceNode, found3 := trafficMap[externalSEHost1ServiceID]
+	assert.Equal(true, found3)
+	assert.Equal(0, len(externalSEHost1ServiceNode.Edges))
+	assert.Equal(nil, externalSEHost1ServiceNode.Metadata[graph.IsServiceEntry])
+
+	externalSEHost2ServiceID, _, _ := graph.Id(config.DefaultClusterID, "testNamespace", "host2.external.com", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
+	externalSEHost2ServiceNode, found4 := trafficMap[externalSEHost2ServiceID]
+	assert.Equal(true, found4)
+	assert.Equal(0, len(externalSEHost2ServiceNode.Edges))
+	assert.Equal(nil, externalSEHost2ServiceNode.Metadata[graph.IsServiceEntry])
+
+	externalHostXServiceID, _, _ := graph.Id(config.DefaultClusterID, "testNamespace", "hostX.external.com", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
+	externalHostXServiceNode, found5 := trafficMap[externalHostXServiceID]
+	assert.Equal(true, found5)
+	assert.Equal(0, len(externalHostXServiceNode.Edges))
+	assert.Equal(nil, externalHostXServiceNode.Metadata[graph.IsServiceEntry])
+
+	internalSEHost1ServiceID, _, _ := graph.Id(config.DefaultClusterID, "testNamespace", "internalHost1", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
+	internalSEHost1ServiceNode, found6 := trafficMap[internalSEHost1ServiceID]
+	assert.Equal(true, found6)
+	assert.Equal(0, len(internalSEHost1ServiceNode.Edges))
+	assert.Equal(nil, internalSEHost1ServiceNode.Metadata[graph.IsServiceEntry])
+
+	internalSEHost2ServiceID, _, _ := graph.Id(config.DefaultClusterID, "testNamespace", "internalHost2", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
+	internalSEHost2ServiceNode, found7 := trafficMap[internalSEHost2ServiceID]
+	assert.Equal(true, found7)
+	assert.Equal(0, len(internalSEHost2ServiceNode.Edges))
+	assert.Equal(nil, internalSEHost2ServiceNode.Metadata[graph.IsServiceEntry])
+
+	globalInfo := graph.NewAppenderGlobalInfo()
+	globalInfo.Business = businessLayer
+	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
+	key := graph.GetClusterSensitiveKey(config.DefaultClusterID, "testNamespace")
+
+	// Run the appender...
+	a := ServiceEntryAppender{
+		AccessibleNamespaces: graph.AccessibleNamespaces{
+			key: &graph.AccessibleNamespace{
+				Cluster:           config.DefaultClusterID,
+				CreationTimestamp: time.Now(),
+				Name:              "testNamespace",
+			}},
+		GraphType: graph.GraphTypeVersionedApp,
+	}
+	a.AppendGraph(trafficMap, globalInfo, namespaceInfo)
+
+	assert.Equal(6, len(trafficMap))
+
+	testID, _, _ = graph.Id(config.DefaultClusterID, graph.Unknown, "test", "testNamespace", "test-v1", "test", "v1", graph.GraphTypeVersionedApp)
+	testNode, found0 = trafficMap[testID]
+	assert.Equal(true, found0)
+	assert.Equal(1, len(testNode.Edges))
+	assert.Equal(nil, testNode.Metadata[graph.IsServiceEntry])
+
+	notSEServiceID, _, _ = graph.Id(config.DefaultClusterID, "testNamespace", "NotSE", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
+	notSEServiceNode, found1 = trafficMap[notSEServiceID]
+	assert.Equal(true, found1)
+	assert.Equal(1, len(notSEServiceNode.Edges))
+	assert.Equal(nil, notSEServiceNode.Metadata[graph.IsServiceEntry])
+
+	notSEAppID, _, _ = graph.Id(config.DefaultClusterID, "testNamespace", "NotSE", "testNamespace", "NotSE-v1", "NotSE", "v1", graph.GraphTypeVersionedApp)
+	notSEAppNode, found2 = trafficMap[notSEAppID]
+	assert.Equal(true, found2)
+	assert.Equal(4, len(notSEAppNode.Edges))
+	assert.Equal(nil, notSEAppNode.Metadata[graph.IsServiceEntry])
+
+	externalSEServiceEntryID, _, _ := graph.Id(config.DefaultClusterID, "testNamespace", "externalSE", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
+	externalSEServiceEntryNode, found3 := trafficMap[externalSEServiceEntryID]
+	assert.Equal(true, found3)
+	assert.Equal(0, len(externalSEServiceEntryNode.Edges))
+	assert.Equal("MESH_EXTERNAL", externalSEServiceEntryNode.Metadata[graph.IsServiceEntry].(*graph.SEInfo).Location)
+	assert.Equal(2, len(externalSEServiceEntryNode.Metadata[graph.DestServices].(graph.DestServicesMetadata)))
+
+	externalHostXServiceID, _, _ = graph.Id(config.DefaultClusterID, "testNamespace", "hostX.external.com", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
+	externalHostXServiceNode, found4 = trafficMap[externalHostXServiceID]
+	assert.Equal(true, found4)
+	assert.Equal(0, len(externalHostXServiceNode.Edges))
+	assert.Equal(nil, externalHostXServiceNode.Metadata[graph.IsServiceEntry])
+
+	internalSEServiceEntryID, _, _ := graph.Id(config.DefaultClusterID, "testNamespace", "internalSE", "testNamespace", "", "", "", graph.GraphTypeVersionedApp)
+	internalSEServiceEntryNode, found5 := trafficMap[internalSEServiceEntryID]
+	assert.Equal(true, found5)
+	assert.Equal(0, len(internalSEServiceEntryNode.Edges))
+	assert.Equal("MESH_INTERNAL", internalSEServiceEntryNode.Metadata[graph.IsServiceEntry].(*graph.SEInfo).Location)
+	assert.Equal(2, len(internalSEServiceEntryNode.Metadata[graph.DestServices].(graph.DestServicesMetadata)))
+}
+
+func TestServiceEntryMeshExportAll(t *testing.T) {
+	assert := assert.New(t)
+
+	businessLayer := setupServiceEntries(t, "testNamespace", nil, []string{"*"})
 	trafficMap := serviceEntriesTrafficMap()
 
 	assert.Equal(8, len(trafficMap))
@@ -594,7 +850,7 @@ func TestServiceEntryExportDefinitionNamespace(t *testing.T) {
 func TestServiceEntryExportNamespaceNotFound(t *testing.T) {
 	assert := assert.New(t)
 
-	businessLayer := setupServiceEntries(t, "testNamespace", []string{"fooNamespace", "barNamespace"})
+	businessLayer := setupServiceEntries(t, "testNamespace", []string{"fooNamespace", "barNamespace"}, nil)
 	trafficMap := serviceEntriesTrafficMap()
 
 	assert.Equal(8, len(trafficMap))
@@ -706,7 +962,7 @@ func TestServiceEntryExportNamespaceNotFound(t *testing.T) {
 func TestKiali7153_1(t *testing.T) {
 	assert := assert.New(t)
 
-	businessLayer := setupServiceEntries(t, "otherNamespace", nil)
+	businessLayer := setupServiceEntries(t, "otherNamespace", nil, nil)
 	trafficMap := serviceEntriesTrafficMap()
 
 	assert.Equal(8, len(trafficMap))
@@ -1219,7 +1475,7 @@ func TestServiceEntryMultipleEdges(t *testing.T) {
 	}
 	internalSE.Spec.Location = api_networking_v1.ServiceEntry_MESH_INTERNAL
 
-	businessLayer := setupBusinessLayer(t, internalSE)
+	businessLayer := setupBusinessLayer(t, nil, internalSE)
 
 	// VersionedApp graph
 	trafficMap := make(map[string]*graph.Node)
@@ -1304,7 +1560,7 @@ func TestServiceEntryMultipleEdges(t *testing.T) {
 func TestSEKiali7305(t *testing.T) {
 	assert := assert.New(t)
 
-	businessLayer := setupServiceEntries(t, "testNamespace", nil)
+	businessLayer := setupServiceEntries(t, "testNamespace", nil, nil)
 
 	// VersionedApp graph
 	trafficMap := make(map[string]*graph.Node)

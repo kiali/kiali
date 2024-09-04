@@ -1,0 +1,8 @@
+kind: VirtualService
+apiVersion: networking.istio.io/v1
+metadata:
+  name: vs_bookinfo2_not_exported
+  namespace: bookinfo2
+spec:
+  hosts:
+  - '*'
