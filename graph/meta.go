@@ -49,6 +49,7 @@ const (
 	Labels                MetadataKey = "labels"
 	ProtocolKey           MetadataKey = "protocol"
 	ResponseTime          MetadataKey = "responseTime"
+	Reverse               MetadataKey = "reverse"
 	SourcePrincipal       MetadataKey = "sourcePrincipal"
 	Throughput            MetadataKey = "throughput"
 )

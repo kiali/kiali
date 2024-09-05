@@ -199,7 +199,7 @@ export const renderNoTraffic = (protocol?: string): React.ReactNode => {
   );
 };
 
-export const getTitle = (title: string): React.ReactNode => {
+export const getTitle = (title: string, ambient?: React.ReactElement): React.ReactNode => {
   switch (title) {
     case NodeType.AGGREGATE:
       title = 'Operation';
@@ -214,5 +214,9 @@ export const getTitle = (title: string): React.ReactNode => {
       title = 'Workload';
       break;
   }
-  return <div className={summaryTitle}>{title}</div>;
+  return (
+    <div className={summaryTitle}>
+      {title} {ambient}
+    </div>
+  );
 };

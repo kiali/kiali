@@ -12,7 +12,7 @@ import {
   TrafficRate,
   prettyProtocol
 } from '../../types/Graph';
-import { renderBadgedLink } from './SummaryLink';
+import { renderBadgedDoubleLink, renderBadgedLink } from './SummaryLink';
 import {
   shouldRefreshData,
   getDatapoints,
@@ -41,6 +41,7 @@ import { classes } from 'typestyle';
 import { panelBodyStyle, panelHeadingStyle, panelStyle } from './SummaryPanelStyle';
 import { ApiResponse } from 'types/Api';
 import { serverConfig } from 'config';
+import { AmbientBadge } from '../../components/Ambient/AmbientBadge';
 
 type SummaryPanelEdgeMetricsState = {
   errRates: Datapoint[];
@@ -146,6 +147,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
     const isHttp = protocol === Protocol.HTTP;
     const isTcp = protocol === Protocol.TCP;
     const isRequests = isHttp || (isGrpc && this.props.trafficRates.includes(TrafficRate.GRPC_REQUEST));
+    const reverse = edgeData.elemreverse;
 
     const SecurityBlock = (): React.ReactElement => {
       return (
@@ -169,13 +171,14 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
         </div>
       );
     };
-
+    const ambientBadge = reverse ? <AmbientBadge tooltip={'reported from Ambient'}></AmbientBadge> : undefined;
     return (
       <div ref={this.mainDivRef} className={classes(panelStyle, summaryPanel)}>
         <div className={panelHeadingStyle}>
-          {getTitle(`Edge (${prettyProtocol(protocol)})`)}
-          {renderBadgedLink(sourceData, undefined, 'From:  ')}
-          {renderBadgedLink(destData, undefined, 'To:        ')}
+          {getTitle(`Edge (${prettyProtocol(protocol)})`, ambientBadge)}
+          {reverse && renderBadgedDoubleLink(sourceData, destData, 'From/To: ')}
+          {!reverse && renderBadgedLink(sourceData, undefined, 'From:  ')}
+          {!reverse && renderBadgedLink(destData, undefined, 'To:        ')}
         </div>
 
         {hasSecurity && <SecurityBlock />}

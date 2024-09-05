@@ -29,6 +29,7 @@ import { GraphData } from 'pages/Graph/GraphPage';
 import * as React from 'react';
 import {
   BoxByType,
+  DecoratedGraphEdgeWrapper,
   EdgeLabelMode,
   EdgeMode,
   GraphEvent,
@@ -164,6 +165,16 @@ const TopologyContent: React.FC<{
     } as GraphPFSettings;
   }, [graphData.fetchParams, edgeLabels, showOutOfMesh, showSecurity, showVirtualServices]);
 
+  const getReverse = (elem: GraphElement): DecoratedGraphEdgeWrapper | undefined => {
+    const elemData = elem.getData();
+    console.log(trafficRates);
+    return graphData.elements?.edges?.find(edge => {
+      return (
+        edge.data.id !== elemData.id && edge.data.source === elemData.target && edge.data.target === elemData.source
+      );
+    });
+  };
+
   //
   // SelectedIds State
   //
@@ -196,6 +207,11 @@ const TopologyContent: React.FC<{
       const elem = controller.getElementById(selectedIds[0]);
       switch (elem?.getKind()) {
         case ModelKind.edge: {
+          // A hidden element can be clicked
+          if (elem?.getData().display === 'reverse' || elem?.getData().display === 'hide') {
+            let data = elem?.getData();
+            data.elemreverse = getReverse(elem);
+          }
           highlighter.setSelectedId(selectedIds[0]);
           updateSummary({ isPF: true, summaryType: 'edge', summaryTarget: elem } as GraphEvent);
           return;
