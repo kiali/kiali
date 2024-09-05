@@ -353,8 +353,8 @@ class CustomMetricsComponent extends React.Component<Props, MetricsState> {
             <GrafanaLinks
               links={this.state.grafanaLinks}
               namespace={this.props.namespace}
-              object={this.props.app}
-              objectType={MetricsObjectTypes.APP}
+              object={this.props.workload ? this.props.workload : this.props.app}
+              objectType={this.props.workload ? MetricsObjectTypes.WORKLOAD : MetricsObjectTypes.APP}
               version={this.props.version}
             />
           </ToolbarGroup>
