@@ -149,6 +149,15 @@ func createMetricsServiceForNamespaces(w http.ResponseWriter, r *http.Request, p
 	return metrics, nsInfos
 }
 
+func getUserClients(r *http.Request, cf kubernetes.ClientFactory) (map[string]kubernetes.ClientInterface, error) {
+	authInfos, err := getAuthInfo(r)
+	if err != nil {
+		return nil, err
+	}
+
+	return cf.GetClients(authInfos)
+}
+
 // getAuthInfo retrieves the token from the request's context
 func getAuthInfo(r *http.Request) (map[string]*api.AuthInfo, error) {
 	authInfoContext := authentication.GetAuthInfoContext(r.Context())

@@ -14,6 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/istio/istiotest"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/models"
@@ -82,8 +83,8 @@ func testPerfScenario(exStatus string, namespaces []core_v1.Namespace, drs []*ne
 
 	k8s := kubetest.NewFakeK8sClient(objs...)
 	SetupBusinessLayer(t, k8s, *conf)
-	discovery := &fakeMeshDiscovery{
-		mesh: models.Mesh{
+	discovery := &istiotest.FakeDiscovery{
+		MeshReturn: models.Mesh{
 			ControlPlanes: []models.ControlPlane{{
 				IstiodNamespace: conf.IstioNamespace,
 				Revision:        "default",

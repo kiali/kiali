@@ -39,7 +39,6 @@ import {
   K8sHTTPRoute,
   K8sGRPCRoute,
   OutboundTrafficPolicy,
-  CanaryUpgradeStatus,
   PodLogsQuery,
   LogLevelQuery,
   LogType,
@@ -47,7 +46,7 @@ import {
 } from '../types/IstioObjects';
 import { ComponentStatus, IstiodResourceThresholds } from '../types/IstioStatus';
 import { TracingInfo, TracingResponse, TracingSingleResponse } from '../types/TracingInfo';
-import { MeshDefinition, MeshQuery } from '../types/Mesh';
+import { ControlPlane, MeshDefinition, MeshQuery } from '../types/Mesh';
 import { DashboardQuery, IstioMetricsOptions, MetricsStatsQuery } from '../types/MetricsOptions';
 import { IstioMetricsMap, MetricsPerNamespace, MetricsStatsResult } from '../types/Metrics';
 import { Namespace } from '../types/Namespace';
@@ -1338,8 +1337,8 @@ export const getCrippledFeatures = (): Promise<ApiResponse<KialiCrippledFeatures
   return newRequest<KialiCrippledFeatures>(HTTP_VERBS.GET, urls.crippledFeatures, {}, {});
 };
 
-export const getCanaryUpgradeStatus = (): Promise<ApiResponse<CanaryUpgradeStatus>> => {
-  return newRequest<CanaryUpgradeStatus>(HTTP_VERBS.GET, urls.canaryUpgradeStatus(), {}, {});
+export const getControlPlanes = (): Promise<ApiResponse<ControlPlane[]>> => {
+  return newRequest<ControlPlane[]>(HTTP_VERBS.GET, urls.controlPlanes, {}, {});
 };
 
 export const getMeshGraph = (params: MeshQuery): Promise<ApiResponse<MeshDefinition>> => {

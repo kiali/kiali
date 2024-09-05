@@ -110,6 +110,7 @@ if [ -z "${HELM_CHARTS_DIR}" ]; then
   HELM_CHARTS_DIR="$(mktemp -d)"
   infomsg "Cloning kiali helm-charts..."
   git clone --single-branch --branch "${TARGET_BRANCH}" https://github.com/kiali/helm-charts.git "${HELM_CHARTS_DIR}"
+  make -C "${HELM_CHARTS_DIR}" build-helm-charts
 fi
 
 # print out our settings for debug purposes
@@ -201,8 +202,6 @@ setup_kind_singlecluster() {
   infomsg "Pushing the images into the cluster..."
   make -e DORP="${DORP}" -e CLUSTER_TYPE="kind" -e KIND_NAME="ci" cluster-push-kiali
 
-  make -C "${HELM_CHARTS_DIR}" build-helm-charts
-
   HELM="${HELM_CHARTS_DIR}/_output/helm-install/helm"
 
   infomsg "Using helm: $(ls -l ${HELM})"
@@ -282,8 +281,6 @@ setup_kind_tempo() {
   infomsg "Pushing the images into the cluster..."
   make -e DORP="${DORP}" -e CLUSTER_TYPE="kind" -e KIND_NAME="ci" cluster-push-kiali
 
-  make -C "${HELM_CHARTS_DIR}" build-helm-charts
-
   HELM="${HELM_CHARTS_DIR}/_output/helm-install/helm"
 
   infomsg "Using helm: $(ls -l ${HELM})"
@@ -336,8 +333,6 @@ setup_kind_multicluster() {
 
   infomsg "Downloading istio"
   "${SCRIPT_DIR}"/istio/download-istio.sh ${DOWNLOAD_ISTIO_VERSION_ARG}
-
-  make -C "${HELM_CHARTS_DIR}" build-helm-charts
 
   local script_dir
   script_dir="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"

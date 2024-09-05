@@ -48,9 +48,15 @@ export interface NamespaceState {
   readonly activeNamespaces: Namespace[];
   readonly filter: string;
   readonly isFetching: boolean;
+  // TODO: Can this be non-optional since we default to empty list?
   readonly items?: Namespace[];
   readonly lastUpdated?: Date;
   readonly namespacesPerCluster: Map<string, string[]>;
+  // The items list filters out namespaces with the same name that exist
+  // on multiple clusters because that is how the namespace selector
+  // currently works but these are actually separate namespaces and
+  // some parts of the UI need the full list unfiltered.
+  readonly unfilteredItems?: Namespace[];
 }
 
 // Various pages are described here with their various sections

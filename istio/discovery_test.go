@@ -2170,8 +2170,7 @@ func TestDiscoverWithTags(t *testing.T) {
 			for _, cp := range mesh.ControlPlanes {
 				require.NotNil(cp.Tags)
 				for _, tag := range cp.Tags {
-					require.NotNil(tag.ControlPlane)
-					require.Equal(&cp, tag.ControlPlane)
+					require.Equal(cp.Revision, tag.Revision)
 				}
 			}
 			for clusterRev, expectedNamespaces := range tc.expectedNamespacesByRev {
@@ -2326,10 +2325,12 @@ func TestDiscoverTagsWithExternalCluster(t *testing.T) {
 	require.Len(externalIstioSystem.Tags, 1)
 	require.Len(externalControlPlane.Tags, 1)
 
-	require.Equal(externalIstioSystem.Tags[0].ControlPlane.ID, externalIstioSystem.ID)
-	require.Equal(externalIstioSystem.Tags[0].ControlPlane.IstiodName, externalIstioSystem.IstiodName)
-	require.Equal(externalControlPlane.Tags[0].ControlPlane.ID, externalControlPlane.ID)
-	require.Equal(externalControlPlane.Tags[0].ControlPlane.IstiodName, externalControlPlane.IstiodName)
+	require.Equal(externalIstioSystem.Tags[0].Revision, externalIstioSystem.Revision)
+	require.Equal(externalIstioSystem.Tags[0].Cluster, externalIstioSystem.Cluster.Name)
+	require.Equal(externalControlPlane.Tags[0].Revision, externalControlPlane.Revision)
+	require.NotEqual(externalControlPlane.Tags[0].Cluster, externalControlPlane.Cluster.Name)
+	require.Equal(externalControlPlane.Tags[0].Cluster, externalControlPlane.ID)
 
-	require.Equal([]models.Namespace{{Name: "bookinfo", Cluster: "remote", Labels: map[string]string{models.IstioRevisionLabel: "prod"}}}, externalControlPlane.ManagedNamespaces)
+	expectedNamespaces := []models.Namespace{{Name: "bookinfo", Cluster: "remote", Labels: map[string]string{models.IstioRevisionLabel: "prod"}, Revision: "prod"}}
+	require.Equal(expectedNamespaces, externalControlPlane.ManagedNamespaces)
 }

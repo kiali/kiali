@@ -98,6 +98,12 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 			"revision":   cp.Revision,
 			"thresholds": cp.Thresholds,
 		}
+		// Assuming there's just one tag per controlplane.
+		// TODO: Is this correct? Especially for primary-remote?
+		if len(cp.Tags) == 1 {
+			infraData["tag"] = cp.Tags[0]
+		}
+
 		healthDataKey := componentHealthKey{Name: cp.IstiodName, Namespace: cp.IstiodNamespace, Cluster: cp.Cluster.Name}.String()
 		istiod, _, err := addInfra(meshMap, mesh.InfraTypeIstiod, cp.Cluster.Name, cp.IstiodNamespace, name, infraData, version, false, healthData[healthDataKey])
 		mesh.CheckError(err)

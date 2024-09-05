@@ -3,19 +3,31 @@ import { ElementModel, GraphElement, Node, NodeModel } from '@patternfly/react-t
 import { kialiStyle } from 'styles/StyleUtils';
 import { TargetPanelCommonProps, shouldRefreshData, targetPanelHR, targetPanelStyle } from './TargetPanelCommon';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
-import { Card, CardBody, CardHeader, Label, Title, TitleSizes, Tooltip, TooltipPosition } from '@patternfly/react-core';
+import { connect } from 'react-redux';
+import { KialiAppState } from '../../../store/Store';
+import {
+  Card,
+  CardBody,
+  CardHeader,
+  Label,
+  List,
+  ListItem,
+  Title,
+  TitleSizes,
+  Tooltip,
+  TooltipPosition
+} from '@patternfly/react-core';
 import { Paths, serverConfig } from 'config';
-import { CanaryUpgradeStatus, ValidationStatus } from 'types/IstioObjects';
+import { ValidationStatus } from 'types/IstioObjects';
 import { OverviewNamespaceAction, OverviewNamespaceActions } from 'pages/Overview/OverviewNamespaceActions';
 import { NamespaceInfo, NamespaceStatus } from 'types/NamespaceInfo';
 import { NamespaceMTLSStatus } from 'components/MTls/NamespaceMTLSStatus';
 import { NamespaceStatuses } from 'pages/Overview/NamespaceStatuses';
 import { DirectionType, OverviewType } from 'pages/Overview/OverviewToolbar';
 import { PromisesRegistry } from 'utils/CancelablePromises';
-import { CanaryUpgradeProgress } from 'pages/Overview/CanaryUpgradeProgress';
+import { ControlPlaneDonut } from 'pages/Overview/ControlPlaneDonut';
 import { isParentKiosk, kioskOverviewAction } from 'components/Kiosk/KioskActions';
 import { Show } from 'pages/Overview/OverviewPage';
-import { ControlPlaneBadge } from 'pages/Overview/ControlPlaneBadge';
 import { ControlPlaneVersionBadge } from 'pages/Overview/ControlPlaneVersionBadge';
 import { AmbientBadge } from 'components/Ambient/AmbientBadge';
 import { PFColors } from 'components/Pf/PfColors';
@@ -38,11 +50,18 @@ import { Metric } from 'types/Metrics';
 import { classes } from 'typestyle';
 import { panelBodyStyle, panelHeadingStyle, panelStyle } from 'pages/Graph/SummaryPanelStyle';
 import { isRemoteCluster } from './TargetPanelControlPlane';
+import { ControlPlane } from 'types/Mesh';
+import { unfilteredNamespaceItemsSelector } from 'store/Selectors';
+import { Namespace } from 'types/Namespace';
 
-type TargetPanelNamespaceProps = TargetPanelCommonProps;
+type ReduxProps = {
+  namespaces: Namespace[];
+};
+
+type TargetPanelNamespaceProps = ReduxProps & TargetPanelCommonProps;
 
 type TargetPanelNamespaceState = {
-  canaryUpgradeStatus?: CanaryUpgradeStatus;
+  controlPlanes?: ControlPlane[];
   errorMetrics?: Metric[];
   loading: boolean;
   metrics?: Metric[];
@@ -55,7 +74,7 @@ type TargetPanelNamespaceState = {
 };
 
 const defaultState: TargetPanelNamespaceState = {
-  canaryUpgradeStatus: undefined,
+  controlPlanes: undefined,
   errorMetrics: undefined,
   loading: false,
   nsInfo: undefined,
@@ -84,7 +103,7 @@ const namespaceNameStyle = kialiStyle({
   textOverflow: 'ellipsis'
 });
 
-export class TargetPanelNamespace extends React.Component<TargetPanelNamespaceProps, TargetPanelNamespaceState> {
+class TargetPanelNamespaceComponent extends React.Component<TargetPanelNamespaceProps, TargetPanelNamespaceState> {
   private promises = new PromisesRegistry();
 
   constructor(props: TargetPanelNamespaceProps) {
@@ -94,6 +113,7 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
     const data = (props.target.elem as GraphElement<ElementModel, any>).getData();
     this.state = {
       ...defaultState,
+      nsInfo: props.namespaces.find(ns => ns.cluster === data.cluster && ns.name === data.namespace),
       targetCluster: data.cluster,
       targetNamespace: data.namespace,
       targetNode: targetNode
@@ -101,19 +121,23 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
   }
 
   static getDerivedStateFromProps(
-    props: TargetPanelCommonProps,
+    props: TargetPanelNamespaceProps,
     state: TargetPanelNamespaceState
   ): TargetPanelNamespaceState | null {
     // if the target (e.g. namespaceBox) has changed, then init the state and set to loading. The loading
     // will actually be kicked off after the render (in componentDidMount/Update).
-    return props.target.elem !== state.targetNode
-      ? ({
-          targetNode: props.target.elem,
-          targetCluster: (props.target.elem as GraphElement<ElementModel, any>).getData().cluster,
-          targetNamespace: (props.target.elem as GraphElement<ElementModel, any>).getData().namespace,
-          loading: true
-        } as TargetPanelNamespaceState)
-      : null;
+    if (props.target.elem !== state.targetNode) {
+      const { cluster, namespace } = (props.target.elem as GraphElement<ElementModel, any>).getData();
+      return {
+        targetNode: props.target.elem as any,
+        targetCluster: cluster,
+        targetNamespace: namespace,
+        nsInfo: props.namespaces.find(ns => ns.cluster === cluster && ns.name === namespace),
+        loading: true
+      };
+    }
+
+    return null;
   }
 
   componentDidMount(): void {
@@ -135,10 +159,11 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
       return this.getLoading();
     }
 
+    const listItemStyle = { marginTop: 0 };
     const isControlPlane = this.isControlPlane();
     const nsInfo = this.state.nsInfo;
     const ns = nsInfo.name;
-    const actions = this.getNamespaceActions(nsInfo);
+    const actions = this.getNamespaceActions();
     const namespaceActions = (
       <OverviewNamespaceActions key={`namespaceAction_${ns}`} namespace={ns} actions={actions} />
     );
@@ -183,18 +208,34 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
 
                 {isControlPlane && (
                   <>
-                    {this.state.canaryUpgradeStatus && this.hasCanaryUpgradeConfigured() && (
-                      <>
+                    {this.state.controlPlanes && (
+                      <div>
                         {targetPanelHR}
-                        <CanaryUpgradeProgress canaryUpgradeStatus={this.state.canaryUpgradeStatus} />
-                      </>
+                        <ControlPlaneDonut controlPlanes={this.state.controlPlanes} />
+                      </div>
                     )}
 
-                    {this.props.istioAPIEnabled && (
-                      <>
+                    {this.state.controlPlanes && (
+                      <div style={{ textAlign: 'left', alignContent: 'start', alignItems: 'start' }}>
                         {targetPanelHR}
-                        {this.renderCharts()}
-                      </>
+                        <Title headingLevel="h3">Control Planes</Title>
+                        <List isPlain isBordered>
+                          {this.state.controlPlanes
+                            .sort((a, b) => a.istiodName.localeCompare(b.istiodName))
+                            .map(cp => (
+                              <ListItem key={cp.istiodName}>
+                                <Title headingLevel="h4">{cp.istiodName}</Title>
+                                <List style={listItemStyle} isPlain>
+                                  <ListItem style={listItemStyle}>
+                                    Version: {cp.version ? cp.version.version : 'Unknown'}
+                                  </ListItem>
+                                  <ListItem style={listItemStyle}>Revision: {cp.revision}</ListItem>
+                                  {cp.tags && <ListItem style={listItemStyle}>Tag: {cp.tags[0].name}</ListItem>}
+                                </List>
+                              </ListItem>
+                            ))}
+                        </List>
+                      </div>
                     )}
                   </>
                 )}
@@ -266,17 +307,7 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
     );
   };
 
-  private hasCanaryUpgradeConfigured = (): boolean => {
-    if (this.state.canaryUpgradeStatus) {
-      if (Object.keys(this.state.canaryUpgradeStatus.namespacesPerRevision).length > 1) {
-        return true;
-      }
-    }
-
-    return false;
-  };
-
-  private getNamespaceActions = (nsInfo: NamespaceInfo): OverviewNamespaceAction[] => {
+  private getNamespaceActions = (): OverviewNamespaceAction[] => {
     // Today actions are fixed, but soon actions may depend of the state of a namespace
     // So we keep this wrapped in a showActions function.
     const namespaceActions: OverviewNamespaceAction[] = isParentKiosk(this.props.kiosk)
@@ -344,190 +375,6 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
             ]
           }
         ];
-    // We are going to assume that if the user can create/update Istio AuthorizationPolicies in a namespace
-    // then it can use the Istio Injection Actions.
-    // RBAC allow more fine granularity but Kiali won't check that in detail.
-
-    if (serverConfig.istioNamespace !== nsInfo.name) {
-      if (serverConfig.kialiFeatureFlags.istioInjectionAction && !serverConfig.kialiFeatureFlags.istioUpgradeAction) {
-        namespaceActions.push({
-          isGroup: false,
-          isSeparator: true
-        });
-
-        const enableAction = {
-          'data-test': `enable-${nsInfo.name}-namespace-sidecar-injection`,
-          isGroup: false,
-          isSeparator: false,
-          title: 'Enable Auto Injection',
-          action: (ns: string) => console.log(`TODO: Enable Auto Injection [${ns}]`)
-          /*
-            this.setState({
-              showTrafficPoliciesModal: true,
-              nsTarget: ns,
-              opTarget: 'enable',
-              kind: 'injection',
-              clusterTarget: nsInfo.cluster
-            })
-            */
-        };
-
-        const disableAction = {
-          'data-test': `disable-${nsInfo.name}-namespace-sidecar-injection`,
-          isGroup: false,
-          isSeparator: false,
-          title: 'Disable Auto Injection',
-          action: (ns: string) => console.log(`TODO: Disable Auto Injection [${ns}]`)
-          /*
-            this.setState({
-              showTrafficPoliciesModal: true,
-              nsTarget: ns,
-              opTarget: 'disable',
-              kind: 'injection',
-              clusterTarget: nsInfo.cluster
-            })
-            */
-        };
-
-        const removeAction = {
-          'data-test': `remove-${nsInfo.name}-namespace-sidecar-injection`,
-          isGroup: false,
-          isSeparator: false,
-          title: 'Remove Auto Injection',
-          action: (ns: string) => console.log(`TODO: Remove Auto Injection [${ns}]`)
-          /*
-            this.setState({
-              showTrafficPoliciesModal: true,
-              nsTarget: ns,
-              opTarget: 'remove',
-              kind: 'injection',
-              clusterTarget: nsInfo.cluster
-            })
-            */
-        };
-
-        if (
-          nsInfo.labels &&
-          ((nsInfo.labels[serverConfig.istioLabels.injectionLabelName] &&
-            nsInfo.labels[serverConfig.istioLabels.injectionLabelName] === 'enabled') ||
-            nsInfo.labels[serverConfig.istioLabels.injectionLabelRev])
-        ) {
-          namespaceActions.push(disableAction);
-          namespaceActions.push(removeAction);
-        } else if (
-          nsInfo.labels &&
-          nsInfo.labels[serverConfig.istioLabels.injectionLabelName] &&
-          nsInfo.labels[serverConfig.istioLabels.injectionLabelName] === 'disabled'
-        ) {
-          namespaceActions.push(enableAction);
-          namespaceActions.push(removeAction);
-        } else {
-          namespaceActions.push(enableAction);
-        }
-      }
-
-      if (serverConfig.kialiFeatureFlags.istioUpgradeAction && this.hasCanaryUpgradeConfigured()) {
-        const revisionActions = Object.keys(this.state.canaryUpgradeStatus?.namespacesPerRevision || {})
-          .filter(revision => !this.state.canaryUpgradeStatus!.namespacesPerRevision[revision].includes(nsInfo.name))
-          .map(revision => ({
-            isGroup: false,
-            isSeparator: false,
-            title: `Switch to ${revision} revision`,
-            action: (ns: string) => console.log(`TODO: Upgrade revision [${ns}]`)
-            /*
-            this.setState({
-              opTarget: 'upgrade',
-              kind: 'canary',
-              nsTarget: ns,
-              showTrafficPoliciesModal: true,
-              clusterTarget: nsInfo.cluster
-            })
-            */
-          }));
-
-        namespaceActions.push({
-          isGroup: false,
-          isSeparator: true
-        });
-
-        revisionActions.forEach(action => {
-          namespaceActions.push(action);
-        });
-      }
-
-      const aps = nsInfo.istioConfig?.authorizationPolicies ?? [];
-
-      const addAuthorizationAction = {
-        isGroup: false,
-        isSeparator: false,
-        title: `${aps.length === 0 ? 'Create ' : 'Update'} Traffic Policies`,
-        action: (ns: string) => console.log(`TODO: create traffic policies [${ns}]`)
-        /*
-          this.setState({
-            opTarget: aps.length === 0 ? 'create' : 'update',
-            nsTarget: ns,
-            clusterTarget: nsInfo.cluster,
-            showTrafficPoliciesModal: true,
-            kind: 'policy'
-          });
-        */
-      };
-
-      const removeAuthorizationAction = {
-        isGroup: false,
-        isSeparator: false,
-        title: 'Delete Traffic Policies',
-        action: (ns: string) => console.log(`TODO: delete traffic policies [${ns}]`)
-        /*
-          this.setState({
-            opTarget: 'delete',
-            nsTarget: ns,
-            showTrafficPoliciesModal: true,
-            kind: 'policy',
-            clusterTarget: nsInfo.cluster
-          })
-          */
-      };
-
-      if (this.props.istioAPIEnabled) {
-        namespaceActions.push({
-          isGroup: false,
-          isSeparator: true
-        });
-
-        namespaceActions.push(addAuthorizationAction);
-
-        if (aps.length > 0) {
-          namespaceActions.push(removeAuthorizationAction);
-        }
-      }
-    } else {
-      console.log(`TODO: grafana links`);
-      /*
-    if (this.state.grafanaLinks.length > 0) {
-      // Istio namespace will render external Grafana dashboards
-      namespaceActions.push({
-        isGroup: false,
-        isSeparator: true
-      });
-
-      this.state.grafanaLinks.forEach(link => {
-        const grafanaDashboard = {
-          isGroup: false,
-          isSeparator: false,
-          isExternal: true,
-          title: link.name,
-          action: (_ns: string) => {
-            window.open(link.url, '_blank');
-            this.load();
-          }
-        };
-
-        namespaceActions.push(grafanaDashboard);
-      });
-      */
-    }
-
     return namespaceActions;
   };
 
@@ -535,18 +382,9 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
     const isControlPlane = this.isControlPlane();
     return (
       <>
-        {isControlPlane && <ControlPlaneBadge cluster={ns.cluster} annotations={ns.annotations}></ControlPlaneBadge>}
-
-        {isControlPlane &&
-          this.hasCanaryUpgradeConfigured() &&
-          this.state.canaryUpgradeStatus &&
-          this.state.canaryUpgradeStatus.namespacesPerRevision &&
-          Object.keys(this.state.canaryUpgradeStatus!.namespacesPerRevision).map(
-            revision =>
-              !this.state.canaryUpgradeStatus!.namespacesPerRevision[revision].includes(ns.name) && (
-                <ControlPlaneVersionBadge version={revision} />
-              )
-          )}
+        {isControlPlane && ns.name !== serverConfig.istioNamespace && (
+          <ControlPlaneVersionBadge version={ns.labels ? ns.labels['istio.io/rev'] : ''} />
+        )}
 
         {isControlPlane && !this.props.istioAPIEnabled && (
           <Label style={{ marginLeft: '0.5rem' }} color="orange" isCompact>
@@ -621,35 +459,10 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
   private load = (): void => {
     this.promises.cancelAll();
 
-    API.getNamespaces()
-      .then(result => {
-        const cluster = this.state.targetCluster;
-        const namespace = this.state.targetNamespace;
-        const nsInfo = result.data.find(ns => ns.cluster === cluster && ns.name === namespace);
-        if (!nsInfo) {
-          AlertUtils.add(`Failed to find |${cluster}:${namespace}| in GetNamespaces() result`);
-          this.setState({ ...defaultState, loading: false });
-          return;
-        }
-
-        this.promises
-          .registerAll(`promises-${cluster}:${namespace}`, [
-            this.fetchCanariesStatus(),
-            this.fetchHealthStatus(),
-            this.fetchMetrics()
-          ])
-          .then(_ => {
-            this.setState({ loading: false, nsInfo: nsInfo });
-          })
-          .catch(err => {
-            if (err.isCanceled) {
-              console.debug('TargetPanelNamespace: Ignore fetch error (canceled).');
-              return;
-            }
-
-            this.setState({ ...defaultState, loading: false });
-            this.handleApiError('Could not loading target namespace panel', err);
-          });
+    this.promises
+      .registerAll(`promises`, [this.fetchControlPlanes(), this.fetchHealthStatus(), this.fetchMetrics()])
+      .then(() => {
+        this.setState({ loading: false });
       })
       .catch(err => {
         if (err.isCanceled) {
@@ -658,27 +471,27 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
         }
 
         this.setState({ ...defaultState, loading: false });
-        this.handleApiError('Could not fetch namespaces when loading target panel', err);
+        this.handleApiError('Could not loading target namespace panel', err);
       });
 
     this.setState({ loading: true });
   };
 
-  private fetchCanariesStatus = async (): Promise<void> => {
+  private fetchControlPlanes = async (): Promise<void> => {
     if (!this.isControlPlane()) {
       return Promise.resolve();
     }
 
-    return API.getCanaryUpgradeStatus()
+    return API.getControlPlanes()
       .then(response => {
         this.setState({
-          canaryUpgradeStatus: {
-            namespacesPerRevision: response.data.namespacesPerRevision
-          }
+          // Filter out controlplanes that don't match this cluster.
+          // This should maybe be done server side.
+          controlPlanes: response.data.filter(controlPlane => controlPlane.cluster.name === this.state.nsInfo?.cluster)
         });
       })
       .catch(error => {
-        AlertUtils.addError('Error fetching namespace canary upgrade status.', error, 'default', MessageType.ERROR);
+        AlertUtils.addError('Error fetching controlplanes.', error, 'default', MessageType.ERROR);
       });
   };
 
@@ -893,3 +706,11 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
     router.navigate(destination);
   };
 }
+
+const mapStateToProps = (state: KialiAppState): ReduxProps => {
+  return {
+    namespaces: unfilteredNamespaceItemsSelector(state) || []
+  };
+};
+
+export const TargetPanelNamespace = connect(mapStateToProps)(TargetPanelNamespaceComponent);

@@ -35,7 +35,7 @@ type Layer struct {
 // Global clientfactory and prometheus clients.
 var (
 	clientFactory       kubernetes.ClientFactory
-	discovery           meshDiscovery
+	discovery           istio.MeshDiscovery
 	grafanaService      *grafana.Service
 	kialiCache          cache.KialiCache
 	poller              ControlPlaneMonitor
@@ -49,7 +49,7 @@ func Start(
 	cf kubernetes.ClientFactory,
 	controlPlaneMonitor ControlPlaneMonitor,
 	cache cache.KialiCache,
-	disc meshDiscovery,
+	disc istio.MeshDiscovery,
 	prom prometheus.ClientInterface,
 	traceClientLoader func() tracing.ClientInterface,
 	grafana *grafana.Service,
@@ -104,7 +104,7 @@ func newLayer(
 	cache cache.KialiCache,
 	conf *config.Config,
 	grafana *grafana.Service,
-	discovery meshDiscovery,
+	discovery istio.MeshDiscovery,
 	cpm ControlPlaneMonitor,
 ) *Layer {
 	temporaryLayer := &Layer{}
@@ -114,9 +114,9 @@ func newLayer(
 	// TODO: Modify the k8s argument to other services to pass the whole k8s map if needed
 	temporaryLayer.App = NewAppService(temporaryLayer, conf, prom, grafana, userClients)
 	temporaryLayer.Health = HealthService{prom: prom, businessLayer: temporaryLayer, userClients: userClients}
-	temporaryLayer.IstioConfig = IstioConfigService{config: *conf, userClients: userClients, kialiCache: cache, businessLayer: temporaryLayer, controlPlaneMonitor: poller}
+	temporaryLayer.IstioConfig = IstioConfigService{config: *conf, userClients: userClients, kialiCache: cache, businessLayer: temporaryLayer, controlPlaneMonitor: cpm}
 	temporaryLayer.Namespace = NewNamespaceService(userClients, kialiSAClients, cache, conf, discovery)
-	temporaryLayer.Mesh = NewMeshService(kialiSAClients, cache, temporaryLayer.Namespace, conf, discovery)
+	temporaryLayer.Mesh = NewMeshService(kialiSAClients, discovery)
 	temporaryLayer.ProxyStatus = ProxyStatusService{kialiSAClients: kialiSAClients, kialiCache: cache, businessLayer: temporaryLayer}
 	// Out of order because it relies on ProxyStatus
 	temporaryLayer.ProxyLogging = ProxyLoggingService{userClients: userClients, proxyStatus: &temporaryLayer.ProxyStatus}
