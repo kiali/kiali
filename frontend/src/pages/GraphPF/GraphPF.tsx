@@ -165,21 +165,20 @@ const TopologyContent: React.FC<{
     } as GraphPFSettings;
   }, [graphData.fetchParams, edgeLabels, showOutOfMesh, showSecurity, showVirtualServices]);
 
-  const getReverse = (elem: GraphElement): DecoratedGraphEdgeWrapper | undefined => {
-    const elemData = elem.getData();
-    console.log(trafficRates);
-    return graphData.elements?.edges?.find(edge => {
-      return (
-        edge.data.id !== elemData.id && edge.data.source === elemData.target && edge.data.target === elemData.source
-      );
-    });
-  };
-
   //
   // SelectedIds State
   //
   const [selectedIds, setSelectedIds] = useVisualizationState<string[]>(SELECTION_STATE, []);
   React.useEffect(() => {
+    const getReverse = (elem: GraphElement): DecoratedGraphEdgeWrapper | undefined => {
+      const elemData = elem.getData();
+      return graphData.elements?.edges?.find(edge => {
+        return (
+          edge.data.id !== elemData.id && edge.data.source === elemData.target && edge.data.target === elemData.source
+        );
+      });
+    };
+
     if (isMiniGraph) {
       if (selectedIds.length > 0) {
         const elem = controller.getElementById(selectedIds[0]);
