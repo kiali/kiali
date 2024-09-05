@@ -14,6 +14,7 @@ import (
 	"github.com/kiali/kiali/business/checkers"
 	"github.com/kiali/kiali/business/references"
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
@@ -23,7 +24,7 @@ import (
 
 type IstioValidationsService struct {
 	businessLayer *Layer
-	discovery     meshDiscovery
+	discovery     istio.MeshDiscovery
 	userClients   map[string]kubernetes.ClientInterface
 }
 

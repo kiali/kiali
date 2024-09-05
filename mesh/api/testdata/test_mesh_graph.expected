@@ -207,7 +207,8 @@
                 "istio-injection": "enabled",
                 "kubernetes.io/metadata.name": "data-plane-1"
               },
-              "annotations": null
+              "annotations": null,
+              "revision": "default"
             },
             {
               "name": "data-plane-2",
@@ -217,7 +218,8 @@
                 "istio.io/rev": "default",
                 "kubernetes.io/metadata.name": "data-plane-2"
               },
-              "annotations": null
+              "annotations": null,
+              "revision": "default"
             }
           ],
           "version": "default"
@@ -330,7 +332,8 @@
                 "istio-injection": "enabled",
                 "kubernetes.io/metadata.name": "data-plane-3"
               },
-              "annotations": null
+              "annotations": null,
+              "revision": "default"
             },
             {
               "name": "data-plane-4",
@@ -340,7 +343,8 @@
                 "istio.io/rev": "default",
                 "kubernetes.io/metadata.name": "data-plane-4"
               },
-              "annotations": null
+              "annotations": null,
+              "revision": "default"
             }
           ],
           "version": "default"

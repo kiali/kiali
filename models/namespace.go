@@ -43,6 +43,13 @@ type Namespace struct {
 
 	// Specific annotations used in Kiali
 	Annotations map[string]string `json:"annotations"`
+
+	// Revision managing this namespace.
+	// If the namespace has 'istio-injection: enabled' label,
+	// it will be set to the 'default' revision. Otherwise
+	// it matches on istio.io/rev. Note that his can also
+	// be a Tag and not the actual revision.
+	Revision string `json:"revision,omitempty"`
 }
 
 type (
@@ -68,6 +75,18 @@ func CastNamespace(ns core_v1.Namespace, cluster string) Namespace {
 	namespace.CreationTimestamp = ns.CreationTimestamp.Time
 	namespace.Labels = ns.Labels
 	namespace.Annotations = ns.Annotations
+
+	if ns.Labels != nil {
+		// Injection label takes precedence.
+		// See rules at: https://istio.io/latest/docs/setup/additional-setup/sidecar-injection/#controlling-the-injection-policy
+		if injectionLabel := ns.Labels[IstioInjectionLabel]; injectionLabel == IstioInjectionDisabledLabelValue {
+			namespace.Revision = ""
+		} else if injectionLabel == IstioInjectionEnabledLabelValue {
+			namespace.Revision = DefaultRevisionLabel
+		} else if label, hasLabel := ns.Labels[IstioRevisionLabel]; hasLabel {
+			namespace.Revision = label
+		}
+	}
 
 	if label, hasLabel := ns.Labels[istioLabels.AmbientNamespaceLabel]; hasLabel && label == istioLabels.AmbientNamespaceLabelValue {
 		namespace.IsAmbient = true

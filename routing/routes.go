@@ -1273,6 +1273,27 @@ func NewRoutes(
 			handlers.MeshGraph(conf, clientFactory, kialiCache, grafana, prom, traceClientLoader, discovery, cpm),
 			true,
 		},
+		// swagger:route GET /mesh/controlplanes controlplanes
+		// ---
+		// The backing JSON for mesh controlplanes
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      400: badRequestError
+		//      500: internalError
+		//      200: graphResponse
+		//
+		{
+			"MeshControlPlanes",
+			"GET",
+			"/api/mesh/controlplanes",
+			handlers.ControlPlanes(kialiCache, clientFactory, conf, discovery),
+			true,
+		},
 		// swagger:route GET /grafana integrations grafanaInfo
 		// ---
 		// Get the grafana URL and other descriptors
@@ -1464,25 +1485,6 @@ func NewRoutes(
 			HandlerFunc:   handlers.MetricsStats,
 			Authenticated: true,
 		},
-		// swagger:route GET /api/mesh/canaries/status
-		// ---
-		// Endpoint to get the IstiodCanariesStatus.
-		//              Produces:
-		//              - application/json
-		//
-		//              Schemes: http, https
-		//
-		// responses:
-		//              500: internalError
-		//              200: istiodCanariesStatus
-		{
-			"IstiodCanariesStatus",
-			"GET",
-			"/api/mesh/canaries/status",
-			handlers.IstiodCanariesStatus,
-			true,
-		},
 	}
-
 	return
 }

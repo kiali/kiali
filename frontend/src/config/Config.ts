@@ -120,7 +120,7 @@ const conf = {
       appTraces: (namespace: string, app: string) => `api/namespaces/${namespace}/apps/${app}/traces`,
       authenticate: 'api/authenticate',
       authInfo: 'api/auth/info',
-      canaryUpgradeStatus: () => 'api/mesh/canaries/status',
+      controlPlanes: 'api/mesh/controlplanes',
       clustersApps: () => `api/clusters/apps`,
       clustersHealth: () => `api/clusters/health`,
       clustersMetrics: () => `api/clusters/metrics`,

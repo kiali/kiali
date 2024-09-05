@@ -29,6 +29,7 @@ import {
   Health,
   NamespaceAppHealth
 } from '../../types/Health';
+import { ControlPlane } from '../../types/Mesh';
 import { SortField } from '../../types/SortFilters';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 import { OverviewToolbar, OverviewDisplayMode, OverviewType, DirectionType } from './OverviewToolbar';
@@ -61,7 +62,7 @@ import { OverviewNamespaceAction, OverviewNamespaceActions } from './OverviewNam
 import { router, HistoryManager, URLParam } from '../../app/History';
 import * as AlertUtils from '../../utils/AlertUtils';
 import { MessageType } from '../../types/MessageCenter';
-import { CanaryUpgradeStatus, ValidationStatus } from '../../types/IstioObjects';
+import { ValidationStatus } from '../../types/IstioObjects';
 import { GrafanaInfo, ISTIO_DASHBOARDS } from '../../types/GrafanaInfo';
 import { ExternalLink } from '../../types/Dashboards';
 import { isParentKiosk, kioskOverviewAction } from '../../components/Kiosk/KioskActions';
@@ -130,8 +131,8 @@ export enum Show {
 }
 
 type State = {
-  canaryUpgradeStatus?: CanaryUpgradeStatus;
   clusterTarget?: string;
+  controlPlanes?: ControlPlane[];
   direction: DirectionType;
   displayMode: OverviewDisplayMode;
   grafanaLinks: ExternalLink[];
@@ -178,7 +179,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
       clusterTarget: '',
       opTarget: '',
       grafanaLinks: [],
-      canaryUpgradeStatus: undefined
+      controlPlanes: undefined
     };
   }
 
@@ -242,8 +243,8 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
               errorMetrics: previous ? previous.errorMetrics : undefined,
               validations: previous ? previous.validations : undefined,
               labels: ns.labels,
-              annotations: ns.annotations
-              //controlPlaneMetrics: previous ? previous.controlPlaneMetrics : undefined
+              annotations: ns.annotations,
+              revision: ns.revision
             };
           });
 
@@ -271,7 +272,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
             this.fetchHealth(isAscending, sortField, type);
             this.fetchTLS(isAscending, sortField);
             this.fetchValidations(isAscending, sortField);
-            this.fetchCanariesStatus();
+            this.fetchControlPlanes();
 
             if (displayMode !== OverviewDisplayMode.COMPACT) {
               this.fetchMetrics(direction);
@@ -638,17 +639,15 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
       });
   };
 
-  private fetchCanariesStatus = async (): Promise<void> => {
-    return API.getCanaryUpgradeStatus()
+  private fetchControlPlanes = async (): Promise<void> => {
+    return API.getControlPlanes()
       .then(response => {
         this.setState({
-          canaryUpgradeStatus: {
-            namespacesPerRevision: response.data.namespacesPerRevision
-          }
+          controlPlanes: response.data
         });
       })
       .catch(error => {
-        AlertUtils.addError('Error fetching canary upgrade status.', error, 'default', MessageType.ERROR);
+        AlertUtils.addError('Error fetching controlplanes.', error, 'default', MessageType.ERROR);
       });
   };
 
@@ -789,7 +788,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
             serverConfig.istioLabels.ambientNamespaceLabelValue
         ) &&
         serverConfig.kialiFeatureFlags.istioInjectionAction &&
-        !serverConfig.kialiFeatureFlags.istioUpgradeAction
+        !nsInfo.revision
       ) {
         namespaceActions.push({
           isGroup: false,
@@ -862,15 +861,20 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
       }
 
       if (serverConfig.kialiFeatureFlags.istioUpgradeAction && this.hasCanaryUpgradeConfigured()) {
-        const revisionActions = Object.keys(this.state.canaryUpgradeStatus?.namespacesPerRevision || {})
-          .filter(revision => !this.state.canaryUpgradeStatus!.namespacesPerRevision[revision].includes(nsInfo.name))
-          .map(revision => ({
+        const revisionActions = this.state.controlPlanes
+          ?.filter(
+            controlplane =>
+              nsInfo.revision &&
+              controlplane.managedClusters?.some(managedCluster => managedCluster.name === nsInfo.cluster) &&
+              controlplane.revision !== nsInfo.revision
+          )
+          .map(controlPlane => ({
             isGroup: false,
             isSeparator: false,
-            title: `Switch to ${revision} revision`,
+            title: `Switch to ${controlPlane.revision} revision`,
             action: (ns: string) =>
               this.setState({
-                opTarget: revision,
+                opTarget: controlPlane.revision,
                 kind: 'canary',
                 nsTarget: ns,
                 showTrafficPoliciesModal: true,
@@ -878,12 +882,14 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
               })
           }));
 
-        namespaceActions.push({
-          isGroup: false,
-          isSeparator: true
-        });
+        if (revisionActions && revisionActions.length > 0) {
+          namespaceActions.push({
+            isGroup: false,
+            isSeparator: true
+          });
+        }
 
-        revisionActions.forEach(action => {
+        revisionActions?.forEach(action => {
           namespaceActions.push(action);
         });
       }
@@ -968,13 +974,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
   };
 
   hasCanaryUpgradeConfigured = (): boolean => {
-    if (this.state.canaryUpgradeStatus) {
-      if (Object.keys(this.state.canaryUpgradeStatus.namespacesPerRevision).length > 1) {
-        return true;
-      }
-    }
-
-    return false;
+    return this.state.controlPlanes !== undefined;
   };
 
   render(): React.ReactNode {
@@ -1105,7 +1105,9 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
         <OverviewTrafficPolicies
           opTarget={this.state.opTarget}
           isOpen={this.state.showTrafficPoliciesModal}
-          canaryUpgradeStatus={this.state.canaryUpgradeStatus}
+          controlPlanes={this.state.controlPlanes?.filter(cp =>
+            cp.managedNamespaces?.some(mn => mn.name === this.state.nsTarget)
+          )}
           kind={this.state.kind}
           hideConfirmModal={this.hideTrafficManagement}
           nsTarget={this.state.nsTarget}
@@ -1329,16 +1331,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
           <ControlPlaneBadge cluster={ns.cluster} annotations={ns.annotations}></ControlPlaneBadge>
         )}
 
-        {ns.name !== serverConfig.istioNamespace &&
-          this.hasCanaryUpgradeConfigured() &&
-          this.state.canaryUpgradeStatus &&
-          this.state.canaryUpgradeStatus.namespacesPerRevision &&
-          Object.keys(this.state.canaryUpgradeStatus!.namespacesPerRevision).map(
-            revision =>
-              this.state.canaryUpgradeStatus!.namespacesPerRevision[revision].includes(ns.name) && (
-                <ControlPlaneVersionBadge version={revision} />
-              )
-          )}
+        {ns.name !== serverConfig.istioNamespace && ns.revision && <ControlPlaneVersionBadge version={ns.revision} />}
 
         {ns.name === serverConfig.istioNamespace && !this.props.istioAPIEnabled && (
           <Label style={{ marginLeft: '0.5rem' }} color="orange" isCompact>

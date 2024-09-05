@@ -92,6 +92,23 @@ export interface MeshDefinition {
   timestamp: number;
 }
 
+// TODO: Make these lowercase.
+export interface Tag {
+  name: string;
+}
+
+export interface ControlPlane {
+  cluster: MeshCluster;
+  istiodName: string;
+  managedClusters?: { name: string }[];
+  managedNamespaces?: NamespaceInfo[];
+  revision: string;
+  tags: Tag[];
+  version?: {
+    version: string;
+  };
+}
+
 // Node data after decorating at fetch-time (what is mainly used by ui code)
 export interface DecoratedMeshNodeData extends MeshNodeData {
   healthStatus: string; // status name

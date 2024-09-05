@@ -10,7 +10,6 @@ import {
 } from './TargetPanelCommon';
 import { Title, TitleSizes } from '@patternfly/react-core';
 import { serverConfig } from 'config';
-import { CanaryUpgradeStatus } from 'types/IstioObjects';
 import { NamespaceInfo, NamespaceStatus } from 'types/NamespaceInfo';
 import { isRemoteCluster } from 'pages/Overview/OverviewCardControlPlaneNamespace';
 import { DirectionType } from 'pages/Overview/OverviewToolbar';
@@ -23,8 +22,6 @@ import { IstioMetricsOptions } from 'types/MetricsOptions';
 import { computePrometheusRateParams } from 'services/Prometheus';
 import { ApiError } from 'types/Api';
 import { DEGRADED, FAILURE, HEALTHY, Health, NOT_READY } from 'types/Health';
-import * as AlertUtils from '../../../utils/AlertUtils';
-import { MessageType } from 'types/MessageCenter';
 import { TLSStatus, nsWideMTLSStatus } from 'types/TLSStatus';
 import * as FilterHelper from '../../../components/FilterList/FilterHelper';
 import { NodeData } from '../MeshElems';
@@ -39,14 +36,22 @@ import { load, dump } from 'js-yaml';
 import { yamlDumpOptions } from '../../../types/IstioConfigDetails';
 import { CertsInfo } from 'types/CertsInfo';
 import { IstioCertsInfo } from 'components/IstioCertsInfo/IstioCertsInfo';
+import { namespaceItemsSelector } from 'store/Selectors';
+import { Namespace } from 'types/Namespace';
+import { connect } from 'react-redux';
+import { KialiAppState } from '../../../store/Store';
 
-type TargetPanelControlPlaneProps = TargetPanelCommonProps & {
-  meshStatus: string;
-  minTLS: string;
+type ReduxProps = {
+  namespaces: Namespace[];
 };
 
+type TargetPanelControlPlaneProps = ReduxProps &
+  TargetPanelCommonProps & {
+    meshStatus: string;
+    minTLS: string;
+  };
+
 type TargetPanelControlPlaneState = {
-  canaryUpgradeStatus?: CanaryUpgradeStatus;
   certificates?: CertsInfo[];
   controlPlaneMetrics?: ControlPlaneMetricsMap;
   controlPlaneNode?: Node<NodeModel, any>;
@@ -59,7 +64,6 @@ type TargetPanelControlPlaneState = {
 };
 
 const defaultState: TargetPanelControlPlaneState = {
-  canaryUpgradeStatus: undefined,
   certificates: undefined,
   controlPlaneMetrics: undefined,
   controlPlaneNode: undefined,
@@ -73,7 +77,7 @@ const defaultState: TargetPanelControlPlaneState = {
 // TODO: Should these remain fixed values?
 const direction: DirectionType = 'outbound';
 
-export class TargetPanelControlPlane extends React.Component<
+class TargetPanelControlPlaneComponent extends React.Component<
   TargetPanelControlPlaneProps,
   TargetPanelControlPlaneState
 > {
@@ -85,6 +89,9 @@ export class TargetPanelControlPlane extends React.Component<
     const namespaceNode = this.props.target.elem as Node<NodeModel, any>;
     this.state = {
       ...defaultState,
+      nsInfo: props.namespaces.find(
+        ns => ns.cluster === namespaceNode.getData().cluster && ns.name === namespaceNode.getData().namespace
+      ),
       controlPlaneNode: namespaceNode
     };
   }
@@ -201,38 +208,14 @@ export class TargetPanelControlPlane extends React.Component<
   private load = (): void => {
     this.promises.cancelAll();
 
-    API.getNamespaces()
-      .then(result => {
-        const data = this.state.controlPlaneNode!.getData() as NodeData;
-        const cluster = data.cluster;
-        const namespace = data.namespace;
-        const nsInfo = result.data.find(ns => ns.cluster === cluster && ns.name === namespace);
-
-        if (!nsInfo) {
-          AlertUtils.add(`Failed to find |${cluster}:${namespace}| in GetNamespaces() result`);
-          this.setState({ ...defaultState, loading: false });
-          return;
-        }
-
-        this.promises
-          .registerAll(`promises-${data.cluster}:${data.namespace}`, [
-            this.fetchCanariesStatus(),
-            this.fetchHealthStatus(),
-            this.fetchMetrics(),
-            this.fetchTLS()
-          ])
-          .then(_ => {
-            this.setState({ loading: false, nsInfo: nsInfo });
-          })
-          .catch(err => {
-            if (err.isCanceled) {
-              console.debug('TargetPanelNamespace: Ignore fetch error (canceled).');
-              return;
-            }
-
-            this.setState({ ...defaultState, loading: false });
-            this.handleApiError('Could not loading target namespace panel', err);
-          });
+    this.promises
+      .registerAll(`promises-${this.state.nsInfo?.cluster}:${this.state.nsInfo?.name}`, [
+        this.fetchHealthStatus(),
+        this.fetchMetrics(),
+        this.fetchTLS()
+      ])
+      .then(_ => {
+        this.setState({ loading: false });
       })
       .catch(err => {
         if (err.isCanceled) {
@@ -241,28 +224,10 @@ export class TargetPanelControlPlane extends React.Component<
         }
 
         this.setState({ ...defaultState, loading: false });
-        this.handleApiError('Could not fetch namespaces when loading target panel', err);
+        this.handleApiError('Could not loading target namespace panel', err);
       });
 
     this.setState({ loading: true });
-  };
-
-  private fetchCanariesStatus = async (): Promise<void> => {
-    if (!this.isControlPlane()) {
-      return Promise.resolve();
-    }
-
-    return API.getCanaryUpgradeStatus()
-      .then(response => {
-        this.setState({
-          canaryUpgradeStatus: {
-            namespacesPerRevision: response.data.namespacesPerRevision
-          }
-        });
-      })
-      .catch(error => {
-        AlertUtils.addError('Error fetching namespace canary upgrade status.', error, 'default', MessageType.ERROR);
-      });
   };
 
   private fetchHealthStatus = async (): Promise<void> => {
@@ -394,3 +359,11 @@ export class TargetPanelControlPlane extends React.Component<
     return <div style={{ padding: '1.5rem 0', textAlign: 'center' }}>Control plane metrics are not available</div>;
   };
 }
+
+const mapStateToProps = (state: KialiAppState): ReduxProps => {
+  return {
+    namespaces: namespaceItemsSelector(state) || []
+  };
+};
+
+export const TargetPanelControlPlane = connect(mapStateToProps)(TargetPanelControlPlaneComponent);

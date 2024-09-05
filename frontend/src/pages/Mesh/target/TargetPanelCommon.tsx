@@ -166,7 +166,9 @@ export const renderNodeHeader = (
           {data.infraName}
 
           {renderHealthStatus(data)}
-          {serverConfig.ambientEnabled && data.infraType === MeshInfraType.ISTIOD && <AmbientLabel tooltip={tooltipMsgType.mesh} />}
+          {serverConfig.ambientEnabled && data.infraType === MeshInfraType.ISTIOD && (
+            <AmbientLabel tooltip={tooltipMsgType.mesh} />
+          )}
         </span>
       </Title>
       {!options.nameOnly && (

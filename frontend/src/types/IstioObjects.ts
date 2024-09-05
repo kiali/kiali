@@ -1417,9 +1417,5 @@ export interface APIKey {
   query?: string;
 }
 
-export interface CanaryUpgradeStatus {
-  namespacesPerRevision: { [key: string]: string[] };
-}
-
 export const MAX_PORT = 65535;
 export const MIN_PORT = 0;
