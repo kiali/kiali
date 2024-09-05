@@ -408,7 +408,9 @@ const TopologyContent: React.FC<{
             addChild(newNode);
           }
         } else {
-          addNode(nd as NodeData);
+          if (!nd.isBox) {
+            addNode(nd as NodeData);
+          }
         }
       });
 
