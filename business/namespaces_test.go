@@ -1,16 +1,20 @@
 package business
 
 import (
+	"cmp"
 	"context"
 	"fmt"
+	"slices"
 	"testing"
 
 	v1 "github.com/openshift/api/project/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	core_v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	kubeclienttesting "k8s.io/client-go/testing"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/istio"
@@ -414,4 +418,44 @@ func TestGetNamespacesForbiddenCached(t *testing.T) {
 	require.Error(err)
 }
 
-// TODO: Add projects tests
+// Tests that you can list namespaces when you have one openshift and one vanilla cluster.
+// See https://github.com/kiali/kiali/issues/7665.
+func TestMixedClustersNoError(t *testing.T) {
+	require := require.New(t)
+
+	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = "openshift"
+	config.Set(conf)
+
+	openshift := kubetest.NewFakeK8sClient(
+		kubetest.FakeNamespace("alpha"),
+		&v1.Project{ObjectMeta: meta_v1.ObjectMeta{Name: "alpha"}},
+	)
+	openshift.OpenShift = true
+	vanilla := kubetest.NewFakeK8sClient(
+		kubetest.FakeNamespace("beta"),
+	)
+	vanilla.ProjectFake.PrependReactor("get", "projects", func(action kubeclienttesting.Action) (bool, runtime.Object, error) {
+		return true, nil, errors.NewForbidden(v1.Resource("projects"), "beta", fmt.Errorf("forbidden"))
+	})
+
+	clients := map[string]kubernetes.ClientInterface{
+		"openshift": openshift,
+		"vanilla":   vanilla,
+	}
+	cache := cache.NewTestingCacheWithClients(t, clients, *conf)
+
+	discovery := istio.NewDiscovery(clients, cache, conf)
+	nsservice := NewNamespaceService(clients, clients, cache, conf, discovery)
+	namespaces, err := nsservice.GetNamespaces(context.TODO())
+	// There's no error for multi-cluster setups. This isn't great but it's how it works.
+	require.NoError(err)
+	require.Len(namespaces, 2)
+	slices.SortFunc(namespaces, func(a models.Namespace, b models.Namespace) int {
+		return cmp.Compare(a.Name, b.Name)
+	})
+	require.Equal("alpha", namespaces[0].Name)
+	require.Equal("openshift", namespaces[0].Cluster)
+	require.Equal("beta", namespaces[1].Name)
+	require.Equal("vanilla", namespaces[1].Cluster)
+}

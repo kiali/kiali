@@ -20,7 +20,7 @@ import (
 type NamespaceService struct {
 	conf                  *config.Config
 	discovery             meshDiscovery
-	hasProjects           bool
+	hasProjects           map[string]bool
 	homeClusterUserClient kubernetes.ClientInterface
 	kialiCache            cache.KialiCache
 	kialiSAClients        map[string]kubernetes.ClientInterface
@@ -47,13 +47,10 @@ func NewNamespaceService(
 	conf *config.Config,
 	discovery meshDiscovery,
 ) NamespaceService {
-	var hasProjects bool
-
 	homeClusterName := conf.KubernetesConfig.ClusterName
-	if saClient, ok := kialiSAClients[homeClusterName]; ok && saClient.IsOpenShift() {
-		hasProjects = true
-	} else {
-		hasProjects = false
+	hasProjects := make(map[string]bool)
+	for cluster, client := range kialiSAClients {
+		hasProjects[cluster] = client.IsOpenShift()
 	}
 
 	return NamespaceService{
@@ -65,6 +62,10 @@ func NewNamespaceService(
 		kialiSAClients:        kialiSAClients,
 		userClients:           userClients,
 	}
+}
+
+func (in *NamespaceService) clusterIsOpenshift(cluster string) bool {
+	return in.hasProjects[cluster]
 }
 
 // GetClusterList Returns a list of cluster names based on the user clients
@@ -159,11 +160,10 @@ func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Namespa
 // getNamespacesByCluster returns the namespaces for the given cluster. The namespaces are filtered such
 // that only those namespaces that match discovery selectors are returned.
 func (in *NamespaceService) getNamespacesByCluster(ctx context.Context, cluster string) ([]models.Namespace, error) {
-
 	var namespaces []models.Namespace
 
 	// If we are running in OpenShift, we will use the project names since these are the list of accessible namespaces
-	if in.hasProjects {
+	if in.clusterIsOpenshift(cluster) {
 		projects, err := in.userClients[cluster].GetProjects(ctx, "")
 		if err != nil {
 			return nil, err
@@ -279,7 +279,7 @@ func (in *NamespaceService) GetClusterNamespace(ctx context.Context, namespace s
 	}
 
 	var result models.Namespace
-	if in.hasProjects {
+	if in.clusterIsOpenshift(cluster) {
 		project, err := client.GetProject(ctx, namespace)
 		if err != nil {
 			return nil, err
