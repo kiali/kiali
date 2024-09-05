@@ -341,7 +341,7 @@ const TopologyContent: React.FC<{
           style: { padding: [35, 35, 35, 35] },
           type: 'group'
         };
-        setNodeLabel(group, nodeMap, graphSettings);
+        setNodeLabel(group, nodeMap, graphSettings, layoutName);
         nodeMap.set(data.id, group);
 
         return group;
@@ -358,7 +358,7 @@ const TopologyContent: React.FC<{
           type: 'node',
           width: DEFAULT_NODE_SIZE
         };
-        setNodeLabel(node, nodeMap, graphSettings);
+        setNodeLabel(node, nodeMap, graphSettings, layoutName);
         nodeMap.set(data.id, node);
 
         return node;
@@ -393,14 +393,22 @@ const TopologyContent: React.FC<{
 
       graphData.elements.nodes?.forEach(n => {
         const nd = n.data;
-        let newNode: NodeModel;
-        if (nd.isBox) {
-          newNode = addGroup(nd as NodeData);
+
+        // Non-dagre layouts do not support groups
+        if (layoutName === LayoutName.Dagre) {
+          let newNode: NodeModel;
+
+          if (nd.isBox) {
+            newNode = addGroup(nd as NodeData);
+          } else {
+            newNode = addNode(nd as NodeData);
+          }
+
+          if (nd.parent) {
+            addChild(newNode);
+          }
         } else {
-          newNode = addNode(nd as NodeData);
-        }
-        if (nd.parent) {
-          addChild(newNode);
+          addNode(nd as NodeData);
         }
       });
 
