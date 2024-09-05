@@ -9,6 +9,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/util/sliceutil"
 )
 
 const (
@@ -449,37 +450,30 @@ func getApp(namespace, appName string, gi *graph.AppenderGlobalInfo) (*models.Ap
 	return nil, false
 }
 
-// getTrafficClusters returns an array of clusters for which the TrafficMap has accessible nodes for the given
-// namespace, or of trafficMap is nil then clusters for which the namespace exists.
+// getTrafficClusters returns an array of accessible cluster names for which the TrafficMap has nodes in the given
+// namespace. If the trafficMap is nil then return all cluster names for which the namespace exists.
 func getTrafficClusters(trafficMap graph.TrafficMap, namespace string, gi *graph.AppenderGlobalInfo) []string {
+	// get all of the accessible clusters for the given namespace
+	namespaceClusters, err := gi.Business.Namespace.GetNamespaceClusters(context.TODO(), namespace)
+	graph.CheckError(err)
+
+	clusterNames := sliceutil.Map(namespaceClusters, func(ns models.Namespace) string {
+		return ns.Cluster
+	})
+
 	if trafficMap == nil {
-		namespaceClusters, err := gi.Business.Namespace.GetNamespaceClusters(context.TODO(), namespace)
-		graph.CheckError(err)
-
-		clusters := make([]string, len(namespaceClusters))
-		for i, nc := range namespaceClusters {
-			clusters[i] = nc.Cluster
-		}
-		return clusters
+		return clusterNames
 	}
 
-	clusterMap := map[string]bool{}
-
-	for _, n := range trafficMap {
-		if b, ok := n.Metadata[graph.IsInaccessible]; ok && b.(bool) {
-			continue
+	// reduce to just the set represented in the traffic map
+	filteredClusterNames := sliceutil.Filter(clusterNames, func(clusterName string) bool {
+		for _, n := range trafficMap {
+			if n.Cluster == clusterName {
+				return true
+			}
 		}
-		if n.Namespace == namespace {
-			clusterMap[n.Cluster] = true
-		}
-	}
+		return false
+	})
 
-	// TODO change to maps.Keys(clusterMap) with Go 1.21
-	clusters := make([]string, len(clusterMap))
-	i := 0
-	for k := range clusterMap {
-		clusters[i] = k
-		i++
-	}
-	return clusters
+	return filteredClusterNames
 }
