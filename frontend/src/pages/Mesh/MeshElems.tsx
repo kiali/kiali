@@ -55,6 +55,7 @@ export type NodeData = DecoratedMeshNodeData & {
   x?: number;
   y?: number;
   // These are additions we've made for our own styling
+  // eslint-disable-next-line @typescript-eslint/member-ordering
   isFind?: boolean;
   isFocus?: boolean;
   isHighlighted?: boolean;
@@ -253,7 +254,7 @@ export const elems = (c: Controller): { edges: Edge[]; nodes: Node[] } => {
 
 // TODO: When/if it is fixed this can be replaced with a straight call to node.getAllNodeChildren();
 // https://github.com/patternfly/patternfly-react/issues/8350
-export const descendents = (node: Node): Node[] => {
+export const descendents = <E extends NodeModel = NodeModel, D = any>(node: Node<E, D>): Node<E, D>[] => {
   const result: Node[] = [];
   if (!node.isGroup()) {
     return result;

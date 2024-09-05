@@ -6,17 +6,24 @@ import { KialiAppState } from 'store/Store';
 import { TourStop } from 'components/Tour/TourStop';
 import { classes } from 'typestyle';
 import { PFColors } from 'components/Pf/PfColors';
-import { MeshInfraType, MeshTarget, MeshType } from 'types/Mesh';
+import {
+  MeshInfraType,
+  DataPlaneNodeData,
+  NodeTarget,
+  IstiodNodeData,
+  BoxTarget,
+  ClusterNodeData,
+  NamespaceNodeData,
+  MeshType
+} from 'types/Mesh';
 import { TargetPanelCommonProps, targetPanelStyle } from './TargetPanelCommon';
 import { MeshTourStops } from '../MeshHelpTour';
 import { BoxByType } from 'types/Graph';
-import { ElementModel, GraphElement } from '@patternfly/react-topology';
 import { TargetPanelCluster } from './TargetPanelCluster';
 import { TargetPanelNamespace } from './TargetPanelNamespace';
 import { TargetPanelNode } from './TargetPanelNode';
 import { TargetPanelMesh } from './TargetPanelMesh';
 import { meshWideMTLSStatusSelector, minTLSVersionSelector } from 'store/Selectors';
-import { NodeData } from '../MeshElems';
 import { TargetPanelDataPlane } from './TargetPanelDataPlane';
 import { TargetPanelControlPlane } from './TargetPanelControlPlane';
 import { useKialiTranslation } from 'utils/I18nUtils';
@@ -71,14 +78,10 @@ export const TargetPanelComponent: React.FC<TargetPanelProps> = (props: TargetPa
 
   React.useEffect(() => setIsCollapsed(false), [target.elem]);
 
-  const getTargetPanel = (target: MeshTarget): React.ReactNode => {
-    const targetType = target.type as MeshType;
-
-    switch (targetType) {
-      case 'box': {
-        const elem = target.elem as GraphElement<ElementModel, any>;
-        const data = elem.getData() as NodeData;
-        const boxType: BoxByType = data.isBox as BoxByType;
+  const getTargetPanel = (): React.ReactNode => {
+    switch (target.type) {
+      case MeshType.Box: {
+        const boxType: BoxByType = target.elem.getData()!.isBox!;
 
         switch (boxType) {
           case BoxByType.CLUSTER:
@@ -88,7 +91,8 @@ export const TargetPanelComponent: React.FC<TargetPanelProps> = (props: TargetPa
                 istioAPIEnabled={props.istioAPIEnabled}
                 kiosk={props.kiosk}
                 refreshInterval={props.refreshInterval}
-                target={target}
+                // TODO: Can we further narrow down these targets with guards?
+                target={target as BoxTarget<ClusterNodeData>}
                 updateTime={props.updateTime}
               />
             );
@@ -99,7 +103,8 @@ export const TargetPanelComponent: React.FC<TargetPanelProps> = (props: TargetPa
                 istioAPIEnabled={props.istioAPIEnabled}
                 kiosk={props.kiosk}
                 refreshInterval={props.refreshInterval}
-                target={target}
+                // TODO: Can we further narrow down these targets with guards?
+                target={target as BoxTarget<NamespaceNodeData>}
                 updateTime={props.updateTime}
               />
             );
@@ -107,7 +112,7 @@ export const TargetPanelComponent: React.FC<TargetPanelProps> = (props: TargetPa
             return <></>;
         }
       }
-      case 'mesh':
+      case MeshType.Mesh:
         return (
           <TargetPanelMesh
             duration={props.duration}
@@ -118,11 +123,8 @@ export const TargetPanelComponent: React.FC<TargetPanelProps> = (props: TargetPa
             updateTime={props.updateTime}
           />
         );
-      case 'node':
-        const elem = target.elem as GraphElement<ElementModel, any>;
-        const data = elem.getData() as NodeData;
-
-        switch (data.infraType) {
+      case MeshType.Node:
+        switch (target.elem.getData()!.infraType) {
           case MeshInfraType.ISTIOD:
             return (
               <TargetPanelControlPlane
@@ -132,7 +134,8 @@ export const TargetPanelComponent: React.FC<TargetPanelProps> = (props: TargetPa
                 meshStatus={props.meshStatus}
                 minTLS={props.minTLS}
                 refreshInterval={props.refreshInterval}
-                target={target}
+                // TODO: Can we further narrow down these targets with guards?
+                target={target as NodeTarget<IstiodNodeData>}
                 updateTime={props.updateTime}
               />
             );
@@ -143,7 +146,8 @@ export const TargetPanelComponent: React.FC<TargetPanelProps> = (props: TargetPa
                 istioAPIEnabled={props.istioAPIEnabled}
                 kiosk={props.kiosk}
                 refreshInterval={props.refreshInterval}
-                target={target}
+                // TODO: Can we further narrow down these targets with guards?
+                target={target as NodeTarget<DataPlaneNodeData>}
                 updateTime={props.updateTime}
               />
             );
@@ -191,7 +195,7 @@ export const TargetPanelComponent: React.FC<TargetPanelProps> = (props: TargetPa
             )}
           </div>
 
-          {getTargetPanel(target)}
+          {getTargetPanel()}
         </div>
       </div>
     </TourStop>

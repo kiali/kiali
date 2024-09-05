@@ -33,7 +33,7 @@ import { HistoryManager, URLParam } from 'app/History';
 import { TourStop } from 'components/Tour/TourStop';
 import { meshComponentFactory } from './components/meshComponentFactory';
 import { MeshData, MeshRefs } from './MeshPage';
-import { MeshInfraType, MeshTarget } from 'types/Mesh';
+import { MeshInfraType, MeshTarget, MeshType } from 'types/Mesh';
 import { MeshHighlighter } from './MeshHighlighter';
 import {
   EdgeData,
@@ -161,7 +161,7 @@ const TopologyContent: React.FC<{
             return;
           }
           default:
-            setTarget({ elem: controller, type: 'mesh' } as MeshTarget);
+            setTarget({ elem: controller, type: MeshType.Mesh });
         }
       }
       return;
@@ -172,24 +172,24 @@ const TopologyContent: React.FC<{
       switch (elem?.getKind()) {
         case ModelKind.edge: {
           highlighter.setSelectedId(selectedIds[0]);
-          setTarget({ elem: elem, type: 'edge' } as MeshTarget);
+          setTarget({ elem: elem, type: MeshType.Edge });
           return;
         }
         case ModelKind.node: {
           highlighter.setSelectedId(selectedIds[0]);
-          const isBox = (elem.getData() as NodeData).isBox;
-          setTarget({ type: isBox ? 'box' : 'node', elem: elem } as MeshTarget);
+          const isBox = elem.getData().isBox;
+          setTarget({ type: isBox ? MeshType.Box : MeshType.Node, elem: elem as Node });
           return;
         }
         case ModelKind.graph:
         default:
           highlighter.setSelectedId(undefined);
           setSelectedIds([]);
-          setTarget({ elem: controller, type: 'mesh' } as MeshTarget);
+          setTarget({ elem: controller, type: MeshType.Mesh });
       }
     } else {
       highlighter.setSelectedId(undefined);
-      setTarget({ elem: controller, type: 'mesh' } as MeshTarget);
+      setTarget({ elem: controller, type: MeshType.Mesh });
     }
   }, [setTarget, selectedIds, highlighter, controller, isMiniMesh, onEdgeTap, onNodeTap, setSelectedIds, meshData]);
 
@@ -471,7 +471,7 @@ const TopologyContent: React.FC<{
   React.useEffect(() => {
     return () => {
       if (setTarget) {
-        setTarget({ type: 'mesh', elem: undefined });
+        setTarget({ type: MeshType.Mesh, elem: undefined });
       }
     };
   }, [setTarget]);

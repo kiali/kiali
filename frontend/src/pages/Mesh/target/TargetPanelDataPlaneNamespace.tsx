@@ -35,7 +35,7 @@ import { TargetPanelConfigTable } from './TargetPanelConfigTable';
 
 type TargetPanelDataPlaneNamespaceProps = Omit<TargetPanelCommonProps, 'target'> & {
   isExpanded: boolean;
-  namespaceData: { [key: string]: string };
+  namespaceData: NamespaceInfo;
   targetCluster: string;
   targetNamespace: string;
 };
@@ -172,7 +172,7 @@ export class TargetPanelDataPlaneNamespace extends React.Component<
           {targetPanelHR}
 
           <TargetPanelConfigTable
-            configData={this.props.namespaceData}
+            configData={this.props.namespaceData as any}
             targetName={this.props.targetNamespace}
             width="30%"
           />

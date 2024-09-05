@@ -12,7 +12,7 @@ import {
   targetPanelWidth
 } from './TargetPanelCommon';
 import { kialiIconDark, kialiIconLight } from 'config';
-import { KialiInstance, MeshNodeData, isExternal } from 'types/Mesh';
+import { BoxTarget, ClusterNodeData, KialiInstance, isExternal } from 'types/Mesh';
 import { Theme } from 'types/Common';
 import { PromisesRegistry } from 'utils/CancelablePromises';
 import * as API from '../../../services/Api';
@@ -26,10 +26,12 @@ import { panelBodyStyle, panelHeadingStyle, panelStyle } from 'pages/Graph/Summa
 import { t } from 'utils/I18nUtils';
 import { UNKNOWN } from 'types/Graph';
 
-type TargetPanelClusterProps = TargetPanelCommonProps;
+type TargetPanelClusterProps = TargetPanelCommonProps & {
+  target: BoxTarget<ClusterNodeData>;
+};
 
 type TargetPanelClusterState = {
-  clusterNode?: Node<NodeModel, any>;
+  clusterNode?: Node<NodeModel, ClusterNodeData>;
   loading: boolean;
 };
 
@@ -58,18 +60,16 @@ export class TargetPanelCluster extends React.Component<TargetPanelClusterProps,
   constructor(props: TargetPanelClusterProps) {
     super(props);
 
-    const clusterNode = this.props.target.elem as Node<NodeModel, any>;
+    const clusterNode = this.props.target.elem;
     this.state = { ...defaultState, clusterNode: clusterNode };
   }
 
-  static getDerivedStateFromProps: React.GetDerivedStateFromProps<TargetPanelCommonProps, TargetPanelClusterState> = (
-    props: TargetPanelCommonProps,
+  static getDerivedStateFromProps: React.GetDerivedStateFromProps<TargetPanelClusterProps, TargetPanelClusterState> = (
+    props: TargetPanelClusterProps,
     state: TargetPanelClusterState
   ) => {
     // if the target (i.e. clusterBox) has changed, then init the state
-    return props.target.elem !== state.clusterNode
-      ? ({ clusterNode: props.target.elem, loading: true } as TargetPanelClusterState)
-      : null;
+    return props.target.elem !== state.clusterNode ? { clusterNode: props.target.elem, loading: true } : null;
   };
 
   componentDidMount(): void {
@@ -91,7 +91,7 @@ export class TargetPanelCluster extends React.Component<TargetPanelClusterProps,
       return null;
     }
 
-    const data = this.state.clusterNode.getData() as MeshNodeData;
+    const data = this.state.clusterNode.getData()!;
     const clusterData = data.infraData ?? {
       accessible: false,
       isKialiHome: false,
@@ -118,12 +118,12 @@ export class TargetPanelCluster extends React.Component<TargetPanelClusterProps,
           <div className={panelBodyStyle}>
             {descendents(this.state.clusterNode)
               .sort((n1, n2) => {
-                const name1 = (n1.getData() as MeshNodeData).infraName.toLowerCase();
-                const name2 = (n2.getData() as MeshNodeData).infraName.toLowerCase();
+                const name1 = n1.getData()!.infraName.toLowerCase();
+                const name2 = n2.getData()!.infraName.toLowerCase();
                 return name1 < name2 ? -1 : 1;
               })
               .map(n => {
-                return renderNodeHeader(n.getData() as MeshNodeData, { nameOnly: true, smallSize: true });
+                return renderNodeHeader(n.getData()!, { nameOnly: true, smallSize: true });
               })}
           </div>
         ) : (

@@ -4,7 +4,7 @@ import { TargetPanelCommonProps, getTitle, renderNodeHeader, targetPanelStyle } 
 import { classes } from 'typestyle';
 import { panelBodyStyle, panelHeadingStyle, panelStyle } from 'pages/Graph/SummaryPanelStyle';
 import { elems, selectAnd } from '../MeshElems';
-import { MeshAttr, MeshInfraType, MeshNodeData } from 'types/Mesh';
+import { DataPlaneNodeData, MeshAttr, MeshInfraType, MeshNodeData } from 'types/Mesh';
 import { kialiStyle } from 'styles/StyleUtils';
 import { useKialiTranslation } from 'utils/I18nUtils';
 import { UNKNOWN } from 'types/Graph';
@@ -44,8 +44,8 @@ export const TargetPanelMesh: React.FC<TargetPanelMeshProps> = (props: TargetPan
           {infraNodes
             .filter(node => node.getData().cluster === clusterData.cluster)
             .sort((in1, in2) => {
-              const data1 = in1.getData() as MeshNodeData;
-              const data2 = in2.getData() as MeshNodeData;
+              const data1 = in1.getData();
+              const data2 = in2.getData();
 
               if (data1.infraType === MeshInfraType.ISTIOD) {
                 return -1;
@@ -81,7 +81,7 @@ export const TargetPanelMesh: React.FC<TargetPanelMeshProps> = (props: TargetPan
     );
   };
 
-  const renderDataPlaneSummary = (nodeData: MeshNodeData): React.ReactNode => {
+  const renderDataPlaneSummary = (nodeData: DataPlaneNodeData): React.ReactNode => {
     return (
       <div key={nodeData.id} className={summaryStyle}>
         {renderNodeHeader(nodeData, { nameOnly: true, smallSize: true })}
@@ -90,7 +90,7 @@ export const TargetPanelMesh: React.FC<TargetPanelMeshProps> = (props: TargetPan
           {nodeData.version && <div>{t('Revision: {{revision}}', { revision: nodeData.version })}</div>}
 
           {t('{{count}} namespace', {
-            count: nodeData.infraData.length,
+            count: nodeData.infraData?.length,
             defaultValue_one: '{{count}} namespace',
             defaultValue_other: '{{count}} namespaces'
           })}
