@@ -7,7 +7,7 @@ import { dump } from 'js-yaml';
 import { yamlDumpOptions } from 'types/IstioConfigDetails';
 
 interface ConfigTableProps {
-  configData?: { [key: string]: string };
+  configData?: unknown;
   label: string;
   width: string;
 }

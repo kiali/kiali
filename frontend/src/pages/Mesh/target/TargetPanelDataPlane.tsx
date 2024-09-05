@@ -12,9 +12,9 @@ import { serverConfig } from 'config';
 import { useKialiTranslation } from 'utils/I18nUtils';
 import { ControlPlaneVersionBadge } from 'pages/Overview/ControlPlaneVersionBadge';
 
-interface TargetPanelDataPlaneProps extends TargetPanelCommonProps {
+type TargetPanelDataPlaneProps = TargetPanelCommonProps & {
   target: NodeTarget<DataPlaneNodeData>;
-}
+};
 
 export const TargetPanelDataPlane: React.FC<TargetPanelDataPlaneProps> = props => {
   const [expanded, setExpanded] = React.useState<string[]>([]);

@@ -65,21 +65,21 @@ export interface DataPlaneNodeData extends BaseNodeData {
 export interface GrafanaNodeData extends BaseNodeData {
   // Grafana node data is the raw grafana config. We don't actually care about what
   // each field is since we just display the whole config in the side panel as is.
-  infraData: any;
+  infraData: unknown;
   infraType: MeshInfraType.GRAFANA;
 }
 
 export interface KialiNodeData extends BaseNodeData {
   // Kiali node data is the raw kiali config. We don't actually care about what
   // each field is since we just display the whole config in the side panel as is.
-  infraData: any;
+  infraData: unknown;
   infraType: MeshInfraType.KIALI;
 }
 
 export interface MetricStoreNodeData extends BaseNodeData {
   // MetricStore node data is the raw metric store config. We don't actually care about what
   // each field is since we just display the whole config in the side panel as is.
-  infraData: any;
+  infraData: unknown;
   infraType: MeshInfraType.METRIC_STORE;
 }
 

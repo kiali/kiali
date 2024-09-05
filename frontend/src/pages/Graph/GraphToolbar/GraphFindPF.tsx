@@ -33,7 +33,6 @@ import { GraphFindOptions } from './GraphFindOptions';
 import { location, HistoryManager, URLParam } from '../../../app/History';
 import { isValid } from 'utils/Common';
 import {
-  descendents,
   EdgeData,
   elems,
   NodeData,
@@ -43,6 +42,7 @@ import {
   SelectOr,
   setObserved
 } from 'pages/GraphPF/GraphPFElems';
+import { descendents } from 'helpers/GraphHelpers';
 import { isArray } from 'lodash';
 import { graphLayout, LayoutType } from 'pages/GraphPF/GraphPF';
 

@@ -74,6 +74,7 @@ export type NodeData = DecoratedGraphNodeData & {
   x?: number;
   y?: number;
   // These are additions we've made for our own styling
+  // eslint-disable-next-line @typescript-eslint/member-ordering
   hasSpans?: Span[];
   isFind?: boolean;
   isFocus?: boolean;
@@ -678,24 +679,6 @@ export const elems = (c: Controller): { edges: Edge[]; nodes: Node[] } => {
     edges: elems.filter(e => isEdge(e)) as Edge[],
     nodes: elems.filter(e => isNode(e)) as Node[]
   };
-};
-
-// TODO: When/if it is fixed this can be replaced with a straight call to node.getAllNodeChildren();
-// https://github.com/patternfly/patternfly-react/issues/8350
-export const descendents = (node: Node): Node[] => {
-  const result: Node[] = [];
-  if (!node.isGroup()) {
-    return result;
-  }
-
-  const children = node.getChildren().filter(e => isNode(e)) as Node[];
-  result.push(...children.filter(child => !child.isGroup()));
-  children.forEach(child => {
-    if (child.isGroup()) {
-      result.push(...descendents(child));
-    }
-  });
-  return result;
 };
 
 export const ancestors = (node: Node): GraphElement[] => {

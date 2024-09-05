@@ -21,7 +21,7 @@ import { ApiError } from 'types/Api';
 import { KialiIcon } from 'config/KialiIcon';
 import { Title, TitleSizes, Tooltip } from '@patternfly/react-core';
 import { classes } from 'typestyle';
-import { descendents } from '../MeshElems';
+import { descendents } from 'helpers/GraphHelpers';
 import { panelBodyStyle, panelHeadingStyle, panelStyle } from 'pages/Graph/SummaryPanelStyle';
 import { t } from 'utils/I18nUtils';
 import { UNKNOWN } from 'types/Graph';

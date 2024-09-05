@@ -252,24 +252,6 @@ export const elems = (c: Controller): { edges: Edge[]; nodes: Node[] } => {
   };
 };
 
-// TODO: When/if it is fixed this can be replaced with a straight call to node.getAllNodeChildren();
-// https://github.com/patternfly/patternfly-react/issues/8350
-export const descendents = <E extends NodeModel = NodeModel, D = any>(node: Node<E, D>): Node<E, D>[] => {
-  const result: Node[] = [];
-  if (!node.isGroup()) {
-    return result;
-  }
-
-  const children = node.getChildren().filter(e => isNode(e)) as Node[];
-  result.push(...children.filter(child => !child.isGroup()));
-  children.forEach(child => {
-    if (child.isGroup()) {
-      result.push(...descendents(child));
-    }
-  });
-  return result;
-};
-
 export const ancestors = (node: Node): GraphElement[] => {
   const result: GraphElement[] = [];
   while (node.hasParent()) {

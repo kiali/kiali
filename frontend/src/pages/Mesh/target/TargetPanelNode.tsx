@@ -16,13 +16,13 @@ export const TargetPanelNode: React.FC<TargetPanelNodeProps<MeshNodeData>> = (
 ) => {
   const { t } = useKialiTranslation();
 
-  const node = props.target.elem;
+  const node = props.target;
 
   if (!node) {
     return null;
   }
 
-  const data = node.getData()!;
+  const data = node.elem.getData()!;
 
   return (
     <div id="target-panel-node" className={classes(panelStyle, targetPanelStyle)}>
