@@ -87,10 +87,8 @@ Given('a workload without a sidecar', function () {
     }
   });
 
-  // Restart the workload to ensure changes are applied.
-  cy.exec(`kubectl scale -n ${this.targetNamespace} --replicas=1 deployment/${this.targetWorkload}`);
-  cy.exec(`kubectl rollout restart deployment ${this.targetWorkload} -n ${this.targetNamespace}`);
-  cy.exec(`kubectl rollout status deployment ${this.targetWorkload} -n ${this.targetNamespace}`);
+  // Restart the workload to ensure the changes are applied.
+  restartWorkload(this.targetNamespace, this.targetWorkload);
 });
 
 Given('a workload with a sidecar', function () {
@@ -133,10 +131,8 @@ Given('a workload with a sidecar', function () {
     }
   });
 
-  // Restart the workload to ensure changes are applied.
-  cy.exec(`kubectl scale -n ${this.targetNamespace} --replicas=1 deployment/${this.targetWorkload}`);
-  cy.exec(`kubectl rollout restart deployment ${this.targetWorkload} -n ${this.targetNamespace}`);
-  cy.exec(`kubectl rollout status deployment ${this.targetWorkload} -n ${this.targetNamespace}`);
+  // Restart the workload to ensure the changes are applied.
+  restartWorkload(this.targetNamespace, this.targetWorkload);
 });
 
 Given('the workload does not have override configuration for automatic sidecar injection', function () {
@@ -187,10 +183,8 @@ Given('the workload does not have override configuration for automatic sidecar i
       }
     });
 
-    // Restart the workload to ensure changes are applied.
-    cy.exec(`kubectl scale -n ${this.targetNamespace} --replicas=1 deployment/${this.targetWorkload}`);
-    cy.exec(`kubectl rollout restart deployment ${this.targetWorkload} -n ${this.targetNamespace}`);
-    cy.exec(`kubectl rollout status deployment ${this.targetWorkload} -n ${this.targetNamespace}`);
+    // Restart the workload to ensure the changes are applied.
+    restartWorkload(this.targetNamespace, this.targetWorkload);
   }
 });
 
@@ -333,7 +327,16 @@ function switchWorkloadSidecarInjection(enableOrDisable: string): void {
   cy.get('button[data-test="workload-actions-toggle"]').should('be.visible').click();
   cy.get(`li[data-test=${enableOrDisable}_auto_injection]`).find('button').should('be.visible').click();
 
+  // Restart the workload to ensure the changes are applied.
+  restartWorkload(this.targetNamespace, this.targetWorkload);
+
   ensureKialiFinishedLoading();
+}
+
+function restartWorkload(targetNamespace: string, targetWorkload: string): void {
+  cy.exec(`kubectl scale -n ${targetNamespace} --replicas=1 deployment/${targetWorkload}`);
+  cy.exec(`kubectl rollout restart deployment ${targetWorkload} -n ${targetNamespace}`);
+  cy.exec(`kubectl rollout status deployment ${targetWorkload} -n ${targetNamespace}`);
 }
 
 When(
