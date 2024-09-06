@@ -518,7 +518,7 @@ func (in *Discovery) getTags(ctx context.Context, controlPlanes []models.Control
 	var tags []models.Tag
 	for cluster, client := range in.kialiSAClients {
 		if !in.kialiCache.CanListWebhooks(cluster) {
-			log.Infof("Unable to list webhooks for cluster [%s]. Give Kiali permission to read 'mutatingwebhookconfigurations'. Skipping getting tags.", cluster)
+			log.Debugf("Unable to list webhooks for cluster [%s]. Give Kiali permission to read 'mutatingwebhookconfigurations'. Skipping getting tags.", cluster)
 			continue
 		}
 

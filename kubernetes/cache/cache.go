@@ -177,6 +177,10 @@ func NewKialiCache(clientFactory kubernetes.ClientFactory, cfg config.Config) (K
 				break
 			}
 		}
+
+		if canReadMutatingWebhooks := kialiCacheImpl.canReadWebhookByCluster[cluster]; !canReadMutatingWebhooks {
+			log.Infof("[Kiali Cache] Unable to list webhooks for cluster [%s]. Give Kiali permission to read 'mutatingwebhookconfigurations'.", cluster)
+		}
 	}
 
 	// TODO: Treat all clusters the same way.
