@@ -256,6 +256,7 @@ export const setNodeLabel = (node: NodeModel, nodeMap: NodeMap, settings: GraphP
     if (data.isGateway?.egressInfo?.hostnames?.length !== undefined) {
       data.labelIcon = <span className={`${badgeMap.get('GW')?.className}`}></span>;
     }
+    // A Waypoint should be mutually exclusive with being a traffic source
     if (data.isWaypoint) {
       data.labelIcon = (
         <span className={`${badgeMap.get('WA')?.className}`} style={{ marginBottom: '1px', marginLeft: '2px' }}></span>
