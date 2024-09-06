@@ -333,11 +333,11 @@ function switchWorkloadSidecarInjection(enableOrDisable: string): void {
   ensureKialiFinishedLoading();
 }
 
-function restartWorkload(targetNamespace: string, targetWorkload: string): void {
+const restartWorkload = (targetNamespace: string, targetWorkload: string): void => {
   cy.exec(`kubectl scale -n ${targetNamespace} --replicas=1 deployment/${targetWorkload}`);
   cy.exec(`kubectl rollout restart deployment ${targetWorkload} -n ${targetNamespace}`);
   cy.exec(`kubectl rollout status deployment ${targetWorkload} -n ${targetNamespace}`);
-}
+};
 
 When(
   'I override the default policy for automatic sidecar injection in the workload to {string} it',
