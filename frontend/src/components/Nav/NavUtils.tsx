@@ -61,6 +61,12 @@ export const makeNamespacesGraphUrlFromParams = (params: GraphUrlParams, isPf = 
 export const makeNodeGraphUrlFromParams = (params: GraphUrlParams, isPf = false): string => {
   const route = isPf ? 'graphpf' : 'graph';
   const node = params.node;
+
+  if (node?.isWaypoint && node?.nodeType === NodeType.APP) {
+    // Waypoints are not part of the app, so make a correction to redirect properly
+    node.nodeType = NodeType.WORKLOAD;
+  }
+
   if (node) {
     switch (node.nodeType) {
       case NodeType.AGGREGATE:

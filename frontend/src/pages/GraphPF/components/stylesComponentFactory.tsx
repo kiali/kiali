@@ -161,8 +161,17 @@ const handleDoubleTap = (doubleTapNode: GraphElement, kiosk: string): void => {
     }
   }
 
-  const { app, cluster, namespace, nodeType, service, version, workload } = dtNodeData;
-  const event = { app, cluster, namespace, nodeType, service, version, workload } as GraphNodeDoubleTapEvent;
+  const { app, cluster, namespace, nodeType, service, version, workload, isWaypoint } = dtNodeData;
+  const event = {
+    app,
+    cluster,
+    namespace,
+    nodeType,
+    service,
+    version,
+    workload,
+    isWaypoint
+  } as GraphNodeDoubleTapEvent;
   const targetNode: NodeParamsType = { ...event, namespace: { name: dtNodeData.namespace } };
 
   // If, while in the drilled-down graph, the user double clicked the same

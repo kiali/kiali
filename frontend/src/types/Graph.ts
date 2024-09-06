@@ -203,6 +203,7 @@ export interface NodeParamsType {
   aggregateValue?: string;
   app: string;
   cluster?: string;
+  isWaypoint?: boolean;
   namespace: Namespace;
   nodeType: NodeType;
   service: string;
