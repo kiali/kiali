@@ -7,7 +7,6 @@ import (
 )
 
 const AmbientAppenderName = "ambient"
-const WaypointSuffix = "waypoint"
 
 // AmbientAppender applies Ambient logic to the graph.
 type AmbientAppender struct {

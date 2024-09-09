@@ -385,8 +385,12 @@ const getEdgeLabel = (edge: EdgeModel, nodeMap: NodeMap, settings: GraphPFSettin
   const edgeLabels = settings.edgeLabels;
   const isVerbose = data.isSelected;
   const includeUnits = isVerbose || numLabels(edgeLabels) > 1;
-  let labels = [] as string[];
 
+  if (data.display === 'hide') {
+    return '';
+  }
+
+  let labels = [] as string[];
   if (edgeLabels.includes(EdgeLabelMode.TRAFFIC_RATE)) {
     let rate = 0;
     let pErr = 0;
@@ -414,6 +418,9 @@ const getEdgeLabel = (edge: EdgeModel, nodeMap: NodeMap, settings: GraphPFSettin
             break;
           case Protocol.TCP:
             labels.push(toFixedByteRate(rate, includeUnits));
+            if (data.reverse) {
+              labels.push(toFixedByteRate(data.reverse.tcp, includeUnits));
+            }
             break;
           default:
             labels.push(toFixedRequestRate(rate, includeUnits));
@@ -451,7 +458,7 @@ const getEdgeLabel = (edge: EdgeModel, nodeMap: NodeMap, settings: GraphPFSettin
     }
   }
 
-  let label = labels.join('\n');
+  let label = labels.join(' - ');
 
   if (isVerbose) {
     const protocol = data.protocol;

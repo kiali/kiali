@@ -136,6 +136,7 @@ type EdgeData struct {
 	DestPrincipal   string          `json:"destPrincipal,omitempty"`   // principal used for the edge destination
 	IsMTLS          string          `json:"isMTLS,omitempty"`          // set to the percentage of traffic using a mutual TLS connection
 	ResponseTime    string          `json:"responseTime,omitempty"`    // in millis
+	Reverse         *EdgeData       `json:"reverse,omitempty"`         // Reverse edge data
 	SourcePrincipal string          `json:"sourcePrincipal,omitempty"` // principal used for the edge source
 	Throughput      string          `json:"throughput,omitempty"`      // in bytes/sec (request or response, depends on client request)
 	Traffic         ProtocolTraffic `json:"traffic,omitempty"`         // traffic rates for the edge protocol
@@ -471,6 +472,19 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 			*edges = append(*edges, &ew)
 		}
 	}
+
+	// TODO: Just for Ambient
+	for _, e := range *edges {
+		if e.Data.Display == "reverse" {
+			for _, otherEdge := range *edges {
+				if e.Data.ID != otherEdge.Data.ID && e.Data.Source == otherEdge.Data.Target && e.Data.Target == otherEdge.Data.Source {
+					e.Data.Reverse = otherEdge.Data
+					// Delete the other edge?
+				}
+			}
+		}
+	}
+
 }
 
 func addNodeTelemetry(n *graph.Node, nd *NodeData) {
