@@ -147,7 +147,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
     const isHttp = protocol === Protocol.HTTP;
     const isTcp = protocol === Protocol.TCP;
     const isRequests = isHttp || (isGrpc && this.props.trafficRates.includes(TrafficRate.GRPC_REQUEST));
-    const reverse = edgeData.elemreverse;
+    const reverse = edgeData.reverse;
 
     const SecurityBlock = (): React.ReactElement => {
       return (
