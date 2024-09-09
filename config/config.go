@@ -425,8 +425,10 @@ type DeploymentConfig struct {
 
 // we need to play games with a custom unmarshaller/marshaller for metav1.LabelSelector because it has no yaml struct tags so
 // it is not processing it the way we want by default (it isn't using camelCase; the fields are lowercase - e.g. matchlabels/matchexpressions)
-type DiscoverySelectorType metav1.LabelSelector
-type DiscoverySelectorsType []*DiscoverySelectorType
+type (
+	DiscoverySelectorType  metav1.LabelSelector
+	DiscoverySelectorsType []*DiscoverySelectorType
+)
 
 func (dst *DiscoverySelectorType) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	// Define a temporary struct to map YAML fields to Go struct fields

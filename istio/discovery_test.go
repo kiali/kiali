@@ -13,7 +13,10 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/exp/maps"
+	admissionregistrationv1 "k8s.io/api/admissionregistration/v1"
 	apps_v1 "k8s.io/api/apps/v1"
+	authv1 "k8s.io/api/authorization/v1"
 	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -1578,4 +1581,624 @@ func TestUpdateStatusMultipleHealthyRevs(t *testing.T) {
 
 	require.Equal(kubernetes.ComponentHealthy, mesh.ControlPlanes[0].Status)
 	require.Equal(kubernetes.ComponentHealthy, mesh.ControlPlanes[1].Status)
+}
+
+type accessReviewClient struct {
+	kubernetes.ClientInterface
+	AccessReview []*authv1.SelfSubjectAccessReview
+}
+
+func (a *accessReviewClient) GetSelfSubjectAccessReview(ctx context.Context, namespace, api, resourceType string, verbs []string) ([]*authv1.SelfSubjectAccessReview, error) {
+	return a.AccessReview, nil
+}
+
+type clusterRevisionKey struct {
+	Cluster              string
+	ControlPlaneRevision string
+}
+
+func TestDiscoverWithTags(t *testing.T) {
+	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = "Kubernetes"
+
+	defaultIstiod := fakeIstiodDeployment(conf.KubernetesConfig.ClusterName, false)
+	defaultWebhook := &admissionregistrationv1.MutatingWebhookConfiguration{
+		ObjectMeta: v1.ObjectMeta{
+			Name: "istio-revision-tag-default",
+			Labels: map[string]string{
+				models.IstioRevisionLabel: "default",
+				models.IstioTagLabel:      "default",
+			},
+		},
+	}
+
+	allowedToListWebhookReview := &authv1.SelfSubjectAccessReview{
+		Spec: authv1.SelfSubjectAccessReviewSpec{
+			ResourceAttributes: &authv1.ResourceAttributes{
+				Verb:     "list",
+				Resource: "mutatingwebhookconfigurations",
+				Group:    "admissionregistration.k8s.io",
+			},
+		},
+		Status: authv1.SubjectAccessReviewStatus{
+			Allowed: true,
+		},
+	}
+
+	cases := map[string]struct {
+		conf                    *config.Config
+		setup                   func() map[string][]runtime.Object
+		expectedNamespacesByRev map[clusterRevisionKey][]string
+	}{
+		"bookinfo with no label should not be managed": {
+			setup: func() map[string][]runtime.Object {
+				return map[string][]runtime.Object{
+					conf.KubernetesConfig.ClusterName: {
+						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo"}},
+						defaultWebhook,
+						defaultIstiod,
+						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
+						fakeIstioConfigMap("default"),
+					},
+				}
+			},
+			expectedNamespacesByRev: map[clusterRevisionKey][]string{
+				{Cluster: conf.KubernetesConfig.ClusterName, ControlPlaneRevision: "default"}: nil,
+			},
+		},
+		"bookinfo with ambient should be managed by the default controlplane": {
+			setup: func() map[string][]runtime.Object {
+				return map[string][]runtime.Object{
+					conf.KubernetesConfig.ClusterName: {
+						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo", Labels: map[string]string{istio.IstioDataplaneModeLabelKey: istio.AmbientDataplaneModeLabelValue}}},
+						defaultWebhook,
+						defaultIstiod,
+						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
+						fakeIstioConfigMap("default"),
+					},
+				}
+			},
+			expectedNamespacesByRev: map[clusterRevisionKey][]string{
+				{Cluster: conf.KubernetesConfig.ClusterName, ControlPlaneRevision: "default"}: nil,
+			},
+		},
+		"bookinfo with default tag should manage one namespace": {
+			setup: func() map[string][]runtime.Object {
+				return map[string][]runtime.Object{
+					conf.KubernetesConfig.ClusterName: {
+						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo", Labels: map[string]string{models.IstioRevisionLabel: "default"}}},
+						defaultWebhook,
+						defaultIstiod,
+						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
+						fakeIstioConfigMap("default"),
+					},
+				}
+			},
+			expectedNamespacesByRev: map[clusterRevisionKey][]string{
+				{Cluster: conf.KubernetesConfig.ClusterName, ControlPlaneRevision: "default"}: {"bookinfo"},
+			},
+		},
+		"bookinfo with injection-enabled label and default tag should manage one namespace": {
+			setup: func() map[string][]runtime.Object {
+				return map[string][]runtime.Object{
+					conf.KubernetesConfig.ClusterName: {
+						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo", Labels: map[string]string{models.IstioInjectionLabel: "enabled"}}},
+						defaultWebhook,
+						defaultIstiod,
+						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
+						fakeIstioConfigMap("default"),
+					},
+				}
+			},
+			expectedNamespacesByRev: map[clusterRevisionKey][]string{
+				{Cluster: conf.KubernetesConfig.ClusterName, ControlPlaneRevision: "default"}: {"bookinfo"},
+			},
+		},
+		"bookinfo with rev label and default tag should manage 0 namespaces": {
+			setup: func() map[string][]runtime.Object {
+				return map[string][]runtime.Object{
+					conf.KubernetesConfig.ClusterName: {
+						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo", Labels: map[string]string{models.IstioRevisionLabel: "1.23.0"}}},
+						defaultWebhook,
+						defaultIstiod,
+						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
+						fakeIstioConfigMap("default"),
+					},
+				}
+			},
+			expectedNamespacesByRev: map[clusterRevisionKey][]string{
+				{Cluster: conf.KubernetesConfig.ClusterName, ControlPlaneRevision: "default"}: nil,
+			},
+		},
+		"bookinfo with rev prod and tag default should manage 0 namespaces": {
+			setup: func() map[string][]runtime.Object {
+				return map[string][]runtime.Object{
+					conf.KubernetesConfig.ClusterName: {
+						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo", Labels: map[string]string{models.IstioRevisionLabel: "prod"}}},
+						defaultWebhook,
+						defaultIstiod,
+						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
+						fakeIstioConfigMap("default"),
+					},
+				}
+			},
+			expectedNamespacesByRev: map[clusterRevisionKey][]string{
+				{Cluster: conf.KubernetesConfig.ClusterName, ControlPlaneRevision: "default"}: nil,
+			},
+		},
+		"bookinfo namespace has rev prod and tag prod with istio rev 1.23.0": {
+			setup: func() map[string][]runtime.Object {
+				tagProd := &admissionregistrationv1.MutatingWebhookConfiguration{
+					ObjectMeta: v1.ObjectMeta{
+						Name: "istio-revision-tag-prod",
+						Labels: map[string]string{
+							models.IstioRevisionLabel: "1.23.0",
+							models.IstioTagLabel:      "prod",
+						},
+					},
+				}
+				istiod_1_23 := fakeIstiodDeployment(conf.KubernetesConfig.ClusterName, false)
+				istiod_1_23.Labels[models.IstioRevisionLabel] = "1.23.0"
+				return map[string][]runtime.Object{
+					conf.KubernetesConfig.ClusterName: {
+						defaultWebhook,
+						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo", Labels: map[string]string{models.IstioRevisionLabel: "prod"}}},
+						tagProd,
+						istiod_1_23,
+						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
+						fakeIstioConfigMap("1.23.0"),
+					},
+				}
+			},
+			expectedNamespacesByRev: map[clusterRevisionKey][]string{
+				{Cluster: conf.KubernetesConfig.ClusterName, ControlPlaneRevision: "1.23.0"}: {"bookinfo"},
+			},
+		},
+		"bookinfo namespace not selected by discovery selectors": {
+			setup: func() map[string][]runtime.Object {
+				istioConfigMap := fakeIstioConfigMap("default")
+				istioConfigMap.Data["mesh"] = `discoverySelectors:
+  - matchLabels:
+      include: true
+`
+				return map[string][]runtime.Object{
+					conf.KubernetesConfig.ClusterName: {
+						fakeIstiodDeployment(conf.KubernetesConfig.ClusterName, false),
+						defaultWebhook,
+						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo", Labels: map[string]string{models.IstioRevisionLabel: "default"}}},
+						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
+						istioConfigMap,
+					},
+				}
+			},
+			expectedNamespacesByRev: map[clusterRevisionKey][]string{
+				{Cluster: conf.KubernetesConfig.ClusterName, ControlPlaneRevision: "default"}: nil,
+			},
+		},
+		"bookinfo namespace is selected by discovery selectors": {
+			setup: func() map[string][]runtime.Object {
+				istioConfigMap := fakeIstioConfigMap("default")
+				istioConfigMap.Data["mesh"] = `discoverySelectors:
+  - matchLabels:
+      include: true
+`
+				return map[string][]runtime.Object{
+					conf.KubernetesConfig.ClusterName: {
+						fakeIstiodDeployment(conf.KubernetesConfig.ClusterName, false),
+						defaultWebhook,
+						&core_v1.Namespace{
+							ObjectMeta: v1.ObjectMeta{
+								Name: "bookinfo",
+								Labels: map[string]string{
+									models.IstioRevisionLabel: "default",
+									"include":                 "true",
+								},
+							},
+						},
+						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
+						istioConfigMap,
+					},
+				}
+			},
+			expectedNamespacesByRev: map[clusterRevisionKey][]string{
+				{Cluster: conf.KubernetesConfig.ClusterName, ControlPlaneRevision: "default"}: {"bookinfo"},
+			},
+		},
+		"accessible namespaces specified and bookinfo included": {
+			conf: func() *config.Config {
+				conf := *conf
+				conf.Deployment.AccessibleNamespaces = []string{"bookinfo", "istio-system"}
+				conf.Deployment.ClusterWideAccess = false
+				return &conf
+			}(),
+			setup: func() map[string][]runtime.Object {
+				return map[string][]runtime.Object{
+					conf.KubernetesConfig.ClusterName: {
+						fakeIstiodDeployment(conf.KubernetesConfig.ClusterName, false),
+						defaultWebhook,
+						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo", Labels: map[string]string{models.IstioRevisionLabel: "default"}}},
+						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
+						fakeIstioConfigMap("default"),
+					},
+				}
+			},
+			expectedNamespacesByRev: map[clusterRevisionKey][]string{
+				{Cluster: conf.KubernetesConfig.ClusterName, ControlPlaneRevision: "default"}: {"bookinfo"},
+			},
+		},
+		"accessible namespaces specified and bookinfo not included": {
+			conf: func() *config.Config {
+				conf := *conf
+				conf.Deployment.AccessibleNamespaces = []string{"istio-system"}
+				conf.Deployment.ClusterWideAccess = false
+				return &conf
+			}(),
+			setup: func() map[string][]runtime.Object {
+				return map[string][]runtime.Object{
+					conf.KubernetesConfig.ClusterName: {
+						fakeIstiodDeployment(conf.KubernetesConfig.ClusterName, false),
+						defaultWebhook,
+						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo", Labels: map[string]string{models.IstioRevisionLabel: "default"}}},
+						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
+						fakeIstioConfigMap("default"),
+					},
+				}
+			},
+			expectedNamespacesByRev: map[clusterRevisionKey][]string{
+				{Cluster: conf.KubernetesConfig.ClusterName, ControlPlaneRevision: "default"}: nil,
+			},
+		},
+		"namespaces with different tags and multiple istio revs each should manage 1 namespace": {
+			setup: func() map[string][]runtime.Object {
+				tagProd := &admissionregistrationv1.MutatingWebhookConfiguration{
+					ObjectMeta: v1.ObjectMeta{
+						Name: "istio-revision-tag-prod",
+						Labels: map[string]string{
+							models.IstioRevisionLabel: "1-23-0",
+							models.IstioTagLabel:      "prod",
+						},
+					},
+				}
+				tagCanary := &admissionregistrationv1.MutatingWebhookConfiguration{
+					ObjectMeta: v1.ObjectMeta{
+						Name: "istio-revision-tag-canary",
+						Labels: map[string]string{
+							models.IstioRevisionLabel: "1-24-0",
+							models.IstioTagLabel:      "canary",
+						},
+					},
+				}
+				istiod_1_23 := fakeIstiodDeployment(conf.KubernetesConfig.ClusterName, false)
+				istiod_1_23.Labels[models.IstioRevisionLabel] = "1-23-0"
+				istiod_1_23.Name = "istiod-1-23-0"
+				istiod_1_24 := fakeIstiodDeployment(conf.KubernetesConfig.ClusterName, false)
+				istiod_1_24.Labels[models.IstioRevisionLabel] = "1-24-0"
+				istiod_1_23.Name = "istiod-1-24-0"
+				return map[string][]runtime.Object{
+					conf.KubernetesConfig.ClusterName: {
+						defaultWebhook,
+						tagProd,
+						tagCanary,
+						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo", Labels: map[string]string{models.IstioRevisionLabel: "prod"}}},
+						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "travels", Labels: map[string]string{models.IstioRevisionLabel: "canary"}}},
+						istiod_1_23,
+						istiod_1_24,
+						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
+						fakeIstioConfigMap("1-23-0"),
+						fakeIstioConfigMap("1-24-0"),
+					},
+				}
+			},
+			expectedNamespacesByRev: map[clusterRevisionKey][]string{
+				{Cluster: conf.KubernetesConfig.ClusterName, ControlPlaneRevision: "1-23-0"}: {"bookinfo"},
+				{Cluster: conf.KubernetesConfig.ClusterName, ControlPlaneRevision: "1-24-0"}: {"travels"},
+			},
+		},
+		"primary-remote with default tag should manage bookinfo on each cluster": {
+			conf: func() *config.Config {
+				conf := *conf
+				conf.KubernetesConfig.ClusterName = "primary"
+				return &conf
+			}(),
+			setup: func() map[string][]runtime.Object {
+				primary := fakeIstiodDeployment("primary", true)
+				return map[string][]runtime.Object{
+					"primary": {
+						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo", Labels: map[string]string{models.IstioRevisionLabel: "default"}}},
+						defaultWebhook,
+						primary,
+						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
+						fakeIstioConfigMap("default"),
+					},
+					"remote": {
+						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo", Labels: map[string]string{models.IstioRevisionLabel: "default"}}},
+						defaultWebhook,
+						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system", Annotations: map[string]string{"topology.istio.io/controlPlaneClusters": "primary"}}},
+					},
+				}
+			},
+			expectedNamespacesByRev: map[clusterRevisionKey][]string{
+				{Cluster: "primary", ControlPlaneRevision: "default"}: {"bookinfo", "bookinfo"},
+			},
+		},
+		"primary-remote with tag should manage bookinfo on both clusters": {
+			conf: func() *config.Config {
+				conf := *conf
+				conf.KubernetesConfig.ClusterName = "primary"
+				return &conf
+			}(),
+			setup: func() map[string][]runtime.Object {
+				tagProd := &admissionregistrationv1.MutatingWebhookConfiguration{
+					ObjectMeta: v1.ObjectMeta{
+						Name: "istio-revision-tag-prod",
+						Labels: map[string]string{
+							models.IstioRevisionLabel: "1-23-0",
+							models.IstioTagLabel:      "prod",
+						},
+					},
+				}
+				primary := fakeIstiodDeployment("primary", true)
+				primary.Labels[models.IstioRevisionLabel] = "1-23-0"
+				primary.Name = "istiod-1-23-0"
+				return map[string][]runtime.Object{
+					"primary": {
+						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo", Labels: map[string]string{models.IstioRevisionLabel: "prod"}}},
+						defaultWebhook,
+						tagProd,
+						primary,
+						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
+						fakeIstioConfigMap("1-23-0"),
+					},
+					"remote": {
+						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo", Labels: map[string]string{models.IstioRevisionLabel: "prod"}}},
+						tagProd,
+						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system", Annotations: map[string]string{"topology.istio.io/controlPlaneClusters": "primary"}}},
+					},
+				}
+			},
+			expectedNamespacesByRev: map[clusterRevisionKey][]string{
+				{Cluster: "primary", ControlPlaneRevision: "1-23-0"}: {"bookinfo", "bookinfo"},
+			},
+		},
+		"multi-primary with tag should only manage bookinfo on their own cluster": {
+			conf: func() *config.Config {
+				conf := *conf
+				conf.KubernetesConfig.ClusterName = "east"
+				return &conf
+			}(),
+			setup: func() map[string][]runtime.Object {
+				tagProdEast := &admissionregistrationv1.MutatingWebhookConfiguration{
+					ObjectMeta: v1.ObjectMeta{
+						Name: "istio-revision-tag-prod",
+						Labels: map[string]string{
+							models.IstioRevisionLabel: "1-23-0",
+							models.IstioTagLabel:      "prod",
+						},
+					},
+				}
+				east := fakeIstiodDeployment("east", true)
+				east.Labels[models.IstioRevisionLabel] = "1-23-0"
+				east.Name = "istiod-1-23-0"
+				tagProdWest := &admissionregistrationv1.MutatingWebhookConfiguration{
+					ObjectMeta: v1.ObjectMeta{
+						Name: "istio-revision-tag-prod",
+						Labels: map[string]string{
+							models.IstioRevisionLabel: "1-23-0",
+							models.IstioTagLabel:      "prod",
+						},
+					},
+				}
+				west := fakeIstiodDeployment("west", true)
+				west.Labels[models.IstioRevisionLabel] = "1-23-0"
+				west.Name = "istiod-1-23-0"
+				return map[string][]runtime.Object{
+					"east": {
+						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo", Labels: map[string]string{models.IstioRevisionLabel: "prod"}}},
+						defaultWebhook,
+						tagProdEast,
+						east,
+						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
+						fakeIstioConfigMap("1-23-0"),
+					},
+					"west": {
+						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo", Labels: map[string]string{models.IstioRevisionLabel: "prod"}}},
+						defaultWebhook,
+						tagProdWest,
+						west,
+						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
+						fakeIstioConfigMap("1-23-0"),
+					},
+				}
+			},
+			expectedNamespacesByRev: map[clusterRevisionKey][]string{
+				{Cluster: "east", ControlPlaneRevision: "1-23-0"}: {"bookinfo"},
+				{Cluster: "west", ControlPlaneRevision: "1-23-0"}: {"bookinfo"},
+			},
+		},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			require := require.New(t)
+			conf := *conf
+			if tc.conf != nil {
+				conf = *tc.conf
+			}
+
+			clients := make(map[string]kubernetes.ClientInterface)
+			for cluster, objects := range tc.setup() {
+				k8s := kubetest.NewFakeK8sClient(objects...)
+				client := &accessReviewClient{
+					ClientInterface: k8s,
+					AccessReview:    []*authv1.SelfSubjectAccessReview{allowedToListWebhookReview},
+				}
+				clients[cluster] = client
+			}
+			cache := cache.NewTestingCacheWithClients(t, clients, conf)
+			discovery := istio.NewDiscovery(clients, cache, &conf)
+
+			mesh, err := discovery.Mesh(context.Background())
+			require.NoError(err)
+			require.Len(mesh.ControlPlanes, len(maps.Keys(tc.expectedNamespacesByRev)))
+			for _, cp := range mesh.ControlPlanes {
+				require.NotNil(cp.Tags)
+				for _, tag := range cp.Tags {
+					require.NotNil(tag.ControlPlane)
+					require.Equal(&cp, tag.ControlPlane)
+				}
+			}
+			for clusterRev, expectedNamespaces := range tc.expectedNamespacesByRev {
+				controlPlane := slicetest.FindOrFail(t, mesh.ControlPlanes, func(cp models.ControlPlane) bool {
+					return cp.Revision == clusterRev.ControlPlaneRevision && cp.Cluster.Name == clusterRev.Cluster
+				})
+				require.Len(controlPlane.ManagedNamespaces, len(expectedNamespaces))
+				for _, ns := range expectedNamespaces {
+					require.True(slices.ContainsFunc(controlPlane.ManagedNamespaces, func(n models.Namespace) bool {
+						return n.Name == ns
+					}), "expected namespace %s to be managed by control plane %s", ns, clusterRev)
+				}
+			}
+		})
+	}
+}
+
+func TestDiscoverTagsWithoutWebhookPermissions(t *testing.T) {
+	require := require.New(t)
+
+	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = "Kubernetes"
+	istiodDeployment := fakeIstiodDeployment("Kubernetes", false)
+	istioConfigMap := fakeIstioConfigMap("default")
+
+	defaultWebhook := &admissionregistrationv1.MutatingWebhookConfiguration{
+		ObjectMeta: v1.ObjectMeta{
+			Name: "istio-revision-tag-default",
+			Labels: map[string]string{
+				models.IstioRevisionLabel: "default",
+				models.IstioTagLabel:      "default",
+			},
+		},
+	}
+
+	allowedToListWebhookReview := &authv1.SelfSubjectAccessReview{
+		Spec: authv1.SelfSubjectAccessReviewSpec{
+			ResourceAttributes: &authv1.ResourceAttributes{
+				Verb:     "list",
+				Resource: "mutatingwebhookconfigurations",
+				Group:    "admissionregistration.k8s.io",
+			},
+		},
+		Status: authv1.SubjectAccessReviewStatus{
+			Allowed: false,
+		},
+	}
+	k8s := kubetest.NewFakeK8sClient(
+		defaultWebhook,
+		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
+		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo", Labels: map[string]string{models.IstioRevisionLabel: "default"}}},
+		istiodDeployment,
+		istioConfigMap,
+	)
+	client := &accessReviewClient{
+		ClientInterface: k8s,
+		AccessReview:    []*authv1.SelfSubjectAccessReview{allowedToListWebhookReview},
+	}
+	clients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: client}
+	cache := cache.NewTestingCacheWithClients(t, clients, *conf)
+	discovery := istio.NewDiscovery(clients, cache, conf)
+	require.False(cache.CanListWebhooks(conf.KubernetesConfig.ClusterName))
+
+	mesh, err := discovery.Mesh(context.TODO())
+	require.NoError(err)
+	require.Len(mesh.ControlPlanes, 1)
+	require.Nil(mesh.ControlPlanes[0].Tags)
+}
+
+func approvingClient(client kubernetes.ClientInterface) *accessReviewClient {
+	return &accessReviewClient{
+		ClientInterface: client,
+		AccessReview: []*authv1.SelfSubjectAccessReview{
+			{
+				Spec: authv1.SelfSubjectAccessReviewSpec{
+					ResourceAttributes: &authv1.ResourceAttributes{
+						Verb:     "list",
+						Resource: "mutatingwebhookconfigurations",
+						Group:    "admissionregistration.k8s.io",
+					},
+				},
+				Status: authv1.SubjectAccessReviewStatus{
+					Allowed: true,
+				},
+			},
+		},
+	}
+}
+
+func fakeDefaultWebhook() *admissionregistrationv1.MutatingWebhookConfiguration {
+	return &admissionregistrationv1.MutatingWebhookConfiguration{
+		ObjectMeta: v1.ObjectMeta{
+			Name: "istio-revision-tag-default",
+			Labels: map[string]string{
+				models.IstioRevisionLabel: "default",
+				models.IstioTagLabel:      "default",
+			},
+		},
+	}
+}
+
+func TestDiscoverTagsWithExternalCluster(t *testing.T) {
+	require := require.New(t)
+
+	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = "external"
+	t.Cleanup(func() { config.Set(config.NewConfig()) })
+	config.Set(conf)
+
+	external := fakeIstiodDeployment("remote", true)
+	external.Labels[models.IstioRevisionLabel] = "1-23-0"
+	external.Name = "istiod-1-23-0"
+	external.Namespace = "external"
+	externalConfigMap := fakeIstioConfigMap("1-23-0")
+	externalConfigMap.Namespace = "external"
+	tagProdRemote := fakeDefaultWebhook()
+	tagProdRemote.Labels[models.IstioRevisionLabel] = "1-23-0"
+	tagProdRemote.Labels[models.IstioTagLabel] = "prod"
+	clients := map[string]kubernetes.ClientInterface{
+		"external": approvingClient(kubetest.NewFakeK8sClient(
+			fakeDefaultWebhook(),
+			&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
+			&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "external"}},
+			external,
+			externalConfigMap,
+			fakeIstioConfigMap("default"),
+			fakeIstiodDeployment("external", false),
+		)),
+		"remote": approvingClient(kubetest.NewFakeK8sClient(
+			&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo", Labels: map[string]string{models.IstioRevisionLabel: "prod"}}},
+			tagProdRemote,
+			&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "external"}},
+		)),
+	}
+
+	cache := cache.NewTestingCacheWithClients(t, clients, *conf)
+	discovery := istio.NewDiscovery(clients, cache, conf)
+
+	mesh, err := discovery.Mesh(context.TODO())
+	require.NoError(err)
+	require.Len(mesh.ControlPlanes, 2)
+
+	externalIstioSystem := slicetest.FindOrFail(t, mesh.ControlPlanes, func(cp models.ControlPlane) bool {
+		return cp.ID == "external"
+	})
+	externalControlPlane := slicetest.FindOrFail(t, mesh.ControlPlanes, func(cp models.ControlPlane) bool {
+		return cp.ID == "remote"
+	})
+	require.Len(externalIstioSystem.Tags, 1)
+	require.Len(externalControlPlane.Tags, 1)
+
+	require.Equal(externalIstioSystem.Tags[0].ControlPlane.ID, externalIstioSystem.ID)
+	require.Equal(externalIstioSystem.Tags[0].ControlPlane.IstiodName, externalIstioSystem.IstiodName)
+	require.Equal(externalControlPlane.Tags[0].ControlPlane.ID, externalControlPlane.ID)
+	require.Equal(externalControlPlane.Tags[0].ControlPlane.IstiodName, externalControlPlane.IstiodName)
+
+	require.Equal([]models.Namespace{{Name: "bookinfo", Cluster: "remote", Labels: map[string]string{models.IstioRevisionLabel: "prod"}}}, externalControlPlane.ManagedNamespaces)
 }

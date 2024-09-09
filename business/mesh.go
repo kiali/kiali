@@ -89,7 +89,7 @@ func (in *MeshService) CanaryUpgradeStatus() (*models.CanaryUpgradeStatus, error
 		}
 
 		// include not revision labeled namespaces into default ones
-		if revision == istio.DefaultRevisionLabel {
+		if revision == models.DefaultRevisionLabel {
 			pendingNss, err := in.homeClusterSAClient.GetNamespaces(fmt.Sprintf("%s=enabled", in.conf.IstioLabels.InjectionLabelName))
 			if err != nil {
 				return nil, err

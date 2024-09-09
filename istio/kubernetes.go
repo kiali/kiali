@@ -12,6 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/kubernetes/cache"
+	"github.com/kiali/kiali/models"
 )
 
 func GetHealthyIstiodPods(kubeCache cache.KubeCache, revision string, namespace string) ([]*corev1.Pod, error) {
@@ -70,4 +71,23 @@ func GetLatestPod(pods []*corev1.Pod) *corev1.Pod {
 	}
 
 	return latestPod
+}
+
+// GetRevision returns the revision of the controlplane that manages this namespace.
+// If this namespace is in the mesh, meaning it either has an injection label,
+// a revision label, or an ambient label, then it returns the revision label.
+// When a namespace has an injection label or an ambient label with no rev label,
+// it is managed by the default revision.
+// If a namespace is out of the mesh, then the empty string is returned.
+func GetRevision(namespace models.Namespace) string {
+	rev, hasRevLabel := namespace.Labels[models.IstioRevisionLabel]
+	injectionEnabled := namespace.Labels[models.IstioInjectionLabel] == models.IstioInjectionEnabledLabelValue
+	// Injection label takes precedence over revision label.
+	// Or if there's no rev label and ambient is enabled then set to default.
+	// TODO: Factor in exclude namespaces for cni for ambient.
+	if injectionEnabled || (!hasRevLabel && namespace.IsAmbient) {
+		rev = "default"
+	}
+
+	return rev
 }

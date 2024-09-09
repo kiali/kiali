@@ -1,4 +1,4 @@
-package business
+package istio
 
 import (
 	"regexp"
@@ -18,8 +18,8 @@ var systemNamespaceRegex = regexp.MustCompile(`^(kube-.*|openshift.*|ibm.*|kiali
 // If there are no overrides, but default discovery selectors are defined in the Kiali config, those will be returned.
 // If there are no selectors defined in the Kiali config, nil is returned (Istio's own discovery selectors will be ignored).
 // kialiConfig argument may be nil - if so, they are ignored and nil is returned.
-func getDiscoverySelectorsForCluster(cluster string, kialiConfig *config.Config) config.DiscoverySelectorsType {
-	ds := getKialiDiscoverySelectors(cluster, kialiConfig)
+func GetDiscoverySelectorsForCluster(cluster string, kialiConfig *config.Config) config.DiscoverySelectorsType {
+	ds := GetKialiDiscoverySelectors(cluster, kialiConfig)
 	return ds
 }
 
@@ -32,8 +32,7 @@ func getDiscoverySelectorsForCluster(cluster string, kialiConfig *config.Config)
 // will select the control plane namespace as defined in the Kiali config in order to assure Kiali will always match
 // the control plane namespace (Kiali should always see that namespace).
 // NOTE: You probably don't want to use this func; instead, see getDiscoverySelectorsForCluster()
-func getKialiDiscoverySelectors(cluster string, cfg *config.Config) config.DiscoverySelectorsType {
-
+func GetKialiDiscoverySelectors(cluster string, cfg *config.Config) config.DiscoverySelectorsType {
 	if cfg == nil {
 		return nil
 	}
@@ -69,8 +68,7 @@ func getKialiDiscoverySelectors(cluster string, cfg *config.Config) config.Disco
 // filterNamespacesWithDiscoverySelectors will look at the given list of namespaces and return a list
 // containing only those namespaces that match the given discovery selectors. If there are no discoverySelectors,
 // then the full list of namespaces is returned minus the system namespaces.
-func filterNamespacesWithDiscoverySelectors(namespaces []models.Namespace, discoverySelectors config.DiscoverySelectorsType) []models.Namespace {
-
+func FilterNamespacesWithDiscoverySelectors(namespaces []models.Namespace, discoverySelectors config.DiscoverySelectorsType) []models.Namespace {
 	if len(namespaces) == 0 || len(discoverySelectors) == 0 {
 		// We have no discovery selectors set. We want to provide all namespaces, but filter out system namespaces
 		// since in all likelihood the user does not want to see them. If for some reason they do want to see one or

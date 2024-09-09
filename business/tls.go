@@ -8,7 +8,6 @@ import (
 	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 
 	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/models"
@@ -74,7 +73,7 @@ func (in *TLSService) MeshWidemTLSStatus(ctx context.Context, cluster string, re
 
 	// Look for enabled if rev label isn't set: https://istio.io/latest/docs/setup/additional-setup/sidecar-injection/#controlling-the-injection-policy
 	namespacesForRevision := sliceutil.Filter(namespaces, func(ns models.Namespace) bool {
-		return ns.Labels[models.IstioRevisionLabel] == revision || ns.Labels[istio.IstioInjectionLabel] == "enabled"
+		return ns.Labels[models.IstioRevisionLabel] == revision || ns.Labels[models.IstioInjectionLabel] == "enabled"
 	})
 	namespaceNames := sliceutil.Map(namespacesForRevision, func(ns models.Namespace) string {
 		return ns.Name
@@ -206,7 +205,7 @@ func (in *TLSService) hasAutoMTLSEnabled(cluster string, namespace *models.Names
 	rev := namespace.Labels[models.IstioRevisionLabel]
 	if rev == "" {
 		// Assume that if there is no revision label, it is the default revision.
-		rev = istio.DefaultRevisionLabel
+		rev = models.DefaultRevisionLabel
 	}
 
 	// Find the controlplane that controls that namespace.

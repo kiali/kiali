@@ -25,6 +25,9 @@ Options:
 -dorp|--docker-or-podman <docker|podman>
     What to use when building images.
     Default: docker
+-hcd|--helm-charts-dir
+    Directory where the Kiali helm charts are located.
+    If one is not supplied a /tmp dir will be created and used.
 -iv|--istio-version <#.#.#>
     The version of Istio you want to install.
     If you want to run with a dev build of Istio, the value must be something like "#.#-dev".
@@ -54,6 +57,7 @@ while [[ $# -gt 0 ]]; do
     -ab|--ambient)                AMBIENT="true";             shift;shift; ;;
     -dorp|--docker-or-podman)     DORP="$2";                  shift;shift; ;;
     -h|--help)                    helpmsg;                    exit 1       ;;
+    -hcd|--helm-charts-dir)       HELM_CHARTS_DIR="$2";       shift;shift; ;;
     -iv|--istio-version)          ISTIO_VERSION="$2";         shift;shift; ;;
     -mc|--multicluster)
       MULTICLUSTER="${2}"
@@ -102,11 +106,18 @@ else
   KIND_NODE_IMAGE="kindest/node:v1.27.3@sha256:3966ac761ae0136263ffdb6cfd4db23ef8a83cba8a463690e98317add2c9ba72"
 fi
 
+if [ -z "${HELM_CHARTS_DIR}" ]; then
+  HELM_CHARTS_DIR="$(mktemp -d)"
+  infomsg "Cloning kiali helm-charts..."
+  git clone --single-branch --branch "${TARGET_BRANCH}" https://github.com/kiali/helm-charts.git "${HELM_CHARTS_DIR}"
+fi
+
 # print out our settings for debug purposes
 cat <<EOM
 === SETTINGS ===
 AUTH_STRATEGY=$AUTH_STRATEGY
 DORP=$DORP
+HELM_CHARTS_DIR=$HELM_CHARTS_DIR
 ISTIO_VERSION=$ISTIO_VERSION
 KIND_NODE_IMAGE=$KIND_NODE_IMAGE
 MULTICLUSTER=$MULTICLUSTER
@@ -120,7 +131,6 @@ which kubectl > /dev/null || (infomsg "kubectl executable is missing"; exit 1)
 which kind > /dev/null || (infomsg "kind executable is missing"; exit 1)
 which "${DORP}" > /dev/null || (infomsg "[$DORP] is not in the PATH"; exit 1)
 
-HELM_CHARTS_DIR="$(mktemp -d)"
 
 if [ -n "${ISTIO_VERSION}" ]; then
   if [[ "${ISTIO_VERSION}" == *-dev ]]; then
@@ -191,8 +201,6 @@ setup_kind_singlecluster() {
   infomsg "Pushing the images into the cluster..."
   make -e DORP="${DORP}" -e CLUSTER_TYPE="kind" -e KIND_NAME="ci" cluster-push-kiali
 
-  infomsg "Cloning kiali helm-charts..."
-  git clone --single-branch --branch "${TARGET_BRANCH}" https://github.com/kiali/helm-charts.git "${HELM_CHARTS_DIR}"
   make -C "${HELM_CHARTS_DIR}" build-helm-charts
 
   HELM="${HELM_CHARTS_DIR}/_output/helm-install/helm"
@@ -273,8 +281,6 @@ setup_kind_tempo() {
   infomsg "Pushing the images into the cluster..."
   make -e DORP="${DORP}" -e CLUSTER_TYPE="kind" -e KIND_NAME="ci" cluster-push-kiali
 
-  infomsg "Cloning kiali helm-charts..."
-  git clone --single-branch --branch "${TARGET_BRANCH}" https://github.com/kiali/helm-charts.git "${HELM_CHARTS_DIR}"
   make -C "${HELM_CHARTS_DIR}" build-helm-charts
 
   HELM="${HELM_CHARTS_DIR}/_output/helm-install/helm"
@@ -329,8 +335,6 @@ setup_kind_multicluster() {
   infomsg "Downloading istio"
   "${SCRIPT_DIR}"/istio/download-istio.sh ${DOWNLOAD_ISTIO_VERSION_ARG}
 
-  infomsg "Cloning kiali helm-charts..."
-  git clone --single-branch --branch "${TARGET_BRANCH}" https://github.com/kiali/helm-charts.git "${HELM_CHARTS_DIR}"
   make -C "${HELM_CHARTS_DIR}" build-helm-charts
 
   local script_dir

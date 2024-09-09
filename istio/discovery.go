@@ -23,6 +23,11 @@ import (
 )
 
 const (
+	AmbientDataplaneModeLabelValue = "ambient"
+	IstioDataplaneModeLabelKey     = "istio.io/dataplane-mode"
+)
+
+const (
 	istioControlPlaneClustersLabel        = "topology.istio.io/controlPlaneClusters"
 	istiodAppNameLabelKey                 = "app"
 	istiodAppNameLabelValue               = "istiod"
@@ -31,13 +36,6 @@ const (
 	istiodScopeGatewayEnvKey              = "PILOT_SCOPE_GATEWAY_TO_NAMESPACE"
 	baseIstioConfigMapName                = "istio"                  // As of 1.19 this is hardcoded in the helm charts.
 	baseIstioSidecarInjectorConfigMapName = "istio-sidecar-injector" // As of 1.19 this is hardcoded in the helm charts.
-)
-
-const (
-	// DefaultRevisionLabel is the value for the default revision.
-	DefaultRevisionLabel = "default"
-	// IstioInjectionLabel is the value for the istio injection label on a namespace.
-	IstioInjectionLabel = "istio-injection"
 )
 
 func parseIstioConfigMap(istioConfig *corev1.ConfigMap) (*models.IstioMeshConfig, error) {
@@ -76,7 +74,6 @@ func (in *Discovery) getControlPlaneConfiguration(kubeCache cache.KubeCache, con
 	}
 
 	configMap, err := kubeCache.GetConfigMap(controlPlane.IstiodNamespace, configMapName)
-
 	if err != nil {
 		return nil, err
 	}
@@ -96,7 +93,7 @@ func (in *Discovery) getControlPlaneConfiguration(kubeCache cache.KubeCache, con
 func revisionedConfigMapName(base string, revision string) string {
 	// If the revision is set, we should use the revisioned configmap name
 	// otherwise the hardcoded base value is used.
-	if revision == "" || revision == DefaultRevisionLabel {
+	if revision == "" || revision == models.DefaultRevisionLabel {
 		return base
 	}
 	return fmt.Sprintf("%s-%s", base, revision)
@@ -208,6 +205,11 @@ func (in *Discovery) Clusters() ([]models.KubeCluster, error) {
 	in.kialiCache.SetClusters(clusters)
 
 	return clusters, nil
+}
+
+type clusterRevisionKey struct {
+	Cluster  string
+	Revision string
 }
 
 // Mesh gathers information about the mesh and controlplanes running in the mesh
@@ -412,9 +414,152 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 		}
 	}
 
+	// Get the tags for the mesh.
+	tags, err := in.getTags(ctx, mesh.ControlPlanes)
+	if err != nil {
+		return nil, err
+	}
+
+	mesh.Tags = tags
+
+	namespacesByClusterAndRev := map[clusterRevisionKey][]models.Namespace{}
+	// Multi-cluster is not supported without cluster wide access.
+	if !in.conf.AllNamespacesAccessible() {
+		// TODO: Namespace list / caching is probably something that other parts of Kiali need.
+		// This probably should moved outside of discovery.
+		for _, name := range in.conf.Deployment.AccessibleNamespaces {
+			homeClusterClient, ok := in.kialiSAClients[in.conf.KubernetesConfig.ClusterName]
+			if !ok {
+				log.Errorf("unable to get client for cluster [%s].", in.conf.KubernetesConfig.ClusterName)
+				continue
+			}
+
+			ns, err := homeClusterClient.GetNamespace(name)
+			if err != nil {
+				log.Errorf("unable to get namespace [%s] for cluster [%s]. Err: %s", name, in.conf.KubernetesConfig.ClusterName, err)
+				continue
+			}
+
+			n := models.CastNamespace(*ns, in.conf.KubernetesConfig.ClusterName)
+			rev := GetRevision(n)
+			if rev == "" {
+				// No revision label means there's no controlplane managing it.
+				// This happens is injection is not enabled for this namespace and it's not ambient.
+				continue
+			}
+			key := clusterRevisionKey{Cluster: in.conf.KubernetesConfig.ClusterName, Revision: rev}
+			namespacesByClusterAndRev[key] = append(namespacesByClusterAndRev[key], n)
+		}
+	} else {
+		for _, cluster := range clusters {
+			if !cluster.Accessible {
+				continue
+			}
+
+			client, ok := in.kialiSAClients[cluster.Name]
+			if !ok {
+				log.Errorf("unable to get client for cluster [%s].", cluster.Name)
+				continue
+			}
+
+			namespaces, err := client.GetNamespaces("")
+			if err != nil {
+				log.Errorf("unable to get namespaces for cluster [%s]. Err: %s", cluster.Name, err)
+				continue
+			}
+
+			for _, namespace := range namespaces {
+				n := models.CastNamespace(namespace, cluster.Name)
+				rev := GetRevision(n)
+				if rev == "" {
+					// No revision label means there's no controlplane managing it.
+					// This happens is injection is not enabled for this namespace and it's not ambient.
+					continue
+				}
+				key := clusterRevisionKey{Cluster: cluster.Name, Revision: rev}
+				namespacesByClusterAndRev[key] = append(namespacesByClusterAndRev[key], n)
+			}
+		}
+	}
+
+	for _, cp := range controlPlanes {
+		for _, cluster := range cp.ManagedClusters {
+			// Default to controlplane revision but if there's a tag then overwrite with that.
+			rev := cp.Revision
+			if cp.Tags != nil {
+				// Find the tag for that cluster.
+				for _, tag := range cp.Tags {
+					if tag.Cluster == cluster.Name && tag.Revision == cp.Revision {
+						rev = tag.Name
+						break
+					}
+				}
+			}
+			key := clusterRevisionKey{Cluster: cluster.Name, Revision: rev}
+			if namespaces, ok := namespacesByClusterAndRev[key]; ok {
+				cp.ManagedNamespaces = append(cp.ManagedNamespaces, namespaces...)
+			}
+		}
+	}
+
+	// Check if there are discovery selectors set and filter namespaces if there are.
+	for _, cp := range controlPlanes {
+		if cp.Config.DiscoverySelectors != nil {
+			cp.ManagedNamespaces = FilterNamespacesWithDiscoverySelectors(cp.ManagedNamespaces, cp.Config.DiscoverySelectors)
+		}
+	}
+
 	in.kialiCache.SetMesh(mesh)
 
 	return mesh, nil
+}
+
+func (in *Discovery) getTags(ctx context.Context, controlPlanes []models.ControlPlane) ([]models.Tag, error) {
+	var tags []models.Tag
+	for cluster, client := range in.kialiSAClients {
+		if !in.kialiCache.CanListWebhooks(cluster) {
+			log.Debugf("Unable to list webhooks for cluster [%s]. Give Kiali permission to read 'mutatingwebhookconfigurations'. Skipping getting tags.", cluster)
+			continue
+		}
+
+		webhooks, err := client.Kube().AdmissionregistrationV1().MutatingWebhookConfigurations().List(
+			ctx, metav1.ListOptions{LabelSelector: models.IstioTagLabel},
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, webhook := range webhooks.Items {
+			log.Debugf("Found webhook [%s/%s] on cluster: [%s].", webhook.Namespace, webhook.Name, cluster)
+			tag := models.Tag{
+				Cluster:  cluster,
+				Name:     webhook.Labels[models.IstioTagLabel],
+				Revision: webhook.Labels[models.IstioRevisionLabel],
+			}
+			tags = append(tags, tag)
+		}
+	}
+
+	tagsByClusterRev := map[string][]*models.Tag{}
+	for i := range tags {
+		tagsByClusterRev[tags[i].Cluster+tags[i].Revision] = append(tagsByClusterRev[tags[i].Cluster+tags[i].Revision], &tags[i])
+	}
+
+	for i := range controlPlanes {
+		controlPlane := &controlPlanes[i]
+		for _, cluster := range controlPlane.ManagedClusters {
+			key := cluster.Name + controlPlane.Revision
+			if cpTags, ok := tagsByClusterRev[key]; ok {
+				for _, tag := range cpTags {
+					tag := tag
+					tag.ControlPlane = controlPlane
+					controlPlane.Tags = append(controlPlane.Tags, *tag)
+				}
+			}
+		}
+	}
+
+	return tags, nil
 }
 
 func (in *Discovery) getKialiInstances(cluster models.KubeCluster) ([]models.KialiInstance, error) {
