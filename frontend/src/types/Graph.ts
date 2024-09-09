@@ -511,7 +511,7 @@ export interface DecoratedGraphEdgeData extends GraphEdgeData {
   responseTime: number;
   responses: Responses;
   // Reverse edge
-  reverse: DecoratedGraphEdgeData;
+  reverse?: DecoratedGraphEdgeData;
   tcp: number;
   // Default value NaN
   throughput: number;
