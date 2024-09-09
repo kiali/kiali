@@ -64,7 +64,7 @@ func NewNamespaceService(
 	}
 }
 
-func (in *NamespaceService) clusterIsOpenshift(cluster string) bool {
+func (in *NamespaceService) clusterIsOpenShift(cluster string) bool {
 	return in.hasProjects[cluster]
 }
 
@@ -163,7 +163,7 @@ func (in *NamespaceService) getNamespacesByCluster(ctx context.Context, cluster 
 	var namespaces []models.Namespace
 
 	// If we are running in OpenShift, we will use the project names since these are the list of accessible namespaces
-	if in.clusterIsOpenshift(cluster) {
+	if in.clusterIsOpenShift(cluster) {
 		projects, err := in.userClients[cluster].GetProjects(ctx, "")
 		if err != nil {
 			return nil, err
@@ -279,7 +279,7 @@ func (in *NamespaceService) GetClusterNamespace(ctx context.Context, namespace s
 	}
 
 	var result models.Namespace
-	if in.clusterIsOpenshift(cluster) {
+	if in.clusterIsOpenShift(cluster) {
 		project, err := client.GetProject(ctx, namespace)
 		if err != nil {
 			return nil, err
