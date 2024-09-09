@@ -71,6 +71,7 @@ func TestNewOpenshiftAuthService(t *testing.T) {
 
 	metadataServer := fakeOAuthMetadataServer(t)
 	client := kubetest.NewFakeK8sClient(oAuthClient)
+	client.OpenShift = true
 	client.KubeClusterInfo.ClientConfig = &rest.Config{Host: metadataServer.URL}
 	clients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: client}
 	clientFactory := kubetest.NewFakeClientFactory(conf, clients)
@@ -144,6 +145,7 @@ func TestOpenshiftAuthController(t *testing.T) {
 		},
 	)
 	client.KubeClusterInfo.ClientConfig = &rest.Config{Host: metadataServer.URL}
+	client.OpenShift = true
 	clients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: client}
 	clientFactory := kubetest.NewFakeClientFactory(conf, clients)
 
@@ -226,6 +228,7 @@ func TestUnauthorizedUserSessionGetsDropped(t *testing.T) {
 	client.UserFake.PrependReactor("get", "users", func(action kubeclienttesting.Action) (bool, runtime.Object, error) {
 		return true, nil, k8serrors.NewUnauthorized("unauthorized")
 	})
+	client.OpenShift = true
 
 	client.KubeClusterInfo.ClientConfig = &rest.Config{Host: metadataServer.URL}
 	clients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: client}
@@ -276,6 +279,7 @@ func TestMulticlusterUnauthorizedUserSessionGetsDropped(t *testing.T) {
 			},
 		},
 	)
+	eastClient.OpenShift = true
 
 	eastClient.KubeClusterInfo.ClientConfig = &rest.Config{Host: metadataServer.URL}
 	westClient := kubetest.NewFakeK8sClient(
@@ -291,6 +295,7 @@ func TestMulticlusterUnauthorizedUserSessionGetsDropped(t *testing.T) {
 			},
 		},
 	)
+	westClient.OpenShift = true
 	westClient.UserFake.PrependReactor("get", "users", func(action kubeclienttesting.Action) (bool, runtime.Object, error) {
 		return true, nil, k8serrors.NewUnauthorized("unauthorized")
 	})
@@ -357,6 +362,7 @@ func TestTerminateSession(t *testing.T) {
 			},
 		},
 	)
+	eastClient.OpenShift = true
 
 	eastClient.KubeClusterInfo.ClientConfig = &rest.Config{Host: metadataServer.URL}
 	westClient := kubetest.NewFakeK8sClient(
@@ -372,6 +378,7 @@ func TestTerminateSession(t *testing.T) {
 			},
 		},
 	)
+	westClient.OpenShift = true
 	westClient.KubeClusterInfo.ClientConfig = &rest.Config{Host: metadataServer.URL}
 	clients := map[string]kubernetes.ClientInterface{
 		"east": eastClient,

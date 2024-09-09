@@ -82,6 +82,11 @@ func NewOpenshiftOAuthService(ctx context.Context, conf *config.Config, kialiSAC
 
 	// TODO: We could parallelize this to potentially speed up the process.
 	for cluster, client := range kialiSAClients {
+		if !client.IsOpenShift() {
+			log.Infof("While setting up the OAuthService, skipping cluster [%s] because it is not an OpenShift cluster", cluster)
+			continue
+		}
+
 		log.Debugf("Getting OAuth config for cluster [%s]", cluster)
 		// Use CA info from kube config.
 		url := client.ClusterInfo().ClientConfig.Host + "/.well-known/oauth-authorization-server"

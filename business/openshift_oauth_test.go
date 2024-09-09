@@ -72,6 +72,7 @@ func TestNewOpenshiftOAuthService(t *testing.T) {
 
 			client := kubetest.NewFakeK8sClient(tc.oAuthClient)
 			client.KubeClusterInfo.ClientConfig = &rest.Config{Host: metadataServer.URL}
+			client.OpenShift = true
 			clients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: client}
 			clientFactory := kubetest.NewFakeClientFactory(conf, clients)
 
@@ -83,4 +84,32 @@ func TestNewOpenshiftOAuthService(t *testing.T) {
 			}
 		})
 	}
+}
+
+// See https://github.com/kiali/kiali/issues/7665.
+func TestNewOAuthMixedClusters(t *testing.T) {
+	require := require.New(t)
+	metadataServer := fakeOAuthMetadataServer(t)
+
+	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = "openshift"
+
+	openshift := kubetest.NewFakeK8sClient(&osoauth_v1.OAuthClient{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name: "kiali-istio-system",
+		},
+		RedirectURIs: []string{"http://localhost:20001/kiali"},
+	})
+	openshift.OpenShift = true
+	vanilla := kubetest.NewFakeK8sClient()
+	clients := map[string]kubernetes.ClientInterface{
+		"openshift": openshift,
+		"vanilla":   vanilla,
+	}
+
+	openshift.KubeClusterInfo.ClientConfig = &rest.Config{Host: metadataServer.URL}
+	clientFactory := kubetest.NewFakeClientFactory(conf, clients)
+
+	_, err := business.NewOpenshiftOAuthService(context.TODO(), conf, clients, clientFactory)
+	require.NoError(err)
 }
