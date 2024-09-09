@@ -30,7 +30,7 @@ func (s NoK8sGatewayChecker) Check() ([]*models.IstioCheck, bool) {
 func (s NoK8sGatewayChecker) ValidateHTTPRouteGateways(validations *[]*models.IstioCheck) bool {
 	valid := true
 
-	gvk := kubernetes.ResourceTypesToAPI[kubernetes.K8sGateways]
+	gvk := kubernetes.K8sGateways
 
 	if len(s.K8sHTTPRoute.Spec.ParentRefs) > 0 {
 		for index, parentRef := range s.K8sHTTPRoute.Spec.ParentRefs {

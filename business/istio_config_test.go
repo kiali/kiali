@@ -32,7 +32,7 @@ func TestParseListParams(t *testing.T) {
 	assert.True(t, criteria.IncludeDestinationRules)
 	assert.True(t, criteria.IncludeServiceEntries)
 
-	objects = "gateways"
+	objects = models.GVKToQueryString(kubernetes.Gateways)
 	criteria = ParseIstioConfigCriteria(objects, labelSelector, "")
 
 	assert.True(t, criteria.IncludeGateways)
@@ -40,14 +40,15 @@ func TestParseListParams(t *testing.T) {
 	assert.False(t, criteria.IncludeDestinationRules)
 	assert.False(t, criteria.IncludeServiceEntries)
 
+	objects = models.GVKToQueryString(kubernetes.K8sGateways)
 	criteria = ParseIstioConfigCriteria(objects, labelSelector, "")
 
-	assert.True(t, criteria.IncludeGateways)
+	assert.True(t, criteria.IncludeK8sGateways)
 	assert.False(t, criteria.IncludeVirtualServices)
 	assert.False(t, criteria.IncludeDestinationRules)
 	assert.False(t, criteria.IncludeServiceEntries)
 
-	objects = "virtualservices"
+	objects = models.GVKToQueryString(kubernetes.VirtualServices)
 	criteria = ParseIstioConfigCriteria(objects, labelSelector, "")
 
 	assert.False(t, criteria.IncludeGateways)
@@ -55,7 +56,7 @@ func TestParseListParams(t *testing.T) {
 	assert.False(t, criteria.IncludeDestinationRules)
 	assert.False(t, criteria.IncludeServiceEntries)
 
-	objects = "destinationrules"
+	objects = models.GVKToQueryString(kubernetes.DestinationRules)
 	criteria = ParseIstioConfigCriteria(objects, labelSelector, "")
 
 	assert.False(t, criteria.IncludeGateways)
@@ -63,7 +64,7 @@ func TestParseListParams(t *testing.T) {
 	assert.True(t, criteria.IncludeDestinationRules)
 	assert.False(t, criteria.IncludeServiceEntries)
 
-	objects = "serviceentries"
+	objects = models.GVKToQueryString(kubernetes.ServiceEntries)
 	criteria = ParseIstioConfigCriteria(objects, labelSelector, "")
 
 	assert.False(t, criteria.IncludeGateways)
@@ -71,7 +72,7 @@ func TestParseListParams(t *testing.T) {
 	assert.False(t, criteria.IncludeDestinationRules)
 	assert.True(t, criteria.IncludeServiceEntries)
 
-	objects = "virtualservices"
+	objects = models.GVKToQueryString(kubernetes.VirtualServices)
 	criteria = ParseIstioConfigCriteria(objects, labelSelector, "")
 
 	assert.False(t, criteria.IncludeGateways)
@@ -79,7 +80,7 @@ func TestParseListParams(t *testing.T) {
 	assert.False(t, criteria.IncludeDestinationRules)
 	assert.False(t, criteria.IncludeServiceEntries)
 
-	objects = "destinationrules,virtualservices"
+	objects = models.GVKToQueryString(kubernetes.DestinationRules) + "," + models.GVKToQueryString(kubernetes.VirtualServices)
 	criteria = ParseIstioConfigCriteria(objects, labelSelector, "")
 
 	assert.False(t, criteria.IncludeGateways)
@@ -166,32 +167,29 @@ func TestGetIstioConfigDetails(t *testing.T) {
 	configService := mockGetIstioConfigDetails(t)
 	conf := config.Get()
 
-	istioConfigDetails, err := configService.GetIstioConfigDetails(context.TODO(), conf.KubernetesConfig.ClusterName, "test", "gateways", "gw-1")
+	istioConfigDetails, err := configService.GetIstioConfigDetails(context.TODO(), conf.KubernetesConfig.ClusterName, "test", kubernetes.Gateways, "gw-1")
 	assert.Equal("gw-1", istioConfigDetails.Gateway.Name)
 	assert.True(istioConfigDetails.Permissions.Update)
 	assert.False(istioConfigDetails.Permissions.Delete)
 	assert.Nil(err)
 
-	istioConfigDetails, err = configService.GetIstioConfigDetails(context.TODO(), conf.KubernetesConfig.ClusterName, "test", "virtualservices", "reviews")
+	istioConfigDetails, err = configService.GetIstioConfigDetails(context.TODO(), conf.KubernetesConfig.ClusterName, "test", kubernetes.VirtualServices, "reviews")
 	assert.Equal("reviews", istioConfigDetails.VirtualService.Name)
 	assert.Equal("VirtualService", istioConfigDetails.VirtualService.Kind)
 	assert.Equal("networking.istio.io/v1", istioConfigDetails.VirtualService.APIVersion)
 	assert.Nil(err)
 
-	istioConfigDetails, err = configService.GetIstioConfigDetails(context.TODO(), conf.KubernetesConfig.ClusterName, "test", "destinationrules", "reviews-dr")
+	istioConfigDetails, err = configService.GetIstioConfigDetails(context.TODO(), conf.KubernetesConfig.ClusterName, "test", kubernetes.DestinationRules, "reviews-dr")
 	assert.Equal("reviews-dr", istioConfigDetails.DestinationRule.Name)
 	assert.Equal("DestinationRule", istioConfigDetails.DestinationRule.Kind)
 	assert.Equal("networking.istio.io/v1", istioConfigDetails.DestinationRule.APIVersion)
 	assert.Nil(err)
 
-	istioConfigDetails, err = configService.GetIstioConfigDetails(context.TODO(), conf.KubernetesConfig.ClusterName, "test", "serviceentries", "googleapis")
+	istioConfigDetails, err = configService.GetIstioConfigDetails(context.TODO(), conf.KubernetesConfig.ClusterName, "test", kubernetes.ServiceEntries, "googleapis")
 	assert.Equal("googleapis", istioConfigDetails.ServiceEntry.Name)
 	assert.Equal("ServiceEntry", istioConfigDetails.ServiceEntry.Kind)
 	assert.Equal("networking.istio.io/v1", istioConfigDetails.ServiceEntry.APIVersion)
 	assert.Nil(err)
-
-	istioConfigDetails, err = configService.GetIstioConfigDetails(context.TODO(), conf.KubernetesConfig.ClusterName, "test", "rules-bad", "stdio")
-	assert.Error(err)
 }
 
 func TestCheckMulticlusterPermissions(t *testing.T) {
@@ -199,13 +197,13 @@ func TestCheckMulticlusterPermissions(t *testing.T) {
 
 	configService := mockGetIstioConfigDetailsMulticluster(t)
 
-	istioConfigDetails, err := configService.GetIstioConfigDetails(context.TODO(), config.Get().KubernetesConfig.ClusterName, "test", "gateways", "gw-1")
+	istioConfigDetails, err := configService.GetIstioConfigDetails(context.TODO(), config.Get().KubernetesConfig.ClusterName, "test", kubernetes.Gateways, "gw-1")
 	assert.Equal("gw-1", istioConfigDetails.Gateway.Name)
 	assert.True(istioConfigDetails.Permissions.Update)
 	assert.False(istioConfigDetails.Permissions.Delete)
 	assert.Nil(err)
 
-	istioConfigDetailsRemote, err := configService.GetIstioConfigDetails(context.TODO(), "east", "test", "gateways", "gw-1")
+	istioConfigDetailsRemote, err := configService.GetIstioConfigDetails(context.TODO(), "east", "test", kubernetes.Gateways, "gw-1")
 	assert.Equal("gw-1", istioConfigDetailsRemote.Gateway.Name)
 	assert.True(istioConfigDetailsRemote.Permissions.Update)
 	assert.False(istioConfigDetailsRemote.Permissions.Delete)
@@ -511,7 +509,7 @@ func TestDeleteIstioConfigDetails(t *testing.T) {
 	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
 	configService := IstioConfigService{userClients: k8sclients, kialiCache: cache, controlPlaneMonitor: poller}
 
-	err := configService.DeleteIstioConfigDetail(context.Background(), conf.KubernetesConfig.ClusterName, "test", "virtualservices", "reviews-to-delete")
+	err := configService.DeleteIstioConfigDetail(context.Background(), conf.KubernetesConfig.ClusterName, "test", kubernetes.VirtualServices, "reviews-to-delete")
 	assert.Nil(err)
 }
 
@@ -526,10 +524,10 @@ func TestUpdateIstioConfigDetails(t *testing.T) {
 	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
 	configService := IstioConfigService{userClients: k8sclients, kialiCache: cache, controlPlaneMonitor: poller}
 
-	updatedVirtualService, err := configService.UpdateIstioConfigDetail(context.Background(), conf.KubernetesConfig.ClusterName, "test", "virtualservices", "reviews-to-update", "{}")
+	updatedVirtualService, err := configService.UpdateIstioConfigDetail(context.Background(), conf.KubernetesConfig.ClusterName, "test", kubernetes.VirtualServices, "reviews-to-update", "{}")
 	require.NoError(err)
 	assert.Equal("test", updatedVirtualService.Namespace.Name)
-	assert.Equal("virtualservices", updatedVirtualService.ObjectType)
+	assert.Equal(kubernetes.VirtualServices, updatedVirtualService.ObjectType)
 	assert.Equal("reviews-to-update", updatedVirtualService.VirtualService.Name)
 }
 
@@ -543,9 +541,9 @@ func TestCreateIstioConfigDetails(t *testing.T) {
 	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
 	configService := IstioConfigService{userClients: k8sclients, kialiCache: cache, controlPlaneMonitor: poller}
 
-	createVirtualService, err := configService.CreateIstioConfigDetail(context.Background(), conf.KubernetesConfig.ClusterName, "test", "virtualservices", []byte("{}"))
+	createVirtualService, err := configService.CreateIstioConfigDetail(context.Background(), conf.KubernetesConfig.ClusterName, "test", kubernetes.VirtualServices, []byte("{}"))
 	assert.Equal("test", createVirtualService.Namespace.Name)
-	assert.Equal("virtualservices", createVirtualService.ObjectType)
+	assert.Equal(kubernetes.VirtualServices, createVirtualService.ObjectType)
 	// Name is now encoded in the payload of the virtualservice so, it modifies this test
 	// assert.Equal("reviews-to-update", createVirtualService.VirtualService.Name)
 	assert.Nil(err)

@@ -26,7 +26,7 @@ func (n SidecarReferences) References() models.IstioReferencesMap {
 
 	for _, sc := range n.Sidecars {
 		namespace := sc.Namespace
-		key := models.IstioReferenceKey{Namespace: namespace, Name: sc.Name, ObjectType: models.ObjectTypeSingular[kubernetes.Sidecars]}
+		key := models.IstioReferenceKey{Namespace: namespace, Name: sc.Name, ObjectType: kubernetes.Sidecars.String()}
 		references := &models.IstioReferences{}
 		for _, ei := range sc.Spec.Egress {
 			if ei == nil {
@@ -84,7 +84,7 @@ func (n SidecarReferences) getConfigReferences(host kubernetes.Host, hostNs stri
 		}
 		for _, seHost := range se.Spec.Hosts {
 			if seHost == host.String() {
-				allSEs = append(allSEs, models.IstioReference{Name: se.Name, Namespace: se.Namespace, ObjectType: models.ObjectTypeSingular[kubernetes.ServiceEntries]})
+				allSEs = append(allSEs, models.IstioReference{Name: se.Name, Namespace: se.Namespace, ObjectType: kubernetes.ServiceEntries.String()})
 				break
 			}
 		}

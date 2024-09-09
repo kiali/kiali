@@ -6,9 +6,12 @@ import (
 	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
 	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 	telemetry_v1 "istio.io/client-go/pkg/apis/telemetry/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	k8s_networking_v1 "sigs.k8s.io/gateway-api/apis/v1"
 	k8s_networking_v1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 	k8s_networking_v1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
+
+	"github.com/kiali/kiali/kubernetes"
 )
 
 // IstioConfigList istioConfigList
@@ -111,8 +114,8 @@ func (i *IstioConfigList) ConvertToResponse() {
 type IstioConfigMap map[string]IstioConfigList
 
 type IstioConfigDetails struct {
-	Namespace  Namespace `json:"namespace"`
-	ObjectType string    `json:"objectType"`
+	Namespace  Namespace               `json:"namespace"`
+	ObjectType schema.GroupVersionKind `json:"objectType"`
 
 	AuthorizationPolicy   *security_v1.AuthorizationPolicy   `json:"authorizationPolicy"`
 	DestinationRule       *networking_v1.DestinationRule     `json:"destinationRule"`
@@ -149,7 +152,7 @@ type IstioConfigHelp struct {
 
 // IstioConfigHelpMessages represents the help messages for a given Istio object type
 var IstioConfigHelpMessages = map[string][]IstioConfigHelp{
-	"authorizationpolicies": {
+	kubernetes.AuthorizationPolicies.String(): {
 		{ObjectField: "spec.selector", Message: "Optional. The selector decides where to apply the authorization policy. The selector will match with workloads in the same namespace as the authorization policy. If the authorization policy is in the root namespace, the selector will additionally match with workloads in all namespaces."},
 		{ObjectField: "spec.selector.matchLabels", Message: "One or more labels that indicate a specific set of pods/VMs on which a policy should be applied."},
 		{ObjectField: "spec.rules", Message: "Optional. A list of rules to match the request. A match occurs when at least one rule matches the request."},
@@ -159,13 +162,13 @@ var IstioConfigHelpMessages = map[string][]IstioConfigHelp{
 		{ObjectField: "spec.rules.when", Message: "Optional. when specifies a list of additional conditions of a request. If not set, any condition is allowed."},
 		{ObjectField: "spec.action", Message: "Optional. The action to take if the request is matched with the rules. Default is ALLOW if not specified."},
 	},
-	"destinationrules": {
+	kubernetes.DestinationRules.String(): {
 		{ObjectField: "spec.host", Message: "The name of a service from the service registry. Rules defined for services that do not exist in the service registry will be ignored."},
 		{ObjectField: "spec.trafficPolicy", Message: "Traffic policies to apply (load balancing policy, connection pool sizes, outlier detection)."},
 		{ObjectField: "spec.subsets", Message: "One or more named sets that represent individual versions of a service. Traffic policies can be overridden at subset level."},
 		{ObjectField: "spec.exportTo", Message: "A list of namespaces to which this destination rule is exported. The resolution of a destination rule to apply to a service occurs in the context of a hierarchy of namespaces. This feature provides a mechanism for service owners and mesh administrators to control the visibility of destination rules across namespace boundaries. If no namespaces are specified then the destination rule is exported to all namespaces by default."},
 	},
-	"envoyfilters": {
+	kubernetes.EnvoyFilters.String(): {
 		{ObjectField: "spec.workloadSelector", Message: "Criteria used to select the specific set of pods/VMs on which this patch configuration should be applied. If omitted, the set of patches in this configuration will be applied to all workload instances in the same namespace."},
 		{ObjectField: "spec.configPatches", Message: "One or more patches with match conditions."},
 		{ObjectField: "spec.configPatches.applyTo", Message: "Specifies where in the Envoy configuration, the patch should be applied."},
@@ -173,29 +176,29 @@ var IstioConfigHelpMessages = map[string][]IstioConfigHelp{
 		{ObjectField: "spec.configPatches.patch", Message: "The patch to apply along with the operation."},
 		{ObjectField: "spec.priority", Message: "riority defines the order in which patch sets are applied within a context. When one patch depends on another patch, the order of patch application is significant."},
 	},
-	"gateways": {
+	kubernetes.Gateways.String(): {
 		{ObjectField: "spec.servers", Message: "A list of server specifications."},
 		{ObjectField: "spec.selector", Message: "One or more labels that indicate a specific set of pods/VMs on which this gateway configuration should be applied. By default workloads are searched across all namespaces based on label selectors."},
 		{ObjectField: "spec.servers.port", Message: "The port on which the proxy should listen for incoming connections."},
 		{ObjectField: "spec.servers.hosts", Message: "One or more hosts exposed by this gateway. While typically applicable to HTTP services, it can also be used for TCP services using TLS with SNI."},
 		{ObjectField: "spec.servers.tls", Message: "Set of TLS related options that govern the server’s behavior. Use these options to control if all http requests should be redirected to https, and the TLS modes to use."},
 	},
-	"sidecars": {
+	kubernetes.Sidecars.String(): {
 		{ObjectField: "spec.workloadSelector", Message: "Criteria used to select the specific set of pods/VMs on which this Sidecar configuration should be applied. If omitted, the Sidecar configuration will be applied to all workload instances in the same namespace."},
 		{ObjectField: "spec.ingress", Message: "Ingress specifies the configuration of the sidecar for processing inbound traffic to the attached workload instance."},
 		{ObjectField: "spec.egress", Message: "Egress specifies the configuration of the sidecar for processing outbound traffic from the attached workload instance to other services in the mesh"},
 	},
-	"peerauthentications": {
+	kubernetes.PeerAuthentications.String(): {
 		{ObjectField: "spec.selector", Message: "The selector determines the workloads to apply the ChannelAuthentication on. If not set, the policy will be applied to all workloads in the same namespace as the policy."},
 		{ObjectField: "spec.selector.matchLabels", Message: "One or more labels that indicate a specific set of pods/VMs on which a policy should be applied."},
 		{ObjectField: "spec.mtls", Message: "Mutual TLS settings for workload. If not defined, inherit from parent."},
 	},
-	"requestauthentications": {
+	kubernetes.RequestAuthentications.String(): {
 		{ObjectField: "spec.selector", Message: "Optional. The selector decides where to apply the request authentication policy. The selector will match with workloads in the same namespace as the request authentication policy. If the request authentication policy is in the root namespace, the selector will additionally match with workloads in all namespaces."},
 		{ObjectField: "spec.selector.matchLabels", Message: "One or more labels that indicate a specific set of pods/VMs on which a policy should be applied."},
 		{ObjectField: "spec.jwtRules", Message: "Define the list of JWTs that can be validated at the selected workloads’ proxy. A valid token will be used to extract the authenticated identity."},
 	},
-	"serviceentries": {
+	kubernetes.ServiceEntries.String(): {
 		{ObjectField: "spec.hosts", Message: "The hosts associated with the ServiceEntry. Could be a DNS name with wildcard prefix."},
 		{ObjectField: "spec.addresses", Message: "The virtual IP addresses associated with the service. Could be CIDR prefix."},
 		{ObjectField: "spec.ports", Message: "The ports associated with the external service. If the Endpoints are Unix domain socket addresses, there must be exactly one port."},
@@ -205,7 +208,7 @@ var IstioConfigHelpMessages = map[string][]IstioConfigHelp{
 		{ObjectField: "spec.workloadSelector", Message: "Applicable only for MESH_INTERNAL services. Only one of endpoints or workloadSelector can be specified."},
 		{ObjectField: "spec.exportTo", Message: "A list of namespaces to which this service is exported. Exporting a service allows it to be used by sidecars, gateways and virtual services defined in other namespaces. This feature provides a mechanism for service owners and mesh administrators to control the visibility of services across namespace boundaries."},
 	},
-	"virtualservices": {
+	kubernetes.VirtualServices.String(): {
 		{ObjectField: "spec.hosts", Message: "The destination hosts to which traffic is being sent. Could be a DNS name with wildcard prefix or an IP address. Depending on the platform, short-names can also be used instead of a FQDN (i.e. has no dots in the name)."},
 		{ObjectField: "spec.gateways", Message: "The names of gateways and sidecars that should apply these routes. Gateways in other namespaces may be referred to by <gateway namespace>/<gateway name>; specifying a gateway with no namespace qualifier is the same as specifying the VirtualService’s namespace. To apply the rules to both gateways and sidecars, specify mesh as one of the gateway names."},
 		{ObjectField: "spec.http", Message: "An ordered list of route rules for HTTP traffic."},
@@ -215,7 +218,7 @@ var IstioConfigHelpMessages = map[string][]IstioConfigHelp{
 		{ObjectField: "spec.http.route.destination.host", Message: "The name of a service from the service registry. Service names are looked up from the platform’s service registry (e.g., Kubernetes services, Consul services, etc.) and from the hosts declared by ServiceEntry."},
 		{ObjectField: "spec.http.route.destination.subset", Message: "The name of a subset within the service. Applicable only to services within the mesh. The subset must be defined in a corresponding DestinationRule."},
 	},
-	"workloadentries": {
+	kubernetes.WorkloadEntries.String(): {
 		{ObjectField: "spec.address", Message: "Address associated with the network endpoint without the port."},
 		{ObjectField: "spec.ports", Message: "Set of ports associated with the endpoint."},
 		{ObjectField: "spec.labels", Message: "One or more labels associated with the endpoint."},
@@ -224,38 +227,38 @@ var IstioConfigHelpMessages = map[string][]IstioConfigHelp{
 		{ObjectField: "spec.weight", Message: "The load balancing weight associated with the endpoint. Endpoints with higher weights will receive proportionally higher traffic."},
 		{ObjectField: "spec.serviceAccount", Message: "The service account associated with the workload if a sidecar is present in the workload."},
 	},
-	"workloadgroups": {
+	kubernetes.WorkloadGroups.String(): {
 		{ObjectField: "spec.metadata", Message: "Metadata that will be used for all corresponding WorkloadEntries. User labels for a workload group should be set here in metadata rather than in template."},
 		{ObjectField: "spec.template", Message: "Template to be used for the generation of WorkloadEntry resources that belong to this WorkloadGroup."},
 		{ObjectField: "spec.probe", Message: "ReadinessProbe describes the configuration the user must provide for healthchecking on their workload."},
 	},
-	"wasmplugins": { // TODO
+	kubernetes.WasmPlugins.String(): { // TODO
 		{},
 	},
-	"telemetries": { // TODO
+	kubernetes.Telemetries.String(): { // TODO
 		{},
 	},
-	"k8sgateways": {
+	kubernetes.K8sGateways.String(): {
 		{ObjectField: "spec", Message: "Kubernetes Gateway API Configuration Object. A Gateway describes how traffic can be translated to Services within the cluster."},
 		{ObjectField: "spec.gatewayClassName", Message: "Defines the name of a GatewayClass object used by this Gateway."},
 		{ObjectField: "spec.listeners", Message: "Define the hostnames, ports, protocol, termination, TLS settings and which routes can be attached to a listener."},
 		{ObjectField: "spec.addresses", Message: "Define the network addresses requested for this gateway."},
 	},
-	"k8sgrpcroutes": {
+	kubernetes.K8sGRPCRoutes.String(): {
 		{ObjectField: "", Message: "Kubernetes Gateway API Configuration Object. GRPCRoute provides a way to route gRPC requests"},
 	},
-	"k8shttproutes": { // TODO
+	kubernetes.K8sHTTPRoutes.String(): { // TODO
 		{ObjectField: "", Message: "Kubernetes Gateway API Configuration Object. HTTPRoute is for multiplexing HTTP or terminated HTTPS connections."},
 	},
-	"k8sreferencegrants": {
+	kubernetes.K8sReferenceGrants.String(): {
 		{ObjectField: "spec", Message: "Kubernetes Gateway API Configuration Object. ReferenceGrant is for enabling cross namespace references within Gateway API."},
 		{ObjectField: "spec.from", Message: "Define the group, kind, and namespace of resources that may reference items described in the to list."},
 		{ObjectField: "spec.to", Message: "Define the group and kind of resources that may be referenced by items described in the from list."},
 	},
-	"k8stcproutes": {
+	kubernetes.K8sTCPRoutes.String(): {
 		{ObjectField: "", Message: "Kubernetes Gateway API Configuration Object. TCPRoute provides a way to route TCP requests"},
 	},
-	"k8stlsroutes": {
+	kubernetes.K8sTLSRoutes.String(): {
 		{ObjectField: "", Message: "Kubernetes Gateway API Configuration Object. TLSRoute provides a way to route TLS requests"},
 	},
 	"internal": {

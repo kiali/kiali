@@ -278,7 +278,7 @@ func NewRoutes(
 			handlers.IstioConfigList,
 			true,
 		},
-		// swagger:route GET /namespaces/{namespace}/istio/{object_type}/{object} config istioConfigDetails
+		// swagger:route GET /namespaces/{namespace}/istio/{group}/{version}/{kind}/{object} config istioConfigDetails
 		// ---
 		// Endpoint to get the Istio Config of an Istio object
 		//
@@ -296,7 +296,7 @@ func NewRoutes(
 		{
 			"IstioConfigDetails",
 			"GET",
-			"/api/namespaces/{namespace}/istio/{object_type}/{object}",
+			"/api/namespaces/{namespace}/istio/{group}/{version}/{kind}/{object}",
 			handlers.IstioConfigDetails,
 			true,
 		},

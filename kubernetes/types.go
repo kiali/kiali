@@ -21,173 +21,138 @@ const (
 	ReplicaSetType            = "ReplicaSet"
 	ServiceType               = "Service"
 	StatefulSetType           = "StatefulSet"
+)
 
+var (
 	// Networking
 
-	DestinationRules    = "destinationrules"
+	DestinationRules    = NetworkingGroupVersionV1.WithKind(DestinationRuleType)
 	DestinationRuleType = "DestinationRule"
 
-	Gateways    = "gateways"
+	Gateways    = NetworkingGroupVersionV1.WithKind(GatewayType)
 	GatewayType = "Gateway"
 
-	EnvoyFilters    = "envoyfilters"
+	EnvoyFilters    = NetworkingGroupVersionV1Alpha3.WithKind(EnvoyFilterType)
 	EnvoyFilterType = "EnvoyFilter"
 
-	Sidecars    = "sidecars"
+	Sidecars    = NetworkingGroupVersionV1.WithKind(SidecarType)
 	SidecarType = "Sidecar"
 
-	ServiceEntries   = "serviceentries"
+	ServiceEntries   = NetworkingGroupVersionV1.WithKind(ServiceEntryType)
 	ServiceEntryType = "ServiceEntry"
 
-	VirtualServices    = "virtualservices"
+	VirtualServices    = NetworkingGroupVersionV1.WithKind(VirtualServiceType)
 	VirtualServiceType = "VirtualService"
 
-	WorkloadEntries   = "workloadentries"
+	WorkloadEntries   = NetworkingGroupVersionV1.WithKind(WorkloadEntryType)
 	WorkloadEntryType = "WorkloadEntry"
 
-	WorkloadGroups    = "workloadgroups"
+	WorkloadGroups    = NetworkingGroupVersionV1.WithKind(WorkloadGroupType)
 	WorkloadGroupType = "WorkloadGroup"
 
-	WasmPlugins    = "wasmplugins"
+	WasmPlugins    = ExtensionGroupVersionV1Alpha1.WithKind(WasmPluginType)
 	WasmPluginType = "WasmPlugin"
 
-	Telemetries   = "telemetries"
+	Telemetries   = TelemetryGroupV1.WithKind(TelemetryType)
 	TelemetryType = "Telemetry"
 
 	// K8s Networking
 
-	K8sGateways    = "k8sgateways"
+	K8sGateways    = K8sNetworkingGroupVersionV1.WithKind(K8sGatewayType)
 	K8sGatewayType = "Gateway"
 
-	K8sGatewayClasses   = "k8sgatewayclasses"
+	K8sGatewayClasses   = K8sNetworkingGroupVersionV1.WithKind(K8sGatewayClassType)
 	K8sGatewayClassType = "GatewayClass"
 
-	K8sGRPCRoutes    = "k8sgrpcroutes"
+	K8sGRPCRoutes    = K8sNetworkingGroupVersionV1.WithKind(K8sGRPCRouteType)
 	K8sGRPCRouteType = "GRPCRoute"
 
-	K8sHTTPRoutes    = "k8shttproutes"
+	K8sHTTPRoutes    = K8sNetworkingGroupVersionV1.WithKind(K8sHTTPRouteType)
 	K8sHTTPRouteType = "HTTPRoute"
 
-	K8sReferenceGrants    = "k8sreferencegrants"
+	K8sReferenceGrants    = K8sNetworkingGroupVersionV1.WithKind(K8sReferenceGrantType)
 	K8sReferenceGrantType = "ReferenceGrant"
 
-	K8sTCPRoutes    = "k8stcproutes"
+	K8sTCPRoutes    = K8sNetworkingGroupVersionV1Alpha2.WithKind(K8sTCPRouteType)
 	K8sTCPRouteType = "TCPRoute"
 
-	K8sTLSRoutes    = "k8stlsroutes"
+	K8sTLSRoutes    = K8sNetworkingGroupVersionV1Alpha2.WithKind(K8sTLSRouteType)
 	K8sTLSRouteType = "TLSRoute"
 
 	// Authorization PeerAuthentications
-	AuthorizationPolicies     = "authorizationpolicies"
+	AuthorizationPolicies     = SecurityGroupVersionV1.WithKind(AuthorizationPoliciesType)
 	AuthorizationPoliciesType = "AuthorizationPolicy"
 
 	// Peer Authentications
-	PeerAuthentications     = "peerauthentications"
+	PeerAuthentications     = SecurityGroupVersionV1.WithKind(PeerAuthenticationsType)
 	PeerAuthenticationsType = "PeerAuthentication"
 
 	// Request Authentications
-	RequestAuthentications     = "requestauthentications"
+	RequestAuthentications     = SecurityGroupVersionV1.WithKind(RequestAuthenticationsType)
 	RequestAuthenticationsType = "RequestAuthentication"
-)
 
-var (
 	NetworkingGroupVersionV1Alpha3 = schema.GroupVersion{
 		Group:   "networking.istio.io",
 		Version: "v1alpha3",
 	}
-	ApiNetworkingVersionV1Alpha3 = NetworkingGroupVersionV1Alpha3.Group + "/" + NetworkingGroupVersionV1Alpha3.Version
 
 	NetworkingGroupVersionV1 = schema.GroupVersion{
 		Group:   "networking.istio.io",
 		Version: "v1",
 	}
-	ApiNetworkingVersionV1 = NetworkingGroupVersionV1.Group + "/" + NetworkingGroupVersionV1.Version
 
 	K8sNetworkingGroupVersionV1Alpha2 = schema.GroupVersion{
 		Group:   "gateway.networking.k8s.io",
 		Version: "v1alpha2",
 	}
-	K8sApiNetworkingVersionV1Alpha2 = K8sNetworkingGroupVersionV1Alpha2.Group + "/" + K8sNetworkingGroupVersionV1Alpha2.Version
 
 	K8sNetworkingGroupVersionV1Beta1 = schema.GroupVersion{
 		Group:   "gateway.networking.k8s.io",
 		Version: "v1beta1",
 	}
-	K8sApiNetworkingVersionV1Beta1 = K8sNetworkingGroupVersionV1Beta1.Group + "/" + K8sNetworkingGroupVersionV1Beta1.Version
 
 	K8sNetworkingGroupVersionV1 = schema.GroupVersion{
 		Group:   "gateway.networking.k8s.io",
 		Version: "v1",
 	}
-	K8sApiNetworkingVersionV1 = K8sNetworkingGroupVersionV1.Group + "/" + K8sNetworkingGroupVersionV1.Version
 
 	SecurityGroupVersionV1 = schema.GroupVersion{
 		Group:   "security.istio.io",
 		Version: "v1",
 	}
-	ApiSecurityVersionV1 = SecurityGroupVersionV1.Group + "/" + SecurityGroupVersionV1.Version
 
 	ExtensionGroupVersionV1Alpha1 = schema.GroupVersion{
 		Group:   "extensions.istio.io",
 		Version: "v1alpha1",
 	}
-	ApiExtensionV1Alpha1 = ExtensionGroupVersionV1Alpha1.Group + "/" + ExtensionGroupVersionV1Alpha1.Version
 
 	TelemetryGroupV1 = schema.GroupVersion{
 		Group:   "telemetry.istio.io",
 		Version: "v1",
 	}
-	ApiTelemetryV1 = TelemetryGroupV1.Group + "/" + TelemetryGroupV1.Version
-
-	PluralType = map[string]string{
-		// Networking
-		Gateways:         GatewayType,
-		VirtualServices:  VirtualServiceType,
-		DestinationRules: DestinationRuleType,
-		ServiceEntries:   ServiceEntryType,
-		Sidecars:         SidecarType,
-		WorkloadEntries:  WorkloadEntryType,
-		WorkloadGroups:   WorkloadGroupType,
-		EnvoyFilters:     EnvoyFilterType,
-		WasmPlugins:      WasmPluginType,
-		Telemetries:      TelemetryType,
-
-		// K8s Networking Gateways
-		K8sGateways:        K8sGatewayType,
-		K8sGRPCRoutes:      K8sGRPCRouteType,
-		K8sHTTPRoutes:      K8sHTTPRouteType,
-		K8sReferenceGrants: K8sReferenceGrantType,
-		K8sTCPRoutes:       K8sTCPRouteType,
-		K8sTLSRoutes:       K8sTLSRouteType,
-
-		// Security
-		AuthorizationPolicies:  AuthorizationPoliciesType,
-		PeerAuthentications:    PeerAuthenticationsType,
-		RequestAuthentications: RequestAuthenticationsType,
-	}
 
 	ResourceTypesToAPI = map[string]schema.GroupVersionKind{
-		DestinationRules: NetworkingGroupVersionV1.WithKind(DestinationRuleType),
-		EnvoyFilters:     NetworkingGroupVersionV1Alpha3.WithKind(EnvoyFilterType),
-		Gateways:         NetworkingGroupVersionV1.WithKind(GatewayType),
-		ServiceEntries:   NetworkingGroupVersionV1.WithKind(ServiceEntryType),
-		Sidecars:         NetworkingGroupVersionV1.WithKind(SidecarType),
-		VirtualServices:  NetworkingGroupVersionV1.WithKind(VirtualServiceType),
-		WorkloadEntries:  NetworkingGroupVersionV1.WithKind(WorkloadEntryType),
-		WorkloadGroups:   NetworkingGroupVersionV1.WithKind(WorkloadGroupType),
-		WasmPlugins:      ExtensionGroupVersionV1Alpha1.WithKind(WasmPluginType),
-		Telemetries:      TelemetryGroupV1.WithKind(TelemetryType),
+		DestinationRules.String(): DestinationRules,
+		EnvoyFilters.String():     EnvoyFilters,
+		Gateways.String():         Gateways,
+		ServiceEntries.String():   ServiceEntries,
+		Sidecars.String():         Sidecars,
+		VirtualServices.String():  VirtualServices,
+		WorkloadEntries.String():  WorkloadEntries,
+		WorkloadGroups.String():   WorkloadGroups,
+		WasmPlugins.String():      WasmPlugins,
+		Telemetries.String():      Telemetries,
 
-		K8sGateways:        K8sNetworkingGroupVersionV1.WithKind(K8sGatewayType),
-		K8sGRPCRoutes:      K8sNetworkingGroupVersionV1.WithKind(K8sGRPCRouteType),
-		K8sHTTPRoutes:      K8sNetworkingGroupVersionV1.WithKind(K8sHTTPRouteType),
-		K8sReferenceGrants: K8sNetworkingGroupVersionV1.WithKind(K8sReferenceGrantType),
-		K8sTCPRoutes:       K8sNetworkingGroupVersionV1Alpha2.WithKind(K8sTCPRouteType),
-		K8sTLSRoutes:       K8sNetworkingGroupVersionV1Alpha2.WithKind(K8sTLSRouteType),
+		K8sGateways.String():        K8sGateways,
+		K8sGRPCRoutes.String():      K8sGRPCRoutes,
+		K8sHTTPRoutes.String():      K8sHTTPRoutes,
+		K8sReferenceGrants.String(): K8sReferenceGrants,
+		K8sTCPRoutes.String():       K8sTCPRoutes,
+		K8sTLSRoutes.String():       K8sTLSRoutes,
 
-		AuthorizationPolicies:  SecurityGroupVersionV1.WithKind(AuthorizationPoliciesType),
-		PeerAuthentications:    SecurityGroupVersionV1.WithKind(PeerAuthenticationsType),
-		RequestAuthentications: SecurityGroupVersionV1.WithKind(RequestAuthenticationsType),
+		AuthorizationPolicies.String():  AuthorizationPolicies,
+		PeerAuthentications.String():    PeerAuthentications,
+		RequestAuthentications.String(): RequestAuthentications,
 	}
 )
 

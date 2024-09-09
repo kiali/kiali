@@ -8,6 +8,8 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"k8s.io/apimachinery/pkg/runtime/schema"
+
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
@@ -104,7 +106,9 @@ func IstioConfigList(w http.ResponseWriter, r *http.Request) {
 func IstioConfigDetails(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	namespace := params["namespace"]
-	objectType := params["object_type"]
+	objectGroup := params["group"]
+	objectVersion := params["version"]
+	objectKind := params["kind"]
 	object := params["object"]
 
 	includeValidations := false
@@ -123,8 +127,14 @@ func IstioConfigDetails(w http.ResponseWriter, r *http.Request) {
 		includeValidations = false
 	}
 
-	if !checkObjectType(objectType) {
-		RespondWithError(w, http.StatusBadRequest, "Object type not managed: "+objectType)
+	gvk := schema.GroupVersionKind{
+		Group:   objectGroup,
+		Version: objectVersion,
+		Kind:    objectKind,
+	}
+
+	if !checkObjectType(gvk) {
+		RespondWithError(w, http.StatusBadRequest, "Object type not managed: "+gvk.String())
 		return
 	}
 
@@ -145,7 +155,7 @@ func IstioConfigDetails(w http.ResponseWriter, r *http.Request) {
 				close(validationsResult)
 			}()
 
-			istioConfigValidationResults, istioConfigReferencesResults, err := business.Validations.GetIstioObjectValidations(r.Context(), cluster, namespace, objectType, object)
+			istioConfigValidationResults, istioConfigReferencesResults, err := business.Validations.GetIstioObjectValidations(r.Context(), cluster, namespace, gvk, object)
 			if err != nil {
 				validationsResult <- err
 			}
@@ -154,14 +164,14 @@ func IstioConfigDetails(w http.ResponseWriter, r *http.Request) {
 		}(&istioConfigValidations, &istioConfigReferences)
 	}
 
-	istioConfigDetails, err := business.IstioConfig.GetIstioConfigDetails(context.TODO(), cluster, namespace, objectType, object)
+	istioConfigDetails, err := business.IstioConfig.GetIstioConfigDetails(context.TODO(), cluster, namespace, gvk, object)
 	if err != nil {
 		handleErrorResponse(w, err)
 		return
 	}
 
 	if includeHelp {
-		istioConfigDetails.IstioConfigHelpFields = models.IstioConfigHelpMessages[objectType]
+		istioConfigDetails.IstioConfigHelpFields = models.IstioConfigHelpMessages[gvk.String()]
 	}
 
 	if includeValidations {
@@ -171,10 +181,10 @@ func IstioConfigDetails(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		if validation, found := istioConfigValidations[models.IstioValidationKey{ObjectType: models.ObjectTypeSingular[objectType], Namespace: namespace, Name: object, Cluster: cluster}]; found {
+		if validation, found := istioConfigValidations[models.IstioValidationKey{ObjectType: gvk.String(), Namespace: namespace, Name: object, Cluster: cluster}]; found {
 			istioConfigDetails.IstioValidation = validation
 		}
-		if references, found := istioConfigReferences[models.IstioReferenceKey{ObjectType: models.ObjectTypeSingular[objectType], Namespace: namespace, Name: object}]; found {
+		if references, found := istioConfigReferences[models.IstioReferenceKey{ObjectType: gvk.String(), Namespace: namespace, Name: object}]; found {
 			istioConfigDetails.IstioReferences = references
 		}
 	}
@@ -185,14 +195,22 @@ func IstioConfigDetails(w http.ResponseWriter, r *http.Request) {
 func IstioConfigDelete(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	namespace := params["namespace"]
-	objectType := params["object_type"]
+	objectGroup := params["group"]
+	objectVersion := params["version"]
+	objectKind := params["kind"]
 	object := params["object"]
 
 	query := r.URL.Query()
 	cluster := clusterNameFromQuery(query)
 
-	if !business.GetIstioAPI(objectType) {
-		RespondWithError(w, http.StatusBadRequest, "Object type not managed: "+objectType)
+	gvk := schema.GroupVersionKind{
+		Group:   objectGroup,
+		Version: objectVersion,
+		Kind:    objectKind,
+	}
+
+	if !business.GetIstioAPI(gvk) {
+		RespondWithError(w, http.StatusBadRequest, "Object type not managed: "+gvk.String())
 		return
 	}
 
@@ -202,12 +220,12 @@ func IstioConfigDelete(w http.ResponseWriter, r *http.Request) {
 		RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
 		return
 	}
-	err = business.IstioConfig.DeleteIstioConfigDetail(r.Context(), cluster, namespace, objectType, object)
+	err = business.IstioConfig.DeleteIstioConfigDetail(r.Context(), cluster, namespace, gvk, object)
 	if err != nil {
 		handleErrorResponse(w, err)
 		return
 	} else {
-		audit(r, "DELETE on Namespace: "+namespace+" Type: "+objectType+" Name: "+object)
+		audit(r, "DELETE on Namespace: "+namespace+" Type: "+gvk.String()+" Name: "+object)
 		RespondWithCode(w, http.StatusOK)
 	}
 }
@@ -215,14 +233,22 @@ func IstioConfigDelete(w http.ResponseWriter, r *http.Request) {
 func IstioConfigUpdate(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	namespace := params["namespace"]
-	objectType := params["object_type"]
+	objectGroup := params["group"]
+	objectVersion := params["version"]
+	objectKind := params["kind"]
 	object := params["object"]
 
 	query := r.URL.Query()
 	cluster := clusterNameFromQuery(query)
 
-	if !business.GetIstioAPI(objectType) {
-		RespondWithError(w, http.StatusBadRequest, "Object type not managed: "+objectType)
+	gvk := schema.GroupVersionKind{
+		Group:   objectGroup,
+		Version: objectVersion,
+		Kind:    objectKind,
+	}
+
+	if !business.GetIstioAPI(gvk) {
+		RespondWithError(w, http.StatusBadRequest, "Object type not managed: "+gvk.String())
 		return
 	}
 
@@ -238,13 +264,13 @@ func IstioConfigUpdate(w http.ResponseWriter, r *http.Request) {
 		RespondWithError(w, http.StatusBadRequest, "Update request with bad update patch: "+err.Error())
 	}
 	jsonPatch := string(body)
-	updatedConfigDetails, err := business.IstioConfig.UpdateIstioConfigDetail(r.Context(), cluster, namespace, objectType, object, jsonPatch)
+	updatedConfigDetails, err := business.IstioConfig.UpdateIstioConfigDetail(r.Context(), cluster, namespace, gvk, object, jsonPatch)
 	if err != nil {
 		handleErrorResponse(w, err)
 		return
 	}
 
-	audit(r, "UPDATE on Namespace: "+namespace+" Type: "+objectType+" Name: "+object+" Patch: "+jsonPatch)
+	audit(r, "UPDATE on Namespace: "+namespace+" Type: "+gvk.String()+" Name: "+object+" Patch: "+jsonPatch)
 	RespondWithJSON(w, http.StatusOK, updatedConfigDetails)
 }
 
@@ -252,13 +278,21 @@ func IstioConfigCreate(w http.ResponseWriter, r *http.Request) {
 	// Feels kinda replicated for multiple functions..
 	params := mux.Vars(r)
 	namespace := params["namespace"]
-	objectType := params["object_type"]
+	objectGroup := params["group"]
+	objectVersion := params["version"]
+	objectKind := params["kind"]
 
 	query := r.URL.Query()
 	cluster := clusterNameFromQuery(query)
 
-	if !business.GetIstioAPI(objectType) {
-		RespondWithError(w, http.StatusBadRequest, "Object type not managed: "+objectType)
+	gvk := schema.GroupVersionKind{
+		Group:   objectGroup,
+		Version: objectVersion,
+		Kind:    objectKind,
+	}
+
+	if !business.GetIstioAPI(gvk) {
+		RespondWithError(w, http.StatusBadRequest, "Object type not managed: "+gvk.String())
 		return
 	}
 
@@ -274,18 +308,18 @@ func IstioConfigCreate(w http.ResponseWriter, r *http.Request) {
 		RespondWithError(w, http.StatusBadRequest, "Create request could not be read: "+err.Error())
 	}
 
-	createdConfigDetails, err := business.IstioConfig.CreateIstioConfigDetail(r.Context(), cluster, namespace, objectType, body)
+	createdConfigDetails, err := business.IstioConfig.CreateIstioConfigDetail(r.Context(), cluster, namespace, gvk, body)
 	if err != nil {
 		handleErrorResponse(w, err)
 		return
 	}
 
-	audit(r, "CREATE on Namespace: "+namespace+" Type: "+objectType+" Object: "+string(body))
+	audit(r, "CREATE on Namespace: "+namespace+" Type: "+gvk.String()+" Object: "+string(body))
 	RespondWithJSON(w, http.StatusOK, createdConfigDetails)
 }
 
-func checkObjectType(objectType string) bool {
-	return business.GetIstioAPI(objectType)
+func checkObjectType(gvk schema.GroupVersionKind) bool {
+	return business.GetIstioAPI(gvk)
 }
 
 func audit(r *http.Request, message string) {

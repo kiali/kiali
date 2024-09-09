@@ -3,6 +3,7 @@ package business
 import (
 	"context"
 	"fmt"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"strings"
 	"sync"
 
@@ -162,13 +163,13 @@ func (in *IstioValidationsService) getAllObjectCheckers(istioConfigList models.I
 }
 
 // GetIstioObjectValidations validates a single Istio object of the given type with the given name found in the given namespace.
-func (in *IstioValidationsService) GetIstioObjectValidations(ctx context.Context, cluster, namespace string, objectType string, object string) (models.IstioValidations, models.IstioReferencesMap, error) {
+func (in *IstioValidationsService) GetIstioObjectValidations(ctx context.Context, cluster, namespace string, objectType schema.GroupVersionKind, object string) (models.IstioValidations, models.IstioReferencesMap, error) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GetIstioObjectValidations",
 		observability.Attribute("package", "business"),
 		observability.Attribute("cluster", "cluster"),
 		observability.Attribute("namespace", namespace),
-		observability.Attribute("objectType", objectType),
+		observability.Attribute("objectType", objectType.String()),
 		observability.Attribute("object", object),
 	)
 	defer end()
@@ -194,7 +195,7 @@ func (in *IstioValidationsService) GetIstioObjectValidations(ctx context.Context
 	}
 
 	// time this function execution so we can capture how long it takes to fully validate this istio object
-	timer := internalmetrics.GetSingleValidationProcessingTimePrometheusTimer(namespace, objectType, object)
+	timer := internalmetrics.GetSingleValidationProcessingTimePrometheusTimer(namespace, objectType.String(), object)
 	defer timer.ObserveDuration()
 
 	wg := sync.WaitGroup{}
@@ -312,7 +313,7 @@ func (in *IstioValidationsService) GetIstioObjectValidations(ctx context.Context
 		return models.IstioValidations{}, istioReferences, err
 	}
 
-	return runObjectCheckers(objectCheckers).FilterByKey(models.ObjectTypeSingular[objectType], object), istioReferences, nil
+	return runObjectCheckers(objectCheckers).FilterByKey(objectType.String(), object), istioReferences, nil
 }
 
 func runObjectCheckers(objectCheckers []ObjectChecker) models.IstioValidations {
