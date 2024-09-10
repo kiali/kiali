@@ -53,9 +53,11 @@ Feature: Kiali Mesh page
     When user selects mesh node with label "istio-system"
     Then user sees "istio-system" namespace side panel
 
+  @skip-ossmc
   Scenario: See the Mesh menu link
     Then user see the "mesh" menu
 
+  @skip-ossmc
   Scenario: See the Mesh link in the about
     And user clicks on Help Button
     And user clicks on About Button
