@@ -11,6 +11,7 @@ export type IstioLabelKey =
   | 'ingressGatewayLabel'
   | 'injectionLabelName'
   | 'injectionLabelRev'
+  | 'k8sGatewayLabelName'
   | 'versionLabelName';
 
 interface DeploymentConfig {
@@ -142,8 +143,8 @@ export interface ToleranceConfig {
 export interface ServerConfig {
   ambientEnabled: boolean;
   authStrategy: string;
-  clusters: { [key: string]: MeshCluster };
   clusterWideAccess: boolean;
+  clusters: { [key: string]: MeshCluster };
   deployment: DeploymentConfig;
   gatewayAPIClasses: GatewayAPIClass[];
   gatewayAPIEnabled: boolean;
