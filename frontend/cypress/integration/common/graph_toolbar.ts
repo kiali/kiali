@@ -68,7 +68,8 @@ When('user clicks graph refresh menu', () => {
 
 When(`user selects graph refresh {string}`, (refresh: string) => {
   cy.get('button#time_range_refresh-toggle').click();
-  cy.get(`button[id="${refresh}"]`).click().get('#loading_kiali_spinner').should('not.exist');
+  cy.get(`button[id="${refresh}"]`).click();
+  cy.get('#loading_kiali_spinner').should('not.exist');
 });
 
 When('user selects {string} graph type', (graphType: string) => {

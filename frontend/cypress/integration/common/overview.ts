@@ -69,7 +69,8 @@ When(`user filters {string} namespace`, (ns: string) => {
   cy.get('button#filter_select_type-toggle').click();
   cy.contains('div#filter_select_type button', 'Namespace').click();
 
-  cy.get('input#filter_input_value').type(ns).type('{enter}').get('#loading_kiali_spinner').should('not.exist');
+  cy.get('input#filter_input_value').type(ns).type('{enter}');
+  cy.get('#loading_kiali_spinner').should('not.exist');
 });
 
 When(`user filters {string} health`, (health: string) => {
@@ -82,16 +83,19 @@ When(`user filters {string} health`, (health: string) => {
 });
 
 When(`user selects Health for {string}`, (type: string) => {
-  cy.get('button#overview-type-toggle').click().get('#loading_kiali_spinner').should('not.exist');
-  cy.contains('div#overview-type button', type).click().get('#loading_kiali_spinner').should('not.exist');
+  cy.get('button#overview-type-toggle').click();
+  cy.contains('div#overview-type button', type).click();
+  cy.get('#loading_kiali_spinner').should('not.exist');
 });
 
 When(`user sorts by name desc`, () => {
-  cy.get('button[data-sort-asc="true"]').click().get('#loading_kiali_spinner').should('not.exist');
+  cy.get('button[data-sort-asc="true"]').click();
+  cy.get('#loading_kiali_spinner').should('not.exist');
 });
 
 When(`user sorts by column {string} desc`, (column: string) => {
-  cy.get(`th[data-label=${column}]`).click().get('#loading_kiali_spinner').should('not.exist');
+  cy.get(`th[data-label=${column}]`).click();
+  cy.get('#loading_kiali_spinner').should('not.exist');
 });
 
 When(`the list is sorted by {string} desc`, (column: string) => {
@@ -111,13 +115,15 @@ When(`the list is sorted by {string} desc`, (column: string) => {
 });
 
 When(`user selects {string} time range`, (interval: string) => {
-  cy.get('button#time_range_duration-toggle').click().get('#loading_kiali_spinner').should('not.exist');
-  cy.contains('div#time_range_duration button', interval).click().get('#loading_kiali_spinner').should('not.exist');
+  cy.get('button#time_range_duration-toggle').click();
+  cy.contains('div#time_range_duration button', interval).click();
+  cy.get('#loading_kiali_spinner').should('not.exist');
 });
 
 When(`user selects {string} traffic direction`, (direction: string) => {
-  cy.get('button#direction-type-toggle').click().get('#loading_kiali_spinner').should('not.exist');
-  cy.contains('div#direction-type button', direction).click().get('#loading_kiali_spinner').should('not.exist');
+  cy.get('button#direction-type-toggle').click();
+  cy.contains('div#direction-type button', direction).click();
+  cy.get('#loading_kiali_spinner').should('not.exist');
 });
 
 When('I fetch the overview of the cluster', () => {

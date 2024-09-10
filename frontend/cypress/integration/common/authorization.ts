@@ -2,11 +2,11 @@ import { Then } from '@badeball/cypress-cucumber-preprocessor';
 import { GraphDataSource } from 'services/GraphDataSource';
 
 Then(`user does not see the {string} link`, link => {
-  cy.get('div[role="dialog"]').get(`#${link}`).should('not.exist');
+  cy.get('div[role="dialog"]').find(`#${link}`).should('not.exist');
 });
 
 Then(`user see the {string} link`, link => {
-  cy.get('div[role="dialog"]').get(`#${link}`).should('exist');
+  cy.get('div[role="dialog"]').find(`#${link}`).should('exist');
 });
 
 Then('the nodes located in the {string} cluster should be restricted', (cluster: string) => {

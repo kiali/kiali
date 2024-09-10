@@ -109,9 +109,9 @@ export const clusterParameterExists = (present: boolean): void => {
 };
 
 Then(`user doesn't see the {string} menu`, menu => {
-  cy.get('#page-sidebar').get(`#${menu}`).should('not.exist');
+  cy.get('#page-sidebar').find(`#${menu}`).should('not.exist');
 });
 
 Then(`user see the {string} menu`, menu => {
-  cy.get('#page-sidebar').get(`#${menu}`).should('exist');
+  cy.get('#page-sidebar').find(`#${menu}`).should('exist');
 });
