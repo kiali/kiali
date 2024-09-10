@@ -23,6 +23,7 @@ const noInfoStyle = kialiStyle({
 
 type ResponseHostsTableProps = {
   responses: Responses;
+  reverse?: Responses;
   title: string;
 };
 
@@ -34,18 +35,22 @@ interface Row {
 }
 
 export const ResponseHostsTable: React.FC<ResponseHostsTableProps> = (props: ResponseHostsTableProps) => {
-  const getRows = (responses: Responses): Row[] => {
+  const getRows = (responses: Responses, key: string): Row[] => {
     const rows: Row[] = [];
     _.keys(responses).forEach(code => {
       _.keys(responses[code].hosts).forEach(h => {
-        rows.push({ key: `${code} ${h}`, code: code, host: h, val: responses[code].hosts[h] });
+        rows.push({ key: `${key} ${code} ${h}`, code: code, host: h, val: responses[code].hosts[h] });
       });
     });
 
     return rows;
   };
 
-  const rows = getRows(props.responses);
+  const rows = getRows(props.responses, 'k');
+  if (props.reverse) {
+    const rowsReverse = getRows(props.reverse, 'r');
+    rows.push(...rowsReverse);
+  }
 
   return (
     <>
