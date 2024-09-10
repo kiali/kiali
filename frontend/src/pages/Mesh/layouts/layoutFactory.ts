@@ -26,13 +26,15 @@ export const layoutFactory: LayoutFactory = (type: string, graph: Graph): Layout
     //  });
     case LayoutName.MeshDagre:
       return new MeshDagreLayout(graph, {
-        layoutOnDrag: false
+        layoutOnDrag: false,
+        ranksep: 15
       });
     default:
       // note - like other PFT layouts, this seems to work best
       // if you don't mess much with the defaults.
       return new DagreLayout(graph, {
-        layoutOnDrag: false
+        layoutOnDrag: false,
+        ranksep: 15
       });
   }
 };

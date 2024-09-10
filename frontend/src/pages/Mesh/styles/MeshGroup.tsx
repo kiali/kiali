@@ -79,6 +79,7 @@ const MeshGroupComponent: React.FC<MeshGroupProps> = ({
         collapsedHeight={collapsedHeight}
         hulledOutline={false}
         showLabel={detailsLevel === ScaleDetailsLevel.high}
+        showLabelOnHover={true}
         {...rest}
         {...passedData}
       >
