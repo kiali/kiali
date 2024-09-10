@@ -124,15 +124,14 @@ func ConfigValidationSummary(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	istioConfigValidationResults, errValidations := business.Validations.GetValidations(r.Context(), cluster, "", "", "")
-	if errValidations != nil {
-		log.Error(errValidations)
-		RespondWithError(w, http.StatusInternalServerError, errValidations.Error())
-		return
-	}
-
 	validationSummaries := []models.IstioValidationSummary{}
 	for _, ns := range nss {
+		istioConfigValidationResults, errValidations := business.Validations.GetValidations(r.Context(), cluster, ns, "", "")
+		if errValidations != nil {
+			log.Error(errValidations)
+			RespondWithError(w, http.StatusInternalServerError, errValidations.Error())
+			return
+		}
 		validationSummaries = append(validationSummaries, *istioConfigValidationResults.SummarizeValidation(ns, cluster))
 	}
 
