@@ -67,6 +67,7 @@ import { HistoryManager, URLParam } from 'app/History';
 import { tcpTimerConfig, timerConfig } from 'components/CytoscapeGraph/TrafficAnimation/AnimationTimerConfig';
 import { TourStop } from 'components/Tour/TourStop';
 import { GraphTourStops } from 'pages/Graph/GraphHelpTour';
+import { supportsGroups } from 'utils/GraphUtils';
 
 let initialLayout = false;
 let requestFit = false;
@@ -394,8 +395,7 @@ const TopologyContent: React.FC<{
       graphData.elements.nodes?.forEach(n => {
         const nd = n.data;
 
-        // Non-dagre layouts do not support groups
-        if (layoutName === LayoutName.Dagre) {
+        if (supportsGroups(layoutName)) {
           let newNode: NodeModel;
 
           if (nd.isBox) {
@@ -739,41 +739,41 @@ const TopologyContent: React.FC<{
                       }
                     },
                     {
-                      ariaLabel: 'Layout - Dagre',
+                      ariaLabel: 'Dagre - boxing layout',
                       id: 'toolbar_layout_dagre',
                       disabled: LayoutName.Dagre === layoutName,
                       icon: <TopologyIcon />,
-                      tooltip: 'Layout - dagre',
+                      tooltip: 'Dagre - boxing layout',
                       callback: () => {
                         setLayoutName(LayoutName.Dagre);
                       }
                     },
                     {
-                      ariaLabel: 'Layout - Grid',
+                      ariaLabel: 'Grid - non-boxing layout',
                       id: 'toolbar_layout_grid',
                       disabled: LayoutName.Grid === layoutName,
                       icon: <TopologyIcon />,
-                      tooltip: 'Layout - grid',
+                      tooltip: 'Grid - non-boxing layout',
                       callback: () => {
                         setLayoutName(LayoutName.Grid);
                       }
                     },
                     {
-                      ariaLabel: 'Layout - Concentric',
+                      ariaLabel: 'Concentric - non-boxing layout',
                       id: 'toolbar_layout_concentric',
                       disabled: LayoutName.Concentric === layoutName,
                       icon: <TopologyIcon />,
-                      tooltip: 'Layout - concentric',
+                      tooltip: 'Concentric - non-boxing layout',
                       callback: () => {
                         setLayoutName(LayoutName.Concentric);
                       }
                     },
                     {
-                      ariaLabel: 'Layout - Breadth First',
+                      ariaLabel: 'Breadth First - non-boxing layout',
                       id: 'toolbar_layout_breadth_first',
                       disabled: LayoutName.BreadthFirst === layoutName,
                       icon: <TopologyIcon />,
-                      tooltip: 'Layout - breadth first',
+                      tooltip: 'Breadth First - non-boxing layout',
                       callback: () => {
                         setLayoutName(LayoutName.BreadthFirst);
                       }

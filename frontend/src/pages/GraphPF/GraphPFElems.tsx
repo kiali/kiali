@@ -40,6 +40,7 @@ import { Span } from 'types/TracingInfo';
 import { IconType } from 'config/Icons';
 import { NodeDecorator } from './NodeDecorator';
 import { LayoutName } from './GraphPF';
+import { supportsGroups } from 'utils/GraphUtils';
 
 // Utilities for working with PF Topology
 // - most of these add cytoscape-like functions
@@ -223,8 +224,7 @@ export const setNodeLabel = (
   const isBoxed = data.parent;
   let box1Type: string | undefined, box2Type: string | undefined;
 
-  // Non-dagre layouts do not support groups
-  if (layoutName === LayoutName.Dagre && isBoxed) {
+  if (isBoxed && supportsGroups(layoutName)) {
     let box1: NodeModel | undefined, box2: NodeModel | undefined;
     box1 = nodeMap.get(data.parent!);
     const box1Data = box1?.data as NodeData;
