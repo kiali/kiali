@@ -37,20 +37,6 @@ func TestGetNamespaceValidations(t *testing.T) {
 	assert.True(validations[models.IstioValidationKey{ObjectType: "virtualservice", Namespace: "test", Name: "product-vs"}].Valid)
 }
 
-func TestGetAllValidations(t *testing.T) {
-	assert := assert.New(t)
-	require := require.New(t)
-	conf := config.NewConfig()
-	config.Set(conf)
-
-	vs := mockCombinedValidationService(t, fakeIstioConfigList(),
-		[]string{"details.test.svc.cluster.local", "product.test.svc.cluster.local", "product2.test.svc.cluster.local", "customer.test.svc.cluster.local"})
-
-	validations, _ := vs.GetValidations(context.TODO(), conf.KubernetesConfig.ClusterName, "", "", "")
-	require.NotEmpty(validations)
-	assert.True(validations[models.IstioValidationKey{ObjectType: "virtualservice", Namespace: "test", Name: "product-vs"}].Valid)
-}
-
 func TestGetIstioObjectValidations(t *testing.T) {
 	assert := assert.New(t)
 	conf := config.NewConfig()
@@ -186,7 +172,7 @@ func TestFilterExportToNamespacesVS(t *testing.T) {
 	vs3towrong := loadVirtualService("vs_bookinfo3_to_wrong.yaml", t)
 	currentIstioObjects = append(currentIstioObjects, vs3towrong)
 	v := mockEmptyValidationService(t)
-	filteredVSs := v.filterVSExportToNamespaces(models.Namespaces{models.Namespace{Name: "bookinfo"}, models.Namespace{Name: "bookinfo2"}, models.Namespace{Name: "bookinfo3"}, models.Namespace{Name: "default"}}, "bookinfo", "", currentIstioObjects)
+	filteredVSs := v.filterVSExportToNamespaces(map[string]bool{"bookinfo": false, "bookinfo2": false, "bookinfo3": false, "default": false}, "bookinfo", "", currentIstioObjects)
 	var expectedVS []*networking_v1.VirtualService
 	expectedVS = append(expectedVS, vs1tothis)
 	expectedVS = append(expectedVS, vs2to1)
@@ -224,7 +210,7 @@ func TestAmbientFilterExportToNamespacesVS(t *testing.T) {
 	vs3towrong := loadVirtualService("vs_bookinfo3_to_wrong.yaml", t)
 	currentIstioObjects = append(currentIstioObjects, vs3towrong)
 	v := mockAmbientValidationService(t)
-	filteredVSs := v.filterVSExportToNamespaces(models.Namespaces{models.Namespace{Name: "bookinfo", IsAmbient: true}, models.Namespace{Name: "bookinfo2"}, models.Namespace{Name: "bookinfo3"}, models.Namespace{Name: "default"}}, "bookinfo2", "", currentIstioObjects)
+	filteredVSs := v.filterVSExportToNamespaces(map[string]bool{"bookinfo": true, "bookinfo2": false, "bookinfo3": false, "default": false}, "bookinfo2", "", currentIstioObjects)
 	var expectedVS []*networking_v1.VirtualService
 	expectedVS = append(expectedVS, vs2tothis)
 	expectedVS = append(expectedVS, vs3to2)
@@ -256,7 +242,7 @@ func TestFilterVSMeshExportToThis(t *testing.T) {
 	vs3toall := loadVirtualService("vs_bookinfo3_to_all.yaml", t)
 	currentIstioObjects = append(currentIstioObjects, vs3toall)
 	v := mockEmptyValidationService(t, ".")
-	filteredVSs := v.filterVSExportToNamespaces(models.Namespaces{models.Namespace{Name: "bookinfo"}, models.Namespace{Name: "bookinfo2"}, models.Namespace{Name: "bookinfo3"}, models.Namespace{Name: "default"}}, "bookinfo", "", currentIstioObjects)
+	filteredVSs := v.filterVSExportToNamespaces(map[string]bool{"bookinfo": false, "bookinfo2": false, "bookinfo3": false, "default": false}, "bookinfo", "", currentIstioObjects)
 	var expectedVS []*networking_v1.VirtualService
 	expectedVS = append(expectedVS, vs1tothis)
 	expectedVS = append(expectedVS, vs1not)
@@ -287,7 +273,7 @@ func TestFilterVSMeshExportToAll(t *testing.T) {
 	vs3toall := loadVirtualService("vs_bookinfo3_to_all.yaml", t)
 	currentIstioObjects = append(currentIstioObjects, vs3toall)
 	v := mockEmptyValidationService(t, "*")
-	filteredVSs := v.filterVSExportToNamespaces(models.Namespaces{models.Namespace{Name: "bookinfo"}, models.Namespace{Name: "bookinfo2"}, models.Namespace{Name: "bookinfo3"}, models.Namespace{Name: "default"}}, "bookinfo2", "", currentIstioObjects)
+	filteredVSs := v.filterVSExportToNamespaces(map[string]bool{"bookinfo": false, "bookinfo2": false, "bookinfo3": false, "default": false}, "bookinfo2", "", currentIstioObjects)
 	var expectedVS []*networking_v1.VirtualService
 	expectedVS = append(expectedVS, vs1not)
 	expectedVS = append(expectedVS, vs2not)
@@ -324,7 +310,7 @@ func TestFilterExportToNamespacesDR(t *testing.T) {
 	dr3towrong := loadDestinationRule("dr_bookinfo3_to_wrong.yaml", t)
 	currentIstioObjects = append(currentIstioObjects, dr3towrong)
 	v := mockEmptyValidationService(t)
-	filteredDRs := v.filterDRExportToNamespaces(models.Namespaces{models.Namespace{Name: "bookinfo"}, models.Namespace{Name: "bookinfo2"}, models.Namespace{Name: "bookinfo3"}, models.Namespace{Name: "default"}}, "bookinfo", "", currentIstioObjects)
+	filteredDRs := v.filterDRExportToNamespaces(map[string]bool{"bookinfo": false, "bookinfo2": false, "bookinfo3": false, "default": false}, "bookinfo", "", currentIstioObjects)
 	var expectedDR []*networking_v1.DestinationRule
 	expectedDR = append(expectedDR, dr1tothis)
 	expectedDR = append(expectedDR, dr2to1)
@@ -362,7 +348,7 @@ func TestAmbientFilterExportToNamespacesDR(t *testing.T) {
 	dr3towrong := loadDestinationRule("dr_bookinfo3_to_wrong.yaml", t)
 	currentIstioObjects = append(currentIstioObjects, dr3towrong)
 	v := mockAmbientValidationService(t)
-	filteredDRs := v.filterDRExportToNamespaces(models.Namespaces{models.Namespace{Name: "bookinfo", IsAmbient: true}, models.Namespace{Name: "bookinfo2"}, models.Namespace{Name: "bookinfo3"}, models.Namespace{Name: "default"}}, "bookinfo2", "", currentIstioObjects)
+	filteredDRs := v.filterDRExportToNamespaces(map[string]bool{"bookinfo": true, "bookinfo2": false, "bookinfo3": false, "default": false}, "bookinfo2", "", currentIstioObjects)
 	var expectedDR []*networking_v1.DestinationRule
 	expectedDR = append(expectedDR, dr2tothis)
 	expectedDR = append(expectedDR, dr3to2)
@@ -394,7 +380,7 @@ func TestFilterDRMeshExportToThis(t *testing.T) {
 	dr3toall := loadDestinationRule("dr_bookinfo3_to_all.yaml", t)
 	currentIstioObjects = append(currentIstioObjects, dr3toall)
 	v := mockEmptyValidationService(t, ".")
-	filteredDRs := v.filterDRExportToNamespaces(models.Namespaces{models.Namespace{Name: "bookinfo"}, models.Namespace{Name: "bookinfo2"}, models.Namespace{Name: "bookinfo3"}, models.Namespace{Name: "default"}}, "bookinfo", "", currentIstioObjects)
+	filteredDRs := v.filterDRExportToNamespaces(map[string]bool{"bookinfo": false, "bookinfo2": false, "bookinfo3": false, "default": false}, "bookinfo", "", currentIstioObjects)
 	var expectedDR []*networking_v1.DestinationRule
 	expectedDR = append(expectedDR, dr1tothis)
 	expectedDR = append(expectedDR, dr1not)
@@ -425,7 +411,7 @@ func TestFilterDRMeshExportToAll(t *testing.T) {
 	dr3toall := loadDestinationRule("dr_bookinfo3_to_all.yaml", t)
 	currentIstioObjects = append(currentIstioObjects, dr3toall)
 	v := mockEmptyValidationService(t, "*")
-	filteredDRs := v.filterDRExportToNamespaces(models.Namespaces{models.Namespace{Name: "bookinfo"}, models.Namespace{Name: "bookinfo2"}, models.Namespace{Name: "bookinfo3"}, models.Namespace{Name: "default"}}, "bookinfo2", "", currentIstioObjects)
+	filteredDRs := v.filterDRExportToNamespaces(map[string]bool{"bookinfo": false, "bookinfo2": false, "bookinfo3": false, "default": false}, "bookinfo2", "", currentIstioObjects)
 	var expectedDR []*networking_v1.DestinationRule
 	expectedDR = append(expectedDR, dr1not)
 	expectedDR = append(expectedDR, dr2not)
@@ -462,7 +448,7 @@ func TestFilterExportToNamespacesSE(t *testing.T) {
 	se3towrong := loadServiceEntry("se_bookinfo3_to_wrong.yaml", t)
 	currentIstioObjects = append(currentIstioObjects, se3towrong)
 	v := mockEmptyValidationService(t)
-	filteredSEs := v.filterSEExportToNamespaces(models.Namespaces{models.Namespace{Name: "bookinfo"}, models.Namespace{Name: "bookinfo2"}, models.Namespace{Name: "bookinfo3"}, models.Namespace{Name: "default"}}, "bookinfo", "", currentIstioObjects)
+	filteredSEs := v.filterSEExportToNamespaces(map[string]bool{"bookinfo": false, "bookinfo2": false, "bookinfo3": false, "default": false}, "bookinfo", "", currentIstioObjects)
 	var expectedSE []*networking_v1.ServiceEntry
 	expectedSE = append(expectedSE, se1tothis)
 	expectedSE = append(expectedSE, se2to1)
@@ -500,7 +486,7 @@ func TestAmbientFilterExportToNamespacesSE(t *testing.T) {
 	se3towrong := loadServiceEntry("se_bookinfo3_to_wrong.yaml", t)
 	currentIstioObjects = append(currentIstioObjects, se3towrong)
 	v := mockAmbientValidationService(t)
-	filteredSEs := v.filterSEExportToNamespaces(models.Namespaces{models.Namespace{Name: "bookinfo", IsAmbient: true}, models.Namespace{Name: "bookinfo2"}, models.Namespace{Name: "bookinfo3"}, models.Namespace{Name: "default"}}, "bookinfo2", "", currentIstioObjects)
+	filteredSEs := v.filterSEExportToNamespaces(map[string]bool{"bookinfo": true, "bookinfo2": false, "bookinfo3": false, "default": false}, "bookinfo2", "", currentIstioObjects)
 	var expectedSE []*networking_v1.ServiceEntry
 	expectedSE = append(expectedSE, se2tothis)
 	expectedSE = append(expectedSE, se3to2)
@@ -532,7 +518,7 @@ func TestFilterSEMeshExportToThis(t *testing.T) {
 	se3toall := loadServiceEntry("se_bookinfo3_to_all.yaml", t)
 	currentIstioObjects = append(currentIstioObjects, se3toall)
 	v := mockEmptyValidationService(t, ".")
-	filteredSEs := v.filterSEExportToNamespaces(models.Namespaces{models.Namespace{Name: "bookinfo"}, models.Namespace{Name: "bookinfo2"}, models.Namespace{Name: "bookinfo3"}, models.Namespace{Name: "default"}}, "bookinfo", "", currentIstioObjects)
+	filteredSEs := v.filterSEExportToNamespaces(map[string]bool{"bookinfo": false, "bookinfo2": false, "bookinfo3": false, "default": false}, "bookinfo", "", currentIstioObjects)
 	var expectedSE []*networking_v1.ServiceEntry
 	expectedSE = append(expectedSE, se1tothis)
 	expectedSE = append(expectedSE, se1not)
@@ -563,7 +549,7 @@ func TestFilterSEMeshExportToAll(t *testing.T) {
 	se3toall := loadServiceEntry("se_bookinfo3_to_all.yaml", t)
 	currentIstioObjects = append(currentIstioObjects, se3toall)
 	v := mockEmptyValidationService(t, "*")
-	filteredSEs := v.filterSEExportToNamespaces(models.Namespaces{models.Namespace{Name: "bookinfo"}, models.Namespace{Name: "bookinfo2"}, models.Namespace{Name: "bookinfo3"}, models.Namespace{Name: "default"}}, "bookinfo2", "", currentIstioObjects)
+	filteredSEs := v.filterSEExportToNamespaces(map[string]bool{"bookinfo": false, "bookinfo2": false, "bookinfo3": false, "default": false}, "bookinfo2", "", currentIstioObjects)
 	var expectedSE []*networking_v1.ServiceEntry
 	expectedSE = append(expectedSE, se1not)
 	expectedSE = append(expectedSE, se2not)
