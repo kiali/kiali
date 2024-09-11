@@ -10,8 +10,6 @@ import (
 	"github.com/kiali/kiali/models"
 )
 
-const AuthorizationPolicyCheckerType = "authorizationpolicy"
-
 type AuthorizationPolicyChecker struct {
 	Cluster               string
 	MtlsDetails           kubernetes.MTLSDetails
@@ -47,14 +45,14 @@ func (a AuthorizationPolicyChecker) Check() models.IstioValidations {
 // runChecks runs all the individual checks for a single mesh policy and appends the result into validations.
 func (a AuthorizationPolicyChecker) runChecks(authPolicy *security_v1.AuthorizationPolicy) models.IstioValidations {
 	policyName := authPolicy.Name
-	key, rrValidation := EmptyValidValidation(policyName, authPolicy.Namespace, AuthorizationPolicyCheckerType, a.Cluster)
+	key, rrValidation := EmptyValidValidation(policyName, authPolicy.Namespace, kubernetes.AuthorizationPolicies.String(), a.Cluster)
 	serviceHosts := kubernetes.ServiceEntryHostnames(a.ServiceEntries)
 	matchLabels := make(map[string]string)
 	if authPolicy.Spec.Selector != nil {
 		matchLabels = authPolicy.Spec.Selector.MatchLabels
 	}
 	enabledCheckers := []Checker{
-		common.SelectorNoWorkloadFoundChecker(AuthorizationPolicyCheckerType, matchLabels, a.WorkloadsPerNamespace),
+		common.SelectorNoWorkloadFoundChecker(kubernetes.AuthorizationPolicies.String(), matchLabels, a.WorkloadsPerNamespace),
 		authorization.NamespaceMethodChecker{AuthorizationPolicy: authPolicy, Namespaces: a.Namespaces.GetNames()},
 		authorization.NoHostChecker{AuthorizationPolicy: authPolicy, Namespaces: a.Namespaces,
 			ServiceEntries: serviceHosts, VirtualServices: a.VirtualServices, RegistryServices: a.RegistryServices, PolicyAllowAny: a.PolicyAllowAny},

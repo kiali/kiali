@@ -9,6 +9,7 @@ import (
 	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
 	"github.com/kiali/kiali/tests/testutils/validations"
@@ -51,29 +52,29 @@ func TestVirtualServiceReferences(t *testing.T) {
 	// Check Gateway references
 	assert.Equal(references.ObjectReferences[0].Name, "gateway1")
 	assert.Equal(references.ObjectReferences[0].Namespace, "bookinfo")
-	assert.Equal(references.ObjectReferences[0].ObjectType, "gateway")
+	assert.Equal(references.ObjectReferences[0].ObjectType, kubernetes.Gateways.String())
 	assert.Equal(references.ObjectReferences[1].Name, "gateway2")
 	assert.Equal(references.ObjectReferences[1].Namespace, "bookinfo2")
-	assert.Equal(references.ObjectReferences[1].ObjectType, "gateway")
+	assert.Equal(references.ObjectReferences[1].ObjectType, kubernetes.Gateways.String())
 	assert.Equal(references.ObjectReferences[2].Name, "mesh")
 	assert.Equal(references.ObjectReferences[2].Namespace, "")
-	assert.Equal(references.ObjectReferences[2].ObjectType, "gateway")
+	assert.Equal(references.ObjectReferences[2].ObjectType, kubernetes.Gateways.String())
 	assert.Equal(references.ObjectReferences[3].Name, "valid-gateway")
 	assert.Equal(references.ObjectReferences[3].Namespace, "bookinfo")
-	assert.Equal(references.ObjectReferences[3].ObjectType, "gateway")
+	assert.Equal(references.ObjectReferences[3].ObjectType, kubernetes.Gateways.String())
 	assert.Equal(references.ObjectReferences[4].Name, "valid-gateway2")
 	assert.Equal(references.ObjectReferences[4].Namespace, "bookinfo")
-	assert.Equal(references.ObjectReferences[4].ObjectType, "gateway")
+	assert.Equal(references.ObjectReferences[4].ObjectType, kubernetes.Gateways.String())
 
 	// Check DR references
 	assert.Equal(references.ObjectReferences[5].Name, "reviews")
 	assert.Equal(references.ObjectReferences[5].Namespace, "bookinfo")
-	assert.Equal(references.ObjectReferences[5].ObjectType, "destinationrule")
+	assert.Equal(references.ObjectReferences[5].ObjectType, kubernetes.DestinationRules.String())
 
 	// Check AP references
 	assert.Equal(references.ObjectReferences[6].Name, "allow-foo")
 	assert.Equal(references.ObjectReferences[6].Namespace, "bookinfo")
-	assert.Equal(references.ObjectReferences[6].ObjectType, "authorizationpolicy")
+	assert.Equal(references.ObjectReferences[6].ObjectType, kubernetes.AuthorizationPolicies.String())
 }
 
 func TestVirtualServiceNoReferences(t *testing.T) {

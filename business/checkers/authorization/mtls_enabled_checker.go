@@ -14,8 +14,6 @@ import (
 	"github.com/kiali/kiali/util/mtls"
 )
 
-const objectType = "authorizationpolicy"
-
 type MtlsEnabledChecker struct {
 	AuthorizationPolicies []*security_v1.AuthorizationPolicy
 	Cluster               string
@@ -37,7 +35,7 @@ func (c MtlsEnabledChecker) Check() models.IstioValidations {
 		if !receiveMtlsTraffic {
 			if need, paths := needsMtls(ap); need {
 				checks := make([]*models.IstioCheck, 0)
-				key := models.BuildKey(objectType, ap.Name, ap.Namespace, c.Cluster)
+				key := models.BuildKey(kubernetes.AuthorizationPolicies.String(), ap.Name, ap.Namespace, c.Cluster)
 
 				for _, path := range paths {
 					check := models.Build("authorizationpolicy.mtls.needstobeenabled", path)
@@ -47,7 +45,7 @@ func (c MtlsEnabledChecker) Check() models.IstioValidations {
 				validations.MergeValidations(models.IstioValidations{key: &models.IstioValidation{
 					Cluster:    c.Cluster,
 					Name:       ap.Namespace,
-					ObjectType: objectType,
+					ObjectType: kubernetes.AuthorizationPolicies.String(),
 					Valid:      false,
 					Checks:     checks,
 				}})

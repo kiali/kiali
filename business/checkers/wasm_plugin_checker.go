@@ -6,8 +6,6 @@ import (
 	"github.com/kiali/kiali/models"
 )
 
-const WasmPluginCheckerType = "wasmplugin"
-
 type WasmPluginChecker struct {
 	Namespaces  models.Namespaces
 	WasmPlugins []*extentions_v1alpha1.WasmPlugin

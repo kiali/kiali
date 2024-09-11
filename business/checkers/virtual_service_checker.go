@@ -1,14 +1,13 @@
 package checkers
 
 import (
+	"github.com/kiali/kiali/kubernetes"
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 
 	"github.com/kiali/kiali/business/checkers/common"
 	"github.com/kiali/kiali/business/checkers/virtualservices"
 	"github.com/kiali/kiali/models"
 )
-
-const VirtualCheckerType = "virtualservice"
 
 type VirtualServiceChecker struct {
 	Namespaces       models.Namespaces
@@ -59,7 +58,7 @@ func (in VirtualServiceChecker) runGroupChecks() models.IstioValidations {
 // runChecks runs all the individual checks for a single virtual service and appends the result into validations.
 func (in VirtualServiceChecker) runChecks(virtualService *networking_v1.VirtualService) models.IstioValidations {
 	virtualServiceName := virtualService.Name
-	key, rrValidation := EmptyValidValidation(virtualServiceName, virtualService.Namespace, VirtualCheckerType, in.Cluster)
+	key, rrValidation := EmptyValidValidation(virtualServiceName, virtualService.Namespace, kubernetes.VirtualServices.String(), in.Cluster)
 
 	enabledCheckers := []Checker{
 		virtualservices.RouteChecker{VirtualService: virtualService, Namespaces: in.Namespaces.GetNames()},

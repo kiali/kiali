@@ -10,8 +10,6 @@ import (
 	"github.com/kiali/kiali/models"
 )
 
-const DestinationRulesCheckerType = "destinationrule"
-
 type MultiMatchChecker struct {
 	Cluster          string
 	DestinationRules []*networking_v1.DestinationRule
@@ -149,12 +147,12 @@ func addError(validations models.IstioValidations, namespaces []string, destinat
 }
 
 func createError(errorText, namespace, destinationRuleName, cluster string, valid bool) (models.IstioValidationKey, *models.IstioValidation) {
-	key := models.IstioValidationKey{Name: destinationRuleName, Namespace: namespace, ObjectType: DestinationRulesCheckerType, Cluster: cluster}
+	key := models.IstioValidationKey{Name: destinationRuleName, Namespace: namespace, ObjectType: kubernetes.DestinationRules.String(), Cluster: cluster}
 	checks := models.Build(errorText, "spec/host")
 	rrValidation := &models.IstioValidation{
 		Cluster:    cluster,
 		Name:       destinationRuleName,
-		ObjectType: DestinationRulesCheckerType,
+		ObjectType: key.ObjectType,
 		Valid:      valid,
 		Checks: []*models.IstioCheck{
 			&checks,

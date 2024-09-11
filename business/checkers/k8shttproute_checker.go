@@ -9,8 +9,6 @@ import (
 	"github.com/kiali/kiali/models"
 )
 
-const K8sHTTPRouteCheckerType = "k8shttproute"
-
 type K8sHTTPRouteChecker struct {
 	Cluster            string
 	K8sGateways        []*k8s_networking_v1.Gateway
@@ -43,7 +41,7 @@ func (in K8sHTTPRouteChecker) runIndividualChecks() models.IstioValidations {
 }
 
 func (in K8sHTTPRouteChecker) runChecks(rt *k8s_networking_v1.HTTPRoute, gatewayNames map[string]k8s_networking_v1.Gateway) models.IstioValidations {
-	key, validations := EmptyValidValidation(rt.Name, rt.Namespace, K8sHTTPRouteCheckerType, in.Cluster)
+	key, validations := EmptyValidValidation(rt.Name, rt.Namespace, kubernetes.K8sHTTPRoutes.String(), in.Cluster)
 
 	enabledCheckers := []Checker{
 		k8shttproutes.NoK8sGatewayChecker{

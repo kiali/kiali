@@ -1,13 +1,13 @@
 package references
 
 import (
-	"github.com/kiali/kiali/kubernetes"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
 )
@@ -51,7 +51,7 @@ func TestSidecarReferences(t *testing.T) {
 	assert.Len(references.ObjectReferences, 1)
 	assert.Equal(references.ObjectReferences[0].Name, "foo-dev")
 	assert.Equal(references.ObjectReferences[0].Namespace, "istio-system")
-	assert.Equal(references.ObjectReferences[0].ObjectType, "serviceentry")
+	assert.Equal(references.ObjectReferences[0].ObjectType, kubernetes.ServiceEntries.String())
 }
 
 func TestSidecarServiceReferences(t *testing.T) {

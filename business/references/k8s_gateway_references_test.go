@@ -7,6 +7,7 @@ import (
 	k8s_networking_v1 "sigs.k8s.io/gateway-api/apis/v1"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
 )

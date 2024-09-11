@@ -1,13 +1,12 @@
 package checkers
 
 import (
+	"github.com/kiali/kiali/kubernetes"
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 
 	"github.com/kiali/kiali/business/checkers/gateways"
 	"github.com/kiali/kiali/models"
 )
-
-const GatewayCheckerType = "gateway"
 
 type GatewayChecker struct {
 	Gateways              []*networking_v1.Gateway
@@ -32,7 +31,7 @@ func (g GatewayChecker) Check() models.IstioValidations {
 }
 
 func (g GatewayChecker) runSingleChecks(gw *networking_v1.Gateway) models.IstioValidations {
-	key, validations := EmptyValidValidation(gw.Name, gw.Namespace, GatewayCheckerType, g.Cluster)
+	key, validations := EmptyValidValidation(gw.Name, gw.Namespace, kubernetes.Gateways.String(), g.Cluster)
 
 	enabledCheckers := []Checker{
 		gateways.SelectorChecker{

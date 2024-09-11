@@ -41,7 +41,7 @@ func TestWellVirtualServiceValidation(t *testing.T) {
 	validation, ok := validations[models.IstioValidationKey{ObjectType: kubernetes.VirtualServices.String(), Namespace: "bookinfo", Name: "reviews-well"}]
 	assert.True(ok)
 	assert.Equal(validation.Name, "reviews-well")
-	assert.Equal(validation.ObjectType, "virtualservice")
+	assert.Equal(validation.ObjectType, kubernetes.VirtualServices.String())
 	assert.True(validation.Valid)
 	assert.Len(validation.Checks, 0)
 }
@@ -57,7 +57,7 @@ func TestVirtualServiceMultipleCheck(t *testing.T) {
 	validation, ok := validations[models.IstioValidationKey{ObjectType: kubernetes.VirtualServices.String(), Namespace: "bookinfo", Name: "reviews-multiple"}]
 	assert.True(ok)
 	assert.Equal(validation.Name, "reviews-multiple")
-	assert.Equal(validation.ObjectType, "virtualservice")
+	assert.Equal(validation.ObjectType, kubernetes.VirtualServices.String())
 	assert.True(validation.Valid)
 	assert.Len(validation.Checks, 2)
 }
@@ -73,7 +73,7 @@ func TestVirtualServiceMixedChecker(t *testing.T) {
 	validation, ok := validations[models.IstioValidationKey{ObjectType: kubernetes.VirtualServices.String(), Namespace: "bookinfo", Name: "reviews-mixed"}]
 	assert.True(ok)
 	assert.Equal(validation.Name, "reviews-mixed")
-	assert.Equal(validation.ObjectType, "virtualservice")
+	assert.Equal(validation.ObjectType, kubernetes.VirtualServices.String())
 	assert.True(validation.Valid)
 	assert.Len(validation.Checks, 2)
 }
@@ -97,14 +97,14 @@ func TestVirtualServiceMultipleIstioObjects(t *testing.T) {
 	validation, ok := validations[models.IstioValidationKey{ObjectType: kubernetes.VirtualServices.String(), Namespace: "bookinfo", Name: "reviews-mixed"}]
 	assert.True(ok)
 	assert.Equal(validation.Name, "reviews-mixed")
-	assert.Equal(validation.ObjectType, "virtualservice")
+	assert.Equal(validation.ObjectType, kubernetes.VirtualServices.String())
 	assert.True(validation.Valid)
 	assert.Len(validation.Checks, 2)
 
 	validation, ok = validations[models.IstioValidationKey{ObjectType: kubernetes.VirtualServices.String(), Namespace: "bookinfo", Name: "reviews-multiple"}]
 	assert.True(ok)
 	assert.Equal(validation.Name, "reviews-multiple")
-	assert.Equal(validation.ObjectType, "virtualservice")
+	assert.Equal(validation.ObjectType, kubernetes.VirtualServices.String())
 	assert.True(validation.Valid)
 	assert.Len(validation.Checks, 2)
 }

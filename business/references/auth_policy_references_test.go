@@ -1,7 +1,6 @@
 package references
 
 import (
-	"github.com/kiali/kiali/kubernetes"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -9,6 +8,7 @@ import (
 	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
 )
@@ -52,11 +52,11 @@ func TestAuthPolicyReferences(t *testing.T) {
 	assert.Len(references.ObjectReferences, 2)
 	assert.Equal(references.ObjectReferences[0].Name, "foo-dev")
 	assert.Equal(references.ObjectReferences[0].Namespace, "istio-system")
-	assert.Equal(references.ObjectReferences[0].ObjectType, "virtualservice")
+	assert.Equal(references.ObjectReferences[0].ObjectType, kubernetes.VirtualServices.String())
 
 	assert.Equal(references.ObjectReferences[1].Name, "foo-dev")
 	assert.Equal(references.ObjectReferences[1].Namespace, "istio-system")
-	assert.Equal(references.ObjectReferences[1].ObjectType, "serviceentry")
+	assert.Equal(references.ObjectReferences[1].ObjectType, kubernetes.ServiceEntries.String())
 }
 
 func TestAuthPolicyServiceReferences(t *testing.T) {

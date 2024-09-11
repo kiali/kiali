@@ -114,33 +114,6 @@ const (
 	Unknown         SeverityLevel = "unknown"
 )
 
-var ObjectTypeSingular = map[string]string{
-	"gateways":               "gateway",
-	"virtualservices":        "virtualservice",
-	"destinationrules":       "destinationrule",
-	"serviceentries":         "serviceentry",
-	"rules":                  "rule",
-	"quotaspecs":             "quotaspec",
-	"quotaspecbindings":      "quotaspecbinding",
-	"policies":               "policy",
-	"serviceroles":           "servicerole",
-	"servicerolebindings":    "servicerolebinding",
-	"clusterrbacconfigs":     "clusterrbacconfig",
-	"authorizationpolicies":  "authorizationpolicy",
-	"sidecars":               "sidecar",
-	"peerauthentications":    "peerauthentication",
-	"requestauthentications": "requestauthentication",
-	"workloads":              "workload",
-	"wasmplugins":            "wasmpluin",
-	"telemetries":            "telemetry",
-	"k8sgateways":            "k8sgateway",
-	"k8sgrpcroutes":          "k8sgrpcroute",
-	"k8shttproutes":          "k8shttproute",
-	"k8sreferencegrants":     "k8sreferencegrant",
-	"k8stcproutes":           "k8stcproute",
-	"k8stlsroutes":           "k8stlsroute",
-}
-
 var checkDescriptors = map[string]IstioCheck{
 	"authorizationpolicy.source.namespacenotfound": {
 		Code:     "KIA0101",

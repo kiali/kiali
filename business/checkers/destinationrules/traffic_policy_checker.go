@@ -33,11 +33,11 @@ func (t TrafficPolicyChecker) Check() models.IstioValidations {
 		// Invalid if there isn't trafficPolicy specified or trafficPolicy doesn't specify TLSSettings
 		if !hasTrafficPolicy(dr) || !hasTLSSettings(dr) {
 			check := models.Build("destinationrules.trafficpolicy.notlssettings", "spec/trafficPolicy")
-			key := models.BuildKey(DestinationRulesCheckerType, dr.Name, dr.Namespace, t.Cluster)
+			key := models.BuildKey(kubernetes.DestinationRules.String(), dr.Name, dr.Namespace, t.Cluster)
 
 			refKeys := make([]models.IstioValidationKey, 0, len(refdMtls))
 			for _, dr := range drSameHosts {
-				refKeys = append(refKeys, models.BuildKey(DestinationRulesCheckerType, dr.Name, dr.Namespace, t.Cluster))
+				refKeys = append(refKeys, models.BuildKey(kubernetes.DestinationRules.String(), dr.Name, dr.Namespace, t.Cluster))
 			}
 
 			validation := buildDestinationRuleValidation(dr, check, true, refKeys, t.Cluster)
@@ -121,7 +121,7 @@ func buildDestinationRuleValidation(dr *networking_v1.DestinationRule, checks mo
 	validation := &models.IstioValidation{
 		Cluster:    cluster,
 		Name:       dr.Name,
-		ObjectType: DestinationRulesCheckerType,
+		ObjectType: kubernetes.DestinationRules.String(),
 		Valid:      valid,
 		Checks: []*models.IstioCheck{
 			&checks,

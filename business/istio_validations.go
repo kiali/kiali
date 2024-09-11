@@ -313,7 +313,7 @@ func (in *IstioValidationsService) GetIstioObjectValidations(ctx context.Context
 		return models.IstioValidations{}, istioReferences, err
 	}
 
-	return runObjectCheckers(objectCheckers).FilterByKey(objectType, object), istioReferences, nil
+	return runObjectCheckers(objectCheckers).FilterByKey(objectType.String(), object), istioReferences, nil
 }
 
 func runObjectCheckers(objectCheckers []ObjectChecker) models.IstioValidations {

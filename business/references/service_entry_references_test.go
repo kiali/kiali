@@ -50,15 +50,15 @@ func TestServiceEntryReferences(t *testing.T) {
 	assert.Len(references.ObjectReferences, 3)
 	assert.Equal(references.ObjectReferences[0].Name, "foo-dev")
 	assert.Equal(references.ObjectReferences[0].Namespace, "istio-system")
-	assert.Equal(references.ObjectReferences[0].ObjectType, "destinationrule")
+	assert.Equal(references.ObjectReferences[0].ObjectType, kubernetes.DestinationRules.String())
 
 	assert.Equal(references.ObjectReferences[1].Name, "foo-sidecar")
 	assert.Equal(references.ObjectReferences[1].Namespace, "istio-system")
-	assert.Equal(references.ObjectReferences[1].ObjectType, "sidecar")
+	assert.Equal(references.ObjectReferences[1].ObjectType, kubernetes.Sidecars.String())
 
 	assert.Equal(references.ObjectReferences[2].Name, "allow-foo")
 	assert.Equal(references.ObjectReferences[2].Namespace, "istio-system")
-	assert.Equal(references.ObjectReferences[2].ObjectType, "authorizationpolicy")
+	assert.Equal(references.ObjectReferences[2].ObjectType, kubernetes.AuthorizationPolicies.String())
 }
 
 func TestServiceEntryNoReferences(t *testing.T) {

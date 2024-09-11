@@ -7,6 +7,7 @@ import (
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
 )
@@ -61,7 +62,7 @@ func TestDestinationRuleReferences(t *testing.T) {
 	assert.Len(references.ObjectReferences, 1)
 	assert.Equal(references.ObjectReferences[0].Name, "reviews")
 	assert.Equal(references.ObjectReferences[0].Namespace, "test-namespace")
-	assert.Equal(references.ObjectReferences[0].ObjectType, "virtualservice")
+	assert.Equal(references.ObjectReferences[0].ObjectType, kubernetes.VirtualServices.String())
 }
 
 func TestDestinationRuleNoReferences(t *testing.T) {

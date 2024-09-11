@@ -22,7 +22,7 @@ func prepareTestForK8sGRPCRoute(route *k8s_networking_v1.GRPCRoute) models.Istio
 			{Name: "bookinfo3"},
 		},
 		K8sGRPCRoutes:      []*k8s_networking_v1.GRPCRoute{route},
-		K8sReferenceGrants: []*k8s_networking_v1beta1.ReferenceGrant{data.CreateReferenceGrantByKind("rg", route.Namespace, "bookinfo", kubernetes.K8sGRPCRouteType)},
+		K8sReferenceGrants: []*k8s_networking_v1beta1.ReferenceGrant{data.CreateReferenceGrantByKind("rg", route.Namespace, "bookinfo", k8s_networking_v1beta1.Kind(kubernetes.K8sGRPCRoutes.Kind))},
 	}
 	return *routeReferences.References()[models.IstioReferenceKey{ObjectType: kubernetes.K8sGRPCRoutes.String(), Namespace: route.Namespace, Name: route.Name}]
 }
@@ -47,11 +47,11 @@ func TestK8sGRPCRouteReferences(t *testing.T) {
 	// Check Gateway references
 	assert.Equal(references.ObjectReferences[0].Name, "gatewayapi")
 	assert.Equal(references.ObjectReferences[0].Namespace, "bookinfo")
-	assert.Equal(references.ObjectReferences[0].ObjectType, "k8sgateway")
+	assert.Equal(references.ObjectReferences[0].ObjectType, kubernetes.K8sGateways.String())
 	// Reference Grant
 	assert.Equal(references.ObjectReferences[1].Name, "rg")
 	assert.Equal(references.ObjectReferences[1].Namespace, "bookinfo")
-	assert.Equal(references.ObjectReferences[1].ObjectType, "k8sreferencegrant")
+	assert.Equal(references.ObjectReferences[1].ObjectType, kubernetes.K8sReferenceGrants.String())
 }
 
 func TestK8sGRPCRouteNoReferences(t *testing.T) {

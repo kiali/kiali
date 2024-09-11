@@ -5,10 +5,9 @@ import (
 
 	"github.com/kiali/kiali/business/checkers/common"
 	"github.com/kiali/kiali/business/checkers/serviceentries"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
-
-const ServiceEntryCheckerType = "serviceentry"
 
 type ServiceEntryChecker struct {
 	ServiceEntries  []*networking_v1.ServiceEntry
@@ -30,7 +29,7 @@ func (s ServiceEntryChecker) Check() models.IstioValidations {
 }
 
 func (s ServiceEntryChecker) runSingleChecks(se *networking_v1.ServiceEntry, workloadEntriesMap map[string][]string) models.IstioValidations {
-	key, validations := EmptyValidValidation(se.Name, se.Namespace, ServiceEntryCheckerType, s.Cluster)
+	key, validations := EmptyValidValidation(se.Name, se.Namespace, kubernetes.ServiceEntries.String(), s.Cluster)
 
 	enabledCheckers := []Checker{
 		serviceentries.HasMatchingWorkloadEntryAddress{ServiceEntry: se, WorkloadEntries: workloadEntriesMap},

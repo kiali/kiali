@@ -9,6 +9,7 @@ import (
 	k8s_networking_v1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
 )
@@ -46,11 +47,11 @@ func TestK8sHTTPRouteReferences(t *testing.T) {
 	// Check Gateway references
 	assert.Equal(references.ObjectReferences[0].Name, "gatewayapi")
 	assert.Equal(references.ObjectReferences[0].Namespace, "bookinfo")
-	assert.Equal(references.ObjectReferences[0].ObjectType, "k8sgateway")
+	assert.Equal(references.ObjectReferences[0].ObjectType, kubernetes.K8sGateways.String())
 	// Reference Grant
 	assert.Equal(references.ObjectReferences[1].Name, "rg")
 	assert.Equal(references.ObjectReferences[1].Namespace, "bookinfo")
-	assert.Equal(references.ObjectReferences[1].ObjectType, "k8sreferencegrant")
+	assert.Equal(references.ObjectReferences[1].ObjectType, kubernetes.K8sReferenceGrants.String())
 }
 
 func TestK8sHTTPRouteNoReferences(t *testing.T) {

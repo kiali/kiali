@@ -175,7 +175,7 @@ func assertMultimatchFailure(t *testing.T, code string, vals models.IstioValidat
 	assert.Len(validation.References, len(references))
 	for i, ref := range references {
 		assert.Equal(ref, validation.References[i].Name)
-		assert.Equal("sidecar", validation.References[i].ObjectType)
+		assert.Equal(kubernetes.Sidecars.String(), validation.References[i].ObjectType)
 	}
 }
 

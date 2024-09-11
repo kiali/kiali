@@ -4,10 +4,9 @@ import (
 	k8s_networking_v1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 
 	"github.com/kiali/kiali/business/checkers/k8sreferencegrants"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
-
-const K8sReferenceGrantCheckerType = "k8sreferencegrant"
 
 type K8sReferenceGrantChecker struct {
 	Cluster            string
@@ -36,7 +35,7 @@ func (in K8sReferenceGrantChecker) runIndividualChecks() models.IstioValidations
 }
 
 func (in K8sReferenceGrantChecker) runChecks(rg *k8s_networking_v1beta1.ReferenceGrant) models.IstioValidations {
-	key, validations := EmptyValidValidation(rg.Name, rg.Namespace, K8sReferenceGrantCheckerType, in.Cluster)
+	key, validations := EmptyValidValidation(rg.Name, rg.Namespace, kubernetes.K8sReferenceGrants.String(), in.Cluster)
 
 	enabledCheckers := []Checker{
 		k8sreferencegrants.NamespaceChecker{
