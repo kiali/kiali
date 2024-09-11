@@ -476,8 +476,51 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
         [NodeType.AGGREGATE, NodeType.UNKNOWN].includes(sourceData.nodeType) || sourceData.isIstio
           ? 'destination'
           : 'source';
-
       const filtersTCP = ['tcp_sent', 'tcp_received'];
+
+      if (edgeData.reverse) {
+        const reverseMetricType = sourceMetricType;
+        const reverseMetricsNodeData = sourceData;
+        const reversePromeRequests = getNodeMetrics(
+          reverseMetricType,
+          reverseMetricsNodeData,
+          props,
+          filtersTCP,
+          direction,
+          reporterTCP,
+          undefined, // TCP metrics include ambient by default (ztunnel already uses source/dest reporting)
+          undefined, // streams (tcp, grpc-messages) use dedicated metrics (i.e. no request_protocol label)
+          quantiles,
+          ['source_workload']
+        );
+        this.metricsPromise = makeCancelablePromise(reversePromeRequests);
+        this.metricsPromise.promise
+          .then(response => {
+            const metrics = response.data;
+            const sent = this.getNodeDataPoints(
+              isTcp ? metrics.tcp_sent : metrics.grpc_sent,
+              destMetricType,
+              sourceMetricType,
+              otherEndData,
+              isDestServiceEntry
+            );
+
+            const received = this.getNodeDataPoints(
+              isTcp ? metrics.tcp_received : metrics.grpc_received,
+              destMetricType,
+              sourceMetricType,
+              otherEndData,
+              isDestServiceEntry
+            );
+            this.setState({
+              reverseSent: sent,
+              reverseReceived: received
+            });
+          })
+          .catch(error => {
+            console.debug(`SummaryPanelEdge: Ignore fetch error for reverse metrics (canceled) ${error}`);
+          });
+      }
 
       promiseRequests = getNodeMetrics(
         metricType,
@@ -648,7 +691,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
       );
     }
 
-    let requestChart: React.ReactNode, streamChart: React.ReactNode;
+    let requestChart: React.ReactNode, streamChart: React.ReactNode, reverseStreamChart: React.ReactNode;
 
     if (isGrpc || isHttp) {
       if (isRequests) {
@@ -685,12 +728,27 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
       streamChart = (
         <StreamChart label="TCP Traffic" sentRates={this.state.sent} receivedRates={this.state.received} unit="bytes" />
       );
+      if (this.state.reverseSent && this.state.reverseReceived) {
+        reverseStreamChart = (
+          <div>
+            {this.state.reverseReceived}
+            {this.state.reverseSent}
+            <StreamChart
+              label="TCP Traffic (Waypoint)"
+              sentRates={this.state.reverseSent}
+              receivedRates={this.state.reverseReceived}
+              unit="bytes"
+            />
+          </div>
+        );
+      }
     }
 
     return (
       <>
         {requestChart}
         {streamChart}
+        {this.state.reverseSent && this.state.reverseReceived && reverseStreamChart}
       </>
     );
   };
