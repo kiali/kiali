@@ -159,9 +159,9 @@
     "typescript": "^4.9.5"
   },
   "resolutions": {
+    "express/path-to-regexp": "^0.1.10",
     "nth-check": "^2.0.1",
     "postcss": "^8.4.31",
-    "express/path-to-regexp": "^0.1.10",
     "react-router/path-to-regexp": "^8.0.0"
   },
   "engines": {
