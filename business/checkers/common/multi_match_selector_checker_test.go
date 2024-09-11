@@ -18,7 +18,7 @@ func TestTwoSidecarsWithSelector(t *testing.T) {
 
 	validations := SidecarSelectorMultiMatchChecker(
 		config.Get().KubernetesConfig.ClusterName,
-		"sidecar",
+		kubernetes.Sidecars.String(),
 		[]*networking_v1.Sidecar{
 			data.AddSelectorToSidecar(map[string]string{
 				"app": "reviews",
@@ -36,7 +36,7 @@ func TestTwoSidecarsWithSelector(t *testing.T) {
 func TestTwoSidecarsWithoutSelector(t *testing.T) {
 	validations := SidecarSelectorMultiMatchChecker(
 		config.Get().KubernetesConfig.ClusterName,
-		"sidecar",
+		kubernetes.Sidecars.String(),
 		[]*networking_v1.Sidecar{
 			data.CreateSidecar("sidecar1", "bookinfo"),
 			data.CreateSidecar("sidecar2", "bookinfo"),
@@ -54,7 +54,7 @@ func TestTwoSidecarsWithoutSelectorDifferentNamespaces(t *testing.T) {
 
 	validations := SidecarSelectorMultiMatchChecker(
 		config.Get().KubernetesConfig.ClusterName,
-		"sidecar",
+		kubernetes.Sidecars.String(),
 		[]*networking_v1.Sidecar{
 			data.CreateSidecar("sidecar1", "bookinfo"),
 			data.CreateSidecar("sidecar2", "bookinfo2"),
@@ -84,7 +84,7 @@ func TestTwoSidecarsTargetingOneDeployment(t *testing.T) {
 	}
 	validations := SidecarSelectorMultiMatchChecker(
 		config.Get().KubernetesConfig.ClusterName,
-		"sidecar",
+		kubernetes.Sidecars.String(),
 		sidecars,
 		workloadList(),
 	).Check()
@@ -115,7 +115,7 @@ func TestSidecarsCrossNamespaces(t *testing.T) {
 	}
 	validations := SidecarSelectorMultiMatchChecker(
 		config.Get().KubernetesConfig.ClusterName,
-		"sidecar",
+		kubernetes.Sidecars.String(),
 		sidecars,
 		workloadList(),
 	).Check()
@@ -147,7 +147,7 @@ func TestSidecarsDifferentNamespaces(t *testing.T) {
 	}
 	validations := SidecarSelectorMultiMatchChecker(
 		config.Get().KubernetesConfig.ClusterName,
-		"sidecar",
+		kubernetes.Sidecars.String(),
 		sidecars,
 		workloadList(),
 	).Check()
