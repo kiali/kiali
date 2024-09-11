@@ -11,6 +11,7 @@ export type IstioLabelKey =
   | 'ingressGatewayLabel'
   | 'injectionLabelName'
   | 'injectionLabelRev'
+  | 'k8sGatewayLabelName'
   | 'versionLabelName';
 
 interface DeploymentConfig {
