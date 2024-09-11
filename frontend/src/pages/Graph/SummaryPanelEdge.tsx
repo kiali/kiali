@@ -47,6 +47,8 @@ type SummaryPanelEdgeMetricsState = {
   errRates: Datapoint[];
   rates: Datapoint[];
   received: Datapoint[];
+  reverseReceived?: Datapoint[];
+  reverseSent?: Datapoint[];
   rt95: Datapoint[];
   rt99: Datapoint[];
   rtAvg: Datapoint[];
@@ -243,22 +245,24 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
             <SimpleTabs id="edge_summary_flag_hosts_tabs" defaultTab={0} style={{ paddingBottom: '0.5rem' }}>
               <Tab style={summaryFont} eventKey={0} title="Flags">
                 <div style={summaryFont}>
-                  <ResponseFlagsTable
-                    title="Response flags by code:"
-                    responses={edgeData.responses}
-                    reverse={reverse?.responses}
-                  />
+                  <ResponseFlagsTable title="Response flags by code:" responses={edgeData.responses} />
                 </div>
+                {reverse && (
+                  <div style={summaryFont}>
+                    <ResponseFlagsTable title="Response flags by code (From Waypoint):" responses={reverse.responses} />
+                  </div>
+                )}
               </Tab>
 
               <Tab style={summaryFont} eventKey={1} title="Hosts">
                 <div style={summaryFont}>
-                  <ResponseHostsTable
-                    title="Hosts by code:"
-                    responses={edgeData.responses}
-                    reverse={reverse?.responses}
-                  />
+                  <ResponseHostsTable title="Hosts by code:" responses={edgeData.responses} />
                 </div>
+                {reverse && (
+                  <div style={summaryFont}>
+                    <ResponseHostsTable title="Hosts by code (From Waypoint):" responses={reverse.responses} />
+                  </div>
+                )}
               </Tab>
             </SimpleTabs>
 

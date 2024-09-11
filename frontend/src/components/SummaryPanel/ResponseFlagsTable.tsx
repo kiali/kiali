@@ -16,7 +16,6 @@ const tableStyle = kialiStyle({
 
 type ResponseFlagsTableProps = {
   responses: Responses;
-  reverse?: Responses;
   title: string;
 };
 
@@ -51,10 +50,6 @@ export const ResponseFlagsTable: React.FC<ResponseFlagsTableProps> = (props: Res
   };
 
   const rows = getRows(props.responses);
-  if (props.reverse) {
-    const rowsReverse = getRows(props.reverse);
-    rows.push(...rowsReverse);
-  }
 
   return (
     <>
