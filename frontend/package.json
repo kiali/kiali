@@ -136,10 +136,12 @@
   },
   "resolutions": {
     "async": "^3.2.2",
+    "express/path-to-regexp": "^0.1.10",
     "json-schema": "^0.4.0",
     "minimist": "^1.2.6",
     "nth-check": "^2.0.1",
-    "postcss": "^8.4.12"
+    "postcss": "^8.4.12",
+    "react-router/path-to-regexp": "^8.0.0"
   },
   "engines": {
     "node": ">=20.0.0",
