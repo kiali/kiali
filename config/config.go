@@ -63,6 +63,7 @@ const (
 const (
 	AmbientAnnotation        = "ambient.istio.io/redirection"
 	AmbientAnnotationEnabled = "enabled"
+	K8sGatewayLabelName      = "gateway.networking.k8s.io/gateway-name"
 	WaypointLabel            = "gateway.istio.io/managed"
 	WaypointLabelValue       = "istio.io-mesh-controller"
 	WaypointUseLabel         = "istio.io/use-waypoint"
@@ -351,6 +352,7 @@ type IstioLabels struct {
 	IngressGatewayLabel        string `yaml:"ingress_gateway_label,omitempty" json:"ingressGatewayLabel"`
 	InjectionLabelName         string `yaml:"injection_label_name,omitempty" json:"injectionLabelName"`
 	InjectionLabelRev          string `yaml:"injection_label_rev,omitempty" json:"injectionLabelRev"`
+	K8sGatewayLabelName        string `yaml:"k8s_gateway_label_name,omitempty" json:"k8sGatewayLabelName"`
 	VersionLabelName           string `yaml:"version_label_name,omitempty" json:"versionLabelName"`
 }
 
@@ -759,6 +761,7 @@ func NewConfig() (c *Config) {
 			IngressGatewayLabel:        "istio=ingressgateway",
 			InjectionLabelName:         "istio-injection",
 			InjectionLabelRev:          "istio.io/rev",
+			K8sGatewayLabelName:        K8sGatewayLabelName,
 			VersionLabelName:           "version",
 		},
 		KialiFeatureFlags: KialiFeatureFlags{

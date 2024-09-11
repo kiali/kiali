@@ -114,12 +114,19 @@ export const isGateway = (labels: { [key: string]: string }): boolean => {
   return (
     labels &&
     ((ingress[0] in labels && labels[ingress[0]] === ingress[1]) ||
-      (egress[0] in labels && labels[egress[0]] === egress[1]))
+      (egress[0] in labels && labels[egress[0]] === egress[1]) ||
+      isK8sGateway(labels))
   );
+};
+
+export const isK8sGateway = (labels: { [key: string]: string }): boolean => {
+  return labels && serverConfig.istioLabels.k8sGatewayLabelName in labels;
 };
 
 export const isWaypoint = (labels: { [key: string]: string }): boolean => {
   return (
-    labels && 'gateway.istio.io/managed' in labels && labels['gateway.istio.io/managed'] === 'istio.io-mesh-controller'
+    labels &&
+    serverConfig.istioLabels.ambientWaypointLabel in labels &&
+    labels[serverConfig.istioLabels.ambientWaypointLabel] === serverConfig.istioLabels.ambientWaypointLabelValue
   );
 };

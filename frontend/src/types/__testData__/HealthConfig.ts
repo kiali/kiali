@@ -101,6 +101,7 @@ export const healthConfig = {
     ingressGatewayLabel: 'istio=ingressgateway',
     injectionLabelName: 'istio-injection',
     injectionLabelRev: 'istio.io/rev',
+    k8sGatewayLabelName: 'gateway.networking.k8s.io/gateway-name',
     versionLabelName: 'version'
   },
   prometheus: {
