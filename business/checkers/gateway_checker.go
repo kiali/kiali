@@ -1,10 +1,10 @@
 package checkers
 
 import (
-	"github.com/kiali/kiali/kubernetes"
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 
 	"github.com/kiali/kiali/business/checkers/gateways"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
 
