@@ -1,6 +1,7 @@
 package references
 
 import (
+	"github.com/kiali/kiali/kubernetes"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -30,7 +31,7 @@ func prepareTestForAuthPolicy(ap *security_v1.AuthorizationPolicy, vs *networkin
 		},
 		RegistryServices: data.CreateFakeRegistryServicesLabels("foo-dev", "istio-system"),
 	}
-	return *drReferences.References()[models.IstioReferenceKey{ObjectType: "authorizationpolicy", Namespace: ap.Namespace, Name: ap.Name}]
+	return *drReferences.References()[models.IstioReferenceKey{ObjectType: kubernetes.AuthorizationPolicies.String(), Namespace: ap.Namespace, Name: ap.Name}]
 }
 
 func TestAuthPolicyReferences(t *testing.T) {

@@ -27,7 +27,7 @@ func prepareTestForPeerAuth(pa *security_v1.PeerAuthentication, drs []*networkin
 				data.CreateWorkloadListItem("details", map[string]string{"app": "details"})),
 		},
 	}
-	return *drReferences.References()[models.IstioReferenceKey{ObjectType: "peerauthentication", Namespace: pa.Namespace, Name: pa.Name}]
+	return *drReferences.References()[models.IstioReferenceKey{ObjectType: kubernetes.PeerAuthentications.String(), Namespace: pa.Namespace, Name: pa.Name}]
 }
 
 func TestMeshPeerAuthDisabledReferences(t *testing.T) {

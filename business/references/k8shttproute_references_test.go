@@ -23,7 +23,7 @@ func prepareTestForK8sHTTPRoute(route *k8s_networking_v1.HTTPRoute) models.Istio
 		K8sHTTPRoutes:      []*k8s_networking_v1.HTTPRoute{route},
 		K8sReferenceGrants: []*k8s_networking_v1beta1.ReferenceGrant{data.CreateReferenceGrant("rg", route.Namespace, "bookinfo")},
 	}
-	return *routeReferences.References()[models.IstioReferenceKey{ObjectType: "k8shttproute", Namespace: route.Namespace, Name: route.Name}]
+	return *routeReferences.References()[models.IstioReferenceKey{ObjectType: kubernetes.K8sHTTPRoutes.String(), Namespace: route.Namespace, Name: route.Name}]
 }
 
 func TestK8sHTTPRouteReferences(t *testing.T) {

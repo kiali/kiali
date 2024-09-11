@@ -7,6 +7,7 @@ import (
 	k8s_networking_v1 "sigs.k8s.io/gateway-api/apis/v1"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
 )
@@ -27,7 +28,7 @@ func TestCorrectK8sGateways(t *testing.T) {
 	}.Check()
 
 	assert.Empty(vals)
-	_, ok := vals[models.IstioValidationKey{ObjectType: "k8sgateway", Namespace: "test", Name: "validk8sgateway", Cluster: config.DefaultClusterID}]
+	_, ok := vals[models.IstioValidationKey{ObjectType: kubernetes.K8sGateways.String(), Namespace: "test", Name: "validk8sgateway", Cluster: config.DefaultClusterID}]
 	assert.False(ok)
 }
 
@@ -52,13 +53,13 @@ func TestDuplicateListenersCheckError(t *testing.T) {
 
 	assert.NotEmpty(vals)
 	assert.Equal(2, len(vals))
-	validation, ok := vals[models.IstioValidationKey{ObjectType: "k8sgateway", Namespace: "test", Name: "validk8sgateway2", Cluster: config.DefaultClusterID}]
+	validation, ok := vals[models.IstioValidationKey{ObjectType: kubernetes.K8sGateways.String(), Namespace: "test", Name: "validk8sgateway2", Cluster: config.DefaultClusterID}]
 	assert.True(ok)
 	assert.NotNil(validation)
 	assert.True(validation.Valid)
 	assert.Greater(len(validation.Checks), 0)
 
-	secValidation, ok := vals[models.IstioValidationKey{ObjectType: "k8sgateway", Namespace: "test", Name: "validk8sgateway", Cluster: config.DefaultClusterID}]
+	secValidation, ok := vals[models.IstioValidationKey{ObjectType: kubernetes.K8sGateways.String(), Namespace: "test", Name: "validk8sgateway", Cluster: config.DefaultClusterID}]
 	assert.True(ok)
 	assert.NotNil(secValidation)
 	assert.True(secValidation.Valid)
@@ -114,13 +115,13 @@ func TestDuplicateAddresssCheckError(t *testing.T) {
 
 	assert.NotEmpty(vals)
 	assert.Equal(2, len(vals))
-	validation, ok := vals[models.IstioValidationKey{ObjectType: "k8sgateway", Namespace: "test", Name: "validk8sgateway2", Cluster: config.DefaultClusterID}]
+	validation, ok := vals[models.IstioValidationKey{ObjectType: kubernetes.K8sGateways.String(), Namespace: "test", Name: "validk8sgateway2", Cluster: config.DefaultClusterID}]
 	assert.True(ok)
 	assert.NotNil(validation)
 	assert.True(validation.Valid)
 	assert.Greater(len(validation.Checks), 0)
 
-	secValidation, ok := vals[models.IstioValidationKey{ObjectType: "k8sgateway", Namespace: "test", Name: "validk8sgateway", Cluster: config.DefaultClusterID}]
+	secValidation, ok := vals[models.IstioValidationKey{ObjectType: kubernetes.K8sGateways.String(), Namespace: "test", Name: "validk8sgateway", Cluster: config.DefaultClusterID}]
 	assert.True(ok)
 	assert.NotNil(secValidation)
 	assert.True(secValidation.Valid)
@@ -200,7 +201,7 @@ func TestUniqueListenerDuplicate(t *testing.T) {
 
 	assert.NotEmpty(vals)
 	assert.Equal(1, len(vals))
-	validation, ok := vals[models.IstioValidationKey{ObjectType: "k8sgateway", Namespace: "test", Name: "k8sgateway", Cluster: config.DefaultClusterID}]
+	validation, ok := vals[models.IstioValidationKey{ObjectType: kubernetes.K8sGateways.String(), Namespace: "test", Name: "k8sgateway", Cluster: config.DefaultClusterID}]
 	assert.True(ok)
 	assert.Greater(len(validation.Checks), 0)
 

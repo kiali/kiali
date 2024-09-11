@@ -5,10 +5,9 @@ import (
 
 	"github.com/kiali/kiali/business/checkers/k8sgateways"
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
-
-const K8sGatewayCheckerType = "k8sgateway"
 
 type K8sGatewayChecker struct {
 	K8sGateways    []*k8s_networking_v1.Gateway
@@ -32,7 +31,7 @@ func (g K8sGatewayChecker) Check() models.IstioValidations {
 }
 
 func (g K8sGatewayChecker) runSingleChecks(gw *k8s_networking_v1.Gateway) models.IstioValidations {
-	key, validations := EmptyValidValidation(gw.Name, gw.Namespace, K8sGatewayCheckerType, g.Cluster)
+	key, validations := EmptyValidValidation(gw.Name, gw.Namespace, kubernetes.K8sGateways.String(), g.Cluster)
 
 	enabledCheckers := []Checker{
 		k8sgateways.StatusChecker{

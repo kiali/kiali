@@ -2,7 +2,6 @@ package models
 
 import (
 	"encoding/json"
-
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/util"
@@ -434,7 +433,7 @@ func (iv IstioValidations) FilterByKey(objectType, name string) IstioValidations
 func (iv IstioValidations) FilterByTypes(objectTypes []string) IstioValidations {
 	types := make(map[string]bool, len(objectTypes))
 	for _, objectType := range objectTypes {
-		types[ObjectTypeSingular[objectType]] = true
+		types[objectType] = true
 	}
 	fiv := IstioValidations{}
 	for k, v := range iv {

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/kiali/kiali/kubernetes"
@@ -301,7 +302,7 @@ func TestK8sReferenceGrantsFromNamespaceError(t *testing.T) {
 	require.Equal("Namespace is not found or is not accessible", config.IstioValidation.Checks[0].Message)
 }
 
-func getConfigDetails(namespace, name, configType string, skipReferences bool, require *require.Assertions) (*models.IstioConfigDetails, error) {
+func getConfigDetails(namespace, name string, configType schema.GroupVersionKind, skipReferences bool, require *require.Assertions) (*models.IstioConfigDetails, error) {
 	ctx := context.TODO()
 	config, _, err := kiali.IstioConfigDetails(namespace, name, configType)
 	if err == nil && config != nil && config.IstioValidation != nil && config.IstioReferences != nil {
@@ -323,7 +324,7 @@ func getConfigDetails(namespace, name, configType string, skipReferences bool, r
 	return config, nil
 }
 
-func getConfigForNamespace(namespace, name, configType string) (*models.IstioConfigDetails, error) {
+func getConfigForNamespace(namespace, name string, configType schema.GroupVersionKind) (*models.IstioConfigDetails, error) {
 	config, _, err := kiali.IstioConfigDetails(namespace, name, configType)
 	log.Debugf("Config response returned: %+v", config)
 	return config, err

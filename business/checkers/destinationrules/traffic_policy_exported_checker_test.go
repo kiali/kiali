@@ -619,7 +619,7 @@ func notPresentReferences(t *testing.T, validation models.IstioValidation, ns st
 	assert := assert.New(t)
 
 	for _, sn := range serviceNames {
-		refKey := models.IstioValidationKey{ObjectType: "destinationrule", Namespace: ns, Name: sn, Cluster: config.DefaultClusterID}
+		refKey := models.IstioValidationKey{ObjectType: kubernetes.DestinationRules.String(), Namespace: ns, Name: sn, Cluster: config.DefaultClusterID}
 		assert.NotContains(validation.References, refKey)
 	}
 }

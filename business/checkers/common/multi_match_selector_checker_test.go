@@ -7,6 +7,7 @@ import (
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
 	"github.com/kiali/kiali/tests/testutils/validations"
@@ -161,7 +162,7 @@ func assertMultimatchFailure(t *testing.T, code string, vals models.IstioValidat
 	assert.NotEmpty(vals)
 
 	// Assert specific's object validation
-	validation, ok := vals[models.IstioValidationKey{ObjectType: "sidecar", Namespace: "bookinfo", Name: item}]
+	validation, ok := vals[models.IstioValidationKey{ObjectType: kubernetes.Sidecars.String(), Namespace: "bookinfo", Name: item}]
 	assert.True(ok)
 	assert.False(validation.Valid)
 

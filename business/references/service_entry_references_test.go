@@ -1,6 +1,7 @@
 package references
 
 import (
+	"github.com/kiali/kiali/kubernetes"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -26,7 +27,7 @@ func prepareTestForServiceEntry(ap *security_v1.AuthorizationPolicy, dr *network
 		DestinationRules:      []*networking_v1.DestinationRule{dr},
 		RegistryServices:      append(data.CreateFakeRegistryServices("foo-dev.bookinfo.svc.cluster.local", "bookinfo", "."), data.CreateFakeRegistryServices("foo-dev.istio-system.svc.cluster.local", "istio-system", "*")...),
 	}
-	return *drReferences.References()[models.IstioReferenceKey{ObjectType: "serviceentry", Namespace: se.Namespace, Name: se.Name}]
+	return *drReferences.References()[models.IstioReferenceKey{ObjectType: kubernetes.ServiceEntries.String(), Namespace: se.Namespace, Name: se.Name}]
 }
 
 func TestServiceEntryReferences(t *testing.T) {

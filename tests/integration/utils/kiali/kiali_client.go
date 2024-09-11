@@ -7,6 +7,8 @@ import (
 	"os"
 	"time"
 
+	"k8s.io/apimachinery/pkg/runtime/schema"
+
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph/config/cytoscape"
@@ -340,8 +342,8 @@ func IstioConfigsList(namespace string) (*IstioConfigListJson, error) {
 	}
 }
 
-func IstioConfigDetails(namespace, name, configType string) (*models.IstioConfigDetails, int, error) {
-	url := fmt.Sprintf("%s/api/namespaces/%s/istio/%s/%s?validate=true", client.kialiURL, namespace, configType, name)
+func IstioConfigDetails(namespace, name string, configType schema.GroupVersionKind) (*models.IstioConfigDetails, int, error) {
+	url := fmt.Sprintf("%s/api/namespaces/%s/istio/%s/%s/%s/%s?validate=true", client.kialiURL, namespace, configType.Group, configType.Version, configType.Kind, name)
 	config := new(models.IstioConfigDetails)
 
 	code, err := getRequestAndUnmarshalInto(url, config)

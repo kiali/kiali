@@ -3,7 +3,6 @@ package business
 import (
 	"context"
 	"fmt"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"strings"
 	"sync"
 
@@ -11,6 +10,7 @@ import (
 	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/kiali/kiali/business/checkers"
 	"github.com/kiali/kiali/business/references"
@@ -313,7 +313,7 @@ func (in *IstioValidationsService) GetIstioObjectValidations(ctx context.Context
 		return models.IstioValidations{}, istioReferences, err
 	}
 
-	return runObjectCheckers(objectCheckers).FilterByKey(objectType.String(), object), istioReferences, nil
+	return runObjectCheckers(objectCheckers).FilterByKey(objectType, object), istioReferences, nil
 }
 
 func runObjectCheckers(objectCheckers []ObjectChecker) models.IstioValidations {

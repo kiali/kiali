@@ -26,7 +26,7 @@ func prepareTestForVirtualService(vs *networking_v1.VirtualService, dr *networki
 		DestinationRules:      []*networking_v1.DestinationRule{dr},
 		AuthorizationPolicies: []*security_v1.AuthorizationPolicy{ap, data.CreateEmptyAuthorizationPolicy("test", "bookinfo")},
 	}
-	return *virtualServiceReferences.References()[models.IstioReferenceKey{ObjectType: "virtualservice", Namespace: vs.Namespace, Name: vs.Name}]
+	return *virtualServiceReferences.References()[models.IstioReferenceKey{ObjectType: kubernetes.VirtualServices.String(), Namespace: vs.Namespace, Name: vs.Name}]
 }
 
 func TestVirtualServiceReferences(t *testing.T) {

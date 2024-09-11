@@ -286,7 +286,7 @@ func presentReferences(t *testing.T, validation models.IstioValidation, ns strin
 	assert.True(len(validation.References) > 0)
 
 	for _, sn := range serviceNames {
-		refKey := models.IstioValidationKey{ObjectType: "destinationrule", Namespace: ns, Name: sn, Cluster: config.DefaultClusterID}
+		refKey := models.IstioValidationKey{ObjectType: kubernetes.DestinationRules.String(), Namespace: ns, Name: sn, Cluster: config.DefaultClusterID}
 		assert.Contains(validation.References, refKey)
 	}
 }

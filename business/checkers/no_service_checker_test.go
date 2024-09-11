@@ -49,10 +49,10 @@ func TestAllIstioObjectWithServices(t *testing.T) {
 	}.Check()
 
 	assert.NotEmpty(vals)
-	assert.NotEmpty(vals[models.IstioValidationKey{ObjectType: "virtualservice", Namespace: "test", Name: "product-vs"}])
-	assert.NotEmpty(vals[models.IstioValidationKey{ObjectType: "destinationrule", Namespace: "test", Name: "customer-dr", Cluster: ""}])
-	assert.True(vals[models.IstioValidationKey{ObjectType: "virtualservice", Namespace: "test", Name: "product-vs"}].Valid)
-	assert.True(vals[models.IstioValidationKey{ObjectType: "destinationrule", Namespace: "test", Name: "customer-dr"}].Valid)
+	assert.NotEmpty(vals[models.IstioValidationKey{ObjectType: kubernetes.VirtualServices.String(), Namespace: "test", Name: "product-vs"}])
+	assert.NotEmpty(vals[models.IstioValidationKey{ObjectType: kubernetes.DestinationRules.String(), Namespace: "test", Name: "customer-dr", Cluster: ""}])
+	assert.True(vals[models.IstioValidationKey{ObjectType: kubernetes.VirtualServices.String(), Namespace: "test", Name: "product-vs"}].Valid)
+	assert.True(vals[models.IstioValidationKey{ObjectType: kubernetes.DestinationRules.String(), Namespace: "test", Name: "customer-dr"}].Valid)
 }
 
 func TestDetectObjectWithoutService(t *testing.T) {
@@ -78,8 +78,8 @@ func TestDetectObjectWithoutService(t *testing.T) {
 	}.Check()
 
 	assert.NotEmpty(vals)
-	assert.True(vals[models.IstioValidationKey{ObjectType: "virtualservice", Namespace: "test", Name: "product-vs"}].Valid)
-	customerDr := vals[models.IstioValidationKey{ObjectType: "destinationrule", Namespace: "test", Name: "customer-dr"}]
+	assert.True(vals[models.IstioValidationKey{ObjectType: kubernetes.VirtualServices.String(), Namespace: "test", Name: "product-vs"}].Valid)
+	customerDr := vals[models.IstioValidationKey{ObjectType: kubernetes.DestinationRules.String(), Namespace: "test", Name: "customer-dr"}]
 	assert.False(customerDr.Valid)
 	assert.Equal(1, len(customerDr.Checks))
 	assert.Equal("spec/host", customerDr.Checks[0].Path)
@@ -101,8 +101,8 @@ func TestDetectObjectWithoutService(t *testing.T) {
 	}.Check()
 
 	assert.NotEmpty(vals)
-	assert.True(vals[models.IstioValidationKey{ObjectType: "destinationrule", Namespace: "test", Name: "customer-dr"}].Valid)
-	productVs := vals[models.IstioValidationKey{ObjectType: "virtualservice", Namespace: "test", Name: "product-vs"}]
+	assert.True(vals[models.IstioValidationKey{ObjectType: kubernetes.DestinationRules.String(), Namespace: "test", Name: "customer-dr"}].Valid)
+	productVs := vals[models.IstioValidationKey{ObjectType: kubernetes.VirtualServices.String(), Namespace: "test", Name: "product-vs"}]
 	assert.False(productVs.Valid)
 	assert.Equal(2, len(productVs.Checks))
 	assert.Equal("spec/http[0]/route[0]/destination/host", productVs.Checks[0].Path)
@@ -126,7 +126,7 @@ func TestDetectObjectWithoutService(t *testing.T) {
 	}.Check()
 
 	assert.NotEmpty(vals)
-	assert.True(vals[models.IstioValidationKey{ObjectType: "destinationrule", Namespace: "test", Name: "customer-dr"}].Valid)
+	assert.True(vals[models.IstioValidationKey{ObjectType: kubernetes.DestinationRules.String(), Namespace: "test", Name: "customer-dr"}].Valid)
 
 	vals = NoServiceChecker{
 		WorkloadsPerNamespace: map[string]models.WorkloadList{
@@ -144,7 +144,7 @@ func TestDetectObjectWithoutService(t *testing.T) {
 	}.Check()
 
 	assert.NotEmpty(vals)
-	assert.True(vals[models.IstioValidationKey{ObjectType: "destinationrule", Namespace: "test", Name: "customer-dr"}].Valid)
+	assert.True(vals[models.IstioValidationKey{ObjectType: kubernetes.DestinationRules.String(), Namespace: "test", Name: "customer-dr"}].Valid)
 }
 
 func TestObjectWithoutGateway(t *testing.T) {
@@ -165,7 +165,7 @@ func TestObjectWithoutGateway(t *testing.T) {
 
 	assert.NotEmpty(vals)
 
-	productVs := vals[models.IstioValidationKey{ObjectType: "virtualservice", Namespace: "test", Name: "product-vs"}]
+	productVs := vals[models.IstioValidationKey{ObjectType: kubernetes.VirtualServices.String(), Namespace: "test", Name: "product-vs"}]
 	assert.False(productVs.Valid)
 	assert.NoError(validations.ConfirmIstioCheckMessage("virtualservices.nogateway", productVs.Checks[0]))
 	assert.NoError(validations.ConfirmIstioCheckMessage("virtualservices.nogateway", productVs.Checks[1]))

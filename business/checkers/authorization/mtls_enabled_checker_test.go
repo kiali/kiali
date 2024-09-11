@@ -266,7 +266,7 @@ func testMtlsCheckerPresent(scenario string, t *testing.T, autoMtls bool) {
 	ta := validations.ValidationsTestAsserter{T: t, Validations: vals}
 	ta.AssertValidationsPresent(1)
 	ta.AssertValidationAt(models.IstioValidationKey{
-		ObjectType: "authorizationpolicy",
+		ObjectType: kubernetes.AuthorizationPolicies.String(),
 		Name:       "policy",
 		Namespace:  "bookinfo",
 	}, models.ErrorSeverity, "spec/rules[0]/from[0]/source/principals", "authorizationpolicy.mtls.needstobeenabled")

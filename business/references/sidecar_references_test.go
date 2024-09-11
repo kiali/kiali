@@ -1,6 +1,7 @@
 package references
 
 import (
+	"github.com/kiali/kiali/kubernetes"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -26,7 +27,7 @@ func prepareTestForSidecar(sc *networking_v1.Sidecar, vs *networking_v1.VirtualS
 		},
 		RegistryServices: data.CreateFakeRegistryServicesLabels("foo-service", "istio-system"),
 	}
-	return *drReferences.References()[models.IstioReferenceKey{ObjectType: "sidecar", Namespace: sc.Namespace, Name: sc.Name}]
+	return *drReferences.References()[models.IstioReferenceKey{ObjectType: kubernetes.Sidecars.String(), Namespace: sc.Namespace, Name: sc.Name}]
 }
 
 func TestSidecarReferences(t *testing.T) {
