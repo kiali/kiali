@@ -11,9 +11,6 @@ export const healthConfig = {
   gatewayAPIEnabled: false,
   logLevel: '',
   kialiFeatureFlags: {
-    certificatesInformationIndicators: {
-      enabled: true
-    },
     disabledFeatures: [],
     istioInjectionAction: true,
     istioAnnotationAction: true,

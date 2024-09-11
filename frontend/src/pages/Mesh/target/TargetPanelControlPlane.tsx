@@ -37,6 +37,8 @@ import { UNKNOWN } from 'types/Graph';
 import { TargetPanelEditor } from './TargetPanelEditor';
 import { load, dump } from 'js-yaml';
 import { yamlDumpOptions } from '../../../types/IstioConfigDetails';
+import { CertsInfo } from 'types/CertsInfo';
+import { IstioCertsInfo } from 'components/IstioCertsInfo/IstioCertsInfo';
 
 type TargetPanelControlPlaneProps = TargetPanelCommonProps & {
   meshStatus: string;
@@ -45,6 +47,7 @@ type TargetPanelControlPlaneProps = TargetPanelCommonProps & {
 
 type TargetPanelControlPlaneState = {
   canaryUpgradeStatus?: CanaryUpgradeStatus;
+  certificates?: CertsInfo[];
   controlPlaneMetrics?: ControlPlaneMetricsMap;
   controlPlaneNode?: Node<NodeModel, any>;
   errorMetrics?: Metric[];
@@ -57,6 +60,7 @@ type TargetPanelControlPlaneState = {
 
 const defaultState: TargetPanelControlPlaneState = {
   canaryUpgradeStatus: undefined,
+  certificates: undefined,
   controlPlaneMetrics: undefined,
   controlPlaneNode: undefined,
   errorMetrics: undefined,
@@ -137,7 +141,7 @@ export class TargetPanelControlPlane extends React.Component<
     // Controlplane infradata is structured: {config: configuration, revision: string}
     const { config, revision } = data.infraData;
     const parsedCm = config.ConfigMap ? this.getParsedYaml(config.ConfigMap) : '';
-
+    console.log(data.infraData);
     return (
       <div
         id="target-panel-control-plane"
@@ -156,10 +160,7 @@ export class TargetPanelControlPlane extends React.Component<
             namespace={nsInfo}
           ></ControlPlaneNamespaceStatus>
 
-          <TLSInfo
-            certificatesInformationIndicators={serverConfig.kialiFeatureFlags.certificatesInformationIndicators.enabled}
-            version={this.props.minTLS}
-          ></TLSInfo>
+          <TLSInfo version={this.props.minTLS} />
 
           {!isRemoteCluster(nsInfo.annotations) && (
             <>
@@ -174,6 +175,8 @@ export class TargetPanelControlPlane extends React.Component<
 
           {targetPanelHR}
           {parsedCm !== '' && <TargetPanelEditor configMap={parsedCm} targetName={data.infraName}></TargetPanelEditor>}
+          {targetPanelHR}
+          <IstioCertsInfo certificates={data.infraData.config.certificates}></IstioCertsInfo>
         </div>
       </div>
     );
@@ -212,6 +215,7 @@ export class TargetPanelControlPlane extends React.Component<
         this.promises
           .registerAll(`promises-${data.cluster}:${data.namespace}`, [
             this.fetchCanariesStatus(),
+            this.fetchCertificates(),
             this.fetchHealthStatus(),
             this.fetchMetrics(),
             this.fetchTLS()
@@ -257,6 +261,20 @@ export class TargetPanelControlPlane extends React.Component<
       })
       .catch(error => {
         AlertUtils.addError('Error fetching namespace canary upgrade status.', error, 'default', MessageType.ERROR);
+      });
+  };
+
+  private fetchCertificates = async (): Promise<void> => {
+    const data = this.state.controlPlaneNode!.getData() as NodeData;
+    console.log(data);
+    return API.getIstioCertsInfo()
+      .then(response => {
+        this.setState({
+          certificates: response.data
+        });
+      })
+      .catch(error => {
+        AlertUtils.addError('Error fetching namespace certificates.', error, 'default', MessageType.ERROR);
       });
   };
 

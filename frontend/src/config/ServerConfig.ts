@@ -91,9 +91,6 @@ const defaultServerConfig: ComputedServerConfig = {
     versionLabelName: 'version'
   },
   kialiFeatureFlags: {
-    certificatesInformationIndicators: {
-      enabled: true
-    },
     disabledFeatures: [],
     istioInjectionAction: true,
     istioAnnotationAction: true,

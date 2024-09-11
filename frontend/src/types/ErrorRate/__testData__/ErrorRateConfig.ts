@@ -77,9 +77,6 @@ export const serverRateConfig = {
   gatewayAPIEnabled: false,
   logLevel: '',
   kialiFeatureFlags: {
-    certificatesInformationIndicators: {
-      enabled: true
-    },
     disabledFeatures: [],
     istioInjectionAction: true,
     istioAnnotationAction: true,

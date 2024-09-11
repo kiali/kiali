@@ -93,11 +93,9 @@ Then('user sees control plane side panel', () => {
       cy.contains('Outbound policy').should('be.visible');
       cy.get('div[data-test="memory-chart"]').should('exist');
       cy.get('div[data-test="cpu-chart"]').should('exist');
+      cy.get('div[data-test="control-plane-certificate"]').should('exist');
       cy.get('[data-test="label-TLS"]').contains('N/A');
-      cy.get('[data-test="lockerCA"]').should('exist');
     });
-  cy.get('[data-test="lockerCA"]').trigger('mouseenter');
-  cy.get('[role="tooltip"]').contains('Valid From');
 });
 
 Then('user sees data plane side panel', () => {

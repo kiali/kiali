@@ -167,6 +167,7 @@ func TestRefreshIstioCache(t *testing.T) {
 		fakeIstiodDeployment(conf.KubernetesConfig.ClusterName, true),
 		kubetest.FakeNamespace("istio-system"),
 		istioConfigMap,
+		FakeCertificateConfigMap("istio-system"),
 	)
 	// RefreshIstioCache relies on this being set.
 	k8s.KubeClusterInfo.Name = conf.KubernetesConfig.ClusterName
@@ -240,6 +241,7 @@ func TestPollingPopulatesCache(t *testing.T) {
 		fakeIstiodDeployment(conf.KubernetesConfig.ClusterName, true),
 		kubetest.FakeNamespace("istio-system"),
 		istioConfigMap,
+		FakeCertificateConfigMap("istio-system"),
 	)
 	// RefreshIstioCache relies on this being set.
 	k8s.KubeClusterInfo.Name = conf.KubernetesConfig.ClusterName

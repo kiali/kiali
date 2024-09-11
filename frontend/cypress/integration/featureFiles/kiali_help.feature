@@ -13,19 +13,13 @@ Feature: Kiali help dropdown verify
   @smoke
   Scenario: Open Kiali help dropdown
     Then user can see all of the Help dropdown options
-      | Documentation | View Debug Info | View Certificates Info | About |
+      | Documentation | View Debug Info | About |
 
   @smoke
   Scenario: User opens the View Debug Info section
     When user clicks on the "View Debug Info" button
     Then user sees the "Debug information" modal
     And user sees information about 1 clusters
-
-  @smoke
-  Scenario: User opens the View Certificates Info section
-    When user clicks on the "View Certificates Info" button
-    Then user sees the "Certificates information" modal
-    And details about the certificates are displayed without an error
 
   @multi-cluster
   Scenario: User opens the View Debug Info section for multi-cluster mode

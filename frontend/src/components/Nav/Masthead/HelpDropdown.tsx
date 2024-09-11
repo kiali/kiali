@@ -6,8 +6,7 @@ import { QuestionCircleIcon } from '@patternfly/react-icons/';
 import { connect } from 'react-redux';
 import { isUpstream } from '../../UpstreamDetector/UpstreamDetector';
 import { Status, StatusKey } from '../../../types/StatusState';
-import { config, serverConfig } from '../../../config';
-import { IstioCertsInfo } from 'components/IstioCertsInfo/IstioCertsInfo';
+import { config } from '../../../config';
 import { Dropdown, DropdownItem, DropdownList, MenuToggle, MenuToggleElement } from '@patternfly/react-core';
 import { useKialiTranslation } from 'utils/I18nUtils';
 
@@ -22,7 +21,6 @@ const HelpDropdownComponent: React.FC<HelpDropdownProps> = (props: HelpDropdownP
   const [isDropdownOpen, setIsDropdownOpen] = React.useState<boolean>(false);
   const [isAboutModalOpen, setIsAboutModalOpen] = React.useState<boolean>(false);
   const [isDebugInformationOpen, setIsDebugInformationOpen] = React.useState<boolean>(false);
-  const [isCertsInformationOpen, setIsCertsInformationOpen] = React.useState<boolean>(false);
 
   const { t } = useKialiTranslation();
 
@@ -59,14 +57,6 @@ const HelpDropdownComponent: React.FC<HelpDropdownProps> = (props: HelpDropdownP
     </DropdownItem>
   );
 
-  if (serverConfig.kialiFeatureFlags.certificatesInformationIndicators.enabled) {
-    items.push(
-      <DropdownItem key={'view_certs_info'} onClick={() => setIsCertsInformationOpen(true)}>
-        View Certificates Info
-      </DropdownItem>
-    );
-  }
-
   items.push(
     <DropdownItem key={'view_about_info'} onClick={() => setIsAboutModalOpen(true)}>
       About
@@ -83,10 +73,6 @@ const HelpDropdownComponent: React.FC<HelpDropdownProps> = (props: HelpDropdownP
       />
 
       <DebugInformation isOpen={isDebugInformationOpen} onClose={() => setIsDebugInformationOpen(false)} />
-
-      {serverConfig.kialiFeatureFlags.certificatesInformationIndicators.enabled && (
-        <IstioCertsInfo isOpen={isCertsInformationOpen} onClose={() => setIsCertsInformationOpen(false)} />
-      )}
 
       <Dropdown
         toggle={(toggleRef: React.Ref<MenuToggleElement>) => (

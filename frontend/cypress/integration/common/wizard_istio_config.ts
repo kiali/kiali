@@ -107,7 +107,7 @@ When('user opens the {string} submenu', (title: string) => {
 When('choosing to delete it', () => {
   cy.get('#actions-toggle').should('be.visible').click();
   cy.get('#actions').contains('Delete').should('be.visible').click();
-  cy.get('#pf-modal-part-2').find('button').contains('Delete').should('be.visible').click();
+  cy.get('#pf-modal-part-1').find('button').contains('Delete').should('be.visible').click();
 });
 
 When('user closes the success notification', () => {

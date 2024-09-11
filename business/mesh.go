@@ -26,6 +26,10 @@ const (
 	AllowAny = "ALLOW_ANY"
 )
 
+type meshDiscovery interface {
+	Mesh(ctx context.Context) (*models.Mesh, error)
+}
+
 // TODO: move meshDiscovery here.
 
 // MeshService is a support service for retrieving data about the mesh environment

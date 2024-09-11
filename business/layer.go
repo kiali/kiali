@@ -20,7 +20,6 @@ type Layer struct {
 	Health         HealthService
 	IstioConfig    IstioConfigService
 	IstioStatus    IstioStatusService
-	IstioCerts     IstioCertsService
 	Tracing        TracingService
 	Mesh           MeshService
 	Namespace      NamespaceService
@@ -116,7 +115,6 @@ func newLayer(
 	temporaryLayer.App = NewAppService(temporaryLayer, conf, prom, grafana, userClients)
 	temporaryLayer.Health = HealthService{prom: prom, businessLayer: temporaryLayer, userClients: userClients}
 	temporaryLayer.IstioConfig = IstioConfigService{config: *conf, userClients: userClients, kialiCache: cache, businessLayer: temporaryLayer, controlPlaneMonitor: poller}
-	temporaryLayer.IstioCerts = NewIstioCertsService(conf, discovery, userClients[homeClusterName])
 	temporaryLayer.Namespace = NewNamespaceService(userClients, kialiSAClients, cache, conf, discovery)
 	temporaryLayer.Mesh = NewMeshService(kialiSAClients, cache, temporaryLayer.Namespace, conf, discovery)
 	temporaryLayer.ProxyStatus = ProxyStatusService{kialiSAClients: kialiSAClients, kialiCache: cache, businessLayer: temporaryLayer}

@@ -36,6 +36,8 @@ const (
 	istiodScopeGatewayEnvKey              = "PILOT_SCOPE_GATEWAY_TO_NAMESPACE"
 	baseIstioConfigMapName                = "istio"                  // As of 1.19 this is hardcoded in the helm charts.
 	baseIstioSidecarInjectorConfigMapName = "istio-sidecar-injector" // As of 1.19 this is hardcoded in the helm charts.
+	certificatesConfigMapName             = "istio-ca-root-cert"
+	certificateName                       = "root-cert.pem"
 )
 
 func parseIstioConfigMap(istioConfig *corev1.ConfigMap) (*models.IstioMeshConfig, error) {
@@ -82,6 +84,16 @@ func (in *Discovery) getControlPlaneConfiguration(kubeCache cache.KubeCache, con
 	if err != nil {
 		return nil, err
 	}
+
+	certConfigMap, err := kubeCache.GetConfigMap(controlPlane.IstiodNamespace, certificatesConfigMapName)
+	if err != nil {
+		return nil, err
+	}
+
+	cert := models.Certificate{}
+	cert.Parse([]byte(certConfigMap.Data[certificateName]))
+	cert.ConfigMapName = certificatesConfigMapName
+	istioConfigMapInfo.Certificates = append(istioConfigMapInfo.Certificates, cert)
 
 	return &models.ControlPlaneConfiguration{
 		IstioMeshConfig: *istioConfigMapInfo,
