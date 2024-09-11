@@ -1,4 +1,4 @@
-import { filterByLabel, isGateway } from '../LabelFilterHelper';
+import { filterByLabel, isGateway, isK8sGateway } from '../LabelFilterHelper';
 import { AppListItem } from '../../types/AppList';
 import { AppHealth, WorkloadHealth, ServiceHealth } from '../../types/Health';
 import { WorkloadListItem } from '../../types/Workload';
@@ -325,5 +325,25 @@ describe('LabelFilter', () => {
   it('check is Egress Gateway when true', () => {
     const result = isGateway({ istio: 'egressgateway' });
     expect(result).toBeTruthy();
+  });
+
+  it('check is Gateway (K8s) when true', () => {
+    const result = isGateway({ 'gateway.networking.k8s.io/gateway-name': 'gateway-istio' });
+    expect(result).toBeTruthy();
+  });
+
+  it('check is Gateway (K8s) when false', () => {
+    const result = isGateway({ 'gateway.networking.k8s.io/wrong-gateway-name': 'gateway-istio' });
+    expect(result).toBeFalsy();
+  });
+
+  it('check is K8s Gateway when true', () => {
+    const result = isK8sGateway({ 'gateway.networking.k8s.io/gateway-name': 'gateway-istio' });
+    expect(result).toBeTruthy();
+  });
+
+  it('check is K8s Gateway when false', () => {
+    const result = isK8sGateway({ 'gateway.networking.k8s.io/wrong-gateway-name': 'gateway-istio' });
+    expect(result).toBeFalsy();
   });
 });

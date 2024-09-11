@@ -213,6 +213,13 @@ func TestIsGatewayLabelsToWorkload(t *testing.T) {
 		"istio-system":                "ingressgateway",
 	}
 	assert.False(w.IsGateway())
+
+	w = Workload{}
+	w.Type = "Deployment"
+	w.Labels = map[string]string{
+		"gateway.networking.k8s.io/gateway-name": "gateway",
+	}
+	assert.True(w.IsGateway())
 }
 
 func fakeDeployment() *apps_v1.Deployment {
