@@ -1,12 +1,12 @@
 package virtualservices
 
 import (
-	"github.com/kiali/kiali/kubernetes"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
 	"github.com/kiali/kiali/tests/testutils/validations"

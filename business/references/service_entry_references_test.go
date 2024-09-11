@@ -1,7 +1,6 @@
 package references
 
 import (
-	"github.com/kiali/kiali/kubernetes"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -9,6 +8,7 @@ import (
 	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
 )
