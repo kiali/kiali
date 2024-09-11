@@ -1,0 +1,33 @@
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+  name: all.googleapis.com
+spec:
+  host: '*.googleapis.com'
+  trafficPolicy:
+    loadBalancer:
+      simple: ROUND_ROBIN
+    portLevelSettings:
+    - port:
+        number: 443
+      tls:
+        mode: SIMPLE
+  exportTo:
+  - '.'
+---
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+  name: all.googleapis.com2
+spec:
+  host: '*.googleapis.com'
+  trafficPolicy:
+    loadBalancer:
+      simple: ROUND_ROBIN
+    portLevelSettings:
+    - port:
+        number: 443
+      tls:
+        mode: SIMPLE
+  exportTo:
+  - '.'

@@ -1,0 +1,25 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: GRPCRoute
+metadata:
+  name: grpcroute
+  namespace: bookinfo
+spec:
+  parentRefs:
+  - name: gatewayapi
+    namespace: istio-system
+  hostnames: ["bookinfo-istio-system"]
+  rules:
+  - matches:
+    - method:
+        service: "foo"
+      headers:
+      - name: my-header
+        value: some-value
+        type: Exact
+    filters:
+    - type: RequestHeaderModifier
+      requestHeaderModifier:
+        add:
+        - name: my-added-header
+          value: added-value
+        remove: [my-removed-header]
