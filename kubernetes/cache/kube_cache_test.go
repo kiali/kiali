@@ -217,24 +217,24 @@ func TestGetSidecar(t *testing.T) {
 	}{
 		"With selector that matches": {
 			selector:        "app=bookinfo",
-			resourceType:    kubernetes.Sidecars,
+			resourceType:    kubernetes.Sidecars.Kind,
 			expectedErr:     nil,
 			expectedObjects: []*networking_v1.Sidecar{sidecar},
 		},
 		"With selector that doesn't match": {
 			selector:        "app=anotherapp",
-			resourceType:    kubernetes.Sidecars,
+			resourceType:    kubernetes.Sidecars.Kind,
 			expectedErr:     nil,
 			expectedObjects: []*networking_v1.Sidecar{},
 		},
 		"Without selector": {
-			resourceType:    kubernetes.Sidecars,
+			resourceType:    kubernetes.Sidecars.Kind,
 			expectedErr:     nil,
 			expectedObjects: []*networking_v1.Sidecar{sidecar},
 		},
 		"With unparseable selector": {
 			selector:        "unpar$ablestr!ng!",
-			resourceType:    kubernetes.Sidecars,
+			resourceType:    kubernetes.Sidecars.Kind,
 			expectedErr:     fmt.Errorf("Any"),
 			expectedObjects: []*networking_v1.Sidecar{},
 		},
@@ -246,7 +246,7 @@ func TestGetSidecar(t *testing.T) {
 		},
 		"Uncached namespace returns empty": {
 			namespace:       "uncachednamespace",
-			resourceType:    kubernetes.Sidecars,
+			resourceType:    kubernetes.Sidecars.Kind,
 			expectedErr:     nil,
 			expectedObjects: []*networking_v1.Sidecar{},
 		},

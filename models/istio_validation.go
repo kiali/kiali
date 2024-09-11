@@ -2,6 +2,7 @@ package models
 
 import (
 	"encoding/json"
+
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/util"
