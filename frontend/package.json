@@ -160,7 +160,8 @@
   },
   "resolutions": {
     "nth-check": "^2.0.1",
-    "postcss": "^8.4.31"
+    "postcss": "^8.4.31",
+    "body-parser": "1.20.3"
   },
   "engines": {
     "node": ">=20.0.0",
