@@ -164,5 +164,5 @@ func TestIstioConfigPermissions(t *testing.T) {
 	require.NoError(err)
 	require.NotEmpty(perms)
 	require.NotEmpty((*perms)[kiali.BOOKINFO])
-	require.NotEmpty((*(*perms)[kiali.BOOKINFO])["authorizationpolicies"])
+	require.NotEmpty((*(*perms)[kiali.BOOKINFO])[kubernetes.AuthorizationPolicies.String()])
 }
