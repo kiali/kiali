@@ -326,6 +326,11 @@ if [ "${MONGO_ENABLED}" == "true" ]; then
       $CLIENT_EXE apply -n ${NAMESPACE} -f ${MONGO_SERVICE_YAML}
     fi
   fi
+
+  if [ "${AMBIENT_ENABLED}" == "true" ]; then
+    echo "Mongodb service opting out of namespace waypoint"
+    $CLIENT_EXE label service mongodb istio.io/use-waypoint=none --namespace=${NAMESPACE}
+  fi
 fi
 
 if [ "${MYSQL_ENABLED}" == "true" ]; then
@@ -357,6 +362,11 @@ if [ "${MYSQL_ENABLED}" == "true" ]; then
       $CLIENT_EXE apply -n ${NAMESPACE} -f ${MYSQL_DB_YAML}
       $CLIENT_EXE apply -n ${NAMESPACE} -f ${MYSQL_SERVICE_YAML}
     fi
+  fi
+
+  if [ "${AMBIENT_ENABLED}" == "true" ]; then
+    echo "Mysqldb service opting out of namespace waypoint"
+    $CLIENT_EXE label service mysqldb istio.io/use-waypoint=none --namespace=${NAMESPACE}
   fi
 fi
 
