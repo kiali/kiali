@@ -65,7 +65,7 @@ When('user sees mesh side panel', () => {
   cy.get('#loading_kiali_spinner').should('not.exist');
   cy.get('#target-panel-mesh')
     .should('be.visible')
-    .within(div => {
+    .within(() => {
       // Get the name of the mesh from the API.
       cy.request({ url: 'api/mesh/graph' }).then(resp => {
         expect(resp.status).to.eq(200);
@@ -87,7 +87,7 @@ Then('user sees control plane side panel', () => {
   cy.get('#loading_kiali_spinner').should('not.exist');
   cy.get('#target-panel-control-plane')
     .should('be.visible')
-    .within(div => {
+    .within(() => {
       cy.contains('istiod');
       cy.contains('Control plane').should('be.visible');
       cy.contains('Outbound policy').should('be.visible');
@@ -105,7 +105,7 @@ Then('user sees data plane side panel', () => {
   cy.get('#loading_kiali_spinner').should('not.exist');
   cy.get('#target-panel-data-plane')
     .should('be.visible')
-    .within(div => {
+    .within(() => {
       cy.contains('Data Plane');
     });
 });
@@ -174,9 +174,9 @@ Then('user sees the istiod node connected to the dataplane nodes', () => {
 Then('user {string} mesh tour', (action: string) => {
   cy.waitForReact();
   if (action === 'sees') {
-    cy.get('div[role="dialog"]').find('span').contains('Shortcuts').should('exist');
+    cy.get('div[class*="pf-v5-c-popover"]').find('span').contains('Shortcuts').should('exist');
   } else {
-    cy.get('div[role="dialog"]').should('not.exist');
+    cy.get('div[class*="pf-v5-c-popover"]').should('not.exist');
   }
 });
 
@@ -185,7 +185,7 @@ Then('user sees {string} namespace side panel', (name: string) => {
   cy.get('#loading_kiali_spinner').should('not.exist');
   cy.get('#target-panel-namespace')
     .should('be.visible')
-    .within(div => {
+    .within(() => {
       cy.contains(name);
     });
 });
@@ -195,7 +195,7 @@ Then('user sees {string} node side panel', (name: string) => {
   cy.get('#loading_kiali_spinner').should('not.exist');
   cy.get('#target-panel-node')
     .should('be.visible')
-    .within(div => {
+    .within(() => {
       cy.contains(name);
     });
 });

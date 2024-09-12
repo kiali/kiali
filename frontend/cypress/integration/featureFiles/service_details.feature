@@ -12,6 +12,7 @@ Feature: Kiali Service Details page
     And user is at the details page for the "service" "bookinfo/productpage" located in the "" cluster
 
   @bookinfo-app
+  @skip-ossmc
   Scenario: See details for productpage
     Then sd::user sees a list with content "Overview"
     Then sd::user sees a list with content "Traffic"
@@ -70,6 +71,7 @@ Feature: Kiali Service Details page
     Then user sees span details
 
   @bookinfo-app
+  @skip-ossmc
   Scenario: Verify that the Graph type dropdown is disabled when changing to Show node graph
     When user sees a minigraph
     And user chooses the "Show node graph" option

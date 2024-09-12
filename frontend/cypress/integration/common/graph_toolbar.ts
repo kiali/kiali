@@ -58,6 +58,7 @@ When('user clicks graph duration menu', () => {
 
 When(`user selects graph duration {string}`, (duration: string) => {
   cy.get('button#time_range_duration-toggle').click();
+  cy.get('#loading_kiali_spinner').should('not.exist');
   cy.get(`button[id="${duration}"]`).click();
   cy.get('#loading_kiali_spinner').should('not.exist');
 });
@@ -68,6 +69,7 @@ When('user clicks graph refresh menu', () => {
 
 When(`user selects graph refresh {string}`, (refresh: string) => {
   cy.get('button#time_range_refresh-toggle').click();
+  cy.get('#loading_kiali_spinner').should('not.exist');
   cy.get(`button[id="${refresh}"]`).click();
   cy.get('#loading_kiali_spinner').should('not.exist');
 });
@@ -186,7 +188,7 @@ Then('user does not see graph duration menu', () => {
 
 Then('user sees selected graph duration {string}', (duration: string) => {
   cy.get('button#time_range_duration-toggle')
-    .find('span[class*="pf-v5-c-menu-toggle__text"]')
+    .find('span[class="pf-v5-c-menu-toggle__text"]')
     .contains(duration)
     .should('exist');
 });
@@ -211,7 +213,7 @@ Then('user does not see graph refresh menu', () => {
 
 Then('user sees selected graph refresh {string}', (refresh: string) => {
   cy.get('button#time_range_refresh-toggle')
-    .find('span[class*="pf-v5-c-menu-toggle__text"]')
+    .find('span[class="pf-v5-c-menu-toggle__text"]')
     .contains(refresh)
     .should('exist');
 });
