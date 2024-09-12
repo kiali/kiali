@@ -18,6 +18,8 @@ Feature: Kiali Workload Details page
     And links in the "Workload" description card should contain a reference to a "west" cluster
     And cluster badge for "west" cluster should be visible in the "Workload" description card
 
+  @skip-ossmc
+  # todo: adapt to PF graph
   Scenario: See minigraph for workload.
     Then user sees a minigraph
     And user sees "service" from a remote "west" cluster

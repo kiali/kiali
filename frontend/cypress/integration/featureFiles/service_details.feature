@@ -18,6 +18,7 @@ Feature: Kiali Service Details page
     Then sd::user sees a list with content "Traffic"
     Then sd::user sees a list with content "Inbound Metrics"
     Then sd::user sees a list with content "Traces"
+    # todo: adapt to kiosk mode for OSSMC
     Then sd::user sees the actions button
 
   @bookinfo-app
@@ -29,6 +30,7 @@ Feature: Kiali Service Details page
 
   @bookinfo-app
   @skip-ossmc
+  # todo: adapt to PF graph
   Scenario: See service minigraph for details app.
     Then sd::user sees a minigraph
 
@@ -72,6 +74,7 @@ Feature: Kiali Service Details page
 
   @bookinfo-app
   @skip-ossmc
+  # todo: adapt to PF graph
   Scenario: Verify that the Graph type dropdown is disabled when changing to Show node graph
     When user sees a minigraph
     And user chooses the "Show node graph" option

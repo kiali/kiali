@@ -49,6 +49,7 @@ Feature: Controlling sidecar injection
 
 	@sleep-app
 	@skip-ossmc
+	# todo: adapt to kiosk mode for OSSMC
 	Scenario: Override the default policy for automatic sidecar injection by enabling it in a workload
 		Given a workload without a sidecar
 		And the workload does not have override configuration for automatic sidecar injection
@@ -58,6 +59,7 @@ Feature: Controlling sidecar injection
 
 	@sleep-app
 	@skip-ossmc
+	# todo: adapt to kiosk mode for OSSMC
 	Scenario: Override the default policy for automatic sidecar injection by disabling it in a workload
 		Given a workload with a sidecar
 		And the workload does not have override configuration for automatic sidecar injection
@@ -67,6 +69,7 @@ Feature: Controlling sidecar injection
 
 	@sleep-app
 	@skip-ossmc
+	# todo: adapt to kiosk mode for OSSMC
 	Scenario: Switch the override configuration for automatic sidecar injection in a workload to disabled
 		Given a workload with a sidecar
 		And the workload has override configuration for automatic sidecar injection
@@ -76,6 +79,7 @@ Feature: Controlling sidecar injection
 
 	@sleep-app
 	@skip-ossmc
+	# todo: adapt to kiosk mode for OSSMC
 	Scenario: Switch the override configuration for automatic sidecar injection in a workload to enabled
 		Given a workload without a sidecar
 		And the workload has override configuration for automatic sidecar injection
@@ -85,6 +89,7 @@ Feature: Controlling sidecar injection
 
 	@sleep-app
 	@skip-ossmc
+	# todo: adapt to kiosk mode for OSSMC
 	Scenario: Remove override configuration for automatic sidecar injection in a workload
 		Given a workload with override configuration for automatic sidecar injection
 		When I remove override configuration for sidecar injection in the workload
