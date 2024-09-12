@@ -29,13 +29,13 @@ func TestDestinationRuleMultimatch(t *testing.T) {
 	config, err := getConfigDetails(kiali.BOOKINFO, "all.googleapis.com", kubernetes.DestinationRules, false, require)
 	require.NoError(err)
 	require.NotNil(config)
-	assertConfigDetailsValidations(*config, kiali.BOOKINFO, "destinationrule", "all.googleapis.com", "KIA0201", true, require)
+	assertConfigDetailsValidations(*config, kiali.BOOKINFO, kubernetes.DestinationRules.String(), "all.googleapis.com", "KIA0201", true, require)
 
 	configList, err := kiali.IstioConfigsList(kiali.BOOKINFO)
 
 	require.NoError(err)
-	assertConfigListValidations(*configList, kiali.BOOKINFO, "destinationrule", "all.googleapis.com", "KIA0201", true, require)
-	assertConfigListValidations(*configList, kiali.BOOKINFO, "destinationrule", "all.googleapis.com2", "KIA0201", true, require)
+	assertConfigListValidations(*configList, kiali.BOOKINFO, kubernetes.DestinationRules.String(), "all.googleapis.com", "KIA0201", true, require)
+	assertConfigListValidations(*configList, kiali.BOOKINFO, kubernetes.DestinationRules.String(), "all.googleapis.com2", "KIA0201", true, require)
 }
 
 func TestAuthPolicyPrincipalsError(t *testing.T) {
@@ -127,7 +127,7 @@ func TestK8sGatewaysAddressesError(t *testing.T) {
 	require.Equal(kiali.BOOKINFO, config.K8sGateway.Namespace)
 	require.NotNil(config.IstioValidation)
 	require.Equal(name, config.IstioValidation.Name)
-	require.Equal("k8sgateway", config.IstioValidation.ObjectType)
+	require.Equal(kubernetes.K8sGateways.String(), config.IstioValidation.ObjectType)
 	require.NotEmpty(config.IstioValidation.Checks)
 	require.Equal(models.WarningSeverity, config.IstioValidation.Checks[0].Severity)
 	require.Equal("More than one K8s Gateway for the same address and type combination", config.IstioValidation.Checks[0].Message)
@@ -156,7 +156,7 @@ func TestK8sGatewaysListenersError(t *testing.T) {
 	require.Equal(kiali.BOOKINFO, config.K8sGateway.Namespace)
 	require.NotNil(config.IstioValidation)
 	require.Equal(name, config.IstioValidation.Name)
-	require.Equal("k8sgateway", config.IstioValidation.ObjectType)
+	require.Equal(kubernetes.K8sGateways.String(), config.IstioValidation.ObjectType)
 	require.NotEmpty(config.IstioValidation.Checks)
 	require.Equal(models.WarningSeverity, config.IstioValidation.Checks[0].Severity)
 	require.Equal("More than one K8s Gateway for the same host port combination", config.IstioValidation.Checks[0].Message)
@@ -211,7 +211,7 @@ func TestK8sHTTPRoutesServicesError(t *testing.T) {
 	require.NotNil(config.IstioValidation)
 	require.False(config.IstioValidation.Valid)
 	require.Equal(name, config.IstioValidation.Name)
-	require.Equal("k8shttproute", config.IstioValidation.ObjectType)
+	require.Equal(kubernetes.K8sHTTPRoutes.String(), config.IstioValidation.ObjectType)
 	require.NotEmpty(config.IstioValidation.Checks)
 	require.Equal(models.ErrorSeverity, config.IstioValidation.Checks[0].Severity)
 	require.Equal("Reference doesn't have a valid service (Service name not found)", config.IstioValidation.Checks[0].Message)
@@ -296,7 +296,7 @@ func TestK8sReferenceGrantsFromNamespaceError(t *testing.T) {
 	require.NotNil(config.IstioValidation)
 	require.False(config.IstioValidation.Valid)
 	require.Equal(name, config.IstioValidation.Name)
-	require.Equal("k8sreferencegrant", config.IstioValidation.ObjectType)
+	require.Equal(kubernetes.K8sReferenceGrants.String(), config.IstioValidation.ObjectType)
 	require.NotEmpty(config.IstioValidation.Checks)
 	require.Equal(models.ErrorSeverity, config.IstioValidation.Checks[0].Severity)
 	require.Equal("Namespace is not found or is not accessible", config.IstioValidation.Checks[0].Message)

@@ -143,7 +143,7 @@ func TestIstioConfigDetails(t *testing.T) {
 	require.NotNil(config.IstioReferences)
 	require.NotNil(config.IstioValidation)
 	require.Equal(name, config.IstioValidation.Name)
-	require.Equal("virtualservice", config.IstioValidation.ObjectType)
+	require.Equal(kubernetes.VirtualServices.String(), config.IstioValidation.ObjectType)
 	if !config.IstioValidation.Valid {
 		require.NotEmpty(config.IstioValidation.References)
 	}
