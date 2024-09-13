@@ -219,7 +219,7 @@ func buildNamespaceTrafficMap(ctx context.Context, namespace string, o graph.Tel
 	// TCP Byte traffic
 	if o.Rates.Tcp != graph.RateNone {
 		var metrics []string
-		groupBy := "app, source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,response_flags"
+		groupBy := "app,source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,response_flags"
 
 		// L4 telemetry is backwards, see https://github.com/istio/istio/issues/32399
 		switch o.Rates.Tcp {
@@ -324,12 +324,9 @@ func populateTrafficMap(trafficMap graph.TrafficMap, vector *model.Vector, metri
 		}
 		ztunnel := false
 		if protocol == graph.TCP.Name {
-			lApp, appOk := m["app"]
-			if !appOk {
-				log.Warningf("Skipping %s, missing expected TS label [app]", m.String())
-				continue
+			if lApp, appOk := m["app"]; appOk {
+				ztunnel = string(lApp) == "ztunnel"
 			}
-			ztunnel = string(lApp) == "ztunnel"
 		}
 
 		// handle clusters
@@ -785,7 +782,7 @@ func buildNodeTrafficMap(cluster, namespace string, n *graph.Node, o graph.Telem
 	// TCP byte traffic
 	if o.Rates.Tcp != graph.RateNone {
 		var metrics []string
-		groupBy := "app, source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,response_flags"
+		groupBy := "app,source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,response_flags"
 
 		inboundReporter := "destination"
 		outboutReporter := "source"
