@@ -8,6 +8,7 @@ import { TrafficShifting, WorkloadWeight } from '../TrafficShifting';
 import { FaultInjection, FaultInjectionRoute } from '../FaultInjection';
 import { PFColors } from '../../Pf/PfColors';
 import { RequestTimeouts, TimeoutRetryRoute } from '../RequestTimeouts';
+import { t } from 'utils/I18nUtils';
 
 type Props = {
   // MatchBuilder props
@@ -82,13 +83,13 @@ export class RuleBuilder extends React.Component<Props, State> {
     return (
       <>
         <Tabs isFilled={true} activeKey={this.state.ruleTabKey} onSelect={this.ruleHandleTabClick}>
-          <Tab eventKey={0} title={'Request Matching'} data-test={'Request Matching'}>
+          <Tab eventKey={0} title={t('Request Matching')} data-test={'Request Matching'}>
             <div style={{ marginTop: '20px' }}>
               <MatchBuilder {...this.props} />
               <Matches {...this.props} />
             </div>
           </Tab>
-          <Tab eventKey={1} title={'Route To'} data-test={'Route To'}>
+          <Tab eventKey={1} title={t('Route To')} data-test={'Route To'}>
             <div
               style={{
                 marginBottom: '10px'
@@ -103,7 +104,7 @@ export class RuleBuilder extends React.Component<Props, State> {
               />
             </div>
           </Tab>
-          <Tab eventKey={2} title={'Fault Injection'} data-test={'Fault Injection'}>
+          <Tab eventKey={2} title={t('Fault Injection')} data-test={'Fault Injection'}>
             <div style={{ marginTop: '10px' }}>
               <FaultInjection
                 initFaultInjectionRoute={this.props.faultInjectionRoute}
@@ -111,7 +112,7 @@ export class RuleBuilder extends React.Component<Props, State> {
               />
             </div>
           </Tab>
-          <Tab eventKey={3} title={'Request Timeouts'} data-test={'Request Timeouts'}>
+          <Tab eventKey={3} title={t('Request Timeouts')} data-test={'Request Timeouts'}>
             <div style={{ marginTop: '10px' }}>
               <RequestTimeouts
                 initTimeoutRetry={this.props.timeoutRetryRoute}
@@ -129,7 +130,7 @@ export class RuleBuilder extends React.Component<Props, State> {
               onClick={this.props.onAddRule}
               data-test="add-route"
             >
-              Add Route Rule
+              {t('Add Route Rule')}
             </Button>
           </span>
         </div>

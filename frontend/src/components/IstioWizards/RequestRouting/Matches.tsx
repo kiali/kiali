@@ -2,6 +2,7 @@ import * as React from 'react';
 import { Chip } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
 import { MATCHING_SELECTED_TOOLTIP, wizardTooltip } from '../WizardHelp';
+import { t } from 'utils/I18nUtils';
 
 type Props = {
   matches: string[];
@@ -33,10 +34,10 @@ export class Matches extends React.Component<Props> {
             marginRight: '32px'
           }}
         >
-          Matching selected
+          {t('Matching selected')}
           {wizardTooltip(MATCHING_SELECTED_TOOLTIP)}
         </span>
-        {matches.length > 0 ? matches : <b>Match any request</b>}
+        {matches.length > 0 ? matches : <b>{t('Match any request')}</b>}
       </div>
     );
   }

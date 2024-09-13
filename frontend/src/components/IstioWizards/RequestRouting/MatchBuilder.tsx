@@ -11,6 +11,7 @@ import {
   MenuToggleElement,
   MenuToggle
 } from '@patternfly/react-core';
+import { t } from 'utils/I18nUtils';
 
 type MatchBuilderProps = {
   category: string;
@@ -151,7 +152,7 @@ export const MatchBuilder: React.FC<MatchBuilderProps> = (props: MatchBuilderPro
           onClick={props.onAddMatch}
           data-test="add-match"
         >
-          Add Match
+          {t('Add Match')}
         </Button>
       </InputGroupItem>
     </InputGroup>

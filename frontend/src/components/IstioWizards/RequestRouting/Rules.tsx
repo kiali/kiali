@@ -14,6 +14,7 @@ import { Abort, Delay, HTTPRetry } from '../../../types/IstioObjects';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { ROUTE_RULES_TOOLTIP, wizardTooltip } from '../WizardHelp';
 import { SimpleTable } from 'components/Table/SimpleTable';
+import { t } from 'utils/I18nUtils';
 
 export enum MOVE_TYPE {
   UP,
@@ -65,17 +66,17 @@ export const Rules: React.FC<RulesProps> = (props: RulesProps) => {
 
   const actionResolver = (_rowData: IRowData, rowIndex: number): IAction[] => {
     const removeAction = {
-      title: 'Remove Rule',
+      title: t('Remove Rule'),
       onClick: () => props.onRemoveRule(rowIndex)
     };
 
     const moveUpAction = {
-      title: 'Move Up',
+      title: t('Move Up'),
       onClick: () => props.onMoveRule(rowIndex, MOVE_TYPE.UP)
     };
 
     const moveDownAction = {
-      title: 'Move Down',
+      title: t('Move Down'),
       onClick: () => props.onMoveRule(rowIndex, MOVE_TYPE.DOWN)
     };
 
@@ -98,14 +99,14 @@ export const Rules: React.FC<RulesProps> = (props: RulesProps) => {
 
   const columns: ThProps[] = [
     {
-      title: 'Rule order',
+      title: t('Rule order'),
       width: 10
     },
     {
-      title: 'Request Matching'
+      title: t('Request Matching')
     },
     {
-      title: 'Route To'
+      title: t('Route To')
     }
   ];
 
@@ -115,8 +116,8 @@ export const Rules: React.FC<RulesProps> = (props: RulesProps) => {
 
   const noRules: React.ReactNode = (
     <EmptyState variant={EmptyStateVariant.full}>
-      <EmptyStateHeader titleText="No Route Rules defined" headingLevel="h5" />
-      <EmptyStateBody className={noRulesStyle}>A Request Routing scenario needs at least a Route Rule</EmptyStateBody>
+      <EmptyStateHeader titleText={t('No Route Rules defined')} headingLevel="h5" />
+      <EmptyStateBody className={noRulesStyle}>{t('A Request Routing scenario needs at least a Route Rule')}</EmptyStateBody>
     </EmptyState>
   );
 
@@ -132,9 +133,9 @@ export const Rules: React.FC<RulesProps> = (props: RulesProps) => {
             : rule.matches.map((match, i) => <div key={`match_${i}`}>{match}</div>)}
           {!isValid && (
             <div className={validationStyle}>
-              Match 'Any request' is defined in a previous rule.
+              {t('Match \'Any request\' is defined in a previous rule.')}
               <br />
-              This rule is not accessible.
+              {t('This rule is not accessible.')}
             </div>
           )}
         </>,
@@ -198,7 +199,7 @@ export const Rules: React.FC<RulesProps> = (props: RulesProps) => {
   return (
     <>
       <div>
-        <span>Route Rules</span>
+        <span>{t('Route Rules')}</span>
         {wizardTooltip(ROUTE_RULES_TOOLTIP)}
       </div>
 

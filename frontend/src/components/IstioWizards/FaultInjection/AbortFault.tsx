@@ -3,6 +3,7 @@ import { FormGroup, FormHelperText, HelperText, HelperTextItem, Switch, TextInpu
 import { Abort } from '../../../types/IstioObjects';
 import { HTTP_ABORT_TOOLTIP, wizardTooltip } from '../WizardHelp';
 import { isValid } from 'utils/Common';
+import { t } from 'utils/I18nUtils';
 
 type Props = {
   aborted: boolean;
@@ -10,14 +11,14 @@ type Props = {
   isValid: boolean;
   onAbort: (aborted: boolean, abort: Abort) => void;
 };
-
-const httpStatusMsg = 'HTTP status code to use to abort the Http request.';
+//todo
+const httpStatusMsg = t('HTTP status code to use to abort the Http request.');
 
 export class AbortFault extends React.Component<Props> {
   render() {
     return (
       <>
-        <FormGroup label="Add HTTP Abort" fieldId="abortSwitch">
+        <FormGroup label={t('Add HTTP Abort')} fieldId="abortSwitch">
           <Switch
             id="abortSwitch"
             label={' '}
@@ -28,7 +29,7 @@ export class AbortFault extends React.Component<Props> {
           <span>{wizardTooltip(HTTP_ABORT_TOOLTIP)}</span>
         </FormGroup>
         {this.props.aborted && (
-          <FormGroup label="Abort Percentage" fieldId="abort-percentage">
+          <FormGroup label={t('Abort Percentage')} fieldId="abort-percentage">
             <TextInput
               value={this.props.abort.percentage?.value}
               id="abort-percentage"
@@ -47,13 +48,13 @@ export class AbortFault extends React.Component<Props> {
             />
             <FormHelperText>
               <HelperText>
-                <HelperTextItem>Percentage of requests to be aborted with the error code provided.</HelperTextItem>
+                <HelperTextItem>{t('Percentage of requests to be aborted with the error code provided.')}</HelperTextItem>
               </HelperText>
             </FormHelperText>
           </FormGroup>
         )}
         {this.props.aborted && (
-          <FormGroup label="HTTP Status Code" fieldId="abort-status-code">
+          <FormGroup label={t('HTTP Status Code')} fieldId="abort-status-code">
             <TextInput
               value={this.props.abort.httpStatus}
               id="abort-status-code"
