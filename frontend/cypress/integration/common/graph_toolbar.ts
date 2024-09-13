@@ -58,7 +58,6 @@ When('user clicks graph duration menu', () => {
 
 When(`user selects graph duration {string}`, (duration: string) => {
   cy.get('button#time_range_duration-toggle').click();
-  cy.get('#loading_kiali_spinner').should('not.exist');
   cy.get(`button[id="${duration}"]`).click();
   cy.get('#loading_kiali_spinner').should('not.exist');
 });
@@ -69,7 +68,6 @@ When('user clicks graph refresh menu', () => {
 
 When(`user selects graph refresh {string}`, (refresh: string) => {
   cy.get('button#time_range_refresh-toggle').click();
-  cy.get('#loading_kiali_spinner').should('not.exist');
   cy.get(`button[id="${refresh}"]`).click();
   cy.get('#loading_kiali_spinner').should('not.exist');
 });
