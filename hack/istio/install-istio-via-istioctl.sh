@@ -20,6 +20,7 @@ CLIENT_EXE=""
 CLUSTER_NAME=""
 CONFIG_PROFILE="" # see "istioctl profile list" for valid values. See: https://istio.io/docs/setup/additional-setup/config-profiles/
 DELETE_ISTIO="false"
+DISABLE_IPV6="true"
 ENABLE_NATIVE_SIDECARS="false"
 PURGE_UNINSTALL="true"
 ISTIOCTL=
@@ -69,6 +70,10 @@ while [[ $# -gt 0 ]]; do
         echo "ERROR: The --delete-istio flag must be 'true' or 'false'"
         exit 1
       fi
+      shift;shift
+      ;;
+    -d6|--disable-ipv6)
+      DISABLE_IPV6="$2"
       shift;shift
       ;;
     -pu|--purge-uninstall)
@@ -210,6 +215,11 @@ Valid command line arguments:
        By default, it will remove all Istio resources, including cluster-scoped resources.
        If you want to keep Istio control planes in other namespaces, set --purge-uninstall to 'false'.
        Default: false
+  -d6|--disable-ipv6 (true|false):
+       Set to 'false' to avoid using the argument values.cni.ambient.ipv6.
+       By default, Istio 1.23 Ambient profile enables IPv6, which doesn't work properly on docker.
+       The value doesn't exist in previous versions.
+       Default: true
   -pu|--purge-uninstall (true|false):
        Set to 'true' if you want to remove all Istio resources, including cluster-scoped resources.
        Default: true
@@ -359,8 +369,9 @@ if [ "${IS_OPENSHIFT}" == "true" ]; then
   fi
 fi
 
-# If Ambient profile, disable ipv6; this is broken on minikube when not using docker driver (TODO: make ipv6 optional)
-if [ "${CONFIG_PROFILE}" == "ambient" ]; then
+# If Ambient profile, disable ipv6; this is broken on minikube when not using docker driver
+echo "DISABLE_IPV6: ${DISABLE_IPV6}"
+if [ "${CONFIG_PROFILE}" == "ambient" ] && [ "${DISABLE_IPV6}" == "true" ]; then
   CNI_OPTIONS="${CNI_OPTIONS} --set values.cni.ambient.ipv6=false"
   echo "Disabling Ambient CNI IPv6"
 fi
