@@ -1,6 +1,13 @@
 import * as React from 'react';
 import { kialiStyle } from 'styles/StyleUtils';
-import { NodeType, SummaryPanelPropType, Protocol, DecoratedGraphNodeData, BoxByType } from '../../types/Graph';
+import {
+  NodeType,
+  SummaryPanelPropType,
+  Protocol,
+  DecoratedGraphNodeData,
+  BoxByType,
+  GraphNodeData
+} from '../../types/Graph';
 import { IstioMetricsOptions, Reporter, Direction } from '../../types/MetricsOptions';
 import * as API from '../../services/Api';
 import * as M from '../../types/Metrics';
@@ -219,4 +226,17 @@ export const getTitle = (title: string, ambient?: React.ReactElement): React.Rea
       {title} {ambient}
     </div>
   );
+};
+
+export const getAppName = (node: GraphNodeData): string => {
+  switch (node.nodeType) {
+    case NodeType.APP:
+      return node.app ? node.app : '';
+    case NodeType.SERVICE:
+      return node.service ? node.service : '';
+    case NodeType.WORKLOAD:
+      return node.workload ? node.workload : '';
+    default:
+      return '';
+  }
 };

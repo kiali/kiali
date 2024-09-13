@@ -58,6 +58,7 @@ func (a AmbientAppender) handleWaypoints(trafficMap graph.TrafficMap) {
 				n.Metadata[graph.IsOutOfMesh] = false
 				for _, edge := range n.Edges {
 					// Just hide so we have all the information
+
 					// TODO: We may want to change the semantics/naming here, to avoid backend control of the UI
 					edge.Metadata[graph.Display] = "hide"
 				}

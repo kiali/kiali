@@ -8,7 +8,7 @@ import {
   DecoratedGraphNodeData
 } from '../../types/Graph';
 import { KialiIcon } from 'config/KialiIcon';
-import { PopoverPosition, Tooltip, TooltipPosition } from '@patternfly/react-core';
+import { PopoverPosition } from '@patternfly/react-core';
 import { Health } from 'types/Health';
 import { HealthIndicator } from 'components/Health/HealthIndicator';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
@@ -16,7 +16,6 @@ import { homeCluster } from 'config';
 import { KialiPageLink } from 'components/Link/KialiPageLink';
 import { kialiStyle } from 'styles/StyleUtils';
 import { t } from 'utils/I18nUtils';
-import { PFColors } from '../../components/Pf/PfColors';
 
 interface LinkInfo {
   displayName: string;
@@ -220,41 +219,6 @@ export const renderBadgedLink = (
         {link}
       </span>
       {nodeData.isInaccessible && <KialiIcon.MtlsLock />}
-    </div>
-  );
-};
-
-export const renderBadgedDoubleLink = (
-  fromData: GraphNodeData,
-  toData: GraphNodeData,
-  label?: string
-): React.ReactNode => {
-  const fromLink = getLink(fromData);
-  const toLink = getLink(toData);
-
-  return (
-    <div key={`node-${fromData.id}-node-${toData.id}`}>
-      <span className={badgeStyle}>
-        {label && (
-          <span style={{ whiteSpace: 'pre' }}>
-            <b>{label}</b>
-          </span>
-        )}
-
-        {getBadge(fromData)}
-        {fromLink}
-        <span style={{ margin: '0 10px' }}>
-          <KialiIcon.ArrowsAltHIcon color={PFColors.Link} />
-        </span>
-        {getBadge(toData)}
-        {toLink}
-        <span style={{ margin: '0 10px' }}>
-          <Tooltip key={'graph-tour-help-ot'} position={TooltipPosition.right} content="Traffic in both direction">
-            <KialiIcon.Help color={PFColors.Link} />
-          </Tooltip>
-        </span>
-      </span>
-      {fromData.isInaccessible && <KialiIcon.MtlsLock />}
     </div>
   );
 };

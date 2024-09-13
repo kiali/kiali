@@ -413,9 +413,10 @@ const getEdgeLabel = (edge: EdgeModel, nodeMap: NodeMap, settings: GraphPFSettin
             }
             break;
           case Protocol.TCP:
-            labels.push(toFixedByteRate(rate, includeUnits));
             if (data.reverse) {
-              labels.push(toFixedByteRate(data.reverse.tcp, includeUnits));
+              labels.push(toFixedByteRate(rate + data.reverse.tcp, includeUnits, '*'));
+            } else {
+              labels.push(toFixedByteRate(rate, includeUnits));
             }
             break;
           default:
@@ -454,7 +455,7 @@ const getEdgeLabel = (edge: EdgeModel, nodeMap: NodeMap, settings: GraphPFSettin
     }
   }
 
-  let label = labels.join(' - ');
+  let label = labels.join('\n');
 
   if (isVerbose) {
     const protocol = data.protocol;
@@ -511,14 +512,15 @@ const toFixedErrRate = (num: number): string => {
   return `${trimFixed(num.toFixed(num < 1 ? 1 : 0))}%err`;
 };
 
-const toFixedByteRate = (num: number, includeUnits: boolean): string => {
+const toFixedByteRate = (num: number, includeUnits: boolean, includeMarker?: string): string => {
+  const marker = includeMarker ? includeMarker : '';
   num = safeNum(num);
   if (num < 1024.0) {
     const rate = num < 1.0 ? trimFixed(num.toFixed(2)) : num.toFixed(0);
-    return includeUnits ? `${rate}bps` : rate;
+    return includeUnits ? `${rate}${marker}bps` : `${rate}${marker}`;
   }
   const rate = trimFixed((num / 1024.0).toFixed(2));
-  return includeUnits ? `${rate}kps` : rate;
+  return includeUnits ? `${rate}${marker}kps` : `${rate}${marker}`;
 };
 
 const toFixedPercent = (num: number): string => {
@@ -592,7 +594,7 @@ const getPathStyle = (data: EdgeData): React.CSSProperties => {
 
 export const setEdgeOptions = (edge: EdgeModel, nodeMap: NodeMap, settings: GraphPFSettings): void => {
   const data = edge.data as EdgeData;
-  if (data.display === 'reverse') {
+  if (data.reverse) {
     data.startTerminalType = data.protocol === Protocol.TCP ? EdgeTerminalType.square : EdgeTerminalType.directional;
   }
   data.endTerminalType = data.protocol === Protocol.TCP ? EdgeTerminalType.square : EdgeTerminalType.directional;

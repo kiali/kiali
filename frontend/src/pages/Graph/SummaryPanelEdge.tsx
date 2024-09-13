@@ -12,7 +12,7 @@ import {
   TrafficRate,
   prettyProtocol
 } from '../../types/Graph';
-import { renderBadgedDoubleLink, renderBadgedLink } from './SummaryLink';
+import { renderBadgedLink } from './SummaryLink';
 import {
   shouldRefreshData,
   getDatapoints,
@@ -24,7 +24,8 @@ import {
   summaryBodyTabs,
   summaryPanel,
   summaryFont,
-  getTitle
+  getTitle,
+  getAppName
 } from './SummaryPanelCommon';
 import { Metric, Datapoint, IstioMetricsMap, Labels } from '../../types/Metrics';
 import { CancelablePromise, makeCancelablePromise } from '../../utils/CancelablePromises';
@@ -174,105 +175,120 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
       );
     };
     const ambientBadge = reverse ? <AmbientBadge tooltip={'reported from Ambient'}></AmbientBadge> : undefined;
-    return (
-      <div ref={this.mainDivRef} className={classes(panelStyle, summaryPanel)}>
-        <div className={panelHeadingStyle}>
-          {getTitle(`Edge (${prettyProtocol(protocol)})`, ambientBadge)}
-          {reverse && renderBadgedDoubleLink(sourceData, destData, 'From/To: ')}
-          {!reverse && renderBadgedLink(sourceData, undefined, 'From:  ')}
-          {!reverse && renderBadgedLink(destData, undefined, 'To:        ')}
-        </div>
+    const MainSummary = ({ reverseEdge }: { reverseEdge?: boolean }): React.ReactElement => {
+      const source = reverseEdge ? destData : sourceData;
+      const dest = reverseEdge ? sourceData : destData;
+      return (
+        <div>
+          <div className={panelHeadingStyle}>
+            {getTitle(`Edge (${prettyProtocol(protocol)})`, ambientBadge)}
+            {renderBadgedLink(source, undefined, 'From:  ')}
+            {renderBadgedLink(dest, undefined, 'To:        ')}
+          </div>
 
-        {hasSecurity && <SecurityBlock />}
+          {hasSecurity && <SecurityBlock />}
 
-        {(isHttp || isGrpc) && (
-          <div className={summaryBodyTabs}>
-            <SimpleTabs id="edge_summary_rate_tabs" defaultTab={0} style={{ paddingBottom: '0.5rem' }}>
-              <Tab style={summaryFont} title="Traffic" eventKey={0}>
-                <div style={summaryFont}>
-                  {isGrpc && (
-                    <>
-                      <RateTableGrpc
-                        isRequests={isRequests}
-                        rate={this.safeRate(edgeData.grpc)}
-                        rateGrpcErr={this.safeRate(edgeData.grpcErr)}
-                        rateNR={this.safeRate(edgeData.grpcNoResponse)}
-                      />
-                    </>
-                  )}
-
-                  {isHttp && (
-                    <>
-                      <RateTableHttp
-                        title="HTTP requests per second:"
-                        rate={this.safeRate(edgeData.http)}
-                        rate3xx={this.safeRate(edgeData.http3xx)}
-                        rate4xx={this.safeRate(edgeData.http4xx)}
-                        rate5xx={this.safeRate(edgeData.http5xx)}
-                        rateNR={this.safeRate(edgeData.httpNoResponse)}
-                      />
-                    </>
-                  )}
-                </div>
-              </Tab>
-
-              {isRequests && (
-                <Tab style={summaryFont} title="Flags" eventKey={1}>
+          {(isHttp || isGrpc) && (
+            <div className={summaryBodyTabs}>
+              <SimpleTabs id="edge_summary_rate_tabs" defaultTab={0} style={{ paddingBottom: '0.5rem' }}>
+                <Tab style={summaryFont} title="Traffic" eventKey={0}>
                   <div style={summaryFont}>
-                    <ResponseFlagsTable
-                      title={`Response flags by ${isGrpc ? 'GRPC code:' : 'HTTP code:'}`}
+                    {isGrpc && (
+                      <>
+                        <RateTableGrpc
+                          isRequests={isRequests}
+                          rate={this.safeRate(edgeData.grpc)}
+                          rateGrpcErr={this.safeRate(edgeData.grpcErr)}
+                          rateNR={this.safeRate(edgeData.grpcNoResponse)}
+                        />
+                      </>
+                    )}
+
+                    {isHttp && (
+                      <>
+                        <RateTableHttp
+                          title="HTTP requests per second:"
+                          rate={this.safeRate(edgeData.http)}
+                          rate3xx={this.safeRate(edgeData.http3xx)}
+                          rate4xx={this.safeRate(edgeData.http4xx)}
+                          rate5xx={this.safeRate(edgeData.http5xx)}
+                          rateNR={this.safeRate(edgeData.httpNoResponse)}
+                        />
+                      </>
+                    )}
+                  </div>
+                </Tab>
+
+                {isRequests && (
+                  <Tab style={summaryFont} title="Flags" eventKey={1}>
+                    <div style={summaryFont}>
+                      <ResponseFlagsTable
+                        title={`Response flags by ${isGrpc ? 'GRPC code:' : 'HTTP code:'}`}
+                        responses={edgeData.responses}
+                      />
+                    </div>
+                  </Tab>
+                )}
+                <Tab style={summaryFont} title="Hosts" eventKey={2}>
+                  <div style={summaryFont}>
+                    <ResponseHostsTable
+                      title={`Hosts by ${isGrpc ? 'GRPC code:' : 'HTTP code:'}`}
                       responses={edgeData.responses}
                     />
                   </div>
                 </Tab>
-              )}
-              <Tab style={summaryFont} title="Hosts" eventKey={2}>
-                <div style={summaryFont}>
-                  <ResponseHostsTable
-                    title={`Hosts by ${isGrpc ? 'GRPC code:' : 'HTTP code:'}`}
-                    responses={edgeData.responses}
-                  />
-                </div>
-              </Tab>
-            </SimpleTabs>
-            {hr()}
-            {this.renderCharts(edge, isGrpc, isHttp, isTcp, isRequests, isPF)}
-          </div>
-        )}
+              </SimpleTabs>
+              {hr()}
+              {this.renderCharts(edge, isGrpc, isHttp, isTcp, isRequests, isPF)}
+            </div>
+          )}
 
-        {isTcp && (
-          <div className={summaryBodyTabs}>
-            <SimpleTabs id="edge_summary_flag_hosts_tabs" defaultTab={0} style={{ paddingBottom: '0.5rem' }}>
-              <Tab style={summaryFont} eventKey={0} title="Flags">
-                <div style={summaryFont}>
-                  <ResponseFlagsTable title="Response flags by code:" responses={edgeData.responses} />
-                </div>
-                {reverse && (
+          {isTcp && (
+            <div className={summaryBodyTabs}>
+              <SimpleTabs id="edge_summary_flag_hosts_tabs" defaultTab={0} style={{ paddingBottom: '0.5rem' }}>
+                <Tab style={summaryFont} eventKey={0} title="Flags">
                   <div style={summaryFont}>
-                    <ResponseFlagsTable title="Response flags by code (From Waypoint):" responses={reverse.responses} />
+                    <ResponseFlagsTable
+                      title="Response flags by code:"
+                      responses={reverseEdge ? reverse.responses : edgeData.responses}
+                    />
                   </div>
-                )}
-              </Tab>
+                </Tab>
 
-              <Tab style={summaryFont} eventKey={1} title="Hosts">
-                <div style={summaryFont}>
-                  <ResponseHostsTable title="Hosts by code:" responses={edgeData.responses} />
-                </div>
-                {reverse && (
+                <Tab style={summaryFont} eventKey={1} title="Hosts">
                   <div style={summaryFont}>
-                    <ResponseHostsTable title="Hosts by code (From Waypoint):" responses={reverse.responses} />
+                    <ResponseHostsTable
+                      title="Hosts by code:"
+                      responses={reverseEdge ? reverse.responses : edgeData.responses}
+                    />
                   </div>
-                )}
-              </Tab>
-            </SimpleTabs>
+                </Tab>
+              </SimpleTabs>
 
-            {hr()}
+              {hr()}
 
-            {this.renderCharts(edge, isGrpc, isHttp, isTcp, isRequests, isPF)}
-          </div>
+              {this.renderCharts(edge, isGrpc, isHttp, isTcp, isRequests, isPF, reverseEdge)}
+            </div>
+          )}
+
+          {!isGrpc && !isHttp && !isTcp && <div className={panelBodyStyle}>{renderNoTraffic()}</div>}
+        </div>
+      );
+    };
+
+    return (
+      <div ref={this.mainDivRef} className={classes(panelStyle, summaryPanel)}>
+        {!reverse && <MainSummary />}
+        {reverse && (
+          <SimpleTabs id="edge_summary_main_tabs" defaultTab={0}>
+            <Tab style={summaryFont} eventKey={0} title={getAppName(sourceData)}>
+              <MainSummary reverseEdge={false} />
+            </Tab>
+            <Tab style={summaryFont} eventKey={1} title={getAppName(destData)}>
+              <MainSummary reverseEdge={true} />
+            </Tab>
+          </SimpleTabs>
         )}
-
-        {!isGrpc && !isHttp && !isTcp && <div className={panelBodyStyle}>{renderNoTraffic()}</div>}
       </div>
     );
   }
@@ -651,7 +667,8 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
     isHttp: boolean,
     isTcp: boolean,
     isRequests: boolean,
-    isPF: boolean
+    isPF: boolean,
+    reverseEdge?: boolean
   ): React.ReactNode => {
     if (!this.hasSupportedCharts(edge, isPF)) {
       return isGrpc || isHttp ? (
@@ -691,7 +708,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
       );
     }
 
-    let requestChart: React.ReactNode, streamChart: React.ReactNode, reverseStreamChart: React.ReactNode;
+    let requestChart: React.ReactNode, streamChart: React.ReactNode;
 
     if (isGrpc || isHttp) {
       if (isRequests) {
@@ -725,21 +742,23 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
         );
       }
     } else if (isTcp) {
-      streamChart = (
-        <StreamChart label="TCP Traffic" sentRates={this.state.sent} receivedRates={this.state.received} unit="bytes" />
-      );
-      if (this.state.reverseSent && this.state.reverseReceived) {
-        reverseStreamChart = (
-          <div>
-            {this.state.reverseReceived}
-            {this.state.reverseSent}
-            <StreamChart
-              label="TCP Traffic (Waypoint)"
-              sentRates={this.state.reverseSent}
-              receivedRates={this.state.reverseReceived}
-              unit="bytes"
-            />
-          </div>
+      if (reverseEdge && this.state.reverseSent && this.state.reverseReceived) {
+        streamChart = (
+          <StreamChart
+            label="TCP Traffic"
+            sentRates={this.state.reverseSent}
+            receivedRates={this.state.reverseReceived}
+            unit="bytes"
+          />
+        );
+      } else {
+        streamChart = (
+          <StreamChart
+            label="TCP Traffic"
+            sentRates={this.state.sent}
+            receivedRates={this.state.received}
+            unit="bytes"
+          />
         );
       }
     }
@@ -748,7 +767,6 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
       <>
         {requestChart}
         {streamChart}
-        {this.state.reverseSent && this.state.reverseReceived && reverseStreamChart}
       </>
     );
   };
