@@ -24,7 +24,7 @@ func (a OutsiderAppender) IsFinalizer() bool {
 }
 
 // AppendGraph implements Appender
-func (a *OutsiderAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, _namespaceInfo *graph.AppenderNamespaceInfo) {
+func (a *OutsiderAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo, _namespaceInfo *graph.AppenderNamespaceInfo) {
 	if len(trafficMap) == 0 {
 		return
 	}

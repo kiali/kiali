@@ -23,7 +23,7 @@ func (a LabelerAppender) IsFinalizer() bool {
 }
 
 // AppendGraph implements Appender
-func (f *LabelerAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, _namespaceInfo *graph.AppenderNamespaceInfo) {
+func (f *LabelerAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo, _namespaceInfo *graph.AppenderNamespaceInfo) {
 	if len(trafficMap) == 0 {
 		return
 	}
@@ -32,7 +32,7 @@ func (f *LabelerAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *g
 }
 
 // labelNodes puts all k8s labels in the metadata for all nodes.
-func labelNodes(trafficMap graph.TrafficMap, gi *graph.AppenderGlobalInfo) {
+func labelNodes(trafficMap graph.TrafficMap, gi *graph.GlobalInfo) {
 	// We need to know the names of the Istio labels for app and version because we do not label the nodes with those.
 	// There is no need to get the Istio label names multiple times, so get them once now.
 	istioLabelNames := config.Get().IstioLabels

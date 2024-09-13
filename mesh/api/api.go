@@ -42,7 +42,7 @@ func GraphMesh(
 	// defer promtimer.ObserveDuration()
 
 	// Create a 'global' object to store the business. Global only to the request.
-	globalInfo := mesh.NewAppenderGlobalInfo()
+	globalInfo := mesh.NewGlobalInfo()
 	globalInfo.Business = business
 	globalInfo.ClientFactory = clientFactory
 	globalInfo.Config = conf
@@ -57,7 +57,7 @@ func GraphMesh(
 }
 
 // graphMesh provides a test hook that accepts mock clients
-func graphMesh(ctx context.Context, globalInfo *mesh.AppenderGlobalInfo, o mesh.Options) (code int, config interface{}) {
+func graphMesh(ctx context.Context, globalInfo *mesh.GlobalInfo, o mesh.Options) (code int, config interface{}) {
 	meshMap, err := generator.BuildMeshMap(ctx, o, globalInfo)
 	if err != nil {
 		if errors.IsForbidden(err) {

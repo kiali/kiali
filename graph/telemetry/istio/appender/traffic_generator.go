@@ -12,7 +12,7 @@ type TrafficGeneratorAppender struct{}
 
 // Name implements Appender
 func (f *TrafficGeneratorAppender) Name() string {
-	return OutsiderAppenderName
+	return TrafficGeneratorAppenderName
 }
 
 // IsFinalizer implements Appender
@@ -21,7 +21,7 @@ func (a TrafficGeneratorAppender) IsFinalizer() bool {
 }
 
 // AppendGraph implements Appender
-func (f *TrafficGeneratorAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, _namespaceInfo *graph.AppenderNamespaceInfo) {
+func (f *TrafficGeneratorAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo, _namespaceInfo *graph.AppenderNamespaceInfo) {
 	if len(trafficMap) == 0 {
 		return
 	}

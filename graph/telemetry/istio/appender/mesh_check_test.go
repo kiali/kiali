@@ -21,7 +21,7 @@ func TestWorkloadSidecarsPasses(t *testing.T) {
 	trafficMap := buildWorkloadTrafficMap()
 	businessLayer := setupSidecarsCheckWorkloads(t, buildFakeWorkloadDeployments(), buildFakeWorkloadPods())
 
-	globalInfo := graph.NewAppenderGlobalInfo()
+	globalInfo := graph.NewGlobalInfo()
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 	key := graph.GetClusterSensitiveKey(config.DefaultClusterID, "testNamespace")
@@ -45,7 +45,7 @@ func TestWorkloadWithMissingSidecarsIsFlagged(t *testing.T) {
 	trafficMap := buildWorkloadTrafficMap()
 	businessLayer := setupSidecarsCheckWorkloads(t, buildFakeWorkloadDeployments(), buildFakeWorkloadPodsNoSidecar())
 
-	globalInfo := graph.NewAppenderGlobalInfo()
+	globalInfo := graph.NewGlobalInfo()
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 	key := graph.GetClusterSensitiveKey(config.DefaultClusterID, "testNamespace")
@@ -70,7 +70,7 @@ func TestInaccessibleWorkload(t *testing.T) {
 	trafficMap := buildInaccessibleWorkloadTrafficMap()
 	businessLayer := setupSidecarsCheckWorkloads(t, buildFakeWorkloadDeployments(), buildFakeWorkloadPodsNoSidecar())
 
-	globalInfo := graph.NewAppenderGlobalInfo()
+	globalInfo := graph.NewGlobalInfo()
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 	key := graph.GetClusterSensitiveKey(config.DefaultClusterID, "testNamespace")
@@ -94,7 +94,7 @@ func TestAppNoPodsPasses(t *testing.T) {
 	trafficMap := buildAppTrafficMap()
 	businessLayer := setupSidecarsCheckWorkloads(t, []apps_v1.Deployment{}, []core_v1.Pod{})
 
-	globalInfo := graph.NewAppenderGlobalInfo()
+	globalInfo := graph.NewGlobalInfo()
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 	key := graph.GetClusterSensitiveKey(config.DefaultClusterID, "testNamespace")
@@ -118,7 +118,7 @@ func TestAppSidecarsPasses(t *testing.T) {
 	trafficMap := buildAppTrafficMap()
 	businessLayer := setupSidecarsCheckWorkloads(t, []apps_v1.Deployment{}, buildFakeWorkloadPods())
 
-	globalInfo := graph.NewAppenderGlobalInfo()
+	globalInfo := graph.NewGlobalInfo()
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 	key := graph.GetClusterSensitiveKey(config.DefaultClusterID, "testNamespace")
@@ -142,7 +142,7 @@ func TestAppWithMissingSidecarsIsFlagged(t *testing.T) {
 	trafficMap := buildAppTrafficMap()
 	businessLayer := setupSidecarsCheckWorkloads(t, []apps_v1.Deployment{}, buildFakeWorkloadPodsNoSidecar())
 
-	globalInfo := graph.NewAppenderGlobalInfo()
+	globalInfo := graph.NewGlobalInfo()
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 	key := graph.GetClusterSensitiveKey(config.DefaultClusterID, "testNamespace")
@@ -167,7 +167,7 @@ func TestAppWithAmbientIsFlagged(t *testing.T) {
 	trafficMap := buildAppTrafficMap()
 	businessLayer := setupSidecarsCheckWorkloads(t, []apps_v1.Deployment{}, buildFakeWorkloadPodsAmbient())
 
-	globalInfo := graph.NewAppenderGlobalInfo()
+	globalInfo := graph.NewGlobalInfo()
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 	key := graph.GetClusterSensitiveKey(config.DefaultClusterID, "testNamespace")
@@ -192,7 +192,7 @@ func TestServicesAreAlwaysValid(t *testing.T) {
 	trafficMap := buildServiceTrafficMap()
 	businessLayer := setupSidecarsCheckWorkloads(t, []apps_v1.Deployment{}, []core_v1.Pod{})
 
-	globalInfo := graph.NewAppenderGlobalInfo()
+	globalInfo := graph.NewGlobalInfo()
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 	key := graph.GetClusterSensitiveKey(config.DefaultClusterID, "testNamespace")

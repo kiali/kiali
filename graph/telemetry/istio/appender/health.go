@@ -33,7 +33,7 @@ func (a HealthAppender) IsFinalizer() bool {
 }
 
 // AppendGraph implements Appender
-func (a HealthAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, _ *graph.AppenderNamespaceInfo) {
+func (a HealthAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo, _ *graph.AppenderNamespaceInfo) {
 	if len(trafficMap) == 0 {
 		return
 	}
@@ -129,7 +129,7 @@ func initHealthData(node *graph.Node) {
 	}
 }
 
-func (a *HealthAppender) attachHealthConfig(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo) {
+func (a *HealthAppender) attachHealthConfig(trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo) {
 	for _, n := range trafficMap {
 		// skip health for inaccessible nodes.  For now, include health for outsider nodes because edge health
 		// may depend on any health config for those nodes.  And, users likely find the health useful.
@@ -153,7 +153,7 @@ func (a *HealthAppender) attachHealthConfig(trafficMap graph.TrafficMap, globalI
 	}
 }
 
-func (a *HealthAppender) attachHealth(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo) {
+func (a *HealthAppender) attachHealth(trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo) {
 	var nodesWithHealth []*graph.Node
 	type healthRequest struct {
 		app       bool

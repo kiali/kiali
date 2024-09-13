@@ -12,11 +12,7 @@ import (
 const AmbientAppenderName = "ambient"
 const WaypointSuffix = "waypoint"
 
-// AmbientAppender adds all the Ambient logic to the graph
-// handleWaypoint Identifies the waypoint proxies
-// based on the name (Optmization) and verifies by getting the workload
-// and then, checking the labels
-// handleWaypoint removes the waypoint proxies when ShowWaypoint is false
+// AmbientAppender applies Ambient logic to the graph.
 type AmbientAppender struct {
 	AccessibleNamespaces graph.AccessibleNamespaces
 	ShowWaypoints        bool
@@ -33,8 +29,11 @@ func (a AmbientAppender) IsFinalizer() bool {
 }
 
 // AppendGraph implements Appender
-func (a AmbientAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
-	if len(trafficMap) == 0 {
+func (a AmbientAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
+
+	// **** JUST SKIP AND RETURN FOR NOW, WE'LL COME BACK TO THIS....
+	// ***************************************************************
+	if len(trafficMap) == 0 || true {
 		return
 	}
 
@@ -43,11 +42,14 @@ func (a AmbientAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *gr
 	a.handleWaypoints(trafficMap, globalInfo)
 }
 
+// handleWaypoint identifies waypoint proxies quickly by name, and then validates
+// and then verifies by fetching the workload and checking labels.  It removes waypoint proxies
+// when ShowWaypoints is false
 // handleWaypoints flags or deletes waypoints, depending on the a.showWaypoints flag.  When showing waypoints we
 // remove outgoing edges from the waypoints, to simplify the graph and avoid highlight-looping.
-func (a AmbientAppender) handleWaypoints(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo) {
+func (a AmbientAppender) handleWaypoints(trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo) {
 
-	// Fetch the waypoint workloads
+	// Fetch the waypoint workloads. This is cached information, so no need to hold this in AppenderGlobalInfo
 	waypoints := globalInfo.Business.Workload.GetWaypoints(context.Background())
 
 	waypointNodes := make(map[string]bool)

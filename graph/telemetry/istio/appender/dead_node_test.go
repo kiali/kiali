@@ -124,7 +124,7 @@ func TestDeadNode(t *testing.T) {
 	assert.Equal("istio-ingressgateway", ingressNode.Workload)
 	assert.Equal(10, len(ingressNode.Edges))
 
-	globalInfo := graph.NewAppenderGlobalInfo()
+	globalInfo := graph.NewGlobalInfo()
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
@@ -288,7 +288,7 @@ func TestDeadNodeIssue2783(t *testing.T) {
 	assert.Equal(true, found)
 	assert.Equal(0, len(bNode.Edges))
 
-	globalInfo := graph.NewAppenderGlobalInfo()
+	globalInfo := graph.NewGlobalInfo()
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
@@ -347,7 +347,7 @@ func TestDeadNodeIssue2982(t *testing.T) {
 	assert.Equal(true, found)
 	assert.Equal(0, len(bNode.Edges))
 
-	globalInfo := graph.NewAppenderGlobalInfo()
+	globalInfo := graph.NewGlobalInfo()
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
@@ -404,7 +404,7 @@ func TestDeadNodeIssue7179(t *testing.T) {
 	assert.Equal(true, found)
 	assert.Equal(0, len(bNode.Edges))
 
-	globalInfo := graph.NewAppenderGlobalInfo()
+	globalInfo := graph.NewGlobalInfo()
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 

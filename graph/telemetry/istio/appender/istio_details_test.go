@@ -87,7 +87,7 @@ func TestCBAll(t *testing.T) {
 	assert.Equal(nil, trafficMap[svcNodeId].Metadata[graph.HasVS])
 	assert.Equal(nil, trafficMap[wlNodeId].Metadata[graph.HasVS])
 
-	globalInfo := graph.NewAppenderGlobalInfo()
+	globalInfo := graph.NewGlobalInfo()
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
@@ -154,7 +154,7 @@ func TestCBSubset(t *testing.T) {
 	assert.Equal(nil, trafficMap[svcNodeId].Metadata[graph.HasVS])
 	assert.Equal(nil, trafficMap[wlNodeId].Metadata[graph.HasVS])
 
-	globalInfo := graph.NewAppenderGlobalInfo()
+	globalInfo := graph.NewGlobalInfo()
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
@@ -218,7 +218,7 @@ func TestCBSubset(t *testing.T) {
 //	assert.Equal(nil, trafficMap[wlNodeId].Metadata[graph.HasVS])
 //	assert.Equal(nil, trafficMap[fooSvcNodeId].Metadata[graph.HasVS])
 //
-//	globalInfo := graph.NewAppenderGlobalInfo()
+//	globalInfo := graph.NewGlobalInfo()
 //	globalInfo.Business = businessLayer
 //	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 //
@@ -284,7 +284,7 @@ func TestCBSubset(t *testing.T) {
 //	assert.Equal(nil, trafficMap[fooSvcNodeId].Metadata[graph.HasTrafficShifting])
 //	assert.Equal(nil, trafficMap[fooSvcNodeId].Metadata[graph.HasRequestRouting])
 //
-//	globalInfo := graph.NewAppenderGlobalInfo()
+//	globalInfo := graph.NewGlobalInfo()
 //	globalInfo.Business = businessLayer
 //	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 //
@@ -328,7 +328,7 @@ func TestSEInAppBox(t *testing.T) {
 	}
 	trafficMap[serviceEntryNode.ID] = serviceEntryNode
 
-	globalInfo := graph.NewAppenderGlobalInfo()
+	globalInfo := graph.NewGlobalInfo()
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 

@@ -10,10 +10,10 @@ type TelemetryVendor interface {
 	// BuildNamespaceTrafficMap is required by the TelemetryVendor interface.  It must produce a valid
 	// TrafficMap for the requested namespaces, It is recommended to use the graph/util.go definitions for
 	// error handling. It should be modeled after the Istio implementation.
-	BuildNamespacesTrafficMap(o TelemetryOptions, client *prometheus.Client, globalInfo *AppenderGlobalInfo) TrafficMap
+	BuildNamespacesTrafficMap(o TelemetryOptions, client *prometheus.Client, globalInfo *GlobalInfo) TrafficMap
 
 	// BuildNodeTrafficMap is required by the TelemetryVendor interface.  It must produce a valid
 	// TrafficMap for the requested node, It is recommended to use the graph/util.go definitions for
 	// error handling. It should be modeled after the Istio implementation.
-	BuildNodeTrafficMap(o TelemetryOptions, client *prometheus.Client, globalInfo *AppenderGlobalInfo) TrafficMap
+	BuildNodeTrafficMap(o TelemetryOptions, client *prometheus.Client, globalInfo *GlobalInfo) TrafficMap
 }

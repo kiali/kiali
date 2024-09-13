@@ -167,7 +167,7 @@ func TestRemoveWaypoint(t *testing.T) {
 	businessLayer := setupWorkloadEntries(t)
 	trafficMap := workloadEntriesTrafficMap()
 
-	globalInfo := graph.NewAppenderGlobalInfo()
+	globalInfo := graph.NewGlobalInfo()
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo(appNamespace)
 
@@ -198,7 +198,7 @@ func TestIsWaypoint(t *testing.T) {
 	businessLayer := setupWorkloadEntries(t)
 	trafficMap := workloadEntriesTrafficMap()
 
-	globalInfo := graph.NewAppenderGlobalInfo()
+	globalInfo := graph.NewGlobalInfo()
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo(appNamespace)
 
@@ -235,7 +235,7 @@ func TestIsWaypointExcludedNs(t *testing.T) {
 	businessLayer := setupWorkloadEntries(t)
 	trafficMap := workloadEntriesTrafficMapExcludedNs()
 
-	globalInfo := graph.NewAppenderGlobalInfo()
+	globalInfo := graph.NewGlobalInfo()
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo(appNamespace)
 

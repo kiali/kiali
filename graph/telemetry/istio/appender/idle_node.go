@@ -29,7 +29,7 @@ func (a IdleNodeAppender) IsFinalizer() bool {
 }
 
 // AppendGraph implements Appender
-func (a IdleNodeAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
+func (a IdleNodeAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
 	if a.IsNodeGraph {
 		return
 	}
