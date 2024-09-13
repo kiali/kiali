@@ -136,7 +136,7 @@ const pathRoutes: RouteObject[] = [
     element: <ServiceDetailsRoute />
   },
   {
-    path: `/namespaces/:namespace/${Paths.ISTIO}/:objectType/:object`,
+    path: `/namespaces/:namespace/${Paths.ISTIO}/:objectGroup/:objectVersion/:objectKind/:objectName`,
     element: <IstioConfigDetailsRoute />
   },
   {
@@ -160,7 +160,7 @@ const pathRoutes: RouteObject[] = [
     element: <WorkloadDetailsRoute />
   },
   {
-    path: `/${Paths.ISTIO}/new/:objectType`,
+    path: `/${Paths.ISTIO}/new/:objectGroup/:objectVersion/:objectKind`,
     element: <IstioConfigNewRoute />
   },
   {

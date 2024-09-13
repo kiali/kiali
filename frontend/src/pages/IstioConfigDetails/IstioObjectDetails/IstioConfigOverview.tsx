@@ -17,7 +17,7 @@ import {
   WorkloadReference
 } from 'types/IstioObjects';
 import { kialiStyle } from 'styles/StyleUtils';
-import { getIstioObject, getReconciliationCondition } from 'utils/IstioConfigUtils';
+import { getIstioObject, getIstioObjectGVK, getReconciliationCondition } from 'utils/IstioConfigUtils';
 import { IstioConfigHelp } from './IstioConfigHelp';
 import { IstioConfigReferences } from './IstioConfigReferences';
 import { IstioConfigValidationReferences } from './IstioConfigValidationReferences';
@@ -115,13 +115,12 @@ export const IstioConfigOverview: React.FC<IstioConfigOverviewProps> = (props: I
 
     // Set the kiali url from kialiInstance info (here a "/console" is required as external link is used)
     const kialiUrl = `${kialiInstance?.url ?? ''}/console`;
-
     urlInKiali =
       kialiUrl +
       GetIstioObjectUrl(
         istioObject.metadata.name,
         istioObject.metadata.namespace,
-        istioObject.kind.toLowerCase(),
+        getIstioObjectGVK(istioObject),
         props.cluster
       );
   }

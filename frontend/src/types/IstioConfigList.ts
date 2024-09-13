@@ -21,11 +21,13 @@ import {
   VirtualService,
   WorkloadEntry,
   WorkloadGroup,
-  IstioObject
+  IstioObject,
+  GroupVersionKind
 } from './IstioObjects';
 import { ResourcePermissions } from './Permissions';
 
 export interface IstioConfigItem {
+  apiVersion?: string;
   authorizationPolicy?: AuthorizationPolicy;
   cluster?: string;
   creationTimestamp?: string;
@@ -38,6 +40,7 @@ export interface IstioConfigItem {
   k8sReferenceGrant?: K8sReferenceGrant;
   k8sTCPRoute?: K8sTCPRoute;
   k8sTLSRoute?: K8sTLSRoute;
+  kind?: string;
   name: string;
   namespace: string;
   peerAuthentication?: PeerAuthentication;
@@ -46,7 +49,6 @@ export interface IstioConfigItem {
   serviceEntry?: ServiceEntry;
   sidecar?: Sidecar;
   telemetry?: Telemetry;
-  type: string;
   validation?: ObjectValidation;
   virtualService?: VirtualService;
   wasmPlugin?: WasmPlugin;
@@ -91,6 +93,32 @@ export interface IstioConfigsMapQuery extends IstioConfigListQuery {
   namespaces?: string;
 }
 
+export const dicIstioTypeToGVK: { [key: string]: GroupVersionKind } = {
+  AuthorizationPolicy: { group: 'security.istio.io', version: 'v1', kind: 'AuthorizationPolicy' },
+  PeerAuthentication: { group: 'security.istio.io', version: 'v1', kind: 'PeerAuthentication' },
+  RequestAuthentication: { group: 'security.istio.io', version: 'v1', kind: 'RequestAuthentication' },
+
+  DestinationRule: { group: 'networking.istio.io', version: 'v1', kind: 'DestinationRule' },
+  Gateway: { group: 'networking.istio.io', version: 'v1', kind: 'Gateway' },
+  EnvoyFilter: { group: 'networking.istio.io', version: 'v1alpha3', kind: 'EnvoyFilter' },
+  Sidecar: { group: 'networking.istio.io', version: 'v1', kind: 'Sidecar' },
+  ServiceEntry: { group: 'networking.istio.io', version: 'v1', kind: 'ServiceEntry' },
+  VirtualService: { group: 'networking.istio.io', version: 'v1', kind: 'VirtualService' },
+  WorkloadEntry: { group: 'networking.istio.io', version: 'v1', kind: 'WorkloadEntry' },
+  WorkloadGroup: { group: 'networking.istio.io', version: 'v1', kind: 'WorkloadGroup' },
+
+  WasmPlugin: { group: 'extensions.istio.io', version: 'v1alpha1', kind: 'WasmPlugin' },
+  Telemetry: { group: 'telemetry.istio.io', version: 'v1', kind: 'Telemetry' },
+
+  K8sGateway: { group: 'gateway.networking.k8s.io', version: 'v1', kind: 'Gateway' },
+  K8sGatewayClass: { group: 'gateway.networking.k8s.io', version: 'v1', kind: 'GatewayClass' },
+  K8sGRPCRoute: { group: 'gateway.networking.k8s.io', version: 'v1', kind: 'GRPCRoute' },
+  K8sHTTPRoute: { group: 'gateway.networking.k8s.io', version: 'v1', kind: 'HTTPRoute' },
+  K8sReferenceGrant: { group: 'gateway.networking.k8s.io', version: 'v1', kind: 'ReferenceGrant' },
+  K8sTCPRoute: { group: 'gateway.networking.k8s.io', version: 'v1alpha2', kind: 'TCPRoute' },
+  K8sTLSRoute: { group: 'gateway.networking.k8s.io', version: 'v1alpha2', kind: 'TLSRoute' }
+};
+
 export const dicIstioType = {
   AuthorizationPolicy: 'authorizationpolicies',
   DestinationRule: 'destinationrules',
@@ -104,7 +132,7 @@ export const dicIstioType = {
   K8sTLSRoute: 'k8stlsroutes',
   PeerAuthentication: 'peerauthentications',
   RequestAuthentication: 'requestauthentications',
-  ServiceEntry: 'serviceentries',
+  dicIstioType: 'serviceentries',
   Sidecar: 'sidecars',
   Telemetry: 'telemetries',
   VirtualService: 'virtualservices',
@@ -301,7 +329,8 @@ export const toIstioItems = (istioConfigList: IstioConfigList, cluster?: string)
       const item = {
         namespace: entry.metadata.namespace ?? '',
         cluster: cluster,
-        type: typeName,
+        kind: entry.kind,
+        apiVersion: entry.apiVersion,
         name: entry.metadata.name,
         creationTimestamp: entry.metadata.creationTimestamp,
         resourceVersion: entry.metadata.resourceVersion,
@@ -328,7 +357,6 @@ export const vsToIstioItems = (
     validations.virtualservice && validations.virtualservice[vKey];
 
   const typeNameProto = dicIstioType['virtualservices']; // ex. serviceEntries -> ServiceEntry
-  const typeName = typeNameProto.toLowerCase(); // ex. ServiceEntry -> serviceentry
   const entryName = `${typeNameProto.charAt(0).toLowerCase()}${typeNameProto.slice(1)}`;
 
   vss.forEach(vs => {
@@ -337,7 +365,8 @@ export const vsToIstioItems = (
     const item = {
       cluster: cluster,
       namespace: vs.metadata.namespace ?? '',
-      type: typeName,
+      kind: vs.kind,
+      apiVersion: vs.apiVersion,
       name: vs.metadata.name,
       creationTimestamp: vs.metadata.creationTimestamp,
       resourceVersion: vs.metadata.resourceVersion,
@@ -361,7 +390,6 @@ export const drToIstioItems = (
     validations.destinationrule && validations.destinationrule[vKey];
 
   const typeNameProto = dicIstioType['destinationrules']; // ex. serviceEntries -> ServiceEntry
-  const typeName = typeNameProto.toLowerCase(); // ex. ServiceEntry -> serviceentry
   const entryName = `${typeNameProto.charAt(0).toLowerCase()}${typeNameProto.slice(1)}`;
 
   drs.forEach(dr => {
@@ -370,7 +398,8 @@ export const drToIstioItems = (
     const item = {
       cluster: cluster,
       namespace: dr.metadata.namespace ?? '',
-      type: typeName,
+      kind: dr.kind,
+      apiVersion: dr.apiVersion,
       name: dr.metadata.name,
       creationTimestamp: dr.metadata.creationTimestamp,
       resourceVersion: dr.metadata.resourceVersion,
@@ -395,7 +424,6 @@ export const gwToIstioItems = (
   const vsGateways = new Set();
 
   const typeNameProto = dicIstioType['gateways']; // ex. serviceEntries -> ServiceEntry
-  const typeName = typeNameProto.toLowerCase(); // ex. ServiceEntry -> serviceentry
   const entryName = `${typeNameProto.charAt(0).toLowerCase()}${typeNameProto.slice(1)}`;
 
   vss.forEach(vs => {
@@ -415,7 +443,8 @@ export const gwToIstioItems = (
       const item = {
         cluster: cluster,
         namespace: gw.metadata.namespace ?? '',
-        type: typeName,
+        kind: gw.kind,
+        apiVersion: gw.apiVersion,
         name: gw.metadata.name,
         creationTimestamp: gw.metadata.creationTimestamp,
         resourceVersion: gw.metadata.resourceVersion,
@@ -442,7 +471,6 @@ export const k8sGwToIstioItems = (
   const k8sGateways = new Set();
 
   const typeNameProto = dicIstioType['k8sgateways']; // ex. serviceEntries -> ServiceEntry
-  const typeName = typeNameProto.toLowerCase(); // ex. ServiceEntry -> serviceentry
   const entryName = `${typeNameProto.charAt(0).toLowerCase()}${typeNameProto.slice(1)}`;
 
   k8srs.forEach(k8sr => {
@@ -472,7 +500,8 @@ export const k8sGwToIstioItems = (
       const item = {
         cluster: cluster,
         namespace: gw.metadata.namespace ?? '',
-        type: typeName,
+        kind: gw.kind,
+        apiVersion: gw.apiVersion,
         name: gw.metadata.name,
         creationTimestamp: gw.metadata.creationTimestamp,
         resourceVersion: gw.metadata.resourceVersion,
@@ -492,7 +521,6 @@ export const seToIstioItems = (see: ServiceEntry[], validations: Validations, cl
   const hasValidations = (vKey: string): ObjectValidation => validations.serviceentry && validations.serviceentry[vKey];
 
   const typeNameProto = dicIstioType['serviceentries']; // ex. serviceEntries -> ServiceEntry
-  const typeName = typeNameProto.toLowerCase(); // ex. ServiceEntry -> serviceentry
   const entryName = `${typeNameProto.charAt(0).toLowerCase()}${typeNameProto.slice(1)}`;
 
   see.forEach(se => {
@@ -501,7 +529,8 @@ export const seToIstioItems = (see: ServiceEntry[], validations: Validations, cl
     const item = {
       cluster: cluster,
       namespace: se.metadata.namespace ?? '',
-      type: typeName,
+      kind: se.kind,
+      apiVersion: se.apiVersion,
       name: se.metadata.name,
       creationTimestamp: se.metadata.creationTimestamp,
       resourceVersion: se.metadata.resourceVersion,
@@ -524,7 +553,6 @@ export const k8sHTTPRouteToIstioItems = (
   const hasValidations = (vKey: string): ObjectValidation => validations.k8shttproute && validations.k8shttproute[vKey];
 
   const typeNameProto = dicIstioType['k8shttproutes']; // ex. serviceEntries -> ServiceEntry
-  const typeName = typeNameProto.toLowerCase(); // ex. ServiceEntry -> serviceentry
   const entryName = `${typeNameProto.charAt(0).toLowerCase()}${typeNameProto.slice(1)}`;
 
   routes.forEach(route => {
@@ -533,7 +561,8 @@ export const k8sHTTPRouteToIstioItems = (
     const item = {
       cluster: cluster,
       namespace: route.metadata.namespace ?? '',
-      type: typeName,
+      kind: route.kind,
+      apiVersion: route.apiVersion,
       name: route.metadata.name,
       creationTimestamp: route.metadata.creationTimestamp,
       resourceVersion: route.metadata.resourceVersion,
@@ -556,7 +585,6 @@ export const k8sGRPCRouteToIstioItems = (
   const hasValidations = (vKey: string): ObjectValidation => validations.k8sgrpcroute && validations.k8sgrpcroute[vKey];
 
   const typeNameProtoGRPC = dicIstioType['k8sgrpcroutes']; // ex. serviceEntries -> ServiceEntry
-  const typeNameGRPC = typeNameProtoGRPC.toLowerCase(); // ex. ServiceEntry -> serviceentry
   const entryNameGRPC = `${typeNameProtoGRPC.charAt(0).toLowerCase()}${typeNameProtoGRPC.slice(1)}`;
 
   grpcRoutes.forEach(route => {
@@ -565,7 +593,8 @@ export const k8sGRPCRouteToIstioItems = (
     const item = {
       cluster: cluster,
       namespace: route.metadata.namespace ?? '',
-      type: typeNameGRPC,
+      kind: route.kind,
+      apiVersion: route.apiVersion,
       name: route.metadata.name,
       creationTimestamp: route.metadata.creationTimestamp,
       resourceVersion: route.metadata.resourceVersion,

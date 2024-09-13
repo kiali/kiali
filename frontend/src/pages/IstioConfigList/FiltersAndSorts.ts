@@ -19,7 +19,11 @@ export const sortFields: SortField<IstioConfigItem>[] = [
     isNumeric: false,
     param: 'it',
     compare: (a: IstioConfigItem, b: IstioConfigItem): number => {
-      return a.type.localeCompare(b.type) || a.name.localeCompare(b.name);
+      return (
+        (a.kind ?? '').localeCompare(b.kind ?? '') ||
+        (a.apiVersion ?? '').localeCompare(b.apiVersion ?? '') ||
+        a.name.localeCompare(b.name)
+      );
     }
   },
   {
@@ -31,7 +35,12 @@ export const sortFields: SortField<IstioConfigItem>[] = [
       // On same name order is not well defined, we need some fallback methods
       // This happens specially on adapters/templates where Istio 1.0.x calls them "handler"
       // So, we have a lot of objects with same namespace+name
-      return a.name.localeCompare(b.name) || a.namespace.localeCompare(b.namespace) || a.type.localeCompare(b.type);
+      return (
+        a.name.localeCompare(b.name) ||
+        a.namespace.localeCompare(b.namespace) ||
+        (a.kind ?? '').localeCompare(b.kind ?? '') ||
+        (a.apiVersion ?? '').localeCompare(b.apiVersion ?? '')
+      );
     }
   },
   {

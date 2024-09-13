@@ -9,6 +9,7 @@ import { kialiStyle } from 'styles/StyleUtils';
 import { KialiAppState } from '../../store/Store';
 import { connect } from 'react-redux';
 import { isParentKiosk, kioskContextMenuAction } from '../Kiosk/KioskActions';
+import { GroupVersionKind } from '../../types/IstioObjects';
 
 export const infoStyle = kialiStyle({
   margin: '0 0 -0.125rem 0.5rem'
@@ -35,14 +36,13 @@ type IstioObjectProps = ReduxProps &
 export const GetIstioObjectUrl = (
   name: string,
   namespace: string,
-  type: string,
+  objectGVK: GroupVersionKind,
   cluster?: string,
   query?: string
 ): string => {
-  const istioType = IstioTypes[type];
   let to = `/namespaces/${namespace}/${Paths.ISTIO}`;
 
-  to = `${to}/${istioType.url}/${name}`;
+  to = `${to}/${objectGVK.group}/${objectGVK.version}/${objectGVK.kind}/${name}`;
 
   if (cluster && isMultiCluster) {
     to = `${to}?clusterName=${cluster}`;

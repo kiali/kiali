@@ -92,6 +92,12 @@ export const IstioLevelToSeverity = {
   WARNING: ValidationTypes.Warning
 };
 
+export interface GroupVersionKind {
+  group: string;
+  kind: string;
+  version: string;
+}
+
 export interface ObjectValidation {
   checks: ObjectCheck[];
   name: string;
@@ -110,7 +116,7 @@ export interface ObjectCheck {
 export interface ObjectReference {
   name: string;
   namespace: string;
-  objectType: string;
+  objectGVK: GroupVersionKind;
 }
 
 export interface PodReference {

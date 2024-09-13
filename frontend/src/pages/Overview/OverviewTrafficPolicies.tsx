@@ -15,6 +15,7 @@ import {
   buildGraphSidecars
 } from 'components/IstioWizards/WizardActions';
 import { AUTHORIZATION_POLICIES } from '../IstioConfigNew/AuthorizationPolicyForm';
+import { dicIstioTypeToGVK } from '../../types/IstioConfigList';
 
 type OverviewTrafficPoliciesProps = {
   canaryUpgradeStatus?: CanaryUpgradeStatus;
@@ -190,8 +191,12 @@ export class OverviewTrafficPolicies extends React.Component<OverviewTrafficPoli
         .registerAll(
           'trafficPoliciesDelete',
           apsP
-            .map(ap => API.deleteIstioConfigDetail(ns, 'authorizationpolicies', ap.metadata.name, cluster))
-            .concat(sdsP.map(sc => API.deleteIstioConfigDetail(ns, 'sidecars', sc.metadata.name, cluster)))
+            .map(ap =>
+              API.deleteIstioConfigDetail(ns, dicIstioTypeToGVK['AuthorizationPolicy'], ap.metadata.name, cluster)
+            )
+            .concat(
+              sdsP.map(sc => API.deleteIstioConfigDetail(ns, dicIstioTypeToGVK['Sidecar'], sc.metadata.name, cluster))
+            )
         )
         .then(_ => {
           //Error here
@@ -227,8 +232,12 @@ export class OverviewTrafficPolicies extends React.Component<OverviewTrafficPoli
         .registerAll(
           'trafficPoliciesCreate',
           aps
-            .map(ap => API.createIstioConfigDetail(ns, 'authorizationpolicies', JSON.stringify(ap), cluster))
-            .concat(sds.map(sc => API.createIstioConfigDetail(ns, 'sidecars', JSON.stringify(sc), cluster)))
+            .map(ap =>
+              API.createIstioConfigDetail(ns, dicIstioTypeToGVK['AuthorizationPolicy'], JSON.stringify(ap), cluster)
+            )
+            .concat(
+              sds.map(sc => API.createIstioConfigDetail(ns, dicIstioTypeToGVK['Sidecar'], JSON.stringify(sc), cluster))
+            )
         )
         .then(results => {
           if (results.length > 0) {

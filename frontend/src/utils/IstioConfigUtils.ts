@@ -1,6 +1,7 @@
 import { IstioConfigDetails } from '../types/IstioConfigDetails';
 import {
   ConnectionPoolSettings,
+  GroupVersionKind,
   IstioObject,
   ObjectCheck,
   OutlierDetection,
@@ -8,7 +9,7 @@ import {
   Validations
 } from '../types/IstioObjects';
 import _ from 'lodash';
-import { IstioConfigItem } from 'types/IstioConfigList';
+import { dicIstioTypeToGVK, IstioConfigItem } from 'types/IstioConfigList';
 
 export const mergeJsonPatch = (objectModified: object, object?: object): object => {
   if (!object) {
@@ -223,3 +224,15 @@ export const getReconciliationCondition = (
   const istioObject = getIstioObject(istioConfigDetails);
   return istioObject?.status?.conditions?.find(condition => condition.type === 'Reconciled');
 };
+
+export function getIstioObjectGVK(obj: IstioObject): GroupVersionKind {
+  if (!obj.apiVersion || !obj.kind) {
+    return { group: '', version: '', kind: '' };
+  }
+  const parts = obj.apiVersion.split('/');
+  if (parts.length !== 2) {
+    // should not happen, but not the best way, only an alternative
+    return dicIstioTypeToGVK[obj.kind];
+  }
+  return { group: parts[0], version: parts[1], kind: obj.kind! };
+}

@@ -38,7 +38,6 @@ import {
   DrawerPanelContent,
   Tab
 } from '@patternfly/react-core';
-import { dicIstioType } from '../../types/IstioConfigList';
 import { showInMessageCenter } from '../../utils/IstioValidationUtils';
 import { Refresh } from '../../components/Refresh/Refresh';
 import { IstioConfigOverview } from './IstioObjectDetails/IstioConfigOverview';
@@ -134,7 +133,7 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
     let title = '';
 
     if (this.state.istioObjectDetails) {
-      const objectType = dicIstioType[this.props.istioConfigId.objectType];
+      const objectType = this.props.istioConfigId.objectKind;
       const methodName = objectType.charAt(0).toLowerCase() + objectType.slice(1);
       const object = this.state.istioObjectDetails[methodName];
 
@@ -151,7 +150,13 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
   };
 
   newIstioObjectPromise = (props: IstioConfigId, validate: boolean): Promise<ApiResponse<IstioConfigDetails>> => {
-    return API.getIstioConfigDetail(props.namespace, props.objectType, props.object, validate, this.state.cluster);
+    return API.getIstioConfigDetail(
+      props.namespace,
+      { group: props.objectGroup, version: props.objectVersion, kind: props.objectKind },
+      props.objectName,
+      validate,
+      this.state.cluster
+    );
   };
 
   fetchIstioObjectDetailsFromProps = (props: IstioConfigId): void => {
@@ -179,7 +184,7 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
       .catch(error => {
         const msg: ErrorMsg = {
           title: 'No Istio object is selected',
-          description: `${this.props.istioConfigId.object} is not found in the mesh`
+          description: `${this.props.istioConfigId.objectName} is not found in the mesh`
         };
 
         this.setState({
@@ -188,7 +193,7 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
         });
 
         AlertUtils.addError(
-          `Could not fetch Istio object type [${props.objectType}] name [${props.object}] in namespace [${props.namespace}].`,
+          `Could not fetch Istio object type [${props.objectKind}] name [${props.objectName}] in namespace [${props.namespace}].`,
           error
         );
       });
@@ -241,8 +246,10 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
   propsMatch(prevProps: IstioConfigDetailsProps): boolean {
     return (
       this.props.istioConfigId.namespace === prevProps.istioConfigId.namespace &&
-      this.props.istioConfigId.object === prevProps.istioConfigId.object &&
-      this.props.istioConfigId.objectType === prevProps.istioConfigId.objectType
+      this.props.istioConfigId.objectName === prevProps.istioConfigId.objectName &&
+      this.props.istioConfigId.objectGroup === prevProps.istioConfigId.objectGroup &&
+      this.props.istioConfigId.objectVersion === prevProps.istioConfigId.objectVersion &&
+      this.props.istioConfigId.objectKind === prevProps.istioConfigId.objectKind
     );
   }
 
@@ -278,8 +285,12 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
   onDelete = (): void => {
     API.deleteIstioConfigDetail(
       this.props.istioConfigId.namespace,
-      this.props.istioConfigId.objectType,
-      this.props.istioConfigId.object,
+      {
+        group: this.props.istioConfigId.objectGroup,
+        version: this.props.istioConfigId.objectVersion,
+        kind: this.props.istioConfigId.objectKind
+      },
+      this.props.istioConfigId.objectName,
       this.state.cluster
     )
       .then(() => this.backToList())
@@ -296,13 +307,17 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
 
       API.updateIstioConfigDetail(
         this.props.istioConfigId.namespace,
-        this.props.istioConfigId.objectType,
-        this.props.istioConfigId.object,
+        {
+          group: this.props.istioConfigId.objectGroup,
+          version: this.props.istioConfigId.objectVersion,
+          kind: this.props.istioConfigId.objectKind
+        },
+        this.props.istioConfigId.objectName,
         jsonPatch,
         this.state.cluster
       )
         .then(() => {
-          const targetMessage = `${this.props.istioConfigId.namespace} / ${this.props.istioConfigId.objectType} / ${this.props.istioConfigId.object}`;
+          const targetMessage = `${this.props.istioConfigId.namespace} / ${this.props.istioConfigId.objectKind} / ${this.props.istioConfigId.objectName}`;
           AlertUtils.add(`Changes applied on ${targetMessage}`, 'default', MessageType.SUCCESS);
           this.fetchIstioObjectDetails();
         })
@@ -579,7 +594,7 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
 
     return !isParentKiosk(this.props.kiosk) ? (
       <IstioActionButtons
-        objectName={this.props.istioConfigId.object}
+        objectName={this.props.istioConfigId.objectName}
         readOnly={!this.canUpdate()}
         canUpdate={this.canUpdate() && this.state.isModified && !this.state.isRemoved && !yamlErrors}
         onCancel={this.onCancel}
@@ -606,7 +621,7 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
       <span className={rightToolbarStyle}>
         <IstioActionDropdown
           objectKind={istioObject ? istioObject.kind : undefined}
-          objectName={this.props.istioConfigId.object}
+          objectName={this.props.istioConfigId.objectName}
           canDelete={canDelete}
           onDelete={this.onDelete}
         />

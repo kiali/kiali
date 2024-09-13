@@ -23,7 +23,12 @@ import {
   IstioPermissions,
   IstioPermissionsQuery
 } from '../types/IstioConfigDetails';
-import { IstioConfigList, IstioConfigListQuery, IstioConfigsMapQuery } from '../types/IstioConfigList';
+import {
+  dicIstioTypeToGVK,
+  IstioConfigList,
+  IstioConfigListQuery,
+  IstioConfigsMapQuery
+} from '../types/IstioConfigList';
 import {
   Pod,
   PodLogs,
@@ -37,7 +42,8 @@ import {
   CanaryUpgradeStatus,
   PodLogsQuery,
   LogLevelQuery,
-  LogType
+  LogType,
+  GroupVersionKind
 } from '../types/IstioObjects';
 import { ComponentStatus, IstiodResourceThresholds } from '../types/IstioStatus';
 import { TracingInfo, TracingResponse, TracingSingleResponse } from '../types/TracingInfo';
@@ -362,7 +368,7 @@ export const getAllIstioConfigs = (
 
 export const getIstioConfigDetail = (
   namespace: string,
-  objectType: string,
+  objectGVK: GroupVersionKind,
   object: string,
   validate: boolean,
   cluster?: string
@@ -380,7 +386,7 @@ export const getIstioConfigDetail = (
 
   return newRequest<IstioConfigDetails>(
     HTTP_VERBS.GET,
-    urls.istioConfigDetail(namespace, objectType, object),
+    urls.istioConfigDetail(namespace, objectGVK.group, objectGVK.version, objectGVK.kind, object),
     queryParams,
     {}
   );
@@ -388,7 +394,7 @@ export const getIstioConfigDetail = (
 
 export const deleteIstioConfigDetail = (
   namespace: string,
-  objectType: string,
+  objectGVK: GroupVersionKind,
   object: string,
   cluster?: string
 ): Promise<ApiResponse<string>> => {
@@ -398,12 +404,17 @@ export const deleteIstioConfigDetail = (
     queryParams.clusterName = cluster;
   }
 
-  return newRequest<string>(HTTP_VERBS.DELETE, urls.istioConfigDelete(namespace, objectType, object), queryParams, {});
+  return newRequest<string>(
+    HTTP_VERBS.DELETE,
+    urls.istioConfigDelete(namespace, objectGVK.group, objectGVK.version, objectGVK.kind, object),
+    queryParams,
+    {}
+  );
 };
 
 export const updateIstioConfigDetail = (
   namespace: string,
-  objectType: string,
+  objectGVK: GroupVersionKind,
   object: string,
   jsonPatch: string,
   cluster?: string
@@ -414,12 +425,17 @@ export const updateIstioConfigDetail = (
     queryParams.clusterName = cluster;
   }
 
-  return newRequest(HTTP_VERBS.PATCH, urls.istioConfigUpdate(namespace, objectType, object), queryParams, jsonPatch);
+  return newRequest(
+    HTTP_VERBS.PATCH,
+    urls.istioConfigUpdate(namespace, objectGVK.group, objectGVK.version, objectGVK.kind, object),
+    queryParams,
+    jsonPatch
+  );
 };
 
 export const createIstioConfigDetail = (
   namespace: string,
-  objectType: string,
+  objectGVK: GroupVersionKind,
   json: string,
   cluster?: string
 ): Promise<ApiResponse<string>> => {
@@ -429,7 +445,12 @@ export const createIstioConfigDetail = (
     queryParams.clusterName = cluster;
   }
 
-  return newRequest(HTTP_VERBS.POST, urls.istioConfigCreate(namespace, objectType), queryParams, json);
+  return newRequest(
+    HTTP_VERBS.POST,
+    urls.istioConfigCreate(namespace, objectGVK.group, objectGVK.version, objectGVK.kind),
+    queryParams,
+    json
+  );
 };
 
 // comma separated list of namespaces
@@ -1242,29 +1263,51 @@ export function deleteServiceTrafficRouting(
 
   vsList.forEach(vs => {
     deletePromises.push(
-      deleteIstioConfigDetail(vs.metadata.namespace ?? '', 'virtualservices', vs.metadata.name, cluster)
+      deleteIstioConfigDetail(
+        vs.metadata.namespace ?? '',
+        dicIstioTypeToGVK['VirtualService'],
+        vs.metadata.name,
+        cluster
+      )
     );
   });
 
   httpRouteList.forEach(k8sr => {
     deletePromises.push(
-      deleteIstioConfigDetail(k8sr.metadata.namespace ?? '', 'k8shttproutes', k8sr.metadata.name, cluster)
+      deleteIstioConfigDetail(
+        k8sr.metadata.namespace ?? '',
+        dicIstioTypeToGVK['K8sHTTPRoute'],
+        k8sr.metadata.name,
+        cluster
+      )
     );
   });
 
   grpcRouteList.forEach(k8sr => {
     deletePromises.push(
-      deleteIstioConfigDetail(k8sr.metadata.namespace ?? '', 'k8sgrpcroutes', k8sr.metadata.name, cluster)
+      deleteIstioConfigDetail(
+        k8sr.metadata.namespace ?? '',
+        dicIstioTypeToGVK['K8sGRPCRoute'],
+        k8sr.metadata.name,
+        cluster
+      )
     );
   });
   drList.forEach(dr => {
     deletePromises.push(
-      deleteIstioConfigDetail(dr.metadata.namespace ?? '', 'destinationrules', dr.metadata.name, cluster)
+      deleteIstioConfigDetail(
+        dr.metadata.namespace ?? '',
+        dicIstioTypeToGVK['DestinationRule'],
+        dr.metadata.name,
+        cluster
+      )
     );
 
     const paName = dr.hasPeerAuthentication();
     if (!!paName) {
-      deletePromises.push(deleteIstioConfigDetail(dr.metadata.namespace ?? '', 'peerauthentications', paName, cluster));
+      deletePromises.push(
+        deleteIstioConfigDetail(dr.metadata.namespace ?? '', dicIstioTypeToGVK['PeerAuthentication'], paName, cluster)
+      );
     }
   });
 

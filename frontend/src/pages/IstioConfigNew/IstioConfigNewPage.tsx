@@ -103,7 +103,9 @@ type ReduxProps = {
 };
 
 type Props = ReduxProps & {
-  objectType: string;
+  objectGroup: string;
+  objectKind: string;
+  objectVersion: string;
 };
 
 type State = {
@@ -216,8 +218,8 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
   canCreate = (namespace: string): boolean => {
     return (
       this.state.istioPermissions[namespace] &&
-      this.props.objectType.length > 0 &&
-      this.state.istioPermissions[namespace][DIC[this.props.objectType]].create
+      this.props.objectKind.length > 0 &&
+      this.state.istioPermissions[namespace][DIC[this.props.objectKind]].create
     );
   };
 
@@ -329,7 +331,7 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
     let err = 0;
     await Promise.all(
       jsonIstioObjects
-        .map(o => API.createIstioConfigDetail(o.namespace, DIC[this.props.objectType], o.json, cluster))
+        .map(o => API.createIstioConfigDetail(o.namespace, DIC[this.props.objectKind], o.json, cluster))
         .map(p =>
           p.catch(error => {
             // ignore 404 errors besides no CRD found ones
@@ -338,7 +340,7 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
               API.getErrorString(error).includes('the server could not find the requested resource')
             ) {
               AlertUtils.addError(
-                `Could not create Istio ${this.props.objectType} objects${cluster ? ` in cluster ${cluster}.` : '.'}`,
+                `Could not create Istio ${this.props.objectKind} objects${cluster ? ` in cluster ${cluster}.` : '.'}`,
                 error
               );
               err++;
@@ -348,7 +350,7 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
     ).then(results => {
       if (results.filter(value => value !== undefined).length > 0) {
         AlertUtils.add(
-          `Istio ${this.props.objectType} created${cluster ? ` in cluster ${cluster}` : ''}`,
+          `Istio ${this.props.objectKind} created${cluster ? ` in cluster ${cluster}` : ''}`,
           'default',
           MessageType.SUCCESS
         );
@@ -363,7 +365,7 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
   showPreview = (): void => {
     const items: ConfigPreviewItem[] = [];
     this.props.activeNamespaces.forEach(ns => {
-      switch (this.props.objectType) {
+      switch (this.props.objectKind) {
         case AUTHORIZACION_POLICY:
           items.push({
             title: 'Authorization Policy',
@@ -492,7 +494,7 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
   };
 
   isIstioFormValid = (): boolean => {
-    switch (this.props.objectType) {
+    switch (this.props.objectKind) {
       case AUTHORIZACION_POLICY:
         return isAuthorizationPolicyStateValid(this.state.authorizationPolicy);
       case GATEWAY:
@@ -647,53 +649,53 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
               {!isValid(isNameValid) && (
                 <FormHelperText>
                   <HelperText>
-                    <HelperTextItem>{`A valid ${this.props.objectType} name is required`}</HelperTextItem>
+                    <HelperTextItem>{`A valid ${this.props.objectKind} name is required`}</HelperTextItem>
                   </HelperText>
                 </FormHelperText>
               )}
             </FormGroup>
 
-            {this.props.objectType === AUTHORIZACION_POLICY && (
+            {this.props.objectKind === AUTHORIZACION_POLICY && (
               <AuthorizationPolicyForm
                 authorizationPolicy={this.state.authorizationPolicy}
                 onChange={this.onChangeAuthorizationPolicy}
               />
             )}
 
-            {this.props.objectType === GATEWAY && (
+            {this.props.objectKind === GATEWAY && (
               <GatewayForm gateway={this.state.gateway} onChange={this.onChangeGateway} />
             )}
 
-            {this.props.objectType === K8SGATEWAY && (
+            {this.props.objectKind === K8SGATEWAY && (
               <K8sGatewayForm k8sGateway={this.state.k8sGateway} onChange={this.onChangeK8sGateway} />
             )}
 
-            {this.props.objectType === K8S_REFERENCE_GRANT && (
+            {this.props.objectKind === K8S_REFERENCE_GRANT && (
               <K8sReferenceGrantForm
                 k8sReferenceGrant={this.state.k8sReferenceGrant}
                 onChange={this.onChangeK8sReferenceGrant}
               />
             )}
 
-            {this.props.objectType === PEER_AUTHENTICATION && (
+            {this.props.objectKind === PEER_AUTHENTICATION && (
               <PeerAuthenticationForm
                 peerAuthentication={this.state.peerAuthentication}
                 onChange={this.onChangePeerAuthentication}
               />
             )}
 
-            {this.props.objectType === REQUEST_AUTHENTICATION && (
+            {this.props.objectKind === REQUEST_AUTHENTICATION && (
               <RequestAuthenticationForm
                 requestAuthentication={this.state.requestAuthentication}
                 onChange={this.onChangeRequestAuthentication}
               />
             )}
 
-            {this.props.objectType === SERVICE_ENTRY && (
+            {this.props.objectKind === SERVICE_ENTRY && (
               <ServiceEntryForm serviceEntry={this.state.serviceEntry} onChange={this.onChangeServiceEntry} />
             )}
 
-            {this.props.objectType === SIDECAR && (
+            {this.props.objectKind === SIDECAR && (
               <SidecarForm sidecar={this.state.sidecar} onChange={this.onChangeSidecar} />
             )}
 
@@ -765,7 +767,7 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
           <IstioConfigPreview
             isOpen={this.state.showPreview}
             items={this.state.itemsPreview}
-            downloadPrefix={this.props.objectType}
+            downloadPrefix={this.props.objectKind}
             title={'Preview new istio objects'}
             opTarget={'create'}
             disableAction={!canCreate}

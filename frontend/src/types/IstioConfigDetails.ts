@@ -29,8 +29,10 @@ import { AceOptions } from 'react-ace/types';
 
 export type IstioConfigId = {
   namespace: string;
-  object: string;
-  objectType: string;
+  objectGroup: string;
+  objectKind: string;
+  objectName: string;
+  objectVersion: string;
 };
 
 export interface IstioConfigDetails {
