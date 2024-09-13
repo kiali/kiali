@@ -374,20 +374,21 @@ func populateTrafficMap(trafficMap graph.TrafficMap, vector *model.Vector, metri
 		// - destSvcName is PassthroughCluster (see https://github.com/kiali/kiali/issues/4488)
 		// - dest node is already a service node
 		// - source or dest workload is an ambient waypoint
-		inject := false
+		var inject, sourceIsWaypoint, destIsWaypoint bool
 		if o.InjectServiceNodes && graph.IsOK(destSvcName) && destSvcName != graph.PassthroughCluster {
 			_, destNodeType, err := graph.Id(destCluster, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, o.GraphType)
 			if err != nil {
 				log.Warningf("Skipping %s, %s", m.String(), err)
 				continue
 			}
-			inject = (graph.NodeTypeService != destNodeType) && !hasWaypoint(ztunnel, sourceCluster, sourceWlNs, sourceWl, destCluster, destWlNs, destWl, globalInfo)
+			sourceIsWaypoint, destIsWaypoint = hasWaypoint(ztunnel, sourceCluster, sourceWlNs, sourceWl, destCluster, destWlNs, destWl, globalInfo)
+			inject = (graph.NodeTypeService != destNodeType) && !sourceIsWaypoint && !destIsWaypoint
 		}
-		addTraffic(trafficMap, metric, inject, val, protocol, code, flags, host, sourceCluster, sourceWlNs, "", sourceWl, sourceApp, sourceVer, destCluster, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, o)
+		addTraffic(trafficMap, metric, inject, val, protocol, code, flags, host, sourceCluster, sourceWlNs, "", sourceWl, sourceApp, sourceVer, destCluster, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, sourceIsWaypoint, destIsWaypoint, o)
 	}
 }
 
-func addTraffic(trafficMap graph.TrafficMap, metric string, inject bool, val float64, protocol, code, flags, host, sourceCluster, sourceNs, sourceSvc, sourceWl, sourceApp, sourceVer, destCluster, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer string, o graph.TelemetryOptions) {
+func addTraffic(trafficMap graph.TrafficMap, metric string, inject bool, val float64, protocol, code, flags, host, sourceCluster, sourceNs, sourceSvc, sourceWl, sourceApp, sourceVer, destCluster, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer string, sourceIsWaypoint, destIsWaypoint bool, o graph.TelemetryOptions) {
 	source, _, err := addNode(trafficMap, sourceCluster, sourceNs, sourceSvc, sourceNs, sourceWl, sourceApp, sourceVer, o)
 	if err != nil {
 		log.Warningf("Skipping addTraffic (source), %s", err)
@@ -397,6 +398,13 @@ func addTraffic(trafficMap graph.TrafficMap, metric string, inject bool, val flo
 	if err != nil {
 		log.Warningf("Skipping addTraffic (dest), %s", err)
 		return
+	}
+
+	if sourceIsWaypoint {
+		source.Metadata[graph.IsWaypoint] = true
+	}
+	if destIsWaypoint {
+		dest.Metadata[graph.IsWaypoint] = true
 	}
 
 	// Istio can generate duplicate metrics by reporting from both the source and destination proxies. To avoid
@@ -983,7 +991,7 @@ func promQuery(query string, queryTime time.Time, api prom_v1.API) model.Vector 
 
 	// wrap with a round() to be in line with metrics api
 	query = fmt.Sprintf("round(%s,0.001)", query)
-	log.Tracef("Graph query:\n%s@time=%v (now=%v, %v)\n", query, queryTime.Format(graph.TF), time.Now().Format(graph.TF), queryTime.Unix())
+	log.Infof("Graph query:\n%s@time=%v (now=%v, %v)\n", query, queryTime.Format(graph.TF), time.Now().Format(graph.TF), queryTime.Unix())
 
 	promtimer := internalmetrics.GetPrometheusProcessingTimePrometheusTimer("Graph-Generation")
 	value, warnings, err := api.Query(ctx, query, queryTime)
@@ -1007,20 +1015,29 @@ func promQuery(query string, queryTime time.Time, api prom_v1.API) model.Vector 
 // hasWaypoint returns true if the source or dest workload is determined to be a waypoint workload.  Note that this logic can
 // go away if and when https://github.com/istio/ztunnel/issues/1128 is implemented, and then we can make this determination
 // directly from the telemetry
-func hasWaypoint(ztunnel bool, sourceCluster, sourceWlNs, srcWl, destCluster, destWlNs, destWl string, globalInfo *graph.GlobalInfo) bool {
+func hasWaypoint(ztunnel bool, sourceCluster, sourceWlNs, srcWl, destCluster, destWlNs, destWl string, globalInfo *graph.GlobalInfo) (sourceIsWaypoint bool, destIsWaypoint bool) {
 	if !ztunnel {
-		return false
+		return false, false
 	}
+
 	// first, try a simple substring check on the name, for a common waypoint giveaway
-	if strings.Contains(strings.ToLower(srcWl), "waypoint") || strings.Contains(strings.ToLower(destWl), "waypoint") {
-		return true
+	sourceIsWaypoint = strings.Contains(strings.ToLower(srcWl), "waypoint")
+	destIsWaypoint = strings.Contains(strings.ToLower(destWl), "waypoint")
+	if sourceIsWaypoint || destIsWaypoint {
+		return sourceIsWaypoint, destIsWaypoint
 	}
+
 	if waypoints, ok := globalInfo.Vendor[appender.AmbientWaypoints]; ok {
-		return sliceutil.Some(waypoints.(models.Workloads), func(wp *models.Workload) bool {
-			return isWaypoint(wp, sourceCluster, sourceWlNs, srcWl) || isWaypoint(wp, destCluster, destWlNs, destWl)
+		sourceIsWaypoint = sliceutil.Some(waypoints.(models.Workloads), func(wp *models.Workload) bool {
+			return isWaypoint(wp, sourceCluster, sourceWlNs, srcWl)
 		})
+		if !sourceIsWaypoint {
+			destIsWaypoint = sliceutil.Some(waypoints.(models.Workloads), func(wp *models.Workload) bool {
+				return isWaypoint(wp, destCluster, destWlNs, destWl)
+			})
+		}
 	}
-	return false
+	return sourceIsWaypoint, destIsWaypoint
 }
 
 // isWaypoint returns true if the ns, name and cluster of a workload matches with one of the waypoints in the list
