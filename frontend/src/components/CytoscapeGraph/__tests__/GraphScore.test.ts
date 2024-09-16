@@ -55,7 +55,6 @@ describe('scoreNodes', () => {
     };
     edgeData = {
       id: 'any',
-      display: '',
       source: 'any',
       target: 'any',
       grpc: 0,
