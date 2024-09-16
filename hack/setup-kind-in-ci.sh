@@ -49,6 +49,13 @@ HELP
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
 cd ${SCRIPT_DIR}/..
 
+source "${SCRIPT_DIR}/kind_provisioner.sh"
+NODE_IMAGE="gcr.io/istio-testing/kind-node:v1.31.0"
+# Default IP family of the cluster is IPv4
+export IP_FAMILY="${IP_FAMILY:-ipv4}"
+DEFAULT_CLUSTER_YAML="${SCRIPT_DIR}/configs/default.yaml"
+KIND_CONFIG=""
+
 # process command line arguments
 while [[ $# -gt 0 ]]; do
   key="$1"
@@ -181,7 +188,8 @@ setup_kind_singlecluster() {
             auth_flags+=(--certs-dir "${certs_dir}")
 
   else
-    "${SCRIPT_DIR}"/start-kind.sh --name ci --image "${KIND_NODE_IMAGE}"
+    setup_kind_cluster_retry ci "${NODE_IMAGE}" "${KIND_CONFIG}"
+    #"${SCRIPT_DIR}"/start-kind.sh --name ci --image "${KIND_NODE_IMAGE}"
   fi
 
   infomsg "Installing istio"

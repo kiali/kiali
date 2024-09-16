@@ -479,6 +479,14 @@ if [ "${NETWORK}" != "" ]; then
   NETWORK_OPTION="--set values.global.network=${NETWORK}"
 fi
 
+if [ "${IP_FAMILY}" == "dual" ]; then
+  DUALSTACK_OPTIONS="--set meshConfig.defaultConfig.proxyMetadata.ISTIO_DUAL_STACK=true \
+                     --set values.pilot.env.ISTIO_DUAL_STACK=true \
+                     --set values.pilot.ipFamilyPolicy=RequireDualStack \
+                     --set values.gateways.istio-ingressgateway.ipFamilyPolicy=RequireDualStack \
+                     --set values.gateways.istio-egressgateway.ipFamilyPolicy=RequireDualStack"
+fi
+
 DEFAULT_ZIPKIN_SERVICE_OPTION="--set values.meshConfig.defaultConfig.tracing.zipkin.address=zipkin.${NAMESPACE}:9411"
 if [[ "${CUSTOM_INSTALL_SETTINGS}" == *"values.meshConfig.defaultConfig.tracing.zipkin.address"* ]]; then
   echo "Custom zipkin address set. Not setting default zipkin address."
@@ -502,6 +510,7 @@ for s in \
    "${MESH_ID_OPTION}" \
    "${NETWORK_OPTION}" \
    "${REDUCE_RESOURCES_OPTIONS}" \
+   "${DUALSTACK_OPTIONS}" \
    "${CUSTOM_INSTALL_SETTINGS}"
 do
   MANIFEST_CONFIG_SETTINGS_TO_APPLY="${MANIFEST_CONFIG_SETTINGS_TO_APPLY} ${s}"
