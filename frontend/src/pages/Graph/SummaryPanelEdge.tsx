@@ -47,13 +47,13 @@ import { AmbientBadge } from '../../components/Ambient/AmbientBadge';
 type SummaryPanelEdgeMetricsState = {
   errRates: Datapoint[];
   rates: Datapoint[];
+  received: Datapoint[];
   rt95: Datapoint[];
   rt99: Datapoint[];
   rtAvg: Datapoint[];
   rtMed: Datapoint[];
   sent: Datapoint[];
   unit: ResponseTimeUnit;
-  waypoint: Datapoint[];
   waypointReceived?: Datapoint[];
   waypointSent?: Datapoint[];
 };
@@ -67,13 +67,13 @@ type SummaryPanelEdgeState = SummaryPanelEdgeMetricsState & {
 const defaultMetricsState: SummaryPanelEdgeMetricsState = {
   errRates: [],
   rates: [],
+  received: [],
   rt95: [],
   rt99: [],
   rtAvg: [],
   rtMed: [],
   sent: [],
-  unit: 'ms',
-  waypoint: []
+  unit: 'ms'
 };
 
 const defaultState: SummaryPanelEdgeState = {
@@ -513,6 +513,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
         this.metricsPromise.promise
           .then(response => {
             const metrics = response.data;
+
             const sent = this.getNodeDataPoints(
               isTcp ? metrics.tcp_sent : metrics.grpc_sent,
               destMetricType,
@@ -557,7 +558,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
     this.metricsPromise.promise
       .then(response => {
         const metrics = response.data;
-        let { rates: reqRates, errRates, rtAvg, rtMed, rt95, rt99, sent, waypoint, unit } = defaultMetricsState;
+        let { rates: reqRates, errRates, rtAvg, rtMed, rt95, rt99, sent, received, unit } = defaultMetricsState;
         if (isHttp || (isGrpc && isRequests)) {
           reqRates = this.getNodeDataPoints(
             metrics.request_count,
@@ -618,7 +619,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
             isDestServiceEntry
           );
 
-          waypoint = this.getNodeDataPoints(
+          received = this.getNodeDataPoints(
             isTcp ? metrics.tcp_received : metrics.grpc_received,
             sourceMetricType,
             destMetricType,
@@ -636,7 +637,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
           rt95: rt95,
           rt99: rt99,
           sent: sent,
-          waypoint: waypoint,
+          received: received,
           unit: unit
         });
       })
@@ -736,7 +737,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
           <StreamChart
             label="gRPC Message Traffic"
             sentRates={this.state.sent!}
-            receivedRates={this.state.waypoint}
+            receivedRates={this.state.received!}
             unit="messages"
           />
         );
@@ -756,7 +757,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
           <StreamChart
             label="TCP Traffic"
             sentRates={this.state.sent}
-            receivedRates={this.state.waypoint}
+            receivedRates={this.state.received}
             unit="bytes"
           />
         );
