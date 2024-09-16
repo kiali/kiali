@@ -379,7 +379,7 @@ const TopologyContent: React.FC<{
         setEdgeOptions(edge, nodeMap, graphSettings);
         // If display is hide, don't push the node
         // To avoid click in the hidden one
-        if (data.display !== 'hide') {
+        if (data.waypoint !== 'from') {
           edges.push(edge);
         }
 

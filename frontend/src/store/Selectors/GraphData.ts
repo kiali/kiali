@@ -219,21 +219,21 @@ export const decorateGraphData = (graphData: GraphElements, duration: number): D
           }
           decoratedEdge.data = { protocol: traffic.protocol, ...decoratedEdge.data };
         }
-        if (decoratedEdge.data.reverse) {
-          let decoratedReverse = { ...decoratedEdge.data.reverse };
-          if (decoratedReverse.traffic) {
-            if (hasProtocolTraffic(decoratedReverse.traffic)) {
-              decoratedReverse = {
+        if (decoratedEdge.data.waypointEdge) {
+          let waypointEdge = { ...decoratedEdge.data.waypointEdge };
+          if (waypointEdge.traffic) {
+            if (hasProtocolTraffic(waypointEdge.traffic)) {
+              waypointEdge = {
                 hasTraffic: true,
-                responses: decoratedReverse.traffic.responses,
-                ...edgeProtocolDefaults[decoratedReverse.traffic.protocol],
-                ...propertiesToNumber(decoratedReverse.traffic.rates),
+                responses: waypointEdge.traffic.responses,
+                ...edgeProtocolDefaults[waypointEdge.traffic.protocol],
+                ...propertiesToNumber(waypointEdge.traffic.rates),
                 // Base properties that need to be cast as number.
-                ...propertiesToNumber(decoratedReverse, ['isMtls', 'responseTime', 'throughput'])
+                ...propertiesToNumber(waypointEdge, ['isMtls', 'responseTime', 'throughput'])
               };
             }
           }
-          decoratedEdge.data.reverse = decoratedReverse;
+          decoratedEdge.data.waypointEdge = waypointEdge;
         }
         // prettier-ignore
         decoratedEdge.data = { ...elementsDefaults.edges, ...decoratedEdge.data } as DecoratedGraphEdgeData;

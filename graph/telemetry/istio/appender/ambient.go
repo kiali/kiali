@@ -7,6 +7,8 @@ import (
 )
 
 const AmbientAppenderName = "ambient"
+const WaypointFrom = "from"
+const WaypointTo = "to"
 
 // AmbientAppender applies Ambient logic to the graph.
 type AmbientAppender struct {
@@ -58,9 +60,7 @@ func (a AmbientAppender) handleWaypoints(trafficMap graph.TrafficMap) {
 				n.Metadata[graph.IsOutOfMesh] = false
 				for _, edge := range n.Edges {
 					// Just hide so we have all the information
-
-					// TODO: We may want to change the semantics/naming here, to avoid backend control of the UI
-					edge.Metadata[graph.Display] = "hide"
+					edge.Metadata[graph.Waypoint] = WaypointFrom
 				}
 			}
 		}
@@ -82,8 +82,9 @@ func (a AmbientAppender) handleWaypoints(trafficMap graph.TrafficMap) {
 		// Find duplicates
 		for _, edge := range n.Edges {
 			if waypointNodes[edge.Dest.ID] {
-				edge.Metadata[graph.Display] = "reverse"
+				edge.Metadata[graph.Waypoint] = WaypointTo
 			}
 		}
+
 	}
 }

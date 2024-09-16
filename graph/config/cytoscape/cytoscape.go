@@ -22,6 +22,7 @@ import (
 	"strings"
 
 	"github.com/kiali/kiali/graph"
+	"github.com/kiali/kiali/graph/telemetry/istio/appender"
 )
 
 // ResponseFlags is a map of maps. Each response code is broken down by responseFlags:percentageOfTraffic, e.g.:
@@ -132,14 +133,14 @@ type EdgeData struct {
 	Target string `json:"target"` // child node ID
 
 	// App Fields (not required by Cytoscape)
-	Display         string          `json:"display,omitempty"`         // Used to hide edges for biderectional ones (Ambient graph simplification)
 	DestPrincipal   string          `json:"destPrincipal,omitempty"`   // principal used for the edge destination
 	IsMTLS          string          `json:"isMTLS,omitempty"`          // set to the percentage of traffic using a mutual TLS connection
 	ResponseTime    string          `json:"responseTime,omitempty"`    // in millis
-	Reverse         *EdgeData       `json:"reverse,omitempty"`         // Reverse edge data
 	SourcePrincipal string          `json:"sourcePrincipal,omitempty"` // principal used for the edge source
 	Throughput      string          `json:"throughput,omitempty"`      // in bytes/sec (request or response, depends on client request)
 	Traffic         ProtocolTraffic `json:"traffic,omitempty"`         // traffic rates for the edge protocol
+	Waypoint        string          `json:"waypoint,omitempty"`        // If edge is "from" or "to" a waypoint
+	WaypointEdge    *EdgeData       `json:"waypointEdge,omitempty"`    // WaypointEdge data when waypoint is "to"
 }
 
 type NodeWrapper struct {
@@ -461,8 +462,8 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 			if e.Metadata[graph.SourcePrincipal] != nil {
 				ed.SourcePrincipal = e.Metadata[graph.SourcePrincipal].(string)
 			}
-			if e.Metadata[graph.Display] != nil {
-				ed.Display = e.Metadata[graph.Display].(string)
+			if e.Metadata[graph.Waypoint] != nil {
+				ed.Waypoint = e.Metadata[graph.Waypoint].(string)
 			}
 			addEdgeTelemetry(e, &ed)
 
@@ -475,10 +476,10 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 
 	// TODO: Just for Ambient
 	for _, e := range *edges {
-		if e.Data.Display == "reverse" {
+		if e.Data.Waypoint == appender.WaypointTo {
 			for _, otherEdge := range *edges {
 				if e.Data.ID != otherEdge.Data.ID && e.Data.Source == otherEdge.Data.Target && e.Data.Target == otherEdge.Data.Source {
-					e.Data.Reverse = otherEdge.Data
+					e.Data.WaypointEdge = otherEdge.Data
 					// Delete the other edge?
 				}
 			}

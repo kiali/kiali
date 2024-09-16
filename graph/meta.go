@@ -15,7 +15,6 @@ func NewMetadata() Metadata {
 const (
 	Aggregate             MetadataKey = "aggregate" // the prom attribute used for aggregation
 	AggregateValue        MetadataKey = "aggregateValue"
-	Display               MetadataKey = "display"
 	DestPrincipal         MetadataKey = "destPrincipal"
 	DestServices          MetadataKey = "destServices"
 	HealthData            MetadataKey = "healthData"
@@ -49,9 +48,9 @@ const (
 	Labels                MetadataKey = "labels"
 	ProtocolKey           MetadataKey = "protocol"
 	ResponseTime          MetadataKey = "responseTime"
-	Reverse               MetadataKey = "reverse"
 	SourcePrincipal       MetadataKey = "sourcePrincipal"
 	Throughput            MetadataKey = "throughput"
+	Waypoint              MetadataKey = "waypoint" // Indicates if the traffic is "from" or "to" a waypoint proxy
 )
 
 // DestServicesMetadata key=Service.Key()

@@ -413,8 +413,8 @@ const getEdgeLabel = (edge: EdgeModel, nodeMap: NodeMap, settings: GraphPFSettin
             }
             break;
           case Protocol.TCP:
-            if (data.reverse) {
-              labels.push(toFixedByteRate(rate + data.reverse.tcp, includeUnits, '*'));
+            if (data.waypoint === 'to' && data.waypointEdge) {
+              labels.push(toFixedByteRate(rate + data.waypointEdge.tcp, includeUnits, '*'));
             } else {
               labels.push(toFixedByteRate(rate, includeUnits));
             }
@@ -594,7 +594,7 @@ const getPathStyle = (data: EdgeData): React.CSSProperties => {
 
 export const setEdgeOptions = (edge: EdgeModel, nodeMap: NodeMap, settings: GraphPFSettings): void => {
   const data = edge.data as EdgeData;
-  if (data.reverse) {
+  if (data.waypointEdge) {
     data.startTerminalType = data.protocol === Protocol.TCP ? EdgeTerminalType.square : EdgeTerminalType.directional;
   }
   data.endTerminalType = data.protocol === Protocol.TCP ? EdgeTerminalType.square : EdgeTerminalType.directional;

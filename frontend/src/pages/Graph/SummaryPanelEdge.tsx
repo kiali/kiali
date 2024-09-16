@@ -47,15 +47,15 @@ import { AmbientBadge } from '../../components/Ambient/AmbientBadge';
 type SummaryPanelEdgeMetricsState = {
   errRates: Datapoint[];
   rates: Datapoint[];
-  received: Datapoint[];
-  reverseReceived?: Datapoint[];
-  reverseSent?: Datapoint[];
   rt95: Datapoint[];
   rt99: Datapoint[];
   rtAvg: Datapoint[];
   rtMed: Datapoint[];
   sent: Datapoint[];
   unit: ResponseTimeUnit;
+  waypoint: Datapoint[];
+  waypointReceived?: Datapoint[];
+  waypointSent?: Datapoint[];
 };
 
 type SummaryPanelEdgeState = SummaryPanelEdgeMetricsState & {
@@ -67,13 +67,13 @@ type SummaryPanelEdgeState = SummaryPanelEdgeMetricsState & {
 const defaultMetricsState: SummaryPanelEdgeMetricsState = {
   errRates: [],
   rates: [],
-  received: [],
   rt95: [],
   rt99: [],
   rtAvg: [],
   rtMed: [],
   sent: [],
-  unit: 'ms'
+  unit: 'ms',
+  waypoint: []
 };
 
 const defaultState: SummaryPanelEdgeState = {
@@ -150,7 +150,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
     const isHttp = protocol === Protocol.HTTP;
     const isTcp = protocol === Protocol.TCP;
     const isRequests = isHttp || (isGrpc && this.props.trafficRates.includes(TrafficRate.GRPC_REQUEST));
-    const reverse = edgeData.reverse;
+    const waypoint = edgeData.waypointEdge;
 
     const SecurityBlock = (): React.ReactElement => {
       return (
@@ -174,10 +174,10 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
         </div>
       );
     };
-    const ambientBadge = reverse ? <AmbientBadge tooltip={'reported from Ambient'}></AmbientBadge> : undefined;
-    const MainSummary = ({ reverseEdge }: { reverseEdge?: boolean }): React.ReactElement => {
-      const source = reverseEdge ? destData : sourceData;
-      const dest = reverseEdge ? sourceData : destData;
+    const ambientBadge = waypoint ? <AmbientBadge tooltip={'reported from Ambient'}></AmbientBadge> : undefined;
+    const MainSummary = ({ waypointEdge }: { waypointEdge?: boolean }): React.ReactElement => {
+      const source = waypointEdge ? destData : sourceData;
+      const dest = waypointEdge ? sourceData : destData;
       return (
         <div>
           <div className={panelHeadingStyle}>
@@ -250,7 +250,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
                   <div style={summaryFont}>
                     <ResponseFlagsTable
                       title="Response flags by code:"
-                      responses={reverseEdge ? reverse.responses : edgeData.responses}
+                      responses={waypointEdge ? waypoint.responses : edgeData.responses}
                     />
                   </div>
                 </Tab>
@@ -259,7 +259,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
                   <div style={summaryFont}>
                     <ResponseHostsTable
                       title="Hosts by code:"
-                      responses={reverseEdge ? reverse.responses : edgeData.responses}
+                      responses={waypointEdge ? waypoint.responses : edgeData.responses}
                     />
                   </div>
                 </Tab>
@@ -267,7 +267,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
 
               {hr()}
 
-              {this.renderCharts(edge, isGrpc, isHttp, isTcp, isRequests, isPF, reverseEdge)}
+              {this.renderCharts(edge, isGrpc, isHttp, isTcp, isRequests, isPF, waypointEdge)}
             </div>
           )}
 
@@ -278,14 +278,14 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
 
     return (
       <div ref={this.mainDivRef} className={classes(panelStyle, summaryPanel)}>
-        {!reverse && <MainSummary />}
-        {reverse && (
+        {!waypoint && <MainSummary />}
+        {waypoint && (
           <SimpleTabs id="edge_summary_main_tabs" defaultTab={0}>
             <Tab style={summaryFont} eventKey={0} title={getAppName(sourceData)}>
-              <MainSummary reverseEdge={false} />
+              <MainSummary waypointEdge={false} />
             </Tab>
             <Tab style={summaryFont} eventKey={1} title={getAppName(destData)}>
-              <MainSummary reverseEdge={true} />
+              <MainSummary waypointEdge={true} />
             </Tab>
           </SimpleTabs>
         )}
@@ -494,12 +494,12 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
           : 'source';
       const filtersTCP = ['tcp_sent', 'tcp_received'];
 
-      if (edgeData.reverse) {
-        const reverseMetricType = sourceMetricType;
-        const reverseMetricsNodeData = sourceData;
-        const reversePromeRequests = getNodeMetrics(
-          reverseMetricType,
-          reverseMetricsNodeData,
+      if (edgeData.waypointEdge) {
+        const waypointMetricType = sourceMetricType;
+        const waypointMetricsNodeData = sourceData;
+        const waypointPromeRequests = getNodeMetrics(
+          waypointMetricType,
+          waypointMetricsNodeData,
           props,
           filtersTCP,
           direction,
@@ -509,7 +509,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
           quantiles,
           ['source_workload']
         );
-        this.metricsPromise = makeCancelablePromise(reversePromeRequests);
+        this.metricsPromise = makeCancelablePromise(waypointPromeRequests);
         this.metricsPromise.promise
           .then(response => {
             const metrics = response.data;
@@ -529,12 +529,12 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
               isDestServiceEntry
             );
             this.setState({
-              reverseSent: sent,
-              reverseReceived: received
+              waypointSent: sent,
+              waypointReceived: received
             });
           })
           .catch(error => {
-            console.debug(`SummaryPanelEdge: Ignore fetch error for reverse metrics (canceled) ${error}`);
+            console.debug(`SummaryPanelEdge: Ignore fetch error for waypoint metrics (canceled) ${error}`);
           });
       }
 
@@ -557,7 +557,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
     this.metricsPromise.promise
       .then(response => {
         const metrics = response.data;
-        let { rates: reqRates, errRates, rtAvg, rtMed, rt95, rt99, sent, received, unit } = defaultMetricsState;
+        let { rates: reqRates, errRates, rtAvg, rtMed, rt95, rt99, sent, waypoint, unit } = defaultMetricsState;
         if (isHttp || (isGrpc && isRequests)) {
           reqRates = this.getNodeDataPoints(
             metrics.request_count,
@@ -618,7 +618,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
             isDestServiceEntry
           );
 
-          received = this.getNodeDataPoints(
+          waypoint = this.getNodeDataPoints(
             isTcp ? metrics.tcp_received : metrics.grpc_received,
             sourceMetricType,
             destMetricType,
@@ -636,7 +636,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
           rt95: rt95,
           rt99: rt99,
           sent: sent,
-          received: received,
+          waypoint: waypoint,
           unit: unit
         });
       })
@@ -668,7 +668,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
     isTcp: boolean,
     isRequests: boolean,
     isPF: boolean,
-    reverseEdge?: boolean
+    waypointEdge?: boolean
   ): React.ReactNode => {
     if (!this.hasSupportedCharts(edge, isPF)) {
       return isGrpc || isHttp ? (
@@ -736,18 +736,18 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
           <StreamChart
             label="gRPC Message Traffic"
             sentRates={this.state.sent!}
-            receivedRates={this.state.received}
+            receivedRates={this.state.waypoint}
             unit="messages"
           />
         );
       }
     } else if (isTcp) {
-      if (reverseEdge && this.state.reverseSent && this.state.reverseReceived) {
+      if (waypointEdge && this.state.waypointSent && this.state.waypointReceived) {
         streamChart = (
           <StreamChart
             label="TCP Traffic"
-            sentRates={this.state.reverseSent}
-            receivedRates={this.state.reverseReceived}
+            sentRates={this.state.waypointSent}
+            receivedRates={this.state.waypointReceived}
             unit="bytes"
           />
         );
@@ -756,7 +756,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
           <StreamChart
             label="TCP Traffic"
             sentRates={this.state.sent}
-            receivedRates={this.state.received}
+            receivedRates={this.state.waypoint}
             unit="bytes"
           />
         );

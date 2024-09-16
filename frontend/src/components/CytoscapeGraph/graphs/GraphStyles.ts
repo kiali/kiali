@@ -1004,7 +1004,7 @@ export class GraphStyles {
         }
       },
       {
-        selector: `edge[display="reverse"]`,
+        selector: `edge[waypoint="to"]`,
         style: {
           'target-arrow-shape': 'triangle-cross',
           'source-arrow-shape': 'triangle-cross',
@@ -1012,7 +1012,7 @@ export class GraphStyles {
         }
       },
       {
-        selector: `edge[display="hide"]`,
+        selector: `edge[waypoint="from"]`,
         style: {
           display: 'none'
         }
