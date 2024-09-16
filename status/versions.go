@@ -139,18 +139,18 @@ func grafanaVersion(ctx context.Context, grafana *grafana.Service, grafanaConfig
 	product := models.ExternalServiceInfo{}
 	product.Name = "Grafana"
 	product.Url = grafana.URL(ctx)
-	if product.Url != "" {
-		// try to determine version by querying
-		url := fmt.Sprintf("%s/api/frontend/settings", product.Url)
+
+	versionUrl := grafana.VersionURL(ctx)
+	if versionUrl != "" {
 		// Be sure to copy config.Auth and not modify the existing
 		auth := grafanaConfig.Auth
 		if auth.UseKialiToken {
 			auth.Token = homeClusterSAClient.GetToken()
 		}
-		body, statusCode, _, err := httputil.HttpGet(url, &auth, 10*time.Second, nil, nil)
+		body, statusCode, _, err := httputil.HttpGet(versionUrl, &auth, 10*time.Second, nil, nil)
 
 		if err != nil || statusCode > 399 {
-			log.Infof("grafana version check failed: url=[%v], code=[%v]", url, statusCode)
+			log.Infof("grafana version check failed: url=[%v], code=[%v]", versionUrl, statusCode)
 		} else {
 			grafanaV := new(grafanaResponseVersion)
 			err = json.Unmarshal(body, &grafanaV)
