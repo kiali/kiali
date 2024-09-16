@@ -328,7 +328,7 @@ const filterByName = (items: WorkloadListItem[], names: string[]): WorkloadListI
 };
 
 const filterByIstioType = (items: WorkloadListItem[], istioTypes: string[]): WorkloadListItem[] => {
-  return items.filter(item => item.istioReferences.filter(ref => istioTypes.includes(ref.objectType)).length !== 0);
+  return items.filter(item => item.istioReferences.filter(ref => istioTypes.includes(ref.objectGVK.kind)).length !== 0);
 };
 
 export const filterBy = (items: WorkloadListItem[], filters: ActiveFiltersInfo): WorkloadListItem[] => {

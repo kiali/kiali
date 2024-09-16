@@ -4,7 +4,7 @@ import { Tooltip, TooltipPosition } from '@patternfly/react-core';
 import * as FilterHelper from '../FilterList/FilterHelper';
 import { appLabelFilter, versionLabelFilter } from '../../pages/WorkloadList/FiltersAndSorts';
 import { MissingSidecar } from '../MissingSidecar/MissingSidecar';
-import { noAmbientLabels, hasMissingSidecar, IstioTypes, Renderer, Resource, SortResource, TResource } from './Config';
+import { noAmbientLabels, hasMissingSidecar, Renderer, Resource, SortResource, TResource, GVKToBadge } from './Config';
 import { HealthIndicator } from '../Health/HealthIndicator';
 import { ValidationObjectSummary } from '../Validations/ValidationObjectSummary';
 import { ValidationServiceSummary } from '../Validations/ValidationServiceSummary';
@@ -29,7 +29,7 @@ import { ValidationStatus } from '../../types/IstioObjects';
 import { PFBadgeType, PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { MissingLabel } from '../MissingLabel/MissingLabel';
 import { MissingAuthPolicy } from 'components/MissingAuthPolicy/MissingAuthPolicy';
-import { getReconciliationCondition } from 'utils/IstioConfigUtils';
+import { getReconciliationCondition, gvkToString } from 'utils/IstioConfigUtils';
 import { Label } from 'components/Label/Label';
 import { isMultiCluster, serverConfig } from 'config/ServerConfig';
 import { ControlPlaneBadge } from 'pages/Overview/ControlPlaneBadge';
@@ -128,15 +128,15 @@ export const details: Renderer<AppListItem | WorkloadListItem | ServiceListItem>
         {item.istioReferences?.length > 0 &&
           item.istioReferences.map(ir => (
             <li
-              key={ir.namespace ? `${ir.objectType}_${ir.name}_${ir.namespace}` : ir.name}
+              key={ir.namespace ? `${ir.objectGVK.group}.${ir.objectGVK.kind}_${ir.name}_${ir.namespace}` : ir.name}
               style={{ marginBottom: '0.125rem' }}
             >
-              <PFBadge badge={PFBadges[ir.objectType]} position={TooltipPosition.top} />
+              <PFBadge badge={GVKToBadge[gvkToString(ir.objectGVK)]} position={TooltipPosition.top} />
               <IstioObjectLink
                 name={ir.name}
                 namespace={ir.namespace ?? ''}
                 cluster={item.cluster}
-                type={ir.objectType.toLowerCase()}
+                objectGVK={ir.objectGVK}
               >
                 {ir.name}
               </IstioObjectLink>
@@ -434,9 +434,6 @@ export const workloadType: Renderer<WorkloadListItem> = (item: WorkloadListItem)
 };
 
 export const istioType: Renderer<IstioConfigItem> = (item: IstioConfigItem) => {
-  const type = item.type;
-  const object = IstioTypes[type];
-
   return (
     <Td
       role="gridcell"
@@ -444,7 +441,7 @@ export const istioType: Renderer<IstioConfigItem> = (item: IstioConfigItem) => {
       key={`VirtuaItem_IstioType_${item.namespace}_${item.name}`}
       style={{ verticalAlign: 'middle' }}
     >
-      {object.name}
+      {item.kind}
     </Td>
   );
 };

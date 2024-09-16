@@ -13,11 +13,12 @@ import {
   TooltipPosition
 } from '@patternfly/react-core';
 import { ValidationObjectSummary } from '../Validations/ValidationObjectSummary';
-import { IstioTypes } from '../VirtualList/Config';
+import { GVKToBadge } from '../VirtualList/Config';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFBadge } from '../Pf/PfBadges';
 import { IstioObjectLink } from '../Link/IstioObjectLink';
 import { SimpleTable } from 'components/Table/SimpleTable';
+import { getIstioObjectGVK, gvkToString } from '../../utils/IstioConfigUtils';
 
 type IstioConfigCardProps = {
   items: IstioConfigItem[];
@@ -42,7 +43,12 @@ export const IstioConfigCard: React.FC<IstioConfigCardProps> = (props: IstioConf
 
   const overviewLink = (item: IstioConfigItem): React.ReactNode => {
     return (
-      <IstioObjectLink name={item.name} namespace={item.namespace ?? ''} cluster={item.cluster} type={item.type}>
+      <IstioObjectLink
+        name={item.name}
+        namespace={item.namespace ?? ''}
+        cluster={item.cluster}
+        objectGVK={getIstioObjectGVK(item.apiVersion, item.kind)}
+      >
         {item.name}
       </IstioObjectLink>
     );
@@ -50,9 +56,10 @@ export const IstioConfigCard: React.FC<IstioConfigCardProps> = (props: IstioConf
 
   const rows: IRow[] = props.items
     .sort((a: IstioConfigItem, b: IstioConfigItem) => {
-      if (a.type < b.type) {
+      // TODO localCompare with apiVersion
+      if ((a.kind ?? '') < (b.kind ?? '')) {
         return -1;
-      } else if (a.type > b.type) {
+      } else if ((a.kind ?? '') > (b.kind ?? '')) {
         return 1;
       } else {
         return a.name < b.name ? -1 : 1;
@@ -62,7 +69,10 @@ export const IstioConfigCard: React.FC<IstioConfigCardProps> = (props: IstioConf
       return {
         cells: [
           <span>
-            <PFBadge badge={IstioTypes[item.type].badge} position={TooltipPosition.top} />
+            <PFBadge
+              badge={GVKToBadge[gvkToString(getIstioObjectGVK(item.apiVersion, item.kind))]}
+              position={TooltipPosition.top}
+            />
             {overviewLink(item)}
           </span>,
           <ValidationObjectSummary

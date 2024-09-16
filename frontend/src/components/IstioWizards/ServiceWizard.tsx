@@ -369,7 +369,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
           promises.push(
             API.createIstioConfigDetail(
               this.props.namespace,
-              dicIstioTypeToGVK['gateways'],
+              dicIstioTypeToGVK['Gateway'],
               JSON.stringify(gw),
               this.props.cluster
             )
@@ -380,7 +380,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
           promises.push(
             API.createIstioConfigDetail(
               this.props.namespace,
-              dicIstioTypeToGVK['k8sgateways'],
+              dicIstioTypeToGVK['K8sGateway'],
               JSON.stringify(k8sgateway),
               this.props.cluster
             )
@@ -445,7 +445,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
             promises.push(
               API.createIstioConfigDetail(
                 this.props.namespace,
-                dicIstioTypeToGVK['destinationrules'],
+                dicIstioTypeToGVK['DestinationRule'],
                 JSON.stringify(dr),
                 this.props.cluster
               )
@@ -456,7 +456,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
             promises.push(
               API.createIstioConfigDetail(
                 this.props.namespace,
-                dicIstioTypeToGVK['virtualservices'],
+                dicIstioTypeToGVK['VirtualService'],
                 JSON.stringify(vs),
                 this.props.cluster
               )
@@ -467,7 +467,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
             promises.push(
               API.createIstioConfigDetail(
                 this.props.namespace,
-                dicIstioTypeToGVK['k8shttproutes'],
+                dicIstioTypeToGVK['K8sHTTPRoute'],
                 JSON.stringify(k8shttproute),
                 this.props.cluster
               )
@@ -478,7 +478,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
             promises.push(
               API.createIstioConfigDetail(
                 this.props.namespace,
-                dicIstioTypeToGVK['k8sgrpcroutes'],
+                dicIstioTypeToGVK['K8sGRPCRoute'],
                 JSON.stringify(k8sgrpcroute),
                 this.props.cluster
               )

@@ -3,19 +3,19 @@ import { IstioObjectLink } from '../components/Link/IstioObjectLink';
 import { Namespace } from '../types/Namespace';
 import { Paths } from '../config';
 import { Link } from 'react-router-dom-v5-compat';
-import { EnvoySummary, Host } from '../types/IstioObjects';
+import { EnvoySummary, GroupVersionKind, Host } from '../types/IstioObjects';
 import { ActiveFilter, ActiveFiltersInfo } from '../types/Filters';
 import { FilterSelected } from '../components/Filters/StatefulFilters';
 import { kioskContextMenuAction } from '../components/Kiosk/KioskActions';
 
 export type FilterMethodMap = { [id: string]: (value, filter) => boolean };
 
-export const istioConfigLink = (halfQDN: string, objectType: string): JSX.Element | string => {
+export const istioConfigLink = (halfQDN: string, objectGVK: GroupVersionKind): JSX.Element | string => {
   const nameParts: string[] = halfQDN.split('.');
   if (nameParts.length === 2) {
     return (
       <React.Fragment>
-        <IstioObjectLink name={nameParts[0]} namespace={nameParts[1]} type={objectType}>
+        <IstioObjectLink name={nameParts[0]} namespace={nameParts[1]} objectGVK={objectGVK}>
           {halfQDN}
         </IstioObjectLink>
       </React.Fragment>

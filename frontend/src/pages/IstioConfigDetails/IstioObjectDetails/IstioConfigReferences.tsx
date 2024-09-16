@@ -6,11 +6,11 @@ import * as React from 'react';
 import { ObjectReference, ServiceReference, WorkloadReference } from 'types/IstioObjects';
 
 interface IstioConfigReferencesProps {
+  cluster?: string;
+  isValid: boolean | undefined;
   objectReferences: ObjectReference[];
   serviceReferences: ServiceReference[];
   workloadReferences: WorkloadReference[];
-  isValid: boolean | undefined;
-  cluster?: string;
 }
 
 export class IstioConfigReferences extends React.Component<IstioConfigReferencesProps> {
@@ -35,7 +35,7 @@ export class IstioConfigReferences extends React.Component<IstioConfigReferences
     return false;
   };
 
-  render() {
+  render(): React.ReactNode {
     return (
       <Stack>
         <StackItem>
@@ -70,7 +70,7 @@ export class IstioConfigReferences extends React.Component<IstioConfigReferences
                   name={reference.name}
                   namespace={reference.namespace}
                   cluster={this.props.cluster}
-                  type={reference.objectType}
+                  objectGVK={reference.objectGVK}
                 />
               </StackItem>
             );

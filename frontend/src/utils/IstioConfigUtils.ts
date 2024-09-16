@@ -225,14 +225,18 @@ export const getReconciliationCondition = (
   return istioObject?.status?.conditions?.find(condition => condition.type === 'Reconciled');
 };
 
-export function getIstioObjectGVK(obj: IstioObject): GroupVersionKind {
-  if (!obj.apiVersion || !obj.kind) {
+export function getIstioObjectGVK(apiVersion?: string, kind?: string): GroupVersionKind {
+  if (!apiVersion || !kind) {
     return { group: '', version: '', kind: '' };
   }
-  const parts = obj.apiVersion.split('/');
+  const parts = apiVersion.split('/');
   if (parts.length !== 2) {
     // should not happen, but not the best way, only an alternative
-    return dicIstioTypeToGVK[obj.kind];
+    return dicIstioTypeToGVK[kind];
   }
-  return { group: parts[0], version: parts[1], kind: obj.kind! };
+  return { group: parts[0], version: parts[1], kind: kind! };
+}
+
+export function gvkToString(gvk: GroupVersionKind): string {
+  return `${gvk.group}/${gvk.version}, Kind=${gvk.kind}`;
 }

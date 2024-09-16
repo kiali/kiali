@@ -147,7 +147,7 @@ const filterByIstioSidecar = (items: AppListItem[], istioSidecar: boolean): AppL
 };
 
 const filterByIstioType = (items: AppListItem[], istioTypes: string[]): AppListItem[] => {
-  return items.filter(item => item.istioReferences.filter(ref => istioTypes.includes(ref.objectType)).length !== 0);
+  return items.filter(item => item.istioReferences.filter(ref => istioTypes.includes(ref.objectGVK.kind)).length !== 0);
 };
 
 export const filterBy = (
@@ -215,7 +215,8 @@ export const sortAppsItems = (
 };
 
 export const compareObjectReference = (a: ObjectReference, b: ObjectReference): number => {
-  const cmpObjectType = a.objectType.localeCompare(b.objectType);
+  const cmpObjectType =
+    a.objectGVK.kind.localeCompare(b.objectGVK.kind) || a.objectGVK.group.localeCompare(b.objectGVK.group);
   if (cmpObjectType !== 0) {
     return cmpObjectType;
   }

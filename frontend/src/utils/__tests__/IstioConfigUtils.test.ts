@@ -1,5 +1,4 @@
 import { getIstioObjectGVK, isServerHostValid, isValidUrl, mergeJsonPatch } from '../IstioConfigUtils';
-import { IstioObject } from '../../types/IstioObjects';
 import { dicIstioTypeToGVK } from '../../types/IstioConfigList';
 
 describe('Validate JSON Patchs', () => {
@@ -100,46 +99,27 @@ describe('Validate bad urls', () => {
 
 describe('Validate returned GoupVersionKind for IstioObject', () => {
   it('Missing apiVersion and kind', () => {
-    const istioObj: IstioObject = { metadata: {} as any };
-    const result = getIstioObjectGVK(istioObj);
+    const result = getIstioObjectGVK();
     expect(result).toEqual({ group: '', version: '', kind: '' });
   });
 
   it('Correct values', () => {
-    const istioObj: IstioObject = {
-      apiVersion: 'networking.istio.io/v1',
-      kind: 'VirtualService',
-      metadata: {} as any
-    };
-    const result = getIstioObjectGVK(istioObj);
+    const result = getIstioObjectGVK('networking.istio.io/v1', 'VirtualService');
     expect(result).toEqual({ group: 'networking.istio.io', version: 'v1', kind: 'VirtualService' });
   });
 
   it('Invalid apiVersion, valid Kind', () => {
-    const istioObj: IstioObject = {
-      apiVersion: 'invalidApiVersion',
-      kind: 'AuthorizationPolicy',
-      metadata: {} as any
-    };
-    const result = getIstioObjectGVK(istioObj);
+    const result = getIstioObjectGVK('invalidApiVersion', 'AuthorizationPolicy');
     expect(result).toEqual(dicIstioTypeToGVK['AuthorizationPolicy']);
   });
 
   it('Empty apiVersion, valid kind', () => {
-    const istioObj: IstioObject = {
-      kind: 'VirtualService',
-      metadata: {} as any
-    };
-    const result = getIstioObjectGVK(istioObj);
+    const result = getIstioObjectGVK('', 'VirtualService');
     expect(result).toEqual({ group: '', version: '', kind: '' });
   });
 
   it('Empty kind, valid apiVersion', () => {
-    const istioObj: IstioObject = {
-      apiVersion: 'networking.istio.io/v1',
-      metadata: {} as any
-    };
-    const result = getIstioObjectGVK(istioObj);
+    const result = getIstioObjectGVK('networking.istio.io/v1');
     expect(result).toEqual({ group: '', version: '', kind: '' });
   });
 });

@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { isMultiCluster, Paths } from '../../config';
 import { Link } from 'react-router-dom-v5-compat';
-import { IstioTypes } from '../VirtualList/Config';
+import { GVKToBadge } from '../VirtualList/Config';
 import { PFBadge } from 'components/Pf/PfBadges';
 import { Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { KialiIcon } from 'config/KialiIcon';
@@ -10,6 +10,7 @@ import { KialiAppState } from '../../store/Store';
 import { connect } from 'react-redux';
 import { isParentKiosk, kioskContextMenuAction } from '../Kiosk/KioskActions';
 import { GroupVersionKind } from '../../types/IstioObjects';
+import { gvkToString } from '../../utils/IstioConfigUtils';
 
 export const infoStyle = kialiStyle({
   margin: '0 0 -0.125rem 0.5rem'
@@ -23,9 +24,9 @@ type ReferenceIstioObjectProps = {
   cluster?: string;
   name: string;
   namespace: string;
+  objectGVK: GroupVersionKind;
   query?: string;
   subType?: string;
-  type: string;
 };
 
 type IstioObjectProps = ReduxProps &
@@ -60,8 +61,8 @@ export const GetIstioObjectUrl = (
 };
 
 export const ReferenceIstioObjectLink: React.FC<ReferenceIstioObjectProps> = (props: ReferenceIstioObjectProps) => {
-  const { name, namespace, cluster, type, subType } = props;
-  const istioType = IstioTypes[type];
+  const { name, namespace, cluster, objectGVK, subType } = props;
+  const badge = GVKToBadge[gvkToString(objectGVK)];
 
   let showLink = true;
   let showTooltip = false;
@@ -77,10 +78,10 @@ export const ReferenceIstioObjectLink: React.FC<ReferenceIstioObjectProps> = (pr
 
   return (
     <>
-      <PFBadge badge={istioType.badge} position={TooltipPosition.top} />
+      <PFBadge badge={badge} position={TooltipPosition.top} />
 
       {showLink && (
-        <IstioObjectLink name={name} namespace={namespace} cluster={cluster} type={type} subType={subType}>
+        <IstioObjectLink name={name} namespace={namespace} cluster={cluster} objectGVK={objectGVK} subType={subType}>
           {reference}
         </IstioObjectLink>
       )}
@@ -97,8 +98,8 @@ export const ReferenceIstioObjectLink: React.FC<ReferenceIstioObjectProps> = (pr
 };
 
 const IstioObjectLinkComponent: React.FC<IstioObjectProps> = (props: IstioObjectProps) => {
-  const { name, namespace, type, cluster, query } = props;
-  const href = GetIstioObjectUrl(name, namespace, type, cluster, query);
+  const { name, namespace, objectGVK, cluster, query } = props;
+  const href = GetIstioObjectUrl(name, namespace, objectGVK, cluster, query);
 
   return isParentKiosk(props.kiosk) ? (
     <Link
@@ -111,7 +112,7 @@ const IstioObjectLinkComponent: React.FC<IstioObjectProps> = (props: IstioObject
     </Link>
   ) : (
     // @TODO put cluster in link when all objects have multicluster support
-    <Link to={href} data-test={`${type}-${namespace}-${name}`}>
+    <Link to={href} data-test={`${objectGVK.group}.${objectGVK.kind}-${namespace}-${name}`}>
       {props.children}
     </Link>
   );
