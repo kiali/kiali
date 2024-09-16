@@ -396,9 +396,22 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 		// node may have destination service info
 		if val, ok := n.Metadata[graph.DestServices]; ok {
 			nd.DestServices = []graph.ServiceName{}
-			for _, val := range val.(graph.DestServicesMetadata) {
-				nd.DestServices = append(nd.DestServices, val)
+			for _, ds := range val.(graph.DestServicesMetadata) {
+				nd.DestServices = append(nd.DestServices, ds)
 			}
+			// sort destServices for better json presentation (and predictable testing)
+			sort.Slice(nd.DestServices, func(i, j int) bool {
+				ds1 := nd.DestServices[i]
+				ds2 := nd.DestServices[j]
+				switch {
+				case ds1.Cluster != ds2.Cluster:
+					return ds1.Cluster < ds2.Cluster
+				case ds1.Namespace != ds2.Namespace:
+					return ds1.Namespace < ds2.Namespace
+				default:
+					return ds1.Name < ds2.Name
+				}
+			})
 		}
 
 		// node may have service entry static info

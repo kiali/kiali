@@ -17,6 +17,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	core_v1 "k8s.io/api/core/v1"
+	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/kiali/kiali/business"
@@ -3820,6 +3822,334 @@ func TestMultiClusterSourceGraph(t *testing.T) {
 	}
 	actual, _ := io.ReadAll(resp.Body)
 	expected, _ := os.ReadFile("testdata/test_mc_source_graph.expected")
+	if runtime.GOOS == "windows" {
+		expected = bytes.Replace(expected, []byte("\r\n"), []byte("\n"), -1)
+	}
+	expected = expected[:len(expected)-1] // remove EOF byte
+
+	assertObjectsEqual(t, expected, actual)
+	assert.Equal(t, 200, resp.StatusCode)
+}
+
+// ambientWorkloads most importantly adds a waypoint to the bookinfo namespace, but also adds the app workloads, just to be more realistic
+func ambientWorkloads(t *testing.T) *business.Layer {
+	k8spod1 := &core_v1.Pod{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:        "productpage-v1",
+			Namespace:   "bookinfo",
+			Labels:      map[string]string{"app": "productpage", "version": "v1"},
+			Annotations: map[string]string{"sidecar.istio.io/status": "{\"version\":\"\",\"initContainers\":[\"istio-init\",\"enable-core-dump\"],\"containers\":[\"istio-proxy\"],\"volumes\":[\"istio-envoy\",\"istio-certs\"]}"}},
+		Spec: core_v1.PodSpec{
+			Containers: []core_v1.Container{
+				{Name: "productpage-v1", Image: "whatever"},
+			},
+		}}
+	k8spod2 := &core_v1.Pod{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:        "ratings-v1",
+			Namespace:   "bookinfo",
+			Labels:      map[string]string{"app": "ratings", "version": "v1"},
+			Annotations: map[string]string{"sidecar.istio.io/status": "{\"version\":\"\",\"initContainers\":[\"istio-init\",\"enable-core-dump\"],\"containers\":[\"istio-proxy\"],\"volumes\":[\"istio-envoy\",\"istio-certs\"]}"}},
+		Spec: core_v1.PodSpec{
+			Containers: []core_v1.Container{
+				{Name: "ratings-v1", Image: "whatever"},
+			},
+		}}
+	k8spod3 := &core_v1.Pod{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:        "reviews-v1",
+			Namespace:   "bookinfo",
+			Labels:      map[string]string{"app": "reviews", "version": "v1"},
+			Annotations: map[string]string{"sidecar.istio.io/status": "{\"version\":\"\",\"initContainers\":[\"istio-init\",\"enable-core-dump\"],\"containers\":[\"istio-proxy\"],\"volumes\":[\"istio-envoy\",\"istio-certs\"]}"}},
+		Spec: core_v1.PodSpec{
+			Containers: []core_v1.Container{
+				{Name: "reviews-v1", Image: "whatever"},
+			},
+		}}
+	k8spod4 := &core_v1.Pod{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:        "istio-waypoint",
+			Namespace:   "bookinfo",
+			Labels:      map[string]string{"app": "waypoint", "version": "v1", config.WaypointLabel: config.WaypointLabelValue},
+			Annotations: map[string]string{"sidecar.istio.io/status": "{\"version\":\"\",\"initContainers\":[\"istio-init\",\"enable-core-dump\"],\"containers\":[\"istio-proxy\"],\"volumes\":[\"istio-envoy\",\"istio-certs\"]}"}},
+		Spec: core_v1.PodSpec{
+			Containers: []core_v1.Container{
+				{Name: "istio-waypoint", Image: "whatever"},
+			},
+		}}
+
+	ns := kubetest.FakeNamespace("bookinfo")
+	k8s := kubetest.NewFakeK8sClient(k8spod1, k8spod2, k8spod3, k8spod4, ns)
+	conf := config.NewConfig()
+	conf.ExternalServices.Istio.IstioAPIEnabled = false
+	conf.KubernetesConfig.ClusterName = "Kubernetes"
+	config.Set(conf)
+
+	business.SetupBusinessLayer(t, k8s, *conf)
+	k8sclients := make(map[string]kubernetes.ClientInterface)
+	k8sclients["Kubernetes"] = k8s
+	businessLayer := business.NewWithBackends(k8sclients, k8sclients, nil, nil)
+	return businessLayer
+}
+
+func ambientMockGraph(t *testing.T, api *prometheustest.PromAPIMock) {
+	q0 := `round(sum(rate(istio_requests_total{reporter=~"source|waypoint",source_workload_namespace!="bookinfo",destination_workload_namespace="unknown",destination_workload="unknown",destination_service=~"^.+\\.bookinfo\\..+$"} [600s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,request_protocol,response_code,grpc_response_status,response_flags) > 0,0.001)`
+	v0 := model.Vector{}
+
+	q1 := `round(sum(rate(istio_requests_total{reporter=~"destination|waypoint",destination_workload_namespace="bookinfo"} [600s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,request_protocol,response_code,grpc_response_status,response_flags) > 0,0.001)`
+	q1m0 := model.Metric{
+		"source_workload_namespace":      "bookinfo",
+		"source_workload":                "productpage-v1",
+		"source_canonical_service":       "productpage",
+		"source_canonical_revision":      "v1",
+		"source_cluster":                 "Kubernetes",
+		"destination_cluster":            "Kubernetes",
+		"destination_service_namespace":  "bookinfo",
+		"destination_service":            "details:9080",
+		"destination_service_name":       "details",
+		"destination_workload_namespace": "bookinfo",
+		"destination_workload":           "details-v1",
+		"destination_canonical_service":  "details",
+		"destination_canonical_revision": "v1",
+		"request_protocol":               "http",
+		"response_code":                  "200",
+		"grpc_response_status":           "0",
+		"response_flags":                 "-",
+	}
+	q1m1 := model.Metric{
+		"source_workload_namespace":      "bookinfo",
+		"source_workload":                "productpage-v1",
+		"source_canonical_service":       "productpage",
+		"source_canonical_revision":      "v1",
+		"source_cluster":                 "Kubernetes",
+		"destination_cluster":            "Kubernetes",
+		"destination_service_namespace":  "bookinfo",
+		"destination_service":            "reviews:9080",
+		"destination_service_name":       "reviews",
+		"destination_workload_namespace": "bookinfo",
+		"destination_workload":           "reviews-v1",
+		"destination_canonical_service":  "reviews",
+		"destination_canonical_revision": "v1",
+		"request_protocol":               "http",
+		"response_code":                  "200",
+		"grpc_response_status":           "0",
+		"response_flags":                 "-",
+	}
+	v1 := model.Vector{
+		&model.Sample{
+			Metric: q1m0,
+			Value:  10,
+		},
+		&model.Sample{
+			Metric: q1m1,
+			Value:  10,
+		},
+	}
+
+	q2 := `round(sum(rate(istio_requests_total{reporter=~"source|waypoint",source_workload_namespace="bookinfo"} [600s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,request_protocol,response_code,grpc_response_status,response_flags) > 0,0.001)`
+	q2m0 := model.Metric{
+		"source_workload_namespace":      "bookinfo",
+		"source_workload":                "productpage-v1",
+		"source_canonical_service":       "productpage",
+		"source_canonical_revision":      "v1",
+		"source_cluster":                 "Kubernetes",
+		"destination_cluster":            "Kubernetes",
+		"destination_service_namespace":  "bookinfo",
+		"destination_service":            "details:9080",
+		"destination_service_name":       "details",
+		"destination_workload_namespace": "bookinfo",
+		"destination_workload":           "details-v1",
+		"destination_canonical_service":  "details",
+		"destination_canonical_revision": "v1",
+		"request_protocol":               "http",
+		"response_code":                  "200",
+		"grpc_response_status":           "0",
+		"response_flags":                 "-",
+	}
+	q2m1 := model.Metric{
+		"source_workload_namespace":      "bookinfo",
+		"source_workload":                "productpage-v1",
+		"source_canonical_service":       "productpage",
+		"source_canonical_revision":      "v1",
+		"source_cluster":                 "Kubernetes",
+		"destination_cluster":            "Kubernetes",
+		"destination_service_namespace":  "bookinfo",
+		"destination_service":            "reviews:9080",
+		"destination_service_name":       "reviews",
+		"destination_workload_namespace": "bookinfo",
+		"destination_workload":           "reviews-v1",
+		"destination_canonical_service":  "reviews",
+		"destination_canonical_revision": "v1",
+		"request_protocol":               "http",
+		"response_code":                  "200",
+		"grpc_response_status":           "0",
+		"response_flags":                 "-",
+	}
+	v2 := model.Vector{
+		&model.Sample{
+			Metric: q2m0,
+			Value:  10,
+		},
+		&model.Sample{
+			Metric: q2m1,
+			Value:  10,
+		},
+	}
+
+	q3 := `round(sum(rate(istio_tcp_received_bytes_total{reporter="source",source_workload_namespace!="bookinfo",destination_workload_namespace="unknown",destination_workload="unknown",destination_service=~"^.+\\.bookinfo\\..+$"} [600s])) by (app,source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,response_flags) > 0,0.001)`
+	v3 := model.Vector{}
+
+	q4 := `round(sum(rate(istio_tcp_received_bytes_total{reporter="destination",destination_workload_namespace="bookinfo"} [600s])) by (app,source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,response_flags) > 0,0.001)`
+	q4m0 := model.Metric{
+		"source_workload_namespace":      "bookinfo",
+		"source_workload":                "waypoint",
+		"source_canonical_service":       "waypoint",
+		"source_canonical_revision":      "latest",
+		"source_cluster":                 "Kubernetes",
+		"destination_cluster":            "Kubernetes",
+		"destination_service_namespace":  "bookinfo",
+		"destination_service":            "productpage.bookinfo.svc.cluster.local",
+		"destination_service_name":       "productpage",
+		"destination_workload_namespace": "bookinfo",
+		"destination_workload":           "productpage-v1",
+		"destination_canonical_service":  "productpage",
+		"destination_canonical_revision": "v1",
+		"response_flags":                 "-",
+		"app":                            "ztunnel",
+	}
+	q4m1 := model.Metric{
+		"source_workload_namespace":      "bookinfo",
+		"source_workload":                "waypoint",
+		"source_canonical_service":       "waypoint",
+		"source_canonical_revision":      "latest",
+		"source_cluster":                 "Kubernetes",
+		"destination_cluster":            "Kubernetes",
+		"destination_service_namespace":  "bookinfo",
+		"destination_service":            "details.bookinfo.svc.cluster.local",
+		"destination_service_name":       "details",
+		"destination_workload_namespace": "bookinfo",
+		"destination_workload":           "details-v1",
+		"destination_canonical_service":  "details",
+		"destination_canonical_revision": "v1",
+		"response_flags":                 "-",
+		"app":                            "ztunnel",
+	}
+	q4m2 := model.Metric{
+		"source_workload_namespace":      "bookinfo",
+		"source_workload":                "waypoint",
+		"source_canonical_service":       "waypoint",
+		"source_canonical_revision":      "latest",
+		"source_cluster":                 "Kubernetes",
+		"destination_cluster":            "Kubernetes",
+		"destination_service_namespace":  "bookinfo",
+		"destination_service":            "reviews.bookinfo.svc.cluster.local",
+		"destination_service_name":       "reviews",
+		"destination_workload_namespace": "bookinfo",
+		"destination_workload":           "reviews-v1",
+		"destination_canonical_service":  "reviews",
+		"destination_canonical_revision": "v1",
+		"response_flags":                 "-",
+		"app":                            "ztunnel",
+	}
+	v4 := model.Vector{
+		&model.Sample{
+			Metric: q4m0,
+			Value:  150,
+		},
+		&model.Sample{
+			Metric: q4m1,
+			Value:  50,
+		},
+		&model.Sample{
+			Metric: q4m2,
+			Value:  50,
+		},
+	}
+
+	q5 := `round(sum(rate(istio_tcp_received_bytes_total{reporter="source",source_workload_namespace="bookinfo"} [600s])) by (app,source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,response_flags) > 0,0.001)`
+	q5m0 := model.Metric{
+		"source_workload_namespace":      "bookinfo",
+		"source_workload":                "productpage-v1",
+		"source_canonical_service":       "productpage",
+		"source_canonical_revision":      "v1",
+		"source_cluster":                 "Kubernetes",
+		"destination_cluster":            "Kubernetes",
+		"destination_service_namespace":  "bookinfo",
+		"destination_service":            "details.bookinfo.svc.cluster.local",
+		"destination_service_name":       "details",
+		"destination_workload_namespace": "bookinfo",
+		"destination_workload":           "waypoint",
+		"destination_canonical_service":  "waypoint",
+		"destination_canonical_revision": "latest",
+		"response_flags":                 "-",
+		"app":                            "ztunnel",
+	}
+	q5m1 := model.Metric{
+		"source_workload_namespace":      "bookinfo",
+		"source_workload":                "productpage-v1",
+		"source_canonical_service":       "productpage",
+		"source_canonical_revision":      "v1",
+		"source_cluster":                 "Kubernetes",
+		"destination_cluster":            "Kubernetes",
+		"destination_service_namespace":  "bookinfo",
+		"destination_service":            "reviews.bookinfo.svc.cluster.local",
+		"destination_service_name":       "reviews",
+		"destination_workload_namespace": "bookinfo",
+		"destination_workload":           "waypoint",
+		"destination_canonical_service":  "waypoint",
+		"destination_canonical_revision": "latest",
+		"response_flags":                 "-",
+		"app":                            "ztunnel",
+	}
+	v5 := model.Vector{
+		&model.Sample{
+			Metric: q5m0,
+			Value:  50,
+		},
+		&model.Sample{
+			Metric: q5m1,
+			Value:  50,
+		},
+	}
+
+	mockQuery(api, q0, &v0)
+	mockQuery(api, q1, &v1)
+	mockQuery(api, q2, &v2)
+	mockQuery(api, q3, &v3)
+	mockQuery(api, q4, &v4)
+	mockQuery(api, q5, &v5)
+}
+
+// TestAmbientGraph tests some waypoint-specific graph features
+func TestAmbientGraph(t *testing.T) {
+	businessLayer := ambientWorkloads(t)
+
+	api := new(prometheustest.PromAPIMock)
+	client, err := prometheus.NewClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+	client.Inject(api)
+
+	ambientMockGraph(t, api)
+
+	mr := mux.NewRouter()
+	mr.HandleFunc("/api/namespaces/graph", func(w http.ResponseWriter, r *http.Request) {
+		code, config := graphNamespacesIstio(r.Context(), businessLayer, client, graph.NewOptions(r, &businessLayer.Namespace))
+		respond(w, code, config)
+	},
+	)
+
+	ts := httptest.NewServer(mr)
+	defer ts.Close()
+
+	url := ts.URL + "/api/namespaces/graph?namespaces=bookinfo&graphType=workload&appenders=ambient&queryTime=1523364075"
+	resp, err := http.Get(url)
+	if err != nil {
+		t.Fatal(err)
+	}
+	actual, _ := io.ReadAll(resp.Body)
+	expected, _ := os.ReadFile("testdata/test_ambient_graph.expected")
 	if runtime.GOOS == "windows" {
 		expected = bytes.Replace(expected, []byte("\r\n"), []byte("\n"), -1)
 	}

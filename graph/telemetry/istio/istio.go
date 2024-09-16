@@ -371,14 +371,14 @@ func populateTrafficMap(trafficMap graph.TrafficMap, vector *model.Vector, metri
 		// - destSvcName is PassthroughCluster (see https://github.com/kiali/kiali/issues/4488)
 		// - dest node is already a service node
 		// - source or dest workload is an ambient waypoint
-		var inject, sourceIsWaypoint, destIsWaypoint bool
+		var inject bool
+		sourceIsWaypoint, destIsWaypoint := hasWaypoint(ztunnel, sourceCluster, sourceWlNs, sourceWl, destCluster, destWlNs, destWl, globalInfo)
 		if o.InjectServiceNodes && graph.IsOK(destSvcName) && destSvcName != graph.PassthroughCluster {
 			_, destNodeType, err := graph.Id(destCluster, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, o.GraphType)
 			if err != nil {
 				log.Warningf("Skipping %s, %s", m.String(), err)
 				continue
 			}
-			sourceIsWaypoint, destIsWaypoint = hasWaypoint(ztunnel, sourceCluster, sourceWlNs, sourceWl, destCluster, destWlNs, destWl, globalInfo)
 			inject = (graph.NodeTypeService != destNodeType) && !sourceIsWaypoint && !destIsWaypoint
 		}
 		addTraffic(trafficMap, metric, inject, val, protocol, code, flags, host, sourceCluster, sourceWlNs, "", sourceWl, sourceApp, sourceVer, destCluster, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, sourceIsWaypoint, destIsWaypoint, o)
