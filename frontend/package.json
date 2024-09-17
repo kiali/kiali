@@ -1,4 +1,5 @@
 {
+  "proxy": "http://localhost:20001",
   "name": "@kiali/kiali-ui",
   "version": "1.90.0",
   "description": "React UI for [Kiali](https://github.com/kiali/kiali).",
@@ -120,7 +121,7 @@
   },
   "devDependencies": {
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
-    "@badeball/cypress-cucumber-preprocessor": "^19.2.0",
+    "@badeball/cypress-cucumber-preprocessor": "^20.1.2",
     "@bahmutov/cypress-esbuild-preprocessor": "^2.2.0",
     "@types/cypress-cucumber-preprocessor": "^4.0.5",
     "@types/cytoscape": "3.14.0",
@@ -155,12 +156,13 @@
     "react-scripts": "^5.0.1",
     "redux-mock-store": "1.5.4",
     "sass": "^1.63.6",
-    "seedrandom": "3.0.1",
+    "seedrandom": "^3.0.5",
     "typescript": "^4.9.5"
   },
   "resolutions": {
     "nth-check": "^2.0.1",
-    "postcss": "^8.4.31"
+    "postcss": "^8.4.31",
+    "workbox-webpack-plugin": "^7.1.0"
   },
   "engines": {
     "node": ">=20.0.0",
