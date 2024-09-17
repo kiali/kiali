@@ -134,7 +134,7 @@ func buildNamespaceTrafficMap(ctx context.Context, namespace string, o graph.Tel
 		metric := "istio_requests_total"
 		groupBy := "source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,request_protocol,response_code,grpc_response_status,response_flags"
 
-		// 0) Incoming: query source telemetry to capture unserviced namespace services' incoming traffic
+		// 0) Incoming: query source telemetry to capture unserviced namespace services' incoming traffic (failed requests that never reach a dest)
 		query := fmt.Sprintf(`sum(rate(%s{reporter=~"source|waypoint",source_workload_namespace!="%s",destination_workload_namespace="unknown",destination_workload="unknown",destination_service=~"^.+\\.%s\\..+$"} [%vs])) by (%s) %s`,
 			metric,
 			namespace,

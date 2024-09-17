@@ -210,6 +210,8 @@ func (a ResponseTimeAppender) populateResponseTimeMap(responseTimeMap map[string
 		// - destSvcName is not set
 		// - destSvcName is PassthroughCluster (see https://github.com/kiali/kiali/issues/4488)
 		// - dest node is already a service node
+		// - note: we ignore the waypoint injection problem here because that deals only with TCP traffic, and
+		//         does not apply to response time.
 		inject := false
 		if a.InjectServiceNodes && graph.IsOK(destSvcName) && destSvcName != graph.PassthroughCluster {
 			_, destNodeType, err := graph.Id(destCluster, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, a.GraphType)
