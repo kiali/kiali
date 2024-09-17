@@ -1,5 +1,7 @@
 package util
 
+import "k8s.io/apimachinery/pkg/runtime/schema"
+
 func RemoveNilValues(root interface{}) {
 	if mRoot, isMap := root.(map[string]interface{}); isMap {
 		for k, v := range mRoot {
@@ -31,6 +33,6 @@ func BuildNameNSKey(name string, namespace string) string {
 	return name + "." + namespace
 }
 
-func BuildNameNSTypeKey(name string, namespace string, objType string) string {
-	return BuildNameNSKey(name, namespace) + "/" + objType
+func BuildNameNSTypeKey(name string, namespace string, objType schema.GroupVersionKind) string {
+	return BuildNameNSKey(name, namespace) + "/" + objType.String()
 }

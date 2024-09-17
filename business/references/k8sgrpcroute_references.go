@@ -19,7 +19,7 @@ func (n K8sGRPCRouteReferences) References() models.IstioReferencesMap {
 	result := models.IstioReferencesMap{}
 
 	for _, rt := range n.K8sGRPCRoutes {
-		key := models.IstioReferenceKey{Namespace: rt.Namespace, Name: rt.Name, ObjectType: kubernetes.K8sGRPCRoutes.String()}
+		key := models.IstioReferenceKey{Namespace: rt.Namespace, Name: rt.Name, ObjectGVK: kubernetes.K8sGRPCRoutes}
 		references := &models.IstioReferences{}
 		references.ServiceReferences = n.getServiceReferences(rt)
 		references.ObjectReferences = n.getConfigReferences(rt)
@@ -67,7 +67,7 @@ func (n K8sGRPCRouteReferences) getConfigReferences(rt *k8s_networking_v1.GRPCRo
 	allGateways := getAllK8sGateways(rt.Spec.ParentRefs, rt.Namespace)
 	// filter unique references
 	for _, gw := range allGateways {
-		key := util.BuildNameNSTypeKey(gw.Name, gw.Namespace, gw.ObjectType)
+		key := util.BuildNameNSTypeKey(gw.Name, gw.Namespace, gw.ObjectGVK)
 		if !keys[key] {
 			result = append(result, gw)
 			keys[key] = true

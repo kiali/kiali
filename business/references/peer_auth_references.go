@@ -20,7 +20,7 @@ func (n PeerAuthReferences) References() models.IstioReferencesMap {
 	result := models.IstioReferencesMap{}
 
 	for _, pa := range n.MTLSDetails.PeerAuthentications {
-		key := models.IstioReferenceKey{Namespace: pa.Namespace, Name: pa.Name, ObjectType: kubernetes.PeerAuthentications.String()}
+		key := models.IstioReferenceKey{Namespace: pa.Namespace, Name: pa.Name, ObjectGVK: kubernetes.PeerAuthentications}
 		references := &models.IstioReferences{}
 		references.ObjectReferences = n.getConfigReferences(pa)
 		references.WorkloadReferences = n.getWorkloadReferences(pa)
@@ -38,7 +38,7 @@ func (n PeerAuthReferences) getConfigReferences(peerAuthn *security_v1.PeerAuthe
 		if _, mode := kubernetes.PeerAuthnHasMTLSEnabled(peerAuthn); mode == "DISABLE" {
 			for _, dr := range n.MTLSDetails.DestinationRules {
 				if _, mode := kubernetes.DestinationRuleHasMeshWideMTLSEnabled(dr); mode == "DISABLE" {
-					allDRs = append(allDRs, models.IstioReference{Name: dr.Name, Namespace: dr.Namespace, ObjectType: kubernetes.DestinationRules.String()})
+					allDRs = append(allDRs, models.IstioReference{Name: dr.Name, Namespace: dr.Namespace, ObjectGVK: kubernetes.DestinationRules})
 				}
 			}
 		}
@@ -47,10 +47,10 @@ func (n PeerAuthReferences) getConfigReferences(peerAuthn *security_v1.PeerAuthe
 		if _, mode := kubernetes.PeerAuthnHasMTLSEnabled(peerAuthn); mode == "DISABLE" {
 			for _, dr := range n.MTLSDetails.DestinationRules {
 				if _, mode := kubernetes.DestinationRuleHasNamespaceWideMTLSEnabled(peerAuthn.Namespace, dr); mode == "DISABLE" {
-					allDRs = append(allDRs, models.IstioReference{Name: dr.Name, Namespace: dr.Namespace, ObjectType: kubernetes.DestinationRules.String()})
+					allDRs = append(allDRs, models.IstioReference{Name: dr.Name, Namespace: dr.Namespace, ObjectGVK: kubernetes.DestinationRules})
 				}
 				if _, mode := kubernetes.DestinationRuleHasMeshWideMTLSEnabled(dr); mode == "DISABLE" {
-					allDRs = append(allDRs, models.IstioReference{Name: dr.Name, Namespace: dr.Namespace, ObjectType: kubernetes.DestinationRules.String()})
+					allDRs = append(allDRs, models.IstioReference{Name: dr.Name, Namespace: dr.Namespace, ObjectGVK: kubernetes.DestinationRules})
 				}
 			}
 		}
@@ -64,7 +64,7 @@ func (n PeerAuthReferences) getConfigReferences(peerAuthn *security_v1.PeerAuthe
 				for _, dr := range n.MTLSDetails.DestinationRules {
 					// otherwise, check among Destination Rules for a rule enabling mTLS mesh-wide.
 					if enabled, _ := kubernetes.DestinationRuleHasMeshWideMTLSEnabled(dr); enabled {
-						allDRs = append(allDRs, models.IstioReference{Name: dr.Name, Namespace: dr.Namespace, ObjectType: kubernetes.DestinationRules.String()})
+						allDRs = append(allDRs, models.IstioReference{Name: dr.Name, Namespace: dr.Namespace, ObjectGVK: kubernetes.DestinationRules})
 					}
 				}
 			}
@@ -73,11 +73,11 @@ func (n PeerAuthReferences) getConfigReferences(peerAuthn *security_v1.PeerAuthe
 				for _, dr := range n.MTLSDetails.DestinationRules {
 					// Check if there is a Destination Rule enabling ns-wide mTLS
 					if enabled, _ := kubernetes.DestinationRuleHasNamespaceWideMTLSEnabled(peerAuthn.Namespace, dr); enabled {
-						allDRs = append(allDRs, models.IstioReference{Name: dr.Name, Namespace: dr.Namespace, ObjectType: kubernetes.DestinationRules.String()})
+						allDRs = append(allDRs, models.IstioReference{Name: dr.Name, Namespace: dr.Namespace, ObjectGVK: kubernetes.DestinationRules})
 					}
 					// Check if there is a Destination Rule enabling mesh-wide mTLS in second position
 					if enabled, _ := kubernetes.DestinationRuleHasMeshWideMTLSEnabled(dr); enabled {
-						allDRs = append(allDRs, models.IstioReference{Name: dr.Name, Namespace: dr.Namespace, ObjectType: kubernetes.DestinationRules.String()})
+						allDRs = append(allDRs, models.IstioReference{Name: dr.Name, Namespace: dr.Namespace, ObjectGVK: kubernetes.DestinationRules})
 					}
 				}
 			}

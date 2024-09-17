@@ -114,8 +114,8 @@ func (i *IstioConfigList) ConvertToResponse() {
 type IstioConfigMap map[string]IstioConfigList
 
 type IstioConfigDetails struct {
-	Namespace  Namespace               `json:"namespace"`
-	ObjectType schema.GroupVersionKind `json:"objectType"`
+	Namespace Namespace               `json:"namespace"`
+	ObjectGVK schema.GroupVersionKind `json:"GVK"`
 
 	AuthorizationPolicy   *security_v1.AuthorizationPolicy   `json:"authorizationPolicy"`
 	DestinationRule       *networking_v1.DestinationRule     `json:"destinationRule"`

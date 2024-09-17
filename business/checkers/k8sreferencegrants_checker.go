@@ -35,7 +35,7 @@ func (in K8sReferenceGrantChecker) runIndividualChecks() models.IstioValidations
 }
 
 func (in K8sReferenceGrantChecker) runChecks(rg *k8s_networking_v1beta1.ReferenceGrant) models.IstioValidations {
-	key, validations := EmptyValidValidation(rg.Name, rg.Namespace, kubernetes.K8sReferenceGrants.String(), in.Cluster)
+	key, validations := EmptyValidValidation(rg.Name, rg.Namespace, kubernetes.K8sReferenceGrants, in.Cluster)
 
 	enabledCheckers := []Checker{
 		k8sreferencegrants.NamespaceChecker{

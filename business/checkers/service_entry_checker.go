@@ -29,7 +29,7 @@ func (s ServiceEntryChecker) Check() models.IstioValidations {
 }
 
 func (s ServiceEntryChecker) runSingleChecks(se *networking_v1.ServiceEntry, workloadEntriesMap map[string][]string) models.IstioValidations {
-	key, validations := EmptyValidValidation(se.Name, se.Namespace, kubernetes.ServiceEntries.String(), s.Cluster)
+	key, validations := EmptyValidValidation(se.Name, se.Namespace, kubernetes.ServiceEntries, s.Cluster)
 
 	enabledCheckers := []Checker{
 		serviceentries.HasMatchingWorkloadEntryAddress{ServiceEntry: se, WorkloadEntries: workloadEntriesMap},

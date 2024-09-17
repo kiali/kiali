@@ -56,7 +56,7 @@ func (in DestinationRulesChecker) runIndividualChecks() models.IstioValidations 
 
 func (in DestinationRulesChecker) runChecks(destinationRule *networking_v1.DestinationRule) models.IstioValidations {
 	destinationRuleName := destinationRule.Name
-	key, rrValidation := EmptyValidValidation(destinationRuleName, destinationRule.Namespace, kubernetes.DestinationRules.String(), in.Cluster)
+	key, rrValidation := EmptyValidValidation(destinationRuleName, destinationRule.Namespace, kubernetes.DestinationRules, in.Cluster)
 
 	enabledCheckers := []Checker{
 		destinationrules.DisabledNamespaceWideMTLSChecker{DestinationRule: destinationRule, MTLSDetails: in.MTLSDetails},

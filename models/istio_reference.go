@@ -1,5 +1,7 @@
 package models
 
+import "k8s.io/apimachinery/pkg/runtime/schema"
+
 // IstioReferences represents a sets of different references
 type IstioReferences struct {
 	// Related Istio objects
@@ -14,9 +16,9 @@ type IstioReferences struct {
 
 // IstioReferenceKey is the key value composed of an Istio ObjectType, Namespace and Name.
 type IstioReferenceKey struct {
-	ObjectType string `json:"objectType"`
-	Name       string `json:"name"`
-	Namespace  string `json:"namespace"`
+	ObjectGVK schema.GroupVersionKind `json:"objectGVK"`
+	Name      string                  `json:"name"`
+	Namespace string                  `json:"namespace"`
 }
 
 // IstioReferencesMap represents a set of IstioValidation grouped by IstioReferenceKey.
@@ -24,9 +26,9 @@ type IstioReferencesMap map[IstioReferenceKey]*IstioReferences
 
 // IstioReference is the key value composed of an Istio ObjectType and Name.
 type IstioReference struct {
-	ObjectType string `json:"objectType"`
-	Name       string `json:"name"`
-	Namespace  string `json:"namespace"`
+	ObjectGVK schema.GroupVersionKind `json:"objectGVK"`
+	Name      string                  `json:"name"`
+	Namespace string                  `json:"namespace"`
 }
 
 // ServiceReference is the key value composed of a Name and Namespace.

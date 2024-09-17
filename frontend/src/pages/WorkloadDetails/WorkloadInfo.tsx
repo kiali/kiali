@@ -20,6 +20,7 @@ import { MiniGraphCard } from '../../components/CytoscapeGraph/MiniGraphCard';
 import { IstioConfigCard } from '../../components/IstioConfigCard/IstioConfigCard';
 import { MiniGraphCardPF } from 'pages/GraphPF/MiniGraphCardPF';
 import { isGateway } from '../../helpers/LabelFilterHelper';
+import { stringToGVK } from '../../utils/IstioConfigUtils';
 
 type WorkloadInfoProps = {
   duration: DurationInSeconds;
@@ -164,7 +165,7 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
       workload.pods.forEach(pod => {
         validations.pod[pod.name] = {
           name: pod.name,
-          objectType: 'pod',
+          objectGVK: stringToGVK('pod'),
           valid: true,
           checks: []
         };

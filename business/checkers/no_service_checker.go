@@ -41,7 +41,7 @@ func (in NoServiceChecker) Check() models.IstioValidations {
 }
 
 func runVirtualServiceCheck(virtualService *networking_v1.VirtualService, serviceHosts map[string][]string, clusterNamespaces models.Namespaces, registryStatus []*kubernetes.RegistryService, policyAllowAny bool, cluster string) models.IstioValidations {
-	key, validations := EmptyValidValidation(virtualService.Name, virtualService.Namespace, kubernetes.VirtualServices.String(), cluster)
+	key, validations := EmptyValidValidation(virtualService.Name, virtualService.Namespace, kubernetes.VirtualServices, cluster)
 
 	result, valid := virtualservices.NoHostChecker{
 		Namespaces:        clusterNamespaces,
@@ -58,7 +58,7 @@ func runVirtualServiceCheck(virtualService *networking_v1.VirtualService, servic
 }
 
 func runGatewayCheck(virtualService *networking_v1.VirtualService, gatewayNames map[string]struct{}, cluster string) models.IstioValidations {
-	key, validations := EmptyValidValidation(virtualService.Name, virtualService.Namespace, kubernetes.VirtualServices.String(), cluster)
+	key, validations := EmptyValidValidation(virtualService.Name, virtualService.Namespace, kubernetes.VirtualServices, cluster)
 
 	result, valid := virtualservices.NoGatewayChecker{
 		VirtualService: virtualService,
@@ -74,7 +74,7 @@ func runGatewayCheck(virtualService *networking_v1.VirtualService, gatewayNames 
 func runDestinationRuleCheck(destinationRule *networking_v1.DestinationRule, workloads map[string]models.WorkloadList,
 	serviceEntries []*networking_v1.ServiceEntry, clusterNamespaces models.Namespaces, registryStatus []*kubernetes.RegistryService, virtualServices []*networking_v1.VirtualService,
 	policyAllowAny bool, cluster string) models.IstioValidations {
-	key, validations := EmptyValidValidation(destinationRule.Name, destinationRule.Namespace, kubernetes.DestinationRules.String(), cluster)
+	key, validations := EmptyValidValidation(destinationRule.Name, destinationRule.Namespace, kubernetes.DestinationRules, cluster)
 
 	result, valid := destinationrules.NoDestinationChecker{
 		Namespaces:            clusterNamespaces,

@@ -181,10 +181,10 @@ func IstioConfigDetails(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		if validation, found := istioConfigValidations[models.IstioValidationKey{ObjectType: gvk.String(), Namespace: namespace, Name: object, Cluster: cluster}]; found {
+		if validation, found := istioConfigValidations[models.IstioValidationKey{ObjectGVK: gvk, Namespace: namespace, Name: object, Cluster: cluster}]; found {
 			istioConfigDetails.IstioValidation = validation
 		}
-		if references, found := istioConfigReferences[models.IstioReferenceKey{ObjectType: gvk.String(), Namespace: namespace, Name: object}]; found {
+		if references, found := istioConfigReferences[models.IstioReferenceKey{ObjectGVK: gvk, Namespace: namespace, Name: object}]; found {
 			istioConfigDetails.IstioReferences = references
 		}
 	}

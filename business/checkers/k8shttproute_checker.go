@@ -41,7 +41,7 @@ func (in K8sHTTPRouteChecker) runIndividualChecks() models.IstioValidations {
 }
 
 func (in K8sHTTPRouteChecker) runChecks(rt *k8s_networking_v1.HTTPRoute, gatewayNames map[string]k8s_networking_v1.Gateway) models.IstioValidations {
-	key, validations := EmptyValidValidation(rt.Name, rt.Namespace, kubernetes.K8sHTTPRoutes.String(), in.Cluster)
+	key, validations := EmptyValidValidation(rt.Name, rt.Namespace, kubernetes.K8sHTTPRoutes, in.Cluster)
 
 	enabledCheckers := []Checker{
 		k8shttproutes.NoK8sGatewayChecker{

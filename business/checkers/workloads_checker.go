@@ -2,6 +2,7 @@ package checkers
 
 import (
 	security_v1 "istio.io/client-go/pkg/apis/security/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/kiali/kiali/business/checkers/workloads"
 	"github.com/kiali/kiali/models"
@@ -30,7 +31,7 @@ func (w WorkloadChecker) Check() models.IstioValidations {
 // runChecks runs all the individual checks for a single workload and appends the result into validations.
 func (w WorkloadChecker) runChecks(workload models.WorkloadListItem, namespace string) models.IstioValidations {
 	wlName := workload.Name
-	key, rrValidation := EmptyValidValidation(wlName, namespace, WorkloadCheckerType, w.Cluster)
+	key, rrValidation := EmptyValidValidation(wlName, namespace, schema.GroupVersionKind{Group: "", Version: "", Kind: WorkloadCheckerType}, w.Cluster)
 
 	enabledCheckers := []Checker{
 		workloads.UncoveredWorkloadChecker{Workload: workload, Namespace: namespace, AuthorizationPolicies: w.AuthorizationPolicies},

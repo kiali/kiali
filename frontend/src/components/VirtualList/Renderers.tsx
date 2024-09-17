@@ -29,7 +29,7 @@ import { ValidationStatus } from '../../types/IstioObjects';
 import { PFBadgeType, PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { MissingLabel } from '../MissingLabel/MissingLabel';
 import { MissingAuthPolicy } from 'components/MissingAuthPolicy/MissingAuthPolicy';
-import { getReconciliationCondition, gvkToString } from 'utils/IstioConfigUtils';
+import { getIstioObjectGVK, getReconciliationCondition, gvkToString } from 'utils/IstioConfigUtils';
 import { Label } from 'components/Label/Label';
 import { isMultiCluster, serverConfig } from 'config/ServerConfig';
 import { ControlPlaneBadge } from 'pages/Overview/ControlPlaneBadge';
@@ -63,9 +63,12 @@ const getLink = (item: TResource, config: Resource, query?: string): string => {
 };
 
 const getIstioLink = (item: TResource): string => {
-  const type = item['type'];
-
-  return GetIstioObjectUrl(item.name, item.namespace, type, item.cluster);
+  return GetIstioObjectUrl(
+    item.name,
+    item.namespace,
+    getIstioObjectGVK(item['apiVersion'], item['kind']),
+    item.cluster
+  );
 };
 
 // Cells

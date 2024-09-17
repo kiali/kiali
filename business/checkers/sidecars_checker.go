@@ -31,7 +31,7 @@ func (s SidecarChecker) runGroupChecks() models.IstioValidations {
 	validations := models.IstioValidations{}
 
 	enabledDRCheckers := []GroupChecker{
-		common.SidecarSelectorMultiMatchChecker(s.Cluster, kubernetes.Sidecars.String(), s.Sidecars, s.WorkloadsPerNamespace),
+		common.SidecarSelectorMultiMatchChecker(s.Cluster, kubernetes.Sidecars, s.Sidecars, s.WorkloadsPerNamespace),
 	}
 
 	for _, checker := range enabledDRCheckers {
@@ -53,7 +53,7 @@ func (s SidecarChecker) runIndividualChecks() models.IstioValidations {
 
 func (s SidecarChecker) runChecks(sidecar *networking_v1.Sidecar) models.IstioValidations {
 	policyName := sidecar.Name
-	key, rrValidation := EmptyValidValidation(policyName, sidecar.Namespace, kubernetes.Sidecars.String(), s.Cluster)
+	key, rrValidation := EmptyValidValidation(policyName, sidecar.Namespace, kubernetes.Sidecars, s.Cluster)
 	serviceHosts := kubernetes.ServiceEntryHostnames(s.ServiceEntries)
 	selectorLabels := make(map[string]string)
 	if sidecar.Spec.WorkloadSelector != nil {
@@ -61,7 +61,7 @@ func (s SidecarChecker) runChecks(sidecar *networking_v1.Sidecar) models.IstioVa
 	}
 
 	enabledCheckers := []Checker{
-		common.WorkloadSelectorNoWorkloadFoundChecker(kubernetes.Sidecars.String(), selectorLabels, s.WorkloadsPerNamespace),
+		common.WorkloadSelectorNoWorkloadFoundChecker(kubernetes.Sidecars, selectorLabels, s.WorkloadsPerNamespace),
 		sidecars.EgressHostChecker{Sidecar: sidecar, ServiceEntries: serviceHosts, RegistryServices: s.RegistryServices},
 		sidecars.GlobalChecker{Sidecar: sidecar},
 		sidecars.OutboundTrafficPolicyModeChecker{Sidecar: sidecar},

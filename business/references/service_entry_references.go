@@ -23,7 +23,7 @@ func (n ServiceEntryReferences) References() models.IstioReferencesMap {
 	result := models.IstioReferencesMap{}
 
 	for _, se := range n.ServiceEntries {
-		key := models.IstioReferenceKey{Namespace: se.Namespace, Name: se.Name, ObjectType: kubernetes.ServiceEntries.String()}
+		key := models.IstioReferenceKey{Namespace: se.Namespace, Name: se.Name, ObjectGVK: kubernetes.ServiceEntries}
 		references := &models.IstioReferences{}
 		references.ObjectReferences = append(references.ObjectReferences, n.getConfigReferences(se)...)
 		references.ServiceReferences = append(references.ServiceReferences, n.getServiceReferences(se)...)
@@ -41,7 +41,7 @@ func (n ServiceEntryReferences) getConfigReferences(se *networking_v1.ServiceEnt
 		if !fqdn.IsWildcard() {
 			for _, seHost := range se.Spec.Hosts {
 				if seHost == fqdn.String() {
-					result = append(result, models.IstioReference{Name: dr.Name, Namespace: dr.Namespace, ObjectType: kubernetes.DestinationRules.String()})
+					result = append(result, models.IstioReference{Name: dr.Name, Namespace: dr.Namespace, ObjectGVK: kubernetes.DestinationRules})
 					continue
 				}
 			}
@@ -65,7 +65,7 @@ func (n ServiceEntryReferences) getConfigReferences(se *networking_v1.ServiceEnt
 					}
 					for _, seHost := range se.Spec.Hosts {
 						if seHost == fqdn.String() {
-							result = append(result, models.IstioReference{Name: sc.Name, Namespace: sc.Namespace, ObjectType: kubernetes.Sidecars.String()})
+							result = append(result, models.IstioReference{Name: sc.Name, Namespace: sc.Namespace, ObjectGVK: kubernetes.Sidecars})
 							break
 						}
 					}
@@ -95,7 +95,7 @@ func (n ServiceEntryReferences) getAuthPoliciesReferences(se *networking_v1.Serv
 						if !fqdn.IsWildcard() {
 							for _, seHost := range se.Spec.Hosts {
 								if seHost == fqdn.String() {
-									result = append(result, models.IstioReference{Name: ap.Name, Namespace: ap.Namespace, ObjectType: kubernetes.AuthorizationPolicies.String()})
+									result = append(result, models.IstioReference{Name: ap.Name, Namespace: ap.Namespace, ObjectGVK: kubernetes.AuthorizationPolicies})
 									continue
 								}
 							}

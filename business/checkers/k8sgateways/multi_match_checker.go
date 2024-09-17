@@ -56,13 +56,13 @@ func (m MultiMatchChecker) Check() models.IstioValidations {
 
 // Create validation error for k8sgateway object
 func createError(gatewayRuleName string, ruleCode string, namespace string, cluster string, path string, references []models.IstioValidationKey) models.IstioValidations {
-	key := models.IstioValidationKey{Name: gatewayRuleName, Namespace: namespace, ObjectType: kubernetes.K8sGateways.String(), Cluster: cluster}
+	key := models.IstioValidationKey{Name: gatewayRuleName, Namespace: namespace, ObjectGVK: kubernetes.K8sGateways, Cluster: cluster}
 	checks := models.Build(ruleCode, path)
 	rrValidation := &models.IstioValidation{
-		Cluster:    cluster,
-		Name:       gatewayRuleName,
-		ObjectType: kubernetes.K8sGateways.String(),
-		Valid:      true,
+		Cluster:   cluster,
+		Name:      gatewayRuleName,
+		ObjectGVK: kubernetes.K8sGateways,
+		Valid:     true,
 		Checks: []*models.IstioCheck{
 			&checks,
 		},
@@ -82,7 +82,7 @@ func (m MultiMatchChecker) findMatch(listener k8s_networking_v1.Listener, gwName
 		}
 		for _, l := range gw.Spec.Listeners {
 			if l.Hostname != nil && listener.Hostname != nil && *l.Hostname == *listener.Hostname && l.Port == listener.Port && l.Protocol == listener.Protocol {
-				key := models.IstioValidationKey{Name: gw.Name, Namespace: gw.Namespace, ObjectType: kubernetes.K8sGateways.String()}
+				key := models.IstioValidationKey{Name: gw.Name, Namespace: gw.Namespace, ObjectGVK: kubernetes.K8sGateways}
 				collidingGateways = append(collidingGateways, key)
 			}
 		}
@@ -102,7 +102,7 @@ func (m MultiMatchChecker) findMatchIP(address k8s_networking_v1.GatewayAddress,
 
 		for _, a := range aa.Spec.Addresses {
 			if a.Type != nil && address.Type != nil && *a.Type == *address.Type && a.Value == address.Value {
-				key := models.IstioValidationKey{Name: aa.Name, Namespace: aa.Namespace, ObjectType: kubernetes.K8sGateways.String()}
+				key := models.IstioValidationKey{Name: aa.Name, Namespace: aa.Namespace, ObjectGVK: kubernetes.K8sGateways}
 				collidingGateways = append(collidingGateways, key)
 			}
 		}

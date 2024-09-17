@@ -240,3 +240,17 @@ export function getIstioObjectGVK(apiVersion?: string, kind?: string): GroupVers
 export function gvkToString(gvk: GroupVersionKind): string {
   return `${gvk.group}/${gvk.version}, Kind=${gvk.kind}`;
 }
+
+export function stringToGVK(gvk: string): GroupVersionKind {
+  const parts = gvk.split(',');
+  if (parts.length !== 2) {
+    // for workloads, apps and services
+    return { group: '', version: '', kind: gvk };
+  }
+  const apiParts = parts[0].split('/');
+  if (apiParts.length !== 2) {
+    // should not happen
+    return { group: '', version: '', kind: gvk };
+  }
+  return { group: apiParts[0], version: apiParts[1], kind: parts[1] };
+}

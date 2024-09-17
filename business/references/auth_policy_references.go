@@ -26,7 +26,7 @@ func (n AuthorizationPolicyReferences) References() models.IstioReferencesMap {
 
 	for _, ap := range n.AuthorizationPolicies {
 		namespace := ap.Namespace
-		key := models.IstioReferenceKey{Namespace: namespace, Name: ap.Name, ObjectType: kubernetes.AuthorizationPolicies.String()}
+		key := models.IstioReferenceKey{Namespace: namespace, Name: ap.Name, ObjectGVK: kubernetes.AuthorizationPolicies}
 		references := &models.IstioReferences{}
 		for _, rule := range ap.Spec.Rules {
 			if rule == nil {
@@ -71,7 +71,7 @@ func (n AuthorizationPolicyReferences) getConfigReferences(host kubernetes.Host)
 	for _, se := range n.ServiceEntries {
 		for _, seHost := range se.Spec.Hosts {
 			if seHost == host.String() {
-				result = append(result, models.IstioReference{Name: se.Name, Namespace: se.Namespace, ObjectType: kubernetes.ServiceEntries.String()})
+				result = append(result, models.IstioReference{Name: se.Name, Namespace: se.Namespace, ObjectGVK: kubernetes.ServiceEntries})
 				continue
 			}
 		}
@@ -82,7 +82,7 @@ func (n AuthorizationPolicyReferences) getConfigReferences(host kubernetes.Host)
 
 			hostS := kubernetes.ParseHost(vHost, vs.Namespace)
 			if hostS.String() == host.String() {
-				result = append(result, models.IstioReference{Name: vs.Name, Namespace: vs.Namespace, ObjectType: kubernetes.VirtualServices.String()})
+				result = append(result, models.IstioReference{Name: vs.Name, Namespace: vs.Namespace, ObjectGVK: kubernetes.VirtualServices})
 				continue
 			}
 		}

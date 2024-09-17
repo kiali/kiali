@@ -35,7 +35,7 @@ func (c MtlsEnabledChecker) Check() models.IstioValidations {
 		if !receiveMtlsTraffic {
 			if need, paths := needsMtls(ap); need {
 				checks := make([]*models.IstioCheck, 0)
-				key := models.BuildKey(kubernetes.AuthorizationPolicies.String(), ap.Name, ap.Namespace, c.Cluster)
+				key := models.BuildKey(kubernetes.AuthorizationPolicies, ap.Name, ap.Namespace, c.Cluster)
 
 				for _, path := range paths {
 					check := models.Build("authorizationpolicy.mtls.needstobeenabled", path)
@@ -43,11 +43,11 @@ func (c MtlsEnabledChecker) Check() models.IstioValidations {
 				}
 
 				validations.MergeValidations(models.IstioValidations{key: &models.IstioValidation{
-					Cluster:    c.Cluster,
-					Name:       ap.Namespace,
-					ObjectType: kubernetes.AuthorizationPolicies.String(),
-					Valid:      false,
-					Checks:     checks,
+					Cluster:   c.Cluster,
+					Name:      ap.Namespace,
+					ObjectGVK: kubernetes.AuthorizationPolicies,
+					Valid:     false,
+					Checks:    checks,
 				}})
 			}
 		}

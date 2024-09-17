@@ -265,7 +265,7 @@ func FilterWorkloadReferences(wSelector string, istioConfigList models.IstioConf
 	wkdReferences := make([]*models.IstioValidationKey, 0)
 	gwFiltered := kubernetes.FilterGatewaysBySelector(wSelector, istioConfigList.Gateways)
 	for _, g := range gwFiltered {
-		ref := models.BuildKey(g.Kind, g.Name, g.Namespace, cluster)
+		ref := models.BuildKey(kubernetes.Gateways, g.Name, g.Namespace, cluster)
 		exist := false
 		for _, r := range wkdReferences {
 			exist = exist || *r == ref
@@ -276,7 +276,7 @@ func FilterWorkloadReferences(wSelector string, istioConfigList models.IstioConf
 	}
 	apFiltered := kubernetes.FilterAuthorizationPoliciesBySelector(wSelector, istioConfigList.AuthorizationPolicies)
 	for _, a := range apFiltered {
-		ref := models.BuildKey(a.Kind, a.Name, a.Namespace, cluster)
+		ref := models.BuildKey(kubernetes.AuthorizationPolicies, a.Name, a.Namespace, cluster)
 		exist := false
 		for _, r := range wkdReferences {
 			exist = exist || *r == ref
@@ -287,7 +287,7 @@ func FilterWorkloadReferences(wSelector string, istioConfigList models.IstioConf
 	}
 	paFiltered := kubernetes.FilterPeerAuthenticationsBySelector(wSelector, istioConfigList.PeerAuthentications)
 	for _, p := range paFiltered {
-		ref := models.BuildKey(p.Kind, p.Name, p.Namespace, cluster)
+		ref := models.BuildKey(kubernetes.PeerAuthentications, p.Name, p.Namespace, cluster)
 		exist := false
 		for _, r := range wkdReferences {
 			exist = exist || *r == ref
@@ -298,7 +298,7 @@ func FilterWorkloadReferences(wSelector string, istioConfigList models.IstioConf
 	}
 	scFiltered := kubernetes.FilterSidecarsBySelector(wSelector, istioConfigList.Sidecars)
 	for _, s := range scFiltered {
-		ref := models.BuildKey(s.Kind, s.Name, s.Namespace, cluster)
+		ref := models.BuildKey(kubernetes.Sidecars, s.Name, s.Namespace, cluster)
 		exist := false
 		for _, r := range wkdReferences {
 			exist = exist || *r == ref
@@ -309,7 +309,7 @@ func FilterWorkloadReferences(wSelector string, istioConfigList models.IstioConf
 	}
 	raFiltered := kubernetes.FilterRequestAuthenticationsBySelector(wSelector, istioConfigList.RequestAuthentications)
 	for _, ra := range raFiltered {
-		ref := models.BuildKey(ra.Kind, ra.Name, ra.Namespace, cluster)
+		ref := models.BuildKey(kubernetes.RequestAuthentications, ra.Name, ra.Namespace, cluster)
 		exist := false
 		for _, r := range wkdReferences {
 			exist = exist || *r == ref
@@ -320,7 +320,7 @@ func FilterWorkloadReferences(wSelector string, istioConfigList models.IstioConf
 	}
 	efFiltered := kubernetes.FilterEnvoyFiltersBySelector(wSelector, istioConfigList.EnvoyFilters)
 	for _, ef := range efFiltered {
-		ref := models.BuildKey(ef.Kind, ef.Name, ef.Namespace, cluster)
+		ref := models.BuildKey(kubernetes.EnvoyFilters, ef.Name, ef.Namespace, cluster)
 		exist := false
 		for _, r := range wkdReferences {
 			exist = exist || *r == ref
@@ -342,9 +342,9 @@ func FilterUniqueIstioReferences(refs []*models.IstioValidationKey) []*models.Is
 	filtered := make([]*models.IstioValidationKey, 0)
 	for k := range refMap {
 		filtered = append(filtered, &models.IstioValidationKey{
-			ObjectType: k.ObjectType,
-			Name:       k.Name,
-			Namespace:  k.Namespace,
+			ObjectGVK: k.ObjectGVK,
+			Name:      k.Name,
+			Namespace: k.Namespace,
 		})
 	}
 	return filtered

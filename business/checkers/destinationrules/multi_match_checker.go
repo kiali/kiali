@@ -147,13 +147,13 @@ func addError(validations models.IstioValidations, namespaces []string, destinat
 }
 
 func createError(errorText, namespace, destinationRuleName, cluster string, valid bool) (models.IstioValidationKey, *models.IstioValidation) {
-	key := models.IstioValidationKey{Name: destinationRuleName, Namespace: namespace, ObjectType: kubernetes.DestinationRules.String(), Cluster: cluster}
+	key := models.IstioValidationKey{Name: destinationRuleName, Namespace: namespace, ObjectGVK: kubernetes.DestinationRules, Cluster: cluster}
 	checks := models.Build(errorText, "spec/host")
 	rrValidation := &models.IstioValidation{
-		Cluster:    cluster,
-		Name:       destinationRuleName,
-		ObjectType: key.ObjectType,
-		Valid:      valid,
+		Cluster:   cluster,
+		Name:      destinationRuleName,
+		ObjectGVK: key.ObjectGVK,
+		Valid:     valid,
 		Checks: []*models.IstioCheck{
 			&checks,
 		},

@@ -439,15 +439,15 @@ func (in *IstioConfigService) GetIstioConfigList(ctx context.Context, cluster st
 // GetIstioConfigDetails returns a specific Istio configuration object.
 // It uses following parameters:
 // - "namespace": 		namespace where configuration is stored
-// - "objectType":		type of the configuration
+// - "objectGVK":		type of the configuration
 // - "object":			name of the configuration
-func (in *IstioConfigService) GetIstioConfigDetails(ctx context.Context, cluster, namespace string, objectType schema.GroupVersionKind, object string) (models.IstioConfigDetails, error) {
+func (in *IstioConfigService) GetIstioConfigDetails(ctx context.Context, cluster, namespace string, objectGVK schema.GroupVersionKind, object string) (models.IstioConfigDetails, error) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GetIstioConfigDetails",
 		observability.Attribute("package", "business"),
 		observability.Attribute("cluster", cluster),
 		observability.Attribute("namespace", namespace),
-		observability.Attribute("objectType", objectType.String()),
+		observability.Attribute("objectGVK", objectGVK.String()),
 		observability.Attribute("object", object),
 	)
 	defer end()
@@ -456,7 +456,7 @@ func (in *IstioConfigService) GetIstioConfigDetails(ctx context.Context, cluster
 
 	istioConfigDetail := models.IstioConfigDetails{}
 	istioConfigDetail.Namespace = models.Namespace{Name: namespace}
-	istioConfigDetail.ObjectType = objectType
+	istioConfigDetail.ObjectGVK = objectGVK
 
 	if _, ok := in.userClients[cluster]; !ok {
 		return istioConfigDetail, fmt.Errorf("Cluster [%s] is not found or is not accessible for Kiali", cluster)
@@ -472,7 +472,7 @@ func (in *IstioConfigService) GetIstioConfigDetails(ctx context.Context, cluster
 
 	go func(ctx context.Context) {
 		defer wg.Done()
-		canCreate, canUpdate, canDelete := getPermissions(ctx, in.userClients[cluster], cluster, namespace, objectType)
+		canCreate, canUpdate, canDelete := getPermissions(ctx, in.userClients[cluster], cluster, namespace, objectGVK)
 		istioConfigDetail.Permissions = models.ResourcePermissions{
 			Create: canCreate,
 			Update: canUpdate,
@@ -482,123 +482,123 @@ func (in *IstioConfigService) GetIstioConfigDetails(ctx context.Context, cluster
 
 	getOpts := meta_v1.GetOptions{}
 
-	switch objectType {
-	case kubernetes.DestinationRules:
+	switch objectGVK.String() {
+	case kubernetes.DestinationRules.String():
 		istioConfigDetail.DestinationRule, err = in.userClients[cluster].Istio().NetworkingV1().DestinationRules(namespace).Get(ctx, object, getOpts)
 		if err == nil {
 			istioConfigDetail.DestinationRule.Kind = kubernetes.DestinationRules.Kind
 			istioConfigDetail.DestinationRule.APIVersion = kubernetes.DestinationRules.GroupVersion().String()
 		}
-	case kubernetes.EnvoyFilters:
+	case kubernetes.EnvoyFilters.String():
 		istioConfigDetail.EnvoyFilter, err = in.userClients[cluster].Istio().NetworkingV1alpha3().EnvoyFilters(namespace).Get(ctx, object, getOpts)
 		if err == nil {
 			istioConfigDetail.EnvoyFilter.Kind = kubernetes.EnvoyFilters.Kind
 			istioConfigDetail.EnvoyFilter.APIVersion = kubernetes.EnvoyFilters.GroupVersion().String()
 		}
-	case kubernetes.Gateways:
+	case kubernetes.Gateways.String():
 		istioConfigDetail.Gateway, err = in.userClients[cluster].Istio().NetworkingV1().Gateways(namespace).Get(ctx, object, getOpts)
 		if err == nil {
 			istioConfigDetail.Gateway.Kind = kubernetes.Gateways.Kind
 			istioConfigDetail.Gateway.APIVersion = kubernetes.Gateways.GroupVersion().String()
 		}
-	case kubernetes.K8sGateways:
+	case kubernetes.K8sGateways.String():
 		istioConfigDetail.K8sGateway, err = in.userClients[cluster].GatewayAPI().GatewayV1().Gateways(namespace).Get(ctx, object, getOpts)
 		if err == nil {
 			istioConfigDetail.K8sGateway.Kind = kubernetes.K8sGateways.Kind
 			istioConfigDetail.K8sGateway.APIVersion = kubernetes.K8sGateways.GroupVersion().String()
 		}
-	case kubernetes.K8sGRPCRoutes:
+	case kubernetes.K8sGRPCRoutes.String():
 		istioConfigDetail.K8sGRPCRoute, err = in.userClients[cluster].GatewayAPI().GatewayV1().GRPCRoutes(namespace).Get(ctx, object, getOpts)
 		if err == nil {
 			istioConfigDetail.K8sGRPCRoute.Kind = kubernetes.K8sGRPCRoutes.Kind
 			istioConfigDetail.K8sGRPCRoute.APIVersion = kubernetes.K8sGRPCRoutes.GroupVersion().String()
 		}
-	case kubernetes.K8sHTTPRoutes:
+	case kubernetes.K8sHTTPRoutes.String():
 		istioConfigDetail.K8sHTTPRoute, err = in.userClients[cluster].GatewayAPI().GatewayV1().HTTPRoutes(namespace).Get(ctx, object, getOpts)
 		if err == nil {
 			istioConfigDetail.K8sHTTPRoute.Kind = kubernetes.K8sHTTPRoutes.Kind
 			istioConfigDetail.K8sHTTPRoute.APIVersion = kubernetes.K8sHTTPRoutes.GroupVersion().String()
 		}
-	case kubernetes.K8sReferenceGrants:
+	case kubernetes.K8sReferenceGrants.String():
 		istioConfigDetail.K8sReferenceGrant, err = in.userClients[cluster].GatewayAPI().GatewayV1beta1().ReferenceGrants(namespace).Get(ctx, object, getOpts)
 		if err == nil {
 			istioConfigDetail.K8sReferenceGrant.Kind = kubernetes.K8sReferenceGrants.Kind
 			istioConfigDetail.K8sReferenceGrant.APIVersion = kubernetes.K8sReferenceGrants.GroupVersion().String()
 		}
-	case kubernetes.K8sTCPRoutes:
+	case kubernetes.K8sTCPRoutes.String():
 		istioConfigDetail.K8sTCPRoute, err = in.userClients[cluster].GatewayAPI().GatewayV1alpha2().TCPRoutes(namespace).Get(ctx, object, getOpts)
 		if err == nil {
 			istioConfigDetail.K8sTCPRoute.Kind = kubernetes.K8sTCPRoutes.Kind
 			istioConfigDetail.K8sTCPRoute.APIVersion = kubernetes.K8sTCPRoutes.GroupVersion().String()
 		}
-	case kubernetes.K8sTLSRoutes:
+	case kubernetes.K8sTLSRoutes.String():
 		istioConfigDetail.K8sTLSRoute, err = in.userClients[cluster].GatewayAPI().GatewayV1alpha2().TLSRoutes(namespace).Get(ctx, object, getOpts)
 		if err == nil {
 			istioConfigDetail.K8sTLSRoute.Kind = kubernetes.K8sTLSRoutes.Kind
 			istioConfigDetail.K8sTLSRoute.APIVersion = kubernetes.K8sTLSRoutes.GroupVersion().String()
 		}
-	case kubernetes.ServiceEntries:
+	case kubernetes.ServiceEntries.String():
 		istioConfigDetail.ServiceEntry, err = in.userClients[cluster].Istio().NetworkingV1().ServiceEntries(namespace).Get(ctx, object, getOpts)
 		if err == nil {
 			istioConfigDetail.ServiceEntry.Kind = kubernetes.ServiceEntries.Kind
 			istioConfigDetail.ServiceEntry.APIVersion = kubernetes.ServiceEntries.GroupVersion().String()
 		}
-	case kubernetes.Sidecars:
+	case kubernetes.Sidecars.String():
 		istioConfigDetail.Sidecar, err = in.userClients[cluster].Istio().NetworkingV1().Sidecars(namespace).Get(ctx, object, getOpts)
 		if err == nil {
 			istioConfigDetail.Sidecar.Kind = kubernetes.Sidecars.Kind
 			istioConfigDetail.Sidecar.APIVersion = kubernetes.Sidecars.GroupVersion().String()
 		}
-	case kubernetes.VirtualServices:
+	case kubernetes.VirtualServices.String():
 		istioConfigDetail.VirtualService, err = in.userClients[cluster].Istio().NetworkingV1().VirtualServices(namespace).Get(ctx, object, getOpts)
 		if err == nil {
 			istioConfigDetail.VirtualService.Kind = kubernetes.VirtualServices.Kind
 			istioConfigDetail.VirtualService.APIVersion = kubernetes.VirtualServices.GroupVersion().String()
 		}
-	case kubernetes.WorkloadEntries:
+	case kubernetes.WorkloadEntries.String():
 		istioConfigDetail.WorkloadEntry, err = in.userClients[cluster].Istio().NetworkingV1().WorkloadEntries(namespace).Get(ctx, object, getOpts)
 		if err == nil {
 			istioConfigDetail.WorkloadEntry.Kind = kubernetes.WorkloadEntries.Kind
 			istioConfigDetail.WorkloadEntry.APIVersion = kubernetes.WorkloadEntries.GroupVersion().String()
 		}
-	case kubernetes.WorkloadGroups:
+	case kubernetes.WorkloadGroups.String():
 		istioConfigDetail.WorkloadGroup, err = in.userClients[cluster].Istio().NetworkingV1().WorkloadGroups(namespace).Get(ctx, object, getOpts)
 		if err == nil {
 			istioConfigDetail.WorkloadGroup.Kind = kubernetes.WorkloadGroups.Kind
 			istioConfigDetail.WorkloadGroup.APIVersion = kubernetes.WorkloadGroups.GroupVersion().String()
 		}
-	case kubernetes.WasmPlugins:
+	case kubernetes.WasmPlugins.String():
 		istioConfigDetail.WasmPlugin, err = in.userClients[cluster].Istio().ExtensionsV1alpha1().WasmPlugins(namespace).Get(ctx, object, getOpts)
 		if err == nil {
 			istioConfigDetail.WasmPlugin.Kind = kubernetes.WasmPlugins.Kind
 			istioConfigDetail.WasmPlugin.APIVersion = kubernetes.WasmPlugins.GroupVersion().String()
 		}
-	case kubernetes.Telemetries:
+	case kubernetes.Telemetries.String():
 		istioConfigDetail.Telemetry, err = in.userClients[cluster].Istio().TelemetryV1().Telemetries(namespace).Get(ctx, object, getOpts)
 		if err == nil {
 			istioConfigDetail.Telemetry.Kind = kubernetes.Telemetries.Kind
 			istioConfigDetail.Telemetry.APIVersion = kubernetes.Telemetries.GroupVersion().String()
 		}
-	case kubernetes.AuthorizationPolicies:
+	case kubernetes.AuthorizationPolicies.String():
 		istioConfigDetail.AuthorizationPolicy, err = in.userClients[cluster].Istio().SecurityV1().AuthorizationPolicies(namespace).Get(ctx, object, getOpts)
 		if err == nil {
 			istioConfigDetail.AuthorizationPolicy.Kind = kubernetes.AuthorizationPolicies.Kind
 			istioConfigDetail.AuthorizationPolicy.APIVersion = kubernetes.AuthorizationPolicies.GroupVersion().String()
 		}
-	case kubernetes.PeerAuthentications:
+	case kubernetes.PeerAuthentications.String():
 		istioConfigDetail.PeerAuthentication, err = in.userClients[cluster].Istio().SecurityV1().PeerAuthentications(namespace).Get(ctx, object, getOpts)
 		if err == nil {
 			istioConfigDetail.PeerAuthentication.Kind = kubernetes.PeerAuthentications.Kind
 			istioConfigDetail.PeerAuthentication.APIVersion = kubernetes.PeerAuthentications.GroupVersion().String()
 		}
-	case kubernetes.RequestAuthentications:
+	case kubernetes.RequestAuthentications.String():
 		istioConfigDetail.RequestAuthentication, err = in.userClients[cluster].Istio().SecurityV1().RequestAuthentications(namespace).Get(ctx, object, getOpts)
 		if err == nil {
 			istioConfigDetail.RequestAuthentication.Kind = kubernetes.RequestAuthentications.Kind
 			istioConfigDetail.RequestAuthentication.APIVersion = kubernetes.RequestAuthentications.GroupVersion().String()
 		}
 	default:
-		err = fmt.Errorf("object type not found: %v", objectType)
+		err = fmt.Errorf("object type not found: %v", objectGVK.String())
 	}
 
 	wg.Wait()
@@ -692,7 +692,7 @@ func (in *IstioConfigService) DeleteIstioConfigDetail(ctx context.Context, clust
 func (in *IstioConfigService) UpdateIstioConfigDetail(ctx context.Context, cluster, namespace string, resourceType schema.GroupVersionKind, name, jsonPatch string) (models.IstioConfigDetails, error) {
 	istioConfigDetail := models.IstioConfigDetails{}
 	istioConfigDetail.Namespace = models.Namespace{Name: namespace}
-	istioConfigDetail.ObjectType = resourceType
+	istioConfigDetail.ObjectGVK = resourceType
 
 	patchOpts := meta_v1.PatchOptions{}
 	patchType := api_types.MergePatchType
@@ -783,7 +783,7 @@ func (in *IstioConfigService) UpdateIstioConfigDetail(ctx context.Context, clust
 func (in *IstioConfigService) CreateIstioConfigDetail(ctx context.Context, cluster, namespace string, resourceType schema.GroupVersionKind, body []byte) (models.IstioConfigDetails, error) {
 	istioConfigDetail := models.IstioConfigDetails{}
 	istioConfigDetail.Namespace = models.Namespace{Name: namespace}
-	istioConfigDetail.ObjectType = resourceType
+	istioConfigDetail.ObjectGVK = resourceType
 
 	createOpts := meta_v1.CreateOptions{}
 
@@ -1040,11 +1040,11 @@ func (in *IstioConfigService) GetIstioConfigPermissions(ctx context.Context, nam
 	return istioConfigPermissions
 }
 
-func getPermissions(ctx context.Context, k8s kubernetes.ClientInterface, cluster string, namespace string, objectType schema.GroupVersionKind) (bool, bool, bool) {
+func getPermissions(ctx context.Context, k8s kubernetes.ClientInterface, cluster string, namespace string, objectGVK schema.GroupVersionKind) (bool, bool, bool) {
 	var canCreate, canPatch, canDelete bool
 
-	if _, ok := kubernetes.ResourceTypesToAPI[objectType.String()]; ok {
-		return getPermissionsApi(ctx, k8s, cluster, namespace, objectType.Group, objectType.Kind)
+	if _, ok := kubernetes.ResourceTypesToAPI[objectGVK.String()]; ok {
+		return getPermissionsApi(ctx, k8s, cluster, namespace, objectGVK.Group, objectGVK.Kind)
 	}
 	return canCreate, canPatch, canDelete
 }

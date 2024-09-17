@@ -76,13 +76,13 @@ func containsVirtualService(vs *networking_v1.VirtualService, vss []*networking_
 
 func multipleVirtualServiceCheck(virtualService *networking_v1.VirtualService, validations models.IstioValidations, references []*networking_v1.VirtualService, cluster string) {
 	virtualServiceName := virtualService.Name
-	key := models.IstioValidationKey{Name: virtualServiceName, Namespace: virtualService.Namespace, ObjectType: kubernetes.VirtualServices.String(), Cluster: cluster}
+	key := models.IstioValidationKey{Name: virtualServiceName, Namespace: virtualService.Namespace, ObjectGVK: kubernetes.VirtualServices, Cluster: cluster}
 	checks := models.Build("virtualservices.singlehost", "spec/hosts")
 	rrValidation := &models.IstioValidation{
-		Cluster:    cluster,
-		Name:       virtualServiceName,
-		ObjectType: kubernetes.VirtualServices.String(),
-		Valid:      true,
+		Cluster:   cluster,
+		Name:      virtualServiceName,
+		ObjectGVK: kubernetes.VirtualServices,
+		Valid:     true,
 		Checks: []*models.IstioCheck{
 			&checks,
 		},
@@ -90,7 +90,7 @@ func multipleVirtualServiceCheck(virtualService *networking_v1.VirtualService, v
 	}
 
 	for _, ref := range references {
-		refKey := models.IstioValidationKey{Name: ref.Name, Namespace: ref.Namespace, ObjectType: kubernetes.VirtualServices.String(), Cluster: cluster}
+		refKey := models.IstioValidationKey{Name: ref.Name, Namespace: ref.Namespace, ObjectGVK: kubernetes.VirtualServices, Cluster: cluster}
 		if refKey != key {
 			rrValidation.References = append(rrValidation.References, refKey)
 		}

@@ -101,7 +101,7 @@ export interface GroupVersionKind {
 export interface ObjectValidation {
   checks: ObjectCheck[];
   name: string;
-  objectType: string;
+  objectGVK: GroupVersionKind;
   references?: ObjectReference[];
   valid: boolean;
 }

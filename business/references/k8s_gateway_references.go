@@ -17,7 +17,7 @@ func (g K8sGatewayReferences) References() models.IstioReferencesMap {
 	result := models.IstioReferencesMap{}
 
 	for _, gw := range g.K8sGateways {
-		key := models.IstioReferenceKey{Namespace: gw.Namespace, Name: gw.Name, ObjectType: kubernetes.K8sGateways.String()}
+		key := models.IstioReferenceKey{Namespace: gw.Namespace, Name: gw.Name, ObjectGVK: kubernetes.K8sGateways}
 		references := &models.IstioReferences{}
 		references.ObjectReferences = g.getConfigReferences(gw)
 		result.MergeReferencesMap(models.IstioReferencesMap{key: references})
@@ -34,7 +34,7 @@ func (g K8sGatewayReferences) getConfigReferences(gw *k8s_networking_v1.Gateway)
 	for _, rt := range g.K8sHTTPRoutes {
 		for _, pr := range rt.Spec.ParentRefs {
 			if string(pr.Name) == gw.Name && string(*pr.Kind) == gvk.Kind && string(*pr.Group) == gvk.Group {
-				ref := models.IstioReference{Name: rt.Name, Namespace: rt.Namespace, ObjectType: kubernetes.K8sHTTPRoutes.String()}
+				ref := models.IstioReference{Name: rt.Name, Namespace: rt.Namespace, ObjectGVK: kubernetes.K8sHTTPRoutes}
 				result = append(result, ref)
 			}
 		}
@@ -43,7 +43,7 @@ func (g K8sGatewayReferences) getConfigReferences(gw *k8s_networking_v1.Gateway)
 	for _, rt := range g.K8sGRPCRoutes {
 		for _, pr := range rt.Spec.ParentRefs {
 			if string(pr.Name) == gw.Name && string(*pr.Kind) == gvk.Kind && string(*pr.Group) == gvk.Group {
-				ref := models.IstioReference{Name: rt.Name, Namespace: rt.Namespace, ObjectType: kubernetes.K8sGRPCRoutes.String()}
+				ref := models.IstioReference{Name: rt.Name, Namespace: rt.Namespace, ObjectGVK: kubernetes.K8sGRPCRoutes}
 				result = append(result, ref)
 			}
 		}

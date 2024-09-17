@@ -19,7 +19,7 @@ func (n K8sHTTPRouteReferences) References() models.IstioReferencesMap {
 	result := models.IstioReferencesMap{}
 
 	for _, rt := range n.K8sHTTPRoutes {
-		key := models.IstioReferenceKey{Namespace: rt.Namespace, Name: rt.Name, ObjectType: kubernetes.K8sHTTPRoutes.String()}
+		key := models.IstioReferenceKey{Namespace: rt.Namespace, Name: rt.Name, ObjectGVK: kubernetes.K8sHTTPRoutes}
 		references := &models.IstioReferences{}
 		references.ServiceReferences = n.getServiceReferences(rt)
 		references.ObjectReferences = n.getConfigReferences(rt)
@@ -67,7 +67,7 @@ func (n K8sHTTPRouteReferences) getConfigReferences(rt *k8s_networking_v1.HTTPRo
 	allGateways := getAllK8sGateways(rt.Spec.ParentRefs, rt.Namespace)
 	// filter unique references
 	for _, gw := range allGateways {
-		key := util.BuildNameNSTypeKey(gw.Name, gw.Namespace, gw.ObjectType)
+		key := util.BuildNameNSTypeKey(gw.Name, gw.Namespace, gw.ObjectGVK)
 		if !keys[key] {
 			result = append(result, gw)
 			keys[key] = true
@@ -110,9 +110,9 @@ func (n K8sHTTPRouteReferences) getAllK8sReferenceGrants(rt *k8s_networking_v1.H
 
 func getK8sGatewayReference(gateway string, namespace string) models.IstioReference {
 	gw := kubernetes.ParseGatewayAsHost(gateway, namespace)
-	return models.IstioReference{Name: gw.Service, Namespace: gw.Namespace, ObjectType: kubernetes.K8sGateways.String()}
+	return models.IstioReference{Name: gw.Service, Namespace: gw.Namespace, ObjectGVK: kubernetes.K8sGateways}
 }
 
 func getK8sGrantReference(name string, namespace string) models.IstioReference {
-	return models.IstioReference{Name: name, Namespace: namespace, ObjectType: kubernetes.K8sReferenceGrants.String()}
+	return models.IstioReference{Name: name, Namespace: namespace, ObjectGVK: kubernetes.K8sReferenceGrants}
 }

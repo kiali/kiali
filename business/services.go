@@ -270,30 +270,30 @@ func (in *SvcService) buildKubernetesServices(svcs []core_v1.Service, pods []cor
 			svcK8sGateways := kubernetes.FilterK8sGatewaysByRoutes(istioConfigList.K8sGateways, svcK8sHTTPRoutes, svcK8sGRPCRoutes)
 
 			for _, vs := range svcVirtualServices {
-				ref := models.BuildKey(vs.Kind, vs.Name, vs.Namespace, cluster)
+				ref := models.BuildKey(kubernetes.VirtualServices, vs.Name, vs.Namespace, cluster)
 				svcReferences = append(svcReferences, &ref)
 			}
 			for _, dr := range svcDestinationRules {
-				ref := models.BuildKey(dr.Kind, dr.Name, dr.Namespace, cluster)
+				ref := models.BuildKey(kubernetes.DestinationRules, dr.Name, dr.Namespace, cluster)
 				svcReferences = append(svcReferences, &ref)
 			}
 			for _, gw := range svcGateways {
-				ref := models.BuildKey(gw.Kind, gw.Name, gw.Namespace, cluster)
+				ref := models.BuildKey(kubernetes.Gateways, gw.Name, gw.Namespace, cluster)
 				svcReferences = append(svcReferences, &ref)
 			}
 			for _, gw := range svcK8sGateways {
 				// Should be K8s type to generate correct link
-				ref := models.BuildKey(kubernetes.K8sGatewayType, gw.Name, gw.Namespace, cluster)
+				ref := models.BuildKey(kubernetes.K8sGateways, gw.Name, gw.Namespace, cluster)
 				svcReferences = append(svcReferences, &ref)
 			}
 			for _, route := range svcK8sGRPCRoutes {
 				// Should be K8s type to generate correct link
-				ref := models.BuildKey(kubernetes.K8sGRPCRouteType, route.Name, route.Namespace, cluster)
+				ref := models.BuildKey(kubernetes.K8sGRPCRoutes, route.Name, route.Namespace, cluster)
 				svcReferences = append(svcReferences, &ref)
 			}
 			for _, route := range svcK8sHTTPRoutes {
 				// Should be K8s type to generate correct link
-				ref := models.BuildKey(kubernetes.K8sHTTPRouteType, route.Name, route.Namespace, cluster)
+				ref := models.BuildKey(kubernetes.K8sHTTPRoutes, route.Name, route.Namespace, cluster)
 				svcReferences = append(svcReferences, &ref)
 			}
 			svcReferences = FilterUniqueIstioReferences(svcReferences)
@@ -388,19 +388,19 @@ func (in *SvcService) buildRegistryServices(rSvcs []*kubernetes.RegistryService,
 		svcGateways := kubernetes.FilterGatewaysByVirtualServices(istioConfigList.Gateways, svcVirtualServices)
 		svcReferences := make([]*models.IstioValidationKey, 0)
 		for _, se := range svcServiceEntries {
-			ref := models.BuildKey(se.Kind, se.Name, se.Namespace, cluster)
+			ref := models.BuildKey(kubernetes.ServiceEntries, se.Name, se.Namespace, cluster)
 			svcReferences = append(svcReferences, &ref)
 		}
 		for _, vs := range svcVirtualServices {
-			ref := models.BuildKey(vs.Kind, vs.Name, vs.Namespace, cluster)
+			ref := models.BuildKey(kubernetes.VirtualServices, vs.Name, vs.Namespace, cluster)
 			svcReferences = append(svcReferences, &ref)
 		}
 		for _, dr := range svcDestinationRules {
-			ref := models.BuildKey(dr.Kind, dr.Name, dr.Namespace, cluster)
+			ref := models.BuildKey(kubernetes.DestinationRules, dr.Name, dr.Namespace, cluster)
 			svcReferences = append(svcReferences, &ref)
 		}
 		for _, gw := range svcGateways {
-			ref := models.BuildKey(gw.Kind, gw.Name, gw.Namespace, cluster)
+			ref := models.BuildKey(kubernetes.Gateways, gw.Name, gw.Namespace, cluster)
 			svcReferences = append(svcReferences, &ref)
 		}
 		svcReferences = FilterUniqueIstioReferences(svcReferences)
