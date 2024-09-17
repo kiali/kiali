@@ -20,7 +20,6 @@ import { TrafficDetails } from 'components/TrafficList/TrafficDetails';
 import { WorkloadWizardDropdown } from '../../components/IstioWizards/WorkloadWizardDropdown';
 import { TimeControl } from '../../components/Time/TimeControl';
 import { EnvoyDetails } from 'components/Envoy/EnvoyDetails';
-import { StatusState } from '../../types/StatusState';
 import { WorkloadHealth } from 'types/Health';
 import { RenderHeader } from '../../components/Nav/Page/RenderHeader';
 import { ErrorSection } from '../../components/ErrorSection/ErrorSection';
@@ -40,7 +39,6 @@ type WorkloadDetailsState = {
 
 type ReduxProps = {
   duration: DurationInSeconds;
-  statusState: StatusState;
   tracingInfo?: TracingInfo;
 };
 
@@ -351,7 +349,6 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
           namespace={this.props.workloadId.namespace}
           workload={this.state.workload}
           onChange={this.fetchWorkload}
-          statusState={this.props.statusState}
         />
       ) : undefined;
 
@@ -385,7 +382,6 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
 
 const mapStateToProps = (state: KialiAppState): ReduxProps => ({
   duration: durationSelector(state),
-  statusState: state.statusState,
   tracingInfo: state.tracingState.info
 });
 
