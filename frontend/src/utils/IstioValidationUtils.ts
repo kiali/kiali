@@ -2,7 +2,7 @@ import { ObjectCheck, ObjectValidation, ValidationTypes } from '../types/IstioOb
 import * as AlertUtils from './AlertUtils';
 import { gvkToString } from './IstioConfigUtils';
 
-const validationMessage = (validation: ObjectValidation, failedCheck: ObjectCheck): void => {
+const validationMessage = (validation: ObjectValidation, failedCheck: ObjectCheck): string => {
   return `${gvkToString(validation.objectGVK)}:${validation.name} ${failedCheck.message}`;
 };
 
