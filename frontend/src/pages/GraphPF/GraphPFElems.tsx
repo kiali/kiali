@@ -413,11 +413,13 @@ const getEdgeLabel = (edge: EdgeModel, nodeMap: NodeMap, settings: GraphPFSettin
             }
             break;
           case Protocol.TCP:
+            labels.push(toFixedByteRate(rate, includeUnits));
             if (data.waypoint === 'to' && data.waypointEdge) {
-              labels.push(toFixedByteRate(rate + data.waypointEdge.tcp, includeUnits, '*'));
-            } else {
-              labels.push(toFixedByteRate(rate, includeUnits));
-            }
+              //labels.push(toFixedByteRate(rate + data.waypointEdge.tcp, includeUnits, '*'));
+              labels.push(toFixedByteRate(data.waypointEdge.tcp, includeUnits));
+            } //else {
+            //labels.push(toFixedByteRate(rate, includeUnits));
+            //}
             break;
           default:
             labels.push(toFixedRequestRate(rate, includeUnits));
@@ -455,7 +457,7 @@ const getEdgeLabel = (edge: EdgeModel, nodeMap: NodeMap, settings: GraphPFSettin
     }
   }
 
-  let label = labels.join('\n');
+  let label = labels.join(' - ');
 
   if (isVerbose) {
     const protocol = data.protocol;

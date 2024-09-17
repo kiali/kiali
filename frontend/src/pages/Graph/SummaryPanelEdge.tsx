@@ -3,31 +3,31 @@ import { RateTableGrpc, RateTableHttp } from '../../components/SummaryPanel/Rate
 import { RequestChart, StreamChart } from '../../components/SummaryPanel/RpsChart';
 import { ResponseTimeChart, ResponseTimeUnit } from '../../components/SummaryPanel/ResponseTimeChart';
 import {
+  DecoratedGraphNodeData,
   GraphType,
   NodeType,
+  prettyProtocol,
   Protocol,
   SummaryPanelPropType,
-  DecoratedGraphNodeData,
-  UNKNOWN,
   TrafficRate,
-  prettyProtocol
+  UNKNOWN
 } from '../../types/Graph';
 import { renderBadgedLink } from './SummaryLink';
 import {
-  shouldRefreshData,
+  getAppName,
   getDatapoints,
   getNodeMetrics,
   getNodeMetricType,
-  hr,
-  renderNoTraffic,
-  NodeMetricType,
-  summaryBodyTabs,
-  summaryPanel,
-  summaryFont,
   getTitle,
-  getAppName
+  hr,
+  NodeMetricType,
+  renderNoTraffic,
+  shouldRefreshData,
+  summaryBodyTabs,
+  summaryFont,
+  summaryPanel
 } from './SummaryPanelCommon';
-import { Metric, Datapoint, IstioMetricsMap, Labels } from '../../types/Metrics';
+import { Datapoint, IstioMetricsMap, Labels, Metric } from '../../types/Metrics';
 import { CancelablePromise, makeCancelablePromise } from '../../utils/CancelablePromises';
 import { decoratedEdgeData, decoratedNodeData } from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
 import { ResponseFlagsTable } from 'components/SummaryPanel/ResponseFlagsTable';
@@ -497,36 +497,36 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
       if (edgeData.waypointEdge) {
         const waypointMetricType = sourceMetricType;
         const waypointMetricsNodeData = sourceData;
-        const waypointPromeRequests = getNodeMetrics(
+        const waypointPromRequests = getNodeMetrics(
           waypointMetricType,
           waypointMetricsNodeData,
           props,
           filtersTCP,
           direction,
-          reporterTCP,
+          'destination',
           undefined, // TCP metrics include ambient by default (ztunnel already uses source/dest reporting)
           undefined, // streams (tcp, grpc-messages) use dedicated metrics (i.e. no request_protocol label)
           quantiles,
-          ['source_workload']
+          ['source_app']
         );
-        this.metricsPromise = makeCancelablePromise(waypointPromeRequests);
+        this.metricsPromise = makeCancelablePromise(waypointPromRequests);
         this.metricsPromise.promise
           .then(response => {
             const metrics = response.data;
 
             const sent = this.getNodeDataPoints(
-              isTcp ? metrics.tcp_sent : metrics.grpc_sent,
-              destMetricType,
-              sourceMetricType,
-              otherEndData,
+              metrics.tcp_sent,
+              NodeMetricType.APP,
+              NodeMetricType.SERVICE,
+              destData,
               isDestServiceEntry
             );
 
             const received = this.getNodeDataPoints(
               isTcp ? metrics.tcp_received : metrics.grpc_received,
-              destMetricType,
-              sourceMetricType,
-              otherEndData,
+              NodeMetricType.APP,
+              NodeMetricType.SERVICE,
+              destData,
               isDestServiceEntry
             );
             this.setState({
@@ -746,7 +746,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
       if (waypointEdge && this.state.waypointSent && this.state.waypointReceived) {
         streamChart = (
           <StreamChart
-            label="TCP Traffic"
+            label="TCP Traffic (Waypoint)"
             sentRates={this.state.waypointSent}
             receivedRates={this.state.waypointReceived}
             unit="bytes"
