@@ -26,7 +26,7 @@ func (a MeshCheckAppender) IsFinalizer() bool {
 }
 
 // AppendGraph implements Appender
-func (a MeshCheckAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
+func (a MeshCheckAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
 	if len(trafficMap) == 0 {
 		return
 	}
@@ -34,7 +34,7 @@ func (a MeshCheckAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *
 	a.applyMeshChecks(trafficMap, globalInfo, namespaceInfo)
 }
 
-func (a *MeshCheckAppender) applyMeshChecks(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
+func (a *MeshCheckAppender) applyMeshChecks(trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
 	for _, n := range trafficMap {
 		// skip if we've already determined the node is out-of-mesh. we may process the same
 		// node multiple times to ensure we check every node (e.g. missing sidecars indicate missing

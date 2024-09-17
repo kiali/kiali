@@ -57,7 +57,7 @@ func (a ServiceEntryAppender) IsFinalizer() bool {
 }
 
 // AppendGraph implements Appender
-func (a ServiceEntryAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
+func (a ServiceEntryAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
 	if len(trafficMap) == 0 {
 		return
 	}
@@ -106,7 +106,7 @@ func (a ServiceEntryAppender) AppendGraph(trafficMap graph.TrafficMap, globalInf
 }
 
 // loadServiceEntryHosts loads serviceEntry hosts for the provided cluster and namespace. Returns true if any are found, otherwise false.
-func (a ServiceEntryAppender) loadServiceEntryHosts(cluster, namespace string, globalInfo *graph.AppenderGlobalInfo) bool {
+func (a ServiceEntryAppender) loadServiceEntryHosts(cluster, namespace string, globalInfo *graph.GlobalInfo) bool {
 	if !a.isAccessible(cluster, namespace) {
 		return false
 	}
@@ -143,7 +143,7 @@ func (a ServiceEntryAppender) loadServiceEntryHosts(cluster, namespace string, g
 	return len(serviceEntryHosts) > 0
 }
 
-func (a ServiceEntryAppender) applyServiceEntries(trafficMap graph.TrafficMap, candidates []*graph.Node, globalInfo *graph.AppenderGlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
+func (a ServiceEntryAppender) applyServiceEntries(trafficMap graph.TrafficMap, candidates []*graph.Node, globalInfo *graph.GlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
 	// a map from "service-entry" information to matching "se-service" nodes
 	seMap := make(map[*serviceEntry][]*graph.Node)
 
@@ -270,7 +270,7 @@ func (a ServiceEntryAppender) applyServiceEntries(trafficMap graph.TrafficMap, c
 // TODO: I don't know what happens (nothing good) if a ServiceEntry is defined in an inaccessible namespace
 // but exported to all namespaces (exportTo: *). It's possible that would allow traffic to flow from an
 // accessible workload through a serviceEntry whose definition we can't fetch.
-func (a ServiceEntryAppender) getServiceEntry(cluster, namespace, serviceName string, globalInfo *graph.AppenderGlobalInfo) (*serviceEntry, bool) {
+func (a ServiceEntryAppender) getServiceEntry(cluster, namespace, serviceName string, globalInfo *graph.GlobalInfo) (*serviceEntry, bool) {
 	serviceEntryHosts, _ := getServiceEntryHosts(cluster, namespace, globalInfo)
 
 	for host, serviceEntriesForHost := range serviceEntryHosts {

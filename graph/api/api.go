@@ -45,11 +45,12 @@ func GraphNamespaces(ctx context.Context, business *business.Layer, o graph.Opti
 func graphNamespacesIstio(ctx context.Context, business *business.Layer, prom *prometheus.Client, o graph.Options) (code int, config interface{}) {
 
 	// Create a 'global' object to store the business. Global only to the request.
-	globalInfo := graph.NewAppenderGlobalInfo()
+	globalInfo := graph.NewGlobalInfo()
 	globalInfo.Business = business
 	globalInfo.Context = ctx
+	globalInfo.PromClient = prom
 
-	trafficMap := istio.BuildNamespacesTrafficMap(ctx, o.TelemetryOptions, prom, globalInfo)
+	trafficMap := istio.BuildNamespacesTrafficMap(ctx, o.TelemetryOptions, globalInfo)
 	code, config = generateGraph(trafficMap, o)
 
 	return code, config
@@ -80,14 +81,15 @@ func GraphNode(ctx context.Context, business *business.Layer, o graph.Options) (
 }
 
 // graphNodeIstio provides a test hook that accepts mock clients
-func graphNodeIstio(ctx context.Context, business *business.Layer, client *prometheus.Client, o graph.Options) (code int, config interface{}) {
+func graphNodeIstio(ctx context.Context, business *business.Layer, prom *prometheus.Client, o graph.Options) (code int, config interface{}) {
 
 	// Create a 'global' object to store the business. Global only to the request.
-	globalInfo := graph.NewAppenderGlobalInfo()
+	globalInfo := graph.NewGlobalInfo()
 	globalInfo.Business = business
 	globalInfo.Context = ctx
+	globalInfo.PromClient = prom
 
-	trafficMap, _ := istio.BuildNodeTrafficMap(o.TelemetryOptions, client, globalInfo)
+	trafficMap, _ := istio.BuildNodeTrafficMap(o.TelemetryOptions, globalInfo)
 	code, config = generateGraph(trafficMap, o)
 
 	return code, config

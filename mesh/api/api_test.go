@@ -34,7 +34,7 @@ import (
 )
 
 // Setup mock
-func setupMocks(t *testing.T) *mesh.AppenderGlobalInfo {
+func setupMocks(t *testing.T) *mesh.GlobalInfo {
 	assert := assert.New(t)
 	require := require.New(t)
 	conf := config.NewConfig()
@@ -169,7 +169,7 @@ trustDomain: cluster.local
 	require.Len(a[0].KialiInstances, 1, "GetClusters didn't resolve the local Kiali instance")
 	assert.Equal("istio-system", a[0].KialiInstances[0].Namespace, "GetClusters didn't set the right namespace of the Kiali instance")
 
-	globalInfo := mesh.NewAppenderGlobalInfo()
+	globalInfo := mesh.NewGlobalInfo()
 	globalInfo.Business = layer
 	globalInfo.Discovery = discovery
 
@@ -177,7 +177,7 @@ trustDomain: cluster.local
 }
 
 // mockMeshGraph provides a common single-cluster mock
-func mockMeshGraph(t *testing.T) (*mesh.AppenderGlobalInfo, error) {
+func mockMeshGraph(t *testing.T) (*mesh.GlobalInfo, error) {
 	globalInfo := setupMocks(t)
 
 	mesh.StatusGetter = func(context.Context, *config.Config, kubernetes.ClientFactory, cache.KialiCache, *grafana.Service) status.StatusInfo {

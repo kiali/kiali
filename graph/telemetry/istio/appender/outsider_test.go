@@ -21,7 +21,7 @@ func TestOutsider(t *testing.T) {
 	accessible, _ := graph.NewNode(config.DefaultClusterID, "accessibleNamespace", "test", "accessibleNamespace", "test-v1", "test", "v1", graph.GraphTypeVersionedApp)
 	trafficMap[accessible.ID] = accessible
 
-	globalInfo := graph.NewAppenderGlobalInfo()
+	globalInfo := graph.NewGlobalInfo()
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 
 	a := OutsiderAppender{

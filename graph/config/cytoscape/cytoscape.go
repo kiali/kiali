@@ -133,7 +133,6 @@ type EdgeData struct {
 
 	// App Fields (not required by Cytoscape)
 	Display         string          `json:"display,omitempty"`         // Used to hide edges for biderectional ones (Ambient graph simplification)
-	Direction       string          `json:"direction,omitempty"`       // Used to represent bidirectional edges (Ambient graph simplification)
 	DestPrincipal   string          `json:"destPrincipal,omitempty"`   // principal used for the edge destination
 	IsMTLS          string          `json:"isMTLS,omitempty"`          // set to the percentage of traffic using a mutual TLS connection
 	ResponseTime    string          `json:"responseTime,omitempty"`    // in millis
@@ -175,7 +174,7 @@ func NewConfig(trafficMap graph.TrafficMap, o graph.ConfigOptions) (result Confi
 	nodes := []*NodeWrapper{}
 	edges := []*EdgeWrapper{}
 
-	buildConfig(trafficMap, &nodes, &edges, o)
+	buildConfig(trafficMap, &nodes, &edges)
 
 	// Add compound nodes as needed, inner boxes first
 	if strings.Contains(o.BoxBy, graph.BoxByApp) || o.GraphType == graph.GraphTypeApp || o.GraphType == graph.GraphTypeVersionedApp {
@@ -242,7 +241,7 @@ func NewConfig(trafficMap graph.TrafficMap, o graph.ConfigOptions) (result Confi
 	return result
 }
 
-func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*EdgeWrapper, o graph.ConfigOptions) {
+func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*EdgeWrapper) {
 	for id, n := range trafficMap {
 		nodeID := nodeHash(id)
 
@@ -397,9 +396,22 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 		// node may have destination service info
 		if val, ok := n.Metadata[graph.DestServices]; ok {
 			nd.DestServices = []graph.ServiceName{}
-			for _, val := range val.(graph.DestServicesMetadata) {
-				nd.DestServices = append(nd.DestServices, val)
+			for _, ds := range val.(graph.DestServicesMetadata) {
+				nd.DestServices = append(nd.DestServices, ds)
 			}
+			// sort destServices for better json presentation (and predictable testing)
+			sort.Slice(nd.DestServices, func(i, j int) bool {
+				ds1 := nd.DestServices[i]
+				ds2 := nd.DestServices[j]
+				switch {
+				case ds1.Cluster != ds2.Cluster:
+					return ds1.Cluster < ds2.Cluster
+				case ds1.Namespace != ds2.Namespace:
+					return ds1.Namespace < ds2.Namespace
+				default:
+					return ds1.Name < ds2.Name
+				}
+			})
 		}
 
 		// node may have service entry static info

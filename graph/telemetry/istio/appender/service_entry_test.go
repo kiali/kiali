@@ -212,7 +212,7 @@ func TestServiceEntry(t *testing.T) {
 	assert.Equal(0, len(internalSEHost2ServiceNode.Edges))
 	assert.Equal(nil, internalSEHost2ServiceNode.Metadata[graph.IsServiceEntry])
 
-	globalInfo := graph.NewAppenderGlobalInfo()
+	globalInfo := graph.NewGlobalInfo()
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 	key := graph.GetClusterSensitiveKey(config.DefaultClusterID, "testNamespace")
@@ -332,7 +332,7 @@ func TestServiceEntryExportAll(t *testing.T) {
 	assert.Equal(0, len(internalSEHost2ServiceNode.Edges))
 	assert.Equal(nil, internalSEHost2ServiceNode.Metadata[graph.IsServiceEntry])
 
-	globalInfo := graph.NewAppenderGlobalInfo()
+	globalInfo := graph.NewGlobalInfo()
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 	key := graph.GetClusterSensitiveKey(config.DefaultClusterID, "testNamespace")
@@ -446,7 +446,7 @@ func TestServiceEntryExportNamespaceFound(t *testing.T) {
 	assert.Equal(0, len(internalSEHost2ServiceNode.Edges))
 	assert.Equal(nil, internalSEHost2ServiceNode.Metadata[graph.IsServiceEntry])
 
-	globalInfo := graph.NewAppenderGlobalInfo()
+	globalInfo := graph.NewGlobalInfo()
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 	key := graph.GetClusterSensitiveKey(config.DefaultClusterID, "testNamespace")
@@ -560,7 +560,7 @@ func TestServiceEntryExportDefinitionNamespace(t *testing.T) {
 	assert.Equal(0, len(internalSEHost2ServiceNode.Edges))
 	assert.Equal(nil, internalSEHost2ServiceNode.Metadata[graph.IsServiceEntry])
 
-	globalInfo := graph.NewAppenderGlobalInfo()
+	globalInfo := graph.NewGlobalInfo()
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 	key := graph.GetClusterSensitiveKey(config.DefaultClusterID, "testNamespace")
@@ -674,7 +674,7 @@ func TestServiceEntryMeshExportDefinitionNamespace(t *testing.T) {
 	assert.Equal(0, len(internalSEHost2ServiceNode.Edges))
 	assert.Equal(nil, internalSEHost2ServiceNode.Metadata[graph.IsServiceEntry])
 
-	globalInfo := graph.NewAppenderGlobalInfo()
+	globalInfo := graph.NewGlobalInfo()
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 	key := graph.GetClusterSensitiveKey(config.DefaultClusterID, "testNamespace")
@@ -788,7 +788,7 @@ func TestServiceEntryMeshExportAll(t *testing.T) {
 	assert.Equal(0, len(internalSEHost2ServiceNode.Edges))
 	assert.Equal(nil, internalSEHost2ServiceNode.Metadata[graph.IsServiceEntry])
 
-	globalInfo := graph.NewAppenderGlobalInfo()
+	globalInfo := graph.NewGlobalInfo()
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 	key := graph.GetClusterSensitiveKey(config.DefaultClusterID, "testNamespace")
@@ -902,7 +902,7 @@ func TestServiceEntryExportNamespaceNotFound(t *testing.T) {
 	assert.Equal(0, len(internalSEHost2ServiceNode.Edges))
 	assert.Equal(nil, internalSEHost2ServiceNode.Metadata[graph.IsServiceEntry])
 
-	globalInfo := graph.NewAppenderGlobalInfo()
+	globalInfo := graph.NewGlobalInfo()
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 	key := graph.GetClusterSensitiveKey(config.DefaultClusterID, "testNamespace")
@@ -1014,7 +1014,7 @@ func TestKiali7153_1(t *testing.T) {
 	assert.Equal(0, len(internalSEHost2ServiceNode.Edges))
 	assert.Equal(nil, internalSEHost2ServiceNode.Metadata[graph.IsServiceEntry])
 
-	globalInfo := graph.NewAppenderGlobalInfo()
+	globalInfo := graph.NewGlobalInfo()
 	globalInfo.Business = businessLayer
 
 	testNamespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
@@ -1128,7 +1128,7 @@ func TestDisjointMulticlusterEntries(t *testing.T) {
 	n0.AddEdge(n2).Metadata[graph.ProtocolKey] = graph.HTTP.Name
 
 	// Run the appender
-	globalInfo := graph.NewAppenderGlobalInfo()
+	globalInfo := graph.NewGlobalInfo()
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo("namespace")
 	key := graph.GetClusterSensitiveKey(config.DefaultClusterID, "namespace")
@@ -1271,7 +1271,7 @@ func TestServiceEntrySameHostMatchNamespace(t *testing.T) {
 	assert.Equal(0, len(SE2Host2ServiceNode.Edges))
 	assert.Equal(nil, SE2Host2ServiceNode.Metadata[graph.IsServiceEntry])
 
-	globalInfo := graph.NewAppenderGlobalInfo()
+	globalInfo := graph.NewGlobalInfo()
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 	key := graph.GetClusterSensitiveKey(config.DefaultClusterID, "testNamespace")
@@ -1402,7 +1402,7 @@ func TestServiceEntrySameHostNoMatchNamespace(t *testing.T) {
 	assert.Equal(0, len(notSEHost2ServiceNode.Edges))
 	assert.Equal(nil, notSEHost2ServiceNode.Metadata[graph.IsServiceEntry])
 
-	globalInfo := graph.NewAppenderGlobalInfo()
+	globalInfo := graph.NewGlobalInfo()
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo("otherNamespace")
 	key := graph.GetClusterSensitiveKey(config.DefaultClusterID, "otherNamespace")
@@ -1514,7 +1514,7 @@ func TestServiceEntryMultipleEdges(t *testing.T) {
 	assert.Equal(0, len(v2Node.Edges))
 	assert.Equal(nil, v2Node.Metadata[graph.IsServiceEntry])
 
-	globalInfo := graph.NewAppenderGlobalInfo()
+	globalInfo := graph.NewGlobalInfo()
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 	key := graph.GetClusterSensitiveKey(config.DefaultClusterID, "testNamespace")
@@ -1577,7 +1577,7 @@ func TestSEKiali7305(t *testing.T) {
 
 	assert.Equal(2, len(trafficMap))
 
-	globalInfo := graph.NewAppenderGlobalInfo()
+	globalInfo := graph.NewGlobalInfo()
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo("testNamespace")
 	key := graph.GetClusterSensitiveKey(config.DefaultClusterID, "testNamespace")
@@ -1669,7 +1669,7 @@ func TestSEKiali7589(t *testing.T) {
 	_, ok := trafficMap[n3.ID].Metadata[graph.IsServiceEntry]
 	assert.False(ok)
 
-	globalInfo := graph.NewAppenderGlobalInfo()
+	globalInfo := graph.NewGlobalInfo()
 	globalInfo.Business = businessLayer
 	namespaceInfo := graph.NewAppenderNamespaceInfo(namespace)
 	key1 := graph.GetClusterSensitiveKey("cluster1", namespace)
