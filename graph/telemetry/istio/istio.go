@@ -72,7 +72,7 @@ func BuildNamespacesTrafficMap(ctx context.Context, o graph.TelemetryOptions, gl
 	if sliceutil.Some(finalizers, func(f graph.Appender) bool {
 		return f.Name() == appender.AmbientAppenderName
 	}) {
-		waypoints := globalInfo.Business.Workload.GetWaypoints(context.Background())
+		waypoints := globalInfo.Business.Workload.GetWaypoints(ctx)
 		globalInfo.Vendor[appender.AmbientWaypoints] = waypoints
 	}
 
@@ -1017,13 +1017,6 @@ func hasWaypoint(ztunnel bool, sourceCluster, sourceWlNs, srcWl, destCluster, de
 		return false, false
 	}
 
-	// first, try a simple substring check on the name, for a common waypoint giveaway
-	sourceIsWaypoint = strings.Contains(strings.ToLower(srcWl), "waypoint")
-	destIsWaypoint = strings.Contains(strings.ToLower(destWl), "waypoint")
-	if sourceIsWaypoint || destIsWaypoint {
-		return sourceIsWaypoint, destIsWaypoint
-	}
-
 	if waypoints, ok := globalInfo.Vendor[appender.AmbientWaypoints]; ok {
 		sourceIsWaypoint = sliceutil.Some(waypoints.(models.Workloads), func(wp *models.Workload) bool {
 			return isWaypoint(wp, sourceCluster, sourceWlNs, srcWl)
@@ -1038,6 +1031,6 @@ func hasWaypoint(ztunnel bool, sourceCluster, sourceWlNs, srcWl, destCluster, de
 }
 
 // isWaypoint returns true if the ns, name and cluster of a workload matches with one of the waypoints in the list
-func isWaypoint(w *models.Workload, cluster, namespace, app string) bool {
-	return w.WorkloadListItem.Name == app && w.WorkloadListItem.Namespace == namespace && w.Cluster == cluster
+func isWaypoint(w *models.Workload, cluster, namespace, name string) bool {
+	return w.WorkloadListItem.Name == name && w.WorkloadListItem.Namespace == namespace && w.Cluster == cluster
 }

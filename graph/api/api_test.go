@@ -3868,7 +3868,7 @@ func ambientWorkloads(t *testing.T) *business.Layer {
 		}}
 	k8spod4 := &core_v1.Pod{
 		ObjectMeta: meta_v1.ObjectMeta{
-			Name:        "istio-waypoint",
+			Name:        "waypoint",
 			Namespace:   "bookinfo",
 			Labels:      map[string]string{"app": "waypoint", "version": "v1", config.WaypointLabel: config.WaypointLabelValue},
 			Annotations: map[string]string{"sidecar.istio.io/status": "{\"version\":\"\",\"initContainers\":[\"istio-init\",\"enable-core-dump\"],\"containers\":[\"istio-proxy\"],\"volumes\":[\"istio-envoy\",\"istio-certs\"]}"}},
@@ -3892,7 +3892,7 @@ func ambientWorkloads(t *testing.T) *business.Layer {
 	return businessLayer
 }
 
-func ambientMockGraph(t *testing.T, api *prometheustest.PromAPIMock) {
+func ambientMockGraph(api *prometheustest.PromAPIMock) {
 	q0 := `round(sum(rate(istio_requests_total{reporter=~"source|waypoint",source_workload_namespace!="bookinfo",destination_workload_namespace="unknown",destination_workload="unknown",destination_service=~"^.+\\.bookinfo\\..+$"} [600s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,request_protocol,response_code,grpc_response_status,response_flags) > 0,0.001)`
 	v0 := model.Vector{}
 
@@ -4131,7 +4131,7 @@ func TestAmbientGraph(t *testing.T) {
 	}
 	client.Inject(api)
 
-	ambientMockGraph(t, api)
+	ambientMockGraph(api)
 
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/graph", func(w http.ResponseWriter, r *http.Request) {
