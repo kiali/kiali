@@ -372,7 +372,20 @@ When('I remove override configuration for sidecar injection in the namespace', f
 function switchWorkloadSidecarInjection(enableOrDisable: string): void {
   cy.visit({ url: `/console/namespaces/${this.targetNamespace}/workloads/${this.targetWorkload}?refresh=0` });
 
-  cy.get('button[data-test="workload-actions-toggle"]').should('be.visible').click();
+  // In OSSMC, the workload actions are integrated in the minigraph menu
+  cy.get('#root').then($root => {
+    if ($root.find('button[data-test="workload-actions-toggle"]').length > 0) {
+      cy.get('button[data-test="workload-actions-toggle"]').should('be.visible').click();
+    } else {
+      cy.intercept(`**/api/**/workloads/**/graph*`).as('workloadMinigraph');
+      cy.wait('@workloadMinigraph');
+
+      cy.waitForReact();
+
+      cy.get('button#minigraph-toggle').should('be.visible').click();
+    }
+  });
+
   cy.get(`li[data-test=${enableOrDisable}_auto_injection]`).find('button').should('be.visible').click();
 
   // Restart the workload to ensure the changes are applied.
