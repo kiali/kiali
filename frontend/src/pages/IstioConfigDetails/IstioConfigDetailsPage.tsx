@@ -286,9 +286,9 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
     API.deleteIstioConfigDetail(
       this.props.istioConfigId.namespace,
       {
-        group: this.props.istioConfigId.objectGroup,
-        version: this.props.istioConfigId.objectVersion,
-        kind: this.props.istioConfigId.objectKind
+        Group: this.props.istioConfigId.objectGroup,
+        Version: this.props.istioConfigId.objectVersion,
+        Kind: this.props.istioConfigId.objectKind
       },
       this.props.istioConfigId.objectName,
       this.state.cluster
@@ -308,9 +308,9 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
       API.updateIstioConfigDetail(
         this.props.istioConfigId.namespace,
         {
-          group: this.props.istioConfigId.objectGroup,
-          version: this.props.istioConfigId.objectVersion,
-          kind: this.props.istioConfigId.objectKind
+          Group: this.props.istioConfigId.objectGroup,
+          Version: this.props.istioConfigId.objectVersion,
+          Kind: this.props.istioConfigId.objectKind
         },
         this.props.istioConfigId.objectName,
         jsonPatch,

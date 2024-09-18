@@ -312,7 +312,7 @@ export const getIstioConfig = (
   const params: QueryParams<IstioConfigListQuery> = {};
 
   if (objects && objects.length > 0) {
-    params.objects = objects.join(',');
+    params.objects = objects.join(';');
   }
 
   if (validate) {
@@ -344,7 +344,7 @@ export const getAllIstioConfigs = (
   const params: QueryParams<IstioConfigsMapQuery> = {};
 
   if (objects && objects.length > 0) {
-    params.objects = objects.join(',');
+    params.objects = objects.join(';');
   }
 
   if (validate) {

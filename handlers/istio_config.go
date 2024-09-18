@@ -23,9 +23,9 @@ func IstioConfigList(w http.ResponseWriter, r *http.Request) {
 	objects := ""
 	parsedTypes := make([]string, 0)
 	if _, ok := query["objects"]; ok {
-		objects = strings.ToLower(query.Get("objects"))
+		objects = query.Get("objects")
 		if len(objects) > 0 {
-			parsedTypes = strings.Split(objects, ",")
+			parsedTypes = strings.Split(objects, ";")
 		}
 	}
 

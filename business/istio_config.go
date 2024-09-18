@@ -1125,62 +1125,62 @@ func ParseIstioConfigCriteria(objects, labelSelector, workloadSelector string) I
 		return criteria
 	}
 
-	types := strings.Split(objects, ",")
-	if checkType(types, models.GVKToQueryString(kubernetes.Gateways)) {
+	types := strings.Split(objects, ";")
+	if checkType(types, kubernetes.Gateways.String()) {
 		criteria.IncludeGateways = true
 	}
-	if checkType(types, models.GVKToQueryString(kubernetes.K8sGateways)) {
+	if checkType(types, kubernetes.K8sGateways.String()) {
 		criteria.IncludeK8sGateways = true
 	}
-	if checkType(types, models.GVKToQueryString(kubernetes.K8sGRPCRoutes)) {
+	if checkType(types, kubernetes.K8sGRPCRoutes.String()) {
 		criteria.IncludeK8sGRPCRoutes = true
 	}
-	if checkType(types, models.GVKToQueryString(kubernetes.K8sHTTPRoutes)) {
+	if checkType(types, kubernetes.K8sHTTPRoutes.String()) {
 		criteria.IncludeK8sHTTPRoutes = true
 	}
-	if checkType(types, models.GVKToQueryString(kubernetes.K8sReferenceGrants)) {
+	if checkType(types, kubernetes.K8sReferenceGrants.String()) {
 		criteria.IncludeK8sReferenceGrants = true
 	}
-	if checkType(types, models.GVKToQueryString(kubernetes.K8sTCPRoutes)) {
+	if checkType(types, kubernetes.K8sTCPRoutes.String()) {
 		criteria.IncludeK8sTCPRoutes = true
 	}
-	if checkType(types, models.GVKToQueryString(kubernetes.K8sTLSRoutes)) {
+	if checkType(types, kubernetes.K8sTLSRoutes.String()) {
 		criteria.IncludeK8sTLSRoutes = true
 	}
-	if checkType(types, models.GVKToQueryString(kubernetes.VirtualServices)) {
+	if checkType(types, kubernetes.VirtualServices.String()) {
 		criteria.IncludeVirtualServices = true
 	}
-	if checkType(types, models.GVKToQueryString(kubernetes.DestinationRules)) {
+	if checkType(types, kubernetes.DestinationRules.String()) {
 		criteria.IncludeDestinationRules = true
 	}
-	if checkType(types, models.GVKToQueryString(kubernetes.ServiceEntries)) {
+	if checkType(types, kubernetes.ServiceEntries.String()) {
 		criteria.IncludeServiceEntries = true
 	}
-	if checkType(types, models.GVKToQueryString(kubernetes.Sidecars)) {
+	if checkType(types, kubernetes.Sidecars.String()) {
 		criteria.IncludeSidecars = true
 	}
-	if checkType(types, models.GVKToQueryString(kubernetes.AuthorizationPolicies)) {
+	if checkType(types, kubernetes.AuthorizationPolicies.String()) {
 		criteria.IncludeAuthorizationPolicies = true
 	}
-	if checkType(types, models.GVKToQueryString(kubernetes.PeerAuthentications)) {
+	if checkType(types, kubernetes.PeerAuthentications.String()) {
 		criteria.IncludePeerAuthentications = true
 	}
-	if checkType(types, models.GVKToQueryString(kubernetes.WorkloadEntries)) {
+	if checkType(types, kubernetes.WorkloadEntries.String()) {
 		criteria.IncludeWorkloadEntries = true
 	}
-	if checkType(types, models.GVKToQueryString(kubernetes.WorkloadGroups)) {
+	if checkType(types, kubernetes.WorkloadGroups.String()) {
 		criteria.IncludeWorkloadGroups = true
 	}
-	if checkType(types, models.GVKToQueryString(kubernetes.WasmPlugins)) {
+	if checkType(types, kubernetes.WasmPlugins.String()) {
 		criteria.IncludeWasmPlugins = true
 	}
-	if checkType(types, models.GVKToQueryString(kubernetes.Telemetries)) {
+	if checkType(types, kubernetes.Telemetries.String()) {
 		criteria.IncludeTelemetry = true
 	}
-	if checkType(types, models.GVKToQueryString(kubernetes.RequestAuthentications)) {
+	if checkType(types, kubernetes.RequestAuthentications.String()) {
 		criteria.IncludeRequestAuthentications = true
 	}
-	if checkType(types, models.GVKToQueryString(kubernetes.EnvoyFilters)) {
+	if checkType(types, kubernetes.EnvoyFilters.String()) {
 		criteria.IncludeEnvoyFilters = true
 	}
 	return criteria

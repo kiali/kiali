@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"io"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"net/http/httptest"
 	"strings"
 	"testing"
@@ -1038,9 +1039,9 @@ func TestGetPodLogsWithoutAccessLogs(t *testing.T) {
 func TestFilterUniqueIstioReferences(t *testing.T) {
 	assert := assert.New(t)
 	references := []*models.IstioValidationKey{
-		{ObjectType: "t1", Namespace: "ns1", Name: "n1"},
-		{ObjectType: "t1", Namespace: "ns1", Name: "n1"},
-		{ObjectType: "t2", Namespace: "ns2", Name: "n2"},
+		{ObjectGVK: schema.GroupVersionKind{Group: "", Version: "", Kind: "t1"}, Namespace: "ns1", Name: "n1"},
+		{ObjectGVK: schema.GroupVersionKind{Group: "", Version: "", Kind: "t1"}, Namespace: "ns1", Name: "n1"},
+		{ObjectGVK: schema.GroupVersionKind{Group: "", Version: "", Kind: "t2"}, Namespace: "ns2", Name: "n2"},
 	}
 	filtered := FilterUniqueIstioReferences(references)
 	assert.Equal(2, len(filtered))

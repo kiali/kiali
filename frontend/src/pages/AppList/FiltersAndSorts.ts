@@ -17,6 +17,7 @@ import { filterByLabel } from '../../helpers/LabelFilterHelper';
 import { istioConfigTypeFilter } from '../IstioConfigList/FiltersAndSorts';
 import { ObjectReference } from '../../types/IstioObjects';
 import { serverConfig } from 'config';
+import { gvkToString } from '../../utils/IstioConfigUtils';
 
 export const sortFields: SortField<AppListItem>[] = [
   {
@@ -147,7 +148,9 @@ const filterByIstioSidecar = (items: AppListItem[], istioSidecar: boolean): AppL
 };
 
 const filterByIstioType = (items: AppListItem[], istioTypes: string[]): AppListItem[] => {
-  return items.filter(item => item.istioReferences.filter(ref => istioTypes.includes(ref.objectGVK.kind)).length !== 0);
+  return items.filter(
+    item => item.istioReferences.filter(ref => istioTypes.includes(gvkToString(ref.objectGVK))).length !== 0
+  );
 };
 
 export const filterBy = (

@@ -63,7 +63,7 @@ func TestGetNamespaceValidations(t *testing.T) {
 	validations, err := vs.GetValidations(context.TODO(), conf.KubernetesConfig.ClusterName, "test", "", "")
 	require.NoError(err)
 	require.NotEmpty(validations)
-	assert.True(validations[models.IstioValidationKey{ObjectType: kubernetes.VirtualServices.String(), Namespace: "test", Name: "product-vs"}].Valid)
+	assert.True(validations[models.IstioValidationKey{ObjectGVK: kubernetes.VirtualServices, Namespace: "test", Name: "product-vs"}].Valid)
 }
 
 func TestGetIstioObjectValidations(t *testing.T) {
@@ -171,9 +171,9 @@ func TestGatewayValidationScopesToNamespaceWhenGatewayToNamespaceSet(t *testing.
 	require.NoError(err)
 	require.Len(validations, 1)
 	key := models.IstioValidationKey{
-		ObjectType: kubernetes.Gateways.String(),
-		Name:       "first",
-		Namespace:  "test",
+		ObjectGVK: kubernetes.Gateways,
+		Name:      "first",
+		Namespace: "test",
 	}
 	// Even though the workload is reference properly, because of the PILOT_SCOPE_GATEWAY_TO_NAMESPACE
 	// the gateway should be marked as invalid.
@@ -602,7 +602,7 @@ func TestGetVSReferences(t *testing.T) {
 	vs := mockCombinedValidationService(t, fakeIstioConfigList(), []string{})
 
 	_, referencesMap, err := vs.GetIstioObjectValidations(context.TODO(), conf.KubernetesConfig.ClusterName, "test", kubernetes.VirtualServices, "product-vs")
-	references := referencesMap[models.IstioReferenceKey{ObjectType: kubernetes.VirtualServices.String(), Namespace: "test", Name: "product-vs"}]
+	references := referencesMap[models.IstioReferenceKey{ObjectGVK: kubernetes.VirtualServices, Namespace: "test", Name: "product-vs"}]
 
 	// Check Service references
 	assert.Nil(err)
@@ -623,7 +623,7 @@ func TestGetVSReferencesNotExisting(t *testing.T) {
 	vs := mockCombinedValidationService(t, fakeEmptyIstioConfigList(), []string{})
 
 	_, referencesMap, err := vs.GetIstioObjectValidations(context.TODO(), conf.KubernetesConfig.ClusterName, "wrong", kubernetes.VirtualServices, "wrong")
-	references := referencesMap[models.IstioReferenceKey{ObjectType: "wrong", Namespace: "wrong", Name: "product-vs"}]
+	references := referencesMap[models.IstioReferenceKey{ObjectGVK: kubernetes.DestinationRules, Namespace: "wrong", Name: "product-vs"}]
 
 	assert.Nil(err)
 	assert.Nil(references)

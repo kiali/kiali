@@ -32,7 +32,7 @@ func TestParseListParams(t *testing.T) {
 	assert.True(t, criteria.IncludeDestinationRules)
 	assert.True(t, criteria.IncludeServiceEntries)
 
-	objects = models.GVKToQueryString(kubernetes.Gateways)
+	objects = kubernetes.Gateways.String()
 	criteria = ParseIstioConfigCriteria(objects, labelSelector, "")
 
 	assert.True(t, criteria.IncludeGateways)
@@ -40,7 +40,7 @@ func TestParseListParams(t *testing.T) {
 	assert.False(t, criteria.IncludeDestinationRules)
 	assert.False(t, criteria.IncludeServiceEntries)
 
-	objects = models.GVKToQueryString(kubernetes.K8sGateways)
+	objects = kubernetes.K8sGateways.String()
 	criteria = ParseIstioConfigCriteria(objects, labelSelector, "")
 
 	assert.True(t, criteria.IncludeK8sGateways)
@@ -48,7 +48,7 @@ func TestParseListParams(t *testing.T) {
 	assert.False(t, criteria.IncludeDestinationRules)
 	assert.False(t, criteria.IncludeServiceEntries)
 
-	objects = models.GVKToQueryString(kubernetes.VirtualServices)
+	objects = kubernetes.VirtualServices.String()
 	criteria = ParseIstioConfigCriteria(objects, labelSelector, "")
 
 	assert.False(t, criteria.IncludeGateways)
@@ -56,7 +56,7 @@ func TestParseListParams(t *testing.T) {
 	assert.False(t, criteria.IncludeDestinationRules)
 	assert.False(t, criteria.IncludeServiceEntries)
 
-	objects = models.GVKToQueryString(kubernetes.DestinationRules)
+	objects = kubernetes.DestinationRules.String()
 	criteria = ParseIstioConfigCriteria(objects, labelSelector, "")
 
 	assert.False(t, criteria.IncludeGateways)
@@ -64,7 +64,7 @@ func TestParseListParams(t *testing.T) {
 	assert.True(t, criteria.IncludeDestinationRules)
 	assert.False(t, criteria.IncludeServiceEntries)
 
-	objects = models.GVKToQueryString(kubernetes.ServiceEntries)
+	objects = kubernetes.ServiceEntries.String()
 	criteria = ParseIstioConfigCriteria(objects, labelSelector, "")
 
 	assert.False(t, criteria.IncludeGateways)
@@ -72,7 +72,7 @@ func TestParseListParams(t *testing.T) {
 	assert.False(t, criteria.IncludeDestinationRules)
 	assert.True(t, criteria.IncludeServiceEntries)
 
-	objects = models.GVKToQueryString(kubernetes.VirtualServices)
+	objects = kubernetes.VirtualServices.String()
 	criteria = ParseIstioConfigCriteria(objects, labelSelector, "")
 
 	assert.False(t, criteria.IncludeGateways)
@@ -80,7 +80,7 @@ func TestParseListParams(t *testing.T) {
 	assert.False(t, criteria.IncludeDestinationRules)
 	assert.False(t, criteria.IncludeServiceEntries)
 
-	objects = models.GVKToQueryString(kubernetes.DestinationRules) + "," + models.GVKToQueryString(kubernetes.VirtualServices)
+	objects = kubernetes.DestinationRules.String() + ";" + kubernetes.VirtualServices.String()
 	criteria = ParseIstioConfigCriteria(objects, labelSelector, "")
 
 	assert.False(t, criteria.IncludeGateways)
@@ -527,7 +527,7 @@ func TestUpdateIstioConfigDetails(t *testing.T) {
 	updatedVirtualService, err := configService.UpdateIstioConfigDetail(context.Background(), conf.KubernetesConfig.ClusterName, "test", kubernetes.VirtualServices, "reviews-to-update", "{}")
 	require.NoError(err)
 	assert.Equal("test", updatedVirtualService.Namespace.Name)
-	assert.Equal(kubernetes.VirtualServices, updatedVirtualService.ObjectType)
+	assert.Equal(kubernetes.VirtualServices.String(), updatedVirtualService.ObjectGVK.String())
 	assert.Equal("reviews-to-update", updatedVirtualService.VirtualService.Name)
 }
 
@@ -543,7 +543,7 @@ func TestCreateIstioConfigDetails(t *testing.T) {
 
 	createVirtualService, err := configService.CreateIstioConfigDetail(context.Background(), conf.KubernetesConfig.ClusterName, "test", kubernetes.VirtualServices, []byte("{}"))
 	assert.Equal("test", createVirtualService.Namespace.Name)
-	assert.Equal(kubernetes.VirtualServices, createVirtualService.ObjectType)
+	assert.Equal(kubernetes.VirtualServices.String(), createVirtualService.ObjectGVK.String())
 	// Name is now encoded in the payload of the virtualservice so, it modifies this test
 	// assert.Equal("reviews-to-update", createVirtualService.VirtualService.Name)
 	assert.Nil(err)
