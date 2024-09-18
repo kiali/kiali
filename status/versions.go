@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"strings"
 	"time"
 
@@ -80,16 +81,36 @@ func tracingVersion(conf *config.Config, homeClusterSAClient kubernetes.ClientIn
 	product.Name = string(tracingConfig.Provider)
 	product.Url = tracingConfig.URL
 
-	if product.Url != "" {
+	// we want to go to inClusterURL to obtain the version. If it isn't specified, fallback to the external URL.
+	versionUrl := tracingConfig.InClusterURL
+	if versionUrl == "" {
+		versionUrl = tracingConfig.URL
+	}
+
+	// there is no known way to get the version from GRPC. So we'll try to change the URL to go over HTTP,
+	// but this is not guaranteed to work. But it is worth a try.
+	if tracingConfig.UseGRPC {
+		parsedUrl, err := url.Parse(versionUrl)
+		if err == nil {
+			// strip the port - if the URL is http, it'll go over 80, if https, it'll go over 443
+			if host := parsedUrl.Hostname(); host != "" {
+				parsedUrl.Host = host
+				versionUrl = parsedUrl.String()
+				log.Debugf("Cannot get tracing version via GRPC; will try over HTTP: [%v]", versionUrl)
+			}
+		}
+	}
+
+	if versionUrl != "" {
 		// try to determine version by querying
 		if tracingConfig.Provider == config.JaegerProvider {
 			auth := tracingConfig.Auth
 			if auth.UseKialiToken {
 				auth.Token = homeClusterSAClient.GetToken()
 			}
-			body, statusCode, _, err := httputil.HttpGet(product.Url, &auth, 10*time.Second, nil, nil)
+			body, statusCode, _, err := httputil.HttpGet(versionUrl, &auth, 10*time.Second, nil, nil)
 			if err != nil || statusCode > 399 {
-				log.Infof("jaeger version check failed: url=[%v], code=[%v]", product.Url, statusCode)
+				log.Infof("jaeger version check failed: url=[%v], code=[%v], err=[%v]", versionUrl, statusCode, err)
 			} else {
 				// Jaeger does not provide api to get version, so it is obtained from js function inside html main page
 				// const JAEGER_VERSION = {"gitCommit: xxx, gitVersion: yyy, buildDate: zzz"}
@@ -108,9 +129,9 @@ func tracingVersion(conf *config.Config, homeClusterSAClient kubernetes.ClientIn
 		} else {
 			// Tempo
 			if tracingConfig.Provider == config.TempoProvider {
-				body, statusCode, _, err := httputil.HttpGet(fmt.Sprintf("%s/api/status/buildinfo", product.Url), nil, 10*time.Second, nil, nil)
+				body, statusCode, _, err := httputil.HttpGet(fmt.Sprintf("%s/api/status/buildinfo", versionUrl), nil, 10*time.Second, nil, nil)
 				if err != nil || statusCode > 399 {
-					log.Infof("tempo version check failed: url=[%v], code=[%v]", product.Url, statusCode)
+					log.Infof("tempo version check failed: url=[%v], code=[%v], err=[%v]", versionUrl, statusCode, err)
 				} else {
 					tempoV := new(tempoResponseVersion)
 					err = json.Unmarshal(body, &tempoV)
