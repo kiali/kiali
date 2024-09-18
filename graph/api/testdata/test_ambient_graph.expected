@@ -6,6 +6,39 @@
     "nodes": [
       {
         "data": {
+          "id": "759ea777f30ebc268ef182543a865ea4",
+          "nodeType": "workload",
+          "cluster": "Kubernetes",
+          "namespace": "bookinfo",
+          "workload": "waypoint",
+          "version": "latest",
+          "destServices": [
+            {
+              "cluster": "Kubernetes",
+              "namespace": "bookinfo",
+              "name": "details"
+            },
+            {
+              "cluster": "Kubernetes",
+              "namespace": "bookinfo",
+              "name": "reviews"
+            }
+          ],
+          "traffic": [
+            {
+              "protocol": "tcp",
+              "rates": {
+                "tcpIn": "100.00",
+                "tcpOut": "250.00"
+              }
+            }
+          ],
+          "healthData": null,
+          "isWaypoint": true
+        }
+      },
+      {
+        "data": {
           "id": "e37e8a43eb2b1196c888957b6f4b7e1c",
           "nodeType": "workload",
           "cluster": "Kubernetes",
@@ -102,40 +135,6 @@
             }
           ],
           "healthData": null
-        }
-      },
-      {
-        "data": {
-          "id": "759ea777f30ebc268ef182543a865ea4",
-          "nodeType": "workload",
-          "cluster": "Kubernetes",
-          "namespace": "bookinfo",
-          "workload": "waypoint",
-          "app": "waypoint",
-          "version": "latest",
-          "destServices": [
-            {
-              "cluster": "Kubernetes",
-              "namespace": "bookinfo",
-              "name": "details"
-            },
-            {
-              "cluster": "Kubernetes",
-              "namespace": "bookinfo",
-              "name": "reviews"
-            }
-          ],
-          "traffic": [
-            {
-              "protocol": "tcp",
-              "rates": {
-                "tcpIn": "100.00",
-                "tcpOut": "250.00"
-              }
-            }
-          ],
-          "healthData": null,
-          "isWaypoint": true
         }
       }
     ],
