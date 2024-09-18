@@ -184,8 +184,11 @@ func (s *Service) VersionURL(ctx context.Context) string {
 
 	connectionInfo, code, err := s.getGrafanaConnectionInfo(ctx)
 	if err != nil {
-		log.Warningf("Failed to obtain Grafana version URL. Cannot get connection info. code=[%v]: %v", code, err)
-		return ""
+		log.Warningf("Cannot get Grafana connection info. Will try a different way to obtain Grafana version. code=[%v]: %v", code, err)
+		connectionInfo = grafanaConnectionInfo{
+			baseExternalURL: grafanaConfig.URL,
+			inClusterURL:    grafanaConfig.InClusterURL,
+		}
 	}
 	// we want to use the internal URL - but if it isn't known, try the external URL
 	baseUrl := connectionInfo.inClusterURL
