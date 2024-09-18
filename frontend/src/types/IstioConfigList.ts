@@ -94,29 +94,29 @@ export interface IstioConfigsMapQuery extends IstioConfigListQuery {
 }
 
 export const dicIstioTypeToGVK: { [key: string]: GroupVersionKind } = {
-  AuthorizationPolicy: { group: 'security.istio.io', version: 'v1', kind: 'AuthorizationPolicy' },
-  PeerAuthentication: { group: 'security.istio.io', version: 'v1', kind: 'PeerAuthentication' },
-  RequestAuthentication: { group: 'security.istio.io', version: 'v1', kind: 'RequestAuthentication' },
+  AuthorizationPolicy: { Group: 'security.istio.io', Version: 'v1', Kind: 'AuthorizationPolicy' },
+  PeerAuthentication: { Group: 'security.istio.io', Version: 'v1', Kind: 'PeerAuthentication' },
+  RequestAuthentication: { Group: 'security.istio.io', Version: 'v1', Kind: 'RequestAuthentication' },
 
-  DestinationRule: { group: 'networking.istio.io', version: 'v1', kind: 'DestinationRule' },
-  Gateway: { group: 'networking.istio.io', version: 'v1', kind: 'Gateway' },
-  EnvoyFilter: { group: 'networking.istio.io', version: 'v1alpha3', kind: 'EnvoyFilter' },
-  Sidecar: { group: 'networking.istio.io', version: 'v1', kind: 'Sidecar' },
-  ServiceEntry: { group: 'networking.istio.io', version: 'v1', kind: 'ServiceEntry' },
-  VirtualService: { group: 'networking.istio.io', version: 'v1', kind: 'VirtualService' },
-  WorkloadEntry: { group: 'networking.istio.io', version: 'v1', kind: 'WorkloadEntry' },
-  WorkloadGroup: { group: 'networking.istio.io', version: 'v1', kind: 'WorkloadGroup' },
+  DestinationRule: { Group: 'networking.istio.io', Version: 'v1', Kind: 'DestinationRule' },
+  Gateway: { Group: 'networking.istio.io', Version: 'v1', Kind: 'Gateway' },
+  EnvoyFilter: { Group: 'networking.istio.io', Version: 'v1alpha3', Kind: 'EnvoyFilter' },
+  Sidecar: { Group: 'networking.istio.io', Version: 'v1', Kind: 'Sidecar' },
+  ServiceEntry: { Group: 'networking.istio.io', Version: 'v1', Kind: 'ServiceEntry' },
+  VirtualService: { Group: 'networking.istio.io', Version: 'v1', Kind: 'VirtualService' },
+  WorkloadEntry: { Group: 'networking.istio.io', Version: 'v1', Kind: 'WorkloadEntry' },
+  WorkloadGroup: { Group: 'networking.istio.io', Version: 'v1', Kind: 'WorkloadGroup' },
 
-  WasmPlugin: { group: 'extensions.istio.io', version: 'v1alpha1', kind: 'WasmPlugin' },
-  Telemetry: { group: 'telemetry.istio.io', version: 'v1', kind: 'Telemetry' },
+  WasmPlugin: { Group: 'extensions.istio.io', Version: 'v1alpha1', Kind: 'WasmPlugin' },
+  Telemetry: { Group: 'telemetry.istio.io', Version: 'v1', Kind: 'Telemetry' },
 
-  K8sGateway: { group: 'gateway.networking.k8s.io', version: 'v1', kind: 'Gateway' },
-  K8sGatewayClass: { group: 'gateway.networking.k8s.io', version: 'v1', kind: 'GatewayClass' },
-  K8sGRPCRoute: { group: 'gateway.networking.k8s.io', version: 'v1', kind: 'GRPCRoute' },
-  K8sHTTPRoute: { group: 'gateway.networking.k8s.io', version: 'v1', kind: 'HTTPRoute' },
-  K8sReferenceGrant: { group: 'gateway.networking.k8s.io', version: 'v1', kind: 'ReferenceGrant' },
-  K8sTCPRoute: { group: 'gateway.networking.k8s.io', version: 'v1alpha2', kind: 'TCPRoute' },
-  K8sTLSRoute: { group: 'gateway.networking.k8s.io', version: 'v1alpha2', kind: 'TLSRoute' }
+  K8sGateway: { Group: 'gateway.networking.k8s.io', Version: 'v1', Kind: 'Gateway' },
+  K8sGatewayClass: { Group: 'gateway.networking.k8s.io', Version: 'v1', Kind: 'GatewayClass' },
+  K8sGRPCRoute: { Group: 'gateway.networking.k8s.io', Version: 'v1', Kind: 'GRPCRoute' },
+  K8sHTTPRoute: { Group: 'gateway.networking.k8s.io', Version: 'v1', Kind: 'HTTPRoute' },
+  K8sReferenceGrant: { Group: 'gateway.networking.k8s.io', Version: 'v1', Kind: 'ReferenceGrant' },
+  K8sTCPRoute: { Group: 'gateway.networking.k8s.io', Version: 'v1alpha2', Kind: 'TCPRoute' },
+  K8sTLSRoute: { Group: 'gateway.networking.k8s.io', Version: 'v1alpha2', Kind: 'TLSRoute' }
 };
 
 export const dicIstioType = {

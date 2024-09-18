@@ -93,9 +93,9 @@ export const IstioLevelToSeverity = {
 };
 
 export interface GroupVersionKind {
-  group: string;
-  kind: string;
-  version: string;
+  Group: string;
+  Kind: string;
+  Version: string;
 }
 
 export interface ObjectValidation {

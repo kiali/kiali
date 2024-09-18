@@ -131,7 +131,7 @@ export const details: Renderer<AppListItem | WorkloadListItem | ServiceListItem>
         {item.istioReferences?.length > 0 &&
           item.istioReferences.map(ir => (
             <li
-              key={ir.namespace ? `${ir.objectGVK.group}.${ir.objectGVK.kind}_${ir.name}_${ir.namespace}` : ir.name}
+              key={ir.namespace ? `${ir.objectGVK.Group}.${ir.objectGVK.Kind}_${ir.name}_${ir.namespace}` : ir.name}
               style={{ marginBottom: '0.125rem' }}
             >
               <PFBadge badge={GVKToBadge[gvkToString(ir.objectGVK)]} position={TooltipPosition.top} />

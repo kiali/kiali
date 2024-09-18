@@ -216,7 +216,7 @@ export const sortAppsItems = (
 
 export const compareObjectReference = (a: ObjectReference, b: ObjectReference): number => {
   const cmpObjectType =
-    a.objectGVK.kind.localeCompare(b.objectGVK.kind) || a.objectGVK.group.localeCompare(b.objectGVK.group);
+    a.objectGVK.Kind.localeCompare(b.objectGVK.Kind) || a.objectGVK.Group.localeCompare(b.objectGVK.Group);
   if (cmpObjectType !== 0) {
     return cmpObjectType;
   }

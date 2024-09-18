@@ -43,7 +43,7 @@ export const GetIstioObjectUrl = (
 ): string => {
   let to = `/namespaces/${namespace}/${Paths.ISTIO}`;
 
-  to = `${to}/${objectGVK.group}/${objectGVK.version}/${objectGVK.kind}/${name}`;
+  to = `${to}/${objectGVK.Group}/${objectGVK.Version}/${objectGVK.Kind}/${name}`;
 
   if (cluster && isMultiCluster) {
     to = `${to}?clusterName=${cluster}`;
@@ -112,7 +112,7 @@ const IstioObjectLinkComponent: React.FC<IstioObjectProps> = (props: IstioObject
     </Link>
   ) : (
     // @TODO put cluster in link when all objects have multicluster support
-    <Link to={href} data-test={`${objectGVK.group}.${objectGVK.kind}-${namespace}-${name}`}>
+    <Link to={href} data-test={`${objectGVK.Group}.${objectGVK.Kind}-${namespace}-${name}`}>
       {props.children}
     </Link>
   );

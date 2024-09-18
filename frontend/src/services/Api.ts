@@ -386,7 +386,7 @@ export const getIstioConfigDetail = (
 
   return newRequest<IstioConfigDetails>(
     HTTP_VERBS.GET,
-    urls.istioConfigDetail(namespace, objectGVK.group, objectGVK.version, objectGVK.kind, object),
+    urls.istioConfigDetail(namespace, objectGVK.Group, objectGVK.Version, objectGVK.Kind, object),
     queryParams,
     {}
   );
@@ -406,7 +406,7 @@ export const deleteIstioConfigDetail = (
 
   return newRequest<string>(
     HTTP_VERBS.DELETE,
-    urls.istioConfigDelete(namespace, objectGVK.group, objectGVK.version, objectGVK.kind, object),
+    urls.istioConfigDelete(namespace, objectGVK.Group, objectGVK.Version, objectGVK.Kind, object),
     queryParams,
     {}
   );
@@ -427,7 +427,7 @@ export const updateIstioConfigDetail = (
 
   return newRequest(
     HTTP_VERBS.PATCH,
-    urls.istioConfigUpdate(namespace, objectGVK.group, objectGVK.version, objectGVK.kind, object),
+    urls.istioConfigUpdate(namespace, objectGVK.Group, objectGVK.Version, objectGVK.Kind, object),
     queryParams,
     jsonPatch
   );
@@ -447,7 +447,7 @@ export const createIstioConfigDetail = (
 
   return newRequest(
     HTTP_VERBS.POST,
-    urls.istioConfigCreate(namespace, objectGVK.group, objectGVK.version, objectGVK.kind),
+    urls.istioConfigCreate(namespace, objectGVK.Group, objectGVK.Version, objectGVK.Kind),
     queryParams,
     json
   );

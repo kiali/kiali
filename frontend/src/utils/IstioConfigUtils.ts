@@ -227,30 +227,30 @@ export const getReconciliationCondition = (
 
 export function getIstioObjectGVK(apiVersion?: string, kind?: string): GroupVersionKind {
   if (!apiVersion || !kind) {
-    return { group: '', version: '', kind: '' };
+    return { Group: '', Version: '', Kind: '' };
   }
   const parts = apiVersion.split('/');
   if (parts.length !== 2) {
     // should not happen, but not the best way, only an alternative
     return dicIstioTypeToGVK[kind];
   }
-  return { group: parts[0], version: parts[1], kind: kind! };
+  return { Group: parts[0], Version: parts[1], Kind: kind! };
 }
 
 export function gvkToString(gvk: GroupVersionKind): string {
-  return `${gvk.group}/${gvk.version}, Kind=${gvk.kind}`;
+  return `${gvk.Group}/${gvk.Version}, Kind=${gvk.Kind}`;
 }
 
 export function stringToGVK(gvk: string): GroupVersionKind {
   const parts = gvk.split(',');
   if (parts.length !== 2) {
     // for workloads, apps and services
-    return { group: '', version: '', kind: gvk };
+    return { Group: '', Version: '', Kind: gvk };
   }
   const apiParts = parts[0].split('/');
   if (apiParts.length !== 2) {
     // should not happen
-    return { group: '', version: '', kind: gvk };
+    return { Group: '', Version: '', Kind: gvk };
   }
-  return { group: apiParts[0], version: apiParts[1], kind: parts[1] };
+  return { Group: apiParts[0], Version: apiParts[1], Kind: parts[1] };
 }
