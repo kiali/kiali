@@ -152,7 +152,7 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
   newIstioObjectPromise = (props: IstioConfigId, validate: boolean): Promise<ApiResponse<IstioConfigDetails>> => {
     return API.getIstioConfigDetail(
       props.namespace,
-      { group: props.objectGroup, version: props.objectVersion, kind: props.objectKind },
+      { Group: props.objectGroup, Version: props.objectVersion, Kind: props.objectKind },
       props.objectName,
       validate,
       this.state.cluster

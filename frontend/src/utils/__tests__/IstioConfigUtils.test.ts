@@ -100,12 +100,12 @@ describe('Validate bad urls', () => {
 describe('Validate returned GoupVersionKind for IstioObject', () => {
   it('Missing apiVersion and kind', () => {
     const result = getIstioObjectGVK();
-    expect(result).toEqual({ group: '', version: '', kind: '' });
+    expect(result).toEqual({ Group: '', Version: '', Kind: '' });
   });
 
   it('Correct values', () => {
     const result = getIstioObjectGVK('networking.istio.io/v1', 'VirtualService');
-    expect(result).toEqual({ group: 'networking.istio.io', version: 'v1', kind: 'VirtualService' });
+    expect(result).toEqual({ Group: 'networking.istio.io', Version: 'v1', Kind: 'VirtualService' });
   });
 
   it('Invalid apiVersion, valid Kind', () => {
@@ -115,11 +115,11 @@ describe('Validate returned GoupVersionKind for IstioObject', () => {
 
   it('Empty apiVersion, valid kind', () => {
     const result = getIstioObjectGVK('', 'VirtualService');
-    expect(result).toEqual({ group: '', version: '', kind: '' });
+    expect(result).toEqual({ Group: '', Version: '', Kind: '' });
   });
 
   it('Empty kind, valid apiVersion', () => {
     const result = getIstioObjectGVK('networking.istio.io/v1');
-    expect(result).toEqual({ group: '', version: '', kind: '' });
+    expect(result).toEqual({ Group: '', Version: '', Kind: '' });
   });
 });
