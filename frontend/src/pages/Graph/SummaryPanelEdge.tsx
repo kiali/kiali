@@ -507,7 +507,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
           undefined, // TCP metrics include ambient by default (ztunnel already uses source/dest reporting)
           undefined, // streams (tcp, grpc-messages) use dedicated metrics (i.e. no request_protocol label)
           quantiles,
-          ['source_app']
+          ['source_workload']
         );
         this.metricsPromise = makeCancelablePromise(waypointPromRequests);
         this.metricsPromise.promise
@@ -516,19 +516,20 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
 
             const sent = this.getNodeDataPoints(
               metrics.tcp_sent,
-              NodeMetricType.APP,
-              NodeMetricType.SERVICE,
+              NodeMetricType.WORKLOAD,
+              NodeMetricType.WORKLOAD,
               destData,
               isDestServiceEntry
             );
 
             const received = this.getNodeDataPoints(
               isTcp ? metrics.tcp_received : metrics.grpc_received,
-              NodeMetricType.APP,
-              NodeMetricType.SERVICE,
+              NodeMetricType.WORKLOAD,
+              NodeMetricType.WORKLOAD,
               destData,
               isDestServiceEntry
             );
+
             this.setState({
               waypointSent: sent,
               waypointReceived: received
