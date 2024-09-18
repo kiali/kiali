@@ -14,6 +14,7 @@ import {
 import { IRow, Table, TableVariant, Tbody, Th, Thead, Tr } from '@patternfly/react-table';
 import { KialiIcon } from 'config/KialiIcon';
 import { kialiStyle } from 'styles/StyleUtils';
+import { t } from 'utils/I18nUtils';
 
 interface Props {
   labels: { [key: string]: string };
@@ -195,17 +196,17 @@ export class WizardLabels extends React.Component<Props, State> {
     const footer = (
       <ActionGroup>
         <Button variant="primary" isDisabled={!this.props.canEdit} onClick={this.onChange} data-test={'save-button'}>
-          Save
+          {t('Save')}
         </Button>
 
         {this.props.canEdit && (
           <Button variant="secondary" className={clearButtonStyle} onClick={this.onClear}>
-            Clear
+            {t('Clear')}
           </Button>
         )}
 
         <Button variant="link" onClick={this.onClose}>
-          Cancel
+          {t('Cancel')}
         </Button>
       </ActionGroup>
     );

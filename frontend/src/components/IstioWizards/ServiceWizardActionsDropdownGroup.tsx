@@ -15,6 +15,7 @@ import {
 import { hasServiceDetailsTrafficRouting } from '../../types/ServiceInfo';
 import { groupMenuStyle } from 'styles/DropdownStyles';
 import { kialiStyle } from 'styles/StyleUtils';
+import { t } from 'utils/I18nUtils';
 
 export const DELETE_TRAFFIC_ROUTING = 'delete_traffic_routing';
 
@@ -63,13 +64,13 @@ export const ServiceWizardActionsDropdownGroup: React.FunctionComponent<Props> =
 
   const getDropdownItemTooltipMessage = (isGatewayAPI: boolean): string => {
     if (serverConfig.deployment.viewOnlyMode) {
-      return 'User does not have permission';
+      return t('User does not have permission');
     } else if (hasTrafficRouting()) {
-      return 'Traffic routing already exists for this service';
+      return t('Traffic routing already exists for this service');
     } else if (isGatewayAPI) {
-      return 'K8s Gateway API is not enabled';
+      return t('K8s Gateway API is not enabled');
     } else {
-      return "Traffic routing doesn't exists for this service";
+      return t('Traffic routing doesn\'t exists for this service');
     }
   };
 
@@ -125,8 +126,8 @@ export const ServiceWizardActionsDropdownGroup: React.FunctionComponent<Props> =
         data-test={WIZARD_EDIT_ANNOTATIONS}
       >
         {serverConfig.kialiFeatureFlags.istioAnnotationAction && !serverConfig.deployment.viewOnlyMode
-          ? 'Edit Annotations'
-          : 'View Annotations'}
+          ? t('Edit Annotations')
+          : t('View Annotations')}
       </DropdownItem>
     );
   }
@@ -147,7 +148,7 @@ export const ServiceWizardActionsDropdownGroup: React.FunctionComponent<Props> =
       isDisabled={deleteDisabled}
       data-test={DELETE_TRAFFIC_ROUTING}
     >
-      Delete Traffic Routing
+      {t('Delete Traffic Routing')}
     </DropdownItem>
   );
 
@@ -164,8 +165,7 @@ export const ServiceWizardActionsDropdownGroup: React.FunctionComponent<Props> =
   }
 
   actionItems.push(deleteDropdownItem);
-
-  const label = updateLabel === '' ? 'Create' : 'Update';
+  const label = updateLabel === '' ? t('Create') : t('Update');
 
   return <DropdownGroup key={`group_${label}`} label={label} className={groupMenuStyle} children={actionItems} />;
 };

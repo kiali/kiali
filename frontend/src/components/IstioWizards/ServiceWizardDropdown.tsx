@@ -36,6 +36,7 @@ import { ServiceOverview } from '../../types/ServiceList';
 import { KialiAppState } from '../../store/Store';
 import { connect } from 'react-redux';
 import { renderDisabledDropdownOption } from 'utils/DropdownUtils';
+import { t } from 'utils/I18nUtils';
 
 type ReduxProps = {
   istioAPIEnabled: boolean;
@@ -207,7 +208,7 @@ const ServiceWizardDropdownComponent: React.FC<Props> = (props: Props) => {
 
   const hasMeshWorkloads = checkHasMeshWorkloads();
   const toolTipMsgActions = !hasMeshWorkloads
-    ? 'There are not Workloads with sidecar for this service'
+    ? t('There are not Workloads with sidecar for this service')
     : `There are not Workloads with ${appLabelName} and ${versionLabelName} labels`;
 
   const validWorkloads = getValidWorkloads();
@@ -226,7 +227,7 @@ const ServiceWizardDropdownComponent: React.FC<Props> = (props: Props) => {
           isExpanded={isActionsOpen}
           isDisabled={!validActions}
         >
-          Actions
+          {t('Actions')}
         </MenuToggle>
       )}
       isOpen={isActionsOpen}

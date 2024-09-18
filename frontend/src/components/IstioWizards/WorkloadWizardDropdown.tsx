@@ -17,6 +17,7 @@ import { MessageType } from '../../types/MessageCenter';
 import { StatusState } from '../../types/StatusState';
 import { WizardLabels } from './WizardLabels';
 import { renderDisabledDropdownOption } from 'utils/DropdownUtils';
+import { t } from 'utils/I18nUtils';
 
 interface Props {
   namespace: string;
@@ -108,7 +109,7 @@ export const WorkloadWizardDropdown: React.FC<Props> = (props: Props) => {
           onClick={() => onAction(WIZARD_ENABLE_AUTO_INJECTION)}
           isDisabled={serverConfig.deployment.viewOnlyMode}
         >
-          Enable Auto Injection
+          {t('Enable Auto Injection')}
         </DropdownItem>
       );
 
@@ -129,7 +130,7 @@ export const WorkloadWizardDropdown: React.FC<Props> = (props: Props) => {
           onClick={() => onAction(WIZARD_DISABLE_AUTO_INJECTION)}
           isDisabled={serverConfig.deployment.viewOnlyMode}
         >
-          Disable Auto Injection
+          {t('Disable Auto Injection')}
         </DropdownItem>
       );
 
@@ -150,7 +151,7 @@ export const WorkloadWizardDropdown: React.FC<Props> = (props: Props) => {
           onClick={() => onAction(WIZARD_REMOVE_AUTO_INJECTION)}
           isDisabled={serverConfig.deployment.viewOnlyMode}
         >
-          Remove Auto Injection
+          {t('Remove Auto Injection')}
         </DropdownItem>
       );
 
@@ -184,8 +185,8 @@ export const WorkloadWizardDropdown: React.FC<Props> = (props: Props) => {
           onClick={() => onWizardToggle(true)}
         >
           {serverConfig.kialiFeatureFlags.istioAnnotationAction && !serverConfig.deployment.viewOnlyMode
-            ? 'Edit Annotations'
-            : 'View Annotations'}
+            ? t('Edit Annotations')
+            : t('View Annotations')}
         </DropdownItem>
       );
 
@@ -210,7 +211,7 @@ export const WorkloadWizardDropdown: React.FC<Props> = (props: Props) => {
           isExpanded={isActionsOpen}
           isDisabled={!validActions}
         >
-          Actions
+          {t('Actions')}
         </MenuToggle>
       )}
       isOpen={isActionsOpen}

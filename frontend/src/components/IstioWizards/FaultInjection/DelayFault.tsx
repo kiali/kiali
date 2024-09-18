@@ -11,11 +11,10 @@ export type DelayFaultProps = {
   isValid: boolean;
   onDelay: (delayed: boolean, delay: Delay) => void;
 };
-//todo
-const fixedDelayedMsg = t('Add a fixed delay before forwarding the request. Format: 1h/1m/1s/1ms. MUST be >=1ms.');
 
 export class DelayFault extends React.Component<DelayFaultProps> {
   render() {
+    const fixedDelayedMsg = t('Add a fixed delay before forwarding the request. Format: 1h/1m/1s/1ms. MUST be >=1ms.');
     return (
       <>
         <FormGroup label={t('Add HTTP Delay')} fieldId="delaySwitch">

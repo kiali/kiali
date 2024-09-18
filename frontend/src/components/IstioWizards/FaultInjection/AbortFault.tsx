@@ -11,11 +11,10 @@ type Props = {
   isValid: boolean;
   onAbort: (aborted: boolean, abort: Abort) => void;
 };
-//todo
-const httpStatusMsg = t('HTTP status code to use to abort the Http request.');
 
 export class AbortFault extends React.Component<Props> {
   render() {
+    const httpStatusMsg = t('HTTP status code to use to abort the Http request.');
     return (
       <>
         <FormGroup label={t('Add HTTP Abort')} fieldId="abortSwitch">

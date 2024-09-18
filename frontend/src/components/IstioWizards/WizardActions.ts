@@ -67,6 +67,7 @@ import { ServiceOverview } from '../../types/ServiceList';
 import { ADD, SET, REQ_MOD, RESP_MOD, REQ_RED, REQ_MIR } from './K8sRequestRouting/K8sFilterBuilder';
 import { ANYTHING, PRESENCE } from './RequestRouting/MatchBuilder';
 import { getGatewayLabels } from '../../helpers/LabelFilterHelper';
+import { t } from 'utils/I18nUtils';
 
 export const WIZARD_TRAFFIC_SHIFTING = 'traffic_shifting';
 export const WIZARD_TCP_TRAFFIC_SHIFTING = 'tcp_traffic_shifting';
@@ -103,13 +104,13 @@ export type WizardAction =
 export type WizardMode = 'create' | 'update';
 
 export const WIZARD_TITLES = {
-  [WIZARD_REQUEST_ROUTING]: 'Request Routing',
-  [WIZARD_FAULT_INJECTION]: 'Fault Injection',
-  [WIZARD_TRAFFIC_SHIFTING]: 'Traffic Shifting',
-  [WIZARD_TCP_TRAFFIC_SHIFTING]: 'TCP Traffic Shifting',
-  [WIZARD_REQUEST_TIMEOUTS]: 'Request Timeouts',
-  [WIZARD_K8S_REQUEST_ROUTING]: 'K8s HTTP Routing',
-  [WIZARD_K8S_GRPC_REQUEST_ROUTING]: 'K8s GRPC Routing'
+  [WIZARD_REQUEST_ROUTING]: t('Request Routing'),
+  [WIZARD_FAULT_INJECTION]: t('Fault Injection'),
+  [WIZARD_TRAFFIC_SHIFTING]: t('Traffic Shifting'),
+  [WIZARD_TCP_TRAFFIC_SHIFTING]: t('TCP Traffic Shifting'),
+  [WIZARD_REQUEST_TIMEOUTS]: t('Request Timeouts'),
+  [WIZARD_K8S_REQUEST_ROUTING]: t('K8s HTTP Routing'),
+  [WIZARD_K8S_GRPC_REQUEST_ROUTING]: t('K8s GRPC Routing')
 };
 
 export type ServiceWizardProps = {

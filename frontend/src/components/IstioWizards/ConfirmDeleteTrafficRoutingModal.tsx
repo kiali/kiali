@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { Button, ButtonVariant, Modal, ModalVariant } from '@patternfly/react-core';
 import { DestinationRuleC, K8sGRPCRoute, K8sHTTPRoute, VirtualService } from '../../types/IstioObjects';
+import { t } from 'utils/I18nUtils';
 
 type Props = {
   destinationRules: DestinationRuleC[];
@@ -18,7 +19,7 @@ export const ConfirmDeleteTrafficRoutingModal: React.FunctionComponent<Props> = 
   }
 
   function getDeleteMessage(): React.ReactNode {
-    const deleteMessage = 'Are you sure you want to delete ?';
+    const deleteMessage = t('Are you sure you want to delete ?');
     const deleteItems: JSX.Element[] = [];
 
     let i = 0;
@@ -75,16 +76,16 @@ export const ConfirmDeleteTrafficRoutingModal: React.FunctionComponent<Props> = 
   return (
     <Modal
       variant={ModalVariant.small}
-      title="Confirm Delete Traffic Routing ?"
+      title={t('Confirm Delete Traffic Routing ?')}
       isOpen={props.isOpen}
       onClose={props.onCancel}
       data-test="delete-traffic-routing-modal"
       actions={[
         <Button key="confirm" variant={ButtonVariant.danger} onClick={props.onConfirm} data-test={'confirm-delete'}>
-          Delete
+            {t('Delete')}
         </Button>,
         <Button key="cancel" variant={ButtonVariant.secondary} isInline onClick={props.onCancel}>
-          Cancel
+            {t('Cancel')}
         </Button>
       ]}
     >
