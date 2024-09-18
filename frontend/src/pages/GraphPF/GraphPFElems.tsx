@@ -457,7 +457,7 @@ const getEdgeLabel = (edge: EdgeModel, nodeMap: NodeMap, settings: GraphPFSettin
     }
   }
 
-  let label = labels.join(' - ');
+  let label = labels.join(' | ');
 
   if (isVerbose) {
     const protocol = data.protocol;
@@ -597,9 +597,9 @@ const getPathStyle = (data: EdgeData): React.CSSProperties => {
 export const setEdgeOptions = (edge: EdgeModel, nodeMap: NodeMap, settings: GraphPFSettings): void => {
   const data = edge.data as EdgeData;
   if (data.waypointEdge) {
-    data.startTerminalType = data.protocol === Protocol.TCP ? EdgeTerminalType.square : EdgeTerminalType.directional;
+    data.startTerminalType = EdgeTerminalType.directional;
   }
-  data.endTerminalType = data.protocol === Protocol.TCP ? EdgeTerminalType.square : EdgeTerminalType.directional;
+  data.endTerminalType = EdgeTerminalType.directional;
   data.pathStyle = getPathStyle(data);
   data.tag = getEdgeLabel(edge, nodeMap, settings);
   data.tagStatus = getEdgeStatus(data);
