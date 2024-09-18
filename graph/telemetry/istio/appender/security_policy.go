@@ -248,6 +248,9 @@ func (a SecurityPolicyAppender) populateSecurityPolicyMap(securityPolicyMap map[
 		// - destSvcName is not set
 		// - destSvcName is PassthroughCluster (see https://github.com/kiali/kiali/issues/4488)
 		// - dest node is already a service node
+		// - source or dest workload is an ambient waypoint
+		// - note: we ignore the waypoint injection problem here because the bogus securitypolicy entries will
+		//         not match any actual edges in the trafficMap. See applySecurityPolicy for more on waypoint handling.
 		inject := false
 		if a.InjectServiceNodes && graph.IsOK(destSvcName) && destSvcName != graph.PassthroughCluster {
 			_, destNodeType, err := graph.Id(destCluster, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, a.GraphType)
@@ -291,8 +294,8 @@ func (a SecurityPolicyAppender) addSecurityPolicy(securityPolicyMap map[string]P
 }
 
 func applySecurityPolicy(trafficMap graph.TrafficMap, securityPolicyMap map[string]PolicyRates, principalMap map[string]map[graph.MetadataKey]string) {
-	for _, s := range trafficMap {
-		for _, e := range s.Edges {
+	for _, n := range trafficMap {
+		for _, e := range n.Edges {
 			key := fmt.Sprintf("%s %s", e.Source.ID, e.Dest.ID)
 			if policyRates, ok := securityPolicyMap[key]; ok {
 				mtls := 0.0
@@ -306,6 +309,15 @@ func applySecurityPolicy(trafficMap graph.TrafficMap, securityPolicyMap map[stri
 				}
 				if mtls > 0 {
 					e.Metadata[graph.IsMTLS] = mtls / (mtls + other) * 100
+				}
+			} else {
+				// our queries and injection logic don't always end up with matches for edges to/from waypoints. These
+				// edges are always secure by nature, handle them directly. Note that we will not be able to provide
+				// the destPrincipal in this case.
+				_, sourceIsWaypoint := e.Source.Metadata[graph.IsWaypoint]
+				_, destIsWaypoint := e.Dest.Metadata[graph.IsWaypoint]
+				if sourceIsWaypoint || destIsWaypoint {
+					e.Metadata[graph.IsMTLS] = 100.0
 				}
 			}
 			if kPrincipalMap, ok := principalMap[key]; ok {
