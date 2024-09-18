@@ -137,16 +137,16 @@
             },
             "CustomHeaders": {},
             "Enabled": true,
+            "ExternalURL": "",
             "HealthCheckUrl": "",
             "GrpcPort": 9095,
-            "InClusterURL": "http://tracing.istio-system:16685/jaeger",
+            "InternalURL": "http://tracing.istio-system:16685/jaeger",
             "IsCore": false,
             "Provider": "jaeger",
             "TempoConfig": {},
             "NamespaceSelector": true,
             "QueryScope": {},
             "QueryTimeout": 5,
-            "URL": "",
             "UseGRPC": true,
             "WhiteListIstioSystem": [
               "jaeger-query",
@@ -179,10 +179,10 @@
             },
             "Dashboards": null,
             "Enabled": true,
+            "ExternalURL": "",
             "HealthCheckUrl": "",
-            "InClusterURL": "http://grafana.istio-system:3000",
-            "IsCore": false,
-            "URL": ""
+            "InternalURL": "http://grafana.istio-system:3000",
+            "IsCore": false
           },
           "isExternal": true,
           "isInaccessible": true

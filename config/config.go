@@ -224,11 +224,13 @@ type CustomDashboardsConfig struct {
 type GrafanaConfig struct {
 	Auth           Auth                     `yaml:"auth"`
 	Dashboards     []GrafanaDashboardConfig `yaml:"dashboards"`
-	Enabled        bool                     `yaml:"enabled"` // Enable or disable Grafana support in Kiali
+	Enabled        bool                     `yaml:"enabled"`      // Enable or disable Grafana support in Kiali
+	ExternalURL    string                   `yaml:"external_url"` // replaces the old url
 	HealthCheckUrl string                   `yaml:"health_check_url,omitempty"`
-	InClusterURL   string                   `yaml:"in_cluster_url"`
+	InternalURL    string                   `yaml:"internal_url"` // replaces the old in_cluster_url
 	IsCore         bool                     `yaml:"is_core,omitempty"`
-	URL            string                   `yaml:"url"`
+	XInClusterURL  string                   `yaml:"in_cluster_url,omitempty" json:"InClusterURL,omitempty"` // DEPRECATED!
+	XURL           string                   `yaml:"url,omitempty" json:"URL,omitempty"`                     // DEPRECATED!
 }
 
 type GrafanaDashboardConfig struct {
@@ -253,19 +255,21 @@ type TempoConfig struct {
 type TracingConfig struct {
 	Auth                 Auth              `yaml:"auth"`
 	CustomHeaders        map[string]string `yaml:"custom_headers,omitempty"`
-	Enabled              bool              `yaml:"enabled"` // Enable Tracing in Kiali
+	Enabled              bool              `yaml:"enabled"`      // Enable Tracing in Kiali
+	ExternalURL          string            `yaml:"external_url"` // replaces the old url
 	HealthCheckUrl       string            `yaml:"health_check_url,omitempty"`
 	GrpcPort             int               `yaml:"grpc_port,omitempty"`
-	InClusterURL         string            `yaml:"in_cluster_url"`
+	InternalURL          string            `yaml:"internal_url"` // replaces the old in_cluster_url
 	IsCore               bool              `yaml:"is_core,omitempty"`
 	Provider             TracingProvider   `yaml:"provider,omitempty"` // jaeger | tempo
 	TempoConfig          TempoConfig       `yaml:"tempo_config,omitempty"`
 	NamespaceSelector    bool              `yaml:"namespace_selector"`
 	QueryScope           map[string]string `yaml:"query_scope,omitempty"`
 	QueryTimeout         int               `yaml:"query_timeout,omitempty"`
-	URL                  string            `yaml:"url"`
 	UseGRPC              bool              `yaml:"use_grpc"`
 	WhiteListIstioSystem []string          `yaml:"whitelist_istio_system"`
+	XInClusterURL        string            `yaml:"in_cluster_url,omitempty" json:"InClusterURL,omitempty"` // DEPRECATED!
+	XURL                 string            `yaml:"url,omitempty" json:"URL,omitempty"`                     // DEPRECATED!
 }
 
 // RegistryConfig contains configuration for connecting to an external istiod.
@@ -696,9 +700,9 @@ func NewConfig() (c *Config) {
 				Auth: Auth{
 					Type: AuthTypeNone,
 				},
-				Enabled:      true,
-				InClusterURL: "http://grafana.istio-system:3000",
-				IsCore:       false,
+				Enabled:     true,
+				InternalURL: "http://grafana.istio-system:3000",
+				IsCore:      false,
 			},
 			Istio: IstioConfig{
 				ComponentStatuses: ComponentStatuses{
@@ -748,15 +752,15 @@ func NewConfig() (c *Config) {
 				},
 				CustomHeaders:        map[string]string{},
 				Enabled:              false,
+				ExternalURL:          "",
 				GrpcPort:             9095,
-				InClusterURL:         "http://tracing.istio-system:16685/jaeger",
+				InternalURL:          "http://tracing.istio-system:16685/jaeger",
 				IsCore:               false,
 				Provider:             JaegerProvider,
 				NamespaceSelector:    true,
 				QueryScope:           map[string]string{},
 				QueryTimeout:         5,
 				TempoConfig:          TempoConfig{},
-				URL:                  "",
 				UseGRPC:              true,
 				WhiteListIstioSystem: []string{"jaeger-query", "istio-ingressgateway"},
 			},
@@ -1063,6 +1067,24 @@ func Unmarshal(yamlString string) (conf *Config, err error) {
 	}
 
 	conf.prepareDashboards()
+
+	// TODO: Still support deprecated settings, but remove this support in future versions
+	if conf.ExternalServices.Grafana.XInClusterURL != "" {
+		conf.ExternalServices.Grafana.InternalURL = conf.ExternalServices.Grafana.XInClusterURL
+		log.Info("DEPRECATION NOTICE: 'external_services.grafana.in_cluster_url' has been deprecated - switch to 'external_services.grafana.internal_url'")
+	}
+	if conf.ExternalServices.Grafana.XURL != "" {
+		conf.ExternalServices.Grafana.ExternalURL = conf.ExternalServices.Grafana.XURL
+		log.Info("DEPRECATION NOTICE: 'external_services.grafana.url' has been deprecated - switch to 'external_services.grafana.external_url'")
+	}
+	if conf.ExternalServices.Tracing.XInClusterURL != "" {
+		conf.ExternalServices.Tracing.InternalURL = conf.ExternalServices.Tracing.XInClusterURL
+		log.Info("DEPRECATION NOTICE: 'external_services.tracing.in_cluster_url' has been deprecated - switch to 'external_services.tracing.internal_url'")
+	}
+	if conf.ExternalServices.Tracing.XURL != "" {
+		conf.ExternalServices.Tracing.ExternalURL = conf.ExternalServices.Tracing.XURL
+		log.Info("DEPRECATION NOTICE: 'external_services.tracing.url' has been deprecated - switch to 'external_services.tracing.external_url'")
+	}
 
 	// Some config settings (such as sensitive settings like passwords) are overrideable
 	// via secrets mounted on the file system rather than storing them directly in the config map itself.

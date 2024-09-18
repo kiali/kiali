@@ -126,11 +126,15 @@ spec:
   external_services:
     grafana:
       enabled: true
+      internal_url: "http://grafana.${CONTROL_PLANE_NAMESPACE}:3000"
+      external_url: "${grafana_external_url}"
       in_cluster_url: "http://grafana.${CONTROL_PLANE_NAMESPACE}:3000"
       url: "${grafana_external_url}"
     tracing:
       enabled: true
       provider: tempo
+      internal_url: "http://tempo-tempo-query-frontend.${TEMPO_NAMESPACE}:3200"
+      external_url: "${tracing_external_url}"
       in_cluster_url: "http://tempo-tempo-query-frontend.${TEMPO_NAMESPACE}:3200"
       url: "${tracing_external_url}"
       use_grpc: false

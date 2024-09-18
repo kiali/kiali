@@ -79,12 +79,12 @@ func tracingVersion(conf *config.Config, homeClusterSAClient kubernetes.ClientIn
 
 	product := models.ExternalServiceInfo{}
 	product.Name = string(tracingConfig.Provider)
-	product.Url = tracingConfig.URL
+	product.Url = tracingConfig.ExternalURL
 
-	// we want to go to inClusterURL to obtain the version. If it isn't specified, fallback to the external URL.
-	versionUrl := tracingConfig.InClusterURL
+	// we want to go to the internal URL to obtain the version. If it isn't specified, fallback to the external URL.
+	versionUrl := tracingConfig.InternalURL
 	if versionUrl == "" {
-		versionUrl = tracingConfig.URL
+		versionUrl = tracingConfig.ExternalURL
 	}
 
 	if versionUrl != "" {
