@@ -14,15 +14,15 @@ func TestIstioValidationsMarshal(t *testing.T) {
 	assert := assert.New(t)
 
 	validations := IstioValidations{
-		IstioValidationKey{ObjectType: kubernetes.VirtualServices.String(), Name: "foo", Namespace: "test"}: &IstioValidation{
-			Name:       "foo",
-			ObjectType: kubernetes.VirtualServices.String(),
-			Valid:      true,
+		IstioValidationKey{ObjectGVK: kubernetes.VirtualServices, Name: "foo", Namespace: "test"}: &IstioValidation{
+			Name:      "foo",
+			ObjectGVK: kubernetes.VirtualServices,
+			Valid:     true,
 		},
-		IstioValidationKey{ObjectType: kubernetes.VirtualServices.String(), Name: "bar", Namespace: "test2"}: &IstioValidation{
-			Name:       "bar",
-			ObjectType: kubernetes.VirtualServices.String(),
-			Valid:      false,
+		IstioValidationKey{ObjectGVK: kubernetes.VirtualServices, Name: "bar", Namespace: "test2"}: &IstioValidation{
+			Name:      "bar",
+			ObjectGVK: kubernetes.VirtualServices,
+			Valid:     false,
 		},
 	}
 	b, err := json.Marshal(validations)
@@ -34,8 +34,8 @@ func TestIstioValidationKeyMarshal(t *testing.T) {
 	assert := assert.New(t)
 
 	validationKey := IstioValidationKey{
-		ObjectType: kubernetes.VirtualServices.String(),
-		Name:       "foo",
+		ObjectGVK: kubernetes.VirtualServices,
+		Name:      "foo",
 	}
 	b, err := json.Marshal(validationKey)
 	assert.NoError(err)
@@ -45,23 +45,23 @@ func TestIstioValidationKeyMarshal(t *testing.T) {
 func TestSummarizeValidations(t *testing.T) {
 	assert := assert.New(t)
 
-	key1 := IstioValidationKey{ObjectType: kubernetes.VirtualServices.String(), Name: "foo", Namespace: "bookinfo", Cluster: "east"}
-	key2 := IstioValidationKey{ObjectType: kubernetes.VirtualServices.String(), Name: "bar", Namespace: "bookinfo", Cluster: "east"}
+	key1 := IstioValidationKey{ObjectGVK: kubernetes.VirtualServices, Name: "foo", Namespace: "bookinfo", Cluster: "east"}
+	key2 := IstioValidationKey{ObjectGVK: kubernetes.VirtualServices, Name: "bar", Namespace: "bookinfo", Cluster: "east"}
 
 	validations := IstioValidations{
 		key1: &IstioValidation{
-			Name:       "foo",
-			ObjectType: kubernetes.VirtualServices.String(),
-			Valid:      true,
+			Name:      "foo",
+			ObjectGVK: kubernetes.VirtualServices,
+			Valid:     true,
 			Checks: []*IstioCheck{
 				{Code: "FOO1", Severity: ErrorSeverity, Message: "Message 1"},
 				{Code: "FOO2", Severity: WarningSeverity, Message: "Message 2"},
 			},
 		},
 		key2: &IstioValidation{
-			Name:       "bar",
-			ObjectType: kubernetes.VirtualServices.String(),
-			Valid:      false,
+			Name:      "bar",
+			ObjectGVK: kubernetes.VirtualServices,
+			Valid:     false,
 			Checks: []*IstioCheck{
 				{Code: "FOO3", Severity: ErrorSeverity, Message: "Message 3"},
 				{Code: "FOO4", Severity: WarningSeverity, Message: "Message 4"},

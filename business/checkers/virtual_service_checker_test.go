@@ -38,10 +38,10 @@ func TestWellVirtualServiceValidation(t *testing.T) {
 	assert.NotEmpty(validations)
 
 	// Well configured object
-	validation, ok := validations[models.IstioValidationKey{ObjectType: kubernetes.VirtualServices.String(), Namespace: "bookinfo", Name: "reviews-well"}]
+	validation, ok := validations[models.IstioValidationKey{ObjectGVK: kubernetes.VirtualServices, Namespace: "bookinfo", Name: "reviews-well"}]
 	assert.True(ok)
 	assert.Equal(validation.Name, "reviews-well")
-	assert.Equal(validation.ObjectType, kubernetes.VirtualServices.String())
+	assert.Equal(validation.ObjectGVK.String(), kubernetes.VirtualServices.String())
 	assert.True(validation.Valid)
 	assert.Len(validation.Checks, 0)
 }
@@ -54,10 +54,10 @@ func TestVirtualServiceMultipleCheck(t *testing.T) {
 	assert.NotEmpty(validations)
 
 	// route rule with multiple problems
-	validation, ok := validations[models.IstioValidationKey{ObjectType: kubernetes.VirtualServices.String(), Namespace: "bookinfo", Name: "reviews-multiple"}]
+	validation, ok := validations[models.IstioValidationKey{ObjectGVK: kubernetes.VirtualServices, Namespace: "bookinfo", Name: "reviews-multiple"}]
 	assert.True(ok)
 	assert.Equal(validation.Name, "reviews-multiple")
-	assert.Equal(validation.ObjectType, kubernetes.VirtualServices.String())
+	assert.Equal(validation.ObjectGVK.String(), kubernetes.VirtualServices.String())
 	assert.True(validation.Valid)
 	assert.Len(validation.Checks, 2)
 }
@@ -70,10 +70,10 @@ func TestVirtualServiceMixedChecker(t *testing.T) {
 	assert.NotEmpty(validations)
 
 	// Precedence is incorrect
-	validation, ok := validations[models.IstioValidationKey{ObjectType: kubernetes.VirtualServices.String(), Namespace: "bookinfo", Name: "reviews-mixed"}]
+	validation, ok := validations[models.IstioValidationKey{ObjectGVK: kubernetes.VirtualServices, Namespace: "bookinfo", Name: "reviews-mixed"}]
 	assert.True(ok)
 	assert.Equal(validation.Name, "reviews-mixed")
-	assert.Equal(validation.ObjectType, kubernetes.VirtualServices.String())
+	assert.Equal(validation.ObjectGVK.String(), kubernetes.VirtualServices.String())
 	assert.True(validation.Valid)
 	assert.Len(validation.Checks, 2)
 }
@@ -94,17 +94,17 @@ func TestVirtualServiceMultipleIstioObjects(t *testing.T) {
 	validations := virtualServiceChecker.Check()
 	assert.NotEmpty(validations)
 
-	validation, ok := validations[models.IstioValidationKey{ObjectType: kubernetes.VirtualServices.String(), Namespace: "bookinfo", Name: "reviews-mixed"}]
+	validation, ok := validations[models.IstioValidationKey{ObjectGVK: kubernetes.VirtualServices, Namespace: "bookinfo", Name: "reviews-mixed"}]
 	assert.True(ok)
 	assert.Equal(validation.Name, "reviews-mixed")
-	assert.Equal(validation.ObjectType, kubernetes.VirtualServices.String())
+	assert.Equal(validation.ObjectGVK.String(), kubernetes.VirtualServices.String())
 	assert.True(validation.Valid)
 	assert.Len(validation.Checks, 2)
 
-	validation, ok = validations[models.IstioValidationKey{ObjectType: kubernetes.VirtualServices.String(), Namespace: "bookinfo", Name: "reviews-multiple"}]
+	validation, ok = validations[models.IstioValidationKey{ObjectGVK: kubernetes.VirtualServices, Namespace: "bookinfo", Name: "reviews-multiple"}]
 	assert.True(ok)
 	assert.Equal(validation.Name, "reviews-multiple")
-	assert.Equal(validation.ObjectType, kubernetes.VirtualServices.String())
+	assert.Equal(validation.ObjectGVK.String(), kubernetes.VirtualServices.String())
 	assert.True(validation.Valid)
 	assert.Len(validation.Checks, 2)
 }

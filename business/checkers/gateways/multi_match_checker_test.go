@@ -30,7 +30,7 @@ func TestCorrectGateways(t *testing.T) {
 	}.Check()
 
 	assert.Empty(vals)
-	_, ok := vals[models.IstioValidationKey{ObjectType: kubernetes.Gateways.String(), Namespace: "test", Name: "validgateway"}]
+	_, ok := vals[models.IstioValidationKey{ObjectGVK: kubernetes.Gateways, Namespace: "test", Name: "validgateway"}]
 	assert.False(ok)
 }
 
@@ -58,7 +58,7 @@ func TestCaseMatching(t *testing.T) {
 
 	assert.NotEmpty(vals)
 	assert.Equal(1, len(vals))
-	validation, ok := vals[models.IstioValidationKey{ObjectType: kubernetes.Gateways.String(), Namespace: "test", Name: "foxxed"}]
+	validation, ok := vals[models.IstioValidationKey{ObjectGVK: kubernetes.Gateways, Namespace: "test", Name: "foxxed"}]
 	assert.True(ok)
 	assert.True(validation.Valid)
 }
@@ -140,11 +140,11 @@ func TestSameHostPortConfigInDifferentNamespace(t *testing.T) {
 
 	assert.NotEmpty(vals)
 	assert.Equal(2, len(vals))
-	validation, ok := vals[models.IstioValidationKey{ObjectType: kubernetes.Gateways.String(), Namespace: "bookinfo", Name: "stillvalid"}]
+	validation, ok := vals[models.IstioValidationKey{ObjectGVK: kubernetes.Gateways, Namespace: "bookinfo", Name: "stillvalid"}]
 	assert.True(ok)
 	assert.True(validation.Valid)
 
-	secValidation, ok := vals[models.IstioValidationKey{ObjectType: kubernetes.Gateways.String(), Namespace: "test", Name: "validgateway"}]
+	secValidation, ok := vals[models.IstioValidationKey{ObjectGVK: kubernetes.Gateways, Namespace: "test", Name: "validgateway"}]
 	assert.True(ok)
 	assert.True(secValidation.Valid)
 
@@ -209,7 +209,7 @@ func TestWildCardMatchingHost(t *testing.T) {
 
 	assert.NotEmpty(vals)
 	assert.Equal(3, len(vals))
-	validation, ok := vals[models.IstioValidationKey{ObjectType: kubernetes.Gateways.String(), Namespace: "test", Name: "stillvalid"}]
+	validation, ok := vals[models.IstioValidationKey{ObjectGVK: kubernetes.Gateways, Namespace: "test", Name: "stillvalid"}]
 	assert.True(ok)
 	assert.True(validation.Valid)
 
@@ -279,11 +279,11 @@ func TestSameWildcardHostPortConfigInDifferentNamespace(t *testing.T) {
 
 	assert.NotEmpty(vals)
 	assert.Equal(2, len(vals))
-	validation, ok := vals[models.IstioValidationKey{ObjectType: kubernetes.Gateways.String(), Namespace: "bookinfo2", Name: "bookinfo-gateway-auto-host-copy"}]
+	validation, ok := vals[models.IstioValidationKey{ObjectGVK: kubernetes.Gateways, Namespace: "bookinfo2", Name: "bookinfo-gateway-auto-host-copy"}]
 	assert.True(ok)
 	assert.True(validation.Valid)
 
-	secValidation, ok := vals[models.IstioValidationKey{ObjectType: kubernetes.Gateways.String(), Namespace: "bookinfo", Name: "bookinfo-gateway-auto-host"}]
+	secValidation, ok := vals[models.IstioValidationKey{ObjectGVK: kubernetes.Gateways, Namespace: "bookinfo", Name: "bookinfo-gateway-auto-host"}]
 	assert.True(ok)
 	assert.True(secValidation.Valid)
 
@@ -316,7 +316,7 @@ func TestAnotherSubdomainWildcardCombination(t *testing.T) {
 
 	assert.NotEmpty(vals)
 	assert.Equal(1, len(vals))
-	validation, ok := vals[models.IstioValidationKey{ObjectType: kubernetes.Gateways.String(), Namespace: "test", Name: "shouldnotbevalid"}]
+	validation, ok := vals[models.IstioValidationKey{ObjectGVK: kubernetes.Gateways, Namespace: "test", Name: "shouldnotbevalid"}]
 	assert.True(ok)
 	assert.True(validation.Valid)
 }
@@ -371,7 +371,7 @@ func TestTwoWildCardsMatching(t *testing.T) {
 
 	assert.NotEmpty(vals)
 	assert.Equal(2, len(vals))
-	validation, ok := vals[models.IstioValidationKey{ObjectType: kubernetes.Gateways.String(), Namespace: "test", Name: "stillvalid"}]
+	validation, ok := vals[models.IstioValidationKey{ObjectGVK: kubernetes.Gateways, Namespace: "test", Name: "stillvalid"}]
 	assert.True(ok)
 	assert.True(validation.Valid)
 	assert.Equal("spec/servers[0]/hosts[0]", validation.Checks[0].Path)
@@ -400,10 +400,10 @@ func TestDuplicateGatewaysErrorCount(t *testing.T) {
 	}.Check()
 
 	assert.NotEmpty(vals)
-	validgateway, ok := vals[models.IstioValidationKey{ObjectType: kubernetes.Gateways.String(), Namespace: "test", Name: "validgateway"}]
+	validgateway, ok := vals[models.IstioValidationKey{ObjectGVK: kubernetes.Gateways, Namespace: "test", Name: "validgateway"}]
 	assert.True(ok)
 
-	duplicatevalidgateway, ok := vals[models.IstioValidationKey{ObjectType: kubernetes.Gateways.String(), Namespace: "test", Name: "duplicatevalidgateway"}]
+	duplicatevalidgateway, ok := vals[models.IstioValidationKey{ObjectGVK: kubernetes.Gateways, Namespace: "test", Name: "duplicatevalidgateway"}]
 	assert.True(ok)
 
 	assert.Equal(2, len(validgateway.Checks))
@@ -466,7 +466,7 @@ func TestMatchOnSameTargetNamespace(t *testing.T) {
 
 	assert.NotEmpty(vals)
 	assert.Equal(1, len(vals))
-	validation, ok := vals[models.IstioValidationKey{ObjectType: kubernetes.Gateways.String(), Namespace: "test", Name: "shouldnotbevalid"}]
+	validation, ok := vals[models.IstioValidationKey{ObjectGVK: kubernetes.Gateways, Namespace: "test", Name: "shouldnotbevalid"}]
 	assert.True(ok)
 	assert.True(validation.Valid)
 }
@@ -496,7 +496,7 @@ func TestMatchOnWildcardTargetNamespace(t *testing.T) {
 
 	assert.NotEmpty(vals)
 	assert.Equal(1, len(vals))
-	validation, ok := vals[models.IstioValidationKey{ObjectType: kubernetes.Gateways.String(), Namespace: "test", Name: "shouldnotbevalid"}]
+	validation, ok := vals[models.IstioValidationKey{ObjectGVK: kubernetes.Gateways, Namespace: "test", Name: "shouldnotbevalid"}]
 	assert.True(ok)
 	assert.True(validation.Valid)
 }
@@ -526,7 +526,7 @@ func TestMatchOnImplicitWildcardTargetNamespace(t *testing.T) {
 
 	assert.NotEmpty(vals)
 	assert.Equal(1, len(vals))
-	validation, ok := vals[models.IstioValidationKey{ObjectType: kubernetes.Gateways.String(), Namespace: "test", Name: "shouldnotbevalid"}]
+	validation, ok := vals[models.IstioValidationKey{ObjectGVK: kubernetes.Gateways, Namespace: "test", Name: "shouldnotbevalid"}]
 	assert.True(ok)
 	assert.True(validation.Valid)
 }

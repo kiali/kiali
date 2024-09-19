@@ -27,7 +27,7 @@ func prepareTestForSidecar(sc *networking_v1.Sidecar, vs *networking_v1.VirtualS
 		},
 		RegistryServices: data.CreateFakeRegistryServicesLabels("foo-service", "istio-system"),
 	}
-	return *drReferences.References()[models.IstioReferenceKey{ObjectType: kubernetes.Sidecars.String(), Namespace: sc.Namespace, Name: sc.Name}]
+	return *drReferences.References()[models.IstioReferenceKey{ObjectGVK: kubernetes.Sidecars, Namespace: sc.Namespace, Name: sc.Name}]
 }
 
 func TestSidecarReferences(t *testing.T) {
@@ -51,7 +51,7 @@ func TestSidecarReferences(t *testing.T) {
 	assert.Len(references.ObjectReferences, 1)
 	assert.Equal(references.ObjectReferences[0].Name, "foo-dev")
 	assert.Equal(references.ObjectReferences[0].Namespace, "istio-system")
-	assert.Equal(references.ObjectReferences[0].ObjectType, kubernetes.ServiceEntries.String())
+	assert.Equal(references.ObjectReferences[0].ObjectGVK.String(), kubernetes.ServiceEntries.String())
 }
 
 func TestSidecarServiceReferences(t *testing.T) {

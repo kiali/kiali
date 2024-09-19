@@ -40,10 +40,10 @@ func TestWithoutK8sGatewayGRPC(t *testing.T) {
 
 	assert.NotEmpty(vals)
 
-	route1 := vals[models.IstioValidationKey{ObjectType: kubernetes.K8sGRPCRoutes.String(), Namespace: "bookinfo", Name: "route1"}]
+	route1 := vals[models.IstioValidationKey{ObjectGVK: kubernetes.K8sGRPCRoutes, Namespace: "bookinfo", Name: "route1"}]
 	assert.False(route1.Valid)
 	assert.NoError(validations.ConfirmIstioCheckMessage("k8sroutes.nok8sgateway", route1.Checks[0]))
-	route2 := vals[models.IstioValidationKey{ObjectType: kubernetes.K8sGRPCRoutes.String(), Namespace: "bookinfo", Name: "route2"}]
+	route2 := vals[models.IstioValidationKey{ObjectGVK: kubernetes.K8sGRPCRoutes, Namespace: "bookinfo", Name: "route2"}]
 	assert.False(route2.Valid)
 	assert.NoError(validations.ConfirmIstioCheckMessage("k8sroutes.nok8sgateway", route2.Checks[0]))
 }
@@ -67,10 +67,10 @@ func TestWithoutServiceGRPC(t *testing.T) {
 
 	assert.NotEmpty(vals)
 
-	route1 := vals[models.IstioValidationKey{ObjectType: kubernetes.K8sGRPCRoutes.String(), Namespace: "bookinfo", Name: "route1"}]
+	route1 := vals[models.IstioValidationKey{ObjectGVK: kubernetes.K8sGRPCRoutes, Namespace: "bookinfo", Name: "route1"}]
 	assert.False(route1.Valid)
 	assert.NoError(validations.ConfirmIstioCheckMessage("k8sroutes.nohost.namenotfound", route1.Checks[0]))
-	route2 := vals[models.IstioValidationKey{ObjectType: kubernetes.K8sGRPCRoutes.String(), Namespace: "bookinfo2", Name: "route2"}]
+	route2 := vals[models.IstioValidationKey{ObjectGVK: kubernetes.K8sGRPCRoutes, Namespace: "bookinfo2", Name: "route2"}]
 	assert.False(route2.Valid)
 	assert.NoError(validations.ConfirmIstioCheckMessage("k8sroutes.nohost.namenotfound", route2.Checks[0]))
 }

@@ -583,7 +583,7 @@ func testValidationAddedExported(t *testing.T, destinationRules []*networking_v1
 
 	result := models.IstioValidation{}
 	for _, nameNamespace := range nameNamespaces {
-		validation, ok := vals[models.BuildKey(kubernetes.DestinationRules.String(), nameNamespace.Name, nameNamespace.Namespace, config.DefaultClusterID)]
+		validation, ok := vals[models.BuildKey(kubernetes.DestinationRules, nameNamespace.Name, nameNamespace.Namespace, config.DefaultClusterID)]
 		assert.True(ok)
 		assert.True(validation.Valid)
 
@@ -609,7 +609,7 @@ func testValidationsNotAddedExported(t *testing.T, destinationRules []*networkin
 	}.Check()
 
 	assert.Empty(vals)
-	validation, ok := vals[models.BuildKey(kubernetes.DestinationRules.String(), name, namespace, config.DefaultClusterID)]
+	validation, ok := vals[models.BuildKey(kubernetes.DestinationRules, name, namespace, config.DefaultClusterID)]
 
 	assert.False(ok)
 	assert.Nil(validation)
@@ -619,7 +619,7 @@ func notPresentReferences(t *testing.T, validation models.IstioValidation, ns st
 	assert := assert.New(t)
 
 	for _, sn := range serviceNames {
-		refKey := models.IstioValidationKey{ObjectType: kubernetes.DestinationRules.String(), Namespace: ns, Name: sn, Cluster: config.DefaultClusterID}
+		refKey := models.IstioValidationKey{ObjectGVK: kubernetes.DestinationRules, Namespace: ns, Name: sn, Cluster: config.DefaultClusterID}
 		assert.NotContains(validation.References, refKey)
 	}
 }

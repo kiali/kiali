@@ -27,7 +27,7 @@ func prepareTestForPeerAuth(pa *security_v1.PeerAuthentication, drs []*networkin
 				data.CreateWorkloadListItem("details", map[string]string{"app": "details"})),
 		},
 	}
-	return *drReferences.References()[models.IstioReferenceKey{ObjectType: kubernetes.PeerAuthentications.String(), Namespace: pa.Namespace, Name: pa.Name}]
+	return *drReferences.References()[models.IstioReferenceKey{ObjectGVK: kubernetes.PeerAuthentications, Namespace: pa.Namespace, Name: pa.Name}]
 }
 
 func TestMeshPeerAuthDisabledReferences(t *testing.T) {
@@ -47,7 +47,7 @@ func TestMeshPeerAuthDisabledReferences(t *testing.T) {
 	assert.Len(references.ObjectReferences, 1)
 	assert.Equal(references.ObjectReferences[0].Name, "disable-mtls")
 	assert.Equal(references.ObjectReferences[0].Namespace, "istio-system")
-	assert.Equal(references.ObjectReferences[0].ObjectType, kubernetes.DestinationRules.String())
+	assert.Equal(references.ObjectReferences[0].ObjectGVK.String(), kubernetes.DestinationRules.String())
 }
 
 func TestNamespacePeerAuthDisabledReferences(t *testing.T) {
@@ -67,7 +67,7 @@ func TestNamespacePeerAuthDisabledReferences(t *testing.T) {
 	assert.Len(references.ObjectReferences, 1)
 	assert.Equal(references.ObjectReferences[0].Name, "disable-namespace")
 	assert.Equal(references.ObjectReferences[0].Namespace, "bookinfo")
-	assert.Equal(references.ObjectReferences[0].ObjectType, kubernetes.DestinationRules.String())
+	assert.Equal(references.ObjectReferences[0].ObjectGVK.String(), kubernetes.DestinationRules.String())
 }
 
 func TestMeshNamespacePeerAuthDisabledReferences(t *testing.T) {
@@ -86,7 +86,7 @@ func TestMeshNamespacePeerAuthDisabledReferences(t *testing.T) {
 	// Check DR and AuthPolicy references
 	assert.Equal(references.ObjectReferences[0].Name, "disable-mtls")
 	assert.Equal(references.ObjectReferences[0].Namespace, "istio-system")
-	assert.Equal(references.ObjectReferences[0].ObjectType, kubernetes.DestinationRules.String())
+	assert.Equal(references.ObjectReferences[0].ObjectGVK.String(), kubernetes.DestinationRules.String())
 }
 
 func TestMeshPeerAuthEnabledReferences(t *testing.T) {
@@ -106,7 +106,7 @@ func TestMeshPeerAuthEnabledReferences(t *testing.T) {
 	assert.Len(references.ObjectReferences, 1)
 	assert.Equal(references.ObjectReferences[0].Name, "enable-mtls")
 	assert.Equal(references.ObjectReferences[0].Namespace, "istio-system")
-	assert.Equal(references.ObjectReferences[0].ObjectType, kubernetes.DestinationRules.String())
+	assert.Equal(references.ObjectReferences[0].ObjectGVK.String(), kubernetes.DestinationRules.String())
 }
 
 func TestNamespacePeerAuthEnabledReferences(t *testing.T) {
@@ -126,7 +126,7 @@ func TestNamespacePeerAuthEnabledReferences(t *testing.T) {
 	assert.Len(references.ObjectReferences, 1)
 	assert.Equal(references.ObjectReferences[0].Name, "enable-namespace")
 	assert.Equal(references.ObjectReferences[0].Namespace, "bookinfo")
-	assert.Equal(references.ObjectReferences[0].ObjectType, kubernetes.DestinationRules.String())
+	assert.Equal(references.ObjectReferences[0].ObjectGVK.String(), kubernetes.DestinationRules.String())
 }
 
 func TestMeshNamespacePeerAuthEnabledReferences(t *testing.T) {
@@ -146,7 +146,7 @@ func TestMeshNamespacePeerAuthEnabledReferences(t *testing.T) {
 	assert.Len(references.ObjectReferences, 1)
 	assert.Equal(references.ObjectReferences[0].Name, "enable-mtls")
 	assert.Equal(references.ObjectReferences[0].Namespace, "istio-system")
-	assert.Equal(references.ObjectReferences[0].ObjectType, kubernetes.DestinationRules.String())
+	assert.Equal(references.ObjectReferences[0].ObjectGVK.String(), kubernetes.DestinationRules.String())
 }
 
 func TestMeshPeerAuthWorkloadReferences(t *testing.T) {

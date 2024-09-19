@@ -135,7 +135,7 @@ func TestIstioConfigDetails(t *testing.T) {
 
 	require.NoError(err)
 	require.NotNil(config)
-	require.Equal(kubernetes.VirtualServices, config.ObjectType)
+	require.Equal(kubernetes.VirtualServices.String(), config.ObjectGVK.String())
 	require.Equal(kiali.BOOKINFO, config.Namespace.Name)
 	require.NotNil(config.VirtualService)
 	require.Equal(name, config.VirtualService.Name)
@@ -143,7 +143,7 @@ func TestIstioConfigDetails(t *testing.T) {
 	require.NotNil(config.IstioReferences)
 	require.NotNil(config.IstioValidation)
 	require.Equal(name, config.IstioValidation.Name)
-	require.Equal(kubernetes.VirtualServices.String(), config.IstioValidation.ObjectType)
+	require.Equal(kubernetes.VirtualServices.String(), config.IstioValidation.ObjectGVK.String())
 	if !config.IstioValidation.Valid {
 		require.NotEmpty(config.IstioValidation.References)
 	}

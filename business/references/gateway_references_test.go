@@ -21,7 +21,7 @@ func prepareTestForGateway(gw *networking_v1.Gateway, vss []*networking_v1.Virtu
 				data.CreateWorkloadListItem("istio-ingressgateway", map[string]string{"istio": "ingressgateway"})),
 		},
 	}
-	return *gwReferences.References()[models.IstioReferenceKey{ObjectType: kubernetes.Gateways.String(), Namespace: gw.Namespace, Name: gw.Name}]
+	return *gwReferences.References()[models.IstioReferenceKey{ObjectGVK: kubernetes.Gateways, Namespace: gw.Namespace, Name: gw.Name}]
 }
 
 func TestGatewayReferences(t *testing.T) {
@@ -41,13 +41,13 @@ func TestGatewayReferences(t *testing.T) {
 	assert.Len(references.ObjectReferences, 3)
 	assert.Equal(references.ObjectReferences[0].Name, "reviews1")
 	assert.Equal(references.ObjectReferences[0].Namespace, "bookinfo")
-	assert.Equal(references.ObjectReferences[0].ObjectType, kubernetes.VirtualServices.String())
+	assert.Equal(references.ObjectReferences[0].ObjectGVK.String(), kubernetes.VirtualServices.String())
 	assert.Equal(references.ObjectReferences[1].Name, "reviews2")
 	assert.Equal(references.ObjectReferences[1].Namespace, "bookinfo")
-	assert.Equal(references.ObjectReferences[1].ObjectType, kubernetes.VirtualServices.String())
+	assert.Equal(references.ObjectReferences[1].ObjectGVK.String(), kubernetes.VirtualServices.String())
 	assert.Equal(references.ObjectReferences[2].Name, "reviews3")
 	assert.Equal(references.ObjectReferences[2].Namespace, "bookinfo")
-	assert.Equal(references.ObjectReferences[2].ObjectType, kubernetes.VirtualServices.String())
+	assert.Equal(references.ObjectReferences[2].ObjectGVK.String(), kubernetes.VirtualServices.String())
 }
 
 func TestGatewayNoWorkloadReferences(t *testing.T) {

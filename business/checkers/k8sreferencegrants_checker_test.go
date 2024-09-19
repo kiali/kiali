@@ -41,10 +41,10 @@ func TestMissingFromNamespace(t *testing.T) {
 
 	assert.NotEmpty(vals)
 
-	grant1 := vals[models.IstioValidationKey{ObjectType: kubernetes.K8sReferenceGrants.String(), Namespace: "bookinfo", Name: "grant1"}]
+	grant1 := vals[models.IstioValidationKey{ObjectGVK: kubernetes.K8sReferenceGrants, Namespace: "bookinfo", Name: "grant1"}]
 	assert.False(grant1.Valid)
 	assert.NoError(validations.ConfirmIstioCheckMessage("k8sreferencegrants.from.namespacenotfound", grant1.Checks[0]))
-	grant2 := vals[models.IstioValidationKey{ObjectType: kubernetes.K8sReferenceGrants.String(), Namespace: "bookinfo3", Name: "grant2"}]
+	grant2 := vals[models.IstioValidationKey{ObjectGVK: kubernetes.K8sReferenceGrants, Namespace: "bookinfo3", Name: "grant2"}]
 	assert.False(grant2.Valid)
 	assert.NoError(validations.ConfirmIstioCheckMessage("k8sreferencegrants.from.namespacenotfound", grant2.Checks[0]))
 }

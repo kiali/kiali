@@ -29,7 +29,7 @@ func TestMultiHostMatchCorrect(t *testing.T) {
 	}.Check()
 
 	assert.Empty(vals)
-	validation, ok := vals[models.IstioValidationKey{ObjectType: kubernetes.DestinationRules.String(), Namespace: "test", Name: "rule2"}]
+	validation, ok := vals[models.IstioValidationKey{ObjectGVK: kubernetes.DestinationRules, Namespace: "test", Name: "rule2"}]
 	assert.False(ok)
 	assert.Nil(validation)
 }
@@ -60,7 +60,7 @@ func TestMultiHostMatchInvalid(t *testing.T) {
 }
 
 func validationAssertion(assert *assert.Assertions, vals models.IstioValidations, drName string, refNames []string) {
-	validation, ok := vals[models.IstioValidationKey{ObjectType: kubernetes.DestinationRules.String(), Namespace: "test", Name: drName}]
+	validation, ok := vals[models.IstioValidationKey{ObjectGVK: kubernetes.DestinationRules, Namespace: "test", Name: drName}]
 	assert.True(ok)
 	assert.True(validation.Valid) // As long as it is warning, this is true
 	assert.NotEmpty(validation.Checks)
@@ -71,9 +71,9 @@ func validationAssertion(assert *assert.Assertions, vals models.IstioValidations
 	for _, refName := range refNames {
 		assert.Contains(validation.References,
 			models.IstioValidationKey{
-				ObjectType: kubernetes.DestinationRules.String(),
-				Namespace:  "test",
-				Name:       refName,
+				ObjectGVK: kubernetes.DestinationRules,
+				Namespace: "test",
+				Name:      refName,
 			},
 		)
 	}
@@ -96,7 +96,7 @@ func TestMultiHostMatchInvalidShortFormat(t *testing.T) {
 
 	assert.NotEmpty(vals)
 	assert.Equal(2, len(vals))
-	validation, ok := vals[models.IstioValidationKey{ObjectType: kubernetes.DestinationRules.String(), Namespace: "test", Name: "rule2"}]
+	validation, ok := vals[models.IstioValidationKey{ObjectGVK: kubernetes.DestinationRules, Namespace: "test", Name: "rule2"}]
 	assert.True(ok)
 	assert.True(validation.Valid) // As long as it is warning, this is true
 	assert.NotEmpty(validation.Checks)
@@ -123,7 +123,7 @@ func TestMultiHostMatchValidShortFormat(t *testing.T) {
 	}.Check()
 
 	assert.Empty(vals)
-	validation, ok := vals[models.IstioValidationKey{ObjectType: kubernetes.DestinationRules.String(), Namespace: "test", Name: "rule2"}]
+	validation, ok := vals[models.IstioValidationKey{ObjectGVK: kubernetes.DestinationRules, Namespace: "test", Name: "rule2"}]
 	assert.False(ok)
 	assert.Nil(validation)
 }
@@ -167,7 +167,7 @@ func TestMultiHostMatchWildcardInvalid(t *testing.T) {
 	}.Check()
 
 	assert.NotEmpty(vals)
-	validation, ok := vals[models.IstioValidationKey{ObjectType: kubernetes.DestinationRules.String(), Namespace: "test", Name: "rule2"}]
+	validation, ok := vals[models.IstioValidationKey{ObjectGVK: kubernetes.DestinationRules, Namespace: "test", Name: "rule2"}]
 	assert.True(ok)
 	assert.True(validation.Valid) // As long as it is warning, this is true
 	assert.NotEmpty(validation.Checks)
@@ -186,7 +186,7 @@ func TestMultiHostMatchWildcardInvalid(t *testing.T) {
 	}.Check()
 
 	assert.NotEmpty(vals)
-	validation, ok = vals[models.IstioValidationKey{ObjectType: kubernetes.DestinationRules.String(), Namespace: "test", Name: "rule1"}]
+	validation, ok = vals[models.IstioValidationKey{ObjectGVK: kubernetes.DestinationRules, Namespace: "test", Name: "rule1"}]
 	assert.True(ok)
 	assert.True(validation.Valid) // As long as it is warning, this is true
 	assert.NotEmpty(validation.Checks)
@@ -212,7 +212,7 @@ func TestMultiHostMatchBothWildcardInvalid(t *testing.T) {
 	}.Check()
 
 	assert.NotEmpty(vals)
-	validation, ok := vals[models.IstioValidationKey{ObjectType: kubernetes.DestinationRules.String(), Namespace: "test", Name: "rule2"}]
+	validation, ok := vals[models.IstioValidationKey{ObjectGVK: kubernetes.DestinationRules, Namespace: "test", Name: "rule2"}]
 	assert.True(ok)
 	assert.True(validation.Valid) // As long as it is warning, this is true
 	assert.NotEmpty(validation.Checks)
@@ -231,7 +231,7 @@ func TestMultiHostMatchBothWildcardInvalid(t *testing.T) {
 	}.Check()
 
 	assert.NotEmpty(vals)
-	validation, ok = vals[models.IstioValidationKey{ObjectType: kubernetes.DestinationRules.String(), Namespace: "test", Name: "rule1"}]
+	validation, ok = vals[models.IstioValidationKey{ObjectGVK: kubernetes.DestinationRules, Namespace: "test", Name: "rule1"}]
 	assert.True(ok)
 	assert.True(validation.Valid) // As long as it is warning, this is true
 	assert.NotEmpty(validation.Checks)
@@ -258,7 +258,7 @@ func TestMultiHostMatchingMeshWideMTLSDestinationRule(t *testing.T) {
 	}.Check()
 
 	assert.Empty(vals)
-	validation, ok := vals[models.IstioValidationKey{ObjectType: kubernetes.DestinationRules.String(), Namespace: "test", Name: "rule2"}]
+	validation, ok := vals[models.IstioValidationKey{ObjectGVK: kubernetes.DestinationRules, Namespace: "test", Name: "rule2"}]
 	assert.False(ok)
 	assert.Nil(validation)
 }
@@ -280,7 +280,7 @@ func TestMultiHostMatchingNamespaceWideMTLSDestinationRule(t *testing.T) {
 	}.Check()
 
 	assert.Empty(vals)
-	validation, ok := vals[models.IstioValidationKey{ObjectType: kubernetes.DestinationRules.String(), Namespace: "test", Name: "rule2"}]
+	validation, ok := vals[models.IstioValidationKey{ObjectGVK: kubernetes.DestinationRules, Namespace: "test", Name: "rule2"}]
 	assert.False(ok)
 	assert.Nil(validation)
 }
@@ -343,7 +343,7 @@ func TestReviewsExample(t *testing.T) {
 
 	assert.NotEmpty(vals)
 	assert.Equal(3, len(vals))
-	validation, ok := vals[models.IstioValidationKey{ObjectType: kubernetes.DestinationRules.String(), Namespace: "bookinfo", Name: "reviews3"}]
+	validation, ok := vals[models.IstioValidationKey{ObjectGVK: kubernetes.DestinationRules, Namespace: "bookinfo", Name: "reviews3"}]
 	assert.True(ok)
 	assert.True(validation.Valid)
 	assert.NotEmpty(validation.Checks)
@@ -391,7 +391,7 @@ func TestMultiServiceEntryInvalid(t *testing.T) {
 
 	assert.NotEmpty(vals)
 	assert.Equal(2, len(vals))
-	validation, ok := vals[models.IstioValidationKey{ObjectType: kubernetes.DestinationRules.String(), Namespace: "test", Name: "service-a2"}]
+	validation, ok := vals[models.IstioValidationKey{ObjectGVK: kubernetes.DestinationRules, Namespace: "test", Name: "service-a2"}]
 	assert.True(ok)
 	assert.True(validation.Valid)
 	assert.NotEmpty(validation.Checks)
