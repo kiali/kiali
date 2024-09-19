@@ -154,6 +154,8 @@ class ServiceInfoComponent extends React.Component<Props, ServiceInfoState> {
 
     deleteServiceTrafficRouting(this.props.serviceDetails!)
       .then(_results => {
+        AlertUtils.addSuccess(`Istio Config deleted for ${this.props.serviceDetails?.service.name} service.`);
+
         triggerRefresh();
       })
       .catch(error => {

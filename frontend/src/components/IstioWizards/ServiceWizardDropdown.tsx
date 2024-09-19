@@ -163,11 +163,14 @@ const ServiceWizardDropdownComponent: React.FC<Props> = (props: Props) => {
       props.cluster
     )
       .then(_results => {
+        AlertUtils.addSuccess(`Istio Config deleted for ${props.serviceName} service.`);
+
         setIsDeleting(false);
         props.onChange();
       })
       .catch(error => {
         AlertUtils.addError('Could not delete Istio config objects.', error);
+
         setIsDeleting(false);
       });
   };

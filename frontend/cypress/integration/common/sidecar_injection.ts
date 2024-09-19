@@ -373,18 +373,16 @@ function switchWorkloadSidecarInjection(enableOrDisable: string): void {
   cy.visit({ url: `/console/namespaces/${this.targetNamespace}/workloads/${this.targetWorkload}?refresh=0` });
 
   // In OSSMC, the workload actions toggle does not exist. Workload actions are integrated in the minigraph menu
-  cy.get('button[data-test="workload-actions-toggle"]').then($element => {
-    if ($element.length > 0) {
-      cy.get('button[data-test="workload-actions-toggle"]').should('be.visible').click();
-    } else {
-      cy.intercept(`**/api/**/workloads/**/graph*`).as('workloadMinigraph');
-      cy.wait('@workloadMinigraph');
+  if (Cypress.env('OSSMC')) {
+    cy.intercept(`**/api/**/workloads/**/graph*`).as('workloadMinigraph');
+    cy.wait('@workloadMinigraph');
 
-      cy.waitForReact();
+    cy.waitForReact();
 
-      cy.get('button#minigraph-toggle').should('be.visible').click();
-    }
-  });
+    cy.get('button#minigraph-toggle').should('be.visible').click();
+  } else {
+    cy.get('button[data-test="workload-actions-toggle"]').should('be.visible').click();
+  }
 
   cy.get(`li[data-test=${enableOrDisable}_auto_injection]`).find('button').should('be.visible').click();
 
