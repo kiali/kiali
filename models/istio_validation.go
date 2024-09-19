@@ -2,6 +2,7 @@ package models
 
 import (
 	"encoding/json"
+
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/kiali/kiali/config"

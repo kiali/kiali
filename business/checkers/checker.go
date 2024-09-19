@@ -1,8 +1,9 @@
 package checkers
 
 import (
-	"github.com/kiali/kiali/models"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	"github.com/kiali/kiali/models"
 )
 
 type Checker interface {
