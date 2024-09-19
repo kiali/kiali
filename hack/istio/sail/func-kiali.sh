@@ -75,15 +75,26 @@ install_kiali_cr() {
     fi
   fi
 
-  # determine the control plane's Istio version - we need it because it is part of the names of the Istio config maps/deployments
-  local istio_version="unknown"
-  for r in $(${OC} get istio -o name);
-  do
-    local ns="$(${OC} get $r -o jsonpath='{.spec.namespace}')"
-    if [ "${ns}" == "${control_plane_namespace}" ]; then
-      istio_version="$(${OC} get $r -o jsonpath='{.spec.version}')"
+  # If on OpenShift we can know what the tracing external URL is; otherwise, the external URL will be left blank.
+  local tracing_external_url=""
+  if [ "${IS_OPENSHIFT}" == "true" ]; then
+    tracing_external_url="$(${OC} get route -n ${TEMPO_NAMESPACE} -l app.kubernetes.io/name=tempo,app.kubernetes.io/component=query-frontend -o jsonpath='https://{..spec.host}')"
+    infomsg "The tracing external URL is the OpenShift route located at [${tracing_external_url}]"
+  else
+    local tracing_ingress_host="$(${OC} -n ${TEMPO_NAMESPACE} get svc -l app.kubernetes.io/name=tempo,app.kubernetes.io/component=query-frontend -o jsonpath='{..status.loadBalancer.ingress[0].ip}' 2> /dev/null)"
+    if [ -n "${tracing_ingress_host}" ]; then
+      tracing_external_url="http://${tracing_ingress_host}:9095" # TODO: I don't know what port; looks like one of: 3200,9095,16685,16686,16687
+      infomsg "The tracing external URL is the LoadBalancer endpoint located at [${tracing_external_url}]"
+    else
+      infomsg "The tracing external URL cannot be determined. Leaving it empty in the Kiali CR."
     fi
-  done
+  fi
+
+  # OpenShift should always use its own auth strategy. For vanilla Kubernetes, set it to anonymous.
+  local auth_strategy="anonymous"
+  if [ "${IS_OPENSHIFT}" == "true" ]; then
+    auth_strategy="openshift"
+  fi
 
   cat <<EOM | ${OC} apply -f -
 apiVersion: kiali.io/v1alpha1
@@ -93,17 +104,15 @@ metadata:
   namespace: ${control_plane_namespace}
 spec:
   version: ${KIALI_VERSION}
+  auth:
+    strategy: ${auth_strategy}
   external_services:
     tracing:
       enabled: true
       provider: tempo
       in_cluster_url: "http://tempo-tempo-query-frontend.${TEMPO_NAMESPACE}.svc.cluster.local:3200"
-      url: "$(${OC} get route -n ${TEMPO_NAMESPACE} -l app.kubernetes.io/name=tempo,app.kubernetes.io/component=query-frontend -o jsonpath='https://{..spec.host}')"
+      url: "${tracing_external_url}"
       use_grpc: false
-    istio:
-      config_map_name: istio-istio-${control_plane_namespace}-${istio_version}
-      istio_sidecar_injector_config_map_name: istio-sidecar-injector-istio-${control_plane_namespace}-${istio_version}
-      istiod_deployment_name: istiod-istio-${control_plane_namespace}-${istio_version}
 EOM
 }
 
@@ -217,7 +226,11 @@ status_kiali_cr() {
       ${OC} get pods --namespace ${res_namespace} -l app.kubernetes.io/name=kiali
       infomsg ""
       infomsg "Kiali Web Console can be accessed here: "
-      ${OC} get route -n ${res_namespace} -l app.kubernetes.io/name=kiali -o jsonpath='https://{..spec.host}{"\n"}'
+      if [ "${IS_OPENSHIFT}" == "true" ]; then
+        ${OC} get route -n ${res_namespace} -l app.kubernetes.io/name=kiali -o jsonpath='https://{..spec.host}{"\n"}'
+      else
+        infomsg "Cannot determine where the UI is on non-OpenShift clusters."
+      fi
     done
   else
     infomsg "There are no Kiali CRs in the cluster"
