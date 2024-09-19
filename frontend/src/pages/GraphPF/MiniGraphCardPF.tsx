@@ -145,6 +145,7 @@ class MiniGraphCardPFComponent extends React.Component<MiniGraphCardPropsPF, Min
                   <Dropdown
                     toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
                       <MenuToggle
+                        id="minigraph-toggle"
                         ref={toggleRef}
                         className={kebabToggleStyle}
                         aria-label="Actions"
