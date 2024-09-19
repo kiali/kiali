@@ -22,7 +22,6 @@ import (
 	"strings"
 
 	"github.com/kiali/kiali/graph"
-	"github.com/kiali/kiali/graph/telemetry/istio/appender"
 )
 
 // ResponseFlags is a map of maps. Each response code is broken down by responseFlags:percentageOfTraffic, e.g.:
@@ -445,54 +444,57 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 		*nodes = append(*nodes, &nw)
 
 		for _, e := range n.Edges {
-			sourceIDHash := nodeHash(n.ID)
-			destIDHash := nodeHash(e.Dest.ID)
-			protocol := ""
-			if e.Metadata[graph.ProtocolKey] != nil {
-				protocol = e.Metadata[graph.ProtocolKey].(string)
-			}
-			edgeID := edgeHash(sourceIDHash, destIDHash, protocol)
-			ed := EdgeData{
-				ID:     edgeID,
-				Source: sourceIDHash,
-				Target: destIDHash,
-				Traffic: ProtocolTraffic{
-					Protocol: protocol,
-				},
-			}
-			if e.Metadata[graph.DestPrincipal] != nil {
-				ed.DestPrincipal = e.Metadata[graph.DestPrincipal].(string)
-			}
-			if e.Metadata[graph.SourcePrincipal] != nil {
-				ed.SourcePrincipal = e.Metadata[graph.SourcePrincipal].(string)
-			}
-			if e.Metadata[graph.Waypoint] != nil {
-				if ed.Waypoint == nil {
-					ed.Waypoint = &WaypointEdge{}
-				}
-				ed.Waypoint.Direction = e.Metadata[graph.Waypoint].(string)
-			}
-			addEdgeTelemetry(e, &ed)
-
+			ed := convertEdge(*e, n.ID)
 			ew := EdgeWrapper{
 				Data: &ed,
 			}
 			*edges = append(*edges, &ew)
 		}
 	}
+}
 
-	// TODO: Just for Ambient
-	for _, e := range *edges {
-		if e.Data.Waypoint != nil && e.Data.Waypoint.Direction == appender.WaypointTo {
-			for _, otherEdge := range *edges {
-				if e.Data.ID != otherEdge.Data.ID && e.Data.Source == otherEdge.Data.Target && e.Data.Target == otherEdge.Data.Source {
-					e.Data.Waypoint.FromEdge = otherEdge.Data
-					// Delete the other edge?
-				}
-			}
+func convertEdge(e graph.Edge, nodeID string) EdgeData {
+
+	sourceIDHash := nodeHash(nodeID)
+	destIDHash := nodeHash(e.Dest.ID)
+	protocol := ""
+	if e.Metadata[graph.ProtocolKey] != nil {
+		protocol = e.Metadata[graph.ProtocolKey].(string)
+	}
+	edgeID := edgeHash(sourceIDHash, destIDHash, protocol)
+	ed := EdgeData{
+		ID:     edgeID,
+		Source: sourceIDHash,
+		Target: destIDHash,
+		Traffic: ProtocolTraffic{
+			Protocol: protocol,
+		},
+	}
+	if e.Metadata[graph.DestPrincipal] != nil {
+		ed.DestPrincipal = e.Metadata[graph.DestPrincipal].(string)
+	}
+	if e.Metadata[graph.SourcePrincipal] != nil {
+		ed.SourcePrincipal = e.Metadata[graph.SourcePrincipal].(string)
+	}
+	if e.Metadata[graph.Waypoint] != nil {
+		if ed.Waypoint == nil {
+			ed.Waypoint = &WaypointEdge{}
 		}
+		ed.Waypoint.Direction = e.Metadata[graph.Waypoint].(string)
+	}
+	if e.Metadata[graph.WaypointFrom] != nil {
+		if ed.Waypoint == nil {
+			ed.Waypoint = &WaypointEdge{}
+		}
+		convertedEdge := e.Metadata[graph.WaypointFrom].(*graph.Edge)
+		cyWaypointEdge := convertEdge(*convertedEdge, convertedEdge.Source.ID)
+		addEdgeTelemetry(convertedEdge, &cyWaypointEdge)
+		ed.Waypoint.FromEdge = &cyWaypointEdge
 	}
 
+	addEdgeTelemetry(&e, &ed)
+
+	return ed
 }
 
 func addNodeTelemetry(n *graph.Node, nd *NodeData) {

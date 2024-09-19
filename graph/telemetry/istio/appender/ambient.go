@@ -48,12 +48,12 @@ func (a AmbientAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *gr
 // handleWaypoints
 func (a AmbientAppender) handleWaypoints(trafficMap graph.TrafficMap) {
 
-	waypointNodes := make(map[string]bool)
+	waypointNodes := make(map[string]*graph.Node)
 
 	// Flag or Delete waypoint nodes in the TrafficMap
 	for _, n := range trafficMap {
 		if _, ok := n.Metadata[graph.IsWaypoint]; ok {
-			waypointNodes[n.ID] = true
+			waypointNodes[n.ID] = n
 			if !a.ShowWaypoints {
 				delete(trafficMap, n.ID)
 			} else {
@@ -74,15 +74,20 @@ func (a AmbientAppender) handleWaypoints(trafficMap graph.TrafficMap) {
 		// Delete edges
 		if !a.ShowWaypoints {
 			n.Edges = sliceutil.Filter(n.Edges, func(edge *graph.Edge) bool {
-				return !waypointNodes[edge.Dest.ID]
+				return waypointNodes[edge.Dest.ID] == nil
 			})
 			continue
 		}
 
 		// Find duplicates
 		for _, edge := range n.Edges {
-			if waypointNodes[edge.Dest.ID] {
+			if waypointNodes[edge.Dest.ID] != nil {
 				edge.Metadata[graph.Waypoint] = WaypointTo
+				for _, waypointEdge := range waypointNodes[edge.Dest.ID].Edges {
+					if waypointEdge.Dest.ID == n.ID {
+						edge.Metadata[graph.WaypointFrom] = waypointEdge
+					}
+				}
 			}
 		}
 

@@ -51,6 +51,7 @@ const (
 	SourcePrincipal       MetadataKey = "sourcePrincipal"
 	Throughput            MetadataKey = "throughput"
 	Waypoint              MetadataKey = "waypoint" // Indicates if the traffic is "from" or "to" a waypoint proxy
+	WaypointFrom          MetadataKey = "waypointFrom"
 )
 
 // DestServicesMetadata key=Service.Key()
