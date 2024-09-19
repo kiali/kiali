@@ -281,7 +281,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
         {!waypoint && <MainSummary />}
         {waypoint && (
           <SimpleTabs id="edge_summary_main_tabs" defaultTab={0}>
-            <Tab style={summaryFont} eventKey={0} title={getAppName(sourceData)}>
+            <Tab style={summaryFont} eventKey={0} title={getLink({ ...sourceData, isInaccessible: true })}>
               <MainSummary waypointEdge={false} />
             </Tab>
             <Tab style={summaryFont} eventKey={0} title={getLink({ ...destData, isInaccessible: true })}>
