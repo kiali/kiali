@@ -1,6 +1,6 @@
 import { Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import { TableDefinition } from 'cypress-cucumber-preprocessor';
-import { MeshCluster } from '../../../src/types/Mesh';
+import { MeshCluster } from 'types/Mesh';
 
 enum SortOrder {
   Ascending = 'ascending',
@@ -215,7 +215,7 @@ export const checkHealthIndicatorInTable = (
   // TODO: Move this somewhere else since other tests will most likely need this info as well.
   // VirtualItem_Clustercluster-default_Nsbookinfo_details
   // VirtualItem_Clustercluster-default_Nsbookinfo_productpage
-  cy.request('/api/config').then(response => {
+  cy.request({ url: '/api/config' }).then(response => {
     cy.wrap(response.isOkStatusCode).should('be.true');
 
     const clusters: { [key: string]: MeshCluster } = response.body.clusters;
@@ -240,7 +240,7 @@ export const checkHealthStatusInTable = (
     ? `${targetNamespace}_${targetType}_${targetRowItemName}`
     : `${targetNamespace}_${targetRowItemName}`;
 
-  cy.request('/api/config').then(response => {
+  cy.request({ url: '/api/config' }).then(response => {
     cy.wrap(response.isOkStatusCode).should('be.true');
 
     const clusters: { [key: string]: MeshCluster } = response.body.clusters;

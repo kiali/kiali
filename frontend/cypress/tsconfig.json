@@ -1,4 +1,5 @@
 {
+  "extends": "../tsconfig",
   "compilerOptions": {
     "esModuleInterop": true,
     "target": "es5",

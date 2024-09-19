@@ -1,13 +1,13 @@
 import { Given, Then, When } from '@badeball/cypress-cucumber-preprocessor';
 
 Given('I am on the {string} workload detail page of the {string} namespace', (workload: string, namespace: string) => {
-  cy.visit(`/console/namespaces/${namespace}/workloads/${workload}?refresh=0`);
+  cy.visit({ url: `/console/namespaces/${namespace}/workloads/${workload}?refresh=0` });
 });
 
 Given(
   'I am on the logs tab of the {string} workload detail page of the {string} namespace',
   (workload: string, namespace: string) => {
-    cy.visit(`/console/namespaces/${namespace}/workloads/${workload}?tab=logs&refresh=0`);
+    cy.visit({ url: `/console/namespaces/${namespace}/workloads/${workload}?tab=logs&refresh=0` });
   }
 );
 
@@ -52,7 +52,7 @@ Then('I should see the {string} container listed', (containerName: string) => {
 });
 
 Then('the {string} container should be checked', (containerName: string) => {
-  cy.get('[data-test=workload-logs-pod-containers]').get(`input#container-${containerName}`).should('be.checked');
+  cy.get('[data-test=workload-logs-pod-containers]').find(`input#container-${containerName}`).should('be.checked');
 });
 
 Then('I should see some {string} pod selected in the pod selector', (podNamePrefix: string) => {
@@ -61,7 +61,7 @@ Then('I should see some {string} pod selected in the pod selector', (podNamePref
 
 Then('the log pane should only show log lines containing {string}', (filterText: string) => {
   cy.get('#logsText')
-    .get('p')
+    .find('p')
     .each(line => {
       expect(line).to.contain(filterText);
     });
@@ -69,7 +69,7 @@ Then('the log pane should only show log lines containing {string}', (filterText:
 
 Then('the log pane should only show log lines not containing {string}', (filterText: string) => {
   cy.get('#logsText')
-    .get('p')
+    .find('p')
     .each(line => {
       expect(line).to.not.contain(filterText);
     });
@@ -79,11 +79,11 @@ Then(
   'the log pane should show at most {int} lines of logs of each selected container',
   (numberOfLinesPerContainer: number) => {
     cy.get('[data-test=workload-logs-pod-containers]')
-      .get('[type=checkbox]:checked')
+      .find('[type=checkbox]:checked')
       .its('length')
       .then(numContainersEnabled => {
         cy.get('#logsText')
-          .get('p')
+          .find('p')
           .its('length')
           .should('be.lte', numContainersEnabled * numberOfLinesPerContainer);
       });
@@ -92,13 +92,13 @@ Then(
 
 Then('the log pane should only show logs for the {string} container', (containerName: string) => {
   cy.get('[data-test=workload-logs-pod-containers]')
-    .get('label')
+    .find('label')
     .contains(containerName)
     .then($podLabel => {
       let logColor = $podLabel[0].style.color;
 
       cy.get('#logsText')
-        .get('p')
+        .find('p')
         .each(line => {
           expect(line[0].style.color).to.equal(logColor);
         });
@@ -110,6 +110,6 @@ Then('the log pane should show spans', () => {
     .find('span')
     .invoke('css', 'color')
     .then(spansColor => {
-      cy.get('#logsText').get('p').should('have.css', 'color', spansColor);
+      cy.get('#logsText').find('p').should('have.css', 'color', spansColor);
     });
 });

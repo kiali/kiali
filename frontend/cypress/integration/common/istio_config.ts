@@ -562,9 +562,11 @@ Then('only {string} are visible in the {string} namespace', (sees: string, ns: s
   let lowercaseSees: string = sees.charAt(0).toLowerCase() + sees.slice(1);
   let count: number;
 
-  cy.request('GET', `/api/namespaces/${ns}/istio?objects=${lowercaseSees}&validate=true`).then(response => {
-    count = response.body[lowercaseSees].length;
-  });
+  cy.request({ method: 'GET', url: `/api/namespaces/${ns}/istio?objects=${lowercaseSees}&validate=true` }).then(
+    response => {
+      count = response.body[lowercaseSees].length;
+    }
+  );
 
   cy.get('tbody').contains('tr', singularize(sees));
   cy.get('tbody').within(() => {
@@ -588,7 +590,7 @@ Then('the user can create a {string} Istio object', (object: string) => {
 });
 
 Then('the user can create a {string} K8s Istio object', (object: string) => {
-  cy.request('GET', '/api/config').then(response => {
+  cy.request({ method: 'GET', url: '/api/config' }).then(response => {
     expect(response.status).to.equal(200);
     const gatewayAPIEnabled = response.body.gatewayAPIEnabled;
 
@@ -621,7 +623,7 @@ function waitUntilConfigIsVisible(attempt: number, crdInstanceName: string, crdN
   if (attempt === 0) {
     return;
   }
-  cy.request('GET', `${Cypress.config('baseUrl')}/api/istio/config?refresh=0`);
+  cy.request({ method: 'GET', url: `${Cypress.config('baseUrl')}/api/istio/config?refresh=0` });
   cy.get('[data-test="refresh-button"]').click();
   ensureKialiFinishedLoading();
   let found = false;

@@ -1,4 +1,5 @@
 @workload-details
+@ossmc
 # don't change first line of this file - the tag is used for the test scripts to identify the test suite
 
 Feature: Kiali Workload Details page
@@ -17,6 +18,8 @@ Feature: Kiali Workload Details page
     But no cluster badge for the "workload" should be visible
 
   @bookinfo-app
+  @skip-ossmc
+  # todo: adapt to PF graph
   Scenario: See minigraph for workload.
     Then user sees a minigraph
 

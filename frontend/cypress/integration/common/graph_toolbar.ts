@@ -1,7 +1,5 @@
 import { Before, Then, When } from '@badeball/cypress-cucumber-preprocessor';
-import { CytoscapeGlobalScratchData, CytoscapeGlobalScratchNamespace } from '../../../src/types/Graph';
-
-const url = '/console';
+import { CytoscapeGlobalScratchData, CytoscapeGlobalScratchNamespace } from 'types/Graph';
 
 Before(() => {
   // Copied from overview.ts.  This prevents cypress from stopping on errors unrelated to the tests.
@@ -22,7 +20,7 @@ Before(() => {
 When(
   'user graphs {string} namespaces with refresh {string} and duration {string}',
   (namespaces: string, refresh: string, duration: string) => {
-    cy.visit(`${url}/graph/namespaces?refresh=${refresh}&duration=${duration}&namespaces=${namespaces}`);
+    cy.visit({ url: `/console/graph/namespaces?refresh=${refresh}&duration=${duration}&namespaces=${namespaces}` });
   }
 );
 
@@ -70,7 +68,8 @@ When('user clicks graph refresh menu', () => {
 
 When(`user selects graph refresh {string}`, (refresh: string) => {
   cy.get('button#time_range_refresh-toggle').click();
-  cy.get(`button[id="${refresh}"]`).click().get('#loading_kiali_spinner').should('not.exist');
+  cy.get(`button[id="${refresh}"]`).click();
+  cy.get('#loading_kiali_spinner').should('not.exist');
 });
 
 When('user selects {string} graph type', (graphType: string) => {
@@ -143,7 +142,7 @@ Then('user sees graph duration menu', () => {
   cy.get('button#time_range_duration-toggle').invoke('attr', 'aria-expanded').should('eq', 'true');
 
   cy.get('div#time_range_duration').within(() => {
-    cy.request('GET', '/api/config').then(response => {
+    cy.request({ method: 'GET', url: '/api/config' }).then(response => {
       expect(response.status).to.equal(200);
 
       const scrapeInterval = response.body.prometheus.globalScrapeInterval;
@@ -187,7 +186,7 @@ Then('user does not see graph duration menu', () => {
 
 Then('user sees selected graph duration {string}', (duration: string) => {
   cy.get('button#time_range_duration-toggle')
-    .find('span[class*="pf-v5-c-menu-toggle__text"]')
+    .find('span[class="pf-v5-c-menu-toggle__text"]')
     .contains(duration)
     .should('exist');
 });
@@ -212,7 +211,7 @@ Then('user does not see graph refresh menu', () => {
 
 Then('user sees selected graph refresh {string}', (refresh: string) => {
   cy.get('button#time_range_refresh-toggle')
-    .find('span[class*="pf-v5-c-menu-toggle__text"]')
+    .find('span[class="pf-v5-c-menu-toggle__text"]')
     .contains(refresh)
     .should('exist');
 });

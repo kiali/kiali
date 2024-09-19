@@ -1,8 +1,6 @@
 import { Before, Given, When, Then } from '@badeball/cypress-cucumber-preprocessor';
 import { ensureKialiFinishedLoading } from './transition';
 
-const url = '/console';
-
 const CLUSTER1_CONTEXT = Cypress.env('CLUSTER1_CONTEXT');
 const CLUSTER2_CONTEXT = Cypress.env('CLUSTER2_CONTEXT');
 
@@ -27,13 +25,13 @@ Before(() => {
 
 Given('user opens the namespace {string} and {string} service details page', (namespace: string, service: string) => {
   // Forcing "Pause" to not cause unhandled promises from the browser when cypress is testing
-  cy.visit(`${url}/namespaces/${namespace}/services/${service}?refresh=0`);
+  cy.visit({ url: `/console/namespaces/${namespace}/services/${service}?refresh=0` });
 });
 
 Given(
   'user opens the namespace {string} and the {string} {string} service details page',
   (namespace: string, cluster: string, service: string) => {
-    cy.visit(`${url}/namespaces/${namespace}/services/${service}?refresh=0&clusterName=${cluster}`);
+    cy.visit({ url: `/console/namespaces/${namespace}/services/${service}?refresh=0&clusterName=${cluster}` });
   }
 );
 

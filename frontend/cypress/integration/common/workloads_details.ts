@@ -29,9 +29,7 @@ Then('user sees workload inbound and outbound traffic information', () => {
 });
 
 Then('user sees workload inbound metrics information', () => {
-  cy.intercept(`${Cypress.config('baseUrl')}/api/namespaces/bookinfo/workloads/details-v1/dashboard*`).as(
-    'fetchMetrics'
-  );
+  cy.intercept(`**/api/namespaces/bookinfo/workloads/details-v1/dashboard*`).as('fetchMetrics');
 
   openTab('Inbound Metrics');
   cy.wait('@fetchMetrics');
@@ -50,9 +48,7 @@ Then('user sees workload inbound metrics information', () => {
 });
 
 Then('user sees workload outbound metrics information', () => {
-  cy.intercept(`${Cypress.config('baseUrl')}/api/namespaces/bookinfo/workloads/details-v1/dashboard*`).as(
-    'fetchMetrics'
-  );
+  cy.intercept(`**/api/namespaces/bookinfo/workloads/details-v1/dashboard*`).as('fetchMetrics');
 
   openTab('Outbound Metrics');
   cy.wait('@fetchMetrics');
@@ -142,7 +138,7 @@ Then('the user sees config expected information', () => {
 });
 
 Then('the user sees the metrics tab', () => {
-  cy.intercept(`${Cypress.config('baseUrl')}/api/namespaces/bookinfo/customdashboard/envoy*`).as('fetchEnvoyMetrics');
+  cy.intercept(`**/api/namespaces/bookinfo/customdashboard/envoy*`).as('fetchEnvoyMetrics');
 
   openTab('Envoy');
   openEnvoyTab('Metrics');
