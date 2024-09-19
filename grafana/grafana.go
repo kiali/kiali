@@ -61,7 +61,7 @@ func (s *Service) URL(ctx context.Context) string {
 	return s.discover(ctx)
 }
 
-// DiscoverGrafana will return the Grafana URL if it has been configured,
+// discover will return the Grafana URL if it has been configured,
 // or will try to retrieve it if an OpenShift Route is defined.
 func (s *Service) discover(ctx context.Context) string {
 	s.routeLock.Lock()
@@ -114,7 +114,7 @@ type DashboardSupplierFunc func(string, string, *config.Auth) ([]byte, int, erro
 
 var DashboardSupplier = findDashboard
 
-// GetGrafanaInfo returns the Grafana URL and other info, the HTTP status code (int) and eventually an error
+// Info returns the Grafana URL and other info, the HTTP status code (int) and eventually an error
 func (s *Service) Info(ctx context.Context, dashboardSupplier DashboardSupplierFunc) (*models.GrafanaInfo, int, error) {
 	grafanaConfig := s.conf.ExternalServices.Grafana
 	if !grafanaConfig.Enabled {
@@ -156,7 +156,7 @@ func (s *Service) Info(ctx context.Context, dashboardSupplier DashboardSupplierF
 	return &grafanaInfo, http.StatusOK, nil
 }
 
-// GetGrafanaLinks returns the links to Grafana dashboards and other info, the HTTP status code (int) and eventually an error
+// Links returns the links to Grafana dashboards and other info, the HTTP status code (int) and eventually an error
 func (s *Service) Links(ctx context.Context, linksSpec []dashboards.MonitoringDashboardExternalLink) ([]models.ExternalLink, int, error) {
 	grafanaConfig := s.conf.ExternalServices.Grafana
 	if !grafanaConfig.Enabled {
@@ -172,6 +172,36 @@ func (s *Service) Links(ctx context.Context, linksSpec []dashboards.MonitoringDa
 		return nil, 0, nil
 	}
 	return getGrafanaLinks(connectionInfo, linksSpec, DashboardSupplier)
+}
+
+// VersionURL returns the Grafana URL that can be used to obtain the Grafana build information that includes its version.
+// This returns an empty string if the version will not be able to be obtained for some reason.
+func (s *Service) VersionURL(ctx context.Context) string {
+	grafanaConfig := s.conf.ExternalServices.Grafana
+	if !grafanaConfig.Enabled {
+		return ""
+	}
+
+	connectionInfo, code, err := s.getGrafanaConnectionInfo(ctx)
+	if err != nil {
+		log.Warningf("Cannot get Grafana connection info. Will try a different way to obtain Grafana version. code=[%v]: %v", code, err)
+		connectionInfo = grafanaConnectionInfo{
+			baseExternalURL: grafanaConfig.URL,
+			inClusterURL:    grafanaConfig.InClusterURL,
+		}
+	}
+	// we want to use the internal URL - but if it isn't known, try the external URL
+	baseUrl := connectionInfo.inClusterURL
+	if connectionInfo.inClusterURL == "" {
+		baseUrl = connectionInfo.baseExternalURL
+	}
+
+	if baseUrl == "" {
+		log.Warningf("Failed to obtain Grafana version URL: Grafana is not configured properly")
+		return ""
+	}
+
+	return fmt.Sprintf("%s/api/frontend/settings", baseUrl)
 }
 
 func getGrafanaLinks(conn grafanaConnectionInfo, linksSpec []dashboards.MonitoringDashboardExternalLink, dashboardSupplier DashboardSupplierFunc) ([]models.ExternalLink, int, error) {
