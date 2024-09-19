@@ -12,9 +12,8 @@ import {
   TrafficRate,
   UNKNOWN
 } from '../../types/Graph';
-import { renderBadgedLink } from './SummaryLink';
+import { getLink, renderBadgedLink } from './SummaryLink';
 import {
-  getAppName,
   getDatapoints,
   getNodeMetrics,
   getNodeMetricType,
@@ -42,7 +41,6 @@ import { classes } from 'typestyle';
 import { panelBodyStyle, panelHeadingStyle, panelStyle } from './SummaryPanelStyle';
 import { ApiResponse } from 'types/Api';
 import { serverConfig } from 'config';
-import { AmbientBadge } from '../../components/Ambient/AmbientBadge';
 
 type SummaryPanelEdgeMetricsState = {
   errRates: Datapoint[];
@@ -174,14 +172,13 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
         </div>
       );
     };
-    const ambientBadge = waypoint ? <AmbientBadge tooltip={'reported from Ambient'}></AmbientBadge> : undefined;
     const MainSummary = ({ waypointEdge }: { waypointEdge?: boolean }): React.ReactElement => {
       const source = waypointEdge ? destData : sourceData;
       const dest = waypointEdge ? sourceData : destData;
       return (
         <div>
           <div className={panelHeadingStyle}>
-            {getTitle(`Edge (${prettyProtocol(protocol)})`, ambientBadge)}
+            {getTitle(`Edge (${prettyProtocol(protocol)})`)}
             {renderBadgedLink(source, undefined, 'From:  ')}
             {renderBadgedLink(dest, undefined, 'To:        ')}
           </div>
@@ -284,7 +281,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
             <Tab style={summaryFont} eventKey={0} title={getLink({ ...sourceData, isInaccessible: true })}>
               <MainSummary waypointEdge={false} />
             </Tab>
-            <Tab style={summaryFont} eventKey={0} title={getLink({ ...destData, isInaccessible: true })}>
+            <Tab style={summaryFont} eventKey={1} title={getLink({ ...destData, isInaccessible: true })}>
               <MainSummary waypointEdge={true} />
             </Tab>
           </SimpleTabs>

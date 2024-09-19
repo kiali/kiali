@@ -415,11 +415,8 @@ const getEdgeLabel = (edge: EdgeModel, nodeMap: NodeMap, settings: GraphPFSettin
           case Protocol.TCP:
             labels.push(toFixedByteRate(rate, includeUnits));
             if (data.waypoint === 'to' && data.waypointEdge) {
-              //labels.push(toFixedByteRate(rate + data.waypointEdge.tcp, includeUnits, '*'));
               labels.push(toFixedByteRate(data.waypointEdge.tcp, includeUnits));
-            } //else {
-            //labels.push(toFixedByteRate(rate, includeUnits));
-            //}
+            }
             break;
           default:
             labels.push(toFixedRequestRate(rate, includeUnits));
@@ -514,15 +511,14 @@ const toFixedErrRate = (num: number): string => {
   return `${trimFixed(num.toFixed(num < 1 ? 1 : 0))}%err`;
 };
 
-const toFixedByteRate = (num: number, includeUnits: boolean, includeMarker?: string): string => {
-  const marker = includeMarker ? includeMarker : '';
+const toFixedByteRate = (num: number, includeUnits: boolean): string => {
   num = safeNum(num);
   if (num < 1024.0) {
     const rate = num < 1.0 ? trimFixed(num.toFixed(2)) : num.toFixed(0);
-    return includeUnits ? `${rate}${marker}bps` : `${rate}${marker}`;
+    return includeUnits ? `${rate}bps` : `${rate}`;
   }
   const rate = trimFixed((num / 1024.0).toFixed(2));
-  return includeUnits ? `${rate}${marker}kps` : `${rate}${marker}`;
+  return includeUnits ? `${rate}kps` : `${rate}`;
 };
 
 const toFixedPercent = (num: number): string => {
