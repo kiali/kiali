@@ -219,7 +219,7 @@ export const decorateGraphData = (graphData: GraphElements, duration: number): D
           }
           decoratedEdge.data = { protocol: traffic.protocol, ...decoratedEdge.data };
         }
-        if (decoratedEdge.data.waypoint.fromEdge) {
+        if (decoratedEdge.data.waypoint?.fromEdge) {
           let waypointEdge = { ...decoratedEdge.data.waypoint.fromEdge };
           if (waypointEdge.traffic) {
             if (hasProtocolTraffic(waypointEdge.traffic)) {

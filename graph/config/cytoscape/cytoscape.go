@@ -144,7 +144,7 @@ type EdgeData struct {
 	SourcePrincipal string          `json:"sourcePrincipal,omitempty"` // principal used for the edge source
 	Throughput      string          `json:"throughput,omitempty"`      // in bytes/sec (request or response, depends on client request)
 	Traffic         ProtocolTraffic `json:"traffic,omitempty"`         // traffic rates for the edge protocol
-	Waypoint        WaypointEdge    `json:"waypoint,omitempty"`        // Biderectional edges for waypoint nodes
+	Waypoint        *WaypointEdge   `json:"waypoint,omitempty"`        // Biderectional edges for waypoint nodes
 }
 
 type NodeWrapper struct {
@@ -467,6 +467,9 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 				ed.SourcePrincipal = e.Metadata[graph.SourcePrincipal].(string)
 			}
 			if e.Metadata[graph.Waypoint] != nil {
+				if ed.Waypoint == nil {
+					ed.Waypoint = &WaypointEdge{}
+				}
 				ed.Waypoint.Direction = e.Metadata[graph.Waypoint].(string)
 			}
 			addEdgeTelemetry(e, &ed)
@@ -480,7 +483,7 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 
 	// TODO: Just for Ambient
 	for _, e := range *edges {
-		if e.Data.Waypoint.Direction == appender.WaypointTo {
+		if e.Data.Waypoint != nil && e.Data.Waypoint.Direction == appender.WaypointTo {
 			for _, otherEdge := range *edges {
 				if e.Data.ID != otherEdge.Data.ID && e.Data.Source == otherEdge.Data.Target && e.Data.Target == otherEdge.Data.Source {
 					e.Data.Waypoint.FromEdge = otherEdge.Data
