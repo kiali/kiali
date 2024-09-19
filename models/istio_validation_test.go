@@ -27,7 +27,7 @@ func TestIstioValidationsMarshal(t *testing.T) {
 	}
 	b, err := json.Marshal(validations)
 	assert.NoError(err)
-	assert.Equal(string(b), `{"networking.istio.io/v1, Kind=VirtualService":{"bar.test2":{"name":"bar","namespace":"","cluster":"","objectType":"networking.istio.io/v1, Kind=VirtualService","valid":false,"checks":null,"references":null},"foo.test":{"name":"foo","namespace":"","cluster":"","objectType":"networking.istio.io/v1, Kind=VirtualService","valid":true,"checks":null,"references":null}}}`)
+	assert.Equal(string(b), `{"networking.istio.io/v1, Kind=VirtualService":{"bar.test2":{"name":"bar","namespace":"","cluster":"","objectGVK":{"Group":"networking.istio.io","Version":"v1","Kind":"VirtualService"},"valid":false,"checks":null,"references":null},"foo.test":{"name":"foo","namespace":"","cluster":"","objectGVK":{"Group":"networking.istio.io","Version":"v1","Kind":"VirtualService"},"valid":true,"checks":null,"references":null}}}`)
 }
 
 func TestIstioValidationKeyMarshal(t *testing.T) {
@@ -39,7 +39,7 @@ func TestIstioValidationKeyMarshal(t *testing.T) {
 	}
 	b, err := json.Marshal(validationKey)
 	assert.NoError(err)
-	assert.Equal(string(b), `{"objectType":"networking.istio.io/v1, Kind=VirtualService","name":"foo","namespace":"","cluster":""}`)
+	assert.Equal(string(b), `{"objectGVK":{"Group":"networking.istio.io","Version":"v1","Kind":"VirtualService"},"name":"foo","namespace":"","cluster":""}`)
 }
 
 func TestSummarizeValidations(t *testing.T) {
