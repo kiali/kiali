@@ -126,6 +126,11 @@ type NodeData struct {
 	IsWaypoint            bool                `json:"isWaypoint,omitempty"`            // true | false
 }
 
+type WaypointEdge struct {
+	Direction string    `json:"direction,omitempty"` // to | from
+	FromEdge  *EdgeData `json:"fromEdge,omitempty"`  // for a 'to' waypoint edge, this is the return 'from' edge
+}
+
 type EdgeData struct {
 	// Cytoscape Fields
 	ID     string `json:"id"`     // unique internal edge ID (e0, e1...)
@@ -139,8 +144,7 @@ type EdgeData struct {
 	SourcePrincipal string          `json:"sourcePrincipal,omitempty"` // principal used for the edge source
 	Throughput      string          `json:"throughput,omitempty"`      // in bytes/sec (request or response, depends on client request)
 	Traffic         ProtocolTraffic `json:"traffic,omitempty"`         // traffic rates for the edge protocol
-	Waypoint        string          `json:"waypoint,omitempty"`        // If edge is "from" or "to" a waypoint
-	WaypointEdge    *EdgeData       `json:"waypointEdge,omitempty"`    // WaypointEdge data when waypoint is "to"
+	Waypoint        WaypointEdge    `json:"waypoint,omitempty"`        // Biderectional edges for waypoint nodes
 }
 
 type NodeWrapper struct {
@@ -463,7 +467,7 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 				ed.SourcePrincipal = e.Metadata[graph.SourcePrincipal].(string)
 			}
 			if e.Metadata[graph.Waypoint] != nil {
-				ed.Waypoint = e.Metadata[graph.Waypoint].(string)
+				ed.Waypoint.Direction = e.Metadata[graph.Waypoint].(string)
 			}
 			addEdgeTelemetry(e, &ed)
 
@@ -476,10 +480,10 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 
 	// TODO: Just for Ambient
 	for _, e := range *edges {
-		if e.Data.Waypoint == appender.WaypointTo {
+		if e.Data.Waypoint.Direction == appender.WaypointTo {
 			for _, otherEdge := range *edges {
 				if e.Data.ID != otherEdge.Data.ID && e.Data.Source == otherEdge.Data.Target && e.Data.Target == otherEdge.Data.Source {
-					e.Data.WaypointEdge = otherEdge.Data
+					e.Data.Waypoint.FromEdge = otherEdge.Data
 					// Delete the other edge?
 				}
 			}

@@ -160,7 +160,8 @@
                 }
               }
             }
-          }
+          },
+          "waypoint": {}
         }
       },
       {
@@ -185,28 +186,32 @@
               }
             }
           },
-          "waypoint": "to",
-          "waypointEdge": {
-            "id": "5a462f4f82cf52e74960330f85181507",
-            "source": "759ea777f30ebc268ef182543a865ea4",
-            "target": "1c14fb66e53814f9aada912a2fae5fad",
-            "traffic": {
-              "protocol": "tcp",
-              "rates": {
-                "tcp": "150.00"
-              },
-              "responses": {
-                "-": {
-                  "flags": {
-                    "-": "100.0"
-                  },
-                  "hosts": {
-                    "productpage.bookinfo.svc.cluster.local": "100.0"
+          "waypoint": {
+            "direction": "to",
+            "fromEdge": {
+              "id": "5a462f4f82cf52e74960330f85181507",
+              "source": "759ea777f30ebc268ef182543a865ea4",
+              "target": "1c14fb66e53814f9aada912a2fae5fad",
+              "traffic": {
+                "protocol": "tcp",
+                "rates": {
+                  "tcp": "150.00"
+                },
+                "responses": {
+                  "-": {
+                    "flags": {
+                      "-": "100.0"
+                    },
+                    "hosts": {
+                      "productpage.bookinfo.svc.cluster.local": "100.0"
+                    }
                   }
                 }
+              },
+              "waypoint": {
+                "direction": "from"
               }
-            },
-            "waypoint": "from"
+            }
           }
         }
       },
@@ -231,7 +236,8 @@
                 }
               }
             }
-          }
+          },
+          "waypoint": {}
         }
       },
       {
@@ -255,7 +261,9 @@
               }
             }
           },
-          "waypoint": "from"
+          "waypoint": {
+            "direction": "from"
+          }
         }
       },
       {
@@ -279,7 +287,9 @@
               }
             }
           },
-          "waypoint": "from"
+          "waypoint": {
+            "direction": "from"
+          }
         }
       },
       {
@@ -303,7 +313,9 @@
               }
             }
           },
-          "waypoint": "from"
+          "waypoint": {
+            "direction": "from"
+          }
         }
       }
     ]

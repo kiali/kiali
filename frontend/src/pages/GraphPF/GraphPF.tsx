@@ -379,7 +379,7 @@ const TopologyContent: React.FC<{
         setEdgeOptions(edge, nodeMap, graphSettings);
         // If the data source is a waypoint, don't push the node
         // To avoid click in the hidden edge
-        if (data.waypoint !== 'from') {
+        if (data.waypoint?.direction !== 'from') {
           edges.push(edge);
         }
 

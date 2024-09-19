@@ -148,7 +148,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
     const isHttp = protocol === Protocol.HTTP;
     const isTcp = protocol === Protocol.TCP;
     const isRequests = isHttp || (isGrpc && this.props.trafficRates.includes(TrafficRate.GRPC_REQUEST));
-    const waypoint = edgeData.waypointEdge;
+    const waypoint = edgeData.waypoint.fromEdge;
 
     const SecurityBlock = (): React.ReactElement => {
       return (
@@ -491,7 +491,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
           : 'source';
       const filtersTCP = ['tcp_sent', 'tcp_received'];
 
-      if (edgeData.waypointEdge) {
+      if (edgeData.waypoint.fromEdge) {
         const waypointMetricType = sourceMetricType;
         const waypointMetricsNodeData = sourceData;
         const waypointPromRequests = getNodeMetrics(

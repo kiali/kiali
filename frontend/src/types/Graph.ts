@@ -484,6 +484,12 @@ export interface DecoratedGraphNodeData extends GraphNodeData {
   traffic: never;
 }
 
+export interface WaypointEdge {
+  direction?: string;
+  // Waypoint edge
+  fromEdge?: DecoratedGraphEdgeData;
+}
+
 // Edge data after decorating at fetch-time (what is mainly used by ui code)
 export interface DecoratedGraphEdgeData extends GraphEdgeData {
   grpc: number;
@@ -512,10 +518,8 @@ export interface DecoratedGraphEdgeData extends GraphEdgeData {
   tcp: number;
   // Default value NaN
   throughput: number;
-  // Waypoint from/to
-  waypoint?: string;
-  // Waypoint edge
-  waypointEdge?: DecoratedGraphEdgeData;
+  // Waypoint from/to and waypoint edge
+  waypoint?: WaypointEdge;
 }
 
 export interface DecoratedGraphNodeWrapper {

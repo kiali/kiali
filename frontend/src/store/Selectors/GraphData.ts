@@ -219,8 +219,8 @@ export const decorateGraphData = (graphData: GraphElements, duration: number): D
           }
           decoratedEdge.data = { protocol: traffic.protocol, ...decoratedEdge.data };
         }
-        if (decoratedEdge.data.waypointEdge) {
-          let waypointEdge = { ...decoratedEdge.data.waypointEdge };
+        if (decoratedEdge.data.waypoint.fromEdge) {
+          let waypointEdge = { ...decoratedEdge.data.waypoint.fromEdge };
           if (waypointEdge.traffic) {
             if (hasProtocolTraffic(waypointEdge.traffic)) {
               waypointEdge = {
@@ -233,7 +233,7 @@ export const decorateGraphData = (graphData: GraphElements, duration: number): D
               };
             }
           }
-          decoratedEdge.data.waypointEdge = waypointEdge;
+          decoratedEdge.data.waypoint.fromEdge = waypointEdge;
         }
         // prettier-ignore
         decoratedEdge.data = { ...elementsDefaults.edges, ...decoratedEdge.data } as DecoratedGraphEdgeData;
