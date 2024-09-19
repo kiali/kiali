@@ -87,20 +87,6 @@ func tracingVersion(conf *config.Config, homeClusterSAClient kubernetes.ClientIn
 		versionUrl = tracingConfig.URL
 	}
 
-	// there is no known way to get the version from GRPC. So we'll try to change the URL to go over HTTP,
-	// but this is not guaranteed to work. But it is worth a try.
-	if tracingConfig.UseGRPC {
-		parsedUrl, err := url.Parse(versionUrl)
-		if err == nil {
-			// strip the port - if the URL is http, it'll go over 80, if https, it'll go over 443
-			if host := parsedUrl.Hostname(); host != "" {
-				parsedUrl.Host = host
-				versionUrl = parsedUrl.String()
-				log.Debugf("Cannot get tracing version via GRPC; will try over HTTP: [%v]", versionUrl)
-			}
-		}
-	}
-
 	if versionUrl != "" {
 		// try to determine version by querying
 		if tracingConfig.Provider == config.JaegerProvider {
@@ -108,6 +94,21 @@ func tracingVersion(conf *config.Config, homeClusterSAClient kubernetes.ClientIn
 			if auth.UseKialiToken {
 				auth.Token = homeClusterSAClient.GetToken()
 			}
+
+			// there is no known way to get the version from GRPC. So we'll try to change the URL to go over HTTP,
+			// but this is not guaranteed to work. But it is worth a try.
+			if tracingConfig.UseGRPC {
+				parsedUrl, err := url.Parse(versionUrl)
+				if err == nil {
+					// strip the port - if the URL is http, it'll go over 80, if https, it'll go over 443
+					if host := parsedUrl.Hostname(); host != "" {
+						parsedUrl.Host = host
+						versionUrl = parsedUrl.String()
+						log.Debugf("Cannot get tracing version via GRPC; will try over HTTP: [%v]", versionUrl)
+					}
+				}
+			}
+
 			body, statusCode, _, err := httputil.HttpGet(versionUrl, &auth, 10*time.Second, nil, nil)
 			if err != nil || statusCode > 399 {
 				log.Infof("jaeger version check failed: url=[%v], code=[%v], err=[%v]", versionUrl, statusCode, err)
