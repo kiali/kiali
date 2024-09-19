@@ -23,7 +23,7 @@ import { ServiceDetailsInfo } from '../../types/ServiceInfo';
 import { KialiAppState } from '../../store/Store';
 import { GraphPF } from './GraphPF';
 import { WizardAction, WizardMode } from 'components/IstioWizards/WizardActions';
-import { isParentKiosk, kioskContextMenuAction } from 'components/Kiosk/KioskActions';
+import { isKiosk, isParentKiosk, kioskContextMenuAction } from 'components/Kiosk/KioskActions';
 import { ServiceWizardActionsDropdownGroup } from 'components/IstioWizards/ServiceWizardActionsDropdownGroup';
 import { toRangeString } from 'components/Time/Utils';
 import { KioskElement } from 'components/Kiosk/KioskElement';
@@ -99,7 +99,7 @@ class MiniGraphCardPFComponent extends React.Component<MiniGraphCardPropsPF, Min
       </DropdownItem>
     ];
 
-    if (isParentKiosk(this.props.kiosk)) {
+    if (isKiosk(this.props.kiosk)) {
       if (this.props.workload && this.props.namespace) {
         graphCardActions.push(
           <WorkloadWizardActionsDropdownGroup

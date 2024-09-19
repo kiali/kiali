@@ -24,7 +24,7 @@ import { TimeInMilliseconds } from '../../types/Common';
 import { ServiceDetailsInfo } from '../../types/ServiceInfo';
 import { KialiDagreGraph } from './graphs/KialiDagreGraph';
 import { KialiAppState } from '../../store/Store';
-import { isParentKiosk, kioskContextMenuAction } from '../Kiosk/KioskActions';
+import { isKiosk, isParentKiosk, kioskContextMenuAction } from '../Kiosk/KioskActions';
 import { ServiceWizardActionsDropdownGroup } from '../IstioWizards/ServiceWizardActionsDropdownGroup';
 import { WizardAction, WizardMode } from '../IstioWizards/WizardActions';
 import { TimeDurationModal } from '../Time/TimeDurationModal';
@@ -95,7 +95,8 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
         Show node graph
       </DropdownItem>
     ];
-    if (isParentKiosk(this.props.kiosk)) {
+
+    if (isKiosk(this.props.kiosk)) {
       if (this.props.workload && this.props.namespace) {
         graphCardActions.push(
           <WorkloadWizardActionsDropdownGroup
