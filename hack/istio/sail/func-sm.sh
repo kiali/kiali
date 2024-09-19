@@ -177,7 +177,7 @@ EOMCNI
 apiVersion: sailoperator.io/v1alpha1
 kind: Istio
 metadata:
-  name: istio-${control_plane_namespace}
+  name: default
 spec:
   version: ${istio_version}
   namespace: ${control_plane_namespace}
