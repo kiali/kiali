@@ -238,6 +238,12 @@ export function getIstioObjectGVK(apiVersion?: string, kind?: string): GroupVers
 }
 
 export function gvkToString(gvk: GroupVersionKind): string {
+  if (!gvk.Group && !gvk.Version && !gvk.Kind) {
+    return '';
+  }
+  if (!gvk.Group || !gvk.Version) {
+    return gvk.Kind;
+  }
   return `${gvk.Group}/${gvk.Version}, Kind=${gvk.Kind}`;
 }
 
@@ -253,4 +259,14 @@ export function stringToGVK(gvk: string): GroupVersionKind {
     return { Group: '', Version: '', Kind: gvk };
   }
   return { Group: apiParts[0], Version: apiParts[1], Kind: parts[1] };
+}
+
+export function kindToStringIncludeK8s(apiVersion?: string, kind?: string): string {
+  if (!kind) {
+    return '';
+  }
+  if (apiVersion?.includes('k8s')) {
+    return `K8s${kind}`;
+  }
+  return kind;
 }

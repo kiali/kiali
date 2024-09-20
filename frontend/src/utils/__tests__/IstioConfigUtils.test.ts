@@ -1,4 +1,4 @@
-import { getIstioObjectGVK, isServerHostValid, isValidUrl, mergeJsonPatch } from '../IstioConfigUtils';
+import { getIstioObjectGVK, gvkToString, isServerHostValid, isValidUrl, mergeJsonPatch } from '../IstioConfigUtils';
 import { dicIstioTypeToGVK } from '../../types/IstioConfigList';
 
 describe('Validate JSON Patchs', () => {
@@ -121,5 +121,30 @@ describe('Validate returned GoupVersionKind for IstioObject', () => {
   it('Empty kind, valid apiVersion', () => {
     const result = getIstioObjectGVK('networking.istio.io/v1');
     expect(result).toEqual({ Group: '', Version: '', Kind: '' });
+  });
+});
+
+describe('Validate converting GroupVersionKind To String', () => {
+  it('Correct GroupVersionKind properties', () => {
+    const result = gvkToString({ Group: 'networking.istio.io', Version: 'v1', Kind: 'VirtualService' });
+    expect(result).toBe('networking.istio.io/v1, Kind=VirtualService');
+  });
+
+  it('Validate empty string when Group, Version, and Kind are all empty', () => {
+    const result = gvkToString({ Group: '', Version: '', Kind: '' });
+    expect(result).toBe('');
+  });
+
+  it('Validate that result is Kind if Group or Version are empty', () => {
+    const gvkMissingGroup = { Group: '', Version: 'v1', Kind: 'ServiceEntry' };
+    const gvkMissingVersion = { Group: 'networking.istio.io', Version: '', Kind: 'ServiceEntry' };
+
+    expect(gvkToString(gvkMissingGroup)).toBe('ServiceEntry');
+    expect(gvkToString(gvkMissingVersion)).toBe('ServiceEntry');
+  });
+
+  it('Validate it returns Kind if both Group and Version are empty', () => {
+    const result = gvkToString({ Group: '', Version: '', Kind: 'Gateway' });
+    expect(result).toBe('Gateway');
   });
 });

@@ -29,7 +29,12 @@ import { ValidationStatus } from '../../types/IstioObjects';
 import { PFBadgeType, PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { MissingLabel } from '../MissingLabel/MissingLabel';
 import { MissingAuthPolicy } from 'components/MissingAuthPolicy/MissingAuthPolicy';
-import { getIstioObjectGVK, getReconciliationCondition, gvkToString } from 'utils/IstioConfigUtils';
+import {
+  getIstioObjectGVK,
+  getReconciliationCondition,
+  gvkToString,
+  kindToStringIncludeK8s
+} from 'utils/IstioConfigUtils';
 import { Label } from 'components/Label/Label';
 import { isMultiCluster, serverConfig } from 'config/ServerConfig';
 import { ControlPlaneBadge } from 'pages/Overview/ControlPlaneBadge';
@@ -444,7 +449,7 @@ export const istioType: Renderer<IstioConfigItem> = (item: IstioConfigItem) => {
       key={`VirtuaItem_IstioType_${item.namespace}_${item.name}`}
       style={{ verticalAlign: 'middle' }}
     >
-      {item.kind}
+      {kindToStringIncludeK8s(item.apiVersion, item.kind)}
     </Td>
   );
 };
