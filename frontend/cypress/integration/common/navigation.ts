@@ -24,12 +24,12 @@ Given('user is at the {string} list page', (page: string) => {
 
 Given('user is at the {string} page', (page: string) => {
   // Forcing "Pause" to not cause unhandled promises from the browser when cypress is testing
-  cy.visit(`${Cypress.config('baseUrl')}/console/${page}?refresh=0`);
+  cy.visit({ url: `${Cypress.config('baseUrl')}/console/${page}?refresh=0` });
 });
 
 Given('user is at the {string} page for the {string} namespace', (page: string, namespace: string) => {
   // Forcing "Pause" to not cause unhandled promises from the browser when cypress is testing
-  cy.visit(`${Cypress.config('baseUrl')}/console/${page}?refresh=0&namespaces=${namespace}`);
+  cy.visit({ url: `${Cypress.config('baseUrl')}/console/${page}?refresh=0&namespaces=${namespace}` });
 });
 
 Given(
@@ -57,7 +57,7 @@ Given(
       }).as('waitForCall');
     }
 
-    cy.visit(`${Cypress.config('baseUrl')}/console/namespaces/${namespace}/${pageDetail}/${name}`, { qs });
+    cy.visit({ url: `${Cypress.config('baseUrl')}/console/namespaces/${namespace}/${pageDetail}/${name}`, qs });
     ensureKialiFinishedLoading();
   }
 );
@@ -109,9 +109,9 @@ export const clusterParameterExists = (present: boolean): void => {
 };
 
 Then(`user doesn't see the {string} menu`, menu => {
-  cy.get('#page-sidebar').get(`#${menu}`).should('not.exist');
+  cy.get('#page-sidebar').find(`#${menu}`).should('not.exist');
 });
 
 Then(`user see the {string} menu`, menu => {
-  cy.get('#page-sidebar').get(`#${menu}`).should('exist');
+  cy.get('#page-sidebar').find(`#${menu}`).should('exist');
 });

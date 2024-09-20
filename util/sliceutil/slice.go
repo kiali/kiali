@@ -27,3 +27,17 @@ func Map[S ~[]E, E any, T any](slice S, f func(E) T) []T {
 	}
 	return ret
 }
+
+// Some returns true if any of the elements satisfies the predicate, otherwise false
+func Some[S ~[]E, E any](slice S, f func(E) bool) bool {
+	if slice == nil {
+		return false
+	}
+
+	for _, e := range slice {
+		if f(e) {
+			return true
+		}
+	}
+	return false
+}

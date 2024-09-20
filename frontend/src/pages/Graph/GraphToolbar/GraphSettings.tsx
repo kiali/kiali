@@ -531,8 +531,8 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
         onChange: toggleBoxByCluster,
         tooltip: (
           <div style={{ textAlign: 'left' }}>
-            When enabled and there are multiple clusters, the graph will box nodes in the same cluster. The "unknown"
-            cluster is never boxed.
+            When enabled and there are multiple clusters, the graph will box nodes in the same cluster. This option is
+            ignored for layouts that don't support boxing. The "unknown" cluster is never boxed.
           </div>
         )
       },
@@ -544,7 +544,8 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
         tooltip: (
           <div style={{ textAlign: 'left' }}>
             When enabled and there are multiple namespaces, the graph will box nodes in the same namespace, within the
-            same cluster. The "unknown" namespace is never boxed.
+            same cluster. This option is ignored for layouts that don't support boxing. The "unknown" namespace is never
+            boxed.
           </div>
         )
       },

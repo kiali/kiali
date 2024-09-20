@@ -43,7 +43,7 @@ func (a ThroughputAppender) IsFinalizer() bool {
 }
 
 // AppendGraph implements Appender
-func (a ThroughputAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
+func (a ThroughputAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
 	if len(trafficMap) == 0 {
 		return
 	}
@@ -166,6 +166,8 @@ func (a ThroughputAppender) populateThroughputMap(throughputMap map[string]float
 		// - destSvcName is not set
 		// - destSvcName is PassthroughCluster (see https://github.com/kiali/kiali/issues/4488)
 		// - dest node is already a service node
+		// - note: we ignore the waypoint injection problem here because ztunnel does not generate throughput
+		//         telemetry for waypoint source or destination traffic (see istio.go for where we do handle it)
 		inject := false
 		if a.InjectServiceNodes && graph.IsOK(destSvcName) && destSvcName != graph.PassthroughCluster {
 			_, destNodeType, err := graph.Id(destCluster, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, a.GraphType)

@@ -1,4 +1,5 @@
 @service-details
+@ossmc
 # don't change first line of this file - the tag is used for the test scripts to identify the test suite
 
 Feature: Kiali Service Details page
@@ -11,11 +12,13 @@ Feature: Kiali Service Details page
     And user is at the details page for the "service" "bookinfo/productpage" located in the "" cluster
 
   @bookinfo-app
+  @skip-ossmc
   Scenario: See details for productpage
     Then sd::user sees a list with content "Overview"
     Then sd::user sees a list with content "Traffic"
     Then sd::user sees a list with content "Inbound Metrics"
     Then sd::user sees a list with content "Traces"
+    # todo: adapt to kiosk mode for OSSMC
     Then sd::user sees the actions button
 
   @bookinfo-app
@@ -26,6 +29,8 @@ Feature: Kiali Service Details page
     But no cluster badge for the "service" should be visible
 
   @bookinfo-app
+  @skip-ossmc
+  # todo: adapt to PF graph
   Scenario: See service minigraph for details app.
     Then sd::user sees a minigraph
 
@@ -68,6 +73,8 @@ Feature: Kiali Service Details page
     Then user sees span details
 
   @bookinfo-app
+  @skip-ossmc
+  # todo: adapt to PF graph
   Scenario: Verify that the Graph type dropdown is disabled when changing to Show node graph
     When user sees a minigraph
     And user chooses the "Show node graph" option

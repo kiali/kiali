@@ -32,7 +32,7 @@ func (c componentHealthKey) String() string {
 }
 
 // BuildMeshMap is required by the graph/TelemetryVendor interface
-func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.AppenderGlobalInfo) (mesh.MeshMap, error) {
+func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mesh.MeshMap, error) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "BuildMeshMap",
 		observability.Attribute("package", "generator"),
@@ -248,7 +248,7 @@ var inMeshUrlRegexp = []*regexp.Regexp{
 // discoverInfraService tries to determine the cluster and namespace of a service, from its URL. Currently it's only
 // targeting in-cluster URLs on the local cluster.  If it can't resolve the URL, or it can't fetch the resulting service,
 // it assumes the URL is outside the mesh and returns ("", "", true).
-func discoverInfraService(url string, ctx context.Context, gi *mesh.AppenderGlobalInfo) (cluster, namespace string, isExternal bool) {
+func discoverInfraService(url string, ctx context.Context, gi *mesh.GlobalInfo) (cluster, namespace string, isExternal bool) {
 	cluster = mesh.External
 	isExternal = true
 	namespace = ""

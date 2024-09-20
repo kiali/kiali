@@ -39,6 +39,8 @@ import { getEdgeHealth } from 'types/ErrorRate/GraphEdgeStatus';
 import { Span } from 'types/TracingInfo';
 import { IconType } from 'config/Icons';
 import { NodeDecorator } from './NodeDecorator';
+import { LayoutName } from './GraphPF';
+import { supportsGroups } from 'utils/GraphUtils';
 
 // Utilities for working with PF Topology
 // - most of these add cytoscape-like functions
@@ -123,7 +125,7 @@ const EdgeColor = PFColors.Success;
 const EdgeColorDead = PFColors.Black500;
 const EdgeColorDegraded = PFColors.Warning;
 const EdgeColorFailure = PFColors.Danger;
-const EdgeColorTCPWithTraffic = PFColors.Blue600;
+const EdgeColorTCPWithTraffic = PFColors.Blue500;
 
 export const getNodeStatus = (data: NodeData): NodeStatus => {
   if ((data.isBox && data.isBox !== BoxByType.APP) || data.isIdle) {
@@ -205,26 +207,33 @@ export const setNodeAttachments = (node: Node<NodeModel>, settings: GraphPFSetti
   }
 };
 
-export const setNodeLabel = (node: NodeModel, nodeMap: NodeMap, settings: GraphPFSettings): void => {
+export const setNodeLabel = (
+  node: NodeModel,
+  nodeMap: NodeMap,
+  settings: GraphPFSettings,
+  layoutName: LayoutName
+): void => {
   const data = node.data as NodeData;
-  const app = data.app || '';
+  const app = data.app ?? '';
   const cluster = data.cluster;
   const namespace = data.namespace;
   const nodeType = data.nodeType;
-  const service = data.service || '';
-  const version = data.version || '';
-  const workload = data.workload || '';
+  const service = data.service ?? '';
+  const version = data.version ?? '';
+  const workload = data.workload ?? '';
   const isBox = data.isBox;
   const isBoxed = data.parent;
-  let box1Type, box2Type: string | undefined;
-  if (isBoxed) {
-    let box1, box2: NodeModel | undefined;
+  let box1Type: string | undefined, box2Type: string | undefined;
+
+  if (isBoxed && supportsGroups(layoutName)) {
+    let box1: NodeModel | undefined, box2: NodeModel | undefined;
     box1 = nodeMap.get(data.parent!);
-    const box1Data = box1.data as NodeData;
+    const box1Data = box1?.data as NodeData;
     box1Type = box1Data.isBox;
     box2 = box1Data.parent ? nodeMap.get(box1Data.parent!) : undefined;
     box2Type = box2 ? (box2.data as NodeData).isBox : undefined;
   }
+
   const isAppBoxed = box1Type === BoxByType.APP;
   const isNamespaceBoxed = box1Type === BoxByType.NAMESPACE || box2Type === BoxByType.NAMESPACE;
   const isMultiNamespace = settings.activeNamespaces.length > 1;
@@ -353,6 +362,8 @@ export const setNodeLabel = (node: NodeModel, nodeMap: NodeMap, settings: GraphP
 
     if (pfBadge) {
       data.badge = pfBadge.badge;
+      data.badgeColor = PFColors.BackgroundColor100;
+      data.badgeBorderColor = PFColors.Blue300;
     }
     node.label = content.shift();
     if (content.length > 0) {

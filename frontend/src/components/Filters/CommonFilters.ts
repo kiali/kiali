@@ -1,3 +1,4 @@
+import { t } from 'utils/I18nUtils';
 import {
   FILTER_ACTION_APPEND,
   FilterType,
@@ -11,12 +12,12 @@ import { removeDuplicatesArray } from '../../utils/Common';
 
 export const presenceValues: FilterValue[] = [
   {
-    id: 'present',
-    title: 'Present'
+    id: 'Present',
+    title: t('Present')
   },
   {
-    id: 'notpresent',
-    title: 'Not Present'
+    id: 'Not Present',
+    title: t('Not Present')
   }
 ];
 
@@ -51,7 +52,7 @@ export const healthFilter: FilterType = {
       title: NOT_READY.name
     },
     {
-      id: 'na',
+      id: NA.name,
       title: NA.name
     }
   ]

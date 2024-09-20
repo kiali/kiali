@@ -44,7 +44,7 @@ cd frontend
 
 yarn i18n
 
-i18n_files=$(git diff --name-only HEAD --diff-filter=M | grep -E 'translation.json')
+i18n_files=$(git diff --name-only --diff-filter=M | grep -E 'translation.json')
 
 #### Git commit check ####
 if [ -n "$yaml_unformatted" ] || [ -n "$go_unformatted" ]; then

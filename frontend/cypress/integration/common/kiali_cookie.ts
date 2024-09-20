@@ -14,7 +14,7 @@ Given('user is at administrator perspective', () => {
 });
 
 Given('user visits base url', () => {
-  cy.visit('/');
+  cy.visit({ url: '/' });
 });
 
 Given('user is at limited user perspective', () => {

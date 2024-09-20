@@ -98,6 +98,11 @@ type WorkloadListItem struct {
 	// example: true
 	IsAmbient bool `json:"isAmbient"`
 
+	// Define if Labels related to this Workload contains any Gateway label
+	// required: true
+	// example: true
+	IsGateway bool `json:"isGateway"`
+
 	// Additional item sample, such as type of api being served (graphql, grpc, rest)
 	// example: rest
 	// required: false
@@ -198,6 +203,7 @@ func (workload *WorkloadListItem) ParseWorkload(w *Workload) {
 	workload.CreatedAt = w.CreatedAt
 	workload.ResourceVersion = w.ResourceVersion
 	workload.IstioSidecar = w.HasIstioSidecar()
+	workload.IsGateway = w.IsGateway()
 	workload.IsAmbient = w.HasIstioAmbient()
 	workload.Labels = w.Labels
 	workload.PodCount = len(w.Pods)
@@ -465,7 +471,7 @@ func (workload *Workload) HasIstioSidecar() bool {
 	return workload.Pods.HasIstioSidecar()
 }
 
-// IsGateway return true if the workload is Ingress or Egress Gateway
+// IsGateway return true if the workload is Ingress, Egress or K8s Gateway
 func (workload *Workload) IsGateway() bool {
 	conf := config.Get()
 	if workload.Type == "Deployment" {
@@ -478,6 +484,9 @@ func (workload *Workload) IsGateway() bool {
 		}
 		egressLabel := conf.GatewayLabel(conf.IstioLabels.EgressGatewayLabel)
 		if labelValue, ok := workload.Labels[egressLabel[0]]; ok && labelValue == egressLabel[1] {
+			return true
+		}
+		if _, ok := workload.Labels[conf.IstioLabels.K8sGatewayLabelName]; ok {
 			return true
 		}
 	}

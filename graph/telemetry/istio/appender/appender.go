@@ -52,12 +52,11 @@ func ParseAppenders(o graph.TelemetryOptions) (appenders []graph.Appender, final
 
 			// finalizer appenders
 			case AmbientAppenderName:
-				requestedAppenders[AmbientAppenderName] = true
+				requestedFinalizers[AmbientAppenderName] = true
 			case HealthAppenderName:
 				// currently, because health is still calculated in the client, if requesting health
 				// we also need to run the healthConfig appender.  Eventually, asking for health will supply
 				// the result of a server-side health calculation.
-				requestedAppenders[HealthAppenderName] = true
 				requestedFinalizers[HealthAppenderName] = true
 			case LabelerAppenderName:
 				requestedFinalizers[LabelerAppenderName] = true
@@ -194,14 +193,14 @@ func ParseAppenders(o graph.TelemetryOptions) (appenders []graph.Appender, final
 
 	// The finalizer order is important
 
-	// always run the outsider finalizer first, this alloes other finalizers to
+	// always run the outsider finalizer first, this allows other finalizers to
 	// utilize graph.isInaccessible and graph.isOutside metatdata values.
 	finalizers = append(finalizers, &OutsiderAppender{
 		AccessibleNamespaces: o.AccessibleNamespaces,
 		Namespaces:           o.Namespaces,
 	})
 
-	if _, ok := requestedAppenders[AmbientAppenderName]; ok || o.Appenders.All {
+	if _, ok := requestedFinalizers[AmbientAppenderName]; ok || o.Appenders.All {
 		waypoints := defaultWaypoints
 		waypointsString := o.Params.Get("waypoints")
 		if waypointsString != "" {
@@ -211,11 +210,10 @@ func ParseAppenders(o graph.TelemetryOptions) (appenders []graph.Appender, final
 				graph.BadRequest(fmt.Sprintf("Invalid waypoints param [%s]", waypointsString))
 			}
 		}
-		a := AmbientAppender{
+		finalizers = append(finalizers, &AmbientAppender{
 			AccessibleNamespaces: o.AccessibleNamespaces,
 			ShowWaypoints:        waypoints,
-		}
-		appenders = append(appenders, a)
+		})
 	}
 
 	// if health finalizer is to be run, do it after the outsider finalizer
@@ -239,6 +237,7 @@ func ParseAppenders(o graph.TelemetryOptions) (appenders []graph.Appender, final
 }
 
 const (
+	AmbientWaypoints     = "ambientWaypoints"     // global vendor info models.Workloads
 	appsMapKey           = "appsMapKey"           // global vendor info map[cluster:namespace]appsMap
 	serviceEntryHostsKey = "serviceEntryHostsKey" // global vendor info service entries for all accessible namespaces
 	serviceListKey       = "serviceListKey"       // global vendor info map[cluster:namespace]serviceDefinitionList
@@ -280,7 +279,7 @@ func (seh serviceEntryHosts) addHost(host string, se *serviceEntry) {
 
 // getServiceLists returns a map[clusterName]*models.ServiceList for all clusters with traffic in the namespace, or if trafficMap is nil
 // then all clusters on which the namespace is valid.
-func getServiceLists(trafficMap graph.TrafficMap, namespace string, gi *graph.AppenderGlobalInfo) map[string]*models.ServiceList {
+func getServiceLists(trafficMap graph.TrafficMap, namespace string, gi *graph.GlobalInfo) map[string]*models.ServiceList {
 	clusters := getTrafficClusters(trafficMap, namespace, gi)
 	serviceLists := map[string]*models.ServiceList{}
 
@@ -291,7 +290,7 @@ func getServiceLists(trafficMap graph.TrafficMap, namespace string, gi *graph.Ap
 	return serviceLists
 }
 
-func getServiceList(cluster, namespace string, gi *graph.AppenderGlobalInfo) *models.ServiceList {
+func getServiceList(cluster, namespace string, gi *graph.GlobalInfo) *models.ServiceList {
 	var serviceListMap map[string]*models.ServiceList
 	if existingServiceMap, ok := gi.Vendor[serviceListKey]; ok {
 		serviceListMap = existingServiceMap.(map[string]*models.ServiceList)
@@ -318,7 +317,7 @@ func getServiceList(cluster, namespace string, gi *graph.AppenderGlobalInfo) *mo
 	return serviceList
 }
 
-func getServiceDefinition(cluster, namespace, serviceName string, gi *graph.AppenderGlobalInfo) (*models.ServiceOverview, bool) {
+func getServiceDefinition(cluster, namespace, serviceName string, gi *graph.GlobalInfo) (*models.ServiceOverview, bool) {
 	if serviceName == "" || serviceName == graph.Unknown {
 		return nil, false
 	}
@@ -332,7 +331,7 @@ func getServiceDefinition(cluster, namespace, serviceName string, gi *graph.Appe
 
 // getServiceEntryHosts returns ServiceEntryHost information cached for a specific cluster and namespace. If not
 // previously cached a new, empty cache entry is created and returned.
-func getServiceEntryHosts(cluster, namespace string, gi *graph.AppenderGlobalInfo) (serviceEntryHosts, bool) {
+func getServiceEntryHosts(cluster, namespace string, gi *graph.GlobalInfo) (serviceEntryHosts, bool) {
 	key := fmt.Sprintf("%s:%s:%s", serviceEntryHostsKey, cluster, namespace)
 	if seHosts, ok := gi.Vendor[key]; ok {
 		return seHosts.(serviceEntryHosts), true
@@ -346,7 +345,7 @@ func getServiceEntryHosts(cluster, namespace string, gi *graph.AppenderGlobalInf
 
 // getWorkloadLists returns a map[clusterName]*models.WorkloadList for all clusters with traffic in the namespace, or if trafficMap is nil
 // then all clusters on which the namespace is valid.
-func getWorkloadLists(trafficMap graph.TrafficMap, namespace string, gi *graph.AppenderGlobalInfo) map[string]*models.WorkloadList {
+func getWorkloadLists(trafficMap graph.TrafficMap, namespace string, gi *graph.GlobalInfo) map[string]*models.WorkloadList {
 	clusters := getTrafficClusters(trafficMap, namespace, gi)
 	workloadLists := map[string]*models.WorkloadList{}
 
@@ -357,7 +356,7 @@ func getWorkloadLists(trafficMap graph.TrafficMap, namespace string, gi *graph.A
 	return workloadLists
 }
 
-func getWorkloadList(cluster, namespace string, gi *graph.AppenderGlobalInfo) *models.WorkloadList {
+func getWorkloadList(cluster, namespace string, gi *graph.GlobalInfo) *models.WorkloadList {
 	var workloadListMap map[string]*models.WorkloadList
 	if existingWorkloadListMap, ok := gi.Vendor[workloadListKey]; ok {
 		workloadListMap = existingWorkloadListMap.(map[string]*models.WorkloadList)
@@ -379,7 +378,7 @@ func getWorkloadList(cluster, namespace string, gi *graph.AppenderGlobalInfo) *m
 	return &workloadList
 }
 
-func getWorkload(cluster, namespace, workloadName string, gi *graph.AppenderGlobalInfo) (*models.WorkloadListItem, bool) {
+func getWorkload(cluster, namespace, workloadName string, gi *graph.GlobalInfo) (*models.WorkloadListItem, bool) {
 	if workloadName == "" || workloadName == graph.Unknown {
 		return nil, false
 	}
@@ -394,7 +393,7 @@ func getWorkload(cluster, namespace, workloadName string, gi *graph.AppenderGlob
 	return nil, false
 }
 
-func getAppWorkloads(cluster, namespace, app, version string, gi *graph.AppenderGlobalInfo) []models.WorkloadListItem {
+func getAppWorkloads(cluster, namespace, app, version string, gi *graph.GlobalInfo) []models.WorkloadListItem {
 	cfg := config.Get()
 	appLabel := cfg.IstioLabels.AppLabelName
 	versionLabel := cfg.IstioLabels.VersionLabelName
@@ -413,7 +412,7 @@ func getAppWorkloads(cluster, namespace, app, version string, gi *graph.Appender
 	return result
 }
 
-func getApp(namespace, appName string, gi *graph.AppenderGlobalInfo) (*models.AppListItem, bool) {
+func getApp(namespace, appName string, gi *graph.GlobalInfo) (*models.AppListItem, bool) {
 	if appName == "" || appName == graph.Unknown {
 		return nil, false
 	}
@@ -452,7 +451,7 @@ func getApp(namespace, appName string, gi *graph.AppenderGlobalInfo) (*models.Ap
 
 // getTrafficClusters returns an array of accessible cluster names for which the TrafficMap has nodes in the given
 // namespace. If the trafficMap is nil then return all cluster names for which the namespace exists.
-func getTrafficClusters(trafficMap graph.TrafficMap, namespace string, gi *graph.AppenderGlobalInfo) []string {
+func getTrafficClusters(trafficMap graph.TrafficMap, namespace string, gi *graph.GlobalInfo) []string {
 	// get all of the accessible clusters for the given namespace
 	namespaceClusters, err := gi.Business.Namespace.GetNamespaceClusters(context.TODO(), namespace)
 	graph.CheckError(err)

@@ -26,7 +26,7 @@ func (a MeshCheckAppender) IsFinalizer() bool {
 }
 
 // AppendGraph implements Appender
-func (a MeshCheckAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
+func (a MeshCheckAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
 	if len(trafficMap) == 0 {
 		return
 	}
@@ -34,7 +34,7 @@ func (a MeshCheckAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *
 	a.applyMeshChecks(trafficMap, globalInfo, namespaceInfo)
 }
 
-func (a *MeshCheckAppender) applyMeshChecks(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
+func (a *MeshCheckAppender) applyMeshChecks(trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
 	for _, n := range trafficMap {
 		// skip if we've already determined the node is out-of-mesh. we may process the same
 		// node multiple times to ensure we check every node (e.g. missing sidecars indicate missing
@@ -61,13 +61,16 @@ func (a *MeshCheckAppender) applyMeshChecks(trafficMap graph.TrafficMap, globalI
 		// get the workloads for the node and check to see if they have sidecars. Note that
 		// if there are no workloads/pods we don't flag it as missing sidecars.  No pods means
 		// no missing sidecars.  (In most cases this means it was flagged as dead, and handled above)
+		// check if workload is Gateway (Istio or K8s)
 		hasIstioSidecar := true
 		hasIstioAmbient := true
+		hasGatewayLabel := true
 		switch n.NodeType {
 		case graph.NodeTypeWorkload:
 			if workload, found := getWorkload(n.Cluster, n.Namespace, n.Workload, globalInfo); found {
 				hasIstioSidecar = workload.IstioSidecar
 				hasIstioAmbient = workload.IsAmbient
+				hasGatewayLabel = workload.IsGateway
 			}
 		case graph.NodeTypeApp:
 			workloads := getAppWorkloads(n.Cluster, n.Namespace, n.App, n.Version, globalInfo)
@@ -79,7 +82,10 @@ func (a *MeshCheckAppender) applyMeshChecks(trafficMap graph.TrafficMap, globalI
 					if !workload.IsAmbient {
 						hasIstioAmbient = false
 					}
-					if !hasIstioSidecar && !hasIstioAmbient {
+					if !workload.IsGateway {
+						hasGatewayLabel = false
+					}
+					if !hasIstioSidecar && !hasIstioAmbient && !hasGatewayLabel {
 						break
 					}
 				}
@@ -91,7 +97,7 @@ func (a *MeshCheckAppender) applyMeshChecks(trafficMap graph.TrafficMap, globalI
 		if hasIstioAmbient || n.Metadata[graph.IsWaypoint] == true {
 			n.Metadata[graph.IsAmbient] = true
 		}
-		if !hasIstioSidecar && !hasIstioAmbient && n.Metadata[graph.IsWaypoint] != true {
+		if !hasGatewayLabel && !hasIstioSidecar && !hasIstioAmbient && n.Metadata[graph.IsWaypoint] != true {
 			n.Metadata[graph.IsOutOfMesh] = true
 		}
 	}

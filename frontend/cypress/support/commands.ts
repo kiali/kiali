@@ -68,12 +68,10 @@ declare namespace Cypress {
     logout(): Chainable<Subject>;
   }
 }
+
 const timeout = 300000; // 5 minutes
 
-function ensureMulticlusterApplicationsAreHealthy(): void {
-  const startTime = this.startTime || Date.now();
-  this.startTime = startTime;
-
+function ensureMulticlusterApplicationsAreHealthy(startTime: number): void {
   if (Date.now() - startTime > timeout) {
     cy.log('Timeout reached without meeting the condition.');
     return;
@@ -95,7 +93,7 @@ function ensureMulticlusterApplicationsAreHealthy(): void {
     } else {
       cy.log("'reviews' app in 'west' cluster is not healthy yet, checking again in 10 seconds...");
       cy.wait(10000);
-      ensureMulticlusterApplicationsAreHealthy();
+      ensureMulticlusterApplicationsAreHealthy(startTime);
     }
   });
 }
@@ -113,13 +111,13 @@ Cypress.Commands.add('login', (username: string, password: string) => {
           );
         }
 
-        cy.intercept('/api/namespaces').as('getNamespaces');
-        cy.intercept('/api/config').as('getConfig');
-        cy.intercept('/api/status').as('getStatus');
-        cy.intercept('/api/tracing').as('getTracing');
-        cy.intercept('/api/auth/info').as('getAuthInfo');
+        cy.intercept('**/api/namespaces').as('getNamespaces');
+        cy.intercept('**/api/config').as('getConfig');
+        cy.intercept('**/api/status').as('getStatus');
+        cy.intercept('**/api/tracing').as('getTracing');
+        cy.intercept('**/api/auth/info').as('getAuthInfo');
 
-        cy.visit('/');
+        cy.visit({ url: '/' });
         const authProvider = Cypress.env('AUTH_PROVIDER');
         if (authProvider !== '' && authProvider !== undefined) {
           cy.contains(authProvider).should('be.visible').click();
@@ -156,7 +154,7 @@ Cypress.Commands.add('login', (username: string, password: string) => {
           }).then(resp => {
             const $html = Cypress.$(resp.body);
             const postUrl = $html.find('form[id=kc-form-login]').attr('action');
-            const url = new URL(postUrl);
+            const url = new URL(postUrl!);
             cy.request({
               url: url.toString(),
               method: 'POST',
@@ -168,7 +166,7 @@ Cypress.Commands.add('login', (username: string, password: string) => {
             }).then(() => {
               const tags = Cypress.env('TAGS');
               if (tags.includes('multi-cluster') || tags.includes('multi-primary')) {
-                ensureMulticlusterApplicationsAreHealthy();
+                ensureMulticlusterApplicationsAreHealthy(Date.now());
               }
             });
           });

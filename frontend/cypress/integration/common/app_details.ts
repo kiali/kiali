@@ -26,7 +26,7 @@ Then('user sees inbound and outbound traffic information', () => {
 });
 
 Then('user sees inbound metrics information', () => {
-  cy.intercept(`${Cypress.config('baseUrl')}/api/namespaces/${NAMESPACE}/apps/${APP}/dashboard*`).as('fetchMetrics');
+  cy.intercept(`**/api/namespaces/${NAMESPACE}/apps/${APP}/dashboard*`).as('fetchMetrics');
 
   openTab('Inbound Metrics');
   cy.wait('@fetchMetrics');
@@ -45,7 +45,7 @@ Then('user sees inbound metrics information', () => {
 });
 
 Then('user sees outbound metrics information', () => {
-  cy.intercept(`${Cypress.config('baseUrl')}/api/namespaces/${NAMESPACE}/apps/${APP}/dashboard*`).as('fetchMetrics');
+  cy.intercept(`**/api/namespaces/${NAMESPACE}/apps/${APP}/dashboard*`).as('fetchMetrics');
 
   openTab('Outbound Metrics');
   cy.wait('@fetchMetrics');
@@ -83,11 +83,11 @@ Then('no cluster badge for the {string} should be visible', (type: string) => {
   if (type === 'Istio config') {
     cy.get('#pfbadge-C').should('not.exist');
   } else if (type === 'graph side panel') {
-    cy.get('#graph-side-panel').within($div => {
+    cy.get('#graph-side-panel').within(() => {
       cy.get('#pfbadge-C').should('not.exist');
     });
   } else {
-    cy.get(`#${type[0].toUpperCase()}${type.slice(1)}DescriptionCard`).within($article => {
+    cy.get(`#${type[0].toUpperCase()}${type.slice(1)}DescriptionCard`).within(() => {
       cy.get('#pfbadge-C').should('not.exist');
     });
   }
@@ -97,11 +97,11 @@ Then('cluster badge for the {string} should be visible', (type: string) => {
   if (type === 'Istio config') {
     cy.get('#pfbadge-C').should('be.visible');
   } else if (type === 'graph side panel') {
-    cy.get('#graph-side-panel').within($div => {
+    cy.get('#graph-side-panel').within(() => {
       cy.get('#pfbadge-C').should('be.visible');
     });
   } else {
-    cy.get(`#${type[0].toUpperCase()}${type.slice(1)}DescriptionCard`).within($article => {
+    cy.get(`#${type[0].toUpperCase()}${type.slice(1)}DescriptionCard`).within(() => {
       cy.get('#pfbadge-C').should('be.visible');
     });
   }
