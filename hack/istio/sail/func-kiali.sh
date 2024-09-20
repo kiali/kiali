@@ -79,7 +79,7 @@ install_kiali_cr() {
   local tracing_external_url=""
   if [ "${IS_OPENSHIFT}" == "true" ]; then
     # we installed TempoStack CR configured for "route" when on OpenShift, so look for the route URL
-    tracing_external_url="$(${OC} get route -n ${TEMPO_NAMESPACE} -l app.kubernetes.io/name=tempo,app.kubernetes.io/component=query-frontend -o jsonpath='https://{..spec.host}')"
+    tracing_external_url="$(${OC} get route -n ${TEMPO_NAMESPACE} -l app.kubernetes.io/name=tempo,app.kubernetes.io/component=query-frontend -o jsonpath='http://{..spec.host}')"
     infomsg "The tracing external URL is the OpenShift route located at [${tracing_external_url}]"
   else
     # we installed TempoStack CR configured for "ingress" when on vanilla Kubernetes, so look for the ingress URL
@@ -95,7 +95,7 @@ install_kiali_cr() {
   # Try to determine the external URL for the Grafana UI
   local grafana_external_url=""
   if [ "${IS_OPENSHIFT}" == "true" ]; then
-    grafana_external_url="$(${OC} get route -n ${CONTROL_PLANE_NAMESPACE} grafana -o jsonpath='https://{..spec.host}')"
+    grafana_external_url="$(${OC} get route -n ${CONTROL_PLANE_NAMESPACE} grafana -o jsonpath='http://{..spec.host}')"
     infomsg "The Grafana external URL is the OpenShift route located at [${grafana_external_url}]"
   else
     local grafana_ingress_host="$(${OC} -n ${CONTROL_PLANE_NAMESPACE} get svc grafana -o jsonpath='{..status.loadBalancer.ingress[0].ip}' 2> /dev/null)"
