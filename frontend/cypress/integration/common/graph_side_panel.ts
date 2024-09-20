@@ -15,6 +15,27 @@ When('user clicks the {string} {string} node', (svcName: string, nodeType: strin
     });
 });
 
+When(
+  'user clicks the edge from {string} {string} to {string} {string}',
+  (svcName: string, nodeType: string, destSvcName: string, destNodeType: string) => {
+    cy.waitForReact();
+    cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false } } })
+      .should('have.length', '1')
+      .then(() => {
+        cy.getReact('CytoscapeGraph')
+          .should('have.length', '1')
+          .getCurrentState()
+          .then(state => {
+            const node = state.cy.nodes(`[nodeType="${nodeType}"][${nodeType}="${svcName}"]`);
+            const destNode = state.cy.nodes(`[nodeType="${destNodeType}"][${destNodeType}="${destSvcName}"]`);
+            const edge = state.cy.edges(`[source="${node.id()}"][target="${destNode.id()}"]`);
+
+            edge.emit('tap');
+          });
+      });
+  }
+);
+
 When('user opens the kebab menu of the graph side panel', () => {
   cy.get('#summary-node-kebab').click();
 });
@@ -41,6 +62,14 @@ Then('service badge for the graph side panel should be visible', () => {
 
 Then('user should see the traces tab not empty', () => {
   cy.get(`[data-test="traces-list"]`).should('be.visible');
+});
+
+Then('app badge for the graph side panel should be visible', () => {
+  cy.get('#pfbadge-A').should('be.visible');
+});
+
+Then('summary panel contains {string}', (text: string) => {
+  cy.get('#graph-side-panel').contains(text);
 });
 
 When(
