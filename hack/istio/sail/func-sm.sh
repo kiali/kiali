@@ -184,6 +184,7 @@ spec:
   updateStrategy:
     type: RevisionBased
   values:
+    profile: demo
     global:
       platform: "${global_platform}"
     meshConfig:
