@@ -188,8 +188,8 @@
           "waypoint": {
             "direction": "to",
             "fromEdge": {
-              "id": "5a462f4f82cf52e74960330f85181507",
-              "source": "759ea777f30ebc268ef182543a865ea4",
+              "id": "e05fed112f9dbe986861ef94a04cce13",
+              "source": "1c14fb66e53814f9aada912a2fae5fad",
               "target": "1c14fb66e53814f9aada912a2fae5fad",
               "traffic": {
                 "protocol": "tcp",
