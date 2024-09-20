@@ -155,7 +155,7 @@ export const WorkloadWizardActionsDropdownGroup: React.FunctionComponent<Props> 
     actionItems.push(annotationsAction);
   }
 
-  if (props.actionsLabel) {
+  if (props.actionsLabel && actionItems.length > 0) {
     return <DropdownGroup key={`group_actions`} label={'Actions'} className={groupMenuStyle} children={actionItems} />;
   } else {
     return <>{actionItems}</>;

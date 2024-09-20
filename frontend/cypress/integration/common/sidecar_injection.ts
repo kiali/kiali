@@ -384,7 +384,14 @@ function switchWorkloadSidecarInjection(enableOrDisable: string): void {
     cy.get('button[data-test="workload-actions-toggle"]').should('be.visible').click();
   }
 
-  cy.get(`li[data-test=${enableOrDisable}_auto_injection]`).find('button').should('be.visible').click();
+  cy.get(`li[data-test=${enableOrDisable}_auto_injection]`)
+    .find('button')
+    .should('be.visible')
+    .click()
+    .then(() => {
+      // Check the success notification message is visible
+      cy.get('div[class="pf-v5-c-alert pf-m-success"]').should('be.visible');
+    });
 
   // Restart the workload to ensure the changes are applied.
   restartWorkload(this.targetNamespace, this.targetWorkload);
