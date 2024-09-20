@@ -22,6 +22,7 @@ NAMESPACE="bookinfo"
 ISTIO_NAMESPACE="istio-system"
 RATE=1
 AUTO_INJECTION="true"
+AUTO_INJECTION_LABEL="istio-injection=enabled"
 MANUAL_INJECTION="false"
 DELETE_BOOKINFO="false"
 MINIKUBE_PROFILE="minikube"
@@ -41,6 +42,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     -ai|--auto-injection)
       AUTO_INJECTION="$2"
+      shift;shift
+      ;;
+    -ail|--auto-injection-label)
+      AUTO_INJECTION_LABEL="$2"
       shift;shift
       ;;
     -db|--delete-bookinfo)
@@ -104,6 +109,7 @@ while [[ $# -gt 0 ]]; do
 Valid command line arguments:
   -a|--arch <amd64|ppc64le|s390x|arm64>: Images for given arch will be used (default: amd64). Custom bookinfo yaml file provided via '-b' argument is ignored when using different arch than the default.
   -ai|--auto-injection <true|false>: If you want sidecars to be auto-injected (default: true).
+  -ail|--auto-injection-label <name=value>: If auto-injection is enabled, this is the label added to the namespace. default: istio-injection=enabled).
   -db|--delete-bookinfo <true|false>: If true, uninstall bookinfo. If false, install bookinfo. (default: false).
   -id|--istio-dir <dir>: Where Istio has already been downloaded. If not found, this script aborts.
   -in|--istio-namespace <name>: Where the Istio control plane is installed (default: istio-system).
@@ -277,7 +283,7 @@ SCC
 fi
 
 if [ "${AUTO_INJECTION}" == "true" ]; then
-  $CLIENT_EXE label namespace ${NAMESPACE} "istio-injection=enabled"
+  $CLIENT_EXE label namespace ${NAMESPACE} "${AUTO_INJECTION_LABEL}"
   $CLIENT_EXE apply -n ${NAMESPACE} -f ${BOOKINFO_YAML}
 else
   if [ "${MANUAL_INJECTION}" == "true" ]; then
