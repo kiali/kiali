@@ -25,6 +25,7 @@ import {
   GroupVersionKind
 } from './IstioObjects';
 import { ResourcePermissions } from './Permissions';
+import { getIstioObjectGVK, gvkToString } from '../utils/IstioConfigUtils';
 
 export interface IstioConfigItem {
   apiVersion?: string;
@@ -300,8 +301,8 @@ export const filterByConfigValidation = (unfiltered: IstioConfigItem[], configFi
 export const toIstioItems = (istioConfigList: IstioConfigList, cluster?: string): IstioConfigItem[] => {
   const istioItems: IstioConfigItem[] = [];
 
-  const hasValidations = (type: string, name: string, namespace?: string): ObjectValidation =>
-    istioConfigList.validations[type] && istioConfigList.validations[type][validationKey(name, namespace)];
+  const hasValidations = (objectGVK: string, name: string, namespace?: string): ObjectValidation =>
+    istioConfigList.validations[objectGVK] && istioConfigList.validations[objectGVK][validationKey(name, namespace)];
 
   const nonItems = ['validations', 'permissions', 'namespace', 'cluster'];
 
@@ -312,7 +313,6 @@ export const toIstioItems = (istioConfigList: IstioConfigList, cluster?: string)
     }
 
     const typeNameProto = dicIstioType[field.toLowerCase()]; // ex. serviceEntries -> ServiceEntry
-    const typeName = typeNameProto.toLowerCase(); // ex. ServiceEntry -> serviceentry
     const entryName = `${typeNameProto.charAt(0).toLowerCase()}${typeNameProto.slice(1)}`;
 
     let entries = istioConfigList[field];
@@ -326,6 +326,7 @@ export const toIstioItems = (istioConfigList: IstioConfigList, cluster?: string)
     }
 
     entries.forEach((entry: IstioObject) => {
+      const gvkString = gvkToString(getIstioObjectGVK(entry.apiVersion, entry.kind));
       const item = {
         namespace: entry.metadata.namespace ?? '',
         cluster: cluster,
@@ -334,8 +335,8 @@ export const toIstioItems = (istioConfigList: IstioConfigList, cluster?: string)
         name: entry.metadata.name,
         creationTimestamp: entry.metadata.creationTimestamp,
         resourceVersion: entry.metadata.resourceVersion,
-        validation: hasValidations(typeName, entry.metadata.name, entry.metadata.namespace)
-          ? istioConfigList.validations[typeName][validationKey(entry.metadata.name, entry.metadata.namespace)]
+        validation: hasValidations(gvkString, entry.metadata.name, entry.metadata.namespace)
+          ? istioConfigList.validations[gvkString][validationKey(entry.metadata.name, entry.metadata.namespace)]
           : undefined
       };
 

@@ -34,6 +34,8 @@ import { HistoryManager } from 'app/History';
 import { durationSelector } from 'store/Selectors';
 import { basicTabStyle } from 'styles/TabStyles';
 import { serverConfig } from 'config';
+import { gvkToString } from '../../utils/IstioConfigUtils';
+import { dicIstioTypeToGVK } from '../../types/IstioConfigList';
 
 type ServiceDetailsState = {
   cluster?: string;
@@ -116,7 +118,14 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
     this.promises
       .register(
         'gateways',
-        API.getIstioConfig(this.props.serviceId.namespace, ['gateways', 'k8sgateways'], false, '', '', cluster)
+        API.getIstioConfig(
+          this.props.serviceId.namespace,
+          [gvkToString(dicIstioTypeToGVK['Gateway']), gvkToString(dicIstioTypeToGVK['K8sGateway'])],
+          false,
+          '',
+          '',
+          cluster
+        )
       )
       .then(response => {
         this.setState({ gateways: response.data.gateways });
@@ -149,7 +158,14 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
         this.setState({ error: msg });
       });
 
-    API.getIstioConfig(this.props.serviceId.namespace, ['peerauthentications'], false, '', '', cluster)
+    API.getIstioConfig(
+      this.props.serviceId.namespace,
+      [gvkToString(dicIstioTypeToGVK['PeerAuthentication'])],
+      false,
+      '',
+      '',
+      cluster
+    )
       .then(results => {
         this.setState({
           peerAuthentications: results.data.peerAuthentications
