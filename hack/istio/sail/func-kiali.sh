@@ -75,15 +75,43 @@ install_kiali_cr() {
     fi
   fi
 
-  # determine the control plane's Istio version - we need it because it is part of the names of the Istio config maps/deployments
-  local istio_version="unknown"
-  for r in $(${OC} get istio -o name);
-  do
-    local ns="$(${OC} get $r -o jsonpath='{.spec.namespace}')"
-    if [ "${ns}" == "${control_plane_namespace}" ]; then
-      istio_version="$(${OC} get $r -o jsonpath='{.spec.version}')"
+  # Try to determine the external URL for the tracing UI
+  local tracing_external_url=""
+  if [ "${IS_OPENSHIFT}" == "true" ]; then
+    # we installed TempoStack CR configured for "route" when on OpenShift, so look for the route URL
+    tracing_external_url="$(${OC} get route -n ${TEMPO_NAMESPACE} -l app.kubernetes.io/name=tempo,app.kubernetes.io/component=query-frontend -o jsonpath='https://{..spec.host}')"
+    infomsg "The tracing external URL is the OpenShift route located at [${tracing_external_url}]"
+  else
+    # we installed TempoStack CR configured for "ingress" when on vanilla Kubernetes, so look for the ingress URL
+    local tracing_ingress_host="$(${OC} -n ${TEMPO_NAMESPACE} get ingress -l app.kubernetes.io/name=tempo,app.kubernetes.io/component=query-frontend -o jsonpath='{..status.loadBalancer.ingress[0].ip}' 2> /dev/null)"
+    if [ -n "${tracing_ingress_host}" ]; then
+      tracing_external_url="http://${tracing_ingress_host}:80"
+      infomsg "The tracing external URL is the LoadBalancer endpoint located at [${tracing_external_url}]"
+    else
+      infomsg "The tracing external URL cannot be determined. Leaving it empty in the Kiali CR."
     fi
-  done
+  fi
+
+  # Try to determine the external URL for the Grafana UI
+  local grafana_external_url=""
+  if [ "${IS_OPENSHIFT}" == "true" ]; then
+    grafana_external_url="$(${OC} get route -n ${CONTROL_PLANE_NAMESPACE} grafana -o jsonpath='http://{..spec.host}')"
+    infomsg "The Grafana external URL is the OpenShift route located at [${grafana_external_url}]"
+  else
+    local grafana_ingress_host="$(${OC} -n ${CONTROL_PLANE_NAMESPACE} get svc grafana -o jsonpath='{..status.loadBalancer.ingress[0].ip}' 2> /dev/null)"
+    if [ -n "${grafana_ingress_host}" ]; then
+      grafana_external_url="http://${grafana_ingress_host}:3000"
+      infomsg "The Grafana external URL is the LoadBalancer endpoint located at [${grafana_external_url}]"
+    else
+      infomsg "The Grafana external URL cannot be determined. Leaving it empty in the Kiali CR."
+    fi
+  fi
+
+  # OpenShift should always use its own auth strategy. For vanilla Kubernetes, set it to anonymous.
+  local auth_strategy="anonymous"
+  if [ "${IS_OPENSHIFT}" == "true" ]; then
+    auth_strategy="openshift"
+  fi
 
   cat <<EOM | ${OC} apply -f -
 apiVersion: kiali.io/v1alpha1
@@ -93,17 +121,19 @@ metadata:
   namespace: ${control_plane_namespace}
 spec:
   version: ${KIALI_VERSION}
+  auth:
+    strategy: ${auth_strategy}
   external_services:
+    grafana:
+      enabled: true
+      in_cluster_url: "http://grafana.${CONTROL_PLANE_NAMESPACE}:3000"
+      url: "${grafana_external_url}"
     tracing:
       enabled: true
       provider: tempo
-      in_cluster_url: "http://tempo-tempo-query-frontend.${TEMPO_NAMESPACE}.svc.cluster.local:3200"
-      url: "$(${OC} get route -n ${TEMPO_NAMESPACE} -l app.kubernetes.io/name=tempo,app.kubernetes.io/component=query-frontend -o jsonpath='https://{..spec.host}')"
+      in_cluster_url: "http://tempo-tempo-query-frontend.${TEMPO_NAMESPACE}:3200"
+      url: "${tracing_external_url}"
       use_grpc: false
-    istio:
-      config_map_name: istio-istio-${control_plane_namespace}-${istio_version}
-      istio_sidecar_injector_config_map_name: istio-sidecar-injector-istio-${control_plane_namespace}-${istio_version}
-      istiod_deployment_name: istiod-istio-${control_plane_namespace}-${istio_version}
 EOM
 }
 
@@ -217,7 +247,11 @@ status_kiali_cr() {
       ${OC} get pods --namespace ${res_namespace} -l app.kubernetes.io/name=kiali
       infomsg ""
       infomsg "Kiali Web Console can be accessed here: "
-      ${OC} get route -n ${res_namespace} -l app.kubernetes.io/name=kiali -o jsonpath='https://{..spec.host}{"\n"}'
+      if [ "${IS_OPENSHIFT}" == "true" ]; then
+        ${OC} get route -n ${res_namespace} -l app.kubernetes.io/name=kiali -o jsonpath='https://{..spec.host}{"\n"}'
+      else
+        infomsg "Cannot determine where the UI is on non-OpenShift clusters."
+      fi
     done
   else
     infomsg "There are no Kiali CRs in the cluster"

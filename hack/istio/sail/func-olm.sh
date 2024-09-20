@@ -23,6 +23,7 @@ install_olm() {
 
   get_olm_version_we_want
   local olm_download_url="https://github.com/operator-framework/operator-lifecycle-manager/releases/download/${OLM_VERSION}/install.sh"
+  infomsg "Will install OLM now. Downloading installer from: ${olm_download_url}"
 
   if ! curl -sL ${olm_download_url} > /tmp/olm-install-script.sh; then
     errormsg "ERROR: Unable to download the OLM install script from GitHub"
@@ -31,22 +32,13 @@ install_olm() {
     chmod +x /tmp/olm-install-script.sh
   fi
 
-  # force the OLM install script to go through our client executable when it executes kubectl commands
-  kubectl() {
-    ${OC} "$@"
-  }
-  export OC
-  export -f kubectl
-
-  # TODO: sometimes this crashes with segfault when running v0.27 of the OLM install script. Not sure why
-  if ! /tmp/olm-install-script.sh "${OLM_VERSION}"; then
+  # Run the OLM install script with PATH set so it picks up our kubectl executable.
+  if ! PATH="$(dirname "$OC"):$PATH" /tmp/olm-install-script.sh "${OLM_VERSION}"; then
     errormsg "ERROR: Failed to install OLM"
-    unset -f kubectl
     rm -f /tmp/olm-install-script.sh
     exit 1
   else
     infomsg "OLM [${OLM_VERSION}] is installed."
-    unset -f kubectl
     rm -f /tmp/olm-install-script.sh
   fi
 }
