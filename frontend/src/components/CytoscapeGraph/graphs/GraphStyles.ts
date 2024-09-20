@@ -1006,15 +1006,12 @@ export class GraphStyles {
       {
         selector: `edge[waypoint]`,
         style: {
-          display: (ele: Cy.EdgeSingular) => {
-            if (ele.data().waypoint.direction === 'from') {
-              return 'none';
+          'source-arrow-shape': (ele: Cy.EdgeSingular) => {
+            if (ele.data().waypoint.direction === 'to' && ele.data().waypoint.fromEdge) {
+              return 'triangle-cross';
             }
-            return 'displayed';
-          },
-          'target-arrow-shape': 'triangle-cross',
-          'source-arrow-shape': 'triangle-cross',
-          'line-style': 'solid'
+            return 'none';
+          }
         }
       }
     ];
