@@ -1004,17 +1004,14 @@ export class GraphStyles {
         }
       },
       {
-        selector: `edge[display="reverse"]`,
+        selector: `edge[waypoint]`,
         style: {
-          'target-arrow-shape': 'triangle-cross',
-          'source-arrow-shape': 'triangle-cross',
-          'line-style': 'solid'
-        }
-      },
-      {
-        selector: `edge[display="hide"]`,
-        style: {
-          display: 'none'
+          'source-arrow-shape': (ele: Cy.EdgeSingular) => {
+            if (ele.data().waypoint.direction === 'to' && ele.data().waypoint.fromEdge) {
+              return 'triangle-cross';
+            }
+            return 'none';
+          }
         }
       }
     ];

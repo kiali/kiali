@@ -386,10 +386,17 @@ func populateTrafficMap(trafficMap graph.TrafficMap, vector *model.Vector, metri
 }
 
 func addTraffic(trafficMap graph.TrafficMap, metric string, inject bool, val float64, protocol, code, flags, host, sourceCluster, sourceNs, sourceSvc, sourceWl, sourceApp, sourceVer, destCluster, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer string, sourceIsWaypoint, destIsWaypoint bool, o graph.TelemetryOptions) {
+	// waypoints are not apps, force it to be a workload regardless of graph type
+	if sourceIsWaypoint {
+		sourceApp = ""
+	}
 	source, _, err := addNode(trafficMap, sourceCluster, sourceNs, sourceSvc, sourceNs, sourceWl, sourceApp, sourceVer, o)
 	if err != nil {
 		log.Warningf("Skipping addTraffic (source), %s", err)
 		return
+	}
+	if destIsWaypoint {
+		destApp = ""
 	}
 	dest, _, err := addNode(trafficMap, destCluster, destSvcNs, destSvcName, destWlNs, destWl, destApp, destVer, o)
 	if err != nil {

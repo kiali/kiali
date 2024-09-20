@@ -3,30 +3,30 @@ import { RateTableGrpc, RateTableHttp } from '../../components/SummaryPanel/Rate
 import { RequestChart, StreamChart } from '../../components/SummaryPanel/RpsChart';
 import { ResponseTimeChart, ResponseTimeUnit } from '../../components/SummaryPanel/ResponseTimeChart';
 import {
+  DecoratedGraphNodeData,
   GraphType,
   NodeType,
+  prettyProtocol,
   Protocol,
   SummaryPanelPropType,
-  DecoratedGraphNodeData,
-  UNKNOWN,
   TrafficRate,
-  prettyProtocol
+  UNKNOWN
 } from '../../types/Graph';
-import { renderBadgedLink } from './SummaryLink';
+import { getLink, renderBadgedLink } from './SummaryLink';
 import {
-  shouldRefreshData,
   getDatapoints,
   getNodeMetrics,
   getNodeMetricType,
+  getTitle,
   hr,
-  renderNoTraffic,
   NodeMetricType,
+  renderNoTraffic,
+  shouldRefreshData,
   summaryBodyTabs,
-  summaryPanel,
   summaryFont,
-  getTitle
+  summaryPanel
 } from './SummaryPanelCommon';
-import { Metric, Datapoint, IstioMetricsMap, Labels } from '../../types/Metrics';
+import { Datapoint, IstioMetricsMap, Labels, Metric } from '../../types/Metrics';
 import { CancelablePromise, makeCancelablePromise } from '../../utils/CancelablePromises';
 import { decoratedEdgeData, decoratedNodeData } from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
 import { ResponseFlagsTable } from 'components/SummaryPanel/ResponseFlagsTable';
@@ -52,6 +52,8 @@ type SummaryPanelEdgeMetricsState = {
   rtMed: Datapoint[];
   sent: Datapoint[];
   unit: ResponseTimeUnit;
+  waypointReceived?: Datapoint[];
+  waypointSent?: Datapoint[];
 };
 
 type SummaryPanelEdgeState = SummaryPanelEdgeMetricsState & {
@@ -146,6 +148,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
     const isHttp = protocol === Protocol.HTTP;
     const isTcp = protocol === Protocol.TCP;
     const isRequests = isHttp || (isGrpc && this.props.trafficRates.includes(TrafficRate.GRPC_REQUEST));
+    const waypoint = edgeData.waypoint?.fromEdge;
 
     const SecurityBlock = (): React.ReactElement => {
       return (
@@ -169,95 +172,120 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
         </div>
       );
     };
+    const MainSummary = ({ waypointEdge }: { waypointEdge?: boolean }): React.ReactElement => {
+      const source = waypointEdge ? destData : sourceData;
+      const dest = waypointEdge ? sourceData : destData;
+      return (
+        <div>
+          <div className={panelHeadingStyle}>
+            {getTitle(`Edge (${prettyProtocol(protocol)})`)}
+            {renderBadgedLink(source, undefined, 'From:  ')}
+            {renderBadgedLink(dest, undefined, 'To:        ')}
+          </div>
 
-    return (
-      <div ref={this.mainDivRef} className={classes(panelStyle, summaryPanel)}>
-        <div className={panelHeadingStyle}>
-          {getTitle(`Edge (${prettyProtocol(protocol)})`)}
-          {renderBadgedLink(sourceData, undefined, 'From:  ')}
-          {renderBadgedLink(destData, undefined, 'To:        ')}
-        </div>
+          {hasSecurity && <SecurityBlock />}
 
-        {hasSecurity && <SecurityBlock />}
-
-        {(isHttp || isGrpc) && (
-          <div className={summaryBodyTabs}>
-            <SimpleTabs id="edge_summary_rate_tabs" defaultTab={0} style={{ paddingBottom: '0.5rem' }}>
-              <Tab style={summaryFont} title="Traffic" eventKey={0}>
-                <div style={summaryFont}>
-                  {isGrpc && (
-                    <>
-                      <RateTableGrpc
-                        isRequests={isRequests}
-                        rate={this.safeRate(edgeData.grpc)}
-                        rateGrpcErr={this.safeRate(edgeData.grpcErr)}
-                        rateNR={this.safeRate(edgeData.grpcNoResponse)}
-                      />
-                    </>
-                  )}
-
-                  {isHttp && (
-                    <>
-                      <RateTableHttp
-                        title="HTTP requests per second:"
-                        rate={this.safeRate(edgeData.http)}
-                        rate3xx={this.safeRate(edgeData.http3xx)}
-                        rate4xx={this.safeRate(edgeData.http4xx)}
-                        rate5xx={this.safeRate(edgeData.http5xx)}
-                        rateNR={this.safeRate(edgeData.httpNoResponse)}
-                      />
-                    </>
-                  )}
-                </div>
-              </Tab>
-
-              {isRequests && (
-                <Tab style={summaryFont} title="Flags" eventKey={1}>
+          {(isHttp || isGrpc) && (
+            <div className={summaryBodyTabs}>
+              <SimpleTabs id="edge_summary_rate_tabs" defaultTab={0} style={{ paddingBottom: '0.5rem' }}>
+                <Tab style={summaryFont} title="Traffic" eventKey={0}>
                   <div style={summaryFont}>
-                    <ResponseFlagsTable
-                      title={`Response flags by ${isGrpc ? 'GRPC code:' : 'HTTP code:'}`}
+                    {isGrpc && (
+                      <>
+                        <RateTableGrpc
+                          isRequests={isRequests}
+                          rate={this.safeRate(edgeData.grpc)}
+                          rateGrpcErr={this.safeRate(edgeData.grpcErr)}
+                          rateNR={this.safeRate(edgeData.grpcNoResponse)}
+                        />
+                      </>
+                    )}
+
+                    {isHttp && (
+                      <>
+                        <RateTableHttp
+                          title="HTTP requests per second:"
+                          rate={this.safeRate(edgeData.http)}
+                          rate3xx={this.safeRate(edgeData.http3xx)}
+                          rate4xx={this.safeRate(edgeData.http4xx)}
+                          rate5xx={this.safeRate(edgeData.http5xx)}
+                          rateNR={this.safeRate(edgeData.httpNoResponse)}
+                        />
+                      </>
+                    )}
+                  </div>
+                </Tab>
+
+                {isRequests && (
+                  <Tab style={summaryFont} title="Flags" eventKey={1}>
+                    <div style={summaryFont}>
+                      <ResponseFlagsTable
+                        title={`Response flags by ${isGrpc ? 'GRPC code:' : 'HTTP code:'}`}
+                        responses={edgeData.responses}
+                      />
+                    </div>
+                  </Tab>
+                )}
+                <Tab style={summaryFont} title="Hosts" eventKey={2}>
+                  <div style={summaryFont}>
+                    <ResponseHostsTable
+                      title={`Hosts by ${isGrpc ? 'GRPC code:' : 'HTTP code:'}`}
                       responses={edgeData.responses}
                     />
                   </div>
                 </Tab>
-              )}
-              <Tab style={summaryFont} title="Hosts" eventKey={2}>
-                <div style={summaryFont}>
-                  <ResponseHostsTable
-                    title={`Hosts by ${isGrpc ? 'GRPC code:' : 'HTTP code:'}`}
-                    responses={edgeData.responses}
-                  />
-                </div>
-              </Tab>
-            </SimpleTabs>
-            {hr()}
-            {this.renderCharts(edge, isGrpc, isHttp, isTcp, isRequests, isPF)}
-          </div>
+              </SimpleTabs>
+              {hr()}
+              {this.renderCharts(edge, isGrpc, isHttp, isTcp, isRequests, isPF)}
+            </div>
+          )}
+
+          {isTcp && (
+            <div className={summaryBodyTabs}>
+              <SimpleTabs id="edge_summary_flag_hosts_tabs" defaultTab={0} style={{ paddingBottom: '0.5rem' }}>
+                <Tab style={summaryFont} eventKey={0} title="Flags">
+                  <div style={summaryFont}>
+                    <ResponseFlagsTable
+                      title="Response flags by code:"
+                      responses={waypointEdge ? waypoint.responses : edgeData.responses}
+                    />
+                  </div>
+                </Tab>
+
+                <Tab style={summaryFont} eventKey={1} title="Hosts">
+                  <div style={summaryFont}>
+                    <ResponseHostsTable
+                      title="Hosts by code:"
+                      responses={waypointEdge ? waypoint.responses : edgeData.responses}
+                    />
+                  </div>
+                </Tab>
+              </SimpleTabs>
+
+              {hr()}
+
+              {this.renderCharts(edge, isGrpc, isHttp, isTcp, isRequests, isPF, waypointEdge)}
+            </div>
+          )}
+
+          {!isGrpc && !isHttp && !isTcp && <div className={panelBodyStyle}>{renderNoTraffic()}</div>}
+        </div>
+      );
+    };
+
+    return (
+      <div ref={this.mainDivRef} className={classes(panelStyle, summaryPanel)}>
+        {!waypoint && <MainSummary />}
+        {waypoint && (
+          <SimpleTabs id="edge_summary_main_tabs" defaultTab={0}>
+            <Tab style={summaryFont} eventKey={0} title={getLink({ ...sourceData, isInaccessible: true })}>
+              <MainSummary waypointEdge={false} />
+            </Tab>
+            <Tab style={summaryFont} eventKey={1} title={getLink({ ...destData, isInaccessible: true })}>
+              <MainSummary waypointEdge={true} />
+            </Tab>
+          </SimpleTabs>
         )}
-
-        {isTcp && (
-          <div className={summaryBodyTabs}>
-            <SimpleTabs id="edge_summary_flag_hosts_tabs" defaultTab={0} style={{ paddingBottom: '0.5rem' }}>
-              <Tab style={summaryFont} eventKey={0} title="Flags">
-                <div style={summaryFont}>
-                  <ResponseFlagsTable title="Response flags by code:" responses={edgeData.responses} />
-                </div>
-              </Tab>
-
-              <Tab style={summaryFont} eventKey={1} title="Hosts">
-                <div style={summaryFont}>
-                  <ResponseHostsTable title="Hosts by code:" responses={edgeData.responses} />
-                </div>
-              </Tab>
-            </SimpleTabs>
-
-            {hr()}
-
-            {this.renderCharts(edge, isGrpc, isHttp, isTcp, isRequests, isPF)}
-          </div>
-        )}
-
-        {!isGrpc && !isHttp && !isTcp && <div className={panelBodyStyle}>{renderNoTraffic()}</div>}
       </div>
     );
   }
@@ -461,8 +489,53 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
         [NodeType.AGGREGATE, NodeType.UNKNOWN].includes(sourceData.nodeType) || sourceData.isIstio
           ? 'destination'
           : 'source';
-
       const filtersTCP = ['tcp_sent', 'tcp_received'];
+
+      if (edgeData.waypoint?.fromEdge) {
+        const waypointMetricType = sourceMetricType;
+        const waypointMetricsNodeData = sourceData;
+        const waypointPromRequests = getNodeMetrics(
+          waypointMetricType,
+          waypointMetricsNodeData,
+          props,
+          filtersTCP,
+          direction,
+          'destination',
+          undefined, // TCP metrics include ambient by default (ztunnel already uses source/dest reporting)
+          undefined, // streams (tcp, grpc-messages) use dedicated metrics (i.e. no request_protocol label)
+          quantiles,
+          ['source_workload']
+        );
+        this.metricsPromise = makeCancelablePromise(waypointPromRequests);
+        this.metricsPromise.promise
+          .then(response => {
+            const metrics = response.data;
+
+            const sent = this.getNodeDataPoints(
+              metrics.tcp_sent,
+              NodeMetricType.WORKLOAD,
+              NodeMetricType.WORKLOAD,
+              destData,
+              isDestServiceEntry
+            );
+
+            const received = this.getNodeDataPoints(
+              isTcp ? metrics.tcp_received : metrics.grpc_received,
+              NodeMetricType.WORKLOAD,
+              NodeMetricType.WORKLOAD,
+              destData,
+              isDestServiceEntry
+            );
+
+            this.setState({
+              waypointSent: sent,
+              waypointReceived: received
+            });
+          })
+          .catch(error => {
+            console.debug(`SummaryPanelEdge: Ignore fetch error for waypoint metrics (canceled) ${error}`);
+          });
+      }
 
       promiseRequests = getNodeMetrics(
         metricType,
@@ -593,7 +666,8 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
     isHttp: boolean,
     isTcp: boolean,
     isRequests: boolean,
-    isPF: boolean
+    isPF: boolean,
+    waypointEdge?: boolean
   ): React.ReactNode => {
     if (!this.hasSupportedCharts(edge, isPF)) {
       return isGrpc || isHttp ? (
@@ -661,15 +735,31 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
           <StreamChart
             label="gRPC Message Traffic"
             sentRates={this.state.sent!}
-            receivedRates={this.state.received}
+            receivedRates={this.state.received!}
             unit="messages"
           />
         );
       }
     } else if (isTcp) {
-      streamChart = (
-        <StreamChart label="TCP Traffic" sentRates={this.state.sent} receivedRates={this.state.received} unit="bytes" />
-      );
+      if (waypointEdge && this.state.waypointSent && this.state.waypointReceived) {
+        streamChart = (
+          <StreamChart
+            label="TCP Traffic (Waypoint)"
+            sentRates={this.state.waypointSent}
+            receivedRates={this.state.waypointReceived}
+            unit="bytes"
+          />
+        );
+      } else {
+        streamChart = (
+          <StreamChart
+            label="TCP Traffic"
+            sentRates={this.state.sent}
+            receivedRates={this.state.received}
+            unit="bytes"
+          />
+        );
+      }
     }
 
     return (

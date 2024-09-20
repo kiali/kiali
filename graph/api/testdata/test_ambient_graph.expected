@@ -6,6 +6,39 @@
     "nodes": [
       {
         "data": {
+          "id": "759ea777f30ebc268ef182543a865ea4",
+          "nodeType": "workload",
+          "cluster": "Kubernetes",
+          "namespace": "bookinfo",
+          "workload": "waypoint",
+          "version": "latest",
+          "destServices": [
+            {
+              "cluster": "Kubernetes",
+              "namespace": "bookinfo",
+              "name": "details"
+            },
+            {
+              "cluster": "Kubernetes",
+              "namespace": "bookinfo",
+              "name": "reviews"
+            }
+          ],
+          "traffic": [
+            {
+              "protocol": "tcp",
+              "rates": {
+                "tcpIn": "100.00",
+                "tcpOut": "250.00"
+              }
+            }
+          ],
+          "healthData": null,
+          "isWaypoint": true
+        }
+      },
+      {
+        "data": {
           "id": "e37e8a43eb2b1196c888957b6f4b7e1c",
           "nodeType": "workload",
           "cluster": "Kubernetes",
@@ -68,7 +101,8 @@
               }
             }
           ],
-          "healthData": null
+          "healthData": null,
+          "isRoot": true
         }
       },
       {
@@ -103,40 +137,6 @@
           ],
           "healthData": null
         }
-      },
-      {
-        "data": {
-          "id": "759ea777f30ebc268ef182543a865ea4",
-          "nodeType": "workload",
-          "cluster": "Kubernetes",
-          "namespace": "bookinfo",
-          "workload": "waypoint",
-          "app": "waypoint",
-          "version": "latest",
-          "destServices": [
-            {
-              "cluster": "Kubernetes",
-              "namespace": "bookinfo",
-              "name": "details"
-            },
-            {
-              "cluster": "Kubernetes",
-              "namespace": "bookinfo",
-              "name": "reviews"
-            }
-          ],
-          "traffic": [
-            {
-              "protocol": "tcp",
-              "rates": {
-                "tcpIn": "100.00",
-                "tcpOut": "250.00"
-              }
-            }
-          ],
-          "healthData": null,
-          "isWaypoint": true
-        }
       }
     ],
     "edges": [
@@ -169,7 +169,6 @@
           "id": "1bd0160d76e993db9e821ca2dfb66242",
           "source": "1c14fb66e53814f9aada912a2fae5fad",
           "target": "759ea777f30ebc268ef182543a865ea4",
-          "display": "reverse",
           "traffic": {
             "protocol": "tcp",
             "rates": {
@@ -184,6 +183,33 @@
                   "details.bookinfo.svc.cluster.local": "50.0",
                   "reviews.bookinfo.svc.cluster.local": "50.0"
                 }
+              }
+            }
+          },
+          "waypoint": {
+            "direction": "to",
+            "fromEdge": {
+              "id": "e05fed112f9dbe986861ef94a04cce13",
+              "source": "1c14fb66e53814f9aada912a2fae5fad",
+              "target": "1c14fb66e53814f9aada912a2fae5fad",
+              "traffic": {
+                "protocol": "tcp",
+                "rates": {
+                  "tcp": "150.00"
+                },
+                "responses": {
+                  "-": {
+                    "flags": {
+                      "-": "100.0"
+                    },
+                    "hosts": {
+                      "productpage.bookinfo.svc.cluster.local": "100.0"
+                    }
+                  }
+                }
+              },
+              "waypoint": {
+                "direction": "from"
               }
             }
           }
@@ -215,34 +241,9 @@
       },
       {
         "data": {
-          "id": "5a462f4f82cf52e74960330f85181507",
-          "source": "759ea777f30ebc268ef182543a865ea4",
-          "target": "1c14fb66e53814f9aada912a2fae5fad",
-          "display": "hide",
-          "traffic": {
-            "protocol": "tcp",
-            "rates": {
-              "tcp": "150.00"
-            },
-            "responses": {
-              "-": {
-                "flags": {
-                  "-": "100.0"
-                },
-                "hosts": {
-                  "productpage.bookinfo.svc.cluster.local": "100.0"
-                }
-              }
-            }
-          }
-        }
-      },
-      {
-        "data": {
           "id": "e7f959973987d7b7e8fa18cae0b69c45",
           "source": "759ea777f30ebc268ef182543a865ea4",
           "target": "689c88683346fc919da3ef7fd2b05435",
-          "display": "hide",
           "traffic": {
             "protocol": "tcp",
             "rates": {
@@ -258,6 +259,9 @@
                 }
               }
             }
+          },
+          "waypoint": {
+            "direction": "from"
           }
         }
       },
@@ -266,7 +270,6 @@
           "id": "7334ac26b2d2cfd53640a99cf11861ff",
           "source": "759ea777f30ebc268ef182543a865ea4",
           "target": "e37e8a43eb2b1196c888957b6f4b7e1c",
-          "display": "hide",
           "traffic": {
             "protocol": "tcp",
             "rates": {
@@ -282,6 +285,9 @@
                 }
               }
             }
+          },
+          "waypoint": {
+            "direction": "from"
           }
         }
       }

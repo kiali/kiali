@@ -385,8 +385,8 @@ const getEdgeLabel = (edge: EdgeModel, nodeMap: NodeMap, settings: GraphPFSettin
   const edgeLabels = settings.edgeLabels;
   const isVerbose = data.isSelected;
   const includeUnits = isVerbose || numLabels(edgeLabels) > 1;
-  let labels = [] as string[];
 
+  let labels = [] as string[];
   if (edgeLabels.includes(EdgeLabelMode.TRAFFIC_RATE)) {
     let rate = 0;
     let pErr = 0;
@@ -414,6 +414,9 @@ const getEdgeLabel = (edge: EdgeModel, nodeMap: NodeMap, settings: GraphPFSettin
             break;
           case Protocol.TCP:
             labels.push(toFixedByteRate(rate, includeUnits));
+            if (data.waypoint?.direction === 'to' && data.waypoint?.fromEdge) {
+              labels.push(toFixedByteRate(data.waypoint.fromEdge.tcp, includeUnits));
+            }
             break;
           default:
             labels.push(toFixedRequestRate(rate, includeUnits));
@@ -451,7 +454,7 @@ const getEdgeLabel = (edge: EdgeModel, nodeMap: NodeMap, settings: GraphPFSettin
     }
   }
 
-  let label = labels.join('\n');
+  let label = labels.join(' | ');
 
   if (isVerbose) {
     const protocol = data.protocol;
@@ -512,10 +515,10 @@ const toFixedByteRate = (num: number, includeUnits: boolean): string => {
   num = safeNum(num);
   if (num < 1024.0) {
     const rate = num < 1.0 ? trimFixed(num.toFixed(2)) : num.toFixed(0);
-    return includeUnits ? `${rate}bps` : rate;
+    return includeUnits ? `${rate}bps` : `${rate}`;
   }
   const rate = trimFixed((num / 1024.0).toFixed(2));
-  return includeUnits ? `${rate}kps` : rate;
+  return includeUnits ? `${rate}kps` : `${rate}`;
 };
 
 const toFixedPercent = (num: number): string => {
@@ -589,10 +592,10 @@ const getPathStyle = (data: EdgeData): React.CSSProperties => {
 
 export const setEdgeOptions = (edge: EdgeModel, nodeMap: NodeMap, settings: GraphPFSettings): void => {
   const data = edge.data as EdgeData;
-  if (data.display === 'reverse') {
-    data.startTerminalType = data.protocol === Protocol.TCP ? EdgeTerminalType.square : EdgeTerminalType.directional;
+  if (data.waypoint?.fromEdge) {
+    data.startTerminalType = EdgeTerminalType.directional;
   }
-  data.endTerminalType = data.protocol === Protocol.TCP ? EdgeTerminalType.square : EdgeTerminalType.directional;
+  data.endTerminalType = EdgeTerminalType.directional;
   data.pathStyle = getPathStyle(data);
   data.tag = getEdgeLabel(edge, nodeMap, settings);
   data.tagStatus = getEdgeStatus(data);
