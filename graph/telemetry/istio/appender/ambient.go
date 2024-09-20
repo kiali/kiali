@@ -61,7 +61,6 @@ func (a AmbientAppender) handleWaypoints(trafficMap graph.TrafficMap) {
 	if len(waypointNodes) == 0 {
 		return
 	}
-
 	for _, n := range trafficMap {
 		// If not showing waypoints then delete edges going to a waypoint
 		if !a.ShowWaypoints {
@@ -77,9 +76,10 @@ func (a AmbientAppender) handleWaypoints(trafficMap graph.TrafficMap) {
 				toWaypointEdgeData := graph.WaypointEdgeInfo{
 					Direction: graph.WaypointEdgeDirectionTo,
 				}
-				for _, fromEdge := range waypoint.Edges {
+				for i, fromEdge := range waypoint.Edges {
 					if fromEdge.Dest.ID == n.ID {
 						toWaypointEdgeData.FromEdge = fromEdge
+						waypoint.Edges = append(waypoint.Edges[:i], waypoint.Edges[i+1:]...)
 					}
 				}
 				toEdge.Metadata[graph.Waypoint] = &toWaypointEdgeData
