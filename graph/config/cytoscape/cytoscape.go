@@ -126,8 +126,8 @@ type NodeData struct {
 }
 
 type WaypointEdge struct {
-	Direction string    `json:"direction,omitempty"` // to | from
-	FromEdge  *EdgeData `json:"fromEdge,omitempty"`  // for a 'to' waypoint edge, this is the return 'from' edge
+	Direction string    `json:"direction"`          // WaypointEdgeDirectionTo | WaypointEdgeDirectionFrom
+	FromEdge  *EdgeData `json:"fromEdge,omitempty"` // for a bi-directional 'to' waypoint edge, this is the return 'from' edge
 }
 
 type EdgeData struct {
@@ -454,7 +454,6 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 }
 
 func convertEdge(e graph.Edge, nodeID string) EdgeData {
-
 	sourceIDHash := nodeHash(nodeID)
 	destIDHash := nodeHash(e.Dest.ID)
 	protocol := ""
@@ -477,19 +476,15 @@ func convertEdge(e graph.Edge, nodeID string) EdgeData {
 		ed.SourcePrincipal = e.Metadata[graph.SourcePrincipal].(string)
 	}
 	if e.Metadata[graph.Waypoint] != nil {
-		if ed.Waypoint == nil {
-			ed.Waypoint = &WaypointEdge{}
+		waypointEdgeInfo := e.Metadata[graph.Waypoint].(*graph.WaypointEdgeInfo)
+		waypointEdge := WaypointEdge{
+			Direction: waypointEdgeInfo.Direction,
 		}
-		ed.Waypoint.Direction = e.Metadata[graph.Waypoint].(string)
-	}
-	if e.Metadata[graph.WaypointFrom] != nil {
-		if ed.Waypoint == nil {
-			ed.Waypoint = &WaypointEdge{}
+		if waypointEdgeInfo.FromEdge != nil {
+			fromEdgeData := convertEdge(*(waypointEdgeInfo.FromEdge), nodeID)
+			waypointEdge.FromEdge = &fromEdgeData
 		}
-		convertedEdge := e.Metadata[graph.WaypointFrom].(*graph.Edge)
-		cyWaypointEdge := convertEdge(*convertedEdge, convertedEdge.Source.ID)
-		addEdgeTelemetry(convertedEdge, &cyWaypointEdge)
-		ed.Waypoint.FromEdge = &cyWaypointEdge
+		ed.Waypoint = &waypointEdge
 	}
 
 	addEdgeTelemetry(&e, &ed)

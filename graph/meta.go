@@ -50,8 +50,7 @@ const (
 	ResponseTime          MetadataKey = "responseTime"
 	SourcePrincipal       MetadataKey = "sourcePrincipal"
 	Throughput            MetadataKey = "throughput"
-	Waypoint              MetadataKey = "waypoint" // Indicates if the traffic is "from" or "to" a waypoint proxy
-	WaypointFrom          MetadataKey = "waypointFrom"
+	Waypoint              MetadataKey = "waypoint" // Information for edges to or from a waypoint
 )
 
 // DestServicesMetadata key=Service.Key()

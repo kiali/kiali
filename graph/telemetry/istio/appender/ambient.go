@@ -7,8 +7,6 @@ import (
 )
 
 const AmbientAppenderName = "ambient"
-const WaypointFrom = "from"
-const WaypointTo = "to"
 
 // AmbientAppender applies Ambient logic to the graph.
 type AmbientAppender struct {
@@ -34,14 +32,6 @@ func (a AmbientAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *gr
 		return
 	}
 
-	// We may not actually need these now that things are flagged in the base graph gen
-	/*
-		waypoints, ok := globalInfo.Vendor[AmbientWaypoints]
-		if !ok {
-			return
-		}
-	*/
-
 	a.handleWaypoints(trafficMap)
 }
 
@@ -59,8 +49,10 @@ func (a AmbientAppender) handleWaypoints(trafficMap graph.TrafficMap) {
 			} else {
 				n.Metadata[graph.IsOutOfMesh] = false
 				for _, edge := range n.Edges {
-					// Just hide so we have all the information
-					edge.Metadata[graph.Waypoint] = WaypointFrom
+					// edges "from" the waypoint will typically be hidden as part of a bi-directional edge
+					edge.Metadata[graph.Waypoint] = &graph.WaypointEdgeInfo{
+						Direction: graph.WaypointEdgeDirectionFrom,
+					}
 				}
 			}
 		}
@@ -71,7 +63,7 @@ func (a AmbientAppender) handleWaypoints(trafficMap graph.TrafficMap) {
 	}
 
 	for _, n := range trafficMap {
-		// Delete edges
+		// If not showing waypoints then delete edges going to a waypoint
 		if !a.ShowWaypoints {
 			n.Edges = sliceutil.Filter(n.Edges, func(edge *graph.Edge) bool {
 				return waypointNodes[edge.Dest.ID] == nil
@@ -79,17 +71,19 @@ func (a AmbientAppender) handleWaypoints(trafficMap graph.TrafficMap) {
 			continue
 		}
 
-		// Find duplicates
-		for _, edge := range n.Edges {
-			if waypointNodes[edge.Dest.ID] != nil {
-				edge.Metadata[graph.Waypoint] = WaypointTo
-				for _, waypointEdge := range waypointNodes[edge.Dest.ID].Edges {
-					if waypointEdge.Dest.ID == n.ID {
-						edge.Metadata[graph.WaypointFrom] = waypointEdge
+		// Otherwise, when we have edges both to and from the waypoint, turn "to" edges into bi-directional edges
+		for _, toEdge := range n.Edges {
+			if waypoint, found := waypointNodes[toEdge.Dest.ID]; found {
+				toWaypointEdgeData := graph.WaypointEdgeInfo{
+					Direction: graph.WaypointEdgeDirectionTo,
+				}
+				for _, fromEdge := range waypoint.Edges {
+					if fromEdge.Dest.ID == n.ID {
+						toWaypointEdgeData.FromEdge = fromEdge
 					}
 				}
+				toEdge.Metadata[graph.Waypoint] = &toWaypointEdgeData
 			}
 		}
-
 	}
 }

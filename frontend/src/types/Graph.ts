@@ -485,9 +485,8 @@ export interface DecoratedGraphNodeData extends GraphNodeData {
 }
 
 export interface WaypointEdge {
-  direction?: string;
-  // Waypoint edge
-  fromEdge?: DecoratedGraphEdgeData;
+  direction: 'to' | 'from';
+  fromEdge?: DecoratedGraphEdgeData; // The edge returning *from* the waypoint when there is bi-directional traffic
 }
 
 // Edge data after decorating at fetch-time (what is mainly used by ui code)
