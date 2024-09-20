@@ -79,7 +79,7 @@ install_kiali_cr() {
   local tracing_external_url=""
   if [ "${IS_OPENSHIFT}" == "true" ]; then
     # we installed TempoStack CR configured for "route" when on OpenShift, so look for the route URL
-    tracing_external_url="$(${OC} get route -n ${TEMPO_NAMESPACE} -l app.kubernetes.io/name=tempo,app.kubernetes.io/component=query-frontend -o jsonpath='http://{..spec.host}')"
+    tracing_external_url="$(${OC} get route -n ${TEMPO_NAMESPACE} -l app.kubernetes.io/name=tempo,app.kubernetes.io/component=query-frontend -o jsonpath='https://{..spec.host}')"
     infomsg "The tracing external URL is the OpenShift route located at [${tracing_external_url}]"
   else
     # we installed TempoStack CR configured for "ingress" when on vanilla Kubernetes, so look for the ingress URL
