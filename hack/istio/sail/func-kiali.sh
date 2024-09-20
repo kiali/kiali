@@ -131,7 +131,7 @@ spec:
     tracing:
       enabled: true
       provider: tempo
-      in_cluster_url: "http://tempo-tempo-query-frontend.${TEMPO_NAMESPACE}.svc.cluster.local:3200"
+      in_cluster_url: "http://tempo-tempo-query-frontend.${TEMPO_NAMESPACE}:3200"
       url: "${tracing_external_url}"
       use_grpc: false
 EOM
