@@ -1,4 +1,10 @@
-import { filterByName, IstioConfigItem, IstioConfigList, toIstioItems } from '../../../types/IstioConfigList';
+import {
+  dicIstioTypeToGVK,
+  filterByName,
+  IstioConfigItem,
+  IstioConfigList,
+  toIstioItems
+} from '../../../types/IstioConfigList';
 import * as IstioConfigListFilters from '../FiltersAndSorts';
 import { SortField } from '../../../types/SortFilters';
 
@@ -27,11 +33,36 @@ const mockIstioConfigList = (names: string[]): IstioConfigList => {
     telemetries: []
   };
   names.forEach(name => {
-    testData.authorizationPolicies.push({ metadata: { name: `${name}0` }, spec: {} });
-    testData.destinationRules.push({ metadata: { name: `${name}1` }, spec: {} });
-    testData.gateways.push({ metadata: { name: `${name}2` }, spec: {} });
-    testData.serviceEntries.push({ metadata: { name: `${name}3` }, spec: {} });
-    testData.virtualServices.push({ metadata: { name: `${name}4` }, spec: {} });
+    testData.authorizationPolicies.push({
+      metadata: { name: `${name}0` },
+      spec: {},
+      kind: dicIstioTypeToGVK['AuthorizationPolicy'].Kind,
+      apiVersion: `${dicIstioTypeToGVK['AuthorizationPolicy'].Group}/${dicIstioTypeToGVK['AuthorizationPolicy'].Version}`
+    });
+    testData.destinationRules.push({
+      metadata: { name: `${name}1` },
+      spec: {},
+      kind: dicIstioTypeToGVK['DestinationRule'].Kind,
+      apiVersion: `${dicIstioTypeToGVK['DestinationRule'].Group}/${dicIstioTypeToGVK['DestinationRule'].Version}`
+    });
+    testData.gateways.push({
+      metadata: { name: `${name}2` },
+      spec: {},
+      kind: dicIstioTypeToGVK['Gateway'].Kind,
+      apiVersion: `${dicIstioTypeToGVK['Gateway'].Group}/${dicIstioTypeToGVK['Gateway'].Version}`
+    });
+    testData.serviceEntries.push({
+      metadata: { name: `${name}3` },
+      spec: {},
+      kind: dicIstioTypeToGVK['ServiceEntry'].Kind,
+      apiVersion: `${dicIstioTypeToGVK['ServiceEntry'].Group}/${dicIstioTypeToGVK['ServiceEntry'].Version}`
+    });
+    testData.virtualServices.push({
+      metadata: { name: `${name}4` },
+      spec: {},
+      kind: dicIstioTypeToGVK['VirtualService'].Kind,
+      apiVersion: `${dicIstioTypeToGVK['VirtualService'].Group}/${dicIstioTypeToGVK['VirtualService'].Version}`
+    });
   });
   return testData;
 };
