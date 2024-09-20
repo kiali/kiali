@@ -75,18 +75,35 @@ install_kiali_cr() {
     fi
   fi
 
-  # If on OpenShift we can know what the tracing external URL is; otherwise, the external URL will be left blank.
+  # Try to determine the external URL for the tracing UI
   local tracing_external_url=""
   if [ "${IS_OPENSHIFT}" == "true" ]; then
+    # we installed TempoStack CR configured for "route" when on OpenShift, so look for the route URL
     tracing_external_url="$(${OC} get route -n ${TEMPO_NAMESPACE} -l app.kubernetes.io/name=tempo,app.kubernetes.io/component=query-frontend -o jsonpath='https://{..spec.host}')"
     infomsg "The tracing external URL is the OpenShift route located at [${tracing_external_url}]"
   else
-    local tracing_ingress_host="$(${OC} -n ${TEMPO_NAMESPACE} get svc -l app.kubernetes.io/name=tempo,app.kubernetes.io/component=query-frontend -o jsonpath='{..status.loadBalancer.ingress[0].ip}' 2> /dev/null)"
+    # we installed TempoStack CR configured for "ingress" when on vanilla Kubernetes, so look for the ingress URL
+    local tracing_ingress_host="$(${OC} -n ${TEMPO_NAMESPACE} get ingress -l app.kubernetes.io/name=tempo,app.kubernetes.io/component=query-frontend -o jsonpath='{..status.loadBalancer.ingress[0].ip}' 2> /dev/null)"
     if [ -n "${tracing_ingress_host}" ]; then
-      tracing_external_url="http://${tracing_ingress_host}:9095" # TODO: I don't know what port; looks like one of: 3200,9095,16685,16686,16687
+      tracing_external_url="http://${tracing_ingress_host}:80"
       infomsg "The tracing external URL is the LoadBalancer endpoint located at [${tracing_external_url}]"
     else
       infomsg "The tracing external URL cannot be determined. Leaving it empty in the Kiali CR."
+    fi
+  fi
+
+  # Try to determine the external URL for the Grafana UI
+  local grafana_external_url=""
+  if [ "${IS_OPENSHIFT}" == "true" ]; then
+    grafana_external_url="$(${OC} get route -n ${CONTROL_PLANE_NAMESPACE} grafana -o jsonpath='https://{..spec.host}')"
+    infomsg "The Grafana external URL is the OpenShift route located at [${grafana_external_url}]"
+  else
+    local grafana_ingress_host="$(${OC} -n ${CONTROL_PLANE_NAMESPACE} get svc grafana -o jsonpath='{..status.loadBalancer.ingress[0].ip}' 2> /dev/null)"
+    if [ -n "${grafana_ingress_host}" ]; then
+      grafana_external_url="http://${grafana_ingress_host}:3000"
+      infomsg "The Grafana external URL is the LoadBalancer endpoint located at [${grafana_external_url}]"
+    else
+      infomsg "The Grafana external URL cannot be determined. Leaving it empty in the Kiali CR."
     fi
   fi
 
@@ -107,6 +124,10 @@ spec:
   auth:
     strategy: ${auth_strategy}
   external_services:
+    grafana:
+      enabled: true
+      in_cluster_url: "http://grafana.${CONTROL_PLANE_NAMESPACE}:3000"
+      url: "${grafana_external_url}"
     tracing:
       enabled: true
       provider: tempo
