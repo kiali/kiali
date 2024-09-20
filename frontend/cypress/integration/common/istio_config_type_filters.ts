@@ -57,7 +57,7 @@ When('chosen from the {string} dropdown', (placeholder: string) => {
   cy.intercept({
     pathname: '**/api/istio/config',
     query: {
-      objects: 'authorizationpolicies'
+      objects: 'security.istio.io/v1, Kind=AuthorizationPolicy'
     }
   }).as('filterActive');
 
@@ -73,7 +73,7 @@ When('multiple filters are chosen', () => {
   cy.intercept({
     pathname: '**/api/istio/config',
     query: {
-      objects: 'authorizationpolicies,destinationrules'
+      objects: 'security.istio.io/v1, Kind=AuthorizationPolicy;networking.istio.io/v1, Kind=DestinationRule'
     }
   }).as('multipleFilters');
 
