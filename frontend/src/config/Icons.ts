@@ -32,6 +32,18 @@ export type IconType = {
 // or from the font awesome site: https://fontawesome.com/icons
 const mutIcons = {
   istio: {
+    arrowLeftRight: {
+      ascii: '\u21c4 ',
+      name: 'arrowLeftRight',
+      text: 'Arrow Left Right',
+      type: 'fa'
+    },
+    arrowLeftRightV: {
+      ascii: '\u21c5 ',
+      name: 'arrowLeftRightV',
+      text: 'Arrow Left Right Vertical',
+      type: 'fa'
+    },
     circuitBreaker: {
       ascii: '\uf0e7 ',
       className: 'fa fa-bolt',

@@ -12,7 +12,7 @@ import {
   TrafficRate,
   UNKNOWN
 } from '../../types/Graph';
-import { getLink, renderBadgedLink } from './SummaryLink';
+import { renderBadgedLink } from './SummaryLink';
 import {
   getDatapoints,
   getNodeMetrics,
@@ -40,7 +40,7 @@ import { Edge } from '@patternfly/react-topology';
 import { classes } from 'typestyle';
 import { panelBodyStyle, panelHeadingStyle, panelStyle } from './SummaryPanelStyle';
 import { ApiResponse } from 'types/Api';
-import { serverConfig } from 'config';
+import { icons, serverConfig } from 'config';
 
 type SummaryPanelEdgeMetricsState = {
   errRates: Datapoint[];
@@ -57,6 +57,7 @@ type SummaryPanelEdgeMetricsState = {
 };
 
 type SummaryPanelEdgeState = SummaryPanelEdgeMetricsState & {
+  activePanel: string;
   edge: any;
   loading: boolean;
   metricsLoadError: string | null;
@@ -74,10 +75,16 @@ const defaultMetricsState: SummaryPanelEdgeMetricsState = {
   unit: 'ms'
 };
 
+enum PanelType {
+  Main = 'main',
+  Waypoint = 'waypoint'
+}
+
 const defaultState: SummaryPanelEdgeState = {
   edge: null,
   loading: false,
   metricsLoadError: null,
+  activePanel: PanelType.Main,
   ...defaultMetricsState
 };
 
@@ -87,6 +94,15 @@ const principalStyle = kialiStyle({
   textOverflow: 'ellipsis',
   width: '100%',
   whiteSpace: 'nowrap'
+});
+
+const switchWaypointIcon = kialiStyle({
+  marginLeft: '95%',
+  marginTop: '-40px'
+});
+
+const hideStyle = kialiStyle({
+  display: 'none'
 });
 
 export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, SummaryPanelEdgeState> {
@@ -132,6 +148,15 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
       this.metricsPromise.cancel();
     }
   }
+
+  updateTab = (e: React.MouseEvent<HTMLAnchorElement>): void => {
+    e.preventDefault();
+    if (this.state.activePanel === PanelType.Main) {
+      this.setState({ activePanel: PanelType.Waypoint });
+    } else {
+      this.setState({ activePanel: PanelType.Main });
+    }
+  };
 
   render(): React.ReactNode {
     const isPF = !!this.props.data.isPF;
@@ -180,7 +205,18 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
           <div className={panelHeadingStyle}>
             {getTitle(`Edge (${prettyProtocol(protocol)})`)}
             {renderBadgedLink(source, undefined, 'From:  ')}
-            {renderBadgedLink(dest, undefined, 'To:        ')}
+            {renderBadgedLink(dest, undefined, 'To:        ')}{' '}
+            {waypoint && (
+              <div className={switchWaypointIcon}>
+                <a
+                  href="#"
+                  onClick={this.updateTab}
+                  style={{ textDecoration: 'none', cursor: 'pointer', fontSize: '1.5em' }}
+                >
+                  {icons.istio.arrowLeftRightV.ascii}
+                </a>
+              </div>
+            )}
           </div>
 
           {hasSecurity && <SecurityBlock />}
@@ -277,14 +313,14 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
       <div ref={this.mainDivRef} className={classes(panelStyle, summaryPanel)}>
         {!waypoint && <MainSummary />}
         {waypoint && (
-          <SimpleTabs id="edge_summary_main_tabs" defaultTab={0}>
-            <Tab style={summaryFont} eventKey={0} title={getLink({ ...sourceData, isInaccessible: true })}>
+          <>
+            <div className={this.state.activePanel === 'main' ? '' : hideStyle}>
               <MainSummary waypointEdge={false} />
-            </Tab>
-            <Tab style={summaryFont} eventKey={1} title={getLink({ ...destData, isInaccessible: true })}>
+            </div>
+            <div className={this.state.activePanel === 'waypoint' ? '' : hideStyle}>
               <MainSummary waypointEdge={true} />
-            </Tab>
-          </SimpleTabs>
+            </div>
+          </>
         )}
       </div>
     );
