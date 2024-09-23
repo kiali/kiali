@@ -3,20 +3,14 @@ import { isMultiCluster, Paths } from '../../config';
 import { Link, useLocation } from 'react-router-dom-v5-compat';
 import { Breadcrumb, BreadcrumbItem } from '@patternfly/react-core';
 import { FilterSelected } from '../Filters/StatefulFilters';
-import { dicIstioType } from '../../types/IstioConfigList';
 import { HistoryManager } from '../../app/History';
 import { useKialiTranslation } from 'utils/I18nUtils';
+import { kindToStringIncludeK8s } from '../../utils/IstioConfigUtils';
 
 const istioName = 'Istio Config';
-const namespaceRegex = /namespaces\/([a-z0-9-]+)\/([\w-.]+)\/([\w-.*]+)(\/([\w-.]+))?(\/([\w-.]+))?/;
 
 const capitalize = (str: string): string => {
   return str.charAt(0).toUpperCase() + str.slice(1);
-};
-
-const getIstioType = (rawType: string): string => {
-  const istioType = Object.keys(dicIstioType).find(key => dicIstioType[key] === rawType);
-  return istioType ? istioType : capitalize(rawType);
 };
 
 const cleanFilters = (): void => {
@@ -34,12 +28,12 @@ export const BreadcrumbView: React.FC = () => {
   const { t } = useKialiTranslation();
 
   React.useEffect(() => {
-    const match = pathname.match(namespaceRegex) ?? [];
-    const ns = match[1];
-    const page = Paths[match[2].toUpperCase()];
-    const istioType = match[3];
+    const match = pathname.split('/');
+    const ns = match[2];
+    const page = Paths[match[3].toUpperCase()];
+    const istioType = page === 'istio' ? kindToStringIncludeK8s(match[4], match[6]) : '';
     const urlParams = new URLSearchParams(search);
-    const itemPage = page !== 'istio' ? match[3] : match[5];
+    const itemPage = page !== 'istio' ? match[3] : match[7];
 
     setCluster(HistoryManager.getClusterName(urlParams));
     setIstioType(istioType);
@@ -90,11 +84,8 @@ export const BreadcrumbView: React.FC = () => {
 
       {isIstio && (
         <BreadcrumbItem>
-          <Link
-            to={`/${pathItem}?namespaces=${namespace}&type=${dicIstioType[istioType || '']}`}
-            onClick={cleanFilters}
-          >
-            {istioType ? getIstioType(istioType) : istioType}
+          <Link to={`/${pathItem}?namespaces=${namespace}&type=${istioType}`} onClick={cleanFilters}>
+            {istioType}
           </Link>
         </BreadcrumbItem>
       )}

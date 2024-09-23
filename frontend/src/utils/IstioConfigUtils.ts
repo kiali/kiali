@@ -256,7 +256,7 @@ export function stringToGVK(gvk: string): GroupVersionKind {
   const apiParts = parts[0].split('/');
   if (apiParts.length !== 2) {
     // should not happen
-    return { Group: '', Version: '', Kind: gvk };
+    return { Group: '', Version: '', Kind: parts[1] };
   }
   return { Group: apiParts[0], Version: apiParts[1], Kind: parts[1] };
 }

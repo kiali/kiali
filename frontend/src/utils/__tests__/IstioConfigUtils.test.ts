@@ -1,4 +1,12 @@
-import { getIstioObjectGVK, gvkToString, isServerHostValid, isValidUrl, mergeJsonPatch } from '../IstioConfigUtils';
+import {
+  getIstioObjectGVK,
+  gvkToString,
+  isServerHostValid,
+  isValidUrl,
+  kindToStringIncludeK8s,
+  mergeJsonPatch,
+  stringToGVK
+} from '../IstioConfigUtils';
 import { dicIstioTypeToGVK } from '../../types/IstioConfigList';
 
 describe('Validate JSON Patchs', () => {
@@ -146,5 +154,52 @@ describe('Validate converting GroupVersionKind To String', () => {
   it('Validate it returns Kind if both Group and Version are empty', () => {
     const result = gvkToString({ Group: '', Version: '', Kind: 'Gateway' });
     expect(result).toBe('Gateway');
+  });
+});
+
+describe('Validate converting String To GroupVersionKind', () => {
+  it('Validate the correct GVK string', () => {
+    const gvk = 'networking.istio.io/v1,VirtualService';
+    const result = stringToGVK(gvk);
+    expect(result).toEqual({ Group: 'networking.istio.io', Version: 'v1', Kind: 'VirtualService' });
+  });
+
+  it('Validate the Kind only for Workloads', () => {
+    const gvk = 'workloads';
+    const result = stringToGVK(gvk);
+    expect(result).toEqual({ Group: '', Version: '', Kind: 'workloads' });
+  });
+
+  it('Check invalid group/version format, Kind is returned only', () => {
+    const gvk = 'invalidFormat,VirtualService';
+    const result = stringToGVK(gvk);
+    expect(result).toEqual({ Group: '', Version: '', Kind: 'VirtualService' });
+  });
+});
+
+describe('Validate Kind To String considering api for K8s', () => {
+  it('return an empty string if kind is undefined', () => {
+    const result = kindToStringIncludeK8s('networking.istio.io/v1', undefined);
+    expect(result).toBe('');
+  });
+
+  it('return the kind unchanged if apiVersion is undefined', () => {
+    const result = kindToStringIncludeK8s(undefined, 'VirtualService');
+    expect(result).toBe('VirtualService');
+  });
+
+  it('return the kind unchanged if apiVersion does not include "k8s"', () => {
+    const result = kindToStringIncludeK8s('networking.istio.io/v1', 'VirtualService');
+    expect(result).toBe('VirtualService');
+  });
+
+  it('return "K8s" prefixed to the kind if apiVersion includes "k8s"', () => {
+    const result = kindToStringIncludeK8s('k8s.networking.io/v1', 'Gateway');
+    expect(result).toBe('K8sGateway');
+  });
+
+  it('both apiVersion and kind are undefined', () => {
+    const result = kindToStringIncludeK8s(undefined, undefined);
+    expect(result).toBe('');
   });
 });
