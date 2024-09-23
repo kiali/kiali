@@ -36,6 +36,7 @@ import { ServiceOverview } from '../../types/ServiceList';
 import { KialiAppState } from '../../store/Store';
 import { connect } from 'react-redux';
 import { renderDisabledDropdownOption } from 'utils/DropdownUtils';
+import { t } from 'utils/I18nUtils';
 
 type ReduxProps = {
   istioAPIEnabled: boolean;
@@ -107,7 +108,6 @@ const ServiceWizardDropdownComponent: React.FC<Props> = (props: Props) => {
   };
 
   const onAction = (key: string): void => {
-
     const updateLabel = getWizardUpdateLabel(props.virtualServices, props.k8sHTTPRoutes, props.k8sGRPCRoutes);
 
     switch (key) {
@@ -163,30 +163,16 @@ const ServiceWizardDropdownComponent: React.FC<Props> = (props: Props) => {
       props.cluster
     )
       .then(_results => {
+        AlertUtils.addSuccess(`Istio Config deleted for ${props.serviceName} service.`);
+
         setIsDeleting(false);
         props.onChange();
       })
       .catch(error => {
         AlertUtils.addError('Could not delete Istio config objects.', error);
+
         setIsDeleting(false);
       });
-  };
-
-  const renderDropdownItems = (): React.ReactNode[] => {
-    return [
-      <ServiceWizardActionsDropdownGroup
-        key="service_wizard_actions_dropdown_group"
-        isDisabled={isDeleting || props.readOnly}
-        virtualServices={props.virtualServices}
-        destinationRules={props.destinationRules}
-        k8sHTTPRoutes={props.k8sHTTPRoutes || []}
-        k8sGRPCRoutes={props.k8sGRPCRoutes || []}
-        annotations={props.annotations}
-        istioPermissions={props.istioPermissions}
-        onAction={onAction}
-        onDelete={onAction}
-      />
-    ];
   };
 
   const onChangeAnnotations = (annotations: { [key: string]: string }): void => {
@@ -226,7 +212,7 @@ const ServiceWizardDropdownComponent: React.FC<Props> = (props: Props) => {
           isExpanded={isActionsOpen}
           isDisabled={!validActions}
         >
-          Actions
+          {t('Actions')}
         </MenuToggle>
       )}
       isOpen={isActionsOpen}
@@ -234,7 +220,20 @@ const ServiceWizardDropdownComponent: React.FC<Props> = (props: Props) => {
       onSelect={onActionsSelect}
       popperProps={{ position: 'right' }}
     >
-      <DropdownList>{renderDropdownItems()}</DropdownList>
+      <DropdownList>
+        <ServiceWizardActionsDropdownGroup
+          key="service_wizard_actions_dropdown_group"
+          isDisabled={isDeleting || props.readOnly}
+          virtualServices={props.virtualServices}
+          destinationRules={props.destinationRules}
+          k8sHTTPRoutes={props.k8sHTTPRoutes ?? []}
+          k8sGRPCRoutes={props.k8sGRPCRoutes ?? []}
+          annotations={props.annotations}
+          istioPermissions={props.istioPermissions}
+          onAction={onAction}
+          onDelete={onAction}
+        />
+      </DropdownList>
     </Dropdown>
   );
   return (

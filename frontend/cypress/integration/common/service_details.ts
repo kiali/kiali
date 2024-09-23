@@ -9,9 +9,20 @@ Then('sd::user sees a list with content {string}', (tab: string) => {
   cy.get('.pf-v5-c-tabs__list').contains(tab);
 });
 
-Then('sd::user sees the actions button', () => {
-  cy.getBySel('service-actions-toggle').should('be.visible').click();
-  cy.getBySel('service-actions-dropdown').contains('Request Routing');
+Then('sd::user sees the service actions', () => {
+  // In OSSMC, the service actions toggle does not exist. Service actions are integrated in the minigraph menu
+  if (Cypress.env('OSSMC')) {
+    cy.intercept(`**/api/**/services/**/graph*`).as('serviceMinigraph');
+    cy.wait('@serviceMinigraph');
+
+    cy.waitForReact();
+
+    cy.get('button#minigraph-toggle').should('be.visible').click();
+  } else {
+    cy.get('button[data-test="service-actions-toggle"]').should('be.visible').click();
+  }
+
+  cy.getBySel('request_routing').contains('Request Routing');
 });
 
 Then('sd::user sees {string} details information for service {string}', (name: string, version: string) => {
