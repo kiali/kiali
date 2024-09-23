@@ -33,6 +33,7 @@
   "Configuration": "Configuration",
   "Configuration:": "Configuration:",
   "Confirm": "Confirm",
+  "Confirm {{modalType}}": "Confirm {{modalType}}",
   "Contextual Menu": "Contextual Menu",
   "Contextual menu on nodes": "Contextual menu on nodes",
   "Control plane": "控制平面",
@@ -122,6 +123,7 @@
   "Last": "最近的",
   "Last {{duration}}": "Last {{duration}}",
   "Layout selection": "Layout selection",
+  "Leave": "Leave",
   "Legend": "Legend",
   "List view": "列表视图",
   "Loading actions...": "Loading actions...",
@@ -184,6 +186,7 @@
   "Present": "Present",
   "Proxy push time": "代理推送时间",
   "Refresh interval": "Refresh interval",
+  "Reload": "Reload",
   "Replay": "重放",
   "Replay...": "重放...",
   "Request Timeout": "Request Timeout",
@@ -265,5 +268,6 @@
   "Workload": "Workload",
   "Workload Entry": "Workload Entry",
   "Workloads": "工作负载",
+  "You have unsaved changes, are you sure you want to {{modalType}}?": "You have unsaved changes, are you sure you want to {{modalType}}?",
   "Zoom": "Zoom"
 }
