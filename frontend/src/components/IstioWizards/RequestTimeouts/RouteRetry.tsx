@@ -68,7 +68,7 @@ export class RouteRetry extends React.Component<RouteRetryProps> {
               />
               <FormHelperText>
                 <HelperText>
-                  <HelperTextItem>{isValid(this.props.isValidRetry) ? t(tryTimeoutMsg) : t(tryTimeoutMsg)}</HelperTextItem>
+                  <HelperTextItem>{t(tryTimeoutMsg)}</HelperTextItem>
                 </HelperText>
               </FormHelperText>
             </FormGroup>

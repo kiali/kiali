@@ -71,7 +71,7 @@ export class AbortFault extends React.Component<Props> {
             />
             <FormHelperText>
               <HelperText>
-                <HelperTextItem>{isValid(this.props.isValid) ? t(httpStatusMsg) : t(httpStatusMsg)}</HelperTextItem>
+                <HelperTextItem>{t(httpStatusMsg)}</HelperTextItem>
               </HelperText>
             </FormHelperText>
           </FormGroup>
