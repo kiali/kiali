@@ -10,9 +10,10 @@ export type RouteTimeoutProps = {
   onTimeout: (isTimeout: boolean, timeout: string) => void;
 };
 
+const timeoutMsg = t('Timeout for HTTP requests. Format: 1h/1m/1s/1ms. MUST be >=1ms.');
+
 export class RouteTimeout extends React.Component<RouteTimeoutProps> {
   render() {
-    const timeoutMsg = t('Timeout for HTTP requests. Format: 1h/1m/1s/1ms. MUST be >=1ms.');
     return (
       <>
         <FormGroup label={t('Add HTTP Timeout')} fieldId="timeoutSwitch">
@@ -36,7 +37,7 @@ export class RouteTimeout extends React.Component<RouteTimeoutProps> {
             />
             <FormHelperText>
               <HelperText>
-                <HelperTextItem>{timeoutMsg}</HelperTextItem>
+                <HelperTextItem>{t(timeoutMsg)}</HelperTextItem>
               </HelperText>
             </FormHelperText>
           </FormGroup>

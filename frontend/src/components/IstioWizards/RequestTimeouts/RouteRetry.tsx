@@ -12,9 +12,10 @@ export type RouteRetryProps = {
   onRetry: (isRetry: boolean, retries: HTTPRetry) => void;
 };
 
+const tryTimeoutMsg = t('Timeout per retry attempt for a given request. Format: 1h/1m/1s/1ms. MUST be >=1ms.');
+
 export class RouteRetry extends React.Component<RouteRetryProps> {
   render() {
-    const tryTimeoutMsg = t('Timeout per retry attempt for a given request. Format: 1h/1m/1s/1ms. MUST be >=1ms.');
     return (
       <>
         <FormGroup label={t('Add HTTP Retry')} fieldId="retrySwitch">
@@ -67,7 +68,7 @@ export class RouteRetry extends React.Component<RouteRetryProps> {
               />
               <FormHelperText>
                 <HelperText>
-                  <HelperTextItem>{isValid(this.props.isValidRetry) ? tryTimeoutMsg : tryTimeoutMsg}</HelperTextItem>
+                  <HelperTextItem>{isValid(this.props.isValidRetry) ? t(tryTimeoutMsg) : t(tryTimeoutMsg)}</HelperTextItem>
                 </HelperText>
               </FormHelperText>
             </FormGroup>

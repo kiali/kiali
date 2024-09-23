@@ -12,9 +12,10 @@ type Props = {
   onAbort: (aborted: boolean, abort: Abort) => void;
 };
 
+const httpStatusMsg = t('HTTP status code to use to abort the Http request.');
+
 export class AbortFault extends React.Component<Props> {
   render() {
-    const httpStatusMsg = t('HTTP status code to use to abort the Http request.');
     return (
       <>
         <FormGroup label={t('Add HTTP Abort')} fieldId="abortSwitch">
@@ -70,7 +71,7 @@ export class AbortFault extends React.Component<Props> {
             />
             <FormHelperText>
               <HelperText>
-                <HelperTextItem>{isValid(this.props.isValid) ? httpStatusMsg : httpStatusMsg}</HelperTextItem>
+                <HelperTextItem>{isValid(this.props.isValid) ? t(httpStatusMsg) : t(httpStatusMsg)}</HelperTextItem>
               </HelperText>
             </FormHelperText>
           </FormGroup>
