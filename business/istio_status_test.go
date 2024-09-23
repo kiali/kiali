@@ -895,11 +895,11 @@ func defaultAddOnCalls(grafana, prom *int) map[string]addOnsSetup {
 
 func addonAddMockUrls(baseUrl string, conf *config.Config, overrideUrl bool) *config.Config {
 	conf.ExternalServices.Grafana.Enabled = true
-	conf.ExternalServices.Grafana.InClusterURL = baseUrl + "/grafana/mock"
+	conf.ExternalServices.Grafana.InternalURL = baseUrl + "/grafana/mock"
 	conf.ExternalServices.Grafana.IsCore = false
 
 	conf.ExternalServices.Tracing.Enabled = true
-	conf.ExternalServices.Tracing.InClusterURL = baseUrl + "/tracing/mock"
+	conf.ExternalServices.Tracing.InternalURL = baseUrl + "/tracing/mock"
 	conf.ExternalServices.Tracing.IsCore = false
 
 	conf.ExternalServices.Prometheus.URL = baseUrl + "/prometheus/mock"
@@ -909,8 +909,8 @@ func addonAddMockUrls(baseUrl string, conf *config.Config, overrideUrl bool) *co
 	conf.ExternalServices.CustomDashboards.IsCore = false
 
 	if overrideUrl {
-		conf.ExternalServices.Grafana.HealthCheckUrl = conf.ExternalServices.Grafana.InClusterURL
-		conf.ExternalServices.Grafana.InClusterURL = baseUrl + "/grafana/wrong"
+		conf.ExternalServices.Grafana.HealthCheckUrl = conf.ExternalServices.Grafana.InternalURL
+		conf.ExternalServices.Grafana.InternalURL = baseUrl + "/grafana/wrong"
 
 		conf.ExternalServices.Prometheus.HealthCheckUrl = conf.ExternalServices.Prometheus.URL
 		conf.ExternalServices.Prometheus.URL = baseUrl + "/prometheus/wrong"

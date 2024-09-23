@@ -48,8 +48,8 @@ func TestGetGrafanaInfoDisabled(t *testing.T) {
 
 func TestGetGrafanaInfoExternal(t *testing.T) {
 	conf := config.NewConfig()
-	conf.ExternalServices.Grafana.InClusterURL = ""
-	conf.ExternalServices.Grafana.URL = "http://grafana-external:3001"
+	conf.ExternalServices.Grafana.InternalURL = ""
+	conf.ExternalServices.Grafana.ExternalURL = "http://grafana-external:3001"
 	conf.ExternalServices.Grafana.Dashboards = dashboardsConfig
 
 	grafana := grafana.NewService(conf, kubetest.NewFakeK8sClient())
@@ -67,9 +67,9 @@ func TestGetGrafanaInfoExternal(t *testing.T) {
 
 func TestGetGrafanaInfoInCluster(t *testing.T) {
 	conf := config.NewConfig()
-	conf.ExternalServices.Grafana.URL = "http://grafana-external:3001"
+	conf.ExternalServices.Grafana.ExternalURL = "http://grafana-external:3001"
 	conf.ExternalServices.Grafana.Dashboards = dashboardsConfig
-	conf.ExternalServices.Grafana.InClusterURL = "http://grafana.istio-system:3001"
+	conf.ExternalServices.Grafana.InternalURL = "http://grafana.istio-system:3001"
 
 	grafana := grafana.NewService(conf, kubetest.NewFakeK8sClient())
 
@@ -86,8 +86,8 @@ func TestGetGrafanaInfoInCluster(t *testing.T) {
 
 func TestGetGrafanaInfoGetError(t *testing.T) {
 	conf := config.NewConfig()
-	conf.ExternalServices.Grafana.InClusterURL = ""
-	conf.ExternalServices.Grafana.URL = "http://grafana-external:3001"
+	conf.ExternalServices.Grafana.InternalURL = ""
+	conf.ExternalServices.Grafana.ExternalURL = "http://grafana-external:3001"
 	conf.ExternalServices.Grafana.Dashboards = dashboardsConfig
 
 	grafana := grafana.NewService(conf, kubetest.NewFakeK8sClient())
@@ -103,8 +103,8 @@ func TestGetGrafanaInfoGetError(t *testing.T) {
 
 func TestGetGrafanaInfoInvalidDashboard(t *testing.T) {
 	conf := config.NewConfig()
-	conf.ExternalServices.Grafana.InClusterURL = ""
-	conf.ExternalServices.Grafana.URL = "http://grafana-external:3001"
+	conf.ExternalServices.Grafana.InternalURL = ""
+	conf.ExternalServices.Grafana.ExternalURL = "http://grafana-external:3001"
 	conf.ExternalServices.Grafana.Dashboards = dashboardsConfig
 
 	grafana := grafana.NewService(conf, kubetest.NewFakeK8sClient())
@@ -121,8 +121,8 @@ func TestGetGrafanaInfoInvalidDashboard(t *testing.T) {
 
 func TestGetGrafanaInfoWithoutLeadingSlashPath(t *testing.T) {
 	conf := config.NewConfig()
-	conf.ExternalServices.Grafana.InClusterURL = ""
-	conf.ExternalServices.Grafana.URL = "http://grafana-external:3001"
+	conf.ExternalServices.Grafana.InternalURL = ""
+	conf.ExternalServices.Grafana.ExternalURL = "http://grafana-external:3001"
 	conf.ExternalServices.Grafana.Dashboards = dashboardsConfig
 
 	grafana := grafana.NewService(conf, kubetest.NewFakeK8sClient())
@@ -140,8 +140,8 @@ func TestGetGrafanaInfoWithoutLeadingSlashPath(t *testing.T) {
 
 func TestGetGrafanaInfoWithTrailingSlashURL(t *testing.T) {
 	conf := config.NewConfig()
-	conf.ExternalServices.Grafana.InClusterURL = ""
-	conf.ExternalServices.Grafana.URL = "http://grafana-external:3001/"
+	conf.ExternalServices.Grafana.InternalURL = ""
+	conf.ExternalServices.Grafana.ExternalURL = "http://grafana-external:3001/"
 	conf.ExternalServices.Grafana.Dashboards = dashboardsConfig
 
 	grafana := grafana.NewService(conf, kubetest.NewFakeK8sClient())
@@ -159,8 +159,8 @@ func TestGetGrafanaInfoWithTrailingSlashURL(t *testing.T) {
 
 func TestGetGrafanaInfoWithQueryParams(t *testing.T) {
 	conf := config.NewConfig()
-	conf.ExternalServices.Grafana.InClusterURL = ""
-	conf.ExternalServices.Grafana.URL = "http://grafana-external:3001/?orgId=1"
+	conf.ExternalServices.Grafana.InternalURL = ""
+	conf.ExternalServices.Grafana.ExternalURL = "http://grafana-external:3001/?orgId=1"
 	conf.ExternalServices.Grafana.Dashboards = dashboardsConfig
 
 	grafana := grafana.NewService(conf, kubetest.NewFakeK8sClient())
@@ -178,10 +178,10 @@ func TestGetGrafanaInfoWithQueryParams(t *testing.T) {
 
 func TestGetGrafanaInfoWithAbsoluteDashboardURL(t *testing.T) {
 	conf := config.NewConfig()
-	conf.ExternalServices.Grafana.InClusterURL = ""
-	conf.ExternalServices.Grafana.URL = "/system/grafana/"
+	conf.ExternalServices.Grafana.InternalURL = ""
+	conf.ExternalServices.Grafana.ExternalURL = "/system/grafana/"
 	conf.ExternalServices.Grafana.Dashboards = dashboardsConfig
-	conf.ExternalServices.Grafana.InClusterURL = "http://grafana.istio-system:3001"
+	conf.ExternalServices.Grafana.InternalURL = "http://grafana.istio-system:3001"
 
 	grafana := grafana.NewService(conf, kubetest.NewFakeK8sClient())
 

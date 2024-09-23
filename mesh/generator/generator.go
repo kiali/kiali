@@ -167,7 +167,7 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 			hasExternalServices = hasExternalServices || isExternal
 
 			if conf.ExternalServices.Tracing.Enabled {
-				cluster, namespace, isExternal = discoverInfraService(es.Tracing.InClusterURL, ctx, gi)
+				cluster, namespace, isExternal = discoverInfraService(es.Tracing.InternalURL, ctx, gi)
 				name = string(es.Tracing.Provider)
 				node, _, err = addInfra(meshMap, mesh.InfraTypeTraceStore, cluster, namespace, name, es.Tracing, esVersions[name], isExternal, healthData["tracing"])
 				mesh.CheckError(err)
@@ -177,7 +177,7 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 			}
 
 			if conf.ExternalServices.Grafana.Enabled {
-				cluster, namespace, isExternal = discoverInfraService(es.Grafana.InClusterURL, ctx, gi)
+				cluster, namespace, isExternal = discoverInfraService(es.Grafana.InternalURL, ctx, gi)
 				name = "Grafana"
 				node, _, err = addInfra(meshMap, mesh.InfraTypeGrafana, cluster, namespace, name, es.Grafana, esVersions[name], isExternal, healthData["grafana"])
 				mesh.CheckError(err)
