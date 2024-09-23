@@ -161,11 +161,6 @@ spec:
     secret:
       type: s3
       name: "${MINIO_SECRET_NAME}"
-  resources:
-    total:
-      limits:
-        memory: 2Gi
-        cpu: 2000m
   template:
     distributor:
       tls:
