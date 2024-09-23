@@ -93,7 +93,7 @@ export const ServiceWizardActionsDropdownGroup: React.FunctionComponent<Props> =
         onClick={() => handleActionClick(eventKey)}
         data-test={eventKey}
       >
-        {WIZARD_TITLES[eventKey]}
+        {t(WIZARD_TITLES[eventKey])}
       </DropdownItem>
     );
 

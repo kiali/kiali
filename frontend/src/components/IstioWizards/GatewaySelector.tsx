@@ -182,7 +182,7 @@ export class GatewaySelector extends React.Component<Props, GatewaySelectorState
                 id="includeMesh"
                 label={
                   <>
-                  {t('Include')} <b>mesh</b> {t('gateway')}
+                  {t('Include mesh gateway')}
                   </>
                 }
                 isDisabled={!this.state.addGateway}

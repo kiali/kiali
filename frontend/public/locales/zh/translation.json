@@ -148,7 +148,7 @@
   "Idle": "Idle",
   "inbound": "入站",
   "Inbound": "入站",
-  "Include": "包含",
+  "Include mesh gateway": "包含mesh网关",
   "Infra node": "Infra node",
   "Issuer:": "发行人:",
   "Istio Ambient ztunnel detected in the Control plane": "在Istio的控制平面中检测到环境ztunnel",

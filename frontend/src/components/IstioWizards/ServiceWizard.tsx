@@ -807,15 +807,15 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
     const titleAction =
       this.props.type.length > 0
         ? this.props.update
-          ? `${t('Update')} ${WIZARD_TITLES[this.props.type]}`
-          : `${t('Create')} ${WIZARD_TITLES[this.props.type]}`
+          ? `${t('Update')} ${t(WIZARD_TITLES[this.props.type])}`
+          : `${t('Create')} ${t(WIZARD_TITLES[this.props.type])}`
         : 'View Modal';
 
     const titleModal =
       this.props.type.length > 0
         ? this.props.update
-          ? `${t('Update')} ${WIZARD_TITLES[this.props.type]}`
-          : `${t('Create')} ${WIZARD_TITLES[this.props.type]}`
+          ? `${t('Update')} ${t(WIZARD_TITLES[this.props.type])}`
+          : `${t('Create')} ${t(WIZARD_TITLES[this.props.type])}`
         : 'View Modal';
 
     return (
