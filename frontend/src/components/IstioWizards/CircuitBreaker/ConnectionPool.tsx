@@ -2,6 +2,7 @@ import * as React from 'react';
 import { FormGroup, FormHelperText, HelperText, HelperTextItem, Switch, TextInput } from '@patternfly/react-core';
 import { ConnectionPoolSettings } from '../../../types/IstioObjects';
 import { CONNECTION_POOL_TOOLTIP, wizardTooltip } from '../WizardHelp';
+import { t } from 'utils/I18nUtils';
 
 type Props = {
   isConnectionPool: boolean;
@@ -13,7 +14,7 @@ export class ConnectionPool extends React.Component<Props> {
   render() {
     return (
       <>
-        <FormGroup label="Add Connection Pool" fieldId="cpSwitch">
+        <FormGroup label={t('Add Connection Pool')} fieldId="cpSwitch">
           <Switch
             id="cpSwitch"
             label={' '}
@@ -24,7 +25,7 @@ export class ConnectionPool extends React.Component<Props> {
           <span>{wizardTooltip(CONNECTION_POOL_TOOLTIP)}</span>
         </FormGroup>
         {this.props.isConnectionPool && (
-          <FormGroup label="Max Connections" fieldId="maxConnections">
+          <FormGroup label={t('Max Connections')} fieldId="maxConnections">
             <TextInput
               value={this.props.connectionPool.tcp?.maxConnections}
               id="maxConnections"
@@ -42,13 +43,13 @@ export class ConnectionPool extends React.Component<Props> {
             />
             <FormHelperText>
               <HelperText>
-                <HelperTextItem>Maximum number of HTTP1 /TCP connections to a destination host</HelperTextItem>
+                <HelperTextItem>{t('Maximum number of HTTP1 /TCP connections to a destination host.')}</HelperTextItem>
               </HelperText>
             </FormHelperText>
           </FormGroup>
         )}
         {this.props.isConnectionPool && (
-          <FormGroup label="HTTP1 Max Pending Requests" fieldId="http1MaxPendingRequests">
+          <FormGroup label={t('HTTP1 Max Pending Requests')} fieldId="http1MaxPendingRequests">
             <TextInput
               value={this.props.connectionPool.http?.http1MaxPendingRequests}
               id="http1MaxPendingRequests"
@@ -66,7 +67,7 @@ export class ConnectionPool extends React.Component<Props> {
             />
             <FormHelperText>
               <HelperText>
-                <HelperTextItem>Maximum number of pending HTTP requests to a destination.</HelperTextItem>
+                <HelperTextItem>{t('Maximum number of pending HTTP requests to a destination.')}</HelperTextItem>
               </HelperText>
             </FormHelperText>
           </FormGroup>

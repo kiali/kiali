@@ -3,6 +3,7 @@ import { FormGroup, FormHelperText, HelperText, HelperTextItem, Switch, TextInpu
 import { Delay } from '../../../types/IstioObjects';
 import { HTTP_DELAY_TOOLTIP, wizardTooltip } from '../WizardHelp';
 import { isValid } from 'utils/Common';
+import { t } from 'utils/I18nUtils';
 
 export type DelayFaultProps = {
   delayed: boolean;
@@ -11,13 +12,13 @@ export type DelayFaultProps = {
   onDelay: (delayed: boolean, delay: Delay) => void;
 };
 
-const fixedDelayedMsg = 'Add a fixed delay before forwarding the request. Format: 1h/1m/1s/1ms. MUST be >=1ms.';
+const fixedDelayedMsg = t('Add a fixed delay before forwarding the request. Format: 1h/1m/1s/1ms. MUST be >=1ms.');
 
 export class DelayFault extends React.Component<DelayFaultProps> {
   render() {
     return (
       <>
-        <FormGroup label="Add HTTP Delay" fieldId="delaySwitch">
+        <FormGroup label={t('Add HTTP Delay')} fieldId="delaySwitch">
           <Switch
             id="delaySwitch"
             label={' '}
@@ -28,7 +29,7 @@ export class DelayFault extends React.Component<DelayFaultProps> {
           <span>{wizardTooltip(HTTP_DELAY_TOOLTIP)}</span>
         </FormGroup>
         {this.props.delayed && (
-          <FormGroup label="Delay Percentage" fieldId="delay-percentage">
+          <FormGroup label={t('Delay Percentage')} fieldId="delay-percentage">
             <TextInput
               value={this.props.delay.percentage?.value}
               type="text"
@@ -48,13 +49,13 @@ export class DelayFault extends React.Component<DelayFaultProps> {
             />
             <FormHelperText>
               <HelperText>
-                <HelperTextItem>Percentage of requests on which the delay will be injected.</HelperTextItem>
+                <HelperTextItem>{t('Percentage of requests on which the delay will be injected.')}</HelperTextItem>
               </HelperText>
             </FormHelperText>
           </FormGroup>
         )}
         {this.props.delayed && (
-          <FormGroup label="Fixed Delay" fieldId="fixed-delay">
+          <FormGroup label={t('Fixed Delay')} fieldId="fixed-delay">
             <TextInput
               value={this.props.delay.fixedDelay}
               id="fixed-delay"
@@ -69,7 +70,7 @@ export class DelayFault extends React.Component<DelayFaultProps> {
             />
             <FormHelperText>
               <HelperText>
-                <HelperTextItem>{fixedDelayedMsg}</HelperTextItem>
+                <HelperTextItem>{t(fixedDelayedMsg)}</HelperTextItem>
               </HelperText>
             </FormHelperText>
           </FormGroup>

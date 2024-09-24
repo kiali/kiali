@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { FormGroup, FormHelperText, HelperText, HelperTextItem, Switch, TextInput } from '@patternfly/react-core';
 import { HTTP_TIMEOUT_TOOLTIP, wizardTooltip } from '../WizardHelp';
+import { t } from 'utils/I18nUtils';
 
 export type RouteTimeoutProps = {
   isTimeout: boolean;
@@ -9,13 +10,13 @@ export type RouteTimeoutProps = {
   onTimeout: (isTimeout: boolean, timeout: string) => void;
 };
 
-const timeoutMsg = 'Timeout for HTTP requests. Format: 1h/1m/1s/1ms. MUST be >=1ms.';
+const timeoutMsg = t('Timeout for HTTP requests. Format: 1h/1m/1s/1ms. MUST be >=1ms.');
 
 export class RouteTimeout extends React.Component<RouteTimeoutProps> {
   render() {
     return (
       <>
-        <FormGroup label="Add HTTP Timeout" fieldId="timeoutSwitch">
+        <FormGroup label={t('Add HTTP Timeout')} fieldId="timeoutSwitch">
           <Switch
             id="timeoutSwitch"
             label={' '}
@@ -26,7 +27,7 @@ export class RouteTimeout extends React.Component<RouteTimeoutProps> {
           <span>{wizardTooltip(HTTP_TIMEOUT_TOOLTIP)}</span>
         </FormGroup>
         {this.props.isTimeout && (
-          <FormGroup label="Timeout" fieldId="timeout-value">
+          <FormGroup label={t('Timeout')} fieldId="timeout-value">
             <TextInput
               value={this.props.timeout}
               type="text"
@@ -36,7 +37,7 @@ export class RouteTimeout extends React.Component<RouteTimeoutProps> {
             />
             <FormHelperText>
               <HelperText>
-                <HelperTextItem>{timeoutMsg}</HelperTextItem>
+                <HelperTextItem>{t(timeoutMsg)}</HelperTextItem>
               </HelperText>
             </FormHelperText>
           </FormGroup>

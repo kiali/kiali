@@ -24,6 +24,7 @@ import {
 } from '../../types/IstioObjects';
 import { LOAD_BALANCER_TOOLTIP, PEER_AUTHENTICATION_TOOLTIP, wizardTooltip } from './WizardHelp';
 import { isValid } from 'utils/Common';
+import { t } from 'utils/I18nUtils';
 
 export const UNSET = 'UNSET';
 export const DISABLE = 'DISABLE';
@@ -444,13 +445,13 @@ class TrafficPolicyComponent extends React.Component<Props, TrafficPolicyState> 
           </FormSelect>
           <FormHelperText>
             <HelperText>
-              <HelperTextItem>TLS related settings for connections to the upstream service.</HelperTextItem>
+              <HelperTextItem>{t('TLS related settings for connections to the upstream service.')}</HelperTextItem>
             </HelperText>
           </FormHelperText>
         </FormGroup>
         {this.state.mtlsMode === MUTUAL && (
           <>
-            <FormGroup label="Client Certificate" fieldId="clientCertificate">
+            <FormGroup label={t('Client Certificate')} fieldId="clientCertificate">
               <TextInput
                 value={this.state.clientCertificate}
                 onChange={(_event, value) => this.onFormChange(TrafficPolicyForm.TLS_CLIENT_CERTIFICATE, value)}
@@ -460,12 +461,12 @@ class TrafficPolicyComponent extends React.Component<Props, TrafficPolicyState> 
               {!isValid(this.state.clientCertificate.length > 0) && (
                 <FormHelperText>
                   <HelperText>
-                    <HelperTextItem>Client Certificate must be non empty</HelperTextItem>
+                    <HelperTextItem>{t('Client Certificate must be non empty')}</HelperTextItem>
                   </HelperText>
                 </FormHelperText>
               )}
             </FormGroup>
-            <FormGroup label="Private Key" fieldId="privateKey">
+            <FormGroup label={t('Private Key')} fieldId="privateKey">
               <TextInput
                 value={this.state.privateKey}
                 onChange={(_event, value) => this.onFormChange(TrafficPolicyForm.TLS_PRIVATE_KEY, value)}
@@ -475,12 +476,12 @@ class TrafficPolicyComponent extends React.Component<Props, TrafficPolicyState> 
               {!isValid(this.state.privateKey.length > 0) && (
                 <FormHelperText>
                   <HelperText>
-                    <HelperTextItem>Private Key must be non empty</HelperTextItem>
+                    <HelperTextItem>{t('Private Key must be non empty')}</HelperTextItem>
                   </HelperText>
                 </FormHelperText>
               )}
             </FormGroup>
-            <FormGroup label="CA Certificates" fieldId="caCertificates">
+            <FormGroup label={t('CA Certificates')} fieldId="caCertificates">
               <TextInput
                 value={this.state.caCertificates}
                 onChange={(_event, value) => this.onFormChange(TrafficPolicyForm.TLS_CA_CERTIFICATES, value)}
@@ -490,7 +491,7 @@ class TrafficPolicyComponent extends React.Component<Props, TrafficPolicyState> 
             </FormGroup>
           </>
         )}
-        <FormGroup label="Add PeerAuthentication" fieldId="advanced-paSwitch">
+        <FormGroup label={t('Add PeerAuthentication')} fieldId="advanced-paSwitch">
           <Switch
             id="advanced-paSwitch"
             label={' '}
@@ -514,7 +515,7 @@ class TrafficPolicyComponent extends React.Component<Props, TrafficPolicyState> 
             </FormSelect>
           </FormGroup>
         )}
-        <FormGroup label="Add LoadBalancer" fieldId="advanced-lbSwitch">
+        <FormGroup label={t('Add LoadBalancer')} fieldId="advanced-lbSwitch">
           <Switch
             id="advanced-lbSwitch"
             label={' '}
@@ -645,8 +646,8 @@ class TrafficPolicyComponent extends React.Component<Props, TrafficPolicyState> 
                     <HelperText>
                       <HelperTextItem>
                         {isValid(isValidLB)
-                          ? 'TTL is expressed in nanoseconds (i.e. 1000, 2000, etc) or seconds (i.e. 10s, 1.5s, etc).'
-                          : 'HTTP Cookie Name must be non empty and TTL must be expressed in in nanoseconds (i.e. 1000, 2000, etc) or seconds (i.e. 10s, 1.5s, etc).'}
+                          ? t('TTL is expressed in nanoseconds (i.e. 1000, 2000, etc) or seconds (i.e. 10s, 1.5s, etc).')
+                          : t('HTTP Cookie Name must be non empty and TTL must be expressed in in nanoseconds (i.e. 1000, 2000, etc) or seconds (i.e. 10s, 1.5s, etc).')}
                       </HelperTextItem>
                     </HelperText>
                   </FormHelperText>

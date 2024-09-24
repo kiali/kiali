@@ -3,6 +3,7 @@ import { FormGroup, FormHelperText, HelperText, HelperTextItem, Switch, TextInpu
 import { HTTPRetry } from '../../../types/IstioObjects';
 import { HTTP_RETRY_TOOLTIP, wizardTooltip } from '../WizardHelp';
 import { isValid } from 'utils/Common';
+import { t } from 'utils/I18nUtils';
 
 export type RouteRetryProps = {
   isRetry: boolean;
@@ -11,13 +12,13 @@ export type RouteRetryProps = {
   onRetry: (isRetry: boolean, retries: HTTPRetry) => void;
 };
 
-const tryTimeoutMsg = 'Timeout per retry attempt for a given request. Format: 1h/1m/1s/1ms. MUST be >=1ms.';
+const tryTimeoutMsg = t('Timeout per retry attempt for a given request. Format: 1h/1m/1s/1ms. MUST be >=1ms.');
 
 export class RouteRetry extends React.Component<RouteRetryProps> {
   render() {
     return (
       <>
-        <FormGroup label="Add HTTP Retry" fieldId="retrySwitch">
+        <FormGroup label={t('Add HTTP Retry')} fieldId="retrySwitch">
           <Switch
             id="retrySwitch"
             label={' '}
@@ -29,7 +30,7 @@ export class RouteRetry extends React.Component<RouteRetryProps> {
         </FormGroup>
         {this.props.isRetry && (
           <>
-            <FormGroup label="Attempts" fieldId="attempts">
+            <FormGroup label={t('Attempts')} fieldId="attempts">
               <TextInput
                 value={this.props.retries.attempts}
                 type="text"
@@ -47,11 +48,11 @@ export class RouteRetry extends React.Component<RouteRetryProps> {
               />
               <FormHelperText>
                 <HelperText>
-                  <HelperTextItem>Number of retries for a given request.</HelperTextItem>
+                  <HelperTextItem>{t('Number of retries for a given request.')}</HelperTextItem>
                 </HelperText>
               </FormHelperText>
             </FormGroup>
-            <FormGroup label="Per Try Timeout" fieldId="pre-try-timeout">
+            <FormGroup label={t('Per Try Timeout')} fieldId="pre-try-timeout">
               <TextInput
                 value={this.props.retries.perTryTimeout}
                 id="pre-try-timeout"
@@ -67,7 +68,7 @@ export class RouteRetry extends React.Component<RouteRetryProps> {
               />
               <FormHelperText>
                 <HelperText>
-                  <HelperTextItem>{isValid(this.props.isValidRetry) ? tryTimeoutMsg : tryTimeoutMsg}</HelperTextItem>
+                  <HelperTextItem>{t(tryTimeoutMsg)}</HelperTextItem>
                 </HelperText>
               </FormHelperText>
             </FormGroup>

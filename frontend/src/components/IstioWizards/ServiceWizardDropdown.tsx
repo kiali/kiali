@@ -193,7 +193,7 @@ const ServiceWizardDropdownComponent: React.FC<Props> = (props: Props) => {
 
   const hasMeshWorkloads = checkHasMeshWorkloads();
   const toolTipMsgActions = !hasMeshWorkloads
-    ? 'There are not Workloads with sidecar for this service'
+    ? t('There are not Workloads with sidecar for this service')
     : `There are not Workloads with ${appLabelName} and ${versionLabelName} labels`;
 
   const validWorkloads = getValidWorkloads();

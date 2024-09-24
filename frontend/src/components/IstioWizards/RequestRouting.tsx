@@ -7,6 +7,7 @@ import { MSG_WEIGHTS_NOT_VALID, WorkloadWeight } from './TrafficShifting';
 import { getDefaultWeights } from './WizardActions';
 import { FaultInjectionRoute } from './FaultInjection';
 import { TimeoutRetryRoute } from './RequestTimeouts';
+import { t } from 'utils/I18nUtils';
 
 type Props = {
   initRules: Rule[];
@@ -340,7 +341,7 @@ export class RequestRouting extends React.Component<Props, State> {
             this.setState(_prevState => {
               return {
                 faultInjectionRoute: faultInjectionRoute,
-                validationMsg: !valid ? 'Fault Injection not valid' : ''
+                validationMsg: !valid ? t('Fault Injection not valid') : ''
               };
             });
           }}
@@ -349,7 +350,7 @@ export class RequestRouting extends React.Component<Props, State> {
             this.setState(_prevState => {
               return {
                 timeoutRetryRoute: timeoutRetryRoute,
-                validationMsg: !valid ? 'Request Timeout not valid' : ''
+                validationMsg: !valid ? t('Request Timeout not valid') : ''
               };
             });
           }}

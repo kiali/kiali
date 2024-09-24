@@ -14,6 +14,7 @@ import {
 } from '@patternfly/react-core';
 import { GATEWAY_TOOLTIP, wizardTooltip } from './WizardHelp';
 import { isValid } from 'utils/Common';
+import { t } from 'utils/I18nUtils';
 
 type Props = {
   serviceName: string;
@@ -164,7 +165,7 @@ export class GatewaySelector extends React.Component<Props, GatewaySelectorState
   render() {
     return (
       <Form isHorizontal={true}>
-        <FormGroup label="Add Gateway" fieldId="gatewaySwitch">
+        <FormGroup label={t('Add Gateway')} fieldId="gatewaySwitch">
           <Switch
             id="advanced-gwSwitch"
             label={' '}
@@ -181,7 +182,7 @@ export class GatewaySelector extends React.Component<Props, GatewaySelectorState
                 id="includeMesh"
                 label={
                   <>
-                    Include <b>mesh</b> gateway
+                  {t('Include mesh gateway')}
                   </>
                 }
                 isDisabled={!this.state.addGateway}
@@ -200,7 +201,7 @@ export class GatewaySelector extends React.Component<Props, GatewaySelectorState
               <Radio
                 id="existingGateway"
                 name="selectGateway"
-                label="Select Gateway"
+                label={t('Select Gateway')}
                 isDisabled={!this.state.addGateway || this.props.gateways.length === 0}
                 isChecked={!this.state.newGateway}
                 onChange={() => this.onFormChange(GatewayForm.SELECT, 'false')}
@@ -208,14 +209,14 @@ export class GatewaySelector extends React.Component<Props, GatewaySelectorState
               <Radio
                 id="createGateway"
                 name="selectGateway"
-                label="Create Gateway"
+                label={t('Create Gateway')}
                 isDisabled={!this.state.addGateway}
                 isChecked={this.state.newGateway}
                 onChange={() => this.onFormChange(GatewayForm.SELECT, 'true')}
               />
             </FormGroup>
             {!this.state.newGateway && (
-              <FormGroup fieldId="selectGateway" label="Gateway">
+              <FormGroup fieldId="selectGateway" label={t('Gateway')}>
                 {this.props.gateways.length > 0 && (
                   <FormSelect
                     id="selectGateway"
@@ -233,7 +234,7 @@ export class GatewaySelector extends React.Component<Props, GatewaySelectorState
             )}
             {this.state.newGateway && (
               <>
-                <FormGroup fieldId="gwPort" label="Port">
+                <FormGroup fieldId="gwPort" label={t('Port')}>
                   <TextInput
                     id="gwPort"
                     name="gwPort"
@@ -243,7 +244,7 @@ export class GatewaySelector extends React.Component<Props, GatewaySelectorState
                     onChange={(_event, value) => this.onFormChange(GatewayForm.PORT, value)}
                   />
                 </FormGroup>
-                <FormGroup fieldId="gwHosts" label="Gateway Hosts">
+                <FormGroup fieldId="gwHosts" label={t('Gateway Hosts')}>
                   <TextInput
                     id="gwHosts"
                     name="gwHosts"
@@ -256,8 +257,8 @@ export class GatewaySelector extends React.Component<Props, GatewaySelectorState
                     <HelperText>
                       <HelperTextItem>
                         {isValid(this.state.gwHostsValid)
-                          ? 'One or more hosts exposed by this gateway. Enter one or multiple hosts separated by comma.'
-                          : "Gateway hosts should be specified using FQDN format or '*' wildcard."}
+                          ? t('One or more hosts exposed by this gateway. Enter one or multiple hosts separated by comma.')
+                          : t('Gateway hosts should be specified using FQDN format or \'*\' wildcard.')}
                       </HelperTextItem>
                     </HelperText>
                   </FormHelperText>

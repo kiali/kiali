@@ -14,6 +14,7 @@ import { Workload } from 'types/Workload';
 import { renderDisabledDropdownOption } from 'utils/DropdownUtils';
 import { MessageType } from 'types/MessageCenter';
 import { groupMenuStyle } from 'styles/DropdownStyles';
+import { t } from 'utils/I18nUtils';
 
 type Props = {
   actionsLabel: boolean;
@@ -70,7 +71,7 @@ export const WorkloadWizardActionsDropdownGroup: React.FunctionComponent<Props> 
         onClick={() => onAction(WIZARD_ENABLE_AUTO_INJECTION)}
         isDisabled={serverConfig.deployment.viewOnlyMode}
       >
-        Enable Auto Injection
+        {t('Enable Auto Injection')}
       </DropdownItem>
     );
 
@@ -78,7 +79,7 @@ export const WorkloadWizardActionsDropdownGroup: React.FunctionComponent<Props> 
       ? renderDisabledDropdownOption(
           'enable_auto_injection',
           TooltipPosition.left,
-          'User does not have permission',
+          t('User does not have permission'),
           enableAction
         )
       : enableAction;
@@ -91,7 +92,7 @@ export const WorkloadWizardActionsDropdownGroup: React.FunctionComponent<Props> 
         onClick={() => onAction(WIZARD_DISABLE_AUTO_INJECTION)}
         isDisabled={serverConfig.deployment.viewOnlyMode}
       >
-        Disable Auto Injection
+        {t('Disable Auto Injection')}
       </DropdownItem>
     );
 
@@ -99,7 +100,7 @@ export const WorkloadWizardActionsDropdownGroup: React.FunctionComponent<Props> 
       ? renderDisabledDropdownOption(
           'disable_auto_injection',
           TooltipPosition.left,
-          'User does not have permission',
+          t('User does not have permission'),
           disableAction
         )
       : disableAction;
@@ -112,7 +113,7 @@ export const WorkloadWizardActionsDropdownGroup: React.FunctionComponent<Props> 
         onClick={() => onAction(WIZARD_REMOVE_AUTO_INJECTION)}
         isDisabled={serverConfig.deployment.viewOnlyMode}
       >
-        Remove Auto Injection
+        {t('Remove Auto Injection')}
       </DropdownItem>
     );
 
@@ -120,7 +121,7 @@ export const WorkloadWizardActionsDropdownGroup: React.FunctionComponent<Props> 
       ? renderDisabledDropdownOption(
           'remove_auto_injection',
           TooltipPosition.left,
-          'User does not have permission',
+          t('User does not have permission'),
           removeAction
         )
       : removeAction;
@@ -147,8 +148,8 @@ export const WorkloadWizardActionsDropdownGroup: React.FunctionComponent<Props> 
         onClick={() => onAction(WIZARD_EDIT_ANNOTATIONS)}
       >
         {serverConfig.kialiFeatureFlags.istioAnnotationAction && !serverConfig.deployment.viewOnlyMode
-          ? 'Edit Annotations'
-          : 'View Annotations'}
+          ? t('Edit Annotations')
+          : t('View Annotations')}
       </DropdownItem>
     );
 
@@ -156,7 +157,9 @@ export const WorkloadWizardActionsDropdownGroup: React.FunctionComponent<Props> 
   }
 
   if (props.actionsLabel && actionItems.length > 0) {
-    return <DropdownGroup key={`group_actions`} label={'Actions'} className={groupMenuStyle} children={actionItems} />;
+    return (
+      <DropdownGroup key={`group_actions`} label={t('Actions')} className={groupMenuStyle} children={actionItems} />
+    );
   } else {
     return <>{actionItems}</>;
   }

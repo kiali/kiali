@@ -9,6 +9,7 @@ import { getDefaultWeights } from './WizardActions';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { KialiIcon } from 'config/KialiIcon';
 import { SimpleTable } from 'components/Table/SimpleTable';
+import { t } from 'utils/I18nUtils';
 
 type Props = {
   initWeights: WorkloadWeight[];
@@ -205,11 +206,11 @@ export class TrafficShifting extends React.Component<Props, State> {
 
     const workloadColumns: ThProps[] = [
       {
-        title: 'Destination Workload',
+        title: t('Destination Workload'),
         width: 30
       },
       {
-        title: 'Traffic Weight',
+        title: t('Traffic Weight'),
         width: 70
       }
     ];
@@ -253,11 +254,11 @@ export class TrafficShifting extends React.Component<Props, State> {
 
     const mirrorColumns: ThProps[] = [
       {
-        title: 'Mirrored Workload',
+        title: t('Mirrored Workload'),
         width: 30
       },
       {
-        title: 'Mirror Percentage',
+        title: t('Mirror Percentage'),
         width: 70
       }
     ];
@@ -301,16 +302,16 @@ export class TrafficShifting extends React.Component<Props, State> {
 
     return (
       <>
-        <SimpleTable label="Weighted routing" columns={workloadColumns} rows={workloadRows} verticalAlign="middle" />
+        <SimpleTable label={t('Weighted routing')} columns={workloadColumns} rows={workloadRows} verticalAlign="middle" />
 
         {mirrorRows.length > 0 && (
-          <SimpleTable label="Mirrors" columns={mirrorColumns} rows={mirrorRows} verticalAlign="middle" />
+          <SimpleTable label={t('Mirrors')} columns={mirrorColumns} rows={mirrorRows} verticalAlign="middle" />
         )}
 
         {this.props.workloads.length > 1 && (
           <div className={evenlyButtonStyle}>
             <Button variant={ButtonVariant.link} icon={<KialiIcon.Equalizer />} onClick={() => this.resetState()}>
-              Evenly distribute traffic
+              {t('Evenly distribute traffic')}
             </Button>{' '}
           </div>
         )}
