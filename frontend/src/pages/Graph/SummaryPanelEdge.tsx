@@ -97,12 +97,15 @@ const principalStyle = kialiStyle({
 });
 
 const switchWaypointIcon = kialiStyle({
-  marginLeft: '95%',
-  marginTop: '-40px'
+  marginTop: '-3em'
 });
 
 const hideStyle = kialiStyle({
   display: 'none'
+});
+
+const fromToStyle = kialiStyle({
+  marginLeft: '2em'
 });
 
 export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, SummaryPanelEdgeState> {
@@ -204,8 +207,8 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
         <div>
           <div className={panelHeadingStyle}>
             {getTitle(`Edge (${prettyProtocol(protocol)})`)}
-            {renderBadgedLink(source, undefined, 'From:  ')}
-            {renderBadgedLink(dest, undefined, 'To:        ')}{' '}
+            {renderBadgedLink(source, undefined, 'From:  ', undefined, waypoint ? fromToStyle : undefined)}
+            {renderBadgedLink(dest, undefined, 'To:        ', undefined, waypoint ? fromToStyle : undefined)}{' '}
             {waypoint && (
               <div className={switchWaypointIcon}>
                 <a
@@ -213,7 +216,9 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
                   onClick={this.updateTab}
                   style={{ textDecoration: 'none', cursor: 'pointer', fontSize: '1.5em' }}
                 >
-                  {icons.istio.arrowLeftRightV.ascii}
+                  {this.state.activePanel === 'main'
+                    ? icons.unicode.arrowDownLeftofUp.char
+                    : icons.unicode.arrowUpLeftofDown.char}
                 </a>
               </div>
             )}

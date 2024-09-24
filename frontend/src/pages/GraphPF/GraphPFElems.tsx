@@ -415,7 +415,7 @@ const getEdgeLabel = (edge: EdgeModel, nodeMap: NodeMap, settings: GraphPFSettin
           case Protocol.TCP:
             if (data.waypoint?.direction === 'to' && data.waypoint?.fromEdge) {
               const waypointLabel = `${toFixedByteRate(rate, includeUnits)} ${
-                icons.istio.arrowLeftRight.ascii
+                icons.unicode.arrowRightOverLeft.char
               } ${toFixedByteRate(data.waypoint.fromEdge.tcp, includeUnits)}`;
               labels.push(waypointLabel);
             } else {

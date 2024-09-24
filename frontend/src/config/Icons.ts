@@ -32,18 +32,6 @@ export type IconType = {
 // or from the font awesome site: https://fontawesome.com/icons
 const mutIcons = {
   istio: {
-    arrowLeftRight: {
-      ascii: '\u21c4 ',
-      name: 'arrowLeftRight',
-      text: 'Arrow Left Right',
-      type: 'fa'
-    },
-    arrowLeftRightV: {
-      ascii: '\u21c5 ',
-      name: 'arrowLeftRightV',
-      text: 'Arrow Left Right Vertical',
-      type: 'fa'
-    },
     circuitBreaker: {
       ascii: '\uf0e7 ',
       className: 'fa fa-bolt',
@@ -164,6 +152,25 @@ const mutIcons = {
       name: 'infrastructure',
       text: 'Waypoint Proxy',
       type: 'pf'
+    }
+  },
+  unicode: {
+    // these are not fully defined icons, just unicode characters.
+    // see https://en.wikipedia.org/wiki/List_of_Unicode_characters#Arrows
+    arrowRightOverLeft: {
+      char: '\u21c4 ',
+      name: 'RightwardsArrowOverLeftwardsArrow',
+      text: 'Rightwards Arrow Over Leftwards Arrow'
+    },
+    arrowUpLeftofDown: {
+      char: '\u21c5 ',
+      name: 'UpwardsArrowLeftwardsofDownwardsArrow',
+      text: 'Upwards Arrow Leftwards of Downwards Arrow'
+    },
+    arrowDownLeftofUp: {
+      char: '\u21f5 ',
+      name: 'DownwardsArrowLeftwardsofUpwardsArrow ',
+      text: 'Downwards Arrow Leftwards of Upwards Arrow '
     }
   }
 };
