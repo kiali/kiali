@@ -14,7 +14,7 @@ import { KialiDispatch } from 'types/Redux';
 import { bindActionCreators } from 'redux';
 import { KialiAppState } from '../../../store/Store';
 import { GraphToolbarActions } from '../../../actions/GraphToolbarActions';
-import { TrafficRate, isGrpcRate, isHttpRate, isTcpRate } from '../../../types/Graph';
+import { TrafficRate, isAmbientRate, isGrpcRate, isHttpRate, isTcpRate } from '../../../types/Graph';
 import * as _ from 'lodash';
 import { trafficRatesSelector } from 'store/Selectors';
 import {
@@ -63,6 +63,17 @@ const GraphTrafficComponent: React.FC<GraphTrafficProps> = (props: GraphTrafficP
 
     const trafficRateOptions: TrafficRateOptionType[] = [
       {
+        id: TrafficRate.AMBIENT_GROUP,
+        labelText: _.startCase(TrafficRate.AMBIENT_GROUP),
+        isChecked: trafficRates.includes(TrafficRate.AMBIENT_GROUP),
+        tooltip: (
+          <div style={{ textAlign: 'left' }}>
+            Displays active Edges for the time period, as reported by the enabled Istio Ambient components. This is
+            independent of specific protocols. Default: All.
+          </div>
+        )
+      },
+      {
         id: TrafficRate.GRPC_GROUP,
         labelText: _.startCase(TrafficRate.GRPC_GROUP),
         isChecked: trafficRates.includes(TrafficRate.GRPC_GROUP),
@@ -92,6 +103,35 @@ const GraphTrafficComponent: React.FC<GraphTrafficProps> = (props: GraphTrafficP
           <div style={{ textAlign: 'left' }}>
             Displays active TCP Edges for the time period, using the selected TCP rate. To see inactive TCP Edges enable
             the "Idle Edges" Display menu option. Default: Sent Bytes.
+          </div>
+        )
+      }
+    ];
+
+    const ambientOptions: TrafficRateOptionType[] = [
+      {
+        id: TrafficRate.AMBIENT_WAYPOINT,
+        labelText: 'Waypoint',
+        isChecked: trafficRates.includes(TrafficRate.AMBIENT_WAYPOINT),
+        tooltip: (
+          <div style={{ textAlign: 'left' }}>Limit to only waypoint reported traffic, for the enabled protocols.</div>
+        )
+      },
+      {
+        id: TrafficRate.AMBIENT_ZTUNNEL,
+        labelText: 'ZTunnel',
+        isChecked: trafficRates.includes(TrafficRate.AMBIENT_ZTUNNEL),
+        tooltip: (
+          <div style={{ textAlign: 'left' }}>Limit to only ztunnel reported traffic, for the enabled protocols.</div>
+        )
+      },
+      {
+        id: TrafficRate.AMBIENT_TOTAL,
+        labelText: 'Total',
+        isChecked: trafficRates.includes(TrafficRate.AMBIENT_TOTAL),
+        tooltip: (
+          <div style={{ textAlign: 'left' }}>
+            Total traffic reported by Ambient components, for the enabled protocols.
           </div>
         )
       }
@@ -207,6 +247,40 @@ const GraphTrafficComponent: React.FC<GraphTrafficProps> = (props: GraphTrafficP
                 >
                   <KialiIcon.Info className={infoStyle} />
                 </Tooltip>
+              )}
+
+              {trafficRateOption.id === TrafficRate.AMBIENT_GROUP && ambientOptions.some(o => o.isChecked) && (
+                <div>
+                  {ambientOptions.map((ambientOption: TrafficRateOptionType) => (
+                    <div key={ambientOption.id} className={menuEntryStyle}>
+                      <label
+                        key={ambientOption.id}
+                        className={!!ambientOption.tooltip ? itemStyleWithInfo : itemStyleWithoutInfo}
+                        style={{ paddingLeft: '2rem' }}
+                      >
+                        <Radio
+                          id={ambientOption.id}
+                          style={{ paddingLeft: '0.25rem' }}
+                          name="ambientOptions"
+                          isChecked={ambientOption.isChecked}
+                          isDisabled={props.disabled}
+                          label={ambientOption.labelText}
+                          onChange={(event, _) => toggleTrafficRateAmbient(_, event)}
+                          value={ambientOption.id}
+                        />
+                      </label>
+                      {!!ambientOption.tooltip && (
+                        <Tooltip
+                          key={`tooltip_${ambientOption.id}`}
+                          position={TooltipPosition.right}
+                          content={ambientOption.tooltip}
+                        >
+                          <KialiIcon.Info className={infoStyle} />
+                        </Tooltip>
+                      )}
+                    </div>
+                  ))}
+                </div>
               )}
 
               {trafficRateOption.id === TrafficRate.GRPC_GROUP && grpcOptions.some(o => o.isChecked) && (
@@ -325,6 +399,9 @@ const GraphTrafficComponent: React.FC<GraphTrafficProps> = (props: GraphTrafficP
       let newRates: TrafficRate[];
 
       switch (rate) {
+        case TrafficRate.AMBIENT_GROUP:
+          newRates = props.trafficRates.filter(r => !isAmbientRate(r));
+          break;
         case TrafficRate.GRPC_GROUP:
           newRates = props.trafficRates.filter(r => !isGrpcRate(r));
           break;
@@ -341,6 +418,9 @@ const GraphTrafficComponent: React.FC<GraphTrafficProps> = (props: GraphTrafficP
       props.setTrafficRates(newRates);
     } else {
       switch (rate) {
+        case TrafficRate.AMBIENT_GROUP:
+          props.setTrafficRates([...props.trafficRates, rate, TrafficRate.AMBIENT_TOTAL]);
+          break;
         case TrafficRate.GRPC_GROUP:
           props.setTrafficRates([...props.trafficRates, rate, TrafficRate.GRPC_REQUEST]);
           break;
@@ -354,6 +434,12 @@ const GraphTrafficComponent: React.FC<GraphTrafficProps> = (props: GraphTrafficP
           props.setTrafficRates([...props.trafficRates, rate]);
       }
     }
+  };
+
+  const toggleTrafficRateAmbient = (_, event) => {
+    const rate = event.target.value as TrafficRate;
+    const newRates = props.trafficRates.filter(r => !isAmbientRate(r));
+    props.setTrafficRates([...newRates, TrafficRate.AMBIENT_GROUP, rate]);
   };
 
   const toggleTrafficRateGrpc = (_, event) => {

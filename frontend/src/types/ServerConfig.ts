@@ -32,6 +32,7 @@ interface GraphFindOption {
 }
 
 interface GraphTraffic {
+  ambient: string;
   grpc: string;
   http: string;
   tcp: string;

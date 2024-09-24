@@ -109,6 +109,7 @@ const defaultServerConfig: ComputedServerConfig = {
           minFontLabel: 10
         },
         traffic: {
+          ambient: 'total',
           grpc: 'requests',
           http: 'requests',
           tcp: 'sent'

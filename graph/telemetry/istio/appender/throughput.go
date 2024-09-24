@@ -72,14 +72,14 @@ func (a ThroughputAppender) appendGraph(trafficMap graph.TrafficMap, namespace s
 	// query prometheus for throughput info in two queries:
 	groupBy := "source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision"
 	metric := fmt.Sprintf("istio_%s_bytes_sum", a.ThroughputType)
-	reporter := "destination|waypoint"
+	reporter := util.GetReporter("destination", a.Rates)
 	if a.ThroughputType == "request" {
-		reporter = "source|waypoint"
+		reporter = util.GetReporter("source", a.Rates)
 	}
 
 	// query prometheus for throughput rates in two queries:
 	// 1) query for requests originating from a workload outside the namespace.
-	query := fmt.Sprintf(`sum(rate(%s{reporter=~"%s",source_workload_namespace!="%s",destination_service_namespace="%s"}[%vs])) by (%s) > 0`,
+	query := fmt.Sprintf(`sum(rate(%s{%s,source_workload_namespace!="%s",destination_service_namespace="%s"}[%vs])) by (%s) > 0`,
 		metric,
 		reporter,
 		namespace,
@@ -90,7 +90,7 @@ func (a ThroughputAppender) appendGraph(trafficMap graph.TrafficMap, namespace s
 	a.populateThroughputMap(throughputMap, &vector)
 
 	// 2) query for requests originating from a workload inside of the namespace
-	query = fmt.Sprintf(`sum(rate(%s{reporter=~"%s",source_workload_namespace="%s"}[%vs])) by (%s) > 0`,
+	query = fmt.Sprintf(`sum(rate(%s{%s,source_workload_namespace="%s"}[%vs])) by (%s) > 0`,
 		metric,
 		reporter,
 		namespace,

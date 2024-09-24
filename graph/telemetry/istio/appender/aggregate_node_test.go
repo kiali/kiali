@@ -90,9 +90,10 @@ func TestNamespacesGraphWithServiceInjection(t *testing.T) {
 		},
 		QueryTime: time.Now().Unix(),
 		Rates: graph.RequestedRates{
-			Grpc: graph.RateRequests,
-			Http: graph.RateRequests,
-			Tcp:  graph.RateTotal,
+			Ambient: graph.AmbientTrafficTotal,
+			Grpc:    graph.RateRequests,
+			Http:    graph.RateRequests,
+			Tcp:     graph.RateTotal,
 		},
 	}
 
@@ -217,9 +218,10 @@ func TestNamespacesGraphNoServiceInjection(t *testing.T) {
 		},
 		QueryTime: time.Now().Unix(),
 		Rates: graph.RequestedRates{
-			Grpc: graph.RateRequests,
-			Http: graph.RateRequests,
-			Tcp:  graph.RateTotal,
+			Ambient: graph.AmbientTrafficTotal,
+			Grpc:    graph.RateRequests,
+			Http:    graph.RateRequests,
+			Tcp:     graph.RateTotal,
 		}}
 
 	appender.appendGraph(trafficMap, "bookinfo", client)
@@ -313,9 +315,10 @@ func TestNodeGraphWithServiceInjection(t *testing.T) {
 		},
 		QueryTime: time.Now().Unix(),
 		Rates: graph.RequestedRates{
-			Grpc: graph.RateRequests,
-			Http: graph.RateRequests,
-			Tcp:  graph.RateTotal,
+			Ambient: graph.AmbientTrafficTotal,
+			Grpc:    graph.RateRequests,
+			Http:    graph.RateRequests,
+			Tcp:     graph.RateTotal,
 		},
 		Service: "reviews",
 	}
@@ -424,9 +427,10 @@ func TestNamespacesGraphWithServiceInjectionSkipRates(t *testing.T) {
 		},
 		QueryTime: time.Now().Unix(),
 		Rates: graph.RequestedRates{
-			Grpc: graph.RateRequests,
-			Http: graph.RateNone,
-			Tcp:  graph.RateTotal,
+			Ambient: graph.AmbientTrafficTotal,
+			Grpc:    graph.RateRequests,
+			Http:    graph.RateNone,
+			Tcp:     graph.RateTotal,
 		},
 	}
 
@@ -502,9 +506,10 @@ func TestNodeGraphNoServiceInjection(t *testing.T) {
 		},
 		QueryTime: time.Now().Unix(),
 		Rates: graph.RequestedRates{
-			Grpc: graph.RateRequests,
-			Http: graph.RateRequests,
-			Tcp:  graph.RateTotal,
+			Ambient: graph.AmbientTrafficTotal,
+			Grpc:    graph.RateRequests,
+			Http:    graph.RateRequests,
+			Tcp:     graph.RateTotal,
 		},
 	}
 
@@ -583,9 +588,10 @@ func TestNodeGraphWithServiceInjectionSkipRates(t *testing.T) {
 		},
 		QueryTime: time.Now().Unix(),
 		Rates: graph.RequestedRates{
-			Grpc: graph.RateRequests,
-			Http: graph.RateNone,
-			Tcp:  graph.RateTotal,
+			Ambient: graph.AmbientTrafficTotal,
+			Grpc:    graph.RateRequests,
+			Http:    graph.RateNone,
+			Tcp:     graph.RateTotal,
 		},
 		Service: "reviews",
 	}

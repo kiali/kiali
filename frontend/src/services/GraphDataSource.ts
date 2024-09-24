@@ -245,14 +245,23 @@ export class GraphDataSource {
       }
     });
 
+    restParams.ambientTraffic = 'none';
     restParams.appenders = appenders;
-
     restParams.rateGrpc = 'none';
     restParams.rateHttp = 'none';
     restParams.rateTcp = 'none';
 
     fetchParams.trafficRates.forEach(trafficRate => {
       switch (trafficRate) {
+        case TrafficRate.AMBIENT_TOTAL:
+          restParams.ambientTraffic = 'total';
+          break;
+        case TrafficRate.AMBIENT_WAYPOINT:
+          restParams.ambientTraffic = 'waypoint';
+          break;
+        case TrafficRate.AMBIENT_ZTUNNEL:
+          restParams.ambientTraffic = 'ztunnel';
+          break;
         case TrafficRate.GRPC_RECEIVED:
           restParams.rateGrpc = 'received';
           break;

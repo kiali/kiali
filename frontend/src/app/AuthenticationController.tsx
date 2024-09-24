@@ -24,7 +24,7 @@ import { UserSettingsActions } from 'actions/UserSettingsActions';
 import { DurationInSeconds, IntervalInMilliseconds, PF_THEME_DARK, Theme } from 'types/Common';
 import { config } from 'config';
 import { store } from 'store/ConfigStore';
-import { toGrpcRate, toHttpRate, toTcpRate, TrafficRate } from 'types/Graph';
+import { toAmbientRate, toGrpcRate, toHttpRate, toTcpRate, TrafficRate } from 'types/Graph';
 import { GraphToolbarActions } from 'actions/GraphToolbarActions';
 import { StatusState, StatusKey } from 'types/StatusState';
 import { PromisesRegistry } from '../utils/CancelablePromises';
@@ -295,10 +295,15 @@ class AuthenticationControllerComponent extends React.Component<
       }
 
       // Graph Traffic
+      const ambientRate = toAmbientRate(uiDefaults.graph.traffic.ambient);
       const grpcRate = toGrpcRate(uiDefaults.graph.traffic.grpc);
       const httpRate = toHttpRate(uiDefaults.graph.traffic.http);
       const tcpRate = toTcpRate(uiDefaults.graph.traffic.tcp);
       const rates: TrafficRate[] = [];
+
+      if (ambientRate) {
+        rates.push(TrafficRate.AMBIENT_GROUP, ambientRate);
+      }
 
       if (grpcRate) {
         rates.push(TrafficRate.GRPC_GROUP, grpcRate);

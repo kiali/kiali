@@ -489,13 +489,15 @@ type GraphSettings struct {
 }
 
 // GraphTraffic defines the protocol-specific rates used to determine traffic for graph generation.
+// ambient options : none | total (traffic) | waypoint (only) | ztunnel (only)
 // grpc options : none | sent (messages) | received (messages) | requests (default) | total (messages)
 // http options : none | requests (default)
 // tcp options  : none | sent (bytes, default) | received (bytes) | total (bytes)
 type GraphTraffic struct {
-	Grpc string `yaml:"grpc,omitempty" json:"grpc,omitempty"`
-	Http string `yaml:"http,omitempty" json:"http,omitempty"`
-	Tcp  string `yaml:"tcp,omitempty" json:"tcp,omitempty"`
+	Ambient string `yaml:"ambient,omitempty" json:"ambient,omitempty"`
+	Grpc    string `yaml:"grpc,omitempty" json:"grpc,omitempty"`
+	Http    string `yaml:"http,omitempty" json:"http,omitempty"`
+	Tcp     string `yaml:"tcp,omitempty" json:"tcp,omitempty"`
 }
 
 // GraphUIDefaults defines UI Defaults specific to the UI Graph
@@ -832,9 +834,10 @@ func NewConfig() (c *Config) {
 						MinFontLabel: 10,
 					},
 					Traffic: GraphTraffic{
-						Grpc: "requests",
-						Http: "requests",
-						Tcp:  "sent",
+						Ambient: "total",
+						Grpc:    "requests",
+						Http:    "requests",
+						Tcp:     "sent",
 					},
 				},
 				I18n: I18nUIDefaults{

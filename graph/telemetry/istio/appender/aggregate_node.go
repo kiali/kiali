@@ -80,8 +80,9 @@ func (a AggregateNodeAppender) appendGraph(trafficMap graph.TrafficMap, namespac
 	//      see them and it will just increase the graph density.  To change that behavior remove the "> 0" conditions.
 	// 1) query for requests originating from a workload outside the namespace.
 	groupBy := fmt.Sprintf("source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,request_protocol,response_code,grpc_response_status,response_flags,%s", a.Aggregate)
-	httpQuery := fmt.Sprintf(`sum(rate(%s{reporter=~"destination|waypoint",source_workload_namespace!="%s",destination_service_namespace="%v",%s!="unknown"}[%vs])) by (%s) > 0`,
+	httpQuery := fmt.Sprintf(`sum(rate(%s{%s,source_workload_namespace!="%s",destination_service_namespace="%v",%s!="unknown"}[%vs])) by (%s) > 0`,
 		"istio_requests_total",
+		util.GetReporter("destination", a.Rates),
 		namespace,
 		namespace,
 		a.Aggregate,
@@ -92,8 +93,9 @@ func (a AggregateNodeAppender) appendGraph(trafficMap graph.TrafficMap, namespac
 	a.injectAggregates(trafficMap, &vector)
 
 	// 2) query for requests originating from a workload inside of the namespace
-	httpQuery = fmt.Sprintf(`sum(rate(%s{reporter=~"destination|waypoint",source_workload_namespace="%s",%s!="unknown"}[%vs])) by (%s) > 0`,
+	httpQuery = fmt.Sprintf(`sum(rate(%s{%s,source_workload_namespace="%s",%s!="unknown"}[%vs])) by (%s) > 0`,
 		"istio_requests_total",
+		util.GetReporter("destination", a.Rates),
 		namespace,
 		a.Aggregate,
 		int(duration.Seconds()), // range duration for the query
@@ -115,8 +117,9 @@ func (a AggregateNodeAppender) appendNodeGraph(trafficMap graph.TrafficMap, name
 		serviceFragment = fmt.Sprintf(`,destination_service_name="%s"`, a.Service)
 	}
 	groupBy := fmt.Sprintf("source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,request_protocol,response_code,grpc_response_status,response_flags,%s", a.Aggregate)
-	httpQuery := fmt.Sprintf(`sum(rate(%s{reporter=~"destination|waypoint",destination_service_namespace="%s",%s="%s"%s}[%vs])) by (%s) > 0`,
+	httpQuery := fmt.Sprintf(`sum(rate(%s{%s,destination_service_namespace="%s",%s="%s"%s}[%vs])) by (%s) > 0`,
 		"istio_requests_total",
+		util.GetReporter("destination", a.Rates),
 		namespace,
 		a.Aggregate,
 		a.AggregateValue,

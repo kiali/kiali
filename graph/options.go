@@ -28,6 +28,10 @@ const (
 )
 
 const (
+	AmbientTrafficNone        string = "none"
+	AmbientTrafficTotal       string = "total"
+	AmbientTrafficWaypoint    string = "waypoint"
+	AmbientTrafficZtunnel     string = "ztunnel"
 	BoxByApp                  string = "app"
 	BoxByCluster              string = "cluster"
 	BoxByNamespace            string = "namespace"
@@ -37,6 +41,7 @@ const (
 	RateRequests              string = "requests" // request count
 	RateSent                  string = "sent"     // tcp bytes sent, grpc request messages, etc
 	RateTotal                 string = "total"    // Sent+Received
+	defaultAmbientTraffic     string = AmbientTrafficTotal
 	defaultBoxBy              string = BoxByNone
 	defaultDuration           string = "10m"
 	defaultGraphType          string = GraphTypeWorkload
@@ -84,9 +89,10 @@ type RequestedAppenders struct {
 }
 
 type RequestedRates struct {
-	Grpc string
-	Http string
-	Tcp  string
+	Ambient string
+	Grpc    string
+	Http    string
+	Tcp     string
 }
 
 // ClusterSensitiveKey is the recommended [string] type for maps keying on a cluster-sensitive name
@@ -143,6 +149,7 @@ func NewOptions(r *net_http.Request, namespacesService *business.NamespaceServic
 	var includeIdleEdges bool
 	var injectServiceNodes bool
 	var queryTime int64
+	ambientTraffic := params.Get("ambientTraffic")
 	appenders := RequestedAppenders{All: true}
 	boxBy := params.Get("boxBy")
 	// @TODO requires refactoring to use clusterNameFromQuery
@@ -285,9 +292,25 @@ func NewOptions(r *net_http.Request, namespacesService *business.NamespaceServic
 	// Process Rate Options
 
 	rates := RequestedRates{
-		Grpc: defaultRateGrpc,
-		Http: defaultRateHttp,
-		Tcp:  defaultRateTcp,
+		Ambient: defaultAmbientTraffic,
+		Grpc:    defaultRateGrpc,
+		Http:    defaultRateHttp,
+		Tcp:     defaultRateTcp,
+	}
+
+	if ambientTraffic != "" {
+		switch ambientTraffic {
+		case AmbientTrafficNone:
+			rates.Ambient = AmbientTrafficNone
+		case AmbientTrafficTotal:
+			rates.Ambient = AmbientTrafficTotal
+		case AmbientTrafficWaypoint:
+			rates.Ambient = AmbientTrafficWaypoint
+		case AmbientTrafficZtunnel:
+			rates.Ambient = AmbientTrafficZtunnel
+		default:
+			BadRequest(fmt.Sprintf("Invalid Ambient Traffic [%s]", rates.Ambient))
+		}
 	}
 
 	if rateGrpc != "" {

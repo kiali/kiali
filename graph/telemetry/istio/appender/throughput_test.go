@@ -134,9 +134,10 @@ func TestResponseThroughput(t *testing.T) {
 		},
 		QueryTime: time.Now().Unix(),
 		Rates: graph.RequestedRates{
-			Grpc: graph.RateRequests,
-			Http: graph.RateRequests,
-			Tcp:  graph.RateTotal,
+			Ambient: graph.AmbientTrafficTotal,
+			Grpc:    graph.RateRequests,
+			Http:    graph.RateRequests,
+			Tcp:     graph.RateTotal,
 		},
 		ThroughputType: "response",
 	}
@@ -309,9 +310,10 @@ func TestRequestThroughput(t *testing.T) {
 		},
 		QueryTime: time.Now().Unix(),
 		Rates: graph.RequestedRates{
-			Grpc: graph.RateRequests,
-			Http: graph.RateRequests,
-			Tcp:  graph.RateTotal,
+			Ambient: graph.AmbientTrafficTotal,
+			Grpc:    graph.RateRequests,
+			Http:    graph.RateRequests,
+			Tcp:     graph.RateTotal,
 		},
 		ThroughputType: "request",
 	}
@@ -418,9 +420,10 @@ func TestRequestThroughputSkipRates(t *testing.T) {
 		},
 		QueryTime: time.Now().Unix(),
 		Rates: graph.RequestedRates{
-			Grpc: graph.RateRequests,
-			Http: graph.RateNone,
-			Tcp:  graph.RateTotal,
+			Ambient: graph.AmbientTrafficTotal,
+			Grpc:    graph.RateRequests,
+			Http:    graph.RateNone,
+			Tcp:     graph.RateTotal,
 		},
 		ThroughputType: "request",
 	}
