@@ -109,7 +109,9 @@ Then('user sees Details information for Apps', () => {
   getColWithRowText(APP, 'Details').within(() => {
     cy.contains('bookinfo-gateway');
 
-    cy.get(`a[href*="/namespaces/bookinfo/istio/gateways/bookinfo-gateway"]`).should('be.visible');
+    cy.get(`a[href*="/namespaces/bookinfo/istio/networking.istio.io/v1/Gateway/bookinfo-gateway"]`).should(
+      'be.visible'
+    );
   });
 });
 

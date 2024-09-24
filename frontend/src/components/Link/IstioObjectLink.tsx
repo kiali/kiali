@@ -112,7 +112,7 @@ const IstioObjectLinkComponent: React.FC<IstioObjectProps> = (props: IstioObject
     </Link>
   ) : (
     // @TODO put cluster in link when all objects have multicluster support
-    <Link to={href} data-test={`${objectGVK.Group}.${objectGVK.Kind}-${namespace}-${name}`}>
+    <Link to={href} data-test={`${objectGVK.Group}.${objectGVK.Version}.${objectGVK.Kind}-${namespace}-${name}`}>
       {props.children}
     </Link>
   );

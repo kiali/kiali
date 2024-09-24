@@ -107,11 +107,11 @@ When('user clicks in the {string} actions', (action: string) => {
 });
 
 Then('user sees the generated {string} objects located in the {string} cluster', (svc: string, cluster: string) => {
-  cy.getBySel(`VirtualItem_Cluster${cluster}_Nsbookinfo_destinationrule_${svc}`)
+  cy.getBySel(`VirtualItem_Cluster${cluster}_Nsbookinfo_networking.istio.io.v1.DestinationRule_${svc}`)
     .find('[data-label="Cluster"]')
     .contains(cluster);
 
-  cy.getBySel(`VirtualItem_Cluster${cluster}_Nsbookinfo_virtualservice_${svc}`)
+  cy.getBySel(`VirtualItem_Cluster${cluster}_Nsbookinfo_networking.istio.io.v1.VirtualService_${svc}`)
     .find('[data-label="Cluster"]')
     .contains(cluster);
 });
@@ -119,15 +119,19 @@ Then('user sees the generated {string} objects located in the {string} cluster',
 Then(
   'user does not see the generated {string} objects located in the {string} cluster',
   (svc: string, cluster: string) => {
-    cy.getBySel(`VirtualItem_Cluster${cluster}_Nsbookinfo_destinationrule_${svc}`).should('not.exist');
-    cy.getBySel(`VirtualItem_Cluster${cluster}_Nsbookinfo_virtualservice_${svc}`).should('not.exist');
+    cy.getBySel(`VirtualItem_Cluster${cluster}_Nsbookinfo_networking.istio.io.v1.DestinationRule_${svc}`).should(
+      'not.exist'
+    );
+    cy.getBySel(`VirtualItem_Cluster${cluster}_Nsbookinfo_networking.istio.io.v1.VirtualService_${svc}`).should(
+      'not.exist'
+    );
   }
 );
 
 Then(
   'the {string} {string} should be listed in {string} {string} namespace',
   (type: string, svc: string, cluster: string, ns: string) => {
-    cy.getBySel(`VirtualItem_Cluster${cluster}_Ns${ns}_${type.toLowerCase()}_${svc}`)
+    cy.getBySel(`VirtualItem_Cluster${cluster}_Ns${ns}_${type}_${svc}`)
       .find('[data-label="Cluster"]')
       .contains(cluster);
   }
@@ -239,13 +243,13 @@ When('user clicks in the {string} {string} {string} reference', (namespace: stri
 
   switch (type) {
     case 'destinationrule':
-      expectedURl = `/namespaces/${namespace}/istio/destinationrules/${name}`;
+      expectedURl = `/namespaces/${namespace}/istio/networking.istio.io/v1/DestinationRule/${name}`;
       break;
     case 'service':
       expectedURl = `/namespaces/${namespace}/services/${name}`;
       break;
     case 'virtualservice':
-      expectedURl = `/namespaces/${namespace}/istio/virtualservices/${name}`;
+      expectedURl = `/namespaces/${namespace}/istio/networking.istio.io/v1/VirtualService/${name}`;
       break;
   }
 

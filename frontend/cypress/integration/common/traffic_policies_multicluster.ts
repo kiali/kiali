@@ -24,24 +24,24 @@ When('user deletes a Traffic Policy and the resource is no longer available in a
   authorizationPolicies.forEach(policy => {
     cy.request({
       failOnStatusCode: false,
-      url: `/api/namespaces/bookinfo/istio/authorizationpolicies/${policy}?clusterName=east`,
+      url: `/api/namespaces/bookinfo/istio/security.istio.io/v1/AuthorizationPolicy/${policy}?clusterName=east`,
       method: 'DELETE'
     });
     cy.request({
       failOnStatusCode: false,
-      url: `/api/namespaces/bookinfo/istio/authorizationpolicies/${policy}?clusterName=west`,
+      url: `/api/namespaces/bookinfo/istio/security.istio.io/v1/AuthorizationPolicy/${policy}?clusterName=west`,
       method: 'DELETE'
     });
   });
   sidecars.forEach(sidecar => {
     cy.request({
       failOnStatusCode: false,
-      url: `/api/namespaces/bookinfo/istio/sidecars/${sidecar}?clusterName=east`,
+      url: `/api/namespaces/bookinfo/istio/networking.istio.io/v1/Sidecar/${sidecar}?clusterName=east`,
       method: 'DELETE'
     });
     cy.request({
       failOnStatusCode: false,
-      url: `/api/namespaces/bookinfo/istio/sidecars/${sidecar}?clusterName=west`,
+      url: `/api/namespaces/bookinfo/istio/networking.istio.io/v1/Sidecar/${sidecar}?clusterName=west`,
       method: 'DELETE'
     });
   });

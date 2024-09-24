@@ -32,7 +32,7 @@ Feature: Kiali Istio Config wizard
     Then "app: details" should be in preview
     Then "key1: value1" should be in preview
     And user creates the istio config
-    Then the "Sidecar" "mysidecarwithlabels" should be listed in "bookinfo" namespace
+    Then the "networking.istio.io.v1.Sidecar" "mysidecarwithlabels" should be listed in "bookinfo" namespace
     And user deletes sidecar named "mysidecarwithlabels" and the resource is no longer available
 
   @gateway-api
@@ -49,7 +49,7 @@ Feature: Kiali Istio Config wizard
     And user types "8080" in the "addPort_0" input
     And user previews the configuration
     And user creates the istio config
-    Then the "K8sGateway" "k8sapigateway" should be listed in "bookinfo" namespace
+    Then the "gateway.networking.k8s.io.v1.Gateway" "k8sapigateway" should be listed in "bookinfo" namespace
 
   @gateway-api
   @bookinfo-app
@@ -68,7 +68,7 @@ Feature: Kiali Istio Config wizard
     And user types "cert" in the "tlsCert_0" input
     And user previews the configuration
     And user creates the istio config
-    Then the "K8sGateway" "k8sapigateway" should be listed in "bookinfo" namespace
+    Then the "gateway.networking.k8s.io.v1.Gateway" "k8sapigateway" should be listed in "bookinfo" namespace
 
   @gateway-api
   @bookinfo-app
@@ -82,7 +82,7 @@ Feature: Kiali Istio Config wizard
     And user chooses "istio-system" mode from the "ReferenceGrantFromNamespace" select
     And user previews the configuration
     And user creates the istio config
-    Then the "K8sReferenceGrant" "k8srefgrant" should be listed in "bookinfo" namespace
+    Then the "gateway.networking.k8s.io.v1.ReferenceGrant" "k8srefgrant" should be listed in "bookinfo" namespace
 
   @bookinfo-app
   Scenario: Try to create a Gateway with no name
@@ -113,7 +113,7 @@ Feature: Kiali Istio Config wizard
     And user types "foobar" in the "addPortName_0" input
     And user previews the configuration
     And user creates the istio config
-    Then the "Gateway" "mygateway" should be listed in "bookinfo" namespace
+    Then the "networking.istio.io.v1.Gateway" "mygateway" should be listed in "bookinfo" namespace
     And user closes the success notification
     And user clicks in the "Gateway" Istio config actions
     And user sees the "Create Gateway" config wizard
@@ -196,7 +196,7 @@ Feature: Kiali Istio Config wizard
     And user types "bar" in the "private-key" input
     And user previews the configuration
     And user creates the istio config
-    Then the "Gateway" "mygatewaywithtls" should be listed in "bookinfo" namespace
+    Then the "networking.istio.io.v1.Gateway" "mygatewaywithtls" should be listed in "bookinfo" namespace
 
   @bookinfo-app
   Scenario: Try to create a ServiceEntry with empty fields
@@ -258,7 +258,7 @@ Feature: Kiali Istio Config wizard
     And user types "8080" in the "addTargetPort_0" input
     And user previews the configuration
     And user creates the istio config
-    Then the "ServiceEntry" "myservice2" should be listed in "bookinfo" namespace
+    Then the "networking.istio.io.v1.ServiceEntry" "myservice2" should be listed in "bookinfo" namespace
 
   @bookinfo-app
   Scenario: Try to create duplicate port specifications on a ServiceEntry
@@ -290,11 +290,11 @@ Feature: Kiali Istio Config wizard
     And user types "8080" in the "addTargetPort_0" input
     And user previews the configuration
     And user creates the istio config
-    Then the "ServiceEntry" "myservice3" should be listed in "bookinfo" namespace
+    Then the "networking.istio.io.v1.ServiceEntry" "myservice3" should be listed in "bookinfo" namespace
     When user is at the "services" page
     And the "host.com" row is visible
     And the "Name" column on the "host.com" row has a link ending in "/namespaces/bookinfo/services/host.com"
-    And the "Details" column on the "host.com" row has a link ending in "/namespaces/bookinfo/istio/serviceentries/myservice3"
+    And the "Details" column on the "host.com" row has a link ending in "/namespaces/bookinfo/istio/networking.istio.io/v1/ServiceEntry/myservice3"
     When user is at the details page for the "service" "bookinfo/host.com" located in the "" cluster
     Then "host.com" details information for service entry "myservice3" can be seen
 
@@ -327,8 +327,8 @@ Feature: Kiali Istio Config wizard
     And user types "google.com" in the "addValue_0" input
     And user previews the configuration
     And user creates the istio config
-    Then the "K8sGateway" "gatewayapi-1" should be listed in "bookinfo" namespace
-    And the "K8sGateway" "gatewayapi-2" should be listed in "bookinfo" namespace
+    Then the "gateway.networking.k8s.io.v1.Gateway" "gatewayapi-1" should be listed in "bookinfo" namespace
+    And the "gateway.networking.k8s.io.v1.Gateway" "gatewayapi-2" should be listed in "bookinfo" namespace
     And the "gatewayapi-1" "K8sGateway" of the "bookinfo" namespace should have a "warning"
     And the "gatewayapi-2" "K8sGateway" of the "bookinfo" namespace should have a "warning"
     When viewing the detail for "gatewayapi-1"
@@ -337,7 +337,7 @@ Feature: Kiali Istio Config wizard
     And viewing the detail for "gatewayapi-2"
     And choosing to delete it
     And user selects the "bookinfo" namespace
-    Then the "K8sGateway" "gatewayapi-2" should not be listed in "bookinfo" namespace
+    Then the "gateway.networking.k8s.io.v1.Gateway" "gatewayapi-2" should not be listed in "bookinfo" namespace
     And the "gatewayapi-1" "K8sGateway" of the "bookinfo" namespace should have a "success"
     When viewing the detail for "gatewayapi-1"
     Then "gatewayapi-2" should not be referenced anymore

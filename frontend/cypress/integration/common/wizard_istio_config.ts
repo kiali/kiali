@@ -121,14 +121,14 @@ Then('user does not see a dropdown for cluster selection', () => {
 Then(
   'the {string} {string} should be listed in {string} namespace',
   (type: string, name: string, namespace: string) => {
-    cy.get(`[data-test=VirtualItem_Ns${namespace}_${type.toLowerCase()}_${name}] svg`).should('exist');
+    cy.get(`[data-test=VirtualItem_Ns${namespace}_${type}_${name}] svg`).should('exist');
   }
 );
 
 Then(
   'the {string} {string} should not be listed in {string} namespace',
   (type: string, name: string, namespace: string) => {
-    cy.get(`[data-test=VirtualItem_Ns${namespace}_${type.toLowerCase()}_${name}] svg`).should('not.exist');
+    cy.get(`[data-test=VirtualItem_Ns${namespace}_${type}_${name}] svg`).should('not.exist');
   }
 );
 
@@ -148,12 +148,12 @@ Then('{string} should be referenced', (gateway: string) => {
   ensureKialiFinishedLoading();
 
   cy.get('h5').contains('Validation References').should('be.visible');
-  cy.get(`a[data-test="k8sgateway-bookinfo-${gateway}"]`).should('be.visible');
+  cy.get(`a[data-test="gateway.networking.k8s.io.v1.Gateway-bookinfo-${gateway}"]`).should('be.visible');
 });
 
 Then('{string} should not be referenced anymore', (gateway: string) => {
   ensureKialiFinishedLoading();
-  cy.get(`a[data-test="k8sgateway-bookinfo-${gateway}"]`).should('not.exist');
+  cy.get(`a[data-test="gateway.networking.k8s.io.v1.Gateway-bookinfo-${gateway}"]`).should('not.exist');
 });
 
 Then('{string} details information for service entry {string} can be seen', (host: string, name: string) => {
@@ -195,6 +195,6 @@ Then('user selects {string} from the cluster dropdown', (clusters: string) => {
 Then(
   'the {string} {string} should not be listed in {string} {string} namespace',
   (type: string, svc: string, cluster: string, ns: string) => {
-    cy.get(`[data-test="VirtualItem_Cluster${cluster}_Ns${ns}_${type.toLowerCase()}_${svc}"]`).should('not.exist');
+    cy.get(`[data-test="VirtualItem_Cluster${cluster}_Ns${ns}_${type}_${svc}"]`).should('not.exist');
   }
 );

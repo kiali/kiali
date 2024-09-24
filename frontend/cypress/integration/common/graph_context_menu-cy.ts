@@ -109,3 +109,28 @@ Then(
     });
   }
 );
+
+Then('configuration is duplicated to the {string} cluster', (cluster: string) => {
+  cy.get('@contextNode').then((node: any) => {
+    const namespace = node.data('namespace');
+    const service = node.data('service');
+
+    cy.fixture(`${service}-virtualservice.json`).then(virtualService => {
+      cy.request({
+        url: `api/namespaces/${namespace}/istio/networking.istio.io/v1/VirtualService`,
+        method: 'POST',
+        qs: { clusterName: cluster },
+        body: virtualService
+      });
+    });
+
+    cy.fixture(`${service}-destinationrule.json`).then(destinationRule => {
+      cy.request({
+        url: `api/namespaces/${namespace}/istio/networking.istio.io/v1/DestinationRule`,
+        method: 'POST',
+        qs: { clusterName: cluster },
+        body: destinationRule
+      });
+    });
+  });
+});

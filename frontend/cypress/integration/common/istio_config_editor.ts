@@ -1,7 +1,7 @@
 import { When, Then } from '@badeball/cypress-cucumber-preprocessor';
 
 When('user updates the {string} AuthorizationPolicy using the text field', (name: string) => {
-  cy.intercept('PATCH', `**/api/namespaces/bookinfo/istio/authorizationpolicies/${name}*`, {
+  cy.intercept('PATCH', `**/api/namespaces/bookinfo/istio/security.istio.io/v1/AuthorizationPolicy/${name}*`, {
     statusCode: 200
   }).as(`${name}-update`);
   cy.window()

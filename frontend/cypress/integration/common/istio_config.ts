@@ -462,31 +462,31 @@ Then('user sees all the Istio Config objects in the bookinfo namespace', () => {
 
 Then('user sees all the Istio Config objects in the bookinfo namespace for the {string} cluster', (cluster: string) => {
   // Bookinfo Gateway
-  cy.getBySel(`VirtualItem_Cluster${cluster}_Nsbookinfo_gateway_bookinfo-gateway`);
+  cy.getBySel(`VirtualItem_Cluster${cluster}_Nsbookinfo_networking.istio.io.v1.Gateway_bookinfo-gateway`);
 
   // Bookinfo VS
-  cy.getBySel(`VirtualItem_Cluster${cluster}_Nsbookinfo_virtualservice_bookinfo`);
+  cy.getBySel(`VirtualItem_Cluster${cluster}_Nsbookinfo_networking.istio.io.v1.VirtualService_bookinfo`);
 });
 
 Then('user sees Cluster information for Istio objects', () => {
   // Gateways
-  cy.getBySel(`VirtualItem_Clustereast_Nsbookinfo_gateway_bookinfo-gateway`).contains(
+  cy.getBySel(`VirtualItem_Clustereast_Nsbookinfo_networking.istio.io.v1.Gateway_bookinfo-gateway`).contains(
     'td[data-label="Cluster"]',
     'east'
   );
 
-  cy.getBySel(`VirtualItem_Clusterwest_Nsbookinfo_gateway_bookinfo-gateway`).contains(
+  cy.getBySel(`VirtualItem_Clusterwest_Nsbookinfo_networking.istio.io.v1.Gateway_bookinfo-gateway`).contains(
     'td[data-label="Cluster"]',
     'west'
   );
 
   // VirtualServices
-  cy.getBySel(`VirtualItem_Clustereast_Nsbookinfo_virtualservice_bookinfo`).contains(
+  cy.getBySel(`VirtualItem_Clustereast_Nsbookinfo_networking.istio.io.v1.VirtualService_bookinfo`).contains(
     'td[data-label="Cluster"]',
     'east'
   );
 
-  cy.getBySel(`VirtualItem_Clusterwest_Nsbookinfo_virtualservice_bookinfo`).contains(
+  cy.getBySel(`VirtualItem_Clusterwest_Nsbookinfo_networking.istio.io.v1.VirtualService_bookinfo`).contains(
     'td[data-label="Cluster"]',
     'west'
   );
@@ -497,7 +497,7 @@ Then('user sees Name information for Istio objects', () => {
 
   // There should be a table with a heading for each piece of information.
   getColWithRowText(object, 'Name').within(() => {
-    cy.get(`a[href*="/namespaces/bookinfo/istio/gateways/${object}"]`).should('be.visible');
+    cy.get(`a[href*="/namespaces/bookinfo/istio/networking.istio.io/v1/Gateway/${object}"]`).should('be.visible');
   });
 });
 
@@ -518,7 +518,7 @@ Then('user sees Configuration information for Istio objects', () => {
 
   // There should be a table with a heading for each piece of information.
   getColWithRowText(object, 'Configuration').within(() => {
-    cy.get(`a[href*="/namespaces/bookinfo/istio/gateways/${object}"]`).should('be.visible');
+    cy.get(`a[href*="/namespaces/bookinfo/istio/networking.istio.io/v1/Gateway/${object}"]`).should('be.visible');
   });
 });
 
@@ -578,40 +578,46 @@ Then('user sees {string}', (sees: string) => {
   cy.get('tbody').contains('tr', sees);
 });
 
-Then('the user can create a {string} Istio object', (object: string) => {
-  cy.get('button[data-test="istio-actions-toggle"]').click();
+Then(
+  'the user can create a {string} {string} {string} Istio object',
+  (group: string, version: string, kind: string) => {
+    cy.get('button[data-test="istio-actions-toggle"]').click();
 
-  cy.getBySel('istio-actions-dropdown').within(() => {
-    cy.contains(object).click();
-  });
+    cy.getBySel('istio-actions-dropdown').within(() => {
+      cy.contains(kind).click();
+    });
 
-  const page = `/istio/new/${object}`;
-  cy.url().should('include', page);
-});
+    const page = `/istio/new/${group}/${version}/${kind}`;
+    cy.url().should('include', page);
+  }
+);
 
-Then('the user can create a {string} K8s Istio object', (object: string) => {
-  cy.request({ method: 'GET', url: '/api/config' }).then(response => {
-    expect(response.status).to.equal(200);
-    const gatewayAPIEnabled = response.body.gatewayAPIEnabled;
+Then(
+  'the user can create a {string} {string} {string} K8s Istio object',
+  (group: string, version: string, kind: string) => {
+    cy.request({ method: 'GET', url: '/api/config' }).then(response => {
+      expect(response.status).to.equal(200);
+      const gatewayAPIEnabled = response.body.gatewayAPIEnabled;
 
-    if (gatewayAPIEnabled) {
-      cy.get('button[data-test="istio-actions-toggle"]').click();
+      if (gatewayAPIEnabled) {
+        cy.get('button[data-test="istio-actions-toggle"]').click();
 
-      cy.getBySel('istio-actions-dropdown').within(() => {
-        cy.contains(object).click();
-      });
+        cy.getBySel('istio-actions-dropdown').within(() => {
+          cy.contains(`K8s${kind}`).click();
+        });
 
-      const page = `/istio/new/${object}`;
-      cy.url().should('include', page);
-    } else {
-      cy.get('button[data-test="istio-actions-toggle"]').click();
+        const page = `/istio/new/${group}/${version}/${kind}`;
+        cy.url().should('include', page);
+      } else {
+        cy.get('button[data-test="istio-actions-toggle"]').click();
 
-      cy.getBySel('istio-actions-dropdown').within(() => {
-        cy.get(object).should('not.exist');
-      });
-    }
-  });
-});
+        cy.getBySel('istio-actions-dropdown').within(() => {
+          cy.get(`K8s${kind}`).should('not.exist');
+        });
+      }
+    });
+  }
+);
 
 Then('the AuthorizationPolicy should have a {string}', function (healthStatus: string) {
   cy.get(

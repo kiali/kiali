@@ -39,7 +39,7 @@ describe('Istio Configs performance tests', () => {
       cy.fixture('commonParams.json')
         .then(data => {
           const overviewUrl = encodeURI(
-            `/console/namespaces/${data.detailsNs}/istio/${data.configType}/${data.configName}`
+            `/console/namespaces/${data.detailsNs}/istio/${data.configGroup}/${data.configVersion}/${data.configKind}/${data.configName}`
           );
           configUrls.set('Istio Config Overview', overviewUrl);
         })

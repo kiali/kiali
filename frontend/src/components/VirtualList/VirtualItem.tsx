@@ -6,7 +6,6 @@ import { Health } from '../../types/Health';
 import { StatefulFiltersRef } from '../Filters/StatefulFilters';
 import { actionRenderer } from './Renderers';
 import { getIstioObjectGVK, gvkToString } from '../../utils/IstioConfigUtils';
-//import {getIstioObjectGVK, gvkToString} from "../../utils/IstioConfigUtils";
 
 type VirtualItemProps = {
   action?: JSX.Element;
@@ -64,8 +63,13 @@ export class VirtualItem extends React.Component<VirtualItemProps, VirtualItemSt
     const { style, className, item } = this.props;
     const cluster = item.cluster ? `_Cluster${item.cluster}` : '';
     const namespace = 'namespace' in item ? `_Ns${item.namespace}` : '';
-    const type = 'type' in item ? `_${item.type}` : '';
-    // End result looks like: VirtualItem_Clusterwest_Nsbookinfo_gateway_bookinfo-gateway
+    const type =
+      'type' in item
+        ? `_${item.type}`
+        : 'kind' in item && 'apiVersion' in item
+        ? `_${item.apiVersion?.replace('/', '.')}.${item.kind}`
+        : '';
+    // End result looks like: VirtualItem_Clusterwest_Nsbookinfo_networking.istio.io.v1.Gateway_bookinfo-gateway
 
     const key = `VirtualItem${cluster}${namespace}${type}_${item.name}`;
 

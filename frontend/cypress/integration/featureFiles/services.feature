@@ -22,8 +22,8 @@ Feature: Kiali Services page
     And the "Labels" column on the "productpage" row has the text "app=productpage"
     And the "Labels" column on the "productpage" row has the text "service=productpage"
     And the "Configuration" column on the "productpage" row has a link ending in "/namespaces/bookinfo/services/productpage"
-    And the "Details" column on the "productpage" row has a link ending in "/namespaces/bookinfo/istio/virtualservices/bookinfo"
-    And the "Details" column on the "productpage" row has a link ending in "/namespaces/bookinfo/istio/gateways/bookinfo-gateway"
+    And the "Details" column on the "productpage" row has a link ending in "/namespaces/bookinfo/istio/networking.istio.io/v1/VirtualService/bookinfo"
+    And the "Details" column on the "productpage" row has a link ending in "/namespaces/bookinfo/istio/networking.istio.io/v1/Gateway/bookinfo-gateway"
     And the "Details" column on the "productpage" row has a icon with title "API Documentation"
     And the "Cluster" column "disappears"
 
