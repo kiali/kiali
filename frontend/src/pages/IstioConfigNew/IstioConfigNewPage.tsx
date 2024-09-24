@@ -17,24 +17,15 @@ import {
 } from '@patternfly/react-core';
 import { RenderContent } from '../../components/Nav/Page';
 import { kialiStyle } from 'styles/StyleUtils';
-import { GatewayForm, GATEWAY, GATEWAYS, GatewayState, initGateway, isGatewayStateValid } from './GatewayForm';
-import {
-  K8sGatewayForm,
-  K8SGATEWAY,
-  K8SGATEWAYS,
-  K8sGatewayState,
-  initK8sGateway,
-  isK8sGatewayStateValid
-} from './K8sGatewayForm';
+import { GatewayForm, GatewayState, initGateway, isGatewayStateValid } from './GatewayForm';
+import { K8sGatewayForm, K8sGatewayState, initK8sGateway, isK8sGatewayStateValid } from './K8sGatewayForm';
 import {
   K8sReferenceGrantForm,
-  K8S_REFERENCE_GRANT,
-  K8S_REFERENCE_GRANTS,
   K8sReferenceGrantState,
   initK8sReferenceGrant,
   isK8sReferenceGrantStateValid
 } from './K8sReferenceGrantForm';
-import { SidecarForm, initSidecar, isSidecarStateValid, SIDECAR, SIDECARS, SidecarState } from './SidecarForm';
+import { SidecarForm, initSidecar, isSidecarStateValid, SidecarState } from './SidecarForm';
 import { Paths, serverConfig } from '../../config';
 import { KialiIcon } from '../../config/KialiIcon';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
@@ -55,8 +46,6 @@ import {
 import { MessageType } from '../../types/MessageCenter';
 import {
   AuthorizationPolicyForm,
-  AUTHORIZACION_POLICY,
-  AUTHORIZATION_POLICIES,
   AuthorizationPolicyState,
   initAuthorizationPolicy,
   isAuthorizationPolicyStateValid
@@ -65,28 +54,17 @@ import {
   PeerAuthenticationForm,
   initPeerAuthentication,
   isPeerAuthenticationStateValid,
-  PEER_AUTHENTICATION,
-  PEER_AUTHENTICATIONS,
   PeerAuthenticationState
 } from './PeerAuthenticationForm';
 import {
   RequestAuthenticationForm,
   initRequestAuthentication,
   isRequestAuthenticationStateValid,
-  REQUEST_AUTHENTICATION,
-  REQUEST_AUTHENTICATIONS,
   RequestAuthenticationState
 } from './RequestAuthenticationForm';
 import { isValidK8SName } from '../../helpers/ValidationHelpers';
 import { DefaultSecondaryMasthead } from '../../components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
-import {
-  ServiceEntryForm,
-  initServiceEntry,
-  isServiceEntryValid,
-  SERVICE_ENTRIES,
-  SERVICE_ENTRY,
-  ServiceEntryState
-} from './ServiceEntryForm';
+import { ServiceEntryForm, initServiceEntry, isServiceEntryValid, ServiceEntryState } from './ServiceEntryForm';
 import { ConfigPreviewItem, IstioConfigPreview } from 'components/IstioConfigPreview/IstioConfigPreview';
 import { isValid } from 'utils/Common';
 import { ClusterDropdown } from './ClusterDropdown';
@@ -94,6 +72,9 @@ import { NamespaceDropdown } from '../../components/Dropdown/NamespaceDropdown';
 import { Labels } from '../../components/Label/Labels';
 import { WizardLabels } from '../../components/IstioWizards/WizardLabels';
 import { isParentKiosk, kioskContextMenuAction } from 'components/Kiosk/KioskActions';
+import { dicIstioTypeToGVK } from '../../types/IstioConfigList';
+import { gvkToString } from '../../utils/IstioConfigUtils';
+import { GroupVersionKind } from '../../types/IstioObjects';
 
 type ReduxProps = {
   activeClusters: MeshCluster[];
@@ -103,9 +84,7 @@ type ReduxProps = {
 };
 
 type Props = ReduxProps & {
-  objectGroup: string;
-  objectKind: string;
-  objectVersion: string;
+  objectGVK: GroupVersionKind;
 };
 
 type State = {
@@ -145,27 +124,16 @@ const editStyle = kialiStyle({
   paddingTop: '0.25rem'
 });
 
-const DIC = {
-  AuthorizationPolicy: AUTHORIZATION_POLICIES,
-  Gateway: GATEWAYS,
-  K8sGateway: K8SGATEWAYS,
-  K8sReferenceGrant: K8S_REFERENCE_GRANTS,
-  PeerAuthentication: PEER_AUTHENTICATIONS,
-  RequestAuthentication: REQUEST_AUTHENTICATIONS,
-  ServiceEntry: SERVICE_ENTRIES,
-  Sidecar: SIDECARS
-};
-
 // Used in the Istio Config list Actions
 export const NEW_ISTIO_RESOURCE = [
-  { value: AUTHORIZACION_POLICY, label: AUTHORIZACION_POLICY, disabled: false },
-  { value: GATEWAY, label: GATEWAY, disabled: false },
-  { value: K8SGATEWAY, label: K8SGATEWAY, disabled: false },
-  { value: K8S_REFERENCE_GRANT, label: K8S_REFERENCE_GRANT, disabled: false },
-  { value: PEER_AUTHENTICATION, label: PEER_AUTHENTICATION, disabled: false },
-  { value: REQUEST_AUTHENTICATION, label: REQUEST_AUTHENTICATION, disabled: false },
-  { value: SERVICE_ENTRY, label: SERVICE_ENTRY, disabled: false },
-  { value: SIDECAR, label: SIDECAR, disabled: false }
+  { value: dicIstioTypeToGVK['AuthorizationPolicy'], disabled: false },
+  { value: dicIstioTypeToGVK['Gateway'], disabled: false },
+  { value: dicIstioTypeToGVK['K8sGateway'], disabled: false },
+  { value: dicIstioTypeToGVK['K8sReferenceGrant'], disabled: false },
+  { value: dicIstioTypeToGVK['PeerAuthentication'], disabled: false },
+  { value: dicIstioTypeToGVK['RequestAuthentication'], disabled: false },
+  { value: dicIstioTypeToGVK['ServiceEntry'], disabled: false },
+  { value: dicIstioTypeToGVK['Sidecar'], disabled: false }
 ];
 
 const initState = (): State => ({
@@ -218,8 +186,8 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
   canCreate = (namespace: string): boolean => {
     return (
       this.state.istioPermissions[namespace] &&
-      this.props.objectKind.length > 0 &&
-      this.state.istioPermissions[namespace][DIC[this.props.objectKind]].create
+      this.props.objectGVK.Kind.length > 0 &&
+      this.state.istioPermissions[namespace][gvkToString(this.props.objectGVK)].create
     );
   };
 
@@ -331,7 +299,7 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
     let err = 0;
     await Promise.all(
       jsonIstioObjects
-        .map(o => API.createIstioConfigDetail(o.namespace, DIC[this.props.objectKind], o.json, cluster))
+        .map(o => API.createIstioConfigDetail(o.namespace, this.props.objectGVK, o.json, cluster))
         .map(p =>
           p.catch(error => {
             // ignore 404 errors besides no CRD found ones
@@ -340,7 +308,9 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
               API.getErrorString(error).includes('the server could not find the requested resource')
             ) {
               AlertUtils.addError(
-                `Could not create Istio ${this.props.objectKind} objects${cluster ? ` in cluster ${cluster}.` : '.'}`,
+                `Could not create Istio ${gvkToString(this.props.objectGVK)} objects${
+                  cluster ? ` in cluster ${cluster}.` : '.'
+                }`,
                 error
               );
               err++;
@@ -350,7 +320,7 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
     ).then(results => {
       if (results.filter(value => value !== undefined).length > 0) {
         AlertUtils.add(
-          `Istio ${this.props.objectKind} created${cluster ? ` in cluster ${cluster}` : ''}`,
+          `Istio ${gvkToString(this.props.objectGVK)} created${cluster ? ` in cluster ${cluster}` : ''}`,
           'default',
           MessageType.SUCCESS
         );
@@ -365,11 +335,11 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
   showPreview = (): void => {
     const items: ConfigPreviewItem[] = [];
     this.props.activeNamespaces.forEach(ns => {
-      switch (this.props.objectKind) {
-        case AUTHORIZACION_POLICY:
+      switch (gvkToString(this.props.objectGVK)) {
+        case gvkToString(dicIstioTypeToGVK['AuthorizationPolicy']):
           items.push({
             title: 'Authorization Policy',
-            type: 'authorizationpolicy',
+            objectGVK: this.props.objectGVK,
             items: [
               buildAuthorizationPolicy(
                 this.state.annotations,
@@ -381,19 +351,19 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
             ]
           });
           break;
-        case GATEWAY:
+        case gvkToString(dicIstioTypeToGVK['Gateway']):
           items.push({
             title: 'Gateway',
-            type: 'gateway',
+            objectGVK: this.props.objectGVK,
             items: [
               buildGateway(this.state.annotations, this.state.labels, this.state.name, ns.name, this.state.gateway)
             ]
           });
           break;
-        case K8SGATEWAY:
+        case gvkToString(dicIstioTypeToGVK['K8sGateway']):
           items.push({
-            title: 'K8sGateway',
-            type: 'k8sGateway',
+            title: 'K8s Gateway',
+            objectGVK: this.props.objectGVK,
             items: [
               buildK8sGateway(
                 this.state.annotations,
@@ -405,10 +375,10 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
             ]
           });
           break;
-        case K8S_REFERENCE_GRANT:
+        case gvkToString(dicIstioTypeToGVK['K8sReferenceGrant']):
           items.push({
-            title: 'K8sReferenceGrant',
-            type: 'k8sReferenceGrant',
+            title: 'K8s Reference Grant',
+            objectGVK: this.props.objectGVK,
             items: [
               buildK8sReferenceGrant(
                 this.state.annotations,
@@ -420,10 +390,10 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
             ]
           });
           break;
-        case PEER_AUTHENTICATION:
+        case gvkToString(dicIstioTypeToGVK['PeerAuthentication']):
           items.push({
             title: 'Peer Authentication',
-            type: 'peerauthentication',
+            objectGVK: this.props.objectGVK,
             items: [
               buildPeerAuthentication(
                 this.state.annotations,
@@ -435,10 +405,10 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
             ]
           });
           break;
-        case REQUEST_AUTHENTICATION:
+        case gvkToString(dicIstioTypeToGVK['RequestAuthentication']):
           items.push({
             title: 'Request Authentication',
-            type: 'requestauthentication',
+            objectGVK: this.props.objectGVK,
             items: [
               buildRequestAuthentication(
                 this.state.annotations,
@@ -450,10 +420,10 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
             ]
           });
           break;
-        case SERVICE_ENTRY:
+        case gvkToString(dicIstioTypeToGVK['ServiceEntry']):
           items.push({
             title: 'Service Entry',
-            type: 'serviceentry',
+            objectGVK: this.props.objectGVK,
             items: [
               buildServiceEntry(
                 this.state.annotations,
@@ -465,10 +435,10 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
             ]
           });
           break;
-        case SIDECAR:
+        case gvkToString(dicIstioTypeToGVK['Sidecar']):
           items.push({
             title: 'Sidecar',
-            type: 'sidecar',
+            objectGVK: this.props.objectGVK,
             items: [
               buildSidecar(this.state.annotations, this.state.labels, this.state.name, ns.name, this.state.sidecar)
             ]
@@ -494,22 +464,22 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
   };
 
   isIstioFormValid = (): boolean => {
-    switch (this.props.objectKind) {
-      case AUTHORIZACION_POLICY:
+    switch (gvkToString(this.props.objectGVK)) {
+      case gvkToString(dicIstioTypeToGVK['AuthorizationPolicy']):
         return isAuthorizationPolicyStateValid(this.state.authorizationPolicy);
-      case GATEWAY:
+      case gvkToString(dicIstioTypeToGVK['Gateway']):
         return isGatewayStateValid(this.state.gateway);
-      case K8SGATEWAY:
+      case gvkToString(dicIstioTypeToGVK['K8sGateway']):
         return isK8sGatewayStateValid(this.state.k8sGateway);
-      case K8S_REFERENCE_GRANT:
+      case gvkToString(dicIstioTypeToGVK['K8sReferenceGrant']):
         return isK8sReferenceGrantStateValid(this.state.k8sReferenceGrant);
-      case PEER_AUTHENTICATION:
+      case gvkToString(dicIstioTypeToGVK['PeerAuthentication']):
         return isPeerAuthenticationStateValid(this.state.peerAuthentication);
-      case REQUEST_AUTHENTICATION:
+      case gvkToString(dicIstioTypeToGVK['RequestAuthentication']):
         return isRequestAuthenticationStateValid(this.state.requestAuthentication);
-      case SERVICE_ENTRY:
+      case gvkToString(dicIstioTypeToGVK['ServiceEntry']):
         return isServiceEntryValid(this.state.serviceEntry);
-      case SIDECAR:
+      case gvkToString(dicIstioTypeToGVK['Sidecar']):
         return isSidecarStateValid(this.state.sidecar);
       default:
         return false;
@@ -649,53 +619,53 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
               {!isValid(isNameValid) && (
                 <FormHelperText>
                   <HelperText>
-                    <HelperTextItem>{`A valid ${this.props.objectKind} name is required`}</HelperTextItem>
+                    <HelperTextItem>{`A valid ${this.props.objectGVK.Kind} name is required`}</HelperTextItem>
                   </HelperText>
                 </FormHelperText>
               )}
             </FormGroup>
 
-            {this.props.objectKind === AUTHORIZACION_POLICY && (
+            {gvkToString(this.props.objectGVK) === gvkToString(dicIstioTypeToGVK['AuthorizationPolicy']) && (
               <AuthorizationPolicyForm
                 authorizationPolicy={this.state.authorizationPolicy}
                 onChange={this.onChangeAuthorizationPolicy}
               />
             )}
 
-            {this.props.objectKind === GATEWAY && (
+            {gvkToString(this.props.objectGVK) === gvkToString(dicIstioTypeToGVK['Gateway']) && (
               <GatewayForm gateway={this.state.gateway} onChange={this.onChangeGateway} />
             )}
 
-            {this.props.objectKind === K8SGATEWAY && (
+            {gvkToString(this.props.objectGVK) === gvkToString(dicIstioTypeToGVK['K8sGateway']) && (
               <K8sGatewayForm k8sGateway={this.state.k8sGateway} onChange={this.onChangeK8sGateway} />
             )}
 
-            {this.props.objectKind === K8S_REFERENCE_GRANT && (
+            {gvkToString(this.props.objectGVK) === gvkToString(dicIstioTypeToGVK['K8sReferenceGrant']) && (
               <K8sReferenceGrantForm
                 k8sReferenceGrant={this.state.k8sReferenceGrant}
                 onChange={this.onChangeK8sReferenceGrant}
               />
             )}
 
-            {this.props.objectKind === PEER_AUTHENTICATION && (
+            {gvkToString(this.props.objectGVK) === gvkToString(dicIstioTypeToGVK['PeerAuthentication']) && (
               <PeerAuthenticationForm
                 peerAuthentication={this.state.peerAuthentication}
                 onChange={this.onChangePeerAuthentication}
               />
             )}
 
-            {this.props.objectKind === REQUEST_AUTHENTICATION && (
+            {gvkToString(this.props.objectGVK) === gvkToString(dicIstioTypeToGVK['RequestAuthentication']) && (
               <RequestAuthenticationForm
                 requestAuthentication={this.state.requestAuthentication}
                 onChange={this.onChangeRequestAuthentication}
               />
             )}
 
-            {this.props.objectKind === SERVICE_ENTRY && (
+            {gvkToString(this.props.objectGVK) === gvkToString(dicIstioTypeToGVK['ServiceEntry']) && (
               <ServiceEntryForm serviceEntry={this.state.serviceEntry} onChange={this.onChangeServiceEntry} />
             )}
 
-            {this.props.objectKind === SIDECAR && (
+            {gvkToString(this.props.objectGVK) === gvkToString(dicIstioTypeToGVK['Sidecar']) && (
               <SidecarForm sidecar={this.state.sidecar} onChange={this.onChangeSidecar} />
             )}
 
@@ -767,7 +737,7 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
           <IstioConfigPreview
             isOpen={this.state.showPreview}
             items={this.state.itemsPreview}
-            downloadPrefix={this.props.objectKind}
+            downloadPrefix={this.props.objectGVK.Kind}
             title={'Preview new istio objects'}
             opTarget={'create'}
             disableAction={!canCreate}

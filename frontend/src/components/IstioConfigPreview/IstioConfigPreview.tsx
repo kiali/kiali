@@ -15,6 +15,7 @@ import {
   AuthorizationPolicy,
   DestinationRule,
   Gateway,
+  GroupVersionKind,
   K8sGateway,
   K8sGRPCRoute,
   K8sHTTPRoute,
@@ -34,6 +35,7 @@ import _ from 'lodash';
 import { download } from 'utils/Common';
 import { t } from 'utils/I18nUtils';
 import { dump } from 'js-yaml';
+import { gvkToString } from '../../utils/IstioConfigUtils';
 
 export type IstioConfigItem =
   | AuthorizationPolicy
@@ -49,8 +51,8 @@ export type IstioConfigItem =
 
 export interface ConfigPreviewItem {
   items: IstioConfigItem[];
+  objectGVK: GroupVersionKind;
   title: string;
-  type: string;
 }
 
 interface Props {
@@ -187,11 +189,11 @@ export class IstioConfigPreview extends React.Component<Props, State> {
   };
 
   groupItems = (list: ConfigPreviewItem[] = this.state.items): ConfigPreviewItem[] => {
-    const types = _.uniq(list.map(item => item.type));
+    const gvks = _.uniq(list.map(item => item.objectGVK));
 
-    const itemsGrouped: ConfigPreviewItem[] = types.map(type => {
-      const filtered = list.filter(it => it.type === type);
-      const item: ConfigPreviewItem = { type: type, title: filtered[0].title, items: [] };
+    const itemsGrouped: ConfigPreviewItem[] = gvks.map(gvk => {
+      const filtered = list.filter(it => gvkToString(it.objectGVK) === gvkToString(gvk));
+      const item: ConfigPreviewItem = { objectGVK: gvk, title: filtered[0].title, items: [] };
       filtered.map(f => item.items.push(f.items[0]));
       return item;
     });

@@ -16,9 +16,7 @@ export const IstioConfigNewRoute: React.FC = () => {
 
   return (
     <IstioConfigNewPage
-      objectGroup={objectGroup!}
-      objectVersion={objectVersion!}
-      objectKind={objectKind!}
+      objectGVK={{ Group: objectGroup!, Version: objectVersion!, Kind: objectKind! }}
     ></IstioConfigNewPage>
   );
 };

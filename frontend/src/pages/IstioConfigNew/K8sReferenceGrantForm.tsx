@@ -1,23 +1,21 @@
 import * as React from 'react';
 import { FormGroup, FormSelect, FormSelectOption } from '@patternfly/react-core';
-import { K8sReferenceRule } from '../../types/IstioObjects';
+import { GroupVersionKind, K8sReferenceRule } from '../../types/IstioObjects';
 import { Namespace } from '../../types/Namespace';
 import { KialiAppState } from '../../store/Store';
 import { namespaceItemsSelector } from '../../store/Selectors';
 import { KialiDispatch } from '../../types/Redux';
 import { NamespaceThunkActions } from '../../actions/NamespaceThunkActions';
 import { connect } from 'react-redux';
+import { dicIstioTypeToGVK } from '../../types/IstioConfigList';
 
-export const K8S_REFERENCE_GRANT = 'K8sReferenceGrant';
-export const K8S_REFERENCE_GRANTS = 'k8sreferencegrants';
-
-export const FROM_KINDS = {
-  HTTPRoute: 'gateway.networking.k8s.io',
-  Gateway: 'gateway.networking.k8s.io',
-  GRPCRoute: 'gateway.networking.k8s.io',
-  TCPRoute: 'gateway.networking.k8s.io',
-  TLSRoute: 'gateway.networking.k8s.io'
-};
+export const FROM_KINDS = [
+  dicIstioTypeToGVK['K8sHTTPRoute'],
+  dicIstioTypeToGVK['K8sGateway'],
+  dicIstioTypeToGVK['K8sGRPCRoute'],
+  dicIstioTypeToGVK['K8sTCPRoute'],
+  dicIstioTypeToGVK['K8sTLSRoute']
+];
 
 export const TO_KINDS = {
   Service: '',
@@ -46,8 +44,8 @@ export type K8sReferenceGrantState = {
 export const initK8sReferenceGrant = (): K8sReferenceGrantState => ({
   from: [
     {
-      kind: Object.keys(FROM_KINDS)[0],
-      group: Object.values(FROM_KINDS)[0],
+      kind: FROM_KINDS[0].Kind,
+      group: FROM_KINDS[0].Group,
       namespace: ''
     }
   ],
@@ -72,7 +70,7 @@ export class K8sReferenceGrantFormComponent extends React.Component<Props, K8sRe
   onChangeReferenceGrantFromKind = (_event: React.FormEvent, value: string): void => {
     this.setState(
       {
-        from: [{ group: FROM_KINDS[value], kind: value, namespace: this.state.from[0].namespace }]
+        from: [{ group: dicIstioTypeToGVK[`K8s${value}`].Group, kind: value, namespace: this.state.from[0].namespace }]
       },
       () => this.props.onChange(this.state)
     );
@@ -118,8 +116,8 @@ export class K8sReferenceGrantFormComponent extends React.Component<Props, K8sRe
             id="ReferenceGrantFromKind"
             name="ReferenceGrantFromKind"
           >
-            {Object.keys(FROM_KINDS).map((fromKey: string, index: number) => (
-              <FormSelectOption key={index} value={fromKey} label={fromKey} />
+            {FROM_KINDS.map((fromKey: GroupVersionKind, index: number) => (
+              <FormSelectOption key={index} value={fromKey.Kind} label={`K8s ${fromKey.Kind}`} />
             ))}
           </FormSelect>
         </FormGroup>

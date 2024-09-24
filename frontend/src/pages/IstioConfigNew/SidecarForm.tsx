@@ -43,9 +43,6 @@ type Props = {
   sidecar: SidecarState;
 };
 
-export const SIDECAR = 'Sidecar';
-export const SIDECARS = 'sidecars';
-
 // Gateway and Sidecar states are consolidated in the parent page
 export type SidecarState = {
   addEgressHost: EgressHost;
