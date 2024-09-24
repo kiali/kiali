@@ -644,6 +644,7 @@ func (c *kubeCache) GetConfigMap(namespace, name string) (*core_v1.ConfigMap, er
 	// Do not modify what is returned by the lister since that is shared and will cause data races.
 	retCM := cfg.DeepCopy()
 	retCM.Kind = kubernetes.ConfigMapType
+	retCM.APIVersion = kubernetes.ApiCoreVersionV1
 	return retCM, nil
 }
 
@@ -709,6 +710,7 @@ func (c *kubeCache) GetDaemonSets(namespace string) ([]apps_v1.DaemonSet, error)
 		// Do not modify what is returned by the lister since that is shared and will cause data races.
 		d := ds.DeepCopy()
 		d.Kind = kubernetes.DaemonSetType
+		d.APIVersion = kubernetes.ApiAppsVersionV1
 		retSets = append(retSets, *d)
 	}
 	return retSets, nil
@@ -728,6 +730,7 @@ func (c *kubeCache) GetDaemonSet(namespace, name string) (*apps_v1.DaemonSet, er
 	// Do not modify what is returned by the lister since that is shared and will cause data races.
 	retDS := ds.DeepCopy()
 	retDS.Kind = kubernetes.DaemonSetType
+	retDS.APIVersion = kubernetes.ApiAppsVersionV1
 	return retDS, nil
 }
 
@@ -777,6 +780,7 @@ func (c *kubeCache) GetDaemonSetsWithSelector(namespace string, selectorLabels m
 			// Do not modify what is returned by the lister since that is shared and will cause data races.
 			svc := ds.DeepCopy()
 			svc.Kind = kubernetes.DaemonSetType
+			svc.APIVersion = kubernetes.ApiAppsVersionV1
 			retDS = append(retDS, svc)
 		}
 	}
@@ -799,6 +803,7 @@ func (c *kubeCache) GetDeployments(namespace string) ([]apps_v1.Deployment, erro
 		// Do not modify what is returned by the lister since that is shared and will cause data races.
 		d := deployment.DeepCopy()
 		d.Kind = kubernetes.DeploymentType
+		d.APIVersion = kubernetes.ApiAppsVersionV1
 		retDeployments = append(retDeployments, *d)
 	}
 	return retDeployments, nil
@@ -842,6 +847,7 @@ func (c *kubeCache) GetDeploymentsWithSelector(namespace string, labelSelector s
 	for _, ds := range deployments {
 		d := ds.DeepCopy()
 		d.Kind = kubernetes.DeploymentType
+		d.APIVersion = kubernetes.ApiAppsVersionV1
 		retDeployments = append(retDeployments, *d)
 	}
 	return retDeployments, nil
@@ -861,6 +867,7 @@ func (c *kubeCache) GetDeployment(namespace, name string) (*apps_v1.Deployment, 
 	// Do not modify what is returned by the lister since that is shared and will cause data races.
 	retDep := deployment.DeepCopy()
 	retDep.Kind = kubernetes.DeploymentType
+	retDep.APIVersion = kubernetes.ApiAppsVersionV1
 	return retDep, nil
 }
 
@@ -878,6 +885,7 @@ func (c *kubeCache) GetEndpoints(namespace, name string) (*core_v1.Endpoints, er
 	// Do not modify what is returned by the lister since that is shared and will cause data races.
 	retEnd := endpoints.DeepCopy()
 	retEnd.Kind = kubernetes.EndpointsType
+	retEnd.APIVersion = kubernetes.ApiCoreVersionV1
 	return retEnd, nil
 }
 
@@ -897,6 +905,7 @@ func (c *kubeCache) GetStatefulSets(namespace string) ([]apps_v1.StatefulSet, er
 		// Do not modify what is returned by the lister since that is shared and will cause data races.
 		s := ss.DeepCopy()
 		s.Kind = kubernetes.StatefulSetType
+		s.APIVersion = kubernetes.ApiAppsVersionV1
 		retSets = append(retSets, *s)
 	}
 	return retSets, nil
@@ -916,6 +925,7 @@ func (c *kubeCache) GetStatefulSet(namespace, name string) (*apps_v1.StatefulSet
 	// Do not modify what is returned by the lister since that is shared and will cause data races.
 	retSet := statefulSet.DeepCopy()
 	retSet.Kind = kubernetes.StatefulSetType
+	retSet.APIVersion = kubernetes.ApiAppsVersionV1
 	return retSet, nil
 }
 
@@ -960,6 +970,7 @@ func (c *kubeCache) GetServices(namespace string, labelSelector string) ([]core_
 	for _, ss := range services {
 		s := ss.DeepCopy()
 		s.Kind = kubernetes.ServiceType
+		s.APIVersion = kubernetes.ApiCoreVersionV1
 		retServices = append(retServices, *s)
 	}
 	return retServices, nil
@@ -987,6 +998,7 @@ func (c *kubeCache) GetServicesBySelectorLabels(namespace string, selectorLabels
 			// Do not modify what is returned by the lister since that is shared and will cause data races.
 			svc := service.DeepCopy()
 			svc.Kind = kubernetes.ServiceType
+			svc.APIVersion = kubernetes.ApiCoreVersionV1
 			retServices = append(retServices, *svc)
 		}
 	}
@@ -1007,6 +1019,7 @@ func (c *kubeCache) GetService(namespace, name string) (*core_v1.Service, error)
 	// Do not modify what is returned by the lister since that is shared and will cause data races.
 	retSvc := service.DeepCopy()
 	retSvc.Kind = kubernetes.ServiceType
+	retSvc.APIVersion = kubernetes.ApiCoreVersionV1
 	return retSvc, nil
 }
 
@@ -1031,6 +1044,7 @@ func (c *kubeCache) GetPods(namespace, labelSelector string) ([]core_v1.Pod, err
 		// Do not modify what is returned by the lister since that is shared and will cause data races.
 		p := pod.DeepCopy()
 		p.Kind = kubernetes.PodType
+		p.APIVersion = kubernetes.ApiCoreVersionV1
 		retPods = append(retPods, *p)
 	}
 	return retPods, nil
@@ -1082,6 +1096,7 @@ func (c *kubeCache) GetReplicaSets(namespace string) ([]apps_v1.ReplicaSet, erro
 			// Do not modify what is returned by the lister since that is shared and will cause data races.
 			rs := activeRS.DeepCopy()
 			rs.Kind = kubernetes.ReplicaSetType
+			rs.APIVersion = kubernetes.ApiAppsVersionV1
 			result[i] = *rs
 			i = i + 1
 		}
@@ -1107,6 +1122,7 @@ func (c *kubeCache) GetDestinationRule(namespace, name string) (*networking_v1.D
 	// Do not modify what is returned by the lister since that is shared and will cause data races.
 	retDR := dr.DeepCopy()
 	retDR.Kind = kubernetes.DestinationRuleType
+	retDR.APIVersion = kubernetes.ApiNetworkingVersionV1
 	return retDR, nil
 }
 
@@ -1153,6 +1169,7 @@ func (c *kubeCache) GetDestinationRules(namespace, labelSelector string) ([]*net
 	for _, dr := range drs {
 		d := dr.DeepCopy()
 		d.Kind = kubernetes.DestinationRuleType
+		d.APIVersion = kubernetes.ApiNetworkingVersionV1
 		retDRs = append(retDRs, d)
 	}
 	return retDRs, nil
@@ -1175,6 +1192,7 @@ func (c *kubeCache) GetEnvoyFilter(namespace, name string) (*networking_v1alpha3
 	// Do not modify what is returned by the lister since that is shared and will cause data races.
 	retEF := ef.DeepCopy()
 	retEF.Kind = kubernetes.EnvoyFilterType
+	retEF.APIVersion = kubernetes.ApiNetworkingVersionV1Alpha3
 	return retEF, nil
 }
 
@@ -1220,6 +1238,7 @@ func (c *kubeCache) GetEnvoyFilters(namespace, labelSelector string) ([]*network
 	for _, ef := range envoyFilters {
 		efCopy := ef.DeepCopy()
 		efCopy.Kind = kubernetes.EnvoyFilterType
+		efCopy.APIVersion = kubernetes.ApiNetworkingVersionV1Alpha3
 		retEnvoyFilters = append(retEnvoyFilters, efCopy)
 	}
 	return retEnvoyFilters, nil
@@ -1241,6 +1260,7 @@ func (c *kubeCache) GetGateway(namespace, name string) (*networking_v1.Gateway, 
 
 	retGW := gw.DeepCopy()
 	retGW.Kind = kubernetes.GatewayType
+	retGW.APIVersion = kubernetes.ApiNetworkingVersionV1
 	return retGW, nil
 }
 
@@ -1286,6 +1306,7 @@ func (c *kubeCache) GetGateways(namespace, labelSelector string) ([]*networking_
 	for _, gw := range gateways {
 		g := gw.DeepCopy()
 		g.Kind = kubernetes.GatewayType
+		g.APIVersion = kubernetes.ApiNetworkingVersionV1
 		retGateways = append(retGateways, g)
 	}
 	return retGateways, nil
@@ -1307,6 +1328,7 @@ func (c *kubeCache) GetServiceEntry(namespace, name string) (*networking_v1.Serv
 
 	retSE := se.DeepCopy()
 	retSE.Kind = kubernetes.ServiceEntryType
+	retSE.APIVersion = kubernetes.ApiNetworkingVersionV1
 	return retSE, nil
 }
 
@@ -1352,6 +1374,7 @@ func (c *kubeCache) GetServiceEntries(namespace, labelSelector string) ([]*netwo
 	for _, se := range serviceEntries {
 		s := se.DeepCopy()
 		s.Kind = kubernetes.ServiceEntryType
+		s.APIVersion = kubernetes.ApiNetworkingVersionV1
 		retSEs = append(retSEs, s)
 	}
 	return retSEs, nil
@@ -1373,6 +1396,7 @@ func (c *kubeCache) GetSidecar(namespace, name string) (*networking_v1.Sidecar, 
 
 	retSC := sc.DeepCopy()
 	retSC.Kind = kubernetes.SidecarType
+	retSC.APIVersion = kubernetes.ApiNetworkingVersionV1
 	return retSC, nil
 }
 
@@ -1418,6 +1442,7 @@ func (c *kubeCache) GetSidecars(namespace, labelSelector string) ([]*networking_
 	for _, sc := range sidecars {
 		s := sc.DeepCopy()
 		s.Kind = kubernetes.SidecarType
+		s.APIVersion = kubernetes.ApiNetworkingVersionV1
 		retSC = append(retSC, s)
 	}
 	return retSC, nil
@@ -1439,6 +1464,7 @@ func (c *kubeCache) GetVirtualService(namespace, name string) (*networking_v1.Vi
 
 	retVS := vs.DeepCopy()
 	retVS.Kind = kubernetes.VirtualServiceType
+	retVS.APIVersion = kubernetes.ApiNetworkingVersionV1
 	return retVS, nil
 }
 
@@ -1484,6 +1510,7 @@ func (c *kubeCache) GetVirtualServices(namespace, labelSelector string) ([]*netw
 	for _, v := range vs {
 		vv := v.DeepCopy()
 		vv.Kind = kubernetes.VirtualServiceType
+		vv.APIVersion = kubernetes.ApiNetworkingVersionV1
 		retVS = append(retVS, vv)
 	}
 	return retVS, nil
@@ -1505,6 +1532,7 @@ func (c *kubeCache) GetWorkloadEntry(namespace, name string) (*networking_v1.Wor
 
 	retWE := we.DeepCopy()
 	retWE.Kind = kubernetes.WorkloadEntryType
+	retWE.APIVersion = kubernetes.ApiNetworkingVersionV1
 	return retWE, nil
 }
 
@@ -1550,6 +1578,7 @@ func (c *kubeCache) GetWorkloadEntries(namespace, labelSelector string) ([]*netw
 	for _, w := range workloadEntries {
 		ww := w.DeepCopy()
 		ww.Kind = kubernetes.WorkloadEntryType
+		ww.APIVersion = kubernetes.ApiNetworkingVersionV1
 		retWE = append(retWE, ww)
 	}
 	return retWE, nil
@@ -1571,6 +1600,7 @@ func (c *kubeCache) GetWorkloadGroup(namespace, name string) (*networking_v1.Wor
 
 	retWG := wg.DeepCopy()
 	retWG.Kind = kubernetes.WorkloadGroupType
+	retWG.APIVersion = kubernetes.ApiNetworkingVersionV1
 	return retWG, nil
 }
 
@@ -1616,6 +1646,7 @@ func (c *kubeCache) GetWorkloadGroups(namespace, labelSelector string) ([]*netwo
 	for _, w := range workloadGroups {
 		ww := w.DeepCopy()
 		ww.Kind = kubernetes.WorkloadGroupType
+		ww.APIVersion = kubernetes.ApiNetworkingVersionV1
 		retWG = append(retWG, ww)
 	}
 	return retWG, nil
@@ -1637,6 +1668,7 @@ func (c *kubeCache) GetWasmPlugin(namespace, name string) (*extentions_v1alpha1.
 
 	retWP := wp.DeepCopy()
 	retWP.Kind = kubernetes.WasmPluginType
+	retWP.APIVersion = kubernetes.ApiExtensionV1Alpha1
 	return retWP, nil
 }
 
@@ -1682,6 +1714,7 @@ func (c *kubeCache) GetWasmPlugins(namespace, labelSelector string) ([]*extentio
 	for _, wp := range wasmPlugins {
 		ww := wp.DeepCopy()
 		ww.Kind = kubernetes.WasmPluginType
+		ww.APIVersion = kubernetes.ApiExtensionV1Alpha1
 		retWP = append(retWP, ww)
 	}
 	return retWP, nil
@@ -1703,6 +1736,7 @@ func (c *kubeCache) GetTelemetry(namespace, name string) (*telemetry_v1.Telemetr
 
 	retT := t.DeepCopy()
 	retT.Kind = kubernetes.TelemetryType
+	retT.APIVersion = kubernetes.ApiTelemetryV1
 	return retT, nil
 }
 
@@ -1748,6 +1782,7 @@ func (c *kubeCache) GetTelemetries(namespace, labelSelector string) ([]*telemetr
 	for _, t := range telemetries {
 		tt := t.DeepCopy()
 		tt.Kind = kubernetes.TelemetryType
+		tt.APIVersion = kubernetes.ApiTelemetryV1
 		retTelemetries = append(retTelemetries, tt)
 	}
 	return retTelemetries, nil
@@ -1784,7 +1819,8 @@ func (c *kubeCache) GetK8sGateway(namespace, name string) (*gatewayapi_v1.Gatewa
 	}
 
 	retG := g.DeepCopy()
-	retG.Kind = kubernetes.K8sGatewayType
+	retG.Kind = kubernetes.K8sActualGatewayType
+	retG.APIVersion = kubernetes.K8sApiNetworkingVersionV1
 	return retG, nil
 }
 
@@ -1831,7 +1867,8 @@ func (c *kubeCache) GetK8sGateways(namespace, labelSelector string) ([]*gatewaya
 	var retK8sGateways []*gatewayapi_v1.Gateway
 	for _, gw := range k8sGateways {
 		ggw := gw.DeepCopy()
-		ggw.Kind = kubernetes.K8sGatewayType
+		ggw.Kind = kubernetes.K8sActualGatewayType
+		ggw.APIVersion = kubernetes.K8sApiNetworkingVersionV1
 		retK8sGateways = append(retK8sGateways, ggw)
 	}
 	return retK8sGateways, nil
@@ -1855,7 +1892,8 @@ func (c *kubeCache) GetK8sGRPCRoute(namespace, name string) (*gatewayapi_v1.GRPC
 	}
 
 	retG := g.DeepCopy()
-	retG.Kind = kubernetes.K8sGRPCRouteType
+	retG.Kind = kubernetes.K8sActualGRPCRouteType
+	retG.APIVersion = kubernetes.K8sApiNetworkingVersionV1
 	return retG, nil
 }
 
@@ -1901,7 +1939,8 @@ func (c *kubeCache) GetK8sGRPCRoutes(namespace, labelSelector string) ([]*gatewa
 	var retK8sGRPCRoutes []*gatewayapi_v1.GRPCRoute
 	for _, hr := range k8sGRPCRoutes {
 		hrCopy := hr.DeepCopy()
-		hrCopy.Kind = kubernetes.K8sGRPCRouteType
+		hrCopy.Kind = kubernetes.K8sActualGRPCRouteType
+		hrCopy.APIVersion = kubernetes.K8sApiNetworkingVersionV1
 		retK8sGRPCRoutes = append(retK8sGRPCRoutes, hrCopy)
 	}
 	return retK8sGRPCRoutes, nil
@@ -1925,7 +1964,8 @@ func (c *kubeCache) GetK8sHTTPRoute(namespace, name string) (*gatewayapi_v1.HTTP
 	}
 
 	retG := g.DeepCopy()
-	retG.Kind = kubernetes.K8sHTTPRouteType
+	retG.Kind = kubernetes.K8sActualHTTPRouteType
+	retG.APIVersion = kubernetes.K8sApiNetworkingVersionV1
 	return retG, nil
 }
 
@@ -1971,7 +2011,8 @@ func (c *kubeCache) GetK8sHTTPRoutes(namespace, labelSelector string) ([]*gatewa
 	var retK8sHTTPRoutes []*gatewayapi_v1.HTTPRoute
 	for _, hr := range k8sHTTPRoutes {
 		hrCopy := hr.DeepCopy()
-		hrCopy.Kind = kubernetes.K8sHTTPRouteType
+		hrCopy.Kind = kubernetes.K8sActualHTTPRouteType
+		hrCopy.APIVersion = kubernetes.K8sApiNetworkingVersionV1
 		retK8sHTTPRoutes = append(retK8sHTTPRoutes, hrCopy)
 	}
 	return retK8sHTTPRoutes, nil
@@ -1995,7 +2036,8 @@ func (c *kubeCache) GetK8sReferenceGrant(namespace, name string) (*gatewayapi_v1
 	}
 
 	retG := g.DeepCopy()
-	retG.Kind = kubernetes.K8sReferenceGrantType
+	retG.Kind = kubernetes.K8sActualReferenceGrantType
+	retG.APIVersion = kubernetes.K8sApiNetworkingVersionV1Beta1
 	return retG, nil
 }
 
@@ -2041,7 +2083,8 @@ func (c *kubeCache) GetK8sReferenceGrants(namespace, labelSelector string) ([]*g
 	var retK8sReferenceGrants []*gatewayapi_v1beta1.ReferenceGrant
 	for _, hr := range k8sReferenceGrants {
 		hrCopy := hr.DeepCopy()
-		hrCopy.Kind = kubernetes.K8sReferenceGrantType
+		hrCopy.Kind = kubernetes.K8sActualReferenceGrantType
+		hrCopy.APIVersion = kubernetes.K8sApiNetworkingVersionV1Beta1
 		retK8sReferenceGrants = append(retK8sReferenceGrants, hrCopy)
 	}
 	return retK8sReferenceGrants, nil
@@ -2065,7 +2108,8 @@ func (c *kubeCache) GetK8sTCPRoute(namespace, name string) (*gatewayapi_v1alpha2
 	}
 
 	retG := g.DeepCopy()
-	retG.Kind = kubernetes.K8sTCPRouteType
+	retG.Kind = kubernetes.K8sActualTCPRouteType
+	retG.APIVersion = kubernetes.K8sApiNetworkingVersionV1Alpha2
 	return retG, nil
 }
 
@@ -2111,7 +2155,8 @@ func (c *kubeCache) GetK8sTCPRoutes(namespace, labelSelector string) ([]*gateway
 	var retK8sTCPRoutes []*gatewayapi_v1alpha2.TCPRoute
 	for _, hr := range k8sTCPRoutes {
 		hrCopy := hr.DeepCopy()
-		hrCopy.Kind = kubernetes.K8sTCPRouteType
+		hrCopy.Kind = kubernetes.K8sActualTCPRouteType
+		hrCopy.APIVersion = kubernetes.K8sApiNetworkingVersionV1Alpha2
 		retK8sTCPRoutes = append(retK8sTCPRoutes, hrCopy)
 	}
 	return retK8sTCPRoutes, nil
@@ -2135,7 +2180,8 @@ func (c *kubeCache) GetK8sTLSRoute(namespace, name string) (*gatewayapi_v1alpha2
 	}
 
 	retG := g.DeepCopy()
-	retG.Kind = kubernetes.K8sTLSRouteType
+	retG.Kind = kubernetes.K8sActualTLSRouteType
+	retG.APIVersion = kubernetes.K8sApiNetworkingVersionV1Alpha2
 	return retG, nil
 }
 
@@ -2181,7 +2227,8 @@ func (c *kubeCache) GetK8sTLSRoutes(namespace, labelSelector string) ([]*gateway
 	var retK8sTLSRoutes []*gatewayapi_v1alpha2.TLSRoute
 	for _, hr := range k8sTLSRoutes {
 		hrCopy := hr.DeepCopy()
-		hrCopy.Kind = kubernetes.K8sTLSRouteType
+		hrCopy.Kind = kubernetes.K8sActualTLSRouteType
+		hrCopy.APIVersion = kubernetes.K8sApiNetworkingVersionV1Alpha2
 		retK8sTLSRoutes = append(retK8sTLSRoutes, hrCopy)
 	}
 	return retK8sTLSRoutes, nil
@@ -2203,6 +2250,7 @@ func (c *kubeCache) GetAuthorizationPolicy(namespace, name string) (*security_v1
 
 	retAP := ap.DeepCopy()
 	retAP.Kind = kubernetes.AuthorizationPoliciesType
+	retAP.APIVersion = kubernetes.ApiSecurityVersionV1
 	return retAP, nil
 }
 
@@ -2248,6 +2296,7 @@ func (c *kubeCache) GetAuthorizationPolicies(namespace, labelSelector string) ([
 	for _, ap := range authorizationPolicies {
 		apCopy := ap.DeepCopy()
 		apCopy.Kind = kubernetes.AuthorizationPoliciesType
+		apCopy.APIVersion = kubernetes.ApiSecurityVersionV1
 		retAuthorizationPolicies = append(retAuthorizationPolicies, apCopy)
 	}
 	return retAuthorizationPolicies, nil
@@ -2269,6 +2318,7 @@ func (c *kubeCache) GetPeerAuthentication(namespace, name string) (*security_v1.
 
 	retPA := pa.DeepCopy()
 	retPA.Kind = kubernetes.PeerAuthenticationsType
+	retPA.APIVersion = kubernetes.ApiSecurityVersionV1
 	return retPA, nil
 }
 
@@ -2314,6 +2364,7 @@ func (c *kubeCache) GetPeerAuthentications(namespace, labelSelector string) ([]*
 	for _, pa := range peerAuthentications {
 		paCopy := pa.DeepCopy()
 		paCopy.Kind = kubernetes.PeerAuthenticationsType
+		paCopy.APIVersion = kubernetes.ApiSecurityVersionV1
 		retPeerAuthentications = append(retPeerAuthentications, paCopy)
 	}
 	return retPeerAuthentications, nil
@@ -2335,6 +2386,7 @@ func (c *kubeCache) GetRequestAuthentication(namespace, name string) (*security_
 
 	retRA := ra.DeepCopy()
 	retRA.Kind = kubernetes.RequestAuthenticationsType
+	retRA.APIVersion = kubernetes.ApiSecurityVersionV1
 	return retRA, nil
 }
 
@@ -2380,6 +2432,7 @@ func (c *kubeCache) GetRequestAuthentications(namespace, labelSelector string) (
 	for _, ra := range requestAuthentications {
 		raCopy := ra.DeepCopy()
 		raCopy.Kind = kubernetes.RequestAuthenticationsType
+		raCopy.APIVersion = kubernetes.ApiSecurityVersionV1
 		retRequestAuthentications = append(retRequestAuthentications, raCopy)
 	}
 	return retRequestAuthentications, nil
