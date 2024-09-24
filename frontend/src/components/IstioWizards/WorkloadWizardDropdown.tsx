@@ -15,6 +15,8 @@ import * as AlertUtils from '../../utils/AlertUtils';
 import { MessageType } from '../../types/MessageCenter';
 import { WizardLabels } from './WizardLabels';
 import { renderDisabledDropdownOption } from 'utils/DropdownUtils';
+import { WorkloadWizardActionsDropdownGroup } from './WorkloadWizardActionsDropdownGroup';
+import { t } from 'utils/I18nUtils';
 
 interface Props {
   namespace: string;
@@ -71,97 +73,18 @@ export const WorkloadWizardDropdown: React.FC<Props> = (props: Props) => {
       case WIZARD_REMOVE_AUTO_INJECTION: {
         setShowWizard(false);
 
-    if (serverConfig.kialiFeatureFlags.istioInjectionAction && !props.workload.isAmbient) {
-      const enableAction = (
-        <DropdownItem
-          data-test={WIZARD_ENABLE_AUTO_INJECTION}
-          key={WIZARD_ENABLE_AUTO_INJECTION}
-          component="button"
-          onClick={() => onAction(WIZARD_ENABLE_AUTO_INJECTION)}
-          isDisabled={serverConfig.deployment.viewOnlyMode}
-        >
-          Enable Auto Injection
-        </DropdownItem>
-      );
+        if (props.onChange) {
+          props.onChange();
+        }
 
-      const enableActionWrapper = serverConfig.deployment.viewOnlyMode
-        ? renderDisabledDropdownOption(
-            'enable_auto_injection',
-            TooltipPosition.left,
-            'User does not have permission',
-            enableAction
-          )
-        : enableAction;
-
-      const disableAction = (
-        <DropdownItem
-          data-test={WIZARD_DISABLE_AUTO_INJECTION}
-          key={WIZARD_DISABLE_AUTO_INJECTION}
-          component="button"
-          onClick={() => onAction(WIZARD_DISABLE_AUTO_INJECTION)}
-          isDisabled={serverConfig.deployment.viewOnlyMode}
-        >
-          Disable Auto Injection
-        </DropdownItem>
-      );
-
-      const disableActionWrapper = serverConfig.deployment.viewOnlyMode
-        ? renderDisabledDropdownOption(
-            'disable_auto_injection',
-            TooltipPosition.left,
-            'User does not have permission',
-            disableAction
-          )
-        : disableAction;
-
-      const removeAction = (
-        <DropdownItem
-          data-test={WIZARD_REMOVE_AUTO_INJECTION}
-          key={WIZARD_REMOVE_AUTO_INJECTION}
-          component="button"
-          onClick={() => onAction(WIZARD_REMOVE_AUTO_INJECTION)}
-          isDisabled={serverConfig.deployment.viewOnlyMode}
-        >
-          Remove Auto Injection
-        </DropdownItem>
-      );
-
-      const removeActionWrapper = serverConfig.deployment.viewOnlyMode
-        ? renderDisabledDropdownOption(
-            'remove_auto_injection',
-            TooltipPosition.left,
-            'User does not have permission',
-            removeAction
-          )
-        : removeAction;
-
-      if (props.workload.istioInjectionAnnotation !== undefined && props.workload.istioInjectionAnnotation) {
-        items.push(disableActionWrapper);
-        items.push(removeActionWrapper);
-      } else if (props.workload.istioInjectionAnnotation !== undefined && !props.workload.istioInjectionAnnotation) {
-        items.push(enableActionWrapper);
-        items.push(removeActionWrapper);
-      } else {
-        // If sidecar is present, we offer first the disable action
-        items.push(props.workload.istioSidecar ? disableActionWrapper : enableActionWrapper);
+        break;
       }
-    }
-
-    if (props.workload.type === 'Deployment') {
-      const annotationsAction = (
-        <DropdownItem
-          data-test={WIZARD_EDIT_ANNOTATIONS}
-          key={WIZARD_EDIT_ANNOTATIONS}
-          component="button"
-          onClick={() => onWizardToggle(true)}
-        >
-          {serverConfig.kialiFeatureFlags.istioAnnotationAction && !serverConfig.deployment.viewOnlyMode
-            ? 'Edit Annotations'
-            : 'View Annotations'}
-        </DropdownItem>
-      );
-
-      items.push(annotationsAction);
+      case WIZARD_EDIT_ANNOTATIONS: {
+        onWizardToggle(true);
+        break;
+      }
+      default:
+        console.log('Unrecognized key');
     }
   };
 
