@@ -765,10 +765,10 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
     )[0];
     const vs = items.filter(it => gvkToString(it.objectGVK) === gvkToString(dicIstioTypeToGVK['VirtualService']))[0];
     const k8shttproute = items.filter(
-      it => gvkToString(it.objectGVK) === gvkToString(dicIstioTypeToGVK['K8sHTTProute'])
+      it => gvkToString(it.objectGVK) === gvkToString(dicIstioTypeToGVK['K8sHTTPRoute'])
     )[0];
     const k8sgrpcroute = items.filter(
-      it => gvkToString(it.objectGVK) === gvkToString(dicIstioTypeToGVK['K8sGRPCroute'])
+      it => gvkToString(it.objectGVK) === gvkToString(dicIstioTypeToGVK['K8sGRPCRoute'])
     )[0];
 
     const previews: WizardPreviews = {

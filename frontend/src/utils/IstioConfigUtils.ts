@@ -238,7 +238,7 @@ export function getIstioObjectGVK(apiVersion?: string, kind?: string): GroupVers
 }
 
 export function gvkToString(gvk: GroupVersionKind): string {
-  if (!gvk.Group && !gvk.Version && !gvk.Kind) {
+  if (!gvk || (!gvk.Group && !gvk.Version && !gvk.Kind)) {
     return '';
   }
   if (!gvk.Group || !gvk.Version) {
