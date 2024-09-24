@@ -621,7 +621,7 @@ Then(
 
 Then('the AuthorizationPolicy should have a {string}', function (healthStatus: string) {
   cy.get(
-    `[data-test=VirtualItem_Ns${this.targetNamespace}_authorizationpolicy_${this.targetAuthorizationPolicy}] span.pf-v5-c-icon`
+    `[data-test=VirtualItem_Ns${this.targetNamespace}_security.istio.io.v1.AuthorizationPolicy_${this.targetAuthorizationPolicy}] span.pf-v5-c-icon`
   ).hasCssVar('color', `--pf-v5-global--${healthStatus}-color--100`);
 });
 

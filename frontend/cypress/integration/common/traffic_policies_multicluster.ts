@@ -72,7 +72,7 @@ When('user confirms to {string} the Traffic Policy', (action: string) => {
 
 Then('user sees the generated Traffic policy objects located in the {string} cluster', (cluster: string) => {
   authorizationPolicies.forEach(policy => {
-    cy.get(`[data-test="VirtualItem_Cluster${cluster}_Nsbookinfo_authorizationpolicy_${policy}"]`)
+    cy.get(`[data-test="VirtualItem_Cluster${cluster}_Nsbookinfo_security.istio.io.v1.AuthorizationPolicy_${policy}"]`)
       .scrollIntoView()
       .should('be.visible');
   });
@@ -85,7 +85,9 @@ Then('user sees the generated Traffic policy objects located in the {string} clu
 
 Then('user should not see the generated Traffic policy objects located in the {string} cluster', (cluster: string) => {
   authorizationPolicies.forEach(policy => {
-    cy.get(`[data-test="VirtualItem_Cluster${cluster}_Nsbookinfo_authorizationpolicy_${policy}"]`).should('not.exist');
+    cy.get(
+      `[data-test="VirtualItem_Cluster${cluster}_Nsbookinfo_security.istio.io.v1.AuthorizationPolicy_${policy}"]`
+    ).should('not.exist');
   });
   sidecars.forEach(sidecar => {
     cy.get(`[data-test="VirtualItem_Cluster${cluster}_Nsbookinfo_sidecar_${sidecar}"]`).should('not.exist');
