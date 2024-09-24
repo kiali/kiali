@@ -96,3 +96,11 @@ Feature: Kiali Graph page - Side panel menu actions
     And service badge for the graph side panel should be visible
     And user clicks the "Traces" graph summary tab
     Then user should see the traces tab not empty
+
+  @bookinfo-app
+  Scenario: Validate summary panel edge
+    Given user graphs "bookinfo" namespaces
+    And user clicks the edge from "productpage" "app" to "details" "service"
+    And service badge for the graph side panel should be visible
+    And app badge for the graph side panel should be visible
+    And summary panel contains "Edge (HTTP)"

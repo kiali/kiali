@@ -269,8 +269,8 @@ else
   tracing:
     enabled: true
     provider: \"tempo\"
-    in_cluster_url: http://localhost:3200
-    url: http://localhost:3200
+    internal_url: http://localhost:3200
+    external_url: http://localhost:3200
     use_grpc: false"
     fi
   fi

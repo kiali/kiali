@@ -75,7 +75,6 @@ Valid options:
   -c|--client <path to k8s client>
       A filename or path to the 'oc' or 'kubectl' client.
       If this is a path to 'oc' then it will be assumed OpenShift is being used.
-      (NOTE: Installing in a non-OpenShift cluster is currently not supported.)
       Default: ${DEFAULT_OC}
 
   -cpn|--control-plane-namespace <name>
@@ -103,6 +102,7 @@ Valid options:
 
   -eo|--enable-ossmconsole <true|false>
       If true, and you elect to enable Kiali (--enable-kiali) this will install OSSMC also.
+      This is ignored if you are installing on a non-OpenShift cluster.
       This is only used with the "install-istio" command.
       Default: ${DEFAULT_ENABLE_OSSMCONSOLE}
 
@@ -202,7 +202,7 @@ elif [ "${_CMD}" == "install-istio" ]; then
     exit 1
   fi
 
-  if ! ${OC} get crd istios.operator.istio.io >& /dev/null; then
+  if ! ${OC} get crd istios.sailoperator.io >& /dev/null; then
     errormsg "Cannot install Istio because the Sail Operator is either not installed or installation is in progress."
     exit 1
   fi
@@ -226,8 +226,10 @@ elif [ "${_CMD}" == "install-istio" ]; then
 
   if [ "${ENABLE_KIALI}" == "true" ]; then
     install_kiali_cr "${CONTROL_PLANE_NAMESPACE}"
-    if [ "${ENABLE_OSSMCONSOLE}" == "true" ]; then
-      install_ossmconsole_cr "ossmconsole"
+    if [ "${IS_OPENSHIFT}" == "true" ]; then
+      if [ "${ENABLE_OSSMCONSOLE}" == "true" ]; then
+        install_ossmconsole_cr "ossmconsole"
+      fi
     fi
   fi
 

@@ -125,6 +125,11 @@ type NodeData struct {
 	IsWaypoint            bool                `json:"isWaypoint,omitempty"`            // true | false
 }
 
+type WaypointEdge struct {
+	Direction string    `json:"direction"`          // WaypointEdgeDirectionTo | WaypointEdgeDirectionFrom
+	FromEdge  *EdgeData `json:"fromEdge,omitempty"` // for a bi-directional 'to' waypoint edge, this is the return 'from' edge
+}
+
 type EdgeData struct {
 	// Cytoscape Fields
 	ID     string `json:"id"`     // unique internal edge ID (e0, e1...)
@@ -132,13 +137,13 @@ type EdgeData struct {
 	Target string `json:"target"` // child node ID
 
 	// App Fields (not required by Cytoscape)
-	Display         string          `json:"display,omitempty"`         // Used to hide edges for biderectional ones (Ambient graph simplification)
 	DestPrincipal   string          `json:"destPrincipal,omitempty"`   // principal used for the edge destination
 	IsMTLS          string          `json:"isMTLS,omitempty"`          // set to the percentage of traffic using a mutual TLS connection
 	ResponseTime    string          `json:"responseTime,omitempty"`    // in millis
 	SourcePrincipal string          `json:"sourcePrincipal,omitempty"` // principal used for the edge source
 	Throughput      string          `json:"throughput,omitempty"`      // in bytes/sec (request or response, depends on client request)
 	Traffic         ProtocolTraffic `json:"traffic,omitempty"`         // traffic rates for the edge protocol
+	Waypoint        *WaypointEdge   `json:"waypoint,omitempty"`        // Biderectional edges for waypoint nodes
 }
 
 type NodeWrapper struct {
@@ -439,38 +444,52 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 		*nodes = append(*nodes, &nw)
 
 		for _, e := range n.Edges {
-			sourceIDHash := nodeHash(n.ID)
-			destIDHash := nodeHash(e.Dest.ID)
-			protocol := ""
-			if e.Metadata[graph.ProtocolKey] != nil {
-				protocol = e.Metadata[graph.ProtocolKey].(string)
-			}
-			edgeID := edgeHash(sourceIDHash, destIDHash, protocol)
-			ed := EdgeData{
-				ID:     edgeID,
-				Source: sourceIDHash,
-				Target: destIDHash,
-				Traffic: ProtocolTraffic{
-					Protocol: protocol,
-				},
-			}
-			if e.Metadata[graph.DestPrincipal] != nil {
-				ed.DestPrincipal = e.Metadata[graph.DestPrincipal].(string)
-			}
-			if e.Metadata[graph.SourcePrincipal] != nil {
-				ed.SourcePrincipal = e.Metadata[graph.SourcePrincipal].(string)
-			}
-			if e.Metadata[graph.Display] != nil {
-				ed.Display = e.Metadata[graph.Display].(string)
-			}
-			addEdgeTelemetry(e, &ed)
-
+			ed := convertEdge(*e, n.ID)
 			ew := EdgeWrapper{
 				Data: &ed,
 			}
 			*edges = append(*edges, &ew)
 		}
 	}
+}
+
+func convertEdge(e graph.Edge, nodeID string) EdgeData {
+	sourceIDHash := nodeHash(nodeID)
+	destIDHash := nodeHash(e.Dest.ID)
+	protocol := ""
+	if e.Metadata[graph.ProtocolKey] != nil {
+		protocol = e.Metadata[graph.ProtocolKey].(string)
+	}
+	edgeID := edgeHash(sourceIDHash, destIDHash, protocol)
+	ed := EdgeData{
+		ID:     edgeID,
+		Source: sourceIDHash,
+		Target: destIDHash,
+		Traffic: ProtocolTraffic{
+			Protocol: protocol,
+		},
+	}
+	if e.Metadata[graph.DestPrincipal] != nil {
+		ed.DestPrincipal = e.Metadata[graph.DestPrincipal].(string)
+	}
+	if e.Metadata[graph.SourcePrincipal] != nil {
+		ed.SourcePrincipal = e.Metadata[graph.SourcePrincipal].(string)
+	}
+	if e.Metadata[graph.Waypoint] != nil {
+		waypointEdgeInfo := e.Metadata[graph.Waypoint].(*graph.WaypointEdgeInfo)
+		waypointEdge := WaypointEdge{
+			Direction: waypointEdgeInfo.Direction,
+		}
+		if waypointEdgeInfo.FromEdge != nil {
+			fromEdgeData := convertEdge(*(waypointEdgeInfo.FromEdge), nodeID)
+			waypointEdge.FromEdge = &fromEdgeData
+		}
+		ed.Waypoint = &waypointEdge
+	}
+
+	addEdgeTelemetry(&e, &ed)
+
+	return ed
 }
 
 func addNodeTelemetry(n *graph.Node, nd *NodeData) {

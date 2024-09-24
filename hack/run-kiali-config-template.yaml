@@ -28,8 +28,8 @@ external_services:
 
   grafana:
     enabled: true
-    in_cluster_url: "${GRAFANA_URL}"
-    url: "${GRAFANA_URL}"
+    internal_url: "${GRAFANA_URL}"
+    external_url: "${GRAFANA_URL}"
 
   istio:
     url_service_version: "${ISTIOD_URL}"
@@ -40,8 +40,8 @@ external_services:
   tracing:
     enabled: true
     provider: "${TRACING_APP}"
-    in_cluster_url: "${TRACING_URL}"
-    url: "${TRACING_URL}"
+    internal_url: "${TRACING_URL}"
+    external_url: "${TRACING_URL}"
     use_grpc: false
 
 login_token:

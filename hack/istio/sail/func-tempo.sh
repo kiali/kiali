@@ -143,6 +143,13 @@ install_tempo() {
   install_minio ${TEMPO_NAMESPACE}
 
   infomsg "Installing TempoStack CR"
+
+  if [ "${IS_OPENSHIFT}" == "true" ]; then
+    local ingress_type="route"
+  else
+    local ingress_type="ingress"
+  fi
+
   ${OC} apply --namespace ${TEMPO_NAMESPACE} -f - <<EOM
 apiVersion: tempo.grafana.com/v1alpha1
 kind: TempoStack
@@ -169,7 +176,7 @@ spec:
         ingress:
           route:
             termination: edge
-          type: route
+          type: ${ingress_type}
 EOM
 
   infomsg "Waiting for things to start..."
@@ -278,7 +285,11 @@ status_tempo() {
       ${OC} get pods --namespace ${res_namespace}
       infomsg ""
       infomsg "Tempo Web Console can be accessed here: "
-      ${OC} get route -n ${res_namespace} -l app.kubernetes.io/name=tempo,app.kubernetes.io/component=query-frontend -o jsonpath='https://{..spec.host}{"\n"}'
+      if [ "${IS_OPENSHIFT}" == "true" ]; then
+        ${OC} get route -n ${res_namespace} -l app.kubernetes.io/name=tempo,app.kubernetes.io/component=query-frontend -o jsonpath='https://{..spec.host}{"\n"}'
+      else
+        infomsg "Cannot determine where the UI is on non-OpenShift clusters."
+      fi
     done
   else
     infomsg "There are no TempoStack CRs in the cluster"

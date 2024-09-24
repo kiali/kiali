@@ -1,10 +1,10 @@
 # Installing Istio with the Latest Sail and Kiali Operators
 
-To install Istio (including Kiali), use the script `install-ossm-release.sh`. This will utilize the Sail operator and Kiali operator to install the latest released images via OLM using either the public Red Hat repository or public Community repository.
+To install Istio (including Kiali), use the script `install-ossm-release.sh`. This will utilize the Sail operator and Kiali operator to install the latest released images via OLM using either the Red Hat repository or the public Community repository or the public OperatorHub.io.
 
 Here's what you need to do in order to install everything.
 
-First, install a Kubernetes cluster and make sure you do not already have Istio or Kiali installed. _(Note: currently non-OpenShift clusters are not supported. When the Sail operator is published on OperatorHub.io, then these scripts should be able to work with minor updates). So for now you need to use OpenShift._
+First, install an OpenShift or Kubernetes cluster and make sure you do not already have Istio or Kiali installed.
 
 Second, if using OpenShift, log into this cluster as a cluster admin user via 'oc'. Otherwise, make sure your current kube context is pointing to your Kubernetes cluster.
 

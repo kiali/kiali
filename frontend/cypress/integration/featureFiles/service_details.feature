@@ -12,14 +12,12 @@ Feature: Kiali Service Details page
     And user is at the details page for the "service" "bookinfo/productpage" located in the "" cluster
 
   @bookinfo-app
-  @skip-ossmc
   Scenario: See details for productpage
     Then sd::user sees a list with content "Overview"
     Then sd::user sees a list with content "Traffic"
     Then sd::user sees a list with content "Inbound Metrics"
     Then sd::user sees a list with content "Traces"
-    # todo: adapt to kiosk mode for OSSMC
-    Then sd::user sees the actions button
+    Then sd::user sees the service actions
 
   @bookinfo-app
   Scenario: See details for service

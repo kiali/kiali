@@ -10,17 +10,9 @@ set -u
 
 install_servicemesh_operators() {
   # if not OpenShift, install from OperatorHub.io
-  # This will create a subscription with the name "my-sail"
   if [ "${IS_OPENSHIFT}" == "false" ]; then
-    errormsg "INSTALLING ON NON-OPENSHIFT CLUSTERS IS NOT YET SUPPORTED."
-    errormsg "THIS WILL BE SUPPORTED WHEN SAIL OPERATOR IS PUBLISHED ON OPERATORHUB.IO."
-    errormsg "WHEN THE FOLLOWING ISSUE IS FIXED, SUPPORT CAN BE ADDED: https://issues.redhat.com/browse/OSSM-4829"
-    exit 1
-    # TODO: When Sail is published on OperatorHub.io, delete the lines above, uncomment below,
-    # and confirm what the name will be of the created subscription - that name should be the same
-    # as the name of the subscription we create further below.
-    #${OC} apply -f https://operatorhub.io/install/sail.yaml
-    #return
+    ${OC} apply -f https://operatorhub.io/install/sailoperator.yaml
+    return
   fi
 
   local catalog_source="${1}"
@@ -34,7 +26,7 @@ install_servicemesh_operators() {
     community)
       local servicemesh_subscription_source="community-operators"
       local servicemesh_subscription_name="sailoperator"
-      local servicemesh_subscription_channel="3.0-nightly"
+      local servicemesh_subscription_channel="candidates"
       ;;
     *)
       local servicemesh_subscription_source="${catalog_source}"
@@ -48,7 +40,7 @@ install_servicemesh_operators() {
 apiVersion: operators.coreos.com/v1alpha1
 kind: Subscription
 metadata:
-  name: my-sail
+  name: my-sailoperator
   namespace: ${OLM_OPERATORS_NAMESPACE}
 spec:
   channel: ${servicemesh_subscription_channel}
@@ -72,8 +64,8 @@ install_istio() {
      destinationrules.networking.istio.io \
      envoyfilters.networking.istio.io \
      gateways.networking.istio.io \
-     istios.operator.istio.io \
-     istiocnis.operator.istio.io \
+     istios.sailoperator.io \
+     istiocnis.sailoperator.io \
      peerauthentications.security.istio.io \
      proxyconfigs.networking.istio.io \
      requestauthentications.security.istio.io \
@@ -125,6 +117,17 @@ install_istio() {
   #while [ "$(${OC} get mutatingwebhookconfigurations -o name | grep -E 'sail|servicemesh|istio')" == "" ]; do echo -n '.'; sleep 5; done
   #infomsg "done."
 
+  # "latest" is not a supported version when using a released version of Sail operator.
+  # We try to determine the latest version of Istio supported by examining the CRD.
+  if [ "${istio_version}" == "latest" ]; then
+    istio_version="$(${OC} get crd istios.sailoperator.io -o json | jq -r '.spec.versions | sort_by(.name) | .[-1].schema.openAPIV3Schema.properties.spec.properties.version.default')"
+    if [ -z "${istio_version}" -o "${istio_version}" == "null" ]; then
+      errormsg "Cannot determine the latest supported version of Istio. You must provide an explicit vX.Y.Z version to install via the --istio-version option"
+      exit 1
+    fi
+    infomsg "The latest supported version of Istio is [${istio_version}]. That version will be installed."
+  fi
+
   if ! ${OC} get namespace ${control_plane_namespace} >& /dev/null; then
     infomsg "Creating control plane namespace: ${control_plane_namespace}"
     ${OC} create namespace ${control_plane_namespace}
@@ -142,7 +145,7 @@ install_istio() {
       fi
       infomsg "Installing IstioCNI CR"
       cat <<EOMCNI > ${istiocni_yaml_file}
-apiVersion: operator.istio.io/v1alpha1
+apiVersion: sailoperator.io/v1alpha1
 kind: IstioCNI
 metadata:
   name: ${istiocni_name}
@@ -166,21 +169,24 @@ EOMCNI
   infomsg "Installing Istio CR"
   if [ "${istio_yaml_file}" == "" ]; then
     local global_platform=""
+    local istio_profile="demo"
     if [ "${IS_OPENSHIFT}" == "true" ]; then
       global_platform="openshift"
+      istio_profile="openshift"
     fi
     local istio_yaml_file="/tmp/istio-cr.yaml"
     cat <<EOM > ${istio_yaml_file}
-apiVersion: operator.istio.io/v1alpha1
+apiVersion: sailoperator.io/v1alpha1
 kind: Istio
 metadata:
-  name: istio-${control_plane_namespace}
+  name: default
 spec:
   version: ${istio_version}
   namespace: ${control_plane_namespace}
   updateStrategy:
     type: RevisionBased
   values:
+    profile: ${istio_profile}
     global:
       platform: "${global_platform}"
     meshConfig:
@@ -216,7 +222,7 @@ delete_servicemesh_operators() {
   fi
 
   infomsg "Unsubscribing from the Sail operator"
-  ${OC} delete subscription --ignore-not-found=true --namespace ${OLM_OPERATORS_NAMESPACE} my-sail
+  ${OC} delete subscription --ignore-not-found=true --namespace ${OLM_OPERATORS_NAMESPACE} my-sailoperator
 
   infomsg "Deleting OLM CSVs which uninstalls the operators and their related resources"
   for csv in $(${OC} get csv --all-namespaces --no-headers -o custom-columns=NS:.metadata.namespace,N:.metadata.name | sed 's/  */:/g' | grep -E 'sail|servicemesh|istio')
@@ -272,7 +278,7 @@ delete_istio() {
 status_servicemesh_operators() {
   infomsg ""
   infomsg "===== SERVICEMESH OPERATOR SUBSCRIPTION"
-  local sub_name="$(${OC} get subscriptions -n ${OLM_OPERATORS_NAMESPACE} -o name my-sail)"
+  local sub_name="$(${OC} get subscriptions -n ${OLM_OPERATORS_NAMESPACE} -o name my-sailoperator)"
   if [ ! -z "${sub_name}" ]; then
     ${OC} get --namespace ${OLM_OPERATORS_NAMESPACE} ${sub_name}
     infomsg ""

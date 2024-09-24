@@ -23,8 +23,7 @@ import { ServiceDetailsInfo } from '../../types/ServiceInfo';
 import { KialiAppState } from '../../store/Store';
 import { GraphPF } from './GraphPF';
 import { WizardAction, WizardMode } from 'components/IstioWizards/WizardActions';
-import { isParentKiosk, kioskContextMenuAction } from 'components/Kiosk/KioskActions';
-import { LoadingWizardActionsDropdownGroup } from 'components/IstioWizards/LoadingWizardActionsDropdownGroup';
+import { isKiosk, isParentKiosk, kioskContextMenuAction } from 'components/Kiosk/KioskActions';
 import { ServiceWizardActionsDropdownGroup } from 'components/IstioWizards/ServiceWizardActionsDropdownGroup';
 import { toRangeString } from 'components/Time/Utils';
 import { KioskElement } from 'components/Kiosk/KioskElement';
@@ -39,6 +38,8 @@ import { GraphSelectorBuilder } from 'pages/Graph/GraphSelector';
 import { NodeData, elems, selectAnd } from './GraphPFElems';
 import { KialiIcon } from 'config/KialiIcon';
 import { kebabToggleStyle } from 'styles/DropdownStyles';
+import { WorkloadWizardActionsDropdownGroup } from 'components/IstioWizards/WorkloadWizardActionsDropdownGroup';
+import { Workload } from 'types/Workload';
 
 type ReduxDispatchProps = {
   onReady: (controller: any) => void;
@@ -54,9 +55,12 @@ type ReduxProps = ReduxDispatchProps & {
 
 type MiniGraphCardPropsPF = ReduxProps & {
   dataSource: GraphDataSource;
+  namespace?: string;
   onDeleteTrafficRouting?: (key: string) => void;
   onLaunchWizard?: (key: WizardAction, mode: WizardMode) => void;
+  refreshWorkload?: () => void;
   serviceDetails?: ServiceDetailsInfo | null;
+  workload?: Workload | null;
 };
 
 type MiniGraphCardState = {
@@ -89,31 +93,35 @@ class MiniGraphCardPFComponent extends React.Component<MiniGraphCardPropsPF, Min
     const graphCardActions = [
       <DropdownItem key="viewFullGraph" onClick={this.onViewFullGraph}>
         Show full graph
+      </DropdownItem>,
+      <DropdownItem key="viewNodeGraph" onClick={this.onViewNodeGraph}>
+        Show node graph
       </DropdownItem>
     ];
 
-    if (isParentKiosk(this.props.kiosk)) {
-      if (this.props.serviceDetails === undefined) {
-        graphCardActions.push(<LoadingWizardActionsDropdownGroup />);
+    if (isKiosk(this.props.kiosk)) {
+      if (this.props.workload && this.props.namespace) {
+        graphCardActions.push(
+          <WorkloadWizardActionsDropdownGroup
+            actionsLabel={true}
+            namespace={this.props.namespace}
+            onAction={this.handleWorkloadAction}
+            workload={this.props.workload}
+          ></WorkloadWizardActionsDropdownGroup>
+        );
       } else if (this.props.serviceDetails) {
         graphCardActions.push(
           <ServiceWizardActionsDropdownGroup
-            virtualServices={this.props.serviceDetails.virtualServices || []}
-            destinationRules={this.props.serviceDetails.destinationRules || []}
-            k8sHTTPRoutes={this.props.serviceDetails.k8sHTTPRoutes || []}
-            k8sGRPCRoutes={this.props.serviceDetails.k8sGRPCRoutes || []}
+            virtualServices={this.props.serviceDetails.virtualServices ?? []}
+            destinationRules={this.props.serviceDetails.destinationRules ?? []}
+            k8sGRPCRoutes={this.props.serviceDetails.k8sGRPCRoutes ?? []}
+            k8sHTTPRoutes={this.props.serviceDetails.k8sHTTPRoutes ?? []}
             istioPermissions={this.props.serviceDetails.istioPermissions}
             onAction={this.handleLaunchWizard}
             onDelete={this.handleDeleteTrafficRouting}
           />
         );
       }
-    } else {
-      graphCardActions.push(
-        <DropdownItem key="viewNodeGraph" onClick={this.onViewNodeGraph}>
-          Show node graph
-        </DropdownItem>
-      );
     }
 
     const rangeEnd: TimeInMilliseconds = this.props.dataSource.graphTimestamp * 1000;
@@ -137,6 +145,7 @@ class MiniGraphCardPFComponent extends React.Component<MiniGraphCardPropsPF, Min
                   <Dropdown
                     toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
                       <MenuToggle
+                        id="minigraph-toggle"
                         ref={toggleRef}
                         className={kebabToggleStyle}
                         aria-label="Actions"
@@ -215,6 +224,13 @@ class MiniGraphCardPFComponent extends React.Component<MiniGraphCardPropsPF, Min
     this.onGraphActionsToggle(false);
     if (this.props.onDeleteTrafficRouting) {
       this.props.onDeleteTrafficRouting(key);
+    }
+  };
+
+  private handleWorkloadAction = (): void => {
+    this.onGraphActionsToggle(false);
+    if (this.props.refreshWorkload) {
+      this.props.refreshWorkload();
     }
   };
 
@@ -389,7 +405,11 @@ class MiniGraphCardPFComponent extends React.Component<MiniGraphCardPropsPF, Min
     };
 
     // To ensure updated components get the updated URL, update the URL first and then the state
-    router.navigate(makeNodeGraphUrlFromParams(urlParams, true));
+    if (isParentKiosk(this.props.kiosk)) {
+      kioskContextMenuAction(makeNodeGraphUrlFromParams(urlParams, true));
+    } else {
+      router.navigate(makeNodeGraphUrlFromParams(urlParams, true));
+    }
   };
 
   private toggleTimeOptionsVisibility = (): void => {

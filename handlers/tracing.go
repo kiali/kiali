@@ -22,10 +22,10 @@ func GetTracingInfo(w http.ResponseWriter, r *http.Request) {
 	if tracingConfig.Enabled {
 		info = models.TracingInfo{
 			Enabled:              true,
-			Integration:          tracingConfig.InClusterURL != "",
+			Integration:          tracingConfig.InternalURL != "",
 			Provider:             string(tracingConfig.Provider),
 			TempoConfig:          tracingConfig.TempoConfig,
-			URL:                  tracingConfig.URL,
+			URL:                  tracingConfig.ExternalURL,
 			NamespaceSelector:    tracingConfig.NamespaceSelector,
 			WhiteListIstioSystem: tracingConfig.WhiteListIstioSystem,
 		}
