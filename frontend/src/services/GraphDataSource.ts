@@ -290,6 +290,9 @@ export class GraphDataSource {
           break;
       }
     });
+    if (!serverConfig.ambientEnabled) {
+      restParams.ambientTraffic = 'none';
+    }
 
     let cluster: string | undefined;
 

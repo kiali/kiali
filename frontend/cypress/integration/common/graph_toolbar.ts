@@ -1,4 +1,5 @@
 import { Before, Then, When } from '@badeball/cypress-cucumber-preprocessor';
+import { serverConfig } from 'config';
 import { CytoscapeGlobalScratchData, CytoscapeGlobalScratchNamespace } from 'types/Graph';
 
 Before(() => {
@@ -95,7 +96,15 @@ Then('user sees default graph traffic menu', () => {
   cy.get('button#graph-traffic-dropdown').invoke('attr', 'aria-expanded').should('eq', 'true');
 
   cy.get('div#graph-traffic-menu').within(() => {
-    cy.get('input').should('have.length', 11);
+    if (serverConfig.ambientEnabled) {
+      cy.get('input').should('have.length', 15);
+      cy.get('input#ambient').should('exist').should('be.checked');
+      cy.get('input#ambientWaypoint').should('exist').should('not.be.checked');
+      cy.get('input#ambientZtunnel').should('exist').should('not.be.checked');
+      cy.get('input#ambientTotal').should('exist').should('be.checked');
+    } else {
+      cy.get('input').should('have.length', 11);
+    }
     cy.get('input#grpc').should('exist').should('be.checked');
     cy.get('input#grpcReceived').should('exist').should('not.be.checked');
     cy.get('input#grpcRequest').should('exist').should('be.checked');

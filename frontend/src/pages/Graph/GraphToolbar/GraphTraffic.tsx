@@ -30,6 +30,7 @@ import {
   menuStyle,
   menuEntryStyle
 } from 'styles/DropdownStyles';
+import { serverConfig } from 'config';
 
 type ReduxProps = {
   setTrafficRates: (trafficRates: TrafficRate[]) => void;
@@ -44,6 +45,7 @@ interface TrafficRateOptionType {
   disabled?: boolean;
   id: string;
   isChecked: boolean;
+  isHidden?: boolean;
   labelText: string;
   onChange?: () => void;
   tooltip?: React.ReactNode;
@@ -66,6 +68,7 @@ const GraphTrafficComponent: React.FC<GraphTrafficProps> = (props: GraphTrafficP
         id: TrafficRate.AMBIENT_GROUP,
         labelText: _.startCase(TrafficRate.AMBIENT_GROUP),
         isChecked: trafficRates.includes(TrafficRate.AMBIENT_GROUP),
+        isHidden: !serverConfig.ambientEnabled,
         tooltip: (
           <div style={{ textAlign: 'left' }}>
             Displays active Edges for the time period, as reported by the enabled Istio Ambient components. This is
@@ -222,171 +225,173 @@ const GraphTrafficComponent: React.FC<GraphTrafficProps> = (props: GraphTrafficP
         maxHeight={{ type: PropertyType.VIEWPORT_HEIGHT_MINUS_TOP, margin: marginBottom }}
       >
         <div id="graph-traffic-menu" className={menuStyle} style={{ width: '16.5em' }}>
-          {trafficRateOptions.map((trafficRateOption: TrafficRateOptionType) => (
-            <div key={trafficRateOption.id} className={menuEntryStyle}>
-              <label
-                key={trafficRateOption.id}
-                className={!!trafficRateOption.tooltip ? itemStyleWithInfo : itemStyleWithoutInfo}
-              >
-                <Checkbox
-                  id={trafficRateOption.id}
-                  name="trafficRateOptions"
-                  isChecked={trafficRateOption.isChecked}
-                  isDisabled={props.disabled}
-                  label={trafficRateOption.labelText}
-                  onChange={(event, _) => toggleTrafficRate(_, event)}
-                  value={trafficRateOption.id}
-                />
-              </label>
-
-              {!!trafficRateOption.tooltip && (
-                <Tooltip
-                  key={`tooltip_${trafficRateOption.id}`}
-                  position={TooltipPosition.right}
-                  content={trafficRateOption.tooltip}
+          {trafficRateOptions
+            .filter((trafficRateOption: TrafficRateOptionType) => !trafficRateOption.isHidden)
+            .map((trafficRateOption: TrafficRateOptionType) => (
+              <div key={trafficRateOption.id} className={menuEntryStyle}>
+                <label
+                  key={trafficRateOption.id}
+                  className={trafficRateOption.tooltip ? itemStyleWithInfo : itemStyleWithoutInfo}
                 >
-                  <KialiIcon.Info className={infoStyle} />
-                </Tooltip>
-              )}
+                  <Checkbox
+                    id={trafficRateOption.id}
+                    name="trafficRateOptions"
+                    isChecked={trafficRateOption.isChecked}
+                    isDisabled={props.disabled}
+                    label={trafficRateOption.labelText}
+                    onChange={(event, _) => toggleTrafficRate(_, event)}
+                    value={trafficRateOption.id}
+                  />
+                </label>
 
-              {trafficRateOption.id === TrafficRate.AMBIENT_GROUP && ambientOptions.some(o => o.isChecked) && (
-                <div>
-                  {ambientOptions.map((ambientOption: TrafficRateOptionType) => (
-                    <div key={ambientOption.id} className={menuEntryStyle}>
-                      <label
-                        key={ambientOption.id}
-                        className={!!ambientOption.tooltip ? itemStyleWithInfo : itemStyleWithoutInfo}
-                        style={{ paddingLeft: '2rem' }}
-                      >
-                        <Radio
-                          id={ambientOption.id}
-                          style={{ paddingLeft: '0.25rem' }}
-                          name="ambientOptions"
-                          isChecked={ambientOption.isChecked}
-                          isDisabled={props.disabled}
-                          label={ambientOption.labelText}
-                          onChange={(event, _) => toggleTrafficRateAmbient(_, event)}
-                          value={ambientOption.id}
-                        />
-                      </label>
-                      {!!ambientOption.tooltip && (
-                        <Tooltip
-                          key={`tooltip_${ambientOption.id}`}
-                          position={TooltipPosition.right}
-                          content={ambientOption.tooltip}
+                {trafficRateOption.tooltip && (
+                  <Tooltip
+                    key={`tooltip_${trafficRateOption.id}`}
+                    position={TooltipPosition.right}
+                    content={trafficRateOption.tooltip}
+                  >
+                    <KialiIcon.Info className={infoStyle} />
+                  </Tooltip>
+                )}
+
+                {trafficRateOption.id === TrafficRate.AMBIENT_GROUP && ambientOptions.some(o => o.isChecked) && (
+                  <div>
+                    {ambientOptions.map((ambientOption: TrafficRateOptionType) => (
+                      <div key={ambientOption.id} className={menuEntryStyle}>
+                        <label
+                          key={ambientOption.id}
+                          className={ambientOption.tooltip ? itemStyleWithInfo : itemStyleWithoutInfo}
+                          style={{ paddingLeft: '2rem' }}
                         >
-                          <KialiIcon.Info className={infoStyle} />
-                        </Tooltip>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
+                          <Radio
+                            id={ambientOption.id}
+                            style={{ paddingLeft: '0.25rem' }}
+                            name="ambientOptions"
+                            isChecked={ambientOption.isChecked}
+                            isDisabled={props.disabled}
+                            label={ambientOption.labelText}
+                            onChange={(event, _) => toggleTrafficRateAmbient(_, event)}
+                            value={ambientOption.id}
+                          />
+                        </label>
+                        {ambientOption.tooltip && (
+                          <Tooltip
+                            key={`tooltip_${ambientOption.id}`}
+                            position={TooltipPosition.right}
+                            content={ambientOption.tooltip}
+                          >
+                            <KialiIcon.Info className={infoStyle} />
+                          </Tooltip>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
 
-              {trafficRateOption.id === TrafficRate.GRPC_GROUP && grpcOptions.some(o => o.isChecked) && (
-                <div>
-                  {grpcOptions.map((grpcOption: TrafficRateOptionType) => (
-                    <div key={grpcOption.id} className={menuEntryStyle}>
-                      <label
-                        key={grpcOption.id}
-                        className={!!grpcOption.tooltip ? itemStyleWithInfo : itemStyleWithoutInfo}
-                        style={{ paddingLeft: '2rem' }}
-                      >
-                        <Radio
-                          id={grpcOption.id}
-                          style={{ paddingLeft: '0.25rem' }}
-                          name="grpcOptions"
-                          isChecked={grpcOption.isChecked}
-                          isDisabled={props.disabled}
-                          label={grpcOption.labelText}
-                          onChange={(event, _) => toggleTrafficRateGrpc(_, event)}
-                          value={grpcOption.id}
-                        />
-                      </label>
-                      {!!grpcOption.tooltip && (
-                        <Tooltip
-                          key={`tooltip_${grpcOption.id}`}
-                          position={TooltipPosition.right}
-                          content={grpcOption.tooltip}
+                {trafficRateOption.id === TrafficRate.GRPC_GROUP && grpcOptions.some(o => o.isChecked) && (
+                  <div>
+                    {grpcOptions.map((grpcOption: TrafficRateOptionType) => (
+                      <div key={grpcOption.id} className={menuEntryStyle}>
+                        <label
+                          key={grpcOption.id}
+                          className={grpcOption.tooltip ? itemStyleWithInfo : itemStyleWithoutInfo}
+                          style={{ paddingLeft: '2rem' }}
                         >
-                          <KialiIcon.Info className={infoStyle} />
-                        </Tooltip>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
+                          <Radio
+                            id={grpcOption.id}
+                            style={{ paddingLeft: '0.25rem' }}
+                            name="grpcOptions"
+                            isChecked={grpcOption.isChecked}
+                            isDisabled={props.disabled}
+                            label={grpcOption.labelText}
+                            onChange={(event, _) => toggleTrafficRateGrpc(_, event)}
+                            value={grpcOption.id}
+                          />
+                        </label>
+                        {grpcOption.tooltip && (
+                          <Tooltip
+                            key={`tooltip_${grpcOption.id}`}
+                            position={TooltipPosition.right}
+                            content={grpcOption.tooltip}
+                          >
+                            <KialiIcon.Info className={infoStyle} />
+                          </Tooltip>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
 
-              {trafficRateOption.id === TrafficRate.HTTP_GROUP && httpOptions.some(o => o.isChecked) && (
-                <div>
-                  {httpOptions.map((httpOption: TrafficRateOptionType) => (
-                    <div key={httpOption.id} className={menuEntryStyle}>
-                      <label
-                        key={httpOption.id}
-                        className={!!httpOption.tooltip ? itemStyleWithInfo : itemStyleWithoutInfo}
-                        style={{ paddingLeft: '2rem' }}
-                      >
-                        <Radio
-                          id={httpOption.id}
-                          style={{ paddingLeft: '0.25rem' }}
-                          name="httpOptions"
-                          isChecked={httpOption.isChecked}
-                          isDisabled={props.disabled}
-                          label={httpOption.labelText}
-                          onChange={(event, _) => toggleTrafficRateHttp(_, event)}
-                          value={httpOption.id}
-                        />
-                      </label>
-
-                      {!!httpOption.tooltip && (
-                        <Tooltip
-                          key={`tooltip_${httpOption.id}`}
-                          position={TooltipPosition.right}
-                          content={httpOption.tooltip}
+                {trafficRateOption.id === TrafficRate.HTTP_GROUP && httpOptions.some(o => o.isChecked) && (
+                  <div>
+                    {httpOptions.map((httpOption: TrafficRateOptionType) => (
+                      <div key={httpOption.id} className={menuEntryStyle}>
+                        <label
+                          key={httpOption.id}
+                          className={httpOption.tooltip ? itemStyleWithInfo : itemStyleWithoutInfo}
+                          style={{ paddingLeft: '2rem' }}
                         >
-                          <KialiIcon.Info className={infoStyle} />
-                        </Tooltip>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
+                          <Radio
+                            id={httpOption.id}
+                            style={{ paddingLeft: '0.25rem' }}
+                            name="httpOptions"
+                            isChecked={httpOption.isChecked}
+                            isDisabled={props.disabled}
+                            label={httpOption.labelText}
+                            onChange={(event, _) => toggleTrafficRateHttp(_, event)}
+                            value={httpOption.id}
+                          />
+                        </label>
 
-              {trafficRateOption.id === TrafficRate.TCP_GROUP && tcpOptions.some(o => o.isChecked) && (
-                <div>
-                  {tcpOptions.map((tcpOption: TrafficRateOptionType) => (
-                    <div key={tcpOption.id} className={menuEntryStyle}>
-                      <label
-                        key={tcpOption.id}
-                        className={!!tcpOption.tooltip ? itemStyleWithInfo : itemStyleWithoutInfo}
-                        style={{ paddingLeft: '2rem' }}
-                      >
-                        <Radio
-                          id={tcpOption.id}
-                          style={{ paddingLeft: '0.25rem' }}
-                          name="tcpOptions"
-                          isChecked={tcpOption.isChecked}
-                          isDisabled={props.disabled}
-                          label={tcpOption.labelText}
-                          onChange={(event, _) => toggleTrafficRateTcp(_, event)}
-                          value={tcpOption.id}
-                        />
-                      </label>
-                      {!!tcpOption.tooltip && (
-                        <Tooltip
-                          key={`tooltip_${tcpOption.id}`}
-                          position={TooltipPosition.right}
-                          content={tcpOption.tooltip}
+                        {httpOption.tooltip && (
+                          <Tooltip
+                            key={`tooltip_${httpOption.id}`}
+                            position={TooltipPosition.right}
+                            content={httpOption.tooltip}
+                          >
+                            <KialiIcon.Info className={infoStyle} />
+                          </Tooltip>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {trafficRateOption.id === TrafficRate.TCP_GROUP && tcpOptions.some(o => o.isChecked) && (
+                  <div>
+                    {tcpOptions.map((tcpOption: TrafficRateOptionType) => (
+                      <div key={tcpOption.id} className={menuEntryStyle}>
+                        <label
+                          key={tcpOption.id}
+                          className={tcpOption.tooltip ? itemStyleWithInfo : itemStyleWithoutInfo}
+                          style={{ paddingLeft: '2rem' }}
                         >
-                          <KialiIcon.Info className={infoStyle} />
-                        </Tooltip>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          ))}
+                          <Radio
+                            id={tcpOption.id}
+                            style={{ paddingLeft: '0.25rem' }}
+                            name="tcpOptions"
+                            isChecked={tcpOption.isChecked}
+                            isDisabled={props.disabled}
+                            label={tcpOption.labelText}
+                            onChange={(event, _) => toggleTrafficRateTcp(_, event)}
+                            value={tcpOption.id}
+                          />
+                        </label>
+                        {tcpOption.tooltip && (
+                          <Tooltip
+                            key={`tooltip_${tcpOption.id}`}
+                            position={TooltipPosition.right}
+                            content={tcpOption.tooltip}
+                          >
+                            <KialiIcon.Info className={infoStyle} />
+                          </Tooltip>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
         </div>
       </BoundingClientAwareComponent>
     );
