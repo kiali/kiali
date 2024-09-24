@@ -260,7 +260,7 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
 
   render(): React.ReactNode {
     const workload = this.props.workload;
-    const pods = workload?.pods || [];
+    const pods = workload?.pods ?? [];
 
     const istioConfigItems = this.state.workloadIstioConfig
       ? toIstioItems(this.state.workloadIstioConfig, workload?.cluster || '')
@@ -335,14 +335,22 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
                 <MiniGraphCard
                   onEdgeTap={this.goToMetrics}
                   dataSource={this.graphDataSource}
+                  namespace={this.props.namespace}
                   graphContainerStyle={graphContainerStyle}
+                  workload={this.props.workload}
+                  refreshWorkload={this.props.refreshWorkload}
                 />
               </GridItem>
             )}
 
             {includeMiniGraphPF && (
               <GridItem span={miniGraphSpan}>
-                <MiniGraphCardPF dataSource={this.graphDataSource} />
+                <MiniGraphCardPF
+                  dataSource={this.graphDataSource}
+                  namespace={this.props.namespace}
+                  workload={this.props.workload}
+                  refreshWorkload={this.props.refreshWorkload}
+                />
               </GridItem>
             )}
           </Grid>

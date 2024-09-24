@@ -114,6 +114,7 @@ install_addon_prometheus() {
   local yaml_file="/tmp/prometheus.yaml"
   download_istio_addon_yaml "${addon_name}" "${yaml_file}"
   apply_istio_addon_yaml "${yaml_file}"
+  expose_service "${addon_name}"
 }
 
 delete_addon_prometheus() {
@@ -146,7 +147,7 @@ install_addon_grafana() {
   local yaml_file="/tmp/grafana.yaml"
   download_istio_addon_yaml "${addon_name}" "${yaml_file}"
   apply_istio_addon_yaml "${yaml_file}"
-  ${OC} expose service/grafana --namespace ${CONTROL_PLANE_NAMESPACE}
+  expose_service "${addon_name}"
 }
 
 delete_addon_grafana() {
@@ -198,4 +199,22 @@ apply_istio_addon_yaml() {
 delete_istio_addon_yaml() {
   local yaml_file="$1"
   cat ${yaml_file} | sed "s/istio-system/${CONTROL_PLANE_NAMESPACE}/g" | ${OC} delete --ignore-not-found=true -n ${CONTROL_PLANE_NAMESPACE} -f -
+}
+
+# $1 - name of the service that will be exposed via Route if OpenShift or via LoadBalancer otherwise
+expose_service() {
+  local service_name="$1"
+
+  # If OpenShift we just rely on default behavior when exposing the service to create a route.
+  # If vanilla Kubernetes, we want to expose the service using LoadBalancer.
+  if [ "${IS_OPENSHIFT}" == "true" ]; then
+    ${OC} expose service ${service_name} --namespace ${CONTROL_PLANE_NAMESPACE}
+  else
+    # if the addon yaml already created the service, just change the type to LoadBalancer
+    if ${OC} get service ${service_name} --namespace ${CONTROL_PLANE_NAMESPACE} &> /dev/null; then
+      ${OC} patch service ${service_name} --namespace ${CONTROL_PLANE_NAMESPACE} -p '{"spec": {"type": "LoadBalancer"}}'
+    else
+      ${OC} expose service ${service_name} --namespace ${CONTROL_PLANE_NAMESPACE} --type LoadBalancer
+    fi
+  fi
 }

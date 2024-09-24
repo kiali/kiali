@@ -111,7 +111,7 @@ export const decorateGraphData = (graphData: GraphElements, duration: number): D
     }
   };
 
-  const propertiesToNumber = (object: Object, keys?: string[]) => {
+  const propertiesToNumber = (object: Object, keys?: string[]): any => {
     const objectWithNumbers = { ...object };
     const targetKeys = keys ? keys : Object.keys(objectWithNumbers);
     for (const key of targetKeys) {
@@ -218,6 +218,22 @@ export const decorateGraphData = (graphData: GraphElements, duration: number): D
             };
           }
           decoratedEdge.data = { protocol: traffic.protocol, ...decoratedEdge.data };
+        }
+        if (decoratedEdge.data.waypoint?.fromEdge) {
+          let waypointEdge = { ...decoratedEdge.data.waypoint.fromEdge };
+          if (waypointEdge.traffic) {
+            if (hasProtocolTraffic(waypointEdge.traffic)) {
+              waypointEdge = {
+                hasTraffic: true,
+                responses: waypointEdge.traffic.responses,
+                ...edgeProtocolDefaults[waypointEdge.traffic.protocol],
+                ...propertiesToNumber(waypointEdge.traffic.rates),
+                // Base properties that need to be cast as number.
+                ...propertiesToNumber(waypointEdge, ['isMtls', 'responseTime', 'throughput'])
+              };
+            }
+          }
+          decoratedEdge.data.waypoint.fromEdge = waypointEdge;
         }
         // prettier-ignore
         decoratedEdge.data = { ...elementsDefaults.edges, ...decoratedEdge.data } as DecoratedGraphEdgeData;

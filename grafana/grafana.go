@@ -49,8 +49,8 @@ func (s *Service) URL(ctx context.Context) string {
 	if !grafanaConf.Enabled {
 		return ""
 	}
-	if grafanaConf.URL != "" || grafanaConf.InClusterURL == "" {
-		return grafanaConf.URL
+	if grafanaConf.ExternalURL != "" || grafanaConf.InternalURL == "" {
+		return grafanaConf.ExternalURL
 	}
 	s.routeLock.RLock()
 	if s.routeURL != nil {
@@ -68,8 +68,8 @@ func (s *Service) discover(ctx context.Context) string {
 	defer s.routeLock.Unlock()
 	// Try to get service and namespace from in-cluster URL, to discover route
 	routeURL := ""
-	if inClusterURL := s.conf.ExternalServices.Grafana.InClusterURL; inClusterURL != "" {
-		parsedURL, err := url.Parse(inClusterURL)
+	if internalURL := s.conf.ExternalServices.Grafana.InternalURL; internalURL != "" {
+		parsedURL, err := url.Parse(internalURL)
 		if err == nil {
 			parts := strings.Split(parsedURL.Hostname(), ".")
 			if len(parts) >= 2 {
@@ -186,13 +186,13 @@ func (s *Service) VersionURL(ctx context.Context) string {
 	if err != nil {
 		log.Warningf("Cannot get Grafana connection info. Will try a different way to obtain Grafana version. code=[%v]: %v", code, err)
 		connectionInfo = grafanaConnectionInfo{
-			baseExternalURL: grafanaConfig.URL,
-			inClusterURL:    grafanaConfig.InClusterURL,
+			baseExternalURL: grafanaConfig.ExternalURL,
+			internalURL:     grafanaConfig.InternalURL,
 		}
 	}
 	// we want to use the internal URL - but if it isn't known, try the external URL
-	baseUrl := connectionInfo.inClusterURL
-	if connectionInfo.inClusterURL == "" {
+	baseUrl := connectionInfo.internalURL
+	if connectionInfo.internalURL == "" {
 		baseUrl = connectionInfo.baseExternalURL
 	}
 
@@ -230,7 +230,7 @@ func getGrafanaLinks(conn grafanaConnectionInfo, linksSpec []dashboards.Monitori
 type grafanaConnectionInfo struct {
 	baseExternalURL   string
 	externalURLParams string
-	inClusterURL      string
+	internalURL       string
 	auth              *config.Auth
 }
 
@@ -250,8 +250,8 @@ func (s *Service) getGrafanaConnectionInfo(ctx context.Context) (grafanaConnecti
 	apiURL := externalURL
 
 	// Find the in-cluster URL to reach Grafana's REST API if properties demand so
-	if cfg.InClusterURL != "" {
-		apiURL = cfg.InClusterURL
+	if cfg.InternalURL != "" {
+		apiURL = cfg.InternalURL
 	}
 
 	urlParts := strings.Split(externalURL, "?")
@@ -265,13 +265,13 @@ func (s *Service) getGrafanaConnectionInfo(ctx context.Context) (grafanaConnecti
 	return grafanaConnectionInfo{
 		baseExternalURL:   externalURL,
 		externalURLParams: externalURLParams,
-		inClusterURL:      apiURL,
+		internalURL:       apiURL,
 		auth:              &cfg.Auth,
 	}, 0, nil
 }
 
 func getDashboardPath(name string, conn grafanaConnectionInfo, dashboardSupplier DashboardSupplierFunc) (string, error) {
-	body, code, err := dashboardSupplier(conn.inClusterURL, url.PathEscape(name), conn.auth)
+	body, code, err := dashboardSupplier(conn.internalURL, url.PathEscape(name), conn.auth)
 	if err != nil {
 		return "", err
 	}

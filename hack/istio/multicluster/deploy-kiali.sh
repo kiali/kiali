@@ -165,14 +165,14 @@ deploy_kiali() {
 
   if [ "${TEMPO}" == "true" ]; then
     helm_args+=(
-          "--set external_services.tracing.url=http://tempo-cr-query-frontend.tempo:3200"
+          "--set external_services.tracing.external_url=http://tempo-cr-query-frontend.tempo:3200"
           "--set external_services.tracing.provider=tempo"
-          "--set external_services.tracing.in_cluster_url=http://tempo-cr-query-frontend.tempo:3200"
+          "--set external_services.tracing.internal_url=http://tempo-cr-query-frontend.tempo:3200"
           "--set external_services.tracing.use_grpc=false"
         )
   else
     helm_args+=(
-          "--set external_services.tracing.url=http://tracing.istio-system:16685/jaeger"
+          "--set external_services.tracing.external_url=http://tracing.istio-system:16685/jaeger"
         )
   fi
 
@@ -180,7 +180,7 @@ deploy_kiali() {
     ${helm_args[@]}
     --namespace ${ISTIO_NAMESPACE}
     --set deployment.logger.log_level="debug"
-    --set external_services.grafana.url="http://grafana.istio-system:3000"
+    --set external_services.grafana.external_url="http://grafana.istio-system:3000"
     --set external_services.grafana.dashboards[0].name="Istio Mesh Dashboard"
     --set health_config.rate[0].kind="service"
     --set health_config.rate[0].name="y-server"

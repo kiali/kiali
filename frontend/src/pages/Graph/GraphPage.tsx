@@ -846,6 +846,10 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
 
     deleteServiceTrafficRouting(this.state.wizardsData!.serviceDetails!)
       .then(_results => {
+        AlertUtils.addSuccess(
+          `Istio Config deleted for ${this.state.wizardsData.serviceDetails?.service.name} service.`
+        );
+
         triggerRefresh();
       })
       .catch(error => {

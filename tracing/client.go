@@ -114,9 +114,9 @@ func newClient(ctx context.Context, cfg *config.Config, token string) (*Client, 
 		auth.Token = token
 	}
 
-	u, errParse := url.Parse(cfgTracing.InClusterURL)
+	u, errParse := url.Parse(cfgTracing.InternalURL)
 	if !cfg.InCluster {
-		u, errParse = url.Parse(cfgTracing.URL)
+		u, errParse = url.Parse(cfgTracing.ExternalURL)
 	}
 	if errParse != nil {
 		log.Errorf("Error parsing Tracing URL: %s", errParse)
