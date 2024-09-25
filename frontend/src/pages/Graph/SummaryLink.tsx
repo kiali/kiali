@@ -202,12 +202,13 @@ export const renderBadgedLink = (
   nodeData: GraphNodeData,
   nodeType?: NodeType,
   label?: string,
-  linkGenerator?: () => LinkInfo
+  linkGenerator?: () => LinkInfo,
+  style?: string
 ): React.ReactNode => {
   const link = getLink(nodeData, nodeType, linkGenerator);
 
   return (
-    <div key={`node-${nodeData.id}`}>
+    <div key={`node-${nodeData.id}`} className={style}>
       <span className={badgeStyle}>
         {label && (
           <span style={{ whiteSpace: 'pre' }}>

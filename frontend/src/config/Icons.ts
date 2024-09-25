@@ -153,6 +153,25 @@ const mutIcons = {
       text: 'Waypoint Proxy',
       type: 'pf'
     }
+  },
+  unicode: {
+    // these are not fully defined icons, just unicode characters.
+    // see https://en.wikipedia.org/wiki/List_of_Unicode_characters#Arrows
+    arrowRightOverLeft: {
+      char: '\u21c4 ',
+      name: 'RightwardsArrowOverLeftwardsArrow',
+      text: 'Rightwards Arrow Over Leftwards Arrow'
+    },
+    arrowUpLeftofDown: {
+      char: '\u21c5 ',
+      name: 'UpwardsArrowLeftwardsofDownwardsArrow',
+      text: 'Upwards Arrow Leftwards of Downwards Arrow'
+    },
+    arrowDownLeftofUp: {
+      char: '\u21f5 ',
+      name: 'DownwardsArrowLeftwardsofUpwardsArrow ',
+      text: 'Downwards Arrow Leftwards of Upwards Arrow '
+    }
   }
 };
 

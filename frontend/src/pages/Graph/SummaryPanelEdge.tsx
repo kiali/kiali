@@ -12,7 +12,7 @@ import {
   TrafficRate,
   UNKNOWN
 } from '../../types/Graph';
-import { getLink, renderBadgedLink } from './SummaryLink';
+import { renderBadgedLink } from './SummaryLink';
 import {
   getDatapoints,
   getNodeMetrics,
@@ -40,7 +40,7 @@ import { Edge } from '@patternfly/react-topology';
 import { classes } from 'typestyle';
 import { panelBodyStyle, panelHeadingStyle, panelStyle } from './SummaryPanelStyle';
 import { ApiResponse } from 'types/Api';
-import { serverConfig } from 'config';
+import { icons, serverConfig } from 'config';
 
 type SummaryPanelEdgeMetricsState = {
   errRates: Datapoint[];
@@ -57,6 +57,7 @@ type SummaryPanelEdgeMetricsState = {
 };
 
 type SummaryPanelEdgeState = SummaryPanelEdgeMetricsState & {
+  activePanel: string;
   edge: any;
   loading: boolean;
   metricsLoadError: string | null;
@@ -74,10 +75,16 @@ const defaultMetricsState: SummaryPanelEdgeMetricsState = {
   unit: 'ms'
 };
 
+enum PanelType {
+  Main = 'main',
+  Waypoint = 'waypoint'
+}
+
 const defaultState: SummaryPanelEdgeState = {
   edge: null,
   loading: false,
   metricsLoadError: null,
+  activePanel: PanelType.Main,
   ...defaultMetricsState
 };
 
@@ -87,6 +94,18 @@ const principalStyle = kialiStyle({
   textOverflow: 'ellipsis',
   width: '100%',
   whiteSpace: 'nowrap'
+});
+
+const switchWaypointIcon = kialiStyle({
+  marginTop: '-3em'
+});
+
+const hideStyle = kialiStyle({
+  display: 'none'
+});
+
+const fromToStyle = kialiStyle({
+  marginLeft: '2em'
 });
 
 export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, SummaryPanelEdgeState> {
@@ -132,6 +151,15 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
       this.metricsPromise.cancel();
     }
   }
+
+  updateTab = (e: React.MouseEvent<HTMLAnchorElement>): void => {
+    e.preventDefault();
+    if (this.state.activePanel === PanelType.Main) {
+      this.setState({ activePanel: PanelType.Waypoint });
+    } else {
+      this.setState({ activePanel: PanelType.Main });
+    }
+  };
 
   render(): React.ReactNode {
     const isPF = !!this.props.data.isPF;
@@ -179,8 +207,23 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
         <div>
           <div className={panelHeadingStyle}>
             {getTitle(`Edge (${prettyProtocol(protocol)})`)}
-            {renderBadgedLink(source, undefined, 'From:  ')}
-            {renderBadgedLink(dest, undefined, 'To:        ')}
+            {renderBadgedLink(source, undefined, 'From:  ', undefined, waypoint ? fromToStyle : undefined)}
+            {renderBadgedLink(dest, undefined, 'To:        ', undefined, waypoint ? fromToStyle : undefined)}{' '}
+            {waypoint && (
+              <div className={switchWaypointIcon}>
+                <Tooltip key="waypoint" position="top" content="Switch From/To">
+                  <a
+                    href="#"
+                    onClick={this.updateTab}
+                    style={{ textDecoration: 'none', cursor: 'pointer', fontSize: '1.5em' }}
+                  >
+                    {this.state.activePanel === 'main'
+                      ? icons.unicode.arrowDownLeftofUp.char
+                      : icons.unicode.arrowUpLeftofDown.char}
+                  </a>
+                </Tooltip>
+              </div>
+            )}
           </div>
 
           {hasSecurity && <SecurityBlock />}
@@ -277,14 +320,14 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
       <div ref={this.mainDivRef} className={classes(panelStyle, summaryPanel)}>
         {!waypoint && <MainSummary />}
         {waypoint && (
-          <SimpleTabs id="edge_summary_main_tabs" defaultTab={0}>
-            <Tab style={summaryFont} eventKey={0} title={getLink({ ...sourceData, isInaccessible: true })}>
+          <>
+            <div className={this.state.activePanel === 'main' ? '' : hideStyle}>
               <MainSummary waypointEdge={false} />
-            </Tab>
-            <Tab style={summaryFont} eventKey={1} title={getLink({ ...destData, isInaccessible: true })}>
+            </div>
+            <div className={this.state.activePanel === 'waypoint' ? '' : hideStyle}>
               <MainSummary waypointEdge={true} />
-            </Tab>
-          </SimpleTabs>
+            </div>
+          </>
         )}
       </div>
     );
