@@ -462,14 +462,18 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 				continue
 			}
 
-			namespaces, err := client.GetNamespaces("")
+			k8sNamespaces, err := client.GetNamespaces("")
 			if err != nil {
 				log.Errorf("unable to get namespaces for cluster [%s]. Err: %s", cluster.Name, err)
 				continue
 			}
 
-			for _, namespace := range namespaces {
-				n := models.CastNamespace(namespace, cluster.Name)
+			namespaces := FilterNamespacesWithDiscoverySelectors(
+				models.CastNamespaceCollection(k8sNamespaces, cluster.Name),
+				GetDiscoverySelectorsForCluster(cluster.Name, in.conf),
+			)
+
+			for _, n := range namespaces {
 				rev := GetRevision(n)
 				if rev == "" {
 					// No revision label means there's no controlplane managing it.
