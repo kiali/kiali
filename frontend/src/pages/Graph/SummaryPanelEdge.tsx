@@ -211,15 +211,17 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
             {renderBadgedLink(dest, undefined, 'To:        ', undefined, waypoint ? fromToStyle : undefined)}{' '}
             {waypoint && (
               <div className={switchWaypointIcon}>
-                <a
-                  href="#"
-                  onClick={this.updateTab}
-                  style={{ textDecoration: 'none', cursor: 'pointer', fontSize: '1.5em' }}
-                >
-                  {this.state.activePanel === 'main'
-                    ? icons.unicode.arrowDownLeftofUp.char
-                    : icons.unicode.arrowUpLeftofDown.char}
-                </a>
+                <Tooltip key="waypoint" position="top" content="Switch From/To">
+                  <a
+                    href="#"
+                    onClick={this.updateTab}
+                    style={{ textDecoration: 'none', cursor: 'pointer', fontSize: '1.5em' }}
+                  >
+                    {this.state.activePanel === 'main'
+                      ? icons.unicode.arrowDownLeftofUp.char
+                      : icons.unicode.arrowUpLeftofDown.char}
+                  </a>
+                </Tooltip>
               </div>
             )}
           </div>
