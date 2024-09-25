@@ -372,8 +372,8 @@ When('I remove override configuration for sidecar injection in the namespace', f
 function switchWorkloadSidecarInjection(enableOrDisable: string): void {
   cy.visit({ url: `/console/namespaces/${this.targetNamespace}/workloads/${this.targetWorkload}?refresh=0` });
 
-  // In kiosk mode, the workload actions toggle does not exist. Workload actions are integrated in the minigraph menu
-  if (Cypress.env('kiosk')) {
+  // In OSSMC, the workload actions toggle does not exist. Workload actions are integrated in the minigraph menu
+  if (Cypress.env('OSSMC')) {
     cy.intercept(`**/api/**/workloads/**/graph*`).as('workloadMinigraph');
     cy.wait('@workloadMinigraph');
 
