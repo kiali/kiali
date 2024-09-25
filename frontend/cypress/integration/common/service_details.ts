@@ -10,8 +10,8 @@ Then('sd::user sees a list with content {string}', (tab: string) => {
 });
 
 Then('sd::user sees the service actions', () => {
-  // In OSSMC, the service actions toggle does not exist. Service actions are integrated in the minigraph menu
-  if (Cypress.env('OSSMC')) {
+  // In kiosk mode, the service actions toggle does not exist. Service actions are integrated in the minigraph menu
+  if (Cypress.env('kiosk')) {
     cy.intercept(`**/api/**/services/**/graph*`).as('serviceMinigraph');
     cy.wait('@serviceMinigraph');
 

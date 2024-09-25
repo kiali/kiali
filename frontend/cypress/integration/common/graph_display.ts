@@ -17,11 +17,24 @@ Before(() => {
   });
 });
 
-When('user graphs {string} namespaces', (namespaces: string) => {
+When(
+  'user graphs {string} namespaces with refresh {string} and duration {string} in the {string} graph',
+  (namespaces: string, refresh: string, duration: string, graphType: string) => {
+    const graphUrl = graphType === 'cytoscape' ? 'graph' : 'graphpf';
+
+    cy.visit({
+      url: `/console/${graphUrl}/namespaces?refresh=${refresh}&duration=${duration}&namespaces=${namespaces}`
+    });
+  }
+);
+
+When('user graphs {string} namespaces in the {string} graph', (namespaces: string, graphType: string) => {
   // Forcing "Pause" to not cause unhandled promises from the browser when cypress is testing
   cy.intercept(`**/api/namespaces/graph*`).as('graphNamespaces');
 
-  cy.visit({ url: `/console/graph/namespaces?refresh=0&namespaces=${namespaces}` });
+  const graphUrl = graphType === 'cytoscape' ? 'graph' : 'graphpf';
+
+  cy.visit({ url: `/console/${graphUrl}/namespaces?refresh=0&namespaces=${namespaces}` });
 
   if (namespaces !== '') {
     cy.wait('@graphNamespaces');

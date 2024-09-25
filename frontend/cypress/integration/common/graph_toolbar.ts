@@ -18,9 +18,13 @@ Before(() => {
 });
 
 When(
-  'user graphs {string} namespaces with refresh {string} and duration {string}',
-  (namespaces: string, refresh: string, duration: string) => {
-    cy.visit({ url: `/console/graph/namespaces?refresh=${refresh}&duration=${duration}&namespaces=${namespaces}` });
+  'user graphs {string} namespaces with refresh {string} and duration {string} in the {string} graph',
+  (namespaces: string, refresh: string, duration: string, graphType: string) => {
+    const graphUrl = graphType === 'cytoscape' ? 'graph' : 'graphpf';
+
+    cy.visit({
+      url: `/console/${graphUrl}/namespaces?refresh=${refresh}&duration=${duration}&namespaces=${namespaces}`
+    });
   }
 );
 

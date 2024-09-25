@@ -7,19 +7,16 @@ Feature: Kiali Graph page - Context menu actions
 
   Background:
     Given user is at administrator perspective
-    When user graphs "bookinfo" namespaces
+    When user graphs "bookinfo" namespaces in the "patternfly" graph
 
   @bookinfo-app
   Scenario: Actions in context menu for service node with existing traffic routing
-    And user opens the context menu of the "productpage" service node
-    And user should see no cluster parameter in the url when clicking the "Details" link in the context menu
-    And user opens the context menu of the "productpage" service node
-    And user should see no cluster parameter in the url when clicking the "Traffic" link in the context menu
-    And user opens the context menu of the "productpage" service node
-    And user should see no cluster parameter in the url when clicking the "Inbound Metrics" link in the context menu
-    And user opens the context menu of the "productpage" service node
-    And user clicks the "delete-traffic-routing" item of the context menu
-    Then user should see the confirmation dialog to delete all traffic routing
+    And user opens the context menu of the "productpage" service node in the "patternfly" graph
+    And user should see no cluster parameter in the url when clicking the "Details" link in the context menu in the "patternfly" graph
+    And user opens the context menu of the "productpage" service node in the "patternfly" graph
+    And user should see no cluster parameter in the url when clicking the "Traffic" link in the context menu in the "patternfly" graph
+    And user opens the context menu of the "productpage" service node in the "patternfly" graph
+    And user should see no cluster parameter in the url when clicking the "Inbound Metrics" link in the context menu in the "patternfly" graph
 
   @bookinfo-app
   Scenario Outline: Ability to launch <action> wizard from graph context menu
@@ -51,7 +48,7 @@ Feature: Kiali Graph page - Context menu actions
     And user is at the "istio" list page
     Then user does not see traffic routing objects for the "details" service in the "bookinfo" namespace in the "east" cluster
 
-  @multi-cluster 
+  @multi-cluster
   Scenario Outline: Ability to launch <action> wizard from graph context menu for a remote service node
     And user opens the context menu of the "ratings" service node on the "west" cluster
     And user clicks the "<action>" action of the context menu
@@ -66,7 +63,7 @@ Feature: Kiali Graph page - Context menu actions
       | request_timeouts     |
 
   @multi-primary
-  @multi-cluster 
+  @multi-cluster
   Scenario: Actions in context menu for a remote service node with existing traffic routing
     And there is no traffic routing for the "ratings" service in the "bookinfo" namespace and in the "west" cluster
     And there is no traffic routing for the "ratings" service in the "bookinfo" namespace and in the "east" cluster

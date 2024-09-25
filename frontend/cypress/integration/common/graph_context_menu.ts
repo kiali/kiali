@@ -2,22 +2,40 @@ import { Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import { ensureKialiFinishedLoading } from './transition';
 
 // Single cluster only.
-When('user opens the context menu of the {string} service node', (svcName: string) => {
-  ensureKialiFinishedLoading();
-  cy.waitForReact();
-  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false } } })
-    .should('have.length', '1')
-    .then(() => {
-      cy.getReact('CytoscapeGraph')
+When(
+  'user opens the context menu of the {string} service node in the {string} graph',
+  (svcName: string, graphType: string) => {
+    ensureKialiFinishedLoading();
+    cy.waitForReact();
+
+    if (graphType === 'cytoscape') {
+      cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false } } })
         .should('have.length', '1')
-        .getCurrentState()
-        .then(state => {
-          const node = state.cy.nodes(`[nodeType="service"][service="${svcName}"]`);
-          node.emit('cxttapstart');
-          cy.wrap(node).as('contextNode');
+        .then(() => {
+          cy.getReact('CytoscapeGraph')
+            .should('have.length', '1')
+            .getCurrentState()
+            .then(state => {
+              const node = state.cy.nodes(`[nodeType="service"][service="${svcName}"]`);
+              node.emit('cxttapstart');
+              cy.wrap(node).as('contextNode');
+            });
         });
-    });
-});
+    } else {
+      cy.getReact('GraphPagePFComponent', { state: { graphData: { isLoading: false } } })
+        .should('have.length', '1')
+        .then(() => {
+          cy.getReact('GraphPF').should('have.length', '1');
+          cy.get('.pf-topology__node__label')
+            .contains(svcName)
+            .parent()
+            .find('.pf-topology__node__action-icon')
+            .click();
+          cy.waitForReact();
+        });
+    }
+  }
+);
 
 When(
   'user opens the context menu of the {string} service node on the {string} cluster',
@@ -80,32 +98,56 @@ Then('user should see the {string} wizard', (wizardKey: string) => {
 });
 
 Then(
-  'user should see no cluster parameter in the url when clicking the {string} link in the context menu',
-  (linkText: string) => {
-    cy.get(`[data-test="graph-node-context-menu"]`).within(() => {
-      cy.get('a')
-        .contains(linkText)
-        .click()
-        .then(() => {
-          cy.url().should('not.include', 'clusterName=');
-          cy.go('back');
-        });
-    });
+  'user should see no cluster parameter in the url when clicking the {string} link in the context menu in the {string} graph',
+  (linkText: string, graphType: string) => {
+    if (graphType === 'cytoscape') {
+      cy.get(`[data-test="graph-node-context-menu"]`).within(() => {
+        cy.get('a')
+          .contains(linkText)
+          .click()
+          .then(() => {
+            cy.url().should('not.include', 'clusterName=');
+            cy.go('back');
+          });
+      });
+    } else {
+      cy.get(`.pf-topology-context-menu__c-dropdown__menu`).within(() => {
+        cy.get('button')
+          .contains(linkText)
+          .click()
+          .then(() => {
+            cy.url().should('not.include', 'clusterName=');
+            cy.go('back');
+          });
+      });
+    }
   }
 );
 
 Then(
-  'user should see the {string} cluster parameter in the url when clicking the {string} link in the context menu',
-  (cluster: string, linkText: string) => {
-    cy.get(`[data-test="graph-node-context-menu"]`).within(() => {
-      cy.get('a')
-        .contains(linkText)
-        .click()
-        .then(() => {
-          cy.url().should('include', `clusterName=${cluster}`);
-          cy.go('back');
-        });
-    });
+  'user should see the {string} cluster parameter in the url when clicking the {string} link in the context menu in the {string} graph',
+  (cluster: string, linkText: string, graphType: string) => {
+    if (graphType === 'cytoscape') {
+      cy.get(`[data-test="graph-node-context-menu"]`).within(() => {
+        cy.get('a')
+          .contains(linkText)
+          .click()
+          .then(() => {
+            cy.url().should('include', `clusterName=${cluster}`);
+            cy.go('back');
+          });
+      });
+    } else {
+      cy.get(`.pf-topology-context-menu__c-dropdown__menu`).within(() => {
+        cy.get('button')
+          .contains(linkText)
+          .click()
+          .then(() => {
+            cy.url().should('include', `clusterName=${cluster}`);
+            cy.go('back');
+          });
+      });
+    }
   }
 );
 

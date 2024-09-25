@@ -18,8 +18,15 @@ Feature: Kiali Graph page - Toolbar (various)
     Then the namespace dropdown is sorted alphabetically
 
   @error-rates-app
-  Scenario: Graph alpha namespace with query params
-    When user graphs "alpha" namespaces with refresh "900000" and duration "300"
+  Scenario: Graph alpha namespace with query params in the cytoscape graph
+    When user graphs "alpha" namespaces with refresh "900000" and duration "300" in the "cytoscape" graph
+    Then user sees the "alpha" namespace
+    And user sees selected graph duration "Last 5m"
+    And user sees selected graph refresh "Every 15m"
+
+  @error-rates-app
+  Scenario: Graph alpha namespace with query params in the patternfly graph
+    When user graphs "alpha" namespaces with refresh "900000" and duration "300" in the "patternfly" graph
     Then user sees the "alpha" namespace
     And user sees selected graph duration "Last 5m"
     And user sees selected graph refresh "Every 15m"
