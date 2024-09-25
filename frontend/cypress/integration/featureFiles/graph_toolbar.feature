@@ -37,7 +37,7 @@ Feature: Kiali Graph page - Toolbar (various)
   @error-rates-app
   Scenario: Open traffic dropdown
     When user clicks graph traffic menu
-    Then user sees default graph traffic menu
+    Then user sees "default" graph traffic menu
 
   @error-rates-app
   Scenario: Disable all traffic
@@ -63,7 +63,7 @@ Feature: Kiali Graph page - Toolbar (various)
   Scenario: User resets to factory default
     When user resets to factory default
     And user clicks graph traffic menu
-    Then user sees default graph traffic menu
+    Then user sees "default" graph traffic menu
 
   @error-rates-app
   Scenario: Open duration dropdown
@@ -114,3 +114,15 @@ Feature: Kiali Graph page - Toolbar (various)
   Scenario: graph type workload
     When user selects "WORKLOAD" graph type
     Then user sees a "workload" graph
+
+  @ambient
+  Scenario: Open traffic dropdown for ambient
+    When user graphs "" namespaces
+    And  user clicks graph traffic menu
+    Then user sees "ambient" graph traffic menu
+
+  @ambient
+  Scenario: Close traffic dropdown for ambient
+    When user clicks graph traffic menu
+    Then user does not see graph traffic menu
+

@@ -117,7 +117,7 @@ const GraphTrafficComponent: React.FC<GraphTrafficProps> = (props: GraphTrafficP
         labelText: 'Waypoint',
         isChecked: trafficRates.includes(TrafficRate.AMBIENT_WAYPOINT),
         tooltip: (
-          <div style={{ textAlign: 'left' }}>Limit to only waypoint reported traffic, for the enabled protocols.</div>
+          <div style={{ textAlign: 'left' }}>Limit to only waypoint-reported traffic, for the enabled protocols.</div>
         )
       },
       {
@@ -125,7 +125,9 @@ const GraphTrafficComponent: React.FC<GraphTrafficProps> = (props: GraphTrafficP
         labelText: 'ZTunnel',
         isChecked: trafficRates.includes(TrafficRate.AMBIENT_ZTUNNEL),
         tooltip: (
-          <div style={{ textAlign: 'left' }}>Limit to only ztunnel reported traffic, for the enabled protocols.</div>
+          <div style={{ textAlign: 'left' }}>
+            Limit to only ztunnel-reported traffic. Relevant only when TCP protocol is enabled.
+          </div>
         )
       },
       {
