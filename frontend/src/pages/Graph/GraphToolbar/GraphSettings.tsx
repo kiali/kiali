@@ -36,7 +36,6 @@ import { KialiDispatch } from 'types/Redux';
 import { KialiCrippledFeatures } from 'types/ServerConfig';
 import { getCrippledFeatures } from 'services/Api';
 import { serverConfig } from '../../../config';
-import { PFColors } from 'components/Pf/PfColors';
 
 type ReduxStateProps = {
   boxByCluster: boolean;
@@ -646,14 +645,12 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
 
     if (serverConfig.ambientEnabled) {
       visibilityOptions.push({
-        iconColor: PFColors.Warning,
         id: 'filterWaypoints',
         isChecked: showWaypoints,
         labelText: 'Waypoint Proxies',
         onChange: toggleWaypoints,
         tooltip: (
           <div style={{ textAlign: 'left' }}>
-            <div>[Feature under development]</div>
             <div>Show waypoint proxies workloads.</div>
             <div>
               When enabled in an Ambient environment, include waypoint proxy telemetry in the graph. Waypoint nodes will
