@@ -14,6 +14,7 @@ Feature: Controlling sidecar injection
 		Given user is at administrator perspective
 
 	@sleep-app
+	@skip-ossmc
 	Scenario: Override the default policy for automatic sidecar injection by enabling it in a namespace
 		Given a namespace without override configuration for automatic sidecar injection
 		When I visit the overview page
@@ -22,6 +23,7 @@ Feature: Controlling sidecar injection
 		Then I should see the override annotation for sidecar injection in the namespace as "enabled"
 
 	@sleep-app
+	@skip-ossmc
 	Scenario: Switch the override configuration for automatic sidecar injection in a namespace to disabled
 		Given a namespace which has override configuration for automatic sidecar injection
 		And the override configuration for sidecar injection is "enabled"
@@ -31,6 +33,7 @@ Feature: Controlling sidecar injection
 		Then I should see the override annotation for sidecar injection in the namespace as "disabled"
 
 	@sleep-app
+	@skip-ossmc
 	Scenario: Switch the override configuration for automatic sidecar injection in a namespace to enabled
 		Given a namespace which has override configuration for automatic sidecar injection
 		And the override configuration for sidecar injection is "disabled"
@@ -40,6 +43,7 @@ Feature: Controlling sidecar injection
 		Then I should see the override annotation for sidecar injection in the namespace as "enabled"
 
 	@sleep-app
+	@skip-ossmc
 	Scenario: Switch to using the default policy for automatic sidecar injection in a namespace
 		Given a namespace which has override configuration for automatic sidecar injection
 		When I visit the overview page

@@ -73,9 +73,6 @@ Given('a workload without a sidecar', function () {
   this.workloadHasSidecar = false;
   this.workloadHasAutoInjectionOverride = false;
 
-  // Restart the workload before disabling the sidecar injection
-  restartWorkload(this.targetNamespace, this.targetWorkload);
-
   // Make sure that injection in the namespace is turned off
   cy.request({
     method: 'PATCH',
@@ -123,9 +120,6 @@ Given('a workload with a sidecar', function () {
   this.namespaceAutoInjectionEnabled = true;
   this.workloadHasSidecar = true;
   this.workloadHasAutoInjectionOverride = false;
-
-  // Restart the workload before enabling the sidecar injection
-  restartWorkload(this.targetNamespace, this.targetWorkload);
 
   // Make sure that injection in the namespace is turned on
   cy.request({
