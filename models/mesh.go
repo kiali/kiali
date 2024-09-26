@@ -125,7 +125,7 @@ type ControlPlaneConfiguration struct {
 }
 
 type Certificate struct {
-	DNSNames      []string  `yaml:"dnsNames"`
+	DNSNames      []string  `json:"dnsNames"`
 	ConfigMapName string    `json:"configMapName"`
 	Issuer        string    `json:"issuer"`
 	NotBefore     time.Time `json:"notBefore"`
