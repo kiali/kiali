@@ -29,7 +29,7 @@ const (
 // Name: extensions
 type ExtensionsAppender struct {
 	Duration         time.Duration
-	globalInfo       *graph.AppenderGlobalInfo
+	globalInfo       *graph.GlobalInfo
 	GraphType        string
 	IncludeIdleEdges bool
 	QueryTime        int64 // unix time in seconds
@@ -49,7 +49,7 @@ func (a ExtensionsAppender) IsFinalizer() bool {
 }
 
 // AppendGraph implements Appender
-func (a ExtensionsAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *graph.AppenderGlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
+func (a ExtensionsAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
 	log.Info("In Extensions") // todo: remove
 
 	cfg := config.Get()

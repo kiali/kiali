@@ -59,7 +59,7 @@ func TestExtension(t *testing.T) {
 	}
 
 	duration, _ := time.ParseDuration("60s")
-	globalInfo := graph.NewAppenderGlobalInfo()
+	globalInfo := graph.NewGlobalInfo()
 	globalInfo.Business = businessLayer
 	globalInfo.PromClient = client
 

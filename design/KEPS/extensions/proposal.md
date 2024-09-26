@@ -186,4 +186,5 @@ extension.kiali.io/ui-url
 
 # Roadmap
 
-- [ ] POC (using Skupper as the extension)
+- [x] POC (using Skupper as the extension)
+- [ ] Add support for Kiali_ext_response_time_seconds
