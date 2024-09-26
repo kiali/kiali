@@ -133,7 +133,7 @@ export const dicIstioType = {
   K8sTLSRoute: 'k8stlsroutes',
   PeerAuthentication: 'peerauthentications',
   RequestAuthentication: 'requestauthentications',
-  dicIstioType: 'serviceentries',
+  serviceEntries: 'serviceentries',
   Sidecar: 'sidecars',
   Telemetry: 'telemetries',
   VirtualService: 'virtualservices',
