@@ -40,7 +40,7 @@ Feature: Kiali Istio Config page
   @bookinfo-app
   Scenario: Filter Istio Config objects by Type
     When the user filters by "Type" for "Gateway"
-    Then only "Gateways" are visible in the "bookinfo" namespace
+    Then only "Gateway" objects are visible in the "bookinfo" namespace
 
   @bookinfo-app
   Scenario: Filter Istio Config objects by Valid configuration

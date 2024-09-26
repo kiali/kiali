@@ -24,21 +24,51 @@ const labelsStringToJson = (labelsString: string): string => {
   return `{${labelsJson}}`;
 };
 
-// I included this, because the URL parameter is in plural, but the the Type itself in Kiali is singular
-// This works for all of the types currently present in Kiali (Feb 8 2023), but may break in the future, because
-// it does not support all of the english words
-const singularize = (word: string): string => {
+const pluralize = (word: string): string => {
   const endings = {
-    ves: 'fe',
-    ies: 'y',
-    i: 'us',
-    zes: 'ze',
-    ses: 's',
-    es: 'e',
-    s: ''
+    fe: 'ves',
+    y: 'ies',
+    us: 'i',
+    ze: 'zes',
+    s: 'ses',
+    e: 'es'
   };
 
-  return word.replace(new RegExp(`(${Object.keys(endings).join('|')})$`), r => endings[r]);
+  for (const [singular, plural] of Object.entries(endings)) {
+    const regex = new RegExp(`${singular}$`);
+    if (regex.test(word)) {
+      return word.replace(regex, plural);
+    }
+  }
+
+  // 's' by default
+  return `${word}s`;
+};
+
+export const dicIstioTypeToGVKStrings: { [key: string]: string } = {
+  AuthorizationPolicy: 'security.istio.io/v1, Kind=AuthorizationPolicy',
+  PeerAuthentication: 'security.istio.io/v1, Kind=PeerAuthentication',
+  RequestAuthentication: 'security.istio.io/v1, Kind=RequestAuthentication',
+
+  DestinationRule: 'networking.istio.io/v1, Kind=DestinationRule',
+  Gateway: 'networking.istio.io/v1, Kind=Gateway',
+  EnvoyFilter: 'networking.istio.io/v1alpha3, Kind=EnvoyFilter',
+  Sidecar: 'networking.istio.io/v1, Kind=Sidecar',
+  ServiceEntry: 'networking.istio.io/v1, Kind=ServiceEntry',
+  VirtualService: 'networking.istio.io/v1, Kind=VirtualService',
+  WorkloadEntry: 'networking.istio.io/v1, Kind=WorkloadEntry',
+  WorkloadGroup: 'networking.istio.io/v1, Kind=WorkloadGroup',
+
+  WasmPlugin: 'extensions.istio.io/v1alpha1, Kind=WasmPlugin',
+  Telemetry: 'telemetry.istio.io/v1, Kind=Telemetry',
+
+  K8sGateway: 'gateway.networking.k8s.io/v1, Kind=Gateway',
+  K8sGatewayClass: 'gateway.networking.k8s.io/v1, Kind=GatewayClass',
+  K8sGRPCRoute: 'gateway.networking.k8s.io/v1, Kind=GRPCRoute',
+  K8sHTTPRoute: 'gateway.networking.k8s.io/v1, Kind=HTTPRoute',
+  K8sReferenceGrant: 'gateway.networking.k8s.io/v1, Kind=ReferenceGrant',
+  K8sTCPRoute: 'gateway.networking.k8s.io/v1alpha2, Kind=TCPRoute',
+  K8sTLSRoute: 'gateway.networking.k8s.io/v1alpha2, Kind=TLSRoute'
 };
 
 const minimalAuthorizationPolicy = (name: string, namespace: string): string => {
@@ -558,17 +588,18 @@ Then('user only sees {string}', (sees: string) => {
   });
 });
 
-Then('only {string} are visible in the {string} namespace', (sees: string, ns: string) => {
+Then('only {string} objects are visible in the {string} namespace', (sees: string, ns: string) => {
   let lowercaseSees: string = sees.charAt(0).toLowerCase() + sees.slice(1);
   let count: number;
 
-  cy.request({ method: 'GET', url: `/api/namespaces/${ns}/istio?objects=${lowercaseSees}&validate=true` }).then(
-    response => {
-      count = response.body[lowercaseSees].length;
-    }
-  );
+  cy.request({
+    method: 'GET',
+    url: `/api/namespaces/${ns}/istio?objects=${dicIstioTypeToGVKStrings[sees]}&validate=true`
+  }).then(response => {
+    count = response.body[pluralize(lowercaseSees)].length;
+  });
 
-  cy.get('tbody').contains('tr', singularize(sees));
+  cy.get('tbody').contains('tr', sees);
   cy.get('tbody').within(() => {
     cy.get('tr').should('have.length', count);
   });

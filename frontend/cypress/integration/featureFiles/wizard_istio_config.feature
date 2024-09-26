@@ -124,7 +124,7 @@ Feature: Kiali Istio Config wizard
     And user types "foobar" in the "addPortName_0" input
     And user previews the configuration
     And user creates the istio config
-    Then an error message "Could not create Istio Gateway objects" is displayed
+    Then an error message "Could not create Istio networking.istio.io/v1, Kind=Gateway objects" is displayed
 
   @bookinfo-app
   Scenario: Try to create a Gateway with negative port number

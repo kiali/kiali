@@ -111,7 +111,7 @@ When('choosing to delete it', () => {
 });
 
 When('user closes the success notification', () => {
-  cy.get('[aria-label^="Close Success alert: alert: Istio Gateway created"]').click();
+  cy.get('[aria-label^="Close Success alert: alert: Istio networking.istio.io/v1, Kind=Gateway created"]').click();
 });
 
 Then('user does not see a dropdown for cluster selection', () => {
