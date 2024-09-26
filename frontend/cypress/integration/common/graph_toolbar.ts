@@ -91,11 +91,19 @@ Then('user {string} graph tour', (action: string) => {
   }
 });
 
-Then('user sees default graph traffic menu', () => {
+Then('user sees {string} graph traffic menu', (menu: string) => {
   cy.get('button#graph-traffic-dropdown').invoke('attr', 'aria-expanded').should('eq', 'true');
 
   cy.get('div#graph-traffic-menu').within(() => {
-    cy.get('input').should('have.length', 11);
+    if (menu === 'ambient') {
+      cy.get('input').should('have.length', 15);
+      cy.get('input#ambient').should('exist').should('be.checked');
+      cy.get('input#ambientWaypoint').should('exist').should('not.be.checked');
+      cy.get('input#ambientZtunnel').should('exist').should('not.be.checked');
+      cy.get('input#ambientTotal').should('exist').should('be.checked');
+    } else {
+      cy.get('input').should('have.length', 11);
+    }
     cy.get('input#grpc').should('exist').should('be.checked');
     cy.get('input#grpcReceived').should('exist').should('not.be.checked');
     cy.get('input#grpcRequest').should('exist').should('be.checked');

@@ -214,9 +214,10 @@ func TestResponseTimeP95(t *testing.T) {
 		Quantile:  0.95,
 		QueryTime: time.Now().Unix(),
 		Rates: graph.RequestedRates{
-			Grpc: graph.RateRequests,
-			Http: graph.RateRequests,
-			Tcp:  graph.RateTotal,
+			Ambient: graph.AmbientTrafficTotal,
+			Grpc:    graph.RateRequests,
+			Http:    graph.RateRequests,
+			Tcp:     graph.RateTotal,
 		},
 	}
 
@@ -487,9 +488,10 @@ func TestResponseTimeAvgSkipRates(t *testing.T) {
 		Quantile:  0.0,
 		QueryTime: time.Now().Unix(),
 		Rates: graph.RequestedRates{
-			Grpc: graph.RateRequests,
-			Http: graph.RateNone,
-			Tcp:  graph.RateTotal,
+			Ambient: graph.AmbientTrafficTotal,
+			Grpc:    graph.RateRequests,
+			Http:    graph.RateNone,
+			Tcp:     graph.RateTotal,
 		},
 	}
 
@@ -760,9 +762,10 @@ func TestResponseTimeAvg(t *testing.T) {
 		Quantile:  0.0,
 		QueryTime: time.Now().Unix(),
 		Rates: graph.RequestedRates{
-			Grpc: graph.RateRequests,
-			Http: graph.RateRequests,
-			Tcp:  graph.RateTotal,
+			Ambient: graph.AmbientTrafficTotal,
+			Grpc:    graph.RateRequests,
+			Http:    graph.RateRequests,
+			Tcp:     graph.RateTotal,
 		},
 	}
 

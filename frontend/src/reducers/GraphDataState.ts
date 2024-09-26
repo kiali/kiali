@@ -38,6 +38,8 @@ export const INITIAL_GRAPH_STATE: GraphState = {
     showVirtualServices: true,
     showWaypoints: false,
     trafficRates: [
+      TrafficRate.AMBIENT_GROUP,
+      TrafficRate.AMBIENT_TOTAL,
       TrafficRate.GRPC_GROUP,
       TrafficRate.GRPC_REQUEST,
       TrafficRate.HTTP_GROUP,

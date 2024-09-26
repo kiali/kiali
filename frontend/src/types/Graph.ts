@@ -88,6 +88,10 @@ export const numLabels = (modes: EdgeLabelMode[]): number => {
 };
 
 export enum TrafficRate {
+  AMBIENT_TOTAL = 'ambientTotal',
+  AMBIENT_GROUP = 'ambient',
+  AMBIENT_WAYPOINT = 'ambientWaypoint',
+  AMBIENT_ZTUNNEL = 'ambientZtunnel',
   GRPC_GROUP = 'grpc',
   GRPC_RECEIVED = 'grpcReceived', // response_messages
   GRPC_REQUEST = 'grpcRequest',
@@ -102,6 +106,8 @@ export enum TrafficRate {
 }
 
 export const DefaultTrafficRates: TrafficRate[] = [
+  TrafficRate.AMBIENT_GROUP,
+  TrafficRate.AMBIENT_TOTAL,
   TrafficRate.GRPC_GROUP,
   TrafficRate.GRPC_REQUEST,
   TrafficRate.HTTP_GROUP,
@@ -109,6 +115,28 @@ export const DefaultTrafficRates: TrafficRate[] = [
   TrafficRate.TCP_GROUP,
   TrafficRate.TCP_SENT
 ];
+
+export const isAmbientRate = (rate: TrafficRate): boolean => {
+  return (
+    rate === TrafficRate.AMBIENT_TOTAL ||
+    rate === TrafficRate.AMBIENT_GROUP ||
+    rate === TrafficRate.AMBIENT_WAYPOINT ||
+    rate === TrafficRate.AMBIENT_ZTUNNEL
+  );
+};
+
+export const toAmbientRate = (rate: string): TrafficRate | undefined => {
+  switch (rate) {
+    case 'total':
+      return TrafficRate.AMBIENT_TOTAL;
+    case 'waypoint':
+      return TrafficRate.AMBIENT_WAYPOINT;
+    case 'ztunnel':
+      return TrafficRate.AMBIENT_ZTUNNEL;
+    default:
+      return undefined;
+  }
+};
 
 export const isGrpcRate = (rate: TrafficRate): boolean => {
   return (
@@ -438,6 +466,7 @@ export interface GraphElements {
 }
 
 export interface GraphElementsQuery {
+  ambientTraffic?: string;
   appenders?: AppenderString;
   boxBy?: string;
   duration?: string;

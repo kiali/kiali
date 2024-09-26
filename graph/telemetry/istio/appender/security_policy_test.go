@@ -88,9 +88,10 @@ func TestSecurityPolicyDefaultRates(t *testing.T) {
 		},
 		QueryTime: time.Now().Unix(),
 		Rates: graph.RequestedRates{
-			Grpc: graph.RateRequests,
-			Http: graph.RateRequests,
-			Tcp:  graph.RateSent,
+			Ambient: graph.AmbientTrafficTotal,
+			Grpc:    graph.RateRequests,
+			Http:    graph.RateRequests,
+			Tcp:     graph.RateSent,
 		},
 	}
 
@@ -193,9 +194,10 @@ func TestSecurityPolicyTotalRates(t *testing.T) {
 		},
 		QueryTime: time.Now().Unix(),
 		Rates: graph.RequestedRates{
-			Grpc: graph.RateTotal,
-			Http: graph.RateRequests,
-			Tcp:  graph.RateTotal,
+			Ambient: graph.AmbientTrafficTotal,
+			Grpc:    graph.RateTotal,
+			Http:    graph.RateRequests,
+			Tcp:     graph.RateTotal,
 		},
 	}
 
@@ -268,9 +270,10 @@ func TestSecurityPolicyWithServiceNodes(t *testing.T) {
 		},
 		QueryTime: time.Now().Unix(),
 		Rates: graph.RequestedRates{
-			Grpc: graph.RateRequests,
-			Http: graph.RateRequests,
-			Tcp:  graph.RateSent,
+			Ambient: graph.AmbientTrafficTotal,
+			Grpc:    graph.RateRequests,
+			Http:    graph.RateRequests,
+			Tcp:     graph.RateSent,
 		},
 	}
 
