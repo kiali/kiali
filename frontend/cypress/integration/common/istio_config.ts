@@ -24,11 +24,12 @@ const labelsStringToJson = (labelsString: string): string => {
   return `{${labelsJson}}`;
 };
 
+// This is for Istio Object Types only
 const pluralize = (word: string): string => {
   const endings = {
-    fe: 'ves',
-    y: 'ies',
-    us: 'i',
+    ay: 'ays',
+    cy: 'cies',
+    ry: 'ries',
     ze: 'zes',
     s: 'ses',
     e: 'es'
