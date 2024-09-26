@@ -2,6 +2,7 @@ import {
   getIstioObjectGVK,
   gvkToString,
   isServerHostValid,
+  istioTypesToGVKString,
   isValidUrl,
   kindToStringIncludeK8s,
   mergeJsonPatch,
@@ -201,5 +202,32 @@ describe('Validate Kind To String considering api for K8s', () => {
   it('both apiVersion and kind are undefined', () => {
     const result = kindToStringIncludeK8s(undefined, undefined);
     expect(result).toBe('');
+  });
+});
+
+describe('Validate Istio Types array To GVK Strings array', () => {
+  it('Valid scenario', () => {
+    const istioTypes = ['AuthorizationPolicy', 'PeerAuthentication', 'K8sGateway', 'Gateway'];
+    const expectedOutput = [
+      'security.istio.io/v1, Kind=AuthorizationPolicy',
+      'security.istio.io/v1, Kind=PeerAuthentication',
+      'gateway.networking.k8s.io/v1, Kind=Gateway',
+      'networking.istio.io/v1, Kind=Gateway'
+    ];
+
+    const result = istioTypesToGVKString(istioTypes);
+    expect(result).toEqual(expectedOutput);
+  });
+
+  it('Empty strings', () => {
+    const istioTypes: string[] = [];
+    const result = istioTypesToGVKString(istioTypes);
+    expect(result).toEqual([]);
+  });
+
+  it('Invalid type', () => {
+    const istioTypes = ['InvalidType'];
+    const result = istioTypesToGVKString(istioTypes);
+    expect(result).toEqual(['']);
   });
 });

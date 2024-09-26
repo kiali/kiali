@@ -270,3 +270,9 @@ export function kindToStringIncludeK8s(apiVersion?: string, kind?: string): stri
   }
   return kind;
 }
+
+export function istioTypesToGVKString(istioTypes: string[]): string[] {
+  return istioTypes.map(type => {
+    return gvkToString(dicIstioTypeToGVK[type]);
+  });
+}
