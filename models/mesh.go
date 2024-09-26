@@ -1,12 +1,11 @@
 package models
 
 import (
+	"crypto/x509"
+	"encoding/pem"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
-
-	"crypto/x509"
-	"encoding/pem"
 
 	"github.com/kiali/kiali/config"
 )
