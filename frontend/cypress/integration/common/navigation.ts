@@ -46,7 +46,10 @@ Given(
     const namespaceAndName = namespacedNamed.split('/');
     const namespace = namespaceAndName[0];
     const pageDetail = getPageDetail(detail);
-    const name = pageDetail === 'istio' ? `${namespaceAndName[1]}/${namespaceAndName[2]}` : namespaceAndName[1];
+    const name =
+      pageDetail === 'istio'
+        ? `${namespaceAndName[1]}/${namespaceAndName[2]}/${namespaceAndName[3]}/${namespaceAndName[4]}`
+        : namespaceAndName[1];
 
     if (pageDetail === 'services') {
       cy.intercept({
