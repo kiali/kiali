@@ -10,7 +10,7 @@ import { KialiAppState } from '../../store/Store';
 import { connect } from 'react-redux';
 import { isParentKiosk, kioskContextMenuAction } from '../Kiosk/KioskActions';
 import { GroupVersionKind } from '../../types/IstioObjects';
-import { gvkToString } from '../../utils/IstioConfigUtils';
+import { gvkToString, kindToStringIncludeK8s } from '../../utils/IstioConfigUtils';
 
 export const infoStyle = kialiStyle({
   margin: '0 0 -0.125rem 0.5rem'
@@ -112,7 +112,7 @@ const IstioObjectLinkComponent: React.FC<IstioObjectProps> = (props: IstioObject
     </Link>
   ) : (
     // @TODO put cluster in link when all objects have multicluster support
-    <Link to={href} data-test={`${objectGVK.Group}.${objectGVK.Version}.${objectGVK.Kind}-${namespace}-${name}`}>
+    <Link to={href} data-test={`${kindToStringIncludeK8s(objectGVK.Group, objectGVK.Kind)}-${namespace}-${name}`}>
       {props.children}
     </Link>
   );

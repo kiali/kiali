@@ -39,14 +39,14 @@ Feature: Service Details Wizard: Request Routing
     And user sees the "bookinfo" "reviews-v1" "workload" reference
     And user sees the "bookinfo" "reviews-v2" "workload" reference
     And user sees the "bookinfo" "reviews-v3" "workload" reference
-    And user sees the "bookinfo" "reviews" "networking.istio.io.v1.VirtualService" reference
+    And user sees the "bookinfo" "reviews" "VirtualService" reference
 
   @bookinfo-app
   Scenario: See a VirtualService generated
-    When user clicks in the "bookinfo" "reviews" "networking.istio.io.v1.VirtualService" reference
+    When user clicks in the "bookinfo" "reviews" "VirtualService" reference
     Then user sees the "kind: VirtualService" regex in the editor
     And user sees the "bookinfo" "reviews" "service" reference
-    And user sees the "bookinfo" "reviews" "destinationrule" reference
+    And user sees the "bookinfo" "reviews" "DestinationRule" reference
     And user sees the "end-user:[\n ]*exact: jason" regex in the editor
 
   @bookinfo-app
@@ -103,7 +103,7 @@ Feature: Service Details Wizard: Request Routing
     And user is at the "istio" list page
     And user selects the "bookinfo" namespace
     Then user sees the generated "details" objects located in the "east" cluster
-    And the "networking.istio.io.v1.Gateway" "details-gateway" should be listed in "east" "bookinfo" namespace
+    And the "Gateway" "details-gateway" should be listed in "east" "bookinfo" namespace
 
   @multi-cluster
   Scenario: Delete the Request Routing scenario in a local cluster
@@ -160,7 +160,7 @@ Feature: Service Details Wizard: Request Routing
     And user is at the "istio" list page
     And user selects the "bookinfo" namespace
     Then user sees the generated "ratings" objects located in the "west" cluster
-    And the "networking.istio.io.v1.Gateway" "ratings-gateway" should be listed in "west" "bookinfo" namespace
+    And the "Gateway" "ratings-gateway" should be listed in "west" "bookinfo" namespace
 
   @multi-cluster
   @multi-primary

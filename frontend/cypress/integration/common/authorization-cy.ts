@@ -44,13 +44,11 @@ Then('the nodes on the cytoscape minigraph located in the {string} cluster shoul
 Then(
   'user sees the {string} Istio Config objects and not the {string} Istio Config Objects',
   (cluster: string, externalCluster: string) => {
-    cy.getBySel(`VirtualItem_Clustereast_Nsbookinfo_networking.istio.io.v1.VirtualService_bookinfo`).contains(
+    cy.getBySel(`VirtualItem_Clustereast_Nsbookinfo_VirtualService_bookinfo`).contains(
       'td[data-label="Cluster"]',
       'east'
     );
-    cy.getBySel(`VirtualItem_Clusterwest_Nsbookinfo_networking.istio.io.v1.VirtualService_bookinfo`).should(
-      'not.exist'
-    );
+    cy.getBySel(`VirtualItem_Clusterwest_Nsbookinfo_VirtualService_bookinfo`).should('not.exist');
   }
 );
 

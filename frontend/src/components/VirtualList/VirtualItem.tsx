@@ -5,7 +5,7 @@ import { PromisesRegistry } from '../../utils/CancelablePromises';
 import { Health } from '../../types/Health';
 import { StatefulFiltersRef } from '../Filters/StatefulFilters';
 import { actionRenderer } from './Renderers';
-import { getIstioObjectGVK, gvkToString } from '../../utils/IstioConfigUtils';
+import { getIstioObjectGVK, gvkToString, kindToStringIncludeK8s } from '../../utils/IstioConfigUtils';
 
 type VirtualItemProps = {
   action?: JSX.Element;
@@ -67,7 +67,7 @@ export class VirtualItem extends React.Component<VirtualItemProps, VirtualItemSt
       'type' in item
         ? `_${item.type}`
         : 'kind' in item && 'apiVersion' in item
-        ? `_${item.apiVersion?.replace('/', '.')}.${item.kind}`
+        ? `_${kindToStringIncludeK8s(item.apiVersion, item.kind)}`
         : '';
     // End result looks like: VirtualItem_Clusterwest_Nsbookinfo_networking.istio.io.v1.Gateway_bookinfo-gateway
 

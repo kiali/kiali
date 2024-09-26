@@ -265,12 +265,8 @@ Then(
   (service: string, namespace: string, cluster: string) => {
     // Wait for the table to load in.
     cy.get('table').should('not.contain.text', 'No Istio config found');
-    cy.getBySel(`VirtualItem_Cluster${cluster}_Ns${namespace}_networking.istio.io.v1.VirtualService_${service}`).should(
-      'not.exist'
-    );
-    cy.getBySel(
-      `VirtualItem_Cluster${cluster}_Ns${namespace}_networking.istio.io.v1.DestinationRule_${service}`
-    ).should('not.exist');
+    cy.getBySel(`VirtualItem_Cluster${cluster}_Ns${namespace}_VirtualService_${service}`).should('not.exist');
+    cy.getBySel(`VirtualItem_Cluster${cluster}_Ns${namespace}_DestinationRule_${service}`).should('not.exist');
   }
 );
 
@@ -279,12 +275,8 @@ Then(
   (service: string, namespace: string, cluster: string) => {
     // Wait for the table to load in.
     cy.get('table').should('not.contain.text', 'No Istio config found');
-    cy.getBySel(`VirtualItem_Cluster${cluster}_Ns${namespace}_networking.istio.io.v1.VirtualService_${service}`).should(
-      'exist'
-    );
-    cy.getBySel(
-      `VirtualItem_Cluster${cluster}_Ns${namespace}_networking.istio.io.v1.DestinationRule_${service}`
-    ).should('exist');
+    cy.getBySel(`VirtualItem_Cluster${cluster}_Ns${namespace}_VirtualService_${service}`).should('exist');
+    cy.getBySel(`VirtualItem_Cluster${cluster}_Ns${namespace}_DestinationRule_${service}`).should('exist');
   }
 );
 

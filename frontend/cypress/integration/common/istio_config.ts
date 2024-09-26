@@ -462,31 +462,31 @@ Then('user sees all the Istio Config objects in the bookinfo namespace', () => {
 
 Then('user sees all the Istio Config objects in the bookinfo namespace for the {string} cluster', (cluster: string) => {
   // Bookinfo Gateway
-  cy.getBySel(`VirtualItem_Cluster${cluster}_Nsbookinfo_networking.istio.io.v1.Gateway_bookinfo-gateway`);
+  cy.getBySel(`VirtualItem_Cluster${cluster}_Nsbookinfo_Gateway_bookinfo-gateway`);
 
   // Bookinfo VS
-  cy.getBySel(`VirtualItem_Cluster${cluster}_Nsbookinfo_networking.istio.io.v1.VirtualService_bookinfo`);
+  cy.getBySel(`VirtualItem_Cluster${cluster}_Nsbookinfo_VirtualService_bookinfo`);
 });
 
 Then('user sees Cluster information for Istio objects', () => {
   // Gateways
-  cy.getBySel(`VirtualItem_Clustereast_Nsbookinfo_networking.istio.io.v1.Gateway_bookinfo-gateway`).contains(
+  cy.getBySel(`VirtualItem_Clustereast_Nsbookinfo_Gateway_bookinfo-gateway`).contains(
     'td[data-label="Cluster"]',
     'east'
   );
 
-  cy.getBySel(`VirtualItem_Clusterwest_Nsbookinfo_networking.istio.io.v1.Gateway_bookinfo-gateway`).contains(
+  cy.getBySel(`VirtualItem_Clusterwest_Nsbookinfo_Gateway_bookinfo-gateway`).contains(
     'td[data-label="Cluster"]',
     'west'
   );
 
   // VirtualServices
-  cy.getBySel(`VirtualItem_Clustereast_Nsbookinfo_networking.istio.io.v1.VirtualService_bookinfo`).contains(
+  cy.getBySel(`VirtualItem_Clustereast_Nsbookinfo_VirtualService_bookinfo`).contains(
     'td[data-label="Cluster"]',
     'east'
   );
 
-  cy.getBySel(`VirtualItem_Clusterwest_Nsbookinfo_networking.istio.io.v1.VirtualService_bookinfo`).contains(
+  cy.getBySel(`VirtualItem_Clusterwest_Nsbookinfo_VirtualService_bookinfo`).contains(
     'td[data-label="Cluster"]',
     'west'
   );
@@ -621,7 +621,7 @@ Then(
 
 Then('the AuthorizationPolicy should have a {string}', function (healthStatus: string) {
   cy.get(
-    `[data-test=VirtualItem_Ns${this.targetNamespace}_security.istio.io.v1.AuthorizationPolicy_${this.targetAuthorizationPolicy}] span.pf-v5-c-icon`
+    `[data-test=VirtualItem_Ns${this.targetNamespace}_AuthorizationPolicy_${this.targetAuthorizationPolicy}] span.pf-v5-c-icon`
   ).hasCssVar('color', `--pf-v5-global--${healthStatus}-color--100`);
 });
 
@@ -637,7 +637,7 @@ function waitUntilConfigIsVisible(attempt: number, crdInstanceName: string, crdN
     .each($row => {
       const dataTestAttr = $row[0].attributes.getNamedItem('data-test');
       if (dataTestAttr !== null) {
-        if (dataTestAttr.value === `VirtualItem_Ns${namespace}_${crdName.toLowerCase()}_${crdInstanceName}`) {
+        if (dataTestAttr.value === `VirtualItem_Ns${namespace}_${crdName}_${crdInstanceName}`) {
           found = true;
         }
       }
@@ -654,7 +654,7 @@ Then(
   'the {string} {string} of the {string} namespace should have a {string}',
   (crdInstanceName: string, crdName: string, namespace: string, healthStatus: string) => {
     waitUntilConfigIsVisible(3, crdInstanceName, crdName, namespace);
-    cy.get(`[data-test=VirtualItem_Ns${namespace}_${crdName.toLowerCase()}_${crdInstanceName}] span.pf-v5-c-icon`)
+    cy.get(`[data-test=VirtualItem_Ns${namespace}_${crdName}_${crdInstanceName}] span.pf-v5-c-icon`)
       .should('be.visible')
       .hasCssVar('color', `--pf-v5-global--${healthStatus}-color--100`);
   }

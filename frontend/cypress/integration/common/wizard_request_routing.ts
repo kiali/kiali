@@ -107,11 +107,11 @@ When('user clicks in the {string} actions', (action: string) => {
 });
 
 Then('user sees the generated {string} objects located in the {string} cluster', (svc: string, cluster: string) => {
-  cy.getBySel(`VirtualItem_Cluster${cluster}_Nsbookinfo_networking.istio.io.v1.DestinationRule_${svc}`)
+  cy.getBySel(`VirtualItem_Cluster${cluster}_Nsbookinfo_DestinationRule_${svc}`)
     .find('[data-label="Cluster"]')
     .contains(cluster);
 
-  cy.getBySel(`VirtualItem_Cluster${cluster}_Nsbookinfo_networking.istio.io.v1.VirtualService_${svc}`)
+  cy.getBySel(`VirtualItem_Cluster${cluster}_Nsbookinfo_VirtualService_${svc}`)
     .find('[data-label="Cluster"]')
     .contains(cluster);
 });
@@ -119,12 +119,8 @@ Then('user sees the generated {string} objects located in the {string} cluster',
 Then(
   'user does not see the generated {string} objects located in the {string} cluster',
   (svc: string, cluster: string) => {
-    cy.getBySel(`VirtualItem_Cluster${cluster}_Nsbookinfo_networking.istio.io.v1.DestinationRule_${svc}`).should(
-      'not.exist'
-    );
-    cy.getBySel(`VirtualItem_Cluster${cluster}_Nsbookinfo_networking.istio.io.v1.VirtualService_${svc}`).should(
-      'not.exist'
-    );
+    cy.getBySel(`VirtualItem_Cluster${cluster}_Nsbookinfo_DestinationRule_${svc}`).should('not.exist');
+    cy.getBySel(`VirtualItem_Cluster${cluster}_Nsbookinfo_VirtualService_${svc}`).should('not.exist');
   }
 );
 
