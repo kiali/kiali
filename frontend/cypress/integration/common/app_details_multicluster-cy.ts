@@ -16,7 +16,7 @@ Then('user sees {string} from a remote {string} cluster in the cytoscape graph',
 Given(
   'the {string} {string} from the {string} cluster is visible in the cytoscape minigraph',
   (name: string, type: string, cluster: string) => {
-    Step(this, 'user sees a minigraph');
+    Step(this, 'user sees a cytoscape minigraph');
     cy.waitForReact();
     cy.getReact('CytoscapeGraph')
       .should('have.length', '1')

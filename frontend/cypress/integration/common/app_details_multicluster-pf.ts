@@ -81,7 +81,7 @@ Then('an info message {string} is displayed', (message: string) => {
 Given(
   'the {string} {string} from the {string} cluster is visible in the patternfly minigraph',
   (name: string, type: string, cluster: string) => {
-    Step(this, 'user sees a minigraph');
+    Step(this, 'user sees a patternfly minigraph');
     cy.waitForReact();
     cy.getReact('CytoscapeGraph')
       .should('have.length', '1')
