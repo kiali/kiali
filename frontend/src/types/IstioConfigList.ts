@@ -27,6 +27,7 @@ import {
 import { ResourcePermissions } from './Permissions';
 import { getIstioObjectGVK, gvkToString } from '../utils/IstioConfigUtils';
 
+// @TODO rework to remove hardcoded object types, once REST API response JSON style is changed
 export interface IstioConfigItem {
   apiVersion?: string;
   authorizationPolicy?: AuthorizationPolicy;
@@ -57,6 +58,7 @@ export interface IstioConfigItem {
   workloadGroup?: WorkloadGroup;
 }
 
+// @TODO rework to remove hardcoded object types, once REST API response JSON style is changed
 export interface IstioConfigList {
   authorizationPolicies: AuthorizationPolicy[];
   destinationRules: DestinationRule[];
@@ -120,6 +122,7 @@ export const dicIstioTypeToGVK: { [key: string]: GroupVersionKind } = {
   K8sTLSRoute: { Group: 'gateway.networking.k8s.io', Version: 'v1alpha2', Kind: 'TLSRoute' }
 };
 
+// @TODO should be removed once REST API response JSON style is changed
 export const dicIstioType = {
   AuthorizationPolicy: 'authorizationpolicies',
   DestinationRule: 'destinationrules',
