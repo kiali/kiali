@@ -64,11 +64,11 @@ func parseIstioConfigMap(istioConfig *corev1.ConfigMap) (*models.IstioMeshConfig
 	return meshConfig, nil
 }
 
-func parseIstioControlPlaneCertificate(certConfigMap *corev1.ConfigMap) (models.Certificate, error) {
+func parseIstioControlPlaneCertificate(certConfigMap *corev1.ConfigMap) models.Certificate {
 	cert := models.Certificate{}
 	cert.Parse([]byte(certConfigMap.Data[certificateName]))
 	cert.ConfigMapName = certificatesConfigMapName
-	return cert, nil
+	return cert
 }
 
 // gets the mesh configuration for a controlplane from the istio configmap.
@@ -96,7 +96,7 @@ func (in *Discovery) getControlPlaneConfiguration(kubeCache cache.KubeCache, con
 	if err != nil {
 		log.Warningf("Unable to get certificate configmap [%s/%s]. Err: %s", controlPlane.IstiodNamespace, certificatesConfigMapName, err)
 	} else {
-		cert, _ := parseIstioControlPlaneCertificate(certConfigMap)
+		cert := parseIstioControlPlaneCertificate(certConfigMap)
 		istioConfigMapInfo.Certificates = append(istioConfigMapInfo.Certificates, cert)
 	}
 
