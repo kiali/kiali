@@ -50,8 +50,6 @@ func (a ExtensionsAppender) IsFinalizer() bool {
 
 // AppendGraph implements Appender
 func (a ExtensionsAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
-	log.Info("In Extensions") // todo: remove
-
 	cfg := config.Get()
 	if len(cfg.Extensions) == 0 {
 		return
@@ -68,11 +66,9 @@ func (a ExtensionsAppender) AppendGraph(trafficMap graph.TrafficMap, globalInfo 
 
 	// Process the extensions defined in the config
 	for _, extension := range cfg.Extensions {
-		log.Infof("Extension %s", extension.Name) // todo: remove
 		if !extension.Enabled {
 			continue
 		}
-		log.Infof("Running Extension %s", extension.Name) // todo: remove
 		a.appendGraph(extension, trafficMap)
 	}
 }
@@ -100,7 +96,7 @@ func (a ExtensionsAppender) appendGraph(ext config.ExtensionConfig, trafficMap g
 			int(a.Duration.Seconds()), // range duration for the query
 			groupBy,
 			idleCondition)
-		log.Infof("Extension requests query [%s]", query)
+		log.Tracef("Extension [%s] requests query [%s]", ext.Name, query)
 		vector := promQuery(query, time.Unix(a.QueryTime, 0), client.GetContext(), client.API(), a)
 		a.appendTrafficMap(ext, trafficMap, &vector, metric)
 	}
@@ -134,7 +130,7 @@ func (a ExtensionsAppender) appendGraph(ext config.ExtensionConfig, trafficMap g
 				int(a.Duration.Seconds()), // range duration for the query
 				groupBy,
 				idleCondition)
-			log.Infof("Extension tcp query [%s]", query)
+			log.Tracef("Extension [%s] tcp query [%s]", ext.Name, query)
 			vector := promQuery(query, time.Unix(a.QueryTime, 0), client.GetContext(), client.API(), a)
 			a.appendTrafficMap(ext, trafficMap, &vector, metric)
 		}
@@ -156,7 +152,6 @@ func (a ExtensionsAppender) appendTrafficMap(ext config.ExtensionConfig, traffic
 		val := float64(s.Value)
 
 		m := s.Metric
-		log.Infof("Processing TS %s", m.String()) // todo: remove
 		lSourceCluster, sourceClusterOk := m["source_cluster"]
 		lSourceIsRoot, sourceIsRootOk := m["source_is_root"]
 		lSourceNs, sourceNsOk := m["source_namespace"]
@@ -166,7 +161,7 @@ func (a ExtensionsAppender) appendTrafficMap(ext config.ExtensionConfig, traffic
 		lDestName, destNameOk := m["dest_name"]
 
 		if !sourceClusterOk || !sourceIsRootOk || !sourceNsOk || !sourceNameOk || !destClusterOk || !destNsOk || !destNameOk {
-			log.Warningf("Skipping %s, missing expected TS labels", m.String())
+			log.Warningf("Extension [%s] skipping %s, missing expected source TS labels", ext.Name, m.String())
 			continue
 		}
 
@@ -200,7 +195,7 @@ func (a ExtensionsAppender) appendTrafficMap(ext config.ExtensionConfig, traffic
 			lCode, codeOk := m["status_code"]
 
 			if !protocolOk || !codeOk {
-				log.Warningf("Skipping %s, missing expected request TS labels", m.String())
+				log.Warningf("Extension [%s] skipping %s, missing expected request TS labels", ext.Name, m.String())
 				continue
 			}
 
@@ -220,12 +215,12 @@ func (a ExtensionsAppender) addTraffic(ext config.ExtensionConfig, trafficMap gr
 	isRoot := sourceIsRoot == "true"
 	source, _, err := a.addNode(ext, trafficMap, isRoot, sourceCluster, sourceNs, sourceName, a.GraphType)
 	if err != nil {
-		log.Warningf("Skipping extension addTraffic (source) in extension, %s", err)
+		log.Warningf("Extension [%s] skipping extension addTraffic (source) in extension, %s", ext.Name, err)
 		return
 	}
 	dest, _, err := a.addNode(ext, trafficMap, false, destCluster, destNs, destName, a.GraphType)
 	if err != nil {
-		log.Warningf("Skipping extension addTraffic (dest), %s", err)
+		log.Warningf("Extension [%s] skipping extension addTraffic (dest), %s", ext.Name, err)
 		return
 	}
 
@@ -257,34 +252,22 @@ func (a ExtensionsAppender) addNode(ext config.ExtensionConfig, trafficMap graph
 	if err != nil {
 		return nil, false, err
 	}
-	log.Infof("addNode id=%s, nodeType=%s", id, nodeType) // todo: remove
 	node, found := trafficMap[id]
 	if !found {
-		log.Infof("not found") // todo: remove
 		if isRoot {
-			log.Infof("is root") // todo: remove
 			// The supplied source information did not exactly match a node in the graph, see if we can make a good "guess"
 			node, found = a.findRootNode(trafficMap, cluster, namespace, name)
-			if found {
-				log.Infof("findRootNode found root!") // todo: remove
-			} else {
-				log.Infof("findRootNode found no root") // todo: remove
-				if a.ShowUnrooted {
-					log.Infof("add unrooted node") // todo: remove
-				} else {
-					return nil, false, fmt.Errorf("no root node found matching is_source_root=true, id=%s", id)
-				}
+			if !found && !a.ShowUnrooted {
+				return nil, false, fmt.Errorf("extension [%s] no root node found matching is_source_root=true, id=%s", ext.Name, id)
 			}
 		}
 		if !found {
-			log.Infof("adding node...") // todo: remove
 			namespace := namespace
 			newNode := graph.NewNodeExplicit(id, cluster, namespace, "", "", "", name, nodeType, a.GraphType)
 			node = newNode
 			trafficMap[id] = node
 		}
 	}
-	log.Infof("added node...") // todo: remove
 	node.Metadata[graph.IsExtension] = &graph.ExtInfo{
 		Name: ext.Name,
 	}
@@ -296,8 +279,6 @@ func (a ExtensionsAppender) addNode(ext config.ExtensionConfig, trafficMap graph
 // TODO: This needs work or maybe just needs to go away.  It should maybe somehow involve version.
 func (a ExtensionsAppender) findRootNode(trafficMap graph.TrafficMap, cluster, namespace, name string) (*graph.Node, bool) {
 	roots := sliceutil.Filter(maps.Values(trafficMap), func(n *graph.Node) bool {
-		match := n.Cluster == cluster && n.Namespace == namespace && (n.Service == name || n.App == name || n.Workload == name)
-		log.Infof("match1 n.Cluster == %s && n.Namespace == %s && (n.Service == %s || n.App == %s || n.Workload == %s) = %v", cluster, namespace, name, name, name, match) // todo: remove
 		return n.Cluster == cluster && n.Namespace == namespace && (n.Service == name || n.App == name || n.Workload == name)
 	})
 	if len(roots) > 0 {
@@ -305,8 +286,6 @@ func (a ExtensionsAppender) findRootNode(trafficMap graph.TrafficMap, cluster, n
 	}
 
 	roots = sliceutil.Filter(maps.Values(trafficMap), func(n *graph.Node) bool {
-		match := n.Namespace == namespace && (n.Service == name || n.App == name || n.Workload == name)
-		log.Infof("match2 n.Namespace == %s && (n.Service == %s || n.App == %s || n.Workload == %s) = %v", namespace, name, name, name, match) // todo: remove
 		return n.Namespace == namespace && (n.Service == name || n.App == name || n.Workload == name)
 	})
 	if len(roots) > 0 {
@@ -328,20 +307,20 @@ func (a ExtensionsAppender) getUrl(ext config.ExtensionConfig, source *graph.Nod
 		if routeUrl != "" {
 			return routeUrl
 		}
-		log.Debugf("No route found for extension service [%s][%s][%s]", source.Cluster, source.Namespace, svcName)
+		log.Debugf("Extension [%s] no route found for extension service [%s][%s][%s]", ext.Name, source.Cluster, source.Namespace, svcName)
 	}
 
 	// otherwise, look for the annotation on the source service, or if that fails, a service named after the extension
 	for _, svcName := range []string{name, ext.Name} {
 		svc, err := a.globalInfo.Business.Svc.GetService(a.globalInfo.Context, source.Cluster, source.Namespace, svcName)
 		if err != nil {
-			log.Debugf("No extension root node service found [%s][%s][%s]", source.Cluster, source.Namespace, svcName)
+			log.Debugf("Extension [%s] no extension root node service found [%s][%s][%s]", ext.Name, source.Cluster, source.Namespace, svcName)
 			continue
 		}
 		if url, found := svc.Annotations[urlAnnotation]; found {
 			return url
 		}
-		log.Debugf("No url annotation found for extension root node service [%s][%s][%s]", source.Cluster, source.Namespace, svcName)
+		log.Debugf("Extension [%s] no url annotation found for extension root node service [%s][%s][%s]", ext.Name, source.Cluster, source.Namespace, svcName)
 	}
 
 	return urlNotFound
