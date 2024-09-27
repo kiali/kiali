@@ -71,7 +71,7 @@ Feature: Kiali Graph page - Side panel menu actions
     Given user is at the "istio" list page
     And there is no traffic routing for the "ratings" service in the "bookinfo" namespace and in the "west" cluster
     When user graphs "bookinfo" namespaces in the cytoscape graph
-    And user opens the context menu of the "ratings" service node on the "west" cluster
+    And user opens the context menu of the "ratings" service node on the "west" cluster in the cytoscape graph
     And user clicks the "request_routing" action of the context menu
     Then user should see the "request_routing" wizard
     When user adds a route rule

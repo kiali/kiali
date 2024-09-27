@@ -245,7 +245,7 @@ Feature: Kiali Graph page - Display menu
   @multi-cluster
   Scenario: See link to correct details page after clicking on a node for the west cluster
     Given user graphs "bookinfo" namespaces in the patternfly graph
-    When user clicks on the "reviews-v2" workload in the "bookinfo" namespace in the "west" cluster
+    When user clicks on the "reviews-v2" workload in the "bookinfo" namespace in the "west" cluster in the patternfly graph
     Then user sees a link to the "west" cluster workload details page in the summary panel
 
   #inspired by this: https://github.com/kiali/kiali/pull/6469
