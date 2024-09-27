@@ -258,7 +258,7 @@ func (a ExtensionsAppender) addNode(ext config.ExtensionConfig, trafficMap graph
 			// The supplied source information did not exactly match a node in the graph, see if we can make a good "guess"
 			node, found = a.findRootNode(trafficMap, cluster, namespace, name)
 			if !found && !a.ShowUnrooted {
-				return nil, false, fmt.Errorf("extension [%s] no root node found matching is_source_root=true, id=%s", ext.Name, id)
+				return nil, false, fmt.Errorf("extension [%s] no root node found matching source_is_root=true, id=%s", ext.Name, id)
 			}
 		}
 		if !found {
