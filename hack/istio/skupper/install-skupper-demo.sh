@@ -58,6 +58,7 @@ OUTPUT_DIR="${ROOT_DIR}/_output"
 
 CLIENT_EXE="kubectl"
 CLUSTER_TYPE="minikube"
+DELETE_MINIKUBE="true"
 HACK_SCRIPTS_DIR="${ROOT_DIR}/hack"
 INSTALL_EAST_WEST_DEMO="no"
 KIALI_DEV_BUILD="true"
@@ -69,9 +70,12 @@ MYSQLSKUPPERNS="mysqlskupperns"
 OPENSHIFT1_API=""
 OPENSHIFT1_USERNAME="kiali"
 OPENSHIFT1_PASSWORD="kiali"
+OPENSHIFT1_TOKEN=""
 OPENSHIFT2_API=""
 OPENSHIFT2_USERNAME="kiali"
 OPENSHIFT2_PASSWORD="kiali"
+OPENSHIFT2_TOKEN=""
+SINGLE_ROUTER="false"
 SKUPPER_EXE="${OUTPUT_DIR}/skupper"
 SKUPPER_TOKEN_FILE_MONGO="${OUTPUT_DIR}/skupper-mongo.token"
 SKUPPER_TOKEN_FILE_MYSQL="${OUTPUT_DIR}/skupper-mysql.token"
@@ -98,15 +102,19 @@ while [ $# -gt 0 ]; do
     suimysql)                 _CMD="suimysql"                      ;shift ;;
     -c|--client)              CLIENT_EXE="$2"                ;shift;shift ;;
     -ct|--cluster-type)       CLUSTER_TYPE="$2"              ;shift;shift ;;
+    -dm|--delete-minikube)    DELETE_MINIKUBE="$2"           ;shift;shift ;;
     -ewd|--east-west-demo)    INSTALL_EAST_WEST_DEMO="$2"    ;shift;shift ;;
     -kdb|--kiali-dev-build)   KIALI_DEV_BUILD="$2"           ;shift;shift ;;
     -kv|--kiali-version)      KIALI_VERSION="$2"             ;shift;shift ;;
     -os1a|--openshift1-api)   OPENSHIFT1_API="$2"            ;shift;shift ;;
     -os1u|--openshift1-user)  OPENSHIFT1_USERNAME="$2"       ;shift;shift ;;
     -os1p|--openshift1-pass)  OPENSHIFT1_PASSWORD="$2"       ;shift;shift ;;
+    -os1t|--openshift1-token) OPENSHIFT1_TOKEN="$2"          ;shift;shift ;;
     -os2a|--openshift2-api)   OPENSHIFT2_API="$2"            ;shift;shift ;;
     -os2u|--openshift2-user)  OPENSHIFT2_USERNAME="$2"       ;shift;shift ;;
     -os2p|--openshift2-pass)  OPENSHIFT2_PASSWORD="$2"       ;shift;shift ;;
+    -os2t|--openshift2-token) OPENSHIFT2_TOKEN="$2"          ;shift;shift ;;
+    -sr|--single-router)      SINGLE_ROUTER="$2"             ;shift;shift ;;
     -ve|--validate-env)       VALIDATE_ENVIRONMENT="$2"      ;shift;shift ;;
     -h|--help)
       cat <<HELPMSG
@@ -116,6 +124,11 @@ Valid command line arguments:
                                            If "minikube", this script creates its own clusters.
                                            If "openshift", the clusters must be started already.
                                            Default: "minikube"
+  -dm|--delete-minikube <true|false>: If true and you are using minikube, the minikube clusters will
+                                      be deleted completely. If false, only the things this script
+                                      installs will be deleted but the minikube clusters will be left running.
+                                      This option is only used with the delete command.
+                                      Default: true
   -ewd|--east-west-demo [yes|no|partial]: The east-west demo is the basic Skupper demo. See: https://skupper.io/start/
                                           If this value is "no", the east-west demo will not be installed.
                                           If this value is "yes", the east-west demo will be installed and all
@@ -138,9 +151,14 @@ Valid command line arguments:
   -os1a|--openshift1-api <api URL>: The URL to the first OpenShift API server.
   -os1u|--openshift1-user <username>: The username of the user for the first OpenShift cluster. (default: kiali)
   -os1p|--openshift1-pass <password>: The password of the user for the first OpenShift cluster. (default: kiali)
+  -oslt|--openshift1-token <token>: If specified, OpenShift login will be done via token, ignoring username/password.
   -os2a|--openshift2-api <api URL>: The URL to the second OpenShift API server.
   -os2u|--openshift2-user <username>: The username of the user for the second OpenShift cluster. (default: kiali)
   -os2p|--openshift2-pass <password>: The password of the user for the second OpenShift cluster. (default: kiali)
+  -os2t|--openshift2-token <token>: If specified, OpenShift login will be done via token, ignoring username/password.
+  -sr|--single-router <true|false>: If true, there will be one router to supply access to both databases.
+                                    If false, there will be two routers - one for each database (mongo and mysql).
+                                    Default: false
   -ve|--validate-env <true|false>: if true, check that the environment has everything we need. Set this to false
                                    to speed up initialization of the script at the expense of not being able to
                                    fail-fast on obvious errors (default: true)
@@ -169,6 +187,16 @@ HELPMSG
   esac
 done
 
+# SET SOME VARIABLES BASED ON COMMAND LINE OPTIONS
+
+if [ "${SINGLE_ROUTER}" == "true" ]; then
+  # there will only be one router to be placed in a single namespace on each end of the pipe - both mongo and mysql will be in that single namespace
+  MONGONS="database"
+  MYSQLNS="database"
+  MONGOSKUPPERNS="skupperns"
+  MYSQLSKUPPERNS="skupperns"
+fi
+
 #
 # FUNCTIONS TO DO THE IMPORTANT STUFF
 #
@@ -187,38 +215,47 @@ download_istio() {
 }
 
 # minikube_install_basic_demo will install the two minikube clusters, the two databases, Istio, Kiali, and Bookinfo demo.
-# It will not install Skupper, so the ratings-v2 app will not work after this function is run because it cannot access Mongo.
+# It will not install Skupper, so the ratings apps will not work after this function is run because it cannot access the databases.
 # Execute the minikube_install_skupper function after this function finishes.
 minikube_install_basic_demo() {
-  if ${HACK_SCRIPTS_DIR}/k8s-minikube.sh --minikube-profile ${CLUSTER2_DB} status &>/dev/null ; then
-    errormsg "There appears to already be a minikube cluster running with profile [${CLUSTER2_DB}]. Aborting."
-    exit 1
-  fi
-  if ${HACK_SCRIPTS_DIR}/k8s-minikube.sh --minikube-profile ${CLUSTER1_ISTIO} status &>/dev/null ; then
-    errormsg "There appears to already be a minikube cluster running with profile [${CLUSTER1_ISTIO}]. Aborting."
-    exit 1
-  fi
 
   download_istio
 
-  infomsg "Installing cluster [${CLUSTER2_DB}] ..."
-  ${HACK_SCRIPTS_DIR}/k8s-minikube.sh --load-balancer-addrs '70-89' --minikube-profile ${CLUSTER2_DB} --minikube-flags '--network mk-demo' start
+  if ${HACK_SCRIPTS_DIR}/k8s-minikube.sh --minikube-profile ${CLUSTER2_DB} status &>/dev/null ; then
+    infomsg "There appears to already be a minikube cluster running with profile [${CLUSTER2_DB}]. It will be used."
+    ${CLIENT_EXE} config use-context ${CLUSTER2_DB}
+  else
+    infomsg "Installing cluster [${CLUSTER2_DB}] ..."
+    ${HACK_SCRIPTS_DIR}/k8s-minikube.sh --load-balancer-addrs '70-89' --minikube-profile ${CLUSTER2_DB} --minikube-flags '--network mk-demo' start
+  fi
 
-  infomsg "Installing cluster [${CLUSTER1_ISTIO}] ..."
-  ${HACK_SCRIPTS_DIR}/k8s-minikube.sh --load-balancer-addrs '50-69' --minikube-profile ${CLUSTER1_ISTIO} --minikube-flags '--network mk-demo' start
+  if ${HACK_SCRIPTS_DIR}/k8s-minikube.sh --minikube-profile ${CLUSTER1_ISTIO} status &>/dev/null ; then
+    infomsg "There appears to already be a minikube cluster running with profile [${CLUSTER1_ISTIO}]. It will be used."
+    ${CLIENT_EXE} config use-context ${CLUSTER1_ISTIO}
+  else
+    infomsg "Installing cluster [${CLUSTER1_ISTIO}] ..."
+    ${HACK_SCRIPTS_DIR}/k8s-minikube.sh --load-balancer-addrs '50-69' --minikube-profile ${CLUSTER1_ISTIO} --minikube-flags '--network mk-demo' start
+  fi
 
   infomsg "Installing Istio ..."
-  ${HACK_SCRIPTS_DIR}/istio/install-istio-via-istioctl.sh -c ${CLIENT_EXE}
+  ${HACK_SCRIPTS_DIR}/istio/install-istio-via-istioctl.sh -c ${CLIENT_EXE} -s values.meshConfig.outboundTrafficPolicy.mode=REGISTRY_ONLY
 
   infomsg "Installing Bookinfo demo ..."
   ${HACK_SCRIPTS_DIR}/istio/install-bookinfo-demo.sh -c ${CLIENT_EXE} --minikube-profile ${CLUSTER1_ISTIO} --traffic-generator --wait-timeout 5m
+
+  infomsg "Updating Bookinfo traffic-generator route ..."
+  ${CLIENT_EXE} patch configmap traffic-generator-config -n bookinfo --type merge -p '{"data":{"route":"http://productpage:9080/productpage"}}'
+  infomsg "Restarting Bookinfo traffic-generator pod ..."
+  ${CLIENT_EXE} delete pod -n bookinfo -l app=kiali-traffic-generator
 
   if [ "${KIALI_VERSION}" == "dev" ]; then
     infomsg "Installing Kiali ..."
     if [ "${KIALI_DEV_BUILD}" == "true" ]; then
       local make_build_targets="build build-ui"
     fi
-    make --directory "${ROOT_DIR}" -e OC="$(which ${CLIENT_EXE})" -e CLUSTER_TYPE=minikube -e MINIKUBE_PROFILE=${CLUSTER1_ISTIO} SERVICE_TYPE=LoadBalancer ${make_build_targets:-} cluster-push operator-create kiali-create
+    make --directory "${ROOT_DIR}" -e OC="$(which ${CLIENT_EXE})" CLUSTER_TYPE=minikube MINIKUBE_PROFILE=${CLUSTER1_ISTIO} SERVICE_TYPE=LoadBalancer ${make_build_targets:-} cluster-push operator-create kiali-create
+    ${CLIENT_EXE} patch kiali kiali -n kiali-operator --type merge -p '{"spec":{"extensions":[{"enabled":true,"name":"skupper"}]}}'
+
   else
     infomsg "Installing Kiali [${KIALI_VERSION}] via Helm ..."
     if ! helm repo update kiali 2> /dev/null; then
@@ -234,33 +271,12 @@ minikube_install_basic_demo() {
   ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} -n bookinfo patch svc productpage --type=merge --patch '{"spec":{"type":"LoadBalancer"}}'
 
   infomsg "Installing MySQL in [${CLUSTER2_DB}] cluster"
-  ${CLIENT_EXE} --context ${CLUSTER2_DB} create namespace ${MYSQLNS}
+  ${CLIENT_EXE} --context ${CLUSTER2_DB} get namespace ${MYSQLNS} 2>/dev/null || ${CLIENT_EXE} --context ${CLUSTER2_DB} create namespace ${MYSQLNS}
   ${CLIENT_EXE} --context ${CLUSTER2_DB} -n ${MYSQLNS} apply -f ${OUTPUT_DIR}/istio-*/samples/bookinfo/platform/kube/bookinfo-mysql.yaml
 
   infomsg "Installing Mongo in [${CLUSTER2_DB}] cluster"
-  ${CLIENT_EXE} --context ${CLUSTER2_DB} create namespace ${MONGONS}
+  ${CLIENT_EXE} --context ${CLUSTER2_DB} get namespace ${MONGONS} 2>/dev/null || ${CLIENT_EXE} --context ${CLUSTER2_DB} create namespace ${MONGONS}
   ${CLIENT_EXE} --context ${CLUSTER2_DB} -n ${MONGONS} apply -f ${OUTPUT_DIR}/istio-*/samples/bookinfo/platform/kube/bookinfo-db.yaml
-
-  infomsg "Creating Istio ServiceEntry resource for MySQL access - this will not be fully configured yet"
-  cat <<EOM | ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} -n bookinfo apply -f -
-apiVersion: networking.istio.io/v1
-kind: ServiceEntry
-metadata:
-  name: mysqldb.test
-spec:
-  addresses:
-  - "127.0.0.1"
-  endpoints:
-  - address: "127.0.0.1"
-  hosts:
-  - mysqldb.test
-  location: MESH_EXTERNAL
-  resolution: STATIC
-  ports:
-  - number: 3306
-    name: tcp
-    protocol: TCP
-EOM
 
   infomsg "Creating ratings-v2-mysql app - this will use MySQL but will not be correctly configured yet"
   ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} -n bookinfo apply -f ${OUTPUT_DIR}/istio-*/samples/bookinfo/platform/kube/bookinfo-ratings-v2-mysql.yaml
@@ -276,10 +292,13 @@ minikube_install_skupper() {
   infomsg "Creating the Skupper link so Bookinfo can access Mongo"
   rm -f "${SKUPPER_TOKEN_FILE_MONGO}"
   ${SKUPPER_EXE} --context ${CLUSTER2_DB} -n ${MONGONS} init
-  ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} create namespace ${MONGOSKUPPERNS}
+  ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} get namespace ${MONGOSKUPPERNS} 2>/dev/null || ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} create namespace ${MONGOSKUPPERNS}
+  ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} label namespace ${MONGOSKUPPERNS} istio-injection=enabled --overwrite
   ${SKUPPER_EXE} --context ${CLUSTER1_ISTIO} -n ${MONGOSKUPPERNS} init --enable-console --enable-flow-collector
   ${SKUPPER_EXE} --context ${CLUSTER1_ISTIO} -n ${MONGOSKUPPERNS} token create "${SKUPPER_TOKEN_FILE_MONGO}"
+  # skupper link will connect both ends of the pipe (the skupper-routers on each end of the pipe will be "linked")
   ${SKUPPER_EXE} --context ${CLUSTER2_DB} -n ${MONGONS} link create "${SKUPPER_TOKEN_FILE_MONGO}"
+  # skupper expose sets up a service on the client side pipe to mimic the service-side service; you can expose multiple services per router
   ${SKUPPER_EXE} --context ${CLUSTER2_DB} -n ${MONGONS} expose deployment/mongodb-v1 --port 27017
   infomsg "Wait for the mongodb-v1 service to be created by Skupper in the [${CLUSTER1_ISTIO}] cluster"
   while ! ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} -n ${MONGOSKUPPERNS} get svc mongodb-v1 &> /dev/null ; do echo -n '.'; sleep 1; done; echo
@@ -292,20 +311,25 @@ minikube_install_skupper() {
 
   # create a link to MySQL
   infomsg "Creating the Skupper link so Bookinfo can access MySQL"
-  rm -f "${SKUPPER_TOKEN_FILE_MYSQL}"
-  ${SKUPPER_EXE} --context ${CLUSTER2_DB} -n ${MYSQLNS} init
-  ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} create namespace ${MYSQLSKUPPERNS}
-  ${SKUPPER_EXE} --context ${CLUSTER1_ISTIO} -n ${MYSQLSKUPPERNS} init --enable-console --enable-flow-collector
-  ${SKUPPER_EXE} --context ${CLUSTER1_ISTIO} -n ${MYSQLSKUPPERNS} token create "${SKUPPER_TOKEN_FILE_MYSQL}"
-  ${SKUPPER_EXE} --context ${CLUSTER2_DB} -n ${MYSQLNS} link create "${SKUPPER_TOKEN_FILE_MYSQL}"
+  # we only have to init a second router if we were told not to have a single router
+  if [ "${SINGLE_ROUTER}" != "true" ]; then
+    rm -f "${SKUPPER_TOKEN_FILE_MYSQL}"
+    ${SKUPPER_EXE} --context ${CLUSTER2_DB} -n ${MYSQLNS} init
+    ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} get namespace ${MYSQLSKUPPERNS} 2>/dev/null || ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} create namespace ${MYSQLSKUPPERNS}
+    ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} label namespace ${MYSQLSKUPPERNS} istio-injection=enabled --overwrite
+    ${SKUPPER_EXE} --context ${CLUSTER1_ISTIO} -n ${MYSQLSKUPPERNS} init --enable-console --enable-flow-collector
+    ${SKUPPER_EXE} --context ${CLUSTER1_ISTIO} -n ${MYSQLSKUPPERNS} token create "${SKUPPER_TOKEN_FILE_MYSQL}"
+    # skupper link will connect both ends of the pipe (the skupper-routers on each end of the pipe will be "linked")
+    ${SKUPPER_EXE} --context ${CLUSTER2_DB} -n ${MYSQLNS} link create "${SKUPPER_TOKEN_FILE_MYSQL}"
+  fi
+  # skupper expose sets up a service on the client side pipe to mimic the service-side service; you can expose multiple services per router
   ${SKUPPER_EXE} --context ${CLUSTER2_DB} -n ${MYSQLNS} expose deployment/mysqldb-v1 --port 3306
   infomsg "Wait for the mysqldb-v1 service to be created by Skupper in the [${CLUSTER1_ISTIO}] cluster"
   while ! ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} -n ${MYSQLSKUPPERNS} get svc mysqldb-v1 &> /dev/null ; do echo -n '.'; sleep 1; done; echo
   SKUPPER_MYSQL_IP="$(${CLIENT_EXE} --context ${CLUSTER1_ISTIO} -n ${MYSQLSKUPPERNS} get svc mysqldb-v1 -o jsonpath='{.spec.clusterIPs[0]}')"
   infomsg "MySQL IP over the Skupper link: ${SKUPPER_MYSQL_IP}"
-  infomsg "Configuring Bookinfo ratings-v2-mysql to talk to MySQL over the Skupper link via the ServiceEntry"
+  infomsg "Configuring Bookinfo ratings-v2-mysql to talk to MySQL over the Skupper link"
   ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} -n bookinfo set env deployment/ratings-v2-mysql MYSQL_DB_HOST="${SKUPPER_MYSQL_IP}"
-  ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} -n bookinfo patch serviceentry mysqldb.test --type='json' -p='[{"op": "replace", "path": "/spec/addresses/0", "value": "'${SKUPPER_MYSQL_IP}'"}, {"op": "replace", "path": "/spec/endpoints/0/address", "value": "'${SKUPPER_MYSQL_IP}'"}]'
   infomsg "Exposing MySQL Skupper Prometheus so its UI can be accessed"
   ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} -n ${MYSQLSKUPPERNS} patch svc skupper-prometheus --type=merge --patch '{"spec":{"type":"LoadBalancer"}}'
 
@@ -320,7 +344,7 @@ minikube_install_skupper() {
 }
 
 # openshift_install_basic_demo will install the two databases, Istio, Kiali, and Bookinfo demo in the two existing OpenShift clusters.
-# It will not install Skupper, so the ratings-v2 app will not work after this function is run because it cannot access Mongo.
+# It will not install Skupper, so the ratings apps will not work after this function is run because it cannot access the databases.
 # Execute the openshift_install_skupper function after this function finishes.
 openshift_install_basic_demo() {
 
@@ -330,20 +354,26 @@ openshift_install_basic_demo() {
   openshift_login ${CLUSTER1_ISTIO}
 
   infomsg "Installing Istio ..."
-  ${HACK_SCRIPTS_DIR}/istio/install-istio-via-istioctl.sh -c ${CLIENT_EXE}
+  ${HACK_SCRIPTS_DIR}/istio/install-istio-via-istioctl.sh -c ${CLIENT_EXE} -s values.meshConfig.outboundTrafficPolicy.mode=REGISTRY_ONLY
 
   infomsg "Installing Bookinfo demo ..."
   ${HACK_SCRIPTS_DIR}/istio/install-bookinfo-demo.sh -c ${CLIENT_EXE} --traffic-generator --wait-timeout 5m
 
+  infomsg "Updating Bookinfo traffic-generator route ..."
+  ${CLIENT_EXE} patch configmap traffic-generator-config -n bookinfo --type merge -p '{"data":{"route":"http://productpage:9080/productpage"}}'
+  infomsg "Restarting Bookinfo traffic-generator pod ..."
+  ${CLIENT_EXE} delete pod -n bookinfo -l app=kiali-traffic-generator
+
   infomsg "Logging into the image registry..."
-  eval $(make --directory "${ROOT_DIR}" -e OC="$(which ${CLIENT_EXE})" -e CLUSTER_TYPE=openshift cluster-status | grep "Image Registry login:" | sed 's/Image Registry login: \(.*\)$/\1/')
+  eval $(make --directory "${ROOT_DIR}" -e OC="$(which ${CLIENT_EXE})" CLUSTER_TYPE=openshift cluster-status | grep "Image Registry login:" | sed 's/Image Registry login: \(.*\)$/\1/')
 
   if [ "${KIALI_VERSION}" == "dev" ]; then
     infomsg "Installing Kiali ..."
     if [ "${KIALI_DEV_BUILD}" == "true" ]; then
       local make_build_targets="build build-ui"
     fi
-    make --directory "${ROOT_DIR}" -e OC="$(which ${CLIENT_EXE})" -e CLUSTER_TYPE=openshift ${make_build_targets:-} cluster-push operator-create kiali-create
+    make --directory "${ROOT_DIR}" -e OC="$(which ${CLIENT_EXE})" CLUSTER_TYPE=openshift ${make_build_targets:-} cluster-push operator-create kiali-create
+    ${CLIENT_EXE} patch kiali kiali -n kiali-operator --type merge -p '{"spec":{"extensions":[{"enabled":true,"name":"skupper"}]}}'
   else
     infomsg "Installing Kiali [${KIALI_VERSION}] via Helm ..."
     if ! helm repo update kiali 2> /dev/null; then
@@ -359,36 +389,15 @@ openshift_install_basic_demo() {
   openshift_login ${CLUSTER2_DB}
 
   infomsg "Installing MySQL in [${CLUSTER2_DB}] cluster"
-  ${CLIENT_EXE} create namespace ${MYSQLNS}
+  ${CLIENT_EXE} get namespace ${MYSQLNS} 2>/dev/null || ${CLIENT_EXE} create namespace ${MYSQLNS}
   ${CLIENT_EXE} -n ${MYSQLNS} apply -f ${OUTPUT_DIR}/istio-*/samples/bookinfo/platform/kube/bookinfo-mysql.yaml
 
   infomsg "Installing Mongo in [${CLUSTER2_DB}] cluster"
-  ${CLIENT_EXE} create namespace ${MONGONS}
+  ${CLIENT_EXE} get namespace ${MONGONS} 2>/dev/null || ${CLIENT_EXE} create namespace ${MONGONS}
   ${CLIENT_EXE} -n ${MONGONS} apply -f ${OUTPUT_DIR}/istio-*/samples/bookinfo/platform/kube/bookinfo-db.yaml
 
   # LOGIN TO CLUSTER 1
   openshift_login ${CLUSTER1_ISTIO}
-
-  infomsg "Creating Istio ServiceEntry resource for MySQL access - this will not be fully configured yet"
-  cat <<EOM | ${CLIENT_EXE} -n bookinfo apply -f -
-apiVersion: networking.istio.io/v1
-kind: ServiceEntry
-metadata:
-  name: mysqldb.test
-spec:
-  addresses:
-  - "127.0.0.1"
-  endpoints:
-  - address: "127.0.0.1"
-  hosts:
-  - mysqldb.test
-  location: MESH_EXTERNAL
-  resolution: STATIC
-  ports:
-  - number: 3306
-    name: tcp
-    protocol: TCP
-EOM
 
   infomsg "Creating ratings-v2-mysql app - this will use MySQL but will not be correctly configured yet"
   ${CLIENT_EXE} -n bookinfo apply -f ${OUTPUT_DIR}/istio-*/samples/bookinfo/platform/kube/bookinfo-ratings-v2-mysql.yaml
@@ -408,12 +417,16 @@ openshift_install_skupper() {
   ${SKUPPER_EXE} -n ${MONGONS} init
   # LOGIN TO CLUSTER 1
   openshift_login ${CLUSTER1_ISTIO}
-  ${CLIENT_EXE} create namespace ${MONGOSKUPPERNS}
+  ${CLIENT_EXE} get namespace ${MONGOSKUPPERNS} 2>/dev/null || ${CLIENT_EXE} create namespace ${MONGOSKUPPERNS}
+  # TODO: RIGHT NOW SKUPPER DOES NOT WORK IN OPENSHIFT WHEN INSIDE THE MESH
+  ${CLIENT_EXE} label namespace ${MONGOSKUPPERNS} istio-injection=disabled --overwrite
   ${SKUPPER_EXE} -n ${MONGOSKUPPERNS} init --enable-console --enable-flow-collector
   ${SKUPPER_EXE} -n ${MONGOSKUPPERNS} token create "${SKUPPER_TOKEN_FILE_MONGO}"
   # LOGIN TO CLUSTER 2
   openshift_login ${CLUSTER2_DB}
+  # skupper link will connect both ends of the pipe (the skupper-routers on each end of the pipe will be "linked")
   ${SKUPPER_EXE} -n ${MONGONS} link create "${SKUPPER_TOKEN_FILE_MONGO}"
+  # skupper expose sets up a service on the client side pipe to mimic the service-side service; you can expose multiple services per router
   ${SKUPPER_EXE} -n ${MONGONS} expose deployment/mongodb-v1 --port 27017
   # LOGIN TO CLUSTER 1
   openshift_login ${CLUSTER1_ISTIO}
@@ -428,18 +441,28 @@ openshift_install_skupper() {
 
   # create a link to MySQL
   infomsg "Creating the Skupper link so Bookinfo can access MySQL"
-  rm -f "${SKUPPER_TOKEN_FILE_MYSQL}"
-  # LOGIN TO CLUSTER 2
-  openshift_login ${CLUSTER2_DB}
-  ${SKUPPER_EXE} -n ${MYSQLNS} init
-  # LOGIN TO CLUSTER 1
-  openshift_login ${CLUSTER1_ISTIO}
-  ${CLIENT_EXE} create namespace ${MYSQLSKUPPERNS}
-  ${SKUPPER_EXE} -n ${MYSQLSKUPPERNS} init --enable-console --enable-flow-collector
-  ${SKUPPER_EXE} -n ${MYSQLSKUPPERNS} token create "${SKUPPER_TOKEN_FILE_MYSQL}"
-  # LOGIN TO CLUSTER 2
-  openshift_login ${CLUSTER2_DB}
-  ${SKUPPER_EXE} -n ${MYSQLNS} link create "${SKUPPER_TOKEN_FILE_MYSQL}"
+  # we only have to init a second router if we were told not to have a single router
+  if [ "${SINGLE_ROUTER}" != "true" ]; then
+    rm -f "${SKUPPER_TOKEN_FILE_MYSQL}"
+    # LOGIN TO CLUSTER 2
+    openshift_login ${CLUSTER2_DB}
+    ${SKUPPER_EXE} -n ${MYSQLNS} init
+    # LOGIN TO CLUSTER 1
+    openshift_login ${CLUSTER1_ISTIO}
+    ${CLIENT_EXE} get namespace ${MYSQLSKUPPERNS} 2>/dev/null || ${CLIENT_EXE} create namespace ${MYSQLSKUPPERNS}
+    # TODO: RIGHT NOW SKUPPER DOES NOT WORK IN OPENSHIFT WHEN INSIDE THE MESH
+    ${CLIENT_EXE} label namespace ${MYSQLSKUPPERNS} istio-injection=disabled --overwrite
+    ${SKUPPER_EXE} -n ${MYSQLSKUPPERNS} init --enable-console --enable-flow-collector
+    ${SKUPPER_EXE} -n ${MYSQLSKUPPERNS} token create "${SKUPPER_TOKEN_FILE_MYSQL}"
+    # LOGIN TO CLUSTER 2
+    openshift_login ${CLUSTER2_DB}
+    # skupper link will connect both ends of the pipe (the skupper-routers on each end of the pipe will be "linked")
+    ${SKUPPER_EXE} -n ${MYSQLNS} link create "${SKUPPER_TOKEN_FILE_MYSQL}"
+  else
+    # LOGIN TO CLUSTER 2
+    openshift_login ${CLUSTER2_DB}
+  fi
+  # skupper expose sets up a service on the client side pipe to mimic the service-side service; you can expose multiple services per router
   ${SKUPPER_EXE} -n ${MYSQLNS} expose deployment/mysqldb-v1 --port 3306
   # LOGIN TO CLUSTER 1
   openshift_login ${CLUSTER1_ISTIO}
@@ -447,11 +470,10 @@ openshift_install_skupper() {
   while ! ${CLIENT_EXE} -n ${MYSQLSKUPPERNS} get svc mysqldb-v1 &> /dev/null ; do echo -n '.'; sleep 1; done; echo
   SKUPPER_MYSQL_IP="$(${CLIENT_EXE} -n ${MYSQLSKUPPERNS} get svc mysqldb-v1 -o jsonpath='{.spec.clusterIPs[0]}')"
   infomsg "MySQL IP over the Skupper link: ${SKUPPER_MYSQL_IP}"
-  infomsg "Configuring Bookinfo ratings-v2-mysql to talk to MySQL over the Skupper link via the ServiceEntry"
+  infomsg "Configuring Bookinfo ratings-v2-mysql to talk to MySQL over the Skupper link"
   ${CLIENT_EXE} -n bookinfo set env deployment/ratings-v2-mysql MYSQL_DB_HOST="${SKUPPER_MYSQL_IP}"
-  ${CLIENT_EXE} -n bookinfo patch serviceentry mysqldb.test --type='json' -p='[{"op": "replace", "path": "/spec/addresses/0", "value": "'${SKUPPER_MYSQL_IP}'"}, {"op": "replace", "path": "/spec/endpoints/0/address", "value": "'${SKUPPER_MYSQL_IP}'"}]'
   infomsg "Exposing MySQL Skupper Prometheus so its UI can be accessed"
-  ${CLIENT_EXE} -n ${MYSQLSKUPPERNS} expose svc skupper-prometheus
+  ${CLIENT_EXE} -n ${MYSQLSKUPPERNS} get route skupper-prometheus 2>/dev/null || ${CLIENT_EXE} -n ${MYSQLSKUPPERNS} expose svc skupper-prometheus
 
   # Get all deployments with the specified label, and patch them with another app label
   local deployments=$(${CLIENT_EXE} get deployments -l "app.kubernetes.io/name=skupper-router" --all-namespaces -o jsonpath='{range .items[*]}{.metadata.namespace}:{.metadata.name}{"\n"}{end}')
@@ -590,9 +612,16 @@ openshift_login() {
   local cluster_name="${1}"
   case ${cluster_name} in
     ${CLUSTER1_ISTIO})
-      if ! ${CLIENT_EXE} login --server "${OPENSHIFT1_API}" -u "${OPENSHIFT1_USERNAME}" -p "${OPENSHIFT1_PASSWORD}" &> /dev/null ; then
-        errormsg "Cannot log into OpenShift cluster #1 [${OPENSHIFT1_API}]. Make sure the credentials for user [${OPENSHIFT1_USERNAME}] is correct."
-        exit 1
+      if [ -z "${OPENSHIFT1_TOKEN}" ]; then
+        if ! ${CLIENT_EXE} login --server "${OPENSHIFT1_API}" -u "${OPENSHIFT1_USERNAME}" -p "${OPENSHIFT1_PASSWORD}" &> /dev/null ; then
+          errormsg "Cannot log into OpenShift cluster #1 [${OPENSHIFT1_API}]. Make sure the credentials for user [${OPENSHIFT1_USERNAME}] is correct."
+          exit 1
+        fi
+      else
+        if ! ${CLIENT_EXE} login --server "${OPENSHIFT1_API}" --token "${OPENSHIFT1_TOKEN}" &> /dev/null ; then
+          errormsg "Cannot log into OpenShift cluster #1 [${OPENSHIFT1_API}]. Make sure --openshift1-token is correct."
+          exit 1
+        fi
       fi
       if ! (${CLIENT_EXE} whoami --show-server | grep -q ${OPENSHIFT1_API}); then
         errormsg "The login did not seem to work: [$(${CLIENT_EXE} whoami --show-server)] does not seem to be cluster #1 [${OPENSHIFT1_API}]"
@@ -600,9 +629,16 @@ openshift_login() {
       fi
       ;;
     ${CLUSTER2_DB})
-      if ! ${CLIENT_EXE} login --server "${OPENSHIFT2_API}" -u "${OPENSHIFT2_USERNAME}" -p "${OPENSHIFT2_PASSWORD}" &> /dev/null ; then
-        errormsg "Cannot log into OpenShift cluster #2 [${OPENSHIFT2_API}]. Make sure the credentials for user [${OPENSHIFT2_USERNAME}] is correct."
-        exit 1
+      if [ -z "${OPENSHIFT2_TOKEN}" ]; then
+        if ! ${CLIENT_EXE} login --server "${OPENSHIFT2_API}" -u "${OPENSHIFT2_USERNAME}" -p "${OPENSHIFT2_PASSWORD}" &> /dev/null ; then
+          errormsg "Cannot log into OpenShift cluster #2 [${OPENSHIFT2_API}]. Make sure the credentials for user [${OPENSHIFT2_USERNAME}] is correct."
+          exit 1
+        fi
+      else
+        if ! ${CLIENT_EXE} login --server "${OPENSHIFT2_API}" --token "${OPENSHIFT2_TOKEN}" &> /dev/null ; then
+          errormsg "Cannot log into OpenShift cluster #2 [${OPENSHIFT2_API}]. Make sure --openshift2-token is correct."
+          exit 1
+        fi
       fi
       if ! (${CLIENT_EXE} whoami --show-server | grep -q ${OPENSHIFT2_API}); then
         errormsg "The login did not seem to work: [$(${CLIENT_EXE} whoami --show-server)] does not seem to be cluster #2 [${OPENSHIFT2_API}]"
@@ -700,10 +736,42 @@ elif [ "$_CMD" == "delete" ]; then
 
   case ${CLUSTER_TYPE} in
     minikube)
-      infomsg "Shutting down [${CLUSTER2_DB}] cluster..."
-      ${HACK_SCRIPTS_DIR}/k8s-minikube.sh delete --minikube-profile ${CLUSTER2_DB}
-      infomsg "Shutting down [${CLUSTER1_ISTIO}] cluster..."
-      ${HACK_SCRIPTS_DIR}/k8s-minikube.sh delete --minikube-profile ${CLUSTER1_ISTIO}
+      if [ "${DELETE_MINIKUBE}" == "true" ]; then
+        infomsg "Will delete both minikube clusters..."
+        infomsg "Shutting down [${CLUSTER2_DB}] cluster..."
+        ${HACK_SCRIPTS_DIR}/k8s-minikube.sh delete --minikube-profile ${CLUSTER2_DB}
+        infomsg "Shutting down [${CLUSTER1_ISTIO}] cluster..."
+        ${HACK_SCRIPTS_DIR}/k8s-minikube.sh delete --minikube-profile ${CLUSTER1_ISTIO}
+      else
+        infomsg "Was told not to delete minikube clusters; installed resources will be deleted but clusters will remain running."
+
+        infomsg "Uninstalling Kiali ..."
+        make --directory "${ROOT_DIR}" -e OC="$(which ${CLIENT_EXE})" CLUSTER_TYPE=minikube MINIKUBE_PROFILE=${CLUSTER1_ISTIO} operator-delete
+
+        # ignore any errors while deleting, just try to delete everything
+        set +e
+        infomsg "Uninstalling Bookinfo demo ..."
+        ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} get namespace bookinfo 2>/dev/null && ${HACK_SCRIPTS_DIR}/istio/install-bookinfo-demo.sh -c ${CLIENT_EXE} -mp ${CLUSTER1_ISTIO} --delete-bookinfo true
+        infomsg "Uninstalling Istio ..."
+        # hack script used to install istio doesn't support telling it which minikube profile to use so just switch context to ensure we talk to the right one
+        ${CLIENT_EXE} config use-context ${CLUSTER1_ISTIO}
+        ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} get namespace istio-system 2>/dev/null && ${HACK_SCRIPTS_DIR}/istio/install-istio-via-istioctl.sh -c ${CLIENT_EXE} --delete-istio true
+        infomsg "Uninstalling Mongo Skupper pipe ..."
+        ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} get namespace ${MONGOSKUPPERNS} 2>/dev/null && ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} delete namespace ${MONGOSKUPPERNS}
+        infomsg "Uninstalling MySQL Skupper pipe ..."
+        ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} get namespace ${MYSQLSKUPPERNS} 2>/dev/null && ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} delete namespace ${MYSQLSKUPPERNS}
+
+        infomsg "Uninstalling ${NAMESPACE_WEST} namespace ..."
+        ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} get namespace ${NAMESPACE_WEST} 2>/dev/null && ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} delete namespace ${NAMESPACE_WEST}
+
+        infomsg "Uninstalling the databases ..."
+        ${CLIENT_EXE} --context ${CLUSTER2_DB} get namespace ${MYSQLNS} 2>/dev/null && ${CLIENT_EXE} --context ${CLUSTER2_DB} delete namespace ${MYSQLNS}
+        ${CLIENT_EXE} --context ${CLUSTER2_DB} get namespace ${MONGONS} 2>/dev/null && ${CLIENT_EXE} --context ${CLUSTER2_DB} delete namespace ${MONGONS}
+
+        infomsg "Uninstalling ${NAMESPACE_EAST} namespace ..."
+        ${CLIENT_EXE} --context ${CLUSTER2_DB} get namespace ${NAMESPACE_EAST} 2>/dev/null && ${CLIENT_EXE} --context ${CLUSTER2_DB} delete namespace ${NAMESPACE_EAST}
+        set -e
+      fi
       ;;
 
     openshift)
@@ -711,7 +779,7 @@ elif [ "$_CMD" == "delete" ]; then
       openshift_login ${CLUSTER1_ISTIO}
 
       infomsg "Uninstalling Kiali ..."
-      make --directory "${ROOT_DIR}" -e OC="$(which ${CLIENT_EXE})" -e CLUSTER_TYPE=openshift operator-delete
+      make --directory "${ROOT_DIR}" -e OC="$(which ${CLIENT_EXE})" CLUSTER_TYPE=openshift operator-delete
 
       # ignore any errors while deleting, just try to delete everything
       set +e
@@ -811,14 +879,22 @@ elif [ "$_CMD" == "sprommongo" -o "$_CMD" == "sprommysql" ]; then
 
 elif [ "$_CMD" == "sstatus" ]; then
 
-  confirm_cluster_is_up "${CLUSTER2_DB}"
   skupper_ui_username="admin"
 
+  confirm_cluster_is_up "${CLUSTER2_DB}"
   infomsg "Status of Mongo Skupper link on [${CLUSTER2_DB}] cluster:"
 
   case ${CLUSTER_TYPE} in
     minikube) ${SKUPPER_EXE} --context ${CLUSTER2_DB} -n ${MONGONS} link status ;;
     openshift) ${SKUPPER_EXE} -n ${MONGONS} link status ;;
+    *) errormsg "Invalid cluster type" && exit 1 ;;
+  esac
+
+  infomsg "Status of MySQL Skupper link on [${CLUSTER2_DB}] cluster:"
+
+  case ${CLUSTER_TYPE} in
+    minikube) ${SKUPPER_EXE} --context ${CLUSTER2_DB} -n ${MYSQLNS} link status ;;
+    openshift) ${SKUPPER_EXE} -n ${MYSQLNS} link status ;;
     *) errormsg "Invalid cluster type" && exit 1 ;;
   esac
 
@@ -828,6 +904,14 @@ elif [ "$_CMD" == "sstatus" ]; then
   case ${CLUSTER_TYPE} in
     minikube) ${SKUPPER_EXE} --context ${CLUSTER1_ISTIO} -n ${MONGOSKUPPERNS} link status ;;
     openshift) ${SKUPPER_EXE} -n ${MONGOSKUPPERNS} link status ;;
+    *) errormsg "Invalid cluster type" && exit 1 ;;
+  esac
+
+  infomsg "Status of MySQL Skupper link on [${CLUSTER1_ISTIO}] cluster:"
+
+  case ${CLUSTER_TYPE} in
+    minikube) ${SKUPPER_EXE} --context ${CLUSTER1_ISTIO} -n ${MYSQLSKUPPERNS} link status ;;
+    openshift) ${SKUPPER_EXE} -n ${MYSQLSKUPPERNS} link status ;;
     *) errormsg "Invalid cluster type" && exit 1 ;;
   esac
 

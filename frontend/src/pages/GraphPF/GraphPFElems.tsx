@@ -239,7 +239,7 @@ export const setNodeLabel = (
   const isMultiNamespace = settings.activeNamespaces.length > 1;
   const isOutside = data.isOutside;
 
-  // Badges portion of label...
+  // Icon Badges portion of label...
 
   // PFT provides the ability to add a single Icon (badge) on the label. Given that we can't
   // duplicate what we do with Cytoscape, which is to add multiple badges on the label,
@@ -370,6 +370,10 @@ export const setNodeLabel = (
       data.secondaryLabel = content.join(':');
     }
     return;
+  }
+
+  if (data.isExtension) {
+    data.badge = PFBadges.Extension.badge;
   }
 
   node.label = content.shift();

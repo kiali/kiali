@@ -471,6 +471,12 @@ type DiscoverySelectorsConfig struct {
 	Overrides map[string]DiscoverySelectorsType `yaml:"overrides,omitempty"`
 }
 
+// ExtensionConfig provides details on a registered Extension
+type ExtensionConfig struct {
+	Enabled bool   `yaml:"enabled,omitempty"`
+	Name    string `yaml:"name"` // same name used in metrics "extension" attribute
+}
+
 // GraphFindOption defines a single Graph Find/Hide Option
 type GraphFindOption struct {
 	AutoSelect  bool   `yaml:"auto_select,omitempty" json:"autoSelect,omitempty"`
@@ -639,6 +645,7 @@ type Config struct {
 	Clustering               Clustering                          `yaml:"clustering,omitempty"`
 	CustomDashboards         dashboards.MonitoringDashboardsList `yaml:"custom_dashboards,omitempty"`
 	Deployment               DeploymentConfig                    `yaml:"deployment,omitempty"`
+	Extensions               []ExtensionConfig                   `yaml:"extensions,omitempty"`
 	ExternalServices         ExternalServices                    `yaml:"external_services,omitempty"`
 	HealthConfig             HealthConfig                        `yaml:"health_config,omitempty" json:"healthConfig,omitempty"`
 	Identity                 security.Identity                   `yaml:",omitempty"`

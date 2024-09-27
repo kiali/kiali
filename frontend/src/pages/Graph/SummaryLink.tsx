@@ -16,6 +16,7 @@ import { homeCluster } from 'config';
 import { KialiPageLink } from 'components/Link/KialiPageLink';
 import { kialiStyle } from 'styles/StyleUtils';
 import { t } from 'utils/I18nUtils';
+import { ExternalLinkAltIcon } from '@patternfly/react-icons';
 
 interface LinkInfo {
   displayName: string;
@@ -48,10 +49,31 @@ const getTooltip = (tooltip: React.ReactNode, nodeData: GraphNodeData): React.Re
   );
 };
 
+const addExtensionBadge = (nodeData: GraphNodeData, reactNode: React.ReactNode): React.ReactNode => {
+  if (!nodeData.isExtension) {
+    return reactNode;
+  }
+
+  const ext = nodeData.isExtension;
+  const tt = (
+    <div>
+      {t('Extension')}: {ext.name}
+    </div>
+  );
+
+  return (
+    <span>
+      <PFBadge badge={PFBadges.Extension} size="sm" tooltip={tt} />
+      {reactNode}
+    </span>
+  );
+};
+
 export const getBadge = (nodeData: GraphNodeData, nodeType?: NodeType): React.ReactNode => {
   switch (nodeType ?? nodeData.nodeType) {
     case NodeType.AGGREGATE:
-      return (
+      return addExtensionBadge(
+        nodeData,
         <PFBadge
           badge={PFBadges.Operation}
           size="sm"
@@ -59,41 +81,63 @@ export const getBadge = (nodeData: GraphNodeData, nodeType?: NodeType): React.Re
         />
       );
     case NodeType.APP:
-      return <PFBadge badge={PFBadges.App} size="sm" tooltip={getTooltip(PFBadges.App.tt!, nodeData)} />;
+      return addExtensionBadge(
+        nodeData,
+        <PFBadge badge={PFBadges.App} size="sm" tooltip={getTooltip(PFBadges.App.tt!, nodeData)} />
+      );
     case NodeType.BOX:
       switch (nodeData.isBox) {
         case BoxByType.APP:
-          return <PFBadge badge={PFBadges.App} size="sm" tooltip={getTooltip(PFBadges.App.tt!, nodeData)} />;
+          return addExtensionBadge(
+            nodeData,
+            <PFBadge badge={PFBadges.App} size="sm" tooltip={getTooltip(PFBadges.App.tt!, nodeData)} />
+          );
         case BoxByType.CLUSTER:
-          return <PFBadge badge={PFBadges.Cluster} size="sm" tooltip={getTooltip(PFBadges.Cluster.tt!, nodeData)} />;
+          return addExtensionBadge(
+            nodeData,
+            <PFBadge badge={PFBadges.Cluster} size="sm" tooltip={getTooltip(PFBadges.Cluster.tt!, nodeData)} />
+          );
         case BoxByType.NAMESPACE:
-          return (
+          return addExtensionBadge(
+            nodeData,
             <PFBadge badge={PFBadges.Namespace} size="sm" tooltip={getTooltip(PFBadges.Namespace.tt!, nodeData)} />
           );
         default:
-          return <PFBadge badge={PFBadges.Unknown} size="sm" />;
+          return addExtensionBadge(nodeData, <PFBadge badge={PFBadges.Unknown} size="sm" />);
       }
     case NodeType.SERVICE:
-      return !!nodeData.isServiceEntry ? (
-        <PFBadge
-          badge={PFBadges.ServiceEntry}
-          size="sm"
-          tooltip={getTooltip(
-            nodeData.isServiceEntry.location === 'MESH_EXTERNAL' ? 'External Service Entry' : 'Internal Service Entry',
-            nodeData
-          )}
-        />
-      ) : (
-        <PFBadge badge={PFBadges.Service} size="sm" tooltip={getTooltip(PFBadges.Service.tt!, nodeData)} />
+      return addExtensionBadge(
+        nodeData,
+        !!nodeData.isServiceEntry ? (
+          <PFBadge
+            badge={PFBadges.ServiceEntry}
+            size="sm"
+            tooltip={getTooltip(
+              nodeData.isServiceEntry.location === 'MESH_EXTERNAL'
+                ? 'External Service Entry'
+                : 'Internal Service Entry',
+              nodeData
+            )}
+          />
+        ) : (
+          <PFBadge badge={PFBadges.Service} size="sm" tooltip={getTooltip(PFBadges.Service.tt!, nodeData)} />
+        )
       );
     case NodeType.WORKLOAD:
-      return nodeData.hasWorkloadEntry ? (
-        <PFBadge badge={PFBadges.WorkloadEntry} size="sm" tooltip={getTooltip(PFBadges.WorkloadEntry.tt!, nodeData)} />
-      ) : (
-        <PFBadge badge={PFBadges.Workload} size="sm" tooltip={getTooltip(PFBadges.Workload.tt!, nodeData)} />
+      return addExtensionBadge(
+        nodeData,
+        nodeData.hasWorkloadEntry ? (
+          <PFBadge
+            badge={PFBadges.WorkloadEntry}
+            size="sm"
+            tooltip={getTooltip(PFBadges.WorkloadEntry.tt!, nodeData)}
+          />
+        ) : (
+          <PFBadge badge={PFBadges.Workload} size="sm" tooltip={getTooltip(PFBadges.Workload.tt!, nodeData)} />
+        )
       );
     default:
-      return <PFBadge badge={PFBadges.Unknown} size="sm" />;
+      return addExtensionBadge(nodeData, <PFBadge badge={PFBadges.Unknown} size="sm" />);
   }
 };
 
@@ -161,15 +205,36 @@ export const getLink = (
     }
   }
 
-  if (link && !nodeData.isInaccessible) {
-    return (
-      <KialiPageLink key={key} href={link} cluster={cluster}>
-        {displayName}
-      </KialiPageLink>
+  let extLink;
+  if (nodeData.isExtension?.url) {
+    const ext = nodeData.isExtension;
+    const text = link && !nodeData.isInaccessible ? `, ` : `${displayName} `;
+    extLink = (
+      <a
+        id={`extLink_${ext.name}`}
+        title={`View in ${ext.name} UI`}
+        href={ext.url}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        {text}
+        <ExternalLinkAltIcon />
+      </a>
     );
   }
 
-  return <span key={key}>{displayName}</span>;
+  if (link && !nodeData.isInaccessible) {
+    return (
+      <>
+        <KialiPageLink key={key} href={link} cluster={cluster}>
+          {displayName}
+        </KialiPageLink>
+        {extLink}
+      </>
+    );
+  }
+
+  return extLink ? extLink : <span key={key}>{displayName}</span>;
 };
 
 export const renderBadgedHost = (host: string): React.ReactNode => {
