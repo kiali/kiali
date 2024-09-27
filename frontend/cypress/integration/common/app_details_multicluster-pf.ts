@@ -116,7 +116,7 @@ Given(
 );
 
 When(
-  'user clicks on the {string} {string} from the {string} cluster in the patternfly graph',
+  'user clicks on the {string} {string} from the {string} cluster in the patternfly minigraph',
   (name: string, type: string, cluster: string) => {
     cy.waitForReact();
     cy.getReact('CytoscapeGraph')

@@ -23,7 +23,7 @@ Feature: Kiali App Details page minigraph in multicluster setup
     Given user is at administrator perspective
     Given user is at the details page for the "app" "bookinfo/productpage" located in the "east" cluster
     And the "<name>" "<type>" from the "west" cluster is visible in the patternfly minigraph
-    When user clicks on the "<name>" "<type>" from the "west" cluster in the patternfly graph
+    When user clicks on the "<name>" "<type>" from the "west" cluster in the patternfly minigraph
     Then the browser is at the details page for the "<type>" "bookinfo/<name>" located in the "west" cluster
 
     Examples:

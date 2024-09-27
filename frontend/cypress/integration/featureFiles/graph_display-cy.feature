@@ -232,8 +232,8 @@ Feature: Kiali Graph page - Display menu
     When user graphs "bookinfo" namespaces in the cytoscape graph
     Then user sees the "bookinfo" namespace
     And user sees the "bookinfo" namespace deployed across the east and west clusters in the cytoscape graph
-    And nodes in the "east" cluster should contain the cluster name in their links
-    And nodes in the "west" cluster should contain the cluster name in their links
+    And nodes in the "east" cluster in the cytoscape graph should contain the cluster name in their links
+    And nodes in the "west" cluster in the cytoscape graph should contain the cluster name in their links
 
   @multi-cluster
   Scenario: See link to correct details page after clicking on a node for the east cluster

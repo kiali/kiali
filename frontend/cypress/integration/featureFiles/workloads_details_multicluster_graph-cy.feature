@@ -6,7 +6,7 @@ Feature: Kiali Workloads Details minigraph in multicluster setup
 
   Scenario: See minigraph for workload.
     Given user is at administrator perspective
-    And user is at the details page for the "workload" "bookinfo/details-v1" located in the "east" cluster
+    And user is at the details page for the "workload" "bookinfo/reviews-v2" located in the "west" cluster
     Then user sees a cytoscape minigraph
     And user sees "service" from a remote "west" cluster in the cytoscape minigraph
 
@@ -19,7 +19,7 @@ Feature: Kiali Workloads Details minigraph in multicluster setup
     Given user is at administrator perspective
     Given user is at the details page for the "workload" "bookinfo/productpage-v1" located in the "east" cluster
     And the "<name>" "<type>" from the "west" cluster is visible in the cytoscape minigraph
-    When user clicks on the "<name>" "<type>" from the "west" cluster in the cytoscape graph
+    When user clicks on the "<name>" "<type>" from the "west" cluster in the cytoscape minigraph
     Then the browser is at the details page for the "<type>" "bookinfo/<name>" located in the "west" cluster
 
     Examples:
