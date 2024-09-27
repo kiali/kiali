@@ -269,9 +269,9 @@
           "healthData": "Healthy",
           "infraData": {
             "config": {
-               "ConfigMap": {
-                          "mesh": "accessLogFile: /dev/stdout\nenableAutoMtls: true\nrootNamespace: istio-system\ntrustDomain: cluster.local\n"
-                        },
+              "ConfigMap": {
+                "mesh": "accessLogFile: /dev/stdout\nenableAutoMtls: true\nrootNamespace: istio-system\ntrustDomain: cluster.local\n"
+              },
               "Network": "kialiNetwork",
               "DisableMixerHttpReports": false,
               "DiscoverySelectors": null,
@@ -279,6 +279,18 @@
               "MeshMTLS": {
                 "MinProtocolVersion": ""
               },
+              "certificates": [
+                {
+                  "configMapName": "istio-ca-root-cert",
+                  "dnsNames": null,
+                  "error": "",
+                  "issuer": "O=cluster.local",
+                  "notBefore": "2021-07-27T14:37:00Z",
+                  "notAfter": "2031-07-25T14:37:00Z",
+                  "accessible": true,
+                  "cluster": ""
+                }
+              ],
               "defaultConfig": {
                 "MeshId": ""
               },

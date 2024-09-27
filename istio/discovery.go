@@ -36,6 +36,8 @@ const (
 	istiodScopeGatewayEnvKey              = "PILOT_SCOPE_GATEWAY_TO_NAMESPACE"
 	baseIstioConfigMapName                = "istio"                  // As of 1.19 this is hardcoded in the helm charts.
 	baseIstioSidecarInjectorConfigMapName = "istio-sidecar-injector" // As of 1.19 this is hardcoded in the helm charts.
+	certificatesConfigMapName             = "istio-ca-root-cert"
+	certificateName                       = "root-cert.pem"
 )
 
 func parseIstioConfigMap(istioConfig *corev1.ConfigMap) (*models.IstioMeshConfig, error) {
@@ -62,6 +64,13 @@ func parseIstioConfigMap(istioConfig *corev1.ConfigMap) (*models.IstioMeshConfig
 	return meshConfig, nil
 }
 
+func parseIstioControlPlaneCertificate(certConfigMap *corev1.ConfigMap) models.Certificate {
+	cert := models.Certificate{}
+	cert.Parse([]byte(certConfigMap.Data[certificateName]))
+	cert.ConfigMapName = certificatesConfigMapName
+	return cert
+}
+
 // gets the mesh configuration for a controlplane from the istio configmap.
 func (in *Discovery) getControlPlaneConfiguration(kubeCache cache.KubeCache, controlPlane *models.ControlPlane) (*models.ControlPlaneConfiguration, error) {
 	var configMapName string
@@ -81,6 +90,14 @@ func (in *Discovery) getControlPlaneConfiguration(kubeCache cache.KubeCache, con
 	istioConfigMapInfo, err := parseIstioConfigMap(configMap)
 	if err != nil {
 		return nil, err
+	}
+
+	certConfigMap, err := kubeCache.GetConfigMap(controlPlane.IstiodNamespace, certificatesConfigMapName)
+	if err != nil {
+		log.Warningf("Unable to get certificate configmap [%s/%s]. Err: %s", controlPlane.IstiodNamespace, certificatesConfigMapName, err)
+	} else {
+		cert := parseIstioControlPlaneCertificate(certConfigMap)
+		istioConfigMapInfo.Certificates = append(istioConfigMapInfo.Certificates, cert)
 	}
 
 	return &models.ControlPlaneConfiguration{

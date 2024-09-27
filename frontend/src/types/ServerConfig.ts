@@ -80,12 +80,7 @@ interface UIDefaults {
   refreshInterval?: string;
 }
 
-interface CertificatesInformationIndicators {
-  enabled: boolean;
-}
-
 interface KialiFeatureFlags {
-  certificatesInformationIndicators: CertificatesInformationIndicators;
   disabledFeatures: string[];
   istioAnnotationAction: boolean;
   istioInjectionAction: boolean;

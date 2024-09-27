@@ -258,11 +258,6 @@ Then('the {string} application indicator for the {string} cluster should list th
   ).should('contain.text', this.targetApp);
 });
 
-// New CP Card validations
-When('user hovers over the MinTLS locker', () => {
-  cy.get('[data-test="lockerCA"]').should('exist');
-});
-
 Then('the toggle on the right side of the {string} namespace card exists', (ns: string) => {
   ensureKialiFinishedLoading();
   cy.get(`div[data-test^="${ns}"]`).should('exist');

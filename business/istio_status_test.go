@@ -25,6 +25,14 @@ import (
 	"github.com/kiali/kiali/tracing/tracingtest"
 )
 
+type fakeMeshDiscovery struct {
+	mesh models.Mesh
+}
+
+func (fmd *fakeMeshDiscovery) Mesh(ctx context.Context) (*models.Mesh, error) {
+	return &fmd.mesh, nil
+}
+
 type addOnsSetup struct {
 	Url        string
 	StatusCode int

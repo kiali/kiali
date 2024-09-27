@@ -100,6 +100,33 @@ trustDomain: cluster.local
 		Data: map[string]string{"mesh": configMapData},
 	}
 
+	certificatesConfigMap := core_v1.ConfigMap{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      "istio-ca-root-cert",
+			Namespace: "istio-system",
+		},
+		Data: map[string]string{
+			"root-cert.pem": `-----BEGIN CERTIFICATE-----
+MIIC/DCCAeSgAwIBAgIQVv6mINjF1kQJS2O98zkkNzANBgkqhkiG9w0BAQsFADAY
+MRYwFAYDVQQKEw1jbHVzdGVyLmxvY2FsMB4XDTIxMDcyNzE0MzcwMFoXDTMxMDcy
+NTE0MzcwMFowGDEWMBQGA1UEChMNY2x1c3Rlci5sb2NhbDCCASIwDQYJKoZIhvcN
+AQEBBQADggEPADCCAQoCggEBAMwHN+LAkWbC9qyAlXQ4Zwn+Yhgc4eCPuw9LQVjW
+b9al44H5sV/1QIog8wOjDHx32k2lTXvdxRgOJd+ENXMQ9DmU6C9oeWhMZAmAvp4M
+NBaYnY4BRcWAPqIhEb/26zRA9pXjPVJX+aN45R1EJWsJxP6ZPkmZZKILnYY6VwqU
+wbbB3lp34HQruvkpePUo4Bux+N+DfQsu1g/C6UMbQlY/kl1d1KaTS4bYQAP1d4eT
+sPxw5Rf9WRSQcGaAWiPbUxVBtA0LYCbHzOacAAwvYhJgvbinr73RiqKUMR5BV/p3
+lyKyVDyrVXXbVNsQhsT/lM5e55DaQEJKyldgklSGseVYHy0CAwEAAaNCMEAwDgYD
+VR0PAQH/BAQDAgIEMA8GA1UdEwEB/wQFMAMBAf8wHQYDVR0OBBYEFK7ZOPXlxd78
+xUpOGYDaqgC/sdevMA0GCSqGSIb3DQEBCwUAA4IBAQACLa2gNuIxQWf4qiCxsbIj
+qddqbjHBGOWVAcyFRk/k7ydmellkI5BcMJEhlPT7TBUutcjvX8lCsup+xGy47NpH
+hRp4hxUYodGXLXQ2HfI+3CgAARBEIBXjh/73UDFcMtH/G6EtGfFEw8ZgbyaDQ9Ft
+c10h5QnbMUBFWdmvwSFvbJwZoTlFM+skogwv+d55sujZS83jbZHs7lZlDy0hDYIm
+tMAWt4FEJnLPrfFtCFJgddiXDYGtX/Apvqac2riSAFg8mQB5WRtxKH7TK9Qhvca7
+V/InYncUvcXt0M4JJSUJi/u6VBKSYYDIHt3mk9Le2qlMQuHkOQ1ZcuEOM2CU/KtO
+-----END CERTIFICATE-----`,
+		},
+	}
+
 	kialiSvc := core_v1.Service{
 		ObjectMeta: v1.ObjectMeta{
 			Name:      "kiali",
@@ -114,6 +141,7 @@ trustDomain: cluster.local
 		kubetest.FakeNamespace("istio-system"),
 		kubetest.FakeNamespaceWithLabels("data-plane-1", defaultInjection),
 		kubetest.FakeNamespaceWithLabels("data-plane-2", revLabel),
+		&certificatesConfigMap,
 		&istiodDeployment,
 		&istioConfigMap,
 		&sidecarConfigMap,
@@ -253,6 +281,8 @@ func TestMeshGraph(t *testing.T) {
 		t.Fatal(err)
 	}
 	actual, _ := io.ReadAll(resp.Body)
+	t.Logf("Actual response body: %s", string(actual)) // Print the actual variable
+
 	expected, _ := os.ReadFile("testdata/test_mesh_graph.expected")
 	if runtime.GOOS == "windows" {
 		expected = bytes.Replace(expected, []byte("\r\n"), []byte("\n"), -1)

@@ -37,6 +37,8 @@ import { UNKNOWN } from 'types/Graph';
 import { TargetPanelEditor } from './TargetPanelEditor';
 import { load, dump } from 'js-yaml';
 import { yamlDumpOptions } from '../../../types/IstioConfigDetails';
+import { CertsInfo } from 'types/CertsInfo';
+import { IstioCertsInfo } from 'components/IstioCertsInfo/IstioCertsInfo';
 
 type TargetPanelControlPlaneProps = TargetPanelCommonProps & {
   meshStatus: string;
@@ -45,6 +47,7 @@ type TargetPanelControlPlaneProps = TargetPanelCommonProps & {
 
 type TargetPanelControlPlaneState = {
   canaryUpgradeStatus?: CanaryUpgradeStatus;
+  certificates?: CertsInfo[];
   controlPlaneMetrics?: ControlPlaneMetricsMap;
   controlPlaneNode?: Node<NodeModel, any>;
   errorMetrics?: Metric[];
@@ -57,6 +60,7 @@ type TargetPanelControlPlaneState = {
 
 const defaultState: TargetPanelControlPlaneState = {
   canaryUpgradeStatus: undefined,
+  certificates: undefined,
   controlPlaneMetrics: undefined,
   controlPlaneNode: undefined,
   errorMetrics: undefined,
@@ -156,10 +160,7 @@ export class TargetPanelControlPlane extends React.Component<
             namespace={nsInfo}
           ></ControlPlaneNamespaceStatus>
 
-          <TLSInfo
-            certificatesInformationIndicators={serverConfig.kialiFeatureFlags.certificatesInformationIndicators.enabled}
-            version={this.props.minTLS}
-          ></TLSInfo>
+          <TLSInfo version={this.props.minTLS} />
 
           {!isRemoteCluster(nsInfo.annotations) && (
             <>
@@ -174,6 +175,10 @@ export class TargetPanelControlPlane extends React.Component<
 
           {targetPanelHR}
           {parsedCm !== '' && <TargetPanelEditor configMap={parsedCm} targetName={data.infraName}></TargetPanelEditor>}
+          {data.infraData.config.certificates && targetPanelHR}
+          {data.infraData.config.certificates && (
+            <IstioCertsInfo certificates={data.infraData.config.certificates}></IstioCertsInfo>
+          )}
         </div>
       </div>
     );

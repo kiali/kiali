@@ -11,7 +11,7 @@ import (
 	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 	apps_v1 "k8s.io/api/apps/v1"
 	core_v1 "k8s.io/api/core/v1"
-	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/kiali/kiali/config"
@@ -21,6 +21,35 @@ import (
 	"github.com/kiali/kiali/tests/data"
 	"github.com/kiali/kiali/tests/testutils/validations"
 )
+
+func FakeCertificateConfigMap(namespace string) *core_v1.ConfigMap {
+	return &core_v1.ConfigMap{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      "istio-ca-root-cert",
+			Namespace: namespace,
+		},
+		Data: map[string]string{
+			"root-cert.pem": `-----BEGIN CERTIFICATE-----
+MIIC/DCCAeSgAwIBAgIQVv6mINjF1kQJS2O98zkkNzANBgkqhkiG9w0BAQsFADAY
+MRYwFAYDVQQKEw1jbHVzdGVyLmxvY2FsMB4XDTIxMDcyNzE0MzcwMFoXDTMxMDcy
+NTE0MzcwMFowGDEWMBQGA1UEChMNY2x1c3Rlci5sb2NhbDCCASIwDQYJKoZIhvcN
+AQEBBQADggEPADCCAQoCggEBAMwHN+LAkWbC9qyAlXQ4Zwn+Yhgc4eCPuw9LQVjW
+b9al44H5sV/1QIog8wOjDHx32k2lTXvdxRgOJd+ENXMQ9DmU6C9oeWhMZAmAvp4M
+NBaYnY4BRcWAPqIhEb/26zRA9pXjPVJX+aN45R1EJWsJxP6ZPkmZZKILnYY6VwqU
+wbbB3lp34HQruvkpePUo4Bux+N+DfQsu1g/C6UMbQlY/kl1d1KaTS4bYQAP1d4eT
+sPxw5Rf9WRSQcGaAWiPbUxVBtA0LYCbHzOacAAwvYhJgvbinr73RiqKUMR5BV/p3
+lyKyVDyrVXXbVNsQhsT/lM5e55DaQEJKyldgklSGseVYHy0CAwEAAaNCMEAwDgYD
+VR0PAQH/BAQDAgIEMA8GA1UdEwEB/wQFMAMBAf8wHQYDVR0OBBYEFK7ZOPXlxd78
+xUpOGYDaqgC/sdevMA0GCSqGSIb3DQEBCwUAA4IBAQACLa2gNuIxQWf4qiCxsbIj
+qddqbjHBGOWVAcyFRk/k7ydmellkI5BcMJEhlPT7TBUutcjvX8lCsup+xGy47NpH
+hRp4hxUYodGXLXQ2HfI+3CgAARBEIBXjh/73UDFcMtH/G6EtGfFEw8ZgbyaDQ9Ft
+c10h5QnbMUBFWdmvwSFvbJwZoTlFM+skogwv+d55sujZS83jbZHs7lZlDy0hDYIm
+tMAWt4FEJnLPrfFtCFJgddiXDYGtX/Apvqac2riSAFg8mQB5WRtxKH7TK9Qhvca7
+V/InYncUvcXt0M4JJSUJi/u6VBKSYYDIHt3mk9Le2qlMQuHkOQ1ZcuEOM2CU/KtO
+-----END CERTIFICATE-----`,
+		},
+	}
+}
 
 func TestGetNamespaceValidations(t *testing.T) {
 	assert := assert.New(t)
@@ -78,7 +107,7 @@ func TestGatewayValidationScopesToNamespaceWhenGatewayToNamespaceSet(t *testing.
 	conf.ExternalServices.Istio.IstiodDeploymentName = istiodDeploymentName
 	config.Set(conf)
 	revConfigMap := &core_v1.ConfigMap{
-		ObjectMeta: meta_v1.ObjectMeta{
+		ObjectMeta: v1.ObjectMeta{
 			Name:      istioConfigMapName,
 			Namespace: "istio-system",
 			Labels: map[string]string{
@@ -87,11 +116,11 @@ func TestGatewayValidationScopesToNamespaceWhenGatewayToNamespaceSet(t *testing.
 		},
 		Data: map[string]string{"mesh": ""},
 	}
-	injectorConfigMap := &core_v1.ConfigMap{ObjectMeta: meta_v1.ObjectMeta{Name: istioSidecarInjectorConfigMapName, Namespace: "istio-system"}}
+	injectorConfigMap := &core_v1.ConfigMap{ObjectMeta: v1.ObjectMeta{Name: istioSidecarInjectorConfigMapName, Namespace: "istio-system"}}
 	istioSystemNamespace := kubetest.FakeNamespace("istio-system")
 
 	istiod_1_19_0 := &apps_v1.Deployment{
-		ObjectMeta: meta_v1.ObjectMeta{
+		ObjectMeta: v1.ObjectMeta{
 			Name:      istiodDeploymentName,
 			Namespace: "istio-system",
 			Labels: map[string]string{
@@ -119,7 +148,7 @@ func TestGatewayValidationScopesToNamespaceWhenGatewayToNamespaceSet(t *testing.
 
 	// The gateway workload is in a different namespace than the Gateway object.
 	gatewayDeployment := &apps_v1.Deployment{
-		ObjectMeta: meta_v1.ObjectMeta{
+		ObjectMeta: v1.ObjectMeta{
 			Name:      "istio-ingressgateway",
 			Namespace: "istio-system",
 			Labels: map[string]string{
@@ -128,7 +157,7 @@ func TestGatewayValidationScopesToNamespaceWhenGatewayToNamespaceSet(t *testing.
 		},
 		Spec: apps_v1.DeploymentSpec{
 			Template: core_v1.PodTemplateSpec{
-				ObjectMeta: meta_v1.ObjectMeta{
+				ObjectMeta: v1.ObjectMeta{
 					Labels: map[string]string{
 						"app": "real", // Matches the gateway label selector
 					},
@@ -137,7 +166,7 @@ func TestGatewayValidationScopesToNamespaceWhenGatewayToNamespaceSet(t *testing.
 		},
 	}
 
-	v := mockMultiNamespaceGatewaysValidationService(t, *conf, revConfigMap, injectorConfigMap, istioSystemNamespace, istiod_1_19_0, gatewayDeployment)
+	v := mockMultiNamespaceGatewaysValidationService(t, *conf, revConfigMap, injectorConfigMap, istioSystemNamespace, istiod_1_19_0, gatewayDeployment, FakeCertificateConfigMap("istio-system"))
 	validations, _, err := v.GetIstioObjectValidations(context.TODO(), conf.KubernetesConfig.ClusterName, "test", "gateways", "first")
 	require.NoError(err)
 	require.Len(validations, 1)
@@ -602,7 +631,7 @@ func TestGetVSReferencesNotExisting(t *testing.T) {
 
 func mockMultiNamespaceGatewaysValidationService(t *testing.T, cfg config.Config, objects ...runtime.Object) IstioValidationsService {
 	fakeIstioObjects := []runtime.Object{
-		&core_v1.ConfigMap{ObjectMeta: meta_v1.ObjectMeta{Name: "istio", Namespace: "istio-system"}},
+		&core_v1.ConfigMap{ObjectMeta: v1.ObjectMeta{Name: "istio", Namespace: "istio-system"}},
 	}
 	for _, p := range fakeNamespaces() {
 		fakeIstioObjects = append(fakeIstioObjects, p.DeepCopyObject())
@@ -637,7 +666,7 @@ func mockMultiNamespaceGatewaysValidationService(t *testing.T, cfg config.Config
 
 func mockCombinedValidationService(t *testing.T, istioConfigList *models.IstioConfigList, services []string) IstioValidationsService {
 	fakeIstioObjects := []runtime.Object{
-		&core_v1.ConfigMap{ObjectMeta: meta_v1.ObjectMeta{Name: "istio", Namespace: "istio-system"}},
+		&core_v1.ConfigMap{ObjectMeta: v1.ObjectMeta{Name: "istio", Namespace: "istio-system"}},
 		kubetest.FakeNamespace("wrong"),
 	}
 	for _, p := range fakeMeshPolicies() {
@@ -731,7 +760,7 @@ defaultVirtualServiceExportTo:
 `
 	}
 	istioConfigMap := core_v1.ConfigMap{
-		ObjectMeta: meta_v1.ObjectMeta{
+		ObjectMeta: v1.ObjectMeta{
 			Name:      "istio",
 			Namespace: "istio-system",
 			Labels: map[string]string{
@@ -746,6 +775,7 @@ defaultVirtualServiceExportTo:
 		fakeDeploymentWithStatus("istio-egressgateway", map[string]string{"app": "istio-egressgateway", "istio": "egressgateway"}, unhealthyStatus),
 		fakeDeploymentWithStatus("istiod", map[string]string{"app": "istiod", "istio": "pilot"}, healthyStatus),
 		&istioConfigMap,
+		FakeCertificateConfigMap("istio-system"),
 	}
 
 	k8s, _, _ := mockAddOnsCalls(t, objects, true, false)
@@ -819,7 +849,7 @@ func fakeCombinedServices(services []string, namespace string) []core_v1.Service
 
 	for _, service := range services {
 		items = append(items, core_v1.Service{
-			ObjectMeta: meta_v1.ObjectMeta{
+			ObjectMeta: v1.ObjectMeta{
 				Name:      service,
 				Namespace: namespace,
 				Labels: map[string]string{
@@ -836,7 +866,7 @@ func fakePods() *core_v1.PodList {
 	return &core_v1.PodList{
 		Items: []core_v1.Pod{
 			{
-				ObjectMeta: meta_v1.ObjectMeta{
+				ObjectMeta: v1.ObjectMeta{
 					Name: "reviews-12345-hello",
 					Labels: map[string]string{
 						"app":     "reviews",
@@ -845,7 +875,7 @@ func fakePods() *core_v1.PodList {
 				},
 			},
 			{
-				ObjectMeta: meta_v1.ObjectMeta{
+				ObjectMeta: v1.ObjectMeta{
 					Name: "reviews-54321-hello",
 					Labels: map[string]string{
 						"app":     "reviews",

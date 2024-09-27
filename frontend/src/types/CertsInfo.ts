@@ -1,11 +1,10 @@
 export interface CertsInfo {
-  secretName: string;
-  secretNamespace: string;
-  dnsNames: String[];
-  issuer: string;
-  subject: string;
-  notBefore: string;
-  notAfter: string;
-  error: string;
   accessible: boolean;
+  configMapName: string;
+  dnsNames: String[];
+  error: string;
+  issuer: string;
+  notAfter: string;
+  notBefore: string;
+  subject: string;
 }

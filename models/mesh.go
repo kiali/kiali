@@ -1,6 +1,10 @@
 package models
 
 import (
+	"crypto/x509"
+	"encoding/pem"
+	"time"
+
 	corev1 "k8s.io/api/core/v1"
 
 	"github.com/kiali/kiali/config"
@@ -120,8 +124,34 @@ type ControlPlaneConfiguration struct {
 }
 
 type Certificate struct {
-	DNSNames   []string `yaml:"dnsNames"`
-	SecretName string   `yaml:"secretName"`
+	DNSNames      []string  `json:"dnsNames"`
+	ConfigMapName string    `json:"configMapName"`
+	Issuer        string    `json:"issuer"`
+	NotBefore     time.Time `json:"notBefore"`
+	NotAfter      time.Time `json:"notAfter"`
+	Error         string    `json:"error"`
+	Accessible    bool      `json:"accessible"`
+	ClusterName   string    `json:"cluster"`
+}
+
+func (ci *Certificate) Parse(certificate []byte) {
+	block, _ := pem.Decode(certificate)
+
+	if block == nil {
+		ci.Error = "unable to decode certificate"
+		return
+	}
+
+	cert, err := x509.ParseCertificate(block.Bytes)
+	if err != nil {
+		ci.Error = "unable to parse certificate"
+		return
+	}
+
+	ci.Issuer = cert.Issuer.String()
+	ci.NotBefore = cert.NotBefore
+	ci.NotAfter = cert.NotAfter
+	ci.Accessible = true
 }
 
 type IstioMeshConfig struct {

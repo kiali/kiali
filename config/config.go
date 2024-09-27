@@ -565,12 +565,6 @@ type Validations struct {
 	SkipWildcardGatewayHosts bool     `yaml:"skip_wildcard_gateway_hosts,omitempty"`
 }
 
-// CertificatesInformationIndicators defines configuration to enable the feature and to grant read permissions to a list of secrets
-type CertificatesInformationIndicators struct {
-	Enabled bool     `yaml:"enabled,omitempty" json:"enabled"`
-	Secrets []string `yaml:"secrets,omitempty" json:"secrets,omitempty"`
-}
-
 // Clustering defines configuration around multi-cluster functionality.
 type Clustering struct {
 	// Clusters is a list of clusters that cannot be autodetected by the Kiali Server.
@@ -601,14 +595,13 @@ type KialiURL struct {
 
 // KialiFeatureFlags available from the CR
 type KialiFeatureFlags struct {
-	CertificatesInformationIndicators CertificatesInformationIndicators `yaml:"certificates_information_indicators,omitempty" json:"certificatesInformationIndicators"`
-	Clustering                        FeatureFlagClustering             `yaml:"clustering,omitempty" json:"clustering,omitempty"`
-	DisabledFeatures                  []string                          `yaml:"disabled_features,omitempty" json:"disabledFeatures,omitempty"`
-	IstioAnnotationAction             bool                              `yaml:"istio_annotation_action,omitempty" json:"istioAnnotationAction"`
-	IstioInjectionAction              bool                              `yaml:"istio_injection_action,omitempty" json:"istioInjectionAction"`
-	IstioUpgradeAction                bool                              `yaml:"istio_upgrade_action,omitempty" json:"istioUpgradeAction"`
-	UIDefaults                        UIDefaults                        `yaml:"ui_defaults,omitempty" json:"uiDefaults,omitempty"`
-	Validations                       Validations                       `yaml:"validations,omitempty" json:"validations,omitempty"`
+	Clustering            FeatureFlagClustering `yaml:"clustering,omitempty" json:"clustering,omitempty"`
+	DisabledFeatures      []string              `yaml:"disabled_features,omitempty" json:"disabledFeatures,omitempty"`
+	IstioAnnotationAction bool                  `yaml:"istio_annotation_action,omitempty" json:"istioAnnotationAction"`
+	IstioInjectionAction  bool                  `yaml:"istio_injection_action,omitempty" json:"istioInjectionAction"`
+	IstioUpgradeAction    bool                  `yaml:"istio_upgrade_action,omitempty" json:"istioUpgradeAction"`
+	UIDefaults            UIDefaults            `yaml:"ui_defaults,omitempty" json:"uiDefaults,omitempty"`
+	Validations           Validations           `yaml:"validations,omitempty" json:"validations,omitempty"`
 }
 
 // Tolerance config
@@ -789,10 +782,6 @@ func NewConfig() (c *Config) {
 			VersionLabelName:           "version",
 		},
 		KialiFeatureFlags: KialiFeatureFlags{
-			CertificatesInformationIndicators: CertificatesInformationIndicators{
-				Enabled: true,
-				Secrets: []string{"cacerts", "istio-ca-secret"},
-			},
 			Clustering: FeatureFlagClustering{
 				EnableExecProvider: false,
 			},
