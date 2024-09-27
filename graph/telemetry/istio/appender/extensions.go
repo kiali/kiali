@@ -341,7 +341,7 @@ func (a ExtensionsAppender) addEdgeTraffic(val float64, protocol, code, flags, s
 		edge.Metadata[graph.ProtocolKey] = protocol
 		edge.Metadata[tsHashMap] = make(map[string]bool)
 		if secure == "true" {
-			edge.Metadata[graph.IsMTLS] = 100 // for extensions, just assume 0 or 100% secure
+			edge.Metadata[graph.IsMTLS] = 100.0 // for extensions, just assume 0 or 100% secure
 		}
 
 	}
