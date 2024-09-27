@@ -281,12 +281,12 @@
               },
               "certificates": [
                 {
-                  "DNSNames": null,
                   "configMapName": "istio-ca-root-cert",
+                  "dnsNames": null,
+                  "error": "",
                   "issuer": "O=cluster.local",
                   "notBefore": "2021-07-27T14:37:00Z",
                   "notAfter": "2031-07-25T14:37:00Z",
-                  "error": "",
                   "accessible": true,
                   "cluster": ""
                 }

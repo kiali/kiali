@@ -1,12 +1,14 @@
 package api
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"runtime"
 	"sort"
 	"testing"
 
@@ -282,10 +284,10 @@ func TestMeshGraph(t *testing.T) {
 	t.Logf("Actual response body: %s", string(actual)) // Print the actual variable
 
 	expected, _ := os.ReadFile("testdata/test_mesh_graph.expected")
-	//if runtime.GOOS == "windows" {
-	//	expected = bytes.Replace(expected, []byte("\r\n"), []byte("\n"), -1)
-	//}
-	//expected = expected[:len(expected)-1] // remove EOF byte
+	if runtime.GOOS == "windows" {
+		expected = bytes.Replace(expected, []byte("\r\n"), []byte("\n"), -1)
+	}
+	expected = expected[:len(expected)-1] // remove EOF byte
 
 	if !assert.JSONEq(t, string(expected), string(actual)) {
 		// The diff is more readable using cmp

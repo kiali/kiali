@@ -175,8 +175,10 @@ export class TargetPanelControlPlane extends React.Component<
 
           {targetPanelHR}
           {parsedCm !== '' && <TargetPanelEditor configMap={parsedCm} targetName={data.infraName}></TargetPanelEditor>}
-          {targetPanelHR}
-          <IstioCertsInfo certificates={data.infraData.config.certificates}></IstioCertsInfo>
+          {data.infraData.config.certificates && targetPanelHR}
+          {data.infraData.config.certificates && (
+            <IstioCertsInfo certificates={data.infraData.config.certificates}></IstioCertsInfo>
+          )}
         </div>
       </div>
     );
@@ -215,7 +217,6 @@ export class TargetPanelControlPlane extends React.Component<
         this.promises
           .registerAll(`promises-${data.cluster}:${data.namespace}`, [
             this.fetchCanariesStatus(),
-            this.fetchCertificates(),
             this.fetchHealthStatus(),
             this.fetchMetrics(),
             this.fetchTLS()
@@ -261,20 +262,6 @@ export class TargetPanelControlPlane extends React.Component<
       })
       .catch(error => {
         AlertUtils.addError('Error fetching namespace canary upgrade status.', error, 'default', MessageType.ERROR);
-      });
-  };
-
-  private fetchCertificates = async (): Promise<void> => {
-    const data = this.state.controlPlaneNode!.getData() as NodeData;
-    console.log(data);
-    return API.getIstioCertsInfo()
-      .then(response => {
-        this.setState({
-          certificates: response.data
-        });
-      })
-      .catch(error => {
-        AlertUtils.addError('Error fetching namespace certificates.', error, 'default', MessageType.ERROR);
       });
   };
 
