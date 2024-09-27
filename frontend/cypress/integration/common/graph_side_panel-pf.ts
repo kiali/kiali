@@ -1,6 +1,6 @@
 import { Then, When } from '@badeball/cypress-cucumber-preprocessor';
 
-When('user clicks the {string} {string} node', (svcName: string, nodeType: string) => {
+When('user clicks the {string} {string} node in the patternfly graph', (svcName: string, nodeType: string) => {
   cy.waitForReact();
   cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false } } })
     .should('have.length', '1')
@@ -16,7 +16,7 @@ When('user clicks the {string} {string} node', (svcName: string, nodeType: strin
 });
 
 When(
-  'user clicks the edge from {string} {string} to {string} {string}',
+  'user clicks the edge from {string} {string} to {string} {string} in the patternfly graph',
   (svcName: string, nodeType: string, destSvcName: string, destNodeType: string) => {
     cy.waitForReact();
     cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false } } })
@@ -138,7 +138,7 @@ When(
 );
 
 When(
-  'user clicks the {string} service node in the {string} namespace in the {string} cluster',
+  'user clicks the {string} service node in the {string} namespace in the {string} cluster in the patternfly graph',
   (service: string, namespace: string, cluster: string) => {
     cy.waitForReact();
     cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false } } })

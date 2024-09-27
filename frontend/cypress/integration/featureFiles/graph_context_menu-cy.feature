@@ -12,19 +12,19 @@ Feature: Kiali Graph page - Context menu actions
   @bookinfo-app
   Scenario: Actions in context menu for service node with existing traffic routing
     And user opens the context menu of the "productpage" service node in the cytoscape graph
-    And user should see no cluster parameter in the url when clicking the "Details" link in the context menu
+    And user should see no cluster parameter in the url when clicking the "Details" link in the context menu in the cytoscape graph
     And user opens the context menu of the "productpage" service node in the cytoscape graph
-    And user should see no cluster parameter in the url when clicking the "Traffic" link in the context menu
+    And user should see no cluster parameter in the url when clicking the "Traffic" link in the context menu in the cytoscape graph
     And user opens the context menu of the "productpage" service node in the cytoscape graph
-    And user should see no cluster parameter in the url when clicking the "Inbound Metrics" link in the context menu
+    And user should see no cluster parameter in the url when clicking the "Inbound Metrics" link in the context menu in the cytoscape graph
     And user opens the context menu of the "productpage" service node in the cytoscape graph
-    And user clicks the "delete-traffic-routing" item of the context menu
+    And user clicks the "delete-traffic-routing" item of the context menu in the cytoscape graph
     Then user should see the confirmation dialog to delete all traffic routing
 
   @bookinfo-app
   Scenario Outline: Ability to launch <action> wizard from graph context menu
-    And user opens the context menu of the "reviews" service node
-    And user clicks the "<action>" action of the context menu
+    And user opens the context menu of the "reviews" service node in the cytoscape graph
+    And user clicks the "<action>" action of the context menu in the cytoscape graph
     Then user should see the "<action>" wizard
 
     Examples:
@@ -38,14 +38,14 @@ Feature: Kiali Graph page - Context menu actions
   @multi-cluster
   Scenario: Actions in context menu for a service node with existing traffic routing
     And there is traffic routing for the "details" service in the "bookinfo" namespace and in the "east" cluster
-    And user opens the context menu of the "details" service node on the "east" cluster
-    And user should see the "east" cluster parameter in the url when clicking the "Details" link in the context menu
-    And user opens the context menu of the "details" service node on the "east" cluster
-    And user should see the "east" cluster parameter in the url when clicking the "Traffic" link in the context menu
-    And user opens the context menu of the "details" service node on the "east" cluster
-    And user should see the "east" cluster parameter in the url when clicking the "Inbound Metrics" link in the context menu
-    And user opens the context menu of the "details" service node on the "east" cluster
-    And user clicks the "delete-traffic-routing" item of the context menu
+    And user opens the context menu of the "details" service node on the "east" cluster in the cytoscape graph
+    And user should see the "east" cluster parameter in the url when clicking the "Details" link in the context menu in the cytoscape graph
+    And user opens the context menu of the "details" service node on the "east" cluster in the cytoscape graph
+    And user should see the "east" cluster parameter in the url when clicking the "Traffic" link in the context menu in the cytoscape graph
+    And user opens the context menu of the "details" service node on the "east" cluster in the cytoscape graph
+    And user should see the "east" cluster parameter in the url when clicking the "Inbound Metrics" link in the context menu in the cytoscape graph
+    And user opens the context menu of the "details" service node on the "east" cluster in the cytoscape graph
+    And user clicks the "delete-traffic-routing" item of the context menu in the cytoscape graph
     Then user should see the confirmation dialog to delete all traffic routing
     When user chooses to delete the routing
     And user is at the "istio" list page
@@ -53,8 +53,8 @@ Feature: Kiali Graph page - Context menu actions
 
   @multi-cluster 
   Scenario Outline: Ability to launch <action> wizard from graph context menu for a remote service node
-    And user opens the context menu of the "ratings" service node on the "west" cluster
-    And user clicks the "<action>" action of the context menu
+    And user opens the context menu of the "ratings" service node on the "west" cluster in the cytoscape graph
+    And user clicks the "<action>" action of the context menu in the cytoscape graph
     Then user should see the "<action>" wizard
 
     Examples:
@@ -70,8 +70,8 @@ Feature: Kiali Graph page - Context menu actions
   Scenario: Actions in context menu for a remote service node with existing traffic routing
     And there is no traffic routing for the "ratings" service in the "bookinfo" namespace and in the "west" cluster
     And there is no traffic routing for the "ratings" service in the "bookinfo" namespace and in the "east" cluster
-    And user opens the context menu of the "ratings" service node on the "west" cluster
-    And user clicks the "request_routing" action of the context menu
+    And user opens the context menu of the "ratings" service node on the "west" cluster in the cytoscape graph
+    And user clicks the "request_routing" action of the context menu in the cytoscape graph
     Then user should see the "request_routing" wizard
     And user adds a route
     And user previews the configuration

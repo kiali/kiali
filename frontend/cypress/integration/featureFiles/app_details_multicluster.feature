@@ -19,7 +19,7 @@ Feature: Kiali App Details page for multicluster
   Scenario: See app minigraph for details app.
     And user is at the details page for the "app" "bookinfo/reviews" located in the "west" cluster
     Then user sees a minigraph
-    And user sees "app" from a remote "west" cluster
+    And user sees "app" from a remote "west" cluster in the cytoscape minigraph
 
   Scenario: See app Traffic information
     And user is at the details page for the "app" "bookinfo/reviews" located in the "west" cluster

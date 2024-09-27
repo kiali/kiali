@@ -18,12 +18,10 @@ Before(() => {
 });
 
 When(
-  'user graphs {string} namespaces with refresh {string} and duration {string} in the {string} graph',
-  (namespaces: string, refresh: string, duration: string, graphType: string) => {
-    const graphUrl = graphType === 'cytoscape' ? 'graph' : 'graphpf';
-
+  'user graphs {string} namespaces with refresh {string} and duration {string} in the patternfly graph',
+  (namespaces: string, refresh: string, duration: string) => {
     cy.visit({
-      url: `/console/${graphUrl}/namespaces?refresh=${refresh}&duration=${duration}&namespaces=${namespaces}`
+      url: `/console/graphpf/namespaces?refresh=${refresh}&duration=${duration}&namespaces=${namespaces}`
     });
   }
 );
@@ -228,7 +226,7 @@ Then('user sees selected graph refresh {string}', (refresh: string) => {
     .should('exist');
 });
 
-Then('user sees a {string} graph', graphType => {
+Then('user sees a {string} patternfly graph', graphType => {
   cy.waitForReact();
   cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false } } })
     .should('have.length', '1')

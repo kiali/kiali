@@ -14,14 +14,6 @@ Feature: Kiali Service Details page for remote cluster
     And links in the "Service" description card should contain a reference to a "west" cluster
     And cluster badge for "west" cluster should be visible in the "Service" description card
 
-  Scenario: See service minigraph for details app.
-    Then sd::user sees a minigraph
-    And user sees "service" from a remote "west" cluster
-
-  Scenario: Minigraph should not be visible for a service, which is not deployed in specific cluster.
-    And user is at the details page for the "service" "bookinfo/details" located in the "west" cluster
-    Then user does not see a minigraph
-
   Scenario: See service Traffic information
     Then sd::user sees inbound and outbound traffic information for the remote service
     And user should see columns related to cluster info for the inbound and outbound traffic
@@ -58,7 +50,6 @@ Feature: Kiali Service Details page for remote cluster
     And user is at the details page for the "service" "bookinfo/ratings" located in the "east" cluster
     And links in the "Service" description card should contain a reference to a "east" cluster
     And cluster badge for "east" cluster should be visible in the "Service" description card
-    And user does not see a minigraph
 
   Scenario: See no app Traffic information for a service, which is not present in the specific cluster.
     And user is at the details page for the "service" "bookinfo/ratings" located in the "east" cluster

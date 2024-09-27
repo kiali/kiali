@@ -14,13 +14,13 @@ Feature: Kiali Graph page - Display menu
 
   @error-rates-app
   Scenario: Graph no namespaces
-    When user graphs "" namespaces
+    When user graphs "" namespaces in the cytoscape graph
     Then user sees no namespace selected
 
   # gamma will only show nodes when idle-nodes is enabled
   @error-rates-app
   Scenario: Graph gamma namespaces
-    When user graphs "gamma" namespaces
+    When user graphs "gamma" namespaces in the cytoscape graph
     Then user sees empty graph
 
   @error-rates-app
@@ -28,7 +28,7 @@ Feature: Kiali Graph page - Display menu
     When user opens display menu
     And user "enables" "idle nodes" option
     Then user sees the "gamma" namespace
-    And idle nodes "appear" in the graph
+    And idle nodes "appear" in the cytoscape graph
 
   @error-rates-app
   Scenario: User disables idle nodes
@@ -37,7 +37,7 @@ Feature: Kiali Graph page - Display menu
 
   @error-rates-app
   Scenario: Graph alpha and beta namespaces
-    When user graphs "alpha,beta" namespaces
+    When user graphs "alpha,beta" namespaces in the cytoscape graph
     Then user sees the "alpha" namespace
     And user sees the "beta" namespace
 
@@ -46,35 +46,35 @@ Feature: Kiali Graph page - Display menu
     When user opens display menu
     Then the display menu opens
     And the display menu has default settings
-    And the graph reflects default settings
+    And the cytoscape graph reflects default settings
 
   # percentile variable must match input id
   # edge label variable must match edge data name
   @error-rates-app
   Scenario: Average Response-time edge labels
     When user enables "avg" "responseTime" edge labels
-    Then user sees "responseTime" edge labels
+    Then user sees "responseTime" edge labels in the cytoscape graph
 
   # percentile variable must match input id
   # edge label variable must match edge data name
   @error-rates-app
   Scenario: Median Response-time edge labels
     When user enables "rt50" "responseTime" edge labels
-    Then user sees "responseTime" edge labels
+    Then user sees "responseTime" edge labels in the cytoscape graph
 
   # percentile variable must match input id
   # edge label variable must match edge data name
   @error-rates-app
   Scenario: 95th Percentile Response-time edge labels
     When user enables "rt95" "responseTime" edge labels
-    Then user sees "responseTime" edge labels
+    Then user sees "responseTime" edge labels in the cytoscape graph
 
   # percentile variable must match input id
   # edge label variable must match edge data name
   @error-rates-app
   Scenario: 99th Percentile Response-time edge labels
     When user enables "rt99" "responseTime" edge labels
-    Then user sees "responseTime" edge labels
+    Then user sees "responseTime" edge labels in the cytoscape graph
 
   # edge label variable must match edge data name
   @error-rates-app
@@ -87,14 +87,14 @@ Feature: Kiali Graph page - Display menu
   @error-rates-app
   Scenario: Request Throughput edge labels
     When user enables "throughputRequest" "throughput" edge labels
-    Then user sees "throughput" edge labels
+    Then user sees "throughput" edge labels in the cytoscape graph
 
   # percentile variable must match input id
   # edge label variable must match edge data name
   @error-rates-app
   Scenario: Response Throughput edge labels
     When user enables "throughputResponse" "throughput" edge labels
-    Then user sees "throughput" edge labels
+    Then user sees "throughput" edge labels in the cytoscape graph
 
   # edge label variable must match edge data name
   @error-rates-app
@@ -106,7 +106,7 @@ Feature: Kiali Graph page - Display menu
   @error-rates-app
   Scenario: Enable Traffic Distribution edge labels
     When user "enables" "trafficDistribution" edge labels
-    Then user sees "trafficDistribution" edge labels
+    Then user sees "trafficDistribution" edge labels in the cytoscape graph
 
   # edge label variable must match edge data name
   @error-rates-app
@@ -118,7 +118,7 @@ Feature: Kiali Graph page - Display menu
   @error-rates-app
   Scenario: Enable Traffic Rate edge labels
     When user "enables" "trafficRate" edge labels
-    Then user sees "trafficRate" edge labels
+    Then user sees "trafficRate" edge labels in the cytoscape graph
 
   # edge label variable must match edge data name
   @error-rates-app
@@ -129,47 +129,47 @@ Feature: Kiali Graph page - Display menu
   @error-rates-app
   Scenario: User disables cluster boxes
     When user "disables" "cluster boxes" option
-    Then user does not see "Cluster" boxing
+    Then user does not see "Cluster" boxing in the cytoscape graph
 
   @error-rates-app
   Scenario: User disables Namespace boxes
     When user "disables" "namespace boxes" option
-    Then user does not see "Namespace" boxing
+    Then user does not see "Namespace" boxing in the cytoscape graph
 
   @error-rates-app
   Scenario: User enables idle edges
     When user "enables" "idle edges" option
-    Then idle edges "appear" in the graph
+    Then idle edges "appear" in the cytoscape graph
 
   @error-rates-app
   Scenario: User disables idle edges
     When user "disables" "idle edges" option
-    Then idle edges "do not appear" in the graph
+    Then idle edges "do not appear" in the cytoscape graph
 
   @error-rates-app
   Scenario: User enables rank
     When user "enables" "rank" option
-    Then ranks "appear" in the graph
+    Then ranks "appear" in the cytoscape graph
 
   @error-rates-app
   Scenario: User disables rank
     When user "disables" "rank" option
-    Then ranks "do not appear" in the graph
+    Then ranks "do not appear" in the cytoscape graph
 
   @error-rates-app
   Scenario: User disables service nodes
     When user "disables" "service nodes" option
-    Then user does not see service nodes
+    Then user does not see service nodes in the cytoscape graph
 
   @error-rates-app
   Scenario: User enables security
     When user "enables" "security" option
-    Then security "appears" in the graph
+    Then security "appears" in the cytoscape graph
 
   @error-rates-app
   Scenario: User disables security
     When user "disables" "security" option
-    Then security "does not appear" in the graph
+    Then security "does not appear" in the cytoscape graph
 
   @error-rates-app
   Scenario: User disables missing sidecars
@@ -215,11 +215,11 @@ Feature: Kiali Graph page - Display menu
 
   @bookinfo-app
   Scenario Outline: Multiple cluster boxes should not be visible in the graph
-    When user graphs "bookinfo" namespaces
+    When user graphs "bookinfo" namespaces in the cytoscape graph
     And user resets to factory default
     And user selects "<type>" graph type
     Then user sees the "bookinfo" namespace
-    And only a single cluster box should be visible
+    And only a single cluster box should be visible in the cytoscape graph
     Examples:
       | type          |
       | APP           |
@@ -229,7 +229,7 @@ Feature: Kiali Graph page - Display menu
 
   @multi-cluster
   Scenario: Graph bookinfo namespace for the multi-cluster setup
-    When user graphs "bookinfo" namespaces
+    When user graphs "bookinfo" namespaces in the cytoscape graph
     Then user sees the "bookinfo" namespace
     And user sees the "bookinfo" namespace deployed across the east and west clusters
     And nodes in the "east" cluster should contain the cluster name in their links
@@ -237,13 +237,13 @@ Feature: Kiali Graph page - Display menu
 
   @multi-cluster
   Scenario: See link to correct details page after clicking on a node for the east cluster
-    Given user graphs "bookinfo" namespaces
+    Given user graphs "bookinfo" namespaces in the cytoscape graph
     When user clicks on the "productpage-v1" workload in the "bookinfo" namespace in the "east" cluster
     Then user sees a link to the "east" cluster workload details page in the summary panel
 
   @multi-cluster
   Scenario: See link to correct details page after clicking on a node for the west cluster
-    Given user graphs "bookinfo" namespaces
+    Given user graphs "bookinfo" namespaces in the cytoscape graph
     When user clicks on the "reviews-v2" workload in the "bookinfo" namespace in the "west" cluster
     Then user sees a link to the "west" cluster workload details page in the summary panel
 
@@ -259,8 +259,8 @@ Feature: Kiali Graph page - Display menu
 
   @multi-cluster
   Scenario Outline: User double clicks node from specific cluster
-    When user graphs "bookinfo" namespaces
-    And user double-clicks on the "reviews" "<type>" from the "<cluster>" cluster in the main graph
+    When user graphs "bookinfo" namespaces in the cytoscape graph
+    And user double-clicks on the "reviews" "<type>" from the "<cluster>" cluster in the main cytoscape graph
     Then the browser is at the details page for the "<type>" "bookinfo/reviews" located in the "<cluster>" cluster
 
     Examples:
@@ -272,16 +272,16 @@ Feature: Kiali Graph page - Display menu
 
   @ambient
   Scenario: User sees tcp traffic
-    When user graphs "bookinfo" namespaces
+    When user graphs "bookinfo" namespaces in the cytoscape graph
     Then user sees the "bookinfo" namespace
     Then user opens traffic menu
     And user "disables" "http" traffic option
-    Then 6 edges appear in the graph
+    Then 6 edges appear in the cytoscape graph
 
   @ambient
   Scenario: User sees http traffic
-    When user graphs "bookinfo" namespaces
+    When user graphs "bookinfo" namespaces in the cytoscape graph
     Then user sees the "bookinfo" namespace
     Then user opens traffic menu
     And user "disables" "tcp" traffic option
-    Then 2 edges appear in the graph
+    Then 2 edges appear in the cytoscape graph

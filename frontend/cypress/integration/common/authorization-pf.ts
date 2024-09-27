@@ -9,7 +9,7 @@ Then(`user see the {string} link`, link => {
   cy.get('div[role="dialog"]').find(`#${link}`).should('exist');
 });
 
-Then('the nodes located in the {string} cluster should be restricted', (cluster: string) => {
+Then('the nodes on the patternfly graph located in the {string} cluster should be restricted', (cluster: string) => {
   cy.waitForReact();
   cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false } } })
     .should('have.length', '1')
@@ -27,27 +27,30 @@ Then('the nodes located in the {string} cluster should be restricted', (cluster:
     });
 });
 
-Then('the nodes on the minigraph located in the {string} cluster should be restricted', (cluster: string) => {
-  cy.waitForReact();
-  cy.getReact('MiniGraphCardComponent')
-    .getProps('dataSource')
-    .should((dataSource: GraphDataSource) => {
-      // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-      expect(dataSource.isLoading).to.be.false;
-    })
-    .then(() => {
-      cy.getReact('CytoscapeGraph')
-        .should('have.length', '1')
-        .getCurrentState()
-        .then(state => {
-          const nodes = state.cy.nodes().filter(node => node.data('cluster') === cluster && !node.data('isBox'));
-          nodes.forEach(node => {
-            // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-            expect(node.data('isInaccessible')).to.be.true;
+Then(
+  'the nodes on the patternfly minigraph located in the {string} cluster should be restricted',
+  (cluster: string) => {
+    cy.waitForReact();
+    cy.getReact('MiniGraphCardComponent')
+      .getProps('dataSource')
+      .should((dataSource: GraphDataSource) => {
+        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+        expect(dataSource.isLoading).to.be.false;
+      })
+      .then(() => {
+        cy.getReact('CytoscapeGraph')
+          .should('have.length', '1')
+          .getCurrentState()
+          .then(state => {
+            const nodes = state.cy.nodes().filter(node => node.data('cluster') === cluster && !node.data('isBox'));
+            nodes.forEach(node => {
+              // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+              expect(node.data('isInaccessible')).to.be.true;
+            });
           });
-        });
-    });
-});
+      });
+  }
+);
 
 Then(
   'user sees the {string} Istio Config objects and not the {string} Istio Config Objects',
