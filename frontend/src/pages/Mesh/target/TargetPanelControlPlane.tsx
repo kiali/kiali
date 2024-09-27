@@ -141,7 +141,7 @@ export class TargetPanelControlPlane extends React.Component<
     // Controlplane infradata is structured: {config: configuration, revision: string}
     const { config, revision } = data.infraData;
     const parsedCm = config.ConfigMap ? this.getParsedYaml(config.ConfigMap) : '';
-    console.log(data.infraData);
+
     return (
       <div
         id="target-panel-control-plane"
