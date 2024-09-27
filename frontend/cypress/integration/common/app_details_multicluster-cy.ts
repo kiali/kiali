@@ -1,16 +1,19 @@
 import { Given, Step, Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import { nodeInfo } from './graph-pf';
 
-Then('user sees {string} from a remote {string} cluster in the cytoscape graph', (type: string, cluster: string) => {
-  cy.waitForReact();
-  cy.getReact('CytoscapeGraph')
-    .should('have.length', '1')
-    .getCurrentState()
-    .then(state => {
-      const apps = state.cy.nodes(`[cluster="${cluster}"][nodeType="${type}"][namespace="bookinfo"]`).length;
-      assert.isAbove(apps, 0);
-    });
-});
+Then(
+  'user sees {string} from a remote {string} cluster in the cytoscape minigraph',
+  (type: string, cluster: string) => {
+    cy.waitForReact();
+    cy.getReact('CytoscapeGraph')
+      .should('have.length', '1')
+      .getCurrentState()
+      .then(state => {
+        const apps = state.cy.nodes(`[cluster="${cluster}"][nodeType="${type}"][namespace="bookinfo"]`).length;
+        assert.isAbove(apps, 0);
+      });
+  }
+);
 
 // And user clicks on the "reviews" <type> from the "west" cluster visible in the graph
 Given(
@@ -48,7 +51,7 @@ Given(
 );
 
 When(
-  'user clicks on the {string} {string} from the {string} cluster in the cytoscape graph',
+  'user clicks on the {string} {string} from the {string} cluster in the cytoscape minigraph',
   (name: string, type: string, cluster: string) => {
     cy.waitForReact();
     cy.getReact('CytoscapeGraph')

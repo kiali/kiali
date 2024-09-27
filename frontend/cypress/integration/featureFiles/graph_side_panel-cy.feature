@@ -68,9 +68,9 @@ Feature: Kiali Graph page - Side panel menu actions
   @multi-cluster
   @multi-primary
   Scenario: Actions in context menu for a remote service node with existing traffic routing
-    Given user is at the "istio" list page in the cytoscape graph
+    Given user is at the "istio" list page
     And there is no traffic routing for the "ratings" service in the "bookinfo" namespace and in the "west" cluster
-    When user graphs "bookinfo" namespaces
+    When user graphs "bookinfo" namespaces in the cytoscape graph
     And user opens the context menu of the "ratings" service node on the "west" cluster
     And user clicks the "request_routing" action of the context menu
     Then user should see the "request_routing" wizard

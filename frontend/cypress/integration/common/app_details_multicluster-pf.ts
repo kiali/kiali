@@ -57,16 +57,19 @@ Then(
   }
 );
 
-Then('user sees {string} from a remote {string} cluster in the patternfly graph', (type: string, cluster: string) => {
-  cy.waitForReact();
-  cy.getReact('CytoscapeGraph')
-    .should('have.length', '1')
-    .getCurrentState()
-    .then(state => {
-      const apps = state.cy.nodes(`[cluster="${cluster}"][nodeType="${type}"][namespace="bookinfo"]`).length;
-      assert.isAbove(apps, 0);
-    });
-});
+Then(
+  'user sees {string} from a remote {string} cluster in the patternfly minigraph',
+  (type: string, cluster: string) => {
+    cy.waitForReact();
+    cy.getReact('CytoscapeGraph')
+      .should('have.length', '1')
+      .getCurrentState()
+      .then(state => {
+        const apps = state.cy.nodes(`[cluster="${cluster}"][nodeType="${type}"][namespace="bookinfo"]`).length;
+        assert.isAbove(apps, 0);
+      });
+  }
+);
 
 Then('user should see columns related to cluster info for the inbound and outbound traffic', () => {
   cy.get(`th[data-label="Cluster"]`).should('be.visible').and('have.length', 2);

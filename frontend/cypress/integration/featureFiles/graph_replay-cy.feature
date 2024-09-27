@@ -11,8 +11,8 @@ Feature: Kiali Graph page - Replay
   @error-rates-app
   Scenario: Graph alpha and beta namespaces
     When user graphs "alpha,beta" namespaces in the cytoscape graph
-    Then user sees the "alpha" namespace in the cytoscape graph
-    And user sees the "beta" namespace in the cytoscape graph
+    Then user sees the "alpha" namespace
+    And user sees the "beta" namespace
 
   @error-rates-app
   Scenario: Show Replay

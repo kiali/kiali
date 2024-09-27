@@ -5,6 +5,10 @@
 
 import { Then } from '@badeball/cypress-cucumber-preprocessor';
 
+Then('user does not see a patternfly minigraph', () => {
+  cy.get('#MiniGraphCard').find('h5').contains('Empty Graph');
+});
+
 Then('user sees a patternfly minigraph', () => {
   cy.getBySel('mini-graph').within(() => {
     cy.get('#cytoscape-graph').should('be.visible');

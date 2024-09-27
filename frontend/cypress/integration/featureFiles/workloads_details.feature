@@ -18,12 +18,6 @@ Feature: Kiali Workload Details page
     But no cluster badge for the "workload" should be visible
 
   @bookinfo-app
-  @skip-ossmc
-  # todo: adapt to PF graph
-  Scenario: See minigraph for workload.
-    Then user sees a minigraph
-
-  @bookinfo-app
   Scenario: See workload traffic information
     Then user sees workload inbound and outbound traffic information
     And the "Cluster" column "disappears"

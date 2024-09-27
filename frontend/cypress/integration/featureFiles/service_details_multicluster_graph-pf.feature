@@ -11,7 +11,7 @@ Feature: Kiali Service Details page for remote cluster
     And user is at the details page for the "service" "bookinfo/ratings" located in the "west" cluster
 
   Scenario: See service minigraph for details app.
-    Then sd::user sees a patternfly minigraph
+    Then user sees a patternfly minigraph
     And user sees "service" from a remote "west" cluster in the patternfly minigraph
 
   Scenario: Minigraph should not be visible for a service, which is not deployed in specific cluster.

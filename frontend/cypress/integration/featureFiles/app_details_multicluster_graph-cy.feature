@@ -16,7 +16,7 @@ Feature: Kiali App Details page minigraph in multicluster setup
   Scenario: Minigraph should not be visible for app, which is not deployed in specific cluster.
     Given user is at administrator perspective
     And user is at the details page for the "app" "bookinfo/details" located in the "west" cluster
-    Then user does not see a minigraph
+    Then user does not see a cytoscape minigraph
 
   Scenario Outline: User should be able to navigate through the graph to remotely located apps, services and workloads
     Given user is at administrator perspective
