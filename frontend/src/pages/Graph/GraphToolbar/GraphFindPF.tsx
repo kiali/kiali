@@ -190,22 +190,22 @@ class GraphFindPFComponent extends React.Component<GraphFindProps, GraphFindStat
     const urlParams = new URLSearchParams(location.getSearch());
     const urlFind = HistoryManager.getParam(URLParam.GRAPH_FIND, urlParams);
 
-    if (!!urlFind) {
+    if (urlFind) {
       if (urlFind !== findValue) {
         findValue = urlFind;
         props.setFindValue(urlFind);
       }
-    } else if (!!findValue) {
+    } else if (findValue) {
       HistoryManager.setParam(URLParam.GRAPH_FIND, findValue);
     }
 
     const urlHide = HistoryManager.getParam(URLParam.GRAPH_HIDE, urlParams);
-    if (!!urlHide) {
+    if (urlHide) {
       if (urlHide !== hideValue) {
         hideValue = urlHide;
         props.setHideValue(urlHide);
       }
-    } else if (!!hideValue) {
+    } else if (hideValue) {
       HistoryManager.setParam(URLParam.GRAPH_HIDE, hideValue);
     }
 
@@ -252,6 +252,7 @@ class GraphFindPFComponent extends React.Component<GraphFindProps, GraphFindStat
       return;
     }
 
+    const controllerChanged = this.props.controller !== prevProps.controller;
     const edgeModeChanged = this.props.edgeMode !== prevProps.edgeMode;
     const findChanged = this.props.findValue !== prevProps.findValue;
     const hideChanged = this.props.hideValue !== prevProps.hideValue;
@@ -274,7 +275,7 @@ class GraphFindPFComponent extends React.Component<GraphFindProps, GraphFindStat
     }
 
     // make sure the value is updated if there was a change
-    if (findChanged || (graphChanged && !!this.props.findValue)) {
+    if (controllerChanged || findChanged || (graphChanged && this.props.findValue)) {
       // ensure findInputValue is aligned if findValue is set externally (e.g. resetSettings)
       if (this.state.findInputValue !== this.props.findValue) {
         this.setFind(this.props.findValue);
@@ -284,8 +285,9 @@ class GraphFindPFComponent extends React.Component<GraphFindProps, GraphFindStat
     }
 
     if (
+      controllerChanged ||
       hideChanged ||
-      (graphChanged && !!this.props.hideValue) ||
+      (graphChanged && this.props.hideValue) ||
       edgeModeChanged ||
       this.props.edgeMode !== EdgeMode.ALL
     ) {
@@ -427,7 +429,7 @@ class GraphFindPFComponent extends React.Component<GraphFindProps, GraphFindStat
       case 9: // tab (autocomplete)
         event.preventDefault();
         const next = this.findAutoComplete.next();
-        if (!!next) {
+        if (next) {
           this.findInputRef.value = next;
           this.findInputRef.scrollLeft = this.findInputRef.scrollWidth;
           this.setState({ findInputValue: next, findError: undefined });
@@ -488,7 +490,7 @@ class GraphFindPFComponent extends React.Component<GraphFindProps, GraphFindStat
         event.preventDefault();
         const next = this.hideAutoComplete.next();
 
-        if (!!next) {
+        if (next) {
           this.hideInputRef.value = next;
           this.hideInputRef.scrollLeft = this.hideInputRef.scrollWidth;
           this.setState({ hideInputValue: next, hideError: undefined });
@@ -561,7 +563,7 @@ class GraphFindPFComponent extends React.Component<GraphFindProps, GraphFindStat
     console.debug(`Hide selector=[${JSON.stringify(selector)}]`);
 
     // unhide hidden elements when we are dealing with the same graph. Either way,release for garbage collection
-    if (!!this.hiddenElements && !graphChanged) {
+    if (this.hiddenElements && !graphChanged) {
       needLayout = true;
       this.hiddenElements.forEach(e => this.unhideElement(graph, e));
     }
@@ -640,10 +642,11 @@ class GraphFindPFComponent extends React.Component<GraphFindProps, GraphFindStat
       // we need to remove edges completely because an invisible edge is not
       // ignored by layout (I don't know why, nodes are ignored)
       finalEdges.forEach(e => e.remove());
+
       this.hiddenElements = finalNodes.concat(finalEdges);
     }
 
-    if (needLayout || !!this.hiddenElements) {
+    if (needLayout || this.hiddenElements) {
       controller.getGraph().reset();
       controller.getGraph().layout();
       controller.getGraph().fit(FIT_PADDING);
@@ -663,7 +666,7 @@ class GraphFindPFComponent extends React.Component<GraphFindProps, GraphFindStat
     this.findElements = undefined;
 
     // add new find-hits
-    if (!!selector.nodeSelector || !!selector.edgeSelector) {
+    if (selector.nodeSelector || selector.edgeSelector) {
       const { nodes, edges } = elems(controller);
       let findNodes = [] as GraphElement[];
       let findEdges = [] as GraphElement[];
@@ -686,10 +689,10 @@ class GraphFindPFComponent extends React.Component<GraphFindProps, GraphFindStat
 
   private setError(error: string | undefined, isFind: boolean): undefined {
     if (isFind && error !== this.state.findError) {
-      const findError = !!error ? `Find: ${error}` : undefined;
+      const findError = error ? `Find: ${error}` : undefined;
       this.setState({ findError: findError });
     } else if (error !== this.state.hideError) {
-      const hideError = !!error ? `Hide: ${error}` : undefined;
+      const hideError = error ? `Hide: ${error}` : undefined;
       this.setState({ hideError: hideError });
     }
 

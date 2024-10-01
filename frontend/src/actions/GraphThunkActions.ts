@@ -1,3 +1,4 @@
+import { Controller } from '@patternfly/react-topology';
 import { KialiDispatch } from '../types/Redux';
 import { GraphActions } from './GraphActions';
 
@@ -12,7 +13,7 @@ export const GraphThunkActions = {
       );
     };
   },
-  graphPFReady: (controller: any) => {
+  graphPFReady: (controller: Controller) => {
     return (dispatch: KialiDispatch) => {
       dispatch(
         GraphActions.updateSummary({

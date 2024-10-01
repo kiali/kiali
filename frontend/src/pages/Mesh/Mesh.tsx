@@ -198,6 +198,13 @@ const TopologyContent: React.FC<{
       requestFit = false;
       fitView();
     }
+
+    // we need to finish the initial layout before we advertise to the outside
+    // world that the graph is ready for external processing (like find/hide)
+    if (initialLayout) {
+      initialLayout = false;
+      onReady({ getController: () => controller, setSelectedIds: setSelectedIds });
+    }
   }, [fitView]);
 
   //
@@ -383,14 +390,8 @@ const TopologyContent: React.FC<{
       nodes.forEach(n => setNodeAttachments(n));
     };
 
-    const initialGraph = !controller.hasGraph();
     console.debug(`mesh updateModel`);
     updateModel(controller);
-
-    if (initialGraph) {
-      console.debug('mesh onReady');
-      onReady({ getController: () => controller, setSelectedIds: setSelectedIds });
-    }
 
     // notify that the graph has been updated
     setUpdateTime(Date.now());
@@ -400,6 +401,7 @@ const TopologyContent: React.FC<{
   // Leave them for now, they are just good for understanding state changes while we develop this PFT graph.
   React.useEffect(() => {
     console.debug(`controller changed`);
+    initialLayout = true;
   }, [controller]);
 
   React.useEffect(() => {
@@ -416,7 +418,6 @@ const TopologyContent: React.FC<{
 
   React.useEffect(() => {
     console.debug(`onReady changed`);
-    initialLayout = true;
   }, [onReady]);
 
   React.useEffect(() => {
@@ -433,7 +434,6 @@ const TopologyContent: React.FC<{
 
     // When the initial layoutName property is set it is premature to perform a layout
     if (initialLayout) {
-      initialLayout = false;
       return;
     }
 
