@@ -16,11 +16,6 @@ Feature: Kiali App Details page for multicluster
     And links in the "App" description card should contain a reference to a "west" cluster
     And cluster badge for "west" cluster should be visible in the "App" description card
 
-  Scenario: See app minigraph for details app.
-    And user is at the details page for the "app" "bookinfo/reviews" located in the "west" cluster
-    Then user sees a minigraph
-    And user sees "app" from a remote "west" cluster
-
   Scenario: See app Traffic information
     And user is at the details page for the "app" "bookinfo/reviews" located in the "west" cluster
     Then user sees inbound and outbound traffic information
@@ -52,7 +47,6 @@ Feature: Kiali App Details page for multicluster
     And user is at the details page for the "app" "bookinfo/ratings" located in the "east" cluster
     Then links in the "App" description card should contain a reference to a "east" cluster
     And cluster badge for "east" cluster should be visible in the "App" description card
-    And user does not see a minigraph
 
   Scenario: See no app Traffic information for an app, which is not deployed in the specific cluster.
     And user is at the details page for the "app" "bookinfo/ratings" located in the "east" cluster

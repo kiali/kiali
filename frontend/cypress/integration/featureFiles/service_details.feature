@@ -27,12 +27,6 @@ Feature: Kiali Service Details page
     But no cluster badge for the "service" should be visible
 
   @bookinfo-app
-  @skip-ossmc
-  # todo: adapt to PF graph
-  Scenario: See service minigraph for details app.
-    Then sd::user sees a minigraph
-
-  @bookinfo-app
   Scenario: See service Traffic information
     Then sd::user sees inbound and outbound traffic information
     And the "Cluster" column "disappears"
@@ -69,11 +63,3 @@ Feature: Kiali Service Details page
     And user sees trace information
     When user selects a trace
     Then user sees span details
-
-  @bookinfo-app
-  @skip-ossmc
-  # todo: adapt to PF graph
-  Scenario: Verify that the Graph type dropdown is disabled when changing to Show node graph
-    When user sees a minigraph
-    And user chooses the "Show node graph" option
-    Then the graph type is disabled

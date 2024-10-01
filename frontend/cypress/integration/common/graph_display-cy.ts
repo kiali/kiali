@@ -1,4 +1,4 @@
-import { Before, Given, Then, When } from '@badeball/cypress-cucumber-preprocessor';
+import { Before, Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import { ensureKialiFinishedLoading } from './transition';
 
 Before(() => {
@@ -17,7 +17,7 @@ Before(() => {
   });
 });
 
-When('user graphs {string} namespaces', (namespaces: string) => {
+When('user graphs {string} namespaces in the cytoscape graph', (namespaces: string) => {
   // Forcing "Pause" to not cause unhandled promises from the browser when cypress is testing
   cy.intercept(`**/api/namespaces/graph*`).as('graphNamespaces');
 
@@ -30,118 +30,7 @@ When('user graphs {string} namespaces', (namespaces: string) => {
   ensureKialiFinishedLoading();
 });
 
-When('user opens display menu', () => {
-  cy.get('button#display-settings').click();
-});
-
-When('user enables {string} {string} edge labels', (radio: string, edgeLabel: string) => {
-  cy.get('div#graph-display-menu').find(`input#${edgeLabel}`).check();
-  cy.get(`input#${radio}`).check();
-});
-
-When('user {string} {string} edge labels', (action: string, edgeLabel: string) => {
-  if (action === 'enables') {
-    cy.get('div#graph-display-menu').find(`input#${edgeLabel}`).check();
-  } else {
-    cy.get('div#graph-display-menu').find(`input#${edgeLabel}`).uncheck();
-  }
-});
-
-When('user {string} {string} option', (action: string, option: string) => {
-  switch (option.toLowerCase()) {
-    case 'cluster boxes':
-      option = 'boxByCluster';
-      break;
-    case 'idle edges':
-      option = 'filterIdleEdges';
-      break;
-    case 'idle nodes':
-      option = 'filterIdleNodes';
-      break;
-    case 'missing sidecars':
-      option = 'filterSidecars';
-      break;
-    case 'namespace boxes':
-      option = 'boxByNamespace';
-      break;
-    case 'operation nodes':
-      option = 'filterOperationNodes';
-      break;
-    case 'rank':
-      option = 'rank';
-      break;
-    case 'service nodes':
-      option = 'filterServiceNodes';
-      break;
-    case 'security':
-      option = 'filterSecurity';
-      break;
-    case 'traffic animation':
-      option = 'filterTrafficAnimation';
-      break;
-    case 'virtual services':
-      option = 'filterVS';
-      break;
-    default:
-      option = 'xxx';
-  }
-
-  if (action === 'enables') {
-    cy.get('div#graph-display-menu').find(`input#${option}`).check();
-
-    if (option === 'rank') {
-      cy.get(`input#inboundEdges`).check();
-    }
-  } else {
-    cy.get('div#graph-display-menu').find(`input#${option}`).uncheck();
-  }
-});
-
-When('user resets to factory default', () => {
-  cy.get('button#graph-factory-reset').click();
-  cy.get('#loading_kiali_spinner').should('not.exist');
-});
-
-///////////////////
-
-Then(`user sees no namespace selected`, () => {
-  cy.get('div#empty-graph-no-namespace').should('be.visible');
-});
-
-Then(`user sees empty graph`, () => {
-  cy.get('div#empty-graph').should('be.visible');
-});
-
-Then(`user sees the {string} namespace`, ns => {
-  cy.get('div#summary-panel-graph').find('div#summary-panel-graph-heading').find(`div#ns-${ns}`).should('be.visible');
-});
-
-Then('the display menu opens', () => {
-  cy.get('button#display-settings').invoke('attr', 'aria-expanded').should('eq', 'true');
-  cy.get('div#graph-display-menu').should('exist');
-});
-
-Then('the display menu has default settings', () => {
-  cy.get('div#graph-display-menu').within(() => {
-    cy.get(`input#responseTime`).should('exist').should('not.be.checked');
-    cy.get(`input#throughput`).should('exist').should('not.be.checked');
-    cy.get(`input#trafficDistribution`).should('exist').should('not.be.checked');
-    cy.get(`input#trafficRate`).should('exist').should('not.be.checked');
-    cy.get(`input#boxByCluster`).should('exist').should('be.checked');
-    cy.get(`input#boxByNamespace`).should('exist').should('be.checked');
-    cy.get(`input#filterIdleEdges`).should('exist').should('not.be.checked');
-    cy.get(`input#filterIdleNodes`).should('exist').should('not.be.checked');
-    cy.get(`input#filterOperationNodes`).should('exist').should('not.be.checked');
-    cy.get(`input#rank`).should('exist').should('not.be.checked');
-    cy.get(`input#filterServiceNodes`).should('exist').should('be.checked');
-    cy.get(`input#filterTrafficAnimation`).should('exist').should('not.be.checked');
-    cy.get(`input#filterSidecars`).should('exist').should('be.checked');
-    cy.get(`input#filterSecurity`).should('exist').should('not.be.checked');
-    cy.get(`input#filterVS`).should('exist').should('be.checked');
-  });
-});
-
-Then('the graph reflects default settings', () => {
+Then('the cytoscape graph reflects default settings', () => {
   cy.waitForReact();
   cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false } } })
     .should('have.length', '1')
@@ -175,7 +64,7 @@ Then('the graph reflects default settings', () => {
     });
 });
 
-Then('user sees {string} edge labels', (el: string) => {
+Then('user sees {string} edge labels in the cytoscape graph', (el: string) => {
   validateInput(el, 'appear');
 
   let rate: string;
@@ -204,11 +93,7 @@ Then('user sees {string} edge labels', (el: string) => {
     });
 });
 
-Then('user sees {string} edge label option is closed', (edgeLabel: string) => {
-  validateInput(edgeLabel, 'does not appear');
-});
-
-Then('user does not see {string} boxing', (boxByType: string) => {
+Then('user does not see {string} boxing in the cytoscape graph', (boxByType: string) => {
   validateInput(`boxBy${boxByType}`, 'does not appear');
 
   cy.waitForReact();
@@ -232,7 +117,7 @@ Then('user does not see {string} boxing', (boxByType: string) => {
 // minute depending on the duration used in the test.) In the future we could possibly
 // try to add something like this, but for now I am changing the test to just ensure
 // that non-idle edges don't disappear.
-Then('idle edges {string} in the graph', (action: string) => {
+Then('idle edges {string} in the cytoscape graph', (action: string) => {
   validateInput('filterIdleEdges', action);
 
   cy.waitForReact();
@@ -257,7 +142,7 @@ Then('idle edges {string} in the graph', (action: string) => {
     });
 });
 
-Then('idle nodes {string} in the graph', (action: string) => {
+Then('idle nodes {string} in the cytoscape graph', (action: string) => {
   validateInput('filterIdleNodes', action);
 
   cy.waitForReact();
@@ -278,7 +163,7 @@ Then('idle nodes {string} in the graph', (action: string) => {
     });
 });
 
-Then('ranks {string} in the graph', (action: string) => {
+Then('ranks {string} in the cytoscape graph', (action: string) => {
   validateInput('rank', action);
 
   cy.waitForReact();
@@ -299,7 +184,7 @@ Then('ranks {string} in the graph', (action: string) => {
     });
 });
 
-Then('user does not see service nodes', () => {
+Then('user does not see service nodes in the cytoscape graph', () => {
   validateInput('filterServiceNodes', 'do not appear');
 
   cy.waitForReact();
@@ -316,7 +201,7 @@ Then('user does not see service nodes', () => {
     });
 });
 
-Then('security {string} in the graph', (action: string) => {
+Then('security {string} in the cytoscape graph', (action: string) => {
   validateInput('filterSecurity', action);
 
   cy.waitForReact();
@@ -337,43 +222,7 @@ Then('security {string} in the graph', (action: string) => {
     });
 });
 
-Then('{string} option {string} in the graph', (option: string, action: string) => {
-  switch (option.toLowerCase()) {
-    case 'missing sidecars':
-      option = 'filterSidecars';
-      break;
-    case 'traffic animation':
-      option = 'filterTrafficAnimation';
-      break;
-    case 'virtual services':
-      option = 'filterVS';
-      break;
-    default:
-      option = 'xxx';
-  }
-
-  validateInput(option, action);
-});
-
-Then('the {string} option should {string} and {string}', (option: string, optionState: string, checkState: string) => {
-  switch (option) {
-    case 'operation nodes':
-      option = 'filterOperationNodes';
-      break;
-    case 'service nodes':
-      option = 'filterServiceNodes';
-      break;
-    default:
-      option = 'xxx';
-  }
-
-  cy.get('div#graph-display-menu')
-    .find(`input#${option}`)
-    .should(optionState.replaceAll(' ', '.'))
-    .and(`be.${checkState}`);
-});
-
-Then('only a single cluster box should be visible', () => {
+Then('only a single cluster box should be visible in the cytoscape graph', () => {
   cy.waitForReact();
   cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false } } })
     .should('have.length', '1')
@@ -407,49 +256,8 @@ const validateInput = (option: string, action: string): void => {
   }
 };
 
-Given(
-  'there are Istio objects in the {string} namespace for {string} cluster',
-  (namespace: string, cluster: string) => {
-    // From test setup there should be at least a "bookinfo" VirtualService and a "bookinfo-gateway" Gateway in each cluster.
-    cy.request({ url: `api/namespaces/${namespace}/istio`, qs: { clusterName: cluster } })
-      .as(`istioConfigRequest-${cluster}`)
-      .then(response => {
-        expect(response.status).to.eq(200);
-        expect(response.body).to.have.property('gateways');
-        expect(response.body).to.have.property('virtualServices');
-        expect(response.body.gateways).to.have.length.gte(1);
-        expect(response.body.virtualServices).to.have.length.gte(1);
-      });
-  }
-);
-
 Then(
-  'the Istio objects for the {string} namespace for both clusters should be grouped together in the panel',
-  (namespace: string) => {
-    cy.get('#graph-side-panel')
-      .find(`#ns-${namespace}`)
-      .within($ns => {
-        // rightClick simiulates 'hover' since support for this is wonky in cypress: https://github.com/cypress-io/cypress/issues/10
-        cy.get(
-          ':is([data-test="icon-correct-validation"], [data-test="icon-warning-validation"], [data-test="icon-error-validation"])'
-        ).rightclick();
-      });
-
-    cy.get('@istioConfigRequest-east').then(resp => {
-      // Not going to check all the objects. Just the ones that probably exist while testing.
-      const totalObjectsEast =
-        resp.body.gateways.length + resp.body.virtualServices.length + resp.body.destinationRules.length;
-      cy.get('@istioConfigRequest-west').then(resp => {
-        const totalObjectsWest =
-          resp.body.gateways.length + resp.body.virtualServices.length + resp.body.destinationRules.length;
-        const totalObjects = totalObjectsEast + totalObjectsWest;
-        cy.get('[aria-label="Validations list"]').contains(`Istio config objects analyzed: ${totalObjects}`);
-      });
-    });
-  }
-);
-Then(
-  'user double-clicks on the {string} {string} from the {string} cluster in the main graph',
+  'user double-clicks on the {string} {string} from the {string} cluster in the main cytoscape graph',
   (name: string, type: string, cluster: string) => {
     cy.waitForReact();
     cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false } } })
@@ -473,19 +281,7 @@ Then(
   }
 );
 
-When('user opens traffic menu', () => {
-  cy.get('button#graph-traffic-dropdown').click();
-});
-
-When('user {string} {string} traffic option', (action: string, option: string) => {
-  if (action === 'enables') {
-    cy.get('div#graph-traffic-menu').find(`input#${option}`).check();
-  } else {
-    cy.get('div#graph-traffic-menu').find(`input#${option}`).uncheck();
-  }
-});
-
-Then('{int} edges appear in the graph', (edges: number) => {
+Then('{int} edges appear in the cytoscape graph', (edges: number) => {
   cy.waitForReact();
   cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false } } })
     .should('have.length', '1')

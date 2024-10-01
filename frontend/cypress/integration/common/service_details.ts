@@ -49,13 +49,6 @@ Then('sd::user sees Istio Config', () => {
   });
 });
 
-Then('sd::user sees a minigraph', () => {
-  cy.getBySel('mini-graph').within(() => {
-    cy.get('#cytoscape-graph').should('be.visible');
-    cy.get('#cy').should('be.visible');
-  });
-});
-
 Then('sd::user sees inbound and outbound traffic information', () => {
   openTab('Traffic');
 

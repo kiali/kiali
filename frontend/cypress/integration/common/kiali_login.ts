@@ -13,7 +13,7 @@ Given('all sessions are cleared', () => {
 Given('user opens base url', () => {
   cy.visit({ url: '/' });
   cy.log(auth_strategy);
-  cy.window().then((win: any) => {
+  cy.window().then(() => {
     if (auth_strategy !== 'openshift') {
       cy.log('Skipping login, Kiali is running with auth disabled');
     }

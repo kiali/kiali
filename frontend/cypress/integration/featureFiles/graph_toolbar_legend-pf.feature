@@ -1,4 +1,5 @@
 @graph-toolbar-legend
+@pft
 # don't change first line of this file - the tag is used for the test scripts to identify the test suite
 
 Feature: Kiali Graph page - Graph toolbar and legend sidebar
@@ -8,7 +9,7 @@ Feature: Kiali Graph page - Graph toolbar and legend sidebar
 
   Background:
     Given user is at administrator perspective
-    And user graphs "alpha,beta" namespaces
+    And user graphs "alpha,beta" namespaces in the patternfly graph
 
   @error-rates-app
   Scenario Outline: Check if the <label> button is usable

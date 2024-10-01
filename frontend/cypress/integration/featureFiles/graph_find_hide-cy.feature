@@ -11,30 +11,30 @@ Feature: Kiali Graph page - Find/Hide
 
   Background:
     Given user is at administrator perspective
-    And user graphs "alpha,beta" namespaces
+    And user graphs "alpha,beta" namespaces in the cytoscape graph
 
   @error-rates-app
   Scenario: Find unhealthy workloads
-    Then user sees nothing highlighted on the graph
+    Then user sees nothing highlighted on the cytoscape graph
     When user finds unhealthy workloads
-    Then user sees unhealthy workloads highlighted on the graph
+    Then user sees unhealthy workloads highlighted on the cytoscape graph
 
   @error-rates-app
   Scenario: Hide unhealthy workloads
     When user hides unhealthy workloads
-    Then user sees no unhealthy workloads on the graph
+    Then user sees no unhealthy workloads on the cytoscape graph
 
   @error-rates-app
   Scenario: Use preset find option to filter workloads
     Then user sees preset find options
     When user selects the preset the find option "Find: unhealthy nodes"
-    Then user sees unhealthy workloads highlighted on the graph
+    Then user sees unhealthy workloads highlighted on the cytoscape graph
 
   @error-rates-app
   Scenario: Use preset hide option to filter workloads
     Then user sees preset hide options
     When user selects the preset hide option "Hide: healthy nodes"
-    Then user sees no healthy workloads on the graph
+    Then user sees no healthy workloads on the cytoscape graph
 
   @error-rates-app
   Scenario: Show Graph Find/Hide help menu

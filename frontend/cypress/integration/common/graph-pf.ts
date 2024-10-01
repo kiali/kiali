@@ -5,55 +5,65 @@
 
 import { Then } from '@badeball/cypress-cucumber-preprocessor';
 
-Then('user sees a minigraph', () => {
+Then('user does not see a patternfly minigraph', () => {
+  cy.get('#MiniGraphCard').find('h5').contains('Empty Graph');
+});
+
+Then('user sees a patternfly minigraph', () => {
   cy.getBySel('mini-graph').within(() => {
     cy.get('#cytoscape-graph').should('be.visible');
     cy.get('#cy').should('be.visible');
   });
 });
 
-Then('user sees the {string} namespace deployed across the east and west clusters', (namespace: string) => {
-  cy.waitForReact();
-  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false } } })
-    .should('have.length', '1')
-    .then(() => {
-      cy.getReact('CytoscapeGraph')
-        .should('have.length', '1')
-        .getCurrentState()
-        .then(state => {
-          const namespaceBoxes = state.cy
-            .nodes()
-            .filter(node => node.data('isBox') === 'namespace' && node.data('namespace') === namespace);
-          expect(namespaceBoxes.length).to.equal(2);
-          expect(namespaceBoxes.filter(node => node.data('cluster') === 'east').length).to.equal(1);
-          expect(namespaceBoxes.filter(node => node.data('cluster') === 'west').length).to.equal(1);
-        });
-    });
-});
-
-Then('nodes in the {string} cluster should contain the cluster name in their links', (cluster: string) => {
-  cy.waitForReact();
-  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false } } })
-    .should('have.length', '1')
-    .then(() => {
-      cy.getReact('CytoscapeGraph')
-        .should('have.length', '1')
-        .getCurrentState()
-        .then(state => {
-          const nodes = state.cy.nodes().filter(node => node.data('cluster') === cluster);
-          nodes.forEach(node => {
-            const links = node.connectedEdges().filter(edge => edge.data('source') === node.id());
-            links.forEach(link => {
-              const sourceNode = nodes.toArray().find(node => node.id() === link.data('source'));
-              expect(sourceNode.data('cluster')).to.equal(cluster);
-            });
+Then(
+  'user sees the {string} namespace deployed across the east and west clusters in the patternfly graph',
+  (namespace: string) => {
+    cy.waitForReact();
+    cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false } } })
+      .should('have.length', '1')
+      .then(() => {
+        cy.getReact('CytoscapeGraph')
+          .should('have.length', '1')
+          .getCurrentState()
+          .then(state => {
+            const namespaceBoxes = state.cy
+              .nodes()
+              .filter(node => node.data('isBox') === 'namespace' && node.data('namespace') === namespace);
+            expect(namespaceBoxes.length).to.equal(2);
+            expect(namespaceBoxes.filter(node => node.data('cluster') === 'east').length).to.equal(1);
+            expect(namespaceBoxes.filter(node => node.data('cluster') === 'west').length).to.equal(1);
           });
-        });
-    });
-});
+      });
+  }
+);
 
 Then(
-  'user clicks on the {string} workload in the {string} namespace in the {string} cluster',
+  'nodes in the {string} cluster in the patternfly graph should contain the cluster name in their links',
+  (cluster: string) => {
+    cy.waitForReact();
+    cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false } } })
+      .should('have.length', '1')
+      .then(() => {
+        cy.getReact('CytoscapeGraph')
+          .should('have.length', '1')
+          .getCurrentState()
+          .then(state => {
+            const nodes = state.cy.nodes().filter(node => node.data('cluster') === cluster);
+            nodes.forEach(node => {
+              const links = node.connectedEdges().filter(edge => edge.data('source') === node.id());
+              links.forEach(link => {
+                const sourceNode = nodes.toArray().find(node => node.id() === link.data('source'));
+                expect(sourceNode.data('cluster')).to.equal(cluster);
+              });
+            });
+          });
+      });
+  }
+);
+
+Then(
+  'user clicks on the {string} workload in the {string} namespace in the {string} cluster in the patternfly graph',
   (workload: string, namespace: string, cluster: string) => {
     cy.waitForReact();
     cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false } } })

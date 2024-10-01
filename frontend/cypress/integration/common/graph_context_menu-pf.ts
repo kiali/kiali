@@ -2,25 +2,21 @@ import { Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import { ensureKialiFinishedLoading } from './transition';
 
 // Single cluster only.
-When('user opens the context menu of the {string} service node', (svcName: string) => {
+When('user opens the context menu of the {string} service node in the patternfly graph', (svcName: string) => {
   ensureKialiFinishedLoading();
   cy.waitForReact();
-  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false } } })
+
+  cy.getReact('GraphPagePFComponent', { state: { graphData: { isLoading: false } } })
     .should('have.length', '1')
     .then(() => {
-      cy.getReact('CytoscapeGraph')
-        .should('have.length', '1')
-        .getCurrentState()
-        .then(state => {
-          const node = state.cy.nodes(`[nodeType="service"][service="${svcName}"]`);
-          node.emit('cxttapstart');
-          cy.wrap(node).as('contextNode');
-        });
+      cy.getReact('GraphPF').should('have.length', '1');
+      cy.get('.pf-topology__node__label').contains(svcName).parent().find('.pf-topology__node__action-icon').click();
+      cy.waitForReact();
     });
 });
 
 When(
-  'user opens the context menu of the {string} service node on the {string} cluster',
+  'user opens the context menu of the {string} service node on the {string} cluster in the patternfly graph',
   (svcName: string, cluster: string) => {
     ensureKialiFinishedLoading();
     cy.waitForReact();
@@ -59,31 +55,11 @@ When(
   }
 );
 
-When('user clicks the {string} item of the context menu', (menuKey: string) => {
-  cy.get(`[data-test="graph-node-context-menu"] [data-test="${menuKey}"]`).then($item => {
-    cy.wrap($item).click();
-  });
-});
-
-When('user clicks the {string} action of the context menu', (actionKey: string) => {
-  cy.get(`[data-test="graph-node-context-menu"] [data-test="${actionKey}_action"]`).then($item => {
-    cy.wrap($item).click();
-  });
-});
-
-Then('user should see the confirmation dialog to delete all traffic routing', () => {
-  cy.get('[data-test=delete-traffic-routing-modal]').should('exist');
-});
-
-Then('user should see the {string} wizard', (wizardKey: string) => {
-  cy.get(`[data-test=${wizardKey}_modal]`).should('exist');
-});
-
 Then(
-  'user should see no cluster parameter in the url when clicking the {string} link in the context menu',
+  'user should see no cluster parameter in the url when clicking the {string} link in the context menu in the patternfly graph',
   (linkText: string) => {
-    cy.get(`[data-test="graph-node-context-menu"]`).within(() => {
-      cy.get('a')
+    cy.get(`.pf-topology-context-menu__c-dropdown__menu`).within(() => {
+      cy.get('button')
         .contains(linkText)
         .click()
         .then(() => {
@@ -95,10 +71,10 @@ Then(
 );
 
 Then(
-  'user should see the {string} cluster parameter in the url when clicking the {string} link in the context menu',
+  'user should see the {string} cluster parameter in the url when clicking the {string} link in the context menu in the patternfly graph',
   (cluster: string, linkText: string) => {
-    cy.get(`[data-test="graph-node-context-menu"]`).within(() => {
-      cy.get('a')
+    cy.get(`.pf-topology-context-menu__c-dropdown__menu`).within(() => {
+      cy.get('button')
         .contains(linkText)
         .click()
         .then(() => {

@@ -8,7 +8,6 @@ Feature: Kiali Workload Details page
   a minigraph for traffic going to and originating from the workload. In addition,
   there should be tabs for viewing workload specific traffic, inbound/outbound metrics and Envoy information, including metrics.
 
-
   Background:
     Given user is at administrator perspective
     And user is at the details page for the "workload" "bookinfo/reviews-v2" located in the "west" cluster
@@ -17,10 +16,6 @@ Feature: Kiali Workload Details page
     Then user sees details information for a remote workload
     And links in the "Workload" description card should contain a reference to a "west" cluster
     And cluster badge for "west" cluster should be visible in the "Workload" description card
-
-  Scenario: See minigraph for workload.
-    Then user sees a minigraph
-    And user sees "service" from a remote "west" cluster
 
   Scenario: See workload traffic information
     Then user sees workload inbound and outbound traffic information for the remote workload
@@ -66,7 +61,6 @@ Feature: Kiali Workload Details page
     And user is at the details page for the "workload" "bookinfo/ratings-v1" located in the "east" cluster
     And links in the "Workload" description card should contain a reference to a "east" cluster
     And cluster badge for "east" cluster should be visible in the "Workload" description card
-    And user does not see a minigraph
 
   Scenario: See no app Traffic information for a workload, which is not present in the specific cluster.
     And user is at the details page for the "workload" "bookinfo/ratings-v1" located in the "east" cluster

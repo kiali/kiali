@@ -1,5 +1,6 @@
 
 @graph-display-user
+@pft
 # don't change first line of this file - the tag is used for the test scripts to identify the test suite
 
 Feature: Kiali Graph page - Display menu for non-admin users
@@ -14,5 +15,5 @@ Feature: Kiali Graph page - Display menu for non-admin users
   @multi-cluster
   @multi-primary
   Scenario: Remote nodes should be restricted if user does not have access rights to a remote namespace
-    When user graphs "bookinfo" namespaces
-    Then the nodes located in the "west" cluster should be restricted
+    When user graphs "bookinfo" namespaces in the patternfly graph
+    Then the nodes on the patternfly graph located in the "west" cluster should be restricted

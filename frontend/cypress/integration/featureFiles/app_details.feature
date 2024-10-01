@@ -19,10 +19,6 @@ Feature: Kiali App Details page
     But no cluster badge for the "app" should be visible
 
   @bookinfo-app
-  Scenario: See app minigraph for details app.
-    Then user sees a minigraph
-
-  @bookinfo-app
   Scenario: See app Traffic information
     Then user sees inbound and outbound traffic information
     And the "Cluster" column "disappears"

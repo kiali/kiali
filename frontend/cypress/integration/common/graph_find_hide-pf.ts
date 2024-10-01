@@ -11,7 +11,7 @@ Then('user finds unhealthy workloads', () => {
   cy.get('#graph_find').type('!healthy{enter}');
 });
 
-Then('user sees unhealthy workloads highlighted on the graph', () => {
+Then('user sees unhealthy workloads highlighted on the patternfly graph', () => {
   const expectedUnhealthyNodes = [
     {
       app: 'v-server',
@@ -50,7 +50,7 @@ Then('user sees unhealthy workloads highlighted on the graph', () => {
     });
 });
 
-Then('user sees nothing highlighted on the graph', () => {
+Then('user sees nothing highlighted on the patternfly graph', () => {
   cy.contains('Loading Graph').should('not.exist');
 
   cy.waitForReact();
@@ -72,7 +72,7 @@ When('user hides unhealthy workloads', () => {
   cy.get('#graph_hide').type('!healthy{enter}');
 });
 
-Then('user sees no unhealthy workloads on the graph', () => {
+Then('user sees no unhealthy workloads on the patternfly graph', () => {
   cy.waitForReact();
   cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false } } })
     .should('have.length', '1')
@@ -109,7 +109,7 @@ When('user selects the preset hide option {string}', (option: string) => {
   cy.get('#graph-hide-presets').contains(option).click();
 });
 
-Then('user sees no healthy workloads on the graph', () => {
+Then('user sees no healthy workloads on the patternfly graph', () => {
   cy.waitForReact();
   cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false } } })
     .should('have.length', '1')

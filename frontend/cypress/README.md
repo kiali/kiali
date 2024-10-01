@@ -250,7 +250,7 @@ To execute only specific subset of the test suite, tag the Gherkin scenarios wit
 @selected
 @bookinfo-app
 Scenario: See minigraph for workload.
-    Then user sees a minigraph
+    Then user sees a patternfly minigraph
 ```
  You can then run these using:
 ```bash

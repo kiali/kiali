@@ -12,10 +12,6 @@ Then('sd::user sees {string} details information for the remote service {string}
   });
 });
 
-Then('user does not see a minigraph', () => {
-  cy.get('#MiniGraphCard').find('h5').contains('Empty Graph');
-});
-
 Then('sd::user sees inbound and outbound traffic information for the remote service', () => {
   openTab('Traffic');
 
