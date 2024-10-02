@@ -3,6 +3,7 @@ import { RateTableGrpc, RateTableHttp } from '../../components/SummaryPanel/Rate
 import { RequestChart, StreamChart } from '../../components/SummaryPanel/RpsChart';
 import { ResponseTimeChart, ResponseTimeUnit } from '../../components/SummaryPanel/ResponseTimeChart';
 import {
+  DecoratedGraphEdgeData,
   DecoratedGraphNodeData,
   GraphType,
   NodeType,
@@ -52,12 +53,12 @@ type SummaryPanelEdgeMetricsState = {
   rtMed: Datapoint[];
   sent: Datapoint[];
   unit: ResponseTimeUnit;
-  waypointReceived?: Datapoint[];
-  waypointSent?: Datapoint[];
+  waypointReverseReceived?: Datapoint[];
+  waypointReverseSent?: Datapoint[];
 };
 
 type SummaryPanelEdgeState = SummaryPanelEdgeMetricsState & {
-  activePanel: string;
+  activePanel: PanelType;
   edge: any;
   loading: boolean;
   metricsLoadError: string | null;
@@ -77,7 +78,7 @@ const defaultMetricsState: SummaryPanelEdgeMetricsState = {
 
 enum PanelType {
   Main = 'main',
-  Waypoint = 'waypoint'
+  WaypointReverse = 'waypointReverse'
 }
 
 const defaultState: SummaryPanelEdgeState = {
@@ -98,10 +99,6 @@ const principalStyle = kialiStyle({
 
 const switchWaypointIcon = kialiStyle({
   marginTop: '-3em'
-});
-
-const hideStyle = kialiStyle({
-  display: 'none'
 });
 
 const fromToStyle = kialiStyle({
@@ -155,7 +152,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
   updateTab = (e: React.MouseEvent<HTMLAnchorElement>): void => {
     e.preventDefault();
     if (this.state.activePanel === PanelType.Main) {
-      this.setState({ activePanel: PanelType.Waypoint });
+      this.setState({ activePanel: PanelType.WaypointReverse });
     } else {
       this.setState({ activePanel: PanelType.Main });
     }
@@ -164,9 +161,13 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
   render(): React.ReactNode {
     const isPF = !!this.props.data.isPF;
     const edge = this.props.data.summaryTarget;
-    const edgeData = isPF ? (edge as Edge).getData() : decoratedEdgeData(edge);
-    const sourceData = isPF ? (edge as Edge).getSource().getData() : decoratedNodeData(edge.source());
-    const destData = isPF ? (edge as Edge).getTarget().getData() : decoratedNodeData(edge.target());
+    const edgeData = isPF ? ((edge as Edge).getData() as DecoratedGraphEdgeData) : decoratedEdgeData(edge);
+    const sourceData = isPF
+      ? ((edge as Edge).getSource().getData() as DecoratedGraphNodeData)
+      : decoratedNodeData(edge.source());
+    const destData = isPF
+      ? ((edge as Edge).getTarget().getData() as DecoratedGraphNodeData)
+      : decoratedNodeData(edge.target());
     const mTLSPercentage = edgeData.isMTLS;
     const isMtls = mTLSPercentage && mTLSPercentage > 0;
     const hasPrincipals = !!edgeData.sourcePrincipal || !!edgeData.destPrincipal;
@@ -176,7 +177,6 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
     const isHttp = protocol === Protocol.HTTP;
     const isTcp = protocol === Protocol.TCP;
     const isRequests = isHttp || (isGrpc && this.props.trafficRates.includes(TrafficRate.GRPC_REQUEST));
-    const waypoint = edgeData.waypoint?.fromEdge;
 
     const SecurityBlock = (): React.ReactElement => {
       return (
@@ -200,16 +200,26 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
         </div>
       );
     };
-    const MainSummary = ({ waypointEdge }: { waypointEdge?: boolean }): React.ReactElement => {
-      const source = waypointEdge ? destData : sourceData;
-      const dest = waypointEdge ? sourceData : destData;
+
+    const MainSummary = (): React.ReactElement => {
+      const isWaypointEdge = !!edgeData.waypoint;
+      const isBidirectional = isWaypointEdge && !!edgeData.waypoint?.fromEdge;
+      const isReversed = isBidirectional && this.state.activePanel === PanelType.WaypointReverse;
+      const source = isReversed ? destData : sourceData;
+      const dest = isReversed ? sourceData : destData;
       return (
         <div>
           <div className={panelHeadingStyle}>
             {getTitle(`Edge (${prettyProtocol(protocol)})`)}
-            {renderBadgedLink(source, undefined, 'From:  ', undefined, waypoint ? fromToStyle : undefined)}
-            {renderBadgedLink(dest, undefined, 'To:        ', undefined, waypoint ? fromToStyle : undefined)}{' '}
-            {waypoint && (
+            {renderBadgedLink(source, undefined, 'From:  ', undefined, isBidirectional ? fromToStyle : undefined)}
+            {renderBadgedLink(
+              dest,
+              undefined,
+              'To:        ',
+              undefined,
+              isBidirectional ? fromToStyle : undefined
+            )}{' '}
+            {isBidirectional && (
               <div className={switchWaypointIcon}>
                 <Tooltip key="waypoint" position="top" content="Switch From/To">
                   <a
@@ -290,7 +300,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
                   <div style={summaryFont}>
                     <ResponseFlagsTable
                       title="Response flags by code:"
-                      responses={waypointEdge ? waypoint.responses : edgeData.responses}
+                      responses={isReversed ? edgeData.waypoint!.fromEdge!.responses : edgeData.responses}
                     />
                   </div>
                 </Tab>
@@ -299,7 +309,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
                   <div style={summaryFont}>
                     <ResponseHostsTable
                       title="Hosts by code:"
-                      responses={waypointEdge ? waypoint.responses : edgeData.responses}
+                      responses={isReversed ? edgeData.waypoint!.fromEdge!.responses : edgeData.responses}
                     />
                   </div>
                 </Tab>
@@ -307,7 +317,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
 
               {hr()}
 
-              {this.renderCharts(edge, isGrpc, isHttp, isTcp, isRequests, isPF, waypointEdge)}
+              {this.renderCharts(edge, isGrpc, isHttp, isTcp, isRequests, isPF, isReversed)}
             </div>
           )}
 
@@ -318,17 +328,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
 
     return (
       <div ref={this.mainDivRef} className={classes(panelStyle, summaryPanel)}>
-        {!waypoint && <MainSummary />}
-        {waypoint && (
-          <>
-            <div className={this.state.activePanel === 'main' ? '' : hideStyle}>
-              <MainSummary waypointEdge={false} />
-            </div>
-            <div className={this.state.activePanel === 'waypoint' ? '' : hideStyle}>
-              <MainSummary waypointEdge={true} />
-            </div>
-          </>
-        )}
+        <MainSummary />
       </div>
     );
   }
@@ -433,7 +433,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
   private updateCharts = (props: SummaryPanelPropType): void => {
     const isPF = !!props.data.isPF;
     const edge = this.props.data.summaryTarget;
-    const edgeData = isPF ? (edge as Edge).getData() : decoratedEdgeData(edge);
+    const edgeData = isPF ? ((edge as Edge).getData() as DecoratedGraphEdgeData) : decoratedEdgeData(edge);
     const sourceData = isPF
       ? ((edge as Edge).getSource().getData() as DecoratedGraphNodeData)
       : decoratedNodeData(edge.source());
@@ -447,6 +447,8 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
     const isHttp = protocol === Protocol.HTTP;
     const isTcp = protocol === Protocol.TCP;
     const isRequests = isHttp || (isGrpc && this.props.trafficRates.includes(TrafficRate.GRPC_REQUEST));
+    const isWaypointEdge = !!edgeData.waypoint;
+    const isBidirectional = isWaypointEdge && !!edgeData.waypoint?.fromEdge;
 
     if (this.metricsPromise) {
       this.metricsPromise.cancel();
@@ -486,8 +488,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
       const reporterRps =
         [NodeType.SERVICE, NodeType.UNKNOWN].includes(sourceData.nodeType) ||
         NodeType.AGGREGATE === metricsNodeData.nodeType ||
-        sourceData.isIstio ||
-        edgeData.isIstio
+        sourceData.isIstio
           ? 'destination'
           : 'source';
 
@@ -529,12 +530,15 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
     } else {
       // TCP uses slightly different reporting
       const reporterTCP =
-        [NodeType.AGGREGATE, NodeType.UNKNOWN].includes(sourceData.nodeType) || sourceData.isIstio
+        [NodeType.AGGREGATE, NodeType.UNKNOWN].includes(sourceData.nodeType) ||
+        sourceData.isIstio ||
+        (isWaypointEdge && edgeData.waypoint?.direction === 'from')
           ? 'destination'
           : 'source';
       const filtersTCP = ['tcp_sent', 'tcp_received'];
 
-      if (edgeData.waypoint?.fromEdge) {
+      // for bidirectional edges make an additional fetch for the reverse direction's metrics
+      if (isBidirectional) {
         const waypointMetricType = sourceMetricType;
         const waypointMetricsNodeData = sourceData;
         const waypointPromRequests = getNodeMetrics(
@@ -571,8 +575,8 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
             );
 
             this.setState({
-              waypointSent: sent,
-              waypointReceived: received
+              waypointReverseSent: sent,
+              waypointReverseReceived: received
             });
           })
           .catch(error => {
@@ -710,7 +714,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
     isTcp: boolean,
     isRequests: boolean,
     isPF: boolean,
-    waypointEdge?: boolean
+    isWaypointEdge?: boolean
   ): React.ReactNode => {
     if (!this.hasSupportedCharts(edge, isPF)) {
       return isGrpc || isHttp ? (
@@ -784,12 +788,12 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
         );
       }
     } else if (isTcp) {
-      if (waypointEdge && this.state.waypointSent && this.state.waypointReceived) {
+      if (isWaypointEdge && this.state.waypointReverseSent && this.state.waypointReverseReceived) {
         streamChart = (
           <StreamChart
             label="TCP Traffic (Waypoint)"
-            sentRates={this.state.waypointSent}
-            receivedRates={this.state.waypointReceived}
+            sentRates={this.state.waypointReverseSent}
+            receivedRates={this.state.waypointReverseReceived}
             unit="bytes"
           />
         );
