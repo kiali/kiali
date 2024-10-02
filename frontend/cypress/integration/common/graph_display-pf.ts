@@ -143,7 +143,7 @@ Then('the display menu has default settings', () => {
 
 Then('the patternfly graph reflects default settings', () => {
   cy.waitForReact();
-  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false } } })
+  cy.getReact('GraphPageComponent', { state: { isReady: true } })
     .should('have.length', '1')
     .then(() => {
       cy.getReact('CytoscapeGraph')
@@ -191,7 +191,7 @@ Then('user sees {string} edge labels in the patternfly graph', (el: string) => {
   }
 
   cy.waitForReact();
-  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false } } })
+  cy.getReact('GraphPageComponent', { state: { isReady: true } })
     .should('have.length', '1')
     .then(() => {
       cy.getReact('CytoscapeGraph')
@@ -212,7 +212,7 @@ Then('user does not see {string} boxing in the patternfly graph', (boxByType: st
   validateInput(`boxBy${boxByType}`, 'does not appear');
 
   cy.waitForReact();
-  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false } } })
+  cy.getReact('GraphPageComponent', { state: { isReady: true } })
     .should('have.length', '1')
     .then(() => {
       cy.getReact('CytoscapeGraph')
@@ -236,7 +236,7 @@ Then('idle edges {string} in the patternfly graph', (action: string) => {
   validateInput('filterIdleEdges', action);
 
   cy.waitForReact();
-  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false } } })
+  cy.getReact('GraphPageComponent', { state: { isReady: true } })
     .should('have.length', '1')
     .then(() => {
       cy.getReact('CytoscapeGraph')
@@ -261,7 +261,7 @@ Then('idle nodes {string} in the patternfly graph', (action: string) => {
   validateInput('filterIdleNodes', action);
 
   cy.waitForReact();
-  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false } } })
+  cy.getReact('GraphPageComponent', { state: { isReady: true } })
     .should('have.length', '1')
     .then(() => {
       cy.getReact('CytoscapeGraph')
@@ -282,7 +282,7 @@ Then('ranks {string} in the patternfly graph', (action: string) => {
   validateInput('rank', action);
 
   cy.waitForReact();
-  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false } } })
+  cy.getReact('GraphPageComponent', { state: { isReady: true } })
     .should('have.length', '1')
     .then(() => {
       cy.getReact('CytoscapeGraph')
@@ -303,7 +303,7 @@ Then('user does not see service nodes in the patternfly graph', () => {
   validateInput('filterServiceNodes', 'do not appear');
 
   cy.waitForReact();
-  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false } } })
+  cy.getReact('GraphPageComponent', { state: { isReady: true } })
     .should('have.length', '1')
     .then(() => {
       cy.getReact('CytoscapeGraph')
@@ -320,7 +320,7 @@ Then('security {string} in the patternfly graph', (action: string) => {
   validateInput('filterSecurity', action);
 
   cy.waitForReact();
-  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false } } })
+  cy.getReact('GraphPageComponent', { state: { isReady: true } })
     .should('have.length', '1')
     .then(() => {
       cy.getReact('CytoscapeGraph')
@@ -375,7 +375,7 @@ Then('the {string} option should {string} and {string}', (option: string, option
 
 Then('only a single cluster box should be visible in the patternfly graph', () => {
   cy.waitForReact();
-  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false } } })
+  cy.getReact('GraphPageComponent', { state: { isReady: true } })
     .should('have.length', '1')
     .then(() => {
       cy.getReact('CytoscapeGraph')
@@ -452,7 +452,7 @@ Then(
   'user double-clicks on the {string} {string} from the {string} cluster in the main patternfly graph',
   (name: string, type: string, cluster: string) => {
     cy.waitForReact();
-    cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false } } })
+    cy.getReact('GraphPageComponent', { state: { isReady: true } })
       .should('have.length', '1')
       .then(() => {
         cy.getReact('CytoscapeGraph')
@@ -487,7 +487,7 @@ When('user {string} {string} traffic option', (action: string, option: string) =
 
 Then('{int} edges appear in the patternfly graph', (edges: number) => {
   cy.waitForReact();
-  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false } } })
+  cy.getReact('GraphPageComponent', { state: { isReady: true } })
     .should('have.length', '1')
     .then(() => {
       cy.getReact('CytoscapeGraph')

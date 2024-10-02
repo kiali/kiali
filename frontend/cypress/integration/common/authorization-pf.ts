@@ -11,7 +11,7 @@ Then(`user see the {string} link`, link => {
 
 Then('the nodes on the patternfly graph located in the {string} cluster should be restricted', (cluster: string) => {
   cy.waitForReact();
-  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false } } })
+  cy.getReact('GraphPageComponent', { state: { isReady: true } })
     .should('have.length', '1')
     .then(() => {
       cy.getReact('CytoscapeGraph')

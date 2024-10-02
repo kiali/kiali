@@ -126,7 +126,7 @@ Then('user does not see graph traffic menu', () => {
 
 Then('user {string} {string} traffic', (action: string, protocol: string) => {
   cy.waitForReact();
-  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false } } })
+  cy.getReact('GraphPageComponent', { state: { isReady: true } })
     .should('have.length', '1')
     .then(() => {
       cy.getReact('CytoscapeGraph')
@@ -228,7 +228,7 @@ Then('user sees selected graph refresh {string}', (refresh: string) => {
 
 Then('user sees a {string} patternfly graph', graphType => {
   cy.waitForReact();
-  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false } } })
+  cy.getReact('GraphPageComponent', { state: { isReady: true } })
     .should('have.length', '1')
     .then(() => {
       cy.getReact('CytoscapeGraph')
