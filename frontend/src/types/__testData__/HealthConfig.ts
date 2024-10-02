@@ -19,7 +19,7 @@ export const healthConfig = {
       graph: {
         findOptions: [],
         hideOptions: [],
-        impl: 'cy',
+        impl: 'pf',
         settings: {
           fontLabel: 13,
           minFontBadge: 7,
@@ -44,8 +44,7 @@ export const healthConfig = {
       },
       mesh: {
         findOptions: [],
-        hideOptions: [],
-        impl: 'classic'
+        hideOptions: []
       },
       metricsPerRefresh: '1m',
       namespaces: [],

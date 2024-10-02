@@ -85,7 +85,7 @@ export const serverRateConfig = {
       graph: {
         findOptions: [],
         hideOptions: [],
-        impl: 'cy',
+        impl: 'pf',
         settings: {
           fontLabel: 13,
           minFontBadge: 7,
@@ -110,8 +110,7 @@ export const serverRateConfig = {
       },
       mesh: {
         findOptions: [],
-        hideOptions: [],
-        impl: 'classic'
+        hideOptions: []
       },
       metricsPerRefresh: '1m',
       namespaces: [],

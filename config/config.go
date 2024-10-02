@@ -823,7 +823,7 @@ func NewConfig() (c *Config) {
 							Expression:  "rank > 2",
 						},
 					},
-					Impl: "cy",
+					Impl: "pf",
 					Settings: GraphSettings{
 						FontLabel:    13,
 						MinFontBadge: 7,
