@@ -288,7 +288,7 @@ const TopologyContent: React.FC<{
       initialLayout = false;
       onReady({ getController: () => controller, setSelectedIds: setSelectedIds });
     }
-  }, [fitView]);
+  }, [controller, fitView, onReady, setSelectedIds]);
 
   //
   // Set detail levels for graph (control zoom-sensitive labels)
