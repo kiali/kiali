@@ -123,23 +123,23 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
     const urlParams = new URLSearchParams(location.getSearch());
     const urlFind = HistoryManager.getParam(URLParam.MESH_FIND, urlParams);
 
-    if (!!urlFind) {
+    if (urlFind) {
       if (urlFind !== findValue) {
         findValue = urlFind;
         props.setFindValue(urlFind);
       }
-    } else if (!!findValue) {
+    } else if (findValue) {
       HistoryManager.setParam(URLParam.MESH_FIND, findValue);
     }
 
     const urlHide = HistoryManager.getParam(URLParam.MESH_HIDE, urlParams);
 
-    if (!!urlHide) {
+    if (urlHide) {
       if (urlHide !== hideValue) {
         hideValue = urlHide;
         props.setHideValue(urlHide);
       }
-    } else if (!!hideValue) {
+    } else if (hideValue) {
       HistoryManager.setParam(URLParam.MESH_HIDE, hideValue);
     }
 
@@ -184,6 +184,7 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
       return;
     }
 
+    const controllerChanged = this.props.controller !== prevProps.controller;
     const findChanged = this.props.findValue !== prevProps.findValue;
     const hideChanged = this.props.hideValue !== prevProps.hideValue;
     const meshChanged = this.props.updateTime !== prevProps.updateTime;
@@ -205,7 +206,7 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
     }
 
     // make sure the value is updated if there was a change
-    if (findChanged || (meshChanged && !!this.props.findValue)) {
+    if (controllerChanged || findChanged || (meshChanged && this.props.findValue)) {
       // ensure findInputValue is aligned if findValue is set externally (e.g. resetSettings)
       if (this.state.findInputValue !== this.props.findValue) {
         this.setFind(this.props.findValue);
@@ -214,7 +215,7 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
       this.handleFind(this.props.controller);
     }
 
-    if (hideChanged || (meshChanged && !!this.props.hideValue)) {
+    if (controllerChanged || hideChanged || (meshChanged && this.props.hideValue)) {
       // ensure hideInputValue is aligned if hideValue is set externally (e.g. resetSettings)
       if (this.state.hideInputValue !== this.props.hideValue) {
         this.setHide(this.props.hideValue);
@@ -354,7 +355,7 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
         event.preventDefault();
         const next = this.findAutoComplete.next();
 
-        if (!!next) {
+        if (next) {
           this.findInputRef.value = next;
           this.findInputRef.scrollLeft = this.findInputRef.scrollWidth;
           this.setState({ findInputValue: next, findError: undefined });
@@ -416,7 +417,7 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
         event.preventDefault();
         const next = this.hideAutoComplete.next();
 
-        if (!!next) {
+        if (next) {
           this.hideInputRef.value = next;
           this.hideInputRef.scrollLeft = this.hideInputRef.scrollWidth;
           this.setState({ hideInputValue: next, hideError: undefined });
@@ -489,7 +490,7 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
     console.debug(`Mesh Hide selector=[${JSON.stringify(selector)}]`);
 
     // unhide hidden elements when we are dealing with the same mesh. Either way,release for garbage collection
-    if (!!this.hiddenElements && !meshChanged) {
+    if (this.hiddenElements && !meshChanged) {
       needLayout = true;
       this.hiddenElements.forEach(e => this.unhideElement(mesh, e));
     }
@@ -552,7 +553,7 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
       this.hiddenElements = finalNodes.concat(finalEdges);
     }
 
-    if (needLayout || !!this.hiddenElements) {
+    if (needLayout || this.hiddenElements) {
       controller.getGraph().reset();
       controller.getGraph().layout();
       controller.getGraph().fit(FIT_PADDING);
@@ -572,7 +573,7 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
     this.findElements = undefined;
 
     // add new find-hits
-    if (!!selector.nodeSelector || !!selector.edgeSelector) {
+    if (selector.nodeSelector || selector.edgeSelector) {
       const { nodes, edges } = elems(controller);
       let findNodes = [] as GraphElement[];
       let findEdges = [] as GraphElement[];
@@ -595,10 +596,10 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
 
   private setError(error: string | undefined, isFind: boolean): undefined {
     if (isFind && error !== this.state.findError) {
-      const findError = !!error ? `Find: ${error}` : undefined;
+      const findError = error ? `Find: ${error}` : undefined;
       this.setState({ findError: findError });
     } else if (error !== this.state.hideError) {
-      const hideError = !!error ? `Hide: ${error}` : undefined;
+      const hideError = error ? `Hide: ${error}` : undefined;
       this.setState({ hideError: hideError });
     }
 

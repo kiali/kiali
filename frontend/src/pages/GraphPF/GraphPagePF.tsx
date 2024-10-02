@@ -147,6 +147,13 @@ export type GraphPagePropsPF = Partial<GraphURLPathProps> &
     lastRefreshAt: TimeInMilliseconds; // redux by way of ConnectRefresh
   };
 
+// GraphRefs are passed back from the graph when it is ready, to allow for
+// other components, or test code, to manipulate the graph programatically.
+export type GraphRefs = {
+  getController: () => Controller;
+  setSelectedIds: (values: string[]) => void;
+};
+
 type WizardsData = {
   // Data (payload) sent to the wizard or the confirm delete dialog
   gateways: string[];
@@ -162,6 +169,7 @@ type WizardsData = {
 
 type GraphPageStatePF = {
   graphData: GraphData;
+  graphRefs?: GraphRefs;
   showConfirmDeleteTrafficRouting: boolean;
   wizardsData: WizardsData;
 };
@@ -213,7 +221,6 @@ const GraphErrorBoundaryFallback = (): React.ReactElement => {
 };
 
 class GraphPagePFComponent extends React.Component<GraphPagePropsPF, GraphPageStatePF> {
-  private controller?: Controller;
   private readonly errorBoundaryRef: any;
   private focusNode?: FocusNode;
   private graphDataSource: GraphDataSource;
@@ -290,7 +297,6 @@ class GraphPagePFComponent extends React.Component<GraphPagePropsPF, GraphPageSt
 
   constructor(props: GraphPagePropsPF) {
     super(props);
-    this.controller = undefined;
     this.errorBoundaryRef = React.createRef();
     const focusNodeId = getFocusSelector();
     if (focusNodeId) {
@@ -307,6 +313,7 @@ class GraphPagePFComponent extends React.Component<GraphPagePropsPF, GraphPageSt
         isLoading: true,
         timestamp: 0
       },
+
       wizardsData: {
         showWizard: false,
         wizardType: '',
@@ -364,10 +371,6 @@ class GraphPagePFComponent extends React.Component<GraphPagePropsPF, GraphPageSt
 
   componentDidUpdate(prev: GraphPagePropsPF): void {
     const curr = this.props;
-
-    if (curr.summaryData?.summaryType === 'graph') {
-      this.controller = curr.summaryData.summaryTarget;
-    }
 
     const activeNamespacesChanged = !arrayEquals(
       prev.activeNamespaces,
@@ -443,7 +446,7 @@ class GraphPagePFComponent extends React.Component<GraphPagePropsPF, GraphPageSt
         <FlexView className={conStyle} column={true}>
           <div>
             <GraphToolbar
-              controller={this.controller}
+              controller={this.state.graphRefs?.getController()}
               disabled={this.state.graphData.isLoading}
               elementsChanged={this.state.graphData.elementsChanged}
               isPF={true}
@@ -482,10 +485,11 @@ class GraphPagePFComponent extends React.Component<GraphPagePropsPF, GraphPageSt
                     toggleIdleNodes={this.props.toggleIdleNodes}
                   >
                     <GraphPF
+                      {...this.props}
                       focusNode={this.focusNode}
                       graphData={this.state.graphData}
                       isMiniGraph={false}
-                      {...this.props}
+                      onReady={this.handleReady}
                     />
                   </EmptyGraphLayout>
                 </div>
@@ -551,6 +555,10 @@ class GraphPagePFComponent extends React.Component<GraphPagePropsPF, GraphPageSt
   // TODO Focus...
   private onFocus = (focusNode: FocusNode): void => {
     console.debug(`onFocus(${focusNode})`);
+  };
+
+  private handleReady = (refs: GraphRefs): void => {
+    this.setState({ graphRefs: refs });
   };
 
   private handleEmptyGraphAction = (): void => {
@@ -776,7 +784,7 @@ const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
 const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => ({
   endTour: bindActionCreators(TourActions.endTour, dispatch),
   onNamespaceChange: bindActionCreators(GraphActions.onNamespaceChange, dispatch),
-  onReady: (controller: any) => dispatch(GraphThunkActions.graphPFReady(controller)),
+  onReady: (controller: Controller) => dispatch(GraphThunkActions.graphPFReady(controller)),
   setActiveNamespaces: (namespaces: Namespace[]) => dispatch(NamespaceActions.setActiveNamespaces(namespaces)),
   setEdgeMode: bindActionCreators(GraphActions.setEdgeMode, dispatch),
   setGraphDefinition: bindActionCreators(GraphActions.setGraphDefinition, dispatch),

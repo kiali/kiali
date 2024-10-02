@@ -68,6 +68,7 @@ import { tcpTimerConfig, timerConfig } from 'components/CytoscapeGraph/TrafficAn
 import { TourStop } from 'components/Tour/TourStop';
 import { GraphTourStops } from 'pages/Graph/GraphHelpTour';
 import { supportsGroups } from 'utils/GraphUtils';
+import { GraphRefs } from './GraphPagePF';
 
 let initialLayout = false;
 let requestFit = false;
@@ -116,7 +117,7 @@ const TopologyContent: React.FC<{
   layoutName: LayoutName;
   onEdgeTap?: (edge: Edge<EdgeModel>) => void;
   onNodeTap?: (node: Node<NodeModel>) => void;
-  onReady: (controller: any) => void;
+  onReady: (refs: GraphRefs) => void;
   setEdgeMode: (edgeMode: EdgeMode) => void;
   setLayout: (val: LayoutName) => void;
   setUpdateTime: (val: TimeInMilliseconds) => void;
@@ -280,7 +281,14 @@ const TopologyContent: React.FC<{
       requestFit = false;
       fitView();
     }
-  }, [fitView]);
+
+    // we need to finish the initial layout before we advertise to the outside
+    // world that the graph is ready for external processing (like find/hide)
+    if (initialLayout) {
+      initialLayout = false;
+      onReady({ getController: () => controller, setSelectedIds: setSelectedIds });
+    }
+  }, [controller, fitView, onReady, setSelectedIds]);
 
   //
   // Set detail levels for graph (control zoom-sensitive labels)
@@ -519,13 +527,8 @@ const TopologyContent: React.FC<{
       }
     };
 
-    const initialGraph = !controller.hasGraph();
     console.debug(`updateModel`);
     updateModel(controller);
-    if (initialGraph) {
-      console.debug('onReady');
-      onReady(controller);
-    }
 
     // notify that the graph has been updated
     const updateModelTime = Date.now();
@@ -571,6 +574,7 @@ const TopologyContent: React.FC<{
   // Leave them for now, they are just good for understanding state changes while we develop this PFT graph.
   React.useEffect(() => {
     console.debug(`controller changed`);
+    initialLayout = true;
   }, [controller]);
 
   React.useEffect(() => {
@@ -591,7 +595,6 @@ const TopologyContent: React.FC<{
 
   React.useEffect(() => {
     console.debug(`onReady changed`);
-    initialLayout = true;
   }, [onReady]);
 
   React.useEffect(() => {
@@ -656,7 +659,6 @@ const TopologyContent: React.FC<{
 
     // When the initial layoutName property is set it is premature to perform a layout
     if (initialLayout) {
-      initialLayout = false;
       return;
     }
 
@@ -821,7 +823,7 @@ export const GraphPF: React.FC<{
   layout: Layout;
   onEdgeTap?: (edge: Edge<EdgeModel>) => void;
   onNodeTap?: (node: Node<NodeModel>) => void;
-  onReady: (controller: any) => void;
+  onReady: (refs: GraphRefs) => void;
   setEdgeMode: (edgeMode: EdgeMode) => void;
   setLayout: (layout: Layout) => void;
   setUpdateTime: (val: TimeInMilliseconds) => void;
