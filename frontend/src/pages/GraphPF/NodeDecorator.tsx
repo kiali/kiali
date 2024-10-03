@@ -9,6 +9,8 @@ import {
   observer
 } from '@patternfly/react-topology';
 import { IconType } from 'config/Icons';
+import { kialiStyle } from 'styles/StyleUtils';
+import { PFColors } from 'components/Pf/PfColors';
 
 interface Props {
   element: Node;
@@ -17,6 +19,10 @@ interface Props {
   tooltip?: string;
 }
 
+const decoratorStyle = kialiStyle({
+  color: PFColors.White
+});
+
 const NodeDecoratorInner: React.FC<Props> = ({ element, quadrant, icon, tooltip }) => {
   const { x, y } = getDefaultShapeDecoratorCenter(quadrant, element);
   const decoratorRef = React.useRef<SVGAElement | null>(null);
@@ -24,10 +30,11 @@ const NodeDecoratorInner: React.FC<Props> = ({ element, quadrant, icon, tooltip 
   return (
     <Tooltip triggerRef={decoratorRef} content={tooltip ?? icon.text}>
       <Decorator
+        className={decoratorStyle}
         innerRef={decoratorRef}
         x={x}
         y={y}
-        radius={DEFAULT_DECORATOR_RADIUS}
+        radius={DEFAULT_DECORATOR_RADIUS * 0.9}
         showBackground
         icon={React.createElement(icon.icon)}
       />
