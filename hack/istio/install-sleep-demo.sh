@@ -22,7 +22,7 @@ AMBIENT="false"
 : ${CLIENT_EXE:=oc}
 DELETE_SLEEP="false"
 : ${ISTIO_NAMESPACE:=istio-system}
-: ${ENABLE_INJECTION:=true}
+: ${AUTO_INJECTION:=true}
 
 # process command line args
 while [[ $# -gt 0 ]]; do
