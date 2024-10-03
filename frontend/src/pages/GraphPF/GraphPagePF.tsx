@@ -170,6 +170,7 @@ type WizardsData = {
 type GraphPageStatePF = {
   graphData: GraphData;
   graphRefs?: GraphRefs;
+  isReady: boolean;
   showConfirmDeleteTrafficRouting: boolean;
   wizardsData: WizardsData;
 };
@@ -313,7 +314,7 @@ class GraphPagePFComponent extends React.Component<GraphPagePropsPF, GraphPageSt
         isLoading: true,
         timestamp: 0
       },
-
+      isReady: false,
       wizardsData: {
         showWizard: false,
         wizardType: '',
@@ -558,7 +559,7 @@ class GraphPagePFComponent extends React.Component<GraphPagePropsPF, GraphPageSt
   };
 
   private handleReady = (refs: GraphRefs): void => {
-    this.setState({ graphRefs: refs });
+    this.setState({ graphRefs: refs, isReady: true });
   };
 
   private handleEmptyGraphAction = (): void => {

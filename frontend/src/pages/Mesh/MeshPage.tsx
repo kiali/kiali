@@ -94,6 +94,7 @@ export type MeshRefs = {
 };
 
 type MeshPageState = {
+  isReady: boolean;
   meshData: MeshData;
   meshRefs?: MeshRefs;
 };
@@ -142,6 +143,7 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
     this.meshDataSource = new MeshDataSource();
 
     this.state = {
+      isReady: false,
       meshData: {
         elements: { edges: [], nodes: [] },
         elementsChanged: false,
@@ -263,7 +265,7 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
   }
 
   private handleReady = (refs: MeshRefs): void => {
-    this.setState({ meshRefs: refs });
+    this.setState({ isReady: true, meshRefs: refs });
   };
 
   private handleEmptyMeshAction = (): void => {

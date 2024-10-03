@@ -20,7 +20,7 @@ Then(
   'user sees the {string} namespace deployed across the east and west clusters in the patternfly graph',
   (namespace: string) => {
     cy.waitForReact();
-    cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false } } })
+    cy.getReact('GraphPageComponent', { state: { isReady: true } })
       .should('have.length', '1')
       .then(() => {
         cy.getReact('CytoscapeGraph')
@@ -42,7 +42,7 @@ Then(
   'nodes in the {string} cluster in the patternfly graph should contain the cluster name in their links',
   (cluster: string) => {
     cy.waitForReact();
-    cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false } } })
+    cy.getReact('GraphPageComponent', { state: { isReady: true } })
       .should('have.length', '1')
       .then(() => {
         cy.getReact('CytoscapeGraph')
@@ -66,7 +66,7 @@ Then(
   'user clicks on the {string} workload in the {string} namespace in the {string} cluster in the patternfly graph',
   (workload: string, namespace: string, cluster: string) => {
     cy.waitForReact();
-    cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false } } })
+    cy.getReact('GraphPageComponent', { state: { isReady: true } })
       .should('have.length', '1')
       .then(() => {
         cy.getReact('CytoscapeGraph')

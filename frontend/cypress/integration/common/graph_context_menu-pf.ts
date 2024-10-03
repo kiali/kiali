@@ -6,7 +6,7 @@ When('user opens the context menu of the {string} service node in the patternfly
   ensureKialiFinishedLoading();
   cy.waitForReact();
 
-  cy.getReact('GraphPagePFComponent', { state: { graphData: { isLoading: false } } })
+  cy.getReact('GraphPagePFComponent', { state: { isReady: true } })
     .should('have.length', '1')
     .then(() => {
       cy.getReact('GraphPF').should('have.length', '1');
@@ -20,7 +20,7 @@ When(
   (svcName: string, cluster: string) => {
     ensureKialiFinishedLoading();
     cy.waitForReact();
-    cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false } } })
+    cy.getReact('GraphPageComponent', { state: { isReady: true } })
       .should('have.length', '1')
       .then(() => {
         cy.getReact('CytoscapeGraph')

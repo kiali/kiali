@@ -30,7 +30,7 @@ When('user opens mesh tour', () => {
 
 When('user selects cluster mesh node', () => {
   cy.waitForReact();
-  cy.getReact('MeshPageComponent', { state: { meshData: { isLoading: false } } })
+  cy.getReact('MeshPageComponent', { state: { isReady: true } })
     .should('have.length', 1)
     .getCurrentState()
     .then(state => {
@@ -46,7 +46,7 @@ When('user selects cluster mesh node', () => {
 
 When('user selects mesh node with label {string}', (label: string) => {
   cy.waitForReact();
-  cy.getReact('MeshPageComponent', { state: { meshData: { isLoading: false } } })
+  cy.getReact('MeshPageComponent', { state: { isReady: true } })
     .should('have.length', 1)
     .getCurrentState()
     .then(state => {
@@ -110,7 +110,7 @@ Then('user sees data plane side panel', () => {
 
 Then('user sees expected mesh infra', () => {
   cy.waitForReact();
-  cy.getReact('MeshPageComponent', { state: { meshData: { isLoading: false } } })
+  cy.getReact('MeshPageComponent', { state: { isReady: true } })
     .should('have.length', 1)
     .getCurrentState()
     .then(state => {
@@ -134,7 +134,7 @@ Then(
   'user sees {int} {string} nodes on the {string} cluster',
   (numberOfDataplaneNodes: number, infraNodeType: MeshInfraType, cluster: string) => {
     cy.waitForReact();
-    cy.getReact('MeshPageComponent', { state: { meshData: { isLoading: false } } })
+    cy.getReact('MeshPageComponent', { state: { isReady: true } })
       .should('have.length', 1)
       .getCurrentState()
       .then(state => {
@@ -151,7 +151,7 @@ Then(
 
 Then('user sees the istiod node connected to the dataplane nodes', () => {
   cy.waitForReact();
-  cy.getReact('MeshPageComponent', { state: { meshData: { isLoading: false } } })
+  cy.getReact('MeshPageComponent', { state: { isReady: true } })
     .should('have.length', 1)
     .getCurrentState()
     .then(state => {

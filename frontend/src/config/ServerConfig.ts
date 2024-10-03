@@ -99,7 +99,7 @@ const defaultServerConfig: ComputedServerConfig = {
       graph: {
         findOptions: [],
         hideOptions: [],
-        impl: 'cy',
+        impl: 'pf',
         settings: {
           fontLabel: 13,
           minFontBadge: 7,
@@ -124,8 +124,7 @@ const defaultServerConfig: ComputedServerConfig = {
       },
       mesh: {
         findOptions: [],
-        hideOptions: [],
-        impl: 'classic'
+        hideOptions: []
       }
     }
   },

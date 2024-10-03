@@ -2,7 +2,7 @@ import { Then, When } from '@badeball/cypress-cucumber-preprocessor';
 
 When('user clicks the {string} {string} node in the patternfly graph', (svcName: string, nodeType: string) => {
   cy.waitForReact();
-  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false } } })
+  cy.getReact('GraphPageComponent', { state: { isReady: true } })
     .should('have.length', '1')
     .then(() => {
       cy.getReact('CytoscapeGraph')
@@ -19,7 +19,7 @@ When(
   'user clicks the edge from {string} {string} to {string} {string} in the patternfly graph',
   (svcName: string, nodeType: string, destSvcName: string, destNodeType: string) => {
     cy.waitForReact();
-    cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false } } })
+    cy.getReact('GraphPageComponent', { state: { isReady: true } })
       .should('have.length', '1')
       .then(() => {
         cy.getReact('CytoscapeGraph')
@@ -141,7 +141,7 @@ When(
   'user clicks the {string} service node in the {string} namespace in the {string} cluster in the patternfly graph',
   (service: string, namespace: string, cluster: string) => {
     cy.waitForReact();
-    cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false } } })
+    cy.getReact('GraphPageComponent', { state: { isReady: true } })
       .should('have.length', '1')
       .then(() => {
         cy.getReact('CytoscapeGraph')
