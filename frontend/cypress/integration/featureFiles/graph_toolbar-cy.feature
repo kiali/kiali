@@ -49,9 +49,9 @@ Feature: Kiali Graph page - Toolbar (various)
   Scenario: Enable http traffic
     When user disables all traffic
     When user enables "http" traffic
-    Then user "sees" "http" traffic
-    And user "does not see" "tcp" traffic
-    And user "does not see" "grpc" traffic
+    Then user "sees" "http" traffic in the cytoscape graph
+    And user "does not see" "tcp" traffic in the cytoscape graph
+    And user "does not see" "grpc" traffic in the cytoscape graph
 
   @error-rates-app
   Scenario: Close traffic dropdown
