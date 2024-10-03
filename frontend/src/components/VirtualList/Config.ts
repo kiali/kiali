@@ -189,85 +189,11 @@ const istioType: ResourceType<IstioConfigItem> = {
   renderer: Renderers.istioType
 };
 
-// type IstioConfigType = {
-//   badge: PFBadgeType;
-//   name: string;
-//   url: string;
-// };
-
 export const GVKToBadge: { [gvk: string]: PFBadgeType } = {};
 
 Object.keys(dicIstioTypeToGVK).forEach(key => {
   GVKToBadge[gvkToString(dicIstioTypeToGVK[key])] = PFBadges[key];
 });
-
-// export const IstioTypes: { [type: string]: IstioConfigType } = {
-//   adapter: { name: 'Adapter', url: 'adapters', badge: PFBadges.Adapter },
-//   attributemanifest: {
-//     name: 'AttributeManifest',
-//     url: 'attributemanifests',
-//     badge: PFBadges.AttributeManifest
-//   },
-//   authorizationpolicy: {
-//     name: 'AuthorizationPolicy',
-//     url: 'authorizationpolicies',
-//     badge: PFBadges.AuthorizationPolicy
-//   },
-//   clusterrbacconfig: {
-//     name: 'ClusterRbacConfig',
-//     url: 'clusterrbacconfigs',
-//     badge: PFBadges.ClusterRBACConfig
-//   },
-//   destinationrule: {
-//     name: 'DestinationRule',
-//     url: 'destinationrules',
-//     badge: PFBadges.DestinationRule
-//   },
-//   envoyfilter: { name: 'EnvoyFilter', url: 'envoyfilters', badge: PFBadges.EnvoyFilter },
-//   gateway: { name: 'Gateway', url: 'gateways', badge: PFBadges.Gateway },
-//   grpcroute: { name: 'GRPCRoute', url: 'k8sgrpcroutes', badge: PFBadges.GRPCRoute },
-//   handler: { name: 'Handler', url: 'handlers', badge: PFBadges.Handler },
-//   httproute: { name: 'HTTPRoute', url: 'k8shttproutes', badge: PFBadges.HTTPRoute },
-//   instance: { name: 'Instance', url: 'instances', badge: PFBadges.Instance },
-//   k8sgateway: { name: 'Gateway (K8s)', url: 'k8sgateways', badge: PFBadges.K8sGateway },
-//   k8sgrpcroute: { name: 'GRPCRoute (K8s)', url: 'k8sgrpcroutes', badge: PFBadges.K8sGRPCRoute },
-//   k8shttproute: { name: 'HTTPRoute (K8s)', url: 'k8shttproutes', badge: PFBadges.K8sHTTPRoute },
-//   k8sreferencegrant: { name: 'ReferenceGrant (K8s)', url: 'k8sreferencegrants', badge: PFBadges.K8sReferenceGrant },
-//   k8stcproute: { name: 'TCPRoute (K8s)', url: 'k8stcproutes', badge: PFBadges.K8sTCPRoute },
-//   k8stlsroute: { name: 'TLSRoute (K8s)', url: 'k8stlsroutes', badge: PFBadges.K8sTLSRoute },
-//   meshpolicy: { name: 'MeshPolicy', url: 'meshpolicies', badge: PFBadges.MeshPolicy },
-//   peerauthentication: {
-//     name: 'PeerAuthentication',
-//     url: 'peerauthentications',
-//     badge: PFBadges.PeerAuthentication
-//   },
-//   policy: { name: 'Policy', url: 'policies', badge: PFBadges.Policy },
-//   rbacconfig: { name: 'RbacConfig', url: 'rbacconfigs', badge: PFBadges.RBACConfig },
-//   requestauthentication: {
-//     name: 'RequestAuthentication',
-//     url: 'requestauthentications',
-//     badge: PFBadges.RequestAuthentication
-//   },
-//   // TODO should be merged with k8sreferencegrant
-//   referencegrant: { name: 'ReferenceGrant (K8s)', url: 'k8sreferencegrants', badge: PFBadges.K8sReferenceGrant },
-//   tcproute: { name: 'TCPRoute (K8s)', url: 'k8stcproutes', badge: PFBadges.K8sTCPRoute },
-//   tlsroute: { name: 'TLSRoute (K8s)', url: 'k8stlsroutes', badge: PFBadges.K8sTLSRoute },
-//   rule: { name: 'Rule', url: 'rules', badge: PFBadges.Rule },
-//   serviceentry: { name: 'ServiceEntry', url: 'serviceentries', badge: PFBadges.ServiceEntry },
-//   servicerole: { name: 'ServiceRole', url: 'serviceroles', badge: PFBadges.ServiceRole },
-//   servicerolebinding: {
-//     name: 'ServiceRoleBinding',
-//     url: 'servicerolebindings',
-//     badge: PFBadges.ServiceRoleBinding
-//   },
-//   sidecar: { name: 'Sidecar', url: 'sidecars', badge: PFBadges.Sidecar },
-//   telemetry: { name: 'Telemetry', url: 'telemetries', badge: PFBadges.Telemetry },
-//   template: { name: 'Template', url: 'templates', badge: PFBadges.Template },
-//   virtualservice: { name: 'VirtualService', url: 'virtualservices', badge: PFBadges.VirtualService },
-//   wasmplugin: { name: 'WasmPlugin', url: 'wasmplugins', badge: PFBadges.WasmPlugin },
-//   workloadentry: { name: 'WorkloadEntry', url: 'workloadentries', badge: PFBadges.WorkloadEntry },
-//   workloadgroup: { name: 'WorkloadGroup', url: 'workloadgroups', badge: PFBadges.WorkloadGroup }
-// };
 
 export type Resource = {
   badge?: PFBadgeType;
