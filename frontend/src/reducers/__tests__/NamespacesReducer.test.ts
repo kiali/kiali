@@ -1,6 +1,7 @@
 import { NamespaceStateReducer } from '../NamespaceState';
 import { GlobalActions } from '../../actions/GlobalActions';
 import { NamespaceActions } from '../../actions/NamespaceAction';
+import { NamespaceState } from 'store/Store';
 
 describe('Namespaces reducer', () => {
   it('should return the initial state', () => {
@@ -10,8 +11,9 @@ describe('Namespaces reducer', () => {
       items: [],
       lastUpdated: undefined,
       filter: '',
-      namespacesPerCluster: new Map<string, string[]>()
-    });
+      namespacesPerCluster: new Map<string, string[]>(),
+      unfilteredItems: []
+    } as NamespaceState);
   });
 
   it('should handle ACTIVE_NAMESPACES', () => {
@@ -146,19 +148,21 @@ describe('Namespaces reducer', () => {
       isFetching: true,
       items: [{ name: 'old' }, { name: 'my-namespace' }],
       lastUpdated: undefined,
-      namespacesPerCluster: new Map<string, string[]>()
+      namespacesPerCluster: new Map<string, string[]>(),
+      unfilteredItems: [{ name: 'old' }, { name: 'my-namespace' }]
     };
     const requestStartedAction = NamespaceActions.receiveList(
       [{ name: 'a' }, { name: 'b' }, { name: 'c' }],
       currentDate
     );
-    const expectedState = {
+    const expectedState: NamespaceState = {
       activeNamespaces: [],
       filter: '',
       isFetching: false,
       items: [{ name: 'a' }, { name: 'b' }, { name: 'c' }],
       lastUpdated: currentDate,
-      namespacesPerCluster: new Map<string, string[]>()
+      namespacesPerCluster: new Map<string, string[]>(),
+      unfilteredItems: [{ name: 'a' }, { name: 'b' }, { name: 'c' }]
     };
     expect(NamespaceStateReducer(currentState, requestStartedAction)).toEqual(expectedState);
   });
