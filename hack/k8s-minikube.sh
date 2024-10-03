@@ -24,7 +24,7 @@ set -u
 DEFAULT_CLIENT_EXE="kubectl"
 DEFAULT_DEX_ENABLED="false"
 DEFAULT_DEX_REPO="https://github.com/dexidp/dex"
-DEFAULT_DEX_VERSION="v2.30.2"
+DEFAULT_DEX_VERSION="v2.41.1"
 DEFAULT_DEX_USER_NAMESPACES="bookinfo"
 DEFAULT_INSECURE_REGISTRY_IP=""
 DEFAULT_K8S_CNI="auto"
@@ -165,10 +165,6 @@ EOF
 <   replicas: 3
 ---
 >   replicas: 1
-26c26
-<       - image: dexidp/dex:v2.27.0 #or quay.io/dexidp/dex:v2.26.0
----
->       - image: docker.io/dexidp/dex:${DEX_VERSION}
 41c41
 <         - name: GITHUB_CLIENT_ID
 ---
@@ -200,7 +196,7 @@ EOF
 <         org: kubernetes
 94a81
 >       responseTypes: ["code", "id_token"]
-96a84,89
+101a89,94
 >     - id: kiali-app
 >       redirectURIs:
 >       - 'http://${MINIKUBE_IP}/kiali'
