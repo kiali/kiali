@@ -92,7 +92,7 @@ Then('configuration is duplicated to the {string} cluster', (cluster: string) =>
 
     cy.fixture(`${service}-virtualservice.json`).then(virtualService => {
       cy.request({
-        url: `api/namespaces/${namespace}/istio/virtualservices`,
+        url: `api/namespaces/${namespace}/istio/networking.istio.io/v1/VirtualService`,
         method: 'POST',
         qs: { clusterName: cluster },
         body: virtualService
@@ -101,7 +101,7 @@ Then('configuration is duplicated to the {string} cluster', (cluster: string) =>
 
     cy.fixture(`${service}-destinationrule.json`).then(destinationRule => {
       cy.request({
-        url: `api/namespaces/${namespace}/istio/destinationrules`,
+        url: `api/namespaces/${namespace}/istio/networking.istio.io/v1/DestinationRule`,
         method: 'POST',
         qs: { clusterName: cluster },
         body: destinationRule
