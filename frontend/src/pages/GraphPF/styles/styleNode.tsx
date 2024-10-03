@@ -13,6 +13,7 @@ import * as React from 'react';
 import { KeyIcon, TopologyIcon } from '@patternfly/react-icons';
 import { PFColors } from 'components/Pf/PfColors';
 import { kialiStyle } from 'styles/StyleUtils';
+import { Triangle } from '../elements/triangle';
 
 // This is the registered Node component override that utilizes our customized Node.tsx component.
 
@@ -121,10 +122,16 @@ const StyleNodeComponent: React.FC<StyleNodeProps> = ({ element, ...rest }) => {
         {...rest}
         {...passedData}
         attachments={hover || detailsLevel === ScaleDetailsLevel.high ? data.attachments : undefined}
-        scaleLabel={hover && detailsLevel !== ScaleDetailsLevel.high}
-        // scaleNode={hover && detailsLevel === ScaleDetailsLevel.low}
+        getCustomShape={(node: Node) => {
+          if (node.getNodeShape() === NodeShape.rhombus) {
+            return Triangle;
+          }
+          return getShapeComponent(node);
+        }}
+        scaleLabel={hover && detailsLevel !== ScaleDetailsLevel.low}
+        scaleNode={hover && detailsLevel !== ScaleDetailsLevel.high}
         showLabel={hover || detailsLevel === ScaleDetailsLevel.high}
-        showStatusBackground={detailsLevel === ScaleDetailsLevel.low}
+        showStatusBackground={detailsLevel === ScaleDetailsLevel.low || rest.selected}
       >
         {(hover || detailsLevel !== ScaleDetailsLevel.low) && renderIcon(element)}
       </DefaultNode>

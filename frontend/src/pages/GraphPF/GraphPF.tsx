@@ -73,7 +73,7 @@ import { GraphRefs } from './GraphPagePF';
 let initialLayout = false;
 let requestFit = false;
 
-const DEFAULT_NODE_SIZE = 50;
+const DEFAULT_NODE_SIZE = 40;
 const ZOOM_IN = 4 / 3;
 const ZOOM_OUT = 3 / 4;
 
