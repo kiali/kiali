@@ -448,7 +448,7 @@ const TopologyContent: React.FC<{
 
       const model = generateDataModel();
       const modelMap = new Map<string, GraphModel>();
-      model.nodes.forEach(e => modelMap.set(e.id, e));
+      model.nodes.forEach(n => modelMap.set(n.id, n));
       model.edges.forEach(e => modelMap.set(e.id, e));
 
       controller.getElements().forEach(e => {
@@ -479,9 +479,9 @@ const TopologyContent: React.FC<{
       // set decorators
       nodes.forEach(n => setNodeAttachments(n, graphSettings));
 
-      // pre-select node if provided
+      // pre-select node-graph node, only when elems have changed (like on first render, or a structural change)
       const graphNode = graphData.fetchParams.node;
-      if (graphNode) {
+      if (graphNode && graphData.elementsChanged) {
         let selector: SelectAnd = [
           { prop: NodeAttr.namespace, val: graphNode.namespace.name },
           { prop: NodeAttr.nodeType, val: graphNode.nodeType }
@@ -527,7 +527,7 @@ const TopologyContent: React.FC<{
       }
     };
 
-    console.debug(`updateModel`);
+    console.trace(`PFT updateModel`);
     updateModel(controller);
 
     // notify that the graph has been updated
@@ -573,32 +573,32 @@ const TopologyContent: React.FC<{
   //TODO REMOVE THESE DEBUGGING MESSAGES...
   // Leave them for now, they are just good for understanding state changes while we develop this PFT graph.
   React.useEffect(() => {
-    console.debug(`controller changed`);
+    console.trace(`PFT: controller changed`);
     initialLayout = true;
   }, [controller]);
 
   React.useEffect(() => {
-    console.debug(`graphData changed`);
+    console.trace(`PFT: graphData changed, elementsChanged=${graphData.elementsChanged}`);
   }, [graphData]);
 
   React.useEffect(() => {
-    console.debug(`graphSettings changed`);
+    console.trace(`PFT: graphSettings changed`);
   }, [graphSettings]);
 
   React.useEffect(() => {
-    console.debug(`highlighter changed`);
+    console.trace(`PFT: highlighter changed`);
   }, [highlighter]);
 
   React.useEffect(() => {
-    console.debug(`isMiniGraph changed`);
+    console.trace(`PFT: isMiniGraph changed`);
   }, [isMiniGraph]);
 
   React.useEffect(() => {
-    console.debug(`onReady changed`);
+    console.trace(`PFT: onReady changed`);
   }, [onReady]);
 
   React.useEffect(() => {
-    console.debug(`setDetails changed`);
+    console.trace(`PFT: setDetails changed`);
   }, [setDetailsLevel]);
 
   React.useEffect(() => {
@@ -650,7 +650,8 @@ const TopologyContent: React.FC<{
   }, [controller, showTrafficAnimation, updateModelTime]);
 
   React.useEffect(() => {
-    console.debug(`layout changed`);
+    console.trace(`PFT: layout changed`);
+
     if (!controller.hasGraph()) {
       return;
     }
@@ -683,7 +684,7 @@ const TopologyContent: React.FC<{
 
   useEventListener(GRAPH_LAYOUT_END_EVENT, onLayoutEnd);
 
-  console.debug(`Render Topology hasGraph=${controller.hasGraph()}`);
+  console.trace(`PFT: Render Topology hasGraph=${controller.hasGraph()}`);
 
   return isMiniGraph ? (
     <TopologyView data-test="topology-view-pf">
@@ -861,7 +862,8 @@ export const GraphPF: React.FC<{
 
   // Set up the controller one time
   React.useEffect(() => {
-    console.debug('New Controller!');
+    console.trace('PFT: New Controller!');
+
     const c = new Visualization();
     c.registerElementFactory(elementFactory);
     c.registerLayoutFactory(layoutFactory);
@@ -899,7 +901,7 @@ export const GraphPF: React.FC<{
     );
   }
 
-  console.debug(`Render GraphPF! hasGraph=${controller?.hasGraph()}`);
+  console.trace(`PFT: Render, hasGraph=${controller?.hasGraph()}`);
   return (
     <VisualizationProvider data-test="visualization-provider" controller={controller}>
       <TopologyContent
