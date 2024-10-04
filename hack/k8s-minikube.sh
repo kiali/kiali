@@ -260,7 +260,7 @@ spec:
         - --config
         - /etc/oauthproxy/oauth2-proxy.conf
         env: []
-        image: quay.io/oauth2-proxy/oauth2-proxy:latest
+        image: quay.io/oauth2-proxy/oauth2-proxy:v7.6.0
         imagePullPolicy: Always
         livenessProbe:
           httpGet:
