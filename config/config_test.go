@@ -21,46 +21,70 @@ func TestSecretFileOverrides(t *testing.T) {
 	overrideSecretsDir = t.TempDir()
 
 	conf := NewConfig()
+	conf.ExternalServices.Grafana.Auth.Username = "grafanausername"
 	conf.ExternalServices.Grafana.Auth.Password = "grafanapassword"
 	conf.ExternalServices.Grafana.Auth.Token = "grafanatoken"
+	conf.ExternalServices.Prometheus.Auth.Username = "prometheususername"
 	conf.ExternalServices.Prometheus.Auth.Password = "prometheuspassword"
 	conf.ExternalServices.Prometheus.Auth.Token = "prometheustoken"
+	conf.ExternalServices.Tracing.Auth.Username = "tracingusername"
 	conf.ExternalServices.Tracing.Auth.Password = "tracingpassword"
 	conf.ExternalServices.Tracing.Auth.Token = "tracingtoken"
 	conf.LoginToken.SigningKey = "signingkey"
+	conf.ExternalServices.CustomDashboards.Prometheus.Auth.Username = "cd-prometheususername"
+	conf.ExternalServices.CustomDashboards.Prometheus.Auth.Password = "cd-prometheuspassword"
+	conf.ExternalServices.CustomDashboards.Prometheus.Auth.Token = "cd-prometheustoken"
 
 	// Unmarshal will override settings found in env vars (if there are any env vars)
 	yamlString, _ := Marshal(conf)
 	conf, _ = Unmarshal(yamlString)
 
 	// we don't have the files yet - so nothing should be overridden from the original yaml
+	assert.Equal(t, conf.ExternalServices.Grafana.Auth.Username, "grafanausername")
 	assert.Equal(t, conf.ExternalServices.Grafana.Auth.Password, "grafanapassword")
 	assert.Equal(t, conf.ExternalServices.Grafana.Auth.Token, "grafanatoken")
+	assert.Equal(t, conf.ExternalServices.Prometheus.Auth.Username, "prometheususername")
 	assert.Equal(t, conf.ExternalServices.Prometheus.Auth.Password, "prometheuspassword")
 	assert.Equal(t, conf.ExternalServices.Prometheus.Auth.Token, "prometheustoken")
+	assert.Equal(t, conf.ExternalServices.Tracing.Auth.Username, "tracingusername")
 	assert.Equal(t, conf.ExternalServices.Tracing.Auth.Password, "tracingpassword")
 	assert.Equal(t, conf.ExternalServices.Tracing.Auth.Token, "tracingtoken")
 	assert.Equal(t, conf.LoginToken.SigningKey, "signingkey")
+	assert.Equal(t, conf.ExternalServices.CustomDashboards.Prometheus.Auth.Username, "cd-prometheususername")
+	assert.Equal(t, conf.ExternalServices.CustomDashboards.Prometheus.Auth.Password, "cd-prometheuspassword")
+	assert.Equal(t, conf.ExternalServices.CustomDashboards.Prometheus.Auth.Token, "cd-prometheustoken")
 
 	// mock some secrets bound to volume mounts
+	createTestSecretFile(t, overrideSecretsDir, SecretFileGrafanaUsername, "grafanausernameENV")
 	createTestSecretFile(t, overrideSecretsDir, SecretFileGrafanaPassword, "grafanapasswordENV")
 	createTestSecretFile(t, overrideSecretsDir, SecretFileGrafanaToken, "grafanatokenENV")
+	createTestSecretFile(t, overrideSecretsDir, SecretFilePrometheusUsername, "prometheususernameENV")
 	createTestSecretFile(t, overrideSecretsDir, SecretFilePrometheusPassword, "prometheuspasswordENV")
 	createTestSecretFile(t, overrideSecretsDir, SecretFilePrometheusToken, "prometheustokenENV")
+	createTestSecretFile(t, overrideSecretsDir, SecretFileTracingUsername, "tracingusernameENV")
 	createTestSecretFile(t, overrideSecretsDir, SecretFileTracingPassword, "tracingpasswordENV")
 	createTestSecretFile(t, overrideSecretsDir, SecretFileTracingToken, "tracingtokenENV")
 	createTestSecretFile(t, overrideSecretsDir, SecretFileLoginTokenSigningKey, "signingkeyENV")
+	createTestSecretFile(t, overrideSecretsDir, SecretFileCustomDashboardsPrometheusUsername, "cdprometheususernameENV")
+	createTestSecretFile(t, overrideSecretsDir, SecretFileCustomDashboardsPrometheusPassword, "cdprometheuspasswordENV")
+	createTestSecretFile(t, overrideSecretsDir, SecretFileCustomDashboardsPrometheusToken, "cdprometheustokenENV")
 
 	conf, _ = Unmarshal(yamlString)
 
 	// credentials are now set- values should be overridden
+	assert.Equal(t, conf.ExternalServices.Grafana.Auth.Username, "grafanausernameENV")
 	assert.Equal(t, conf.ExternalServices.Grafana.Auth.Password, "grafanapasswordENV")
 	assert.Equal(t, conf.ExternalServices.Grafana.Auth.Token, "grafanatokenENV")
+	assert.Equal(t, conf.ExternalServices.Prometheus.Auth.Username, "prometheususernameENV")
 	assert.Equal(t, conf.ExternalServices.Prometheus.Auth.Password, "prometheuspasswordENV")
 	assert.Equal(t, conf.ExternalServices.Prometheus.Auth.Token, "prometheustokenENV")
+	assert.Equal(t, conf.ExternalServices.Tracing.Auth.Username, "tracingusernameENV")
 	assert.Equal(t, conf.ExternalServices.Tracing.Auth.Password, "tracingpasswordENV")
 	assert.Equal(t, conf.ExternalServices.Tracing.Auth.Token, "tracingtokenENV")
 	assert.Equal(t, conf.LoginToken.SigningKey, "signingkeyENV")
+	assert.Equal(t, conf.ExternalServices.CustomDashboards.Prometheus.Auth.Username, "cdprometheususernameENV")
+	assert.Equal(t, conf.ExternalServices.CustomDashboards.Prometheus.Auth.Password, "cdprometheuspasswordENV")
+	assert.Equal(t, conf.ExternalServices.CustomDashboards.Prometheus.Auth.Token, "cdprometheustokenENV")
 }
 
 func createTestSecretFile(t *testing.T, parentDir string, name string, content string) {
@@ -92,6 +116,9 @@ func TestSensitiveDataObfuscation(t *testing.T) {
 	conf.ExternalServices.Tracing.Auth.Token = "my-token"
 	conf.LoginToken.SigningKey = "my-signkey"
 	conf.LoginToken.ExpirationSeconds = 12345
+	conf.ExternalServices.CustomDashboards.Prometheus.Auth.Username = "my-username"
+	conf.ExternalServices.CustomDashboards.Prometheus.Auth.Password = "my-password"
+	conf.ExternalServices.CustomDashboards.Prometheus.Auth.Token = "my-token"
 
 	printed := fmt.Sprintf("%v", conf)
 
@@ -103,9 +130,18 @@ func TestSensitiveDataObfuscation(t *testing.T) {
 
 	// Test that the original values are unchanged
 	assert.Equal(t, "my-username", conf.ExternalServices.Grafana.Auth.Username)
+	assert.Equal(t, "my-password", conf.ExternalServices.Grafana.Auth.Password)
+	assert.Equal(t, "my-token", conf.ExternalServices.Grafana.Auth.Token)
+	assert.Equal(t, "my-username", conf.ExternalServices.Prometheus.Auth.Username)
 	assert.Equal(t, "my-password", conf.ExternalServices.Prometheus.Auth.Password)
+	assert.Equal(t, "my-token", conf.ExternalServices.Prometheus.Auth.Token)
+	assert.Equal(t, "my-username", conf.ExternalServices.Tracing.Auth.Username)
+	assert.Equal(t, "my-password", conf.ExternalServices.Tracing.Auth.Password)
 	assert.Equal(t, "my-token", conf.ExternalServices.Tracing.Auth.Token)
 	assert.Equal(t, "my-signkey", conf.LoginToken.SigningKey)
+	assert.Equal(t, "my-username", conf.ExternalServices.CustomDashboards.Prometheus.Auth.Username)
+	assert.Equal(t, "my-password", conf.ExternalServices.CustomDashboards.Prometheus.Auth.Password)
+	assert.Equal(t, "my-token", conf.ExternalServices.CustomDashboards.Prometheus.Auth.Token)
 }
 
 func TestMarshalUnmarshalStaticContentRootDirectory(t *testing.T) {
