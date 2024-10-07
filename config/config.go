@@ -21,12 +21,20 @@ import (
 // Files found in /kiali-override-secrets that override the ConfigMap yaml values
 const (
 	// External services auth
+	SecretFileGrafanaUsername    = "grafana-username"
 	SecretFileGrafanaPassword    = "grafana-password"
 	SecretFileGrafanaToken       = "grafana-token"
+	SecretFilePrometheusUsername = "prometheus-username"
 	SecretFilePrometheusPassword = "prometheus-password"
 	SecretFilePrometheusToken    = "prometheus-token"
+	SecretFileTracingUsername    = "tracing-username"
 	SecretFileTracingPassword    = "tracing-password"
 	SecretFileTracingToken       = "tracing-token"
+
+	// External services auth for custom dashboards
+	SecretFileCustomDashboardsPrometheusUsername = "customdashboards-prometheus-username"
+	SecretFileCustomDashboardsPrometheusPassword = "customdashboards-prometheus-password"
+	SecretFileCustomDashboardsPrometheusToken    = "customdashboards-prometheus-token"
 
 	// Login Token signing key used to prepare the token for user login
 	SecretFileLoginTokenSigningKey = "login-token-signing-key"
@@ -1002,6 +1010,7 @@ func (conf Config) Obfuscate() (obf Config) {
 	obf.ExternalServices.Grafana.Auth.Obfuscate()
 	obf.ExternalServices.Prometheus.Auth.Obfuscate()
 	obf.ExternalServices.Tracing.Auth.Obfuscate()
+	obf.ExternalServices.CustomDashboards.Prometheus.Auth.Obfuscate()
 	obf.Identity.Obfuscate()
 	obf.LoginToken.Obfuscate()
 	obf.Auth.OpenId.ClientSecret = "xxx"
@@ -1095,6 +1104,10 @@ func Unmarshal(yamlString string) (conf *Config, err error) {
 
 	overrides := []overridesType{
 		{
+			configValue: &conf.ExternalServices.Grafana.Auth.Username,
+			fileName:    SecretFileGrafanaUsername,
+		},
+		{
 			configValue: &conf.ExternalServices.Grafana.Auth.Password,
 			fileName:    SecretFileGrafanaPassword,
 		},
@@ -1103,12 +1116,20 @@ func Unmarshal(yamlString string) (conf *Config, err error) {
 			fileName:    SecretFileGrafanaToken,
 		},
 		{
+			configValue: &conf.ExternalServices.Prometheus.Auth.Username,
+			fileName:    SecretFilePrometheusUsername,
+		},
+		{
 			configValue: &conf.ExternalServices.Prometheus.Auth.Password,
 			fileName:    SecretFilePrometheusPassword,
 		},
 		{
 			configValue: &conf.ExternalServices.Prometheus.Auth.Token,
 			fileName:    SecretFilePrometheusToken,
+		},
+		{
+			configValue: &conf.ExternalServices.Tracing.Auth.Username,
+			fileName:    SecretFileTracingUsername,
 		},
 		{
 			configValue: &conf.ExternalServices.Tracing.Auth.Password,
@@ -1121,6 +1142,18 @@ func Unmarshal(yamlString string) (conf *Config, err error) {
 		{
 			configValue: &conf.LoginToken.SigningKey,
 			fileName:    SecretFileLoginTokenSigningKey,
+		},
+		{
+			configValue: &conf.ExternalServices.CustomDashboards.Prometheus.Auth.Username,
+			fileName:    SecretFileCustomDashboardsPrometheusUsername,
+		},
+		{
+			configValue: &conf.ExternalServices.CustomDashboards.Prometheus.Auth.Password,
+			fileName:    SecretFileCustomDashboardsPrometheusPassword,
+		},
+		{
+			configValue: &conf.ExternalServices.CustomDashboards.Prometheus.Auth.Token,
+			fileName:    SecretFileCustomDashboardsPrometheusToken,
 		},
 	}
 
