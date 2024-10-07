@@ -36,17 +36,26 @@ const renderIcon = (element: Node): React.ReactNode => {
     Component = TopologyIcon;
   }
 
-  // this blurb taken from PFT demo StyleNode.tsx, not sure if it's required
-  // vv
   const { width, height } = element.getDimensions();
-  const shape = element.getNodeShape();
-  const iconSize =
-    (shape === NodeShape.trapezoid ? width : Math.min(width, height)) - (shape === NodeShape.stadium ? 5 : 20) * 2;
-  // ^^
+  const dim = Math.min(width, height);
+  let iconX = dim * 0.27;
+  let iconY = dim * 0.27;
+  let iconDim = dim * 0.45;
+
+  switch (element.getNodeShape()) {
+    case NodeShape.rhombus:
+      // will be a triangle, slightly reduce icon size and adjust position
+      iconDim = dim * 0.4;
+      iconX = dim * 0.28;
+      iconY = dim * 0.43;
+      break;
+    default:
+    // use defaults
+  }
 
   return Component ? (
-    <g transform={`translate(${(width - iconSize) / 2}, ${(height - iconSize) / 2})`}>
-      <Component width={iconSize} height={iconSize} />
+    <g transform={`translate(${iconX} , ${iconY})`}>
+      <Component width={iconDim} height={iconDim} />
     </g>
   ) : (
     <></>
