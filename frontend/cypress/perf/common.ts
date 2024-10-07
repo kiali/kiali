@@ -26,7 +26,6 @@ const measureLoadTime = (
   cy.wrap(visitsArray)
     .each(() => {
       cy.intercept(`**/api/namespaces/graph*`).as('graphNamespaces');
-      cy.intercept(`**/api/istio/validations*`).as('validations');
       // Disabling refresh so that we can see how long it takes to load the page without additional requests
       // being made due to the refresh.
       cy.visit({
@@ -43,7 +42,6 @@ const measureLoadTime = (
           });
           if (isGraph) {
             cy.wait('@graphNamespaces');
-            cy.wait('@validations');
           } else {
             cy.get(loadElementToCheck).should('be.visible');
           }
