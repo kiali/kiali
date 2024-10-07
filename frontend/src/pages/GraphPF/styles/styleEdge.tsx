@@ -46,7 +46,7 @@ const StyleEdgeComponent: React.FC<StyleEdgeProps> = ({ element, ...rest }) => {
       $nest: {
         '& .pf-topology__edge__link': data.pathStyle,
         '& .pf-topology-connector-arrow': {
-          ...data.pathStyle,
+          stroke: data.pathStyle.stroke,
           fill: data.pathStyle.stroke
         }
       }
