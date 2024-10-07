@@ -788,7 +788,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
             serverConfig.istioLabels.ambientNamespaceLabelValue
         ) &&
         serverConfig.kialiFeatureFlags.istioInjectionAction &&
-        !nsInfo.revision
+        !serverConfig.kialiFeatureFlags.istioUpgradeAction
       ) {
         namespaceActions.push({
           isGroup: false,
