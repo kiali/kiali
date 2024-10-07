@@ -1,9 +1,0 @@
-{
-  "traffic": "grpc,grpcRequest,http,httpRequest,tcp,tcpSent",
-  "graphType": "versionedApp",
-  "namespaces": "bookinfo,alpha,beta,sleep",
-  "duration": "300",
-  "refresh": "15000",
-  "layout": "kiali-dagre",
-  "namespaceLayout": "kiali-dagre"
-}

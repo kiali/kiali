@@ -37,7 +37,7 @@ describe('Graph performance tests', () => {
     it('Measures All Namespaces Graph Idle Nodes load time', { defaultCommandTimeout: Cypress.env('timeout') }, () => {
       measureGraphLoadTime(
         'All Namespaces Graph Idle Nodes',
-        Cypress.env(baselines).graphAll,
+        Cypress.env(baselines).graphAllIdle,
         graphUrlAllNamespacesIdle
       );
     });
