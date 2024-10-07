@@ -40,49 +40,52 @@ const StyleEdgeComponent: React.FC<StyleEdgeProps> = ({ element, ...rest }) => {
     data.onHover(element, false);
   };
 
-  // Change edge color according to the pathStyle
-  const edgeClass = kialiStyle({
-    $nest: {
-      '& .pf-topology__edge__link': data.pathStyle
-    }
-  });
-  cssClasses.push(edgeClass);
-
-  const edgeHoverClass = kialiStyle({
-    $nest: {
-      '& .pf-topology__edge.pf-m-hover': {
-        $nest: {
-          '& .pf-topology__edge__link, & .pf-topology-connector-arrow': data.pathStyle
-        }
+  // when selected keep the selection styling, otherwise apply our custom path styling
+  if (!rest.selected) {
+    // Change edge color according to the pathStyle
+    const edgeClass = kialiStyle({
+      $nest: {
+        '& .pf-topology__edge__link': data.pathStyle
       }
-    }
-  });
-  cssClasses.push(edgeHoverClass);
+    });
+    cssClasses.push(edgeClass);
 
-  // Change connector color according to the pathStyle
-  const connectorClass = kialiStyle({
-    $nest: {
-      '& .pf-topology-connector-arrow': {
-        stroke: data.pathStyle.stroke,
-        fill: data.pathStyle.stroke
-      }
-    }
-  });
-  cssClasses.push(connectorClass);
-
-  const edgeConnectorArrowHoverStyles = kialiStyle({
-    $nest: {
-      '& .pf-topology__edge.pf-m-hover': {
-        $nest: {
-          '& .pf-topology-connector-arrow': {
-            stroke: data.pathStyle.stroke,
-            fill: data.pathStyle.stroke
+    const edgeHoverClass = kialiStyle({
+      $nest: {
+        '& .pf-topology__edge.pf-m-hover': {
+          $nest: {
+            '& .pf-topology__edge__link, & .pf-topology-connector-arrow': data.pathStyle
           }
         }
       }
-    }
-  });
-  cssClasses.push(edgeConnectorArrowHoverStyles);
+    });
+    cssClasses.push(edgeHoverClass);
+
+    // Change connector color according to the pathStyle
+    const connectorClass = kialiStyle({
+      $nest: {
+        '& .pf-topology-connector-arrow': {
+          stroke: data.pathStyle.stroke,
+          fill: data.pathStyle.stroke
+        }
+      }
+    });
+    cssClasses.push(connectorClass);
+
+    const edgeConnectorArrowHoverStyles = kialiStyle({
+      $nest: {
+        '& .pf-topology__edge.pf-m-hover': {
+          $nest: {
+            '& .pf-topology-connector-arrow': {
+              stroke: data.pathStyle.stroke,
+              fill: data.pathStyle.stroke
+            }
+          }
+        }
+      }
+    });
+    cssClasses.push(edgeConnectorArrowHoverStyles);
+  }
 
   // If has spans, add the span overlay
   if (data.hasSpans) {
