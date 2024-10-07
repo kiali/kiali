@@ -1,53 +1,34 @@
-import { reportFilePath } from './common';
+import { baselines, measureGraphLoadTime, reportFilePath } from './common';
 
 describe('Graph performance tests', () => {
   beforeEach(() => {
     cy.login(Cypress.env('USERNAME'), Cypress.env('PASSWD'));
   });
 
-  describe('Graph page with workloads', () => {
+  describe('Graph page', () => {
     let graphUrl;
+    let graphUrlAllNamespaces;
 
     before(() => {
-      cy.fixture('graphParams')
+      cy.fixture('commonParams')
         .then(data => {
           graphUrl = encodeURI(
-            `/console/graph/namespaces?traffic=${data.traffic}&graphType=${data.graphType}&namespaces=${data.namespaces}&duration=${data.duration}&refresh=${data.refresh}&layout=${data.layout}&namespaceLayout=${data.namespaceLayout}`
+            `/console/graphpf/namespaces?traffic=${data.traffic}&graphType=${data.graphType}&namespaces=${data.namespaces}&duration=${data.duration}&refresh=${data.refresh}&layout=${data.layout}`
+          );
+          graphUrlAllNamespaces = encodeURI(
+            `/console/graphpf/namespaces?traffic=${data.traffic}&graphType=${data.graphType}&namespaces=${data.allNamespaces}&duration=${data.duration}&refresh=${data.refresh}&layout=${data.layout}`
           );
         })
         .as('data');
 
-      cy.writeFile(reportFilePath, '\n[Graph page With workloads]\n', { flag: 'a+' });
+      cy.writeFile(reportFilePath, '\n[Graph page]\n', { flag: 'a+' });
     });
 
+    it('Measures All Namespaces Graph load time', { defaultCommandTimeout: Cypress.env('timeout') }, () => {
+      measureGraphLoadTime('All Namespaces Graph', Cypress.env(baselines).graphAll, graphUrlAllNamespaces);
+    });
     it('Measures Graph load time', { defaultCommandTimeout: Cypress.env('timeout') }, () => {
-      cy.intercept(`**/api/namespaces/graph*`).as('graphNamespaces');
-
-      cy.visit({
-        url: graphUrl,
-        onBeforeLoad(win) {
-          win.performance.mark('start');
-        }
-      })
-        .its('performance')
-        .then(performance => {
-          cy.wait('@graphNamespaces');
-
-          cy.get('#cy', { timeout: 10000 })
-            .should('be.visible')
-            .then(() => {
-              performance.mark('end');
-              performance.measure('pageLoad', 'start', 'end');
-
-              const measure = performance.getEntriesByName('pageLoad')[0];
-              const duration = measure.duration;
-
-              assert.isAtMost(duration, Cypress.env('threshold'));
-
-              const contents = `Graph load time for ${graphUrl}: ${(duration / 1000).toPrecision(5)} seconds\n`;
-              cy.writeFile(reportFilePath, contents, { flag: 'a+' });
-            });
-        });
+      measureGraphLoadTime('Selected Namespaces Graph', Cypress.env(baselines).graphSelected, graphUrl);
     });
   });
 });

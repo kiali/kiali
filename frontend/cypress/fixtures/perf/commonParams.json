@@ -7,6 +7,9 @@
   "applicationName": "productpage",
   "configType": "virtualservices",
   "configName": "bookinfo",
+  "traffic": "grpc,grpcRequest,http,httpRequest,tcp,tcpSent",
+  "graphType": "versionedApp",
+  "layout": "kiali-dagre",
   "duration": "300",
   "rangeDuration": "300",
   "refresh": "15000"

@@ -11,5 +11,7 @@
   "configListAdd": "2",
   "configListSelected": "2",
   "configDetails": "1",
-  "overview": "2"
+  "overview": "2",
+  "graphAll": "4",
+  "graphSelected": "2"
 }
