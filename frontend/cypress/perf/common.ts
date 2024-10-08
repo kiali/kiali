@@ -25,7 +25,6 @@ const measureLoadTime = (
 
   cy.wrap(visitsArray)
     .each(() => {
-      cy.intercept(`**/api/namespaces/graph*`).as('graphNamespaces');
       // Disabling refresh so that we can see how long it takes to load the page without additional requests
       // being made due to the refresh.
       cy.visit({
@@ -43,7 +42,6 @@ const measureLoadTime = (
           if (isGraph) {
             cy.waitForReact();
             cy.getReact('GraphPF').should('have.length', '1');
-            //cy.wait('@graphNamespaces');
           } else {
             cy.get(loadElementToCheck).should('be.visible');
           }
