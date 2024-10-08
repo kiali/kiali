@@ -122,9 +122,9 @@ const StyleGroupComponent: React.FC<StyleGroupProps> = ({
       )}
       <DefaultGroup
         className={groupClass}
-        element={element}
         collapsedWidth={collapsedWidth}
         collapsedHeight={collapsedHeight}
+        element={element}
         hulledOutline={false}
         showLabel={detailsLevel === ScaleDetailsLevel.high}
         showLabelOnHover={true}
