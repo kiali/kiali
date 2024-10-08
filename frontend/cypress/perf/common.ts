@@ -41,6 +41,8 @@ const measureLoadTime = (
             return false;
           });
           if (isGraph) {
+            cy.waitForReact();
+            cy.getReact('GraphPF').should('have.length', '1');
             cy.wait('@graphNamespaces');
           } else {
             cy.get(loadElementToCheck).should('be.visible');
@@ -67,7 +69,7 @@ const measureLoadTime = (
 };
 
 export const measureGraphLoadTime = (name: string, baseline: number, listUrl: string): void => {
-  measureLoadTime(name, baseline, listUrl, '.pf-topology-content', false);
+  measureLoadTime(name, baseline, listUrl, '', true);
 };
 
 export const measureListsLoadTime = (name: string, baseline: number, listUrl: string): void => {
