@@ -6,16 +6,16 @@ describe('Graph performance tests', () => {
   });
 
   describe('Graph page', () => {
-    //let graphUrl;
+    let graphUrl;
     let graphUrlAllNamespaces;
     let graphUrlAllNamespacesIdle;
 
     before(() => {
       cy.fixture('commonParams')
         .then(data => {
-          // graphUrl = encodeURI(
-          //   `/console/graphpf/namespaces?traffic=${data.traffic}&graphType=${data.graphType}&namespaces=${data.namespaces}&duration=${data.duration}&refresh=${data.refresh}&layout=${data.layout}`
-          // );
+          graphUrl = encodeURI(
+            `/console/graphpf/namespaces?traffic=${data.traffic}&graphType=${data.graphType}&namespaces=${data.namespaces}&duration=${data.duration}&refresh=${data.refresh}&layout=${data.layout}`
+          );
           graphUrlAllNamespaces = encodeURI(
             `/console/graphpf/namespaces?traffic=${data.traffic}&graphType=${data.graphType}&namespaces=${data.allNamespaces}&duration=${data.duration}&refresh=${data.refresh}&layout=${data.layout}`
           );
@@ -28,9 +28,6 @@ describe('Graph performance tests', () => {
       cy.writeFile(reportFilePath, '\n[Graph page]\n', { flag: 'a+' });
     });
 
-    // it('Measures Graph load time', { defaultCommandTimeout: Cypress.env('timeout') }, () => {
-    //   measureGraphLoadTime('Selected Namespaces Graph', Cypress.env(baselines).graphSelected, graphUrl);
-    // });
     it('Measures All Namespaces Graph load time', { defaultCommandTimeout: Cypress.env('timeout') }, () => {
       measureGraphLoadTime('All Namespaces Graph', Cypress.env(baselines).graphAll, graphUrlAllNamespaces);
     });
@@ -40,6 +37,9 @@ describe('Graph performance tests', () => {
         Cypress.env(baselines).graphAllIdle,
         graphUrlAllNamespacesIdle
       );
+    });
+    it('Measures Graph load time', { defaultCommandTimeout: Cypress.env('timeout') }, () => {
+      measureGraphLoadTime('Selected Namespaces Graph', Cypress.env(baselines).graphSelected, graphUrl);
     });
   });
 });
