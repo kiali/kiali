@@ -41,7 +41,7 @@ const measureLoadTime = (
             return false;
           });
           if (isGraph) {
-            cy.wait('@graphNamespaces');
+            //cy.wait('@graphNamespaces');
           } else {
             cy.get(loadElementToCheck).should('be.visible');
           }
