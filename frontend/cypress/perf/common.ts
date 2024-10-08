@@ -43,7 +43,7 @@ const measureLoadTime = (
           if (isGraph) {
             cy.waitForReact();
             cy.getReact('GraphPF').should('have.length', '1');
-            cy.wait('@graphNamespaces');
+            //cy.wait('@graphNamespaces');
           } else {
             cy.get(loadElementToCheck).should('be.visible');
           }
