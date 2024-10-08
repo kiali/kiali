@@ -117,6 +117,18 @@ const StyleNodeComponent: React.FC<StyleNodeProps> = ({ element, ...rest }) => {
     data.onHover(element, false);
   };
 
+  const nodeClass = kialiStyle({
+    $nest: {
+      '&.pf-m-hover': {
+        cursor: 'pointer'
+      },
+      '&.pf-m-selected .pf-topology__node__background': {
+        stroke: PFColors.Active,
+        strokeWidth: 6
+      }
+    }
+  });
+
   const passedData = React.useMemo(() => {
     const newData = { ...data };
     if (detailsLevel !== ScaleDetailsLevel.high) {
@@ -140,6 +152,7 @@ const StyleNodeComponent: React.FC<StyleNodeProps> = ({ element, ...rest }) => {
       {data.isFind && <ShapeComponent className={findOverlayStyle} width={width} height={height} element={element} />}
       {data.isFocus && <ShapeComponent className={focusOverlayStyle} width={width} height={height} element={element} />}
       <DefaultNode
+        className={nodeClass}
         element={element}
         {...rest}
         {...passedData}
@@ -148,7 +161,7 @@ const StyleNodeComponent: React.FC<StyleNodeProps> = ({ element, ...rest }) => {
         scaleLabel={hover && detailsLevel !== ScaleDetailsLevel.low}
         scaleNode={hover && detailsLevel !== ScaleDetailsLevel.high}
         showLabel={hover || detailsLevel === ScaleDetailsLevel.high}
-        showStatusBackground={detailsLevel === ScaleDetailsLevel.low}
+        showStatusBackground={detailsLevel !== ScaleDetailsLevel.high}
       >
         {(hover || detailsLevel !== ScaleDetailsLevel.low) && renderIcon(element)}
       </DefaultNode>

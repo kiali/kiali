@@ -40,19 +40,51 @@ const StyleEdgeComponent: React.FC<StyleEdgeProps> = ({ element, ...rest }) => {
     data.onHover(element, false);
   };
 
-  // when selected keep the selection styling, otherwise apply our custom path styling
-  if (!rest.selected) {
-    const edgeClass = kialiStyle({
-      $nest: {
-        '& .pf-topology__edge__link': data.pathStyle,
-        '& .pf-topology-connector-arrow': {
-          stroke: data.pathStyle.stroke,
-          fill: data.pathStyle.stroke
+  const edgeClass = kialiStyle({
+    $nest: {
+      // node status color on edges
+      '& .pf-topology__edge__link': data.pathStyle,
+      '& .pf-topology-connector-arrow': {
+        stroke: data.pathStyle.stroke,
+        fill: data.pathStyle.stroke
+      },
+
+      // active color for selected edges
+      '&.pf-m-selected': {
+        $nest: {
+          '& .pf-topology__edge__link': {
+            stroke: PFColors.Active
+          },
+          '& .pf-topology-connector-arrow': {
+            stroke: PFColors.Active,
+            fill: PFColors.Active,
+            strokeWidth: 1
+          }
+        }
+      },
+
+      // maintain the selection background on hover (only for selected edges)
+      '&.pf-m-selected.pf-m-hover': {
+        $nest: {
+          '.pf-topology__edge__background': {
+            stroke: 'var(--pf-topology__edge--m-selected--background--Stroke)'
+          }
+        }
+      },
+
+      // pointer cursor on hover
+      '&.pf-m-hover': {
+        cursor: 'pointer',
+        $nest: {
+          '.pf-topology__edge__background': {
+            cursor: 'pointer'
+          }
         }
       }
-    });
-    cssClasses.push(edgeClass);
-  }
+    }
+  });
+
+  cssClasses.push(edgeClass);
 
   // If has spans, add the span overlay
   if (data.hasSpans) {
