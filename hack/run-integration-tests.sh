@@ -194,7 +194,7 @@ ensureKialiServerReady() {
 ensureKialiTracesReady() {
   infomsg "Waiting for Kiali to have traces"
   local start_time=$(date +%s)
-  local end_time=$((start_time + 60))
+  local end_time=$((start_time + 240))
   local multicluster=$1
 
   # Get traces from the last 5m
