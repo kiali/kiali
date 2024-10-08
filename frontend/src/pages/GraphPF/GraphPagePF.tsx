@@ -473,7 +473,7 @@ class GraphPagePFComponent extends React.Component<GraphPagePropsPF, GraphPageSt
                 </Chip>
               )}
               {(!this.props.replayActive || isReplayReady) && (
-                <div id="cytoscape-graph" className={graphContainerStyle}>
+                <div id="pft-graph" className={graphContainerStyle}>
                   <EmptyGraphLayout
                     action={this.handleEmptyGraphAction}
                     elements={this.state.graphData.elements}

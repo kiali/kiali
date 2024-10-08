@@ -122,11 +122,9 @@ Cypress.Commands.add('login', (username: string, password: string) => {
         if (authProvider !== '' && authProvider !== undefined) {
           cy.contains(authProvider).should('be.visible').click();
         }
-        cy.get('#inputUsername')
-          .clear()
-          .type('' || username);
+        cy.get('#inputUsername').clear().type(username);
 
-        cy.get('#inputPassword').type('' || password);
+        cy.get('#inputPassword').type(password);
         cy.get('button[type="submit"]').click();
 
         // Wait for post login routes to be loaded. Otherwise cypress redirects you back to the home page

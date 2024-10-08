@@ -1,5 +1,8 @@
 import { Before, Given, Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import { ensureKialiFinishedLoading } from './transition';
+import { Visualization } from '@patternfly/react-topology';
+import { elems, select, selectAnd, selectOr } from './graph-pf';
+import { EdgeAttr, NodeAttr } from 'types/Graph';
 
 Before(() => {
   // Copied from overview.ts.  This prevents cypress from stopping on errors unrelated to the tests.
@@ -17,7 +20,7 @@ Before(() => {
   });
 });
 
-When('user graphs {string} namespaces in the patternfly graph', (namespaces: string) => {
+When('user graphs {string} namespaces', (namespaces: string) => {
   // Forcing "Pause" to not cause unhandled promises from the browser when cypress is testing
   cy.intercept(`**/api/namespaces/graph*`).as('graphNamespaces');
 
@@ -141,41 +144,52 @@ Then('the display menu has default settings', () => {
   });
 });
 
-Then('the patternfly graph reflects default settings', () => {
+Then('the graph reflects default settings', () => {
   cy.waitForReact();
-  cy.getReact('GraphPageComponent', { state: { isReady: true } })
+  cy.getReact('GraphPagePFComponent', { state: { isReady: true } })
     .should('have.length', '1')
-    .then(() => {
-      cy.getReact('CytoscapeGraph')
-        .should('have.length', '1')
-        .getCurrentState()
-        .then(state => {
-          // no nonDefault edge label info
-          let numEdges = state.cy.edges(`[?responseTime],[?throughput]`).length;
-          assert.equal(numEdges, 0);
+    .getCurrentState()
+    .then(state => {
+      const controller = state.graphRefs.getController() as Visualization;
+      assert.isTrue(controller.hasGraph());
+      const { nodes, edges } = elems(controller);
 
-          // no idle edges, mtls
-          numEdges = state.cy.edges(`[^hasTraffic],[isMTLS > 0]`).length;
-          assert.equal(numEdges, 0);
+      // no nonDefault edge label info
+      let numEdges = selectOr(edges, [
+        [{ prop: EdgeAttr.responseTime, op: 'truthy' }],
+        [{ prop: EdgeAttr.throughput, op: 'truthy' }]
+      ]).length;
+      assert.equal(numEdges, 0);
 
-          // boxes
-          let numNodes = state.cy.nodes(`[isBox = "app"]`).length;
-          assert.isAbove(numNodes, 0);
-          numNodes = state.cy.nodes(`[isBox = "namespace"]`).length;
-          assert.isAbove(numNodes, 0);
+      // no idle edges, mtls
+      numEdges = selectOr(edges, [
+        [{ prop: EdgeAttr.hasTraffic, op: 'falsy' }],
+        [{ prop: EdgeAttr.isMTLS, op: '=', val: undefined }]
+      ]).length;
+      assert.equal(numEdges, 0);
 
-          // service nodes
-          numNodes = state.cy.nodes(`[nodeType = "service"]`).length;
-          assert.isAbove(numNodes, 0);
+      // boxes
+      let numNodes = select(nodes, { prop: NodeAttr.isBox, op: '=', val: 'app' }).length;
+      assert.isAbove(numNodes, 0);
+      numNodes = select(nodes, { prop: NodeAttr.isBox, op: '=', val: 'namespace' }).length;
+      assert.isAbove(numNodes, 0);
 
-          // a variety of not-found tests
-          numNodes = state.cy.nodes(`[isBox = "cluster"],[?isIdle],[?rank],[nodeType = "operation"]`).length;
-          assert.equal(numNodes, 0);
-        });
+      // service nodes
+      numNodes = select(nodes, { prop: NodeAttr.nodeType, op: '=', val: 'service' }).length;
+      assert.isAbove(numNodes, 0);
+
+      // a variety of not-found tests
+      numNodes = selectOr(nodes, [
+        [{ prop: NodeAttr.isBox, op: '=', val: 'cluster' }],
+        [{ prop: NodeAttr.isIdle, op: 'truthy' }],
+        [{ prop: NodeAttr.rank, op: 'truthy' }],
+        [{ prop: NodeAttr.nodeType, op: '=', val: 'operation' }]
+      ]).length;
+      assert.equal(numNodes, 0);
     });
 });
 
-Then('user sees {string} edge labels in the patternfly graph', (el: string) => {
+Then('user sees {string} edge labels', (el: string) => {
   validateInput(el, 'appear');
 
   let rate: string;
@@ -191,16 +205,16 @@ Then('user sees {string} edge labels in the patternfly graph', (el: string) => {
   }
 
   cy.waitForReact();
-  cy.getReact('GraphPageComponent', { state: { isReady: true } })
+  cy.getReact('GraphPagePFComponent', { state: { isReady: true } })
     .should('have.length', '1')
-    .then(() => {
-      cy.getReact('CytoscapeGraph')
-        .should('have.length', '1')
-        .getCurrentState()
-        .then(state => {
-          const numEdges = state.cy.edges(`[${rate}" > 0]`).length;
-          assert.isAbove(numEdges, 0);
-        });
+    .getCurrentState()
+    .then(state => {
+      const controller = state.graphRefs.getController() as Visualization;
+      assert.isTrue(controller.hasGraph());
+      const { edges } = elems(controller);
+
+      const numEdges = select(edges, { prop: rate, op: '>', val: 0 }).length;
+      assert.isAbove(numEdges, 0);
     });
 });
 
@@ -208,20 +222,20 @@ Then('user sees {string} edge label option is closed', (edgeLabel: string) => {
   validateInput(edgeLabel, 'does not appear');
 });
 
-Then('user does not see {string} boxing in the patternfly graph', (boxByType: string) => {
+Then('user does not see {string} boxing', (boxByType: string) => {
   validateInput(`boxBy${boxByType}`, 'does not appear');
 
   cy.waitForReact();
-  cy.getReact('GraphPageComponent', { state: { isReady: true } })
+  cy.getReact('GraphPagePFComponent', { state: { isReady: true } })
     .should('have.length', '1')
-    .then(() => {
-      cy.getReact('CytoscapeGraph')
-        .should('have.length', '1')
-        .getCurrentState()
-        .then(state => {
-          const numBoxes = state.cy.nodes(`[isBox = "${boxByType.toLowerCase()}"]`).length;
-          assert.equal(numBoxes, 0);
-        });
+    .getCurrentState()
+    .then(state => {
+      const controller = state.graphRefs.getController() as Visualization;
+      assert.isTrue(controller.hasGraph());
+      const { nodes } = elems(controller);
+
+      const numBoxes = select(nodes, { prop: NodeAttr.isBox, op: '=', val: boxByType.toLowerCase() }).length;
+      assert.equal(numBoxes, 0);
     });
 });
 
@@ -232,108 +246,115 @@ Then('user does not see {string} boxing in the patternfly graph', (boxByType: st
 // minute depending on the duration used in the test.) In the future we could possibly
 // try to add something like this, but for now I am changing the test to just ensure
 // that non-idle edges don't disappear.
-Then('idle edges {string} in the patternfly graph', (action: string) => {
+Then('idle edges {string} in the graph', (action: string) => {
   validateInput('filterIdleEdges', action);
 
   cy.waitForReact();
-  cy.getReact('GraphPageComponent', { state: { isReady: true } })
-    .should('have.length', '1')
-    .then(() => {
-      cy.getReact('CytoscapeGraph')
-        .should('have.length', '1')
-        .getCurrentState()
-        .then(state => {
-          const numEdges = state.cy.edges(`[hasTraffic]`).length;
-          const numIdleEdges = state.cy.edges(`[^hasTraffic]`).length;
 
-          if (action === 'appear') {
-            assert.isAbove(numEdges, 0);
-            assert.isAtLeast(numIdleEdges, 0);
-          } else {
-            assert.isAbove(numEdges, 0);
-            assert.equal(numIdleEdges, 0);
-          }
-        });
+  cy.getReact('GraphPagePFComponent', { state: { isReady: true } })
+    .should('have.length', '1')
+    .getCurrentState()
+    .then(state => {
+      const controller = state.graphRefs.getController() as Visualization;
+      assert.isTrue(controller.hasGraph());
+      const { edges } = elems(controller);
+
+      const numEdges = select(edges, { prop: EdgeAttr.hasTraffic, op: '!=', val: undefined }).length;
+      const numIdleEdges = select(edges, { prop: EdgeAttr.hasTraffic, op: '=', val: undefined }).length;
+
+      if (action === 'appear') {
+        assert.isAbove(numEdges, 0);
+        assert.isAtLeast(numIdleEdges, 0);
+      } else {
+        assert.isAbove(numEdges, 0);
+        assert.equal(numIdleEdges, 0);
+      }
     });
 });
 
-Then('idle nodes {string} in the patternfly graph', (action: string) => {
+Then('idle nodes {string} in the graph', (action: string) => {
   validateInput('filterIdleNodes', action);
 
   cy.waitForReact();
-  cy.getReact('GraphPageComponent', { state: { isReady: true } })
+  cy.getReact('GraphPagePFComponent', { state: { graphData: { isLoading: false } } })
     .should('have.length', '1')
-    .then(() => {
-      cy.getReact('CytoscapeGraph')
-        .should('have.length', '1')
-        .getCurrentState()
-        .then(state => {
-          const numNodes = state.cy.nodes(`[?isIdle]`).length;
-          if (action === 'appear') {
-            assert.equal(numNodes, 16);
-          } else {
-            assert.equal(numNodes, 0);
-          }
-        });
+    .getCurrentState()
+    .then(state => {
+      const controller = state.graphRefs.getController() as Visualization;
+      assert.isTrue(controller.hasGraph());
+      const { nodes } = elems(controller);
+
+      let numNodes = select(nodes, { prop: NodeAttr.isIdle, op: 'truthy' }).length;
+
+      if (action === 'appear') {
+        assert.equal(numNodes, 16);
+      } else {
+        assert.equal(numNodes, 0);
+      }
     });
 });
 
-Then('ranks {string} in the patternfly graph', (action: string) => {
+Then('ranks {string} in the graph', (action: string) => {
   validateInput('rank', action);
 
   cy.waitForReact();
-  cy.getReact('GraphPageComponent', { state: { isReady: true } })
+  cy.getReact('GraphPagePFComponent', { state: { graphData: { isLoading: false } } })
     .should('have.length', '1')
-    .then(() => {
-      cy.getReact('CytoscapeGraph')
-        .should('have.length', '1')
-        .getCurrentState()
-        .then(state => {
-          const numNodes = state.cy.nodes(`[rank > 0]`).length;
-          if (action === 'appear') {
-            assert.isAbove(numNodes, 0);
-          } else {
-            assert.equal(numNodes, 0);
-          }
-        });
+    .getCurrentState()
+    .then(state => {
+      const controller = state.graphRefs.getController() as Visualization;
+      assert.isTrue(controller.hasGraph());
+      const { nodes } = elems(controller);
+
+      let numNodes = select(nodes, { prop: NodeAttr.rank, op: '>', val: '0' }).length;
+
+      if (action === 'appear') {
+        assert.isAbove(numNodes, 0);
+      } else {
+        assert.equal(numNodes, 0);
+      }
     });
 });
 
-Then('user does not see service nodes in the patternfly graph', () => {
+Then('user does not see service nodes', () => {
   validateInput('filterServiceNodes', 'do not appear');
 
   cy.waitForReact();
-  cy.getReact('GraphPageComponent', { state: { isReady: true } })
+  cy.getReact('GraphPagePFComponent', { state: { graphData: { isLoading: false } } })
     .should('have.length', '1')
-    .then(() => {
-      cy.getReact('CytoscapeGraph')
-        .should('have.length', '1')
-        .getCurrentState()
-        .then(state => {
-          const numBoxes = state.cy.nodes(`[nodeType = "service"][^isOutside]`).length;
-          assert.equal(numBoxes, 0);
-        });
+    .getCurrentState()
+    .then(state => {
+      const controller = state.graphRefs.getController() as Visualization;
+      assert.isTrue(controller.hasGraph());
+      const { nodes } = elems(controller);
+
+      let numBoxes = selectAnd(nodes, [
+        { prop: NodeAttr.nodeType, op: '=', val: 'service' },
+        { prop: NodeAttr.isOutside, op: '=', val: undefined }
+      ]).length;
+      assert.equal(numBoxes, 0);
     });
 });
 
-Then('security {string} in the patternfly graph', (action: string) => {
+Then('security {string} in the graph', (action: string) => {
   validateInput('filterSecurity', action);
 
   cy.waitForReact();
-  cy.getReact('GraphPageComponent', { state: { isReady: true } })
+  cy.getReact('GraphPagePFComponent', { state: { graphData: { isLoading: false } } })
     .should('have.length', '1')
-    .then(() => {
-      cy.getReact('CytoscapeGraph')
-        .should('have.length', '1')
-        .getCurrentState()
-        .then(state => {
-          const numEdges = state.cy.edges(`[isMTLS > 0]`).length;
-          if (action === 'appears') {
-            assert.isAbove(numEdges, 0);
-          } else {
-            assert.equal(numEdges, 0);
-          }
-        });
+    .getCurrentState()
+    .then(state => {
+      const controller = state.graphRefs.getController() as Visualization;
+      assert.isTrue(controller.hasGraph());
+      const { edges } = elems(controller);
+
+      let numEdges = select(edges, { prop: EdgeAttr.isMTLS, op: '>', val: 0 }).length;
+
+      if (action === 'appears') {
+        assert.isAbove(numEdges, 0);
+      } else {
+        assert.equal(numEdges, 0);
+      }
     });
 });
 
@@ -373,21 +394,24 @@ Then('the {string} option should {string} and {string}', (option: string, option
     .and(`be.${checkState}`);
 });
 
-Then('only a single cluster box should be visible in the patternfly graph', () => {
+Then('only a single cluster box should be visible', () => {
   cy.waitForReact();
-  cy.getReact('GraphPageComponent', { state: { isReady: true } })
+  cy.getReact('GraphPagePFComponent', { state: { graphData: { isLoading: false } } })
     .should('have.length', '1')
-    .then(() => {
-      cy.getReact('CytoscapeGraph')
-        .should('have.length', '1')
-        .getCurrentState()
-        .then(state => {
-          const clusterBoxes = state.cy.nodes(`[isBox = "cluster"]`).length;
-          assert.equal(clusterBoxes, 0);
+    .getCurrentState()
+    .then(state => {
+      const controller = state.graphRefs.getController() as Visualization;
+      assert.isTrue(controller.hasGraph());
+      const { nodes } = elems(controller);
 
-          const namespaceBoxes = state.cy.nodes(`[isBox = "namespace"][namespace = "bookinfo"]`).length;
-          assert.equal(namespaceBoxes, 1);
-        });
+      const clusterBoxes = select(nodes, { prop: NodeAttr.isBox, op: '=', val: 'cluster' }).length;
+      assert.equal(clusterBoxes, 0);
+
+      const namespaceBoxes = selectAnd(nodes, [
+        { prop: NodeAttr.isBox, op: '=', val: 'namespace' },
+        { prop: NodeAttr.namespace, op: '=', val: 'bookinfo' }
+      ]).length;
+      assert.equal(namespaceBoxes, 1);
     });
 });
 
@@ -448,30 +472,6 @@ Then(
     });
   }
 );
-Then(
-  'user double-clicks on the {string} {string} from the {string} cluster in the main patternfly graph',
-  (name: string, type: string, cluster: string) => {
-    cy.waitForReact();
-    cy.getReact('GraphPageComponent', { state: { isReady: true } })
-      .should('have.length', '1')
-      .then(() => {
-        cy.getReact('CytoscapeGraph')
-          .should('have.length', '1')
-          .getCurrentState()
-          .then(state => {
-            let node;
-            if (type === 'app') {
-              node = state.cy.nodes(`[app="${name}"][cluster="${cluster}"][isBox="app"]`);
-            } else if (type === 'service') {
-              node = state.cy.nodes(`[nodeType="service"][cluster="${cluster}"][app="${name}"]`);
-            }
-            // none of the standard cytoscape.js events for double-clicks were not working unfortunately
-            node.emit('tap');
-            node.emit('tap');
-          });
-      });
-  }
-);
 
 When('user opens traffic menu', () => {
   cy.get('button#graph-traffic-dropdown').click();
@@ -485,15 +485,19 @@ When('user {string} {string} traffic option', (action: string, option: string) =
   }
 });
 
-Then('{int} edges appear in the patternfly graph', (edges: number) => {
+Then('{int} edges appear in the graph', (graphEdges: number) => {
   cy.waitForReact();
-  cy.getReact('GraphPagePFComponent', { state: { isReady: true } })
-    .should('have.length', 1)
+  cy.getReact('GraphPagePFComponent', { state: { graphData: { isLoading: false } } })
+    .should('have.length', '1')
     .getCurrentState()
     .then(state => {
-      const graphEdges = state.graphData.elements.edges;
-      console.log(graphEdges.length);
-      assert.isAtLeast(graphEdges.length, edges);
+      const controller = state.graphRefs.getController() as Visualization;
+      assert.isTrue(controller.hasGraph());
+      const { edges } = elems(controller);
+
+      const numEdges = select(edges, { prop: EdgeAttr.hasTraffic, op: '!=', val: undefined }).length;
+      // It can be more, depending on the service version redirection
+      assert.isAtLeast(numEdges, graphEdges);
     });
 });
 

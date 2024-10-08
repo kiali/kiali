@@ -1,5 +1,4 @@
 @service-details
-@pft
 # don't change first line of this file - the tag is used for the test scripts to identify the test suite
 
 Feature: Kiali Service Details page
@@ -13,10 +12,10 @@ Feature: Kiali Service Details page
 
   @bookinfo-app
   Scenario: See service minigraph for details app.
-    Then user sees a patternfly minigraph
+    Then user sees a minigraph
 
   @bookinfo-app
   Scenario: Verify that the Graph type dropdown is disabled when changing to Show node graph
-    When user sees a patternfly minigraph
+    When user sees a minigraph
     And user chooses the "Show node graph" option
     Then the graph type is disabled

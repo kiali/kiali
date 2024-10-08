@@ -22,9 +22,9 @@ type EmptyGraphLayoutProps = {
   isError: boolean;
   isLoading?: boolean;
   isMiniGraph: boolean;
-  namespaces: Namespace[];
-  showIdleNodes: boolean;
-  toggleIdleNodes: () => void;
+  namespaces?: Namespace[];
+  showIdleNodes?: boolean;
+  toggleIdleNodes?: () => void;
 };
 
 const emptyStateStyle = kialiStyle({
@@ -99,7 +99,7 @@ export class EmptyGraphLayout extends React.Component<EmptyGraphLayoutProps, Emp
       );
     }
 
-    if (this.props.namespaces.length === 0) {
+    if (this.props.namespaces?.length === 0) {
       return (
         <EmptyState id="empty-graph-no-namespace" variant={EmptyStateVariant.lg} className={emptyStateStyle}>
           <EmptyStateHeader titleText="No namespace is selected" headingLevel="h5" />
@@ -118,7 +118,7 @@ export class EmptyGraphLayout extends React.Component<EmptyGraphLayoutProps, Emp
           <EmptyStateHeader titleText="Empty Graph" headingLevel="h5" />
           <EmptyStateBody>
             There is currently no graph available for {this.namespacesText()}. This could either mean there is no
-            service mesh available for {this.props.namespaces.length === 1 ? 'this namespace' : 'these namespaces'} or
+            service mesh available for {this.props.namespaces?.length === 1 ? 'this namespace' : 'these namespaces'} or
             the service mesh has yet to see request traffic.
             {this.props.showIdleNodes && (
               <> You are currently displaying 'Idle nodes', send requests to the service mesh and click 'Refresh'.</>

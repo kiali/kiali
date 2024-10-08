@@ -1,4 +1,4 @@
-import { Then, When } from '@badeball/cypress-cucumber-preprocessor';
+import { When } from '@badeball/cypress-cucumber-preprocessor';
 
 When('user clicks the {string} {string} node in the cytoscape graph', (svcName: string, nodeType: string) => {
   cy.waitForReact();

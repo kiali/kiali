@@ -1,8 +1,9 @@
-import { Given, Step, Then, When } from '@badeball/cypress-cucumber-preprocessor';
+import { Given, Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import { openTab } from './transition';
 import { clusterParameterExists } from './navigation';
 import { ensureKialiFinishedLoading } from './transition';
-import { nodeInfo } from './graph-pf';
+import { elems, nodeInfo } from './graph-pf';
+import { Visualization } from '@patternfly/react-topology';
 
 Then('user sees details information for the remote {string} app', (name: string) => {
   cy.getBySel('app-description-card').within(() => {
@@ -57,19 +58,19 @@ Then(
   }
 );
 
-Then(
-  'user sees {string} from a remote {string} cluster in the patternfly minigraph',
-  (type: string, cluster: string) => {
-    cy.waitForReact();
-    cy.getReact('CytoscapeGraph')
-      .should('have.length', '1')
-      .getCurrentState()
-      .then(state => {
-        const apps = state.cy.nodes(`[cluster="${cluster}"][nodeType="${type}"][namespace="bookinfo"]`).length;
-        assert.isAbove(apps, 0);
-      });
-  }
-);
+Then('user sees {string} from a remote {string} cluster in the minigraph', (type: string, cluster: string) => {
+  cy.waitForReact();
+  cy.getReact('MiniGraphCardPFComponent', { state: { isReady: true } })
+    .should('have.length', '1')
+    .getCurrentState()
+    .then(state => {
+      const controller = state.graphRefs.getController() as Visualization;
+      assert.isTrue(controller.hasGraph());
+      const { nodes } = elems(controller);
+      const filteredNodes = nodes.filter(n => n.getData().cluster === cluster && n.getData().nodeType === type);
+      assert.isAbove(filteredNodes.length, 0, 'Unexpected number of nodes');
+    });
+});
 
 Then('user should see columns related to cluster info for the inbound and outbound traffic', () => {
   cy.get(`th[data-label="Cluster"]`).should('be.visible').and('have.length', 2);
@@ -82,33 +83,31 @@ Then('an info message {string} is displayed', (message: string) => {
 
 // And user clicks on the "reviews" <type> from the "west" cluster visible in the graph
 Given(
-  'the {string} {string} from the {string} cluster is visible in the patternfly minigraph',
+  'the {string} {string} from the {string} cluster is visible in the minigraph',
   (name: string, type: string, cluster: string) => {
-    Step(this, 'user sees a patternfly minigraph');
     cy.waitForReact();
-    cy.getReact('CytoscapeGraph')
+    cy.getReact('MiniGraphCardPFComponent', { state: { isReady: true } })
       .should('have.length', '1')
       .then($graph => {
         cy.wrap($graph)
           .getProps()
           .then(props => {
-            const graphType = props.graphData.fetchParams.graphType;
+            const graphType = props.dataSource.fetchParameters.graphType;
             const { nodeType, isBox } = nodeInfo(type, graphType);
             cy.wrap($graph)
               .getCurrentState()
               .then(state => {
-                cy.wrap(
-                  state.cy
-                    .nodes()
-                    .some(
-                      node =>
-                        node.data('nodeType') === nodeType &&
-                        node.data('namespace') === 'bookinfo' &&
-                        node.data(type) === name &&
-                        node.data('cluster') === cluster &&
-                        node.data('isBox') === isBox
-                    )
-                ).should('be.true');
+                const controller = state.graphRefs.getController() as Visualization;
+                assert.isTrue(controller.hasGraph());
+                const { nodes } = elems(controller);
+                const nodeExists = nodes.some(
+                  node =>
+                    node.getData().nodeType === nodeType &&
+                    node.getData().namespace === 'bookinfo' &&
+                    node.getData().cluster === cluster &&
+                    node.getData().isBox === isBox
+                );
+                assert(nodeExists, `Node ${name} of type ${type} from cluster ${cluster} not found in the graph`);
               });
           });
       });
@@ -116,7 +115,7 @@ Given(
 );
 
 When(
-  'user clicks on the {string} {string} from the {string} cluster in the patternfly minigraph',
+  'user clicks on the {string} {string} from the {string} cluster in the minigraph',
   (name: string, type: string, cluster: string) => {
     cy.waitForReact();
     cy.getReact('CytoscapeGraph')

@@ -1,37 +1,60 @@
 import { Then, When } from '@badeball/cypress-cucumber-preprocessor';
+import { Visualization } from '@patternfly/react-topology';
+import { elems, selectAnd } from './graph-pf';
+import { NodeAttr } from 'types/Graph';
 
-When('user clicks the {string} {string} node in the patternfly graph', (svcName: string, nodeType: string) => {
+When('user clicks the {string} {string} node', (svcName: string, nodeType: string) => {
   cy.waitForReact();
-  cy.getReact('GraphPageComponent', { state: { isReady: true } })
+  cy.getReact('GraphPagePFComponent', { state: { isReady: true } })
     .should('have.length', '1')
-    .then(() => {
-      cy.getReact('CytoscapeGraph')
-        .should('have.length', '1')
-        .getCurrentState()
-        .then(state => {
-          const node = state.cy.nodes(`[nodeType="${nodeType}"][${nodeType}="${svcName}"]`);
-          node.emit('tap');
-        });
+    .getCurrentState()
+    .then(state => {
+      const controller = state.graphRefs.getController() as Visualization;
+      assert.isTrue(controller.hasGraph());
+      const { nodes } = elems(controller);
+
+      const node = selectAnd(nodes, [
+        { prop: NodeAttr.nodeType, op: '=', val: nodeType },
+        { prop: nodeType, op: '=', val: svcName }
+      ]);
+
+      cy.log(node[0].getId());
+
+      const setSelectedIds = state.graphRefs.setSelectedIds as (values: string[]) => void;
+      setSelectedIds([node[0].getId()]);
     });
 });
 
 When(
-  'user clicks the edge from {string} {string} to {string} {string} in the patternfly graph',
+  'user clicks the edge from {string} {string} to {string} {string}',
   (svcName: string, nodeType: string, destSvcName: string, destNodeType: string) => {
     cy.waitForReact();
-    cy.getReact('GraphPageComponent', { state: { isReady: true } })
+    cy.getReact('GraphPagePFComponent', { state: { isReady: true } })
       .should('have.length', '1')
-      .then(() => {
-        cy.getReact('CytoscapeGraph')
-          .should('have.length', '1')
-          .getCurrentState()
-          .then(state => {
-            const node = state.cy.nodes(`[nodeType="${nodeType}"][${nodeType}="${svcName}"]`);
-            const destNode = state.cy.nodes(`[nodeType="${destNodeType}"][${destNodeType}="${destSvcName}"]`);
-            const edge = state.cy.edges(`[source="${node.id()}"][target="${destNode.id()}"]`);
+      .getCurrentState()
+      .then(state => {
+        const controller = state.graphRefs.getController() as Visualization;
+        assert.isTrue(controller.hasGraph());
 
-            edge.emit('tap');
-          });
+        const { nodes, edges } = elems(controller);
+
+        const node = selectAnd(nodes, [
+          { prop: NodeAttr.nodeType, op: '=', val: nodeType },
+          { prop: nodeType, op: '=', val: svcName }
+        ]);
+
+        const destNode = selectAnd(nodes, [
+          { prop: NodeAttr.nodeType, op: '=', val: destNodeType },
+          { prop: destNodeType, op: '=', val: destSvcName }
+        ]);
+
+        const edge = selectAnd(edges, [
+          { prop: 'source', op: '=', val: node[0].getId() },
+          { prop: 'target', op: '=', val: destNode[0].getId() }
+        ]);
+
+        const setSelectedIds = state.graphRefs.setSelectedIds as (values: string[]) => void;
+        setSelectedIds([edge[0].getId()]);
       });
   }
 );
@@ -138,36 +161,39 @@ When(
 );
 
 When(
-  'user clicks the {string} service node in the {string} namespace in the {string} cluster in the patternfly graph',
+  'user clicks the {string} service node in the {string} namespace in the {string} cluster',
   (service: string, namespace: string, cluster: string) => {
     cy.waitForReact();
-    cy.getReact('GraphPageComponent', { state: { isReady: true } })
+    cy.getReact('GraphPagePFComponent', { state: { isReady: true } })
       .should('have.length', '1')
-      .then(() => {
-        cy.getReact('CytoscapeGraph')
-          .should('have.length', '1')
-          .getCurrentState()
-          .then($graph => {
-            const serviceNode = $graph.cy
-              .nodes()
-              .filter(
-                node =>
-                  node.data('nodeType') === 'service' &&
-                  node.data('isBox') === undefined &&
-                  node.data('service') === service &&
-                  node.data('namespace') === namespace &&
-                  node.data('cluster') === cluster
-              );
-            expect(serviceNode.length).to.equal(1);
-            cy.wrap(serviceNode.emit('tap')).then(() => {
-              // Wait for the side panel to change.
-              // Note we can't use summary-graph-panel since that
-              // element will get unmounted and disappear when
-              // the context changes but the graph-side-panel does not.
-              cy.get('#graph-side-panel').contains(service);
-              cy.wrap(serviceNode).as('contextNode');
-            });
-          });
+      .getCurrentState()
+      .then(state => {
+        const controller = state.graphRefs.getController() as Visualization;
+        assert.isTrue(controller.hasGraph());
+        const { nodes } = elems(controller);
+
+        const serviceNode = nodes.filter(
+          node =>
+            node.getData().nodeType === 'service' &&
+            node.getData().isBox === undefined &&
+            node.getData().service === service &&
+            node.getData().namespace === namespace &&
+            node.getData().cluster === cluster
+        );
+
+        expect(serviceNode.length).to.equal(1);
+
+        const setSelectedIds = state.graphRefs.setSelectedIds as (values: string[]) => void;
+        setSelectedIds([serviceNode[0].getId()]);
+
+        cy.wrap(setSelectedIds([serviceNode[0].getId()])).then(() => {
+          // Wait for the side panel to change.
+          // Note we can't use summary-graph-panel since that
+          // element will get unmounted and disappear when
+          // the context changes but the graph-side-panel does not.
+          cy.get('#graph-side-panel').contains(service);
+          cy.wrap(serviceNode).as('contextNode');
+        });
       });
   }
 );

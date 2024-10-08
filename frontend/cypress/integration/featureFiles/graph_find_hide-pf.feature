@@ -1,5 +1,4 @@
 @graph-page-find-hide
-@pft
 # don't change first line of this file - the tag is used for the test scripts to identify the test suite
 
 Feature: Kiali Graph page - Find/Hide
@@ -12,30 +11,30 @@ Feature: Kiali Graph page - Find/Hide
 
   Background:
     Given user is at administrator perspective
-    And user graphs "alpha,beta" namespaces in the patternfly graph
+    And user graphs "alpha,beta" namespaces
 
   @error-rates-app
   Scenario: Find unhealthy workloads
-    Then user sees nothing highlighted on the patternfly graph
+    Then user sees nothing highlighted on the graph
     When user finds unhealthy workloads
-    Then user sees unhealthy workloads highlighted on the patternfly graph
+    Then user sees unhealthy workloads highlighted on the graph
 
   @error-rates-app
   Scenario: Hide unhealthy workloads
     When user hides unhealthy workloads
-    Then user sees no unhealthy workloads on the patternfly graph
+    Then user sees no unhealthy workloads on the graph
 
   @error-rates-app
   Scenario: Use preset find option to filter workloads
     Then user sees preset find options
     When user selects the preset the find option "Find: unhealthy nodes"
-    Then user sees unhealthy workloads highlighted on the patternfly graph
+    Then user sees unhealthy workloads highlighted on the graph
 
   @error-rates-app
   Scenario: Use preset hide option to filter workloads
     Then user sees preset hide options
     When user selects the preset hide option "Hide: healthy nodes"
-    Then user sees no healthy workloads on the patternfly graph
+    Then user sees no healthy workloads on the graph
 
   @error-rates-app
   Scenario: Show Graph Find/Hide help menu
