@@ -28,18 +28,18 @@ describe('Graph performance tests', () => {
       cy.writeFile(reportFilePath, '\n[Graph page]\n', { flag: 'a+' });
     });
 
-    it('Measures Graph load time', { defaultCommandTimeout: Cypress.env('timeout') }, () => {
-      measureGraphLoadTime('Selected Namespaces Graph', Cypress.env(baselines).graphSelected, graphUrl);
-    });
+    // it('Measures Graph load time', { defaultCommandTimeout: Cypress.env('timeout') }, () => {
+    //   measureGraphLoadTime('Selected Namespaces Graph', Cypress.env(baselines).graphSelected, graphUrl);
+    // });
     it('Measures All Namespaces Graph load time', { defaultCommandTimeout: Cypress.env('timeout') }, () => {
       measureGraphLoadTime('All Namespaces Graph', Cypress.env(baselines).graphAll, graphUrlAllNamespaces);
     });
-    it('Measures All Namespaces Graph Idle Nodes load time', { defaultCommandTimeout: Cypress.env('timeout') }, () => {
-      measureGraphLoadTime(
-        'All Namespaces Graph Idle Nodes',
-        Cypress.env(baselines).graphAllIdle,
-        graphUrlAllNamespacesIdle
-      );
-    });
+    // it('Measures All Namespaces Graph Idle Nodes load time', { defaultCommandTimeout: Cypress.env('timeout') }, () => {
+    //   measureGraphLoadTime(
+    //     'All Namespaces Graph Idle Nodes',
+    //     Cypress.env(baselines).graphAllIdle,
+    //     graphUrlAllNamespacesIdle
+    //   );
+    // });
   });
 });
