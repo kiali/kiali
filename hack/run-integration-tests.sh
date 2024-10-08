@@ -213,6 +213,7 @@ ensureKialiTracesReady() {
       fi
       sleep 1
     else
+      echo "Got traces."
       break
     fi
 
@@ -391,6 +392,7 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_PRIMARY_REMOTE}" ]; then
 
   ensureKialiServerReady
   ensureMulticlusterApplicationsAreHealthy
+  ensureKialiTracesReady
 
   export CYPRESS_BASE_URL="${KIALI_URL}"
   export CYPRESS_CLUSTER1_CONTEXT="kind-east"
