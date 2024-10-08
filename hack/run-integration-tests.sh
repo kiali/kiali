@@ -195,10 +195,16 @@ ensureKialiTracesReady() {
   infomsg "Waiting for Kiali to have traces"
   local start_time=$(date +%s)
   local end_time=$((start_time + 60))
+  local multicluster=$1
 
   # Get traces from the last 5m
   local traces_date=$((($(date +%s) - 300) * 1000))
   local trace_url="${KIALI_URL}/api/namespaces/bookinfo/workloads/productpage-v1/traces?startMicros=${traces_date}&tags=&limit=100"
+  if [ "$multicluster" == "true" ]; then
+    echo "Multicluster request"
+    trace_url="${KIALI_URL}/api/namespaces/bookinfo/workloads/reviews-v2/traces?startMicros=${traces_date}&tags=&limit=100&clusterName=west"
+  fi
+
   infomsg "Traces url: ${trace_url}"
   while true; do
     result=$(curl -k -s --fail "$trace_url" \
@@ -392,7 +398,7 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_PRIMARY_REMOTE}" ]; then
 
   ensureKialiServerReady
   ensureMulticlusterApplicationsAreHealthy
-  ensureKialiTracesReady
+  ensureKialiTracesReady "true"
 
   export CYPRESS_BASE_URL="${KIALI_URL}"
   export CYPRESS_CLUSTER1_CONTEXT="kind-east"
