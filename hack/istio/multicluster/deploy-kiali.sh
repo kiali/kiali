@@ -173,7 +173,7 @@ deploy_kiali() {
   else
     helm_args+=(
           "--set external_services.tracing.external_url=http://tracing.istio-system/jaeger"
-          "--set external_services.tracing.user_grpc=false"
+          "--set external_services.tracing.use_grpc=false"
           "--set external_services.tracing.internal_url=http://tracing.istio-system/jaeger"
         )
   fi
