@@ -1,13 +1,13 @@
 import {
   Graph,
   Layout,
-  DagreLayout,
   GridLayout,
   ConcentricLayout,
   LayoutFactory,
   BreadthFirstLayout
 } from '@patternfly/react-topology';
 import { LayoutName } from '../GraphPF';
+import { ExtendedDagreLayout } from './ExtendedDagreLayout';
 
 /*
 This is just for reference, a copy of PFT defaults, so we can compare any tweaks we've made below...
@@ -35,7 +35,7 @@ export const layoutFactory: LayoutFactory = (type: string, graph: Graph): Layout
         nodeDistance: 50
       });
     default:
-      return new DagreLayout(graph, {
+      return new ExtendedDagreLayout(graph, {
         linkDistance: 40, // edgesep
         nodeDistance: 25, // nodesep
         ranksep: 15,
