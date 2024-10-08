@@ -41,46 +41,14 @@ const MeshEdgeComponent: React.FC<MeshEdgeProps> = ({ element, ...rest }) => {
   // Change edge color according to the pathStyle
   const edgeClass = kialiStyle({
     $nest: {
-      '& .pf-topology__edge__link': data.pathStyle
-    }
-  });
-  cssClasses.push(edgeClass);
-
-  const edgeHoverClass = kialiStyle({
-    $nest: {
-      '& .pf-topology__edge.pf-m-hover': {
-        $nest: {
-          '& .pf-topology__edge__link, & .pf-topology-connector-arrow': data.pathStyle
-        }
-      }
-    }
-  });
-  cssClasses.push(edgeHoverClass);
-
-  // Change connector color according to the pathStyle
-  const connectorClass = kialiStyle({
-    $nest: {
+      '& .pf-topology__edge__link': data.pathStyle,
       '& .pf-topology-connector-arrow': {
         stroke: data.pathStyle.stroke,
         fill: data.pathStyle.stroke
       }
     }
   });
-  cssClasses.push(connectorClass);
-
-  const edgeConnectorArrowHoverStyles = kialiStyle({
-    $nest: {
-      '& .pf-topology__edge.pf-m-hover': {
-        $nest: {
-          '& .pf-topology-connector-arrow': {
-            stroke: data.pathStyle.stroke,
-            fill: data.pathStyle.stroke
-          }
-        }
-      }
-    }
-  });
-  cssClasses.push(edgeConnectorArrowHoverStyles);
+  cssClasses.push(edgeClass);
 
   if (data.isFind) {
     const findClass = kialiStyle({

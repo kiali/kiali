@@ -5,6 +5,7 @@ import {
   NodeShape,
   observer,
   ScaleDetailsLevel,
+  ShapeProps,
   useHover,
   WithSelectionProps
 } from '@patternfly/react-topology';
@@ -62,11 +63,22 @@ const renderIcon = (element: Node): React.ReactNode => {
   );
 };
 
+const getNodeShape = (node: Node): React.FunctionComponent<ShapeProps> => {
+  switch (node.getNodeShape()) {
+    case NodeShape.rhombus:
+      return Triangle;
+    case NodeShape.trapezoid:
+      return Plate;
+    default:
+      return getShapeComponent(node);
+  }
+};
+
 const StyleNodeComponent: React.FC<StyleNodeProps> = ({ element, ...rest }) => {
   const data = element.getData();
   const detailsLevel = useDetailsLevel();
   const [hover, hoverRef] = useHover();
-  const ShapeComponent = getShapeComponent(element);
+  const ShapeComponent = getNodeShape(element);
 
   const ColorFind = PFColors.Gold400;
   const ColorFocus = PFColors.Blue200;
@@ -132,20 +144,11 @@ const StyleNodeComponent: React.FC<StyleNodeProps> = ({ element, ...rest }) => {
         {...rest}
         {...passedData}
         attachments={hover || detailsLevel === ScaleDetailsLevel.high ? data.attachments : undefined}
-        getCustomShape={(node: Node) => {
-          switch (node.getNodeShape()) {
-            case NodeShape.rhombus:
-              return Triangle;
-            case NodeShape.trapezoid:
-              return Plate;
-            default:
-              return getShapeComponent(node);
-          }
-        }}
+        getCustomShape={getNodeShape}
         scaleLabel={hover && detailsLevel !== ScaleDetailsLevel.low}
         scaleNode={hover && detailsLevel !== ScaleDetailsLevel.high}
         showLabel={hover || detailsLevel === ScaleDetailsLevel.high}
-        showStatusBackground={detailsLevel === ScaleDetailsLevel.low || rest.selected}
+        showStatusBackground={detailsLevel === ScaleDetailsLevel.low}
       >
         {(hover || detailsLevel !== ScaleDetailsLevel.low) && renderIcon(element)}
       </DefaultNode>
