@@ -339,6 +339,11 @@ func (o *PromClientMock) GetWorkloadRequestRates(namespace, cluster, workload, r
 	return args.Get(0).(model.Vector), args.Get(1).(model.Vector), args.Error(2)
 }
 
+func (o *PromClientMock) FetchDelta(metricName, labels, grouping string, queryTime time.Time, duration time.Duration) prometheus.Metric {
+	args := o.Called(metricName, labels, grouping, queryTime, duration)
+	return args.Get(0).(prometheus.Metric)
+}
+
 func (o *PromClientMock) FetchRange(metricName, labels, grouping, aggregator string, q *prometheus.RangeQuery) prometheus.Metric {
 	args := o.Called(metricName, labels, grouping, aggregator, q)
 	return args.Get(0).(prometheus.Metric)

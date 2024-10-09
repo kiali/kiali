@@ -128,6 +128,8 @@ const conf = {
       clustersTls: () => `api/clusters/tls`,
       clustersWorkloads: () => `api/clusters/workloads`,
       configValidations: () => `api/istio/validations`,
+      controlPlaneMetrics: (namespace: string, controlPlane: string) =>
+        `api/namespaces/${namespace}/controlplanes/${controlPlane}/metrics`,
       crippledFeatures: 'api/crippled',
       customDashboard: (namespace: string, template: string) =>
         `api/namespaces/${namespace}/customdashboard/${template}`,

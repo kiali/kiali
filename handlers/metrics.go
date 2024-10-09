@@ -166,6 +166,77 @@ func getAggregateMetrics(w http.ResponseWriter, r *http.Request, promSupplier pr
 	RespondWithJSON(w, http.StatusOK, metrics)
 }
 
+// ControlPlaneMetrics is the API handler to fetch metrics to be displayed, related to a single control plane revision
+func ControlPlaneMetrics(promSupplier promClientSupplier, discovery remoteClusterIdentifier) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		layer, err := getBusiness(r)
+		if err != nil {
+			RespondWithError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		vars := mux.Vars(r)
+		namespace := vars["namespace"]
+		controlPlane := vars["controlplane"]
+		cluster := clusterNameFromQuery(r.URL.Query())
+
+		metricsService, namespaceInfo := createMetricsServiceForNamespaceMC(w, r, promSupplier, namespace)
+		if metricsService == nil {
+			// any returned value nil means error & response already written
+			return
+		}
+		oldestNs := GetOldestNamespace(namespaceInfo)
+
+		params := models.IstioMetricsQuery{Cluster: cluster, Namespace: namespace}
+
+		err = extractIstioMetricsQueryParams(r, &params, oldestNs)
+		if err != nil {
+			RespondWithError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		if discovery.IsRemoteCluster(r.Context(), cluster) {
+			RespondWithError(w, http.StatusServiceUnavailable, fmt.Sprintf("cannot fetch control plane metrics for remote cluster [%s]", cluster))
+			return
+		}
+
+		if namespace != config.Get().IstioNamespace {
+			RespondWithError(w, http.StatusBadRequest, fmt.Sprintf("namespace [%s] is not the control plane namespace", namespace))
+			return
+		}
+
+		cpWorkload, err := layer.Workload.GetWorkload(r.Context(), business.WorkloadCriteria{
+			Cluster:               cluster,
+			Namespace:             namespace,
+			WorkloadName:          controlPlane,
+			IncludeServices:       false,
+			IncludeIstioResources: false,
+			IncludeHealth:         false,
+		})
+		if err != nil {
+			RespondWithError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		metrics := make(models.MetricsMap)
+
+		// Should we exclude remote clusters?  what if those metrics are in a unified db? Can they be?
+		if isRemoteCluster := discovery.IsRemoteCluster(r.Context(), cluster); !isRemoteCluster {
+			controlPlaneMetrics, err := metricsService.GetControlPlaneMetrics(params, cpWorkload.Pods, nil)
+			if err != nil {
+				RespondWithError(w, http.StatusServiceUnavailable, err.Error())
+				return
+			}
+
+			for k, v := range controlPlaneMetrics {
+				metrics[k] = v
+			}
+		}
+
+		RespondWithJSON(w, http.StatusOK, metrics)
+	}
+}
+
 type remoteClusterIdentifier interface {
 	IsRemoteCluster(context.Context, string) bool
 }
@@ -203,18 +274,6 @@ func NamespaceMetrics(promSupplier promClientSupplier, discovery remoteClusterId
 		if err != nil {
 			RespondWithError(w, http.StatusServiceUnavailable, err.Error())
 			return
-		}
-
-		if isRemoteCluster := discovery.IsRemoteCluster(r.Context(), cluster); !isRemoteCluster && namespace == config.Get().IstioNamespace {
-			controlPlaneMetrics, err := metricsService.GetControlPlaneMetrics(params, nil)
-			if err != nil {
-				RespondWithError(w, http.StatusServiceUnavailable, err.Error())
-				return
-			}
-
-			for k, v := range controlPlaneMetrics {
-				metrics[k] = v
-			}
 		}
 
 		RespondWithJSON(w, http.StatusOK, metrics)
@@ -266,18 +325,6 @@ func ClustersMetrics(promSupplier promClientSupplier, discovery remoteClusterIde
 			if err != nil {
 				RespondWithError(w, http.StatusServiceUnavailable, err.Error())
 				return
-			}
-
-			if isRemoteCluster := discovery.IsRemoteCluster(r.Context(), cluster); !isRemoteCluster && namespace == config.Get().IstioNamespace {
-				controlPlaneMetrics, err := metricsService.GetControlPlaneMetrics(params, nil)
-				if err != nil {
-					RespondWithError(w, http.StatusServiceUnavailable, err.Error())
-					return
-				}
-
-				for k, v := range controlPlaneMetrics {
-					metrics[k] = v
-				}
 			}
 
 			if err != nil {

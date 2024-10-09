@@ -25,6 +25,7 @@ var invalidLabelCharRE = regexp.MustCompile(`[^a-zA-Z0-9_]`)
 
 // ClientInterface for mocks (only mocked function are necessary here)
 type ClientInterface interface {
+	FetchDelta(metricName, labels, grouping string, queryTime time.Time, duration time.Duration) Metric
 	FetchHistogramRange(metricName, labels, grouping string, q *RangeQuery) Histogram
 	FetchHistogramValues(metricName, labels, grouping, rateInterval string, avg bool, quantiles []string, queryTime time.Time) (map[string]model.Vector, error)
 	FetchRange(metricName, labels, grouping, aggregator string, q *RangeQuery) Metric
@@ -228,6 +229,15 @@ func (in *Client) GetWorkloadRequestRates(namespace, cluster, workload, ratesInt
 		promCache.SetWorkloadRequestRates(namespace, cluster, workload, ratesInterval, queryTime, inResult, outResult)
 	}
 	return inResult, outResult, nil
+}
+
+// FetchDelta fetches a delta for a simple metric (gauge or counter), for a given duration
+func (in *Client) FetchDelta(metricName, labels, grouping string, queryTime time.Time, duration time.Duration) Metric {
+	query := fmt.Sprintf("delta(%s%s[%s])", metricName, labels, duration.Round(time.Second).String())
+	if grouping != "" {
+		query += fmt.Sprintf(" by (%s)", grouping)
+	}
+	return fetchQuery(in.ctx, in.api, query, queryTime)
 }
 
 // FetchRange fetches a simple metric (gauge or counter) in given range

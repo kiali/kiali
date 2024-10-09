@@ -28,7 +28,7 @@ import { MessageType } from 'types/MessageCenter';
 import { TLSStatus, nsWideMTLSStatus } from 'types/TLSStatus';
 import * as FilterHelper from '../../../components/FilterList/FilterHelper';
 import { NodeData } from '../MeshElems';
-import { ControlPlaneMetricsMap, Metric } from 'types/Metrics';
+import { ControlPlaneMetricsMap } from 'types/Metrics';
 import { classes } from 'typestyle';
 import { panelBodyStyle, panelHeadingStyle, panelStyle } from 'pages/Graph/SummaryPanelStyle';
 import { MeshMTLSStatus } from 'components/MTls/MeshMTLSStatus';
@@ -50,9 +50,7 @@ type TargetPanelControlPlaneState = {
   certificates?: CertsInfo[];
   controlPlaneMetrics?: ControlPlaneMetricsMap;
   controlPlaneNode?: Node<NodeModel, any>;
-  errorMetrics?: Metric[];
   loading: boolean;
-  metrics?: Metric[];
   nsInfo?: NamespaceInfo;
   status?: NamespaceStatus;
   tlsStatus?: TLSStatus;
@@ -63,7 +61,6 @@ const defaultState: TargetPanelControlPlaneState = {
   certificates: undefined,
   controlPlaneMetrics: undefined,
   controlPlaneNode: undefined,
-  errorMetrics: undefined,
   loading: false,
   nsInfo: undefined,
   status: undefined,
@@ -156,8 +153,8 @@ export class TargetPanelControlPlane extends React.Component<
           <MeshMTLSStatus cluster={data.cluster} revision={revision} />
 
           <ControlPlaneNamespaceStatus
+            controlPlaneMetrics={this.state.controlPlaneMetrics}
             outboundTrafficPolicy={config.OutboundTrafficPolicy}
-            namespace={nsInfo}
           ></ControlPlaneNamespaceStatus>
 
           <TLSInfo version={this.props.minTLS} />
@@ -315,33 +312,21 @@ export class TargetPanelControlPlane extends React.Component<
 
     const data = this.state.controlPlaneNode!.getData() as NodeData;
 
-    return API.getNamespaceMetrics(data.namespace, options, data.cluster)
+    return API.getControlPlaneMetrics(data.namespace, data.infraName, options, data.cluster)
       .then(rs => {
-        const metrics: Metric[] = rs.data.request_count as Metric[];
-        const errorMetrics: Metric[] = rs.data.request_error_count as Metric[];
+        const controlPlaneMetrics: ControlPlaneMetricsMap = {
+          istiod_proxy_time: rs.data.pilot_proxy_convergence_time,
+          istiod_container_cpu: rs.data.container_cpu_usage_seconds_total,
+          istiod_container_mem: rs.data.container_memory_working_set_bytes,
+          istiod_process_cpu: rs.data.process_cpu_seconds_total,
+          istiod_process_mem: rs.data.process_resident_memory_bytes
+        };
 
-        if (this.isControlPlane()) {
-          const controlPlaneMetrics: ControlPlaneMetricsMap = {
-            istiod_proxy_time: rs.data.pilot_proxy_convergence_time,
-            istiod_container_cpu: rs.data.container_cpu_usage_seconds_total,
-            istiod_container_mem: rs.data.container_memory_working_set_bytes,
-            istiod_process_cpu: rs.data.process_cpu_seconds_total,
-            istiod_process_mem: rs.data.process_resident_memory_bytes
-          };
-
-          this.setState({
-            controlPlaneMetrics: controlPlaneMetrics,
-            errorMetrics: errorMetrics,
-            metrics: metrics
-          });
-        } else {
-          this.setState({
-            errorMetrics: errorMetrics,
-            metrics: metrics
-          });
-        }
+        this.setState({
+          controlPlaneMetrics: controlPlaneMetrics
+        });
       })
-      .catch(err => this.handleApiError('Could not fetch namespace metrics', err));
+      .catch(err => this.handleApiError('Could not fetch control plane metrics', err));
   };
 
   private fetchTLS = async (): Promise<void> => {

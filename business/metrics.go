@@ -1,6 +1,7 @@
 package business
 
 import (
+	"fmt"
 	"math"
 	"sort"
 	"strings"
@@ -251,39 +252,62 @@ func createStatsMetricsLabelsBuilder(q *models.MetricsStatsQuery) *MetricsLabels
 	return lb
 }
 
-func (in *MetricsService) GetControlPlaneMetrics(q models.IstioMetricsQuery, scaler func(n string) float64) (models.MetricsMap, error) {
-	metrics := make(models.MetricsMap)
+func (in *MetricsService) GetControlPlaneMetrics(q models.IstioMetricsQuery, pods models.Pods, scaler func(n string) float64) (models.MetricsMap, error) {
+	podRegex := ""
+	separator := ""
+	for _, pod := range pods {
+		podRegex = fmt.Sprintf("%s%s%s", podRegex, separator, pod.Name)
+		separator = "|"
+	}
+	podLabel := fmt.Sprintf(`{pod="%s"}`, podRegex)
 
-	h := in.prom.FetchHistogramRange("pilot_proxy_convergence_time", "", "", &q.RangeQuery)
+	metrics := make(models.MetricsMap)
 	var err error
-	converted, err := models.ConvertHistogram("pilot_proxy_convergence_time", h, models.ConversionParams{Scale: 1})
+
+	// pilot_proxy_convergence_time is handled in a special way.  our typical "sum(range(" queries for avg and quantiles,
+	// don't work here. Because proxy sync is reported more like a step function.  The count and sum are updated one time,
+	// and so there is typically no range, because any range requires at least two data points.  What we really want here
+	// is delta(sum) / delta(count) for the time period. Note, this is pretty non-standard manipulation of a histogram,
+	// don't try this at home.
+	deltaDuration := q.End.Sub(q.Start)
+	deltaSumMetric := in.prom.FetchDelta("pilot_proxy_convergence_time_sum", podLabel, "", q.End, deltaDuration)
+	deltaSumConverted, err := models.ConvertMetric("pilot_proxy_convergence_time_sum", deltaSumMetric, models.ConversionParams{Scale: 1})
 	if err != nil {
 		return nil, err
 	}
+	deltaSum := deltaSumConverted[0].Datapoints[0].Value
+	deltaCountMetric := in.prom.FetchDelta("pilot_proxy_convergence_time_count", podLabel, "", q.End, deltaDuration)
+	deltaCountConverted, err := models.ConvertMetric("pilot_proxy_convergence_time_count", deltaCountMetric, models.ConversionParams{Scale: 1})
+	if err != nil {
+		return nil, err
+	}
+	deltaCount := deltaCountConverted[0].Datapoints[0].Value
+	converted := deltaSumConverted
+	converted[0].Datapoints[0].Value = deltaSum / deltaCount
 	metrics["pilot_proxy_convergence_time"] = append(metrics["pilot_proxy_convergence_time"], converted...)
 
-	metric := in.prom.FetchRateRange("container_cpu_usage_seconds_total", []string{`{pod=~"istiod-.*|istio-pilot-.*"}`}, "", &q.RangeQuery)
+	metric := in.prom.FetchRateRange("container_cpu_usage_seconds_total", []string{podLabel}, "", &q.RangeQuery)
 	converted, err = models.ConvertMetric("container_cpu_usage_seconds_total", metric, models.ConversionParams{Scale: 1})
 	if err != nil {
 		return nil, err
 	}
 	metrics["container_cpu_usage_seconds_total"] = append(metrics["container_cpu_usage_seconds_total"], converted...)
 
-	metric = in.prom.FetchRateRange("process_cpu_seconds_total", []string{`{app="istiod"}`}, "", &q.RangeQuery)
+	metric = in.prom.FetchRateRange("process_cpu_seconds_total", []string{podLabel}, "", &q.RangeQuery)
 	converted, err = models.ConvertMetric("process_cpu_seconds_total", metric, models.ConversionParams{Scale: 1})
 	if err != nil {
 		return nil, err
 	}
 	metrics["process_cpu_seconds_total"] = append(metrics["process_cpu_seconds_total"], converted...)
 
-	metric = in.prom.FetchRange("container_memory_working_set_bytes", `{container="discovery", pod=~"istiod-.*|istio-pilot-.*"}`, "", "", &q.RangeQuery)
+	metric = in.prom.FetchRange("container_memory_working_set_bytes", podLabel, "", "", &q.RangeQuery)
 	converted, err = models.ConvertMetric("container_memory_working_set_bytes", metric, models.ConversionParams{Scale: 0.000001})
 	if err != nil {
 		return nil, err
 	}
 	metrics["container_memory_working_set_bytes"] = append(metrics["container_memory_working_set_bytes"], converted...)
 
-	metric = in.prom.FetchRange("process_resident_memory_bytes", `{app="istiod"}`, "", "", &q.RangeQuery)
+	metric = in.prom.FetchRange("process_resident_memory_bytes", podLabel, "", "", &q.RangeQuery)
 	converted, err = models.ConvertMetric("process_resident_memory_bytes", metric, models.ConversionParams{Scale: 0.000001})
 	if err != nil {
 		return nil, err

@@ -853,6 +853,27 @@ func NewRoutes(
 			handlers.WorkloadMetrics,
 			true,
 		},
+		// swagger:route GET /namespaces/{namespace}/controlplanes/{controlplane}/metrics controlplanes controlPlaneMetrics
+		// ---
+		// Endpoint to fetch metrics to be displayed, related to a single control plane
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      400: badRequestError
+		//      503: serviceUnavailableError
+		//      200: metricsResponse
+		//
+		{
+			"ControlPlaneMetrics",
+			"GET",
+			"/api/namespaces/{namespace}/controlplanes/{controlplane}/metrics",
+			handlers.ControlPlaneMetrics(handlers.DefaultPromClientSupplier, discovery),
+			true,
+		},
 		// swagger:route GET /namespaces/{namespace}/services/{service}/dashboard services serviceDashboard
 		// ---
 		// Endpoint to fetch dashboard to be displayed, related to a single service
