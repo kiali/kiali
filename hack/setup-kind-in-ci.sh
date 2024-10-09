@@ -111,7 +111,7 @@ if [ -z "${HELM_CHARTS_DIR}" ]; then
   infomsg "Cloning kiali helm-charts..."
   git clone --single-branch --branch "${TARGET_BRANCH}" https://github.com/kiali/helm-charts.git "${HELM_CHARTS_DIR}"
 fi
-
+ISTIO_VERSION="1.23.1"
 # print out our settings for debug purposes
 cat <<EOM
 === SETTINGS ===
