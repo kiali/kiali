@@ -31,7 +31,7 @@ Then(
       )
       .getCurrentState()
       .then(state => {
-        cy.wrap(state.dashboard).should('be.empty');
+        cy.wrap(state.dashboard).should('not.be.empty');
       });
   }
 );

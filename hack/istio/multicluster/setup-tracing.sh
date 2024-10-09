@@ -5,6 +5,8 @@ set -e
 SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
 source ${SCRIPT_DIR}/env.sh $*
 
+echo "Setting up tracing for Multicluster"
+
 # This script combines traces from the west cluster into the east cluster by sending traces through the istio-ingressgateway.
 # It deploys an otel collector into the west cluster which gathers all traces and exports them to the east cluster.
 # It opens a separate port on the istio-ingressgateway for zipkin so that the tracing setup doesn't conflict with
@@ -15,10 +17,12 @@ source ${SCRIPT_DIR}/env.sh $*
 ingress_output=$(${CLIENT_EXE} get svc -n istio-system --context "${CLUSTER1_CONTEXT}" istio-ingressgateway -o jsonpath='{.spec.ports[?(@.name=="zipkin-http")]}')
 # Check if the output is empty
 if [ -z "$ingress_output" ]; then
+    echo "Ingress output $ingress_output"
     ${CLIENT_EXE} --context "${CLUSTER1_CONTEXT}" patch Service -n istio-system istio-ingressgateway --type=json -p '[{"op": "add", "path": "/spec/ports/-", "value": {"name": "zipkin-http", "port": 9411, "protocol": "TCP", "targetPort": 8080}}]'
 fi
 
 if [ "${TEMPO}" == "true" ]; then
+  echo "Setting tracing for Tempo"
 ${CLIENT_EXE} --context "${CLUSTER1_CONTEXT}" apply -f - <<EOF
 apiVersion: networking.istio.io/v1
 kind: VirtualService
@@ -41,6 +45,7 @@ EOF
 
 else
 
+echo "Setting tracing for Zipkin"
 ${CLIENT_EXE} --context "${CLUSTER1_CONTEXT}" apply -f - <<EOF
 apiVersion: networking.istio.io/v1
 kind: VirtualService
@@ -149,10 +154,14 @@ spec:
       targetPort: 9411
 EOF
 
+echo "Created zipkin service"
+
 # For Tempo, we need a service with reference to the zipkin service,
 # Tempo is installed in a different namespace
 if [ "${TEMPO}" == "true" ]; then
-  
+
+echo "Creating Tempo namespace for the Tempo service"
+
 ${CLIENT_EXE} create ns tempo
 
 ${CLIENT_EXE} --context "${CLUSTER2_CONTEXT}" apply -f - <<EOF

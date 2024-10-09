@@ -317,7 +317,7 @@ if [ -z "${CONFIG_PROFILE}" ]; then
     CONFIG_PROFILE="demo"
   fi
 fi
-echo "Istio versoin: ${ISTIO_VERSION}"
+
 if [ "${ISTIO_DIR}" == "" ]; then
   # Go to the main output directory and try to find an Istio there.
   HACK_SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"

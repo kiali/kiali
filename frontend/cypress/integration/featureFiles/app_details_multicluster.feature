@@ -22,22 +22,22 @@ Feature: Kiali App Details page for multicluster
     And user should see columns related to cluster info for the inbound and outbound traffic
 
   Scenario: See Inbound Metrics
-    And user is at the details page for the "app" "bookinfo/ratings" located in the "west" cluster
+    And user is at the details page for the "app" "bookinfo/reviews" located in the "west" cluster
     Then user sees "Inbound" metrics information for the remote "reviews" "app"
 
   Scenario: See Outbound Metrics
-    And user is at the details page for the "app" "bookinfo/ratings" located in the "west" cluster
+    And user is at the details page for the "app" "bookinfo/reviews" located in the "west" cluster
     Then user sees "Outbound" metrics information for the remote "reviews" "app"
 
   Scenario: See tracing info after selecting a trace
-    And user is at the details page for the "app" "bookinfo/ratings" located in the "west" cluster
+    And user is at the details page for the "app" "bookinfo/reviews" located in the "west" cluster
     And user sees trace information
     And an info message "Loading traces for all clusters. Tracing is not configured to store traces per cluster." is displayed
     When user selects a trace
     Then user sees trace details
 
   Scenario: See span info after selecting app span
-    And user is at the details page for the "app" "bookinfo/ratings" located in the "west" cluster
+    And user is at the details page for the "app" "bookinfo/reviews" located in the "west" cluster
     And user sees trace information
     When user selects a trace
     Then user sees span details

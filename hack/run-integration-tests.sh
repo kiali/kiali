@@ -229,7 +229,11 @@ ensureKialiTracesReady() {
   result=$(curl -k -s --fail "$trace_url" \
           -H 'Accept: application/json, text/plain, */*' \
           -H 'Content-Type: application/json' | jq -r '.data')
-  echo "Result for east traces: ${result}"
+  if [ "$result" == "[]" ]; then
+    echo "No results for productpage in east cluster"
+  else
+    echo "Results for productpage in west cluster"
+  fi
 
 
 }
