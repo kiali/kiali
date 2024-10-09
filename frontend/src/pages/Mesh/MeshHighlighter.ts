@@ -42,6 +42,7 @@ export class MeshHighlighter {
     this.selectedId = selectedId;
     this.clearHover();
     this.clearHighlighting();
+    this.refresh();
   };
 
   clearHover = (): void => {

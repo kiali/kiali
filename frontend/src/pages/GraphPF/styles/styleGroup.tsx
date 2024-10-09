@@ -61,6 +61,30 @@ const StyleGroupComponent: React.FC<StyleGroupProps> = ({
     data.onHover(element, false);
   };
 
+  // the selected group has an active border, but the background remains unchanged
+  const selectedGroupStyle = {
+    $nest: {
+      '& .pf-topology__group__background': {
+        fill: PFColors.BackgroundColorLight300,
+        stroke: PFColors.Active
+      },
+      '&.pf-m-alt-group .pf-topology__group__background': {
+        fill: 'var(--pf-topology__group--m-alt-group--topology__group__background--Fill)',
+        stroke: PFColors.Active
+      }
+    }
+  };
+
+  const groupClass = kialiStyle({
+    $nest: {
+      '&.pf-m-selected': selectedGroupStyle,
+      '&.pf-m-selected.pf-m-hover': selectedGroupStyle,
+      '&.pf-m-hover .pf-topology__group__background': {
+        stroke: PFColors.Color200
+      }
+    }
+  });
+
   const passedData = React.useMemo(() => {
     const newData = { ...data };
     Object.keys(newData).forEach(key => {
@@ -97,9 +121,10 @@ const StyleGroupComponent: React.FC<StyleGroupProps> = ({
         />
       )}
       <DefaultGroup
-        element={element}
+        className={groupClass}
         collapsedWidth={collapsedWidth}
         collapsedHeight={collapsedHeight}
+        element={element}
         hulledOutline={false}
         showLabel={detailsLevel === ScaleDetailsLevel.high}
         showLabelOnHover={true}

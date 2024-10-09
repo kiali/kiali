@@ -72,6 +72,7 @@ export enum PFColors {
   BackgroundColor100 = 'var(--pf-v5-global--BackgroundColor--100)',
   BackgroundColor150 = 'var(--pf-v5-global--BackgroundColor--150)',
   BackgroundColor200 = 'var(--pf-v5-global--BackgroundColor--200)',
+  BackgroundColorLight300 = 'var(--pf-v5-global--BackgroundColor--light-300)',
 
   // PF standard colors (compatible with dark mode)
   Color100 = 'var(--pf-v5-global--Color--100)',

@@ -246,7 +246,7 @@ class GraphToolbarComponent extends React.PureComponent<GraphToolbarProps> {
 
             <ToolbarItem style={{ marginLeft: 'auto', alignSelf: 'center' }}>
               <Tooltip key={'graph-tour-help-ot'} position={TooltipPosition.right} content="Shortcuts and tips...">
-                <TourStop info={GraphTourStops.Shortcuts}>
+                <TourStop info={this.props.isPF ? GraphTourStops.ShortcutsPF : GraphTourStops.Shortcuts}>
                   <Button
                     id="graph-tour"
                     variant={ButtonVariant.link}

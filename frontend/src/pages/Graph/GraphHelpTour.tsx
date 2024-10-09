@@ -2,6 +2,7 @@ import { PopoverPosition } from '@patternfly/react-core';
 import { TourStopInfo, TourInfo } from 'components/Tour/TourStop';
 import { GraphShortcuts } from './GraphToolbar/GraphShortcuts';
 import { t } from 'utils/I18nUtils';
+import { GraphShortcutsPF } from './GraphToolbar/GraphShortcutsPF';
 
 export const GraphTourStops: { [name: string]: TourStopInfo } = {
   ContextualMenu: {
@@ -83,6 +84,11 @@ export const GraphTourStops: { [name: string]: TourStopInfo } = {
     htmlDescription: GraphShortcuts,
     position: PopoverPosition.leftStart
   },
+  ShortcutsPF: {
+    name: t('Shortcuts'),
+    htmlDescription: GraphShortcutsPF,
+    position: PopoverPosition.leftStart
+  },
   SidePanel: {
     name: t('Side Panel'),
     description: t(
@@ -120,7 +126,7 @@ export const GraphTour: TourInfo = {
 export const GraphTourPF: TourInfo = {
   name: t('GraphTour'),
   stops: [
-    GraphTourStops.Shortcuts,
+    GraphTourStops.ShortcutsPF,
     GraphTourStops.Namespaces,
     GraphTourStops.GraphTraffic,
     GraphTourStops.GraphType,

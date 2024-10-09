@@ -41,6 +41,7 @@ import { IconType } from 'config/Icons';
 import { NodeDecorator } from './NodeDecorator';
 import { LayoutName } from './GraphPF';
 import { supportsGroups } from 'utils/GraphUtils';
+import { kialiStyle } from 'styles/StyleUtils';
 
 // Utilities for working with PF Topology
 // - most of these add cytoscape-like functions
@@ -207,6 +208,12 @@ export const setNodeAttachments = (node: Node<NodeModel>, settings: GraphPFSetti
   }
 };
 
+const labelIconStyle = kialiStyle({
+  color: PFColors.White,
+  fontSize: '14px',
+  marginBottom: '1px'
+});
+
 export const setNodeLabel = (
   node: NodeModel,
   nodeMap: NodeMap,
@@ -253,22 +260,20 @@ export const setNodeLabel = (
       data.isGateway?.ingressInfo?.hostnames?.length !== undefined ||
       data.isGateway?.gatewayAPIInfo?.hostnames?.length !== undefined
     ) {
-      data.labelIcon = (
-        <span className={`${badgeMap.get('GW')?.className}`} style={{ fontSize: '14px', marginBottom: '1px' }}></span>
-      );
+      data.labelIcon = <span className={`${badgeMap.get('GW')?.className} ${labelIconStyle}`}></span>;
     } else {
       data.labelIcon = (
-        <span className={`${badgeMap.get('RO')?.className}`} style={{ marginBottom: '1px', marginLeft: '2px' }}></span>
+        <span className={`${badgeMap.get('RO')?.className} ${labelIconStyle}`} style={{ marginLeft: '2px' }}></span>
       );
     }
   } else {
     if (data.isGateway?.egressInfo?.hostnames?.length !== undefined) {
-      data.labelIcon = <span className={`${badgeMap.get('GW')?.className}`}></span>;
+      data.labelIcon = <span className={`${badgeMap.get('GW')?.className} ${labelIconStyle}`}></span>;
     }
     // A Waypoint should be mutually exclusive with being a traffic source
     if (data.isWaypoint) {
       data.labelIcon = (
-        <span className={`${badgeMap.get('WA')?.className}`} style={{ marginBottom: '1px', marginLeft: '2px' }}></span>
+        <span className={`${badgeMap.get('WA')?.className} ${labelIconStyle}`} style={{ marginLeft: '2px' }}></span>
       );
     }
   }

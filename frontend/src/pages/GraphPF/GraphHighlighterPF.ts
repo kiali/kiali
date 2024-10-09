@@ -43,6 +43,7 @@ export class GraphHighlighterPF {
     this.selectedId = selectedId;
     this.clearHover();
     this.clearHighlighting();
+    this.refresh();
   };
 
   clearHover = (): void => {

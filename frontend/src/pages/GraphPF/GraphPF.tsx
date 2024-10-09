@@ -73,7 +73,7 @@ import { GraphRefs } from './GraphPagePF';
 let initialLayout = false;
 let requestFit = false;
 
-const DEFAULT_NODE_SIZE = 50;
+const DEFAULT_NODE_SIZE = 40;
 const ZOOM_IN = 4 / 3;
 const ZOOM_OUT = 3 / 4;
 
@@ -105,7 +105,7 @@ export interface FocusNode {
   isSelected?: boolean;
 }
 
-// The is the main graph rendering component
+// This is the main graph rendering component
 const TopologyContent: React.FC<{
   controller: Controller;
   edgeLabels: EdgeLabelMode[];
@@ -527,7 +527,7 @@ const TopologyContent: React.FC<{
       }
     };
 
-    console.trace(`PFT updateModel`);
+    console.debug(`PFT updateModel`);
     updateModel(controller);
 
     // notify that the graph has been updated
@@ -573,32 +573,32 @@ const TopologyContent: React.FC<{
   //TODO REMOVE THESE DEBUGGING MESSAGES...
   // Leave them for now, they are just good for understanding state changes while we develop this PFT graph.
   React.useEffect(() => {
-    console.trace(`PFT: controller changed`);
+    console.debug(`PFT: controller changed`);
     initialLayout = true;
   }, [controller]);
 
   React.useEffect(() => {
-    console.trace(`PFT: graphData changed, elementsChanged=${graphData.elementsChanged}`);
+    console.debug(`PFT: graphData changed, elementsChanged=${graphData.elementsChanged}`);
   }, [graphData]);
 
   React.useEffect(() => {
-    console.trace(`PFT: graphSettings changed`);
+    console.debug(`PFT: graphSettings changed`);
   }, [graphSettings]);
 
   React.useEffect(() => {
-    console.trace(`PFT: highlighter changed`);
+    console.debug(`PFT: highlighter changed`);
   }, [highlighter]);
 
   React.useEffect(() => {
-    console.trace(`PFT: isMiniGraph changed`);
+    console.debug(`PFT: isMiniGraph changed`);
   }, [isMiniGraph]);
 
   React.useEffect(() => {
-    console.trace(`PFT: onReady changed`);
+    console.debug(`PFT: onReady changed`);
   }, [onReady]);
 
   React.useEffect(() => {
-    console.trace(`PFT: setDetails changed`);
+    console.debug(`PFT: setDetails changed`);
   }, [setDetailsLevel]);
 
   React.useEffect(() => {
@@ -650,7 +650,7 @@ const TopologyContent: React.FC<{
   }, [controller, showTrafficAnimation, updateModelTime]);
 
   React.useEffect(() => {
-    console.trace(`PFT: layout changed`);
+    console.debug(`PFT: layout changed`);
 
     if (!controller.hasGraph()) {
       return;
@@ -684,7 +684,7 @@ const TopologyContent: React.FC<{
 
   useEventListener(GRAPH_LAYOUT_END_EVENT, onLayoutEnd);
 
-  console.trace(`PFT: Render Topology hasGraph=${controller.hasGraph()}`);
+  console.debug(`PFT: Render Topology hasGraph=${controller.hasGraph()}`);
 
   return isMiniGraph ? (
     <TopologyView data-test="topology-view-pf">
@@ -862,7 +862,7 @@ export const GraphPF: React.FC<{
 
   // Set up the controller one time
   React.useEffect(() => {
-    console.trace('PFT: New Controller!');
+    console.debug('PFT: New Controller!');
 
     const c = new Visualization();
     c.registerElementFactory(elementFactory);
@@ -901,7 +901,7 @@ export const GraphPF: React.FC<{
     );
   }
 
-  console.trace(`PFT: Render, hasGraph=${controller?.hasGraph()}`);
+  console.debug(`PFT: Render, hasGraph=${controller?.hasGraph()}`);
   return (
     <VisualizationProvider data-test="visualization-provider" controller={controller}>
       <TopologyContent

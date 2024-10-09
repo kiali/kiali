@@ -40,49 +40,51 @@ const StyleEdgeComponent: React.FC<StyleEdgeProps> = ({ element, ...rest }) => {
     data.onHover(element, false);
   };
 
-  // Change edge color according to the pathStyle
   const edgeClass = kialiStyle({
     $nest: {
-      '& .pf-topology__edge__link': data.pathStyle
-    }
-  });
-  cssClasses.push(edgeClass);
-
-  const edgeHoverClass = kialiStyle({
-    $nest: {
-      '& .pf-topology__edge.pf-m-hover': {
-        $nest: {
-          '& .pf-topology__edge__link, & .pf-topology-connector-arrow': data.pathStyle
-        }
-      }
-    }
-  });
-  cssClasses.push(edgeHoverClass);
-
-  // Change connector color according to the pathStyle
-  const connectorClass = kialiStyle({
-    $nest: {
+      // node status color on edges
+      '& .pf-topology__edge__link': data.pathStyle,
       '& .pf-topology-connector-arrow': {
         stroke: data.pathStyle.stroke,
         fill: data.pathStyle.stroke
-      }
-    }
-  });
-  cssClasses.push(connectorClass);
+      },
 
-  const edgeConnectorArrowHoverStyles = kialiStyle({
-    $nest: {
-      '& .pf-topology__edge.pf-m-hover': {
+      // active color for selected edges
+      '&.pf-m-selected': {
         $nest: {
+          '& .pf-topology__edge__link': {
+            stroke: PFColors.Active
+          },
           '& .pf-topology-connector-arrow': {
-            stroke: data.pathStyle.stroke,
-            fill: data.pathStyle.stroke
+            stroke: PFColors.Active,
+            fill: PFColors.Active,
+            strokeWidth: 1
+          }
+        }
+      },
+
+      // maintain the selection background on hover (only for selected edges)
+      '&.pf-m-selected.pf-m-hover': {
+        $nest: {
+          '.pf-topology__edge__background': {
+            stroke: 'var(--pf-topology__edge--m-selected--background--Stroke)'
+          }
+        }
+      },
+
+      // pointer cursor on hover
+      '&.pf-m-hover': {
+        cursor: 'pointer',
+        $nest: {
+          '.pf-topology__edge__background': {
+            cursor: 'pointer'
           }
         }
       }
     }
   });
-  cssClasses.push(edgeConnectorArrowHoverStyles);
+
+  cssClasses.push(edgeClass);
 
   // If has spans, add the span overlay
   if (data.hasSpans) {

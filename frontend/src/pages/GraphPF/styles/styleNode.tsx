@@ -5,6 +5,7 @@ import {
   NodeShape,
   observer,
   ScaleDetailsLevel,
+  ShapeProps,
   useHover,
   WithSelectionProps
 } from '@patternfly/react-topology';
@@ -13,6 +14,8 @@ import * as React from 'react';
 import { KeyIcon, TopologyIcon } from '@patternfly/react-icons';
 import { PFColors } from 'components/Pf/PfColors';
 import { kialiStyle } from 'styles/StyleUtils';
+import { Triangle } from '../elements/triangle';
+import { Plate } from '../elements/plate';
 
 // This is the registered Node component override that utilizes our customized Node.tsx component.
 
@@ -34,28 +37,48 @@ const renderIcon = (element: Node): React.ReactNode => {
     Component = TopologyIcon;
   }
 
-  // this blurb taken from PFT demo StyleNode.tsx, not sure if it's required
-  // vv
   const { width, height } = element.getDimensions();
-  const shape = element.getNodeShape();
-  const iconSize =
-    (shape === NodeShape.trapezoid ? width : Math.min(width, height)) - (shape === NodeShape.stadium ? 5 : 20) * 2;
-  // ^^
+  const dim = Math.min(width, height);
+  let iconX = dim * 0.27;
+  let iconY = dim * 0.27;
+  let iconDim = dim * 0.45;
+
+  switch (element.getNodeShape()) {
+    case NodeShape.rhombus:
+      // will be a triangle, slightly reduce icon size and adjust position
+      iconDim = dim * 0.4;
+      iconX = dim * 0.28;
+      iconY = dim * 0.43;
+      break;
+    default:
+    // use defaults
+  }
 
   return Component ? (
-    <g transform={`translate(${(width - iconSize) / 2}, ${(height - iconSize) / 2})`}>
-      <Component width={iconSize} height={iconSize} />
+    <g transform={`translate(${iconX} , ${iconY})`}>
+      <Component width={iconDim} height={iconDim} />
     </g>
   ) : (
     <></>
   );
 };
 
+const getNodeShape = (node: Node): React.FunctionComponent<ShapeProps> => {
+  switch (node.getNodeShape()) {
+    case NodeShape.rhombus:
+      return Triangle;
+    case NodeShape.trapezoid:
+      return Plate;
+    default:
+      return getShapeComponent(node);
+  }
+};
+
 const StyleNodeComponent: React.FC<StyleNodeProps> = ({ element, ...rest }) => {
   const data = element.getData();
   const detailsLevel = useDetailsLevel();
   const [hover, hoverRef] = useHover();
-  const ShapeComponent = getShapeComponent(element);
+  const ShapeComponent = getNodeShape(element);
 
   const ColorFind = PFColors.Gold400;
   const ColorFocus = PFColors.Blue200;
@@ -94,6 +117,18 @@ const StyleNodeComponent: React.FC<StyleNodeProps> = ({ element, ...rest }) => {
     data.onHover(element, false);
   };
 
+  const nodeClass = kialiStyle({
+    $nest: {
+      '&.pf-m-hover': {
+        cursor: 'pointer'
+      },
+      '&.pf-m-selected .pf-topology__node__background': {
+        stroke: PFColors.Active,
+        strokeWidth: 6
+      }
+    }
+  });
+
   const passedData = React.useMemo(() => {
     const newData = { ...data };
     if (detailsLevel !== ScaleDetailsLevel.high) {
@@ -117,14 +152,16 @@ const StyleNodeComponent: React.FC<StyleNodeProps> = ({ element, ...rest }) => {
       {data.isFind && <ShapeComponent className={findOverlayStyle} width={width} height={height} element={element} />}
       {data.isFocus && <ShapeComponent className={focusOverlayStyle} width={width} height={height} element={element} />}
       <DefaultNode
+        className={nodeClass}
         element={element}
         {...rest}
         {...passedData}
         attachments={hover || detailsLevel === ScaleDetailsLevel.high ? data.attachments : undefined}
-        scaleLabel={hover && detailsLevel !== ScaleDetailsLevel.high}
-        // scaleNode={hover && detailsLevel === ScaleDetailsLevel.low}
+        getCustomShape={getNodeShape}
+        scaleLabel={hover && detailsLevel !== ScaleDetailsLevel.low}
+        scaleNode={hover && detailsLevel !== ScaleDetailsLevel.high}
         showLabel={hover || detailsLevel === ScaleDetailsLevel.high}
-        showStatusBackground={detailsLevel === ScaleDetailsLevel.low}
+        showStatusBackground={detailsLevel !== ScaleDetailsLevel.high}
       >
         {(hover || detailsLevel !== ScaleDetailsLevel.low) && renderIcon(element)}
       </DefaultNode>
