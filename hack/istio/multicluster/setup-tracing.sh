@@ -119,7 +119,6 @@ config:
           - memory_limiter
           - batch
         exporters:
-          - logging
           - zipkin
       metrics: null
       logs: null
