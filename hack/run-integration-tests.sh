@@ -223,7 +223,12 @@ ensureKialiTracesReady() {
       break
     fi
 
+
   done
+
+    POD_NAME=$(kubectl --context kind-west get pods -l app.kubernetes.io/name=opentelemetry-collector -n istio-system -o custom-columns=":metadata.name" | head -n 2)
+    echo $POD_NAME
+    kubectl logs $POD_NAME --context kind-west -n istio-system
 
   trace_url="${KIALI_URL}/api/namespaces/bookinfo/workloads/productpage-v1/traces?startMicros=${traces_date}&tags=&limit=100&clusterName=east"
   result=$(curl -k -s --fail "$trace_url" \
