@@ -17,8 +17,9 @@ echo "Setting up tracing for Multicluster"
 ingress_output=$(${CLIENT_EXE} get svc -n istio-system --context "${CLUSTER1_CONTEXT}" istio-ingressgateway -o jsonpath='{.spec.ports[?(@.name=="zipkin-http")]}')
 # Check if the output is empty
 if [ -z "$ingress_output" ]; then
-    echo "Ingress output $ingress_output"
+    echo "Ingress output"
     ${CLIENT_EXE} --context "${CLUSTER1_CONTEXT}" patch Service -n istio-system istio-ingressgateway --type=json -p '[{"op": "add", "path": "/spec/ports/-", "value": {"name": "zipkin-http", "port": 9411, "protocol": "TCP", "targetPort": 8080}}]'
+    ${CLIENT_EXE} --context "${CLUSTER1_CONTEXT}" describe Service -n istio-system istio-ingressgateway
 fi
 
 if [ "${TEMPO}" == "true" ]; then
@@ -87,6 +88,7 @@ spec:
 EOF
 
 ISTIO_INGRESS_IP=$(${CLIENT_EXE} --context "${CLUSTER1_CONTEXT}" get service -n istio-system istio-ingressgateway -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+echo "ISTIO INGRESS: ${ISTIO_INGRESS_IP}"
 helm repo add open-telemetry https://open-telemetry.github.io/opentelemetry-helm-charts
 # Disable everything except zipkin. We can't rename the service so disable that too and create one ourselves.
 helm --kube-context "${CLUSTER2_CONTEXT}" upgrade --install --namespace istio-system my-opentelemetry-collector open-telemetry/opentelemetry-collector -f - <<EOF
