@@ -224,6 +224,14 @@ ensureKialiTracesReady() {
     fi
 
   done
+
+  trace_url="${KIALI_URL}/api/namespaces/bookinfo/workloads/productpage-v1/traces?startMicros=${traces_date}&tags=&limit=100&clusterName=east"
+  result=$(curl -k -s --fail "$trace_url" \
+          -H 'Accept: application/json, text/plain, */*' \
+          -H 'Content-Type: application/json' | jq -r '.data')
+  echo "Result for east traces: ${result}"
+
+
 }
 
 ensureBookinfoGraphReady() {

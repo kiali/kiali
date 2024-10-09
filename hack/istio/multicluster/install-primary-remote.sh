@@ -68,7 +68,7 @@ if [ "${TEMPO}" == "true" ]; then
   "${SCRIPT_DIR}"/../tempo/install-tempo-env.sh -c ${CLIENT_EXE} -ot true
   ${ISTIO_INSTALL_SCRIPT} ${image_tag_arg:-} ${image_hub_arg:-} --client-exe-path ${CLIENT_EXE} --cluster-name ${CLUSTER1_NAME} --istioctl ${ISTIOCTL} --istio-dir ${ISTIO_DIR} --mesh-id ${MESH_ID} --namespace ${ISTIO_NAMESPACE} --network ${NETWORK1_ID} --set values.pilot.env.EXTERNAL_ISTIOD=true --k8s-gateway-api-enabled true  -a "prometheus grafana" -s values.meshConfig.defaultConfig.tracing.zipkin.address="tempo-cr-distributor.tempo:9411"
 else
-  ${ISTIO_INSTALL_SCRIPT} ${image_tag_arg:-} ${image_hub_arg:-} --client-exe-path ${CLIENT_EXE} --cluster-name ${CLUSTER1_NAME} --istioctl ${ISTIOCTL} --istio-version "1.23.1" --istio-dir ${ISTIO_DIR} --mesh-id ${MESH_ID} --namespace ${ISTIO_NAMESPACE} --network ${NETWORK1_ID} --set values.pilot.env.EXTERNAL_ISTIOD=true --k8s-gateway-api-enabled true
+  ${ISTIO_INSTALL_SCRIPT} ${image_tag_arg:-} ${image_hub_arg:-} --client-exe-path ${CLIENT_EXE} --cluster-name ${CLUSTER1_NAME} --istioctl ${ISTIOCTL} --istio-dir ${ISTIO_DIR} --mesh-id ${MESH_ID} --namespace ${ISTIO_NAMESPACE} --network ${NETWORK1_ID} --set values.pilot.env.EXTERNAL_ISTIOD=true --k8s-gateway-api-enabled true
 fi
 
 GEN_GATEWAY_SCRIPT="${ISTIO_DIR}/samples/multicluster/gen-eastwest-gateway.sh"
