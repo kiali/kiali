@@ -194,7 +194,7 @@ ensureKialiServerReady() {
 ensureKialiTracesReady() {
   infomsg "Waiting for Kiali to have traces"
   local start_time=$(date +%s)
-  local end_time=$((start_time + 240))
+  local end_time=$((start_time + 60))
   local multicluster=$1
 
   # Get traces from the last 5m
@@ -217,29 +217,19 @@ ensureKialiTracesReady() {
         echo "Timed out waiting for Kiali to get any trace"
         break
       fi
-      sleep 1
+      sleep 10
     else
       echo "Got traces."
       break
     fi
 
-
   done
 
-    POD_NAME=$(kubectl --context kind-west get pods -l app.kubernetes.io/name=opentelemetry-collector -n istio-system -o custom-columns=":metadata.name" | head -n 2)
-    echo $POD_NAME
-    kubectl logs $POD_NAME --context kind-west -n istio-system
-
-  trace_url="${KIALI_URL}/api/namespaces/bookinfo/workloads/productpage-v1/traces?startMicros=${traces_date}&tags=&limit=100&clusterName=east"
-  result=$(curl -k -s --fail "$trace_url" \
-          -H 'Accept: application/json, text/plain, */*' \
-          -H 'Content-Type: application/json' | jq -r '.data')
-  if [ "$result" == "[]" ]; then
-    echo "No results for productpage in east cluster"
-  else
-    echo "Results for productpage in west cluster"
-  fi
-
+  # When there are no traces from the remote cluster, check collector pod logs
+  # Uncomment for debugging purposes
+  #POD_NAME=$(kubectl --context kind-west get pods -l app.kubernetes.io/name=opentelemetry-collector -n istio-system -o custom-columns=":metadata.name" | head -n 2)
+  #echo $POD_NAME
+  #kubectl logs $POD_NAME --context kind-west -n istio-system
 
 }
 

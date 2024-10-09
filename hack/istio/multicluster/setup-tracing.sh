@@ -5,8 +5,6 @@ set -e
 SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
 source ${SCRIPT_DIR}/env.sh $*
 
-echo "Setting up tracing for Multicluster"
-
 # This script combines traces from the west cluster into the east cluster by sending traces through the istio-ingressgateway.
 # It deploys an otel collector into the west cluster which gathers all traces and exports them to the east cluster.
 # It opens a separate port on the istio-ingressgateway for zipkin so that the tracing setup doesn't conflict with
@@ -17,13 +15,10 @@ echo "Setting up tracing for Multicluster"
 ingress_output=$(${CLIENT_EXE} get svc -n istio-system --context "${CLUSTER1_CONTEXT}" istio-ingressgateway -o jsonpath='{.spec.ports[?(@.name=="zipkin-http")]}')
 # Check if the output is empty
 if [ -z "$ingress_output" ]; then
-    echo "Ingress output"
     ${CLIENT_EXE} --context "${CLUSTER1_CONTEXT}" patch Service -n istio-system istio-ingressgateway --type=json -p '[{"op": "add", "path": "/spec/ports/-", "value": {"name": "zipkin-http", "port": 9411, "protocol": "TCP", "targetPort": 8080}}]'
-    ${CLIENT_EXE} --context "${CLUSTER1_CONTEXT}" describe Service -n istio-system istio-ingressgateway
 fi
 
 if [ "${TEMPO}" == "true" ]; then
-  echo "Setting tracing for Tempo"
 ${CLIENT_EXE} --context "${CLUSTER1_CONTEXT}" apply -f - <<EOF
 apiVersion: networking.istio.io/v1
 kind: VirtualService
@@ -46,7 +41,6 @@ EOF
 
 else
 
-echo "Setting tracing for Zipkin"
 ${CLIENT_EXE} --context "${CLUSTER1_CONTEXT}" apply -f - <<EOF
 apiVersion: networking.istio.io/v1
 kind: VirtualService
@@ -88,7 +82,7 @@ spec:
 EOF
 
 ISTIO_INGRESS_IP=$(${CLIENT_EXE} --context "${CLUSTER1_CONTEXT}" get service -n istio-system istio-ingressgateway -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
-echo "ISTIO INGRESS: ${ISTIO_INGRESS_IP}"
+
 helm repo add open-telemetry https://open-telemetry.github.io/opentelemetry-helm-charts
 # Disable everything except zipkin. We can't rename the service so disable that too and create one ourselves.
 helm --kube-context "${CLUSTER2_CONTEXT}" upgrade --install --namespace istio-system my-opentelemetry-collector open-telemetry/opentelemetry-collector -f - <<EOF
@@ -155,13 +149,9 @@ spec:
       targetPort: 9411
 EOF
 
-echo "Created zipkin service"
-
 # For Tempo, we need a service with reference to the zipkin service,
 # Tempo is installed in a different namespace
 if [ "${TEMPO}" == "true" ]; then
-
-echo "Creating Tempo namespace for the Tempo service"
 
 ${CLIENT_EXE} create ns tempo
 
