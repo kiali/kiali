@@ -99,7 +99,7 @@ image:
   repository: "otel/opentelemetry-collector-contrib"
 config:
   exporters:
-    logging: {}
+    debug: {}
     zipkin:
       endpoint: http://${ISTIO_INGRESS_IP}:9411/api/v2/spans
       tls:
