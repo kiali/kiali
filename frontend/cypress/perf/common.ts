@@ -12,7 +12,13 @@ before(() => {
     .as('data');
 });
 
-const measureLoadTime = (name: string, baseline: number, loadUrl: string, loadElementToCheck: string): void => {
+const measureLoadTime = (
+  name: string,
+  baseline: number,
+  loadUrl: string,
+  loadElementToCheck: string,
+  isGraph: boolean
+): void => {
   // Getting an average to smooth out the results.
   let sum = 0;
   const visitsArray = Array.from({ length: visits });
@@ -33,7 +39,12 @@ const measureLoadTime = (name: string, baseline: number, loadUrl: string, loadEl
           cy.on('uncaught:exception', (err, runnable) => {
             return false;
           });
-          cy.get(loadElementToCheck).should('be.visible');
+          if (isGraph) {
+            cy.waitForReact();
+            cy.getReact('GraphPF').should('have.length', '1');
+          } else {
+            cy.get(loadElementToCheck).should('be.visible');
+          }
 
           cy.get('#loading_kiali_spinner', { timeout: 300000 })
             .should('not.exist')
@@ -55,12 +66,16 @@ const measureLoadTime = (name: string, baseline: number, loadUrl: string, loadEl
     });
 };
 
+export const measureGraphLoadTime = (name: string, baseline: number, listUrl: string): void => {
+  measureLoadTime(name, baseline, listUrl, '', true);
+};
+
 export const measureListsLoadTime = (name: string, baseline: number, listUrl: string): void => {
-  measureLoadTime(name, baseline, listUrl, '.pf-v5-c-toolbar');
+  measureLoadTime(name, baseline, listUrl, '.pf-v5-c-toolbar', false);
 };
 
 export const measureDetailsLoadTime = (name: string, baseline: number, detailsUrl: string): void => {
-  measureLoadTime(name, baseline, detailsUrl, '.pf-v5-c-tabs');
+  measureLoadTime(name, baseline, detailsUrl, '.pf-v5-c-tabs', false);
 };
 
 export const compareToBaseline = (resultMS: number, baseline: number): string => {
