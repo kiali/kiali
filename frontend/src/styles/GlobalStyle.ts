@@ -89,7 +89,7 @@ export const globalStyle = kialiStyle({
     },
 
     /**
-     * Hide kebab menu from Patternfly topology groups
+     * Hide the kebab menu of Patternfly topology groups
      */
     '& .pf-topology__group__label': {
       $nest: {

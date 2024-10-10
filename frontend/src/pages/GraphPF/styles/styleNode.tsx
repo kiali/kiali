@@ -86,6 +86,7 @@ const nodeClass = kialiStyle({
   }
 });
 
+// Hide the kebab menu of Patternfly topology nodes
 const labelClass = kialiStyle({
   $nest: {
     '& text:not(.pf-m-secondary)': {
