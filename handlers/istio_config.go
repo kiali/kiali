@@ -145,8 +145,8 @@ func IstioConfigDetails(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var istioConfigValidations models.IstioValidations
-	var istioConfigReferences models.IstioReferencesMap
+	istioConfigValidations := models.IstioValidations{}
+	istioConfigReferences := models.IstioReferencesMap{}
 
 	validationsResult := make(chan error)
 	if includeValidations {
@@ -154,13 +154,17 @@ func IstioConfigDetails(w http.ResponseWriter, r *http.Request) {
 			defer func() {
 				close(validationsResult)
 			}()
-
-			istioConfigValidationResults, istioConfigReferencesResults, err := business.Validations.GetIstioObjectValidations(r.Context(), cluster, namespace, gvk, object)
-			if err != nil {
-				validationsResult <- err
+			// validations should be done per namespaces to apply exportTo configs
+			loadedNamespaces, _ := business.Namespace.GetClusterNamespaces(r.Context(), cluster)
+			for _, ns := range loadedNamespaces {
+				istioConfigValidationResults, istioConfigReferencesResults, err := business.Validations.GetIstioObjectValidations(r.Context(), cluster, ns.Name, gvk, object)
+				if err != nil {
+					validationsResult <- err
+				}
+				*istioConfigValidations = istioConfigValidations.MergeValidations(istioConfigValidationResults)
+				*istioConfigReferences = istioConfigReferencesResults.MergeReferencesMap(istioConfigReferencesResults)
 			}
-			*istioConfigValidations = istioConfigValidationResults
-			*istioConfigReferences = istioConfigReferencesResults
+
 		}(&istioConfigValidations, &istioConfigReferences)
 	}
 
