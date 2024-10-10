@@ -7,6 +7,7 @@ Feature: Kiali Service Details page for remote cluster
 
   Background:
     Given user is at administrator perspective
+    And cytoscape graph is enabled
     And user is at the details page for the "service" "bookinfo/ratings" located in the "west" cluster
 
   Scenario: See service minigraph for details app.

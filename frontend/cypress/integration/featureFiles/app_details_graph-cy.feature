@@ -7,6 +7,7 @@ Feature: Kiali App Details page
 
   Background:
     Given user is at administrator perspective
+    And cytoscape graph is enabled
     And user is at the details page for the "app" "bookinfo/details" located in the "" cluster
 
   @bookinfo-app

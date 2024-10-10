@@ -4,16 +4,29 @@
 */
 
 import { Then } from '@badeball/cypress-cucumber-preprocessor';
+import { Controller, Edge, Visualization, Node, isNode, isEdge } from '@patternfly/react-topology';
 
 Then('user does not see a patternfly minigraph', () => {
   cy.get('#MiniGraphCard').find('h5').contains('Empty Graph');
 });
 
 Then('user sees a patternfly minigraph', () => {
-  cy.getBySel('mini-graph').within(() => {
-    cy.get('#cytoscape-graph').should('be.visible');
-    cy.get('#cy').should('be.visible');
-  });
+  cy.waitForReact();
+  cy.getReact('MiniGraphCardPFComponent', { state: { isReady: true } })
+    .should('have.length', 1)
+    .getCurrentState()
+    .then(state => {
+      const controller = state.graphRefs.getController() as Visualization;
+      assert.isTrue(controller.hasGraph());
+      const { nodes, edges } = elems(controller);
+      const nodeNames = nodes.map(n => n.getLabel());
+      const filteredNodes = nodes.filter(n => n.getType() !== 'group');
+      assert.equal(filteredNodes.length, 3, 'Unexpected number of infra nodes');
+      assert.equal(edges.length, 2, 'Unexpected number of infra edges');
+      assert.isTrue(nodeNames.some(n => n.includes('details')));
+      assert.isTrue(nodeNames.some(n => n.includes('v1')));
+      assert.isTrue(nodeNames.some(n => n.includes('productpage')));
+    });
 });
 
 Then(
@@ -122,5 +135,14 @@ export const nodeInfo = (nodeType: string, graphType: string): { isBox?: string;
   return {
     nodeType,
     isBox
+  };
+};
+
+const elems = (c: Controller): { edges: Edge[]; nodes: Node[] } => {
+  const elems = c.getElements();
+
+  return {
+    nodes: elems.filter(e => isNode(e)) as Node[],
+    edges: elems.filter(e => isEdge(e)) as Edge[]
   };
 };

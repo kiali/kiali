@@ -8,6 +8,7 @@ Feature: Kiali Service Details page
 
   Background:
     Given user is at administrator perspective
+    And cytoscape graph is enabled
     And user is at the details page for the "service" "bookinfo/productpage" located in the "" cluster
 
   @bookinfo-app

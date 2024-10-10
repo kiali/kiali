@@ -9,6 +9,7 @@ Feature: Kiali Workload Details page
 
   Background:
     Given user is at administrator perspective
+    And cytoscape graph is enabled
     And user is at the details page for the "workload" "bookinfo/details-v1" located in the "" cluster
 
   @bookinfo-app

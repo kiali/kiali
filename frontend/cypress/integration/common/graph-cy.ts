@@ -3,7 +3,16 @@
   that are common to multiple features.
 */
 
-import { Then } from '@badeball/cypress-cucumber-preprocessor';
+import { Given, Then } from '@badeball/cypress-cucumber-preprocessor';
+
+Given('cytoscape graph is enabled', () => {
+  cy.intercept(`${Cypress.config('baseUrl')}/api/config`, request => {
+    request.reply(response => {
+      response.body['kialiFeatureFlags']['uiDefaults']['graph']['impl'] = 'cy';
+      return response;
+    });
+  });
+});
 
 Then('user does not see a cytoscape minigraph', () => {
   cy.get('#MiniGraphCard').find('h5').contains('Empty Graph');

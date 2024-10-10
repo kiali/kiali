@@ -1,4 +1,5 @@
 import { Then, When } from '@badeball/cypress-cucumber-preprocessor';
+import { Controller, Edge, isEdge, isNode, Visualization, Node } from '@patternfly/react-topology';
 
 const clearFindAndHide = (): void => {
   cy.get('#graph_hide').clear();
@@ -30,41 +31,46 @@ Then('user sees unhealthy workloads highlighted on the patternfly graph', () => 
     }
   ];
   cy.waitForReact();
-  cy.getReact('GraphPageComponent', { state: { isReady: true } })
-    .should('have.length', '1')
-    .then(() => {
-      cy.getReact('CytoscapeGraph')
-        .should('have.length', '1')
-        .getCurrentState()
-        .then(state => {
-          const unhealthyNodes = state.cy
-            .nodes()
-            .filter((node: any) => node.classes().includes('find'))
-            .map((node: any) => ({
-              app: node.data('app'),
-              version: node.data('version'),
-              namespace: node.data('namespace')
-            }));
-          expect(unhealthyNodes).to.include.deep.members(expectedUnhealthyNodes);
-        });
+  cy.getReact('GraphPagePFComponent', { state: { isReady: true } })
+    .should('have.length', 1)
+    .getCurrentState()
+    .then(state => {
+      const controller = state.graphRefs.getController() as Visualization;
+      assert.isTrue(controller.hasGraph());
+      const { nodes } = elems(controller);
+      const unhealthyNodes = nodes
+        .filter(n => n.getData().isFind)
+        .map(n => ({
+          app: n.getData().app,
+          version: n.getData().version,
+          namespace: n.getData().namespace
+        }));
+      assert.includeDeepMembers(unhealthyNodes, expectedUnhealthyNodes, 'Unexpected unhealthy nodes');
     });
 });
 
 Then('user sees nothing highlighted on the patternfly graph', () => {
-  cy.contains('Loading Graph').should('not.exist');
-
   cy.waitForReact();
-  cy.getReact('GraphPageComponent', { state: { isReady: true } })
-    .should('have.length', '1')
-    .then(() => {
-      cy.getReact('CytoscapeGraph')
-        .should('have.length', '1')
-        .getCurrentState()
-        .then(state => {
-          expect(state.cy.nodes().filter((node: any) => node.classes().includes('find')).length).to.equal(0);
-        });
+  cy.getReact('GraphPagePFComponent', { state: { isReady: true } })
+    .should('have.length', 1)
+    .getCurrentState()
+    .then(state => {
+      const controller = state.graphRefs.getController() as Visualization;
+      assert.isTrue(controller.hasGraph());
+      const { nodes } = elems(controller);
+      const filteredNodes = nodes.filter(n => n.getData().isFind);
+      assert.equal(filteredNodes.length, 0, 'Unexpected number of highlighted nodes');
     });
 });
+
+const elems = (c: Controller): { edges: Edge[]; nodes: Node[] } => {
+  const elems = c.getElements();
+
+  return {
+    nodes: elems.filter(e => isNode(e)) as Node[],
+    edges: elems.filter(e => isEdge(e)) as Edge[]
+  };
+};
 
 When('user hides unhealthy workloads', () => {
   clearFindAndHide();
