@@ -21,7 +21,7 @@ import { ValidationSummary } from '../Validations/ValidationSummary';
 import { OverviewToolbar } from '../../pages/Overview/OverviewToolbar';
 import { OverviewCardDataPlaneNamespace } from '../../pages/Overview/OverviewCardDataPlaneNamespace';
 import { StatefulFiltersRef } from '../Filters/StatefulFilters';
-import { IstioObjectLink, GetIstioObjectUrl, infoStyle } from '../Link/IstioObjectLink';
+import { IstioObjectLink, GetIstioObjectUrl } from '../Link/IstioObjectLink';
 import { labelFilter } from 'components/Filters/CommonFilters';
 import { labelFilter as NsLabelFilter } from '../../pages/Overview/Filters';
 import { ValidationSummaryLink } from '../Link/ValidationSummaryLink';
@@ -42,6 +42,11 @@ import { NamespaceStatuses } from 'pages/Overview/NamespaceStatuses';
 import { isGateway, isWaypoint } from '../../helpers/LabelFilterHelper';
 import { KialiIcon } from '../../config/KialiIcon';
 import { Td } from '@patternfly/react-table';
+import { kialiStyle } from 'styles/StyleUtils';
+
+const infoStyle = kialiStyle({
+  margin: '0 0 -0.125rem 0.5rem'
+});
 
 // Links
 

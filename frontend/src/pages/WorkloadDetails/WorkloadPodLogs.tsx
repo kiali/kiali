@@ -47,7 +47,7 @@ import { location, router, URLParam } from 'app/History';
 import { Span, TracingQuery } from 'types/Tracing';
 import moment from 'moment';
 import { formatDuration } from 'utils/tracing/TracingHelper';
-import { infoStyle, kebabToggleStyle } from 'styles/DropdownStyles';
+import { itemInfoStyle, kebabToggleStyle } from 'styles/DropdownStyles';
 import { isValid } from 'utils/Common';
 import { KioskElement } from '../../components/Kiosk/KioskElement';
 import { TimeDurationModal } from '../../components/Time/TimeDurationModal';
@@ -714,7 +714,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
             </div>
           }
         >
-          <KialiIcon.Info className={infoStyle} />
+          <KialiIcon.Info className={itemInfoStyle} />
         </Tooltip>
       </h1>
     );

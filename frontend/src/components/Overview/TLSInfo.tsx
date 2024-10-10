@@ -2,12 +2,15 @@ import { Label, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { KialiIcon } from 'config/KialiIcon';
 import * as React from 'react';
 import { kialiStyle } from 'styles/StyleUtils';
-import { infoStyle } from '../../pages/Overview/OverviewCardControlPlaneNamespace';
 import { useKialiTranslation } from 'utils/I18nUtils';
 
 type Props = {
   version?: string;
 };
+
+const infoStyle = kialiStyle({
+  marginLeft: '0.25rem'
+});
 
 const lockIconStyle = kialiStyle({ marginLeft: '0.25rem' });
 

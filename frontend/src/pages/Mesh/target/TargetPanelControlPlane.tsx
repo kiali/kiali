@@ -12,12 +12,9 @@ import { Title, TitleSizes } from '@patternfly/react-core';
 import { serverConfig } from 'config';
 import { CanaryUpgradeStatus } from 'types/IstioObjects';
 import { NamespaceInfo, NamespaceStatus } from 'types/NamespaceInfo';
-import { isRemoteCluster } from 'pages/Overview/OverviewCardControlPlaneNamespace';
 import { DirectionType } from 'pages/Overview/OverviewToolbar';
-import { ControlPlaneNamespaceStatus } from 'pages/Overview/ControlPlaneNamespaceStatus';
 import { PromisesRegistry } from 'utils/CancelablePromises';
 import { TLSInfo } from 'components/Overview/TLSInfo';
-import { OverviewCardControlPlaneNamespace } from 'pages/Overview/OverviewCardControlPlaneNamespace';
 import * as API from '../../../services/Api';
 import { IstioMetricsOptions } from 'types/MetricsOptions';
 import { computePrometheusRateParams } from 'services/Prometheus';
@@ -39,6 +36,8 @@ import { load, dump } from 'js-yaml';
 import { yamlDumpOptions } from '../../../types/IstioConfigDetails';
 import { CertsInfo } from 'types/CertsInfo';
 import { IstioCertsInfo } from 'components/IstioCertsInfo/IstioCertsInfo';
+import { TargetPanelControlPlaneMetrics } from './TargetPanelControlPlaneMetrics';
+import { TargetPanelControlPlaneStatus } from './TargetPanelControlPlaneStatus';
 
 type TargetPanelControlPlaneProps = TargetPanelCommonProps & {
   meshStatus: string;
@@ -65,6 +64,15 @@ const defaultState: TargetPanelControlPlaneState = {
   nsInfo: undefined,
   status: undefined,
   tlsStatus: undefined
+};
+
+const controlPlaneAnnotation = 'topology.istio.io/controlPlaneClusters';
+
+export const isRemoteCluster = (annotations?: { [key: string]: string }): boolean => {
+  if (annotations && annotations[controlPlaneAnnotation]) {
+    return true;
+  }
+  return false;
 };
 
 // TODO: Should these remain fixed values?
@@ -152,10 +160,10 @@ export class TargetPanelControlPlane extends React.Component<
 
           <MeshMTLSStatus cluster={data.cluster} revision={revision} />
 
-          <ControlPlaneNamespaceStatus
+          <TargetPanelControlPlaneStatus
             controlPlaneMetrics={this.state.controlPlaneMetrics}
             outboundTrafficPolicy={config.OutboundTrafficPolicy}
-          ></ControlPlaneNamespaceStatus>
+          />
 
           <TLSInfo version={this.props.minTLS} />
 
@@ -364,7 +372,7 @@ export class TargetPanelControlPlane extends React.Component<
       const { thresholds } = data.infraData;
 
       return (
-        <OverviewCardControlPlaneNamespace
+        <TargetPanelControlPlaneMetrics
           key={data.namespace}
           pilotLatency={this.state.controlPlaneMetrics?.istiod_proxy_time}
           istiodContainerMemory={this.state.controlPlaneMetrics?.istiod_container_mem}
