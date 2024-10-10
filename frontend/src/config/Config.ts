@@ -134,13 +134,14 @@ const conf = {
       grafana: 'api/grafana',
       istioConfig: (namespace: string) => `api/namespaces/${namespace}/istio`,
       istioCertsInfo: () => 'api/istio/certs',
-      istioConfigCreate: (namespace: string, objectType: string) => `api/namespaces/${namespace}/istio/${objectType}`,
-      istioConfigDetail: (namespace: string, objectType: string, object: string) =>
-        `api/namespaces/${namespace}/istio/${objectType}/${object}`,
-      istioConfigDelete: (namespace: string, objectType: string, object: string) =>
-        `api/namespaces/${namespace}/istio/${objectType}/${object}`,
-      istioConfigUpdate: (namespace: string, objectType: string, object: string) =>
-        `api/namespaces/${namespace}/istio/${objectType}/${object}`,
+      istioConfigCreate: (namespace: string, group: string, version: string, kind: string) =>
+        `api/namespaces/${namespace}/istio/${group}/${version}/${kind}`,
+      istioConfigDetail: (namespace: string, group: string, version: string, kind: string, object: string) =>
+        `api/namespaces/${namespace}/istio/${group}/${version}/${kind}/${object}`,
+      istioConfigDelete: (namespace: string, group: string, version: string, kind: string, object: string) =>
+        `api/namespaces/${namespace}/istio/${group}/${version}/${kind}/${object}`,
+      istioConfigUpdate: (namespace: string, group: string, version: string, kind: string, object: string) =>
+        `api/namespaces/${namespace}/istio/${group}/${version}/${kind}/${object}`,
       istioPermissions: 'api/istio/permissions',
       istiodResourceThresholds: () => 'api/mesh/resources/thresholds',
       istioStatus: () => 'api/istio/status',

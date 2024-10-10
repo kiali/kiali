@@ -24,21 +24,52 @@ const labelsStringToJson = (labelsString: string): string => {
   return `{${labelsJson}}`;
 };
 
-// I included this, because the URL parameter is in plural, but the the Type itself in Kiali is singular
-// This works for all of the types currently present in Kiali (Feb 8 2023), but may break in the future, because
-// it does not support all of the english words
-const singularize = (word: string): string => {
+// This is for Istio Object Types only
+const pluralize = (word: string): string => {
   const endings = {
-    ves: 'fe',
-    ies: 'y',
-    i: 'us',
-    zes: 'ze',
-    ses: 's',
-    es: 'e',
-    s: ''
+    ay: 'ays',
+    cy: 'cies',
+    ry: 'ries',
+    ze: 'zes',
+    s: 'ses',
+    e: 'es'
   };
 
-  return word.replace(new RegExp(`(${Object.keys(endings).join('|')})$`), r => endings[r]);
+  for (const [singular, plural] of Object.entries(endings)) {
+    const regex = new RegExp(`${singular}$`);
+    if (regex.test(word)) {
+      return word.replace(regex, plural);
+    }
+  }
+
+  // 's' by default
+  return `${word}s`;
+};
+
+export const dicIstioTypeToGVKStrings: { [key: string]: string } = {
+  AuthorizationPolicy: 'security.istio.io/v1, Kind=AuthorizationPolicy',
+  PeerAuthentication: 'security.istio.io/v1, Kind=PeerAuthentication',
+  RequestAuthentication: 'security.istio.io/v1, Kind=RequestAuthentication',
+
+  DestinationRule: 'networking.istio.io/v1, Kind=DestinationRule',
+  Gateway: 'networking.istio.io/v1, Kind=Gateway',
+  EnvoyFilter: 'networking.istio.io/v1alpha3, Kind=EnvoyFilter',
+  Sidecar: 'networking.istio.io/v1, Kind=Sidecar',
+  ServiceEntry: 'networking.istio.io/v1, Kind=ServiceEntry',
+  VirtualService: 'networking.istio.io/v1, Kind=VirtualService',
+  WorkloadEntry: 'networking.istio.io/v1, Kind=WorkloadEntry',
+  WorkloadGroup: 'networking.istio.io/v1, Kind=WorkloadGroup',
+
+  WasmPlugin: 'extensions.istio.io/v1alpha1, Kind=WasmPlugin',
+  Telemetry: 'telemetry.istio.io/v1, Kind=Telemetry',
+
+  K8sGateway: 'gateway.networking.k8s.io/v1, Kind=Gateway',
+  K8sGatewayClass: 'gateway.networking.k8s.io/v1, Kind=GatewayClass',
+  K8sGRPCRoute: 'gateway.networking.k8s.io/v1, Kind=GRPCRoute',
+  K8sHTTPRoute: 'gateway.networking.k8s.io/v1, Kind=HTTPRoute',
+  K8sReferenceGrant: 'gateway.networking.k8s.io/v1, Kind=ReferenceGrant',
+  K8sTCPRoute: 'gateway.networking.k8s.io/v1alpha2, Kind=TCPRoute',
+  K8sTLSRoute: 'gateway.networking.k8s.io/v1alpha2, Kind=TLSRoute'
 };
 
 const minimalAuthorizationPolicy = (name: string, namespace: string): string => {
@@ -462,31 +493,31 @@ Then('user sees all the Istio Config objects in the bookinfo namespace', () => {
 
 Then('user sees all the Istio Config objects in the bookinfo namespace for the {string} cluster', (cluster: string) => {
   // Bookinfo Gateway
-  cy.getBySel(`VirtualItem_Cluster${cluster}_Nsbookinfo_gateway_bookinfo-gateway`);
+  cy.getBySel(`VirtualItem_Cluster${cluster}_Nsbookinfo_Gateway_bookinfo-gateway`);
 
   // Bookinfo VS
-  cy.getBySel(`VirtualItem_Cluster${cluster}_Nsbookinfo_virtualservice_bookinfo`);
+  cy.getBySel(`VirtualItem_Cluster${cluster}_Nsbookinfo_VirtualService_bookinfo`);
 });
 
 Then('user sees Cluster information for Istio objects', () => {
   // Gateways
-  cy.getBySel(`VirtualItem_Clustereast_Nsbookinfo_gateway_bookinfo-gateway`).contains(
+  cy.getBySel(`VirtualItem_Clustereast_Nsbookinfo_Gateway_bookinfo-gateway`).contains(
     'td[data-label="Cluster"]',
     'east'
   );
 
-  cy.getBySel(`VirtualItem_Clusterwest_Nsbookinfo_gateway_bookinfo-gateway`).contains(
+  cy.getBySel(`VirtualItem_Clusterwest_Nsbookinfo_Gateway_bookinfo-gateway`).contains(
     'td[data-label="Cluster"]',
     'west'
   );
 
   // VirtualServices
-  cy.getBySel(`VirtualItem_Clustereast_Nsbookinfo_virtualservice_bookinfo`).contains(
+  cy.getBySel(`VirtualItem_Clustereast_Nsbookinfo_VirtualService_bookinfo`).contains(
     'td[data-label="Cluster"]',
     'east'
   );
 
-  cy.getBySel(`VirtualItem_Clusterwest_Nsbookinfo_virtualservice_bookinfo`).contains(
+  cy.getBySel(`VirtualItem_Clusterwest_Nsbookinfo_VirtualService_bookinfo`).contains(
     'td[data-label="Cluster"]',
     'west'
   );
@@ -497,7 +528,7 @@ Then('user sees Name information for Istio objects', () => {
 
   // There should be a table with a heading for each piece of information.
   getColWithRowText(object, 'Name').within(() => {
-    cy.get(`a[href*="/namespaces/bookinfo/istio/gateways/${object}"]`).should('be.visible');
+    cy.get(`a[href*="/namespaces/bookinfo/istio/networking.istio.io/v1/Gateway/${object}"]`).should('be.visible');
   });
 });
 
@@ -518,7 +549,7 @@ Then('user sees Configuration information for Istio objects', () => {
 
   // There should be a table with a heading for each piece of information.
   getColWithRowText(object, 'Configuration').within(() => {
-    cy.get(`a[href*="/namespaces/bookinfo/istio/gateways/${object}"]`).should('be.visible');
+    cy.get(`a[href*="/namespaces/bookinfo/istio/networking.istio.io/v1/Gateway/${object}"]`).should('be.visible');
   });
 });
 
@@ -558,17 +589,18 @@ Then('user only sees {string}', (sees: string) => {
   });
 });
 
-Then('only {string} are visible in the {string} namespace', (sees: string, ns: string) => {
+Then('only {string} objects are visible in the {string} namespace', (sees: string, ns: string) => {
   let lowercaseSees: string = sees.charAt(0).toLowerCase() + sees.slice(1);
   let count: number;
 
-  cy.request({ method: 'GET', url: `/api/namespaces/${ns}/istio?objects=${lowercaseSees}&validate=true` }).then(
-    response => {
-      count = response.body[lowercaseSees].length;
-    }
-  );
+  cy.request({
+    method: 'GET',
+    url: `/api/namespaces/${ns}/istio?objects=${dicIstioTypeToGVKStrings[sees]}&validate=true`
+  }).then(response => {
+    count = response.body[pluralize(lowercaseSees)].length;
+  });
 
-  cy.get('tbody').contains('tr', singularize(sees));
+  cy.get('tbody').contains('tr', sees);
   cy.get('tbody').within(() => {
     cy.get('tr').should('have.length', count);
   });
@@ -578,44 +610,50 @@ Then('user sees {string}', (sees: string) => {
   cy.get('tbody').contains('tr', sees);
 });
 
-Then('the user can create a {string} Istio object', (object: string) => {
-  cy.get('button[data-test="istio-actions-toggle"]').click();
+Then(
+  'the user can create a {string} {string} {string} Istio object',
+  (group: string, version: string, kind: string) => {
+    cy.get('button[data-test="istio-actions-toggle"]').click();
 
-  cy.getBySel('istio-actions-dropdown').within(() => {
-    cy.contains(object).click();
-  });
+    cy.getBySel('istio-actions-dropdown').within(() => {
+      cy.contains(kind).click();
+    });
 
-  const page = `/istio/new/${object}`;
-  cy.url().should('include', page);
-});
+    const page = `/istio/new/${group}/${version}/${kind}`;
+    cy.url().should('include', page);
+  }
+);
 
-Then('the user can create a {string} K8s Istio object', (object: string) => {
-  cy.request({ method: 'GET', url: '/api/config' }).then(response => {
-    expect(response.status).to.equal(200);
-    const gatewayAPIEnabled = response.body.gatewayAPIEnabled;
+Then(
+  'the user can create a {string} {string} {string} K8s Istio object',
+  (group: string, version: string, kind: string) => {
+    cy.request({ method: 'GET', url: '/api/config' }).then(response => {
+      expect(response.status).to.equal(200);
+      const gatewayAPIEnabled = response.body.gatewayAPIEnabled;
 
-    if (gatewayAPIEnabled) {
-      cy.get('button[data-test="istio-actions-toggle"]').click();
+      if (gatewayAPIEnabled) {
+        cy.get('button[data-test="istio-actions-toggle"]').click();
 
-      cy.getBySel('istio-actions-dropdown').within(() => {
-        cy.contains(object).click();
-      });
+        cy.getBySel('istio-actions-dropdown').within(() => {
+          cy.contains(`K8s${kind}`).click();
+        });
 
-      const page = `/istio/new/${object}`;
-      cy.url().should('include', page);
-    } else {
-      cy.get('button[data-test="istio-actions-toggle"]').click();
+        const page = `/istio/new/${group}/${version}/${kind}`;
+        cy.url().should('include', page);
+      } else {
+        cy.get('button[data-test="istio-actions-toggle"]').click();
 
-      cy.getBySel('istio-actions-dropdown').within(() => {
-        cy.get(object).should('not.exist');
-      });
-    }
-  });
-});
+        cy.getBySel('istio-actions-dropdown').within(() => {
+          cy.get(`K8s${kind}`).should('not.exist');
+        });
+      }
+    });
+  }
+);
 
 Then('the AuthorizationPolicy should have a {string}', function (healthStatus: string) {
   cy.get(
-    `[data-test=VirtualItem_Ns${this.targetNamespace}_authorizationpolicy_${this.targetAuthorizationPolicy}] span.pf-v5-c-icon`
+    `[data-test=VirtualItem_Ns${this.targetNamespace}_AuthorizationPolicy_${this.targetAuthorizationPolicy}] span.pf-v5-c-icon`
   ).hasCssVar('color', `--pf-v5-global--${healthStatus}-color--100`);
 });
 
@@ -631,7 +669,7 @@ function waitUntilConfigIsVisible(attempt: number, crdInstanceName: string, crdN
     .each($row => {
       const dataTestAttr = $row[0].attributes.getNamedItem('data-test');
       if (dataTestAttr !== null) {
-        if (dataTestAttr.value === `VirtualItem_Ns${namespace}_${crdName.toLowerCase()}_${crdInstanceName}`) {
+        if (dataTestAttr.value === `VirtualItem_Ns${namespace}_${crdName}_${crdInstanceName}`) {
           found = true;
         }
       }
@@ -648,7 +686,7 @@ Then(
   'the {string} {string} of the {string} namespace should have a {string}',
   (crdInstanceName: string, crdName: string, namespace: string, healthStatus: string) => {
     waitUntilConfigIsVisible(3, crdInstanceName, crdName, namespace);
-    cy.get(`[data-test=VirtualItem_Ns${namespace}_${crdName.toLowerCase()}_${crdInstanceName}] span.pf-v5-c-icon`)
+    cy.get(`[data-test=VirtualItem_Ns${namespace}_${crdName}_${crdInstanceName}] span.pf-v5-c-icon`)
       .should('be.visible')
       .hasCssVar('color', `--pf-v5-global--${healthStatus}-color--100`);
   }

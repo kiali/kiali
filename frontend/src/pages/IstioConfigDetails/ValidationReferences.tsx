@@ -4,12 +4,12 @@ import { ReferenceIstioObjectLink } from '../../components/Link/IstioObjectLink'
 import { ObjectReference } from '../../types/IstioObjects';
 
 interface Props {
-  objectReferences: ObjectReference[];
   cluster?: string;
+  objectReferences: ObjectReference[];
 }
 
 export class ValidationReferences extends React.Component<Props> {
-  render() {
+  render(): React.ReactNode {
     return (
       <>
         <Title headingLevel="h3" size={TitleSizes.xl}>
@@ -18,11 +18,11 @@ export class ValidationReferences extends React.Component<Props> {
         <Stack>
           {this.props.objectReferences.map((reference, i) => {
             return (
-              <StackItem key={'rel-object-' + i}>
+              <StackItem key={`el-object-${i}`}>
                 <ReferenceIstioObjectLink
                   cluster={this.props.cluster}
                   name={reference.name}
-                  type={reference.objectType}
+                  objectGVK={reference.objectGVK}
                   namespace={reference.namespace}
                 />
               </StackItem>

@@ -3,7 +3,7 @@ import { Labels } from 'components/Label/Labels';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { LocalTime } from 'components/Time/LocalTime';
 import { ValidationObjectSummary } from 'components/Validations/ValidationObjectSummary';
-import { IstioTypes } from 'components/VirtualList/Config';
+import { GVKToBadge } from 'components/VirtualList/Config';
 import { KialiIcon } from 'config/KialiIcon';
 import * as React from 'react';
 import { IstioConfigDetails } from 'types/IstioConfigDetails';
@@ -17,7 +17,7 @@ import {
   WorkloadReference
 } from 'types/IstioObjects';
 import { kialiStyle } from 'styles/StyleUtils';
-import { getIstioObject, getReconciliationCondition } from 'utils/IstioConfigUtils';
+import { getIstioObject, getIstioObjectGVK, getReconciliationCondition, gvkToString } from 'utils/IstioConfigUtils';
 import { IstioConfigHelp } from './IstioConfigHelp';
 import { IstioConfigReferences } from './IstioConfigReferences';
 import { IstioConfigValidationReferences } from './IstioConfigValidationReferences';
@@ -115,13 +115,12 @@ export const IstioConfigOverview: React.FC<IstioConfigOverviewProps> = (props: I
 
     // Set the kiali url from kialiInstance info (here a "/console" is required as external link is used)
     const kialiUrl = `${kialiInstance?.url ?? ''}/console`;
-
     urlInKiali =
       kialiUrl +
       GetIstioObjectUrl(
         istioObject.metadata.name,
         istioObject.metadata.namespace,
-        istioObject.kind.toLowerCase(),
+        getIstioObjectGVK(istioObject.apiVersion, istioObject.kind),
         props.cluster
       );
   }
@@ -144,7 +143,10 @@ export const IstioConfigOverview: React.FC<IstioConfigOverviewProps> = (props: I
         {istioObject && istioObject.kind && (
           <>
             <div className={iconStyle}>
-              <PFBadge badge={IstioTypes[istioObject.kind?.toLowerCase()].badge} position={TooltipPosition.top} />
+              <PFBadge
+                badge={GVKToBadge[gvkToString(getIstioObjectGVK(istioObject.apiVersion, istioObject.kind))]}
+                position={TooltipPosition.top}
+              />
             </div>
 
             {istioObject?.metadata.name}

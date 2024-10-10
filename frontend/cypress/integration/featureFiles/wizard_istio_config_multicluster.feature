@@ -38,9 +38,9 @@ Feature: Kiali Istio Config page
     And user types "foobar" in the "addPortName_0" input
     And user previews the configuration
     And user creates the istio config
-    Then an error message "Could not create Istio Gateway objects" is displayed
-    And the "Gateway" "bookinfo-gateway-mc" should be listed in "east" "bookinfo" namespace 
-    And the "Gateway" "bookinfo-gateway-mc" should not be listed in "west" "bookinfo" namespace 
+    Then an error message "Could not create Istio networking.istio.io/v1, Kind=Gateway objects" is displayed
+    And the "Gateway" "bookinfo-gateway-mc" should be listed in "east" "bookinfo" namespace
+    And the "Gateway" "bookinfo-gateway-mc" should not be listed in "west" "bookinfo" namespace
 
   @multi-primary
   Scenario: Create a Gateway in both clusters in the Multi-Primary deployment
@@ -57,12 +57,12 @@ Feature: Kiali Istio Config page
     And user types "foobar" in the "addPortName_0" input
     And user previews the configuration
     And user creates the istio config
-    And the "Gateway" "bookinfo-gateway-mc" should be listed in "east" "bookinfo" namespace 
+    And the "Gateway" "bookinfo-gateway-mc" should be listed in "east" "bookinfo" namespace
     And the "Gateway" "bookinfo-gateway-mc" should be listed in "west" "bookinfo" namespace
 
   @skip
   @sleep-app
-  # For this test, I deployed a sleep app in the east cluster. 
+  # For this test, I deployed a sleep app in the east cluster.
   Scenario: Try to create a remotely located Gateway in a namespace, which is only present in the local cluster
     When user selects the "sleep" namespace
     And user clicks in the "Gateway" Istio config actions

@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
 	"github.com/kiali/kiali/tests/testutils/validations"
@@ -145,7 +146,7 @@ func TestRepeatingSimpleHostWithGateway(t *testing.T) {
 		VirtualServices: vss,
 	}.Check()
 
-	refKey := models.IstioValidationKey{ObjectType: "virtualservice", Namespace: "bookinfo", Name: "virtual-2"}
+	refKey := models.IstioValidationKey{ObjectGVK: kubernetes.VirtualServices, Namespace: "bookinfo", Name: "virtual-2"}
 	presentValidationTest(t, vals, "virtual-1")
 	presentReference(t, *(vals[refKey]), "virtual-1")
 
@@ -451,11 +452,11 @@ func emptyValidationTest(t *testing.T, vals models.IstioValidations) {
 	assert := assert.New(t)
 	assert.Empty(vals)
 
-	validation, ok := vals[models.IstioValidationKey{ObjectType: "virtualservice", Namespace: "bookinfo", Name: "virtual-1"}]
+	validation, ok := vals[models.IstioValidationKey{ObjectGVK: kubernetes.VirtualServices, Namespace: "bookinfo", Name: "virtual-1"}]
 	assert.False(ok)
 	assert.Nil(validation)
 
-	validation, ok = vals[models.IstioValidationKey{ObjectType: "virtualservice", Namespace: "bookinfo", Name: "virtual-2"}]
+	validation, ok = vals[models.IstioValidationKey{ObjectGVK: kubernetes.VirtualServices, Namespace: "bookinfo", Name: "virtual-2"}]
 	assert.False(ok)
 	assert.Nil(validation)
 }
@@ -463,7 +464,7 @@ func emptyValidationTest(t *testing.T, vals models.IstioValidations) {
 func noObjectValidationTest(t *testing.T, vals models.IstioValidations, name string) {
 	assert := assert.New(t)
 
-	validation, ok := vals[models.IstioValidationKey{ObjectType: "virtualservice", Namespace: "bookinfo", Name: name}]
+	validation, ok := vals[models.IstioValidationKey{ObjectGVK: kubernetes.VirtualServices, Namespace: "bookinfo", Name: name}]
 	assert.False(ok)
 	assert.Nil(validation)
 }
@@ -472,7 +473,7 @@ func presentValidationTest(t *testing.T, vals models.IstioValidations, serviceNa
 	assert := assert.New(t)
 	assert.NotEmpty(vals)
 
-	validation, ok := vals[models.IstioValidationKey{ObjectType: "virtualservice", Namespace: "bookinfo", Name: serviceName}]
+	validation, ok := vals[models.IstioValidationKey{ObjectGVK: kubernetes.VirtualServices, Namespace: "bookinfo", Name: serviceName}]
 	assert.True(ok)
 
 	assert.True(validation.Valid)
@@ -484,7 +485,7 @@ func presentValidationTest(t *testing.T, vals models.IstioValidations, serviceNa
 
 func presentReference(t *testing.T, validation models.IstioValidation, serviceName string) {
 	assert := assert.New(t)
-	refKey := models.IstioValidationKey{ObjectType: "virtualservice", Namespace: "bookinfo", Name: serviceName}
+	refKey := models.IstioValidationKey{ObjectGVK: kubernetes.VirtualServices, Namespace: "bookinfo", Name: serviceName}
 
 	assert.True(len(validation.References) > 0)
 	assert.Contains(validation.References, refKey)
@@ -495,7 +496,7 @@ func presentReferences(t *testing.T, validation models.IstioValidation, serviceN
 	assert.True(len(validation.References) > 0)
 
 	for _, sn := range serviceNames {
-		refKey := models.IstioValidationKey{ObjectType: "virtualservice", Namespace: "bookinfo", Name: sn}
+		refKey := models.IstioValidationKey{ObjectGVK: kubernetes.VirtualServices, Namespace: "bookinfo", Name: sn}
 		assert.Contains(validation.References, refKey)
 	}
 }

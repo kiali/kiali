@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/kiali/kiali/kubernetes"
@@ -28,13 +29,13 @@ func TestDestinationRuleMultimatch(t *testing.T) {
 	config, err := getConfigDetails(kiali.BOOKINFO, "all.googleapis.com", kubernetes.DestinationRules, false, require)
 	require.NoError(err)
 	require.NotNil(config)
-	assertConfigDetailsValidations(*config, kiali.BOOKINFO, "destinationrule", "all.googleapis.com", "KIA0201", true, require)
+	assertConfigDetailsValidations(*config, kiali.BOOKINFO, kubernetes.DestinationRules, "all.googleapis.com", "KIA0201", true, require)
 
 	configList, err := kiali.IstioConfigsList(kiali.BOOKINFO)
 
 	require.NoError(err)
-	assertConfigListValidations(*configList, kiali.BOOKINFO, "destinationrule", "all.googleapis.com", "KIA0201", true, require)
-	assertConfigListValidations(*configList, kiali.BOOKINFO, "destinationrule", "all.googleapis.com2", "KIA0201", true, require)
+	assertConfigListValidations(*configList, kiali.BOOKINFO, kubernetes.DestinationRules, "all.googleapis.com", "KIA0201", true, require)
+	assertConfigListValidations(*configList, kiali.BOOKINFO, kubernetes.DestinationRules, "all.googleapis.com2", "KIA0201", true, require)
 }
 
 func TestAuthPolicyPrincipalsError(t *testing.T) {
@@ -48,7 +49,7 @@ func TestAuthPolicyPrincipalsError(t *testing.T) {
 
 	require.NoError(err)
 	require.NotNil(config)
-	require.Equal(kubernetes.AuthorizationPolicies, config.ObjectType)
+	require.Equal(kubernetes.AuthorizationPolicies.String(), config.ObjectGVK.String())
 	require.Equal(kiali.BOOKINFO, config.Namespace.Name)
 	require.NotNil(config.AuthorizationPolicy)
 	require.Equal(name, config.AuthorizationPolicy.Name)
@@ -56,7 +57,7 @@ func TestAuthPolicyPrincipalsError(t *testing.T) {
 	require.NotNil(config.IstioReferences)
 	require.NotNil(config.IstioValidation)
 	require.Equal(name, config.IstioValidation.Name)
-	require.Equal("authorizationpolicy", config.IstioValidation.ObjectType)
+	require.Equal(kubernetes.AuthorizationPolicies.String(), config.IstioValidation.ObjectGVK.String())
 	require.False(config.IstioValidation.Valid)
 	require.Empty(config.IstioValidation.References)
 	require.NotEmpty(config.IstioValidation.Checks)
@@ -119,14 +120,14 @@ func TestK8sGatewaysAddressesError(t *testing.T) {
 
 	require.NoError(err)
 	require.NotNil(config)
-	require.Equal(kubernetes.K8sGateways, config.ObjectType)
+	require.Equal(kubernetes.K8sGateways.String(), config.ObjectGVK.String())
 	require.Equal(kiali.BOOKINFO, config.Namespace.Name)
 	require.NotNil(config.K8sGateway)
 	require.Equal(name, config.K8sGateway.Name)
 	require.Equal(kiali.BOOKINFO, config.K8sGateway.Namespace)
 	require.NotNil(config.IstioValidation)
 	require.Equal(name, config.IstioValidation.Name)
-	require.Equal("k8sgateway", config.IstioValidation.ObjectType)
+	require.Equal(kubernetes.K8sGateways.String(), config.IstioValidation.ObjectGVK.String())
 	require.NotEmpty(config.IstioValidation.Checks)
 	require.Equal(models.WarningSeverity, config.IstioValidation.Checks[0].Severity)
 	require.Equal("More than one K8s Gateway for the same address and type combination", config.IstioValidation.Checks[0].Message)
@@ -148,14 +149,14 @@ func TestK8sGatewaysListenersError(t *testing.T) {
 
 	require.NoError(err)
 	require.NotNil(config)
-	require.Equal(kubernetes.K8sGateways, config.ObjectType)
+	require.Equal(kubernetes.K8sGateways.String(), config.ObjectGVK.String())
 	require.Equal(kiali.BOOKINFO, config.Namespace.Name)
 	require.NotNil(config.K8sGateway)
 	require.Equal(name, config.K8sGateway.Name)
 	require.Equal(kiali.BOOKINFO, config.K8sGateway.Namespace)
 	require.NotNil(config.IstioValidation)
 	require.Equal(name, config.IstioValidation.Name)
-	require.Equal("k8sgateway", config.IstioValidation.ObjectType)
+	require.Equal(kubernetes.K8sGateways.String(), config.IstioValidation.ObjectGVK.String())
 	require.NotEmpty(config.IstioValidation.Checks)
 	require.Equal(models.WarningSeverity, config.IstioValidation.Checks[0].Severity)
 	require.Equal("More than one K8s Gateway for the same host port combination", config.IstioValidation.Checks[0].Message)
@@ -172,7 +173,7 @@ func TestK8sHTTPRoutesGatewaysError(t *testing.T) {
 
 	require.NoError(err)
 	require.NotNil(config)
-	require.Equal(kubernetes.K8sHTTPRoutes, config.ObjectType)
+	require.Equal(kubernetes.K8sHTTPRoutes.String(), config.ObjectGVK.String())
 	require.Equal(kiali.BOOKINFO, config.Namespace.Name)
 	require.NotNil(config.K8sHTTPRoute)
 	require.Equal(name, config.K8sHTTPRoute.Name)
@@ -180,7 +181,7 @@ func TestK8sHTTPRoutesGatewaysError(t *testing.T) {
 	require.NotNil(config.IstioValidation)
 	require.False(config.IstioValidation.Valid)
 	require.Equal(name, config.IstioValidation.Name)
-	require.Equal("k8shttproute", config.IstioValidation.ObjectType)
+	require.Equal(kubernetes.K8sHTTPRoutes.String(), config.IstioValidation.ObjectGVK.String())
 	require.NotEmpty(config.IstioValidation.Checks)
 	require.Equal(models.ErrorSeverity, config.IstioValidation.Checks[0].Severity)
 	require.Equal("Route is pointing to a non-existent or inaccessible K8s gateway", config.IstioValidation.Checks[0].Message)
@@ -202,7 +203,7 @@ func TestK8sHTTPRoutesServicesError(t *testing.T) {
 
 	require.NoError(err)
 	require.NotNil(config)
-	require.Equal(kubernetes.K8sHTTPRoutes, config.ObjectType)
+	require.Equal(kubernetes.K8sHTTPRoutes.String(), config.ObjectGVK.String())
 	require.Equal(kiali.BOOKINFO, config.Namespace.Name)
 	require.NotNil(config.K8sHTTPRoute)
 	require.Equal(name, config.K8sHTTPRoute.Name)
@@ -210,7 +211,7 @@ func TestK8sHTTPRoutesServicesError(t *testing.T) {
 	require.NotNil(config.IstioValidation)
 	require.False(config.IstioValidation.Valid)
 	require.Equal(name, config.IstioValidation.Name)
-	require.Equal("k8shttproute", config.IstioValidation.ObjectType)
+	require.Equal(kubernetes.K8sHTTPRoutes.String(), config.IstioValidation.ObjectGVK.String())
 	require.NotEmpty(config.IstioValidation.Checks)
 	require.Equal(models.ErrorSeverity, config.IstioValidation.Checks[0].Severity)
 	require.Equal("Reference doesn't have a valid service (Service name not found)", config.IstioValidation.Checks[0].Message)
@@ -227,7 +228,7 @@ func TestK8sGRPCRoutesGatewaysError(t *testing.T) {
 
 	require.NoError(err)
 	require.NotNil(config)
-	require.Equal(kubernetes.K8sGRPCRoutes, config.ObjectType)
+	require.Equal(kubernetes.K8sGRPCRoutes.String(), config.ObjectGVK.String())
 	require.Equal(kiali.BOOKINFO, config.Namespace.Name)
 	require.NotNil(config.K8sGRPCRoute)
 	require.Equal(name, config.K8sGRPCRoute.Name)
@@ -235,7 +236,7 @@ func TestK8sGRPCRoutesGatewaysError(t *testing.T) {
 	require.NotNil(config.IstioValidation)
 	require.False(config.IstioValidation.Valid)
 	require.Equal(name, config.IstioValidation.Name)
-	require.Equal("k8sgrpcroute", config.IstioValidation.ObjectType)
+	require.Equal(kubernetes.K8sGRPCRoutes.String(), config.IstioValidation.ObjectGVK.String())
 	require.NotEmpty(config.IstioValidation.Checks)
 	require.Equal(models.ErrorSeverity, config.IstioValidation.Checks[0].Severity)
 	require.Equal("Route is pointing to a non-existent or inaccessible K8s gateway", config.IstioValidation.Checks[0].Message)
@@ -257,7 +258,7 @@ func TestK8sGRPCRoutesServicesError(t *testing.T) {
 
 	require.NoError(err)
 	require.NotNil(config)
-	require.Equal(kubernetes.K8sGRPCRoutes, config.ObjectType)
+	require.Equal(kubernetes.K8sGRPCRoutes.String(), config.ObjectGVK.String())
 	require.Equal(kiali.BOOKINFO, config.Namespace.Name)
 	require.NotNil(config.K8sGRPCRoute)
 	require.Equal(name, config.K8sGRPCRoute.Name)
@@ -265,7 +266,7 @@ func TestK8sGRPCRoutesServicesError(t *testing.T) {
 	require.NotNil(config.IstioValidation)
 	require.False(config.IstioValidation.Valid)
 	require.Equal(name, config.IstioValidation.Name)
-	require.Equal("k8sgrpcroute", config.IstioValidation.ObjectType)
+	require.Equal(kubernetes.K8sGRPCRoutes.String(), config.IstioValidation.ObjectGVK.String())
 	require.NotEmpty(config.IstioValidation.Checks)
 	require.Equal(models.ErrorSeverity, config.IstioValidation.Checks[0].Severity)
 	require.Equal("Reference doesn't have a valid service (Service name not found)", config.IstioValidation.Checks[0].Message)
@@ -287,7 +288,7 @@ func TestK8sReferenceGrantsFromNamespaceError(t *testing.T) {
 
 	require.NoError(err)
 	require.NotNil(config)
-	require.Equal(kubernetes.K8sReferenceGrants, config.ObjectType)
+	require.Equal(kubernetes.K8sReferenceGrants.String(), config.ObjectGVK.String())
 	require.Equal(kiali.BOOKINFO, config.Namespace.Name)
 	require.NotNil(config.K8sReferenceGrant)
 	require.Equal(name, config.K8sReferenceGrant.Name)
@@ -295,13 +296,13 @@ func TestK8sReferenceGrantsFromNamespaceError(t *testing.T) {
 	require.NotNil(config.IstioValidation)
 	require.False(config.IstioValidation.Valid)
 	require.Equal(name, config.IstioValidation.Name)
-	require.Equal("k8sreferencegrant", config.IstioValidation.ObjectType)
+	require.Equal(kubernetes.K8sReferenceGrants.String(), config.IstioValidation.ObjectGVK.String())
 	require.NotEmpty(config.IstioValidation.Checks)
 	require.Equal(models.ErrorSeverity, config.IstioValidation.Checks[0].Severity)
 	require.Equal("Namespace is not found or is not accessible", config.IstioValidation.Checks[0].Message)
 }
 
-func getConfigDetails(namespace, name, configType string, skipReferences bool, require *require.Assertions) (*models.IstioConfigDetails, error) {
+func getConfigDetails(namespace, name string, configType schema.GroupVersionKind, skipReferences bool, require *require.Assertions) (*models.IstioConfigDetails, error) {
 	ctx := context.TODO()
 	config, _, err := kiali.IstioConfigDetails(namespace, name, configType)
 	if err == nil && config != nil && config.IstioValidation != nil && config.IstioReferences != nil {
@@ -323,28 +324,28 @@ func getConfigDetails(namespace, name, configType string, skipReferences bool, r
 	return config, nil
 }
 
-func getConfigForNamespace(namespace, name, configType string) (*models.IstioConfigDetails, error) {
+func getConfigForNamespace(namespace, name string, configType schema.GroupVersionKind) (*models.IstioConfigDetails, error) {
 	config, _, err := kiali.IstioConfigDetails(namespace, name, configType)
 	log.Debugf("Config response returned: %+v", config)
 	return config, err
 }
 
-func assertConfigListValidations(configList kiali.IstioConfigListJson, namespace, objType, objName, code string, valid bool, require *require.Assertions) {
+func assertConfigListValidations(configList kiali.IstioConfigListJson, namespace string, objGVK schema.GroupVersionKind, objName, code string, valid bool, require *require.Assertions) {
 	require.NotEmpty(configList)
 	require.NotNil(configList.IstioValidations)
-	require.NotNil(configList.IstioValidations[objType])
+	require.NotNil(configList.IstioValidations[objGVK.String()])
 	objKey := fmt.Sprintf("%s.%s", objName, namespace)
-	require.NotNil(configList.IstioValidations[objType][objKey])
-	require.Equal(valid, configList.IstioValidations[objType][objKey].Valid)
-	require.NotEmpty(configList.IstioValidations[objType][objKey].Checks)
-	require.Equal(code, configList.IstioValidations[objType][objKey].Checks[0].Code)
+	require.NotNil(configList.IstioValidations[objGVK.String()][objKey])
+	require.Equal(valid, configList.IstioValidations[objGVK.String()][objKey].Valid)
+	require.NotEmpty(configList.IstioValidations[objGVK.String()][objKey].Checks)
+	require.Equal(code, configList.IstioValidations[objGVK.String()][objKey].Checks[0].Code)
 }
 
-func assertConfigDetailsValidations(configDetails models.IstioConfigDetails, namespace, objType, objName, code string, valid bool, require *require.Assertions) {
+func assertConfigDetailsValidations(configDetails models.IstioConfigDetails, namespace string, objGVK schema.GroupVersionKind, objName, code string, valid bool, require *require.Assertions) {
 	require.NotEmpty(configDetails)
 	require.NotNil(configDetails.IstioValidation)
 	require.Equal(namespace, configDetails.IstioValidation.Namespace)
-	require.Equal(objType, configDetails.IstioValidation.ObjectType)
+	require.Equal(objGVK.String(), configDetails.IstioValidation.ObjectGVK.String())
 	require.Equal(objName, configDetails.IstioValidation.Name)
 	require.Equal(valid, configDetails.IstioValidation.Valid)
 	require.NotEmpty(configDetails.IstioValidation.Checks)

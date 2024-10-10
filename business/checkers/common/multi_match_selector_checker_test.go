@@ -7,6 +7,7 @@ import (
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
 	"github.com/kiali/kiali/tests/testutils/validations"
@@ -17,7 +18,7 @@ func TestTwoSidecarsWithSelector(t *testing.T) {
 
 	validations := SidecarSelectorMultiMatchChecker(
 		config.Get().KubernetesConfig.ClusterName,
-		"sidecar",
+		kubernetes.Sidecars,
 		[]*networking_v1.Sidecar{
 			data.AddSelectorToSidecar(map[string]string{
 				"app": "reviews",
@@ -35,7 +36,7 @@ func TestTwoSidecarsWithSelector(t *testing.T) {
 func TestTwoSidecarsWithoutSelector(t *testing.T) {
 	validations := SidecarSelectorMultiMatchChecker(
 		config.Get().KubernetesConfig.ClusterName,
-		"sidecar",
+		kubernetes.Sidecars,
 		[]*networking_v1.Sidecar{
 			data.CreateSidecar("sidecar1", "bookinfo"),
 			data.CreateSidecar("sidecar2", "bookinfo"),
@@ -53,7 +54,7 @@ func TestTwoSidecarsWithoutSelectorDifferentNamespaces(t *testing.T) {
 
 	validations := SidecarSelectorMultiMatchChecker(
 		config.Get().KubernetesConfig.ClusterName,
-		"sidecar",
+		kubernetes.Sidecars,
 		[]*networking_v1.Sidecar{
 			data.CreateSidecar("sidecar1", "bookinfo"),
 			data.CreateSidecar("sidecar2", "bookinfo2"),
@@ -83,7 +84,7 @@ func TestTwoSidecarsTargetingOneDeployment(t *testing.T) {
 	}
 	validations := SidecarSelectorMultiMatchChecker(
 		config.Get().KubernetesConfig.ClusterName,
-		"sidecar",
+		kubernetes.Sidecars,
 		sidecars,
 		workloadList(),
 	).Check()
@@ -114,7 +115,7 @@ func TestSidecarsCrossNamespaces(t *testing.T) {
 	}
 	validations := SidecarSelectorMultiMatchChecker(
 		config.Get().KubernetesConfig.ClusterName,
-		"sidecar",
+		kubernetes.Sidecars,
 		sidecars,
 		workloadList(),
 	).Check()
@@ -146,7 +147,7 @@ func TestSidecarsDifferentNamespaces(t *testing.T) {
 	}
 	validations := SidecarSelectorMultiMatchChecker(
 		config.Get().KubernetesConfig.ClusterName,
-		"sidecar",
+		kubernetes.Sidecars,
 		sidecars,
 		workloadList(),
 	).Check()
@@ -161,7 +162,7 @@ func assertMultimatchFailure(t *testing.T, code string, vals models.IstioValidat
 	assert.NotEmpty(vals)
 
 	// Assert specific's object validation
-	validation, ok := vals[models.IstioValidationKey{ObjectType: "sidecar", Namespace: "bookinfo", Name: item}]
+	validation, ok := vals[models.IstioValidationKey{ObjectGVK: kubernetes.Sidecars, Namespace: "bookinfo", Name: item}]
 	assert.True(ok)
 	assert.False(validation.Valid)
 
@@ -174,7 +175,7 @@ func assertMultimatchFailure(t *testing.T, code string, vals models.IstioValidat
 	assert.Len(validation.References, len(references))
 	for i, ref := range references {
 		assert.Equal(ref, validation.References[i].Name)
-		assert.Equal("sidecar", validation.References[i].ObjectType)
+		assert.Equal(kubernetes.Sidecars.String(), validation.References[i].ObjectGVK.String())
 	}
 }
 

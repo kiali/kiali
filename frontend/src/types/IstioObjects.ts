@@ -4,6 +4,7 @@ import { ProxyStatus } from './Health';
 import { TimeInSeconds } from './Common';
 import { KIALI_RELATED_LABEL, KIALI_WIZARD_LABEL } from 'components/IstioWizards/WizardActions';
 import { PFColorVal } from 'components/Pf/PfColors';
+import { TypeMeta } from './Kubernetes';
 
 // Common types
 
@@ -46,9 +47,7 @@ export interface K8sMetadata {
   uid?: string;
 }
 
-export interface IstioObject {
-  apiVersion?: string;
-  kind?: string;
+export interface IstioObject extends TypeMeta {
   metadata: K8sMetadata;
   status?: IstioStatus;
 }
@@ -92,10 +91,16 @@ export const IstioLevelToSeverity = {
   WARNING: ValidationTypes.Warning
 };
 
+export interface GroupVersionKind {
+  Group: string;
+  Kind: string;
+  Version: string;
+}
+
 export interface ObjectValidation {
   checks: ObjectCheck[];
   name: string;
-  objectType: string;
+  objectGVK: GroupVersionKind;
   references?: ObjectReference[];
   valid: boolean;
 }
@@ -110,7 +115,7 @@ export interface ObjectCheck {
 export interface ObjectReference {
   name: string;
   namespace: string;
-  objectType: string;
+  objectGVK: GroupVersionKind;
 }
 
 export interface PodReference {
@@ -583,8 +588,13 @@ export class DestinationRuleC implements DestinationRule {
   spec: DestinationRuleSpec = {};
 
   constructor(dr: DestinationRule) {
+    this.kind = dr.kind;
+    this.apiVersion = dr.apiVersion;
     Object.assign(this, dr);
   }
+  status?: IstioStatus | undefined;
+  kind: string;
+  apiVersion: string;
 
   static fromDrArray(drs: DestinationRule[]): DestinationRuleC[] {
     return drs.map(item => new DestinationRuleC(item));

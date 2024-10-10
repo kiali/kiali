@@ -12,7 +12,7 @@ import { RenderComponentScroll } from '../../components/Nav/Page';
 import { GraphDataSource } from '../../services/GraphDataSource';
 import { DurationInSeconds } from 'types/Common';
 import { isIstioNamespace, serverConfig } from '../../config/ServerConfig';
-import { IstioConfigList, toIstioItems } from '../../types/IstioConfigList';
+import { dicIstioTypeToGVK, IstioConfigList, toIstioItems } from '../../types/IstioConfigList';
 import { WorkloadPods } from './WorkloadPods';
 import { GraphEdgeTapEvent } from '../../components/CytoscapeGraph/CytoscapeGraph';
 import { location, router, URLParam } from '../../app/History';
@@ -20,6 +20,7 @@ import { MiniGraphCard } from '../../components/CytoscapeGraph/MiniGraphCard';
 import { IstioConfigCard } from '../../components/IstioConfigCard/IstioConfigCard';
 import { MiniGraphCardPF } from 'pages/GraphPF/MiniGraphCardPF';
 import { isGateway } from '../../helpers/LabelFilterHelper';
+import { gvkToString, stringToGVK } from '../../utils/IstioConfigUtils';
 
 type WorkloadInfoProps = {
   duration: DurationInSeconds;
@@ -44,12 +45,12 @@ const tabName = 'list';
 const defaultTab = 'pods';
 
 const workloadIstioResources = [
-  'gateways',
-  'authorizationpolicies',
-  'peerauthentications',
-  'sidecars',
-  'requestauthentications',
-  'envoyfilters'
+  gvkToString(dicIstioTypeToGVK['Gateway']),
+  gvkToString(dicIstioTypeToGVK['AuthorizationPolicy']),
+  gvkToString(dicIstioTypeToGVK['PeerAuthentication']),
+  gvkToString(dicIstioTypeToGVK['Sidecar']),
+  gvkToString(dicIstioTypeToGVK['RequestAuthentication']),
+  gvkToString(dicIstioTypeToGVK['EnvoyFilter'])
 ];
 
 export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState> {
@@ -164,7 +165,7 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
       workload.pods.forEach(pod => {
         validations.pod[pod.name] = {
           name: pod.name,
-          objectType: 'pod',
+          objectGVK: stringToGVK('pod'),
           valid: true,
           checks: []
         };

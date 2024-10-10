@@ -1,11 +1,12 @@
 import { ObjectCheck, ObjectValidation, ValidationTypes } from '../types/IstioObjects';
 import * as AlertUtils from './AlertUtils';
+import { gvkToString } from './IstioConfigUtils';
 
-const validationMessage = (validation: ObjectValidation, failedCheck: ObjectCheck) => {
-  return `${validation.objectType}:${validation.name} ${failedCheck.message}`;
+const validationMessage = (validation: ObjectValidation, failedCheck: ObjectCheck): string => {
+  return `${gvkToString(validation.objectGVK)}:${validation.name} ${failedCheck.message}`;
 };
 
-const showInMessageCenterValidation = (validation: ObjectValidation) => {
+const showInMessageCenterValidation = (validation: ObjectValidation): void => {
   for (let check of validation.checks) {
     switch (check.severity) {
       case ValidationTypes.Warning:
@@ -18,7 +19,7 @@ const showInMessageCenterValidation = (validation: ObjectValidation) => {
   }
 };
 
-const showInMessageCenterValidations = (validations: ObjectValidation[]) => {
+const showInMessageCenterValidations = (validations: ObjectValidation[]): void => {
   const elementsWithFailedValidations: string[] = [];
   let hasError = false;
   for (let validation of validations) {
@@ -27,7 +28,7 @@ const showInMessageCenterValidations = (validations: ObjectValidation[]) => {
         if (check.severity === ValidationTypes.Error) {
           hasError = true;
         }
-        elementsWithFailedValidations.push(`${validation.objectType}:${validation.name}`);
+        elementsWithFailedValidations.push(`${gvkToString(validation.objectGVK)}:${validation.name}`);
       }
     }
   }
@@ -41,7 +42,7 @@ const showInMessageCenterValidations = (validations: ObjectValidation[]) => {
   }
 };
 
-export const showInMessageCenter = (validation: ObjectValidation | ObjectValidation[]) => {
+export const showInMessageCenter = (validation: ObjectValidation | ObjectValidation[]): void => {
   if (Array.isArray(validation)) {
     showInMessageCenterValidations(validation);
   } else {

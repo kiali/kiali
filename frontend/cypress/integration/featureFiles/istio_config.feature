@@ -40,7 +40,7 @@ Feature: Kiali Istio Config page
   @bookinfo-app
   Scenario: Filter Istio Config objects by Type
     When the user filters by "Type" for "Gateway"
-    Then only "Gateways" are visible in the "bookinfo" namespace
+    Then only "Gateway" objects are visible in the "bookinfo" namespace
 
   @bookinfo-app
   Scenario: Filter Istio Config objects by Valid configuration
@@ -50,32 +50,32 @@ Feature: Kiali Istio Config page
 
   @bookinfo-app
   Scenario: Ability to create an AuthorizationPolicy object
-    Then the user can create a "AuthorizationPolicy" Istio object
+    Then the user can create a "security.istio.io" "v1" "AuthorizationPolicy" Istio object
 
   @bookinfo-app
   Scenario: Ability to create a Gateway object
-    Then the user can create a "Gateway" Istio object
+    Then the user can create a "networking.istio.io" "v1" "Gateway" Istio object
 
   @gateway-api
   @bookinfo-app
   Scenario: Ability to create a K8sGateway object
-    Then the user can create a "K8sGateway" K8s Istio object
+    Then the user can create a "gateway.networking.k8s.io" "v1" "Gateway" K8s Istio object
 
   @bookinfo-app
   Scenario: Ability to create a PeerAuthentication object
-    Then the user can create a "PeerAuthentication" Istio object
+    Then the user can create a "security.istio.io" "v1" "PeerAuthentication" Istio object
 
   @bookinfo-app
   Scenario: Ability to create a RequestAuthentication object
-    Then the user can create a "RequestAuthentication" Istio object
+    Then the user can create a "security.istio.io" "v1" "RequestAuthentication" Istio object
 
   @bookinfo-app
   Scenario: Ability to create a ServiceEntry object
-    Then the user can create a "ServiceEntry" Istio object
+    Then the user can create a "networking.istio.io" "v1" "ServiceEntry" Istio object
 
   @bookinfo-app
   Scenario: Ability to create a Sidecar object
-    Then the user can create a "Sidecar" Istio object
+    Then the user can create a "networking.istio.io" "v1" "Sidecar" Istio object
 
   @multi-cluster
   @multi-primary

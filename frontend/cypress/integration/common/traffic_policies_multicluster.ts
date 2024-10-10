@@ -24,24 +24,24 @@ When('user deletes a Traffic Policy and the resource is no longer available in a
   authorizationPolicies.forEach(policy => {
     cy.request({
       failOnStatusCode: false,
-      url: `/api/namespaces/bookinfo/istio/authorizationpolicies/${policy}?clusterName=east`,
+      url: `/api/namespaces/bookinfo/istio/security.istio.io/v1/AuthorizationPolicy/${policy}?clusterName=east`,
       method: 'DELETE'
     });
     cy.request({
       failOnStatusCode: false,
-      url: `/api/namespaces/bookinfo/istio/authorizationpolicies/${policy}?clusterName=west`,
+      url: `/api/namespaces/bookinfo/istio/security.istio.io/v1/AuthorizationPolicy/${policy}?clusterName=west`,
       method: 'DELETE'
     });
   });
   sidecars.forEach(sidecar => {
     cy.request({
       failOnStatusCode: false,
-      url: `/api/namespaces/bookinfo/istio/sidecars/${sidecar}?clusterName=east`,
+      url: `/api/namespaces/bookinfo/istio/networking.istio.io/v1/Sidecar/${sidecar}?clusterName=east`,
       method: 'DELETE'
     });
     cy.request({
       failOnStatusCode: false,
-      url: `/api/namespaces/bookinfo/istio/sidecars/${sidecar}?clusterName=west`,
+      url: `/api/namespaces/bookinfo/istio/networking.istio.io/v1/Sidecar/${sidecar}?clusterName=west`,
       method: 'DELETE'
     });
   });
@@ -72,12 +72,12 @@ When('user confirms to {string} the Traffic Policy', (action: string) => {
 
 Then('user sees the generated Traffic policy objects located in the {string} cluster', (cluster: string) => {
   authorizationPolicies.forEach(policy => {
-    cy.get(`[data-test="VirtualItem_Cluster${cluster}_Nsbookinfo_authorizationpolicy_${policy}"]`)
+    cy.get(`[data-test="VirtualItem_Cluster${cluster}_Nsbookinfo_AuthorizationPolicy_${policy}"]`)
       .scrollIntoView()
       .should('be.visible');
   });
   sidecars.forEach(sidecar => {
-    cy.get(`[data-test="VirtualItem_Cluster${cluster}_Nsbookinfo_sidecar_${sidecar}"]`)
+    cy.get(`[data-test="VirtualItem_Cluster${cluster}_Nsbookinfo_Sidecar_${sidecar}"]`)
       .scrollIntoView()
       .should('be.visible');
   });
@@ -85,9 +85,9 @@ Then('user sees the generated Traffic policy objects located in the {string} clu
 
 Then('user should not see the generated Traffic policy objects located in the {string} cluster', (cluster: string) => {
   authorizationPolicies.forEach(policy => {
-    cy.get(`[data-test="VirtualItem_Cluster${cluster}_Nsbookinfo_authorizationpolicy_${policy}"]`).should('not.exist');
+    cy.get(`[data-test="VirtualItem_Cluster${cluster}_Nsbookinfo_AuthorizationPolicy_${policy}"]`).should('not.exist');
   });
   sidecars.forEach(sidecar => {
-    cy.get(`[data-test="VirtualItem_Cluster${cluster}_Nsbookinfo_sidecar_${sidecar}"]`).should('not.exist');
+    cy.get(`[data-test="VirtualItem_Cluster${cluster}_Nsbookinfo_Sidecar_${sidecar}"]`).should('not.exist');
   });
 });

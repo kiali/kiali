@@ -3,6 +3,8 @@ package models
 import (
 	"encoding/json"
 
+	"k8s.io/apimachinery/pkg/runtime/schema"
+
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/util"
@@ -13,10 +15,10 @@ type NamespaceValidations map[string]IstioValidations
 
 // IstioValidationKey is the key value composed of an Istio ObjectType and Name.
 type IstioValidationKey struct {
-	ObjectType string `json:"objectType"`
-	Name       string `json:"name"`
-	Namespace  string `json:"namespace"`
-	Cluster    string `json:"cluster"`
+	ObjectGVK schema.GroupVersionKind `json:"objectGVK"`
+	Name      string                  `json:"name"`
+	Namespace string                  `json:"namespace"`
+	Cluster   string                  `json:"cluster"`
 }
 
 // IstioValidationSummary represents the number of errors/warnings of a set of Istio Validations.
@@ -69,8 +71,8 @@ type IstioValidation struct {
 
 	// Type of the object
 	// required: true
-	// example: virtualservice
-	ObjectType string `json:"objectType"`
+	// example: group=networking.istio.io, version=v1, kind=Gateway
+	ObjectGVK schema.GroupVersionKind `json:"objectGVK"`
 
 	// Represents validity of the object: in case of warning, validity remains as true
 	// required: true
@@ -114,33 +116,6 @@ const (
 	WarningSeverity SeverityLevel = "warning"
 	Unknown         SeverityLevel = "unknown"
 )
-
-var ObjectTypeSingular = map[string]string{
-	"gateways":               "gateway",
-	"virtualservices":        "virtualservice",
-	"destinationrules":       "destinationrule",
-	"serviceentries":         "serviceentry",
-	"rules":                  "rule",
-	"quotaspecs":             "quotaspec",
-	"quotaspecbindings":      "quotaspecbinding",
-	"policies":               "policy",
-	"serviceroles":           "servicerole",
-	"servicerolebindings":    "servicerolebinding",
-	"clusterrbacconfigs":     "clusterrbacconfig",
-	"authorizationpolicies":  "authorizationpolicy",
-	"sidecars":               "sidecar",
-	"peerauthentications":    "peerauthentication",
-	"requestauthentications": "requestauthentication",
-	"workloads":              "workload",
-	"wasmplugins":            "wasmpluin",
-	"telemetries":            "telemetry",
-	"k8sgateways":            "k8sgateway",
-	"k8sgrpcroutes":          "k8sgrpcroute",
-	"k8shttproutes":          "k8shttproute",
-	"k8sreferencegrants":     "k8sreferencegrant",
-	"k8stcproutes":           "k8stcproute",
-	"k8stlsroutes":           "k8stlsroute",
-}
 
 var checkDescriptors = map[string]IstioCheck{
 	"authorizationpolicy.source.namespacenotfound": {
@@ -386,8 +361,8 @@ func Build(checkId string, path string) IstioCheck {
 	return check
 }
 
-func BuildKey(objectType, name, namespace, cluster string) IstioValidationKey {
-	return IstioValidationKey{Cluster: cluster, ObjectType: objectType, Namespace: namespace, Name: name}
+func BuildKey(objectGVK schema.GroupVersionKind, name, namespace, cluster string) IstioValidationKey {
+	return IstioValidationKey{Cluster: cluster, ObjectGVK: objectGVK, Namespace: namespace, Name: name}
 }
 
 func CheckMessage(checkId string) string {
@@ -402,11 +377,11 @@ func (ic IstioCheck) GetFullMessage() string {
 	return ic.Code + " " + ic.Message
 }
 
-func (iv IstioValidations) FilterBySingleType(objectType, name string) IstioValidations {
+func (iv IstioValidations) FilterBySingleType(objectGVK schema.GroupVersionKind, name string) IstioValidations {
 	fiv := IstioValidations{}
 	for k, v := range iv {
 		// We don't want to filter other types
-		if k.ObjectType != objectType {
+		if k.ObjectGVK.String() != objectGVK.String() {
 			fiv[k] = v
 		} else {
 			// But for this exact type we're strict
@@ -419,10 +394,10 @@ func (iv IstioValidations) FilterBySingleType(objectType, name string) IstioVali
 	return fiv
 }
 
-func (iv IstioValidations) FilterByKey(objectType, name string) IstioValidations {
+func (iv IstioValidations) FilterByKey(objectGVK schema.GroupVersionKind, name string) IstioValidations {
 	fiv := IstioValidations{}
 	for k, v := range iv {
-		if k.Name == name && k.ObjectType == objectType {
+		if k.Name == name && k.ObjectGVK.String() == objectGVK.String() {
 			fiv[k] = v
 		}
 	}
@@ -434,11 +409,11 @@ func (iv IstioValidations) FilterByKey(objectType, name string) IstioValidations
 func (iv IstioValidations) FilterByTypes(objectTypes []string) IstioValidations {
 	types := make(map[string]bool, len(objectTypes))
 	for _, objectType := range objectTypes {
-		types[ObjectTypeSingular[objectType]] = true
+		types[objectType] = true
 	}
 	fiv := IstioValidations{}
 	for k, v := range iv {
-		if _, found := types[k.ObjectType]; found {
+		if _, found := types[k.ObjectGVK.String()]; found {
 			fiv[k] = v
 		}
 	}
@@ -497,7 +472,7 @@ func (iv IstioValidations) SummarizeValidation(ns string, cluster string) *Istio
 		Cluster:   cluster,
 	}
 	for k, v := range iv {
-		if k.Namespace == ns && k.Cluster == cluster && k.ObjectType != "workload" {
+		if k.Namespace == ns && k.Cluster == cluster && k.ObjectGVK.Kind != "workload" {
 			ivs.mergeSummaries(v.Checks)
 		}
 	}
@@ -519,11 +494,16 @@ func (summary *IstioValidationSummary) mergeSummaries(cs []*IstioCheck) {
 func (iv IstioValidations) MarshalJSON() ([]byte, error) {
 	out := make(map[string]map[string]*IstioValidation)
 	for k, v := range iv {
-		_, ok := out[k.ObjectType]
-		if !ok {
-			out[k.ObjectType] = make(map[string]*IstioValidation)
+		key := k.ObjectGVK.String()
+		if k.ObjectGVK.Group == "" {
+			// wor workloads, apps and services
+			key = k.ObjectGVK.Kind
 		}
-		out[k.ObjectType][util.BuildNameNSKey(k.Name, k.Namespace)] = v
+		_, ok := out[key]
+		if !ok {
+			out[key] = make(map[string]*IstioValidation)
+		}
+		out[key][util.BuildNameNSKey(k.Name, k.Namespace)] = v
 	}
 	return json.Marshal(out)
 }
@@ -540,7 +520,7 @@ func (iv *IstioValidations) StripIgnoredChecks() {
 				for _, cti := range codesToIgnore {
 					if cti == curCheck.Code {
 						ignoreCheck = true
-						log.Tracef("Ignoring validation failure [%+v] for object [%s:%s] in namespace [%s]", curCheck, curValidationKey.ObjectType, curValidationKey.Name, curValidationKey.Namespace)
+						log.Tracef("Ignoring validation failure [%+v] for object [%s:%s] in namespace [%s]", curCheck, curValidationKey.ObjectGVK.String(), curValidationKey.Name, curValidationKey.Namespace)
 						break
 					}
 				}

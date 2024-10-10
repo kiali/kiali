@@ -79,7 +79,7 @@ describe('SummaryPanelNodeComponent', () => {
         </MemoryRouter>
       </Provider>
     );
-    const weLinks = wrapper.find('a').findWhere(a => a.prop('href') && a.prop('href').includes('workloadentries'));
+    const weLinks = wrapper.find('a').findWhere(a => a.prop('href') && a.prop('href').includes('WorkloadEntry'));
     expect(weLinks.exists()).toBeTruthy();
     expect(weLinks.length).toEqual(2);
   });
@@ -99,7 +99,7 @@ describe('SummaryPanelNodeComponent', () => {
       expandable
         .children()
         .find('a')
-        .findWhere(a => a.prop('href') && a.prop('href').includes('workloadentries'))
+        .findWhere(a => a.prop('href') && a.prop('href').includes('WorkloadEntry'))
         .exists()
     ).toBeTruthy();
   });

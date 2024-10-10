@@ -8,6 +8,7 @@ import (
 	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
 )
@@ -26,7 +27,7 @@ func prepareTestForServiceEntry(ap *security_v1.AuthorizationPolicy, dr *network
 		DestinationRules:      []*networking_v1.DestinationRule{dr},
 		RegistryServices:      append(data.CreateFakeRegistryServices("foo-dev.bookinfo.svc.cluster.local", "bookinfo", "."), data.CreateFakeRegistryServices("foo-dev.istio-system.svc.cluster.local", "istio-system", "*")...),
 	}
-	return *drReferences.References()[models.IstioReferenceKey{ObjectType: "serviceentry", Namespace: se.Namespace, Name: se.Name}]
+	return *drReferences.References()[models.IstioReferenceKey{ObjectGVK: kubernetes.ServiceEntries, Namespace: se.Namespace, Name: se.Name}]
 }
 
 func TestServiceEntryReferences(t *testing.T) {
@@ -49,15 +50,15 @@ func TestServiceEntryReferences(t *testing.T) {
 	assert.Len(references.ObjectReferences, 3)
 	assert.Equal(references.ObjectReferences[0].Name, "foo-dev")
 	assert.Equal(references.ObjectReferences[0].Namespace, "istio-system")
-	assert.Equal(references.ObjectReferences[0].ObjectType, "destinationrule")
+	assert.Equal(references.ObjectReferences[0].ObjectGVK.String(), kubernetes.DestinationRules.String())
 
 	assert.Equal(references.ObjectReferences[1].Name, "foo-sidecar")
 	assert.Equal(references.ObjectReferences[1].Namespace, "istio-system")
-	assert.Equal(references.ObjectReferences[1].ObjectType, "sidecar")
+	assert.Equal(references.ObjectReferences[1].ObjectGVK.String(), kubernetes.Sidecars.String())
 
 	assert.Equal(references.ObjectReferences[2].Name, "allow-foo")
 	assert.Equal(references.ObjectReferences[2].Namespace, "istio-system")
-	assert.Equal(references.ObjectReferences[2].ObjectType, "authorizationpolicy")
+	assert.Equal(references.ObjectReferences[2].ObjectGVK.String(), kubernetes.AuthorizationPolicies.String())
 }
 
 func TestServiceEntryNoReferences(t *testing.T) {

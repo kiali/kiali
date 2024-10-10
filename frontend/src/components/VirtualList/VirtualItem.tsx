@@ -1,10 +1,11 @@
 import * as React from 'react';
 import { Tr } from '@patternfly/react-table';
-import { Resource, IstioTypes, hasHealth, RenderResource } from './Config';
+import { Resource, hasHealth, RenderResource, GVKToBadge } from './Config';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 import { Health } from '../../types/Health';
 import { StatefulFiltersRef } from '../Filters/StatefulFilters';
 import { actionRenderer } from './Renderers';
+import { getIstioObjectGVK, gvkToString, kindToStringIncludeK8s } from '../../utils/IstioConfigUtils';
 
 type VirtualItemProps = {
   action?: JSX.Element;
@@ -52,15 +53,23 @@ export class VirtualItem extends React.Component<VirtualItemProps, VirtualItemSt
   };
 
   getBadge = (): React.ReactNode => {
-    return this.props.config.name !== 'istio' ? this.props.config.badge : IstioTypes[this.props.item['type']].badge;
+    // TODO this.props.item.type
+    return this.props.config.name !== 'istio'
+      ? this.props.config.badge
+      : GVKToBadge[gvkToString(getIstioObjectGVK(this.props.item['apiVersion'], this.props.item['kind']))];
   };
 
   render(): React.ReactNode {
     const { style, className, item } = this.props;
     const cluster = item.cluster ? `_Cluster${item.cluster}` : '';
     const namespace = 'namespace' in item ? `_Ns${item.namespace}` : '';
-    const type = 'type' in item ? `_${item.type}` : '';
-    // End result looks like: VirtualItem_Clusterwest_Nsbookinfo_gateway_bookinfo-gateway
+    const type =
+      'type' in item
+        ? `_${item.type}`
+        : 'kind' in item && 'apiVersion' in item
+        ? `_${kindToStringIncludeK8s(item.apiVersion, item.kind)}`
+        : '';
+    // End result looks like: VirtualItem_Clusterwest_Nsbookinfo_networking.istio.io.v1.Gateway_bookinfo-gateway
 
     const key = `VirtualItem${cluster}${namespace}${type}_${item.name}`;
 

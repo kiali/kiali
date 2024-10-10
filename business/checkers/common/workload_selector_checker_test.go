@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
 	"github.com/kiali/kiali/tests/testutils/validations"
@@ -14,7 +15,7 @@ func TestPresentWorkloads(t *testing.T) {
 	assert := assert.New(t)
 
 	validations, valid := WorkloadSelectorNoWorkloadFoundChecker(
-		"sidecar",
+		kubernetes.Sidecars,
 		map[string]string{
 			"app":     "details",
 			"version": "v1",
@@ -27,7 +28,7 @@ func TestPresentWorkloads(t *testing.T) {
 	assert.Empty(validations)
 
 	validations, valid = WorkloadSelectorNoWorkloadFoundChecker(
-		"sidecar",
+		kubernetes.Sidecars,
 		map[string]string{
 			"app": "details",
 		},
@@ -59,7 +60,7 @@ func testFailureWithEmptyWorkloadList(assert *assert.Assertions, selector map[st
 
 func testFailure(assert *assert.Assertions, selector map[string]string, wl map[string]models.WorkloadList, code string) {
 	vals, valid := WorkloadSelectorNoWorkloadFoundChecker(
-		"sidecar",
+		kubernetes.Sidecars,
 		selector,
 		wl,
 	).Check()

@@ -6,9 +6,6 @@ import { isValid } from 'utils/Common';
 import { areValidHosts } from './GatewayForm/ServerBuilder';
 import { serverConfig } from '../../config';
 
-export const GATEWAY = 'Gateway';
-export const GATEWAYS = 'gateways';
-
 type Props = {
   gateway: GatewayState;
   onChange: (gateway: GatewayState) => void;

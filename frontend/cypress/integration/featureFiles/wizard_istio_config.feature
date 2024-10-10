@@ -124,7 +124,7 @@ Feature: Kiali Istio Config wizard
     And user types "foobar" in the "addPortName_0" input
     And user previews the configuration
     And user creates the istio config
-    Then an error message "Could not create Istio Gateway objects" is displayed
+    Then an error message "Could not create Istio networking.istio.io/v1, Kind=Gateway objects" is displayed
 
   @bookinfo-app
   Scenario: Try to create a Gateway with negative port number
@@ -294,7 +294,7 @@ Feature: Kiali Istio Config wizard
     When user is at the "services" page
     And the "host.com" row is visible
     And the "Name" column on the "host.com" row has a link ending in "/namespaces/bookinfo/services/host.com"
-    And the "Details" column on the "host.com" row has a link ending in "/namespaces/bookinfo/istio/serviceentries/myservice3"
+    And the "Details" column on the "host.com" row has a link ending in "/namespaces/bookinfo/istio/networking.istio.io/v1/ServiceEntry/myservice3"
     When user is at the details page for the "service" "bookinfo/host.com" located in the "" cluster
     Then "host.com" details information for service entry "myservice3" can be seen
 

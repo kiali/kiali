@@ -7,6 +7,7 @@ import (
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
 )
@@ -31,7 +32,7 @@ func prepareTestForDestinationRule(dr *networking_v1.DestinationRule, vs *networ
 		ServiceEntries:   []*networking_v1.ServiceEntry{fakeServiceEntry()},
 		RegistryServices: data.CreateFakeRegistryServicesLabels("reviews", "test-namespace"),
 	}
-	return *drReferences.References()[models.IstioReferenceKey{ObjectType: "destinationrule", Namespace: dr.Namespace, Name: dr.Name}]
+	return *drReferences.References()[models.IstioReferenceKey{ObjectGVK: kubernetes.DestinationRules, Namespace: dr.Namespace, Name: dr.Name}]
 }
 
 func TestDestinationRuleReferences(t *testing.T) {
@@ -61,7 +62,7 @@ func TestDestinationRuleReferences(t *testing.T) {
 	assert.Len(references.ObjectReferences, 1)
 	assert.Equal(references.ObjectReferences[0].Name, "reviews")
 	assert.Equal(references.ObjectReferences[0].Namespace, "test-namespace")
-	assert.Equal(references.ObjectReferences[0].ObjectType, "virtualservice")
+	assert.Equal(references.ObjectReferences[0].ObjectGVK.String(), kubernetes.VirtualServices.String())
 }
 
 func TestDestinationRuleNoReferences(t *testing.T) {

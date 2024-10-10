@@ -17,6 +17,7 @@ import { filterByLabel } from '../../helpers/LabelFilterHelper';
 import { istioConfigTypeFilter } from '../IstioConfigList/FiltersAndSorts';
 import { ObjectReference } from '../../types/IstioObjects';
 import { serverConfig } from 'config';
+import { gvkToString, istioTypesToGVKString } from '../../utils/IstioConfigUtils';
 
 export const sortFields: SortField<AppListItem>[] = [
   {
@@ -147,7 +148,11 @@ const filterByIstioSidecar = (items: AppListItem[], istioSidecar: boolean): AppL
 };
 
 const filterByIstioType = (items: AppListItem[], istioTypes: string[]): AppListItem[] => {
-  return items.filter(item => item.istioReferences.filter(ref => istioTypes.includes(ref.objectType)).length !== 0);
+  return items.filter(
+    item =>
+      item.istioReferences.filter(ref => istioTypesToGVKString(istioTypes).includes(gvkToString(ref.objectGVK)))
+        .length !== 0
+  );
 };
 
 export const filterBy = (
@@ -215,7 +220,8 @@ export const sortAppsItems = (
 };
 
 export const compareObjectReference = (a: ObjectReference, b: ObjectReference): number => {
-  const cmpObjectType = a.objectType.localeCompare(b.objectType);
+  const cmpObjectType =
+    a.objectGVK.Kind.localeCompare(b.objectGVK.Kind) || a.objectGVK.Group.localeCompare(b.objectGVK.Group);
   if (cmpObjectType !== 0) {
     return cmpObjectType;
   }

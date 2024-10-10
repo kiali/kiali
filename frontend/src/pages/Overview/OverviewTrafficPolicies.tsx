@@ -14,7 +14,8 @@ import {
   buildNamespaceInjectionPatch,
   buildGraphSidecars
 } from 'components/IstioWizards/WizardActions';
-import { AUTHORIZATION_POLICIES } from '../IstioConfigNew/AuthorizationPolicyForm';
+import { dicIstioTypeToGVK } from '../../types/IstioConfigList';
+import { gvkToString } from '../../utils/IstioConfigUtils';
 
 type OverviewTrafficPoliciesProps = {
   canaryUpgradeStatus?: CanaryUpgradeStatus;
@@ -109,7 +110,7 @@ export class OverviewTrafficPolicies extends React.Component<OverviewTrafficPoli
     this.promises
       .register('namespacepermissions', API.getIstioPermissions([this.props.nsTarget], this.props.nsInfo.cluster))
       .then(result => {
-        const permission = result.data[this.props.nsTarget][AUTHORIZATION_POLICIES];
+        const permission = result.data[this.props.nsTarget][gvkToString(dicIstioTypeToGVK['AuthorizationPolicy'])];
         const disableOp = !(permission.create && permission.update && permission.delete);
         this.setState({
           confirmationModal,
@@ -190,8 +191,12 @@ export class OverviewTrafficPolicies extends React.Component<OverviewTrafficPoli
         .registerAll(
           'trafficPoliciesDelete',
           apsP
-            .map(ap => API.deleteIstioConfigDetail(ns, 'authorizationpolicies', ap.metadata.name, cluster))
-            .concat(sdsP.map(sc => API.deleteIstioConfigDetail(ns, 'sidecars', sc.metadata.name, cluster)))
+            .map(ap =>
+              API.deleteIstioConfigDetail(ns, dicIstioTypeToGVK['AuthorizationPolicy'], ap.metadata.name, cluster)
+            )
+            .concat(
+              sdsP.map(sc => API.deleteIstioConfigDetail(ns, dicIstioTypeToGVK['Sidecar'], sc.metadata.name, cluster))
+            )
         )
         .then(_ => {
           //Error here
@@ -227,8 +232,12 @@ export class OverviewTrafficPolicies extends React.Component<OverviewTrafficPoli
         .registerAll(
           'trafficPoliciesCreate',
           aps
-            .map(ap => API.createIstioConfigDetail(ns, 'authorizationpolicies', JSON.stringify(ap), cluster))
-            .concat(sds.map(sc => API.createIstioConfigDetail(ns, 'sidecars', JSON.stringify(sc), cluster)))
+            .map(ap =>
+              API.createIstioConfigDetail(ns, dicIstioTypeToGVK['AuthorizationPolicy'], JSON.stringify(ap), cluster)
+            )
+            .concat(
+              sds.map(sc => API.createIstioConfigDetail(ns, dicIstioTypeToGVK['Sidecar'], JSON.stringify(sc), cluster))
+            )
         )
         .then(results => {
           if (results.length > 0) {
@@ -262,19 +271,22 @@ export class OverviewTrafficPolicies extends React.Component<OverviewTrafficPoli
 
     this.state.authorizationPolicies.length > 0 &&
       items.push({
-        type: 'authorizationPolicy',
+        objectGVK: dicIstioTypeToGVK['AuthorizationPolicy'],
         items: this.state.authorizationPolicies,
         title: 'Authorization Policies'
       });
 
-    this.state.sidecars.length > 0 && items.push({ type: 'sidecar', items: this.state.sidecars, title: 'Sidecars' });
+    this.state.sidecars.length > 0 &&
+      items.push({ objectGVK: dicIstioTypeToGVK['Sidecar'], items: this.state.sidecars, title: 'Sidecars' });
 
     return items;
   };
 
   onConfirmPreviewPoliciesModal = (items: ConfigPreviewItem[]): void => {
-    const aps = items.filter(i => i.type === 'authorizationPolicy')[0];
-    const sds = items.filter(i => i.type === 'sidecar')[0];
+    const aps = items.filter(
+      i => gvkToString(i.objectGVK) === gvkToString(dicIstioTypeToGVK['AuthorizationPolicy'])
+    )[0];
+    const sds = items.filter(i => gvkToString(i.objectGVK) === gvkToString(dicIstioTypeToGVK['Sidecar']))[0];
 
     this.setState(
       {

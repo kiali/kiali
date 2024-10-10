@@ -10,6 +10,7 @@ import (
 	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/kiali/kiali/business/checkers"
 	"github.com/kiali/kiali/business/references"
@@ -130,11 +131,11 @@ func (in *IstioValidationsService) GetValidations(ctx context.Context, cluster, 
 		// in.businessLayer.Svc.GetServiceList(criteria) on fetchServices performs the validations on the service
 		// No need to re-fetch deployments+pods for this
 		validations.MergeValidations(services.Validations)
-		validations = validations.FilterBySingleType("service", service)
+		validations = validations.FilterBySingleType(schema.GroupVersionKind{Group: "", Version: "", Kind: "service"}, service)
 	} else if workload != "" {
 		workloadList := workloadsPerNamespace[namespace]
 		validations.MergeValidations(workloadList.Validations)
-		validations = validations.FilterBySingleType("workload", workload)
+		validations = validations.FilterBySingleType(schema.GroupVersionKind{Group: "", Version: "", Kind: "workload"}, workload)
 	}
 
 	return validations, nil
@@ -162,13 +163,13 @@ func (in *IstioValidationsService) getAllObjectCheckers(istioConfigList models.I
 }
 
 // GetIstioObjectValidations validates a single Istio object of the given type with the given name found in the given namespace.
-func (in *IstioValidationsService) GetIstioObjectValidations(ctx context.Context, cluster, namespace string, objectType string, object string) (models.IstioValidations, models.IstioReferencesMap, error) {
+func (in *IstioValidationsService) GetIstioObjectValidations(ctx context.Context, cluster, namespace string, objectGVK schema.GroupVersionKind, object string) (models.IstioValidations, models.IstioReferencesMap, error) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GetIstioObjectValidations",
 		observability.Attribute("package", "business"),
 		observability.Attribute("cluster", "cluster"),
 		observability.Attribute("namespace", namespace),
-		observability.Attribute("objectType", objectType),
+		observability.Attribute("objectGVK", objectGVK.String()),
 		observability.Attribute("object", object),
 	)
 	defer end()
@@ -194,7 +195,7 @@ func (in *IstioValidationsService) GetIstioObjectValidations(ctx context.Context
 	}
 
 	// time this function execution so we can capture how long it takes to fully validate this istio object
-	timer := internalmetrics.GetSingleValidationProcessingTimePrometheusTimer(namespace, objectType, object)
+	timer := internalmetrics.GetSingleValidationProcessingTimePrometheusTimer(namespace, objectGVK.String(), object)
 	defer timer.ObserveDuration()
 
 	wg := sync.WaitGroup{}
@@ -219,32 +220,32 @@ func (in *IstioValidationsService) GetIstioObjectValidations(ctx context.Context
 
 	noServiceChecker := checkers.NoServiceChecker{Cluster: cluster, Namespaces: namespaces, IstioConfigList: &istioConfigList, WorkloadsPerNamespace: workloadsPerNamespace, AuthorizationDetails: &rbacDetails, RegistryServices: registryServices, PolicyAllowAny: in.isPolicyAllowAny()}
 
-	switch objectType {
-	case kubernetes.Gateways:
+	switch objectGVK.String() {
+	case kubernetes.Gateways.String():
 		objectCheckers = []ObjectChecker{
 			checkers.GatewayChecker{Cluster: cluster, Gateways: istioConfigList.Gateways, WorkloadsPerNamespace: workloadsPerNamespace, IsGatewayToNamespace: in.isGatewayToNamespace()},
 		}
 		referenceChecker = references.GatewayReferences{Gateways: istioConfigList.Gateways, VirtualServices: istioConfigList.VirtualServices, WorkloadsPerNamespace: workloadsPerNamespace}
-	case kubernetes.VirtualServices:
+	case kubernetes.VirtualServices.String():
 		virtualServiceChecker := checkers.VirtualServiceChecker{Cluster: cluster, Namespaces: namespaces, VirtualServices: istioConfigList.VirtualServices, DestinationRules: istioConfigList.DestinationRules}
 		objectCheckers = []ObjectChecker{noServiceChecker, virtualServiceChecker}
 		referenceChecker = references.VirtualServiceReferences{Namespace: namespace, Namespaces: namespaces, VirtualServices: istioConfigList.VirtualServices, DestinationRules: istioConfigList.DestinationRules, AuthorizationPolicies: rbacDetails.AuthorizationPolicies}
-	case kubernetes.DestinationRules:
+	case kubernetes.DestinationRules.String():
 		destinationRulesChecker := checkers.DestinationRulesChecker{Cluster: cluster, Namespaces: namespaces, DestinationRules: istioConfigList.DestinationRules, MTLSDetails: mtlsDetails, ServiceEntries: istioConfigList.ServiceEntries}
 		objectCheckers = []ObjectChecker{noServiceChecker, destinationRulesChecker}
 		referenceChecker = references.DestinationRuleReferences{Namespace: namespace, Namespaces: namespaces, DestinationRules: istioConfigList.DestinationRules, VirtualServices: istioConfigList.VirtualServices, WorkloadsPerNamespace: workloadsPerNamespace, ServiceEntries: istioConfigList.ServiceEntries, RegistryServices: registryServices}
-	case kubernetes.ServiceEntries:
+	case kubernetes.ServiceEntries.String():
 		serviceEntryChecker := checkers.ServiceEntryChecker{Cluster: cluster, ServiceEntries: istioConfigList.ServiceEntries, Namespaces: namespaces, WorkloadEntries: istioConfigList.WorkloadEntries}
 		objectCheckers = []ObjectChecker{serviceEntryChecker}
 		referenceChecker = references.ServiceEntryReferences{AuthorizationPolicies: rbacDetails.AuthorizationPolicies, Namespace: namespace, Namespaces: namespaces, DestinationRules: istioConfigList.DestinationRules, ServiceEntries: istioConfigList.ServiceEntries, Sidecars: istioConfigList.Sidecars, RegistryServices: registryServices}
-	case kubernetes.Sidecars:
+	case kubernetes.Sidecars.String():
 		sidecarsChecker := checkers.SidecarChecker{
 			Cluster: cluster, Sidecars: istioConfigList.Sidecars, Namespaces: namespaces,
 			WorkloadsPerNamespace: workloadsPerNamespace, ServiceEntries: istioConfigList.ServiceEntries, RegistryServices: registryServices,
 		}
 		objectCheckers = []ObjectChecker{sidecarsChecker}
 		referenceChecker = references.SidecarReferences{Sidecars: istioConfigList.Sidecars, Namespace: namespace, Namespaces: namespaces, ServiceEntries: istioConfigList.ServiceEntries, RegistryServices: registryServices, WorkloadsPerNamespace: workloadsPerNamespace}
-	case kubernetes.AuthorizationPolicies:
+	case kubernetes.AuthorizationPolicies.String():
 		authPoliciesChecker := checkers.AuthorizationPolicyChecker{
 			AuthorizationPolicies: rbacDetails.AuthorizationPolicies,
 			Cluster:               cluster, Namespaces: namespaces, ServiceEntries: istioConfigList.ServiceEntries, ServiceAccounts: serviceAccounts,
@@ -252,49 +253,49 @@ func (in *IstioValidationsService) GetIstioObjectValidations(ctx context.Context
 		}
 		objectCheckers = []ObjectChecker{authPoliciesChecker}
 		referenceChecker = references.AuthorizationPolicyReferences{AuthorizationPolicies: rbacDetails.AuthorizationPolicies, Namespace: namespace, Namespaces: namespaces, VirtualServices: istioConfigList.VirtualServices, ServiceEntries: istioConfigList.ServiceEntries, RegistryServices: registryServices, WorkloadsPerNamespace: workloadsPerNamespace}
-	case kubernetes.PeerAuthentications:
+	case kubernetes.PeerAuthentications.String():
 		// Validations on PeerAuthentications
 		peerAuthnChecker := checkers.PeerAuthenticationChecker{Cluster: cluster, PeerAuthentications: mtlsDetails.PeerAuthentications, MTLSDetails: mtlsDetails, WorkloadsPerNamespace: workloadsPerNamespace}
 		objectCheckers = []ObjectChecker{peerAuthnChecker}
 		referenceChecker = references.PeerAuthReferences{MTLSDetails: mtlsDetails, WorkloadsPerNamespace: workloadsPerNamespace}
-	case kubernetes.WorkloadEntries:
+	case kubernetes.WorkloadEntries.String():
 		// Validation on WorkloadEntries are not yet in place
-	case kubernetes.WorkloadGroups:
+	case kubernetes.WorkloadGroups.Group:
 		// Validation on WorkloadGroups are not yet in place
-	case kubernetes.RequestAuthentications:
+	case kubernetes.RequestAuthentications.String():
 		// Validation on RequestAuthentications are not yet in place
 		requestAuthnChecker := checkers.RequestAuthenticationChecker{Cluster: cluster, RequestAuthentications: istioConfigList.RequestAuthentications, WorkloadsPerNamespace: workloadsPerNamespace}
 		objectCheckers = []ObjectChecker{requestAuthnChecker}
-	case kubernetes.EnvoyFilters:
+	case kubernetes.EnvoyFilters.String():
 		// Validation on EnvoyFilters are not yet in place
-	case kubernetes.WasmPlugins:
+	case kubernetes.WasmPlugins.String():
 		// Validation on WasmPlugins is not expected
-	case kubernetes.Telemetries:
+	case kubernetes.Telemetries.String():
 		// Validation on Telemetries is not expected
-	case kubernetes.K8sGateways:
+	case kubernetes.K8sGateways.String():
 		// Validations on K8sGateways
 		objectCheckers = []ObjectChecker{
 			checkers.K8sGatewayChecker{Cluster: cluster, K8sGateways: istioConfigList.K8sGateways, GatewayClasses: in.businessLayer.IstioConfig.GatewayAPIClasses(cluster)},
 		}
 		referenceChecker = references.K8sGatewayReferences{K8sGateways: istioConfigList.K8sGateways, K8sHTTPRoutes: istioConfigList.K8sHTTPRoutes, K8sGRPCRoutes: istioConfigList.K8sGRPCRoutes}
-	case kubernetes.K8sGRPCRoutes:
+	case kubernetes.K8sGRPCRoutes.String():
 		grpcRouteChecker := checkers.K8sGRPCRouteChecker{Cluster: cluster, K8sGRPCRoutes: istioConfigList.K8sGRPCRoutes, K8sGateways: istioConfigList.K8sGateways, K8sReferenceGrants: istioConfigList.K8sReferenceGrants, Namespaces: namespaces, RegistryServices: registryServices}
 		objectCheckers = []ObjectChecker{noServiceChecker, grpcRouteChecker}
 		referenceChecker = references.K8sGRPCRouteReferences{K8sGRPCRoutes: istioConfigList.K8sGRPCRoutes, Namespaces: namespaces, K8sReferenceGrants: istioConfigList.K8sReferenceGrants}
-	case kubernetes.K8sHTTPRoutes:
+	case kubernetes.K8sHTTPRoutes.String():
 		httpRouteChecker := checkers.K8sHTTPRouteChecker{Cluster: cluster, K8sHTTPRoutes: istioConfigList.K8sHTTPRoutes, K8sGateways: istioConfigList.K8sGateways, K8sReferenceGrants: istioConfigList.K8sReferenceGrants, Namespaces: namespaces, RegistryServices: registryServices}
 		objectCheckers = []ObjectChecker{noServiceChecker, httpRouteChecker}
 		referenceChecker = references.K8sHTTPRouteReferences{K8sHTTPRoutes: istioConfigList.K8sHTTPRoutes, Namespaces: namespaces, K8sReferenceGrants: istioConfigList.K8sReferenceGrants}
-	case kubernetes.K8sReferenceGrants:
+	case kubernetes.K8sReferenceGrants.String():
 		objectCheckers = []ObjectChecker{
 			checkers.K8sReferenceGrantChecker{Cluster: cluster, K8sReferenceGrants: istioConfigList.K8sReferenceGrants, Namespaces: namespaces},
 		}
-	case kubernetes.K8sTCPRoutes:
+	case kubernetes.K8sTCPRoutes.String():
 		// Validation on K8sTCPRoutes is not expected
-	case kubernetes.K8sTLSRoutes:
+	case kubernetes.K8sTLSRoutes.String():
 		// Validation on K8sTLSRoutes is not expected
 	default:
-		err = fmt.Errorf("object type not found: %v", objectType)
+		err = fmt.Errorf("object type not found: %v", objectGVK.String())
 	}
 
 	close(errChan)
@@ -312,7 +313,7 @@ func (in *IstioValidationsService) GetIstioObjectValidations(ctx context.Context
 		return models.IstioValidations{}, istioReferences, err
 	}
 
-	return runObjectCheckers(objectCheckers).FilterByKey(models.ObjectTypeSingular[objectType], object), istioReferences, nil
+	return runObjectCheckers(objectCheckers).FilterByKey(objectGVK, object), istioReferences, nil
 }
 
 func runObjectCheckers(objectCheckers []ObjectChecker) models.IstioValidations {

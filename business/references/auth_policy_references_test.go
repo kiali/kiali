@@ -8,6 +8,7 @@ import (
 	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
 )
@@ -30,7 +31,7 @@ func prepareTestForAuthPolicy(ap *security_v1.AuthorizationPolicy, vs *networkin
 		},
 		RegistryServices: data.CreateFakeRegistryServicesLabels("foo-dev", "istio-system"),
 	}
-	return *drReferences.References()[models.IstioReferenceKey{ObjectType: "authorizationpolicy", Namespace: ap.Namespace, Name: ap.Name}]
+	return *drReferences.References()[models.IstioReferenceKey{ObjectGVK: kubernetes.AuthorizationPolicies, Namespace: ap.Namespace, Name: ap.Name}]
 }
 
 func TestAuthPolicyReferences(t *testing.T) {
@@ -51,11 +52,11 @@ func TestAuthPolicyReferences(t *testing.T) {
 	assert.Len(references.ObjectReferences, 2)
 	assert.Equal(references.ObjectReferences[0].Name, "foo-dev")
 	assert.Equal(references.ObjectReferences[0].Namespace, "istio-system")
-	assert.Equal(references.ObjectReferences[0].ObjectType, "virtualservice")
+	assert.Equal(references.ObjectReferences[0].ObjectGVK.String(), kubernetes.VirtualServices.String())
 
 	assert.Equal(references.ObjectReferences[1].Name, "foo-dev")
 	assert.Equal(references.ObjectReferences[1].Namespace, "istio-system")
-	assert.Equal(references.ObjectReferences[1].ObjectType, "serviceentry")
+	assert.Equal(references.ObjectReferences[1].ObjectGVK.String(), kubernetes.ServiceEntries.String())
 }
 
 func TestAuthPolicyServiceReferences(t *testing.T) {

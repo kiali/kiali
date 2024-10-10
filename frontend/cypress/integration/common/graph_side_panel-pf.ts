@@ -88,7 +88,7 @@ When(
 
       // If the VirtualService doesn't exist. Create it.
       cy.request({
-        url: `api/namespaces/${namespace}/istio/virtualservices/${service}`,
+        url: `api/namespaces/${namespace}/istio/networking.istio.io/v1/VirtualService/${service}`,
         qs: { clusterName: cluster },
         failOnStatusCode: false
       }).then(response => {
@@ -96,7 +96,7 @@ When(
           cy.log(`Creating VirtualService for ${service} service in namespace ${namespace} in cluster ${cluster}`);
           cy.fixture(`${service}-virtualservice.json`).then(virtualservice => {
             cy.request({
-              url: `api/namespaces/${namespace}/istio/virtualservices`,
+              url: `api/namespaces/${namespace}/istio/networking.istio.io/v1/VirtualService`,
               method: 'POST',
               body: virtualservice,
               qs: { clusterName: cluster }
@@ -112,7 +112,7 @@ When(
 
       // If the DestionationRule doesn't exist. Create it.
       cy.request({
-        url: `api/namespaces/${namespace}/istio/destinationrules/${service}`,
+        url: `api/namespaces/${namespace}/istio/networking.istio.io/v1/DestinationRule/${service}`,
         qs: { clusterName: cluster },
         failOnStatusCode: false
       }).then(response => {
@@ -120,7 +120,7 @@ When(
           cy.log(`Creating DestinationRule for ${service} service in namespace ${namespace} in cluster ${cluster}`);
           cy.fixture(`${service}-destinationrule.json`).then(dr => {
             cy.request({
-              url: `api/namespaces/${namespace}/istio/destinationrules`,
+              url: `api/namespaces/${namespace}/istio/networking.istio.io/v1/DestinationRule`,
               method: 'POST',
               body: dr,
               qs: { clusterName: cluster }
@@ -191,12 +191,12 @@ When('user chooses to delete the routing', () => {
     const namespace = node.data('namespace');
     cy.log(`Deleting traffic routing for ${service} service in namespace ${namespace}, data: ${node.data()}`);
     cy.intercept({
-      pathname: `**/api/namespaces/${namespace}/istio/virtualservices/${service}`,
+      pathname: `**/api/namespaces/${namespace}/istio/networking.istio.io/v1/VirtualService/${service}`,
       method: 'DELETE',
       query: { clusterName: cluster }
     }).as('delete-vs');
     cy.intercept({
-      pathname: `**/api/namespaces/${namespace}/istio/destinationrules/${service}`,
+      pathname: `**/api/namespaces/${namespace}/istio/networking.istio.io/v1/DestinationRule/${service}`,
       method: 'DELETE',
       query: { clusterName: cluster }
     }).as('delete-dr');
@@ -230,7 +230,7 @@ Then(
       ) {
         cy.log(`Deleting VirtualService for ${service} service in namespace ${namespace} in cluster ${cluster}`);
         cy.request({
-          url: `api/namespaces/${namespace}/istio/virtualservices/${service}`,
+          url: `api/namespaces/${namespace}/istio/networking.istio.io/v1/VirtualService/${service}`,
           method: 'DELETE',
           qs: { clusterName: cluster }
         }).then(response => {
@@ -247,7 +247,7 @@ Then(
       ) {
         cy.log(`Deleting DestinationRule for ${service} service in namespace ${namespace} in cluster ${cluster}`);
         cy.request({
-          url: `api/namespaces/${namespace}/istio/destinationrules/${service}`,
+          url: `api/namespaces/${namespace}/istio/networking.istio.io/v1/DestinationRule/${service}`,
           method: 'DELETE',
           qs: { clusterName: cluster }
         }).then(response => {
@@ -265,8 +265,8 @@ Then(
   (service: string, namespace: string, cluster: string) => {
     // Wait for the table to load in.
     cy.get('table').should('not.contain.text', 'No Istio config found');
-    cy.getBySel(`VirtualItem_Cluster${cluster}_Ns${namespace}_virtualservice_${service}`).should('not.exist');
-    cy.getBySel(`VirtualItem_Cluster${cluster}_Ns${namespace}_destinationrule_${service}`).should('not.exist');
+    cy.getBySel(`VirtualItem_Cluster${cluster}_Ns${namespace}_VirtualService_${service}`).should('not.exist');
+    cy.getBySel(`VirtualItem_Cluster${cluster}_Ns${namespace}_DestinationRule_${service}`).should('not.exist');
   }
 );
 
@@ -275,8 +275,8 @@ Then(
   (service: string, namespace: string, cluster: string) => {
     // Wait for the table to load in.
     cy.get('table').should('not.contain.text', 'No Istio config found');
-    cy.getBySel(`VirtualItem_Cluster${cluster}_Ns${namespace}_virtualservice_${service}`).should('exist');
-    cy.getBySel(`VirtualItem_Cluster${cluster}_Ns${namespace}_destinationrule_${service}`).should('exist');
+    cy.getBySel(`VirtualItem_Cluster${cluster}_Ns${namespace}_VirtualService_${service}`).should('exist');
+    cy.getBySel(`VirtualItem_Cluster${cluster}_Ns${namespace}_DestinationRule_${service}`).should('exist');
   }
 );
 

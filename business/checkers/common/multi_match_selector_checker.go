@@ -4,13 +4,14 @@ import (
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/kiali/kiali/models"
 )
 
 type GenericMultiMatchChecker struct {
 	Cluster               string
-	SubjectType           string
+	ObjectGVK             schema.GroupVersionKind
 	Keys                  []models.IstioValidationKey
 	Selectors             map[int]map[string]string
 	WorkloadsPerNamespace map[string]models.WorkloadList
@@ -18,15 +19,15 @@ type GenericMultiMatchChecker struct {
 	skipSelSubj           bool
 }
 
-func PeerAuthenticationMultiMatchChecker(cluster, subjectType string, pa []*security_v1.PeerAuthentication, workloadsPerNamespace map[string]models.WorkloadList) GenericMultiMatchChecker {
+func PeerAuthenticationMultiMatchChecker(cluster string, objectGVK schema.GroupVersionKind, pa []*security_v1.PeerAuthentication, workloadsPerNamespace map[string]models.WorkloadList) GenericMultiMatchChecker {
 	keys := []models.IstioValidationKey{}
 	selectors := make(map[int]map[string]string, len(pa))
 	for i, p := range pa {
 		key := models.IstioValidationKey{
-			ObjectType: subjectType,
-			Name:       p.Name,
-			Namespace:  p.Namespace,
-			Cluster:    cluster,
+			ObjectGVK: objectGVK,
+			Name:      p.Name,
+			Namespace: p.Namespace,
+			Cluster:   cluster,
 		}
 		keys = append(keys, key)
 		selectors[i] = make(map[string]string)
@@ -37,7 +38,7 @@ func PeerAuthenticationMultiMatchChecker(cluster, subjectType string, pa []*secu
 	}
 	return GenericMultiMatchChecker{
 		Cluster:               cluster,
-		SubjectType:           subjectType,
+		ObjectGVK:             objectGVK,
 		Keys:                  keys,
 		Selectors:             selectors,
 		WorkloadsPerNamespace: workloadsPerNamespace,
@@ -46,15 +47,15 @@ func PeerAuthenticationMultiMatchChecker(cluster, subjectType string, pa []*secu
 	}
 }
 
-func RequestAuthenticationMultiMatchChecker(cluster, subjectType string, ra []*security_v1.RequestAuthentication, workloadsPerNamespace map[string]models.WorkloadList) GenericMultiMatchChecker {
+func RequestAuthenticationMultiMatchChecker(cluster string, objectGVK schema.GroupVersionKind, ra []*security_v1.RequestAuthentication, workloadsPerNamespace map[string]models.WorkloadList) GenericMultiMatchChecker {
 	keys := []models.IstioValidationKey{}
 	selectors := make(map[int]map[string]string, len(ra))
 	for i, r := range ra {
 		key := models.IstioValidationKey{
-			ObjectType: subjectType,
-			Name:       r.Name,
-			Namespace:  r.Namespace,
-			Cluster:    cluster,
+			ObjectGVK: objectGVK,
+			Name:      r.Name,
+			Namespace: r.Namespace,
+			Cluster:   cluster,
 		}
 		keys = append(keys, key)
 		selectors[i] = make(map[string]string)
@@ -66,7 +67,7 @@ func RequestAuthenticationMultiMatchChecker(cluster, subjectType string, ra []*s
 	// So skip multi match validation
 	return GenericMultiMatchChecker{
 		Cluster:               cluster,
-		SubjectType:           subjectType,
+		ObjectGVK:             objectGVK,
 		Keys:                  keys,
 		Selectors:             selectors,
 		WorkloadsPerNamespace: workloadsPerNamespace,
@@ -75,7 +76,7 @@ func RequestAuthenticationMultiMatchChecker(cluster, subjectType string, ra []*s
 	}
 }
 
-func SidecarSelectorMultiMatchChecker(cluster, subjectType string, sc []*networking_v1.Sidecar, workloadsPerNamespace map[string]models.WorkloadList) GenericMultiMatchChecker {
+func SidecarSelectorMultiMatchChecker(cluster string, objectGVK schema.GroupVersionKind, sc []*networking_v1.Sidecar, workloadsPerNamespace map[string]models.WorkloadList) GenericMultiMatchChecker {
 	keys := []models.IstioValidationKey{}
 	selectors := make(map[int]map[string]string, len(sc))
 	i := 0
@@ -86,10 +87,10 @@ func SidecarSelectorMultiMatchChecker(cluster, subjectType string, sc []*network
 				continue
 			}
 			key := models.IstioValidationKey{
-				ObjectType: subjectType,
-				Name:       s.Name,
-				Namespace:  s.Namespace,
-				Cluster:    cluster,
+				ObjectGVK: objectGVK,
+				Name:      s.Name,
+				Namespace: s.Namespace,
+				Cluster:   cluster,
 			}
 			keys = append(keys, key)
 			selectors[i] = make(map[string]string)
@@ -101,7 +102,7 @@ func SidecarSelectorMultiMatchChecker(cluster, subjectType string, sc []*network
 	}
 	return GenericMultiMatchChecker{
 		Cluster:               cluster,
-		SubjectType:           subjectType,
+		ObjectGVK:             objectGVK,
 		Keys:                  keys,
 		Selectors:             selectors,
 		WorkloadsPerNamespace: workloadsPerNamespace,
@@ -151,10 +152,10 @@ func (m GenericMultiMatchChecker) selectorLessSubjects() []KeyWithIndex {
 			swi = append(swi, KeyWithIndex{
 				Index: i,
 				Key: &models.IstioValidationKey{
-					ObjectType: k.ObjectType,
-					Name:       k.Name,
-					Namespace:  k.Namespace,
-					Cluster:    m.Cluster,
+					ObjectGVK: k.ObjectGVK,
+					Name:      k.Name,
+					Namespace: k.Namespace,
+					Cluster:   m.Cluster,
 				},
 			})
 		}
@@ -185,7 +186,7 @@ func (m GenericMultiMatchChecker) buildSelectorLessSubjectValidations(subjects [
 				*subjectWithIndex.Key: &models.IstioValidation{
 					Cluster:    m.Cluster,
 					Name:       subjectWithIndex.Key.Name,
-					ObjectType: subjectWithIndex.Key.ObjectType,
+					ObjectGVK:  subjectWithIndex.Key.ObjectGVK,
 					Valid:      false,
 					References: references,
 					Checks: []*models.IstioCheck{
@@ -219,7 +220,7 @@ func (m GenericMultiMatchChecker) multiMatchSubjects() ReferenceMap {
 	workloadSubjects := ReferenceMap{}
 
 	for i, s := range m.Keys {
-		subjectKey := models.BuildKey(m.SubjectType, s.Name, s.Namespace, m.Cluster)
+		subjectKey := models.BuildKey(m.ObjectGVK, s.Name, s.Namespace, m.Cluster)
 
 		selector := labels.SelectorFromSet(m.Selectors[i])
 		if selector.Empty() {
@@ -231,8 +232,8 @@ func (m GenericMultiMatchChecker) multiMatchSubjects() ReferenceMap {
 				if !selector.Matches(labels.Set(w.Labels)) {
 					continue
 				}
-
-				workloadKey := models.BuildKey(w.Type, w.Name, wls.Namespace, m.Cluster)
+				// TODO for now a hacky way, for a workload type we only have a Kind, will be checked on frontend side
+				workloadKey := models.BuildKey(schema.GroupVersionKind{Group: "", Version: "", Kind: w.Type}, w.Name, wls.Namespace, m.Cluster)
 				workloadSubjects.Add(workloadKey, subjectKey)
 			}
 		}
@@ -281,7 +282,7 @@ func (m GenericMultiMatchChecker) buildMultipleSubjectValidation(scs []models.Is
 			sck: &models.IstioValidation{
 				Cluster:    m.Cluster,
 				Name:       sck.Name,
-				ObjectType: m.SubjectType,
+				ObjectGVK:  m.ObjectGVK,
 				Valid:      false,
 				References: refs,
 				Checks: []*models.IstioCheck{

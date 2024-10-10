@@ -28,8 +28,6 @@ export type AuthorizationPolicyState = {
   workloadSelectorValid: boolean;
 };
 
-export const AUTHORIZACION_POLICY = 'AuthorizationPolicy';
-export const AUTHORIZATION_POLICIES = 'authorizationpolicies';
 export const DENY_ALL = 'DENY_ALL';
 export const ALLOW_ALL = 'ALLOW_ALL';
 export const RULES = 'RULES';
@@ -67,7 +65,7 @@ export class AuthorizationPolicyForm extends React.Component<Props, Authorizatio
     this.state = initAuthorizationPolicy();
   }
 
-  componentDidMount() {
+  componentDidMount(): void {
     this.setState({
       policy: this.props.authorizationPolicy.policy,
       workloadSelector: this.props.authorizationPolicy.workloadSelector,
@@ -178,11 +176,11 @@ export class AuthorizationPolicyForm extends React.Component<Props, Authorizatio
     );
   };
 
-  onAuthorizationChange = () => {
+  onAuthorizationChange = (): void => {
     this.props.onChange(this.state);
   };
 
-  render() {
+  render(): React.ReactNode {
     return (
       <>
         <FormGroup label="Policy" fieldId="rules-form">

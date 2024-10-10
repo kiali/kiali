@@ -19,9 +19,6 @@ import { isValid } from 'utils/Common';
 import { KialiIcon } from 'config/KialiIcon';
 import { SimpleTable } from 'components/Table/SimpleTable';
 
-export const SERVICE_ENTRY = 'ServiceEntry';
-export const SERVICE_ENTRIES = 'serviceentries';
-
 const MESH_EXTERNAL = 'MESH_EXTERNAL';
 const MESH_INTERNAL = 'MESH_INTERNAL';
 

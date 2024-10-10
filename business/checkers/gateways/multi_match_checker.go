@@ -11,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/util/intutil"
 )
@@ -23,7 +24,6 @@ type MultiMatchChecker struct {
 }
 
 const (
-	GatewayCheckerType     = "gateway"
 	wildCardMatch          = "*"
 	targetNamespaceAll     = "*"
 	targetNamespaceCurrent = "."
@@ -103,14 +103,14 @@ func (m MultiMatchChecker) Check() models.IstioValidations {
 }
 
 func createError(gatewayRuleName, namespace, cluster string, serverIndex, hostIndex int) models.IstioValidations {
-	key := models.IstioValidationKey{Name: gatewayRuleName, Namespace: namespace, ObjectType: GatewayCheckerType, Cluster: cluster}
+	key := models.IstioValidationKey{Name: gatewayRuleName, Namespace: namespace, ObjectGVK: kubernetes.Gateways, Cluster: cluster}
 	checks := models.Build("gateways.multimatch",
 		"spec/servers["+strconv.Itoa(serverIndex)+"]/hosts["+strconv.Itoa(hostIndex)+"]")
 	rrValidation := &models.IstioValidation{
-		Cluster:    cluster,
-		Name:       gatewayRuleName,
-		ObjectType: GatewayCheckerType,
-		Valid:      true,
+		Cluster:   cluster,
+		Name:      gatewayRuleName,
+		ObjectGVK: key.ObjectGVK,
+		Valid:     true,
 		Checks: []*models.IstioCheck{
 			&checks,
 		},

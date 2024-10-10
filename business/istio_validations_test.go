@@ -63,7 +63,7 @@ func TestGetNamespaceValidations(t *testing.T) {
 	validations, err := vs.GetValidations(context.TODO(), conf.KubernetesConfig.ClusterName, "test", "", "")
 	require.NoError(err)
 	require.NotEmpty(validations)
-	assert.True(validations[models.IstioValidationKey{ObjectType: "virtualservice", Namespace: "test", Name: "product-vs"}].Valid)
+	assert.True(validations[models.IstioValidationKey{ObjectGVK: kubernetes.VirtualServices, Namespace: "test", Name: "product-vs"}].Valid)
 }
 
 func TestGetIstioObjectValidations(t *testing.T) {
@@ -74,7 +74,7 @@ func TestGetIstioObjectValidations(t *testing.T) {
 	vs := mockCombinedValidationService(t, fakeIstioConfigList(),
 		[]string{"details.test.svc.cluster.local", "product.test.svc.cluster.local", "customer.test.svc.cluster.local"})
 
-	validations, _, _ := vs.GetIstioObjectValidations(context.TODO(), conf.KubernetesConfig.ClusterName, "test", "virtualservices", "product-vs")
+	validations, _, _ := vs.GetIstioObjectValidations(context.TODO(), conf.KubernetesConfig.ClusterName, "test", kubernetes.VirtualServices, "product-vs")
 
 	assert.NotEmpty(validations)
 }
@@ -86,7 +86,7 @@ func TestGatewayValidation(t *testing.T) {
 	kubernetes.SetConfig(t, *conf)
 
 	v := mockMultiNamespaceGatewaysValidationService(t, *conf)
-	validations, _, _ := v.GetIstioObjectValidations(context.TODO(), conf.KubernetesConfig.ClusterName, "test", "gateways", "first")
+	validations, _, _ := v.GetIstioObjectValidations(context.TODO(), conf.KubernetesConfig.ClusterName, "test", kubernetes.Gateways, "first")
 	assert.NotEmpty(validations)
 }
 
@@ -167,13 +167,13 @@ func TestGatewayValidationScopesToNamespaceWhenGatewayToNamespaceSet(t *testing.
 	}
 
 	v := mockMultiNamespaceGatewaysValidationService(t, *conf, revConfigMap, injectorConfigMap, istioSystemNamespace, istiod_1_19_0, gatewayDeployment, FakeCertificateConfigMap("istio-system"))
-	validations, _, err := v.GetIstioObjectValidations(context.TODO(), conf.KubernetesConfig.ClusterName, "test", "gateways", "first")
+	validations, _, err := v.GetIstioObjectValidations(context.TODO(), conf.KubernetesConfig.ClusterName, "test", kubernetes.Gateways, "first")
 	require.NoError(err)
 	require.Len(validations, 1)
 	key := models.IstioValidationKey{
-		ObjectType: "gateway",
-		Name:       "first",
-		Namespace:  "test",
+		ObjectGVK: kubernetes.Gateways,
+		Name:      "first",
+		Namespace: "test",
 	}
 	// Even though the workload is reference properly, because of the PILOT_SCOPE_GATEWAY_TO_NAMESPACE
 	// the gateway should be marked as invalid.
@@ -602,7 +602,7 @@ func TestGetVSReferences(t *testing.T) {
 	vs := mockCombinedValidationService(t, fakeIstioConfigList(), []string{})
 
 	_, referencesMap, err := vs.GetIstioObjectValidations(context.TODO(), conf.KubernetesConfig.ClusterName, "test", kubernetes.VirtualServices, "product-vs")
-	references := referencesMap[models.IstioReferenceKey{ObjectType: "virtualservice", Namespace: "test", Name: "product-vs"}]
+	references := referencesMap[models.IstioReferenceKey{ObjectGVK: kubernetes.VirtualServices, Namespace: "test", Name: "product-vs"}]
 
 	// Check Service references
 	assert.Nil(err)
@@ -622,8 +622,8 @@ func TestGetVSReferencesNotExisting(t *testing.T) {
 
 	vs := mockCombinedValidationService(t, fakeEmptyIstioConfigList(), []string{})
 
-	_, referencesMap, err := vs.GetIstioObjectValidations(context.TODO(), conf.KubernetesConfig.ClusterName, "wrong", "virtualservices", "wrong")
-	references := referencesMap[models.IstioReferenceKey{ObjectType: "wrong", Namespace: "wrong", Name: "product-vs"}]
+	_, referencesMap, err := vs.GetIstioObjectValidations(context.TODO(), conf.KubernetesConfig.ClusterName, "wrong", kubernetes.VirtualServices, "wrong")
+	references := referencesMap[models.IstioReferenceKey{ObjectGVK: kubernetes.DestinationRules, Namespace: "wrong", Name: "product-vs"}]
 
 	assert.Nil(err)
 	assert.Nil(references)

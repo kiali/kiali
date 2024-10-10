@@ -7,6 +7,7 @@ import (
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
 )
@@ -26,7 +27,7 @@ func prepareTestForSidecar(sc *networking_v1.Sidecar, vs *networking_v1.VirtualS
 		},
 		RegistryServices: data.CreateFakeRegistryServicesLabels("foo-service", "istio-system"),
 	}
-	return *drReferences.References()[models.IstioReferenceKey{ObjectType: "sidecar", Namespace: sc.Namespace, Name: sc.Name}]
+	return *drReferences.References()[models.IstioReferenceKey{ObjectGVK: kubernetes.Sidecars, Namespace: sc.Namespace, Name: sc.Name}]
 }
 
 func TestSidecarReferences(t *testing.T) {
@@ -50,7 +51,7 @@ func TestSidecarReferences(t *testing.T) {
 	assert.Len(references.ObjectReferences, 1)
 	assert.Equal(references.ObjectReferences[0].Name, "foo-dev")
 	assert.Equal(references.ObjectReferences[0].Namespace, "istio-system")
-	assert.Equal(references.ObjectReferences[0].ObjectType, "serviceentry")
+	assert.Equal(references.ObjectReferences[0].ObjectGVK.String(), kubernetes.ServiceEntries.String())
 }
 
 func TestSidecarServiceReferences(t *testing.T) {

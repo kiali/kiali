@@ -17,6 +17,7 @@ import { calculateErrorRate } from '../../types/ErrorRate';
 import { istioConfigTypeFilter } from '../IstioConfigList/FiltersAndSorts';
 import { compareObjectReferences } from '../AppList/FiltersAndSorts';
 import { serverConfig } from 'config';
+import { gvkToString, istioTypesToGVKString } from '../../utils/IstioConfigUtils';
 
 export const sortFields: SortField<ServiceListItem>[] = [
   {
@@ -24,7 +25,7 @@ export const sortFields: SortField<ServiceListItem>[] = [
     title: 'Namespace',
     isNumeric: false,
     param: 'ns',
-    compare: (a: ServiceListItem, b: ServiceListItem) => {
+    compare: (a: ServiceListItem, b: ServiceListItem): number => {
       let sortValue = a.namespace.localeCompare(b.namespace);
       if (sortValue === 0) {
         sortValue = a.name.localeCompare(b.name);
@@ -44,7 +45,7 @@ export const sortFields: SortField<ServiceListItem>[] = [
     title: 'Details',
     isNumeric: false,
     param: 'is',
-    compare: (a: ServiceListItem, b: ServiceListItem) => {
+    compare: (a: ServiceListItem, b: ServiceListItem): number => {
       // First sort by missing sidecar
       const aSC = hasMissingSidecar(a) ? 1 : 0;
       const bSC = hasMissingSidecar(b) ? 1 : 0;
@@ -83,7 +84,7 @@ export const sortFields: SortField<ServiceListItem>[] = [
     title: 'Health',
     isNumeric: false,
     param: 'he',
-    compare: (a, b) => {
+    compare: (a: ServiceListItem, b: ServiceListItem): number => {
       if (hasHealth(a) && hasHealth(b)) {
         const statusForA = a.health.getGlobalStatus();
         const statusForB = b.health.getGlobalStatus();
@@ -108,7 +109,7 @@ export const sortFields: SortField<ServiceListItem>[] = [
     title: 'Config',
     isNumeric: false,
     param: 'cv',
-    compare: (a: ServiceListItem, b: ServiceListItem) => {
+    compare: (a: ServiceListItem, b: ServiceListItem): number => {
       let sortValue = -1;
       if (a.validation && !b.validation) {
         sortValue = -1;
@@ -136,7 +137,7 @@ export const sortFields: SortField<ServiceListItem>[] = [
     title: 'Cluster',
     isNumeric: false,
     param: 'cl',
-    compare: (a: ServiceListItem, b: ServiceListItem) => {
+    compare: (a: ServiceListItem, b: ServiceListItem): number => {
       if (a.cluster && b.cluster) {
         let sortValue = a.cluster.localeCompare(b.cluster);
         if (sortValue === 0) {
@@ -225,7 +226,11 @@ const filterByServiceType = (items: ServiceListItem[], serviceTypes: string[]): 
 };
 
 const filterByIstioType = (items: ServiceListItem[], istioTypes: string[]): ServiceListItem[] => {
-  return items.filter(item => item.istioReferences.filter(ref => istioTypes.includes(ref.objectType)).length !== 0);
+  return items.filter(
+    item =>
+      item.istioReferences.filter(ref => istioTypesToGVKString(istioTypes).includes(gvkToString(ref.objectGVK)))
+        .length !== 0
+  );
 };
 
 export const filterBy = (items: ServiceListItem[], filters: ActiveFiltersInfo): ServiceListItem[] => {

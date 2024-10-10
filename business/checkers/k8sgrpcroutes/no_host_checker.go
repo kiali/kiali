@@ -68,5 +68,5 @@ func (n NoHostChecker) checkDestination(sHost string, itemNamespace string) bool
 
 func (n NoHostChecker) checkReferenceGrant(fromNamespace string, toNamespace string) bool {
 	// Use ReferenceGrant objects to check if cross namespace reference exists
-	return kubernetes.HasMatchingReferenceGrant(fromNamespace, toNamespace, kubernetes.K8sActualGRPCRouteType, kubernetes.ServiceType, n.K8sReferenceGrants)
+	return kubernetes.HasMatchingReferenceGrant(fromNamespace, toNamespace, kubernetes.K8sGRPCRouteType, kubernetes.ServiceType, n.K8sReferenceGrants)
 }

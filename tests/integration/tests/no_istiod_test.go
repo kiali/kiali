@@ -93,7 +93,7 @@ func emptyValidations(t *testing.T) {
 
 	require.NoError(err)
 	require.NotNil(config)
-	require.Equal(k8s.Gateways, config.ObjectType)
+	require.Equal(k8s.Gateways.String(), config.ObjectGVK.String())
 	require.Equal(kiali.BOOKINFO, config.Namespace.Name)
 	require.NotNil(config.Gateway)
 	require.Equal(name, config.Gateway.Name)

@@ -26,7 +26,7 @@ func (n SidecarReferences) References() models.IstioReferencesMap {
 
 	for _, sc := range n.Sidecars {
 		namespace := sc.Namespace
-		key := models.IstioReferenceKey{Namespace: namespace, Name: sc.Name, ObjectType: models.ObjectTypeSingular[kubernetes.Sidecars]}
+		key := models.IstioReferenceKey{Namespace: namespace, Name: sc.Name, ObjectGVK: kubernetes.Sidecars}
 		references := &models.IstioReferences{}
 		for _, ei := range sc.Spec.Egress {
 			if ei == nil {
@@ -84,14 +84,14 @@ func (n SidecarReferences) getConfigReferences(host kubernetes.Host, hostNs stri
 		}
 		for _, seHost := range se.Spec.Hosts {
 			if seHost == host.String() {
-				allSEs = append(allSEs, models.IstioReference{Name: se.Name, Namespace: se.Namespace, ObjectType: models.ObjectTypeSingular[kubernetes.ServiceEntries]})
+				allSEs = append(allSEs, models.IstioReference{Name: se.Name, Namespace: se.Namespace, ObjectGVK: kubernetes.ServiceEntries})
 				break
 			}
 		}
 	}
 	// filter unique references
 	for _, vs := range allSEs {
-		key := util.BuildNameNSTypeKey(vs.Name, vs.Namespace, vs.ObjectType)
+		key := util.BuildNameNSTypeKey(vs.Name, vs.Namespace, vs.ObjectGVK)
 		if !keys[key] {
 			result = append(result, vs)
 			keys[key] = true

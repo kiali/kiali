@@ -17,6 +17,7 @@ import (
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/kiali/kiali/config"
@@ -1038,9 +1039,9 @@ func TestGetPodLogsWithoutAccessLogs(t *testing.T) {
 func TestFilterUniqueIstioReferences(t *testing.T) {
 	assert := assert.New(t)
 	references := []*models.IstioValidationKey{
-		{ObjectType: "t1", Namespace: "ns1", Name: "n1"},
-		{ObjectType: "t1", Namespace: "ns1", Name: "n1"},
-		{ObjectType: "t2", Namespace: "ns2", Name: "n2"},
+		{ObjectGVK: schema.GroupVersionKind{Group: "", Version: "", Kind: "t1"}, Namespace: "ns1", Name: "n1"},
+		{ObjectGVK: schema.GroupVersionKind{Group: "", Version: "", Kind: "t1"}, Namespace: "ns1", Name: "n1"},
+		{ObjectGVK: schema.GroupVersionKind{Group: "", Version: "", Kind: "t2"}, Namespace: "ns2", Name: "n2"},
 	}
 	filtered := FilterUniqueIstioReferences(references)
 	assert.Equal(2, len(filtered))

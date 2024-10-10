@@ -2,29 +2,30 @@ package common
 
 import (
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/kiali/kiali/models"
 )
 
 type GenericNoWorkloadFoundChecker struct {
-	SubjectType           string
+	ObjectGVK             schema.GroupVersionKind
 	SelectorLabels        map[string]string
 	WorkloadsPerNamespace map[string]models.WorkloadList
 	Path                  string
 }
 
-func SelectorNoWorkloadFoundChecker(subjectType string, selectorLabels map[string]string, workloadsPerNamespace map[string]models.WorkloadList) GenericNoWorkloadFoundChecker {
+func SelectorNoWorkloadFoundChecker(objectGVK schema.GroupVersionKind, selectorLabels map[string]string, workloadsPerNamespace map[string]models.WorkloadList) GenericNoWorkloadFoundChecker {
 	return GenericNoWorkloadFoundChecker{
-		SubjectType:           subjectType,
+		ObjectGVK:             objectGVK,
 		SelectorLabels:        selectorLabels,
 		WorkloadsPerNamespace: workloadsPerNamespace,
 		Path:                  "spec/selector/matchLabels",
 	}
 }
 
-func WorkloadSelectorNoWorkloadFoundChecker(subjectType string, selectorLabels map[string]string, workloadsPerNamespace map[string]models.WorkloadList) GenericNoWorkloadFoundChecker {
+func WorkloadSelectorNoWorkloadFoundChecker(objectGVK schema.GroupVersionKind, selectorLabels map[string]string, workloadsPerNamespace map[string]models.WorkloadList) GenericNoWorkloadFoundChecker {
 	return GenericNoWorkloadFoundChecker{
-		SubjectType:           subjectType,
+		ObjectGVK:             objectGVK,
 		SelectorLabels:        selectorLabels,
 		WorkloadsPerNamespace: workloadsPerNamespace,
 		Path:                  "spec/workloadSelector/labels",

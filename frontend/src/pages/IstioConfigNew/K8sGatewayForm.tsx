@@ -7,9 +7,6 @@ import { isValidHostname, isValidName, isValidTLS, SELECTOR } from './GatewayFor
 import { isValidAddress } from './GatewayForm/AddressBuilder';
 import { serverConfig } from '../../config';
 
-export const K8SGATEWAY = 'K8sGateway';
-export const K8SGATEWAYS = 'k8sgateways';
-
 type Props = {
   k8sGateway: K8sGatewayState;
   onChange: (k8sGateway: K8sGatewayState) => void;

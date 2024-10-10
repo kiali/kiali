@@ -1,11 +1,12 @@
 import { ObjectValidation, ValidationTypes } from '../IstioObjects';
 import { parseKialiValidations } from '../AceValidations';
+import { dicIstioTypeToGVK } from '../IstioConfigList';
 
 const fs = require('fs');
 
 const destinationRuleValidations: ObjectValidation = {
   name: 'details',
-  objectType: 'destinationrule',
+  objectGVK: dicIstioTypeToGVK['DestinationRule'],
   valid: false,
   checks: [
     {
@@ -18,7 +19,7 @@ const destinationRuleValidations: ObjectValidation = {
 
 const vsInvalidHosts: ObjectValidation = {
   name: 'productpage',
-  objectType: 'virtualservice',
+  objectGVK: dicIstioTypeToGVK['VirtualService'],
   valid: false,
   checks: [
     {
@@ -31,7 +32,7 @@ const vsInvalidHosts: ObjectValidation = {
 
 const vsInvalidHttpFirstRoute: ObjectValidation = {
   name: 'productpage',
-  objectType: 'virtualservice',
+  objectGVK: dicIstioTypeToGVK['VirtualService'],
   valid: false,
   checks: [
     {
@@ -44,7 +45,7 @@ const vsInvalidHttpFirstRoute: ObjectValidation = {
 
 const vsInvalidHttpSecondRoute: ObjectValidation = {
   name: 'productpage',
-  objectType: 'virtualservice',
+  objectGVK: dicIstioTypeToGVK['VirtualService'],
   valid: false,
   checks: [
     {
@@ -57,7 +58,7 @@ const vsInvalidHttpSecondRoute: ObjectValidation = {
 
 const vsInvalidHttpThirdRoute: ObjectValidation = {
   name: 'productpage',
-  objectType: 'virtualservice',
+  objectGVK: dicIstioTypeToGVK['VirtualService'],
   valid: false,
   checks: [
     {
@@ -70,7 +71,7 @@ const vsInvalidHttpThirdRoute: ObjectValidation = {
 
 const vsInvalidHttpSecondSecondDestinationField: ObjectValidation = {
   name: 'productpage',
-  objectType: 'virtualservice',
+  objectGVK: dicIstioTypeToGVK['VirtualService'],
   valid: false,
   checks: [
     {
@@ -83,7 +84,7 @@ const vsInvalidHttpSecondSecondDestinationField: ObjectValidation = {
 
 const vsInvalidHttpThirdFirstDestinationField: ObjectValidation = {
   name: 'productpage',
-  objectType: 'virtualservice',
+  objectGVK: dicIstioTypeToGVK['VirtualService'],
   valid: false,
   checks: [
     {
@@ -96,7 +97,7 @@ const vsInvalidHttpThirdFirstDestinationField: ObjectValidation = {
 
 const vsInvalidHttpThirdFirstSubsetNotFound: ObjectValidation = {
   name: 'productpage',
-  objectType: 'virtualservice',
+  objectGVK: dicIstioTypeToGVK['VirtualService'],
   valid: false,
   checks: [
     {
@@ -109,7 +110,7 @@ const vsInvalidHttpThirdFirstSubsetNotFound: ObjectValidation = {
 
 const vsInvalidHttpFirstSecondSubsetNotFound: ObjectValidation = {
   name: 'productpage',
-  objectType: 'virtualservice',
+  objectGVK: dicIstioTypeToGVK['VirtualService'],
   valid: false,
   checks: [
     {
@@ -122,7 +123,7 @@ const vsInvalidHttpFirstSecondSubsetNotFound: ObjectValidation = {
 
 const vsInvalidHttpFourthFirstWeigth: ObjectValidation = {
   name: 'productpage',
-  objectType: 'virtualservice',
+  objectGVK: dicIstioTypeToGVK['VirtualService'],
   valid: false,
   checks: [
     {
@@ -135,7 +136,7 @@ const vsInvalidHttpFourthFirstWeigth: ObjectValidation = {
 
 const vsInvalidHttpFifthSecondWeigth: ObjectValidation = {
   name: 'productpage',
-  objectType: 'virtualservice',
+  objectGVK: dicIstioTypeToGVK['VirtualService'],
   valid: false,
   checks: [
     {

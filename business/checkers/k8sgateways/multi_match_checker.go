@@ -5,6 +5,7 @@ import (
 
 	k8s_networking_v1 "sigs.k8s.io/gateway-api/apis/v1"
 
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
 
@@ -12,10 +13,6 @@ type MultiMatchChecker struct {
 	Cluster     string
 	K8sGateways []*k8s_networking_v1.Gateway
 }
-
-const (
-	K8sGatewayCheckerType = "k8sgateway"
-)
 
 // Check validates that no two gateways share the same host+port combination
 func (m MultiMatchChecker) Check() models.IstioValidations {
@@ -59,13 +56,13 @@ func (m MultiMatchChecker) Check() models.IstioValidations {
 
 // Create validation error for k8sgateway object
 func createError(gatewayRuleName string, ruleCode string, namespace string, cluster string, path string, references []models.IstioValidationKey) models.IstioValidations {
-	key := models.IstioValidationKey{Name: gatewayRuleName, Namespace: namespace, ObjectType: K8sGatewayCheckerType, Cluster: cluster}
+	key := models.IstioValidationKey{Name: gatewayRuleName, Namespace: namespace, ObjectGVK: kubernetes.K8sGateways, Cluster: cluster}
 	checks := models.Build(ruleCode, path)
 	rrValidation := &models.IstioValidation{
-		Cluster:    cluster,
-		Name:       gatewayRuleName,
-		ObjectType: K8sGatewayCheckerType,
-		Valid:      true,
+		Cluster:   cluster,
+		Name:      gatewayRuleName,
+		ObjectGVK: kubernetes.K8sGateways,
+		Valid:     true,
 		Checks: []*models.IstioCheck{
 			&checks,
 		},
@@ -85,7 +82,7 @@ func (m MultiMatchChecker) findMatch(listener k8s_networking_v1.Listener, gwName
 		}
 		for _, l := range gw.Spec.Listeners {
 			if l.Hostname != nil && listener.Hostname != nil && *l.Hostname == *listener.Hostname && l.Port == listener.Port && l.Protocol == listener.Protocol {
-				key := models.IstioValidationKey{Name: gw.Name, Namespace: gw.Namespace, ObjectType: K8sGatewayCheckerType}
+				key := models.IstioValidationKey{Name: gw.Name, Namespace: gw.Namespace, ObjectGVK: kubernetes.K8sGateways}
 				collidingGateways = append(collidingGateways, key)
 			}
 		}
@@ -105,7 +102,7 @@ func (m MultiMatchChecker) findMatchIP(address k8s_networking_v1.GatewayAddress,
 
 		for _, a := range aa.Spec.Addresses {
 			if a.Type != nil && address.Type != nil && *a.Type == *address.Type && a.Value == address.Value {
-				key := models.IstioValidationKey{Name: aa.Name, Namespace: aa.Namespace, ObjectType: K8sGatewayCheckerType}
+				key := models.IstioValidationKey{Name: aa.Name, Namespace: aa.Namespace, ObjectGVK: kubernetes.K8sGateways}
 				collidingGateways = append(collidingGateways, key)
 			}
 		}

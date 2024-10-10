@@ -278,7 +278,7 @@ func NewRoutes(
 			handlers.IstioConfigList,
 			true,
 		},
-		// swagger:route GET /namespaces/{namespace}/istio/{object_type}/{object} config istioConfigDetails
+		// swagger:route GET /namespaces/{namespace}/istio/{group}/{version}/{kind}/{object} config istioConfigDetails
 		// ---
 		// Endpoint to get the Istio Config of an Istio object
 		//
@@ -296,11 +296,11 @@ func NewRoutes(
 		{
 			"IstioConfigDetails",
 			"GET",
-			"/api/namespaces/{namespace}/istio/{object_type}/{object}",
+			"/api/namespaces/{namespace}/istio/{group}/{version}/{kind}/{object}",
 			handlers.IstioConfigDetails,
 			true,
 		},
-		// swagger:route DELETE /namespaces/{namespace}/istio/{object_type}/{object} config istioConfigDelete
+		// swagger:route DELETE /namespaces/{namespace}/istio/{group}/{version}/{kind}/{object} config istioConfigDelete
 		// ---
 		// Endpoint to delete the Istio Config of an (arbitrary) Istio object
 		//
@@ -317,11 +317,11 @@ func NewRoutes(
 		{
 			"IstioConfigDelete",
 			"DELETE",
-			"/api/namespaces/{namespace}/istio/{object_type}/{object}",
+			"/api/namespaces/{namespace}/istio/{group}/{version}/{kind}/{object}",
 			handlers.IstioConfigDelete,
 			true,
 		},
-		// swagger:route PATCH /namespaces/{namespace}/istio/{object_type}/{object} config istioConfigUpdate
+		// swagger:route PATCH /namespaces/{namespace}/istio/{group}/{version}/{kind}/{object} config istioConfigUpdate
 		// ---
 		// Endpoint to update the Istio Config of an Istio object used for templates and adapters using Json Merge Patch strategy.
 		//
@@ -342,11 +342,11 @@ func NewRoutes(
 		{
 			"IstioConfigUpdate",
 			"PATCH",
-			"/api/namespaces/{namespace}/istio/{object_type}/{object}",
+			"/api/namespaces/{namespace}/istio/{group}/{version}/{kind}/{object}",
 			handlers.IstioConfigUpdate,
 			true,
 		},
-		// swagger:route POST /namespaces/{namespace}/istio/{object_type} config istioConfigCreate
+		// swagger:route POST /namespaces/{namespace}/istio/{group}/{version}/{kind} config istioConfigCreate
 		// ---
 		// Endpoint to create an Istio object by using an Istio Config item
 		//
@@ -365,7 +365,7 @@ func NewRoutes(
 		{
 			"IstioConfigCreate",
 			"POST",
-			"/api/namespaces/{namespace}/istio/{object_type}",
+			"/api/namespaces/{namespace}/istio/{group}/{version}/{kind}",
 			handlers.IstioConfigCreate,
 			true,
 		},

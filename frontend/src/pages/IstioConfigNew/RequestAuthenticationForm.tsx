@@ -18,9 +18,6 @@ export type RequestAuthenticationState = {
   workloadSelectorValid: boolean;
 };
 
-export const REQUEST_AUTHENTICATION = 'RequestAuthentication';
-export const REQUEST_AUTHENTICATIONS = 'requestauthentications';
-
 export const initRequestAuthentication = (): RequestAuthenticationState => ({
   addJWTRules: false,
   addWorkloadSelector: false,
@@ -42,7 +39,7 @@ export class RequestAuthenticationForm extends React.Component<Props, RequestAut
     this.state = initRequestAuthentication();
   }
 
-  componentDidMount() {
+  componentDidMount(): void {
     this.setState({
       workloadSelector: this.props.requestAuthentication.workloadSelector,
       jwtRules: this.props.requestAuthentication.jwtRules,
@@ -151,7 +148,7 @@ export class RequestAuthenticationForm extends React.Component<Props, RequestAut
     );
   };
 
-  render() {
+  render(): React.ReactNode {
     return (
       <>
         <FormGroup label="Workload Selector" fieldId="workloadSelectorSwitch">

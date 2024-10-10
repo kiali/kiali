@@ -4,12 +4,12 @@ import * as React from 'react';
 import { ObjectReference } from 'types/IstioObjects';
 
 interface IstioConfigReferencesProps {
-  objectReferences: ObjectReference[];
   cluster?: string;
+  objectReferences: ObjectReference[];
 }
 
 export class IstioConfigValidationReferences extends React.Component<IstioConfigReferencesProps> {
-  render() {
+  render(): React.ReactNode {
     return (
       <Stack>
         <StackItem>
@@ -26,7 +26,7 @@ export class IstioConfigValidationReferences extends React.Component<IstioConfig
                   name={reference.name}
                   namespace={reference.namespace}
                   cluster={this.props.cluster}
-                  type={reference.objectType}
+                  objectGVK={reference.objectGVK}
                 />
               </StackItem>
             );

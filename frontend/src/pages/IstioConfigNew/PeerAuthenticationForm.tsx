@@ -58,9 +58,6 @@ export type PeerAuthenticationState = {
   workloadSelectorValid: boolean;
 };
 
-export const PEER_AUTHENTICATION = 'PeerAuthentication';
-export const PEER_AUTHENTICATIONS = 'peerauthentications';
-
 export const initPeerAuthentication = (): PeerAuthenticationState => ({
   addNewPortMtls: {
     port: '',

@@ -6,6 +6,7 @@ import { KialiIcon } from '../../config/KialiIcon';
 import { KialiAppState } from '../../store/Store';
 import { connect } from 'react-redux';
 import { PFColors } from 'components/Pf/PfColors';
+import { kindToStringIncludeK8s } from '../../utils/IstioConfigUtils';
 
 const titles = ['applications', 'istio', 'istio/new', 'mesh', 'services', 'workloads'];
 
@@ -53,7 +54,8 @@ const DefaultSecondaryMastheadComponent: React.FC<Props> = (props: Props) => {
 
       if (path.startsWith('istio/new/')) {
         // 'istio/new/'.length() == 10
-        const objectType = path.substring(10);
+        // istio/new/gateway.networking.k8s.io/v1/Gateway should be K8sGateway
+        const objectType = kindToStringIncludeK8s(path.substring(10), path.substring(path.lastIndexOf('/') + 1));
         title = `Create ${objectType}`;
       } else if (path === 'istio') {
         title = 'Istio Config';

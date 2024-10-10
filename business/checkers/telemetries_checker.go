@@ -6,8 +6,6 @@ import (
 	"github.com/kiali/kiali/models"
 )
 
-const TelemetryCheckerType = "telemetry"
-
 type TelemetryChecker struct {
 	Namespaces  models.Namespaces
 	Telemetries []*telemetry_v1.Telemetry

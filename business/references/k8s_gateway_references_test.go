@@ -7,6 +7,7 @@ import (
 	k8s_networking_v1 "sigs.k8s.io/gateway-api/apis/v1"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
 )
@@ -30,7 +31,7 @@ func TestK8sGatewayReferences(t *testing.T) {
 	}
 
 	references := gatewayReferences.References()
-	gateway := references[models.IstioReferenceKey{ObjectType: "k8sgateway", Namespace: "bookinfo", Name: "bookinfo"}]
+	gateway := references[models.IstioReferenceKey{ObjectGVK: kubernetes.K8sGateways, Namespace: "bookinfo", Name: "bookinfo"}]
 
 	assert.Len(gateway.ObjectReferences, 2)
 	assert.Equal(gateway.ObjectReferences[0].Name, "details")
@@ -56,7 +57,7 @@ func TestK8sGatewayNoReferences(t *testing.T) {
 	}
 
 	references := gatewayReferences.References()
-	gateway := references[models.IstioReferenceKey{ObjectType: "k8sgateway", Namespace: "bookinfo", Name: "bookinfo"}]
+	gateway := references[models.IstioReferenceKey{ObjectGVK: kubernetes.K8sGateways, Namespace: "bookinfo", Name: "bookinfo"}]
 
 	assert.Empty(gateway.ObjectReferences)
 }

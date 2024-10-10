@@ -10,8 +10,6 @@ import (
 	"github.com/kiali/kiali/models"
 )
 
-const PeerAuthenticationCheckerType = "peerauthentication"
-
 type PeerAuthenticationChecker struct {
 	PeerAuthentications   []*security_v1.PeerAuthentication
 	MTLSDetails           kubernetes.MTLSDetails
@@ -22,7 +20,7 @@ type PeerAuthenticationChecker struct {
 func (m PeerAuthenticationChecker) Check() models.IstioValidations {
 	validations := models.IstioValidations{}
 
-	validations.MergeValidations(common.PeerAuthenticationMultiMatchChecker(m.Cluster, PeerAuthenticationCheckerType, m.PeerAuthentications, m.WorkloadsPerNamespace).Check())
+	validations.MergeValidations(common.PeerAuthenticationMultiMatchChecker(m.Cluster, kubernetes.PeerAuthentications, m.PeerAuthentications, m.WorkloadsPerNamespace).Check())
 
 	for _, peerAuthn := range m.PeerAuthentications {
 		validations.MergeValidations(m.runChecks(peerAuthn))
@@ -34,7 +32,7 @@ func (m PeerAuthenticationChecker) Check() models.IstioValidations {
 // runChecks runs all the individual checks for a single mesh policy and appends the result into validations.
 func (m PeerAuthenticationChecker) runChecks(peerAuthn *security_v1.PeerAuthentication) models.IstioValidations {
 	peerAuthnName := peerAuthn.Name
-	key, rrValidation := EmptyValidValidation(peerAuthnName, peerAuthn.Namespace, PeerAuthenticationCheckerType, m.Cluster)
+	key, rrValidation := EmptyValidValidation(peerAuthnName, peerAuthn.Namespace, kubernetes.PeerAuthentications, m.Cluster)
 
 	var enabledCheckers []Checker
 
@@ -42,7 +40,7 @@ func (m PeerAuthenticationChecker) runChecks(peerAuthn *security_v1.PeerAuthenti
 	if peerAuthn.Spec.Selector != nil {
 		matchLabels = peerAuthn.Spec.Selector.MatchLabels
 	}
-	enabledCheckers = append(enabledCheckers, common.SelectorNoWorkloadFoundChecker(PeerAuthenticationCheckerType, matchLabels, m.WorkloadsPerNamespace))
+	enabledCheckers = append(enabledCheckers, common.SelectorNoWorkloadFoundChecker(kubernetes.PeerAuthentications, matchLabels, m.WorkloadsPerNamespace))
 	if config.IsRootNamespace(peerAuthn.Namespace) {
 		enabledCheckers = append(enabledCheckers, peerauthentications.DisabledMeshWideChecker{PeerAuthn: peerAuthn, DestinationRules: m.MTLSDetails.DestinationRules})
 	} else {

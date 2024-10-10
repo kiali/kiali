@@ -23,7 +23,7 @@ func (n GatewayReferences) References() models.IstioReferencesMap {
 		if gw.Name == "mesh" {
 			continue
 		}
-		key := models.IstioReferenceKey{Namespace: gw.Namespace, Name: gw.Name, ObjectType: models.ObjectTypeSingular[kubernetes.Gateways]}
+		key := models.IstioReferenceKey{Namespace: gw.Namespace, Name: gw.Name, ObjectGVK: kubernetes.Gateways}
 		references := &models.IstioReferences{}
 		references.WorkloadReferences = n.getWorkloadReferences(gw)
 		references.ObjectReferences = n.getConfigReferences(gw)
@@ -56,14 +56,14 @@ func (n GatewayReferences) getConfigReferences(gw *networking_v1.Gateway) []mode
 	for _, vs := range n.VirtualServices {
 		namespace := vs.Namespace
 		if len(vs.Spec.Gateways) > 0 && isGatewayListed(gw, vs.Spec.Gateways, namespace) {
-			allVSs = append(allVSs, models.IstioReference{Name: vs.Name, Namespace: vs.Namespace, ObjectType: models.ObjectTypeSingular[kubernetes.VirtualServices]})
+			allVSs = append(allVSs, models.IstioReference{Name: vs.Name, Namespace: vs.Namespace, ObjectGVK: kubernetes.VirtualServices})
 		}
 		if len(vs.Spec.Http) > 0 {
 			for _, httpRoute := range vs.Spec.Http {
 				if httpRoute != nil {
 					for _, match := range httpRoute.Match {
 						if match != nil && isGatewayListed(gw, match.Gateways, namespace) {
-							allVSs = append(allVSs, models.IstioReference{Name: vs.Name, Namespace: vs.Namespace, ObjectType: models.ObjectTypeSingular[kubernetes.VirtualServices]})
+							allVSs = append(allVSs, models.IstioReference{Name: vs.Name, Namespace: vs.Namespace, ObjectGVK: kubernetes.VirtualServices})
 						}
 					}
 				}
@@ -74,7 +74,7 @@ func (n GatewayReferences) getConfigReferences(gw *networking_v1.Gateway) []mode
 				if tlsRoute != nil {
 					for _, match := range tlsRoute.Match {
 						if match != nil && isGatewayListed(gw, match.Gateways, namespace) {
-							allVSs = append(allVSs, models.IstioReference{Name: vs.Name, Namespace: vs.Namespace, ObjectType: models.ObjectTypeSingular[kubernetes.VirtualServices]})
+							allVSs = append(allVSs, models.IstioReference{Name: vs.Name, Namespace: vs.Namespace, ObjectGVK: kubernetes.VirtualServices})
 						}
 					}
 				}
@@ -84,7 +84,7 @@ func (n GatewayReferences) getConfigReferences(gw *networking_v1.Gateway) []mode
 	}
 	// filter unique references
 	for _, vs := range allVSs {
-		key := util.BuildNameNSTypeKey(vs.Name, vs.Namespace, vs.ObjectType)
+		key := util.BuildNameNSTypeKey(vs.Name, vs.Namespace, vs.ObjectGVK)
 		if !keys[key] {
 			result = append(result, vs)
 			keys[key] = true

@@ -8,7 +8,15 @@ import { IstioConfigNewPage } from 'pages/IstioConfigNew/IstioConfigNewPage';
  * do not work with react-router params (like Openshift Console)
  */
 export const IstioConfigNewRoute: React.FC = () => {
-  const { objectType } = useParams<{ objectType: string }>();
+  const { objectGroup, objectVersion, objectKind } = useParams<{
+    objectGroup: string;
+    objectKind: string;
+    objectVersion: string;
+  }>();
 
-  return <IstioConfigNewPage objectType={objectType!}></IstioConfigNewPage>;
+  return (
+    <IstioConfigNewPage
+      objectGVK={{ Group: objectGroup!, Version: objectVersion!, Kind: objectKind! }}
+    ></IstioConfigNewPage>
+  );
 };

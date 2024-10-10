@@ -17,6 +17,7 @@ import { KialiPageLink } from 'components/Link/KialiPageLink';
 import { kialiStyle } from 'styles/StyleUtils';
 import { t } from 'utils/I18nUtils';
 import { ExternalLinkAltIcon } from '@patternfly/react-icons';
+import { dicIstioTypeToGVK } from '../../types/IstioConfigList';
 
 interface LinkInfo {
   displayName: string;
@@ -185,9 +186,10 @@ export const getLink = (
         break;
       case NodeType.SERVICE:
         if (nodeData.isServiceEntry) {
-          link = `/namespaces/${encodeURIComponent(
-            nodeData.isServiceEntry.namespace
-          )}/istio/serviceentries/${encodeURIComponent(service!)}`;
+          const seGVK = dicIstioTypeToGVK['ServiceEntry'];
+          link = `/namespaces/${encodeURIComponent(nodeData.isServiceEntry.namespace)}/istio/${seGVK.Group}/${
+            seGVK.Version
+          }/${seGVK.Kind}/${encodeURIComponent(service!)}`;
         } else {
           link = `/namespaces/${encodeURIComponent(namespace)}/services/${encodeURIComponent(service!)}`;
         }

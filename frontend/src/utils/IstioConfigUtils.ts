@@ -1,6 +1,7 @@
 import { IstioConfigDetails } from '../types/IstioConfigDetails';
 import {
   ConnectionPoolSettings,
+  GroupVersionKind,
   IstioObject,
   ObjectCheck,
   OutlierDetection,
@@ -8,7 +9,7 @@ import {
   Validations
 } from '../types/IstioObjects';
 import _ from 'lodash';
-import { IstioConfigItem } from 'types/IstioConfigList';
+import { dicIstioTypeToGVK, IstioConfigItem } from 'types/IstioConfigList';
 
 export const mergeJsonPatch = (objectModified: object, object?: object): object => {
   if (!object) {
@@ -223,3 +224,55 @@ export const getReconciliationCondition = (
   const istioObject = getIstioObject(istioConfigDetails);
   return istioObject?.status?.conditions?.find(condition => condition.type === 'Reconciled');
 };
+
+export function getIstioObjectGVK(apiVersion?: string, kind?: string): GroupVersionKind {
+  if (!apiVersion || !kind) {
+    return { Group: '', Version: '', Kind: '' };
+  }
+  const parts = apiVersion.split('/');
+  if (parts.length !== 2) {
+    // should not happen, but not the best way, only an alternative
+    return dicIstioTypeToGVK[kind];
+  }
+  return { Group: parts[0], Version: parts[1], Kind: kind! };
+}
+
+export function gvkToString(gvk: GroupVersionKind): string {
+  if (!gvk || (!gvk.Group && !gvk.Version && !gvk.Kind)) {
+    return '';
+  }
+  if (!gvk.Group || !gvk.Version) {
+    return gvk.Kind;
+  }
+  return `${gvk.Group}/${gvk.Version}, Kind=${gvk.Kind}`;
+}
+
+export function stringToGVK(gvk: string): GroupVersionKind {
+  const parts = gvk.split(',');
+  if (parts.length !== 2) {
+    // for workloads, apps and services
+    return { Group: '', Version: '', Kind: gvk };
+  }
+  const apiParts = parts[0].split('/');
+  if (apiParts.length !== 2) {
+    // should not happen
+    return { Group: '', Version: '', Kind: parts[1] };
+  }
+  return { Group: apiParts[0], Version: apiParts[1], Kind: parts[1] };
+}
+
+export function kindToStringIncludeK8s(apiVersion?: string, kind?: string): string {
+  if (!kind) {
+    return '';
+  }
+  if (apiVersion?.includes('k8s')) {
+    return `K8s${kind}`;
+  }
+  return kind;
+}
+
+export function istioTypesToGVKString(istioTypes: string[]): string[] {
+  return istioTypes.map(type => {
+    return gvkToString(dicIstioTypeToGVK[type]);
+  });
+}

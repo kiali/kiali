@@ -140,17 +140,17 @@ func (in *AppService) GetClusterAppList(ctx context.Context, criteria AppCriteri
 			if criteria.IncludeIstioResources {
 				vsFiltered := kubernetes.FilterVirtualServicesByService(istioConfigList.VirtualServices, srv.Namespace, srv.Name)
 				for _, v := range vsFiltered {
-					ref := models.BuildKey(v.Kind, v.Name, v.Namespace, cluster)
+					ref := models.BuildKey(kubernetes.VirtualServices, v.Name, v.Namespace, cluster)
 					svcReferences = append(svcReferences, &ref)
 				}
 				drFiltered := kubernetes.FilterDestinationRulesByService(istioConfigList.DestinationRules, srv.Namespace, srv.Name)
 				for _, d := range drFiltered {
-					ref := models.BuildKey(d.Kind, d.Name, d.Namespace, cluster)
+					ref := models.BuildKey(kubernetes.DestinationRules, d.Name, d.Namespace, cluster)
 					svcReferences = append(svcReferences, &ref)
 				}
 				gwFiltered := kubernetes.FilterGatewaysByVirtualServices(istioConfigList.Gateways, istioConfigList.VirtualServices)
 				for _, g := range gwFiltered {
-					ref := models.BuildKey(g.Kind, g.Name, g.Namespace, cluster)
+					ref := models.BuildKey(kubernetes.Gateways, g.Name, g.Namespace, cluster)
 					svcReferences = append(svcReferences, &ref)
 				}
 
@@ -295,17 +295,17 @@ func (in *AppService) GetAppList(ctx context.Context, criteria AppCriteria) (mod
 				if criteria.IncludeIstioResources {
 					vsFiltered := kubernetes.FilterVirtualServicesByService(istioConfigList.VirtualServices, srv.Namespace, srv.Name)
 					for _, v := range vsFiltered {
-						ref := models.BuildKey(v.Kind, v.Name, v.Namespace, criteria.Cluster)
+						ref := models.BuildKey(kubernetes.VirtualServices, v.Name, v.Namespace, criteria.Cluster)
 						svcReferences = append(svcReferences, &ref)
 					}
 					drFiltered := kubernetes.FilterDestinationRulesByService(istioConfigList.DestinationRules, srv.Namespace, srv.Name)
 					for _, d := range drFiltered {
-						ref := models.BuildKey(d.Kind, d.Name, d.Namespace, criteria.Cluster)
+						ref := models.BuildKey(kubernetes.DestinationRules, d.Name, d.Namespace, criteria.Cluster)
 						svcReferences = append(svcReferences, &ref)
 					}
 					gwFiltered := kubernetes.FilterGatewaysByVirtualServices(istioConfigList.Gateways, istioConfigList.VirtualServices)
 					for _, g := range gwFiltered {
-						ref := models.BuildKey(g.Kind, g.Name, g.Namespace, criteria.Cluster)
+						ref := models.BuildKey(kubernetes.Gateways, g.Name, g.Namespace, criteria.Cluster)
 						svcReferences = append(svcReferences, &ref)
 					}
 

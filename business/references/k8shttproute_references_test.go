@@ -9,6 +9,7 @@ import (
 	k8s_networking_v1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
 )
@@ -23,7 +24,7 @@ func prepareTestForK8sHTTPRoute(route *k8s_networking_v1.HTTPRoute) models.Istio
 		K8sHTTPRoutes:      []*k8s_networking_v1.HTTPRoute{route},
 		K8sReferenceGrants: []*k8s_networking_v1beta1.ReferenceGrant{data.CreateReferenceGrant("rg", route.Namespace, "bookinfo")},
 	}
-	return *routeReferences.References()[models.IstioReferenceKey{ObjectType: "k8shttproute", Namespace: route.Namespace, Name: route.Name}]
+	return *routeReferences.References()[models.IstioReferenceKey{ObjectGVK: kubernetes.K8sHTTPRoutes, Namespace: route.Namespace, Name: route.Name}]
 }
 
 func TestK8sHTTPRouteReferences(t *testing.T) {
@@ -46,11 +47,11 @@ func TestK8sHTTPRouteReferences(t *testing.T) {
 	// Check Gateway references
 	assert.Equal(references.ObjectReferences[0].Name, "gatewayapi")
 	assert.Equal(references.ObjectReferences[0].Namespace, "bookinfo")
-	assert.Equal(references.ObjectReferences[0].ObjectType, "k8sgateway")
+	assert.Equal(references.ObjectReferences[0].ObjectGVK.String(), kubernetes.K8sGateways.String())
 	// Reference Grant
 	assert.Equal(references.ObjectReferences[1].Name, "rg")
 	assert.Equal(references.ObjectReferences[1].Namespace, "bookinfo")
-	assert.Equal(references.ObjectReferences[1].ObjectType, "k8sreferencegrant")
+	assert.Equal(references.ObjectReferences[1].ObjectGVK.String(), kubernetes.K8sReferenceGrants.String())
 }
 
 func TestK8sHTTPRouteNoReferences(t *testing.T) {

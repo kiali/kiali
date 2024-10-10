@@ -156,7 +156,7 @@ const serviceList: ServiceListItem[] = [
     isAmbient: false,
     labels: { app: 'details', service: 'details' },
     ports: { http: 9080 },
-    validation: { name: 'details', objectType: 'service', valid: true, checks: [] },
+    validation: { name: 'details', objectGVK: { Group: '', Version: '', Kind: 'service' }, valid: true, checks: [] },
     istioReferences: [],
     kialiWizard: '',
     serviceRegistry: 'Kubernetes'
@@ -169,7 +169,7 @@ const serviceList: ServiceListItem[] = [
     isAmbient: false,
     labels: { app: 'reviews', service: 'reviews' },
     ports: { http: 9080 },
-    validation: { name: 'reviews', objectType: 'service', valid: true, checks: [] },
+    validation: { name: 'reviews', objectGVK: { Group: '', Version: '', Kind: 'service' }, valid: true, checks: [] },
     istioReferences: [],
     kialiWizard: '',
     serviceRegistry: 'Kubernetes'
@@ -182,7 +182,7 @@ const serviceList: ServiceListItem[] = [
     isAmbient: false,
     labels: { app: 'ratings', service: 'ratings' },
     ports: { http: 9080 },
-    validation: { name: 'ratings', objectType: 'service', valid: true, checks: [] },
+    validation: { name: 'ratings', objectGVK: { Group: '', Version: '', Kind: 'service' }, valid: true, checks: [] },
     istioReferences: [],
     kialiWizard: '',
     serviceRegistry: 'Kubernetes'
@@ -195,7 +195,12 @@ const serviceList: ServiceListItem[] = [
     isAmbient: false,
     labels: { app: 'productpage', service: 'productpage' },
     ports: { http: 9080 },
-    validation: { name: 'productpage', objectType: 'service', valid: true, checks: [] },
+    validation: {
+      name: 'productpage',
+      objectGVK: { Group: '', Version: '', Kind: 'service' },
+      valid: true,
+      checks: []
+    },
     istioReferences: [],
     kialiWizard: '',
     serviceRegistry: 'Kubernetes'
@@ -304,7 +309,12 @@ describe('LabelFilter', () => {
         isAmbient: false,
         labels: { app: 'details', service: 'details' },
         ports: { http: 9080 },
-        validation: { name: 'details', objectType: 'service', valid: true, checks: [] },
+        validation: {
+          name: 'details',
+          objectGVK: { Group: '', Version: '', Kind: 'service' },
+          valid: true,
+          checks: []
+        },
         istioReferences: [],
         kialiWizard: '',
         serviceRegistry: 'Kubernetes'

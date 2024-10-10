@@ -252,7 +252,7 @@ func testValidationAdded(t *testing.T, destinationRules []*networking_v1.Destina
 	assert.NotEmpty(vals)
 	assert.Equal(1, len(vals))
 
-	validation, ok := vals[models.BuildKey(DestinationRulesCheckerType, "reviews", "bookinfo", config.DefaultClusterID)]
+	validation, ok := vals[models.BuildKey(kubernetes.DestinationRules, "reviews", "bookinfo", config.DefaultClusterID)]
 	assert.True(ok)
 	assert.True(validation.Valid)
 
@@ -275,7 +275,7 @@ func testValidationsNotAdded(t *testing.T, destinationRules []*networking_v1.Des
 	}.Check()
 
 	assert.Empty(vals)
-	validation, ok := vals[models.BuildKey(DestinationRulesCheckerType, "reviews", "bookinfo", config.DefaultClusterID)]
+	validation, ok := vals[models.BuildKey(kubernetes.DestinationRules, "reviews", "bookinfo", config.DefaultClusterID)]
 
 	assert.False(ok)
 	assert.Nil(validation)
@@ -286,7 +286,7 @@ func presentReferences(t *testing.T, validation models.IstioValidation, ns strin
 	assert.True(len(validation.References) > 0)
 
 	for _, sn := range serviceNames {
-		refKey := models.IstioValidationKey{ObjectType: "destinationrule", Namespace: ns, Name: sn, Cluster: config.DefaultClusterID}
+		refKey := models.IstioValidationKey{ObjectGVK: kubernetes.DestinationRules, Namespace: ns, Name: sn, Cluster: config.DefaultClusterID}
 		assert.Contains(validation.References, refKey)
 	}
 }

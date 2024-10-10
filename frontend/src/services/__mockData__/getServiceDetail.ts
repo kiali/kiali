@@ -1,5 +1,6 @@
 import { ServiceDetailsInfo } from '../../types/ServiceInfo';
 import { ValidationTypes } from '../../types/IstioObjects';
+import { dicIstioTypeToGVK } from '../../types/IstioConfigList';
 
 export const SERVICE_DETAILS: ServiceDetailsInfo = {
   service: {
@@ -60,6 +61,8 @@ export const SERVICE_DETAILS: ServiceDetailsInfo = {
   ],
   virtualServices: [
     {
+      kind: 'VirtualService',
+      apiVersion: 'networking.istio.io/v1',
       metadata: {
         name: 'reviews',
         creationTimestamp: '2018-07-02T13:44:01+02:00',
@@ -88,6 +91,8 @@ export const SERVICE_DETAILS: ServiceDetailsInfo = {
   k8sGRPCRoutes: [],
   destinationRules: [
     {
+      kind: 'DestinationRule',
+      apiVersion: 'networking.istio.io/v1',
       metadata: {
         name: 'reviews',
         creationTimestamp: '2018-07-02T13:44:01+02:00',
@@ -128,10 +133,10 @@ export const SERVICE_DETAILS: ServiceDetailsInfo = {
   workloads: [],
   health: undefined,
   validations: {
-    destinationrule: {
+    'networking.istio.io/v1, Kind=DestinationRule': {
       reviews: {
         name: 'details',
-        objectType: 'destinationrule',
+        objectGVK: dicIstioTypeToGVK['DestinationRule'],
         valid: false,
         checks: [
           {
