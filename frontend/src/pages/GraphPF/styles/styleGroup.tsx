@@ -38,6 +38,30 @@ const focusOverlayStyle = kialiStyle({
   stroke: ColorFocus
 });
 
+// the selected group has an active border, but the background remains unchanged
+const selectedGroupStyle = {
+  $nest: {
+    '& .pf-topology__group__background': {
+      fill: PFColors.BackgroundColorLight300,
+      stroke: PFColors.Active
+    },
+    '&.pf-m-alt-group .pf-topology__group__background': {
+      fill: 'var(--pf-topology__group--m-alt-group--topology__group__background--Fill)',
+      stroke: PFColors.Active
+    }
+  }
+};
+
+const groupClass = kialiStyle({
+  $nest: {
+    '&.pf-m-selected': selectedGroupStyle,
+    '&.pf-m-selected.pf-m-hover': selectedGroupStyle,
+    '&.pf-m-hover .pf-topology__group__background': {
+      stroke: PFColors.Color200
+    }
+  }
+});
+
 const StyleGroupComponent: React.FC<StyleGroupProps> = ({
   collapsedHeight = 75,
   collapsedWidth = 75,
@@ -60,30 +84,6 @@ const StyleGroupComponent: React.FC<StyleGroupProps> = ({
   const onMouseLeave = (): void => {
     data.onHover(element, false);
   };
-
-  // the selected group has an active border, but the background remains unchanged
-  const selectedGroupStyle = {
-    $nest: {
-      '& .pf-topology__group__background': {
-        fill: PFColors.BackgroundColorLight300,
-        stroke: PFColors.Active
-      },
-      '&.pf-m-alt-group .pf-topology__group__background': {
-        fill: 'var(--pf-topology__group--m-alt-group--topology__group__background--Fill)',
-        stroke: PFColors.Active
-      }
-    }
-  };
-
-  const groupClass = kialiStyle({
-    $nest: {
-      '&.pf-m-selected': selectedGroupStyle,
-      '&.pf-m-selected.pf-m-hover': selectedGroupStyle,
-      '&.pf-m-hover .pf-topology__group__background': {
-        stroke: PFColors.Color200
-      }
-    }
-  });
 
   const passedData = React.useMemo(() => {
     const newData = { ...data };
