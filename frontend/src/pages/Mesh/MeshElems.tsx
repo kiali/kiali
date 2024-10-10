@@ -146,6 +146,9 @@ export const setNodeLabel = (node: NodeModel, _nodeMap: NodeMap): void => {
         break;
       case MeshInfraType.ISTIOD:
         pfBadge = PFBadges.Istio;
+        if (data.infraData && data.infraData.tag) {
+          content.push(`Tag: ${data.infraData.tag.name}`);
+        }
         break;
       case MeshInfraType.KIALI:
         pfBadge = PFBadges.Kiali;

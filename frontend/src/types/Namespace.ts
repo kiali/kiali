@@ -4,6 +4,7 @@ export interface Namespace {
   isAmbient?: boolean;
   labels?: { [key: string]: string };
   annotations?: { [key: string]: string };
+  revision?: string;
 }
 
 export const namespaceFromString = (namespace: string) => ({ name: namespace });

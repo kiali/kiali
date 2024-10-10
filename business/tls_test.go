@@ -13,6 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/istio/istiotest"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/models"
@@ -45,8 +46,8 @@ func TestMeshStatusEnabled(t *testing.T) {
 
 	k8s := kubetest.NewFakeK8sClient(objs...)
 	SetupBusinessLayer(t, k8s, *conf)
-	discovery := &fakeMeshDiscovery{
-		mesh: models.Mesh{
+	discovery := &istiotest.FakeDiscovery{
+		MeshReturn: models.Mesh{
 			ControlPlanes: []models.ControlPlane{{
 				IstiodNamespace: conf.IstioNamespace,
 				Revision:        "default",
@@ -91,8 +92,8 @@ func TestMeshStatusEnabledAutoMtls(t *testing.T) {
 
 	k8s := kubetest.NewFakeK8sClient(objs...)
 	SetupBusinessLayer(t, k8s, *conf)
-	discovery := &fakeMeshDiscovery{
-		mesh: models.Mesh{
+	discovery := &istiotest.FakeDiscovery{
+		MeshReturn: models.Mesh{
 			ControlPlanes: []models.ControlPlane{{
 				IstiodNamespace: conf.IstioNamespace,
 				Revision:        "default",
@@ -140,8 +141,8 @@ func TestMeshStatusPartiallyEnabled(t *testing.T) {
 
 	k8s := kubetest.NewFakeK8sClient(objs...)
 	SetupBusinessLayer(t, k8s, *conf)
-	discovery := &fakeMeshDiscovery{
-		mesh: models.Mesh{
+	discovery := &istiotest.FakeDiscovery{
+		MeshReturn: models.Mesh{
 			ControlPlanes: []models.ControlPlane{{
 				IstiodNamespace: conf.IstioNamespace,
 				Revision:        "default",
@@ -185,8 +186,8 @@ func TestMeshStatusNotEnabled(t *testing.T) {
 
 	k8s := kubetest.NewFakeK8sClient(objs...)
 	SetupBusinessLayer(t, k8s, *conf)
-	discovery := &fakeMeshDiscovery{
-		mesh: models.Mesh{
+	discovery := &istiotest.FakeDiscovery{
+		MeshReturn: models.Mesh{
 			ControlPlanes: []models.ControlPlane{{
 				IstiodNamespace: conf.IstioNamespace,
 				Revision:        "default",
@@ -233,8 +234,8 @@ func TestMeshStatusDisabled(t *testing.T) {
 
 	k8s := kubetest.NewFakeK8sClient(objs...)
 	SetupBusinessLayer(t, k8s, *conf)
-	discovery := &fakeMeshDiscovery{
-		mesh: models.Mesh{
+	discovery := &istiotest.FakeDiscovery{
+		MeshReturn: models.Mesh{
 			ControlPlanes: []models.ControlPlane{{
 				IstiodNamespace: conf.IstioNamespace,
 				Revision:        "default",
@@ -268,8 +269,8 @@ func TestMeshStatusNotEnabledAutoMtls(t *testing.T) {
 	ns := kubetest.FakeNamespaceWithLabels("test", injectionEnabledLabel)
 	k8s := kubetest.NewFakeK8sClient(ns)
 	SetupBusinessLayer(t, k8s, *conf)
-	discovery := &fakeMeshDiscovery{
-		mesh: models.Mesh{
+	discovery := &istiotest.FakeDiscovery{
+		MeshReturn: models.Mesh{
 			ControlPlanes: []models.ControlPlane{{
 				IstiodNamespace: conf.IstioNamespace,
 				Revision:        "default",
@@ -412,8 +413,8 @@ func TestNamespaceHasDestinationRuleEnabledDifferentNs(t *testing.T) {
 	conf.Deployment.ClusterWideAccess = true
 	kubernetes.SetConfig(t, *conf)
 	SetupBusinessLayer(t, k8s, *conf)
-	discovery := &fakeMeshDiscovery{
-		mesh: models.Mesh{
+	discovery := &istiotest.FakeDiscovery{
+		MeshReturn: models.Mesh{
 			ControlPlanes: []models.ControlPlane{{
 				IstiodNamespace: conf.IstioNamespace,
 				Revision:        "default",
@@ -463,8 +464,8 @@ func testNamespaceScenario(exStatus string, drs []*networking_v1.DestinationRule
 	k8sclients := make(map[string]kubernetes.ClientInterface)
 	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
 	SetupBusinessLayer(t, k8s, *conf)
-	discovery := &fakeMeshDiscovery{
-		mesh: models.Mesh{
+	discovery := &istiotest.FakeDiscovery{
+		MeshReturn: models.Mesh{
 			ControlPlanes: []models.ControlPlane{{
 				IstiodNamespace: conf.IstioNamespace,
 				Revision:        "default",

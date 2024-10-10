@@ -14,6 +14,7 @@ export type NamespaceInfo = {
   metrics?: Metric[];
   name: string;
   outboundPolicyMode?: string;
+  revision?: string;
   status?: NamespaceStatus;
   tlsStatus?: TLSStatus;
   validations?: ValidationStatus;

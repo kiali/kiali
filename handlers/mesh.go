@@ -19,15 +19,25 @@ import (
 	"github.com/kiali/kiali/tracing"
 )
 
-func IstiodCanariesStatus(w http.ResponseWriter, r *http.Request) {
-	business, err := getBusiness(r)
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
+func ControlPlanes(cache cache.KialiCache, clientFactory kubernetes.ClientFactory, conf *config.Config, discovery istio.MeshDiscovery) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		userClients, err := getUserClients(r, clientFactory)
+		if err != nil {
+			RespondWithError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+		namespaceService := business.NewNamespaceService(userClients, clientFactory.GetSAClients(), cache, conf, discovery)
 
-	irt, _ := business.Mesh.CanaryUpgradeStatus()
-	RespondWithJSON(w, http.StatusOK, irt)
+		mesh, err := discovery.Mesh(r.Context())
+		if err != nil {
+			RespondWithError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		filterAccessibleControlPlanes(r.Context(), namespaceService, mesh)
+
+		RespondWithJSON(w, http.StatusOK, mesh.ControlPlanes)
+	}
 }
 
 // MeshGraph is a REST http.HandlerFunc handling graph generation for the mesh
@@ -70,7 +80,6 @@ func MeshGraph(
 }
 
 func filterAccessibleControlPlanes(ctx context.Context, namespaceService business.NamespaceService, mesh *models.Mesh) {
-
 	authorizedControlPlanes := []models.ControlPlane{}
 	for _, cp := range mesh.ControlPlanes {
 		// Check if the user is able to access to the control plane

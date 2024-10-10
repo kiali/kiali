@@ -126,6 +126,10 @@ func sidecarInjectorConfigMapName(revision string) string {
 	return revisionedConfigMapName(baseIstioSidecarInjectorConfigMapName, revision)
 }
 
+type MeshDiscovery interface {
+	Mesh(ctx context.Context) (*models.Mesh, error)
+}
+
 // Discovery detects istio infrastructure and configuration across clusters.
 type Discovery struct {
 	conf           *config.Config
@@ -432,12 +436,10 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 	}
 
 	// Get the tags for the mesh.
-	tags, err := in.getTags(ctx, mesh.ControlPlanes)
+	_, err = in.setTags(ctx, mesh.ControlPlanes)
 	if err != nil {
 		return nil, err
 	}
-
-	mesh.Tags = tags
 
 	namespacesByClusterAndRev := map[clusterRevisionKey][]models.Namespace{}
 	// Multi-cluster is not supported without cluster wide access.
@@ -535,7 +537,7 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 	return mesh, nil
 }
 
-func (in *Discovery) getTags(ctx context.Context, controlPlanes []models.ControlPlane) ([]models.Tag, error) {
+func (in *Discovery) setTags(ctx context.Context, controlPlanes []models.ControlPlane) ([]models.Tag, error) {
 	var tags []models.Tag
 	for cluster, client := range in.kialiSAClients {
 		if !in.kialiCache.CanListWebhooks(cluster) {
@@ -573,7 +575,6 @@ func (in *Discovery) getTags(ctx context.Context, controlPlanes []models.Control
 			if cpTags, ok := tagsByClusterRev[key]; ok {
 				for _, tag := range cpTags {
 					tag := tag
-					tag.ControlPlane = controlPlane
 					controlPlane.Tags = append(controlPlane.Tags, *tag)
 				}
 			}

@@ -1,7 +1,8 @@
 import * as React from 'react';
 import { Button, ButtonVariant, Modal, ModalVariant } from '@patternfly/react-core';
 import { NamespaceInfo } from '../../types/NamespaceInfo';
-import { AuthorizationPolicy, CanaryUpgradeStatus, Sidecar } from 'types/IstioObjects';
+import { ControlPlane } from '../../types/Mesh';
+import { AuthorizationPolicy, Sidecar } from 'types/IstioObjects';
 import { MessageType } from 'types/MessageCenter';
 import { PromisesRegistry } from 'utils/CancelablePromises';
 import { DurationInSeconds } from 'types/Common';
@@ -18,7 +19,7 @@ import { dicIstioTypeToGVK } from '../../types/IstioConfigList';
 import { gvkToString } from '../../utils/IstioConfigUtils';
 
 type OverviewTrafficPoliciesProps = {
-  canaryUpgradeStatus?: CanaryUpgradeStatus;
+  controlPlanes?: ControlPlane[];
   duration: DurationInSeconds;
   hideConfirmModal: () => void;
   isOpen: boolean;
@@ -49,21 +50,12 @@ export class OverviewTrafficPolicies extends React.Component<OverviewTrafficPoli
       sidecars: [],
       loaded: this.props.opTarget === 'update',
       disableOp: true,
-      selectedRevision: this.props.kind === 'canary' ? this.getCanaryUpgradeVersion(this.props.opTarget) : ''
+      selectedRevision: this.props.kind === 'canary' ? this.props.opTarget : ''
     };
   }
 
   confirmationModalStatus = (): boolean => {
     return this.props.kind === 'canary' || this.props.kind === 'injection';
-  };
-
-  getCanaryUpgradeVersion = (opTarget: string): string => {
-    if (this.props.canaryUpgradeStatus) {
-      if (opTarget in this.props.canaryUpgradeStatus.namespacesPerRevision) {
-        return opTarget;
-      }
-    }
-    return '';
   };
 
   componentDidUpdate(prevProps: OverviewTrafficPoliciesProps): void {
@@ -73,9 +65,7 @@ export class OverviewTrafficPolicies extends React.Component<OverviewTrafficPoli
           this.fetchPermission(true);
           break;
         case 'canary':
-          this.setState({ selectedRevision: this.getCanaryUpgradeVersion(this.props.opTarget) }, () =>
-            this.fetchPermission(true)
-          );
+          this.setState({ selectedRevision: this.props.opTarget }, () => this.fetchPermission(true));
           break;
         default:
           if (this.props.opTarget === 'create') {
@@ -305,7 +295,7 @@ export class OverviewTrafficPolicies extends React.Component<OverviewTrafficPoli
   };
 
   render(): React.ReactNode {
-    const canaryVersion = this.props.kind === 'canary' ? this.getCanaryUpgradeVersion(this.props.opTarget) : '';
+    const canaryVersion = this.props.kind === 'canary' ? this.props.opTarget : '';
 
     const modalAction =
       this.props.kind === 'canary'
