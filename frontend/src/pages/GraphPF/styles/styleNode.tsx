@@ -74,6 +74,33 @@ const getNodeShape = (node: Node): React.FunctionComponent<ShapeProps> => {
   }
 };
 
+const nodeClass = kialiStyle({
+  $nest: {
+    '&.pf-m-hover': {
+      cursor: 'pointer'
+    },
+    '&.pf-m-selected .pf-topology__node__background': {
+      stroke: PFColors.Active,
+      strokeWidth: 6
+    }
+  }
+});
+
+// Hide the kebab menu of Patternfly topology nodes
+const labelClass = kialiStyle({
+  $nest: {
+    '& text:not(.pf-m-secondary)': {
+      transform: 'translateX(10px)'
+    },
+    '& .pf-topology__node__action-icon': {
+      display: 'none'
+    },
+    '& text ~ .pf-topology__node__separator': {
+      display: 'none'
+    }
+  }
+});
+
 const StyleNodeComponent: React.FC<StyleNodeProps> = ({ element, ...rest }) => {
   const data = element.getData();
   const detailsLevel = useDetailsLevel();
@@ -117,18 +144,6 @@ const StyleNodeComponent: React.FC<StyleNodeProps> = ({ element, ...rest }) => {
     data.onHover(element, false);
   };
 
-  const nodeClass = kialiStyle({
-    $nest: {
-      '&.pf-m-hover': {
-        cursor: 'pointer'
-      },
-      '&.pf-m-selected .pf-topology__node__background': {
-        stroke: PFColors.Active,
-        strokeWidth: 6
-      }
-    }
-  });
-
   const passedData = React.useMemo(() => {
     const newData = { ...data };
     if (detailsLevel !== ScaleDetailsLevel.high) {
@@ -153,6 +168,7 @@ const StyleNodeComponent: React.FC<StyleNodeProps> = ({ element, ...rest }) => {
       {data.isFocus && <ShapeComponent className={focusOverlayStyle} width={width} height={height} element={element} />}
       <DefaultNode
         className={nodeClass}
+        labelClassName={labelClass}
         element={element}
         {...rest}
         {...passedData}

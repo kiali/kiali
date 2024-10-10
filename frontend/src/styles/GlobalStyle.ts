@@ -86,6 +86,23 @@ export const globalStyle = kialiStyle({
           color: 'var(--pf-v5-global--link--Color--light--hover)'
         }
       }
+    },
+
+    /**
+     * Hide the kebab menu of Patternfly topology groups
+     */
+    '& .pf-topology__group__label': {
+      $nest: {
+        '& .pf-topology__node__label__badge ~ text:not(.pf-m-secondary)': {
+          transform: 'translateX(10px)'
+        },
+        '& .pf-topology__node__action-icon': {
+          display: 'none'
+        },
+        '& text ~ .pf-topology__node__separator': {
+          display: 'none'
+        }
+      }
     }
   }
 });
