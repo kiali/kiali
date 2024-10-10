@@ -26,10 +26,10 @@ import {
 } from './IstioObjects';
 import { ResourcePermissions } from './Permissions';
 import { getIstioObjectGVK, gvkToString } from '../utils/IstioConfigUtils';
+import { TypeMeta } from './Kubernetes';
 
 // @TODO rework to remove hardcoded object types, once REST API response JSON style is changed
-export interface IstioConfigItem {
-  apiVersion?: string;
+export interface IstioConfigItem extends TypeMeta {
   authorizationPolicy?: AuthorizationPolicy;
   cluster?: string;
   creationTimestamp?: string;
@@ -42,7 +42,6 @@ export interface IstioConfigItem {
   k8sReferenceGrant?: K8sReferenceGrant;
   k8sTCPRoute?: K8sTCPRoute;
   k8sTLSRoute?: K8sTLSRoute;
-  kind?: string;
   name: string;
   namespace: string;
   peerAuthentication?: PeerAuthentication;

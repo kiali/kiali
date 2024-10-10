@@ -19,11 +19,7 @@ export const sortFields: SortField<IstioConfigItem>[] = [
     isNumeric: false,
     param: 'it',
     compare: (a: IstioConfigItem, b: IstioConfigItem): number => {
-      return (
-        (a.kind ?? '').localeCompare(b.kind ?? '') ||
-        (a.apiVersion ?? '').localeCompare(b.apiVersion ?? '') ||
-        a.name.localeCompare(b.name)
-      );
+      return a.kind.localeCompare(b.kind) || a.apiVersion.localeCompare(b.apiVersion) || a.name.localeCompare(b.name);
     }
   },
   {
@@ -38,8 +34,8 @@ export const sortFields: SortField<IstioConfigItem>[] = [
       return (
         a.name.localeCompare(b.name) ||
         a.namespace.localeCompare(b.namespace) ||
-        (a.kind ?? '').localeCompare(b.kind ?? '') ||
-        (a.apiVersion ?? '').localeCompare(b.apiVersion ?? '')
+        a.kind.localeCompare(b.kind) ||
+        a.apiVersion.localeCompare(b.apiVersion)
       );
     }
   },
