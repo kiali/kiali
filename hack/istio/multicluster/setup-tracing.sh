@@ -57,6 +57,7 @@ spec:
 EOF
 
 ISTIO_INGRESS_IP=$(${CLIENT_EXE} --context "${CLUSTER1_CONTEXT}" get service -n istio-system istio-ingressgateway -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+
 helm repo add open-telemetry https://open-telemetry.github.io/opentelemetry-helm-charts
 # Disable everything except zipkin. We can't rename the service so disable that too and create one ourselves.
 helm --kube-context "${CLUSTER2_CONTEXT}" upgrade --install --namespace istio-system my-opentelemetry-collector open-telemetry/opentelemetry-collector -f - <<EOF
@@ -67,7 +68,7 @@ image:
   repository: "otel/opentelemetry-collector-contrib"
 config:
   exporters:
-    logging: {}
+    debug: {}
     zipkin:
       endpoint: http://${ISTIO_INGRESS_IP}:9411/api/v2/spans
       tls:
@@ -87,7 +88,6 @@ config:
           - memory_limiter
           - batch
         exporters:
-          - logging
           - zipkin
       metrics: null
       logs: null
@@ -123,3 +123,27 @@ spec:
       port: 9411
       targetPort: 9411
 EOF
+
+# For Tempo, we need a service with reference to the zipkin service,
+# Tempo is installed in a different namespace
+if [ "${TEMPO}" == "true" ]; then
+
+${CLIENT_EXE} create ns tempo
+
+${CLIENT_EXE} --context "${CLUSTER2_CONTEXT}" apply -f - <<EOF
+apiVersion: v1
+kind: Service
+metadata:
+  name: tempo-cr-distributor
+  namespace: tempo
+spec:
+  type: ExternalName
+  externalName: zipkin.istio-system.svc.cluster.local
+  ports:
+    - name: zipkin-port
+      protocol: TCP
+      port: 9411
+      targetPort: 9411
+EOF
+
+fi
