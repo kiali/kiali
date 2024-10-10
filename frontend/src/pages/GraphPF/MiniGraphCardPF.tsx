@@ -187,7 +187,9 @@ class MiniGraphCardPFComponent extends React.Component<MiniGraphCardPropsPF, Min
                 }}
                 isMiniGraph={true}
                 layout={KialiDagreGraph.getLayout()}
+                onDeleteTrafficRouting={this.handleDeleteTrafficRouting}
                 onEdgeTap={this.handleEdgeTap}
+                onLaunchWizard={this.handleLaunchWizard}
                 onNodeTap={this.handleNodeTap}
                 onReady={this.props.onReady}
                 setEdgeMode={this.props.setEdgeMode}
