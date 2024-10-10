@@ -69,6 +69,9 @@ import { TourStop } from 'components/Tour/TourStop';
 import { GraphTourStops } from 'pages/Graph/GraphHelpTour';
 import { supportsGroups } from 'utils/GraphUtils';
 import { GraphRefs } from './GraphPagePF';
+import { WizardAction, WizardMode } from 'components/IstioWizards/WizardActions';
+import { ServiceDetailsInfo } from 'types/ServiceInfo';
+import { PeerAuthentication } from 'types/IstioObjects';
 
 let initialLayout = false;
 let requestFit = false;
@@ -115,7 +118,16 @@ const TopologyContent: React.FC<{
   highlighter: GraphHighlighterPF;
   isMiniGraph: boolean;
   layoutName: LayoutName;
+  onDeleteTrafficRouting: (key: string, serviceDetails: ServiceDetailsInfo) => void;
   onEdgeTap?: (edge: Edge<EdgeModel>) => void;
+  onLaunchWizard: (
+    key: WizardAction,
+    mode: WizardMode,
+    namespace: string,
+    serviceDetails: ServiceDetailsInfo,
+    gateways: string[],
+    peerAuths: PeerAuthentication[]
+  ) => void;
   onNodeTap?: (node: Node<NodeModel>) => void;
   onReady: (refs: GraphRefs) => void;
   setEdgeMode: (edgeMode: EdgeMode) => void;
@@ -137,9 +149,11 @@ const TopologyContent: React.FC<{
   highlighter,
   isMiniGraph,
   layoutName,
+  onDeleteTrafficRouting,
   onEdgeTap,
   onNodeTap,
   onReady,
+  onLaunchWizard,
   setEdgeMode,
   setLayout: setLayoutName,
   setUpdateTime,
@@ -472,7 +486,11 @@ const TopologyContent: React.FC<{
       });
 
       controller.fromModel(model);
-      controller.getGraph().setData({ graphData: graphData });
+      controller.getGraph().setData({
+        graphData: graphData,
+        onDeleteTrafficRouting: onDeleteTrafficRouting,
+        onLaunchWizard: onLaunchWizard
+      });
 
       const { nodes } = elems(controller);
 
@@ -540,6 +558,8 @@ const TopologyContent: React.FC<{
     graphSettings,
     highlighter,
     layoutName,
+    onDeleteTrafficRouting,
+    onLaunchWizard,
     onReady,
     setDetailsLevel,
     setSelectedIds,
@@ -822,7 +842,16 @@ export const GraphPF: React.FC<{
   graphData: GraphData;
   isMiniGraph: boolean;
   layout: Layout;
+  onDeleteTrafficRouting: (key: string, serviceDetails: ServiceDetailsInfo) => void;
   onEdgeTap?: (edge: Edge<EdgeModel>) => void;
+  onLaunchWizard: (
+    key: WizardAction,
+    mode: WizardMode,
+    namespace: string,
+    serviceDetails: ServiceDetailsInfo,
+    gateways: string[],
+    peerAuths: PeerAuthentication[]
+  ) => void;
   onNodeTap?: (node: Node<NodeModel>) => void;
   onReady: (refs: GraphRefs) => void;
   setEdgeMode: (edgeMode: EdgeMode) => void;
@@ -842,7 +871,9 @@ export const GraphPF: React.FC<{
   graphData,
   isMiniGraph,
   layout,
+  onDeleteTrafficRouting,
   onEdgeTap,
+  onLaunchWizard,
   onNodeTap,
   onReady,
   setEdgeMode,
@@ -913,7 +944,9 @@ export const GraphPF: React.FC<{
         highlighter={highlighter!}
         isMiniGraph={isMiniGraph}
         layoutName={getLayoutName(layout)}
+        onDeleteTrafficRouting={onDeleteTrafficRouting}
         onEdgeTap={onEdgeTap}
+        onLaunchWizard={onLaunchWizard}
         onNodeTap={onNodeTap}
         onReady={onReady}
         setEdgeMode={setEdgeMode}

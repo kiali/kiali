@@ -21,6 +21,7 @@ export const DELETE_TRAFFIC_ROUTING = 'delete_traffic_routing';
 
 type Props = {
   annotations?: { [key: string]: string };
+  className?: string;
   destinationRules: DestinationRule[];
   isDisabled?: boolean;
   istioPermissions: ResourcePermissions;
@@ -70,7 +71,7 @@ export const ServiceWizardActionsDropdownGroup: React.FunctionComponent<Props> =
     } else if (isGatewayAPI) {
       return t('K8s Gateway API is not enabled');
     } else {
-      return t('Traffic routing doesn\'t exists for this service');
+      return t("Traffic routing doesn't exists for this service");
     }
   };
 
@@ -87,6 +88,7 @@ export const ServiceWizardActionsDropdownGroup: React.FunctionComponent<Props> =
 
     const wizardItem = (
       <DropdownItem
+        className={props.className}
         key={eventKey}
         component="button"
         isDisabled={!enabledItem}

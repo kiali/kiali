@@ -8,12 +8,11 @@ interface Shortcut {
 
 const shortcuts: Shortcut[] = [
   { shortcut: 'Mouse wheel', description: 'Zoom graph' },
-  { shortcut: 'Click + Drag', description: 'Pan graph' },
+  { shortcut: 'Click + Drag', description: 'Pan graph, drag node' },
   { shortcut: 'Node Click', description: 'Select node + side panel' },
   { shortcut: 'Edge Click', description: 'Select edge + side panel' },
-  { shortcut: 'Right click', description: 'Contextual menu' },
-  { shortcut: 'Kebab click', description: 'Contextual menu' },
-  { shortcut: 'Kebab: Node Graph', description: 'Drill into node detail graph' }
+  { shortcut: 'Right Click', description: 'Menu of options' },
+  { shortcut: 'Menu: Node Graph', description: 'Drill into node detail graph' }
 ];
 
 const makeShortcut = (shortcut: Shortcut): React.ReactNode => {
