@@ -97,10 +97,10 @@ export const globalStyle = kialiStyle({
           transform: 'translateX(10px)'
         },
         '& .pf-topology__node__action-icon': {
-          display: 'none'
+          visibility: 'hidden'
         },
         '& text ~ .pf-topology__node__separator': {
-          display: 'none'
+          visibility: 'hidden'
         }
       }
     }
