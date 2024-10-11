@@ -1,3 +1,5 @@
+import { Controller, Edge, isEdge, isNode, Visualization } from '@patternfly/react-topology';
+
 export const reportFilePath = 'cypress/results/performance.txt';
 
 export const visits = 5;
@@ -41,7 +43,16 @@ const measureLoadTime = (
           });
           if (isGraph) {
             cy.waitForReact();
-            cy.getReact('GraphPF').should('have.length', '1');
+            cy.getReact('GraphPF')
+              .should('have.length', '1')
+              .getCurrentState()
+              .then(state => {
+                const controller = state.graphRefs.getController() as Visualization;
+                assert.isTrue(controller.hasGraph());
+                const { nodes, edges } = elems(controller);
+                assert.notEqual(nodes.length, 0, 'Nodes should be loaded');
+                assert.notEqual(edges.length, 0, 'Edges should be loaded');
+              });
           } else {
             cy.get(loadElementToCheck).should('be.visible');
           }
@@ -95,4 +106,13 @@ const getDifference = (result, baseline: number): string => {
   } else {
     return '0';
   }
+};
+
+const elems = (c: Controller): { edges: Edge[]; nodes: Node[] } => {
+  const elems = c.getElements();
+
+  return {
+    nodes: elems.filter(e => isNode(e)) as Node[],
+    edges: elems.filter(e => isEdge(e)) as Edge[]
+  };
 };
