@@ -43,7 +43,7 @@ const measureLoadTime = (
           });
           if (isGraph) {
             cy.waitForReact();
-            cy.getReact('GraphPF')
+            cy.getReact('GraphPagePFComponent', { state: { isReady: true } })
               .should('have.length', '1')
               .getCurrentState()
               .then(state => {
