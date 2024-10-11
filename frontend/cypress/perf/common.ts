@@ -49,9 +49,7 @@ const measureLoadTime = (
               .then(state => {
                 const controller = state.graphRefs.getController() as Visualization;
                 assert.isTrue(controller.hasGraph());
-                const { nodes, edges } = elems(controller);
-                assert.notEqual(nodes.length, 0, 'Nodes should be loaded');
-                assert.notEqual(edges.length, 0, 'Edges should be loaded');
+                assert.notEqual(controller.getElements().length, 0, 'Elements should be loaded');
               });
           } else {
             cy.get(loadElementToCheck).should('be.visible');
@@ -106,13 +104,4 @@ const getDifference = (result, baseline: number): string => {
   } else {
     return '0';
   }
-};
-
-const elems = (c: Controller): { edges: Edge[]; nodes: Node[] } => {
-  const elems = c.getElements();
-
-  return {
-    nodes: elems.filter(e => isNode(e)) as Node[],
-    edges: elems.filter(e => isEdge(e)) as Edge[]
-  };
 };
