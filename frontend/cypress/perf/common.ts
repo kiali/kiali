@@ -1,4 +1,4 @@
-import { Controller, Edge, isEdge, isNode, Visualization } from '@patternfly/react-topology';
+import { Visualization } from '@patternfly/react-topology';
 
 export const reportFilePath = 'cypress/results/performance.txt';
 
