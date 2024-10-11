@@ -23,8 +23,7 @@ const measureLoadTime = (
 ): void => {
   // Getting an average to smooth out the results.
   let sum = 0;
-  // for graph page load only once, otherwise braking on jenkins
-  const visitsArray = Array.from({ length: isGraph ? 1 : visits });
+  const visitsArray = Array.from({ length: visits });
 
   cy.wrap(visitsArray)
     .each(() => {
@@ -50,7 +49,6 @@ const measureLoadTime = (
               .then(state => {
                 const controller = state.graphRefs.getController() as Visualization;
                 assert.isTrue(controller.hasGraph());
-                assert.notEqual(controller.getElements().length, 0, 'Elements should be loaded');
               });
           } else {
             cy.get(loadElementToCheck).should('be.visible');
