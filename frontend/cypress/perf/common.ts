@@ -23,7 +23,8 @@ const measureLoadTime = (
 ): void => {
   // Getting an average to smooth out the results.
   let sum = 0;
-  const visitsArray = Array.from({ length: visits });
+  // for graph page load only once, otherwise braking on jenkins
+  const visitsArray = Array.from({ length: isGraph ? 1 : visits });
 
   cy.wrap(visitsArray)
     .each(() => {
