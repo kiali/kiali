@@ -28,7 +28,7 @@ Feature: Kiali Waypoint related features
     Given user is at the "overview" page
     When user clicks in the "LIST" view
     Then user sees a "LIST" "bookinfo" namespace
-    And badge for "istio.io/use-waypoint=waypoint" is visible in the LIST view in cluster "Kubernetes" and namespace "bookinfo"
+    And badge for "istio.io/use-waypoint=waypoint" is visible in the LIST view in cluster "cluster-default" and namespace "bookinfo"
 
   @waypoint
   Scenario: The workload productpage is enrolled in waypoint
@@ -39,6 +39,35 @@ Feature: Kiali Waypoint related features
     And the user hovers in the "ambient" label and sees "L7" in the tooltip
 
   @waypoint
+  @pft
   Scenario: Validate the ambient graph
-    Given user is at the "graph" page
+    Given user is at the "graphpf" page
 
+
+  @waypoint
+  @pft
+  Scenario: User sees ztunnel traffic
+    When user graphs "bookinfo" namespaces in the patternfly graph
+    Then user sees the "bookinfo" namespace
+    Then user opens traffic menu
+    And user "enables" "ambientZtunnel" traffic option
+    Then 7 edges appear in the patternfly graph
+
+  @waypoint
+  @pft
+  Scenario: User sees waypoint traffic
+    When user graphs "bookinfo" namespaces in the patternfly graph
+    Then user sees the "bookinfo" namespace
+    Then user opens traffic menu
+    And user "enables" "ambientWaypoint" traffic option
+    Then 11 edges appear in the patternfly graph
+
+  @waypoint
+  @pft
+  Scenario: User sees no Ambient traffic
+    When user graphs "bookinfo" namespaces in the patternfly graph
+    Then user sees the "bookinfo" namespace
+    Then user opens traffic menu
+    And user "enables" "ambientTotal" traffic option
+    And user "disables" "ambient" traffic option
+    Then 2 edges appear in the patternfly graph
