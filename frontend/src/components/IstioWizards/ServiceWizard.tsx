@@ -847,7 +847,6 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
 
   render(): React.ReactNode {
     const [gatewaySelected, isMesh] = getInitGateway(this.props.virtualServices);
-    console.log(gatewaySelected, 'ded');
     const k8sGatewaySelected = getInitK8sGateway(this.props.k8sHTTPRoutes, this.props.k8sGRPCRoutes);
 
     const titleAction =
