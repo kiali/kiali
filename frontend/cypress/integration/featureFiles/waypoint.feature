@@ -40,13 +40,8 @@ Feature: Kiali Waypoint related features
 
   @waypoint
   @pft
-  Scenario: Validate the ambient graph
-    Given user is at the "graphpf" page
-
-
-  @waypoint
-  @pft
   Scenario: User sees ztunnel traffic
+    Given user is at the "graphpf" page
     When user graphs "bookinfo" namespaces in the patternfly graph
     Then user sees the "bookinfo" namespace
     Then user opens traffic menu
@@ -56,6 +51,7 @@ Feature: Kiali Waypoint related features
   @waypoint
   @pft
   Scenario: User sees waypoint traffic
+    Given user is at the "graphpf" page
     When user graphs "bookinfo" namespaces in the patternfly graph
     Then user sees the "bookinfo" namespace
     Then user opens traffic menu
@@ -65,6 +61,7 @@ Feature: Kiali Waypoint related features
   @waypoint
   @pft
   Scenario: User sees no Ambient traffic
+    Given user is at the "graphpf" page
     When user graphs "bookinfo" namespaces in the patternfly graph
     Then user sees the "bookinfo" namespace
     Then user opens traffic menu
