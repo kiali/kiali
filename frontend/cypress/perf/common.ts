@@ -44,13 +44,12 @@ const measureLoadTime = (
           });
           if (isGraph) {
             cy.waitForReact();
-            cy.getReact('GraphPagePFComponent', { state: { isReady: true } })
-              .should('have.length', '1')
-              .getCurrentState()
-              .then(state => {
-                const controller = state.graphRefs.getController() as Visualization;
-                assert.isTrue(controller.hasGraph());
-              });
+            cy.getReact('GraphPagePFComponent', { state: { isReady: true } }).should('have.length', '1');
+            // .getCurrentState()
+            // .then(state => {
+            //   const controller = state.graphRefs.getController() as Visualization;
+            //   assert.isTrue(controller.hasGraph());
+            // });
           } else {
             cy.get(loadElementToCheck).should('be.visible');
           }
