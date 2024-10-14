@@ -294,7 +294,7 @@ cat ${ISTIO_DIR}/samples/addons/prometheus.yaml | sed "s/istio-system/external-i
 
 # There's no istio on the remote cluster so install gateway CRDs. 
 kubectl get crd gateways.gateway.networking.k8s.io --context="${CTX_REMOTE_CLUSTER}" &> /dev/null || \
-  { kubectl kustomize "github.com/kubernetes-sigs/gateway-api/config/crd?ref=v1.1.0" | kubectl apply -f - --context="${CTX_REMOTE_CLUSTER}"; }
+  { kubectl kustomize "github.com/kubernetes-sigs/gateway-api/config/crd?ref=v1.2.0" | kubectl apply -f - --context="${CTX_REMOTE_CLUSTER}"; }
 
 # Configure Prometheus federation
 # Open up remote prom for scraping by the centralized prom.
