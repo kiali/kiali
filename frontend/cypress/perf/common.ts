@@ -1,5 +1,3 @@
-// import { Visualization } from '@patternfly/react-topology';
-
 export const reportFilePath = 'cypress/results/performance.txt';
 
 export const visits = 5;
@@ -24,7 +22,7 @@ const measureLoadTime = (
   // Getting an average to smooth out the results.
   let sum = 0;
   // for graph page load only once, otherwise braking on jenkins
-  const visitsArray = Array.from({ length: isGraph ? 1 : visits });
+  const visitsArray = Array.from({ length: visits });
 
   cy.wrap(visitsArray)
     .each(() => {
@@ -45,11 +43,8 @@ const measureLoadTime = (
           if (isGraph) {
             cy.waitForReact();
             cy.getReact('GraphPagePFComponent', { state: { isReady: true } }).should('have.length', '1');
-            // .getCurrentState()
-            // .then(state => {
-            //   const controller = state.graphRefs.getController() as Visualization;
-            //   assert.isTrue(controller.hasGraph());
-            // });
+            // @TODO this check fails on jenkins with CPU/Memory error, to find a better solution
+            // .getCurrentState().then(state => {const controller = state.graphRefs.getController() as Visualization; assert.isTrue(controller.hasGraph()); });
           } else {
             cy.get(loadElementToCheck).should('be.visible');
           }

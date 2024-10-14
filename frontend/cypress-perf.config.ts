@@ -4,12 +4,9 @@ import { getAuthStrategy } from './cypress/plugins/setup';
 /* eslint-disable import/no-default-export*/
 export default defineConfig({
   fixturesFolder: 'cypress/fixtures/perf',
-  numTestsKeptInMemory: 0,
-  experimentalMemoryManagement: true,
   env: {
     timeout: 10000,
-    threshold: 100000,
-    CYPRESS_NO_COMMAND_LOG: 1
+    threshold: 100000
   },
   e2e: {
     baseUrl: 'http://localhost:3000',
