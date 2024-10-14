@@ -1,4 +1,4 @@
-import { Visualization } from '@patternfly/react-topology';
+// import { Visualization } from '@patternfly/react-topology';
 
 export const reportFilePath = 'cypress/results/performance.txt';
 
