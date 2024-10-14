@@ -195,11 +195,6 @@ func ControlPlaneMetrics(promSupplier promClientSupplier, discovery remoteCluste
 			return
 		}
 
-		if discovery.IsRemoteCluster(r.Context(), cluster) {
-			RespondWithError(w, http.StatusServiceUnavailable, fmt.Sprintf("cannot fetch control plane metrics for remote cluster [%s]", cluster))
-			return
-		}
-
 		if namespace != config.Get().IstioNamespace {
 			RespondWithError(w, http.StatusBadRequest, fmt.Sprintf("namespace [%s] is not the control plane namespace", namespace))
 			return
@@ -220,17 +215,14 @@ func ControlPlaneMetrics(promSupplier promClientSupplier, discovery remoteCluste
 
 		metrics := make(models.MetricsMap)
 
-		// Should we exclude remote clusters?  what if those metrics are in a unified db? Can they be?
-		if isRemoteCluster := discovery.IsRemoteCluster(r.Context(), cluster); !isRemoteCluster {
-			controlPlaneMetrics, err := metricsService.GetControlPlaneMetrics(params, cpWorkload.Pods, nil)
-			if err != nil {
-				RespondWithError(w, http.StatusServiceUnavailable, err.Error())
-				return
-			}
+		controlPlaneMetrics, err := metricsService.GetControlPlaneMetrics(params, cpWorkload.Pods, nil)
+		if err != nil {
+			RespondWithError(w, http.StatusServiceUnavailable, err.Error())
+			return
+		}
 
-			for k, v := range controlPlaneMetrics {
-				metrics[k] = v
-			}
+		for k, v := range controlPlaneMetrics {
+			metrics[k] = v
 		}
 
 		RespondWithJSON(w, http.StatusOK, metrics)
