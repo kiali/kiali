@@ -69,19 +69,12 @@ export class GatewaySelector extends React.Component<Props, GatewaySelectorState
     this.setState((prevState) => ({ isOpen: !prevState.isOpen }));
   };
 
-  onSelect = (_event: React.MouseEvent<Element, MouseEvent> | undefined, value: string | number | undefined) => {
-    this.setState({ selectedGateway: value as string, isOpen: false });
-  };
-
   toggle = (toggleRef: React.Ref<any>) => (
     <MenuToggle
       ref={toggleRef}
       onClick={this.onToggleClick}
       isExpanded={this.state.isOpen} 
       isDisabled={!this.state.addGateway || this.state.newGateway || this.props.gateways.length === 0} 
-      style={{
-        width: '200px',
-      } as React.CSSProperties}
     >
       {this.state.selectedGateway ?? this.props.gateways[0]}
     </MenuToggle>
@@ -142,7 +135,8 @@ export class GatewaySelector extends React.Component<Props, GatewaySelectorState
       case GatewayForm.GATEWAY_SELECTED:
         this.setState(
           {
-            selectedGateway: value
+            selectedGateway: value,
+            isOpen: false,
           },
           () => this.props.onGatewayChange(this.isGatewayValid(), this.state)
         );
@@ -248,7 +242,7 @@ export class GatewaySelector extends React.Component<Props, GatewaySelectorState
                   id="selectGateway"
                   isOpen={this.state.isOpen}
                   selected={this.state.selectedGateway}
-                  onSelect={this.onSelect}
+                  onSelect={(_event, gw) => this.onFormChange(GatewayForm.GATEWAY_SELECTED, gw as string)}
                   onOpenChange={(isOpen: boolean) => {
                     this.setState({ isOpen });
                   }}
