@@ -1,5 +1,5 @@
+import * as React from 'react';
 import { Bullseye, Spinner } from '@patternfly/react-core';
-import { MapIcon } from '@patternfly/react-icons';
 import ReactResizeDetector from 'react-resize-detector';
 import {
   Controller,
@@ -25,8 +25,6 @@ import {
   VisualizationSurface,
   Edge
 } from '@patternfly/react-topology';
-import { TopologyIcon } from '@patternfly/react-icons';
-import * as React from 'react';
 import { Layout } from 'types/Graph';
 import { elementFactory } from './elements/elementFactory';
 import { layoutFactory } from './layouts/layoutFactory';
@@ -52,6 +50,8 @@ import { MeshTourStops } from './MeshHelpTour';
 import { KialiMeshDagre } from './layouts/KialiMeshDagre';
 //import { KialiMeshCola } from './layouts/KialiMeshCola';
 import { KialiDagreGraph } from 'components/CytoscapeGraph/graphs/KialiDagreGraph';
+import { KialiIcon } from 'config/KialiIcon';
+import { toolbarActiveStyle } from 'styles/GraphStyle';
 
 let initialLayout = false;
 let requestFit = false;
@@ -93,6 +93,7 @@ const TopologyContent: React.FC<{
   setLayout: (val: LayoutName) => void;
   setTarget: (meshTarget: MeshTarget) => void;
   setUpdateTime: (val: TimeInMilliseconds) => void;
+  showLegend: boolean;
   toggleLegend?: () => void;
 }> = ({
   controller,
@@ -106,6 +107,7 @@ const TopologyContent: React.FC<{
   setLayout: _setLayoutName,
   setTarget,
   setUpdateTime,
+  showLegend,
   toggleLegend
 }) => {
   //
@@ -488,8 +490,11 @@ const TopologyContent: React.FC<{
                     {
                       ariaLabel: 'Layout - Dagre',
                       id: 'toolbar_layout_dagre',
-                      disabled: LayoutName.Dagre === layoutName,
-                      icon: <TopologyIcon />,
+                      icon: (
+                        <KialiIcon.Topology
+                          className={LayoutName.Dagre === layoutName ? toolbarActiveStyle : undefined}
+                        />
+                      ),
                       tooltip: 'Layout - Dagre',
                       callback: () => {
                         _setLayoutName(LayoutName.Dagre);
@@ -498,8 +503,11 @@ const TopologyContent: React.FC<{
                     {
                       ariaLabel: 'Layout - Mesh Dagre',
                       id: 'toolbar_layout_mesh_dagre',
-                      disabled: LayoutName.MeshDagre === layoutName,
-                      icon: <TopologyIcon />,
+                      icon: (
+                        <KialiIcon.Topology
+                          className={LayoutName.MeshDagre === layoutName ? toolbarActiveStyle : undefined}
+                        />
+                      ),
                       tooltip: 'Layout - Mesh Dagre',
                       callback: () => {
                         _setLayoutName(LayoutName.MeshDagre);
@@ -522,7 +530,7 @@ const TopologyContent: React.FC<{
                     }
                   },
                   legend: true,
-                  legendIcon: <MapIcon />,
+                  legendIcon: <KialiIcon.Map className={showLegend ? toolbarActiveStyle : undefined} />,
                   legendTip: 'Legend',
                   legendCallback: () => {
                     if (toggleLegend) toggleLegend();
@@ -549,6 +557,7 @@ export const Mesh: React.FC<{
   setLayout: (layout: Layout) => void;
   setTarget: (meshTarget: MeshTarget) => void;
   setUpdateTime: (val: TimeInMilliseconds) => void;
+  showLegend: boolean;
   toggleLegend?: () => void;
 }> = ({
   isMiniMesh,
@@ -560,6 +569,7 @@ export const Mesh: React.FC<{
   setLayout,
   setTarget,
   setUpdateTime,
+  showLegend,
   toggleLegend
 }) => {
   //create controller on startup and register factories
@@ -616,6 +626,7 @@ export const Mesh: React.FC<{
         setLayout={setLayoutByName}
         setTarget={setTarget}
         setUpdateTime={setUpdateTime}
+        showLegend={showLegend}
         toggleLegend={toggleLegend}
       />
     </VisualizationProvider>
