@@ -2,7 +2,7 @@ import { Given, Then } from '@badeball/cypress-cucumber-preprocessor';
 
 Given('{string} namespace has the waypoint label', (namespace: string) => {
   cy.exec(`kubectl label namespace ${namespace} istio.io/use-waypoint=waypoint`, { failOnNonZeroExit: false });
-  cy.wait(5000);
+  cy.wait(10000);
 });
 
 Then('the user hovers in the {string} label and sees {string} in the tooltip', (label: string, text: string) => {
