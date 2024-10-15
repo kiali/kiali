@@ -33,7 +33,7 @@ export const BreadcrumbView: React.FC = () => {
     const page = Paths[match[3].toUpperCase()];
     const istioType = page === 'istio' ? kindToStringIncludeK8s(match[4], match[6]) : '';
     const urlParams = new URLSearchParams(search);
-    const itemPage = page !== 'istio' ? match[3] : match[7];
+    const itemPage = page !== 'istio' ? match[4] : match[7];
 
     setCluster(HistoryManager.getClusterName(urlParams));
     setIstioType(istioType);
