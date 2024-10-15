@@ -1243,7 +1243,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods))
 				w.ParseDaemonSet(&daeset[iFound])
 			} else {
-				log.Errorf("Workload %s is not found as Deployment", controllerName)
+				log.Errorf("Workload %s is not found as DaemonSet", controllerName)
 				cnFound = false
 			}
 		default:
