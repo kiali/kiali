@@ -721,3 +721,12 @@ Then('user sees all the Istio Config toggles', () => {
   cy.get('[data-test="toggle-configuration"]').should('be.checked');
   colExists('Configuration', true);
 });
+
+Then(
+  'the {string} object in {string} namespace with {string} name Istio Config is valid',
+  (object, ns, name: string) => {
+    cy.get(`[data-test="VirtualItem_Ns${ns}_${object}_${name}"]`)
+      .find('[data-test="icon-correct-validation"]')
+      .should('exist');
+  }
+);

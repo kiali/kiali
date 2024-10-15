@@ -496,3 +496,19 @@ Then('{int} edges appear in the patternfly graph', (edges: number) => {
       assert.isAtLeast(graphEdges.length, edges);
     });
 });
+
+Then('the {string} node {string} exists', (nodeName: string, action: string) => {
+  cy.waitForReact();
+  cy.getReact('GraphPagePFComponent', { state: { isReady: true } })
+    .should('have.length', 1)
+    .getCurrentState()
+    .then(state => {
+      const graphNodes = state.graphData.elements.nodes;
+      const foundNode = graphNodes.filter(node => node.data.workload === nodeName);
+      if (action === 'does') {
+        assert.isAtLeast(foundNode.length, 1);
+      } else {
+        assert.equal(foundNode.length, 0);
+      }
+    });
+});

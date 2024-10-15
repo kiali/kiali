@@ -61,9 +61,40 @@ Feature: Kiali Waypoint related features
     When user graphs "bookinfo" namespaces in the patternfly graph
     Then user sees the "bookinfo" namespace
     Then user opens traffic menu
-    And user "enables" "ambientTotal" traffic option
     And user "disables" "ambient" traffic option
     Then 2 edges appear in the patternfly graph
+
+  @waypoint
+  @pft
+  Scenario: User sees all Ambient traffic
+    Given user is at the "graphpf" page
+    When user graphs "bookinfo" namespaces in the patternfly graph
+    Then user sees the "bookinfo" namespace
+    Then user opens traffic menu
+    And user "enables" "ambientTotal" traffic option
+    And user "enables" "ambient" traffic option
+    Then 16 edges appear in the patternfly graph
+
+  @waypoint
+  @pft
+  Scenario: User sees doesn't see waypoint proxy
+    And the "waypoint" node "doesn't" exists
+
+  @waypoint
+  @pft
+  Scenario: User sees waypoint proxy
+    When user opens display menu
+    Then the display menu opens
+    Then user "enables" "filterWaypoints" edge labels
+    Then 16 edges appear in the patternfly graph
+    And the "waypoint" node "does" exists
+
+  @waypoint
+  @pft
+  Scenario: Waypoint should not have validation errors
+    Given user is at the "istio" page
+    And user selects the "bookinfo" namespace
+    Then the "K8sGateway" object in "bookinfo" namespace with "waypoint" name Istio Config is valid
 
   @waypoint
   Scenario: Namespace is labeled with the waypoint labels

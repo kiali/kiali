@@ -1,5 +1,8 @@
 import { Then } from '@badeball/cypress-cucumber-preprocessor';
 
+// waitForWorkloadEnrolled waits until Kiali returns the namespace labels updated
+// Adding the waypoint label into the bookinfo namespace
+// This is usually enough (Slower) to have the workloads enrolled
 const waitForWorkloadEnrolled = (maxRetries = 30, retryCount = 0): void => {
   if (retryCount >= maxRetries) {
     throw new Error(`Condition not met after ${maxRetries} retries`);
