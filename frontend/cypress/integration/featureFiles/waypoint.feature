@@ -11,9 +11,12 @@ Feature: Kiali Waypoint related features
     Given user is at administrator perspective
 
   @waypoint
+  Scenario: namespace is labeled with waypoint label
+    Then "bookinfo" namespace is labeled with the waypoint label
+
+  @waypoint
   Scenario: See the waypoint workload with the correct info
     Given user is at the "workloads" list page
-    And "bookinfo" namespace has the waypoint label
     When user selects the "bookinfo" namespace
     Then the "waypoint" row is visible
     And the health column on the "waypoint" row has a health icon
@@ -22,13 +25,6 @@ Feature: Kiali Waypoint related features
     And the "Labels" column on the "waypoint" row has the text "istio.io/gateway-name=waypoint"
     And the "Type" column on the "waypoint" row has the text "Deployment"
     And the "Details" column on the "waypoint" row has the text "Waypoint Proxy"
-
-  @waypoint
-  Scenario: Namespace is labeled with the waypoint labels
-    Given user is at the "overview" page
-    When user clicks in the "LIST" view
-    Then user sees a "LIST" "bookinfo" namespace
-    And badge for "istio.io/use-waypoint=waypoint" is visible in the LIST view in cluster "cluster-default" and namespace "bookinfo"
 
   @waypoint
   Scenario: The workload productpage is enrolled in waypoint
@@ -68,3 +64,10 @@ Feature: Kiali Waypoint related features
     And user "enables" "ambientTotal" traffic option
     And user "disables" "ambient" traffic option
     Then 2 edges appear in the patternfly graph
+
+  @waypoint
+  Scenario: Namespace is labeled with the waypoint labels
+    Given user is at the "overview" page
+    When user clicks in the "LIST" view
+    Then user sees a "LIST" "bookinfo" namespace
+    And badge for "istio.io/use-waypoint=waypoint" is visible in the LIST view in cluster "cluster-default" and namespace "bookinfo"
