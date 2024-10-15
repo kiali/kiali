@@ -1,6 +1,6 @@
+import * as React from 'react';
 import { Bullseye, Spinner } from '@patternfly/react-core';
 import ReactResizeDetector from 'react-resize-detector';
-import { LongArrowAltRightIcon, TopologyIcon, MapIcon } from '@patternfly/react-icons';
 import {
   Controller,
   createTopologyControlButtons,
@@ -26,7 +26,6 @@ import {
   Edge
 } from '@patternfly/react-topology';
 import { GraphData } from 'pages/Graph/GraphPage';
-import * as React from 'react';
 import {
   BoxByType,
   EdgeLabelMode,
@@ -72,6 +71,8 @@ import { GraphRefs } from './GraphPagePF';
 import { WizardAction, WizardMode } from 'components/IstioWizards/WizardActions';
 import { ServiceDetailsInfo } from 'types/ServiceInfo';
 import { PeerAuthentication } from 'types/IstioObjects';
+import { KialiIcon } from 'config/KialiIcon';
+import { toolbarActiveStyle } from 'styles/GraphStyle';
 
 let initialLayout = false;
 let requestFit = false;
@@ -108,7 +109,7 @@ export interface FocusNode {
   isSelected?: boolean;
 }
 
-// This is the main graph rendering component
+// The is the main graph rendering component
 const TopologyContent: React.FC<{
   controller: Controller;
   edgeLabels: EdgeLabelMode[];
@@ -133,6 +134,7 @@ const TopologyContent: React.FC<{
   setEdgeMode: (edgeMode: EdgeMode) => void;
   setLayout: (val: LayoutName) => void;
   setUpdateTime: (val: TimeInMilliseconds) => void;
+  showLegend: boolean;
   showOutOfMesh: boolean;
   showSecurity: boolean;
   showTrafficAnimation: boolean;
@@ -157,6 +159,7 @@ const TopologyContent: React.FC<{
   setEdgeMode,
   setLayout: setLayoutName,
   setUpdateTime,
+  showLegend,
   showOutOfMesh,
   showSecurity,
   showTrafficAnimation,
@@ -726,46 +729,40 @@ const TopologyContent: React.FC<{
                   zoomIn: false,
                   zoomOut: false,
                   customButtons: [
-                    // TODO, get rid of the show all edges option, and the disabling, when we can set an option active
-                    {
-                      ariaLabel: 'Show All Edges',
-                      callback: () => {
-                        setEdgeMode(EdgeMode.ALL);
-                      },
-                      disabled: EdgeMode.ALL === edgeMode,
-                      icon: <LongArrowAltRightIcon />,
-                      id: 'toolbar_edge_mode_all',
-                      tooltip: 'Show all edges'
-                    },
                     {
                       ariaLabel: 'Hide Healthy Edges',
                       callback: () => {
-                        //change this back when we have the active styling
-                        //setEdgeMode(EdgeMode.UNHEALTHY === edgeMode ? EdgeMode.ALL : EdgeMode.UNHEALTHY);
-                        setEdgeMode(EdgeMode.UNHEALTHY);
+                        setEdgeMode(EdgeMode.UNHEALTHY === edgeMode ? EdgeMode.ALL : EdgeMode.UNHEALTHY);
                       },
-                      disabled: EdgeMode.UNHEALTHY === edgeMode,
-                      icon: <LongArrowAltRightIcon />,
+                      icon: (
+                        <KialiIcon.LongArrowRight
+                          className={EdgeMode.UNHEALTHY === edgeMode ? toolbarActiveStyle : undefined}
+                        />
+                      ),
                       id: 'toolbar_edge_mode_unhealthy',
                       tooltip: 'Hide healthy edges'
                     },
                     {
                       ariaLabel: 'Hide All Edges',
                       id: 'toolbar_edge_mode_none',
-                      disabled: EdgeMode.NONE === edgeMode,
-                      icon: <LongArrowAltRightIcon />,
+                      icon: (
+                        <KialiIcon.LongArrowRight
+                          className={EdgeMode.NONE === edgeMode ? toolbarActiveStyle : undefined}
+                        />
+                      ),
                       tooltip: 'Hide all edges',
                       callback: () => {
-                        //change this back when we have the active styling
-                        //setEdgeMode(EdgeMode.NONE === edgeMode ? EdgeMode.ALL : EdgeMode.NONE);
-                        setEdgeMode(EdgeMode.NONE);
+                        setEdgeMode(EdgeMode.NONE === edgeMode ? EdgeMode.ALL : EdgeMode.NONE);
                       }
                     },
                     {
                       ariaLabel: 'Dagre - boxing layout',
                       id: 'toolbar_layout_dagre',
-                      disabled: LayoutName.Dagre === layoutName,
-                      icon: <TopologyIcon />,
+                      icon: (
+                        <KialiIcon.Topology
+                          className={LayoutName.Dagre === layoutName ? toolbarActiveStyle : undefined}
+                        />
+                      ),
                       tooltip: 'Dagre - boxing layout',
                       callback: () => {
                         setLayoutName(LayoutName.Dagre);
@@ -774,8 +771,11 @@ const TopologyContent: React.FC<{
                     {
                       ariaLabel: 'Grid - non-boxing layout',
                       id: 'toolbar_layout_grid',
-                      disabled: LayoutName.Grid === layoutName,
-                      icon: <TopologyIcon />,
+                      icon: (
+                        <KialiIcon.Topology
+                          className={LayoutName.Grid === layoutName ? toolbarActiveStyle : undefined}
+                        />
+                      ),
                       tooltip: 'Grid - non-boxing layout',
                       callback: () => {
                         setLayoutName(LayoutName.Grid);
@@ -784,8 +784,11 @@ const TopologyContent: React.FC<{
                     {
                       ariaLabel: 'Concentric - non-boxing layout',
                       id: 'toolbar_layout_concentric',
-                      disabled: LayoutName.Concentric === layoutName,
-                      icon: <TopologyIcon />,
+                      icon: (
+                        <KialiIcon.Topology
+                          className={LayoutName.Concentric === layoutName ? toolbarActiveStyle : undefined}
+                        />
+                      ),
                       tooltip: 'Concentric - non-boxing layout',
                       callback: () => {
                         setLayoutName(LayoutName.Concentric);
@@ -794,8 +797,11 @@ const TopologyContent: React.FC<{
                     {
                       ariaLabel: 'Breadth First - non-boxing layout',
                       id: 'toolbar_layout_breadth_first',
-                      disabled: LayoutName.BreadthFirst === layoutName,
-                      icon: <TopologyIcon />,
+                      icon: (
+                        <KialiIcon.Topology
+                          className={LayoutName.BreadthFirst === layoutName ? toolbarActiveStyle : undefined}
+                        />
+                      ),
                       tooltip: 'Breadth First - non-boxing layout',
                       callback: () => {
                         setLayoutName(LayoutName.BreadthFirst);
@@ -818,7 +824,7 @@ const TopologyContent: React.FC<{
                     }
                   },
                   legend: true,
-                  legendIcon: <MapIcon />,
+                  legendIcon: <KialiIcon.Map className={showLegend ? toolbarActiveStyle : undefined} />,
                   legendTip: 'Legend',
                   legendCallback: () => {
                     if (toggleLegend) toggleLegend();
@@ -857,6 +863,7 @@ export const GraphPF: React.FC<{
   setEdgeMode: (edgeMode: EdgeMode) => void;
   setLayout: (layout: Layout) => void;
   setUpdateTime: (val: TimeInMilliseconds) => void;
+  showLegend: boolean;
   showOutOfMesh: boolean;
   showSecurity: boolean;
   showTrafficAnimation: boolean;
@@ -879,6 +886,7 @@ export const GraphPF: React.FC<{
   setEdgeMode,
   setLayout,
   setUpdateTime,
+  showLegend,
   showOutOfMesh,
   showSecurity,
   showTrafficAnimation,
@@ -952,6 +960,7 @@ export const GraphPF: React.FC<{
         setEdgeMode={setEdgeMode}
         setLayout={setLayoutByName}
         setUpdateTime={setUpdateTime}
+        showLegend={showLegend}
         showOutOfMesh={showOutOfMesh}
         showSecurity={showSecurity}
         showTrafficAnimation={showTrafficAnimation}
