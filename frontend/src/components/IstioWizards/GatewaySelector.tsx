@@ -4,11 +4,13 @@ import {
   Form,
   FormGroup,
   FormHelperText,
-  FormSelect,
-  FormSelectOption,
   HelperText,
   HelperTextItem,
+  MenuToggle,
   Radio,
+  Select,
+  SelectList,
+  SelectOption,
   Switch,
   TextInput
 } from '@patternfly/react-core';
@@ -35,6 +37,7 @@ export type GatewaySelectorState = {
   gatewayClass: string;
   addMesh: boolean;
   port: number;
+  isOpen: boolean;
 };
 
 enum GatewayForm {
@@ -57,9 +60,25 @@ export class GatewaySelector extends React.Component<Props, GatewaySelectorState
       selectedGateway: props.gateways.length > 0 ? (props.gateway !== '' ? props.gateway : props.gateways[0]) : '',
       gatewayClass: '',
       addMesh: props.isMesh,
-      port: 80
+      port: 80,
+      isOpen: false,
     };
   }
+
+  onToggleClick = () => {
+    this.setState((prevState) => ({ isOpen: !prevState.isOpen }));
+  };
+
+  toggle = (toggleRef: React.Ref<any>) => (
+    <MenuToggle
+      ref={toggleRef}
+      onClick={this.onToggleClick}
+      isExpanded={this.state.isOpen} 
+      isDisabled={!this.state.addGateway || this.state.newGateway || this.props.gateways.length === 0} 
+    >
+      {this.state.selectedGateway ?? this.props.gateways[0]}
+    </MenuToggle>
+  );
 
   checkGwHosts = (gwHosts: string): boolean => {
     const hosts = gwHosts.split(',');
@@ -116,7 +135,8 @@ export class GatewaySelector extends React.Component<Props, GatewaySelectorState
       case GatewayForm.GATEWAY_SELECTED:
         this.setState(
           {
-            selectedGateway: value
+            selectedGateway: value,
+            isOpen: false,
           },
           () => this.props.onGatewayChange(this.isGatewayValid(), this.state)
         );
@@ -217,20 +237,29 @@ export class GatewaySelector extends React.Component<Props, GatewaySelectorState
             </FormGroup>
             {!this.state.newGateway && (
               <FormGroup fieldId="selectGateway" label={t('Gateway')}>
-                {this.props.gateways.length > 0 && (
-                  <FormSelect
-                    id="selectGateway"
-                    value={this.state.selectedGateway}
-                    isDisabled={!this.state.addGateway || this.state.newGateway || this.props.gateways.length === 0}
-                    onChange={(_event, gw: string) => this.onFormChange(GatewayForm.GATEWAY_SELECTED, gw)}
-                  >
+              {this.props.gateways.length > 0 && (
+                <Select
+                  id="selectGateway"
+                  isOpen={this.state.isOpen}
+                  selected={this.state.selectedGateway}
+                  onSelect={(_event, gw) => this.onFormChange(GatewayForm.GATEWAY_SELECTED, gw as string)}
+                  onOpenChange={(isOpen: boolean) => {
+                    this.setState({ isOpen });
+                  }}
+                  toggle={this.toggle}
+                  shouldFocusToggleOnSelect
+                >
+                  <SelectList>
                     {this.props.gateways.map(gw => (
-                      <FormSelectOption key={gw} value={gw} label={gw} />
+                      <SelectOption key={gw} value={gw}>
+                        {gw}
+                      </SelectOption>
                     ))}
-                  </FormSelect>
-                )}
-                {this.props.gateways.length === 0 && <>There are no gateways to select.</>}
-              </FormGroup>
+                  </SelectList>
+                </Select>
+              )}
+              {this.props.gateways.length === 0 && <>There are no gateways to select.</>}
+            </FormGroup>
             )}
             {this.state.newGateway && (
               <>
