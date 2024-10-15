@@ -154,7 +154,7 @@ func newClient(ctx context.Context, cfg *config.Config, token string) (*Client, 
 		// 	})
 		// 	ctx = metadata.NewOutgoingContext(ctx, requestMetadata)
 		// }
-		conn, _ := grpc.NewClient(address, opts...)
+		conn, err := grpc.NewClient(address, opts...)
 		if err == nil {
 			cc := model.NewQueryServiceClient(conn)
 			client, err = jaeger.NewGRPCJaegerClient(ctx, cc)
