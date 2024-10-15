@@ -196,6 +196,7 @@ class MiniGraphCardPFComponent extends React.Component<MiniGraphCardPropsPF, Min
                 setLayout={this.props.setLayout}
                 setUpdateTime={this.props.setUpdateTime}
                 updateSummary={this.props.updateSummary}
+                showLegend={false}
                 showOutOfMesh={true}
                 showSecurity={true}
                 showTrafficAnimation={false}
