@@ -19,7 +19,6 @@ import (
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.7.0"
 	"go.opentelemetry.io/otel/trace"
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 
 	"github.com/kiali/kiali/config"
@@ -183,7 +182,7 @@ func getExporter(collectorURL string) (sdktrace.SpanExporter, error) {
 			ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 			defer cancel()
 
-			opts := []otlptracegrpc.Option{otlptracegrpc.WithEndpoint(collectorURL), otlptracegrpc.WithDialOption(grpc.WithBlock())}
+			opts := []otlptracegrpc.Option{otlptracegrpc.WithEndpoint(collectorURL), otlptracegrpc.WithDialOption()}
 
 			if tracingOpt.Otel.TLSEnabled {
 				if tracingOpt.Otel.SkipVerify {
