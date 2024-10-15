@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -167,7 +166,7 @@ func getAggregateMetrics(w http.ResponseWriter, r *http.Request, promSupplier pr
 }
 
 // ControlPlaneMetrics is the API handler to fetch metrics to be displayed, related to a single control plane revision
-func ControlPlaneMetrics(promSupplier promClientSupplier, discovery remoteClusterIdentifier) http.HandlerFunc {
+func ControlPlaneMetrics(promSupplier promClientSupplier) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		layer, err := getBusiness(r)
 		if err != nil {
@@ -229,13 +228,9 @@ func ControlPlaneMetrics(promSupplier promClientSupplier, discovery remoteCluste
 	}
 }
 
-type remoteClusterIdentifier interface {
-	IsRemoteCluster(context.Context, string) bool
-}
-
 // NamespaceMetrics is the API handler to fetch metrics to be displayed, related to all
 // services in the namespace
-func NamespaceMetrics(promSupplier promClientSupplier, discovery remoteClusterIdentifier) http.HandlerFunc {
+func NamespaceMetrics(promSupplier promClientSupplier) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		_, err := getBusiness(r)
 		if err != nil {
@@ -274,7 +269,7 @@ func NamespaceMetrics(promSupplier promClientSupplier, discovery remoteClusterId
 
 // ClustersMetrics is the API handler to fetch metrics to be displayed, related to all
 // services in provided namespaces of given cluster
-func ClustersMetrics(promSupplier promClientSupplier, discovery remoteClusterIdentifier) http.HandlerFunc {
+func ClustersMetrics(promSupplier promClientSupplier) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
 		namespaces := query.Get("namespaces") // csl of namespaces
@@ -520,10 +515,10 @@ func prepareStatsQueries(w http.ResponseWriter, r *http.Request, rawQ []models.M
 			continue
 		}
 		if nsInfoErr, ok := nsInfos[q.Target.Namespace]; !ok {
-			errors.Add(fmt.Errorf("Missing info for namespace '%s'", q.Target.Namespace))
+			errors.Add(fmt.Errorf("missing info for namespace '%s'", q.Target.Namespace))
 			continue
 		} else if nsInfoErr.err != nil {
-			errors.Add(fmt.Errorf("Namespace '%s': %v", q.Target.Namespace, nsInfoErr.err))
+			errors.Add(fmt.Errorf("namespace '%s': %v", q.Target.Namespace, nsInfoErr.err))
 			continue
 		} else {
 			namespaceInfo := nsInfoErr.info

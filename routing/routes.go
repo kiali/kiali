@@ -871,7 +871,7 @@ func NewRoutes(
 			"ControlPlaneMetrics",
 			"GET",
 			"/api/namespaces/{namespace}/controlplanes/{controlplane}/metrics",
-			handlers.ControlPlaneMetrics(handlers.DefaultPromClientSupplier, discovery),
+			handlers.ControlPlaneMetrics(handlers.DefaultPromClientSupplier),
 			true,
 		},
 		// swagger:route GET /namespaces/{namespace}/services/{service}/dashboard services serviceDashboard
@@ -976,7 +976,7 @@ func NewRoutes(
 			"NamespaceMetrics",
 			"GET",
 			"/api/namespaces/{namespace}/metrics",
-			handlers.NamespaceMetrics(handlers.DefaultPromClientSupplier, discovery),
+			handlers.NamespaceMetrics(handlers.DefaultPromClientSupplier),
 			true,
 		},
 		// swagger:route GET /clusters/health cluster namespaces Health
@@ -1461,7 +1461,7 @@ func NewRoutes(
 			"ClustersMetrics",
 			"GET",
 			"/api/clusters/metrics",
-			handlers.ClustersMetrics(handlers.DefaultPromClientSupplier, discovery),
+			handlers.ClustersMetrics(handlers.DefaultPromClientSupplier),
 			true,
 		},
 		// swagger:route POST /stats/metrics stats metricsStats
