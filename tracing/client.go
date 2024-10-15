@@ -154,7 +154,7 @@ func newClient(ctx context.Context, cfg *config.Config, token string) (*Client, 
 		// 	})
 		// 	ctx = metadata.NewOutgoingContext(ctx, requestMetadata)
 		// }
-		conn, err := grpc.Dial(address, opts...)
+		conn, _ := grpc.NewClient(address, opts...)
 		if err == nil {
 			cc := model.NewQueryServiceClient(conn)
 			client, err = jaeger.NewGRPCJaegerClient(ctx, cc)
@@ -199,7 +199,7 @@ func newClient(ctx context.Context, cfg *config.Config, token string) (*Client, 
 					dialOps = append(dialOps, grpc.WithTransportCredentials(insecure.NewCredentials()))
 				}
 				grpcAddress := fmt.Sprintf("%s:%d", u.Hostname(), cfg.ExternalServices.Tracing.GrpcPort)
-				clientConn, _ := grpc.DialContext(ctx, grpcAddress, dialOps...)
+				clientConn, _ := grpc.NewClient(grpcAddress, dialOps...)
 				streamClient, err := tempo.NewgRPCClient(client, u, clientConn)
 				if err != nil {
 					log.Errorf("Error creating gRPC Tempo Client %s", err.Error())

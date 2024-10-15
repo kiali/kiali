@@ -65,8 +65,7 @@ func TestCreateGRPCClient(t *testing.T) {
 		}
 	})}
 
-	ctx := context.Background()
-	clientConn, err := grpc.DialContext(ctx, "", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithContextDialer(dialer()))
+	clientConn, err := grpc.NewClient("", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithContextDialer(dialer()))
 	assert.Nil(t, err)
 	assert.NotNil(t, clientConn)
 
