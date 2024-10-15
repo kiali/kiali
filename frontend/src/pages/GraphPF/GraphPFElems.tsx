@@ -210,7 +210,9 @@ export const setNodeAttachments = (node: Node<NodeModel>, settings: GraphPFSetti
 
 const labelIconStyle = kialiStyle({
   color: PFColors.White,
-  marginLeft: '0.125rem'
+  display: 'flex',
+  marginLeft: '0.125rem',
+  marginTop: '0.125rem'
 });
 
 const gatewayIconStyle = kialiStyle({
