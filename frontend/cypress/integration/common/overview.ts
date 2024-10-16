@@ -346,6 +346,7 @@ Then('Control Plane metrics should be visible for cluster {string}', (cluster: s
 });
 
 Then('badge for {string} is visible in the LIST view in the namespace {string}', (label: string, ns: string) => {
-  const cluster = getClusterForSingleCluster();
-  cy.getBySel(`VirtualItem_Cluster${cluster}_${ns}`).contains(label).should('be.visible');
+  getClusterForSingleCluster().then(cluster => {
+    cy.getBySel(`VirtualItem_Cluster${cluster}_${ns}`).contains(label).should('be.visible');
+  });
 });
