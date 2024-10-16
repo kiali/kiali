@@ -487,16 +487,28 @@ When('user {string} {string} traffic option', (action: string, option: string) =
 
 Then('{int} edges appear in the patternfly graph', (edges: number) => {
   cy.waitForReact();
-  cy.getReact('GraphPageComponent', { state: { isReady: true } })
-    .should('have.length', '1')
-    .then(() => {
-      cy.getReact('CytoscapeGraph')
-        .should('have.length', '1')
-        .getCurrentState()
-        .then(state => {
-          const numEdges = state.cy.edges(`[hasTraffic]`).length;
-          // It can be more, depending on the service version redirection
-          assert.isAtLeast(numEdges, edges);
-        });
+  cy.getReact('GraphPagePFComponent', { state: { isReady: true } })
+    .should('have.length', 1)
+    .getCurrentState()
+    .then(state => {
+      const graphEdges = state.graphData.elements.edges;
+      console.log(graphEdges.length);
+      assert.isAtLeast(graphEdges.length, edges);
+    });
+});
+
+Then('the {string} node {string} exists', (nodeName: string, action: string) => {
+  cy.waitForReact();
+  cy.getReact('GraphPagePFComponent', { state: { isReady: true } })
+    .should('have.length', 1)
+    .getCurrentState()
+    .then(state => {
+      const graphNodes = state.graphData.elements.nodes;
+      const foundNode = graphNodes.filter(node => node.data.workload === nodeName);
+      if (action === 'does') {
+        assert.isAtLeast(foundNode.length, 1);
+      } else {
+        assert.equal(foundNode.length, 0);
+      }
     });
 });

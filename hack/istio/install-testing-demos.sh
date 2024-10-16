@@ -136,6 +136,7 @@ if [ "${DELETE_DEMOS}" != "true" ]; then
   elif [ "${AMBIENT_ENABLED}" == "true" ]; then
     echo "Deploying bookinfo demo..."
     "${SCRIPT_DIR}/install-bookinfo-demo.sh" -c kubectl -mp ${MINIKUBE_PROFILE} -tg ${AMBIENT_ARGS_BOOKINFO}
+    "${ISTIO_DIR}/bin/istioctl" waypoint apply -n bookinfo
 
     echo "Deploying sleep demo ..."
     "${SCRIPT_DIR}/install-sleep-demo.sh" -c kubectl -in ${ISTIO_NAMESPACE} -a ${ARCH} ${AMBIENT_ARGS_BOOKINFO}

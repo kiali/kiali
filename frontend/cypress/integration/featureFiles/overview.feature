@@ -72,7 +72,7 @@ Feature: Kiali Overview page
     When user selects "Last 10m" time range
     And user selects "Outbound" traffic direction
     Then user sees the "alpha" namespace with "outbound" traffic "10m"
-  
+
   @error-rates-app
   @bookinfo-app
   Scenario: The healthy status of a logical mesh application is reported in the overview of a namespace
@@ -190,4 +190,4 @@ Feature: Kiali Overview page
   Scenario: See ambient badge in the LIST view
     When user clicks in the "LIST" view
     Then user sees a "LIST" "istio-system" namespace
-    And badge for "Ambient" is visible in the LIST view in cluster "cluster-default" and namespace "istio-system"
+    And badge for "Ambient" is visible in the LIST view in the namespace "istio-system"

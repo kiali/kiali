@@ -199,6 +199,20 @@ export const ensureObjectsInTable = (...names: string[]): void => {
   });
 };
 
+// Fetch the cluster info from /api/config
+export const getClusterForSingleCluster = (): Cypress.Chainable<string> => {
+  return cy.request({ url: '/api/config' }).then(response => {
+    cy.wrap(response.isOkStatusCode).should('be.true');
+
+    const clusters: { [key: string]: MeshCluster } = response.body.clusters;
+    const clusterNames = Object.keys(clusters);
+    cy.wrap(clusterNames).should('have.length', 1);
+    const cluster = clusterNames[0];
+
+    return cy.wrap(cluster);
+  });
+};
+
 // Only works for a single cluster.
 export const checkHealthIndicatorInTable = (
   targetNamespace: string,
@@ -211,18 +225,9 @@ export const checkHealthIndicatorInTable = (
     : `${targetNamespace}_${targetRowItemName}`;
 
   // cy.getBySel(`VirtualItem_Ns${selector}]`).find('span').filter(`.icon-${healthStatus}`).should('exist');
-  // Fetch the cluster info from /api/config
-  // TODO: Move this somewhere else since other tests will most likely need this info as well.
   // VirtualItem_Clustercluster-default_Nsbookinfo_details
   // VirtualItem_Clustercluster-default_Nsbookinfo_productpage
-  cy.request({ url: '/api/config' }).then(response => {
-    cy.wrap(response.isOkStatusCode).should('be.true');
-
-    const clusters: { [key: string]: MeshCluster } = response.body.clusters;
-    const clusterNames = Object.keys(clusters);
-    cy.wrap(clusterNames).should('have.length', 1);
-    const cluster = clusterNames[0];
-
+  getClusterForSingleCluster().then(cluster => {
     cy.getBySel(`VirtualItem_Cluster${cluster}_Ns${selector}`)
       .find('span')
       .filter(`.icon-${healthStatus}`)
