@@ -1,5 +1,7 @@
 import { Before, Given, Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import { ensureKialiFinishedLoading } from './transition';
+import { MeshCluster } from '../../../src/types/Mesh';
+import { getClusterForSingleCluster } from './table';
 
 const CLUSTER1_CONTEXT = Cypress.env('CLUSTER1_CONTEXT');
 const CLUSTER2_CONTEXT = Cypress.env('CLUSTER2_CONTEXT');
@@ -344,9 +346,7 @@ Then('Control Plane metrics should be visible for cluster {string}', (cluster: s
   cy.getBySel(`VirtualItem_Cluster${cluster}_istio-system`).find('[data-test="memory-chart"]');
 });
 
-Then(
-  'badge for {string} is visible in the LIST view in cluster {string} and namespace {string}',
-  (label: string, cluster: string, ns: string) => {
-    cy.getBySel(`VirtualItem_Cluster${cluster}_${ns}`).contains(label).should('be.visible');
-  }
-);
+Then('badge for {string} is visible in the LIST view in the namespace {string}', (label: string, ns: string) => {
+  const cluster = getClusterForSingleCluster();
+  cy.getBySel(`VirtualItem_Cluster${cluster}_${ns}`).contains(label).should('be.visible');
+});

@@ -101,4 +101,4 @@ Feature: Kiali Waypoint related features
     Given user is at the "overview" page
     When user clicks in the "LIST" view
     Then user sees a "LIST" "bookinfo" namespace
-    And badge for "istio.io/use-waypoint=waypoint" is visible in the LIST view in cluster "cluster-default" and namespace "bookinfo"
+    And badge for "istio.io/use-waypoint=waypoint" is visible in the LIST view in the namespace "bookinfo"
