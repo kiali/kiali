@@ -280,7 +280,8 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
         selectedGateway: '',
         gatewayClass: '',
         addMesh: false,
-        port: 80
+        port: 80,
+        isOpen: false,
       };
 
       if (hasGateway(this.props.virtualServices)) {
