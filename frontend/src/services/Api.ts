@@ -218,6 +218,26 @@ export const getNamespaceMetrics = (
   return newRequest<Readonly<IstioMetricsMap>>(HTTP_VERBS.GET, urls.namespaceMetrics(namespace), queryParams, {});
 };
 
+export const getControlPlaneMetrics = (
+  namespace: string,
+  controlPlane: string,
+  params: IstioMetricsOptions,
+  cluster?: string
+): Promise<ApiResponse<Readonly<IstioMetricsMap>>> => {
+  const queryParams: QueryParams<IstioMetricsOptions> = { ...params };
+
+  if (cluster) {
+    queryParams.clusterName = cluster;
+  }
+
+  return newRequest<Readonly<IstioMetricsMap>>(
+    HTTP_VERBS.GET,
+    urls.controlPlaneMetrics(namespace, controlPlane),
+    queryParams,
+    {}
+  );
+};
+
 // comma separated list of namespaces
 export const getClustersMetrics = (
   namespaces: string,

@@ -24,7 +24,7 @@ import {
 import { KialiIcon } from 'config/KialiIcon';
 import {
   containerStyle,
-  infoStyle,
+  itemInfoStyle,
   itemStyleWithInfo,
   itemStyleWithoutInfo,
   menuStyle,
@@ -32,10 +32,15 @@ import {
 } from 'styles/DropdownStyles';
 import { serverConfig } from 'config';
 
-type ReduxProps = {
+type ReduxDispatchProps = {
   setTrafficRates: (trafficRates: TrafficRate[]) => void;
+};
+
+type ReduxStateProps = {
   trafficRates: TrafficRate[];
 };
+
+type ReduxProps = ReduxDispatchProps & ReduxStateProps;
 
 type GraphTrafficProps = ReduxProps & {
   disabled: boolean;
@@ -56,11 +61,11 @@ const marginBottom = 20;
 const GraphTrafficComponent: React.FC<GraphTrafficProps> = (props: GraphTrafficProps) => {
   const [isOpen, setIsOpen] = React.useState<boolean>(false);
 
-  const onToggle = (isOpen: boolean) => {
+  const onToggle = (isOpen: boolean): void => {
     setIsOpen(isOpen);
   };
 
-  const getPopoverContent = () => {
+  const getPopoverContent = (): React.ReactNode => {
     const trafficRates = props.trafficRates;
 
     const trafficRateOptions: TrafficRateOptionType[] = [
@@ -252,7 +257,7 @@ const GraphTrafficComponent: React.FC<GraphTrafficProps> = (props: GraphTrafficP
                     position={TooltipPosition.right}
                     content={trafficRateOption.tooltip}
                   >
-                    <KialiIcon.Info className={infoStyle} />
+                    <KialiIcon.Info className={itemInfoStyle} />
                   </Tooltip>
                 )}
 
@@ -282,7 +287,7 @@ const GraphTrafficComponent: React.FC<GraphTrafficProps> = (props: GraphTrafficP
                             position={TooltipPosition.right}
                             content={ambientOption.tooltip}
                           >
-                            <KialiIcon.Info className={infoStyle} />
+                            <KialiIcon.Info className={itemInfoStyle} />
                           </Tooltip>
                         )}
                       </div>
@@ -316,7 +321,7 @@ const GraphTrafficComponent: React.FC<GraphTrafficProps> = (props: GraphTrafficP
                             position={TooltipPosition.right}
                             content={grpcOption.tooltip}
                           >
-                            <KialiIcon.Info className={infoStyle} />
+                            <KialiIcon.Info className={itemInfoStyle} />
                           </Tooltip>
                         )}
                       </div>
@@ -351,7 +356,7 @@ const GraphTrafficComponent: React.FC<GraphTrafficProps> = (props: GraphTrafficP
                             position={TooltipPosition.right}
                             content={httpOption.tooltip}
                           >
-                            <KialiIcon.Info className={infoStyle} />
+                            <KialiIcon.Info className={itemInfoStyle} />
                           </Tooltip>
                         )}
                       </div>
@@ -385,7 +390,7 @@ const GraphTrafficComponent: React.FC<GraphTrafficProps> = (props: GraphTrafficP
                             position={TooltipPosition.right}
                             content={tcpOption.tooltip}
                           >
-                            <KialiIcon.Info className={infoStyle} />
+                            <KialiIcon.Info className={itemInfoStyle} />
                           </Tooltip>
                         )}
                       </div>
@@ -399,7 +404,7 @@ const GraphTrafficComponent: React.FC<GraphTrafficProps> = (props: GraphTrafficP
     );
   };
 
-  const toggleTrafficRate = (_, event) => {
+  const toggleTrafficRate = (_, event): void => {
     const rate = event.target.value as TrafficRate;
 
     if (props.trafficRates.includes(rate)) {
@@ -443,25 +448,25 @@ const GraphTrafficComponent: React.FC<GraphTrafficProps> = (props: GraphTrafficP
     }
   };
 
-  const toggleTrafficRateAmbient = (_, event) => {
+  const toggleTrafficRateAmbient = (_, event): void => {
     const rate = event.target.value as TrafficRate;
     const newRates = props.trafficRates.filter(r => !isAmbientRate(r));
     props.setTrafficRates([...newRates, TrafficRate.AMBIENT_GROUP, rate]);
   };
 
-  const toggleTrafficRateGrpc = (_, event) => {
+  const toggleTrafficRateGrpc = (_, event): void => {
     const rate = event.target.value as TrafficRate;
     const newRates = props.trafficRates.filter(r => !isGrpcRate(r));
     props.setTrafficRates([...newRates, TrafficRate.GRPC_GROUP, rate]);
   };
 
-  const toggleTrafficRateHttp = (_, event) => {
+  const toggleTrafficRateHttp = (_, event): void => {
     const rate = event.target.value as TrafficRate;
     const newRates = props.trafficRates.filter(r => !isHttpRate(r));
     props.setTrafficRates([...newRates, TrafficRate.HTTP_GROUP, rate]);
   };
 
-  const toggleTrafficRateTcp = (_, event) => {
+  const toggleTrafficRateTcp = (_, event): void => {
     const rate = event.target.value as TrafficRate;
     const newRates = props.trafficRates.filter(r => !isTcpRate(r));
     props.setTrafficRates([...newRates, TrafficRate.TCP_GROUP, rate]);
@@ -489,12 +494,12 @@ const GraphTrafficComponent: React.FC<GraphTrafficProps> = (props: GraphTrafficP
 };
 
 // Allow Redux to map sections of our global app state to our props
-const mapStateToProps = (state: KialiAppState) => ({
+const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
   trafficRates: trafficRatesSelector(state)
 });
 
 // Map our actions to Redux
-const mapDispatchToProps = (dispatch: KialiDispatch) => {
+const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => {
   return {
     setTrafficRates: bindActionCreators(GraphToolbarActions.setTrafficRates, dispatch)
   };

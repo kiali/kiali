@@ -24,7 +24,7 @@ import {
 import { KialiIcon } from 'config/KialiIcon';
 import {
   containerStyle,
-  infoStyle,
+  itemInfoStyle,
   itemStyleWithInfo,
   itemStyleWithoutInfo,
   menuStyle,
@@ -742,7 +742,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
                 </div>
               }
             >
-              <KialiIcon.Info className={infoStyle} />
+              <KialiIcon.Info className={itemInfoStyle} />
             </Tooltip>
           </div>
 
@@ -771,7 +771,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
                   content={edgeLabelOption.tooltip}
                 >
                   <KialiIcon.Info
-                    className={edgeLabelOption.iconClassName ?? infoStyle}
+                    className={edgeLabelOption.iconClassName ?? itemInfoStyle}
                     color={edgeLabelOption.iconColor}
                   />
                 </Tooltip>
@@ -807,7 +807,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
                           content={rtOption.tooltip}
                         >
                           <KialiIcon.Info
-                            className={edgeLabelOption.iconClassName ?? infoStyle}
+                            className={edgeLabelOption.iconClassName ?? itemInfoStyle}
                             color={edgeLabelOption.iconColor}
                           />
                         </Tooltip>
@@ -847,7 +847,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
                           content={throughputOption.tooltip}
                         >
                           <KialiIcon.Info
-                            className={throughputOption.iconClassName ?? infoStyle}
+                            className={throughputOption.iconClassName ?? itemInfoStyle}
                             color={throughputOption.iconColor}
                           />
                         </Tooltip>
@@ -875,7 +875,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
 
               {item.tooltip && (
                 <Tooltip key={`tooltip_${item.id}`} position={TooltipPosition.right} content={item.tooltip}>
-                  <KialiIcon.Info className={item.iconClassName ?? infoStyle} color={item.iconColor} />
+                  <KialiIcon.Info className={item.iconClassName ?? itemInfoStyle} color={item.iconColor} />
                 </Tooltip>
               )}
 
@@ -907,7 +907,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
                           content={scoringOption.tooltip}
                         >
                           <KialiIcon.Info
-                            className={scoringOption.iconClassName ?? infoStyle}
+                            className={scoringOption.iconClassName ?? itemInfoStyle}
                             color={scoringOption.iconColor}
                           />
                         </Tooltip>
@@ -935,7 +935,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
 
               {item.tooltip && (
                 <Tooltip key={`tooltip_${item.id}`} position={TooltipPosition.right} content={item.tooltip}>
-                  <KialiIcon.Info className={item.iconClassName ?? infoStyle} color={item.iconColor} />
+                  <KialiIcon.Info className={item.iconClassName ?? itemInfoStyle} color={item.iconColor} />
                 </Tooltip>
               )}
             </div>

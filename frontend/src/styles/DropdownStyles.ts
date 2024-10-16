@@ -41,7 +41,7 @@ export const itemStyleWithInfo = kialiStyle({
   padding: '0.375rem 0 0.375rem 1rem'
 });
 
-export const infoStyle = kialiStyle({
+export const itemInfoStyle = kialiStyle({
   marginLeft: '0.375rem'
 });
 

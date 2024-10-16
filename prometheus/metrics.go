@@ -12,6 +12,7 @@ import (
 
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
+	"github.com/kiali/kiali/util/sliceutil"
 )
 
 func fetchRateRange(ctx context.Context, api prom_v1.API, metricName string, labels []string, grouping string, q *RangeQuery) Metric {
@@ -91,8 +92,39 @@ func buildHistogramQueries(metricName, labels, grouping, rateInterval string, av
 	return queries
 }
 
+func fetchQuery(ctx context.Context, api prom_v1.API, query string, queryTime time.Time) Metric {
+	result, warnings, err := api.Query(ctx, query, queryTime)
+	if len(warnings) > 0 {
+		log.Warningf("fetchQuery. Prometheus Warnings: [%s]", strings.Join(warnings, ","))
+	}
+	if err != nil {
+		return Metric{Err: err}
+	}
+	switch result.Type() {
+	case model.ValVector:
+		return Metric{Matrix: vectorToMatrix(result.(model.Vector), model.Time(queryTime.Unix()))}
+	case model.ValMatrix:
+		return Metric{Matrix: result.(model.Matrix)}
+	}
+	return Metric{Err: fmt.Errorf("invalid query, unexpected result type [%s]: [%s]", result.Type(), query)}
+}
+
+func vectorToMatrix(vector []*model.Sample, t model.Time) model.Matrix {
+	matrix := sliceutil.Map(vector, func(sample *model.Sample) *model.SampleStream {
+		return &model.SampleStream{
+			Metric: sample.Metric,
+			Values: []model.SamplePair{
+				{
+					Timestamp: t,
+					Value:     sample.Value,
+				},
+			},
+		}
+	})
+	return matrix
+}
+
 func fetchRange(ctx context.Context, api prom_v1.API, query string, bounds prom_v1.Range) Metric {
-	log.Tracef("[Prom] fetchRange: %s", query)
 	result, warnings, err := api.QueryRange(ctx, query, bounds)
 	if len(warnings) > 0 {
 		log.Warningf("fetchRange. Prometheus Warnings: [%s]", strings.Join(warnings, ","))

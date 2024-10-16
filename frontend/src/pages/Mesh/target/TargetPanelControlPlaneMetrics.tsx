@@ -1,20 +1,14 @@
 import * as React from 'react';
-import { Datapoint, Metric } from '../../types/Metrics';
 import { SparklineChart } from 'components/Charts/SparklineChart';
 import { VCLine, RichDataPoint } from 'types/VictoryChartInfo';
 import { PFColors } from 'components/Pf/PfColors';
 import { toVCLine } from 'utils/VictoryChartsUtils';
 import { Card, CardBody, Flex, FlexItem, Grid, GridItem, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { KialiIcon } from 'config/KialiIcon';
-import { kialiStyle } from 'styles/StyleUtils';
 import { IstiodResourceThresholds } from 'types/IstioStatus';
 import { useKialiTranslation } from 'utils/I18nUtils';
-
-export const infoStyle = kialiStyle({
-  marginLeft: '0.25rem'
-});
-
-const controlPlaneAnnotation = 'topology.istio.io/controlPlaneClusters';
+import { Datapoint, Metric } from 'types/Metrics';
+import { kialiStyle } from 'styles/StyleUtils';
 
 type ControlPlaneProps = {
   istiodContainerCpu?: Metric[];
@@ -25,12 +19,9 @@ type ControlPlaneProps = {
   pilotLatency?: Metric[];
 };
 
-export const isRemoteCluster = (annotations?: { [key: string]: string }): boolean => {
-  if (annotations && annotations[controlPlaneAnnotation]) {
-    return true;
-  }
-  return false;
-};
+const infoStyle = kialiStyle({
+  marginLeft: '0.25rem'
+});
 
 const showMetrics = (metrics: Metric[] | undefined): boolean => {
   // show metrics if metrics exists and some values at least are not zero
@@ -46,7 +37,7 @@ const showMetrics = (metrics: Metric[] | undefined): boolean => {
   return false;
 };
 
-export const OverviewCardControlPlaneNamespace: React.FC<ControlPlaneProps> = (props: ControlPlaneProps) => {
+export const TargetPanelControlPlaneMetrics: React.FC<ControlPlaneProps> = (props: ControlPlaneProps) => {
   const { t } = useKialiTranslation();
 
   let memorySeries: VCLine<RichDataPoint>[] = [];

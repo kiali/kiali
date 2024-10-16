@@ -1,11 +1,10 @@
 import { TLSStatus } from './TLSStatus';
-import { ControlPlaneMetricsMap, Metric } from './Metrics';
+import { Metric } from './Metrics';
 import { ValidationStatus } from './IstioObjects';
 import { IstioConfigList } from './IstioConfigList';
 
 export type NamespaceInfo = {
   annotations?: { [key: string]: string };
-  controlPlaneMetrics?: ControlPlaneMetricsMap;
   cluster?: string;
   errorMetrics?: Metric[];
   isAmbient?: boolean;

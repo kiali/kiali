@@ -8,7 +8,6 @@ import { Paths, serverConfig } from 'config';
 import { CanaryUpgradeStatus, ValidationStatus } from 'types/IstioObjects';
 import { OverviewNamespaceAction, OverviewNamespaceActions } from 'pages/Overview/OverviewNamespaceActions';
 import { NamespaceInfo, NamespaceStatus } from 'types/NamespaceInfo';
-import { isRemoteCluster } from 'pages/Overview/OverviewCardControlPlaneNamespace';
 import { NamespaceMTLSStatus } from 'components/MTls/NamespaceMTLSStatus';
 import { NamespaceStatuses } from 'pages/Overview/NamespaceStatuses';
 import { DirectionType, OverviewType } from 'pages/Overview/OverviewToolbar';
@@ -38,6 +37,7 @@ import * as FilterHelper from '../../../components/FilterList/FilterHelper';
 import { Metric } from 'types/Metrics';
 import { classes } from 'typestyle';
 import { panelBodyStyle, panelHeadingStyle, panelStyle } from 'pages/Graph/SummaryPanelStyle';
+import { isRemoteCluster } from './TargetPanelControlPlane';
 
 type TargetPanelNamespaceProps = TargetPanelCommonProps;
 

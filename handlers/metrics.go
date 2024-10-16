@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -166,13 +165,72 @@ func getAggregateMetrics(w http.ResponseWriter, r *http.Request, promSupplier pr
 	RespondWithJSON(w, http.StatusOK, metrics)
 }
 
-type remoteClusterIdentifier interface {
-	IsRemoteCluster(context.Context, string) bool
+// ControlPlaneMetrics is the API handler to fetch metrics to be displayed, related to a single control plane revision
+func ControlPlaneMetrics(promSupplier promClientSupplier) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		layer, err := getBusiness(r)
+		if err != nil {
+			RespondWithError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		vars := mux.Vars(r)
+		namespace := vars["namespace"]
+		controlPlane := vars["controlplane"]
+		cluster := clusterNameFromQuery(r.URL.Query())
+
+		metricsService, namespaceInfo := createMetricsServiceForNamespaceMC(w, r, promSupplier, namespace)
+		if metricsService == nil {
+			// any returned value nil means error & response already written
+			return
+		}
+		oldestNs := GetOldestNamespace(namespaceInfo)
+
+		params := models.IstioMetricsQuery{Cluster: cluster, Namespace: namespace}
+
+		err = extractIstioMetricsQueryParams(r, &params, oldestNs)
+		if err != nil {
+			RespondWithError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		if namespace != config.Get().IstioNamespace {
+			RespondWithError(w, http.StatusBadRequest, fmt.Sprintf("namespace [%s] is not the control plane namespace", namespace))
+			return
+		}
+
+		cpWorkload, err := layer.Workload.GetWorkload(r.Context(), business.WorkloadCriteria{
+			Cluster:               cluster,
+			Namespace:             namespace,
+			WorkloadName:          controlPlane,
+			IncludeServices:       false,
+			IncludeIstioResources: false,
+			IncludeHealth:         false,
+		})
+		if err != nil {
+			RespondWithError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		metrics := make(models.MetricsMap)
+
+		controlPlaneMetrics, err := metricsService.GetControlPlaneMetrics(params, cpWorkload.Pods, nil)
+		if err != nil {
+			RespondWithError(w, http.StatusServiceUnavailable, err.Error())
+			return
+		}
+
+		for k, v := range controlPlaneMetrics {
+			metrics[k] = v
+		}
+
+		RespondWithJSON(w, http.StatusOK, metrics)
+	}
 }
 
 // NamespaceMetrics is the API handler to fetch metrics to be displayed, related to all
 // services in the namespace
-func NamespaceMetrics(promSupplier promClientSupplier, discovery remoteClusterIdentifier) http.HandlerFunc {
+func NamespaceMetrics(promSupplier promClientSupplier) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		_, err := getBusiness(r)
 		if err != nil {
@@ -205,25 +263,13 @@ func NamespaceMetrics(promSupplier promClientSupplier, discovery remoteClusterId
 			return
 		}
 
-		if isRemoteCluster := discovery.IsRemoteCluster(r.Context(), cluster); !isRemoteCluster && namespace == config.Get().IstioNamespace {
-			controlPlaneMetrics, err := metricsService.GetControlPlaneMetrics(params, nil)
-			if err != nil {
-				RespondWithError(w, http.StatusServiceUnavailable, err.Error())
-				return
-			}
-
-			for k, v := range controlPlaneMetrics {
-				metrics[k] = v
-			}
-		}
-
 		RespondWithJSON(w, http.StatusOK, metrics)
 	}
 }
 
 // ClustersMetrics is the API handler to fetch metrics to be displayed, related to all
 // services in provided namespaces of given cluster
-func ClustersMetrics(promSupplier promClientSupplier, discovery remoteClusterIdentifier) http.HandlerFunc {
+func ClustersMetrics(promSupplier promClientSupplier) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
 		namespaces := query.Get("namespaces") // csl of namespaces
@@ -266,18 +312,6 @@ func ClustersMetrics(promSupplier promClientSupplier, discovery remoteClusterIde
 			if err != nil {
 				RespondWithError(w, http.StatusServiceUnavailable, err.Error())
 				return
-			}
-
-			if isRemoteCluster := discovery.IsRemoteCluster(r.Context(), cluster); !isRemoteCluster && namespace == config.Get().IstioNamespace {
-				controlPlaneMetrics, err := metricsService.GetControlPlaneMetrics(params, nil)
-				if err != nil {
-					RespondWithError(w, http.StatusServiceUnavailable, err.Error())
-					return
-				}
-
-				for k, v := range controlPlaneMetrics {
-					metrics[k] = v
-				}
 			}
 
 			if err != nil {
@@ -481,10 +515,10 @@ func prepareStatsQueries(w http.ResponseWriter, r *http.Request, rawQ []models.M
 			continue
 		}
 		if nsInfoErr, ok := nsInfos[q.Target.Namespace]; !ok {
-			errors.Add(fmt.Errorf("Missing info for namespace '%s'", q.Target.Namespace))
+			errors.Add(fmt.Errorf("missing info for namespace '%s'", q.Target.Namespace))
 			continue
 		} else if nsInfoErr.err != nil {
-			errors.Add(fmt.Errorf("Namespace '%s': %v", q.Target.Namespace, nsInfoErr.err))
+			errors.Add(fmt.Errorf("namespace '%s': %v", q.Target.Namespace, nsInfoErr.err))
 			continue
 		} else {
 			namespaceInfo := nsInfoErr.info

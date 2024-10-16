@@ -401,7 +401,7 @@ func TestPrepareStatsQueriesPartialError(t *testing.T) {
 	assert.NotNil(errs)
 	errsStr := errs.Strings()
 	assert.Len(errsStr, 1)
-	assert.Equal("Namespace 'nsNil': no privileges", errsStr[0])
+	assert.Equal("namespace 'nsNil': no privileges", errsStr[0])
 	assert.NotNil(srv)
 	assert.Len(queries, 3)
 	assert.Equal("ns1", queries[0].Target.Namespace)

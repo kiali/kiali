@@ -9,7 +9,7 @@ import {
   Tooltip,
   TooltipPosition
 } from '@patternfly/react-core';
-import { infoStyle, itemStyleWithoutInfo, menuStyle, titleStyle } from 'styles/DropdownStyles';
+import { itemInfoStyle, itemStyleWithoutInfo, menuStyle, titleStyle } from 'styles/DropdownStyles';
 import { HistoryManager, URLParam } from 'app/History';
 import { KialiIcon } from 'config/KialiIcon';
 
@@ -32,8 +32,8 @@ export const percentilesOptions: DisplayOptionType[] = [
 
 interface Props {
   disabled: boolean;
-  onQuerySettingsChanged: (settings: QuerySettings) => void;
   onDisplaySettingsChanged: (settings: DisplaySettings) => void;
+  onQuerySettingsChanged: (settings: QuerySettings) => void;
   percentilesPromise: Promise<Map<string, number>>;
 }
 
@@ -93,11 +93,11 @@ export class TracesDisplayOptions extends React.Component<Props, State> {
     };
   }
 
-  private onToggle = isOpen => {
+  private onToggle = (isOpen): void => {
     this.setState({ isOpen: isOpen });
   };
 
-  render() {
+  render(): React.ReactNode {
     const { isOpen } = this.state;
 
     return (
@@ -120,7 +120,7 @@ export class TracesDisplayOptions extends React.Component<Props, State> {
     );
   }
 
-  private getPopoverContent() {
+  private getPopoverContent(): React.ReactNode {
     return (
       <div id="traces-display-menu" className={menuStyle}>
         <div style={{ marginTop: '0.5rem' }}>
@@ -140,7 +140,7 @@ export class TracesDisplayOptions extends React.Component<Props, State> {
               </div>
             }
           >
-            <KialiIcon.Info className={infoStyle} />
+            <KialiIcon.Info className={itemInfoStyle} />
           </Tooltip>
         </div>
 
@@ -157,7 +157,7 @@ export class TracesDisplayOptions extends React.Component<Props, State> {
               <label key={item.id} className={itemStyleWithoutInfo}>
                 <Radio
                   id={item.id}
-                  name={'percentiles' + item.id}
+                  name={`percentiles${item.id}`}
                   isChecked={item.id === this.state.percentile || (item.id === 'all' && !this.state.percentile)}
                   label={label}
                   onChange={(_event, checked) => this.onPercentileChanged(item.id, checked)}
@@ -200,16 +200,16 @@ export class TracesDisplayOptions extends React.Component<Props, State> {
               </div>
             }
           >
-            <KialiIcon.Info className={infoStyle} />
+            <KialiIcon.Info className={itemInfoStyle} />
           </Tooltip>
         </div>
 
         {[20, 100, 500, 1000].map(limit => (
-          <div key={'limit-' + limit}>
-            <label key={'limit-' + limit} className={itemStyleWithoutInfo}>
+          <div key={`limit-${limit}`}>
+            <label key={`limit-${limit}`} className={itemStyleWithoutInfo}>
               <Radio
-                id={'limit-' + limit}
-                name={'limit-' + limit}
+                id={`limit-${limit}`}
+                name={`limit-${limit}`}
                 isChecked={this.state.limit === limit}
                 label={String(limit)}
                 onChange={(_event, checked) => this.onLimitChanged(limit, checked)}
@@ -248,31 +248,31 @@ export class TracesDisplayOptions extends React.Component<Props, State> {
     );
   }
 
-  private onPercentileChanged = (id: string, checked: boolean) => {
+  private onPercentileChanged = (id: string, checked: boolean): void => {
     if (checked) {
       this.saveValue(URLParam.TRACING_PERCENTILE, id);
       this.setState({ percentile: id }, () => this.props.onQuerySettingsChanged(this.state));
     }
   };
 
-  private onErrorsOnlyChanged = (checked: boolean) => {
+  private onErrorsOnlyChanged = (checked: boolean): void => {
     this.saveValue(URLParam.TRACING_ERRORS_ONLY, String(checked));
     this.setState({ errorsOnly: checked }, () => this.props.onQuerySettingsChanged(this.state));
   };
 
-  private onLimitChanged = (limit: number, checked: boolean) => {
+  private onLimitChanged = (limit: number, checked: boolean): void => {
     if (checked) {
       this.saveValue(URLParam.TRACING_LIMIT_TRACES, String(limit));
       this.setState({ limit: limit }, () => this.props.onQuerySettingsChanged(this.state));
     }
   };
 
-  private onValueAxisChanged = (showSpansAverage: boolean) => {
+  private onValueAxisChanged = (showSpansAverage: boolean): void => {
     this.saveValue(URLParam.TRACING_SHOW_SPANS_AVG, String(showSpansAverage));
     this.setState({ showSpansAverage: showSpansAverage }, () => this.props.onDisplaySettingsChanged(this.state));
   };
 
-  private saveValue = (key: URLParam, value: string) => {
+  private saveValue = (key: URLParam, value: string): void => {
     sessionStorage.setItem(key, value);
     HistoryManager.setParam(key, value);
   };

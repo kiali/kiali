@@ -3,7 +3,6 @@ import * as React from 'react';
 import { serverConfig } from '../../config';
 import { AmbientBadge } from '../../components/Ambient/AmbientBadge';
 import { RemoteClusterBadge } from './RemoteClusterBadge';
-import { isRemoteCluster } from './OverviewCardControlPlaneNamespace';
 import { Link, useLocation } from 'react-router-dom-v5-compat';
 import { IstioStatus, meshLinkStyle } from 'components/IstioStatus/IstioStatus';
 import {
@@ -14,6 +13,7 @@ import {
 } from '@patternfly/react-icons';
 import { useKialiTranslation } from 'utils/I18nUtils';
 import { isControlPlaneAccessible } from '../../utils/MeshUtils';
+import { isRemoteCluster } from 'pages/Mesh/target/TargetPanelControlPlane';
 
 type Props = {
   annotations?: { [key: string]: string };

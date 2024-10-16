@@ -12,7 +12,7 @@ import { isParentKiosk, kioskContextMenuAction } from '../Kiosk/KioskActions';
 import { GroupVersionKind } from '../../types/IstioObjects';
 import { gvkToString, kindToStringIncludeK8s } from '../../utils/IstioConfigUtils';
 
-export const infoStyle = kialiStyle({
+const infoStyle = kialiStyle({
   margin: '0 0 -0.125rem 0.5rem'
 });
 
