@@ -7,8 +7,8 @@ export enum StatusKey {
 }
 
 export enum TempoUrlFormat {
-  JAEGER = 'Jaeger',
-  GRAFANA = 'Grafana'
+  JAEGER = 'jaeger',
+  GRAFANA = 'grafana'
 }
 
 export type Status = { [K in StatusKey]?: string };
