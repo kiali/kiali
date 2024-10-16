@@ -1,6 +1,5 @@
 import { Before, Given, Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import { ensureKialiFinishedLoading } from './transition';
-import { MeshCluster } from '../../../src/types/Mesh';
 import { getClusterForSingleCluster } from './table';
 
 const CLUSTER1_CONTEXT = Cypress.env('CLUSTER1_CONTEXT');
