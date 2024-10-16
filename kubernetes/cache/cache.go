@@ -299,8 +299,20 @@ func (in *kialiCacheImpl) GetZtunnelPods(cluster string) []v1.Pod {
 	}
 
 	if len(daemonsets) == 0 {
-		log.Debugf("No ztunnel daemonsets found in Kiali accessible namespaces in cluster '%s'", cluster)
-		return ztunnelPods
+		// At least start from istio 1.23, the ztunnel daemonset is deployed with new labels `app.kubernetes.io/name=ztunnel`
+		daemonsets, err = kubeCache.GetDaemonSetsWithSelector(metav1.NamespaceAll, map[string]string{
+			"app.kubernetes.io/name": ztunnelApp,
+		})
+		if err != nil {
+			// Don't set the check so we will check again the next time since this error may be transient.
+			log.Debugf("Error checking for ztunnel in Kiali accessible namespaces in cluster '%s': %s", cluster, err.Error())
+			return ztunnelPods
+		}
+
+		if len(daemonsets) == 0 {
+			log.Debugf("No ztunnel daemonsets found in Kiali accessible namespaces in cluster '%s'", cluster)
+			return ztunnelPods
+		}
 	}
 
 	dsPods, err := kubeCache.GetPods(daemonsets[0].Namespace, "")
