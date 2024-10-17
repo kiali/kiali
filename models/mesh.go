@@ -96,7 +96,7 @@ type ControlPlane struct {
 	Status string `json:"status"`
 
 	// Tags are the tags associated with the controlplane.
-	Tag *Tag `json:"tag"`
+	Tag *Tag `json:"tag,omitempty"`
 
 	// Thresholds is the thresholds for the controlplane.
 	Thresholds *IstiodThresholds `json:"thresholds"`
