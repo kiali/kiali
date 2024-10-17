@@ -30,46 +30,8 @@ export const mergeJsonPatch = (objectModified: object, object?: object): object 
 
 export const getIstioObject = (istioObjectDetails?: IstioConfigDetails | IstioConfigItem): IstioObject | undefined => {
   let istioObject: IstioObject | undefined;
-  if (istioObjectDetails) {
-    if (istioObjectDetails.gateway) {
-      istioObject = istioObjectDetails.gateway;
-    } else if (istioObjectDetails.k8sGateway) {
-      istioObject = istioObjectDetails.k8sGateway;
-    } else if (istioObjectDetails.k8sGRPCRoute) {
-      istioObject = istioObjectDetails.k8sGRPCRoute;
-    } else if (istioObjectDetails.k8sHTTPRoute) {
-      istioObject = istioObjectDetails.k8sHTTPRoute;
-    } else if (istioObjectDetails.k8sReferenceGrant) {
-      istioObject = istioObjectDetails.k8sReferenceGrant;
-    } else if (istioObjectDetails.k8sTCPRoute) {
-      istioObject = istioObjectDetails.k8sTCPRoute;
-    } else if (istioObjectDetails.k8sTLSRoute) {
-      istioObject = istioObjectDetails.k8sTLSRoute;
-    } else if (istioObjectDetails.virtualService) {
-      istioObject = istioObjectDetails.virtualService;
-    } else if (istioObjectDetails.destinationRule) {
-      istioObject = istioObjectDetails.destinationRule;
-    } else if (istioObjectDetails.serviceEntry) {
-      istioObject = istioObjectDetails.serviceEntry;
-    } else if (istioObjectDetails.workloadEntry) {
-      istioObject = istioObjectDetails.workloadEntry;
-    } else if (istioObjectDetails.workloadGroup) {
-      istioObject = istioObjectDetails.workloadGroup;
-    } else if (istioObjectDetails.envoyFilter) {
-      istioObject = istioObjectDetails.envoyFilter;
-    } else if (istioObjectDetails.authorizationPolicy) {
-      istioObject = istioObjectDetails.authorizationPolicy;
-    } else if (istioObjectDetails.peerAuthentication) {
-      istioObject = istioObjectDetails.peerAuthentication;
-    } else if (istioObjectDetails.requestAuthentication) {
-      istioObject = istioObjectDetails.requestAuthentication;
-    } else if (istioObjectDetails.sidecar) {
-      istioObject = istioObjectDetails.sidecar;
-    } else if (istioObjectDetails.wasmPlugin) {
-      istioObject = istioObjectDetails.wasmPlugin;
-    } else if (istioObjectDetails.telemetry) {
-      istioObject = istioObjectDetails.telemetry;
-    }
+  if (istioObjectDetails && istioObjectDetails.resource) {
+    istioObject = istioObjectDetails.resource;
   }
   return istioObject;
 };
