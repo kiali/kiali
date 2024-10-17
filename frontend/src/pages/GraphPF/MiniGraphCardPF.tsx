@@ -192,11 +192,14 @@ class MiniGraphCardPFComponent extends React.Component<MiniGraphCardPropsPF, Min
                 onLaunchWizard={this.handleLaunchWizard}
                 onNodeTap={this.handleNodeTap}
                 onReady={this.props.onReady}
+                rankBy={[]}
                 setEdgeMode={this.props.setEdgeMode}
                 setLayout={this.props.setLayout}
+                setRankResult={() => {}}
                 setUpdateTime={this.props.setUpdateTime}
                 updateSummary={this.props.updateSummary}
                 showLegend={false}
+                showRank={false}
                 showOutOfMesh={true}
                 showSecurity={true}
                 showTrafficAnimation={false}
