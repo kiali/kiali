@@ -276,7 +276,7 @@ Then('idle nodes {string} in the graph', (action: string) => {
   validateInput('filterIdleNodes', action);
 
   cy.waitForReact();
-  cy.getReact('GraphPagePFComponent', { state: { graphData: { isLoading: false } } })
+  cy.getReact('GraphPagePFComponent', { state: { isReady: true } })
     .should('have.length', '1')
     .getCurrentState()
     .then(state => {
@@ -298,7 +298,7 @@ Then('ranks {string} in the graph', (action: string) => {
   validateInput('rank', action);
 
   cy.waitForReact();
-  cy.getReact('GraphPagePFComponent', { state: { graphData: { isLoading: false } } })
+  cy.getReact('GraphPagePFComponent', { state: { isReady: true } })
     .should('have.length', '1')
     .getCurrentState()
     .then(state => {
@@ -320,7 +320,7 @@ Then('user does not see service nodes', () => {
   validateInput('filterServiceNodes', 'do not appear');
 
   cy.waitForReact();
-  cy.getReact('GraphPagePFComponent', { state: { graphData: { isLoading: false } } })
+  cy.getReact('GraphPagePFComponent', { state: { isReady: true } })
     .should('have.length', '1')
     .getCurrentState()
     .then(state => {
@@ -332,6 +332,7 @@ Then('user does not see service nodes', () => {
         { prop: NodeAttr.nodeType, op: '=', val: 'service' },
         { prop: NodeAttr.isOutside, op: '=', val: undefined }
       ]).length;
+
       assert.equal(numBoxes, 0);
     });
 });
@@ -340,7 +341,7 @@ Then('security {string} in the graph', (action: string) => {
   validateInput('filterSecurity', action);
 
   cy.waitForReact();
-  cy.getReact('GraphPagePFComponent', { state: { graphData: { isLoading: false } } })
+  cy.getReact('GraphPagePFComponent', { state: { isReady: true } })
     .should('have.length', '1')
     .getCurrentState()
     .then(state => {
@@ -396,7 +397,7 @@ Then('the {string} option should {string} and {string}', (option: string, option
 
 Then('only a single cluster box should be visible', () => {
   cy.waitForReact();
-  cy.getReact('GraphPagePFComponent', { state: { graphData: { isLoading: false } } })
+  cy.getReact('GraphPagePFComponent', { state: { isReady: true } })
     .should('have.length', '1')
     .getCurrentState()
     .then(state => {
@@ -487,7 +488,7 @@ When('user {string} {string} traffic option', (action: string, option: string) =
 
 Then('{int} edges appear in the graph', (graphEdges: number) => {
   cy.waitForReact();
-  cy.getReact('GraphPagePFComponent', { state: { graphData: { isLoading: false } } })
+  cy.getReact('GraphPagePFComponent', { state: { isReady: true } })
     .should('have.length', '1')
     .getCurrentState()
     .then(state => {

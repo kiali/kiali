@@ -94,12 +94,14 @@ Given(
           .then(props => {
             const graphType = props.dataSource.fetchParameters.graphType;
             const { nodeType, isBox } = nodeInfo(type, graphType);
+
             cy.wrap($graph)
               .getCurrentState()
               .then(state => {
                 const controller = state.graphRefs.getController() as Visualization;
                 assert.isTrue(controller.hasGraph());
                 const { nodes } = elems(controller);
+
                 const nodeExists = nodes.some(
                   node =>
                     node.getData().nodeType === nodeType &&
@@ -107,6 +109,7 @@ Given(
                     node.getData().cluster === cluster &&
                     node.getData().isBox === isBox
                 );
+
                 assert(nodeExists, `Node ${name} of type ${type} from cluster ${cluster} not found in the graph`);
               });
           });
@@ -118,31 +121,33 @@ When(
   'user clicks on the {string} {string} from the {string} cluster in the minigraph',
   (name: string, type: string, cluster: string) => {
     cy.waitForReact();
-    cy.getReact('CytoscapeGraph')
+    cy.getReact('MiniGraphCardPFComponent', { state: { isReady: true } })
       .should('have.length', '1')
       .then($graph => {
         cy.wrap($graph)
           .getProps()
           .then(props => {
-            const graphType = props.graphData.fetchParams.graphType;
+            const graphType = props.dataSource.fetchParameters.graphType;
+            const { nodeType, isBox } = nodeInfo(type, graphType);
+
             cy.wrap($graph)
               .getCurrentState()
               .then(state => {
-                const node = state.cy
-                  .nodes()
-                  .toArray()
-                  .find(node => {
-                    const { nodeType, isBox } = nodeInfo(type, graphType);
-                    return (
-                      node.data('nodeType') === nodeType &&
-                      node.data('namespace') === 'bookinfo' &&
-                      node.data(type) === name &&
-                      node.data('cluster') === cluster &&
-                      node.data('isBox') === isBox &&
-                      !node.data('isInaccessible')
-                    );
-                  });
-                node.emit('tap');
+                const controller = state.graphRefs.getController() as Visualization;
+                assert.isTrue(controller.hasGraph());
+                const { nodes } = elems(controller);
+
+                const node = nodes.find(
+                  node =>
+                    node.getData().nodeType === nodeType &&
+                    node.getData().namespace === 'bookinfo' &&
+                    node.getData().type === name &&
+                    node.getData().cluster === cluster &&
+                    node.getData().isBox === isBox &&
+                    !node.getData().isInaccessible
+                );
+
+                cy.get(`[data-id=${node?.getId()}]`).click();
               });
           });
       });

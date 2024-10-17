@@ -18,46 +18,51 @@ Then('user sees a minigraph', () => {
     .then(state => {
       const controller = state.graphRefs.getController() as Visualization;
       assert.isTrue(controller.hasGraph());
+      const { nodes } = elems(controller);
+      assert.isAbove(nodes.length, 0);
     });
 });
 
 Then('user sees the {string} namespace deployed across the east and west clusters', (namespace: string) => {
   cy.waitForReact();
-  cy.getReact('GraphPageComponent', { state: { isReady: true } })
+  cy.getReact('GraphPagePFComponent', { state: { isReady: true } })
     .should('have.length', '1')
-    .then(() => {
-      cy.getReact('CytoscapeGraph')
-        .should('have.length', '1')
-        .getCurrentState()
-        .then(state => {
-          const namespaceBoxes = state.cy
-            .nodes()
-            .filter(node => node.data('isBox') === 'namespace' && node.data('namespace') === namespace);
-          expect(namespaceBoxes.length).to.equal(2);
-          expect(namespaceBoxes.filter(node => node.data('cluster') === 'east').length).to.equal(1);
-          expect(namespaceBoxes.filter(node => node.data('cluster') === 'west').length).to.equal(1);
-        });
+    .getCurrentState()
+    .then(state => {
+      const controller = state.graphRefs.getController() as Visualization;
+      assert.isTrue(controller.hasGraph());
+      const { nodes } = elems(controller);
+
+      const namespaceBoxes = nodes.filter(
+        node => node.getData().isBox === 'namespace' && node.getData().namespace === namespace
+      );
+
+      expect(namespaceBoxes.length).to.equal(2);
+      expect(namespaceBoxes.filter(node => node.getData().cluster === 'east').length).to.equal(1);
+      expect(namespaceBoxes.filter(node => node.getData().cluster === 'west').length).to.equal(1);
     });
 });
 
 Then('nodes in the {string} cluster should contain the cluster name in their links', (cluster: string) => {
   cy.waitForReact();
-  cy.getReact('GraphPageComponent', { state: { isReady: true } })
+  cy.getReact('GraphPagePFComponent', { state: { isReady: true } })
     .should('have.length', '1')
-    .then(() => {
-      cy.getReact('CytoscapeGraph')
-        .should('have.length', '1')
-        .getCurrentState()
-        .then(state => {
-          const nodes = state.cy.nodes().filter(node => node.data('cluster') === cluster);
-          nodes.forEach(node => {
-            const links = node.connectedEdges().filter(edge => edge.data('source') === node.id());
-            links.forEach(link => {
-              const sourceNode = nodes.toArray().find(node => node.id() === link.data('source'));
-              expect(sourceNode.data('cluster')).to.equal(cluster);
-            });
-          });
+    .getCurrentState()
+    .then(state => {
+      const controller = state.graphRefs.getController() as Visualization;
+      assert.isTrue(controller.hasGraph());
+      const { edges, nodes } = elems(controller);
+
+      const clusterNodes = nodes.filter(node => node.getData().cluster === cluster);
+
+      clusterNodes.forEach(node => {
+        const links = edges.filter(edge => edge.getData().source === node.getId());
+
+        links.forEach(link => {
+          const sourceNode = clusterNodes.find(node => node.getId() === link.getData().source);
+          expect(sourceNode?.getData().cluster).to.equal(cluster);
         });
+      });
     });
 });
 
@@ -65,30 +70,33 @@ Then(
   'user clicks on the {string} workload in the {string} namespace in the {string} cluster',
   (workload: string, namespace: string, cluster: string) => {
     cy.waitForReact();
-    cy.getReact('GraphPageComponent', { state: { isReady: true } })
+    cy.getReact('GraphPagePFComponent', { state: { isReady: true } })
       .should('have.length', '1')
-      .then(() => {
-        cy.getReact('CytoscapeGraph')
-          .should('have.length', '1')
-          .getCurrentState()
-          .then(state => {
-            const workloadNode = state.cy.nodes().filter(
-              node =>
-                // Apparently workloads are apps for the versioned app graph.
-                node.data('nodeType') === 'app' &&
-                node.data('isBox') === undefined &&
-                node.data('workload') === workload &&
-                node.data('namespace') === namespace &&
-                node.data('cluster') === cluster
-            );
-            expect(workloadNode.length).to.equal(1);
-            cy.wrap(workloadNode.emit('tap')).then(() => {
-              // Wait for the side panel to change.
-              // Note we can't use summary-graph-panel since that
-              // element will get unmounted and disappear when
-              // the context changes but the graph-side-panel does not.
-              cy.get('#graph-side-panel').contains(workload);
-            });
+      .getCurrentState()
+      .then(state => {
+        const controller = state.graphRefs.getController() as Visualization;
+        assert.isTrue(controller.hasGraph());
+        const { nodes } = elems(controller);
+
+        const workloadNode = nodes.filter(
+          node =>
+            // Apparently workloads are apps for the versioned app graph.
+            node.getData().nodeType === 'app' &&
+            node.getData().isBox === undefined &&
+            node.getData().workload === workload &&
+            node.getData().namespace === namespace &&
+            node.getData().cluster === cluster
+        );
+
+        expect(workloadNode.length).to.equal(1);
+        cy.get(`[data-id=${workloadNode[0]?.getId()}]`)
+          .click()
+          .then(() => {
+            // Wait for the side panel to change.
+            // Note we can't use summary-graph-panel since that
+            // element will get unmounted and disappear when
+            // the context changes but the graph-side-panel does not.
+            cy.get('#graph-side-panel').contains(workload);
           });
       });
   }
