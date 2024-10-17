@@ -70,3 +70,27 @@ When(
       });
   }
 );
+
+When('user chooses to delete the routing in the cystoscape graph', () => {
+  cy.get('@contextNode').then(node => {
+    const cluster = node.data('cluster');
+    const service = node.data('service');
+    const namespace = node.data('namespace');
+    cy.log(`Deleting traffic routing for ${service} service in namespace ${namespace}, data: ${node.data()}`);
+    cy.intercept({
+      pathname: `**/api/namespaces/${namespace}/istio/networking.istio.io/v1/VirtualService/${service}`,
+      method: 'DELETE',
+      query: { clusterName: cluster }
+    }).as('delete-vs');
+    cy.intercept({
+      pathname: `**/api/namespaces/${namespace}/istio/networking.istio.io/v1/DestinationRule/${service}`,
+      method: 'DELETE',
+      query: { clusterName: cluster }
+    }).as('delete-dr');
+
+    cy.getBySel('confirm-delete').click();
+
+    cy.wait('@delete-vs').its('response.statusCode').should('eq', 200);
+    cy.wait('@delete-dr').its('response.statusCode').should('eq', 200);
+  });
+});

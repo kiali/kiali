@@ -22,6 +22,7 @@ When('user opens the context menu of the {string} service node', (svcName: strin
       ]);
 
       cy.get(`[data-id=${node[0].getId()}]`).rightclick();
+      cy.wrap(node[0]).as('contextNode');
     });
 });
 
@@ -53,6 +54,7 @@ When(
         expect(node.length).to.equal(1);
 
         cy.get(`[data-id=${node[0].getId()}]`).rightclick();
+        cy.wrap(node).as('contextNode');
 
         cy.getBySel('graph-node-context-menu').should('be.visible');
       });
@@ -91,8 +93,8 @@ Then(
 
 Then('configuration is duplicated to the {string} cluster', (cluster: string) => {
   cy.get('@contextNode').then((node: any) => {
-    const namespace = node.data('namespace');
-    const service = node.data('service');
+    const namespace = node.getData().namespace;
+    const service = node.getData().service;
 
     cy.fixture(`${service}-virtualservice.json`).then(virtualService => {
       cy.request({

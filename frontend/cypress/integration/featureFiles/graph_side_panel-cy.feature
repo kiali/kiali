@@ -46,7 +46,7 @@ Feature: Kiali Graph page - Side panel menu actions
     And user opens the kebab menu of the graph side panel
     And user clicks the "delete_traffic_routing" item of the kebab menu of the graph side panel
     Then user should see the confirmation dialog to delete all traffic routing
-    When user chooses to delete the routing
+    When user chooses to delete the routing in the cystoscape graph
     And user is at the "istio" list page
     Then user does not see traffic routing objects for the "ratings" service in the "bookinfo" namespace in the "west" cluster
 

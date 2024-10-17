@@ -508,8 +508,12 @@ Then('the {string} node {string} exists', (nodeName: string, action: string) => 
     .should('have.length', 1)
     .getCurrentState()
     .then(state => {
-      const graphNodes = state.graphData.elements.nodes;
-      const foundNode = graphNodes.filter(node => node.data.workload === nodeName);
+      const controller = state.graphRefs.getController() as Visualization;
+      assert.isTrue(controller.hasGraph());
+      const { nodes } = elems(controller);
+
+      const foundNode = nodes.filter(node => node.getData().workload === nodeName);
+
       if (action === 'does') {
         assert.isAtLeast(foundNode.length, 1);
       } else {

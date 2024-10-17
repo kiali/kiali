@@ -211,16 +211,19 @@ Then('{string} cluster badge for the graph side panel should be visible', (clust
 });
 
 When('user chooses to delete the routing', () => {
-  cy.get('@contextNode').then(node => {
-    const cluster = node.data('cluster');
-    const service = node.data('service');
-    const namespace = node.data('namespace');
-    cy.log(`Deleting traffic routing for ${service} service in namespace ${namespace}, data: ${node.data()}`);
+  cy.get('@contextNode').then((node: any) => {
+    const cluster = node.getData().cluster;
+    const service = node.getData().service;
+    const namespace = node.getData().namespace;
+
+    cy.log(`Deleting traffic routing for ${service} service in namespace ${namespace}, data: ${node.getData()}`);
+
     cy.intercept({
       pathname: `**/api/namespaces/${namespace}/istio/networking.istio.io/v1/VirtualService/${service}`,
       method: 'DELETE',
       query: { clusterName: cluster }
     }).as('delete-vs');
+
     cy.intercept({
       pathname: `**/api/namespaces/${namespace}/istio/networking.istio.io/v1/DestinationRule/${service}`,
       method: 'DELETE',
