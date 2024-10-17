@@ -184,14 +184,12 @@ const TopologyContent: React.FC<{
       activeNamespaces: graphData.fetchParams.namespaces,
       edgeLabels: edgeLabels,
       graphType: graphData.fetchParams.graphType,
-      rankBy: rankBy,
       showOutOfMesh: showOutOfMesh,
-      showRank: showRank,
       showSecurity: showSecurity,
       showVirtualServices: showVirtualServices,
       trafficRates: graphData.fetchParams.trafficRates
     } as GraphPFSettings;
-  }, [graphData.fetchParams, edgeLabels, rankBy, showOutOfMesh, showRank, showSecurity, showVirtualServices]);
+  }, [graphData.fetchParams, edgeLabels, showOutOfMesh, showSecurity, showVirtualServices]);
 
   //
   // SelectedIds State
@@ -599,9 +597,12 @@ const TopologyContent: React.FC<{
     onDeleteTrafficRouting,
     onLaunchWizard,
     onReady,
+    rankBy,
     setDetailsLevel,
     setSelectedIds,
-    setUpdateTime
+    setRankResult,
+    setUpdateTime,
+    showRank
   ]);
 
   React.useEffect(() => {
