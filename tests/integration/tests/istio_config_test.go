@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"github.com/kiali/kiali/models"
 	"path"
 	"testing"
 
@@ -36,7 +37,7 @@ func TestIstioConfigs(t *testing.T) {
 	assertConfigs(*configList, kiali.BOOKINFO, require)
 }
 
-func assertConfigs(configList kiali.IstioConfigListJson, namespace string, require *require.Assertions) {
+func assertConfigs(configList models.IstioConfigList, namespace string, require *require.Assertions) {
 	require.NotEmpty(configList)
 	require.NotNil(configList.IstioValidations)
 	require.Equal(kiali.BOOKINFO, namespace)

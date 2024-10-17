@@ -72,8 +72,9 @@ export class OverviewTrafficPolicies extends React.Component<OverviewTrafficPoli
             this.generateTrafficPolicies();
             this.fetchPermission();
           } else if (this.props.opTarget === 'update') {
-            const authorizationPolicies = this.props.nsInfo?.istioConfig?.authorizationPolicies ?? [];
-            const sidecars = this.props.nsInfo?.istioConfig?.sidecars ?? [];
+            const authorizationPolicies =
+              this.props.nsInfo?.istioConfig?.resources[gvkToString(dicIstioTypeToGVK['AuthorizationPolicy'])] ?? [];
+            const sidecars = this.props.nsInfo?.istioConfig?.resources[gvkToString(dicIstioTypeToGVK['Sidecar'])] ?? [];
             const remove = ['uid', 'resourceVersion', 'generation', 'creationTimestamp', 'managedFields'];
             sidecars.map(sdc => remove.map(key => delete sdc.metadata[key]));
             authorizationPolicies.map(ap => remove.map(key => delete ap.metadata[key]));
@@ -82,8 +83,8 @@ export class OverviewTrafficPolicies extends React.Component<OverviewTrafficPoli
             const nsInfo = this.props.nsInfo.istioConfig;
             this.setState(
               {
-                authorizationPolicies: nsInfo?.authorizationPolicies ?? [],
-                sidecars: nsInfo?.sidecars ?? []
+                authorizationPolicies: nsInfo?.resources[gvkToString(dicIstioTypeToGVK['AuthorizationPolicy'])] ?? [],
+                sidecars: nsInfo?.resources[gvkToString(dicIstioTypeToGVK['Sidecar'])] ?? []
               },
               () => this.fetchPermission(true)
             );

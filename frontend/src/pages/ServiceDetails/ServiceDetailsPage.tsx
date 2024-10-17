@@ -128,8 +128,8 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
         )
       )
       .then(response => {
-        this.setState({ gateways: response.data.gateways });
-        this.setState({ k8sGateways: response.data.k8sGateways });
+        this.setState({ gateways: response.data.resources[gvkToString(dicIstioTypeToGVK['Gateway'])] });
+        this.setState({ k8sGateways: response.data.resources[gvkToString(dicIstioTypeToGVK['K8sGateway'])] });
       })
       .catch(gwError => {
         AlertUtils.addError('Could not fetch Gateways list.', gwError);
@@ -168,7 +168,7 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
     )
       .then(results => {
         this.setState({
-          peerAuthentications: results.data.peerAuthentications
+          peerAuthentications: results.data.resources[gvkToString(dicIstioTypeToGVK['PeerAuthentication'])]
         });
       })
       .catch(error => {

@@ -1,6 +1,8 @@
 package models
 
 import (
+	"encoding/json"
+
 	extentions_v1alpha1 "istio.io/client-go/pkg/apis/extensions/v1alpha1"
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
@@ -18,28 +20,163 @@ import (
 // This type is used for returning a response of IstioConfigList
 // swagger:model IstioConfigList
 type IstioConfigList struct {
-	DestinationRules []*networking_v1.DestinationRule   `json:"destinationRules"`
-	EnvoyFilters     []*networking_v1alpha3.EnvoyFilter `json:"envoyFilters"`
-	Gateways         []*networking_v1.Gateway           `json:"gateways"`
-	ServiceEntries   []*networking_v1.ServiceEntry      `json:"serviceEntries"`
-	Sidecars         []*networking_v1.Sidecar           `json:"sidecars"`
-	VirtualServices  []*networking_v1.VirtualService    `json:"virtualServices"`
-	WorkloadEntries  []*networking_v1.WorkloadEntry     `json:"workloadEntries"`
-	WorkloadGroups   []*networking_v1.WorkloadGroup     `json:"workloadGroups"`
-	WasmPlugins      []*extentions_v1alpha1.WasmPlugin  `json:"wasmPlugins"`
-	Telemetries      []*telemetry_v1.Telemetry          `json:"telemetries"`
+	DestinationRules []*networking_v1.DestinationRule   `json:"-"`
+	EnvoyFilters     []*networking_v1alpha3.EnvoyFilter `json:"-"`
+	Gateways         []*networking_v1.Gateway           `json:"-"`
+	ServiceEntries   []*networking_v1.ServiceEntry      `json:"-"`
+	Sidecars         []*networking_v1.Sidecar           `json:"-"`
+	VirtualServices  []*networking_v1.VirtualService    `json:"-"`
+	WorkloadEntries  []*networking_v1.WorkloadEntry     `json:"-"`
+	WorkloadGroups   []*networking_v1.WorkloadGroup     `json:"-"`
+	WasmPlugins      []*extentions_v1alpha1.WasmPlugin  `json:"-"`
+	Telemetries      []*telemetry_v1.Telemetry          `json:"-"`
 
-	K8sGateways        []*k8s_networking_v1.Gateway             `json:"k8sGateways"`
-	K8sGRPCRoutes      []*k8s_networking_v1.GRPCRoute           `json:"k8sGRPCRoutes"`
-	K8sHTTPRoutes      []*k8s_networking_v1.HTTPRoute           `json:"k8sHTTPRoutes"`
-	K8sReferenceGrants []*k8s_networking_v1beta1.ReferenceGrant `json:"k8sReferenceGrants"`
-	K8sTCPRoutes       []*k8s_networking_v1alpha2.TCPRoute      `json:"k8sTCPRoutes"`
-	K8sTLSRoutes       []*k8s_networking_v1alpha2.TLSRoute      `json:"k8sTLSRoutes"`
+	K8sGateways        []*k8s_networking_v1.Gateway             `json:"-"`
+	K8sGRPCRoutes      []*k8s_networking_v1.GRPCRoute           `json:"-"`
+	K8sHTTPRoutes      []*k8s_networking_v1.HTTPRoute           `json:"-"`
+	K8sReferenceGrants []*k8s_networking_v1beta1.ReferenceGrant `json:"-"`
+	K8sTCPRoutes       []*k8s_networking_v1alpha2.TCPRoute      `json:"-"`
+	K8sTLSRoutes       []*k8s_networking_v1alpha2.TLSRoute      `json:"-"`
 
-	AuthorizationPolicies  []*security_v1.AuthorizationPolicy   `json:"authorizationPolicies"`
-	PeerAuthentications    []*security_v1.PeerAuthentication    `json:"peerAuthentications"`
-	RequestAuthentications []*security_v1.RequestAuthentication `json:"requestAuthentications"`
-	IstioValidations       IstioValidations                     `json:"validations"`
+	AuthorizationPolicies  []*security_v1.AuthorizationPolicy   `json:"-"`
+	PeerAuthentications    []*security_v1.PeerAuthentication    `json:"-"`
+	RequestAuthentications []*security_v1.RequestAuthentication `json:"-"`
+	IstioValidations       IstioValidations                     `json:"-"`
+}
+
+func (i IstioConfigList) MarshalJSON() ([]byte, error) {
+	// result map with keys and values
+	jsonMap := make(map[string]interface{})
+
+	resources := make(map[string]interface{})
+
+	resources[kubernetes.DestinationRules.String()] = i.DestinationRules
+	resources[kubernetes.EnvoyFilters.String()] = i.EnvoyFilters
+	resources[kubernetes.Gateways.String()] = i.Gateways
+	resources[kubernetes.ServiceEntries.String()] = i.ServiceEntries
+	resources[kubernetes.Sidecars.String()] = i.Sidecars
+	resources[kubernetes.VirtualServices.String()] = i.VirtualServices
+	resources[kubernetes.WorkloadEntries.String()] = i.WorkloadEntries
+	resources[kubernetes.WorkloadGroups.String()] = i.WorkloadGroups
+	resources[kubernetes.WasmPlugins.String()] = i.WasmPlugins
+	resources[kubernetes.Telemetries.String()] = i.Telemetries
+	resources[kubernetes.K8sGateways.String()] = i.K8sGateways
+	resources[kubernetes.K8sGRPCRoutes.String()] = i.K8sGRPCRoutes
+	resources[kubernetes.K8sHTTPRoutes.String()] = i.K8sHTTPRoutes
+	resources[kubernetes.K8sReferenceGrants.String()] = i.K8sReferenceGrants
+	resources[kubernetes.K8sTCPRoutes.String()] = i.K8sTCPRoutes
+	resources[kubernetes.K8sTLSRoutes.String()] = i.K8sTLSRoutes
+	resources[kubernetes.AuthorizationPolicies.String()] = i.AuthorizationPolicies
+	resources[kubernetes.PeerAuthentications.String()] = i.PeerAuthentications
+	resources[kubernetes.RequestAuthentications.String()] = i.RequestAuthentications
+
+	jsonMap["resources"] = resources
+	jsonMap["validations"] = i.IstioValidations
+
+	return json.Marshal(jsonMap)
+}
+
+func (i *IstioConfigList) UnmarshalJSON(data []byte) error {
+	var temp struct {
+		Resources   map[string]json.RawMessage `json:"resources"`
+		Validations IstioValidations           `json:"validations"`
+	}
+
+	if err := json.Unmarshal(data, &temp); err != nil {
+		return err
+	}
+
+	i.IstioValidations = temp.Validations
+
+	// Iterate over the resources map and unmarshal each resource type
+	for resourceType, rawMessage := range temp.Resources {
+		if len(rawMessage) == 0 || string(rawMessage) == "[]" {
+			continue
+		}
+
+		switch resourceType {
+		case kubernetes.DestinationRules.String():
+			if err := json.Unmarshal(rawMessage, &i.DestinationRules); err != nil {
+				return err
+			}
+		case kubernetes.EnvoyFilters.String():
+			if err := json.Unmarshal(rawMessage, &i.EnvoyFilters); err != nil {
+				return err
+			}
+		case kubernetes.Gateways.String():
+			if err := json.Unmarshal(rawMessage, &i.Gateways); err != nil {
+				return err
+			}
+		case kubernetes.ServiceEntries.String():
+			if err := json.Unmarshal(rawMessage, &i.ServiceEntries); err != nil {
+				return err
+			}
+		case kubernetes.Sidecars.String():
+			if err := json.Unmarshal(rawMessage, &i.Sidecars); err != nil {
+				return err
+			}
+		case kubernetes.VirtualServices.String():
+			if err := json.Unmarshal(rawMessage, &i.VirtualServices); err != nil {
+				return err
+			}
+		case kubernetes.WorkloadEntries.String():
+			if err := json.Unmarshal(rawMessage, &i.WorkloadEntries); err != nil {
+				return err
+			}
+		case kubernetes.WorkloadGroups.String():
+			if err := json.Unmarshal(rawMessage, &i.WorkloadGroups); err != nil {
+				return err
+			}
+		case kubernetes.WasmPlugins.String():
+			if err := json.Unmarshal(rawMessage, &i.WasmPlugins); err != nil {
+				return err
+			}
+		case kubernetes.Telemetries.String():
+			if err := json.Unmarshal(rawMessage, &i.Telemetries); err != nil {
+				return err
+			}
+		case kubernetes.K8sGateways.String():
+			if err := json.Unmarshal(rawMessage, &i.K8sGateways); err != nil {
+				return err
+			}
+		case kubernetes.K8sGRPCRoutes.String():
+			if err := json.Unmarshal(rawMessage, &i.K8sGRPCRoutes); err != nil {
+				return err
+			}
+		case kubernetes.K8sHTTPRoutes.String():
+			if err := json.Unmarshal(rawMessage, &i.K8sHTTPRoutes); err != nil {
+				return err
+			}
+		case kubernetes.K8sReferenceGrants.String():
+			if err := json.Unmarshal(rawMessage, &i.K8sReferenceGrants); err != nil {
+				return err
+			}
+		case kubernetes.K8sTCPRoutes.String():
+			if err := json.Unmarshal(rawMessage, &i.K8sTCPRoutes); err != nil {
+				return err
+			}
+		case kubernetes.K8sTLSRoutes.String():
+			if err := json.Unmarshal(rawMessage, &i.K8sTLSRoutes); err != nil {
+				return err
+			}
+		case kubernetes.AuthorizationPolicies.String():
+			if err := json.Unmarshal(rawMessage, &i.AuthorizationPolicies); err != nil {
+				return err
+			}
+		case kubernetes.PeerAuthentications.String():
+			if err := json.Unmarshal(rawMessage, &i.PeerAuthentications); err != nil {
+				return err
+			}
+		case kubernetes.RequestAuthentications.String():
+			if err := json.Unmarshal(rawMessage, &i.RequestAuthentications); err != nil {
+				return err
+			}
+		default:
+			// Ignore unrecognized resource types
+		}
+	}
+
+	return nil
 }
 
 func (i *IstioConfigList) ConvertToResponse() {
@@ -114,34 +251,255 @@ func (i *IstioConfigList) ConvertToResponse() {
 type IstioConfigMap map[string]IstioConfigList
 
 type IstioConfigDetails struct {
-	Namespace Namespace               `json:"namespace"`
-	ObjectGVK schema.GroupVersionKind `json:"GVK"`
+	Namespace Namespace               `json:"-"`
+	ObjectGVK schema.GroupVersionKind `json:"-"`
 
-	AuthorizationPolicy   *security_v1.AuthorizationPolicy   `json:"authorizationPolicy"`
-	DestinationRule       *networking_v1.DestinationRule     `json:"destinationRule"`
-	EnvoyFilter           *networking_v1alpha3.EnvoyFilter   `json:"envoyFilter"`
-	Gateway               *networking_v1.Gateway             `json:"gateway"`
-	PeerAuthentication    *security_v1.PeerAuthentication    `json:"peerAuthentication"`
-	RequestAuthentication *security_v1.RequestAuthentication `json:"requestAuthentication"`
-	ServiceEntry          *networking_v1.ServiceEntry        `json:"serviceEntry"`
-	Sidecar               *networking_v1.Sidecar             `json:"sidecar"`
-	VirtualService        *networking_v1.VirtualService      `json:"virtualService"`
-	WorkloadEntry         *networking_v1.WorkloadEntry       `json:"workloadEntry"`
-	WorkloadGroup         *networking_v1.WorkloadGroup       `json:"workloadGroup"`
-	WasmPlugin            *extentions_v1alpha1.WasmPlugin    `json:"wasmPlugin"`
-	Telemetry             *telemetry_v1.Telemetry            `json:"telemetry"`
+	AuthorizationPolicy   *security_v1.AuthorizationPolicy   `json:"-"`
+	DestinationRule       *networking_v1.DestinationRule     `json:"-"`
+	EnvoyFilter           *networking_v1alpha3.EnvoyFilter   `json:"-"`
+	Gateway               *networking_v1.Gateway             `json:"-"`
+	PeerAuthentication    *security_v1.PeerAuthentication    `json:"-"`
+	RequestAuthentication *security_v1.RequestAuthentication `json:"-"`
+	ServiceEntry          *networking_v1.ServiceEntry        `json:"-"`
+	Sidecar               *networking_v1.Sidecar             `json:"-"`
+	VirtualService        *networking_v1.VirtualService      `json:"-"`
+	WorkloadEntry         *networking_v1.WorkloadEntry       `json:"-"`
+	WorkloadGroup         *networking_v1.WorkloadGroup       `json:"-"`
+	WasmPlugin            *extentions_v1alpha1.WasmPlugin    `json:"-"`
+	Telemetry             *telemetry_v1.Telemetry            `json:"-"`
 
-	K8sGateway        *k8s_networking_v1.Gateway             `json:"k8sGateway"`
-	K8sGRPCRoute      *k8s_networking_v1.GRPCRoute           `json:"k8sGRPCRoute"`
-	K8sHTTPRoute      *k8s_networking_v1.HTTPRoute           `json:"k8sHTTPRoute"`
-	K8sReferenceGrant *k8s_networking_v1beta1.ReferenceGrant `json:"k8sReferenceGrant"`
-	K8sTCPRoute       *k8s_networking_v1alpha2.TCPRoute      `json:"k8sTCPRoute"`
-	K8sTLSRoute       *k8s_networking_v1alpha2.TLSRoute      `json:"k8sTLSRoute"`
+	K8sGateway        *k8s_networking_v1.Gateway             `json:"-"`
+	K8sGRPCRoute      *k8s_networking_v1.GRPCRoute           `json:"-"`
+	K8sHTTPRoute      *k8s_networking_v1.HTTPRoute           `json:"-"`
+	K8sReferenceGrant *k8s_networking_v1beta1.ReferenceGrant `json:"-"`
+	K8sTCPRoute       *k8s_networking_v1alpha2.TCPRoute      `json:"-"`
+	K8sTLSRoute       *k8s_networking_v1alpha2.TLSRoute      `json:"-"`
 
-	Permissions           ResourcePermissions `json:"permissions"`
-	IstioValidation       *IstioValidation    `json:"validation"`
-	IstioReferences       *IstioReferences    `json:"references"`
-	IstioConfigHelpFields []IstioConfigHelp   `json:"help"`
+	Permissions           ResourcePermissions `json:"-"`
+	IstioValidation       *IstioValidation    `json:"-"`
+	IstioReferences       *IstioReferences    `json:"-"`
+	IstioConfigHelpFields []IstioConfigHelp   `json:"-"`
+}
+
+func (i IstioConfigDetails) MarshalJSON() ([]byte, error) {
+	// result map with keys and values
+	jsonMap := make(map[string]interface{})
+
+	var resource interface{}
+
+	// Check not nil field and assign to `resource`, should be only one field
+	if i.AuthorizationPolicy != nil {
+		resource = i.AuthorizationPolicy
+	} else if i.DestinationRule != nil {
+		resource = i.DestinationRule
+	} else if i.EnvoyFilter != nil {
+		resource = i.EnvoyFilter
+	} else if i.Gateway != nil {
+		resource = i.Gateway
+	} else if i.PeerAuthentication != nil {
+		resource = i.PeerAuthentication
+	} else if i.RequestAuthentication != nil {
+		resource = i.RequestAuthentication
+	} else if i.ServiceEntry != nil {
+		resource = i.ServiceEntry
+	} else if i.Sidecar != nil {
+		resource = i.Sidecar
+	} else if i.VirtualService != nil {
+		resource = i.VirtualService
+	} else if i.WorkloadEntry != nil {
+		resource = i.WorkloadEntry
+	} else if i.WorkloadGroup != nil {
+		resource = i.WorkloadGroup
+	} else if i.WasmPlugin != nil {
+		resource = i.WasmPlugin
+	} else if i.Telemetry != nil {
+		resource = i.Telemetry
+	} else if i.K8sGateway != nil {
+		resource = i.K8sGateway
+	} else if i.K8sGRPCRoute != nil {
+		resource = i.K8sGRPCRoute
+	} else if i.K8sHTTPRoute != nil {
+		resource = i.K8sHTTPRoute
+	} else if i.K8sReferenceGrant != nil {
+		resource = i.K8sReferenceGrant
+	} else if i.K8sTCPRoute != nil {
+		resource = i.K8sTCPRoute
+	} else if i.K8sTLSRoute != nil {
+		resource = i.K8sTLSRoute
+	}
+
+	jsonMap["resource"] = resource
+	jsonMap["namespace"] = i.Namespace
+	jsonMap["gvk"] = i.ObjectGVK
+	jsonMap["permissions"] = i.Permissions
+	jsonMap["validation"] = i.IstioValidation
+	jsonMap["references"] = i.IstioReferences
+	jsonMap["help"] = i.IstioConfigHelpFields
+
+	return json.Marshal(jsonMap)
+}
+
+func (icd *IstioConfigDetails) UnmarshalJSON(data []byte) error {
+	var temp struct {
+		Namespace             Namespace               `json:"namespace"`
+		ObjectGVK             schema.GroupVersionKind `json:"gvk"`
+		Permissions           ResourcePermissions     `json:"permissions"`
+		IstioValidation       *IstioValidation        `json:"validation"`
+		IstioReferences       *IstioReferences        `json:"references"`
+		IstioConfigHelpFields []IstioConfigHelp       `json:"help"`
+		Resource              json.RawMessage         `json:"resource"`
+	}
+
+	if err := json.Unmarshal(data, &temp); err != nil {
+		return err
+	}
+
+	icd.Namespace = temp.Namespace
+	icd.ObjectGVK = temp.ObjectGVK
+	icd.Permissions = temp.Permissions
+	icd.IstioValidation = temp.IstioValidation
+	icd.IstioReferences = temp.IstioReferences
+	icd.IstioConfigHelpFields = temp.IstioConfigHelpFields
+
+	// Based on the GVK, determine which resource type to unmarshal the resource into
+	switch temp.ObjectGVK.String() {
+	case kubernetes.AuthorizationPolicies.String():
+		var ap security_v1.AuthorizationPolicy
+		if err := json.Unmarshal(temp.Resource, &ap); err != nil {
+			return err
+		}
+		icd.AuthorizationPolicy = &ap
+
+	case kubernetes.DestinationRules.String():
+		var dr networking_v1.DestinationRule
+		if err := json.Unmarshal(temp.Resource, &dr); err != nil {
+			return err
+		}
+		icd.DestinationRule = &dr
+
+	case kubernetes.EnvoyFilters.String():
+		var ef networking_v1alpha3.EnvoyFilter
+		if err := json.Unmarshal(temp.Resource, &ef); err != nil {
+			return err
+		}
+		icd.EnvoyFilter = &ef
+
+	case kubernetes.Gateways.String():
+		var gw networking_v1.Gateway
+		if err := json.Unmarshal(temp.Resource, &gw); err != nil {
+			return err
+		}
+		icd.Gateway = &gw
+
+	case kubernetes.PeerAuthentications.String():
+		var pa security_v1.PeerAuthentication
+		if err := json.Unmarshal(temp.Resource, &pa); err != nil {
+			return err
+		}
+		icd.PeerAuthentication = &pa
+
+	case kubernetes.RequestAuthentications.String():
+		var ra security_v1.RequestAuthentication
+		if err := json.Unmarshal(temp.Resource, &ra); err != nil {
+			return err
+		}
+		icd.RequestAuthentication = &ra
+
+	case kubernetes.ServiceEntries.String():
+		var se networking_v1.ServiceEntry
+		if err := json.Unmarshal(temp.Resource, &se); err != nil {
+			return err
+		}
+		icd.ServiceEntry = &se
+
+	case kubernetes.Sidecars.String():
+		var sc networking_v1.Sidecar
+		if err := json.Unmarshal(temp.Resource, &sc); err != nil {
+			return err
+		}
+		icd.Sidecar = &sc
+
+	case kubernetes.VirtualServices.String():
+		var vs networking_v1.VirtualService
+		if err := json.Unmarshal(temp.Resource, &vs); err != nil {
+			return err
+		}
+		icd.VirtualService = &vs
+
+	case kubernetes.WorkloadEntries.String():
+		var we networking_v1.WorkloadEntry
+		if err := json.Unmarshal(temp.Resource, &we); err != nil {
+			return err
+		}
+		icd.WorkloadEntry = &we
+
+	case kubernetes.WorkloadGroups.String():
+		var wg networking_v1.WorkloadGroup
+		if err := json.Unmarshal(temp.Resource, &wg); err != nil {
+			return err
+		}
+		icd.WorkloadGroup = &wg
+
+	case kubernetes.WasmPlugins.String():
+		var wp extentions_v1alpha1.WasmPlugin
+		if err := json.Unmarshal(temp.Resource, &wp); err != nil {
+			return err
+		}
+		icd.WasmPlugin = &wp
+
+	case kubernetes.Telemetries.String():
+		var tm telemetry_v1.Telemetry
+		if err := json.Unmarshal(temp.Resource, &tm); err != nil {
+			return err
+		}
+		icd.Telemetry = &tm
+
+	case kubernetes.K8sGateways.String():
+		var kg k8s_networking_v1.Gateway
+		if err := json.Unmarshal(temp.Resource, &kg); err != nil {
+			return err
+		}
+		icd.K8sGateway = &kg
+
+	case kubernetes.K8sGRPCRoutes.String():
+		var grpcRoute k8s_networking_v1.GRPCRoute
+		if err := json.Unmarshal(temp.Resource, &grpcRoute); err != nil {
+			return err
+		}
+		icd.K8sGRPCRoute = &grpcRoute
+
+	case kubernetes.K8sHTTPRoutes.String():
+		var httpRoute k8s_networking_v1.HTTPRoute
+		if err := json.Unmarshal(temp.Resource, &httpRoute); err != nil {
+			return err
+		}
+		icd.K8sHTTPRoute = &httpRoute
+
+	case kubernetes.K8sReferenceGrants.String():
+		var refGrant k8s_networking_v1beta1.ReferenceGrant
+		if err := json.Unmarshal(temp.Resource, &refGrant); err != nil {
+			return err
+		}
+		icd.K8sReferenceGrant = &refGrant
+
+	case kubernetes.K8sTCPRoutes.String():
+		var tcpRoute k8s_networking_v1alpha2.TCPRoute
+		if err := json.Unmarshal(temp.Resource, &tcpRoute); err != nil {
+			return err
+		}
+		icd.K8sTCPRoute = &tcpRoute
+
+	case kubernetes.K8sTLSRoutes.String():
+		var tlsRoute k8s_networking_v1alpha2.TLSRoute
+		if err := json.Unmarshal(temp.Resource, &tlsRoute); err != nil {
+			return err
+		}
+		icd.K8sTLSRoute = &tlsRoute
+
+	default:
+		return nil
+	}
+	return nil
 }
 
 // IstioConfigHelp represents a help message for a given Istio object type and field

@@ -73,8 +73,9 @@ import { ControlPlaneVersionBadge } from './ControlPlaneVersionBadge';
 import { AmbientBadge } from '../../components/Ambient/AmbientBadge';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { ApiError } from 'types/Api';
-import { IstioConfigList } from 'types/IstioConfigList';
+import { dicIstioTypeToGVK, IstioConfigList } from 'types/IstioConfigList';
 import { t } from 'utils/I18nUtils';
+import { gvkToString } from '../../utils/IstioConfigUtils';
 
 const gridStyleCompact = kialiStyle({
   backgroundColor: PFColors.BackgroundColor200,
@@ -565,27 +566,9 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
             configListField.forEach(istioObject => {
               if (!istioConfigPerNamespace.has(istioObject.metadata.namespace)) {
                 const newIstioConfigList: IstioConfigList = {
-                  authorizationPolicies: [],
-                  destinationRules: [],
-                  envoyFilters: [],
-                  gateways: [],
-                  k8sGateways: [],
-                  k8sGRPCRoutes: [],
-                  k8sHTTPRoutes: [],
-                  k8sReferenceGrants: [],
-                  k8sTCPRoutes: [],
-                  k8sTLSRoutes: [],
-                  peerAuthentications: [],
                   permissions: {},
-                  requestAuthentications: [],
-                  serviceEntries: [],
-                  sidecars: [],
-                  telemetries: [],
-                  validations: {},
-                  virtualServices: [],
-                  wasmPlugins: [],
-                  workloadEntries: [],
-                  workloadGroups: []
+                  resources: {},
+                  validations: {}
                 };
                 istioConfigPerNamespace.set(istioObject.metadata.namespace, newIstioConfigList);
               }
@@ -894,7 +877,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
         });
       }
 
-      const aps = nsInfo.istioConfig?.authorizationPolicies ?? [];
+      const aps = nsInfo.istioConfig?.resources[gvkToString(dicIstioTypeToGVK['AuthorizationPolicy'])] ?? [];
 
       const addAuthorizationAction = {
         isGroup: false,
