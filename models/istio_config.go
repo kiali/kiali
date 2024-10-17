@@ -1,6 +1,8 @@
 package models
 
 import (
+	"encoding/json"
+
 	extentions_v1alpha1 "istio.io/client-go/pkg/apis/extensions/v1alpha1"
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
@@ -18,28 +20,60 @@ import (
 // This type is used for returning a response of IstioConfigList
 // swagger:model IstioConfigList
 type IstioConfigList struct {
-	DestinationRules []*networking_v1.DestinationRule   `json:"destinationRules"`
-	EnvoyFilters     []*networking_v1alpha3.EnvoyFilter `json:"envoyFilters"`
-	Gateways         []*networking_v1.Gateway           `json:"gateways"`
-	ServiceEntries   []*networking_v1.ServiceEntry      `json:"serviceEntries"`
-	Sidecars         []*networking_v1.Sidecar           `json:"sidecars"`
-	VirtualServices  []*networking_v1.VirtualService    `json:"virtualServices"`
-	WorkloadEntries  []*networking_v1.WorkloadEntry     `json:"workloadEntries"`
-	WorkloadGroups   []*networking_v1.WorkloadGroup     `json:"workloadGroups"`
-	WasmPlugins      []*extentions_v1alpha1.WasmPlugin  `json:"wasmPlugins"`
-	Telemetries      []*telemetry_v1.Telemetry          `json:"telemetries"`
+	DestinationRules []*networking_v1.DestinationRule   `json:"-"`
+	EnvoyFilters     []*networking_v1alpha3.EnvoyFilter `json:"-"`
+	Gateways         []*networking_v1.Gateway           `json:"-"`
+	ServiceEntries   []*networking_v1.ServiceEntry      `json:"-"`
+	Sidecars         []*networking_v1.Sidecar           `json:"-"`
+	VirtualServices  []*networking_v1.VirtualService    `json:"-"`
+	WorkloadEntries  []*networking_v1.WorkloadEntry     `json:"-"`
+	WorkloadGroups   []*networking_v1.WorkloadGroup     `json:"-"`
+	WasmPlugins      []*extentions_v1alpha1.WasmPlugin  `json:"-"`
+	Telemetries      []*telemetry_v1.Telemetry          `json:"-"`
 
-	K8sGateways        []*k8s_networking_v1.Gateway             `json:"k8sGateways"`
-	K8sGRPCRoutes      []*k8s_networking_v1.GRPCRoute           `json:"k8sGRPCRoutes"`
-	K8sHTTPRoutes      []*k8s_networking_v1.HTTPRoute           `json:"k8sHTTPRoutes"`
-	K8sReferenceGrants []*k8s_networking_v1beta1.ReferenceGrant `json:"k8sReferenceGrants"`
-	K8sTCPRoutes       []*k8s_networking_v1alpha2.TCPRoute      `json:"k8sTCPRoutes"`
-	K8sTLSRoutes       []*k8s_networking_v1alpha2.TLSRoute      `json:"k8sTLSRoutes"`
+	K8sGateways        []*k8s_networking_v1.Gateway             `json:"-"`
+	K8sGRPCRoutes      []*k8s_networking_v1.GRPCRoute           `json:"-"`
+	K8sHTTPRoutes      []*k8s_networking_v1.HTTPRoute           `json:"-"`
+	K8sReferenceGrants []*k8s_networking_v1beta1.ReferenceGrant `json:"-"`
+	K8sTCPRoutes       []*k8s_networking_v1alpha2.TCPRoute      `json:"-"`
+	K8sTLSRoutes       []*k8s_networking_v1alpha2.TLSRoute      `json:"-"`
 
-	AuthorizationPolicies  []*security_v1.AuthorizationPolicy   `json:"authorizationPolicies"`
-	PeerAuthentications    []*security_v1.PeerAuthentication    `json:"peerAuthentications"`
-	RequestAuthentications []*security_v1.RequestAuthentication `json:"requestAuthentications"`
-	IstioValidations       IstioValidations                     `json:"validations"`
+	AuthorizationPolicies  []*security_v1.AuthorizationPolicy   `json:"-"`
+	PeerAuthentications    []*security_v1.PeerAuthentication    `json:"-"`
+	RequestAuthentications []*security_v1.RequestAuthentication `json:"-"`
+	IstioValidations       IstioValidations                     `json:"-"`
+}
+
+func (i IstioConfigList) MarshalJSON() ([]byte, error) {
+	// Create a map to hold the dynamically generated JSON keys and values
+	jsonMap := make(map[string]interface{})
+
+	resources := make(map[string]interface{})
+
+	resources[kubernetes.DestinationRules.String()] = i.DestinationRules
+	resources[kubernetes.EnvoyFilters.String()] = i.EnvoyFilters
+	resources[kubernetes.Gateways.String()] = i.Gateways
+	resources[kubernetes.ServiceEntries.String()] = i.ServiceEntries
+	resources[kubernetes.Sidecars.String()] = i.Sidecars
+	resources[kubernetes.VirtualServices.String()] = i.VirtualServices
+	resources[kubernetes.WorkloadEntries.String()] = i.WorkloadEntries
+	resources[kubernetes.WorkloadGroups.String()] = i.WorkloadGroups
+	resources[kubernetes.WasmPlugins.String()] = i.WasmPlugins
+	resources[kubernetes.Telemetries.String()] = i.Telemetries
+	resources[kubernetes.K8sGateways.String()] = i.K8sGateways
+	resources[kubernetes.K8sGRPCRoutes.String()] = i.K8sGRPCRoutes
+	resources[kubernetes.K8sHTTPRoutes.String()] = i.K8sHTTPRoutes
+	resources[kubernetes.K8sReferenceGrants.String()] = i.K8sReferenceGrants
+	resources[kubernetes.K8sTCPRoutes.String()] = i.K8sTCPRoutes
+	resources[kubernetes.K8sTLSRoutes.String()] = i.K8sTLSRoutes
+	resources[kubernetes.AuthorizationPolicies.String()] = i.AuthorizationPolicies
+	resources[kubernetes.PeerAuthentications.String()] = i.PeerAuthentications
+	resources[kubernetes.RequestAuthentications.String()] = i.RequestAuthentications
+
+	jsonMap["resources"] = resources
+	jsonMap["validations"] = i.IstioValidations
+
+	return json.Marshal(jsonMap)
 }
 
 func (i *IstioConfigList) ConvertToResponse() {
