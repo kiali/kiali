@@ -275,16 +275,22 @@ func (in *MetricsService) GetControlPlaneMetrics(q models.IstioMetricsQuery, pod
 	if err != nil {
 		return nil, err
 	}
-	deltaSum := deltaSumConverted[0].Datapoints[0].Value
 	deltaCountMetric := in.prom.FetchDelta("pilot_proxy_convergence_time_count", podLabel, "", q.End, deltaDuration)
 	deltaCountConverted, err := models.ConvertMetric("pilot_proxy_convergence_time_count", deltaCountMetric, models.ConversionParams{Scale: 1})
 	if err != nil {
 		return nil, err
 	}
-	deltaCount := deltaCountConverted[0].Datapoints[0].Value
-	converted := deltaSumConverted
-	converted[0].Datapoints[0].Value = deltaSum / deltaCount
-	metrics["pilot_proxy_convergence_time"] = append(metrics["pilot_proxy_convergence_time"], converted...)
+
+	var converted []models.Metric
+
+	// if the supporting metrics are not there just don't report this metric
+	if len(deltaSumConverted) > 0 && len(deltaSumConverted[0].Datapoints) > 0 && len(deltaCountConverted) > 0 && len(deltaCountConverted[0].Datapoints) > 0 {
+		deltaSum := deltaSumConverted[0].Datapoints[0].Value
+		deltaCount := deltaCountConverted[0].Datapoints[0].Value
+		converted = deltaSumConverted
+		converted[0].Datapoints[0].Value = deltaSum / deltaCount
+		metrics["pilot_proxy_convergence_time"] = append(metrics["pilot_proxy_convergence_time"], converted...)
+	}
 
 	metric := in.prom.FetchRateRange("container_cpu_usage_seconds_total", []string{podLabel}, "", &q.RangeQuery)
 	converted, err = models.ConvertMetric("container_cpu_usage_seconds_total", metric, models.ConversionParams{Scale: 1})
