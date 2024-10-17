@@ -22,6 +22,8 @@ export default defineConfig({
     omitFiltered: true,
     filterSpecs: true
   },
+  experimentalMemoryManagement: true,
+  numTestsKeptInMemory: 1,
   e2e: {
     baseUrl: 'http://localhost:3000',
     async setupNodeEvents(
