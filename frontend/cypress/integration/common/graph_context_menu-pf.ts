@@ -54,7 +54,7 @@ When(
         expect(node.length).to.equal(1);
 
         cy.get(`[data-id=${node[0].getId()}]`).rightclick();
-        cy.wrap(node).as('contextNode');
+        cy.wrap(node[0]).as('contextNode');
 
         cy.get('.pf-topology-context-menu__c-dropdown__menu').should('be.visible');
       });

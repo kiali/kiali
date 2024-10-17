@@ -183,16 +183,13 @@ When(
 
         expect(serviceNode.length).to.equal(1);
 
-        const setSelectedIds = state.graphRefs.setSelectedIds as (values: string[]) => void;
-        setSelectedIds([serviceNode[0].getId()]);
-
-        cy.wrap(setSelectedIds([serviceNode[0].getId()])).then(() => {
+        cy.wrap(cy.get(`[data-id=${serviceNode[0].getId()}]`).click()).then(() => {
           // Wait for the side panel to change.
           // Note we can't use summary-graph-panel since that
           // element will get unmounted and disappear when
           // the context changes but the graph-side-panel does not.
           cy.get('#graph-side-panel').contains(service);
-          cy.wrap(serviceNode).as('contextNode');
+          cy.wrap(serviceNode[0]).as('contextNode');
         });
       });
   }
