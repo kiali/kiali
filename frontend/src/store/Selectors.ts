@@ -79,10 +79,6 @@ const namespaceItems = (state: KialiAppState): Namespace[] | undefined => state.
 
 export const namespaceItemsSelector = createIdentitySelector(namespaceItems);
 
-const unfilteredNamespaceItems = (state: KialiAppState): Namespace[] | undefined => state.namespaces.unfilteredItems;
-
-export const unfilteredNamespaceItemsSelector = createIdentitySelector(unfilteredNamespaceItems);
-
 const rankBy = (state: KialiAppState): RankMode[] => state.graph.toolbarState.rankBy;
 
 export const rankBySelector = createIdentitySelector(rankBy);

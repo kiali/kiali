@@ -51,35 +51,30 @@ import { classes } from 'typestyle';
 import { panelBodyStyle, panelHeadingStyle, panelStyle } from 'pages/Graph/SummaryPanelStyle';
 import { isRemoteCluster } from './TargetPanelControlPlane';
 import { ControlPlane } from 'types/Mesh';
-import { unfilteredNamespaceItemsSelector } from 'store/Selectors';
-import { Namespace } from 'types/Namespace';
 
 type ReduxProps = {
-  namespaces: Namespace[];
+  controlPlanes: ControlPlane[];
 };
 
 type TargetPanelNamespaceProps = ReduxProps & TargetPanelCommonProps;
 
 type TargetPanelNamespaceState = {
-  controlPlanes?: ControlPlane[];
   errorMetrics?: Metric[];
   loading: boolean;
   metrics?: Metric[];
   nsInfo?: NamespaceInfo;
   status?: NamespaceStatus;
-  targetCluster?: string;
-  targetNamespace?: string;
-  targetNode?: Node<NodeModel, any>;
+  targetCluster: string;
+  targetNamespace: string;
+  targetNode: Node<NodeModel, any>;
   tlsStatus?: TLSStatus;
 };
 
-const defaultState: TargetPanelNamespaceState = {
-  controlPlanes: undefined,
+const defaultState = {
   errorMetrics: undefined,
   loading: false,
   nsInfo: undefined,
   status: undefined,
-  targetNode: undefined,
   tlsStatus: undefined
 };
 
@@ -113,7 +108,6 @@ class TargetPanelNamespaceComponent extends React.Component<TargetPanelNamespace
     const data = (props.target.elem as GraphElement<ElementModel, any>).getData();
     this.state = {
       ...defaultState,
-      nsInfo: props.namespaces.find(ns => ns.cluster === data.cluster && ns.name === data.namespace),
       targetCluster: data.cluster,
       targetNamespace: data.namespace,
       targetNode: targetNode
@@ -132,7 +126,7 @@ class TargetPanelNamespaceComponent extends React.Component<TargetPanelNamespace
         targetNode: props.target.elem as any,
         targetCluster: cluster,
         targetNamespace: namespace,
-        nsInfo: props.namespaces.find(ns => ns.cluster === cluster && ns.name === namespace),
+        nsInfo: state.nsInfo,
         loading: true
       };
     }
@@ -208,19 +202,19 @@ class TargetPanelNamespaceComponent extends React.Component<TargetPanelNamespace
 
                 {isControlPlane && (
                   <>
-                    {this.state.controlPlanes && (
+                    {this.props.controlPlanes && (
                       <div>
                         {targetPanelHR}
-                        <ControlPlaneDonut controlPlanes={this.state.controlPlanes} />
+                        <ControlPlaneDonut controlPlanes={this.props.controlPlanes} />
                       </div>
                     )}
 
-                    {this.state.controlPlanes && (
+                    {this.props.controlPlanes && (
                       <div style={{ textAlign: 'left', alignContent: 'start', alignItems: 'start' }}>
                         {targetPanelHR}
                         <Title headingLevel="h3">Control Planes</Title>
                         <List isPlain isBordered>
-                          {this.state.controlPlanes
+                          {this.props.controlPlanes
                             .sort((a, b) => a.istiodName.localeCompare(b.istiodName))
                             .map(cp => (
                               <ListItem key={cp.istiodName}>
@@ -230,7 +224,7 @@ class TargetPanelNamespaceComponent extends React.Component<TargetPanelNamespace
                                     Version: {cp.version ? cp.version.version : 'Unknown'}
                                   </ListItem>
                                   <ListItem style={listItemStyle}>Revision: {cp.revision}</ListItem>
-                                  {cp.tags && <ListItem style={listItemStyle}>Tag: {cp.tags[0].name}</ListItem>}
+                                  {cp.tag && <ListItem style={listItemStyle}>Tag: {cp.tag.name}</ListItem>}
                                 </List>
                               </ListItem>
                             ))}
@@ -460,7 +454,7 @@ class TargetPanelNamespaceComponent extends React.Component<TargetPanelNamespace
     this.promises.cancelAll();
 
     this.promises
-      .registerAll(`promises`, [this.fetchControlPlanes(), this.fetchHealthStatus(), this.fetchMetrics()])
+      .registerAll(`promises`, [this.fetchNamespaceInfo(), this.fetchHealthStatus(), this.fetchMetrics()])
       .then(() => {
         this.setState({ loading: false });
       })
@@ -477,21 +471,15 @@ class TargetPanelNamespaceComponent extends React.Component<TargetPanelNamespace
     this.setState({ loading: true });
   };
 
-  private fetchControlPlanes = async (): Promise<void> => {
-    if (!this.isControlPlane()) {
-      return Promise.resolve();
-    }
-
-    return API.getControlPlanes()
+  private fetchNamespaceInfo = async (): Promise<void> => {
+    return API.getNamespaceInfo(this.state.targetNamespace)
       .then(response => {
         this.setState({
-          // Filter out controlplanes that don't match this cluster.
-          // This should maybe be done server side.
-          controlPlanes: response.data.filter(controlPlane => controlPlane.cluster.name === this.state.nsInfo?.cluster)
+          nsInfo: response.data
         });
       })
       .catch(error => {
-        AlertUtils.addError('Error fetching controlplanes.', error, 'default', MessageType.ERROR);
+        AlertUtils.addError('Error fetching namespace info.', error, 'default', MessageType.ERROR);
       });
   };
 
@@ -709,7 +697,7 @@ class TargetPanelNamespaceComponent extends React.Component<TargetPanelNamespace
 
 const mapStateToProps = (state: KialiAppState): ReduxProps => {
   return {
-    namespaces: unfilteredNamespaceItemsSelector(state) || []
+    controlPlanes: state.mesh.controlPlanes || []
   };
 };
 

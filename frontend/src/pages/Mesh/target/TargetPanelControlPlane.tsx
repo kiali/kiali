@@ -35,20 +35,12 @@ import { CertsInfo } from 'types/CertsInfo';
 import { IstioCertsInfo } from 'components/IstioCertsInfo/IstioCertsInfo';
 import { TargetPanelControlPlaneMetrics } from './TargetPanelControlPlaneMetrics';
 import { TargetPanelControlPlaneStatus } from './TargetPanelControlPlaneStatus';
-import { namespaceItemsSelector } from 'store/Selectors';
-import { Namespace } from 'types/Namespace';
-import { connect } from 'react-redux';
-import { KialiAppState } from '../../../store/Store';
+import { ControlPlane } from 'types/Mesh';
 
-type ReduxProps = {
-  namespaces: Namespace[];
+type TargetPanelControlPlaneProps = TargetPanelCommonProps & {
+  meshStatus: string;
+  minTLS: string;
 };
-
-type TargetPanelControlPlaneProps = ReduxProps &
-  TargetPanelCommonProps & {
-    meshStatus: string;
-    minTLS: string;
-  };
 
 type TargetPanelControlPlaneState = {
   certificates?: CertsInfo[];
@@ -82,7 +74,7 @@ export const isRemoteCluster = (annotations?: { [key: string]: string }): boolea
 // TODO: Should these remain fixed values?
 const direction: DirectionType = 'outbound';
 
-class TargetPanelControlPlaneComponent extends React.Component<
+export class TargetPanelControlPlane extends React.Component<
   TargetPanelControlPlaneProps,
   TargetPanelControlPlaneState
 > {
@@ -94,9 +86,6 @@ class TargetPanelControlPlaneComponent extends React.Component<
     const namespaceNode = this.props.target.elem as Node<NodeModel, any>;
     this.state = {
       ...defaultState,
-      nsInfo: props.namespaces.find(
-        ns => ns.cluster === namespaceNode.getData().cluster && ns.name === namespaceNode.getData().namespace
-      ),
       controlPlaneNode: namespaceNode
     };
   }
@@ -150,9 +139,8 @@ class TargetPanelControlPlaneComponent extends React.Component<
     const nsInfo = this.state.nsInfo;
     const data = this.state.controlPlaneNode?.getData() as NodeData;
 
-    // Controlplane infradata is structured: {config: configuration, revision: string}
-    const { config, revision } = data.infraData;
-    const parsedCm = config.ConfigMap ? this.getParsedYaml(config.ConfigMap) : '';
+    const controlPlane: ControlPlane = data.infraData;
+    const parsedCm = controlPlane.config.configMap ? this.getParsedYaml(controlPlane.config.configMap) : '';
 
     return (
       <div
@@ -165,11 +153,11 @@ class TargetPanelControlPlaneComponent extends React.Component<
         <div className={panelBodyStyle}>
           <div>{t('Version: {{version}}', { version: data.version || t(UNKNOWN) })}</div>
 
-          <MeshMTLSStatus cluster={data.cluster} revision={revision} />
+          <MeshMTLSStatus cluster={data.cluster} revision={controlPlane.revision} />
 
           <TargetPanelControlPlaneStatus
             controlPlaneMetrics={this.state.controlPlaneMetrics}
-            outboundTrafficPolicy={config.OutboundTrafficPolicy}
+            outboundTrafficPolicy={controlPlane.config.OutboundTrafficPolicy}
           />
 
           <TLSInfo version={this.props.minTLS} />
@@ -213,11 +201,14 @@ class TargetPanelControlPlaneComponent extends React.Component<
   private load = (): void => {
     this.promises.cancelAll();
 
+    const data = this.state.controlPlaneNode!.getData() as NodeData;
+
     this.promises
-      .registerAll(`promises-${this.state.nsInfo?.cluster}:${this.state.nsInfo?.name}`, [
+      .registerAll(`promises-${data.cluster}:${data.namespace}`, [
         this.fetchHealthStatus(),
         this.fetchMetrics(),
-        this.fetchTLS()
+        this.fetchTLS(),
+        this.fetchNamespaceInfo()
       ])
       .then(_ => {
         this.setState({ loading: false });
@@ -233,6 +224,18 @@ class TargetPanelControlPlaneComponent extends React.Component<
       });
 
     this.setState({ loading: true });
+  };
+
+  private fetchNamespaceInfo = async (): Promise<void> => {
+    const data = this.state.controlPlaneNode!.getData() as NodeData;
+
+    return API.getNamespaceInfo(data.namespace, data.cluster)
+      .then(response => {
+        this.setState({
+          nsInfo: response.data
+        });
+      })
+      .catch(err => this.handleApiError('Could not fetch namespace info', err));
   };
 
   private fetchHealthStatus = async (): Promise<void> => {
@@ -352,11 +355,3 @@ class TargetPanelControlPlaneComponent extends React.Component<
     return <div style={{ padding: '1.5rem 0', textAlign: 'center' }}>Control plane metrics are not available</div>;
   };
 }
-
-const mapStateToProps = (state: KialiAppState): ReduxProps => {
-  return {
-    namespaces: namespaceItemsSelector(state) || []
-  };
-};
-
-export const TargetPanelControlPlane = connect(mapStateToProps)(TargetPanelControlPlaneComponent);

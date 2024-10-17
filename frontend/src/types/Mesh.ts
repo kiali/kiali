@@ -46,7 +46,7 @@ export interface MeshNodeData {
   cluster: string;
   healthData?: MeshNodeHealthData;
   id: string;
-  infraData?: MeshCluster | NamespaceInfo[] | any; // add other type options as the case arises
+  infraData?: MeshCluster | NamespaceInfo[] | ControlPlane | any; // add other type options as the case arises
   infraName: string;
   infraType: MeshInfraType;
   isAmbient?: boolean;
@@ -92,18 +92,24 @@ export interface MeshDefinition {
   timestamp: number;
 }
 
-// TODO: Make these lowercase.
 export interface Tag {
   name: string;
 }
 
+export interface ControlPlaneConfig {
+  OutboundTrafficPolicy?: any;
+  configMap?: any;
+}
+
 export interface ControlPlane {
   cluster: MeshCluster;
+  config: ControlPlaneConfig;
   istiodName: string;
   managedClusters?: { name: string }[];
   managedNamespaces?: NamespaceInfo[];
   revision: string;
-  tags: Tag[];
+  tag?: Tag;
+  thresholds: any;
   version?: {
     version: string;
   };

@@ -93,19 +93,8 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 			version = cp.Version.Version
 		}
 
-		infraData := map[string]any{
-			"config":     cp.Config,
-			"revision":   cp.Revision,
-			"thresholds": cp.Thresholds,
-		}
-		// Assuming there's just one tag per controlplane.
-		// TODO: Is this correct? Especially for primary-remote?
-		if len(cp.Tags) == 1 {
-			infraData["tag"] = cp.Tags[0]
-		}
-
 		healthDataKey := componentHealthKey{Name: cp.IstiodName, Namespace: cp.IstiodNamespace, Cluster: cp.Cluster.Name}.String()
-		istiod, _, err := addInfra(meshMap, mesh.InfraTypeIstiod, cp.Cluster.Name, cp.IstiodNamespace, name, infraData, version, false, healthData[healthDataKey])
+		istiod, _, err := addInfra(meshMap, mesh.InfraTypeIstiod, cp.Cluster.Name, cp.IstiodNamespace, name, cp, version, false, healthData[healthDataKey])
 		mesh.CheckError(err)
 
 		for _, mc := range cp.ManagedClusters {
@@ -132,14 +121,9 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 				})
 				// Show the tag instead of the revision name since that is what is actually set on the namespaces.
 				rev := cp.Revision
-				if cp.Tags != nil {
-					for _, tag := range cp.Tags {
-						if tag.Cluster == cp.Cluster.Name {
-							// There should just be one tag pointing to this controlplane revision per cluster.
-							rev = tag.Name
-							break
-						}
-					}
+				if cp.Tag != nil {
+					// There should just be one tag pointing to this controlplane revision per cluster.
+					rev = cp.Tag.Name
 				}
 				dp, _, err := addInfra(meshMap, mesh.InfraTypeDataPlane, mc.Name, "", "Data Plane", namespaces, rev, false, "")
 				graph.CheckError(err)

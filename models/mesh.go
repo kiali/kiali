@@ -96,7 +96,7 @@ type ControlPlane struct {
 	Status string `json:"status"`
 
 	// Tags are the tags associated with the controlplane.
-	Tags []Tag `json:"tags"`
+	Tag *Tag `json:"tag"`
 
 	// Thresholds is the thresholds for the controlplane.
 	Thresholds *IstiodThresholds `json:"thresholds"`
@@ -108,7 +108,7 @@ type ControlPlane struct {
 // ControlPlaneConfiguration is the configuration for the controlPlane and any associated dataPlane.
 type ControlPlaneConfiguration struct {
 	// Config Map
-	ConfigMap map[string]string `yaml:"configMap,omitempty"`
+	ConfigMap map[string]string `json:"configMap,omitempty" yaml:"configMap,omitempty"`
 
 	// IsGatewayToNamespace specifies the PILOT_SCOPE_GATEWAY_TO_NAMESPACE environment variable in Control Plane
 	// This is not currently used by the frontend so excluding it from the API response.

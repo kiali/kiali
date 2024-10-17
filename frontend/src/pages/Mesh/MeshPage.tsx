@@ -26,10 +26,12 @@ import { connectRefresh } from '../../components/Refresh/connectRefresh';
 import { Controller } from '@patternfly/react-topology';
 import { EmptyMeshLayout } from './EmptyMeshLayout';
 import {
+  ControlPlane,
   DecoratedMeshEdgeWrapper,
   DecoratedMeshElements,
   DecoratedMeshNodeWrapper,
   MeshDefinition,
+  MeshInfraType,
   MeshTarget
 } from 'types/Mesh';
 import { Mesh, getLayoutByName } from './Mesh';
@@ -62,6 +64,7 @@ type ReduxStateProps = {
 type ReduxDispatchProps = {
   endTour: () => void;
   onReady: (controller: Controller) => void;
+  setControlPlanes: (controlPlanes: ControlPlane[]) => void;
   setDefinition: (meshDefinition: MeshDefinition) => void;
   setLayout: (layout: Layout) => void;
   setTarget: (target: MeshTarget) => void;
@@ -280,6 +283,15 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
   ): void => {
     const prevElements = this.state.meshData.elements;
 
+    // Find the controlplanes nodes and pull out the controlplane
+    // object from infraData. The controlplane object has all the
+    // managed namespaces that is needed by other elements.
+    const controlPlanes: ControlPlane[] | undefined = elements.nodes
+      ?.filter(node => node.data.infraType === MeshInfraType.ISTIOD)
+      .map(node => node.data.infraData);
+
+    this.props.setControlPlanes(controlPlanes || []);
+
     this.setState({
       meshData: {
         elements: elements,
@@ -416,6 +428,7 @@ const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
 const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => ({
   endTour: bindActionCreators(TourActions.endTour, dispatch),
   onReady: (controller: Controller) => dispatch(MeshThunkActions.meshReady(controller)),
+  setControlPlanes: bindActionCreators(MeshActions.setControlPlanes, dispatch),
   setDefinition: bindActionCreators(MeshActions.setDefinition, dispatch),
   setLayout: bindActionCreators(MeshActions.setLayout, dispatch),
   setTarget: bindActionCreators(MeshActions.setTarget, dispatch),
