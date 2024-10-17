@@ -72,14 +72,6 @@ When('user clicks the {string} action of the context menu in the cytoscape graph
   });
 });
 
-Then('user should see the {string} wizard', (wizardKey: string) => {
-  cy.get(`[data-test=${wizardKey}_modal]`).should('exist');
-});
-
-Then('user should see the confirmation dialog to delete all traffic routing', () => {
-  cy.get('[data-test=delete-traffic-routing-modal]').should('exist');
-});
-
 Then(
   'user should see no cluster parameter in the url when clicking the {string} link in the context menu in the cytoscape graph',
   (linkText: string) => {

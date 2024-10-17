@@ -56,15 +56,31 @@ When(
         cy.get(`[data-id=${node[0].getId()}]`).rightclick();
         cy.wrap(node).as('contextNode');
 
-        cy.getBySel('graph-node-context-menu').should('be.visible');
+        cy.get('.pf-topology-context-menu__c-dropdown__menu').should('be.visible');
       });
   }
 );
 
+When('user clicks the {string} item of the context menu', (menuKey: string) => {
+  cy.get('.pf-topology-context-menu__c-dropdown__menu')
+    .find(`[data-test="${menuKey}"]`)
+    .then($item => {
+      cy.wrap($item).click();
+    });
+});
+
+Then('user should see the {string} wizard', (wizardKey: string) => {
+  cy.get(`[data-test=${wizardKey}_modal]`).should('exist');
+});
+
+Then('user should see the confirmation dialog to delete all traffic routing', () => {
+  cy.get('[data-test=delete-traffic-routing-modal]').should('exist');
+});
+
 Then(
   'user should see no cluster parameter in the url when clicking the {string} link in the context menu',
   (linkText: string) => {
-    cy.get(`.pf-topology-context-menu__c-dropdown__menu`).within(() => {
+    cy.get('.pf-topology-context-menu__c-dropdown__menu').within(() => {
       cy.get('button')
         .contains(linkText)
         .click()
@@ -79,7 +95,7 @@ Then(
 Then(
   'user should see the {string} cluster parameter in the url when clicking the {string} link in the context menu',
   (cluster: string, linkText: string) => {
-    cy.get(`.pf-topology-context-menu__c-dropdown__menu`).within(() => {
+    cy.get('.pf-topology-context-menu__c-dropdown__menu').within(() => {
       cy.get('button')
         .contains(linkText)
         .click()

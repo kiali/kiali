@@ -79,10 +79,9 @@ When(`user selects graph refresh {string}`, (refresh: string) => {
 When('user selects {string} graph type', (graphType: string) => {
   cy.get('button#graph_type_dropdown-toggle')
     .click()
-    .parent()
-    .find('div#graph_type_dropdown')
-    .find(`button[id="${graphType}"]`)
-    .click();
+    .then(() => {
+      cy.get('div#graph_type_dropdown').find(`button[id="${graphType}"]`).click();
+    });
 
   cy.get('#loading_kiali_spinner').should('not.exist');
 });
