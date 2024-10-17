@@ -19,7 +19,9 @@ Then('the nodes located in the {string} cluster should be restricted', (cluster:
       const controller = state.graphRefs.getController() as Visualization;
       assert.isTrue(controller.hasGraph());
       const { nodes } = elems(controller);
+
       const filteredNodes = nodes.filter(node => node.getData().cluster === cluster && !node.getData().isBox);
+
       filteredNodes.forEach(node => {
         assert.isTrue(node.getData().isInaccessible);
       });
@@ -35,7 +37,9 @@ Then('the nodes on the minigraph located in the {string} cluster should be restr
       const controller = state.graphRefs.getController() as Visualization;
       assert.isTrue(controller.hasGraph());
       const { nodes } = elems(controller);
+
       const filteredNodes = nodes.filter(node => node.getData().cluster === cluster && !node.getData().isBox);
+
       filteredNodes.forEach(node => {
         assert.isTrue(node.getData().isInaccessible);
       });
