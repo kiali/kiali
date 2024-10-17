@@ -201,6 +201,7 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
     return this.promises
       .register(`configs${cluster}`, API.getAllIstioConfigs(typeFilters, validate, '', '', cluster))
       .then(response => {
+        console.log(JSON.stringify(response));
         return toIstioItems(filterByNamespaces(filterByName(response.data, istioNameFilters), namespaces), cluster);
       });
   }
