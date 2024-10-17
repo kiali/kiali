@@ -281,7 +281,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
         gatewayClass: '',
         addMesh: false,
         port: 80,
-        isOpen: false,
+        isOpen: false
       };
 
       if (hasGateway(this.props.virtualServices)) {
@@ -1098,7 +1098,6 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
                       <K8sRouteHosts
                         valid={this.state.valid.k8sRouteHosts}
                         k8sRouteHosts={this.state.k8sRouteHosts}
-                        gateway={this.state.gateway}
                         onK8sRouteHostsChange={this.onK8sRouteHosts}
                       />
                     </div>
@@ -1110,7 +1109,6 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
                       <K8sGRPCRouteHosts
                         valid={this.state.valid.k8sRouteHosts}
                         k8sRouteHosts={this.state.k8sRouteHosts}
-                        gateway={this.state.gateway}
                         onK8sRouteHostsChange={this.onK8sRouteHosts}
                       />
                     </div>
