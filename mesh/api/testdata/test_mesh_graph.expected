@@ -241,9 +241,9 @@
               "Components": []
             },
             "ConfigMapName": "",
+            "EgressGatewayNamespace": "",
             "EnvoyAdminLocalPort": 15000,
             "GatewayAPIClasses": [],
-            "EgressGatewayNamespace": "",
             "IngressGatewayNamespace": "",
             "IstioAPIEnabled": true,
             "IstioIdentityDomain": "svc.cluster.local",
@@ -287,24 +287,18 @@
               "accessible": true
             },
             "config": {
-              "ConfigMap": {
+              "configMap": {
                 "mesh": "accessLogFile: /dev/stdout\nenableAutoMtls: true\nrootNamespace: istio-system\ntrustDomain: cluster.local\n"
               },
               "Network": "kialiNetwork",
-              "DisableMixerHttpReports": false,
-              "DiscoverySelectors": null,
-              "EnableAutoMtls": true,
-              "MeshMTLS": {
-                "MinProtocolVersion": ""
-              },
               "certificates": [
                 {
-                  "configMapName": "istio-ca-root-cert",
                   "dnsNames": null,
-                  "error": "",
+                  "configMapName": "istio-ca-root-cert",
                   "issuer": "O=cluster.local",
                   "notBefore": "2021-07-27T14:37:00Z",
                   "notAfter": "2031-07-25T14:37:00Z",
+                  "error": "",
                   "accessible": true,
                   "cluster": ""
                 }
@@ -312,13 +306,19 @@
               "defaultConfig": {
                 "MeshId": ""
               },
+              "DefaultDestinationRuleExportTo": null,
+              "DefaultServiceExportTo": null,
+              "DefaultVirtualServiceExportTo": null,
+              "DisableMixerHttpReports": false,
+              "DiscoverySelectors": null,
+              "EnableAutoMtls": true,
+              "MeshMTLS": {
+                "MinProtocolVersion": ""
+              },
               "OutboundTrafficPolicy": {
                 "mode": "ALLOW_ANY"
               },
-              "TrustDomain": "cluster.local",
-              "DefaultDestinationRuleExportTo": null,
-              "DefaultServiceExportTo": null,
-              "DefaultVirtualServiceExportTo": null
+              "TrustDomain": "cluster.local"
             },
             "externalControlPlane": false,
             "id": "cluster-primary",
