@@ -1,5 +1,4 @@
 @app-details
-@pft
 # don't change first line of this file - the tag is used for the test scripts to identify the test suite
 
 Feature: Kiali App Details page
@@ -12,4 +11,4 @@ Feature: Kiali App Details page
 
   @bookinfo-app
   Scenario: See app minigraph for details app.
-    Then user sees a patternfly minigraph
+    Then user sees a minigraph

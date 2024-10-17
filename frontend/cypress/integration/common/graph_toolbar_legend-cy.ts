@@ -26,42 +26,30 @@ const buttonState = (label: string, active: boolean): void => {
     .should('eq', active);
 };
 
-Then('the toggle button {string} is enabled', (label: string) => {
+Then('the toggle button {string} is enabled in the cytoscape graph', (label: string) => {
   cy.get(`button[aria-label="${label}"]`).should('have.attr', 'aria-disabled', 'false');
 });
 
-When('the button {string} is clicked', (label: string) => {
+When('the button {string} is clicked in the cytoscape graph', (label: string) => {
   buttonClick(label);
 });
 
-Then('the button {string} is active', (label: string) => {
+Then('the button {string} is active in the cytoscape graph', (label: string) => {
   buttonState(label, true);
 });
 
-Then('the button {string} is not active', (label: string) => {
+Then('the button {string} is not active in the cytoscape graph', (label: string) => {
   buttonState(label, false);
 });
 
-Then('the {string} is turned on', (label: string) => {
+Then('the {string} is turned on in the cytoscape graph', (label: string) => {
   buttonPrepare(label, true);
 });
 
-Then('the {string} is turned off', (label: string) => {
+Then('the {string} is turned off in the cytoscape graph', (label: string) => {
   buttonPrepare(label, false);
 });
 
-Then('user can see the legend section', () => {
-  cy.get("[data-test='graph-legend']").should('be.visible');
-});
-
-When('the Legend section is visible', () => {
+When('the Legend section is visible in the cytoscape graph', () => {
   buttonClick('Show Legend');
-});
-
-When('the cross is clicked', () => {
-  cy.get('#legend_close').click();
-});
-
-Then('user cannot see the legend section', () => {
-  cy.get("[data-test='graph-legend']").should('not.exist');
 });

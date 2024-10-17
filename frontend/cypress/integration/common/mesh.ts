@@ -1,6 +1,7 @@
 import { Before, Then, When } from '@badeball/cypress-cucumber-preprocessor';
-import { Controller, Edge, Node, Visualization, isEdge, isNode } from '@patternfly/react-topology';
+import { Visualization } from '@patternfly/react-topology';
 import { MeshInfraType, MeshNodeData } from 'types/Mesh';
+import { elems } from './graph-pf';
 
 Before(() => {
   // Copied from overview.ts.  This prevents cypress from stopping on errors unrelated to the tests.
@@ -40,7 +41,7 @@ When('user selects cluster mesh node', () => {
       const node = nodes.find(n => (n.getData() as MeshNodeData).infraType === MeshInfraType.CLUSTER);
       assert.exists(node);
       const setSelectedIds = state.meshRefs.setSelectedIds as (values: string[]) => void;
-      setSelectedIds([node.getId()]);
+      setSelectedIds([node!.getId()]);
     });
 });
 
@@ -56,7 +57,7 @@ When('user selects mesh node with label {string}', (label: string) => {
       const node = nodes.find(n => n.getLabel() === label);
       assert.exists(node);
       const setSelectedIds = state.meshRefs.setSelectedIds as (values: string[]) => void;
-      setSelectedIds([node.getId()]);
+      setSelectedIds([node!.getId()]);
     });
 });
 
@@ -161,8 +162,8 @@ Then('user sees the istiod node connected to the dataplane nodes', () => {
       const istiodNode = nodes.find(n => n.getData().infraType === MeshInfraType.ISTIOD);
       // eslint-disable-next-line @typescript-eslint/no-unused-expressions
       expect(istiodNode).to.exist;
-      expect(istiodNode.getSourceEdges()).to.have.lengthOf(2);
-      istiodNode.getSourceEdges().every(e => {
+      expect(istiodNode?.getSourceEdges()).to.have.lengthOf(2);
+      istiodNode?.getSourceEdges().every(e => {
         const targetNodeData = e.getTarget().getData();
         return targetNodeData.infraType === MeshInfraType.DATAPLANE && targetNodeData.cluster === 'cluster';
       });
@@ -197,16 +198,3 @@ Then('user sees {string} node side panel', (name: string) => {
       cy.contains(name);
     });
 });
-
-//
-// Since I can't import from MeshElems.tsx, copying some helpers here...
-//
-
-const elems = (c: Controller): { edges: Edge[]; nodes: Node[] } => {
-  const elems = c.getElements();
-
-  return {
-    nodes: elems.filter(e => isNode(e)) as Node[],
-    edges: elems.filter(e => isEdge(e)) as Edge[]
-  };
-};

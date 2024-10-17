@@ -182,7 +182,7 @@ deploy_kiali() {
     --set deployment.logger.log_level="debug"
     --set external_services.grafana.external_url="http://grafana.istio-system:3000"
     --set external_services.grafana.dashboards[0].name="Istio Mesh Dashboard"
-    --set kiali_feature_flags.ui_defaults.graph.impl="cy"
+    --set kiali_feature_flags.ui_defaults.graph.impl="pf"
     --set health_config.rate[0].kind="service"
     --set health_config.rate[0].name="y-server"
     --set health_config.rate[0].namespace="alpha"

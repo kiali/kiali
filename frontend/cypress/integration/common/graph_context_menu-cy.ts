@@ -72,14 +72,6 @@ When('user clicks the {string} action of the context menu in the cytoscape graph
   });
 });
 
-Then('user should see the {string} wizard', (wizardKey: string) => {
-  cy.get(`[data-test=${wizardKey}_modal]`).should('exist');
-});
-
-Then('user should see the confirmation dialog to delete all traffic routing', () => {
-  cy.get('[data-test=delete-traffic-routing-modal]').should('exist');
-});
-
 Then(
   'user should see no cluster parameter in the url when clicking the {string} link in the context menu in the cytoscape graph',
   (linkText: string) => {
@@ -109,3 +101,28 @@ Then(
     });
   }
 );
+
+Then('configuration is duplicated to the {string} cluster in the cytoscape graph', (cluster: string) => {
+  cy.get('@contextNode').then((node: any) => {
+    const namespace = node.data('namespace');
+    const service = node.data('service');
+
+    cy.fixture(`${service}-virtualservice.json`).then(virtualService => {
+      cy.request({
+        url: `api/namespaces/${namespace}/istio/networking.istio.io/v1/VirtualService`,
+        method: 'POST',
+        qs: { clusterName: cluster },
+        body: virtualService
+      });
+    });
+
+    cy.fixture(`${service}-destinationrule.json`).then(destinationRule => {
+      cy.request({
+        url: `api/namespaces/${namespace}/istio/networking.istio.io/v1/DestinationRule`,
+        method: 'POST',
+        qs: { clusterName: cluster },
+        body: destinationRule
+      });
+    });
+  });
+});

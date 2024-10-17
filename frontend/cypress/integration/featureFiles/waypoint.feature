@@ -38,42 +38,42 @@ Feature: Kiali Waypoint related features
   @pft
   Scenario: User sees ztunnel traffic
     Given user is at the "graphpf" page
-    When user graphs "bookinfo" namespaces in the patternfly graph
+    When user graphs "bookinfo" namespaces
     Then user sees the "bookinfo" namespace
     Then user opens traffic menu
     And user "enables" "ambientZtunnel" traffic option
-    Then 7 edges appear in the patternfly graph
+    Then 7 edges appear in the graph
 
   @waypoint
   @pft
   Scenario: User sees waypoint traffic
     Given user is at the "graphpf" page
-    When user graphs "bookinfo" namespaces in the patternfly graph
+    When user graphs "bookinfo" namespaces
     Then user sees the "bookinfo" namespace
     Then user opens traffic menu
     And user "enables" "ambientWaypoint" traffic option
-    Then 11 edges appear in the patternfly graph
+    Then 11 edges appear in the graph
 
   @waypoint
   @pft
   Scenario: User sees no Ambient traffic
     Given user is at the "graphpf" page
-    When user graphs "bookinfo" namespaces in the patternfly graph
+    When user graphs "bookinfo" namespaces
     Then user sees the "bookinfo" namespace
     Then user opens traffic menu
     And user "disables" "ambient" traffic option
-    Then 2 edges appear in the patternfly graph
+    Then 2 edges appear in the graph
 
   @waypoint
   @pft
   Scenario: User sees all Ambient traffic
     Given user is at the "graphpf" page
-    When user graphs "bookinfo" namespaces in the patternfly graph
+    When user graphs "bookinfo" namespaces
     Then user sees the "bookinfo" namespace
     Then user opens traffic menu
     And user "enables" "ambientTotal" traffic option
     And user "enables" "ambient" traffic option
-    Then 16 edges appear in the patternfly graph
+    Then 16 edges appear in the graph
 
   @waypoint
   @pft
@@ -86,7 +86,7 @@ Feature: Kiali Waypoint related features
     When user opens display menu
     Then the display menu opens
     Then user "enables" "filterWaypoints" edge labels
-    Then 16 edges appear in the patternfly graph
+    Then 16 edges appear in the graph
     And the "waypoint" node "does" exists
 
   @waypoint
