@@ -35,6 +35,8 @@ import {
   NodeAttr,
   NodeType,
   Protocol,
+  RankMode,
+  RankResult,
   UNKNOWN
 } from 'types/Graph';
 import { JaegerTrace } from 'types/TracingInfo';
@@ -73,6 +75,7 @@ import { ServiceDetailsInfo } from 'types/ServiceInfo';
 import { PeerAuthentication } from 'types/IstioObjects';
 import { KialiIcon } from 'config/KialiIcon';
 import { toolbarActiveStyle } from 'styles/GraphStyle';
+import { scoreNodes, ScoringCriteria } from 'components/CytoscapeGraph/GraphScore';
 
 let initialLayout = false;
 let requestFit = false;
@@ -131,11 +134,14 @@ const TopologyContent: React.FC<{
   ) => void;
   onNodeTap?: (node: Node<NodeModel>) => void;
   onReady: (refs: GraphRefs) => void;
+  rankBy: RankMode[];
   setEdgeMode: (edgeMode: EdgeMode) => void;
   setLayout: (val: LayoutName) => void;
+  setRankResult: (rankResult: RankResult) => void;
   setUpdateTime: (val: TimeInMilliseconds) => void;
   showLegend: boolean;
   showOutOfMesh: boolean;
+  showRank: boolean;
   showSecurity: boolean;
   showTrafficAnimation: boolean;
   showVirtualServices: boolean;
@@ -156,11 +162,14 @@ const TopologyContent: React.FC<{
   onNodeTap,
   onReady,
   onLaunchWizard,
+  rankBy,
   setEdgeMode,
   setLayout: setLayoutName,
+  setRankResult,
   setUpdateTime,
   showLegend,
   showOutOfMesh,
+  showRank,
   showSecurity,
   showTrafficAnimation,
   showVirtualServices,
@@ -175,12 +184,14 @@ const TopologyContent: React.FC<{
       activeNamespaces: graphData.fetchParams.namespaces,
       edgeLabels: edgeLabels,
       graphType: graphData.fetchParams.graphType,
+      rankBy: rankBy,
       showOutOfMesh: showOutOfMesh,
+      showRank: showRank,
       showSecurity: showSecurity,
       showVirtualServices: showVirtualServices,
       trafficRates: graphData.fetchParams.trafficRates
     } as GraphPFSettings;
-  }, [graphData.fetchParams, edgeLabels, showOutOfMesh, showSecurity, showVirtualServices]);
+  }, [graphData.fetchParams, edgeLabels, rankBy, showOutOfMesh, showRank, showSecurity, showVirtualServices]);
 
   //
   // SelectedIds State
@@ -438,6 +449,30 @@ const TopologyContent: React.FC<{
           }
         }
       });
+
+      // Compute rank result if enabled
+      let scoringCriteria: ScoringCriteria[] = [];
+
+      if (showRank) {
+        for (const ranking of rankBy) {
+          if (ranking === RankMode.RANK_BY_INBOUND_EDGES) {
+            scoringCriteria.push(ScoringCriteria.InboundEdges);
+          }
+
+          if (ranking === RankMode.RANK_BY_OUTBOUND_EDGES) {
+            scoringCriteria.push(ScoringCriteria.OutboundEdges);
+          }
+        }
+
+        let upperBound = 0;
+        ({ upperBound } = scoreNodes(graphData.elements, ...scoringCriteria));
+
+        if (setRankResult) {
+          setRankResult({ upperBound });
+        }
+      } else {
+        scoreNodes(graphData.elements, ...scoringCriteria);
+      }
 
       // Compute edge healths one time for the graph
       assignEdgeHealth(graphData.elements.edges || [], nodeMap, graphSettings);
@@ -860,11 +895,14 @@ export const GraphPF: React.FC<{
   ) => void;
   onNodeTap?: (node: Node<NodeModel>) => void;
   onReady: (refs: GraphRefs) => void;
+  rankBy: RankMode[];
   setEdgeMode: (edgeMode: EdgeMode) => void;
   setLayout: (layout: Layout) => void;
+  setRankResult: (rankResult: RankResult) => void;
   setUpdateTime: (val: TimeInMilliseconds) => void;
   showLegend: boolean;
   showOutOfMesh: boolean;
+  showRank: boolean;
   showSecurity: boolean;
   showTrafficAnimation: boolean;
   showVirtualServices: boolean;
@@ -883,11 +921,14 @@ export const GraphPF: React.FC<{
   onLaunchWizard,
   onNodeTap,
   onReady,
+  rankBy,
   setEdgeMode,
   setLayout,
+  setRankResult,
   setUpdateTime,
   showLegend,
   showOutOfMesh,
+  showRank,
   showSecurity,
   showTrafficAnimation,
   showVirtualServices,
@@ -957,11 +998,14 @@ export const GraphPF: React.FC<{
         onLaunchWizard={onLaunchWizard}
         onNodeTap={onNodeTap}
         onReady={onReady}
+        rankBy={rankBy}
         setEdgeMode={setEdgeMode}
         setLayout={setLayoutByName}
+        setRankResult={setRankResult}
         setUpdateTime={setUpdateTime}
         showLegend={showLegend}
         showOutOfMesh={showOutOfMesh}
+        showRank={showRank}
         showSecurity={showSecurity}
         showTrafficAnimation={showTrafficAnimation}
         showVirtualServices={showVirtualServices}
