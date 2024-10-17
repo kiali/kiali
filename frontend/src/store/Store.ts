@@ -27,7 +27,7 @@ import { ComponentStatus } from '../types/IstioStatus';
 import { TracingState } from 'reducers/TracingState';
 import { MetricsStatsState } from 'reducers/MetricsStatsState';
 import { CertsInfo } from 'types/CertsInfo';
-import { MeshCluster, MeshDefinition, MeshTarget } from '../types/Mesh';
+import { ControlPlane, MeshCluster, MeshDefinition, MeshTarget } from '../types/Mesh';
 
 // Store is the Redux Data store
 
@@ -45,12 +45,17 @@ export interface ClusterState {
 }
 
 export interface NamespaceState {
-  readonly activeNamespaces: Namespace[];
-  readonly filter: string;
+  readonly activeNamespaces: Namespace[]; // the namespaces currently selected in NamespaceDropdown
+  readonly filter: string; // the filter currently defined in NamespaceDropdown
   readonly isFetching: boolean;
+  // TODO: Can this be non-optional since we default to empty list?
+  // Set of unique namespace names, for convenience.
+  // namespaces on different clusters that share the same name
+  // are filtered out of this list. Do not use this expecting
+  // it to be a complete list of namespaces across all clusters.
   readonly items?: Namespace[];
   readonly lastUpdated?: Date;
-  readonly namespacesPerCluster: Map<string, string[]>;
+  readonly namespacesPerCluster: Map<string, string[]>; // map clusterName -> namespaces on cluster
 }
 
 // Various pages are described here with their various sections
@@ -134,6 +139,11 @@ export interface MeshToolbarState {
 }
 
 export interface MeshState {
+  // controlPlanes are pulled from the graph response and are used
+  // by other elements on the graph page. They are in the redux
+  // store to so that the other elements can stay in sync with
+  // with graph and we don't have to duplicate requests to get this info.
+  controlPlanes?: ControlPlane[];
   definition: MeshDefinition | null;
   layout: Layout;
   target: MeshTarget | null;
