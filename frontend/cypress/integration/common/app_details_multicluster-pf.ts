@@ -81,13 +81,13 @@ Then('an info message {string} is displayed', (message: string) => {
   cy.contains(message).should('be.visible');
 });
 
-// And user clicks on the "reviews" <type> from the "west" cluster visible in the graph
 Given(
   'the {string} {string} from the {string} cluster is visible in the minigraph',
   (name: string, type: string, cluster: string) => {
     cy.waitForReact();
     cy.getReact('MiniGraphCardPFComponent', { state: { isReady: true } })
       .should('have.length', '1')
+<<<<<<< HEAD
       .getCurrentState()
       .then(state => {
         const controller = state.graphRefs.getController() as Visualization;
@@ -105,6 +105,24 @@ Given(
             node.getData().isBox === isBox
         );
 
+=======
+      .then($graph => {
+        const { props, state } = $graph[0];
+        const graphType = props.dataSource.fetchParameters.graphType;
+        const { nodeType, isBox } = nodeInfo(type, graphType);
+        const controller = state.graphRefs.getController() as Visualization;
+        assert.isTrue(controller.hasGraph());
+        const { nodes } = elems(controller);
+
+        const nodeExists = nodes.some(
+          node =>
+            node.getData().nodeType === nodeType &&
+            node.getData().namespace === 'bookinfo' &&
+            node.getData().cluster === cluster &&
+            node.getData().isBox === isBox
+        );
+
+>>>>>>> 9c89c739c (workaround to avoid cypress crashing due to react lib)
         assert(nodeExists, `Node ${name} of type ${type} from cluster ${cluster} not found in the graph`);
       });
   }
@@ -116,6 +134,7 @@ When(
     cy.waitForReact();
     cy.getReact('MiniGraphCardPFComponent', { state: { isReady: true } })
       .should('have.length', '1')
+<<<<<<< HEAD
       .getCurrentState()
       .then(state => {
         const controller = state.graphRefs.getController() as Visualization;
@@ -135,6 +154,26 @@ When(
             !node.getData().isInaccessible
         );
 
+=======
+      .then($graph => {
+        const { props, state } = $graph[0];
+        const graphType = props.dataSource.fetchParameters.graphType;
+        const { nodeType, isBox } = nodeInfo(type, graphType);
+        const controller = state.graphRefs.getController() as Visualization;
+        assert.isTrue(controller.hasGraph());
+        const { nodes } = elems(controller);
+
+        const node = nodes.find(
+          node =>
+            node.getData().nodeType === nodeType &&
+            node.getData().namespace === 'bookinfo' &&
+            node.getData().cluster === cluster &&
+            node.getData().isBox === isBox &&
+            !node.getData().isInaccessible
+        );
+        assert(node, `Node ${name} of type ${type} from cluster ${cluster} not found in the graph`);
+
+>>>>>>> 9c89c739c (workaround to avoid cypress crashing due to react lib)
         cy.get(`[data-id=${node?.getId()}]`).click();
       });
   }
