@@ -88,31 +88,24 @@ Given(
     cy.waitForReact();
     cy.getReact('MiniGraphCardPFComponent', { state: { isReady: true } })
       .should('have.length', '1')
-      .then($graph => {
-        cy.wrap($graph)
-          .getProps()
-          .then(props => {
-            const graphType = props.dataSource.fetchParameters.graphType;
-            const { nodeType, isBox } = nodeInfo(type, graphType);
+      .getCurrentState()
+      .then(state => {
+        const controller = state.graphRefs.getController() as Visualization;
+        assert.isTrue(controller.hasGraph());
 
-            cy.wrap($graph)
-              .getCurrentState()
-              .then(state => {
-                const controller = state.graphRefs.getController() as Visualization;
-                assert.isTrue(controller.hasGraph());
-                const { nodes } = elems(controller);
+        const graphType = controller.getGraph().getData().graphData.fetchParams.graphType;
+        const { nodeType, isBox } = nodeInfo(type, graphType);
 
-                const nodeExists = nodes.some(
-                  node =>
-                    node.getData().nodeType === nodeType &&
-                    node.getData().namespace === 'bookinfo' &&
-                    node.getData().cluster === cluster &&
-                    node.getData().isBox === isBox
-                );
+        const { nodes } = elems(controller);
+        const nodeExists = nodes.some(
+          node =>
+            node.getData().nodeType === nodeType &&
+            node.getData().namespace === 'bookinfo' &&
+            node.getData().cluster === cluster &&
+            node.getData().isBox === isBox
+        );
 
-                assert(nodeExists, `Node ${name} of type ${type} from cluster ${cluster} not found in the graph`);
-              });
-          });
+        assert(nodeExists, `Node ${name} of type ${type} from cluster ${cluster} not found in the graph`);
       });
   }
 );
@@ -123,33 +116,26 @@ When(
     cy.waitForReact();
     cy.getReact('MiniGraphCardPFComponent', { state: { isReady: true } })
       .should('have.length', '1')
-      .then($graph => {
-        cy.wrap($graph)
-          .getProps()
-          .then(props => {
-            const graphType = props.dataSource.fetchParameters.graphType;
-            const { nodeType, isBox } = nodeInfo(type, graphType);
+      .getCurrentState()
+      .then(state => {
+        const controller = state.graphRefs.getController() as Visualization;
+        assert.isTrue(controller.hasGraph());
 
-            cy.wrap($graph)
-              .getCurrentState()
-              .then(state => {
-                const controller = state.graphRefs.getController() as Visualization;
-                assert.isTrue(controller.hasGraph());
-                const { nodes } = elems(controller);
+        const graphType = controller.getGraph().getData().graphData.fetchParams.graphType;
+        const { nodeType, isBox } = nodeInfo(type, graphType);
 
-                const node = nodes.find(
-                  node =>
-                    node.getData().nodeType === nodeType &&
-                    node.getData().namespace === 'bookinfo' &&
-                    node.getData().type === name &&
-                    node.getData().cluster === cluster &&
-                    node.getData().isBox === isBox &&
-                    !node.getData().isInaccessible
-                );
+        const { nodes } = elems(controller);
+        const node = nodes.find(
+          node =>
+            node.getData().nodeType === nodeType &&
+            node.getData().namespace === 'bookinfo' &&
+            node.getData().type === name &&
+            node.getData().cluster === cluster &&
+            node.getData().isBox === isBox &&
+            !node.getData().isInaccessible
+        );
 
-                cy.get(`[data-id=${node?.getId()}]`).click();
-              });
-          });
+        cy.get(`[data-id=${node?.getId()}]`).click();
       });
   }
 );
