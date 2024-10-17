@@ -1,6 +1,6 @@
 import { isTempoService, TempoUrlProvider } from './Tempo';
 import { isJaegerService, JaegerUrlProvider } from './Jaeger';
-import { ExternalServiceInfo } from 'types/StatusState';
+import { ExternalServiceInfo, TempoUrlFormat } from 'types/StatusState';
 import { JAEGER, TEMPO, TracingUrlProvider } from 'types/Tracing';
 
 // Get a tracing url provider, assuming some is configured
@@ -22,7 +22,11 @@ export function GetTracingUrlProvider(
   // the wanted url provider
   let urlProvider: TracingUrlProvider | undefined = undefined;
   if (isTempoService(svc)) {
-    urlProvider = new TempoUrlProvider(svc, externalServices);
+    if (svc.tempoConfig?.url_format === TempoUrlFormat.JAEGER) {
+      urlProvider = new JaegerUrlProvider(svc);
+    } else {
+      urlProvider = new TempoUrlProvider(svc, externalServices);
+    }
   }
   if (isJaegerService(svc)) {
     urlProvider = new JaegerUrlProvider(svc);

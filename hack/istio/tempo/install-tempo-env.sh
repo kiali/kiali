@@ -205,7 +205,7 @@ spec:
             cpu: "2"
             memory: 2Gi
       jaegerQuery:
-        enabled: false
+        enabled: true
 EOF
   fi
 }

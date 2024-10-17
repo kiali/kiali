@@ -5,7 +5,6 @@ import { SpanData, TraceData } from '../../../types/TracingInfo';
 
 interface JaegerExternalService extends ConcreteService {
   name: typeof JAEGER;
-  url: string;
 }
 
 export function isJaegerService(svc: ExternalServiceInfo): svc is JaegerExternalService {
@@ -13,10 +12,10 @@ export function isJaegerService(svc: ExternalServiceInfo): svc is JaegerExternal
 }
 
 export class JaegerUrlProvider implements TracingUrlProvider {
-  private service: JaegerExternalService;
+  private service: ConcreteService;
   readonly valid: boolean = true;
 
-  constructor(service: JaegerExternalService) {
+  constructor(service: ConcreteService) {
     this.service = service;
   }
 

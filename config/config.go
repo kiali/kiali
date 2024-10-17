@@ -255,8 +255,9 @@ type GrafanaVariablesConfig struct {
 }
 
 type TempoConfig struct {
-	OrgID         string `yaml:"org_id" json:"org_id,omitempty"`
 	DatasourceUID string `yaml:"datasource_uid" json:"datasource_uid,omitempty"`
+	OrgID         string `yaml:"org_id" json:"org_id,omitempty"`
+	URLFormat     string `yaml:"url_format" json:"url_format,omitempty"`
 }
 
 // TracingConfig describes configuration used for tracing links

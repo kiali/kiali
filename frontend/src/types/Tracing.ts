@@ -44,6 +44,7 @@ export interface TracingUrlProvider {
 // Require that all properties are required and not null/undefined
 export type ConcreteService = {
   name: string;
+  url: string;
 };
 
 export const TEMPO = 'tempo';

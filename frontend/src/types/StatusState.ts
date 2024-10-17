@@ -6,11 +6,17 @@ export enum StatusKey {
   KIALI_STATE = 'Kiali state'
 }
 
+export enum TempoUrlFormat {
+  JAEGER = 'jaeger',
+  GRAFANA = 'grafana'
+}
+
 export type Status = { [K in StatusKey]?: string };
 
 export type TempoConfig = {
   datasource_uid: string;
   org_id: string;
+  url_format: TempoUrlFormat;
 };
 
 export interface ExternalServiceInfo {
