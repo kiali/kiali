@@ -120,7 +120,6 @@ const conf = {
       appTraces: (namespace: string, app: string) => `api/namespaces/${namespace}/apps/${app}/traces`,
       authenticate: 'api/authenticate',
       authInfo: 'api/auth/info',
-      controlPlanes: 'api/mesh/controlplanes',
       clustersApps: () => `api/clusters/apps`,
       clustersHealth: () => `api/clusters/health`,
       clustersMetrics: () => `api/clusters/metrics`,
@@ -130,6 +129,7 @@ const conf = {
       configValidations: () => `api/istio/validations`,
       controlPlaneMetrics: (namespace: string, controlPlane: string) =>
         `api/namespaces/${namespace}/controlplanes/${controlPlane}/metrics`,
+      controlPlanes: 'api/mesh/controlplanes',
       crippledFeatures: 'api/crippled',
       customDashboard: (namespace: string, template: string) =>
         `api/namespaces/${namespace}/customdashboard/${template}`,
