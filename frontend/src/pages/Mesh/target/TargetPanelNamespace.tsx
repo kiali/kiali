@@ -38,6 +38,8 @@ import { Metric } from 'types/Metrics';
 import { classes } from 'typestyle';
 import { panelBodyStyle, panelHeadingStyle, panelStyle } from 'pages/Graph/SummaryPanelStyle';
 import { isRemoteCluster } from './TargetPanelControlPlane';
+import { gvkToString } from '../../../utils/IstioConfigUtils';
+import { dicIstioTypeToGVK } from '../../../types/IstioConfigList';
 
 type TargetPanelNamespaceProps = TargetPanelCommonProps;
 
@@ -455,7 +457,7 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
         });
       }
 
-      const aps = nsInfo.istioConfig?.authorizationPolicies ?? [];
+      const aps = nsInfo.istioConfig?.resources[gvkToString(dicIstioTypeToGVK['AuthorizationPolicy'])] ?? [];
 
       const addAuthorizationAction = {
         isGroup: false,
