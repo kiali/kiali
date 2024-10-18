@@ -45,14 +45,23 @@ Feature: Kiali Graph page - Context menu actions
       | request_timeouts     |
 
   @multi-cluster
-  Scenario: Actions in context menu for a service node with existing traffic routing
-    And there is traffic routing for the "details" service in the "bookinfo" namespace and in the "east" cluster
+  Scenario: Detail action in context menu for a service node
     And user opens the context menu of the "details" service node on the "east" cluster
     And user should see the "east" cluster parameter in the url when clicking the "Details" link in the context menu
+
+  @multi-cluster
+  Scenario: Traffic action in context menu for a service node
     And user opens the context menu of the "details" service node on the "east" cluster
     And user should see the "east" cluster parameter in the url when clicking the "Traffic" link in the context menu
+
+  @multi-cluster
+  Scenario: Inbound Metrics action in context menu for a service node
     And user opens the context menu of the "details" service node on the "east" cluster
     And user should see the "east" cluster parameter in the url when clicking the "Inbound Metrics" link in the context menu
+
+  @multi-cluster
+  Scenario: Delete traffic routing in context menu for a service node with existing traffic routing
+    And there is traffic routing for the "details" service in the "bookinfo" namespace and in the "east" cluster
     And user opens the context menu of the "details" service node on the "east" cluster
     And user clicks the "delete_traffic_routing" item of the context menu
     Then user should see the confirmation dialog to delete all traffic routing

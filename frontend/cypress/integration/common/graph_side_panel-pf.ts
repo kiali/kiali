@@ -7,8 +7,9 @@ When('user clicks the {string} {string} node', (svcName: string, nodeType: strin
   cy.waitForReact();
   cy.getReact('GraphPagePFComponent', { state: { isReady: true } })
     .should('have.length', '1')
-    .getCurrentState()
-    .then(state => {
+    .then($graph => {
+      const { state } = $graph[0];
+
       const controller = state.graphRefs.getController() as Visualization;
       assert.isTrue(controller.hasGraph());
       const { nodes } = elems(controller);
@@ -17,8 +18,6 @@ When('user clicks the {string} {string} node', (svcName: string, nodeType: strin
         { prop: NodeAttr.nodeType, op: '=', val: nodeType },
         { prop: nodeType, op: '=', val: svcName }
       ]);
-
-      cy.log(node[0].getId());
 
       const setSelectedIds = state.graphRefs.setSelectedIds as (values: string[]) => void;
       setSelectedIds([node[0].getId()]);
@@ -31,8 +30,9 @@ When(
     cy.waitForReact();
     cy.getReact('GraphPagePFComponent', { state: { isReady: true } })
       .should('have.length', '1')
-      .getCurrentState()
-      .then(state => {
+      .then($graph => {
+        const { state } = $graph[0];
+
         const controller = state.graphRefs.getController() as Visualization;
         assert.isTrue(controller.hasGraph());
 
@@ -166,8 +166,9 @@ When(
     cy.waitForReact();
     cy.getReact('GraphPagePFComponent', { state: { isReady: true } })
       .should('have.length', '1')
-      .getCurrentState()
-      .then(state => {
+      .then($graph => {
+        const { state } = $graph[0];
+
         const controller = state.graphRefs.getController() as Visualization;
         assert.isTrue(controller.hasGraph());
         const { nodes } = elems(controller);

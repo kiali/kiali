@@ -10,8 +10,9 @@ When('user opens the context menu of the {string} service node', (svcName: strin
   cy.waitForReact();
   cy.getReact('GraphPagePFComponent', { state: { isReady: true } })
     .should('have.length', '1')
-    .getCurrentState()
-    .then(state => {
+    .then($graph => {
+      const { state } = $graph[0];
+
       const controller = state.graphRefs.getController() as Visualization;
       assert.isTrue(controller.hasGraph());
       const { nodes } = elems(controller);
@@ -33,8 +34,9 @@ When(
     cy.waitForReact();
     cy.getReact('GraphPagePFComponent', { state: { isReady: true } })
       .should('have.length', '1')
-      .getCurrentState()
-      .then(state => {
+      .then($graph => {
+        const { state } = $graph[0];
+
         const controller = state.graphRefs.getController() as Visualization;
         assert.isTrue(controller.hasGraph());
         const { nodes } = elems(controller);

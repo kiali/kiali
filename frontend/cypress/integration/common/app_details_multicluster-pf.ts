@@ -62,12 +62,15 @@ Then('user sees {string} from a remote {string} cluster in the minigraph', (type
   cy.waitForReact();
   cy.getReact('MiniGraphCardPFComponent', { state: { isReady: true } })
     .should('have.length', '1')
-    .getCurrentState()
-    .then(state => {
+    .then($graph => {
+      const { state } = $graph[0];
+
       const controller = state.graphRefs.getController() as Visualization;
       assert.isTrue(controller.hasGraph());
       const { nodes } = elems(controller);
+
       const filteredNodes = nodes.filter(n => n.getData().cluster === cluster && n.getData().nodeType === type);
+
       assert.isAbove(filteredNodes.length, 0, 'Unexpected number of nodes');
     });
 });
@@ -89,8 +92,10 @@ Given(
       .should('have.length', '1')
       .then($graph => {
         const { props, state } = $graph[0];
+
         const graphType = props.dataSource.fetchParameters.graphType;
         const { nodeType, isBox } = nodeInfo(type, graphType);
+
         const controller = state.graphRefs.getController() as Visualization;
         assert.isTrue(controller.hasGraph());
         const { nodes } = elems(controller);
@@ -116,8 +121,10 @@ When(
       .should('have.length', '1')
       .then($graph => {
         const { props, state } = $graph[0];
+
         const graphType = props.dataSource.fetchParameters.graphType;
         const { nodeType, isBox } = nodeInfo(type, graphType);
+
         const controller = state.graphRefs.getController() as Visualization;
         assert.isTrue(controller.hasGraph());
         const { nodes } = elems(controller);
@@ -130,6 +137,7 @@ When(
             node.getData().isBox === isBox &&
             !node.getData().isInaccessible
         );
+
         assert(node, `Node ${name} of type ${type} from cluster ${cluster} not found in the graph`);
 
         cy.get(`[data-id=${node?.getId()}]`).click();

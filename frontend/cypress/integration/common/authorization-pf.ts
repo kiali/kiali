@@ -14,8 +14,9 @@ Then('the nodes located in the {string} cluster should be restricted', (cluster:
   cy.waitForReact();
   cy.getReact('GraphPagePFComponent', { state: { isReady: true } })
     .should('have.length', '1')
-    .getCurrentState()
-    .then(state => {
+    .then($graph => {
+      const { state } = $graph[0];
+
       const controller = state.graphRefs.getController() as Visualization;
       assert.isTrue(controller.hasGraph());
       const { nodes } = elems(controller);
@@ -32,8 +33,9 @@ Then('the nodes on the minigraph located in the {string} cluster should be restr
   cy.waitForReact();
   cy.getReact('MiniGraphCardPFComponent', { state: { isReady: true } })
     .should('have.length', '1')
-    .getCurrentState()
-    .then(state => {
+    .then($graph => {
+      const { state } = $graph[0];
+
       const controller = state.graphRefs.getController() as Visualization;
       assert.isTrue(controller.hasGraph());
       const { nodes } = elems(controller);

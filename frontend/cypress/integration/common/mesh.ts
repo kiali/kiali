@@ -33,13 +33,16 @@ When('user selects cluster mesh node', () => {
   cy.waitForReact();
   cy.getReact('MeshPageComponent', { state: { isReady: true } })
     .should('have.length', 1)
-    .getCurrentState()
-    .then(state => {
+    .then($graph => {
+      const { state } = $graph[0];
+
       const controller = state.meshRefs.getController() as Visualization;
       assert.isTrue(controller.hasGraph());
+
       const { nodes } = elems(controller);
       const node = nodes.find(n => (n.getData() as MeshNodeData).infraType === MeshInfraType.CLUSTER);
       assert.exists(node);
+
       const setSelectedIds = state.meshRefs.setSelectedIds as (values: string[]) => void;
       setSelectedIds([node!.getId()]);
     });
@@ -49,13 +52,16 @@ When('user selects mesh node with label {string}', (label: string) => {
   cy.waitForReact();
   cy.getReact('MeshPageComponent', { state: { isReady: true } })
     .should('have.length', 1)
-    .getCurrentState()
-    .then(state => {
+    .then($graph => {
+      const { state } = $graph[0];
+
       const controller = state.meshRefs.getController() as Visualization;
       assert.isTrue(controller.hasGraph());
+
       const { nodes } = elems(controller);
       const node = nodes.find(n => n.getLabel() === label);
       assert.exists(node);
+
       const setSelectedIds = state.meshRefs.setSelectedIds as (values: string[]) => void;
       setSelectedIds([node!.getId()]);
     });
@@ -113,13 +119,16 @@ Then('user sees expected mesh infra', () => {
   cy.waitForReact();
   cy.getReact('MeshPageComponent', { state: { isReady: true } })
     .should('have.length', 1)
-    .getCurrentState()
-    .then(state => {
+    .then($graph => {
+      const { state } = $graph[0];
+
       const controller = state.meshRefs.getController() as Visualization;
       assert.isTrue(controller.hasGraph());
+
       const { nodes, edges } = elems(controller);
       const nodeNames = nodes.map(n => n.getLabel());
       const nodesLength = nodeNames.some(n => n === 'External Deployments') ? 9 : 8;
+
       assert.equal(nodes.length, nodesLength, 'Unexpected number of infra nodes');
       assert.equal(edges.length, 5, 'Unexpected number of infra edges');
       assert.isTrue(nodeNames.some(n => n === 'Data Plane'));
@@ -137,14 +146,17 @@ Then(
     cy.waitForReact();
     cy.getReact('MeshPageComponent', { state: { isReady: true } })
       .should('have.length', 1)
-      .getCurrentState()
-      .then(state => {
+      .then($graph => {
+        const { state } = $graph[0];
+
         const controller = state.meshRefs.getController() as Visualization;
         assert.isTrue(controller.hasGraph());
+
         const { nodes } = elems(controller);
         const dataplaneNodes = nodes.filter(
           n => n.getData().infraType === infraNodeType && n.getData().cluster === cluster
         );
+
         expect(dataplaneNodes).to.have.lengthOf(numberOfDataplaneNodes);
       });
   }
@@ -154,15 +166,19 @@ Then('user sees the istiod node connected to the dataplane nodes', () => {
   cy.waitForReact();
   cy.getReact('MeshPageComponent', { state: { isReady: true } })
     .should('have.length', 1)
-    .getCurrentState()
-    .then(state => {
+    .then($graph => {
+      const { state } = $graph[0];
+
       const controller = state.meshRefs.getController() as Visualization;
       assert.isTrue(controller.hasGraph());
+
       const { nodes } = elems(controller);
       const istiodNode = nodes.find(n => n.getData().infraType === MeshInfraType.ISTIOD);
+
       // eslint-disable-next-line @typescript-eslint/no-unused-expressions
       expect(istiodNode).to.exist;
       expect(istiodNode?.getSourceEdges()).to.have.lengthOf(2);
+
       istiodNode?.getSourceEdges().every(e => {
         const targetNodeData = e.getTarget().getData();
         return targetNodeData.infraType === MeshInfraType.DATAPLANE && targetNodeData.cluster === 'cluster';

@@ -129,8 +129,9 @@ Then('user {string} {string} traffic', (action: string, protocol: string) => {
   cy.waitForReact();
   cy.getReact('GraphPagePFComponent', { state: { isReady: true } })
     .should('have.length', '1')
-    .getCurrentState()
-    .then(state => {
+    .then($graph => {
+      const { state } = $graph[0];
+
       const controller = state.graphRefs.getController() as Visualization;
       assert.isTrue(controller.hasGraph());
       const { edges } = elems(controller);
@@ -231,11 +232,15 @@ Then('user sees a {string} graph', graphType => {
   cy.waitForReact();
   cy.getReact('GraphPagePFComponent', { state: { isReady: true } })
     .should('have.length', '1')
-    .getCurrentState()
-    .then(state => {
+    .then($graph => {
+      const { state } = $graph[0];
+
+      assert.equal(state.graphData.fetchParams.graphType, graphType);
+
       const controller = state.graphRefs.getController() as Visualization;
       assert.isTrue(controller.hasGraph());
+      const { nodes } = elems(controller);
 
-      assert.equal(controller.getGraph().getData().graphData.fetchParams.graphType, graphType);
+      assert.isAbove(nodes.length, 0);
     });
 });

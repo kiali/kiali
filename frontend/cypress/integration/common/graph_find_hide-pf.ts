@@ -33,11 +33,13 @@ Then('user sees unhealthy workloads highlighted on the graph', () => {
   cy.waitForReact();
   cy.getReact('GraphPagePFComponent', { state: { isReady: true } })
     .should('have.length', '1')
-    .getCurrentState()
-    .then(state => {
+    .then($graph => {
+      const { state } = $graph[0];
+
       const controller = state.graphRefs.getController() as Visualization;
       assert.isTrue(controller.hasGraph());
       const { nodes } = elems(controller);
+
       const unhealthyNodes = nodes
         .filter(n => n.getData().isFind)
         .map(n => ({
@@ -45,6 +47,7 @@ Then('user sees unhealthy workloads highlighted on the graph', () => {
           version: n.getData().version,
           namespace: n.getData().namespace
         }));
+
       assert.includeDeepMembers(unhealthyNodes, expectedUnhealthyNodes, 'Unexpected unhealthy nodes');
     });
 });
@@ -53,11 +56,13 @@ Then('user sees nothing highlighted on the graph', () => {
   cy.waitForReact();
   cy.getReact('GraphPagePFComponent', { state: { isReady: true } })
     .should('have.length', '1')
-    .getCurrentState()
-    .then(state => {
+    .then($graph => {
+      const { state } = $graph[0];
+
       const controller = state.graphRefs.getController() as Visualization;
       assert.isTrue(controller.hasGraph());
       const { nodes } = elems(controller);
+
       const filteredNodes = nodes.filter(n => n.getData().isFind);
       assert.equal(filteredNodes.length, 0, 'Unexpected number of highlighted nodes');
     });
@@ -82,15 +87,18 @@ Then('user sees no unhealthy workloads on the graph', () => {
   cy.waitForReact();
   cy.getReact('GraphPagePFComponent', { state: { isReady: true } })
     .should('have.length', '1')
-    .getCurrentState()
-    .then(state => {
+    .then($graph => {
+      const { state } = $graph[0];
+
       const controller = state.graphRefs.getController() as Visualization;
       assert.isTrue(controller.hasGraph());
       const { nodes } = elems(controller);
+
       const visibleNodes = nodes.filter(n => n.isVisible());
       const noUnhealthyNodes = visibleNodes.every(
         node => node.getData().healthStatus !== 'Failure' || node.getData().nodeType === 'box'
       );
+
       assert.equal(noUnhealthyNodes, true, 'Unhealthy nodes are still visible');
     });
 });
@@ -117,15 +125,18 @@ Then('user sees no healthy workloads on the graph', () => {
   cy.waitForReact();
   cy.getReact('GraphPagePFComponent', { state: { isReady: true } })
     .should('have.length', '1')
-    .getCurrentState()
-    .then(state => {
+    .then($graph => {
+      const { state } = $graph[0];
+
       const controller = state.graphRefs.getController() as Visualization;
       assert.isTrue(controller.hasGraph());
       const { nodes } = elems(controller);
+
       const visibleNodes = nodes.filter(n => n.isVisible());
       const noUnhealthyNodes = visibleNodes.every(
         node => node.getData().healthStatus !== 'Healthy' || node.getData().nodeType === 'box'
       );
+
       assert.equal(noUnhealthyNodes, true, 'Unhealthy nodes are still visible');
     });
 });

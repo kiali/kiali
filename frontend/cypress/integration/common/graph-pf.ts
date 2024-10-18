@@ -14,11 +14,13 @@ Then('user sees a minigraph', () => {
   cy.waitForReact();
   cy.getReact('MiniGraphCardPFComponent', { state: { isReady: true } })
     .should('have.length', '1')
-    .getCurrentState()
-    .then(state => {
+    .then($graph => {
+      const { state } = $graph[0];
+
       const controller = state.graphRefs.getController() as Visualization;
       assert.isTrue(controller.hasGraph());
       const { nodes } = elems(controller);
+
       assert.isAbove(nodes.length, 0);
     });
 });
@@ -27,8 +29,9 @@ Then('user sees the {string} namespace deployed across the east and west cluster
   cy.waitForReact();
   cy.getReact('GraphPagePFComponent', { state: { isReady: true } })
     .should('have.length', '1')
-    .getCurrentState()
-    .then(state => {
+    .then($graph => {
+      const { state } = $graph[0];
+
       const controller = state.graphRefs.getController() as Visualization;
       assert.isTrue(controller.hasGraph());
       const { nodes } = elems(controller);
@@ -47,8 +50,9 @@ Then('nodes in the {string} cluster should contain the cluster name in their lin
   cy.waitForReact();
   cy.getReact('GraphPagePFComponent', { state: { isReady: true } })
     .should('have.length', '1')
-    .getCurrentState()
-    .then(state => {
+    .then($graph => {
+      const { state } = $graph[0];
+
       const controller = state.graphRefs.getController() as Visualization;
       assert.isTrue(controller.hasGraph());
       const { edges, nodes } = elems(controller);
@@ -72,8 +76,9 @@ Then(
     cy.waitForReact();
     cy.getReact('GraphPagePFComponent', { state: { isReady: true } })
       .should('have.length', '1')
-      .getCurrentState()
-      .then(state => {
+      .then($graph => {
+        const { state } = $graph[0];
+
         const controller = state.graphRefs.getController() as Visualization;
         assert.isTrue(controller.hasGraph());
         const { nodes } = elems(controller);
