@@ -1,5 +1,4 @@
 @graph-toolbar
-@pft
 # don't change first line of this file - the tag is used for the test scripts to identify the test suite
 
 Feature: Kiali Graph page - Toolbar (various)
@@ -15,12 +14,12 @@ Feature: Kiali Graph page - Toolbar (various)
   # NOTE: Graph Replay has its own test script
 
   Scenario: On the graph page the namespace selector should be sorted alphabetically
-    When user graphs "" namespaces in the patternfly graph
+    When user graphs "" namespaces
     Then the namespace dropdown is sorted alphabetically
 
   @error-rates-app
   Scenario: Graph alpha namespace with query params
-    When user graphs "alpha" namespaces with refresh "900000" and duration "300" in the patternfly graph
+    When user graphs "alpha" namespaces with refresh "900000" and duration "300"
     Then user sees the "alpha" namespace
     And user sees selected graph duration "Last 5m"
     And user sees selected graph refresh "Every 15m"
@@ -99,26 +98,26 @@ Feature: Kiali Graph page - Toolbar (various)
   @error-rates-app
   Scenario: graph type app
     When user selects "APP" graph type
-    Then user sees a "app" patternfly graph
+    Then user sees a "app" graph
 
   @error-rates-app
   Scenario: graph type service
     When user selects "SERVICE" graph type
-    Then user sees a "service" patternfly graph
+    Then user sees a "service" graph
 
   @error-rates-app
   Scenario: graph type versioned app
     When user selects "VERSIONED_APP" graph type
-    Then user sees a "versionedApp" patternfly graph
+    Then user sees a "versionedApp" graph
 
   @error-rates-app
   Scenario: graph type workload
     When user selects "WORKLOAD" graph type
-    Then user sees a "workload" patternfly graph
+    Then user sees a "workload" graph
 
   @ambient
   Scenario: Open traffic dropdown for ambient
-    When user graphs "" namespaces in the patternfly graph
+    When user graphs "" namespaces
     And user clicks graph traffic menu
     Then user sees "ambient" graph traffic menu
 

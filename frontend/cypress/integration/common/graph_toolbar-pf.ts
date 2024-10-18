@@ -1,5 +1,7 @@
 import { Before, Then, When } from '@badeball/cypress-cucumber-preprocessor';
-import { CytoscapeGlobalScratchData, CytoscapeGlobalScratchNamespace } from 'types/Graph';
+import { EdgeAttr } from 'types/Graph';
+import { elems, select } from './graph-pf';
+import { Visualization } from '@patternfly/react-topology';
 
 Before(() => {
   // Copied from overview.ts.  This prevents cypress from stopping on errors unrelated to the tests.
@@ -18,7 +20,7 @@ Before(() => {
 });
 
 When(
-  'user graphs {string} namespaces with refresh {string} and duration {string} in the patternfly graph',
+  'user graphs {string} namespaces with refresh {string} and duration {string}',
   (namespaces: string, refresh: string, duration: string) => {
     cy.visit({
       url: `/console/graphpf/namespaces?refresh=${refresh}&duration=${duration}&namespaces=${namespaces}`
@@ -77,10 +79,9 @@ When(`user selects graph refresh {string}`, (refresh: string) => {
 When('user selects {string} graph type', (graphType: string) => {
   cy.get('button#graph_type_dropdown-toggle')
     .click()
-    .parent()
-    .find('div#graph_type_dropdown')
-    .find(`button[id="${graphType}"]`)
-    .click();
+    .then(() => {
+      cy.get('div#graph_type_dropdown').find(`button[id="${graphType}"]`).click();
+    });
 
   cy.get('#loading_kiali_spinner').should('not.exist');
 });
@@ -126,21 +127,22 @@ Then('user does not see graph traffic menu', () => {
 
 Then('user {string} {string} traffic', (action: string, protocol: string) => {
   cy.waitForReact();
-  cy.getReact('GraphPageComponent', { state: { isReady: true } })
+  cy.getReact('GraphPagePFComponent', { state: { isReady: true } })
     .should('have.length', '1')
-    .then(() => {
-      cy.getReact('CytoscapeGraph')
-        .should('have.length', '1')
-        .getCurrentState()
-        .then(state => {
-          const numEdges = state.cy.edges(`[protocol = "${protocol}"]`).length;
+    .then($graph => {
+      const { state } = $graph[0];
 
-          if (action === 'sees') {
-            assert.isAbove(numEdges, 0);
-          } else {
-            assert.equal(numEdges, 0);
-          }
-        });
+      const controller = state.graphRefs.getController() as Visualization;
+      assert.isTrue(controller.hasGraph());
+      const { edges } = elems(controller);
+
+      const numEdges = select(edges, { prop: EdgeAttr.protocol, op: '=', val: protocol }).length;
+
+      if (action === 'sees') {
+        assert.isAbove(numEdges, 0);
+      } else {
+        assert.equal(numEdges, 0);
+      }
     });
 });
 
@@ -226,17 +228,19 @@ Then('user sees selected graph refresh {string}', (refresh: string) => {
     .should('exist');
 });
 
-Then('user sees a {string} patternfly graph', graphType => {
+Then('user sees a {string} graph', graphType => {
   cy.waitForReact();
-  cy.getReact('GraphPageComponent', { state: { isReady: true } })
+  cy.getReact('GraphPagePFComponent', { state: { isReady: true } })
     .should('have.length', '1')
-    .then(() => {
-      cy.getReact('CytoscapeGraph')
-        .should('have.length', '1')
-        .getCurrentState()
-        .then(state => {
-          const globalScratch: CytoscapeGlobalScratchData = state.cy.scratch(CytoscapeGlobalScratchNamespace);
-          assert.equal(globalScratch.graphType, graphType);
-        });
+    .then($graph => {
+      const { state } = $graph[0];
+
+      assert.equal(state.graphData.fetchParams.graphType, graphType);
+
+      const controller = state.graphRefs.getController() as Visualization;
+      assert.isTrue(controller.hasGraph());
+      const { nodes } = elems(controller);
+
+      assert.isAbove(nodes.length, 0);
     });
 });

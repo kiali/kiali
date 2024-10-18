@@ -31,7 +31,6 @@ import { TimeDurationIndicator } from 'components/Time/TimeDurationIndicator';
 import { TimeDurationModal } from 'components/Time/TimeDurationModal';
 import { KialiDagreGraph } from 'components/CytoscapeGraph/graphs/KialiDagreGraph';
 import { KialiDispatch } from 'types/Redux';
-import { GraphThunkActions } from 'actions/GraphThunkActions';
 import { bindActionCreators } from 'redux';
 import { GraphActions } from 'actions/GraphActions';
 import { GraphSelectorBuilder } from 'pages/Graph/GraphSelector';
@@ -40,9 +39,10 @@ import { KialiIcon } from 'config/KialiIcon';
 import { kebabToggleStyle } from 'styles/DropdownStyles';
 import { WorkloadWizardActionsDropdownGroup } from 'components/IstioWizards/WorkloadWizardActionsDropdownGroup';
 import { Workload } from 'types/Workload';
+import { GraphRefs } from './GraphPagePF';
+import { EmptyGraphLayout } from 'components/CytoscapeGraph/EmptyGraphLayout';
 
 type ReduxDispatchProps = {
-  onReady: (controller: any) => void;
   setEdgeMode: (edgeMode: EdgeMode) => void;
   setLayout: (layout: Layout) => void;
   setUpdateTime: (val: TimeInMilliseconds) => void;
@@ -65,14 +65,21 @@ type MiniGraphCardPropsPF = ReduxProps & {
 
 type MiniGraphCardState = {
   graphData: DecoratedGraphElements;
+  graphRefs?: GraphRefs;
   isKebabOpen: boolean;
+  isReady: boolean;
   isTimeOptionsOpen: boolean;
 };
 
 class MiniGraphCardPFComponent extends React.Component<MiniGraphCardPropsPF, MiniGraphCardState> {
   constructor(props: MiniGraphCardPropsPF) {
     super(props);
-    this.state = { isKebabOpen: false, isTimeOptionsOpen: false, graphData: props.dataSource.graphData };
+    this.state = {
+      isReady: false,
+      isKebabOpen: false,
+      isTimeOptionsOpen: false,
+      graphData: props.dataSource.graphData
+    };
   }
 
   componentDidMount(): void {
@@ -173,38 +180,45 @@ class MiniGraphCardPFComponent extends React.Component<MiniGraphCardPropsPF, Min
 
           <CardBody>
             <div style={{ height: '100%' }}>
-              <GraphPF
-                edgeLabels={this.props.dataSource.fetchParameters.edgeLabels}
-                edgeMode={EdgeMode.ALL}
-                graphData={{
-                  elements: this.state.graphData,
-                  elementsChanged: true,
-                  errorMessage: !!this.props.dataSource.errorMessage ? this.props.dataSource.errorMessage : undefined,
-                  isError: this.props.dataSource.isError,
-                  isLoading: this.props.dataSource.isLoading,
-                  fetchParams: this.props.dataSource.fetchParameters,
-                  timestamp: this.props.dataSource.graphTimestamp
-                }}
+              <EmptyGraphLayout
+                elements={this.state.graphData}
+                isLoading={this.props.dataSource.isLoading}
+                isError={this.props.dataSource.isError}
                 isMiniGraph={true}
-                layout={KialiDagreGraph.getLayout()}
-                onDeleteTrafficRouting={this.handleDeleteTrafficRouting}
-                onEdgeTap={this.handleEdgeTap}
-                onLaunchWizard={this.handleLaunchWizard}
-                onNodeTap={this.handleNodeTap}
-                onReady={this.props.onReady}
-                rankBy={[]}
-                setEdgeMode={this.props.setEdgeMode}
-                setLayout={this.props.setLayout}
-                setRankResult={() => {}}
-                setUpdateTime={this.props.setUpdateTime}
-                updateSummary={this.props.updateSummary}
-                showLegend={false}
-                showRank={false}
-                showOutOfMesh={true}
-                showSecurity={true}
-                showTrafficAnimation={false}
-                showVirtualServices={true}
-              />
+              >
+                <GraphPF
+                  edgeLabels={this.props.dataSource.fetchParameters.edgeLabels}
+                  edgeMode={EdgeMode.ALL}
+                  graphData={{
+                    elements: this.state.graphData,
+                    elementsChanged: true,
+                    errorMessage: !!this.props.dataSource.errorMessage ? this.props.dataSource.errorMessage : undefined,
+                    isError: this.props.dataSource.isError,
+                    isLoading: this.props.dataSource.isLoading,
+                    fetchParams: this.props.dataSource.fetchParameters,
+                    timestamp: this.props.dataSource.graphTimestamp
+                  }}
+                  isMiniGraph={true}
+                  layout={KialiDagreGraph.getLayout()}
+                  onDeleteTrafficRouting={this.handleDeleteTrafficRouting}
+                  onEdgeTap={this.handleEdgeTap}
+                  onLaunchWizard={this.handleLaunchWizard}
+                  onNodeTap={this.handleNodeTap}
+                  onReady={this.handleReady}
+                  rankBy={[]}
+                  setEdgeMode={this.props.setEdgeMode}
+                  setLayout={this.props.setLayout}
+                  setRankResult={() => {}}
+                  setUpdateTime={this.props.setUpdateTime}
+                  updateSummary={this.props.updateSummary}
+                  showLegend={false}
+                  showRank={false}
+                  showOutOfMesh={true}
+                  showSecurity={true}
+                  showTrafficAnimation={false}
+                  showVirtualServices={true}
+                />
+              </EmptyGraphLayout>
             </div>
           </CardBody>
         </Card>
@@ -218,6 +232,10 @@ class MiniGraphCardPFComponent extends React.Component<MiniGraphCardPropsPF, Min
       </>
     );
   }
+
+  private handleReady = (refs: GraphRefs): void => {
+    this.setState({ graphRefs: refs, isReady: true });
+  };
 
   private handleLaunchWizard = (key: WizardAction, mode: WizardMode): void => {
     this.onGraphActionsToggle(false);
@@ -320,7 +338,7 @@ class MiniGraphCardPFComponent extends React.Component<MiniGraphCardPropsPF, Min
     let href = `/namespaces/${data.namespace}/${resourceType}s/${resource}`;
 
     if (data.cluster) {
-      href = `${href}?cluster=${data.cluster}`;
+      href = `${href}?clusterName=${data.cluster}`;
     }
 
     if (isParentKiosk(this.props.kiosk)) {
@@ -428,7 +446,6 @@ const mapStateToProps = (state: KialiAppState): { kiosk: string } => ({
 });
 
 const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => ({
-  onReady: (controller: any) => dispatch(GraphThunkActions.graphPFReady(controller)),
   setEdgeMode: bindActionCreators(GraphActions.setEdgeMode, dispatch),
   setLayout: bindActionCreators(GraphActions.setLayout, dispatch),
   setUpdateTime: (val: TimeInMilliseconds) => dispatch(GraphActions.setUpdateTime(val)),

@@ -1,5 +1,5 @@
-
 @graph-display-user
+@cytoscape
 # don't change first line of this file - the tag is used for the test scripts to identify the test suite
 
 Feature: Kiali Graph page - Display menu for non-admin users

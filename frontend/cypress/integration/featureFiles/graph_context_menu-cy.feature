@@ -1,4 +1,5 @@
 @graph-context-menu
+@cytoscape
 # don't change first line of this file - the tag is used for the test scripts to identify the test suite
 
 Feature: Kiali Graph page - Context menu actions
@@ -47,7 +48,7 @@ Feature: Kiali Graph page - Context menu actions
     And user opens the context menu of the "details" service node on the "east" cluster in the cytoscape graph
     And user clicks the "delete-traffic-routing" item of the context menu in the cytoscape graph
     Then user should see the confirmation dialog to delete all traffic routing
-    When user chooses to delete the routing
+    When user chooses to delete the routing in the cystoscape graph
     And user is at the "istio" list page
     Then user does not see traffic routing objects for the "details" service in the "bookinfo" namespace in the "east" cluster
 
@@ -80,6 +81,6 @@ Feature: Kiali Graph page - Context menu actions
     # In multi-primary, istio configuration for cross cluster services needs to
     # be duplicated across clusters but the wizards only create the istio config
     # on a single cluster.
-    And configuration is duplicated to the "east" cluster
+    And configuration is duplicated to the "east" cluster in the cytoscape graph
     And user is at the "istio" list page
     Then user sees traffic routing objects for the "ratings" service in the "bookinfo" namespace in the "west" cluster

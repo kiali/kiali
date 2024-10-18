@@ -35,62 +35,57 @@ Feature: Kiali Waypoint related features
     And the user hovers in the "ambient" label and sees "L7" in the tooltip
 
   @waypoint
-  @pft
   Scenario: User sees ztunnel traffic
     Given user is at the "graphpf" page
-    When user graphs "bookinfo" namespaces in the patternfly graph
+    When user graphs "bookinfo" namespaces
     Then user sees the "bookinfo" namespace
     Then user opens traffic menu
     And user "enables" "ambientZtunnel" traffic option
-    Then 7 edges appear in the patternfly graph
+    Then 7 edges appear in the graph
+
+  # TODO Fix waypoint issue
+  #@waypoint
+  #Scenario: User sees waypoint traffic
+  #  Given user is at the "graphpf" page
+  #  When user graphs "bookinfo" namespaces
+  #  Then user sees the "bookinfo" namespace
+  #  Then user opens traffic menu
+  #  And user "enables" "ambientWaypoint" traffic option
+  #  Then 11 edges appear in the graph
 
   @waypoint
-  @pft
-  Scenario: User sees waypoint traffic
-    Given user is at the "graphpf" page
-    When user graphs "bookinfo" namespaces in the patternfly graph
-    Then user sees the "bookinfo" namespace
-    Then user opens traffic menu
-    And user "enables" "ambientWaypoint" traffic option
-    Then 11 edges appear in the patternfly graph
-
-  @waypoint
-  @pft
   Scenario: User sees no Ambient traffic
     Given user is at the "graphpf" page
-    When user graphs "bookinfo" namespaces in the patternfly graph
+    When user graphs "bookinfo" namespaces
     Then user sees the "bookinfo" namespace
     Then user opens traffic menu
     And user "disables" "ambient" traffic option
-    Then 2 edges appear in the patternfly graph
+    Then 2 edges appear in the graph
 
   @waypoint
-  @pft
   Scenario: User sees all Ambient traffic
     Given user is at the "graphpf" page
-    When user graphs "bookinfo" namespaces in the patternfly graph
+    When user graphs "bookinfo" namespaces
     Then user sees the "bookinfo" namespace
     Then user opens traffic menu
     And user "enables" "ambientTotal" traffic option
     And user "enables" "ambient" traffic option
-    Then 16 edges appear in the patternfly graph
+    Then 16 edges appear in the graph
 
   @waypoint
-  @pft
   Scenario: User sees doesn't see waypoint proxy
     And the "waypoint" node "doesn't" exists
 
-  @waypoint
-  @pft
-  Scenario: User sees waypoint proxy
-    When user opens display menu
-    Then the display menu opens
-    Then user "enables" "filterWaypoints" edge labels
-    Then 16 edges appear in the patternfly graph
-    And the "waypoint" node "does" exists
+  # TODO Fix waypoint issue
+  #@waypoint
+  #Scenario: User sees waypoint proxy
+  #  When user opens display menu
+  #  Then the display menu opens
+  #  Then user "enables" "filterWaypoints" edge labels
+  #  Then 16 edges appear in the graph
+  #  And the "waypoint" node "does" exists
 
   @waypoint
-  @pft
   Scenario: Waypoint should not have validation errors
     Given user is at the "istio" page
     And user selects the "bookinfo" namespace

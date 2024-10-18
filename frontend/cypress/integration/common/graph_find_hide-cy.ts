@@ -1,4 +1,4 @@
-import { Then, When } from '@badeball/cypress-cucumber-preprocessor';
+import { Then } from '@badeball/cypress-cucumber-preprocessor';
 
 Then('user sees unhealthy workloads highlighted on the cytoscape graph', () => {
   const expectedUnhealthyNodes = [

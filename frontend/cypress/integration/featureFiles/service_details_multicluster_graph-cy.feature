@@ -1,5 +1,6 @@
 @multi-cluster
 @service-details-multi-cluster
+@cytoscape
 Feature: Kiali Service Details page for remote cluster
 
   User opens the Services page and sees the bookinfo namespaces,
