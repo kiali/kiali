@@ -2,7 +2,6 @@ package models
 
 import (
 	"encoding/json"
-
 	extentions_v1alpha1 "istio.io/client-go/pkg/apis/extensions/v1alpha1"
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 	networking_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
@@ -234,6 +233,169 @@ func (i IstioConfigDetails) MarshalJSON() ([]byte, error) {
 	jsonMap["help"] = i.IstioConfigHelpFields
 
 	return json.Marshal(jsonMap)
+}
+
+func (icd *IstioConfigDetails) UnmarshalJSON(data []byte) error {
+	var temp struct {
+		Namespace             Namespace               `json:"namespace"`
+		ObjectGVK             schema.GroupVersionKind `json:"gvk"`
+		Permissions           ResourcePermissions     `json:"permissions"`
+		IstioValidation       *IstioValidation        `json:"validation"`
+		IstioReferences       *IstioReferences        `json:"references"`
+		IstioConfigHelpFields []IstioConfigHelp       `json:"help"`
+		Resource              json.RawMessage         `json:"resource"`
+	}
+
+	if err := json.Unmarshal(data, &temp); err != nil {
+		return err
+	}
+
+	icd.Namespace = temp.Namespace
+	icd.ObjectGVK = temp.ObjectGVK
+	icd.Permissions = temp.Permissions
+	icd.IstioValidation = temp.IstioValidation
+	icd.IstioReferences = temp.IstioReferences
+	icd.IstioConfigHelpFields = temp.IstioConfigHelpFields
+
+	// Based on the GVK, determine which resource type to unmarshal the resource into
+	switch temp.ObjectGVK.String() {
+	case kubernetes.AuthorizationPolicies.String():
+		var ap security_v1.AuthorizationPolicy
+		if err := json.Unmarshal(temp.Resource, &ap); err != nil {
+			return err
+		}
+		icd.AuthorizationPolicy = &ap
+
+	case kubernetes.DestinationRules.String():
+		var dr networking_v1.DestinationRule
+		if err := json.Unmarshal(temp.Resource, &dr); err != nil {
+			return err
+		}
+		icd.DestinationRule = &dr
+
+	case kubernetes.EnvoyFilters.String():
+		var ef networking_v1alpha3.EnvoyFilter
+		if err := json.Unmarshal(temp.Resource, &ef); err != nil {
+			return err
+		}
+		icd.EnvoyFilter = &ef
+
+	case kubernetes.Gateways.String():
+		var gw networking_v1.Gateway
+		if err := json.Unmarshal(temp.Resource, &gw); err != nil {
+			return err
+		}
+		icd.Gateway = &gw
+
+	case kubernetes.PeerAuthentications.String():
+		var pa security_v1.PeerAuthentication
+		if err := json.Unmarshal(temp.Resource, &pa); err != nil {
+			return err
+		}
+		icd.PeerAuthentication = &pa
+
+	case kubernetes.RequestAuthentications.String():
+		var ra security_v1.RequestAuthentication
+		if err := json.Unmarshal(temp.Resource, &ra); err != nil {
+			return err
+		}
+		icd.RequestAuthentication = &ra
+
+	case kubernetes.ServiceEntries.String():
+		var se networking_v1.ServiceEntry
+		if err := json.Unmarshal(temp.Resource, &se); err != nil {
+			return err
+		}
+		icd.ServiceEntry = &se
+
+	case kubernetes.Sidecars.String():
+		var sc networking_v1.Sidecar
+		if err := json.Unmarshal(temp.Resource, &sc); err != nil {
+			return err
+		}
+		icd.Sidecar = &sc
+
+	case kubernetes.VirtualServices.String():
+		var vs networking_v1.VirtualService
+		if err := json.Unmarshal(temp.Resource, &vs); err != nil {
+			return err
+		}
+		icd.VirtualService = &vs
+
+	case kubernetes.WorkloadEntries.String():
+		var we networking_v1.WorkloadEntry
+		if err := json.Unmarshal(temp.Resource, &we); err != nil {
+			return err
+		}
+		icd.WorkloadEntry = &we
+
+	case kubernetes.WorkloadGroups.String():
+		var wg networking_v1.WorkloadGroup
+		if err := json.Unmarshal(temp.Resource, &wg); err != nil {
+			return err
+		}
+		icd.WorkloadGroup = &wg
+
+	case kubernetes.WasmPlugins.String():
+		var wp extentions_v1alpha1.WasmPlugin
+		if err := json.Unmarshal(temp.Resource, &wp); err != nil {
+			return err
+		}
+		icd.WasmPlugin = &wp
+
+	case kubernetes.Telemetries.String():
+		var tm telemetry_v1.Telemetry
+		if err := json.Unmarshal(temp.Resource, &tm); err != nil {
+			return err
+		}
+		icd.Telemetry = &tm
+
+	case kubernetes.K8sGateways.String():
+		var kg k8s_networking_v1.Gateway
+		if err := json.Unmarshal(temp.Resource, &kg); err != nil {
+			return err
+		}
+		icd.K8sGateway = &kg
+
+	case kubernetes.K8sGRPCRoutes.String():
+		var grpcRoute k8s_networking_v1.GRPCRoute
+		if err := json.Unmarshal(temp.Resource, &grpcRoute); err != nil {
+			return err
+		}
+		icd.K8sGRPCRoute = &grpcRoute
+
+	case kubernetes.K8sHTTPRoutes.String():
+		var httpRoute k8s_networking_v1.HTTPRoute
+		if err := json.Unmarshal(temp.Resource, &httpRoute); err != nil {
+			return err
+		}
+		icd.K8sHTTPRoute = &httpRoute
+
+	case kubernetes.K8sReferenceGrants.String():
+		var refGrant k8s_networking_v1beta1.ReferenceGrant
+		if err := json.Unmarshal(temp.Resource, &refGrant); err != nil {
+			return err
+		}
+		icd.K8sReferenceGrant = &refGrant
+
+	case kubernetes.K8sTCPRoutes.String():
+		var tcpRoute k8s_networking_v1alpha2.TCPRoute
+		if err := json.Unmarshal(temp.Resource, &tcpRoute); err != nil {
+			return err
+		}
+		icd.K8sTCPRoute = &tcpRoute
+
+	case kubernetes.K8sTLSRoutes.String():
+		var tlsRoute k8s_networking_v1alpha2.TLSRoute
+		if err := json.Unmarshal(temp.Resource, &tlsRoute); err != nil {
+			return err
+		}
+		icd.K8sTLSRoute = &tlsRoute
+
+	default:
+		return nil
+	}
+	return nil
 }
 
 // IstioConfigHelp represents a help message for a given Istio object type and field
