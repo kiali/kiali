@@ -187,7 +187,7 @@ const TopologyContent: React.FC<{
       // Fit padding after resize
       setTimeout(() => {
         controller.getGraph().fit(FIT_PADDING);
-      }, 0);
+      }, 250);
     }
   }, [controller]);
 
@@ -390,6 +390,10 @@ const TopologyContent: React.FC<{
 
       // set decorators
       nodes.forEach(n => setNodeAttachments(n));
+
+      if (meshData.elementsChanged) {
+        fitView();
+      }
     };
 
     console.debug(`mesh updateModel`);
@@ -397,7 +401,7 @@ const TopologyContent: React.FC<{
 
     // notify that the graph has been updated
     setUpdateTime(Date.now());
-  }, [controller, meshData, highlighter, layoutName, onReady, setDetailsLevel, setSelectedIds, setUpdateTime]);
+  }, [controller, fitView, meshData, highlighter, layoutName, onReady, setDetailsLevel, setSelectedIds, setUpdateTime]);
 
   //TODO REMOVE THESE DEBUGGING MESSAGES...
   // Leave them for now, they are just good for understanding state changes while we develop this PFT graph.
