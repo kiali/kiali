@@ -43,8 +43,8 @@ import {
   selectOr,
   SelectOr
 } from 'pages/GraphPF/GraphPFElems';
-import { FIT_PADDING } from 'pages/GraphPF/GraphPF';
 import { isArray } from 'lodash';
+import { graphLayout, LayoutType } from 'pages/GraphPF/GraphPF';
 
 type ReduxStateProps = {
   edgeLabels: EdgeLabelMode[];
@@ -647,9 +647,7 @@ class GraphFindPFComponent extends React.Component<GraphFindProps, GraphFindStat
     }
 
     if (needLayout || this.hiddenElements) {
-      controller.getGraph().reset();
-      controller.getGraph().layout();
-      controller.getGraph().fit(FIT_PADDING);
+      graphLayout(controller, graphChanged ? LayoutType.LayoutNoFit : LayoutType.Layout);
     }
   };
 

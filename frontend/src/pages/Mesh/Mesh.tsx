@@ -53,9 +53,6 @@ import { KialiDagreGraph } from 'components/CytoscapeGraph/graphs/KialiDagreGrap
 import { KialiIcon } from 'config/KialiIcon';
 import { toolbarActiveStyle } from 'styles/GraphStyle';
 
-let initialLayout = false;
-let requestFit = false;
-
 const DEFAULT_NODE_SIZE = 100;
 const NAMESPACE_NODE_SIZE = 70;
 const ZOOM_IN = 4 / 3;
@@ -69,6 +66,15 @@ export enum LayoutName {
   MeshDagre = 'kiali-mesh-dagre'
 }
 
+export enum LayoutType {
+  Layout = 'layout',
+  LayoutNoFit = 'layoutNoFit',
+  Resize = 'resize'
+}
+
+let initialLayout = false;
+let layoutInProgress: LayoutType | undefined;
+
 export function getLayoutByName(layoutName: string): Layout {
   switch (layoutName) {
     // case LayoutName.MeshCola:
@@ -78,6 +84,27 @@ export function getLayoutByName(layoutName: string): Layout {
     default:
       return KialiDagreGraph.getLayout();
   }
+}
+
+export function meshLayout(controller: Controller, layoutType: LayoutType, reset?: boolean): void {
+  if (!controller?.hasGraph()) {
+    console.debug('Skip meshLayout, no graph');
+    return;
+  }
+  if (initialLayout) {
+    console.debug('Skip meshLayout, initial layout not yet performed');
+    return;
+  }
+  if (layoutInProgress) {
+    console.debug('Skip meshLayout, layout already in progress');
+    return;
+  }
+  console.debug(`layout in progress (layoutType=${layoutType} reset=${reset}`);
+  layoutInProgress = layoutType;
+  if (reset) {
+    controller.getGraph().reset();
+  }
+  controller.getGraph().layout();
 }
 
 // The is the main graph rendering component
@@ -166,39 +193,29 @@ const TopologyContent: React.FC<{
   }, [setTarget, selectedIds, highlighter, controller, isMiniMesh, onEdgeTap, onNodeTap, setSelectedIds, meshData]);
 
   //
-  // fitView handling
+  // Layout and resize handling
   //
-  const fitView = React.useCallback(() => {
-    if (controller?.hasGraph()) {
-      const graph = controller.getGraph();
-
-      graph.reset();
-      graph.fit(FIT_PADDING);
-    }
-  }, [controller]);
-
-  // resize handling
   const handleResize = React.useCallback(() => {
-    if (!requestFit && controller?.hasGraph()) {
-      requestFit = true;
-      controller.getGraph().reset();
-      controller.getGraph().layout();
-
-      // Fit padding after resize
-      setTimeout(() => {
-        controller.getGraph().fit(FIT_PADDING);
-      }, 0);
-    }
+    meshLayout(controller, LayoutType.Resize);
   }, [controller]);
 
-  //
-  // layoutEnd handling
-  //
   const onLayoutEnd = React.useCallback(() => {
-    //fit view to new loaded elements
-    if (requestFit) {
-      requestFit = false;
-      fitView();
+    console.debug(`onLayoutEnd layoutInProgress=${layoutInProgress}`);
+
+    // If a layout was called outside of our standard mechanism, don't perform our layoutEnd actions
+    if (!initialLayout && !layoutInProgress) {
+      return;
+    }
+
+    if (layoutInProgress !== LayoutType.LayoutNoFit) {
+      // On a resize, delay fit to ensure that the canvas size updates before the fit
+      if (layoutInProgress === LayoutType.Resize) {
+        setTimeout(() => {
+          controller.getGraph().fit(FIT_PADDING);
+        }, 250);
+      } else {
+        controller.getGraph().fit(FIT_PADDING);
+      }
     }
 
     // we need to finish the initial layout before we advertise to the outside
@@ -207,7 +224,9 @@ const TopologyContent: React.FC<{
       initialLayout = false;
       onReady({ getController: () => controller, setSelectedIds: setSelectedIds });
     }
-  }, [controller, fitView, onReady, setSelectedIds]);
+
+    layoutInProgress = undefined;
+  }, [controller, onReady, setSelectedIds]);
 
   //
   // Set detail levels for graph (control zoom-sensitive labels)
@@ -407,8 +426,11 @@ const TopologyContent: React.FC<{
   }, [controller]);
 
   React.useEffect(() => {
-    console.debug(`meshData changed`);
-  }, [meshData]);
+    console.debug(`meshData changed, elementsChange=${meshData.elementsChanged}`);
+    if (meshData.elementsChanged) {
+      meshLayout(controller, LayoutType.Layout);
+    }
+  }, [controller, meshData]);
 
   React.useEffect(() => {
     console.debug(`highlighter changed`);
@@ -428,11 +450,10 @@ const TopologyContent: React.FC<{
 
   React.useEffect(() => {
     console.debug(`layout changed`);
+
     if (!controller.hasGraph()) {
       return;
     }
-
-    requestFit = true;
 
     // When the initial layoutName property is set it is premature to perform a layout
     if (initialLayout) {
@@ -440,12 +461,8 @@ const TopologyContent: React.FC<{
     }
 
     controller.getGraph().setLayout(layoutName);
-    controller.getGraph().layout();
-    if (requestFit) {
-      requestFit = false;
-      fitView();
-    }
-  }, [controller, fitView, layoutName]);
+    meshLayout(controller, LayoutType.Layout);
+  }, [controller, layoutName]);
 
   //
   // Set back to mesh target at unmount-time (not every post-render)
@@ -523,11 +540,7 @@ const TopologyContent: React.FC<{
                     controller && controller.getGraph().scaleBy(ZOOM_OUT);
                   },
                   resetViewCallback: () => {
-                    if (controller) {
-                      requestFit = true;
-                      controller.getGraph().reset();
-                      controller.getGraph().layout();
-                    }
+                    meshLayout(controller, LayoutType.Layout);
                   },
                   legend: true,
                   legendIcon: <KialiIcon.Map className={showLegend ? toolbarActiveStyle : undefined} />,

@@ -29,13 +29,13 @@ import { HEALTHY, NA, NOT_READY } from 'types/Health';
 import { location, HistoryManager, URLParam } from '../../../app/History';
 import { isValid } from 'utils/Common';
 import { descendents, elems, SelectAnd, SelectExp, selectOr, SelectOr } from 'pages/GraphPF/GraphPFElems';
-import { FIT_PADDING } from 'pages/GraphPF/GraphPF';
 import { isArray } from 'lodash';
 import { MeshAttr, MeshEdgeData, MeshInfraType, MeshNodeData } from 'types/Mesh';
 import { Layout } from 'types/Graph';
 import { MeshToolbarActions } from 'actions/MeshToolbarActions';
 import { MeshFindOptions } from './MeshFindOptions';
 import { MeshHelpFind } from '../MeshHelpFind';
+import { LayoutType, meshLayout } from '../Mesh';
 
 type ReduxStateProps = {
   findValue: string;
@@ -554,9 +554,7 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
     }
 
     if (needLayout || this.hiddenElements) {
-      controller.getGraph().reset();
-      controller.getGraph().layout();
-      controller.getGraph().fit(FIT_PADDING);
+      meshLayout(controller, meshChanged ? LayoutType.LayoutNoFit : LayoutType.Layout);
     }
   };
 
