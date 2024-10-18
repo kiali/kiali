@@ -581,6 +581,10 @@ const TopologyContent: React.FC<{
       }
     };
 
+    if (graphData.elementsChanged) {
+      fitView();
+    }
+
     console.debug(`PFT updateModel`);
     updateModel(controller);
 
@@ -590,6 +594,7 @@ const TopologyContent: React.FC<{
     setUpdateTime(updateModelTime);
   }, [
     controller,
+    fitView,
     graphData,
     graphSettings,
     highlighter,

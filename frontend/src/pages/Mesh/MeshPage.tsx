@@ -279,11 +279,11 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
     fetchParams: MeshFetchParams
   ): void => {
     const prevElements = this.state.meshData.elements;
-
+    const elementsChanged = this.elementsChanged(prevElements, elements);
     this.setState({
       meshData: {
         elements: elements,
-        elementsChanged: this.elementsChanged(prevElements, elements),
+        elementsChanged: elementsChanged,
         fetchParams: fetchParams,
         isLoading: false,
         name: meshName,
