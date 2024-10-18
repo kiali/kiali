@@ -233,7 +233,6 @@ if [ "${DELETE_BOOKINFO}" == "true" ]; then
   echo "====== UNINSTALLING ANY EXISTING BOOKINFO DEMO ====="
   if [ "${IS_OPENSHIFT}" == "true" ]; then
     $CLIENT_EXE delete network-attachment-definition istio-cni -n ${NAMESPACE}
-    $CLIENT_EXE delete scc bookinfo-scc
     $CLIENT_EXE delete project ${NAMESPACE}
     # oc delete project does not wait for a namespace to be removed, we need to also call 'oc delete namespace'
     $CLIENT_EXE delete namespace ${NAMESPACE}
@@ -260,26 +259,6 @@ kind: NetworkAttachmentDefinition
 metadata:
   name: istio-cni
 NAD
-  cat <<SCC | $CLIENT_EXE apply -f -
-apiVersion: security.openshift.io/v1
-kind: SecurityContextConstraints
-metadata:
-  name: bookinfo-scc
-runAsUser:
-  type: RunAsAny
-seLinuxContext:
-  type: RunAsAny
-supplementalGroups:
-  type: RunAsAny
-priority: 9
-users:
-- "system:serviceaccount:${NAMESPACE}:bookinfo-details"
-- "system:serviceaccount:${NAMESPACE}:bookinfo-productpage"
-- "system:serviceaccount:${NAMESPACE}:bookinfo-ratings"
-- "system:serviceaccount:${NAMESPACE}:bookinfo-ratings-v2"
-- "system:serviceaccount:${NAMESPACE}:bookinfo-reviews"
-- "system:serviceaccount:${NAMESPACE}:default"
-SCC
 fi
 
 if [ "${AUTO_INJECTION}" == "true" ]; then
