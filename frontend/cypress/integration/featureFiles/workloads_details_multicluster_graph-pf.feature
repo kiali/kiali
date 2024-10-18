@@ -25,7 +25,9 @@ Feature: Kiali Workloads Details minigraph in multicluster setup
     Examples:
       | type     | name       |
       | service  | reviews    |
-      | workload | reviews-v3 |
+
+  # TODO Fix issue https://github.com/kiali/kiali/issues/7839
+  #   | workload | reviews-v3 |
 
   # This is a regression test for this bug (https://github.com/kiali/kiali/issues/6185)
   # This is only multi-primary because that is the suite that has openid setup.
