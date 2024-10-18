@@ -8,6 +8,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
@@ -21,7 +22,7 @@ func NewIstioStatusService(
 	userClients map[string]kubernetes.ClientInterface,
 	tracing *TracingService,
 	workloads *WorkloadService,
-	discovery meshDiscovery,
+	discovery istio.MeshDiscovery,
 ) IstioStatusService {
 	return IstioStatusService{
 		conf:                conf,
@@ -36,7 +37,7 @@ func NewIstioStatusService(
 // SvcService deals with fetching istio/kubernetes services related content and convert to kiali model
 type IstioStatusService struct {
 	conf                *config.Config
-	discovery           meshDiscovery
+	discovery           istio.MeshDiscovery
 	homeClusterSAClient kubernetes.ClientInterface
 	tracing             *TracingService
 	userClients         map[string]kubernetes.ClientInterface

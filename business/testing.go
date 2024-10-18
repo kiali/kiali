@@ -18,7 +18,7 @@ import (
 
 // SetWithBackends allows for specifying the ClientFactory and Prometheus clients to be used.
 // Mock friendly. Used only with tests.
-func setWithBackends(cf kubernetes.ClientFactory, prom prometheus.ClientInterface, cache cache.KialiCache, cpm ControlPlaneMonitor, d meshDiscovery) {
+func setWithBackends(cf kubernetes.ClientFactory, prom prometheus.ClientInterface, cache cache.KialiCache, cpm ControlPlaneMonitor, d istio.MeshDiscovery) {
 	clientFactory = cf
 	discovery = d
 	kialiCache = cache
@@ -67,6 +67,6 @@ func WithControlPlaneMonitor(cpm ControlPlaneMonitor) {
 }
 
 // WithDiscovery is a testing func that lets you replace the global discovery var.
-func WithDiscovery(disc meshDiscovery) {
+func WithDiscovery(disc istio.MeshDiscovery) {
 	discovery = disc
 }

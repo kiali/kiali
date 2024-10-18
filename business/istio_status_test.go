@@ -17,6 +17,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/istio/istiotest"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/log"
@@ -24,14 +25,6 @@ import (
 	"github.com/kiali/kiali/tracing"
 	"github.com/kiali/kiali/tracing/tracingtest"
 )
-
-type fakeMeshDiscovery struct {
-	mesh models.Mesh
-}
-
-func (fmd *fakeMeshDiscovery) Mesh(ctx context.Context) (*models.Mesh, error) {
-	return &fmd.mesh, nil
-}
 
 type addOnsSetup struct {
 	Url        string
@@ -445,8 +438,8 @@ func TestDefaults(t *testing.T) {
 	conf := config.NewConfig()
 	// Set global cache var
 	SetupBusinessLayer(t, k8s, *conf)
-	discovery := &fakeMeshDiscovery{
-		mesh: models.Mesh{
+	discovery := &istiotest.FakeDiscovery{
+		MeshReturn: models.Mesh{
 			ControlPlanes: []models.ControlPlane{{Cluster: &models.KubeCluster{Name: conf.KubernetesConfig.ClusterName}, IstiodName: "istiod", Status: kubernetes.ComponentHealthy}},
 		},
 	}
@@ -504,8 +497,8 @@ func TestNonDefaults(t *testing.T) {
 
 	// Set global cache var
 	SetupBusinessLayer(t, k8s, *conf)
-	discovery := &fakeMeshDiscovery{
-		mesh: models.Mesh{
+	discovery := &istiotest.FakeDiscovery{
+		MeshReturn: models.Mesh{
 			ControlPlanes: []models.ControlPlane{{Cluster: &models.KubeCluster{Name: conf.KubernetesConfig.ClusterName}, IstiodName: "istiod", Status: kubernetes.ComponentHealthy}},
 		},
 	}
@@ -557,8 +550,8 @@ func TestIstiodNotReady(t *testing.T) {
 
 	// Set global cache var
 	SetupBusinessLayer(t, k8s, *conf)
-	discovery := &fakeMeshDiscovery{
-		mesh: models.Mesh{
+	discovery := &istiotest.FakeDiscovery{
+		MeshReturn: models.Mesh{
 			ControlPlanes: []models.ControlPlane{{Cluster: &models.KubeCluster{Name: conf.KubernetesConfig.ClusterName}, IstiodName: "istiod", Status: kubernetes.ComponentNotReady}},
 		},
 	}
@@ -616,8 +609,8 @@ func TestCustomizedAppLabel(t *testing.T) {
 
 	// Set global cache var
 	SetupBusinessLayer(t, k8s, *conf)
-	discovery := &fakeMeshDiscovery{
-		mesh: models.Mesh{
+	discovery := &istiotest.FakeDiscovery{
+		MeshReturn: models.Mesh{
 			ControlPlanes: []models.ControlPlane{{Cluster: &models.KubeCluster{Name: conf.KubernetesConfig.ClusterName}, IstiodName: "istiod", Status: kubernetes.ComponentHealthy}},
 		},
 	}
@@ -671,8 +664,8 @@ func TestDaemonSetComponentHealthy(t *testing.T) {
 
 	// Set global cache var
 	SetupBusinessLayer(t, k8s, *conf)
-	discovery := &fakeMeshDiscovery{
-		mesh: models.Mesh{
+	discovery := &istiotest.FakeDiscovery{
+		MeshReturn: models.Mesh{
 			ControlPlanes: []models.ControlPlane{{Cluster: &models.KubeCluster{Name: conf.KubernetesConfig.ClusterName}, IstiodName: "istiod", Status: kubernetes.ComponentHealthy}},
 		},
 	}
@@ -722,8 +715,8 @@ func TestDaemonSetComponentUnhealthy(t *testing.T) {
 
 	// Set global cache var
 	SetupBusinessLayer(t, k8s, *conf)
-	discovery := &fakeMeshDiscovery{
-		mesh: models.Mesh{
+	discovery := &istiotest.FakeDiscovery{
+		MeshReturn: models.Mesh{
 			ControlPlanes: []models.ControlPlane{{Cluster: &models.KubeCluster{Name: conf.KubernetesConfig.ClusterName}, IstiodName: "istiod", Status: kubernetes.ComponentHealthy}},
 		},
 	}

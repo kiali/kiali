@@ -1853,14 +1853,31 @@ func TestDiscoverWithTags(t *testing.T) {
 						},
 					},
 				}
+				// Add in another tag to add noise and ensure the proper tag gets picked up.
+				tagDev := &admissionregistrationv1.MutatingWebhookConfiguration{
+					ObjectMeta: v1.ObjectMeta{
+						Name: "istio-revision-tag-dev",
+						Labels: map[string]string{
+							models.IstioRevisionLabel: "1.22.0",
+							models.IstioTagLabel:      "dev",
+						},
+					},
+				}
+				istiod_1_22 := fakeIstiodDeployment(conf.KubernetesConfig.ClusterName, false)
+				istiod_1_22.Name = "istiod-1-22-0"
+				istiod_1_22.Labels[models.IstioRevisionLabel] = "1.22.0"
 				istiod_1_23 := fakeIstiodDeployment(conf.KubernetesConfig.ClusterName, false)
+				istiod_1_23.Name = "istiod-1-23-0"
 				istiod_1_23.Labels[models.IstioRevisionLabel] = "1.23.0"
 				return map[string][]runtime.Object{
 					conf.KubernetesConfig.ClusterName: {
 						defaultWebhook,
 						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo", Labels: map[string]string{models.IstioRevisionLabel: "prod"}}},
 						tagProd,
+						tagDev,
 						istiod_1_23,
+						istiod_1_22,
+						fakeIstioConfigMap("1.22.0"),
 						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
 						fakeIstioConfigMap("1.23.0"),
 						FakeCertificateConfigMap("istio-system"),
@@ -1869,6 +1886,7 @@ func TestDiscoverWithTags(t *testing.T) {
 			},
 			expectedNamespacesByRev: map[clusterRevisionKey][]string{
 				{Cluster: conf.KubernetesConfig.ClusterName, ControlPlaneRevision: "1.23.0"}: {"bookinfo"},
+				{Cluster: conf.KubernetesConfig.ClusterName, ControlPlaneRevision: "1.22.0"}: nil,
 			},
 		},
 		"bookinfo namespace not selected by discovery selectors": {
@@ -2016,7 +2034,7 @@ func TestDiscoverWithTags(t *testing.T) {
 				{Cluster: conf.KubernetesConfig.ClusterName, ControlPlaneRevision: "1-24-0"}: {"travels"},
 			},
 		},
-		"primary-remote with default tag should manage bookinfo on each cluster": {
+		"primary-remote with default tag should manage bookinfo on primary cluster": {
 			conf: func() *config.Config {
 				conf := *conf
 				conf.KubernetesConfig.ClusterName = "primary"
@@ -2045,7 +2063,7 @@ func TestDiscoverWithTags(t *testing.T) {
 				{Cluster: "primary", ControlPlaneRevision: "default"}: {"bookinfo", "bookinfo"},
 			},
 		},
-		"primary-remote with tag should manage bookinfo on both clusters": {
+		"primary-remote with tag should manage bookinfo on primary cluster": {
 			conf: func() *config.Config {
 				conf := *conf
 				conf.KubernetesConfig.ClusterName = "primary"
@@ -2083,7 +2101,7 @@ func TestDiscoverWithTags(t *testing.T) {
 				}
 			},
 			expectedNamespacesByRev: map[clusterRevisionKey][]string{
-				{Cluster: "primary", ControlPlaneRevision: "1-23-0"}: {"bookinfo", "bookinfo"},
+				{Cluster: "primary", ControlPlaneRevision: "1-23-0"}: {"bookinfo"},
 			},
 		},
 		"multi-primary with tag should only manage bookinfo on their own cluster": {
@@ -2168,11 +2186,8 @@ func TestDiscoverWithTags(t *testing.T) {
 			require.NoError(err)
 			require.Len(mesh.ControlPlanes, len(maps.Keys(tc.expectedNamespacesByRev)))
 			for _, cp := range mesh.ControlPlanes {
-				require.NotNil(cp.Tags)
-				for _, tag := range cp.Tags {
-					require.NotNil(tag.ControlPlane)
-					require.Equal(&cp, tag.ControlPlane)
-				}
+				require.NotNil(cp.Tag)
+				require.Equal(cp.Revision, cp.Tag.Revision)
 			}
 			for clusterRev, expectedNamespaces := range tc.expectedNamespacesByRev {
 				controlPlane := slicetest.FindOrFail(t, mesh.ControlPlanes, func(cp models.ControlPlane) bool {
@@ -2239,7 +2254,7 @@ func TestDiscoverTagsWithoutWebhookPermissions(t *testing.T) {
 	mesh, err := discovery.Mesh(context.TODO())
 	require.NoError(err)
 	require.Len(mesh.ControlPlanes, 1)
-	require.Nil(mesh.ControlPlanes[0].Tags)
+	require.Nil(mesh.ControlPlanes[0].Tag)
 }
 
 func approvingClient(client kubernetes.ClientInterface) *accessReviewClient {
@@ -2323,13 +2338,15 @@ func TestDiscoverTagsWithExternalCluster(t *testing.T) {
 	externalControlPlane := slicetest.FindOrFail(t, mesh.ControlPlanes, func(cp models.ControlPlane) bool {
 		return cp.ID == "remote"
 	})
-	require.Len(externalIstioSystem.Tags, 1)
-	require.Len(externalControlPlane.Tags, 1)
+	require.NotNil(externalIstioSystem.Tag)
+	require.NotNil(externalControlPlane.Tag)
 
-	require.Equal(externalIstioSystem.Tags[0].ControlPlane.ID, externalIstioSystem.ID)
-	require.Equal(externalIstioSystem.Tags[0].ControlPlane.IstiodName, externalIstioSystem.IstiodName)
-	require.Equal(externalControlPlane.Tags[0].ControlPlane.ID, externalControlPlane.ID)
-	require.Equal(externalControlPlane.Tags[0].ControlPlane.IstiodName, externalControlPlane.IstiodName)
+	require.Equal(externalIstioSystem.Tag.Revision, externalIstioSystem.Revision)
+	require.Equal(externalIstioSystem.Tag.Cluster, externalIstioSystem.Cluster.Name)
+	require.Equal(externalControlPlane.Tag.Revision, externalControlPlane.Revision)
+	require.NotEqual(externalControlPlane.Tag.Cluster, externalControlPlane.Cluster.Name)
+	require.Equal(externalControlPlane.Tag.Cluster, externalControlPlane.ID)
 
-	require.Equal([]models.Namespace{{Name: "bookinfo", Cluster: "remote", Labels: map[string]string{models.IstioRevisionLabel: "prod"}}}, externalControlPlane.ManagedNamespaces)
+	expectedNamespaces := []models.Namespace{{Name: "bookinfo", Cluster: "remote", Labels: map[string]string{models.IstioRevisionLabel: "prod"}, Revision: "prod"}}
+	require.Equal(expectedNamespaces, externalControlPlane.ManagedNamespaces)
 }
