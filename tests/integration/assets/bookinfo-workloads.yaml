@@ -71,6 +71,9 @@ metadata:
     app: details
     version: v2
 spec:
+  securityContext:
+    seccompProfile:
+      type: RuntimeDefault
   containers:
   - name: details
     image: istio/examples-bookinfo-details-v1:1.8.0
