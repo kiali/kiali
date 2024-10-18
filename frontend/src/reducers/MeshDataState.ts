@@ -22,8 +22,6 @@ export const INITIAL_MESH_STATE: MeshState = {
 // This Reducer allows changes to the 'graphDataState' portion of Redux Store
 export const MeshDataStateReducer = (state: MeshState = INITIAL_MESH_STATE, action: KialiAppAction): MeshState => {
   switch (action.type) {
-    case getType(MeshActions.setControlPlanes):
-      return updateState(state, { controlPlanes: action.payload });
     case getType(MeshActions.setDefinition):
       return updateState(state, { definition: action.payload });
     case getType(MeshActions.setLayout):

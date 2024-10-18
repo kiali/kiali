@@ -97,8 +97,8 @@ export interface Tag {
 }
 
 export interface ControlPlaneConfig {
-  OutboundTrafficPolicy?: any;
   configMap?: any;
+  outboundTrafficPolicy?: any;
 }
 
 export interface ControlPlane {

@@ -318,12 +318,23 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 				}
 			}
 
-			// If the cluster id set on the controlplane matches the cluster's id then it manages the cluster it is deployed on.
+			// If the cluster id that is set on the controlplane matches this cluster's id then it manages the cluster it is deployed on.
+			// This is for single cluster deployments and primary-remote where the cluster here is the primary cluster.
 			if controlPlane.ID == cluster.Name {
 				controlPlane.ManagedClusters = append(controlPlane.ManagedClusters, &cluster)
 			} else {
-				// It's an "external controlplane".
+				// It's an "external controlplane" don't add this cluster as a "managed cluster".
 				controlPlane.ExternalControlPlane = true
+			}
+
+			// If the controlplane doesn't manage an external cluster and the cluster id doesn't
+			// match this cluster's name then it's probably a misconfiguration. For primary-remote
+			// where the primary could be misconfigured, it's unclear how to detect this.
+			if !controlPlane.ManagesExternal && controlPlane.ID != cluster.Name {
+				log.Warningf("The controlplane [%s/%s] cluster name ['%s'] does not match the cluster ['%s'] where it is deployed. "+
+					"This is likely a misconfiguration. Check your 'values.global.multiCluster.clusterName' setting on your controlplane "+
+					"or check your Kiali configuration setting 'kubernetes_config.cluster_name'.",
+					controlPlane.IstiodNamespace, controlPlane.IstiodName, controlPlane.ID, cluster.Name)
 			}
 
 			// Even if we fail to get the version we should still return the controlplane object.

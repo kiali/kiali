@@ -99,10 +99,10 @@ type ControlPlane struct {
 	Tag *Tag `json:"tag,omitempty"`
 
 	// Thresholds is the thresholds for the controlplane.
-	Thresholds *IstiodThresholds `json:"thresholds"`
+	Thresholds *IstiodThresholds `json:"thresholds,omitempty"`
 
 	// Version is the version of the controlplane.
-	Version *ExternalServiceInfo `json:"version"`
+	Version *ExternalServiceInfo `json:"version,omitempty"`
 }
 
 // ControlPlaneConfiguration is the configuration for the controlPlane and any associated dataPlane.
@@ -115,7 +115,7 @@ type ControlPlaneConfiguration struct {
 	IsGatewayToNamespace bool `json:"-"`
 
 	// Network is the name of the network that the controlplane is using.
-	Network string
+	Network string `json:"network,omitempty"`
 
 	// IstioMeshConfig comes from the istio configmap.
 	IstioMeshConfig
@@ -152,6 +152,9 @@ func (ci *Certificate) Parse(certificate []byte) {
 	ci.Accessible = true
 }
 
+// TODO: Lowercase these as they are used on the frontend.
+// Better yet, change YAML parsing to first convert the
+// YAML to JSON so that we don't need to use yaml tags at all.
 type IstioMeshConfig struct {
 	Certificates  []Certificate `yaml:"certificates,omitempty" json:"certificates,omitempty"`
 	DefaultConfig struct {
@@ -167,7 +170,7 @@ type IstioMeshConfig struct {
 	MeshMTLS                       struct {
 		MinProtocolVersion string `yaml:"minProtocolVersion"`
 	} `yaml:"meshMtls"`
-	OutboundTrafficPolicy OutboundPolicy `yaml:"outboundTrafficPolicy,omitempty"`
+	OutboundTrafficPolicy OutboundPolicy `yaml:"outboundTrafficPolicy,omitempty" json:"outboundTrafficPolicy,omitempty"`
 	TrustDomain           string         `yaml:"trustDomain,omitempty"`
 }
 

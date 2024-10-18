@@ -27,7 +27,7 @@ import { ComponentStatus } from '../types/IstioStatus';
 import { TracingState } from 'reducers/TracingState';
 import { MetricsStatsState } from 'reducers/MetricsStatsState';
 import { CertsInfo } from 'types/CertsInfo';
-import { ControlPlane, MeshCluster, MeshDefinition, MeshTarget } from '../types/Mesh';
+import { MeshCluster, MeshDefinition, MeshTarget } from '../types/Mesh';
 
 // Store is the Redux Data store
 
@@ -139,11 +139,6 @@ export interface MeshToolbarState {
 }
 
 export interface MeshState {
-  // controlPlanes are pulled from the graph response and are used
-  // by other elements on the graph page. They are in the redux
-  // store to so that the other elements can stay in sync with
-  // with graph and we don't have to duplicate requests to get this info.
-  controlPlanes?: ControlPlane[];
   definition: MeshDefinition | null;
   layout: Layout;
   target: MeshTarget | null;

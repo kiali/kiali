@@ -290,7 +290,7 @@
               "configMap": {
                 "mesh": "accessLogFile: /dev/stdout\nenableAutoMtls: true\nrootNamespace: istio-system\ntrustDomain: cluster.local\n"
               },
-              "Network": "kialiNetwork",
+              "network": "kialiNetwork",
               "certificates": [
                 {
                   "dnsNames": null,
@@ -315,7 +315,7 @@
               "MeshMTLS": {
                 "MinProtocolVersion": ""
               },
-              "OutboundTrafficPolicy": {
+              "outboundTrafficPolicy": {
                 "mode": "ALLOW_ANY"
               },
               "TrustDomain": "cluster.local"
@@ -400,12 +400,10 @@
             "resources": {},
             "revision": "default",
             "status": "",
-            "tag": null,
             "thresholds": {
               "memory": 0,
               "cpu": 0
-            },
-            "version": null
+            }
           },
           "version": "Unknown"
         }

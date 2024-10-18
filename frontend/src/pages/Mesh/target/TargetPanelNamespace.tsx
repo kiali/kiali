@@ -3,8 +3,6 @@ import { ElementModel, GraphElement, Node, NodeModel } from '@patternfly/react-t
 import { kialiStyle } from 'styles/StyleUtils';
 import { TargetPanelCommonProps, shouldRefreshData, targetPanelHR, targetPanelStyle } from './TargetPanelCommon';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
-import { connect } from 'react-redux';
-import { KialiAppState } from '../../../store/Store';
 import {
   Card,
   CardBody,
@@ -51,14 +49,12 @@ import { classes } from 'typestyle';
 import { panelBodyStyle, panelHeadingStyle, panelStyle } from 'pages/Graph/SummaryPanelStyle';
 import { isRemoteCluster } from './TargetPanelControlPlane';
 import { ControlPlane } from 'types/Mesh';
+import { MeshInfraType } from 'types/Mesh';
 
-type ReduxProps = {
-  controlPlanes: ControlPlane[];
-};
-
-type TargetPanelNamespaceProps = ReduxProps & TargetPanelCommonProps;
+type TargetPanelNamespaceProps = TargetPanelCommonProps;
 
 type TargetPanelNamespaceState = {
+  controlPlanes?: ControlPlane[];
   errorMetrics?: Metric[];
   loading: boolean;
   metrics?: Metric[];
@@ -98,16 +94,28 @@ const namespaceNameStyle = kialiStyle({
   textOverflow: 'ellipsis'
 });
 
-class TargetPanelNamespaceComponent extends React.Component<TargetPanelNamespaceProps, TargetPanelNamespaceState> {
+export class TargetPanelNamespace extends React.Component<TargetPanelNamespaceProps, TargetPanelNamespaceState> {
   private promises = new PromisesRegistry();
 
   constructor(props: TargetPanelNamespaceProps) {
     super(props);
 
     const targetNode = this.props.target.elem as Node<NodeModel, any>;
+
     const data = (props.target.elem as GraphElement<ElementModel, any>).getData();
+
+    // Find the controlplanes nodes and pull out the controlplane
+    // object from infraData. The controlplane object has all the
+    // managed namespaces that is needed by elements on this page.
+    const controlPlanes: ControlPlane[] | undefined = props.target.elem
+      ?.getGraph()
+      .getData()
+      .meshData.elements.nodes?.filter(node => node.data.infraType === MeshInfraType.ISTIOD)
+      .map(node => node.data.infraData);
+
     this.state = {
       ...defaultState,
+      controlPlanes: controlPlanes,
       targetCluster: data.cluster,
       targetNamespace: data.namespace,
       targetNode: targetNode
@@ -123,6 +131,7 @@ class TargetPanelNamespaceComponent extends React.Component<TargetPanelNamespace
     if (props.target.elem !== state.targetNode) {
       const { cluster, namespace } = (props.target.elem as GraphElement<ElementModel, any>).getData();
       return {
+        controlPlanes: state.controlPlanes,
         targetNode: props.target.elem as any,
         targetCluster: cluster,
         targetNamespace: namespace,
@@ -202,19 +211,19 @@ class TargetPanelNamespaceComponent extends React.Component<TargetPanelNamespace
 
                 {isControlPlane && (
                   <>
-                    {this.props.controlPlanes && (
+                    {this.state.controlPlanes && (
                       <div>
                         {targetPanelHR}
-                        <ControlPlaneDonut controlPlanes={this.props.controlPlanes} />
+                        <ControlPlaneDonut controlPlanes={this.state.controlPlanes} />
                       </div>
                     )}
 
-                    {this.props.controlPlanes && (
+                    {this.state.controlPlanes && (
                       <div style={{ textAlign: 'left', alignContent: 'start', alignItems: 'start' }}>
                         {targetPanelHR}
                         <Title headingLevel="h3">Control Planes</Title>
                         <List isPlain isBordered>
-                          {this.props.controlPlanes
+                          {this.state.controlPlanes
                             .sort((a, b) => a.istiodName.localeCompare(b.istiodName))
                             .map(cp => (
                               <ListItem key={cp.istiodName}>
@@ -694,11 +703,3 @@ class TargetPanelNamespaceComponent extends React.Component<TargetPanelNamespace
     router.navigate(destination);
   };
 }
-
-const mapStateToProps = (state: KialiAppState): ReduxProps => {
-  return {
-    controlPlanes: state.mesh.controlPlanes || []
-  };
-};
-
-export const TargetPanelNamespace = connect(mapStateToProps)(TargetPanelNamespaceComponent);

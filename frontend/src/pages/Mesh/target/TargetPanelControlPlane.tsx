@@ -151,13 +151,15 @@ export class TargetPanelControlPlane extends React.Component<
         <div className={panelHeadingStyle}>{renderNodeHeader(data, {})}</div>
 
         <div className={panelBodyStyle}>
+          {controlPlane.tag && <div>{t('Tag: {{tag}}', { tag: controlPlane.tag.name })}</div>}
+
           <div>{t('Version: {{version}}', { version: data.version || t(UNKNOWN) })}</div>
 
           <MeshMTLSStatus cluster={data.cluster} revision={controlPlane.revision} />
 
           <TargetPanelControlPlaneStatus
             controlPlaneMetrics={this.state.controlPlaneMetrics}
-            outboundTrafficPolicy={controlPlane.config.OutboundTrafficPolicy}
+            outboundTrafficPolicy={controlPlane.config.outboundTrafficPolicy}
           />
 
           <TLSInfo version={this.props.minTLS} />
