@@ -20,7 +20,7 @@ on:
         default: master
         type: string
       quay_repository:
-        description: Quay repository    
+        description: Quay repository
         type: string
         default: quay.io/kiali/kiali
         required: true
