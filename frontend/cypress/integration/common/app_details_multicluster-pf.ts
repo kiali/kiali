@@ -140,7 +140,12 @@ When(
 
         assert(node, `Node ${name} of type ${type} from cluster ${cluster} not found in the graph`);
 
-        cy.get(`[data-id=${node?.getId()}]`).click();
+        if (type === 'app') {
+          // application node must be taken from the groups data layer, not from the default one
+          cy.get(`[data-layer-id="groups"] [data-id=${node?.getId()}]`).click();
+        } else {
+          cy.get(`[data-id=${node?.getId()}]`).click();
+        }
       });
   }
 );

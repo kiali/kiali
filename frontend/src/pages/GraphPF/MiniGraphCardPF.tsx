@@ -180,7 +180,7 @@ class MiniGraphCardPFComponent extends React.Component<MiniGraphCardPropsPF, Min
 
           <CardBody>
             <div style={{ height: '100%' }}>
-            <EmptyGraphLayout
+              <EmptyGraphLayout
                 elements={this.state.graphData}
                 isLoading={this.props.dataSource.isLoading}
                 isError={this.props.dataSource.isError}
@@ -338,7 +338,7 @@ class MiniGraphCardPFComponent extends React.Component<MiniGraphCardPropsPF, Min
     let href = `/namespaces/${data.namespace}/${resourceType}s/${resource}`;
 
     if (data.cluster) {
-      href = `${href}?cluster=${data.cluster}`;
+      href = `${href}?clusterName=${data.cluster}`;
     }
 
     if (isParentKiosk(this.props.kiosk)) {
