@@ -19,7 +19,6 @@ describe('Parse find value test', () => {
         setHideValue={testSetter}
         toggleFindHelp={testHandler}
         layout={{ name: '' }}
-        updateTime={0}
       />
     );
 
