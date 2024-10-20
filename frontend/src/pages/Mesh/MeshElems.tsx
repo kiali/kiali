@@ -19,6 +19,7 @@ import { DEGRADED, FAILURE } from 'types/Health';
 import { DecoratedMeshEdgeData, DecoratedMeshEdgeWrapper, DecoratedMeshNodeData, MeshInfraType } from 'types/Mesh';
 import { BoxByType } from 'types/Graph';
 import { NamespaceInfo } from 'types/NamespaceInfo';
+import { PFColors } from 'components/Pf/PfColors';
 
 // Utilities for working with PF Topology
 // - most of these add cytoscape-like functions
@@ -165,6 +166,8 @@ export const setNodeLabel = (node: NodeModel, _nodeMap: NodeMap): void => {
   }
   if (pfBadge) {
     data.badge = pfBadge.badge;
+    data.badgeColor = PFColors.BackgroundColor100;
+    data.badgeBorderColor = PFColors.Blue300;
   }
   node.label = content.shift();
   if (content.length > 0) {
