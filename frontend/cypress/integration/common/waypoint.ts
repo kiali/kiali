@@ -49,7 +49,7 @@ const waitForBookinfoWaypointTrafficGeneratedInGraph = (maxRetries = 30, retryCo
     expect(response.status).to.equal(200);
     const elements = response.body.elements;
 
-    if (elements?.edges?.length > 10) {
+    if (elements?.edges?.length > 15) {
       return;
     } else {
       return cy.wait(10000).then(() => {
