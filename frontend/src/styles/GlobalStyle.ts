@@ -91,7 +91,7 @@ export const globalStyle = kialiStyle({
     /**
      * Hide the kebab menu of Patternfly topology groups
      */
-    '& .pf-topology__group__label': {
+    '& #pft-graph .pf-topology__group__label': {
       $nest: {
         '& .pf-topology__node__label__badge ~ text:not(.pf-m-secondary)': {
           transform: 'translateX(10px)'
