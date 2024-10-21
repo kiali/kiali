@@ -1,6 +1,7 @@
 package handlers_test
 
 import (
+	"encoding/json"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -10,7 +11,6 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	"k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/kiali/kiali/business"
@@ -18,9 +18,11 @@ import (
 	"github.com/kiali/kiali/grafana"
 	"github.com/kiali/kiali/handlers"
 	"github.com/kiali/kiali/istio"
+	"github.com/kiali/kiali/istio/istiotest"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/kubernetes/kubetest"
+	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/prometheus/prometheustest"
 	"github.com/kiali/kiali/tracing"
@@ -130,4 +132,70 @@ func TestGetMeshGraph(t *testing.T) {
 	resp, err := http.Get(server.URL + "/api/mesh/graph")
 	require.NoError(err)
 	checkStatus(t, http.StatusOK, resp)
+}
+
+func TestControlPlanes(t *testing.T) {
+	require := require.New(t)
+
+	conf := config.NewConfig()
+	clients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: kubetest.NewFakeK8sClient()}
+	cf := kubetest.NewFakeClientFactory(conf, clients)
+	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
+	mesh := models.Mesh{
+		ControlPlanes: []models.ControlPlane{
+			{
+				Cluster:         &models.KubeCluster{Name: "east"},
+				ManagedClusters: []*models.KubeCluster{{Name: "east"}},
+			},
+		},
+	}
+	discovery := &istiotest.FakeDiscovery{
+		MeshReturn: mesh,
+	}
+
+	authInfo := map[string]*api.AuthInfo{conf.KubernetesConfig.ClusterName: {Token: "test"}}
+	handler := handlers.WithAuthInfo(authInfo, handlers.ControlPlanes(cache, cf, conf, discovery))
+	r := httptest.NewRequest("GET", "/api/mesh/controlplanes", nil)
+	w := httptest.NewRecorder()
+
+	handler(w, r)
+
+	resp := w.Result()
+	body, err := io.ReadAll(resp.Body)
+	require.NoError(err)
+	require.Equal(200, resp.StatusCode)
+
+	var controlPlaneResponse []models.ControlPlane
+	require.NoError(json.Unmarshal(body, &controlPlaneResponse))
+
+	require.Len(controlPlaneResponse, 1)
+}
+
+func TestControlPlanesUnauthorized(t *testing.T) {
+	require := require.New(t)
+
+	conf := config.NewConfig()
+	clients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: kubetest.NewFakeK8sClient()}
+	cf := kubetest.NewFakeClientFactory(conf, clients)
+	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
+	mesh := models.Mesh{
+		ControlPlanes: []models.ControlPlane{
+			{
+				Cluster:         &models.KubeCluster{Name: "east"},
+				ManagedClusters: []*models.KubeCluster{{Name: "east"}},
+			},
+		},
+	}
+	discovery := &istiotest.FakeDiscovery{
+		MeshReturn: mesh,
+	}
+
+	handler := handlers.ControlPlanes(cache, cf, conf, discovery)
+	r := httptest.NewRequest("GET", "/api/mesh/controlplanes", nil)
+	w := httptest.NewRecorder()
+
+	handler(w, r)
+
+	resp := w.Result()
+	require.Equal(500, resp.StatusCode)
 }

@@ -8,6 +8,7 @@ import (
 	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/models"
@@ -18,7 +19,7 @@ import (
 
 type TLSService struct {
 	businessLayer *Layer
-	discovery     meshDiscovery
+	discovery     istio.MeshDiscovery
 	userClients   map[string]kubernetes.ClientInterface
 	kialiCache    cache.KialiCache
 }

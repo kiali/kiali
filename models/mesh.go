@@ -19,6 +19,8 @@ const (
 	DefaultRevisionLabel = "default"
 	// IstioInjectionLabel is the key for the istio injection label on a namespace.
 	IstioInjectionLabel = "istio-injection"
+	// IstioInjectionDisabledLabelValue is the value for the istio injection label when it is disabled.
+	IstioInjectionDisabledLabelValue = "disabled"
 	// IstioInjectionEnabledLabelValue is the value for the istio injection label when it is enabled.
 	IstioInjectionEnabledLabelValue = "enabled"
 )
@@ -29,8 +31,6 @@ const (
 type Mesh struct {
 	// ControlPlanes that share the same mesh ID.
 	ControlPlanes []ControlPlane
-	// Tags are the tags associated with the mesh.
-	Tags []Tag
 }
 
 // Tag maps a controlplane revision to a namespace label.
@@ -40,13 +40,11 @@ type Mesh struct {
 // your controlplane.
 type Tag struct {
 	// Cluster is the cluster that the tag is associated with.
-	Cluster string
-	// ControlPlane associated with the tag.
-	ControlPlane *ControlPlane
+	Cluster string `json:"cluster"`
 	// Name is the name of the tag.
-	Name string
+	Name string `json:"name"`
 	// Revision is the revision of the controlplane associated with this tag.
-	Revision string
+	Revision string `json:"revision"`
 }
 
 // ControlPlane manages the dataPlane for one or more kube clusters.
@@ -54,70 +52,70 @@ type Tag struct {
 // It has configuration for all the clusters/namespaces associated with it.
 type ControlPlane struct {
 	// Cluster the kube cluster that the controlplane is running on.
-	Cluster *KubeCluster
+	Cluster *KubeCluster `json:"cluster"`
 
 	// Config
-	Config ControlPlaneConfiguration
+	Config ControlPlaneConfiguration `json:"config"`
 
 	// ExternalControlPlane indicates if the controlplane is managing an external cluster.
-	ExternalControlPlane bool
+	ExternalControlPlane bool `json:"externalControlPlane"`
 
 	// ID is the control plane ID as known by istiod.
-	ID string
+	ID string `json:"id"`
 
 	// IstiodName is the control plane name
-	IstiodName string
+	IstiodName string `json:"istiodName"`
 
 	// IstiodNamespace is the namespace name of the deployed control plane
-	IstiodNamespace string
+	IstiodNamespace string `json:"istiodNamespace"`
 
 	// ManagedClusters are the clusters that this controlplane manages.
 	// This could include the cluster that the controlplane is running on.
-	ManagedClusters []*KubeCluster
+	ManagedClusters []*KubeCluster `json:"managedClusters"`
 
 	// ManagesExternal indicates if the controlplane manages an external cluster.
 	// It could also manage the cluster that it is running on.
-	ManagesExternal bool
+	ManagesExternal bool `json:"managesExternal"`
 
 	// ManagedNamespaces are the namespaces that the controlplane is managing.
 	// More specifically, it is a namespace with either injection enabled
 	// or ambient enabled and it matches this controlplane's revision either
 	// directly or through a tag.
-	ManagedNamespaces []Namespace
+	ManagedNamespaces []Namespace `json:"managedNamespaces"`
 
 	// Resources are the resources that the controlplane is using.
-	Resources corev1.ResourceRequirements
+	Resources corev1.ResourceRequirements `json:"resources"`
 
 	// Revision is the revision of the controlplane.
 	// Can be empty when it's the default revision.
-	Revision string
+	Revision string `json:"revision"`
 
 	// Status is the status of the controlplane as reported by kiali.
 	// It includes the deployment status and whether kiali can connect
 	// to the controlplane or not.
-	Status string
+	Status string `json:"status"`
 
 	// Tags are the tags associated with the controlplane.
-	Tags []Tag
+	Tag *Tag `json:"tag,omitempty"`
 
 	// Thresholds is the thresholds for the controlplane.
-	Thresholds *IstiodThresholds
+	Thresholds *IstiodThresholds `json:"thresholds,omitempty"`
 
 	// Version is the version of the controlplane.
-	Version *ExternalServiceInfo
+	Version *ExternalServiceInfo `json:"version,omitempty"`
 }
 
 // ControlPlaneConfiguration is the configuration for the controlPlane and any associated dataPlane.
 type ControlPlaneConfiguration struct {
 	// Config Map
-	ConfigMap map[string]string `yaml:"configMap,omitempty"`
+	ConfigMap map[string]string `json:"configMap,omitempty" yaml:"configMap,omitempty"`
 
 	// IsGatewayToNamespace specifies the PILOT_SCOPE_GATEWAY_TO_NAMESPACE environment variable in Control Plane
 	// This is not currently used by the frontend so excluding it from the API response.
 	IsGatewayToNamespace bool `json:"-"`
 
 	// Network is the name of the network that the controlplane is using.
-	Network string
+	Network string `json:"network,omitempty"`
 
 	// IstioMeshConfig comes from the istio configmap.
 	IstioMeshConfig
@@ -154,6 +152,9 @@ func (ci *Certificate) Parse(certificate []byte) {
 	ci.Accessible = true
 }
 
+// TODO: Lowercase these as they are used on the frontend.
+// Better yet, change YAML parsing to first convert the
+// YAML to JSON so that we don't need to use yaml tags at all.
 type IstioMeshConfig struct {
 	Certificates  []Certificate `yaml:"certificates,omitempty" json:"certificates,omitempty"`
 	DefaultConfig struct {
@@ -169,7 +170,7 @@ type IstioMeshConfig struct {
 	MeshMTLS                       struct {
 		MinProtocolVersion string `yaml:"minProtocolVersion"`
 	} `yaml:"meshMtls"`
-	OutboundTrafficPolicy OutboundPolicy `yaml:"outboundTrafficPolicy,omitempty"`
+	OutboundTrafficPolicy OutboundPolicy `yaml:"outboundTrafficPolicy,omitempty" json:"outboundTrafficPolicy,omitempty"`
 	TrustDomain           string         `yaml:"trustDomain,omitempty"`
 }
 

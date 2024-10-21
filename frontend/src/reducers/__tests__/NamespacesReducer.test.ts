@@ -1,6 +1,7 @@
 import { NamespaceStateReducer } from '../NamespaceState';
 import { GlobalActions } from '../../actions/GlobalActions';
 import { NamespaceActions } from '../../actions/NamespaceAction';
+import { NamespaceState } from 'store/Store';
 
 describe('Namespaces reducer', () => {
   it('should return the initial state', () => {
@@ -11,7 +12,7 @@ describe('Namespaces reducer', () => {
       lastUpdated: undefined,
       filter: '',
       namespacesPerCluster: new Map<string, string[]>()
-    });
+    } as NamespaceState);
   });
 
   it('should handle ACTIVE_NAMESPACES', () => {
@@ -152,7 +153,7 @@ describe('Namespaces reducer', () => {
       [{ name: 'a' }, { name: 'b' }, { name: 'c' }],
       currentDate
     );
-    const expectedState = {
+    const expectedState: NamespaceState = {
       activeNamespaces: [],
       filter: '',
       isFetching: false,

@@ -207,7 +207,8 @@
                 "istio-injection": "enabled",
                 "kubernetes.io/metadata.name": "data-plane-1"
               },
-              "annotations": null
+              "annotations": null,
+              "revision": "default"
             },
             {
               "name": "data-plane-2",
@@ -217,7 +218,8 @@
                 "istio.io/rev": "default",
                 "kubernetes.io/metadata.name": "data-plane-2"
               },
-              "annotations": null
+              "annotations": null,
+              "revision": "default"
             }
           ],
           "version": "default"
@@ -239,9 +241,9 @@
               "Components": []
             },
             "ConfigMapName": "",
+            "EgressGatewayNamespace": "",
             "EnvoyAdminLocalPort": 15000,
             "GatewayAPIClasses": [],
-            "EgressGatewayNamespace": "",
             "IngressGatewayNamespace": "",
             "IstioAPIEnabled": true,
             "IstioIdentityDomain": "svc.cluster.local",
@@ -268,25 +270,35 @@
           "nodeType": "infra",
           "healthData": "Healthy",
           "infraData": {
+            "cluster": {
+              "apiEndpoint": "http://127.0.0.2:9443",
+              "isKialiHome": true,
+              "kialiInstances": [
+                {
+                  "namespace": "istio-system",
+                  "operatorResource": "",
+                  "serviceName": "kiali",
+                  "url": "",
+                  "version": ""
+                }
+              ],
+              "name": "cluster-primary",
+              "secretName": "",
+              "accessible": true
+            },
             "config": {
-              "ConfigMap": {
+              "configMap": {
                 "mesh": "accessLogFile: /dev/stdout\nenableAutoMtls: true\nrootNamespace: istio-system\ntrustDomain: cluster.local\n"
               },
-              "Network": "kialiNetwork",
-              "DisableMixerHttpReports": false,
-              "DiscoverySelectors": null,
-              "EnableAutoMtls": true,
-              "MeshMTLS": {
-                "MinProtocolVersion": ""
-              },
+              "network": "kialiNetwork",
               "certificates": [
                 {
-                  "configMapName": "istio-ca-root-cert",
                   "dnsNames": null,
-                  "error": "",
+                  "configMapName": "istio-ca-root-cert",
                   "issuer": "O=cluster.local",
                   "notBefore": "2021-07-27T14:37:00Z",
                   "notAfter": "2031-07-25T14:37:00Z",
+                  "error": "",
                   "accessible": true,
                   "cluster": ""
                 }
@@ -294,15 +306,100 @@
               "defaultConfig": {
                 "MeshId": ""
               },
-              "OutboundTrafficPolicy": {
-                "mode": "ALLOW_ANY"
-              },
-              "TrustDomain": "cluster.local",
               "DefaultDestinationRuleExportTo": null,
               "DefaultServiceExportTo": null,
-              "DefaultVirtualServiceExportTo": null
+              "DefaultVirtualServiceExportTo": null,
+              "DisableMixerHttpReports": false,
+              "DiscoverySelectors": null,
+              "EnableAutoMtls": true,
+              "MeshMTLS": {
+                "MinProtocolVersion": ""
+              },
+              "outboundTrafficPolicy": {
+                "mode": "ALLOW_ANY"
+              },
+              "TrustDomain": "cluster.local"
             },
+            "externalControlPlane": false,
+            "id": "cluster-primary",
+            "istiodName": "istiod",
+            "istiodNamespace": "istio-system",
+            "managedClusters": [
+              {
+                "apiEndpoint": "http://127.0.0.2:9443",
+                "isKialiHome": true,
+                "kialiInstances": [
+                  {
+                    "namespace": "istio-system",
+                    "operatorResource": "",
+                    "serviceName": "kiali",
+                    "url": "",
+                    "version": ""
+                  }
+                ],
+                "name": "cluster-primary",
+                "secretName": "",
+                "accessible": true
+              },
+              {
+                "apiEndpoint": "",
+                "isKialiHome": false,
+                "kialiInstances": null,
+                "name": "cluster-remote",
+                "secretName": "",
+                "accessible": true
+              }
+            ],
+            "managesExternal": true,
+            "managedNamespaces": [
+              {
+                "name": "data-plane-1",
+                "cluster": "cluster-primary",
+                "isAmbient": false,
+                "labels": {
+                  "istio-injection": "enabled",
+                  "kubernetes.io/metadata.name": "data-plane-1"
+                },
+                "annotations": null,
+                "revision": "default"
+              },
+              {
+                "name": "data-plane-2",
+                "cluster": "cluster-primary",
+                "isAmbient": false,
+                "labels": {
+                  "istio.io/rev": "default",
+                  "kubernetes.io/metadata.name": "data-plane-2"
+                },
+                "annotations": null,
+                "revision": "default"
+              },
+              {
+                "name": "data-plane-3",
+                "cluster": "cluster-remote",
+                "isAmbient": false,
+                "labels": {
+                  "istio-injection": "enabled",
+                  "kubernetes.io/metadata.name": "data-plane-3"
+                },
+                "annotations": null,
+                "revision": "default"
+              },
+              {
+                "name": "data-plane-4",
+                "cluster": "cluster-remote",
+                "isAmbient": false,
+                "labels": {
+                  "istio.io/rev": "default",
+                  "kubernetes.io/metadata.name": "data-plane-4"
+                },
+                "annotations": null,
+                "revision": "default"
+              }
+            ],
+            "resources": {},
             "revision": "default",
+            "status": "",
             "thresholds": {
               "memory": 0,
               "cpu": 0
@@ -330,7 +427,8 @@
                 "istio-injection": "enabled",
                 "kubernetes.io/metadata.name": "data-plane-3"
               },
-              "annotations": null
+              "annotations": null,
+              "revision": "default"
             },
             {
               "name": "data-plane-4",
@@ -340,7 +438,8 @@
                 "istio.io/rev": "default",
                 "kubernetes.io/metadata.name": "data-plane-4"
               },
-              "annotations": null
+              "annotations": null,
+              "revision": "default"
             }
           ],
           "version": "default"

@@ -126,6 +126,10 @@ func sidecarInjectorConfigMapName(revision string) string {
 	return revisionedConfigMapName(baseIstioSidecarInjectorConfigMapName, revision)
 }
 
+type MeshDiscovery interface {
+	Mesh(ctx context.Context) (*models.Mesh, error)
+}
+
 // Discovery detects istio infrastructure and configuration across clusters.
 type Discovery struct {
 	conf           *config.Config
@@ -314,12 +318,23 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 				}
 			}
 
-			// If the cluster id set on the controlplane matches the cluster's id then it manages the cluster it is deployed on.
+			// If the cluster id that is set on the controlplane matches this cluster's id then it manages the cluster it is deployed on.
+			// This is for single cluster deployments and primary-remote where the cluster here is the primary cluster.
 			if controlPlane.ID == cluster.Name {
 				controlPlane.ManagedClusters = append(controlPlane.ManagedClusters, &cluster)
 			} else {
-				// It's an "external controlplane".
+				// It's an "external controlplane" don't add this cluster as a "managed cluster".
 				controlPlane.ExternalControlPlane = true
+			}
+
+			// If the controlplane doesn't manage an external cluster and the cluster id doesn't
+			// match this cluster's name then it's probably a misconfiguration. For primary-remote
+			// where the primary could be misconfigured, it's unclear how to detect this.
+			if !controlPlane.ManagesExternal && controlPlane.ID != cluster.Name {
+				log.Warningf("The controlplane [%s/%s] cluster name ['%s'] does not match the cluster ['%s'] where it is deployed. "+
+					"This is likely a misconfiguration. Check your 'values.global.multiCluster.clusterName' setting on your controlplane "+
+					"or check your Kiali configuration setting 'kubernetes_config.cluster_name'.",
+					controlPlane.IstiodNamespace, controlPlane.IstiodName, controlPlane.ID, cluster.Name)
 			}
 
 			// Even if we fail to get the version we should still return the controlplane object.
@@ -432,12 +447,9 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 	}
 
 	// Get the tags for the mesh.
-	tags, err := in.getTags(ctx, mesh.ControlPlanes)
-	if err != nil {
+	if err := in.setTags(ctx, mesh.ControlPlanes); err != nil {
 		return nil, err
 	}
-
-	mesh.Tags = tags
 
 	namespacesByClusterAndRev := map[clusterRevisionKey][]models.Namespace{}
 	// Multi-cluster is not supported without cluster wide access.
@@ -507,13 +519,9 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 		for _, cluster := range cp.ManagedClusters {
 			// Default to controlplane revision but if there's a tag then overwrite with that.
 			rev := cp.Revision
-			if cp.Tags != nil {
-				// Find the tag for that cluster.
-				for _, tag := range cp.Tags {
-					if tag.Cluster == cluster.Name && tag.Revision == cp.Revision {
-						rev = tag.Name
-						break
-					}
+			if cp.Tag != nil {
+				if cp.Tag.Cluster == cluster.Name && cp.Tag.Revision == cp.Revision {
+					rev = cp.Tag.Name
 				}
 			}
 			key := clusterRevisionKey{Cluster: cluster.Name, Revision: rev}
@@ -535,8 +543,8 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 	return mesh, nil
 }
 
-func (in *Discovery) getTags(ctx context.Context, controlPlanes []models.ControlPlane) ([]models.Tag, error) {
-	var tags []models.Tag
+func (in *Discovery) setTags(ctx context.Context, controlPlanes []models.ControlPlane) error {
+	tagsByClusterRev := map[string]*models.Tag{}
 	for cluster, client := range in.kialiSAClients {
 		if !in.kialiCache.CanListWebhooks(cluster) {
 			log.Debugf("Unable to list webhooks for cluster [%s]. Give Kiali permission to read 'mutatingwebhookconfigurations'. Skipping getting tags.", cluster)
@@ -547,7 +555,7 @@ func (in *Discovery) getTags(ctx context.Context, controlPlanes []models.Control
 			ctx, metav1.ListOptions{LabelSelector: models.IstioTagLabel},
 		)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		for _, webhook := range webhooks.Items {
@@ -557,30 +565,26 @@ func (in *Discovery) getTags(ctx context.Context, controlPlanes []models.Control
 				Name:     webhook.Labels[models.IstioTagLabel],
 				Revision: webhook.Labels[models.IstioRevisionLabel],
 			}
-			tags = append(tags, tag)
+			key := tag.Cluster + tag.Revision
+			if _, found := tagsByClusterRev[key]; found {
+				log.Debugf("Found more than one webhook for tag [%s] pointing to revision: [%s] on cluster: [%s]. This is likely a misconfiguration.", tag.Name, tag.Revision, tag.Cluster)
+				continue
+			}
+			tagsByClusterRev[key] = &tag
 		}
-	}
-
-	tagsByClusterRev := map[string][]*models.Tag{}
-	for i := range tags {
-		tagsByClusterRev[tags[i].Cluster+tags[i].Revision] = append(tagsByClusterRev[tags[i].Cluster+tags[i].Revision], &tags[i])
 	}
 
 	for i := range controlPlanes {
 		controlPlane := &controlPlanes[i]
 		for _, cluster := range controlPlane.ManagedClusters {
 			key := cluster.Name + controlPlane.Revision
-			if cpTags, ok := tagsByClusterRev[key]; ok {
-				for _, tag := range cpTags {
-					tag := tag
-					tag.ControlPlane = controlPlane
-					controlPlane.Tags = append(controlPlane.Tags, *tag)
-				}
+			if tag, ok := tagsByClusterRev[key]; ok {
+				controlPlane.Tag = tag
 			}
 		}
 	}
 
-	return tags, nil
+	return nil
 }
 
 func (in *Discovery) getKialiInstances(cluster models.KubeCluster) ([]models.KialiInstance, error) {

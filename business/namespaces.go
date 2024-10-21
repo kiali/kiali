@@ -20,7 +20,7 @@ import (
 // NamespaceService deals with fetching k8sClients namespaces / OpenShift projects and convert to kiali model
 type NamespaceService struct {
 	conf                  *config.Config
-	discovery             meshDiscovery
+	discovery             istio.MeshDiscovery
 	hasProjects           map[string]bool
 	homeClusterUserClient kubernetes.ClientInterface
 	kialiCache            cache.KialiCache
@@ -46,7 +46,7 @@ func NewNamespaceService(
 	kialiSAClients map[string]kubernetes.ClientInterface,
 	cache cache.KialiCache,
 	conf *config.Config,
-	discovery meshDiscovery,
+	discovery istio.MeshDiscovery,
 ) NamespaceService {
 	homeClusterName := conf.KubernetesConfig.ClusterName
 	hasProjects := make(map[string]bool)
