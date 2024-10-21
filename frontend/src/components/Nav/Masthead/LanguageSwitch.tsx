@@ -34,12 +34,17 @@ export const LanguageSwitchComponent: React.FC<LanguageSwitchProps> = ({ languag
   const { t } = useKialiTranslation();
 
   const languageItems: React.ReactNode[] = [
-    <DropdownItem key="English" onClick={() => switchLanguage(Language.ENGLISH)}>
+    <DropdownItem key="english" onClick={() => switchLanguage(Language.ENGLISH)}>
       <span>English</span>
       {language === Language.ENGLISH && <KialiIcon.Check className={checkStyle} />}
     </DropdownItem>,
 
-    <DropdownItem key="Chinese" onClick={() => switchLanguage(Language.CHINESE)}>
+    <DropdownItem key="spanish" onClick={() => switchLanguage(Language.SPANISH)}>
+      <span>Español</span>
+      {language === Language.SPANISH && <KialiIcon.Check className={checkStyle} />}
+    </DropdownItem>,
+
+    <DropdownItem key="chinese" onClick={() => switchLanguage(Language.CHINESE)}>
       <span>中文</span>
       {language === Language.CHINESE && <KialiIcon.Check className={checkStyle} />}
     </DropdownItem>
