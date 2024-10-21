@@ -108,9 +108,9 @@ export class MeshHighlighter {
           if ((element as Node).isGroup()) {
             return this.getBoxHighlight(element as Node);
           }
-          return { toHighlight: this.getNodeHighlight(element as Node), unhighlightOthers: true };
+          return { toHighlight: this.getNodeHighlight(element as Node), unhighlightOthers: false };
         case 'edge':
-          return { toHighlight: this.getEdgeHighlight(element as Edge), unhighlightOthers: true };
+          return { toHighlight: this.getEdgeHighlight(element as Edge), unhighlightOthers: false };
 
         default:
         // fall through

@@ -42,9 +42,16 @@ const MeshEdgeComponent: React.FC<MeshEdgeProps> = ({ element, ...rest }) => {
   const edgeClass = kialiStyle({
     $nest: {
       '& .pf-topology__edge__link': data.pathStyle,
-      '& .pf-topology-connector-arrow': {
-        stroke: data.pathStyle.stroke,
-        fill: data.pathStyle.stroke
+
+      // remove the hover CSS change (edges cannot be selected on the mesh page)
+      '&.pf-m-hover': {
+        $nest: {
+          '& .pf-topology__edge__background': data.pathStyle,
+          '& .pf-topology__edge__link': {
+            ...data.pathStyle,
+            stroke: 'var(--edge--stroke)'
+          }
+        }
       }
     }
   });

@@ -179,7 +179,7 @@ class MiniGraphCardPFComponent extends React.Component<MiniGraphCardPropsPF, Min
           </CardHeader>
 
           <CardBody>
-            <div style={{ height: '100%' }}>
+            <div id="pft-graph" style={{ height: '100%' }}>
               <EmptyGraphLayout
                 elements={this.state.graphData}
                 isLoading={this.props.dataSource.isLoading}

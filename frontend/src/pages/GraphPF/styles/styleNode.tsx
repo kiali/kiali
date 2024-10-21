@@ -74,7 +74,7 @@ const getNodeShape = (node: Node): React.FunctionComponent<ShapeProps> => {
   }
 };
 
-const nodeClass = kialiStyle({
+const nodeStyle = kialiStyle({
   $nest: {
     '&.pf-m-hover': {
       cursor: 'pointer'
@@ -87,7 +87,7 @@ const nodeClass = kialiStyle({
 });
 
 // Hide the kebab menu of Patternfly topology nodes
-const labelClass = kialiStyle({
+const labelStyle = kialiStyle({
   $nest: {
     '& text:not(.pf-m-secondary)': {
       transform: 'translateX(10px)'
@@ -167,14 +167,14 @@ const StyleNodeComponent: React.FC<StyleNodeProps> = ({ element, ...rest }) => {
       {data.isFind && <ShapeComponent className={findOverlayStyle} width={width} height={height} element={element} />}
       {data.isFocus && <ShapeComponent className={focusOverlayStyle} width={width} height={height} element={element} />}
       <DefaultNode
-        className={nodeClass}
-        labelClassName={labelClass}
+        className={nodeStyle}
+        labelClassName={labelStyle}
         element={element}
         {...rest}
         {...passedData}
         attachments={hover || detailsLevel === ScaleDetailsLevel.high ? data.attachments : undefined}
         getCustomShape={getNodeShape}
-        scaleLabel={hover && detailsLevel !== ScaleDetailsLevel.low}
+        scaleLabel={hover && detailsLevel === ScaleDetailsLevel.high}
         scaleNode={hover && detailsLevel !== ScaleDetailsLevel.high}
         showLabel={hover || detailsLevel === ScaleDetailsLevel.high}
         showStatusBackground={detailsLevel !== ScaleDetailsLevel.high}
