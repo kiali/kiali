@@ -26,7 +26,6 @@ import { KialiIcon } from 'config/KialiIcon';
 import { kialiStyle } from 'styles/StyleUtils';
 import { TourStop } from 'components/Tour/TourStop';
 import { GraphTourStops } from 'pages/Graph/GraphHelpTour';
-import { TimeInMilliseconds } from 'types/Common';
 import { KialiDispatch } from 'types/Redux';
 import { AutoComplete } from 'utils/AutoComplete';
 import { HEALTHY, NA, NOT_READY } from 'types/Health';
@@ -43,8 +42,8 @@ import {
   selectOr,
   SelectOr
 } from 'pages/GraphPF/GraphPFElems';
-import { FIT_PADDING } from 'pages/GraphPF/GraphPF';
 import { isArray } from 'lodash';
+import { graphLayout, LayoutType } from 'pages/GraphPF/GraphPF';
 
 type ReduxStateProps = {
   edgeLabels: EdgeLabelMode[];
@@ -57,7 +56,6 @@ type ReduxStateProps = {
   showIdleNodes: boolean;
   showRank: boolean;
   showSecurity: boolean;
-  updateTime: TimeInMilliseconds;
 };
 
 type ReduxDispatchProps = {
@@ -222,9 +220,9 @@ class GraphFindPFComponent extends React.Component<GraphFindProps, GraphFindStat
   shouldComponentUpdate(nextProps: GraphFindProps, nextState: GraphFindState): boolean {
     const controllerChanged = this.props.controller !== nextProps.controller;
     const edgeModeChanged = this.props.edgeMode !== nextProps.edgeMode;
+    const elementsChanged = !this.props.elementsChanged && nextProps.elementsChanged;
     const findChanged = this.props.findValue !== nextProps.findValue;
     const hideChanged = this.props.hideValue !== nextProps.hideValue;
-    const graphChanged = this.props.updateTime !== nextProps.updateTime;
     const showFindHelpChanged = this.props.showFindHelp !== nextProps.showFindHelp;
     const findErrorChanged = this.state.findError !== nextState.findError;
     const hideErrorChanged = this.state.hideError !== nextState.hideError;
@@ -232,9 +230,9 @@ class GraphFindPFComponent extends React.Component<GraphFindProps, GraphFindStat
     const shouldUpdate =
       controllerChanged ||
       edgeModeChanged ||
+      elementsChanged ||
       findChanged ||
       hideChanged ||
-      graphChanged ||
       showFindHelpChanged ||
       findErrorChanged ||
       hideErrorChanged;
@@ -254,9 +252,9 @@ class GraphFindPFComponent extends React.Component<GraphFindProps, GraphFindStat
 
     const controllerChanged = this.props.controller !== prevProps.controller;
     const edgeModeChanged = this.props.edgeMode !== prevProps.edgeMode;
+    const elementsChanged = this.props.elementsChanged && !prevProps.elementsChanged;
     const findChanged = this.props.findValue !== prevProps.findValue;
     const hideChanged = this.props.hideValue !== prevProps.hideValue;
-    const graphChanged = this.props.updateTime !== prevProps.updateTime;
 
     // ensure redux state and URL are aligned
     if (findChanged) {
@@ -275,7 +273,7 @@ class GraphFindPFComponent extends React.Component<GraphFindProps, GraphFindStat
     }
 
     // make sure the value is updated if there was a change
-    if (controllerChanged || findChanged || (graphChanged && this.props.findValue)) {
+    if (controllerChanged || findChanged || (elementsChanged && this.props.findValue)) {
       // ensure findInputValue is aligned if findValue is set externally (e.g. resetSettings)
       if (this.state.findInputValue !== this.props.findValue) {
         this.setFind(this.props.findValue);
@@ -287,7 +285,7 @@ class GraphFindPFComponent extends React.Component<GraphFindProps, GraphFindStat
     if (
       controllerChanged ||
       hideChanged ||
-      (graphChanged && this.props.hideValue) ||
+      (elementsChanged && this.props.hideValue) ||
       edgeModeChanged ||
       this.props.edgeMode !== EdgeMode.ALL
     ) {
@@ -295,7 +293,7 @@ class GraphFindPFComponent extends React.Component<GraphFindProps, GraphFindStat
       if (this.state.hideInputValue !== this.props.hideValue) {
         this.setHide(this.props.hideValue);
       }
-      this.handleHide(this.props.controller, graphChanged);
+      this.handleHide(this.props.controller);
     }
   }
 
@@ -554,20 +552,17 @@ class GraphFindPFComponent extends React.Component<GraphFindProps, GraphFindStat
     }
   };
 
-  private handleHide = (controller: Controller, graphChanged: boolean): void => {
+  private handleHide = (controller: Controller): void => {
     const selector = this.parseValue(this.props.hideValue, false);
     const checkRemovals = selector.nodeSelector || selector.edgeSelector || this.props.edgeMode !== EdgeMode.ALL;
     const graph = controller.getGraph();
-    let needLayout = false;
 
     console.debug(`Hide selector=[${JSON.stringify(selector)}]`);
 
-    // unhide hidden elements when we are dealing with the same graph. Either way,release for garbage collection
-    if (this.hiddenElements && !graphChanged) {
-      needLayout = true;
+    // unhide any currently hidden elements, something changed so we'll redetermine what needs to be hidden
+    if (this.hiddenElements) {
       this.hiddenElements.forEach(e => this.unhideElement(graph, e));
     }
-
     this.hiddenElements = undefined;
 
     // select the new hide-hits
@@ -646,11 +641,9 @@ class GraphFindPFComponent extends React.Component<GraphFindProps, GraphFindStat
       this.hiddenElements = finalNodes.concat(finalEdges);
     }
 
-    if (needLayout || this.hiddenElements) {
-      controller.getGraph().reset();
-      controller.getGraph().layout();
-      controller.getGraph().fit(FIT_PADDING);
-    }
+    // always perform a full layout, because if this function is invoked at all, we know either we're dealing with either
+    // a new controller, a different topology, a new hide expression, etc
+    graphLayout(controller, LayoutType.Layout);
   };
 
   private handleFind = (controller: Controller): void => {
@@ -1199,8 +1192,7 @@ const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
   showFindHelp: state.graph.toolbarState.showFindHelp,
   showIdleNodes: state.graph.toolbarState.showIdleNodes,
   showRank: state.graph.toolbarState.showRank,
-  showSecurity: state.graph.toolbarState.showSecurity,
-  updateTime: state.graph.updateTime
+  showSecurity: state.graph.toolbarState.showSecurity
 });
 
 const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => {

@@ -77,9 +77,6 @@ import { KialiIcon } from 'config/KialiIcon';
 import { toolbarActiveStyle } from 'styles/GraphStyle';
 import { scoreNodes, ScoringCriteria } from 'components/CytoscapeGraph/GraphScore';
 
-let initialLayout = false;
-let requestFit = false;
-
 const DEFAULT_NODE_SIZE = 40;
 const ZOOM_IN = 4 / 3;
 const ZOOM_OUT = 3 / 4;
@@ -93,6 +90,15 @@ export enum LayoutName {
   Grid = 'Grid'
 }
 
+export enum LayoutType {
+  Layout = 'layout',
+  LayoutNoFit = 'layoutNoFit',
+  Resize = 'resize'
+}
+
+let initialLayout = false;
+let layoutInProgress: LayoutType | undefined;
+
 export function getLayoutByName(layoutName: string): Layout {
   switch (layoutName) {
     case LayoutName.BreadthFirst:
@@ -104,6 +110,27 @@ export function getLayoutByName(layoutName: string): Layout {
     default:
       return KialiDagreGraph.getLayout();
   }
+}
+
+export function graphLayout(controller: Controller, layoutType: LayoutType, reset?: boolean): void {
+  if (!controller?.hasGraph()) {
+    console.debug('TG: Skip graphLayout, no graph');
+    return;
+  }
+  if (initialLayout) {
+    console.debug('TG: Skip graphLayout, initial layout not yet performed');
+    return;
+  }
+  if (layoutInProgress) {
+    console.debug('TG: Skip graphLayout, layout already in progress');
+    return;
+  }
+  console.debug(`TG: layout in progress (layoutType=${layoutType} reset=${reset}`);
+  layoutInProgress = layoutType;
+  if (reset) {
+    controller.getGraph().reset();
+  }
+  controller.getGraph().layout();
 }
 
 // TODO: Implement some sort of focus when provided
@@ -274,38 +301,30 @@ const TopologyContent: React.FC<{
   }, [controller, graphData.fetchParams.graphType, trace]);
 
   //
-  // fitView handling
+  // Layout and resize handling
   //
-  const fitView = React.useCallback(() => {
-    if (controller && controller.hasGraph()) {
-      controller.getGraph().fit(FIT_PADDING);
-    } else {
-      console.error('fitView called before controller graph');
-    }
-  }, [controller]);
 
-  // resize handling
   const handleResize = React.useCallback(() => {
-    if (!requestFit && controller?.hasGraph()) {
-      requestFit = true;
-      controller.getGraph().reset();
-      controller.getGraph().layout();
-
-      // Fit padding after resize
-      setTimeout(() => {
-        controller.getGraph().fit(FIT_PADDING);
-      }, 250);
-    }
+    graphLayout(controller, LayoutType.Resize);
   }, [controller]);
 
-  //
-  // layoutEnd handling
-  //
   const onLayoutEnd = React.useCallback(() => {
-    //fit view to new loaded elements
-    if (requestFit) {
-      requestFit = false;
-      fitView();
+    console.debug(`TG: onLayoutEnd layoutInProgress=${layoutInProgress}`);
+
+    // If a layout was called outside of our standard mechanism, don't perform our layoutEnd actions
+    if (!initialLayout && !layoutInProgress) {
+      return;
+    }
+
+    if (layoutInProgress !== LayoutType.LayoutNoFit) {
+      // On a resize, delay fit to ensure that the canvas size updates before the fit
+      if (layoutInProgress === LayoutType.Resize) {
+        setTimeout(() => {
+          controller.getGraph().fit(FIT_PADDING);
+        }, 250);
+      } else {
+        controller.getGraph().fit(FIT_PADDING);
+      }
     }
 
     // we need to finish the initial layout before we advertise to the outside
@@ -314,7 +333,9 @@ const TopologyContent: React.FC<{
       initialLayout = false;
       onReady({ getController: () => controller, setSelectedIds: setSelectedIds });
     }
-  }, [controller, fitView, onReady, setSelectedIds]);
+
+    layoutInProgress = undefined;
+  }, [controller, onReady, setSelectedIds]);
 
   //
   // Set detail levels for graph (control zoom-sensitive labels)
@@ -422,7 +443,7 @@ const TopologyContent: React.FC<{
         if (parent) {
           parent.children?.push(node.id);
         } else {
-          console.error(`Could not find parent node |${parentId}|`);
+          console.error(`TG: Could not find parent node |${parentId}|`);
         }
       }
 
@@ -581,7 +602,7 @@ const TopologyContent: React.FC<{
       }
     };
 
-    console.debug(`PFT updateModel`);
+    console.debug(`TG: updateModel`);
     updateModel(controller);
 
     // notify that the graph has been updated
@@ -629,35 +650,36 @@ const TopologyContent: React.FC<{
     }
   }, [controller, focusNode, setSelectedIds]);
 
-  //TODO REMOVE THESE DEBUGGING MESSAGES...
-  // Leave them for now, they are just good for understanding state changes while we develop this PFT graph.
   React.useEffect(() => {
-    console.debug(`PFT: controller changed`);
+    console.debug(`TG: controller changed`);
     initialLayout = true;
   }, [controller]);
 
   React.useEffect(() => {
-    console.debug(`PFT: graphData changed, elementsChanged=${graphData.elementsChanged}`);
-  }, [graphData]);
+    console.debug(`TG: graphData changed, elementsChanged=${graphData.elementsChanged}`);
+    if (graphData.elementsChanged) {
+      graphLayout(controller, LayoutType.Layout);
+    }
+  }, [controller, graphData]);
 
   React.useEffect(() => {
-    console.debug(`PFT: graphSettings changed`);
+    console.debug(`TG: graphSettings changed`);
   }, [graphSettings]);
 
   React.useEffect(() => {
-    console.debug(`PFT: highlighter changed`);
+    console.debug(`TG: highlighter changed`);
   }, [highlighter]);
 
   React.useEffect(() => {
-    console.debug(`PFT: isMiniGraph changed`);
+    console.debug(`TG: isMiniGraph changed`);
   }, [isMiniGraph]);
 
   React.useEffect(() => {
-    console.debug(`PFT: onReady changed`);
+    console.debug(`TG: onReady changed`);
   }, [onReady]);
 
   React.useEffect(() => {
-    console.debug(`PFT: setDetails changed`);
+    console.debug(`TG: setDetails changed`);
   }, [setDetailsLevel]);
 
   React.useEffect(() => {
@@ -709,13 +731,11 @@ const TopologyContent: React.FC<{
   }, [controller, showTrafficAnimation, updateModelTime]);
 
   React.useEffect(() => {
-    console.debug(`PFT: layout changed`);
+    console.debug(`TG: layout changed`);
 
     if (!controller.hasGraph()) {
       return;
     }
-
-    requestFit = true;
 
     // When the initial layoutName property is set it is premature to perform a layout
     if (initialLayout) {
@@ -723,12 +743,8 @@ const TopologyContent: React.FC<{
     }
 
     controller.getGraph().setLayout(layoutName);
-    controller.getGraph().layout();
-    if (requestFit) {
-      requestFit = false;
-      fitView();
-    }
-  }, [controller, fitView, layoutName]);
+    graphLayout(controller, LayoutType.Layout);
+  }, [controller, layoutName]);
 
   //
   // Set back to graph summary at unmount-time (not every post-render)
@@ -743,7 +759,7 @@ const TopologyContent: React.FC<{
 
   useEventListener(GRAPH_LAYOUT_END_EVENT, onLayoutEnd);
 
-  console.debug(`PFT: Render Topology hasGraph=${controller.hasGraph()}`);
+  console.debug(`TG: Render Topology hasGraph=${controller.hasGraph()}`);
 
   return isMiniGraph ? (
     <TopologyView data-test="topology-view-pf">
@@ -853,11 +869,7 @@ const TopologyContent: React.FC<{
                     controller && controller.getGraph().scaleBy(ZOOM_OUT);
                   },
                   resetViewCallback: () => {
-                    if (controller) {
-                      requestFit = true;
-                      controller.getGraph().reset();
-                      controller.getGraph().layout();
-                    }
+                    graphLayout(controller, LayoutType.Layout);
                   },
                   legend: true,
                   legendIcon: <KialiIcon.Map className={showLegend ? toolbarActiveStyle : undefined} />,
@@ -943,7 +955,7 @@ export const GraphPF: React.FC<{
 
   // Set up the controller one time
   React.useEffect(() => {
-    console.debug('PFT: New Controller!');
+    console.debug('TG: New Controller!');
 
     const c = new Visualization();
     c.registerElementFactory(elementFactory);
@@ -982,7 +994,7 @@ export const GraphPF: React.FC<{
     );
   }
 
-  console.debug(`PFT: Render, hasGraph=${controller?.hasGraph()}`);
+  console.debug(`TG: Render, hasGraph=${controller?.hasGraph()}`);
   return (
     <VisualizationProvider data-test="visualization-provider" controller={controller}>
       <TopologyContent

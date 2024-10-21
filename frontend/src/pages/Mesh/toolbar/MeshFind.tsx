@@ -22,27 +22,25 @@ import { KialiIcon } from 'config/KialiIcon';
 import { kialiStyle } from 'styles/StyleUtils';
 import { TourStop } from 'components/Tour/TourStop';
 import { MeshTourStops } from 'pages/Mesh/MeshHelpTour';
-import { TimeInMilliseconds } from 'types/Common';
 import { KialiDispatch } from 'types/Redux';
 import { AutoComplete } from 'utils/AutoComplete';
 import { HEALTHY, NA, NOT_READY } from 'types/Health';
 import { location, HistoryManager, URLParam } from '../../../app/History';
 import { isValid } from 'utils/Common';
 import { descendents, elems, SelectAnd, SelectExp, selectOr, SelectOr } from 'pages/GraphPF/GraphPFElems';
-import { FIT_PADDING } from 'pages/GraphPF/GraphPF';
 import { isArray } from 'lodash';
 import { MeshAttr, MeshEdgeData, MeshInfraType, MeshNodeData } from 'types/Mesh';
 import { Layout } from 'types/Graph';
 import { MeshToolbarActions } from 'actions/MeshToolbarActions';
 import { MeshFindOptions } from './MeshFindOptions';
 import { MeshHelpFind } from '../MeshHelpFind';
+import { LayoutType, meshLayout } from '../Mesh';
 
 type ReduxStateProps = {
   findValue: string;
   hideValue: string;
   layout: Layout;
   showFindHelp: boolean;
-  updateTime: TimeInMilliseconds;
 };
 
 type ReduxDispatchProps = {
@@ -155,18 +153,18 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
   // wait for the mesh change to do the update.
   shouldComponentUpdate(nextProps: MeshFindProps, nextState: MeshFindState): boolean {
     const controllerChanged = this.props.controller !== nextProps.controller;
+    const elementsChanged = !this.props.elementsChanged && nextProps.elementsChanged;
     const findChanged = this.props.findValue !== nextProps.findValue;
     const hideChanged = this.props.hideValue !== nextProps.hideValue;
-    const meshChanged = this.props.updateTime !== nextProps.updateTime;
     const showFindHelpChanged = this.props.showFindHelp !== nextProps.showFindHelp;
     const findErrorChanged = this.state.findError !== nextState.findError;
     const hideErrorChanged = this.state.hideError !== nextState.hideError;
 
     const shouldUpdate =
       controllerChanged ||
+      elementsChanged ||
       findChanged ||
       hideChanged ||
-      meshChanged ||
       showFindHelpChanged ||
       findErrorChanged ||
       hideErrorChanged;
@@ -185,9 +183,9 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
     }
 
     const controllerChanged = this.props.controller !== prevProps.controller;
+    const elementsChanged = this.props.elementsChanged && !prevProps.elementsChanged;
     const findChanged = this.props.findValue !== prevProps.findValue;
     const hideChanged = this.props.hideValue !== prevProps.hideValue;
-    const meshChanged = this.props.updateTime !== prevProps.updateTime;
 
     // ensure redux state and URL are aligned
     if (findChanged) {
@@ -206,7 +204,7 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
     }
 
     // make sure the value is updated if there was a change
-    if (controllerChanged || findChanged || (meshChanged && this.props.findValue)) {
+    if (controllerChanged || findChanged || (elementsChanged && this.props.findValue)) {
       // ensure findInputValue is aligned if findValue is set externally (e.g. resetSettings)
       if (this.state.findInputValue !== this.props.findValue) {
         this.setFind(this.props.findValue);
@@ -215,12 +213,12 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
       this.handleFind(this.props.controller);
     }
 
-    if (controllerChanged || hideChanged || (meshChanged && this.props.hideValue)) {
+    if (controllerChanged || hideChanged || (elementsChanged && this.props.hideValue)) {
       // ensure hideInputValue is aligned if hideValue is set externally (e.g. resetSettings)
       if (this.state.hideInputValue !== this.props.hideValue) {
         this.setHide(this.props.hideValue);
       }
-      this.handleHide(this.props.controller, meshChanged);
+      this.handleHide(this.props.controller);
     }
   }
 
@@ -481,20 +479,17 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
     }
   };
 
-  private handleHide = (controller: Controller, meshChanged: boolean): void => {
+  private handleHide = (controller: Controller): void => {
     const selector = this.parseValue(this.props.hideValue, false);
     const checkRemovals = selector.nodeSelector || selector.edgeSelector;
     const mesh = controller.getGraph();
-    let needLayout = false;
 
     console.debug(`Mesh Hide selector=[${JSON.stringify(selector)}]`);
 
-    // unhide hidden elements when we are dealing with the same mesh. Either way,release for garbage collection
-    if (this.hiddenElements && !meshChanged) {
-      needLayout = true;
+    // unhide any currently hidden elements, something changed so we'll redetermine what needs to be hidden
+    if (this.hiddenElements) {
       this.hiddenElements.forEach(e => this.unhideElement(mesh, e));
     }
-
     this.hiddenElements = undefined;
 
     // select the new hide-hits
@@ -553,11 +548,9 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
       this.hiddenElements = finalNodes.concat(finalEdges);
     }
 
-    if (needLayout || this.hiddenElements) {
-      controller.getGraph().reset();
-      controller.getGraph().layout();
-      controller.getGraph().fit(FIT_PADDING);
-    }
+    // always perform a full layout, because if this function is invoked at all, we know either we're dealing with either
+    // a new controller, a different topology, a new hide expression, etc
+    meshLayout(controller, LayoutType.Layout);
   };
 
   private handleFind = (controller: Controller): void => {
@@ -883,8 +876,7 @@ const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
   findValue: meshFindValueSelector(state),
   hideValue: meshHideValueSelector(state),
   layout: state.mesh.layout,
-  showFindHelp: state.mesh.toolbarState.showFindHelp,
-  updateTime: state.mesh.updateTime
+  showFindHelp: state.mesh.toolbarState.showFindHelp
 });
 
 const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => {

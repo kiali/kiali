@@ -575,10 +575,11 @@ class GraphPagePFComponent extends React.Component<GraphPagePropsPF, GraphPageSt
     fetchParams: FetchParams
   ): void => {
     const prevElements = this.state.graphData.elements;
+    const elementsChanged = CytoscapeGraphUtils.elementsChanged(prevElements, elements);
     this.setState({
       graphData: {
         elements: elements,
-        elementsChanged: CytoscapeGraphUtils.elementsChanged(prevElements, elements),
+        elementsChanged: elementsChanged,
         isLoading: false,
         fetchParams: fetchParams,
         timestamp: graphTimestamp * 1000
