@@ -36,21 +36,24 @@ const waitForWorkloadEnrolled = (maxRetries = 30, retryCount = 0): void => {
   });
 };
 
-const waitForTrafficGeneratedInGraph = (maxRetries = 30, retryCount = 0): void => {
+const waitForBookinfoWaypointTrafficGeneratedInGraph = (maxRetries = 30, retryCount = 0): void => {
   if (retryCount >= maxRetries) {
     throw new Error(`Condition not met after ${maxRetries} retries`);
   }
 
-  cy.request({ method: 'GET', url: '/api/namespaces/graph' }).then(response => {
+  cy.request({
+    method: 'GET',
+    url:
+      '/api/namespaces/graph?duration=120s&graphType=versionedApp&includeIdleEdges=false&injectServiceNodes=true&boxBy=cluster,namespace,app&waypoints=false&appenders=deadNode,istio,serviceEntry,meshCheck,workloadEntry,health,ambient&rateGrpc=requests&rateHttp=requests&rateTcp=sent&namespaces=bookinfo'
+  }).then(response => {
     expect(response.status).to.equal(200);
+    const elements = response.body.elements;
 
-    const elements = response.body;
-
-    if (elements.edges.length < 11) {
+    if (elements?.edges?.length > 10) {
       return;
     } else {
       return cy.wait(10000).then(() => {
-        return waitForTrafficGeneratedInGraph(maxRetries, retryCount + 1); // Ensure to return the recursive call
+        return waitForBookinfoWaypointTrafficGeneratedInGraph(maxRetries, retryCount + 1); // Ensure to return the recursive call
       });
     }
   });
@@ -62,7 +65,7 @@ Then('{string} namespace is labeled with the waypoint label', (namespace: string
 });
 
 Then('the graph page has enough data', () => {
-  waitForTrafficGeneratedInGraph();
+  waitForBookinfoWaypointTrafficGeneratedInGraph();
 });
 
 Then('the user hovers in the {string} label and sees {string} in the tooltip', (label: string, text: string) => {
