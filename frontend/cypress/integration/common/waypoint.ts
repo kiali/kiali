@@ -36,9 +36,33 @@ const waitForWorkloadEnrolled = (maxRetries = 30, retryCount = 0): void => {
   });
 };
 
+const waitForTrafficGeneratedInGraph = (maxRetries = 30, retryCount = 0): void => {
+  if (retryCount >= maxRetries) {
+    throw new Error(`Condition not met after ${maxRetries} retries`);
+  }
+
+  cy.request({ method: 'GET', url: '/api/namespaces/graph' }).then(response => {
+    expect(response.status).to.equal(200);
+
+    const elements = response.body;
+
+    if (elements.edges.length < 11) {
+      return;
+    } else {
+      return cy.wait(10000).then(() => {
+        return waitForTrafficGeneratedInGraph(maxRetries, retryCount + 1); // Ensure to return the recursive call
+      });
+    }
+  });
+};
+
 Then('{string} namespace is labeled with the waypoint label', (namespace: string) => {
   cy.exec(`kubectl label namespace ${namespace} istio.io/use-waypoint=waypoint`, { failOnNonZeroExit: false });
   waitForWorkloadEnrolled();
+});
+
+Then('the graph page has enough data', () => {
+  waitForTrafficGeneratedInGraph();
 });
 
 Then('the user hovers in the {string} label and sees {string} in the tooltip', (label: string, text: string) => {

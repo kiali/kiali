@@ -497,6 +497,8 @@ When('user {string} {string} traffic option', (action: string, option: string) =
 
 Then('{int} edges appear in the graph', (graphEdges: number) => {
   cy.waitForReact();
+  ensureKialiFinishedLoading();
+
   cy.getReact('GraphPagePFComponent', { state: { isReady: true } })
     .should('have.length', '1')
     .then($graph => {
