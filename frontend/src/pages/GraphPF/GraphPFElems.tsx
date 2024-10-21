@@ -208,7 +208,7 @@ export const setNodeAttachments = (node: Node<NodeModel>, settings: GraphPFSetti
   }
 };
 
-const labelIconStyle = kialiStyle({
+const rootIconStyle = kialiStyle({
   color: PFColors.White,
   display: 'flex',
   marginLeft: '0.125rem',
@@ -218,6 +218,13 @@ const labelIconStyle = kialiStyle({
 const gatewayIconStyle = kialiStyle({
   color: PFColors.White,
   display: 'flex',
+  marginTop: '-0.125rem'
+});
+
+const waypointIconStyle = kialiStyle({
+  color: PFColors.White,
+  display: 'flex',
+  marginLeft: '0.125rem',
   marginTop: '-0.125rem'
 });
 
@@ -269,7 +276,7 @@ export const setNodeLabel = (
     ) {
       data.labelIcon = <span className={`${badgeMap.get('GW')?.className} ${gatewayIconStyle}`}></span>;
     } else {
-      data.labelIcon = <span className={`${badgeMap.get('RO')?.className} ${labelIconStyle}`}></span>;
+      data.labelIcon = <span className={`${badgeMap.get('RO')?.className} ${rootIconStyle}`}></span>;
     }
   } else {
     if (data.isGateway?.egressInfo?.hostnames?.length !== undefined) {
@@ -277,7 +284,7 @@ export const setNodeLabel = (
     }
     // A Waypoint should be mutually exclusive with being a traffic source
     if (data.isWaypoint) {
-      data.labelIcon = <span className={`${badgeMap.get('WA')?.className} ${labelIconStyle}`}></span>;
+      data.labelIcon = <span className={`${badgeMap.get('WA')?.className} ${waypointIconStyle}`}></span>;
     }
   }
 

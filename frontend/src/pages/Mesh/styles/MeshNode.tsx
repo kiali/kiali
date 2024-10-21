@@ -75,6 +75,21 @@ const renderIcon = (element: Node): React.ReactNode => {
   );
 };
 
+const nodeStyle = kialiStyle({
+  $nest: {
+    '.pf-topology__node__background': {
+      strokeWidth: 3
+    },
+    '&.pf-m-hover': {
+      cursor: 'pointer'
+    },
+    '&.pf-m-selected .pf-topology__node__background': {
+      stroke: PFColors.Active,
+      strokeWidth: 6
+    }
+  }
+});
+
 const MeshNodeComponent: React.FC<MeshNodeProps> = ({ element, ...rest }) => {
   const data = element.getData();
   const detailsLevel = useDetailsLevel();
@@ -124,16 +139,16 @@ const MeshNodeComponent: React.FC<MeshNodeProps> = ({ element, ...rest }) => {
     <g style={{ opacity: opacity }} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} ref={hoverRef as any}>
       {data.isFind && <ShapeComponent className={findOverlayStyle} width={width} height={height} element={element} />}
       <DefaultNode
+        className={nodeStyle}
         element={element}
         {...rest}
         {...passedData}
         attachments={hover || detailsLevel === ScaleDetailsLevel.high ? data.attachments : undefined}
-        scaleLabel={hover && detailsLevel !== ScaleDetailsLevel.high}
-        // scaleNode={hover && detailsLevel === ScaleDetailsLevel.low}
+        scaleLabel={hover && detailsLevel === ScaleDetailsLevel.high}
+        scaleNode={hover && detailsLevel !== ScaleDetailsLevel.high}
         showLabel={hover || detailsLevel === ScaleDetailsLevel.high}
-        showStatusBackground={detailsLevel === ScaleDetailsLevel.low}
       >
-        {(hover || detailsLevel !== ScaleDetailsLevel.low) && renderIcon(element)}
+        {renderIcon(element)}
       </DefaultNode>
     </g>
   );

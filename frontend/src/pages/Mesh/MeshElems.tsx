@@ -200,7 +200,7 @@ const getPathStyle = (data: EdgeData): React.CSSProperties => {
     case FAILURE.name:
     case DEGRADED.name:
       return {
-        strokeWidth: 3,
+        strokeWidth: 6,
         strokeDasharray: '10 10'
       } as React.CSSProperties;
     default:
