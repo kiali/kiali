@@ -58,11 +58,10 @@ Feature: Kiali App Details page for multicluster
     And user is at the details page for the "app" "bookinfo/ratings" located in the "east" cluster
     Then user does not see any inbound and outbound traffic information
 
-  Scenario: See no Inbound Metrics for an app, which is not deployed in the specific cluster. 
+  Scenario: See no Inbound Metrics for an app, which is not deployed in the specific cluster.
     And user is at the details page for the "app" "bookinfo/ratings" located in the "east" cluster
     Then user does not see "Inbound" metrics information for the "east" "ratings" "app"
 
-  Scenario: See no Outbound Metrics for an app, which is not deployed in the specific cluster. 
+  Scenario: See no Outbound Metrics for an app, which is not deployed in the specific cluster.
     And user is at the details page for the "app" "bookinfo/ratings" located in the "east" cluster
     Then user does not see "Outbound" metrics information for the "east" "ratings" "app"
-  

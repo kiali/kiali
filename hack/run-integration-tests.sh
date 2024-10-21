@@ -181,10 +181,16 @@ ensureKialiTracesReady() {
   infomsg "Waiting for Kiali to have traces"
   local start_time=$(date +%s)
   local end_time=$((start_time + 60))
+  local multicluster=$1
 
   # Get traces from the last 5m
   local traces_date=$((($(date +%s) - 300) * 1000))
   local trace_url="${KIALI_URL}/api/namespaces/bookinfo/workloads/productpage-v1/traces?startMicros=${traces_date}&tags=&limit=100"
+  if [ "$multicluster" == "true" ]; then
+    echo "Multicluster request"
+    trace_url="${KIALI_URL}/api/namespaces/bookinfo/workloads/reviews-v2/traces?startMicros=${traces_date}&tags=&limit=100&clusterName=west"
+  fi
+
   infomsg "Traces url: ${trace_url}"
   while true; do
     result=$(curl -k -s --fail "$trace_url" \
@@ -197,12 +203,20 @@ ensureKialiTracesReady() {
         echo "Timed out waiting for Kiali to get any trace"
         break
       fi
-      sleep 1
+      sleep 10
     else
+      echo "Got traces."
       break
     fi
 
   done
+
+  # When there are no traces from the remote cluster, check collector pod logs
+  # Uncomment for debugging purposes
+  #POD_NAME=$(kubectl --context kind-west get pods -l app.kubernetes.io/name=opentelemetry-collector -n istio-system -o custom-columns=":metadata.name" | head -n 2)
+  #echo $POD_NAME
+  #kubectl logs $POD_NAME --context kind-west -n istio-system
+
 }
 
 ensureBookinfoGraphReady() {
@@ -377,6 +391,7 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_PRIMARY_REMOTE}" ]; then
 
   ensureKialiServerReady
   ensureMulticlusterApplicationsAreHealthy
+  ensureKialiTracesReady "true"
 
   export CYPRESS_BASE_URL="${KIALI_URL}"
   export CYPRESS_CLUSTER1_CONTEXT="kind-east"
