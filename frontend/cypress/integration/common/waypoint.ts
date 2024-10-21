@@ -30,7 +30,7 @@ const waitForWorkloadEnrolled = (maxRetries = 30, retryCount = 0): void => {
       return;
     } else {
       return cy.wait(10000).then(() => {
-        return waitForWorkloadEnrolled(maxRetries, retryCount + 1); // Ensure to return the recursive call
+        return waitForWorkloadEnrolled(maxRetries, retryCount + 1);
       });
     }
   });
@@ -44,16 +44,16 @@ const waitForBookinfoWaypointTrafficGeneratedInGraph = (maxRetries = 30, retryCo
   cy.request({
     method: 'GET',
     url:
-      '/api/namespaces/graph?duration=120s&graphType=versionedApp&includeIdleEdges=false&injectServiceNodes=true&boxBy=cluster,namespace,app&waypoints=false&appenders=deadNode,istio,serviceEntry,meshCheck,workloadEntry,health,ambient&rateGrpc=requests&rateHttp=requests&rateTcp=sent&namespaces=bookinfo'
+      '/api/namespaces/graph?duration=60s&graphType=versionedApp&includeIdleEdges=false&injectServiceNodes=true&boxBy=cluster,namespace,app&waypoints=false&ambientTraffic=waypoint&appenders=deadNode,istio,serviceEntry,meshCheck,workloadEntry,health,ambient&rateGrpc=requests&rateHttp=requests&rateTcp=sent&namespaces=bookinfo'
   }).then(response => {
     expect(response.status).to.equal(200);
     const elements = response.body.elements;
 
-    if (elements?.edges?.length > 15) {
+    if (elements?.edges?.length > 10) {
       return;
     } else {
       return cy.wait(10000).then(() => {
-        return waitForBookinfoWaypointTrafficGeneratedInGraph(maxRetries, retryCount + 1); // Ensure to return the recursive call
+        return waitForBookinfoWaypointTrafficGeneratedInGraph(maxRetries, retryCount + 1);
       });
     }
   });
