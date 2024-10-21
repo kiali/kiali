@@ -528,7 +528,7 @@ Then('the {string} node {string} exists', (nodeName: string, action: string) => 
       const foundNode = nodes.filter(node => node.getData().workload === nodeName);
 
       if (action === 'does') {
-        assert.isAtLeast(foundNode.length, 1);
+        assert.equal(foundNode.length, 1);
       } else {
         assert.equal(foundNode.length, 0);
       }
