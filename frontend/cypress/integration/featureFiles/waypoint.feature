@@ -77,16 +77,6 @@ Feature: Kiali Waypoint related features
     And the "waypoint" node "doesn't" exists
 
   @waypoint
-  Scenario: User sees waypoint proxy
-    When user opens display menu
-    Then the display menu opens
-    Then user "enables" "filterWaypoints" edge labels
-    Then user opens traffic menu
-    And user "enables" "ambientTotal" traffic option
-    Then 16 edges appear in the graph
-    And the "waypoint" node "does" exists
-
-  @waypoint
   Scenario: Waypoint should not have validation errors
     Given user is at the "istio" page
     And user selects the "bookinfo" namespace
@@ -98,3 +88,17 @@ Feature: Kiali Waypoint related features
     When user clicks in the "LIST" view
     Then user sees a "LIST" "bookinfo" namespace
     And badge for "istio.io/use-waypoint=waypoint" is visible in the LIST view in the namespace "bookinfo"
+
+
+  @waypoint
+  Scenario: User sees waypoint proxy
+    Given user is at the "graphpf" page
+    When user graphs "bookinfo" namespaces
+    Then user sees the "bookinfo" namespace
+    When user opens display menu
+    Then the display menu opens
+    Then user "enables" "filterWaypoints" edge labels
+    Then user opens traffic menu
+    And user "enables" "ambientTotal" traffic option
+    Then 16 edges appear in the graph
+    And the "waypoint" node "does" exists
