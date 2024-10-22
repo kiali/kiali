@@ -86,6 +86,7 @@ func (i *IstioConfigList) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
+	i.ConvertToResponse()
 	i.IstioValidations = temp.Validations
 
 	// Iterate over the resources map and unmarshal each resource type
