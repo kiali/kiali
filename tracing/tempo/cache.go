@@ -40,9 +40,8 @@ type (
 	}
 
 	tempoCacheImpl struct {
-		cacheDuration   time.Duration
 		cacheExpiration time.Duration
-		// Cache by query,
+		// Cache by service name + query (Converted to string)
 		cacheAppTraces map[string]*queryResult
 		// Cache individual traces
 		cacheTraceDetails map[string]*traceResult
@@ -59,12 +58,10 @@ type (
 
 func NewTempoCache() TempoCache {
 	kConfig := kialiConfig.Get()
-	// TODO: Update with Tracing settings
-	cacheDuration := time.Duration(kConfig.ExternalServices.Prometheus.CacheDuration) * time.Second
-	cacheExpiration := time.Duration(kConfig.ExternalServices.Prometheus.CacheExpiration) * time.Second
+
+	cacheExpiration := time.Duration(kConfig.ExternalServices.Tracing.CacheExpiration) * time.Second
 
 	tempoCacheImpl := tempoCacheImpl{
-		cacheDuration:     cacheDuration,
 		cacheExpiration:   cacheExpiration,
 		cacheAppTraces:    make(map[string]*queryResult),
 		cacheTraceDetails: make(map[string]*traceResult),
@@ -91,44 +88,54 @@ func mapToString(tags map[string]string) string {
 	return strings.Join(tagPairs, ",")
 }
 
-// Return the size of the cache
-func (c *tempoCacheImpl) Size() int {
-	size := 0
-	for key, value := range c.cacheTraceDetails {
-		size += int(unsafe.Sizeof(key)) + int(unsafe.Sizeof(value)) + len(key)
-	}
-	for key, value := range c.cacheAppTraces {
-		size += int(unsafe.Sizeof(key)) + int(unsafe.Sizeof(value)) + len(key)
-	}
-	return size
-}
-
 // Remove expired items
 // Check every minute
 func (c *tempoCacheImpl) watchExpiration() {
 	for {
 		time.Sleep(1 * time.Minute)
-		// Delete expired
+		size := 0
+
+		// Delete expired from Trace cache
+		c.appTracesLock.Lock()
 		for key, value := range c.cacheTraceDetails {
 			if time.Since(value.queryTime) > c.cacheExpiration {
 				delete(c.cacheTraceDetails, key)
+			} else {
+				size += len(key) + int(unsafe.Sizeof(key))
+				size += int(unsafe.Sizeof(value.queryTime))
+				size += int(unsafe.Sizeof(value.inResult))
+				if value.inResult != nil {
+					size += int(unsafe.Sizeof(*value.inResult))
+					size += int(unsafe.Sizeof(value.inResult.Data))
+				}
 			}
 		}
+		c.appTracesLock.Unlock()
+		c.traceDetailsLock.Lock()
 		for key, value := range c.cacheAppTraces {
 			if time.Since(value.queryTime) > c.cacheExpiration {
-				delete(c.cacheTraceDetails, key)
+				delete(c.cacheAppTraces, key)
+			} else {
+				size += len(key) + int(unsafe.Sizeof(key))
+				size += int(unsafe.Sizeof(value.queryTime))
+				size += int(unsafe.Sizeof(value.inResult))
+				if value.inResult != nil {
+					size += int(unsafe.Sizeof(*value.inResult))
+					size += int(unsafe.Sizeof(value.inResult.Data))
+				}
 			}
 		}
+		c.traceDetailsLock.Unlock()
 
 		// Show stats
-		log.Infof("[Tempo Cache] STATS")
+		log.Debugf("[Tempo Cache] STATS")
 		if c.totalRequests == 0 {
-			log.Infof("Total requests: 0.0%%")
+			log.Debugf("Total requests: 0.0%%")
 		} else {
 			rates := float64(c.hits) / float64(c.totalRequests) * 100
-			log.Infof("[Tempo Cache] Cache hit rate: %.2f%%", rates)
+			log.Debugf("[Tempo Cache] Cache hit rate: %.2f%%", rates)
 		}
-		log.Infof("[Tempo Cache] Cache size: %d bytes", c.Size())
+		log.Debugf("[Tempo Cache] Cache size: %d bytes", size)
 	}
 }
 
@@ -139,8 +146,7 @@ func (c *tempoCacheImpl) GetAppTracesHTTP(service string, q models.TracingQuery)
 	c.totalRequests++
 	if appTraces, okNs := c.cacheAppTraces[cacheKey]; okNs {
 		if time.Since(appTraces.queryTime) < c.cacheExpiration {
-			// TODO: Change to Trace
-			log.Infof("[Tempo Cache] GetAppTracesHTTP [service: %s] [key: %s]", service, cacheKey)
+			log.Tracef("[Tempo Cache] GetAppTracesHTTP [service: %s] [key: %s]", service, cacheKey)
 			c.hits++
 			return true, appTraces.inResult
 		}
@@ -154,8 +160,7 @@ func (c *tempoCacheImpl) GetTraceDetailHTTP(traceID string) (bool, *model.Tracin
 	c.totalRequests++
 	if appTraces, okNs := c.cacheTraceDetails[traceID]; okNs {
 		if time.Since(appTraces.queryTime) < c.cacheExpiration {
-			// TODO: Change to Trace
-			log.Infof("[Tempo Cache] GetTraceDetailHTTP [traceID: %s]", traceID)
+			log.Tracef("[Tempo Cache] GetTraceDetailHTTP [traceID: %s]", traceID)
 			c.hits++
 			return true, appTraces.inResult
 		}
@@ -168,8 +173,7 @@ func (c *tempoCacheImpl) GetTags() (bool, *otel.TagsResponse) {
 	c.tagsLock.RLock()
 	c.totalRequests++
 	if time.Since(c.cacheTags.queryTime) < c.cacheExpiration {
-		// TODO: Change to Trace
-		log.Infof("[Tempo Cache] GetTags ")
+		log.Tracef("[Tempo Cache] GetTags ")
 		c.hits++
 		return true, c.cacheTags.inResult
 	}
@@ -185,8 +189,7 @@ func (c *tempoCacheImpl) SetAppTracesHTTP(service string, q models.TracingQuery,
 		queryTime: time.Now(),
 		inResult:  response,
 	}
-	// TODO: Change to Trace
-	log.Infof("[Tempo Cache] SetAppTracesHTTP [service: %s] [key: %s]", service, cacheKey)
+	log.Tracef("[Tempo Cache] SetAppTracesHTTP [service: %s] [key: %s]", service, cacheKey)
 }
 
 func (c *tempoCacheImpl) SetTags(response *otel.TagsResponse) {
@@ -198,8 +201,7 @@ func (c *tempoCacheImpl) SetTags(response *otel.TagsResponse) {
 		inResult:  response,
 	}
 
-	// TODO: Change to Trace
-	log.Infof("[Tempo Cache] SetTags")
+	log.Tracef("[Tempo Cache] SetTags")
 }
 
 func (c *tempoCacheImpl) SetTraceDetailHTTP(traceID string, response *model.TracingSingleTrace) {
@@ -210,6 +212,6 @@ func (c *tempoCacheImpl) SetTraceDetailHTTP(traceID string, response *model.Trac
 		queryTime: time.Now(),
 		inResult:  response,
 	}
-	// TODO: Change to Trace
-	log.Infof("[Tempo Cache] SetTraceDetailHTTP [traceID: %s]", traceID)
+
+	log.Tracef("[Tempo Cache] SetTraceDetailHTTP [traceID: %s]", traceID)
 }
