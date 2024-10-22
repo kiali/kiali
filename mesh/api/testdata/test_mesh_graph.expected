@@ -135,6 +135,8 @@
               "UseKialiToken": false,
               "Username": "xxx"
             },
+            "CacheEnabled": true,
+            "CacheExpiration": 600,
             "CustomHeaders": {},
             "Enabled": true,
             "ExternalURL": "",
