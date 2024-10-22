@@ -136,7 +136,7 @@
               "Username": "xxx"
             },
             "CacheEnabled": true,
-            "CacheExpiration": 600,
+            "CacheExpiration": 300,
             "CustomHeaders": {},
             "Enabled": true,
             "ExternalURL": "",
