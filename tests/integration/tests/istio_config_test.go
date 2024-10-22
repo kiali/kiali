@@ -1,13 +1,13 @@
 package tests
 
 import (
-	"github.com/kiali/kiali/models"
 	"path"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/integration/utils"
 	"github.com/kiali/kiali/tests/integration/utils/kiali"
 	"github.com/kiali/kiali/tools/cmd"
