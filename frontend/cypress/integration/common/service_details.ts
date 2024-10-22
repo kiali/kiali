@@ -84,7 +84,7 @@ Then('sd::user does not see No data message in the {string} graph', (graph: stri
 When('user chooses the {string} option', (title: string) => {
   cy.wait('@waitForCall');
 
-  cy.get('button[aria-label="Actions"]').click();
+  cy.get('#minigraph-toggle').click();
 
   cy.contains(title).should('be.visible');
   cy.contains(title).click();

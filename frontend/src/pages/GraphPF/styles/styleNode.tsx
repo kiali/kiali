@@ -97,6 +97,9 @@ const labelStyle = kialiStyle({
     },
     '& text ~ .pf-topology__node__separator': {
       visibility: 'hidden'
+    },
+    '& .pf-topology__node__label__icon__background': {
+      fill: 'var(--pf-v5-global--palette--purple-500)'
     }
   }
 });

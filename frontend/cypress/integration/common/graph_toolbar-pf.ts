@@ -88,9 +88,9 @@ When('user selects {string} graph type', (graphType: string) => {
 
 Then('user {string} graph tour', (action: string) => {
   if (action === 'sees') {
-    cy.get('div[role="dialog"]').find('span').contains('Shortcuts').should('exist');
+    cy.get('.pf-v5-c-popover').find('span').contains('Shortcuts').should('exist');
   } else {
-    cy.get('div[role="dialog"]').should('not.exist');
+    cy.get('.pf-v5-c-popover').should('not.exist');
   }
 });
 

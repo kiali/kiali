@@ -34,11 +34,6 @@
     */
     .pf-v5-c-page__main-section {
       --kiali-details-pages-tab-content-height: calc(100vh - 130px - var(--pf-v5-c-page__header--MinHeight));
-
-      // override some otherwise un-overridable PFT CSS
-      --pf-topology__node_decorator--Color: var(--pf-v5-global--palette--white);
-      --pf-topology__node__decorator__bg--Fill: var(--pf-v5-global--palette--purple-500);
-      --pf-topology__node__label__icon__background--Fill: var(--pf-v5-global--palette--purple-500);
     }
 
     /**
