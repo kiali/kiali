@@ -3,11 +3,13 @@ import {
   Form,
   FormGroup,
   FormHelperText,
-  FormSelect,
-  FormSelectOption,
   HelperText,
   HelperTextItem,
+  MenuToggle,
   Radio,
+  Select,
+  SelectList,
+  SelectOption,
   Switch,
   TextInput
 } from '@patternfly/react-core';
@@ -35,6 +37,7 @@ export type K8sGatewaySelectorState = {
   // @TODO add Mesh is not supported yet
   addMesh: boolean;
   port: number;
+  isOpen: boolean;
 };
 
 enum K8sGatewayForm {
@@ -55,11 +58,27 @@ export class K8sGatewaySelector extends React.Component<Props, K8sGatewaySelecto
       newGateway: props.k8sGateways.length === 0,
       selectedGateway:
         props.k8sGateways.length > 0 ? (props.gateway !== '' ? props.gateway : props.k8sGateways[0]) : '',
-      gatewayClass: serverConfig.gatewayAPIClasses[0].className,
+      gatewayClass: serverConfig?.gatewayAPIClasses[0]?.className,
       addMesh: false,
-      port: 80
+      port: 80,
+      isOpen: false,
     };
   }
+
+  onToggleClick = () => {
+    this.setState((prevState) => ({isOpen: !prevState.isOpen}));
+  }
+
+  toggleMenu = (toggleRef: React.Ref<any>, label: string, isDisabled = false) => (
+    <MenuToggle
+      ref={toggleRef}
+      onClick={this.onToggleClick}
+      isExpanded={this.state.isOpen}
+      isDisabled={isDisabled}
+    >
+      {label}
+    </MenuToggle>
+  );
 
   checkGwHosts = (gwHosts: string): boolean => {
     // All k8s gateway hosts must be valid
@@ -100,7 +119,8 @@ export class K8sGatewaySelector extends React.Component<Props, K8sGatewaySelecto
       case K8sGatewayForm.GATEWAY_SELECTED:
         this.setState(
           {
-            selectedGateway: value
+            selectedGateway: value,
+            isOpen: false,
           },
           () => this.props.onGatewayChange(this.isGatewayValid(), this.state)
         );
@@ -126,7 +146,8 @@ export class K8sGatewaySelector extends React.Component<Props, K8sGatewaySelecto
   onChangeGatewayClass = (_event, value) => {
     this.setState(
       {
-        gatewayClass: value
+        gatewayClass: value,
+        isOpen: false,
       },
       () => this.props.onGatewayChange(this.isGatewayValid(), this.state)
     );
@@ -168,18 +189,31 @@ export class K8sGatewaySelector extends React.Component<Props, K8sGatewaySelecto
             {!this.state.newGateway && (
               <FormGroup fieldId="selectGateway" label="K8sGateway">
                 {this.props.k8sGateways.length > 0 && (
-                  <FormSelect
+                  <Select
                     id="selectGateway"
-                    value={this.state.selectedGateway}
-                    isDisabled={!this.state.addGateway || this.state.newGateway || this.props.k8sGateways.length === 0}
-                    onChange={(_event, k8sGateway: string) =>
-                      this.onFormChange(K8sGatewayForm.GATEWAY_SELECTED, k8sGateway)
+                    isOpen={this.state.isOpen}
+                    selected={this.state.selectedGateway}
+                    onSelect={(_event, k8sGateway) => this.onFormChange(K8sGatewayForm.GATEWAY_SELECTED, k8sGateway as string)}
+                    onOpenChange={(isOpen: boolean) => {
+                      this.setState({isOpen});
+                    }}
+                    toggle={(toggleRef) =>
+                      this.toggleMenu(
+                        toggleRef,
+                        this.state.selectedGateway,
+                        !this.state.addGateway || this.state.newGateway || this.props.k8sGateways.length === 0
+                      )
                     }
+                    shouldFocusToggleOnSelect
                   >
-                    {this.props.k8sGateways.map(k8sGateway => (
-                      <FormSelectOption key={k8sGateway} value={k8sGateway} label={k8sGateway} />
-                    ))}
-                  </FormSelect>
+                    <SelectList>
+                      {this.props.k8sGateways.map(k8sGateway => (
+                        <SelectOption key={k8sGateway} value={k8sGateway}>
+                          {k8sGateway}
+                        </SelectOption>
+                      ))}
+                    </SelectList>
+                  </Select>
                 )}
                 {this.props.k8sGateways.length === 0 && <>There are no K8s API gateways to select.</>}
               </FormGroup>
@@ -188,18 +222,27 @@ export class K8sGatewaySelector extends React.Component<Props, K8sGatewaySelecto
               <>
                 {serverConfig.gatewayAPIClasses.length > 1 && (
                   <FormGroup label="Gateway Class" fieldId="gatewayClass">
-                    <FormSelect
-                      value={this.state.gatewayClass}
-                      onChange={this.onChangeGatewayClass}
+                    <Select
+                      isOpen = {this.state.isOpen}
+                      selected={this.state.gatewayClass}
+                      onSelect={this.onChangeGatewayClass}
                       id="gatewayClass"
-                      name="gatewayClass"
+                      onOpenChange={(isOpen: boolean) => {
+                        this.setState({isOpen});
+                      }}
+                      toggle={(toggleRef) => this.toggleMenu(toggleRef, this.state.gatewayClass)}
+                      shouldFocusToggleOnSelect
                     >
-                      {serverConfig.gatewayAPIClasses.map((option, index) => (
-                        <FormSelectOption key={index} value={option.className} label={option.name} />
-                      ))}
-                    </FormSelect>
+                      <SelectList>
+                        {serverConfig.gatewayAPIClasses.map((option, index) => (
+                          <SelectOption key={index} value={option.className}>
+                            {option.name}
+                          </SelectOption>
+                        ))}
+                      </SelectList>
+                    </Select>
                   </FormGroup>
-                )}
+                  )}
                 <FormGroup fieldId="gwPort" label="Port">
                   <TextInput
                     id="gwPort"
