@@ -10,6 +10,7 @@ import (
 	"path"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
@@ -26,9 +27,26 @@ type OtelHTTPClient struct {
 	ClusterTag bool
 }
 
+var (
+	once       sync.Once
+	tempoCache TempoCache
+)
+
+func initTempoCache() {
+	if config.Get().ExternalServices.Tracing.CacheEnabled {
+		log.Infof("[Tempo Cache] Enabled")
+		tempoCache = NewTempoCache()
+	} else {
+		log.Infof("[Tempo Cache] Disabled")
+	}
+}
+
 // New client
 func NewOtelClient(client http.Client, baseURL *url.URL) (otelClient *OtelHTTPClient, err error) {
 	url := *baseURL
+
+	once.Do(initTempoCache)
+
 	// Istio adds the istio.cluster_id tag
 	// That allows to filter traces by cluster in MC environments
 	// This is a check to validate that this tag exists before use it
@@ -57,6 +75,11 @@ func NewOtelClient(client http.Client, baseURL *url.URL) (otelClient *OtelHTTPCl
 func (oc OtelHTTPClient) GetAppTracesHTTP(client http.Client, baseURL *url.URL, serviceName string, q models.TracingQuery) (response *model.TracingResponse, err error) {
 	url := *baseURL
 	url.Path = path.Join(url.Path, "/api/search")
+	if tempoCache != nil {
+		if isCached, result := tempoCache.GetAppTracesHTTP(serviceName, q); isCached {
+			return result, nil
+		}
+	}
 	oc.prepareTraceQL(&url, serviceName, q)
 
 	r, err := oc.queryTracesHTTP(client, &url, q.Tags["error"])
@@ -64,12 +87,20 @@ func (oc OtelHTTPClient) GetAppTracesHTTP(client http.Client, baseURL *url.URL, 
 	if r != nil {
 		r.TracingServiceName = serviceName
 	}
+	if tempoCache != nil {
+		tempoCache.SetAppTracesHTTP(serviceName, q, r)
+	}
 	return r, err
 }
 
 // GetTraceDetailHTTP get one trace by trace ID
 func (oc OtelHTTPClient) GetTraceDetailHTTP(client http.Client, endpoint *url.URL, traceID string) (*model.TracingSingleTrace, error) {
 	u := *endpoint
+	if tempoCache != nil {
+		if isCached, result := tempoCache.GetTraceDetailHTTP(traceID); isCached {
+			return result, nil
+		}
+	}
 	u.Path = path.Join(u.Path, "/api/traces/", traceID)
 	resp, code, reqError := makeRequest(client, u.String(), nil)
 	if reqError != nil {
@@ -96,6 +127,12 @@ func (oc OtelHTTPClient) GetTraceDetailHTTP(client http.Client, endpoint *url.UR
 	}
 	if len(response.Data) == 0 {
 		return &model.TracingSingleTrace{Errors: response.Errors}, nil
+	}
+	if tempoCache != nil {
+		tempoCache.SetTraceDetailHTTP(traceID, &model.TracingSingleTrace{
+			Data:   response.Data[0],
+			Errors: response.Errors,
+		})
 	}
 	return &model.TracingSingleTrace{
 		Data:   response.Data[0],

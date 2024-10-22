@@ -262,6 +262,8 @@ type TempoConfig struct {
 // TracingConfig describes configuration used for tracing links
 type TracingConfig struct {
 	Auth                 Auth              `yaml:"auth"`
+	CacheEnabled         bool              `yaml:"cache_enabled,omitempty"`
+	CacheExpiration      int               `yaml:"cache_expiration,omitempty"`
 	CustomHeaders        map[string]string `yaml:"custom_headers,omitempty"`
 	Enabled              bool              `yaml:"enabled"`      // Enable Tracing in Kiali
 	ExternalURL          string            `yaml:"external_url"` // replaces the old url
@@ -753,6 +755,8 @@ func NewConfig() (c *Config) {
 				Auth: Auth{
 					Type: AuthTypeNone,
 				},
+				CacheEnabled:         true,
+				CacheExpiration:      600, // Seconds
 				CustomHeaders:        map[string]string{},
 				Enabled:              false,
 				ExternalURL:          "",
