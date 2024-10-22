@@ -11,7 +11,6 @@ import (
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tracing/jaeger/model"
-	otel "github.com/kiali/kiali/tracing/otel/model"
 )
 
 type (
@@ -25,17 +24,10 @@ type (
 		inResult  *model.TracingSingleTrace
 	}
 
-	tagsResult struct {
-		queryTime time.Time // Expiration time
-		inResult  *otel.TagsResponse
-	}
-
 	TempoCache interface {
 		GetAppTracesHTTP(service string, q models.TracingQuery) (bool, *model.TracingResponse)
-		GetTags() (bool, *otel.TagsResponse)
 		GetTraceDetailHTTP(traceID string) (bool, *model.TracingSingleTrace)
 		SetAppTracesHTTP(service string, q models.TracingQuery, response *model.TracingResponse)
-		SetTags(response *otel.TagsResponse)
 		SetTraceDetailHTTP(traceID string, response *model.TracingSingleTrace)
 	}
 
@@ -45,11 +37,8 @@ type (
 		cacheAppTraces map[string]*queryResult
 		// Cache individual traces
 		cacheTraceDetails map[string]*traceResult
-		// Cache tags
-		cacheTags        *tagsResult
-		appTracesLock    sync.RWMutex
-		traceDetailsLock sync.RWMutex
-		tagsLock         sync.RWMutex
+		appTracesLock     sync.RWMutex
+		traceDetailsLock  sync.RWMutex
 		// stats
 		hits          int
 		totalRequests int
@@ -65,7 +54,6 @@ func NewTempoCache() TempoCache {
 		cacheExpiration:   cacheExpiration,
 		cacheAppTraces:    make(map[string]*queryResult),
 		cacheTraceDetails: make(map[string]*traceResult),
-		cacheTags:         &tagsResult{},
 		hits:              0,
 		totalRequests:     0,
 	}
@@ -75,7 +63,7 @@ func NewTempoCache() TempoCache {
 }
 
 func getKey(service string, q models.TracingQuery) string {
-	return fmt.Sprintf("%s:%d:%d:%s:%s", service, q.Start.Unix()/60, q.End.Unix()/60, mapToString(q.Tags), q.Cluster)
+	return fmt.Sprintf("%s:%d:%d:%s:%s:%s", service, q.Start.Unix()/60, q.End.Unix()/60, mapToString(q.Tags), q.Cluster, q.MinDuration)
 }
 
 func mapToString(tags map[string]string) string {
@@ -88,8 +76,9 @@ func mapToString(tags map[string]string) string {
 	return strings.Join(tagPairs, ",")
 }
 
-// Remove expired items
-// Check every minute
+// Check for expired items and removes them from the cache
+// Runs every minute
+// It also displays some stats for cache size and hit rate
 func (c *tempoCacheImpl) watchExpiration() {
 	for {
 		time.Sleep(1 * time.Minute)
@@ -128,9 +117,8 @@ func (c *tempoCacheImpl) watchExpiration() {
 		c.traceDetailsLock.Unlock()
 
 		// Show stats
-		log.Debugf("[Tempo Cache] STATS")
 		if c.totalRequests == 0 {
-			log.Debugf("Total requests: 0.0%%")
+			log.Debugf("[Tempo Cache] Total requests: 0.0%%")
 		} else {
 			rates := float64(c.hits) / float64(c.totalRequests) * 100
 			log.Debugf("[Tempo Cache] Cache hit rate: %.2f%%", rates)
@@ -168,18 +156,6 @@ func (c *tempoCacheImpl) GetTraceDetailHTTP(traceID string) (bool, *model.Tracin
 	return false, nil
 }
 
-func (c *tempoCacheImpl) GetTags() (bool, *otel.TagsResponse) {
-	defer c.tagsLock.RUnlock()
-	c.tagsLock.RLock()
-	c.totalRequests++
-	if time.Since(c.cacheTags.queryTime) < c.cacheExpiration {
-		log.Tracef("[Tempo Cache] GetTags ")
-		c.hits++
-		return true, c.cacheTags.inResult
-	}
-	return false, nil
-}
-
 func (c *tempoCacheImpl) SetAppTracesHTTP(service string, q models.TracingQuery, response *model.TracingResponse) {
 	defer c.appTracesLock.Unlock()
 	c.appTracesLock.Lock()
@@ -190,18 +166,6 @@ func (c *tempoCacheImpl) SetAppTracesHTTP(service string, q models.TracingQuery,
 		inResult:  response,
 	}
 	log.Tracef("[Tempo Cache] SetAppTracesHTTP [service: %s] [key: %s]", service, cacheKey)
-}
-
-func (c *tempoCacheImpl) SetTags(response *otel.TagsResponse) {
-	defer c.appTracesLock.Unlock()
-	c.appTracesLock.Lock()
-
-	c.cacheTags = &tagsResult{
-		queryTime: time.Now(),
-		inResult:  response,
-	}
-
-	log.Tracef("[Tempo Cache] SetTags")
 }
 
 func (c *tempoCacheImpl) SetTraceDetailHTTP(traceID string, response *model.TracingSingleTrace) {

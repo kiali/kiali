@@ -756,7 +756,7 @@ func NewConfig() (c *Config) {
 					Type: AuthTypeNone,
 				},
 				CacheEnabled:         true,
-				CacheExpiration:      600, // Seconds
+				CacheExpiration:      300, // Seconds
 				CustomHeaders:        map[string]string{},
 				Enabled:              false,
 				ExternalURL:          "",
