@@ -497,6 +497,8 @@ When('user {string} {string} traffic option', (action: string, option: string) =
 
 Then('{int} edges appear in the graph', (graphEdges: number) => {
   cy.waitForReact();
+  ensureKialiFinishedLoading();
+
   cy.getReact('GraphPagePFComponent', { state: { isReady: true } })
     .should('have.length', '1')
     .then($graph => {
@@ -526,7 +528,7 @@ Then('the {string} node {string} exists', (nodeName: string, action: string) => 
       const foundNode = nodes.filter(node => node.getData().workload === nodeName);
 
       if (action === 'does') {
-        assert.isAtLeast(foundNode.length, 1);
+        assert.equal(foundNode.length, 1);
       } else {
         assert.equal(foundNode.length, 0);
       }

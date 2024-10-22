@@ -13,6 +13,7 @@ Feature: Kiali Waypoint related features
   @waypoint
   Scenario: namespace is labeled with waypoint label
     Then "bookinfo" namespace is labeled with the waypoint label
+    And the graph page has enough data
 
   @waypoint
   Scenario: See the waypoint workload with the correct info
@@ -43,16 +44,6 @@ Feature: Kiali Waypoint related features
     And user "enables" "ambientZtunnel" traffic option
     Then 7 edges appear in the graph
 
-  # TODO Fix waypoint issue
-  #@waypoint
-  #Scenario: User sees waypoint traffic
-  #  Given user is at the "graphpf" page
-  #  When user graphs "bookinfo" namespaces
-  #  Then user sees the "bookinfo" namespace
-  #  Then user opens traffic menu
-  #  And user "enables" "ambientWaypoint" traffic option
-  #  Then 11 edges appear in the graph
-
   @waypoint
   Scenario: User sees no Ambient traffic
     Given user is at the "graphpf" page
@@ -73,17 +64,27 @@ Feature: Kiali Waypoint related features
     Then 16 edges appear in the graph
 
   @waypoint
-  Scenario: User sees doesn't see waypoint proxy
+  Scenario: User doesn't see waypoint proxy
     And the "waypoint" node "doesn't" exists
 
-  # TODO Fix waypoint issue
-  #@waypoint
-  #Scenario: User sees waypoint proxy
-  #  When user opens display menu
-  #  Then the display menu opens
-  #  Then user "enables" "filterWaypoints" edge labels
-  #  Then 16 edges appear in the graph
-  #  And the "waypoint" node "does" exists
+  @waypoint
+  Scenario: User sees waypoint proxy
+    When user opens display menu
+    Then the display menu opens
+    Then user "enables" "filterWaypoints" edge labels
+    Then user opens traffic menu
+    And user "enables" "ambientTotal" traffic option
+    Then 16 edges appear in the graph
+    And the "waypoint" node "does" exists
+
+  @waypoint
+  Scenario: User sees waypoint traffic
+    Given user is at the "graphpf" page
+    When user graphs "bookinfo" namespaces
+    Then user sees the "bookinfo" namespace
+    Then user opens traffic menu
+    And user "enables" "ambientWaypoint" traffic option
+    Then 11 edges appear in the graph
 
   @waypoint
   Scenario: Waypoint should not have validation errors
