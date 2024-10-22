@@ -181,8 +181,8 @@ func (c *tempoCacheImpl) GetTags() (bool, *otel.TagsResponse) {
 }
 
 func (c *tempoCacheImpl) SetAppTracesHTTP(service string, q models.TracingQuery, response *model.TracingResponse) {
-	defer c.appTracesLock.RUnlock()
-	c.appTracesLock.RLock()
+	defer c.appTracesLock.Unlock()
+	c.appTracesLock.Lock()
 	cacheKey := getKey(service, q)
 
 	c.cacheAppTraces[cacheKey] = &queryResult{
@@ -193,8 +193,8 @@ func (c *tempoCacheImpl) SetAppTracesHTTP(service string, q models.TracingQuery,
 }
 
 func (c *tempoCacheImpl) SetTags(response *otel.TagsResponse) {
-	defer c.appTracesLock.RUnlock()
-	c.appTracesLock.RLock()
+	defer c.appTracesLock.Unlock()
+	c.appTracesLock.Lock()
 
 	c.cacheTags = &tagsResult{
 		queryTime: time.Now(),
@@ -205,8 +205,8 @@ func (c *tempoCacheImpl) SetTags(response *otel.TagsResponse) {
 }
 
 func (c *tempoCacheImpl) SetTraceDetailHTTP(traceID string, response *model.TracingSingleTrace) {
-	defer c.appTracesLock.RUnlock()
-	c.appTracesLock.RLock()
+	defer c.appTracesLock.Unlock()
+	c.appTracesLock.Lock()
 
 	c.cacheTraceDetails[traceID] = &traceResult{
 		queryTime: time.Now(),
