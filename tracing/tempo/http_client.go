@@ -75,7 +75,7 @@ func NewOtelClient(client http.Client, baseURL *url.URL) (otelClient *OtelHTTPCl
 func (oc OtelHTTPClient) GetAppTracesHTTP(client http.Client, baseURL *url.URL, serviceName string, q models.TracingQuery) (response *model.TracingResponse, err error) {
 	url := *baseURL
 	url.Path = path.Join(url.Path, "/api/search")
-	if q.End.Before(q.Start) || q.End.Equal(q.Start) {
+	if q.End.Before(q.Start) {
 		return nil, fmt.Errorf("end time must be greater than start time")
 	}
 	if tempoCache != nil {
