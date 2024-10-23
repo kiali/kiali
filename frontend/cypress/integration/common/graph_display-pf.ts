@@ -450,8 +450,8 @@ Given(
       .then(response => {
         expect(response.status).to.eq(200);
         expect(response.body).to.have.property('resources');
-        expect(response.body.resources['networking.istio.io/v1, Kind=Gateway']).to.have.length.gte(1);
-        expect(response.body.resources['networking.istio.io/v1, Kind=VirtualService']).to.have.length.gte(1);
+        expect(response.body.resources['networking.istio.io/v1, Kind=Gateway'].length).greaterThan(0);
+        expect(response.body.resources['networking.istio.io/v1, Kind=VirtualService'].length).greaterThan(0);
       });
   }
 );
@@ -471,10 +471,10 @@ Then(
     cy.get('@istioConfigRequest-east').then(resp => {
       // Not going to check all the objects. Just the ones that probably exist while testing.
       const totalObjectsEast =
-        resp.body.gateways.length + resp.body.virtualServices.length + resp.body.destinationRules.length;
+        resp.body.resources['gateway.networking.k8s.io/v1, Kind=Gateway'].length + resp.body.resources['networking.istio.io/v1, Kind=VirtualService'].length + resp.body.resources['networking.istio.io/v1, Kind=DestinationRule'].length;
       cy.get('@istioConfigRequest-west').then(resp => {
         const totalObjectsWest =
-          resp.body.gateways.length + resp.body.virtualServices.length + resp.body.destinationRules.length;
+          resp.body.resources['gateway.networking.k8s.io/v1, Kind=Gateway'].length + resp.body.resources['networking.istio.io/v1, Kind=VirtualService'].length + resp.body.resources['networking.istio.io/v1, Kind=DestinationRule'].length;
         const totalObjects = totalObjectsEast + totalObjectsWest;
         cy.get('[aria-label="Validations list"]').contains(`Istio config objects analyzed: ${totalObjects}`);
       });
