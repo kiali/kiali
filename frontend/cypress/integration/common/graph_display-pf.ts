@@ -469,16 +469,15 @@ Then(
       });
 
     cy.get('@istioConfigRequest-east').then(resp => {
-      // Not going to check all the objects. Just the ones that probably exist while testing.
-      const totalObjectsEast =
-        resp.body.resources['gateway.networking.k8s.io/v1, Kind=Gateway'].length +
-        resp.body.resources['networking.istio.io/v1, Kind=VirtualService'].length +
-        resp.body.resources['networking.istio.io/v1, Kind=DestinationRule'].length;
+      let totalObjectsEast = 0;
+      Object.keys(resp.body.resources).forEach(resourceKey => {
+        totalObjectsEast += resp.body.resources[resourceKey].length;
+      });
       cy.get('@istioConfigRequest-west').then(resp => {
-        const totalObjectsWest =
-          resp.body.resources['gateway.networking.k8s.io/v1, Kind=Gateway'].length +
-          resp.body.resources['networking.istio.io/v1, Kind=VirtualService'].length +
-          resp.body.resources['networking.istio.io/v1, Kind=DestinationRule'].length;
+        let totalObjectsWest = 0;
+        Object.keys(resp.body.resources).forEach(resourceKey => {
+          totalObjectsEast += resp.body.resources[resourceKey].length;
+        });
         const totalObjects = totalObjectsEast + totalObjectsWest;
         cy.get('[aria-label="Validations list"]').contains(`Istio config objects analyzed: ${totalObjects}`);
       });
