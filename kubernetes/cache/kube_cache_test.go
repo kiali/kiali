@@ -511,7 +511,8 @@ func TestGetPodTrimmed(t *testing.T) {
 	}
 	want := core_v1.Pod{
 		TypeMeta: metav1.TypeMeta{
-			Kind: "Pod",
+			APIVersion: "v1",
+			Kind:       "Pod",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        "foo",
@@ -604,7 +605,8 @@ func TestGetServiceTrimmed(t *testing.T) {
 	}
 	want := core_v1.Service{
 		TypeMeta: metav1.TypeMeta{
-			Kind: "Service",
+			APIVersion: "v1",
+			Kind:       "Service",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:            "foo",
