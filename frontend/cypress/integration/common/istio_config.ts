@@ -590,14 +590,13 @@ Then('user only sees {string}', (sees: string) => {
 });
 
 Then('only {string} objects are visible in the {string} namespace', (sees: string, ns: string) => {
-  let lowercaseSees: string = sees.charAt(0).toLowerCase() + sees.slice(1);
   let count: number;
 
   cy.request({
     method: 'GET',
     url: `/api/namespaces/${ns}/istio?objects=${dicIstioTypeToGVKStrings[sees]}&validate=true`
   }).then(response => {
-    count = response.body[pluralize(lowercaseSees)].length;
+    count = response.body['resources'][dicIstioTypeToGVKStrings[sees]].length;
   });
 
   cy.get('tbody').contains('tr', sees);
