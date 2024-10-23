@@ -21,6 +21,9 @@ import 'ace-builds/src-noconflict/theme-twilight';
 // Enables the search box for the ACE editor
 import 'ace-builds/src-noconflict/ext-searchbox';
 
+// A PFT dependency that is noisy console logging (see below)
+import { configure } from 'mobx';
+
 // i18n
 import './i18n';
 
@@ -53,5 +56,10 @@ setRouter([
 if (!window.location.pathname.includes(rootBasename)) {
   router.navigate(`/${window.location.search}`, { replace: true });
 }
+
+// Suppress thousands of console warnings when scrolling over PFT graphs
+configure({
+  enforceActions: 'never'
+});
 
 ReactDOM.render(<RouterProvider router={router} />, document.getElementById('root') as HTMLElement);
