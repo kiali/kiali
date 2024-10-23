@@ -19,6 +19,7 @@ export default defineConfig({
     'cypress-react-selector': {
       root: '#root'
     },
+    cookie: false,
     omitFiltered: true,
     filterSpecs: true
   },
@@ -38,10 +39,7 @@ export default defineConfig({
         })
       );
 
-      config.env.cookie = false;
-
-      // This name is non-standard and might change based on your environment hence the separate
-      // env variable.
+      // This name is non-standard and might change based on your environment hence the separate env variable.
       config.env.AUTH_STRATEGY = await getAuthStrategy(config.baseUrl!, config.env.ALLOW_INSECURE_KIALI_API);
 
       return config;
