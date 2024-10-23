@@ -561,8 +561,8 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
         });
 
         const istioConfigPerNamespace = new Map<string, IstioConfigList>();
-        Object.entries(istioConfig).forEach(([key, configListField]) => {
-          if (Array.isArray(configListField)) {
+        Object.entries(istioConfig.resources).forEach(([key, configListField]) => {
+          if (configListField && Array.isArray(configListField)) {
             configListField.forEach(istioObject => {
               if (!istioConfigPerNamespace.has(istioObject.metadata.namespace)) {
                 const newIstioConfigList: IstioConfigList = {
@@ -572,7 +572,10 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
                 };
                 istioConfigPerNamespace.set(istioObject.metadata.namespace, newIstioConfigList);
               }
-              istioConfigPerNamespace.get(istioObject.metadata.namespace)![key].push(istioObject);
+              if (!istioConfigPerNamespace.get(istioObject.metadata.namespace)!['resources'][key]) {
+                istioConfigPerNamespace.get(istioObject.metadata.namespace)!['resources'][key] = [];
+              }
+              istioConfigPerNamespace.get(istioObject.metadata.namespace)!['resources'][key].push(istioObject);
             });
           }
         });
