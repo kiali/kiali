@@ -267,29 +267,6 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
       ? toIstioItems(this.state.workloadIstioConfig, workload?.cluster || '')
       : [];
 
-    // Helper to iterate at same time on workloadIstioConfig resources and validations
-    const wkIstioTypes = [
-      { field: 'gateways', validation: 'gateway' },
-      { field: 'sidecars', validation: 'sidecar' },
-      { field: 'envoyFilters', validation: 'envoyfilter' },
-      { field: 'requestAuthentications', validation: 'requestauthentication' },
-      { field: 'authorizationPolicies', validation: 'authorizationpolicy' },
-      { field: 'peerAuthentications', validation: 'peerauthentication' }
-    ];
-
-    if (this.state.workloadIstioConfig?.validations) {
-      const typeNames: { [key: string]: string[] } = {};
-      wkIstioTypes.forEach(wkIstioType => {
-        if (this.state.workloadIstioConfig && this.state.workloadIstioConfig.validations[wkIstioType.validation]) {
-          typeNames[wkIstioType.validation] = [];
-
-          this.state.workloadIstioConfig[wkIstioType.field]?.forEach(r =>
-            typeNames[wkIstioType.validation].push(r.metadata.name)
-          );
-        }
-      });
-    }
-
     // RenderComponentScroll handles height to provide an inner scroll combined with tabs
     // This height needs to be propagated to minigraph to proper resize in height
     // Graph resizes correctly on width

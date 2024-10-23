@@ -449,10 +449,12 @@ Given(
       .as(`istioConfigRequest-${cluster}`)
       .then(response => {
         expect(response.status).to.eq(200);
-        expect(response.body).to.have.property('gateways');
-        expect(response.body).to.have.property('virtualServices');
-        expect(response.body.gateways).to.have.length.gte(1);
-        expect(response.body.virtualServices).to.have.length.gte(1);
+        expect(response.body).to.have.property('resources');
+        expect(response.body.resources).to.have.length.gte(2);
+        expect(response.body.resources).to.have.property('networking.istio.io/v1, Kind=Gateway');
+        expect(response.body.resources).to.have.property('networking.istio.io/v1, Kind=VirtualService');
+        expect(response.body.resources['networking.istio.io/v1, Kind=Gateway']).to.have.length.gte(1);
+        expect(response.body.resources['networking.istio.io/v1, Kind=VirtualService']).to.have.length.gte(1);
       });
   }
 );

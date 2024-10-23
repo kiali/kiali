@@ -119,11 +119,18 @@ const nodeContextMenu = (node: GraphElement, kiosk: string): Promise<React.React
   );
   const getGwPromise = promises.register(
     'getGwPromise',
-    API.getAllIstioConfigs(['gateways'], false, '', '', nodeData.cluster)
+    API.getAllIstioConfigs([gvkToString(dicIstioTypeToGVK['Gateway'])], false, '', '', nodeData.cluster)
   );
   const getPeerAuthsPromise = promises.register(
     'getPeerAuthsPromise',
-    API.getIstioConfig(nodeData.namespace, ['peerauthentications'], false, '', '', nodeData.cluster)
+    API.getIstioConfig(
+      nodeData.namespace,
+      [gvkToString(dicIstioTypeToGVK['PeerAuthentication'])],
+      false,
+      '',
+      '',
+      nodeData.cluster
+    )
   );
 
   return new Promise<React.ReactElement[]>((resolve, reject) => {
