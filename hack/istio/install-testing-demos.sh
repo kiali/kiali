@@ -37,21 +37,6 @@ kind: NetworkAttachmentDefinition
 metadata:
   name: istio-cni
 NAD
-    cat <<SCC | $CLIENT_EXE apply -n sleep -f -
-apiVersion: security.openshift.io/v1
-kind: SecurityContextConstraints
-metadata:
-  name: sleep-scc
-runAsUser:
-  type: RunAsAny
-seLinuxContext:
-  type: RunAsAny
-supplementalGroups:
-  type: RunAsAny
-users:
-- "system:serviceaccount:sleep:default"
-- "system:serviceaccount:sleep:sleep"
-SCC
   fi
   if [ "${ARCH}" == "s390x" ]; then
     echo "Using s390x specific images for curl in sleep.yaml"
@@ -206,7 +191,7 @@ else
   fi
   if [ "${IS_OPENSHIFT}" == "true" ]; then
     ${CLIENT_EXE} delete network-attachment-definition istio-cni -n sleep
-    ${CLIENT_EXE} delete scc sleep-scc
+    ${CLIENT_EXE} adm policy remove-scc-from-user anyuid system:serviceaccount:sleep:sleep
     ${CLIENT_EXE} delete project sleep
   fi
   ${CLIENT_EXE} delete namespace sleep
