@@ -135,8 +135,6 @@
               "UseKialiToken": false,
               "Username": "xxx"
             },
-            "CacheEnabled": true,
-            "CacheExpiration": 300,
             "CustomHeaders": {},
             "Enabled": true,
             "ExternalURL": "",
@@ -145,7 +143,10 @@
             "InternalURL": "http://tracing.istio-system:16685/jaeger",
             "IsCore": false,
             "Provider": "jaeger",
-            "TempoConfig": {},
+            "TempoConfig": {
+              "CacheEnabled": true,
+              "CacheExpiration": 300
+            },
             "NamespaceSelector": true,
             "QueryScope": {},
             "QueryTimeout": 5,
