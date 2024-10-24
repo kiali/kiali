@@ -117,7 +117,7 @@ export const DEGRADED: Status = {
 
 export const NOT_READY: Status = {
   className: 'icon-idle',
-  color: PFColors.InfoBackground,
+  color: PFColors.Info,
   icon: MinusCircleIcon,
   name: t('Not Ready'),
   priority: 2
