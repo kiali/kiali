@@ -1,6 +1,11 @@
 package util
 
-import "k8s.io/apimachinery/pkg/runtime/schema"
+import (
+	"fmt"
+	"strings"
+
+	"k8s.io/apimachinery/pkg/runtime/schema"
+)
 
 func RemoveNilValues(root interface{}) {
 	if mRoot, isMap := root.(map[string]interface{}); isMap {
@@ -35,4 +40,48 @@ func BuildNameNSKey(name string, namespace string) string {
 
 func BuildNameNSTypeKey(name string, namespace string, objType schema.GroupVersionKind) string {
 	return BuildNameNSKey(name, namespace) + "/" + objType.String()
+}
+
+func ParseNameNSKey(nameNSKey string) (string, string) {
+	// Find the last dot in the string to separate name and namespace
+	lastDot := strings.LastIndex(nameNSKey, ".")
+	if lastDot == -1 {
+		// If there's no dot, it might be malformed, or it's a name with no namespace
+		return nameNSKey, ""
+	}
+	// Split the name and namespace
+	name := nameNSKey[:lastDot]
+	namespace := nameNSKey[lastDot+1:]
+
+	return name, namespace
+}
+
+// Helper function to parse the GVK string back into schema.GroupVersionKind
+func StringToGVK(gvk string) (schema.GroupVersionKind, error) {
+	// Split the GVK string into its components (group, version, kind)
+	// Example: "gateway.networking.k8s.io/v1, Kind=Gateway"
+	parts := strings.Split(gvk, ", Kind=")
+	if len(parts) != 2 {
+		// wor workloads, apps and services
+		return schema.GroupVersionKind{
+			Group:   "",
+			Version: "",
+			Kind:    gvk,
+		}, nil
+	}
+
+	groupVersion := parts[0]
+	kind := parts[1]
+
+	// Split the groupVersion into group and version
+	gvParts := strings.Split(groupVersion, "/")
+	if len(gvParts) == 2 {
+		return schema.GroupVersionKind{
+			Group:   gvParts[0],
+			Version: gvParts[1],
+			Kind:    kind,
+		}, nil
+	}
+
+	return schema.GroupVersionKind{}, fmt.Errorf("Invalid GVK format: %s", gvk)
 }

@@ -508,6 +508,39 @@ func (iv IstioValidations) MarshalJSON() ([]byte, error) {
 	return json.Marshal(out)
 }
 
+func (iv *IstioValidations) UnmarshalJSON(data []byte) error {
+	temp := make(map[string]map[string]*IstioValidation)
+
+	if err := json.Unmarshal(data, &temp); err != nil {
+		return err
+	}
+
+	*iv = make(IstioValidations)
+	for gvkString, innerMap := range temp {
+		// Parse the GVK string back into a schema.GroupVersionKind
+		gvk, err := util.StringToGVK(gvkString)
+		if err != nil {
+			return err
+		}
+
+		for nameNs, validation := range innerMap {
+			// Split the Name.Namespace key into its components
+			name, namespace := util.ParseNameNSKey(nameNs)
+
+			validationKey := IstioValidationKey{
+				ObjectGVK: gvk,
+				Name:      name,
+				Namespace: namespace,
+				Cluster:   "", // @TODO multicluster validations
+			}
+
+			(*iv)[validationKey] = validation
+		}
+	}
+
+	return nil
+}
+
 func (iv *IstioValidations) StripIgnoredChecks() {
 	// strip away codes that are to be ignored
 	codesToIgnore := config.Get().KialiFeatureFlags.Validations.Ignore

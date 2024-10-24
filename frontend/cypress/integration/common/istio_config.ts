@@ -24,28 +24,6 @@ const labelsStringToJson = (labelsString: string): string => {
   return `{${labelsJson}}`;
 };
 
-// This is for Istio Object Types only
-const pluralize = (word: string): string => {
-  const endings = {
-    ay: 'ays',
-    cy: 'cies',
-    ry: 'ries',
-    ze: 'zes',
-    s: 'ses',
-    e: 'es'
-  };
-
-  for (const [singular, plural] of Object.entries(endings)) {
-    const regex = new RegExp(`${singular}$`);
-    if (regex.test(word)) {
-      return word.replace(regex, plural);
-    }
-  }
-
-  // 's' by default
-  return `${word}s`;
-};
-
 export const dicIstioTypeToGVKStrings: { [key: string]: string } = {
   AuthorizationPolicy: 'security.istio.io/v1, Kind=AuthorizationPolicy',
   PeerAuthentication: 'security.istio.io/v1, Kind=PeerAuthentication',
@@ -590,14 +568,13 @@ Then('user only sees {string}', (sees: string) => {
 });
 
 Then('only {string} objects are visible in the {string} namespace', (sees: string, ns: string) => {
-  let lowercaseSees: string = sees.charAt(0).toLowerCase() + sees.slice(1);
   let count: number;
 
   cy.request({
     method: 'GET',
     url: `/api/namespaces/${ns}/istio?objects=${dicIstioTypeToGVKStrings[sees]}&validate=true`
   }).then(response => {
-    count = response.body[pluralize(lowercaseSees)].length;
+    count = response.body['resources'][dicIstioTypeToGVKStrings[sees]].length;
   });
 
   cy.get('tbody').contains('tr', sees);
