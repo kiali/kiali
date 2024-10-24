@@ -52,6 +52,7 @@ import {
   NodeData,
   selectAnd,
   SelectAnd,
+  setObserved,
   setEdgeOptions,
   setNodeAttachments,
   setNodeLabel
@@ -547,10 +548,12 @@ const TopologyContent: React.FC<{
       });
 
       controller.fromModel(model);
-      controller.getGraph().setData({
-        graphData: graphData,
-        onDeleteTrafficRouting: onDeleteTrafficRouting,
-        onLaunchWizard: onLaunchWizard
+      setObserved(() => {
+        controller.getGraph().setData({
+          graphData: graphData,
+          onDeleteTrafficRouting: onDeleteTrafficRouting,
+          onLaunchWizard: onLaunchWizard
+        });
       });
 
       const { nodes } = elems(controller);
@@ -601,7 +604,7 @@ const TopologyContent: React.FC<{
           data.isSelected = true;
           setSelectedIds([target.getId()]);
 
-          target.setData(data);
+          setObserved(() => target.setData(data));
         }
       }
     };
@@ -640,14 +643,14 @@ const TopologyContent: React.FC<{
         if (focusNode.isSelected) {
           data.isSelected = true;
           setSelectedIds([node.getId()]);
-          node.setData({ ...(node.getData() as NodeData) });
+          setObserved(() => node.setData({ ...(node.getData() as NodeData) }));
         }
         // flash node
         for (let i = 0; i < 8; ++i) {
           setTimeout(() => {
             const data = node.getData() as NodeData;
             data.isFocus = !data.isFocus;
-            node.setData({ ...(node.getData() as NodeData) });
+            setObserved(() => node.setData({ ...(node.getData() as NodeData) }));
           }, i * 500);
         }
       }

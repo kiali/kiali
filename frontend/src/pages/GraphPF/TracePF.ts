@@ -7,7 +7,7 @@ import {
   searchParentApp,
   searchParentWorkload
 } from 'utils/tracing/TracingHelper';
-import { edgesOut, elems, select, SelectAnd, selectAnd } from './GraphPFElems';
+import { edgesOut, elems, select, SelectAnd, selectAnd, setObserved } from './GraphPFElems';
 
 export const showTrace = (controller: Controller, graphType: GraphType, trace: JaegerTrace): void => {
   if (!controller.hasGraph()) {
@@ -144,7 +144,7 @@ const addSpan = (ele: Node | Edge | undefined, span: Span): void => {
     hasSpans = [span];
   }
   // must reset Data to get the element to re-render
-  ele.setData({ ...data, hasSpans: hasSpans });
+  setObserved(() => ele.setData({ ...data, hasSpans: hasSpans }));
 };
 
 export const hideTrace = (controller: Controller): void => {
@@ -152,9 +152,11 @@ export const hideTrace = (controller: Controller): void => {
     return;
   }
   // unhighlight old span-hits
-  const { nodes, edges } = elems(controller);
-  select(edges, { prop: 'hasSpans', op: 'truthy' }).forEach(e => e.setData({ ...e.getData(), hasSpans: undefined }));
-  select(nodes, { prop: 'hasSpans', op: 'truthy' }).forEach(e => e.setData({ ...e.getData(), hasSpans: undefined }));
+  setObserved(() => {
+    const { nodes, edges } = elems(controller);
+    select(edges, { prop: 'hasSpans', op: 'truthy' }).forEach(e => e.setData({ ...e.getData(), hasSpans: undefined }));
+    select(nodes, { prop: 'hasSpans', op: 'truthy' }).forEach(e => e.setData({ ...e.getData(), hasSpans: undefined }));
+  });
 };
 
 const getOutboundServiceEntry = (span: Span, nodes: Node[]): Node[] | undefined => {

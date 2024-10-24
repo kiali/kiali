@@ -42,6 +42,7 @@ import {
   elems,
   getNodeShape,
   getNodeStatus,
+  setObserved,
   setEdgeOptions,
   setNodeAttachments,
   setNodeLabel
@@ -403,7 +404,7 @@ const TopologyContent: React.FC<{
       });
 
       controller.fromModel(model);
-      controller.getGraph().setData({ meshData: meshData });
+      setObserved(() => controller.getGraph().setData({ meshData: meshData }));
 
       const { nodes } = elems(controller);
 
