@@ -48,7 +48,7 @@ type (
 func NewTempoCache() TempoCache {
 	kConfig := kialiConfig.Get()
 
-	cacheExpiration := time.Duration(kConfig.ExternalServices.Tracing.CacheExpiration) * time.Second
+	cacheExpiration := time.Duration(kConfig.ExternalServices.Tracing.TempoConfig.CacheExpiration) * time.Second
 
 	tempoCacheImpl := tempoCacheImpl{
 		cacheExpiration:   cacheExpiration,

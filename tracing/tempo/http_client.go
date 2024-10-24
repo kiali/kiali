@@ -33,7 +33,7 @@ var (
 )
 
 func initTempoCache() {
-	if config.Get().ExternalServices.Tracing.CacheEnabled {
+	if config.Get().ExternalServices.Tracing.TempoConfig.CacheEnabled {
 		log.Infof("[Tempo Cache] Enabled")
 		tempoCache = NewTempoCache()
 	} else {

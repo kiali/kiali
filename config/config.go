@@ -254,16 +254,16 @@ type GrafanaVariablesConfig struct {
 }
 
 type TempoConfig struct {
-	DatasourceUID string `yaml:"datasource_uid" json:"datasource_uid,omitempty"`
-	OrgID         string `yaml:"org_id" json:"org_id,omitempty"`
-	URLFormat     string `yaml:"url_format" json:"url_format,omitempty"`
+	CacheEnabled    bool   `yaml:"cache_enabled,omitempty"`
+	CacheExpiration int    `yaml:"cache_expiration,omitempty"`
+	DatasourceUID   string `yaml:"datasource_uid" json:"datasource_uid,omitempty"`
+	OrgID           string `yaml:"org_id" json:"org_id,omitempty"`
+	URLFormat       string `yaml:"url_format" json:"url_format,omitempty"`
 }
 
 // TracingConfig describes configuration used for tracing links
 type TracingConfig struct {
 	Auth                 Auth              `yaml:"auth"`
-	CacheEnabled         bool              `yaml:"cache_enabled,omitempty"`
-	CacheExpiration      int               `yaml:"cache_expiration,omitempty"`
 	CustomHeaders        map[string]string `yaml:"custom_headers,omitempty"`
 	Enabled              bool              `yaml:"enabled"`      // Enable Tracing in Kiali
 	ExternalURL          string            `yaml:"external_url"` // replaces the old url
@@ -755,19 +755,20 @@ func NewConfig() (c *Config) {
 				Auth: Auth{
 					Type: AuthTypeNone,
 				},
-				CacheEnabled:         true,
-				CacheExpiration:      300, // Seconds
-				CustomHeaders:        map[string]string{},
-				Enabled:              false,
-				ExternalURL:          "",
-				GrpcPort:             9095,
-				InternalURL:          "http://tracing.istio-system:16685/jaeger",
-				IsCore:               false,
-				Provider:             JaegerProvider,
-				NamespaceSelector:    true,
-				QueryScope:           map[string]string{},
-				QueryTimeout:         5,
-				TempoConfig:          TempoConfig{},
+				CustomHeaders:     map[string]string{},
+				Enabled:           false,
+				ExternalURL:       "",
+				GrpcPort:          9095,
+				InternalURL:       "http://tracing.istio-system:16685/jaeger",
+				IsCore:            false,
+				Provider:          JaegerProvider,
+				NamespaceSelector: true,
+				QueryScope:        map[string]string{},
+				QueryTimeout:      5,
+				TempoConfig: TempoConfig{
+					CacheEnabled:    true,
+					CacheExpiration: 300,
+				},
 				UseGRPC:              true,
 				WhiteListIstioSystem: []string{"jaeger-query", "istio-ingressgateway"},
 			},
