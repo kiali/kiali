@@ -226,7 +226,12 @@ if [ "${DELETE_BOOKINFO}" == "true" ]; then
     else
       $CLIENT_EXE delete smm default -n ${NAMESPACE}
     fi
-    $CLIENT_EXE delete scc bookinfo-scc
+    ${CLIENT_EXE} adm policy remove-scc-from-user anyuid system:serviceaccount:${NAMESPACE}:bookinfo-details
+    ${CLIENT_EXE} adm policy remove-scc-from-user anyuid system:serviceaccount:${NAMESPACE}:bookinfo-productpage
+    ${CLIENT_EXE} adm policy remove-scc-from-user anyuid system:serviceaccount:${NAMESPACE}:bookinfo-ratings
+    ${CLIENT_EXE} adm policy remove-scc-from-user anyuid system:serviceaccount:${NAMESPACE}:bookinfo-ratings-v2
+    ${CLIENT_EXE} adm policy remove-scc-from-user anyuid system:serviceaccount:${NAMESPACE}:bookinfo-reviews
+    ${CLIENT_EXE} adm policy remove-scc-from-user anyuid system:serviceaccount:${NAMESPACE}:default
     $CLIENT_EXE delete project ${NAMESPACE}
     # oc delete project does not wait for a namespace to be removed, we need to also call 'oc delete namespace'
     $CLIENT_EXE delete namespace ${NAMESPACE}
@@ -257,25 +262,12 @@ metadata:
   name: istio-cni
 NAD
   fi
-  cat <<SCC | $CLIENT_EXE apply -f -
-apiVersion: security.openshift.io/v1
-kind: SecurityContextConstraints
-metadata:
-  name: bookinfo-scc
-runAsUser:
-  type: RunAsAny
-seLinuxContext:
-  type: RunAsAny
-supplementalGroups:
-  type: RunAsAny
-users:
-- "system:serviceaccount:${NAMESPACE}:bookinfo-details"
-- "system:serviceaccount:${NAMESPACE}:bookinfo-productpage"
-- "system:serviceaccount:${NAMESPACE}:bookinfo-ratings"
-- "system:serviceaccount:${NAMESPACE}:bookinfo-ratings=v2"
-- "system:serviceaccount:${NAMESPACE}:bookinfo-reviews"
-- "system:serviceaccount:${NAMESPACE}:default"
-SCC
+  ${CLIENT_EXE} adm policy add-scc-to-user anyuid system:serviceaccount:${NAMESPACE}:bookinfo-details
+  ${CLIENT_EXE} adm policy add-scc-to-user anyuid system:serviceaccount:${NAMESPACE}:bookinfo-productpage
+  ${CLIENT_EXE} adm policy add-scc-to-user anyuid system:serviceaccount:${NAMESPACE}:bookinfo-ratings
+  ${CLIENT_EXE} adm policy add-scc-to-user anyuid system:serviceaccount:${NAMESPACE}:bookinfo-ratings-v2
+  ${CLIENT_EXE} adm policy add-scc-to-user anyuid system:serviceaccount:${NAMESPACE}:bookinfo-reviews
+  ${CLIENT_EXE} adm policy add-scc-to-user anyuid system:serviceaccount:${NAMESPACE}:default
 fi
 
 if [ "${AUTO_INJECTION}" == "true" ]; then
