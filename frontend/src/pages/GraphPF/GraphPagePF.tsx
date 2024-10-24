@@ -583,7 +583,7 @@ class GraphPagePFComponent extends React.Component<GraphPagePropsPF, GraphPageSt
         isLoading: false,
         fetchParams: fetchParams,
         timestamp: graphTimestamp * 1000
-      }
+      } as GraphData
     });
     this.props.setGraphDefinition(this.graphDataSource.graphDefinition);
   };

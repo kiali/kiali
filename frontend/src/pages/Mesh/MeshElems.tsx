@@ -14,6 +14,7 @@ import {
   NodeShape,
   NodeStatus
 } from '@patternfly/react-topology';
+import { action } from 'mobx';
 import { PFBadges, PFBadgeType } from 'components/Pf/PfBadges';
 import { DEGRADED, FAILURE } from 'types/Health';
 import { DecoratedMeshEdgeData, DecoratedMeshEdgeWrapper, DecoratedMeshNodeData, MeshInfraType } from 'types/Mesh';
@@ -39,20 +40,12 @@ export type NodeData = DecoratedMeshNodeData & {
   collapsible?: boolean; // for groups
   column?: number;
   component?: React.ReactNode;
-  icon?: React.ReactNode;
   isCollapsed?: boolean; // for groups
-  isFind?: boolean;
-  isHighlighted?: boolean;
-  isSelected?: boolean;
-  isUnhighlighted?: boolean;
   labelIcon?: React.ReactNode;
   labelIconClass?: string;
   labelIconPadding?: number;
   labelPosition?: LabelPosition;
-  marginX?: number;
   onCollapseChange?: (group: Node, collapsed: boolean) => void;
-  onHover?: (element: GraphElement, isMouseIn: boolean) => void;
-  row?: number;
   secondaryLabel?: string;
   setLocation?: boolean;
   showContextMenu?: boolean;
@@ -61,6 +54,13 @@ export type NodeData = DecoratedMeshNodeData & {
   truncateLength?: number;
   x?: number;
   y?: number;
+  // These are additions we've made for our own styling
+  isFind?: boolean;
+  isFocus?: boolean;
+  isHighlighted?: boolean;
+  isSelected?: boolean;
+  isUnhighlighted?: boolean;
+  onHover?: (element: GraphElement, isMouseIn: boolean) => void;
 };
 
 export type EdgeData = DecoratedMeshEdgeData & {
@@ -230,6 +230,17 @@ export const assignEdgeHealth = (_edges: DecoratedMeshEdgeWrapper[], _nodeMap: N
 };
 
 ///// PFT helpers
+
+// setObserved executes the provided setter func in a single mobx action. The setter is expected to make at least one element update.
+// like a call to elem.setData() or elem.setVisible(). PFT has these updates wrapped in a mobx observer and wants changes wrapper
+// in a mobx action. To limit renders, batch several data updates in one setDataFunc execution. If you see a console warning like
+// "[MobX] Since strict-mode is enabled, changing (observed) observable values without using an action is not allowed",
+// then you're missing this wrapper.
+export const setObserved = (setter: () => void): void => {
+  action(() => {
+    setter();
+  })();
+};
 
 export const elems = (c: Controller): { edges: Edge[]; nodes: Node[] } => {
   const elems = c.getElements();

@@ -22,7 +22,7 @@
 
 import { Edge, Node } from '@patternfly/react-topology';
 import { Controller, GraphElement } from '@patternfly/react-topology';
-import { NodeData, ancestors, predecessors, successors } from './MeshElems';
+import { NodeData, ancestors, predecessors, setObserved, successors } from './MeshElems';
 
 export class MeshHighlighter {
   controller: Controller;
@@ -67,12 +67,14 @@ export class MeshHighlighter {
   };
 
   clearHighlighting = (): void => {
-    this.controller.getElements().forEach(e => {
-      const data = e.getData() as NodeData;
+    setObserved(() => {
+      this.controller.getElements().forEach(e => {
+        const data = e.getData() as NodeData;
 
-      if (data.isHighlighted || data.isUnhighlighted) {
-        e.setData({ ...data, isHighlighted: false, isUnhighlighted: false });
-      }
+        if (data.isHighlighted || data.isUnhighlighted) {
+          e.setData({ ...data, isHighlighted: false, isUnhighlighted: false });
+        }
+      });
     });
   };
 
@@ -82,18 +84,20 @@ export class MeshHighlighter {
       return;
     }
 
-    highlighted.toHighlight.forEach(e => {
-      e.setData({ ...e.getData(), isHighlighted: true });
-    });
-
-    if (highlighted.unhighlightOthers) {
-      this.controller.getElements().forEach(e => {
-        const data = e.getData() as NodeData;
-        if (!data.isHighlighted) {
-          e.setData({ ...data, isUnhighlighted: true });
-        }
+    setObserved(() => {
+      highlighted.toHighlight.forEach(e => {
+        e.setData({ ...e.getData(), isHighlighted: true });
       });
-    }
+
+      if (highlighted.unhighlightOthers) {
+        this.controller.getElements().forEach(e => {
+          const data = e.getData() as NodeData;
+          if (!data.isHighlighted) {
+            e.setData({ ...data, isUnhighlighted: true });
+          }
+        });
+      }
+    });
   };
 
   // Returns the nodes to highlight. Highlighting for a hovered or selected element

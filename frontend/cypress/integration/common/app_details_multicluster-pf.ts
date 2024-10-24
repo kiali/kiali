@@ -4,6 +4,7 @@ import { clusterParameterExists } from './navigation';
 import { ensureKialiFinishedLoading } from './transition';
 import { elems, nodeInfo } from './graph-pf';
 import { Visualization } from '@patternfly/react-topology';
+import { NodeType } from 'types/Graph';
 
 Then('user sees details information for the remote {string} app', (name: string) => {
   cy.getBySel('app-description-card').within(() => {
@@ -100,13 +101,26 @@ Given(
         assert.isTrue(controller.hasGraph());
         const { nodes } = elems(controller);
 
-        const nodeExists = nodes.some(
-          node =>
+        const nodeExists = nodes.some(node => {
+          const nodeOk =
             node.getData().nodeType === nodeType &&
             node.getData().namespace === 'bookinfo' &&
             node.getData().cluster === cluster &&
-            node.getData().isBox === isBox
-        );
+            node.getData().isBox === isBox;
+          if (!nodeOk) {
+            return false;
+          }
+          switch (type) {
+            case NodeType.APP:
+              return node.getData().app === name;
+            case NodeType.SERVICE:
+              return node.getData().service === name;
+            case NodeType.WORKLOAD:
+              return node.getData().workload === name;
+            default:
+              return false;
+          }
+        });
 
         assert(nodeExists, `Node ${name} of type ${type} from cluster ${cluster} not found in the graph`);
       });
@@ -129,14 +143,26 @@ When(
         assert.isTrue(controller.hasGraph());
         const { nodes } = elems(controller);
 
-        const node = nodes.find(
-          node =>
+        const node = nodes.find(node => {
+          const nodeOk =
             node.getData().nodeType === nodeType &&
             node.getData().namespace === 'bookinfo' &&
             node.getData().cluster === cluster &&
-            node.getData().isBox === isBox &&
-            !node.getData().isInaccessible
-        );
+            node.getData().isBox === isBox;
+          if (!nodeOk) {
+            return false;
+          }
+          switch (type) {
+            case NodeType.APP:
+              return node.getData().app === name;
+            case NodeType.SERVICE:
+              return node.getData().service === name;
+            case NodeType.WORKLOAD:
+              return node.getData().workload === name;
+            default:
+              return false;
+          }
+        });
 
         assert(node, `Node ${name} of type ${type} from cluster ${cluster} not found in the graph`);
 

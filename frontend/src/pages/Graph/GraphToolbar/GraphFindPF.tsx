@@ -40,7 +40,8 @@ import {
   SelectAnd,
   SelectExp,
   selectOr,
-  SelectOr
+  SelectOr,
+  setObserved
 } from 'pages/GraphPF/GraphPFElems';
 import { isArray } from 'lodash';
 import { graphLayout, LayoutType } from 'pages/GraphPF/GraphPF';
@@ -544,12 +545,16 @@ class GraphFindPFComponent extends React.Component<GraphFindProps, GraphFindStat
   };
 
   // All edges have the graph as a parent
-  private unhideElement = (g: Graph, e: GraphElement): void => {
-    e.setVisible(true);
+  private unhideElements = (g: Graph, elems: GraphElement[]): void => {
+    setObserved(() => {
+      elems.forEach(e => {
+        e.setVisible(true);
 
-    if (!e.hasParent()) {
-      g.appendChild(e);
-    }
+        if (!e.hasParent()) {
+          g.appendChild(e);
+        }
+      });
+    });
   };
 
   private handleHide = (controller: Controller): void => {
@@ -561,7 +566,7 @@ class GraphFindPFComponent extends React.Component<GraphFindProps, GraphFindStat
 
     // unhide any currently hidden elements, something changed so we'll redetermine what needs to be hidden
     if (this.hiddenElements) {
-      this.hiddenElements.forEach(e => this.unhideElement(graph, e));
+      this.unhideElements(graph, this.hiddenElements);
     }
     this.hiddenElements = undefined;
 
@@ -574,48 +579,57 @@ class GraphFindPFComponent extends React.Component<GraphFindProps, GraphFindStat
       // add elements described by the hide expression
       if (selector.nodeSelector) {
         hiddenNodes = selectOr(nodes, selector.nodeSelector);
-        hiddenNodes.forEach(n => n.setVisible(false));
+        setObserved(() => hiddenNodes.forEach(n => n.setVisible(false)));
       }
 
       if (selector.edgeSelector) {
         hiddenEdges = selectOr(edges, selector.edgeSelector);
-        hiddenEdges.forEach(e => e.setVisible(false));
+        setObserved(() => hiddenEdges.forEach(e => e.setVisible(false)));
       }
 
       if (hiddenEdges.length > 0) {
         // also hide nodes with only hidden edges (keep idle nodes as that is an explicit option)
-        nodes.forEach(n => {
-          if (n.isVisible()) {
-            const nodeData = n.getData();
-            const nodeEdges = n.getSourceEdges().concat(n.getTargetEdges());
-            if (!nodeData.isIdle && nodeEdges.length > 0 && nodeEdges.every(e => !e.isVisible())) {
-              n.setVisible(false);
+        setObserved(() => {
+          nodes.forEach(n => {
+            if (n.isVisible()) {
+              const nodeData = n.getData();
+              const nodeEdges = n.getSourceEdges().concat(n.getTargetEdges());
+              if (!nodeData.isIdle && nodeEdges.length > 0 && nodeEdges.every(e => !e.isVisible())) {
+                n.setVisible(false);
+              }
             }
-          }
+          });
         });
       }
 
       // also hide edges connected to hidden nodes
-      edges.forEach(e => {
-        if (e.isVisible() && !(e.getSource().isVisible() && e.getTarget().isVisible())) {
-          e.setVisible(false);
-        }
+      setObserved(() => {
+        edges.forEach(e => {
+          if (e.isVisible() && !(e.getSource().isVisible() && e.getTarget().isVisible())) {
+            e.setVisible(false);
+          }
+        });
       });
 
       // unhide any box hits, we only hide empty boxes
-      nodes.filter(n => n.isGroup() && !n.isVisible()).forEach(g => this.unhideElement(graph, g));
+      this.unhideElements(
+        graph,
+        nodes.filter(n => n.isGroup() && !n.isVisible())
+      );
 
       // Handle EdgeMode as part of Hide, just edges, leave remaining visible nodes
       if (this.props.edgeMode !== EdgeMode.ALL) {
         switch (this.props.edgeMode) {
           case EdgeMode.NONE:
-            edges.forEach(e => e.setVisible(false));
+            setObserved(() => edges.forEach(e => e.setVisible(false)));
             break;
           case EdgeMode.UNHEALTHY:
-            edges.forEach(e => {
-              if (e.isVisible() && !e.getData()[NodeAttr.healthStatus]) {
-                e.setVisible(false);
-              }
+            setObserved(() => {
+              edges.forEach(e => {
+                if (e.isVisible() && !e.getData()[NodeAttr.healthStatus]) {
+                  e.setVisible(false);
+                }
+              });
             });
 
             break;
@@ -623,20 +637,22 @@ class GraphFindPFComponent extends React.Component<GraphFindProps, GraphFindStat
       }
 
       // now hide any appboxes that don't have any visible children
-      nodes
-        .filter(n => n.isGroup())
-        .forEach(g => {
-          if (descendents(g).every(d => !d.isVisible())) {
-            g.setVisible(false);
-          }
-        });
+      setObserved(() => {
+        nodes
+          .filter(n => n.isGroup())
+          .forEach(g => {
+            if (descendents(g).every(d => !d.isVisible())) {
+              g.setVisible(false);
+            }
+          });
+      });
 
       const finalNodes = nodes.filter(n => !n.isVisible()) as GraphElement[];
       const finalEdges = edges.filter(e => !e.isVisible()) as GraphElement[];
 
       // we need to remove edges completely because an invisible edge is not
       // ignored by layout (I don't know why, nodes are ignored)
-      finalEdges.forEach(e => e.remove());
+      setObserved(() => finalEdges.forEach(e => e.remove()));
 
       this.hiddenElements = finalNodes.concat(finalEdges);
     }
@@ -651,9 +667,11 @@ class GraphFindPFComponent extends React.Component<GraphFindProps, GraphFindStat
     console.debug(`Find selector=[${JSON.stringify(selector)}]`);
 
     // unhighlight old find-hits
-    this.findElements?.forEach(e => {
-      const data = e.getData() as NodeData | EdgeData;
-      e.setData({ ...data, isFind: false });
+    setObserved(() => {
+      this.findElements?.forEach(e => {
+        const data = e.getData() as NodeData | EdgeData;
+        e.setData({ ...data, isFind: false } as NodeData | EdgeData);
+      });
     });
 
     this.findElements = undefined;
@@ -673,9 +691,11 @@ class GraphFindPFComponent extends React.Component<GraphFindProps, GraphFindStat
       }
 
       this.findElements = findNodes.concat(findEdges);
-      this.findElements.forEach(e => {
-        const data = e.getData() as NodeData | EdgeData;
-        e.setData({ ...data, isFind: true });
+      setObserved(() => {
+        this.findElements?.forEach(e => {
+          const data = e.getData() as NodeData | EdgeData;
+          e.setData({ ...data, isFind: true } as NodeData | EdgeData);
+        });
       });
     }
   };
