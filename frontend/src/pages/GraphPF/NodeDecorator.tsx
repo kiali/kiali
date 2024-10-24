@@ -20,7 +20,20 @@ interface Props {
 }
 
 const decoratorStyle = kialiStyle({
-  color: PFColors.White
+  color: PFColors.White,
+  $nest: {
+    '& .pf-topology__node__decorator__bg': {
+      fill: PFColors.Purple500
+    },
+    '& .pf-topology__node__decorator__icon': {
+      color: PFColors.White,
+      $nest: {
+        '& svg': {
+          fill: PFColors.White
+        }
+      }
+    }
+  }
 });
 
 const NodeDecoratorInner: React.FC<Props> = ({ element, quadrant, icon, tooltip }) => {
