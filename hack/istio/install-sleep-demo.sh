@@ -91,7 +91,7 @@ if [ "${DELETE_SLEEP}" == "true" ]; then
 
   if [ "${IS_OPENSHIFT}" == "true" ]; then
     ${CLIENT_EXE} delete network-attachment-definition istio-cni -n sleep
-    ${CLIENT_EXE} delete scc sleep-scc
+    ${CLIENT_EXE} adm policy remove-scc-from-user anyuid system:serviceaccount:sleep:sleep
     ${CLIENT_EXE} delete project sleep
   fi
   ${CLIENT_EXE} delete namespace sleep
