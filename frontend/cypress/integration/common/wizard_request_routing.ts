@@ -1,27 +1,8 @@
-import { Before, Given, When, Then } from '@badeball/cypress-cucumber-preprocessor';
+import { Given, When, Then } from '@badeball/cypress-cucumber-preprocessor';
 import { ensureKialiFinishedLoading } from './transition';
 
 const CLUSTER1_CONTEXT = Cypress.env('CLUSTER1_CONTEXT');
 const CLUSTER2_CONTEXT = Cypress.env('CLUSTER2_CONTEXT');
-
-Before(() => {
-  // Forcing to not stop cypress on unexpected errors not related to the tests.
-  // There are some random failures due timeouts/loadtime/framework that throws some error in the browser.
-  // After reviewing the tests failures, those are unrelated to the app, so,
-  // it needs this event to not fail the CI action due some "slow" action or similar.
-  // This is something to review in future iterations when tests are solid, but I haven't found a better way to
-  // solve this issue.
-  cy.on('uncaught:exception', (err, runnable, promise) => {
-    // when the exception originated from an unhandled promise
-    // rejection, the promise is provided as a third argument
-    // you can turn off failing the test in this case
-    if (promise) {
-      return false;
-    }
-    // we still want to ensure there are no other unexpected
-    // errors, so we let them fail the test
-  });
-});
 
 Given('user opens the namespace {string} and {string} service details page', (namespace: string, service: string) => {
   // Forcing "Pause" to not cause unhandled promises from the browser when cypress is testing
