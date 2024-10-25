@@ -73,9 +73,9 @@ import { ControlPlaneVersionBadge } from './ControlPlaneVersionBadge';
 import { AmbientBadge } from '../../components/Ambient/AmbientBadge';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { ApiError } from 'types/Api';
-import { dicIstioTypeToGVK, IstioConfigList } from 'types/IstioConfigList';
+import { IstioConfigList } from 'types/IstioConfigList';
 import { t } from 'utils/I18nUtils';
-import { gvkToString } from '../../utils/IstioConfigUtils';
+import { getGVKTypeString } from '../../utils/IstioConfigUtils';
 
 const gridStyleCompact = kialiStyle({
   backgroundColor: PFColors.BackgroundColor200,
@@ -880,7 +880,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
         });
       }
 
-      const aps = nsInfo.istioConfig?.resources[gvkToString(dicIstioTypeToGVK['AuthorizationPolicy'])] ?? [];
+      const aps = nsInfo.istioConfig?.resources[getGVKTypeString('AuthorizationPolicy')] ?? [];
 
       const addAuthorizationAction = {
         isGroup: false,

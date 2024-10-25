@@ -10,10 +10,11 @@ import {
   Validations,
   VirtualService,
   IstioObject,
-  GroupVersionKind
+  GroupVersionKind,
+  K8sResource
 } from './IstioObjects';
 import { ResourcePermissions } from './Permissions';
-import { getIstioObjectGVK, gvkToString } from '../utils/IstioConfigUtils';
+import { getGVKTypeString, getIstioObjectGVK } from '../utils/IstioConfigUtils';
 import { TypeMeta } from './Kubernetes';
 
 export interface IstioConfigItem extends TypeMeta {
@@ -21,7 +22,7 @@ export interface IstioConfigItem extends TypeMeta {
   creationTimestamp?: string;
   name: string;
   namespace: string;
-  resource: any;
+  resource: K8sResource;
   resourceVersion?: string;
   validation?: ObjectValidation;
 }
@@ -102,7 +103,7 @@ export const filterByNamespaces = (unfiltered: IstioConfigList, namespaces: stri
 
   // Iterate over dicIstioTypeToGVK to dynamically filter each resource by namespace
   Object.keys(dicIstioTypeToGVK).forEach(key => {
-    const resourceKey = gvkToString(dicIstioTypeToGVK[key]);
+    const resourceKey = getGVKTypeString(key);
 
     // Check if the resource exists in the unfiltered list, then filter by namespace
     if (unfiltered.resources[resourceKey]) {
@@ -128,7 +129,7 @@ export const filterByName = (unfiltered: IstioConfigList, names: string[]): Isti
 
   // Iterate over the dicIstioTypeToGVK to access each resource type dynamically
   Object.keys(dicIstioTypeToGVK).forEach(key => {
-    const resourceKey = gvkToString(dicIstioTypeToGVK[key]);
+    const resourceKey = getGVKTypeString(key);
 
     // Check if the resource exists in the unfiltered list, then filter by names
     if (unfiltered.resources[resourceKey]) {
@@ -194,7 +195,7 @@ export const toIstioItems = (istioConfigList: IstioConfigList, cluster?: string)
     }
 
     entries.forEach((entry: IstioObject) => {
-      const gvkString = gvkToString(getIstioObjectGVK(entry.apiVersion, entry.kind));
+      const gvkString = getGVKTypeString(getIstioObjectGVK(entry.apiVersion, entry.kind));
       const item = {
         namespace: entry.metadata.namespace ?? '',
         cluster: cluster,

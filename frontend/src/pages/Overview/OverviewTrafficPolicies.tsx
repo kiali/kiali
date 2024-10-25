@@ -16,7 +16,7 @@ import {
   buildGraphSidecars
 } from 'components/IstioWizards/WizardActions';
 import { dicIstioTypeToGVK } from '../../types/IstioConfigList';
-import { gvkToString } from '../../utils/IstioConfigUtils';
+import { getGVKTypeString } from '../../utils/IstioConfigUtils';
 
 type OverviewTrafficPoliciesProps = {
   controlPlanes?: ControlPlane[];
@@ -73,8 +73,8 @@ export class OverviewTrafficPolicies extends React.Component<OverviewTrafficPoli
             this.fetchPermission();
           } else if (this.props.opTarget === 'update') {
             const authorizationPolicies =
-              this.props.nsInfo?.istioConfig?.resources[gvkToString(dicIstioTypeToGVK['AuthorizationPolicy'])] ?? [];
-            const sidecars = this.props.nsInfo?.istioConfig?.resources[gvkToString(dicIstioTypeToGVK['Sidecar'])] ?? [];
+              this.props.nsInfo?.istioConfig?.resources[getGVKTypeString('AuthorizationPolicy')] ?? [];
+            const sidecars = this.props.nsInfo?.istioConfig?.resources[getGVKTypeString('Sidecar')] ?? [];
             const remove = ['uid', 'resourceVersion', 'generation', 'creationTimestamp', 'managedFields'];
             sidecars.map(sdc => remove.map(key => delete sdc.metadata[key]));
             authorizationPolicies.map(ap => remove.map(key => delete ap.metadata[key]));
@@ -83,8 +83,8 @@ export class OverviewTrafficPolicies extends React.Component<OverviewTrafficPoli
             const nsInfo = this.props.nsInfo.istioConfig;
             this.setState(
               {
-                authorizationPolicies: nsInfo?.resources[gvkToString(dicIstioTypeToGVK['AuthorizationPolicy'])] ?? [],
-                sidecars: nsInfo?.resources[gvkToString(dicIstioTypeToGVK['Sidecar'])] ?? []
+                authorizationPolicies: nsInfo?.resources[getGVKTypeString('AuthorizationPolicy')] ?? [],
+                sidecars: nsInfo?.resources[getGVKTypeString('Sidecar')] ?? []
               },
               () => this.fetchPermission(true)
             );
@@ -101,7 +101,7 @@ export class OverviewTrafficPolicies extends React.Component<OverviewTrafficPoli
     this.promises
       .register('namespacepermissions', API.getIstioPermissions([this.props.nsTarget], this.props.nsInfo.cluster))
       .then(result => {
-        const permission = result.data[this.props.nsTarget][gvkToString(dicIstioTypeToGVK['AuthorizationPolicy'])];
+        const permission = result.data[this.props.nsTarget][getGVKTypeString('AuthorizationPolicy')];
         const disableOp = !(permission.create && permission.update && permission.delete);
         this.setState({
           confirmationModal,
@@ -274,10 +274,8 @@ export class OverviewTrafficPolicies extends React.Component<OverviewTrafficPoli
   };
 
   onConfirmPreviewPoliciesModal = (items: ConfigPreviewItem[]): void => {
-    const aps = items.filter(
-      i => gvkToString(i.objectGVK) === gvkToString(dicIstioTypeToGVK['AuthorizationPolicy'])
-    )[0];
-    const sds = items.filter(i => gvkToString(i.objectGVK) === gvkToString(dicIstioTypeToGVK['Sidecar']))[0];
+    const aps = items.filter(i => getGVKTypeString(i.objectGVK) === getGVKTypeString('AuthorizationPolicy'))[0];
+    const sds = items.filter(i => getGVKTypeString(i.objectGVK) === getGVKTypeString('Sidecar'))[0];
 
     this.setState(
       {

@@ -1,6 +1,6 @@
 import { Namespace } from './Namespace';
 import { ResourcePermissions } from './Permissions';
-import { ObjectValidation, IstioObject, References, HelpMessage } from './IstioObjects';
+import { ObjectValidation, IstioObject, References, HelpMessage, K8sResource } from './IstioObjects';
 import { AceOptions } from 'react-ace/types';
 
 export type IstioConfigId = {
@@ -17,7 +17,7 @@ export interface IstioConfigDetails {
   namespace: Namespace;
   permissions: ResourcePermissions;
   references?: References;
-  resource: any;
+  resource: K8sResource;
   validation: ObjectValidation;
 }
 

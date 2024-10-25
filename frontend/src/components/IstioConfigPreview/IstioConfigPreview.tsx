@@ -35,7 +35,7 @@ import _ from 'lodash';
 import { download } from 'utils/Common';
 import { t } from 'utils/I18nUtils';
 import { dump } from 'js-yaml';
-import { gvkToString } from '../../utils/IstioConfigUtils';
+import { getGVKTypeString } from '../../utils/IstioConfigUtils';
 
 export type IstioConfigItem =
   | AuthorizationPolicy
@@ -192,7 +192,7 @@ export class IstioConfigPreview extends React.Component<Props, State> {
     const gvks = _.uniq(list.map(item => item.objectGVK));
 
     const itemsGrouped: ConfigPreviewItem[] = gvks.map(gvk => {
-      const filtered = list.filter(it => gvkToString(it.objectGVK) === gvkToString(gvk));
+      const filtered = list.filter(it => getGVKTypeString(it.objectGVK) === getGVKTypeString(gvk));
       const item: ConfigPreviewItem = { objectGVK: gvk, title: filtered[0].title, items: [] };
       filtered.map(f => item.items.push(f.items[0]));
       return item;

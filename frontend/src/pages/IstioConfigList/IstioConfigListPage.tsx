@@ -4,7 +4,6 @@ import { RenderContent } from '../../components/Nav/Page';
 import * as IstioConfigListFilters from './FiltersAndSorts';
 import * as FilterComponent from '../../components/FilterList/FilterComponent';
 import {
-  dicIstioTypeToGVK,
   filterByConfigValidation,
   filterByName,
   filterByNamespaces,
@@ -29,7 +28,7 @@ import { activeNamespacesSelector } from '../../store/Selectors';
 import { connect } from 'react-redux';
 import { DefaultSecondaryMasthead } from '../../components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
 import { isMultiCluster, serverConfig } from '../../config';
-import { gvkToString } from '../../utils/IstioConfigUtils';
+import { getGVKTypeString } from '../../utils/IstioConfigUtils';
 
 interface ReduxProps {
   activeNamespaces: Namespace[];
@@ -107,7 +106,7 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
     const namespacesSelected = this.props.activeNamespaces!.map(item => item.name);
 
     const istioTypeFilters = getFilterSelectedValues(IstioConfigListFilters.istioTypeFilter, activeFilters).map(value =>
-      gvkToString(dicIstioTypeToGVK[value])
+      getGVKTypeString(value)
     );
 
     const istioNameFilters = getFilterSelectedValues(IstioConfigListFilters.istioNameFilter, activeFilters);

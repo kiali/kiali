@@ -199,7 +199,15 @@ export function getIstioObjectGVK(apiVersion?: string, kind?: string): GroupVers
   return { Group: parts[0], Version: parts[1], Kind: kind! };
 }
 
-export function gvkToString(gvk: GroupVersionKind): string {
+export function getGVKTypeString(gvk: GroupVersionKind | string): string {
+  if (typeof gvk === 'string') {
+    return gvkToString(dicIstioTypeToGVK[gvk]);
+  } else {
+    return gvkToString(gvk);
+  }
+}
+
+function gvkToString(gvk: GroupVersionKind): string {
   if (!gvk || (!gvk.Group && !gvk.Version && !gvk.Kind)) {
     return '';
   }

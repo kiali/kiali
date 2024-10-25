@@ -1,6 +1,6 @@
 import {
+  getGVKTypeString,
   getIstioObjectGVK,
-  gvkToString,
   isServerHostValid,
   istioTypesToGVKString,
   isValidUrl,
@@ -135,12 +135,12 @@ describe('Validate returned GoupVersionKind for IstioObject', () => {
 
 describe('Validate converting GroupVersionKind To String', () => {
   it('Correct GroupVersionKind properties', () => {
-    const result = gvkToString({ Group: 'networking.istio.io', Version: 'v1', Kind: 'VirtualService' });
+    const result = getGVKTypeString({ Group: 'networking.istio.io', Version: 'v1', Kind: 'VirtualService' });
     expect(result).toBe('networking.istio.io/v1, Kind=VirtualService');
   });
 
   it('Validate empty string when Group, Version, and Kind are all empty', () => {
-    const result = gvkToString({ Group: '', Version: '', Kind: '' });
+    const result = getGVKTypeString({ Group: '', Version: '', Kind: '' });
     expect(result).toBe('');
   });
 
@@ -148,12 +148,12 @@ describe('Validate converting GroupVersionKind To String', () => {
     const gvkMissingGroup = { Group: '', Version: 'v1', Kind: 'ServiceEntry' };
     const gvkMissingVersion = { Group: 'networking.istio.io', Version: '', Kind: 'ServiceEntry' };
 
-    expect(gvkToString(gvkMissingGroup)).toBe('ServiceEntry');
-    expect(gvkToString(gvkMissingVersion)).toBe('ServiceEntry');
+    expect(getGVKTypeString(gvkMissingGroup)).toBe('ServiceEntry');
+    expect(getGVKTypeString(gvkMissingVersion)).toBe('ServiceEntry');
   });
 
   it('Validate it returns Kind if both Group and Version are empty', () => {
-    const result = gvkToString({ Group: '', Version: '', Kind: 'Gateway' });
+    const result = getGVKTypeString({ Group: '', Version: '', Kind: 'Gateway' });
     expect(result).toBe('Gateway');
   });
 });

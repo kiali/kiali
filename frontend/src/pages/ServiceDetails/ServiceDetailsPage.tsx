@@ -34,8 +34,7 @@ import { HistoryManager } from 'app/History';
 import { durationSelector } from 'store/Selectors';
 import { basicTabStyle } from 'styles/TabStyles';
 import { serverConfig } from 'config';
-import { gvkToString } from '../../utils/IstioConfigUtils';
-import { dicIstioTypeToGVK } from '../../types/IstioConfigList';
+import { getGVKTypeString } from '../../utils/IstioConfigUtils';
 
 type ServiceDetailsState = {
   cluster?: string;
@@ -120,7 +119,7 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
         'gateways',
         API.getIstioConfig(
           this.props.serviceId.namespace,
-          [gvkToString(dicIstioTypeToGVK['Gateway']), gvkToString(dicIstioTypeToGVK['K8sGateway'])],
+          [getGVKTypeString('Gateway'), getGVKTypeString('K8sGateway')],
           false,
           '',
           '',
@@ -128,8 +127,8 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
         )
       )
       .then(response => {
-        this.setState({ gateways: response.data.resources[gvkToString(dicIstioTypeToGVK['Gateway'])] });
-        this.setState({ k8sGateways: response.data.resources[gvkToString(dicIstioTypeToGVK['K8sGateway'])] });
+        this.setState({ gateways: response.data.resources[getGVKTypeString('Gateway')] });
+        this.setState({ k8sGateways: response.data.resources[getGVKTypeString('K8sGateway')] });
       })
       .catch(gwError => {
         AlertUtils.addError('Could not fetch Gateways list.', gwError);
@@ -158,17 +157,10 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
         this.setState({ error: msg });
       });
 
-    API.getIstioConfig(
-      this.props.serviceId.namespace,
-      [gvkToString(dicIstioTypeToGVK['PeerAuthentication'])],
-      false,
-      '',
-      '',
-      cluster
-    )
+    API.getIstioConfig(this.props.serviceId.namespace, [getGVKTypeString('PeerAuthentication')], false, '', '', cluster)
       .then(results => {
         this.setState({
-          peerAuthentications: results.data.resources[gvkToString(dicIstioTypeToGVK['PeerAuthentication'])]
+          peerAuthentications: results.data.resources[getGVKTypeString('PeerAuthentication')]
         });
       })
       .catch(error => {

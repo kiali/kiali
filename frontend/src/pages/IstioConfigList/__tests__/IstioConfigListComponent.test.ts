@@ -7,7 +7,7 @@ import {
 } from '../../../types/IstioConfigList';
 import * as IstioConfigListFilters from '../FiltersAndSorts';
 import { SortField } from '../../../types/SortFilters';
-import { gvkToString } from '../../../utils/IstioConfigUtils';
+import { getGVKTypeString } from '../../../utils/IstioConfigUtils';
 
 const mockIstioConfigList = (names: string[]): IstioConfigList => {
   const testData: IstioConfigList = {
@@ -16,35 +16,35 @@ const mockIstioConfigList = (names: string[]): IstioConfigList => {
     resources: {}
   };
   Object.keys(dicIstioTypeToGVK).forEach(index => {
-    const key = gvkToString(dicIstioTypeToGVK[index]);
+    const key = getGVKTypeString(index);
     testData.resources[key] = [];
   });
   names.forEach(name => {
-    testData.resources[gvkToString(dicIstioTypeToGVK['AuthorizationPolicy'])].push({
+    testData.resources[getGVKTypeString('AuthorizationPolicy')].push({
       metadata: { name: `${name}0` },
       spec: {},
       kind: dicIstioTypeToGVK['AuthorizationPolicy'].Kind,
       apiVersion: `${dicIstioTypeToGVK['AuthorizationPolicy'].Group}/${dicIstioTypeToGVK['AuthorizationPolicy'].Version}`
     });
-    testData.resources[gvkToString(dicIstioTypeToGVK['DestinationRule'])].push({
+    testData.resources[getGVKTypeString('DestinationRule')].push({
       metadata: { name: `${name}1` },
       spec: {},
       kind: dicIstioTypeToGVK['DestinationRule'].Kind,
       apiVersion: `${dicIstioTypeToGVK['DestinationRule'].Group}/${dicIstioTypeToGVK['DestinationRule'].Version}`
     });
-    testData.resources[gvkToString(dicIstioTypeToGVK['Gateway'])].push({
+    testData.resources[getGVKTypeString('Gateway')].push({
       metadata: { name: `${name}2` },
       spec: {},
       kind: dicIstioTypeToGVK['Gateway'].Kind,
       apiVersion: `${dicIstioTypeToGVK['Gateway'].Group}/${dicIstioTypeToGVK['Gateway'].Version}`
     });
-    testData.resources[gvkToString(dicIstioTypeToGVK['ServiceEntry'])].push({
+    testData.resources[getGVKTypeString('ServiceEntry')].push({
       metadata: { name: `${name}3` },
       spec: {},
       kind: dicIstioTypeToGVK['ServiceEntry'].Kind,
       apiVersion: `${dicIstioTypeToGVK['ServiceEntry'].Group}/${dicIstioTypeToGVK['ServiceEntry'].Version}`
     });
-    testData.resources[gvkToString(dicIstioTypeToGVK['VirtualService'])].push({
+    testData.resources[getGVKTypeString('VirtualService')].push({
       metadata: { name: `${name}4` },
       spec: {},
       kind: dicIstioTypeToGVK['VirtualService'].Kind,
@@ -60,30 +60,30 @@ describe('IstioConfigList#filterByName', () => {
   it('should filter IstioConfigList by name', () => {
     let filtered = filterByName(unfiltered, ['white', 'red']);
     expect(filtered).toBeDefined();
-    expect(filtered.resources[gvkToString(dicIstioTypeToGVK['Gateway'])].length).toBe(2);
-    expect(filtered.resources[gvkToString(dicIstioTypeToGVK['VirtualService'])].length).toBe(2);
-    expect(filtered.resources[gvkToString(dicIstioTypeToGVK['DestinationRule'])].length).toBe(2);
-    expect(filtered.resources[gvkToString(dicIstioTypeToGVK['ServiceEntry'])].length).toBe(2);
+    expect(filtered.resources[getGVKTypeString('Gateway')].length).toBe(2);
+    expect(filtered.resources[getGVKTypeString('VirtualService')].length).toBe(2);
+    expect(filtered.resources[getGVKTypeString('DestinationRule')].length).toBe(2);
+    expect(filtered.resources[getGVKTypeString('ServiceEntry')].length).toBe(2);
 
-    expect(filtered.resources[gvkToString(dicIstioTypeToGVK['AuthorizationPolicy'])][0].metadata.name).toBe('white0');
-    expect(filtered.resources[gvkToString(dicIstioTypeToGVK['DestinationRule'])][0].metadata.name).toBe('white1');
-    expect(filtered.resources[gvkToString(dicIstioTypeToGVK['ServiceEntry'])][0].metadata.name).toBe('white3');
-    expect(filtered.resources[gvkToString(dicIstioTypeToGVK['VirtualService'])][0].metadata.name).toBe('white4');
+    expect(filtered.resources[getGVKTypeString('AuthorizationPolicy')][0].metadata.name).toBe('white0');
+    expect(filtered.resources[getGVKTypeString('DestinationRule')][0].metadata.name).toBe('white1');
+    expect(filtered.resources[getGVKTypeString('ServiceEntry')][0].metadata.name).toBe('white3');
+    expect(filtered.resources[getGVKTypeString('VirtualService')][0].metadata.name).toBe('white4');
 
     filtered = filterByName(unfiltered, ['bad']);
     expect(filtered).toBeDefined();
-    expect(filtered.resources[gvkToString(dicIstioTypeToGVK['Gateway'])].length).toBe(0);
-    expect(filtered.resources[gvkToString(dicIstioTypeToGVK['VirtualService'])].length).toBe(0);
-    expect(filtered.resources[gvkToString(dicIstioTypeToGVK['DestinationRule'])].length).toBe(0);
-    expect(filtered.resources[gvkToString(dicIstioTypeToGVK['ServiceEntry'])].length).toBe(0);
-    expect(filtered.resources[gvkToString(dicIstioTypeToGVK['WasmPlugin'])].length).toBe(0);
-    expect(filtered.resources[gvkToString(dicIstioTypeToGVK['Telemetry'])].length).toBe(0);
-    expect(filtered.resources[gvkToString(dicIstioTypeToGVK['K8sGateway'])].length).toBe(0);
-    expect(filtered.resources[gvkToString(dicIstioTypeToGVK['K8sGRPCRoute'])].length).toBe(0);
-    expect(filtered.resources[gvkToString(dicIstioTypeToGVK['K8sHTTPRoute'])].length).toBe(0);
-    expect(filtered.resources[gvkToString(dicIstioTypeToGVK['K8sReferenceGrant'])].length).toBe(0);
-    expect(filtered.resources[gvkToString(dicIstioTypeToGVK['K8sTCPRoute'])].length).toBe(0);
-    expect(filtered.resources[gvkToString(dicIstioTypeToGVK['K8sTLSRoute'])].length).toBe(0);
+    expect(filtered.resources[getGVKTypeString('Gateway')].length).toBe(0);
+    expect(filtered.resources[getGVKTypeString('VirtualService')].length).toBe(0);
+    expect(filtered.resources[getGVKTypeString('DestinationRule')].length).toBe(0);
+    expect(filtered.resources[getGVKTypeString('ServiceEntry')].length).toBe(0);
+    expect(filtered.resources[getGVKTypeString('WasmPlugin')].length).toBe(0);
+    expect(filtered.resources[getGVKTypeString('Telemetry')].length).toBe(0);
+    expect(filtered.resources[getGVKTypeString('K8sGateway')].length).toBe(0);
+    expect(filtered.resources[getGVKTypeString('K8sGRPCRoute')].length).toBe(0);
+    expect(filtered.resources[getGVKTypeString('K8sHTTPRoute')].length).toBe(0);
+    expect(filtered.resources[getGVKTypeString('K8sReferenceGrant')].length).toBe(0);
+    expect(filtered.resources[getGVKTypeString('K8sTCPRoute')].length).toBe(0);
+    expect(filtered.resources[getGVKTypeString('K8sTLSRoute')].length).toBe(0);
   });
 });
 

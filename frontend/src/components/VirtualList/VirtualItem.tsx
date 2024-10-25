@@ -5,7 +5,7 @@ import { PromisesRegistry } from '../../utils/CancelablePromises';
 import { Health } from '../../types/Health';
 import { StatefulFiltersRef } from '../Filters/StatefulFilters';
 import { actionRenderer } from './Renderers';
-import { getIstioObjectGVK, gvkToString, kindToStringIncludeK8s } from '../../utils/IstioConfigUtils';
+import { getGVKTypeString, getIstioObjectGVK, kindToStringIncludeK8s } from '../../utils/IstioConfigUtils';
 
 type VirtualItemProps = {
   action?: JSX.Element;
@@ -56,7 +56,7 @@ export class VirtualItem extends React.Component<VirtualItemProps, VirtualItemSt
     // TODO this.props.item.type
     return this.props.config.name !== 'istio'
       ? this.props.config.badge
-      : GVKToBadge[gvkToString(getIstioObjectGVK(this.props.item['apiVersion'], this.props.item['kind']))];
+      : GVKToBadge[getGVKTypeString(getIstioObjectGVK(this.props.item['apiVersion'], this.props.item['kind']))];
   };
 
   render(): React.ReactNode {

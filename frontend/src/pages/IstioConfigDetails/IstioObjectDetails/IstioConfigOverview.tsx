@@ -17,7 +17,12 @@ import {
   WorkloadReference
 } from 'types/IstioObjects';
 import { kialiStyle } from 'styles/StyleUtils';
-import { getIstioObject, getIstioObjectGVK, getReconciliationCondition, gvkToString } from 'utils/IstioConfigUtils';
+import {
+  getGVKTypeString,
+  getIstioObject,
+  getIstioObjectGVK,
+  getReconciliationCondition
+} from 'utils/IstioConfigUtils';
 import { IstioConfigHelp } from './IstioConfigHelp';
 import { IstioConfigReferences } from './IstioConfigReferences';
 import { IstioConfigValidationReferences } from './IstioConfigValidationReferences';
@@ -144,7 +149,7 @@ export const IstioConfigOverview: React.FC<IstioConfigOverviewProps> = (props: I
           <>
             <div className={iconStyle}>
               <PFBadge
-                badge={GVKToBadge[gvkToString(getIstioObjectGVK(istioObject.apiVersion, istioObject.kind))]}
+                badge={GVKToBadge[getGVKTypeString(getIstioObjectGVK(istioObject.apiVersion, istioObject.kind))]}
                 position={TooltipPosition.top}
               />
             </div>

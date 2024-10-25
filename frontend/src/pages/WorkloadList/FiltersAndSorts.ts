@@ -25,7 +25,7 @@ import { calculateErrorRate } from '../../types/ErrorRate';
 import { istioConfigTypeFilter } from '../IstioConfigList/FiltersAndSorts';
 import { compareObjectReferences } from '../AppList/FiltersAndSorts';
 import { serverConfig } from 'config';
-import { gvkToString, istioTypesToGVKString } from '../../utils/IstioConfigUtils';
+import { getGVKTypeString, istioTypesToGVKString } from '../../utils/IstioConfigUtils';
 
 const missingLabels = (r: WorkloadListItem): number => {
   return r.appLabel && r.versionLabel ? 0 : r.appLabel || r.versionLabel ? 1 : 2;
@@ -331,7 +331,7 @@ const filterByName = (items: WorkloadListItem[], names: string[]): WorkloadListI
 const filterByIstioType = (items: WorkloadListItem[], istioTypes: string[]): WorkloadListItem[] => {
   return items.filter(
     item =>
-      item.istioReferences.filter(ref => istioTypesToGVKString(istioTypes).includes(gvkToString(ref.objectGVK)))
+      item.istioReferences.filter(ref => istioTypesToGVKString(istioTypes).includes(getGVKTypeString(ref.objectGVK)))
         .length !== 0
   );
 };
