@@ -230,13 +230,14 @@ func addInfra(meshMap mesh.MeshMap, infraType, cluster, namespace, name string, 
 // inMeshUrlRegexp is an array of regex to be matched, in order (most to least restrictive), against external service [inCluster] URLs
 // if matching it will capture the namespace and service name.
 var inMeshUrlRegexp = []*regexp.Regexp{
-	regexp.MustCompile(`^h.+\/\/(.+?)\.(.+?)\.svc\.cluster\.local.*$`),
-	regexp.MustCompile(`^h.+\/\/(.+?)\.(.+?)[:\/].*$`),
-	regexp.MustCompile(`^h.+\/\/(.+?)\.(.+)$`),
+	regexp.MustCompile(`^h.+\/\/\d+?\.\d+?\.\d+?\.\d+?.*$`),            // weed out IP-based urls, which we can't use for discovery
+	regexp.MustCompile(`^h.+\/\/(.+?)\.(.+?)\.svc\.cluster\.local.*$`), // http://(namespace).(service).svc.cluster.local...
+	regexp.MustCompile(`^h.+\/\/(.+?)\.(.+?)[:\/].*$`),                 // http://(namespace).(service):port... or http://(namespace).(service)/...
+	regexp.MustCompile(`^h.+\/\/(.+?)\.(.+)$`),                         // http://(namespace).(service)
 }
 
 // discoverInfraService tries to determine the cluster and namespace of a service, from its URL. Currently it's only
-// targeting in-cluster URLs on the local cluster.  If it can't resolve the URL, or it can't fetch the resulting service,
+// targeting internal URLs. If it can't resolve the URL, or it can't fetch the resulting service,
 // it assumes the URL is outside the mesh and returns ("", "", true).
 func discoverInfraService(url string, ctx context.Context, gi *mesh.GlobalInfo) (cluster, namespace string, isExternal bool) {
 	cluster = mesh.External
@@ -254,7 +255,7 @@ func discoverInfraService(url string, ctx context.Context, gi *mesh.GlobalInfo) 
 			break
 		}
 	}
-	if matches == nil {
+	if matches == nil || len(matches) != 3 {
 		return
 	}
 
