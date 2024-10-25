@@ -42,6 +42,7 @@ import {
   elems,
   getNodeShape,
   getNodeStatus,
+  setObserved,
   setEdgeOptions,
   setNodeAttachments,
   setNodeLabel
@@ -397,13 +398,13 @@ const TopologyContent: React.FC<{
           }
         } else {
           if (e.getType() !== 'graph') {
-            controller.removeElement(e);
+            setObserved(() => controller.removeElement(e));
           }
         }
       });
 
       controller.fromModel(model);
-      controller.getGraph().setData({ meshData: meshData });
+      setObserved(() => controller.getGraph().setData({ meshData: meshData }));
 
       const { nodes } = elems(controller);
 

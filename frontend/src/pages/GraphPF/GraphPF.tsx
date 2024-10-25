@@ -52,6 +52,7 @@ import {
   NodeData,
   selectAnd,
   SelectAnd,
+  setObserved,
   setEdgeOptions,
   setNodeAttachments,
   setNodeLabel
@@ -133,7 +134,6 @@ export function graphLayout(controller: Controller, layoutType: LayoutType, rese
   controller.getGraph().layout();
 }
 
-// TODO: Implement some sort of focus when provided
 export interface FocusNode {
   id: string;
   isSelected?: boolean;
@@ -222,7 +222,22 @@ const TopologyContent: React.FC<{
   // SelectedIds State
   //
   const [selectedIds, setSelectedIds] = useVisualizationState<string[]>(SELECTION_STATE, []);
+
+  // selectedRef holds the current selectedId to protect againt selecting the same element, and duplicating the
+  // work below. We could also have created a separate callback to update the selectedId, first comparing against
+  // "selectedIds", but 1) our code would have to remember to call it, and 2) I have seen situations where the
+  // node loses its selected styling and it only comes back on a repeat selection.
+  const selectedRef = React.useRef<string>();
   React.useEffect(() => {
+    if (selectedIds.length > 0) {
+      if (selectedRef.current === selectedIds[0]) {
+        return;
+      }
+      selectedRef.current = selectedIds[0];
+    } else {
+      selectedRef.current = undefined;
+    }
+
     if (isMiniGraph) {
       if (selectedIds.length > 0) {
         const elem = controller.getElementById(selectedIds[0]);
@@ -271,17 +286,7 @@ const TopologyContent: React.FC<{
       highlighter.setSelectedId(undefined);
       updateSummary({ isPF: true, summaryType: 'graph', summaryTarget: controller } as GraphEvent);
     }
-  }, [
-    controller,
-    graphData,
-    highlighter,
-    isMiniGraph,
-    onEdgeTap,
-    onNodeTap,
-    selectedIds,
-    setSelectedIds,
-    updateSummary
-  ]);
+  }, [controller, highlighter, isMiniGraph, onEdgeTap, onNodeTap, selectedIds, setSelectedIds, updateSummary]);
 
   //
   // TraceOverlay State
@@ -537,16 +542,18 @@ const TopologyContent: React.FC<{
           }
         } else {
           if (e.getType() !== 'graph') {
-            controller.removeElement(e);
+            setObserved(() => controller.removeElement(e));
           }
         }
       });
 
       controller.fromModel(model);
-      controller.getGraph().setData({
-        graphData: graphData,
-        onDeleteTrafficRouting: onDeleteTrafficRouting,
-        onLaunchWizard: onLaunchWizard
+      setObserved(() => {
+        controller.getGraph().setData({
+          graphData: graphData,
+          onDeleteTrafficRouting: onDeleteTrafficRouting,
+          onLaunchWizard: onLaunchWizard
+        });
       });
 
       const { nodes } = elems(controller);
@@ -597,7 +604,7 @@ const TopologyContent: React.FC<{
           data.isSelected = true;
           setSelectedIds([target.getId()]);
 
-          target.setData(data);
+          setObserved(() => target.setData(data));
         }
       }
     };
@@ -620,8 +627,8 @@ const TopologyContent: React.FC<{
     onReady,
     rankBy,
     setDetailsLevel,
-    setSelectedIds,
     setRankResult,
+    setSelectedIds,
     setUpdateTime,
     showRank
   ]);
@@ -636,14 +643,14 @@ const TopologyContent: React.FC<{
         if (focusNode.isSelected) {
           data.isSelected = true;
           setSelectedIds([node.getId()]);
-          node.setData({ ...(node.getData() as NodeData) });
+          setObserved(() => node.setData({ ...(node.getData() as NodeData) }));
         }
         // flash node
-        for (let i = 0; i < 10; ++i) {
+        for (let i = 0; i < 8; ++i) {
           setTimeout(() => {
             const data = node.getData() as NodeData;
             data.isFocus = !data.isFocus;
-            node.setData({ ...(node.getData() as NodeData) });
+            setObserved(() => node.setData({ ...(node.getData() as NodeData) }));
           }, i * 500);
         }
       }
