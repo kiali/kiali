@@ -1,24 +1,8 @@
-import { Before, Given, Then, When } from '@badeball/cypress-cucumber-preprocessor';
+import { Given, Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import { ensureKialiFinishedLoading } from './transition';
 import { Visualization } from '@patternfly/react-topology';
 import { elems, select, selectAnd, selectOr } from './graph-pf';
 import { EdgeAttr, NodeAttr } from 'types/Graph';
-
-Before(() => {
-  // Copied from overview.ts.  This prevents cypress from stopping on errors unrelated to the tests.
-  // There can be random failures due timeouts/loadtime/framework that throw browser errors.  This
-  // prevents a CI failure due something like a "slow".  There may be a better way to handle this.
-  cy.on('uncaught:exception', (err, runnable, promise) => {
-    // when the exception originated from an unhandled promise
-    // rejection, the promise is provided as a third argument
-    // you can turn off failing the test in this case
-    if (promise) {
-      return false;
-    }
-    // we still want to ensure there are no other unexpected
-    // errors, so we let them fail the test
-  });
-});
 
 When('user graphs {string} namespaces', (namespaces: string) => {
   // Forcing "Pause" to not cause unhandled promises from the browser when cypress is testing

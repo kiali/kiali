@@ -1,28 +1,9 @@
-import { Before, Given, Then, When } from '@badeball/cypress-cucumber-preprocessor';
+import { Given, Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import { ensureKialiFinishedLoading } from './transition';
 import { getClusterForSingleCluster } from './table';
 
 const CLUSTER1_CONTEXT = Cypress.env('CLUSTER1_CONTEXT');
 const CLUSTER2_CONTEXT = Cypress.env('CLUSTER2_CONTEXT');
-
-Before(() => {
-  // Focing to not stop cypress on unexpected errors not related to the tests.
-  // There are some random failures due timeouts/loadtime/framework that throws some error in the browser.
-  // After reviewing the tests failures, those are unrelated to the app, so,
-  // it needs this event to not fail the CI action due some "slow" action or similar.
-  // This is something to review in future iterations when tests are solid, but I haven't found a better way to
-  // solve this issue.
-  cy.on('uncaught:exception', (err, runnable, promise) => {
-    // when the exception originated from an unhandled promise
-    // rejection, the promise is provided as a third argument
-    // you can turn off failing the test in this case
-    if (promise) {
-      return false;
-    }
-    // we still want to ensure there are no other unexpected
-    // errors, so we let them fail the test
-  });
-});
 
 Given('a healthy application in the cluster', function () {
   this.targetNamespace = 'bookinfo';
