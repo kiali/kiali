@@ -1,7 +1,7 @@
 import { After, Given, Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import { colExists, getColWithRowText } from './table';
 import { ensureKialiFinishedLoading } from './transition';
-import { getGVKTypeString } from '../../../src/utils/IstioConfigUtils';
+import { getGVKTypeString } from 'utils/IstioConfigUtils';
 
 const CLUSTER1_CONTEXT = Cypress.env('CLUSTER1_CONTEXT');
 const CLUSTER2_CONTEXT = Cypress.env('CLUSTER2_CONTEXT');
