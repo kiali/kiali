@@ -542,7 +542,7 @@ const TopologyContent: React.FC<{
           }
         } else {
           if (e.getType() !== 'graph') {
-            controller.removeElement(e);
+            setObserved(() => controller.removeElement(e));
           }
         }
       });
