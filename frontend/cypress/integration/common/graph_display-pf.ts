@@ -449,10 +449,9 @@ Given(
       .as(`istioConfigRequest-${cluster}`)
       .then(response => {
         expect(response.status).to.eq(200);
-        expect(response.body).to.have.property('gateways');
-        expect(response.body).to.have.property('virtualServices');
-        expect(response.body.gateways).to.have.length.gte(1);
-        expect(response.body.virtualServices).to.have.length.gte(1);
+        expect(response.body).to.have.property('resources');
+        expect(response.body.resources['networking.istio.io/v1, Kind=Gateway'].length).greaterThan(0);
+        expect(response.body.resources['networking.istio.io/v1, Kind=VirtualService'].length).greaterThan(0);
       });
   }
 );
@@ -470,12 +469,15 @@ Then(
       });
 
     cy.get('@istioConfigRequest-east').then(resp => {
-      // Not going to check all the objects. Just the ones that probably exist while testing.
-      const totalObjectsEast =
-        resp.body.gateways.length + resp.body.virtualServices.length + resp.body.destinationRules.length;
+      let totalObjectsEast = 0;
+      Object.keys(resp.body.resources).forEach(resourceKey => {
+        totalObjectsEast += resp.body.resources[resourceKey].length;
+      });
       cy.get('@istioConfigRequest-west').then(resp => {
-        const totalObjectsWest =
-          resp.body.gateways.length + resp.body.virtualServices.length + resp.body.destinationRules.length;
+        let totalObjectsWest = 0;
+        Object.keys(resp.body.resources).forEach(resourceKey => {
+          totalObjectsEast += resp.body.resources[resourceKey].length;
+        });
         const totalObjects = totalObjectsEast + totalObjectsWest;
         cy.get('[aria-label="Validations list"]').contains(`Istio config objects analyzed: ${totalObjects}`);
       });

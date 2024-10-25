@@ -17,7 +17,7 @@ import { calculateErrorRate } from '../../types/ErrorRate';
 import { istioConfigTypeFilter } from '../IstioConfigList/FiltersAndSorts';
 import { compareObjectReferences } from '../AppList/FiltersAndSorts';
 import { serverConfig } from 'config';
-import { gvkToString, istioTypesToGVKString } from '../../utils/IstioConfigUtils';
+import { getGVKTypeString, istioTypesToGVKString } from '../../utils/IstioConfigUtils';
 
 export const sortFields: SortField<ServiceListItem>[] = [
   {
@@ -228,7 +228,7 @@ const filterByServiceType = (items: ServiceListItem[], serviceTypes: string[]): 
 const filterByIstioType = (items: ServiceListItem[], istioTypes: string[]): ServiceListItem[] => {
   return items.filter(
     item =>
-      item.istioReferences.filter(ref => istioTypesToGVKString(istioTypes).includes(gvkToString(ref.objectGVK)))
+      item.istioReferences.filter(ref => istioTypesToGVKString(istioTypes).includes(getGVKTypeString(ref.objectGVK)))
         .length !== 0
   );
 };

@@ -10,7 +10,7 @@ import { KialiAppState } from '../../store/Store';
 import { connect } from 'react-redux';
 import { isParentKiosk, kioskContextMenuAction } from '../Kiosk/KioskActions';
 import { GroupVersionKind } from '../../types/IstioObjects';
-import { gvkToString, kindToStringIncludeK8s } from '../../utils/IstioConfigUtils';
+import { getGVKTypeString, kindToStringIncludeK8s } from '../../utils/IstioConfigUtils';
 
 const infoStyle = kialiStyle({
   margin: '0 0 -0.125rem 0.5rem'
@@ -62,7 +62,7 @@ export const GetIstioObjectUrl = (
 
 export const ReferenceIstioObjectLink: React.FC<ReferenceIstioObjectProps> = (props: ReferenceIstioObjectProps) => {
   const { name, namespace, cluster, objectGVK, subType } = props;
-  const badge = GVKToBadge[gvkToString(objectGVK)];
+  const badge = GVKToBadge[getGVKTypeString(objectGVK)];
 
   let showLink = true;
   let showTooltip = false;

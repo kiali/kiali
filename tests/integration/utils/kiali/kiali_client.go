@@ -57,14 +57,6 @@ type WorkloadJson struct {
 	Validations ObjectValidations `json:"validations"`
 }
 
-type IstioConfigListJson struct {
-	models.IstioConfigList
-	// TODO merge with IstioConfigList and have IstioValidations instead
-	IstioValidations ObjectValidations `json:"validations"`
-}
-
-type IstioConfigMapJson map[string]*IstioConfigListJson
-
 type MetricJson struct {
 	Labels     map[string]string `json:"labels"`
 	Datapoints []interface{}     `json:"datapoints"`
@@ -318,9 +310,9 @@ func WorkloadDetails(name, namespace string) (*WorkloadJson, int, error) {
 	}
 }
 
-func IstioConfigs() (*IstioConfigListJson, error) {
+func IstioConfigs() (*models.IstioConfigList, error) {
 	url := fmt.Sprintf("%s/api/istio/config?validate=true", client.kialiURL)
-	configList := new(IstioConfigListJson)
+	configList := new(models.IstioConfigList)
 
 	_, err := getRequestAndUnmarshalInto(url, configList)
 	if err == nil {
@@ -330,9 +322,9 @@ func IstioConfigs() (*IstioConfigListJson, error) {
 	}
 }
 
-func IstioConfigsList(namespace string) (*IstioConfigListJson, error) {
+func IstioConfigsList(namespace string) (*models.IstioConfigList, error) {
 	url := fmt.Sprintf("%s/api/namespaces/%s/istio?validate=true", client.kialiURL, namespace)
-	configList := new(IstioConfigListJson)
+	configList := new(models.IstioConfigList)
 
 	_, err := getRequestAndUnmarshalInto(url, configList)
 	if err == nil {

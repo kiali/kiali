@@ -2,7 +2,6 @@ package tests
 
 import (
 	"context"
-	"fmt"
 	"path"
 	"testing"
 	"time"
@@ -330,15 +329,21 @@ func getConfigForNamespace(namespace, name string, configType schema.GroupVersio
 	return config, err
 }
 
-func assertConfigListValidations(configList kiali.IstioConfigListJson, namespace string, objGVK schema.GroupVersionKind, objName, code string, valid bool, require *require.Assertions) {
+func assertConfigListValidations(configList models.IstioConfigList, namespace string, objGVK schema.GroupVersionKind, objName, code string, valid bool, require *require.Assertions) {
 	require.NotEmpty(configList)
 	require.NotNil(configList.IstioValidations)
-	require.NotNil(configList.IstioValidations[objGVK.String()])
-	objKey := fmt.Sprintf("%s.%s", objName, namespace)
-	require.NotNil(configList.IstioValidations[objGVK.String()][objKey])
-	require.Equal(valid, configList.IstioValidations[objGVK.String()][objKey].Valid)
-	require.NotEmpty(configList.IstioValidations[objGVK.String()][objKey].Checks)
-	require.Equal(code, configList.IstioValidations[objGVK.String()][objKey].Checks[0].Code)
+	found := false
+	for key, validation := range configList.IstioValidations {
+		if key.Name == objName && key.Namespace == namespace {
+			found = true
+			require.NotNil(validation)
+			require.Equal(valid, validation.Valid)
+			require.NotEmpty(validation.Checks)
+			require.Equal(code, validation.Checks[0].Code)
+			break
+		}
+	}
+	require.True(found)
 }
 
 func assertConfigDetailsValidations(configDetails models.IstioConfigDetails, namespace string, objGVK schema.GroupVersionKind, objName, code string, valid bool, require *require.Assertions) {

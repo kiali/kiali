@@ -18,7 +18,7 @@ import { kialiStyle } from 'styles/StyleUtils';
 import { PFBadge } from '../Pf/PfBadges';
 import { IstioObjectLink } from '../Link/IstioObjectLink';
 import { SimpleTable } from 'components/Table/SimpleTable';
-import { getIstioObjectGVK, gvkToString } from '../../utils/IstioConfigUtils';
+import { getGVKTypeString, getIstioObjectGVK } from '../../utils/IstioConfigUtils';
 
 type IstioConfigCardProps = {
   items: IstioConfigItem[];
@@ -70,7 +70,7 @@ export const IstioConfigCard: React.FC<IstioConfigCardProps> = (props: IstioConf
         cells: [
           <span>
             <PFBadge
-              badge={GVKToBadge[gvkToString(getIstioObjectGVK(item.apiVersion, item.kind))]}
+              badge={GVKToBadge[getGVKTypeString(getIstioObjectGVK(item.apiVersion, item.kind))]}
               position={TooltipPosition.top}
             />
             {overviewLink(item)}

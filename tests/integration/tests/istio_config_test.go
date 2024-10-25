@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/integration/utils"
 	"github.com/kiali/kiali/tests/integration/utils/kiali"
 	"github.com/kiali/kiali/tools/cmd"
@@ -36,7 +37,7 @@ func TestIstioConfigs(t *testing.T) {
 	assertConfigs(*configList, kiali.BOOKINFO, require)
 }
 
-func assertConfigs(configList kiali.IstioConfigListJson, namespace string, require *require.Assertions) {
+func assertConfigs(configList models.IstioConfigList, namespace string, require *require.Assertions) {
 	require.NotEmpty(configList)
 	require.NotNil(configList.IstioValidations)
 	require.Equal(kiali.BOOKINFO, namespace)

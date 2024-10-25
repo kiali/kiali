@@ -30,9 +30,9 @@ import { PFBadgeType, PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { MissingLabel } from '../MissingLabel/MissingLabel';
 import { MissingAuthPolicy } from 'components/MissingAuthPolicy/MissingAuthPolicy';
 import {
+  getGVKTypeString,
   getIstioObjectGVK,
   getReconciliationCondition,
-  gvkToString,
   kindToStringIncludeK8s
 } from 'utils/IstioConfigUtils';
 import { Label } from 'components/Label/Label';
@@ -144,7 +144,7 @@ export const details: Renderer<AppListItem | WorkloadListItem | ServiceListItem>
               key={ir.namespace ? `${ir.objectGVK.Group}.${ir.objectGVK.Kind}_${ir.name}_${ir.namespace}` : ir.name}
               style={{ marginBottom: '0.125rem' }}
             >
-              <PFBadge badge={GVKToBadge[gvkToString(ir.objectGVK)]} position={TooltipPosition.top} />
+              <PFBadge badge={GVKToBadge[getGVKTypeString(ir.objectGVK)]} position={TooltipPosition.top} />
               <IstioObjectLink
                 name={ir.name}
                 namespace={ir.namespace ?? ''}

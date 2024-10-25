@@ -1,6 +1,7 @@
 import { After, Given, Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import { colExists, getColWithRowText } from './table';
 import { ensureKialiFinishedLoading } from './transition';
+import { getGVKTypeString } from 'utils/IstioConfigUtils';
 
 const CLUSTER1_CONTEXT = Cypress.env('CLUSTER1_CONTEXT');
 const CLUSTER2_CONTEXT = Cypress.env('CLUSTER2_CONTEXT');
@@ -22,54 +23,6 @@ const labelsStringToJson = (labelsString: string): string => {
   }
 
   return `{${labelsJson}}`;
-};
-
-// This is for Istio Object Types only
-const pluralize = (word: string): string => {
-  const endings = {
-    ay: 'ays',
-    cy: 'cies',
-    ry: 'ries',
-    ze: 'zes',
-    s: 'ses',
-    e: 'es'
-  };
-
-  for (const [singular, plural] of Object.entries(endings)) {
-    const regex = new RegExp(`${singular}$`);
-    if (regex.test(word)) {
-      return word.replace(regex, plural);
-    }
-  }
-
-  // 's' by default
-  return `${word}s`;
-};
-
-export const dicIstioTypeToGVKStrings: { [key: string]: string } = {
-  AuthorizationPolicy: 'security.istio.io/v1, Kind=AuthorizationPolicy',
-  PeerAuthentication: 'security.istio.io/v1, Kind=PeerAuthentication',
-  RequestAuthentication: 'security.istio.io/v1, Kind=RequestAuthentication',
-
-  DestinationRule: 'networking.istio.io/v1, Kind=DestinationRule',
-  Gateway: 'networking.istio.io/v1, Kind=Gateway',
-  EnvoyFilter: 'networking.istio.io/v1alpha3, Kind=EnvoyFilter',
-  Sidecar: 'networking.istio.io/v1, Kind=Sidecar',
-  ServiceEntry: 'networking.istio.io/v1, Kind=ServiceEntry',
-  VirtualService: 'networking.istio.io/v1, Kind=VirtualService',
-  WorkloadEntry: 'networking.istio.io/v1, Kind=WorkloadEntry',
-  WorkloadGroup: 'networking.istio.io/v1, Kind=WorkloadGroup',
-
-  WasmPlugin: 'extensions.istio.io/v1alpha1, Kind=WasmPlugin',
-  Telemetry: 'telemetry.istio.io/v1, Kind=Telemetry',
-
-  K8sGateway: 'gateway.networking.k8s.io/v1, Kind=Gateway',
-  K8sGatewayClass: 'gateway.networking.k8s.io/v1, Kind=GatewayClass',
-  K8sGRPCRoute: 'gateway.networking.k8s.io/v1, Kind=GRPCRoute',
-  K8sHTTPRoute: 'gateway.networking.k8s.io/v1, Kind=HTTPRoute',
-  K8sReferenceGrant: 'gateway.networking.k8s.io/v1, Kind=ReferenceGrant',
-  K8sTCPRoute: 'gateway.networking.k8s.io/v1alpha2, Kind=TCPRoute',
-  K8sTLSRoute: 'gateway.networking.k8s.io/v1alpha2, Kind=TLSRoute'
 };
 
 const minimalAuthorizationPolicy = (name: string, namespace: string): string => {
@@ -590,14 +543,13 @@ Then('user only sees {string}', (sees: string) => {
 });
 
 Then('only {string} objects are visible in the {string} namespace', (sees: string, ns: string) => {
-  let lowercaseSees: string = sees.charAt(0).toLowerCase() + sees.slice(1);
   let count: number;
 
   cy.request({
     method: 'GET',
-    url: `/api/namespaces/${ns}/istio?objects=${dicIstioTypeToGVKStrings[sees]}&validate=true`
+    url: `/api/namespaces/${ns}/istio?objects=${getGVKTypeString(sees)}&validate=true`
   }).then(response => {
-    count = response.body[pluralize(lowercaseSees)].length;
+    count = response.body['resources'][getGVKTypeString(sees)].length;
   });
 
   cy.get('tbody').contains('tr', sees);

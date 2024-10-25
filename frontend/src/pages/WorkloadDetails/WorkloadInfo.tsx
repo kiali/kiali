@@ -12,7 +12,7 @@ import { RenderComponentScroll } from '../../components/Nav/Page';
 import { GraphDataSource } from '../../services/GraphDataSource';
 import { DurationInSeconds } from 'types/Common';
 import { isIstioNamespace, serverConfig } from '../../config/ServerConfig';
-import { dicIstioTypeToGVK, IstioConfigList, toIstioItems } from '../../types/IstioConfigList';
+import { IstioConfigList, toIstioItems } from '../../types/IstioConfigList';
 import { WorkloadPods } from './WorkloadPods';
 import { GraphEdgeTapEvent } from '../../components/CytoscapeGraph/CytoscapeGraph';
 import { location, router, URLParam } from '../../app/History';
@@ -20,7 +20,7 @@ import { MiniGraphCard } from '../../components/CytoscapeGraph/MiniGraphCard';
 import { IstioConfigCard } from '../../components/IstioConfigCard/IstioConfigCard';
 import { MiniGraphCardPF } from 'pages/GraphPF/MiniGraphCardPF';
 import { isGateway } from '../../helpers/LabelFilterHelper';
-import { gvkToString, stringToGVK } from '../../utils/IstioConfigUtils';
+import { getGVKTypeString, stringToGVK } from '../../utils/IstioConfigUtils';
 
 type WorkloadInfoProps = {
   duration: DurationInSeconds;
@@ -45,12 +45,12 @@ const tabName = 'list';
 const defaultTab = 'pods';
 
 const workloadIstioResources = [
-  gvkToString(dicIstioTypeToGVK['Gateway']),
-  gvkToString(dicIstioTypeToGVK['AuthorizationPolicy']),
-  gvkToString(dicIstioTypeToGVK['PeerAuthentication']),
-  gvkToString(dicIstioTypeToGVK['Sidecar']),
-  gvkToString(dicIstioTypeToGVK['RequestAuthentication']),
-  gvkToString(dicIstioTypeToGVK['EnvoyFilter'])
+  getGVKTypeString('Gateway'),
+  getGVKTypeString('AuthorizationPolicy'),
+  getGVKTypeString('PeerAuthentication'),
+  getGVKTypeString('Sidecar'),
+  getGVKTypeString('RequestAuthentication'),
+  getGVKTypeString('EnvoyFilter')
 ];
 
 export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState> {
@@ -266,29 +266,6 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
     const istioConfigItems = this.state.workloadIstioConfig
       ? toIstioItems(this.state.workloadIstioConfig, workload?.cluster || '')
       : [];
-
-    // Helper to iterate at same time on workloadIstioConfig resources and validations
-    const wkIstioTypes = [
-      { field: 'gateways', validation: 'gateway' },
-      { field: 'sidecars', validation: 'sidecar' },
-      { field: 'envoyFilters', validation: 'envoyfilter' },
-      { field: 'requestAuthentications', validation: 'requestauthentication' },
-      { field: 'authorizationPolicies', validation: 'authorizationpolicy' },
-      { field: 'peerAuthentications', validation: 'peerauthentication' }
-    ];
-
-    if (this.state.workloadIstioConfig?.validations) {
-      const typeNames: { [key: string]: string[] } = {};
-      wkIstioTypes.forEach(wkIstioType => {
-        if (this.state.workloadIstioConfig && this.state.workloadIstioConfig.validations[wkIstioType.validation]) {
-          typeNames[wkIstioType.validation] = [];
-
-          this.state.workloadIstioConfig[wkIstioType.field]?.forEach(r =>
-            typeNames[wkIstioType.validation].push(r.metadata.name)
-          );
-        }
-      });
-    }
 
     // RenderComponentScroll handles height to provide an inner scroll combined with tabs
     // This height needs to be propagated to minigraph to proper resize in height

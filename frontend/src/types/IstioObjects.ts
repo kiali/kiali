@@ -47,6 +47,10 @@ export interface K8sMetadata {
   uid?: string;
 }
 
+export interface K8sResource extends TypeMeta {
+  metadata: K8sMetadata;
+}
+
 export interface IstioObject extends TypeMeta {
   metadata: K8sMetadata;
   status?: IstioStatus;

@@ -1,9 +1,9 @@
 import { ObjectCheck, ObjectValidation, ValidationTypes } from '../types/IstioObjects';
 import * as AlertUtils from './AlertUtils';
-import { gvkToString } from './IstioConfigUtils';
+import { getGVKTypeString } from './IstioConfigUtils';
 
 const validationMessage = (validation: ObjectValidation, failedCheck: ObjectCheck): string => {
-  return `${gvkToString(validation.objectGVK)}:${validation.name} ${failedCheck.message}`;
+  return `${getGVKTypeString(validation.objectGVK)}:${validation.name} ${failedCheck.message}`;
 };
 
 const showInMessageCenterValidation = (validation: ObjectValidation): void => {
@@ -28,7 +28,7 @@ const showInMessageCenterValidations = (validations: ObjectValidation[]): void =
         if (check.severity === ValidationTypes.Error) {
           hasError = true;
         }
-        elementsWithFailedValidations.push(`${gvkToString(validation.objectGVK)}:${validation.name}`);
+        elementsWithFailedValidations.push(`${getGVKTypeString(validation.objectGVK)}:${validation.name}`);
       }
     }
   }

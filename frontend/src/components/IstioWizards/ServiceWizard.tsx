@@ -74,7 +74,7 @@ import { KialiIcon } from '../../config/KialiIcon';
 import { ApiResponse } from 'types/Api';
 import { t } from 'utils/I18nUtils';
 import { dicIstioTypeToGVK } from '../../types/IstioConfigList';
-import { gvkToString } from '../../utils/IstioConfigUtils';
+import { getGVKTypeString } from '../../utils/IstioConfigUtils';
 
 const emptyServiceWizardState = (fqdnServiceName: string): ServiceWizardState => {
   return {
@@ -270,7 +270,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
         gatewayClass: '',
         addMesh: false,
         port: 80,
-        isOpen: false,
+        isOpen: false
       };
 
       const k8sGateway: K8sGatewaySelectorState = {
@@ -756,21 +756,13 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
   };
 
   onConfirmPreview = (items: ConfigPreviewItem[]): void => {
-    const dr = items.filter(it => gvkToString(it.objectGVK) === gvkToString(dicIstioTypeToGVK['DestinationRule']))[0];
-    const gw = items.filter(it => gvkToString(it.objectGVK) === gvkToString(dicIstioTypeToGVK['Gateway']))[0];
-    const k8sgateway = items.filter(
-      it => gvkToString(it.objectGVK) === gvkToString(dicIstioTypeToGVK['K8sGateway'])
-    )[0];
-    const pa = items.filter(
-      it => gvkToString(it.objectGVK) === gvkToString(dicIstioTypeToGVK['PeerAuthentication'])
-    )[0];
-    const vs = items.filter(it => gvkToString(it.objectGVK) === gvkToString(dicIstioTypeToGVK['VirtualService']))[0];
-    const k8shttproute = items.filter(
-      it => gvkToString(it.objectGVK) === gvkToString(dicIstioTypeToGVK['K8sHTTPRoute'])
-    )[0];
-    const k8sgrpcroute = items.filter(
-      it => gvkToString(it.objectGVK) === gvkToString(dicIstioTypeToGVK['K8sGRPCRoute'])
-    )[0];
+    const dr = items.filter(it => getGVKTypeString(it.objectGVK) === getGVKTypeString('DestinationRule'))[0];
+    const gw = items.filter(it => getGVKTypeString(it.objectGVK) === getGVKTypeString('Gateway'))[0];
+    const k8sgateway = items.filter(it => getGVKTypeString(it.objectGVK) === getGVKTypeString('K8sGateway'))[0];
+    const pa = items.filter(it => getGVKTypeString(it.objectGVK) === getGVKTypeString('PeerAuthentication'))[0];
+    const vs = items.filter(it => getGVKTypeString(it.objectGVK) === getGVKTypeString('VirtualService'))[0];
+    const k8shttproute = items.filter(it => getGVKTypeString(it.objectGVK) === getGVKTypeString('K8sHTTPRoute'))[0];
+    const k8sgrpcroute = items.filter(it => getGVKTypeString(it.objectGVK) === getGVKTypeString('K8sGRPCRoute'))[0];
 
     const previews: WizardPreviews = {
       dr: dr ? (dr.items[0] as DestinationRule) : undefined,
