@@ -172,7 +172,10 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
 
         if (!isIstioNamespace(this.props.namespace) && !isGateway(this.props.workload?.labels || {})) {
           if (!isWaypoint) {
-            if (!pod.istioContainers || pod.istioContainers.length === 0) {
+            if (
+              (!pod.istioContainers || pod.istioContainers.length === 0) &&
+              (!pod.istioInitContainers || pod.istioInitContainers.length === 0)
+            ) {
               if (
                 !(
                   serverConfig.ambientEnabled &&
@@ -184,7 +187,12 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
                 validations.pod[pod.name].checks.push(noIstiosidecar);
               }
             } else {
-              pod.istioContainers.forEach(c => {
+              pod.istioContainers?.forEach(c => {
+                if (!c.isReady && validations.pod[pod.name].checks.indexOf(failingPodIstioContainer) === -1) {
+                  validations.pod[pod.name].checks.push(failingPodIstioContainer);
+                }
+              });
+              pod.istioInitContainers?.forEach(c => {
                 if (!c.isReady && validations.pod[pod.name].checks.indexOf(failingPodIstioContainer) === -1) {
                   validations.pod[pod.name].checks.push(failingPodIstioContainer);
                 }
