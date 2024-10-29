@@ -14,7 +14,10 @@ OLM_INDEX_BASE_IMAGE ?= quay.io/openshift/origin-operator-registry:4.16
 OPM_VERSION ?= 1.47.0
 
 # which OLM to install (for olm-install target)
-OLM_VERSION ?= latest
+# TODO OLM v0.29.0 has a bug and cannot start. When that bug is fixed, put OLM_VERSION back to "latest"
+# see https://github.com/operator-framework/operator-lifecycle-manager/issues/3419
+#OLM_VERSION ?= latest
+OLM_VERSION ?= v0.28.0
 
 .prepare-olm-cluster-names: .determine-olm-operators-namespace .prepare-cluster
 ifeq ($(CLUSTER_TYPE),minikube)
