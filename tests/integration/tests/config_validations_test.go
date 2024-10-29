@@ -24,13 +24,32 @@ func TestDestinationRuleMultimatch(t *testing.T) {
 	defer utils.DeleteFile(filePath, kiali.BOOKINFO)
 	require.True(utils.ApplyFile(filePath, kiali.BOOKINFO))
 
-	// @TODO add another test when issue #7690 is fixed with DRs exportTo: 'another_namespace'
 	config, err := getConfigDetails(kiali.BOOKINFO, "all.googleapis.com", kubernetes.DestinationRules, false, require)
 	require.NoError(err)
 	require.NotNil(config)
 	assertConfigDetailsValidations(*config, kiali.BOOKINFO, kubernetes.DestinationRules, "all.googleapis.com", "KIA0201", true, require)
 
 	configList, err := kiali.IstioConfigsList(kiali.BOOKINFO)
+
+	require.NoError(err)
+	assertConfigListValidations(*configList, kiali.BOOKINFO, kubernetes.DestinationRules, "all.googleapis.com", "KIA0201", true, require)
+	assertConfigListValidations(*configList, kiali.BOOKINFO, kubernetes.DestinationRules, "all.googleapis.com2", "KIA0201", true, require)
+}
+
+func TestDestinationRuleExportMultimatch(t *testing.T) {
+	require := require.New(t)
+	filePath := path.Join(cmd.KialiProjectRoot, kiali.ASSETS+"/bookinfo-destination-rule-export-multimatch.yaml")
+	defer utils.DeleteFile(filePath, kiali.BOOKINFO)
+	require.True(utils.ApplyFile(filePath, kiali.BOOKINFO))
+
+	config, err := getConfigDetails(kiali.BOOKINFO, "all.googleapis.com", kubernetes.DestinationRules, false, require)
+	require.NoError(err)
+	require.NotNil(config)
+	assertConfigDetailsValidations(*config, kiali.BOOKINFO, kubernetes.DestinationRules, "all.googleapis.com", "KIA0201", true, require)
+
+	// load configs for all namespaces, single namespace config load will not return export to validations
+	// anyway Kiali UI does not load configs for a single namespace to avoid validation inconsistency and performance issues
+	configList, err := kiali.IstioConfigs()
 
 	require.NoError(err)
 	assertConfigListValidations(*configList, kiali.BOOKINFO, kubernetes.DestinationRules, "all.googleapis.com", "KIA0201", true, require)

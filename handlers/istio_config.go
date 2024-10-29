@@ -90,6 +90,8 @@ func IstioConfigList(w http.ResponseWriter, r *http.Request) {
 			}
 		} else {
 			// when namespace is provided, do validations for that namespace only
+			// this option is not called from Kiali UI
+			// @TODO consider exportTo namespaces
 			istioConfig.IstioValidations, err = business.Validations.GetValidations(r.Context(), cluster, namespace, "", "")
 			if err != nil {
 				handleErrorResponse(w, err)
@@ -172,7 +174,7 @@ func IstioConfigDetails(w http.ResponseWriter, r *http.Request) {
 							validationsResult <- err
 						}
 						*istioConfigValidations = istioConfigValidations.MergeValidations(istioConfigValidationResults)
-						*istioConfigReferences = istioConfigReferencesResults.MergeReferencesMap(istioConfigReferencesResults)
+						*istioConfigReferences = istioConfigReferences.MergeReferencesMap(istioConfigReferencesResults)
 					}
 				}
 			}
@@ -182,7 +184,7 @@ func IstioConfigDetails(w http.ResponseWriter, r *http.Request) {
 				validationsResult <- err
 			}
 			*istioConfigValidations = istioConfigValidations.MergeValidations(istioConfigValidationResults)
-			*istioConfigReferences = istioConfigReferencesResults.MergeReferencesMap(istioConfigReferencesResults)
+			*istioConfigReferences = istioConfigReferences.MergeReferencesMap(istioConfigReferencesResults)
 
 		}(&istioConfigValidations, &istioConfigReferences)
 	}
