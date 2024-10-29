@@ -14,6 +14,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/util"
 )
 
 func IstioConfigList(w http.ResponseWriter, r *http.Request) {
@@ -145,6 +146,12 @@ func IstioConfigDetails(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	istioConfigDetails, err := business.IstioConfig.GetIstioConfigDetails(context.TODO(), cluster, namespace, gvk, object)
+	if err != nil {
+		handleErrorResponse(w, err)
+		return
+	}
+
 	istioConfigValidations := models.IstioValidations{}
 	istioConfigReferences := models.IstioReferencesMap{}
 
@@ -154,24 +161,30 @@ func IstioConfigDetails(w http.ResponseWriter, r *http.Request) {
 			defer func() {
 				close(validationsResult)
 			}()
-			// validations should be done per namespaces to apply exportTo configs
-			loadedNamespaces, _ := business.Namespace.GetClusterNamespaces(r.Context(), cluster)
-			for _, ns := range loadedNamespaces {
-				istioConfigValidationResults, istioConfigReferencesResults, err := business.Validations.GetIstioObjectValidations(r.Context(), cluster, ns.Name, gvk, object)
-				if err != nil {
-					validationsResult <- err
+			exportTo := istioConfigDetails.GetExportTo()
+			if len(exportTo) != 0 {
+				// validations should be done per exported namespaces to apply exportTo configs
+				loadedNamespaces, _ := business.Namespace.GetClusterNamespaces(r.Context(), cluster)
+				for _, ns := range loadedNamespaces {
+					if util.InSlice(exportTo, ns.Name) && ns.Name != namespace {
+						istioConfigValidationResults, istioConfigReferencesResults, err := business.Validations.GetIstioObjectValidations(r.Context(), cluster, ns.Name, gvk, object)
+						if err != nil {
+							validationsResult <- err
+						}
+						*istioConfigValidations = istioConfigValidations.MergeValidations(istioConfigValidationResults)
+						*istioConfigReferences = istioConfigReferencesResults.MergeReferencesMap(istioConfigReferencesResults)
+					}
 				}
-				*istioConfigValidations = istioConfigValidations.MergeValidations(istioConfigValidationResults)
-				*istioConfigReferences = istioConfigReferencesResults.MergeReferencesMap(istioConfigReferencesResults)
 			}
+			// also validate own namespace
+			istioConfigValidationResults, istioConfigReferencesResults, err := business.Validations.GetIstioObjectValidations(r.Context(), cluster, namespace, gvk, object)
+			if err != nil {
+				validationsResult <- err
+			}
+			*istioConfigValidations = istioConfigValidations.MergeValidations(istioConfigValidationResults)
+			*istioConfigReferences = istioConfigReferencesResults.MergeReferencesMap(istioConfigReferencesResults)
 
 		}(&istioConfigValidations, &istioConfigReferences)
-	}
-
-	istioConfigDetails, err := business.IstioConfig.GetIstioConfigDetails(context.TODO(), cluster, namespace, gvk, object)
-	if err != nil {
-		handleErrorResponse(w, err)
-		return
 	}
 
 	if includeHelp {

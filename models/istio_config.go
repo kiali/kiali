@@ -503,6 +503,18 @@ func (icd *IstioConfigDetails) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+func (i IstioConfigDetails) GetExportTo() []string {
+	// Check not nil field and assign to `resource`, should be only one field
+	if i.VirtualService != nil {
+		return i.VirtualService.Spec.ExportTo
+	} else if i.DestinationRule != nil {
+		return i.DestinationRule.Spec.ExportTo
+	} else if i.ServiceEntry != nil {
+		return i.ServiceEntry.Spec.ExportTo
+	}
+	return []string{}
+}
+
 // IstioConfigHelp represents a help message for a given Istio object type and field
 type IstioConfigHelp struct {
 	ObjectField string `json:"objectField"`
