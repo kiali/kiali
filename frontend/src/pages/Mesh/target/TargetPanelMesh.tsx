@@ -3,7 +3,7 @@ import { Node, NodeModel, Visualization } from '@patternfly/react-topology';
 import { TargetPanelCommonProps, getTitle, renderNodeHeader, targetPanelStyle } from './TargetPanelCommon';
 import { classes } from 'typestyle';
 import { panelBodyStyle, panelHeadingStyle, panelStyle } from 'pages/Graph/SummaryPanelStyle';
-import { elems, selectAnd } from '../MeshElems';
+import { elems, selectAnd } from 'helpers/GraphHelpers';
 import { DataPlaneNodeData, MeshAttr, MeshInfraType, MeshNodeData } from 'types/Mesh';
 import { kialiStyle } from 'styles/StyleUtils';
 import { useKialiTranslation } from 'utils/I18nUtils';

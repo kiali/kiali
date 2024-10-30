@@ -39,14 +39,13 @@ import {
   EdgeData,
   NodeData,
   assignEdgeHealth,
-  elems,
   getNodeShape,
   getNodeStatus,
-  setObserved,
   setEdgeOptions,
   setNodeAttachments,
   setNodeLabel
 } from './MeshElems';
+import { elems, setObserved } from 'helpers/GraphHelpers';
 import { MeshTourStops } from './MeshHelpTour';
 import { KialiMeshDagre } from './layouts/KialiMeshDagre';
 //import { KialiMeshCola } from './layouts/KialiMeshCola';

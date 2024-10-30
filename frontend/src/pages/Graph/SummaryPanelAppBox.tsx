@@ -31,7 +31,7 @@ import { KialiIcon } from 'config/KialiIcon';
 import { decoratedNodeData } from 'components/CytoscapeGraph/CytoscapeGraphUtils';
 import { getOptions, clickHandler } from 'components/CytoscapeGraph/ContextMenu/NodeContextMenu';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
-import { edgesIn, edgesOut, select, selectAnd, selectOr } from 'pages/GraphPF/GraphPFElems';
+import { edgesIn, edgesOut, select, selectAnd, selectOr } from 'helpers/GraphHelpers';
 import { classes } from 'typestyle';
 import { panelBodyStyle, panelHeadingStyle, panelStyle } from './SummaryPanelStyle';
 import { isMultiCluster, serverConfig } from 'config';

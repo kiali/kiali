@@ -7,7 +7,7 @@ import {
   searchParentApp,
   searchParentWorkload
 } from 'utils/tracing/TracingHelper';
-import { edgesOut, elems, select, SelectAnd, selectAnd, setObserved } from './GraphPFElems';
+import { edgesOut, elems, select, SelectAnd, selectAnd, setObserved } from 'helpers/GraphHelpers';
 
 export const showTrace = (controller: Controller, graphType: GraphType, trace: JaegerTrace): void => {
   if (!controller.hasGraph()) {

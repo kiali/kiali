@@ -45,18 +45,15 @@ import { elementFactory } from './elements/elementFactory';
 import {
   assignEdgeHealth,
   EdgeData,
-  elems,
   getNodeShape,
   getNodeStatus,
   GraphPFSettings,
   NodeData,
-  selectAnd,
-  SelectAnd,
-  setObserved,
   setEdgeOptions,
   setNodeAttachments,
   setNodeLabel
 } from './GraphPFElems';
+import { elems, selectAnd, SelectAnd, setObserved } from 'helpers/GraphHelpers';
 import { layoutFactory } from './layouts/layoutFactory';
 import { hideTrace, showTrace } from './TracePF';
 import { GraphHighlighterPF } from './GraphHighlighterPF';
