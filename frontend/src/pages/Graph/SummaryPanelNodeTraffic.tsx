@@ -32,7 +32,7 @@ import { CancelablePromise, makeCancelablePromise } from '../../utils/Cancelable
 import { Reporter } from '../../types/MetricsOptions';
 import { decoratedNodeData } from '../../components/CytoscapeGraph/CytoscapeGraphUtils';
 import { KialiIcon } from 'config/KialiIcon';
-import { edgesOut, nodesIn, select } from 'pages/GraphPF/GraphPFElems';
+import { edgesOut, nodesIn, select } from 'helpers/GraphHelpers';
 import { ApiResponse } from 'types/Api';
 import { serverConfig } from 'config';
 

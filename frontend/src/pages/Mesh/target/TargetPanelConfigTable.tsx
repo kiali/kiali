@@ -6,7 +6,7 @@ import { yamlDumpOptions } from 'types/IstioConfigDetails';
 import { ConfigButtonsTargetPanel } from '../../../components/Mesh/ConfigButtonsTargetPanel';
 
 interface TargetPanelConfigTableProps {
-  configData: { [key: string]: string };
+  configData: unknown;
   targetName: string;
   width: string;
 }

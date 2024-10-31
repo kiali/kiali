@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { ElementModel, GraphElement, Node, NodeModel } from '@patternfly/react-topology';
+import { Node, NodeModel } from '@patternfly/react-topology';
 import { kialiStyle } from 'styles/StyleUtils';
 import { TargetPanelCommonProps, shouldRefreshData, targetPanelHR, targetPanelStyle } from './TargetPanelCommon';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
@@ -48,10 +48,12 @@ import { Metric } from 'types/Metrics';
 import { classes } from 'typestyle';
 import { panelBodyStyle, panelHeadingStyle, panelStyle } from 'pages/Graph/SummaryPanelStyle';
 import { isRemoteCluster } from './TargetPanelControlPlane';
-import { ControlPlane } from 'types/Mesh';
+import { BoxTarget, ControlPlane, NamespaceNodeData } from 'types/Mesh';
 import { MeshInfraType } from 'types/Mesh';
 
-type TargetPanelNamespaceProps = TargetPanelCommonProps;
+type TargetPanelNamespaceProps = TargetPanelCommonProps & {
+  target: BoxTarget<NamespaceNodeData>;
+};
 
 type TargetPanelNamespaceState = {
   controlPlanes?: ControlPlane[];
@@ -62,7 +64,7 @@ type TargetPanelNamespaceState = {
   status?: NamespaceStatus;
   targetCluster: string;
   targetNamespace: string;
-  targetNode: Node<NodeModel, any>;
+  targetNode: Node<NodeModel, NamespaceNodeData>;
   tlsStatus?: TLSStatus;
 };
 
@@ -100,9 +102,9 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
   constructor(props: TargetPanelNamespaceProps) {
     super(props);
 
-    const targetNode = this.props.target.elem as Node<NodeModel, any>;
+    const targetNode = this.props.target.elem;
 
-    const data = (props.target.elem as GraphElement<ElementModel, any>).getData();
+    const data = targetNode.getData()!;
 
     // Find the controlplanes nodes and pull out the controlplane
     // object from infraData. The controlplane object has all the
@@ -129,10 +131,10 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
     // if the target (e.g. namespaceBox) has changed, then init the state and set to loading. The loading
     // will actually be kicked off after the render (in componentDidMount/Update).
     if (props.target.elem !== state.targetNode) {
-      const { cluster, namespace } = (props.target.elem as GraphElement<ElementModel, any>).getData();
+      const { cluster, namespace } = props.target.elem.getData()!;
       return {
         controlPlanes: state.controlPlanes,
-        targetNode: props.target.elem as any,
+        targetNode: props.target.elem,
         targetCluster: cluster,
         targetNamespace: namespace,
         nsInfo: state.nsInfo,

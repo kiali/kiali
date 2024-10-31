@@ -22,7 +22,8 @@
 
 import { Edge, Node } from '@patternfly/react-topology';
 import { Controller, GraphElement } from '@patternfly/react-topology';
-import { NodeData, ancestors, predecessors, setObserved, successors } from './MeshElems';
+import { NodeData } from './MeshElems';
+import { ancestors, predecessors, setObserved, successors } from 'helpers/GraphHelpers';
 
 export class MeshHighlighter {
   controller: Controller;
@@ -138,7 +139,7 @@ export class MeshHighlighter {
   };
 
   getNodeHighlight = (node: Node): GraphElement[] => {
-    const elems = predecessors(node).concat(successors(node));
+    const elems = predecessors(node, []).concat(successors(node, []));
     elems.push(node);
 
     return this.includeAncestorNodes(elems);
@@ -148,7 +149,7 @@ export class MeshHighlighter {
     const source = edge.getSource();
     const target = edge.getTarget();
 
-    let elems = [edge, source, target, ...predecessors(source), ...successors(target)];
+    let elems = [edge, source, target, ...predecessors(source, []), ...successors(target, [])];
     elems = this.includeAncestorNodes(elems);
 
     return elems;

@@ -21,7 +21,6 @@ import { ApiError } from 'types/Api';
 import { DEGRADED, FAILURE, HEALTHY, Health, NOT_READY } from 'types/Health';
 import { TLSStatus, nsWideMTLSStatus } from 'types/TLSStatus';
 import * as FilterHelper from '../../../components/FilterList/FilterHelper';
-import { NodeData } from '../MeshElems';
 import { ControlPlaneMetricsMap } from 'types/Metrics';
 import { classes } from 'typestyle';
 import { panelBodyStyle, panelHeadingStyle, panelStyle } from 'pages/Graph/SummaryPanelStyle';
@@ -35,17 +34,18 @@ import { CertsInfo } from 'types/CertsInfo';
 import { IstioCertsInfo } from 'components/IstioCertsInfo/IstioCertsInfo';
 import { TargetPanelControlPlaneMetrics } from './TargetPanelControlPlaneMetrics';
 import { TargetPanelControlPlaneStatus } from './TargetPanelControlPlaneStatus';
-import { ControlPlane } from 'types/Mesh';
+import { ControlPlane, IstiodNodeData, NodeTarget } from 'types/Mesh';
 
 type TargetPanelControlPlaneProps = TargetPanelCommonProps & {
   meshStatus: string;
   minTLS: string;
+  target: NodeTarget<IstiodNodeData>;
 };
 
 type TargetPanelControlPlaneState = {
   certificates?: CertsInfo[];
   controlPlaneMetrics?: ControlPlaneMetricsMap;
-  controlPlaneNode?: Node<NodeModel, any>;
+  controlPlaneNode?: Node<NodeModel, IstiodNodeData>;
   loading: boolean;
   nsInfo?: NamespaceInfo;
   status?: NamespaceStatus;
@@ -83,7 +83,7 @@ export class TargetPanelControlPlane extends React.Component<
   constructor(props: TargetPanelControlPlaneProps) {
     super(props);
 
-    const namespaceNode = this.props.target.elem as Node<NodeModel, any>;
+    const namespaceNode = this.props.target.elem;
     this.state = {
       ...defaultState,
       controlPlaneNode: namespaceNode
@@ -91,14 +91,12 @@ export class TargetPanelControlPlane extends React.Component<
   }
 
   static getDerivedStateFromProps: React.GetDerivedStateFromProps<
-    TargetPanelCommonProps,
+    TargetPanelControlPlaneProps,
     TargetPanelControlPlaneState
   > = (props, state) => {
     // if the target (e.g. namespaceBox) has changed, then init the state and set to loading. The loading
     // will actually be kicked off after the render (in componentDidMount/Update).
-    return props.target.elem !== state.controlPlaneNode
-      ? { controlPlaneNode: props.target.elem as Node<NodeModel, any>, loading: true }
-      : null;
+    return props.target.elem !== state.controlPlaneNode ? { controlPlaneNode: props.target.elem, loading: true } : null;
   };
 
   componentDidMount(): void {
@@ -137,7 +135,7 @@ export class TargetPanelControlPlane extends React.Component<
     }
 
     const nsInfo = this.state.nsInfo;
-    const data = this.state.controlPlaneNode?.getData() as NodeData;
+    const data = this.state.controlPlaneNode?.getData()!;
 
     const controlPlane: ControlPlane = data.infraData;
     const parsedCm = controlPlane.config.configMap ? this.getParsedYaml(controlPlane.config.configMap) : '';
@@ -203,7 +201,7 @@ export class TargetPanelControlPlane extends React.Component<
   private load = (): void => {
     this.promises.cancelAll();
 
-    const data = this.state.controlPlaneNode!.getData() as NodeData;
+    const data = this.state.controlPlaneNode!.getData()!;
 
     this.promises
       .registerAll(`promises-${data.cluster}:${data.namespace}`, [
@@ -229,7 +227,7 @@ export class TargetPanelControlPlane extends React.Component<
   };
 
   private fetchNamespaceInfo = async (): Promise<void> => {
-    const data = this.state.controlPlaneNode!.getData() as NodeData;
+    const data = this.state.controlPlaneNode!.getData()!;
 
     return API.getNamespaceInfo(data.namespace, data.cluster)
       .then(response => {
@@ -241,7 +239,7 @@ export class TargetPanelControlPlane extends React.Component<
   };
 
   private fetchHealthStatus = async (): Promise<void> => {
-    const data = this.state.controlPlaneNode!.getData() as NodeData;
+    const data = this.state.controlPlaneNode!.getData()!;
 
     return API.getClustersAppHealth(data.namespace, this.props.duration, data.cluster)
       .then(results => {
@@ -288,7 +286,7 @@ export class TargetPanelControlPlane extends React.Component<
       step: rateParams.step
     };
 
-    const data = this.state.controlPlaneNode!.getData() as NodeData;
+    const data = this.state.controlPlaneNode!.getData()!;
 
     return API.getControlPlaneMetrics(data.namespace, data.infraName, options, data.cluster)
       .then(rs => {
@@ -312,7 +310,7 @@ export class TargetPanelControlPlane extends React.Component<
       return Promise.resolve();
     }
 
-    const data = this.state.controlPlaneNode!.getData() as NodeData;
+    const data = this.state.controlPlaneNode!.getData()!;
 
     return API.getNamespaceTls(data.namespace, data.cluster)
       .then(rs => {
@@ -328,7 +326,7 @@ export class TargetPanelControlPlane extends React.Component<
   };
 
   private isControlPlane = (): boolean => {
-    const data = this.state.controlPlaneNode!.getData() as NodeData;
+    const data = this.state.controlPlaneNode!.getData()!;
     return data.namespace === serverConfig.istioNamespace;
   };
 
@@ -338,7 +336,7 @@ export class TargetPanelControlPlane extends React.Component<
 
   private renderCharts = (): React.ReactNode => {
     if (this.state.status) {
-      const data = this.state.controlPlaneNode!.getData() as NodeData;
+      const data = this.state.controlPlaneNode!.getData()!;
       const { thresholds } = data.infraData;
 
       return (

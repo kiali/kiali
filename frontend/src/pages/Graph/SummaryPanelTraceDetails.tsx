@@ -22,7 +22,7 @@ import { bindActionCreators } from 'redux';
 import { responseFlags } from 'utils/ResponseFlags';
 import { isParentKiosk, kioskContextMenuAction } from '../../components/Kiosk/KioskActions';
 import { Visualization, Node } from '@patternfly/react-topology';
-import { elems, selectAnd } from 'pages/GraphPF/GraphPFElems';
+import { elems, selectAnd } from 'helpers/GraphHelpers';
 import { FocusNode } from 'pages/GraphPF/GraphPF';
 import { GraphSelectorBuilder } from './GraphSelector';
 import { ExternalServiceInfo } from '../../types/StatusState';

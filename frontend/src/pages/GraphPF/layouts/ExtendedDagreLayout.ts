@@ -1,5 +1,5 @@
 import { DragEvent, DagreLayout, DragOperationWithType, Layout, Node } from '@patternfly/react-topology';
-import { descendents } from '../GraphPFElems';
+import { descendents } from 'helpers/GraphHelpers';
 
 export class ExtendedDagreLayout extends DagreLayout implements Layout {
   // endDrag override allows us to get around what I consider a PFT bug, and update any

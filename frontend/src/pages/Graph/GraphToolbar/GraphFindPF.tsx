@@ -32,17 +32,9 @@ import { HEALTHY, NA, NOT_READY } from 'types/Health';
 import { GraphFindOptions } from './GraphFindOptions';
 import { location, HistoryManager, URLParam } from '../../../app/History';
 import { isValid } from 'utils/Common';
-import {
-  descendents,
-  EdgeData,
-  elems,
-  NodeData,
-  SelectAnd,
-  SelectExp,
-  selectOr,
-  SelectOr,
-  setObserved
-} from 'pages/GraphPF/GraphPFElems';
+import { EdgeData, NodeData } from 'pages/GraphPF/GraphPFElems';
+import { elems, SelectAnd, SelectExp, selectOr, SelectOr, setObserved } from 'helpers/GraphHelpers';
+import { descendents } from 'helpers/GraphHelpers';
 import { isArray } from 'lodash';
 import { graphLayout, LayoutType } from 'pages/GraphPF/GraphPF';
 

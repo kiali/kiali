@@ -1,6 +1,8 @@
-import { Controller, ElementModel, GraphElement } from '@patternfly/react-topology';
+import { Controller, NodeModel, Node } from '@patternfly/react-topology';
 import { AppenderString } from './Common';
 import { NamespaceInfo } from './NamespaceInfo';
+import { BoxByType } from './Graph';
+import { CertsInfo } from 'types/CertsInfo';
 
 export interface MeshCluster {
   accessible: boolean;
@@ -35,14 +37,73 @@ export enum MeshInfraType {
 }
 
 export enum MeshNodeType {
-  BOX = 'box',
-  INFRA = 'infra'
+  Box = 'box',
+  Infra = 'infra'
 }
 
 export type MeshNodeHealthData = string;
 
-// Node data expected from server
-export interface MeshNodeData {
+export interface IstiodNodeData extends BaseNodeData {
+  infraData: ControlPlane;
+  infraType: MeshInfraType.ISTIOD;
+}
+
+export interface NamespaceNodeData extends BaseNodeData {
+  infraType: MeshInfraType.NAMESPACE;
+}
+
+export interface ClusterNodeData extends BaseNodeData {
+  infraData: MeshCluster;
+  infraType: MeshInfraType.CLUSTER;
+}
+
+export interface DataPlaneNodeData extends BaseNodeData {
+  infraData: NamespaceInfo[];
+  infraType: MeshInfraType.DATAPLANE;
+}
+
+export interface GrafanaNodeData extends BaseNodeData {
+  // Grafana node data is the raw grafana config. We don't actually care about what
+  // each field is since we just display the whole config in the side panel as is.
+  infraData: unknown;
+  infraType: MeshInfraType.GRAFANA;
+}
+
+export interface KialiNodeData extends BaseNodeData {
+  // Kiali node data is the raw kiali config. We don't actually care about what
+  // each field is since we just display the whole config in the side panel as is.
+  infraData: unknown;
+  infraType: MeshInfraType.KIALI;
+}
+
+export interface MetricStoreNodeData extends BaseNodeData {
+  // MetricStore node data is the raw metric store config. We don't actually care about what
+  // each field is since we just display the whole config in the side panel as is.
+  infraData: unknown;
+  infraType: MeshInfraType.METRIC_STORE;
+}
+
+export interface TraceStoreNodeData extends BaseNodeData {
+  // TraceStore node data is raw the trace store config. We don't actually care about what
+  // each field is since we just display the whole config in the side panel as is.
+  infraType: MeshInfraType.TRACE_STORE;
+}
+
+// Node data expected from server. Depending on the infraType,
+// infraData and some other fields may change between the types.
+// Fields that are common to all are defined in BaseNodeData.
+export type MeshNodeData =
+  | IstiodNodeData
+  | NamespaceNodeData
+  | ClusterNodeData
+  | DataPlaneNodeData
+  | GrafanaNodeData
+  | KialiNodeData
+  | MetricStoreNodeData
+  | TraceStoreNodeData;
+
+// BaseNodeData has common fields for all MeshNodeData types.
+interface BaseNodeData {
   cluster: string;
   healthData?: MeshNodeHealthData;
   id: string;
@@ -50,7 +111,7 @@ export interface MeshNodeData {
   infraName: string;
   infraType: MeshInfraType;
   isAmbient?: boolean;
-  isBox?: string;
+  isBox?: BoxByType;
   isExternal?: boolean;
   isInaccessible?: boolean;
   isMTLS?: boolean;
@@ -97,6 +158,7 @@ export interface Tag {
 }
 
 export interface ControlPlaneConfig {
+  certificates?: CertsInfo[];
   configMap?: any;
   outboundTrafficPolicy?: any;
 }
@@ -116,9 +178,9 @@ export interface ControlPlane {
 }
 
 // Node data after decorating at fetch-time (what is mainly used by ui code)
-export interface DecoratedMeshNodeData extends MeshNodeData {
+export type DecoratedMeshNodeData = MeshNodeData & {
   healthStatus: string; // status name
-}
+};
 
 // Edge data after decorating at fetch-time (what is mainly used by ui code)
 export interface DecoratedMeshEdgeData extends MeshEdgeData {
@@ -142,12 +204,40 @@ export interface DecoratedMeshElements {
   nodes?: DecoratedMeshNodeWrapper[];
 }
 
-export type MeshType = 'mesh' | 'node' | 'edge' | 'box';
-
-export interface MeshTarget {
-  elem: Controller | GraphElement<ElementModel, any> | undefined;
-  type: MeshType; // the element type
+export enum MeshType {
+  Box = 'box',
+  Edge = 'edge',
+  Mesh = 'mesh',
+  Node = 'node'
 }
+
+export type BoxNodeData = ClusterNodeData | NamespaceNodeData;
+
+export interface NodeTarget<T extends MeshNodeData> {
+  elem: Node<NodeModel, T>;
+  type: MeshType.Node;
+}
+
+export interface MeshControllerTarget {
+  elem: Controller | undefined;
+  type: MeshType.Mesh;
+}
+
+export interface EdgeTarget {
+  elem: any;
+  type: MeshType.Edge;
+}
+
+export interface BoxTarget<T extends BoxNodeData> {
+  elem: Node<NodeModel, T>;
+  type: MeshType.Box;
+}
+
+export type MeshTarget<N extends MeshNodeData = MeshNodeData, B extends BoxNodeData = BoxNodeData> =
+  | NodeTarget<N>
+  | MeshControllerTarget
+  | EdgeTarget
+  | BoxTarget<B>;
 
 export const MeshAttr = {
   // shared attrs

@@ -27,7 +27,7 @@ import { AutoComplete } from 'utils/AutoComplete';
 import { HEALTHY, NA, NOT_READY } from 'types/Health';
 import { location, HistoryManager, URLParam } from '../../../app/History';
 import { isValid } from 'utils/Common';
-import { descendents, elems, SelectAnd, SelectExp, selectOr, SelectOr } from 'pages/GraphPF/GraphPFElems';
+import { setObserved, elems, SelectAnd, SelectExp, selectOr, SelectOr, descendents } from 'helpers/GraphHelpers';
 import { isArray } from 'lodash';
 import { MeshAttr, MeshEdgeData, MeshInfraType, MeshNodeData } from 'types/Mesh';
 import { Layout } from 'types/Graph';
@@ -35,7 +35,6 @@ import { MeshToolbarActions } from 'actions/MeshToolbarActions';
 import { MeshFindOptions } from './MeshFindOptions';
 import { MeshHelpFind } from '../MeshHelpFind';
 import { LayoutType, meshLayout } from '../Mesh';
-import { setObserved } from '../MeshElems';
 
 type ReduxStateProps = {
   findValue: string;

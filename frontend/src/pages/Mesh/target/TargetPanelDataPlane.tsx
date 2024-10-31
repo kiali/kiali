@@ -1,8 +1,7 @@
 import * as React from 'react';
-import { Node, NodeModel } from '@patternfly/react-topology';
 import { TargetPanelCommonProps, nodeStyle, targetPanelStyle } from './TargetPanelCommon';
 import { classes } from 'typestyle';
-import { MeshNodeData } from 'types/Mesh';
+import { DataPlaneNodeData, MeshNodeData, NodeTarget } from 'types/Mesh';
 import { panelBodyStyle, panelHeadingStyle, panelStyle } from 'pages/Graph/SummaryPanelStyle';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { Title, TitleSizes } from '@patternfly/react-core';
@@ -13,7 +12,11 @@ import { serverConfig } from 'config';
 import { useKialiTranslation } from 'utils/I18nUtils';
 import { ControlPlaneVersionBadge } from 'pages/Overview/ControlPlaneVersionBadge';
 
-export const TargetPanelDataPlane: React.FC<TargetPanelCommonProps> = (props: TargetPanelCommonProps) => {
+type TargetPanelDataPlaneProps = TargetPanelCommonProps & {
+  target: NodeTarget<DataPlaneNodeData>;
+};
+
+export const TargetPanelDataPlane: React.FC<TargetPanelDataPlaneProps> = props => {
   const [expanded, setExpanded] = React.useState<string[]>([]);
 
   const { t } = useKialiTranslation();
@@ -48,13 +51,13 @@ export const TargetPanelDataPlane: React.FC<TargetPanelCommonProps> = (props: Ta
     );
   };
 
-  const node = props.target?.elem as Node<NodeModel, any>;
+  const node = props.target;
 
   if (!node) {
     return null;
   }
 
-  const data = node.getData() as MeshNodeData;
+  const data = node.elem.getData()!;
 
   return (
     <div id="target-panel-data-plane" className={classes(panelStyle, targetPanelStyle)}>
@@ -68,7 +71,7 @@ export const TargetPanelDataPlane: React.FC<TargetPanelCommonProps> = (props: Ta
             </Tr>
           </Thead>
 
-          {(data.infraData as NamespaceInfo[])
+          {data.infraData
             .filter(ns => ns.name !== serverConfig.istioNamespace)
             .sort((ns1, ns2) => (ns1.name < ns2.name ? -1 : 1))
             .map((ns, i) => {
@@ -94,7 +97,7 @@ export const TargetPanelDataPlane: React.FC<TargetPanelCommonProps> = (props: Ta
                       <ExpandableRowContent>
                         <TargetPanelDataPlaneNamespace
                           duration={props.duration}
-                          namespaceData={namespaceData}
+                          namespaceData={namespaceData!}
                           istioAPIEnabled={props.istioAPIEnabled}
                           isExpanded={isExpanded(ns)}
                           kiosk={props.kiosk}

@@ -23,7 +23,8 @@
 import { Edge, Node } from '@patternfly/react-topology';
 import { Controller, GraphElement } from '@patternfly/react-topology';
 import { BoxByType, NodeAttr } from 'types/Graph';
-import { ancestors, NodeData, predecessors, setObserved, successors } from './GraphPFElems';
+import { NodeData } from './GraphPFElems';
+import { ancestors, predecessors, setObserved, successors } from 'helpers/GraphHelpers';
 
 export class GraphHighlighterPF {
   controller: Controller;
