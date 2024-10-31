@@ -2,6 +2,7 @@ import _ from 'lodash';
 import { ServerConfig } from '../types/ServerConfig';
 import { parseHealthConfig } from './HealthConfig';
 import { MeshCluster } from '../types/Mesh';
+import { TrafficRate } from 'types/Graph';
 
 export type Durations = { [key: number]: string };
 
@@ -169,6 +170,9 @@ export const setServerConfig = (cfg: ServerConfig): void => {
 
   homeCluster = getHomeCluster(serverConfig);
   isMultiCluster = isMC();
+  if (!serverConfig.ambientEnabled) {
+    serverConfig.kialiFeatureFlags.uiDefaults.graph.traffic.ambient = 'none';
+  }
 };
 
 export const isIstioNamespace = (namespace: string): boolean => {
