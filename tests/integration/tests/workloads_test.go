@@ -26,7 +26,7 @@ func TestWorkloadsList(t *testing.T) {
 		require.NotNil(wl.Health)
 		require.NotNil(wl.Labels)
 		require.Equal(kiali.BOOKINFO, wl.Namespace)
-		if !strings.Contains(wl.Name, "traffic-generator") {
+		if !strings.Contains(wl.Name, "traffic-generator") && !strings.Contains(wl.Name, "gateway") {
 			require.True(wl.IstioSidecar)
 			require.NotNil(wl.IstioReferences)
 		}
@@ -48,7 +48,7 @@ func TestWorkloadDetails(t *testing.T) {
 		require.NotEmpty(pod.Status)
 		require.NotEmpty(pod.Name)
 		// @TODO fails on CI
-		//require.NotNil(pod.ProxyStatus)
+		// require.NotNil(pod.ProxyStatus)
 	}
 	require.NotEmpty(wl.Services)
 	for _, wl := range wl.Services {
@@ -66,9 +66,9 @@ func TestWorkloadDetails(t *testing.T) {
 }
 
 func TestWorkloadIstioIngressEmptyProxyStatus(t *testing.T) {
-	name := "istio-ingressgateway"
+	name := "bookinfo-gateway-istio"
 	require := require.New(t)
-	wl, _, err := kiali.WorkloadDetails(name, "istio-system")
+	wl, _, err := kiali.WorkloadDetails(name, "bookinfo")
 
 	require.NoError(err)
 	require.NotNil(wl)

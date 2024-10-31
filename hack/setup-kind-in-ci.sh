@@ -38,6 +38,9 @@ Options:
     Whether to set up a multicluster environment
     and which kind of multicluster environment to setup.
     Default: <none>
+-s|--sail
+    Install Istio with the Sail Operator.
+    Default: <false>
 -te|--tempo
     If Tempo will be installed as the tracing platform
     instead of Jaeger
@@ -49,6 +52,7 @@ HELP
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
 cd ${SCRIPT_DIR}/..
 
+# TODO: Remove sail option once everything uses sail to install
 # process command line arguments
 while [[ $# -gt 0 ]]; do
   key="$1"
@@ -67,6 +71,7 @@ while [[ $# -gt 0 ]]; do
       fi
       shift;shift
       ;;
+    -s|--sail)                     SAIL="true";              shift;shift; ;;
     -te|--tempo)                   TEMPO="$2";               shift;shift; ;;
     *) echo "Unknown argument: [$key]. Aborting."; helpmsg; exit 1 ;;
   esac
@@ -102,7 +107,7 @@ fi
 KIND_NODE_IMAGE=""
 if [ "${ISTIO_VERSION}" == "1.12.0" -o "${ISTIO_VERSION}" == "1.14.0" -o "${ISTIO_VERSION}" == "1.16.0" ]; then
   KIND_NODE_IMAGE="kindest/node:v1.23.4@sha256:0e34f0d0fd448aa2f2819cfd74e99fe5793a6e4938b328f657c8e3f81ee0dfb9"
-else
+elif [ "${ISTIO_VERSION}" == "v1.18.0" ]; then
   KIND_NODE_IMAGE="kindest/node:v1.27.3@sha256:3966ac761ae0136263ffdb6cfd4db23ef8a83cba8a463690e98317add2c9ba72"
 fi
 
@@ -122,6 +127,7 @@ HELM_CHARTS_DIR=$HELM_CHARTS_DIR
 ISTIO_VERSION=$ISTIO_VERSION
 KIND_NODE_IMAGE=$KIND_NODE_IMAGE
 MULTICLUSTER=$MULTICLUSTER
+SAIL=$SAIL
 TARGET_BRANCH=$TARGET_BRANCH
 TEMPO=$TEMPO
 === SETTINGS ===
@@ -132,7 +138,6 @@ which kubectl > /dev/null || (infomsg "kubectl executable is missing"; exit 1)
 which kind > /dev/null || (infomsg "kind executable is missing"; exit 1)
 which "${DORP}" > /dev/null || (infomsg "[$DORP] is not in the PATH"; exit 1)
 
-
 if [ -n "${ISTIO_VERSION}" ]; then
   if [[ "${ISTIO_VERSION}" == *-dev ]]; then
     DOWNLOAD_ISTIO_VERSION_ARG="--dev-istio-version ${ISTIO_VERSION}"
@@ -141,6 +146,10 @@ if [ -n "${ISTIO_VERSION}" ]; then
   fi
 fi
 
+# The sample apps setup scripts still rely on the istioctl dir to be present
+# to deploy the samples so we still need to download istio even when using
+# sail until the sample app scripts can be updated to pull the sample apps
+# from a URL or by mirroring them locally.
 infomsg "Downloading istio"
 "${SCRIPT_DIR}"/istio/download-istio.sh ${DOWNLOAD_ISTIO_VERSION_ARG}
 
@@ -195,6 +204,19 @@ setup_kind_singlecluster() {
       # -net is giving issues trying to access the services inside the cluster with HTTP code 56
       # At least with Ambient 1.21
       "${SCRIPT_DIR}"/istio/install-istio-via-istioctl.sh --reduce-resources true --client-exe-path "$(which kubectl)" -cn "cluster-default" -mid "mesh-default" -gae true ${hub_arg:-} -cp ambient
+  elif [ "${SAIL}" == "true" ]; then
+    local patch_file
+    patch_file=$(mktemp)
+    cat <<EOF > "$patch_file"
+spec:
+  values:
+    global:
+      meshID: mesh-default
+      network: network-default
+      multiCluster:
+        clusterName: cluster-default
+EOF
+    "${SCRIPT_DIR}"/istio/install-istio-via-sail.sh --patch-file "$patch_file"
   else
     "${SCRIPT_DIR}"/istio/install-istio-via-istioctl.sh --reduce-resources true --client-exe-path "$(which kubectl)" -cn "cluster-default" -mid "mesh-default" -net "network-default" -gae true ${hub_arg:-}
   fi
