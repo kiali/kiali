@@ -123,6 +123,10 @@ Options:
     than to install its own operator.
     Default: helm
 
+-ov|--olm-version <version>
+    Defines the version of OLM to test with. This is ignored if --olm-enabled=false.
+    Default: latest
+
 -rc|--rebuild-cluster <true|false>
     If true, any existing cluster will be destroyed and a new one will be rebuilt.
     Default: false
@@ -183,6 +187,7 @@ while [[ $# -gt 0 ]]; do
     -lpn|--logs-project-name)     LOGS_PROJECT_NAME="$2";     shift;shift; ;;
     -oe|--olm-enabled)            OLM_ENABLED="$2";           shift;shift; ;;
     -oi|--operator-installer)     OPERATOR_INSTALLER="$2";    shift;shift; ;;
+    -ov|--olm-version)            OLM_VERSION="$2";           shift;shift; ;;
     -rc|--rebuild-cluster)        REBUILD_CLUSTER="$2";       shift;shift; ;;
     -sd|--src-dir)                SRC="$2";                   shift;shift; ;;
     -st|--skip-tests)             SKIP_TESTS="$2";            shift;shift; ;;
@@ -203,6 +208,7 @@ SRC="${SRC:-/tmp/KIALI-GIT-KIND}"
 DORP="${DORP:-docker}"
 GIT_CLONE_PROTOCOL="${GIT_CLONE_PROTOCOL:-git}"
 OLM_ENABLED="${OLM_ENABLED:-false}"
+OLM_VERSION="${OLM_VERSION:-latest}"
 REBUILD_CLUSTER="${REBUILD_CLUSTER:-false}"
 
 CLIENT_EXE="$(which ${CLIENT_EXE} 2>/dev/null || echo "invalid kubectl: ${CLIENT_EXE}")"
@@ -291,6 +297,7 @@ LOGS_LOCAL_SUBDIR=$LOGS_LOCAL_SUBDIR
 LOGS_LOCAL_SUBDIR_ABS=$LOGS_LOCAL_SUBDIR_ABS
 LOGS_PROJECT_NAME=$LOGS_PROJECT_NAME
 OLM_ENABLED=$OLM_ENABLED
+OLM_VERSION=$OLM_VERSION
 OPERATOR_INSTALLER=$OPERATOR_INSTALLER
 REBUILD_CLUSTER=$REBUILD_CLUSTER
 SKIP_TESTS=$SKIP_TESTS
@@ -463,8 +470,6 @@ fi
 
 # if requested, install OLM and the Kiali Operator via OLM
 if [ "${OLM_ENABLED}" == "true" ]; then
-  OLM_VERSION="latest" # TODO might be nice to allow the user to set this via a command line option --olm-version
-
   if [ "${OLM_VERSION}" == "latest" ]; then
     OLM_VERSION="$(curl -s https://api.github.com/repos/operator-framework/operator-lifecycle-manager/releases 2> /dev/null | grep "tag_name" | sed -e 's/.*://' -e 's/ *"//' -e 's/",//' | grep -v "snapshot" | sort -t "." -k 1.2g,1 -k 2g,2 -k 3g | tail -n 1)"
     if [ -z "${OLM_VERSION}" ]; then
@@ -473,6 +478,8 @@ if [ "${OLM_ENABLED}" == "true" ]; then
     else
       infomsg "Github reports the latest OLM version is: ${OLM_VERSION}"
     fi
+  else
+      infomsg "Using the specified OLM version: ${OLM_VERSION}"
   fi
 
   # force the install.sh script to go through our client executable when it executes kubectl commands

@@ -16,6 +16,7 @@ OPM_VERSION ?= 1.47.0
 # which OLM to install (for olm-install target)
 # TODO OLM v0.29.0 has a bug and cannot start. When that bug is fixed, put OLM_VERSION back to "latest"
 # see https://github.com/operator-framework/operator-lifecycle-manager/issues/3419
+# This should be fixed with a new version during the week of Nov 3, 2024 - we can revert back to latest at that time.
 #OLM_VERSION ?= latest
 OLM_VERSION ?= v0.28.0
 
