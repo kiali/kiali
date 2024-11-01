@@ -2,7 +2,6 @@ import _ from 'lodash';
 import { ServerConfig } from '../types/ServerConfig';
 import { parseHealthConfig } from './HealthConfig';
 import { MeshCluster } from '../types/Mesh';
-import { TrafficRate } from 'types/Graph';
 
 export type Durations = { [key: number]: string };
 
