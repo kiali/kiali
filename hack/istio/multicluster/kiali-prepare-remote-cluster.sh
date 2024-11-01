@@ -107,13 +107,11 @@ create_resources_in_remote_cluster() {
   local helm_template_output="$(${HELM} template            \
       ${helm_version_arg:-}                                 \
       --namespace ${REMOTE_CLUSTER_NAMESPACE}               \
+      --set deployment.remote_cluster_resources_only=true   \
       --set deployment.instance_name=${KIALI_RESOURCE_NAME} \
       --set deployment.cluster_wide_access=true             \
       --set deployment.view_only_mode=${VIEW_ONLY}          \
       --set auth.strategy=anonymous                         \
-      --show-only templates/serviceaccount.yaml             \
-      --show-only templates/${role_template_name}.yaml      \
-      --show-only templates/rolebinding.yaml                \
       --repo https://kiali.org/helm-charts                  \
       kiali-server                                          \
       kiali-server)"
