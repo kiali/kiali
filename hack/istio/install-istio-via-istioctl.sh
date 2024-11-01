@@ -415,28 +415,6 @@ users:
 - "system:serviceaccount:${NAMESPACE}:prometheus"
 - "system:serviceaccount:${NAMESPACE}:grafana"
 SCC
-    else
-      echo "Creating SCC for OpenShift for the Istio addons"
-      cat <<SCC | ${CLIENT_EXE} apply -f -
-apiVersion: security.openshift.io/v1
-kind: SecurityContextConstraints
-metadata:
-  name: istio-addons-openshift-scc
-runAsUser:
-  type: RunAsAny
-seLinuxContext:
-  type: RunAsAny
-supplementalGroups:
-  type: RunAsAny
-fsGroup:
-  type: RunAsAny
-seccompProfiles:
-- '*'
-priority: 9
-users:
-- "system:serviceaccount:${NAMESPACE}:prometheus"
-- "system:serviceaccount:${NAMESPACE}:grafana"
-SCC
     fi
   else
     if ! ${CLIENT_EXE} get namespace ${NAMESPACE}; then
