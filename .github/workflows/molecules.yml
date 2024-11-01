@@ -10,6 +10,12 @@ on:
         required: false
         default: ""
         type: string
+      olm_version:
+        description: "Version of OLM to install or 'latest'. e.g. v0.28.0"
+        required: false
+        # change this to "latest" after the upstream OLM bug is fixed
+        default: "v0.28.0"
+        type: string
 
 jobs:
   molecules:
@@ -31,4 +37,4 @@ jobs:
     - name: Run molecule tests using helm
       run: ./hack/ci-kind-molecule-tests.sh --client-exe $(which kubectl) --kind-exe $(which kind) --all-tests "${{ inputs.all_tests }}" --git-clone-protocol https --irc-room "" --upload-logs false --rebuild-cluster true -ci true --operator-installer helm --olm-enabled false
     - name: Run molecule tests using OLM
-      run: ./hack/ci-kind-molecule-tests.sh --client-exe $(which kubectl) --kind-exe $(which kind) --all-tests "${{ inputs.all_tests }}" --git-clone-protocol https --irc-room "" --upload-logs false --rebuild-cluster true -ci true --operator-installer skip --olm-enabled true
+      run: ./hack/ci-kind-molecule-tests.sh --client-exe $(which kubectl) --kind-exe $(which kind) --all-tests "${{ inputs.all_tests }}" --git-clone-protocol https --irc-room "" --upload-logs false --rebuild-cluster true -ci true --operator-installer skip --olm-enabled true --olm-version "${{ inputs.olm_version }}"
