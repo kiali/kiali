@@ -195,6 +195,35 @@ func (a SecurityPolicyAppender) appendGraph(trafficMap graph.TrafficMap, namespa
 			query = fmt.Sprintf(`%s OR (%s)`, query, tcpReceivedQuery)
 		}
 	}
+	// If we are including ztunnel traffic we may need more TCP queries, because for ztunnel-to-sidecar traffic ztunnel
+	// will report as source telemetry. If this results in duplicate source and dest ztunnel telem, it should be OK, as
+	// the rate should be the same, and will just overwrite itself.
+	if a.Rates.Ambient == graph.AmbientTrafficTotal || a.Rates.Ambient == graph.AmbientTrafficZtunnel {
+		if a.Rates.Tcp == graph.RateSent || a.Rates.Tcp == graph.RateTotal {
+			tcpSentQuery := fmt.Sprintf(`sum(rate(%s{app="ztunnel",reporter="source",source_workload_namespace="%v"}[%vs])) by (%s) > 0`,
+				"istio_tcp_sent_bytes_total",
+				namespace,
+				int(duration.Seconds()), // range duration for the query
+				groupBy)
+			if query == "" {
+				query = fmt.Sprintf(`(%s)`, tcpSentQuery)
+			} else {
+				query = fmt.Sprintf(`%s OR (%s)`, query, tcpSentQuery)
+			}
+		}
+		if a.Rates.Tcp == graph.RateReceived || a.Rates.Tcp == graph.RateTotal {
+			tcpReceivedQuery := fmt.Sprintf(`sum(rate(%s{app="ztunnel",reporter="source",source_workload_namespace="%v"}[%vs])) by (%s) > 0`,
+				"istio_tcp_received_bytes_total",
+				namespace,
+				int(duration.Seconds()), // range duration for the query
+				groupBy)
+			if query == "" {
+				query = fmt.Sprintf(`(%s)`, tcpReceivedQuery)
+			} else {
+				query = fmt.Sprintf(`%s OR (%s)`, query, tcpReceivedQuery)
+			}
+		}
+	}
 
 	inVector := promQuery(query, time.Unix(a.QueryTime, 0), client.GetContext(), client.API(), a)
 

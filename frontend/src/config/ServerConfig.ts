@@ -169,6 +169,9 @@ export const setServerConfig = (cfg: ServerConfig): void => {
 
   homeCluster = getHomeCluster(serverConfig);
   isMultiCluster = isMC();
+  if (!serverConfig.ambientEnabled) {
+    serverConfig.kialiFeatureFlags.uiDefaults.graph.traffic.ambient = 'none';
+  }
 };
 
 export const isIstioNamespace = (namespace: string): boolean => {
