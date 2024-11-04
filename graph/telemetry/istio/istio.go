@@ -241,8 +241,9 @@ func buildNamespaceTrafficMap(ctx context.Context, namespace string, o graph.Tel
 
 		for _, metric := range metrics {
 			// 0) Incoming: query source telemetry to capture unserviced namespace services' incoming traffic
-			query := fmt.Sprintf(`sum(rate(%s{%sreporter="source",source_workload_namespace!="%s",destination_workload_namespace="unknown",destination_workload="unknown",destination_service=~"^.+\\.%s\\..+$"} [%vs])) by (%s) %s`,
+			query := fmt.Sprintf(`sum(rate(%s{%s%s,source_workload_namespace!="%s",destination_workload_namespace="unknown",destination_workload="unknown",destination_service=~"^.+\\.%s\\..+$"} [%vs])) by (%s) %s`,
 				metric,
+				util.GetReporter("source", o.Rates),
 				util.GetApp(o.Rates),
 				namespace,
 				namespace,
@@ -253,8 +254,9 @@ func buildNamespaceTrafficMap(ctx context.Context, namespace string, o graph.Tel
 			populateTrafficMap(trafficMap, &incomingVector, metric, o, globalInfo)
 
 			// 1) Incoming: query destination telemetry to capture namespace services' incoming traffic	query = fmt.Sprintf(`sum(rate(%s{reporter="destination",destination_service_namespace="%s"} [%vs])) by (%s) %s`,
-			query = fmt.Sprintf(`sum(rate(%s{%sreporter="destination",destination_workload_namespace="%s"} [%vs])) by (%s) %s`,
+			query = fmt.Sprintf(`sum(rate(%s{%s%s,destination_workload_namespace="%s"} [%vs])) by (%s) %s`,
 				metric,
+				util.GetReporter("destination", o.Rates),
 				util.GetApp(o.Rates),
 				namespace,
 				int(duration.Seconds()), // range duration for the query
@@ -264,8 +266,9 @@ func buildNamespaceTrafficMap(ctx context.Context, namespace string, o graph.Tel
 			populateTrafficMap(trafficMap, &incomingVector, metric, o, globalInfo)
 
 			// 2) Outgoing: query source telemetry to capture namespace workloads' outgoing traffic
-			query = fmt.Sprintf(`sum(rate(%s{%sreporter="source",source_workload_namespace="%s"} [%vs])) by (%s) %s`,
+			query = fmt.Sprintf(`sum(rate(%s{%s%s,source_workload_namespace="%s"} [%vs])) by (%s) %s`,
 				metric,
+				util.GetReporter("source", o.Rates),
 				util.GetApp(o.Rates),
 				namespace,
 				int(duration.Seconds()), // range duration for the query
