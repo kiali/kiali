@@ -142,18 +142,6 @@ func (in *TracingService) GetAppTraces(ns, app string, query models.TracingQuery
 		return nil, err
 	}
 
-	if len(r.Data) == query.Limit {
-		// Reached the limit, use split & join mode to spread traces over the requested interval
-		log.Trace("Limit of traces was reached, using split & join mode")
-		more, err := in.getAppTracesSlicedInterval(ns, app, query)
-		if err != nil {
-			// Log error but continue to process results (might still have some data fetched)
-			log.Errorf("Traces split & join failed: %v", err)
-		}
-		if more != nil {
-			mergeResponses(r, more)
-		}
-	}
 	return r, nil
 }
 
