@@ -144,6 +144,14 @@ type WorkloadListItem struct {
 	// Names of the workload service accounts
 	ServiceAccountNames []string `json:"serviceAccountNames"`
 
+	// TemplateAnnotations are the annotations on the pod template if the workload
+	// has a pod template.
+	TemplateAnnotations map[string]string `json:"templateAnnotations,omitempty"`
+
+	// TemplateLabels are the labels on the pod template if the workload
+	// has a pod template.
+	TemplateLabels map[string]string `json:"templateLabels,omitempty"`
+
 	// Health
 	Health WorkloadHealth `json:"health,omitempty"`
 
@@ -226,6 +234,8 @@ func (workload *Workload) parseObjectMeta(meta *meta_v1.ObjectMeta, tplMeta *met
 	conf := config.Get()
 	workload.Name = meta.Name
 	if tplMeta != nil && tplMeta.Labels != nil {
+		workload.TemplateLabels = tplMeta.Labels
+		// TODO: This is not right since the template labels won't match the workload's labels.
 		workload.Labels = tplMeta.Labels
 		/** Check the labels app and version required by Istio in template Pods*/
 		_, workload.AppLabel = tplMeta.Labels[conf.IstioLabels.AppLabelName]
@@ -234,7 +244,9 @@ func (workload *Workload) parseObjectMeta(meta *meta_v1.ObjectMeta, tplMeta *met
 		workload.Labels = map[string]string{}
 	}
 	annotations := meta.Annotations
+	// TODO: This is not right since the template labels won't match the workload's labels.
 	if tplMeta.Annotations != nil {
+		workload.TemplateAnnotations = tplMeta.Annotations
 		annotations = tplMeta.Annotations
 	}
 
@@ -473,23 +485,49 @@ func (workload *Workload) HasIstioSidecar() bool {
 
 // IsGateway return true if the workload is Ingress, Egress or K8s Gateway
 func (workload *Workload) IsGateway() bool {
-	conf := config.Get()
-	if workload.Type == "Deployment" {
-		if labelValue, ok := workload.Labels["operator.istio.io/component"]; ok && (labelValue == "IngressGateways" || labelValue == "EgressGateways") {
-			return true
-		}
-		ingressLabel := conf.GatewayLabel(conf.IstioLabels.IngressGatewayLabel)
-		if labelValue, ok := workload.Labels[ingressLabel[0]]; ok && labelValue == ingressLabel[1] {
-			return true
-		}
-		egressLabel := conf.GatewayLabel(conf.IstioLabels.EgressGatewayLabel)
-		if labelValue, ok := workload.Labels[egressLabel[0]]; ok && labelValue == egressLabel[1] {
-			return true
-		}
-		if _, ok := workload.Labels[conf.IstioLabels.K8sGatewayLabelName]; ok {
-			return true
-		}
+	// There's not consistent labeling for gateways.
+	// In case of using istioctl, you get:
+	// istio: ingressgateway
+	// or
+	// istio: egressgateway
+	//
+	// In case of using helm, you get:
+	// istio: <gateway-name>
+	//
+	// In case of gateway injection you get:
+	// istio: <gateway-name>
+	//
+	// In case of gateway-api you get:
+	// istio.io/gateway-name: gateway
+	//
+	// In case of east/west gateways you get:
+	// istio: eastwestgateway
+	//
+	// We're going to do different checks for all the ways you can label/deploy gateways
+
+	// istioctl
+	if labelValue, ok := workload.Labels["operator.istio.io/component"]; ok && (labelValue == "IngressGateways" || labelValue == "EgressGateways") {
+		return true
 	}
+
+	// There's a lot of unit tests that look specifically for istio: ingressgateway and istio: egressgateway.
+	// These should be covered by istioctl and gateway injection cases but adding checks for these just in case.
+	if labelValue, ok := workload.Labels["istio"]; ok && (labelValue == "ingressgateway" || labelValue == "egressgateway") {
+		return true
+	}
+
+	// Gateway injection. Includes helm because the helm template uses gateway injection.
+	// If the pod injection template is a gateway then it's a gateway.
+	if workload.TemplateAnnotations != nil && workload.TemplateAnnotations["inject.istio.io/templates"] == "gateway" {
+		return true
+	}
+
+	// gateway-api
+	// If this label exists then it's a gateway
+	if _, ok := workload.Labels["istio.io/gateway-name"]; ok {
+		return true
+	}
+
 	return false
 }
 

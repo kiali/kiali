@@ -1,5 +1,6 @@
 import { AppHealth } from './Health';
 import { ObjectReference } from './IstioObjects';
+import { InstanceType } from 'types/Common';
 
 export interface AppList {
   applications: AppListItem[];
@@ -9,7 +10,9 @@ export interface AppList {
 export interface AppListItem {
   cluster?: string;
   health: AppHealth;
+  instanceType: InstanceType.App;
   isAmbient: boolean;
+  isGateway: boolean;
   istioReferences: ObjectReference[];
   istioSidecar: boolean;
   labels: { [key: string]: string };

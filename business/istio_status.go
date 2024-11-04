@@ -67,12 +67,18 @@ func (iss *IstioStatusService) GetStatus(ctx context.Context) (kubernetes.IstioC
 
 func (iss *IstioStatusService) getIstioComponentStatus(ctx context.Context, cluster string) (kubernetes.IstioComponentStatus, error) {
 	// Fetching workloads from component namespaces
-	workloads, err := iss.getComponentNamespacesWorkloads(ctx, cluster)
-	if err != nil {
-		return kubernetes.IstioComponentStatus{}, err
+	// If there's some explicit config then use that. Otherwise autodiscover.
+	if len(iss.conf.ExternalServices.Istio.ComponentStatuses.Components) > 0 {
+		log.Trace("Istio components config set. Using this instead of autodetecting components.")
+		workloads, err := iss.getComponentNamespacesWorkloads(ctx, cluster)
+		if err != nil {
+			return kubernetes.IstioComponentStatus{}, err
+		}
+
+		return iss.getStatusOf(workloads, cluster), nil
 	}
 
-	deploymentStatus := iss.getStatusOf(workloads, cluster)
+	log.Trace("Istio components config not set. Autodetecting components.")
 
 	mesh, err := iss.discovery.Mesh(ctx)
 	if err != nil {
@@ -100,46 +106,28 @@ func (iss *IstioStatusService) getIstioComponentStatus(ctx context.Context, clus
 			IsCore:    true,
 		})
 	}
-	deploymentStatus = deploymentStatus.Merge(istiodStatus)
-	deploymentStatus = deploymentStatus.Merge(iss.getGatewaysStatus(ctx, cluster))
 
-	return deploymentStatus, nil
-}
+	// Autodiscover gateways.
+	workloads, err := iss.workloads.GetAllWorkloads(ctx, cluster)
+	if err != nil {
+		// Don't error on gateways since they are non-essential.
+		log.Debugf("Unable to get gateway workloads when building istio component status. Cluster: %s. Err: %s", cluster, err)
+		return istiodStatus, nil
+	}
 
-func (iss *IstioStatusService) getGatewaysStatus(ctx context.Context, cluster string) kubernetes.IstioComponentStatus {
-	var gatewaysStatus kubernetes.IstioComponentStatus
-	updateGatewayStatus := func(label string, isCore bool, namespace string) {
-		// Fetching gateway workloads from gateway namespace
-		if namespace == "" {
-			namespace = iss.conf.IstioNamespace
-		}
-		// keep the label in status name, to align with ComponentStatuses
-		wls, err := iss.workloads.fetchWorkloadsFromCluster(ctx, cluster, namespace, label)
-		if err == nil && len(wls) != 0 {
-			for _, wl := range wls {
-				status := GetWorkloadStatus(*wl)
-				gatewaysStatus = append(gatewaysStatus, kubernetes.ComponentStatus{
-					Cluster:   cluster,
-					Name:      label,
-					Namespace: namespace,
-					Status:    status,
-					IsCore:    isCore,
-				})
-			}
-		} else {
-			gatewaysStatus = append(gatewaysStatus, kubernetes.ComponentStatus{
-				Cluster:   cluster,
-				Name:      label,
-				Namespace: namespace,
-				Status:    kubernetes.ComponentNotFound,
-				IsCore:    isCore,
+	for _, workload := range workloads {
+		if workload.IsGateway() {
+			istiodStatus = append(istiodStatus, kubernetes.ComponentStatus{
+				Cluster:   workload.Cluster,
+				Name:      workload.Name,
+				Namespace: workload.Namespace,
+				Status:    GetWorkloadStatus(*workload),
+				IsCore:    false,
 			})
 		}
 	}
-	updateGatewayStatus(iss.conf.IstioLabels.IngressGatewayLabel, true, iss.conf.ExternalServices.Istio.IngressGatewayNamespace)
-	updateGatewayStatus(iss.conf.IstioLabels.EgressGatewayLabel, false, iss.conf.ExternalServices.Istio.EgressGatewayNamespace)
 
-	return gatewaysStatus
+	return istiodStatus, nil
 }
 
 func (iss *IstioStatusService) getComponentNamespacesWorkloads(ctx context.Context, cluster string) ([]*models.Workload, error) {

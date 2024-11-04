@@ -4,7 +4,7 @@ import { RenderContent } from '../../components/Nav/Page';
 import * as ServiceListFilters from './FiltersAndSorts';
 import * as FilterComponent from '../../components/FilterList/FilterComponent';
 import { ServiceList, ServiceListItem } from '../../types/ServiceList';
-import { DurationInSeconds } from '../../types/Common';
+import { DurationInSeconds, InstanceType } from '../../types/Common';
 import { Namespace } from '../../types/Namespace';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 import { namespaceEquals } from '../../utils/Common';
@@ -117,6 +117,7 @@ class ServiceListPageComponent extends FilterComponent.Component<
     if (data.services) {
       return data.services.map(service => ({
         name: service.name,
+        instanceType: InstanceType.Service,
         istioSidecar: service.istioSidecar,
         isAmbient: service.isAmbient,
         namespace: service.namespace,

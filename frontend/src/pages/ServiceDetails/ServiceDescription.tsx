@@ -67,9 +67,11 @@ export const ServiceDescription: React.FC<ServiceInfoDescriptionProps> = (props:
           }
 
           workloads.push({
+            namespace: wk.namespace,
             workloadName: wk.name,
             istioSidecar: wk.istioSidecar,
             isAmbient: wk.isAmbient,
+            isGateway: wk.isGateway,
             serviceAccountNames: wk.serviceAccountNames,
             labels: wk.labels ?? {}
           });
