@@ -1,6 +1,7 @@
 import * as React from 'react';
 import AceEditor from 'react-ace';
 import ReactAce from 'react-ace/lib/ace';
+import YAML from 'js-yaml';
 import { useKialiTheme } from '../../../utils/ThemeUtils';
 import { Theme } from '../../../types/Common';
 import { ConfigButtonsTargetPanel } from '../../../components/Mesh/ConfigButtonsTargetPanel';
@@ -9,7 +10,8 @@ import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from 'components/Pf/PfColors';
 
 interface TargetPanelEditorProps {
-  configMap: string;
+  configJson?: string;
+  configMap?: string;
   targetName: string;
 }
 
@@ -44,10 +46,18 @@ const aceEditorStyle = kialiStyle({
 export const TargetPanelEditor: React.FC<TargetPanelEditorProps> = (props: TargetPanelEditorProps) => {
   const darkTheme = useKialiTheme() === Theme.DARK;
   const aceEditorRef = React.useRef<ReactAce | null>(null);
+  let yaml = props.configMap;
+  if (!yaml) {
+    try {
+      yaml = YAML.dump(props.configJson || 'N/A');
+    } catch (error) {
+      yaml = 'N/A';
+    }
+  }
 
   return (
     <>
-      <ConfigButtonsTargetPanel copyText={props.configMap} targetName={props.targetName} />
+      <ConfigButtonsTargetPanel copyText={yaml} targetName={props.targetName} />
 
       <AceEditor
         ref={aceEditorRef}
@@ -59,7 +69,7 @@ export const TargetPanelEditor: React.FC<TargetPanelEditorProps> = (props: Targe
         wrapEnabled={true}
         readOnly={true}
         setOptions={aceOptions}
-        value={props.configMap}
+        value={yaml}
         showPrintMargin={false}
       />
     </>
