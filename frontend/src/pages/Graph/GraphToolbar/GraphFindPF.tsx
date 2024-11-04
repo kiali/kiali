@@ -642,10 +642,6 @@ class GraphFindPFComponent extends React.Component<GraphFindProps, GraphFindStat
       const finalNodes = nodes.filter(n => !n.isVisible()) as GraphElement[];
       const finalEdges = edges.filter(e => !e.isVisible()) as GraphElement[];
 
-      // we need to remove edges completely because an invisible edge is not
-      // ignored by layout (I don't know why, nodes are ignored)
-      setObserved(() => finalEdges.forEach(e => e.remove()));
-
       this.hiddenElements = finalNodes.concat(finalEdges);
     }
 
