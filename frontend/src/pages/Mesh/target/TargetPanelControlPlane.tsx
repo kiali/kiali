@@ -28,8 +28,7 @@ import { MeshMTLSStatus } from 'components/MTls/MeshMTLSStatus';
 import { t } from 'utils/I18nUtils';
 import { UNKNOWN } from 'types/Graph';
 import { TargetPanelEditor } from './TargetPanelEditor';
-import { load, dump } from 'js-yaml';
-import { yamlDumpOptions } from '../../../types/IstioConfigDetails';
+import { load } from 'js-yaml';
 import { CertsInfo } from 'types/CertsInfo';
 import { IstioCertsInfo } from 'components/IstioCertsInfo/IstioCertsInfo';
 import { TargetPanelControlPlaneMetrics } from './TargetPanelControlPlaneMetrics';
@@ -113,20 +112,16 @@ export class TargetPanelControlPlane extends React.Component<
     this.promises.cancelAll();
   }
 
-  convertYamlToJson(yamlString: string): unknown {
-    return load(yamlString);
-  }
-
-  getParsedYaml(configMap: Map<string, string>): string {
+  configMapToJson(configMap: Map<string, string>): unknown {
     let cm = {};
+
     if (configMap) {
       for (const [key, value] of Object.entries(configMap)) {
-        cm[key] = this.convertYamlToJson(value);
+        cm[key] = load(value);
       }
-
-      return dump(cm, yamlDumpOptions);
     }
-    return '';
+
+    return cm;
   }
 
   render(): React.ReactNode {
@@ -138,7 +133,7 @@ export class TargetPanelControlPlane extends React.Component<
     const data = this.state.controlPlaneNode?.getData()!;
 
     const controlPlane: ControlPlane = data.infraData;
-    const parsedCm = controlPlane.config.configMap ? this.getParsedYaml(controlPlane.config.configMap) : '';
+    const configMapJson = controlPlane.config.configMap ? this.configMapToJson(controlPlane.config.configMap) : '';
 
     return (
       <div
@@ -174,7 +169,8 @@ export class TargetPanelControlPlane extends React.Component<
           )}
 
           {targetPanelHR}
-          {parsedCm !== '' && <TargetPanelEditor configMap={parsedCm} targetName={data.infraName}></TargetPanelEditor>}
+          <TargetPanelEditor configData={configMapJson} targetName={data.infraName}></TargetPanelEditor>
+
           {data.infraData.config.certificates && targetPanelHR}
           {data.infraData.config.certificates && (
             <IstioCertsInfo certificates={data.infraData.config.certificates}></IstioCertsInfo>

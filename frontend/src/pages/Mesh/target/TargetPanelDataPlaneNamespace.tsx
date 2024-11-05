@@ -31,7 +31,7 @@ import * as FilterHelper from '../../../components/FilterList/FilterHelper';
 import { panelBodyStyle, panelHeadingStyle } from 'pages/Graph/SummaryPanelStyle';
 import { Metric } from 'types/Metrics';
 import { t } from 'utils/I18nUtils';
-import { TargetPanelConfigTable } from './TargetPanelConfigTable';
+import { TargetPanelEditor } from './TargetPanelEditor';
 
 type TargetPanelDataPlaneNamespaceProps = Omit<TargetPanelCommonProps, 'target'> & {
   isExpanded: boolean;
@@ -171,11 +171,10 @@ export class TargetPanelDataPlaneNamespace extends React.Component<
 
           {targetPanelHR}
 
-          <TargetPanelConfigTable
-            configData={this.props.namespaceData as any}
+          <TargetPanelEditor
+            configData={this.props.namespaceData}
             targetName={this.props.targetNamespace}
-            width="30%"
-          />
+          ></TargetPanelEditor>
         </CardBody>
       </Card>
     );

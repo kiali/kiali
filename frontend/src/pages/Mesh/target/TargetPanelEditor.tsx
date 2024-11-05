@@ -7,9 +7,11 @@ import { ConfigButtonsTargetPanel } from '../../../components/Mesh/ConfigButtons
 import { AceOptions } from 'react-ace/types';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from 'components/Pf/PfColors';
+import { yamlDumpOptions } from 'types/IstioConfigDetails';
+import { dump } from 'js-yaml';
 
 interface TargetPanelEditorProps {
-  configMap: string;
+  configData: unknown;
   targetName: string;
 }
 
@@ -45,9 +47,16 @@ export const TargetPanelEditor: React.FC<TargetPanelEditorProps> = (props: Targe
   const darkTheme = useKialiTheme() === Theme.DARK;
   const aceEditorRef = React.useRef<ReactAce | null>(null);
 
+  let yaml = '';
+  try {
+    yaml = dump(props.configData || 'N/A', yamlDumpOptions);
+  } catch (error) {
+    yaml = 'N/A';
+  }
+
   return (
     <>
-      <ConfigButtonsTargetPanel copyText={props.configMap} targetName={props.targetName} />
+      <ConfigButtonsTargetPanel copyText={yaml} targetName={props.targetName} />
 
       <AceEditor
         ref={aceEditorRef}
@@ -59,7 +68,7 @@ export const TargetPanelEditor: React.FC<TargetPanelEditorProps> = (props: Targe
         wrapEnabled={true}
         readOnly={true}
         setOptions={aceOptions}
-        value={props.configMap}
+        value={yaml}
         showPrintMargin={false}
       />
     </>
