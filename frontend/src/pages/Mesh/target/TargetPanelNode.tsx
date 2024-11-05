@@ -31,7 +31,8 @@ export const TargetPanelNode: React.FC<TargetPanelNodeProps<MeshNodeData>> = (
         <span>{t('Version: {{version}}', { version: data.version || t(UNKNOWN) })}</span>
 
         {targetPanelHR}
-        <TargetPanelEditor configJson={data.infraData} targetName={data.infraName}></TargetPanelEditor>
+
+        <TargetPanelEditor configData={data.infraData} targetName={data.infraName}></TargetPanelEditor>
       </div>
     </div>
   );

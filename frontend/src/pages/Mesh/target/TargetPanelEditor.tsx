@@ -1,17 +1,17 @@
 import * as React from 'react';
 import AceEditor from 'react-ace';
 import ReactAce from 'react-ace/lib/ace';
-import YAML from 'js-yaml';
 import { useKialiTheme } from '../../../utils/ThemeUtils';
 import { Theme } from '../../../types/Common';
 import { ConfigButtonsTargetPanel } from '../../../components/Mesh/ConfigButtonsTargetPanel';
 import { AceOptions } from 'react-ace/types';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from 'components/Pf/PfColors';
+import { yamlDumpOptions } from 'types/IstioConfigDetails';
+import { dump } from 'js-yaml';
 
 interface TargetPanelEditorProps {
-  configJson?: string;
-  configMap?: string;
+  configData: unknown;
   targetName: string;
 }
 
@@ -46,13 +46,12 @@ const aceEditorStyle = kialiStyle({
 export const TargetPanelEditor: React.FC<TargetPanelEditorProps> = (props: TargetPanelEditorProps) => {
   const darkTheme = useKialiTheme() === Theme.DARK;
   const aceEditorRef = React.useRef<ReactAce | null>(null);
-  let yaml = props.configMap;
-  if (!yaml) {
-    try {
-      yaml = YAML.dump(props.configJson || 'N/A');
-    } catch (error) {
-      yaml = 'N/A';
-    }
+
+  let yaml = '';
+  try {
+    yaml = dump(props.configData || 'N/A', yamlDumpOptions);
+  } catch (error) {
+    yaml = 'N/A';
   }
 
   return (

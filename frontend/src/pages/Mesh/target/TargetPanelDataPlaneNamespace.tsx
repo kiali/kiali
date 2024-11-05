@@ -170,8 +170,9 @@ export class TargetPanelDataPlaneNamespace extends React.Component<
           {this.renderCharts('outbound')}
 
           {targetPanelHR}
+
           <TargetPanelEditor
-            configJson={this.props.namespaceData as any}
+            configData={this.props.namespaceData}
             targetName={this.props.targetNamespace}
           ></TargetPanelEditor>
         </CardBody>
