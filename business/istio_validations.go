@@ -8,12 +8,12 @@ import (
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 
+	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/kiali/kiali/business/checkers"
 	"github.com/kiali/kiali/business/references"
 	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/log"
@@ -23,18 +23,18 @@ import (
 )
 
 func NewValidationsService(
-	meshDiscovery istio.MeshDiscovery,
 	istioConfig *IstioConfigService,
 	kialiCache cache.KialiCache,
+	meshService *MeshService,
 	namespaceService *NamespaceService,
 	service *SvcService,
 	userClients map[string]kubernetes.ClientInterface,
 	workloadService *WorkloadService,
 ) IstioValidationsService {
 	return IstioValidationsService{
-		discovery:   meshDiscovery,
 		istioConfig: istioConfig,
 		kialiCache:  kialiCache,
+		mesh:        meshService,
 		namespace:   namespaceService,
 		service:     service,
 		userClients: userClients,
@@ -43,9 +43,9 @@ func NewValidationsService(
 }
 
 type IstioValidationsService struct {
-	discovery   istio.MeshDiscovery
 	istioConfig *IstioConfigService
 	kialiCache  cache.KialiCache
+	mesh        *MeshService
 	namespace   *NamespaceService
 	service     *SvcService
 	userClients map[string]kubernetes.ClientInterface
@@ -134,8 +134,6 @@ func (in *IstioValidationsService) CreateValidations(ctx context.Context, cluste
 	defer timer.ObserveDuration()
 
 	criteria := IstioConfigCriteria{
-		AllNamespaces:                 true,
-		Cluster:                       cluster,
 		IncludeGateways:               true,
 		IncludeDestinationRules:       true,
 		IncludeServiceEntries:         true,
@@ -148,7 +146,7 @@ func (in *IstioValidationsService) CreateValidations(ctx context.Context, cluste
 		IncludeK8sHTTPRoutes:          true,
 		IncludeK8sGateways:            true,
 	}
-	istioConfigList, err := in.istioConfig.GetIstioConfigList(ctx, criteria)
+	istioConfigList, err := in.istioConfig.GetIstioConfigList(ctx, cluster, criteria)
 	if err != nil {
 		return nil, err
 	}
@@ -168,7 +166,7 @@ func (in *IstioValidationsService) CreateValidations(ctx context.Context, cluste
 		workloadsPerNamespace[ns.Name] = workloadList
 	}
 
-	mesh, err := in.discovery.Mesh(ctx)
+	mesh, err := in.mesh.discovery.Mesh(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -192,7 +190,7 @@ func (in *IstioValidationsService) CreateValidations(ctx context.Context, cluste
 
 	var rbacDetails kubernetes.RBACDetails
 	in.filterAuthPolicies("", &rbacDetails, istioConfigList.AuthorizationPolicies)
-	objectCheckers := in.getAllObjectCheckers(istioConfigList, workloadsPerNamespace, mtlsDetails, rbacDetails, namespaces, registryServices, cluster)
+	objectCheckers := in.getAllObjectCheckers(*istioConfigList, workloadsPerNamespace, mtlsDetails, rbacDetails, namespaces, registryServices, cluster)
 
 	// Get group validations for same kind istio objects
 	validations := runObjectCheckers(objectCheckers)
@@ -208,7 +206,7 @@ func (in *IstioValidationsService) getAllObjectCheckers(istioConfigList models.I
 		checkers.GatewayChecker{Gateways: istioConfigList.Gateways, WorkloadsPerNamespace: workloadsPerNamespace, IsGatewayToNamespace: in.isGatewayToNamespace(), Cluster: cluster},
 		checkers.PeerAuthenticationChecker{PeerAuthentications: mtlsDetails.PeerAuthentications, MTLSDetails: mtlsDetails, WorkloadsPerNamespace: workloadsPerNamespace, Cluster: cluster},
 		checkers.ServiceEntryChecker{ServiceEntries: istioConfigList.ServiceEntries, Namespaces: namespaces, WorkloadEntries: istioConfigList.WorkloadEntries, Cluster: cluster},
-		checkers.AuthorizationPolicyChecker{AuthorizationPolicies: rbacDetails.AuthorizationPolicies, Namespaces: namespaces, ServiceEntries: istioConfigList.ServiceEntries, WorkloadsPerNamespace: workloadsPerNamespace, MtlsDetails: mtlsDetails, VirtualServices: istioConfigList.VirtualServices, RegistryServices: registryServices, PolicyAllowAny: in.isPolicyAllowAny(), Cluster: cluster, ServiceAccounts: serviceAccounts},
+		checkers.AuthorizationPolicyChecker{AuthorizationPolicies: rbacDetails.AuthorizationPolicies, Namespaces: namespaces, ServiceEntries: istioConfigList.ServiceEntries, WorkloadsPerNamespace: workloadsPerNamespace, MtlsDetails: mtlsDetails, VirtualServices: istioConfigList.VirtualServices, RegistryServices: registryServices, PolicyAllowAny: in.isPolicyAllowAny(), Cluster: cluster},
 		checkers.SidecarChecker{Sidecars: istioConfigList.Sidecars, Namespaces: namespaces, WorkloadsPerNamespace: workloadsPerNamespace, ServiceEntries: istioConfigList.ServiceEntries, RegistryServices: registryServices, Cluster: cluster},
 		checkers.RequestAuthenticationChecker{RequestAuthentications: istioConfigList.RequestAuthentications, WorkloadsPerNamespace: workloadsPerNamespace, Cluster: cluster},
 		checkers.WorkloadChecker{AuthorizationPolicies: rbacDetails.AuthorizationPolicies, WorkloadsPerNamespace: workloadsPerNamespace, Cluster: cluster},
@@ -259,7 +257,7 @@ func (in *IstioValidationsService) GetIstioObjectValidations(ctx context.Context
 	errChan := make(chan error, 1)
 
 	// Get all the Istio objects from a Namespace and all gateways from every namespace
-	wg.Add(3)
+	wg.Add(2)
 
 	go in.fetchIstioConfigList(ctx, &istioConfigList, &mtlsDetails, &rbacDetails, cluster, namespace, errChan, &wg)
 	go in.fetchAllWorkloads(ctx, &workloadsPerNamespace, cluster, &namespaces, errChan, &wg)
@@ -322,7 +320,6 @@ func (in *IstioValidationsService) GetIstioObjectValidations(ctx context.Context
 		requestAuthnChecker := checkers.RequestAuthenticationChecker{Cluster: cluster, RequestAuthentications: istioConfigList.RequestAuthentications, WorkloadsPerNamespace: workloadsPerNamespace}
 		objectCheckers = []checkers.ObjectChecker{requestAuthnChecker}
 	case kubernetes.EnvoyFilters.String():
-		objectCheckers = []checkers.ObjectChecker{requestAuthnChecker}
 		// Validation on EnvoyFilters are not yet in place
 	case kubernetes.WasmPlugins.String():
 		// Validation on WasmPlugins is not expected
@@ -336,7 +333,7 @@ func (in *IstioValidationsService) GetIstioObjectValidations(ctx context.Context
 		referenceChecker = references.K8sGatewayReferences{K8sGateways: istioConfigList.K8sGateways, K8sHTTPRoutes: istioConfigList.K8sHTTPRoutes, K8sGRPCRoutes: istioConfigList.K8sGRPCRoutes}
 	case kubernetes.K8sGRPCRoutes.String():
 		grpcRouteChecker := checkers.K8sGRPCRouteChecker{Cluster: cluster, K8sGRPCRoutes: istioConfigList.K8sGRPCRoutes, K8sGateways: istioConfigList.K8sGateways, K8sReferenceGrants: istioConfigList.K8sReferenceGrants, Namespaces: namespaces, RegistryServices: registryServices}
-		objectCheckers = []ObjectChecker{noServiceChecker, grpcRouteChecker}
+		objectCheckers = []checkers.ObjectChecker{noServiceChecker, grpcRouteChecker}
 		referenceChecker = references.K8sGRPCRouteReferences{K8sGRPCRoutes: istioConfigList.K8sGRPCRoutes, Namespaces: namespaces, K8sReferenceGrants: istioConfigList.K8sReferenceGrants}
 	case kubernetes.K8sHTTPRoutes.String():
 		httpRouteChecker := checkers.K8sHTTPRouteChecker{Cluster: cluster, K8sHTTPRoutes: istioConfigList.K8sHTTPRoutes, K8sGateways: istioConfigList.K8sGateways, K8sReferenceGrants: istioConfigList.K8sReferenceGrants, Namespaces: namespaces, RegistryServices: registryServices}
@@ -460,7 +457,7 @@ func (in *IstioValidationsService) fetchIstioConfigList(ctx context.Context, rVa
 		IncludeK8sGateways:            true,
 		IncludeK8sReferenceGrants:     true,
 	}
-	istioConfigMap, err := in.istioConfig.GetIstioConfigMap(ctx, criteria)
+	istioConfigMap, err := in.istioConfig.GetIstioConfigMap(ctx, meta_v1.NamespaceAll, criteria)
 	if err != nil {
 		errChan <- err
 		return
@@ -538,7 +535,7 @@ func (in *IstioValidationsService) filterVSExportToNamespaces(allNamespaces map[
 	if currentNamespace == "" {
 		return kubernetes.FilterAutogeneratedVirtualServices(vs)
 	}
-	meshExportTo := in.businessLayer.Mesh.GetMeshConfig().DefaultVirtualServiceExportTo
+	meshExportTo := in.mesh.GetMeshConfig().DefaultVirtualServiceExportTo
 	var result []*networking_v1.VirtualService
 	for _, v := range vs {
 		if kubernetes.IsAutogenerated(v.Name) {
@@ -555,7 +552,7 @@ func (in *IstioValidationsService) filterDRExportToNamespaces(allNamespaces map[
 	if currentNamespace == "" {
 		return dr
 	}
-	meshExportTo := in.businessLayer.Mesh.GetMeshConfig().DefaultDestinationRuleExportTo
+	meshExportTo := in.mesh.GetMeshConfig().DefaultDestinationRuleExportTo
 	var result []*networking_v1.DestinationRule
 	for _, d := range dr {
 		if in.isExportedObjectIncluded(d.Spec.ExportTo, meshExportTo, allNamespaces, d.Namespace, currentNamespace, cluster) {
@@ -569,7 +566,7 @@ func (in *IstioValidationsService) filterSEExportToNamespaces(allNamespaces map[
 	if currentNamespace == "" {
 		return se
 	}
-	meshExportTo := in.businessLayer.Mesh.GetMeshConfig().DefaultServiceExportTo
+	meshExportTo := in.mesh.GetMeshConfig().DefaultServiceExportTo
 	var result []*networking_v1.ServiceEntry
 	for _, s := range se {
 		if in.isExportedObjectIncluded(s.Spec.ExportTo, meshExportTo, allNamespaces, s.Namespace, currentNamespace, cluster) {
@@ -603,7 +600,7 @@ func (in *IstioValidationsService) isExportedObjectIncluded(exportTo []string, m
 }
 
 func (in *IstioValidationsService) fetchNonLocalmTLSConfigs(mtlsDetails *kubernetes.MTLSDetails, cluster string) error {
-	mesh, err := in.discovery.Mesh(context.TODO())
+	mesh, err := in.mesh.discovery.Mesh(context.TODO())
 	if err != nil {
 		return err
 	}
@@ -619,7 +616,7 @@ func (in *IstioValidationsService) fetchNonLocalmTLSConfigs(mtlsDetails *kuberne
 }
 
 func (in *IstioValidationsService) isGatewayToNamespace() bool {
-	mesh, err := in.discovery.Mesh(context.TODO())
+	mesh, err := in.mesh.discovery.Mesh(context.TODO())
 	if err != nil {
 		log.Errorf("Error getting mesh config: %s", err)
 		return false
@@ -636,7 +633,7 @@ func (in *IstioValidationsService) isGatewayToNamespace() bool {
 }
 
 func (in *IstioValidationsService) isPolicyAllowAny() bool {
-	mesh, err := in.discovery.Mesh(context.TODO())
+	mesh, err := in.mesh.discovery.Mesh(context.TODO())
 	if err != nil {
 		log.Errorf("Error getting mesh config: %s", err)
 		return false

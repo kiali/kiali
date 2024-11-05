@@ -139,7 +139,7 @@ var _ = BeforeSuite(func() {
 	}
 	kialiCache, err = cache.NewKialiCache(saClients, *conf)
 	Expect(err).ToNot(HaveOccurred())
-	layer, err := business.NewLayerWithSAClients(conf, kialiCache, nil, nil, nil, saClients)
+	layer, err := business.NewLayerWithSAClients(conf, kialiCache, nil, nil, nil, nil, nil, saClients)
 	Expect(err).ToNot(HaveOccurred())
 	err = controller.NewValidationsController(ctx, []string{conf.KubernetesConfig.ClusterName}, kialiCache, &layer.Validations, k8sManager, util.AsPtr(time.Millisecond*100))
 	Expect(err).ToNot(HaveOccurred())

@@ -123,8 +123,7 @@ func newLayer(
 	temporaryLayer.RegistryStatus = RegistryStatusService{kialiCache: cache}
 	temporaryLayer.TLS = TLSService{discovery: discovery, userClients: userClients, kialiCache: cache, businessLayer: temporaryLayer}
 	temporaryLayer.Svc = SvcService{config: *conf, kialiCache: cache, businessLayer: temporaryLayer, prom: prom, userClients: userClients}
-	temporaryLayer.TokenReview = NewTokenReview(userClients[homeClusterName])
-	temporaryLayer.Workload = *NewWorkloadService(userClients, prom, cache, temporaryLayer, conf)
+	temporaryLayer.Workload = *NewWorkloadService(userClients, prom, cache, temporaryLayer, conf, grafana)
 	temporaryLayer.Validations = NewValidationsService(&temporaryLayer.IstioConfig, cache, &temporaryLayer.Mesh, &temporaryLayer.Namespace, &temporaryLayer.Svc, userClients, &temporaryLayer.Workload)
 
 	temporaryLayer.Tracing = NewTracingService(conf, traceClient, &temporaryLayer.Svc, &temporaryLayer.Workload)
@@ -160,6 +159,15 @@ func NewLayer(
 // It should be the user client based on the logged in user's token.
 // TODO: Remove this when the services in the business layer are no longer coupled
 // to the business layer and can be used separately.
-func NewLayerWithSAClients(conf *config.Config, cache cache.KialiCache, prom prometheus.ClientInterface, traceClient tracing.ClientInterface, cpm ControlPlaneMonitor, saClients map[string]kubernetes.ClientInterface) (*Layer, error) {
-	return newLayer(saClients, saClients, prom, traceClient, cache, cpm, conf), nil
+func NewLayerWithSAClients(
+	conf *config.Config,
+	cache cache.KialiCache,
+	prom prometheus.ClientInterface,
+	traceClient tracing.ClientInterface,
+	cpm ControlPlaneMonitor,
+	grafana *grafana.Service,
+	discovery *istio.Discovery,
+	saClients map[string]kubernetes.ClientInterface,
+) (*Layer, error) {
+	return newLayer(saClients, saClients, prom, traceClient, cache, conf, grafana, discovery, cpm), nil
 }

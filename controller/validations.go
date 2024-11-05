@@ -73,7 +73,7 @@ func NewValidationsController(
 		}
 	}()
 
-	if err := validationsController.Watch(&ctrlsource.Channel{Source: events}, &handler.EnqueueRequestForObject{}); err != nil {
+	if err := validationsController.Watch(ctrlsource.Channel(events, &handler.EnqueueRequestForObject{})); err != nil {
 		return fmt.Errorf("error setting up ValidationsController when creating controller watch: %s", err)
 	}
 

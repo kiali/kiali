@@ -74,10 +74,8 @@ func IstioConfigList(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	var istioConfigValidations models.IstioValidations
-
 	if includeValidations {
-		istioConfigValidations, err = business.Validations.GetValidations(r.Context(), cluster)
+		istioConfig.IstioValidations, err = business.Validations.GetValidations(r.Context(), cluster)
 		if err != nil {
 			RespondWithError(w, http.StatusInternalServerError, "Error while getting validations: "+err.Error())
 			return
@@ -85,43 +83,11 @@ func IstioConfigList(w http.ResponseWriter, r *http.Request) {
 
 		// We don't filter by objects when calling validations, because certain validations require fetching all types to get the correct errors
 		if len(parsedTypes) > 0 {
-			istioConfigValidations = istioConfigValidations.FilterByTypes(parsedTypes)
-		}
-	}
-
-	istioConfig := models.IstioConfigList{}
-
-	// This can result on an error when IstioAPI is disabled, so filter here
-	// Even if all namespaces are not accessible, but the IstioAPI is enabled, still use the Istio Registry by AllNamespaces=true
-	// In Ambient mode ExportTo is ignored, so proceed per namespace
-	if criteria.AllNamespaces && !config.Get().AllNamespacesAccessible() && !config.Get().ExternalServices.Istio.IstioAPIEnabled || (business.IstioConfig.IsAmbientEnabled(cluster) && len(nss) > 0) {
-		criteria.AllNamespaces = false
-		for _, ns := range nss {
-			criteria.Namespace = ns
-			istioConfigNs, _ := business.IstioConfig.GetIstioConfigList(r.Context(), criteria)
-			istioConfig = istioConfig.MergeConfigs(istioConfigNs)
-		}
-		if len(parsedTypes) > 0 {
 			istioConfig.IstioValidations = istioConfig.IstioValidations.FilterByTypes(parsedTypes)
 		}
 	}
 
-	if includeValidations {
-		// Add validation results to the IstioConfigList once they're available (previously done in the UI layer)
-		istioConfig.IstioValidations = istioConfigValidations
-	}
-
-	if err != nil {
-		handleErrorResponse(w, err)
-		return
-	}
-
-	if len(nss) > 0 {
-		// From allNamespaces load only requested ones
-		RespondWithJSON(w, http.StatusOK, istioConfig.FilterIstioConfigs(nss))
-	} else {
-		RespondWithJSON(w, http.StatusOK, istioConfig)
-	}
+	RespondWithAPIResponse(w, http.StatusOK, istioConfig)
 }
 
 func IstioConfigDetails(w http.ResponseWriter, r *http.Request) {

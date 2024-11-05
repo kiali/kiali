@@ -66,10 +66,13 @@ func TestSetNewKey(t *testing.T) {
 	_, found := testStore.Get("key1")
 	require.False(found)
 
+	currentVersion := testStore.Version()
+
 	testStore.Set("key1", 42)
 	val, found := testStore.Get("key1")
 	require.True(found)
 	require.Equal(42, val)
+	require.Equal(currentVersion+1, testStore.Version())
 }
 
 func TestSetExistingKey(t *testing.T) {
@@ -144,10 +147,10 @@ func TestDeleteKey(t *testing.T) {
 	testStore.Replace(map[string]int{"key1": 42, "key2": 99})
 	require.Equal(uint(1), testStore.Version())
 
-	testStore.Delete("key1")
-	_, err := testStore.Get("key1")
-	require.Error(err)
+	testStore.Remove("key1")
+	_, found := testStore.Get("key1")
+	require.False(found)
 	require.Equal(uint(2), testStore.Version())
 
-	testStore.Delete("nonexistent")
+	testStore.Remove("nonexistent")
 }
