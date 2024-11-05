@@ -72,6 +72,15 @@ export class TracesFetcher {
             'Loading traces for all clusters. Tracing is not configured to store traces per cluster.'
           );
         }
+        const firstTraceTimestamp = Math.min(...traces.map(s => s.startTime));
+        // If the first trace starts more than one minute later than the start date that the user selects, show an info message
+        // The order in which traces are returned is not deterministic and
+        const oneMinuteInMcr = 60 * 1000000; // Date in microseconds
+        if (firstTraceTimestamp - q.startMicros > oneMinuteInMcr) {
+          AlertUtils.addInfo(
+            `Last ${q.limit} traces shown. To search for traces in a different period, select a custom time range or adjust the traces limit.`
+          );
+        }
       })
       .catch(error => {
         AlertUtils.addError('Could not fetch traces.', error);
