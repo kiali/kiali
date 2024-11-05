@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/kiali/kiali/config"
@@ -56,21 +55,6 @@ func (in *TracingService) getFilteredSpans(ns, app string, query models.TracingQ
 	}
 	spans := tracesToSpans(app, r, filter, in.conf)
 	return spans, nil
-}
-
-func mergeResponses(dest *model.TracingResponse, src *model.TracingResponse) {
-	dest.TracingServiceName = src.TracingServiceName
-	dest.Errors = append(dest.Errors, src.Errors...)
-	traceIds := make(map[jaegerModels.TraceID]bool)
-	for _, prev := range dest.Data {
-		traceIds[prev.TraceID] = true
-	}
-	for _, trace := range src.Data {
-		if _, ok := traceIds[trace.TraceID]; !ok {
-			dest.Data = append(dest.Data, trace)
-			traceIds[trace.TraceID] = true
-		}
-	}
 }
 
 func (in *TracingService) GetAppSpans(ns, app string, query models.TracingQuery) ([]model.TracingSpan, error) {
@@ -219,53 +203,6 @@ func (in *TracingService) GetWorkloadTraces(ctx context.Context, ns, workload st
 		r.Data = traces
 	}
 	return r, err
-}
-
-func (in *TracingService) getAppTracesSlicedInterval(ns, app string, query models.TracingQuery) (*model.TracingResponse, error) {
-	client, err := in.client()
-	if err != nil {
-		return nil, err
-	}
-	// Spread queries over 10 interval slices
-	nSlices := 10
-	limit := query.Limit / nSlices
-	if limit == 0 {
-		limit = 1
-	}
-	diff := query.End.Sub(query.Start)
-	duration := diff / time.Duration(nSlices)
-
-	type tracesChanResult struct {
-		resp *model.TracingResponse
-		err  error
-	}
-	tracesChan := make(chan tracesChanResult, nSlices)
-	var wg sync.WaitGroup
-
-	for i := 0; i < nSlices; i++ {
-		q := query
-		q.Limit = limit
-		q.Start = query.Start.Add(duration * time.Duration(i))
-		q.End = q.Start.Add(duration)
-		wg.Add(1)
-		go func(q models.TracingQuery) {
-			defer wg.Done()
-			r, err := client.GetAppTraces(ns, app, q)
-			tracesChan <- tracesChanResult{resp: r, err: err}
-		}(q)
-	}
-	wg.Wait()
-	// All slices are fetched, close channel
-	close(tracesChan)
-	merged := &model.TracingResponse{}
-	for r := range tracesChan {
-		if r.err != nil {
-			err = r.err
-			continue
-		}
-		mergeResponses(merged, r.resp)
-	}
-	return merged, err
 }
 
 func (in *TracingService) GetTraceDetail(traceID string) (trace *model.TracingSingleTrace, err error) {
