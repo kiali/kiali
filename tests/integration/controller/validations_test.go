@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"github.com/kiali/kiali/kubernetes"
 	"time"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -12,6 +11,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
 

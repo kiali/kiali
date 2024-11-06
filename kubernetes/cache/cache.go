@@ -97,9 +97,6 @@ type KialiCache interface {
 }
 
 type kialiCacheImpl struct {
-	ambientEnabled        *bool
-	ambientLastUpdateTime *time.Time
-
 	ambientChecksPerCluster store.Store[string, bool]
 	// This isn't expected to change so it's not protected by a mutex.
 	buildInfo               models.BuildInfo
