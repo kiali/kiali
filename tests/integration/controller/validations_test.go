@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"github.com/kiali/kiali/kubernetes"
 	"time"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -60,7 +61,7 @@ var _ = Describe("Validations controller", func() {
 		})
 
 		It("Should update validations in the kiali cache when an existing VirtualService is updated", func() {
-			validationKey := models.IstioValidationKey{Name: "test-vs", Namespace: "default", ObjectType: "virtualservice"}
+			validationKey := models.IstioValidationKey{Name: "test-vs", Namespace: "default", ObjectGVK: kubernetes.VirtualServices}
 			validation, err := kialiCache.Validations().Get(validationKey)
 			Expect(err).ShouldNot(HaveOccurred())
 			Expect(validation.Checks).Should(BeEmpty())
@@ -104,9 +105,9 @@ var _ = Describe("Validations controller", func() {
 
 			By("By checking that the validations are then deleted from the kiali cache")
 			Eventually(func() bool {
-				validationKey := models.IstioValidationKey{Name: "test-vs", Namespace: "default", ObjectType: "virtualservice"}
-				_, err := kialiCache.Validations().Get(validationKey)
-				return err != nil && len(kialiCache.Validations().Items()) == 0
+				validationKey := models.IstioValidationKey{Name: "test-vs", Namespace: "default", ObjectGVK: kubernetes.VirtualServices}
+				_, result := kialiCache.Validations().Get(validationKey)
+				return result && len(kialiCache.Validations().Items()) == 0
 			}, timeout, interval).Should(BeTrue())
 		})
 	})

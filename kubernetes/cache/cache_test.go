@@ -21,7 +21,7 @@ func TestNoHomeClusterReturnsError(t *testing.T) {
 	config.Set(conf)
 
 	clients := map[string]kubernetes.ClientInterface{"nothomecluster": kubetest.NewFakeK8sClient()}
-	_, err := NewKialiCache(clients, *conf)
+	_, err := cache.NewKialiCache(clients, *conf)
 	require.Error(err, "no home cluster should return an error")
 }
 
@@ -40,7 +40,7 @@ func TestKubeCacheCreatedPerClient(t *testing.T) {
 		"cluster2":                        client2,
 	}
 
-	kialiCache, _ := NewKialiCache(saClients, *conf)
+	kialiCache, _ := cache.NewKialiCache(saClients, *conf)
 
 	caches := kialiCache.GetKubeCaches()
 	require.Equal(2, len(caches))
@@ -245,13 +245,14 @@ func TestRefreshTokenNamespaces(t *testing.T) {
 	require.True(found)
 	require.Equal(1, len(namespaces))
 	require.Equal("test", namespaces[0].Name)
+}
 
 func TestValidationsSetByConstructor(t *testing.T) {
 	require := require.New(t)
 	conf := config.NewConfig()
 
 	clients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: kubetest.NewFakeK8sClient()}
-	cache, err := NewKialiCache(clients, *conf)
+	cache, err := cache.NewKialiCache(clients, *conf)
 	require.NoError(err)
 
 	require.NotNil(cache.Validations())
