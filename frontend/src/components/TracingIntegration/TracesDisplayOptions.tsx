@@ -12,6 +12,7 @@ import {
 import { itemInfoStyle, itemStyleWithoutInfo, menuStyle, titleStyle } from 'styles/DropdownStyles';
 import { HistoryManager, URLParam } from 'app/History';
 import { KialiIcon } from 'config/KialiIcon';
+import { TraceLimit } from 'components/Metrics/TraceLimit';
 
 export interface QuerySettings {
   errorsOnly: boolean;
@@ -182,42 +183,7 @@ export class TracesDisplayOptions extends React.Component<Props, State> {
           </label>
         </div>
 
-        <div style={{ marginTop: '0.5rem' }}>
-          <span className={titleStyle} style={{ paddingRight: 0 }}>
-            Limit per query
-          </span>
-          <Tooltip
-            key="tooltip_limit_per_query"
-            position={TooltipPosition.right}
-            content={
-              <div style={{ textAlign: 'left' }}>
-                <div>
-                  This limits the number of app-level traces that will be fetched. Because an app may be comprised of
-                  several workload versions not every trace trace may apply to a particular workload. It may be
-                  necessary to increase the limit to get the desired number of workload traces. In some cases the same
-                  can be true of service traces.
-                </div>
-              </div>
-            }
-          >
-            <KialiIcon.Info className={itemInfoStyle} />
-          </Tooltip>
-        </div>
-
-        {[20, 100, 500, 1000].map(limit => (
-          <div key={`limit-${limit}`}>
-            <label key={`limit-${limit}`} className={itemStyleWithoutInfo}>
-              <Radio
-                id={`limit-${limit}`}
-                name={`limit-${limit}`}
-                isChecked={this.state.limit === limit}
-                label={String(limit)}
-                onChange={(_event, checked) => this.onLimitChanged(limit, checked)}
-                value={String(limit)}
-              />
-            </label>
-          </div>
-        ))}
+        <TraceLimit asRadio={true} onLimitChange={this.onLimitChanged} titleStyle={titleStyle} />
 
         <div className={titleStyle}>Value axis</div>
         <div>
@@ -260,11 +226,9 @@ export class TracesDisplayOptions extends React.Component<Props, State> {
     this.setState({ errorsOnly: checked }, () => this.props.onQuerySettingsChanged(this.state));
   };
 
-  private onLimitChanged = (limit: number, checked: boolean): void => {
-    if (checked) {
-      this.saveValue(URLParam.TRACING_LIMIT_TRACES, String(limit));
-      this.setState({ limit: limit }, () => this.props.onQuerySettingsChanged(this.state));
-    }
+  private onLimitChanged = (limit: number): void => {
+    this.saveValue(URLParam.TRACING_LIMIT_TRACES, String(limit));
+    this.setState({ limit: limit }, () => this.props.onQuerySettingsChanged(this.state));
   };
 
   private onValueAxisChanged = (showSpansAverage: boolean): void => {

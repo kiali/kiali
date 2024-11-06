@@ -55,6 +55,8 @@ import { TimeDurationIndicator } from '../../components/Time/TimeDurationIndicat
 import { serverConfig } from '../../config';
 import { ApiResponse } from 'types/Api';
 import { isParentKiosk, kioskContextMenuAction } from 'components/Kiosk/KioskActions';
+import { TRACE_LIMIT_DEFAULT } from 'components/Metrics/TraceLimit';
+import { TraceSpansLimit } from 'components/Metrics/TraceSpansLimit';
 
 const appContainerColors = [PFColors.Blue300, PFColors.Green300, PFColors.Purple300, PFColors.Orange300];
 const proxyContainerColor = PFColors.Gold400;
@@ -63,6 +65,7 @@ const spanColor = PFColors.Cyan300;
 type ReduxProps = {
   kiosk: string;
   timeRange: TimeRange;
+  tracingIntegration: boolean;
 };
 
 export type WorkloadPodLogsProps = ReduxProps & {
@@ -109,6 +112,7 @@ interface WorkloadPodLogsState {
   showError?: string;
   showLogValue: string;
   showSpans: boolean;
+  showSpansLimit: number;
   showTimestamps: boolean;
   showToolbar: boolean;
   showZtunnel: boolean;
@@ -255,6 +259,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
 
     const urlParams = new URLSearchParams(location.getSearch());
     const showSpans = urlParams.get(URLParam.SHOW_SPANS);
+    const showSpansLimit = urlParams.get(URLParam.TRACING_LIMIT_TRACES);
     const showZtunnel = urlParams.get(URLParam.SHOW_ZTUNNEL);
 
     const defaultState = {
@@ -272,6 +277,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
       showClearShowLogButton: false,
       showLogValue: '',
       showSpans: showSpans === 'true',
+      showSpansLimit: showSpansLimit ? parseInt(showSpansLimit) : TRACE_LIMIT_DEFAULT,
       showZtunnel: showZtunnel === 'true',
       showTimestamps: false,
       showToolbar: true,
@@ -314,6 +320,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
         pod.name,
         this.state.containerOptions,
         this.state.showSpans,
+        this.state.showSpansLimit,
         this.state.showZtunnel,
         this.state.maxLines,
         this.props.timeRange,
@@ -329,6 +336,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
     const updateMaxLines = this.state.maxLines && prevState.maxLines !== this.state.maxLines;
     const lastRefreshChanged = prevProps.lastRefreshAt !== this.props.lastRefreshAt;
     const showSpansChanged = prevState.showSpans !== this.state.showSpans;
+    const showSpansLimitChanged = prevState.showSpansLimit !== this.state.showSpansLimit;
     const timeRangeChanged = !isEqualTimeRange(this.props.timeRange, prevProps.timeRange);
     const showZtunnel = prevState.showZtunnel !== this.state.showZtunnel;
 
@@ -337,6 +345,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
       updateMaxLines ||
       lastRefreshChanged ||
       showSpansChanged ||
+      showSpansLimitChanged ||
       timeRangeChanged ||
       showZtunnel
     ) {
@@ -346,6 +355,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
         pod.name,
         newContainerOptions!,
         this.state.showSpans,
+        this.state.showSpansLimit,
         this.state.showZtunnel,
         this.state.maxLines,
         this.props.timeRange,
@@ -444,25 +454,26 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                             </ToolbarItem>
                           </ToolbarItem>
 
-                          <ToolbarItem style={{ alignSelf: 'center' }}>
-                            <Checkbox
-                              id="log-spans"
-                              className={checkboxStyle}
-                              inputClassName={colorCheck(spanColor)}
-                              isChecked={this.state.showSpans}
-                              label={
-                                <span
-                                  style={{
-                                    color: spanColor,
-                                    fontWeight: 'bold'
-                                  }}
-                                >
-                                  spans
-                                </span>
-                              }
-                              onChange={(_event, checked) => this.toggleSpans(checked)}
-                            />
-                          </ToolbarItem>
+                          {this.props.tracingIntegration && (
+                            <ToolbarItem style={{ alignSelf: 'center' }}>
+                              <TraceSpansLimit
+                                onSpansChange={this.onSpansChange}
+                                showSpans={this.state.showSpans}
+                                showSpansLimit={this.state.showSpansLimit}
+                                spansClassName={colorCheck(spanColor)}
+                                spansLabel={
+                                  <span
+                                    style={{
+                                      color: spanColor,
+                                      fontWeight: 'bold'
+                                    }}
+                                  >
+                                    spans
+                                  </span>
+                                }
+                              />
+                            </ToolbarItem>
+                          )}
 
                           <ToolbarItem style={{ marginLeft: 'auto' }}>
                             <ToolbarDropdown
@@ -504,12 +515,17 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
     );
   }
 
-  private toggleSpans = (checked: boolean): void => {
+  private onSpansChange = (checked: boolean, limit: number): void => {
     const urlParams = new URLSearchParams(location.getSearch());
     urlParams.set(URLParam.SHOW_SPANS, String(checked));
-    router.navigate(`${location.getPathname()}?${urlParams.toString()}`, { replace: true });
+    if (checked) {
+      urlParams.set(URLParam.TRACING_LIMIT_TRACES, String(limit));
+    } else {
+      urlParams.delete(URLParam.SHOW_SPANS);
+    }
 
-    this.setState({ showSpans: !this.state.showSpans });
+    router.navigate(`${location.getPathname()}?${urlParams.toString()}`, { replace: true });
+    this.setState({ showSpans: checked, showSpansLimit: limit });
   };
 
   private getContainerLegend = (): React.ReactNode => {
@@ -1105,6 +1121,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
     podName: string,
     containerOptions: ContainerOption[],
     showSpans: boolean,
+    showSpansLimit: number,
     showZtunnel: boolean,
     maxLines: number,
     timeRange: TimeRange,
@@ -1160,6 +1177,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
       // Convert seconds to microseconds
       const params: TracingQuery = {
         endMicros: endTime * 1000,
+        limit: showSpansLimit,
         startMicros: sinceTime * 1000000
       };
 
@@ -1279,7 +1297,8 @@ const formatDate = (timestamp: string): string => {
 const mapStateToProps = (state: KialiAppState): ReduxProps => {
   return {
     kiosk: state.globalState.kiosk,
-    timeRange: timeRangeSelector(state)
+    timeRange: timeRangeSelector(state),
+    tracingIntegration: state.tracingState.info ? state.tracingState.info.integration : false
   };
 };
 

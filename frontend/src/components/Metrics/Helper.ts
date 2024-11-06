@@ -6,6 +6,7 @@ import { responseFlags } from 'utils/ResponseFlags';
 import { AggregationModel, DashboardModel } from 'types/Dashboards';
 import { AllPromLabelsValues, Metric, PromLabel, SingleLabelValues } from 'types/Metrics';
 import { MetricsQuery } from 'types/MetricsOptions';
+import { TRACE_LIMIT_DEFAULT } from './TraceLimit';
 
 // Default to 10 minutes. Showing timeseries to only 1 minute doesn't make so much sense.
 export const defaultMetricsDuration: DurationInSeconds = 600;
@@ -170,11 +171,12 @@ export const retrieveMetricsSettings = (): MetricsSettings => {
   const urlParams = new URLSearchParams(location.getSearch());
 
   const settings: MetricsSettings = {
-    showSpans: false,
-    showTrendlines: false,
+    labelsSettings: new Map(),
     showAverage: true,
+    showSpans: false,
+    showSpansLimit: TRACE_LIMIT_DEFAULT,
     showQuantiles: [],
-    labelsSettings: new Map()
+    showTrendlines: false
   };
 
   const avg = urlParams.get(URLParam.SHOW_AVERAGE);
@@ -185,6 +187,11 @@ export const retrieveMetricsSettings = (): MetricsSettings => {
   const spans = urlParams.get(URLParam.SHOW_SPANS);
   if (spans !== null) {
     settings.showSpans = spans === 'true';
+  }
+
+  const spansLimit = urlParams.get(URLParam.TRACING_LIMIT_TRACES);
+  if (spansLimit !== null) {
+    settings.showSpansLimit = parseInt(spansLimit);
   }
 
   const trendlines = urlParams.get(URLParam.SHOW_TRENDLINES);

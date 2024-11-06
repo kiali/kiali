@@ -32,6 +32,7 @@ import { KialiCrippledFeatures } from 'types/ServerConfig';
 import { TimeDurationIndicator } from '../Time/TimeDurationIndicator';
 import { ApiResponse } from 'types/Api';
 import { isParentKiosk, kioskContextMenuAction } from 'components/Kiosk/KioskActions';
+import { TraceSpansLimit } from './TraceSpansLimit';
 
 type MetricsState = {
   crippledFeatures?: KialiCrippledFeatures;
@@ -40,6 +41,7 @@ type MetricsState = {
   isTimeOptionsOpen: boolean;
   labelsSettings: LabelsSettings;
   showSpans: boolean;
+  showSpansLimit: number;
   showTrendlines: boolean;
   spanOverlay?: Overlay<JaegerLineInfo>;
   tabHeight: number;
@@ -95,10 +97,13 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
       isTimeOptionsOpen: false,
       tabHeight: 300,
       showSpans: settings.showSpans,
+      showSpansLimit: settings.showSpansLimit,
       showTrendlines: settings.showTrendlines
     };
 
-    this.spanOverlay = new SpanOverlay(changed => this.setState({ spanOverlay: changed }));
+    this.spanOverlay = new SpanOverlay(changed => {
+      this.setState({ spanOverlay: changed });
+    });
   }
 
   private initOptions(settings: MetricsSettings): IstioMetricsOptions {
@@ -127,13 +132,15 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
     this.refresh();
   }
 
-  componentDidUpdate(prevProps: Props): void {
+  componentDidUpdate(prevProps: Props, prevState: MetricsState): void {
     if (
       this.props.direction !== prevProps.direction ||
       this.props.namespace !== prevProps.namespace ||
       this.props.object !== prevProps.object ||
       this.props.objectType !== prevProps.objectType ||
       this.props.lastRefreshAt !== prevProps.lastRefreshAt ||
+      this.state.showSpans !== prevState.showSpans ||
+      this.state.showSpansLimit !== prevState.showSpansLimit ||
       !isEqualTimeRange(this.props.timeRange, prevProps.timeRange)
     ) {
       if (this.props.direction !== prevProps.direction) {
@@ -143,6 +150,7 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
         this.setState({
           labelsSettings: settings.labelsSettings,
           showSpans: settings.showSpans,
+          showSpansLimit: settings.showSpansLimit,
           showTrendlines: settings.showTrendlines
         });
       }
@@ -155,13 +163,14 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
   private refresh = (): void => {
     this.fetchMetrics();
 
-    if (this.props.tracingIntegration) {
+    if (this.state.showSpans) {
       this.spanOverlay.fetch({
-        namespace: this.props.namespace,
         cluster: this.props.cluster,
+        limit: this.state.showSpansLimit,
+        namespace: this.props.namespace,
+        range: this.props.timeRange,
         target: this.props.object,
-        targetKind: this.props.objectType,
-        range: this.props.timeRange
+        targetKind: this.props.objectType
       });
     }
   };
@@ -334,11 +343,16 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
     );
   }
 
-  private onSpans = (checked: boolean): void => {
+  private onSpansChange = (checked: boolean, limit: number): void => {
     const urlParams = new URLSearchParams(location.getSearch());
     urlParams.set(URLParam.SHOW_SPANS, String(checked));
+    if (checked) {
+      urlParams.set(URLParam.TRACING_LIMIT_TRACES, String(limit));
+    } else {
+      urlParams.delete(URLParam.SHOW_SPANS);
+    }
     router.navigate(`${location.getPathname()}?${urlParams.toString()}`, { replace: true });
-    this.setState({ showSpans: !this.state.showSpans });
+    this.setState({ showSpans: checked, showSpansLimit: limit });
   };
 
   private onTrendlines = (checked: boolean): void => {
@@ -387,15 +401,15 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
               />
             </ToolbarItem>
 
-            <ToolbarItem style={{ alignSelf: 'center' }}>
-              <Checkbox
-                id="spans-show-"
-                isChecked={this.state.showSpans}
-                key="spans-show-chart"
-                label="Spans"
-                onChange={(_event, checked) => this.onSpans(checked)}
-              />
-            </ToolbarItem>
+            {this.props.tracingIntegration && (
+              <ToolbarItem style={{ alignSelf: 'center' }}>
+                <TraceSpansLimit
+                  onSpansChange={this.onSpansChange}
+                  showSpans={this.state.showSpans}
+                  showSpansLimit={this.state.showSpansLimit}
+                />
+              </ToolbarItem>
+            )}
 
             <ToolbarItem style={{ alignSelf: 'center' }}>
               <Checkbox
