@@ -21,6 +21,7 @@ import (
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/controller"
+	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/kubernetes/kubetest"
@@ -65,8 +66,9 @@ func TestValidationsFailsToUpdateWithOldCache(t *testing.T) {
 	)
 	cache := newIncrementFirstVersionCache(business.SetupBusinessLayer(t, client, *conf))
 	k8sclients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: client}
-	namespace := business.NewNamespaceService(k8sclients, k8sclients, cache, *conf)
-	mesh := business.NewMeshService(k8sclients, cache, namespace, *conf)
+	discovery := istio.NewDiscovery(k8sclients, cache, conf)
+	namespace := business.NewNamespaceService(k8sclients, k8sclients, cache, conf, discovery)
+	mesh := business.NewMeshService(k8sclients, discovery)
 	layer := business.NewWithBackends(k8sclients, k8sclients, nil, nil)
 	validations := business.NewValidationsService(&layer.IstioConfig, cache, &mesh, &namespace, &layer.Svc, k8sclients, &layer.Workload)
 	reconciler := controller.NewValidationsReconciler([]string{conf.KubernetesConfig.ClusterName}, cache, &validations, 0)

@@ -502,7 +502,7 @@ func TestHasCircuitBreaker(t *testing.T) {
 func TestDeleteIstioConfigDetails(t *testing.T) {
 	assert := assert.New(t)
 	k8s := kubetest.NewFakeK8sClient(
-		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "test"}},
+		kubetest.FakeNamespace("test"),
 		data.CreateEmptyVirtualService("reviews-to-delete", "test", []string{"reviews"}),
 	)
 	cache := SetupBusinessLayer(t, k8s, *config.NewConfig())
@@ -522,7 +522,7 @@ func TestUpdateIstioConfigDetails(t *testing.T) {
 	assert := assert.New(t)
 	require := require.New(t)
 	k8s := kubetest.NewFakeK8sClient(
-		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "test"}},
+		kubetest.FakeNamespace("test"),
 		data.CreateEmptyVirtualService("reviews-to-update", "test", []string{"reviews"}),
 	)
 	cache := SetupBusinessLayer(t, k8s, *config.NewConfig())
@@ -543,7 +543,7 @@ func TestUpdateIstioConfigDetails(t *testing.T) {
 func TestCreateIstioConfigDetails(t *testing.T) {
 	assert := assert.New(t)
 	k8s := kubetest.NewFakeK8sClient(
-		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "test"}},
+		kubetest.FakeNamespace("test"),
 	)
 	cache := SetupBusinessLayer(t, k8s, *config.NewConfig())
 	conf := config.Get()
