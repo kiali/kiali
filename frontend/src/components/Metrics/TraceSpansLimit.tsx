@@ -31,9 +31,9 @@ export const TraceSpansLimit: React.FC<TraceSpansLimitProps> = (props: TraceSpan
     <span style={{ display: 'flex' }}>
       <Checkbox
         className={props.spansClassName}
-        id={`spans-show-`}
+        id={`spans-show`}
         isChecked={showSpans}
-        key={`spans-show-chart`}
+        key={`spans-show`}
         label={showSpans ? '' : props.spansLabel ? props.spansLabel : t('Spans')}
         onChange={onSpansChange}
         style={showSpans ? { alignSelf: 'center' } : {}}
