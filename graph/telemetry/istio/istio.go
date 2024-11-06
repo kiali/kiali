@@ -820,9 +820,12 @@ func buildNodeTrafficMap(cluster, namespace string, n *graph.Node, o graph.Telem
 
 		inboundReporter := "destination"
 		outboutReporter := "source"
-		if strings.HasPrefix(n.Workload, "waypoint") {
-			inboundReporter = "source"
-			outboutReporter = "destination"
+		if waypoints, ok := globalInfo.Vendor[appender.AmbientWaypoints]; ok {
+			wp := waypoints.(models.Workload)
+			if isWaypoint(&wp, n.Cluster, n.Namespace, n.Workload) {
+				inboundReporter = "source"
+				outboutReporter = "destination"
+			}
 		}
 		// L4 telemetry is backwards, see https://github.com/istio/istio/issues/32399
 		switch o.Rates.Tcp {
@@ -1073,6 +1076,7 @@ func hasWaypoint(ztunnel bool, sourceCluster, sourceWlNs, srcWl, destCluster, de
 }
 
 // isWaypoint returns true if the ns, name and cluster of a workload matches with one of the waypoints in the list
+// We need the waypoint list
 func isWaypoint(w *models.Workload, cluster, namespace, name string) bool {
 	return w.WorkloadListItem.Name == name && w.WorkloadListItem.Namespace == namespace && w.Cluster == cluster
 }
