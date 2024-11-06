@@ -139,8 +139,15 @@ func (in *IstioValidationsService) CreateValidations(ctx context.Context, cluste
 	var registryServices []*kubernetes.RegistryService
 	var workloadsPerNamespace map[string]models.WorkloadList
 	istioConfigsPerNamespace := map[string]*models.IstioConfigList{}
-	mtlsDetails := kubernetes.MTLSDetails{}
-	rbacDetails := kubernetes.RBACDetails{}
+	mtlsDetails := kubernetes.MTLSDetails{
+		DestinationRules:        make([]*networking_v1.DestinationRule, 0),
+		MeshPeerAuthentications: make([]*security_v1.PeerAuthentication, 0),
+		PeerAuthentications:     make([]*security_v1.PeerAuthentication, 0),
+		EnabledAutoMtls:         false,
+	}
+	rbacDetails := kubernetes.RBACDetails{
+		AuthorizationPolicies: make([]*security_v1.AuthorizationPolicy, 0),
+	}
 
 	wg := sync.WaitGroup{}
 	errChan := make(chan error, 1)
@@ -159,9 +166,6 @@ func (in *IstioValidationsService) CreateValidations(ctx context.Context, cluste
 		go in.fetchIstioConfigList(ctx, istioConfigsPerNamespace[namespace.Name], &mtlsDetails, &rbacDetails, cluster, namespace.Name, errChan, &wg)
 	}
 
-	if registryStatus := in.kialiCache.GetRegistryStatus(cluster); registryStatus != nil {
-		registryServices = registryStatus.Services
-	}
 	wg.Wait()
 	close(errChan)
 	for e := range errChan {
@@ -169,6 +173,11 @@ func (in *IstioValidationsService) CreateValidations(ctx context.Context, cluste
 			return nil, e
 		}
 	}
+
+	if registryStatus := in.kialiCache.GetRegistryStatus(cluster); registryStatus != nil {
+		registryServices = registryStatus.Services
+	}
+
 	validations := models.IstioValidations{}
 	for _, namespace := range namespaces {
 		objectCheckers := in.getAllObjectCheckers(*istioConfigsPerNamespace[namespace.Name], workloadsPerNamespace, mtlsDetails, rbacDetails, namespaces, registryServices, cluster, serviceAccounts)
@@ -221,8 +230,15 @@ func (in *IstioValidationsService) GetIstioObjectValidations(ctx context.Context
 	var err error
 	var objectCheckers []checkers.ObjectChecker
 	var referenceChecker ReferenceChecker
-	mtlsDetails := kubernetes.MTLSDetails{}
-	rbacDetails := kubernetes.RBACDetails{}
+	mtlsDetails := kubernetes.MTLSDetails{
+		DestinationRules:        make([]*networking_v1.DestinationRule, 0),
+		MeshPeerAuthentications: make([]*security_v1.PeerAuthentication, 0),
+		PeerAuthentications:     make([]*security_v1.PeerAuthentication, 0),
+		EnabledAutoMtls:         false,
+	}
+	rbacDetails := kubernetes.RBACDetails{
+		AuthorizationPolicies: make([]*security_v1.AuthorizationPolicy, 0),
+	}
 	istioReferences := models.IstioReferencesMap{}
 
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
