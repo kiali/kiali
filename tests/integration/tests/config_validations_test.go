@@ -29,6 +29,11 @@ func TestDestinationRuleMultimatch(t *testing.T) {
 	require.NotNil(config)
 	assertConfigDetailsValidations(*config, kiali.BOOKINFO, kubernetes.DestinationRules, "all.googleapis.com", "KIA0201", true, require)
 
+	config, err = getConfigDetails(kiali.BOOKINFO, "all.googleapis.com2", kubernetes.DestinationRules, false, require)
+	require.NoError(err)
+	require.NotNil(config)
+	assertConfigDetailsValidations(*config, kiali.BOOKINFO, kubernetes.DestinationRules, "all.googleapis.com2", "KIA0201", true, require)
+
 	configList, err := kiali.IstioConfigsList(kiali.BOOKINFO)
 
 	require.NoError(err)
@@ -46,6 +51,11 @@ func TestDestinationRuleExportMultimatch(t *testing.T) {
 	require.NoError(err)
 	require.NotNil(config)
 	assertConfigDetailsValidations(*config, kiali.BOOKINFO, kubernetes.DestinationRules, "all.googleapis.com", "KIA0201", true, require)
+
+	config, err = getConfigDetails(kiali.BOOKINFO, "all.googleapis.com2", kubernetes.DestinationRules, false, require)
+	require.NoError(err)
+	require.NotNil(config)
+	assertConfigDetailsValidations(*config, kiali.BOOKINFO, kubernetes.DestinationRules, "all.googleapis.com2", "KIA0201", true, require)
 
 	// load configs for all namespaces, single namespace config load will not return export to validations
 	// anyway Kiali UI does not load configs for a single namespace to avoid validation inconsistency and performance issues
