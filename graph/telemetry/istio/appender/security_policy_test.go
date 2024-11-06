@@ -12,17 +12,141 @@ import (
 	"github.com/kiali/kiali/graph"
 )
 
+// TestSecurityPolicyDefaultRates test default rates for sidecars mesh
 func TestSecurityPolicyDefaultRates(t *testing.T) {
 	assert := assert.New(t)
 
 	q0 := fmt.Sprintf("round((%s) OR (%s),0.001)",
+		`sum(rate(istio_requests_total{mesh_id="mesh1",reporter="destination",source_workload_namespace!="bookinfo",destination_service_namespace="bookinfo"}[60s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,source_principal,destination_cluster,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,destination_principal,connection_security_policy) > 0`,
+		`sum(rate(istio_tcp_sent_bytes_total{mesh_id="mesh1",app!="ztunnel",reporter="destination",source_workload_namespace!="bookinfo",destination_service_namespace="bookinfo"}[60s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,source_principal,destination_cluster,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,destination_principal,connection_security_policy) > 0`)
+	v0 := model.Vector{}
+
+	q1 := fmt.Sprintf("round((%s) OR (%s),0.001)",
+		`sum(rate(istio_requests_total{mesh_id="mesh1",reporter="destination",source_workload_namespace="bookinfo"}[60s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,source_principal,destination_cluster,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,destination_principal,connection_security_policy) > 0`,
+		`sum(rate(istio_tcp_sent_bytes_total{mesh_id="mesh1",app!="ztunnel",reporter="destination",source_workload_namespace="bookinfo"}[60s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,source_principal,destination_cluster,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,destination_principal,connection_security_policy) > 0`)
+	// edge 1, represents ztunnel dest reported
+	q1m0 := model.Metric{
+		"source_cluster":                 config.DefaultClusterID,
+		"source_workload_namespace":      "istio-system",
+		"source_workload":                "ingressgateway-unknown",
+		"source_canonical_service":       "ingressgateway",
+		"source_canonical_revision":      model.LabelValue(graph.Unknown),
+		"source_principal":               "source-principal-test",
+		"destination_cluster":            config.DefaultClusterID,
+		"destination_service_namespace":  "bookinfo",
+		"destination_service_name":       "productpage",
+		"destination_workload_namespace": "bookinfo",
+		"destination_workload":           "productpage-v1",
+		"destination_canonical_service":  "productpage",
+		"destination_canonical_revision": "v1",
+		"destination_principal":          "destination-principal-test",
+		"connection_security_policy":     "mutual_tls"}
+	// edge 1, same edge, represents ztunnel source reported, basically overwites dest reported
+	q1m1 := model.Metric{
+		"source_cluster":                 config.DefaultClusterID,
+		"source_workload_namespace":      "istio-system",
+		"source_workload":                "ingressgateway-unknown",
+		"source_canonical_service":       "ingressgateway",
+		"source_canonical_revision":      model.LabelValue(graph.Unknown),
+		"source_principal":               "source-principal-test",
+		"destination_cluster":            config.DefaultClusterID,
+		"destination_service_namespace":  "bookinfo",
+		"destination_service_name":       "productpage",
+		"destination_workload_namespace": "bookinfo",
+		"destination_workload":           "productpage-v1",
+		"destination_canonical_service":  "productpage",
+		"destination_canonical_revision": "v1",
+		"destination_principal":          "destination-principal-test",
+		"connection_security_policy":     "mutual_tls"}
+	// edge 2, represents ztunnel only source reported (see kiali7811)
+	q1m2 := model.Metric{
+		"source_cluster":                 config.DefaultClusterID,
+		"source_workload_namespace":      "istio-system",
+		"source_workload":                "ingressgateway-unknown",
+		"source_canonical_service":       "ingressgateway",
+		"source_canonical_revision":      model.LabelValue(graph.Unknown),
+		"source_principal":               "source-principal-test",
+		"destination_cluster":            config.DefaultClusterID,
+		"destination_service_namespace":  "bookinfo",
+		"destination_service_name":       "productpage",
+		"destination_workload_namespace": "bookinfo",
+		"destination_workload":           "productpage-v1",
+		"destination_canonical_service":  "productpage",
+		"destination_canonical_revision": "v1",
+		"destination_principal":          "destination-principal-test",
+		"connection_security_policy":     "none"}
+	v1 := model.Vector{
+		&model.Sample{
+			Metric: q1m0,
+			Value:  10.0},
+		&model.Sample{
+			Metric: q1m1,
+			Value:  10.0},
+		&model.Sample{
+			Metric: q1m2,
+			Value:  10.0}}
+
+	client, api, err := setupMockedWithQueryScope("mesh1")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	mockQuery(api, q0, &v0)
+	mockQuery(api, q1, &v1)
+
+	trafficMap := securityPolicyTestTraffic()
+	ingressID, _, _ := graph.Id(config.DefaultClusterID, "istio-system", "", "istio-system", "ingressgateway-unknown", "ingressgateway", graph.Unknown, graph.GraphTypeVersionedApp)
+	ingress, ok := trafficMap[ingressID]
+	assert.Equal(true, ok)
+	assert.Equal("ingressgateway", ingress.App)
+	assert.Equal(1, len(ingress.Edges))
+	assert.Equal(nil, ingress.Edges[0].Metadata[graph.IsMTLS])
+
+	duration, _ := time.ParseDuration("60s")
+	appender := SecurityPolicyAppender{
+		GraphType:          graph.GraphTypeVersionedApp,
+		InjectServiceNodes: false,
+		Namespaces: graph.NamespaceInfoMap{
+			"bookinfo": graph.NamespaceInfo{
+				Name:     "bookinfo",
+				Duration: duration,
+				IsIstio:  false,
+			},
+		},
+		QueryTime: time.Now().Unix(),
+		Rates: graph.RequestedRates{
+			Ambient: graph.AmbientTrafficNone,
+			Grpc:    graph.RateRequests,
+			Http:    graph.RateRequests,
+			Tcp:     graph.RateSent,
+		},
+	}
+
+	appender.appendGraph(trafficMap, "bookinfo", client)
+
+	ingress, ok = trafficMap[ingressID]
+	assert.Equal(true, ok)
+	assert.Equal("ingressgateway", ingress.App)
+	assert.Equal(1, len(ingress.Edges))
+	assert.Equal(50.0, ingress.Edges[0].Metadata[graph.IsMTLS])
+
+	productpage := ingress.Edges[0].Dest
+	assert.Equal("productpage", productpage.App)
+	assert.Equal("v1", productpage.Version)
+}
+
+// TestSecurityPolicyAmbientDefaultRates test default rates for Ambient mesh
+func TestSecurityPolicyAmbientDefaultRates(t *testing.T) {
+	assert := assert.New(t)
+
+	q0 := fmt.Sprintf("round((%s) OR (%s),0.001)",
 		`sum(rate(istio_requests_total{mesh_id="mesh1",reporter=~"destination|waypoint",source_workload_namespace!="bookinfo",destination_service_namespace="bookinfo"}[60s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,source_principal,destination_cluster,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,destination_principal,connection_security_policy) > 0`,
-		`sum(rate(istio_tcp_sent_bytes_total{mesh_id="mesh1",reporter="destination",source_workload_namespace!="bookinfo",destination_service_namespace="bookinfo"}[60s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,source_principal,destination_cluster,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,destination_principal,connection_security_policy) > 0`)
+		`sum(rate(istio_tcp_sent_bytes_total{mesh_id="mesh1",reporter=~"destination|waypoint",source_workload_namespace!="bookinfo",destination_service_namespace="bookinfo"}[60s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,source_principal,destination_cluster,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,destination_principal,connection_security_policy) > 0`)
 	v0 := model.Vector{}
 
 	q1 := fmt.Sprintf("round((%s) OR (%s) OR (%s),0.001)",
 		`sum(rate(istio_requests_total{mesh_id="mesh1",reporter=~"destination|waypoint",source_workload_namespace="bookinfo"}[60s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,source_principal,destination_cluster,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,destination_principal,connection_security_policy) > 0`,
-		`sum(rate(istio_tcp_sent_bytes_total{mesh_id="mesh1",reporter="destination",source_workload_namespace="bookinfo"}[60s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,source_principal,destination_cluster,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,destination_principal,connection_security_policy) > 0`,
+		`sum(rate(istio_tcp_sent_bytes_total{mesh_id="mesh1",reporter=~"destination|waypoint",source_workload_namespace="bookinfo"}[60s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,source_principal,destination_cluster,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,destination_principal,connection_security_policy) > 0`,
 		`sum(rate(istio_tcp_sent_bytes_total{mesh_id="mesh1",app="ztunnel",reporter="source",source_workload_namespace="bookinfo"}[60s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,source_principal,destination_cluster,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,destination_principal,connection_security_policy) > 0`)
 	// edge 1, represents ztunnel dest reported
 	q1m0 := model.Metric{
@@ -139,21 +263,19 @@ func TestSecurityPolicyTotalRates(t *testing.T) {
 	assert := assert.New(t)
 
 	q0 := fmt.Sprintf("round((%s) OR (%s) OR (%s) OR (%s) OR (%s),0.001)",
-		`sum(rate(istio_requests_total{reporter=~"destination|waypoint",source_workload_namespace!="bookinfo",destination_service_namespace="bookinfo"}[60s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,source_principal,destination_cluster,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,destination_principal,connection_security_policy) > 0`,
-		`sum(rate(istio_request_messages_total{reporter=~"destination|waypoint",source_workload_namespace!="bookinfo",destination_service_namespace="bookinfo"}[60s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,source_principal,destination_cluster,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,destination_principal,connection_security_policy) > 0`,
-		`sum(rate(istio_response_messages_total{reporter=~"destination|waypoint",source_workload_namespace!="bookinfo",destination_service_namespace="bookinfo"}[60s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,source_principal,destination_cluster,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,destination_principal,connection_security_policy) > 0`,
-		`sum(rate(istio_tcp_sent_bytes_total{reporter="destination",source_workload_namespace!="bookinfo",destination_service_namespace="bookinfo"}[60s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,source_principal,destination_cluster,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,destination_principal,connection_security_policy) > 0`,
-		`sum(rate(istio_tcp_received_bytes_total{reporter="destination",source_workload_namespace!="bookinfo",destination_service_namespace="bookinfo"}[60s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,source_principal,destination_cluster,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,destination_principal,connection_security_policy) > 0`)
+		`sum(rate(istio_requests_total{reporter="destination",source_workload_namespace!="bookinfo",destination_service_namespace="bookinfo"}[60s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,source_principal,destination_cluster,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,destination_principal,connection_security_policy) > 0`,
+		`sum(rate(istio_request_messages_total{reporter="destination",source_workload_namespace!="bookinfo",destination_service_namespace="bookinfo"}[60s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,source_principal,destination_cluster,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,destination_principal,connection_security_policy) > 0`,
+		`sum(rate(istio_response_messages_total{reporter="destination",source_workload_namespace!="bookinfo",destination_service_namespace="bookinfo"}[60s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,source_principal,destination_cluster,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,destination_principal,connection_security_policy) > 0`,
+		`sum(rate(istio_tcp_sent_bytes_total{app!="ztunnel",reporter="destination",source_workload_namespace!="bookinfo",destination_service_namespace="bookinfo"}[60s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,source_principal,destination_cluster,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,destination_principal,connection_security_policy) > 0`,
+		`sum(rate(istio_tcp_received_bytes_total{app!="ztunnel",reporter="destination",source_workload_namespace!="bookinfo",destination_service_namespace="bookinfo"}[60s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,source_principal,destination_cluster,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,destination_principal,connection_security_policy) > 0`)
 	v0 := model.Vector{}
 
-	q1 := fmt.Sprintf("round((%s) OR (%s) OR (%s) OR (%s) OR (%s) OR (%s) OR (%s),0.001)",
-		`sum(rate(istio_requests_total{reporter=~"destination|waypoint",source_workload_namespace="bookinfo"}[60s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,source_principal,destination_cluster,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,destination_principal,connection_security_policy) > 0`,
-		`sum(rate(istio_request_messages_total{reporter=~"destination|waypoint",source_workload_namespace="bookinfo"}[60s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,source_principal,destination_cluster,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,destination_principal,connection_security_policy) > 0`,
-		`sum(rate(istio_response_messages_total{reporter=~"destination|waypoint",source_workload_namespace="bookinfo"}[60s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,source_principal,destination_cluster,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,destination_principal,connection_security_policy) > 0`,
-		`sum(rate(istio_tcp_sent_bytes_total{reporter="destination",source_workload_namespace="bookinfo"}[60s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,source_principal,destination_cluster,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,destination_principal,connection_security_policy) > 0`,
-		`sum(rate(istio_tcp_received_bytes_total{reporter="destination",source_workload_namespace="bookinfo"}[60s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,source_principal,destination_cluster,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,destination_principal,connection_security_policy) > 0`,
-		`sum(rate(istio_tcp_sent_bytes_total{app="ztunnel",reporter="source",source_workload_namespace="bookinfo"}[60s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,source_principal,destination_cluster,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,destination_principal,connection_security_policy) > 0`,
-		`sum(rate(istio_tcp_received_bytes_total{app="ztunnel",reporter="source",source_workload_namespace="bookinfo"}[60s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,source_principal,destination_cluster,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,destination_principal,connection_security_policy) > 0`)
+	q1 := fmt.Sprintf("round((%s) OR (%s) OR (%s) OR (%s) OR (%s),0.001)",
+		`sum(rate(istio_requests_total{reporter="destination",source_workload_namespace="bookinfo"}[60s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,source_principal,destination_cluster,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,destination_principal,connection_security_policy) > 0`,
+		`sum(rate(istio_request_messages_total{reporter="destination",source_workload_namespace="bookinfo"}[60s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,source_principal,destination_cluster,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,destination_principal,connection_security_policy) > 0`,
+		`sum(rate(istio_response_messages_total{reporter="destination",source_workload_namespace="bookinfo"}[60s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,source_principal,destination_cluster,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,destination_principal,connection_security_policy) > 0`,
+		`sum(rate(istio_tcp_sent_bytes_total{app!="ztunnel",reporter="destination",source_workload_namespace="bookinfo"}[60s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,source_principal,destination_cluster,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,destination_principal,connection_security_policy) > 0`,
+		`sum(rate(istio_tcp_received_bytes_total{app!="ztunnel",reporter="destination",source_workload_namespace="bookinfo"}[60s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,source_principal,destination_cluster,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,destination_principal,connection_security_policy) > 0`)
 	q1m0 := model.Metric{
 		"source_cluster":                 config.DefaultClusterID,
 		"source_workload_namespace":      "istio-system",
@@ -223,7 +345,7 @@ func TestSecurityPolicyTotalRates(t *testing.T) {
 		},
 		QueryTime: time.Now().Unix(),
 		Rates: graph.RequestedRates{
-			Ambient: graph.AmbientTrafficTotal,
+			Ambient: graph.AmbientTrafficNone,
 			Grpc:    graph.RateTotal,
 			Http:    graph.RateRequests,
 			Tcp:     graph.RateTotal,
@@ -247,12 +369,12 @@ func TestSecurityPolicyWithServiceNodesAndNoZtunnel(t *testing.T) {
 	assert := assert.New(t)
 
 	q0 := fmt.Sprintf("round((%s) OR (%s),0.001)",
-		`sum(rate(istio_requests_total{reporter=~"destination|waypoint",source_workload_namespace!="bookinfo",destination_service_namespace="bookinfo"}[60s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,source_principal,destination_cluster,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,destination_principal,connection_security_policy) > 0`,
+		`sum(rate(istio_requests_total{reporter="destination",source_workload_namespace!="bookinfo",destination_service_namespace="bookinfo"}[60s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,source_principal,destination_cluster,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,destination_principal,connection_security_policy) > 0`,
 		`sum(rate(istio_tcp_sent_bytes_total{app!="ztunnel",reporter="destination",source_workload_namespace!="bookinfo",destination_service_namespace="bookinfo"}[60s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,source_principal,destination_cluster,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,destination_principal,connection_security_policy) > 0`)
 	v0 := model.Vector{}
 
 	q1 := fmt.Sprintf("round((%s) OR (%s),0.001)",
-		`sum(rate(istio_requests_total{reporter=~"destination|waypoint",source_workload_namespace="bookinfo"}[60s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,source_principal,destination_cluster,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,destination_principal,connection_security_policy) > 0`,
+		`sum(rate(istio_requests_total{reporter="destination",source_workload_namespace="bookinfo"}[60s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,source_principal,destination_cluster,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,destination_principal,connection_security_policy) > 0`,
 		`sum(rate(istio_tcp_sent_bytes_total{app!="ztunnel",reporter="destination",source_workload_namespace="bookinfo"}[60s])) by (source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,source_principal,destination_cluster,destination_service_namespace,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,destination_principal,connection_security_policy) > 0`)
 	q1m0 := model.Metric{
 		"source_cluster":                 config.DefaultClusterID,
@@ -303,7 +425,7 @@ func TestSecurityPolicyWithServiceNodesAndNoZtunnel(t *testing.T) {
 		},
 		QueryTime: time.Now().Unix(),
 		Rates: graph.RequestedRates{
-			Ambient: graph.AmbientTrafficWaypoint,
+			Ambient: graph.AmbientTrafficNone,
 			Grpc:    graph.RateRequests,
 			Http:    graph.RateRequests,
 			Tcp:     graph.RateSent,
