@@ -12,7 +12,7 @@ type TraceLimitProps = {
   initialLimit?: number;
   onLimitChange: (limit: number) => void;
   title?: string;
-  titleStyle?: string;
+  titleClassName?: string;
 };
 
 export const TraceLimit: React.FC<TraceLimitProps> = (props: TraceLimitProps) => {
@@ -54,7 +54,7 @@ export const TraceLimit: React.FC<TraceLimitProps> = (props: TraceLimitProps) =>
   const traceLimitComponent = (
     <span>
       <div style={{ marginTop: '0.5rem' }}>
-        <span className={props.titleStyle} style={{ paddingRight: 0 }}>
+        <span className={props.titleClassName} style={{ paddingRight: 0 }}>
           {props.title ? props.title : t('Limit per query')}
         </span>
         {tooltip}
@@ -89,7 +89,8 @@ export const TraceLimit: React.FC<TraceLimitProps> = (props: TraceLimitProps) =>
       <ToolbarDropdown
         id={'trace-limit-dropdown'}
         handleSelect={onLimitChange}
-        nameDropdown={props.title ? props.title : t('Limit')}
+        nameDropdown={props.title ? props.title : t('limit')}
+        nameDropdownClassName={props.titleClassName}
         value={limit}
         label={traceOptions[limit]}
         options={traceOptions}

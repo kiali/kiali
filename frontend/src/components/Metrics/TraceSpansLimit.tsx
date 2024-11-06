@@ -9,7 +9,9 @@ type TraceSpansLimitProps = {
   showSpans?: boolean;
   showSpansLimit?: number;
   spansClassName?: string;
-  spansLabel?: React.ReactNode;
+  spansInputClassName?: string;
+  spansLabelClassName?: string;
+  spansLabel?: string;
 };
 
 export const TraceSpansLimit: React.FC<TraceSpansLimitProps> = (props: TraceSpansLimitProps) => {
@@ -27,20 +29,28 @@ export const TraceSpansLimit: React.FC<TraceSpansLimitProps> = (props: TraceSpan
     props.onSpansChange(checked, currentLimit);
   };
 
+  const label = props.spansLabel ? props.spansLabel : t('spans');
+
   const traceSpansLimitComponent = (
     <span style={{ display: 'flex' }}>
       <Checkbox
         className={props.spansClassName}
         id={`spans-show`}
+        inputClassName={props.spansInputClassName}
         isChecked={showSpans}
         key={`spans-show`}
-        label={showSpans ? '' : props.spansLabel ? props.spansLabel : t('Spans')}
+        label={showSpans ? '' : <span className={props.spansLabelClassName}>{label}</span>}
         onChange={onSpansChange}
         style={showSpans ? { alignSelf: 'center' } : {}}
       />
       {showSpans && (
         <span style={{ marginLeft: '0.5rem' }}>
-          <TraceLimit asRadio={props.limitsAsRadio} initialLimit={props.showSpansLimit} onLimitChange={onLimitChange} />
+          <TraceLimit
+            asRadio={props.limitsAsRadio}
+            initialLimit={props.showSpansLimit}
+            onLimitChange={onLimitChange}
+            titleClassName={props.spansLabelClassName}
+          />
         </span>
       )}
     </span>

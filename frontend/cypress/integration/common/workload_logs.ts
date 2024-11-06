@@ -108,7 +108,7 @@ Then('the log pane should only show logs for the {string} container', (container
 });
 
 Then('the log pane should show spans', () => {
-  cy.get('label[for=spans-show]')
+  cy.get('label[for=trace-limit-dropdown]')
     .find('span')
     .invoke('css', 'color')
     .then(spansColor => {

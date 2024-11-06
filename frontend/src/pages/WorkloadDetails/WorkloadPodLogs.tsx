@@ -223,9 +223,14 @@ const logInfoStyle = kialiStyle({
   fontSize: '0.75rem'
 });
 
-const logMessaageStyle = kialiStyle({
+const logMessageStyle = kialiStyle({
   fontSize: '0.75rem',
   paddingRight: '1rem'
+});
+
+const spansLabelStyle = kialiStyle({
+  color: spanColor,
+  fontWeight: 'bold'
 });
 
 const colorCheck = (color: string): string =>
@@ -460,17 +465,8 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                                 onSpansChange={this.onSpansChange}
                                 showSpans={this.state.showSpans}
                                 showSpansLimit={this.state.showSpansLimit}
-                                spansClassName={colorCheck(spanColor)}
-                                spansLabel={
-                                  <span
-                                    style={{
-                                      color: spanColor,
-                                      fontWeight: 'bold'
-                                    }}
-                                  >
-                                    spans
-                                  </span>
-                                }
+                                spansInputClassName={colorCheck(spanColor)}
+                                spansLabelClassName={spansLabelStyle}
                               />
                             </ToolbarItem>
                           )}
@@ -626,7 +622,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
       return (
         <div key={`s-${index}`} className={logLineStyle} style={{ ...style }}>
           {this.state.showTimestamps && (
-            <span key={`al-s-${index}`} className={logMessaageStyle} style={{ color: spanColor }}>
+            <span key={`al-s-${index}`} className={logMessageStyle} style={{ color: spanColor }}>
               {e.timestamp}
             </span>
           )}
@@ -647,7 +643,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
               <KialiIcon.Info key={`al-i-${index}`} className={alInfoIcon} color={spanColor} />
             </Button>
           </Tooltip>
-          <p key={`al-p-${index}`} className={logMessaageStyle} style={{ color: spanColor }}>
+          <p key={`al-p-${index}`} className={logMessageStyle} style={{ color: spanColor }}>
             {this.entryToString(e)}
           </p>
         </div>
@@ -659,14 +655,14 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
 
     return !le.accessLog ? (
       <div key={`le-d-${index}`} className={logLineStyle} style={{ ...style }}>
-        <p key={`le-${index}`} className={logMessaageStyle} style={{ color: messageColor }}>
+        <p key={`le-${index}`} className={logMessageStyle} style={{ color: messageColor }}>
           {this.entryToString(e)}
         </p>
       </div>
     ) : (
       <div key={`al-${index}`} className={logLineStyle} style={{ ...style }}>
         {this.state.showTimestamps && (
-          <span key={`al-s-${index}`} className={logMessaageStyle} style={{ color: messageColor }}>
+          <span key={`al-s-${index}`} className={logMessageStyle} style={{ color: messageColor }}>
             {formatDate(le.timestamp)}
           </span>
         )}
@@ -689,7 +685,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
           </Button>
         </Tooltip>
 
-        <p key={`al-p-${index}`} className={logMessaageStyle} style={{ color: messageColor }}>
+        <p key={`al-p-${index}`} className={logMessageStyle} style={{ color: messageColor }}>
           {le.message}
         </p>
       </div>
