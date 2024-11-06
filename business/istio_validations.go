@@ -134,13 +134,13 @@ func (in *IstioValidationsService) CreateValidations(ctx context.Context, cluste
 	timer := internalmetrics.GetValidationProcessingTimePrometheusTimer("", "")
 	defer timer.ObserveDuration()
 
-	istioConfigsPerNamespace := map[string]*models.IstioConfigList{}
 	var serviceAccounts map[string][]string
 	var namespaces models.Namespaces
-	var mtlsDetails kubernetes.MTLSDetails
-	var rbacDetails kubernetes.RBACDetails
 	var registryServices []*kubernetes.RegistryService
 	var workloadsPerNamespace map[string]models.WorkloadList
+	istioConfigsPerNamespace := map[string]*models.IstioConfigList{}
+	mtlsDetails := kubernetes.MTLSDetails{}
+	rbacDetails := kubernetes.RBACDetails{}
 
 	wg := sync.WaitGroup{}
 	errChan := make(chan error, 1)
@@ -216,13 +216,13 @@ func (in *IstioValidationsService) GetIstioObjectValidations(ctx context.Context
 	var istioConfigList models.IstioConfigList
 	var namespaces models.Namespaces
 	var workloadsPerNamespace map[string]models.WorkloadList
-	var mtlsDetails kubernetes.MTLSDetails
-	var rbacDetails kubernetes.RBACDetails
 	var registryServices []*kubernetes.RegistryService
 	var serviceAccounts map[string][]string
 	var err error
 	var objectCheckers []checkers.ObjectChecker
 	var referenceChecker ReferenceChecker
+	mtlsDetails := kubernetes.MTLSDetails{}
+	rbacDetails := kubernetes.RBACDetails{}
 	istioReferences := models.IstioReferencesMap{}
 
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
