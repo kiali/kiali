@@ -1294,7 +1294,7 @@ const mapStateToProps = (state: KialiAppState): ReduxProps => {
   return {
     kiosk: state.globalState.kiosk,
     timeRange: timeRangeSelector(state),
-    tracingIntegration: state.tracingState.info ? state.tracingState.info.integration : false
+    tracingIntegration: state.tracingState.info?.integration ?? false
   };
 };
 
