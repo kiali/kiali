@@ -94,7 +94,7 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
     this.fetcher = new TracesFetcher(
       this.onTracesUpdated,
       errors => {
-        // If there was traces displayed already, do not hide them so that the user can still interact with them
+        // If there were already traces displayed, do not hide them so that the user can still interact with them
         // (consider it's probably a temporary failure)
         // Note that the error message is anyway displayed in the notifications component, so it's not going unnoticed
         if (this.state.traces.length === 0) {
