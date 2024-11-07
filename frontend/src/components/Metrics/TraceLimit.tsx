@@ -92,7 +92,7 @@ export const TraceLimit: React.FC<TraceLimitProps> = (props: TraceLimitProps) =>
       <ToolbarDropdown
         id="trace-limit-dropdown"
         handleSelect={onLimitChange}
-        nameDropdown={props.title ? props.title : t('limit')}
+        nameDropdown={props.title ?? t('limit')}
         nameDropdownClassName={props.titleClassName}
         value={limit}
         label={traceLimits[limit]}
