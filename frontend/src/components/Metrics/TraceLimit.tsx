@@ -20,7 +20,7 @@ export const TraceLimit: React.FC<TraceLimitProps> = (props: TraceLimitProps) =>
   const [limit, setLimit] = React.useState<number>(initialLimit);
   const { t } = useKialiTranslation();
 
-  const onLimitChangeRadio = (limit: number, checked): void => {
+  const onLimitChangeRadio = (limit: number, checked: boolean): void => {
     if (checked) {
       setLimit(limit);
       props.onLimitChange(limit);
