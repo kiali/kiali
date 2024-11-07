@@ -174,7 +174,7 @@ export const retrieveMetricsSettings = (limitDefault?: number): MetricsSettings 
     labelsSettings: new Map(),
     showAverage: true,
     showSpans: false,
-    showSpansLimit: limitDefault ?? TRACE_LIMIT_DEFAULT,
+    spanLimit: limitDefault ?? TRACE_LIMIT_DEFAULT,
     showQuantiles: [],
     showTrendlines: false
   };
@@ -191,7 +191,7 @@ export const retrieveMetricsSettings = (limitDefault?: number): MetricsSettings 
 
   const spansLimit = urlParams.get(URLParam.TRACING_LIMIT_TRACES);
   if (spansLimit !== null) {
-    settings.showSpansLimit = parseInt(spansLimit);
+    settings.spanLimit = parseInt(spansLimit);
   }
 
   const trendlines = urlParams.get(URLParam.SHOW_TRENDLINES);

@@ -464,7 +464,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                               <TraceSpansLimit
                                 onSpansChange={this.onSpansChange}
                                 showSpans={this.state.showSpans}
-                                showSpansLimit={this.state.showSpansLimit}
+                                traceLimit={this.state.showSpansLimit}
                                 spansInputClassName={colorCheck(spanColor)}
                                 spansLabelClassName={spansLabelStyle}
                               />

@@ -183,7 +183,12 @@ export class TracesDisplayOptions extends React.Component<Props, State> {
           </label>
         </div>
 
-        <TraceLimit asRadio={true} onLimitChange={this.onLimitChanged} titleClassName={titleStyle} />
+        <TraceLimit
+          asRadio={true}
+          initialLimit={this.state.limit}
+          onLimitChange={this.onLimitChanged}
+          titleClassName={titleStyle}
+        />
 
         <div className={titleStyle}>Value axis</div>
         <div>

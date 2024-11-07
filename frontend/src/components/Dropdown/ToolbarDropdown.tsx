@@ -9,6 +9,7 @@ import {
   TooltipPosition
 } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
+import { classes } from 'typestyle';
 
 const dropdownTitle = kialiStyle({
   alignSelf: 'center',
@@ -92,7 +93,7 @@ export const ToolbarDropdown: React.FC<ToolbarDropdownProps> = (props: ToolbarDr
   return (
     <>
       {props.nameDropdown && (
-        <span id={`${props.id}-name`} className={`${dropdownTitle} ${props.nameDropdownClassName}`}>
+        <span id={`${props.id}-name`} className={classes(dropdownTitle, props.nameDropdownClassName)}>
           {props.nameDropdown}
         </span>
       )}

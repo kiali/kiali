@@ -7,17 +7,17 @@ type TraceSpansLimitProps = {
   limitsAsRadio?: boolean; // if true use Dropdown, otherwise inline radio
   onSpansChange: (checked: boolean, limit: number) => void;
   showSpans?: boolean;
-  showSpansLimit?: number;
   spansClassName?: string;
   spansInputClassName?: string;
   spansLabelClassName?: string;
   spansLabel?: string;
+  traceLimit?: number;
 };
 
 export const TraceSpansLimit: React.FC<TraceSpansLimitProps> = (props: TraceSpansLimitProps) => {
   const [showSpans, setShowSpans] = React.useState<boolean>(props.showSpans ?? false);
   const { t } = useKialiTranslation();
-  let currentLimit = props.showSpansLimit ?? TRACE_LIMIT_DEFAULT;
+  let currentLimit = props.traceLimit ?? TRACE_LIMIT_DEFAULT;
 
   const onLimitChange = (limit: number): void => {
     currentLimit = limit;
@@ -47,7 +47,7 @@ export const TraceSpansLimit: React.FC<TraceSpansLimitProps> = (props: TraceSpan
         <span style={{ marginLeft: '0.5rem' }}>
           <TraceLimit
             asRadio={props.limitsAsRadio}
-            initialLimit={props.showSpansLimit}
+            initialLimit={props.traceLimit}
             onLimitChange={onLimitChange}
             titleClassName={props.spansLabelClassName}
           />
