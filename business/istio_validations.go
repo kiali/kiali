@@ -149,30 +149,22 @@ func (in *IstioValidationsService) CreateValidations(ctx context.Context, cluste
 		AuthorizationPolicies: make([]*security_v1.AuthorizationPolicy, 0),
 	}
 
-	wg := sync.WaitGroup{}
-	errChan := make(chan error, 1)
-
-	wg.Add(2)
-
-	go in.fetchAllWorkloads(ctx, &workloadsPerNamespace, cluster, &namespaces, errChan, &wg)
-	go in.fetchServiceAccounts(ctx, &serviceAccounts, errChan, &wg)
-	wg.Wait()
-
-	wg = sync.WaitGroup{}
-	wg.Add(len(namespaces))
+	err := in.fetchAllWorkloadsDirect(ctx, &workloadsPerNamespace, cluster, &namespaces)
+	if err != nil {
+		return nil, err
+	}
+	err = in.fetchServiceAccountsDirect(ctx, &serviceAccounts)
+	if err != nil {
+		return nil, err
+	}
 
 	for _, namespace := range namespaces {
 		var istioConfigs models.IstioConfigList
-		go in.fetchIstioConfigList(ctx, &istioConfigs, &mtlsDetails, &rbacDetails, cluster, namespace.Name, errChan, &wg)
-		istioConfigsPerNamespace[namespace.Name] = &istioConfigs
-	}
-
-	wg.Wait()
-	close(errChan)
-	for e := range errChan {
-		if e != nil { // Check that default value wasn't returned
-			return nil, e
+		err = in.fetchIstioConfigListDirect(ctx, &istioConfigs, &mtlsDetails, &rbacDetails, cluster, namespace.Name)
+		if err != nil {
+			return nil, err
 		}
+		istioConfigsPerNamespace[namespace.Name] = &istioConfigs
 	}
 
 	if registryStatus := in.kialiCache.GetRegistryStatus(cluster); registryStatus != nil {
@@ -401,92 +393,122 @@ func runObjectReferenceChecker(referenceChecker ReferenceChecker) models.IstioRe
 	return referenceChecker.References()
 }
 
-func (in *IstioValidationsService) fetchAllWorkloads(ctx context.Context, rValue *map[string]models.WorkloadList, cluster string, namespaces *models.Namespaces, errChan chan error, wg *sync.WaitGroup) {
-	defer wg.Done()
-	if len(errChan) == 0 {
-		nss, err := in.namespace.GetClusterNamespaces(ctx, cluster)
+// helper function for fetchAllWorkloads to call directly
+func (in *IstioValidationsService) fetchAllWorkloadsDirect(
+	ctx context.Context,
+	rValue *map[string]models.WorkloadList,
+	cluster string,
+	namespaces *models.Namespaces,
+) error {
+	nss, err := in.namespace.GetClusterNamespaces(ctx, cluster)
+	if err != nil {
+		return err
+	}
+	*namespaces = nss
+
+	allWorkloads := map[string]models.WorkloadList{}
+	for _, ns := range nss {
+		criteria := WorkloadCriteria{Cluster: cluster, Namespace: ns.Name, IncludeIstioResources: false, IncludeHealth: false}
+		workloadList, err := in.workload.GetWorkloadList(ctx, criteria)
 		if err != nil {
-			errChan <- err
-			return
-
+			return err
 		}
-		*namespaces = nss
-
-		allWorkloads := map[string]models.WorkloadList{}
-		for _, ns := range nss {
-			criteria := WorkloadCriteria{Cluster: cluster, Namespace: ns.Name, IncludeIstioResources: false, IncludeHealth: false}
-			workloadList, err := in.workload.GetWorkloadList(ctx, criteria)
-			if err != nil {
-				select {
-				case errChan <- err:
-				default:
-				}
-			} else {
-				allWorkloads[ns.Name] = workloadList
-			}
-		}
-		*rValue = allWorkloads
+		allWorkloads[ns.Name] = workloadList
 	}
+	*rValue = allWorkloads
+	return nil
 }
 
-// fetchServiceAccounts returns list of names of the ServiceAccounts retrieved from Registry Services in a map per cluster.
-func (in *IstioValidationsService) fetchServiceAccounts(ctx context.Context, rValue *map[string][]string, errChan chan error, wg *sync.WaitGroup) {
-	serviceAccounts := map[string][]string{}
-
-	istioDomain := strings.Replace(config.Get().ExternalServices.Istio.IstioIdentityDomain, "svc.", "", 1)
-	defer wg.Done()
-	if len(errChan) == 0 {
-		for _, cluster := range in.namespace.GetClusterList() {
-			nss, err := in.namespace.GetClusterNamespaces(ctx, cluster)
-			if err != nil {
-				errChan <- err
-				return
-			}
-			for _, ns := range nss {
-				criteria := WorkloadCriteria{Cluster: cluster, Namespace: ns.Name, IncludeIstioResources: false, IncludeHealth: false}
-				workloadList, err := in.workload.GetWorkloadList(ctx, criteria)
-				if err != nil {
-					select {
-					case errChan <- err:
-					default:
-					}
-				} else {
-					for _, wl := range workloadList.Workloads {
-						for _, sAccountName := range wl.ServiceAccountNames {
-							saFullName := fmt.Sprintf("%s/ns/%s/sa/%s", istioDomain, ns.Name, sAccountName)
-							found := false
-							if _, ok := serviceAccounts[cluster]; !ok {
-								serviceAccounts[cluster] = []string{}
-							}
-							for _, name := range serviceAccounts[cluster] {
-								if name == saFullName {
-									found = true
-									break
-								}
-							}
-							if !found {
-								serviceAccounts[cluster] = append(serviceAccounts[cluster], saFullName)
-							}
-						}
-					}
-				}
-			}
-		}
-		*rValue = serviceAccounts
-	}
-}
-
-func (in *IstioValidationsService) fetchIstioConfigList(ctx context.Context, rValue *models.IstioConfigList, mtlsDetails *kubernetes.MTLSDetails, rbacDetails *kubernetes.RBACDetails, cluster, namespace string, errChan chan error, wg *sync.WaitGroup) {
+// with errChan and WaitGroup for asynchronous use
+func (in *IstioValidationsService) fetchAllWorkloads(
+	ctx context.Context,
+	rValue *map[string]models.WorkloadList,
+	cluster string,
+	namespaces *models.Namespaces,
+	errChan chan error,
+	wg *sync.WaitGroup,
+) {
 	defer wg.Done()
 	if len(errChan) > 0 {
 		return
 	}
 
+	if err := in.fetchAllWorkloadsDirect(ctx, rValue, cluster, namespaces); err != nil {
+		errChan <- err
+	}
+}
+
+// helper function for fetchServiceAccounts to call directly
+func (in *IstioValidationsService) fetchServiceAccountsDirect(
+	ctx context.Context,
+	rValue *map[string][]string,
+) error {
+	serviceAccounts := map[string][]string{}
+	istioDomain := strings.Replace(config.Get().ExternalServices.Istio.IstioIdentityDomain, "svc.", "", 1)
+
+	for _, cluster := range in.namespace.GetClusterList() {
+		nss, err := in.namespace.GetClusterNamespaces(ctx, cluster)
+		if err != nil {
+			return err
+		}
+		for _, ns := range nss {
+			criteria := WorkloadCriteria{Cluster: cluster, Namespace: ns.Name, IncludeIstioResources: false, IncludeHealth: false}
+			workloadList, err := in.workload.GetWorkloadList(ctx, criteria)
+			if err != nil {
+				return err
+			}
+			for _, wl := range workloadList.Workloads {
+				for _, sAccountName := range wl.ServiceAccountNames {
+					saFullName := fmt.Sprintf("%s/ns/%s/sa/%s", istioDomain, ns.Name, sAccountName)
+					found := false
+					if _, ok := serviceAccounts[cluster]; !ok {
+						serviceAccounts[cluster] = []string{}
+					}
+					for _, name := range serviceAccounts[cluster] {
+						if name == saFullName {
+							found = true
+							break
+						}
+					}
+					if !found {
+						serviceAccounts[cluster] = append(serviceAccounts[cluster], saFullName)
+					}
+				}
+			}
+		}
+	}
+	*rValue = serviceAccounts
+	return nil
+}
+
+// for asynchronous use fetchServiceAccountsDirect
+func (in *IstioValidationsService) fetchServiceAccounts(
+	ctx context.Context,
+	rValue *map[string][]string,
+	errChan chan error,
+	wg *sync.WaitGroup,
+) {
+	defer wg.Done()
+	if len(errChan) > 0 {
+		return
+	}
+
+	if err := in.fetchServiceAccountsDirect(ctx, rValue); err != nil {
+		errChan <- err
+	}
+}
+
+func (in *IstioValidationsService) fetchIstioConfigListDirect(
+	ctx context.Context,
+	rValue *models.IstioConfigList,
+	mtlsDetails *kubernetes.MTLSDetails,
+	rbacDetails *kubernetes.RBACDetails,
+	cluster, namespace string,
+) error {
 	// all namespaces are necessary to check Ambient mode of each namespace
 	nss, err := in.namespace.GetClusterNamespaces(ctx, cluster)
 	if err != nil {
-		errChan <- err
-		return
+		return err
 	}
 
 	criteria := IstioConfigCriteria{
@@ -506,8 +528,7 @@ func (in *IstioValidationsService) fetchIstioConfigList(ctx context.Context, rVa
 	}
 	istioConfigMap, err := in.istioConfig.GetIstioConfigMap(ctx, meta_v1.NamespaceAll, criteria)
 	if err != nil {
-		errChan <- err
-		return
+		return err
 	}
 	istioConfigList := istioConfigMap[cluster]
 
@@ -554,8 +575,29 @@ func (in *IstioValidationsService) fetchIstioConfigList(ctx context.Context, rVa
 	rValue.WorkloadEntries = append(rValue.WorkloadEntries, istioConfigList.WorkloadEntries...)
 
 	in.filterPeerAuths(namespace, mtlsDetails, istioConfigList.PeerAuthentications)
-
 	in.filterAuthPolicies(namespace, rbacDetails, istioConfigList.AuthorizationPolicies)
+
+	return nil
+}
+
+// Wrapper with errChan and WaitGroup for asynchronous use
+func (in *IstioValidationsService) fetchIstioConfigList(
+	ctx context.Context,
+	rValue *models.IstioConfigList,
+	mtlsDetails *kubernetes.MTLSDetails,
+	rbacDetails *kubernetes.RBACDetails,
+	cluster, namespace string,
+	errChan chan error,
+	wg *sync.WaitGroup,
+) {
+	defer wg.Done()
+	if len(errChan) > 0 {
+		return
+	}
+
+	if err := in.fetchIstioConfigListDirect(ctx, rValue, mtlsDetails, rbacDetails, cluster, namespace); err != nil {
+		errChan <- err
+	}
 }
 
 func (in *IstioValidationsService) filterPeerAuths(namespace string, mtlsDetails *kubernetes.MTLSDetails, peerAuths []*security_v1.PeerAuthentication) {
