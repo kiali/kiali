@@ -6,7 +6,7 @@ image:https://img.shields.io/badge/license-Apache2-blue.svg["Apache 2.0 license"
 
 == Introduction
 
-link:https://kiali.io/[kiali] is a management console for Istio service mesh. Kiali can be quickly installed as an Istio add-on, or trusted as a part of your production environment.
+link:https://kiali.io/[kiali] is a management console for Istio service mesh. Kiali can be quickly installed as an Istio add-on or integrated as a trusted component within a production environment.
 
 === Table of contents
 
@@ -16,11 +16,11 @@ toc::[]
 
 First, check the link:https://kiali.io/community/[Community section on kiali.io], which provides a brief introduction on contributing, how to report issues and request features, and how to reach us.
 
-If you would like to make code contributions, please also check the link:./CONTRIBUTING.md[Contribution Guide].
+For those interested in making code contributions, please also check the link:./CONTRIBUTING.md[Contribution Guide].
 
 === Getting Started
 
-The target audience of this README are developers. If you are not a developer but want to learn more about Kiali, the link:https://kiali.io/docs[Kiali documentation] should be more helpful. For instructions on installing Kiali, please read the link:https://kiali.io/docs/installation/[Installation] page.
+The target audience of this README are developers. For those who are not developers but wish to learn more about Kiali, the link:https://kiali.io/docs[Kiali documentation] should be more helpful. For instructions on installing Kiali, please read the link:https://kiali.io/docs/installation/[Installation] page.
 
 === How and where Kiali is released?
 
@@ -28,19 +28,19 @@ Read the link:./RELEASING.adoc[RELEASING.adoc] file.
 
 == Developer setup
 
-Make sure you have the following tools:
+Ensure the following tools are available:
 
 * The link:http://golang.org/doc/install[Go Programming Language]
-** Currently, Kiali releases are built using a specific minimum version of Go as declared in the link:https://github.com/kiali/kiali/blob/master/Makefile#L31[Makefile]. Although Kiali may build correctly using other versions of Go, it's suggested to use the version that the Makefile uses for your own development to ensure replicatable builds.
+** Kiali releases are built with a specified minimum version of Go, as indicated in the link:https://github.com/kiali/kiali/blob/master/Makefile#L31[Makefile]. While Kiali may compile with other versions, using the version specified in the Makefile is recommended for consistent builds.
 * link:http://git-scm.com/book/en/v2/Getting-Started-Installing-Git[git]
 * gcc
 * link:https://docs.docker.com/installation/[Docker] or link:https://podman.io[Podman]
-** If you are using `podman` declare the environment variable `DORP=podman`.
+** If using `podman`, set the environment variable `DORP=podman`.
 * link:https://nodejs.org[NodeJS] (Node.js >= 20 with the NPM command)
 * link:https://classic.yarnpkg.com/[Yarn]
-* The _GNU make_ utility or any of it's alternatives
+* The _GNU make_ (or a compatible alternative)
 
-Once you have the required developer tools, you can get and build the code with the following script:
+Once the required developer tools are available, the code can be obtained and built using the following script:
 
 [source,shell]
 ----
@@ -59,7 +59,7 @@ ln -s $KIALI_SOURCES/kiali-operator kiali/operator
 cd $KIALI_SOURCES/kiali
 make build test
 
-# You can pass go test flags through the GO_TEST_FLAGS env var
+# Go test flags can be passed via the GO_TEST_FLAGS environment variable.
 # make -e GO_TEST_FLAGS="-race -v -run=\"TestCanConnectToIstiodReachable\"" test
 
 # Build the front-end and run the tests
@@ -76,34 +76,35 @@ The rest of this README assumes the directory tree created by the previous comma
 
 === Create a Kubernetes cluster and install a Service Mesh
 
-Since Kiali is a management console for an Istio-based service mesh, you will need an Istio-like Service Mesh to try Kiali. Then, Istio Meshes are installed on Kubernetes clusters.
+To use Kiali, a management console for Istio-based service meshes, an Istio-compatible service mesh is required. Istio meshes are installed on Kubernetes clusters.
 
-We provide a few unsupported scripts that can help to get started:
+We provide a few unsupported scripts that can help to get started. The scripts below are already in the Kiali Repository. Ensure that the correct path is being used to run the scripts without issues.
 
-* You can use the link:hack/crc-openshift.sh[`crc-openshift.sh`] script to create an OpenShift cluster on your local machine.
-* If you are familiar to minikube, you may try the link:hack/k8s-minikube.sh[`k8s-minikube.sh`] script. It has the option to install Dex which is useful if you want to test with OpenID.
-* You can also use link:https://kind.sigs.k8s.io/[kind], run link:hack/start-kind.sh[`start-kind.sh`] script to create a single node KinD cluster with metallb enabled for testing Kiali against a real environment.
-* Finally, the link:hack/istio/install-istio-via-istioctl.sh[`install-istio-via-istioctl.sh`] and the link:hack/istio/install-bookinfo-demo.sh[`install-bookinfo-demo.sh`] scripts can assist into installing Istio and the Bookinfo sample application in your cluster, respectively. You can try running these scripts without any arguments.
+
+* The link:hack/crc-openshift.sh[`crc-openshift.sh`] script allows creation of an OpenShift cluster on a local machine.
+* For those familiar with minikube, the link:hack/k8s-minikube.sh[`k8s-minikube.sh`] script can be used. This script includes an option to install Dex, which is helpful for testing with OpenID.
+* Alternatively, the link:hack/start-kind.sh[`start-kind.sh`] script can be used to create a single-node KinD cluster with MetalLB enabled, allowing Kiali to be tested in a real environment.
+* Finally, the link:hack/istio/install-istio-via-istioctl.sh[`install-istio-via-istioctl.sh`] and the link:hack/istio/install-bookinfo-demo.sh[`install-bookinfo-demo.sh`] scripts can assist in installing Istio and the Bookinfo sample application in the cluster, respectively. Trying to run these scripts without any arguments is also an option.
 
 These scripts are written to rely on the minimum dependencies as possible and will try to download any required tools.
 
-Depending on the type of cluster you are using, you should define the `CLUSTER_TYPE` environment variable on your shell to `openshift` (this is the default if not set), `minikube` or `kind` value so that the Makefiles can assist in other operations. If you are not using any of these clusters, you should set the environment variable to `CLUSTER_TYPE=local`.
+Based on the type of cluster in use, define the `CLUSTER_TYPE` environment variable in the shell. Set it to `openshift` (default if not specified), `minikube` or `kind` so the Makefiles can assist with additional operations. For other cluster types, set  `CLUSTER_TYPE=local`.
 
 [NOTE]
-If you are using `minikube` it's recommended that you enable the `registry` and `ingress` add-on. The `k8s-minikube.sh` script should do this for you.
+For `minikube` it is recommended to enable the `registry` and `ingress` add-ons, which can be configured by the `k8s-minikube.sh` script.
 
 [NOTE]
-If you are using `docker` and using minikube's registry add-on or any custom non-secure registry, make sure the link:https://docs.docker.com/registry/insecure/[Docker daemon is properly configured to use your registry].
+When using `docker` with Minikube's registry add-on or any custom non-secure registry, ensure the link:https://docs.docker.com/registry/insecure/[Docker daemon is properly configured to use your registry].
 
 === Building the Container Image and deploying to a cluster
 
-Assuming that:
+Assuming the following conditions:
 
-* you have successfully built the back-end and the front-end,
-* you also have created a Kubernetes cluster with an Istio-based Service Mesh installed on it,
-* and you are not using the `CLUSTER_TYPE=local` environment variable
+* The back-end and front-end have been successfully built
+* A Kubernetes cluster with an Istio-based Service Mesh has been created
+* The `CLUSTER_TYPE=local` environment variable is not being used
 
-the following commands should deploy a development build of Kiali to the cluster:
+The commands below will deploy a development build of Kiali to the cluster.
 
 [source,shell]
 ----
@@ -112,10 +113,10 @@ cd $KIALI_SOURCES/kiali
 # Build the Kiali-server and Kiali-operator container images and push them to the cluster
 make cluster-push
 
-# If you want to only build and push the Kiali-server container images:
+# To build and push only the Kiali-server container images:
 # make cluster-push-kiali
 
-# If you want to only build and push the Kiali-operator container images:
+# To build and push only the Kiali-operator container images:
 # make cluster-push-operator
 
 # Deploy the operator to the cluster
@@ -125,7 +126,7 @@ make operator-create
 make kiali-create
 ----
 
-If you are using the `CLUSTER_TYPE=local` environment variable, you will need to declare some additional environment variables to set the container registry where container images should be pushed and use `make container-push*` targets instead of `cluster-push*` targets. For example, if your container registry is `localhost:5000`:
+When using the `CLUSTER_TYPE=local` environment variable, additional environment variables must be declared to specify the container registry for pushing container images. The `make container-push*`  targets should be used instead of the `cluster-push*` targets. For example, if the container registry is `localhost:5000`:
 
 [source,shell]
 ----
@@ -139,10 +140,10 @@ cd $KIALI_SOURCES/kiali
 # Build the Kiali-server and Kiali-operator container images and push them to the cluster
 make container-build container-push
 
-# If you want to only build and push the Kiali-server container images:
+# To build and push only the Kiali-server container images:
 # make container-build-kiali container-push-kiali-quay
 
-# If you want to only build and push the Kiali-operator container images:
+# To build and push only the Kiali-operator container images:
 # make container-build-operator container-push-operator-quay
 
 # Deploy the operator to the cluster
@@ -154,7 +155,7 @@ make kiali-create
 
 === Reloading Kiali image
 
-If you already have Kiali installed and you want to recreate the kiali server pod, you can run the following command:
+If Kiali is already installed and there is a need to recreate the Kiali server pod, the following command can be run:
 
 [source,shell]
 ----
@@ -162,7 +163,7 @@ cd $KIALI_SOURCES/kiali
 make kiali-reload-image
 ----
 
-This is to facilitate development. To quickly build a new Kiali container image and load it to the cluster, you can run:
+This is intended to facilitate development. To quickly build a new Kiali container image and load it to the cluster, run the following command:
 
 [source,shell]
 ----
@@ -174,7 +175,7 @@ make clean build cluster-push-kiali kiali-reload-image
 ----
 
 [NOTE]
-There is no equivalent reload command for the operator. You would need to manually reload the operator via `kubectl` or `oc` commands.
+No equivalent reload command exists for the operator. The operator must be manually reloaded using `kubectl` or `oc` commands.
 
 === Cluster clean-up
 
@@ -185,18 +186,18 @@ cd $KIALI_SOURCES/kiali
 # Delete the Kiali CR to let the operator remove Kiali.
 make kiali-delete
 
-# If the previous command never ends, the following command forces removal by bypassing the operator
+# If the previous command fails to complete, the following command forces removal by bypassing the operator
 # make kiali-purge
 
 # Remove the operator
-# NOTE: After this completes, the `kiali-create` and `kiali-delete` targets will be ineffective
-# until you run the `operator-create` target to re-deploy the Kiali operator again.
+# NOTE: After this is completed, the `kiali-create` and `kiali-delete` targets will be ineffective
+# Until the `operator-create` target is run to re-deploy the Kiali operator, execute the following command to delete the operator:
 make operator-delete
 ----
 
 === Code formatting and linting
 
-If you are changing the back-end code of Kiali, before submitting a pull request make sure your changes are properly formatted and no new linting issues are introduced by running:
+When changing the back-end code of Kiali, ensure that the changes are properly formatted and no new linting issues are introduced before submitting a pull request by running:
 
 [source,shell]
 ----
@@ -232,11 +233,11 @@ spec:
 
 === Running Standalone
 
-You may want to run Kiali outside of any cluster environment for debugging purposes. To do this, you
-will want to use the link:./hack/run-kiali.sh[run-kiali.sh hack script] located in the
-link:./hack[hack directory]. See the `--help` output for the options you can set.
-The default configuration it uses is found in the link:./hack/run-kiali-config-template.yaml[config template file]
-also located in the `hack` directory. Read the comments at the tops of both files for more details.
+For debugging purposes, running Kiali outside of a cluster environment may be desired. To do this, use the link:./hack/run-kiali.sh[run-kiali.sh] script in the
+link:./hack[hack] directory. Check the `--help` output for available options.
+By default, the script uses the configuration template file located in the same directory it uses, and can be found in the link:./hack/run-kiali-config-template.yaml[config template file]
+also located in the `hack` directory. For additional information, refer to the comments at the top of both files.
+
 
 [source,shell]
 ----
@@ -248,7 +249,8 @@ cd $KIALI_SOURCES/kiali/hack
 
 There are two sets of integration tests. The first are backend tests that test the Kiali API directly. These can be found at link:./tests/integration/README.md[backend tests]. The second are frontend Cypress tests that test Kiali through the browser. These can be found at link:./frontend/cypress/README.md[frontend tests].
 
-Both tests are run as part of the CI pipeline. If you'd like to run these same tests locally, you can use link:./hack/run-integration-tests.sh[this script] to setup your local environment and run the integration tests. Or these tests can be run against any live environment that meets the following requirements.
+Both tests are executed as part of the CI pipeline. To run these tests locally, link:./hack/run-integration-tests.sh[the script] can be used to setup a local environment and execute the integration tests. Alternatively, the tests can be run against any live environment that meets the following requirements.
+
 
 Requirements:
 - Istio
@@ -256,27 +258,27 @@ Requirements:
 - bookinfo demo app
 - error rates demo app
 
-You can use link:./hack/istio/install-testing-demos.sh[this script] to install all the neccessary demo apps for testing. The script supports both openshift and non-openshift deployments.
+link:./hack/istio/install-testing-demos.sh[This script] can be used install all necessary demo applications for testing and supports deployments on both Openshift and non-Openshift enviroments.
 
 [source,shell]
 ----
-# If you are doing frontend development, start the frontend development server, where `<kiali-url>` is the URL to the base Kiali UI location such as `http://localhost:20001/kiali`:
+# For frontend development, start the frontend development server, where `<kiali-url>` is the URL to the base Kiali UI location, such as `http://localhost:20001/kiali`:
 make -e YARN_START_URL=http://<kiali-url> yarn-start
 
 # Start the cypress tests. The tests will run against the frontend development server by default.
-# Otherwise you can pass a custom url with env vars:
+# Alternatively, a custom URL can be provided using environment variables:
 #
 # make -e CYPRESS_BASE_URL=http://<kiali-url> cypress-gui
 make cypress-gui
 ----
 
-Note that `make cypress-gui` runs the Cypress GUI that allows you to pick which individual tests to run. To run the entire test suite in headless mode, use the make target `cypress-run` instead.
+Note that `make cypress-gui` runs the Cypress GUI, enabling the selection of individual tests to run. To execute the entire test suite in headless mode, use the `cypress-run` target instead.
 
 === Debugging Server Backend
 
 ==== VisualStudio Code
 
-If you are using VisualStudio Code, you can install the following `launcher.json` that is then used to launch the Kiali Server in the debugger. Run the `hack/run-kiali.sh` script first to ensure the proper services are up (such as the Prometheus port-forward proxy).
+For VisualStudio Code, install the following `launcher.json` to launch the Kiali Server in the debugger. First, run the `hack/run-kiali.sh` script first to ensure that required services, such as Prometheus port-forward proxy, are running.
 
 [source,json]
 ----
@@ -305,47 +307,47 @@ If you are using VisualStudio Code, you can install the following `launcher.json
 
 === Debugging GUI Frontend
 
-You can debug the Kiali GUI directly inside of Google Chrome using the Chrome Developer Tools or using VisualStudio Code.
+The Kiali GUI can be debugged directly in Google Chrome using Chrome Developer Tools or within Visual Studio Code.
 
-In order to use either one, you first must perform some initial steps.
+To use either, some initial steps are required.
 
-First, run the Kiali Server backend, either normally within a cluster or via `run-kiali.sh` as explained earlier. Determine what the Kiali URL is before moving to the next step. For example, if you run Kiali in minikube, and you set up a port-forward that exposes it, the URL to remember will be `http://localhost:20001/kiali`.
+First, start the Kiali Server backend, either within a cluster or by using the `run-kiali.sh` script as previously explained. Before proceeding, determine the Kiali URL. For example, when Kiali is run in Minikube with a port-forward set up to expose it, the URL to note will be`http://localhost:20001/kiali`.
 
-Second, run the GUI frontend using make: `make -e YARN_START_URL=<kiali-url> yarn-start` where `<kiali-url>` is the URL you determined from the previous step. You may need to also pass `-e PORT=3001` to override the default port where the yarn server will listen to (the default is `3000` which will conflict with Grafana if you started the Kiali Server via `run-kiali.sh`). Some examples:
+Next, run the GUI frontend using the following command: `make -e YARN_START_URL=<kiali-url> yarn-start` where `<kiali-url>` is the URL determined in the previous step. Additionally, if needed, pass `-e PORT=3001` to override the default port `3000`, which may conflict with Grafana if the Kiali Server was started using  `run-kiali.sh`. Some examples:
 
 * If the Kiali Server is running in minikube with a port-forward exposing it, then run `make -e YARN_START_URL=http://localhost:20001/kiali yarn-start`.
 * If the Kiali Server is running in OpenShift with the usual Kiali Route exposing it, then run `make -e YARN_START_URL=https://<Kiali-OpenShift-Route-IP>/ yarn-start`.
 * If the Kiali Server is running locally via `run-kiali.sh`, then run `make -e YARN_START_URL=http://localhost:20001/kiali -e PORT=3001 yarn-start`.
 
-The `yarn-start` make command will start the Kiali GUI frontend on a local endpoint - when it is ready, look at the output for the "Local" URL you use to access it. The output will look something like this:
+The `yarn-start` make command will start the Kiali GUI frontend on a local endpoint. Once ready, check the output for the "Local" URL to access it. The output will resemble the following:
 
 ```
 Compiled successfully!
 
-You can now view @kiali/kiali-ui in the browser.
+The @kiali/kiali-ui can now be viewed in the browser.
 
   Local:            http://localhost:3001
   On Your Network:  http://192.168.1.15:3001
 ...
 ```
 
-At this point, you can begin to set up your debugger tool of choice - see the next sections.
+At this point, the debugger tool of choice can be set up - refer to the following sections for details.
 
 ==== Google Chrome Developer Tools
 
 Start Google Chrome and point the browser to the local URL for the Kiali GUI frontend started by yarn-start (in the example above, that will be `http://localhost:3001`).
 
-In Google Chrome, open the Developer Tools. You can press `F12` or `Control-Shift-I` to do this.
+In Google Chrome, open the Developer Tools. Press `F12` or `Control-Shift-I` to do this.
 
-Within the Developer Tools, navigate to the `Sources` tab, then the `Filesystem` sub-tab, and press the `+ Add folder to workspace` link. In the file selection dialog, select your Kiali `frontend/src` folder. This will inform Developer Tools where your Kiali GUI frontend source code can be found.
+Within the Developer Tools, navigate to the `Sources` tab, then the `Filesystem` sub-tab, and press the `+ Add folder to workspace` link. In the file selection dialog, select the Kiali `frontend/src` folder. This will inform Developer Tools where the Kiali GUI frontend source code can be found.
 
-At this point, you need to give Google Chrome permission to access your local source code folder. Towards the top of the browser window, you will see a prompt - press the "Allow" button to give Chrome the necessary permissions it needs.
+At this point, Google Chrome requires permission to access the local source code folder. A prompt will appear at the top of the browser window - click the "Allow" button to grant Chrome the necessary permissions.
 
-You are now ready to debug the Kiali Server frontend. You can set breakpoints, inspect variables, examine stack traces, etc. just as you can do with any typical debugging tool.
-
+The Kiali Server frontend is now ready for debugging. Breakpoints can be set, variables inspected, stack traces examined, and other typical debugging actions can be performed.
 ==== VisualStudio Code
 
-If you are using VisualStudio Code, you can install the following `launcher.json` that is then used to launch Google Chrome to debug the Kiali Server GUI frontend in the debugger. The `url` setting is the local URL of the yarn-start server - make sure you use the one appropriate for your environment.
+For VisualStudio Code, the following `launcher.json` can be installed to launch Google Chrome for debugging the Kiali Server GUI frontend. The `url`  setting should correspond to the local URL of the yarn-start server - ensuring the correct URL is used for the specific environment.
+
 
 [source,json]
 ----
@@ -369,15 +371,15 @@ Many configuration settings can optionally be set within the Kiali Operator cust
 
 == Embedding Kiali
 
-If you want to embed Kiali in other applications, Kiali offers a simple feature called _Kiosk mode_. In this mode, Kiali won't show the main header, nor the main navigation bar.
+To embed Kiali in other applications, Kiali provides a feature called _Kiosk mode_. In this mode, the main header and navigation bar are not displayed.
 
-To enable Kiosk mode, you only need to add a `kiosk=<platform_id>` URL parameter. You will need to use the full path of the page you want to embed. For example, assuming that you access Kiali through HTTPS:
+To enable Kiosk mode, simply add a `kiosk=<platform_id>` URL parameter. The full path of the page to be embedded must be used. For example, if Kiali is accessed via HTTPS:
 
 * To embed the _Overview_ page, use `https://_kiali_path_/overview?kiosk=console`.
 * To embed the _Graph_ page, use `https://_kiali_path_/graph/namespaces?kiosk=console`.
 * To embed the _Applications list_ page, use `https://_kiali_path_/applications?kiosk=console`.
 
-If the page you want to embed uses other URL arguments, you can specify any of them to preset options. For example, if you want to embed the graph of the _bookinfo_ namespace, use the following URL: `http://_kiali_path_/graph/namespaces?namespaces=bookinfo&kiosk=console`.
+If the page to be embedded includes other URL arguments, any of them can be specified to preset options. For example, to embed the graph of the _bookinfo_ namespace, use the following URL: `http://_kiali_path_/graph/namespaces?namespaces=bookinfo&kiosk=console`.
 
 `<platform_id>` value in the `kiosk` URL parameter will be used in future use cases to add conditional logic on embedded use cases, for now, any non empty value will enable the kiosk mode.
 
@@ -385,7 +387,7 @@ If the page you want to embed uses other URL arguments, you can specify any of t
 
 === Grafana
 
-If you have Grafana installed in a custom way that is not easily auto-detectable by Kiali, you need to change in the Kiali CR the value of the grafana > url
+If Grafana is installed in a custom manner that Kiali cannot automatically detect, the value of grafana > url in the Kiali CR must be updated.
 
 [source,yaml]
 ----
@@ -413,8 +415,8 @@ The Kiali project will periodically upgrade to a newer version of Go. These are 
 
 1. Run `go mod edit -go=x.y` where "x" and "y" are the major/minor versions of the Go version being used.
 2. Run `go mod tidy -v`
-3. Run `make clean build build-ui test` to ensure everything builds correctly. If any problems occur, obviously you must fix them.
-4. Commit the changes to your working branch, create a PR, and make sure everything builds and works before merging the PR.
+3. Run `make clean build build-ui test` to ensure everything builds correctly. If any problems occur, fix them.
+4. Commit the changes to the working branch, create a PR, and make sure everything builds and works before merging the PR.
 
 The Makefile and some Github Actions will check the go version from the go.mod file.
 
@@ -426,21 +428,21 @@ The Makefile and some Github Actions will check the go version from the go.mod f
 
 === Running the UI outside the cluster
 
-When developing the http://github.com/kiali/kiali/frontend[Kiali UI] you will find it useful to run it outside of the cluster to make it easier to update the UI code and see the changes without having to re-deploy. The preferred approach for this is to use the _proxy_ feature of React. The process is described https://github.com/kiali/kiali/blob/master/frontend/README.adoc#developing[here]. Alternatively, you can use the `make -e YARN_START_URL=<url> yarn-start` command where `<url>` is to the Kiali backend.
+When developing the http://github.com/kiali/kiali/frontend[Kiali UI] running it outside of the cluster can be helpful for easily updating the UI code and viewing changes without needing to re-deploy. The preferred method for this is to use React's _proxy_ feature, as outlined https://github.com/kiali/kiali/blob/master/frontend/README.adoc#developing[here]. Alternatively, the `make -e YARN_START_URL=<url> yarn-start` command can be used, where `<url>` points to the Kiali backend.
 
 === Disabling SSL
 
-In the provided OpenShift templates, SSL is turned on by default. If you want to turn it off, you should:
+In the provided OpenShift templates, SSL is enabled by default. To disable it, the following steps should be taken:
 
 * Remove the "tls: termination: reencrypt" option from the Kiali route
 
 * Remove the "identity" block, with certificate paths, from the Kiali Config Map.
 
-* Optionally you can also remove the annotation "service.beta.openshift.io/serving-cert-secret-name" in the Kiali Service, and the related `kiali-cabundle` volume that is declared and mounted in Kiali Deployment (but if you don't, they will just be ignored).
+* Optionally, the annotation "service.beta.openshift.io/serving-cert-secret-name" can be removed from the Kiali Service, along with the related `kiali-cabundle` volume declared and mounted in Kiali Deployment. However, if not removed, these will simply be ignored.
 
 == Exposing Kiali to External Clients Using Istio Gateway
 
-The operator will create a Route or Ingress by default (see the Kiali CR setting "deployment.ingress_enabled"). If you want to expose Kiali via Istio itself, you can create Gateway, Virtual Service, and Destination Rule resources similar to below:
+The operator will create a Route or Ingress by default (see the Kiali CR setting "deployment.ingress_enabled"). To expose Kiali via Istio, Gateway, Virtual Service, and Destination Rule resources can be created, as shown below:
 
 [source,yaml]
 ----
@@ -516,17 +518,17 @@ image:https://user-images.githubusercontent.com/6889074/87819080-ad099980-c839-1
 
 Follow these steps:
 
-1: You should have the link:https://istio.io/latest/docs/setup/install/external-controlplane[Istio with an External Control Plane] setup running
+1: Have the link:https://istio.io/latest/docs/setup/install/external-controlplane[Istio with an External Control Plane] setup running
 
 2: Create the link:https://github.com/istio/istio/blob/master/samples/addons/kiali.yaml[Kiali ClusterRole, ClusterRoleBinding, and ServiceAccount] in the Data Plane cluster
 
-3: Create a remote secret in the Control Plane, using the Data Plane ServiceAccount you just created. This allows the Control Plane to read from and modify the Data Plane
+3: Create a remote secret in the Control Plane, using the Data Plane ServiceAccount that was just created. This allows the Control Plane to read from and modify the Data Plane
 [source,shell]
 ----
 istioctl create-remote-secret --service-account kiali-service-account --context=$DataPlane --name kiali | kubectl apply -n istio-system --context=$ControlPlane -f -
 ----
 
-4: You will now run Kiali in the Control Plane. You need to add the remote secret to the Kiali Deployment by specifying a Volume and VolumeMount. When Kiali sees */kiali-remote-secret/kiali* it will use the remote cluster's API server instead of the local API server
+4: Kiali will now run in the Control Plane. The remote secret must be added to the Kiali Deployment by specifying a Volume and VolumeMount. When Kiali detects */kiali-remote-secret/kiali* it will use the remote cluster's API server instead of the local API server
 [source,yaml]
 ----
 spec:
@@ -544,6 +546,6 @@ spec:
           secretName: istio-remote-secret-kiali
 ----
 
-5: Kiali now needs the Istio metrics from the sidecars. You need to run Prometheus in the Control Plane and have it scrape the metrics from an link:https://istio.io/latest/docs/reference/config/istio.mesh.v1alpha1/#ProxyConfig[envoyMetricsService]. These link:https://kiali.io/docs/faq/general/#which-istio-metrics-and-attributes-are-required-by-kiali[metrics] are *required*.
+5: Kiali now requires Istio metrics from the sidecars. Prometheus must be run in the Control Plane and configured to scrape the metrics from an link:https://istio.io/latest/docs/reference/config/istio.mesh.v1alpha1/#ProxyConfig[envoyMetricsService]. These link:https://kiali.io/docs/faq/general/#which-istio-metrics-and-attributes-are-required-by-kiali[metrics] are *required*.
 
 6: Kiali in the Control Plane should now be fully functional with the Data Plane
