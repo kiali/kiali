@@ -77,13 +77,9 @@ export class TracesFetcher {
         // If the traces cover less than 90% of the selected period, show an info message
         // The order in which traces are returned is not deterministic
         const endDate = q.endMicros ? q.endMicros : Date.now() * 1000;
-        const timeRange = q.startMicros - endDate;
+        const timeRange = (endDate - q.startMicros) * 0.9;
 
-        if (
-          firstTraceTimestamp &&
-          this.lastFetchMicros &&
-          firstTraceTimestamp - this.lastFetchMicros < 0.9 * timeRange
-        ) {
+        if (firstTraceTimestamp && this.lastFetchMicros && this.lastFetchMicros - firstTraceTimestamp < timeRange) {
           this.onInfo(
             `Last ${q.limit} traces shown. To search for traces in a different period, select a custom time range or adjust the traces limit.`
           );
