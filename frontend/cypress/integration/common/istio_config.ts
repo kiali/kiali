@@ -604,12 +604,22 @@ Then(
 );
 
 Then('the AuthorizationPolicy should have a {string}', function (healthStatus: string) {
-  cy.get(
-    `[data-test=VirtualItem_Ns${this.targetNamespace}_AuthorizationPolicy_${this.targetAuthorizationPolicy}] span.pf-v5-c-icon`
-  ).hasCssVar('color', `--pf-v5-global--${healthStatus}-color--100`);
+  waitUntilConfigIsVisible(
+    3,
+    this.targetAuthorizationPolicy,
+    'AuthorizationPolicy',
+    this.targetNamespace,
+    healthStatus
+  );
 });
 
-function waitUntilConfigIsVisible(attempt: number, crdInstanceName: string, crdName: string, namespace: string): void {
+function waitUntilConfigIsVisible(
+  attempt: number,
+  crdInstanceName: string,
+  crdName: string,
+  namespace: string,
+  healthStatus: string
+): void {
   if (attempt === 0) {
     return;
   }
@@ -620,16 +630,26 @@ function waitUntilConfigIsVisible(attempt: number, crdInstanceName: string, crdN
   cy.get('tr')
     .each($row => {
       const dataTestAttr = $row[0].attributes.getNamedItem('data-test');
+      const hasNA = $row[0].innerText.includes('N/A');
       if (dataTestAttr !== null) {
-        if (dataTestAttr.value === `VirtualItem_Ns${namespace}_${crdName}_${crdInstanceName}`) {
-          found = true;
+        if (dataTestAttr.value === `VirtualItem_Ns${namespace}_${crdName}_${crdInstanceName}` && !hasNA) {
+          // Check if the health status icon is correct
+          cy.get(`[data-test=VirtualItem_Ns${namespace}_${crdName}_${crdInstanceName}] span.pf-v5-c-icon`)
+            .should('be.visible')
+            .then(icon => {
+              const colorVar = `--pf-v5-global--${healthStatus}-color--100`;
+              const color = getComputedStyle(icon[0]).getPropertyValue(colorVar);
+              if (color) {
+                found = true;
+              }
+            });
         }
       }
     })
     .then(() => {
       if (!found) {
-        cy.wait(40000);
-        waitUntilConfigIsVisible(attempt - 1, crdInstanceName, crdName, namespace);
+        cy.wait(10000);
+        waitUntilConfigIsVisible(attempt - 1, crdInstanceName, crdName, namespace, healthStatus);
       }
     });
 }
@@ -637,10 +657,7 @@ function waitUntilConfigIsVisible(attempt: number, crdInstanceName: string, crdN
 Then(
   'the {string} {string} of the {string} namespace should have a {string}',
   (crdInstanceName: string, crdName: string, namespace: string, healthStatus: string) => {
-    waitUntilConfigIsVisible(3, crdInstanceName, crdName, namespace);
-    cy.get(`[data-test=VirtualItem_Ns${namespace}_${crdName}_${crdInstanceName}] span.pf-v5-c-icon`)
-      .should('be.visible')
-      .hasCssVar('color', `--pf-v5-global--${healthStatus}-color--100`);
+    waitUntilConfigIsVisible(3, crdInstanceName, crdName, namespace, healthStatus);
   }
 );
 

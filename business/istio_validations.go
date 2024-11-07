@@ -138,16 +138,6 @@ func (in *IstioValidationsService) CreateValidations(ctx context.Context, cluste
 	var namespaces models.Namespaces
 	var registryServices []*kubernetes.RegistryService
 	var workloadsPerNamespace map[string]models.WorkloadList
-	istioConfigsPerNamespace := map[string]*models.IstioConfigList{}
-	mtlsDetails := kubernetes.MTLSDetails{
-		DestinationRules:        make([]*networking_v1.DestinationRule, 0),
-		MeshPeerAuthentications: make([]*security_v1.PeerAuthentication, 0),
-		PeerAuthentications:     make([]*security_v1.PeerAuthentication, 0),
-		EnabledAutoMtls:         false,
-	}
-	rbacDetails := kubernetes.RBACDetails{
-		AuthorizationPolicies: make([]*security_v1.AuthorizationPolicy, 0),
-	}
 
 	err := in.fetchAllWorkloadsDirect(ctx, &workloadsPerNamespace, cluster, &namespaces)
 	if err != nil {
@@ -158,22 +148,25 @@ func (in *IstioValidationsService) CreateValidations(ctx context.Context, cluste
 		return nil, err
 	}
 
-	for _, namespace := range namespaces {
-		var istioConfigs models.IstioConfigList
-		err = in.fetchIstioConfigListDirect(ctx, &istioConfigs, &mtlsDetails, &rbacDetails, cluster, namespace.Name)
-		if err != nil {
-			return nil, err
-		}
-		istioConfigsPerNamespace[namespace.Name] = &istioConfigs
-	}
-
 	if registryStatus := in.kialiCache.GetRegistryStatus(cluster); registryStatus != nil {
 		registryServices = registryStatus.Services
 	}
 
 	validations := models.IstioValidations{}
+
 	for _, namespace := range namespaces {
-		objectCheckers := in.getAllObjectCheckers(*istioConfigsPerNamespace[namespace.Name], workloadsPerNamespace, mtlsDetails, rbacDetails, namespaces, registryServices, cluster, serviceAccounts)
+		var istioConfigs models.IstioConfigList
+		var mtlsDetails kubernetes.MTLSDetails
+		var rbacDetails kubernetes.RBACDetails
+		err = in.fetchIstioConfigListDirect(ctx, &istioConfigs, &mtlsDetails, &rbacDetails, cluster, namespace.Name)
+		if err != nil {
+			return nil, err
+		}
+		if err := in.fetchNonLocalmTLSConfigs(&mtlsDetails, cluster); err != nil {
+			return nil, err
+		}
+
+		objectCheckers := in.getAllObjectCheckers(istioConfigs, workloadsPerNamespace, mtlsDetails, rbacDetails, namespaces, registryServices, cluster, serviceAccounts)
 
 		// Get group validations for same kind istio objects
 		validations.MergeValidations(runObjectCheckers(objectCheckers))
@@ -223,15 +216,8 @@ func (in *IstioValidationsService) GetIstioObjectValidations(ctx context.Context
 	var err error
 	var objectCheckers []checkers.ObjectChecker
 	var referenceChecker ReferenceChecker
-	mtlsDetails := kubernetes.MTLSDetails{
-		DestinationRules:        make([]*networking_v1.DestinationRule, 0),
-		MeshPeerAuthentications: make([]*security_v1.PeerAuthentication, 0),
-		PeerAuthentications:     make([]*security_v1.PeerAuthentication, 0),
-		EnabledAutoMtls:         false,
-	}
-	rbacDetails := kubernetes.RBACDetails{
-		AuthorizationPolicies: make([]*security_v1.AuthorizationPolicy, 0),
-	}
+	var mtlsDetails kubernetes.MTLSDetails
+	var rbacDetails kubernetes.RBACDetails
 	istioReferences := models.IstioReferencesMap{}
 
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
