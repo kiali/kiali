@@ -102,9 +102,10 @@ func (a SecurityPolicyAppender) appendGraph(trafficMap graph.TrafficMap, namespa
 		}
 	}
 	if a.Rates.Tcp == graph.RateSent || a.Rates.Tcp == graph.RateTotal {
-		tcpSentQuery := fmt.Sprintf(`sum(rate(%s{%sreporter="destination",source_workload_namespace!="%v",destination_service_namespace="%v"}[%vs])) by (%s) > 0`,
+		tcpSentQuery := fmt.Sprintf(`sum(rate(%s{%s%s,source_workload_namespace!="%v",destination_service_namespace="%v"}[%vs])) by (%s) > 0`,
 			"istio_tcp_sent_bytes_total",
 			util.GetApp(a.Rates),
+			util.GetReporter("destination", a.Rates),
 			namespace,
 			namespace,
 			int(duration.Seconds()), // range duration for the query
@@ -116,9 +117,10 @@ func (a SecurityPolicyAppender) appendGraph(trafficMap graph.TrafficMap, namespa
 		}
 	}
 	if a.Rates.Tcp == graph.RateReceived || a.Rates.Tcp == graph.RateTotal {
-		tcpReceivedQuery := fmt.Sprintf(`sum(rate(%s{%sreporter="destination",source_workload_namespace!="%v",destination_service_namespace="%v"}[%vs])) by (%s) > 0`,
+		tcpReceivedQuery := fmt.Sprintf(`sum(rate(%s{%s%s,source_workload_namespace!="%v",destination_service_namespace="%v"}[%vs])) by (%s) > 0`,
 			"istio_tcp_received_bytes_total",
 			util.GetApp(a.Rates),
+			util.GetReporter("destination", a.Rates),
 			namespace,
 			namespace,
 			int(duration.Seconds()), // range duration for the query
@@ -170,9 +172,10 @@ func (a SecurityPolicyAppender) appendGraph(trafficMap graph.TrafficMap, namespa
 		}
 	}
 	if a.Rates.Tcp == graph.RateSent || a.Rates.Tcp == graph.RateTotal {
-		tcpSentQuery := fmt.Sprintf(`sum(rate(%s{%sreporter="destination",source_workload_namespace="%v"}[%vs])) by (%s) > 0`,
+		tcpSentQuery := fmt.Sprintf(`sum(rate(%s{%s%s,source_workload_namespace="%v"}[%vs])) by (%s) > 0`,
 			"istio_tcp_sent_bytes_total",
 			util.GetApp(a.Rates),
+			util.GetReporter("destination", a.Rates),
 			namespace,
 			int(duration.Seconds()), // range duration for the query
 			groupBy)
@@ -183,9 +186,10 @@ func (a SecurityPolicyAppender) appendGraph(trafficMap graph.TrafficMap, namespa
 		}
 	}
 	if a.Rates.Tcp == graph.RateReceived || a.Rates.Tcp == graph.RateTotal {
-		tcpReceivedQuery := fmt.Sprintf(`sum(rate(%s{%sreporter="destination",source_workload_namespace="%v"}[%vs])) by (%s) > 0`,
+		tcpReceivedQuery := fmt.Sprintf(`sum(rate(%s{%s%s,source_workload_namespace="%v"}[%vs])) by (%s) > 0`,
 			"istio_tcp_received_bytes_total",
 			util.GetApp(a.Rates),
+			util.GetReporter("destination", a.Rates),
 			namespace,
 			int(duration.Seconds()), // range duration for the query
 			groupBy)

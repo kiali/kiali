@@ -241,9 +241,10 @@ func buildNamespaceTrafficMap(ctx context.Context, namespace string, o graph.Tel
 
 		for _, metric := range metrics {
 			// 0) Incoming: query source telemetry to capture unserviced namespace services' incoming traffic
-			query := fmt.Sprintf(`sum(rate(%s{%sreporter="source",source_workload_namespace!="%s",destination_workload_namespace="unknown",destination_workload="unknown",destination_service=~"^.+\\.%s\\..+$"} [%vs])) by (%s) %s`,
+			query := fmt.Sprintf(`sum(rate(%s{%s%s,source_workload_namespace!="%s",destination_workload_namespace="unknown",destination_workload="unknown",destination_service=~"^.+\\.%s\\..+$"} [%vs])) by (%s) %s`,
 				metric,
 				util.GetApp(o.Rates),
+				util.GetReporter("source", o.Rates),
 				namespace,
 				namespace,
 				int(duration.Seconds()), // range duration for the query
@@ -253,9 +254,10 @@ func buildNamespaceTrafficMap(ctx context.Context, namespace string, o graph.Tel
 			populateTrafficMap(trafficMap, &incomingVector, metric, o, globalInfo)
 
 			// 1) Incoming: query destination telemetry to capture namespace services' incoming traffic	query = fmt.Sprintf(`sum(rate(%s{reporter="destination",destination_service_namespace="%s"} [%vs])) by (%s) %s`,
-			query = fmt.Sprintf(`sum(rate(%s{%sreporter="destination",destination_workload_namespace="%s"} [%vs])) by (%s) %s`,
+			query = fmt.Sprintf(`sum(rate(%s{%s%s,destination_workload_namespace="%s"} [%vs])) by (%s) %s`,
 				metric,
 				util.GetApp(o.Rates),
+				util.GetReporter("destination", o.Rates),
 				namespace,
 				int(duration.Seconds()), // range duration for the query
 				groupBy,
@@ -264,9 +266,10 @@ func buildNamespaceTrafficMap(ctx context.Context, namespace string, o graph.Tel
 			populateTrafficMap(trafficMap, &incomingVector, metric, o, globalInfo)
 
 			// 2) Outgoing: query source telemetry to capture namespace workloads' outgoing traffic
-			query = fmt.Sprintf(`sum(rate(%s{%sreporter="source",source_workload_namespace="%s"} [%vs])) by (%s) %s`,
+			query = fmt.Sprintf(`sum(rate(%s{%s%s,source_workload_namespace="%s"} [%vs])) by (%s) %s`,
 				metric,
 				util.GetApp(o.Rates),
+				util.GetReporter("source", o.Rates),
 				namespace,
 				int(duration.Seconds()), // range duration for the query
 				groupBy,
@@ -815,11 +818,16 @@ func buildNodeTrafficMap(cluster, namespace string, n *graph.Node, o graph.Telem
 		var metrics []string
 		groupBy := "app,source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,response_flags"
 
-		inboundReporter := "destination"
-		outboutReporter := "source"
-		if strings.HasPrefix(n.Workload, "waypoint") {
-			inboundReporter = "source"
-			outboutReporter = "destination"
+		inboundReporter := `reporter="destination"`
+		outboutReporter := `reporter="source"`
+		if waypoints, ok := globalInfo.Vendor[appender.AmbientWaypoints]; ok {
+			isAWaypoint := sliceutil.Some(waypoints.(models.Workloads), func(wp *models.Workload) bool {
+				return isWaypoint(wp, n.Cluster, n.Namespace, n.Workload)
+			})
+			if isAWaypoint {
+				inboundReporter = util.GetReporter("source", o.Rates)
+				outboutReporter = util.GetReporter("destination", o.Rates)
+			}
 		}
 		// L4 telemetry is backwards, see https://github.com/istio/istio/issues/32399
 		switch o.Rates.Tcp {
@@ -838,7 +846,7 @@ func buildNodeTrafficMap(cluster, namespace string, n *graph.Node, o graph.Telem
 
 			switch n.NodeType {
 			case graph.NodeTypeWorkload:
-				query = fmt.Sprintf(`sum(rate(%s{%sreporter="%s"%s,destination_workload_namespace="%s",destination_workload="%s"} [%vs])) by (%s) %s`,
+				query = fmt.Sprintf(`sum(rate(%s{%s%s%s,destination_workload_namespace="%s",destination_workload="%s"} [%vs])) by (%s) %s`,
 					metric,
 					util.GetApp(o.Rates),
 					inboundReporter,
@@ -850,7 +858,7 @@ func buildNodeTrafficMap(cluster, namespace string, n *graph.Node, o graph.Telem
 					idleCondition)
 			case graph.NodeTypeApp:
 				if graph.IsOK(n.Version) {
-					query = fmt.Sprintf(`sum(rate(%s{%sreporter="%s"%s,destination_service_namespace="%s",destination_canonical_service="%s",destination_canonical_revision="%s"} [%vs])) by (%s) %s`,
+					query = fmt.Sprintf(`sum(rate(%s{%s%s%s,destination_service_namespace="%s",destination_canonical_service="%s",destination_canonical_revision="%s"} [%vs])) by (%s) %s`,
 						metric,
 						util.GetApp(o.Rates),
 						inboundReporter,
@@ -862,7 +870,7 @@ func buildNodeTrafficMap(cluster, namespace string, n *graph.Node, o graph.Telem
 						groupBy,
 						idleCondition)
 				} else {
-					query = fmt.Sprintf(`sum(rate(%s{%sreporter="%s"%s,destination_service_namespace="%s",destination_canonical_service="%s"} [%vs])) by (%s) %s`,
+					query = fmt.Sprintf(`sum(rate(%s{%s%s%s,destination_service_namespace="%s",destination_canonical_service="%s"} [%vs])) by (%s) %s`,
 						metric,
 						util.GetApp(o.Rates),
 						inboundReporter,
@@ -875,7 +883,7 @@ func buildNodeTrafficMap(cluster, namespace string, n *graph.Node, o graph.Telem
 				}
 			case graph.NodeTypeService:
 				// TODO: Do we need to handle requests from unknown in a special way (like in HTTP above)? Not sure how tcp is reported from unknown.
-				query = fmt.Sprintf(`sum(rate(%s{%sreporter="%s"%s,destination_service_namespace="%s",destination_service=~"^%s\\.%s\\..*$"} [%vs])) by (%s) %s`,
+				query = fmt.Sprintf(`sum(rate(%s{%s%s%s,destination_service_namespace="%s",destination_service=~"^%s\\.%s\\..*$"} [%vs])) by (%s) %s`,
 					metric,
 					util.GetApp(o.Rates),
 					inboundReporter,
@@ -895,7 +903,7 @@ func buildNodeTrafficMap(cluster, namespace string, n *graph.Node, o graph.Telem
 			// 2) query for outbound traffic
 			switch n.NodeType {
 			case graph.NodeTypeWorkload:
-				query = fmt.Sprintf(`sum(rate(%s{%sreporter="%s"%s,source_workload_namespace="%s",source_workload="%s"} [%vs])) by (%s) %s`,
+				query = fmt.Sprintf(`sum(rate(%s{%s%s%s,source_workload_namespace="%s",source_workload="%s"} [%vs])) by (%s) %s`,
 					metric,
 					util.GetApp(o.Rates),
 					outboutReporter,
@@ -907,7 +915,7 @@ func buildNodeTrafficMap(cluster, namespace string, n *graph.Node, o graph.Telem
 					idleCondition)
 			case graph.NodeTypeApp:
 				if graph.IsOK(n.Version) {
-					query = fmt.Sprintf(`sum(rate(%s{%sreporter="%s"%s,source_workload_namespace="%s",source_canonical_service="%s",source_canonical_revision="%s"} [%vs])) by (%s) %s`,
+					query = fmt.Sprintf(`sum(rate(%s{%s%s%s,source_workload_namespace="%s",source_canonical_service="%s",source_canonical_revision="%s"} [%vs])) by (%s) %s`,
 						metric,
 						util.GetApp(o.Rates),
 						outboutReporter,
@@ -919,7 +927,7 @@ func buildNodeTrafficMap(cluster, namespace string, n *graph.Node, o graph.Telem
 						groupBy,
 						idleCondition)
 				} else {
-					query = fmt.Sprintf(`sum(rate(%s{%sreporter="%s"%s,source_workload_namespace="%s",source_canonical_service="%s"} [%vs])) by (%s) %s`,
+					query = fmt.Sprintf(`sum(rate(%s{%s%s%s,source_workload_namespace="%s",source_canonical_service="%s"} [%vs])) by (%s) %s`,
 						metric,
 						util.GetApp(o.Rates),
 						outboutReporter,
@@ -1070,6 +1078,8 @@ func hasWaypoint(ztunnel bool, sourceCluster, sourceWlNs, srcWl, destCluster, de
 }
 
 // isWaypoint returns true if the ns, name and cluster of a workload matches with one of the waypoints in the list
+// We need the waypoint list
+// NOTE: Skip cluster comparaison if cluster is unknown
 func isWaypoint(w *models.Workload, cluster, namespace, name string) bool {
-	return w.WorkloadListItem.Name == name && w.WorkloadListItem.Namespace == namespace && w.Cluster == cluster
+	return w.WorkloadListItem.Name == name && w.WorkloadListItem.Namespace == namespace && (cluster == "unknown" || w.Cluster == cluster)
 }
