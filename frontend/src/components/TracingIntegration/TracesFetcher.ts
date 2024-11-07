@@ -81,7 +81,7 @@ export class TracesFetcher {
 
         if (firstTraceTimestamp && this.lastFetchMicros && this.lastFetchMicros - firstTraceTimestamp < timeRange) {
           this.onInfo(
-            `Last ${q.limit} traces shown. To search for traces in a different period, select a custom time range or adjust the traces limit.`
+            `The ${q.limit} traces do not fully cover the time period. You may want to increase the limit, reduce the time range, or define a custom time range.`
           );
         } else {
           // Empty message
