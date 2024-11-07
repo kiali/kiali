@@ -167,14 +167,14 @@ export const timeRangeToOptions = (range: TimeRange, opts: MetricsQuery): void =
   opts.rateInterval = intervalOpts.rateInterval;
 };
 
-export const retrieveMetricsSettings = (): MetricsSettings => {
+export const retrieveMetricsSettings = (limitDefault?: number): MetricsSettings => {
   const urlParams = new URLSearchParams(location.getSearch());
 
   const settings: MetricsSettings = {
     labelsSettings: new Map(),
     showAverage: true,
     showSpans: false,
-    showSpansLimit: TRACE_LIMIT_DEFAULT,
+    showSpansLimit: limitDefault ?? TRACE_LIMIT_DEFAULT,
     showQuantiles: [],
     showTrendlines: false
   };

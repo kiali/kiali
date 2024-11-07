@@ -74,6 +74,9 @@ type ReduxDispatchProps = {
 
 type Props = ReduxStateProps & ReduxDispatchProps & IstioMetricsProps;
 
+// lower that the standard default, we apply it to several small charts
+const spansLimitDefault = 20;
+
 const fullHeightStyle = kialiStyle({
   height: '100%'
 });
@@ -87,7 +90,7 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
   constructor(props: Props) {
     super(props);
     this.toolbarRef = React.createRef<HTMLDivElement>();
-    const settings = MetricsHelper.retrieveMetricsSettings();
+    const settings = MetricsHelper.retrieveMetricsSettings(spansLimitDefault);
     this.options = this.initOptions(settings);
 
     // Initialize active filters from URL
@@ -144,7 +147,7 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
       !isEqualTimeRange(this.props.timeRange, prevProps.timeRange)
     ) {
       if (this.props.direction !== prevProps.direction) {
-        const settings = MetricsHelper.retrieveMetricsSettings();
+        const settings = MetricsHelper.retrieveMetricsSettings(spansLimitDefault);
         this.options = this.initOptions(settings);
 
         this.setState({

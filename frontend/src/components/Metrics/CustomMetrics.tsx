@@ -76,6 +76,9 @@ type ReduxDispatchProps = {
 
 type Props = ReduxStateProps & ReduxDispatchProps & CustomMetricsProps;
 
+// lower that the standard default, we apply it to several small charts
+const spansLimitDefault = 20;
+
 const fullHeightStyle = kialiStyle({
   height: '100%'
 });
@@ -98,7 +101,7 @@ class CustomMetricsComponent extends React.Component<Props, MetricsState> {
   constructor(props: Props) {
     super(props);
     this.toolbarRef = React.createRef<HTMLDivElement>();
-    const settings = MetricsHelper.retrieveMetricsSettings();
+    const settings = MetricsHelper.retrieveMetricsSettings(spansLimitDefault);
     this.options = this.initOptions(settings);
 
     // Initialize active filters from URL
@@ -149,7 +152,7 @@ class CustomMetricsComponent extends React.Component<Props, MetricsState> {
       this.state.showSpansLimit !== prevState.showSpansLimit ||
       !isEqualTimeRange(this.props.timeRange, prevProps.timeRange)
     ) {
-      const settings = MetricsHelper.retrieveMetricsSettings();
+      const settings = MetricsHelper.retrieveMetricsSettings(spansLimitDefault);
       this.options = this.initOptions(settings);
       this.spanOverlay.reset();
       this.refresh();

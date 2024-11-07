@@ -4,6 +4,7 @@ exports[`ToolbarDropdown Render correctly the toolbar dropdown 1`] = `
 <Fragment>
   <span
     className="kiali_f1jcl1sl undefined"
+    id="graph_filter_interval_duration-name"
   >
     graph_filter_interval_duration
   </span>
@@ -100,6 +101,7 @@ exports[`ToolbarDropdown Render correctly the toolbar dropdown 2`] = `
 <Fragment>
   <span
     className="kiali_f1jcl1sl undefined"
+    id="metrics_filter_poll_interval-name"
   >
     metrics_filter_poll_interval
   </span>
@@ -187,6 +189,7 @@ exports[`ToolbarDropdown Render correctly the toolbar dropdown 3`] = `
 <Fragment>
   <span
     className="kiali_f1jcl1sl undefined"
+    id="graph_filter_layouts-name"
   >
     graph_filter_layouts
   </span>

@@ -17,7 +17,7 @@ type TraceSpansLimitProps = {
 export const TraceSpansLimit: React.FC<TraceSpansLimitProps> = (props: TraceSpansLimitProps) => {
   const [showSpans, setShowSpans] = React.useState<boolean>(!!props.showSpans);
   const { t } = useKialiTranslation();
-  let currentLimit = TRACE_LIMIT_DEFAULT;
+  let currentLimit = props.showSpansLimit ?? TRACE_LIMIT_DEFAULT;
 
   const onLimitChange = (limit: number): void => {
     currentLimit = limit;

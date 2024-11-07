@@ -51,6 +51,13 @@ export const TraceLimit: React.FC<TraceLimitProps> = (props: TraceLimitProps) =>
     </Tooltip>
   );
 
+  const traceLimits: { [key: string]: string } = {
+    20: '20',
+    100: '100',
+    500: '500',
+    1000: '1000'
+  };
+
   const traceLimitComponent = (
     <span id="trace-limit">
       <div style={{ marginTop: '0.5rem' }}>
@@ -60,29 +67,25 @@ export const TraceLimit: React.FC<TraceLimitProps> = (props: TraceLimitProps) =>
         {tooltip}
       </div>
 
-      {[20, 100, 500, 1000].map(lim => (
-        <div key={`limit-${lim}`}>
-          <label key={`limit-${lim}`} className={itemStyleWithoutInfo}>
-            <Radio
-              id={`limit-${lim}`}
-              name={`limit-${lim}`}
-              isChecked={lim === limit}
-              label={String(lim)}
-              onChange={(_event, checked) => onLimitChangeRadio(lim, checked)}
-              value={String(lim)}
-            />
-          </label>
-        </div>
-      ))}
+      {Object.keys(traceLimits).map(key => {
+        const lim = parseInt(key);
+        return (
+          <div key={`limit-${lim}`}>
+            <label key={`limit-${lim}`} className={itemStyleWithoutInfo}>
+              <Radio
+                id={`limit-${lim}`}
+                name={`limit-${lim}`}
+                isChecked={lim === limit}
+                label={lim}
+                onChange={(_event, checked) => onLimitChangeRadio(lim, checked)}
+                value={lim}
+              />
+            </label>
+          </div>
+        );
+      })}
     </span>
   );
-
-  const traceOptions: { [key: string]: string } = {
-    20: '20',
-    100: '100',
-    500: '500',
-    1000: '1000'
-  };
 
   const traceLimitDropdownComponent = (
     <span>
@@ -92,8 +95,8 @@ export const TraceLimit: React.FC<TraceLimitProps> = (props: TraceLimitProps) =>
         nameDropdown={props.title ? props.title : t('limit')}
         nameDropdownClassName={props.titleClassName}
         value={limit}
-        label={traceOptions[limit]}
-        options={traceOptions}
+        label={traceLimits[limit]}
+        options={traceLimits}
       />
       {tooltip}
     </span>
