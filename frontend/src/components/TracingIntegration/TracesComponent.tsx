@@ -44,7 +44,6 @@ import { TracingUrlProvider } from 'types/Tracing';
 import { GetTracingUrlProvider } from 'utils/tracing/UrlProviders';
 import { ExternalServiceInfo } from 'types/StatusState';
 import { retrieveTimeRange } from '../Time/TimeRangeHelper';
-import { alertType, InlineAlert } from '../Alerts/InlineAlert';
 
 type ReduxProps = {
   externalServices: ExternalServiceInfo[];
