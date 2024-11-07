@@ -1,5 +1,16 @@
 import * as React from 'react';
-import { Card, CardBody, Tab, Tabs, Toolbar, ToolbarGroup, ToolbarItem, Tooltip } from '@patternfly/react-core';
+import {
+  Alert,
+  AlertVariant,
+  Card,
+  CardBody,
+  Tab,
+  Tabs,
+  Toolbar,
+  ToolbarGroup,
+  ToolbarItem,
+  Tooltip
+} from '@patternfly/react-core';
 import { ExternalLinkAltIcon } from '@patternfly/react-icons';
 import { connect } from 'react-redux';
 import * as API from 'services/Api';
@@ -32,7 +43,6 @@ import { TracingUrlProvider } from 'types/Tracing';
 import { GetTracingUrlProvider } from 'utils/tracing/UrlProviders';
 import { ExternalServiceInfo } from 'types/StatusState';
 import { retrieveTimeRange } from '../Time/TimeRangeHelper';
-import { alertType, InlineAlert } from '../Alerts/InlineAlert';
 
 type ReduxProps = {
   externalServices: ExternalServiceInfo[];
@@ -272,7 +282,14 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
                 {this.state.infoMessage && (
                   <ToolbarGroup>
                     <ToolbarItem style={{ width: '100%' }}>
-                      <InlineAlert type={alertType.INFO} message={this.state.infoMessage} />
+                      <Alert
+                        style={{ width: '100%' }}
+                        variant={AlertVariant.info}
+                        title={this.state.infoMessage}
+                        actionClose={() => {
+                          console.log('Closing');
+                        }}
+                      />
                     </ToolbarItem>
                   </ToolbarGroup>
                 )}
