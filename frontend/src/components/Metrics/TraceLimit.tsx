@@ -62,7 +62,7 @@ export const TraceLimit: React.FC<TraceLimitProps> = (props: TraceLimitProps) =>
     <span id="trace-limit">
       <div style={{ marginTop: '0.5rem' }}>
         <span className={props.titleClassName} style={{ paddingRight: 0 }}>
-          {props.title ? props.title : t('Limit per query')}
+          {props.title ?? t('Limit per query')}
         </span>
         {tooltip}
       </div>
