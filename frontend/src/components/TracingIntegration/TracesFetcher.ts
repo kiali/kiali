@@ -22,7 +22,8 @@ export class TracesFetcher {
 
   constructor(
     private onChange: (traces: JaegerTrace[], tracingServiceName: string) => void,
-    private onErrors: (err: TracingError[]) => void
+    private onErrors: (err: TracingError[]) => void,
+    private onInfo: (info: string) => void
   ) {}
 
   fetch = (o: FetchOptions, oldTraces: JaegerTrace[]): void => {
@@ -73,13 +74,22 @@ export class TracesFetcher {
           );
         }
         const firstTraceTimestamp = Math.min(...traces.map(s => s.startTime));
-        // If the first trace starts more than one minute later than the start date that the user selects, show an info message
-        // The order in which traces are returned is not deterministic and
-        const oneMinuteInMcr = 60 * 1000000; // Date in microseconds
-        if (firstTraceTimestamp - q.startMicros > oneMinuteInMcr) {
-          AlertUtils.addInfo(
+        // If the traces cover less than 90% of the selected period, show an info message
+        // The order in which traces are returned is not deterministic
+        const endDate = q.endMicros ? q.endMicros : Date.now() * 1000;
+        const timeRange = q.startMicros - endDate;
+
+        if (
+          firstTraceTimestamp &&
+          this.lastFetchMicros &&
+          firstTraceTimestamp - this.lastFetchMicros < 0.9 * timeRange
+        ) {
+          this.onInfo(
             `Last ${q.limit} traces shown. To search for traces in a different period, select a custom time range or adjust the traces limit.`
           );
+        } else {
+          // Empty message
+          this.onInfo('');
         }
       })
       .catch(error => {

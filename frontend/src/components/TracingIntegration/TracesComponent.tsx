@@ -32,6 +32,7 @@ import { TracingUrlProvider } from 'types/Tracing';
 import { GetTracingUrlProvider } from 'utils/tracing/UrlProviders';
 import { ExternalServiceInfo } from 'types/StatusState';
 import { retrieveTimeRange } from '../Time/TimeRangeHelper';
+import { alertType, InlineAlert } from '../Alerts/InlineAlert';
 
 type ReduxProps = {
   externalServices: ExternalServiceInfo[];
@@ -53,6 +54,7 @@ type TracesProps = ReduxProps & {
 interface TracesState {
   activeTab: number;
   displaySettings: DisplaySettings;
+  infoMessage?: string;
   isTimeOptionsOpen: boolean;
   querySettings: QuerySettings;
   targetApp?: string;
@@ -89,14 +91,20 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
       activeTab: getSpanId() ? spansDetailsTab : traceDetailsTab,
       toolbarDisabled: false
     };
-    this.fetcher = new TracesFetcher(this.onTracesUpdated, errors => {
-      // If there was traces displayed already, do not hide them so that the user can still interact with them
-      // (consider it's probably a temporary failure)
-      // Note that the error message is anyway displayed in the notifications component, so it's not going unnoticed
-      if (this.state.traces.length === 0) {
-        this.setState({ tracingErrors: errors, toolbarDisabled: true });
+    this.fetcher = new TracesFetcher(
+      this.onTracesUpdated,
+      errors => {
+        // If there was traces displayed already, do not hide them so that the user can still interact with them
+        // (consider it's probably a temporary failure)
+        // Note that the error message is anyway displayed in the notifications component, so it's not going unnoticed
+        if (this.state.traces.length === 0) {
+          this.setState({ tracingErrors: errors, toolbarDisabled: true });
+        }
+      },
+      info => {
+        this.setState({ infoMessage: info });
       }
-    });
+    );
     // This establishes the percentile-based filtering levels
     this.percentilesPromise = this.fetchPercentiles();
 
@@ -261,6 +269,13 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
           <Card>
             <CardBody>
               <Toolbar style={{ padding: 0 }}>
+                {this.state.infoMessage && (
+                  <ToolbarGroup>
+                    <ToolbarItem style={{ width: '100%' }}>
+                      <InlineAlert type={alertType.INFO} message={this.state.infoMessage} />
+                    </ToolbarItem>
+                  </ToolbarGroup>
+                )}
                 <ToolbarGroup>
                   <ToolbarItem>
                     <TracesDisplayOptions
