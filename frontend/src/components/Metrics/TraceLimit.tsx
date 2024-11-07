@@ -52,7 +52,7 @@ export const TraceLimit: React.FC<TraceLimitProps> = (props: TraceLimitProps) =>
   );
 
   const traceLimitComponent = (
-    <span>
+    <span id="trace-limit">
       <div style={{ marginTop: '0.5rem' }}>
         <span className={props.titleClassName} style={{ paddingRight: 0 }}>
           {props.title ? props.title : t('Limit per query')}
@@ -87,7 +87,7 @@ export const TraceLimit: React.FC<TraceLimitProps> = (props: TraceLimitProps) =>
   const traceLimitDropdownComponent = (
     <span>
       <ToolbarDropdown
-        id={'trace-limit-dropdown'}
+        id="trace-limit-dropdown"
         handleSelect={onLimitChange}
         nameDropdown={props.title ? props.title : t('limit')}
         nameDropdownClassName={props.titleClassName}

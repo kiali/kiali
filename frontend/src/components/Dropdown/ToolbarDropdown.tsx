@@ -92,7 +92,9 @@ export const ToolbarDropdown: React.FC<ToolbarDropdownProps> = (props: ToolbarDr
   return (
     <>
       {props.nameDropdown && (
-        <span className={`${dropdownTitle} ${props.nameDropdownClassName}`}>{props.nameDropdown}</span>
+        <span id={`${props.id}-name`} className={`${dropdownTitle} ${props.nameDropdownClassName}`}>
+          {props.nameDropdown}
+        </span>
       )}
       {props.tooltip ? (
         <Tooltip
