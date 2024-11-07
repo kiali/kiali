@@ -1,6 +1,7 @@
 import * as React from 'react';
 import {
   Alert,
+  AlertActionCloseButton,
   AlertVariant,
   Card,
   CardBody,
@@ -72,6 +73,7 @@ interface TracesState {
   traces: JaegerTrace[];
   tracingErrors: TracingError[];
   url: string;
+  visibleAlert: boolean;
   width: number;
 }
 
@@ -99,7 +101,8 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
       tracingErrors: [],
       targetApp: targetApp,
       activeTab: getSpanId() ? spansDetailsTab : traceDetailsTab,
-      toolbarDisabled: false
+      toolbarDisabled: false,
+      visibleAlert: true
     };
     this.fetcher = new TracesFetcher(
       this.onTracesUpdated,
@@ -112,7 +115,7 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
         }
       },
       info => {
-        this.setState({ infoMessage: info });
+        this.setState({ infoMessage: info, visibleAlert: true });
       }
     );
     // This establishes the percentile-based filtering levels
@@ -279,16 +282,14 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
           <Card>
             <CardBody>
               <Toolbar style={{ padding: 0 }}>
-                {this.state.infoMessage && (
+                {this.state.infoMessage && this.state.visibleAlert && (
                   <ToolbarGroup>
                     <ToolbarItem style={{ width: '100%' }}>
                       <Alert
                         style={{ width: '100%' }}
                         variant={AlertVariant.info}
                         title={this.state.infoMessage}
-                        actionClose={() => {
-                          console.log('Closing');
-                        }}
+                        actionClose={<AlertActionCloseButton onClose={() => this.setState({ visibleAlert: false })} />}
                       />
                     </ToolbarItem>
                   </ToolbarGroup>
