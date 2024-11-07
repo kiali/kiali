@@ -162,8 +162,9 @@ func (in *IstioValidationsService) CreateValidations(ctx context.Context, cluste
 	wg.Add(len(namespaces))
 
 	for _, namespace := range namespaces {
-		istioConfigsPerNamespace[namespace.Name] = &models.IstioConfigList{}
-		go in.fetchIstioConfigList(ctx, istioConfigsPerNamespace[namespace.Name], &mtlsDetails, &rbacDetails, cluster, namespace.Name, errChan, &wg)
+		var istioConfigs models.IstioConfigList
+		go in.fetchIstioConfigList(ctx, &istioConfigs, &mtlsDetails, &rbacDetails, cluster, namespace.Name, errChan, &wg)
+		istioConfigsPerNamespace[namespace.Name] = &istioConfigs
 	}
 
 	wg.Wait()
