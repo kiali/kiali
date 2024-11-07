@@ -1859,6 +1859,8 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 			w.SetPods(cPods)
 		}
 
+		w.WorkloadListItem.IsGateway = w.IsGateway()
+
 		// Add the Proxy Status to the workload
 		for _, pod := range w.Pods {
 			if pod.HasIstioSidecar() && !w.IsGateway() && config.Get().ExternalServices.Istio.IstioAPIEnabled {
