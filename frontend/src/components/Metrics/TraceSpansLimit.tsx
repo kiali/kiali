@@ -29,7 +29,7 @@ export const TraceSpansLimit: React.FC<TraceSpansLimitProps> = (props: TraceSpan
     props.onSpansChange(checked, currentLimit);
   };
 
-  const label = props.spansLabel ? props.spansLabel : t('spans');
+  const label = props.spansLabel ?? t('spans');
 
   const traceSpansLimitComponent = (
     <span id="trace-spans-limit" style={{ display: 'flex' }}>
