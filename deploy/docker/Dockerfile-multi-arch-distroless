@@ -1,8 +1,8 @@
-# ubi8/openssl is essentially ubi8-micro with openssl
-FROM registry.access.redhat.com/ubi8/openssl AS base-amd64
-FROM registry.access.redhat.com/ubi8/openssl AS base-arm64
-FROM registry.access.redhat.com/ubi8/openssl AS base-s390x
-FROM registry.access.redhat.com/ubi8/openssl AS base-ppc64le
+# ubi9/openssl is essentially ubi9-micro with openssl
+FROM registry.access.redhat.com/ubi9/openssl AS base-amd64
+FROM registry.access.redhat.com/ubi9/openssl AS base-arm64
+FROM registry.access.redhat.com/ubi9/openssl AS base-s390x
+FROM registry.access.redhat.com/ubi9/openssl AS base-ppc64le
 
 FROM base-${TARGETARCH}
 

@@ -1,5 +1,5 @@
-# ubi8/openssl is essentially ubi8-micro with openssl
-FROM registry.access.redhat.com/ubi8/openssl
+# ubi9/openssl is essentially ubi9-micro with openssl
+FROM registry.access.redhat.com/ubi9/openssl
 
 LABEL maintainer="kiali-dev@googlegroups.com"
 
