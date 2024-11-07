@@ -1,56 +1,46 @@
 import * as React from 'react';
-import { useKialiTranslation } from 'utils/I18nUtils';
 import { Checkbox } from '@patternfly/react-core';
 import { TRACE_LIMIT_DEFAULT, TraceLimit } from './TraceLimit';
 
 type TraceSpansLimitProps = {
-  limitsAsRadio?: boolean; // if true use Dropdown, otherwise inline radio
-  onSpansChange: (checked: boolean, limit: number) => void;
+  onChange: (checked: boolean, limit: number) => void;
+  className?: string;
+  inputClassName?: string;
+  label?: string;
+  labelClassName?: string;
   showSpans?: boolean;
-  spansClassName?: string;
-  spansInputClassName?: string;
-  spansLabelClassName?: string;
-  spansLabel?: string;
   traceLimit?: number;
 };
 
 export const TraceSpansLimit: React.FC<TraceSpansLimitProps> = (props: TraceSpansLimitProps) => {
   const [showSpans, setShowSpans] = React.useState<boolean>(props.showSpans ?? false);
-  const { t } = useKialiTranslation();
   let currentLimit = props.traceLimit ?? TRACE_LIMIT_DEFAULT;
 
   const onLimitChange = (limit: number): void => {
     currentLimit = limit;
-    props.onSpansChange(showSpans, currentLimit);
+    props.onChange(showSpans, currentLimit);
   };
 
   const onSpansChange = (_event, checked): void => {
     setShowSpans(checked);
-    props.onSpansChange(checked, currentLimit);
+    props.onChange(checked, currentLimit);
   };
-
-  const label = props.spansLabel ?? t('spans');
 
   const traceSpansLimitComponent = (
     <span id="trace-spans-limit" style={{ display: 'flex' }}>
       <Checkbox
-        className={props.spansClassName}
+        className={props.className}
         id={`spans-show`}
-        inputClassName={props.spansInputClassName}
+        inputClassName={props.inputClassName}
         isChecked={showSpans}
         key={`spans-show`}
-        label={showSpans ? '' : <span className={props.spansLabelClassName}>{label}</span>}
+        label={showSpans ? '' : <span className={props.labelClassName}>{props.label}</span>}
         onChange={onSpansChange}
         style={showSpans ? { alignSelf: 'center' } : {}}
       />
       {showSpans && (
         <span style={{ marginLeft: '0.5rem' }}>
-          <TraceLimit
-            asRadio={props.limitsAsRadio}
-            initialLimit={props.traceLimit}
-            onLimitChange={onLimitChange}
-            titleClassName={props.spansLabelClassName}
-          />
+          <TraceLimit initialLimit={props.traceLimit} onLimitChange={onLimitChange} />
         </span>
       )}
     </span>

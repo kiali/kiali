@@ -110,8 +110,8 @@ Then('the log pane should only show logs for the {string} container', (container
 
 Then('the log pane should show spans', () => {
   cy.get('#trace-limit-dropdown-toggle').should('exist');
-  cy.get('#trace-limit-dropdown-name')
-    .invoke('css', 'color')
+  cy.get('#spans-show')
+    .invoke('css', 'accentColor')
     .then(spansColor => {
       cy.get('#logsText').find('p').should('have.css', 'color', spansColor);
     });

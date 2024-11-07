@@ -462,11 +462,12 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                           {this.props.tracingIntegration && (
                             <ToolbarItem style={{ alignSelf: 'center' }}>
                               <TraceSpansLimit
-                                onSpansChange={this.onSpansChange}
+                                inputClassName={colorCheck(spanColor)}
+                                label="Traces"
+                                labelClassName={spansLabelStyle}
+                                onChange={this.onTraceSpansChange}
                                 showSpans={this.state.showSpans}
                                 traceLimit={this.state.showSpansLimit}
-                                spansInputClassName={colorCheck(spanColor)}
-                                spansLabelClassName={spansLabelStyle}
                               />
                             </ToolbarItem>
                           )}
@@ -511,7 +512,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
     );
   }
 
-  private onSpansChange = (checked: boolean, limit: number): void => {
+  private onTraceSpansChange = (checked: boolean, limit: number): void => {
     const urlParams = new URLSearchParams(location.getSearch());
     urlParams.set(URLParam.SHOW_SPANS, String(checked));
     if (checked) {

@@ -3,7 +3,6 @@ import { Radio, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { KialiIcon } from 'config/KialiIcon';
 import { itemInfoStyle, itemStyleWithoutInfo } from 'styles/DropdownStyles';
 import { ToolbarDropdown } from 'components/Dropdown/ToolbarDropdown';
-import { useKialiTranslation } from 'utils/I18nUtils';
 
 export const TRACE_LIMIT_DEFAULT = 100;
 
@@ -18,7 +17,6 @@ type TraceLimitProps = {
 export const TraceLimit: React.FC<TraceLimitProps> = (props: TraceLimitProps) => {
   const initialLimit = props.initialLimit ?? TRACE_LIMIT_DEFAULT;
   const [limit, setLimit] = React.useState<number>(initialLimit);
-  const { t } = useKialiTranslation();
 
   const onLimitChangeRadio = (limit: number, checked: boolean): void => {
     if (checked) {
@@ -52,17 +50,17 @@ export const TraceLimit: React.FC<TraceLimitProps> = (props: TraceLimitProps) =>
   );
 
   const traceLimits: { [key: string]: string } = {
-    20: '20',
-    100: '100',
-    500: '500',
-    1000: '1000'
+    20: '20 traces',
+    100: '100 traces',
+    500: '500 traces',
+    1000: '1000 traces'
   };
 
   const traceLimitComponent = (
     <span id="trace-limit">
       <div style={{ marginTop: '0.5rem' }}>
         <span className={props.titleClassName} style={{ paddingRight: 0 }}>
-          {props.title ?? t('Limit per query')}
+          {props.title}
         </span>
         {tooltip}
       </div>
@@ -92,7 +90,7 @@ export const TraceLimit: React.FC<TraceLimitProps> = (props: TraceLimitProps) =>
       <ToolbarDropdown
         id="trace-limit-dropdown"
         handleSelect={onLimitChange}
-        nameDropdown={props.title ?? t('limit')}
+        nameDropdown={props.title}
         nameDropdownClassName={props.titleClassName}
         value={limit}
         label={traceLimits[limit]}

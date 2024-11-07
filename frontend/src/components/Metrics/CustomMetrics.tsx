@@ -305,7 +305,7 @@ class CustomMetricsComponent extends React.Component<Props, MetricsState> {
     );
   }
 
-  private onSpansChange = (checked: boolean, limit: number): void => {
+  private onTraceSpansChange = (checked: boolean, limit: number): void => {
     const urlParams = new URLSearchParams(location.getSearch());
     urlParams.set(URLParam.SHOW_SPANS, String(checked));
     if (checked) {
@@ -348,7 +348,8 @@ class CustomMetricsComponent extends React.Component<Props, MetricsState> {
             {this.props.tracingIntegration && (
               <ToolbarItem style={{ alignSelf: 'center' }}>
                 <TraceSpansLimit
-                  onSpansChange={this.onSpansChange}
+                  label="Traces"
+                  onChange={this.onTraceSpansChange}
                   showSpans={this.state.showSpans}
                   traceLimit={this.state.traceLimit}
                 />

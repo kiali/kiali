@@ -187,6 +187,7 @@ export class TracesDisplayOptions extends React.Component<Props, State> {
           asRadio={true}
           initialLimit={this.state.limit}
           onLimitChange={this.onLimitChanged}
+          title="Trace limit"
           titleClassName={titleStyle}
         />
 
