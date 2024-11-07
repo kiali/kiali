@@ -89,6 +89,11 @@ create_resources_in_remote_cluster() {
     error "Cannot find the Helm executable '${HELM}'; please install it."
   fi
 
+  IS_OPENSHIFT="false"
+  if ${CLIENT_EXE_REMOTE_CLUSTER} api-versions | grep -q 'operator.openshift.io/v1'; then
+    IS_OPENSHIFT="true"
+  fi
+
   info "Create the remote cluster namespace [${REMOTE_CLUSTER_NAMESPACE}] if it doesn't exist"
   ${CLIENT_EXE_REMOTE_CLUSTER} get namespace "${REMOTE_CLUSTER_NAMESPACE}" &> /dev/null || \
     ${CLIENT_EXE_REMOTE_CLUSTER} create ${DRY_RUN_ARG} namespace "${REMOTE_CLUSTER_NAMESPACE}"
@@ -107,13 +112,12 @@ create_resources_in_remote_cluster() {
   local helm_template_output="$(${HELM} template            \
       ${helm_version_arg:-}                                 \
       --namespace ${REMOTE_CLUSTER_NAMESPACE}               \
+      --set isOpenShift=${IS_OPENSHIFT}                     \
+      --set deployment.remote_cluster_resources_only=true   \
       --set deployment.instance_name=${KIALI_RESOURCE_NAME} \
       --set deployment.cluster_wide_access=true             \
       --set deployment.view_only_mode=${VIEW_ONLY}          \
       --set auth.strategy=anonymous                         \
-      --show-only templates/serviceaccount.yaml             \
-      --show-only templates/${role_template_name}.yaml      \
-      --show-only templates/rolebinding.yaml                \
       --repo https://kiali.org/helm-charts                  \
       kiali-server                                          \
       kiali-server)"
