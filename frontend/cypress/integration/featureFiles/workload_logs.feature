@@ -25,7 +25,7 @@ Feature: Workload logs tab
   Scenario: The log pane of the logs tab should only show the lines with the requested text
     Given I am on the logs tab of the "productpage-v1" workload detail page of the "bookinfo" namespace
     When I type "INFO" on the Show text field
-    Then the log pane should only show log lines containing "DEBUG"
+    Then the log pane should only show log lines containing "INFO"
 
   @bookinfo-app
   Scenario: The log pane of the logs tab should hide the lines with the requested text
