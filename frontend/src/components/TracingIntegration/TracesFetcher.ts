@@ -77,11 +77,13 @@ export class TracesFetcher {
         // If the traces cover less than 90% of the selected period, show an info message
         // The order in which traces are returned is not deterministic
         const endDate = q.endMicros ? q.endMicros : Date.now() * 1000;
-        const timeRange = (endDate - q.startMicros) * 0.9;
+        const timeRange = (endDate - q.startMicros) * 0.85;
 
         if (firstTraceTimestamp && this.lastFetchMicros && this.lastFetchMicros - firstTraceTimestamp < timeRange) {
+          const coveredTime = Math.min(this.lastFetchMicros, endDate) - Math.max(firstTraceTimestamp, q.startMicros);
+          const percentageCovered = Math.trunc((coveredTime / (endDate - q.startMicros)) * 100);
           this.onInfo(
-            `The ${q.limit} traces do not fully cover the time period. You may want to increase the limit, reduce the time range, or define a custom time range.`
+            `The ${q.limit} traces cover only ${percentageCovered}% of the time period. You may want to increase the fetch limit, reduce the time range, or define a custom time range.`
           );
         } else {
           // Empty message
