@@ -107,16 +107,14 @@ func (in *IstioValidationsService) GetValidationsForService(ctx context.Context,
 }
 
 func (in *IstioValidationsService) GetValidationsForWorkload(ctx context.Context, cluster, namespace, workload string) (models.IstioValidations, error) {
+	if namespace == "" {
+		return nil, fmt.Errorf("Namespace param should be set for Validations in cluster %s", cluster)
+	}
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
 	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
-        if namespace == "" {
-              return nil, fmt.Errorf("Namespace param should be set for Validations in cluster %s", cluster)
-        }
-
-        if _, err := in.namespace.GetClusterNamespace(ctx, namespace, cluster); err != nil {
-	    return nil, err
-        }
-
+	if _, err := in.namespace.GetClusterNamespace(ctx, namespace, cluster); err != nil {
+		return nil, err
+	}
 
 	return models.IstioValidations(validationsForCluster(in.kialiCache.Validations().Items(), cluster)).FilterBySingleType(schema.GroupVersionKind{Group: "", Version: "", Kind: "workload"}, workload), nil
 }
