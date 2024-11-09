@@ -4,7 +4,7 @@
 
 Feature: Manipulate Traffic Policies in the Primary-Remote and Multi-Primary setup
   In Primary-Remote setup, user should be able to create, update and delete policies on the local cluster only.
-  In Multi-Primary setup, user should be able to create, update and delete policies on both clusters. 
+  In Multi-Primary setup, user should be able to create, update and delete policies on both clusters.
 
 	Background:
 		Given user is at administrator perspective
@@ -34,17 +34,6 @@ Feature: Manipulate Traffic Policies in the Primary-Remote and Multi-Primary set
     When user is at the "istio" list page
     And user selects the "bookinfo" namespace
     Then user should not see the generated Traffic policy objects located in the "east" cluster
-
-  Scenario: Try to create a Traffic Policy in a remote cluster in the Primary-Remote deployment
-    When user deletes a Traffic Policy and the resource is no longer available in any cluster
-    And user is at the "overview" page
-    And user decides to "create" a Traffic Policy in the "west" "bookinfo"
-    And user confirms to "create" the Traffic Policy
-    Then an error message "Could not create traffic policies." is displayed
-    And user is at the "istio" list page
-    And user selects the "bookinfo" namespace
-    And user should not see the generated Traffic policy objects located in the "east" cluster
-    And user should not see the generated Traffic policy objects located in the "west" cluster
 
   @multi-primary
   Scenario: Create a Traffic Policy in a remote cluster

@@ -8,6 +8,8 @@ Given(
   'I am on the logs tab of the {string} workload detail page of the {string} namespace',
   (workload: string, namespace: string) => {
     cy.visit(`/console/namespaces/${namespace}/workloads/${workload}?tab=logs&refresh=0`);
+    cy.get('#metrics_filter_interval_duration-toggle').click();
+    cy.get('#1800').click();
   }
 );
 
