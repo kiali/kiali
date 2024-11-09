@@ -226,11 +226,23 @@ func TestIsGatewayLabelsToWorkload(t *testing.T) {
 			},
 			ShouldBeGateway: true,
 		},
-		"gateway-api created gateway should be a gateway": {
+		"gateway-api created gateway with old label should be a gateway": {
 			Labels: map[string]string{
 				"istio.io/gateway-name": "gateway",
 			},
 			ShouldBeGateway: true,
+		},
+		"gateway-api created gateway with new label should be a gateway": {
+			Labels: map[string]string{
+				"gateway.istio.io/managed": "istio.io-gateway-controller",
+			},
+			ShouldBeGateway: true,
+		},
+		"gateway-api created gateway with new label but with waypoint value should not be a gateway": {
+			Labels: map[string]string{
+				"gateway.istio.io/managed": "istio.io-mesh-controller",
+			},
+			ShouldBeGateway: false,
 		},
 		"gateway with istio ingress label should be a gateway": {
 			Labels: map[string]string{

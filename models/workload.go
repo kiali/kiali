@@ -523,8 +523,15 @@ func (workload *Workload) IsGateway() bool {
 	}
 
 	// gateway-api
+	// This is the old gateway-api label that was removed in 1.24.
 	// If this label exists then it's a gateway
 	if _, ok := workload.Labels["istio.io/gateway-name"]; ok {
+		return true
+	}
+
+	// This is the new gateway-api label that was added in 1.24
+	// The value distinguishes gateways from waypoints.
+	if workload.Labels["gateway.istio.io/managed"] == "istio.io-gateway-controller" {
 		return true
 	}
 
