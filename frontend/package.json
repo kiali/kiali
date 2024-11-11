@@ -161,8 +161,7 @@
   "resolutions": {
     "nth-check": "^2.0.1",
     "postcss": "^8.4.31",
-    "workbox-webpack-plugin": "^7.1.0",
-    "rollup": "^2.79.2"
+    "workbox-webpack-plugin": "^7.1.0"
   },
   "engines": {
     "node": ">=20.0.0",
