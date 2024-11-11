@@ -1365,3 +1365,36 @@ func TestGetAllGateways(t *testing.T) {
 	require.Len(workloads, 1)
 	require.True(workloads[0].IsGateway(), "Expected IsGateway to be True but it was false")
 }
+
+func TestGetWorkloadListWithCustomKindThatMatchesCoreKind(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+
+	conf := config.NewConfig()
+
+	kubeObjs := []runtime.Object{
+		&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}},
+	}
+	for _, pod := range FakePodsFromCustomController() {
+		p := pod
+		// Setting here a custom type whose Kind matches a core Kube type.
+		p.OwnerReferences[0].APIVersion = "customAPI/v1"
+		p.OwnerReferences[0].Kind = "DaemonSet"
+		kubeObjs = append(kubeObjs, &p)
+	}
+
+	k8s := kubetest.NewFakeK8sClient(kubeObjs...)
+	k8s.OpenShift = true
+	SetupBusinessLayer(t, k8s, *conf)
+	svc := setupWorkloadService(k8s, conf)
+
+	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: false, IncludeHealth: false}
+	workloadList, _ := svc.GetWorkloadList(context.TODO(), criteria)
+	workloads := workloadList.Workloads
+
+	assert.Equal("Namespace", workloadList.Namespace)
+
+	require.Equal(1, len(workloads))
+	assert.Equal("custom-controller-RS-123", workloads[0].Name)
+	assert.Equal("DaemonSet", workloads[0].WorkloadGVK.Kind)
+}
