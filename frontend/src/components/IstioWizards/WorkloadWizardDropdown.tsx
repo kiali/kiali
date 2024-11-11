@@ -17,6 +17,7 @@ import { WizardLabels } from './WizardLabels';
 import { renderDisabledDropdownOption } from 'utils/DropdownUtils';
 import { WorkloadWizardActionsDropdownGroup } from './WorkloadWizardActionsDropdownGroup';
 import { t } from 'utils/I18nUtils';
+import { getGVKTypeString } from '../../utils/IstioConfigUtils';
 
 interface Props {
   namespace: string;
@@ -46,7 +47,7 @@ export const WorkloadWizardDropdown: React.FC<Props> = (props: Props) => {
     API.updateWorkload(
       props.namespace,
       props.workload.name,
-      props.workload.type,
+      props.workload.gvk,
       jsonInjectionPatch,
       'json',
       props.workload.cluster
@@ -92,7 +93,9 @@ export const WorkloadWizardDropdown: React.FC<Props> = (props: Props) => {
     //  istio actions
     (serverConfig.kialiFeatureFlags.istioInjectionAction && !props.workload.isAmbient) ||
     // annotations
-    props.workload.type === 'Deployment';
+    getGVKTypeString(props.workload.gvk) === getGVKTypeString('Deployment');
+
+  const supportedWorkload = getGVKTypeString(props.workload.gvk) === getGVKTypeString(props.workload.gvk.Kind);
 
   const dropdown = (
     <Dropdown
@@ -142,6 +145,13 @@ export const WorkloadWizardDropdown: React.FC<Props> = (props: Props) => {
             'tooltip_wizard_actions',
             TooltipPosition.top,
             t('User does not have permission on this Workload'),
+            dropdown
+          )
+        : !supportedWorkload
+        ? renderDisabledDropdownOption(
+            'tooltip_wizard_actions',
+            TooltipPosition.top,
+            t('This type of Workload is Read only'),
             dropdown
           )
         : dropdown}

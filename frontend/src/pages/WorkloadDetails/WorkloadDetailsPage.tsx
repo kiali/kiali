@@ -306,7 +306,7 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
                     app={app}
                     version={version}
                     workload={this.state.workload!.name}
-                    workloadType={this.state.workload!.type}
+                    workloadType={this.state.workload!.gvk.Kind}
                     template={dashboard.template}
                   />
                 </Tab>

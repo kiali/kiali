@@ -42,7 +42,7 @@ func TestWorkloadDetails(t *testing.T) {
 	require.NoError(err)
 	require.NotNil(wl)
 	require.Equal(name, wl.Name)
-	require.Equal("Deployment", wl.Type)
+	require.Equal("Deployment", wl.WorkloadGVK.Kind)
 	require.NotNil(wl.Pods)
 	for _, pod := range wl.Pods {
 		require.NotEmpty(pod.Status)
@@ -73,7 +73,7 @@ func TestWorkloadIstioIngressEmptyProxyStatus(t *testing.T) {
 	require.NoError(err)
 	require.NotNil(wl)
 	require.Equal(name, wl.Name)
-	require.Equal("Deployment", wl.Type)
+	require.Equal("Deployment", wl.WorkloadGVK.Kind)
 	require.NotNil(wl.Pods)
 	for _, pod := range wl.Pods {
 		require.NotEmpty(pod.Status)
@@ -109,7 +109,7 @@ func TestDiscoverWorkload(t *testing.T) {
 		foundWorkloads := 0
 		for _, wl := range wlList.Workloads {
 			for k, v := range extraWorkloads {
-				if k == wl.Name && v == wl.Type {
+				if k == wl.Name && v == wl.WorkloadGVK.Kind {
 					foundWorkloads++
 				}
 			}

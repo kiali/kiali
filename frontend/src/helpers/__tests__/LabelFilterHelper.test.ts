@@ -6,6 +6,7 @@ import { InstanceType } from 'types/Common';
 import { ServiceListItem } from '../../types/ServiceList';
 import { setServerConfig } from '../../config/ServerConfig';
 import { serverRateConfig } from '../../types/ErrorRate/__testData__/ErrorRateConfig';
+import { dicTypeToGVK } from '../../types/IstioConfigList';
 
 setServerConfig(serverRateConfig);
 const emptyAppHealth = new AppHealth(
@@ -80,7 +81,7 @@ const workloadList: WorkloadListItem[] = [
     namespace: 'bookinfo',
     health: emptyWorkHealth,
     name: 'details-v1',
-    type: 'Deployment',
+    gvk: dicTypeToGVK['Deployment'],
     istioSidecar: false,
     isAmbient: false,
     isGateway: false,
@@ -95,7 +96,7 @@ const workloadList: WorkloadListItem[] = [
     namespace: 'bookinfo',
     health: emptyWorkHealth,
     name: 'productpage-v1',
-    type: 'Deployment',
+    gvk: dicTypeToGVK['Deployment'],
     istioSidecar: false,
     isAmbient: false,
     isGateway: false,
@@ -110,7 +111,7 @@ const workloadList: WorkloadListItem[] = [
     namespace: 'bookinfo',
     health: emptyWorkHealth,
     name: 'ratings-v1',
-    type: 'Deployment',
+    gvk: dicTypeToGVK['Deployment'],
     istioSidecar: false,
     isAmbient: false,
     isGateway: false,
@@ -125,7 +126,7 @@ const workloadList: WorkloadListItem[] = [
     namespace: 'bookinfo',
     health: emptyWorkHealth,
     name: 'reviews-v1',
-    type: 'Deployment',
+    gvk: dicTypeToGVK['Deployment'],
     istioSidecar: false,
     isAmbient: false,
     isGateway: false,
@@ -140,7 +141,7 @@ const workloadList: WorkloadListItem[] = [
     namespace: 'bookinfo',
     health: emptyWorkHealth,
     name: 'reviews-v2',
-    type: 'Deployment',
+    gvk: dicTypeToGVK['Deployment'],
     istioSidecar: false,
     isAmbient: false,
     isGateway: false,
@@ -155,7 +156,7 @@ const workloadList: WorkloadListItem[] = [
     namespace: 'bookinfo',
     health: emptyWorkHealth,
     name: 'reviews-v3',
-    type: 'Deployment',
+    gvk: dicTypeToGVK['Deployment'],
     istioSidecar: false,
     isAmbient: false,
     isGateway: false,
@@ -285,7 +286,7 @@ describe('LabelFilter', () => {
         instanceType: InstanceType.Workload,
         health: emptyWorkHealth,
         name: 'reviews-v1',
-        type: 'Deployment',
+        gvk: dicTypeToGVK['Deployment'],
         istioSidecar: false,
         isAmbient: false,
         isGateway: false,
@@ -300,7 +301,7 @@ describe('LabelFilter', () => {
         instanceType: InstanceType.Workload,
         health: emptyWorkHealth,
         name: 'reviews-v2',
-        type: 'Deployment',
+        gvk: dicTypeToGVK['Deployment'],
         istioSidecar: false,
         isAmbient: false,
         isGateway: false,
@@ -315,7 +316,7 @@ describe('LabelFilter', () => {
         instanceType: InstanceType.Workload,
         health: emptyWorkHealth,
         name: 'reviews-v3',
-        type: 'Deployment',
+        gvk: dicTypeToGVK['Deployment'],
         istioSidecar: false,
         isAmbient: false,
         isGateway: false,

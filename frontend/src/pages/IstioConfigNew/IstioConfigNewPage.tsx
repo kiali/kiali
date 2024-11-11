@@ -72,7 +72,7 @@ import { NamespaceDropdown } from '../../components/Dropdown/NamespaceDropdown';
 import { Labels } from '../../components/Label/Labels';
 import { WizardLabels } from '../../components/IstioWizards/WizardLabels';
 import { isParentKiosk, kioskContextMenuAction } from 'components/Kiosk/KioskActions';
-import { dicIstioTypeToGVK } from '../../types/IstioConfigList';
+import { dicTypeToGVK } from '../../types/IstioConfigList';
 import { getGVKTypeString } from '../../utils/IstioConfigUtils';
 import { GroupVersionKind } from '../../types/IstioObjects';
 
@@ -126,14 +126,14 @@ const editStyle = kialiStyle({
 
 // Used in the Istio Config list Actions
 export const NEW_ISTIO_RESOURCE = [
-  { value: dicIstioTypeToGVK['AuthorizationPolicy'], disabled: false },
-  { value: dicIstioTypeToGVK['Gateway'], disabled: false },
-  { value: dicIstioTypeToGVK['K8sGateway'], disabled: false },
-  { value: dicIstioTypeToGVK['K8sReferenceGrant'], disabled: false },
-  { value: dicIstioTypeToGVK['PeerAuthentication'], disabled: false },
-  { value: dicIstioTypeToGVK['RequestAuthentication'], disabled: false },
-  { value: dicIstioTypeToGVK['ServiceEntry'], disabled: false },
-  { value: dicIstioTypeToGVK['Sidecar'], disabled: false }
+  { value: dicTypeToGVK['AuthorizationPolicy'], disabled: false },
+  { value: dicTypeToGVK['Gateway'], disabled: false },
+  { value: dicTypeToGVK['K8sGateway'], disabled: false },
+  { value: dicTypeToGVK['K8sReferenceGrant'], disabled: false },
+  { value: dicTypeToGVK['PeerAuthentication'], disabled: false },
+  { value: dicTypeToGVK['RequestAuthentication'], disabled: false },
+  { value: dicTypeToGVK['ServiceEntry'], disabled: false },
+  { value: dicTypeToGVK['Sidecar'], disabled: false }
 ];
 
 const initState = (): State => ({

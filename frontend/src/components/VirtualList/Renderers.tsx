@@ -443,7 +443,7 @@ export const workloadType: Renderer<WorkloadListItem> = (item: WorkloadListItem)
       key={`VirtuaItem_WorkloadType_${item.namespace}_${item.name}`}
       style={{ verticalAlign: 'middle' }}
     >
-      {item.type}
+      {item.gvk.Kind}
     </Td>
   );
 };

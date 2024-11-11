@@ -6,7 +6,7 @@ import {
   AllFilterTypes,
   ToggleType
 } from '../../types/Filters';
-import { WorkloadListItem, WorkloadType } from '../../types/Workload';
+import { WorkloadListItem } from '../../types/Workload';
 import { hasMissingSidecar } from 'components/VirtualList/Config';
 import { SortField } from '../../types/SortFilters';
 import { hasHealth } from '../../types/Health';
@@ -26,6 +26,7 @@ import { istioConfigTypeFilter } from '../IstioConfigList/FiltersAndSorts';
 import { compareObjectReferences } from '../AppList/FiltersAndSorts';
 import { serverConfig } from 'config';
 import { getGVKTypeString, istioTypesToGVKString } from '../../utils/IstioConfigUtils';
+import { dicTypeToGVK } from '../../types/IstioConfigList';
 
 const missingLabels = (r: WorkloadListItem): number => {
   return r.appLabel && r.versionLabel ? 0 : r.appLabel || r.versionLabel ? 1 : 2;
@@ -57,7 +58,7 @@ export const sortFields: SortField<WorkloadListItem>[] = [
     title: 'Workload Type',
     isNumeric: false,
     param: 'wt',
-    compare: (a: WorkloadListItem, b: WorkloadListItem) => a.type.localeCompare(b.type)
+    compare: (a: WorkloadListItem, b: WorkloadListItem) => a.gvk.Kind.localeCompare(b.gvk.Kind)
   },
   {
     id: 'details',
@@ -236,40 +237,40 @@ const workloadTypeFilter: FilterType = {
   action: FILTER_ACTION_APPEND,
   filterValues: [
     {
-      id: WorkloadType.CronJob,
-      title: WorkloadType.CronJob
+      id: dicTypeToGVK.CronJob.Kind,
+      title: dicTypeToGVK.CronJob.Kind
     },
     {
-      id: WorkloadType.DaemonSet,
-      title: WorkloadType.DaemonSet
+      id: dicTypeToGVK.DaemonSet.Kind,
+      title: dicTypeToGVK.DaemonSet.Kind
     },
     {
-      id: WorkloadType.Deployment,
-      title: WorkloadType.Deployment
+      id: dicTypeToGVK.Deployment.Kind,
+      title: dicTypeToGVK.Deployment.Kind
     },
     {
-      id: WorkloadType.DeploymentConfig,
-      title: WorkloadType.DeploymentConfig
+      id: dicTypeToGVK.DeploymentConfig.Kind,
+      title: dicTypeToGVK.DeploymentConfig.Kind
     },
     {
-      id: WorkloadType.Job,
-      title: WorkloadType.Job
+      id: dicTypeToGVK.Job.Kind,
+      title: dicTypeToGVK.Job.Kind
     },
     {
-      id: WorkloadType.Pod,
-      title: WorkloadType.Pod
+      id: dicTypeToGVK.Pod.Kind,
+      title: dicTypeToGVK.Pod.Kind
     },
     {
-      id: WorkloadType.ReplicaSet,
-      title: WorkloadType.ReplicaSet
+      id: dicTypeToGVK.ReplicaSet.Kind,
+      title: dicTypeToGVK.ReplicaSet.Kind
     },
     {
-      id: WorkloadType.ReplicationController,
-      title: WorkloadType.ReplicationController
+      id: dicTypeToGVK.ReplicationController.Kind,
+      title: dicTypeToGVK.ReplicationController.Kind
     },
     {
-      id: WorkloadType.StatefulSet,
-      title: WorkloadType.StatefulSet
+      id: dicTypeToGVK.StatefulSet.Kind,
+      title: dicTypeToGVK.StatefulSet.Kind
     }
   ]
 };
@@ -299,7 +300,7 @@ const filterByType = (items: WorkloadListItem[], filter: string[]): WorkloadList
   if (filter && filter.length === 0) {
     return items;
   }
-  return items.filter(item => includeName(item.type, filter));
+  return items.filter(item => includeName(item.gvk.Kind, filter));
 };
 
 const filterByLabelPresence = (

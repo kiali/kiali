@@ -1,5 +1,5 @@
 import {
-  dicIstioTypeToGVK,
+  dicTypeToGVK,
   filterByName,
   IstioConfigItem,
   IstioConfigList,
@@ -15,7 +15,7 @@ const mockIstioConfigList = (names: string[]): IstioConfigList => {
     permissions: {},
     resources: {}
   };
-  Object.keys(dicIstioTypeToGVK).forEach(index => {
+  Object.keys(dicTypeToGVK).forEach(index => {
     const key = getGVKTypeString(index);
     testData.resources[key] = [];
   });
@@ -23,32 +23,32 @@ const mockIstioConfigList = (names: string[]): IstioConfigList => {
     testData.resources[getGVKTypeString('AuthorizationPolicy')].push({
       metadata: { name: `${name}0` },
       spec: {},
-      kind: dicIstioTypeToGVK['AuthorizationPolicy'].Kind,
-      apiVersion: `${dicIstioTypeToGVK['AuthorizationPolicy'].Group}/${dicIstioTypeToGVK['AuthorizationPolicy'].Version}`
+      kind: dicTypeToGVK['AuthorizationPolicy'].Kind,
+      apiVersion: `${dicTypeToGVK['AuthorizationPolicy'].Group}/${dicTypeToGVK['AuthorizationPolicy'].Version}`
     });
     testData.resources[getGVKTypeString('DestinationRule')].push({
       metadata: { name: `${name}1` },
       spec: {},
-      kind: dicIstioTypeToGVK['DestinationRule'].Kind,
-      apiVersion: `${dicIstioTypeToGVK['DestinationRule'].Group}/${dicIstioTypeToGVK['DestinationRule'].Version}`
+      kind: dicTypeToGVK['DestinationRule'].Kind,
+      apiVersion: `${dicTypeToGVK['DestinationRule'].Group}/${dicTypeToGVK['DestinationRule'].Version}`
     });
     testData.resources[getGVKTypeString('Gateway')].push({
       metadata: { name: `${name}2` },
       spec: {},
-      kind: dicIstioTypeToGVK['Gateway'].Kind,
-      apiVersion: `${dicIstioTypeToGVK['Gateway'].Group}/${dicIstioTypeToGVK['Gateway'].Version}`
+      kind: dicTypeToGVK['Gateway'].Kind,
+      apiVersion: `${dicTypeToGVK['Gateway'].Group}/${dicTypeToGVK['Gateway'].Version}`
     });
     testData.resources[getGVKTypeString('ServiceEntry')].push({
       metadata: { name: `${name}3` },
       spec: {},
-      kind: dicIstioTypeToGVK['ServiceEntry'].Kind,
-      apiVersion: `${dicIstioTypeToGVK['ServiceEntry'].Group}/${dicIstioTypeToGVK['ServiceEntry'].Version}`
+      kind: dicTypeToGVK['ServiceEntry'].Kind,
+      apiVersion: `${dicTypeToGVK['ServiceEntry'].Group}/${dicTypeToGVK['ServiceEntry'].Version}`
     });
     testData.resources[getGVKTypeString('VirtualService')].push({
       metadata: { name: `${name}4` },
       spec: {},
-      kind: dicIstioTypeToGVK['VirtualService'].Kind,
-      apiVersion: `${dicIstioTypeToGVK['VirtualService'].Group}/${dicIstioTypeToGVK['VirtualService'].Version}`
+      kind: dicTypeToGVK['VirtualService'].Kind,
+      apiVersion: `${dicTypeToGVK['VirtualService'].Group}/${dicTypeToGVK['VirtualService'].Version}`
     });
   });
   return testData;
@@ -94,11 +94,11 @@ describe('IstioConfigListContainer#toIstioItems', () => {
     expect(istioItems).toBeDefined();
     expect(istioItems.length).toBe(15);
     expect(istioItems[0].resource).toBeDefined();
-    expect(istioItems[0].resource.kind).toBe(dicIstioTypeToGVK['AuthorizationPolicy'].Kind);
+    expect(istioItems[0].resource.kind).toBe(dicTypeToGVK['AuthorizationPolicy'].Kind);
     expect(istioItems[3].resource).toBeDefined();
-    expect(istioItems[3].resource.kind).toBe(dicIstioTypeToGVK['DestinationRule'].Kind);
+    expect(istioItems[3].resource.kind).toBe(dicTypeToGVK['DestinationRule'].Kind);
     expect(istioItems[6].resource).toBeDefined();
-    expect(istioItems[6].resource.kind).toBe(dicIstioTypeToGVK['Gateway'].Kind);
+    expect(istioItems[6].resource.kind).toBe(dicTypeToGVK['Gateway'].Kind);
   });
 });
 
@@ -114,17 +114,17 @@ describe('IstioConfigComponent#sortIstioItems', () => {
 
     const first = sorted[0];
     expect(first.resource).toBeDefined();
-    expect(first.resource.kind).toBe(dicIstioTypeToGVK['AuthorizationPolicy'].Kind);
+    expect(first.resource.kind).toBe(dicTypeToGVK['AuthorizationPolicy'].Kind);
     expect(first.resource.metadata.name).toBe('blue0');
 
     const second = sorted[1];
     expect(second.resource).toBeDefined();
-    expect(second.resource.kind).toBe(dicIstioTypeToGVK['DestinationRule'].Kind);
+    expect(second.resource.kind).toBe(dicTypeToGVK['DestinationRule'].Kind);
     expect(second.resource.metadata.name).toBe('blue1');
 
     const last = sorted[14];
     expect(last.resource).toBeDefined();
-    expect(last.resource.kind).toBe(dicIstioTypeToGVK['VirtualService'].Kind);
+    expect(last.resource.kind).toBe(dicTypeToGVK['VirtualService'].Kind);
     expect(last.resource.metadata.name).toBe('white4');
   });
 
@@ -140,12 +140,12 @@ describe('IstioConfigComponent#sortIstioItems', () => {
 
     const first = sorted[0];
     expect(first.resource).toBeDefined();
-    expect(first.resource.kind).toBe(dicIstioTypeToGVK['VirtualService'].Kind);
+    expect(first.resource.kind).toBe(dicTypeToGVK['VirtualService'].Kind);
     expect(first.resource.metadata.name).toBe('white4');
 
     const last = sorted[14];
     expect(last.resource).toBeDefined();
-    expect(last.resource.kind).toBe(dicIstioTypeToGVK['AuthorizationPolicy'].Kind);
+    expect(last.resource.kind).toBe(dicTypeToGVK['AuthorizationPolicy'].Kind);
     expect(last.resource.metadata.name).toBe('blue0');
   });
 
@@ -160,17 +160,17 @@ describe('IstioConfigComponent#sortIstioItems', () => {
 
     const first = sorted[0];
     expect(first.resource).toBeDefined();
-    expect(first.resource.kind).toBe(dicIstioTypeToGVK['AuthorizationPolicy'].Kind);
+    expect(first.resource.kind).toBe(dicTypeToGVK['AuthorizationPolicy'].Kind);
     expect(first.resource.metadata.name).toBe('blue0');
 
     const second = sorted[3];
     expect(second.resource).toBeDefined();
-    expect(second.resource.kind).toBe(dicIstioTypeToGVK['DestinationRule'].Kind);
+    expect(second.resource.kind).toBe(dicTypeToGVK['DestinationRule'].Kind);
     expect(second.resource.metadata.name).toBe('blue1');
 
     const last = sorted[14];
     expect(last.resource).toBeDefined();
-    expect(last.resource.kind).toBe(dicIstioTypeToGVK['VirtualService'].Kind);
+    expect(last.resource.kind).toBe(dicTypeToGVK['VirtualService'].Kind);
     expect(last.resource.metadata.name).toBe('white4');
   });
 
@@ -185,7 +185,7 @@ describe('IstioConfigComponent#sortIstioItems', () => {
 
     const first = sorted[0];
     expect(first.resource).toBeDefined();
-    expect(first.resource.kind).toBe(dicIstioTypeToGVK['VirtualService'].Kind);
+    expect(first.resource.kind).toBe(dicTypeToGVK['VirtualService'].Kind);
     expect(first.resource.metadata.name).toBe('white4');
   });
 });

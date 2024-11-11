@@ -120,7 +120,7 @@ class WorkloadListPageComponent extends FilterComponent.Component<
         namespace: deployment.namespace,
         name: deployment.name,
         instanceType: InstanceType.Workload,
-        type: deployment.type,
+        gvk: deployment.gvk,
         appLabel: deployment.appLabel,
         versionLabel: deployment.versionLabel,
         istioSidecar: deployment.istioSidecar,

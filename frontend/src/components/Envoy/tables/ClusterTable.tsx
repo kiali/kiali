@@ -13,7 +13,7 @@ import { kialiStyle } from 'styles/StyleUtils';
 import { isParentKiosk } from '../../Kiosk/KioskActions';
 import { SortableTh } from 'components/Table/SimpleTable';
 import { t } from 'utils/I18nUtils';
-import { dicIstioTypeToGVK } from '../../../types/IstioConfigList';
+import { dicTypeToGVK } from '../../../types/IstioConfigList';
 
 export class ClusterTable implements SummaryTable {
   kiosk: string;
@@ -271,7 +271,7 @@ export class ClusterTable implements SummaryTable {
               value.subset,
               value.direction,
               value.type,
-              istioConfigLink(value.destination_rule, dicIstioTypeToGVK['DestinationRule'])
+              istioConfigLink(value.destination_rule, dicTypeToGVK['DestinationRule'])
             ]
           };
         }

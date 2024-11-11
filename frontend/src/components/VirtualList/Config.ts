@@ -4,7 +4,7 @@ import { AppWorkload } from 'types/App';
 import { isWaypoint } from 'helpers/LabelFilterHelper';
 import { WorkloadListItem, Workload } from '../../types/Workload';
 import { ServiceListItem } from '../../types/ServiceList';
-import { dicIstioTypeToGVK, IstioConfigItem } from '../../types/IstioConfigList';
+import { dicTypeToGVK, IstioConfigItem } from '../../types/IstioConfigList';
 import * as Renderers from './Renderers';
 import { Health } from '../../types/Health';
 import { isIstioNamespace } from 'config/ServerConfig';
@@ -201,7 +201,7 @@ const istioType: ResourceType<IstioConfigItem> = {
 
 export const GVKToBadge: { [gvk: string]: PFBadgeType } = {};
 
-Object.keys(dicIstioTypeToGVK).forEach(key => {
+Object.keys(dicTypeToGVK).forEach(key => {
   GVKToBadge[getGVKTypeString(key)] = PFBadges[key];
 });
 

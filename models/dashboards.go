@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"sort"
 
+	"k8s.io/apimachinery/pkg/runtime/schema"
+
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/config/dashboards"
 	"github.com/kiali/kiali/prometheus"
@@ -17,7 +19,7 @@ type DashboardQuery struct {
 	AdditionalLabels  []Aggregation
 	RawDataAggregator string
 	Workload          string
-	WorkloadType      string
+	WorkloadGVK       schema.GroupVersionKind
 }
 
 // FillDefaults fills the struct with default parameters

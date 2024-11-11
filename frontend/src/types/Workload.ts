@@ -1,5 +1,5 @@
 import { WorkloadHealth, WorkloadHealthResponse } from './Health';
-import { ObjectReference, Pod, Service, Validations } from './IstioObjects';
+import { GroupVersionKind, ObjectReference, Pod, Service, Validations } from './IstioObjects';
 import { InstanceType } from 'types/Common';
 
 export type WorkloadId = {
@@ -14,6 +14,7 @@ export interface Workload {
   availableReplicas: Number;
   cluster?: string;
   createdAt: string;
+  gvk: GroupVersionKind;
   health?: WorkloadHealthResponse;
   instanceType: InstanceType.Workload;
   isAmbient: boolean;
@@ -28,7 +29,6 @@ export interface Workload {
   resourceVersion: string;
   runtimes: Runtime[];
   services: Service[];
-  type: string;
   validations?: Validations;
   versionLabel: boolean;
   waypointWorkloads: Workload[];
@@ -40,6 +40,7 @@ export const emptyWorkload: Workload = {
   appLabel: false,
   availableReplicas: 0,
   createdAt: '',
+  gvk: { Group: '', Version: '', Kind: '' },
   isAmbient: false,
   isGateway: false,
   istioSidecar: true, // true until proven otherwise
@@ -52,27 +53,15 @@ export const emptyWorkload: Workload = {
   resourceVersion: '',
   runtimes: [],
   services: [],
-  type: '',
   versionLabel: false,
   waypointWorkloads: []
-};
-
-export const WorkloadType = {
-  CronJob: 'CronJob',
-  DaemonSet: 'DaemonSet',
-  Deployment: 'Deployment',
-  DeploymentConfig: 'DeploymentConfig',
-  Job: 'Job',
-  Pod: 'Pod',
-  ReplicaSet: 'ReplicaSet',
-  ReplicationController: 'ReplicationController',
-  StatefulSet: 'StatefulSet'
 };
 
 export interface WorkloadListItem {
   additionalDetailSample?: AdditionalItem;
   appLabel: boolean;
   cluster?: string;
+  gvk: GroupVersionKind;
   health: WorkloadHealth;
   instanceType: InstanceType.Workload;
   isAmbient: boolean;
@@ -83,7 +72,6 @@ export interface WorkloadListItem {
   name: string;
   namespace: string;
   notCoveredAuthPolicy: boolean;
-  type: string;
   versionLabel: boolean;
 }
 
@@ -94,8 +82,8 @@ export interface WorkloadQuery {
 }
 
 export interface WorkloadUpdateQuery {
+  gvk: string;
   patchType?: string;
-  type: string;
 }
 
 export interface WorkloadListQuery {

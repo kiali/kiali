@@ -12,7 +12,7 @@ import { KialiIcon } from 'config/KialiIcon';
 import { kialiStyle } from 'styles/StyleUtils';
 import { isParentKiosk } from '../../Kiosk/KioskActions';
 import { SortableTh } from 'components/Table/SimpleTable';
-import { dicIstioTypeToGVK } from '../../../types/IstioConfigList';
+import { dicTypeToGVK } from '../../../types/IstioConfigList';
 
 export class RouteTable implements SummaryTable {
   kiosk: string;
@@ -187,7 +187,7 @@ export class RouteTable implements SummaryTable {
               summary.name,
               serviceLink(summary.domains, this.namespaces, this.namespace, true, parentKiosk),
               summary.match,
-              istioConfigLink(summary.virtual_service, dicIstioTypeToGVK['VirtualService'])
+              istioConfigLink(summary.virtual_service, dicTypeToGVK['VirtualService'])
             ]
           };
         }

@@ -45,7 +45,7 @@ func CustomDashboard(conf *config.Config, grafana *grafana.Service) http.Handler
 
 		var wkd *models.Workload
 		if params.Workload != "" {
-			wkd, err = layer.Workload.GetWorkload(r.Context(), business.WorkloadCriteria{Cluster: cluster, Namespace: namespace, WorkloadName: params.Workload, WorkloadType: params.WorkloadType, IncludeServices: false})
+			wkd, err = layer.Workload.GetWorkload(r.Context(), business.WorkloadCriteria{Cluster: cluster, Namespace: namespace, WorkloadName: params.Workload, WorkloadGVK: params.WorkloadGVK, IncludeServices: false})
 			if err != nil {
 				if errors.IsNotFound(err) {
 					RespondWithError(w, http.StatusNotFound, err.Error())

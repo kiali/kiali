@@ -73,7 +73,7 @@ import { ConfigPreviewItem, IstioConfigPreview } from 'components/IstioConfigPre
 import { KialiIcon } from '../../config/KialiIcon';
 import { ApiResponse } from 'types/Api';
 import { t } from 'utils/I18nUtils';
-import { dicIstioTypeToGVK } from '../../types/IstioConfigList';
+import { dicTypeToGVK } from '../../types/IstioConfigList';
 import { getGVKTypeString } from '../../utils/IstioConfigUtils';
 
 const emptyServiceWizardState = (fqdnServiceName: string): ServiceWizardState => {
@@ -371,7 +371,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
           promises.push(
             API.createIstioConfigDetail(
               this.props.namespace,
-              dicIstioTypeToGVK['Gateway'],
+              dicTypeToGVK['Gateway'],
               JSON.stringify(gw),
               this.props.cluster
             )
@@ -382,7 +382,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
           promises.push(
             API.createIstioConfigDetail(
               this.props.namespace,
-              dicIstioTypeToGVK['K8sGateway'],
+              dicTypeToGVK['K8sGateway'],
               JSON.stringify(k8sgateway),
               this.props.cluster
             )
@@ -394,7 +394,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
             promises.push(
               API.updateIstioConfigDetail(
                 this.props.namespace,
-                dicIstioTypeToGVK['DestinationRule'],
+                dicTypeToGVK['DestinationRule'],
                 dr.metadata.name,
                 JSON.stringify(dr),
                 this.props.cluster
@@ -406,7 +406,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
             promises.push(
               API.updateIstioConfigDetail(
                 this.props.namespace,
-                dicIstioTypeToGVK['VirtualService'],
+                dicTypeToGVK['VirtualService'],
                 vs.metadata.name,
                 JSON.stringify(vs),
                 this.props.cluster
@@ -418,7 +418,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
             promises.push(
               API.updateIstioConfigDetail(
                 this.props.namespace,
-                dicIstioTypeToGVK['K8sHTTPRoute'],
+                dicTypeToGVK['K8sHTTPRoute'],
                 k8shttproute.metadata.name,
                 JSON.stringify(k8shttproute),
                 this.props.cluster
@@ -430,7 +430,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
             promises.push(
               API.updateIstioConfigDetail(
                 this.props.namespace,
-                dicIstioTypeToGVK['K8sGRPCRoute'],
+                dicTypeToGVK['K8sGRPCRoute'],
                 k8sgrpcroute.metadata.name,
                 JSON.stringify(k8sgrpcroute),
                 this.props.cluster
@@ -447,7 +447,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
             promises.push(
               API.createIstioConfigDetail(
                 this.props.namespace,
-                dicIstioTypeToGVK['DestinationRule'],
+                dicTypeToGVK['DestinationRule'],
                 JSON.stringify(dr),
                 this.props.cluster
               )
@@ -458,7 +458,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
             promises.push(
               API.createIstioConfigDetail(
                 this.props.namespace,
-                dicIstioTypeToGVK['VirtualService'],
+                dicTypeToGVK['VirtualService'],
                 JSON.stringify(vs),
                 this.props.cluster
               )
@@ -469,7 +469,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
             promises.push(
               API.createIstioConfigDetail(
                 this.props.namespace,
-                dicIstioTypeToGVK['K8sHTTPRoute'],
+                dicTypeToGVK['K8sHTTPRoute'],
                 JSON.stringify(k8shttproute),
                 this.props.cluster
               )
@@ -480,7 +480,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
             promises.push(
               API.createIstioConfigDetail(
                 this.props.namespace,
-                dicIstioTypeToGVK['K8sGRPCRoute'],
+                dicTypeToGVK['K8sGRPCRoute'],
                 JSON.stringify(k8sgrpcroute),
                 this.props.cluster
               )
@@ -491,7 +491,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
             promises.push(
               API.createIstioConfigDetail(
                 this.props.namespace,
-                dicIstioTypeToGVK['PeerAuthentication'],
+                dicTypeToGVK['PeerAuthentication'],
                 JSON.stringify(pa),
                 this.props.cluster
               )
@@ -539,7 +539,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
         promises.push(
           API.createIstioConfigDetail(
             this.props.namespace,
-            dicIstioTypeToGVK['PeerAuthentication'],
+            dicTypeToGVK['PeerAuthentication'],
             JSON.stringify(pa),
             this.props.cluster
           )
@@ -548,7 +548,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
         promises.push(
           API.updateIstioConfigDetail(
             this.props.namespace,
-            dicIstioTypeToGVK['PeerAuthentication'],
+            dicTypeToGVK['PeerAuthentication'],
             dr.metadata.name,
             JSON.stringify(pa),
             this.props.cluster
@@ -559,7 +559,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
       promises.push(
         API.deleteIstioConfigDetail(
           this.props.namespace,
-          dicIstioTypeToGVK['PeerAuthentication'],
+          dicTypeToGVK['PeerAuthentication'],
           dr.metadata.name,
           this.props.cluster
         )
@@ -783,19 +783,19 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
     if (this.state.previews) {
       if (this.state.previews.dr) {
         items.push({
-          objectGVK: dicIstioTypeToGVK['DestinationRule'],
+          objectGVK: dicTypeToGVK['DestinationRule'],
           items: [this.state.previews.dr],
           title: 'Destination Rule'
         });
       }
 
       if (this.state.previews.gw) {
-        items.push({ objectGVK: dicIstioTypeToGVK['Gateway'], items: [this.state.previews.gw], title: 'Gateway' });
+        items.push({ objectGVK: dicTypeToGVK['Gateway'], items: [this.state.previews.gw], title: 'Gateway' });
       }
 
       if (this.state.previews.k8sgateway) {
         items.push({
-          objectGVK: dicIstioTypeToGVK['K8sGateway'],
+          objectGVK: dicTypeToGVK['K8sGateway'],
           items: [this.state.previews.k8sgateway],
           title: 'K8s Gateway'
         });
@@ -803,7 +803,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
 
       if (this.state.previews.k8shttproute) {
         items.push({
-          objectGVK: dicIstioTypeToGVK['K8sHTTPRoute'],
+          objectGVK: dicTypeToGVK['K8sHTTPRoute'],
           items: [this.state.previews.k8shttproute],
           title: 'K8s HTTPRoute'
         });
@@ -811,7 +811,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
 
       if (this.state.previews.k8sgrpcroute) {
         items.push({
-          objectGVK: dicIstioTypeToGVK['K8sGRPCRoute'],
+          objectGVK: dicTypeToGVK['K8sGRPCRoute'],
           items: [this.state.previews.k8sgrpcroute],
           title: 'K8s GRPCRoute'
         });
@@ -819,7 +819,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
 
       if (this.state.previews.pa) {
         items.push({
-          objectGVK: dicIstioTypeToGVK['PeerAuthentication'],
+          objectGVK: dicTypeToGVK['PeerAuthentication'],
           items: [this.state.previews.pa],
           title: 'Peer Authentication'
         });
@@ -827,7 +827,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
 
       if (this.state.previews.vs) {
         items.push({
-          objectGVK: dicIstioTypeToGVK['VirtualService'],
+          objectGVK: dicTypeToGVK['VirtualService'],
           items: [this.state.previews.vs],
           title: 'VirtualService'
         });

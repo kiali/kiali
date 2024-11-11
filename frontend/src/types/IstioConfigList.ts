@@ -46,7 +46,7 @@ export interface IstioConfigsMapQuery extends IstioConfigListQuery {
   namespaces?: string;
 }
 
-export const dicIstioTypeToGVK: { [key: string]: GroupVersionKind } = {
+export const dicTypeToGVK: { [key: string]: GroupVersionKind } = {
   AuthorizationPolicy: { Group: 'security.istio.io', Version: 'v1', Kind: 'AuthorizationPolicy' },
   PeerAuthentication: { Group: 'security.istio.io', Version: 'v1', Kind: 'PeerAuthentication' },
   RequestAuthentication: { Group: 'security.istio.io', Version: 'v1', Kind: 'RequestAuthentication' },
@@ -69,7 +69,17 @@ export const dicIstioTypeToGVK: { [key: string]: GroupVersionKind } = {
   K8sHTTPRoute: { Group: 'gateway.networking.k8s.io', Version: 'v1', Kind: 'HTTPRoute' },
   K8sReferenceGrant: { Group: 'gateway.networking.k8s.io', Version: 'v1', Kind: 'ReferenceGrant' },
   K8sTCPRoute: { Group: 'gateway.networking.k8s.io', Version: 'v1alpha2', Kind: 'TCPRoute' },
-  K8sTLSRoute: { Group: 'gateway.networking.k8s.io', Version: 'v1alpha2', Kind: 'TLSRoute' }
+  K8sTLSRoute: { Group: 'gateway.networking.k8s.io', Version: 'v1alpha2', Kind: 'TLSRoute' },
+
+  CronJob: { Group: 'batch', Version: 'v1', Kind: 'CronJob' },
+  DaemonSet: { Group: 'apps', Version: 'v1', Kind: 'DaemonSet' },
+  Deployment: { Group: 'apps', Version: 'v1', Kind: 'Deployment' },
+  DeploymentConfig: { Group: 'apps.openshift.io', Version: 'v1', Kind: 'DeploymentConfig' },
+  Job: { Group: 'batch', Version: 'v1', Kind: 'Job' },
+  Pod: { Group: '', Version: 'v1', Kind: 'Pod' },
+  ReplicaSet: { Group: 'apps', Version: 'v1', Kind: 'ReplicaSet' },
+  ReplicationController: { Group: '', Version: 'v1', Kind: 'ReplicationController' },
+  StatefulSet: { Group: 'apps', Version: 'v1', Kind: 'StatefulSet' }
 };
 
 export function validationKey(name: string, namespace?: string): string {
@@ -101,8 +111,8 @@ export const filterByNamespaces = (unfiltered: IstioConfigList, namespaces: stri
   const namespaceSet = new Set(namespaces);
   const filteredResources: { [key: string]: any[] } = {};
 
-  // Iterate over dicIstioTypeToGVK to dynamically filter each resource by namespace
-  Object.keys(dicIstioTypeToGVK).forEach(key => {
+  // Iterate over dicTypeToGVK to dynamically filter each resource by namespace
+  Object.keys(dicTypeToGVK).forEach(key => {
     const resourceKey = getGVKTypeString(key);
 
     // Check if the resource exists in the unfiltered list, then filter by namespace
@@ -127,8 +137,8 @@ export const filterByName = (unfiltered: IstioConfigList, names: string[]): Isti
 
   const filteredResources: { [key: string]: any[] } = {};
 
-  // Iterate over the dicIstioTypeToGVK to access each resource type dynamically
-  Object.keys(dicIstioTypeToGVK).forEach(key => {
+  // Iterate over the dicTypeToGVK to access each resource type dynamically
+  Object.keys(dicTypeToGVK).forEach(key => {
     const resourceKey = getGVKTypeString(key);
 
     // Check if the resource exists in the unfiltered list, then filter by names

@@ -1,6 +1,6 @@
 import { ServiceDetailsInfo } from '../../types/ServiceInfo';
 import { ValidationTypes } from '../../types/IstioObjects';
-import { dicIstioTypeToGVK } from '../../types/IstioConfigList';
+import { dicTypeToGVK } from '../../types/IstioConfigList';
 
 export const SERVICE_DETAILS: ServiceDetailsInfo = {
   service: {
@@ -136,7 +136,7 @@ export const SERVICE_DETAILS: ServiceDetailsInfo = {
     'networking.istio.io/v1, Kind=DestinationRule': {
       reviews: {
         name: 'details',
-        objectGVK: dicIstioTypeToGVK['DestinationRule'],
+        objectGVK: dicTypeToGVK['DestinationRule'],
         valid: false,
         checks: [
           {

@@ -23,12 +23,7 @@ import {
   IstioPermissions,
   IstioPermissionsQuery
 } from '../types/IstioConfigDetails';
-import {
-  dicIstioTypeToGVK,
-  IstioConfigList,
-  IstioConfigListQuery,
-  IstioConfigsMapQuery
-} from '../types/IstioConfigList';
+import { dicTypeToGVK, IstioConfigList, IstioConfigListQuery, IstioConfigsMapQuery } from '../types/IstioConfigList';
 import {
   Pod,
   PodLogs,
@@ -70,6 +65,7 @@ import {
 } from '../types/Workload';
 import { CertsInfo } from 'types/CertsInfo';
 import { ApiError, ApiResponse } from 'types/Api';
+import { getGVKTypeString } from '../utils/IstioConfigUtils';
 
 export const ANONYMOUS_USER = 'anonymous';
 
@@ -1020,12 +1016,12 @@ export const getWorkload = (
 export const updateWorkload = (
   namespace: string,
   name: string,
-  type: string,
+  type: GroupVersionKind | string,
   jsonPatch: string,
   patchType?: string,
   cluster?: string
 ): Promise<ApiResponse<string>> => {
-  const params: QueryParams<WorkloadUpdateQuery> = { type: type };
+  const params: QueryParams<WorkloadUpdateQuery> = { gvk: getGVKTypeString(type) };
 
   if (patchType) {
     params.patchType = patchType;
@@ -1282,50 +1278,30 @@ export function deleteServiceTrafficRouting(
 
   vsList.forEach(vs => {
     deletePromises.push(
-      deleteIstioConfigDetail(
-        vs.metadata.namespace ?? '',
-        dicIstioTypeToGVK['VirtualService'],
-        vs.metadata.name,
-        cluster
-      )
+      deleteIstioConfigDetail(vs.metadata.namespace ?? '', dicTypeToGVK['VirtualService'], vs.metadata.name, cluster)
     );
   });
 
   httpRouteList.forEach(k8sr => {
     deletePromises.push(
-      deleteIstioConfigDetail(
-        k8sr.metadata.namespace ?? '',
-        dicIstioTypeToGVK['K8sHTTPRoute'],
-        k8sr.metadata.name,
-        cluster
-      )
+      deleteIstioConfigDetail(k8sr.metadata.namespace ?? '', dicTypeToGVK['K8sHTTPRoute'], k8sr.metadata.name, cluster)
     );
   });
 
   grpcRouteList.forEach(k8sr => {
     deletePromises.push(
-      deleteIstioConfigDetail(
-        k8sr.metadata.namespace ?? '',
-        dicIstioTypeToGVK['K8sGRPCRoute'],
-        k8sr.metadata.name,
-        cluster
-      )
+      deleteIstioConfigDetail(k8sr.metadata.namespace ?? '', dicTypeToGVK['K8sGRPCRoute'], k8sr.metadata.name, cluster)
     );
   });
   drList.forEach(dr => {
     deletePromises.push(
-      deleteIstioConfigDetail(
-        dr.metadata.namespace ?? '',
-        dicIstioTypeToGVK['DestinationRule'],
-        dr.metadata.name,
-        cluster
-      )
+      deleteIstioConfigDetail(dr.metadata.namespace ?? '', dicTypeToGVK['DestinationRule'], dr.metadata.name, cluster)
     );
 
     const paName = dr.hasPeerAuthentication();
     if (!!paName) {
       deletePromises.push(
-        deleteIstioConfigDetail(dr.metadata.namespace ?? '', dicIstioTypeToGVK['PeerAuthentication'], paName, cluster)
+        deleteIstioConfigDetail(dr.metadata.namespace ?? '', dicTypeToGVK['PeerAuthentication'], paName, cluster)
       );
     }
   });

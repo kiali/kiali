@@ -10,6 +10,7 @@ import (
 	apps_v1 "k8s.io/api/apps/v1"
 	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/kiali/kiali/config"
 )
@@ -41,7 +42,7 @@ func TestParseDeploymentToWorkload(t *testing.T) {
 	assert.Equal("bar", w.Labels["foo"])
 	assert.Equal("v1", w.Labels["version"])
 	assert.Equal("2709198702082918", w.ResourceVersion)
-	assert.Equal("Deployment", w.Type)
+	assert.Equal("Deployment", w.WorkloadGVK.Kind)
 	assert.Equal(int32(1), w.DesiredReplicas)
 	assert.Equal(int32(1), w.CurrentReplicas)
 	assert.Equal(int32(1), w.AvailableReplicas)
@@ -75,7 +76,7 @@ func TestParseReplicaSetToWorkload(t *testing.T) {
 	assert.Equal("bar", w.Labels["foo"])
 	assert.Equal("v1", w.Labels["version"])
 	assert.Equal("2709198702082918", w.ResourceVersion)
-	assert.Equal("ReplicaSet", w.Type)
+	assert.Equal("ReplicaSet", w.WorkloadGVK.Kind)
 	assert.Equal(int32(1), w.DesiredReplicas)
 	assert.Equal(int32(1), w.CurrentReplicas)
 	assert.Equal(int32(1), w.AvailableReplicas)
@@ -102,7 +103,7 @@ func TestParseReplicationControllerToWorkload(t *testing.T) {
 	assert.Equal("bar", w.Labels["foo"])
 	assert.Equal("v1", w.Labels["version"])
 	assert.Equal("2709198702082918", w.ResourceVersion)
-	assert.Equal("ReplicationController", w.Type)
+	assert.Equal("ReplicationController", w.WorkloadGVK.Kind)
 	assert.Equal(int32(1), w.DesiredReplicas)
 	assert.Equal(int32(1), w.CurrentReplicas)
 	assert.Equal(int32(1), w.AvailableReplicas)
@@ -155,7 +156,7 @@ func TestParsePodToWorkload(t *testing.T) {
 	assert.Equal("bar", w.Labels["foo"])
 	assert.Equal("v1", w.Labels["version"])
 	assert.Equal("2709198702082918", w.ResourceVersion)
-	assert.Equal("Pod", w.Type)
+	assert.Equal("Pod", w.WorkloadGVK.Kind)
 	assert.Equal(int32(1), w.DesiredReplicas)
 	assert.Equal(int32(1), w.CurrentReplicas)
 	assert.Equal(int32(1), w.AvailableReplicas)
@@ -169,13 +170,13 @@ func TestParsePodsToWorkload(t *testing.T) {
 	config.Set(config.NewConfig())
 
 	w := Workload{}
-	w.ParsePods("workload-from-controller", "Controller", []core_v1.Pod{*fakePod()})
+	w.ParsePods("workload-from-controller", schema.GroupVersionKind{Kind: "Controller"}, []core_v1.Pod{*fakePod()})
 
 	assert.Equal("workload-from-controller", w.Name)
 	assert.Equal("bar", w.Labels["foo"])
 	assert.Equal("v1", w.Labels["version"])
 	assert.Equal("2709198702082918", w.ResourceVersion)
-	assert.Equal("Controller", w.Type)
+	assert.Equal("Controller", w.WorkloadGVK.Kind)
 	assert.Equal(int32(1), w.DesiredReplicas)
 	assert.Equal(int32(1), w.CurrentReplicas)
 	assert.Equal(int32(1), w.AvailableReplicas)

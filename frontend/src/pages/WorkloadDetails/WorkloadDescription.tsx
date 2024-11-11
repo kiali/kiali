@@ -15,7 +15,7 @@ import { MissingSidecar } from '../../components/MissingSidecar/MissingSidecar';
 import { PFBadge, PFBadges } from '../../components/Pf/PfBadges';
 import { MissingLabel } from '../../components/MissingLabel/MissingLabel';
 import { MissingAuthPolicy } from 'components/MissingAuthPolicy/MissingAuthPolicy';
-import { hasMissingAuthPolicy } from 'utils/IstioConfigUtils';
+import { getGVKTypeString, hasMissingAuthPolicy } from 'utils/IstioConfigUtils';
 import { DetailDescription } from '../../components/DetailDescription/DetailDescription';
 import { isWaypoint } from '../../helpers/LabelFilterHelper';
 import { AmbientLabel, tooltipMsgType } from '../../components/Ambient/AmbientLabel';
@@ -80,8 +80,13 @@ export const WorkloadDescription: React.FC<WorkloadDescriptionProps> = (props: W
   workload.services?.forEach(s => services.push(s.name));
 
   const isTemplateLabels =
-    ['Deployment', 'ReplicaSet', 'ReplicationController', 'DeploymentConfig', 'StatefulSet'].indexOf(workload.type) >=
-    0;
+    [
+      getGVKTypeString('Deployment'),
+      getGVKTypeString('ReplicaSet'),
+      getGVKTypeString('ReplicationController'),
+      getGVKTypeString('DeploymentConfig'),
+      getGVKTypeString('StatefulSet')
+    ].indexOf(getGVKTypeString(workload.gvk)) >= 0;
 
   const runtimes = (workload.runtimes ?? []).map(r => r.name).filter(name => name !== '');
 
@@ -98,7 +103,7 @@ export const WorkloadDescription: React.FC<WorkloadDescriptionProps> = (props: W
 
           <li>
             <span>Type</span>
-            {workload.type ? workload.type : 'N/A'}
+            {workload.gvk.Kind ? workload.gvk.Kind : 'N/A'}
           </li>
 
           <li>

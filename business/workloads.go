@@ -23,6 +23,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/kiali/kiali/business/checkers"
 	"github.com/kiali/kiali/config"
@@ -77,7 +78,7 @@ type WorkloadCriteria struct {
 	Cluster               string
 	Namespace             string
 	WorkloadName          string
-	WorkloadType          string
+	WorkloadGVK           schema.GroupVersionKind
 	IncludeIstioResources bool
 	IncludeServices       bool
 	IncludeHealth         bool
@@ -399,7 +400,7 @@ func (in *WorkloadService) GetWorkload(ctx context.Context, criteria WorkloadCri
 		observability.Attribute("cluster", criteria.Cluster),
 		observability.Attribute("namespace", criteria.Namespace),
 		observability.Attribute("workloadName", criteria.WorkloadName),
-		observability.Attribute("workloadType", criteria.WorkloadType),
+		observability.Attribute("workloadType", criteria.WorkloadGVK.String()),
 		observability.Attribute("includeServices", criteria.IncludeServices),
 		observability.Attribute("rateInterval", criteria.RateInterval),
 		observability.Attribute("queryTime", criteria.QueryTime),
@@ -452,14 +453,14 @@ func (in *WorkloadService) GetWorkload(ctx context.Context, criteria WorkloadCri
 	return workload, nil
 }
 
-func (in *WorkloadService) UpdateWorkload(ctx context.Context, cluster string, namespace string, workloadName string, workloadType string, includeServices bool, jsonPatch string, patchType string) (*models.Workload, error) {
+func (in *WorkloadService) UpdateWorkload(ctx context.Context, cluster string, namespace string, workloadName string, workloadGVK schema.GroupVersionKind, includeServices bool, jsonPatch string, patchType string) (*models.Workload, error) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "UpdateWorkload",
 		observability.Attribute("package", "business"),
 		observability.Attribute("cluster", cluster),
 		observability.Attribute("namespace", namespace),
 		observability.Attribute("workloadName", workloadName),
-		observability.Attribute("workloadType", workloadType),
+		observability.Attribute("workloadType", workloadGVK.Kind),
 		observability.Attribute("includeServices", includeServices),
 		observability.Attribute("jsonPatch", jsonPatch),
 		observability.Attribute("patchType", patchType),
@@ -467,7 +468,7 @@ func (in *WorkloadService) UpdateWorkload(ctx context.Context, cluster string, n
 	defer end()
 
 	// Identify controller and apply patch to workload
-	err := in.updateWorkload(ctx, cluster, namespace, workloadName, workloadType, jsonPatch, patchType)
+	err := in.updateWorkload(ctx, cluster, namespace, workloadName, workloadGVK, jsonPatch, patchType)
 	if err != nil {
 		return nil, err
 	}
@@ -482,7 +483,7 @@ func (in *WorkloadService) UpdateWorkload(ctx context.Context, cluster string, n
 	cache.Refresh(namespace)
 
 	// After the update we fetch the whole workload
-	return in.GetWorkload(ctx, WorkloadCriteria{Cluster: cluster, Namespace: namespace, WorkloadName: workloadName, WorkloadType: workloadType, IncludeServices: includeServices})
+	return in.GetWorkload(ctx, WorkloadCriteria{Cluster: cluster, Namespace: namespace, WorkloadName: workloadName, WorkloadGVK: workloadGVK, IncludeServices: includeServices})
 }
 
 func (in *WorkloadService) GetPod(cluster, namespace, name string) (*models.Pod, error) {
@@ -918,19 +919,24 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 		return ws, err
 	}
 
-	// Key: name of controller; Value: type of controller
-	controllers := map[string]string{}
+	// Key: name of controller; Value: GroupVersionKind of controller
+	controllers := map[string]schema.GroupVersionKind{}
 
 	// Find controllers from pods
 	for _, pod := range pods {
 		if len(pod.OwnerReferences) != 0 {
 			for _, ref := range pod.OwnerReferences {
+				refGV, err := schema.ParseGroupVersion(ref.APIVersion)
+				if err != nil {
+					log.Errorf("could not parse OwnerReference api version %q: %v", ref.APIVersion, err)
+					continue
+				}
 				if ref.Controller != nil && *ref.Controller && in.isWorkloadIncluded(ref.Kind) {
 					if _, exist := controllers[ref.Name]; !exist {
-						controllers[ref.Name] = ref.Kind
+						controllers[ref.Name] = refGV.WithKind(ref.Kind)
 					} else {
-						if controllers[ref.Name] != ref.Kind {
-							controllers[ref.Name] = controllerPriority(controllers[ref.Name], ref.Kind)
+						if controllers[ref.Name].String() != refGV.WithKind(ref.Kind).String() {
+							controllers[ref.Name] = refGV.WithKind(controllerPriority(controllers[ref.Name].Kind, ref.Kind))
 						}
 					}
 				}
@@ -938,7 +944,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 		} else {
 			if _, exist := controllers[pod.Name]; !exist {
 				// Pod without controller
-				controllers[pod.Name] = "Pod"
+				controllers[pod.Name] = kubernetes.Pods
 			}
 		}
 	}
@@ -946,8 +952,8 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 	// Resolve ReplicaSets from Deployments
 	// Resolve ReplicationControllers from DeploymentConfigs
 	// Resolve Jobs from CronJobs
-	for controllerName, controllerType := range controllers {
-		if controllerType == kubernetes.ReplicaSetType {
+	for controllerName, controllerGVK := range controllers {
+		if controllerGVK.String() == kubernetes.ReplicaSets.String() {
 			found := false
 			iFound := -1
 			for i, rs := range repset {
@@ -960,18 +966,23 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 			if found && len(repset[iFound].OwnerReferences) > 0 {
 				for _, ref := range repset[iFound].OwnerReferences {
 					if ref.Controller != nil && *ref.Controller {
+						refGV, err := schema.ParseGroupVersion(ref.APIVersion)
+						if err != nil {
+							log.Errorf("could not parse OwnerReference api version %q: %v", ref.APIVersion, err)
+							continue
+						}
 						if _, exist := controllers[ref.Name]; !exist {
 							// For valid owner controllers, delete the child ReplicaSet and add the parent controller,
 							// otherwise (for custom controllers), defer to the replica set.
 							if in.isWorkloadValid(ref.Kind) {
-								controllers[ref.Name] = ref.Kind
+								controllers[ref.Name] = refGV.WithKind(ref.Kind)
 								delete(controllers, controllerName)
 							} else {
 								log.Debugf("Add ReplicaSet to workload list for custom controller [%s][%s]", ref.Name, ref.Kind)
 							}
 						} else {
-							if controllers[ref.Name] != ref.Kind {
-								controllers[ref.Name] = controllerPriority(controllers[ref.Name], ref.Kind)
+							if controllers[ref.Name].String() != refGV.WithKind(ref.Kind).String() {
+								controllers[ref.Name] = refGV.WithKind(controllerPriority(controllers[ref.Name].Kind, ref.Kind))
 							}
 							delete(controllers, controllerName)
 						}
@@ -979,7 +990,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 				}
 			}
 		}
-		if controllerType == kubernetes.ReplicationControllerType {
+		if controllerGVK.String() == kubernetes.ReplicationControllers.String() {
 			found := false
 			iFound := -1
 			for i, rc := range repcon {
@@ -991,13 +1002,18 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 			}
 			if found && len(repcon[iFound].OwnerReferences) > 0 {
 				for _, ref := range repcon[iFound].OwnerReferences {
+					refGV, err := schema.ParseGroupVersion(ref.APIVersion)
+					if err != nil {
+						log.Errorf("could not parse OwnerReference api version %q: %v", ref.APIVersion, err)
+						continue
+					}
 					if ref.Controller != nil && *ref.Controller {
 						// Delete the child ReplicationController and add the parent controller
 						if _, exist := controllers[ref.Name]; !exist {
-							controllers[ref.Name] = ref.Kind
+							controllers[ref.Name] = refGV.WithKind(ref.Kind)
 						} else {
-							if controllers[ref.Name] != ref.Kind {
-								controllers[ref.Name] = controllerPriority(controllers[ref.Name], ref.Kind)
+							if controllers[ref.Name].String() != refGV.WithKind(ref.Kind).String() {
+								controllers[ref.Name] = refGV.WithKind(controllerPriority(controllers[ref.Name].Kind, ref.Kind))
 							}
 						}
 						delete(controllers, controllerName)
@@ -1005,7 +1021,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 				}
 			}
 		}
-		if controllerType == kubernetes.JobType {
+		if controllerGVK.String() == kubernetes.Jobs.String() {
 			found := false
 			iFound := -1
 			for i, jb := range jbs {
@@ -1017,13 +1033,18 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 			}
 			if found && len(jbs[iFound].OwnerReferences) > 0 {
 				for _, ref := range jbs[iFound].OwnerReferences {
+					refGV, err := schema.ParseGroupVersion(ref.APIVersion)
+					if err != nil {
+						log.Errorf("could not parse OwnerReference api version %q: %v", ref.APIVersion, err)
+						continue
+					}
 					if ref.Controller != nil && *ref.Controller {
 						// Delete the child Job and add the parent controller
 						if _, exist := controllers[ref.Name]; !exist {
-							controllers[ref.Name] = ref.Kind
+							controllers[ref.Name] = refGV.WithKind(ref.Kind)
 						} else {
-							if controllers[ref.Name] != ref.Kind {
-								controllers[ref.Name] = controllerPriority(controllers[ref.Name], ref.Kind)
+							if controllers[ref.Name].String() != refGV.WithKind(ref.Kind).String() {
+								controllers[ref.Name] = refGV.WithKind(controllerPriority(controllers[ref.Name].Kind, ref.Kind))
 							}
 						}
 						// Jobs are special as deleting CronJob parent doesn't delete children
@@ -1059,7 +1080,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 			selectorCheck = selector.Matches(labels.Set(d.Spec.Template.Labels))
 		}
 		if _, exist := controllers[d.Name]; !exist && selectorCheck {
-			controllers[d.Name] = "Deployment"
+			controllers[d.Name] = kubernetes.Deployments
 		}
 	}
 	for _, rs := range repset {
@@ -1068,7 +1089,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 			selectorCheck = selector.Matches(labels.Set(rs.Spec.Template.Labels))
 		}
 		if _, exist := controllers[rs.Name]; !exist && len(rs.OwnerReferences) == 0 && selectorCheck {
-			controllers[rs.Name] = "ReplicaSet"
+			controllers[rs.Name] = kubernetes.ReplicaSets
 		}
 	}
 	for _, dc := range depcon {
@@ -1077,7 +1098,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 			selectorCheck = selector.Matches(labels.Set(dc.Spec.Template.Labels))
 		}
 		if _, exist := controllers[dc.Name]; !exist && selectorCheck {
-			controllers[dc.Name] = "DeploymentConfig"
+			controllers[dc.Name] = kubernetes.DeploymentConfigs
 		}
 	}
 	for _, rc := range repcon {
@@ -1086,7 +1107,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 			selectorCheck = selector.Matches(labels.Set(rc.Spec.Template.Labels))
 		}
 		if _, exist := controllers[rc.Name]; !exist && len(rc.OwnerReferences) == 0 && selectorCheck {
-			controllers[rc.Name] = "ReplicationController"
+			controllers[rc.Name] = kubernetes.ReplicationControllers
 		}
 	}
 	for _, fs := range fulset {
@@ -1095,7 +1116,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 			selectorCheck = selector.Matches(labels.Set(fs.Spec.Template.Labels))
 		}
 		if _, exist := controllers[fs.Name]; !exist && selectorCheck {
-			controllers[fs.Name] = "StatefulSet"
+			controllers[fs.Name] = kubernetes.StatefulSets
 		}
 	}
 	for _, ds := range daeset {
@@ -1104,7 +1125,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 			selectorCheck = selector.Matches(labels.Set(ds.Spec.Template.Labels))
 		}
 		if _, exist := controllers[ds.Name]; !exist && selectorCheck {
-			controllers[ds.Name] = "DaemonSet"
+			controllers[ds.Name] = kubernetes.DaemonSets
 		}
 	}
 
@@ -1121,11 +1142,11 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 		}
 		w.Cluster = cluster
 		w.Namespace = namespace
-		controllerType := controllers[controllerName]
+		controllerGVK := controllers[controllerName]
 		// Flag to add a controller if it is found
 		cnFound := true
-		switch controllerType {
-		case kubernetes.DeploymentType:
+		switch controllerGVK.String() {
+		case kubernetes.Deployments.String():
 			found := false
 			iFound := -1
 			for i, dp := range dep {
@@ -1143,7 +1164,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 				log.Errorf("Workload %s is not found as Deployment", controllerName)
 				cnFound = false
 			}
-		case kubernetes.ReplicaSetType:
+		case kubernetes.ReplicaSets.String():
 			found := false
 			iFound := -1
 			for i, rs := range repset {
@@ -1161,7 +1182,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 				log.Errorf("Workload %s is not found as ReplicaSet", controllerName)
 				cnFound = false
 			}
-		case kubernetes.ReplicationControllerType:
+		case kubernetes.ReplicationControllers.String():
 			found := false
 			iFound := -1
 			for i, rc := range repcon {
@@ -1179,7 +1200,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 				log.Errorf("Workload %s is not found as ReplicationController", controllerName)
 				cnFound = false
 			}
-		case kubernetes.DeploymentConfigType:
+		case kubernetes.DeploymentConfigs.String():
 			found := false
 			iFound := -1
 			for i, dc := range depcon {
@@ -1197,7 +1218,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 				log.Errorf("Workload %s is not found as DeploymentConfig", controllerName)
 				cnFound = false
 			}
-		case kubernetes.StatefulSetType:
+		case kubernetes.StatefulSets.String():
 			found := false
 			iFound := -1
 			for i, fs := range fulset {
@@ -1215,7 +1236,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 				log.Errorf("Workload %s is not found as StatefulSet", controllerName)
 				cnFound = false
 			}
-		case kubernetes.PodType:
+		case kubernetes.Pods.String():
 			found := false
 			iFound := -1
 			for i, pod := range pods {
@@ -1232,7 +1253,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 				log.Errorf("Workload %s is not found as Pod", controllerName)
 				cnFound = false
 			}
-		case kubernetes.JobType:
+		case kubernetes.Jobs.String():
 			found := false
 			iFound := -1
 			for i, jb := range jbs {
@@ -1250,7 +1271,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 				log.Errorf("Workload %s is not found as Job", controllerName)
 				cnFound = false
 			}
-		case kubernetes.CronJobType:
+		case kubernetes.CronJobs.String():
 			found := false
 			iFound := -1
 			for i, cjb := range conjbs {
@@ -1268,7 +1289,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 				log.Warningf("Workload %s is not found as CronJob (CronJob could be deleted but children are still in the namespace)", controllerName)
 				cnFound = false
 			}
-		case kubernetes.DaemonSetType:
+		case kubernetes.DaemonSets.String():
 			found := false
 			iFound := -1
 			for i, ds := range daeset {
@@ -1290,10 +1311,10 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 			// This covers the scenario of a custom controller without replicaset, controlling pods directly.
 			// Note that a custom controller with replicaset(s) will return the replicaset(s) as the workloads.
 			var cPods []core_v1.Pod
-			cPods = kubernetes.FilterPodsByController(controllerName, controllerType, pods)
+			cPods = kubernetes.FilterPodsByController(controllerName, controllerGVK, pods)
 			if len(cPods) > 0 {
-				w.ParsePods(controllerName, controllerType, cPods)
-				log.Debugf("Workload %s of type %s has no ReplicaSet as a child controller (this may be ok, but is unusual)", controllerName, controllerType)
+				w.ParsePods(controllerName, controllerGVK, cPods)
+				log.Debugf("Workload %s of type %s has no ReplicaSet as a child controller (this may be ok, but is unusual)", controllerName, controllerGVK)
 			}
 			w.SetPods(cPods)
 		}
@@ -1344,7 +1365,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 	// Flag used for custom controllers
 	// i.e. a third party framework creates its own "Deployment" controller with extra features
 	// on this case, Kiali will collect basic info from the ReplicaSet controller
-	_, knownWorkloadType := controllerOrder[criteria.WorkloadType]
+	_, knownWorkloadType := controllerOrder[criteria.WorkloadGVK.Kind]
 
 	wg := sync.WaitGroup{}
 	wg.Add(9)
@@ -1376,7 +1397,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 		defer wg.Done()
 		var err error
 
-		if criteria.WorkloadType != "" && criteria.WorkloadType != kubernetes.DeploymentType {
+		if criteria.WorkloadGVK.Kind != "" && criteria.WorkloadGVK.String() != kubernetes.Deployments.String() {
 			return
 		}
 		dep, err = kialiCache.GetDeployment(criteria.Namespace, criteria.WorkloadName)
@@ -1394,7 +1415,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 	go func() {
 		defer wg.Done()
 
-		if criteria.WorkloadType != "" && criteria.WorkloadType != kubernetes.ReplicaSetType && knownWorkloadType {
+		if criteria.WorkloadGVK.Kind != "" && criteria.WorkloadGVK.String() != kubernetes.ReplicaSets.String() && knownWorkloadType {
 			return
 		}
 		var err error
@@ -1409,7 +1430,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 	go func() {
 		defer wg.Done()
 
-		if criteria.WorkloadType != "" && criteria.WorkloadType != kubernetes.ReplicationControllerType {
+		if criteria.WorkloadGVK.Kind != "" && criteria.WorkloadGVK.String() != kubernetes.ReplicationControllers.String() {
 			return
 		}
 
@@ -1428,7 +1449,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 	go func() {
 		defer wg.Done()
 
-		if criteria.WorkloadType != "" && criteria.WorkloadType != kubernetes.DeploymentConfigType {
+		if criteria.WorkloadGVK.Kind != "" && criteria.WorkloadGVK.String() != kubernetes.DeploymentConfigs.String() {
 			return
 		}
 
@@ -1446,7 +1467,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 	go func() {
 		defer wg.Done()
 
-		if criteria.WorkloadType != "" && criteria.WorkloadType != kubernetes.StatefulSetType {
+		if criteria.WorkloadGVK.Kind != "" && criteria.WorkloadGVK.String() != kubernetes.StatefulSets.String() {
 			return
 		}
 
@@ -1463,7 +1484,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 	go func() {
 		defer wg.Done()
 
-		if criteria.WorkloadType != "" && criteria.WorkloadType != kubernetes.CronJobType {
+		if criteria.WorkloadGVK.Kind != "" && criteria.WorkloadGVK.String() != kubernetes.CronJobs.String() {
 			return
 		}
 
@@ -1482,7 +1503,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 	go func() {
 		defer wg.Done()
 
-		if criteria.WorkloadType != "" && criteria.WorkloadType != kubernetes.JobType {
+		if criteria.WorkloadGVK.Kind != "" && criteria.WorkloadGVK.String() != kubernetes.Jobs.String() {
 			return
 		}
 
@@ -1501,7 +1522,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 	go func() {
 		defer wg.Done()
 
-		if criteria.WorkloadType != "" && criteria.WorkloadType != kubernetes.DaemonSetType {
+		if criteria.WorkloadGVK.Kind != "" && criteria.WorkloadGVK.String() != kubernetes.DaemonSets.String() {
 			return
 		}
 
@@ -1520,19 +1541,24 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 		return wl, err
 	}
 
-	// Key: name of controller; Value: type of controller
-	controllers := map[string]string{}
+	// Key: name of controller; Value: GVK of controller
+	controllers := map[string]schema.GroupVersionKind{}
 
 	// Find controllers from pods
 	for _, pod := range pods {
 		if len(pod.OwnerReferences) != 0 {
 			for _, ref := range pod.OwnerReferences {
+				refGV, err := schema.ParseGroupVersion(ref.APIVersion)
+				if err != nil {
+					log.Errorf("could not parse OwnerReference api version %q: %v", ref.APIVersion, err)
+					continue
+				}
 				if ref.Controller != nil && *ref.Controller && in.isWorkloadIncluded(ref.Kind) {
 					if _, exist := controllers[ref.Name]; !exist {
-						controllers[ref.Name] = ref.Kind
+						controllers[ref.Name] = refGV.WithKind(ref.Kind)
 					} else {
-						if controllers[ref.Name] != ref.Kind {
-							controllers[ref.Name] = controllerPriority(controllers[ref.Name], ref.Kind)
+						if controllers[ref.Name].String() != refGV.WithKind(ref.Kind).String() {
+							controllers[ref.Name] = refGV.WithKind(controllerPriority(controllers[ref.Name].String(), ref.Kind))
 						}
 					}
 				}
@@ -1540,7 +1566,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 		} else {
 			if _, exist := controllers[pod.Name]; !exist {
 				// Pod without controller
-				controllers[pod.Name] = "Pod"
+				controllers[pod.Name] = kubernetes.Pods
 			}
 		}
 	}
@@ -1548,8 +1574,8 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 	// Resolve ReplicaSets from Deployments
 	// Resolve ReplicationControllers from DeploymentConfigs
 	// Resolve Jobs from CronJobs
-	for controllerName, controllerType := range controllers {
-		if controllerType == kubernetes.ReplicaSetType {
+	for controllerName, controllerGVK := range controllers {
+		if controllerGVK.String() == kubernetes.ReplicaSets.String() {
 			found := false
 			iFound := -1
 			for i, rs := range repset {
@@ -1561,19 +1587,24 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 			}
 			if found && len(repset[iFound].OwnerReferences) > 0 {
 				for _, ref := range repset[iFound].OwnerReferences {
+					refGV, err := schema.ParseGroupVersion(ref.APIVersion)
+					if err != nil {
+						log.Errorf("could not parse OwnerReference api version %q: %v", ref.APIVersion, err)
+						continue
+					}
 					if ref.Controller != nil && *ref.Controller {
 						// For valid owner controllers, delete the child ReplicaSet and add the parent controller,
 						// otherwise (for custom controllers), defer to the replica set.
 						if _, exist := controllers[ref.Name]; !exist {
 							if in.isWorkloadValid(ref.Kind) {
-								controllers[ref.Name] = ref.Kind
+								controllers[ref.Name] = refGV.WithKind(ref.Kind)
 								delete(controllers, controllerName)
 							} else {
 								log.Debugf("Use ReplicaSet as workload for custom controller [%s][%s]", ref.Name, ref.Kind)
 							}
 						} else {
-							if controllers[ref.Name] != ref.Kind {
-								controllers[ref.Name] = controllerPriority(controllers[ref.Name], ref.Kind)
+							if controllers[ref.Name].String() != refGV.WithKind(ref.Kind).String() {
+								controllers[ref.Name] = refGV.WithKind(controllerPriority(controllers[ref.Name].Kind, ref.Kind))
 							}
 							delete(controllers, controllerName)
 						}
@@ -1581,7 +1612,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 				}
 			}
 		}
-		if controllerType == kubernetes.ReplicationControllerType {
+		if controllerGVK.String() == kubernetes.ReplicationControllers.String() {
 			found := false
 			iFound := -1
 			for i, rc := range repcon {
@@ -1593,13 +1624,18 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 			}
 			if found && len(repcon[iFound].OwnerReferences) > 0 {
 				for _, ref := range repcon[iFound].OwnerReferences {
+					refGV, err := schema.ParseGroupVersion(ref.APIVersion)
+					if err != nil {
+						log.Errorf("could not parse OwnerReference api version %q: %v", ref.APIVersion, err)
+						continue
+					}
 					if ref.Controller != nil && *ref.Controller {
 						// Delete the child ReplicationController and add the parent controller
 						if _, exist := controllers[ref.Name]; !exist {
-							controllers[ref.Name] = ref.Kind
+							controllers[ref.Name] = refGV.WithKind(ref.Kind)
 						} else {
-							if controllers[ref.Name] != ref.Kind {
-								controllers[ref.Name] = controllerPriority(controllers[ref.Name], ref.Kind)
+							if controllers[ref.Name].String() != refGV.WithKind(ref.Kind).String() {
+								controllers[ref.Name] = refGV.WithKind(controllerPriority(controllers[ref.Name].String(), ref.Kind))
 							}
 						}
 						delete(controllers, controllerName)
@@ -1607,7 +1643,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 				}
 			}
 		}
-		if controllerType == kubernetes.JobType {
+		if controllerGVK.String() == kubernetes.Jobs.String() {
 			found := false
 			iFound := -1
 			for i, jb := range jbs {
@@ -1619,13 +1655,18 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 			}
 			if found && len(jbs[iFound].OwnerReferences) > 0 {
 				for _, ref := range jbs[iFound].OwnerReferences {
+					refGV, err := schema.ParseGroupVersion(ref.APIVersion)
+					if err != nil {
+						log.Errorf("could not parse OwnerReference api version %q: %v", ref.APIVersion, err)
+						continue
+					}
 					if ref.Controller != nil && *ref.Controller {
 						// Delete the child Job and add the parent controller
 						if _, exist := controllers[ref.Name]; !exist {
-							controllers[ref.Name] = ref.Kind
+							controllers[ref.Name] = refGV.WithKind(ref.Kind)
 						} else {
-							if controllers[ref.Name] != ref.Kind {
-								controllers[ref.Name] = controllerPriority(controllers[ref.Name], ref.Kind)
+							if controllers[ref.Name].String() != refGV.WithKind(ref.Kind).String() {
+								controllers[ref.Name] = refGV.WithKind(controllerPriority(controllers[ref.Name].String(), ref.Kind))
 							}
 						}
 						// Jobs are special as deleting CronJob parent doesn't delete children
@@ -1649,32 +1690,32 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 	// Cornercase, check for controllers without pods, to show them as a workload
 	if dep != nil {
 		if _, exist := controllers[dep.Name]; !exist {
-			controllers[dep.Name] = kubernetes.DeploymentType
+			controllers[dep.Name] = kubernetes.Deployments
 		}
 	}
 	for _, rs := range repset {
 		if _, exist := controllers[rs.Name]; !exist && len(rs.OwnerReferences) == 0 {
-			controllers[rs.Name] = kubernetes.ReplicaSetType
+			controllers[rs.Name] = kubernetes.ReplicaSets
 		}
 	}
 	if depcon != nil {
 		if _, exist := controllers[depcon.Name]; !exist {
-			controllers[depcon.Name] = kubernetes.DeploymentConfigType
+			controllers[depcon.Name] = kubernetes.DeploymentConfigs
 		}
 	}
 	for _, rc := range repcon {
 		if _, exist := controllers[rc.Name]; !exist && len(rc.OwnerReferences) == 0 {
-			controllers[rc.Name] = kubernetes.ReplicationControllerType
+			controllers[rc.Name] = kubernetes.ReplicationControllers
 		}
 	}
 	if fulset != nil {
 		if _, exist := controllers[fulset.Name]; !exist {
-			controllers[fulset.Name] = kubernetes.StatefulSetType
+			controllers[fulset.Name] = kubernetes.StatefulSets
 		}
 	}
 	if ds != nil {
 		if _, exist := controllers[ds.Name]; !exist {
-			controllers[ds.Name] = kubernetes.DaemonSetType
+			controllers[ds.Name] = kubernetes.DaemonSets
 		}
 	}
 
@@ -1699,16 +1740,16 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 		// For custom types: fall through to the default handler and try to get the workload definition working
 		// up from the pods or replicas sets.
 		// see https://github.com/kiali/kiali/issues/3830
-		discoveredControllerType := controllers[criteria.WorkloadName]
-		controllerType := discoveredControllerType
-		if criteria.WorkloadType != "" && discoveredControllerType != criteria.WorkloadType {
-			controllerType = criteria.WorkloadType
+		discoveredControllerGVK := controllers[criteria.WorkloadName]
+		controllerGVK := discoveredControllerGVK
+		if criteria.WorkloadGVK.Kind != "" && discoveredControllerGVK.String() != criteria.WorkloadGVK.String() {
+			controllerGVK = criteria.WorkloadGVK
 		}
 
 		// Handle the known types...
 		cnFound := true
-		switch controllerType {
-		case kubernetes.DeploymentType:
+		switch controllerGVK.String() {
+		case kubernetes.Deployments.String():
 			if dep != nil && dep.Name == criteria.WorkloadName {
 				selector := labels.Set(dep.Spec.Template.Labels).AsSelector()
 				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods))
@@ -1717,7 +1758,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 				log.Errorf("Workload %s is not found as Deployment", criteria.WorkloadName)
 				cnFound = false
 			}
-		case kubernetes.ReplicaSetType:
+		case kubernetes.ReplicaSets.String():
 			found := false
 			iFound := -1
 			for i, rs := range repset {
@@ -1735,7 +1776,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 				log.Errorf("Workload %s is not found as ReplicaSet", criteria.WorkloadName)
 				cnFound = false
 			}
-		case kubernetes.ReplicationControllerType:
+		case kubernetes.ReplicationControllers.String():
 			found := false
 			iFound := -1
 			for i, rc := range repcon {
@@ -1753,7 +1794,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 				log.Errorf("Workload %s is not found as ReplicationController", criteria.WorkloadName)
 				cnFound = false
 			}
-		case kubernetes.DeploymentConfigType:
+		case kubernetes.DeploymentConfigs.String():
 			if depcon != nil && depcon.Name == criteria.WorkloadName {
 				selector := labels.Set(depcon.Spec.Template.Labels).AsSelector()
 				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods))
@@ -1762,7 +1803,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 				log.Errorf("Workload %s is not found as DeploymentConfig", criteria.WorkloadName)
 				cnFound = false
 			}
-		case kubernetes.StatefulSetType:
+		case kubernetes.StatefulSets.String():
 			if fulset != nil && fulset.Name == criteria.WorkloadName {
 				selector := labels.Set(fulset.Spec.Template.Labels).AsSelector()
 				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods))
@@ -1771,7 +1812,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 				log.Errorf("Workload %s is not found as StatefulSet", criteria.WorkloadName)
 				cnFound = false
 			}
-		case kubernetes.PodType:
+		case kubernetes.Pods.String():
 			found := false
 			iFound := -1
 			for i, pod := range pods {
@@ -1788,7 +1829,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 				log.Errorf("Workload %s is not found as Pod", criteria.WorkloadName)
 				cnFound = false
 			}
-		case kubernetes.JobType:
+		case kubernetes.Jobs.String():
 			found := false
 			iFound := -1
 			for i, jb := range jbs {
@@ -1806,7 +1847,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 				log.Errorf("Workload %s is not found as Job", criteria.WorkloadName)
 				cnFound = false
 			}
-		case kubernetes.CronJobType:
+		case kubernetes.CronJobs.String():
 			found := false
 			iFound := -1
 			for i, cjb := range conjbs {
@@ -1824,7 +1865,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 				log.Warningf("Workload %s is not found as CronJob (CronJob could be deleted but children are still in the namespace)", criteria.WorkloadName)
 				cnFound = false
 			}
-		case kubernetes.DaemonSetType:
+		case kubernetes.DaemonSets.String():
 			if ds != nil && ds.Name == criteria.WorkloadName {
 				selector := labels.Set(ds.Spec.Template.Labels).AsSelector()
 				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods))
@@ -1841,12 +1882,12 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 			// 1. use the controller type found in the Pod resolution and ignore the unknown criteria type
 			var cPods []core_v1.Pod
 			for _, rs := range repset {
-				if discoveredControllerType == kubernetes.ReplicaSetType && criteria.WorkloadName == rs.Name {
+				if discoveredControllerGVK.Kind == kubernetes.ReplicaSetType && criteria.WorkloadName == rs.Name {
 					w.ParseReplicaSet(&rs)
 				} else {
 					rsOwnerRef := meta_v1.GetControllerOf(&rs.ObjectMeta)
-					if rsOwnerRef != nil && rsOwnerRef.Name == criteria.WorkloadName && rsOwnerRef.Kind == discoveredControllerType {
-						w.ParseReplicaSetParent(&rs, criteria.WorkloadName, discoveredControllerType)
+					if rsOwnerRef != nil && rsOwnerRef.Name == criteria.WorkloadName && rsOwnerRef.Kind == discoveredControllerGVK.Kind {
+						w.ParseReplicaSetParent(&rs, criteria.WorkloadName, discoveredControllerGVK)
 					} else {
 						continue
 					}
@@ -1862,10 +1903,10 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 			// 2. If no pods we're found for a ReplicaSet type, it's possible the controller
 			//    is managing the pods itself i.e. the pod's have an owner ref directly to the controller type.
 			if len(cPods) == 0 {
-				cPods = kubernetes.FilterPodsByController(criteria.WorkloadName, discoveredControllerType, pods)
+				cPods = kubernetes.FilterPodsByController(criteria.WorkloadName, discoveredControllerGVK, pods)
 				if len(cPods) > 0 {
-					w.ParsePods(criteria.WorkloadName, discoveredControllerType, cPods)
-					log.Debugf("Workload %s of type %s has not a ReplicaSet as a child controller, it may need a revisit", criteria.WorkloadName, discoveredControllerType)
+					w.ParsePods(criteria.WorkloadName, discoveredControllerGVK, cPods)
+					log.Debugf("Workload %s of type %s has not a ReplicaSet as a child controller, it may need a revisit", criteria.WorkloadName, discoveredControllerGVK)
 				}
 			}
 
@@ -1998,7 +2039,7 @@ func (in *WorkloadService) getWaypointsForWorkload(ctx context.Context, namespac
 	for _, waypoint := range waypoints {
 		// At the moment, it is not possible to have the waypoint in a different namespace
 		// This is expected to change in future releases
-		wkd, err := in.fetchWorkload(ctx, WorkloadCriteria{Cluster: workload.Cluster, Namespace: namespace, WorkloadName: waypoint.Name, WorkloadType: ""})
+		wkd, err := in.fetchWorkload(ctx, WorkloadCriteria{Cluster: workload.Cluster, Namespace: namespace, WorkloadName: waypoint.Name, WorkloadGVK: schema.GroupVersionKind{}})
 		if err != nil {
 			log.Debugf("getWaypointsForWorkload: Error fetching workloads %s", err.Error())
 			return nil
@@ -2048,7 +2089,7 @@ func (in *WorkloadService) listWaypointWorkloads(ctx context.Context, name, clus
 	return workloadslist
 }
 
-func (in *WorkloadService) updateWorkload(ctx context.Context, cluster string, namespace string, workloadName string, workloadType string, jsonPatch string, patchType string) error {
+func (in *WorkloadService) updateWorkload(ctx context.Context, cluster string, namespace string, workloadName string, workloadGVK schema.GroupVersionKind, jsonPatch string, patchType string) error {
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
 	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
 	if _, err := in.businessLayer.Namespace.GetClusterNamespace(ctx, namespace, cluster); err != nil {
@@ -2060,51 +2101,51 @@ func (in *WorkloadService) updateWorkload(ctx context.Context, cluster string, n
 		return fmt.Errorf("user client for cluster [%s] not found", cluster)
 	}
 
-	workloadTypes := []string{
-		kubernetes.DeploymentType,
-		kubernetes.ReplicaSetType,
-		kubernetes.ReplicationControllerType,
-		kubernetes.DeploymentConfigType,
-		kubernetes.StatefulSetType,
-		kubernetes.JobType,
-		kubernetes.CronJobType,
-		kubernetes.PodType,
-		kubernetes.DaemonSetType,
+	workloadGVKs := []schema.GroupVersionKind{
+		kubernetes.Deployments,
+		kubernetes.ReplicaSets,
+		kubernetes.ReplicationControllers,
+		kubernetes.DeploymentConfigs,
+		kubernetes.StatefulSets,
+		kubernetes.Jobs,
+		kubernetes.CronJobs,
+		kubernetes.Pods,
+		kubernetes.DaemonSets,
 	}
 
-	// workloadType is an optional parameter used to optimize the workload type fetch
+	// workloadGVK is an optional parameter used to optimize the workload type fetch
 	// By default workloads use only the "name" but not the pair "name,type".
-	if workloadType != "" {
+	if workloadGVK.Kind != "" {
 		found := false
-		for _, wt := range workloadTypes {
-			if workloadType == wt {
+		for _, wt := range workloadGVKs {
+			if workloadGVK.Kind == wt.Kind {
 				found = true
 				break
 			}
 		}
 		if found {
-			workloadTypes = []string{workloadType}
+			workloadGVKs = []schema.GroupVersionKind{workloadGVK}
 		}
 	}
 
 	wg := sync.WaitGroup{}
-	wg.Add(len(workloadTypes))
-	errChan := make(chan error, len(workloadTypes))
+	wg.Add(len(workloadGVKs))
+	errChan := make(chan error, len(workloadGVKs))
 
-	for _, workloadType := range workloadTypes {
-		go func(wkType string) {
+	for _, workloadGVK := range workloadGVKs {
+		go func(wkGVK schema.GroupVersionKind) {
 			defer wg.Done()
 			var err error
-			if in.isWorkloadIncluded(wkType) {
-				err = userClient.UpdateWorkload(namespace, workloadName, wkType, jsonPatch, patchType)
+			if in.isWorkloadIncluded(wkGVK.Kind) {
+				err = userClient.UpdateWorkload(namespace, workloadName, wkGVK, jsonPatch, patchType)
 			}
 			if err != nil {
 				if !errors.IsNotFound(err) {
-					log.Errorf("Error fetching %s per namespace %s and name %s: %s", wkType, namespace, workloadName, err)
+					log.Errorf("Error fetching %s per namespace %s and name %s: %s", wkGVK, namespace, workloadName, err)
 					errChan <- err
 				}
 			}
-		}(workloadType)
+		}(workloadGVK)
 	}
 
 	wg.Wait()
@@ -2160,7 +2201,7 @@ func (in *WorkloadService) GetWorkloadAppName(ctx context.Context, cluster, name
 	)
 	defer end()
 
-	wkd, err := in.fetchWorkload(ctx, WorkloadCriteria{Cluster: cluster, Namespace: namespace, WorkloadName: workload, WorkloadType: ""})
+	wkd, err := in.fetchWorkload(ctx, WorkloadCriteria{Cluster: cluster, Namespace: namespace, WorkloadName: workload, WorkloadGVK: schema.GroupVersionKind{Group: "", Version: "", Kind: ""}})
 	if err != nil {
 		return "", err
 	}

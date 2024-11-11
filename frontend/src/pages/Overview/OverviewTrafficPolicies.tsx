@@ -15,7 +15,7 @@ import {
   buildNamespaceInjectionPatch,
   buildGraphSidecars
 } from 'components/IstioWizards/WizardActions';
-import { dicIstioTypeToGVK } from '../../types/IstioConfigList';
+import { dicTypeToGVK } from '../../types/IstioConfigList';
 import { getGVKTypeString } from '../../utils/IstioConfigUtils';
 
 type OverviewTrafficPoliciesProps = {
@@ -182,12 +182,8 @@ export class OverviewTrafficPolicies extends React.Component<OverviewTrafficPoli
         .registerAll(
           'trafficPoliciesDelete',
           apsP
-            .map(ap =>
-              API.deleteIstioConfigDetail(ns, dicIstioTypeToGVK['AuthorizationPolicy'], ap.metadata.name, cluster)
-            )
-            .concat(
-              sdsP.map(sc => API.deleteIstioConfigDetail(ns, dicIstioTypeToGVK['Sidecar'], sc.metadata.name, cluster))
-            )
+            .map(ap => API.deleteIstioConfigDetail(ns, dicTypeToGVK['AuthorizationPolicy'], ap.metadata.name, cluster))
+            .concat(sdsP.map(sc => API.deleteIstioConfigDetail(ns, dicTypeToGVK['Sidecar'], sc.metadata.name, cluster)))
         )
         .then(_ => {
           //Error here
@@ -224,10 +220,10 @@ export class OverviewTrafficPolicies extends React.Component<OverviewTrafficPoli
           'trafficPoliciesCreate',
           aps
             .map(ap =>
-              API.createIstioConfigDetail(ns, dicIstioTypeToGVK['AuthorizationPolicy'], JSON.stringify(ap), cluster)
+              API.createIstioConfigDetail(ns, dicTypeToGVK['AuthorizationPolicy'], JSON.stringify(ap), cluster)
             )
             .concat(
-              sds.map(sc => API.createIstioConfigDetail(ns, dicIstioTypeToGVK['Sidecar'], JSON.stringify(sc), cluster))
+              sds.map(sc => API.createIstioConfigDetail(ns, dicTypeToGVK['Sidecar'], JSON.stringify(sc), cluster))
             )
         )
         .then(results => {
@@ -262,13 +258,13 @@ export class OverviewTrafficPolicies extends React.Component<OverviewTrafficPoli
 
     this.state.authorizationPolicies.length > 0 &&
       items.push({
-        objectGVK: dicIstioTypeToGVK['AuthorizationPolicy'],
+        objectGVK: dicTypeToGVK['AuthorizationPolicy'],
         items: this.state.authorizationPolicies,
         title: 'Authorization Policies'
       });
 
     this.state.sidecars.length > 0 &&
-      items.push({ objectGVK: dicIstioTypeToGVK['Sidecar'], items: this.state.sidecars, title: 'Sidecars' });
+      items.push({ objectGVK: dicTypeToGVK['Sidecar'], items: this.state.sidecars, title: 'Sidecars' });
 
     return items;
   };
