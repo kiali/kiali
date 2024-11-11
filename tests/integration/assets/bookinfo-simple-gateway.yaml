@@ -1,0 +1,18 @@
+apiVersion: networking.istio.io/v1
+kind: Gateway
+metadata:
+  name: ingress-app
+  namespace: bookinfo
+spec:
+  selector:
+    app: istio-ingressgateway
+  servers:
+  - hosts:
+    - bookinfo/app-rpc.bookinfo
+    port:
+      name: grpc
+      number: 443
+      protocol: HTTPS
+    tls:
+      credentialName: istio-icc-app
+      mode: SIMPLE

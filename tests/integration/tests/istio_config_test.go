@@ -130,8 +130,11 @@ func assertConfigs(configList models.IstioConfigList, namespace string, require 
 }
 
 func TestIstioConfigDetails(t *testing.T) {
-	name := "bookinfo"
 	require := require.New(t)
+	filePath := path.Join(cmd.KialiProjectRoot, kiali.ASSETS+"/bookinfo-traffic-shifting-reviews.yaml")
+	t.Cleanup(func() { utils.DeleteFile(filePath, kiali.BOOKINFO) })
+	require.True(utils.ApplyFile(filePath, kiali.BOOKINFO))
+	name := "virtual-service-reviews"
 	config, _, err := kiali.IstioConfigDetails(kiali.BOOKINFO, name, kubernetes.VirtualServices)
 
 	require.NoError(err)
