@@ -1,5 +1,17 @@
 import * as React from 'react';
-import { Card, CardBody, Tab, Tabs, Toolbar, ToolbarGroup, ToolbarItem, Tooltip } from '@patternfly/react-core';
+import {
+  Alert,
+  AlertActionCloseButton,
+  AlertVariant,
+  Card,
+  CardBody,
+  Tab,
+  Tabs,
+  Toolbar,
+  ToolbarGroup,
+  ToolbarItem,
+  Tooltip
+} from '@patternfly/react-core';
 import { ExternalLinkAltIcon } from '@patternfly/react-icons';
 import { connect } from 'react-redux';
 import * as API from 'services/Api';
@@ -53,6 +65,7 @@ type TracesProps = ReduxProps & {
 interface TracesState {
   activeTab: number;
   displaySettings: DisplaySettings;
+  infoMessage?: string;
   isTimeOptionsOpen: boolean;
   querySettings: QuerySettings;
   targetApp?: string;
@@ -60,6 +73,7 @@ interface TracesState {
   traces: JaegerTrace[];
   tracingErrors: TracingError[];
   url: string;
+  visibleAlert: boolean;
   width: number;
 }
 
@@ -87,16 +101,23 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
       tracingErrors: [],
       targetApp: targetApp,
       activeTab: getSpanId() ? spansDetailsTab : traceDetailsTab,
-      toolbarDisabled: false
+      toolbarDisabled: false,
+      visibleAlert: true
     };
-    this.fetcher = new TracesFetcher(this.onTracesUpdated, errors => {
-      // If there was traces displayed already, do not hide them so that the user can still interact with them
-      // (consider it's probably a temporary failure)
-      // Note that the error message is anyway displayed in the notifications component, so it's not going unnoticed
-      if (this.state.traces.length === 0) {
-        this.setState({ tracingErrors: errors, toolbarDisabled: true });
+    this.fetcher = new TracesFetcher(
+      this.onTracesUpdated,
+      errors => {
+        // If there were already traces displayed, do not hide them so that the user can still interact with them
+        // (consider it's probably a temporary failure)
+        // Note that the error message is anyway displayed in the notifications component, so it's not going unnoticed
+        if (this.state.traces.length === 0) {
+          this.setState({ tracingErrors: errors, toolbarDisabled: true });
+        }
+      },
+      info => {
+        this.setState({ infoMessage: info, visibleAlert: true });
       }
-    });
+    );
     // This establishes the percentile-based filtering levels
     this.percentilesPromise = this.fetchPercentiles();
 
@@ -261,6 +282,18 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
           <Card>
             <CardBody>
               <Toolbar style={{ padding: 0 }}>
+                {this.state.infoMessage && this.state.visibleAlert && (
+                  <ToolbarGroup>
+                    <ToolbarItem style={{ width: '100%' }}>
+                      <Alert
+                        style={{ width: '100%' }}
+                        variant={AlertVariant.info}
+                        title={this.state.infoMessage}
+                        actionClose={<AlertActionCloseButton onClose={() => this.setState({ visibleAlert: false })} />}
+                      />
+                    </ToolbarItem>
+                  </ToolbarGroup>
+                )}
                 <ToolbarGroup>
                   <ToolbarItem>
                     <TracesDisplayOptions

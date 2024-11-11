@@ -22,7 +22,8 @@ export class TracesFetcher {
 
   constructor(
     private onChange: (traces: JaegerTrace[], tracingServiceName: string) => void,
-    private onErrors: (err: TracingError[]) => void
+    private onErrors: (err: TracingError[]) => void,
+    private onInfo: (info: string) => void
   ) {}
 
   fetch = (o: FetchOptions, oldTraces: JaegerTrace[]): void => {
@@ -71,6 +72,22 @@ export class TracesFetcher {
           AlertUtils.addWarning(
             'Loading traces for all clusters. Tracing is not configured to store traces per cluster.'
           );
+        }
+        const firstTraceTimestamp = Math.min(...traces.map(s => s.startTime));
+        // If the traces cover less than 90% of the selected period, show an info message
+        // The order in which traces are returned is not deterministic
+        const endDate = q.endMicros ? q.endMicros : Date.now() * 1000;
+        const timeRange = (endDate - q.startMicros) * 0.85;
+
+        if (firstTraceTimestamp && this.lastFetchMicros && this.lastFetchMicros - firstTraceTimestamp < timeRange) {
+          const coveredTime = Math.min(this.lastFetchMicros, endDate) - Math.max(firstTraceTimestamp, q.startMicros);
+          const percentageCovered = Math.trunc((coveredTime / (endDate - q.startMicros)) * 100);
+          this.onInfo(
+            `The ${q.limit} traces cover only ${percentageCovered}% of the time period. You may want to increase the fetch limit, reduce the time range, or define a custom time range.`
+          );
+        } else {
+          // Empty message
+          this.onInfo('');
         }
       })
       .catch(error => {
