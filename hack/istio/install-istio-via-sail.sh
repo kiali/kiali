@@ -2,10 +2,17 @@
 
 set -e
 
-if ! command -v yq &> /dev/null; then
-  echo "yq is required but it is either not installed or not in the PATH."
-  exit 1
-fi
+ensure_command () {
+  if ! command -v "$1" &> /dev/null; then
+    echo "$1 is required but it is either not installed or not in the PATH."
+    exit 1
+  fi
+}
+
+requirements=("yq" "helm")
+for req in "${requirements[@]}"; do
+  ensure_command "$req"
+done
 
 CUSTOM_INSTALL_SETTINGS=""
 PATCH_FILE=""
@@ -30,11 +37,12 @@ while [[ $# -gt 0 ]]; do
       cat <<HELPMSG
 Valid command line arguments:
   -pf|--patch-file <name=value>:
-       filepath to a yaml file of an 'Istio' resource that will overlay the default 'Istio' resource. 
+       filepath to a yaml file of an Istio resource that will overlay the default Istio resource.
        --patch-file /path/to/patch-file.yaml
   -s|--set <name=value>:
-       Sets a name/value pair for a custom install setting. Some examples you may want to use:
-       --set installPackagePath=/git/clone/istio.io/installer
+       Override any part of the Istio yaml providing a yq compatible path for that field.
+       Options specified with --set take precedence over --patch-file. Some examples you may want to use:
+       --set '.spec.version="v1.22.4"'
   -h|--help:
        this message
 HELPMSG
@@ -105,5 +113,9 @@ kubectl wait --for=condition=Ready istios/default -n istio-system
 # Install addons
 addons=("prometheus" "grafana" "jaeger")
 for addon in "${addons[@]}"; do
-  kubectl apply -n istio-system -f "https://raw.githubusercontent.com/istio/istio/refs/heads/release-1.23/samples/addons/$addon.yaml"
+  istio_version=$(kubectl get istios default -o jsonpath='{.spec.version}')
+  # Verison comes in the form v1.23.0 but we want 1.23
+  # Remove the 'v' and remove the .0 from 1.23.0 and we should be left with 1.23
+  addon_version="${istio_version:1:4}"
+  kubectl apply -n istio-system -f "https://raw.githubusercontent.com/istio/istio/refs/heads/release-$addon_version/samples/addons/$addon.yaml"
 done
