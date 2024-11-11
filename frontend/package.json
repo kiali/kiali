@@ -144,6 +144,7 @@
     "@babel/plugin-syntax-flow": "^7.22.5",
     "@babel/plugin-transform-react-jsx": "^7.22.15",
     "async": "^3.2.2",
+    "cross-spawn": "^7.0.5",
     "json-schema": "^0.4.0",
     "minimist": "^1.2.6",
     "nth-check": "^2.0.1",
