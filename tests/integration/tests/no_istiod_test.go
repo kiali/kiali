@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"path"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -9,6 +10,7 @@ import (
 	"github.com/kiali/kiali/tests/integration/utils"
 	"github.com/kiali/kiali/tests/integration/utils/kiali"
 	"github.com/kiali/kiali/tests/integration/utils/kube"
+	"github.com/kiali/kiali/tools/cmd"
 )
 
 func TestNoIstiod(t *testing.T) {
@@ -86,8 +88,11 @@ func noProxyStatus(t *testing.T) {
 }
 
 func emptyValidations(t *testing.T) {
-	name := "bookinfo-gateway"
+	name := "ingress-app"
 	require := require.New(t)
+	filePath := path.Join(cmd.KialiProjectRoot, kiali.ASSETS+"/bookinfo-simple-gateway.yaml")
+	t.Cleanup(func() { utils.DeleteFile(filePath, kiali.BOOKINFO) })
+	require.True(utils.ApplyFile(filePath, kiali.BOOKINFO))
 
 	config, err := getConfigForNamespace(kiali.BOOKINFO, name, k8s.Gateways)
 
