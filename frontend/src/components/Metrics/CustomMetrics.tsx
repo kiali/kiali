@@ -348,7 +348,7 @@ class CustomMetricsComponent extends React.Component<Props, MetricsState> {
             {this.props.tracingIntegration && (
               <ToolbarItem style={{ alignSelf: 'center' }}>
                 <TraceSpansLimit
-                  label="Traces"
+                  label="Spans"
                   onChange={this.onTraceSpansChange}
                   showSpans={this.state.showSpans}
                   traceLimit={this.state.traceLimit}

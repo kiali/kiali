@@ -463,7 +463,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                             <ToolbarItem style={{ alignSelf: 'center' }}>
                               <TraceSpansLimit
                                 inputClassName={colorCheck(spanColor)}
-                                label="Traces"
+                                label="Spans"
                                 labelClassName={spansLabelStyle}
                                 onChange={this.onTraceSpansChange}
                                 showSpans={this.state.showSpans}

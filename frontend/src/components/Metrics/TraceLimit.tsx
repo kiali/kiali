@@ -38,9 +38,10 @@ export const TraceLimit: React.FC<TraceLimitProps> = (props: TraceLimitProps) =>
       content={
         <div style={{ textAlign: 'left' }}>
           <div>
-            This limits the number of traces that will be fetched. If the number of fetched traces does not sufficiently
-            cover the desired time period, increase the limit or reduce the time period. Query time may increase for
-            larger limits and/or time periods. A custom time period may also be used.
+            This limits the number of traces that will be fetched. Each trace may have several spans. If the number of
+            fetched traces does not sufficiently cover the desired time period, increase the limit or reduce the time
+            period. Query time may increase for larger limits and/or time periods. A custom time period may also be
+            used.
           </div>
         </div>
       }
