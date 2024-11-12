@@ -47,7 +47,7 @@ import { location, router, URLParam } from 'app/History';
 import { Span, TracingQuery } from 'types/Tracing';
 import moment from 'moment';
 import { formatDuration } from 'utils/tracing/TracingHelper';
-import { itemInfoStyle, kebabToggleStyle } from 'styles/DropdownStyles';
+import { kebabToggleStyle } from 'styles/DropdownStyles';
 import { isValid } from 'utils/Common';
 import { KioskElement } from '../../components/Kiosk/KioskElement';
 import { TimeDurationModal } from '../../components/Time/TimeDurationModal';
@@ -57,6 +57,7 @@ import { ApiResponse } from 'types/Api';
 import { isParentKiosk, kioskContextMenuAction } from 'components/Kiosk/KioskActions';
 import { TRACE_LIMIT_DEFAULT } from 'components/Metrics/TraceLimit';
 import { TraceSpansLimit } from 'components/Metrics/TraceSpansLimit';
+import { infoStyle } from 'styles/InfoStyle';
 
 const appContainerColors = [PFColors.Blue300, PFColors.Green300, PFColors.Purple300, PFColors.Orange300];
 const proxyContainerColor = PFColors.Gold400;
@@ -154,12 +155,6 @@ const checkInfoIcon = kialiStyle({
   width: '0.75rem',
   marginLeft: '-5px',
   marginTop: '5px'
-});
-
-const infoIcons = kialiStyle({
-  marginLeft: '0.5em',
-  marginTop: '30%',
-  width: '1.5rem'
 });
 
 const toolbarTail = kialiStyle({
@@ -385,11 +380,11 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                     {this.state.showToolbar && (
                       <Toolbar style={{ padding: 0, width: '100%' }}>
                         <ToolbarGroup style={{ margin: 0, marginRight: '0.5rem' }}>
-                          <ToolbarItem>
-                            <PFBadge badge={PFBadges.Pod} position={TooltipPosition.top} style={{ marginTop: '30%' }} />
+                          <ToolbarItem style={{ alignSelf: 'center' }}>
+                            <PFBadge badge={PFBadges.Pod} position={TooltipPosition.top} />
                           </ToolbarItem>
 
-                          <ToolbarItem>
+                          <ToolbarItem style={{ alignSelf: 'center' }}>
                             <ToolbarDropdown
                               id="wpl_pods"
                               tooltip="Display logs for the selected pod"
@@ -400,7 +395,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                             />
                           </ToolbarItem>
 
-                          <ToolbarItem>
+                          <ToolbarItem style={{ alignSelf: 'center' }}>
                             <TextInput
                               id="log_show"
                               name="log_show"
@@ -448,13 +443,13 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                             {this.state.showError && <div style={{ color: 'red' }}>{this.state.showError}</div>}
                             {this.state.hideError && <div style={{ color: 'red' }}>{this.state.hideError}</div>}
 
-                            <ToolbarItem>
+                            <ToolbarItem style={{ alignSelf: 'center' }}>
                               <Tooltip
                                 key="show_hide_log_help"
                                 position="top"
                                 content="Show only, or Hide all, matching log entries. Match by case-sensitive substring (default) or regular expression (as set in the kebab menu)."
                               >
-                                <KialiIcon.Info className={infoIcons} />
+                                <KialiIcon.Info className={infoStyle} />
                               </Tooltip>
                             </ToolbarItem>
                           </ToolbarItem>
@@ -727,7 +722,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
             </div>
           }
         >
-          <KialiIcon.Info className={itemInfoStyle} />
+          <KialiIcon.Info className={infoStyle} />
         </Tooltip>
       </h1>
     );

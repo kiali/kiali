@@ -1,8 +1,9 @@
 import * as React from 'react';
 import { Radio, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { KialiIcon } from 'config/KialiIcon';
-import { itemInfoStyle, itemStyleWithoutInfo } from 'styles/DropdownStyles';
+import { itemStyleWithoutInfo } from 'styles/DropdownStyles';
 import { ToolbarDropdown } from 'components/Dropdown/ToolbarDropdown';
+import { infoStyle } from 'styles/InfoStyle';
 
 export const TRACE_LIMIT_DEFAULT = 100;
 
@@ -46,7 +47,7 @@ export const TraceLimit: React.FC<TraceLimitProps> = (props: TraceLimitProps) =>
         </div>
       }
     >
-      <KialiIcon.Info className={itemInfoStyle} />
+      <KialiIcon.Info className={infoStyle} />
     </Tooltip>
   );
 
