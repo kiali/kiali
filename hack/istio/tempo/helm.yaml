@@ -1,0 +1,33 @@
+storage:
+  trace:
+    backend: s3
+    s3:
+      access_key: 'minio'
+      secret_key: 'minio123'
+      bucket: 'tempo-data'
+      endpoint: 'minio:9000'
+      insecure: true
+#MinIO storage configuration
+minio:
+  enabled: true
+  mode: standalone
+  rootUser: minio
+  rootPassword: minio123
+  buckets:
+  # Default Tempo storage bucket
+  - name: tempo-data
+    policy: none
+    purge: false
+traces:
+  otlp:
+    grpc:
+      enabled: true
+    http:
+      enabled: true
+  zipkin:
+    enabled: true
+  jaeger:
+    thriftHttp:
+      enabled: false
+  opencensus:
+    enabled: false

@@ -15,6 +15,7 @@ DELETE_TEMPO="false"
 INSTALL_BOOKINFO="true"
 INSTALL_ISTIO="true"
 INSTALL_KIALI="false"
+METHOD="operator"
 ONLY_TEMPO="false"
 SECURE_DISTRIBUTOR="false"
 TEMPO_NS="tempo"
@@ -47,6 +48,10 @@ while [[ $# -gt 0 ]]; do
       INSTALL_KIALI="$2"
       shift;shift
       ;;
+    -im|--install-method)
+      METHOD="$2"
+      shift;shift
+      ;;
     -ot|--only-tempo)
       ONLY_TEMPO="$2"
       shift;shift
@@ -74,6 +79,9 @@ Valid command line arguments:
        If istio should be installed. true by default.
   -ik|--install-kiali:
        If Kiali should be installed. false by default.
+  -im|--install-method:
+       If using "operator" or "helm". "operator" by default. Helm installation has other properties and uses a more updated version of Tempo.
+       The recommendation resources for using helm in minikube:
   -ot|--only-tempo:
        Install only tempo. false by default.
   -sd|--secure-distributor:
@@ -100,6 +108,11 @@ if [ "$?" = "0" ]; then
   echo "The cluster client executable is found here: ${CLIENT_EXE}"
 else
   echo "You must install the cluster client ${CLIENT_EXE_NAME} in your PATH before you can continue"
+  exit 1
+fi
+
+if [ "${METHOD}" != "operator" ] && [ "${METHOD}" != "helm" ]; then
+  echo "method should be 'operator' or 'helm'"
   exit 1
 fi
 
@@ -141,10 +154,14 @@ install_tempo() {
     --from-literal=access_key_id="minio" \
     --from-literal=access_key_secret="minio123"
 
-  if [ "${SECURE_DISTRIBUTOR}" == "true" ]; then
-    # Create ca and cert for tls for the distributor
-    echo -e "Creating ca and cert for tls for the distributor \n"
-    subj="
+  if [ "${METHOD}" == "operator" ]; then
+
+    echo -e "Installing Tempo with the operator \n"
+
+    if [ "${SECURE_DISTRIBUTOR}" == "true" ]; then
+      # Create ca and cert for tls for the distributor
+      echo -e "Creating ca and cert for tls for the distributor \n"
+      subj="
 C=ES
 ST=ST
 O=AR
@@ -156,9 +173,9 @@ emailAddress=not@mail
     openssl req -x509 -sha256 -nodes -newkey rsa:2048 -subj "$(echo -n "$subj" | tr "\n" "/")" -keyout /tmp/tls.key -out /tmp/service-ca.crt
     ${CLIENT_EXE} -n ${TEMPO_NS} create configmap tempo-ca --from-file=/tmp/service-ca.crt
     ${CLIENT_EXE} create secret tls tempo-cert -n ${TEMPO_NS} --key="/tmp/tls.key" --cert="/tmp/service-ca.crt"
-  # Install TempoStack CR
-  echo -e "Installing tempo with tls enabled \n"
-  ${CLIENT_EXE} apply -n ${TEMPO_NS} -f - <<EOF
+    # Install TempoStack CR
+    echo -e "Installing tempo with tls enabled \n"
+    ${CLIENT_EXE} apply -n ${TEMPO_NS} -f - <<EOF
 apiVersion: tempo.grafana.com/v1alpha1
 kind: TempoStack
 metadata:
@@ -183,10 +200,10 @@ spec:
       jaegerQuery:
         enabled: false
 EOF
-  else
-    # Install TempoStack CR
-    echo -e "Installing tempo \n"
-    ${CLIENT_EXE} apply -n ${TEMPO_NS} -f - <<EOF
+    else
+      # Install TempoStack CR
+      echo -e "Installing tempo \n"
+      ${CLIENT_EXE} apply -n ${TEMPO_NS} -f - <<EOF
 apiVersion: tempo.grafana.com/v1alpha1
 kind: TempoStack
 metadata:
@@ -207,6 +224,14 @@ spec:
       jaegerQuery:
         enabled: false
 EOF
+    fi
+
+  else
+    echo -e "Installing Tempo with Helm Charts \n"
+    helm repo add grafana https://grafana.github.io/helm-charts
+    helm repo update
+    helm install tempo-cr grafana/tempo-distributed -n tempo -f ${SCRIPT_DIR}/helm.yaml
+
   fi
 }
 
