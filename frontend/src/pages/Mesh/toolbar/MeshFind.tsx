@@ -35,6 +35,7 @@ import { MeshToolbarActions } from 'actions/MeshToolbarActions';
 import { MeshFindOptions } from './MeshFindOptions';
 import { MeshHelpFind } from '../MeshHelpFind';
 import { LayoutType, meshLayout } from '../Mesh';
+import { infoStyle } from 'styles/InfoStyle';
 
 type ReduxStateProps = {
   findValue: string;
@@ -87,6 +88,14 @@ const gridStyle = kialiStyle({
 
 const meshFindStyle = kialiStyle({
   marginRight: '0.75rem',
+  $nest: {
+    '& > .pf-v5-c-form__group-control': {
+      display: 'flex'
+    }
+  }
+});
+
+const meshHideStyle = kialiStyle({
   $nest: {
     '& > .pf-v5-c-form__group-control': {
       display: 'flex'
@@ -297,7 +306,7 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
             </GridItem>
 
             <GridItem span={1}>
-              <FormGroup className={meshFindStyle}>
+              <FormGroup className={meshHideStyle}>
                 <MeshFindOptions kind="hide" onSelect={this.updateHideOption} />
                 {this.props.hideValue && (
                   <Tooltip key="ot_clear_hide" position="top" content="Clear Hide...">
@@ -323,7 +332,7 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
               className={findHideHelpStyle}
               onClick={this.toggleFindHelp}
             >
-              <KialiIcon.Info />
+              <KialiIcon.Info className={infoStyle} />
             </Button>
           </MeshHelpFind>
         ) : (
@@ -334,7 +343,7 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
               className={findHideHelpStyle}
               onClick={this.toggleFindHelp}
             >
-              <KialiIcon.Info />
+              <KialiIcon.Info className={infoStyle} />
             </Button>
           </Tooltip>
         )}

@@ -41,10 +41,6 @@ export const itemStyleWithInfo = kialiStyle({
   padding: '0.375rem 0 0.375rem 1rem'
 });
 
-export const itemInfoStyle = kialiStyle({
-  marginLeft: '0.375rem'
-});
-
 export const groupMenuStyle = kialiStyle({
   textAlign: 'left'
 });

@@ -16,6 +16,7 @@ import { isMultiCluster } from '../../config';
 import { Workload } from '../../types/Workload';
 import { hasMissingSidecar } from 'components/VirtualList/Config';
 import { healthIndicatorStyle } from 'styles/HealthStyle';
+import { infoStyle } from 'styles/InfoStyle';
 
 type ReduxProps = {
   kiosk: string;
@@ -54,10 +55,6 @@ const containerStyle = kialiStyle({
 
 const itemStyle = kialiStyle({
   paddingBottom: '0.25rem'
-});
-
-const infoStyle = kialiStyle({
-  marginLeft: '0.5rem'
 });
 
 export const renderWaypoint = (bgsize?: string): React.ReactNode => {

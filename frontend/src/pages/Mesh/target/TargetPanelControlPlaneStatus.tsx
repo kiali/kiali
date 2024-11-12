@@ -4,16 +4,12 @@ import * as React from 'react';
 import { OutboundTrafficPolicy } from 'types/IstioObjects';
 import { useKialiTranslation } from 'utils/I18nUtils';
 import { ControlPlaneMetricsMap } from 'types/Metrics';
-import { kialiStyle } from 'styles/StyleUtils';
+import { infoStyle } from 'styles/InfoStyle';
 
 type Props = {
   controlPlaneMetrics?: ControlPlaneMetricsMap;
   outboundTrafficPolicy?: OutboundTrafficPolicy;
 };
-
-const infoStyle = kialiStyle({
-  marginLeft: '0.25rem'
-});
 
 export const TargetPanelControlPlaneStatus: React.FC<Props> = (props: Props) => {
   const { t } = useKialiTranslation();

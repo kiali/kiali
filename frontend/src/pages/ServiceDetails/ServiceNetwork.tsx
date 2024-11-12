@@ -5,6 +5,7 @@ import { kialiStyle } from 'styles/StyleUtils';
 import { Gateway, ObjectCheck, ObjectValidation, VirtualService } from '../../types/IstioObjects';
 import { ValidationList } from '../../components/Validations/ValidationList';
 import { KialiIcon } from '../../config/KialiIcon';
+import { infoStyle } from 'styles/InfoStyle';
 
 type ServiceNetworkProps = {
   gateways: Gateway[];
@@ -26,10 +27,6 @@ const resourceListStyle = kialiStyle({
       fontWeight: 700
     }
   }
-});
-
-const infoStyle = kialiStyle({
-  marginLeft: '0.25rem'
 });
 
 export const ServiceNetwork: React.FC<ServiceNetworkProps> = (props: ServiceNetworkProps) => {

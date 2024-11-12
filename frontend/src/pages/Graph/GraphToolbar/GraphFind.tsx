@@ -33,6 +33,7 @@ import { GraphFindOptions } from './GraphFindOptions';
 import { location, HistoryManager, URLParam } from '../../../app/History';
 import { isValid } from 'utils/Common';
 import { serverConfig } from '../../../config';
+import { infoStyle } from 'styles/InfoStyle';
 
 type ReduxStateProps = {
   edgeLabels: EdgeLabelMode[];
@@ -96,6 +97,14 @@ const gridStyle = kialiStyle({
 
 const graphFindStyle = kialiStyle({
   marginRight: '0.75rem',
+  $nest: {
+    '& > .pf-v5-c-form__group-control': {
+      display: 'flex'
+    }
+  }
+});
+
+const graphHideStyle = kialiStyle({
   $nest: {
     '& > .pf-v5-c-form__group-control': {
       display: 'flex'
@@ -376,7 +385,7 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
             </GridItem>
 
             <GridItem span={1}>
-              <FormGroup className={graphFindStyle}>
+              <FormGroup className={graphHideStyle}>
                 <GraphFindOptions kind="hide" onSelect={this.updateHideOption} />
                 {this.props.hideValue && (
                   <Tooltip key="ot_clear_hide" position="top" content="Clear Hide...">
@@ -402,7 +411,7 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
               className={findHideHelpStyle}
               onClick={this.toggleFindHelp}
             >
-              <KialiIcon.Info />
+              <KialiIcon.Info className={infoStyle} />
             </Button>
           </GraphHelpFind>
         ) : (
@@ -413,7 +422,7 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
               className={findHideHelpStyle}
               onClick={this.toggleFindHelp}
             >
-              <KialiIcon.Info />
+              <KialiIcon.Info className={infoStyle} />
             </Button>
           </Tooltip>
         )}

@@ -20,6 +20,7 @@ import { DetailDescription } from '../../components/DetailDescription/DetailDesc
 import { isWaypoint } from '../../helpers/LabelFilterHelper';
 import { AmbientLabel, tooltipMsgType } from '../../components/Ambient/AmbientLabel';
 import { validationKey } from '../../types/IstioConfigList';
+import { infoStyleProps } from 'styles/InfoStyle';
 
 type WorkloadDescriptionProps = {
   health?: H.Health;
@@ -43,7 +44,7 @@ const iconStyle = kialiStyle({
 });
 
 const infoStyle = kialiStyle({
-  marginLeft: '0.5rem',
+  ...infoStyleProps,
   verticalAlign: '-0.125rem'
 });
 

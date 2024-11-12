@@ -10,7 +10,7 @@ interface Props {
   checks?: ObjectCheck[];
 }
 
-const infoStyle = kialiStyle({
+const statusInfoStyle = kialiStyle({
   verticalAlign: '-0.125em !important'
 });
 
@@ -54,7 +54,7 @@ export class IstioStatusMessageList extends React.Component<Props> {
                     <FlexItem>{check.code}</FlexItem>
                     <Tooltip content={check.message} position={TooltipPosition.right}>
                       <div className="iconInfo">
-                        <KialiIcon.Info className={infoStyle} />
+                        <KialiIcon.Info className={statusInfoStyle} />
                       </div>
                     </Tooltip>
                   </Flex>

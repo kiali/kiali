@@ -20,6 +20,7 @@ import { LocalTime } from '../../components/Time/LocalTime';
 import { Labels } from '../../components/Label/Labels';
 import { PFBadge, PFBadges } from '../../components/Pf/PfBadges';
 import { SimpleTable } from 'components/Table/SimpleTable';
+import { infoStyle } from 'styles/InfoStyle';
 
 type WorkloadPodsProps = {
   namespace: string;
@@ -42,10 +43,6 @@ const resourceListStyle = kialiStyle({
       fontWeight: 700
     }
   }
-});
-
-const infoStyle = kialiStyle({
-  marginLeft: '0.5rem'
 });
 
 const iconStyle = kialiStyle({

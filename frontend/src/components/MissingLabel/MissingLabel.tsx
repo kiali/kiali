@@ -2,8 +2,8 @@ import * as React from 'react';
 import { Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { icons, serverConfig } from '../../config';
 import { KialiIcon } from '../../config/KialiIcon';
-import { kialiStyle } from 'styles/StyleUtils';
 import { PFBadge } from '../Pf/PfBadges';
+import { infoStyle } from 'styles/InfoStyle';
 
 type MissingLabelProps = {
   className?: string;
@@ -11,10 +11,6 @@ type MissingLabelProps = {
   missingVersion: boolean;
   tooltip: boolean;
 };
-
-const infoStyle = kialiStyle({
-  marginLeft: '0.5rem'
-});
 
 export const MissingLabel: React.FC<MissingLabelProps> = (props: MissingLabelProps) => {
   const appLabel = serverConfig.istioLabels.appLabelName;
