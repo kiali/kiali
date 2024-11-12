@@ -11,9 +11,13 @@ import { connect } from 'react-redux';
 import { isParentKiosk, kioskContextMenuAction } from '../Kiosk/KioskActions';
 import { GroupVersionKind } from '../../types/IstioObjects';
 import { getGVKTypeString, kindToStringIncludeK8s } from '../../utils/IstioConfigUtils';
+import { infoStyleProps } from 'styles/InfoStyle';
 
-const infoStyle = kialiStyle({
-  margin: '0 0 -0.125rem 0.5rem'
+const objectInfoStyle = kialiStyle({
+  ...infoStyleProps,
+  marginBottom: '-0.125rem',
+  marginRight: '0',
+  marginTop: '0'
 });
 
 type ReduxProps = {
@@ -90,7 +94,7 @@ export const ReferenceIstioObjectLink: React.FC<ReferenceIstioObjectProps> = (pr
 
       {showTooltip && (
         <Tooltip position={TooltipPosition.right} content={<div style={{ textAlign: 'left' }}>{tooltipMsg}</div>}>
-          <KialiIcon.Info className={infoStyle} />
+          <KialiIcon.Info className={objectInfoStyle} />
         </Tooltip>
       )}
     </>

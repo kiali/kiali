@@ -8,7 +8,7 @@ import { KialiIcon } from 'config/KialiIcon';
 import { IstiodResourceThresholds } from 'types/IstioStatus';
 import { useKialiTranslation } from 'utils/I18nUtils';
 import { Datapoint, Metric } from 'types/Metrics';
-import { kialiStyle } from 'styles/StyleUtils';
+import { infoStyle } from 'styles/InfoStyle';
 
 type ControlPlaneProps = {
   istiodContainerCpu?: Metric[];
@@ -18,10 +18,6 @@ type ControlPlaneProps = {
   istiodResourceThresholds?: IstiodResourceThresholds;
   pilotLatency?: Metric[];
 };
-
-const infoStyle = kialiStyle({
-  marginLeft: '0.25rem'
-});
 
 const showMetrics = (metrics: Metric[] | undefined): boolean => {
   // show metrics if metrics exists and some values at least are not zero

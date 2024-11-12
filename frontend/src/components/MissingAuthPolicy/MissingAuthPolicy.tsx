@@ -4,7 +4,7 @@ import { SVGIconProps } from '@patternfly/react-icons/dist/js/createIcon';
 import { isIstioNamespace } from 'config/ServerConfig';
 import { icons } from 'config';
 import { KialiIcon } from '../../config/KialiIcon';
-import { kialiStyle } from 'styles/StyleUtils';
+import { infoStyle } from 'styles/InfoStyle';
 
 type MissingAuthPolicyProps = {
   text?: string;
@@ -15,10 +15,6 @@ type MissingAuthPolicyProps = {
   namespace: string;
   className?: string;
 };
-
-const infoStyle = kialiStyle({
-  marginLeft: '0.5rem'
-});
 
 export const MissingAuthPolicy: React.FC<MissingAuthPolicyProps> = ({
   text = 'Missing Authorization Policy',

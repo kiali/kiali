@@ -24,13 +24,13 @@ import {
 import { KialiIcon } from 'config/KialiIcon';
 import {
   containerStyle,
-  itemInfoStyle,
   itemStyleWithInfo,
   itemStyleWithoutInfo,
   menuStyle,
   menuEntryStyle
 } from 'styles/DropdownStyles';
 import { serverConfig } from 'config';
+import { infoStyle } from 'styles/InfoStyle';
 
 type ReduxDispatchProps = {
   setTrafficRates: (trafficRates: TrafficRate[]) => void;
@@ -257,7 +257,7 @@ const GraphTrafficComponent: React.FC<GraphTrafficProps> = (props: GraphTrafficP
                     position={TooltipPosition.right}
                     content={trafficRateOption.tooltip}
                   >
-                    <KialiIcon.Info className={itemInfoStyle} />
+                    <KialiIcon.Info className={infoStyle} />
                   </Tooltip>
                 )}
 
@@ -287,7 +287,7 @@ const GraphTrafficComponent: React.FC<GraphTrafficProps> = (props: GraphTrafficP
                             position={TooltipPosition.right}
                             content={ambientOption.tooltip}
                           >
-                            <KialiIcon.Info className={itemInfoStyle} />
+                            <KialiIcon.Info className={infoStyle} />
                           </Tooltip>
                         )}
                       </div>
@@ -321,7 +321,7 @@ const GraphTrafficComponent: React.FC<GraphTrafficProps> = (props: GraphTrafficP
                             position={TooltipPosition.right}
                             content={grpcOption.tooltip}
                           >
-                            <KialiIcon.Info className={itemInfoStyle} />
+                            <KialiIcon.Info className={infoStyle} />
                           </Tooltip>
                         )}
                       </div>
@@ -356,7 +356,7 @@ const GraphTrafficComponent: React.FC<GraphTrafficProps> = (props: GraphTrafficP
                             position={TooltipPosition.right}
                             content={httpOption.tooltip}
                           >
-                            <KialiIcon.Info className={itemInfoStyle} />
+                            <KialiIcon.Info className={infoStyle} />
                           </Tooltip>
                         )}
                       </div>
@@ -390,7 +390,7 @@ const GraphTrafficComponent: React.FC<GraphTrafficProps> = (props: GraphTrafficP
                             position={TooltipPosition.right}
                             content={tcpOption.tooltip}
                           >
-                            <KialiIcon.Info className={itemInfoStyle} />
+                            <KialiIcon.Info className={infoStyle} />
                           </Tooltip>
                         )}
                       </div>

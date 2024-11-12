@@ -3,6 +3,7 @@ import { Label } from './Label';
 import { Button, ButtonVariant, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
 import { KialiIcon } from '../../config/KialiIcon';
+import { infoStyleProps } from 'styles/InfoStyle';
 
 const SHOW_MORE_TRESHOLD = 2;
 
@@ -18,8 +19,8 @@ const linkStyle = kialiStyle({
   fontSize: '0.8rem'
 });
 
-const infoStyle = kialiStyle({
-  marginLeft: '0.25rem',
+const labelInfoStyle = kialiStyle({
+  ...infoStyleProps,
   marginBottom: '0.125rem'
 });
 
@@ -76,7 +77,7 @@ export const Labels: React.FC<LabelsProps> = (props: LabelsProps) => {
       position={TooltipPosition.auto}
       content={<div style={{ textAlign: 'left' }}>{props.tooltipMessage}</div>}
     >
-      <KialiIcon.Info className={infoStyle} />
+      <KialiIcon.Info className={labelInfoStyle} />
     </Tooltip>
   ) : undefined;
 

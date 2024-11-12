@@ -32,6 +32,7 @@ import { PFColors } from '../../../components/Pf/PfColors';
 import { GetIstioObjectUrl } from '../../../components/Link/IstioObjectLink';
 import { homeCluster, isMultiCluster, serverConfig } from '../../../config';
 import { CLUSTER_DEFAULT } from 'types/Graph';
+import { infoStyle } from 'styles/InfoStyle';
 
 interface IstioConfigOverviewProps {
   cluster?: string;
@@ -50,10 +51,6 @@ interface IstioConfigOverviewProps {
 
 const iconStyle = kialiStyle({
   display: 'inline-block'
-});
-
-const infoStyle = kialiStyle({
-  marginLeft: '0.5rem'
 });
 
 const warnStyle = kialiStyle({

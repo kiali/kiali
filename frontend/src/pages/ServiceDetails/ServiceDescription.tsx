@@ -13,6 +13,7 @@ import { HealthIndicator } from '../../components/Health/HealthIndicator';
 import { PFBadge, PFBadges } from '../../components/Pf/PfBadges';
 import { DetailDescription } from '../../components/DetailDescription/DetailDescription';
 import { AmbientLabel, tooltipMsgType } from '../../components/Ambient/AmbientLabel';
+import { infoStyleProps } from 'styles/InfoStyle';
 
 interface ServiceInfoDescriptionProps {
   namespace: string;
@@ -35,7 +36,7 @@ const iconStyle = kialiStyle({
 });
 
 const infoStyle = kialiStyle({
-  marginLeft: '0.5rem',
+  ...infoStyleProps,
   verticalAlign: '-0.125rem'
 });
 

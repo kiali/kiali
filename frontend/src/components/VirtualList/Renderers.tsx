@@ -43,9 +43,13 @@ import { isGateway, isWaypoint } from '../../helpers/LabelFilterHelper';
 import { KialiIcon } from '../../config/KialiIcon';
 import { Td } from '@patternfly/react-table';
 import { kialiStyle } from 'styles/StyleUtils';
+import { infoStyleProps } from 'styles/InfoStyle';
 
-const infoStyle = kialiStyle({
-  margin: '0 0 -0.125rem 0.5rem'
+const rendererInfoStyle = kialiStyle({
+  ...infoStyleProps,
+  marginBottom: '-0.125rem',
+  marginRight: '0',
+  marginTop: '0'
 });
 
 // Links
@@ -165,7 +169,7 @@ export const details: Renderer<AppListItem | WorkloadListItem | ServiceListItem>
               position={TooltipPosition.top}
               content="Layer 7 service Mesh capabilities in Istio Ambient"
             >
-              <KialiIcon.Info className={infoStyle} />
+              <KialiIcon.Info className={rendererInfoStyle} />
             </Tooltip>
           </li>
         )}
