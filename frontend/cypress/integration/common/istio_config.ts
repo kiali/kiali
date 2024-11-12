@@ -621,7 +621,7 @@ function waitUntilConfigIsVisible(
   healthStatus: string
 ): void {
   if (attempt === 0) {
-    return;
+    throw new Error(`Condition not met after retries`);
   }
   cy.request({ method: 'GET', url: `${Cypress.config('baseUrl')}/api/istio/config?refresh=0` });
   cy.get('[data-test="refresh-button"]').click();
