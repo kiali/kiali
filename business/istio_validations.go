@@ -138,11 +138,11 @@ func (in *IstioValidationsService) CreateValidations(ctx context.Context, cluste
 	var registryServices []*kubernetes.RegistryService
 	var workloadsPerNamespace map[string]models.WorkloadList
 
-	err := in.fetchAllWorkloadsDirect(ctx, &workloadsPerNamespace, cluster, &namespaces)
+	err := in.fetchAllWorkloads(ctx, &workloadsPerNamespace, cluster, &namespaces)
 	if err != nil {
 		return nil, err
 	}
-	err = in.fetchServiceAccountsDirect(ctx, &serviceAccounts)
+	err = in.fetchServiceAccounts(ctx, &serviceAccounts)
 	if err != nil {
 		return nil, err
 	}
@@ -157,7 +157,7 @@ func (in *IstioValidationsService) CreateValidations(ctx context.Context, cluste
 		var istioConfigs models.IstioConfigList
 		var mtlsDetails kubernetes.MTLSDetails
 		var rbacDetails kubernetes.RBACDetails
-		err = in.fetchIstioConfigListDirect(ctx, &istioConfigs, &mtlsDetails, &rbacDetails, cluster, namespace.Name)
+		err = in.fetchIstioConfigList(ctx, &istioConfigs, &mtlsDetails, &rbacDetails, cluster, namespace.Name)
 		if err != nil {
 			return nil, err
 		}
@@ -235,9 +235,39 @@ func (in *IstioValidationsService) GetIstioObjectValidations(ctx context.Context
 	// Get all the Istio objects from a Namespace and all gateways from every namespace
 	wg.Add(3)
 
-	go in.fetchIstioConfigList(ctx, &istioConfigList, &mtlsDetails, &rbacDetails, cluster, namespace, errChan, &wg)
-	go in.fetchAllWorkloads(ctx, &workloadsPerNamespace, cluster, &namespaces, errChan, &wg)
-	go in.fetchServiceAccounts(ctx, &serviceAccounts, errChan, &wg)
+	go func() {
+		defer wg.Done()
+
+		if len(errChan) > 0 {
+			return
+		}
+		if fetchErr := in.fetchIstioConfigList(ctx, &istioConfigList, &mtlsDetails, &rbacDetails, cluster, namespace); fetchErr != nil {
+			errChan <- fetchErr
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+
+		if len(errChan) > 0 {
+			return
+		}
+		if fetchErr := in.fetchAllWorkloads(ctx, &workloadsPerNamespace, cluster, &namespaces); fetchErr != nil {
+			errChan <- fetchErr
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+
+		if len(errChan) > 0 {
+			return
+		}
+		if fetchErr := in.fetchServiceAccounts(ctx, &serviceAccounts); fetchErr != nil {
+			errChan <- fetchErr
+		}
+	}()
+
 	if err := in.fetchNonLocalmTLSConfigs(&mtlsDetails, cluster); err != nil {
 		return nil, nil, err
 	}
@@ -378,8 +408,7 @@ func runObjectReferenceChecker(referenceChecker ReferenceChecker) models.IstioRe
 	return referenceChecker.References()
 }
 
-// helper function for fetchAllWorkloads to call directly
-func (in *IstioValidationsService) fetchAllWorkloadsDirect(
+func (in *IstioValidationsService) fetchAllWorkloads(
 	ctx context.Context,
 	rValue *map[string]models.WorkloadList,
 	cluster string,
@@ -404,27 +433,7 @@ func (in *IstioValidationsService) fetchAllWorkloadsDirect(
 	return nil
 }
 
-// with errChan and WaitGroup for asynchronous use
-func (in *IstioValidationsService) fetchAllWorkloads(
-	ctx context.Context,
-	rValue *map[string]models.WorkloadList,
-	cluster string,
-	namespaces *models.Namespaces,
-	errChan chan error,
-	wg *sync.WaitGroup,
-) {
-	defer wg.Done()
-	if len(errChan) > 0 {
-		return
-	}
-
-	if err := in.fetchAllWorkloadsDirect(ctx, rValue, cluster, namespaces); err != nil {
-		errChan <- err
-	}
-}
-
-// helper function for fetchServiceAccounts to call directly
-func (in *IstioValidationsService) fetchServiceAccountsDirect(
+func (in *IstioValidationsService) fetchServiceAccounts(
 	ctx context.Context,
 	rValue *map[string][]string,
 ) error {
@@ -466,24 +475,7 @@ func (in *IstioValidationsService) fetchServiceAccountsDirect(
 	return nil
 }
 
-// for asynchronous use fetchServiceAccountsDirect
-func (in *IstioValidationsService) fetchServiceAccounts(
-	ctx context.Context,
-	rValue *map[string][]string,
-	errChan chan error,
-	wg *sync.WaitGroup,
-) {
-	defer wg.Done()
-	if len(errChan) > 0 {
-		return
-	}
-
-	if err := in.fetchServiceAccountsDirect(ctx, rValue); err != nil {
-		errChan <- err
-	}
-}
-
-func (in *IstioValidationsService) fetchIstioConfigListDirect(
+func (in *IstioValidationsService) fetchIstioConfigList(
 	ctx context.Context,
 	rValue *models.IstioConfigList,
 	mtlsDetails *kubernetes.MTLSDetails,
@@ -563,26 +555,6 @@ func (in *IstioValidationsService) fetchIstioConfigListDirect(
 	in.filterAuthPolicies(namespace, rbacDetails, istioConfigList.AuthorizationPolicies)
 
 	return nil
-}
-
-// Wrapper with errChan and WaitGroup for asynchronous use
-func (in *IstioValidationsService) fetchIstioConfigList(
-	ctx context.Context,
-	rValue *models.IstioConfigList,
-	mtlsDetails *kubernetes.MTLSDetails,
-	rbacDetails *kubernetes.RBACDetails,
-	cluster, namespace string,
-	errChan chan error,
-	wg *sync.WaitGroup,
-) {
-	defer wg.Done()
-	if len(errChan) > 0 {
-		return
-	}
-
-	if err := in.fetchIstioConfigListDirect(ctx, rValue, mtlsDetails, rbacDetails, cluster, namespace); err != nil {
-		errChan <- err
-	}
 }
 
 func (in *IstioValidationsService) filterPeerAuths(namespace string, mtlsDetails *kubernetes.MTLSDetails, peerAuths []*security_v1.PeerAuthentication) {
