@@ -13,8 +13,7 @@ on:
       olm_version:
         description: "Version of OLM to install or 'latest'. e.g. v0.28.0"
         required: false
-        # change this to "latest" after the upstream OLM bug is fixed
-        default: "v0.28.0"
+        default: "latest"
         type: string
 
 jobs:
