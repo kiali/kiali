@@ -10,7 +10,6 @@ import {
   getFilterSelectedValues,
   filterByHealth
 } from '../../components/Filters/CommonFilters';
-import { hasMissingSidecar } from '../../components/VirtualList/Config';
 import { TextInputTypes } from '@patternfly/react-core';
 import { filterByLabel } from '../../helpers/LabelFilterHelper';
 import { calculateErrorRate } from '../../types/ErrorRate';
@@ -46,14 +45,7 @@ export const sortFields: SortField<ServiceListItem>[] = [
     isNumeric: false,
     param: 'is',
     compare: (a: ServiceListItem, b: ServiceListItem): number => {
-      // First sort by missing sidecar
-      const aSC = hasMissingSidecar(a) ? 1 : 0;
-      const bSC = hasMissingSidecar(b) ? 1 : 0;
-      if (aSC !== bSC) {
-        return aSC - bSC;
-      }
-
-      // Second by Details
+      // First by Details
       const iRefA = a.istioReferences;
       const iRefB = b.istioReferences;
       const cmpRefs = compareObjectReferences(iRefA, iRefB);

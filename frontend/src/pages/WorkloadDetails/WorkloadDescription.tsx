@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { Workload } from '../../types/Workload';
+import { hasMissingSidecar } from 'components/VirtualList/Config';
 import { Card, CardBody, CardHeader, Title, TitleSizes, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
 import { Labels } from '../../components/Label/Labels';
@@ -16,7 +17,7 @@ import { MissingLabel } from '../../components/MissingLabel/MissingLabel';
 import { MissingAuthPolicy } from 'components/MissingAuthPolicy/MissingAuthPolicy';
 import { hasMissingAuthPolicy } from 'utils/IstioConfigUtils';
 import { DetailDescription } from '../../components/DetailDescription/DetailDescription';
-import { isGateway, isWaypoint } from '../../helpers/LabelFilterHelper';
+import { isWaypoint } from '../../helpers/LabelFilterHelper';
 import { AmbientLabel, tooltipMsgType } from '../../components/Ambient/AmbientLabel';
 import { validationKey } from '../../types/IstioConfigList';
 
@@ -64,25 +65,26 @@ const runtimeInfoStyle = kialiStyle({
 
 export const WorkloadDescription: React.FC<WorkloadDescriptionProps> = (props: WorkloadDescriptionProps) => {
   const workload = props.workload;
+  if (!workload) {
+    return <>Loading</>;
+  }
+
   const apps: string[] = [];
   const services: string[] = [];
 
-  if (workload) {
-    if (workload.labels[serverConfig.istioLabels.appLabelName]) {
-      apps.push(workload.labels[serverConfig.istioLabels.appLabelName]);
-    }
-
-    workload.services?.forEach(s => services.push(s.name));
+  if (workload.labels[serverConfig.istioLabels.appLabelName]) {
+    apps.push(workload.labels[serverConfig.istioLabels.appLabelName]);
   }
 
+  workload.services?.forEach(s => services.push(s.name));
+
   const isTemplateLabels =
-    workload &&
     ['Deployment', 'ReplicaSet', 'ReplicationController', 'DeploymentConfig', 'StatefulSet'].indexOf(workload.type) >=
-      0;
+    0;
 
-  const runtimes = (workload?.runtimes ?? []).map(r => r.name).filter(name => name !== '');
+  const runtimes = (workload.runtimes ?? []).map(r => r.name).filter(name => name !== '');
 
-  const workloadProperties = workload ? (
+  const workloadProperties = (
     <>
       <div key="properties-list" className={resourceListStyle}>
         <ul style={{ listStyleType: 'none' }}>
@@ -141,9 +143,9 @@ export const WorkloadDescription: React.FC<WorkloadDescriptionProps> = (props: W
         </ul>
       </div>
     </>
-  ) : undefined;
+  );
 
-  return workload ? (
+  return (
     <Card id="WorkloadDescriptionCard" data-test="workload-description-card">
       <CardHeader>
         <Title headingLevel="h5" size={TitleSizes.lg}>
@@ -151,62 +153,52 @@ export const WorkloadDescription: React.FC<WorkloadDescriptionProps> = (props: W
             <PFBadge badge={PFBadges.Workload} position={TooltipPosition.top} />
           </div>
 
-          {props.workload ? props.workload.name : 'Workload'}
+          {workload.name}
 
-          {workloadProperties ? (
-            <Tooltip
-              position={TooltipPosition.right}
-              content={<div style={{ textAlign: 'left' }}>{workloadProperties}</div>}
-            >
-              <KialiIcon.Info className={infoStyle} />
-            </Tooltip>
-          ) : undefined}
+          <Tooltip
+            position={TooltipPosition.right}
+            content={<div style={{ textAlign: 'left' }}>{workloadProperties}</div>}
+          >
+            <KialiIcon.Info className={infoStyle} />
+          </Tooltip>
 
           <span className={healthIconStyle}>
             <HealthIndicator id={workload.name} health={props.health} />
           </span>
 
-          {props.workload &&
-            !props.workload.istioSidecar &&
-            !props.workload.isAmbient &&
-            !isWaypoint(props.workload.labels) && (
-              <MissingSidecar
-                dataTest={`missing-sidecar-badge-for-${workload.name}-workload-in-${props.namespace}-namespace`}
-                namespace={props.namespace}
-                tooltip={true}
-                className={infoStyle}
-                text=""
-                isGateway={isGateway(workload.labels)}
-              />
-            )}
-
-          {props.workload && props.workload.isAmbient && !isWaypoint(props.workload.labels) && (
-            <AmbientLabel
-              tooltip={tooltipMsgType.workload}
-              waypoint={props.workload.waypointWorkloads?.length > 0 ? true : false}
+          {hasMissingSidecar(workload) && (
+            <MissingSidecar
+              dataTest={`missing-sidecar-badge-for-${workload.name}-workload-in-${props.namespace}-namespace`}
+              tooltip={true}
+              className={infoStyle}
+              text=""
             />
           )}
 
-          {props.workload &&
-            hasMissingAuthPolicy(validationKey(props.workload.name, props.namespace), props.workload.validations) && (
-              <MissingAuthPolicy namespace={props.namespace} tooltip={true} className={infoStyle} text="" />
-            )}
+          {workload.isAmbient && !isWaypoint(workload.labels) && (
+            <AmbientLabel
+              tooltip={tooltipMsgType.workload}
+              waypoint={workload.waypointWorkloads?.length > 0 ? true : false}
+            />
+          )}
 
-          {props.workload &&
-            (!props.workload.appLabel || !props.workload.versionLabel) &&
-            !isWaypoint(props.workload.labels) && (
-              <MissingLabel
-                missingApp={!props.workload.appLabel}
-                missingVersion={!props.workload.versionLabel}
-                className={infoStyle}
-                tooltip={true}
-              />
-            )}
+          {hasMissingAuthPolicy(validationKey(workload.name, props.namespace), workload.validations) && (
+            <MissingAuthPolicy namespace={props.namespace} tooltip={true} className={infoStyle} text="" />
+          )}
+
+          {(!workload.appLabel || !workload.versionLabel) && !isWaypoint(workload.labels) && (
+            <MissingLabel
+              missingApp={!workload.appLabel}
+              missingVersion={!workload.versionLabel}
+              className={infoStyle}
+              tooltip={true}
+            />
+          )}
         </Title>
 
-        {props.workload?.cluster && isMultiCluster && (
+        {workload.cluster && isMultiCluster && (
           <div key="cluster-icon" className={iconStyle}>
-            <PFBadge badge={PFBadges.Cluster} position={TooltipPosition.right} /> {props.workload.cluster}
+            <PFBadge badge={PFBadges.Cluster} position={TooltipPosition.right} /> {workload.cluster}
           </div>
         )}
       </CardHeader>
@@ -225,17 +217,9 @@ export const WorkloadDescription: React.FC<WorkloadDescriptionProps> = (props: W
           services={services}
           health={props.health}
           cluster={props.workload?.cluster}
-          waypointWorkloads={
-            props.workload
-              ? isWaypoint(props.workload.labels)
-                ? props.workload.waypointWorkloads
-                : undefined
-              : undefined
-          }
+          waypointWorkloads={isWaypoint(workload.labels) ? workload.waypointWorkloads : undefined}
         />
       </CardBody>
     </Card>
-  ) : (
-    <>Loading</>
   );
 };

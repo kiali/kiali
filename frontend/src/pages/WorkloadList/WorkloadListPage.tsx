@@ -4,7 +4,7 @@ import { RenderContent } from '../../components/Nav/Page';
 import * as WorkloadListFilters from './FiltersAndSorts';
 import * as FilterComponent from '../../components/FilterList/FilterComponent';
 import { WorkloadListItem, ClusterWorkloadsResponse } from '../../types/Workload';
-import { DurationInSeconds } from '../../types/Common';
+import { InstanceType, DurationInSeconds } from '../../types/Common';
 import { Namespace } from '../../types/Namespace';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 import { namespaceEquals } from '../../utils/Common';
@@ -119,11 +119,13 @@ class WorkloadListPageComponent extends FilterComponent.Component<
         cluster: deployment.cluster,
         namespace: deployment.namespace,
         name: deployment.name,
+        instanceType: InstanceType.Workload,
         type: deployment.type,
         appLabel: deployment.appLabel,
         versionLabel: deployment.versionLabel,
         istioSidecar: deployment.istioSidecar,
         isAmbient: deployment.isAmbient,
+        isGateway: deployment.isGateway,
         additionalDetailSample: deployment.additionalDetailSample,
         health: WorkloadHealth.fromJson(deployment.namespace, deployment.name, deployment.health, {
           rateInterval: this.props.duration,

@@ -129,9 +129,8 @@ func (in *AppService) GetClusterAppList(ctx context.Context, criteria AppCriteri
 
 	for keyApp, valueApp := range allApps {
 		appItem := &models.AppListItem{
-			Name:         keyApp,
-			IstioSidecar: true,
-			Health:       models.EmptyAppHealth(),
+			Name:   keyApp,
+			Health: models.EmptyAppHealth(),
 		}
 		applabels := make(map[string][]string)
 		svcReferences := make([]*models.IstioValidationKey, 0)
@@ -170,13 +169,17 @@ func (in *AppService) GetClusterAppList(ctx context.Context, criteria AppCriteri
 		appItem.IstioReferences = FilterUniqueIstioReferences(append(svcReferences, wkdReferences...))
 
 		for _, w := range valueApp.Workloads {
-			if appItem.IstioSidecar = w.IstioSidecar; !appItem.IstioSidecar {
-				break
+			// If any workload has these properties then consider the whole app to have them.
+			// If some worklodas have a sidecar and some don't for example then all workloads will be
+			// considered to have a sidecar, ambient, gateway etc.
+			if w.IstioSidecar {
+				appItem.IstioSidecar = true
 			}
-		}
-		for _, w := range valueApp.Workloads {
-			if appItem.IsAmbient = w.HasIstioAmbient(); !appItem.IsAmbient {
-				break
+			if w.HasIstioAmbient() {
+				appItem.IsAmbient = true
+			}
+			if w.IsGateway() {
+				appItem.IsGateway = true
 			}
 		}
 		if criteria.IncludeHealth {

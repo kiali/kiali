@@ -12,9 +12,11 @@ import (
 // Pods alias for list of Pod structs
 type Pods []*Pod
 
-const AmbientAnnotation = "ambient.istio.io/redirection"
-const AmbientAnnotationEnabled = "enabled"
-const IstioProxy = "istio-proxy"
+const (
+	AmbientAnnotation        = "ambient.istio.io/redirection"
+	AmbientAnnotationEnabled = "enabled"
+	IstioProxy               = "istio-proxy"
+)
 
 // Pod holds a subset of v1.Pod data that is meaningful in Kiali
 type Pod struct {

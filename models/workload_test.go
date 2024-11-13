@@ -6,6 +6,7 @@ import (
 
 	osapps_v1 "github.com/openshift/api/apps/v1"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	apps_v1 "k8s.io/api/apps/v1"
 	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -33,7 +34,8 @@ func TestParseDeploymentToWorkload(t *testing.T) {
 	config.Set(cfg)
 
 	w := Workload{}
-	w.ParseDeployment(fakeDeployment())
+	d := fakeDeployment()
+	w.ParseDeployment(d)
 
 	assert.Equal("reviews-v1", w.Name)
 	assert.Equal("bar", w.Labels["foo"])
@@ -48,6 +50,11 @@ func TestParseDeploymentToWorkload(t *testing.T) {
 	assert.Equal("value-annot-2", w.AdditionalDetails[0].Value)
 	assert.Equal("Annotation 1", w.AdditionalDetails[1].Title)
 	assert.Equal("value-annot-1", w.AdditionalDetails[1].Value)
+	// TODO: The parsing is actually clobbering the Deployment.Annotations if Template.Annotations
+	// is set but fixing it may cause unintended side effects so putting this test after the rest.
+	d.Spec.Template.Annotations = map[string]string{"food": "pizza", "drink": "soda"}
+	w.ParseDeployment(d)
+	assert.Equal(w.TemplateAnnotations, d.Spec.Template.Annotations)
 }
 
 func TestParseReplicaSetToWorkload(t *testing.T) {
@@ -187,39 +194,84 @@ func TestParsePodWithoutLabelsToWorkload(t *testing.T) {
 }
 
 func TestIsGatewayLabelsToWorkload(t *testing.T) {
-	assert := assert.New(t)
-	config.Set(config.NewConfig())
-
-	w := Workload{}
-	w.Type = "Deployment"
-	w.Labels = map[string]string{
-		"istio":   "ingressgateway",
-		"version": "v1",
+	cases := map[string]struct {
+		Labels              map[string]string
+		ShouldBeGateway     bool
+		TemplateAnnotations map[string]string
+	}{
+		"istioctl created egress gateway should be a gateway": {
+			Labels: map[string]string{
+				"operator.istio.io/component": "EgressGateways",
+				"version":                     "v1",
+			},
+			ShouldBeGateway: true,
+		},
+		"istioctl created ingress gateway should be a gateway": {
+			Labels: map[string]string{
+				"operator.istio.io/component": "IngressGateways",
+				"version":                     "v1",
+			},
+			ShouldBeGateway: true,
+		},
+		"gateway with bad label should not be a gateway": {
+			Labels: map[string]string{
+				"operator.istio.io/component": "EgressGateway",
+				"istio-system":                "ingressgateway",
+			},
+			ShouldBeGateway: false,
+		},
+		"gateway-injection created gateway should be a gateway": {
+			TemplateAnnotations: map[string]string{
+				"inject.istio.io/templates": "gateway",
+			},
+			ShouldBeGateway: true,
+		},
+		"gateway-api created gateway with old label should be a gateway": {
+			Labels: map[string]string{
+				"istio.io/gateway-name": "gateway",
+			},
+			ShouldBeGateway: true,
+		},
+		"gateway-api created gateway with new label should be a gateway": {
+			Labels: map[string]string{
+				"gateway.istio.io/managed": "istio.io-gateway-controller",
+			},
+			ShouldBeGateway: true,
+		},
+		"gateway-api created gateway with new label but with waypoint value should not be a gateway": {
+			Labels: map[string]string{
+				"gateway.istio.io/managed": "istio.io-mesh-controller",
+			},
+			ShouldBeGateway: false,
+		},
+		"gateway with istio ingress label should be a gateway": {
+			Labels: map[string]string{
+				"istio": "ingressgateway",
+			},
+			ShouldBeGateway: true,
+		},
+		"gateway with istio egress label should be a gateway": {
+			Labels: map[string]string{
+				"istio": "egressgateway",
+			},
+			ShouldBeGateway: true,
+		},
+		"no labels and no annotations should not be a gateway": {
+			ShouldBeGateway: false,
+		},
 	}
-	assert.True(w.IsGateway())
 
-	w = Workload{}
-	w.Type = "Deployment"
-	w.Labels = map[string]string{
-		"operator.istio.io/component": "EgressGateways",
-		"version":                     "v1",
-	}
-	assert.True(w.IsGateway())
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			require := require.New(t)
 
-	w = Workload{}
-	w.Type = "Deployment"
-	w.Labels = map[string]string{
-		"operator.istio.io/component": "EgressGateway",
-		"istio-system":                "ingressgateway",
-	}
-	assert.False(w.IsGateway())
+			w := Workload{}
+			w.Labels = tc.Labels
+			w.TemplateAnnotations = tc.TemplateAnnotations
 
-	w = Workload{}
-	w.Type = "Deployment"
-	w.Labels = map[string]string{
-		"gateway.networking.k8s.io/gateway-name": "gateway",
+			require.Equal(tc.ShouldBeGateway, w.IsGateway())
+		})
 	}
-	assert.True(w.IsGateway())
 }
 
 func fakeDeployment() *apps_v1.Deployment {

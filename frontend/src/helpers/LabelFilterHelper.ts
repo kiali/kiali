@@ -100,29 +100,6 @@ const getKeyAndValues = (filters: string[]): { keyValues: string[]; keys: string
   return { keyValues, keys };
 };
 
-export const getGatewayLabels = (labelConfig: string): string[] => {
-  const label = labelConfig.split('=');
-  if (label.length === 2) {
-    return label;
-  }
-  return ['', ''];
-};
-
-export const isGateway = (labels: { [key: string]: string }): boolean => {
-  const ingress = getGatewayLabels(serverConfig.istioLabels.ingressGatewayLabel);
-  const egress = getGatewayLabels(serverConfig.istioLabels.egressGatewayLabel);
-  return (
-    labels &&
-    ((ingress[0] in labels && labels[ingress[0]] === ingress[1]) ||
-      (egress[0] in labels && labels[egress[0]] === egress[1]) ||
-      isK8sGateway(labels))
-  );
-};
-
-export const isK8sGateway = (labels: { [key: string]: string }): boolean => {
-  return labels && serverConfig.istioLabels.k8sGatewayLabelName in labels;
-};
-
 export const isWaypoint = (labels: { [key: string]: string }): boolean => {
   return (
     labels &&

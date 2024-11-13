@@ -4,7 +4,7 @@ import { ServerList } from './GatewayForm/ServerList';
 import { MAX_PORT, Server, ServerForm, ServerTLSSettings, MIN_PORT } from '../../types/IstioObjects';
 import { isValid } from 'utils/Common';
 import { areValidHosts } from './GatewayForm/ServerBuilder';
-import { serverConfig } from '../../config';
+import { defaultGatewayLabel, defaultGatewayLabelValue } from 'config/Constants';
 
 type Props = {
   gateway: GatewayState;
@@ -24,7 +24,7 @@ export const initGateway = (): GatewayState => ({
   addWorkloadSelector: false,
   gatewayServers: [],
   serversForm: [],
-  workloadSelectorLabels: serverConfig.istioLabels.ingressGatewayLabel,
+  workloadSelectorLabels: `${defaultGatewayLabel}=${defaultGatewayLabelValue}`,
   workloadSelectorValid: true
 });
 

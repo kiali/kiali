@@ -19,7 +19,6 @@ import { location, router, URLParam } from '../../app/History';
 import { MiniGraphCard } from '../../components/CytoscapeGraph/MiniGraphCard';
 import { IstioConfigCard } from '../../components/IstioConfigCard/IstioConfigCard';
 import { MiniGraphCardPF } from 'pages/GraphPF/MiniGraphCardPF';
-import { isGateway } from '../../helpers/LabelFilterHelper';
 import { getGVKTypeString, stringToGVK } from '../../utils/IstioConfigUtils';
 
 type WorkloadInfoProps = {
@@ -170,7 +169,7 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
           checks: []
         };
 
-        if (!isIstioNamespace(this.props.namespace) && !isGateway(this.props.workload?.labels || {})) {
+        if (!isIstioNamespace(this.props.namespace) && !workload.isGateway) {
           if (!isWaypoint) {
             if (
               (!pod.istioContainers || pod.istioContainers.length === 0) &&
