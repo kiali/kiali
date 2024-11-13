@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import { SimpleList, SimpleListItem, Button, Checkbox, Divider, ButtonVariant } from '@patternfly/react-core';
+import { SimpleList, SimpleListItem, Button, Divider, ButtonVariant } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
 
 import { KialiAppState } from 'store/Store';
@@ -20,6 +20,7 @@ import { isParentKiosk, kioskContextMenuAction } from '../../components/Kiosk/Ki
 import { KialiDispatch } from '../../types/Redux';
 import { isMultiCluster } from '../../config';
 import { KialiIcon } from 'config/KialiIcon';
+import { TraceLimit, TraceLimitOption } from 'components/Metrics/TraceLimit';
 
 type ReduxStateProps = {
   kiosk: string;
@@ -38,10 +39,7 @@ type Props = ReduxStateProps &
 
 type State = {
   traces: JaegerTrace[];
-  useGraphRefresh: boolean;
 };
-
-const tracesLimit = 15;
 
 const refreshDivStyle = kialiStyle({
   display: 'flex',
@@ -49,15 +47,6 @@ const refreshDivStyle = kialiStyle({
   width: '100%',
   marginTop: '0.5rem',
   marginBottom: '0.5rem'
-});
-
-const checkboxStyle = kialiStyle({
-  $nest: {
-    '& > label': {
-      fontSize: 'var(--graph-side-panel--font-size)',
-      paddingTop: '0.25rem'
-    }
-  }
 });
 
 const refreshButtonStyle = kialiStyle({
@@ -71,6 +60,7 @@ const dividerStyle = kialiStyle({
 
 class SummaryPanelNodeTracesComponent extends React.Component<Props, State> {
   private promises = new PromisesRegistry();
+  private currentLimit: TraceLimitOption = 20;
 
   static getDerivedStateFromProps(props: Props, state: State): State {
     // Update the selected trace within list because it may have more up-to-date data after being selected hence fetched again
@@ -87,7 +77,7 @@ class SummaryPanelNodeTracesComponent extends React.Component<Props, State> {
 
   constructor(props: Props) {
     super(props);
-    this.state = { traces: [], useGraphRefresh: false };
+    this.state = { traces: [] };
   }
 
   componentDidMount(): void {
@@ -96,7 +86,6 @@ class SummaryPanelNodeTracesComponent extends React.Component<Props, State> {
 
   componentDidUpdate(prevProps: Props): void {
     if (
-      (this.state.useGraphRefresh && prevProps.queryTime !== this.props.queryTime) ||
       prevProps.nodeData.namespace !== this.props.nodeData.namespace ||
       prevProps.nodeData.app !== this.props.nodeData.app ||
       prevProps.nodeData.workload !== this.props.nodeData.workload ||
@@ -108,53 +97,6 @@ class SummaryPanelNodeTracesComponent extends React.Component<Props, State> {
 
   componentWillUnmount(): void {
     this.promises.cancelAll();
-  }
-
-  private loadTraces(): void {
-    // Convert seconds to microseconds
-    const params: TracingQuery = {
-      startMicros: this.props.queryTime * 1000000,
-      limit: tracesLimit
-    };
-
-    const d = this.props.nodeData;
-
-    const promise = d.workload
-      ? API.getWorkloadTraces(d.namespace, d.workload, params, d.cluster)
-      : d.service
-      ? API.getServiceTraces(d.namespace, d.service, params, d.cluster)
-      : API.getAppTraces(d.namespace, d.app!, params, d.cluster);
-
-    this.promises.cancelAll();
-
-    this.promises
-      .register('traces', promise)
-      .then(response => {
-        const traces = response.data.data
-          ? (response.data.data
-              .map(trace => transformTraceData(trace, this.props.nodeData.cluster))
-              .filter(trace => trace !== null) as JaegerTrace[])
-          : [];
-
-        if (this.props.selectedTrace && !traces.some(t => t.traceID === this.props.selectedTrace!.traceID)) {
-          // Put selected trace back in list
-          traces.push(this.props.selectedTrace);
-        }
-
-        this.setState({ traces: traces });
-      })
-      .catch(error => {
-        AlertUtils.addError('Could not fetch traces.', error);
-      });
-  }
-
-  private onClickTrace(trace: JaegerTrace): void {
-    if (this.props.selectedTrace?.traceID === trace.traceID) {
-      // Deselect
-      this.props.setTraceId(this.props.nodeData.cluster, undefined);
-    } else {
-      this.props.setTraceId(this.props.nodeData.cluster, trace.traceID);
-    }
   }
 
   render(): React.ReactNode {
@@ -169,17 +111,12 @@ class SummaryPanelNodeTracesComponent extends React.Component<Props, State> {
     return (
       <div style={{ marginBottom: '0.5rem' }}>
         <div className={refreshDivStyle}>
-          <Checkbox
-            id="use-graph-refresh"
-            label="Use graph refresh"
-            className={checkboxStyle}
-            isChecked={this.state.useGraphRefresh}
-            onChange={(_event, checked) => this.setState({ useGraphRefresh: checked })}
-          />
+          <span style={{ marginLeft: '0.5rem' }}>
+            <TraceLimit initialLimit={this.currentLimit} onLimitChange={this.onLimitChange} />
+          </span>
 
           <Button
             id="manual-refresh"
-            isDisabled={this.state.useGraphRefresh}
             onClick={() => this.loadTraces()}
             aria-label="Refresh"
             variant={ButtonVariant.secondary}
@@ -222,6 +159,58 @@ class SummaryPanelNodeTracesComponent extends React.Component<Props, State> {
         </Button>
       </div>
     );
+  }
+
+  private onLimitChange = (limit: number): void => {
+    this.currentLimit = limit as TraceLimitOption;
+    this.loadTraces();
+  };
+
+  private loadTraces(): void {
+    // Convert seconds to microseconds
+    const params: TracingQuery = {
+      startMicros: this.props.queryTime * 1000000,
+      limit: this.currentLimit
+    };
+
+    const d = this.props.nodeData;
+
+    const promise = d.workload
+      ? API.getWorkloadTraces(d.namespace, d.workload, params, d.cluster)
+      : d.service
+      ? API.getServiceTraces(d.namespace, d.service, params, d.cluster)
+      : API.getAppTraces(d.namespace, d.app!, params, d.cluster);
+
+    this.promises.cancelAll();
+
+    this.promises
+      .register('traces', promise)
+      .then(response => {
+        const traces = response.data.data
+          ? (response.data.data
+              .map(trace => transformTraceData(trace, this.props.nodeData.cluster))
+              .filter(trace => trace !== null) as JaegerTrace[])
+          : [];
+
+        if (this.props.selectedTrace && !traces.some(t => t.traceID === this.props.selectedTrace!.traceID)) {
+          // Put selected trace back in list
+          traces.push(this.props.selectedTrace);
+        }
+
+        this.setState({ traces: traces });
+      })
+      .catch(error => {
+        AlertUtils.addError('Could not fetch traces.', error);
+      });
+  }
+
+  private onClickTrace(trace: JaegerTrace): void {
+    if (this.props.selectedTrace?.traceID === trace.traceID) {
+      // Deselect
+      this.props.setTraceId(this.props.nodeData.cluster, undefined);
+    } else {
+      this.props.setTraceId(this.props.nodeData.cluster, trace.traceID);
+    }
   }
 }
 
