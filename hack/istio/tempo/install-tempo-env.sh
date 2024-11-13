@@ -19,6 +19,7 @@ METHOD="operator"
 ONLY_TEMPO="false"
 SECURE_DISTRIBUTOR="false"
 TEMPO_NS="tempo"
+TEMPO_PORT="3200"
 
 # process command line args
 while [[ $# -gt 0 ]]; do
@@ -228,6 +229,7 @@ EOF
 
   else
     echo -e "Installing Tempo with Helm Charts \n"
+    TEMPO_PORT="3100"
     helm repo add grafana https://grafana.github.io/helm-charts
     helm repo update
     helm install tempo-cr grafana/tempo-distributed -n tempo -f ${SCRIPT_DIR}/helm.yaml
@@ -288,7 +290,7 @@ else
     echo -e "Installation finished. \n"
     if [ "${IS_OPENSHIFT}" != "true" ]; then
       echo "If you want to access Tempo from outside the cluster on your local machine, You can port forward the services with:
-  ./run-kiali.sh -pg 13000:3000 -pp 19090:9090 -pt 3200:3200 -app 8080 -es false -iu http://127.0.0.1:15014 -tr tempo-cr-query-frontend -ts tempo-cr-query-frontend -tn tempo
+  ./run-kiali.sh -pg 13000:3000 -pp 19090:9090 -pt 3200:${TEMPO_PORT} -app 8080 -es false -iu http://127.0.0.1:15014 -tr tempo-cr-query-frontend -ts tempo-cr-query-frontend -tn tempo
 
   To configure Kiali to use this, set the external_services.tracing section with the following settings:
   tracing:
