@@ -12,11 +12,12 @@ import { defaultMetricsDuration } from './Helper';
 export type JaegerLineInfo = LineInfo & { traceId?: string; spanId?: string };
 
 type FetchOptions = {
-  namespace: string;
   cluster?: string;
+  limit: number;
+  namespace: string;
+  range: TimeRange;
   target: string;
   targetKind: MetricsObjectTypes;
-  range: TimeRange;
 };
 
 export class SpanOverlay {
@@ -48,6 +49,7 @@ export class SpanOverlay {
     if (this.spans.length > 0) {
       q.startMicros = 1 + Math.max(...this.spans.map(s => s.startTime));
     }
+    q.limit = opts.limit;
     const apiCall =
       opts.targetKind === MetricsObjectTypes.APP
         ? API.getAppSpans

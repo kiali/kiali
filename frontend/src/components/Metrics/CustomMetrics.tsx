@@ -6,7 +6,6 @@ import {
   ToolbarItem,
   Card,
   CardBody,
-  Checkbox,
   EmptyState,
   EmptyStateVariant,
   EmptyStateHeader
@@ -39,6 +38,7 @@ import { UserSettingsActions } from '../../actions/UserSettingsActions';
 import { timeRangeSelector } from '../../store/Selectors';
 import { TimeDurationIndicator } from '../Time/TimeDurationIndicator';
 import { isParentKiosk, kioskContextMenuAction } from 'components/Kiosk/KioskActions';
+import { TraceSpansLimit } from './TraceSpansLimit';
 
 type MetricsState = {
   cluster?: string;
@@ -49,6 +49,7 @@ type MetricsState = {
   showSpans: boolean;
   spanOverlay?: Overlay<JaegerLineInfo>;
   tabHeight: number;
+  traceLimit: number;
 };
 
 type CustomMetricsProps = {
@@ -75,6 +76,9 @@ type ReduxDispatchProps = {
 
 type Props = ReduxStateProps & ReduxDispatchProps & CustomMetricsProps;
 
+// lower that the standard default, we apply it to several small charts
+const traceLimitDefault = 20;
+
 const fullHeightStyle = kialiStyle({
   height: '100%'
 });
@@ -97,18 +101,19 @@ class CustomMetricsComponent extends React.Component<Props, MetricsState> {
   constructor(props: Props) {
     super(props);
     this.toolbarRef = React.createRef<HTMLDivElement>();
-    const settings = MetricsHelper.retrieveMetricsSettings();
+    const settings = MetricsHelper.retrieveMetricsSettings(traceLimitDefault);
     this.options = this.initOptions(settings);
 
     // Initialize active filters from URL
     const cluster = HistoryManager.getClusterName();
     this.state = {
       cluster: cluster,
+      grafanaLinks: [],
       isTimeOptionsOpen: false,
       labelsSettings: settings.labelsSettings,
-      grafanaLinks: [],
+      showSpans: settings.showSpans,
       tabHeight: 300,
-      showSpans: settings.showSpans
+      traceLimit: settings.spanLimit
     };
 
     this.spanOverlay = new SpanOverlay(changed => this.setState({ spanOverlay: changed }));
@@ -135,7 +140,7 @@ class CustomMetricsComponent extends React.Component<Props, MetricsState> {
     this.refresh();
   }
 
-  componentDidUpdate(prevProps: Props): void {
+  componentDidUpdate(prevProps: Props, prevState: MetricsState): void {
     if (
       this.props.namespace !== prevProps.namespace ||
       this.props.app !== prevProps.app ||
@@ -143,9 +148,11 @@ class CustomMetricsComponent extends React.Component<Props, MetricsState> {
       this.props.version !== prevProps.version ||
       this.props.template !== prevProps.template ||
       this.props.lastRefreshAt !== prevProps.lastRefreshAt ||
+      this.state.showSpans !== prevState.showSpans ||
+      this.state.traceLimit !== prevState.traceLimit ||
       !isEqualTimeRange(this.props.timeRange, prevProps.timeRange)
     ) {
-      const settings = MetricsHelper.retrieveMetricsSettings();
+      const settings = MetricsHelper.retrieveMetricsSettings(this.state.traceLimit);
       this.options = this.initOptions(settings);
       this.spanOverlay.reset();
       this.refresh();
@@ -154,13 +161,15 @@ class CustomMetricsComponent extends React.Component<Props, MetricsState> {
 
   private refresh = (): void => {
     this.fetchMetrics();
-    if (this.props.tracingIntegration) {
+
+    if (this.state.showSpans) {
       this.spanOverlay.fetch({
-        namespace: this.props.namespace,
         cluster: this.state.cluster,
+        limit: this.state.traceLimit,
+        namespace: this.props.namespace,
+        range: this.props.timeRange,
         target: this.props.workload || this.props.app,
-        targetKind: this.props.workload ? MetricsObjectTypes.WORKLOAD : MetricsObjectTypes.APP,
-        range: this.props.timeRange
+        targetKind: this.props.workload ? MetricsObjectTypes.WORKLOAD : MetricsObjectTypes.APP
       });
     }
   };
@@ -296,12 +305,16 @@ class CustomMetricsComponent extends React.Component<Props, MetricsState> {
     );
   }
 
-  private onSpans = (checked: boolean): void => {
+  private onTraceSpansChange = (checked: boolean, limit: number): void => {
     const urlParams = new URLSearchParams(location.getSearch());
     urlParams.set(URLParam.SHOW_SPANS, String(checked));
-
+    if (checked) {
+      urlParams.set(URLParam.TRACING_LIMIT_TRACES, String(limit));
+    } else {
+      urlParams.delete(URLParam.SHOW_SPANS);
+    }
     router.navigate(`${location.getPathname()}?${urlParams.toString()}`, { replace: true });
-    this.setState({ showSpans: !this.state.showSpans });
+    this.setState({ showSpans: checked, traceLimit: limit });
   };
 
   private renderOptionsBar = (): React.ReactNode => {
@@ -332,15 +345,16 @@ class CustomMetricsComponent extends React.Component<Props, MetricsState> {
               <MetricsRawAggregation onChanged={this.onRawAggregationChanged} />
             </ToolbarItem>
 
-            <ToolbarItem style={{ alignSelf: 'center' }}>
-              <Checkbox
-                id={`spans-show-`}
-                isChecked={this.state.showSpans}
-                key={`spans-show-chart`}
-                label="Spans"
-                onChange={(_event, checked) => this.onSpans(checked)}
-              />
-            </ToolbarItem>
+            {this.props.tracingIntegration && (
+              <ToolbarItem style={{ alignSelf: 'center' }}>
+                <TraceSpansLimit
+                  label="Spans"
+                  onChange={this.onTraceSpansChange}
+                  showSpans={this.state.showSpans}
+                  traceLimit={this.state.traceLimit}
+                />
+              </ToolbarItem>
+            )}
 
             <KioskElement>
               <ToolbarItem style={{ marginLeft: 'auto' }}>

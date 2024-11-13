@@ -32,6 +32,7 @@ import { KialiCrippledFeatures } from 'types/ServerConfig';
 import { TimeDurationIndicator } from '../Time/TimeDurationIndicator';
 import { ApiResponse } from 'types/Api';
 import { isParentKiosk, kioskContextMenuAction } from 'components/Kiosk/KioskActions';
+import { TraceSpansLimit } from './TraceSpansLimit';
 
 type MetricsState = {
   crippledFeatures?: KialiCrippledFeatures;
@@ -43,6 +44,7 @@ type MetricsState = {
   showTrendlines: boolean;
   spanOverlay?: Overlay<JaegerLineInfo>;
   tabHeight: number;
+  traceLimit: number;
 };
 
 type ObjectId = {
@@ -72,6 +74,9 @@ type ReduxDispatchProps = {
 
 type Props = ReduxStateProps & ReduxDispatchProps & IstioMetricsProps;
 
+// lower that the standard default, we apply it to several small charts
+const traceLimitDefault = 20;
+
 const fullHeightStyle = kialiStyle({
   height: '100%'
 });
@@ -85,7 +90,7 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
   constructor(props: Props) {
     super(props);
     this.toolbarRef = React.createRef<HTMLDivElement>();
-    const settings = MetricsHelper.retrieveMetricsSettings();
+    const settings = MetricsHelper.retrieveMetricsSettings(traceLimitDefault);
     this.options = this.initOptions(settings);
 
     // Initialize active filters from URL
@@ -95,10 +100,13 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
       isTimeOptionsOpen: false,
       tabHeight: 300,
       showSpans: settings.showSpans,
-      showTrendlines: settings.showTrendlines
+      showTrendlines: settings.showTrendlines,
+      traceLimit: settings.spanLimit
     };
 
-    this.spanOverlay = new SpanOverlay(changed => this.setState({ spanOverlay: changed }));
+    this.spanOverlay = new SpanOverlay(changed => {
+      this.setState({ spanOverlay: changed });
+    });
   }
 
   private initOptions(settings: MetricsSettings): IstioMetricsOptions {
@@ -127,23 +135,26 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
     this.refresh();
   }
 
-  componentDidUpdate(prevProps: Props): void {
+  componentDidUpdate(prevProps: Props, prevState: MetricsState): void {
     if (
       this.props.direction !== prevProps.direction ||
       this.props.namespace !== prevProps.namespace ||
       this.props.object !== prevProps.object ||
       this.props.objectType !== prevProps.objectType ||
       this.props.lastRefreshAt !== prevProps.lastRefreshAt ||
+      this.state.showSpans !== prevState.showSpans ||
+      this.state.traceLimit !== prevState.traceLimit ||
       !isEqualTimeRange(this.props.timeRange, prevProps.timeRange)
     ) {
       if (this.props.direction !== prevProps.direction) {
-        const settings = MetricsHelper.retrieveMetricsSettings();
+        const settings = MetricsHelper.retrieveMetricsSettings(this.state.traceLimit);
         this.options = this.initOptions(settings);
 
         this.setState({
           labelsSettings: settings.labelsSettings,
           showSpans: settings.showSpans,
-          showTrendlines: settings.showTrendlines
+          showTrendlines: settings.showTrendlines,
+          traceLimit: settings.spanLimit
         });
       }
 
@@ -155,13 +166,14 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
   private refresh = (): void => {
     this.fetchMetrics();
 
-    if (this.props.tracingIntegration) {
+    if (this.state.showSpans) {
       this.spanOverlay.fetch({
-        namespace: this.props.namespace,
         cluster: this.props.cluster,
+        limit: this.state.traceLimit,
+        namespace: this.props.namespace,
+        range: this.props.timeRange,
         target: this.props.object,
-        targetKind: this.props.objectType,
-        range: this.props.timeRange
+        targetKind: this.props.objectType
       });
     }
   };
@@ -334,11 +346,16 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
     );
   }
 
-  private onSpans = (checked: boolean): void => {
+  private onTraceSpansChange = (checked: boolean, limit: number): void => {
     const urlParams = new URLSearchParams(location.getSearch());
     urlParams.set(URLParam.SHOW_SPANS, String(checked));
+    if (checked) {
+      urlParams.set(URLParam.TRACING_LIMIT_TRACES, String(limit));
+    } else {
+      urlParams.delete(URLParam.SHOW_SPANS);
+    }
     router.navigate(`${location.getPathname()}?${urlParams.toString()}`, { replace: true });
-    this.setState({ showSpans: !this.state.showSpans });
+    this.setState({ showSpans: checked, traceLimit: limit });
   };
 
   private onTrendlines = (checked: boolean): void => {
@@ -387,15 +404,16 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
               />
             </ToolbarItem>
 
-            <ToolbarItem style={{ alignSelf: 'center' }}>
-              <Checkbox
-                id="spans-show-"
-                isChecked={this.state.showSpans}
-                key="spans-show-chart"
-                label="Spans"
-                onChange={(_event, checked) => this.onSpans(checked)}
-              />
-            </ToolbarItem>
+            {this.props.tracingIntegration && (
+              <ToolbarItem style={{ alignSelf: 'center' }}>
+                <TraceSpansLimit
+                  label="Spans"
+                  onChange={this.onTraceSpansChange}
+                  showSpans={this.state.showSpans}
+                  traceLimit={this.state.traceLimit}
+                />
+              </ToolbarItem>
+            )}
 
             <ToolbarItem style={{ alignSelf: 'center' }}>
               <Checkbox

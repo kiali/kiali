@@ -47,7 +47,7 @@ import { location, router, URLParam } from 'app/History';
 import { Span, TracingQuery } from 'types/Tracing';
 import moment from 'moment';
 import { formatDuration } from 'utils/tracing/TracingHelper';
-import { itemInfoStyle, kebabToggleStyle } from 'styles/DropdownStyles';
+import { kebabToggleStyle } from 'styles/DropdownStyles';
 import { isValid } from 'utils/Common';
 import { KioskElement } from '../../components/Kiosk/KioskElement';
 import { TimeDurationModal } from '../../components/Time/TimeDurationModal';
@@ -55,6 +55,9 @@ import { TimeDurationIndicator } from '../../components/Time/TimeDurationIndicat
 import { serverConfig } from '../../config';
 import { ApiResponse } from 'types/Api';
 import { isParentKiosk, kioskContextMenuAction } from 'components/Kiosk/KioskActions';
+import { TRACE_LIMIT_DEFAULT } from 'components/Metrics/TraceLimit';
+import { TraceSpansLimit } from 'components/Metrics/TraceSpansLimit';
+import { infoStyle } from 'styles/InfoStyle';
 
 const appContainerColors = [PFColors.Blue300, PFColors.Green300, PFColors.Purple300, PFColors.Orange300];
 const proxyContainerColor = PFColors.Gold400;
@@ -63,6 +66,7 @@ const spanColor = PFColors.Cyan300;
 type ReduxProps = {
   kiosk: string;
   timeRange: TimeRange;
+  tracingIntegration: boolean;
 };
 
 export type WorkloadPodLogsProps = ReduxProps & {
@@ -109,6 +113,7 @@ interface WorkloadPodLogsState {
   showError?: string;
   showLogValue: string;
   showSpans: boolean;
+  showSpansLimit: number;
   showTimestamps: boolean;
   showToolbar: boolean;
   showZtunnel: boolean;
@@ -150,12 +155,6 @@ const checkInfoIcon = kialiStyle({
   width: '0.75rem',
   marginLeft: '-5px',
   marginTop: '5px'
-});
-
-const infoIcons = kialiStyle({
-  marginLeft: '0.5em',
-  marginTop: '30%',
-  width: '1.5rem'
 });
 
 const toolbarTail = kialiStyle({
@@ -219,9 +218,14 @@ const logInfoStyle = kialiStyle({
   fontSize: '0.75rem'
 });
 
-const logMessaageStyle = kialiStyle({
+const logMessageStyle = kialiStyle({
   fontSize: '0.75rem',
   paddingRight: '1rem'
+});
+
+const spansLabelStyle = kialiStyle({
+  color: spanColor,
+  fontWeight: 'bold'
 });
 
 const colorCheck = (color: string): string =>
@@ -255,6 +259,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
 
     const urlParams = new URLSearchParams(location.getSearch());
     const showSpans = urlParams.get(URLParam.SHOW_SPANS);
+    const showSpansLimit = urlParams.get(URLParam.TRACING_LIMIT_TRACES);
     const showZtunnel = urlParams.get(URLParam.SHOW_ZTUNNEL);
 
     const defaultState = {
@@ -272,6 +277,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
       showClearShowLogButton: false,
       showLogValue: '',
       showSpans: showSpans === 'true',
+      showSpansLimit: showSpansLimit ? parseInt(showSpansLimit) : TRACE_LIMIT_DEFAULT,
       showZtunnel: showZtunnel === 'true',
       showTimestamps: false,
       showToolbar: true,
@@ -314,6 +320,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
         pod.name,
         this.state.containerOptions,
         this.state.showSpans,
+        this.state.showSpansLimit,
         this.state.showZtunnel,
         this.state.maxLines,
         this.props.timeRange,
@@ -329,6 +336,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
     const updateMaxLines = this.state.maxLines && prevState.maxLines !== this.state.maxLines;
     const lastRefreshChanged = prevProps.lastRefreshAt !== this.props.lastRefreshAt;
     const showSpansChanged = prevState.showSpans !== this.state.showSpans;
+    const showSpansLimitChanged = prevState.showSpansLimit !== this.state.showSpansLimit;
     const timeRangeChanged = !isEqualTimeRange(this.props.timeRange, prevProps.timeRange);
     const showZtunnel = prevState.showZtunnel !== this.state.showZtunnel;
 
@@ -337,6 +345,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
       updateMaxLines ||
       lastRefreshChanged ||
       showSpansChanged ||
+      showSpansLimitChanged ||
       timeRangeChanged ||
       showZtunnel
     ) {
@@ -346,6 +355,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
         pod.name,
         newContainerOptions!,
         this.state.showSpans,
+        this.state.showSpansLimit,
         this.state.showZtunnel,
         this.state.maxLines,
         this.props.timeRange,
@@ -370,11 +380,11 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                     {this.state.showToolbar && (
                       <Toolbar style={{ padding: 0, width: '100%' }}>
                         <ToolbarGroup style={{ margin: 0, marginRight: '0.5rem' }}>
-                          <ToolbarItem>
-                            <PFBadge badge={PFBadges.Pod} position={TooltipPosition.top} style={{ marginTop: '30%' }} />
+                          <ToolbarItem style={{ alignSelf: 'center' }}>
+                            <PFBadge badge={PFBadges.Pod} position={TooltipPosition.top} />
                           </ToolbarItem>
 
-                          <ToolbarItem>
+                          <ToolbarItem style={{ alignSelf: 'center' }}>
                             <ToolbarDropdown
                               id="wpl_pods"
                               tooltip="Display logs for the selected pod"
@@ -385,7 +395,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                             />
                           </ToolbarItem>
 
-                          <ToolbarItem>
+                          <ToolbarItem style={{ alignSelf: 'center' }}>
                             <TextInput
                               id="log_show"
                               name="log_show"
@@ -433,36 +443,29 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                             {this.state.showError && <div style={{ color: 'red' }}>{this.state.showError}</div>}
                             {this.state.hideError && <div style={{ color: 'red' }}>{this.state.hideError}</div>}
 
-                            <ToolbarItem>
+                            <ToolbarItem style={{ alignSelf: 'center' }}>
                               <Tooltip
                                 key="show_hide_log_help"
                                 position="top"
                                 content="Show only, or Hide all, matching log entries. Match by case-sensitive substring (default) or regular expression (as set in the kebab menu)."
                               >
-                                <KialiIcon.Info className={infoIcons} />
+                                <KialiIcon.Info className={infoStyle} />
                               </Tooltip>
                             </ToolbarItem>
                           </ToolbarItem>
 
-                          <ToolbarItem style={{ alignSelf: 'center' }}>
-                            <Checkbox
-                              id="log-spans"
-                              className={checkboxStyle}
-                              inputClassName={colorCheck(spanColor)}
-                              isChecked={this.state.showSpans}
-                              label={
-                                <span
-                                  style={{
-                                    color: spanColor,
-                                    fontWeight: 'bold'
-                                  }}
-                                >
-                                  spans
-                                </span>
-                              }
-                              onChange={(_event, checked) => this.toggleSpans(checked)}
-                            />
-                          </ToolbarItem>
+                          {this.props.tracingIntegration && (
+                            <ToolbarItem style={{ alignSelf: 'center' }}>
+                              <TraceSpansLimit
+                                inputClassName={colorCheck(spanColor)}
+                                label="Spans"
+                                labelClassName={spansLabelStyle}
+                                onChange={this.onTraceSpansChange}
+                                showSpans={this.state.showSpans}
+                                traceLimit={this.state.showSpansLimit}
+                              />
+                            </ToolbarItem>
+                          )}
 
                           <ToolbarItem style={{ marginLeft: 'auto' }}>
                             <ToolbarDropdown
@@ -504,12 +507,17 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
     );
   }
 
-  private toggleSpans = (checked: boolean): void => {
+  private onTraceSpansChange = (checked: boolean, limit: number): void => {
     const urlParams = new URLSearchParams(location.getSearch());
     urlParams.set(URLParam.SHOW_SPANS, String(checked));
-    router.navigate(`${location.getPathname()}?${urlParams.toString()}`, { replace: true });
+    if (checked) {
+      urlParams.set(URLParam.TRACING_LIMIT_TRACES, String(limit));
+    } else {
+      urlParams.delete(URLParam.SHOW_SPANS);
+    }
 
-    this.setState({ showSpans: !this.state.showSpans });
+    router.navigate(`${location.getPathname()}?${urlParams.toString()}`, { replace: true });
+    this.setState({ showSpans: checked, showSpansLimit: limit });
   };
 
   private getContainerLegend = (): React.ReactNode => {
@@ -610,7 +618,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
       return (
         <div key={`s-${index}`} className={logLineStyle} style={{ ...style }}>
           {this.state.showTimestamps && (
-            <span key={`al-s-${index}`} className={logMessaageStyle} style={{ color: spanColor }}>
+            <span key={`al-s-${index}`} className={logMessageStyle} style={{ color: spanColor }}>
               {e.timestamp}
             </span>
           )}
@@ -631,7 +639,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
               <KialiIcon.Info key={`al-i-${index}`} className={alInfoIcon} color={spanColor} />
             </Button>
           </Tooltip>
-          <p key={`al-p-${index}`} className={logMessaageStyle} style={{ color: spanColor }}>
+          <p key={`al-p-${index}`} className={logMessageStyle} style={{ color: spanColor }}>
             {this.entryToString(e)}
           </p>
         </div>
@@ -643,14 +651,14 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
 
     return !le.accessLog ? (
       <div key={`le-d-${index}`} className={logLineStyle} style={{ ...style }}>
-        <p key={`le-${index}`} className={logMessaageStyle} style={{ color: messageColor }}>
+        <p key={`le-${index}`} className={logMessageStyle} style={{ color: messageColor }}>
           {this.entryToString(e)}
         </p>
       </div>
     ) : (
       <div key={`al-${index}`} className={logLineStyle} style={{ ...style }}>
         {this.state.showTimestamps && (
-          <span key={`al-s-${index}`} className={logMessaageStyle} style={{ color: messageColor }}>
+          <span key={`al-s-${index}`} className={logMessageStyle} style={{ color: messageColor }}>
             {formatDate(le.timestamp)}
           </span>
         )}
@@ -673,7 +681,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
           </Button>
         </Tooltip>
 
-        <p key={`al-p-${index}`} className={logMessaageStyle} style={{ color: messageColor }}>
+        <p key={`al-p-${index}`} className={logMessageStyle} style={{ color: messageColor }}>
           {le.message}
         </p>
       </div>
@@ -714,7 +722,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
             </div>
           }
         >
-          <KialiIcon.Info className={itemInfoStyle} />
+          <KialiIcon.Info className={infoStyle} />
         </Tooltip>
       </h1>
     );
@@ -1105,6 +1113,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
     podName: string,
     containerOptions: ContainerOption[],
     showSpans: boolean,
+    showSpansLimit: number,
     showZtunnel: boolean,
     maxLines: number,
     timeRange: TimeRange,
@@ -1160,6 +1169,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
       // Convert seconds to microseconds
       const params: TracingQuery = {
         endMicros: endTime * 1000,
+        limit: showSpansLimit,
         startMicros: sinceTime * 1000000
       };
 
@@ -1279,7 +1289,8 @@ const formatDate = (timestamp: string): string => {
 const mapStateToProps = (state: KialiAppState): ReduxProps => {
   return {
     kiosk: state.globalState.kiosk,
-    timeRange: timeRangeSelector(state)
+    timeRange: timeRangeSelector(state),
+    tracingIntegration: state.tracingState.info?.integration ?? false
   };
 };
 

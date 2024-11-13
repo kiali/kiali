@@ -39,11 +39,12 @@ When('I select only the {string} container', (containerName: string) => {
 });
 
 When('I enable visualization of spans', () => {
+  cy.get('#trace-limit-dropdown-toggle').should('not.exist');
   cy.get('[data-test=workload-logs-pod-containers]').within(() => {
     cy.get('[type=checkbox]').uncheck();
   });
 
-  cy.get('input#log-spans').check();
+  cy.get('input#spans-show').check();
 });
 
 Then('I should see the {string} container listed', (containerName: string) => {
@@ -108,9 +109,9 @@ Then('the log pane should only show logs for the {string} container', (container
 });
 
 Then('the log pane should show spans', () => {
-  cy.get('label[for=log-spans]')
-    .find('span')
-    .invoke('css', 'color')
+  cy.get('#trace-limit-dropdown-toggle').should('exist');
+  cy.get('#spans-show')
+    .invoke('css', 'accentColor')
     .then(spansColor => {
       cy.get('#logsText').find('p').should('have.css', 'color', spansColor);
     });

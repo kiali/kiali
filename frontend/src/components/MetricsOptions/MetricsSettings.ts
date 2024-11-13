@@ -18,4 +18,5 @@ export interface MetricsSettings {
   showSpans: boolean;
   showTrendlines: boolean;
   showQuantiles: Quantiles[];
+  spanLimit: number;
 }

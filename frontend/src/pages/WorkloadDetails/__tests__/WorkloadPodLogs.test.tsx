@@ -14,6 +14,7 @@ const defaultProps = (): WorkloadPodLogsProps => ({
   kiosk: '',
   lastRefreshAt: 200,
   timeRange: {},
+  tracingIntegration: false,
   namespace: 'namespace',
   workload: 'workload',
   pods: [
