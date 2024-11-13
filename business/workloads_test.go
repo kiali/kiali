@@ -1326,3 +1326,42 @@ func TestGetWorkloadSetsIsGateway(t *testing.T) {
 
 	require.True(workload.WorkloadListItem.IsGateway, "Expected IsGateway to be True but it was false")
 }
+
+func TestGetAllGateways(t *testing.T) {
+	require := require.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	k8s := kubetest.NewFakeK8sClient(
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "Namespace"}},
+		&apps_v1.Deployment{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "ingress-gateway",
+				Namespace: "Namespace",
+			},
+			Spec: apps_v1.DeploymentSpec{
+				Template: core_v1.PodTemplateSpec{
+					ObjectMeta: meta_v1.ObjectMeta{
+						Labels: map[string]string{
+							"istio.io/gateway-name": "ingress-gateway",
+						},
+					},
+				},
+			},
+		},
+		&apps_v1.Deployment{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "non-gateway-workload",
+				Namespace: "Namespace",
+			},
+		},
+	)
+	SetupBusinessLayer(t, k8s, *conf)
+	svc := setupWorkloadService(k8s, conf)
+
+	workloads, err := svc.GetAllGateways(context.Background(), conf.KubernetesConfig.ClusterName)
+	require.NoError(err)
+
+	require.Len(workloads, 1)
+	require.True(workloads[0].IsGateway(), "Expected IsGateway to be True but it was false")
+}

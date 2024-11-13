@@ -33,6 +33,7 @@ import (
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/observability"
 	"github.com/kiali/kiali/prometheus"
+	"github.com/kiali/kiali/util/sliceutil"
 )
 
 func NewWorkloadService(
@@ -173,6 +174,18 @@ func (in *WorkloadService) GetAllWorkloads(ctx context.Context, cluster string) 
 	}
 
 	return workloads, nil
+}
+
+// GetAllGateways fetches all gateway workloads across every namespace in the cluster.
+func (in *WorkloadService) GetAllGateways(ctx context.Context, cluster string) (models.Workloads, error) {
+	workloads, err := in.GetAllWorkloads(ctx, cluster)
+	if err != nil {
+		return nil, err
+	}
+
+	return sliceutil.Filter(workloads, func(w *models.Workload) bool {
+		return w.IsGateway()
+	}), nil
 }
 
 // GetWorkloadList is the API handler to fetch the list of workloads in a given namespace.
