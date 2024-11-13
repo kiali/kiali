@@ -108,23 +108,21 @@ func (iss *IstioStatusService) getIstioComponentStatus(ctx context.Context, clus
 	}
 
 	// Autodiscover gateways.
-	workloads, err := iss.workloads.GetAllWorkloads(ctx, cluster)
+	gateways, err := iss.workloads.GetAllGateways(ctx, cluster)
 	if err != nil {
 		// Don't error on gateways since they are non-essential.
 		log.Debugf("Unable to get gateway workloads when building istio component status. Cluster: %s. Err: %s", cluster, err)
 		return istiodStatus, nil
 	}
 
-	for _, workload := range workloads {
-		if workload.IsGateway() {
-			istiodStatus = append(istiodStatus, kubernetes.ComponentStatus{
-				Cluster:   workload.Cluster,
-				Name:      workload.Name,
-				Namespace: workload.Namespace,
-				Status:    GetWorkloadStatus(*workload),
-				IsCore:    false,
-			})
-		}
+	for _, workload := range gateways {
+		istiodStatus = append(istiodStatus, kubernetes.ComponentStatus{
+			Cluster:   workload.Cluster,
+			Name:      workload.Name,
+			Namespace: workload.Namespace,
+			Status:    GetWorkloadStatus(*workload),
+			IsCore:    false,
+		})
 	}
 
 	return istiodStatus, nil
