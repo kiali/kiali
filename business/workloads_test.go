@@ -759,7 +759,6 @@ func TestGetZtunnelPodLogsProxy(t *testing.T) {
 	assert.Equal("spiffe://cluster.local/ns/travel-agency/sa/default", entryQuotes.AccessLog.UpstreamCluster)
 	assert.Equal("mysqldb.travel-agency.svc.cluster.local", entryQuotes.AccessLog.RequestedServer)
 	assert.Equal(int64(1719927663203), entryQuotes.TimestampUnix)
-
 }
 
 func TestDuplicatedControllers(t *testing.T) {
@@ -1293,4 +1292,76 @@ func TestValidateWaypointService(t *testing.T) {
 
 	assert.Equal(1, len(workloadProductPage.Pods))
 	assert.Equal(0, len(workloadProductPage.WaypointWorkloads))
+}
+
+func TestGetWorkloadSetsIsGateway(t *testing.T) {
+	require := require.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	k8s := kubetest.NewFakeK8sClient(
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "Namespace"}},
+		&apps_v1.Deployment{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "ingress-gateway",
+				Namespace: "Namespace",
+			},
+			Spec: apps_v1.DeploymentSpec{
+				Template: core_v1.PodTemplateSpec{
+					ObjectMeta: meta_v1.ObjectMeta{
+						Labels: map[string]string{
+							"istio.io/gateway-name": "ingress-gateway",
+						},
+					},
+				},
+			},
+		},
+	)
+	SetupBusinessLayer(t, k8s, *conf)
+	svc := setupWorkloadService(k8s, conf)
+
+	criteria := WorkloadCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", WorkloadName: "ingress-gateway", IncludeServices: false}
+	workload, err := svc.GetWorkload(context.TODO(), criteria)
+	require.NoError(err)
+
+	require.True(workload.WorkloadListItem.IsGateway, "Expected IsGateway to be True but it was false")
+}
+
+func TestGetAllGateways(t *testing.T) {
+	require := require.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	k8s := kubetest.NewFakeK8sClient(
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "Namespace"}},
+		&apps_v1.Deployment{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "ingress-gateway",
+				Namespace: "Namespace",
+			},
+			Spec: apps_v1.DeploymentSpec{
+				Template: core_v1.PodTemplateSpec{
+					ObjectMeta: meta_v1.ObjectMeta{
+						Labels: map[string]string{
+							"istio.io/gateway-name": "ingress-gateway",
+						},
+					},
+				},
+			},
+		},
+		&apps_v1.Deployment{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "non-gateway-workload",
+				Namespace: "Namespace",
+			},
+		},
+	)
+	SetupBusinessLayer(t, k8s, *conf)
+	svc := setupWorkloadService(k8s, conf)
+
+	workloads, err := svc.GetAllGateways(context.Background(), conf.KubernetesConfig.ClusterName)
+	require.NoError(err)
+
+	require.Len(workloads, 1)
+	require.True(workloads[0].IsGateway(), "Expected IsGateway to be True but it was false")
 }

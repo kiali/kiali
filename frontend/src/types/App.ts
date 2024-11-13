@@ -1,5 +1,6 @@
 import { Namespace } from './Namespace';
 import { Runtime } from './Workload';
+import { InstanceType } from 'types/Common';
 import { AppHealthResponse } from '../types/Health';
 
 export type AppId = {
@@ -10,8 +11,10 @@ export type AppId = {
 
 export interface AppWorkload {
   isAmbient: boolean;
+  isGateway: boolean;
   istioSidecar: boolean;
   labels: { [key: string]: string };
+  namespace: string;
   serviceAccountNames: string[];
   workloadName: string;
 }
@@ -19,6 +22,7 @@ export interface AppWorkload {
 export interface App {
   cluster?: string;
   health: AppHealthResponse;
+  instanceType: InstanceType.App;
   isAmbient: boolean;
   name: string;
   namespace: Namespace;

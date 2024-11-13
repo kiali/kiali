@@ -12,9 +12,9 @@ import { KialiIcon, createIcon } from '../../config/KialiIcon';
 import { KialiAppState } from '../../store/Store';
 import { connect } from 'react-redux';
 import { isParentKiosk, kioskContextMenuAction } from '../Kiosk/KioskActions';
-import { isGateway, isWaypoint } from '../../helpers/LabelFilterHelper';
-import { isMultiCluster, serverConfig } from '../../config';
+import { isMultiCluster } from '../../config';
 import { Workload } from '../../types/Workload';
+import { hasMissingSidecar } from 'components/VirtualList/Config';
 import { healthIndicatorStyle } from 'styles/HealthStyle';
 
 type ReduxProps = {
@@ -203,19 +203,7 @@ const DetailDescriptionComponent: React.FC<Props> = (props: Props) => {
           <KialiIcon.Info className={infoStyle} />
         </Tooltip>
 
-        {((!workload.istioSidecar &&
-          !workload.isAmbient &&
-          !isWaypoint(workload.labels) &&
-          serverConfig.ambientEnabled) ||
-          (!workload.istioSidecar && !serverConfig.ambientEnabled)) && (
-          <MissingSidecar
-            namespace={props.namespace}
-            isGateway={isGateway(workload.labels)}
-            tooltip={true}
-            className={infoStyle}
-            text=""
-          />
-        )}
+        {hasMissingSidecar(workload) && <MissingSidecar tooltip={true} className={infoStyle} text="" />}
       </span>
     );
   };
@@ -275,16 +263,7 @@ const DetailDescriptionComponent: React.FC<Props> = (props: Props) => {
             <span style={{ marginLeft: '0.5rem' }}>{createIcon(sub.status)}</span>
           </Tooltip>
 
-          {((!workload.istioSidecar && !workload.isAmbient && serverConfig.ambientEnabled) ||
-            (!workload.istioSidecar && !serverConfig.ambientEnabled)) && (
-            <MissingSidecar
-              namespace={props.namespace}
-              isGateway={isGateway(workload.labels)}
-              tooltip={true}
-              className={infoStyle}
-              text=""
-            />
-          )}
+          {hasMissingSidecar(workload) && <MissingSidecar tooltip={true} className={infoStyle} text="" />}
         </span>
       );
     } else {

@@ -1,3 +1,4 @@
+import { InstanceType } from 'types/Common';
 import { ServiceHealth } from './Health';
 import { Validations, ObjectValidation, ObjectReference } from './IstioObjects';
 import { AdditionalItem } from './Workload';
@@ -23,6 +24,7 @@ export interface ServiceOverview {
 }
 
 export interface ServiceListItem extends ServiceOverview {
+  instanceType: InstanceType.Service;
   namespace: string;
   validation?: ObjectValidation;
 }

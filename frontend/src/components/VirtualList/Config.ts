@@ -1,6 +1,8 @@
 import deepFreeze from 'deep-freeze';
 import { AppListItem } from '../../types/AppList';
-import { WorkloadListItem } from '../../types/Workload';
+import { AppWorkload } from 'types/App';
+import { isWaypoint } from 'helpers/LabelFilterHelper';
+import { WorkloadListItem, Workload } from '../../types/Workload';
 import { ServiceListItem } from '../../types/ServiceList';
 import { dicIstioTypeToGVK, IstioConfigItem } from '../../types/IstioConfigList';
 import * as Renderers from './Renderers';
@@ -9,7 +11,6 @@ import { isIstioNamespace } from 'config/ServerConfig';
 import { NamespaceInfo } from '../../types/NamespaceInfo';
 import { StatefulFiltersRef } from '../Filters/StatefulFilters';
 import { PFBadges, PFBadgeType } from '../../components/Pf/PfBadges';
-import { isGateway, isWaypoint } from '../../helpers/LabelFilterHelper';
 import { getGVKTypeString } from '../../utils/IstioConfigUtils';
 
 export type SortResource = AppListItem | WorkloadListItem | ServiceListItem;
@@ -28,8 +29,17 @@ export const hasHealth = (r: RenderResource): r is SortResource => {
   return (r as SortResource).health !== undefined;
 };
 
-export const hasMissingSidecar = (r: SortResource): boolean => {
-  return !isIstioNamespace(r.namespace) && !r.istioSidecar && !isGateway(r.labels) && !isWaypoint(r.labels);
+export const hasMissingSidecar = (workload: Workload | WorkloadListItem | AppWorkload | AppListItem): boolean => {
+  return (
+    // TODO:
+    // Are we missing an ambient case here where ambient is enabled AND we are missing the ambient labels AND we are missing the sidecar?
+    // hasMissingSC && hasMissingA && serverConfig.ambientEnabled
+    !workload.istioSidecar &&
+    !workload.isAmbient &&
+    !isWaypoint(workload.labels) &&
+    !workload.isGateway &&
+    !isIstioNamespace(workload.namespace)
+  );
 };
 
 export const noAmbientLabels = (r: SortResource): boolean => {

@@ -1,7 +1,8 @@
-import { filterByLabel, isGateway, isK8sGateway } from '../LabelFilterHelper';
+import { filterByLabel } from '../LabelFilterHelper';
 import { AppListItem } from '../../types/AppList';
 import { AppHealth, WorkloadHealth, ServiceHealth } from '../../types/Health';
 import { WorkloadListItem } from '../../types/Workload';
+import { InstanceType } from 'types/Common';
 import { ServiceListItem } from '../../types/ServiceList';
 import { setServerConfig } from '../../config/ServerConfig';
 import { serverRateConfig } from '../../types/ErrorRate/__testData__/ErrorRateConfig';
@@ -30,10 +31,12 @@ const emptySvcHealth = new ServiceHealth(
 const appList: AppListItem[] = [
   {
     namespace: 'bookinfo',
+    instanceType: InstanceType.App,
     health: emptyAppHealth,
     name: 'ratings',
     istioSidecar: false,
     isAmbient: false,
+    isGateway: false,
     labels: { app: 'ratings', service: 'ratings', version: 'v1' },
     istioReferences: []
   },
@@ -41,8 +44,10 @@ const appList: AppListItem[] = [
     namespace: 'bookinfo',
     health: emptyAppHealth,
     name: 'productpage',
+    instanceType: InstanceType.App,
     istioSidecar: false,
     isAmbient: false,
+    isGateway: false,
     labels: { app: 'productpage', service: 'productpage', version: 'v1' },
     istioReferences: []
   },
@@ -50,8 +55,10 @@ const appList: AppListItem[] = [
     namespace: 'bookinfo',
     health: emptyAppHealth,
     name: 'details',
+    instanceType: InstanceType.App,
     istioSidecar: false,
     isAmbient: false,
+    isGateway: false,
     labels: { app: 'details', service: 'details', version: 'v1' },
     istioReferences: []
   },
@@ -59,8 +66,10 @@ const appList: AppListItem[] = [
     namespace: 'bookinfo',
     health: emptyAppHealth,
     name: 'reviews',
+    instanceType: InstanceType.App,
     istioSidecar: false,
     isAmbient: false,
+    isGateway: false,
     labels: { app: 'reviews', service: 'reviews', version: 'v1,v2,v3' },
     istioReferences: []
   }
@@ -74,10 +83,12 @@ const workloadList: WorkloadListItem[] = [
     type: 'Deployment',
     istioSidecar: false,
     isAmbient: false,
+    isGateway: false,
     labels: { app: 'details', version: 'v1' },
     appLabel: true,
     versionLabel: true,
     istioReferences: [],
+    instanceType: InstanceType.Workload,
     notCoveredAuthPolicy: false
   },
   {
@@ -87,10 +98,12 @@ const workloadList: WorkloadListItem[] = [
     type: 'Deployment',
     istioSidecar: false,
     isAmbient: false,
+    isGateway: false,
     labels: { app: 'productpage', version: 'v1' },
     appLabel: true,
     versionLabel: true,
     istioReferences: [],
+    instanceType: InstanceType.Workload,
     notCoveredAuthPolicy: false
   },
   {
@@ -100,10 +113,12 @@ const workloadList: WorkloadListItem[] = [
     type: 'Deployment',
     istioSidecar: false,
     isAmbient: false,
+    isGateway: false,
     labels: { app: 'ratings', version: 'v1' },
     appLabel: true,
     versionLabel: true,
     istioReferences: [],
+    instanceType: InstanceType.Workload,
     notCoveredAuthPolicy: false
   },
   {
@@ -113,10 +128,12 @@ const workloadList: WorkloadListItem[] = [
     type: 'Deployment',
     istioSidecar: false,
     isAmbient: false,
+    isGateway: false,
     labels: { app: 'reviews', version: 'v1' },
     appLabel: true,
     versionLabel: true,
     istioReferences: [],
+    instanceType: InstanceType.Workload,
     notCoveredAuthPolicy: false
   },
   {
@@ -126,10 +143,12 @@ const workloadList: WorkloadListItem[] = [
     type: 'Deployment',
     istioSidecar: false,
     isAmbient: false,
+    isGateway: false,
     labels: { app: 'reviews', version: 'v2' },
     appLabel: true,
     versionLabel: true,
     istioReferences: [],
+    instanceType: InstanceType.Workload,
     notCoveredAuthPolicy: false
   },
   {
@@ -139,10 +158,12 @@ const workloadList: WorkloadListItem[] = [
     type: 'Deployment',
     istioSidecar: false,
     isAmbient: false,
+    isGateway: false,
     labels: { app: 'reviews', version: 'v3' },
     appLabel: true,
     versionLabel: true,
     istioReferences: [],
+    instanceType: InstanceType.Workload,
     notCoveredAuthPolicy: false
   }
 ];
@@ -152,6 +173,7 @@ const serviceList: ServiceListItem[] = [
     namespace: 'bookinfo',
     health: emptySvcHealth,
     name: 'details',
+    instanceType: InstanceType.Service,
     istioSidecar: false,
     isAmbient: false,
     labels: { app: 'details', service: 'details' },
@@ -165,6 +187,7 @@ const serviceList: ServiceListItem[] = [
     namespace: 'bookinfo',
     health: emptySvcHealth,
     name: 'reviews',
+    instanceType: InstanceType.Service,
     istioSidecar: false,
     isAmbient: false,
     labels: { app: 'reviews', service: 'reviews' },
@@ -178,6 +201,7 @@ const serviceList: ServiceListItem[] = [
     namespace: 'bookinfo',
     health: emptySvcHealth,
     name: 'ratings',
+    instanceType: InstanceType.Service,
     istioSidecar: false,
     isAmbient: false,
     labels: { app: 'ratings', service: 'ratings' },
@@ -191,6 +215,7 @@ const serviceList: ServiceListItem[] = [
     namespace: 'bookinfo',
     health: emptySvcHealth,
     name: 'productpage',
+    instanceType: InstanceType.Service,
     istioSidecar: false,
     isAmbient: false,
     labels: { app: 'productpage', service: 'productpage' },
@@ -218,10 +243,12 @@ describe('LabelFilter', () => {
     expect(result).toEqual([
       {
         namespace: 'bookinfo',
+        instanceType: InstanceType.App,
         health: emptyAppHealth,
         name: 'details',
         istioSidecar: false,
         isAmbient: false,
+        isGateway: false,
         labels: { app: 'details', service: 'details', version: 'v1' },
         istioReferences: []
       }
@@ -233,10 +260,12 @@ describe('LabelFilter', () => {
     expect(result).toEqual([
       {
         namespace: 'bookinfo',
+        instanceType: InstanceType.App,
         health: emptyAppHealth,
         name: 'reviews',
         istioSidecar: false,
         isAmbient: false,
+        isGateway: false,
         labels: { app: 'reviews', service: 'reviews', version: 'v1,v2,v3' },
         istioReferences: []
       }
@@ -253,11 +282,13 @@ describe('LabelFilter', () => {
     expect(result).toEqual([
       {
         namespace: 'bookinfo',
+        instanceType: InstanceType.Workload,
         health: emptyWorkHealth,
         name: 'reviews-v1',
         type: 'Deployment',
         istioSidecar: false,
         isAmbient: false,
+        isGateway: false,
         labels: { app: 'reviews', version: 'v1' },
         appLabel: true,
         versionLabel: true,
@@ -266,11 +297,13 @@ describe('LabelFilter', () => {
       },
       {
         namespace: 'bookinfo',
+        instanceType: InstanceType.Workload,
         health: emptyWorkHealth,
         name: 'reviews-v2',
         type: 'Deployment',
         istioSidecar: false,
         isAmbient: false,
+        isGateway: false,
         labels: { app: 'reviews', version: 'v2' },
         appLabel: true,
         versionLabel: true,
@@ -279,11 +312,13 @@ describe('LabelFilter', () => {
       },
       {
         namespace: 'bookinfo',
+        instanceType: InstanceType.Workload,
         health: emptyWorkHealth,
         name: 'reviews-v3',
         type: 'Deployment',
         istioSidecar: false,
         isAmbient: false,
+        isGateway: false,
         labels: { app: 'reviews', version: 'v3' },
         appLabel: true,
         versionLabel: true,
@@ -305,6 +340,7 @@ describe('LabelFilter', () => {
         namespace: 'bookinfo',
         health: emptySvcHealth,
         name: 'details',
+        instanceType: InstanceType.Service,
         istioSidecar: false,
         isAmbient: false,
         labels: { app: 'details', service: 'details' },
@@ -320,40 +356,5 @@ describe('LabelFilter', () => {
         serviceRegistry: 'Kubernetes'
       }
     ]);
-  });
-
-  it('check is Ingress/Egress Gateway when false', () => {
-    const result = isGateway({ istio: 'wrong' });
-    expect(result).toBeFalsy();
-  });
-
-  it('check is Ingress Gateway when true', () => {
-    const result = isGateway({ istio: 'ingressgateway' });
-    expect(result).toBeTruthy();
-  });
-
-  it('check is Egress Gateway when true', () => {
-    const result = isGateway({ istio: 'egressgateway' });
-    expect(result).toBeTruthy();
-  });
-
-  it('check is Gateway (K8s) when true', () => {
-    const result = isGateway({ 'gateway.networking.k8s.io/gateway-name': 'gateway-istio' });
-    expect(result).toBeTruthy();
-  });
-
-  it('check is Gateway (K8s) when false', () => {
-    const result = isGateway({ 'gateway.networking.k8s.io/wrong-gateway-name': 'gateway-istio' });
-    expect(result).toBeFalsy();
-  });
-
-  it('check is K8s Gateway when true', () => {
-    const result = isK8sGateway({ 'gateway.networking.k8s.io/gateway-name': 'gateway-istio' });
-    expect(result).toBeTruthy();
-  });
-
-  it('check is K8s Gateway when false', () => {
-    const result = isK8sGateway({ 'gateway.networking.k8s.io/wrong-gateway-name': 'gateway-istio' });
-    expect(result).toBeFalsy();
   });
 });

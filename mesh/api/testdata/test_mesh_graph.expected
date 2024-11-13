@@ -241,10 +241,8 @@
               "Components": []
             },
             "ConfigMapName": "",
-            "EgressGatewayNamespace": "",
             "EnvoyAdminLocalPort": 15000,
             "GatewayAPIClasses": [],
-            "IngressGatewayNamespace": "",
             "IstioAPIEnabled": true,
             "IstioIdentityDomain": "svc.cluster.local",
             "IstioInjectionAnnotation": "sidecar.istio.io/inject",

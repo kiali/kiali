@@ -47,9 +47,11 @@ interface EndpointAddress {
 export interface WorkloadOverview {
   createdAt: string;
   isAmbient: boolean;
+  isGateway: boolean;
   istioSidecar: boolean;
   labels?: { [key: string]: string };
   name: string;
+  namespace: string;
   resourceVersion: string;
   serviceAccountNames: string[];
   type: string;

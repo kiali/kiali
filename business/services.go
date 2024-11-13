@@ -258,6 +258,7 @@ func (in *SvcService) buildKubernetesServices(svcs []core_v1.Service, pods []cor
 		if !onlyDefinitions {
 			sPods := kubernetes.FilterPodsByService(&item, pods)
 			/** Check if Service has istioSidecar deployed */
+			// TODO: This won't work if pods are scaled to zero.
 			mPods := models.Pods{}
 			mPods.Parse(sPods)
 			hasSidecar = mPods.HasAnyIstioSidecar()

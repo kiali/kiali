@@ -7,6 +7,7 @@ import {
   ToggleType
 } from '../../types/Filters';
 import { WorkloadListItem, WorkloadType } from '../../types/Workload';
+import { hasMissingSidecar } from 'components/VirtualList/Config';
 import { SortField } from '../../types/SortFilters';
 import { hasHealth } from '../../types/Health';
 import {
@@ -18,7 +19,6 @@ import {
   getPresenceFilterValue,
   filterByHealth
 } from '../../components/Filters/CommonFilters';
-import { hasMissingSidecar } from '../../components/VirtualList/Config';
 import { TextInputTypes } from '@patternfly/react-core';
 import { filterByLabel } from '../../helpers/LabelFilterHelper';
 import { calculateErrorRate } from '../../types/ErrorRate';

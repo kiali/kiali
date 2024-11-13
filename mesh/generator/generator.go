@@ -57,6 +57,8 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 	istioStatus, err := gi.IstioStatusGetter.GetStatus(ctx)
 	if errors.IsForbidden(err) {
 		return nil, err
+	} else if err != nil {
+		err = fmt.Errorf("when checking the health status of components in the mesh, an error occurred. Please correct the error then try again. Error: %w", err)
 	}
 	mesh.CheckError(err)
 

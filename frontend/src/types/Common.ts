@@ -113,3 +113,11 @@ export const isEqualTimeRange = (t1: TimeRange, t2: TimeRange): boolean => {
 
   return true;
 };
+
+// InstanceType is either an App, Workload, or Service. It represents one of the three
+// different pages that Kiali shows lists for other than Istio config.
+export enum InstanceType {
+  App = 'app',
+  Service = 'service',
+  Workload = 'workload'
+}

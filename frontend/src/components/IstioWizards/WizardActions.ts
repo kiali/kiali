@@ -66,8 +66,8 @@ import { QUERY_PARAMS, PATH, HEADERS, METHOD } from './K8sRequestRouting/K8sMatc
 import { ServiceOverview } from '../../types/ServiceList';
 import { ADD, SET, REQ_MOD, RESP_MOD, REQ_RED, REQ_MIR } from './K8sRequestRouting/K8sFilterBuilder';
 import { ANYTHING, PRESENCE } from './RequestRouting/MatchBuilder';
-import { getGatewayLabels } from '../../helpers/LabelFilterHelper';
 import { t } from 'utils/I18nUtils';
+import { defaultGatewayLabel, defaultGatewayLabelValue } from 'config/Constants';
 
 export const WIZARD_TRAFFIC_SHIFTING = 'traffic_shifting';
 export const WIZARD_TCP_TRAFFIC_SHIFTING = 'tcp_traffic_shifting';
@@ -691,7 +691,6 @@ export const buildIstioConfig = (wProps: ServiceWizardProps, wState: ServiceWiza
     };
 
     // Wizard is optional, only when user has explicitly selected "Create a Gateway or K8s API Gateway"
-    const ingressLabels = getGatewayLabels(serverConfig.istioLabels.ingressGatewayLabel);
     wizardGW =
       wState.gateway && wState.gateway.addGateway && wState.gateway.newGateway
         ? {
@@ -706,7 +705,7 @@ export const buildIstioConfig = (wProps: ServiceWizardProps, wState: ServiceWiza
             },
             spec: {
               selector: {
-                [ingressLabels[0]]: ingressLabels[1]
+                [defaultGatewayLabel]: defaultGatewayLabelValue
               },
               servers: [
                 {
