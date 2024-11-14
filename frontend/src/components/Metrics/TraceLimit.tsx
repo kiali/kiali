@@ -5,8 +5,6 @@ import { itemStyleWithoutInfo } from 'styles/DropdownStyles';
 import { ToolbarDropdown } from 'components/Dropdown/ToolbarDropdown';
 import { infoStyle } from 'styles/InfoStyle';
 
-export const TRACE_LIMIT_DEFAULT = 100;
-
 type TraceLimitProps = {
   asRadio?: boolean;
   initialLimit?: number;
@@ -14,6 +12,9 @@ type TraceLimitProps = {
   title?: string;
   titleClassName?: string;
 };
+
+export const TRACE_LIMIT_DEFAULT = 100;
+export type TraceLimitOption = 20 | 100 | 500 | 1000;
 
 export const TraceLimit: React.FC<TraceLimitProps> = (props: TraceLimitProps) => {
   const initialLimit = props.initialLimit ?? TRACE_LIMIT_DEFAULT;
