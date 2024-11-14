@@ -18,7 +18,7 @@ func newTestingCache(t *testing.T, cf kubernetes.ClientFactory, conf config.Conf
 	// when the cache is created.
 	conf.ExternalServices.Istio.IstioAPIEnabled = false
 
-	cache, err := NewKialiCache(cf, conf)
+	cache, err := NewKialiCache(cf.GetSAClients(), conf)
 	if err != nil {
 		t.Fatalf("Error creating KialiCache: %v", err)
 	}

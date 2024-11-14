@@ -149,7 +149,7 @@ func WorkloadDetails(w http.ResponseWriter, r *http.Request) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			istioConfigValidations, errValidations = business.Validations.GetValidations(r.Context(), criteria.Cluster, criteria.Namespace, "", criteria.WorkloadName)
+			istioConfigValidations, errValidations = business.Validations.GetValidationsForWorkload(r.Context(), criteria.Cluster, criteria.Namespace, criteria.WorkloadName)
 		}()
 	}
 
@@ -218,7 +218,7 @@ func WorkloadUpdate(w http.ResponseWriter, r *http.Request) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			istioConfigValidations, errValidations = business.Validations.GetValidations(r.Context(), cluster, namespace, "", workload)
+			istioConfigValidations, errValidations = business.Validations.GetValidationsForWorkload(r.Context(), cluster, namespace, workload)
 		}()
 	}
 

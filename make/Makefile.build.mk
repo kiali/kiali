@@ -70,7 +70,7 @@ build-system-test: go-check
 	  -o ${GOPATH}/bin/kiali -ldflags "-X main.version=${VERSION} -X main.commitHash=${COMMIT_HASH} -X main.goVersion=${GO_ACTUAL_VERSION}"
 
 ## test: Run tests, excluding third party tests under vendor and frontend. Runs `go test` internally
-test:
+test: .ensure-envtest-bin-dir-exists
 	@echo Running tests, excluding third party tests under vendor
 	${GO} test ${GO_TEST_FLAGS} $(shell ${GO} list ./... | grep -v -e /vendor/ -e /frontend/ -e /tests/integration/)
 
@@ -80,10 +80,16 @@ test-integration-setup:
 	go install github.com/jstemmer/go-junit-report@latest
 
 ## test-integration: Run Integration test suite
-test-integration: test-integration-setup
+test-integration: test-integration-setup .ensure-envtest-bin-dir-exists
 	@echo Running Integration tests
 	cd tests/integration/tests && ${GO} test ${GO_TEST_FLAGS} -v -timeout 30m 2>&1 | tee >(go-junit-report > ../junit-rest-report.xml) ../int-test.log
 	@echo Test results can be found here: $$(ls -1 ${ROOTDIR}/tests/integration/junit-rest-report.xml)
+	@echo Running controller integration tests
+	@cd tests/integration/controller && ${GO} test -v
+
+test-integration-controller: .ensure-envtest-bin-dir-exists
+	@echo Running controller integration tests
+	cd tests/integration/controller && ${GO} test -v
 
 #
 # Lint targets
@@ -97,3 +103,15 @@ lint-install:
 # doc.go is ommited for linting, because it generates lots of warnings.
 lint:
 	golangci-lint run -c ./.github/workflows/config/.golangci.yml
+
+# Assuming here that if the bin dir exists then the tools also exist inside of it.
+.ensure-envtest-bin-dir-exists: .ensure-envtest-exists
+	@if [ ! -d "${OUTDIR}/k8s" ]; then \
+		setup-envtest use --bin-dir "${OUTDIR}"; \
+	fi
+
+## Download setup-envtest locally if necessary.
+.ensure-envtest-exists:
+	@if [ ! -x envtest ]; then \
+	  ${GO} install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest; \
+	fi

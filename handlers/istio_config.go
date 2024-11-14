@@ -75,29 +75,13 @@ func IstioConfigList(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if includeValidations {
-		// We don't filter by service and workload when calling validations, because certain validations require fetching all types to get the correct errors
-		if namespace == "" {
-			// when namespace is empty, validations should be done per namespaces to apply exportTo configs
-			loadedNamespaces, _ := business.Namespace.GetClusterNamespaces(r.Context(), cluster)
-			istioConfig.IstioValidations = models.IstioValidations{}
-			for _, ns := range loadedNamespaces {
-				nsValidations, nsErr := business.Validations.GetValidations(r.Context(), cluster, ns.Name, "", "")
-				if nsErr != nil {
-					handleErrorResponse(w, nsErr)
-					return
-				}
-				istioConfig.IstioValidations.MergeValidations(nsValidations)
-			}
-		} else {
-			// when namespace is provided, do validations for that namespace only
-			// this option is not called from Kiali UI
-			// @TODO consider exportTo namespaces
-			istioConfig.IstioValidations, err = business.Validations.GetValidations(r.Context(), cluster, namespace, "", "")
-			if err != nil {
-				handleErrorResponse(w, err)
-				return
-			}
+		istioConfig.IstioValidations, err = business.Validations.GetValidations(r.Context(), cluster)
+		if err != nil {
+			RespondWithError(w, http.StatusInternalServerError, "Error while getting validations: "+err.Error())
+			return
 		}
+
+		// We don't filter by objects when calling validations, because certain validations require fetching all types to get the correct errors
 		if len(parsedTypes) > 0 {
 			istioConfig.IstioValidations = istioConfig.IstioValidations.FilterByTypes(parsedTypes)
 		}

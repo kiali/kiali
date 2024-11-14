@@ -14,6 +14,10 @@ type GroupChecker interface {
 	Check() models.IstioValidations
 }
 
+type ObjectChecker interface {
+	Check() models.IstioValidations
+}
+
 // EmptyValidValidation returns a stub validation object which can be used by checkers
 func EmptyValidValidations(name, namespace string, objectGVK schema.GroupVersionKind, cluster string) models.IstioValidations {
 	key, emptyValidation := EmptyValidValidation(name, namespace, objectGVK, cluster)

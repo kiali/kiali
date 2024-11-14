@@ -79,6 +79,9 @@ type KialiCache interface {
 	RegistryStatusCache
 	ProxyStatusCache
 
+	// SetValidations caches validations for a cluster/namespace.
+	Validations() store.Store[models.IstioValidationKey, *models.IstioValidation]
+
 	// SetClusters sets the list of clusters that the cache knows about.
 	SetClusters([]models.KubeCluster)
 
@@ -101,7 +104,6 @@ type kialiCacheImpl struct {
 	cleanup                 func()
 	conf                    config.Config
 
-	clientFactory kubernetes.ClientFactory
 	// Maps a cluster name to a KubeCache
 	kubeCache map[string]KubeCache
 
@@ -126,22 +128,24 @@ type kialiCacheImpl struct {
 	registryStatusStore store.Store[string, *kubernetes.RegistryStatus]
 
 	waypointList models.WaypointStore
+	// validations key'd by the validation key
+	validations store.Store[models.IstioValidationKey, *models.IstioValidation]
 
 	// Info about the kube clusters that the cache knows about.
 	clusters    []models.KubeCluster
 	clusterLock sync.RWMutex
 }
 
-func NewKialiCache(clientFactory kubernetes.ClientFactory, cfg config.Config) (KialiCache, error) {
+func NewKialiCache(kialiSAClients map[string]kubernetes.ClientInterface, cfg config.Config) (KialiCache, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	namespaceKeyTTL := time.Duration(cfg.KubernetesConfig.CacheTokenNamespaceDuration) * time.Second
 	kialiCacheImpl := kialiCacheImpl{
 		ambientChecksPerCluster: store.NewExpirationStore(ctx, store.New[string, bool](), util.AsPtr(ambientCheckExpirationTime), nil),
 		canReadWebhookByCluster: make(map[string]bool),
 		cleanup:                 cancel,
-		clientFactory:           clientFactory,
 		conf:                    cfg,
 		kubeCache:               make(map[string]KubeCache),
+		validations:             store.New[models.IstioValidationKey, *models.IstioValidation](),
 		meshStore:               store.NewExpirationStore(ctx, store.New[string, *models.Mesh](), util.AsPtr(meshExpirationTime), nil),
 		namespaceStore:          store.NewExpirationStore(ctx, store.New[namespacesKey, map[string]models.Namespace](), &namespaceKeyTTL, nil),
 		refreshDuration:         time.Duration(cfg.KubernetesConfig.CacheDuration) * time.Second,
@@ -149,7 +153,7 @@ func NewKialiCache(clientFactory kubernetes.ClientFactory, cfg config.Config) (K
 		registryStatusStore:     store.New[string, *kubernetes.RegistryStatus](),
 	}
 
-	for cluster, client := range clientFactory.GetSAClients() {
+	for cluster, client := range kialiSAClients {
 		// we only need our deleteNamespace function called when an error occurs in a namespace-scoped cache
 		var errHandler ErrorHandler
 		if !cfg.Deployment.ClusterWideAccess {
@@ -243,6 +247,10 @@ func (c *kialiCacheImpl) GetMesh() (*models.Mesh, bool) {
 
 func (c *kialiCacheImpl) SetMesh(mesh *models.Mesh) {
 	c.meshStore.Set(kialiCacheMeshKey, mesh)
+}
+
+func (c *kialiCacheImpl) Validations() store.Store[models.IstioValidationKey, *models.IstioValidation] {
+	return c.validations
 }
 
 // IsAmbientEnabled checks if the istio Ambient profile was enabled

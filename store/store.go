@@ -21,6 +21,10 @@ type Store[K comparable, V any] interface {
 	// Set associates the given value with the given key. It will overwrite any existing value
 	// or create a new entry if the key does not exist.
 	Set(key K, value V)
+
+	// Version returns the current version of the store. The version is incremented every time the store is modified.
+	// It can be used to detect changes to the store.
+	Version() uint
 }
 
 // New returns a new store safe for concurrent use.

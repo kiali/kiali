@@ -8,8 +8,9 @@ import (
 
 // threadSafeStore implements the Store interface and is safe for concurrent use.
 type threadSafeStore[K comparable, V any] struct {
-	lock sync.RWMutex
-	data map[K]V
+	lock    sync.RWMutex
+	data    map[K]V
+	version uint
 }
 
 // Get returns the value associated with the given key or an error.
@@ -39,6 +40,7 @@ func (s *threadSafeStore[K, V]) Replace(items map[K]V) {
 		items = make(map[K]V)
 	}
 	s.data = items
+	s.version++
 }
 
 // Set associates the given value with the given key. It will overwrite any existing value
@@ -47,12 +49,14 @@ func (s *threadSafeStore[K, V]) Set(key K, value V) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 	s.data[key] = value
+	s.version++
 }
 
 func (s *threadSafeStore[K, V]) Remove(key K) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 	delete(s.data, key)
+	s.version++
 }
 
 // Keys returns all the keys in the store.
@@ -62,5 +66,9 @@ func (s *threadSafeStore[K, V]) Keys() []K {
 	return maps.Keys(s.data)
 }
 
+func (s *threadSafeStore[K, V]) Version() uint {
+	return s.version
+}
+
 // Interface guard to ensure threadSafeStore implements the Store.
-var _ Store[any, any] = &threadSafeStore[any, any]{}
+var _ Store[string, any] = &threadSafeStore[string, any]{}

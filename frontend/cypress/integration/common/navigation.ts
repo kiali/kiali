@@ -32,6 +32,16 @@ Given('user is at the {string} page for the {string} namespace', (page: string, 
   cy.visit({ url: `${Cypress.config('baseUrl')}/console/${page}?refresh=0&namespaces=${namespace}` });
 });
 
+Given('autorefresh is enabled', () => {
+  // Forcing "Pause" to not cause unhandled promises from the browser when cypress is testing
+  cy.url().then(currentURL => {
+    const url = new URL(currentURL);
+    const tenSecondsInMiliSeconds = '10000';
+    url.searchParams.set('refresh', tenSecondsInMiliSeconds);
+    cy.visit(url.toString());
+  });
+});
+
 Given(
   'user is at the details page for the {string} {string} located in the {string} cluster',
   (detail: detailType, namespacedNamed: string, cluster: string) => {
