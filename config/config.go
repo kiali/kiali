@@ -254,12 +254,11 @@ type GrafanaVariablesConfig struct {
 }
 
 type TempoConfig struct {
-	CacheCapacity   int    `yaml:"cache_capacity,omitempty"`
-	CacheEnabled    bool   `yaml:"cache_enabled,omitempty"`
-	CacheExpiration int    `yaml:"cache_expiration,omitempty"`
-	DatasourceUID   string `yaml:"datasource_uid" json:"datasource_uid,omitempty"`
-	OrgID           string `yaml:"org_id" json:"org_id,omitempty"`
-	URLFormat       string `yaml:"url_format" json:"url_format,omitempty"`
+	CacheCapacity int    `yaml:"cache_capacity,omitempty"`
+	CacheEnabled  bool   `yaml:"cache_enabled,omitempty"`
+	DatasourceUID string `yaml:"datasource_uid" json:"datasource_uid,omitempty"`
+	OrgID         string `yaml:"org_id" json:"org_id,omitempty"`
+	URLFormat     string `yaml:"url_format" json:"url_format,omitempty"`
 }
 
 // TracingConfig describes configuration used for tracing links
@@ -767,9 +766,8 @@ func NewConfig() (c *Config) {
 				QueryScope:        map[string]string{},
 				QueryTimeout:      5,
 				TempoConfig: TempoConfig{
-					CacheCapacity:   200,
-					CacheEnabled:    true,
-					CacheExpiration: 300,
+					CacheCapacity: 200,
+					CacheEnabled:  true,
 				},
 				UseGRPC:              true,
 				WhiteListIstioSystem: []string{"jaeger-query", "istio-ingressgateway"},
