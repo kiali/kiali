@@ -10,11 +10,11 @@ import (
 	"path"
 	"strconv"
 	"strings"
-	"sync"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/store"
 	"github.com/kiali/kiali/tracing/jaeger/model"
 	jaegerModels "github.com/kiali/kiali/tracing/jaeger/model/json"
 	otel "github.com/kiali/kiali/tracing/otel/model"
@@ -25,27 +25,12 @@ import (
 
 type OtelHTTPClient struct {
 	ClusterTag bool
-}
-
-var (
-	once       sync.Once
-	tempoCache TempoCache
-)
-
-func initTempoCache() {
-	if config.Get().ExternalServices.Tracing.TempoConfig.CacheEnabled {
-		log.Infof("[Tempo Cache] Enabled")
-		tempoCache = NewTempoCache()
-	} else {
-		log.Infof("[Tempo Cache] Disabled")
-	}
+	TempoCache store.FifoStore[string, *model.TracingSingleTrace]
 }
 
 // New client
 func NewOtelClient(client http.Client, baseURL *url.URL) (otelClient *OtelHTTPClient, err error) {
 	url := *baseURL
-
-	once.Do(initTempoCache)
 
 	// Istio adds the istio.cluster_id tag
 	// That allows to filter traces by cluster in MC environments
@@ -68,7 +53,12 @@ func NewOtelClient(client http.Client, baseURL *url.URL) (otelClient *OtelHTTPCl
 		}
 	}
 
-	return &OtelHTTPClient{ClusterTag: tags}, nil
+	otelHTTPClient := &OtelHTTPClient{ClusterTag: tags}
+	if config.Get().ExternalServices.Tracing.TempoConfig.CacheEnabled {
+		otelHTTPClient.TempoCache = *store.NewFIFOStore[string, *model.TracingSingleTrace](config.Get().ExternalServices.Tracing.TempoConfig.CacheCapacity)
+	}
+
+	return otelHTTPClient, nil
 }
 
 // GetAppTracesHTTP search traces
@@ -78,11 +68,6 @@ func (oc OtelHTTPClient) GetAppTracesHTTP(client http.Client, baseURL *url.URL, 
 	if q.End.Before(q.Start) {
 		return nil, fmt.Errorf("end time must be greater than start time")
 	}
-	if tempoCache != nil {
-		if isCached, result := tempoCache.GetAppTracesHTTP(serviceName, q); isCached {
-			return result, nil
-		}
-	}
 	oc.prepareTraceQL(&url, serviceName, q)
 
 	r, err := oc.queryTracesHTTP(client, &url, q.Tags["error"])
@@ -90,17 +75,14 @@ func (oc OtelHTTPClient) GetAppTracesHTTP(client http.Client, baseURL *url.URL, 
 	if r != nil {
 		r.TracingServiceName = serviceName
 	}
-	if tempoCache != nil && err != nil {
-		tempoCache.SetAppTracesHTTP(serviceName, q, r)
-	}
 	return r, err
 }
 
 // GetTraceDetailHTTP get one trace by trace ID
 func (oc OtelHTTPClient) GetTraceDetailHTTP(client http.Client, endpoint *url.URL, traceID string) (*model.TracingSingleTrace, error) {
 	u := *endpoint
-	if tempoCache != nil {
-		if isCached, result := tempoCache.GetTraceDetailHTTP(traceID); isCached {
+	if config.Get().ExternalServices.Tracing.TempoConfig.CacheEnabled {
+		if result, isCached := oc.TempoCache.Get(traceID); isCached {
 			return result, nil
 		}
 	}
@@ -131,8 +113,8 @@ func (oc OtelHTTPClient) GetTraceDetailHTTP(client http.Client, endpoint *url.UR
 	if len(response.Data) == 0 {
 		return &model.TracingSingleTrace{Errors: response.Errors}, nil
 	}
-	if tempoCache != nil {
-		tempoCache.SetTraceDetailHTTP(traceID, &model.TracingSingleTrace{
+	if config.Get().ExternalServices.Tracing.TempoConfig.CacheEnabled {
+		oc.TempoCache.Set(traceID, &model.TracingSingleTrace{
 			Data:   response.Data[0],
 			Errors: response.Errors,
 		})

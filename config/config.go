@@ -254,6 +254,7 @@ type GrafanaVariablesConfig struct {
 }
 
 type TempoConfig struct {
+	CacheCapacity   int    `yaml:"cache_capacity,omitempty"`
 	CacheEnabled    bool   `yaml:"cache_enabled,omitempty"`
 	CacheExpiration int    `yaml:"cache_expiration,omitempty"`
 	DatasourceUID   string `yaml:"datasource_uid" json:"datasource_uid,omitempty"`
@@ -766,6 +767,7 @@ func NewConfig() (c *Config) {
 				QueryScope:        map[string]string{},
 				QueryTimeout:      5,
 				TempoConfig: TempoConfig{
+					CacheCapacity:   200,
 					CacheEnabled:    true,
 					CacheExpiration: 300,
 				},
