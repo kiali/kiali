@@ -2,8 +2,9 @@ package store
 
 import (
 	"container/list"
-	"github.com/kiali/kiali/log"
 	"sync"
+
+	"github.com/kiali/kiali/log"
 )
 
 type storeStats struct {
