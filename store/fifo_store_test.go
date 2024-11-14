@@ -24,6 +24,7 @@ func TestSetAndGet(t *testing.T) {
 
 	elem, found = fifoStore.Get("foo2")
 	require.Equal(fifoStore.stats.hits, 2)
+	require.True(found)
 	require.Equal(elem, "bar2")
 
 	fifoStore.Set("foo4", "bar4")
