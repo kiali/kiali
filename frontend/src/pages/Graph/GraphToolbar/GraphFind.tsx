@@ -87,8 +87,8 @@ const buttonClearStyle = kialiStyle({
 });
 
 const findHideHelpStyle = kialiStyle({
-  paddingLeft: '0.25rem',
-  paddingRight: '0.25rem'
+  paddingLeft: '0',
+  paddingRight: '0'
 });
 
 const gridStyle = kialiStyle({
@@ -415,7 +415,7 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
             </Button>
           </GraphHelpFind>
         ) : (
-          <Tooltip key={'ot_graph_find_help'} position="top" content="Find/Hide Help...">
+          <Tooltip key={'ot_graph_find_help'} position="top" content="Click to open Find/Hide help">
             <Button
               data-test="graph-find-hide-help-button"
               variant={ButtonVariant.link}

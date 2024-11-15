@@ -42,7 +42,6 @@ const resourceListStyle = kialiStyle({
   margin: '0 0 0.5rem 0',
   $nest: {
     '& > span': {
-      float: 'left',
       width: '125px',
       fontWeight: 700
     }
