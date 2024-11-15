@@ -146,17 +146,17 @@ func (in *K8SClient) SetProxyLogLevel(namespace, pod, level string) error {
 func ServiceEntryHostnames(serviceEntries []*networking_v1.ServiceEntry) map[string][]string {
 	hostnames := make(map[string][]string)
 
-	for _, v := range serviceEntries {
-		for _, host := range v.Spec.Hosts {
-			hostnames[host] = make([]string, 0, 1)
-		}
-		for _, port := range v.Spec.Ports {
-			protocol := mapPortToVirtualServiceProtocol(port.Protocol)
-			for host := range hostnames {
-				hostnames[host] = append(hostnames[host], protocol)
+	for _, serviceEntry := range serviceEntries {
+		for _, host := range serviceEntry.Spec.Hosts {
+			protocols := make([]string, 0, len(serviceEntry.Spec.Ports))
+			for _, port := range serviceEntry.Spec.Ports {
+				protocol := mapPortToVirtualServiceProtocol(port.Protocol)
+				protocols = append(protocols, protocol)
 			}
+			hostnames[host] = append(protocols, hostnames[host]...)
 		}
 	}
+
 	return hostnames
 }
 
