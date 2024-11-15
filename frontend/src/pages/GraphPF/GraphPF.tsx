@@ -692,12 +692,14 @@ const TopologyContent: React.FC<{
   React.useEffect(() => {
     const edges = controller.getGraph().getEdges();
     if (!showTrafficAnimation) {
+      /*
       edges
         .filter(e => e.getEdgeAnimationSpeed() !== EdgeAnimationSpeed.none)
         .forEach(e => {
           e.setEdgeAnimationSpeed(EdgeAnimationSpeed.none);
           e.setEdgeStyle(EdgeStyle.solid);
         });
+      */
       return;
     }
 
