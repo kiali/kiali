@@ -5,7 +5,7 @@ import { kialiStyle } from 'styles/StyleUtils';
 import { Gateway, ObjectCheck, ObjectValidation, VirtualService } from '../../types/IstioObjects';
 import { ValidationList } from '../../components/Validations/ValidationList';
 import { KialiIcon } from '../../config/KialiIcon';
-import { infoStyle } from 'styles/InfoStyle';
+import { infoStyle } from 'styles/IconStyle';
 
 type ServiceNetworkProps = {
   gateways: Gateway[];

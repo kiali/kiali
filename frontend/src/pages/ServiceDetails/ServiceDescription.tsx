@@ -13,7 +13,7 @@ import { HealthIndicator } from '../../components/Health/HealthIndicator';
 import { PFBadge, PFBadges } from '../../components/Pf/PfBadges';
 import { DetailDescription } from '../../components/DetailDescription/DetailDescription';
 import { AmbientLabel, tooltipMsgType } from '../../components/Ambient/AmbientLabel';
-import { infoStyleProps } from 'styles/InfoStyle';
+import { infoStyleProps } from 'styles/IconStyle';
 
 interface ServiceInfoDescriptionProps {
   namespace: string;

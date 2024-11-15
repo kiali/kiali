@@ -32,7 +32,7 @@ import { PFColors } from '../../../components/Pf/PfColors';
 import { GetIstioObjectUrl } from '../../../components/Link/IstioObjectLink';
 import { homeCluster, isMultiCluster, serverConfig } from '../../../config';
 import { CLUSTER_DEFAULT } from 'types/Graph';
-import { infoStyle } from 'styles/InfoStyle';
+import { infoStyle } from 'styles/IconStyle';
 
 interface IstioConfigOverviewProps {
   cluster?: string;

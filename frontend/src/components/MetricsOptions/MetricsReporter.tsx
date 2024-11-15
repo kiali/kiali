@@ -6,7 +6,7 @@ import { Reporter, Direction } from '../../types/MetricsOptions';
 import { Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { KialiIcon } from '../../config/KialiIcon';
 import { kialiStyle } from 'styles/StyleUtils';
-import { infoStyleProps } from 'styles/InfoStyle';
+import { infoStyleProps } from 'styles/IconStyle';
 
 interface Props {
   direction: Direction;

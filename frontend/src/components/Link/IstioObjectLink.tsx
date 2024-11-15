@@ -11,7 +11,7 @@ import { connect } from 'react-redux';
 import { isParentKiosk, kioskContextMenuAction } from '../Kiosk/KioskActions';
 import { GroupVersionKind } from '../../types/IstioObjects';
 import { getGVKTypeString, kindToStringIncludeK8s } from '../../utils/IstioConfigUtils';
-import { infoStyleProps } from 'styles/InfoStyle';
+import { infoStyleProps } from 'styles/IconStyle';
 
 const objectInfoStyle = kialiStyle({
   ...infoStyleProps,

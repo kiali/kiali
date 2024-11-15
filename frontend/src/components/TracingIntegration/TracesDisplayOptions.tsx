@@ -13,7 +13,7 @@ import { itemStyleWithoutInfo, menuStyle, titleStyle } from 'styles/DropdownStyl
 import { HistoryManager, URLParam } from 'app/History';
 import { KialiIcon } from 'config/KialiIcon';
 import { TraceLimit } from 'components/Metrics/TraceLimit';
-import { infoStyle } from 'styles/InfoStyle';
+import { infoStyle } from 'styles/IconStyle';
 
 export interface QuerySettings {
   errorsOnly: boolean;

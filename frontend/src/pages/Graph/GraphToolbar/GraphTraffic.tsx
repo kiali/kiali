@@ -30,7 +30,7 @@ import {
   menuEntryStyle
 } from 'styles/DropdownStyles';
 import { serverConfig } from 'config';
-import { infoStyle } from 'styles/InfoStyle';
+import { infoStyle } from 'styles/IconStyle';
 
 type ReduxDispatchProps = {
   setTrafficRates: (trafficRates: TrafficRate[]) => void;

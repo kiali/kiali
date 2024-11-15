@@ -33,7 +33,7 @@ import { GraphFindOptions } from './GraphFindOptions';
 import { location, HistoryManager, URLParam } from '../../../app/History';
 import { isValid } from 'utils/Common';
 import { serverConfig } from '../../../config';
-import { infoStyle } from 'styles/InfoStyle';
+import { infoStyle } from 'styles/IconStyle';
 
 type ReduxStateProps = {
   edgeLabels: EdgeLabelMode[];

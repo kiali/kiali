@@ -37,7 +37,7 @@ import { elems, SelectAnd, SelectExp, selectOr, SelectOr, setObserved } from 'he
 import { descendents } from 'helpers/GraphHelpers';
 import { isArray } from 'lodash';
 import { graphLayout, LayoutType } from 'pages/GraphPF/GraphPF';
-import { infoStyle } from 'styles/InfoStyle';
+import { infoStyle } from 'styles/IconStyle';
 
 type ReduxStateProps = {
   edgeLabels: EdgeLabelMode[];

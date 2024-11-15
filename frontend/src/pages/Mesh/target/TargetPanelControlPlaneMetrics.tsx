@@ -8,7 +8,7 @@ import { KialiIcon } from 'config/KialiIcon';
 import { IstiodResourceThresholds } from 'types/IstioStatus';
 import { useKialiTranslation } from 'utils/I18nUtils';
 import { Datapoint, Metric } from 'types/Metrics';
-import { infoStyle } from 'styles/InfoStyle';
+import { infoStyle } from 'styles/IconStyle';
 
 type ControlPlaneProps = {
   istiodContainerCpu?: Metric[];

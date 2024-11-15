@@ -16,7 +16,7 @@ import { isMultiCluster } from '../../config';
 import { Workload } from '../../types/Workload';
 import { hasMissingSidecar } from 'components/VirtualList/Config';
 import { healthIndicatorStyle } from 'styles/HealthStyle';
-import { infoStyle } from 'styles/InfoStyle';
+import { infoStyle } from 'styles/IconStyle';
 
 type ReduxProps = {
   kiosk: string;

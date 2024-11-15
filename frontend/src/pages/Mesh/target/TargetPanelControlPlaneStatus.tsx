@@ -4,7 +4,7 @@ import * as React from 'react';
 import { OutboundTrafficPolicy } from 'types/IstioObjects';
 import { useKialiTranslation } from 'utils/I18nUtils';
 import { ControlPlaneMetricsMap } from 'types/Metrics';
-import { infoStyle } from 'styles/InfoStyle';
+import { infoStyle } from 'styles/IconStyle';
 
 type Props = {
   controlPlaneMetrics?: ControlPlaneMetricsMap;

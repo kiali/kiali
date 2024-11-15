@@ -20,7 +20,7 @@ import { DetailDescription } from '../../components/DetailDescription/DetailDesc
 import { isWaypoint } from '../../helpers/LabelFilterHelper';
 import { AmbientLabel, tooltipMsgType } from '../../components/Ambient/AmbientLabel';
 import { validationKey } from '../../types/IstioConfigList';
-import { infoStyleProps } from 'styles/InfoStyle';
+import { infoStyleProps } from 'styles/IconStyle';
 
 type WorkloadDescriptionProps = {
   health?: H.Health;

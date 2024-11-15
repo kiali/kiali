@@ -45,7 +45,7 @@ import { Td } from '@patternfly/react-table';
 import { kialiStyle } from 'styles/StyleUtils';
 import { hasMissingSidecar } from './Config';
 import { InstanceType } from 'types/Common';
-import { infoStyleProps } from 'styles/InfoStyle';
+import { infoStyleProps } from 'styles/IconStyle';
 
 const rendererInfoStyle = kialiStyle({
   ...infoStyleProps,

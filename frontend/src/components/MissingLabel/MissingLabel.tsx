@@ -3,7 +3,7 @@ import { Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { icons, serverConfig } from '../../config';
 import { KialiIcon } from '../../config/KialiIcon';
 import { PFBadge } from '../Pf/PfBadges';
-import { infoStyle } from 'styles/InfoStyle';
+import { infoStyle } from 'styles/IconStyle';
 
 type MissingLabelProps = {
   className?: string;
