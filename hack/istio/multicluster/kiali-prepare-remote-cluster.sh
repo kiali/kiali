@@ -190,9 +190,22 @@ get_remote_cluster_token() {
         || (info "Waiting for the remote cluster SA secret token to be created..." && sleep 5)
     done
     if [ "${encoded_token}" == "" ]; then
-      error "There is no token assigned yet to the remote cluster SA secret [${token_secret}] found in remote cluster namespace [${REMOTE_CLUSTER_NAMESPACE}]. Exiting."
+      error "$(cat <<ERRMSG
+There is no token assigned yet to the remote cluster SA secret [${token_secret}] found in remote cluster namespace [${REMOTE_CLUSTER_NAMESPACE}].
+If you do not have such a secret yet, you can create one in order to generate a token. For example:
+${CLIENT_EXE_REMOTE_CLUSTER} apply -f - <<EOM
+apiVersion: v1
+kind: Secret
+metadata:
+  name: "${token_secret}"
+  namespace: "${REMOTE_CLUSTER_NAMESPACE}"
+  annotations:
+    kubernetes.io/service-account.name: "${KIALI_RESOURCE_NAME}"
+type: kubernetes.io/service-account-token
+EOM
+ERRMSG
+)"
     fi
-
     TOKEN="$(echo ${encoded_token} | base64 -d)"
   fi
 }
