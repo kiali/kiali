@@ -6,7 +6,8 @@ import { Reporter, Direction } from '../../types/MetricsOptions';
 import { Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { KialiIcon } from '../../config/KialiIcon';
 import { kialiStyle } from 'styles/StyleUtils';
-import { infoStyleProps } from 'styles/IconStyle';
+import { infoStyle } from 'styles/IconStyle';
+import { classes } from 'typestyle';
 
 interface Props {
   direction: Direction;
@@ -15,7 +16,6 @@ interface Props {
 }
 
 const metricsReporterInfoStyle = kialiStyle({
-  ...infoStyleProps,
   marginBottom: '0.125rem',
   marginRight: '0.25rem',
   marginTop: '0'
@@ -87,7 +87,7 @@ export class MetricsReporter extends React.Component<Props> {
         />
 
         <Tooltip content={<div style={{ textAlign: 'left' }}>{this.reportTooltip}</div>} position={TooltipPosition.top}>
-          <KialiIcon.Info className={metricsReporterInfoStyle} />
+          <KialiIcon.Info className={classes(infoStyle, metricsReporterInfoStyle)} />
         </Tooltip>
       </span>
     );

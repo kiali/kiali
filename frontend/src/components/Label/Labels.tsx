@@ -3,6 +3,8 @@ import { Label } from './Label';
 import { Button, ButtonVariant, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
 import { KialiIcon } from '../../config/KialiIcon';
+import { classes } from 'typestyle';
+import { infoStyle } from 'styles/IconStyle';
 
 const SHOW_MORE_TRESHOLD = 2;
 

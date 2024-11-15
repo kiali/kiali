@@ -45,10 +45,10 @@ import { Td } from '@patternfly/react-table';
 import { kialiStyle } from 'styles/StyleUtils';
 import { hasMissingSidecar } from './Config';
 import { InstanceType } from 'types/Common';
-import { infoStyleProps } from 'styles/IconStyle';
+import { infoStyle } from 'styles/IconStyle';
+import { classes } from 'typestyle';
 
 const rendererInfoStyle = kialiStyle({
-  ...infoStyleProps,
   marginBottom: '-0.125rem',
   marginRight: '0',
   marginTop: '0'
@@ -167,7 +167,7 @@ export const details: Renderer<AppListItem | WorkloadListItem | ServiceListItem>
               position={TooltipPosition.top}
               content="Layer 7 service Mesh capabilities in Istio Ambient"
             >
-              <KialiIcon.Info className={rendererInfoStyle} />
+              <KialiIcon.Info className={classes(infoStyle, rendererInfoStyle)} />
             </Tooltip>
           </li>
         )}
