@@ -129,7 +129,9 @@ echo "Using following Kiali CR [${KIALI_CR_NAMESPACE}:${KIALI_CR_NAME}]"
 # Get a Kiali server namespace, if not defined in .spec.deployment.namespace, use Kiali CR's namespace
 KIALI_SA_NAMESPACE=$(${OC} get kiali ${KIALI_CR_NAME} -n ${KIALI_CR_NAMESPACE} -o jsonpath='{.spec.deployment.namespace}{"\n"}{.metadata.namespace}' | awk 'NF{print $1; exit}')
 # Get a service account required to generate Kiali Cluster Role Binding for OpenShift Prometheus access
-KIALI_SA_NAME=$(${OC} get sa ${KIALI_CR_NAME}-service-account -n ${KIALI_SA_NAMESPACE} -o custom-columns=N:.metadata.name --no-headers)
+kialiInstance=$(${OC} get kiali ${KIALI_CR_NAME} -o jsonpath='{.spec.deployment.instance_name}' -n ${KIALI_CR_NAMESPACE})
+kialiInstance=${kialiInstance:-"kiali"}
+KIALI_SA_NAME=$(${OC} get sa ${kialiInstance}-service-account -n ${KIALI_SA_NAMESPACE} -o custom-columns=N:.metadata.name --no-headers)
 if [ -z "${KIALI_SA_NAME}" ]; then
   echo "There are no Kiali Servers installed in the ${KIALI_SA_NAMESPACE} namespace."
   exit 1
