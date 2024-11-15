@@ -9,10 +9,11 @@ import {
   Tooltip,
   TooltipPosition
 } from '@patternfly/react-core';
-import { itemInfoStyle, itemStyleWithoutInfo, menuStyle, titleStyle } from 'styles/DropdownStyles';
+import { itemStyleWithoutInfo, menuStyle, titleStyle } from 'styles/DropdownStyles';
 import { HistoryManager, URLParam } from 'app/History';
 import { KialiIcon } from 'config/KialiIcon';
 import { TraceLimit } from 'components/Metrics/TraceLimit';
+import { infoStyle } from 'styles/IconStyle';
 
 export interface QuerySettings {
   errorsOnly: boolean;
@@ -141,7 +142,7 @@ export class TracesDisplayOptions extends React.Component<Props, State> {
               </div>
             }
           >
-            <KialiIcon.Info className={itemInfoStyle} />
+            <KialiIcon.Info className={infoStyle} />
           </Tooltip>
         </div>
 

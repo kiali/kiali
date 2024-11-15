@@ -13,6 +13,8 @@ import { HealthIndicator } from '../../components/Health/HealthIndicator';
 import { PFBadge, PFBadges } from '../../components/Pf/PfBadges';
 import { DetailDescription } from '../../components/DetailDescription/DetailDescription';
 import { AmbientLabel, tooltipMsgType } from '../../components/Ambient/AmbientLabel';
+import { infoStyle } from 'styles/IconStyle';
+import { classes } from 'typestyle';
 
 interface ServiceInfoDescriptionProps {
   namespace: string;
@@ -34,8 +36,7 @@ const iconStyle = kialiStyle({
   display: 'inline-block'
 });
 
-const infoStyle = kialiStyle({
-  marginLeft: '0.5rem',
+const serviceInfoStyle = kialiStyle({
   verticalAlign: '-0.125rem'
 });
 
@@ -161,7 +162,7 @@ export const ServiceDescription: React.FC<ServiceInfoDescriptionProps> = (props:
             position={TooltipPosition.right}
             content={<div style={{ textAlign: 'left' }}>{serviceProperties}</div>}
           >
-            <KialiIcon.Info className={infoStyle} />
+            <KialiIcon.Info className={classes(infoStyle, serviceInfoStyle)} />
           </Tooltip>
 
           <span className={healthIconStyle}>

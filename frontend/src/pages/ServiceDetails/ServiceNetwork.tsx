@@ -5,6 +5,7 @@ import { kialiStyle } from 'styles/StyleUtils';
 import { Gateway, ObjectCheck, ObjectValidation, VirtualService } from '../../types/IstioObjects';
 import { ValidationList } from '../../components/Validations/ValidationList';
 import { KialiIcon } from '../../config/KialiIcon';
+import { infoStyle } from 'styles/IconStyle';
 
 type ServiceNetworkProps = {
   gateways: Gateway[];
@@ -13,9 +14,9 @@ type ServiceNetworkProps = {
 };
 
 type HostnameInfo = {
-  hostname: string;
-  fromType: string | undefined;
   fromName: string | undefined;
+  fromType: string | undefined;
+  hostname: string;
 };
 
 const resourceListStyle = kialiStyle({
@@ -26,10 +27,6 @@ const resourceListStyle = kialiStyle({
       fontWeight: 700
     }
   }
-});
-
-const infoStyle = kialiStyle({
-  marginLeft: '0.25rem'
 });
 
 export const ServiceNetwork: React.FC<ServiceNetworkProps> = (props: ServiceNetworkProps) => {
@@ -172,15 +169,10 @@ export const ServiceNetwork: React.FC<ServiceNetworkProps> = (props: ServiceNetw
             {props.serviceDetails.virtualServices.length > 0 && (
               <li>
                 <span>Hostnames</span>
-                <div
-                  style={{
-                    display: 'inline-block',
-                    width: '75%'
-                  }}
-                >
+                <div style={{ display: 'inline-block' }}>
                   {getHostnames(props.serviceDetails.virtualServices).map((hostname, i) => {
                     return (
-                      <div key={`hostname_${i}`}>
+                      <div key={`hostname_${i}`} style={{ width: 'fit-content' }}>
                         <Tooltip
                           position={TooltipPosition.right}
                           content={

@@ -37,6 +37,7 @@ import { elems, SelectAnd, SelectExp, selectOr, SelectOr, setObserved } from 'he
 import { descendents } from 'helpers/GraphHelpers';
 import { isArray } from 'lodash';
 import { graphLayout, LayoutType } from 'pages/GraphPF/GraphPF';
+import { infoStyle } from 'styles/IconStyle';
 
 type ReduxStateProps = {
   edgeLabels: EdgeLabelMode[];
@@ -89,8 +90,8 @@ const buttonClearStyle = kialiStyle({
 });
 
 const findHideHelpStyle = kialiStyle({
-  paddingLeft: '0.25rem',
-  paddingRight: '0.25rem'
+  paddingLeft: '0',
+  paddingRight: '0'
 });
 
 const gridStyle = kialiStyle({
@@ -99,6 +100,14 @@ const gridStyle = kialiStyle({
 
 const graphFindStyle = kialiStyle({
   marginRight: '0.75rem',
+  $nest: {
+    '& > .pf-v5-c-form__group-control': {
+      display: 'flex'
+    }
+  }
+});
+
+const graphHideStyle = kialiStyle({
   $nest: {
     '& > .pf-v5-c-form__group-control': {
       display: 'flex'
@@ -365,7 +374,7 @@ class GraphFindPFComponent extends React.Component<GraphFindProps, GraphFindStat
             </GridItem>
 
             <GridItem span={1}>
-              <FormGroup className={graphFindStyle}>
+              <FormGroup className={graphHideStyle}>
                 <GraphFindOptions kind="hide" onSelect={this.updateHideOption} />
                 {this.props.hideValue && (
                   <Tooltip key="ot_clear_hide" position="top" content="Clear Hide...">
@@ -391,18 +400,18 @@ class GraphFindPFComponent extends React.Component<GraphFindProps, GraphFindStat
               className={findHideHelpStyle}
               onClick={this.toggleFindHelp}
             >
-              <KialiIcon.Info />
+              <KialiIcon.Info className={infoStyle} />
             </Button>
           </GraphHelpFind>
         ) : (
-          <Tooltip key={'ot_graph_find_help'} position="top" content="Find/Hide Help...">
+          <Tooltip key={'ot_graph_find_help'} position="top" content="Click to open Find/Hide help">
             <Button
               data-test="graph-find-hide-help-button"
               variant={ButtonVariant.link}
               className={findHideHelpStyle}
               onClick={this.toggleFindHelp}
             >
-              <KialiIcon.Info />
+              <KialiIcon.Info className={infoStyle} />
             </Button>
           </Tooltip>
         )}

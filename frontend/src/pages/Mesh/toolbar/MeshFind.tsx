@@ -35,6 +35,7 @@ import { MeshToolbarActions } from 'actions/MeshToolbarActions';
 import { MeshFindOptions } from './MeshFindOptions';
 import { MeshHelpFind } from '../MeshHelpFind';
 import { LayoutType, meshLayout } from '../Mesh';
+import { infoStyle } from 'styles/IconStyle';
 
 type ReduxStateProps = {
   findValue: string;
@@ -77,8 +78,8 @@ const buttonClearStyle = kialiStyle({
 });
 
 const findHideHelpStyle = kialiStyle({
-  paddingLeft: '0.25rem',
-  paddingRight: '0.25rem'
+  paddingLeft: '0',
+  paddingRight: '0'
 });
 
 const gridStyle = kialiStyle({
@@ -87,6 +88,14 @@ const gridStyle = kialiStyle({
 
 const meshFindStyle = kialiStyle({
   marginRight: '0.75rem',
+  $nest: {
+    '& > .pf-v5-c-form__group-control': {
+      display: 'flex'
+    }
+  }
+});
+
+const meshHideStyle = kialiStyle({
   $nest: {
     '& > .pf-v5-c-form__group-control': {
       display: 'flex'
@@ -297,7 +306,7 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
             </GridItem>
 
             <GridItem span={1}>
-              <FormGroup className={meshFindStyle}>
+              <FormGroup className={meshHideStyle}>
                 <MeshFindOptions kind="hide" onSelect={this.updateHideOption} />
                 {this.props.hideValue && (
                   <Tooltip key="ot_clear_hide" position="top" content="Clear Hide...">
@@ -323,18 +332,18 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
               className={findHideHelpStyle}
               onClick={this.toggleFindHelp}
             >
-              <KialiIcon.Info />
+              <KialiIcon.Info className={infoStyle} />
             </Button>
           </MeshHelpFind>
         ) : (
-          <Tooltip key={'ot_mesh_find_help'} position="top" content="Find/Hide Help...">
+          <Tooltip key={'ot_mesh_find_help'} position="top" content="Click to open Find/Hide help">
             <Button
               data-test="mesh-find-hide-help-button"
               variant={ButtonVariant.link}
               className={findHideHelpStyle}
               onClick={this.toggleFindHelp}
             >
-              <KialiIcon.Info />
+              <KialiIcon.Info className={infoStyle} />
             </Button>
           </Tooltip>
         )}

@@ -24,7 +24,6 @@ import {
 import { KialiIcon } from 'config/KialiIcon';
 import {
   containerStyle,
-  itemInfoStyle,
   itemStyleWithInfo,
   itemStyleWithoutInfo,
   menuStyle,
@@ -36,6 +35,7 @@ import { KialiDispatch } from 'types/Redux';
 import { KialiCrippledFeatures } from 'types/ServerConfig';
 import { getCrippledFeatures } from 'services/Api';
 import { serverConfig } from '../../../config';
+import { infoStyle } from 'styles/IconStyle';
 
 type ReduxStateProps = {
   boxByCluster: boolean;
@@ -742,7 +742,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
                 </div>
               }
             >
-              <KialiIcon.Info className={itemInfoStyle} />
+              <KialiIcon.Info className={infoStyle} />
             </Tooltip>
           </div>
 
@@ -771,7 +771,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
                   content={edgeLabelOption.tooltip}
                 >
                   <KialiIcon.Info
-                    className={edgeLabelOption.iconClassName ?? itemInfoStyle}
+                    className={edgeLabelOption.iconClassName ?? infoStyle}
                     color={edgeLabelOption.iconColor}
                   />
                 </Tooltip>
@@ -807,7 +807,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
                           content={rtOption.tooltip}
                         >
                           <KialiIcon.Info
-                            className={edgeLabelOption.iconClassName ?? itemInfoStyle}
+                            className={edgeLabelOption.iconClassName ?? infoStyle}
                             color={edgeLabelOption.iconColor}
                           />
                         </Tooltip>
@@ -847,7 +847,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
                           content={throughputOption.tooltip}
                         >
                           <KialiIcon.Info
-                            className={throughputOption.iconClassName ?? itemInfoStyle}
+                            className={throughputOption.iconClassName ?? infoStyle}
                             color={throughputOption.iconColor}
                           />
                         </Tooltip>
@@ -875,7 +875,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
 
               {item.tooltip && (
                 <Tooltip key={`tooltip_${item.id}`} position={TooltipPosition.right} content={item.tooltip}>
-                  <KialiIcon.Info className={item.iconClassName ?? itemInfoStyle} color={item.iconColor} />
+                  <KialiIcon.Info className={item.iconClassName ?? infoStyle} color={item.iconColor} />
                 </Tooltip>
               )}
 
@@ -907,7 +907,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
                           content={scoringOption.tooltip}
                         >
                           <KialiIcon.Info
-                            className={scoringOption.iconClassName ?? itemInfoStyle}
+                            className={scoringOption.iconClassName ?? infoStyle}
                             color={scoringOption.iconColor}
                           />
                         </Tooltip>
@@ -935,7 +935,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
 
               {item.tooltip && (
                 <Tooltip key={`tooltip_${item.id}`} position={TooltipPosition.right} content={item.tooltip}>
-                  <KialiIcon.Info className={item.iconClassName ?? itemInfoStyle} color={item.iconColor} />
+                  <KialiIcon.Info className={item.iconClassName ?? infoStyle} color={item.iconColor} />
                 </Tooltip>
               )}
             </div>

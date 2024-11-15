@@ -4,7 +4,7 @@ import { SVGIconProps } from '@patternfly/react-icons/dist/js/createIcon';
 import { serverConfig } from 'config/ServerConfig';
 import { icons } from 'config';
 import { KialiIcon } from '../../config/KialiIcon';
-import { kialiStyle } from 'styles/StyleUtils';
+import { infoStyle } from 'styles/IconStyle';
 
 type MissingSidecarProps = {
   className?: string;
@@ -17,10 +17,6 @@ type MissingSidecarProps = {
   texttooltip?: string;
   tooltip?: boolean;
 };
-
-const infoStyle = kialiStyle({
-  marginLeft: '0.5rem'
-});
 
 export const MissingSidecar: React.FC<MissingSidecarProps> = ({
   textmesh = 'Out of mesh',

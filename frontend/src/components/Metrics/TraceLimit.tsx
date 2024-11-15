@@ -3,7 +3,7 @@ import { Radio, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { KialiIcon } from 'config/KialiIcon';
 import { itemStyleWithoutInfo } from 'styles/DropdownStyles';
 import { ToolbarDropdown } from 'components/Dropdown/ToolbarDropdown';
-import { infoStyle } from 'styles/InfoStyle';
+import { infoStyle } from 'styles/IconStyle';
 
 type TraceLimitProps = {
   asRadio?: boolean;

@@ -20,6 +20,8 @@ import { DetailDescription } from '../../components/DetailDescription/DetailDesc
 import { isWaypoint } from '../../helpers/LabelFilterHelper';
 import { AmbientLabel, tooltipMsgType } from '../../components/Ambient/AmbientLabel';
 import { validationKey } from '../../types/IstioConfigList';
+import { infoStyle } from 'styles/IconStyle';
+import { classes } from 'typestyle';
 
 type WorkloadDescriptionProps = {
   health?: H.Health;
@@ -42,8 +44,7 @@ const iconStyle = kialiStyle({
   display: 'inline-block'
 });
 
-const infoStyle = kialiStyle({
-  marginLeft: '0.5rem',
+const workloadInfoStyle = kialiStyle({
   verticalAlign: '-0.125rem'
 });
 
@@ -159,7 +160,7 @@ export const WorkloadDescription: React.FC<WorkloadDescriptionProps> = (props: W
             position={TooltipPosition.right}
             content={<div style={{ textAlign: 'left' }}>{workloadProperties}</div>}
           >
-            <KialiIcon.Info className={infoStyle} />
+            <KialiIcon.Info className={classes(infoStyle, workloadInfoStyle)} />
           </Tooltip>
 
           <span className={healthIconStyle}>
@@ -170,7 +171,7 @@ export const WorkloadDescription: React.FC<WorkloadDescriptionProps> = (props: W
             <MissingSidecar
               dataTest={`missing-sidecar-badge-for-${workload.name}-workload-in-${props.namespace}-namespace`}
               tooltip={true}
-              className={infoStyle}
+              className={classes(infoStyle, workloadInfoStyle)}
               text=""
             />
           )}
@@ -183,14 +184,19 @@ export const WorkloadDescription: React.FC<WorkloadDescriptionProps> = (props: W
           )}
 
           {hasMissingAuthPolicy(validationKey(workload.name, props.namespace), workload.validations) && (
-            <MissingAuthPolicy namespace={props.namespace} tooltip={true} className={infoStyle} text="" />
+            <MissingAuthPolicy
+              namespace={props.namespace}
+              tooltip={true}
+              className={classes(infoStyle, workloadInfoStyle)}
+              text=""
+            />
           )}
 
           {(!workload.appLabel || !workload.versionLabel) && !isWaypoint(workload.labels) && (
             <MissingLabel
               missingApp={!workload.appLabel}
               missingVersion={!workload.versionLabel}
-              className={infoStyle}
+              className={classes(infoStyle, workloadInfoStyle)}
               tooltip={true}
             />
           )}

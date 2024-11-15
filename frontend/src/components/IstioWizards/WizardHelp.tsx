@@ -2,10 +2,7 @@ import * as React from 'react';
 import { Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { KialiIcon } from '../../config/KialiIcon';
 import { kialiStyle } from 'styles/StyleUtils';
-
-const infoStyle = kialiStyle({
-  marginLeft: '0.5rem'
-});
+import { infoStyle } from 'styles/IconStyle';
 
 const importantTooltip = kialiStyle({
   fontWeight: 700
