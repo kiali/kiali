@@ -153,7 +153,7 @@ func ServiceEntryHostnames(serviceEntries []*networking_v1.ServiceEntry) map[str
 				protocol := mapPortToVirtualServiceProtocol(port.Protocol)
 				protocols = append(protocols, protocol)
 			}
-			hostnames[host] = protocols
+			hostnames[host] = append(protocols, hostnames[host]...)
 		}
 	}
 
