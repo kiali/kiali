@@ -187,10 +187,10 @@ get_remote_cluster_token() {
       local encoded_token="$(${CLIENT_EXE_REMOTE_CLUSTER} get secrets -n ${REMOTE_CLUSTER_NAMESPACE} ${token_secret} -o jsonpath='{.data.token}' 2>/dev/null)" \
         && [ "${encoded_token}" != "" ] \
         && break \
-        || (info "Waiting for the SA secret token to be created..." && sleep 5)
+        || (info "Waiting for the remote cluster SA secret token to be created..." && sleep 5)
     done
     if [ "${encoded_token}" == "" ]; then
-      error "There is no token assigned yet to the remote cluster SA secret [${token_secret}] found in namespace [${REMOTE_CLUSTER_NAMESPACE}]. Exiting."
+      error "There is no token assigned yet to the remote cluster SA secret [${token_secret}] found in remote cluster namespace [${REMOTE_CLUSTER_NAMESPACE}]. Exiting."
     fi
 
     TOKEN="$(echo ${encoded_token} | base64 -d)"
@@ -217,34 +217,36 @@ create_kiali_remote_cluster_secret() {
     info remote_cluster_server_url=${remote_cluster_server_url}
   fi
 
-  # The CA data can either be specified directly in the config or a CA file is defined that we then have to read. Either way, get the CA bytes.
-  # If we cannot find the CA bytes, it could be because it is configured with "insecure-skip-tls-verify: true". If so, use that unless we were told not to.
-  # It is an error otherwise because we need the CA or we need to be allowed to skip the TLS verification.
-  local remote_cluster_ca_bytes="$(${CLIENT_EXE} config view --raw=true -o jsonpath='{.clusters[?(@.name == "'${REMOTE_CLUSTER_NAME_FROM_CONTEXT}'")].cluster.certificate-authority-data}' 2>/dev/null)"
-  if [ "${remote_cluster_ca_bytes}" == "" ]; then
-    local ca_file="$(${CLIENT_EXE} config view --raw=true -o jsonpath='{.clusters[?(@.name == "'${REMOTE_CLUSTER_NAME_FROM_CONTEXT}'")].cluster.certificate-authority}' 2>/dev/null)"
-    if [ ! -r "${ca_file}" ]; then
-      local existing_skip_tls_verify="$(${CLIENT_EXE} config view --raw=true -o jsonpath='{.clusters[?(@.name == "'${REMOTE_CLUSTER_NAME_FROM_CONTEXT}'")].cluster.insecure-skip-tls-verify}' 2>/dev/null)"
-      if [ "${existing_skip_tls_verify}" != "true" ]; then
-        error "Unable to read the remote cluster CA bytes or file specified in the kubeconfig remote cluster named [${REMOTE_CLUSTER_NAME_FROM_CONTEXT}]. Check that the kubeconfig is correct."
-      elif [ "${ALLOW_SKIP_TLS_VERIFY}" != "true" ]; then
-        error "The remote cluster named [${REMOTE_CLUSTER_NAME_FROM_CONTEXT}] in the remote context is configured with insecure-skip-tls-verify. If you agree to use that, pass in '--allow-skip-tls-verify true'. Aborting."
+  if [ "${ALLOW_SKIP_TLS_VERIFY}" != "true" ]; then
+    # The CA data can either be specified directly in the config or a CA file is defined that we then have to read. Either way, get the CA bytes.
+    # If we cannot find the CA bytes, it could be because it is configured with "insecure-skip-tls-verify: true". If so, use that unless we were told not to.
+    # It is an error otherwise because we need the CA or we need to be allowed to skip the TLS verification.
+    local remote_cluster_ca_bytes="$(${CLIENT_EXE} config view --raw=true -o jsonpath='{.clusters[?(@.name == "'${REMOTE_CLUSTER_NAME_FROM_CONTEXT}'")].cluster.certificate-authority-data}' 2>/dev/null)"
+    if [ "${remote_cluster_ca_bytes}" == "" ]; then
+      local ca_file="$(${CLIENT_EXE} config view --raw=true -o jsonpath='{.clusters[?(@.name == "'${REMOTE_CLUSTER_NAME_FROM_CONTEXT}'")].cluster.certificate-authority}' 2>/dev/null)"
+      if [ ! -r "${ca_file}" ]; then
+          info "WARNING: Unable to read the remote cluster CA bytes or file specified in the kubeconfig remote cluster named [${REMOTE_CLUSTER_NAME_FROM_CONTEXT}]."
+      else
+        info ca_file=${ca_file}
+        remote_cluster_ca_bytes="$(cat ${ca_file} 2>/dev/null | base64 --wrap=0 2>/dev/null)"
+        if [ "${remote_cluster_ca_bytes}" == "" ]; then
+          info "WARNING: Unable to get the remote cluster CA cert data from the CA file [${ca_file}] specified in the kubeconfig remote cluster named [${REMOTE_CLUSTER_NAME_FROM_CONTEXT}]."
+        fi
       fi
-    else
-      info ca_file=${ca_file}
-      remote_cluster_ca_bytes="$(cat ${ca_file} 2>/dev/null | base64 --wrap=0 2>/dev/null)"
       if [ "${remote_cluster_ca_bytes}" == "" ]; then
-        error "Unable to get the remote cluster CA cert data from the CA file [${ca_file}] specified in the kubeconfig remote cluster named [${REMOTE_CLUSTER_NAME_FROM_CONTEXT}]. Check that the kubeconfig is correct."
+        info "Obtaining the remote cluster CA cert data from the remote cluster itself"
+        remote_cluster_ca_bytes="$(${CLIENT_EXE_REMOTE_CLUSTER} get configmap -n ${REMOTE_CLUSTER_NAMESPACE} kube-root-ca.crt -ojsonpath='{.data.ca\.crt}' | base64 --wrap=0 2>/dev/null)"
       fi
     fi
   fi
 
-  # Get the token that is needed to access the remote cluster
-  get_remote_cluster_token
-
-  if [ "${remote_cluster_ca_bytes}" == "" -a "${ALLOW_SKIP_TLS_VERIFY}" == "true" ]; then
-    info "Kiali will be allowed to insecurely skip TLS verification when connecting to the remote cluster named [${REMOTE_CLUSTER_NAME}]."
-    local cert_auth_yaml="insecure-skip-tls-verify: true"
+  if [ "${remote_cluster_ca_bytes}" == "" ]; then
+    if [ "${ALLOW_SKIP_TLS_VERIFY}" == "true" ]; then
+      info "Kiali will be allowed to insecurely skip TLS verification when connecting to the remote cluster named [${REMOTE_CLUSTER_NAME}]."
+      local cert_auth_yaml="insecure-skip-tls-verify: true"
+    else
+      error "Cannot obtain the remote cluster CA cert data. You can allow for this insecure condition by passing in '--allow-skip-tls-verify true'"
+    fi
   else
     local cert_auth_yaml="certificate-authority-data: ${remote_cluster_ca_bytes}"
   fi
@@ -271,6 +273,8 @@ $(echo "${EXEC_AUTH_JSON}" | yq -P | sed "s/^/  /g")
 EOF
 )
   else
+    # Get the token that is needed to access the remote cluster
+    get_remote_cluster_token
     local user_auth="token: ${TOKEN}"
   fi
 
