@@ -14,9 +14,9 @@ type ServiceNetworkProps = {
 };
 
 type HostnameInfo = {
-  hostname: string;
-  fromType: string | undefined;
   fromName: string | undefined;
+  fromType: string | undefined;
+  hostname: string;
 };
 
 const resourceListStyle = kialiStyle({
@@ -169,15 +169,10 @@ export const ServiceNetwork: React.FC<ServiceNetworkProps> = (props: ServiceNetw
             {props.serviceDetails.virtualServices.length > 0 && (
               <li>
                 <span>Hostnames</span>
-                <div
-                  style={{
-                    display: 'inline-block',
-                    width: '75%'
-                  }}
-                >
+                <div style={{ display: 'inline-block' }}>
                   {getHostnames(props.serviceDetails.virtualServices).map((hostname, i) => {
                     return (
-                      <div key={`hostname_${i}`}>
+                      <div key={`hostname_${i}`} style={{ width: 'fit-content' }}>
                         <Tooltip
                           position={TooltipPosition.right}
                           content={
