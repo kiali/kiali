@@ -1,5 +1,4 @@
 import { Point, clamp, quadraticBezier, linearInterpolation, distance, bezierLength } from '../../../utils/MathUtils';
-import { PFColorVals } from '../../Pf/PfColors';
 import {
   TrafficPointCircleRenderer,
   TrafficPointConcentricDiamondRenderer,
@@ -10,6 +9,7 @@ import { Protocol } from '../../../types/Graph';
 import { timerConfig, tcpTimerConfig } from './AnimationTimerConfig';
 import { Controller, Edge } from '@patternfly/react-topology';
 import { EdgeData } from 'pages/GraphPF/GraphPFElems';
+import { PFColors } from 'components/Pf/PfColors';
 
 // Clamp response time from min to max
 const SPEED_RESPONSE_TIME_MIN = 0;
@@ -45,8 +45,8 @@ enum TrafficEdgeType {
  */
 const getTrafficPointRendererForRpsError: (edge: Edge) => TrafficPointRenderer = (_edge: Edge) => {
   return new TrafficPointConcentricDiamondRenderer(
-    new Diamond(5, PFColorVals.White, PFColorVals.Danger, 1.0),
-    new Diamond(2, PFColorVals.Danger, PFColorVals.Danger, 1.0)
+    new Diamond(5, PFColors.White, PFColors.Danger, 1.0),
+    new Diamond(2, PFColors.Danger, PFColors.Danger, 1.0)
   );
 };
 
@@ -56,7 +56,7 @@ const getTrafficPointRendererForRpsError: (edge: Edge) => TrafficPointRenderer =
  * @returns {TrafficPointRenderer}
  */
 const getTrafficPointRendererForRpsSuccess: (edge: Edge) => TrafficPointRenderer = (edge: Edge) => {
-  return new TrafficPointCircleRenderer(2, PFColorVals.White, edge.getData().pathStyle.stroke, 2);
+  return new TrafficPointCircleRenderer(2, PFColors.White, edge.getData().pathStyle.stroke, 2);
 };
 
 /**
@@ -65,7 +65,7 @@ const getTrafficPointRendererForRpsSuccess: (edge: Edge) => TrafficPointRenderer
  * @returns {TrafficPointCircleRenderer}
  */
 const getTrafficPointRendererForTcp: (edge: Edge) => TrafficPointRenderer = (_edge: Edge) => {
-  return new TrafficPointCircleRenderer(1.6, PFColorVals.Black100, PFColorVals.Black500, 1);
+  return new TrafficPointCircleRenderer(1.6, PFColors.Black100, PFColors.Black500, 1);
 };
 
 /**
@@ -86,78 +86,6 @@ type TrafficPoint = {
   offset: Point;
   renderer: TrafficPointRenderer;
 };
-
-// This class is an adpatation of cytoscape-canvas: https://github.com/classcraft/cytoscape.js-canvas
-// It creates a canvas over or under Patternfly Topology graph. In this case to render traffic animation
-// on graph edges.
-class RendererCanvas {
-  zIndex = 1;
-
-  private controller: Controller;
-  private canvas: HTMLCanvasElement;
-  private pixelRatio: number;
-
-  constructor(controller: Controller) {
-    this.controller = controller;
-    this.canvas = document.createElement('canvas');
-    this.controller.getGraph().getLayersgetGraph().appendChild(this.canvas);
-    this.pixelRatio = window.devicePixelRatio || 1;
-    this.canvas.setAttribute('style', `position:absolute; top:0; left:0; z-index:${options.zIndex};`);
-    this.resize();
-  }
-
-  resize() {
-    const width = this.controller.getGraph().getBounds().width;
-    const height = this.controller.getGraph().getBounds().height;
-
-    const canvasWidth = width * this.pixelRatio;
-    const canvasHeight = height * this.pixelRatio;
-
-    this.canvas.width = canvasWidth;
-    this.canvas.height = canvasHeight;
-
-    this.canvas.style.width = `${width}px`;
-    this.canvas.style.height = `${height}px`;
-  }
-
-  /**
-   * @return {Canvas} The generated canvas
-   */
-  getCanvas() {
-    return this.canvas;
-  }
-
-  /**
-   * Helper: Clear the canvas
-   * @param {CanvasRenderingContext2D} ctx
-   */
-  clear(ctx) {
-    const width = this.controller.getGraph().getBounds().width;
-    const height = this.controller.getGraph().getBounds().height;
-    ctx.save();
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.clearRect(0, 0, width * this.pixelRatio, height * this.pixelRatio);
-    ctx.restore();
-  }
-  /**
-   * Helper: Reset the context transform to an identity matrix
-   * @param {CanvasRenderingContext2D} ctx
-   */
-  resetTransform(ctx) {
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-  }
-  /**
-   * Helper: Set the context transform to match Cystoscape's zoom & pan
-   * @param {CanvasRenderingContext2D} ctx
-   */
-  setTransform(ctx) {
-    const pan = this.controller.getGraph().getDimensions();
-    const zoom = cy.zoom();
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.translate(pan.x * this.pixelRatio, pan.y * this.pixelRatio);
-    ctx.scale(zoom * this.pixelRatio, zoom * this.pixelRatio);
-  }
-}
 
 /**
  * Helps generate traffic points
@@ -320,26 +248,30 @@ type TrafficEdgeHash = {
  * responseTime determines how fast the TrafficPoint should travel from the start to the end of the edge.
  * percentErr determine if the next TrafficPoint is error or not.
  */
-export class TrafficRendererPF {
+export class TrafficAnimation {
   private animationTimer;
+  private controller: Controller;
   private previousTimestamp;
   private trafficEdges: TrafficEdgeHash = {};
-
-  private readonly renderer: RendererCanvas;
-  private readonly context;
+  private context: any;
 
   constructor(controller: Controller) {
-    this.renderer = RendererCanvas(controller);
-    const canvas = this.renderer.getCanvas();
-    canvas.style['pointer-events'] = 'none';
+    this.controller = controller;
+    const canvas = document.createElement('canvas');
+    this.context = canvas.getContext('2d');
+    this.context = canvas.style['pointer-events'] = 'none';
     this.context = canvas.getContext('2d');
   }
 
   /**
    * Starts the rendering loop, discards any other rendering loop that was started
    */
-  start(edges: Edge[]) {
+  start() {
     this.pause();
+    const edges = this.controller
+      .getGraph()
+      .getEdges()
+      .filter(e => e.isVisible());
     this.trafficEdges = this.processEdges(edges);
     this.animationTimer = window.setInterval(this.processStep, FRAME_RATE * 1000);
   }
@@ -350,19 +282,9 @@ export class TrafficRendererPF {
   pause() {
     if (this.animationTimer !== undefined) {
       window.clearInterval(this.animationTimer);
-      //this.layer.clear(this.context);
       this.animationTimer = undefined;
       this.previousTimestamp = undefined;
     }
-  }
-
-  clearContext(context) {
-    const width = cy.width();
-    const height = cy.height();
-    ctx.save();
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.clearRect(0, 0, width * options.pixelRatio, height * options.pixelRatio);
-    ctx.restore();
   }
 
   /**
@@ -384,18 +306,15 @@ export class TrafficRendererPF {
         this.previousTimestamp = nextTimestamp;
       }
       const step = this.currentStep(nextTimestamp);
-      this.layer.clear(this.context);
-      this.layer.setTransform(this.context);
+
       Object.keys(this.trafficEdges).forEach(edgeId => {
         const trafficEdge = this.trafficEdges[edgeId];
-        const edge = trafficEdge.getEdge();
-        // Skip if edge is currently hidden or removed
-        if (edge.isVisible()) {
-          trafficEdge.processStep(step);
-          trafficEdge.removeFinishedPoints();
-          this.render(trafficEdge);
-        }
+        //const edge = trafficEdge.getEdge();
+        trafficEdge.processStep(step);
+        trafficEdge.removeFinishedPoints();
+        this.render(trafficEdge);
       });
+
       this.previousTimestamp = nextTimestamp;
     } catch (exception) {
       // If a step failed, the next step is likely to fail.
