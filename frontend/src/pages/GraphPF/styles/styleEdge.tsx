@@ -1,4 +1,4 @@
-import { DefaultEdge, Edge, observer, ScaleDetailsLevel, WithSelectionProps } from '@patternfly/react-topology';
+import { DefaultEdge, Edge, Layer, observer, ScaleDetailsLevel, WithSelectionProps } from '@patternfly/react-topology';
 import { useDetailsLevel } from '@patternfly/react-topology';
 import { PFColors } from 'components/Pf/PfColors';
 import * as React from 'react';
@@ -172,6 +172,33 @@ const StyleEdgeComponent: React.FC<StyleEdgeProps> = ({ element, ...rest }) => {
       <circle cx={startPoint.x} cy={startPoint.y} r="5" className={circleStyle} style={{ animationDelay: '0.5s' }} />
       <circle cx={startPoint.x} cy={startPoint.y} r="5" className={circleStyle} style={{ animationDelay: '1s' }} />
     </g>
+  const hasAnimation = false;
+  return (
+    <>
+      {hasAnimation && (
+        <Layer id={hasAnimation ? 'animation' : undefined}>
+          <g style={{ opacity: opacity }} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
+            <DefaultEdge
+              className={classes(...cssClasses)}
+              element={element}
+              tagClass={tagClass}
+              {...rest}
+              {...passedData}
+              tag="foo"
+            />
+          </g>
+        </Layer>
+      )}
+      <g style={{ opacity: opacity }} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
+        <DefaultEdge
+          className={classes(...cssClasses)}
+          element={element}
+          tagClass={tagClass}
+          {...rest}
+          {...passedData}
+        />
+      </g>
+    </>
   );
 };
 
