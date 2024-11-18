@@ -35,6 +35,7 @@ export type NodeData = DecoratedMeshNodeData & {
   collapsible?: boolean; // for groups
   column?: number;
   component?: React.ReactNode;
+  hideContextMenuKebab?: boolean;
   isCollapsed?: boolean; // for groups
   labelIcon?: React.ReactNode;
   labelIconClass?: string;
@@ -168,10 +169,14 @@ export const setNodeLabel = (node: NodeModel, _nodeMap: NodeMap): void => {
     data.badgeColor = PFColors.BackgroundColor100;
     data.badgeBorderColor = PFColors.Blue300;
   }
+
   node.label = content.shift();
   if (content.length > 0) {
     data.secondaryLabel = content.join(':');
   }
+
+  data.hideContextMenuKebab = true;
+
   return;
 };
 

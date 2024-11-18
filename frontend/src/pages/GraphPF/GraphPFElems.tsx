@@ -56,6 +56,7 @@ export type NodeData = DecoratedGraphNodeData & {
   badgeTextColor?: string;
   column?: number;
   component?: React.ReactNode;
+  hideContextMenuKebab?: boolean;
   labelIcon?: React.ReactNode;
   labelIconClass?: string;
   labelIconPadding?: number;
@@ -356,6 +357,7 @@ export const setNodeLabel = (
 
   if (isBox) {
     let pfBadge: PFBadgeType | undefined;
+
     switch (isBox) {
       case BoxByType.APP:
         pfBadge = PFBadges.App;
@@ -375,14 +377,7 @@ export const setNodeLabel = (
       data.badgeColor = PFColors.BackgroundColor100;
       data.badgeBorderColor = PFColors.Blue300;
     }
-    node.label = content.shift();
-    if (content.length > 0) {
-      data.secondaryLabel = content.join(':');
-    }
-    return;
-  }
-
-  if (data.isExtension) {
+  } else if (data.isExtension) {
     data.badge = PFBadges.Extension.badge;
   }
 
@@ -390,6 +385,8 @@ export const setNodeLabel = (
   if (content.length > 0) {
     data.secondaryLabel = content.join(':');
   }
+
+  data.hideContextMenuKebab = true;
 
   return;
 };

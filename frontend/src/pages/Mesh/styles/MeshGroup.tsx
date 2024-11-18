@@ -65,7 +65,7 @@ const MeshGroupComponent: React.FC<MeshGroupProps> = ({
     }
   };
 
-  const groupClass = kialiStyle({
+  const groupStyle = kialiStyle({
     $nest: {
       '&.pf-m-selected': selectedGroupStyle,
       '&.pf-m-selected.pf-m-hover': selectedGroupStyle,
@@ -99,7 +99,7 @@ const MeshGroupComponent: React.FC<MeshGroupProps> = ({
   return (
     <g style={{ opacity: opacity }} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
       <DefaultGroup
-        className={groupClass}
+        className={groupStyle}
         collapsedWidth={collapsedWidth}
         collapsedHeight={collapsedHeight}
         element={element}

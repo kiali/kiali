@@ -4,6 +4,7 @@ import {
   GraphElement,
   ModelKind,
   nodeDragSourceSpec,
+  withAreaSelection,
   withContextMenu,
   withDragNode,
   withPanZoom,
@@ -103,7 +104,9 @@ const nodeContextMenu = (node: GraphElement, kiosk: string): Promise<React.React
     );
   });
 
-  items.push(<DropdownGroup key={`group_show`} label={'Show'} children={menuOptions} />);
+  if (menuOptions.length > 0) {
+    items.push(<DropdownGroup key={`group_show`} label={'Show'} children={menuOptions} />);
+  }
 
   if (nodeData.nodeType !== NodeType.SERVICE) {
     // Add margin bottom if the service wizard is not added
@@ -336,7 +339,9 @@ export const stylesComponentFactory: ComponentFactory = (
     case ModelKind.edge:
       return withSelection({ multiSelect: false, controlled: false })(StyleEdge as any);
     case ModelKind.graph:
-      return withSelection({ multiSelect: false, controlled: false })(withPanZoom()(GraphComponent));
+      return withSelection({ multiSelect: false, controlled: false })(
+        withPanZoom()(withAreaSelection(['ctrlKey', 'shiftKey'])(GraphComponent))
+      );
     case ModelKind.node: {
       return withDragNode(nodeDragSourceSpec('node', true, true))(
         withContextMenu(e => nodeContextMenu(e, kiosk))(

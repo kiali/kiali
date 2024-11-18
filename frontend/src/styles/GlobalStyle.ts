@@ -90,6 +90,7 @@ export const globalStyle = kialiStyle({
 
     /**
      * Hide the kebab menu of Patternfly topology groups
+     * TODO Remove when groups can hide the kebab menu - https://github.com/patternfly/react-topology/issues/254
      */
     '& #pft-graph .pf-topology__group__label': {
       $nest: {
@@ -101,6 +102,20 @@ export const globalStyle = kialiStyle({
         },
         '& text ~ .pf-topology__node__separator': {
           visibility: 'hidden'
+        }
+      }
+    },
+
+    /**
+     * TODO Move to labelClassName - https://github.com/patternfly/react-topology/issues/255
+     */
+    '& #mesh-container .pf-topology__group__label': {
+      $nest: {
+        '& > text': {
+          fontSize: '1.25rem'
+        },
+        '& .pf-topology__node__label__badge > text': {
+          fontSize: '1rem'
         }
       }
     }

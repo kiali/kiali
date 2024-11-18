@@ -90,6 +90,17 @@ const nodeStyle = kialiStyle({
   }
 });
 
+const labelNodeStyle = kialiStyle({
+  $nest: {
+    '& > text': {
+      fontSize: '1.25rem'
+    },
+    '& .pf-topology__node__label__badge > text': {
+      fontSize: '1rem'
+    }
+  }
+});
+
 const MeshNodeComponent: React.FC<MeshNodeProps> = ({ element, ...rest }) => {
   const data = element.getData();
   const detailsLevel = useDetailsLevel();
@@ -140,6 +151,7 @@ const MeshNodeComponent: React.FC<MeshNodeProps> = ({ element, ...rest }) => {
       {data.isFind && <ShapeComponent className={findOverlayStyle} width={width} height={height} element={element} />}
       <DefaultNode
         className={nodeStyle}
+        labelClassName={labelNodeStyle}
         element={element}
         {...rest}
         {...passedData}
