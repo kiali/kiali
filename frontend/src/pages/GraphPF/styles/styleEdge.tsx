@@ -1,9 +1,10 @@
 import { DefaultEdge, Edge, Layer, observer, ScaleDetailsLevel, WithSelectionProps } from '@patternfly/react-topology';
 import { useDetailsLevel } from '@patternfly/react-topology';
 import { PFColors } from 'components/Pf/PfColors';
-import * as React from 'react';
+//import * as React from 'react';
 import { kialiStyle } from 'styles/StyleUtils';
 import { classes, keyframes } from 'typestyle';
+import React, { useRef, useEffect } from 'react';
 
 // This is our styled edge component registered in stylesComponentFactory.tsx.  It is responsible for adding customizations that then get passed down to DefaultEdge.  The current customizations:
 //   data.pathStyle?: React.CSSProperties // additional CSS stylings for the edge/path (not the endpoint).
@@ -25,6 +26,23 @@ type StyleEdgeProps = {
 const tagClass = kialiStyle({
   fontFamily: 'Verdana,Arial,Helvetica,sans-serif,pficon'
 });
+
+const CanvasComponent = () => {
+  const containerRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (containerRef.current) {
+      const canvas = document.createElement('canvas');
+      containerRef.current.append(canvas);
+
+      const context = canvas.getContext('2d');
+      context!.fillStyle = 'green';
+      context!.fillRect(10, 10, 100, 100);
+    }
+  }, [containerRef]);
+
+  return <div ref={containerRef} />;
+};
 
 const StyleEdgeComponent: React.FC<StyleEdgeProps> = ({ element, ...rest }) => {
   const data = element.getData();
@@ -172,12 +190,13 @@ const StyleEdgeComponent: React.FC<StyleEdgeProps> = ({ element, ...rest }) => {
       <circle cx={startPoint.x} cy={startPoint.y} r="5" className={circleStyle} style={{ animationDelay: '0.5s' }} />
       <circle cx={startPoint.x} cy={startPoint.y} r="5" className={circleStyle} style={{ animationDelay: '1s' }} />
     </g>
-  const hasAnimation = false;
+  const hasAnimation = true;
   return (
     <>
       {hasAnimation && (
         <Layer id={hasAnimation ? 'animation' : undefined}>
           <g style={{ opacity: opacity }} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
+            <CanvasComponent />
             <DefaultEdge
               className={classes(...cssClasses)}
               element={element}
