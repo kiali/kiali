@@ -258,8 +258,7 @@ export class TrafficAnimation {
   constructor(controller: Controller) {
     this.controller = controller;
     const canvas = document.createElement('canvas');
-    this.context = canvas.getContext('2d');
-    this.context = canvas.style['pointer-events'] = 'none';
+    canvas.style['pointer-events'] = 'none';
     this.context = canvas.getContext('2d');
   }
 
