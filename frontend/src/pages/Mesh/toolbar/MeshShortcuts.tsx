@@ -10,7 +10,8 @@ interface Shortcut {
 const shortcuts: Shortcut[] = [
   { shortcut: t('Mouse wheel'), description: t('Zoom') },
   { shortcut: t('Click + Drag'), description: t('Panning') },
-  // { shortcut: t('Shift + Drag'), description: t('Select zoom area') },
+  { shortcut: 'Shift + Drag', description: t('Select zoom area') },
+  { shortcut: 'Ctrl + Drag', description: t('Select zoom area') },
   // { shortcut: t('Right click'), description: t('Contextual menu on nodes') },
   { shortcut: t('Single click'), description: t('Details in side panel on nodes') }
 ];
