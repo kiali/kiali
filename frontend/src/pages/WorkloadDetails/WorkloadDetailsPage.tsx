@@ -270,6 +270,8 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
       workload.pods.forEach(pod => {
         if (pod.istioContainers && pod.istioContainers.length > 0) {
           hasIstioSidecars = true;
+        } else if (pod.istioInitContainers && pod.istioInitContainers.some(cont => cont.name === 'istio-proxy')) {
+          hasIstioSidecars = true;
         } else {
           hasIstioSidecars =
             hasIstioSidecars || (!!pod.containers && pod.containers.some(cont => cont.name === 'istio-proxy'));
