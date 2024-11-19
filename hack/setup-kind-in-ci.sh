@@ -369,7 +369,7 @@ setup_kind_multicluster() {
     mkdir -p "${certs_dir}"/keycloak
   fi
 
-  if [[ -n "${KIND_NODE_IMAGE}" ]]; then
+  if [ -n "${KIND_NODE_IMAGE}" ]; then
     local kind_node_image="--kind-node-image ${KIND_NODE_IMAGE}"
   fi
 
