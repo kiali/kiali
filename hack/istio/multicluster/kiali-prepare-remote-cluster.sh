@@ -253,7 +253,7 @@ create_kiali_remote_cluster_secret() {
     fi
   fi
 
-  if [ "${remote_cluster_ca_bytes}" == "" ]; then
+  if [ "${remote_cluster_ca_bytes:-}" == "" ]; then
     if [ "${ALLOW_SKIP_TLS_VERIFY}" == "true" ]; then
       info "Kiali will be allowed to insecurely skip TLS verification when connecting to the remote cluster named [${REMOTE_CLUSTER_NAME}]."
       local cert_auth_yaml="insecure-skip-tls-verify: true"
