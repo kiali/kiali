@@ -3,7 +3,7 @@ import { useDetailsLevel } from '@patternfly/react-topology';
 import { PFColors } from 'components/Pf/PfColors';
 import * as React from 'react';
 import { kialiStyle } from 'styles/StyleUtils';
-import { classes } from 'typestyle';
+import { classes, keyframes } from 'typestyle';
 
 // This is our styled edge component registered in stylesComponentFactory.tsx.  It is responsible for adding customizations that then get passed down to DefaultEdge.  The current customizations:
 //   data.pathStyle?: React.CSSProperties // additional CSS stylings for the edge/path (not the endpoint).
@@ -145,9 +145,32 @@ const StyleEdgeComponent: React.FC<StyleEdgeProps> = ({ element, ...rest }) => {
     return newData;
   }, [data, detailsLevel]);
 
+  const startPoint = element.getStartPoint();
+  const endPoint = element.getEndPoint();
+
+  const moveX = endPoint.x - startPoint.x;
+  const moveY = endPoint.y - startPoint.y;
+
+  const move = keyframes({
+    from: { transform: 'translateX(0)' },
+    to: { transform: `translateX(${moveX}px) translateY(${moveY}px)` }
+  });
+
+  const circleStyle = kialiStyle({
+    fill: 'white',
+    stroke: 'blue',
+    animationName: move,
+    animationDuration: '1s',
+    animationFillMode: 'forwards',
+    animationTimingFunction: 'linear',
+    animationIterationCount: 'infinite'
+  });
+
   return (
     <g style={{ opacity: opacity }} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
       <DefaultEdge className={classes(...cssClasses)} element={element} tagClass={tagClass} {...rest} {...passedData} />
+      <circle cx={startPoint.x} cy={startPoint.y} r="5" className={circleStyle} style={{ animationDelay: '0.5s' }} />
+      <circle cx={startPoint.x} cy={startPoint.y} r="5" className={circleStyle} style={{ animationDelay: '1s' }} />
     </g>
   );
 };
