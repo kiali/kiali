@@ -86,7 +86,7 @@ export function getLayoutByName(layoutName: string): Layout {
   }
 }
 
-export function meshLayout(controller: Controller, layoutType: LayoutType, reset?: boolean): void {
+export function meshLayout(controller: Controller, layoutType: LayoutType, reset: boolean = true): void {
   if (!controller?.hasGraph()) {
     console.debug('Skip meshLayout, no graph');
     return;
