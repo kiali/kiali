@@ -681,6 +681,11 @@ func TestValidatingSingleObjectUpdatesList(t *testing.T) {
 	_, err = vs.userClients[conf.KubernetesConfig.ClusterName].Istio().NetworkingV1().VirtualServices("test").Update(context.Background(), v, v1.UpdateOptions{})
 	require.NoError(err)
 
+	// make sure validations are updated in a cache before retrieving them
+	validations, err = vs.CreateValidations(context.Background(), conf.KubernetesConfig.ClusterName)
+	require.NoError(err)
+	vs.kialiCache.Validations().Replace(validations)
+
 	updatedValidations, _, err := vs.GetIstioObjectValidations(context.Background(), conf.KubernetesConfig.ClusterName, "test", kubernetes.VirtualServices, "product-vs")
 	require.NoError(err)
 	require.False(updatedValidations[key].Valid)
