@@ -110,7 +110,7 @@ export function getLayoutByName(layoutName: string): Layout {
   }
 }
 
-export function graphLayout(controller: Controller, layoutType: LayoutType, reset?: boolean): void {
+export function graphLayout(controller: Controller, layoutType: LayoutType, reset: boolean = true): void {
   if (!controller?.hasGraph()) {
     console.debug('TG: Skip graphLayout, no graph');
     return;
