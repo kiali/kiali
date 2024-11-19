@@ -209,7 +209,7 @@ fi
 start_kind() {
   # Due to: https://github.com/kubernetes-sigs/kind/issues/1449#issuecomment-1612648982 we need two nodes.
   infomsg "Kind cluster to be created with name [${NAME}]"
-  NODE_IMAGE_LINE=${IMAGE:+image: ${IMAGE}}
+  KIND_NODE_IMAGE=${IMAGE:+image: ${IMAGE}}
   cat <<EOF | ${KIND_EXE} create cluster --name "${NAME}" --config -
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
@@ -218,10 +218,10 @@ networking:
 $(echo_keycloak_kubeadm_config)
 nodes:
   - role: control-plane
-    ${NODE_IMAGE_LINE}
+    ${KIND_NODE_IMAGE}
 $(echo_keycloak_mount)
   - role: worker
-    ${NODE_IMAGE_LINE}
+    ${KIND_NODE_IMAGE}
 $(echo_image_registry_cluster_config)
 EOF
 }
