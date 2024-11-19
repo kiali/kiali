@@ -75,7 +75,7 @@ KEYCLOAK_HOSTNAME="keycloak-keycloak.${APPS_DOMAIN}"
 echo "Creating keycloak deployment"
 helm upgrade --kube-context "${CLUSTER1_CONTEXT}" --install --wait --timeout 15m \
   --namespace keycloak \
-  --repo https://charts.bitnami.com/bitnami keycloak keycloak \
+   keycloak oci://registry-1.docker.io/bitnamicharts/keycloak \
   --reuse-values --values - <<EOF
 auth:
   createAdminUser: true
