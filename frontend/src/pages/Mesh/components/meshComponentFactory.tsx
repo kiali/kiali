@@ -3,6 +3,7 @@ import {
   GraphComponent,
   ModelKind,
   nodeDragSourceSpec,
+  withAreaSelection,
   withDragNode,
   withPanZoom,
   withSelection
@@ -21,7 +22,9 @@ export const meshComponentFactory: ComponentFactory = (
       // Currently, no side panel for edges, nothing really to show but the connectivity
       return MeshEdge as any;
     case ModelKind.graph:
-      return withSelection({ multiSelect: false, controlled: false })(withPanZoom()(GraphComponent));
+      return withSelection({ multiSelect: false, controlled: false })(
+        withPanZoom()(withAreaSelection(['ctrlKey', 'shiftKey'])(GraphComponent))
+      );
     case ModelKind.node: {
       return withDragNode(nodeDragSourceSpec('node', true, true))(
         withSelection({ multiSelect: false, controlled: false })((type === 'group' ? MeshGroup : MeshNode) as any)

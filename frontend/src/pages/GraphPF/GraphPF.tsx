@@ -23,7 +23,10 @@ import {
   Visualization,
   VisualizationProvider,
   VisualizationSurface,
-  Edge
+  Edge,
+  GraphAreaSelectedEventListener,
+  GRAPH_AREA_SELECTED_EVENT,
+  GraphLayoutEndEventListener
 } from '@patternfly/react-topology';
 import { GraphData } from 'pages/Graph/GraphPage';
 import {
@@ -761,7 +764,18 @@ const TopologyContent: React.FC<{
     };
   }, [updateSummary]);
 
-  useEventListener(GRAPH_LAYOUT_END_EVENT, onLayoutEnd);
+  // Enable the selection-based zoom
+  useEventListener<GraphAreaSelectedEventListener>(
+    GRAPH_AREA_SELECTED_EVENT,
+    ({ graph, modifier, startPoint, endPoint }) => {
+      if (modifier === 'shiftKey' || modifier === 'ctrlKey') {
+        graph.zoomToSelection(startPoint, endPoint);
+        return;
+      }
+    }
+  );
+
+  useEventListener<GraphLayoutEndEventListener>(GRAPH_LAYOUT_END_EVENT, onLayoutEnd);
 
   console.debug(`TG: Render Topology hasGraph=${controller.hasGraph()}`);
 
