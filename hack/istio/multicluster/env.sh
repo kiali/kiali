@@ -18,6 +18,8 @@ if [ "${HACK_ENV_DONE:-}" == "true" ]; then
   return 0
 fi
 
+set -u
+
 SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
 
 switch_cluster() {
@@ -130,6 +132,9 @@ MANAGE_MINIKUBE="${MANAGE_MINIKUBE:-true}"
 # If true and client exe is kubectl, then two kind instances will be installed/uninstalled by these scripts
 MANAGE_KIND="${MANAGE_KIND:-false}"
 
+# Image of the kind cluster
+KIND_NODE_IMAGE="${KIND_NODE_IMAGE:-}"
+
 # Minikube options - these are ignored if MANAGE_MINIKUBE is false
 MINIKUBE_DRIVER="kvm2"
 MINIKUBE_CPU=""
@@ -142,12 +147,16 @@ KEYCLOAK_DB_PASSWORD="${KEYCLOAK_DB_PASSWORD:-keycloak-password}"
 KEYCLOAK_KUBE_CLIENT_SECRET="${KEYCLOAK_KUBE_CLIENT_SECRET:-kube-client-secret}"
 KIALI_USER_PASSWORD="${KIALI_USER_PASSWORD:-kiali}"
 
+# Path to a Kiali server helm charts tarball
+KIALI_SERVER_HELM_CHARTS="${KIALI_SERVER_HELM_CHARTS:-}"
+
 # Some settings that can be configured when helm installing the two Kiali instances.
 KIALI1_WEB_FQDN="${KIALI1_WEB_FQDN:-}"
 KIALI1_WEB_SCHEMA="${KIALI1_WEB_SCHEMA:-}"
 KIALI2_WEB_FQDN="${KIALI2_WEB_FQDN:-}"
 KIALI2_WEB_SCHEMA="${KIALI2_WEB_SCHEMA:-}"
 
+# If true the local dev image of Kiali will be built and used in the Kiali deployment
 KIALI_BUILD_DEV_IMAGE="${KIALI_BUILD_DEV_IMAGE:-false}"
 
 # process command line args
