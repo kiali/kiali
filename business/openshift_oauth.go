@@ -3,6 +3,8 @@ package business
 import (
 	"context"
 	"crypto/sha256"
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -55,6 +57,7 @@ type OpenshiftOAuthService struct {
 	conf           *config.Config
 	kialiSAClients map[string]kubernetes.ClientInterface
 	oAuthConfigs   map[string]*oAuthConfig
+	systemCertPool *x509.CertPool
 }
 
 // Structure that's returned by the openshift oauth authorization server.
@@ -64,6 +67,47 @@ type OAuthAuthorizationServer struct {
 	AuthorizationEndpoint string `json:"authorization_endpoint"`
 	TokenEndpoint         string `json:"token_endpoint"`
 	Issuer                string `json:"issuer"`
+}
+
+// Generates an http.Client with RootCAs specified in kubeconfig along with the system certs.
+func httpClientWithPool(restConfig rest.Config, systemPool *x509.CertPool) (*http.Client, error) {
+	// If it's insecure or there are no system certs then don't bother appending them.
+	if restConfig.Insecure || systemPool == nil {
+		log.Trace("Insecure or empty system pool")
+		return rest.HTTPClientFor(&restConfig)
+	}
+
+	pool := systemPool.Clone()
+
+	// Need to populate CAData from CAFile.
+	if err := rest.LoadTLSFiles(&restConfig); err != nil {
+		return nil, fmt.Errorf("unable to load CA info from restConfig")
+	}
+
+	tlsConfig, err := rest.TLSConfigFor(&restConfig)
+	if err != nil {
+		return nil, fmt.Errorf("unable to create tls config from restConfig: %s", err)
+	}
+
+	// We can't merge two cert pools directly so first check that some tls configuration
+	// is set and then use the original kubeConfig CAData.
+	if tlsConfig == nil {
+		tlsConfig = &tls.Config{}
+	}
+
+	if restConfig.TLSClientConfig.CAData != nil {
+		log.Trace("Appending CA data from tls client config to pool")
+		if !pool.AppendCertsFromPEM(restConfig.TLSClientConfig.CAData) {
+			return nil, fmt.Errorf("unable to append CA from restConfig to system pool: %s", restConfig.TLSClientConfig.CAData)
+		}
+	}
+
+	tlsConfig.RootCAs = pool
+
+	return &http.Client{
+		Timeout:   restConfig.Timeout,
+		Transport: &http.Transport{TLSClientConfig: tlsConfig},
+	}, nil
 }
 
 // NewOpenshiftOAuthService creates a new OpenshiftOAuthService.
@@ -80,6 +124,12 @@ func NewOpenshiftOAuthService(ctx context.Context, conf *config.Config, kialiSAC
 	ctx, cancel = context.WithDeadline(ctx, oneMinuteFromNow)
 	defer cancel()
 
+	// Adding system certs in case the idp does not use the same cert as the oauth server.
+	systemCertPool, err := x509.SystemCertPool()
+	if err != nil {
+		log.Errorf("While initializing openshift auth, unable to read system certs: %s", err)
+	}
+
 	// TODO: We could parallelize this to potentially speed up the process.
 	for cluster, client := range kialiSAClients {
 		log.Debugf("Getting OAuth config for cluster [%s]", cluster)
@@ -91,7 +141,7 @@ func NewOpenshiftOAuthService(ctx context.Context, conf *config.Config, kialiSAC
 		}
 		request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", client.GetToken()))
 
-		httpClient, err := rest.HTTPClientFor(client.ClusterInfo().ClientConfig)
+		httpClient, err := httpClientWithPool(*client.ClusterInfo().ClientConfig, systemCertPool)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create http client for fetching oauth server metadata from kube api server [%s], error: %s", url, err)
 		}
@@ -157,6 +207,7 @@ func NewOpenshiftOAuthService(ctx context.Context, conf *config.Config, kialiSAC
 		conf:           conf,
 		kialiSAClients: kialiSAClients,
 		oAuthConfigs:   oAuthConfigs,
+		systemCertPool: systemCertPool,
 	}, nil
 }
 
@@ -167,15 +218,16 @@ func (in *OpenshiftOAuthService) Exchange(ctx context.Context, code string, veri
 		return nil, fmt.Errorf("could not get ServiceAccount client for cluster [%s]", cluster)
 	}
 
+	httpClient, err := httpClientWithPool(*client.ClusterInfo().ClientConfig, in.systemCertPool)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create http client for oauth consumption, error: %s", err)
+	}
+
 	oAuthConfig := in.oAuthConfigs[cluster]
 	if oAuthConfig == nil {
 		return nil, fmt.Errorf("could not get OAuth config for cluster [%s]", cluster)
 	}
 
-	httpClient, err := rest.HTTPClientFor(client.ClusterInfo().ClientConfig)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create http client for oauth consumption, error: %s", err)
-	}
 	ctx = context.WithValue(ctx, oauth2.HTTPClient, httpClient)
 	tok, err := oAuthConfig.Exchange(ctx, code, oauth2.VerifierOption(verifier))
 	if err != nil {
