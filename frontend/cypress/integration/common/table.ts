@@ -293,10 +293,10 @@ When('user sorts the list by column {string} in {string} order', (column: string
     }
 
     // Three possible states:
-    // 1. aria-sort attribute is none: not sorted, click once for ascending and twice for descending.
+    // 1. aria-sort attribute does not exist or is none: not sorted, click once for ascending and twice for descending.
     // 2. aria-sort attribute is ascending: click once for descending.
     // 3. aria-sort attribute is descending: click once for ascending.
-    if ($el.attr('aria-sort') === 'none') {
+    if (!$el.attr('aria-sort') || $el.attr('aria-sort') === 'none') {
       if (order === SortOrder.Ascending) {
         cy.wrap($el).find('button').click();
         cy.wrap($el).should('have.attr', 'aria-sort', SortOrder.Ascending);
