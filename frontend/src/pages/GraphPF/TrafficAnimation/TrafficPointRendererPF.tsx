@@ -47,6 +47,7 @@ export class TrafficPointCircleRenderer extends TrafficPointRenderer {
 
     return (
       <circle
+        key={`point-${element.getId()}-${animationDelay}`}
         cx={startPoint.x}
         cy={startPoint.y}
         r={`${this.radius}`}
