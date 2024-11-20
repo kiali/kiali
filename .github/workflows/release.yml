@@ -1,13 +1,13 @@
 name: Release
 
 on:
-  #schedule:
+  schedule:
   # Every Monday at 07:00 (UTC)
-  #- cron: "00 7 * * MON"
+  - cron: "00 7 * * MON"
   workflow_dispatch:
     inputs:
       release_type:
-        description: 'Release type'     
+        description: 'Release type'
         required: true
         type: choice
         options:
