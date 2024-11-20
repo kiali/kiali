@@ -151,7 +151,7 @@ const StyleEdgeComponent: React.FC<StyleEdgeProps> = ({ element, ...rest }) => {
   const moveX = endPoint.x - startPoint.x;
   const moveY = endPoint.y - startPoint.y;
 
-  const move = keyframes({
+  const moveAnimation = keyframes({
     from: { transform: 'translateX(0)' },
     to: { transform: `translateX(${moveX}px) translateY(${moveY}px)` }
   });
@@ -159,7 +159,7 @@ const StyleEdgeComponent: React.FC<StyleEdgeProps> = ({ element, ...rest }) => {
   const circleStyle = kialiStyle({
     fill: 'white',
     stroke: 'blue',
-    animationName: move,
+    animationName: moveAnimation,
     animationDuration: '1s',
     animationFillMode: 'forwards',
     animationTimingFunction: 'linear',
