@@ -1,15 +1,16 @@
-import { Point, clamp, quadraticBezier, linearInterpolation, distance, bezierLength } from '../../../utils/MathUtils';
+import { Point, clamp, distance } from '../../../utils/MathUtils';
 import {
   TrafficPointCircleRenderer,
-  TrafficPointConcentricDiamondRenderer,
-  TrafficPointRenderer,
-  Diamond
-} from './TrafficPointRenderer';
+  //TrafficPointConcentricDiamondRenderer,
+  TrafficPointRenderer
+  //Diamond
+} from './TrafficPointRendererPF';
 import { Protocol } from '../../../types/Graph';
 import { timerConfig, tcpTimerConfig } from './AnimationTimerConfig';
 import { Controller, Edge } from '@patternfly/react-topology';
 import { EdgeData } from 'pages/GraphPF/GraphPFElems';
 import { PFColors } from 'components/Pf/PfColors';
+import { setObserved } from 'helpers/GraphHelpers';
 
 // Clamp response time from min to max
 const SPEED_RESPONSE_TIME_MIN = 0;
@@ -23,15 +24,6 @@ const TCP_SPEED = 1;
 
 const BASE_LENGTH = 50;
 
-// How often paint a frame
-const FRAME_RATE = 1 / 60;
-
-enum EdgeConnectionType {
-  LINEAR,
-  CURVE,
-  LOOP
-}
-
 enum TrafficEdgeType {
   RPS, // requests-per-second (includes http, grpc)
   TCP, // bytes-per-second
@@ -43,11 +35,17 @@ enum TrafficEdgeType {
  * @param edge
  * @returns {TrafficPointRenderer}
  */
-const getTrafficPointRendererForRpsError: (edge: Edge) => TrafficPointRenderer = (_edge: Edge) => {
+const getTrafficPointRendererForRpsError: (edge: Edge, animationDuration: string) => TrafficPointRenderer = (
+  edge: Edge,
+  animationDuration
+) => {
+  return new TrafficPointCircleRenderer(animationDuration, 2, PFColors.Red100, edge.getData().pathStyle.stroke);
+  /*
   return new TrafficPointConcentricDiamondRenderer(
     new Diamond(5, PFColors.White, PFColors.Danger, 1.0),
     new Diamond(2, PFColors.Danger, PFColors.Danger, 1.0)
   );
+  */
 };
 
 /**
@@ -55,8 +53,11 @@ const getTrafficPointRendererForRpsError: (edge: Edge) => TrafficPointRenderer =
  * @param edge
  * @returns {TrafficPointRenderer}
  */
-const getTrafficPointRendererForRpsSuccess: (edge: Edge) => TrafficPointRenderer = (edge: Edge) => {
-  return new TrafficPointCircleRenderer(2, PFColors.White, edge.getData().pathStyle.stroke, 2);
+const getTrafficPointRendererForRpsSuccess: (edge: Edge, animationDuration: string) => TrafficPointRenderer = (
+  edge: Edge,
+  animationDuration
+) => {
+  return new TrafficPointCircleRenderer(animationDuration, 2, PFColors.White, edge.getData().pathStyle.stroke);
 };
 
 /**
@@ -64,8 +65,11 @@ const getTrafficPointRendererForRpsSuccess: (edge: Edge) => TrafficPointRenderer
  * @param edge
  * @returns {TrafficPointCircleRenderer}
  */
-const getTrafficPointRendererForTcp: (edge: Edge) => TrafficPointRenderer = (_edge: Edge) => {
-  return new TrafficPointCircleRenderer(1.6, PFColors.Black100, PFColors.Black500, 1);
+const getTrafficPointRendererForTcp: (edge: Edge, animationDuration: string) => TrafficPointRenderer = (
+  _edge: Edge,
+  animationDuration
+) => {
+  return new TrafficPointCircleRenderer(animationDuration, 1.6, PFColors.Black100, PFColors.Black500);
 };
 
 /**
@@ -93,19 +97,39 @@ type TrafficPoint = {
  * timerForNextPoint - keeps track of how many milliseconds to generate the next point.
  * speed - defines the speed of the next point (see TrafficPoint.speed)
  */
-class TrafficPointGenerator {
+export class TrafficPointGenerator {
   private timer?: number;
   private timerForNextPoint?: number;
   private speed: number = 0;
   private errorRate: number = 0;
   private type: TrafficEdgeType = TrafficEdgeType.NONE;
 
+  render(edge: Edge): React.ReactFragment {
+    const pointDurationSeconds = 1.0 / this.speed;
+    const numPointsOnEdge = Math.ceil(pointDurationSeconds / this.timer!);
+    const pointDuration = `${pointDurationSeconds}s`;
+    const renderer =
+      this.type === TrafficEdgeType.RPS
+        ? getTrafficPointRendererForRpsSuccess(edge, pointDuration)
+        : getTrafficPointRendererForTcp(edge, `${pointDurationSeconds}s`);
+    const errorRenderer =
+      this.type === TrafficEdgeType.RPS ? getTrafficPointRendererForRpsError(edge, pointDuration) : undefined;
+
+    const points: Array<React.SVGProps<SVGElement>> = [];
+    for (let i = 0; i < numPointsOnEdge; ++i) {
+      const isErrorPoint = errorRenderer && Math.random() <= this.errorRate;
+      const animationDelay = `${i * this.timer!}ms`;
+      points.unshift(isErrorPoint ? errorRenderer.render(edge, animationDelay) : renderer.render(edge, animationDelay));
+    }
+
+    return <>{points.map(p => p)}</>;
+  }
+
   /**
    * Process a render step for the generator, decrements the timerForNextPoint and
    * returns a new point if it reaches zero (or is close).
    * This method adds some randomness to avoid the "flat" look that all the points
    * are synchronized.
-   */
   processStep(step: number, edge: Edge): TrafficPoint | undefined {
     if (this.timerForNextPoint !== undefined) {
       this.timerForNextPoint -= step;
@@ -117,6 +141,7 @@ class TrafficPointGenerator {
     }
     return undefined;
   }
+   */
 
   setTimer(timer: number | undefined) {
     this.timer = timer;
@@ -138,6 +163,7 @@ class TrafficPointGenerator {
     this.type = type;
   }
 
+  /*
   private nextPoint(edge: Edge): TrafficPoint {
     let renderer;
     let offset;
@@ -160,6 +186,7 @@ class TrafficPointGenerator {
       offset: offset
     };
   }
+    */
 }
 
 /**
@@ -183,7 +210,6 @@ class TrafficEdge {
   /**
    * Process a step for the Traffic Edge, increments the delta of the points
    * Calls `processStep` for the generator and adds a new point if any.
-   */
   processStep(step: number) {
     this.points = this.points.map(p => {
       p.delta += (step * p.speed) / 1000;
@@ -194,6 +220,7 @@ class TrafficEdge {
       this.points.push(point);
     }
   }
+   */
 
   getPoints() {
     return this.points;
@@ -201,6 +228,10 @@ class TrafficEdge {
 
   getEdge() {
     return this.edge;
+  }
+
+  getGenerator(): TrafficPointGenerator {
+    return this.generator;
   }
 
   getType() {
@@ -241,169 +272,35 @@ type TrafficEdgeHash = {
 };
 
 /**
- * Renders the traffic going from edges using the edge information to compute
- * their rate and speed
- *
- * rate determines how often to put a TrafficPoint in the edge.
- * responseTime determines how fast the TrafficPoint should travel from the start to the end of the edge.
- * percentErr determine if the next TrafficPoint is error or not.
+ * Assigns to each edge the information needed to render the appropriate animation given the state of
+ * the overall graph.
+ * - rate determines how often to put a TrafficPoint in the edge.
+ * - responseTime determines how fast the TrafficPoint should travel from the start to the end of the edge.
+ * - percentErr determine if the next TrafficPoint is error or not.
  */
 export class TrafficAnimation {
-  private animationTimer;
   private controller: Controller;
-  private previousTimestamp;
-  private trafficEdges: TrafficEdgeHash = {};
-  private context: any;
 
   constructor(controller: Controller) {
     this.controller = controller;
-    const canvas = document.createElement('canvas');
-    canvas.style['pointer-events'] = 'none';
-    this.context = canvas.getContext('2d');
   }
 
   /**
-   * Starts the rendering loop, discards any other rendering loop that was started
+   * Starts an animation, discarding any prior animation
    */
   start() {
-    this.pause();
-    const edges = this.controller
-      .getGraph()
-      .getEdges()
-      .filter(e => e.isVisible());
-    this.trafficEdges = this.processEdges(edges);
-    this.animationTimer = window.setInterval(this.processStep, FRAME_RATE * 1000);
+    console.log('start');
+    this.processEdges(this.controller.getGraph().getEdges());
   }
 
-  /**
-   * Stops the rendering loop if any
-   */
-  pause() {
-    if (this.animationTimer !== undefined) {
-      window.clearInterval(this.animationTimer);
-      this.animationTimer = undefined;
-      this.previousTimestamp = undefined;
-    }
-  }
+  private processEdges(edges: Edge[]) {
+    const visibleEdges = edges.filter(e => e.isVisible());
 
-  /**
-   * Stops the rendering loop if any
-   */
-  stop() {
-    this.pause();
-    this.trafficEdges = {};
-  }
-
-  /**
-   * Process a step, clears the canvas, sets the graph transformation to render
-   * every dot.
-   */
-  processStep = () => {
-    try {
-      const nextTimestamp = Date.now();
-      if (!this.previousTimestamp) {
-        this.previousTimestamp = nextTimestamp;
-      }
-      const step = this.currentStep(nextTimestamp);
-
-      Object.keys(this.trafficEdges).forEach(edgeId => {
-        const trafficEdge = this.trafficEdges[edgeId];
-        //const edge = trafficEdge.getEdge();
-        trafficEdge.processStep(step);
-        trafficEdge.removeFinishedPoints();
-        this.render(trafficEdge);
-      });
-
-      this.previousTimestamp = nextTimestamp;
-    } catch (exception) {
-      // If a step failed, the next step is likely to fail.
-      // Stop the rendering and throw the exception
-      this.stop();
-      throw exception;
-    }
-  };
-
-  /**
-   * Renders the points inside the TrafficEdge (unless unhighlighted)
-   *
-   */
-  private render(trafficEdge: TrafficEdge) {
-    const edge = trafficEdge.getEdge();
-    const edgeData = edge.getData() as EdgeData;
-    if (edgeData.isUnhighlighted) {
-      return;
-    }
-    trafficEdge.getPoints().forEach((point: TrafficPoint) => {
-      const controlPoints = this.edgeControlPoints(edge);
-      try {
-        const pointInGraph = this.pointWithOffset(this.pointInGraph(controlPoints, point.delta), point.offset);
-
-        if (pointInGraph) {
-          point.renderer.render(this.context, pointInGraph);
-        }
-      } catch (error) {
-        if (error instanceof Error) {
-          console.error(`Error rendering TrafficEdge, it won't be rendered: ${error.message}`);
-        }
-      }
-    });
-  }
-
-  private pointInGraph(controlPoints: Array<Point>, t: number) {
-    /*
-     * Control points are build so that if you have p0, p1, p2, p3, p4 points, you need to build 2 quadratic bezier:
-     * 1) p0 (t=0), p1 (t=0.5) and p2 (t=1) and 2) p2 (t=0), p3 (t=0.5) and p4 (t=1)
-     * p0 and p4 (or pn) are always the source and target of an edge.
-     * Commonly there is only 2 points for straight lines, 3  points for curves and 5 points for loops.
-     * Not going to generalize them now to avoid having a more complex code that is needed.
-     * https://github.com/cytoscape/cytoscape.js/issues/2139#issuecomment-398473432
-     */
-    const edgeConnectionType = this.edgeConnectionTypeFromControlPoints(controlPoints);
-    switch (edgeConnectionType) {
-      case EdgeConnectionType.LINEAR:
-        return linearInterpolation(controlPoints[0], controlPoints[1], t);
-      case EdgeConnectionType.CURVE:
-        return quadraticBezier(controlPoints[0], controlPoints[1], controlPoints[2], t);
-      case EdgeConnectionType.LOOP:
-        // Find the local t depending the current step
-        if (t < 0.5) {
-          // Normalize [0, 0.5)
-          return quadraticBezier(controlPoints[0], controlPoints[1], controlPoints[2], t / 0.5);
-        } else {
-          // Normalize [0.5, 1]
-          return quadraticBezier(controlPoints[2], controlPoints[3], controlPoints[4], (t - 0.5) * 2);
-        }
-      default:
-        throw Error('Unhandled EdgeConnectionType:' + edgeConnectionType);
-    }
-  }
-
-  private pointWithOffset(point: Point, offset: Point) {
-    return offset === undefined ? point : { x: point.x + offset.x, y: point.y + offset.y };
-  }
-
-  private currentStep(currentTime: number): number {
-    const step = currentTime - this.previousTimestamp;
-    return step === 0 ? FRAME_RATE * 1000 : step;
-  }
-
-  private getTrafficEdgeType(edgeData: EdgeData) {
-    switch (edgeData.protocol) {
-      case Protocol.GRPC:
-      case Protocol.HTTP:
-        return TrafficEdgeType.RPS;
-      case Protocol.TCP:
-        return TrafficEdgeType.TCP;
-      default:
-        return TrafficEdgeType.NONE;
-    }
-  }
-
-  private processEdges(edges: Edge[]): TrafficEdgeHash {
     timerConfig.resetCalibration();
     tcpTimerConfig.resetCalibration();
+
     // Calibrate animation amplitude
-    edges.forEach(edge => {
+    visibleEdges.forEach(edge => {
       const edgeData = edge.getData() as EdgeData;
       switch (edgeData.protocol) {
         case Protocol.GRPC:
@@ -417,22 +314,52 @@ export class TrafficAnimation {
           break;
       }
     });
-    // Process edges
-    return edges.reduce((trafficEdges: TrafficEdgeHash, edge: Edge) => {
+
+    // assign animation values
+    const trafficAnimation = visibleEdges.reduce((trafficEdges: TrafficEdgeHash, edge: Edge) => {
       const edgeData = edge.getData() as EdgeData;
       const type = this.getTrafficEdgeType(edgeData);
       if (type !== TrafficEdgeType.NONE) {
         const edgeId = edge.getId();
-        if (edgeId in this.trafficEdges) {
-          trafficEdges[edgeId] = this.trafficEdges[edgeId];
-        } else {
-          trafficEdges[edgeId] = new TrafficEdge(edge);
-        }
+        trafficEdges[edgeId] = new TrafficEdge(edge);
         trafficEdges[edgeId].setType(type);
         this.fillTrafficEdge(edge, trafficEdges[edgeId]);
       }
       return trafficEdges;
     }, {});
+
+    setObserved(() => {
+      edges.forEach(e => {
+        const trafficEdge = trafficAnimation[e.getId()];
+        e.setData({ animation: trafficEdge ? trafficEdge.getGenerator() : undefined, ...e.getData() });
+      });
+    });
+  }
+
+  /**
+   * Stops the aniimation
+   */
+  stop() {
+    console.log('stop');
+    setObserved(() => {
+      this.controller
+        .getGraph()
+        .getEdges()
+        .forEach(e => e.setData({ animation: undefined, ...e.getData() }));
+    });
+  }
+
+  private getTrafficEdgeType(edgeData: EdgeData) {
+    console.log(`protocol=${edgeData.protocol}`);
+    switch (edgeData.protocol) {
+      case Protocol.GRPC:
+      case Protocol.HTTP:
+        return TrafficEdgeType.RPS;
+      case Protocol.TCP:
+        return TrafficEdgeType.TCP;
+      default:
+        return TrafficEdgeType.NONE;
+    }
   }
 
   private fillTrafficEdge(edge: Edge, trafficEdge: TrafficEdge) {
@@ -485,52 +412,19 @@ export class TrafficAnimation {
     return SPEED_RATE_MIN + (1 - delta) * (SPEED_RATE_MAX - SPEED_RATE_MIN);
   }
 
-  private edgeLength(edge: Edge) {
-    const controlPoints = this.edgeControlPoints(edge);
-    const edgeConnectionType = this.edgeConnectionTypeFromControlPoints(controlPoints);
-    switch (edgeConnectionType) {
-      case EdgeConnectionType.LINEAR:
-        return distance(controlPoints[0], controlPoints[1]);
-      case EdgeConnectionType.CURVE:
-        return bezierLength(controlPoints[0], controlPoints[1], controlPoints[2]);
-      case EdgeConnectionType.LOOP:
-        return (
-          bezierLength(controlPoints[0], controlPoints[1], controlPoints[2]) +
-          bezierLength(controlPoints[2], controlPoints[3], controlPoints[4])
-        );
-      default:
-        throw Error('Unhandled EdgeConnectionType:' + edgeConnectionType);
+  private edgeLength(edge: Edge): number {
+    let len = 0;
+    const points = this.edgePoints(edge);
+    for (let i = 0; i < points.length; ++i) {
+      len += distance(points[i], points[i + 1]);
     }
+    return len;
   }
 
-  private edgeControlPoints(edge: Edge) {
+  private edgePoints(edge: Edge): Array<Point> {
     const controlPoints: Array<Point> = [edge.getStartPoint()];
-    const rawControlPoints = edge.getBendpoints();
-    if (rawControlPoints) {
-      for (let i = 0; i < rawControlPoints.length; ++i) {
-        controlPoints.push(rawControlPoints[i]);
-        // If there is a next point, we are going to use the midpoint for the next point
-        if (i + 1 < rawControlPoints.length) {
-          controlPoints.push({
-            x: (rawControlPoints[i].x + rawControlPoints[i + 1].x) / 2,
-            y: (rawControlPoints[i].y + rawControlPoints[i + 1].y) / 2
-          });
-        }
-      }
-    }
+    controlPoints.push(...edge.getBendpoints());
     controlPoints.push(edge.getEndPoint());
     return controlPoints;
-  }
-
-  private edgeConnectionTypeFromControlPoints(controlPoints: Array<Point>) {
-    if (controlPoints.length === 2) {
-      return EdgeConnectionType.LINEAR;
-    } else if (controlPoints.length === 3) {
-      return EdgeConnectionType.CURVE;
-    } else if (controlPoints.length === 5) {
-      return EdgeConnectionType.LOOP;
-    } else {
-      throw Error('Unknown EdgeConnectionType, ControlPoint.length=' + controlPoints.length);
-    }
   }
 }
