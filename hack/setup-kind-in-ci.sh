@@ -93,11 +93,7 @@ TARGET_BRANCH="${TARGET_BRANCH:-master}"
 # https://kiali.io/docs/installation/installation-guide/prerequisites/
 # https://istio.io/latest/docs/releases/supported-releases/
 if [ -z "${ISTIO_VERSION}" ]; then
-  if [ "${TARGET_BRANCH}" == "v1.48" ]; then
-    ISTIO_VERSION="1.12.0"
-  elif [ "${TARGET_BRANCH}" == "v1.57" ]; then
-    ISTIO_VERSION="1.14.0"
-  elif [ "${TARGET_BRANCH}" == "v1.65" ]; then
+  if [ "${TARGET_BRANCH}" == "v1.65" ]; then
     ISTIO_VERSION="1.16.0"
   elif [ "${TARGET_BRANCH}" == "v1.73" ]; then
     ISTIO_VERSION="1.18.0"
@@ -105,7 +101,7 @@ if [ -z "${ISTIO_VERSION}" ]; then
 fi
 
 KIND_NODE_IMAGE=""
-if [ "${ISTIO_VERSION}" == "1.12.0" -o "${ISTIO_VERSION}" == "1.14.0" -o "${ISTIO_VERSION}" == "1.16.0" ]; then
+if [ "${ISTIO_VERSION}" == "1.16.0" ]; then
   KIND_NODE_IMAGE="kindest/node:v1.23.4@sha256:0e34f0d0fd448aa2f2819cfd74e99fe5793a6e4938b328f657c8e3f81ee0dfb9"
 elif [ "${ISTIO_VERSION}" == "v1.18.0" ]; then
   KIND_NODE_IMAGE="kindest/node:v1.27.3@sha256:3966ac761ae0136263ffdb6cfd4db23ef8a83cba8a463690e98317add2c9ba72"
@@ -373,6 +369,10 @@ setup_kind_multicluster() {
     mkdir -p "${certs_dir}"/keycloak
   fi
 
+  if [ -n "${KIND_NODE_IMAGE}" ]; then
+    local kind_node_image="--kind-node-image ${KIND_NODE_IMAGE}"
+  fi
+
   local cluster1_context
   local cluster2_context
   local cluster1_name
@@ -384,7 +384,8 @@ setup_kind_multicluster() {
       --certs-dir "${certs_dir}" \
       -dorp docker \
       --istio-dir "${istio_dir}" \
-      ${hub_arg:-}
+      ${kind_node_image:-}
+      ${hub_arg:-} \
 
     cluster1_context="kind-east"
     cluster2_context="kind-west"
@@ -393,7 +394,7 @@ setup_kind_multicluster() {
     kubectl rollout status deployment prometheus -n istio-system --context kind-east
     kubectl rollout status deployment prometheus -n istio-system --context kind-west
   elif [ "${MULTICLUSTER}" == "${PRIMARY_REMOTE}" ]; then
-    "${SCRIPT_DIR}"/istio/multicluster/install-primary-remote.sh --kiali-enabled false --manage-kind true -dorp docker -te ${TEMPO} --istio-dir "${istio_dir}" ${hub_arg:-}
+    "${SCRIPT_DIR}"/istio/multicluster/install-primary-remote.sh --kiali-enabled false --manage-kind true -dorp docker -te ${TEMPO} --istio-dir "${istio_dir}" ${kind_node_image:-} ${hub_arg:-}
     cluster1_context="kind-east"
     cluster2_context="kind-west"
     cluster1_name="east"
@@ -401,7 +402,7 @@ setup_kind_multicluster() {
     kubectl rollout status deployment prometheus -n istio-system --context kind-east
     kubectl rollout status deployment prometheus -n istio-system --context kind-west
   elif [ "${MULTICLUSTER}" == "${EXTERNAL_CONTROLPLANE}" ]; then
-    "${SCRIPT_DIR}"/istio/multicluster/setup-external-controlplane.sh
+    "${SCRIPT_DIR}"/istio/multicluster/setup-external-controlplane.sh ${kind_node_image:-}
     cluster1_context="kind-controlplane"
     cluster2_context="kind-dataplane"
     cluster1_name="controlplane"

@@ -129,23 +129,6 @@ fi
 # Start up two kind instances if requested
 if [ "${MANAGE_KIND}" == "true" ]; then
   echo "Starting kind instances"
-  
-  # If a specific version of Istio hasn't been provided, try and guess the right one
-  # based on the Kiali branch being tested (TARGET_BRANCH) and the compatibility matrices:
-  # https://kiali.io/docs/installation/installation-guide/prerequisites/
-  # https://istio.io/latest/docs/releases/supported-releases/
-  if [ "${TARGET_BRANCH:-""}" == "v1.48" ]; then
-    ISTIO_VERSION="1.13.0"
-  else
-    ISTIO_VERSION=""
-  fi
-
-  KIND_NODE_IMAGE=""
-  if [ "${ISTIO_VERSION}" == "1.13.0" ]; then
-    KIND_NODE_IMAGE="kindest/node:v1.23.4@sha256:0e34f0d0fd448aa2f2819cfd74e99fe5793a6e4938b328f657c8e3f81ee0dfb9"
-  else
-    KIND_NODE_IMAGE="kindest/node:v1.27.3@sha256:3966ac761ae0136263ffdb6cfd4db23ef8a83cba8a463690e98317add2c9ba72"
-  fi
 
   if [ "${KIALI_AUTH_STRATEGY}" == "openid" ]; then
     "${SCRIPT_DIR}/../../keycloak.sh" -kcd "${KEYCLOAK_CERTS_DIR}" create-ca
@@ -163,10 +146,10 @@ if [ "${MANAGE_KIND}" == "true" ]; then
     "${SCRIPT_DIR}"/../../start-kind.sh \
       --name "${CLUSTER1_NAME}" \
       --load-balancer-range "${lb_range_start}-${lb_range_end}" \
-      --image "${KIND_NODE_IMAGE}" \
       --enable-keycloak true \
       --keycloak-certs-dir "${KEYCLOAK_CERTS_DIR}" \
-      --keycloak-issuer-uri https://"${KEYCLOAK_ADDRESS}"/realms/kube
+      --keycloak-issuer-uri https://"${KEYCLOAK_ADDRESS}"/realms/kube \
+      --image "${KIND_NODE_IMAGE}"
 
     "${SCRIPT_DIR}/../../keycloak.sh" -kcd "${KEYCLOAK_CERTS_DIR}" -kip "${KEYCLOAK_ADDRESS}" deploy
 
@@ -174,10 +157,10 @@ if [ "${MANAGE_KIND}" == "true" ]; then
     "${SCRIPT_DIR}"/../../start-kind.sh \
       --name "${CLUSTER2_NAME}" \
       --load-balancer-range "255.85-255.98" \
-      --image "${KIND_NODE_IMAGE}" \
       --enable-keycloak true \
       --keycloak-certs-dir "${KEYCLOAK_CERTS_DIR}" \
-      --keycloak-issuer-uri https://"${KEYCLOAK_ADDRESS}"/realms/kube
+      --keycloak-issuer-uri https://"${KEYCLOAK_ADDRESS}"/realms/kube \
+      --image "${KIND_NODE_IMAGE}"
   else
     echo "==== START KIND FOR CLUSTER #1 [${CLUSTER1_NAME}] - ${CLUSTER1_CONTEXT}"
     "${SCRIPT_DIR}"/../../start-kind.sh \

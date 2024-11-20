@@ -132,6 +132,9 @@ MANAGE_MINIKUBE="${MANAGE_MINIKUBE:-true}"
 # If true and client exe is kubectl, then two kind instances will be installed/uninstalled by these scripts
 MANAGE_KIND="${MANAGE_KIND:-false}"
 
+# Image of the kind cluster
+KIND_NODE_IMAGE="${KIND_NODE_IMAGE:-}"
+
 # Minikube options - these are ignored if MANAGE_MINIKUBE is false
 MINIKUBE_DRIVER="kvm2"
 MINIKUBE_CPU=""
@@ -144,12 +147,16 @@ KEYCLOAK_DB_PASSWORD="${KEYCLOAK_DB_PASSWORD:-keycloak-password}"
 KEYCLOAK_KUBE_CLIENT_SECRET="${KEYCLOAK_KUBE_CLIENT_SECRET:-kube-client-secret}"
 KIALI_USER_PASSWORD="${KIALI_USER_PASSWORD:-kiali}"
 
+# Path to a Kiali server helm charts tarball
+KIALI_SERVER_HELM_CHARTS="${KIALI_SERVER_HELM_CHARTS:-}"
+
 # Some settings that can be configured when helm installing the two Kiali instances.
 KIALI1_WEB_FQDN="${KIALI1_WEB_FQDN:-}"
 KIALI1_WEB_SCHEMA="${KIALI1_WEB_SCHEMA:-}"
 KIALI2_WEB_FQDN="${KIALI2_WEB_FQDN:-}"
 KIALI2_WEB_SCHEMA="${KIALI2_WEB_SCHEMA:-}"
 
+# If true the local dev image of Kiali will be built and used in the Kiali deployment
 KIALI_BUILD_DEV_IMAGE="${KIALI_BUILD_DEV_IMAGE:-false}"
 
 # process command line args
@@ -257,6 +264,10 @@ while [[ $# -gt 0 ]]; do
     -ke|--kiali-enabled)
       [ "${2:-}" != "true" -a "${2:-}" != "false" ] && echo "--kiali-enabled must be 'true' or 'false'" && exit 1
       KIALI_ENABLED="$2"
+      shift;shift
+      ;;
+    -kni|--kind-node-image)
+      KIND_NODE_IMAGE="$2"
       shift;shift
       ;;
     -kshc|--kiali-server-helm-charts)
@@ -377,13 +388,21 @@ Valid command line arguments:
   -ih|--istio-hub <hub>: If you want to override the image hub used by istioctl (where the images are found),
                          set this to the hub name, or "default" to use the default image locations.
   -it|--istio-tag <tag>: If you want to override the image tag used by istioctl, set this to the tag name.
+  -k1wf|--kiali1-web-fqdn <fqdn>: If specified, this will be the #1 Kaili setting for spec.server.web_fqdn.
+  -k1ws|--kiali1-web-schema <schema>: If specified, this will be the #1 Kaili setting for spec.server.web_schema.
+  -k2wf|--kiali2-web-fqdn <fqdn>: If specified, this will be the #2 Kaili setting for spec.server.web_fqdn.
+  -k2ws|--kiali2-web-schema <schema>: If specified, this will be the #2 Kaili setting for spec.server.web_schema.
+  -ka|--keycloak-address <ip or host name>: Address of the keycloak idp.
   -kas|--kiali-auth-strategy <openid|openshift|anonymous>: The authentication strategy to use for Kiali (Default: openid)
   -kbdi|--kiali-build-dev-image <bool>: If "true" the local dev image of Kiali will be built and used in the Kiali deployment.
                                         Will be ignored if --kiali-enabled is 'false'. (Default: false)
   -kcrcs|--kiali-create-remote-cluster-secrets <bool>: Create remote cluster secrets for kiali remote cluster access.
+  -kcs|--keycloak-client-secret <password>: Client secret for the openshift kube client in keycloak.
+  -kdp|--keycloak-db-password <password>: Password for the keycloak database.
   -ke|--kiali-enabled <bool>: If "true" the latest release of Kiali will be installed in both clusters. If you want
                               a different version of Kiali installed, you must set this to "false" and install it yourself.
                               (Default: true)
+  -kni|--kind-node-image: Image of the kind cluster. Defaults to latest kind image if not specified.
   -kshc|--kiali-server-helm-charts <path>: If specified, must be the path to a Kiali server helm charts tarball. If not
                                            specified, the latest published helm charts is used. (Default: kiali-server)
   -kudi|--kiali-use-dev-image: If "true" the local dev image of Kiali will be pushed and used in the Kiali deployment.
@@ -391,13 +410,6 @@ Valid command line arguments:
                                that will be the image pushed to the clusters. You can "make container-build-kiali" to build it.
                                Will be ignored if --kiali-enabled is 'false'. (Default: false)
                                CURRENTLY ONLY SUPPORTED WITH MINIKUBE!
-  -k1wf|--kiali1-web-fqdn <fqdn>: If specified, this will be the #1 Kaili setting for spec.server.web_fqdn.
-  -k1ws|--kiali1-web-schema <schema>: If specified, this will be the #1 Kaili setting for spec.server.web_schema.
-  -k2wf|--kiali2-web-fqdn <fqdn>: If specified, this will be the #2 Kaili setting for spec.server.web_fqdn.
-  -k2ws|--kiali2-web-schema <schema>: If specified, this will be the #2 Kaili setting for spec.server.web_schema.
-  -ka|--keycloak-address <ip or host name>: Address of the keycloak idp.
-  -kcs|--keycloak-client-secret <password>: Client secret for the openshift kube client in keycloak.
-  -kdp|--keycloak-db-password <password>: Password for the keycloak database.
   -kup|--kiali-user-password <password>: Password for the kiali user in keycloak.
   -mcpu|--minikube-cpu <cpu count>: Number of CPUs to give to each minikube cluster
   -md|--minikube-driver <name>: The driver used by minikube (e.g. virtualbox, kvm2) (Default: kvm2)
@@ -559,7 +571,8 @@ if [ "${KIALI_USE_DEV_IMAGE}" == "true" ]; then
 fi
 
 # Export all variables so child scripts pick them up
-export BOOKINFO_ENABLED \
+export AUTH_GROUPS \
+       BOOKINFO_ENABLED \
        BOOKINFO_NAMESPACE \
        CERTS_DIR \
        CLIENT_EXE_NAME \
@@ -573,18 +586,19 @@ export BOOKINFO_ENABLED \
        CLUSTER2_USER \
        CROSSNETWORK_GATEWAY_REQUIRED \
        DORP \
-       AUTH_GROUPS \
        IS_OPENSHIFT \
        ISTIO_DIR \
        ISTIO_NAMESPACE \
        ISTIO_HUB \
        ISTIO_TAG \
+       KEYCLOAK_CERTS_DIR \
        KIALI_AUTH_STRATEGY \
        KIALI_BUILD_DEV_IMAGE \
        KIALI_CREATE_REMOTE_CLUSTER_SECRETS \
        KIALI_ENABLED \
+       KIALI_SERVER_HELM_CHARTS \
        KIALI_USE_DEV_IMAGE \
-       KEYCLOAK_CERTS_DIR \
+       KIND_NODE_IMAGE \
        MANAGE_KIND \
        MANAGE_MINIKUBE \
        MANUAL_MESH_NETWORK_CONFIG \
@@ -632,6 +646,7 @@ KIALI1_WEB_FQDN=$KIALI1_WEB_FQDN
 KIALI1_WEB_SCHEMA=$KIALI1_WEB_SCHEMA
 KIALI2_WEB_FQDN=$KIALI2_WEB_FQDN
 KIALI2_WEB_SCHEMA=$KIALI2_WEB_SCHEMA
+KIND_NODE_IMAGE=$KIND_NODE_IMAGE
 MANAGE_KIND=$MANAGE_KIND
 MANAGE_MINIKUBE=$MANAGE_MINIKUBE
 MANUAL_MESH_NETWORK_CONFIG=$MANUAL_MESH_NETWORK_CONFIG
