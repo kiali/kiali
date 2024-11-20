@@ -152,15 +152,28 @@ const StyleEdgeComponent: React.FC<StyleEdgeProps> = ({ element, ...rest }) => {
   const moveY = endPoint.y - startPoint.y;
 
   const moveAnimation = keyframes({
-    from: { transform: 'translateX(0)' },
-    to: { transform: `translateX(${moveX}px) translateY(${moveY}px)` }
+    from: { translate: '0' },
+    to: { translate: `${moveX}px ${moveY}px` }
   });
 
   const circleStyle = kialiStyle({
     fill: 'white',
     stroke: 'blue',
     animationName: moveAnimation,
-    animationDuration: '1s',
+    animationDuration: '2s',
+    animationFillMode: 'forwards',
+    animationTimingFunction: 'linear',
+    animationIterationCount: 'infinite'
+  });
+
+  const rectStyle = kialiStyle({
+    fill: 'white',
+    stroke: 'red',
+    transformBox: 'fill-box',
+    transformOrigin: 'center',
+    rotate: '45deg',
+    animationName: moveAnimation,
+    animationDuration: '2s',
     animationFillMode: 'forwards',
     animationTimingFunction: 'linear',
     animationIterationCount: 'infinite'
@@ -170,7 +183,22 @@ const StyleEdgeComponent: React.FC<StyleEdgeProps> = ({ element, ...rest }) => {
     <g style={{ opacity: opacity }} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
       <DefaultEdge className={classes(...cssClasses)} element={element} tagClass={tagClass} {...rest} {...passedData} />
       <circle cx={startPoint.x} cy={startPoint.y} r="5" className={circleStyle} style={{ animationDelay: '0.5s' }} />
-      <circle cx={startPoint.x} cy={startPoint.y} r="5" className={circleStyle} style={{ animationDelay: '1s' }} />
+      <rect
+        x={startPoint.x - 5}
+        y={startPoint.y - 5}
+        width="10"
+        height="10"
+        className={rectStyle}
+        style={{ animationDelay: '1.5s' }}
+      />
+      <rect
+        x={startPoint.x - 2}
+        y={startPoint.y - 2}
+        width="4"
+        height="4"
+        className={rectStyle}
+        style={{ animationDelay: '1.5s', fill: 'red' }}
+      />
     </g>
   );
 };
