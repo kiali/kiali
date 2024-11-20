@@ -1,10 +1,9 @@
-import { DefaultEdge, Edge, Layer, observer, ScaleDetailsLevel, WithSelectionProps } from '@patternfly/react-topology';
+import * as React from 'react';
+import { DefaultEdge, Edge, observer, ScaleDetailsLevel, WithSelectionProps } from '@patternfly/react-topology';
 import { useDetailsLevel } from '@patternfly/react-topology';
 import { PFColors } from 'components/Pf/PfColors';
-//import * as React from 'react';
 import { kialiStyle } from 'styles/StyleUtils';
-import { classes, keyframes } from 'typestyle';
-import React, { useRef, useEffect } from 'react';
+import { classes } from 'typestyle';
 
 // This is our styled edge component registered in stylesComponentFactory.tsx.  It is responsible for adding customizations that then get passed down to DefaultEdge.  The current customizations:
 //   data.pathStyle?: React.CSSProperties // additional CSS stylings for the edge/path (not the endpoint).
@@ -27,24 +26,9 @@ const tagClass = kialiStyle({
   fontFamily: 'Verdana,Arial,Helvetica,sans-serif,pficon'
 });
 
-const CanvasComponent = () => {
-  const containerRef = useRef<any>(null);
-
-  useEffect(() => {
-    if (containerRef.current) {
-      const canvas = document.createElement('canvas');
-      containerRef.current.append(canvas);
-
-      const context = canvas.getContext('2d');
-      context!.fillStyle = 'green';
-      context!.fillRect(10, 10, 100, 100);
-    }
-  }, [containerRef]);
-
-  return <div ref={containerRef} />;
-};
-
 const StyleEdgeComponent: React.FC<StyleEdgeProps> = ({ element, ...rest }) => {
+  //const [hover] = useHover();
+
   const data = element.getData();
   const detailsLevel = useDetailsLevel();
 
@@ -131,6 +115,7 @@ const StyleEdgeComponent: React.FC<StyleEdgeProps> = ({ element, ...rest }) => {
   }
 
   // Set animation duration velocity
+  /*
   if (data.animationDuration) {
     const animationClass = kialiStyle({
       $nest: {
@@ -141,6 +126,7 @@ const StyleEdgeComponent: React.FC<StyleEdgeProps> = ({ element, ...rest }) => {
     });
     cssClasses.push(animationClass);
   }
+  */
 
   // Set the path style when unhighlighted (opacity)
   let opacity = 1;
@@ -150,6 +136,7 @@ const StyleEdgeComponent: React.FC<StyleEdgeProps> = ({ element, ...rest }) => {
 
   const passedData = React.useMemo(() => {
     const newData = { ...data };
+
     if (detailsLevel !== ScaleDetailsLevel.high) {
       newData.showTag = false;
     }
@@ -163,61 +150,23 @@ const StyleEdgeComponent: React.FC<StyleEdgeProps> = ({ element, ...rest }) => {
     return newData;
   }, [data, detailsLevel]);
 
-  const startPoint = element.getStartPoint();
-  const endPoint = element.getEndPoint();
-
-  const moveX = endPoint.x - startPoint.x;
-  const moveY = endPoint.y - startPoint.y;
-
-  const move = keyframes({
-    from: { transform: 'translateX(0)' },
-    to: { transform: `translateX(${moveX}px) translateY(${moveY}px)` }
-  });
-
-  const circleStyle = kialiStyle({
-    fill: 'white',
-    stroke: 'blue',
-    animationName: move,
-    animationDuration: '1s',
-    animationFillMode: 'forwards',
-    animationTimingFunction: 'linear',
-    animationIterationCount: 'infinite'
-  });
-
+  /*
   return (
     <g style={{ opacity: opacity }} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
       <DefaultEdge className={classes(...cssClasses)} element={element} tagClass={tagClass} {...rest} {...passedData} />
       <circle cx={startPoint.x} cy={startPoint.y} r="5" className={circleStyle} style={{ animationDelay: '0.5s' }} />
       <circle cx={startPoint.x} cy={startPoint.y} r="5" className={circleStyle} style={{ animationDelay: '1s' }} />
     </g>
-  const hasAnimation = true;
+  */
+  const hasAnimation = !data.isUnhighlighted && data.animation;
+  if (hasAnimation) {
+    console.log(`hasAnimation=${element.getId()}`);
+  }
   return (
-    <>
-      {hasAnimation && (
-        <Layer id={hasAnimation ? 'animation' : undefined}>
-          <g style={{ opacity: opacity }} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
-            <CanvasComponent />
-            <DefaultEdge
-              className={classes(...cssClasses)}
-              element={element}
-              tagClass={tagClass}
-              {...rest}
-              {...passedData}
-              tag="foo"
-            />
-          </g>
-        </Layer>
-      )}
-      <g style={{ opacity: opacity }} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
-        <DefaultEdge
-          className={classes(...cssClasses)}
-          element={element}
-          tagClass={tagClass}
-          {...rest}
-          {...passedData}
-        />
-      </g>
-    </>
+    <g style={{ opacity: opacity }} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
+      <DefaultEdge className={classes(...cssClasses)} element={element} tagClass={tagClass} {...rest} {...passedData} />
+      {hasAnimation && data.animation?.render(element)}
+    </g>
   );
 };
 

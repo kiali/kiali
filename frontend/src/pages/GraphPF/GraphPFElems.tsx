@@ -38,6 +38,7 @@ import { NodeDecorator } from './NodeDecorator';
 import { LayoutName } from './GraphPF';
 import { supportsGroups } from 'utils/GraphUtils';
 import { kialiStyle } from 'styles/StyleUtils';
+import { TrafficPointGenerator } from './TrafficAnimation/TrafficRendererPF';
 
 // Utilities for working with PF Topology
 // - most of these add cytoscape-like functions
@@ -81,6 +82,7 @@ export type NodeData = DecoratedGraphNodeData & {
 };
 
 export type EdgeData = DecoratedGraphEdgeData & {
+  animation?: TrafficPointGenerator;
   endTerminalType: EdgeTerminalType;
   hasSpans?: Span[];
   isFind?: boolean;

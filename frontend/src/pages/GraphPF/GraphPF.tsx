@@ -76,7 +76,7 @@ import { PeerAuthentication } from 'types/IstioObjects';
 import { KialiIcon } from 'config/KialiIcon';
 import { toolbarActiveStyle } from 'styles/GraphStyle';
 import { scoreNodes, ScoringCriteria } from 'components/CytoscapeGraph/GraphScore';
-import { TrafficAnimation } from 'components/CytoscapeGraph/TrafficAnimation/TrafficRendererPF';
+import { TrafficAnimation } from './TrafficAnimation/TrafficRendererPF';
 
 const DEFAULT_NODE_SIZE = 40;
 const ZOOM_IN = 4 / 3;
