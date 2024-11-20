@@ -57,7 +57,7 @@ const getTrafficPointRendererForRpsSuccess: (edge: Edge, animationDuration: stri
   edge: Edge,
   animationDuration
 ) => {
-  return new TrafficPointCircleRenderer(animationDuration, 2, PFColors.White, edge.getData().pathStyle.stroke);
+  return new TrafficPointCircleRenderer(animationDuration, 4, PFColors.White, edge.getData().pathStyle.stroke);
 };
 
 /**
@@ -69,7 +69,7 @@ const getTrafficPointRendererForTcp: (edge: Edge, animationDuration: string) => 
   _edge: Edge,
   animationDuration
 ) => {
-  return new TrafficPointCircleRenderer(animationDuration, 1.6, PFColors.Black100, PFColors.Black500);
+  return new TrafficPointCircleRenderer(animationDuration, 3.2, PFColors.Black100, PFColors.Black500);
 };
 
 /**
@@ -108,10 +108,13 @@ export class TrafficPointGenerator {
     const pointDurationSeconds = 1.0 / this.speed;
     const numPointsOnEdge = Math.ceil(pointDurationSeconds / this.timer!);
     const pointDuration = `${pointDurationSeconds}s`;
+    console.log(
+      `${this.type}: speed=${this.speed.toFixed(2)} numPointsOnEdge=${numPointsOnEdge} pointDuration=${pointDuration}`
+    );
     const renderer =
       this.type === TrafficEdgeType.RPS
         ? getTrafficPointRendererForRpsSuccess(edge, pointDuration)
-        : getTrafficPointRendererForTcp(edge, `${pointDurationSeconds}s`);
+        : getTrafficPointRendererForTcp(edge, pointDuration);
     const errorRenderer =
       this.type === TrafficEdgeType.RPS ? getTrafficPointRendererForRpsError(edge, pointDuration) : undefined;
 
@@ -350,7 +353,6 @@ export class TrafficAnimation {
   }
 
   private getTrafficEdgeType(edgeData: EdgeData) {
-    console.log(`protocol=${edgeData.protocol}`);
     switch (edgeData.protocol) {
       case Protocol.GRPC:
       case Protocol.HTTP:
@@ -415,7 +417,7 @@ export class TrafficAnimation {
   private edgeLength(edge: Edge): number {
     let len = 0;
     const points = this.edgePoints(edge);
-    for (let i = 0; i < points.length; ++i) {
+    for (let i = 0; i < points.length - 1; ++i) {
       len += distance(points[i], points[i + 1]);
     }
     return len;

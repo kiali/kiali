@@ -159,9 +159,6 @@ const StyleEdgeComponent: React.FC<StyleEdgeProps> = ({ element, ...rest }) => {
     </g>
   */
   const hasAnimation = !data.isUnhighlighted && data.animation;
-  if (hasAnimation) {
-    console.log(`hasAnimation=${element.getId()}`);
-  }
   return (
     <g style={{ opacity: opacity }} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
       <DefaultEdge className={classes(...cssClasses)} element={element} tagClass={tagClass} {...rest} {...passedData} />

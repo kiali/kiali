@@ -26,8 +26,7 @@ import {
   Edge,
   GraphAreaSelectedEventListener,
   GRAPH_AREA_SELECTED_EVENT,
-  GraphLayoutEndEventListener,
-  DEFAULT_LAYERS
+  GraphLayoutEndEventListener
 } from '@patternfly/react-topology';
 import { GraphData } from 'pages/Graph/GraphPage';
 import {
@@ -338,11 +337,16 @@ const TopologyContent: React.FC<{
     // world that the graph is ready for external processing (like find/hide)
     if (initialLayout) {
       initialLayout = false;
+
+      if (showTrafficAnimation) {
+        trafficAnimation.start();
+      }
+
       onReady({ getController: () => controller, setSelectedIds: setSelectedIds });
     }
 
     layoutInProgress = undefined;
-  }, [controller, onReady, setSelectedIds]);
+  }, [controller, onReady, setSelectedIds, showTrafficAnimation, trafficAnimation]);
 
   //
   // Set detail levels for graph (control zoom-sensitive labels)
@@ -368,7 +372,6 @@ const TopologyContent: React.FC<{
         const defaultModel: Model = {
           graph: {
             id: 'graphPF',
-            layers: [...DEFAULT_LAYERS, 'animation'],
             layout: layoutName,
             type: 'graph'
           }
@@ -698,7 +701,9 @@ const TopologyContent: React.FC<{
       return;
     }
 
-    trafficAnimation.start();
+    if (!initialLayout) {
+      trafficAnimation.start();
+    }
   }, [controller, showTrafficAnimation, trafficAnimation, updateModelTime]);
 
   React.useEffect(() => {
