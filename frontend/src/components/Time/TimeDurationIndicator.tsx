@@ -26,6 +26,7 @@ type ReduxDispatchProps = {
 
 type Props = ReduxStateProps &
   ReduxDispatchProps & {
+    id?: string;
     isDuration?: boolean;
     onClick?: () => void;
     setDuration: (duration: DurationInSeconds) => void;
@@ -95,7 +96,7 @@ class TimeDurationIndicatorComponent extends React.PureComponent<Props> {
           </>
         }
       >
-        <Button variant="link" isInline={true} onClick={this.props.onClick}>
+        <Button id={this.props.id} variant="link" isInline={true} onClick={this.props.onClick}>
           <KialiIcon.Clock className={infoStyle} />
           {this.timeDurationIndicator()}, {getRefreshIntervalName(this.props.refreshInterval)}
         </Button>

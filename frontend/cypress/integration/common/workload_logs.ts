@@ -8,6 +8,12 @@ Given(
   'I am on the logs tab of the {string} workload detail page of the {string} namespace',
   (workload: string, namespace: string) => {
     cy.visit({ url: `/console/namespaces/${namespace}/workloads/${workload}?tab=logs&refresh=0` });
+
+    // In OSSMC, the duration interval is configured using the time duration modal component
+    if (Cypress.env('OSSMC')) {
+      cy.get('#time_duration').click();
+    }
+
     cy.get('#metrics_filter_interval_duration-toggle').click();
     cy.get('#1800').click();
   }
