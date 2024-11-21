@@ -4,7 +4,12 @@ import { keyframes } from 'typestyle';
 import { Edge } from '@patternfly/react-topology';
 
 export abstract class TrafficPointRenderer {
-  abstract render(element: Edge, animationDelay: string): React.SVGProps<SVGElement>;
+  abstract render(
+    element: Edge,
+    animationDelay: string,
+    repeat: boolean,
+    onAnimationEnd?: React.AnimationEventHandler
+  ): React.SVGProps<SVGElement>;
 }
 
 export class TrafficPointCircleRenderer extends TrafficPointRenderer {
@@ -12,6 +17,7 @@ export class TrafficPointCircleRenderer extends TrafficPointRenderer {
   readonly radius: number;
   readonly backgroundColor: string;
   readonly borderColor: string;
+  private keyIndex = 0;
 
   constructor(animationDuration: string, radius: number, backgroundColor: string, borderColor: string) {
     super();
@@ -21,7 +27,7 @@ export class TrafficPointCircleRenderer extends TrafficPointRenderer {
     this.radius = radius;
   }
 
-  private getStyle(moveAnimation: string): string {
+  private getStyle(moveAnimation: string, repeat: boolean): string {
     return kialiStyle({
       fill: this.backgroundColor,
       stroke: this.borderColor,
@@ -29,11 +35,16 @@ export class TrafficPointCircleRenderer extends TrafficPointRenderer {
       animationDuration: this.animationDuration,
       animationFillMode: 'forwards',
       animationTimingFunction: 'linear',
-      animationIterationCount: 'infinite'
+      animationIterationCount: repeat ? 'infinite' : 1
     });
   }
 
-  render(element: Edge, animationDelay: string): React.SVGProps<SVGCircleElement> {
+  render(
+    element: Edge,
+    animationDelay: string,
+    repeat: boolean,
+    onAnimationEnd?: React.AnimationEventHandler
+  ): React.SVGProps<SVGCircleElement> {
     const startPoint = element.getStartPoint();
     const endPoint = element.getEndPoint();
 
@@ -42,17 +53,22 @@ export class TrafficPointCircleRenderer extends TrafficPointRenderer {
 
     const moveAnimation = keyframes({
       from: { transform: 'translateX(0)' },
-      to: { transform: `translateX(${moveX}px) translateY(${moveY}px)`, display: 'none' }
+      to: { transform: `translateX(${moveX}px) translateY(${moveY}px)`, display: repeat ? '' : 'none' }
     });
+
+    if (onAnimationEnd) {
+      console.log(`circle with callback`);
+    }
 
     return (
       <circle
-        key={`point-${element.getId()}-${animationDelay}`}
+        key={`point-circle-${element.getId()}-${++this.keyIndex}`}
         cx={startPoint.x}
         cy={startPoint.y}
         r={`${this.radius}`}
-        className={this.getStyle(moveAnimation)}
+        className={this.getStyle(moveAnimation, repeat)}
         style={{ animationDelay: animationDelay }}
+        onAnimationEnd={onAnimationEnd}
       />
     );
   }
@@ -63,6 +79,7 @@ export class TrafficPointDiamondRenderer extends TrafficPointRenderer {
   readonly radius: number;
   readonly backgroundColor: string;
   readonly borderColor: string;
+  private keyIndex = 0;
 
   constructor(animationDuration: string, radius: number, backgroundColor: string, borderColor: string) {
     super();
@@ -72,7 +89,7 @@ export class TrafficPointDiamondRenderer extends TrafficPointRenderer {
     this.radius = radius;
   }
 
-  private getStyle(moveAnimation: string): string {
+  private getStyle(moveAnimation: string, repeat: boolean): string {
     return kialiStyle({
       fill: this.backgroundColor,
       stroke: this.borderColor,
@@ -84,11 +101,16 @@ export class TrafficPointDiamondRenderer extends TrafficPointRenderer {
       animationDuration: this.animationDuration,
       animationFillMode: 'forwards',
       animationTimingFunction: 'linear',
-      animationIterationCount: 'infinite'
+      animationIterationCount: repeat ? 'infinite' : 1
     });
   }
 
-  render(element: Edge, animationDelay: string): React.SVGProps<SVGCircleElement> {
+  render(
+    element: Edge,
+    animationDelay: string,
+    repeat: boolean,
+    onAnimationEnd?: React.AnimationEventHandler
+  ): React.SVGProps<SVGRectElement> {
     const startPoint = element.getStartPoint();
     const endPoint = element.getEndPoint();
 
@@ -97,18 +119,22 @@ export class TrafficPointDiamondRenderer extends TrafficPointRenderer {
 
     const moveAnimation = keyframes({
       from: { translate: '0' },
-      to: { translate: `${moveX}px ${moveY}px`, display: 'none' }
+      to: { translate: `${moveX}px ${moveY}px`, display: repeat ? '' : 'none' }
     });
 
+    if (onAnimationEnd) {
+      console.log(`rect with callback`);
+    }
     return (
       <rect
-        key={`point-${element.getId()}-${animationDelay}`}
+        key={`point-rect-${element.getId()}-${++this.keyIndex}`}
+        className={this.getStyle(moveAnimation, repeat)}
+        style={{ animationDelay: animationDelay }}
         x={startPoint.x - this.radius}
         y={startPoint.y - this.radius}
         width={this.radius * 2 - 1}
         height={this.radius * 2 - 1}
-        className={this.getStyle(moveAnimation)}
-        style={{ animationDelay: animationDelay }}
+        onAnimationEnd={onAnimationEnd}
       />
     );
   }

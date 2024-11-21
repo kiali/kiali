@@ -39,12 +39,6 @@ const getTrafficPointRendererForRpsError: (edge: Edge, animationDuration: string
   animationDuration
 ) => {
   return new TrafficPointDiamondRenderer(animationDuration, 4, PFColors.White, PFColors.Danger);
-  /*
-  return new TrafficPointConcentricDiamondRenderer(
-    new Diamond(5, PFColors.White, PFColors.Danger, 1.0),
-    new Diamond(2, PFColors.Danger, PFColors.Danger, 1.0)
-  );
-  */
 };
 
 /**
@@ -97,9 +91,7 @@ type TrafficPoint = {
  * speed - defines the speed of the next point (see TrafficPoint.speed)
  */
 export class TrafficPointGenerator {
-  private animationTimer?: number;
   private timer?: number;
-  private timerForNextPoint?: number;
   private speed: number = 0;
   private errorRate: number = 0;
   private type: TrafficEdgeType = TrafficEdgeType.NONE;
@@ -109,58 +101,48 @@ export class TrafficPointGenerator {
     const numPointsOnEdge = Math.ceil(pointDurationSeconds / this.timer!);
     const pointDuration = `${pointDurationSeconds}s`;
 
-    console.log(
-      `${this.type}: speed=${this.speed.toFixed(2)} numPointsOnEdge=${numPointsOnEdge} pointDuration=${pointDuration}`
-    );
-
     const renderer =
       this.type === TrafficEdgeType.RPS
         ? getTrafficPointRendererForRpsSuccess(edge, pointDuration)
         : getTrafficPointRendererForTcp(edge, pointDuration);
     const errorRenderer =
       this.type === TrafficEdgeType.RPS ? getTrafficPointRendererForRpsError(edge, pointDuration) : undefined;
-
-    if (this.animationTimer) {
-      window.clearInterval(this.animationTimer);
-    }
+    const repeat = this.errorRate === 0 || this.errorRate === 100;
+    console.log(`${edge.getId()} repeat=${repeat} numPointsOnEdge=${numPointsOnEdge} pointDuration=${pointDuration}`);
 
     const points: Array<React.SVGProps<SVGElement>> = [];
-
-    // We generate points for the edge and iterate infinitely. If the error rate is constant
-    // (i.e. error rate is 0 or 100), we can generate a small set of points. But if we need
-    // to inject occasional errors then we need a larger number of points to ensure that, over
-    // time we (very likely) inject errors.
-
-    // enough to avoid any very obvious pattern
-    const minPoints = numPointsOnEdge === 1 ? 1 : Math.max(10, 2 * numPointsOnEdge);
-    // enough to ensure error points and avoid obvious patterns
-    const errPoints = 50;
-    const allTheSame = this.errorRate === 0 || this.errorRate === 100;
-    const numPoints = allTheSame ? minPoints : errPoints;
-    let forceErrorPoint = !allTheSame;
-    console.log(
-      `numPointsOnEdge=${numPointsOnEdge} numPoints=${numPoints}, launch=${this.timer}ms forceErr=${forceErrorPoint} `
-    );
-    for (let i = 0; i < numPoints; ++i) {
-      const isLastPoint = 1 === numPoints - 1;
-      const isErrorPoint = errorRenderer && (Math.random() <= this.errorRate || (isLastPoint && forceErrorPoint));
-      forceErrorPoint = forceErrorPoint && !isErrorPoint;
+    for (let i = 0; i < numPointsOnEdge; ++i) {
+      const isErrorPoint = errorRenderer && Math.random() <= this.errorRate;
       const animationDelay = `${i * this.timer!}ms`;
-      console.log(
-        `  point animationDelay=${animationDelay} isErr=${isErrorPoint} errRate=${this.errorRate.toFixed(2)}`
-      );
-      points.unshift(isErrorPoint ? errorRenderer.render(edge, animationDelay) : renderer.render(edge, animationDelay));
+      const renew = !repeat && i + 1 === numPointsOnEdge;
+      // console.log(`point ${edge.getId()} renew=${renew}`);
+      const point = isErrorPoint
+        ? errorRenderer.render(edge, animationDelay, repeat, renew ? this.renewAnimation(edge) : undefined)
+        : renderer.render(edge, animationDelay, repeat, renew ? this.renewAnimation(edge) : undefined);
+      points.unshift(point);
+      /*
+      if (renew) {
+        this.renewAnimation(edge, (i + 1) * this.timer! + pointDurationSeconds * 1000)(point as any);
+      }
+     */
     }
 
     return <>{points.map(p => p)}</>;
   }
 
+  // renewAnimation performs an innocuous "set" to force the edge to re-render and generate new points
+  private renewAnimation(edge: Edge, delay?: number): React.AnimationEventHandler {
+    return _elem => {
+      console.log(`setTimeout scheduled! ${edge.getId()} delay=${delay?.toFixed(2)}`);
+      window.setTimeout(() => {
+        console.log(`setTimeout executing! ${edge.getId()} `);
+        setObserved(() => edge.setData({ ...edge.getData(), animationTime: Date.now() }));
+      }, delay);
+    };
+  }
+
   setTimer(timer: number | undefined) {
     this.timer = timer;
-    // Start as soon as posible, unless we have no traffic
-    if (this.timerForNextPoint === undefined) {
-      this.timerForNextPoint = timer;
-    }
   }
 
   setSpeed(speed: number) {
