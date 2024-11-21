@@ -21,6 +21,7 @@ import { isWaypoint } from '../../helpers/LabelFilterHelper';
 import { AmbientLabel, tooltipMsgType } from '../../components/Ambient/AmbientLabel';
 import { gvkType, validationKey } from '../../types/IstioConfigList';
 import { infoStyle } from 'styles/IconStyle';
+import { addInfo } from 'utils/AlertUtils';
 import { classes } from 'typestyle';
 
 type WorkloadDescriptionProps = {
@@ -90,6 +91,10 @@ export const WorkloadDescription: React.FC<WorkloadDescriptionProps> = (props: W
 
   const runtimes = (workload.runtimes ?? []).map(r => r.name).filter(name => name !== '');
 
+  if (!isGVKSupported(workload.gvk)) {
+    addInfo('This type of workload is not fully supported by Kiali, only limited information is available for display');
+  }
+
   const workloadProperties = (
     <>
       <div key="properties-list" className={resourceListStyle}>
@@ -105,7 +110,7 @@ export const WorkloadDescription: React.FC<WorkloadDescriptionProps> = (props: W
             <span>Type</span>
             {isGVKSupported(workload.gvk)
               ? workload.gvk.Kind || 'N/A'
-              : `${workload.gvk.Group}.${workload.gvk.Version}.${workload.gvk.Kind} is read-only`}
+              : `${workload.gvk.Group}.${workload.gvk.Version}.${workload.gvk.Kind}`}
           </li>
 
           <li>
