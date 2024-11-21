@@ -103,7 +103,7 @@ export const WorkloadDescription: React.FC<WorkloadDescriptionProps> = (props: W
 
           <li>
             <span>Type</span>
-            {workload.gvk.Kind ? workload.gvk.Kind : 'N/A'}
+            {workload.gvk.Kind || 'N/A'}
           </li>
 
           <li>
