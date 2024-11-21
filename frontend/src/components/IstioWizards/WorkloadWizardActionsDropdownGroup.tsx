@@ -16,6 +16,7 @@ import { MessageType } from 'types/MessageCenter';
 import { groupMenuStyle } from 'styles/DropdownStyles';
 import { t } from 'utils/I18nUtils';
 import { getGVKTypeString } from '../../utils/IstioConfigUtils';
+import { gvkType } from '../../types/IstioConfigList';
 
 type Props = {
   actionsLabel: boolean;
@@ -140,7 +141,7 @@ export const WorkloadWizardActionsDropdownGroup: React.FunctionComponent<Props> 
   }
 
   // Annotations
-  if (props.annotations && getGVKTypeString(props.workload.gvk) === getGVKTypeString('Deployment')) {
+  if (props.annotations && getGVKTypeString(props.workload.gvk) === getGVKTypeString(gvkType.Deployment)) {
     const annotationsAction = (
       <DropdownItem
         data-test={WIZARD_EDIT_ANNOTATIONS}

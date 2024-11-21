@@ -316,7 +316,7 @@
   "This chart shows memory consumption for the istiod {{memoryMetricSource}}": "This chart shows memory consumption for the istiod {{memoryMetricSource}}",
   "This rule is not accessible.": "该规则将无法生效。",
   "This shows the meshConfig.outboundTrafficPolicy.mode setting. It controls the sidecar handling of                 requests to external services (services not defined in Istio’s internal service registry). When                 set to ALLOW_ANY the Istio proxy performs a passthrough to the unknown services. When set to REGISTRY_ONLY                 the Istio proxy blocks requets to hosts without a defined HTTP service or service entry.": "This shows the meshConfig.outboundTrafficPolicy.mode setting. It controls the sidecar handling of                 requests to external services (services not defined in Istio’s internal service registry). When                 set to ALLOW_ANY the Istio proxy performs a passthrough to the unknown services. When set to REGISTRY_ONLY                 the Istio proxy blocks requets to hosts without a defined HTTP service or service entry.",
-  "This type of Workload is Read only": "This type of Workload is Read only",
+  "This type of workload is read-only": "This type of workload is read-only",
   "Time duration": "Time duration",
   "Time range": "Time range",
   "Time Range": "Time Range",

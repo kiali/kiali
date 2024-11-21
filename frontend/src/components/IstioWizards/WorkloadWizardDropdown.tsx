@@ -17,7 +17,8 @@ import { WizardLabels } from './WizardLabels';
 import { renderDisabledDropdownOption } from 'utils/DropdownUtils';
 import { WorkloadWizardActionsDropdownGroup } from './WorkloadWizardActionsDropdownGroup';
 import { t } from 'utils/I18nUtils';
-import { getGVKTypeString } from '../../utils/IstioConfigUtils';
+import { getGVKTypeString, isGVKSupported } from '../../utils/IstioConfigUtils';
+import { gvkType } from '../../types/IstioConfigList';
 
 interface Props {
   namespace: string;
@@ -93,9 +94,9 @@ export const WorkloadWizardDropdown: React.FC<Props> = (props: Props) => {
     //  istio actions
     (serverConfig.kialiFeatureFlags.istioInjectionAction && !props.workload.isAmbient) ||
     // annotations
-    getGVKTypeString(props.workload.gvk) === getGVKTypeString('Deployment');
+    getGVKTypeString(props.workload.gvk) === getGVKTypeString(gvkType.Deployment);
 
-  const supportedWorkload = getGVKTypeString(props.workload.gvk) === getGVKTypeString(props.workload.gvk.Kind);
+  const supportedWorkload = isGVKSupported(props.workload.gvk);
 
   const dropdown = (
     <Dropdown
@@ -108,7 +109,7 @@ export const WorkloadWizardDropdown: React.FC<Props> = (props: Props) => {
           onClick={() => onActionsToggle(!isActionsOpen)}
           data-test="workload-actions-toggle"
           isExpanded={isActionsOpen}
-          isDisabled={!validActions}
+          isDisabled={!validActions || !supportedWorkload}
         >
           {t('Actions')}
         </MenuToggle>

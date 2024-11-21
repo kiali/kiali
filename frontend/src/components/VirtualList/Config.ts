@@ -11,7 +11,7 @@ import { isIstioNamespace } from 'config/ServerConfig';
 import { NamespaceInfo } from '../../types/NamespaceInfo';
 import { StatefulFiltersRef } from '../Filters/StatefulFilters';
 import { PFBadges, PFBadgeType } from '../../components/Pf/PfBadges';
-import { getGVKTypeString } from '../../utils/IstioConfigUtils';
+import { getGVKTypeString, kindToStringIncludeK8s } from '../../utils/IstioConfigUtils';
 
 export type SortResource = AppListItem | WorkloadListItem | ServiceListItem;
 export type TResource = SortResource | IstioConfigItem;
@@ -201,8 +201,8 @@ const istioType: ResourceType<IstioConfigItem> = {
 
 export const GVKToBadge: { [gvk: string]: PFBadgeType } = {};
 
-Object.keys(dicTypeToGVK).forEach(key => {
-  GVKToBadge[getGVKTypeString(key)] = PFBadges[key];
+Object.values(dicTypeToGVK).forEach(value => {
+  GVKToBadge[getGVKTypeString(value)] = PFBadges[kindToStringIncludeK8s(value.Group, value.Kind)];
 });
 
 export type Resource = {

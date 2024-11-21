@@ -15,11 +15,11 @@ import { MissingSidecar } from '../../components/MissingSidecar/MissingSidecar';
 import { PFBadge, PFBadges } from '../../components/Pf/PfBadges';
 import { MissingLabel } from '../../components/MissingLabel/MissingLabel';
 import { MissingAuthPolicy } from 'components/MissingAuthPolicy/MissingAuthPolicy';
-import { getGVKTypeString, hasMissingAuthPolicy } from 'utils/IstioConfigUtils';
+import { getGVKTypeString, hasMissingAuthPolicy, isGVKSupported } from 'utils/IstioConfigUtils';
 import { DetailDescription } from '../../components/DetailDescription/DetailDescription';
 import { isWaypoint } from '../../helpers/LabelFilterHelper';
 import { AmbientLabel, tooltipMsgType } from '../../components/Ambient/AmbientLabel';
-import { validationKey } from '../../types/IstioConfigList';
+import { gvkType, validationKey } from '../../types/IstioConfigList';
 import { infoStyle } from 'styles/IconStyle';
 import { classes } from 'typestyle';
 
@@ -81,11 +81,11 @@ export const WorkloadDescription: React.FC<WorkloadDescriptionProps> = (props: W
 
   const isTemplateLabels =
     [
-      getGVKTypeString('Deployment'),
-      getGVKTypeString('ReplicaSet'),
-      getGVKTypeString('ReplicationController'),
-      getGVKTypeString('DeploymentConfig'),
-      getGVKTypeString('StatefulSet')
+      getGVKTypeString(gvkType.Deployment),
+      getGVKTypeString(gvkType.ReplicaSet),
+      getGVKTypeString(gvkType.ReplicationController),
+      getGVKTypeString(gvkType.DeploymentConfig),
+      getGVKTypeString(gvkType.StatefulSet)
     ].indexOf(getGVKTypeString(workload.gvk)) >= 0;
 
   const runtimes = (workload.runtimes ?? []).map(r => r.name).filter(name => name !== '');
@@ -103,7 +103,9 @@ export const WorkloadDescription: React.FC<WorkloadDescriptionProps> = (props: W
 
           <li>
             <span>Type</span>
-            {workload.gvk.Kind || 'N/A'}
+            {isGVKSupported(workload.gvk)
+              ? workload.gvk.Kind || 'N/A'
+              : `${workload.gvk.Group}.${workload.gvk.Version}.${workload.gvk.Kind} is read-only`}
           </li>
 
           <li>

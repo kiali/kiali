@@ -35,6 +35,7 @@ import { durationSelector } from 'store/Selectors';
 import { basicTabStyle } from 'styles/TabStyles';
 import { serverConfig } from 'config';
 import { getGVKTypeString } from '../../utils/IstioConfigUtils';
+import { gvkType } from '../../types/IstioConfigList';
 
 type ServiceDetailsState = {
   cluster?: string;
@@ -119,7 +120,7 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
         'gateways',
         API.getIstioConfig(
           this.props.serviceId.namespace,
-          [getGVKTypeString('Gateway'), getGVKTypeString('K8sGateway')],
+          [getGVKTypeString(gvkType.Gateway), getGVKTypeString(gvkType.K8sGateway)],
           false,
           '',
           '',
@@ -127,8 +128,8 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
         )
       )
       .then(response => {
-        this.setState({ gateways: response.data.resources[getGVKTypeString('Gateway')] });
-        this.setState({ k8sGateways: response.data.resources[getGVKTypeString('K8sGateway')] });
+        this.setState({ gateways: response.data.resources[getGVKTypeString(gvkType.Gateway)] });
+        this.setState({ k8sGateways: response.data.resources[getGVKTypeString(gvkType.K8sGateway)] });
       })
       .catch(gwError => {
         AlertUtils.addError('Could not fetch Gateways list.', gwError);
@@ -157,10 +158,17 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
         this.setState({ error: msg });
       });
 
-    API.getIstioConfig(this.props.serviceId.namespace, [getGVKTypeString('PeerAuthentication')], false, '', '', cluster)
+    API.getIstioConfig(
+      this.props.serviceId.namespace,
+      [getGVKTypeString(gvkType.PeerAuthentication)],
+      false,
+      '',
+      '',
+      cluster
+    )
       .then(results => {
         this.setState({
-          peerAuthentications: results.data.resources[getGVKTypeString('PeerAuthentication')]
+          peerAuthentications: results.data.resources[getGVKTypeString(gvkType.PeerAuthentication)]
         });
       })
       .catch(error => {

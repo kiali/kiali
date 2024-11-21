@@ -7,6 +7,7 @@ import {
   filterByConfigValidation,
   filterByName,
   filterByNamespaces,
+  gvkType,
   IstioConfigItem,
   toIstioItems
 } from '../../types/IstioConfigList';
@@ -106,7 +107,7 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
     const namespacesSelected = this.props.activeNamespaces!.map(item => item.name);
 
     const istioTypeFilters = getFilterSelectedValues(IstioConfigListFilters.istioTypeFilter, activeFilters).map(value =>
-      getGVKTypeString(value)
+      getGVKTypeString(gvkType[value])
     );
 
     const istioNameFilters = getFilterSelectedValues(IstioConfigListFilters.istioNameFilter, activeFilters);

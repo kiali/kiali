@@ -9,7 +9,7 @@ import {
   Validations
 } from '../types/IstioObjects';
 import _ from 'lodash';
-import { dicTypeToGVK, IstioConfigItem } from 'types/IstioConfigList';
+import { dicTypeToGVK, gvkType, IstioConfigItem } from 'types/IstioConfigList';
 
 export const mergeJsonPatch = (objectModified: object, object?: object): object => {
   if (!object) {
@@ -199,9 +199,13 @@ export function getIstioObjectGVK(apiVersion?: string, kind?: string): GroupVers
   return { Group: parts[0], Version: parts[1], Kind: kind! };
 }
 
-export function getGVKTypeString(gvk: GroupVersionKind | string): string {
+export function getGVKTypeString(gvk: GroupVersionKind | gvkType): string {
   if (typeof gvk === 'string') {
-    return gvkToString(dicTypeToGVK[gvk]);
+    const gvkEntry = dicTypeToGVK[gvk];
+    if (!gvkEntry) {
+      throw new Error(`GVK type '${gvk}' not found in dicTypeToGVK.`);
+    }
+    return gvkToString(gvkEntry);
   } else {
     return gvkToString(gvk);
   }
@@ -245,4 +249,8 @@ export function istioTypesToGVKString(istioTypes: string[]): string[] {
   return istioTypes.map(type => {
     return gvkToString(dicTypeToGVK[type]);
   });
+}
+
+export function isGVKSupported(gvk: GroupVersionKind): boolean {
+  return getGVKTypeString(gvk) === getGVKTypeString(gvkType[gvk.Kind]);
 }

@@ -7,14 +7,14 @@ import { namespaceItemsSelector } from '../../store/Selectors';
 import { KialiDispatch } from '../../types/Redux';
 import { NamespaceThunkActions } from '../../actions/NamespaceThunkActions';
 import { connect } from 'react-redux';
-import { dicTypeToGVK } from '../../types/IstioConfigList';
+import { dicTypeToGVK, gvkType } from '../../types/IstioConfigList';
 
 export const FROM_KINDS = [
-  dicTypeToGVK['K8sHTTPRoute'],
-  dicTypeToGVK['K8sGateway'],
-  dicTypeToGVK['K8sGRPCRoute'],
-  dicTypeToGVK['K8sTCPRoute'],
-  dicTypeToGVK['K8sTLSRoute']
+  dicTypeToGVK[gvkType.K8sHTTPRoute],
+  dicTypeToGVK[gvkType.K8sGateway],
+  dicTypeToGVK[gvkType.K8sGRPCRoute],
+  dicTypeToGVK[gvkType.K8sTCPRoute],
+  dicTypeToGVK[gvkType.K8sTLSRoute]
 ];
 
 export const TO_KINDS = {

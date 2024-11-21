@@ -8,7 +8,7 @@ import {
   mergeJsonPatch,
   stringToGVK
 } from '../IstioConfigUtils';
-import { dicTypeToGVK } from '../../types/IstioConfigList';
+import { dicTypeToGVK, gvkType } from '../../types/IstioConfigList';
 
 describe('Validate JSON Patchs', () => {
   const gateway: object = {
@@ -119,7 +119,7 @@ describe('Validate returned GoupVersionKind for IstioObject', () => {
 
   it('Invalid apiVersion, valid Kind', () => {
     const result = getIstioObjectGVK('invalidApiVersion', 'AuthorizationPolicy');
-    expect(result).toEqual(dicTypeToGVK['AuthorizationPolicy']);
+    expect(result).toEqual(dicTypeToGVK[gvkType.AuthorizationPolicy]);
   });
 
   it('Empty apiVersion, valid kind', () => {
@@ -145,12 +145,12 @@ describe('Validate converting GroupVersionKind To String', () => {
   });
 
   it('Correct Workload Kind properties', () => {
-    const result = getGVKTypeString('Deployment');
+    const result = getGVKTypeString(gvkType.Deployment);
     expect(result).toBe('apps/v1, Kind=Deployment');
   });
 
   it('Correct Gateway Kind properties', () => {
-    const result = getGVKTypeString('Gateway');
+    const result = getGVKTypeString(gvkType.Gateway);
     expect(result).toBe('networking.istio.io/v1, Kind=Gateway');
   });
 

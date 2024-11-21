@@ -69,7 +69,7 @@ import { ADD, SET, REQ_MOD, RESP_MOD, REQ_RED, REQ_MIR } from './K8sRequestRouti
 import { ANYTHING, PRESENCE } from './RequestRouting/MatchBuilder';
 import { t } from 'utils/I18nUtils';
 import { defaultGatewayLabel, defaultGatewayLabelValue } from 'config/Constants';
-import { dicTypeToGVK } from '../../types/IstioConfigList';
+import { dicTypeToGVK, gvkType } from '../../types/IstioConfigList';
 
 export const WIZARD_TRAFFIC_SHIFTING = 'traffic_shifting';
 export const WIZARD_TCP_TRAFFIC_SHIFTING = 'tcp_traffic_shifting';
@@ -2377,7 +2377,7 @@ export const buildWorkloadInjectionPatch = (gvk: GroupVersionKind, enable: boole
   labels[serverConfig.istioAnnotations.istioInjectionAnnotation] = remove ? null : enable ? 'true' : 'false';
   const annotations = {};
   annotations[serverConfig.istioAnnotations.istioInjectionAnnotation] = null;
-  if (gvk.Kind === dicTypeToGVK['Pod'].Kind) {
+  if (gvk.Kind === dicTypeToGVK[gvkType.Pod].Kind) {
     patch['labels'] = labels;
     patch['annotations'] = annotations;
   } else {

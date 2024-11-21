@@ -46,40 +46,76 @@ export interface IstioConfigsMapQuery extends IstioConfigListQuery {
   namespaces?: string;
 }
 
-export const dicTypeToGVK: { [key: string]: GroupVersionKind } = {
-  AuthorizationPolicy: { Group: 'security.istio.io', Version: 'v1', Kind: 'AuthorizationPolicy' },
-  PeerAuthentication: { Group: 'security.istio.io', Version: 'v1', Kind: 'PeerAuthentication' },
-  RequestAuthentication: { Group: 'security.istio.io', Version: 'v1', Kind: 'RequestAuthentication' },
+export enum gvkType {
+  AuthorizationPolicy = 'AuthorizationPolicy',
+  PeerAuthentication = 'PeerAuthentication',
+  RequestAuthentication = 'RequestAuthentication',
 
-  DestinationRule: { Group: 'networking.istio.io', Version: 'v1', Kind: 'DestinationRule' },
-  Gateway: { Group: 'networking.istio.io', Version: 'v1', Kind: 'Gateway' },
-  EnvoyFilter: { Group: 'networking.istio.io', Version: 'v1alpha3', Kind: 'EnvoyFilter' },
-  Sidecar: { Group: 'networking.istio.io', Version: 'v1', Kind: 'Sidecar' },
-  ServiceEntry: { Group: 'networking.istio.io', Version: 'v1', Kind: 'ServiceEntry' },
-  VirtualService: { Group: 'networking.istio.io', Version: 'v1', Kind: 'VirtualService' },
-  WorkloadEntry: { Group: 'networking.istio.io', Version: 'v1', Kind: 'WorkloadEntry' },
-  WorkloadGroup: { Group: 'networking.istio.io', Version: 'v1', Kind: 'WorkloadGroup' },
+  DestinationRule = 'DestinationRule',
+  Gateway = 'Gateway',
+  EnvoyFilter = 'EnvoyFilter',
+  Sidecar = 'Sidecar',
+  ServiceEntry = 'ServiceEntry',
+  VirtualService = 'VirtualService',
+  WorkloadEntry = 'WorkloadEntry',
+  WorkloadGroup = 'WorkloadGroup',
 
-  WasmPlugin: { Group: 'extensions.istio.io', Version: 'v1alpha1', Kind: 'WasmPlugin' },
-  Telemetry: { Group: 'telemetry.istio.io', Version: 'v1', Kind: 'Telemetry' },
+  WasmPlugin = 'WasmPlugin',
+  Telemetry = 'Telemetry',
 
-  K8sGateway: { Group: 'gateway.networking.k8s.io', Version: 'v1', Kind: 'Gateway' },
-  K8sGatewayClass: { Group: 'gateway.networking.k8s.io', Version: 'v1', Kind: 'GatewayClass' },
-  K8sGRPCRoute: { Group: 'gateway.networking.k8s.io', Version: 'v1', Kind: 'GRPCRoute' },
-  K8sHTTPRoute: { Group: 'gateway.networking.k8s.io', Version: 'v1', Kind: 'HTTPRoute' },
-  K8sReferenceGrant: { Group: 'gateway.networking.k8s.io', Version: 'v1', Kind: 'ReferenceGrant' },
-  K8sTCPRoute: { Group: 'gateway.networking.k8s.io', Version: 'v1alpha2', Kind: 'TCPRoute' },
-  K8sTLSRoute: { Group: 'gateway.networking.k8s.io', Version: 'v1alpha2', Kind: 'TLSRoute' },
+  K8sGateway = 'K8sGateway',
+  K8sGatewayClass = 'K8sGatewayClass',
+  K8sGRPCRoute = 'K8sGRPCRoute',
+  K8sHTTPRoute = 'K8sHTTPRoute',
+  K8sReferenceGrant = 'K8sReferenceGrant',
+  K8sTCPRoute = 'K8sTCPRoute',
+  K8sTLSRoute = 'K8sTLSRoute',
 
-  CronJob: { Group: 'batch', Version: 'v1', Kind: 'CronJob' },
-  DaemonSet: { Group: 'apps', Version: 'v1', Kind: 'DaemonSet' },
-  Deployment: { Group: 'apps', Version: 'v1', Kind: 'Deployment' },
-  DeploymentConfig: { Group: 'apps.openshift.io', Version: 'v1', Kind: 'DeploymentConfig' },
-  Job: { Group: 'batch', Version: 'v1', Kind: 'Job' },
-  Pod: { Group: '', Version: 'v1', Kind: 'Pod' },
-  ReplicaSet: { Group: 'apps', Version: 'v1', Kind: 'ReplicaSet' },
-  ReplicationController: { Group: '', Version: 'v1', Kind: 'ReplicationController' },
-  StatefulSet: { Group: 'apps', Version: 'v1', Kind: 'StatefulSet' }
+  CronJob = 'CronJob',
+  DaemonSet = 'DaemonSet',
+  Deployment = 'Deployment',
+  DeploymentConfig = 'DeploymentConfig',
+  Job = 'Job',
+  Pod = 'Pod',
+  ReplicaSet = 'ReplicaSet',
+  ReplicationController = 'ReplicationController',
+  StatefulSet = 'StatefulSet'
+}
+
+export const dicTypeToGVK: { [key in gvkType]: GroupVersionKind } = {
+  [gvkType.AuthorizationPolicy]: { Group: 'security.istio.io', Version: 'v1', Kind: gvkType.AuthorizationPolicy },
+  [gvkType.PeerAuthentication]: { Group: 'security.istio.io', Version: 'v1', Kind: gvkType.PeerAuthentication },
+  [gvkType.RequestAuthentication]: { Group: 'security.istio.io', Version: 'v1', Kind: gvkType.RequestAuthentication },
+
+  [gvkType.DestinationRule]: { Group: 'networking.istio.io', Version: 'v1', Kind: gvkType.DestinationRule },
+  [gvkType.Gateway]: { Group: 'networking.istio.io', Version: 'v1', Kind: gvkType.Gateway },
+  [gvkType.EnvoyFilter]: { Group: 'networking.istio.io', Version: 'v1alpha3', Kind: gvkType.EnvoyFilter },
+  [gvkType.Sidecar]: { Group: 'networking.istio.io', Version: 'v1', Kind: gvkType.Sidecar },
+  [gvkType.ServiceEntry]: { Group: 'networking.istio.io', Version: 'v1', Kind: gvkType.ServiceEntry },
+  [gvkType.VirtualService]: { Group: 'networking.istio.io', Version: 'v1', Kind: gvkType.VirtualService },
+  [gvkType.WorkloadEntry]: { Group: 'networking.istio.io', Version: 'v1', Kind: gvkType.WorkloadEntry },
+  [gvkType.WorkloadGroup]: { Group: 'networking.istio.io', Version: 'v1', Kind: gvkType.WorkloadGroup },
+
+  [gvkType.WasmPlugin]: { Group: 'extensions.istio.io', Version: 'v1alpha1', Kind: gvkType.WasmPlugin },
+  [gvkType.Telemetry]: { Group: 'telemetry.istio.io', Version: 'v1', Kind: gvkType.Telemetry },
+
+  [gvkType.K8sGateway]: { Group: 'gateway.networking.k8s.io', Version: 'v1', Kind: 'Gateway' },
+  [gvkType.K8sGatewayClass]: { Group: 'gateway.networking.k8s.io', Version: 'v1', Kind: 'GatewayClass' },
+  [gvkType.K8sGRPCRoute]: { Group: 'gateway.networking.k8s.io', Version: 'v1', Kind: 'GRPCRoute' },
+  [gvkType.K8sHTTPRoute]: { Group: 'gateway.networking.k8s.io', Version: 'v1', Kind: 'HTTPRoute' },
+  [gvkType.K8sReferenceGrant]: { Group: 'gateway.networking.k8s.io', Version: 'v1', Kind: 'ReferenceGrant' },
+  [gvkType.K8sTCPRoute]: { Group: 'gateway.networking.k8s.io', Version: 'v1alpha2', Kind: 'TCPRoute' },
+  [gvkType.K8sTLSRoute]: { Group: 'gateway.networking.k8s.io', Version: 'v1alpha2', Kind: 'TLSRoute' },
+
+  [gvkType.CronJob]: { Group: 'batch', Version: 'v1', Kind: 'CronJob' },
+  [gvkType.DaemonSet]: { Group: 'apps', Version: 'v1', Kind: 'DaemonSet' },
+  [gvkType.Deployment]: { Group: 'apps', Version: 'v1', Kind: 'Deployment' },
+  [gvkType.DeploymentConfig]: { Group: 'apps.openshift.io', Version: 'v1', Kind: 'DeploymentConfig' },
+  [gvkType.Job]: { Group: 'batch', Version: 'v1', Kind: 'Job' },
+  [gvkType.Pod]: { Group: '', Version: 'v1', Kind: 'Pod' },
+  [gvkType.ReplicaSet]: { Group: 'apps', Version: 'v1', Kind: 'ReplicaSet' },
+  [gvkType.ReplicationController]: { Group: '', Version: 'v1', Kind: 'ReplicationController' },
+  [gvkType.StatefulSet]: { Group: 'apps', Version: 'v1', Kind: 'StatefulSet' }
 };
 
 export function validationKey(name: string, namespace?: string): string {
@@ -112,8 +148,8 @@ export const filterByNamespaces = (unfiltered: IstioConfigList, namespaces: stri
   const filteredResources: { [key: string]: any[] } = {};
 
   // Iterate over dicTypeToGVK to dynamically filter each resource by namespace
-  Object.keys(dicTypeToGVK).forEach(key => {
-    const resourceKey = getGVKTypeString(key);
+  Object.values(dicTypeToGVK).forEach(value => {
+    const resourceKey = getGVKTypeString(value);
 
     // Check if the resource exists in the unfiltered list, then filter by namespace
     if (unfiltered.resources[resourceKey]) {
@@ -138,8 +174,8 @@ export const filterByName = (unfiltered: IstioConfigList, names: string[]): Isti
   const filteredResources: { [key: string]: any[] } = {};
 
   // Iterate over the dicTypeToGVK to access each resource type dynamically
-  Object.keys(dicTypeToGVK).forEach(key => {
-    const resourceKey = getGVKTypeString(key);
+  Object.values(dicTypeToGVK).forEach(value => {
+    const resourceKey = getGVKTypeString(value);
 
     // Check if the resource exists in the unfiltered list, then filter by names
     if (unfiltered.resources[resourceKey]) {
