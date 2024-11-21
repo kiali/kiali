@@ -151,7 +151,7 @@ export const WorkloadWizardDropdown: React.FC<Props> = (props: Props) => {
         ? renderDisabledDropdownOption(
             'tooltip_wizard_actions',
             TooltipPosition.top,
-            t('This type of Workload is Read only'),
+            t('This type of workload is read-only'),
             dropdown
           )
         : dropdown}
