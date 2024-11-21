@@ -150,14 +150,6 @@ const StyleEdgeComponent: React.FC<StyleEdgeProps> = ({ element, ...rest }) => {
     return newData;
   }, [data, detailsLevel]);
 
-  /*
-  return (
-    <g style={{ opacity: opacity }} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
-      <DefaultEdge className={classes(...cssClasses)} element={element} tagClass={tagClass} {...rest} {...passedData} />
-      <circle cx={startPoint.x} cy={startPoint.y} r="5" className={circleStyle} style={{ animationDelay: '0.5s' }} />
-      <circle cx={startPoint.x} cy={startPoint.y} r="5" className={circleStyle} style={{ animationDelay: '1s' }} />
-    </g>
-  */
   const hasAnimation = !data.isUnhighlighted && data.animation;
   return (
     <g style={{ opacity: opacity }} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>

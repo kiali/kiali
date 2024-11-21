@@ -1,9 +1,8 @@
 import { Point, clamp, distance } from '../../../utils/MathUtils';
 import {
   TrafficPointCircleRenderer,
-  //TrafficPointConcentricDiamondRenderer,
+  TrafficPointDiamondRenderer,
   TrafficPointRenderer
-  //Diamond
 } from './TrafficPointRendererPF';
 import { Protocol } from '../../../types/Graph';
 import { timerConfig, tcpTimerConfig } from './AnimationTimerConfig';
@@ -36,10 +35,10 @@ enum TrafficEdgeType {
  * @returns {TrafficPointRenderer}
  */
 const getTrafficPointRendererForRpsError: (edge: Edge, animationDuration: string) => TrafficPointRenderer = (
-  edge: Edge,
+  _edge: Edge,
   animationDuration
 ) => {
-  return new TrafficPointCircleRenderer(animationDuration, 2, PFColors.Red100, edge.getData().pathStyle.stroke);
+  return new TrafficPointDiamondRenderer(animationDuration, 4, PFColors.White, PFColors.Danger);
   /*
   return new TrafficPointConcentricDiamondRenderer(
     new Diamond(5, PFColors.White, PFColors.Danger, 1.0),
@@ -66,10 +65,10 @@ const getTrafficPointRendererForRpsSuccess: (edge: Edge, animationDuration: stri
  * @returns {TrafficPointCircleRenderer}
  */
 const getTrafficPointRendererForTcp: (edge: Edge, animationDuration: string) => TrafficPointRenderer = (
-  _edge: Edge,
+  edge: Edge,
   animationDuration
 ) => {
-  return new TrafficPointCircleRenderer(animationDuration, 3.2, PFColors.Black100, PFColors.Black500);
+  return new TrafficPointCircleRenderer(animationDuration, 3.2, PFColors.Black200, edge.getData().pathStyle.stroke);
 };
 
 /**
@@ -98,6 +97,7 @@ type TrafficPoint = {
  * speed - defines the speed of the next point (see TrafficPoint.speed)
  */
 export class TrafficPointGenerator {
+  private animationTimer?: number;
   private timer?: number;
   private timerForNextPoint?: number;
   private speed: number = 0;
@@ -108,9 +108,11 @@ export class TrafficPointGenerator {
     const pointDurationSeconds = 1.0 / this.speed;
     const numPointsOnEdge = Math.ceil(pointDurationSeconds / this.timer!);
     const pointDuration = `${pointDurationSeconds}s`;
+
     console.log(
       `${this.type}: speed=${this.speed.toFixed(2)} numPointsOnEdge=${numPointsOnEdge} pointDuration=${pointDuration}`
     );
+
     const renderer =
       this.type === TrafficEdgeType.RPS
         ? getTrafficPointRendererForRpsSuccess(edge, pointDuration)
@@ -118,33 +120,40 @@ export class TrafficPointGenerator {
     const errorRenderer =
       this.type === TrafficEdgeType.RPS ? getTrafficPointRendererForRpsError(edge, pointDuration) : undefined;
 
+    if (this.animationTimer) {
+      window.clearInterval(this.animationTimer);
+    }
+
     const points: Array<React.SVGProps<SVGElement>> = [];
-    for (let i = 0; i < numPointsOnEdge; ++i) {
-      const isErrorPoint = errorRenderer && Math.random() <= this.errorRate;
+
+    // We generate points for the edge and iterate infinitely. If the error rate is constant
+    // (i.e. error rate is 0 or 100), we can generate a small set of points. But if we need
+    // to inject occasional errors then we need a larger number of points to ensure that, over
+    // time we (very likely) inject errors.
+
+    // enough to avoid any very obvious pattern
+    const minPoints = numPointsOnEdge === 1 ? 1 : Math.max(10, 2 * numPointsOnEdge);
+    // enough to ensure error points and avoid obvious patterns
+    const errPoints = 50;
+    const allTheSame = this.errorRate === 0 || this.errorRate === 100;
+    const numPoints = allTheSame ? minPoints : errPoints;
+    let forceErrorPoint = !allTheSame;
+    console.log(
+      `numPointsOnEdge=${numPointsOnEdge} numPoints=${numPoints}, launch=${this.timer}ms forceErr=${forceErrorPoint} `
+    );
+    for (let i = 0; i < numPoints; ++i) {
+      const isLastPoint = 1 === numPoints - 1;
+      const isErrorPoint = errorRenderer && (Math.random() <= this.errorRate || (isLastPoint && forceErrorPoint));
+      forceErrorPoint = forceErrorPoint && !isErrorPoint;
       const animationDelay = `${i * this.timer!}ms`;
+      console.log(
+        `  point animationDelay=${animationDelay} isErr=${isErrorPoint} errRate=${this.errorRate.toFixed(2)}`
+      );
       points.unshift(isErrorPoint ? errorRenderer.render(edge, animationDelay) : renderer.render(edge, animationDelay));
     }
 
     return <>{points.map(p => p)}</>;
   }
-
-  /**
-   * Process a render step for the generator, decrements the timerForNextPoint and
-   * returns a new point if it reaches zero (or is close).
-   * This method adds some randomness to avoid the "flat" look that all the points
-   * are synchronized.
-  processStep(step: number, edge: Edge): TrafficPoint | undefined {
-    if (this.timerForNextPoint !== undefined) {
-      this.timerForNextPoint -= step;
-      // Add some random-ness to make it less "flat"
-      if (this.timerForNextPoint <= Math.random() * 200) {
-        this.timerForNextPoint = this.timer;
-        return this.nextPoint(edge);
-      }
-    }
-    return undefined;
-  }
-   */
 
   setTimer(timer: number | undefined) {
     this.timer = timer;
@@ -158,6 +167,7 @@ export class TrafficPointGenerator {
     this.speed = speed;
   }
 
+  // error rate 0..1 (1 = 100%)
   setErrorRate(errorRate: number) {
     this.errorRate = errorRate;
   }
@@ -165,31 +175,6 @@ export class TrafficPointGenerator {
   setType(type: TrafficEdgeType) {
     this.type = type;
   }
-
-  /*
-  private nextPoint(edge: Edge): TrafficPoint {
-    let renderer;
-    let offset;
-    const isErrorPoint = Math.random() <= this.errorRate;
-    if (this.type === TrafficEdgeType.RPS) {
-      renderer = isErrorPoint ? getTrafficPointRendererForRpsError(edge) : getTrafficPointRendererForRpsSuccess(edge);
-    } else if (this.type === TrafficEdgeType.TCP) {
-      renderer = getTrafficPointRendererForTcp(edge);
-      // Cheap way to put some offset around the edge, I think this is enough unless we want more accuracy
-      // More accuracy would need to identify the slope of current segment of the edgge (for curves and loops) to only do
-      // offsets perpendicular to it, instead of it, we are moving around a circle area
-      // Random offset (x,y); 'x' in [-1.5, 1.5] and 'y' in [-1.5, 1.5]
-      offset = { x: Math.random() * 3 - 1.5, y: Math.random() * 3 - 1.5 };
-    }
-
-    return {
-      speed: this.speed,
-      delta: 0, // at the beginning of the edge
-      renderer: renderer,
-      offset: offset
-    };
-  }
-    */
 }
 
 /**
@@ -209,21 +194,6 @@ class TrafficEdge {
     this.edge = edge;
     this.generator = new TrafficPointGenerator();
   }
-
-  /**
-   * Process a step for the Traffic Edge, increments the delta of the points
-   * Calls `processStep` for the generator and adds a new point if any.
-  processStep(step: number) {
-    this.points = this.points.map(p => {
-      p.delta += (step * p.speed) / 1000;
-      return p;
-    });
-    const point = this.generator.processStep(step, this.edge);
-    if (point) {
-      this.points.push(point);
-    }
-  }
-   */
 
   getPoints() {
     return this.points;
@@ -334,13 +304,13 @@ export class TrafficAnimation {
     setObserved(() => {
       edges.forEach(e => {
         const trafficEdge = trafficAnimation[e.getId()];
-        e.setData({ animation: trafficEdge ? trafficEdge.getGenerator() : undefined, ...e.getData() });
+        e.setData({ ...e.getData(), animation: trafficEdge ? trafficEdge.getGenerator() : undefined });
       });
     });
   }
 
   /**
-   * Stops the aniimation
+   * Stops the animation
    */
   stop() {
     console.log('stop');
@@ -348,7 +318,7 @@ export class TrafficAnimation {
       this.controller
         .getGraph()
         .getEdges()
-        .forEach(e => e.setData({ animation: undefined, ...e.getData() }));
+        .forEach(e => e.setData({ ...e.getData(), animation: undefined }));
     });
   }
 
