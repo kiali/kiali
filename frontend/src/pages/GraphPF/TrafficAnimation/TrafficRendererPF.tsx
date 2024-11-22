@@ -6,10 +6,11 @@ import {
 } from './TrafficPointRendererPF';
 import { Protocol } from '../../../types/Graph';
 import { timerConfig, tcpTimerConfig } from './AnimationTimerConfig';
-import { Controller, Edge } from '@patternfly/react-topology';
+import { Controller, Edge, EdgeAnimationSpeed, EdgeStyle } from '@patternfly/react-topology';
 import { EdgeData } from 'pages/GraphPF/GraphPFElems';
 import { PFColors } from 'components/Pf/PfColors';
 import { setObserved } from 'helpers/GraphHelpers';
+import { serverConfig } from 'config';
 
 // Clamp response time from min to max
 const SPEED_RESPONSE_TIME_MIN = 0;
@@ -244,7 +245,77 @@ export class TrafficAnimation {
    * Starts an animation, discarding any prior animation
    */
   start() {
-    this.processEdges(this.controller.getGraph().getEdges());
+    const settings = serverConfig.kialiFeatureFlags.uiDefaults.graph.settings;
+    const edges = this.controller.getGraph().getEdges();
+
+    // start our custom traffic animation
+    if (settings.animation !== 'dash') {
+      this.processEdges(edges);
+      return;
+    }
+
+    // start default pft traffic animation
+    tcpTimerConfig.resetCalibration();
+    // Calibrate animation amplitude
+    edges.forEach(e => {
+      const edgeData = e.getData() as EdgeData;
+      switch (edgeData.protocol) {
+        case Protocol.GRPC:
+          timerConfig.calibrate(edgeData.grpc);
+          break;
+        case Protocol.HTTP:
+          timerConfig.calibrate(edgeData.http);
+          break;
+        case Protocol.TCP:
+          tcpTimerConfig.calibrate(edgeData.tcp);
+          break;
+      }
+    });
+    setObserved(() => {
+      edges.forEach(e => {
+        const edgeData = e.getData() as EdgeData;
+        switch (edgeData.protocol) {
+          case Protocol.GRPC:
+            e.setEdgeAnimationSpeed(timerConfig.computeAnimationSpeedPF(edgeData.grpc));
+            break;
+          case Protocol.HTTP:
+            e.setEdgeAnimationSpeed(timerConfig.computeAnimationSpeedPF(edgeData.http));
+            break;
+          case Protocol.TCP:
+            e.setEdgeAnimationSpeed(tcpTimerConfig.computeAnimationSpeedPF(edgeData.tcp));
+            break;
+        }
+        if (e.getEdgeAnimationSpeed() !== EdgeAnimationSpeed.none) {
+          e.setEdgeStyle(EdgeStyle.dashedMd);
+        }
+      });
+    });
+  }
+
+  /**
+   * Stops the animation
+   */
+  stop() {
+    const settings = serverConfig.kialiFeatureFlags.uiDefaults.graph.settings;
+    const edges = this.controller.getGraph().getEdges();
+
+    // stop our custom traffic animation
+    if (settings.animation !== 'dash') {
+      setObserved(() => {
+        edges.forEach(e => e.setData({ ...e.getData(), animation: undefined }));
+      });
+      return;
+    }
+
+    // stop default pft traffic animation
+    setObserved(() => {
+      edges
+        .filter(e => e.getEdgeAnimationSpeed() !== EdgeAnimationSpeed.none)
+        .forEach(e => {
+          e.setEdgeAnimationSpeed(EdgeAnimationSpeed.none);
+          e.setEdgeStyle(EdgeStyle.solid);
+        });
+    });
   }
 
   private processEdges(edges: Edge[]) {
@@ -287,18 +358,6 @@ export class TrafficAnimation {
         const trafficEdge = trafficAnimation[e.getId()];
         e.setData({ ...e.getData(), animation: trafficEdge ? trafficEdge.getGenerator() : undefined });
       });
-    });
-  }
-
-  /**
-   * Stops the animation
-   */
-  stop() {
-    setObserved(() => {
-      this.controller
-        .getGraph()
-        .getEdges()
-        .forEach(e => e.setData({ ...e.getData(), animation: undefined }));
     });
   }
 

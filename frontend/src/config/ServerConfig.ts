@@ -98,6 +98,7 @@ const defaultServerConfig: ComputedServerConfig = {
         hideOptions: [],
         impl: 'pf',
         settings: {
+          animation: 'point',
           fontLabel: 13,
           minFontBadge: 7,
           minFontLabel: 10
