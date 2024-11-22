@@ -31,12 +31,16 @@ type WorkloadDescriptionProps = {
 };
 
 const resourceListStyle = kialiStyle({
-  marginBottom: '0.75rem',
+  display: 'flex',
   $nest: {
-    '& > ul > li span': {
-      float: 'left',
-      width: '125px',
-      fontWeight: 700
+    '& > ul > li': {
+      display: 'flex',
+      $nest: {
+        '& span': {
+          minWidth: '125px',
+          fontWeight: 700
+        }
+      }
     }
   }
 });
@@ -106,11 +110,16 @@ export const WorkloadDescription: React.FC<WorkloadDescriptionProps> = (props: W
             </li>
           )}
 
+          {!isGVKSupported(workload.gvk) && (
+            <li>
+              <span>API Version</span>
+              {`${workload.gvk.Group}.${workload.gvk.Version}`}
+            </li>
+          )}
+
           <li>
             <span>Type</span>
-            {isGVKSupported(workload.gvk)
-              ? workload.gvk.Kind || 'N/A'
-              : `${workload.gvk.Group}.${workload.gvk.Version}.${workload.gvk.Kind}`}
+            {workload.gvk.Kind || 'N/A'}
           </li>
 
           <li>
