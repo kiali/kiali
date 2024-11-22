@@ -7,7 +7,7 @@ export abstract class TrafficPointRenderer {
   abstract render(
     element: Edge,
     animationDelay: string,
-    repeat: boolean,
+    isInfinite: boolean,
     onAnimationEnd?: React.AnimationEventHandler
   ): React.SVGProps<SVGElement>;
 }
@@ -17,7 +17,6 @@ export class TrafficPointCircleRenderer extends TrafficPointRenderer {
   readonly radius: number;
   readonly backgroundColor: string;
   readonly borderColor: string;
-  private keyIndex = 0;
 
   constructor(animationDuration: string, radius: number, backgroundColor: string, borderColor: string) {
     super();
@@ -27,22 +26,22 @@ export class TrafficPointCircleRenderer extends TrafficPointRenderer {
     this.radius = radius;
   }
 
-  private getStyle(moveAnimation: string, repeat: boolean): string {
+  private getStyle(moveAnimation: string, isInfinite: boolean): string {
     return kialiStyle({
-      fill: this.backgroundColor,
-      stroke: this.borderColor,
-      animationName: moveAnimation,
       animationDuration: this.animationDuration,
       animationFillMode: 'forwards',
+      animationIterationCount: isInfinite ? 'infinite' : 1,
+      animationName: moveAnimation,
       animationTimingFunction: 'linear',
-      animationIterationCount: repeat ? 'infinite' : 1
+      fill: this.backgroundColor,
+      stroke: this.borderColor
     });
   }
 
   render(
     element: Edge,
     animationDelay: string,
-    repeat: boolean,
+    isInfinite: boolean,
     onAnimationEnd?: React.AnimationEventHandler
   ): React.SVGProps<SVGCircleElement> {
     const startPoint = element.getStartPoint();
@@ -53,21 +52,20 @@ export class TrafficPointCircleRenderer extends TrafficPointRenderer {
 
     const moveAnimation = keyframes({
       from: { transform: 'translateX(0)' },
-      to: { transform: `translateX(${moveX}px) translateY(${moveY}px)`, display: repeat ? '' : 'none' }
+      to: { transform: `translateX(${moveX}px) translateY(${moveY}px)`, display: isInfinite ? '' : 'none' }
     });
 
-    if (onAnimationEnd) {
-      console.log(`circle with callback`);
-    }
-
+    // use random # to ensure the key is not repeat, or it can be ignored by the render
+    const key = `point-circle-${Math.random()}`;
     return (
       <circle
-        key={`point-circle-${element.getId()}-${++this.keyIndex}`}
+        id={key}
+        key={key}
+        className={this.getStyle(moveAnimation, isInfinite)}
+        style={{ animationDelay: animationDelay }}
         cx={startPoint.x}
         cy={startPoint.y}
         r={`${this.radius}`}
-        className={this.getStyle(moveAnimation, repeat)}
-        style={{ animationDelay: animationDelay }}
         onAnimationEnd={onAnimationEnd}
       />
     );
@@ -79,7 +77,6 @@ export class TrafficPointDiamondRenderer extends TrafficPointRenderer {
   readonly radius: number;
   readonly backgroundColor: string;
   readonly borderColor: string;
-  private keyIndex = 0;
 
   constructor(animationDuration: string, radius: number, backgroundColor: string, borderColor: string) {
     super();
@@ -89,26 +86,26 @@ export class TrafficPointDiamondRenderer extends TrafficPointRenderer {
     this.radius = radius;
   }
 
-  private getStyle(moveAnimation: string, repeat: boolean): string {
+  private getStyle(moveAnimation: string, isInfinite: boolean): string {
     return kialiStyle({
+      animationDuration: this.animationDuration,
+      animationFillMode: 'forwards',
+      animationIterationCount: isInfinite ? 'infinite' : 1,
+      animationName: moveAnimation,
+      animationTimingFunction: 'linear',
       fill: this.backgroundColor,
+      rotate: '45deg',
       stroke: this.borderColor,
       strokeWidth: this.radius - 1,
       transformBox: 'fill-box',
-      transformOrigin: 'center',
-      rotate: '45deg',
-      animationName: moveAnimation,
-      animationDuration: this.animationDuration,
-      animationFillMode: 'forwards',
-      animationTimingFunction: 'linear',
-      animationIterationCount: repeat ? 'infinite' : 1
+      transformOrigin: 'center'
     });
   }
 
   render(
     element: Edge,
     animationDelay: string,
-    repeat: boolean,
+    isInfinite: boolean,
     onAnimationEnd?: React.AnimationEventHandler
   ): React.SVGProps<SVGRectElement> {
     const startPoint = element.getStartPoint();
@@ -119,16 +116,16 @@ export class TrafficPointDiamondRenderer extends TrafficPointRenderer {
 
     const moveAnimation = keyframes({
       from: { translate: '0' },
-      to: { translate: `${moveX}px ${moveY}px`, display: repeat ? '' : 'none' }
+      to: { translate: `${moveX}px ${moveY}px`, display: isInfinite ? '' : 'none' }
     });
 
-    if (onAnimationEnd) {
-      console.log(`rect with callback`);
-    }
+    // use random # to ensure the key is not repeated, or it can be ignored by the render
+    const key = `point-rect-${Math.random()}}`;
     return (
       <rect
-        key={`point-rect-${element.getId()}-${++this.keyIndex}`}
-        className={this.getStyle(moveAnimation, repeat)}
+        id={key}
+        key={key}
+        className={this.getStyle(moveAnimation, isInfinite)}
         style={{ animationDelay: animationDelay }}
         x={startPoint.x - this.radius}
         y={startPoint.y - this.radius}

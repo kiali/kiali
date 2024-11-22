@@ -151,9 +151,6 @@ const StyleEdgeComponent: React.FC<StyleEdgeProps> = ({ element, ...rest }) => {
   }, [data, detailsLevel]);
 
   const hasAnimation = !data.isUnhighlighted && data.animation;
-  if (hasAnimation && data.animation.errorRate > 0) {
-    console.log(`render error edge ${element.getId()}`);
-  }
   return (
     <g style={{ opacity: opacity }} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
       <DefaultEdge className={classes(...cssClasses)} element={element} tagClass={tagClass} {...rest} {...passedData} />
