@@ -12,6 +12,32 @@ export abstract class TrafficPointRenderer {
   ): React.SVGProps<SVGElement>;
 }
 
+function getMoveAnimation(edge: Edge, isInfinite: boolean): string {
+  const startPoint = edge.getStartPoint();
+  const endPoint = edge.getEndPoint();
+
+  if (edge.getBendpoints().length === 0) {
+    const moveX = endPoint.x - startPoint.x;
+    const moveY = endPoint.y - startPoint.y;
+    return keyframes({
+      '0%': { translate: '0' },
+      '100%': { translate: `${moveX}px ${moveY}px`, display: isInfinite ? '' : 'none' }
+    });
+  }
+
+  // a kiali edge can have at most 1 bendpoint, in the middle. see extendedBaseEdge.ts
+  const bendPoint = edge.getBendpoints()[0];
+  const moveBendX = bendPoint.x - startPoint.x;
+  const moveBendY = bendPoint.y - startPoint.y;
+  const moveEndX = endPoint.x - startPoint.x;
+  const moveEndY = endPoint.y - startPoint.y;
+  return keyframes({
+    '0%': { translate: '0' },
+    '50%': { translate: `${moveBendX}px ${moveBendY}px` },
+    '100%': { translate: `${moveEndX}px ${moveEndY}px`, display: isInfinite ? '' : 'none' }
+  });
+}
+
 export class TrafficPointCircleRenderer extends TrafficPointRenderer {
   readonly animationDuration: string;
   readonly radius: number;
@@ -39,21 +65,13 @@ export class TrafficPointCircleRenderer extends TrafficPointRenderer {
   }
 
   render(
-    element: Edge,
+    edge: Edge,
     animationDelay: string,
     isInfinite: boolean,
     onAnimationEnd?: React.AnimationEventHandler
   ): React.SVGProps<SVGCircleElement> {
-    const startPoint = element.getStartPoint();
-    const endPoint = element.getEndPoint();
-
-    const moveX = endPoint.x - startPoint.x;
-    const moveY = endPoint.y - startPoint.y;
-
-    const moveAnimation = keyframes({
-      from: { transform: 'translateX(0)' },
-      to: { transform: `translateX(${moveX}px) translateY(${moveY}px)`, display: isInfinite ? '' : 'none' }
-    });
+    const startPoint = edge.getStartPoint();
+    const moveAnimation = getMoveAnimation(edge, isInfinite);
 
     // use random # to ensure the key is not repeat, or it can be ignored by the render
     const key = `point-circle-${Math.random()}`;
@@ -103,21 +121,13 @@ export class TrafficPointDiamondRenderer extends TrafficPointRenderer {
   }
 
   render(
-    element: Edge,
+    edge: Edge,
     animationDelay: string,
     isInfinite: boolean,
     onAnimationEnd?: React.AnimationEventHandler
   ): React.SVGProps<SVGRectElement> {
-    const startPoint = element.getStartPoint();
-    const endPoint = element.getEndPoint();
-
-    const moveX = endPoint.x - startPoint.x;
-    const moveY = endPoint.y - startPoint.y;
-
-    const moveAnimation = keyframes({
-      from: { translate: '0' },
-      to: { translate: `${moveX}px ${moveY}px`, display: isInfinite ? '' : 'none' }
-    });
+    const startPoint = edge.getStartPoint();
+    const moveAnimation = getMoveAnimation(edge, isInfinite);
 
     // use random # to ensure the key is not repeated, or it can be ignored by the render
     const key = `point-rect-${Math.random()}}`;
