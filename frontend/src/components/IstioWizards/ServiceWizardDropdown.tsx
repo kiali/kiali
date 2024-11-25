@@ -107,10 +107,10 @@ const ServiceWizardDropdownComponent: React.FC<Props> = (props: Props) => {
     });
   };
 
-  const onAction = (key: string): void => {
+  const newServiceWizard = (serviceWizard: string): void => {
     const updateLabel = getWizardUpdateLabel(props.virtualServices, props.k8sHTTPRoutes, props.k8sGRPCRoutes);
 
-    switch (key) {
+    switch (serviceWizard) {
       case WIZARD_REQUEST_ROUTING:
       case WIZARD_FAULT_INJECTION:
       case WIZARD_TRAFFIC_SHIFTING:
@@ -119,8 +119,8 @@ const ServiceWizardDropdownComponent: React.FC<Props> = (props: Props) => {
       case WIZARD_K8S_GRPC_REQUEST_ROUTING:
       case WIZARD_REQUEST_TIMEOUTS: {
         setShowWizard(true);
-        setWizardType(key);
-        setUpdateWizard(key === updateLabel);
+        setWizardType(serviceWizard);
+        setUpdateWizard(serviceWizard === updateLabel);
         break;
       }
       case DELETE_TRAFFIC_ROUTING: {
@@ -230,8 +230,8 @@ const ServiceWizardDropdownComponent: React.FC<Props> = (props: Props) => {
           k8sGRPCRoutes={props.k8sGRPCRoutes ?? []}
           annotations={props.annotations}
           istioPermissions={props.istioPermissions}
-          onAction={onAction}
-          onDelete={onAction}
+          onAction={newServiceWizard}
+          onDelete={newServiceWizard}
         />
       </DropdownList>
     </Dropdown>
