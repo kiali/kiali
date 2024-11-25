@@ -27,8 +27,6 @@ const tagClass = kialiStyle({
 });
 
 const StyleEdgeComponent: React.FC<StyleEdgeProps> = ({ element, ...rest }) => {
-  //const [hover] = useHover();
-
   const data = element.getData();
   const detailsLevel = useDetailsLevel();
 
@@ -113,20 +111,6 @@ const StyleEdgeComponent: React.FC<StyleEdgeProps> = ({ element, ...rest }) => {
     });
     cssClasses.push(findClass);
   }
-
-  // Set animation duration velocity
-  /*
-  if (data.animationDuration) {
-    const animationClass = kialiStyle({
-      $nest: {
-        '& .pf-topology__edge__link': {
-          animationDuration: `${data.animationDuration}s`
-        }
-      }
-    });
-    cssClasses.push(animationClass);
-  }
-  */
 
   // Set the path style when unhighlighted (opacity)
   let opacity = 1;
