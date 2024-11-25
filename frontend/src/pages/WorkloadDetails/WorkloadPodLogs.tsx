@@ -480,8 +480,8 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                           </ToolbarItem>
 
                           <KioskElement>
-                            <ToolbarItem>
-                              <TimeDurationIndicator onClick={this.toggleTimeOptionsVisibility} />
+                            <ToolbarItem style={{ alignSelf: 'center' }}>
+                              <TimeDurationIndicator id="time_duration" onClick={this.toggleTimeOptionsVisibility} />
                             </ToolbarItem>
                           </KioskElement>
                         </ToolbarGroup>

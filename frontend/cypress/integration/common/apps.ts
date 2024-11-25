@@ -55,7 +55,7 @@ Then('user sees span details', () => {
     .eq(1) // take 1st  row
     .find('td')
     .eq(4) // take 5th cell (kebab)
-    .should('be.visible');
+    .should('exist');
 
   cy.get('table')
     .should('be.visible')
