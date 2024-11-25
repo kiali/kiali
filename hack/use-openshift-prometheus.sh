@@ -305,14 +305,24 @@ spec:
       replacement: \$2:\$1
       sourceLabels: [__meta_kubernetes_pod_annotation_prometheus_io_port, __meta_kubernetes_pod_ip]
       targetLabel: __address__
-    - action: labeldrop
-      regex: "__meta_kubernetes_pod_label_(.+)"
+    # Set the 'app' label from 'app.kubernetes.io/name' or fallback to 'app'
+    - sourceLabels: ["__meta_kubernetes_pod_label_app_kubernetes_io_name", "__meta_kubernetes_pod_label_app"]
+      separator: ";"
+      targetLabel: "app"
+      action: replace
+      regex: "(.+);.*|.*;(.+)"
+      replacement: "\${1}\${2}"  # Use the first non-empty value
+    # Set the 'version' label from 'app.kubernetes.io/version' or fallback to 'version'
+    - sourceLabels: ["__meta_kubernetes_pod_label_app_kubernetes_io_version", "__meta_kubernetes_pod_label_version"]
+      separator: ";"
+      targetLabel: "version"
+      action: replace
+      regex: "(.+);.*|.*;(.+)"
+      replacement: "\${1}\${2}"  # Use the first non-empty value
+    # add some labels we want
     - sourceLabels: [__meta_kubernetes_namespace]
       action: replace
       targetLabel: namespace
-    - sourceLabels: [__meta_kubernetes_pod_name]
-      action: replace
-      targetLabel: pod_name
     - action: replace
       replacement: "${MESH_LABEL}"
       targetLabel: mesh_id
