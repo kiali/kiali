@@ -175,7 +175,11 @@ const pathRoutes: RouteObject[] = [
     path: `/${Paths.MESH}`,
     element: <MeshPage />
   },
-  { path: '*', element: <Navigate to={'/overview'} replace /> }
+  { path: '*', element: <Navigate to={'/overview'} replace /> },
+  {
+    path: `namespaces/:namespace/${Paths.SERVICES}/new`,
+    element: <ServiceDetailsRoute />
+  }
 ];
 
 export { navMenuItems, pathRoutes };
