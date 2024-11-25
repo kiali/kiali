@@ -35,11 +35,12 @@ enum TrafficEdgeType {
  * @param edge
  * @returns {TrafficPointRenderer}
  */
-const getTrafficPointRendererForRpsError: (edge: Edge, animationDuration: string) => TrafficPointRenderer = (
-  _edge: Edge,
-  animationDuration
-) => {
-  return new TrafficPointDiamondRenderer(animationDuration, 4, PFColors.White, PFColors.Danger);
+const getTrafficPointRendererForRpsError: (
+  edge: Edge,
+  animationDuration: string,
+  percentVisible: number
+) => TrafficPointRenderer = (_edge: Edge, animationDuration: string, percentVisible: number) => {
+  return new TrafficPointDiamondRenderer(animationDuration, percentVisible, 4, PFColors.White, PFColors.Danger);
 };
 
 /**
@@ -47,11 +48,18 @@ const getTrafficPointRendererForRpsError: (edge: Edge, animationDuration: string
  * @param edge
  * @returns {TrafficPointRenderer}
  */
-const getTrafficPointRendererForRpsSuccess: (edge: Edge, animationDuration: string) => TrafficPointRenderer = (
+const getTrafficPointRendererForRpsSuccess: (
   edge: Edge,
-  animationDuration
-) => {
-  return new TrafficPointCircleRenderer(animationDuration, 4, PFColors.White, edge.getData().pathStyle.stroke);
+  animationDuration: string,
+  percentVisible: number
+) => TrafficPointRenderer = (edge: Edge, animationDuration: string, percentVisible: number) => {
+  return new TrafficPointCircleRenderer(
+    animationDuration,
+    percentVisible,
+    4,
+    PFColors.White,
+    edge.getData().pathStyle.stroke
+  );
 };
 
 /**
@@ -59,11 +67,18 @@ const getTrafficPointRendererForRpsSuccess: (edge: Edge, animationDuration: stri
  * @param edge
  * @returns {TrafficPointCircleRenderer}
  */
-const getTrafficPointRendererForTcp: (edge: Edge, animationDuration: string) => TrafficPointRenderer = (
+const getTrafficPointRendererForTcp: (
   edge: Edge,
-  animationDuration
-) => {
-  return new TrafficPointCircleRenderer(animationDuration, 3.2, PFColors.Black200, edge.getData().pathStyle.stroke);
+  animationDuration: string,
+  percentVisible: number
+) => TrafficPointRenderer = (edge: Edge, animationDuration: string, percentVisible: number) => {
+  return new TrafficPointCircleRenderer(
+    animationDuration,
+    percentVisible,
+    3.2,
+    PFColors.Black200,
+    edge.getData().pathStyle.stroke
+  );
 };
 
 /**
@@ -96,37 +111,68 @@ type TrafficPoint = {
  * only once in five renderings (on average). Each set of points must force
  * a re-render of the edge, with a new set of svg elements.
  *
- * timer - defines how fast to generate a new point, its in milliseconds.
+ * launchTime - defines how fast to generate a new point, its in milliseconds.
  * speed - defines the speed of the next point (see TrafficPoint.speed)
  */
 export class TrafficPointGenerator {
-  private timer?: number;
-  private speed: number = 0;
   private errorRate: number = 0;
+  private launchTime: number = 0;
+  private speed: number = 0;
   private type: TrafficEdgeType = TrafficEdgeType.NONE;
 
   render(edge: Edge): React.ReactFragment {
-    const pointDurationSeconds = 1.0 / this.speed;
-    const pointDuration = `${pointDurationSeconds}s`;
-    const numPointsOnEdge = (pointDurationSeconds * 1000) / this.timer!;
-    console.log(
-      `numPointsOnEdge=${numPointsOnEdge} (pointDurationSeconds:${pointDurationSeconds}) / timer:(${this.timer})`
-    );
+    if (!this.launchTime || !this.speed) {
+      return <></>;
+    }
 
+    // time it takes for point to travel the edge
+    const travelDuration = (1.0 / this.speed) * 1000;
+
+    // how many points visible on edge at any given time, on average (i.e. this is a float)
+    const pointsOnEdge = travelDuration / this.launchTime;
+
+    // how many TrafficPoints we need to render (an int). We need to render at least one point
+    // for any edge with traffic, even if it is not always visible.
+    const renderedPointsOnEdge = Math.ceil(pointsOnEdge);
+
+    // time it takes for point to complete animation. This will be longer than then travel time
+    // when numPoints on edge < 1.0
+    const animationDuration = Math.max(travelDuration, this.launchTime);
+
+    // the percentage of the animationDuration for which the TrafficPoint is visible
+    const percentVisible = Math.min(100, Math.round((travelDuration / animationDuration) * 100));
+
+    // a slight randomization for the first point, so not everything launches at the same time
+    const initialDelay = Math.random() * (renderedPointsOnEdge - pointsOnEdge) * 1000;
+
+    const animationDurationSeconds = `${animationDuration / 1000}s`;
     const renderer =
       this.type === TrafficEdgeType.RPS
-        ? getTrafficPointRendererForRpsSuccess(edge, pointDuration)
-        : getTrafficPointRendererForTcp(edge, pointDuration);
+        ? getTrafficPointRendererForRpsSuccess(edge, animationDurationSeconds, percentVisible)
+        : getTrafficPointRendererForTcp(edge, animationDurationSeconds, percentVisible);
     const errorRenderer =
-      this.type === TrafficEdgeType.RPS ? getTrafficPointRendererForRpsError(edge, pointDuration) : undefined;
-    const isInfinite = this.errorRate === 0 || this.errorRate === 100;
+      this.type === TrafficEdgeType.RPS
+        ? getTrafficPointRendererForRpsError(edge, animationDurationSeconds, percentVisible)
+        : undefined;
+
+    /* Debugging
+    console.log(
+      `renderedPoints=${renderedPointsOnEdge} pointsOnEdge=${pointsOnEdge.toFixed(2)} launchTime=${(
+        this.launchTime / 1000
+      ).toFixed(2)} travelDuration=${(travelDuration / 1000).toFixed(2)} animationDuration:${(
+        animationDuration / 1000
+      ).toFixed(2)} percentVisible=${percentVisible} initialDelay=${(initialDelay / 1000).toFixed(2)}`
+    );
+    */
 
     const points: Array<React.SVGProps<SVGElement>> = [];
-    for (let i = 0; i < numPointsOnEdge; ++i) {
+    for (let i = 0; i < pointsOnEdge; ++i) {
+      const animationDelay = `${i * this.launchTime + initialDelay}ms`;
+      // If there is no mix of success and error points, just iterate infinitely
+      const isInfinite = this.errorRate === 0 || this.errorRate === 100;
+      // Otherwise, instruct the last Traffic point on the edge to renew the animation with new points
+      const renew = !isInfinite && i + 1 === renderedPointsOnEdge;
       const isErrorPoint = errorRenderer && Math.random() <= this.errorRate;
-      const animationDelay = `${i * this.timer!}ms`;
-      // when the final animation ends, renew the animation
-      const renew = !isInfinite && i + 1 === numPointsOnEdge;
       const point = isErrorPoint
         ? errorRenderer.render(edge, animationDelay, isInfinite, renew ? this.renewAnimation(edge) : undefined)
         : renderer.render(edge, animationDelay, isInfinite, renew ? this.renewAnimation(edge) : undefined);
@@ -137,16 +183,16 @@ export class TrafficPointGenerator {
   }
 
   // renewAnimation performs an innocuous "set" to force the edge to re-render and generate new points
-  private renewAnimation(edge: Edge, delay?: number): React.AnimationEventHandler {
+  private renewAnimation(edge: Edge): React.AnimationEventHandler {
     return _elem => {
       window.setTimeout(() => {
         setObserved(() => edge.setData({ ...edge.getData(), animationTime: Date.now() }));
-      }, delay);
+      }, 0);
     };
   }
 
   setTimer(timer: number | undefined) {
-    this.timer = timer;
+    this.launchTime = timer ?? 0;
   }
 
   setSpeed(speed: number) {

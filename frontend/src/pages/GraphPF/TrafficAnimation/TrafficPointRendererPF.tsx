@@ -12,43 +12,65 @@ export abstract class TrafficPointRenderer {
   ): React.SVGProps<SVGElement>;
 }
 
-function getMoveAnimation(edge: Edge, isInfinite: boolean): string {
+function getMoveAnimation(edge: Edge, percentVisible: number, isInfinite: boolean): string {
   const startPoint = edge.getStartPoint();
   const endPoint = edge.getEndPoint();
+  const moveAnimation = {};
 
   if (edge.getBendpoints().length === 0) {
     const moveX = endPoint.x - startPoint.x;
     const moveY = endPoint.y - startPoint.y;
-    return keyframes({
-      '0%': { translate: '0' },
-      '100%': { translate: `${moveX}px ${moveY}px`, display: isInfinite ? '' : 'none' }
-    });
-  }
 
-  // a kiali edge can have at most 1 bendpoint, in the middle. see extendedBaseEdge.ts
-  const bendPoint = edge.getBendpoints()[0];
-  const moveBendX = bendPoint.x - startPoint.x;
-  const moveBendY = bendPoint.y - startPoint.y;
-  const moveEndX = endPoint.x - startPoint.x;
-  const moveEndY = endPoint.y - startPoint.y;
-  return keyframes({
-    '0%': { translate: '0' },
-    '50%': { translate: `${moveBendX}px ${moveBendY}px` },
-    '100%': { translate: `${moveEndX}px ${moveEndY}px`, display: isInfinite ? '' : 'none' }
-  });
+    moveAnimation['0%'] = { translate: '0' };
+    moveAnimation[`${percentVisible}%`] = { translate: `${moveX}px ${moveY}px`, display: isInfinite ? '' : 'none' };
+    // this acts like a delay at the end, the animation continues but nothing is visible
+    if (percentVisible < 100) {
+      moveAnimation[`${percentVisible}.1%`] = { display: 'none' };
+      moveAnimation['100%'] = { display: 'none' };
+    }
+  } else {
+    // a kiali edge can have at most 1 bendpoint, in the middle. see extendedBaseEdge.ts
+    const bendPoint = edge.getBendpoints()[0];
+    const moveBendX = bendPoint.x - startPoint.x;
+    const moveBendY = bendPoint.y - startPoint.y;
+    const moveEndX = endPoint.x - startPoint.x;
+    const moveEndY = endPoint.y - startPoint.y;
+    const bend = Math.round(percentVisible / 2);
+
+    moveAnimation['0%'] = { translate: '0' };
+    moveAnimation[`${bend}%`] = { translate: `${moveBendX}px ${moveBendY}px` };
+    moveAnimation[`${percentVisible}%`] = {
+      translate: `${moveEndX}px ${moveEndY}px`,
+      display: isInfinite ? '' : 'none'
+    };
+    // this acts like a delay at the end, the animation continues but nothing is visible
+    if (percentVisible < 100) {
+      moveAnimation[`${percentVisible}.1%`] = { display: 'none' };
+      moveAnimation['100%'] = { display: 'none' };
+    }
+  }
+  return keyframes(moveAnimation);
 }
 
 export class TrafficPointCircleRenderer extends TrafficPointRenderer {
   readonly animationDuration: string;
-  readonly radius: number;
   readonly backgroundColor: string;
   readonly borderColor: string;
+  readonly percentVisible: number;
+  readonly radius: number;
 
-  constructor(animationDuration: string, radius: number, backgroundColor: string, borderColor: string) {
+  constructor(
+    animationDuration: string,
+    percentVisible: number,
+    radius: number,
+    backgroundColor: string,
+    borderColor: string
+  ) {
     super();
     this.animationDuration = animationDuration;
     this.backgroundColor = backgroundColor;
     this.borderColor = borderColor;
+    this.percentVisible = percentVisible;
     this.radius = radius;
   }
 
@@ -71,7 +93,7 @@ export class TrafficPointCircleRenderer extends TrafficPointRenderer {
     onAnimationEnd?: React.AnimationEventHandler
   ): React.SVGProps<SVGCircleElement> {
     const startPoint = edge.getStartPoint();
-    const moveAnimation = getMoveAnimation(edge, isInfinite);
+    const moveAnimation = getMoveAnimation(edge, this.percentVisible, isInfinite);
 
     // use random # to ensure the key is not repeat, or it can be ignored by the render
     const key = `point-circle-${Math.random()}`;
@@ -92,15 +114,23 @@ export class TrafficPointCircleRenderer extends TrafficPointRenderer {
 
 export class TrafficPointDiamondRenderer extends TrafficPointRenderer {
   readonly animationDuration: string;
-  readonly radius: number;
   readonly backgroundColor: string;
   readonly borderColor: string;
+  readonly percentVisible: number;
+  readonly radius: number;
 
-  constructor(animationDuration: string, radius: number, backgroundColor: string, borderColor: string) {
+  constructor(
+    animationDuration: string,
+    percentVisible: number,
+    radius: number,
+    backgroundColor: string,
+    borderColor: string
+  ) {
     super();
     this.animationDuration = animationDuration;
     this.backgroundColor = backgroundColor;
     this.borderColor = borderColor;
+    this.percentVisible = percentVisible;
     this.radius = radius;
   }
 
@@ -127,7 +157,7 @@ export class TrafficPointDiamondRenderer extends TrafficPointRenderer {
     onAnimationEnd?: React.AnimationEventHandler
   ): React.SVGProps<SVGRectElement> {
     const startPoint = edge.getStartPoint();
-    const moveAnimation = getMoveAnimation(edge, isInfinite);
+    const moveAnimation = getMoveAnimation(edge, this.percentVisible, isInfinite);
 
     // use random # to ensure the key is not repeated, or it can be ignored by the render
     const key = `point-rect-${Math.random()}}`;
