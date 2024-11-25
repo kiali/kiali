@@ -9,13 +9,19 @@ Given(
   (workload: string, namespace: string) => {
     cy.visit({ url: `/console/namespaces/${namespace}/workloads/${workload}?tab=logs&refresh=0` });
 
+    const changeIntervalDuration = (): void => {
+      cy.get('#metrics_filter_interval_duration-toggle').click();
+      cy.get('#1800').click();
+    };
+
     // In OSSMC, the duration interval is configured using the time duration modal component
     if (Cypress.env('OSSMC')) {
       cy.get('#time_duration').click();
+      changeIntervalDuration();
+      cy.get('#time-duration-modal').find('button').contains('Confirm').click();
+    } else {
+      changeIntervalDuration();
     }
-
-    cy.get('#metrics_filter_interval_duration-toggle').click();
-    cy.get('#1800').click();
   }
 );
 

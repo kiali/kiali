@@ -72,6 +72,7 @@ export const TimeDurationModal: React.FC<Props> = (props: Props) => {
 
   return (
     <Modal
+      id="time-duration-modal"
       aria-label={t('Time duration')}
       variant={ModalVariant.small}
       width={700}

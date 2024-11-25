@@ -81,6 +81,7 @@ class TimeDurationIndicatorComponent extends React.PureComponent<Props> {
   render(): React.ReactNode {
     return (
       <Tooltip
+        trigger={'mouseenter'}
         isContentLeftAligned={true}
         maxWidth={'50em'}
         content={
