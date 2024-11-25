@@ -108,7 +108,10 @@ export class TrafficPointGenerator {
   render(edge: Edge): React.ReactFragment {
     const pointDurationSeconds = 1.0 / this.speed;
     const pointDuration = `${pointDurationSeconds}s`;
-    const numPointsOnEdge = Math.ceil(pointDurationSeconds / this.timer!);
+    const numPointsOnEdge = (pointDurationSeconds * 1000) / this.timer!;
+    console.log(
+      `numPointsOnEdge=${numPointsOnEdge} (pointDurationSeconds:${pointDurationSeconds}) / timer:(${this.timer})`
+    );
 
     const renderer =
       this.type === TrafficEdgeType.RPS
