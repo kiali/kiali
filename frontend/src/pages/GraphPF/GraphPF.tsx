@@ -889,7 +889,7 @@ const TopologyContent: React.FC<{
                   },
                   // currently unused
                   fitToScreenCallback: () => {
-                    controller.getGraph().fit(80);
+                    controller.getGraph().fit(FIT_PADDING);
                   },
                   resetViewCallback: () => {
                     graphLayout(controller, LayoutType.Layout);
