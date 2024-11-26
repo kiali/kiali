@@ -322,6 +322,8 @@ const TopologyContent: React.FC<{
     }
 
     if (layoutInProgress !== LayoutType.LayoutNoFit) {
+      controller.getGraph().fit(FIT_PADDING);
+
       // On a resize, delay fit to ensure that the canvas size updates before the fit
       if (layoutInProgress === LayoutType.Resize) {
         setTimeout(() => {
