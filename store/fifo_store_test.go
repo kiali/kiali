@@ -18,22 +18,22 @@ func TestSetAndGet(t *testing.T) {
 	fifoStore.Set("foo2", "bar2")
 	fifoStore.Set("foo3", "bar3")
 
-	require.Equal(fifoStore.stats.hits, 0)
+	require.Equal(fifoStore.stats.Hits, 0)
 	require.Equal(len(fifoStore.items), 3)
 
 	elem, found := fifoStore.Get("foo")
-	require.Equal(fifoStore.stats.hits, 1)
+	require.Equal(fifoStore.stats.Hits, 1)
 	require.True(found)
 	require.Equal(elem, "bar")
 
 	elem, found = fifoStore.Get("foo2")
-	require.Equal(fifoStore.stats.hits, 2)
+	require.Equal(fifoStore.stats.Hits, 2)
 	require.True(found)
 	require.Equal(elem, "bar2")
 
 	fifoStore.Set("foo4", "bar4")
 	_, found = fifoStore.Get("foo")
-	require.Equal(fifoStore.stats.hits, 2)
+	require.Equal(fifoStore.stats.Hits, 2)
 	require.Equal(len(fifoStore.items), 3)
 	require.False(found)
 }
@@ -46,7 +46,7 @@ func TestExpired(t *testing.T) {
 	fifoStore.Set("foo2", "bar2")
 	fifoStore.Set("foo3", "bar3")
 
-	require.Equal(fifoStore.stats.hits, 0)
+	require.Equal(fifoStore.stats.Hits, 0)
 	require.Equal(len(fifoStore.items), 3)
 
 	time.Sleep(5 * time.Second)
@@ -73,7 +73,7 @@ func TestExpiredNoCleanup(t *testing.T) {
 	fifoStore.Set("foo2", "bar2")
 	fifoStore.Set("foo3", "bar3")
 
-	require.Equal(fifoStore.stats.hits, 0)
+	require.Equal(fifoStore.stats.Hits, 0)
 	require.Equal(len(fifoStore.items), 3)
 
 	time.Sleep(5 * time.Second)

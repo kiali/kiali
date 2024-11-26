@@ -15,10 +15,15 @@ const (
 	defaultTTL                     = 5 * time.Minute
 )
 
-type storeStats struct {
-	hits          int
-	totalRequests int
-	size          int
+type Stats struct {
+	HitRate string `json:"hitRate,omitempty"`
+	Size    int    `json:"size,omitempty"`
+}
+
+type StoreStats struct {
+	Hits          int
+	TotalRequests int
+	Size          int
 }
 
 // FifoStore uses a FIFO approach storage and is safe for concurrent use.
@@ -28,7 +33,7 @@ type FifoStore[K comparable, V any] struct {
 	items                   map[K]*list.Element
 	lock                    sync.RWMutex
 	order                   *list.List
-	stats                   storeStats
+	stats                   StoreStats
 	stopped                 <-chan struct{}
 	ttl                     time.Duration
 }
@@ -51,9 +56,9 @@ func NewFIFOStore[K comparable, V any](ctx context.Context, capacity int, expira
 		expirationCheckInterval: *expirationCheckInterval,
 		items:                   make(map[K]*list.Element),
 		order:                   list.New(),
-		stats: storeStats{
-			hits:          0,
-			totalRequests: 0,
+		stats: StoreStats{
+			Hits:          0,
+			TotalRequests: 0,
 		},
 		ttl: *ttl,
 	}
@@ -65,7 +70,7 @@ func NewFIFOStore[K comparable, V any](ctx context.Context, capacity int, expira
 func (f *FifoStore[K, V]) Get(key K) (V, bool) {
 	f.lock.RLock()
 	defer f.lock.RUnlock()
-	f.stats.totalRequests++
+	f.stats.TotalRequests++
 	elem, exists := f.items[key]
 	if !exists {
 		var value V
@@ -82,7 +87,7 @@ func (f *FifoStore[K, V]) Get(key K) (V, bool) {
 		return value, false
 	}
 	log.Tracef("[FIFO store] Returning from cache: %v", key)
-	f.stats.hits++
+	f.stats.Hits++
 	return elem.Value.(*entry[K, V]).value, true
 }
 
@@ -109,8 +114,8 @@ func (f *FifoStore[K, V]) Set(key K, value V) {
 }
 
 // Get stats
-func (f *FifoStore[K, V]) GetStats() storeStats {
-	f.stats.size = len(f.items)
+func (f *FifoStore[K, V]) GetStats() StoreStats {
+	f.stats.Size = len(f.items)
 	return f.stats
 }
 
@@ -119,6 +124,8 @@ func (f *FifoStore[K, V]) GetStats() storeStats {
 // But this avoids to have expired items using cache capacity
 func (f *FifoStore[K, V]) removeExpiredKeys(ctx context.Context) <-chan struct{} {
 	stopped := make(chan struct{})
+	f.lock.Lock()
+	defer f.lock.Unlock()
 	go func() {
 		for {
 			select {

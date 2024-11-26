@@ -6,9 +6,11 @@ import { panelBodyStyle, panelHeadingStyle, panelStyle } from 'pages/Graph/Summa
 import { useKialiTranslation } from 'utils/I18nUtils';
 import { UNKNOWN } from 'types/Graph';
 import { TargetPanelEditor } from './TargetPanelEditor';
+import { TracingStats } from '../../../types/TracingInfo';
 
 type TargetPanelNodeProps<T extends MeshNodeData> = TargetPanelCommonProps & {
   target: NodeTarget<T>;
+  tracingStats?: TracingStats;
 };
 
 export const TargetPanelNode: React.FC<TargetPanelNodeProps<MeshNodeData>> = (
@@ -23,7 +25,6 @@ export const TargetPanelNode: React.FC<TargetPanelNodeProps<MeshNodeData>> = (
   }
 
   const data = node.elem.getData()!;
-
   return (
     <div id="target-panel-node" className={classes(panelStyle, targetPanelStyle)}>
       <div className={panelHeadingStyle}>{renderNodeHeader(data, { nameOnly: isExternal(data.cluster) })}</div>
@@ -31,7 +32,24 @@ export const TargetPanelNode: React.FC<TargetPanelNodeProps<MeshNodeData>> = (
         <span>{t('Version: {{version}}', { version: data.version || t(UNKNOWN) })}</span>
 
         {targetPanelHR}
-
+        {data.infraName === 'tempo' && props.tracingStats && (
+          <>
+            <div style={{ display: 'table' }}>
+              Cache:
+              <div style={{ marginLeft: '20px' }}>
+                <span style={{ color: 'rgb(25, 118, 116)', fontWeight: 'bold' }}>Hit rate:</span>{' '}
+                {props.tracingStats.hitRate}
+              </div>
+              {props.tracingStats.size && (
+                <div style={{ marginLeft: '20px' }}>
+                  <span style={{ color: 'rgb(25, 118, 116)', fontWeight: 'bold' }}>Size:</span>{' '}
+                  {props.tracingStats.size}
+                </div>
+              )}
+            </div>
+            {targetPanelHR}
+          </>
+        )}
         <TargetPanelEditor configData={data.infraData} targetName={data.infraName}></TargetPanelEditor>
       </div>
     </div>

@@ -254,8 +254,8 @@ type GrafanaVariablesConfig struct {
 }
 
 type TempoConfig struct {
-	CacheCapacity int    `yaml:"cache_capacity,omitempty"`
-	CacheEnabled  bool   `yaml:"cache_enabled,omitempty"`
+	CacheCapacity int    `yaml:"cache_capacity" json:"cache_capacity,omitempty"`
+	CacheEnabled  bool   `yaml:"cache_enabled" json:"cache_enabled,omitempty"`
 	DatasourceUID string `yaml:"datasource_uid" json:"datasource_uid,omitempty"`
 	OrgID         string `yaml:"org_id" json:"org_id,omitempty"`
 	URLFormat     string `yaml:"url_format" json:"url_format,omitempty"`

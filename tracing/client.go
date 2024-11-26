@@ -21,6 +21,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/store"
 	"github.com/kiali/kiali/tracing/jaeger"
 	"github.com/kiali/kiali/tracing/jaeger/model"
 	"github.com/kiali/kiali/tracing/tempo"
@@ -39,6 +40,7 @@ type ClientInterface interface {
 	GetTraceDetail(traceId string) (*model.TracingSingleTrace, error)
 	GetErrorTraces(ns, app string, duration time.Duration) (errorTraces int, err error)
 	GetServiceStatus() (available bool, err error)
+	GetCacheStats() (stats *store.Stats, err error)
 }
 
 // HTTPClientInterface for Mocks, also for Tempo or Jaeger
@@ -46,6 +48,7 @@ type HTTPClientInterface interface {
 	GetAppTracesHTTP(client http.Client, baseURL *url.URL, serviceName string, q models.TracingQuery) (response *model.TracingResponse, err error)
 	GetTraceDetailHTTP(client http.Client, endpoint *url.URL, traceID string) (*model.TracingSingleTrace, error)
 	GetServiceStatusHTTP(client http.Client, baseURL *url.URL) (bool, error)
+	GetCacheStats() (stats *store.Stats, err error)
 }
 
 // GRPCClientInterface for Mocks, also for Tempo or Jaeger
@@ -266,6 +269,15 @@ func (in *Client) GetServiceStatus() (bool, error) {
 	}
 
 	return in.grpcClient.GetServices(in.ctx)
+}
+
+func (in *Client) GetCacheStats() (*store.Stats, error) {
+	if in.httpTracingClient != nil && config.Get().ExternalServices.Tracing.TempoConfig.CacheEnabled {
+		stats, err := in.httpTracingClient.GetCacheStats()
+		return stats, err
+	} else {
+		return nil, fmt.Errorf("Cache is disabled")
+	}
 }
 
 func BuildTracingServiceName(namespace, app string) string {

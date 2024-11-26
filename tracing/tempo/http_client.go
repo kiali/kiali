@@ -148,6 +148,24 @@ func (oc *OtelHTTPClient) GetServiceStatusHTTP(client http.Client, baseURL *url.
 	return reqError == nil, reqError
 }
 
+// GetCacheStats get cache stats
+func (oc *OtelHTTPClient) GetCacheStats() (*store.Stats, error) {
+	if config.Get().ExternalServices.Tracing.TempoConfig.CacheEnabled {
+		stats := oc.TempoCache.GetStats()
+
+		hitRate := 0.0
+		if stats.TotalRequests > 0 {
+			hitRate = (float64(stats.Hits) / float64(stats.TotalRequests)) * 100
+		}
+
+		rates := store.Stats{HitRate: fmt.Sprintf("%.2f%%", hitRate), Size: stats.Size}
+
+		return util.AsPtr(rates), nil
+	} else {
+		return nil, fmt.Errorf("Cache is disabled")
+	}
+}
+
 // queryTracesHTTP
 func (oc *OtelHTTPClient) queryTracesHTTP(client http.Client, u *url.URL, error string) (*model.TracingResponse, error) {
 	// HTTP and GRPC requests co-exist, but when minDuration is present, for HTTP it requires a unit (ms)

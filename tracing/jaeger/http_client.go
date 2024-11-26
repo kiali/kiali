@@ -14,6 +14,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/store"
 	"github.com/kiali/kiali/tracing/jaeger/model"
 	"github.com/kiali/kiali/util"
 )
@@ -125,6 +126,12 @@ func (jc JaegerHTTPClient) GetServiceStatusHTTP(client http.Client, baseURL *url
 	url.Path = path.Join(url.Path, "/api/services")
 	_, _, reqError := makeRequest(client, url.String(), nil)
 	return reqError == nil, reqError
+}
+
+// GetCacheStats get cache stats
+// Jaeger doesn't have a cache
+func (oc JaegerHTTPClient) GetCacheStats() (*store.Stats, error) {
+	return nil, fmt.Errorf("Cache is disabled")
 }
 
 func queryTracesHTTP(client http.Client, u *url.URL) (*model.TracingResponse, error) {

@@ -4,11 +4,17 @@
 
 import { Target } from './MetricsOptions';
 
+export type TracingStats = {
+  hitRate: string;
+  size: number;
+};
+
 export interface TracingInfo {
   enabled: boolean;
   integration: boolean;
   namespaceSelector: boolean;
   provider: string;
+  stats?: TracingStats;
   url: string;
   whiteListIstioSystem: string[];
 }
