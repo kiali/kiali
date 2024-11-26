@@ -2,12 +2,12 @@ package tracingtest
 
 import (
 	"fmt"
-	"github.com/kiali/kiali/store"
 	"time"
 
 	"github.com/stretchr/testify/mock"
 
 	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/store"
 	"github.com/kiali/kiali/tracing/jaeger/model"
 )
 
