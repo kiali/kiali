@@ -326,7 +326,7 @@ const TopologyContent: React.FC<{
       if (layoutInProgress === LayoutType.Resize) {
         setTimeout(() => {
           controller.getGraph().fit(FIT_PADDING);
-        }, 250);
+        }, 500);
       } else {
         controller.getGraph().fit(FIT_PADDING);
       }

@@ -101,7 +101,7 @@
     "react-flexview": "4.0.3",
     "react-i18next": "^11.7.3",
     "react-redux": "7.2.2",
-    "react-resize-detector": "3.4.0",
+    "react-resize-detector": "9.1.1",
     "react-router": "5.3.x",
     "react-router-dom": "5.3.x",
     "react-router-dom-v5-compat": "^6.11.2",
