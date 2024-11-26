@@ -24,7 +24,7 @@ func GetTracingInfo(w http.ResponseWriter, r *http.Request) {
 		RespondWithError(w, http.StatusInternalServerError, "AppTraces initialization error: "+err.Error())
 		return
 	}
-	stats, err := business.Tracing.GetCacheStats()
+	stats, _ := business.Tracing.GetCacheStats()
 	if tracingConfig.Enabled {
 		info = models.TracingInfo{
 			Enabled:              true,
@@ -35,7 +35,7 @@ func GetTracingInfo(w http.ResponseWriter, r *http.Request) {
 			NamespaceSelector:    tracingConfig.NamespaceSelector,
 			WhiteListIstioSystem: tracingConfig.WhiteListIstioSystem,
 		}
-		if stats != nil && tracingConfig.Provider == "tempo" && tracingConfig.TempoConfig.CacheEnabled == true {
+		if stats != nil && tracingConfig.Provider == "tempo" && tracingConfig.TempoConfig.CacheEnabled {
 			info.Stats = *stats
 		}
 	} else {
