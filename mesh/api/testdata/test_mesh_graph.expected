@@ -144,8 +144,8 @@
             "IsCore": false,
             "Provider": "jaeger",
             "TempoConfig": {
-              "CacheCapacity": 200,
-              "CacheEnabled": true
+              "cache_capacity": 200,
+              "cache_enabled": true
             },
             "NamespaceSelector": true,
             "QueryScope": {},
