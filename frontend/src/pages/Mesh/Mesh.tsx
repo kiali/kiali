@@ -211,13 +211,14 @@ const TopologyContent: React.FC<{
     }
 
     if (layoutInProgress !== LayoutType.LayoutNoFit) {
-      // On a resize, delay fit to ensure that the canvas size updates before the fit
+      controller.getGraph().fit(FIT_PADDING);
+
+      // On a resize, perform a delayed second fit, this one is performed [hopefully] after
+      // the canvas size is updated (which needs to happen in the underlying PFT code)
       if (layoutInProgress === LayoutType.Resize) {
         setTimeout(() => {
           controller.getGraph().fit(FIT_PADDING);
-        }, 250);
-      } else {
-        controller.getGraph().fit(FIT_PADDING);
+        }, 500);
       }
     }
 
@@ -552,6 +553,10 @@ const TopologyContent: React.FC<{
                   // currently unused
                   zoomOutCallback: () => {
                     controller && controller.getGraph().scaleBy(ZOOM_OUT);
+                  },
+                  // currently unused
+                  fitToScreenCallback: () => {
+                    controller.getGraph().fit(FIT_PADDING);
                   },
                   resetViewCallback: () => {
                     meshLayout(controller, LayoutType.Layout);

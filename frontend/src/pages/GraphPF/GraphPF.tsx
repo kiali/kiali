@@ -82,7 +82,7 @@ const DEFAULT_NODE_SIZE = 40;
 const ZOOM_IN = 4 / 3;
 const ZOOM_OUT = 3 / 4;
 
-export const FIT_PADDING = 80;
+export const FIT_PADDING = 90;
 
 export enum LayoutName {
   BreadthFirst = 'BreadthFirst',
@@ -322,13 +322,14 @@ const TopologyContent: React.FC<{
     }
 
     if (layoutInProgress !== LayoutType.LayoutNoFit) {
-      // On a resize, delay fit to ensure that the canvas size updates before the fit
+      controller.getGraph().fit(FIT_PADDING);
+
+      // On a resize, perform a delayed second fit, this one is performed [hopefully] after
+      // the canvas size is updated (which needs to happen in the underlying PFT code)
       if (layoutInProgress === LayoutType.Resize) {
         setTimeout(() => {
           controller.getGraph().fit(FIT_PADDING);
-        }, 250);
-      } else {
-        controller.getGraph().fit(FIT_PADDING);
+        }, 500);
       }
     }
 
@@ -885,6 +886,10 @@ const TopologyContent: React.FC<{
                   // currently unused
                   zoomOutCallback: () => {
                     controller && controller.getGraph().scaleBy(ZOOM_OUT);
+                  },
+                  // currently unused
+                  fitToScreenCallback: () => {
+                    controller.getGraph().fit(FIT_PADDING);
                   },
                   resetViewCallback: () => {
                     graphLayout(controller, LayoutType.Layout);
