@@ -62,7 +62,6 @@ func NewFIFOStore[K comparable, V any](ctx context.Context, capacity int, expira
 		},
 		ttl: *ttl,
 	}
-	f.stopped = f.removeExpiredKeys(ctx)
 	return f
 }
 
@@ -122,34 +121,33 @@ func (f *FifoStore[K, V]) GetStats() StoreStats {
 // removeExpiredKeys
 // Get already checks expired elements
 // But this avoids to have expired items using cache capacity
-func (f *FifoStore[K, V]) removeExpiredKeys(ctx context.Context) <-chan struct{} {
+func (f *FifoStore[K, V]) removeExpiredKeys(ctx context.Context) {
 	stopped := make(chan struct{})
-	go func() {
-		f.lock.Lock()
-		defer f.lock.Unlock()
-		for {
-			select {
-			case <-time.After(f.expirationCheckInterval):
-				// Check for expired keys and remove them from the store.
-				// If a key is expired, send a signal on the channel.
-				for _, item := range f.items {
-					key := item.Value.(*entry[K, V]).key
+	ticker := time.NewTicker(f.expirationCheckInterval)
+	defer ticker.Stop()
 
-					if time.Now().After(item.Value.(*entry[K, V]).ttl) {
-						log.Tracef("[FIFO store] Key '%v' expired. Removing from store", key)
-						delete(f.items, key)
-						f.order.Remove(item)
-					}
-				}
+	// Check for expired keys and remove them from the store.
+	// If a key is expired, send a signal on the channel
+	for {
+		select {
+		case <-ticker.C:
+			f.lock.Lock()
+			for _, item := range f.items {
+				key := item.Value.(*entry[K, V]).key
 
-			case <-ctx.Done():
-				select {
-				case stopped <- struct{}{}:
-				default:
+				if time.Now().After(item.Value.(*entry[K, V]).ttl) {
+					log.Tracef("[FIFO store] Key '%v' expired. Removing from store", key)
+					delete(f.items, key)
+					f.order.Remove(item)
 				}
-				return
 			}
+			f.lock.Unlock()
+		case <-ctx.Done():
+			select {
+			case stopped <- struct{}{}:
+			default:
+			}
+			return
 		}
-	}()
-	return stopped
+	}
 }
