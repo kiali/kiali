@@ -124,9 +124,9 @@ func (f *FifoStore[K, V]) GetStats() StoreStats {
 // But this avoids to have expired items using cache capacity
 func (f *FifoStore[K, V]) removeExpiredKeys(ctx context.Context) <-chan struct{} {
 	stopped := make(chan struct{})
-	f.lock.Lock()
-	defer f.lock.Unlock()
 	go func() {
+		f.lock.Lock()
+		defer f.lock.Unlock()
 		for {
 			select {
 			case <-time.After(f.expirationCheckInterval):
