@@ -5,8 +5,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kiali/kiali/util"
 	"github.com/stretchr/testify/require"
+
+	"github.com/kiali/kiali/util"
 )
 
 func TestSetAndGet(t *testing.T) {
