@@ -7,11 +7,12 @@ import (
 	"time"
 
 	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/util"
 )
 
 const (
-	expirationCheckInterval = 1 * time.Minute
-	TTL                     = 5 * time.Minute
+	defaultExpirationCheckInterval = 1 * time.Minute
+	defaultTTL                     = 5 * time.Minute
 )
 
 type storeStats struct {
@@ -22,12 +23,14 @@ type storeStats struct {
 
 // FifoStore uses a FIFO approach storage and is safe for concurrent use.
 type FifoStore[K comparable, V any] struct {
-	capacity int
-	items    map[K]*list.Element
-	lock     sync.RWMutex
-	order    *list.List
-	stats    storeStats
-	stopped  <-chan struct{}
+	capacity                int
+	expirationCheckInterval time.Duration
+	items                   map[K]*list.Element
+	lock                    sync.RWMutex
+	order                   *list.List
+	stats                   storeStats
+	stopped                 <-chan struct{}
+	ttl                     time.Duration
 }
 
 type entry[K comparable, V any] struct {
@@ -36,15 +39,23 @@ type entry[K comparable, V any] struct {
 	value V
 }
 
-func NewFIFOStore[K comparable, V any](ctx context.Context, capacity int) *FifoStore[K, V] {
+func NewFIFOStore[K comparable, V any](ctx context.Context, capacity int, expirationCheckInterval *time.Duration, ttl *time.Duration) *FifoStore[K, V] {
+	if expirationCheckInterval == nil {
+		expirationCheckInterval = util.AsPtr(defaultExpirationCheckInterval)
+	}
+	if ttl == nil {
+		ttl = util.AsPtr(defaultTTL)
+	}
 	f := &FifoStore[K, V]{
-		items:    make(map[K]*list.Element),
-		order:    list.New(),
-		capacity: capacity,
+		capacity:                capacity,
+		expirationCheckInterval: *expirationCheckInterval,
+		items:                   make(map[K]*list.Element),
+		order:                   list.New(),
 		stats: storeStats{
 			hits:          0,
 			totalRequests: 0,
 		},
+		ttl: *ttl,
 	}
 	f.stopped = f.removeExpiredKeys(ctx)
 	return f
@@ -93,7 +104,7 @@ func (f *FifoStore[K, V]) Set(key K, value V) {
 		}
 	}
 
-	elem := f.order.PushBack(&entry[K, V]{key, time.Now().Add(TTL), value})
+	elem := f.order.PushBack(&entry[K, V]{key, time.Now().Add(f.ttl), value})
 	f.items[key] = elem
 }
 
@@ -111,7 +122,7 @@ func (f *FifoStore[K, V]) removeExpiredKeys(ctx context.Context) <-chan struct{}
 	go func() {
 		for {
 			select {
-			case <-time.After(expirationCheckInterval):
+			case <-time.After(f.expirationCheckInterval):
 				// Check for expired keys and remove them from the store.
 				// If a key is expired, send a signal on the channel.
 				for _, item := range f.items {

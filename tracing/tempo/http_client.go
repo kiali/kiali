@@ -56,8 +56,7 @@ func NewOtelClient(client http.Client, baseURL *url.URL) (otelClient *OtelHTTPCl
 
 	otelHTTPClient := &OtelHTTPClient{ClusterTag: tags}
 	if config.Get().ExternalServices.Tracing.TempoConfig.CacheEnabled {
-		ctx, _ := context.WithCancel(context.Background())
-		otelHTTPClient.TempoCache = *store.NewFIFOStore[string, *model.TracingSingleTrace](ctx, config.Get().ExternalServices.Tracing.TempoConfig.CacheCapacity)
+		otelHTTPClient.TempoCache = *store.NewFIFOStore[string, *model.TracingSingleTrace](context.Background(), config.Get().ExternalServices.Tracing.TempoConfig.CacheCapacity, nil, nil)
 	}
 
 	return otelHTTPClient, nil
