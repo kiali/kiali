@@ -1,6 +1,7 @@
 package store
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -9,7 +10,8 @@ import (
 func TestSetAndGet(t *testing.T) {
 	require := require.New(t)
 
-	fifoStore := NewFIFOStore[string, string](3)
+	ctx, _ := context.WithCancel(context.Background())
+	fifoStore := NewFIFOStore[string, string](ctx, 3)
 	fifoStore.Set("foo", "bar")
 	fifoStore.Set("foo2", "bar2")
 	fifoStore.Set("foo3", "bar3")

@@ -2,9 +2,16 @@ package store
 
 import (
 	"container/list"
+	"context"
 	"sync"
+	"time"
 
 	"github.com/kiali/kiali/log"
+)
+
+const (
+	expirationCheckInterval = 1 * time.Minute
+	TTL                     = 5 * time.Minute
 )
 
 type storeStats struct {
@@ -20,15 +27,17 @@ type FifoStore[K comparable, V any] struct {
 	lock     sync.RWMutex
 	order    *list.List
 	stats    storeStats
+	stopped  <-chan struct{}
 }
 
 type entry[K comparable, V any] struct {
 	key   K
+	ttl   time.Time
 	value V
 }
 
-func NewFIFOStore[K comparable, V any](capacity int) *FifoStore[K, V] {
-	return &FifoStore[K, V]{
+func NewFIFOStore[K comparable, V any](ctx context.Context, capacity int) *FifoStore[K, V] {
+	f := &FifoStore[K, V]{
 		items:    make(map[K]*list.Element),
 		order:    list.New(),
 		capacity: capacity,
@@ -37,6 +46,8 @@ func NewFIFOStore[K comparable, V any](capacity int) *FifoStore[K, V] {
 			totalRequests: 0,
 		},
 	}
+	f.stopped = f.removeExpiredKeys(ctx)
+	return f
 }
 
 // Get returns the value associated with the given key or an error.
@@ -47,6 +58,16 @@ func (f *FifoStore[K, V]) Get(key K) (V, bool) {
 	elem, exists := f.items[key]
 	if !exists {
 		var value V
+		log.Tracef("[FIFO store] Element doesnt exist: %v", key)
+		return value, false
+	}
+	// If element is expired
+	if time.Now().After(elem.Value.(*entry[K, V]).ttl) {
+		entryToRemove := elem.Value.(*entry[K, V])
+		delete(f.items, entryToRemove.key)
+		f.order.Remove(elem)
+		var value V
+		log.Tracef("[FIFO store] Element expired: %v", key)
 		return value, false
 	}
 	log.Tracef("[FIFO store] Returning from cache: %v", key)
@@ -72,7 +93,7 @@ func (f *FifoStore[K, V]) Set(key K, value V) {
 		}
 	}
 
-	elem := f.order.PushBack(&entry[K, V]{key, value})
+	elem := f.order.PushBack(&entry[K, V]{key, time.Now().Add(TTL), value})
 	f.items[key] = elem
 }
 
@@ -80,4 +101,37 @@ func (f *FifoStore[K, V]) Set(key K, value V) {
 func (f *FifoStore[K, V]) GetStats() storeStats {
 	f.stats.size = len(f.items)
 	return f.stats
+}
+
+// removeExpiredKeys
+// Get already checks expired elements
+// But this avoids to have expired items using cache capacity
+func (f *FifoStore[K, V]) removeExpiredKeys(ctx context.Context) <-chan struct{} {
+	stopped := make(chan struct{})
+	go func() {
+		for {
+			select {
+			case <-time.After(expirationCheckInterval):
+				// Check for expired keys and remove them from the store.
+				// If a key is expired, send a signal on the channel.
+				for _, item := range f.items {
+					key := item.Value.(*entry[K, V]).key
+
+					if time.Now().After(item.Value.(*entry[K, V]).ttl) {
+						log.Tracef("[FIFO store] Key '%v' expired. Removing from store", key)
+						delete(f.items, key)
+						f.order.Remove(item)
+					}
+				}
+
+			case <-ctx.Done():
+				select {
+				case stopped <- struct{}{}:
+				default:
+				}
+				return
+			}
+		}
+	}()
+	return stopped
 }

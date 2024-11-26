@@ -1,6 +1,7 @@
 package tempo
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -55,7 +56,8 @@ func NewOtelClient(client http.Client, baseURL *url.URL) (otelClient *OtelHTTPCl
 
 	otelHTTPClient := &OtelHTTPClient{ClusterTag: tags}
 	if config.Get().ExternalServices.Tracing.TempoConfig.CacheEnabled {
-		otelHTTPClient.TempoCache = *store.NewFIFOStore[string, *model.TracingSingleTrace](config.Get().ExternalServices.Tracing.TempoConfig.CacheCapacity)
+		ctx, _ := context.WithCancel(context.Background())
+		otelHTTPClient.TempoCache = *store.NewFIFOStore[string, *model.TracingSingleTrace](ctx, config.Get().ExternalServices.Tracing.TempoConfig.CacheCapacity)
 	}
 
 	return otelHTTPClient, nil
