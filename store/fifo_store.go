@@ -141,15 +141,18 @@ func (f *FifoStore[K, V]) removeExpiredKeys(ctx context.Context) <-chan struct{}
 		for {
 			select {
 			case <-time.After(f.expirationCheckInterval):
+				f.lock.RLock()
 				for _, item := range f.items {
 					key := item.Value.(*entry[K, V]).key
 
 					if time.Now().After(item.Value.(*entry[K, V]).ttl) {
 						log.Tracef("[FIFO store] Key '%v' expired. Removing from store", key)
+						f.lock.RUnlock()
 						f.Remove(key)
+						f.lock.RLock()
 					}
 				}
-
+				f.lock.RUnlock()
 			case <-ctx.Done():
 				select {
 				case stopped <- struct{}{}:
