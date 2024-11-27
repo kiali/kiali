@@ -11,6 +11,7 @@ import (
 	"path"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
@@ -24,9 +25,15 @@ import (
 	"github.com/kiali/kiali/util"
 )
 
+const (
+	expirationCheckInterval = 1 * time.Minute
+	TTL                     = 5 * time.Minute
+)
+
 type OtelHTTPClient struct {
 	ClusterTag bool
-	TempoCache store.FifoStore[string, *model.TracingSingleTrace]
+	TempoCache store.Store[string, *model.TracingSingleTrace]
+	FIFOStore  *store.FIFOStore[string, *model.TracingSingleTrace]
 }
 
 // New client
@@ -56,7 +63,10 @@ func NewOtelClient(client http.Client, baseURL *url.URL) (otelClient *OtelHTTPCl
 
 	otelHTTPClient := &OtelHTTPClient{ClusterTag: tags}
 	if config.Get().ExternalServices.Tracing.TempoConfig.CacheEnabled {
-		otelHTTPClient.TempoCache = *store.NewFIFOStore[string, *model.TracingSingleTrace](context.Background(), config.Get().ExternalServices.Tracing.TempoConfig.CacheCapacity, nil, nil)
+		vanillaStore := store.New[string, *model.TracingSingleTrace]()
+		fifoStore := store.NewFIFOStore[string, *model.TracingSingleTrace](vanillaStore, config.Get().ExternalServices.Tracing.TempoConfig.CacheCapacity)
+		otelHTTPClient.FIFOStore = fifoStore
+		otelHTTPClient.TempoCache = store.NewExpirationStore[string, *model.TracingSingleTrace](context.Background(), fifoStore, util.AsPtr(TTL), util.AsPtr(expirationCheckInterval))
 	}
 
 	return otelHTTPClient, nil
@@ -150,8 +160,10 @@ func (oc *OtelHTTPClient) GetServiceStatusHTTP(client http.Client, baseURL *url.
 
 // GetCacheStats get cache stats
 func (oc *OtelHTTPClient) GetCacheStats() (*store.Stats, error) {
+
 	if config.Get().ExternalServices.Tracing.TempoConfig.CacheEnabled {
-		stats := oc.TempoCache.GetStats()
+
+		stats := oc.FIFOStore.GetStats()
 
 		hitRate := 0.0
 		if stats.TotalRequests > 0 {
@@ -161,6 +173,8 @@ func (oc *OtelHTTPClient) GetCacheStats() (*store.Stats, error) {
 		rates := store.Stats{HitRate: fmt.Sprintf("%.2f%%", hitRate), Size: stats.Size}
 
 		return util.AsPtr(rates), nil
+
+		return nil, fmt.Errorf("Cache is disabled")
 	} else {
 		return nil, fmt.Errorf("Cache is disabled")
 	}
