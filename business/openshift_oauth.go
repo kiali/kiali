@@ -70,15 +70,7 @@ type OAuthAuthorizationServer struct {
 }
 
 // Generates an http.Client with RootCAs specified in kubeconfig along with the system certs.
-func httpClientWithPool(restConfig rest.Config, systemPool *x509.CertPool) (*http.Client, error) {
-	// If it's insecure or there are no system certs then don't bother appending them.
-	if restConfig.Insecure || systemPool == nil {
-		log.Trace("Insecure or empty system pool")
-		return rest.HTTPClientFor(&restConfig)
-	}
-
-	pool := systemPool.Clone()
-
+func httpClientWithPool(conf *config.Config, restConfig rest.Config, systemPool *x509.CertPool) (*http.Client, error) {
 	// Need to populate CAData from CAFile.
 	if err := rest.LoadTLSFiles(&restConfig); err != nil {
 		return nil, fmt.Errorf("unable to load CA info from restConfig")
@@ -95,14 +87,24 @@ func httpClientWithPool(restConfig rest.Config, systemPool *x509.CertPool) (*htt
 		tlsConfig = &tls.Config{}
 	}
 
-	if restConfig.TLSClientConfig.CAData != nil {
-		log.Trace("Appending CA data from tls client config to pool")
-		if !pool.AppendCertsFromPEM(restConfig.TLSClientConfig.CAData) {
-			return nil, fmt.Errorf("unable to append CA from restConfig to system pool: %s", restConfig.TLSClientConfig.CAData)
-		}
+	// If this setting is set in the Kiali config then override whatever is set on the kubeconfig.
+	if conf.Auth.OpenShift.InsecureSkipVerifyTLS {
+		tlsConfig.InsecureSkipVerify = true
 	}
 
-	tlsConfig.RootCAs = pool
+	if !tlsConfig.InsecureSkipVerify {
+		// Append system certs
+		pool := systemPool.Clone()
+		if restConfig.TLSClientConfig.CAData != nil {
+			log.Trace("Appending CA data from tls client config to pool")
+			if !pool.AppendCertsFromPEM(restConfig.TLSClientConfig.CAData) {
+				return nil, fmt.Errorf("unable to append CA from restConfig to system pool: %s", restConfig.TLSClientConfig.CAData)
+			}
+		}
+		tlsConfig.RootCAs = pool
+	} else {
+		log.Trace("Insecure connection to oAuth server.")
+	}
 
 	return &http.Client{
 		Timeout:   restConfig.Timeout,
@@ -146,7 +148,7 @@ func NewOpenshiftOAuthService(ctx context.Context, conf *config.Config, kialiSAC
 		}
 		request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", client.GetToken()))
 
-		httpClient, err := httpClientWithPool(*client.ClusterInfo().ClientConfig, systemCertPool)
+		httpClient, err := httpClientWithPool(conf, *client.ClusterInfo().ClientConfig, systemCertPool)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create http client for fetching oauth server metadata from kube api server [%s], error: %s", url, err)
 		}
@@ -223,7 +225,7 @@ func (in *OpenshiftOAuthService) Exchange(ctx context.Context, code string, veri
 		return nil, fmt.Errorf("could not get ServiceAccount client for cluster [%s]", cluster)
 	}
 
-	httpClient, err := httpClientWithPool(*client.ClusterInfo().ClientConfig, in.systemCertPool)
+	httpClient, err := httpClientWithPool(in.conf, *client.ClusterInfo().ClientConfig, in.systemCertPool)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create http client for oauth consumption, error: %s", err)
 	}

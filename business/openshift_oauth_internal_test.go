@@ -37,9 +37,11 @@ func TestSystemPoolAddedToClient(t *testing.T) {
 	require.NoError(t, err)
 
 	cases := map[string]struct {
-		restConfig rest.Config
-		pool       []*x509.Certificate
-		expected   []*x509.Certificate
+		conf             *config.Config
+		restConfig       rest.Config
+		pool             []*x509.Certificate
+		expected         []*x509.Certificate
+		expectedInsecure bool
 	}{
 		"cert in pool but not in rest config has just one cert": {
 			pool:     []*x509.Certificate{caCert},
@@ -54,10 +56,21 @@ func TestSystemPoolAddedToClient(t *testing.T) {
 			pool:       []*x509.Certificate{caCert2},
 			expected:   []*x509.Certificate{caCert, caCert2},
 		},
+		"insecure setting has insecure set": {
+			conf:             &config.Config{Auth: config.AuthConfig{OpenShift: config.OpenShiftConfig{InsecureSkipVerifyTLS: true}}},
+			restConfig:       rest.Config{TLSClientConfig: rest.TLSClientConfig{CAData: ca}},
+			pool:             []*x509.Certificate{caCert2},
+			expected:         []*x509.Certificate{caCert}, // this will still get loaded from restconfig.
+			expectedInsecure: true,
+		},
 	}
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
 			require := require.New(t)
+
+			if tc.conf == nil {
+				tc.conf = config.NewConfig()
+			}
 
 			expected := x509.NewCertPool()
 			for _, cert := range tc.expected {
@@ -69,7 +82,7 @@ func TestSystemPoolAddedToClient(t *testing.T) {
 				pool.AddCert(cert)
 			}
 
-			httpClient, err := httpClientWithPool(tc.restConfig, pool)
+			httpClient, err := httpClientWithPool(tc.conf, tc.restConfig, pool)
 			require.NoError(err)
 
 			tr, ok := httpClient.Transport.(*http.Transport)
@@ -77,6 +90,7 @@ func TestSystemPoolAddedToClient(t *testing.T) {
 			require.NotNil(tr.TLSClientConfig)
 			require.NotNil(tr.TLSClientConfig.RootCAs)
 			require.True(tr.TLSClientConfig.RootCAs.Equal(expected), "cert pools not equal")
+			require.Equal(tc.expectedInsecure, tr.TLSClientConfig.InsecureSkipVerify)
 		})
 	}
 }
