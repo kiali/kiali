@@ -7,6 +7,7 @@ import { useKialiTranslation } from 'utils/I18nUtils';
 import { UNKNOWN } from 'types/Graph';
 import { TargetPanelEditor } from './TargetPanelEditor';
 import { TracingStats } from '../../../types/TracingInfo';
+import { TEMPO } from '../../../types/Tracing';
 
 type TargetPanelNodeProps<T extends MeshNodeData> = TargetPanelCommonProps & {
   target: NodeTarget<T>;
@@ -32,7 +33,7 @@ export const TargetPanelNode: React.FC<TargetPanelNodeProps<MeshNodeData>> = (
         <span>{t('Version: {{version}}', { version: data.version || t(UNKNOWN) })}</span>
 
         {targetPanelHR}
-        {data.infraName === 'tempo' && props.tracingStats && (
+        {data.infraName === TEMPO && props.tracingStats?.hitRate && (
           <>
             <div style={{ display: 'table' }}>
               Cache:
