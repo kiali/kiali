@@ -173,10 +173,8 @@ func (oc *OtelHTTPClient) GetCacheStats() (*store.Stats, error) {
 		rates := store.Stats{HitRate: fmt.Sprintf("%.2f%%", hitRate), Size: stats.Size}
 
 		return util.AsPtr(rates), nil
-
-		return nil, fmt.Errorf("Cache is disabled")
 	} else {
-		return nil, fmt.Errorf("Cache is disabled")
+		return nil, fmt.Errorf("cache is disabled")
 	}
 }
 
