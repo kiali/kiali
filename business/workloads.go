@@ -1570,6 +1570,31 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 				controllers[pod.Name] = kubernetes.Pods
 			}
 		}
+		// TODO: This should be in the cache
+		// TODO: Maybe user doesn't have permissions
+		k8s, okK8s := in.userClients[criteria.Cluster]
+		if !okK8s {
+			log.Infof("cluster [%s] is not found or is not accessible for Kiali", criteria.Cluster)
+		}
+		ztunnelPods := in.cache.GetZtunnelPods(criteria.Cluster)
+
+		for _, ztunnelPod := range ztunnelPods {
+			ecd, err3 := k8s.ForwardGetRequest(ztunnelPod.Namespace, ztunnelPod.Name, 15000, "/config_dump")
+			if err3 == nil {
+				var data map[string]interface{}
+				err4 := json.Unmarshal(ecd, &data)
+				if err4 == nil {
+					wks := data["workloads"].([]interface{})
+					for _, wk := range wks {
+						wkC := wk.(map[string]interface{})
+						if wkC["name"] == pod.Name {
+							// TODO: This is what we want. Add to pod
+							log.Infof("Protocol: %s", wkC["protocol"].(string))
+						}
+					}
+				}
+			}
+		}
 	}
 
 	// Resolve ReplicaSets from Deployments
