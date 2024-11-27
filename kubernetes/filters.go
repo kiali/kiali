@@ -228,7 +228,7 @@ func FilterPodsByController(controllerName string, controllerGVK schema.GroupVer
 				log.Errorf("could not parse OwnerReference api version %q: %v", ref.APIVersion, err)
 				continue
 			}
-			if ref.Controller != nil && *ref.Controller && ref.Name == controllerName && refGV.WithKind(ref.Kind).String() == controllerGVK.String() {
+			if ref.Controller != nil && *ref.Controller && ref.Name == controllerName && refGV.WithKind(ref.Kind) == controllerGVK {
 				pods = append(pods, pod)
 				break
 			}

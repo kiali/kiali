@@ -936,7 +936,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 					if _, exist := controllers[ref.Name]; !exist {
 						controllers[ref.Name] = refGV.WithKind(ref.Kind)
 					} else {
-						if controllers[ref.Name].String() != refGV.WithKind(ref.Kind).String() {
+						if controllers[ref.Name] != refGV.WithKind(ref.Kind) {
 							controllers[ref.Name] = refGV.WithKind(controllerPriority(controllers[ref.Name].Kind, ref.Kind))
 						}
 					}
@@ -954,7 +954,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 	// Resolve ReplicationControllers from DeploymentConfigs
 	// Resolve Jobs from CronJobs
 	for controllerName, controllerGVK := range controllers {
-		if controllerGVK.String() == kubernetes.ReplicaSets.String() {
+		if controllerGVK == kubernetes.ReplicaSets {
 			found := false
 			iFound := -1
 			for i, rs := range repset {
@@ -982,7 +982,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 								log.Debugf("Add ReplicaSet to workload list for custom controller [%s][%s]", ref.Name, ref.Kind)
 							}
 						} else {
-							if controllers[ref.Name].String() != refGV.WithKind(ref.Kind).String() {
+							if controllers[ref.Name] != refGV.WithKind(ref.Kind) {
 								controllers[ref.Name] = refGV.WithKind(controllerPriority(controllers[ref.Name].Kind, ref.Kind))
 							}
 							delete(controllers, controllerName)
@@ -991,7 +991,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 				}
 			}
 		}
-		if controllerGVK.String() == kubernetes.ReplicationControllers.String() {
+		if controllerGVK == kubernetes.ReplicationControllers {
 			found := false
 			iFound := -1
 			for i, rc := range repcon {
@@ -1013,7 +1013,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 						if _, exist := controllers[ref.Name]; !exist {
 							controllers[ref.Name] = refGV.WithKind(ref.Kind)
 						} else {
-							if controllers[ref.Name].String() != refGV.WithKind(ref.Kind).String() {
+							if controllers[ref.Name] != refGV.WithKind(ref.Kind) {
 								controllers[ref.Name] = refGV.WithKind(controllerPriority(controllers[ref.Name].Kind, ref.Kind))
 							}
 						}
@@ -1022,7 +1022,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 				}
 			}
 		}
-		if controllerGVK.String() == kubernetes.Jobs.String() {
+		if controllerGVK == kubernetes.Jobs {
 			found := false
 			iFound := -1
 			for i, jb := range jbs {
@@ -1044,7 +1044,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 						if _, exist := controllers[ref.Name]; !exist {
 							controllers[ref.Name] = refGV.WithKind(ref.Kind)
 						} else {
-							if controllers[ref.Name].String() != refGV.WithKind(ref.Kind).String() {
+							if controllers[ref.Name] != refGV.WithKind(ref.Kind) {
 								controllers[ref.Name] = refGV.WithKind(controllerPriority(controllers[ref.Name].Kind, ref.Kind))
 							}
 						}
@@ -1146,8 +1146,8 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 		controllerGVK := controllers[controllerName]
 		// Flag to add a controller if it is found
 		cnFound := true
-		switch controllerGVK.String() {
-		case kubernetes.Deployments.String():
+		switch controllerGVK {
+		case kubernetes.Deployments:
 			found := false
 			iFound := -1
 			for i, dp := range dep {
@@ -1165,7 +1165,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 				log.Errorf("Workload %s is not found as Deployment", controllerName)
 				cnFound = false
 			}
-		case kubernetes.ReplicaSets.String():
+		case kubernetes.ReplicaSets:
 			found := false
 			iFound := -1
 			for i, rs := range repset {
@@ -1183,7 +1183,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 				log.Errorf("Workload %s is not found as ReplicaSet", controllerName)
 				cnFound = false
 			}
-		case kubernetes.ReplicationControllers.String():
+		case kubernetes.ReplicationControllers:
 			found := false
 			iFound := -1
 			for i, rc := range repcon {
@@ -1201,7 +1201,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 				log.Errorf("Workload %s is not found as ReplicationController", controllerName)
 				cnFound = false
 			}
-		case kubernetes.DeploymentConfigs.String():
+		case kubernetes.DeploymentConfigs:
 			found := false
 			iFound := -1
 			for i, dc := range depcon {
@@ -1219,7 +1219,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 				log.Errorf("Workload %s is not found as DeploymentConfig", controllerName)
 				cnFound = false
 			}
-		case kubernetes.StatefulSets.String():
+		case kubernetes.StatefulSets:
 			found := false
 			iFound := -1
 			for i, fs := range fulset {
@@ -1237,7 +1237,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 				log.Errorf("Workload %s is not found as StatefulSet", controllerName)
 				cnFound = false
 			}
-		case kubernetes.Pods.String():
+		case kubernetes.Pods:
 			found := false
 			iFound := -1
 			for i, pod := range pods {
@@ -1254,7 +1254,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 				log.Errorf("Workload %s is not found as Pod", controllerName)
 				cnFound = false
 			}
-		case kubernetes.Jobs.String():
+		case kubernetes.Jobs:
 			found := false
 			iFound := -1
 			for i, jb := range jbs {
@@ -1272,7 +1272,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 				log.Errorf("Workload %s is not found as Job", controllerName)
 				cnFound = false
 			}
-		case kubernetes.CronJobs.String():
+		case kubernetes.CronJobs:
 			found := false
 			iFound := -1
 			for i, cjb := range conjbs {
@@ -1290,7 +1290,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 				log.Warningf("Workload %s is not found as CronJob (CronJob could be deleted but children are still in the namespace)", controllerName)
 				cnFound = false
 			}
-		case kubernetes.DaemonSets.String():
+		case kubernetes.DaemonSets:
 			found := false
 			iFound := -1
 			for i, ds := range daeset {
@@ -1398,7 +1398,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 		defer wg.Done()
 		var err error
 
-		if criteria.WorkloadGVK.Kind != "" && criteria.WorkloadGVK.String() != kubernetes.Deployments.String() {
+		if criteria.WorkloadGVK.Kind != "" && criteria.WorkloadGVK != kubernetes.Deployments {
 			return
 		}
 		dep, err = kialiCache.GetDeployment(criteria.Namespace, criteria.WorkloadName)
@@ -1416,7 +1416,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 	go func() {
 		defer wg.Done()
 
-		if criteria.WorkloadGVK.Kind != "" && criteria.WorkloadGVK.String() != kubernetes.ReplicaSets.String() && knownWorkloadType {
+		if criteria.WorkloadGVK.Kind != "" && criteria.WorkloadGVK != kubernetes.ReplicaSets && knownWorkloadType {
 			return
 		}
 		var err error
@@ -1431,7 +1431,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 	go func() {
 		defer wg.Done()
 
-		if criteria.WorkloadGVK.Kind != "" && criteria.WorkloadGVK.String() != kubernetes.ReplicationControllers.String() {
+		if criteria.WorkloadGVK.Kind != "" && criteria.WorkloadGVK != kubernetes.ReplicationControllers {
 			return
 		}
 
@@ -1450,7 +1450,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 	go func() {
 		defer wg.Done()
 
-		if criteria.WorkloadGVK.Kind != "" && criteria.WorkloadGVK.String() != kubernetes.DeploymentConfigs.String() {
+		if criteria.WorkloadGVK.Kind != "" && criteria.WorkloadGVK != kubernetes.DeploymentConfigs {
 			return
 		}
 
@@ -1468,7 +1468,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 	go func() {
 		defer wg.Done()
 
-		if criteria.WorkloadGVK.Kind != "" && criteria.WorkloadGVK.String() != kubernetes.StatefulSets.String() {
+		if criteria.WorkloadGVK.Kind != "" && criteria.WorkloadGVK != kubernetes.StatefulSets {
 			return
 		}
 
@@ -1485,7 +1485,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 	go func() {
 		defer wg.Done()
 
-		if criteria.WorkloadGVK.Kind != "" && criteria.WorkloadGVK.String() != kubernetes.CronJobs.String() {
+		if criteria.WorkloadGVK.Kind != "" && criteria.WorkloadGVK != kubernetes.CronJobs {
 			return
 		}
 
@@ -1504,7 +1504,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 	go func() {
 		defer wg.Done()
 
-		if criteria.WorkloadGVK.Kind != "" && criteria.WorkloadGVK.String() != kubernetes.Jobs.String() {
+		if criteria.WorkloadGVK.Kind != "" && criteria.WorkloadGVK != kubernetes.Jobs {
 			return
 		}
 
@@ -1523,7 +1523,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 	go func() {
 		defer wg.Done()
 
-		if criteria.WorkloadGVK.Kind != "" && criteria.WorkloadGVK.String() != kubernetes.DaemonSets.String() {
+		if criteria.WorkloadGVK.Kind != "" && criteria.WorkloadGVK != kubernetes.DaemonSets {
 			return
 		}
 
@@ -1558,7 +1558,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 					if _, exist := controllers[ref.Name]; !exist {
 						controllers[ref.Name] = refGV.WithKind(ref.Kind)
 					} else {
-						if controllers[ref.Name].String() != refGV.WithKind(ref.Kind).String() {
+						if controllers[ref.Name] != refGV.WithKind(ref.Kind) {
 							controllers[ref.Name] = refGV.WithKind(controllerPriority(controllers[ref.Name].String(), ref.Kind))
 						}
 					}
@@ -1576,7 +1576,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 	// Resolve ReplicationControllers from DeploymentConfigs
 	// Resolve Jobs from CronJobs
 	for controllerName, controllerGVK := range controllers {
-		if controllerGVK.String() == kubernetes.ReplicaSets.String() {
+		if controllerGVK == kubernetes.ReplicaSets {
 			found := false
 			iFound := -1
 			for i, rs := range repset {
@@ -1604,7 +1604,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 								log.Debugf("Use ReplicaSet as workload for custom controller [%s][%s]", ref.Name, ref.Kind)
 							}
 						} else {
-							if controllers[ref.Name].String() != refGV.WithKind(ref.Kind).String() {
+							if controllers[ref.Name] != refGV.WithKind(ref.Kind) {
 								controllers[ref.Name] = refGV.WithKind(controllerPriority(controllers[ref.Name].Kind, ref.Kind))
 							}
 							delete(controllers, controllerName)
@@ -1613,7 +1613,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 				}
 			}
 		}
-		if controllerGVK.String() == kubernetes.ReplicationControllers.String() {
+		if controllerGVK == kubernetes.ReplicationControllers {
 			found := false
 			iFound := -1
 			for i, rc := range repcon {
@@ -1635,7 +1635,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 						if _, exist := controllers[ref.Name]; !exist {
 							controllers[ref.Name] = refGV.WithKind(ref.Kind)
 						} else {
-							if controllers[ref.Name].String() != refGV.WithKind(ref.Kind).String() {
+							if controllers[ref.Name] != refGV.WithKind(ref.Kind) {
 								controllers[ref.Name] = refGV.WithKind(controllerPriority(controllers[ref.Name].String(), ref.Kind))
 							}
 						}
@@ -1644,7 +1644,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 				}
 			}
 		}
-		if controllerGVK.String() == kubernetes.Jobs.String() {
+		if controllerGVK == kubernetes.Jobs {
 			found := false
 			iFound := -1
 			for i, jb := range jbs {
@@ -1666,7 +1666,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 						if _, exist := controllers[ref.Name]; !exist {
 							controllers[ref.Name] = refGV.WithKind(ref.Kind)
 						} else {
-							if controllers[ref.Name].String() != refGV.WithKind(ref.Kind).String() {
+							if controllers[ref.Name] != refGV.WithKind(ref.Kind) {
 								controllers[ref.Name] = refGV.WithKind(controllerPriority(controllers[ref.Name].String(), ref.Kind))
 							}
 						}
@@ -1743,14 +1743,14 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 		// see https://github.com/kiali/kiali/issues/3830
 		discoveredControllerGVK := controllers[criteria.WorkloadName]
 		controllerGVK := discoveredControllerGVK
-		if criteria.WorkloadGVK.Kind != "" && discoveredControllerGVK.String() != criteria.WorkloadGVK.String() {
+		if criteria.WorkloadGVK.Kind != "" && discoveredControllerGVK != criteria.WorkloadGVK {
 			controllerGVK = criteria.WorkloadGVK
 		}
 
 		// Handle the known types...
 		cnFound := true
-		switch controllerGVK.String() {
-		case kubernetes.Deployments.String():
+		switch controllerGVK {
+		case kubernetes.Deployments:
 			if dep != nil && dep.Name == criteria.WorkloadName {
 				selector := labels.Set(dep.Spec.Template.Labels).AsSelector()
 				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods))
@@ -1759,7 +1759,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 				log.Errorf("Workload %s is not found as Deployment", criteria.WorkloadName)
 				cnFound = false
 			}
-		case kubernetes.ReplicaSets.String():
+		case kubernetes.ReplicaSets:
 			found := false
 			iFound := -1
 			for i, rs := range repset {
@@ -1777,7 +1777,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 				log.Errorf("Workload %s is not found as ReplicaSet", criteria.WorkloadName)
 				cnFound = false
 			}
-		case kubernetes.ReplicationControllers.String():
+		case kubernetes.ReplicationControllers:
 			found := false
 			iFound := -1
 			for i, rc := range repcon {
@@ -1795,7 +1795,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 				log.Errorf("Workload %s is not found as ReplicationController", criteria.WorkloadName)
 				cnFound = false
 			}
-		case kubernetes.DeploymentConfigs.String():
+		case kubernetes.DeploymentConfigs:
 			if depcon != nil && depcon.Name == criteria.WorkloadName {
 				selector := labels.Set(depcon.Spec.Template.Labels).AsSelector()
 				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods))
@@ -1804,7 +1804,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 				log.Errorf("Workload %s is not found as DeploymentConfig", criteria.WorkloadName)
 				cnFound = false
 			}
-		case kubernetes.StatefulSets.String():
+		case kubernetes.StatefulSets:
 			if fulset != nil && fulset.Name == criteria.WorkloadName {
 				selector := labels.Set(fulset.Spec.Template.Labels).AsSelector()
 				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods))
@@ -1813,7 +1813,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 				log.Errorf("Workload %s is not found as StatefulSet", criteria.WorkloadName)
 				cnFound = false
 			}
-		case kubernetes.Pods.String():
+		case kubernetes.Pods:
 			found := false
 			iFound := -1
 			for i, pod := range pods {
@@ -1830,7 +1830,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 				log.Errorf("Workload %s is not found as Pod", criteria.WorkloadName)
 				cnFound = false
 			}
-		case kubernetes.Jobs.String():
+		case kubernetes.Jobs:
 			found := false
 			iFound := -1
 			for i, jb := range jbs {
@@ -1848,7 +1848,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 				log.Errorf("Workload %s is not found as Job", criteria.WorkloadName)
 				cnFound = false
 			}
-		case kubernetes.CronJobs.String():
+		case kubernetes.CronJobs:
 			found := false
 			iFound := -1
 			for i, cjb := range conjbs {
@@ -1866,7 +1866,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 				log.Warningf("Workload %s is not found as CronJob (CronJob could be deleted but children are still in the namespace)", criteria.WorkloadName)
 				cnFound = false
 			}
-		case kubernetes.DaemonSets.String():
+		case kubernetes.DaemonSets:
 			if ds != nil && ds.Name == criteria.WorkloadName {
 				selector := labels.Set(ds.Spec.Template.Labels).AsSelector()
 				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods))

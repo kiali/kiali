@@ -460,27 +460,27 @@ func (in *K8SClient) UpdateWorkload(namespace string, workloadName string, workl
 	emptyPatchOptions := meta_v1.PatchOptions{}
 	bytePatch := []byte(jsonPatch)
 	var err error
-	switch workloadGVK.String() {
-	case Deployments.String():
+	switch workloadGVK {
+	case Deployments:
 		_, err = in.k8s.AppsV1().Deployments(namespace).Patch(in.ctx, workloadName, GetPatchType(patchType), bytePatch, emptyPatchOptions)
-	case ReplicaSets.String():
+	case ReplicaSets:
 		_, err = in.k8s.AppsV1().ReplicaSets(namespace).Patch(in.ctx, workloadName, GetPatchType(patchType), bytePatch, emptyPatchOptions)
-	case ReplicationControllers.String():
+	case ReplicationControllers:
 		_, err = in.k8s.CoreV1().ReplicationControllers(namespace).Patch(in.ctx, workloadName, GetPatchType(patchType), bytePatch, emptyPatchOptions)
-	case DeploymentConfigs.String():
+	case DeploymentConfigs:
 		if in.IsOpenShift() {
 			result := &osapps_v1.DeploymentConfigList{}
 			err = in.k8s.Discovery().RESTClient().Patch(GetPatchType(patchType)).Prefix("apis", "apps.openshift.io", "v1").Namespace(namespace).Resource("deploymentconfigs").SubResource(workloadName).Body(bytePatch).Do(in.ctx).Into(result)
 		}
-	case StatefulSets.String():
+	case StatefulSets:
 		_, err = in.k8s.AppsV1().StatefulSets(namespace).Patch(in.ctx, workloadName, GetPatchType(patchType), bytePatch, emptyPatchOptions)
-	case Jobs.String():
+	case Jobs:
 		_, err = in.k8s.BatchV1().Jobs(namespace).Patch(in.ctx, workloadName, GetPatchType(patchType), bytePatch, emptyPatchOptions)
-	case CronJobs.String():
+	case CronJobs:
 		_, err = in.k8s.BatchV1().CronJobs(namespace).Patch(in.ctx, workloadName, GetPatchType(patchType), bytePatch, emptyPatchOptions)
-	case Pods.String():
+	case Pods:
 		_, err = in.k8s.CoreV1().Pods(namespace).Patch(in.ctx, workloadName, GetPatchType(patchType), bytePatch, emptyPatchOptions)
-	case DaemonSets.String():
+	case DaemonSets:
 		_, err = in.k8s.AppsV1().DaemonSets(namespace).Patch(in.ctx, workloadName, GetPatchType(patchType), bytePatch, emptyPatchOptions)
 	default:
 		err = fmt.Errorf("Workload type %s not found", workloadGVK.String())

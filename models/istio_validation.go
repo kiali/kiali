@@ -381,7 +381,7 @@ func (iv IstioValidations) FilterBySingleType(objectGVK schema.GroupVersionKind,
 	fiv := IstioValidations{}
 	for k, v := range iv {
 		// We don't want to filter other types
-		if k.ObjectGVK.String() != objectGVK.String() {
+		if k.ObjectGVK != objectGVK {
 			fiv[k] = v
 		} else {
 			// But for this exact type we're strict
@@ -397,7 +397,7 @@ func (iv IstioValidations) FilterBySingleType(objectGVK schema.GroupVersionKind,
 func (iv IstioValidations) FilterByKey(objectGVK schema.GroupVersionKind, name string) IstioValidations {
 	fiv := IstioValidations{}
 	for k, v := range iv {
-		if k.Name == name && k.ObjectGVK.String() == objectGVK.String() {
+		if k.Name == name && k.ObjectGVK == objectGVK {
 			fiv[k] = v
 		}
 	}

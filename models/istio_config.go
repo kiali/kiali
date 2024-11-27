@@ -363,134 +363,134 @@ func (icd *IstioConfigDetails) UnmarshalJSON(data []byte) error {
 	icd.IstioConfigHelpFields = temp.IstioConfigHelpFields
 
 	// Based on the GVK, determine which resource type to unmarshal the resource into
-	switch temp.ObjectGVK.String() {
-	case kubernetes.AuthorizationPolicies.String():
+	switch temp.ObjectGVK {
+	case kubernetes.AuthorizationPolicies:
 		var ap security_v1.AuthorizationPolicy
 		if err := json.Unmarshal(temp.Resource, &ap); err != nil {
 			return err
 		}
 		icd.AuthorizationPolicy = &ap
 
-	case kubernetes.DestinationRules.String():
+	case kubernetes.DestinationRules:
 		var dr networking_v1.DestinationRule
 		if err := json.Unmarshal(temp.Resource, &dr); err != nil {
 			return err
 		}
 		icd.DestinationRule = &dr
 
-	case kubernetes.EnvoyFilters.String():
+	case kubernetes.EnvoyFilters:
 		var ef networking_v1alpha3.EnvoyFilter
 		if err := json.Unmarshal(temp.Resource, &ef); err != nil {
 			return err
 		}
 		icd.EnvoyFilter = &ef
 
-	case kubernetes.Gateways.String():
+	case kubernetes.Gateways:
 		var gw networking_v1.Gateway
 		if err := json.Unmarshal(temp.Resource, &gw); err != nil {
 			return err
 		}
 		icd.Gateway = &gw
 
-	case kubernetes.PeerAuthentications.String():
+	case kubernetes.PeerAuthentications:
 		var pa security_v1.PeerAuthentication
 		if err := json.Unmarshal(temp.Resource, &pa); err != nil {
 			return err
 		}
 		icd.PeerAuthentication = &pa
 
-	case kubernetes.RequestAuthentications.String():
+	case kubernetes.RequestAuthentications:
 		var ra security_v1.RequestAuthentication
 		if err := json.Unmarshal(temp.Resource, &ra); err != nil {
 			return err
 		}
 		icd.RequestAuthentication = &ra
 
-	case kubernetes.ServiceEntries.String():
+	case kubernetes.ServiceEntries:
 		var se networking_v1.ServiceEntry
 		if err := json.Unmarshal(temp.Resource, &se); err != nil {
 			return err
 		}
 		icd.ServiceEntry = &se
 
-	case kubernetes.Sidecars.String():
+	case kubernetes.Sidecars:
 		var sc networking_v1.Sidecar
 		if err := json.Unmarshal(temp.Resource, &sc); err != nil {
 			return err
 		}
 		icd.Sidecar = &sc
 
-	case kubernetes.VirtualServices.String():
+	case kubernetes.VirtualServices:
 		var vs networking_v1.VirtualService
 		if err := json.Unmarshal(temp.Resource, &vs); err != nil {
 			return err
 		}
 		icd.VirtualService = &vs
 
-	case kubernetes.WorkloadEntries.String():
+	case kubernetes.WorkloadEntries:
 		var we networking_v1.WorkloadEntry
 		if err := json.Unmarshal(temp.Resource, &we); err != nil {
 			return err
 		}
 		icd.WorkloadEntry = &we
 
-	case kubernetes.WorkloadGroups.String():
+	case kubernetes.WorkloadGroups:
 		var wg networking_v1.WorkloadGroup
 		if err := json.Unmarshal(temp.Resource, &wg); err != nil {
 			return err
 		}
 		icd.WorkloadGroup = &wg
 
-	case kubernetes.WasmPlugins.String():
+	case kubernetes.WasmPlugins:
 		var wp extentions_v1alpha1.WasmPlugin
 		if err := json.Unmarshal(temp.Resource, &wp); err != nil {
 			return err
 		}
 		icd.WasmPlugin = &wp
 
-	case kubernetes.Telemetries.String():
+	case kubernetes.Telemetries:
 		var tm telemetry_v1.Telemetry
 		if err := json.Unmarshal(temp.Resource, &tm); err != nil {
 			return err
 		}
 		icd.Telemetry = &tm
 
-	case kubernetes.K8sGateways.String():
+	case kubernetes.K8sGateways:
 		var kg k8s_networking_v1.Gateway
 		if err := json.Unmarshal(temp.Resource, &kg); err != nil {
 			return err
 		}
 		icd.K8sGateway = &kg
 
-	case kubernetes.K8sGRPCRoutes.String():
+	case kubernetes.K8sGRPCRoutes:
 		var grpcRoute k8s_networking_v1.GRPCRoute
 		if err := json.Unmarshal(temp.Resource, &grpcRoute); err != nil {
 			return err
 		}
 		icd.K8sGRPCRoute = &grpcRoute
 
-	case kubernetes.K8sHTTPRoutes.String():
+	case kubernetes.K8sHTTPRoutes:
 		var httpRoute k8s_networking_v1.HTTPRoute
 		if err := json.Unmarshal(temp.Resource, &httpRoute); err != nil {
 			return err
 		}
 		icd.K8sHTTPRoute = &httpRoute
 
-	case kubernetes.K8sReferenceGrants.String():
+	case kubernetes.K8sReferenceGrants:
 		var refGrant k8s_networking_v1beta1.ReferenceGrant
 		if err := json.Unmarshal(temp.Resource, &refGrant); err != nil {
 			return err
 		}
 		icd.K8sReferenceGrant = &refGrant
 
-	case kubernetes.K8sTCPRoutes.String():
+	case kubernetes.K8sTCPRoutes:
 		var tcpRoute k8s_networking_v1alpha2.TCPRoute
 		if err := json.Unmarshal(temp.Resource, &tcpRoute); err != nil {
 			return err
 		}
 		icd.K8sTCPRoute = &tcpRoute
 
-	case kubernetes.K8sTLSRoutes.String():
+	case kubernetes.K8sTLSRoutes:
 		var tlsRoute k8s_networking_v1alpha2.TLSRoute
 		if err := json.Unmarshal(temp.Resource, &tlsRoute); err != nil {
 			return err
