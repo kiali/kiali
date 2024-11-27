@@ -2,6 +2,7 @@ package store
 
 import (
 	"container/list"
+
 	"github.com/kiali/kiali/log"
 )
 
