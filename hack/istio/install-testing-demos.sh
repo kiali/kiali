@@ -121,32 +121,12 @@ if [ "${DELETE_DEMOS}" != "true" ]; then
     AMBIENT_ARGS_ERROR_RATES="-ei false"
   fi
 
-  # Installed demos should be the exact same for both environments.
-  # Only the args passed to the scripts differ from each other.
-  if [ "${IS_OPENSHIFT}" == "true" ]; then
-    echo "Deploying bookinfo demo ..."
-    "${SCRIPT_DIR}/install-bookinfo-demo.sh" -tg -in ${ISTIO_NAMESPACE} -a ${ARCH} ${AMBIENT_ARGS_BOOKINFO}
-    # Install just bookinfo for now for Ambient
-    if [ "${AMBIENT_ENABLED}" != "true" ]; then
-      echo "Deploying error rates demo ..."
-      "${SCRIPT_DIR}/install-error-rates-demo.sh" -in ${ISTIO_NAMESPACE} -a ${ARCH} ${AMBIENT_ARGS_ERROR_RATES}
-    fi
-    echo "Deploying sleep demo ..."
-    "${SCRIPT_DIR}/install-sleep-demo.sh" -in ${ISTIO_NAMESPACE} -a ${ARCH} ${AMBIENT_ARGS_BOOKINFO}
-  elif [ "${AMBIENT_ENABLED}" == "true" ]; then
-    echo "Deploying bookinfo demo..."
-    "${SCRIPT_DIR}/install-bookinfo-demo.sh" -c kubectl -mp ${MINIKUBE_PROFILE} -tg ${AMBIENT_ARGS_BOOKINFO}
-    "${ISTIO_DIR}/bin/istioctl" waypoint apply -n bookinfo
-
-    echo "Deploying sleep demo ..."
-    "${SCRIPT_DIR}/install-sleep-demo.sh" -c kubectl -in ${ISTIO_NAMESPACE} -a ${ARCH} ${AMBIENT_ARGS_BOOKINFO}
-  else
-    gateway_yaml=""
-    if [ "${USE_GATEWAY_API}" == "true" ]; then
-      gateway_yaml="${ISTIO_DIR}/samples/bookinfo/gateway-api/bookinfo-gateway.yaml"
-    elif [ -v GATEWAY_HOST ]; then
-      gateway_yaml=$(mktemp)
-      cat << EOF > "${gateway_yaml}"
+  gateway_yaml=""
+  if [ "${USE_GATEWAY_API}" == "true" ]; then
+    gateway_yaml="${ISTIO_DIR}/samples/bookinfo/gateway-api/bookinfo-gateway.yaml"
+  elif [ -v GATEWAY_HOST ]; then
+    gateway_yaml=$(mktemp)
+    cat << EOF > "${gateway_yaml}"
 apiVersion: networking.istio.io/v1
 kind: Gateway
 metadata:
@@ -189,7 +169,27 @@ spec:
         port:
           number: 9080
 EOF
+  fi
+  # Installed demos should be the exact same for both environments.
+  # Only the args passed to the scripts differ from each other.
+  if [ "${IS_OPENSHIFT}" == "true" ]; then
+    echo "Deploying bookinfo demo ..."
+    "${SCRIPT_DIR}/install-bookinfo-demo.sh" -tg -in ${ISTIO_NAMESPACE} -a ${ARCH} ${gateway_yaml:+-g ${gateway_yaml}} ${AMBIENT_ARGS_BOOKINFO}
+    # Install just bookinfo for now for Ambient
+    if [ "${AMBIENT_ENABLED}" != "true" ]; then
+      echo "Deploying error rates demo ..."
+      "${SCRIPT_DIR}/install-error-rates-demo.sh" -in ${ISTIO_NAMESPACE} -a ${ARCH} ${AMBIENT_ARGS_ERROR_RATES}
     fi
+    echo "Deploying sleep demo ..."
+    "${SCRIPT_DIR}/install-sleep-demo.sh" -in ${ISTIO_NAMESPACE} -a ${ARCH} ${AMBIENT_ARGS_BOOKINFO}
+  elif [ "${AMBIENT_ENABLED}" == "true" ]; then
+    echo "Deploying bookinfo demo..."
+    "${SCRIPT_DIR}/install-bookinfo-demo.sh" -c kubectl -mp ${MINIKUBE_PROFILE} -tg ${AMBIENT_ARGS_BOOKINFO}
+    "${ISTIO_DIR}/bin/istioctl" waypoint apply -n bookinfo
+
+    echo "Deploying sleep demo ..."
+    "${SCRIPT_DIR}/install-sleep-demo.sh" -c kubectl -in ${ISTIO_NAMESPACE} -a ${ARCH} ${AMBIENT_ARGS_BOOKINFO}
+  else
     echo "Deploying bookinfo demo..."
     "${SCRIPT_DIR}/install-bookinfo-demo.sh" -c kubectl -mp ${MINIKUBE_PROFILE} -tg -in ${ISTIO_NAMESPACE} -a ${ARCH} ${gateway_yaml:+-g ${gateway_yaml}} ${AMBIENT_ARGS_BOOKINFO}
 
