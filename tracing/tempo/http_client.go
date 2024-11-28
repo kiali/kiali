@@ -36,7 +36,7 @@ type OtelHTTPClient struct {
 }
 
 // New client
-func NewOtelClient(client http.Client, baseURL *url.URL) (otelClient *OtelHTTPClient, err error) {
+func NewOtelClient(ctx context.Context, client http.Client, baseURL *url.URL) (otelClient *OtelHTTPClient, err error) {
 	url := *baseURL
 
 	// Istio adds the istio.cluster_id tag
@@ -64,7 +64,7 @@ func NewOtelClient(client http.Client, baseURL *url.URL) (otelClient *OtelHTTPCl
 	if config.Get().ExternalServices.Tracing.TempoConfig.CacheEnabled {
 		s := store.New[string, *model.TracingSingleTrace]()
 		fifoStore := store.NewFIFOStore(s, config.Get().ExternalServices.Tracing.TempoConfig.CacheCapacity, "tempo")
-		otelHTTPClient.TempoCache = store.NewExpirationStore[string, *model.TracingSingleTrace](context.Background(), fifoStore, util.AsPtr(TTL), util.AsPtr(expirationCheckInterval))
+		otelHTTPClient.TempoCache = store.NewExpirationStore[string, *model.TracingSingleTrace](ctx, fifoStore, util.AsPtr(TTL), util.AsPtr(expirationCheckInterval))
 	}
 
 	return otelHTTPClient, nil
