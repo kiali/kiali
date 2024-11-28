@@ -177,6 +177,7 @@ export interface Pod {
   istioInitContainers?: ContainerInfo[];
   labels?: { [key: string]: string };
   name: string;
+  protocol?: string;
   proxyStatus?: ProxyStatus;
   serviceAccountName: string;
   status: string;

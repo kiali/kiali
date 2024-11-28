@@ -1,6 +1,7 @@
 package models
 
 import (
+	"encoding/json"
 	"strconv"
 	"time"
 
@@ -465,6 +466,30 @@ func (workload *Workload) SetPods(pods []core_v1.Pod) {
 	workload.Pods.Parse(pods)
 	workload.IstioSidecar = workload.HasIstioSidecar()
 	workload.IsAmbient = workload.HasIstioAmbient()
+}
+
+func (workload *Workload) AddPodsProtocol(k8s kubernetes.ClientInterface, ztunnelPods []core_v1.Pod) {
+
+	for _, pod := range workload.Pods {
+		for _, ztunnelPod := range ztunnelPods {
+			ecd, err3 := k8s.ForwardGetRequest(ztunnelPod.Namespace, ztunnelPod.Name, 15000, "/config_dump")
+			if err3 == nil {
+				var data map[string]interface{}
+				err4 := json.Unmarshal(ecd, &data)
+				if err4 == nil {
+					// TODO: Handle interface conversion errors
+					wks := data["workloads"].([]interface{})
+					for _, wk := range wks {
+						wkC := wk.(map[string]interface{})
+						if wkC["name"] == pod.Name {
+
+							pod.Protocol = wkC["protocol"].(string)
+						}
+					}
+				}
+			}
+		}
+	}
 }
 
 func (workload *Workload) SetServices(svcs *ServiceList) {
