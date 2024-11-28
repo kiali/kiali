@@ -2,6 +2,7 @@ package store
 
 import (
 	"container/list"
+	"sync"
 
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
@@ -10,9 +11,10 @@ import (
 // FIFOStore uses a FIFO approach storage and is safe for concurrent use.
 type FIFOStore[K comparable, V any] struct {
 	capacity int
+	lock     sync.RWMutex
 	name     string // Used for metrics
+	order    *list.List
 	Store[K, V]
-	order *list.List
 }
 
 func NewFIFOStore[K comparable, V any](store Store[K, V], capacity int, name string) *FIFOStore[K, V] {
@@ -43,20 +45,22 @@ func (f *FIFOStore[K, V]) Get(key K) (V, bool) {
 
 // Set
 func (f *FIFOStore[K, V]) Set(key K, value V) {
-	if _, exists := f.Store.Get(key); exists {
-		return
-	}
+	_, exists := f.Store.Get(key)
 
 	// Remove older
-	if f.order != nil && f.order.Len() >= f.capacity {
+	if f.order != nil && f.order.Len() >= f.capacity && !exists {
 		oldest := f.order.Front()
 		if oldest != nil {
+			f.lock.Lock()
 			f.order.Remove(oldest)
+			f.lock.Unlock()
 			f.Store.Remove(oldest.Value.(K))
 		}
 	}
 
+	f.lock.Lock()
 	f.order.PushBack(key)
+	f.lock.Unlock()
 	f.Store.Set(key, value)
 }
 
@@ -64,9 +68,29 @@ func (f *FIFOStore[K, V]) Set(key K, value V) {
 func (f *FIFOStore[K, V]) Remove(key K) {
 	for e := f.order.Front(); e != nil; e = e.Next() {
 		if e.Value == key {
+			f.lock.Lock()
 			f.order.Remove(e)
+			f.lock.Unlock()
 			break
 		}
 	}
 	f.Store.Remove(key)
+}
+
+// Replace replaces the contents of the store with the given map and updates the order list
+func (f *FIFOStore[K, V]) Replace(items map[K]V) {
+
+	f.Store.Replace(items)
+	if items == nil {
+		f.lock.Lock()
+		f.order = list.New()
+		f.lock.Unlock()
+		return
+	}
+
+	f.lock.Lock()
+	for key := range items {
+		f.order.PushBack(key)
+	}
+	f.lock.Unlock()
 }
