@@ -1,6 +1,7 @@
 package tempo
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -50,7 +51,7 @@ func TestGetTraces(t *testing.T) {
 		}
 	})}
 
-	tempoClient, err := NewOtelClient(httpClient, baseUrl)
+	tempoClient, err := NewOtelClient(context.TODO(), httpClient, baseUrl)
 	assert.Nil(t, err)
 	assert.NotNil(t, tempoClient)
 
@@ -89,7 +90,7 @@ func TestGetTrace(t *testing.T) {
 		}
 	})}
 
-	tempoClient, err := NewOtelClient(httpClient, baseUrl)
+	tempoClient, err := NewOtelClient(context.TODO(), httpClient, baseUrl)
 	assert.Nil(t, err)
 	assert.NotNil(t, tempoClient)
 
@@ -113,7 +114,7 @@ func TestErrorResponse(t *testing.T) {
 		}
 	})}
 
-	tempoClient, err := NewOtelClient(httpClient, baseUrl)
+	tempoClient, err := NewOtelClient(context.TODO(), httpClient, baseUrl)
 	assert.Nil(t, err)
 	assert.NotNil(t, tempoClient)
 
@@ -143,7 +144,7 @@ func TestQuery(t *testing.T) {
 		}
 	})}
 
-	tempoClient, err := NewOtelClient(httpClient, baseUrl)
+	tempoClient, err := NewOtelClient(context.TODO(), httpClient, baseUrl)
 	assert.Nil(t, err)
 	assert.NotNil(t, tempoClient)
 
