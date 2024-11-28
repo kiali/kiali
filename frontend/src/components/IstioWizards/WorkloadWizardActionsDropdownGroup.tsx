@@ -15,6 +15,8 @@ import { renderDisabledDropdownOption } from 'utils/DropdownUtils';
 import { MessageType } from 'types/MessageCenter';
 import { groupMenuStyle } from 'styles/DropdownStyles';
 import { t } from 'utils/I18nUtils';
+import { getGVKTypeString } from '../../utils/IstioConfigUtils';
+import { gvkType } from '../../types/IstioConfigList';
 
 type Props = {
   actionsLabel: boolean;
@@ -34,11 +36,11 @@ export const WorkloadWizardActionsDropdownGroup: React.FunctionComponent<Props> 
       case WIZARD_REMOVE_AUTO_INJECTION:
         const remove = key === WIZARD_REMOVE_AUTO_INJECTION;
         const enable = key === WIZARD_ENABLE_AUTO_INJECTION;
-        const jsonInjectionPatch = buildWorkloadInjectionPatch(props.workload.type, enable, remove);
+        const jsonInjectionPatch = buildWorkloadInjectionPatch(props.workload.gvk, enable, remove);
         API.updateWorkload(
           props.namespace,
           props.workload.name,
-          props.workload.type,
+          props.workload.gvk,
           jsonInjectionPatch,
           undefined,
           props.workload.cluster
@@ -139,7 +141,7 @@ export const WorkloadWizardActionsDropdownGroup: React.FunctionComponent<Props> 
   }
 
   // Annotations
-  if (props.annotations && props.workload.type === 'Deployment') {
+  if (props.annotations && getGVKTypeString(props.workload.gvk) === getGVKTypeString(gvkType.Deployment)) {
     const annotationsAction = (
       <DropdownItem
         data-test={WIZARD_EDIT_ANNOTATIONS}

@@ -26,7 +26,8 @@ func FakeDeployments(conf config.Config) []apps_v1.Deployment {
 	return []apps_v1.Deployment{
 		{
 			TypeMeta: meta_v1.TypeMeta{
-				Kind: "Deployment",
+				APIVersion: kubernetes.Deployments.GroupVersion().String(),
+				Kind:       kubernetes.Deployments.Kind,
 			},
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:              "httpbin-v1",
@@ -48,7 +49,8 @@ func FakeDeployments(conf config.Config) []apps_v1.Deployment {
 		},
 		{
 			TypeMeta: meta_v1.TypeMeta{
-				Kind: "Deployment",
+				APIVersion: kubernetes.Deployments.GroupVersion().String(),
+				Kind:       kubernetes.Deployments.Kind,
 			},
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:              "httpbin-v2",
@@ -70,7 +72,8 @@ func FakeDeployments(conf config.Config) []apps_v1.Deployment {
 		},
 		{
 			TypeMeta: meta_v1.TypeMeta{
-				Kind: "Deployment",
+				APIVersion: kubernetes.Deployments.GroupVersion().String(),
+				Kind:       kubernetes.Deployments.Kind,
 			},
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:              "httpbin-v3",
@@ -102,7 +105,8 @@ func FakeDuplicatedDeployments() []apps_v1.Deployment {
 	return []apps_v1.Deployment{
 		{
 			TypeMeta: meta_v1.TypeMeta{
-				Kind: "Deployment",
+				APIVersion: kubernetes.Deployments.GroupVersion().String(),
+				Kind:       kubernetes.Deployments.Kind,
 			},
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:              "duplicated-v1",
@@ -131,7 +135,8 @@ func FakeReplicaSets(conf config.Config) []apps_v1.ReplicaSet {
 	return []apps_v1.ReplicaSet{
 		{
 			TypeMeta: meta_v1.TypeMeta{
-				Kind: "ReplicaSet",
+				APIVersion: kubernetes.ReplicaSets.GroupVersion().String(),
+				Kind:       kubernetes.ReplicaSets.Kind,
 			},
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:              "httpbin-v1",
@@ -153,7 +158,8 @@ func FakeReplicaSets(conf config.Config) []apps_v1.ReplicaSet {
 		},
 		{
 			TypeMeta: meta_v1.TypeMeta{
-				Kind: "ReplicaSet",
+				APIVersion: kubernetes.ReplicaSets.GroupVersion().String(),
+				Kind:       kubernetes.ReplicaSets.Kind,
 			},
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:              "httpbin-v2",
@@ -175,7 +181,8 @@ func FakeReplicaSets(conf config.Config) []apps_v1.ReplicaSet {
 		},
 		{
 			TypeMeta: meta_v1.TypeMeta{
-				Kind: "ReplicaSet",
+				APIVersion: kubernetes.ReplicaSets.GroupVersion().String(),
+				Kind:       kubernetes.ReplicaSets.Kind,
 			},
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:              "httpbin-v3",
@@ -208,7 +215,8 @@ func FakeDuplicatedReplicaSets() []apps_v1.ReplicaSet {
 	return []apps_v1.ReplicaSet{
 		{
 			TypeMeta: meta_v1.TypeMeta{
-				Kind: "ReplicaSet",
+				APIVersion: kubernetes.ReplicaSets.GroupVersion().String(),
+				Kind:       kubernetes.ReplicaSets.Kind,
 			},
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name: "duplicated-v1-12345",
@@ -216,7 +224,8 @@ func FakeDuplicatedReplicaSets() []apps_v1.ReplicaSet {
 				CreationTimestamp: meta_v1.NewTime(t1),
 				OwnerReferences: []meta_v1.OwnerReference{{
 					Controller: &controller,
-					Kind:       "Deployment",
+					APIVersion: kubernetes.Deployments.GroupVersion().String(),
+					Kind:       kubernetes.Deployments.Kind,
 					Name:       "duplicated-v1",
 				}},
 			},
@@ -247,7 +256,8 @@ func FakeReplicationControllers() []core_v1.ReplicationController {
 	return []core_v1.ReplicationController{
 		{
 			TypeMeta: meta_v1.TypeMeta{
-				Kind: "ReplicationController",
+				APIVersion: kubernetes.ReplicationControllers.GroupVersion().String(),
+				Kind:       kubernetes.ReplicationControllers.Kind,
 			},
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:              "httpbin-v1",
@@ -269,7 +279,8 @@ func FakeReplicationControllers() []core_v1.ReplicationController {
 		},
 		{
 			TypeMeta: meta_v1.TypeMeta{
-				Kind: "ReplicationController",
+				APIVersion: kubernetes.ReplicationControllers.GroupVersion().String(),
+				Kind:       kubernetes.ReplicationControllers.Kind,
 			},
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:              "httpbin-v2",
@@ -291,7 +302,8 @@ func FakeReplicationControllers() []core_v1.ReplicationController {
 		},
 		{
 			TypeMeta: meta_v1.TypeMeta{
-				Kind: "ReplicationController",
+				APIVersion: kubernetes.ReplicationControllers.GroupVersion().String(),
+				Kind:       kubernetes.ReplicationControllers.Kind,
 			},
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:              "httpbin-v3",
@@ -324,7 +336,8 @@ func FakeDeploymentConfigs() []osapps_v1.DeploymentConfig {
 	return []osapps_v1.DeploymentConfig{
 		{
 			TypeMeta: meta_v1.TypeMeta{
-				Kind: "DeploymentConfig",
+				APIVersion: kubernetes.DeploymentConfigs.GroupVersion().String(),
+				Kind:       kubernetes.DeploymentConfigs.Kind,
 			},
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:              "httpbin-v1",
@@ -346,7 +359,8 @@ func FakeDeploymentConfigs() []osapps_v1.DeploymentConfig {
 		},
 		{
 			TypeMeta: meta_v1.TypeMeta{
-				Kind: "DeploymentConfig",
+				APIVersion: kubernetes.DeploymentConfigs.GroupVersion().String(),
+				Kind:       kubernetes.DeploymentConfigs.Kind,
 			},
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:              "httpbin-v2",
@@ -368,7 +382,8 @@ func FakeDeploymentConfigs() []osapps_v1.DeploymentConfig {
 		},
 		{
 			TypeMeta: meta_v1.TypeMeta{
-				Kind: "DeploymentConfig",
+				APIVersion: kubernetes.DeploymentConfigs.GroupVersion().String(),
+				Kind:       kubernetes.DeploymentConfigs.Kind,
 			},
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:              "httpbin-v3",
@@ -401,7 +416,8 @@ func FakeStatefulSets() []apps_v1.StatefulSet {
 	return []apps_v1.StatefulSet{
 		{
 			TypeMeta: meta_v1.TypeMeta{
-				Kind: "StatefulSet",
+				APIVersion: kubernetes.StatefulSets.GroupVersion().String(),
+				Kind:       kubernetes.StatefulSets.Kind,
 			},
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:              "httpbin-v1",
@@ -422,7 +438,8 @@ func FakeStatefulSets() []apps_v1.StatefulSet {
 		},
 		{
 			TypeMeta: meta_v1.TypeMeta{
-				Kind: "StatefulSet",
+				APIVersion: kubernetes.StatefulSets.GroupVersion().String(),
+				Kind:       kubernetes.StatefulSets.Kind,
 			},
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:              "httpbin-v2",
@@ -443,7 +460,8 @@ func FakeStatefulSets() []apps_v1.StatefulSet {
 		},
 		{
 			TypeMeta: meta_v1.TypeMeta{
-				Kind: "StatefulSet",
+				APIVersion: kubernetes.StatefulSets.GroupVersion().String(),
+				Kind:       kubernetes.StatefulSets.Kind,
 			},
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:              "httpbin-v3",
@@ -475,7 +493,8 @@ func FakeDaemonSets() []apps_v1.DaemonSet {
 	return []apps_v1.DaemonSet{
 		{
 			TypeMeta: meta_v1.TypeMeta{
-				Kind: "DaemonSet",
+				APIVersion: kubernetes.DaemonSets.GroupVersion().String(),
+				Kind:       kubernetes.DaemonSets.Kind,
 			},
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:              "httpbin-v1",
@@ -497,7 +516,8 @@ func FakeDaemonSets() []apps_v1.DaemonSet {
 		},
 		{
 			TypeMeta: meta_v1.TypeMeta{
-				Kind: "DaemonSet",
+				APIVersion: kubernetes.DaemonSets.GroupVersion().String(),
+				Kind:       kubernetes.DaemonSets.Kind,
 			},
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:              "httpbin-v2",
@@ -519,7 +539,8 @@ func FakeDaemonSets() []apps_v1.DaemonSet {
 		},
 		{
 			TypeMeta: meta_v1.TypeMeta{
-				Kind: "DaemonSet",
+				APIVersion: kubernetes.DaemonSets.GroupVersion().String(),
+				Kind:       kubernetes.DaemonSets.Kind,
 			},
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:              "httpbin-v3",
@@ -551,7 +572,8 @@ func FakeDuplicatedStatefulSets() []apps_v1.StatefulSet {
 	return []apps_v1.StatefulSet{
 		{
 			TypeMeta: meta_v1.TypeMeta{
-				Kind: "StatefulSet",
+				APIVersion: kubernetes.StatefulSets.GroupVersion().String(),
+				Kind:       kubernetes.StatefulSets.Kind,
 			},
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:              "duplicated-v1",
@@ -582,7 +604,8 @@ func FakeDepSyncedWithRS() []apps_v1.Deployment {
 	return []apps_v1.Deployment{
 		{
 			TypeMeta: meta_v1.TypeMeta{
-				Kind: "Deployment",
+				APIVersion: kubernetes.Deployments.GroupVersion().String(),
+				Kind:       kubernetes.Deployments.Kind,
 			},
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:              "details-v1",
@@ -615,7 +638,8 @@ func FakeRSSyncedWithPods() []apps_v1.ReplicaSet {
 	return []apps_v1.ReplicaSet{
 		{
 			TypeMeta: meta_v1.TypeMeta{
-				Kind: "ReplicaSet",
+				APIVersion: kubernetes.ReplicaSets.GroupVersion().String(),
+				Kind:       kubernetes.ReplicaSets.Kind,
 			},
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:              "details-v1-3618568057",
@@ -623,7 +647,8 @@ func FakeRSSyncedWithPods() []apps_v1.ReplicaSet {
 				CreationTimestamp: meta_v1.NewTime(t1),
 				OwnerReferences: []meta_v1.OwnerReference{{
 					Controller: &controller,
-					Kind:       "Deployment",
+					APIVersion: kubernetes.Deployments.GroupVersion().String(),
+					Kind:       kubernetes.Deployments.Kind,
 					Name:       "details-v1",
 				}},
 			},
@@ -659,7 +684,8 @@ func FakePodsSyncedWithDeployments() []core_v1.Pod {
 				Labels:            map[string]string{appLabel: "httpbin", versionLabel: "v1"},
 				OwnerReferences: []meta_v1.OwnerReference{{
 					Controller: &controller,
-					Kind:       "ReplicaSet",
+					APIVersion: kubernetes.ReplicaSets.GroupVersion().String(),
+					Kind:       kubernetes.ReplicaSets.Kind,
 					Name:       "details-v1-3618568057",
 				}},
 				Annotations: kubetest.FakeIstioAnnotations(),
@@ -693,7 +719,8 @@ func FakePodSyncedWithDeployments() *core_v1.Pod {
 			Labels:            map[string]string{appLabel: "httpbin", versionLabel: "v1"},
 			OwnerReferences: []meta_v1.OwnerReference{{
 				Controller: &controller,
-				Kind:       "ReplicaSet",
+				APIVersion: kubernetes.ReplicaSets.GroupVersion().String(),
+				Kind:       kubernetes.ReplicaSets.Kind,
 				Name:       "details-v1-3618568057",
 			}},
 			Annotations: kubetest.FakeIstioAnnotations(),
@@ -752,7 +779,8 @@ func FakePodsSyncedWithDuplicated() []core_v1.Pod {
 				Labels:            map[string]string{appLabel: "duplicated", versionLabel: "v1"},
 				OwnerReferences: []meta_v1.OwnerReference{{
 					Controller: &controller,
-					Kind:       "StatefulSet",
+					APIVersion: kubernetes.StatefulSets.GroupVersion().String(),
+					Kind:       kubernetes.StatefulSets.Kind,
 					Name:       "duplicated-v1",
 				}},
 				Annotations: kubetest.FakeIstioAnnotations(),
@@ -776,7 +804,8 @@ func FakePodsSyncedWithDuplicated() []core_v1.Pod {
 				Labels:            map[string]string{appLabel: "duplicated", versionLabel: "v1"},
 				OwnerReferences: []meta_v1.OwnerReference{{
 					Controller: &controller,
-					Kind:       "StatefulSet",
+					APIVersion: kubernetes.StatefulSets.GroupVersion().String(),
+					Kind:       kubernetes.StatefulSets.Kind,
 					Name:       "duplicated-v1",
 				}},
 				Annotations: kubetest.FakeIstioAnnotations(),
@@ -805,7 +834,8 @@ func FakePodsNoController() []core_v1.Pod {
 	return []core_v1.Pod{
 		{
 			TypeMeta: meta_v1.TypeMeta{
-				Kind: "Pod",
+				APIVersion: kubernetes.Pods.GroupVersion().String(),
+				Kind:       kubernetes.Pods.Kind,
 			},
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:              "orphan-pod",
@@ -844,7 +874,8 @@ func FakePodsFromCustomController() []core_v1.Pod {
 				Labels:            map[string]string{appLabel: "httpbin", versionLabel: "v1"},
 				OwnerReferences: []meta_v1.OwnerReference{{
 					Controller: &controller,
-					Kind:       "ReplicaSet",
+					APIVersion: kubernetes.ReplicaSets.GroupVersion().String(),
+					Kind:       kubernetes.ReplicaSets.Kind,
 					Name:       "custom-controller-RS-123",
 				}},
 				Annotations: kubetest.FakeIstioAnnotations(),
@@ -879,7 +910,8 @@ func FakeZtunnelPods() []core_v1.Pod {
 				Labels:            map[string]string{appLabel: "ztunnel", versionLabel: "v1"},
 				OwnerReferences: []meta_v1.OwnerReference{{
 					Controller: &controller,
-					Kind:       "ReplicaSet",
+					APIVersion: kubernetes.ReplicaSets.GroupVersion().String(),
+					Kind:       kubernetes.ReplicaSets.Kind,
 					Name:       "ztunnel",
 				}},
 				Annotations: kubetest.FakeIstioAnnotations(),
@@ -996,7 +1028,8 @@ func FakeZtunnelDaemonSet() []apps_v1.DaemonSet {
 	return []apps_v1.DaemonSet{
 		{
 			TypeMeta: meta_v1.TypeMeta{
-				Kind: "DaemonSet",
+				APIVersion: kubernetes.DaemonSets.GroupVersion().String(),
+				Kind:       kubernetes.DaemonSets.Kind,
 			},
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:              "ztunnel",
@@ -1032,7 +1065,8 @@ func FakeCustomControllerRSSyncedWithPods() []apps_v1.ReplicaSet {
 	return []apps_v1.ReplicaSet{
 		{
 			TypeMeta: meta_v1.TypeMeta{
-				Kind: "ReplicaSet",
+				APIVersion: kubernetes.ReplicaSets.GroupVersion().String(),
+				Kind:       kubernetes.ReplicaSets.Kind,
 			},
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:              "custom-controller-RS-123",

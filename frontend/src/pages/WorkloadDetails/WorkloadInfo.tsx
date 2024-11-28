@@ -12,7 +12,7 @@ import { RenderComponentScroll } from '../../components/Nav/Page';
 import { GraphDataSource } from '../../services/GraphDataSource';
 import { DurationInSeconds } from 'types/Common';
 import { isIstioNamespace, serverConfig } from '../../config/ServerConfig';
-import { IstioConfigList, toIstioItems } from '../../types/IstioConfigList';
+import { gvkType, IstioConfigList, toIstioItems } from '../../types/IstioConfigList';
 import { WorkloadPods } from './WorkloadPods';
 import { GraphEdgeTapEvent } from '../../components/CytoscapeGraph/CytoscapeGraph';
 import { location, router, URLParam } from '../../app/History';
@@ -44,12 +44,12 @@ const tabName = 'list';
 const defaultTab = 'pods';
 
 const workloadIstioResources = [
-  getGVKTypeString('Gateway'),
-  getGVKTypeString('AuthorizationPolicy'),
-  getGVKTypeString('PeerAuthentication'),
-  getGVKTypeString('Sidecar'),
-  getGVKTypeString('RequestAuthentication'),
-  getGVKTypeString('EnvoyFilter')
+  getGVKTypeString(gvkType.Gateway),
+  getGVKTypeString(gvkType.AuthorizationPolicy),
+  getGVKTypeString(gvkType.PeerAuthentication),
+  getGVKTypeString(gvkType.Sidecar),
+  getGVKTypeString(gvkType.RequestAuthentication),
+  getGVKTypeString(gvkType.EnvoyFilter)
 ];
 
 export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState> {

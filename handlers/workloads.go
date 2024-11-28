@@ -9,12 +9,15 @@ import (
 	"strings"
 	"sync"
 
+	"k8s.io/apimachinery/pkg/runtime/schema"
+
 	"github.com/gorilla/mux"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/util"
 )
 
 // workloadParams holds the path and query parameters for WorkloadList and WorkloadDetails
@@ -28,20 +31,19 @@ type workloadParams struct {
 	Namespace    string `json:"namespace"`
 	WorkloadName string `json:"workload"`
 	// in: query
-	WorkloadType string `json:"type"`
+	WorkloadGVK schema.GroupVersionKind `json:"workloadGVK"`
 	// Optional
 	ClusterName           string `json:"clusterName,omitempty"`
 	IncludeHealth         bool   `json:"health"`
 	IncludeIstioResources bool   `json:"istioResources"`
 }
 
-func (p *workloadParams) extract(r *http.Request) {
+func (p *workloadParams) extract(r *http.Request) error {
 	vars := mux.Vars(r)
 	query := r.URL.Query()
 	p.baseExtract(r, vars)
 	p.Namespace = vars["namespace"]
 	p.WorkloadName = vars["workload"]
-	p.WorkloadType = query.Get("type")
 	p.ClusterName = clusterNameFromQuery(query)
 
 	var err error
@@ -53,6 +55,12 @@ func (p *workloadParams) extract(r *http.Request) {
 	if err != nil {
 		p.IncludeIstioResources = true
 	}
+
+	p.WorkloadGVK, err = util.StringToGVK(query.Get("workloadGVK"))
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // ClustersWorkloads is the API handler to fetch all the workloads to be displayed, related to a single namespace
@@ -60,7 +68,11 @@ func ClustersWorkloads(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
 	namespacesQueryParam := query.Get("namespaces") // csl of namespaces
 	p := workloadParams{}
-	p.extract(r)
+	errParse := p.extract(r)
+	if errParse != nil {
+		RespondWithError(w, http.StatusInternalServerError, "Request parsing error: "+errParse.Error())
+		return
+	}
 
 	// Get business layer
 	businessLayer, err := getBusiness(r)
@@ -121,11 +133,15 @@ func ClustersWorkloads(w http.ResponseWriter, r *http.Request) {
 // WorkloadDetails is the API handler to fetch all details to be displayed, related to a single workload
 func WorkloadDetails(w http.ResponseWriter, r *http.Request) {
 	p := workloadParams{}
-	p.extract(r)
+	errParse := p.extract(r)
+	if errParse != nil {
+		RespondWithError(w, http.StatusInternalServerError, "Request parsing error: "+errParse.Error())
+		return
+	}
 
 	criteria := business.WorkloadCriteria{
 		Namespace: p.Namespace, WorkloadName: p.WorkloadName,
-		WorkloadType: p.WorkloadType, IncludeIstioResources: true, IncludeServices: true, IncludeHealth: p.IncludeHealth, RateInterval: p.RateInterval,
+		WorkloadGVK: p.WorkloadGVK, IncludeIstioResources: true, IncludeServices: true, IncludeHealth: p.IncludeHealth, RateInterval: p.RateInterval,
 		QueryTime: p.QueryTime, Cluster: p.ClusterName,
 	}
 
@@ -195,7 +211,11 @@ func WorkloadUpdate(w http.ResponseWriter, r *http.Request) {
 
 	namespace := params["namespace"]
 	workload := params["workload"]
-	workloadType := query.Get("type")
+	workloadGVK, errGVK := util.StringToGVK(query.Get("workloadGVK"))
+	if errGVK != nil {
+		RespondWithError(w, http.StatusBadRequest, "Update request with bad workloadGVK param: "+errGVK.Error())
+	}
+
 	cluster := clusterNameFromQuery(query)
 	log.Debugf("Cluster: %s", cluster)
 
@@ -222,7 +242,7 @@ func WorkloadUpdate(w http.ResponseWriter, r *http.Request) {
 		}()
 	}
 
-	workloadDetails, err := business.Workload.UpdateWorkload(r.Context(), cluster, namespace, workload, workloadType, true, jsonPatch, patchType)
+	workloadDetails, err := business.Workload.UpdateWorkload(r.Context(), cluster, namespace, workload, workloadGVK, true, jsonPatch, patchType)
 	if includeValidations && err == nil {
 		wg.Wait()
 		workloadDetails.Validations = istioConfigValidations
@@ -232,7 +252,7 @@ func WorkloadUpdate(w http.ResponseWriter, r *http.Request) {
 		handleErrorResponse(w, err)
 		return
 	}
-	auditMsg := fmt.Sprintf("UPDATE on Cluster: [%s] Namespace: [%s] Workload name: [%s] Type: [%s] Patch: [%s]", cluster, namespace, workload, workloadType, jsonPatch)
+	auditMsg := fmt.Sprintf("UPDATE on Cluster: [%s] Namespace: [%s] Workload name: [%s] Type: [%s] Patch: [%s]", cluster, namespace, workload, workloadGVK, jsonPatch)
 	audit(r, auditMsg)
 	RespondWithJSON(w, http.StatusOK, workloadDetails)
 }

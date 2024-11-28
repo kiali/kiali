@@ -11,6 +11,7 @@ import {
   ConnectionPoolSettings,
   DestinationRule,
   Gateway,
+  GroupVersionKind,
   HTTPMatchRequest,
   HTTPRoute,
   HTTPRouteDestination,
@@ -68,6 +69,7 @@ import { ADD, SET, REQ_MOD, RESP_MOD, REQ_RED, REQ_MIR } from './K8sRequestRouti
 import { ANYTHING, PRESENCE } from './RequestRouting/MatchBuilder';
 import { t } from 'utils/I18nUtils';
 import { defaultGatewayLabel, defaultGatewayLabelValue } from 'config/Constants';
+import { dicTypeToGVK, gvkType } from '../../types/IstioConfigList';
 
 export const WIZARD_TRAFFIC_SHIFTING = 'traffic_shifting';
 export const WIZARD_TCP_TRAFFIC_SHIFTING = 'tcp_traffic_shifting';
@@ -2366,7 +2368,7 @@ export const buildNamespaceInjectionPatch = (enable: boolean, remove: boolean, r
   return JSON.stringify(patch);
 };
 
-export const buildWorkloadInjectionPatch = (workloadType: string, enable: boolean, remove: boolean): string => {
+export const buildWorkloadInjectionPatch = (gvk: GroupVersionKind, enable: boolean, remove: boolean): string => {
   const patch = {};
 
   // environments prefer to use the pod label over the annotation
@@ -2375,7 +2377,7 @@ export const buildWorkloadInjectionPatch = (workloadType: string, enable: boolea
   labels[serverConfig.istioAnnotations.istioInjectionAnnotation] = remove ? null : enable ? 'true' : 'false';
   const annotations = {};
   annotations[serverConfig.istioAnnotations.istioInjectionAnnotation] = null;
-  if (workloadType === 'Pod') {
+  if (gvk.Kind === dicTypeToGVK[gvkType.Pod].Kind) {
     patch['labels'] = labels;
     patch['annotations'] = annotations;
   } else {

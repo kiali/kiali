@@ -40,7 +40,7 @@ import { groupMenuStyle, kebabToggleStyle } from 'styles/DropdownStyles';
 import { isMultiCluster, serverConfig } from '../../config';
 import { panelBodyStyle, panelHeadingStyle, panelStyle } from './SummaryPanelStyle';
 import { renderWaypoint } from '../../components/DetailDescription/DetailDescription';
-import { dicIstioTypeToGVK } from '../../types/IstioConfigList';
+import { dicTypeToGVK, gvkType } from '../../types/IstioConfigList';
 
 type SummaryPanelNodeState = {
   isActionOpen: boolean;
@@ -256,7 +256,7 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
     if (!nodeData.hasWorkloadEntry) {
       return <div>{renderBadgedLink(nodeData, NodeType.WORKLOAD)}</div>;
     }
-    const weGVK = dicIstioTypeToGVK['WorkloadEntry'];
+    const weGVK = dicTypeToGVK[gvkType.WorkloadEntry];
 
     const workloadEntryLinks = nodeData.hasWorkloadEntry.map(we => (
       <div>

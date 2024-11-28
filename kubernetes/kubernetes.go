@@ -57,7 +57,7 @@ type K8SClientInterface interface {
 	StreamPodLogs(namespace, name string, opts *core_v1.PodLogOptions) (io.ReadCloser, error)
 	UpdateNamespace(namespace string, jsonPatch string) (*core_v1.Namespace, error)
 	UpdateService(namespace string, name string, jsonPatch string, patchType string) error
-	UpdateWorkload(namespace string, name string, workloadType string, jsonPatch string, patchType string) error
+	UpdateWorkload(namespace string, name string, workloadGVK schema.GroupVersionKind, jsonPatch string, patchType string) error
 }
 
 type OSClientInterface interface {
@@ -456,34 +456,34 @@ func (in *K8SClient) GetSelfSubjectAccessReview(ctx context.Context, namespace, 
 	return result, err
 }
 
-func (in *K8SClient) UpdateWorkload(namespace string, workloadName string, workloadType string, jsonPatch string, patchType string) error {
+func (in *K8SClient) UpdateWorkload(namespace string, workloadName string, workloadGVK schema.GroupVersionKind, jsonPatch string, patchType string) error {
 	emptyPatchOptions := meta_v1.PatchOptions{}
 	bytePatch := []byte(jsonPatch)
 	var err error
-	switch workloadType {
-	case DeploymentType:
+	switch workloadGVK {
+	case Deployments:
 		_, err = in.k8s.AppsV1().Deployments(namespace).Patch(in.ctx, workloadName, GetPatchType(patchType), bytePatch, emptyPatchOptions)
-	case ReplicaSetType:
+	case ReplicaSets:
 		_, err = in.k8s.AppsV1().ReplicaSets(namespace).Patch(in.ctx, workloadName, GetPatchType(patchType), bytePatch, emptyPatchOptions)
-	case ReplicationControllerType:
+	case ReplicationControllers:
 		_, err = in.k8s.CoreV1().ReplicationControllers(namespace).Patch(in.ctx, workloadName, GetPatchType(patchType), bytePatch, emptyPatchOptions)
-	case DeploymentConfigType:
+	case DeploymentConfigs:
 		if in.IsOpenShift() {
 			result := &osapps_v1.DeploymentConfigList{}
 			err = in.k8s.Discovery().RESTClient().Patch(GetPatchType(patchType)).Prefix("apis", "apps.openshift.io", "v1").Namespace(namespace).Resource("deploymentconfigs").SubResource(workloadName).Body(bytePatch).Do(in.ctx).Into(result)
 		}
-	case StatefulSetType:
+	case StatefulSets:
 		_, err = in.k8s.AppsV1().StatefulSets(namespace).Patch(in.ctx, workloadName, GetPatchType(patchType), bytePatch, emptyPatchOptions)
-	case JobType:
+	case Jobs:
 		_, err = in.k8s.BatchV1().Jobs(namespace).Patch(in.ctx, workloadName, GetPatchType(patchType), bytePatch, emptyPatchOptions)
-	case CronJobType:
+	case CronJobs:
 		_, err = in.k8s.BatchV1().CronJobs(namespace).Patch(in.ctx, workloadName, GetPatchType(patchType), bytePatch, emptyPatchOptions)
-	case PodType:
+	case Pods:
 		_, err = in.k8s.CoreV1().Pods(namespace).Patch(in.ctx, workloadName, GetPatchType(patchType), bytePatch, emptyPatchOptions)
-	case DaemonSetType:
+	case DaemonSets:
 		_, err = in.k8s.AppsV1().DaemonSets(namespace).Patch(in.ctx, workloadName, GetPatchType(patchType), bytePatch, emptyPatchOptions)
 	default:
-		err = fmt.Errorf("Workload type %s not found", workloadType)
+		err = fmt.Errorf("Workload type %s not found", workloadGVK.String())
 	}
 	return err
 }

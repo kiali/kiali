@@ -11,6 +11,7 @@ import (
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	k8s_networking_v1 "sigs.k8s.io/gateway-api/apis/v1"
 	k8s_networking_v1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
@@ -146,19 +147,19 @@ func TestFilterPodsByController(t *testing.T) {
 			UID:  types.UID("e07b722f-c922-4046-8d98-7aa8487d41c1"),
 		},
 		TypeMeta: meta_v1.TypeMeta{
-			Kind:       "ReplicaSet",
-			APIVersion: apps_v1.SchemeGroupVersion.String(),
+			Kind:       ReplicaSets.Kind,
+			APIVersion: ReplicaSets.GroupVersion().String(),
 		},
 	}
 	cases := map[string]struct {
 		controllerName string
-		controllerType string
+		controllerGVK  schema.GroupVersionKind
 		pods           []core_v1.Pod
 		expectedLen    int
 	}{
 		"Filters by kind and full name": {
 			controllerName: rs.Name,
-			controllerType: "ReplicaSet",
+			controllerGVK:  ReplicaSets,
 			pods: []core_v1.Pod{
 				{
 					ObjectMeta: meta_v1.ObjectMeta{
@@ -176,7 +177,7 @@ func TestFilterPodsByController(t *testing.T) {
 		},
 		"Includes APIVersion": {
 			controllerName: rs.Name,
-			controllerType: "ReplicaSet",
+			controllerGVK:  ReplicaSets,
 			pods: []core_v1.Pod{
 				{
 					ObjectMeta: meta_v1.ObjectMeta{
@@ -189,8 +190,7 @@ func TestFilterPodsByController(t *testing.T) {
 					},
 				},
 			},
-			// TODO: This should be 0
-			expectedLen: 1,
+			expectedLen: 0,
 		},
 	}
 
@@ -198,7 +198,7 @@ func TestFilterPodsByController(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			assert := assert.New(t)
 
-			pods := FilterPodsByController(tc.controllerName, tc.controllerType, tc.pods)
+			pods := FilterPodsByController(tc.controllerName, tc.controllerGVK, tc.pods)
 			assert.Equal(tc.expectedLen, len(pods))
 		})
 	}

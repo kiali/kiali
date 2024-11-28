@@ -68,6 +68,8 @@ export class VirtualItem extends React.Component<VirtualItemProps, VirtualItemSt
         ? `_${item.type}`
         : 'kind' in item && 'apiVersion' in item
         ? `_${kindToStringIncludeK8s(item.apiVersion, item.kind)}`
+        : 'gvk' in item
+        ? `_${item.gvk.Kind}`
         : '';
     // End result looks like: VirtualItem_Clusterwest_Nsbookinfo_networking.istio.io.v1.Gateway_bookinfo-gateway
 

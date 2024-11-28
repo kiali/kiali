@@ -81,15 +81,15 @@ func TestGetWorkloadListFromDeployments(t *testing.T) {
 	assert.Equal("httpbin-v1", workloads[0].Name)
 	assert.Equal(true, workloads[0].AppLabel)
 	assert.Equal(false, workloads[0].VersionLabel)
-	assert.Equal("Deployment", workloads[0].Type)
+	assert.Equal("Deployment", workloads[0].WorkloadGVK.Kind)
 	assert.Equal("httpbin-v2", workloads[1].Name)
 	assert.Equal(true, workloads[1].AppLabel)
 	assert.Equal(true, workloads[1].VersionLabel)
-	assert.Equal("Deployment", workloads[1].Type)
+	assert.Equal("Deployment", workloads[1].WorkloadGVK.Kind)
 	assert.Equal("httpbin-v3", workloads[2].Name)
 	assert.Equal(false, workloads[2].AppLabel)
 	assert.Equal(false, workloads[2].VersionLabel)
-	assert.Equal("Deployment", workloads[2].Type)
+	assert.Equal("Deployment", workloads[2].WorkloadGVK.Kind)
 }
 
 func TestGetWorkloadListFromReplicaSets(t *testing.T) {
@@ -122,15 +122,15 @@ func TestGetWorkloadListFromReplicaSets(t *testing.T) {
 	assert.Equal("httpbin-v1", workloads[0].Name)
 	assert.Equal(true, workloads[0].AppLabel)
 	assert.Equal(false, workloads[0].VersionLabel)
-	assert.Equal("ReplicaSet", workloads[0].Type)
+	assert.Equal("ReplicaSet", workloads[0].WorkloadGVK.Kind)
 	assert.Equal("httpbin-v2", workloads[1].Name)
 	assert.Equal(true, workloads[1].AppLabel)
 	assert.Equal(true, workloads[1].VersionLabel)
-	assert.Equal("ReplicaSet", workloads[1].Type)
+	assert.Equal("ReplicaSet", workloads[1].WorkloadGVK.Kind)
 	assert.Equal("httpbin-v3", workloads[2].Name)
 	assert.Equal(false, workloads[2].AppLabel)
 	assert.Equal(false, workloads[2].VersionLabel)
-	assert.Equal("ReplicaSet", workloads[2].Type)
+	assert.Equal("ReplicaSet", workloads[2].WorkloadGVK.Kind)
 }
 
 func TestGetWorkloadListFromReplicationControllers(t *testing.T) {
@@ -161,15 +161,15 @@ func TestGetWorkloadListFromReplicationControllers(t *testing.T) {
 	assert.Equal("httpbin-v1", workloads[0].Name)
 	assert.Equal(true, workloads[0].AppLabel)
 	assert.Equal(false, workloads[0].VersionLabel)
-	assert.Equal("ReplicationController", workloads[0].Type)
+	assert.Equal("ReplicationController", workloads[0].WorkloadGVK.Kind)
 	assert.Equal("httpbin-v2", workloads[1].Name)
 	assert.Equal(true, workloads[1].AppLabel)
 	assert.Equal(true, workloads[1].VersionLabel)
-	assert.Equal("ReplicationController", workloads[1].Type)
+	assert.Equal("ReplicationController", workloads[1].WorkloadGVK.Kind)
 	assert.Equal("httpbin-v3", workloads[2].Name)
 	assert.Equal(false, workloads[2].AppLabel)
 	assert.Equal(false, workloads[2].VersionLabel)
-	assert.Equal("ReplicationController", workloads[2].Type)
+	assert.Equal("ReplicationController", workloads[2].WorkloadGVK.Kind)
 }
 
 func TestGetWorkloadListFromDeploymentConfigs(t *testing.T) {
@@ -200,15 +200,15 @@ func TestGetWorkloadListFromDeploymentConfigs(t *testing.T) {
 	assert.Equal("httpbin-v1", workloads[0].Name)
 	assert.Equal(true, workloads[0].AppLabel)
 	assert.Equal(false, workloads[0].VersionLabel)
-	assert.Equal("DeploymentConfig", workloads[0].Type)
+	assert.Equal("DeploymentConfig", workloads[0].WorkloadGVK.Kind)
 	assert.Equal("httpbin-v2", workloads[1].Name)
 	assert.Equal(true, workloads[1].AppLabel)
 	assert.Equal(true, workloads[1].VersionLabel)
-	assert.Equal("DeploymentConfig", workloads[1].Type)
+	assert.Equal("DeploymentConfig", workloads[1].WorkloadGVK.Kind)
 	assert.Equal("httpbin-v3", workloads[2].Name)
 	assert.Equal(false, workloads[2].AppLabel)
 	assert.Equal(false, workloads[2].VersionLabel)
-	assert.Equal("DeploymentConfig", workloads[2].Type)
+	assert.Equal("DeploymentConfig", workloads[2].WorkloadGVK.Kind)
 }
 
 func TestGetWorkloadListFromStatefulSets(t *testing.T) {
@@ -239,15 +239,15 @@ func TestGetWorkloadListFromStatefulSets(t *testing.T) {
 	assert.Equal("httpbin-v1", workloads[0].Name)
 	assert.Equal(true, workloads[0].AppLabel)
 	assert.Equal(false, workloads[0].VersionLabel)
-	assert.Equal("StatefulSet", workloads[0].Type)
+	assert.Equal("StatefulSet", workloads[0].WorkloadGVK.Kind)
 	assert.Equal("httpbin-v2", workloads[1].Name)
 	assert.Equal(true, workloads[1].AppLabel)
 	assert.Equal(true, workloads[1].VersionLabel)
-	assert.Equal("StatefulSet", workloads[1].Type)
+	assert.Equal("StatefulSet", workloads[1].WorkloadGVK.Kind)
 	assert.Equal("httpbin-v3", workloads[2].Name)
 	assert.Equal(false, workloads[2].AppLabel)
 	assert.Equal(false, workloads[2].VersionLabel)
-	assert.Equal("StatefulSet", workloads[2].Type)
+	assert.Equal("StatefulSet", workloads[2].WorkloadGVK.Kind)
 }
 
 func TestGetWorkloadListFromDaemonSets(t *testing.T) {
@@ -278,15 +278,15 @@ func TestGetWorkloadListFromDaemonSets(t *testing.T) {
 	assert.Equal("httpbin-v1", workloads[0].Name)
 	assert.Equal(true, workloads[0].AppLabel)
 	assert.Equal(false, workloads[0].VersionLabel)
-	assert.Equal("DaemonSet", workloads[0].Type)
+	assert.Equal("DaemonSet", workloads[0].WorkloadGVK.Kind)
 	assert.Equal("httpbin-v2", workloads[1].Name)
 	assert.Equal(true, workloads[1].AppLabel)
 	assert.Equal(true, workloads[1].VersionLabel)
-	assert.Equal("DaemonSet", workloads[1].Type)
+	assert.Equal("DaemonSet", workloads[1].WorkloadGVK.Kind)
 	assert.Equal("httpbin-v3", workloads[2].Name)
 	assert.Equal(false, workloads[2].AppLabel)
 	assert.Equal(false, workloads[2].VersionLabel)
-	assert.Equal("DaemonSet", workloads[2].Type)
+	assert.Equal("DaemonSet", workloads[2].WorkloadGVK.Kind)
 }
 
 func TestGetWorkloadListFromDepRCPod(t *testing.T) {
@@ -322,7 +322,7 @@ func TestGetWorkloadListFromDepRCPod(t *testing.T) {
 
 	require.Equal(1, len(workloads))
 	assert.Equal("details-v1", workloads[0].Name)
-	assert.Equal("Deployment", workloads[0].Type)
+	assert.Equal("Deployment", workloads[0].WorkloadGVK.Kind)
 	assert.Equal(true, workloads[0].AppLabel)
 	assert.Equal(true, workloads[0].VersionLabel)
 }
@@ -352,7 +352,7 @@ func TestGetWorkloadListFromPod(t *testing.T) {
 
 	require.Equal(1, len(workloads))
 	assert.Equal("orphan-pod", workloads[0].Name)
-	assert.Equal("Pod", workloads[0].Type)
+	assert.Equal("Pod", workloads[0].WorkloadGVK.Kind)
 	assert.Equal(true, workloads[0].AppLabel)
 	assert.Equal(true, workloads[0].VersionLabel)
 }
@@ -386,7 +386,7 @@ func TestGetWorkloadListFromPods(t *testing.T) {
 
 	require.Equal(1, len(workloads))
 	assert.Equal("custom-controller-RS-123", workloads[0].Name)
-	assert.Equal("ReplicaSet", workloads[0].Type)
+	assert.Equal("ReplicaSet", workloads[0].WorkloadGVK.Kind)
 	assert.Equal(true, workloads[0].AppLabel)
 	assert.Equal(true, workloads[0].VersionLabel)
 }
@@ -416,12 +416,12 @@ func TestGetWorkloadFromDeployment(t *testing.T) {
 	SetupBusinessLayer(t, k8s, *conf)
 	svc := setupWorkloadService(k8s, conf)
 
-	criteria := WorkloadCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", WorkloadName: "details-v1", WorkloadType: "", IncludeServices: false}
+	criteria := WorkloadCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", WorkloadName: "details-v1", WorkloadGVK: schema.GroupVersionKind{}, IncludeServices: false}
 	workload, err := svc.GetWorkload(context.TODO(), criteria)
 	require.NoError(err)
 
 	assert.Equal("details-v1", workload.Name)
-	assert.Equal("Deployment", workload.Type)
+	assert.Equal("Deployment", workload.WorkloadGVK.Kind)
 	assert.Equal(true, workload.AppLabel)
 	assert.Equal(true, workload.VersionLabel)
 }
@@ -454,12 +454,12 @@ func TestGetWorkloadWithInvalidWorkloadType(t *testing.T) {
 	SetupBusinessLayer(t, k8s, *conf)
 	svc := setupWorkloadService(k8s, conf)
 
-	criteria := WorkloadCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", WorkloadName: "details-v1", WorkloadType: "invalid", IncludeServices: false}
+	criteria := WorkloadCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", WorkloadName: "details-v1", WorkloadGVK: schema.GroupVersionKind{Kind: "invalid"}, IncludeServices: false}
 	workload, err := svc.GetWorkload(context.TODO(), criteria)
 	require.NoError(err)
 
 	assert.Equal("details-v1", workload.Name)
-	assert.Equal("Deployment", workload.Type)
+	assert.Equal("Deployment", workload.WorkloadGVK.Kind)
 	assert.Equal(true, workload.AppLabel)
 	assert.Equal(true, workload.VersionLabel)
 }
@@ -491,19 +491,19 @@ func TestGetWorkloadFromPods(t *testing.T) {
 	SetupBusinessLayer(t, k8s, *conf)
 	svc := setupWorkloadService(k8s, conf)
 
-	criteria := WorkloadCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", WorkloadName: "custom-controller", WorkloadType: "", IncludeServices: false}
+	criteria := WorkloadCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", WorkloadName: "custom-controller", WorkloadGVK: schema.GroupVersionKind{}, IncludeServices: false}
 	workload, err := svc.GetWorkload(context.TODO(), criteria)
 	require.Error(err)
 
 	// custom controller is not a workload type, only its replica set(s)
 	assert.Equal((*models.Workload)(nil), workload)
 
-	criteria = WorkloadCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", WorkloadName: "custom-controller-RS-123", WorkloadType: "", IncludeServices: false}
+	criteria = WorkloadCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", WorkloadName: "custom-controller-RS-123", WorkloadGVK: schema.GroupVersionKind{}, IncludeServices: false}
 	workload, err = svc.GetWorkload(context.TODO(), criteria)
 	require.NoError(err)
 
 	assert.Equal("custom-controller-RS-123", workload.Name)
-	assert.Equal("ReplicaSet", workload.Type)
+	assert.Equal("ReplicaSet", workload.WorkloadGVK.Kind)
 	assert.Equal(true, workload.AppLabel)
 	assert.Equal(true, workload.VersionLabel)
 	assert.Equal(0, len(workload.Runtimes))
@@ -803,11 +803,11 @@ func TestDuplicatedControllers(t *testing.T) {
 
 	workloads := workloadList.Workloads
 
-	criteria = WorkloadCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", WorkloadName: "duplicated-v1", WorkloadType: "", IncludeServices: false}
+	criteria = WorkloadCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", WorkloadName: "duplicated-v1", WorkloadGVK: schema.GroupVersionKind{}, IncludeServices: false}
 	workload, err := svc.GetWorkload(context.TODO(), criteria)
 
 	require.NoError(err)
-	assert.Equal(workloads[0].Type, workload.Type)
+	assert.Equal(workloads[0].WorkloadGVK.String(), workload.WorkloadGVK.String())
 }
 
 func TestGetWorkloadListFromGenericPodController(t *testing.T) {
@@ -851,7 +851,7 @@ func TestGetWorkloadListFromGenericPodController(t *testing.T) {
 	workloadList, _ := svc.GetWorkloadList(context.TODO(), criteria)
 	workloads := workloadList.Workloads
 
-	criteria = WorkloadCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", WorkloadName: owner.Name, WorkloadType: "", IncludeServices: false}
+	criteria = WorkloadCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", WorkloadName: owner.Name, WorkloadGVK: schema.GroupVersionKind{}, IncludeServices: false}
 	workload, err := svc.GetWorkload(context.TODO(), criteria)
 
 	require.NoError(err)
@@ -870,8 +870,8 @@ func TestGetWorkloadListKindsWithSameName(t *testing.T) {
 
 	rs := FakeRSSyncedWithPods()
 	pods := FakePodsSyncedWithDeployments()
-	pods[0].OwnerReferences[0].APIVersion = "shiny.new.apps/v1"
-	pods[0].OwnerReferences[0].Kind = "ReplicaSet"
+	pods[0].OwnerReferences[0].APIVersion = kubernetes.ReplicaSets.GroupVersion().String()
+	pods[0].OwnerReferences[0].Kind = kubernetes.ReplicaSets.Kind
 
 	// Setup mocks
 	kubeObjs := []runtime.Object{
@@ -995,7 +995,7 @@ func TestGetWorkloadListRSOwnedByCustom(t *testing.T) {
 	require.NoError(err)
 	workloads := workloadList.Workloads
 
-	criteria = WorkloadCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", WorkloadName: owner.Name, WorkloadType: "", IncludeServices: false}
+	criteria = WorkloadCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", WorkloadName: owner.Name, WorkloadGVK: schema.GroupVersionKind{}, IncludeServices: false}
 	workload, _ := svc.GetWorkload(context.TODO(), criteria)
 
 	require.Equal(len(workloads), 1)
@@ -1126,7 +1126,7 @@ func TestValidateWaypoint(t *testing.T) {
 	svc := setupWorkloadService(k8s, conf)
 
 	// Get waypoint proxy
-	criteria := WorkloadCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", WorkloadName: "waypoint", WorkloadType: "", IncludeServices: false}
+	criteria := WorkloadCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", WorkloadName: "waypoint", WorkloadGVK: schema.GroupVersionKind{}, IncludeServices: false}
 	workload, err := svc.GetWorkload(context.TODO(), criteria)
 
 	require.NoError(err)
@@ -1136,7 +1136,7 @@ func TestValidateWaypoint(t *testing.T) {
 	assert.True(workload.Pods[0].IsWaypoint())
 
 	// Get waypoint proxy
-	criteriaDetails := WorkloadCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", WorkloadName: "details", WorkloadType: "", IncludeServices: false}
+	criteriaDetails := WorkloadCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", WorkloadName: "details", WorkloadGVK: schema.GroupVersionKind{}, IncludeServices: false}
 	workloadDetails, errDetails := svc.GetWorkload(context.TODO(), criteriaDetails)
 
 	require.NoError(errDetails)
@@ -1147,7 +1147,7 @@ func TestValidateWaypoint(t *testing.T) {
 	assert.Equal("waypoint", workloadDetails.WaypointWorkloads[0].Name)
 
 	// productPage should not have a waypoint
-	criteriaProductPage := WorkloadCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", WorkloadName: "productpage", WorkloadType: "", IncludeServices: false}
+	criteriaProductPage := WorkloadCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", WorkloadName: "productpage", WorkloadGVK: schema.GroupVersionKind{}, IncludeServices: false}
 	workloadProductPage, errProductPage := svc.GetWorkload(context.TODO(), criteriaProductPage)
 
 	require.NoError(errProductPage)
@@ -1198,7 +1198,7 @@ func TestValidateWaypointNS(t *testing.T) {
 	svc := setupWorkloadService(k8s, conf)
 
 	// Get waypoint proxy
-	criteria := WorkloadCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", WorkloadName: "waypoint", WorkloadType: "", IncludeServices: false}
+	criteria := WorkloadCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", WorkloadName: "waypoint", WorkloadGVK: schema.GroupVersionKind{}, IncludeServices: false}
 	workload, err := svc.GetWorkload(context.TODO(), criteria)
 
 	require.NoError(err)
@@ -1208,7 +1208,7 @@ func TestValidateWaypointNS(t *testing.T) {
 	assert.True(workload.Pods[0].IsWaypoint())
 
 	// Get waypoint proxy
-	criteriaDetails := WorkloadCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", WorkloadName: "details", WorkloadType: "", IncludeServices: false}
+	criteriaDetails := WorkloadCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", WorkloadName: "details", WorkloadGVK: schema.GroupVersionKind{}, IncludeServices: false}
 	workloadDetails, errDetails := svc.GetWorkload(context.TODO(), criteriaDetails)
 
 	require.NoError(errDetails)
@@ -1219,7 +1219,7 @@ func TestValidateWaypointNS(t *testing.T) {
 	assert.Equal("waypoint", workloadDetails.WaypointWorkloads[0].Name)
 
 	// productPage should have also a waypoint
-	criteriaProductPage := WorkloadCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", WorkloadName: "productpage", WorkloadType: "", IncludeServices: false}
+	criteriaProductPage := WorkloadCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", WorkloadName: "productpage", WorkloadGVK: schema.GroupVersionKind{}, IncludeServices: false}
 	workloadProductPage, errProductPage := svc.GetWorkload(context.TODO(), criteriaProductPage)
 
 	require.NoError(errProductPage)
@@ -1263,7 +1263,7 @@ func TestValidateWaypointService(t *testing.T) {
 	svc := setupWorkloadService(k8s, conf)
 
 	// Get waypoint proxy
-	criteria := WorkloadCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", WorkloadName: "waypoint", WorkloadType: "", IncludeServices: false}
+	criteria := WorkloadCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", WorkloadName: "waypoint", WorkloadGVK: schema.GroupVersionKind{}, IncludeServices: false}
 	workload, err := svc.GetWorkload(context.TODO(), criteria)
 
 	require.NoError(err)
@@ -1273,7 +1273,7 @@ func TestValidateWaypointService(t *testing.T) {
 	assert.True(workload.Pods[0].IsWaypoint())
 
 	// Get waypoint proxy
-	criteriaDetails := WorkloadCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", WorkloadName: "details", WorkloadType: "", IncludeServices: false}
+	criteriaDetails := WorkloadCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", WorkloadName: "details", WorkloadGVK: schema.GroupVersionKind{}, IncludeServices: false}
 	workloadDetails, errDetails := svc.GetWorkload(context.TODO(), criteriaDetails)
 
 	require.NoError(errDetails)
@@ -1284,7 +1284,7 @@ func TestValidateWaypointService(t *testing.T) {
 	assert.Equal("waypoint", workloadDetails.WaypointWorkloads[0].Name)
 
 	// productPage should not have a waypoint
-	criteriaProductPage := WorkloadCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", WorkloadName: "productpage", WorkloadType: "", IncludeServices: false}
+	criteriaProductPage := WorkloadCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", WorkloadName: "productpage", WorkloadGVK: schema.GroupVersionKind{}, IncludeServices: false}
 	workloadProductPage, errProductPage := svc.GetWorkload(context.TODO(), criteriaProductPage)
 
 	require.NoError(errProductPage)
@@ -1364,4 +1364,37 @@ func TestGetAllGateways(t *testing.T) {
 
 	require.Len(workloads, 1)
 	require.True(workloads[0].IsGateway(), "Expected IsGateway to be True but it was false")
+}
+
+func TestGetWorkloadListWithCustomKindThatMatchesCoreKind(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+
+	conf := config.NewConfig()
+
+	kubeObjs := []runtime.Object{
+		&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}},
+	}
+	for _, pod := range FakePodsFromCustomController() {
+		p := pod
+		// Setting here a custom type whose Kind matches a core Kube type.
+		p.OwnerReferences[0].APIVersion = "customAPI/v1"
+		p.OwnerReferences[0].Kind = "DaemonSet"
+		kubeObjs = append(kubeObjs, &p)
+	}
+
+	k8s := kubetest.NewFakeK8sClient(kubeObjs...)
+	k8s.OpenShift = true
+	SetupBusinessLayer(t, k8s, *conf)
+	svc := setupWorkloadService(k8s, conf)
+
+	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: false, IncludeHealth: false}
+	workloadList, _ := svc.GetWorkloadList(context.TODO(), criteria)
+	workloads := workloadList.Workloads
+
+	assert.Equal("Namespace", workloadList.Namespace)
+
+	require.Equal(1, len(workloads))
+	assert.Equal("custom-controller-RS-123", workloads[0].Name)
+	assert.Equal("DaemonSet", workloads[0].WorkloadGVK.Kind)
 }

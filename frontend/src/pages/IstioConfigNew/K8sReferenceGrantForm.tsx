@@ -7,14 +7,14 @@ import { namespaceItemsSelector } from '../../store/Selectors';
 import { KialiDispatch } from '../../types/Redux';
 import { NamespaceThunkActions } from '../../actions/NamespaceThunkActions';
 import { connect } from 'react-redux';
-import { dicIstioTypeToGVK } from '../../types/IstioConfigList';
+import { dicTypeToGVK, gvkType } from '../../types/IstioConfigList';
 
 export const FROM_KINDS = [
-  dicIstioTypeToGVK['K8sHTTPRoute'],
-  dicIstioTypeToGVK['K8sGateway'],
-  dicIstioTypeToGVK['K8sGRPCRoute'],
-  dicIstioTypeToGVK['K8sTCPRoute'],
-  dicIstioTypeToGVK['K8sTLSRoute']
+  dicTypeToGVK[gvkType.K8sHTTPRoute],
+  dicTypeToGVK[gvkType.K8sGateway],
+  dicTypeToGVK[gvkType.K8sGRPCRoute],
+  dicTypeToGVK[gvkType.K8sTCPRoute],
+  dicTypeToGVK[gvkType.K8sTLSRoute]
 ];
 
 export const TO_KINDS = {
@@ -70,7 +70,7 @@ export class K8sReferenceGrantFormComponent extends React.Component<Props, K8sRe
   onChangeReferenceGrantFromKind = (_event: React.FormEvent, value: string): void => {
     this.setState(
       {
-        from: [{ group: dicIstioTypeToGVK[`K8s${value}`].Group, kind: value, namespace: this.state.from[0].namespace }]
+        from: [{ group: dicTypeToGVK[`K8s${value}`].Group, kind: value, namespace: this.state.from[0].namespace }]
       },
       () => this.props.onChange(this.state)
     );

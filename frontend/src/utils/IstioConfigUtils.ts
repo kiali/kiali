@@ -9,7 +9,7 @@ import {
   Validations
 } from '../types/IstioObjects';
 import _ from 'lodash';
-import { dicIstioTypeToGVK, IstioConfigItem } from 'types/IstioConfigList';
+import { dicTypeToGVK, gvkType, IstioConfigItem } from 'types/IstioConfigList';
 
 export const mergeJsonPatch = (objectModified: object, object?: object): object => {
   if (!object) {
@@ -194,14 +194,18 @@ export function getIstioObjectGVK(apiVersion?: string, kind?: string): GroupVers
   const parts = apiVersion.split('/');
   if (parts.length !== 2) {
     // should not happen, but not the best way, only an alternative
-    return dicIstioTypeToGVK[kind];
+    return dicTypeToGVK[kind];
   }
   return { Group: parts[0], Version: parts[1], Kind: kind! };
 }
 
-export function getGVKTypeString(gvk: GroupVersionKind | string): string {
+export function getGVKTypeString(gvk: GroupVersionKind | gvkType): string {
   if (typeof gvk === 'string') {
-    return gvkToString(dicIstioTypeToGVK[gvk]);
+    const gvkEntry = dicTypeToGVK[gvk];
+    if (!gvkEntry) {
+      throw new Error(`GVK type '${gvk}' not found in dicTypeToGVK.`);
+    }
+    return gvkToString(gvkEntry);
   } else {
     return gvkToString(gvk);
   }
@@ -243,6 +247,10 @@ export function kindToStringIncludeK8s(apiVersion?: string, kind?: string): stri
 
 export function istioTypesToGVKString(istioTypes: string[]): string[] {
   return istioTypes.map(type => {
-    return gvkToString(dicIstioTypeToGVK[type]);
+    return gvkToString(dicTypeToGVK[type]);
   });
+}
+
+export function isGVKSupported(gvk: GroupVersionKind): boolean {
+  return getGVKTypeString(gvk) === getGVKTypeString(gvkType[gvk.Kind]);
 }

@@ -17,6 +17,8 @@ import { WizardLabels } from './WizardLabels';
 import { renderDisabledDropdownOption } from 'utils/DropdownUtils';
 import { WorkloadWizardActionsDropdownGroup } from './WorkloadWizardActionsDropdownGroup';
 import { t } from 'utils/I18nUtils';
+import { getGVKTypeString, isGVKSupported } from '../../utils/IstioConfigUtils';
+import { gvkType } from '../../types/IstioConfigList';
 
 interface Props {
   namespace: string;
@@ -46,7 +48,7 @@ export const WorkloadWizardDropdown: React.FC<Props> = (props: Props) => {
     API.updateWorkload(
       props.namespace,
       props.workload.name,
-      props.workload.type,
+      props.workload.gvk,
       jsonInjectionPatch,
       'json',
       props.workload.cluster
@@ -92,7 +94,9 @@ export const WorkloadWizardDropdown: React.FC<Props> = (props: Props) => {
     //  istio actions
     (serverConfig.kialiFeatureFlags.istioInjectionAction && !props.workload.isAmbient) ||
     // annotations
-    props.workload.type === 'Deployment';
+    getGVKTypeString(props.workload.gvk) === getGVKTypeString(gvkType.Deployment);
+
+  const supportedWorkload = isGVKSupported(props.workload.gvk);
 
   const dropdown = (
     <Dropdown
@@ -105,7 +109,7 @@ export const WorkloadWizardDropdown: React.FC<Props> = (props: Props) => {
           onClick={() => onActionsToggle(!isActionsOpen)}
           data-test="workload-actions-toggle"
           isExpanded={isActionsOpen}
-          isDisabled={!validActions}
+          isDisabled={!validActions || !supportedWorkload}
         >
           {t('Actions')}
         </MenuToggle>
@@ -142,6 +146,13 @@ export const WorkloadWizardDropdown: React.FC<Props> = (props: Props) => {
             'tooltip_wizard_actions',
             TooltipPosition.top,
             t('User does not have permission on this Workload'),
+            dropdown
+          )
+        : !supportedWorkload
+        ? renderDisabledDropdownOption(
+            'tooltip_wizard_actions',
+            TooltipPosition.top,
+            t('This type of workload is read-only'),
             dropdown
           )
         : dropdown}

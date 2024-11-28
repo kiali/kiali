@@ -10,8 +10,10 @@ import (
 	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes"
 )
 
 type ClusterWorkloads struct {
@@ -67,10 +69,10 @@ type WorkloadListItem struct {
 	// The kube cluster where this workload is located.
 	Cluster string `json:"cluster"`
 
-	// Type of the workload
+	// Group Version Kind of the workload
 	// required: true
-	// example: deployment
-	Type string `json:"type"`
+	// example: 'apps/v1, Kind=Deployment'
+	WorkloadGVK schema.GroupVersionKind `json:"gvk"`
 
 	// Creation timestamp (in RFC3339 format)
 	// required: true
@@ -207,7 +209,7 @@ func (workload *WorkloadListItem) ParseWorkload(w *Workload) {
 	conf := config.Get()
 	workload.Name = w.Name
 	workload.Namespace = w.Namespace
-	workload.Type = w.Type
+	workload.WorkloadGVK = w.WorkloadGVK
 	workload.CreatedAt = w.CreatedAt
 	workload.ResourceVersion = w.ResourceVersion
 	workload.IstioSidecar = w.HasIstioSidecar()
@@ -284,7 +286,7 @@ func (workload *Workload) parseObjectMeta(meta *meta_v1.ObjectMeta, tplMeta *met
 }
 
 func (workload *Workload) ParseDeployment(d *apps_v1.Deployment) {
-	workload.Type = "Deployment"
+	workload.WorkloadGVK = kubernetes.Deployments
 	workload.parseObjectMeta(&d.ObjectMeta, &d.Spec.Template.ObjectMeta)
 	if d.Spec.Replicas != nil {
 		workload.DesiredReplicas = *d.Spec.Replicas
@@ -299,7 +301,7 @@ func (workload *Workload) ParseDeployment(d *apps_v1.Deployment) {
 }
 
 func (workload *Workload) ParseReplicaSet(r *apps_v1.ReplicaSet) {
-	workload.Type = "ReplicaSet"
+	workload.WorkloadGVK = kubernetes.ReplicaSets
 	workload.parseObjectMeta(&r.ObjectMeta, &r.Spec.Template.ObjectMeta)
 	if r.Spec.Replicas != nil {
 		workload.DesiredReplicas = *r.Spec.Replicas
@@ -308,12 +310,12 @@ func (workload *Workload) ParseReplicaSet(r *apps_v1.ReplicaSet) {
 	workload.AvailableReplicas = r.Status.AvailableReplicas
 }
 
-func (workload *Workload) ParseReplicaSetParent(r *apps_v1.ReplicaSet, workloadName string, workloadType string) {
+func (workload *Workload) ParseReplicaSetParent(r *apps_v1.ReplicaSet, workloadName string, workloadGVK schema.GroupVersionKind) {
 	// Some properties are taken from the ReplicaSet
 	workload.parseObjectMeta(&r.ObjectMeta, &r.Spec.Template.ObjectMeta)
 	// But name and type are coming from the parent
 	// Custom properties from parent controller are not processed by Kiali
-	workload.Type = workloadType
+	workload.WorkloadGVK = workloadGVK
 	workload.Name = workloadName
 	if r.Spec.Replicas != nil {
 		workload.DesiredReplicas = *r.Spec.Replicas
@@ -323,7 +325,7 @@ func (workload *Workload) ParseReplicaSetParent(r *apps_v1.ReplicaSet, workloadN
 }
 
 func (workload *Workload) ParseReplicationController(r *core_v1.ReplicationController) {
-	workload.Type = "ReplicationController"
+	workload.WorkloadGVK = kubernetes.ReplicationControllers
 	workload.parseObjectMeta(&r.ObjectMeta, &r.Spec.Template.ObjectMeta)
 	if r.Spec.Replicas != nil {
 		workload.DesiredReplicas = *r.Spec.Replicas
@@ -333,7 +335,7 @@ func (workload *Workload) ParseReplicationController(r *core_v1.ReplicationContr
 }
 
 func (workload *Workload) ParseDeploymentConfig(dc *osapps_v1.DeploymentConfig) {
-	workload.Type = "DeploymentConfig"
+	workload.WorkloadGVK = kubernetes.DeploymentConfigs
 	workload.parseObjectMeta(&dc.ObjectMeta, &dc.Spec.Template.ObjectMeta)
 	workload.DesiredReplicas = dc.Spec.Replicas
 	workload.CurrentReplicas = dc.Status.Replicas
@@ -341,7 +343,7 @@ func (workload *Workload) ParseDeploymentConfig(dc *osapps_v1.DeploymentConfig) 
 }
 
 func (workload *Workload) ParseStatefulSet(s *apps_v1.StatefulSet) {
-	workload.Type = "StatefulSet"
+	workload.WorkloadGVK = kubernetes.StatefulSets
 	workload.parseObjectMeta(&s.ObjectMeta, &s.Spec.Template.ObjectMeta)
 	if s.Spec.Replicas != nil {
 		workload.DesiredReplicas = *s.Spec.Replicas
@@ -351,7 +353,7 @@ func (workload *Workload) ParseStatefulSet(s *apps_v1.StatefulSet) {
 }
 
 func (workload *Workload) ParsePod(pod *core_v1.Pod) {
-	workload.Type = "Pod"
+	workload.WorkloadGVK = kubernetes.Pods
 	workload.parseObjectMeta(&pod.ObjectMeta, &pod.ObjectMeta)
 
 	var podReplicas, podAvailableReplicas int32
@@ -375,7 +377,7 @@ func (workload *Workload) ParsePod(pod *core_v1.Pod) {
 }
 
 func (workload *Workload) ParseJob(job *batch_v1.Job) {
-	workload.Type = "Job"
+	workload.WorkloadGVK = kubernetes.Jobs
 	workload.parseObjectMeta(&job.ObjectMeta, &job.ObjectMeta)
 	// Job controller does not use replica parameters as other controllers
 	// this is a workaround to use same values from Workload perspective
@@ -385,7 +387,7 @@ func (workload *Workload) ParseJob(job *batch_v1.Job) {
 }
 
 func (workload *Workload) ParseCronJob(cnjb *batch_v1.CronJob) {
-	workload.Type = "CronJob"
+	workload.WorkloadGVK = kubernetes.CronJobs
 	workload.parseObjectMeta(&cnjb.ObjectMeta, &cnjb.ObjectMeta)
 
 	// We don't have the information of this controller
@@ -410,7 +412,7 @@ func (workload *Workload) ParseCronJob(cnjb *batch_v1.CronJob) {
 }
 
 func (workload *Workload) ParseDaemonSet(ds *apps_v1.DaemonSet) {
-	workload.Type = "DaemonSet"
+	workload.WorkloadGVK = kubernetes.DaemonSets
 	workload.parseObjectMeta(&ds.ObjectMeta, &ds.Spec.Template.ObjectMeta)
 	// This is a cornercase for DaemonSet controllers
 	// Desired is the number of desired nodes in a cluster that are running a DaemonSet Pod
@@ -421,10 +423,10 @@ func (workload *Workload) ParseDaemonSet(ds *apps_v1.DaemonSet) {
 	workload.HealthAnnotations = GetHealthAnnotation(ds.Annotations, GetHealthConfigAnnotation())
 }
 
-func (workload *Workload) ParsePods(controllerName string, controllerType string, pods []core_v1.Pod) {
+func (workload *Workload) ParsePods(controllerName string, controllerGVK schema.GroupVersionKind, pods []core_v1.Pod) {
 	conf := config.Get()
 	workload.Name = controllerName
-	workload.Type = controllerType
+	workload.WorkloadGVK = controllerGVK
 	// We don't have the information of this controller
 	// We will infer the number of replicas as the number of pods without succeed state
 	// We will infer the number of available as the number of pods with running state
@@ -476,7 +478,7 @@ func (workload *Workload) HasIstioSidecar() bool {
 		return true
 	}
 	// All pods in a deployment should be the same
-	if workload.Type == "Deployment" {
+	if workload.WorkloadGVK == kubernetes.Deployments {
 		return workload.Pods[0].HasIstioSidecar()
 	}
 	// Need to check each pod
@@ -545,7 +547,7 @@ func (workload *Workload) HasIstioAmbient() bool {
 		return false
 	}
 	// All pods in a deployment should be the same
-	if workload.Type == "Deployment" {
+	if workload.WorkloadGVK == kubernetes.Deployments {
 		return workload.Pods[0].AmbientEnabled()
 	}
 	// Need to check each pod

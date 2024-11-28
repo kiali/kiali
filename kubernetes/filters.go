@@ -11,10 +11,12 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	k8s_networking_v1 "sigs.k8s.io/gateway-api/apis/v1"
 	k8s_networking_v1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/log"
 )
 
 func FilterAuthorizationPoliciesBySelector(workloadSelector string, authorizationpolicies []*security_v1.AuthorizationPolicy) []*security_v1.AuthorizationPolicy {
@@ -217,12 +219,16 @@ func FilterK8sGatewaysByRoutes(allGws []*k8s_networking_v1.Gateway, httpRoutes [
 	return gateways
 }
 
-func FilterPodsByController(controllerName string, controllerType string, allPods []core_v1.Pod) []core_v1.Pod {
+func FilterPodsByController(controllerName string, controllerGVK schema.GroupVersionKind, allPods []core_v1.Pod) []core_v1.Pod {
 	var pods []core_v1.Pod
 	for _, pod := range allPods {
 		for _, ref := range pod.OwnerReferences {
-			// TODO: Kind is not a definitive reference. Need to include check for API version as well.
-			if ref.Controller != nil && *ref.Controller && ref.Name == controllerName && ref.Kind == controllerType {
+			refGV, err := schema.ParseGroupVersion(ref.APIVersion)
+			if err != nil {
+				log.Errorf("could not parse OwnerReference api version %q: %v", ref.APIVersion, err)
+				continue
+			}
+			if ref.Controller != nil && *ref.Controller && ref.Name == controllerName && refGV.WithKind(ref.Kind) == controllerGVK {
 				pods = append(pods, pod)
 				break
 			}

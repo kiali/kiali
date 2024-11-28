@@ -73,7 +73,7 @@ import { ControlPlaneVersionBadge } from './ControlPlaneVersionBadge';
 import { AmbientBadge } from '../../components/Ambient/AmbientBadge';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { ApiError } from 'types/Api';
-import { IstioConfigList } from 'types/IstioConfigList';
+import { gvkType, IstioConfigList } from 'types/IstioConfigList';
 import { t } from 'utils/I18nUtils';
 import { getGVKTypeString } from '../../utils/IstioConfigUtils';
 
@@ -880,7 +880,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
         });
       }
 
-      const aps = nsInfo.istioConfig?.resources[getGVKTypeString('AuthorizationPolicy')] ?? [];
+      const aps = nsInfo.istioConfig?.resources[getGVKTypeString(gvkType.AuthorizationPolicy)] ?? [];
 
       const addAuthorizationAction = {
         isGroup: false,

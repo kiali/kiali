@@ -15,12 +15,13 @@ import { MissingSidecar } from '../../components/MissingSidecar/MissingSidecar';
 import { PFBadge, PFBadges } from '../../components/Pf/PfBadges';
 import { MissingLabel } from '../../components/MissingLabel/MissingLabel';
 import { MissingAuthPolicy } from 'components/MissingAuthPolicy/MissingAuthPolicy';
-import { hasMissingAuthPolicy } from 'utils/IstioConfigUtils';
+import { getGVKTypeString, hasMissingAuthPolicy, isGVKSupported } from 'utils/IstioConfigUtils';
 import { DetailDescription } from '../../components/DetailDescription/DetailDescription';
 import { isWaypoint } from '../../helpers/LabelFilterHelper';
 import { AmbientLabel, tooltipMsgType } from '../../components/Ambient/AmbientLabel';
-import { validationKey } from '../../types/IstioConfigList';
+import { gvkType, validationKey } from '../../types/IstioConfigList';
 import { infoStyle } from 'styles/IconStyle';
+import { addInfo } from 'utils/AlertUtils';
 import { classes } from 'typestyle';
 
 type WorkloadDescriptionProps = {
@@ -30,12 +31,16 @@ type WorkloadDescriptionProps = {
 };
 
 const resourceListStyle = kialiStyle({
-  marginBottom: '0.75rem',
+  display: 'flex',
   $nest: {
-    '& > ul > li span': {
-      float: 'left',
-      width: '125px',
-      fontWeight: 700
+    '& > ul > li': {
+      display: 'flex',
+      $nest: {
+        '& span': {
+          minWidth: '125px',
+          fontWeight: 700
+        }
+      }
     }
   }
 });
@@ -80,10 +85,19 @@ export const WorkloadDescription: React.FC<WorkloadDescriptionProps> = (props: W
   workload.services?.forEach(s => services.push(s.name));
 
   const isTemplateLabels =
-    ['Deployment', 'ReplicaSet', 'ReplicationController', 'DeploymentConfig', 'StatefulSet'].indexOf(workload.type) >=
-    0;
+    [
+      getGVKTypeString(gvkType.Deployment),
+      getGVKTypeString(gvkType.ReplicaSet),
+      getGVKTypeString(gvkType.ReplicationController),
+      getGVKTypeString(gvkType.DeploymentConfig),
+      getGVKTypeString(gvkType.StatefulSet)
+    ].indexOf(getGVKTypeString(workload.gvk)) >= 0;
 
   const runtimes = (workload.runtimes ?? []).map(r => r.name).filter(name => name !== '');
+
+  if (!isGVKSupported(workload.gvk)) {
+    addInfo('This type of workload is not fully supported by Kiali, only limited information is available for display');
+  }
 
   const workloadProperties = (
     <>
@@ -96,9 +110,16 @@ export const WorkloadDescription: React.FC<WorkloadDescriptionProps> = (props: W
             </li>
           )}
 
+          {!isGVKSupported(workload.gvk) && (
+            <li>
+              <span>API Version</span>
+              {`${workload.gvk.Group}.${workload.gvk.Version}`}
+            </li>
+          )}
+
           <li>
             <span>Type</span>
-            {workload.type ? workload.type : 'N/A'}
+            {workload.gvk.Kind || 'N/A'}
           </li>
 
           <li>

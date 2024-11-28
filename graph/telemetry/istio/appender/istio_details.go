@@ -368,7 +368,7 @@ func (a IstioAppender) getIstioComponentWorkloads(component string, globalInfo *
 
 		// Find Istio component deployments
 		for _, workload := range wList.Workloads {
-			if workload.Type == "Deployment" {
+			if workload.WorkloadGVK == kubernetes.Deployments {
 				if labelValue, ok := workload.Labels["operator.istio.io/component"]; ok && labelValue == component {
 					componentWorkloads[key] = append(componentWorkloads[key], workload)
 				}
@@ -388,7 +388,7 @@ func (a IstioAppender) getGatewayAPIWorkloads(globalInfo *graph.GlobalInfo) map[
 
 		// Find Istio managed Gateway API deployments
 		for _, workload := range wList.Workloads {
-			if workload.Type == "Deployment" {
+			if workload.WorkloadGVK == kubernetes.Deployments {
 				if _, ok := workload.Labels["istio.io/gateway-name"]; ok {
 					managedWorkloads[key] = append(managedWorkloads[key], workload)
 				}

@@ -78,7 +78,7 @@ func noProxyStatus(t *testing.T) {
 	require.NoError(err)
 	require.NotNil(wl)
 	require.Equal(name, wl.Name)
-	require.Equal("Deployment", wl.Type)
+	require.Equal("Deployment", wl.WorkloadGVK.Kind)
 	require.NotNil(wl.Pods)
 	for _, pod := range wl.Pods {
 		require.NotEmpty(pod.Status)

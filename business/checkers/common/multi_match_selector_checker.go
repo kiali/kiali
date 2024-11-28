@@ -232,8 +232,7 @@ func (m GenericMultiMatchChecker) multiMatchSubjects() ReferenceMap {
 				if !selector.Matches(labels.Set(w.Labels)) {
 					continue
 				}
-				// TODO for now a hacky way, for a workload type we only have a Kind, will be checked on frontend side
-				workloadKey := models.BuildKey(schema.GroupVersionKind{Group: "", Version: "", Kind: w.Type}, w.Name, wls.Namespace, m.Cluster)
+				workloadKey := models.BuildKey(w.WorkloadGVK, w.Name, wls.Namespace, m.Cluster)
 				workloadSubjects.Add(workloadKey, subjectKey)
 			}
 		}
