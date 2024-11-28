@@ -1,13 +1,11 @@
 package tracingtest
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/stretchr/testify/mock"
 
 	"github.com/kiali/kiali/models"
-	"github.com/kiali/kiali/store"
 	"github.com/kiali/kiali/tracing/jaeger/model"
 )
 
@@ -33,8 +31,4 @@ func (j *TracingClientMock) GetErrorTraces(ns string, app string, duration time.
 func (j *TracingClientMock) GetServiceStatus() (available bool, err error) {
 	args := j.Called()
 	return args.Get(0).(bool), args.Error(1)
-}
-
-func (j *TracingClientMock) GetCacheStats() (*store.Stats, error) {
-	return nil, fmt.Errorf("Cache is disabled")
 }

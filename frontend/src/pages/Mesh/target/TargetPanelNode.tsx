@@ -23,6 +23,7 @@ export const TargetPanelNode: React.FC<TargetPanelNodeProps<MeshNodeData>> = (
   }
 
   const data = node.elem.getData()!;
+
   return (
     <div id="target-panel-node" className={classes(panelStyle, targetPanelStyle)}>
       <div className={panelHeadingStyle}>{renderNodeHeader(data, { nameOnly: isExternal(data.cluster) })}</div>
@@ -30,6 +31,7 @@ export const TargetPanelNode: React.FC<TargetPanelNodeProps<MeshNodeData>> = (
         <span>{t('Version: {{version}}', { version: data.version || t(UNKNOWN) })}</span>
 
         {targetPanelHR}
+
         <TargetPanelEditor configData={data.infraData} targetName={data.infraName}></TargetPanelEditor>
       </div>
     </div>
