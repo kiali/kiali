@@ -1570,31 +1570,6 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 				controllers[pod.Name] = kubernetes.Pods
 			}
 		}
-		// TODO: This should be in the cache
-		// TODO: Maybe user doesn't have permissions
-		k8s, okK8s := in.userClients[criteria.Cluster]
-		if !okK8s {
-			log.Infof("cluster [%s] is not found or is not accessible for Kiali", criteria.Cluster)
-		}
-		ztunnelPods := in.cache.GetZtunnelPods(criteria.Cluster)
-
-		for _, ztunnelPod := range ztunnelPods {
-			ecd, err3 := k8s.ForwardGetRequest(ztunnelPod.Namespace, ztunnelPod.Name, 15000, "/config_dump")
-			if err3 == nil {
-				var data map[string]interface{}
-				err4 := json.Unmarshal(ecd, &data)
-				if err4 == nil {
-					wks := data["workloads"].([]interface{})
-					for _, wk := range wks {
-						wkC := wk.(map[string]interface{})
-						if wkC["name"] == pod.Name {
-							// TODO: This is what we want. Add to pod
-							log.Infof("Protocol: %s", wkC["protocol"].(string))
-						}
-					}
-				}
-			}
-		}
 	}
 
 	// Resolve ReplicaSets from Deployments
@@ -1942,6 +1917,13 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 		w.WorkloadListItem.IsGateway = w.IsGateway()
 
 		// Add the Proxy Status to the workload
+		// TODO: If ambient
+		// TODO: This should be in the cache
+		// TODO: Maybe user doesn't have permissions
+		k8s, okK8s := in.userClients[criteria.Cluster]
+		if !okK8s {
+			log.Infof("cluster [%s] is not found or is not accessible for Kiali", criteria.Cluster)
+		}
 		for _, pod := range w.Pods {
 			if pod.HasIstioSidecar() && !w.IsGateway() && config.Get().ExternalServices.Istio.IstioAPIEnabled {
 				pod.ProxyStatus = in.businessLayer.ProxyStatus.GetPodProxyStatus(criteria.Cluster, criteria.Namespace, pod.Name)
@@ -1949,6 +1931,14 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 			// If Ambient is enabled for pod, check if has any Waypoint proxy
 			if pod.AmbientEnabled() {
 				w.WaypointWorkloads = in.getWaypointsForWorkload(ctx, criteria.Namespace, w)
+				// TODO: If ambient
+				// TODO: This should be in the cache
+				// TODO: Maybe user doesn't have permissions
+				if okK8s {
+					ztunnelPods := in.cache.GetZtunnelPods(criteria.Cluster)
+					w.AddPodsProtocol(k8s, ztunnelPods)
+				}
+
 			}
 			// If the pod is a waypoint proxy, check if it is attached to a namespace or to a service account, and get the affected workloads
 			if pod.IsWaypoint() {
