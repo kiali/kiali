@@ -27,13 +27,11 @@ import { meshWideMTLSStatusSelector, minTLSVersionSelector } from 'store/Selecto
 import { TargetPanelDataPlane } from './TargetPanelDataPlane';
 import { TargetPanelControlPlane } from './TargetPanelControlPlane';
 import { useKialiTranslation } from 'utils/I18nUtils';
-import { TracingStats } from '../../../types/TracingInfo';
 
 type ReduxProps = {
   kiosk: string;
   meshStatus: string;
   minTLS: string;
-  tracingStats?: TracingStats;
 };
 
 type TargetPanelProps = ReduxProps &
@@ -162,7 +160,6 @@ export const TargetPanelComponent: React.FC<TargetPanelProps> = (props: TargetPa
                 refreshInterval={props.refreshInterval}
                 target={target}
                 updateTime={props.updateTime}
-                tracingStats={props.tracingStats}
               />
             );
         }
@@ -208,8 +205,7 @@ export const TargetPanelComponent: React.FC<TargetPanelProps> = (props: TargetPa
 const mapStateToProps = (state: KialiAppState): ReduxProps => ({
   kiosk: state.globalState.kiosk,
   meshStatus: meshWideMTLSStatusSelector(state),
-  minTLS: minTLSVersionSelector(state),
-  tracingStats: state.tracingState.info?.stats
+  minTLS: minTLSVersionSelector(state)
 });
 
 export const TargetPanel = connect(mapStateToProps)(TargetPanelComponent);

@@ -13,28 +13,24 @@ import (
 func TestSetAndGet(t *testing.T) {
 	require := require.New(t)
 
-	vanillaStore := New[string, string]()
-	fifoStore := NewFIFOStore[string, string](vanillaStore, 3)
+	s := New[string, string]()
+	fifoStore := NewFIFOStore[string, string](s, 3, "test")
 	fifoStore.Set("foo", "bar")
 	fifoStore.Set("foo2", "bar2")
 	fifoStore.Set("foo3", "bar3")
 
-	require.Equal(fifoStore.stats.Hits, 0)
 	require.Equal(fifoStore.order.Len(), 3)
 
 	elem, found := fifoStore.Get("foo")
-	require.Equal(fifoStore.stats.Hits, 1)
 	require.True(found)
 	require.Equal(elem, "bar")
 
 	elem, found = fifoStore.Get("foo2")
-	require.Equal(fifoStore.stats.Hits, 2)
 	require.True(found)
 	require.Equal(elem, "bar2")
 
 	fifoStore.Set("foo4", "bar4")
 	_, found = fifoStore.Get("foo")
-	require.Equal(fifoStore.stats.Hits, 2)
 	require.Equal(fifoStore.order.Len(), 3)
 	require.False(found)
 }
@@ -42,14 +38,13 @@ func TestSetAndGet(t *testing.T) {
 func TestExpired(t *testing.T) {
 	require := require.New(t)
 
-	vanillaStore := New[string, string]()
-	fifoStore := NewFIFOStore[string, string](vanillaStore, 3)
+	store := New[string, string]()
+	fifoStore := NewFIFOStore[string, string](store, 3, "test")
 	expirationStore := NewExpirationStore[string, string](context.Background(), fifoStore, util.AsPtr(10*time.Second), util.AsPtr(10*time.Second))
 	expirationStore.Set("foo", "bar")
 	expirationStore.Set("foo2", "bar2")
 	expirationStore.Set("foo3", "bar3")
 
-	require.Equal(fifoStore.stats.Hits, 0)
 	require.Equal(len(expirationStore.Store.Items()), 3)
 
 	time.Sleep(5 * time.Second)
@@ -71,8 +66,8 @@ func TestExpired(t *testing.T) {
 func TestExpiredNoCleanup(t *testing.T) {
 	require := require.New(t)
 
-	vanillaStore := New[string, string]()
-	fifoStore := NewFIFOStore[string, string](vanillaStore, 3)
+	store := New[string, string]()
+	fifoStore := NewFIFOStore[string, string](store, 3, "test")
 	expirationStore := NewExpirationStore[string, string](context.Background(), fifoStore, util.AsPtr(10*time.Second), util.AsPtr(10*time.Second))
 	expirationStore.Set("foo", "bar")
 	expirationStore.Set("foo2", "bar2")

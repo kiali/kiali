@@ -10,7 +10,6 @@ import (
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/observability"
-	"github.com/kiali/kiali/store"
 	"github.com/kiali/kiali/tracing"
 	"github.com/kiali/kiali/tracing/jaeger/model"
 	jaegerModels "github.com/kiali/kiali/tracing/jaeger/model/json"
@@ -228,15 +227,6 @@ func (in *TracingService) GetStatus() (accessible bool, err error) {
 		return false, err
 	}
 	return client.GetServiceStatus()
-}
-
-func (in *TracingService) GetCacheStats() (stats *store.Stats, err error) {
-	client, err := in.client()
-	if err != nil {
-		return nil, err
-	}
-	stats, errStats := client.GetCacheStats()
-	return stats, errStats
 }
 
 func matchesWorkload(trace *jaegerModels.Trace, namespace, workload string) bool {

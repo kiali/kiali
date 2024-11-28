@@ -33,7 +33,6 @@ const (
 type OtelHTTPClient struct {
 	ClusterTag bool
 	TempoCache store.Store[string, *model.TracingSingleTrace]
-	FIFOStore  *store.FIFOStore[string, *model.TracingSingleTrace]
 }
 
 // New client
@@ -63,9 +62,8 @@ func NewOtelClient(client http.Client, baseURL *url.URL) (otelClient *OtelHTTPCl
 
 	otelHTTPClient := &OtelHTTPClient{ClusterTag: tags}
 	if config.Get().ExternalServices.Tracing.TempoConfig.CacheEnabled {
-		vanillaStore := store.New[string, *model.TracingSingleTrace]()
-		fifoStore := store.NewFIFOStore[string, *model.TracingSingleTrace](vanillaStore, config.Get().ExternalServices.Tracing.TempoConfig.CacheCapacity)
-		otelHTTPClient.FIFOStore = fifoStore
+		s := store.New[string, *model.TracingSingleTrace]()
+		fifoStore := store.NewFIFOStore[string, *model.TracingSingleTrace](s, config.Get().ExternalServices.Tracing.TempoConfig.CacheCapacity, "tempo")
 		otelHTTPClient.TempoCache = store.NewExpirationStore[string, *model.TracingSingleTrace](context.Background(), fifoStore, util.AsPtr(TTL), util.AsPtr(expirationCheckInterval))
 	}
 
@@ -156,26 +154,6 @@ func (oc *OtelHTTPClient) GetServiceStatusHTTP(client http.Client, baseURL *url.
 		return false, fmt.Errorf("Error %d getting status services", status)
 	}
 	return reqError == nil, reqError
-}
-
-// GetCacheStats get cache stats
-func (oc *OtelHTTPClient) GetCacheStats() (*store.Stats, error) {
-
-	if config.Get().ExternalServices.Tracing.TempoConfig.CacheEnabled {
-
-		stats := oc.FIFOStore.GetStats()
-
-		hitRate := 0.0
-		if stats.TotalRequests > 0 {
-			hitRate = (float64(stats.Hits) / float64(stats.TotalRequests)) * 100
-		}
-
-		rates := store.Stats{HitRate: fmt.Sprintf("%.2f%%", hitRate), Size: stats.Size}
-
-		return util.AsPtr(rates), nil
-	} else {
-		return nil, fmt.Errorf("cache is disabled")
-	}
 }
 
 // queryTracesHTTP

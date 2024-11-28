@@ -4,45 +4,31 @@ import (
 	"container/list"
 
 	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/prometheus/internalmetrics"
 )
-
-type Stats struct {
-	HitRate string `json:"hitRate,omitempty"`
-	Size    int    `json:"size,omitempty"`
-}
-
-type StoreStats struct {
-	Hits          int
-	TotalRequests int
-	Size          int
-}
 
 // FIFOStore uses a FIFO approach storage and is safe for concurrent use.
 type FIFOStore[K comparable, V any] struct {
 	capacity int
+	name     string // Used for metrics
 	Store[K, V]
 	order *list.List
-	stats StoreStats
 }
 
-func NewFIFOStore[K comparable, V any](store Store[K, V], capacity int) *FIFOStore[K, V] {
+func NewFIFOStore[K comparable, V any](store Store[K, V], capacity int, name string) *FIFOStore[K, V] {
 
 	f := &FIFOStore[K, V]{
 		capacity: capacity,
 		Store:    store,
 		order:    list.New(),
-		stats: StoreStats{
-			Hits:          0,
-			TotalRequests: 0,
-		},
+		name:     name,
 	}
 	return f
 }
 
 // Get returns the value associated with the given key or an error.
 func (f *FIFOStore[K, V]) Get(key K) (V, bool) {
-
-	f.stats.TotalRequests++
+	internalmetrics.GetCacheRequestsTotalMetric(f.name).Inc()
 	elem, exists := f.Store.Get(key)
 	if !exists {
 		var value V
@@ -51,7 +37,7 @@ func (f *FIFOStore[K, V]) Get(key K) (V, bool) {
 	}
 
 	log.Tracef("[FIFO store] Returning from cache: %v", key)
-	f.stats.Hits++
+	internalmetrics.GetCacheHitsTotalMetric(f.name).Inc()
 	return elem, true
 }
 
@@ -83,15 +69,4 @@ func (f *FIFOStore[K, V]) Remove(key K) {
 		}
 	}
 	f.Store.Remove(key)
-}
-
-// Get stats
-func (f *FIFOStore[K, V]) GetStats() StoreStats {
-	if f.order != nil {
-		f.stats.Size = len(f.Store.Items())
-	} else {
-		f.stats.Size = 0
-	}
-
-	return f.stats
 }

@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/store"
 )
 
 const (
@@ -15,7 +14,6 @@ type TracingInfo struct {
 	Enabled              bool               `json:"enabled"`
 	Integration          bool               `json:"integration"`
 	Provider             string             `json:"provider"`
-	Stats                store.Stats        `json:"stats"`
 	TempoConfig          config.TempoConfig `json:"tempoConfig"`
 	URL                  string             `json:"url"`
 	NamespaceSelector    bool               `json:"namespaceSelector"`

@@ -23,7 +23,7 @@ type ExpirationStore[K comparable, V any] struct {
 	Stopped <-chan struct{}
 
 	keyExpirationCheckInterval time.Duration
-	KeyTTLs                    Store[K, time.Time]
+	keyTTLs                    Store[K, time.Time]
 	ttl                        time.Duration
 }
 
@@ -41,29 +41,24 @@ func NewExpirationStore[K comparable, V any](ctx context.Context, store Store[K,
 	s := &ExpirationStore[K, V]{
 		Store:                      store,
 		keyExpirationCheckInterval: *keyExpirationCheckInterval,
-		KeyTTLs:                    New[K, time.Time](),
+		keyTTLs:                    New[K, time.Time](),
 		ttl:                        *keyTTL,
 	}
 	s.Stopped = s.checkAndRemoveExpiredKeys(ctx)
 	return s
 }
 
-// Get
-func (s *ExpirationStore[K, V]) Get(key K) (V, bool) {
-	return s.Store.Get(key)
-}
-
 // Set associates the given value with the given key and sets the expiration time.
 func (s *ExpirationStore[K, V]) Set(key K, value V) {
 	s.Store.Set(key, value)
-	s.KeyTTLs.Set(key, time.Now().Add(s.ttl))
+	s.keyTTLs.Set(key, time.Now().Add(s.ttl))
 }
 
 // Remove removes the given key from the store. If the key does not exist, it does nothing.
 // Removes the expiration key as well.
 func (s *ExpirationStore[K, V]) Remove(key K) {
 	s.Store.Remove(key)
-	s.KeyTTLs.Remove(key)
+	s.keyTTLs.Remove(key)
 }
 
 // Replace replaces the contents of the store with the given map and renews key timers.
@@ -71,12 +66,12 @@ func (s *ExpirationStore[K, V]) Replace(items map[K]V) {
 	now := time.Now()
 	s.Store.Replace(items)
 	if items == nil {
-		s.KeyTTLs.Replace(nil)
+		s.keyTTLs.Replace(nil)
 		return
 	}
 
 	for key := range items {
-		s.KeyTTLs.Set(key, now.Add(s.ttl))
+		s.keyTTLs.Set(key, now.Add(s.ttl))
 	}
 }
 
@@ -89,7 +84,7 @@ func (s *ExpirationStore[K, V]) checkAndRemoveExpiredKeys(ctx context.Context) <
 				// Check for expired keys and remove them from the store.
 				// If a key is expired, send a signal on the channel.
 				for _, key := range s.Keys() {
-					expiration, found := s.KeyTTLs.Get(key)
+					expiration, found := s.keyTTLs.Get(key)
 					if !found {
 						continue
 					}

@@ -19,12 +19,6 @@ func GetTracingInfo(w http.ResponseWriter, r *http.Request) {
 	tracingConfig := config.Get().ExternalServices.Tracing
 	var info models.TracingInfo
 
-	business, err := getBusiness(r)
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, "AppTraces initialization error: "+err.Error())
-		return
-	}
-	stats, _ := business.Tracing.GetCacheStats()
 	if tracingConfig.Enabled {
 		info = models.TracingInfo{
 			Enabled:              true,
@@ -34,9 +28,6 @@ func GetTracingInfo(w http.ResponseWriter, r *http.Request) {
 			URL:                  tracingConfig.ExternalURL,
 			NamespaceSelector:    tracingConfig.NamespaceSelector,
 			WhiteListIstioSystem: tracingConfig.WhiteListIstioSystem,
-		}
-		if stats != nil && tracingConfig.Provider == "tempo" && tracingConfig.TempoConfig.CacheEnabled {
-			info.Stats = *stats
 		}
 	} else {
 		// 0-values would work, but let's be explicit
