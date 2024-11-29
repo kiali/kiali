@@ -1917,13 +1917,6 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 		w.WorkloadListItem.IsGateway = w.IsGateway()
 
 		// Add the Proxy Status to the workload
-		// TODO: If ambient
-		// TODO: This should be in the cache
-		// TODO: Maybe user doesn't have permissions
-		k8s, okK8s := in.userClients[criteria.Cluster]
-		if !okK8s {
-			log.Infof("cluster [%s] is not found or is not accessible for Kiali", criteria.Cluster)
-		}
 		for _, pod := range w.Pods {
 			isPodWaypoint := pod.IsWaypoint()
 			if (pod.HasIstioSidecar() && !w.IsGateway() && config.Get().ExternalServices.Istio.IstioAPIEnabled) || isPodWaypoint {
@@ -1935,17 +1928,14 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 				// TODO: If ambient
 				// TODO: This should be in the cache
 				// TODO: Maybe user doesn't have permissions
-				if okK8s {
-					ztunnelPods := in.cache.GetZtunnelPods(criteria.Cluster)
-					for _, zPod := range ztunnelPods {
-						zPodConfig, errConfig := in.businessLayer.ProxyStatus.GetZtunnelConfigDump(criteria.Cluster, zPod.Namespace, zPod.Name)
-						if errConfig != nil {
-							log.Errorf("Error getting config dump for pod %s: %v", zPod.Name, errConfig)
-						} else {
-							log.Infof("Config: %v", zPodConfig)
-							w.AddPodsProtocol(k8s, ztunnelPods)
-						}
-
+				ztunnelPods := in.cache.GetZtunnelPods(criteria.Cluster)
+				for _, zPod := range ztunnelPods {
+					zPodConfig, errConfig := in.businessLayer.ProxyStatus.GetZtunnelConfigDump(criteria.Cluster, zPod.Namespace, zPod.Name)
+					if errConfig != nil {
+						log.Errorf("Error getting config dump for pod %s: %v", zPod.Name, errConfig)
+					} else {
+						log.Infof("Config: %v", zPodConfig)
+						w.AddPodsProtocol(zPodConfig)
 					}
 
 				}
