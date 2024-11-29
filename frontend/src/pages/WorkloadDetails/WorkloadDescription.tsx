@@ -244,7 +244,8 @@ export const WorkloadDescription: React.FC<WorkloadDescriptionProps> = (props: W
           services={services}
           health={props.health}
           cluster={props.workload?.cluster}
-          waypointWorkloads={isWaypoint(workload.labels) ? workload.waypointWorkloads : undefined}
+          isWaypoint={isWaypoint(workload.labels)}
+          waypointWorkloads={workload.waypointWorkloads}
         />
       </CardBody>
     </Card>

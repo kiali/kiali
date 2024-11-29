@@ -39,7 +39,7 @@ import { useKialiSelector } from '../../hooks/redux';
 import { groupMenuStyle, kebabToggleStyle } from 'styles/DropdownStyles';
 import { isMultiCluster, serverConfig } from '../../config';
 import { panelBodyStyle, panelHeadingStyle, panelStyle } from './SummaryPanelStyle';
-import { renderWaypoint } from '../../components/DetailDescription/DetailDescription';
+import { renderWaypointLabel } from '../../components/DetailDescription/DetailDescription';
 import { dicTypeToGVK, gvkType } from '../../types/IstioConfigList';
 
 type SummaryPanelNodeState = {
@@ -238,7 +238,7 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
 
           <div>
             {this.renderBadgeSummary(nodeData)}
-            {nodeData.isWaypoint && renderWaypoint('sm')}
+            {nodeData.isWaypoint && renderWaypointLabel('sm')}
             {shouldRenderDestsList && <div>{destsList}</div>}
             {shouldRenderSvcList && <div>{servicesList}</div>}
             {shouldRenderService && <div>{renderBadgedLink(nodeData, NodeType.SERVICE)}</div>}
