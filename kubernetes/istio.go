@@ -80,6 +80,7 @@ type IstioClientInterface interface {
 	GatewayAPI() gatewayapiclient.Interface
 
 	GetConfigDump(namespace, podName string) (*ConfigDump, error)
+	GetZtunnelConfigDump(namespace, podName string) (*ConfigDump, error)
 	SetProxyLogLevel(namespace, podName, level string) error
 }
 
@@ -92,6 +93,27 @@ func (in *K8SClient) GatewayAPI() gatewayapiclient.Interface {
 }
 
 func (in *K8SClient) GetConfigDump(namespace, podName string) (*ConfigDump, error) {
+	// Fetching the Config Dump from the pod's Envoy.
+	// The port 15000 is open on each Envoy Sidecar (managed by Istio) to serve the Envoy Admin  interface.
+	// This port can only be accessed by inside the pod.
+	// See the Istio's doc page about its port usage:
+	// https://istio.io/latest/docs/ops/deployment/requirements/#ports-used-by-istio
+	resp, err := in.ForwardGetRequest(namespace, podName, 15000, "/config_dump")
+	if err != nil {
+		log.Errorf("Error forwarding the /config_dump request: %v", err)
+		return nil, err
+	}
+
+	cd := &ConfigDump{}
+	err = json.Unmarshal(resp, cd)
+	if err != nil {
+		log.Errorf("Error Unmarshalling the config_dump: %v", err)
+	}
+
+	return cd, err
+}
+
+func (in *K8SClient) GetZtunnelConfigDump(namespace, podName string) (*ConfigDump, error) {
 	// Fetching the Config Dump from the pod's Envoy.
 	// The port 15000 is open on each Envoy Sidecar (managed by Istio) to serve the Envoy Admin  interface.
 	// This port can only be accessed by inside the pod.
