@@ -241,7 +241,7 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
       );
     }
 
-    if (this.state.workload && this.hasIstioSidecars(this.state.workload) && !isWaypoint(this.state.workload.labels)) {
+    if (this.state.workload && (this.hasIstioSidecars(this.state.workload) || isWaypoint(this.state.workload.labels))) {
       const envoyTab = (
         <Tab title="Envoy" eventKey={10} key="Envoy">
           {this.state.workload && (
