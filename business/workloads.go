@@ -1925,7 +1925,8 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 			log.Infof("cluster [%s] is not found or is not accessible for Kiali", criteria.Cluster)
 		}
 		for _, pod := range w.Pods {
-			if pod.HasIstioSidecar() && !w.IsGateway() && config.Get().ExternalServices.Istio.IstioAPIEnabled {
+			isPodWaypoint := pod.IsWaypoint()
+			if (pod.HasIstioSidecar() && !w.IsGateway() && config.Get().ExternalServices.Istio.IstioAPIEnabled) || isPodWaypoint {
 				pod.ProxyStatus = in.businessLayer.ProxyStatus.GetPodProxyStatus(criteria.Cluster, criteria.Namespace, pod.Name)
 			}
 			// If Ambient is enabled for pod, check if has any Waypoint proxy
@@ -1936,12 +1937,22 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 				// TODO: Maybe user doesn't have permissions
 				if okK8s {
 					ztunnelPods := in.cache.GetZtunnelPods(criteria.Cluster)
-					w.AddPodsProtocol(k8s, ztunnelPods)
+					for _, zPod := range ztunnelPods {
+						zPodConfig, errConfig := in.businessLayer.ProxyStatus.GetZtunnelConfigDump(criteria.Cluster, zPod.Namespace, zPod.Name)
+						if errConfig != nil {
+							log.Errorf("Error getting config dump for pod %s: %v", zPod.Name, errConfig)
+						} else {
+							log.Infof("Config: %v", zPodConfig)
+							w.AddPodsProtocol(k8s, ztunnelPods)
+						}
+
+					}
+
 				}
 
 			}
 			// If the pod is a waypoint proxy, check if it is attached to a namespace or to a service account, and get the affected workloads
-			if pod.IsWaypoint() {
+			if isPodWaypoint {
 				// Get waypoint workloads
 				w.WaypointWorkloads = append(w.WaypointWorkloads, in.listWaypointWorkloads(ctx, pod.Name, criteria.Cluster)...)
 			}
