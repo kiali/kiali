@@ -136,6 +136,7 @@ export class TrafficPointDiamondRenderer extends TrafficPointRenderer {
 
   private getStyle(moveAnimation: string, isInfinite: boolean): string {
     return kialiStyle({
+      opacity: 0,
       animationDuration: this.animationDuration,
       animationFillMode: 'forwards',
       animationIterationCount: isInfinite ? 'infinite' : 1,
