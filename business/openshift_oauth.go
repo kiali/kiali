@@ -103,7 +103,7 @@ func httpClientWithPool(conf *config.Config, restConfig rest.Config, systemPool 
 		}
 		tlsConfig.RootCAs = pool
 	} else {
-		log.Trace("Insecure connection to oAuth server.")
+		log.Debug("Insecure connection to oAuth server.")
 	}
 
 	return &http.Client{
