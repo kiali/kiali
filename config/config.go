@@ -401,7 +401,8 @@ type AuthConfig struct {
 
 // OpenShiftConfig contains specific configuration for authentication when on OpenShift
 type OpenShiftConfig struct {
-	CAFile string `yaml:"ca_file,omitempty"`
+	CAFile                string `yaml:"ca_file,omitempty"`
+	InsecureSkipVerifyTLS bool   `yaml:"insecure_skip_verify_tls,omitempty"`
 }
 
 // OpenIdConfig contains specific configuration for authentication using an OpenID provider
@@ -683,6 +684,9 @@ func NewConfig() (c *Config) {
 				IssuerUri:               "",
 				Scopes:                  []string{"openid", "profile", "email"},
 				UsernameClaim:           "sub",
+			},
+			OpenShift: OpenShiftConfig{
+				InsecureSkipVerifyTLS: false,
 			},
 		},
 		CustomDashboards: dashboards.GetBuiltInMonitoringDashboards(),
