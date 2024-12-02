@@ -57,16 +57,6 @@ func (in *ProxyStatusService) GetConfigDump(cluster, namespace, pod string) (mod
 	return models.EnvoyProxyDump{ConfigDump: dump}, err
 }
 
-func (in *ProxyStatusService) GetZtunnelConfigDump(cluster, namespace, pod string) (kubernetes.ZtunnelConfigDump, error) {
-	kialiSAClient, ok := in.kialiSAClients[cluster]
-	if !ok {
-		return kubernetes.ZtunnelConfigDump{}, fmt.Errorf("cluster [%s] not found", cluster)
-	}
-
-	dump, err := kialiSAClient.GetZtunnelConfigDump(namespace, pod)
-	return *dump, err
-}
-
 func (in *ProxyStatusService) GetConfigDumpResourceEntries(cluster, namespace, pod, resource string) (*models.EnvoyProxyDump, error) {
 	kialiSAClient, ok := in.kialiSAClients[cluster]
 	if !ok {

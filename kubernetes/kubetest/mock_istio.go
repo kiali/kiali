@@ -2,7 +2,6 @@ package kubetest
 
 import (
 	"context"
-
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 	istio "istio.io/client-go/pkg/clientset/versioned"
 	istio_fake "istio.io/client-go/pkg/clientset/versioned/fake"
