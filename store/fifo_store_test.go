@@ -19,7 +19,7 @@ func TestSetAndGet(t *testing.T) {
 	fifoStore.Set("foo2", "bar2")
 	fifoStore.Set("foo3", "bar3")
 
-	require.Equal(fifoStore.order.Len(), 3)
+	require.Equal(3, fifoStore.order.Len())
 
 	elem, found := fifoStore.Get("foo")
 	require.True(found)
@@ -32,6 +32,40 @@ func TestSetAndGet(t *testing.T) {
 	fifoStore.Set("foo4", "bar4")
 	_, found = fifoStore.Get("foo")
 	require.Equal(fifoStore.order.Len(), 3)
+	require.False(found)
+}
+
+func TestUpdate(t *testing.T) {
+	require := require.New(t)
+
+	s := New[string, string]()
+	fifoStore := NewFIFOStore[string, string](s, 3, "test")
+	fifoStore.Set("foo", "bar")
+	fifoStore.Set("foo2", "bar2")
+	fifoStore.Set("foo3", "bar3")
+
+	require.Equal(fifoStore.order.Len(), 3)
+
+	elem, found := fifoStore.Get("foo")
+	require.True(found)
+	require.Equal(elem, "bar")
+
+	elem, found = fifoStore.Get("foo2")
+	require.True(found)
+	require.Equal(elem, "bar2")
+
+	fifoStore.Set("foo2", "newValue")
+	elem, found = fifoStore.Get("foo2")
+	require.Equal(fifoStore.order.Len(), 3)
+	require.True(found)
+	require.Equal(elem, "newValue")
+
+	fifoStore.Set("foo4", "bar4")
+	elem, found = fifoStore.Get("foo2")
+	require.Equal(fifoStore.order.Len(), 3)
+	require.True(found)
+	require.Equal(elem, "newValue")
+	_, found = fifoStore.Get("foo")
 	require.False(found)
 }
 
@@ -60,7 +94,6 @@ func TestExpired(t *testing.T) {
 	require.False(found2)
 	_, found3 := expirationStore.Get("foo3")
 	require.False(found3)
-
 }
 
 func TestExpiredNoCleanup(t *testing.T) {
@@ -73,7 +106,6 @@ func TestExpiredNoCleanup(t *testing.T) {
 	expirationStore.Set("foo2", "bar2")
 	expirationStore.Set("foo3", "bar3")
 
-	//require.Equal(expirationStore.stats.Hits, 0)
 	require.Equal(len(expirationStore.Store.Items()), 3)
 
 	time.Sleep(5 * time.Second)

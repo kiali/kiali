@@ -45,32 +45,34 @@ func (f *FIFOStore[K, V]) Get(key K) (V, bool) {
 
 // Set
 func (f *FIFOStore[K, V]) Set(key K, value V) {
+	f.lock.Lock()
+	defer f.lock.Unlock()
+
 	_, exists := f.Store.Get(key)
 
 	// Remove older
 	if f.order != nil && f.order.Len() >= f.capacity && !exists {
 		oldest := f.order.Front()
 		if oldest != nil {
-			f.lock.Lock()
 			f.order.Remove(oldest)
-			f.lock.Unlock()
 			f.Store.Remove(oldest.Value.(K))
 		}
 	}
 
-	f.lock.Lock()
-	f.order.PushBack(key)
-	f.lock.Unlock()
+	if !exists {
+		f.order.PushBack(key)
+	}
 	f.Store.Set(key, value)
 }
 
 // Set
 func (f *FIFOStore[K, V]) Remove(key K) {
+	f.lock.Lock()
+	defer f.lock.Unlock()
+
 	for e := f.order.Front(); e != nil; e = e.Next() {
 		if e.Value == key {
-			f.lock.Lock()
 			f.order.Remove(e)
-			f.lock.Unlock()
 			break
 		}
 	}
@@ -79,18 +81,16 @@ func (f *FIFOStore[K, V]) Remove(key K) {
 
 // Replace replaces the contents of the store with the given map and updates the order list
 func (f *FIFOStore[K, V]) Replace(items map[K]V) {
+	f.lock.Lock()
+	defer f.lock.Unlock()
 
 	f.Store.Replace(items)
 	if items == nil {
-		f.lock.Lock()
 		f.order = list.New()
-		f.lock.Unlock()
 		return
 	}
 
-	f.lock.Lock()
 	for key := range items {
 		f.order.PushBack(key)
 	}
-	f.lock.Unlock()
 }
