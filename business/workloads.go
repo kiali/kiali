@@ -1925,13 +1925,13 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 			// If Ambient is enabled for pod, check if has any Waypoint proxy
 			if pod.AmbientEnabled() {
 				w.WaypointWorkloads = in.getWaypointsForWorkload(ctx, criteria.Namespace, w)
-				// TODO: If ambient
 				// TODO: Maybe user doesn't have permissions
 				ztunnelPods := in.cache.GetZtunnelPods(criteria.Cluster)
 				for _, zPod := range ztunnelPods {
+					// There should be a ztunnel pod per node
+					// TODO: Maybe we should check if some of the config differs for one pod?
 					zPodConfig := in.cache.GetZtunnelDump(criteria.Cluster, zPod.Namespace, zPod.Name)
 					if zPodConfig != nil {
-						log.Infof("Config GET")
 						w.AddPodsProtocol(*zPodConfig)
 					}
 				}

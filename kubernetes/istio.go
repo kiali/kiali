@@ -114,21 +114,19 @@ func (in *K8SClient) GetConfigDump(namespace, podName string) (*ConfigDump, erro
 }
 
 func (in *K8SClient) GetZtunnelConfigDump(namespace, podName string) (*ZtunnelConfigDump, error) {
-	// Fetching the Config Dump from the pod's Envoy.
-	// The port 15000 is open on each Envoy Sidecar (managed by Istio) to serve the Envoy Admin  interface.
-	// This port can only be accessed by inside the pod.
-	// See the Istio's doc page about its port usage:
-	// https://istio.io/latest/docs/ops/deployment/requirements/#ports-used-by-istio
+	// Fetching the Config Dump from the pod's ztunnel.
+	// The port 15000 is open on each ztunnel pod (managed by Istio)
+	// And returns different data than the Envoy Proxy
 	resp, err := in.ForwardGetRequest(namespace, podName, 15000, "/config_dump")
 	if err != nil {
-		log.Errorf("Error forwarding the /config_dump request: %v", err)
+		log.Errorf("Error forwarding the /config_dump request: %s", err.Error())
 		return nil, err
 	}
 
 	cd := &ZtunnelConfigDump{}
 	err = json.Unmarshal(resp, cd)
 	if err != nil {
-		log.Errorf("Error Unmarshalling the config_dump: %v", err)
+		log.Errorf("Error Unmarshalling the ztunnel config_dump: %s", err.Error())
 	}
 
 	return cd, err
