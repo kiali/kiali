@@ -5,6 +5,7 @@ import { PFColors } from '../../../../components/Pf/PfColors';
 import { SimpleTable } from 'components/Table/SimpleTable';
 import { Button, ButtonVariant } from '@patternfly/react-core';
 import { KialiIcon } from 'config/KialiIcon';
+import { t, useKialiTranslation } from 'utils/I18nUtils';
 
 type SourceListProps = {
   fromList: { [key: string]: string[] }[];
@@ -13,7 +14,7 @@ type SourceListProps = {
 
 const columns: ThProps[] = [
   {
-    title: 'Source Matches of a Request',
+    title: t('Source Matches of a Request'),
     width: 100
   },
   {
@@ -27,6 +28,8 @@ const noSourceStyle = kialiStyle({
 });
 
 export const SourceList: React.FC<SourceListProps> = (props: SourceListProps) => {
+  const { t } = useKialiTranslation();
+
   const rows: IRow[] = props.fromList.map((source, i) => {
     return {
       key: `fromSource_${i}`,
@@ -51,7 +54,7 @@ export const SourceList: React.FC<SourceListProps> = (props: SourceListProps) =>
     };
   });
 
-  const noSources = <div className={noSourceStyle}>No Source Matches Defined</div>;
+  const noSources = <div className={noSourceStyle}>{t('No Source Matches Defined')}</div>;
 
-  return <SimpleTable label="Source List" columns={columns} rows={rows} emptyState={noSources} />;
+  return <SimpleTable label={t('Source List')} columns={columns} rows={rows} emptyState={noSources} />;
 };

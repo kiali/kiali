@@ -5,6 +5,7 @@ import { PFColors } from '../../../../components/Pf/PfColors';
 import { Button, ButtonVariant } from '@patternfly/react-core';
 import { KialiIcon } from 'config/KialiIcon';
 import { SimpleTable } from 'components/Table/SimpleTable';
+import { t, useKialiTranslation } from 'utils/I18nUtils';
 
 type OperationListProps = {
   onRemoveTo: (index: number) => void;
@@ -13,7 +14,7 @@ type OperationListProps = {
 
 const columns: ThProps[] = [
   {
-    title: 'Operations of a Request',
+    title: t('Operations of a Request'),
     width: 100
   },
   {
@@ -27,6 +28,8 @@ const noOperationsStyle = kialiStyle({
 });
 
 export const OperationList: React.FC<OperationListProps> = (props: OperationListProps) => {
+  const { t } = useKialiTranslation();
+
   const rows: IRow[] = props.toList.map((operation, i) => {
     return {
       key: `toOperation_${i}`,
@@ -50,7 +53,7 @@ export const OperationList: React.FC<OperationListProps> = (props: OperationList
     };
   });
 
-  const noOperations = <div className={noOperationsStyle}>No Operations Defined</div>;
+  const noOperations = <div className={noOperationsStyle}>{t('No Operations Defined')}</div>;
 
-  return <SimpleTable label="Operation List" columns={columns} rows={rows} emptyState={noOperations} />;
+  return <SimpleTable label={t('Operation List')} columns={columns} rows={rows} emptyState={noOperations} />;
 };

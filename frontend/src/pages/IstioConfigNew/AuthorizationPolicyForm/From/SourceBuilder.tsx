@@ -7,18 +7,10 @@ import { PFColors } from '../../../../components/Pf/PfColors';
 import { isValid } from 'utils/Common';
 import { SimpleTable } from 'components/Table/SimpleTable';
 import { KialiIcon } from 'config/KialiIcon';
+import { t, useKialiTranslation } from 'utils/I18nUtils';
 
 type Props = {
   onAddFrom: (source: { [key: string]: string[] }) => void;
-};
-
-type State = {
-  newSourceField: string;
-  newValues: string;
-  source: {
-    [key: string]: string[];
-  };
-  sourceFields: string[];
 };
 
 const INIT_SOURCE_FIELDS = [
@@ -38,11 +30,11 @@ const noSourceStyle = kialiStyle({
 
 const columns: ThProps[] = [
   {
-    title: 'Source Field',
+    title: t('Source Field'),
     width: 20
   },
   {
-    title: 'Values',
+    title: t('Values'),
     width: 80
   },
   {
@@ -50,157 +42,142 @@ const columns: ThProps[] = [
   }
 ];
 
-export class SourceBuilder extends React.Component<Props, State> {
-  constructor(props: Props) {
-    super(props);
-    this.state = {
-      sourceFields: Object.assign([], INIT_SOURCE_FIELDS),
-      source: {},
-      newSourceField: INIT_SOURCE_FIELDS[0],
-      newValues: ''
-    };
-  }
+export const SourceBuilder: React.FC<Props> = (props: Props) => {
+  const [newSourceField, setNewSourceField] = React.useState<string>(INIT_SOURCE_FIELDS[0]);
+  const [newValues, setNewValues] = React.useState<string>('');
+  const [source, setSource] = React.useState<{ [key: string]: string[] }>({});
+  const [sourceFields, setSourceFields] = React.useState<string[]>(INIT_SOURCE_FIELDS);
 
-  onAddNewSourceField = (_event: React.FormEvent, value: string): void => {
-    this.setState({
-      newSourceField: value
-    });
+  const { t } = useKialiTranslation();
+
+  const onAddNewSourceField = (_event: React.FormEvent, value: string): void => {
+    setNewSourceField(value);
   };
 
-  onAddNewValues = (_event: React.FormEvent, value: string): void => {
-    this.setState({
-      newValues: value
-    });
+  const onAddNewValues = (_event: React.FormEvent, value: string): void => {
+    setNewValues(value);
   };
 
-  onAddSource = (): void => {
-    this.setState(prevState => {
-      const i = prevState.sourceFields.indexOf(prevState.newSourceField);
+  const onAddSource = (): void => {
+    const newSourceFields = [...sourceFields];
+    const i = sourceFields.indexOf(newSourceField);
 
-      if (i > -1) {
-        prevState.sourceFields.splice(i, 1);
-      }
+    if (i > -1) {
+      newSourceFields.splice(i, 1);
+    }
 
-      prevState.source[prevState.newSourceField] = prevState.newValues.split(',');
+    const newSource = { ...source };
+    newSource[newSourceField] = newValues.split(',');
 
-      return {
-        sourceFields: prevState.sourceFields,
-        source: prevState.source,
-        newSourceField: prevState.sourceFields[0],
-        newValues: ''
-      };
-    });
+    setSource(newSource);
+    setSourceFields(newSourceFields);
+    setNewSourceField(newSourceFields[0]);
+    setNewValues('');
   };
 
-  onAddSourceFromList = (): void => {
-    const fromItem = this.state.source;
+  const onAddSourceFromList = (): void => {
+    const fromItem = source;
 
-    this.setState(
-      {
-        sourceFields: Object.assign([], INIT_SOURCE_FIELDS),
-        source: {},
-        newSourceField: INIT_SOURCE_FIELDS[0],
-        newValues: ''
-      },
-      () => {
-        this.props.onAddFrom(fromItem);
-      }
-    );
+    setSourceFields(INIT_SOURCE_FIELDS);
+    setSource({});
+    setNewSourceField(INIT_SOURCE_FIELDS[0]);
+    setNewValues('');
+
+    props.onAddFrom(fromItem);
   };
 
   // Helper to identify when some values are valid
-  isValidSource = (): [boolean, string] => {
-    if (this.state.newSourceField === 'ipBlocks' || this.state.newSourceField === 'notIpBlocks') {
-      const validIp = this.state.newValues.split(',').every(ip => isValidIp(ip));
+  const isValidSource = (): [boolean, string] => {
+    if (newSourceField === 'ipBlocks' || newSourceField === 'notIpBlocks') {
+      const validIp = newValues.split(',').every(ip => isValidIp(ip));
 
       if (!validIp) {
-        return [false, 'Not valid IP'];
+        return [false, t('Not valid IP')];
       }
     }
 
-    const emptyValues = this.state.newValues.split(',').every(v => v.length === 0);
+    const emptyValues = newValues.split(',').every(v => v.length === 0);
 
     if (emptyValues) {
-      return [false, 'Empty value'];
+      return [false, t('Empty value')];
     }
 
     return [true, ''];
   };
 
-  onRemoveSource = (removeSourceField: string): void => {
-    this.setState(prevState => {
-      prevState.sourceFields.push(removeSourceField);
-      delete prevState.source[removeSourceField];
-      const newSourceFields = prevState.sourceFields.sort();
+  const onRemoveSource = (removeSourceField: string): void => {
+    let newSourceFields = [...sourceFields];
+    newSourceFields.push(removeSourceField);
+    newSourceFields = newSourceFields.sort();
 
-      return {
-        sourceFields: newSourceFields,
-        source: prevState.source,
-        newSourceField: newSourceFields[0],
-        newValues: ''
-      };
-    });
+    const newSource = { ...source };
+    delete newSource[removeSourceField];
+
+    setSource(newSource);
+    setSourceFields(newSourceFields);
+    setNewSourceField(newSourceFields[0]);
+    setNewValues('');
   };
 
-  rows = (): IRow[] => {
-    const [isValidSource, invalidText] = this.isValidSource();
+  const rows = (): IRow[] => {
+    const [validSource, invalidText] = isValidSource();
 
-    const sourceRows = Object.keys(this.state.source).map((sourceField, i) => {
+    const sourceRows = Object.keys(source).map((sourceField, i) => {
       return {
         key: `sourceKey_${i}`,
         cells: [
           <>{sourceField}</>,
-          <>{this.state.source[sourceField].join(',')}</>,
+          <>{source[sourceField].join(',')}</>,
           <Button
             id="removeSourceBtn"
             variant={ButtonVariant.link}
             icon={<KialiIcon.Delete />}
-            onClick={() => this.onRemoveSource(sourceField)}
+            onClick={() => onRemoveSource(sourceField)}
           />
         ]
       };
     });
 
-    if (this.state.sourceFields.length > 0) {
+    if (sourceFields.length > 0) {
       return sourceRows.concat([
         {
           key: 'sourceKeyNew',
           cells: [
             <FormSelect
-              value={this.state.newSourceField}
+              value={newSourceField}
               id="addNewSourceField"
               name="addNewSourceField"
-              onChange={this.onAddNewSourceField}
+              onChange={onAddNewSourceField}
             >
-              {this.state.sourceFields.map((option, index) => (
+              {sourceFields.map((option, index) => (
                 <FormSelectOption isDisabled={false} key={`source_${index}`} value={option} label={option} />
               ))}
             </FormSelect>,
             <>
               <TextInput
-                value={this.state.newValues}
+                value={newValues}
                 type="text"
                 id="addNewValues"
                 key="addNewValues"
-                aria-describedby="add new source values"
+                aria-describedby={t('Add new source values')}
                 name="addNewValues"
-                onChange={this.onAddNewValues}
-                validated={isValid(isValidSource)}
+                onChange={onAddNewValues}
+                validated={isValid(validSource)}
               />
 
-              {!isValidSource && (
+              {!validSource && (
                 <div key="hostsHelperText" className={noSourceStyle}>
                   {invalidText}
                 </div>
               )}
             </>,
             <>
-              {this.state.sourceFields.length > 0 && (
+              {sourceFields.length > 0 && (
                 <Button
                   variant={ButtonVariant.link}
                   icon={<KialiIcon.AddMore />}
-                  onClick={this.onAddSource}
-                  isDisabled={!isValidSource}
+                  onClick={onAddSource}
+                  isDisabled={!validSource}
                 />
               )}
             </>
@@ -212,20 +189,18 @@ export class SourceBuilder extends React.Component<Props, State> {
     return sourceRows;
   };
 
-  render(): React.ReactNode {
-    return (
-      <>
-        <SimpleTable label="Source Builder" columns={columns} rows={this.rows()} />
+  return (
+    <>
+      <SimpleTable label={t('Source Builder')} columns={columns} rows={rows()} />
 
-        <Button
-          variant={ButtonVariant.link}
-          icon={<KialiIcon.AddMore />}
-          isDisabled={Object.keys(this.state.source).length === 0}
-          onClick={this.onAddSourceFromList}
-        >
-          Add Source to From List
-        </Button>
-      </>
-    );
-  }
-}
+      <Button
+        variant={ButtonVariant.link}
+        icon={<KialiIcon.AddMore />}
+        isDisabled={Object.keys(source).length === 0}
+        onClick={onAddSourceFromList}
+      >
+        {t('Add Source to From List')}
+      </Button>
+    </>
+  );
+};

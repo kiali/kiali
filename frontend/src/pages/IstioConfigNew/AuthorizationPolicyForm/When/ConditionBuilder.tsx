@@ -8,6 +8,7 @@ import { isValidIp } from '../../../../utils/IstioConfigUtils';
 import { isValid } from 'utils/Common';
 import { SimpleTable } from 'components/Table/SimpleTable';
 import { KialiIcon } from 'config/KialiIcon';
+import { t, useKialiTranslation } from 'utils/I18nUtils';
 
 export type Condition = {
   key: string;
@@ -19,21 +20,17 @@ type Props = {
   onAddCondition: (condition: Condition) => void;
 };
 
-type State = {
-  condition: Condition;
-};
-
 const columns: ThProps[] = [
   {
-    title: 'Condition Key',
+    title: t('Condition Key'),
     width: 30
   },
   {
-    title: 'Values',
+    title: t('Values'),
     width: 30
   },
   {
-    title: 'Not Values',
+    title: t('Not Values'),
     width: 30
   }
 ];
@@ -57,58 +54,40 @@ const conditionFixedKeys = [
 
 const conditionIpAddressKeys = ['source.ip', 'remote.ip', 'destination.ip'];
 
-export class ConditionBuilder extends React.Component<Props, State> {
-  constructor(props: Props) {
-    super(props);
-    this.state = {
-      condition: {
-        key: ''
-      }
-    };
-  }
+export const ConditionBuilder: React.FC<Props> = (props: Props) => {
+  const [condition, setCondition] = React.useState<Condition>({ key: '' });
 
-  onAddNewConditionKey = (_event: React.FormEvent, key: string): void => {
-    this.setState(prevState => {
-      prevState.condition.key = key;
-      return {
-        condition: prevState.condition
-      };
-    });
+  const { t } = useKialiTranslation();
+
+  const onAddNewConditionKey = (_event: React.FormEvent, key: string): void => {
+    const newCondition = { ...condition };
+    newCondition.key = key;
+
+    setCondition(newCondition);
   };
 
-  onAddNewValues = (_event: React.FormEvent, value: string): void => {
-    this.setState(prevState => {
-      prevState.condition.values = value.length === 0 ? [] : value.split(',');
-      return {
-        condition: prevState.condition
-      };
-    });
+  const onAddNewValues = (_event: React.FormEvent, value: string): void => {
+    const newCondition = { ...condition };
+    newCondition.values = value.length === 0 ? [] : value.split(',');
+
+    setCondition(newCondition);
   };
 
-  onAddNewNotValues = (_event: React.FormEvent, notValues: string): void => {
-    this.setState(prevState => {
-      prevState.condition.notValues = notValues.length === 0 ? [] : notValues.split(',');
-      return {
-        condition: prevState.condition
-      };
-    });
+  const onAddNewNotValues = (_event: React.FormEvent, notValues: string): void => {
+    const newCondition = { ...condition };
+    newCondition.notValues = notValues.length === 0 ? [] : notValues.split(',');
+
+    setCondition(newCondition);
   };
 
-  onAddConditionToList = (): void => {
-    const conditionItem = this.state.condition;
-    this.setState(
-      {
-        condition: {
-          key: ''
-        }
-      },
-      () => {
-        this.props.onAddCondition(conditionItem);
-      }
-    );
+  const onAddConditionToList = (): void => {
+    const conditionItem = condition;
+
+    setCondition({ key: '' });
+    props.onAddCondition(conditionItem);
   };
 
-  isValidKey = (key: string): boolean => {
+  const isValidKey = (key: string): boolean => {
     if (key.length === 0) {
       return false;
     }
@@ -133,45 +112,45 @@ export class ConditionBuilder extends React.Component<Props, State> {
   };
 
   // Helper to mark invalid any of the fields: key, values, notValues with helper text
-  isValidCondition = (): [boolean, boolean, boolean, string] => {
-    const key = this.state.condition.key;
-    const isValidKey = this.isValidKey(key);
+  const isValidCondition = (): [boolean, boolean, boolean, string] => {
+    const key = condition.key;
+    const isValid = isValidKey(key);
 
-    if (!isValidKey) {
-      return [false, true, true, 'Condition Key not supported'];
+    if (!isValid) {
+      return [false, true, true, t('Condition Key not supported')];
     }
 
-    const values = this.state.condition.values;
-    const notValues = this.state.condition.notValues;
+    const values = condition.values;
+    const notValues = condition.notValues;
 
     if ((!values || values.length === 0) && (!notValues || notValues.length === 0)) {
-      return [true, false, false, 'Values and NotValues cannot be empty'];
+      return [true, false, false, t('Values and NotValues cannot be empty')];
     }
 
     if (conditionIpAddressKeys.includes(key)) {
       // If some value is not an IP, then is not valid
       const valuesValid = values ? !values.some(value => !isValidIp(value)) : true;
       const notValuesValid = notValues ? !notValues.some(value => !isValidIp(value)) : true;
-      return [true, valuesValid, notValuesValid, 'Not valid IP'];
+      return [true, valuesValid, notValuesValid, t('Not valid IP')];
     }
 
     return [true, true, true, ''];
   };
 
-  rows = (validKey: boolean, validValues: boolean, validNotValues: boolean, validText: string): IRow[] => {
+  const rows = (validKey: boolean, validValues: boolean, validNotValues: boolean, validText: string): IRow[] => {
     return [
       {
         key: 'conditionKeyNew',
         cells: [
           <>
             <TextInput
-              value={this.state.condition.key}
+              value={condition.key}
               type="text"
               id="addNewConditionKey"
               key="addNewConditionKey"
-              aria-describedby="add new condition key"
+              aria-describedby={t('Add new condition key')}
               name="addNewConditionKey"
-              onChange={this.onAddNewConditionKey}
+              onChange={onAddNewConditionKey}
               validated={isValid(validKey)}
             />
 
@@ -183,13 +162,13 @@ export class ConditionBuilder extends React.Component<Props, State> {
           </>,
           <>
             <TextInput
-              value={this.state.condition.values ? this.state.condition.values.join(',') : ''}
+              value={condition.values ? condition.values.join(',') : ''}
               type="text"
               id="addNewValues"
               key="addNewValues"
-              aria-describedby="add new condition values"
+              aria-describedby={t('Add new condition values')}
               name="addNewConditionValues"
-              onChange={this.onAddNewValues}
+              onChange={onAddNewValues}
             />
 
             {!validValues && (
@@ -200,13 +179,13 @@ export class ConditionBuilder extends React.Component<Props, State> {
           </>,
           <>
             <TextInput
-              value={this.state.condition.notValues ? this.state.condition.notValues.join(',') : ''}
+              value={condition.notValues ? condition.notValues.join(',') : ''}
               type="text"
               id="addNewNotValues"
               key="addNewNotValues"
-              aria-describedby="add new condition not values"
+              aria-describedby={t('Add new condition not values')}
               name="addNewNotValues"
-              onChange={this.onAddNewNotValues}
+              onChange={onAddNewNotValues}
             />
 
             {!validNotValues && (
@@ -220,27 +199,25 @@ export class ConditionBuilder extends React.Component<Props, State> {
     ];
   };
 
-  render(): React.ReactNode {
-    const [validKey, validValues, validNotValues, validText] = this.isValidCondition();
-    const validCondition = validKey && validValues && validNotValues;
+  const [validKey, validValues, validNotValues, validText] = isValidCondition();
+  const validCondition = validKey && validValues && validNotValues;
 
-    return (
-      <>
-        <SimpleTable
-          label="Condition Builder"
-          columns={columns}
-          rows={this.rows(validKey, validValues, validNotValues, validText)}
-        />
+  return (
+    <>
+      <SimpleTable
+        label={t('Condition Builder')}
+        columns={columns}
+        rows={rows(validKey, validValues, validNotValues, validText)}
+      />
 
-        <Button
-          variant={ButtonVariant.link}
-          icon={<KialiIcon.AddMore />}
-          isDisabled={!validCondition}
-          onClick={this.onAddConditionToList}
-        >
-          Add Condition to When List
-        </Button>
-      </>
-    );
-  }
-}
+      <Button
+        variant={ButtonVariant.link}
+        icon={<KialiIcon.AddMore />}
+        isDisabled={!validCondition}
+        onClick={onAddConditionToList}
+      >
+        {t('Add Condition to When List')}
+      </Button>
+    </>
+  );
+};

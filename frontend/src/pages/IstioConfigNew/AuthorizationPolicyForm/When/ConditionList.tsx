@@ -6,6 +6,7 @@ import { PFColors } from '../../../../components/Pf/PfColors';
 import { SimpleTable } from 'components/Table/SimpleTable';
 import { Button, ButtonVariant } from '@patternfly/react-core';
 import { KialiIcon } from 'config/KialiIcon';
+import { t } from 'utils/I18nUtils';
 
 type ConditionListProps = {
   conditionList: Condition[];
@@ -14,7 +15,7 @@ type ConditionListProps = {
 
 const columns: ThProps[] = [
   {
-    title: 'Additional Conditions of a Request',
+    title: t('Additional Conditions of a Request'),
     width: 100
   },
   {
@@ -55,7 +56,7 @@ export const ConditionList: React.FC<ConditionListProps> = (props: ConditionList
     };
   });
 
-  const noConditions = <div className={noConditionsStyle}>No Conditions Defined</div>;
+  const noConditions = <div className={noConditionsStyle}>{t('No Conditions Defined')}</div>;
 
-  return <SimpleTable label="Condition List" columns={columns} rows={rows} emptyState={noConditions} />;
+  return <SimpleTable label={t('Condition List')} columns={columns} rows={rows} emptyState={noConditions} />;
 };

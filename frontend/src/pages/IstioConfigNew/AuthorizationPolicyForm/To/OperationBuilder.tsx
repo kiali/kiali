@@ -3,18 +3,10 @@ import { IRow, ThProps } from '@patternfly/react-table';
 import { Button, ButtonVariant, FormSelect, FormSelectOption, TextInput } from '@patternfly/react-core';
 import { SimpleTable } from 'components/Table/SimpleTable';
 import { KialiIcon } from 'config/KialiIcon';
+import { t, useKialiTranslation } from 'utils/I18nUtils';
 
 type Props = {
   onAddTo: (operation: { [key: string]: string[] }) => void;
-};
-
-type State = {
-  newOperationField: string;
-  newValues: string;
-  operation: {
-    [key: string]: string[];
-  };
-  operationFields: string[];
 };
 
 const INIT_OPERATION_FIELDS = [
@@ -30,11 +22,11 @@ const INIT_OPERATION_FIELDS = [
 
 const columns: ThProps[] = [
   {
-    title: 'Operation Field',
+    title: t('Operation Field'),
     width: 20
   },
   {
-    title: 'Values',
+    title: t('Values'),
     width: 80
   },
   {
@@ -42,124 +34,109 @@ const columns: ThProps[] = [
   }
 ];
 
-export class OperationBuilder extends React.Component<Props, State> {
-  constructor(props: Props) {
-    super(props);
-    this.state = {
-      operationFields: Object.assign([], INIT_OPERATION_FIELDS),
-      operation: {},
-      newOperationField: INIT_OPERATION_FIELDS[0],
-      newValues: ''
-    };
-  }
+export const OperationBuilder: React.FC<Props> = (props: Props) => {
+  const [newOperationField, setNewOperationField] = React.useState<string>(INIT_OPERATION_FIELDS[0]);
+  const [newValues, setNewValues] = React.useState<string>('');
+  const [operation, setOperation] = React.useState<{ [key: string]: string[] }>({});
+  const [operationFields, setOperationFields] = React.useState<string[]>(INIT_OPERATION_FIELDS);
 
-  onAddNewOperationField = (_event: React.FormEvent, value: string): void => {
-    this.setState({
-      newOperationField: value
-    });
+  const { t } = useKialiTranslation();
+
+  const onAddNewOperationField = (_event: React.FormEvent, value: string): void => {
+    setNewOperationField(value);
   };
 
-  onAddNewValues = (_event: React.FormEvent, value: string): void => {
-    this.setState({
-      newValues: value
-    });
+  const onAddNewValues = (_event: React.FormEvent, value: string): void => {
+    setNewValues(value);
   };
 
-  onAddOperation = (): void => {
-    this.setState(prevState => {
-      const i = prevState.operationFields.indexOf(prevState.newOperationField);
+  const onAddOperation = (): void => {
+    const newOperationFields = [...operationFields];
+    const i = operationFields.indexOf(newOperationField);
 
-      if (i > -1) {
-        prevState.operationFields.splice(i, 1);
-      }
+    if (i > -1) {
+      newOperationFields.splice(i, 1);
+    }
 
-      prevState.operation[prevState.newOperationField] = prevState.newValues.split(',');
+    const newOperation = { ...operation };
+    newOperation[newOperationField] = newValues.split(',');
 
-      return {
-        operationFields: prevState.operationFields,
-        operation: prevState.operation,
-        newOperationField: prevState.operationFields[0],
-        newValues: ''
-      };
-    });
+    setOperation(newOperation);
+    setOperationFields(newOperationFields);
+    setNewOperationField(newOperationFields[0]);
+    setNewValues('');
   };
 
-  onAddOperationToList = (): void => {
-    const toItem = this.state.operation;
+  const onAddOperationToList = (): void => {
+    const toItem = operation;
 
-    this.setState(
-      {
-        operationFields: Object.assign([], INIT_OPERATION_FIELDS),
-        operation: {},
-        newOperationField: INIT_OPERATION_FIELDS[0],
-        newValues: ''
-      },
-      () => {
-        this.props.onAddTo(toItem);
-      }
-    );
+    setOperationFields(INIT_OPERATION_FIELDS);
+    setOperation({});
+    setNewOperationField(INIT_OPERATION_FIELDS[0]);
+    setNewValues('');
+
+    props.onAddTo(toItem);
   };
 
-  onRemoveOperation = (removeOperationField: string): void => {
-    this.setState(prevState => {
-      prevState.operationFields.push(removeOperationField);
-      delete prevState.operation[removeOperationField];
-      const newOperationFields = prevState.operationFields.sort();
+  const onRemoveOperation = (removeOperationField: string): void => {
+    let newOperationFields = [...operationFields];
+    newOperationFields.push(removeOperationField);
+    newOperationFields = newOperationFields.sort();
 
-      return {
-        operationFields: newOperationFields,
-        operation: prevState.operation,
-        newOperationField: newOperationFields[0],
-        newValues: ''
-      };
-    });
+    const newOperation = { ...operation };
+    delete newOperation[removeOperationField];
+
+    setOperation(newOperation);
+    setOperationFields(newOperationFields);
+    setNewOperationField(newOperationFields[0]);
+    setNewValues('');
   };
 
-  rows = (): IRow[] => {
-    const operatorRows = Object.keys(this.state.operation).map((operationField, i) => {
+  const rows = (): IRow[] => {
+    const operatorRows = Object.keys(operation).map((operationField, i) => {
       return {
         key: `operationKey_${i}`,
         cells: [
           <>{operationField}</>,
-          <>{this.state.operation[operationField].join(',')}</>,
+          <>{operation[operationField].join(',')}</>,
           <Button
-            id="removeSourceBtn"
+            id="removeOperationBtn"
             variant={ButtonVariant.link}
             icon={<KialiIcon.Delete />}
-            onClick={() => this.onRemoveOperation(operationField)}
+            onClick={() => onRemoveOperation(operationField)}
           />
         ]
       };
     });
 
-    if (this.state.operationFields.length > 0) {
+    if (operationFields.length > 0) {
       return operatorRows.concat([
         {
           key: 'operationKeyNew',
           cells: [
             <FormSelect
-              value={this.state.newOperationField}
+              value={newOperationField}
               id="addNewOperationField"
               name="addNewOperationField"
-              onChange={this.onAddNewOperationField}
+              onChange={onAddNewOperationField}
             >
-              {this.state.operationFields.map((option, index) => (
+              {operationFields.map((option, index) => (
                 <FormSelectOption isDisabled={false} key={`operation_${index}`} value={option} label={option} />
               ))}
             </FormSelect>,
 
             <TextInput
-              value={this.state.newValues}
+              value={newValues}
               type="text"
               id="addNewValues"
               key="addNewValues"
-              aria-describedby="add new operation values"
+              aria-describedby={t('Add new operation values')}
               name="addNewValues"
-              onChange={this.onAddNewValues}
+              onChange={onAddNewValues}
             />,
             <>
-              {this.state.operationFields.length > 0 && (
-                <Button variant={ButtonVariant.link} icon={<KialiIcon.AddMore />} onClick={this.onAddOperation} />
+              {operationFields.length > 0 && (
+                <Button variant={ButtonVariant.link} icon={<KialiIcon.AddMore />} onClick={onAddOperation} />
               )}
             </>
           ]
@@ -169,20 +146,18 @@ export class OperationBuilder extends React.Component<Props, State> {
     return operatorRows;
   };
 
-  render(): React.ReactNode {
-    return (
-      <>
-        <SimpleTable label="Operation Builder" columns={columns} rows={this.rows()} />
+  return (
+    <>
+      <SimpleTable label={t('Operation Builder')} columns={columns} rows={rows()} />
 
-        <Button
-          variant={ButtonVariant.link}
-          icon={<KialiIcon.AddMore />}
-          isDisabled={Object.keys(this.state.operation).length === 0}
-          onClick={this.onAddOperationToList}
-        >
-          Add Operation to To List
-        </Button>
-      </>
-    );
-  }
-}
+      <Button
+        variant={ButtonVariant.link}
+        icon={<KialiIcon.AddMore />}
+        isDisabled={Object.keys(operation).length === 0}
+        onClick={onAddOperationToList}
+      >
+        {t('Add Operation to To List')}
+      </Button>
+    </>
+  );
+};
