@@ -1926,18 +1926,14 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 			if pod.AmbientEnabled() {
 				w.WaypointWorkloads = in.getWaypointsForWorkload(ctx, criteria.Namespace, w)
 				// TODO: If ambient
-				// TODO: This should be in the cache
 				// TODO: Maybe user doesn't have permissions
 				ztunnelPods := in.cache.GetZtunnelPods(criteria.Cluster)
 				for _, zPod := range ztunnelPods {
-					zPodConfig, errConfig := in.businessLayer.ProxyStatus.GetZtunnelConfigDump(criteria.Cluster, zPod.Namespace, zPod.Name)
-					if errConfig != nil {
-						log.Errorf("Error getting config dump for pod %s: %v", zPod.Name, errConfig)
-					} else {
-						log.Infof("Config: %v", zPodConfig)
-						w.AddPodsProtocol(zPodConfig)
+					zPodConfig := in.cache.GetZtunnelDump(criteria.Cluster, zPod.Namespace, zPod.Name)
+					if zPodConfig != nil {
+						log.Infof("Config GET")
+						w.AddPodsProtocol(*zPodConfig)
 					}
-
 				}
 
 			}

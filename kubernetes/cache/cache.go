@@ -78,6 +78,7 @@ type KialiCache interface {
 
 	RegistryStatusCache
 	ProxyStatusCache
+	ZtunnelDumpCache
 
 	// SetValidations caches validations for a cluster/namespace.
 	Validations() store.Store[models.IstioValidationKey, *models.IstioValidation]
@@ -126,6 +127,8 @@ type kialiCacheImpl struct {
 	proxyStatusStore store.Store[string, *kubernetes.ProxyStatus]
 	// RegistryStatusStore stores the registry status and should be key'd off of the cluster name.
 	registryStatusStore store.Store[string, *kubernetes.RegistryStatus]
+	// ProxyStatusStore stores ztunnel config dump per cluster + namespace + pod.
+	ztunnelConfigStore store.Store[string, *kubernetes.ZtunnelConfigDump]
 
 	waypointList models.WaypointStore
 	// validations key'd by the validation key
@@ -151,6 +154,7 @@ func NewKialiCache(kialiSAClients map[string]kubernetes.ClientInterface, cfg con
 		refreshDuration:         time.Duration(cfg.KubernetesConfig.CacheDuration) * time.Second,
 		proxyStatusStore:        store.New[string, *kubernetes.ProxyStatus](),
 		registryStatusStore:     store.New[string, *kubernetes.RegistryStatus](),
+		ztunnelConfigStore:      store.New[string, *kubernetes.ZtunnelConfigDump](),
 	}
 
 	for cluster, client := range kialiSAClients {

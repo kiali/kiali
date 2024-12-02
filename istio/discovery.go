@@ -100,6 +100,32 @@ func (in *Discovery) getControlPlaneConfiguration(kubeCache cache.KubeCache, con
 		istioConfigMapInfo.Certificates = append(istioConfigMapInfo.Certificates, cert)
 	}
 
+	// TODO: If Ambient enabled
+	// Check ztunnel pods
+	ztunnelPods := in.kialiCache.GetZtunnelPods(controlPlane.Cluster.Name)
+	if len(ztunnelPods) > 0 {
+		client := in.kialiSAClients[controlPlane.Cluster.Name]
+		zTunnel := make(map[string]*kubernetes.ZtunnelConfigDump)
+
+		for _, zPod := range ztunnelPods {
+			resp, err := client.ForwardGetRequest(zPod.Namespace, zPod.Name, 15000, "/config_dump")
+			if err != nil {
+				log.Errorf("[getZtunnelConfigDump] Error forwarding the /config_dump request: %v", err)
+				return nil, err
+			}
+
+			configDump := &kubernetes.ZtunnelConfigDump{}
+			err = json.Unmarshal(resp, configDump)
+			if err != nil {
+				log.Errorf("[getZtunnelConfigDump] Error Unmarshalling the config_dump: %v", err)
+			} else {
+				key := fmt.Sprintf("%s%s%s", client.ClusterInfo().Name, zPod.Namespace, zPod.Name)
+				zTunnel[key] = configDump
+			}
+		}
+		in.kialiCache.SetZtunnelDump(zTunnel)
+	}
+
 	return &models.ControlPlaneConfiguration{
 		IstioMeshConfig: *istioConfigMapInfo,
 		Network:         in.resolveNetwork(kubeCache, controlPlane),
