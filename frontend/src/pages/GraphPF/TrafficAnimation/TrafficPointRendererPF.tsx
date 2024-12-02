@@ -37,8 +37,8 @@ function getMoveAnimation(edge: Edge, percentVisible: number, isInfinite: boolea
     const moveEndY = endPoint.y - startPoint.y;
     const bend = Math.round(percentVisible / 2);
 
-    moveAnimation['0%'] = { translate: '0' };
-    moveAnimation[`${bend}%`] = { translate: `${moveBendX}px ${moveBendY}px` };
+    moveAnimation['0%'] = { opacity: 1, translate: '0' };
+    moveAnimation[`${bend}%`] = { opacity: 1, translate: `${moveBendX}px ${moveBendY}px` };
     moveAnimation[`${percentVisible}%`] = {
       translate: `${moveEndX}px ${moveEndY}px`,
       display: isInfinite ? '' : 'none'
