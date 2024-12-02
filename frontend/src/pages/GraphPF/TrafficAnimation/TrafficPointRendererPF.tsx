@@ -21,8 +21,8 @@ function getMoveAnimation(edge: Edge, percentVisible: number, isInfinite: boolea
     const moveX = endPoint.x - startPoint.x;
     const moveY = endPoint.y - startPoint.y;
 
-    moveAnimation['0%'] = { translate: '0' };
-    moveAnimation[`${percentVisible}%`] = { translate: `${moveX}px ${moveY}px`, display: isInfinite ? '' : 'none' };
+    moveAnimation['0%'] = { opacity: 1, translate: '0' };
+    moveAnimation[`${percentVisible}%`] = { opacity: 1, translate: `${moveX}px ${moveY}px`, display: isInfinite ? '' : 'none' };
     // this acts like a delay at the end, the animation continues but nothing is visible
     if (percentVisible < 100) {
       moveAnimation[`${percentVisible}.1%`] = { display: 'none' };
