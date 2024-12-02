@@ -185,7 +185,7 @@ export class TrafficPointGenerator {
   // renewAnimation performs an innocuous "set" to force the edge to re-render and generate new points
   private renewAnimation(edge: Edge): React.AnimationEventHandler {
     return _elem => {
-      window.setTimeout(() => {
+      setTimeout(() => {
         setObserved(() => edge.setData({ ...edge.getData(), animationTime: Date.now() }));
       }, 0);
     };
