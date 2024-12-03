@@ -4,6 +4,7 @@ import { useDetailsLevel } from '@patternfly/react-topology';
 import { PFColors } from 'components/Pf/PfColors';
 import { kialiStyle } from 'styles/StyleUtils';
 import { classes } from 'typestyle';
+import { AnimationEdge } from '../TrafficAnimation/AnimationEdge';
 
 // This is our styled edge component registered in stylesComponentFactory.tsx.  It is responsible for adding customizations that then get passed down to DefaultEdge.  The current customizations:
 //   data.pathStyle?: React.CSSProperties // additional CSS stylings for the edge/path (not the endpoint).
@@ -134,11 +135,22 @@ const StyleEdgeComponent: React.FC<StyleEdgeProps> = ({ element, ...rest }) => {
     return newData;
   }, [data, detailsLevel]);
 
-  const hasAnimation = !data.isUnhighlighted && data.animation;
+  const hasAnimation = !!data.animation; // !data.isUnhighlighted && data.animation;
+  const start = element.getStartPoint();
+  const end = element.getEndPoint();
   return (
     <g style={{ opacity: opacity }} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
       <DefaultEdge className={classes(...cssClasses)} element={element} tagClass={tagClass} {...rest} {...passedData} />
-      {hasAnimation && data.animation?.render(element)}
+      {hasAnimation && (
+        <AnimationEdge
+          animationTime={data.animationTime}
+          edge={element}
+          endX={end.x}
+          endY={end.y}
+          startX={start.x}
+          startY={start.y}
+        />
+      )}
     </g>
   );
 };
