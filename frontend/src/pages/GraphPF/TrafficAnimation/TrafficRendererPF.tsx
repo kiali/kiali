@@ -166,8 +166,9 @@ export class TrafficPointGenerator {
     */
 
     const points: Array<React.SVGProps<SVGElement>> = [];
+    const delayInterval = animationDuration / renderedPointsOnEdge;
     for (let i = 0; i < pointsOnEdge; ++i) {
-      const animationDelay = `${i * this.launchTime + initialDelay}ms`;
+      const animationDelay = `${i * delayInterval + initialDelay}ms`;
       // If there is no mix of success and error points, just iterate infinitely
       const isInfinite = this.errorRate === 0 || this.errorRate === 100;
       // Otherwise, instruct the last Traffic point on the edge to renew the animation with new points
