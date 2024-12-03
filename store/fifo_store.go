@@ -70,12 +70,7 @@ func (f *FIFOStore[K, V]) Remove(key K) {
 	f.lock.Lock()
 	defer f.lock.Unlock()
 
-	for e := f.order.Front(); e != nil; e = e.Next() {
-		if e.Value == key {
-			f.order.Remove(e)
-			break
-		}
-	}
+	f.order.Remove(list.Element{Value: key})
 	f.Store.Remove(key)
 }
 
