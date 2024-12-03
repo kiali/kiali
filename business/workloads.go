@@ -2225,9 +2225,6 @@ func (in *WorkloadService) GetWorkloadAppName(ctx context.Context, cluster, name
 	}
 	appLabelName := in.config.IstioLabels.AppLabelName
 	app := wkd.Labels[appLabelName]
-	if app == "" {
-		return "", nil
-	}
 	return app, nil
 }
 
