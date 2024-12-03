@@ -273,8 +273,11 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
         } else if (pod.istioInitContainers && pod.istioInitContainers.some(cont => cont.name === 'istio-proxy')) {
           hasIstioSidecars = true;
         } else {
+          // Ztunnel doesn't have Envoy
           hasIstioSidecars =
-            hasIstioSidecars || (!!pod.containers && pod.containers.some(cont => cont.name === 'istio-proxy'));
+            hasIstioSidecars ||
+            (!!pod.containers &&
+              pod.containers.some(cont => cont.name === 'istio-proxy' && !cont.image.includes('ztunnel')));
         }
       });
     }

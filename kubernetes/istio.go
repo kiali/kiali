@@ -80,7 +80,6 @@ type IstioClientInterface interface {
 	GatewayAPI() gatewayapiclient.Interface
 
 	GetConfigDump(namespace, podName string) (*ConfigDump, error)
-	GetZtunnelConfigDump(namespace, podName string) (*ZtunnelConfigDump, error)
 	SetProxyLogLevel(namespace, podName, level string) error
 }
 
@@ -108,25 +107,6 @@ func (in *K8SClient) GetConfigDump(namespace, podName string) (*ConfigDump, erro
 	err = json.Unmarshal(resp, cd)
 	if err != nil {
 		log.Errorf("Error Unmarshalling the config_dump: %v", err)
-	}
-
-	return cd, err
-}
-
-func (in *K8SClient) GetZtunnelConfigDump(namespace, podName string) (*ZtunnelConfigDump, error) {
-	// Fetching the Config Dump from the pod's ztunnel.
-	// The port 15000 is open on each ztunnel pod (managed by Istio)
-	// And returns different data than the Envoy Proxy
-	resp, err := in.ForwardGetRequest(namespace, podName, 15000, "/config_dump")
-	if err != nil {
-		log.Errorf("Error forwarding the /config_dump request: %s", err.Error())
-		return nil, err
-	}
-
-	cd := &ZtunnelConfigDump{}
-	err = json.Unmarshal(resp, cd)
-	if err != nil {
-		log.Errorf("Error Unmarshalling the ztunnel config_dump: %s", err.Error())
 	}
 
 	return cd, err

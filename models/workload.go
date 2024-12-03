@@ -552,6 +552,16 @@ func (workload *Workload) IsGateway() bool {
 	return false
 }
 
+// IsWaypoint return true if the workload is a waypoint proxy (Based in labels)
+func (workload *Workload) IsWaypoint() bool {
+
+	if workload.Labels["gateway.istio.io/managed"] == "istio.io-mesh-controller" {
+		return true
+	}
+
+	return false
+}
+
 // HasIstioAmbient returns true if the workload has any pod with Ambient mesh annotations
 func (workload *Workload) HasIstioAmbient() bool {
 	// if no pods we can't prove that ambient is enabled, so return false (Default)

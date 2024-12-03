@@ -2219,12 +2219,14 @@ func (in *WorkloadService) GetWorkloadAppName(ctx context.Context, cluster, name
 		return "", err
 	}
 
+	if wkd.IsGateway() || wkd.IsWaypoint() {
+		// Waypoints and Gateways doesn't have an app label, but they have valid traces data
+		return workload, nil
+	}
 	appLabelName := in.config.IstioLabels.AppLabelName
 	app := wkd.Labels[appLabelName]
 	if app == "" {
-		// This can be a valid assumption, is the workload doesn't have an app label, but it still has valid traces data
-		// Like for waypoint proxies or gateways
-		return workload, nil
+		return "", nil
 	}
 	return app, nil
 }
