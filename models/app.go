@@ -50,6 +50,11 @@ type AppListItem struct {
 	// example: true
 	IsAmbient bool `json:"isAmbient"`
 
+	// Define if Labels related to this Workload contains any Gateway label
+	// required: true
+	// example: true
+	IsGateway bool `json:"isGateway"`
+
 	// Labels for App
 	Labels map[string]string `json:"labels"`
 

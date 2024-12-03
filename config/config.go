@@ -72,7 +72,6 @@ const (
 const (
 	AmbientAnnotation        = "ambient.istio.io/redirection"
 	AmbientAnnotationEnabled = "enabled"
-	K8sGatewayLabelName      = "gateway.networking.k8s.io/gateway-name"
 	WaypointLabel            = "gateway.istio.io/managed"
 	WaypointLabelValue       = "istio.io-mesh-controller"
 	WaypointUseLabel         = "istio.io/use-waypoint"
@@ -292,10 +291,8 @@ type RegistryConfig struct {
 type IstioConfig struct {
 	ComponentStatuses                 ComponentStatuses `yaml:"component_status,omitempty"`
 	ConfigMapName                     string            `yaml:"config_map_name,omitempty"`
-	EgressGatewayNamespace            string            `yaml:"egress_gateway_namespace,omitempty"`
 	EnvoyAdminLocalPort               int               `yaml:"envoy_admin_local_port,omitempty"`
 	GatewayAPIClasses                 []GatewayAPIClass `yaml:"gateway_api_classes,omitempty"`
-	IngressGatewayNamespace           string            `yaml:"ingress_gateway_namespace,omitempty"`
 	IstioAPIEnabled                   bool              `yaml:"istio_api_enabled"`
 	IstioIdentityDomain               string            `yaml:"istio_identity_domain,omitempty"`
 	IstioInjectionAnnotation          string            `yaml:"istio_injection_annotation,omitempty"`
@@ -356,11 +353,8 @@ type IstioLabels struct {
 	AmbientWaypointLabelValue  string `yaml:"ambient_waypoint_label_value,omitempty" json:"ambientWaypointLabelValue"`
 	AmbientWaypointUseLabel    string `yaml:"ambient_waypoint_use_label,omitempty" json:"ambientWaypointUseLabel"`
 	AppLabelName               string `yaml:"app_label_name,omitempty" json:"appLabelName"`
-	EgressGatewayLabel         string `yaml:"egress_gateway_label,omitempty" json:"egressGatewayLabel"`
-	IngressGatewayLabel        string `yaml:"ingress_gateway_label,omitempty" json:"ingressGatewayLabel"`
 	InjectionLabelName         string `yaml:"injection_label_name,omitempty" json:"injectionLabelName"`
 	InjectionLabelRev          string `yaml:"injection_label_rev,omitempty" json:"injectionLabelRev"`
-	K8sGatewayLabelName        string `yaml:"k8s_gateway_label_name,omitempty" json:"k8sGatewayLabelName"`
 	VersionLabelName           string `yaml:"version_label_name,omitempty" json:"versionLabelName"`
 }
 
@@ -401,7 +395,8 @@ type AuthConfig struct {
 
 // OpenShiftConfig contains specific configuration for authentication when on OpenShift
 type OpenShiftConfig struct {
-	CAFile string `yaml:"ca_file,omitempty"`
+	CAFile                string `yaml:"ca_file,omitempty"`
+	InsecureSkipVerifyTLS bool   `yaml:"insecure_skip_verify_tls,omitempty"`
 }
 
 // OpenIdConfig contains specific configuration for authentication using an OpenID provider
@@ -684,6 +679,9 @@ func NewConfig() (c *Config) {
 				Scopes:                  []string{"openid", "profile", "email"},
 				UsernameClaim:           "sub",
 			},
+			OpenShift: OpenShiftConfig{
+				InsecureSkipVerifyTLS: false,
+			},
 		},
 		CustomDashboards: dashboards.GetBuiltInMonitoringDashboards(),
 		Deployment: DeploymentConfig{
@@ -724,9 +722,7 @@ func NewConfig() (c *Config) {
 					Components: []ComponentStatus{},
 				},
 				ConfigMapName:                     "",
-				EgressGatewayNamespace:            "",
 				EnvoyAdminLocalPort:               15000,
-				IngressGatewayNamespace:           "",
 				IstioAPIEnabled:                   true,
 				IstioIdentityDomain:               "svc.cluster.local",
 				IstioInjectionAnnotation:          "sidecar.istio.io/inject",
@@ -783,11 +779,8 @@ func NewConfig() (c *Config) {
 			AmbientWaypointLabelValue:  WaypointLabelValue,
 			AmbientWaypointUseLabel:    WaypointUseLabel,
 			AppLabelName:               "app",
-			EgressGatewayLabel:         "istio=egressgateway",
-			IngressGatewayLabel:        "istio=ingressgateway",
 			InjectionLabelName:         "istio-injection",
 			InjectionLabelRev:          "istio.io/rev",
-			K8sGatewayLabelName:        K8sGatewayLabelName,
 			VersionLabelName:           "version",
 		},
 		KialiFeatureFlags: KialiFeatureFlags{
@@ -973,14 +966,6 @@ func (conf *Config) AllNamespacesAccessible() bool {
 // IsServerHTTPS returns true if the server endpoint should use HTTPS. If false, only plaintext HTTP is supported.
 func (conf *Config) IsServerHTTPS() bool {
 	return conf.Identity.CertFile != "" && conf.Identity.PrivateKeyFile != ""
-}
-
-func (conf *Config) GatewayLabel(labelConfig string) []string {
-	label := strings.Split(labelConfig, "=")
-	if len(label) == 2 {
-		return label
-	}
-	return []string{}
 }
 
 func (conf *Config) IsRBACDisabled() bool {
@@ -1330,14 +1315,6 @@ func Validate(cfg Config) error {
 	cfgTracing := cfg.ExternalServices.Tracing
 	if cfgTracing.Enabled && cfgTracing.Provider != JaegerProvider && cfgTracing.Provider != TempoProvider {
 		return fmt.Errorf("error in configuration options for the external services tracing provider. Invalid provider type [%s]", cfgTracing.Provider)
-	}
-
-	if len(cfg.GatewayLabel(cfg.IstioLabels.IngressGatewayLabel)) != 2 {
-		return fmt.Errorf("error parsing key=value configuration. Invalid ingress gateway label [%s]", cfg.IstioLabels.IngressGatewayLabel)
-	}
-
-	if len(cfg.GatewayLabel(cfg.IstioLabels.EgressGatewayLabel)) != 2 {
-		return fmt.Errorf("error parsing key=value configuration. Invalid egress gateway label [%s]", cfg.IstioLabels.EgressGatewayLabel)
 	}
 
 	return nil

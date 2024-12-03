@@ -11,13 +11,13 @@ import {
   filterByHealth,
   labelFilter
 } from '../../components/Filters/CommonFilters';
-import { hasMissingSidecar } from '../../components/VirtualList/Config';
 import { TextInputTypes } from '@patternfly/react-core';
 import { filterByLabel } from '../../helpers/LabelFilterHelper';
 import { istioConfigTypeFilter } from '../IstioConfigList/FiltersAndSorts';
 import { ObjectReference } from '../../types/IstioObjects';
 import { serverConfig } from 'config';
 import { getGVKTypeString, istioTypesToGVKString } from '../../utils/IstioConfigUtils';
+import { hasMissingSidecar } from 'components/VirtualList/Config';
 
 export const sortFields: SortField<AppListItem>[] = [
   {

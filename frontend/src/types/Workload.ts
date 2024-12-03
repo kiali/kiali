@@ -1,5 +1,6 @@
 import { WorkloadHealth, WorkloadHealthResponse } from './Health';
 import { ObjectReference, Pod, Service, Validations } from './IstioObjects';
+import { InstanceType } from 'types/Common';
 
 export type WorkloadId = {
   namespace: string;
@@ -14,11 +15,14 @@ export interface Workload {
   cluster?: string;
   createdAt: string;
   health?: WorkloadHealthResponse;
+  instanceType: InstanceType.Workload;
   isAmbient: boolean;
+  isGateway: boolean;
   istioInjectionAnnotation?: boolean;
   istioSidecar: boolean;
   labels: { [key: string]: string };
   name: string;
+  namespace: string;
   pods: Pod[];
   replicas: Number;
   resourceVersion: string;
@@ -37,9 +41,12 @@ export const emptyWorkload: Workload = {
   availableReplicas: 0,
   createdAt: '',
   isAmbient: false,
+  isGateway: false,
   istioSidecar: true, // true until proven otherwise
   labels: {},
   name: '',
+  namespace: '',
+  instanceType: InstanceType.Workload,
   pods: [],
   replicas: 0,
   resourceVersion: '',
@@ -67,7 +74,9 @@ export interface WorkloadListItem {
   appLabel: boolean;
   cluster?: string;
   health: WorkloadHealth;
+  instanceType: InstanceType.Workload;
   isAmbient: boolean;
+  isGateway: boolean;
   istioReferences: ObjectReference[];
   istioSidecar: boolean;
   labels: { [key: string]: string };

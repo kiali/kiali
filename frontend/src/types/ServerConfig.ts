@@ -7,11 +7,8 @@ export type IstioLabelKey =
   | 'ambientWaypointLabel'
   | 'ambientWaypointLabelValue'
   | 'appLabelName'
-  | 'egressGatewayLabel'
-  | 'ingressGatewayLabel'
   | 'injectionLabelName'
   | 'injectionLabelRev'
-  | 'k8sGatewayLabelName'
   | 'versionLabelName';
 
 interface DeploymentConfig {

@@ -33,6 +33,7 @@ import (
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/observability"
 	"github.com/kiali/kiali/prometheus"
+	"github.com/kiali/kiali/util/sliceutil"
 )
 
 func NewWorkloadService(
@@ -146,6 +147,45 @@ func (in *WorkloadService) getWorkloadValidations(authpolicies []*security_v1.Au
 	}.Check()
 
 	return validations
+}
+
+// GetAllWorkloads fetches all workloads across every namespace in the cluster.
+func (in *WorkloadService) GetAllWorkloads(ctx context.Context, cluster string) (models.Workloads, error) {
+	var end observability.EndFunc
+	ctx, end = observability.StartSpan(ctx, "GetAllWorkloads",
+		observability.Attribute("package", "business"),
+		observability.Attribute("cluster", cluster),
+	)
+	defer end()
+
+	namespaces, err := in.businessLayer.Namespace.GetClusterNamespaces(ctx, cluster)
+	if err != nil {
+		return nil, err
+	}
+
+	var workloads models.Workloads
+	for _, namespace := range namespaces {
+		w, err := in.fetchWorkloadsFromCluster(ctx, cluster, namespace.Name, "")
+		if err != nil {
+			return nil, err
+		}
+
+		workloads = append(workloads, w...)
+	}
+
+	return workloads, nil
+}
+
+// GetAllGateways fetches all gateway workloads across every namespace in the cluster.
+func (in *WorkloadService) GetAllGateways(ctx context.Context, cluster string) (models.Workloads, error) {
+	workloads, err := in.GetAllWorkloads(ctx, cluster)
+	if err != nil {
+		return nil, err
+	}
+
+	return sliceutil.Filter(workloads, func(w *models.Workload) bool {
+		return w.IsGateway()
+	}), nil
 }
 
 // GetWorkloadList is the API handler to fetch the list of workloads in a given namespace.
@@ -1263,7 +1303,6 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 			if pod.HasIstioSidecar() && !w.IsGateway() && config.Get().ExternalServices.Istio.IstioAPIEnabled {
 				pod.ProxyStatus = in.businessLayer.ProxyStatus.GetPodProxyStatus(cluster, namespace, pod.Name)
 			}
-
 		}
 
 		if cnFound {
@@ -1833,6 +1872,8 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 			w.SetPods(cPods)
 		}
 
+		w.WorkloadListItem.IsGateway = w.IsGateway()
+
 		// Add the Proxy Status to the workload
 		for _, pod := range w.Pods {
 			if pod.HasIstioSidecar() && !w.IsGateway() && config.Get().ExternalServices.Istio.IstioAPIEnabled {
@@ -1858,7 +1899,6 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 
 // GetWaypoints: Return the list of workloads when the waypoint proxy is applied per namespace
 func (in *WorkloadService) GetWaypoints(ctx context.Context) models.Workloads {
-
 	if !in.cache.IsWaypointListExpired() {
 		log.Tracef("GetWaypoints: Returning list from cache")
 		return in.cache.GetWaypointList()
@@ -1974,7 +2014,6 @@ func (in *WorkloadService) getWaypointsForWorkload(ctx context.Context, namespac
 // listWaypointWorkloads returns the list of workloads when the waypoint proxy is applied per namespace
 // Maybe use some cache?
 func (in *WorkloadService) listWaypointWorkloads(ctx context.Context, name, cluster string) []models.Workload {
-
 	// Get all the workloads for a namespaces labeled
 	labelSelector := fmt.Sprintf("%s=%s", config.WaypointUseLabel, name)
 	nslist, errNs := in.userClients[cluster].GetNamespaces(labelSelector)
