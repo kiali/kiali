@@ -20,6 +20,7 @@ ISTIO_DIR=
 CLIENT_EXE_NAME="oc"
 NAMESPACE="bookinfo"
 ISTIO_NAMESPACE="istio-system"
+INGRESS_NAMESPACE=${ISTIO_NAMESPACE}
 RATE=1
 AUTO_INJECTION="true"
 AUTO_INJECTION_LABEL="istio-injection=enabled"
@@ -58,6 +59,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     -in|--istio-namespace)
       ISTIO_NAMESPACE="$2"
+      shift;shift
+      ;;
+    -ign|--ingress-gateway-namespace)
+      INGRESS_NAMESPACE="$2"
       shift;shift
       ;;
     -c|--client-exe)
@@ -113,6 +118,7 @@ Valid command line arguments:
   -db|--delete-bookinfo <true|false>: If true, uninstall bookinfo. If false, install bookinfo. (default: false).
   -id|--istio-dir <dir>: Where Istio has already been downloaded. If not found, this script aborts.
   -in|--istio-namespace <name>: Where the Istio control plane is installed (default: istio-system).
+  -ign|--ingress-gateway-namespace: Namespace where the ingress gateway is located (default: same as istio-namespace). (Use for traffic generator)
   -c|--client-exe <name>: Cluster client executable name - valid values are "kubectl" or "oc"
   -mi|--manual-injection <true|false>: If you want sidecars to be manually injected via istioctl (default: false).
   -mp|--minikube-profile <name>: If using minikube, this is the minikube profile name (default: minikube).
@@ -360,7 +366,8 @@ sleep 4
 # Expose the OpenShift routes
 if [ "${IS_OPENSHIFT}" == "true" ]; then
   $CLIENT_EXE expose svc/productpage -n ${NAMESPACE}
-  $CLIENT_EXE expose svc/istio-ingressgateway --port http2 -n ${ISTIO_NAMESPACE}
+  $CLIENT_EXE expose svc/istio-ingressgateway --port http2 -n ${INGRESS_NAMESPACE} --name=istio-ingressgateway
+  $CLIENT_EXE expose svc/bookinfo-gateway-istio --port=http -n ${NAMESPACE} --name=bookinfo-gateway-istio
 fi
 
 echo "Bookinfo Demo should be installed and starting up - here are the pods and services"
@@ -393,12 +400,25 @@ fi
 if [ "${TRAFFIC_GENERATOR_ENABLED}" == "true" ]; then
   echo "Installing Traffic Generator"
   if [ "${IS_OPENSHIFT}" == "true" ]; then
-    echo "Determining the route to send traffic to"
-    INGRESS_ROUTE=$(${CLIENT_EXE} get route istio-ingressgateway -o jsonpath='{.spec.host}{"\n"}' -n ${ISTIO_NAMESPACE})
-    while [ -z "${INGRESS_ROUTE}" ]; do
+    echo "Determining the route to send traffic to, trying istio-ingressgateway route in ${INGRESS_NAMESPACE} namespace"
+    # first, try istio-ingressgateway in istio-system, wait for a while the host is populated
+    # make sure you have latest kubectl/oc which support JSONPath condition without value
+    ${CLIENT_EXE} wait --for=jsonpath='{.status.ingress[].host}' --timeout=10s route istio-ingressgateway -n ${INGRESS_NAMESPACE}
+    INGRESS_ROUTE=$(${CLIENT_EXE} get route istio-ingressgateway -o jsonpath='{.spec.host}{"\n"}' -n ${INGRESS_NAMESPACE})
+    if [ -z "${INGRESS_ROUTE}" ]; then
       sleep 1
-      INGRESS_ROUTE=$(${CLIENT_EXE} get route productpage -o jsonpath='{.spec.host}{"\n"}' -n ${NAMESPACE})
-    done
+      echo "No istio-ingressgateway route in ${INGRESS_NAMESPACE} namespace, next, trying bookinfo-gateway-istio route in ${NAMESPACE} namespace"
+      # next, try route for gateway in bookinfo namespace created by gateway-api
+      ${CLIENT_EXE} wait --for=jsonpath='{.status.ingress[].host}' --timeout=10s route bookinfo-gateway-istio -n ${NAMESPACE}
+      INGRESS_ROUTE=$(${CLIENT_EXE} get route bookinfo-gateway-istio -o jsonpath='{.spec.host}{"\n"}' -n ${NAMESPACE})
+      if [ -z "${INGRESS_ROUTE}" ]; then
+        sleep 1
+        echo "No bookinfo-gateway-istio route in ${NAMESPACE} namespace, the route for productpage app will be used dirrectly"
+        # nevermind, use productpage route directly
+        ${CLIENT_EXE} wait --for=jsonpath='{.status.ingress[].host}' --timeout=10s route productpage -n ${NAMESPACE}
+        INGRESS_ROUTE=$(${CLIENT_EXE} get route productpage -o jsonpath='{.spec.host}{"\n"}' -n ${NAMESPACE})
+      fi
+    fi
     echo
     echo "Traffic Generator will use the OpenShift ingress route of: ${INGRESS_ROUTE}"
   else
@@ -413,7 +433,7 @@ if [ "${TRAFFIC_GENERATOR_ENABLED}" == "true" ]; then
       # for now, we only support minikube k8s environments and maybe a good guess otherwise (e.g. for kind clusters)
       if minikube -p ${MINIKUBE_PROFILE} status > /dev/null 2>&1 ; then
         INGRESS_HOST=$(minikube -p ${MINIKUBE_PROFILE} ip)
-        INGRESS_PORT=$($CLIENT_EXE -n ${ISTIO_NAMESPACE} get service istio-ingressgateway -o jsonpath='{.spec.ports[?(@.name=="http2")].nodePort}')
+        INGRESS_PORT=$($CLIENT_EXE -n ${INGRESS_NAMESPACE} get service istio-ingressgateway -o jsonpath='{.spec.ports[?(@.name=="http2")].nodePort}')
         INGRESS_ROUTE=$INGRESS_HOST:$INGRESS_PORT
 
         echo "Wait for productpage to come up to see if it is accessible via minikube ingress"
@@ -429,7 +449,7 @@ if [ "${TRAFFIC_GENERATOR_ENABLED}" == "true" ]; then
       else
         echo "Failed to get minikube ip. If you are using minikube, make sure it is up and your profile is defined properly (--minikube-profile option)"
         echo "Will try to get the ingressgateway IP in case you are running 'kind' and we can access it directly."
-        INGRESS_HOST=$($CLIENT_EXE get service -n ${ISTIO_NAMESPACE} istio-ingressgateway -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+        INGRESS_HOST=$($CLIENT_EXE get service -n ${INGRESS_NAMESPACE} istio-ingressgateway -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
         INGRESS_PORT="80"
         INGRESS_ROUTE=$INGRESS_HOST:$INGRESS_PORT
         echo "Wait for productpage to come up to see if it is accessible via ingress"

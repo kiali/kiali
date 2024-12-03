@@ -12,6 +12,7 @@ set -ue
 
 DELETE="false"
 ISTIO_NAMESPACE="istio-system"
+KIALI_CR_NAMESPACE=""
 MESH_LABEL="mymesh"
 NAMESPACES=""
 NETWORK_POLICIES="false"
@@ -21,17 +22,19 @@ OC="oc"
 while [[ $# -gt 0 ]]; do
   key="$1"
   case $key in
-    -d|--delete)             DELETE="$2"            ; shift;shift ;;
-    -in|--istio-namespace)   ISTIO_NAMESPACE="$2"   ; shift;shift ;;
-    -ml|--mesh-label)        MESH_LABEL="$2"        ; shift;shift ;;
-    -n|--namespaces)         NAMESPACES="$2"        ; shift;shift ;;
-    -np|--network-policies)  NETWORK_POLICIES="$2"  ; shift;shift ;;
-    -oc|--oc)                OC="$2"                ; shift;shift ;;
+    -d|--delete)                DELETE="$2"            ; shift;shift ;;
+    -in|--istio-namespace)      ISTIO_NAMESPACE="$2"   ; shift;shift ;;
+    -kcns|--kiali-cr-namespace) KIALI_CR_NAMESPACE="$2"; shift;shift ;;
+    -ml|--mesh-label)           MESH_LABEL="$2"        ; shift;shift ;;
+    -n|--namespaces)            NAMESPACES="$2"        ; shift;shift ;;
+    -np|--network-policies)     NETWORK_POLICIES="$2"  ; shift;shift ;;
+    -oc|--oc)                   OC="$2"                ; shift;shift ;;
     -h|--help)
       cat <<HELPMSG
 Valid command line arguments:
   -d|--delete (true|false): If true, delete any existing resources that this script originally created (Default: false)
   -in|--istio-namespace <name>: The control plane namespace (Default: istio-system)
+  -kcns|--kiali-cr-namespace <name>: A namespace containing Kiali CR which should be used. When specified, first found Kiali CR in the given namespace will be used. When empty, first found Kiali CR cluster wide will be used. (Default: "")
   -ml|--mesh-label <label>: The label that will be attached to the metrics to demarcate the telemetry for this mesh (Default: mymesh)
   -n|--namespaces <names>: Space-separated names of namespaces in the mesh (Default: empty)
   -np|--network-policies (true|false) If true, NetworkPolicies will be created (or deleted if --delete is true) to allow for all ingress traffic, including from OpenShift monitoring namespaces labeled with network.openshift.io/policy-group: monitoring (where Prometheus lives) (Default: false)
@@ -50,6 +53,7 @@ done
 echo "=== SETTINGS ==="
 echo "DELETE=$DELETE"
 echo "ISTIO_NAMESPACE=$ISTIO_NAMESPACE"
+echo "KIALI_CR_NAMESPACE=$KIALI_CR_NAMESPACE"
 echo "MESH_LABEL=$MESH_LABEL"
 echo "OC=$OC"
 echo "NETWORK_POLICIES=$NETWORK_POLICIES"
@@ -96,35 +100,40 @@ RESOURCE_LABEL_VALUE="kiali"
 RESOURCE_LABEL_EQUALS="${RESOURCE_LABEL_NAME}=${RESOURCE_LABEL_VALUE}"
 RESOURCE_LABEL_COLON="${RESOURCE_LABEL_NAME}: ${RESOURCE_LABEL_VALUE}"
 
-KIALI_CR_NAMESPACE=""
 KIALI_CR_NAME=""
-for cr in $(${OC} get kiali --all-namespaces -o custom-columns=NS:.metadata.namespace,N:.metadata.name --no-headers | sed 's/  */:/g'); do
-  if [ -n "${KIALI_CR_NAME}" ]; then
-    echo "There is more than one Kiali CR installed in the cluster - will ignore CR [${cr}] and will use [${KIALI_CR_NAMESPACE}:${KIALI_CR_NAME}]"
-  else
+if [ -n "${KIALI_CR_NAMESPACE}" ]
+then
+  for cr in $(${OC} get kiali -n ${KIALI_CR_NAMESPACE} -o custom-columns=N:.metadata.name --no-headers); do
+    KIALI_CR_NAME="${cr}"
+    break
+  done
+  if [ -z "${KIALI_CR_NAME}" ]
+  then
+    echo "Couldn't find any Kiali CR in ${KIALI_CR_NAMESPACE} namespace. Exiting."
+    exit 1
+  fi
+else
+  for cr in $(${OC} get kiali --all-namespaces -o custom-columns=NS:.metadata.namespace,N:.metadata.name --no-headers | sed 's/  */:/g'); do
     KIALI_CR_NAMESPACE="$(echo $cr | cut -d: -f1)"
     KIALI_CR_NAME="$(echo $cr | cut -d: -f2)"
+    break
+  done
+  if [ -z "${KIALI_CR_NAME}" ]; then
+    echo "There are no Kiali CRs installed in the cluster."
+    exit 1
   fi
-done
-
-if [ -z "${KIALI_CR_NAME}" ]; then
-  echo "There are no Kiali CRs installed in the cluster."
-  exit 1
 fi
 
-KIALI_SA_NAMESPACE=""
-KIALI_SA_NAME=""
-for sa in $(${OC} get sa --all-namespaces -l "app.kubernetes.io/name=kiali" -o custom-columns=NS:.metadata.namespace,N:.metadata.name --no-headers | sed 's/  */:/g'); do
-  if [ -n "${KIALI_SA_NAME}" ]; then
-    echo "There is more than one Kiali Server installed in the cluster - ignoring service account [${sa}] and will use [${KIALI_SA_NAMESPACE}:${KIALI_SA_NAME}]"
-  else
-    KIALI_SA_NAMESPACE="$(echo $sa | cut -d: -f1)"
-    KIALI_SA_NAME="$(echo $sa | cut -d: -f2)"
-  fi
-done
+echo "Using following Kiali CR [${KIALI_CR_NAMESPACE}:${KIALI_CR_NAME}]"
 
+# Get a Kiali server namespace, if not defined in .spec.deployment.namespace, use Kiali CR's namespace
+KIALI_SA_NAMESPACE=$(${OC} get kiali ${KIALI_CR_NAME} -n ${KIALI_CR_NAMESPACE} -o jsonpath='{.spec.deployment.namespace}{"\n"}{.metadata.namespace}' | awk 'NF{print $1; exit}')
+# Get a service account required to generate Kiali Cluster Role Binding for OpenShift Prometheus access
+kialiInstance=$(${OC} get kiali ${KIALI_CR_NAME} -o jsonpath='{.spec.deployment.instance_name}' -n ${KIALI_CR_NAMESPACE})
+kialiInstance=${kialiInstance:-"kiali"}
+KIALI_SA_NAME=$(${OC} get sa ${kialiInstance}-service-account -n ${KIALI_SA_NAMESPACE} -o custom-columns=N:.metadata.name --no-headers)
 if [ -z "${KIALI_SA_NAME}" ]; then
-  echo "There are no Kiali Servers installed in the cluster."
+  echo "There are no Kiali Servers installed in the ${KIALI_SA_NAMESPACE} namespace."
   exit 1
 fi
 
@@ -170,8 +179,10 @@ data:
     enableUserWorkload: true
 EOM
 
-  if [ "$(${OC} get clusterrolebinding -l ${RESOURCE_LABEL_EQUALS} -o name 2>/dev/null)" == "1" ]; then
+  crb=$(${OC} get clusterrolebinding -l ${RESOURCE_LABEL_EQUALS} -o name 2>/dev/null)
+  if [ -n "${crb}" ]; then
     echo "Kiali Cluster Role Binding for OpenShift Prometheus access already exists. It will be re-used."
+    ${OC} patch ${crb} --type='json' -p="[{'op': 'add', 'path': '/subjects/0', 'value': {'kind': 'ServiceAccount','name': '${KIALI_SA_NAME}','namespace': '${KIALI_SA_NAMESPACE}'}}]"
   else
     echo "Generating Kiali Cluster Role Binding for OpenShift Prometheus access"
     cat <<CRB | ${OC} apply -f -
@@ -294,14 +305,24 @@ spec:
       replacement: \$2:\$1
       sourceLabels: [__meta_kubernetes_pod_annotation_prometheus_io_port, __meta_kubernetes_pod_ip]
       targetLabel: __address__
-    - action: labeldrop
-      regex: "__meta_kubernetes_pod_label_(.+)"
+    # Set the 'app' label from 'app.kubernetes.io/name' or fallback to 'app'
+    - sourceLabels: ["__meta_kubernetes_pod_label_app_kubernetes_io_name", "__meta_kubernetes_pod_label_app"]
+      separator: ";"
+      targetLabel: "app"
+      action: replace
+      regex: "(.+);.*|.*;(.+)"
+      replacement: "\${1}\${2}"  # Use the first non-empty value
+    # Set the 'version' label from 'app.kubernetes.io/version' or fallback to 'version'
+    - sourceLabels: ["__meta_kubernetes_pod_label_app_kubernetes_io_version", "__meta_kubernetes_pod_label_version"]
+      separator: ";"
+      targetLabel: "version"
+      action: replace
+      regex: "(.+);.*|.*;(.+)"
+      replacement: "\${1}\${2}"  # Use the first non-empty value
+    # add some labels we want
     - sourceLabels: [__meta_kubernetes_namespace]
       action: replace
       targetLabel: namespace
-    - sourceLabels: [__meta_kubernetes_pod_name]
-      action: replace
-      targetLabel: pod_name
     - action: replace
       replacement: "${MESH_LABEL}"
       targetLabel: mesh_id

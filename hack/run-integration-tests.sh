@@ -299,12 +299,10 @@ ensureMulticlusterApplicationsAreHealthy() {
 infomsg "Running ${TEST_SUITE} integration tests"
 if [ "${TEST_SUITE}" == "${BACKEND}" ]; then
   if [ "${TESTS_ONLY}" == "false" ]; then
-    "${SCRIPT_DIR}"/setup-kind-in-ci.sh ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG}
-
-    ISTIO_INGRESS_IP="$(kubectl get svc istio-ingressgateway -n istio-system -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')"
+    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --sail true ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG}
 
     # Install demo apps
-    "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl" -g "${ISTIO_INGRESS_IP}"
+    "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl" --use-gateway-api true
 
     ensureKialiServerReady
     
