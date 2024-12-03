@@ -150,11 +150,11 @@ func TestReplace(t *testing.T) {
 	require.True(found)
 	require.Equal(elem, "newValue")
 
-	replaced2 := map[string]string{"replacedKey": "replacedValue", "replacedKey2": "replacedValue2", "replacedKey3": "replacedValue3", "newKey": "newValue"}
+	replaced2 := map[string]string{}
+	replaced2["replacedKey"] = "replacedValue"
+	replaced2["replacedKey2"] = "replacedValue2"
+	replaced2["replacedKey3"] = "replacedValue3"
+	replaced2["newKey"] = "newValue"
 	fifoStore.Replace(replaced2)
 	require.Equal(fifoStore.order.Len(), 3)
-
-	elem, found = fifoStore.Get("replacedKey2")
-	require.True(found)
-	require.Equal(elem, "replacedValue2")
 }

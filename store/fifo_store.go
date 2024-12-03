@@ -8,8 +8,8 @@ import (
 	"github.com/kiali/kiali/prometheus/internalmetrics"
 )
 
-// FIFOStore uses a FIFO approach storage and is safe for concurrent use.
-type FIFOStore[K comparable, V any] struct {
+// fifoStore uses a FIFO approach storage and is safe for concurrent use.
+type fifoStore[K comparable, V any] struct {
 	capacity int
 	lock     sync.RWMutex
 	name     string // Used for metrics
@@ -17,9 +17,9 @@ type FIFOStore[K comparable, V any] struct {
 	Store[K, V]
 }
 
-func NewFIFOStore[K comparable, V any](store Store[K, V], capacity int, name string) *FIFOStore[K, V] {
+func NewFIFOStore[K comparable, V any](store Store[K, V], capacity int, name string) *fifoStore[K, V] {
 
-	f := &FIFOStore[K, V]{
+	f := &fifoStore[K, V]{
 		capacity: capacity,
 		Store:    store,
 		order:    list.New(),
@@ -29,7 +29,7 @@ func NewFIFOStore[K comparable, V any](store Store[K, V], capacity int, name str
 }
 
 // Get returns the value associated with the given key or an error.
-func (f *FIFOStore[K, V]) Get(key K) (V, bool) {
+func (f *fifoStore[K, V]) Get(key K) (V, bool) {
 	internalmetrics.GetCacheRequestsTotalMetric(f.name).Inc()
 	elem, exists := f.Store.Get(key)
 	if !exists {
@@ -45,7 +45,7 @@ func (f *FIFOStore[K, V]) Get(key K) (V, bool) {
 
 // Set Adds an item into the store, at the end of the list
 // If the key already exists, modifies the value, without modify the element order
-func (f *FIFOStore[K, V]) Set(key K, value V) {
+func (f *fifoStore[K, V]) Set(key K, value V) {
 	f.lock.Lock()
 	defer f.lock.Unlock()
 
@@ -67,7 +67,7 @@ func (f *FIFOStore[K, V]) Set(key K, value V) {
 }
 
 // Remove removes an element from the store
-func (f *FIFOStore[K, V]) Remove(key K) {
+func (f *fifoStore[K, V]) Remove(key K) {
 	f.lock.Lock()
 	defer f.lock.Unlock()
 
@@ -76,7 +76,7 @@ func (f *FIFOStore[K, V]) Remove(key K) {
 }
 
 // Replace replaces the contents of the store with the given map and updates the order list
-func (f *FIFOStore[K, V]) Replace(items map[K]V) {
+func (f *fifoStore[K, V]) Replace(items map[K]V) {
 	f.lock.Lock()
 	defer f.lock.Unlock()
 
