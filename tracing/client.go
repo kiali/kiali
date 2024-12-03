@@ -180,7 +180,7 @@ func newClient(ctx context.Context, cfg *config.Config, token string) (*Client, 
 		log.Infof("Create Tracing HTTP client %s", u)
 
 		if cfgTracing.Provider == config.TempoProvider {
-			httpTracingClient, err = tempo.NewOtelClient(client, u)
+			httpTracingClient, err = tempo.NewOtelClient(ctx, client, u)
 			if err != nil {
 				log.Errorf("Error creating HTTP client %s", err.Error())
 				return nil, err

@@ -40,6 +40,8 @@ type MetricsType struct {
 	MeshGraphMarshalTime           *prometheus.HistogramVec
 	PrometheusProcessingTime       *prometheus.HistogramVec
 	SingleValidationProcessingTime *prometheus.HistogramVec
+	CacheTotalRequests             *prometheus.CounterVec
+	CacheHitsTotal                 *prometheus.CounterVec
 	ValidationProcessingTime       *prometheus.HistogramVec
 }
 
@@ -124,6 +126,20 @@ var Metrics = MetricsType{
 		},
 		[]string{labelNamespace, labelType, labelName},
 	),
+	CacheTotalRequests: prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "kiali_cache_requests_total",
+			Help: "The number of total requests for the cache.",
+		},
+		[]string{labelName},
+	),
+	CacheHitsTotal: prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "kiali_cache_hits_total",
+			Help: "The number of total hits for the cache.",
+		},
+		[]string{labelName},
+	),
 }
 
 // SuccessOrFailureMetricType let's you capture metrics for both successes and failures,
@@ -185,6 +201,8 @@ func RegisterInternalMetrics() {
 		Metrics.CheckerProcessingTime,
 		Metrics.ValidationProcessingTime,
 		Metrics.SingleValidationProcessingTime,
+		Metrics.CacheTotalRequests,
+		Metrics.CacheHitsTotal,
 	)
 }
 
@@ -391,4 +409,16 @@ func GetAPIFailureMetric(route string) prometheus.Counter {
 // SetKubernetesClients sets the kubernetes client count
 func SetKubernetesClients(clientCount int) {
 	Metrics.KubernetesClients.With(prometheus.Labels{}).Set(float64(clientCount))
+}
+
+func GetCacheRequestsTotalMetric(cache string) prometheus.Counter {
+	return Metrics.CacheTotalRequests.With(prometheus.Labels{
+		labelName: cache,
+	})
+}
+
+func GetCacheHitsTotalMetric(cache string) prometheus.Counter {
+	return Metrics.CacheHitsTotal.With(prometheus.Labels{
+		labelName: cache,
+	})
 }

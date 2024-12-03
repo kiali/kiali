@@ -143,7 +143,10 @@
             "InternalURL": "http://tracing.istio-system:16685/jaeger",
             "IsCore": false,
             "Provider": "jaeger",
-            "TempoConfig": {},
+            "TempoConfig": {
+              "cache_capacity": 200,
+              "cache_enabled": true
+            },
             "NamespaceSelector": true,
             "QueryScope": {},
             "QueryTimeout": 5,

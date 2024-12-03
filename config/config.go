@@ -254,6 +254,8 @@ type GrafanaVariablesConfig struct {
 }
 
 type TempoConfig struct {
+	CacheCapacity int    `yaml:"cache_capacity" json:"cache_capacity,omitempty"`
+	CacheEnabled  bool   `yaml:"cache_enabled" json:"cache_enabled,omitempty"`
 	DatasourceUID string `yaml:"datasource_uid" json:"datasource_uid,omitempty"`
 	OrgID         string `yaml:"org_id" json:"org_id,omitempty"`
 	URLFormat     string `yaml:"url_format" json:"url_format,omitempty"`
@@ -757,17 +759,20 @@ func NewConfig() (c *Config) {
 				Auth: Auth{
 					Type: AuthTypeNone,
 				},
-				CustomHeaders:        map[string]string{},
-				Enabled:              false,
-				ExternalURL:          "",
-				GrpcPort:             9095,
-				InternalURL:          "http://tracing.istio-system:16685/jaeger",
-				IsCore:               false,
-				Provider:             JaegerProvider,
-				NamespaceSelector:    true,
-				QueryScope:           map[string]string{},
-				QueryTimeout:         5,
-				TempoConfig:          TempoConfig{},
+				CustomHeaders:     map[string]string{},
+				Enabled:           false,
+				ExternalURL:       "",
+				GrpcPort:          9095,
+				InternalURL:       "http://tracing.istio-system:16685/jaeger",
+				IsCore:            false,
+				Provider:          JaegerProvider,
+				NamespaceSelector: true,
+				QueryScope:        map[string]string{},
+				QueryTimeout:      5,
+				TempoConfig: TempoConfig{
+					CacheCapacity: 200,
+					CacheEnabled:  true,
+				},
 				UseGRPC:              true,
 				WhiteListIstioSystem: []string{"jaeger-query", "istio-ingressgateway"},
 			},

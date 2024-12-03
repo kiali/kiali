@@ -1,6 +1,7 @@
 package tempo
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -10,10 +11,12 @@ import (
 	"path"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/store"
 	"github.com/kiali/kiali/tracing/jaeger/model"
 	jaegerModels "github.com/kiali/kiali/tracing/jaeger/model/json"
 	otel "github.com/kiali/kiali/tracing/otel/model"
@@ -22,13 +25,20 @@ import (
 	"github.com/kiali/kiali/util"
 )
 
+const (
+	expirationCheckInterval = 1 * time.Minute
+	TTL                     = 5 * time.Minute
+)
+
 type OtelHTTPClient struct {
 	ClusterTag bool
+	TempoCache store.Store[string, *model.TracingSingleTrace]
 }
 
 // New client
-func NewOtelClient(client http.Client, baseURL *url.URL) (otelClient *OtelHTTPClient, err error) {
+func NewOtelClient(ctx context.Context, client http.Client, baseURL *url.URL) (otelClient *OtelHTTPClient, err error) {
 	url := *baseURL
+
 	// Istio adds the istio.cluster_id tag
 	// That allows to filter traces by cluster in MC environments
 	// This is a check to validate that this tag exists before use it
@@ -50,13 +60,23 @@ func NewOtelClient(client http.Client, baseURL *url.URL) (otelClient *OtelHTTPCl
 		}
 	}
 
-	return &OtelHTTPClient{ClusterTag: tags}, nil
+	otelHTTPClient := &OtelHTTPClient{ClusterTag: tags}
+	if config.Get().ExternalServices.Tracing.TempoConfig.CacheEnabled {
+		s := store.New[string, *model.TracingSingleTrace]()
+		fifoStore := store.NewFIFOStore(s, config.Get().ExternalServices.Tracing.TempoConfig.CacheCapacity, "tempo")
+		otelHTTPClient.TempoCache = store.NewExpirationStore[string, *model.TracingSingleTrace](ctx, fifoStore, util.AsPtr(TTL), util.AsPtr(expirationCheckInterval))
+	}
+
+	return otelHTTPClient, nil
 }
 
 // GetAppTracesHTTP search traces
-func (oc OtelHTTPClient) GetAppTracesHTTP(client http.Client, baseURL *url.URL, serviceName string, q models.TracingQuery) (response *model.TracingResponse, err error) {
+func (oc *OtelHTTPClient) GetAppTracesHTTP(client http.Client, baseURL *url.URL, serviceName string, q models.TracingQuery) (response *model.TracingResponse, err error) {
 	url := *baseURL
 	url.Path = path.Join(url.Path, "/api/search")
+	if q.End.Before(q.Start) {
+		return nil, fmt.Errorf("end time must be greater than start time")
+	}
 	oc.prepareTraceQL(&url, serviceName, q)
 
 	r, err := oc.queryTracesHTTP(client, &url, q.Tags["error"])
@@ -68,8 +88,13 @@ func (oc OtelHTTPClient) GetAppTracesHTTP(client http.Client, baseURL *url.URL, 
 }
 
 // GetTraceDetailHTTP get one trace by trace ID
-func (oc OtelHTTPClient) GetTraceDetailHTTP(client http.Client, endpoint *url.URL, traceID string) (*model.TracingSingleTrace, error) {
+func (oc *OtelHTTPClient) GetTraceDetailHTTP(client http.Client, endpoint *url.URL, traceID string) (*model.TracingSingleTrace, error) {
 	u := *endpoint
+	if config.Get().ExternalServices.Tracing.TempoConfig.CacheEnabled {
+		if result, isCached := oc.TempoCache.Get(traceID); isCached {
+			return result, nil
+		}
+	}
 	u.Path = path.Join(u.Path, "/api/traces/", traceID)
 	resp, code, reqError := makeRequest(client, u.String(), nil)
 	if reqError != nil {
@@ -97,6 +122,12 @@ func (oc OtelHTTPClient) GetTraceDetailHTTP(client http.Client, endpoint *url.UR
 	if len(response.Data) == 0 {
 		return &model.TracingSingleTrace{Errors: response.Errors}, nil
 	}
+	if config.Get().ExternalServices.Tracing.TempoConfig.CacheEnabled {
+		oc.TempoCache.Set(traceID, &model.TracingSingleTrace{
+			Data:   response.Data[0],
+			Errors: response.Errors,
+		})
+	}
 	return &model.TracingSingleTrace{
 		Data:   response.Data[0],
 		Errors: response.Errors,
@@ -104,7 +135,7 @@ func (oc OtelHTTPClient) GetTraceDetailHTTP(client http.Client, endpoint *url.UR
 }
 
 // GetServiceStatusHTTP get service status
-func (oc OtelHTTPClient) GetServiceStatusHTTP(client http.Client, baseURL *url.URL) (bool, error) {
+func (oc *OtelHTTPClient) GetServiceStatusHTTP(client http.Client, baseURL *url.URL) (bool, error) {
 	var u url.URL
 	healthCheckUrl := config.Get().ExternalServices.Tracing.HealthCheckUrl
 	if healthCheckUrl != "" {
@@ -126,7 +157,7 @@ func (oc OtelHTTPClient) GetServiceStatusHTTP(client http.Client, baseURL *url.U
 }
 
 // queryTracesHTTP
-func (oc OtelHTTPClient) queryTracesHTTP(client http.Client, u *url.URL, error string) (*model.TracingResponse, error) {
+func (oc *OtelHTTPClient) queryTracesHTTP(client http.Client, u *url.URL, error string) (*model.TracingResponse, error) {
 	// HTTP and GRPC requests co-exist, but when minDuration is present, for HTTP it requires a unit (ms)
 	// https://github.com/kiali/kiali/issues/3939
 	minDuration := u.Query().Get("minDuration")
@@ -155,7 +186,7 @@ func (oc OtelHTTPClient) queryTracesHTTP(client http.Client, u *url.URL, error s
 }
 
 // transformTrace processes every trace ID and make a request to get all the spans for that trace
-func (oc OtelHTTPClient) transformTrace(traces *otel.Traces, error string, limit int) (*model.TracingResponse, error) {
+func (oc *OtelHTTPClient) transformTrace(traces *otel.Traces, error string, limit int) (*model.TracingResponse, error) {
 	var response model.TracingResponse
 	serviceName := ""
 
@@ -245,7 +276,7 @@ func convertSingleTrace(traces *otelModels.Data, id string) (*model.TracingRespo
 }
 
 // prepareTraceQL set the query in TraceQL format
-func (oc OtelHTTPClient) prepareTraceQL(u *url.URL, tracingServiceName string, query models.TracingQuery) {
+func (oc *OtelHTTPClient) prepareTraceQL(u *url.URL, tracingServiceName string, query models.TracingQuery) {
 	q := url.Values{}
 	q.Set("start", fmt.Sprintf("%d", query.Start.Unix()))
 	q.Set("end", fmt.Sprintf("%d", query.End.Unix()))
@@ -280,7 +311,7 @@ func (oc OtelHTTPClient) prepareTraceQL(u *url.URL, tracingServiceName string, q
 }
 
 // GetTraceQLQuery returns the raw query in TraceQL format
-func (oc OtelHTTPClient) GetTraceQLQuery(u *url.URL, tracingServiceName string, query models.TracingQuery) string {
+func (oc *OtelHTTPClient) GetTraceQLQuery(u *url.URL, tracingServiceName string, query models.TracingQuery) string {
 	oc.prepareTraceQL(u, tracingServiceName, query)
 	return u.RawQuery
 }
