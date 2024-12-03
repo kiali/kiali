@@ -166,10 +166,10 @@ func TestExchangeUsesSystemPoolAndRestTLS(t *testing.T) {
 						},
 					}},
 				},
-				systemCertPool: x509.NewCertPool(),
+				certPool: x509.NewCertPool(),
 			}
 			if tc.systemPoolCert != nil {
-				svc.systemCertPool.AddCert(tc.systemPoolCert)
+				svc.certPool.AddCert(tc.systemPoolCert)
 			}
 
 			_, err := svc.Exchange(context.Background(), "anycode", "anyverify", conf.KubernetesConfig.ClusterName)
