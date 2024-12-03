@@ -43,7 +43,8 @@ func (f *FIFOStore[K, V]) Get(key K) (V, bool) {
 	return elem, true
 }
 
-// Set
+// Set Adds an item into the store, at the end of the list
+// If the key already exists, modifies the value, without modify the element order
 func (f *FIFOStore[K, V]) Set(key K, value V) {
 	f.lock.Lock()
 	defer f.lock.Unlock()
@@ -65,12 +66,12 @@ func (f *FIFOStore[K, V]) Set(key K, value V) {
 	f.Store.Set(key, value)
 }
 
-// Set
+// Remove removes an element from the store
 func (f *FIFOStore[K, V]) Remove(key K) {
 	f.lock.Lock()
 	defer f.lock.Unlock()
 
-	f.order.Remove(list.Element{Value: key})
+	f.order.Remove(&list.Element{Value: key})
 	f.Store.Remove(key)
 }
 
@@ -79,11 +80,22 @@ func (f *FIFOStore[K, V]) Replace(items map[K]V) {
 	f.lock.Lock()
 	defer f.lock.Unlock()
 
-	f.Store.Replace(items)
-	if items == nil {
-		f.order = list.New()
-		return
+	if len(items) > f.capacity {
+		truncated := make(map[K]V, f.capacity)
+		count := 0
+
+		for k, v := range items {
+			if count >= f.capacity {
+				break
+			}
+			truncated[k] = v
+			count++
+		}
+		items = truncated
 	}
+
+	f.Store.Replace(items)
+	f.order = list.New()
 
 	for key := range items {
 		f.order.PushBack(key)

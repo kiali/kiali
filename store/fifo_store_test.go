@@ -123,3 +123,38 @@ func TestExpiredNoCleanup(t *testing.T) {
 	require.False(found3)
 
 }
+
+func TestReplace(t *testing.T) {
+	require := require.New(t)
+
+	s := New[string, string]()
+	fifoStore := NewFIFOStore[string, string](s, 3, "test")
+	fifoStore.Set("foo", "bar")
+	fifoStore.Set("foo2", "bar2")
+	fifoStore.Set("foo3", "bar3")
+
+	require.Equal(fifoStore.order.Len(), 3)
+	elem, found := fifoStore.Get("foo")
+
+	require.True(found)
+	require.Equal(elem, "bar")
+
+	replaced := map[string]string{"newKey": "newValue", "newKey2": "newValue2", "newKey3": "newValue3"}
+	fifoStore.Replace(replaced)
+	require.Equal(fifoStore.order.Len(), 3)
+	_, found = fifoStore.Get("foo")
+
+	require.False(found)
+	elem, found = fifoStore.Get("newKey")
+
+	require.True(found)
+	require.Equal(elem, "newValue")
+
+	replaced2 := map[string]string{"replacedKey": "replacedValue", "replacedKey2": "replacedValue2", "replacedKey3": "replacedValue3", "newKey": "newValue"}
+	fifoStore.Replace(replaced2)
+	require.Equal(fifoStore.order.Len(), 3)
+
+	elem, found = fifoStore.Get("replacedKey2")
+	require.True(found)
+	require.Equal(elem, "replacedValue2")
+}
