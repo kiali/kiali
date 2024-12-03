@@ -60,7 +60,7 @@ func extractClusterName(r *http.Request, conf *config.Config) string {
 // The OAuth service created inside the constructor will make a request to the OpenShift OAuth server
 // to gather OAuth metadata.
 func NewOpenshiftAuthController(conf *config.Config, clientFactory kubernetes.ClientFactory) (*OpenshiftAuthController, error) {
-	openshiftOAuthService, err := business.NewOpenshiftOAuthService(context.TODO(), conf, clientFactory.GetSAClients(), clientFactory)
+	openshiftOAuthService, err := business.NewOpenshiftOAuthService(context.TODO(), conf, clientFactory.GetSAClients(), clientFactory, business.OAuthServerCAFile)
 	if err != nil {
 		log.Errorf("Error creating OpenshiftOAuthService: %v", err)
 		return nil, err
