@@ -16,6 +16,7 @@ import (
 
 	"github.com/nitishm/engarde/pkg/parser"
 	osapps_v1 "github.com/openshift/api/apps/v1"
+	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 	apps_v1 "k8s.io/api/apps/v1"
 	batch_v1 "k8s.io/api/batch/v1"
@@ -774,6 +775,8 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 	var jbs []batch_v1.Job
 	var conjbs []batch_v1.CronJob
 	var daeset []apps_v1.DaemonSet
+	var wgroups []*networking_v1.WorkloadGroup
+	var wentries []*networking_v1.WorkloadEntry
 
 	ws := models.Workloads{}
 
@@ -794,8 +797,8 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 	}
 
 	wg := sync.WaitGroup{}
-	wg.Add(9)
-	errChan := make(chan error, 9)
+	wg.Add(11)
+	errChan := make(chan error, 11)
 
 	// Pods are always fetched
 	go func() {
@@ -917,6 +920,28 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 		}
 	}()
 
+	// WorkloadGroups are always fetched
+	go func() {
+		defer wg.Done()
+		var err error
+		wgroups, err = kubeCache.GetWorkloadGroups(namespace, labelSelector)
+		if err != nil {
+			log.Errorf("Error fetching WorkloadGroups per namespace %s: %s", namespace, err)
+			errChan <- err
+		}
+	}()
+
+	// WorkloadEntries are always fetched
+	go func() {
+		defer wg.Done()
+		var err error
+		wentries, err = kubeCache.GetWorkloadEntries(namespace, labelSelector)
+		if err != nil {
+			log.Errorf("Error fetching WorkloadEntries per namespace %s: %s", namespace, err)
+			errChan <- err
+		}
+	}()
+
 	wg.Wait()
 	if len(errChan) != 0 {
 		err := <-errChan
@@ -950,6 +975,13 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 				// Pod without controller
 				controllers[pod.Name] = kubernetes.Pods
 			}
+		}
+	}
+
+	// Find controllers from WorkloadEntries
+	for _, wentry := range wentries {
+		if _, exist := controllers[wentry.Name]; !exist {
+			controllers[wentry.Name] = kubernetes.WorkloadEntries
 		}
 	}
 
@@ -1311,6 +1343,24 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 				log.Errorf("Workload %s is not found as DaemonSet", controllerName)
 				cnFound = false
 			}
+		case kubernetes.WorkloadEntries:
+			found := false
+			iFound := -1
+			for i, wgroup := range wgroups {
+				if wgroup.Name == controllerName {
+					found = true
+					iFound = i
+					break
+				}
+			}
+			if found {
+				//selector := labels.Set(wgroups[iFound].Spec.Metadata.Labels).AsSelector()
+				//w.SetPods(kubernetes.FilterWorkloadEntriesBySelector(selector, wentries))
+				w.ParseWorkloadGroup(wgroups[iFound])
+			} else {
+				log.Errorf("Workload %s is not found as WorkloadGroup", controllerName)
+				cnFound = false
+			}
 		default:
 			// This covers the scenario of a custom controller without replicaset, controlling pods directly.
 			// Note that a custom controller with replicaset(s) will return the replicaset(s) as the workloads.
@@ -1347,6 +1397,8 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 	var jbs []batch_v1.Job
 	var conjbs []batch_v1.CronJob
 	var ds *apps_v1.DaemonSet
+	var wgroup *networking_v1.WorkloadGroup
+	var wentries []*networking_v1.WorkloadEntry
 
 	wl := &models.Workload{
 		WorkloadListItem: models.WorkloadListItem{
@@ -1372,8 +1424,8 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 	_, knownWorkloadType := controllerOrder[criteria.WorkloadGVK.Kind]
 
 	wg := sync.WaitGroup{}
-	wg.Add(9)
-	errChan := make(chan error, 9)
+	wg.Add(11)
+	errChan := make(chan error, 11)
 
 	kialiCache, err := in.cache.GetKubeCache(criteria.Cluster)
 	if err != nil {
@@ -1393,6 +1445,44 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 		if err != nil {
 			log.Errorf("Error fetching Pods per namespace %s: %s", criteria.Namespace, err)
 			errChan <- err
+		}
+	}()
+
+	// fetch as WorkloadGroup when workloadType is WorkloadGroups or unspecified
+	go func() {
+		defer wg.Done()
+		var err error
+
+		if criteria.WorkloadGVK.Kind != "" && criteria.WorkloadGVK != kubernetes.WorkloadGroups {
+			return
+		}
+		wgroup, err = kialiCache.GetWorkloadGroup(criteria.Namespace, criteria.WorkloadName)
+		if err != nil {
+			if errors.IsNotFound(err) {
+				dep = nil
+			} else {
+				log.Errorf("Error fetching WorkloadGroup per namespace %s and name %s: %s", criteria.Namespace, criteria.WorkloadName, err)
+				errChan <- err
+			}
+		}
+	}()
+
+	// fetch as WorkloadEntries when workloadType is WorkloadGroups or unspecified
+	go func() {
+		defer wg.Done()
+		var err error
+
+		if criteria.WorkloadGVK.Kind != "" && criteria.WorkloadGVK != kubernetes.WorkloadGroups {
+			return
+		}
+		wentries, err = kialiCache.GetWorkloadEntries(criteria.Namespace, "")
+		if err != nil {
+			if errors.IsNotFound(err) {
+				dep = nil
+			} else {
+				log.Errorf("Error fetching WorkloadEntry per namespace %s: %s", criteria.Namespace, err)
+				errChan <- err
+			}
 		}
 	}()
 
@@ -1572,6 +1662,13 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 				// Pod without controller
 				controllers[pod.Name] = kubernetes.Pods
 			}
+		}
+	}
+
+	// Find controllers from WorkloadEntries
+	for _, wentry := range wentries {
+		if _, exist := controllers[wentry.Name]; !exist {
+			controllers[wentry.Name] = kubernetes.WorkloadEntries
 		}
 	}
 
@@ -1876,6 +1973,15 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 				w.ParseDaemonSet(ds)
 			} else {
 				log.Errorf("Workload %s is not found as DaemonSet", criteria.WorkloadName)
+				cnFound = false
+			}
+		case kubernetes.WorkloadEntries:
+			if wgroup != nil && wgroup.Name == criteria.WorkloadName {
+				//selector := labels.Set(wgroups[iFound].Spec.Metadata.Labels).AsSelector()
+				//w.SetPods(kubernetes.FilterWorkloadEntriesBySelector(selector, wentries))
+				w.ParseWorkloadGroup(wgroup)
+			} else {
+				log.Errorf("Workload %s is not found as WorkloadGroup", criteria.WorkloadName)
 				cnFound = false
 			}
 		default:

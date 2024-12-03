@@ -5,6 +5,7 @@ import (
 	"time"
 
 	osapps_v1 "github.com/openshift/api/apps/v1"
+	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 	apps_v1 "k8s.io/api/apps/v1"
 	batch_v1 "k8s.io/api/batch/v1"
 	core_v1 "k8s.io/api/core/v1"
@@ -462,6 +463,11 @@ func (workload *Workload) ParseDaemonSet(ds *apps_v1.DaemonSet) {
 	workload.CurrentReplicas = ds.Status.CurrentNumberScheduled
 	workload.AvailableReplicas = ds.Status.NumberAvailable
 	workload.HealthAnnotations = GetHealthAnnotation(ds.Annotations, GetHealthConfigAnnotation())
+}
+
+func (workload *Workload) ParseWorkloadGroup(wg *networking_v1.WorkloadGroup) {
+	workload.WorkloadGVK = kubernetes.WorkloadGroups
+	workload.parseObjectMeta(&wg.ObjectMeta, &wg.ObjectMeta)
 }
 
 func (workload *Workload) ParsePods(controllerName string, controllerGVK schema.GroupVersionKind, pods []core_v1.Pod) {
