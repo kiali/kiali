@@ -103,7 +103,7 @@ func (oc *OtelHTTPClient) GetTraceDetailHTTP(client http.Client, endpoint *url.U
 	}
 	if code != 200 {
 		errorMsg := fmt.Sprintf("Error returning traces: %s", resp)
-		log.Errorf(errorMsg)
+		log.Errorf("%s", errorMsg)
 		var errorTrace []model.StructuredError
 		errorTrace = append(errorTrace, model.StructuredError{TraceID: traceID, Code: code, Msg: errorMsg})
 		return &model.TracingSingleTrace{Errors: errorTrace}, errors.New(errorMsg)
@@ -173,7 +173,7 @@ func (oc *OtelHTTPClient) queryTracesHTTP(client http.Client, u *url.URL, error 
 	}
 	if code != 200 {
 		errorMsg := fmt.Sprintf("Tempo API query error: %s [code: %d, URL: %v]", resp, code, u)
-		log.Errorf(errorMsg)
+		log.Errorf("%s", errorMsg)
 		return &model.TracingResponse{}, errors.New(errorMsg)
 	}
 	limit, err := strconv.Atoi(u.Query().Get("limit"))

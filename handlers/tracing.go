@@ -242,28 +242,28 @@ func readQuery(values url.Values) (models.TracingQuery, error) {
 		if num, err := strconv.ParseInt(v, 10, 64); err == nil {
 			q.Start = time.Unix(0, num*int64(time.Microsecond))
 		} else {
-			return models.TracingQuery{}, fmt.Errorf("Cannot parse parameter 'startMicros': " + err.Error())
+			return models.TracingQuery{}, fmt.Errorf("Cannot parse parameter 'startMicros': %s", err.Error())
 		}
 	}
 	if v := values.Get("endMicros"); v != "" {
 		if num, err := strconv.ParseInt(v, 10, 64); err == nil {
 			q.End = time.Unix(0, num*int64(time.Microsecond))
 		} else {
-			return models.TracingQuery{}, fmt.Errorf("Cannot parse parameter 'endMicros': " + err.Error())
+			return models.TracingQuery{}, fmt.Errorf("Cannot parse parameter 'endMicros': %s", err.Error())
 		}
 	}
 	if strLimit := values.Get("limit"); strLimit != "" {
 		if num, err := strconv.Atoi(strLimit); err == nil {
 			q.Limit = num
 		} else {
-			return models.TracingQuery{}, fmt.Errorf("Cannot parse parameter 'limit': " + err.Error())
+			return models.TracingQuery{}, fmt.Errorf("Cannot parse parameter 'limit': %s", err.Error())
 		}
 	}
 	if rawTags := values.Get("tags"); rawTags != "" {
 		var tags map[string]string
 		err := json.Unmarshal([]byte(rawTags), &tags)
 		if err != nil {
-			return models.TracingQuery{}, fmt.Errorf("Cannot parse parameter 'tags': " + err.Error())
+			return models.TracingQuery{}, fmt.Errorf("Cannot parse parameter 'tags': %s", err.Error())
 		}
 		q.Tags = tags
 	}
@@ -271,7 +271,7 @@ func readQuery(values url.Values) (models.TracingQuery, error) {
 		if num, err := strconv.Atoi(strMinD); err == nil {
 			q.MinDuration = time.Duration(num) * time.Microsecond
 		} else {
-			return models.TracingQuery{}, fmt.Errorf("Cannot parse parameter 'minDuration': " + err.Error())
+			return models.TracingQuery{}, fmt.Errorf("Cannot parse parameter 'minDuration': %s", err.Error())
 		}
 	}
 
