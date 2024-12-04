@@ -95,7 +95,7 @@ test-integration-controller: .ensure-envtest-bin-dir-exists
 
 ## lint-install: Installs golangci-lint
 lint-install:
-	curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $$(${GO} env GOPATH)/bin v1.57.2
+	curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $$(${GO} env GOPATH)/bin v1.60.1
 
 ## lint: Runs golangci-lint
 # doc.go is ommited for linting, because it generates lots of warnings.
