@@ -16,7 +16,7 @@ import { PFBadge, PFBadges } from '../../components/Pf/PfBadges';
 import { MissingLabel } from '../../components/MissingLabel/MissingLabel';
 import { MissingAuthPolicy } from 'components/MissingAuthPolicy/MissingAuthPolicy';
 import { getGVKTypeString, hasMissingAuthPolicy, isGVKSupported } from 'utils/IstioConfigUtils';
-import { DetailDescription } from '../../components/DetailDescription/DetailDescription';
+import { DetailDescription, renderWaypointSimpleLabel } from '../../components/DetailDescription/DetailDescription';
 import { isWaypoint } from '../../helpers/LabelFilterHelper';
 import { AmbientLabel, tooltipMsgType } from '../../components/Ambient/AmbientLabel';
 import { gvkType, validationKey } from '../../types/IstioConfigList';
@@ -221,6 +221,8 @@ export const WorkloadDescription: React.FC<WorkloadDescriptionProps> = (props: W
               tooltip={true}
             />
           )}
+
+          {isWaypoint(workload.labels) && renderWaypointSimpleLabel()}
         </Title>
 
         {workload.cluster && isMultiCluster && (
