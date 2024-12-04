@@ -165,6 +165,8 @@ const conf = {
       podEnvoyProxyLogging: (namespace: string, pod: string) => `api/namespaces/${namespace}/pods/${pod}/logging`,
       podEnvoyProxyResourceEntries: (namespace: string, pod: string, resource: string) =>
         `api/namespaces/${namespace}/pods/${pod}/config_dump/${resource}`,
+      podZtunnelConfig: (namespace: string, pod: string) =>
+        `api/namespaces/${namespace}/pods/${pod}/config_dump_ztunnel`,
       serverConfig: `api/config`,
       service: (namespace: string, service: string) => `api/namespaces/${namespace}/services/${service}`,
       serviceGraphElements: (namespace: string, service: string) =>
