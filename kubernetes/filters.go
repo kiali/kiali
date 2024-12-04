@@ -291,14 +291,14 @@ func FilterPodsBySelector(selector labels.Selector, allPods []core_v1.Pod) []cor
 	return pods
 }
 
-func FilterWorkloadEntriesBySelector(selector labels.Selector, allEntries []*networking_v1.WorkloadEntry) []core_v1.Pod {
-	var pods []core_v1.Pod
+func FilterWorkloadEntriesBySelector(selector labels.Selector, allEntries []*networking_v1.WorkloadEntry) []*networking_v1.WorkloadEntry {
+	var entries []*networking_v1.WorkloadEntry
 	for _, entry := range allEntries {
-		if selector.Matches(labels.Set(entry.ObjectMeta.Labels)) {
-			//pods = append(pods, entry)
+		if selector.Matches(labels.Set(entry.Spec.Labels)) {
+			entries = append(entries, entry)
 		}
 	}
-	return pods
+	return entries
 }
 
 // FilterPodsByService returns a subpart of pod list filtered according service selector

@@ -465,9 +465,29 @@ func (workload *Workload) ParseDaemonSet(ds *apps_v1.DaemonSet) {
 	workload.HealthAnnotations = GetHealthAnnotation(ds.Annotations, GetHealthConfigAnnotation())
 }
 
-func (workload *Workload) ParseWorkloadGroup(wg *networking_v1.WorkloadGroup) {
+func (workload *Workload) ParseWorkloadGroup(wg *networking_v1.WorkloadGroup, wentries []*networking_v1.WorkloadEntry) {
+	conf := config.Get()
 	workload.WorkloadGVK = kubernetes.WorkloadGroups
 	workload.parseObjectMeta(&wg.ObjectMeta, &wg.ObjectMeta)
+	// WorkloadEntry does not have status, they are generated based on WorkloadGroup.Template
+	workload.DesiredReplicas = int32(len(wentries))
+	workload.CurrentReplicas = int32(len(wentries))
+	workload.AvailableReplicas = int32(len(wentries))
+	workload.Labels = map[string]string{}
+	// We fetch one WorkloadEntry as template for labels, similar to Pods
+	if len(wentries) > 0 {
+		if wentries[0].Spec.Labels != nil {
+			workload.Labels = wentries[0].Spec.Labels
+		}
+		workload.CreatedAt = formatTime(wentries[0].CreationTimestamp.Time)
+		workload.ResourceVersion = wentries[0].ResourceVersion
+	}
+	/** Check the labels app and version required by Istio in template Pods*/
+	_, workload.AppLabel = workload.Labels[conf.IstioLabels.AppLabelName]
+	_, workload.VersionLabel = workload.Labels[conf.IstioLabels.VersionLabelName]
+	//for _, entry := range wentries {
+	//	append(workload.Pods)
+	//}
 }
 
 func (workload *Workload) ParsePods(controllerName string, controllerGVK schema.GroupVersionKind, pods []core_v1.Pod) {

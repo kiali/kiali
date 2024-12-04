@@ -1354,9 +1354,8 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 				}
 			}
 			if found {
-				//selector := labels.Set(wgroups[iFound].Spec.Metadata.Labels).AsSelector()
-				//w.SetPods(kubernetes.FilterWorkloadEntriesBySelector(selector, wentries))
-				w.ParseWorkloadGroup(wgroups[iFound])
+				selector := labels.Set(wgroups[iFound].Spec.Metadata.Labels).AsSelector()
+				w.ParseWorkloadGroup(wgroups[iFound], kubernetes.FilterWorkloadEntriesBySelector(selector, wentries))
 			} else {
 				log.Errorf("Workload %s is not found as WorkloadGroup", controllerName)
 				cnFound = false
@@ -1977,9 +1976,8 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 			}
 		case kubernetes.WorkloadEntries:
 			if wgroup != nil && wgroup.Name == criteria.WorkloadName {
-				//selector := labels.Set(wgroups[iFound].Spec.Metadata.Labels).AsSelector()
-				//w.SetPods(kubernetes.FilterWorkloadEntriesBySelector(selector, wentries))
-				w.ParseWorkloadGroup(wgroup)
+				selector := labels.Set(wgroup.Spec.Metadata.Labels).AsSelector()
+				w.ParseWorkloadGroup(wgroup, kubernetes.FilterWorkloadEntriesBySelector(selector, wentries))
 			} else {
 				log.Errorf("Workload %s is not found as WorkloadGroup", criteria.WorkloadName)
 				cnFound = false
