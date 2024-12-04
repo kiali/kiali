@@ -148,7 +148,7 @@ func Authenticate(conf *config.Config, authController authentication.AuthControl
 			log.Warning("Authentication attempt with anonymous access enabled.")
 		default:
 			message := fmt.Sprintf("Cannot authenticate users, because strategy <%s> is unknown.", conf.Auth.Strategy)
-			log.Errorf(message)
+			log.Errorf("%s", message)
 			RespondWithError(w, http.StatusInternalServerError, message)
 		}
 	}

@@ -474,7 +474,7 @@ type servicesError struct {
 }
 
 func (s *servicesError) GetServicesBySelectorLabels(namespace string, selectorLabels map[string]string) ([]core_v1.Service, error) {
-	return nil, fmt.Errorf(s.errorMsg)
+	return nil, fmt.Errorf("%s", s.errorMsg)
 }
 
 func TestErrorCausesPanic(t *testing.T) {
