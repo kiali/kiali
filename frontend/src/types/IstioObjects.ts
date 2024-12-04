@@ -1434,3 +1434,167 @@ export interface APIKey {
 
 export const MAX_PORT = 65535;
 export const MIN_PORT = 0;
+
+export type ZtunnelConfigDump = {
+  certificates?: Certificate[];
+  config?: ZtunnelConfig;
+  policies?: any[];
+  services?: ZtunnelService[];
+  workloads?: ZtunnelWorkload[];
+};
+
+export type Certificate = {
+  certChain: CertChain[];
+  identity: string;
+  state: string;
+};
+
+export type CertChain = {
+  expirationTime: string;
+  pem: string;
+  serialNumber?: string;
+  validFrom: string;
+};
+
+export type ZtunnelConfig = {
+  adminAddr: ZtunnelAddress;
+  altCaHostname?: string;
+  altXdsHostname?: string;
+  caAddress: string;
+  caRootCert: FilePath;
+  clusterDomain: string;
+  clusterId: string;
+  connectionWindowSize: number;
+  dnsProxy: boolean;
+  dnsProxyAddr: ZtunnelAddress;
+  dnsResolverCfg: DNSResolverConfig;
+  dnsResolverOpts: DNSResolverOptions;
+  fakeCa: boolean;
+  fakeSelfInbound: boolean;
+  frameSize: number;
+  illegalPorts: number[];
+  inboundAddr: string;
+  inboundPlaintextAddr: string;
+  inpodPortReuse: boolean;
+  inpodUds: string;
+  localNode: string;
+  network: string;
+  numWorkerThreads: number;
+  outboundAddr: string;
+  packetMark: number;
+  poolMaxStreamsPerConn: number;
+  poolUnusedReleaseTimeout: TimeDuration;
+  proxy: boolean;
+  proxyArgs: string;
+  proxyMetadata: Record<string, string>;
+  proxyMode: string;
+  proxyWorkloadInformation?: string;
+  readinessAddr: SocketAddress;
+  requireOriginalSource?: string;
+  secretTtl: TimeDuration;
+  selfTerminationDeadline: TimeDuration;
+  socks5Addr?: string;
+  statsAddr: SocketAddress;
+  windowSize: number;
+  xdsAddress: string;
+  xdsOnDemand: boolean;
+  xdsRootCert: FilePath;
+};
+
+export type ZtunnelAddress = {
+  Localhost: any[];
+};
+
+export type FilePath = {
+  File: string;
+};
+
+export type DNSResolverConfig = {
+  domain?: string;
+  name_servers: NameServer[];
+  search: string[];
+};
+
+export type NameServer = {
+  bind_addr?: string;
+  protocol: string;
+  socket_addr: string;
+  tls_dns_name?: string;
+  trust_negative_responses: boolean;
+};
+
+export type DNSResolverOptions = {
+  attempts: number;
+  authentic_data: boolean;
+  cache_size: number;
+  check_names: boolean;
+  edns0: boolean;
+  ip_strategy: string;
+  ndots: number;
+  negative_max_ttl?: string;
+  negative_min_ttl?: string;
+  num_concurrent_reqs: number;
+  positive_max_ttl?: string;
+  positive_min_ttl?: string;
+  preserve_intermediates: boolean;
+  recursion_desired: boolean;
+  rotate: boolean;
+  server_ordering_strategy: string;
+  shuffle_dns_servers: boolean;
+  timeout: TimeDuration;
+  try_tcp_on_error: boolean;
+  use_hosts_file: boolean;
+  validate: boolean;
+};
+
+export type TimeDuration = {
+  nanos: number;
+  secs: number;
+};
+
+export type SocketAddress = {
+  SocketAddr: string;
+};
+
+export type ZtunnelService = {
+  endpoints: Record<string, ZtunnelEndpoint>;
+  hostname: string;
+  ipFamilies: string;
+  name: string;
+  namespace: string;
+  ports: Record<string, number>;
+  subjectAltNames: string[];
+  vips: string[];
+  waypoint: ZtunnelWaypoint;
+};
+
+export type ZtunnelEndpoint = {
+  port: Record<string, number>;
+  status: string;
+  workloadUid: string;
+};
+
+export type ZtunnelWaypoint = {
+  destination: string;
+  hboneMtlsPort: number;
+};
+
+export type ZtunnelWorkload = {
+  canonicalName: string;
+  canonicalRevision: string;
+  clusterId: string;
+  name: string;
+  namespace: string;
+  networkMode: string;
+  node: string;
+  protocol: string;
+  serviceAccount: string;
+  services: string[];
+  status: string;
+  trustDomain: string;
+  uid: string;
+  waypoint?: ZtunnelWaypoint;
+  workloadIps: string[];
+  workloadName: string;
+  workloadType: string;
+};

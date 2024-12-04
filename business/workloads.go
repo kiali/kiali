@@ -1951,6 +1951,12 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 	return wl, kubernetes.NewNotFound(criteria.WorkloadName, "Kiali", "Workload")
 }
 
+func (in *WorkloadService) GetZtunnelConfig(cluster, namespace, pod string) *kubernetes.ZtunnelConfigDump {
+
+	return in.cache.GetZtunnelDump(cluster, namespace, pod)
+
+}
+
 // GetWaypoints: Return the list of workloads when the waypoint proxy is applied per namespace
 func (in *WorkloadService) GetWaypoints(ctx context.Context) models.Workloads {
 	if !in.cache.IsWaypointListExpired() {

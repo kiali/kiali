@@ -28,6 +28,7 @@ import { connectRefresh } from '../../components/Refresh/connectRefresh';
 import { isWaypoint } from '../../helpers/LabelFilterHelper';
 import { HistoryManager } from 'app/History';
 import { basicTabStyle } from 'styles/TabStyles';
+import { ZtunnelConfig } from '../../components/Ambient/ZtunnelConfig';
 
 type WorkloadDetailsState = {
   cluster?: string;
@@ -85,7 +86,7 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
       currentTab !== this.state.currentTab ||
       this.props.duration !== prevProps.duration
     ) {
-      if (currentTab === 'info' || currentTab === 'logs' || currentTab === 'envoy') {
+      if (currentTab === 'info' || currentTab === 'logs' || currentTab === 'envoy' || currentTab === 'ztunnel') {
         this.fetchWorkload(cluster).then(() => {
           if (currentTab !== this.state.currentTab || cluster !== this.state.cluster) {
             this.setState({ currentTab: currentTab, cluster: cluster });
@@ -257,6 +258,22 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
       paramToTab['envoy'] = 10;
     }
 
+    if (this.state.workload && this.isZtunnel(this.state.workload)) {
+      const ztunnelTab = (
+        <Tab title="Ztunnel Config" eventKey={11} key="Ztunnel">
+          {this.state.workload && (
+            <ZtunnelConfig
+              lastRefreshAt={this.props.lastRefreshAt}
+              namespace={this.props.workloadId.namespace}
+              workload={this.state.workload}
+            />
+          )}
+        </Tab>
+      );
+      tabsArray.push(ztunnelTab);
+      paramToTab['ztunnel'] = 11;
+    }
+
     // Used by the runtimes tabs
     nextTabIndex = tabsArray.length + 1;
 
@@ -283,6 +300,14 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
     }
 
     return hasIstioSidecars;
+  }
+
+  private isZtunnel(workload: Workload): boolean {
+    return workload.pods.some(pod => {
+      return pod.containers?.some(cont => {
+        return cont.image.includes('ztunnel');
+      });
+    });
   }
 
   private runtimeTabs(): React.ReactNode[] {
