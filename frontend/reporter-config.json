@@ -3,6 +3,7 @@
   "mochaJunitReporterReporterOptions": {
     "mochaFile": "cypress/results/results-[hash].xml",
     "testCaseSwitchClassnameAndName": true,
-    "jenkinsMode": true
+    "jenkinsMode": true,
+    "jenkinsClassnamePrefix": "[Kiali]"
   }
 }
