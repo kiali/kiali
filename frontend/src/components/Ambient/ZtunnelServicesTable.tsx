@@ -23,6 +23,7 @@ export const ZtunnelServicesTable: React.FC<ZtunnelServicesProps> = (props: Ztun
       if (endpoint.status === 'Healthy') {
         up++;
       }
+      return
     });
     return `${total}/${up}`;
   };
