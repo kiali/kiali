@@ -18,12 +18,12 @@ export const ZtunnelServicesTable: React.FC<ZtunnelServicesProps> = (props: Ztun
   const getEndpoints = (endpoints: Record<string, ZtunnelEndpoint>): string => {
     let total = 0;
     let up = 0;
-    Object.entries(endpoints).map(([_, endpoint]) => {
+    Object.entries(endpoints).forEach(([_, endpoint]) => {
       total++;
       if (endpoint.status === 'Healthy') {
         up++;
       }
-      return
+      return;
     });
     return `${total}/${up}`;
   };
@@ -45,7 +45,7 @@ export const ZtunnelServicesTable: React.FC<ZtunnelServicesProps> = (props: Ztun
               service.namespace,
               service.name,
               service.vips.map(sb => {
-                return sb.toString();
+                return sb;
               }),
               service.waypoint.destination ? (
                 <>
