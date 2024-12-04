@@ -6,6 +6,7 @@ import { PFColors } from '../../../components/Pf/PfColors';
 import { SimpleTable } from 'components/Table/SimpleTable';
 import { Button, ButtonVariant } from '@patternfly/react-core';
 import { KialiIcon } from 'config/KialiIcon';
+import { t, useKialiTranslation } from 'utils/I18nUtils';
 
 type RuleListProps = {
   action: string;
@@ -15,15 +16,15 @@ type RuleListProps = {
 
 const columns: ThProps[] = [
   {
-    title: 'From',
+    title: t('From'),
     width: 40
   },
   {
-    title: 'To',
+    title: t('To'),
     width: 40
   },
   {
-    title: 'When',
+    title: t('When'),
     width: 40
   },
   {
@@ -41,6 +42,8 @@ const noRulesStyle = kialiStyle({
 });
 
 export const RuleList: React.FC<RuleListProps> = (props: RuleListProps) => {
+  const { t } = useKialiTranslation();
+
   const rows: IRow[] = props.ruleList.map((rule, i) => {
     return {
       key: `rule_${i}`,
@@ -124,9 +127,10 @@ export const RuleList: React.FC<RuleListProps> = (props: RuleListProps) => {
     };
   });
 
-  const noRulesMessage = props.action === 'DENY' ? ' DENY action requires at least one Rule' : 'No Rules Defined.';
+  const noRulesMessage =
+    props.action === 'DENY' ? t(' DENY action requires at least one Rule') : t('No Rules Defined.');
 
   const noRules = <div className={noRulesStyle}>{noRulesMessage}</div>;
 
-  return <SimpleTable label="Rule List" columns={columns} rows={rows} emptyState={noRules} />;
+  return <SimpleTable label={t('Rule List')} columns={columns} rows={rows} emptyState={noRules} />;
 };

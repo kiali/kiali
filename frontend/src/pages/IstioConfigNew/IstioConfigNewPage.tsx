@@ -75,6 +75,8 @@ import { isParentKiosk, kioskContextMenuAction } from 'components/Kiosk/KioskAct
 import { dicTypeToGVK, gvkType } from '../../types/IstioConfigList';
 import { getGVKTypeString } from '../../utils/IstioConfigUtils';
 import { GroupVersionKind } from '../../types/IstioObjects';
+import { useKialiTranslation } from 'utils/I18nUtils';
+import { usePreviousValue } from 'utils/ReactUtils';
 
 type ReduxProps = {
   activeClusters: MeshCluster[];
@@ -87,26 +89,7 @@ type Props = ReduxProps & {
   objectGVK: GroupVersionKind;
 };
 
-type State = {
-  annotations: { [key: string]: string };
-  authorizationPolicy: AuthorizationPolicyState;
-  gateway: GatewayState;
-  istioPermissions: IstioPermissions;
-  itemsPreview: ConfigPreviewItem[];
-  k8sGateway: K8sGatewayState;
-  k8sReferenceGrant: K8sReferenceGrantState;
-  labels: { [key: string]: string };
-  name: string;
-  peerAuthentication: PeerAuthenticationState;
-  requestAuthentication: RequestAuthenticationState;
-  serviceEntry: ServiceEntryState;
-  showAnnotationsWizard: boolean;
-  showLabelsWizard: boolean;
-  showPreview: boolean;
-  sidecar: SidecarState;
-};
-
-const formPadding = kialiStyle({ padding: '30px 20px 30px 20px' });
+const formPadding = kialiStyle({ padding: '2rem 1.25rem' });
 
 const editIcon = kialiStyle({
   marginLeft: '0.25rem',
@@ -136,170 +119,171 @@ export const NEW_ISTIO_RESOURCE = [
   { value: dicTypeToGVK[gvkType.Sidecar], disabled: false }
 ];
 
-const initState = (): State => ({
-  annotations: {},
-  name: '',
-  istioPermissions: {},
-  labels: {},
-  showAnnotationsWizard: false,
-  showLabelsWizard: false,
-  showPreview: false,
-  itemsPreview: [],
-  authorizationPolicy: initAuthorizationPolicy(),
-  gateway: initGateway(),
-  k8sGateway: initK8sGateway(),
-  k8sReferenceGrant: initK8sReferenceGrant(),
-  peerAuthentication: initPeerAuthentication(),
-  requestAuthentication: initRequestAuthentication(),
-  serviceEntry: initServiceEntry(),
-  // Init with the istio-system/* for sidecar
-  sidecar: initSidecar(`${serverConfig.istioNamespace}/*`)
-});
+const IstioConfigNewPageComponent: React.FC<Props> = (props: Props) => {
+  const [annotations, setAnnotations] = React.useState<{ [key: string]: string }>({});
+  const [authorizationPolicy, setAuthorizationPolicy] = React.useState<AuthorizationPolicyState>(
+    initAuthorizationPolicy()
+  );
+  const [gateway, setGateway] = React.useState<GatewayState>(initGateway());
+  const [istioPermissions, setIstioPermissions] = React.useState<IstioPermissions>({});
+  const [itemsPreview, setItemsPreview] = React.useState<ConfigPreviewItem[]>([]);
+  const [k8sGateway, setK8sGateway] = React.useState<K8sGatewayState>(initK8sGateway());
+  const [k8sReferenceGrant, setK8sReferenceGrant] = React.useState<K8sReferenceGrantState>(initK8sReferenceGrant());
+  const [labels, setLabels] = React.useState<{ [key: string]: string }>({});
+  const [name, setName] = React.useState<string>('');
+  const [peerAuthentication, setPeerAuthentication] = React.useState<PeerAuthenticationState>(initPeerAuthentication());
+  const [requestAuthentication, setRequestAuthentication] = React.useState<RequestAuthenticationState>(
+    initRequestAuthentication()
+  );
+  const [serviceEntry, setServiceEntry] = React.useState<ServiceEntryState>(initServiceEntry());
+  const [showAnnotationsWizard, setShowAnnotationsWizard] = React.useState<boolean>(false);
+  const [showLabelsWizard, setShowLabelsWizard] = React.useState<boolean>(false);
+  const [showPreview, setShowPreview] = React.useState<boolean>(false);
+  const [sidecar, setSidecar] = React.useState<SidecarState>(initSidecar(`${serverConfig.istioNamespace}/*`));
 
-class IstioConfigNewPageComponent extends React.Component<Props, State> {
-  private promises = new PromisesRegistry();
+  const { t } = useKialiTranslation();
 
-  constructor(props: Props) {
-    super(props);
-    this.state = initState();
-  }
+  const promises = React.useRef<PromisesRegistry>();
 
-  componentWillUnmount(): void {
-    this.promises.cancelAll();
-  }
+  // Promises initialization
+  React.useEffect(() => {
+    promises.current = new PromisesRegistry();
 
-  componentDidMount(): void {
-    // Init component state
-    this.setState(Object.assign({}, initState));
-    this.fetchPermissions();
-  }
+    return () => {
+      promises.current?.cancelAll();
+    };
+  }, []);
 
-  componentDidUpdate(prevProps: Props, _prevState: State): void {
-    if (
-      prevProps.activeNamespaces !== this.props.activeNamespaces ||
-      prevProps.activeClusters !== this.props.activeClusters
-    ) {
-      this.fetchPermissions();
-    }
-  }
+  const { activeNamespaces, activeClusters, namespacesPerCluster, objectGVK } = props;
 
-  canCreate = (namespace: string): boolean => {
-    return (
-      this.state.istioPermissions[namespace] &&
-      this.props.objectGVK.Kind.length > 0 &&
-      this.state.istioPermissions[namespace][getGVKTypeString(this.props.objectGVK)].create
-    );
-  };
+  const canCreateNamespace = React.useCallback(
+    (namespace: string, permissions: IstioPermissions): boolean => {
+      return (
+        permissions[namespace] &&
+        objectGVK.Kind.length > 0 &&
+        permissions[namespace][getGVKTypeString(objectGVK)].create
+      );
+    },
+    [objectGVK]
+  );
 
-  isNamespaceInCluster = (namespace: string, cluster: string): boolean => {
-    return (
-      this.props.namespacesPerCluster !== undefined &&
-      this.props.namespacesPerCluster.has(cluster) &&
-      this.props.namespacesPerCluster.get(cluster)!.includes(namespace)
-    );
-  };
+  const isNamespaceInCluster = React.useCallback(
+    (namespace: string, cluster: string): boolean => {
+      return (
+        namespacesPerCluster !== undefined &&
+        namespacesPerCluster.has(cluster) &&
+        namespacesPerCluster.get(cluster)!.includes(namespace)
+      );
+    },
+    [namespacesPerCluster]
+  );
 
-  fetchPermissions = (): void => {
-    if (this.props.activeClusters.length > 0) {
-      this.props.activeClusters.forEach(cluster => {
-        this.fetchPermissionsForCluster(cluster.name);
-      });
-    } else {
-      this.fetchPermissionsForCluster();
-    }
-  };
-
-  fetchPermissionsForCluster = (cluster?: string): void => {
-    if (this.props.activeNamespaces.length > 0) {
-      this.promises
-        .register(
-          `permissions${cluster}`,
-          API.getIstioPermissions(
-            this.props.activeNamespaces.map(n => n.name),
-            cluster
+  const fetchPermissionsForCluster = React.useCallback(
+    (cluster?: string): void => {
+      if (activeNamespaces.length > 0) {
+        promises.current
+          ?.register(
+            `permissions${cluster}`,
+            API.getIstioPermissions(
+              activeNamespaces.map(n => n.name),
+              cluster
+            )
           )
-        )
-        .then(permResponse => {
-          this.setState(
-            {
-              istioPermissions: permResponse.data
-            },
-            () => {
-              this.props.activeNamespaces.forEach(ns => {
-                if (!this.canCreate(ns.name)) {
-                  AlertUtils.addWarning(
-                    `User does not have permission to create Istio Config on namespace: ${ns.name}${
-                      cluster ? ` in cluster ${cluster}` : ''
-                    }`
-                  );
-                }
-                if (cluster && !this.isNamespaceInCluster(ns.name, cluster)) {
-                  AlertUtils.addInfo(`Namespace: ${ns.name} is not found in cluster ${cluster}`);
-                }
-              });
+          .then(permResponse => {
+            setIstioPermissions(permResponse.data);
+
+            activeNamespaces.forEach(ns => {
+              if (!canCreateNamespace(ns.name, permResponse.data)) {
+                AlertUtils.addWarning(
+                  `${t('User does not have permission to create Istio Config on namespace: {{namespace}}', {
+                    namespace: ns.name
+                  })}${cluster ? t(' in cluster {{clusterName}}', { clusterName: cluster }) : ''}`
+                );
+              }
+
+              if (cluster && !isNamespaceInCluster(ns.name, cluster)) {
+                AlertUtils.addInfo(
+                  t('Namespace: {{namespace}} is not found in cluster {{clusterName}}', {
+                    namespace: ns.name,
+                    clusterName: cluster
+                  })
+                );
+              }
+            });
+          })
+          .catch(error => {
+            // Canceled errors are expected on this query when page is unmounted
+            if (!error.isCanceled) {
+              AlertUtils.addError(t('Could not fetch Permissions.'), error);
             }
-          );
-        })
-        .catch(error => {
-          // Canceled errors are expected on this query when page is unmounted
-          if (!error.isCanceled) {
-            AlertUtils.addError('Could not fetch Permissions.', error);
-          }
-        });
-    }
-  };
+          });
+      }
+    },
+    [activeNamespaces, promises, t, isNamespaceInCluster, canCreateNamespace]
+  );
 
-  onNameChange = (_event, value): void => {
-    this.setState({
-      name: value
-    });
-  };
-
-  onLabelsWizardToggle = (value: boolean): void => {
-    this.setState({
-      showLabelsWizard: value
-    });
-  };
-
-  onAddLabels = (value: { [key: string]: string }): void => {
-    this.setState({
-      labels: value,
-      showLabelsWizard: false
-    });
-  };
-
-  onAnnotationsWizardToggle = (value: boolean): void => {
-    this.setState({
-      showAnnotationsWizard: value
-    });
-  };
-
-  onAddAnnotations = (value: { [key: string]: string }): void => {
-    this.setState({
-      annotations: value,
-      showAnnotationsWizard: false
-    });
-  };
-
-  onIstioResourceCreate = (): void => {
-    if (this.props.activeClusters.length > 0) {
-      this.props.activeClusters.forEach(cluster => {
-        this.onIstioResourceCreateForCluster(cluster.name);
+  const fetchPermissions = React.useCallback(() => {
+    if (activeClusters.length > 0) {
+      activeClusters.forEach(cluster => {
+        fetchPermissionsForCluster(cluster.name);
       });
     } else {
-      this.onIstioResourceCreateForCluster();
+      fetchPermissionsForCluster();
+    }
+  }, [activeClusters, fetchPermissionsForCluster]);
+
+  const prevActiveClusters = usePreviousValue(activeClusters);
+  const prevActiveNamespaces = usePreviousValue(activeNamespaces);
+
+  React.useEffect(() => {
+    // Fetch permissions if the activeClusters or activeNamespaces change
+    if (prevActiveClusters !== activeClusters || prevActiveNamespaces !== activeNamespaces) {
+      fetchPermissions();
+    }
+  }, [prevActiveClusters, activeClusters, prevActiveNamespaces, activeNamespaces, fetchPermissions]);
+
+  const onNameChange = (_event: React.FormEvent, value: string): void => {
+    setName(value);
+  };
+
+  const onLabelsWizardToggle = (value: boolean): void => {
+    setShowLabelsWizard(value);
+  };
+
+  const onAddLabels = (value: { [key: string]: string }): void => {
+    setLabels(value);
+    setShowLabelsWizard(false);
+  };
+
+  const onAnnotationsWizardToggle = (value: boolean): void => {
+    setShowAnnotationsWizard(value);
+  };
+
+  const onAddAnnotations = (value: { [key: string]: string }): void => {
+    setAnnotations(value);
+    setShowAnnotationsWizard(false);
+  };
+
+  const onIstioResourceCreate = (): void => {
+    if (props.activeClusters.length > 0) {
+      props.activeClusters.forEach(cluster => {
+        onIstioResourceCreateForCluster(cluster.name);
+      });
+    } else {
+      onIstioResourceCreateForCluster();
     }
   };
 
-  onIstioResourceCreateForCluster = async (cluster?: string): Promise<void> => {
-    const jsonIstioObjects: { json: string; namespace: string }[] = this.state.itemsPreview.map(item => ({
+  const onIstioResourceCreateForCluster = async (cluster?: string): Promise<void> => {
+    const jsonIstioObjects: { json: string; namespace: string }[] = itemsPreview.map(item => ({
       json: JSON.stringify(item.items[0]),
-      namespace: item.items[0].metadata.namespace || ''
+      namespace: item.items[0].metadata.namespace ?? ''
     }));
+
     let err = 0;
     await Promise.all(
       jsonIstioObjects
-        .map(o => API.createIstioConfigDetail(o.namespace, this.props.objectGVK, o.json, cluster))
+        .map(o => API.createIstioConfigDetail(o.namespace, props.objectGVK, o.json, cluster))
         .map(p =>
           p.catch(error => {
             // ignore 404 errors besides no CRD found ones
@@ -308,8 +292,8 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
               API.getErrorString(error).includes('the server could not find the requested resource')
             ) {
               AlertUtils.addError(
-                `Could not create Istio ${getGVKTypeString(this.props.objectGVK)} objects${
-                  cluster ? ` in cluster ${cluster}.` : '.'
+                `${t('Could not create Istio {{type}} objects', { type: getGVKTypeString(props.objectGVK) })}${
+                  cluster ? t(' in cluster {{clusterName}}', { clusterName: cluster }) : ''
                 }`,
                 error
               );
@@ -320,7 +304,9 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
     ).then(results => {
       if (results.filter(value => value !== undefined).length > 0) {
         AlertUtils.add(
-          `Istio ${getGVKTypeString(this.props.objectGVK)} created${cluster ? ` in cluster ${cluster}` : ''}`,
+          `${t('Istio {{type}} created', { type: getGVKTypeString(props.objectGVK) })}${
+            cluster ? t(' in cluster {{clusterName}}', { clusterName: cluster }) : ''
+          }`,
           'default',
           MessageType.SUCCESS
         );
@@ -328,430 +314,357 @@ class IstioConfigNewPageComponent extends React.Component<Props, State> {
     });
 
     if (err === 0) {
-      this.backToList();
+      backToList();
     }
   };
 
-  showPreview = (): void => {
+  const openPreview = (): void => {
     const items: ConfigPreviewItem[] = [];
-    this.props.activeNamespaces.forEach(ns => {
-      switch (getGVKTypeString(this.props.objectGVK)) {
+    props.activeNamespaces.forEach(ns => {
+      switch (getGVKTypeString(props.objectGVK)) {
         case getGVKTypeString(gvkType.AuthorizationPolicy):
           items.push({
-            title: 'Authorization Policy',
-            objectGVK: this.props.objectGVK,
-            items: [
-              buildAuthorizationPolicy(
-                this.state.annotations,
-                this.state.labels,
-                this.state.name,
-                ns.name,
-                this.state.authorizationPolicy
-              )
-            ]
+            title: t('Authorization Policy'),
+            objectGVK: props.objectGVK,
+            items: [buildAuthorizationPolicy(annotations, labels, name, ns.name, authorizationPolicy)]
           });
           break;
         case getGVKTypeString(gvkType.Gateway):
           items.push({
-            title: 'Gateway',
-            objectGVK: this.props.objectGVK,
-            items: [
-              buildGateway(this.state.annotations, this.state.labels, this.state.name, ns.name, this.state.gateway)
-            ]
+            title: t('Gateway'),
+            objectGVK: props.objectGVK,
+            items: [buildGateway(annotations, labels, name, ns.name, gateway)]
           });
           break;
         case getGVKTypeString(gvkType.K8sGateway):
           items.push({
-            title: 'K8s Gateway',
-            objectGVK: this.props.objectGVK,
-            items: [
-              buildK8sGateway(
-                this.state.annotations,
-                this.state.labels,
-                this.state.name,
-                ns.name,
-                this.state.k8sGateway
-              )
-            ]
+            title: t('K8s Gateway'),
+            objectGVK: props.objectGVK,
+            items: [buildK8sGateway(annotations, labels, name, ns.name, k8sGateway)]
           });
           break;
         case getGVKTypeString(gvkType.K8sReferenceGrant):
           items.push({
-            title: 'K8s Reference Grant',
-            objectGVK: this.props.objectGVK,
-            items: [
-              buildK8sReferenceGrant(
-                this.state.annotations,
-                this.state.labels,
-                this.state.name,
-                ns.name,
-                this.state.k8sReferenceGrant
-              )
-            ]
+            title: t('K8s Reference Grant'),
+            objectGVK: props.objectGVK,
+            items: [buildK8sReferenceGrant(annotations, labels, name, ns.name, k8sReferenceGrant)]
           });
           break;
         case getGVKTypeString(gvkType.PeerAuthentication):
           items.push({
-            title: 'Peer Authentication',
-            objectGVK: this.props.objectGVK,
-            items: [
-              buildPeerAuthentication(
-                this.state.annotations,
-                this.state.labels,
-                this.state.name,
-                ns.name,
-                this.state.peerAuthentication
-              )
-            ]
+            title: t('Peer Authentication'),
+            objectGVK: props.objectGVK,
+            items: [buildPeerAuthentication(annotations, labels, name, ns.name, peerAuthentication)]
           });
           break;
         case getGVKTypeString(gvkType.RequestAuthentication):
           items.push({
-            title: 'Request Authentication',
-            objectGVK: this.props.objectGVK,
-            items: [
-              buildRequestAuthentication(
-                this.state.annotations,
-                this.state.labels,
-                this.state.name,
-                ns.name,
-                this.state.requestAuthentication
-              )
-            ]
+            title: t('Request Authentication'),
+            objectGVK: props.objectGVK,
+            items: [buildRequestAuthentication(annotations, labels, name, ns.name, requestAuthentication)]
           });
           break;
         case getGVKTypeString(gvkType.ServiceEntry):
           items.push({
-            title: 'Service Entry',
-            objectGVK: this.props.objectGVK,
-            items: [
-              buildServiceEntry(
-                this.state.annotations,
-                this.state.labels,
-                this.state.name,
-                ns.name,
-                this.state.serviceEntry
-              )
-            ]
+            title: t('Service Entry'),
+            objectGVK: props.objectGVK,
+            items: [buildServiceEntry(annotations, labels, name, ns.name, serviceEntry)]
           });
           break;
         case getGVKTypeString(gvkType.Sidecar):
           items.push({
-            title: 'Sidecar',
-            objectGVK: this.props.objectGVK,
-            items: [
-              buildSidecar(this.state.annotations, this.state.labels, this.state.name, ns.name, this.state.sidecar)
-            ]
+            title: t('Sidecar'),
+            objectGVK: props.objectGVK,
+            items: [buildSidecar(annotations, labels, name, ns.name, sidecar)]
           });
           break;
       }
     });
-    this.setState({ itemsPreview: items, showPreview: true });
-    //this.onIstioResourceCreate()
+    setItemsPreview(items);
+    setShowPreview(true);
+    //onIstioResourceCreate()
   };
 
-  backToList = (): void => {
-    this.setState(initState(), () => {
-      // Back to list page
-      const backUrl = `/${Paths.ISTIO}?namespaces=${this.props.activeNamespaces.map(n => n.name).join(',')}`;
-
-      if (isParentKiosk(this.props.kiosk)) {
-        kioskContextMenuAction(backUrl);
-      } else {
-        router.navigate(backUrl);
-      }
-    });
+  const backToList = (): void => {
+    // Back to list page
+    const backUrl = `/${Paths.ISTIO}?namespaces=${props.activeNamespaces.map(n => n.name).join(',')}`;
+    if (isParentKiosk(props.kiosk)) {
+      kioskContextMenuAction(backUrl);
+    } else {
+      router.navigate(backUrl);
+    }
   };
 
-  isIstioFormValid = (): boolean => {
-    switch (getGVKTypeString(this.props.objectGVK)) {
+  const isIstioFormValid = (): boolean => {
+    switch (getGVKTypeString(props.objectGVK)) {
       case getGVKTypeString(gvkType.AuthorizationPolicy):
-        return isAuthorizationPolicyStateValid(this.state.authorizationPolicy);
+        return isAuthorizationPolicyStateValid(authorizationPolicy);
       case getGVKTypeString(gvkType.Gateway):
-        return isGatewayStateValid(this.state.gateway);
+        return isGatewayStateValid(gateway);
       case getGVKTypeString(gvkType.K8sGateway):
-        return isK8sGatewayStateValid(this.state.k8sGateway);
+        return isK8sGatewayStateValid(k8sGateway);
       case getGVKTypeString(gvkType.K8sReferenceGrant):
-        return isK8sReferenceGrantStateValid(this.state.k8sReferenceGrant);
+        return isK8sReferenceGrantStateValid(k8sReferenceGrant);
       case getGVKTypeString(gvkType.PeerAuthentication):
-        return isPeerAuthenticationStateValid(this.state.peerAuthentication);
+        return isPeerAuthenticationStateValid(peerAuthentication);
       case getGVKTypeString(gvkType.RequestAuthentication):
-        return isRequestAuthenticationStateValid(this.state.requestAuthentication);
+        return isRequestAuthenticationStateValid(requestAuthentication);
       case getGVKTypeString(gvkType.ServiceEntry):
-        return isServiceEntryValid(this.state.serviceEntry);
+        return isServiceEntryValid(serviceEntry);
       case getGVKTypeString(gvkType.Sidecar):
-        return isSidecarStateValid(this.state.sidecar);
+        return isSidecarStateValid(sidecar);
       default:
         return false;
     }
   };
 
-  onChangeAuthorizationPolicy = (authorizationPolicy: AuthorizationPolicyState): void => {
-    this.setState(prevState => {
-      Object.keys(prevState.authorizationPolicy).forEach(
-        key => (prevState.authorizationPolicy[key] = authorizationPolicy[key])
-      );
-      return {
-        authorizationPolicy: prevState.authorizationPolicy
-      };
-    });
+  const onChangeAuthorizationPolicy = (authorizationPolicyValue: AuthorizationPolicyState): void => {
+    const newAuthorizationPolicy = { ...authorizationPolicy };
+    Object.keys(newAuthorizationPolicy).forEach(key => (newAuthorizationPolicy[key] = authorizationPolicyValue[key]));
+
+    setAuthorizationPolicy(newAuthorizationPolicy);
   };
 
-  onChangeGateway = (gateway: GatewayState): void => {
-    this.setState(prevState => {
-      Object.keys(prevState.gateway).forEach(key => (prevState.gateway[key] = gateway[key]));
-      return {
-        gateway: prevState.gateway
-      };
-    });
+  const onChangeGateway = (gatewayValue: GatewayState): void => {
+    const newGateway = { ...gateway };
+    Object.keys(newGateway).forEach(key => (newGateway[key] = gatewayValue[key]));
+
+    setGateway(newGateway);
   };
 
-  onChangeK8sGateway = (k8sGateway: K8sGatewayState): void => {
-    this.setState(prevState => {
-      Object.keys(prevState.k8sGateway).forEach(key => (prevState.k8sGateway[key] = k8sGateway[key]));
-      return {
-        k8sGateway: prevState.k8sGateway
-      };
-    });
+  const onChangeK8sGateway = (k8sGatewayValue: K8sGatewayState): void => {
+    const newK8sGateway = { ...k8sGateway };
+    Object.keys(newK8sGateway).forEach(key => (newK8sGateway[key] = k8sGatewayValue[key]));
+
+    setK8sGateway(newK8sGateway);
   };
 
-  onChangeK8sReferenceGrant = (k8sReferenceGrant: K8sReferenceGrantState): void => {
-    this.setState(prevState => {
-      Object.keys(prevState.k8sReferenceGrant).forEach(
-        key => (prevState.k8sReferenceGrant[key] = k8sReferenceGrant[key])
-      );
-      return {
-        k8sReferenceGrant: prevState.k8sReferenceGrant
-      };
-    });
+  const onChangeK8sReferenceGrant = (k8sReferenceGrantValue: K8sReferenceGrantState): void => {
+    const newK8sReferenceGrant = { ...k8sReferenceGrant };
+    Object.keys(newK8sReferenceGrant).forEach(key => (newK8sReferenceGrant[key] = k8sReferenceGrantValue[key]));
+
+    setK8sReferenceGrant(newK8sReferenceGrant);
   };
 
-  onChangePeerAuthentication = (peerAuthentication: PeerAuthenticationState): void => {
-    this.setState(prevState => {
-      Object.keys(prevState.peerAuthentication).forEach(
-        key => (prevState.peerAuthentication[key] = peerAuthentication[key])
-      );
-      return {
-        peerAuthentication: prevState.peerAuthentication
-      };
-    });
+  const onChangePeerAuthentication = (peerAuthenticationValue: PeerAuthenticationState): void => {
+    const newPeerAuthentication = { ...peerAuthentication };
+    Object.keys(newPeerAuthentication).forEach(key => (newPeerAuthentication[key] = peerAuthenticationValue[key]));
+
+    setPeerAuthentication(newPeerAuthentication);
   };
 
-  onChangeRequestAuthentication = (requestAuthentication: RequestAuthenticationState): void => {
-    this.setState(prevState => {
-      Object.keys(prevState.requestAuthentication).forEach(
-        key => (prevState.requestAuthentication[key] = requestAuthentication[key])
-      );
-      return {
-        requestAuthentication: prevState.requestAuthentication
-      };
-    });
-  };
-
-  onChangeServiceEntry = (serviceEntry: ServiceEntryState): void => {
-    this.setState(prevState => {
-      Object.keys(prevState.serviceEntry).forEach(key => (prevState.serviceEntry[key] = serviceEntry[key]));
-      return {
-        serviceEntry: prevState.serviceEntry
-      };
-    });
-  };
-
-  onChangeSidecar = (sidecar: SidecarState): void => {
-    this.setState(prevState => {
-      Object.keys(prevState.sidecar).forEach(key => (prevState.sidecar[key] = sidecar[key]));
-      return {
-        sidecar: prevState.sidecar
-      };
-    });
-  };
-
-  render(): React.ReactNode {
-    const canCreate = this.props.activeNamespaces.every(ns => this.canCreate(ns.name));
-    const isNameValid = isValidK8SName(this.state.name);
-    const isNamespacesValid = this.props.activeNamespaces.length > 0;
-    const isMultiCluster = Object.keys(serverConfig.clusters).length > 1;
-    const isClustersValid = this.props.activeClusters.length > 0 || !isMultiCluster;
-    const isFormValid = isNameValid && isNamespacesValid && isClustersValid && this.isIstioFormValid();
-    return (
-      <>
-        <div>
-          <DefaultSecondaryMasthead showClusterSelector={false} hideNamespaceSelector={true} />
-        </div>
-
-        <RenderContent>
-          <Form className={formPadding} isHorizontal={true}>
-            <FormGroup label="Namespaces" isRequired={true} fieldId="namespaces">
-              <NamespaceDropdown disabled={false} />
-              {!isValid(isNamespacesValid) && (
-                <FormHelperText>
-                  <HelperText>
-                    <HelperTextItem>An Istio Config resource needs at least one namespace selected</HelperTextItem>
-                  </HelperText>
-                </FormHelperText>
-              )}
-            </FormGroup>
-
-            {isMultiCluster && (
-              <FormGroup label="Clusters" isRequired={true} fieldId="clusters">
-                <ClusterDropdown />
-                {!isValid(isClustersValid) && (
-                  <FormHelperText>
-                    <HelperText>
-                      <HelperTextItem>An Istio Config resource needs at least one cluster selected</HelperTextItem>
-                    </HelperText>
-                  </FormHelperText>
-                )}
-              </FormGroup>
-            )}
-
-            <FormGroup label="Name" isRequired={true} fieldId="name">
-              <TextInput
-                value={this.state.name}
-                isRequired={true}
-                type="text"
-                id="name"
-                aria-describedby="name"
-                name="name"
-                onChange={this.onNameChange}
-                validated={isValid(isNameValid)}
-              />
-              {!isValid(isNameValid) && (
-                <FormHelperText>
-                  <HelperText>
-                    <HelperTextItem>{`A valid ${this.props.objectGVK.Kind} name is required`}</HelperTextItem>
-                  </HelperText>
-                </FormHelperText>
-              )}
-            </FormGroup>
-
-            {getGVKTypeString(this.props.objectGVK) === getGVKTypeString(gvkType.AuthorizationPolicy) && (
-              <AuthorizationPolicyForm
-                authorizationPolicy={this.state.authorizationPolicy}
-                onChange={this.onChangeAuthorizationPolicy}
-              />
-            )}
-
-            {getGVKTypeString(this.props.objectGVK) === getGVKTypeString(gvkType.Gateway) && (
-              <GatewayForm gateway={this.state.gateway} onChange={this.onChangeGateway} />
-            )}
-
-            {getGVKTypeString(this.props.objectGVK) === getGVKTypeString(gvkType.K8sGateway) && (
-              <K8sGatewayForm k8sGateway={this.state.k8sGateway} onChange={this.onChangeK8sGateway} />
-            )}
-
-            {getGVKTypeString(this.props.objectGVK) === getGVKTypeString(gvkType.K8sReferenceGrant) && (
-              <K8sReferenceGrantForm
-                k8sReferenceGrant={this.state.k8sReferenceGrant}
-                onChange={this.onChangeK8sReferenceGrant}
-              />
-            )}
-
-            {getGVKTypeString(this.props.objectGVK) === getGVKTypeString(gvkType.PeerAuthentication) && (
-              <PeerAuthenticationForm
-                peerAuthentication={this.state.peerAuthentication}
-                onChange={this.onChangePeerAuthentication}
-              />
-            )}
-
-            {getGVKTypeString(this.props.objectGVK) === getGVKTypeString(gvkType.RequestAuthentication) && (
-              <RequestAuthenticationForm
-                requestAuthentication={this.state.requestAuthentication}
-                onChange={this.onChangeRequestAuthentication}
-              />
-            )}
-
-            {getGVKTypeString(this.props.objectGVK) === getGVKTypeString(gvkType.ServiceEntry) && (
-              <ServiceEntryForm serviceEntry={this.state.serviceEntry} onChange={this.onChangeServiceEntry} />
-            )}
-
-            {getGVKTypeString(this.props.objectGVK) === getGVKTypeString(gvkType.Sidecar) && (
-              <SidecarForm sidecar={this.state.sidecar} onChange={this.onChangeSidecar} />
-            )}
-
-            <FormGroup fieldId="labels" label="Labels">
-              <div className={editStyle}>
-                <Labels labels={this.state.labels} expanded={true} />
-                <Button
-                  className={editButton}
-                  type="button"
-                  variant="link"
-                  isInline
-                  onClick={() => this.onLabelsWizardToggle(true)}
-                  data-test={'edit-labels'}
-                >
-                  Edit
-                  <KialiIcon.PencilAlt className={editIcon} />
-                </Button>
-              </div>
-              <WizardLabels
-                showAnotationsWizard={this.state.showLabelsWizard}
-                type={'labels'}
-                onChange={labels => this.onAddLabels(labels)}
-                onClose={() => this.onLabelsWizardToggle(false)}
-                labels={this.state.labels}
-                canEdit={true}
-              />
-            </FormGroup>
-
-            <FormGroup fieldId="annotations" label="Annotations">
-              <div className={editStyle}>
-                <Labels labels={this.state.annotations} type={'annotations'} expanded={true} />
-                <Button
-                  className={editButton}
-                  type="button"
-                  variant="link"
-                  isInline
-                  onClick={() => this.onAnnotationsWizardToggle(true)}
-                  data-test={'edit-annotations'}
-                >
-                  Edit
-                  <KialiIcon.PencilAlt className={editIcon} />
-                </Button>
-              </div>
-              <WizardLabels
-                showAnotationsWizard={this.state.showAnnotationsWizard}
-                type={'annotations'}
-                onChange={annotations => this.onAddAnnotations(annotations)}
-                onClose={() => this.onAnnotationsWizardToggle(false)}
-                labels={this.state.annotations}
-                canEdit={true}
-              />
-            </FormGroup>
-
-            <ActionGroup>
-              <Button
-                variant={ButtonVariant.primary}
-                isDisabled={!isFormValid}
-                onClick={() => this.showPreview()}
-                data-test={'preview'}
-              >
-                Preview
-              </Button>
-              <Button variant={ButtonVariant.secondary} onClick={() => this.backToList()}>
-                Cancel
-              </Button>
-            </ActionGroup>
-          </Form>
-
-          <IstioConfigPreview
-            isOpen={this.state.showPreview}
-            items={this.state.itemsPreview}
-            downloadPrefix={this.props.objectGVK.Kind}
-            title={'Preview new istio objects'}
-            opTarget={'create'}
-            disableAction={!canCreate}
-            ns={this.props.activeNamespaces.map(n => n.name).join(',')}
-            onConfirm={items =>
-              this.setState({ showPreview: false, itemsPreview: items }, () => this.onIstioResourceCreate())
-            }
-            onClose={() => this.setState({ showPreview: false })}
-          />
-        </RenderContent>
-      </>
+  const onChangeRequestAuthentication = (requestAuthenticationValue: RequestAuthenticationState): void => {
+    const newRequestAuthentication = { ...requestAuthentication };
+    Object.keys(newRequestAuthentication).forEach(
+      key => (newRequestAuthentication[key] = requestAuthenticationValue[key])
     );
-  }
-}
+
+    setRequestAuthentication(newRequestAuthentication);
+  };
+
+  const onChangeServiceEntry = (serviceEntryValue: ServiceEntryState): void => {
+    const newServiceEntry = { ...serviceEntry };
+    Object.keys(newServiceEntry).forEach(key => (newServiceEntry[key] = serviceEntryValue[key]));
+
+    setServiceEntry(newServiceEntry);
+  };
+
+  const onChangeSidecar = (sidecarValue: SidecarState): void => {
+    const newSidecar = { ...sidecar };
+    Object.keys(newSidecar).forEach(key => (newSidecar[key] = sidecarValue[key]));
+
+    setSidecar(newSidecar);
+  };
+
+  const onPreviewConfirm = (items: ConfigPreviewItem[]): void => {
+    setShowPreview(false);
+    setItemsPreview(items);
+
+    onIstioResourceCreate();
+  };
+
+  const canCreate = props.activeNamespaces.every(ns => canCreateNamespace(ns.name, istioPermissions));
+  const isNameValid = isValidK8SName(name);
+  const isNamespacesValid = props.activeNamespaces.length > 0;
+  const isMultiCluster = Object.keys(serverConfig.clusters).length > 1;
+  const isClustersValid = props.activeClusters.length > 0 || !isMultiCluster;
+  const isFormValid = isNameValid && isNamespacesValid && isClustersValid && isIstioFormValid();
+
+  return (
+    <>
+      <div>
+        <DefaultSecondaryMasthead showClusterSelector={false} hideNamespaceSelector={true} />
+      </div>
+
+      <RenderContent>
+        <Form className={formPadding} isHorizontal={true}>
+          <FormGroup label={t('Namespaces')} isRequired={true} fieldId="namespaces">
+            <NamespaceDropdown disabled={false} />
+
+            {!isValid(isNamespacesValid) && (
+              <FormHelperText>
+                <HelperText>
+                  <HelperTextItem>{t('An Istio Config resource needs at least one namespace selected')}</HelperTextItem>
+                </HelperText>
+              </FormHelperText>
+            )}
+          </FormGroup>
+
+          {isMultiCluster && (
+            <FormGroup label={t('Clusters')} isRequired={true} fieldId="clusters">
+              <ClusterDropdown />
+
+              {!isValid(isClustersValid) && (
+                <FormHelperText>
+                  <HelperText>
+                    <HelperTextItem>{t('An Istio Config resource needs at least one cluster selected')}</HelperTextItem>
+                  </HelperText>
+                </FormHelperText>
+              )}
+            </FormGroup>
+          )}
+
+          <FormGroup label={t('Name')} isRequired={true} fieldId="name">
+            <TextInput
+              value={name}
+              isRequired={true}
+              type="text"
+              id="name"
+              aria-describedby={t('name')}
+              name="name"
+              onChange={onNameChange}
+              validated={isValid(isNameValid)}
+            />
+
+            {!isValid(isNameValid) && (
+              <FormHelperText>
+                <HelperText>
+                  <HelperTextItem>{t('A valid {{kind}} name is required', props.objectGVK.Kind)}</HelperTextItem>
+                </HelperText>
+              </FormHelperText>
+            )}
+          </FormGroup>
+
+          {getGVKTypeString(props.objectGVK) === getGVKTypeString(gvkType.AuthorizationPolicy) && (
+            <AuthorizationPolicyForm authorizationPolicy={authorizationPolicy} onChange={onChangeAuthorizationPolicy} />
+          )}
+
+          {getGVKTypeString(props.objectGVK) === getGVKTypeString(gvkType.Gateway) && (
+            <GatewayForm gateway={gateway} onChange={onChangeGateway} />
+          )}
+
+          {getGVKTypeString(props.objectGVK) === getGVKTypeString(gvkType.K8sGateway) && (
+            <K8sGatewayForm k8sGateway={k8sGateway} onChange={onChangeK8sGateway} />
+          )}
+
+          {getGVKTypeString(props.objectGVK) === getGVKTypeString(gvkType.K8sReferenceGrant) && (
+            <K8sReferenceGrantForm k8sReferenceGrant={k8sReferenceGrant} onChange={onChangeK8sReferenceGrant} />
+          )}
+
+          {getGVKTypeString(props.objectGVK) === getGVKTypeString(gvkType.PeerAuthentication) && (
+            <PeerAuthenticationForm peerAuthentication={peerAuthentication} onChange={onChangePeerAuthentication} />
+          )}
+
+          {getGVKTypeString(props.objectGVK) === getGVKTypeString(gvkType.RequestAuthentication) && (
+            <RequestAuthenticationForm
+              requestAuthentication={requestAuthentication}
+              onChange={onChangeRequestAuthentication}
+            />
+          )}
+
+          {getGVKTypeString(props.objectGVK) === getGVKTypeString(gvkType.ServiceEntry) && (
+            <ServiceEntryForm serviceEntry={serviceEntry} onChange={onChangeServiceEntry} />
+          )}
+
+          {getGVKTypeString(props.objectGVK) === getGVKTypeString(gvkType.Sidecar) && (
+            <SidecarForm sidecar={sidecar} onChange={onChangeSidecar} />
+          )}
+
+          <FormGroup fieldId="labels" label="Labels">
+            <div className={editStyle}>
+              <Labels labels={labels} expanded={true} />
+
+              <Button
+                className={editButton}
+                type="button"
+                variant="link"
+                isInline
+                onClick={() => onLabelsWizardToggle(true)}
+                data-test={'edit-labels'}
+              >
+                {t('Edit')}
+                <KialiIcon.PencilAlt className={editIcon} />
+              </Button>
+            </div>
+
+            <WizardLabels
+              showAnotationsWizard={showLabelsWizard}
+              type={'labels'}
+              onChange={labels => onAddLabels(labels)}
+              onClose={() => onLabelsWizardToggle(false)}
+              labels={labels}
+              canEdit={true}
+            />
+          </FormGroup>
+
+          <FormGroup fieldId="annotations" label={t('Annotations')}>
+            <div className={editStyle}>
+              <Labels labels={annotations} type={'annotations'} expanded={true} />
+
+              <Button
+                className={editButton}
+                type="button"
+                variant="link"
+                isInline
+                onClick={() => onAnnotationsWizardToggle(true)}
+                data-test={'edit-annotations'}
+              >
+                {t('Edit')}
+                <KialiIcon.PencilAlt className={editIcon} />
+              </Button>
+            </div>
+
+            <WizardLabels
+              showAnotationsWizard={showAnnotationsWizard}
+              type={'annotations'}
+              onChange={annotations => onAddAnnotations(annotations)}
+              onClose={() => onAnnotationsWizardToggle(false)}
+              labels={annotations}
+              canEdit={true}
+            />
+          </FormGroup>
+
+          <ActionGroup>
+            <Button
+              variant={ButtonVariant.primary}
+              isDisabled={!isFormValid}
+              onClick={() => openPreview()}
+              data-test={'preview'}
+            >
+              {t('Preview')}
+            </Button>
+
+            <Button variant={ButtonVariant.secondary} onClick={() => backToList()}>
+              {t('Cancel')}
+            </Button>
+          </ActionGroup>
+        </Form>
+
+        <IstioConfigPreview
+          isOpen={showPreview}
+          items={itemsPreview}
+          downloadPrefix={props.objectGVK.Kind}
+          title={t('Preview new istio objects')}
+          opTarget={'create'}
+          disableAction={!canCreate}
+          ns={props.activeNamespaces.map(n => n.name).join(',')}
+          onConfirm={items => onPreviewConfirm(items)}
+          onClose={() => setShowPreview(false)}
+        />
+      </RenderContent>
+    </>
+  );
+};
 
 const mapStateToProps = (state: KialiAppState): ReduxProps => {
   return {

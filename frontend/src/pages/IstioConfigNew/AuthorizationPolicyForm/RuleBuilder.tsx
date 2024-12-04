@@ -9,6 +9,7 @@ import { ConditionList } from './When/ConditionList';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from '../../../components/Pf/PfColors';
 import { KialiIcon } from 'config/KialiIcon';
+import { useKialiTranslation } from 'utils/I18nUtils';
 
 type Props = {
   onAddRule: (rule: Rule) => void;
@@ -18,15 +19,6 @@ export type Rule = {
   from: { [key: string]: string[] }[];
   to: { [key: string]: string[] }[];
   when: Condition[];
-};
-
-type State = {
-  addFromSwitch: boolean;
-  addToSwitch: boolean;
-  addWhenSwitch: boolean;
-  conditionList: Condition[];
-  fromList: { [key: string]: string[] }[];
-  toList: { [key: string]: string[] }[];
 };
 
 const warningStyle = kialiStyle({
@@ -40,200 +32,162 @@ const addRuleStyle = kialiStyle({
   paddingLeft: 0
 });
 
-export class RuleBuilder extends React.Component<Props, State> {
-  constructor(props: Props) {
-    super(props);
-    this.state = {
-      addFromSwitch: false,
-      addToSwitch: false,
-      addWhenSwitch: false,
-      fromList: [],
-      toList: [],
-      conditionList: []
-    };
-  }
+export const RuleBuilder: React.FC<Props> = (props: Props) => {
+  const [addFromSwitch, setAddFromSwitch] = React.useState<boolean>(false);
+  const [addToSwitch, setAddToSwitch] = React.useState<boolean>(false);
+  const [addWhenSwitch, setAddWhenSwitch] = React.useState<boolean>(false);
+  const [conditionList, setConditionList] = React.useState<Condition[]>([]);
+  const [fromList, setFromList] = React.useState<{ [key: string]: string[] }[]>([]);
+  const [toList, setToList] = React.useState<{ [key: string]: string[] }[]>([]);
 
-  onAddFrom = (source: { [key: string]: string[] }): void => {
-    this.setState(prevState => {
-      prevState.fromList.push(source);
+  const { t } = useKialiTranslation();
 
-      return {
-        fromList: prevState.fromList
-      };
-    });
+  const onAddFrom = (source: { [key: string]: string[] }): void => {
+    const newFromList = [...fromList];
+    newFromList.push(source);
+
+    setFromList(newFromList);
   };
 
-  onRemoveFrom = (index: number): void => {
-    this.setState(prevState => {
-      prevState.fromList.splice(index, 1);
+  const onRemoveFrom = (index: number): void => {
+    const newFromList = [...fromList];
+    newFromList.splice(index, 1);
 
-      return {
-        fromList: prevState.fromList
-      };
-    });
+    setFromList(newFromList);
   };
 
-  onAddTo = (operation: { [key: string]: string[] }): void => {
-    this.setState(prevState => {
-      prevState.toList.push(operation);
+  const onAddTo = (operation: { [key: string]: string[] }): void => {
+    const newToList = [...toList];
+    newToList.push(operation);
 
-      return {
-        toList: prevState.toList
-      };
-    });
+    setToList(newToList);
   };
 
-  onRemoveTo = (index: number): void => {
-    this.setState(prevState => {
-      prevState.toList.splice(index, 1);
+  const onRemoveTo = (index: number): void => {
+    const newToList = [...toList];
+    newToList.splice(index, 1);
 
-      return {
-        toList: prevState.toList
-      };
-    });
+    setToList(newToList);
   };
 
-  onAddCondition = (condition: Condition): void => {
-    this.setState(prevState => {
-      prevState.conditionList.push(condition);
+  const onAddCondition = (condition: Condition): void => {
+    const newConditionList = [...conditionList];
+    newConditionList.push(condition);
 
-      return {
-        conditionList: prevState.conditionList
-      };
-    });
+    setConditionList(newConditionList);
   };
 
-  onRemoveCondition = (index: number): void => {
-    this.setState(prevState => {
-      prevState.conditionList.splice(index, 1);
+  const onRemoveCondition = (index: number): void => {
+    const newConditionList = [...conditionList];
+    newConditionList.splice(index, 1);
 
-      return {
-        conditionList: prevState.conditionList
-      };
-    });
+    setConditionList(newConditionList);
   };
 
-  onAddRule = (): void => {
+  const onAddRule = (): void => {
     const newRule: Rule = {
-      from: Object.assign([], this.state.fromList),
-      to: Object.assign([], this.state.toList),
-      when: Object.assign([], this.state.conditionList)
+      from: [...fromList],
+      to: [...toList],
+      when: [...conditionList]
     };
 
-    this.setState(
-      {
-        addFromSwitch: false,
-        addToSwitch: false,
-        addWhenSwitch: false,
-        fromList: [],
-        toList: [],
-        conditionList: []
-      },
-      () => this.props.onAddRule(newRule)
-    );
+    setAddFromSwitch(false);
+    setAddToSwitch(false);
+    setAddWhenSwitch(false);
+    setFromList([]);
+    setToList([]);
+    setConditionList([]);
+
+    props.onAddRule(newRule);
   };
 
-  canAddRule = (): boolean => {
-    return this.state.fromList.length > 0 || this.state.toList.length > 0 || this.state.conditionList.length > 0;
+  const canAddRule = (): boolean => {
+    return fromList.length > 0 || toList.length > 0 || conditionList.length > 0;
   };
 
-  render() {
-    return (
-      <>
-        <FormGroup label="From" fieldId="addFromSwitch">
-          <Switch
-            id="addFromSwitch"
-            label=" "
-            labelOff=" "
-            isChecked={this.state.addFromSwitch}
-            onChange={() => {
-              this.setState(prevState => ({
-                addFromSwitch: !prevState.addFromSwitch
-              }));
-            }}
-          />
-        </FormGroup>
+  return (
+    <>
+      <FormGroup label={t('From')} fieldId="addFromSwitch">
+        <Switch
+          id="addFromSwitch"
+          label=" "
+          labelOff=" "
+          isChecked={addFromSwitch}
+          onChange={() => setAddFromSwitch(!addFromSwitch)}
+        />
+      </FormGroup>
 
-        {this.state.addFromSwitch && (
-          <>
-            <FormGroup label="Source Builder" fieldId="sourceBuilder">
-              <SourceBuilder onAddFrom={this.onAddFrom} />
-            </FormGroup>
+      {addFromSwitch && (
+        <>
+          <FormGroup label={t('Source Builder')} fieldId="sourceBuilder">
+            <SourceBuilder onAddFrom={onAddFrom} />
+          </FormGroup>
 
-            <FormGroup label="From List" fieldId="sourceList">
-              <SourceList fromList={this.state.fromList} onRemoveFrom={this.onRemoveFrom} />
-            </FormGroup>
-          </>
+          <FormGroup label={t('From List')} fieldId="sourceList">
+            <SourceList fromList={fromList} onRemoveFrom={onRemoveFrom} />
+          </FormGroup>
+        </>
+      )}
+
+      <FormGroup label={t('To')} fieldId="addToSwitch">
+        <Switch
+          id="addToSwitch"
+          label=" "
+          labelOff=" "
+          isChecked={addToSwitch}
+          onChange={() => setAddToSwitch(!addToSwitch)}
+        />
+      </FormGroup>
+
+      {addToSwitch && (
+        <>
+          <FormGroup label={t('Operation Builder')} fieldId="operationBuilder">
+            <OperationBuilder onAddTo={onAddTo} />
+          </FormGroup>
+
+          <FormGroup label={t('To List')} fieldId="operationList">
+            <OperationList toList={toList} onRemoveTo={onRemoveTo} />
+          </FormGroup>
+        </>
+      )}
+
+      <FormGroup label={t('When')} fieldId="addWhenSwitch">
+        <Switch
+          id="addWhenSwitch"
+          label=" "
+          labelOff=" "
+          isChecked={addWhenSwitch}
+          onChange={() => setAddWhenSwitch(!addWhenSwitch)}
+        />
+      </FormGroup>
+
+      {addWhenSwitch && (
+        <>
+          <FormGroup label={t('Condition Builder')} fieldId="conditionBuilder">
+            <ConditionBuilder onAddCondition={onAddCondition} />
+          </FormGroup>
+
+          <FormGroup label={t('When List')} fieldId="conditionList">
+            <ConditionList conditionList={conditionList} onRemoveCondition={onRemoveCondition} />
+          </FormGroup>
+        </>
+      )}
+
+      <FormGroup fieldId="addRule">
+        <Button
+          variant={ButtonVariant.link}
+          icon={<KialiIcon.AddMore />}
+          onClick={onAddRule}
+          isDisabled={!canAddRule()}
+          className={addRuleStyle}
+        >
+          {t('Add Rule to Rule List')}
+        </Button>
+
+        {!canAddRule() && (
+          <span className={warningStyle}>{t('A Rule needs at least an item in "From", "To" or "When" sections')}</span>
         )}
-
-        <FormGroup label="To" fieldId="addToSwitch">
-          <Switch
-            id="addToSwitch"
-            label=" "
-            labelOff=" "
-            isChecked={this.state.addToSwitch}
-            onChange={() => {
-              this.setState(prevState => ({
-                addToSwitch: !prevState.addToSwitch
-              }));
-            }}
-          />
-        </FormGroup>
-
-        {this.state.addToSwitch && (
-          <>
-            <FormGroup label="Operation Builder" fieldId="operationBuilder">
-              <OperationBuilder onAddTo={this.onAddTo} />
-            </FormGroup>
-
-            <FormGroup label="To List" fieldId="operationList">
-              <OperationList toList={this.state.toList} onRemoveTo={this.onRemoveTo} />
-            </FormGroup>
-          </>
-        )}
-
-        <FormGroup label="When" fieldId="addWhenSwitch">
-          <Switch
-            id="addWhenSwitch"
-            label=" "
-            labelOff=" "
-            isChecked={this.state.addWhenSwitch}
-            onChange={() => {
-              this.setState(prevState => ({
-                addWhenSwitch: !prevState.addWhenSwitch
-              }));
-            }}
-          />
-        </FormGroup>
-
-        {this.state.addWhenSwitch && (
-          <>
-            <FormGroup label="Condition Builder" fieldId="conditionBuilder">
-              <ConditionBuilder onAddCondition={this.onAddCondition} />
-            </FormGroup>
-
-            <FormGroup label="When List" fieldId="conditionList">
-              <ConditionList conditionList={this.state.conditionList} onRemoveCondition={this.onRemoveCondition} />
-            </FormGroup>
-          </>
-        )}
-
-        <FormGroup fieldId="addRule">
-          <Button
-            variant={ButtonVariant.link}
-            icon={<KialiIcon.AddMore />}
-            onClick={this.onAddRule}
-            isDisabled={!this.canAddRule()}
-            className={addRuleStyle}
-          >
-            Add Rule to Rule List
-          </Button>
-
-          {!this.canAddRule() && (
-            <span className={warningStyle}>A Rule needs at least an item in "From", "To" or "When" sections</span>
-          )}
-        </FormGroup>
-      </>
-    );
-  }
-}
+      </FormGroup>
+    </>
+  );
+};
