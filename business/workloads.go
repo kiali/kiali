@@ -2098,7 +2098,9 @@ func (in *WorkloadService) listWaypointWorkloads(ctx context.Context, name, clus
 		}
 		for _, wk := range workloadList {
 			// Is there any annotation that disables?
-			workloadslist = append(workloadslist, *wk)
+			if wk.Labels["istio.io/dataplane-mode"] != "none" {
+				workloadslist = append(workloadslist, *wk)
+			}
 		}
 
 	}
