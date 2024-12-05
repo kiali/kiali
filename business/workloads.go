@@ -1968,15 +1968,15 @@ func (in *WorkloadService) GetWaypoints(ctx context.Context) models.Workloads {
 	waypoints := []*models.Workload{}
 
 	for cluster := range in.userClients {
-		nslist, errNs := in.userClients[cluster].GetNamespaces("")
+		nslist, errNs := in.businessLayer.Namespace.GetClusterNamespaces(ctx, cluster)
 		if errNs != nil {
-			log.Errorf("GetWaypoints: Error fetching namespaces for cluster %s", cluster)
+			log.Errorf("GetWaypoints: Error fetching namespaces for cluster %s. %s", cluster, errNs.Error())
 		}
 
 		for _, ns := range nslist {
 			nsWaypoints, err := in.fetchWorkloadsFromCluster(ctx, cluster, ns.Name, labelSelector)
 			if err != nil {
-				log.Debugf("GetWaypoints: Error fetching workloads for namespace %s, labelSelector %s", ns.Name, labelSelector)
+				log.Debugf("GetWaypoints: Error fetching workloads for namespace %s, labelSelector %s. %s", ns.Name, labelSelector, err.Error())
 				continue
 			}
 			waypoints = append(waypoints, nsWaypoints...)
