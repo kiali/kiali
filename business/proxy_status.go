@@ -16,25 +16,35 @@ type ProxyStatusService struct {
 }
 
 func (in *ProxyStatusService) GetPodProxyStatus(cluster, ns, pod string) *models.ProxyStatus {
-	return castProxyStatus(kialiCache.GetPodProxyStatus(cluster, ns, pod))
+	return castProxyStatus(kialiCache.GetPodProxyStatus(cluster, ns, pod), false)
 }
 
-func castProxyStatus(ps *kubernetes.ProxyStatus) *models.ProxyStatus {
+func (in *ProxyStatusService) GetUpdatedPodProxyStatus(cluster, ns, pod string) *models.ProxyStatus {
+	return castProxyStatus(kialiCache.GetPodProxyStatus(cluster, ns, pod), true)
+}
+
+// castProxyStatus allows to use Ignored when sent is not set.
+// See https://github.com/istio/istio/pull/51638/files#diff-fded610aca2639111f0d6b42e18dfc1ce047126340a2d36bb976cfa4c575b984R8
+func castProxyStatus(ps *kubernetes.ProxyStatus, useIgnored bool) *models.ProxyStatus {
 	if ps == nil {
 		return nil
 	}
 
 	return &models.ProxyStatus{
-		CDS: xdsStatus(ps.ClusterSent, ps.ClusterAcked),
-		EDS: xdsStatus(ps.EndpointSent, ps.EndpointAcked),
-		LDS: xdsStatus(ps.ListenerSent, ps.ListenerAcked),
-		RDS: xdsStatus(ps.RouteSent, ps.RouteAcked),
+		CDS: xdsStatus(ps.ClusterSent, ps.ClusterAcked, useIgnored),
+		EDS: xdsStatus(ps.EndpointSent, ps.EndpointAcked, useIgnored),
+		LDS: xdsStatus(ps.ListenerSent, ps.ListenerAcked, useIgnored),
+		RDS: xdsStatus(ps.RouteSent, ps.RouteAcked, useIgnored),
 	}
 }
 
-func xdsStatus(sent, acked string) string {
+func xdsStatus(sent, acked string, useIgnored bool) string {
 	if sent == "" {
-		return "NOT_SENT"
+		if useIgnored {
+			return "IGNORED"
+		} else {
+			return "NOT_SENT"
+		}
 	}
 	if sent == acked {
 		return "Synced"
