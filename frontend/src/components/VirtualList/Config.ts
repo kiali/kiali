@@ -1,7 +1,6 @@
 import deepFreeze from 'deep-freeze';
 import { AppListItem } from '../../types/AppList';
 import { AppWorkload } from 'types/App';
-import { isWaypoint } from 'helpers/LabelFilterHelper';
 import { WorkloadListItem, Workload } from '../../types/Workload';
 import { ServiceListItem } from '../../types/ServiceList';
 import { dicTypeToGVK, IstioConfigItem } from '../../types/IstioConfigList';
@@ -36,7 +35,7 @@ export const hasMissingSidecar = (workload: Workload | WorkloadListItem | AppWor
     // hasMissingSC && hasMissingA && serverConfig.ambientEnabled
     !workload.istioSidecar &&
     !workload.isAmbient &&
-    !isWaypoint(workload.labels) &&
+    workload.ambient !== 'waypoint' &&
     !workload.isGateway &&
     !isIstioNamespace(workload.namespace)
   );

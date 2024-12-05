@@ -10,6 +10,7 @@ export type AppId = {
 };
 
 export interface AppWorkload {
+  ambient?: string;
   isAmbient: boolean;
   isGateway: boolean;
   istioSidecar: boolean;

@@ -66,6 +66,11 @@ type WorkloadListItem struct {
 	// Namespace of the workload
 	Namespace string `json:"namespace"`
 
+	// If is part of the Ambient infraestructure
+	// required: false
+	// example: waypoint/ztunnel
+	Ambient string `json:"ambient"`
+
 	// The kube cluster where this workload is located.
 	Cluster string `json:"cluster"`
 
@@ -556,6 +561,16 @@ func (workload *Workload) IsGateway() bool {
 func (workload *Workload) IsWaypoint() bool {
 
 	return workload.Labels["gateway.istio.io/managed"] == "istio.io-mesh-controller"
+}
+
+// IsWaypoint return true if the workload is a ztunnel (Based in labels)
+func (workload *Workload) IsZtunnel() bool {
+	for _, pod := range workload.Pods {
+		if pod.Labels["app"] == "ztunnel" {
+			return true
+		}
+	}
+	return false
 }
 
 // HasIstioAmbient returns true if the workload has any pod with Ambient mesh annotations

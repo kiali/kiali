@@ -25,7 +25,6 @@ import { RenderHeader } from '../../components/Nav/Page/RenderHeader';
 import { ErrorSection } from '../../components/ErrorSection/ErrorSection';
 import { ErrorMsg } from '../../types/ErrorMsg';
 import { connectRefresh } from '../../components/Refresh/connectRefresh';
-import { isWaypoint } from '../../helpers/LabelFilterHelper';
 import { HistoryManager } from 'app/History';
 import { basicTabStyle } from 'styles/TabStyles';
 import { ZtunnelConfig } from '../../components/Ambient/ZtunnelConfig';
@@ -242,7 +241,10 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
       );
     }
 
-    if (this.state.workload && (this.hasIstioSidecars(this.state.workload) || isWaypoint(this.state.workload.labels))) {
+    if (
+      this.state.workload &&
+      (this.hasIstioSidecars(this.state.workload) || this.state.workload.ambient === 'waypoint')
+    ) {
       const envoyTab = (
         <Tab title="Envoy" eventKey={10} key="Envoy">
           {this.state.workload && (
@@ -258,9 +260,9 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
       paramToTab['envoy'] = 10;
     }
 
-    if (this.state.workload && this.isZtunnel(this.state.workload)) {
+    if (this.state.workload && this.state.workload.ambient === 'ztunnel') {
       const ztunnelTab = (
-        <Tab title="Ztunnel Config" eventKey={11} key="Ztunnel">
+        <Tab title="Ztunnel" eventKey={11} key="Ztunnel">
           {this.state.workload && (
             <ZtunnelConfig
               lastRefreshAt={this.props.lastRefreshAt}
@@ -294,20 +296,12 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
           hasIstioSidecars =
             hasIstioSidecars ||
             (!!pod.containers &&
-              pod.containers.some(cont => cont.name === 'istio-proxy' && !cont.image.includes('ztunnel')));
+              pod.containers.some(cont => cont.name === 'istio-proxy' && workload.ambient !== 'ztunnel'));
         }
       });
     }
 
     return hasIstioSidecars;
-  }
-
-  private isZtunnel(workload: Workload): boolean {
-    return workload.pods.some(pod => {
-      return pod.containers?.some(cont => {
-        return cont.image.includes('ztunnel');
-      });
-    });
   }
 
   private runtimeTabs(): React.ReactNode[] {
