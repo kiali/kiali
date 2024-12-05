@@ -3,11 +3,13 @@ import {
   Form,
   FormGroup,
   FormHelperText,
-  FormSelect,
-  FormSelectOption,
   HelperText,
   HelperTextItem,
+  MenuToggle,
   Radio,
+  Select,
+  SelectList,
+  SelectOption,
   Switch,
   TextInput
 } from '@patternfly/react-core';
@@ -17,24 +19,25 @@ import { isK8sGatewayHostValid } from '../../utils/IstioConfigUtils';
 import { serverConfig } from '../../config';
 
 type Props = {
-  serviceName: string;
-  hasGateway: boolean;
   gateway: string;
+  hasGateway: boolean;
   k8sGateways: string[];
   k8sRouteHosts: string[];
   onGatewayChange: (valid: boolean, gateway: K8sGatewaySelectorState) => void;
+  serviceName: string;
 };
 
 export type K8sGatewaySelectorState = {
   addGateway: boolean;
-  gwHosts: string;
-  gwHostsValid: boolean;
-  newGateway: boolean;
-  selectedGateway: string;
-  gatewayClass: string;
   // @TODO add Mesh is not supported yet
   addMesh: boolean;
+  gatewayClass: string;
+  gwHosts: string;
+  gwHostsValid: boolean;
+  isOpen: boolean;
+  newGateway: boolean;
   port: number;
+  selectedGateway: string;
 };
 
 enum K8sGatewayForm {
@@ -55,11 +58,22 @@ export class K8sGatewaySelector extends React.Component<Props, K8sGatewaySelecto
       newGateway: props.k8sGateways.length === 0,
       selectedGateway:
         props.k8sGateways.length > 0 ? (props.gateway !== '' ? props.gateway : props.k8sGateways[0]) : '',
-      gatewayClass: serverConfig.gatewayAPIClasses[0].className,
+      gatewayClass: serverConfig?.gatewayAPIClasses[0]?.className,
       addMesh: false,
-      port: 80
+      port: 80,
+      isOpen: false
     };
   }
+
+  onToggleClick = (): void => {
+    this.setState(prevState => ({ isOpen: !prevState.isOpen }));
+  };
+
+  toggleMenu = (toggleRef: React.Ref<any>, label: string, isDisabled = false): React.ReactNode => (
+    <MenuToggle ref={toggleRef} onClick={this.onToggleClick} isExpanded={this.state.isOpen} isDisabled={isDisabled}>
+      {label}
+    </MenuToggle>
+  );
 
   checkGwHosts = (gwHosts: string): boolean => {
     // All k8s gateway hosts must be valid
@@ -68,7 +82,7 @@ export class K8sGatewaySelector extends React.Component<Props, K8sGatewaySelecto
     });
   };
 
-  onFormChange = (component: K8sGatewayForm, value: string) => {
+  onFormChange = (component: K8sGatewayForm, value: string): void => {
     switch (component) {
       case K8sGatewayForm.SWITCH:
         this.setState(
@@ -100,7 +114,8 @@ export class K8sGatewaySelector extends React.Component<Props, K8sGatewaySelecto
       case K8sGatewayForm.GATEWAY_SELECTED:
         this.setState(
           {
-            selectedGateway: value
+            selectedGateway: value,
+            isOpen: false
           },
           () => this.props.onGatewayChange(this.isGatewayValid(), this.state)
         );
@@ -123,16 +138,17 @@ export class K8sGatewaySelector extends React.Component<Props, K8sGatewaySelecto
     return this.state.gwHostsValid;
   };
 
-  onChangeGatewayClass = (_event, value) => {
+  onChangeGatewayClass = (gatewayClass: string): void => {
     this.setState(
       {
-        gatewayClass: value
+        gatewayClass: gatewayClass,
+        isOpen: false
       },
       () => this.props.onGatewayChange(this.isGatewayValid(), this.state)
     );
   };
 
-  render() {
+  render(): React.ReactNode {
     return (
       <Form isHorizontal={true}>
         <FormGroup label="Add K8s API Gateway" fieldId="gatewaySwitch">
@@ -145,6 +161,7 @@ export class K8sGatewaySelector extends React.Component<Props, K8sGatewaySelecto
           />
           <span>{wizardTooltip(GATEWAY_TOOLTIP)}</span>
         </FormGroup>
+
         {this.state.addGateway && (
           <>
             <FormGroup fieldId="selectGateway">
@@ -156,6 +173,7 @@ export class K8sGatewaySelector extends React.Component<Props, K8sGatewaySelecto
                 isChecked={!this.state.newGateway}
                 onChange={() => this.onFormChange(K8sGatewayForm.SELECT, 'false')}
               />
+
               <Radio
                 id="createGateway"
                 name="selectGateway"
@@ -165,41 +183,68 @@ export class K8sGatewaySelector extends React.Component<Props, K8sGatewaySelecto
                 onChange={() => this.onFormChange(K8sGatewayForm.SELECT, 'true')}
               />
             </FormGroup>
+
             {!this.state.newGateway && (
               <FormGroup fieldId="selectGateway" label="K8sGateway">
                 {this.props.k8sGateways.length > 0 && (
-                  <FormSelect
+                  <Select
                     id="selectGateway"
-                    value={this.state.selectedGateway}
-                    isDisabled={!this.state.addGateway || this.state.newGateway || this.props.k8sGateways.length === 0}
-                    onChange={(_event, k8sGateway: string) =>
-                      this.onFormChange(K8sGatewayForm.GATEWAY_SELECTED, k8sGateway)
+                    isOpen={this.state.isOpen}
+                    selected={this.state.selectedGateway}
+                    onSelect={(_event, k8sGateway) =>
+                      this.onFormChange(K8sGatewayForm.GATEWAY_SELECTED, k8sGateway as string)
                     }
+                    onOpenChange={(isOpen: boolean) => {
+                      this.setState({ isOpen });
+                    }}
+                    toggle={toggleRef =>
+                      this.toggleMenu(
+                        toggleRef,
+                        this.state.selectedGateway,
+                        !this.state.addGateway || this.state.newGateway || this.props.k8sGateways.length === 0
+                      )
+                    }
+                    shouldFocusToggleOnSelect
                   >
-                    {this.props.k8sGateways.map(k8sGateway => (
-                      <FormSelectOption key={k8sGateway} value={k8sGateway} label={k8sGateway} />
-                    ))}
-                  </FormSelect>
+                    <SelectList>
+                      {this.props.k8sGateways.map(k8sGateway => (
+                        <SelectOption key={k8sGateway} value={k8sGateway}>
+                          {k8sGateway}
+                        </SelectOption>
+                      ))}
+                    </SelectList>
+                  </Select>
                 )}
                 {this.props.k8sGateways.length === 0 && <>There are no K8s API gateways to select.</>}
               </FormGroup>
             )}
+
             {this.state.newGateway && (
               <>
                 {serverConfig.gatewayAPIClasses.length > 1 && (
                   <FormGroup label="Gateway Class" fieldId="gatewayClass">
-                    <FormSelect
-                      value={this.state.gatewayClass}
-                      onChange={this.onChangeGatewayClass}
+                    <Select
+                      isOpen={this.state.isOpen}
+                      selected={this.state.gatewayClass}
+                      onSelect={(_event, gatewayClass) => this.onChangeGatewayClass(gatewayClass as string)}
                       id="gatewayClass"
-                      name="gatewayClass"
+                      onOpenChange={(isOpen: boolean) => {
+                        this.setState({ isOpen });
+                      }}
+                      toggle={toggleRef => this.toggleMenu(toggleRef, this.state.gatewayClass)}
+                      shouldFocusToggleOnSelect
                     >
-                      {serverConfig.gatewayAPIClasses.map((option, index) => (
-                        <FormSelectOption key={index} value={option.className} label={option.name} />
-                      ))}
-                    </FormSelect>
+                      <SelectList>
+                        {serverConfig.gatewayAPIClasses.map((option, index) => (
+                          <SelectOption key={index} value={option.className}>
+                            {option.name}
+                          </SelectOption>
+                        ))}
+                      </SelectList>
+                    </Select>
                   </FormGroup>
                 )}
+
                 <FormGroup fieldId="gwPort" label="Port">
                   <TextInput
                     id="gwPort"
@@ -210,6 +255,7 @@ export class K8sGatewaySelector extends React.Component<Props, K8sGatewaySelecto
                     onChange={(_event, value) => this.onFormChange(K8sGatewayForm.PORT, value)}
                   />
                 </FormGroup>
+
                 <FormGroup fieldId="gwHosts" label="K8s API Gateway Hosts">
                   <TextInput
                     id="gwHosts"
@@ -219,6 +265,7 @@ export class K8sGatewaySelector extends React.Component<Props, K8sGatewaySelecto
                     onChange={(_event, value) => this.onFormChange(K8sGatewayForm.GW_HOSTS, value)}
                     validated={isValid(this.state.gwHostsValid)}
                   />
+
                   <FormHelperText>
                     <HelperText>
                       <HelperTextItem>
