@@ -1,11 +1,11 @@
 import { Edge } from '@patternfly/react-topology';
 import * as React from 'react';
 
-// AnimationEdge is a memo'd component that avoids a re-render unless the edge points change
-// or an animationTime expires (meaning we need to generate new trafficpoints).
+// AnimationEdge is a memo'd component that avoids a re-render unless edge position or rendering
+// values have changed
 
 type AnimationEdgeProps = {
-  animationTime?: number;
+  animationHash: string;
   edge: Edge;
   endX: number;
   endY: number;
@@ -14,7 +14,8 @@ type AnimationEdgeProps = {
 };
 
 const AnimationEdgeComponent: React.FC<AnimationEdgeProps> = (props: AnimationEdgeProps) => {
-  return <>{props.edge.getData().animation.render(props.edge)}</>;
+  const animation = props.edge.getData().animation;
+  return animation ? <>{animation.render(props.edge)}</> : <></>;
 };
 
 export const AnimationEdge = React.memo(AnimationEdgeComponent);

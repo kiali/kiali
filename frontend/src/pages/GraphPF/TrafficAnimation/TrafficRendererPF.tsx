@@ -160,7 +160,7 @@ export class TrafficPointGenerator {
       const delayInterval = animationDuration / renderedPointsOnEdge;
       for (let i = 0; i < pointsOnEdge; ++i) {
         const animationDelay = `${i * delayInterval + initialDelay}ms`;
-        const point = renderer.render(edge, animationDelay, true, undefined);
+        const point = renderer.render(edge, animationDelay, undefined);
         points.unshift(point);
       }
     } else {
@@ -190,8 +190,8 @@ export class TrafficPointGenerator {
         const animationDelay = `${i * delayInterval + initialDelay}ms`;
         const isErrorPoint = Math.random() <= this.errorRate || (!hasError && i + 1 === renderedPointsOnEdge);
         const point = isErrorPoint
-          ? errorRenderer.render(edge, animationDelay, true, undefined)
-          : renderer.render(edge, animationDelay, true, undefined);
+          ? errorRenderer.render(edge, animationDelay, undefined)
+          : renderer.render(edge, animationDelay, undefined);
         points.unshift(point);
       }
     }
@@ -214,6 +214,31 @@ export class TrafficPointGenerator {
 
   setType(type: TrafficEdgeType) {
     this.type = type;
+  }
+
+  // getHash returns a string representing the combined animation settings, and can
+  // be used to decide whether the animation settings have changed enough to
+  // force a re-render of the animation. Because animation values are sensitive
+  // and change frequently, we don't want to use them directly. We want to limit
+  // re-renders to noticeable changes, and so we need this to return a different
+  // value only on a significant shift in animation settings. To do this we:
+  //   1) categorize an edge into a PFT EdgeAnimationSpeed bucket
+  //   2) look for a sizeable change in error rate
+  // and combine the values.
+  getHash(edgeData: EdgeData) {
+    let animationSpeedPF = EdgeAnimationSpeed.none;
+    switch (edgeData.protocol) {
+      case Protocol.GRPC:
+        animationSpeedPF = timerConfig.computeAnimationSpeedPF(edgeData.grpc);
+        break;
+      case Protocol.HTTP:
+        animationSpeedPF = timerConfig.computeAnimationSpeedPF(edgeData.http);
+        break;
+      case Protocol.TCP:
+        animationSpeedPF = tcpTimerConfig.computeAnimationSpeedPF(edgeData.tcp);
+        break;
+    }
+    return `${animationSpeedPF}:${this.errorRate.toFixed(1)}:${this.type}`;
   }
 }
 

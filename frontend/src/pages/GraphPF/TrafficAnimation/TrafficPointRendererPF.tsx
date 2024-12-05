@@ -7,12 +7,11 @@ export abstract class TrafficPointRenderer {
   abstract render(
     element: Edge,
     animationDelay: string,
-    isInfinite: boolean,
     onAnimationEnd?: React.AnimationEventHandler
   ): React.SVGProps<SVGElement>;
 }
 
-function getMoveAnimation(edge: Edge, percentVisible: number, isInfinite: boolean): string {
+function getMoveAnimation(edge: Edge, percentVisible: number): string {
   const startPoint = edge.getStartPoint();
   const endPoint = edge.getEndPoint();
   const moveAnimation = {};
@@ -23,7 +22,6 @@ function getMoveAnimation(edge: Edge, percentVisible: number, isInfinite: boolea
 
     moveAnimation['0%'] = { opacity: 1, translate: '0' };
     moveAnimation[`${percentVisible}%`] = {
-      display: isInfinite ? '' : 'none',
       opacity: 1,
       translate: `${moveX}px ${moveY}px`
     };
@@ -44,8 +42,7 @@ function getMoveAnimation(edge: Edge, percentVisible: number, isInfinite: boolea
     moveAnimation['0%'] = { opacity: 1, translate: '0' };
     moveAnimation[`${bend}%`] = { opacity: 1, translate: `${moveBendX}px ${moveBendY}px` };
     moveAnimation[`${percentVisible}%`] = {
-      translate: `${moveEndX}px ${moveEndY}px`,
-      display: isInfinite ? '' : 'none'
+      translate: `${moveEndX}px ${moveEndY}px`
     };
     // this acts like a delay at the end, the animation continues but nothing is visible
     if (percentVisible < 100) {
@@ -78,11 +75,11 @@ export class TrafficPointCircleRenderer extends TrafficPointRenderer {
     this.radius = radius;
   }
 
-  private getStyle(moveAnimation: string, isInfinite: boolean): string {
+  private getStyle(moveAnimation: string): string {
     return kialiStyle({
       animationDuration: this.animationDuration,
       animationFillMode: 'forwards',
-      animationIterationCount: isInfinite ? 'infinite' : 1,
+      animationIterationCount: 'infinite',
       animationName: moveAnimation,
       animationTimingFunction: 'linear',
       fill: this.backgroundColor,
@@ -94,11 +91,10 @@ export class TrafficPointCircleRenderer extends TrafficPointRenderer {
   render(
     edge: Edge,
     animationDelay: string,
-    isInfinite: boolean,
     onAnimationEnd?: React.AnimationEventHandler
   ): React.SVGProps<SVGCircleElement> {
     const startPoint = edge.getStartPoint();
-    const moveAnimation = getMoveAnimation(edge, this.percentVisible, isInfinite);
+    const moveAnimation = getMoveAnimation(edge, this.percentVisible);
 
     // use random # to ensure the key is not repeat, or it can be ignored by the render
     const key = `point-circle-${Math.random()}`;
@@ -106,7 +102,7 @@ export class TrafficPointCircleRenderer extends TrafficPointRenderer {
       <circle
         id={key}
         key={key}
-        className={this.getStyle(moveAnimation, isInfinite)}
+        className={this.getStyle(moveAnimation)}
         style={{ animationDelay: animationDelay }}
         cx={startPoint.x}
         cy={startPoint.y}
@@ -139,11 +135,11 @@ export class TrafficPointDiamondRenderer extends TrafficPointRenderer {
     this.radius = radius;
   }
 
-  private getStyle(moveAnimation: string, isInfinite: boolean): string {
+  private getStyle(moveAnimation: string): string {
     return kialiStyle({
       animationDuration: this.animationDuration,
       animationFillMode: 'forwards',
-      animationIterationCount: isInfinite ? 'infinite' : 1,
+      animationIterationCount: 'infinite',
       animationName: moveAnimation,
       animationTimingFunction: 'linear',
       fill: this.backgroundColor,
@@ -159,11 +155,10 @@ export class TrafficPointDiamondRenderer extends TrafficPointRenderer {
   render(
     edge: Edge,
     animationDelay: string,
-    isInfinite: boolean,
     onAnimationEnd?: React.AnimationEventHandler
   ): React.SVGProps<SVGRectElement> {
     const startPoint = edge.getStartPoint();
-    const moveAnimation = getMoveAnimation(edge, this.percentVisible, isInfinite);
+    const moveAnimation = getMoveAnimation(edge, this.percentVisible);
 
     // use random # to ensure the key is not repeated, or it can be ignored by the render
     const key = `point-rect-${Math.random()}}`;
@@ -171,7 +166,7 @@ export class TrafficPointDiamondRenderer extends TrafficPointRenderer {
       <rect
         id={key}
         key={key}
-        className={this.getStyle(moveAnimation, isInfinite)}
+        className={this.getStyle(moveAnimation)}
         style={{ animationDelay: animationDelay }}
         x={startPoint.x - this.radius}
         y={startPoint.y - this.radius}

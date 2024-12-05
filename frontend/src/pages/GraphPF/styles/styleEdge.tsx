@@ -135,7 +135,7 @@ const StyleEdgeComponent: React.FC<StyleEdgeProps> = ({ element, ...rest }) => {
     return newData;
   }, [data, detailsLevel]);
 
-  const hasAnimation = !!data.animation; // !data.isUnhighlighted && data.animation;
+  const hasAnimation = !!data.animation;
   const start = element.getStartPoint();
   const end = element.getEndPoint();
   return (
@@ -143,7 +143,7 @@ const StyleEdgeComponent: React.FC<StyleEdgeProps> = ({ element, ...rest }) => {
       <DefaultEdge className={classes(...cssClasses)} element={element} tagClass={tagClass} {...rest} {...passedData} />
       {hasAnimation && (
         <AnimationEdge
-          animationTime={data.animationTime}
+          animationHash={data.animation?.getHash(data)}
           edge={element}
           endX={end.x}
           endY={end.y}
