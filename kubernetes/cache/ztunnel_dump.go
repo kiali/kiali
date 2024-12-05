@@ -9,7 +9,7 @@ func ztunnelDumpKey(cluster, namespace, pod string) string {
 }
 
 type ZtunnelDumpCache interface {
-	SetZtunnelDump(nelConfig map[string]*kubernetes.ZtunnelConfigDump)
+	SetZtunnelDump(ztunnelConfig map[string]*kubernetes.ZtunnelConfigDump)
 	GetZtunnelDump(cluster, namespace, pod string) *kubernetes.ZtunnelConfigDump
 }
 
