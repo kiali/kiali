@@ -920,25 +920,29 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 		}
 	}()
 
-	// WorkloadGroups are always fetched
+	// WorkloadGroups are fetched only when included
 	go func() {
 		defer wg.Done()
 		var err error
-		wgroups, err = kubeCache.GetWorkloadGroups(namespace, labelSelector)
-		if err != nil {
-			log.Errorf("Error fetching WorkloadGroups per namespace %s: %s", namespace, err)
-			errChan <- err
+		if in.isWorkloadIncluded(kubernetes.WorkloadGroupType) {
+			wgroups, err = kubeCache.GetWorkloadGroups(namespace, labelSelector)
+			if err != nil {
+				log.Errorf("Error fetching WorkloadGroups per namespace %s: %s", namespace, err)
+				errChan <- err
+			}
 		}
 	}()
 
-	// WorkloadEntries are always fetched
+	// WorkloadEntries are fetched only when included
 	go func() {
 		defer wg.Done()
 		var err error
-		wentries, err = kubeCache.GetWorkloadEntries(namespace, labelSelector)
-		if err != nil {
-			log.Errorf("Error fetching WorkloadEntries per namespace %s: %s", namespace, err)
-			errChan <- err
+		if in.isWorkloadIncluded(kubernetes.WorkloadEntryType) {
+			wentries, err = kubeCache.GetWorkloadEntries(namespace, labelSelector)
+			if err != nil {
+				log.Errorf("Error fetching WorkloadEntries per namespace %s: %s", namespace, err)
+				errChan <- err
+			}
 		}
 	}()
 
