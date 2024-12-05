@@ -2,7 +2,7 @@ import { EdgeAnimationSpeed } from '@patternfly/react-topology';
 import { clamp } from 'utils/MathUtils';
 
 // Some information about the mathematical problem here:
-// We try to project a set of RATE values from an upper-unbounded interval ]0, +Inf[ to a set of TIMER DELAY values in
+// We try to project a set of RATE values from an upper-unbounded interval [0, +Inf] to a set of TIMER DELAY values in
 //    a bounded interval [40ms, 5000ms] (arbitrary bounds).
 // TIMER DELAY is the delay for dots generation in the animation. The lower it is, the more dots there are.
 //
