@@ -474,11 +474,14 @@ func (workload *Workload) ParseWorkloadGroup(wg *networking_v1.WorkloadGroup, we
 	workload.CurrentReplicas = int32(len(wentries))
 	workload.AvailableReplicas = int32(len(wentries))
 	workload.Labels = map[string]string{}
-	// We fetch one WorkloadEntry as template for labels, similar to Pods
+	// Template.Labels can be nillable, this should be handled
+	// when Template does not have labels, the no Applications will be recognised
+	if wg.Spec.Template.Labels != nil {
+		workload.Labels = wg.Spec.Template.Labels
+	}
+	// We fetch one WorkloadEntry as template, similar to Pods
+	// WorkloadEntry is generated based on Spec.Template
 	if len(wentries) > 0 {
-		if wentries[0].Spec.Labels != nil {
-			workload.Labels = wentries[0].Spec.Labels
-		}
 		workload.CreatedAt = formatTime(wentries[0].CreationTimestamp.Time)
 		workload.ResourceVersion = wentries[0].ResourceVersion
 	}

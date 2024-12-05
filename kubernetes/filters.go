@@ -293,9 +293,12 @@ func FilterPodsBySelector(selector labels.Selector, allPods []core_v1.Pod) []cor
 
 func FilterWorkloadEntriesBySelector(selector labels.Selector, allEntries []*networking_v1.WorkloadEntry) []*networking_v1.WorkloadEntry {
 	var entries []*networking_v1.WorkloadEntry
-	for _, entry := range allEntries {
-		if selector.Matches(labels.Set(entry.Spec.Labels)) {
-			entries = append(entries, entry)
+	// WorkloadGroup.Template.Labels is nullable
+	if !selector.Empty() {
+		for _, entry := range allEntries {
+			if selector.Matches(labels.Set(entry.Spec.Labels)) {
+				entries = append(entries, entry)
+			}
 		}
 	}
 	return entries

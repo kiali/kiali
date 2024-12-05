@@ -483,18 +483,23 @@ func (in *AppService) fetchNamespaceApps(ctx context.Context, namespace string, 
 	}
 	allEntities := make(namespaceApps)
 	for _, w := range ws {
-		// Check if namespace is cached
-		serviceCriteria := ServiceCriteria{
-			Cluster:                cluster,
-			Namespace:              namespace,
-			IncludeHealth:          false,
-			IncludeIstioResources:  false,
-			IncludeOnlyDefinitions: true,
-			ServiceSelector:        labels.Set(w.Labels).String(),
-		}
-		ss, err = in.businessLayer.Svc.GetServiceList(ctx, serviceCriteria)
-		if err != nil {
-			return nil, err
+		// WorkloadGroup.Labels can be empty
+		if len(w.Labels) > 0 {
+			// Check if namespace is cached
+			serviceCriteria := ServiceCriteria{
+				Cluster:                cluster,
+				Namespace:              namespace,
+				IncludeHealth:          false,
+				IncludeIstioResources:  false,
+				IncludeOnlyDefinitions: true,
+				ServiceSelector:        labels.Set(w.Labels).String(),
+			}
+			ss, err = in.businessLayer.Svc.GetServiceList(ctx, serviceCriteria)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			ss = nil
 		}
 		castAppDetails(in.conf.IstioLabels.AppLabelName, allEntities, ss, w, cluster)
 	}

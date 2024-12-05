@@ -433,7 +433,8 @@ func (in *WorkloadService) GetWorkload(ctx context.Context, criteria WorkloadCri
 		runtimes = NewDashboardsService(in.config, in.grafana, ns, workload).GetCustomDashboardRefs(criteria.Namespace, app, version, workload.Pods)
 	}()
 
-	if criteria.IncludeServices {
+	// WorkloadGroup.Labels can be empty
+	if criteria.IncludeServices && len(workload.Labels) > 0 {
 		var services *models.ServiceList
 		var err error
 
@@ -938,7 +939,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 		defer wg.Done()
 		var err error
 		if in.isWorkloadIncluded(kubernetes.WorkloadEntryType) {
-			wentries, err = kubeCache.GetWorkloadEntries(namespace, labelSelector)
+			wentries, err = kubeCache.GetWorkloadEntries(namespace, "")
 			if err != nil {
 				log.Errorf("Error fetching WorkloadEntries per namespace %s: %s", namespace, err)
 				errChan <- err
@@ -982,10 +983,10 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 		}
 	}
 
-	// Find controllers from WorkloadEntries
-	for _, wentry := range wentries {
-		if _, exist := controllers[wentry.Name]; !exist {
-			controllers[wentry.Name] = kubernetes.WorkloadEntries
+	// Find controllers from WorkloadGroups
+	for _, wgroup := range wgroups {
+		if _, exist := controllers[wgroup.Name]; !exist {
+			controllers[wgroup.Name] = kubernetes.WorkloadGroups
 		}
 	}
 
@@ -1347,7 +1348,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 				log.Errorf("Workload %s is not found as DaemonSet", controllerName)
 				cnFound = false
 			}
-		case kubernetes.WorkloadEntries:
+		case kubernetes.WorkloadGroups:
 			found := false
 			iFound := -1
 			for i, wgroup := range wgroups {
@@ -1358,7 +1359,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 				}
 			}
 			if found {
-				selector := labels.Set(wgroups[iFound].Spec.Metadata.Labels).AsSelector()
+				selector := labels.Set(wgroups[iFound].Spec.Template.Labels).AsSelector()
 				w.ParseWorkloadGroup(wgroups[iFound], kubernetes.FilterWorkloadEntriesBySelector(selector, wentries))
 			} else {
 				log.Errorf("Workload %s is not found as WorkloadGroup", controllerName)
@@ -1462,7 +1463,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 		wgroup, err = kialiCache.GetWorkloadGroup(criteria.Namespace, criteria.WorkloadName)
 		if err != nil {
 			if errors.IsNotFound(err) {
-				dep = nil
+				wgroup = nil
 			} else {
 				log.Errorf("Error fetching WorkloadGroup per namespace %s and name %s: %s", criteria.Namespace, criteria.WorkloadName, err)
 				errChan <- err
@@ -1481,7 +1482,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 		wentries, err = kialiCache.GetWorkloadEntries(criteria.Namespace, "")
 		if err != nil {
 			if errors.IsNotFound(err) {
-				dep = nil
+				wentries = nil
 			} else {
 				log.Errorf("Error fetching WorkloadEntry per namespace %s: %s", criteria.Namespace, err)
 				errChan <- err
@@ -1668,10 +1669,10 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 		}
 	}
 
-	// Find controllers from WorkloadEntries
-	for _, wentry := range wentries {
-		if _, exist := controllers[wentry.Name]; !exist {
-			controllers[wentry.Name] = kubernetes.WorkloadEntries
+	// Find controllers from WorkloadGroups
+	if wgroup != nil {
+		if _, exist := controllers[wgroup.Name]; !exist {
+			controllers[wgroup.Name] = kubernetes.WorkloadGroups
 		}
 	}
 
@@ -1978,9 +1979,9 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 				log.Errorf("Workload %s is not found as DaemonSet", criteria.WorkloadName)
 				cnFound = false
 			}
-		case kubernetes.WorkloadEntries:
+		case kubernetes.WorkloadGroups:
 			if wgroup != nil && wgroup.Name == criteria.WorkloadName {
-				selector := labels.Set(wgroup.Spec.Metadata.Labels).AsSelector()
+				selector := labels.Set(wgroup.Spec.Template.Labels).AsSelector()
 				w.ParseWorkloadGroup(wgroup, kubernetes.FilterWorkloadEntriesBySelector(selector, wentries))
 			} else {
 				log.Errorf("Workload %s is not found as WorkloadGroup", criteria.WorkloadName)
