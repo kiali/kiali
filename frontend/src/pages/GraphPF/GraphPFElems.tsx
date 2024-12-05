@@ -201,9 +201,7 @@ export const setNodeAttachments = (node: Node<NodeModel>, settings: GraphPFSetti
     }
   }
 
-  if (attachments.length > 0) {
-    data.attachments = attachments;
-  }
+  data.attachments = attachments.length > 0 ? attachments : undefined;
 };
 
 const rootIconStyle = kialiStyle({
