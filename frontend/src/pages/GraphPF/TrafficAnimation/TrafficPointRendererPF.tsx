@@ -5,7 +5,7 @@ import { Edge } from '@patternfly/react-topology';
 
 export abstract class TrafficPointRenderer {
   abstract render(
-    element: Edge,
+    edge: Edge,
     animationDelay: string,
     onAnimationEnd?: React.AnimationEventHandler
   ): React.SVGProps<SVGElement>;
@@ -59,13 +59,15 @@ export class TrafficPointCircleRenderer extends TrafficPointRenderer {
   readonly borderColor: string;
   readonly percentVisible: number;
   readonly radius: number;
+  readonly withOffsets: boolean;
 
   constructor(
     animationDuration: string,
+    backgroundColor: string,
+    borderColor: string,
     percentVisible: number,
     radius: number,
-    backgroundColor: string,
-    borderColor: string
+    withOffsets: boolean
   ) {
     super();
     this.animationDuration = animationDuration;
@@ -73,6 +75,7 @@ export class TrafficPointCircleRenderer extends TrafficPointRenderer {
     this.borderColor = borderColor;
     this.percentVisible = percentVisible;
     this.radius = radius;
+    this.withOffsets = withOffsets;
   }
 
   private getStyle(moveAnimation: string): string {
@@ -95,6 +98,11 @@ export class TrafficPointCircleRenderer extends TrafficPointRenderer {
   ): React.SVGProps<SVGCircleElement> {
     const startPoint = edge.getStartPoint();
     const moveAnimation = getMoveAnimation(edge, this.percentVisible);
+    // If requested, calculate offsets. The offset must be small to avoid more serious
+    // calculation that would ensure perpendicular distance from the edge. Instead, we
+    // just apply a [-2.5, 2.5] offset to both 'x' and 'y'
+    const offsetX = this.withOffsets ? Math.random() * 5 - 2.5 : 0;
+    const offsetY = this.withOffsets ? Math.random() * 5 - 2.5 : 0;
 
     // use random # to ensure the key is not repeat, or it can be ignored by the render
     const key = `point-circle-${Math.random()}`;
@@ -104,8 +112,8 @@ export class TrafficPointCircleRenderer extends TrafficPointRenderer {
         key={key}
         className={this.getStyle(moveAnimation)}
         style={{ animationDelay: animationDelay }}
-        cx={startPoint.x}
-        cy={startPoint.y}
+        cx={startPoint.x + offsetX}
+        cy={startPoint.y + offsetY}
         r={`${this.radius}`}
         onAnimationEnd={onAnimationEnd}
       />
@@ -122,10 +130,10 @@ export class TrafficPointDiamondRenderer extends TrafficPointRenderer {
 
   constructor(
     animationDuration: string,
-    percentVisible: number,
-    radius: number,
     backgroundColor: string,
-    borderColor: string
+    borderColor: string,
+    percentVisible: number,
+    radius: number
   ) {
     super();
     this.animationDuration = animationDuration;

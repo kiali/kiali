@@ -40,14 +40,11 @@ const getTrafficPointRendererForRpsError: (
   animationDuration: string,
   percentVisible: number
 ) => TrafficPointRenderer = (_edge: Edge, animationDuration: string, percentVisible: number) => {
-  return new TrafficPointDiamondRenderer(animationDuration, percentVisible, 4, PFColors.White, PFColors.Danger);
+  return new TrafficPointDiamondRenderer(animationDuration, PFColors.White, PFColors.Danger, percentVisible, 4);
 };
 
-/**
- * Returns a TrafficPointRenderer for a RPS success point
- * @param edge
- * @returns {TrafficPointRenderer}
- */
+// Returns a TrafficPointRenderer for a RPS success point
+// - for HTTP we specify withOffsets=false, center all of traffic points on the edge
 const getTrafficPointRendererForRpsSuccess: (
   edge: Edge,
   animationDuration: string,
@@ -55,18 +52,17 @@ const getTrafficPointRendererForRpsSuccess: (
 ) => TrafficPointRenderer = (edge: Edge, animationDuration: string, percentVisible: number) => {
   return new TrafficPointCircleRenderer(
     animationDuration,
+    PFColors.White,
+    edge.getData().pathStyle.stroke,
     percentVisible,
     4,
-    PFColors.White,
-    edge.getData().pathStyle.stroke
+    false
   );
 };
 
-/**
- * Returns a TrafficPointRenderer for a Tcp point
- * @param edge
- * @returns {TrafficPointCircleRenderer}
- */
+// Returns a TrafficPointRenderer for a Tcp point
+// - for TCP we specify withOffsets=true, This requests that we apply a small, random offset to each
+//   TCP trafficPoint. This makes it more visually distinct from HTTP trafficPoints (no offset) and
 const getTrafficPointRendererForTcp: (
   edge: Edge,
   animationDuration: string,
@@ -74,10 +70,11 @@ const getTrafficPointRendererForTcp: (
 ) => TrafficPointRenderer = (edge: Edge, animationDuration: string, percentVisible: number) => {
   return new TrafficPointCircleRenderer(
     animationDuration,
+    PFColors.Black200,
+    edge.getData().pathStyle.stroke,
     percentVisible,
     3.2,
-    PFColors.Black200,
-    edge.getData().pathStyle.stroke
+    true
   );
 };
 
