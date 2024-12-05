@@ -37,7 +37,6 @@ import {
   Layout,
   NodeAttr,
   NodeType,
-  Protocol,
   RankMode,
   RankResult,
   UNKNOWN
@@ -66,7 +65,6 @@ import { KialiDagreGraph } from 'components/CytoscapeGraph/graphs/KialiDagreGrap
 import { KialiGridGraph } from 'components/CytoscapeGraph/graphs/KialiGridGraph';
 import { KialiBreadthFirstGraph } from 'components/CytoscapeGraph/graphs/KialiBreadthFirstGraph';
 import { HistoryManager, URLParam } from 'app/History';
-import { tcpTimerConfig, timerConfig } from 'components/CytoscapeGraph/TrafficAnimation/AnimationTimerConfig';
 import { TourStop } from 'components/Tour/TourStop';
 import { GraphTourStops } from 'pages/Graph/GraphHelpTour';
 import { supportsGroups } from 'utils/GraphUtils';
@@ -77,6 +75,7 @@ import { PeerAuthentication } from 'types/IstioObjects';
 import { KialiIcon } from 'config/KialiIcon';
 import { toolbarActiveStyle } from 'styles/GraphStyle';
 import { scoreNodes, ScoringCriteria } from 'components/CytoscapeGraph/GraphScore';
+import { TrafficAnimation } from './TrafficAnimation/TrafficRendererPF';
 
 const DEFAULT_NODE_SIZE = 40;
 const ZOOM_IN = 4 / 3;
@@ -174,6 +173,7 @@ const TopologyContent: React.FC<{
   showVirtualServices: boolean;
   toggleLegend?: () => void;
   trace?: JaegerTrace;
+  trafficAnimation: TrafficAnimation;
   updateSummary: (graphEvent: GraphEvent) => void;
 }> = ({
   controller,
@@ -200,8 +200,9 @@ const TopologyContent: React.FC<{
   showSecurity,
   showTrafficAnimation,
   showVirtualServices,
-  trace,
   toggleLegend,
+  trace,
+  trafficAnimation,
   updateSummary
 }) => {
   const [updateModelTime, setUpdateModelTime] = React.useState(0);
@@ -337,11 +338,16 @@ const TopologyContent: React.FC<{
     // world that the graph is ready for external processing (like find/hide)
     if (initialLayout) {
       initialLayout = false;
+
+      if (showTrafficAnimation) {
+        trafficAnimation.start();
+      }
+
       onReady({ getController: () => controller, setSelectedIds: setSelectedIds });
     }
 
     layoutInProgress = undefined;
-  }, [controller, onReady, setSelectedIds]);
+  }, [controller, onReady, setSelectedIds, showTrafficAnimation, trafficAnimation]);
 
   //
   // Set detail levels for graph (control zoom-sensitive labels)
@@ -367,8 +373,8 @@ const TopologyContent: React.FC<{
         const defaultModel: Model = {
           graph: {
             id: 'graphPF',
-            type: 'graph',
-            layout: layoutName
+            layout: layoutName,
+            type: 'graph'
           }
         };
         controller.fromModel(defaultModel, false);
@@ -691,52 +697,15 @@ const TopologyContent: React.FC<{
   }, [setDetailsLevel]);
 
   React.useEffect(() => {
-    const edges = controller.getGraph().getEdges();
     if (!showTrafficAnimation) {
-      edges
-        .filter(e => e.getEdgeAnimationSpeed() !== EdgeAnimationSpeed.none)
-        .forEach(e => {
-          e.setEdgeAnimationSpeed(EdgeAnimationSpeed.none);
-          e.setEdgeStyle(EdgeStyle.solid);
-        });
+      trafficAnimation.stop();
       return;
     }
 
-    timerConfig.resetCalibration();
-    tcpTimerConfig.resetCalibration();
-    // Calibrate animation amplitude
-    edges.forEach(e => {
-      const edgeData = e.getData() as EdgeData;
-      switch (edgeData.protocol) {
-        case Protocol.GRPC:
-          timerConfig.calibrate(edgeData.grpc);
-          break;
-        case Protocol.HTTP:
-          timerConfig.calibrate(edgeData.http);
-          break;
-        case Protocol.TCP:
-          tcpTimerConfig.calibrate(edgeData.tcp);
-          break;
-      }
-    });
-    edges.forEach(e => {
-      const edgeData = e.getData() as EdgeData;
-      switch (edgeData.protocol) {
-        case Protocol.GRPC:
-          e.setEdgeAnimationSpeed(timerConfig.computeAnimationSpeedPF(edgeData.grpc));
-          break;
-        case Protocol.HTTP:
-          e.setEdgeAnimationSpeed(timerConfig.computeAnimationSpeedPF(edgeData.http));
-          break;
-        case Protocol.TCP:
-          e.setEdgeAnimationSpeed(tcpTimerConfig.computeAnimationSpeedPF(edgeData.tcp));
-          break;
-      }
-      if (e.getEdgeAnimationSpeed() !== EdgeAnimationSpeed.none) {
-        e.setEdgeStyle(EdgeStyle.dashedMd);
-      }
-    });
-  }, [controller, showTrafficAnimation, updateModelTime]);
+    if (!initialLayout) {
+      trafficAnimation.start();
+    }
+  }, [controller, showTrafficAnimation, trafficAnimation, updateModelTime]);
 
   React.useEffect(() => {
     console.debug(`TG: layout changed`);
@@ -975,6 +944,7 @@ export const GraphPF: React.FC<{
   //create controller on startup and register factories
   const [controller, setController] = React.useState<Visualization>();
   const [highlighter, setHighlighter] = React.useState<GraphHighlighterPF>();
+  const [trafficAnimation, setTrafficAnimation] = React.useState<TrafficAnimation>();
 
   // Set up the controller one time
   React.useEffect(() => {
@@ -986,6 +956,7 @@ export const GraphPF: React.FC<{
     c.registerComponentFactory(stylesComponentFactory);
     setController(c);
     setHighlighter(new GraphHighlighterPF(c));
+    setTrafficAnimation(new TrafficAnimation(c));
   }, []);
 
   const getLayoutName = (layout: Layout): LayoutName => {
@@ -1045,8 +1016,9 @@ export const GraphPF: React.FC<{
         showSecurity={showSecurity}
         showTrafficAnimation={showTrafficAnimation}
         showVirtualServices={showVirtualServices}
-        trace={trace}
         toggleLegend={toggleLegend}
+        trace={trace}
+        trafficAnimation={trafficAnimation!}
         updateSummary={updateSummary}
       />
     </VisualizationProvider>

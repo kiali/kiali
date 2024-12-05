@@ -36,6 +36,7 @@ interface GraphTraffic {
 }
 
 interface GraphSettings {
+  animation: 'point' | 'dash';
   fontLabel: number;
   minFontBadge: number;
   minFontLabel: number;

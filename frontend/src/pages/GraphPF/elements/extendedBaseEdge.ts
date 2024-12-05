@@ -2,8 +2,11 @@ import { BaseEdge, Edge, Point } from '@patternfly/react-topology';
 
 // This extends BaseEdge to eliminate Bendpoints when possible (mainly because Dagre layout
 // does not provide an option to use or not use bendpoints). Bendpoints must be honored when
-// we have multiple edges (i.e. different protocols) between the same two nodes.
-// Kiali graphs tend to have a lot of nodes and boxes, and look cleaner with straight edges.
+// we have multiple edges (i.e. different protocols) between the same two nodes. With our
+// strategy an edge will have at most one bendpoint, at the midpoint (see more below). Note,
+// traffic animation depends on this, so if you make a change here you will need to also
+// make changes in traffic animation.
+// Kiali graphs tend to have a lot of nodes and boxes, and looks cleaner with straight edges.
 
 //TODO: Possibly make this optional
 //export type ExtendedEdgeModel = EdgeModel & {

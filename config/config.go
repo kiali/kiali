@@ -491,10 +491,12 @@ type GraphFindOption struct {
 }
 
 // GraphSettings affect the graph visualization.
-// FontLabel: font used for node text (edge label font is determined from this value)
-// MinFontBadge: smallest effective font (zoomed font) before removing node badges
-// MinFontLabel: smallest effective node text font (zoomed font) before removing labels
+// Animation: animation type point (default) | dash
+// FontLabel: font used for node text (edge label font is determined from this value) TODO: Cytoscape only - remove when cytoscape is removed
+// MinFontBadge: smallest effective font (zoomed font) before removing node badges TODO: Cytoscape only - remove when cytoscape is removed
+// MinFontLabel: smallest effective node text font (zoomed font) before removing labels TODO: Cytoscape only - remove when cytoscape is removed
 type GraphSettings struct {
+	Animation    string  `yaml:"animation,omitempty" json:"animation,omitempty"`
 	FontLabel    float32 `yaml:"font_label,omitempty" json:"fontLabel,omitempty"`
 	MinFontBadge float32 `yaml:"min_font_badge,omitempty" json:"minFontBadge,omitempty"`
 	MinFontLabel float32 `yaml:"min_font_label,omitempty" json:"minFontLabel,omitempty"`
@@ -516,7 +518,7 @@ type GraphTraffic struct {
 type GraphUIDefaults struct {
 	FindOptions []GraphFindOption `yaml:"find_options,omitempty" json:"findOptions,omitempty"`
 	HideOptions []GraphFindOption `yaml:"hide_options,omitempty" json:"hideOptions,omitempty"`
-	Impl        string            `yaml:"impl,omitempty" json:"impl,omitempty"`
+	Impl        string            `yaml:"impl,omitempty" json:"impl,omitempty"` // TODO: remove when cytoscape is removed
 	Settings    GraphSettings     `yaml:"settings,omitempty" json:"settings,omitempty"`
 	Traffic     GraphTraffic      `yaml:"traffic,omitempty" json:"traffic,omitempty"`
 }
@@ -832,6 +834,7 @@ func NewConfig() (c *Config) {
 					},
 					Impl: "pf",
 					Settings: GraphSettings{
+						Animation:    "point",
 						FontLabel:    13,
 						MinFontBadge: 7,
 						MinFontLabel: 10,

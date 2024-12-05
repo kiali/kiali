@@ -1,9 +1,10 @@
+import * as React from 'react';
 import { DefaultEdge, Edge, observer, ScaleDetailsLevel, WithSelectionProps } from '@patternfly/react-topology';
 import { useDetailsLevel } from '@patternfly/react-topology';
 import { PFColors } from 'components/Pf/PfColors';
-import * as React from 'react';
 import { kialiStyle } from 'styles/StyleUtils';
 import { classes } from 'typestyle';
+import { AnimationEdge } from '../TrafficAnimation/AnimationEdge';
 
 // This is our styled edge component registered in stylesComponentFactory.tsx.  It is responsible for adding customizations that then get passed down to DefaultEdge.  The current customizations:
 //   data.pathStyle?: React.CSSProperties // additional CSS stylings for the edge/path (not the endpoint).
@@ -112,18 +113,6 @@ const StyleEdgeComponent: React.FC<StyleEdgeProps> = ({ element, ...rest }) => {
     cssClasses.push(findClass);
   }
 
-  // Set animation duration velocity
-  if (data.animationDuration) {
-    const animationClass = kialiStyle({
-      $nest: {
-        '& .pf-topology__edge__link': {
-          animationDuration: `${data.animationDuration}s`
-        }
-      }
-    });
-    cssClasses.push(animationClass);
-  }
-
   // Set the path style when unhighlighted (opacity)
   let opacity = 1;
   if (data.isUnhighlighted) {
@@ -132,6 +121,7 @@ const StyleEdgeComponent: React.FC<StyleEdgeProps> = ({ element, ...rest }) => {
 
   const passedData = React.useMemo(() => {
     const newData = { ...data };
+
     if (detailsLevel !== ScaleDetailsLevel.high) {
       newData.showTag = false;
     }
@@ -145,9 +135,22 @@ const StyleEdgeComponent: React.FC<StyleEdgeProps> = ({ element, ...rest }) => {
     return newData;
   }, [data, detailsLevel]);
 
+  const hasAnimation = !!data.animation;
+  const start = element.getStartPoint();
+  const end = element.getEndPoint();
   return (
     <g style={{ opacity: opacity }} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
       <DefaultEdge className={classes(...cssClasses)} element={element} tagClass={tagClass} {...rest} {...passedData} />
+      {hasAnimation && (
+        <AnimationEdge
+          animationHash={data.animation?.getHash(data)}
+          edge={element}
+          endX={end.x}
+          endY={end.y}
+          startX={start.x}
+          startY={start.y}
+        />
+      )}
     </g>
   );
 };
