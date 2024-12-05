@@ -1940,11 +1940,16 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 				}
 
 			}
-			// If the pod is a waypoint proxy, check if it is attached to a namespace or to a service account, and get the affected workloads
-			if isPodWaypoint {
-				// Get waypoint workloads
-				w.WaypointWorkloads = append(w.WaypointWorkloads, in.listWaypointWorkloads(ctx, pod.Name, criteria.Cluster)...)
-			}
+		}
+
+		// If the pod is a waypoint proxy, check if it is attached to a namespace or to a service account, and get the affected workloads
+		if w.IsWaypoint() {
+			w.Ambient = "waypoint"
+			// Get waypoint workloads
+			w.WaypointWorkloads = append(w.WaypointWorkloads, in.listWaypointWorkloads(ctx, w.Name, criteria.Cluster)...)
+		}
+		if w.IsZtunnel() {
+			w.Ambient = "ztunnel"
 		}
 
 		if cnFound {

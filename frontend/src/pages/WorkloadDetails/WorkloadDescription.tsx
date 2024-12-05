@@ -17,7 +17,6 @@ import { MissingLabel } from '../../components/MissingLabel/MissingLabel';
 import { MissingAuthPolicy } from 'components/MissingAuthPolicy/MissingAuthPolicy';
 import { getGVKTypeString, hasMissingAuthPolicy, isGVKSupported } from 'utils/IstioConfigUtils';
 import { DetailDescription, renderWaypointSimpleLabel } from '../../components/DetailDescription/DetailDescription';
-import { isWaypoint } from '../../helpers/LabelFilterHelper';
 import { AmbientLabel, tooltipMsgType } from '../../components/Ambient/AmbientLabel';
 import { gvkType, validationKey } from '../../types/IstioConfigList';
 import { infoStyle } from 'styles/IconStyle';
@@ -197,7 +196,7 @@ export const WorkloadDescription: React.FC<WorkloadDescriptionProps> = (props: W
             />
           )}
 
-          {workload.isAmbient && !isWaypoint(workload.labels) && (
+          {workload.isAmbient && workload.ambient !== 'waypoint' && (
             <AmbientLabel
               tooltip={tooltipMsgType.workload}
               waypoint={workload.waypointWorkloads?.length > 0 ? true : false}
@@ -213,7 +212,7 @@ export const WorkloadDescription: React.FC<WorkloadDescriptionProps> = (props: W
             />
           )}
 
-          {(!workload.appLabel || !workload.versionLabel) && !isWaypoint(workload.labels) && (
+          {(!workload.appLabel || !workload.versionLabel) && workload.ambient !== 'waypoint' && (
             <MissingLabel
               missingApp={!workload.appLabel}
               missingVersion={!workload.versionLabel}
@@ -222,7 +221,7 @@ export const WorkloadDescription: React.FC<WorkloadDescriptionProps> = (props: W
             />
           )}
 
-          {isWaypoint(workload.labels) && renderWaypointSimpleLabel()}
+          {workload.ambient === 'waypoint' && renderWaypointSimpleLabel()}
         </Title>
 
         {workload.cluster && isMultiCluster && (
@@ -246,7 +245,7 @@ export const WorkloadDescription: React.FC<WorkloadDescriptionProps> = (props: W
           services={services}
           health={props.health}
           cluster={props.workload?.cluster}
-          isWaypoint={isWaypoint(workload.labels)}
+          isWaypoint={workload.ambient === 'waypoint'}
           waypointWorkloads={workload.waypointWorkloads}
         />
       </CardBody>
