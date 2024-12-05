@@ -1,0 +1,1928 @@
+{
+  "certificates": [],
+  "config": {
+    "adminAddr": {
+      "Localhost": [true, 15000]
+    },
+    "altCaHostname": null,
+    "altXdsHostname": null,
+    "caAddress": "https://istiod.istio-system.svc:15012",
+    "caRootCert": {
+      "File": "./var/run/secrets/istio/root-cert.pem"
+    },
+    "clusterDomain": "cluster.local",
+    "clusterId": "cluster-default",
+    "connectionWindowSize": 4194304,
+    "dnsProxy": true,
+    "dnsProxyAddr": {
+      "Localhost": [true, 15053]
+    },
+    "dnsResolverCfg": {
+      "domain": null,
+      "name_servers": [
+        {
+          "bind_addr": null,
+          "protocol": "udp",
+          "socket_addr": "10.96.0.10:53",
+          "tls_dns_name": null,
+          "trust_negative_responses": false
+        },
+        {
+          "bind_addr": null,
+          "protocol": "tcp",
+          "socket_addr": "10.96.0.10:53",
+          "tls_dns_name": null,
+          "trust_negative_responses": false
+        }
+      ],
+      "search": [
+        "istio-system.svc.cluster.local",
+        "svc.cluster.local",
+        "cluster.local",
+        "home"
+      ]
+    },
+    "dnsResolverOpts": {
+      "attempts": 2,
+      "authentic_data": false,
+      "cache_size": 4096,
+      "check_names": true,
+      "edns0": false,
+      "ip_strategy": "Ipv4AndIpv6",
+      "ndots": 5,
+      "negative_max_ttl": null,
+      "negative_min_ttl": null,
+      "num_concurrent_reqs": 2,
+      "positive_max_ttl": null,
+      "positive_min_ttl": null,
+      "preserve_intermediates": true,
+      "recursion_desired": true,
+      "rotate": false,
+      "server_ordering_strategy": "QueryStatistics",
+      "shuffle_dns_servers": false,
+      "timeout": {
+        "nanos": 0,
+        "secs": 5
+      },
+      "try_tcp_on_error": false,
+      "use_hosts_file": true,
+      "validate": false
+    },
+    "fakeCa": false,
+    "fakeSelfInbound": false,
+    "frameSize": 1048576,
+    "illegalPorts": [15001, 15006, 15008],
+    "inboundAddr": "[::]:15008",
+    "inboundPlaintextAddr": "[::]:15006",
+    "inpodPortReuse": true,
+    "inpodUds": "/var/run/ztunnel/ztunnel.sock",
+    "localNode": "ci-control-plane",
+    "network": "",
+    "numWorkerThreads": 2,
+    "outboundAddr": "[::]:15001",
+    "packetMark": 1337,
+    "poolMaxStreamsPerConn": 100,
+    "poolUnusedReleaseTimeout": {
+      "nanos": 0,
+      "secs": 300
+    },
+    "proxy": true,
+    "proxyArgs": "proxy ztunnel",
+    "proxyMetadata": {
+      "CLUSTER_ID": "cluster-default",
+      "ENABLE_HBONE": "true",
+      "ISTIO_VERSION": "1.24.1"
+    },
+    "proxyMode": "Shared",
+    "proxyWorkloadInformation": null,
+    "readinessAddr": {
+      "SocketAddr": "[::]:15021"
+    },
+    "requireOriginalSource": null,
+    "secretTtl": {
+      "nanos": 0,
+      "secs": 86400
+    },
+    "selfTerminationDeadline": {
+      "nanos": 0,
+      "secs": 25
+    },
+    "socks5Addr": null,
+    "statsAddr": {
+      "SocketAddr": "[::]:15020"
+    },
+    "windowSize": 4194304,
+    "xdsAddress": "https://istiod.istio-system.svc:15012",
+    "xdsOnDemand": false,
+    "xdsRootCert": {
+      "File": "./var/run/secrets/istio/root-cert.pem"
+    }
+  },
+  "policies": [],
+  "services": [
+    {
+      "endpoints": {
+        "cluster-default//Pod/bookinfo/bookinfo-gateway-istio-7c875f844-dllvg": {
+          "port": {
+            "15021": 15021,
+            "80": 80
+          },
+          "status": "Healthy",
+          "workloadUid": "cluster-default//Pod/bookinfo/bookinfo-gateway-istio-7c875f844-dllvg"
+        }
+      },
+      "hostname": "bookinfo-gateway-istio.bookinfo.svc.cluster.local",
+      "ipFamilies": "IPv4",
+      "name": "bookinfo-gateway-istio",
+      "namespace": "bookinfo",
+      "ports": {
+        "15021": 15021,
+        "80": 80
+      },
+      "subjectAltNames": [],
+      "vips": ["/10.96.57.63"],
+      "waypoint": {
+        "destination": "bookinfo/waypoint.bookinfo.svc.cluster.local",
+        "hboneMtlsPort": 15008
+      }
+    },
+    {
+      "endpoints": {
+        "cluster-default//Pod/travel-agency/cars-v1-8f6f65b75-f62nc": {
+          "port": {
+            "8000": 8000
+          },
+          "status": "Healthy",
+          "workloadUid": "cluster-default//Pod/travel-agency/cars-v1-8f6f65b75-f62nc"
+        }
+      },
+      "hostname": "cars.travel-agency.svc.cluster.local",
+      "ipFamilies": "IPv4",
+      "name": "cars",
+      "namespace": "travel-agency",
+      "ports": {
+        "8000": 8000
+      },
+      "subjectAltNames": [],
+      "vips": ["/10.96.137.86"]
+    },
+    {
+      "endpoints": {
+        "cluster-default//Pod/travel-control/control-57d5847d68-74kjs": {
+          "port": {
+            "8080": 8080
+          },
+          "status": "Healthy",
+          "workloadUid": "cluster-default//Pod/travel-control/control-57d5847d68-74kjs"
+        }
+      },
+      "hostname": "control.travel-control.svc.cluster.local",
+      "ipFamilies": "IPv4",
+      "name": "control",
+      "namespace": "travel-control",
+      "ports": {
+        "8080": 8080
+      },
+      "subjectAltNames": [],
+      "vips": ["/10.96.49.97"]
+    },
+    {
+      "endpoints": {
+        "cluster-default//Pod/bookinfo/details-v1-7c5d957895-pwqdh": {
+          "port": {
+            "9080": 9080
+          },
+          "status": "Healthy",
+          "workloadUid": "cluster-default//Pod/bookinfo/details-v1-7c5d957895-pwqdh"
+        }
+      },
+      "hostname": "details-v1.bookinfo.svc.cluster.local",
+      "ipFamilies": "IPv4",
+      "name": "details-v1",
+      "namespace": "bookinfo",
+      "ports": {
+        "9080": 9080
+      },
+      "subjectAltNames": [],
+      "vips": ["/10.96.221.215"],
+      "waypoint": {
+        "destination": "bookinfo/waypoint.bookinfo.svc.cluster.local",
+        "hboneMtlsPort": 15008
+      }
+    },
+    {
+      "endpoints": {
+        "cluster-default//Pod/bookinfo/details-v1-7c5d957895-pwqdh": {
+          "port": {
+            "9080": 9080
+          },
+          "status": "Healthy",
+          "workloadUid": "cluster-default//Pod/bookinfo/details-v1-7c5d957895-pwqdh"
+        }
+      },
+      "hostname": "details.bookinfo.svc.cluster.local",
+      "ipFamilies": "IPv4",
+      "name": "details",
+      "namespace": "bookinfo",
+      "ports": {
+        "9080": 9080
+      },
+      "subjectAltNames": [],
+      "vips": ["/10.96.49.172"],
+      "waypoint": {
+        "destination": "bookinfo/waypoint.bookinfo.svc.cluster.local",
+        "hboneMtlsPort": 15008
+      }
+    },
+    {
+      "endpoints": {
+        "cluster-default//Pod/travel-agency/discounts-v1-58c9676688-sx2vp": {
+          "port": {
+            "8000": 8000
+          },
+          "status": "Healthy",
+          "workloadUid": "cluster-default//Pod/travel-agency/discounts-v1-58c9676688-sx2vp"
+        }
+      },
+      "hostname": "discounts.travel-agency.svc.cluster.local",
+      "ipFamilies": "IPv4",
+      "name": "discounts",
+      "namespace": "travel-agency",
+      "ports": {
+        "8000": 8000
+      },
+      "subjectAltNames": [],
+      "vips": ["/10.96.151.162"]
+    },
+    {
+      "endpoints": {
+        "cluster-default//Pod/travel-agency/flights-v1-6775bb778f-d88gr": {
+          "port": {
+            "8000": 8000
+          },
+          "status": "Healthy",
+          "workloadUid": "cluster-default//Pod/travel-agency/flights-v1-6775bb778f-d88gr"
+        }
+      },
+      "hostname": "flights.travel-agency.svc.cluster.local",
+      "ipFamilies": "IPv4",
+      "name": "flights",
+      "namespace": "travel-agency",
+      "ports": {
+        "8000": 8000
+      },
+      "subjectAltNames": [],
+      "vips": ["/10.96.34.73"]
+    },
+    {
+      "endpoints": {
+        "cluster-default//Pod/istio-system/grafana-7874f88995-49vm4": {
+          "port": {
+            "3000": 3000
+          },
+          "status": "Healthy",
+          "workloadUid": "cluster-default//Pod/istio-system/grafana-7874f88995-49vm4"
+        }
+      },
+      "hostname": "grafana.istio-system.svc.cluster.local",
+      "ipFamilies": "IPv4",
+      "name": "grafana",
+      "namespace": "istio-system",
+      "ports": {
+        "3000": 3000
+      },
+      "subjectAltNames": [],
+      "vips": ["/10.96.73.168"]
+    },
+    {
+      "endpoints": {
+        "cluster-default//Pod/travel-agency/hotels-v1-5799fbd56c-bwpsb": {
+          "port": {
+            "8000": 8000
+          },
+          "status": "Healthy",
+          "workloadUid": "cluster-default//Pod/travel-agency/hotels-v1-5799fbd56c-bwpsb"
+        }
+      },
+      "hostname": "hotels.travel-agency.svc.cluster.local",
+      "ipFamilies": "IPv4",
+      "name": "hotels",
+      "namespace": "travel-agency",
+      "ports": {
+        "8000": 8000
+      },
+      "subjectAltNames": [],
+      "vips": ["/10.96.201.105"]
+    },
+    {
+      "endpoints": {
+        "cluster-default//Pod/travel-agency/insurances-v1-96d96c758-qs6sn": {
+          "port": {
+            "8000": 8000
+          },
+          "status": "Healthy",
+          "workloadUid": "cluster-default//Pod/travel-agency/insurances-v1-96d96c758-qs6sn"
+        }
+      },
+      "hostname": "insurances.travel-agency.svc.cluster.local",
+      "ipFamilies": "IPv4",
+      "name": "insurances",
+      "namespace": "travel-agency",
+      "ports": {
+        "8000": 8000
+      },
+      "subjectAltNames": [],
+      "vips": ["/10.96.70.24"]
+    },
+    {
+      "endpoints": {
+        "cluster-default//Pod/istio-system/istio-egressgateway-66db7db9d4-kjcmw": {
+          "port": {
+            "443": 8443,
+            "80": 8080
+          },
+          "status": "Healthy",
+          "workloadUid": "cluster-default//Pod/istio-system/istio-egressgateway-66db7db9d4-kjcmw"
+        }
+      },
+      "hostname": "istio-egressgateway.istio-system.svc.cluster.local",
+      "ipFamilies": "IPv4",
+      "name": "istio-egressgateway",
+      "namespace": "istio-system",
+      "ports": {
+        "443": 8443,
+        "80": 8080
+      },
+      "subjectAltNames": [],
+      "vips": ["/10.96.20.75"]
+    },
+    {
+      "endpoints": {
+        "cluster-default//Pod/istio-system/istio-ingressgateway-74d79d79fc-q6x6q": {
+          "port": {
+            "15021": 15021,
+            "443": 8443,
+            "80": 8080
+          },
+          "status": "Healthy",
+          "workloadUid": "cluster-default//Pod/istio-system/istio-ingressgateway-74d79d79fc-q6x6q"
+        }
+      },
+      "hostname": "istio-ingressgateway.istio-system.svc.cluster.local",
+      "ipFamilies": "IPv4",
+      "name": "istio-ingressgateway",
+      "namespace": "istio-system",
+      "ports": {
+        "15021": 15021,
+        "443": 8443,
+        "80": 8080
+      },
+      "subjectAltNames": [],
+      "vips": ["/10.96.6.94"]
+    },
+    {
+      "endpoints": {
+        "cluster-default//Pod/istio-system/istiod-54b6586f84-9bgw2": {
+          "port": {
+            "15010": 15010,
+            "15012": 15012,
+            "15014": 15014,
+            "443": 15017
+          },
+          "status": "Healthy",
+          "workloadUid": "cluster-default//Pod/istio-system/istiod-54b6586f84-9bgw2"
+        }
+      },
+      "hostname": "istiod.istio-system.svc.cluster.local",
+      "ipFamilies": "IPv4",
+      "name": "istiod",
+      "namespace": "istio-system",
+      "ports": {
+        "15010": 15010,
+        "15012": 15012,
+        "15014": 15014,
+        "443": 15017
+      },
+      "subjectAltNames": [],
+      "vips": ["/10.96.140.151"]
+    },
+    {
+      "endpoints": {
+        "cluster-default//Pod/istio-system/jaeger-d89bc58b9-d7tf2": {
+          "port": {
+            "14250": 14250,
+            "14268": 14268,
+            "4317": 4317,
+            "4318": 4318,
+            "9411": 9411
+          },
+          "status": "Healthy",
+          "workloadUid": "cluster-default//Pod/istio-system/jaeger-d89bc58b9-d7tf2"
+        }
+      },
+      "hostname": "jaeger-collector.istio-system.svc.cluster.local",
+      "ipFamilies": "IPv4",
+      "name": "jaeger-collector",
+      "namespace": "istio-system",
+      "ports": {
+        "14250": 14250,
+        "14268": 14268,
+        "4317": 4317,
+        "4318": 4318,
+        "9411": 9411
+      },
+      "subjectAltNames": [],
+      "vips": ["/10.96.16.215"]
+    },
+    {
+      "endpoints": {
+        "cluster-default//Pod/keycloak/keycloak-0": {
+          "port": {
+            "8080": 8080,
+            "8443": 8443
+          },
+          "status": "Healthy",
+          "workloadUid": "cluster-default//Pod/keycloak/keycloak-0"
+        }
+      },
+      "hostname": "keycloak-headless.keycloak.svc.cluster.local",
+      "ipFamilies": "IPv4",
+      "loadBalancer": {
+        "healthPolicy": "AllowAll",
+        "mode": "Standard",
+        "routingPreferences": []
+      },
+      "name": "keycloak-headless",
+      "namespace": "keycloak",
+      "ports": {
+        "8080": 0,
+        "8443": 0
+      },
+      "subjectAltNames": [],
+      "vips": []
+    },
+    {
+      "endpoints": {
+        "cluster-default//Pod/keycloak/keycloak-postgresql-0": {
+          "port": {
+            "5432": 5432
+          },
+          "status": "Healthy",
+          "workloadUid": "cluster-default//Pod/keycloak/keycloak-postgresql-0"
+        }
+      },
+      "hostname": "keycloak-postgresql-hl.keycloak.svc.cluster.local",
+      "ipFamilies": "IPv4",
+      "loadBalancer": {
+        "healthPolicy": "AllowAll",
+        "mode": "Standard",
+        "routingPreferences": []
+      },
+      "name": "keycloak-postgresql-hl",
+      "namespace": "keycloak",
+      "ports": {
+        "5432": 0
+      },
+      "subjectAltNames": [],
+      "vips": []
+    },
+    {
+      "endpoints": {
+        "cluster-default//Pod/keycloak/keycloak-postgresql-0": {
+          "port": {
+            "5432": 5432
+          },
+          "status": "Healthy",
+          "workloadUid": "cluster-default//Pod/keycloak/keycloak-postgresql-0"
+        }
+      },
+      "hostname": "keycloak-postgresql.keycloak.svc.cluster.local",
+      "ipFamilies": "IPv4",
+      "name": "keycloak-postgresql",
+      "namespace": "keycloak",
+      "ports": {
+        "5432": 0
+      },
+      "subjectAltNames": [],
+      "vips": ["/10.96.61.11"]
+    },
+    {
+      "endpoints": {
+        "cluster-default//Pod/keycloak/keycloak-0": {
+          "port": {
+            "443": 8443,
+            "80": 8080
+          },
+          "status": "Healthy",
+          "workloadUid": "cluster-default//Pod/keycloak/keycloak-0"
+        }
+      },
+      "hostname": "keycloak.keycloak.svc.cluster.local",
+      "ipFamilies": "IPv4",
+      "name": "keycloak",
+      "namespace": "keycloak",
+      "ports": {
+        "443": 0,
+        "80": 0
+      },
+      "subjectAltNames": [],
+      "vips": ["/10.96.213.239"]
+    },
+    {
+      "endpoints": {
+        "cluster-default//Pod/istio-system/kiali-7898fcc67d-5b6xl": {
+          "port": {
+            "80": 20001,
+            "9090": 9090
+          },
+          "status": "Healthy",
+          "workloadUid": "cluster-default//Pod/istio-system/kiali-7898fcc67d-5b6xl"
+        }
+      },
+      "hostname": "kiali.istio-system.svc.cluster.local",
+      "ipFamilies": "IPv4",
+      "name": "kiali",
+      "namespace": "istio-system",
+      "ports": {
+        "80": 20001,
+        "9090": 9090
+      },
+      "subjectAltNames": [],
+      "vips": ["/10.96.119.35"]
+    },
+    {
+      "endpoints": {
+        "cluster-default//Pod/kube-system/coredns-5d78c9869d-j7t9q": {
+          "port": {
+            "53": 53,
+            "9153": 9153
+          },
+          "status": "Healthy",
+          "workloadUid": "cluster-default//Pod/kube-system/coredns-5d78c9869d-j7t9q"
+        },
+        "cluster-default//Pod/kube-system/coredns-5d78c9869d-t7vcc": {
+          "port": {
+            "53": 53,
+            "9153": 9153
+          },
+          "status": "Healthy",
+          "workloadUid": "cluster-default//Pod/kube-system/coredns-5d78c9869d-t7vcc"
+        }
+      },
+      "hostname": "kube-dns.kube-system.svc.cluster.local",
+      "ipFamilies": "IPv4",
+      "name": "kube-dns",
+      "namespace": "kube-system",
+      "ports": {
+        "53": 53,
+        "9153": 9153
+      },
+      "subjectAltNames": [],
+      "vips": ["/10.96.0.10"]
+    },
+    {
+      "endpoints": {
+        "cluster-default/discovery.k8s.io/EndpointSlice/default/kubernetes/172.18.0.5": {
+          "port": {
+            "443": 6443
+          },
+          "status": "Healthy",
+          "workloadUid": "cluster-default/discovery.k8s.io/EndpointSlice/default/kubernetes/172.18.0.5"
+        }
+      },
+      "hostname": "kubernetes.default.svc.cluster.local",
+      "ipFamilies": "IPv4",
+      "name": "kubernetes",
+      "namespace": "default",
+      "ports": {
+        "443": 6443
+      },
+      "subjectAltNames": [],
+      "vips": ["/10.96.0.1"]
+    },
+    {
+      "endpoints": {
+        "cluster-default//Pod/travel-agency/mysqldb-v1-bd877d7fc-6hntn": {
+          "port": {
+            "3306": 3306
+          },
+          "status": "Healthy",
+          "workloadUid": "cluster-default//Pod/travel-agency/mysqldb-v1-bd877d7fc-6hntn"
+        }
+      },
+      "hostname": "mysqldb.travel-agency.svc.cluster.local",
+      "ipFamilies": "IPv4",
+      "name": "mysqldb",
+      "namespace": "travel-agency",
+      "ports": {
+        "3306": 3306
+      },
+      "subjectAltNames": [],
+      "vips": ["/10.96.45.104"]
+    },
+    {
+      "endpoints": {
+        "cluster-default//Pod/bookinfo/productpage-v1-f47f868c8-vlj4p": {
+          "port": {
+            "9080": 9080
+          },
+          "status": "Healthy",
+          "workloadUid": "cluster-default//Pod/bookinfo/productpage-v1-f47f868c8-vlj4p"
+        }
+      },
+      "hostname": "productpage-v1.bookinfo.svc.cluster.local",
+      "ipFamilies": "IPv4",
+      "name": "productpage-v1",
+      "namespace": "bookinfo",
+      "ports": {
+        "9080": 9080
+      },
+      "subjectAltNames": [],
+      "vips": ["/10.96.83.103"],
+      "waypoint": {
+        "destination": "bookinfo/waypoint.bookinfo.svc.cluster.local",
+        "hboneMtlsPort": 15008
+      }
+    },
+    {
+      "endpoints": {
+        "cluster-default//Pod/bookinfo/productpage-v1-f47f868c8-vlj4p": {
+          "port": {
+            "9080": 9080
+          },
+          "status": "Healthy",
+          "workloadUid": "cluster-default//Pod/bookinfo/productpage-v1-f47f868c8-vlj4p"
+        }
+      },
+      "hostname": "productpage.bookinfo.svc.cluster.local",
+      "ipFamilies": "IPv4",
+      "name": "productpage",
+      "namespace": "bookinfo",
+      "ports": {
+        "9080": 9080
+      },
+      "subjectAltNames": [],
+      "vips": ["/10.96.209.124"],
+      "waypoint": {
+        "destination": "bookinfo/waypoint.bookinfo.svc.cluster.local",
+        "hboneMtlsPort": 15008
+      }
+    },
+    {
+      "endpoints": {
+        "cluster-default//Pod/istio-system/prometheus-86f99d868-w247r": {
+          "port": {
+            "9090": 9090
+          },
+          "status": "Healthy",
+          "workloadUid": "cluster-default//Pod/istio-system/prometheus-86f99d868-w247r"
+        }
+      },
+      "hostname": "prometheus.istio-system.svc.cluster.local",
+      "ipFamilies": "IPv4",
+      "name": "prometheus",
+      "namespace": "istio-system",
+      "ports": {
+        "9090": 9090
+      },
+      "subjectAltNames": [],
+      "vips": ["/10.96.143.95"]
+    },
+    {
+      "endpoints": {
+        "cluster-default//Pod/bookinfo/ratings-v1-85cf8d8647-gtptp": {
+          "port": {
+            "9080": 9080
+          },
+          "status": "Healthy",
+          "workloadUid": "cluster-default//Pod/bookinfo/ratings-v1-85cf8d8647-gtptp"
+        }
+      },
+      "hostname": "ratings-v1.bookinfo.svc.cluster.local",
+      "ipFamilies": "IPv4",
+      "name": "ratings-v1",
+      "namespace": "bookinfo",
+      "ports": {
+        "9080": 9080
+      },
+      "subjectAltNames": [],
+      "vips": ["/10.96.93.254"],
+      "waypoint": {
+        "destination": "bookinfo/waypoint.bookinfo.svc.cluster.local",
+        "hboneMtlsPort": 15008
+      }
+    },
+    {
+      "endpoints": {
+        "cluster-default//Pod/bookinfo/ratings-v1-85cf8d8647-gtptp": {
+          "port": {
+            "9080": 9080
+          },
+          "status": "Healthy",
+          "workloadUid": "cluster-default//Pod/bookinfo/ratings-v1-85cf8d8647-gtptp"
+        }
+      },
+      "hostname": "ratings.bookinfo.svc.cluster.local",
+      "ipFamilies": "IPv4",
+      "name": "ratings",
+      "namespace": "bookinfo",
+      "ports": {
+        "9080": 9080
+      },
+      "subjectAltNames": [],
+      "vips": ["/10.96.237.201"],
+      "waypoint": {
+        "destination": "bookinfo/waypoint.bookinfo.svc.cluster.local",
+        "hboneMtlsPort": 15008
+      }
+    },
+    {
+      "endpoints": {
+        "cluster-default//Pod/bookinfo/reviews-v1-5fc87d67c-r67vp": {
+          "port": {
+            "9080": 9080
+          },
+          "status": "Healthy",
+          "workloadUid": "cluster-default//Pod/bookinfo/reviews-v1-5fc87d67c-r67vp"
+        }
+      },
+      "hostname": "reviews-v1.bookinfo.svc.cluster.local",
+      "ipFamilies": "IPv4",
+      "name": "reviews-v1",
+      "namespace": "bookinfo",
+      "ports": {
+        "9080": 9080
+      },
+      "subjectAltNames": [],
+      "vips": ["/10.96.59.186"],
+      "waypoint": {
+        "destination": "bookinfo/waypoint.bookinfo.svc.cluster.local",
+        "hboneMtlsPort": 15008
+      }
+    },
+    {
+      "endpoints": {
+        "cluster-default//Pod/bookinfo/reviews-v2-f6d449f65-v2qx7": {
+          "port": {
+            "9080": 9080
+          },
+          "status": "Healthy",
+          "workloadUid": "cluster-default//Pod/bookinfo/reviews-v2-f6d449f65-v2qx7"
+        }
+      },
+      "hostname": "reviews-v2.bookinfo.svc.cluster.local",
+      "ipFamilies": "IPv4",
+      "name": "reviews-v2",
+      "namespace": "bookinfo",
+      "ports": {
+        "9080": 9080
+      },
+      "subjectAltNames": [],
+      "vips": ["/10.96.81.236"],
+      "waypoint": {
+        "destination": "bookinfo/waypoint.bookinfo.svc.cluster.local",
+        "hboneMtlsPort": 15008
+      }
+    },
+    {
+      "endpoints": {
+        "cluster-default//Pod/bookinfo/reviews-v3-76f75877b9-g6ds7": {
+          "port": {
+            "9080": 9080
+          },
+          "status": "Healthy",
+          "workloadUid": "cluster-default//Pod/bookinfo/reviews-v3-76f75877b9-g6ds7"
+        }
+      },
+      "hostname": "reviews-v3.bookinfo.svc.cluster.local",
+      "ipFamilies": "IPv4",
+      "name": "reviews-v3",
+      "namespace": "bookinfo",
+      "ports": {
+        "9080": 9080
+      },
+      "subjectAltNames": [],
+      "vips": ["/10.96.146.65"],
+      "waypoint": {
+        "destination": "bookinfo/waypoint.bookinfo.svc.cluster.local",
+        "hboneMtlsPort": 15008
+      }
+    },
+    {
+      "endpoints": {
+        "cluster-default//Pod/bookinfo/reviews-v1-5fc87d67c-r67vp": {
+          "port": {
+            "9080": 9080
+          },
+          "status": "Healthy",
+          "workloadUid": "cluster-default//Pod/bookinfo/reviews-v1-5fc87d67c-r67vp"
+        },
+        "cluster-default//Pod/bookinfo/reviews-v2-f6d449f65-v2qx7": {
+          "port": {
+            "9080": 9080
+          },
+          "status": "Healthy",
+          "workloadUid": "cluster-default//Pod/bookinfo/reviews-v2-f6d449f65-v2qx7"
+        },
+        "cluster-default//Pod/bookinfo/reviews-v3-76f75877b9-g6ds7": {
+          "port": {
+            "9080": 9080
+          },
+          "status": "Healthy",
+          "workloadUid": "cluster-default//Pod/bookinfo/reviews-v3-76f75877b9-g6ds7"
+        }
+      },
+      "hostname": "reviews.bookinfo.svc.cluster.local",
+      "ipFamilies": "IPv4",
+      "name": "reviews",
+      "namespace": "bookinfo",
+      "ports": {
+        "9080": 9080
+      },
+      "subjectAltNames": [],
+      "vips": ["/10.96.224.224"],
+      "waypoint": {
+        "destination": "bookinfo/waypoint.bookinfo.svc.cluster.local",
+        "hboneMtlsPort": 15008
+      }
+    },
+    {
+      "endpoints": {
+        "cluster-default//Pod/istio-system/jaeger-d89bc58b9-d7tf2": {
+          "port": {
+            "16685": 16685,
+            "80": 16686
+          },
+          "status": "Healthy",
+          "workloadUid": "cluster-default//Pod/istio-system/jaeger-d89bc58b9-d7tf2"
+        }
+      },
+      "hostname": "tracing.istio-system.svc.cluster.local",
+      "ipFamilies": "IPv4",
+      "name": "tracing",
+      "namespace": "istio-system",
+      "ports": {
+        "16685": 16685,
+        "80": 16686
+      },
+      "subjectAltNames": [],
+      "vips": ["/10.96.42.73"]
+    },
+    {
+      "endpoints": {
+        "cluster-default//Pod/travel-agency/travels-v1-5cb87c8dbd-h4cjs": {
+          "port": {
+            "8000": 8000
+          },
+          "status": "Healthy",
+          "workloadUid": "cluster-default//Pod/travel-agency/travels-v1-5cb87c8dbd-h4cjs"
+        }
+      },
+      "hostname": "travels.travel-agency.svc.cluster.local",
+      "ipFamilies": "IPv4",
+      "name": "travels",
+      "namespace": "travel-agency",
+      "ports": {
+        "8000": 8000
+      },
+      "subjectAltNames": [],
+      "vips": ["/10.96.157.40"]
+    },
+    {
+      "endpoints": {
+        "cluster-default//Pod/travel-portal/travels-659bd87ccd-9s9bw": {
+          "port": {
+            "8000": 8000
+          },
+          "status": "Healthy",
+          "workloadUid": "cluster-default//Pod/travel-portal/travels-659bd87ccd-9s9bw"
+        }
+      },
+      "hostname": "travels.travel-portal.svc.cluster.local",
+      "ipFamilies": "IPv4",
+      "name": "travels",
+      "namespace": "travel-portal",
+      "ports": {
+        "8000": 8000
+      },
+      "subjectAltNames": [],
+      "vips": ["/10.96.108.253"]
+    },
+    {
+      "endpoints": {
+        "cluster-default//Pod/travel-portal/viaggi-74c7c5f946-6gh5k": {
+          "port": {
+            "8000": 8000
+          },
+          "status": "Healthy",
+          "workloadUid": "cluster-default//Pod/travel-portal/viaggi-74c7c5f946-6gh5k"
+        }
+      },
+      "hostname": "viaggi.travel-portal.svc.cluster.local",
+      "ipFamilies": "IPv4",
+      "name": "viaggi",
+      "namespace": "travel-portal",
+      "ports": {
+        "8000": 8000
+      },
+      "subjectAltNames": [],
+      "vips": ["/10.96.247.142"]
+    },
+    {
+      "endpoints": {
+        "cluster-default//Pod/travel-portal/voyages-5b4f7d7d75-dz626": {
+          "port": {
+            "8000": 8000
+          },
+          "status": "Healthy",
+          "workloadUid": "cluster-default//Pod/travel-portal/voyages-5b4f7d7d75-dz626"
+        }
+      },
+      "hostname": "voyages.travel-portal.svc.cluster.local",
+      "ipFamilies": "IPv4",
+      "name": "voyages",
+      "namespace": "travel-portal",
+      "ports": {
+        "8000": 8000
+      },
+      "subjectAltNames": [],
+      "vips": ["/10.96.97.150"]
+    },
+    {
+      "endpoints": {
+        "cluster-default//Pod/bookinfo/waypoint-7564f99fc9-xlkjz": {
+          "port": {
+            "15008": 15008,
+            "15021": 15021
+          },
+          "status": "Healthy",
+          "workloadUid": "cluster-default//Pod/bookinfo/waypoint-7564f99fc9-xlkjz"
+        }
+      },
+      "hostname": "waypoint.bookinfo.svc.cluster.local",
+      "ipFamilies": "IPv4",
+      "loadBalancer": {
+        "healthPolicy": "OnlyHealthy",
+        "mode": "Failover",
+        "routingPreferences": ["Network", "Region", "Zone", "Subzone"]
+      },
+      "name": "waypoint",
+      "namespace": "bookinfo",
+      "ports": {
+        "15008": 15008,
+        "15021": 15021
+      },
+      "subjectAltNames": [],
+      "vips": ["/10.96.213.240"]
+    },
+    {
+      "endpoints": {
+        "cluster-default//Pod/metallb-system/controller-595f88d88f-hxf64": {
+          "port": {
+            "443": 9443
+          },
+          "status": "Healthy",
+          "workloadUid": "cluster-default//Pod/metallb-system/controller-595f88d88f-hxf64"
+        }
+      },
+      "hostname": "webhook-service.metallb-system.svc.cluster.local",
+      "ipFamilies": "IPv4",
+      "name": "webhook-service",
+      "namespace": "metallb-system",
+      "ports": {
+        "443": 9443
+      },
+      "subjectAltNames": [],
+      "vips": ["/10.96.154.160"]
+    },
+    {
+      "endpoints": {
+        "cluster-default//Pod/istio-system/jaeger-d89bc58b9-d7tf2": {
+          "port": {
+            "9411": 9411
+          },
+          "status": "Healthy",
+          "workloadUid": "cluster-default//Pod/istio-system/jaeger-d89bc58b9-d7tf2"
+        }
+      },
+      "hostname": "zipkin.istio-system.svc.cluster.local",
+      "ipFamilies": "IPv4",
+      "name": "zipkin",
+      "namespace": "istio-system",
+      "ports": {
+        "9411": 9411
+      },
+      "subjectAltNames": [],
+      "vips": ["/10.96.82.57"]
+    }
+  ],
+  "stagedServices": {},
+  "staticConfig": {
+    "policies": [],
+    "services": [],
+    "workloads": []
+  },
+  "version": {
+    "buildProfile": "release",
+    "buildStatus": "Clean",
+    "gitRevision": "4c7cdf1b62ddcc786402499c03eff0d5172c95ef",
+    "gitTag": "1.24.0-2-g4c7cdf1",
+    "istioVersion": "unknown",
+    "rustVersion": "1.81.0",
+    "version": "4c7cdf1b62ddcc786402499c03eff0d5172c95ef"
+  },
+  "workloadState": {},
+  "workloads": [
+    {
+      "canonicalName": "bookinfo-gateway-istio",
+      "canonicalRevision": "latest",
+      "clusterId": "cluster-default",
+      "name": "bookinfo-gateway-istio-7c875f844-dllvg",
+      "namespace": "bookinfo",
+      "networkMode": "Standard",
+      "node": "ci-worker",
+      "protocol": "TCP",
+      "serviceAccount": "bookinfo-gateway-istio",
+      "services": [
+        "bookinfo/bookinfo-gateway-istio.bookinfo.svc.cluster.local"
+      ],
+      "status": "Healthy",
+      "trustDomain": "cluster.local",
+      "uid": "cluster-default//Pod/bookinfo/bookinfo-gateway-istio-7c875f844-dllvg",
+      "workloadIps": ["10.244.1.22"],
+      "workloadName": "bookinfo-gateway-istio",
+      "workloadType": "deployment"
+    },
+    {
+      "canonicalName": "details",
+      "canonicalRevision": "v1",
+      "clusterId": "cluster-default",
+      "name": "details-v1-7c5d957895-pwqdh",
+      "namespace": "bookinfo",
+      "networkMode": "Standard",
+      "node": "ci-worker",
+      "protocol": "HBONE",
+      "serviceAccount": "bookinfo-details",
+      "services": [
+        "bookinfo/details.bookinfo.svc.cluster.local",
+        "bookinfo/details-v1.bookinfo.svc.cluster.local"
+      ],
+      "status": "Healthy",
+      "trustDomain": "cluster.local",
+      "uid": "cluster-default//Pod/bookinfo/details-v1-7c5d957895-pwqdh",
+      "workloadIps": ["10.244.1.15"],
+      "workloadName": "details-v1",
+      "workloadType": "deployment"
+    },
+    {
+      "canonicalName": "kiali-traffic-generator",
+      "canonicalRevision": "latest",
+      "clusterId": "cluster-default",
+      "name": "kiali-traffic-generator-dvxz2",
+      "namespace": "bookinfo",
+      "networkMode": "Standard",
+      "node": "ci-worker",
+      "protocol": "HBONE",
+      "serviceAccount": "default",
+      "status": "Healthy",
+      "trustDomain": "cluster.local",
+      "uid": "cluster-default//Pod/bookinfo/kiali-traffic-generator-dvxz2",
+      "workloadIps": ["10.244.1.24"],
+      "workloadName": "kiali-traffic-generator-dvxz2",
+      "workloadType": "pod"
+    },
+    {
+      "canonicalName": "productpage",
+      "canonicalRevision": "v1",
+      "clusterId": "cluster-default",
+      "name": "productpage-v1-f47f868c8-vlj4p",
+      "namespace": "bookinfo",
+      "networkMode": "Standard",
+      "node": "ci-worker",
+      "protocol": "HBONE",
+      "serviceAccount": "bookinfo-productpage",
+      "services": [
+        "bookinfo/productpage.bookinfo.svc.cluster.local",
+        "bookinfo/productpage-v1.bookinfo.svc.cluster.local"
+      ],
+      "status": "Healthy",
+      "trustDomain": "cluster.local",
+      "uid": "cluster-default//Pod/bookinfo/productpage-v1-f47f868c8-vlj4p",
+      "workloadIps": ["10.244.1.20"],
+      "workloadName": "productpage-v1",
+      "workloadType": "deployment"
+    },
+    {
+      "canonicalName": "ratings",
+      "canonicalRevision": "v1",
+      "clusterId": "cluster-default",
+      "name": "ratings-v1-85cf8d8647-gtptp",
+      "namespace": "bookinfo",
+      "networkMode": "Standard",
+      "node": "ci-worker",
+      "protocol": "HBONE",
+      "serviceAccount": "bookinfo-ratings",
+      "services": [
+        "bookinfo/ratings.bookinfo.svc.cluster.local",
+        "bookinfo/ratings-v1.bookinfo.svc.cluster.local"
+      ],
+      "status": "Healthy",
+      "trustDomain": "cluster.local",
+      "uid": "cluster-default//Pod/bookinfo/ratings-v1-85cf8d8647-gtptp",
+      "workloadIps": ["10.244.1.16"],
+      "workloadName": "ratings-v1",
+      "workloadType": "deployment"
+    },
+    {
+      "canonicalName": "reviews",
+      "canonicalRevision": "v1",
+      "clusterId": "cluster-default",
+      "name": "reviews-v1-5fc87d67c-r67vp",
+      "namespace": "bookinfo",
+      "networkMode": "Standard",
+      "node": "ci-worker",
+      "protocol": "HBONE",
+      "serviceAccount": "bookinfo-reviews",
+      "services": [
+        "bookinfo/reviews.bookinfo.svc.cluster.local",
+        "bookinfo/reviews-v1.bookinfo.svc.cluster.local"
+      ],
+      "status": "Healthy",
+      "trustDomain": "cluster.local",
+      "uid": "cluster-default//Pod/bookinfo/reviews-v1-5fc87d67c-r67vp",
+      "workloadIps": ["10.244.1.17"],
+      "workloadName": "reviews-v1",
+      "workloadType": "deployment"
+    },
+    {
+      "canonicalName": "reviews",
+      "canonicalRevision": "v2",
+      "clusterId": "cluster-default",
+      "name": "reviews-v2-f6d449f65-v2qx7",
+      "namespace": "bookinfo",
+      "networkMode": "Standard",
+      "node": "ci-worker",
+      "protocol": "HBONE",
+      "serviceAccount": "bookinfo-reviews",
+      "services": [
+        "bookinfo/reviews.bookinfo.svc.cluster.local",
+        "bookinfo/reviews-v2.bookinfo.svc.cluster.local"
+      ],
+      "status": "Healthy",
+      "trustDomain": "cluster.local",
+      "uid": "cluster-default//Pod/bookinfo/reviews-v2-f6d449f65-v2qx7",
+      "workloadIps": ["10.244.1.18"],
+      "workloadName": "reviews-v2",
+      "workloadType": "deployment"
+    },
+    {
+      "canonicalName": "reviews",
+      "canonicalRevision": "v3",
+      "clusterId": "cluster-default",
+      "name": "reviews-v3-76f75877b9-g6ds7",
+      "namespace": "bookinfo",
+      "networkMode": "Standard",
+      "node": "ci-worker",
+      "protocol": "HBONE",
+      "serviceAccount": "bookinfo-reviews",
+      "services": [
+        "bookinfo/reviews-v3.bookinfo.svc.cluster.local",
+        "bookinfo/reviews.bookinfo.svc.cluster.local"
+      ],
+      "status": "Healthy",
+      "trustDomain": "cluster.local",
+      "uid": "cluster-default//Pod/bookinfo/reviews-v3-76f75877b9-g6ds7",
+      "workloadIps": ["10.244.1.19"],
+      "workloadName": "reviews-v3",
+      "workloadType": "deployment"
+    },
+    {
+      "canonicalName": "waypoint",
+      "canonicalRevision": "latest",
+      "clusterId": "cluster-default",
+      "name": "waypoint-7564f99fc9-xlkjz",
+      "namespace": "bookinfo",
+      "networkMode": "Standard",
+      "node": "ci-worker",
+      "protocol": "TCP",
+      "serviceAccount": "waypoint",
+      "services": ["bookinfo/waypoint.bookinfo.svc.cluster.local"],
+      "status": "Healthy",
+      "trustDomain": "cluster.local",
+      "uid": "cluster-default//Pod/bookinfo/waypoint-7564f99fc9-xlkjz",
+      "workloadIps": ["10.244.1.23"],
+      "workloadName": "waypoint",
+      "workloadType": "deployment"
+    },
+    {
+      "canonicalName": "grafana",
+      "canonicalRevision": "latest",
+      "clusterId": "cluster-default",
+      "name": "grafana-7874f88995-49vm4",
+      "namespace": "istio-system",
+      "networkMode": "Standard",
+      "node": "ci-worker",
+      "protocol": "TCP",
+      "serviceAccount": "grafana",
+      "services": ["istio-system/grafana.istio-system.svc.cluster.local"],
+      "status": "Healthy",
+      "trustDomain": "cluster.local",
+      "uid": "cluster-default//Pod/istio-system/grafana-7874f88995-49vm4",
+      "workloadIps": ["10.244.1.11"],
+      "workloadName": "grafana",
+      "workloadType": "deployment"
+    },
+    {
+      "canonicalName": "istio-cni",
+      "canonicalRevision": "1.24.1",
+      "clusterId": "cluster-default",
+      "name": "istio-cni-node-gn8px",
+      "namespace": "istio-system",
+      "networkMode": "HostNetwork",
+      "node": "ci-control-plane",
+      "protocol": "TCP",
+      "serviceAccount": "istio-cni",
+      "status": "Healthy",
+      "trustDomain": "cluster.local",
+      "uid": "cluster-default//Pod/istio-system/istio-cni-node-gn8px",
+      "workloadIps": ["172.18.0.5"],
+      "workloadName": "istio-cni-node-gn8px",
+      "workloadType": "pod"
+    },
+    {
+      "canonicalName": "istio-cni",
+      "canonicalRevision": "1.24.1",
+      "clusterId": "cluster-default",
+      "name": "istio-cni-node-m287m",
+      "namespace": "istio-system",
+      "networkMode": "HostNetwork",
+      "node": "ci-worker",
+      "protocol": "TCP",
+      "serviceAccount": "istio-cni",
+      "status": "Healthy",
+      "trustDomain": "cluster.local",
+      "uid": "cluster-default//Pod/istio-system/istio-cni-node-m287m",
+      "workloadIps": ["172.18.0.6"],
+      "workloadName": "istio-cni-node-m287m",
+      "workloadType": "pod"
+    },
+    {
+      "canonicalName": "istio-egressgateway",
+      "canonicalRevision": "latest",
+      "clusterId": "cluster-default",
+      "name": "istio-egressgateway-66db7db9d4-kjcmw",
+      "namespace": "istio-system",
+      "networkMode": "Standard",
+      "node": "ci-worker",
+      "protocol": "TCP",
+      "serviceAccount": "istio-egressgateway-service-account",
+      "services": [
+        "istio-system/istio-egressgateway.istio-system.svc.cluster.local"
+      ],
+      "status": "Healthy",
+      "trustDomain": "cluster.local",
+      "uid": "cluster-default//Pod/istio-system/istio-egressgateway-66db7db9d4-kjcmw",
+      "workloadIps": ["10.244.1.7"],
+      "workloadName": "istio-egressgateway",
+      "workloadType": "deployment"
+    },
+    {
+      "canonicalName": "istio-ingressgateway",
+      "canonicalRevision": "latest",
+      "clusterId": "cluster-default",
+      "name": "istio-ingressgateway-74d79d79fc-q6x6q",
+      "namespace": "istio-system",
+      "networkMode": "Standard",
+      "node": "ci-worker",
+      "protocol": "TCP",
+      "serviceAccount": "istio-ingressgateway-service-account",
+      "services": [
+        "istio-system/istio-ingressgateway.istio-system.svc.cluster.local"
+      ],
+      "status": "Healthy",
+      "trustDomain": "cluster.local",
+      "uid": "cluster-default//Pod/istio-system/istio-ingressgateway-74d79d79fc-q6x6q",
+      "workloadIps": ["10.244.1.8"],
+      "workloadName": "istio-ingressgateway",
+      "workloadType": "deployment"
+    },
+    {
+      "canonicalName": "istiod",
+      "canonicalRevision": "1.24.1",
+      "clusterId": "cluster-default",
+      "name": "istiod-54b6586f84-9bgw2",
+      "namespace": "istio-system",
+      "networkMode": "Standard",
+      "node": "ci-worker",
+      "protocol": "TCP",
+      "serviceAccount": "istiod",
+      "services": ["istio-system/istiod.istio-system.svc.cluster.local"],
+      "status": "Healthy",
+      "trustDomain": "cluster.local",
+      "uid": "cluster-default//Pod/istio-system/istiod-54b6586f84-9bgw2",
+      "workloadIps": ["10.244.1.6"],
+      "workloadName": "istiod",
+      "workloadType": "deployment"
+    },
+    {
+      "canonicalName": "jaeger",
+      "canonicalRevision": "latest",
+      "clusterId": "cluster-default",
+      "name": "jaeger-d89bc58b9-d7tf2",
+      "namespace": "istio-system",
+      "networkMode": "Standard",
+      "node": "ci-worker",
+      "protocol": "TCP",
+      "serviceAccount": "default",
+      "services": [
+        "istio-system/jaeger-collector.istio-system.svc.cluster.local",
+        "istio-system/tracing.istio-system.svc.cluster.local",
+        "istio-system/zipkin.istio-system.svc.cluster.local"
+      ],
+      "status": "Healthy",
+      "trustDomain": "cluster.local",
+      "uid": "cluster-default//Pod/istio-system/jaeger-d89bc58b9-d7tf2",
+      "workloadIps": ["10.244.1.12"],
+      "workloadName": "jaeger",
+      "workloadType": "deployment"
+    },
+    {
+      "canonicalName": "kiali",
+      "canonicalRevision": "v2.3.0-SNAPSHOT",
+      "clusterId": "cluster-default",
+      "name": "kiali-7898fcc67d-5b6xl",
+      "namespace": "istio-system",
+      "networkMode": "Standard",
+      "node": "ci-worker",
+      "protocol": "TCP",
+      "serviceAccount": "kiali",
+      "services": ["istio-system/kiali.istio-system.svc.cluster.local"],
+      "status": "Healthy",
+      "trustDomain": "cluster.local",
+      "uid": "cluster-default//Pod/istio-system/kiali-7898fcc67d-5b6xl",
+      "workloadIps": ["10.244.1.27"],
+      "workloadName": "kiali",
+      "workloadType": "deployment"
+    },
+    {
+      "canonicalName": "prometheus",
+      "canonicalRevision": "v2.54.1",
+      "clusterId": "cluster-default",
+      "name": "prometheus-86f99d868-w247r",
+      "namespace": "istio-system",
+      "networkMode": "Standard",
+      "node": "ci-worker",
+      "protocol": "TCP",
+      "serviceAccount": "prometheus",
+      "services": ["istio-system/prometheus.istio-system.svc.cluster.local"],
+      "status": "Healthy",
+      "trustDomain": "cluster.local",
+      "uid": "cluster-default//Pod/istio-system/prometheus-86f99d868-w247r",
+      "workloadIps": ["10.244.1.10"],
+      "workloadName": "prometheus",
+      "workloadType": "deployment"
+    },
+    {
+      "canonicalName": "ztunnel",
+      "canonicalRevision": "1.24.1",
+      "clusterId": "cluster-default",
+      "name": "ztunnel-6z6nt",
+      "namespace": "istio-system",
+      "networkMode": "Standard",
+      "node": "ci-worker",
+      "protocol": "TCP",
+      "serviceAccount": "ztunnel",
+      "status": "Healthy",
+      "trustDomain": "cluster.local",
+      "uid": "cluster-default//Pod/istio-system/ztunnel-6z6nt",
+      "workloadIps": ["10.244.1.9"],
+      "workloadName": "ztunnel-6z6nt",
+      "workloadType": "pod"
+    },
+    {
+      "canonicalName": "ztunnel",
+      "canonicalRevision": "1.24.1",
+      "clusterId": "cluster-default",
+      "name": "ztunnel-7hml8",
+      "namespace": "istio-system",
+      "networkMode": "Standard",
+      "node": "ci-control-plane",
+      "protocol": "TCP",
+      "serviceAccount": "ztunnel",
+      "status": "Healthy",
+      "trustDomain": "cluster.local",
+      "uid": "cluster-default//Pod/istio-system/ztunnel-7hml8",
+      "workloadIps": ["10.244.0.5"],
+      "workloadName": "ztunnel-7hml8",
+      "workloadType": "pod"
+    },
+    {
+      "canonicalName": "keycloak",
+      "canonicalRevision": "26.0.7",
+      "clusterId": "cluster-default",
+      "name": "keycloak-0",
+      "namespace": "keycloak",
+      "networkMode": "Standard",
+      "node": "ci-worker",
+      "protocol": "TCP",
+      "serviceAccount": "keycloak",
+      "services": [
+        "keycloak/keycloak-headless.keycloak.svc.cluster.local",
+        "keycloak/keycloak.keycloak.svc.cluster.local"
+      ],
+      "status": "Healthy",
+      "trustDomain": "cluster.local",
+      "uid": "cluster-default//Pod/keycloak/keycloak-0",
+      "workloadIps": ["10.244.1.3"],
+      "workloadName": "keycloak-0",
+      "workloadType": "pod"
+    },
+    {
+      "canonicalName": "postgresql",
+      "canonicalRevision": "17.2.0",
+      "clusterId": "cluster-default",
+      "name": "keycloak-postgresql-0",
+      "namespace": "keycloak",
+      "networkMode": "Standard",
+      "node": "ci-worker",
+      "protocol": "TCP",
+      "serviceAccount": "keycloak-postgresql",
+      "services": [
+        "keycloak/keycloak-postgresql.keycloak.svc.cluster.local",
+        "keycloak/keycloak-postgresql-hl.keycloak.svc.cluster.local"
+      ],
+      "status": "Healthy",
+      "trustDomain": "cluster.local",
+      "uid": "cluster-default//Pod/keycloak/keycloak-postgresql-0",
+      "workloadIps": ["10.244.1.5"],
+      "workloadName": "keycloak-postgresql-0",
+      "workloadType": "pod"
+    },
+    {
+      "canonicalName": "coredns",
+      "canonicalRevision": "latest",
+      "clusterId": "cluster-default",
+      "name": "coredns-5d78c9869d-j7t9q",
+      "namespace": "kube-system",
+      "networkMode": "Standard",
+      "node": "ci-control-plane",
+      "protocol": "TCP",
+      "serviceAccount": "coredns",
+      "services": ["kube-system/kube-dns.kube-system.svc.cluster.local"],
+      "status": "Healthy",
+      "trustDomain": "cluster.local",
+      "uid": "cluster-default//Pod/kube-system/coredns-5d78c9869d-j7t9q",
+      "workloadIps": ["10.244.0.3"],
+      "workloadName": "coredns",
+      "workloadType": "deployment"
+    },
+    {
+      "canonicalName": "coredns",
+      "canonicalRevision": "latest",
+      "clusterId": "cluster-default",
+      "name": "coredns-5d78c9869d-t7vcc",
+      "namespace": "kube-system",
+      "networkMode": "Standard",
+      "node": "ci-control-plane",
+      "protocol": "TCP",
+      "serviceAccount": "coredns",
+      "services": ["kube-system/kube-dns.kube-system.svc.cluster.local"],
+      "status": "Healthy",
+      "trustDomain": "cluster.local",
+      "uid": "cluster-default//Pod/kube-system/coredns-5d78c9869d-t7vcc",
+      "workloadIps": ["10.244.0.2"],
+      "workloadName": "coredns",
+      "workloadType": "deployment"
+    },
+    {
+      "canonicalName": "etcd-ci-control-plane",
+      "canonicalRevision": "latest",
+      "clusterId": "cluster-default",
+      "name": "etcd-ci-control-plane",
+      "namespace": "kube-system",
+      "networkMode": "HostNetwork",
+      "node": "ci-control-plane",
+      "protocol": "TCP",
+      "serviceAccount": "default",
+      "status": "Healthy",
+      "trustDomain": "cluster.local",
+      "uid": "cluster-default//Pod/kube-system/etcd-ci-control-plane",
+      "workloadIps": ["172.18.0.5"],
+      "workloadName": "etcd-ci-control-plane",
+      "workloadType": "pod"
+    },
+    {
+      "canonicalName": "kindnet",
+      "canonicalRevision": "latest",
+      "clusterId": "cluster-default",
+      "name": "kindnet-9c5wr",
+      "namespace": "kube-system",
+      "networkMode": "HostNetwork",
+      "node": "ci-control-plane",
+      "protocol": "TCP",
+      "serviceAccount": "kindnet",
+      "status": "Healthy",
+      "trustDomain": "cluster.local",
+      "uid": "cluster-default//Pod/kube-system/kindnet-9c5wr",
+      "workloadIps": ["172.18.0.5"],
+      "workloadName": "kindnet-9c5wr",
+      "workloadType": "pod"
+    },
+    {
+      "canonicalName": "kindnet",
+      "canonicalRevision": "latest",
+      "clusterId": "cluster-default",
+      "name": "kindnet-f4c5q",
+      "namespace": "kube-system",
+      "networkMode": "HostNetwork",
+      "node": "ci-worker",
+      "protocol": "TCP",
+      "serviceAccount": "kindnet",
+      "status": "Healthy",
+      "trustDomain": "cluster.local",
+      "uid": "cluster-default//Pod/kube-system/kindnet-f4c5q",
+      "workloadIps": ["172.18.0.6"],
+      "workloadName": "kindnet-f4c5q",
+      "workloadType": "pod"
+    },
+    {
+      "canonicalName": "kube-apiserver-ci-control-plane",
+      "canonicalRevision": "latest",
+      "clusterId": "cluster-default",
+      "name": "kube-apiserver-ci-control-plane",
+      "namespace": "kube-system",
+      "networkMode": "HostNetwork",
+      "node": "ci-control-plane",
+      "protocol": "TCP",
+      "serviceAccount": "default",
+      "status": "Healthy",
+      "trustDomain": "cluster.local",
+      "uid": "cluster-default//Pod/kube-system/kube-apiserver-ci-control-plane",
+      "workloadIps": ["172.18.0.5"],
+      "workloadName": "kube-apiserver-ci-control-plane",
+      "workloadType": "pod"
+    },
+    {
+      "canonicalName": "kube-controller-manager-ci-control-plane",
+      "canonicalRevision": "latest",
+      "clusterId": "cluster-default",
+      "name": "kube-controller-manager-ci-control-plane",
+      "namespace": "kube-system",
+      "networkMode": "HostNetwork",
+      "node": "ci-control-plane",
+      "protocol": "TCP",
+      "serviceAccount": "default",
+      "status": "Healthy",
+      "trustDomain": "cluster.local",
+      "uid": "cluster-default//Pod/kube-system/kube-controller-manager-ci-control-plane",
+      "workloadIps": ["172.18.0.5"],
+      "workloadName": "kube-controller-manager-ci-control-plane",
+      "workloadType": "pod"
+    },
+    {
+      "canonicalName": "kube-proxy-dsmfj",
+      "canonicalRevision": "latest",
+      "clusterId": "cluster-default",
+      "name": "kube-proxy-dsmfj",
+      "namespace": "kube-system",
+      "networkMode": "HostNetwork",
+      "node": "ci-worker",
+      "protocol": "TCP",
+      "serviceAccount": "kube-proxy",
+      "status": "Healthy",
+      "trustDomain": "cluster.local",
+      "uid": "cluster-default//Pod/kube-system/kube-proxy-dsmfj",
+      "workloadIps": ["172.18.0.6"],
+      "workloadName": "kube-proxy-dsmfj",
+      "workloadType": "pod"
+    },
+    {
+      "canonicalName": "kube-proxy-mh2lk",
+      "canonicalRevision": "latest",
+      "clusterId": "cluster-default",
+      "name": "kube-proxy-mh2lk",
+      "namespace": "kube-system",
+      "networkMode": "HostNetwork",
+      "node": "ci-control-plane",
+      "protocol": "TCP",
+      "serviceAccount": "kube-proxy",
+      "status": "Healthy",
+      "trustDomain": "cluster.local",
+      "uid": "cluster-default//Pod/kube-system/kube-proxy-mh2lk",
+      "workloadIps": ["172.18.0.5"],
+      "workloadName": "kube-proxy-mh2lk",
+      "workloadType": "pod"
+    },
+    {
+      "canonicalName": "kube-scheduler-ci-control-plane",
+      "canonicalRevision": "latest",
+      "clusterId": "cluster-default",
+      "name": "kube-scheduler-ci-control-plane",
+      "namespace": "kube-system",
+      "networkMode": "HostNetwork",
+      "node": "ci-control-plane",
+      "protocol": "TCP",
+      "serviceAccount": "default",
+      "status": "Healthy",
+      "trustDomain": "cluster.local",
+      "uid": "cluster-default//Pod/kube-system/kube-scheduler-ci-control-plane",
+      "workloadIps": ["172.18.0.5"],
+      "workloadName": "kube-scheduler-ci-control-plane",
+      "workloadType": "pod"
+    },
+    {
+      "canonicalName": "local-path-provisioner",
+      "canonicalRevision": "latest",
+      "clusterId": "cluster-default",
+      "name": "local-path-provisioner-6bc4bddd6b-8jtdf",
+      "namespace": "local-path-storage",
+      "networkMode": "Standard",
+      "node": "ci-control-plane",
+      "protocol": "TCP",
+      "serviceAccount": "local-path-provisioner-service-account",
+      "status": "Healthy",
+      "trustDomain": "cluster.local",
+      "uid": "cluster-default//Pod/local-path-storage/local-path-provisioner-6bc4bddd6b-8jtdf",
+      "workloadIps": ["10.244.0.4"],
+      "workloadName": "local-path-provisioner",
+      "workloadType": "deployment"
+    },
+    {
+      "canonicalName": "metallb",
+      "canonicalRevision": "latest",
+      "clusterId": "cluster-default",
+      "name": "controller-595f88d88f-hxf64",
+      "namespace": "metallb-system",
+      "networkMode": "Standard",
+      "node": "ci-worker",
+      "protocol": "TCP",
+      "serviceAccount": "controller",
+      "services": [
+        "metallb-system/webhook-service.metallb-system.svc.cluster.local"
+      ],
+      "status": "Healthy",
+      "trustDomain": "cluster.local",
+      "uid": "cluster-default//Pod/metallb-system/controller-595f88d88f-hxf64",
+      "workloadIps": ["10.244.1.2"],
+      "workloadName": "controller",
+      "workloadType": "deployment"
+    },
+    {
+      "canonicalName": "metallb",
+      "canonicalRevision": "latest",
+      "clusterId": "cluster-default",
+      "name": "speaker-8c8nw",
+      "namespace": "metallb-system",
+      "networkMode": "HostNetwork",
+      "node": "ci-worker",
+      "protocol": "TCP",
+      "serviceAccount": "speaker",
+      "status": "Healthy",
+      "trustDomain": "cluster.local",
+      "uid": "cluster-default//Pod/metallb-system/speaker-8c8nw",
+      "workloadIps": ["172.18.0.6"],
+      "workloadName": "speaker-8c8nw",
+      "workloadType": "pod"
+    },
+    {
+      "canonicalName": "metallb",
+      "canonicalRevision": "latest",
+      "clusterId": "cluster-default",
+      "name": "speaker-pmxbn",
+      "namespace": "metallb-system",
+      "networkMode": "HostNetwork",
+      "node": "ci-control-plane",
+      "protocol": "TCP",
+      "serviceAccount": "speaker",
+      "status": "Healthy",
+      "trustDomain": "cluster.local",
+      "uid": "cluster-default//Pod/metallb-system/speaker-pmxbn",
+      "workloadIps": ["172.18.0.5"],
+      "workloadName": "speaker-pmxbn",
+      "workloadType": "pod"
+    },
+    {
+      "canonicalName": "cars",
+      "canonicalRevision": "v1",
+      "clusterId": "cluster-default",
+      "name": "cars-v1-8f6f65b75-f62nc",
+      "namespace": "travel-agency",
+      "nativeTunnel": true,
+      "networkMode": "Standard",
+      "node": "ci-worker",
+      "protocol": "HBONE",
+      "serviceAccount": "default",
+      "services": ["travel-agency/cars.travel-agency.svc.cluster.local"],
+      "status": "Healthy",
+      "trustDomain": "cluster.local",
+      "uid": "cluster-default//Pod/travel-agency/cars-v1-8f6f65b75-f62nc",
+      "workloadIps": ["10.244.1.29"],
+      "workloadName": "cars-v1",
+      "workloadType": "deployment"
+    },
+    {
+      "canonicalName": "discounts",
+      "canonicalRevision": "v1",
+      "clusterId": "cluster-default",
+      "name": "discounts-v1-58c9676688-sx2vp",
+      "namespace": "travel-agency",
+      "nativeTunnel": true,
+      "networkMode": "Standard",
+      "node": "ci-worker",
+      "protocol": "HBONE",
+      "serviceAccount": "default",
+      "services": ["travel-agency/discounts.travel-agency.svc.cluster.local"],
+      "status": "Healthy",
+      "trustDomain": "cluster.local",
+      "uid": "cluster-default//Pod/travel-agency/discounts-v1-58c9676688-sx2vp",
+      "workloadIps": ["10.244.1.30"],
+      "workloadName": "discounts-v1",
+      "workloadType": "deployment"
+    },
+    {
+      "canonicalName": "flights",
+      "canonicalRevision": "v1",
+      "clusterId": "cluster-default",
+      "name": "flights-v1-6775bb778f-d88gr",
+      "namespace": "travel-agency",
+      "nativeTunnel": true,
+      "networkMode": "Standard",
+      "node": "ci-worker",
+      "protocol": "HBONE",
+      "serviceAccount": "default",
+      "services": ["travel-agency/flights.travel-agency.svc.cluster.local"],
+      "status": "Healthy",
+      "trustDomain": "cluster.local",
+      "uid": "cluster-default//Pod/travel-agency/flights-v1-6775bb778f-d88gr",
+      "workloadIps": ["10.244.1.31"],
+      "workloadName": "flights-v1",
+      "workloadType": "deployment"
+    },
+    {
+      "canonicalName": "hotels",
+      "canonicalRevision": "v1",
+      "clusterId": "cluster-default",
+      "name": "hotels-v1-5799fbd56c-bwpsb",
+      "namespace": "travel-agency",
+      "nativeTunnel": true,
+      "networkMode": "Standard",
+      "node": "ci-worker",
+      "protocol": "HBONE",
+      "serviceAccount": "default",
+      "services": ["travel-agency/hotels.travel-agency.svc.cluster.local"],
+      "status": "Healthy",
+      "trustDomain": "cluster.local",
+      "uid": "cluster-default//Pod/travel-agency/hotels-v1-5799fbd56c-bwpsb",
+      "workloadIps": ["10.244.1.32"],
+      "workloadName": "hotels-v1",
+      "workloadType": "deployment"
+    },
+    {
+      "canonicalName": "insurances",
+      "canonicalRevision": "v1",
+      "clusterId": "cluster-default",
+      "name": "insurances-v1-96d96c758-qs6sn",
+      "namespace": "travel-agency",
+      "nativeTunnel": true,
+      "networkMode": "Standard",
+      "node": "ci-worker",
+      "protocol": "HBONE",
+      "serviceAccount": "default",
+      "services": ["travel-agency/insurances.travel-agency.svc.cluster.local"],
+      "status": "Healthy",
+      "trustDomain": "cluster.local",
+      "uid": "cluster-default//Pod/travel-agency/insurances-v1-96d96c758-qs6sn",
+      "workloadIps": ["10.244.1.33"],
+      "workloadName": "insurances-v1",
+      "workloadType": "deployment"
+    },
+    {
+      "canonicalName": "mysqldb",
+      "canonicalRevision": "v1",
+      "clusterId": "cluster-default",
+      "name": "mysqldb-v1-bd877d7fc-6hntn",
+      "namespace": "travel-agency",
+      "nativeTunnel": true,
+      "networkMode": "Standard",
+      "node": "ci-worker",
+      "protocol": "HBONE",
+      "serviceAccount": "default",
+      "services": ["travel-agency/mysqldb.travel-agency.svc.cluster.local"],
+      "status": "Healthy",
+      "trustDomain": "cluster.local",
+      "uid": "cluster-default//Pod/travel-agency/mysqldb-v1-bd877d7fc-6hntn",
+      "workloadIps": ["10.244.1.28"],
+      "workloadName": "mysqldb-v1",
+      "workloadType": "deployment"
+    },
+    {
+      "canonicalName": "travels",
+      "canonicalRevision": "v1",
+      "clusterId": "cluster-default",
+      "name": "travels-v1-5cb87c8dbd-h4cjs",
+      "namespace": "travel-agency",
+      "nativeTunnel": true,
+      "networkMode": "Standard",
+      "node": "ci-worker",
+      "protocol": "HBONE",
+      "serviceAccount": "default",
+      "services": ["travel-agency/travels.travel-agency.svc.cluster.local"],
+      "status": "Healthy",
+      "trustDomain": "cluster.local",
+      "uid": "cluster-default//Pod/travel-agency/travels-v1-5cb87c8dbd-h4cjs",
+      "workloadIps": ["10.244.1.34"],
+      "workloadName": "travels-v1",
+      "workloadType": "deployment"
+    },
+    {
+      "canonicalName": "control",
+      "canonicalRevision": "v1",
+      "clusterId": "cluster-default",
+      "name": "control-57d5847d68-74kjs",
+      "namespace": "travel-control",
+      "nativeTunnel": true,
+      "networkMode": "Standard",
+      "node": "ci-worker",
+      "protocol": "HBONE",
+      "serviceAccount": "default",
+      "services": ["travel-control/control.travel-control.svc.cluster.local"],
+      "status": "Healthy",
+      "trustDomain": "cluster.local",
+      "uid": "cluster-default//Pod/travel-control/control-57d5847d68-74kjs",
+      "workloadIps": ["10.244.1.38"],
+      "workloadName": "control",
+      "workloadType": "deployment"
+    },
+    {
+      "canonicalName": "travels",
+      "canonicalRevision": "v1",
+      "clusterId": "cluster-default",
+      "name": "travels-659bd87ccd-9s9bw",
+      "namespace": "travel-portal",
+      "nativeTunnel": true,
+      "networkMode": "Standard",
+      "node": "ci-worker",
+      "protocol": "HBONE",
+      "serviceAccount": "default",
+      "services": ["travel-portal/travels.travel-portal.svc.cluster.local"],
+      "status": "Healthy",
+      "trustDomain": "cluster.local",
+      "uid": "cluster-default//Pod/travel-portal/travels-659bd87ccd-9s9bw",
+      "workloadIps": ["10.244.1.37"],
+      "workloadName": "travels",
+      "workloadType": "deployment"
+    },
+    {
+      "canonicalName": "viaggi",
+      "canonicalRevision": "v1",
+      "clusterId": "cluster-default",
+      "name": "viaggi-74c7c5f946-6gh5k",
+      "namespace": "travel-portal",
+      "nativeTunnel": true,
+      "networkMode": "Standard",
+      "node": "ci-worker",
+      "protocol": "HBONE",
+      "serviceAccount": "default",
+      "services": ["travel-portal/viaggi.travel-portal.svc.cluster.local"],
+      "status": "Healthy",
+      "trustDomain": "cluster.local",
+      "uid": "cluster-default//Pod/travel-portal/viaggi-74c7c5f946-6gh5k",
+      "workloadIps": ["10.244.1.36"],
+      "workloadName": "viaggi",
+      "workloadType": "deployment"
+    },
+    {
+      "canonicalName": "voyages",
+      "canonicalRevision": "v1",
+      "clusterId": "cluster-default",
+      "name": "voyages-5b4f7d7d75-dz626",
+      "namespace": "travel-portal",
+      "nativeTunnel": true,
+      "networkMode": "Standard",
+      "node": "ci-worker",
+      "protocol": "HBONE",
+      "serviceAccount": "default",
+      "services": ["travel-portal/voyages.travel-portal.svc.cluster.local"],
+      "status": "Healthy",
+      "trustDomain": "cluster.local",
+      "uid": "cluster-default//Pod/travel-portal/voyages-5b4f7d7d75-dz626",
+      "workloadIps": ["10.244.1.35"],
+      "workloadName": "voyages",
+      "workloadType": "deployment"
+    },
+    {
+      "clusterId": "cluster-default",
+      "name": "kubernetes",
+      "namespace": "default",
+      "networkMode": "HostNetwork",
+      "protocol": "TCP",
+      "serviceAccount": "default",
+      "services": ["default/kubernetes.default.svc.cluster.local"],
+      "status": "Healthy",
+      "trustDomain": "cluster.local",
+      "uid": "cluster-default/discovery.k8s.io/EndpointSlice/default/kubernetes/172.18.0.5",
+      "workloadIps": ["172.18.0.5"],
+      "workloadType": "deployment"
+    }
+  ]
+}
