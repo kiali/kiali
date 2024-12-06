@@ -1,6 +1,8 @@
 package cache_test
 
 import (
+	"encoding/json"
+	"os"
 	"sync"
 	"testing"
 
@@ -256,4 +258,38 @@ func TestValidationsSetByConstructor(t *testing.T) {
 	require.NoError(err)
 
 	require.NotNil(cache.Validations())
+}
+
+func TestZtunnelDump(t *testing.T) {
+	require := require.New(t)
+	conf := config.NewConfig()
+
+	clients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: kubetest.NewFakeK8sClient()}
+	cache, err := cache.NewKialiCache(clients, *conf)
+	require.NoError(err)
+
+	initData := cache.GetZtunnelDump("cluster-default", "istio-system", "ztunnel-7hml8")
+	require.Nil(initData)
+
+	zTunnel := make(map[string]*kubernetes.ZtunnelConfigDump)
+	zTunnelData, err := os.Open("../testdata/ztunnel-config.json")
+	require.NoError(err)
+	defer zTunnelData.Close()
+
+	configD := &kubernetes.ZtunnelConfigDump{}
+	errD := json.NewDecoder(zTunnelData).Decode(&configD)
+	require.NoError(errD)
+
+	zTunnel["cluster-defaultistio-systemztunnel-7hml8"] = configD
+	cache.SetZtunnelDump(zTunnel)
+
+	cacheData := cache.GetZtunnelDump("cluster-default", "istio-system", "ztunnel-7hml8")
+	require.NotNil(cacheData)
+	require.Equal(cacheData.Workloads[1].Name, "details-v1-7c5d957895-pwqdh")
+	require.Equal(cacheData.Workloads[1].Protocol, "HBONE")
+	require.Equal(cacheData.Workloads[1].Node, "ci-worker")
+
+	require.Equal(cacheData.Services[36].Hostname, "waypoint.bookinfo.svc.cluster.local")
+	require.Equal(cacheData.Services[36].Name, "waypoint")
+	require.Equal(cacheData.Services[36].Namespace, "bookinfo")
 }

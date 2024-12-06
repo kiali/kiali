@@ -26,6 +26,7 @@ type Props = ReduxProps & {
   apps?: string[];
   cluster?: string;
   health?: H.Health;
+  isWaypoint?: boolean;
   namespace: string;
   services?: string[];
   waypointWorkloads?: Workload[];
@@ -56,7 +57,24 @@ const itemStyle = kialiStyle({
   paddingBottom: '0.25rem'
 });
 
-export const renderWaypoint = (bgsize?: string): React.ReactNode => {
+export const renderWaypointSimpleLabel = (bgsize?: string): React.ReactNode => {
+  const badgeSize = bgsize === 'global' || bgsize === 'sm' ? bgsize : 'global';
+  const tooltip = <div>This workload is identified as a waypoint proxy, as part of Istio Ambient</div>;
+
+  return [
+    <>
+      <PFBadge
+        badge={PFBadges.Waypoint}
+        position={TooltipPosition.top}
+        size={badgeSize}
+        tooltip={tooltip}
+        style={{ marginLeft: '5px' }}
+      />
+    </>
+  ];
+};
+
+export const renderWaypointLabel = (bgsize?: string): React.ReactNode => {
   const badgeSize = bgsize === 'global' || bgsize === 'sm' ? bgsize : 'global';
   return [
     <>
@@ -75,6 +93,43 @@ export const renderWaypoint = (bgsize?: string): React.ReactNode => {
 };
 
 const DetailDescriptionComponent: React.FC<Props> = (props: Props) => {
+  const renderWaypoints = (): React.ReactNode => {
+    const waypointList = props.waypointWorkloads?.map(waypoint => {
+      let href = `/namespaces/${waypoint.namespace}/workloads/${waypoint.name}`;
+      if (props.cluster && isMultiCluster) {
+        href = `${href}?clusterName=${props.cluster}`;
+      }
+      const link = isParentKiosk(props.kiosk) ? (
+        <Link
+          to=""
+          onClick={() => {
+            kioskContextMenuAction(href);
+          }}
+        >
+          {waypoint.name}
+        </Link>
+      ) : (
+        <Link to={href}>{waypoint.name}</Link>
+      );
+      return (
+        <li key={`App_${waypoint.namespace}_${waypoint.name}`} className={itemStyle}>
+          <div className={iconStyle}>
+            <PFBadge badge={PFBadges.Waypoint} position={TooltipPosition.top} />
+          </div>
+
+          <span>{link}</span>
+        </li>
+      );
+    });
+    return [
+      <div key="waypoint-list" className={resourceListStyle}>
+        <ul id="waypoint-list" style={{ listStyleType: 'none' }}>
+          {waypointList}
+        </ul>
+      </div>
+    ];
+  };
+
   const renderAppItem = (namespace: string, appName: string): React.ReactNode => {
     let href = `/namespaces/${namespace}/applications/${appName}`;
 
@@ -366,7 +421,7 @@ const DetailDescriptionComponent: React.FC<Props> = (props: Props) => {
       {props.workloads !== undefined && workloadSummary()}
       {props.services !== undefined && serviceList()}
       {props.health && renderTrafficStatus(props.health)}
-      {props.waypointWorkloads && renderWaypoint()}
+      {props.waypointWorkloads && renderWaypoints()}
     </div>
   );
 };

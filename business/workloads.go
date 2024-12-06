@@ -1918,18 +1918,38 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 
 		// Add the Proxy Status to the workload
 		for _, pod := range w.Pods {
+			isPodWaypoint := pod.IsWaypoint()
 			if pod.HasIstioSidecar() && !w.IsGateway() && config.Get().ExternalServices.Istio.IstioAPIEnabled {
 				pod.ProxyStatus = in.businessLayer.ProxyStatus.GetPodProxyStatus(criteria.Cluster, criteria.Namespace, pod.Name)
+			}
+			if isPodWaypoint {
+				pod.ProxyStatus = in.businessLayer.ProxyStatus.GetUpdatedPodProxyStatus(criteria.Cluster, criteria.Namespace, pod.Name)
 			}
 			// If Ambient is enabled for pod, check if has any Waypoint proxy
 			if pod.AmbientEnabled() {
 				w.WaypointWorkloads = in.getWaypointsForWorkload(ctx, criteria.Namespace, w)
+				// TODO: Maybe user doesn't have permissions
+				ztunnelPods := in.cache.GetZtunnelPods(criteria.Cluster)
+				for _, zPod := range ztunnelPods {
+					// There should be a ztunnel pod per node
+					// TODO: Maybe we should check if some of the config differs for one pod?
+					zPodConfig := in.cache.GetZtunnelDump(criteria.Cluster, zPod.Namespace, zPod.Name)
+					if zPodConfig != nil {
+						w.AddPodsProtocol(*zPodConfig)
+					}
+				}
+
 			}
-			// If the pod is a waypoint proxy, check if it is attached to a namespace or to a service account, and get the affected workloads
-			if pod.IsWaypoint() {
-				// Get waypoint workloads
-				w.WaypointWorkloads = append(w.WaypointWorkloads, in.listWaypointWorkloads(ctx, pod.Name, criteria.Cluster)...)
-			}
+		}
+
+		// If the pod is a waypoint proxy, check if it is attached to a namespace or to a service account, and get the affected workloads
+		if w.IsWaypoint() {
+			w.Ambient = "waypoint"
+			// Get waypoint workloads
+			w.WaypointWorkloads = append(w.WaypointWorkloads, in.listWaypointWorkloads(ctx, w.Name, criteria.Cluster)...)
+		}
+		if w.IsZtunnel() {
+			w.Ambient = "ztunnel"
 		}
 
 		if cnFound {
@@ -1937,6 +1957,12 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 		}
 	}
 	return wl, kubernetes.NewNotFound(criteria.WorkloadName, "Kiali", "Workload")
+}
+
+func (in *WorkloadService) GetZtunnelConfig(cluster, namespace, pod string) *kubernetes.ZtunnelConfigDump {
+
+	return in.cache.GetZtunnelDump(cluster, namespace, pod)
+
 }
 
 // GetWaypoints: Return the list of workloads when the waypoint proxy is applied per namespace
@@ -1950,15 +1976,15 @@ func (in *WorkloadService) GetWaypoints(ctx context.Context) models.Workloads {
 	waypoints := []*models.Workload{}
 
 	for cluster := range in.userClients {
-		nslist, errNs := in.userClients[cluster].GetNamespaces("")
+		nslist, errNs := in.businessLayer.Namespace.GetClusterNamespaces(ctx, cluster)
 		if errNs != nil {
-			log.Errorf("GetWaypoints: Error fetching namespaces for cluster %s", cluster)
+			log.Errorf("GetWaypoints: Error fetching namespaces for cluster %s. %s", cluster, errNs.Error())
 		}
 
 		for _, ns := range nslist {
 			nsWaypoints, err := in.fetchWorkloadsFromCluster(ctx, cluster, ns.Name, labelSelector)
 			if err != nil {
-				log.Debugf("GetWaypoints: Error fetching workloads for namespace %s, labelSelector %s", ns.Name, labelSelector)
+				log.Debugf("GetWaypoints: Error fetching workloads for namespace %s, labelSelector %s. %s", ns.Name, labelSelector, err.Error())
 				continue
 			}
 			waypoints = append(waypoints, nsWaypoints...)
@@ -2072,7 +2098,9 @@ func (in *WorkloadService) listWaypointWorkloads(ctx context.Context, name, clus
 		}
 		for _, wk := range workloadList {
 			// Is there any annotation that disables?
-			workloadslist = append(workloadslist, *wk)
+			if wk.Labels["istio.io/dataplane-mode"] != "none" {
+				workloadslist = append(workloadslist, *wk)
+			}
 		}
 
 	}
@@ -2207,6 +2235,10 @@ func (in *WorkloadService) GetWorkloadAppName(ctx context.Context, cluster, name
 		return "", err
 	}
 
+	if wkd.IsGateway() || wkd.IsWaypoint() {
+		// Waypoints and Gateways doesn't have an app label, but they have valid traces data
+		return workload, nil
+	}
 	appLabelName := in.config.IstioLabels.AppLabelName
 	app := wkd.Labels[appLabelName]
 	return app, nil
