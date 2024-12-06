@@ -5,6 +5,7 @@ import (
 	"time"
 
 	osapps_v1 "github.com/openshift/api/apps/v1"
+	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 	apps_v1 "k8s.io/api/apps/v1"
 	batch_v1 "k8s.io/api/batch/v1"
 	core_v1 "k8s.io/api/core/v1"
@@ -421,6 +422,34 @@ func (workload *Workload) ParseDaemonSet(ds *apps_v1.DaemonSet) {
 	workload.CurrentReplicas = ds.Status.CurrentNumberScheduled
 	workload.AvailableReplicas = ds.Status.NumberAvailable
 	workload.HealthAnnotations = GetHealthAnnotation(ds.Annotations, GetHealthConfigAnnotation())
+}
+
+func (workload *Workload) ParseWorkloadGroup(wg *networking_v1.WorkloadGroup, wentries []*networking_v1.WorkloadEntry) {
+	conf := config.Get()
+	workload.WorkloadGVK = kubernetes.WorkloadGroups
+	workload.parseObjectMeta(&wg.ObjectMeta, &wg.ObjectMeta)
+	// WorkloadEntry does not have status, they are generated based on WorkloadGroup.Template
+	workload.DesiredReplicas = int32(len(wentries))
+	workload.CurrentReplicas = int32(len(wentries))
+	workload.AvailableReplicas = int32(len(wentries))
+	workload.Labels = map[string]string{}
+	// Template.Labels can be nillable, this should be handled
+	// when Template does not have labels, the no Applications will be recognised
+	if wg.Spec.Template.Labels != nil {
+		workload.Labels = wg.Spec.Template.Labels
+	}
+	// We fetch one WorkloadEntry as template, similar to Pods
+	// WorkloadEntry is generated based on Spec.Template
+	if len(wentries) > 0 {
+		workload.CreatedAt = formatTime(wentries[0].CreationTimestamp.Time)
+		workload.ResourceVersion = wentries[0].ResourceVersion
+	}
+	/** Check the labels app and version required by Istio in template Pods*/
+	_, workload.AppLabel = workload.Labels[conf.IstioLabels.AppLabelName]
+	_, workload.VersionLabel = workload.Labels[conf.IstioLabels.VersionLabelName]
+	//for _, entry := range wentries {
+	//	append(workload.Pods)
+	//}
 }
 
 func (workload *Workload) ParsePods(controllerName string, controllerGVK schema.GroupVersionKind, pods []core_v1.Pod) {
