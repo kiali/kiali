@@ -23,7 +23,6 @@ import 'ace-builds/src-noconflict/ext-searchbox';
 
 // i18n
 import './i18n';
-
 declare global {
   interface Date {
     toLocaleStringWithConditionalDate(): string;

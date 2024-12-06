@@ -37,6 +37,7 @@ import { KialiAppState } from '../../store/Store';
 import { connect } from 'react-redux';
 import { renderDisabledDropdownOption } from 'utils/DropdownUtils';
 import { t } from 'utils/I18nUtils';
+import { NavigateFunction, useNavigate } from 'react-router-dom-v5-compat';
 
 type ReduxProps = {
   istioAPIEnabled: boolean;
@@ -106,21 +107,34 @@ const ServiceWizardDropdownComponent: React.FC<Props> = (props: Props) => {
       );
     });
   };
+  const navigate = useNavigate();
+  const navigateNewPage = (navigate: NavigateFunction, newUrl: string): void => {
+    navigate(newUrl);
+  };
 
-  const onAction = (key: string): void => {
-    const updateLabel = getWizardUpdateLabel(props.virtualServices, props.k8sHTTPRoutes, props.k8sGRPCRoutes);
+  const newServiceWizard = (serviceWizard: string): void => {
+    const newUrl = `/namespaces/${props.namespace}/services/service/new`;
+    const updateLabel = getWizardUpdateLabel(
+      props.virtualServices, 
+      props.k8sHTTPRoutes, 
+      props.k8sGRPCRoutes
+    );
+    navigateNewPage(navigate, newUrl)
 
-    switch (key) {
+    switch (serviceWizard) {
+      case WIZARD_TRAFFIC_SHIFTING: {
+        navigateNewPage(navigate, newUrl);
+        break;
+    }
       case WIZARD_REQUEST_ROUTING:
       case WIZARD_FAULT_INJECTION:
-      case WIZARD_TRAFFIC_SHIFTING:
       case WIZARD_TCP_TRAFFIC_SHIFTING:
       case WIZARD_K8S_REQUEST_ROUTING:
       case WIZARD_K8S_GRPC_REQUEST_ROUTING:
       case WIZARD_REQUEST_TIMEOUTS: {
         setShowWizard(true);
-        setWizardType(key);
-        setUpdateWizard(key === updateLabel);
+        setWizardType(serviceWizard);
+        setUpdateWizard(serviceWizard === updateLabel);
         break;
       }
       case DELETE_TRAFFIC_ROUTING: {
@@ -230,8 +244,8 @@ const ServiceWizardDropdownComponent: React.FC<Props> = (props: Props) => {
           k8sGRPCRoutes={props.k8sGRPCRoutes ?? []}
           annotations={props.annotations}
           istioPermissions={props.istioPermissions}
-          onAction={onAction}
-          onDelete={onAction}
+          onAction={(action: string) => newServiceWizard(action)}
+          onDelete={newServiceWizard}
         />
       </DropdownList>
     </Dropdown>
@@ -291,3 +305,4 @@ const mapStateToProps = (state: KialiAppState): ReduxProps => ({
 });
 
 export const ServiceWizardDropdown = connect(mapStateToProps)(ServiceWizardDropdownComponent);
+
