@@ -110,7 +110,7 @@ type TrafficPoint = {
  * speed      - defines the speed of the next point (see TrafficPoint.speed)
  */
 export class TrafficPointGenerator {
-  private errorRate: number = 0;
+  private errorRate: number = 0; // integer [0..100]
   private launchTime: number = 0;
   private speed: number = 0;
   private type: TrafficEdgeType = TrafficEdgeType.NONE;
@@ -120,7 +120,7 @@ export class TrafficPointGenerator {
       return <></>;
     }
 
-    const isUniform = this.errorRate < 0.01 || this.errorRate > 0.99;
+    const isUniform = this.errorRate === 0 || this.errorRate === 100;
     const points: Array<React.SVGProps<SVGElement>> = [];
 
     // time it takes for point to travel the edge
@@ -169,7 +169,7 @@ export class TrafficPointGenerator {
       const visiblePointsOnEdge = Math.ceil(pointsOnEdge);
       const minPoints = Math.max(15, visiblePointsOnEdge); // for very high error rates
       const maxPoints = Math.max(50, visiblePointsOnEdge); // for very low error rates
-      const renderedPointsOnEdge = minPoints + Math.round((1.0 - this.errorRate) * (maxPoints - minPoints));
+      const renderedPointsOnEdge = minPoints + Math.round((1.0 - this.errorRate / 100) * (maxPoints - minPoints));
 
       // time it takes for point to complete animation. This will be longer than then travel time
       // when visiblePoints < renderedPoints
@@ -183,9 +183,11 @@ export class TrafficPointGenerator {
       const errorRenderer = getTrafficPointRendererForRpsError(edge, animationDurationSeconds, percentVisible);
 
       const delayInterval = animationDuration / renderedPointsOnEdge;
-      for (let i = 0, hasError = false; i < renderedPointsOnEdge; ++i) {
+      for (let i = 0, injectedError = false; i < renderedPointsOnEdge; ++i) {
         const animationDelay = `${i * delayInterval + initialDelay}ms`;
-        const isErrorPoint = Math.random() <= this.errorRate || (!hasError && i + 1 === renderedPointsOnEdge);
+        let isErrorPoint = Math.random() * 100 <= this.errorRate;
+        isErrorPoint = isErrorPoint || (!injectedError && i + 1 === renderedPointsOnEdge);
+        injectedError = injectedError || isErrorPoint;
         const point = isErrorPoint
           ? errorRenderer.render(edge, animationDelay, undefined)
           : renderer.render(edge, animationDelay, undefined);
@@ -204,9 +206,11 @@ export class TrafficPointGenerator {
     this.speed = speed;
   }
 
-  // error rate 0..1 (1 = 100%)
+  // setErrorRate, where errorRate is in the range [0..1], reflecting
+  // an error rate between 0 and 100%. The error rate will be rounded
+  // to the nearest integer percentage.
   setErrorRate(errorRate: number) {
-    this.errorRate = errorRate;
+    this.errorRate = clamp(Math.round(errorRate * 100), 0, 100);
   }
 
   setType(type: TrafficEdgeType) {
@@ -235,7 +239,7 @@ export class TrafficPointGenerator {
         animationSpeedPF = tcpTimerConfig.computeAnimationSpeedPF(edgeData.tcp);
         break;
     }
-    return `${animationSpeedPF}:${this.errorRate.toFixed(1)}:${this.type}`;
+    return `${animationSpeedPF}:${(this.errorRate / 100).toFixed(1)}:${this.type}`;
   }
 }
 
