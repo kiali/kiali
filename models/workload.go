@@ -253,7 +253,12 @@ func (workload *WorkloadListItem) ParseWorkload(w *Workload) {
 	workload.WorkloadGVK = w.WorkloadGVK
 	workload.CreatedAt = w.CreatedAt
 	workload.ResourceVersion = w.ResourceVersion
-	workload.IstioSidecar = w.HasIstioSidecar()
+	if w.WorkloadGVK == kubernetes.WorkloadGroups {
+		// For WorkloadGroups IstioSidecar is already calculated while fetching
+		workload.IstioSidecar = w.IstioSidecar
+	} else {
+		workload.IstioSidecar = w.HasIstioSidecar()
+	}
 	workload.IsGateway = w.IsGateway()
 	workload.IsAmbient = w.HasIstioAmbient()
 	workload.Labels = w.Labels
@@ -466,23 +471,29 @@ func (workload *Workload) ParseDaemonSet(ds *apps_v1.DaemonSet) {
 	workload.HealthAnnotations = GetHealthAnnotation(ds.Annotations, GetHealthConfigAnnotation())
 }
 
-func (workload *Workload) ParseWorkloadGroup(wg *networking_v1.WorkloadGroup, wentries []*networking_v1.WorkloadEntry) {
+func (workload *Workload) ParseWorkloadGroup(wg *networking_v1.WorkloadGroup, wentries []*networking_v1.WorkloadEntry, sidecars []*networking_v1.Sidecar) {
 	conf := config.Get()
 	workload.WorkloadGVK = kubernetes.WorkloadGroups
 	workload.parseObjectMeta(&wg.ObjectMeta, &wg.ObjectMeta)
 	workload.DesiredReplicas = int32(len(wentries))
 	workload.CurrentReplicas = int32(len(wentries))
 	workload.Labels = map[string]string{}
-	// Template.Labels can be nillable, this should be handled
-	// when Template does not have labels, the no Applications will be recognised
-	if wg.Spec.Template.Labels != nil {
-		workload.Labels = wg.Spec.Template.Labels
+	// when there are Sidecars matching the WorkloadGroup Template Labels
+	if len(sidecars) > 0 {
+		workload.IstioSidecar = true
 	}
 	// We fetch one WorkloadEntry as template, similar to Pods
 	// WorkloadEntry is generated based on Spec.Template
 	if len(wentries) > 0 {
 		workload.CreatedAt = formatTime(wentries[0].CreationTimestamp.Time)
 		workload.ResourceVersion = wentries[0].ResourceVersion
+		workload.Labels = wentries[0].Spec.Labels
+	} else {
+		// Template.Labels can be nillable, this should be handled
+		// when Template does not have labels, the no Applications will be recognised
+		if wg.Spec.Template.Labels != nil {
+			workload.Labels = wg.Spec.Template.Labels
+		}
 	}
 	/** Check the labels app and version required by Istio in template Pods*/
 	_, workload.AppLabel = workload.Labels[conf.IstioLabels.AppLabelName]
