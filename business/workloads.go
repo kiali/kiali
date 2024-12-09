@@ -2097,8 +2097,8 @@ func (in *WorkloadService) listWaypointWorkloads(ctx context.Context, name, clus
 			log.Debugf("listWaypointWorkloads: Error fetching workloads for namespace %s", ns.Name)
 		}
 		for _, wk := range workloadList {
-			// Is there any annotation that disables?
-			if wk.Labels["istio.io/dataplane-mode"] != "none" {
+			// This annotation disables other labels (Like the ns one)
+			if wk.Labels[in.config.IstioLabels.AmbientNamespaceLabel] != "none" {
 				workloadslist = append(workloadslist, *wk)
 			}
 		}
