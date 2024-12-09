@@ -8,6 +8,7 @@ export interface AppList {
 }
 
 export interface AppListItem {
+  ambient?: string;
   cluster?: string;
   health: AppHealth;
   instanceType: InstanceType.App;

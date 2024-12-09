@@ -1,7 +1,6 @@
 import { AppListItem } from '../types/AppList';
 import { WorkloadListItem } from '../types/Workload';
 import { ServiceListItem } from '../types/ServiceList';
-import { serverConfig } from '../config';
 
 type itemsType = AppListItem | ServiceListItem | WorkloadListItem;
 
@@ -98,12 +97,4 @@ const getKeyAndValues = (filters: string[]): { keyValues: string[]; keys: string
   const keys = filters.filter(f => !f.includes('='));
   const keyValues = filters.filter(f => f.includes('='));
   return { keyValues, keys };
-};
-
-export const isWaypoint = (labels: { [key: string]: string }): boolean => {
-  return (
-    labels &&
-    serverConfig.istioLabels.ambientWaypointLabel in labels &&
-    labels[serverConfig.istioLabels.ambientWaypointLabel] === serverConfig.istioLabels.ambientWaypointLabelValue
-  );
 };

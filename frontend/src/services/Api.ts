@@ -43,7 +43,8 @@ import {
   PodLogsQuery,
   LogLevelQuery,
   LogType,
-  GroupVersionKind
+  GroupVersionKind,
+  ZtunnelConfigDump
 } from '../types/IstioObjects';
 import { ComponentStatus, IstiodResourceThresholds } from '../types/IstioStatus';
 import { TracingInfo, TracingResponse, TracingSingleResponse } from '../types/TracingInfo';
@@ -1130,6 +1131,20 @@ export const getPodEnvoyProxy = (
   }
 
   return newRequest<EnvoyProxyDump>(HTTP_VERBS.GET, urls.podEnvoyProxy(namespace, pod), params, {});
+};
+
+export const getPodZtunnelConfig = (
+  namespace: string,
+  pod: string,
+  cluster?: string
+): Promise<ApiResponse<ZtunnelConfigDump>> => {
+  const params: ClusterParam = {};
+
+  if (cluster) {
+    params.clusterName = cluster;
+  }
+
+  return newRequest<ZtunnelConfigDump>(HTTP_VERBS.GET, urls.podZtunnelConfig(namespace, pod), params, {});
 };
 
 export const getPodEnvoyProxyResourceEntries = (
