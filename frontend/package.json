@@ -159,6 +159,7 @@
     "typescript": "^4.9.5"
   },
   "resolutions": {
+    "nanoid": "^3.3.8",
     "nth-check": "^2.0.1",
     "postcss": "^8.4.31",
     "workbox-webpack-plugin": "^7.1.0"
