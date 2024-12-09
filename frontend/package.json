@@ -148,6 +148,7 @@
     "json-schema": "^0.4.0",
     "minimist": "^1.2.6",
     "nth-check": "^2.0.1",
+    "path-to-regexp": "^1.9.0",
     "postcss": "^8.4.31",
     "workbox-webpack-plugin": "^7.1.0"
   },
