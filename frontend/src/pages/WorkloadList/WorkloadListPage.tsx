@@ -116,6 +116,7 @@ class WorkloadListPageComponent extends FilterComponent.Component<
   getDeploymentItems(data: ClusterWorkloadsResponse): WorkloadListItem[] {
     if (data.workloads) {
       return data.workloads.map(deployment => ({
+        ambient: deployment.ambient,
         cluster: deployment.cluster,
         namespace: deployment.namespace,
         name: deployment.name,

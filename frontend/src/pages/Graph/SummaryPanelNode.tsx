@@ -39,8 +39,8 @@ import { useKialiSelector } from '../../hooks/redux';
 import { groupMenuStyle, kebabToggleStyle } from 'styles/DropdownStyles';
 import { isMultiCluster, serverConfig } from '../../config';
 import { panelBodyStyle, panelHeadingStyle, panelStyle } from './SummaryPanelStyle';
-import { renderWaypointLabel } from '../../components/DetailDescription/DetailDescription';
 import { dicTypeToGVK, gvkType } from '../../types/IstioConfigList';
+import { renderWaypointLabel } from '../../components/Ambient/WaypointLabel';
 
 type SummaryPanelNodeState = {
   isActionOpen: boolean;

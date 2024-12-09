@@ -66,7 +66,7 @@ type WorkloadListItem struct {
 	// Namespace of the workload
 	Namespace string `json:"namespace"`
 
-	// If is part of the Ambient infraestructure
+	// If is part of the Ambient infrastructure
 	// required: false
 	// example: waypoint/ztunnel
 	Ambient string `json:"ambient"`

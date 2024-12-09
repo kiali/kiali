@@ -16,12 +16,13 @@ import { PFBadge, PFBadges } from '../../components/Pf/PfBadges';
 import { MissingLabel } from '../../components/MissingLabel/MissingLabel';
 import { MissingAuthPolicy } from 'components/MissingAuthPolicy/MissingAuthPolicy';
 import { getGVKTypeString, hasMissingAuthPolicy, isGVKSupported } from 'utils/IstioConfigUtils';
-import { DetailDescription, renderWaypointSimpleLabel } from '../../components/DetailDescription/DetailDescription';
+import { DetailDescription } from '../../components/DetailDescription/DetailDescription';
 import { AmbientLabel, tooltipMsgType } from '../../components/Ambient/AmbientLabel';
 import { gvkType, validationKey } from '../../types/IstioConfigList';
 import { infoStyle } from 'styles/IconStyle';
 import { addInfo } from 'utils/AlertUtils';
 import { classes } from 'typestyle';
+import { renderWaypointSimpleLabel } from '../../components/Ambient/WaypointLabel';
 
 type WorkloadDescriptionProps = {
   health?: H.Health;

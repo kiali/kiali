@@ -57,41 +57,6 @@ const itemStyle = kialiStyle({
   paddingBottom: '0.25rem'
 });
 
-export const renderWaypointSimpleLabel = (bgsize?: string): React.ReactNode => {
-  const badgeSize = bgsize === 'global' || bgsize === 'sm' ? bgsize : 'global';
-  const tooltip = <div>This workload is identified as a waypoint proxy, as part of Istio Ambient</div>;
-
-  return [
-    <>
-      <PFBadge
-        badge={PFBadges.Waypoint}
-        position={TooltipPosition.top}
-        size={badgeSize}
-        tooltip={tooltip}
-        style={{ marginLeft: '5px' }}
-      />
-    </>
-  ];
-};
-
-export const renderWaypointLabel = (bgsize?: string): React.ReactNode => {
-  const badgeSize = bgsize === 'global' || bgsize === 'sm' ? bgsize : 'global';
-  return [
-    <>
-      <div key="waypoint-workloads-title">
-        <PFBadge badge={PFBadges.Waypoint} position={TooltipPosition.top} size={badgeSize} />
-        Waypoint proxy
-        <Tooltip
-          position={TooltipPosition.right}
-          content="This workload is identified as a waypoint proxy, as part of Istio Ambient"
-        >
-          <KialiIcon.Info className={infoStyle} />
-        </Tooltip>
-      </div>
-    </>
-  ];
-};
-
 const DetailDescriptionComponent: React.FC<Props> = (props: Props) => {
   const renderWaypoints = (): React.ReactNode => {
     const waypointList = props.waypointWorkloads?.map(waypoint => {

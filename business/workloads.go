@@ -286,6 +286,9 @@ func (in *WorkloadService) GetWorkloadList(ctx context.Context, criteria Workloa
 		}
 		wItem.Cluster = cluster
 		wItem.Namespace = namespace
+		if w.IsWaypoint() {
+			wItem.Ambient = "waypoint"
+		}
 		workloadList.Workloads = append(workloadList.Workloads, *wItem)
 	}
 
