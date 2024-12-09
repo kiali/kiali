@@ -16,6 +16,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/util/healthutil"
 )
 
 type ClusterWorkloads struct {
@@ -469,10 +470,8 @@ func (workload *Workload) ParseWorkloadGroup(wg *networking_v1.WorkloadGroup, we
 	conf := config.Get()
 	workload.WorkloadGVK = kubernetes.WorkloadGroups
 	workload.parseObjectMeta(&wg.ObjectMeta, &wg.ObjectMeta)
-	// WorkloadEntry does not have status, they are generated based on WorkloadGroup.Template
 	workload.DesiredReplicas = int32(len(wentries))
 	workload.CurrentReplicas = int32(len(wentries))
-	workload.AvailableReplicas = int32(len(wentries))
 	workload.Labels = map[string]string{}
 	// Template.Labels can be nillable, this should be handled
 	// when Template does not have labels, the no Applications will be recognised
@@ -488,9 +487,23 @@ func (workload *Workload) ParseWorkloadGroup(wg *networking_v1.WorkloadGroup, we
 	/** Check the labels app and version required by Istio in template Pods*/
 	_, workload.AppLabel = workload.Labels[conf.IstioLabels.AppLabelName]
 	_, workload.VersionLabel = workload.Labels[conf.IstioLabels.VersionLabelName]
-	//for _, entry := range wentries {
-	//	append(workload.Pods)
-	//}
+	for _, entry := range wentries {
+		podStatus := core_v1.PodFailed
+		if healthutil.IsWorkloadEntryHealthy(entry) {
+			podStatus = core_v1.PodRunning
+			workload.AvailableReplicas = workload.AvailableReplicas + 1
+		}
+		workload.Pods = append(workload.Pods, &Pod{
+			Name:               entry.Name,
+			Labels:             entry.Spec.Labels,
+			CreatedAt:          formatTime(entry.CreationTimestamp.Time),
+			Status:             string(podStatus),
+			AppLabel:           workload.AppLabel,
+			VersionLabel:       workload.VersionLabel,
+			Annotations:        entry.Annotations,
+			ServiceAccountName: entry.Spec.ServiceAccount,
+		})
+	}
 }
 
 func (workload *Workload) ParsePods(controllerName string, controllerGVK schema.GroupVersionKind, pods []core_v1.Pod) {
