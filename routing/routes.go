@@ -1442,6 +1442,13 @@ func NewRoutes(
 			handlers.ConfigDumpResourceEntries,
 			true,
 		},
+		{
+			"ZtunnelConfigDump",
+			"GET",
+			"/api/namespaces/{namespace}/pods/{pod}/config_dump_ztunnel",
+			handlers.ConfigDumpZtunnel,
+			true,
+		},
 		// swagger:route POST /namespaces/{namespace}/pods/{pod}/logging pods podProxyLogging
 		// ---
 		// Endpoint to set pod proxy log level

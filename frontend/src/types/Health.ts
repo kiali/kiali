@@ -235,7 +235,7 @@ export const isProxyStatusSynced = (status: ProxyStatus): boolean => {
 };
 
 export const isProxyStatusComponentSynced = (componentStatus: string): boolean => {
-  return componentStatus === 'Synced';
+  return componentStatus === 'Synced' || componentStatus === 'IGNORED';
 };
 
 export const mergeStatus = (s1: Status, s2: Status): Status => {

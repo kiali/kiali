@@ -1,13 +1,12 @@
 import deepFreeze from 'deep-freeze';
 import { AppListItem } from '../../types/AppList';
 import { AppWorkload } from 'types/App';
-import { isWaypoint } from 'helpers/LabelFilterHelper';
 import { WorkloadListItem, Workload } from '../../types/Workload';
 import { ServiceListItem } from '../../types/ServiceList';
 import { dicTypeToGVK, IstioConfigItem } from '../../types/IstioConfigList';
 import * as Renderers from './Renderers';
 import { Health } from '../../types/Health';
-import { isIstioNamespace } from 'config/ServerConfig';
+import { isIstioNamespace, serverConfig } from 'config/ServerConfig';
 import { NamespaceInfo } from '../../types/NamespaceInfo';
 import { StatefulFiltersRef } from '../Filters/StatefulFilters';
 import { PFBadges, PFBadgeType } from '../../components/Pf/PfBadges';
@@ -31,14 +30,16 @@ export const hasHealth = (r: RenderResource): r is SortResource => {
 
 export const hasMissingSidecar = (workload: Workload | WorkloadListItem | AppWorkload | AppListItem): boolean => {
   return (
-    // TODO:
-    // Are we missing an ambient case here where ambient is enabled AND we are missing the ambient labels AND we are missing the sidecar?
-    // hasMissingSC && hasMissingA && serverConfig.ambientEnabled
-    !workload.istioSidecar &&
-    !workload.isAmbient &&
-    !isWaypoint(workload.labels) &&
-    !workload.isGateway &&
-    !isIstioNamespace(workload.namespace)
+    (!serverConfig.ambientEnabled &&
+      !workload.istioSidecar &&
+      !workload.isGateway &&
+      !isIstioNamespace(workload.namespace)) ||
+    (serverConfig.ambientEnabled &&
+      !workload.isAmbient &&
+      !workload.istioSidecar &&
+      workload.ambient !== 'waypoint' &&
+      !workload.isGateway &&
+      !isIstioNamespace(workload.namespace))
   );
 };
 

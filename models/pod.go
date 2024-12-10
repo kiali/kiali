@@ -13,9 +13,7 @@ import (
 type Pods []*Pod
 
 const (
-	AmbientAnnotation        = "ambient.istio.io/redirection"
-	AmbientAnnotationEnabled = "enabled"
-	IstioProxy               = "istio-proxy"
+	IstioProxy = "istio-proxy"
 )
 
 // Pod holds a subset of v1.Pod data that is meaningful in Kiali
@@ -33,6 +31,7 @@ type Pod struct {
 	AppLabel            bool              `json:"appLabel"`
 	VersionLabel        bool              `json:"versionLabel"`
 	Annotations         map[string]string `json:"annotations"`
+	Protocol            string            `json:"protocol"`
 	ProxyStatus         *ProxyStatus      `json:"proxyStatus"`
 	ServiceAccountName  string            `json:"serviceAccountName"`
 }

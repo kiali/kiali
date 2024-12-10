@@ -165,6 +165,25 @@ func TestParsePodToWorkload(t *testing.T) {
 	assert.Equal("value-annot", w.AdditionalDetails[0].Value)
 }
 
+func TestParseWaypointPodToWorkload(t *testing.T) {
+	assert := assert.New(t)
+
+	w := Workload{}
+	w.ParsePod(fakeWaypointPod())
+
+	assert.Equal("waypoint", w.Name)
+	assert.Equal("istio.io-mesh-controller", w.Labels["gateway.istio.io/managed"])
+	assert.Equal("waypoint", w.Labels["gateway.networking.k8s.io/gateway-name"])
+	assert.Equal("2709198702082918", w.ResourceVersion)
+	assert.Equal("Pod", w.WorkloadGVK.Kind)
+	assert.False(w.IsAmbient)
+	assert.True(w.IsWaypoint())
+	assert.False(w.IsGateway())
+	assert.Equal(int32(1), w.DesiredReplicas)
+	assert.Equal(int32(1), w.CurrentReplicas)
+	assert.Equal(int32(1), w.AvailableReplicas)
+}
+
 func TestParsePodsToWorkload(t *testing.T) {
 	assert := assert.New(t)
 	config.Set(config.NewConfig())
@@ -403,6 +422,26 @@ func fakePod() *core_v1.Pod {
 			ResourceVersion:   "2709198702082918",
 			Labels:            map[string]string{"foo": "bar", "version": "v1"},
 			Annotations:       map[string]string{"annotation": "value-annot"},
+		},
+		Status: core_v1.PodStatus{
+			Phase: "Running",
+		},
+	}
+}
+
+func fakeWaypointPod() *core_v1.Pod {
+	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
+
+	return &core_v1.Pod{
+		TypeMeta: meta_v1.TypeMeta{
+			Kind: "Pod",
+		},
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:              "waypoint",
+			CreationTimestamp: meta_v1.NewTime(t1),
+			ResourceVersion:   "2709198702082918",
+			Labels:            map[string]string{"gateway.istio.io/managed": "istio.io-mesh-controller", "gateway.networking.k8s.io/gateway-name": "waypoint"},
+			Annotations:       map[string]string{"istio.io/rev": "default"},
 		},
 		Status: core_v1.PodStatus{
 			Phase: "Running",

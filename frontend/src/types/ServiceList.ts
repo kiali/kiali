@@ -11,6 +11,7 @@ export interface ServiceList {
 
 export interface ServiceOverview {
   additionalDetailSample?: AdditionalItem;
+  ambient?: string;
   cluster?: string;
   health: ServiceHealth;
   isAmbient: boolean;
