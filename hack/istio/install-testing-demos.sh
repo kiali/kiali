@@ -124,7 +124,7 @@ if [ "${DELETE_DEMOS}" != "true" ]; then
   gateway_yaml=""
   if [ "${USE_GATEWAY_API}" == "true" ]; then
     gateway_yaml="${ISTIO_DIR}/samples/bookinfo/gateway-api/bookinfo-gateway.yaml"
-  elif [ -v GATEWAY_HOST ]; then
+  elif ! [ -z "$GATEWAY_HOST" ]; then
     gateway_yaml=$(mktemp)
     cat << EOF > "${gateway_yaml}"
 apiVersion: networking.istio.io/v1
@@ -200,7 +200,7 @@ EOF
     "${SCRIPT_DIR}/install-sleep-demo.sh" -c kubectl -in ${ISTIO_NAMESPACE} -a ${ARCH} ${AMBIENT_ARGS_BOOKINFO}
   fi
 
-  if [ -v "${GATEWAY_HOST}" ]; then
+  if [[ -z "$GATEWAY_HOST" && "${USE_GATEWAY_API}" != "true" ]]; then
     # Assume that the '*' is used for hosts if the gateway host is not specified.
     # Some front-end tests have conflicts with the wildcard host in the bookinfo-gateway. Patch it with the host resolved for the traffic generator.
     ISTIO_INGRESS_HOST=$(${CLIENT_EXE} get cm -n bookinfo traffic-generator-config -o jsonpath='{.data.route}' | sed 's|.*//\([^\:]*\).*/.*|\1|')
