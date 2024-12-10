@@ -271,6 +271,10 @@ const workloadTypeFilter: FilterType = {
     {
       id: dicTypeToGVK.StatefulSet.Kind,
       title: dicTypeToGVK.StatefulSet.Kind
+    },
+    {
+      id: dicTypeToGVK.WorkloadGroup.Kind,
+      title: dicTypeToGVK.WorkloadGroup.Kind
     }
   ]
 };

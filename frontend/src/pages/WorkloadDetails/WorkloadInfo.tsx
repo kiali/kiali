@@ -98,19 +98,21 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
     });
 
     const workloadSelector = wkLabels.join(',');
-
-    API.getIstioConfig(
-      this.props.namespace,
-      workloadIstioResources,
-      true,
-      '',
-      workloadSelector,
-      this.props.workload.cluster
-    )
-      .then(results => {
-        this.setState({ workloadIstioConfig: results.data });
-      })
-      .catch(error => AlertUtils.addError('Could not fetch Health/IstioConfig.', error));
+    // make sure workload selector is not empty, not to load all configs, this can happen when WorkloadGroup has no labels
+    if (workloadSelector) {
+      API.getIstioConfig(
+        this.props.namespace,
+        workloadIstioResources,
+        true,
+        '',
+        workloadSelector,
+        this.props.workload.cluster
+      )
+        .then(results => {
+          this.setState({ workloadIstioConfig: results.data });
+        })
+        .catch(error => AlertUtils.addError('Could not fetch Health/IstioConfig.', error));
+    }
   };
 
   // All information for validations is fetched in the workload, no need to add another call
