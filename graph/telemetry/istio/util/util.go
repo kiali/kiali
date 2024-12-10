@@ -142,7 +142,7 @@ func AddQueryScope(query string) string {
 	return strings.ReplaceAll(query, "{", scope)
 }
 
-// GetReporter returns the "report=" prom query fragment based on whether the reporter must include waypoint traffic
+// GetReporter returns the "reporter=" prom query fragment based on whether the reporter must include waypoint traffic
 func GetReporter(reporter string, rates graph.RequestedRates) string {
 	if rates.Ambient == graph.AmbientTrafficWaypoint || rates.Ambient == graph.AmbientTrafficTotal {
 		return fmt.Sprintf(`reporter=~"%s|waypoint"`, reporter)

@@ -63,7 +63,7 @@ type NodeOptions struct {
 	AggregateValue string
 	App            string
 	Cluster        string
-	Namespace      string
+	Namespace      NamespaceInfo
 	Service        string
 	Version        string
 	Workload       string
@@ -106,6 +106,7 @@ func GetClusterSensitiveKey(cluster, name string) ClusterSensitiveKey {
 type AccessibleNamespace struct {
 	Cluster           string
 	CreationTimestamp time.Time
+	IsAmbient         bool
 	Name              string
 }
 
@@ -271,20 +272,23 @@ func NewOptions(r *net_http.Request, namespacesService *business.NamespaceServic
 	for _, namespaceName := range strings.Split(namespaces, ",") {
 		namespaceName = strings.TrimSpace(namespaceName)
 		var earliestCreationTimestamp *time.Time
+		var isAmbient bool
 		for _, an := range accessibleNamespaces {
 			if namespaceName == an.Name {
 				if nil == earliestCreationTimestamp || earliestCreationTimestamp.After(an.CreationTimestamp) {
 					earliestCreationTimestamp = &an.CreationTimestamp
 				}
+				isAmbient = an.IsAmbient
 			}
 		}
 		if nil == earliestCreationTimestamp {
 			Forbidden(fmt.Sprintf("Requested namespace [%s] is not accessible.", namespaceName))
 		} else {
 			namespaceMap[namespaceName] = NamespaceInfo{
-				Name:     namespaceName,
-				Duration: getSafeNamespaceDuration(namespaceName, *earliestCreationTimestamp, time.Duration(duration), queryTime),
-				IsIstio:  config.IsIstioNamespace(namespaceName),
+				Name:      namespaceName,
+				Duration:  getSafeNamespaceDuration(namespaceName, *earliestCreationTimestamp, time.Duration(duration), queryTime),
+				IsAmbient: isAmbient,
+				IsIstio:   config.IsIstioNamespace(namespaceName),
 			}
 		}
 	}
@@ -391,7 +395,7 @@ func NewOptions(r *net_http.Request, namespacesService *business.NamespaceServic
 				AggregateValue: aggregateValue,
 				App:            app,
 				Cluster:        cluster,
-				Namespace:      namespace,
+				Namespace:      namespaceMap[namespace],
 				Service:        service,
 				Version:        version,
 				Workload:       workload,
@@ -427,6 +431,7 @@ func getAccessibleNamespaces(ctx context.Context, namespacesService *business.Na
 		accessibleNamespaces[GetClusterSensitiveKey(namespace.Cluster, namespace.Name)] = &AccessibleNamespace{
 			Cluster:           namespace.Cluster,
 			CreationTimestamp: namespace.CreationTimestamp,
+			IsAmbient:         namespace.IsAmbient,
 			Name:              namespace.Name,
 		}
 	}

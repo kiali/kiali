@@ -221,7 +221,7 @@ func TestResponseTimeP95(t *testing.T) {
 		},
 	}
 
-	appender.appendGraph(trafficMap, "bookinfo", client)
+	appender.appendGraph(trafficMap, graph.NamespaceInfo{Name: "bookinfo", IsAmbient: false}, client)
 
 	ingress, ok = trafficMap[ingressID]
 	assert.Equal(true, ok)
@@ -495,7 +495,7 @@ func TestResponseTimeAvgSkipRates(t *testing.T) {
 		},
 	}
 
-	appender.appendGraph(trafficMap, "bookinfo", client)
+	appender.appendGraph(trafficMap, graph.NamespaceInfo{Name: "bookinfo", IsAmbient: false}, client)
 
 	ingress, ok = trafficMap[ingressID]
 	assert.Equal(true, ok)
@@ -769,7 +769,7 @@ func TestResponseTimeAvg(t *testing.T) {
 		},
 	}
 
-	appender.appendGraph(trafficMap, "bookinfo", client)
+	appender.appendGraph(trafficMap, graph.NamespaceInfo{Name: "bookinfo", IsAmbient: false}, client)
 
 	ingress, ok = trafficMap[ingressID]
 	assert.Equal(true, ok)

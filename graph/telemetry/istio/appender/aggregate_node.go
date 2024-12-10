@@ -18,7 +18,7 @@ const (
 
 // AggregateNodeAppender is responsible for injecting aggregate nodes into the graph to gain
 // visibility into traffic aggregations for a user-specfied metric attribute.
-// Note: Aggregate Nodes are supported only on Requests traffic (not TCP or gRPC-message traffic)
+// Note: Aggregate Nodes are supported only on Request traffic (not TCP or gRPC-message traffic)
 type AggregateNodeAppender struct {
 	Aggregate          string
 	AggregateValue     string
@@ -79,6 +79,10 @@ func (a AggregateNodeAppender) appendGraph(trafficMap graph.TrafficMap, namespac
 	//   note2: for now we will filter out aggregates with no traffic on the assumption that users probably don't want to
 	//      see them and it will just increase the graph density.  To change that behavior remove the "> 0" conditions.
 	// 1) query for requests originating from a workload outside the namespace.
+	//
+	// TODO: This *may* require an additional query to pick up incoming gateway traffic (source reported) for ambient namespaces (no dest
+	// proxy reporting) but because it's unclear whether this is a used feature, or whether we really need to handle that use case, I'm
+	// deferring. If necessary, see the incoming traffic handling in buildNamespacesTrafficMap.
 	groupBy := fmt.Sprintf("source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,request_protocol,response_code,grpc_response_status,response_flags,%s", a.Aggregate)
 	httpQuery := fmt.Sprintf(`sum(rate(%s{%s,source_workload_namespace!="%s",destination_service_namespace="%v",%s!="unknown"}[%vs])) by (%s) > 0`,
 		"istio_requests_total",
