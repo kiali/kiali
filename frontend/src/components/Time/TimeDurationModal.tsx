@@ -77,6 +77,7 @@ export const TimeDurationModal: React.FC<Props> = (props: Props) => {
     if (getUrlTimeRange() !== undefined) {
       dispatch(UserSettingsActions.setTimeRange(getUrlTimeRange()));
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleCancel = (): void => {
