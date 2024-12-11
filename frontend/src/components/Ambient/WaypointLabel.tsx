@@ -13,7 +13,7 @@ export const renderWaypointLabel = (bgsize?: string): React.ReactNode => {
         Waypoint proxy
         <Tooltip
           position={TooltipPosition.right}
-          content="This workload is identified as a waypoint proxy, as part of Istio Ambient"
+          content="This workload is an Istio Ambient waypoint proxy"
         >
           <KialiIcon.Info className={infoStyle} />
         </Tooltip>
