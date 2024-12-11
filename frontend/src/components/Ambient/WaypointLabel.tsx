@@ -24,7 +24,7 @@ export const renderWaypointLabel = (bgsize?: string): React.ReactNode => {
 
 export const renderWaypointSimpleLabel = (bgsize?: string): React.ReactNode => {
   const badgeSize = bgsize === 'global' || bgsize === 'sm' ? bgsize : 'global';
-  const tooltip = <div>This workload is identified as a waypoint proxy, as part of Istio Ambient</div>;
+  const tooltip = <div>This workload is an Istio Ambient waypoint proxy</div>;
 
   return [
     <>
