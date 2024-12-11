@@ -1921,12 +1921,9 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 
 		// Add the Proxy Status to the workload
 		for _, pod := range w.Pods {
-			isPodWaypoint := pod.IsWaypoint()
-			if pod.HasIstioSidecar() && !w.IsGateway() && config.Get().ExternalServices.Istio.IstioAPIEnabled {
-				pod.ProxyStatus = in.businessLayer.ProxyStatus.GetPodProxyStatus(criteria.Cluster, criteria.Namespace, pod.Name, false)
-			}
-			if isPodWaypoint {
-				pod.ProxyStatus = in.businessLayer.ProxyStatus.GetPodProxyStatus(criteria.Cluster, criteria.Namespace, pod.Name, true)
+			if config.Get().ExternalServices.Istio.IstioAPIEnabled && (pod.HasIstioSidecar() || w.IsWaypoint()) {
+				isSubscribed := pod.HasIstioSidecar() && !w.IsGateway()
+				pod.ProxyStatus = in.businessLayer.ProxyStatus.GetPodProxyStatus(criteria.Cluster, criteria.Namespace, pod.Name, isSubscribed)
 			}
 			// If Ambient is enabled for pod, check if has any Waypoint proxy
 			if pod.AmbientEnabled() {

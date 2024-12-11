@@ -22,25 +22,25 @@ func (in *ProxyStatusService) GetPodProxyStatus(cluster, ns, pod string, isSubsc
 
 // castProxyStatus allows to use Ignored when sent is not set.
 // See https://github.com/istio/istio/pull/51638/files#diff-fded610aca2639111f0d6b42e18dfc1ce047126340a2d36bb976cfa4c575b984R8
-func castProxyStatus(ps *kubernetes.ProxyStatus, useIgnored bool) *models.ProxyStatus {
+func castProxyStatus(ps *kubernetes.ProxyStatus, isSubscribed bool) *models.ProxyStatus {
 	if ps == nil {
 		return nil
 	}
 
 	return &models.ProxyStatus{
-		CDS: xdsStatus(ps.ClusterSent, ps.ClusterAcked, useIgnored),
-		EDS: xdsStatus(ps.EndpointSent, ps.EndpointAcked, useIgnored),
-		LDS: xdsStatus(ps.ListenerSent, ps.ListenerAcked, useIgnored),
-		RDS: xdsStatus(ps.RouteSent, ps.RouteAcked, useIgnored),
+		CDS: xdsStatus(ps.ClusterSent, ps.ClusterAcked, isSubscribed),
+		EDS: xdsStatus(ps.EndpointSent, ps.EndpointAcked, isSubscribed),
+		LDS: xdsStatus(ps.ListenerSent, ps.ListenerAcked, isSubscribed),
+		RDS: xdsStatus(ps.RouteSent, ps.RouteAcked, isSubscribed),
 	}
 }
 
-func xdsStatus(sent, acked string, useIgnored bool) string {
+func xdsStatus(sent, acked string, isSubscribed bool) string {
 	if sent == "" {
-		if useIgnored {
-			return "IGNORED"
-		} else {
+		if isSubscribed {
 			return "NOT_SENT"
+		} else {
+			return "IGNORED"
 		}
 	}
 	if sent == acked {
