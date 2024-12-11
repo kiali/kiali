@@ -7,6 +7,7 @@ metadata:
     app: ratings-vm
 spec:
   template:
+    address: 2.2.2.2
     labels:
       app: ratings-vm
       class: vm
@@ -56,6 +57,7 @@ metadata:
     app: ratings-vm2
 spec:
   template:
+    address: 2.2.2.2
     labels:
       app: ratings-vm2
       class: vm2
@@ -105,6 +107,7 @@ metadata:
     app: ratings-vm-no-entry
 spec:
   template:
+    address: 2.2.2.2
     labels:
       app: ratings-vm-no-entry
       class: vm3
@@ -117,4 +120,5 @@ metadata:
   namespace: bookinfo
 spec:
   template:
+    address: 2.2.2.2
     serviceAccount: bookinfo-ratings
