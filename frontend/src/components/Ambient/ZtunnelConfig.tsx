@@ -22,6 +22,7 @@ import { kialiStyle } from '../../styles/StyleUtils';
 import { ZtunnelServicesTable } from './ZtunnelServicesTable';
 import { ZtunnelWorkloadsTable } from './ZtunnelWorkloadsTable';
 import { t } from 'i18next';
+import { SortableTh } from '../Table/SimpleTable';
 
 const resources: string[] = ['services', 'workloads'];
 
@@ -58,6 +59,10 @@ const iconStyle = kialiStyle({
   display: 'inline-block',
   alignSelf: 'center'
 });
+
+export interface SortableCompareTh<T> extends SortableTh {
+  compare?: (a: T, b: T) => number;
+}
 
 class ZtunnelConfigComponent extends React.Component<ZtunnelConfigProps, ZtunnelConfigState> {
   constructor(props: ZtunnelConfigProps) {

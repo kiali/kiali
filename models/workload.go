@@ -506,6 +506,7 @@ func (workload *Workload) HasIstioSidecar() bool {
 }
 
 // IsGateway return true if the workload is Ingress, Egress or K8s Gateway
+// waypoint proxies are not included. Use IsWaypoint() instead
 func (workload *Workload) IsGateway() bool {
 	// There's not consistent labeling for gateways.
 	// In case of using istioctl, you get:
