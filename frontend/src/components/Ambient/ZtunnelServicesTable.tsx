@@ -4,6 +4,7 @@ import { ZtunnelEndpoint, ZtunnelService } from '../../types/IstioObjects';
 import { SimpleTable } from '../Table/SimpleTable';
 import { EmptyState, EmptyStateBody, EmptyStateVariant } from '@patternfly/react-core';
 import { kialiStyle } from '../../styles/StyleUtils';
+import { t } from 'i18next';
 
 type ZtunnelServicesProps = {
   config?: ZtunnelService[];
@@ -61,23 +62,23 @@ export const ZtunnelServicesTable: React.FC<ZtunnelServicesProps> = (props: Ztun
     : [];
 
   const columns: ThProps[] = [
-    { title: 'Namespace' },
-    { title: 'Service Name' },
-    { title: 'Service VIP' },
-    { title: 'Waypoint' },
-    { title: 'Endpoints' }
+    { title: t('Namespace') },
+    { title: t('Service Name') },
+    { title: t('Service VIP') },
+    { title: t('Waypoint') },
+    { title: t('Endpoints') }
   ];
   const noServicesConfig: React.ReactNode = (
     <EmptyState variant={EmptyStateVariant.sm} className={emtpytStyle}>
       <EmptyStateBody className={emtpytStyle} data-test="istio-config-empty">
-        No Ztunnel services found
+        {t('No Ztunnel services found')}
       </EmptyStateBody>
     </EmptyState>
   );
 
   return (
     <SimpleTable
-      label="Ztunnel services config"
+      label={t('Ztunnel services config')}
       columns={columns}
       rows={rows}
       variant={TableVariant.compact}

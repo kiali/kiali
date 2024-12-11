@@ -21,6 +21,7 @@ import { PFBadge, PFBadges } from '../Pf/PfBadges';
 import { kialiStyle } from '../../styles/StyleUtils';
 import { ZtunnelServicesTable } from './ZtunnelServicesTable';
 import { ZtunnelWorkloadsTable } from './ZtunnelWorkloadsTable';
+import { t } from 'i18next';
 
 const resources: string[] = ['services', 'workloads'];
 
@@ -148,7 +149,7 @@ class ZtunnelConfigComponent extends React.Component<ZtunnelConfigProps, Ztunnel
     const tabs: JSX.Element[] = [];
 
     const servicesTab = (
-      <Tab title="Services" eventKey={0} key="services">
+      <Tab title={t('Services')} eventKey={0} key="services">
         <Card className={fullHeightStyle}>
           <CardBody>
             <div className={fullHeightStyle}>
@@ -158,7 +159,7 @@ class ZtunnelConfigComponent extends React.Component<ZtunnelConfigProps, Ztunnel
                 </div>
                 <ToolbarDropdown
                   id="ztunnel_pods_list"
-                  tooltip="Display ztunnel config for the selected pod"
+                  tooltip={t('Display ztunnel config for the selected pod')}
                   handleSelect={key => this.setPod(key)}
                   value={this.state.pod.name}
                   label={this.state.pod.name}
@@ -174,7 +175,7 @@ class ZtunnelConfigComponent extends React.Component<ZtunnelConfigProps, Ztunnel
     tabs.push(servicesTab);
 
     const workloadsTab = (
-      <Tab title="Workloads" eventKey={1} key="workloads">
+      <Tab title={t('Workloads')} eventKey={1} key="workloads">
         <Card className={fullHeightStyle}>
           <CardBody>
             <div className={fullHeightStyle}>
@@ -184,7 +185,7 @@ class ZtunnelConfigComponent extends React.Component<ZtunnelConfigProps, Ztunnel
                 </div>
                 <ToolbarDropdown
                   id="envoy_pods_list"
-                  tooltip="Display envoy config for the selected pod"
+                  tooltip={t('Display envoy config for the selected pod')}
                   handleSelect={key => this.setPod(key)}
                   value={this.state.pod.name}
                   label={this.state.pod.name}

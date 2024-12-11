@@ -4,6 +4,7 @@ import { ZtunnelWorkload } from '../../types/IstioObjects';
 import { EmptyState, EmptyStateBody, EmptyStateVariant } from '@patternfly/react-core';
 import { emtpytStyle } from './ZtunnelServicesTable';
 import { SimpleTable } from '../Table/SimpleTable';
+import { t } from 'i18next';
 
 type ZtunnelWorkloadsProps = {
   config?: ZtunnelWorkload[];
@@ -35,7 +36,7 @@ export const ZtunnelWorkloadsTable: React.FC<ZtunnelWorkloadsProps> = (props: Zt
                   {workload.waypoint.destination}:{workload.waypoint.hboneMtlsPort}
                 </>
               ) : (
-                'None'
+                t('None')
               ),
               workload.protocol
             ]
@@ -44,24 +45,24 @@ export const ZtunnelWorkloadsTable: React.FC<ZtunnelWorkloadsProps> = (props: Zt
     : [];
 
   const columns: ThProps[] = [
-    { title: 'Namespace' },
-    { title: 'Pod Name' },
-    { title: 'Address' },
-    { title: 'Node' },
-    { title: 'Waypoint' },
-    { title: 'Protocol' }
+    { title: t('Namespace') },
+    { title: t('Pod Name') },
+    { title: t('Address') },
+    { title: t('Node') },
+    { title: t('Waypoint') },
+    { title: t('Protocol') }
   ];
   const noWorkloadsConfig: React.ReactNode = (
     <EmptyState variant={EmptyStateVariant.sm} className={emtpytStyle}>
       <EmptyStateBody className={emtpytStyle} data-test="istio-config-empty">
-        No Ztunnel workloads found
+        {t('No Ztunnel workloads found')}
       </EmptyStateBody>
     </EmptyState>
   );
 
   return (
     <SimpleTable
-      label="Ztunnel workloads config"
+      label={t('Ztunnel workloads config')}
       columns={columns}
       rows={rows}
       variant={TableVariant.compact}
