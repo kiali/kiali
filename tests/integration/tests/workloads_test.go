@@ -126,10 +126,10 @@ func TestDiscoverWorkloadGroups(t *testing.T) {
 	require := require.New(t)
 	workloadsPath := path.Join(cmd.KialiProjectRoot, kiali.ASSETS+"/bookinfo-workload-groups.yaml")
 	extraWorkloads := map[string]string{
-		"ratings-vm":          "WorkloadGroup",
-		"ratings-vm2":         "WorkloadGroup",
-		"bookinfo-ratings-vm": "WorkloadGroup",
-		"ratings-vm-no-entry": "WorkloadGroup",
+		"ratings-vm":           "WorkloadGroup",
+		"ratings-vm2":          "WorkloadGroup",
+		"ratings-vm-no-entry":  "WorkloadGroup",
+		"ratings-vm-no-entry2": "WorkloadGroup",
 	}
 
 	defer utils.DeleteFile(workloadsPath, kiali.BOOKINFO)
