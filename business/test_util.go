@@ -6,15 +6,16 @@ import (
 	"os"
 	"time"
 
-	osapps_v1 "github.com/openshift/api/apps/v1"
-	apps_v1 "k8s.io/api/apps/v1"
-	core_v1 "k8s.io/api/core/v1"
-	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/log"
+	osapps_v1 "github.com/openshift/api/apps/v1"
+	networkingv1 "istio.io/api/networking/v1"
+	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
+	apps_v1 "k8s.io/api/apps/v1"
+	core_v1 "k8s.io/api/core/v1"
+	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // Consolidate fake/mock data used in tests per package
@@ -91,6 +92,169 @@ func FakeDeployments(conf config.Config) []apps_v1.Deployment {
 				Replicas:            2,
 				AvailableReplicas:   0,
 				UnavailableReplicas: 2,
+			},
+		},
+	}
+}
+
+func FakeWorkloadGroups(conf config.Config) []networking_v1.WorkloadGroup {
+	appLabel := conf.IstioLabels.AppLabelName
+	classLabel := "class"
+	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
+	return []networking_v1.WorkloadGroup{
+		{
+			TypeMeta: meta_v1.TypeMeta{
+				APIVersion: kubernetes.WorkloadGroups.GroupVersion().String(),
+				Kind:       kubernetes.WorkloadGroups.Kind,
+			},
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:              "ratings-vm",
+				Namespace:         "Namespace",
+				CreationTimestamp: meta_v1.NewTime(t1),
+				Labels:            map[string]string{appLabel: "ratings-vm"},
+			},
+			Spec: networkingv1.WorkloadGroup{
+				Template: &networkingv1.WorkloadEntry{
+					Labels:         map[string]string{appLabel: "ratings-vm", classLabel: "vm"},
+					ServiceAccount: "bookinfo-ratings",
+				},
+			},
+		},
+		{
+			TypeMeta: meta_v1.TypeMeta{
+				APIVersion: kubernetes.WorkloadGroups.GroupVersion().String(),
+				Kind:       kubernetes.WorkloadGroups.Kind,
+			},
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:              "ratings-vm2",
+				Namespace:         "Namespace",
+				CreationTimestamp: meta_v1.NewTime(t1),
+				Labels:            map[string]string{appLabel: "ratings-vm2"},
+			},
+			Spec: networkingv1.WorkloadGroup{
+				Template: &networkingv1.WorkloadEntry{
+					Labels:         map[string]string{appLabel: "ratings-vm2", classLabel: "vm2"},
+					ServiceAccount: "bookinfo-ratings",
+				},
+			},
+		},
+		{
+			TypeMeta: meta_v1.TypeMeta{
+				APIVersion: kubernetes.WorkloadGroups.GroupVersion().String(),
+				Kind:       kubernetes.WorkloadGroups.Kind,
+			},
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:              "ratings-vm-no-entry",
+				Namespace:         "Namespace",
+				CreationTimestamp: meta_v1.NewTime(t1),
+				Labels:            map[string]string{appLabel: "ratings-vm-no-entry"},
+			},
+			Spec: networkingv1.WorkloadGroup{
+				Template: &networkingv1.WorkloadEntry{
+					Labels:         map[string]string{appLabel: "ratings-vm-no-entry", classLabel: "vm3"},
+					ServiceAccount: "bookinfo-ratings",
+				},
+			},
+		},
+		{
+			TypeMeta: meta_v1.TypeMeta{
+				APIVersion: kubernetes.WorkloadGroups.GroupVersion().String(),
+				Kind:       kubernetes.WorkloadGroups.Kind,
+			},
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:              "ratings-vm-no-labels",
+				Namespace:         "Namespace",
+				CreationTimestamp: meta_v1.NewTime(t1),
+			},
+			Spec: networkingv1.WorkloadGroup{
+				Template: &networkingv1.WorkloadEntry{
+					ServiceAccount: "bookinfo-ratings",
+				},
+			},
+		},
+	}
+}
+
+func FakeWorkloadGroupSidecars(conf config.Config) []networking_v1.Sidecar {
+	appLabel := conf.IstioLabels.AppLabelName
+	classLabel := "class"
+	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
+	return []networking_v1.Sidecar{
+		{
+			TypeMeta: meta_v1.TypeMeta{
+				APIVersion: kubernetes.Sidecars.GroupVersion().String(),
+				Kind:       kubernetes.Sidecars.Kind,
+			},
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:              "bookinfo-ratings-vm",
+				Namespace:         "Namespace",
+				CreationTimestamp: meta_v1.NewTime(t1),
+				Labels:            map[string]string{appLabel: "ratings-vm"},
+			},
+			Spec: networkingv1.Sidecar{
+				WorkloadSelector: &networkingv1.WorkloadSelector{
+					Labels: map[string]string{appLabel: "ratings-vm", classLabel: "vm"},
+				},
+			},
+		},
+		{
+			TypeMeta: meta_v1.TypeMeta{
+				APIVersion: kubernetes.Sidecars.GroupVersion().String(),
+				Kind:       kubernetes.Sidecars.Kind,
+			},
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:              "bookinfo-ratings-vm2",
+				Namespace:         "Namespace",
+				CreationTimestamp: meta_v1.NewTime(t1),
+				Labels:            map[string]string{appLabel: "ratings-vm2"},
+			},
+			Spec: networkingv1.Sidecar{
+				WorkloadSelector: &networkingv1.WorkloadSelector{
+					Labels: map[string]string{appLabel: "ratings-vm2", classLabel: "vm2"},
+				},
+			},
+		},
+	}
+}
+
+func FakeWorkloadEntries(conf config.Config) []networking_v1.WorkloadEntry {
+	appLabel := conf.IstioLabels.AppLabelName
+	versionLabel := conf.IstioLabels.VersionLabelName
+	classLabel := "class"
+	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
+	return []networking_v1.WorkloadEntry{
+		{
+			TypeMeta: meta_v1.TypeMeta{
+				APIVersion: kubernetes.WorkloadEntries.GroupVersion().String(),
+				Kind:       kubernetes.WorkloadEntries.Kind,
+			},
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:              "ratings-vm",
+				Namespace:         "Namespace",
+				CreationTimestamp: meta_v1.NewTime(t1),
+				Labels:            map[string]string{appLabel: "ratings-vm"},
+			},
+			Spec: networkingv1.WorkloadEntry{
+				Labels:         map[string]string{appLabel: "ratings-vm", classLabel: "vm", versionLabel: "v3"},
+				Network:        "vm-us-east",
+				ServiceAccount: "bookinfo-ratings",
+			},
+		},
+		{
+			TypeMeta: meta_v1.TypeMeta{
+				APIVersion: kubernetes.WorkloadEntries.GroupVersion().String(),
+				Kind:       kubernetes.WorkloadEntries.Kind,
+			},
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:              "ratings-vm2",
+				Namespace:         "Namespace",
+				CreationTimestamp: meta_v1.NewTime(t1),
+				Labels:            map[string]string{appLabel: "ratings-vm2"},
+			},
+			Spec: networkingv1.WorkloadEntry{
+				Labels:         map[string]string{appLabel: "ratings-vm2", classLabel: "vm2", versionLabel: "v4"},
+				Network:        "vm-us-east",
+				ServiceAccount: "bookinfo-ratings",
 			},
 		},
 	}
