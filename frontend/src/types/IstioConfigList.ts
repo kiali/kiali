@@ -79,7 +79,8 @@ export enum gvkType {
   Pod = 'Pod',
   ReplicaSet = 'ReplicaSet',
   ReplicationController = 'ReplicationController',
-  StatefulSet = 'StatefulSet'
+  StatefulSet = 'StatefulSet',
+  TrafficShifting = "TrafficShifting"
 }
 
 export const dicTypeToGVK: { [key in gvkType]: GroupVersionKind } = {
