@@ -45,6 +45,7 @@ interface EndpointAddress {
 }
 
 export interface WorkloadOverview {
+  ambient?: string;
   createdAt: string;
   isAmbient: boolean;
   isGateway: boolean;

@@ -582,6 +582,7 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, cluster, namespace,
 		wi := &models.WorkloadListItem{}
 		wi.ParseWorkload(w)
 		wo = append(wo, wi)
+		// The service is not marked as Ambient if any of the workloads is Ambient
 		if !w.IsAmbient {
 			isAmbient = false
 		}

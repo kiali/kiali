@@ -231,6 +231,9 @@ func (workload *WorkloadListItem) ParseWorkload(w *Workload) {
 	}
 	workload.HealthAnnotations = w.HealthAnnotations
 	workload.IstioReferences = []*IstioValidationKey{}
+	if w.IsWaypoint() {
+		workload.Ambient = "waypoint"
+	}
 
 	/** Check the labels app and version required by Istio in template Pods*/
 	_, workload.AppLabel = w.Labels[conf.IstioLabels.AppLabelName]
