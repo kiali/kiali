@@ -15,12 +15,9 @@ type ProxyStatusService struct {
 	businessLayer  *Layer
 }
 
-func (in *ProxyStatusService) GetPodProxyStatus(cluster, ns, pod string) *models.ProxyStatus {
-	return castProxyStatus(kialiCache.GetPodProxyStatus(cluster, ns, pod), false)
-}
-
-func (in *ProxyStatusService) GetUpdatedPodProxyStatus(cluster, ns, pod string) *models.ProxyStatus {
-	return castProxyStatus(kialiCache.GetPodProxyStatus(cluster, ns, pod), true)
+// GetPodProxyStatus isSubscribed is used to return IGNORED if sent is empty, instead of NOT_SENT
+func (in *ProxyStatusService) GetPodProxyStatus(cluster, ns, pod string, isSubscribed bool) *models.ProxyStatus {
+	return castProxyStatus(kialiCache.GetPodProxyStatus(cluster, ns, pod), isSubscribed)
 }
 
 // castProxyStatus allows to use Ignored when sent is not set.
