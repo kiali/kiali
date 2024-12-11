@@ -321,7 +321,6 @@ func PodLogs(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// PodLogs is the API handler to fetch logs for a single pod container
 func ConfigDumpZtunnel(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 
