@@ -243,7 +243,12 @@ print_all_service_endpoints() {
 
 exec_ssh() {
   local sshcmd=${1}
-  ssh -y -i ${CRC_ROOT_DIR}/machines/crc/id_ecdsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null core@$(${CRC_COMMAND} ip) ${sshcmd}
+  # when network-mode is "user", the port is 2222.
+  local port=22
+  if ${CRC_COMMAND} config get network-mode | grep -q ' user$'; then
+    port=2222
+  fi
+  ssh -y -p ${port} -i ${CRC_ROOT_DIR}/machines/crc/id_ed25519 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null core@$(${CRC_COMMAND} ip) ${sshcmd}
 }
 
 expose_cluster() {
@@ -504,10 +509,10 @@ SCRIPT_ROOT="$( cd "$(dirname "$0")" ; pwd -P )"
 cd ${SCRIPT_ROOT}
 
 # The default version of the crc tool to be downloaded
-DEFAULT_CRC_DOWNLOAD_VERSION="2.42.0"
+DEFAULT_CRC_DOWNLOAD_VERSION="2.45.0"
 
 # The default version of the crc bundle - this is typically the version included with the CRC download
-DEFAULT_CRC_LIBVIRT_DOWNLOAD_VERSION="4.17.0"
+DEFAULT_CRC_LIBVIRT_DOWNLOAD_VERSION="4.17.7"
 
 # The default virtual CPUs assigned to the CRC VM
 DEFAULT_CRC_CPUS="6"
@@ -523,6 +528,9 @@ DEFAULT_DOWNLOAD_BUNDLE="false"
 
 # Enables cluster monitoring in the CRC cluster
 DEFAULT_ENABLE_CLUSTER_MONITORING="false"
+
+# Enables network mode "user" which uses the local host networking
+DEFAULT_ENABLE_USER_NETWORK_MODE="false"
 
 # process command line args to override environment
 _CMD=""
@@ -617,6 +625,10 @@ while [[ $# -gt 0 ]]; do
       ENABLE_CLUSTER_MONITORING="$2"
       shift;shift
       ;;
+    -eunm|--enable-user-network-mode)
+      ENABLE_USER_NETWORK_MODE="$2"
+      shift;shift
+      ;;
     -p|--pull-secret-file)
       PULL_SECRET_FILE="$2"
       shift;shift
@@ -668,6 +680,10 @@ Valid options:
   -ecm|--enable-cluster-monitoring (true|false)
       If true, the cluster will have monitoring enabled.
       Default: ${DEFAULT_ENABLE_CLUSTER_MONITORING}
+      Used only for the 'start' command.
+  -eunm|--enable-user-network-mode (true|false)
+      If true, the network mode will be changed to "user" and will enable CRC to use the local host's networking.
+      Default: ${DEFAULT_ENABLE_USER_NETWORK_MODE}
       Used only for the 'start' command.
   -h|--help : this message
   -p|--pull-secret-file <filename>
@@ -738,6 +754,7 @@ CRC_MACHINE_IMAGE="${CRC_ROOT_DIR}/machines/crc/crc"
 CRC_OC_BIN="${CRC_ROOT_DIR}/bin/oc/oc"
 DOWNLOAD_BUNDLE="${DOWNLOAD_BUNDLE:-${DEFAULT_DOWNLOAD_BUNDLE}}"
 ENABLE_CLUSTER_MONITORING="${ENABLE_CLUSTER_MONITORING:-${DEFAULT_ENABLE_CLUSTER_MONITORING}}"
+ENABLE_USER_NETWORK_MODE="${ENABLE_USER_NETWORK_MODE:-${DEFAULT_ENABLE_USER_NETWORK_MODE}}"
 
 # VM configuration
 CRC_CPUS=${CRC_CPUS:-${DEFAULT_CRC_CPUS}}
@@ -795,6 +812,7 @@ debug "ENVIRONMENT:
   CRC_ROOT_DIR=$CRC_ROOT_DIR
   CRC_VIRTUAL_DISK_SIZE=$CRC_VIRTUAL_DISK_SIZE
   ENABLE_CLUSTER_MONITORING=$ENABLE_CLUSTER_MONITORING
+  ENABLE_USER_NETWORK_MODE=$ENABLE_USER_NETWORK_MODE
   OPENSHIFT_BIN_PATH=$OPENSHIFT_BIN_PATH
   "
 
@@ -895,8 +913,14 @@ if [ "$_CMD" = "start" ]; then
   fi
 
   # Unsure if we need these
-  #${CRC_COMMAND} config set network-mode user
-  #${CRC_COMMAND} config set host-network-access true
+  if [ "${ENABLE_USER_NETWORK_MODE}" == "true" ]; then
+    ${CRC_COMMAND} config set network-mode user
+    ${CRC_COMMAND} config set host-network-access true
+  else
+    if ${CRC_COMMAND} config get network-mode | grep -q ' user$'; then
+      infomsg "WARNING: --enable-user-network-mode is false but the current CRC config has it enabled."
+    fi
+  fi
 
   infomsg "Setting up the requirements for the OpenShift cluster..."
   debug "${CRC_COMMAND} setup"
