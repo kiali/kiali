@@ -941,10 +941,7 @@ func FakeWaypointPod() []core_v1.Pod {
 			},
 			Spec: core_v1.PodSpec{
 				Containers: []core_v1.Container{
-					{Name: "waypoint-dcd74f8b4-nf7jc", Image: "whatever"},
-				},
-				InitContainers: []core_v1.Container{
-					{Name: "istio-init", Image: "gcr.io/istio-release/proxyv2:1.22.0-distroless"},
+					{Name: "waypoint-dcd74f8b4-nf7jc", Image: "gcr.io/istio-release/proxyv2:1.24.1-distroless"},
 				},
 			},
 		},
@@ -976,9 +973,6 @@ func FakeWaypointNamespaceEnrolledPods(waypoint bool) []core_v1.Pod {
 				Containers: []core_v1.Container{
 					{Name: "details", Image: "whatever"},
 				},
-				InitContainers: []core_v1.Container{
-					{Name: "istio-init", Image: "docker.io/istio/proxy_init:0.7.1"},
-				},
 			},
 		},
 		{ObjectMeta: meta_v1.ObjectMeta{
@@ -991,9 +985,6 @@ func FakeWaypointNamespaceEnrolledPods(waypoint bool) []core_v1.Pod {
 			Spec: core_v1.PodSpec{
 				Containers: []core_v1.Container{
 					{Name: "productpage", Image: "whatever"},
-				},
-				InitContainers: []core_v1.Container{
-					{Name: "istio-init", Image: "docker.io/istio/proxy_init:0.7.1"},
 				},
 			},
 		},

@@ -1133,7 +1133,7 @@ func TestValidateWaypoint(t *testing.T) {
 	require.NotNil(workload)
 
 	assert.Equal(1, len(workload.Pods))
-	assert.True(workload.Pods[0].IsWaypoint())
+	assert.True(workload.IsWaypoint())
 
 	// Get waypoint proxy
 	criteriaDetails := WorkloadCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", WorkloadName: "details", WorkloadGVK: schema.GroupVersionKind{}, IncludeServices: false}
@@ -1205,7 +1205,7 @@ func TestValidateWaypointNS(t *testing.T) {
 	require.NotNil(workload)
 
 	assert.Equal(1, len(workload.Pods))
-	assert.True(workload.Pods[0].IsWaypoint())
+	assert.True(workload.IsWaypoint())
 
 	// Get waypoint proxy
 	criteriaDetails := WorkloadCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", WorkloadName: "details", WorkloadGVK: schema.GroupVersionKind{}, IncludeServices: false}
@@ -1270,7 +1270,7 @@ func TestValidateWaypointService(t *testing.T) {
 	require.NotNil(workload)
 
 	assert.Equal(1, len(workload.Pods))
-	assert.True(workload.Pods[0].IsWaypoint())
+	assert.True(workload.IsWaypoint())
 
 	// Get waypoint proxy
 	criteriaDetails := WorkloadCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", WorkloadName: "details", WorkloadGVK: schema.GroupVersionKind{}, IncludeServices: false}
@@ -1349,7 +1349,8 @@ func TestValidateWaypointProxyStatus(t *testing.T) {
 	require.NotNil(workload)
 
 	assert.Equal(1, len(workload.Pods))
-	assert.True(workload.Pods[0].IsWaypoint())
+	assert.False(workload.IsGateway())
+	assert.True(workload.IsWaypoint())
 
 	pod := workload.Pods[0]
 	assert.NotNil(pod.ProxyStatus)

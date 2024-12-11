@@ -220,11 +220,6 @@ func (pod *Pod) AmbientEnabled() bool {
 	return pod.Annotations[config.AmbientAnnotation] == config.AmbientAnnotationEnabled
 }
 
-// IsWaypoint returns true if the pod is a waypoint proxy
-func (pod *Pod) IsWaypoint() bool {
-	return config.IsWaypoint(pod.Labels)
-}
-
 // HasNativeSidecar returns true if the pod has istio-proxy init containers
 func (pod *Pod) HasNativeSidecar() bool {
 	for _, c := range pod.IstioInitContainers {
