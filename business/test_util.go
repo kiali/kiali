@@ -10,7 +10,9 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/log"
+
 	osapps_v1 "github.com/openshift/api/apps/v1"
+
 	networkingv1 "istio.io/api/networking/v1"
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 	apps_v1 "k8s.io/api/apps/v1"
@@ -97,11 +99,11 @@ func FakeDeployments(conf config.Config) []apps_v1.Deployment {
 	}
 }
 
-func FakeWorkloadGroups(conf config.Config) []networking_v1.WorkloadGroup {
+func FakeWorkloadGroups(conf config.Config) []*networking_v1.WorkloadGroup {
 	appLabel := conf.IstioLabels.AppLabelName
 	classLabel := "class"
 	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
-	return []networking_v1.WorkloadGroup{
+	return []*networking_v1.WorkloadGroup{
 		{
 			TypeMeta: meta_v1.TypeMeta{
 				APIVersion: kubernetes.WorkloadGroups.GroupVersion().String(),
@@ -175,11 +177,11 @@ func FakeWorkloadGroups(conf config.Config) []networking_v1.WorkloadGroup {
 	}
 }
 
-func FakeWorkloadGroupSidecars(conf config.Config) []networking_v1.Sidecar {
+func FakeWorkloadGroupSidecars(conf config.Config) []*networking_v1.Sidecar {
 	appLabel := conf.IstioLabels.AppLabelName
 	classLabel := "class"
 	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
-	return []networking_v1.Sidecar{
+	return []*networking_v1.Sidecar{
 		{
 			TypeMeta: meta_v1.TypeMeta{
 				APIVersion: kubernetes.Sidecars.GroupVersion().String(),
@@ -217,12 +219,12 @@ func FakeWorkloadGroupSidecars(conf config.Config) []networking_v1.Sidecar {
 	}
 }
 
-func FakeWorkloadEntries(conf config.Config) []networking_v1.WorkloadEntry {
+func FakeWorkloadEntries(conf config.Config) []*networking_v1.WorkloadEntry {
 	appLabel := conf.IstioLabels.AppLabelName
 	versionLabel := conf.IstioLabels.VersionLabelName
 	classLabel := "class"
 	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
-	return []networking_v1.WorkloadEntry{
+	return []*networking_v1.WorkloadEntry{
 		{
 			TypeMeta: meta_v1.TypeMeta{
 				APIVersion: kubernetes.WorkloadEntries.GroupVersion().String(),
