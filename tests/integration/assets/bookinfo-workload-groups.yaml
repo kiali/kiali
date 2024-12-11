@@ -1,0 +1,120 @@
+apiVersion: networking.istio.io/v1
+kind: WorkloadGroup
+metadata:
+  name: ratings-vm
+  namespace: bookinfo
+  labels:
+    app: ratings-vm
+spec:
+  template:
+    labels:
+      app: ratings-vm
+      class: vm
+    serviceAccount: bookinfo-ratings
+---
+apiVersion: networking.istio.io/v1
+kind: WorkloadEntry
+metadata:
+  name: ratings-vm
+  namespace: bookinfo
+spec:
+  address: 2.2.2.2
+  labels:
+    class: vm
+    app: ratings-vm
+    version: v3
+  serviceAccount: bookinfo-ratings
+  network: vm-us-east
+---
+apiVersion: networking.istio.io/v1beta1
+kind: Sidecar
+metadata:
+  name: bookinfo-ratings-vm
+  namespace: bookinfo
+spec:
+  egress:
+  - bind: 127.0.0.2
+    hosts:
+    - ./*
+  ingress:
+  - defaultEndpoint: 127.0.0.1:9080
+    port:
+      name: http
+      number: 9080
+      protocol: HTTP
+  workloadSelector:
+    labels:
+      app: ratings-vm
+      class: vm
+---
+apiVersion: networking.istio.io/v1
+kind: WorkloadGroup
+metadata:
+  name: ratings-vm2
+  namespace: bookinfo
+  labels:
+    app: ratings-vm2
+spec:
+  template:
+    labels:
+      app: ratings-vm2
+      class: vm2
+    serviceAccount: bookinfo-ratings
+---
+apiVersion: networking.istio.io/v1
+kind: WorkloadEntry
+metadata:
+  name: ratings-vm2
+  namespace: bookinfo
+spec:
+  address: 2.2.2.2
+  labels:
+    class: vm2
+    app: ratings-vm2
+    version: v4
+  serviceAccount: bookinfo-ratings
+  network: vm-us-east
+---
+apiVersion: networking.istio.io/v1beta1
+kind: Sidecar
+metadata:
+  name: bookinfo-ratings-vm2
+  namespace: bookinfo
+spec:
+  egress:
+  - bind: 127.0.0.2
+    hosts:
+    - ./*
+  ingress:
+  - defaultEndpoint: 127.0.0.1:9080
+    port:
+      name: http
+      number: 9080
+      protocol: HTTP
+  workloadSelector:
+    labels:
+      app: ratings-vm2
+      class: vm2
+---
+apiVersion: networking.istio.io/v1
+kind: WorkloadGroup
+metadata:
+  name: ratings-vm-no-entry
+  namespace: bookinfo
+  labels:
+    app: ratings-vm-no-entry
+spec:
+  template:
+    labels:
+      app: ratings-vm-no-entry
+      class: vm3
+    serviceAccount: bookinfo-ratings
+---
+apiVersion: networking.istio.io/v1
+kind: WorkloadGroup
+metadata:
+  name: ratings-vm-no-entry2
+  namespace: bookinfo
+spec:
+  template:
+    serviceAccount: bookinfo-ratings

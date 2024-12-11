@@ -106,15 +106,15 @@ func TestGetWorkloadListFromWorkloadGroups(t *testing.T) {
 	}
 	for _, obj := range FakeWorkloadGroups(*conf) {
 		o := obj
-		kubeObjs = append(kubeObjs, &o)
+		kubeObjs = append(kubeObjs, o)
 	}
 	for _, obj := range FakeWorkloadEntries(*conf) {
 		o := obj
-		kubeObjs = append(kubeObjs, &o)
+		kubeObjs = append(kubeObjs, o)
 	}
 	for _, obj := range FakeWorkloadGroupSidecars(*conf) {
 		o := obj
-		kubeObjs = append(kubeObjs, &o)
+		kubeObjs = append(kubeObjs, o)
 	}
 
 	k8s := kubetest.NewFakeK8sClient(kubeObjs...)
@@ -503,15 +503,15 @@ func TestGetWorkloadFromWorkloadGroup(t *testing.T) {
 	}
 	for _, obj := range FakeWorkloadGroups(*conf) {
 		o := obj
-		kubeObjs = append(kubeObjs, &o)
+		kubeObjs = append(kubeObjs, o)
 	}
 	for _, obj := range FakeWorkloadEntries(*conf) {
 		o := obj
-		kubeObjs = append(kubeObjs, &o)
+		kubeObjs = append(kubeObjs, o)
 	}
 	for _, obj := range FakeWorkloadGroupSidecars(*conf) {
 		o := obj
-		kubeObjs = append(kubeObjs, &o)
+		kubeObjs = append(kubeObjs, o)
 	}
 	k8s := kubetest.NewFakeK8sClient(kubeObjs...)
 	k8s.OpenShift = true
