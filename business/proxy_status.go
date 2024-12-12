@@ -39,8 +39,8 @@ func xdsStatus(sent, acked string, isSubscribed bool) string {
 	if sent == "" {
 		if isSubscribed {
 			return "NOT_SENT"
-		} else {
-			return "IGNORED"
+		}
+		return "IGNORED"
 		}
 	}
 	if sent == acked {
