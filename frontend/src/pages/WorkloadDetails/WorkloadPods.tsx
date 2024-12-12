@@ -106,6 +106,11 @@ export const WorkloadPods: React.FC<WorkloadPodsProps> = (props: WorkloadPodsPro
             </li>
 
             <li>
+              <span>Protocol</span>
+              <div style={{ display: 'inline-block' }}>{pod.protocol ? pod.protocol : 'TCP'}</div>
+            </li>
+
+            <li>
               <span>Labels</span>
               <div style={{ display: 'inline-block' }}>
                 <Labels labels={pod.labels} expanded={true} />

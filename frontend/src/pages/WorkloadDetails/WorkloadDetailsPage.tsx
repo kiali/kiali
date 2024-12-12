@@ -25,9 +25,9 @@ import { RenderHeader } from '../../components/Nav/Page/RenderHeader';
 import { ErrorSection } from '../../components/ErrorSection/ErrorSection';
 import { ErrorMsg } from '../../types/ErrorMsg';
 import { connectRefresh } from '../../components/Refresh/connectRefresh';
-import { isWaypoint } from '../../helpers/LabelFilterHelper';
 import { HistoryManager } from 'app/History';
 import { basicTabStyle } from 'styles/TabStyles';
+import { ZtunnelConfig } from '../../components/Ambient/ZtunnelConfig';
 
 type WorkloadDetailsState = {
   cluster?: string;
@@ -85,7 +85,7 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
       currentTab !== this.state.currentTab ||
       this.props.duration !== prevProps.duration
     ) {
-      if (currentTab === 'info' || currentTab === 'logs' || currentTab === 'envoy') {
+      if (currentTab === 'info' || currentTab === 'logs' || currentTab === 'envoy' || currentTab === 'ztunnel') {
         this.fetchWorkload(cluster).then(() => {
           if (currentTab !== this.state.currentTab || cluster !== this.state.cluster) {
             this.setState({ currentTab: currentTab, cluster: cluster });
@@ -241,7 +241,10 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
       );
     }
 
-    if (this.state.workload && this.hasIstioSidecars(this.state.workload) && !isWaypoint(this.state.workload.labels)) {
+    if (
+      this.state.workload &&
+      (this.hasIstioSidecars(this.state.workload) || this.state.workload.ambient === 'waypoint')
+    ) {
       const envoyTab = (
         <Tab title="Envoy" eventKey={10} key="Envoy">
           {this.state.workload && (
@@ -255,6 +258,22 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
       );
       tabsArray.push(envoyTab);
       paramToTab['envoy'] = 10;
+    }
+
+    if (this.state.workload && this.state.workload.ambient === 'ztunnel') {
+      const ztunnelTab = (
+        <Tab title="Ztunnel" eventKey={11} key="Ztunnel">
+          {this.state.workload && (
+            <ZtunnelConfig
+              lastRefreshAt={this.props.lastRefreshAt}
+              namespace={this.props.workloadId.namespace}
+              workload={this.state.workload}
+            />
+          )}
+        </Tab>
+      );
+      tabsArray.push(ztunnelTab);
+      paramToTab['ztunnel'] = 11;
     }
 
     // Used by the runtimes tabs
@@ -273,8 +292,11 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
         } else if (pod.istioInitContainers && pod.istioInitContainers.some(cont => cont.name === 'istio-proxy')) {
           hasIstioSidecars = true;
         } else {
+          // Ztunnel doesn't have Envoy
           hasIstioSidecars =
-            hasIstioSidecars || (!!pod.containers && pod.containers.some(cont => cont.name === 'istio-proxy'));
+            hasIstioSidecars ||
+            (!!pod.containers &&
+              pod.containers.some(cont => cont.name === 'istio-proxy' && workload.ambient !== 'ztunnel'));
         }
       });
     }

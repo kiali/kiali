@@ -57,6 +57,11 @@ func (o *K8SClientMock) GetConfigDump(namespace string, podName string) (*kubern
 	return args.Get(0).(*kubernetes.ConfigDump), args.Error(1)
 }
 
+func (o *K8SClientMock) GetZtunnelConfigDump(namespace string, podName string) (*kubernetes.ZtunnelConfigDump, error) {
+	args := o.Called(namespace, podName)
+	return args.Get(0).(*kubernetes.ZtunnelConfigDump), args.Error(1)
+}
+
 func (o *K8SClientMock) GetRegistryServices() ([]*kubernetes.RegistryService, error) {
 	args := o.Called()
 	return args.Get(0).([]*kubernetes.RegistryService), args.Error(1)

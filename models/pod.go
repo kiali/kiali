@@ -13,9 +13,7 @@ import (
 type Pods []*Pod
 
 const (
-	AmbientAnnotation        = "ambient.istio.io/redirection"
-	AmbientAnnotationEnabled = "enabled"
-	IstioProxy               = "istio-proxy"
+	IstioProxy = "istio-proxy"
 )
 
 // Pod holds a subset of v1.Pod data that is meaningful in Kiali
@@ -33,6 +31,7 @@ type Pod struct {
 	AppLabel            bool              `json:"appLabel"`
 	VersionLabel        bool              `json:"versionLabel"`
 	Annotations         map[string]string `json:"annotations"`
+	Protocol            string            `json:"protocol"`
 	ProxyStatus         *ProxyStatus      `json:"proxyStatus"`
 	ServiceAccountName  string            `json:"serviceAccountName"`
 }
@@ -219,11 +218,6 @@ func (pods Pods) HasAnyAmbient() bool {
 // AmbientEnabled returns true if the pod is labeled as ambient-type
 func (pod *Pod) AmbientEnabled() bool {
 	return pod.Annotations[config.AmbientAnnotation] == config.AmbientAnnotationEnabled
-}
-
-// IsWaypoint returns true if the pod is a waypoint proxy
-func (pod *Pod) IsWaypoint() bool {
-	return config.IsWaypoint(pod.Labels)
 }
 
 // HasNativeSidecar returns true if the pod has istio-proxy init containers

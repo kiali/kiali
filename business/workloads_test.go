@@ -1133,7 +1133,7 @@ func TestValidateWaypoint(t *testing.T) {
 	require.NotNil(workload)
 
 	assert.Equal(1, len(workload.Pods))
-	assert.True(workload.Pods[0].IsWaypoint())
+	assert.True(workload.IsWaypoint())
 
 	// Get waypoint proxy
 	criteriaDetails := WorkloadCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", WorkloadName: "details", WorkloadGVK: schema.GroupVersionKind{}, IncludeServices: false}
@@ -1205,7 +1205,7 @@ func TestValidateWaypointNS(t *testing.T) {
 	require.NotNil(workload)
 
 	assert.Equal(1, len(workload.Pods))
-	assert.True(workload.Pods[0].IsWaypoint())
+	assert.True(workload.IsWaypoint())
 
 	// Get waypoint proxy
 	criteriaDetails := WorkloadCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", WorkloadName: "details", WorkloadGVK: schema.GroupVersionKind{}, IncludeServices: false}
@@ -1270,7 +1270,7 @@ func TestValidateWaypointService(t *testing.T) {
 	require.NotNil(workload)
 
 	assert.Equal(1, len(workload.Pods))
-	assert.True(workload.Pods[0].IsWaypoint())
+	assert.True(workload.IsWaypoint())
 
 	// Get waypoint proxy
 	criteriaDetails := WorkloadCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", WorkloadName: "details", WorkloadGVK: schema.GroupVersionKind{}, IncludeServices: false}
@@ -1292,6 +1292,72 @@ func TestValidateWaypointService(t *testing.T) {
 
 	assert.Equal(1, len(workloadProductPage.Pods))
 	assert.Equal(0, len(workloadProductPage.WaypointWorkloads))
+}
+
+// TestValidateWaypoint validate waypoint proxy status
+func TestValidateWaypointProxyStatus(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	// Setup mocks
+	kubeObjs := []runtime.Object{
+		&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}},
+	}
+
+	for _, obj := range FakeWaypointPod() {
+		o := obj
+		kubeObjs = append(kubeObjs, &o)
+	}
+
+	for _, obj := range FakeWaypointNamespaceEnrolledPods(true) {
+		o := obj
+		kubeObjs = append(kubeObjs, &o)
+	}
+
+	k8s := kubetest.NewFakeK8sClient(kubeObjs...)
+	k8s.OpenShift = true
+	SetupBusinessLayer(t, k8s, *conf)
+	svc := setupWorkloadService(k8s, conf)
+
+	// Set cache proxy status
+	ps := kubernetes.ProxyStatus{
+		Pilot: "istiod-54b6586f84-9bgw2",
+		SyncStatus: kubernetes.SyncStatus{ClusterID: "",
+			ProxyID:       "waypoint.Namespace",
+			ProxyVersion:  "",
+			IstioVersion:  "1.24.1",
+			ClusterSent:   "2024-12-05T09:04:18Z/388d498c74-bc9a-4fa8-a658-36fe2a752d32",
+			ClusterAcked:  "2024-12-05T09:04:18Z/388d498c74-bc9a-4fa8-a658-36fe2a752d32",
+			ListenerSent:  "2024-12-05T09:04:18Z/38936e5b48-b856-4ec4-94b0-0ef0f085aca5",
+			ListenerAcked: "2024-12-05T09:04:18Z/38936e5b48-b856-4ec4-94b0-0ef0f085aca5",
+			RouteSent:     "",
+			RouteAcked:    "",
+			EndpointSent:  "2024-12-05T09:04:18Z/3889678ca1-9e60-4c11-973e-c7fdbc338d92",
+			EndpointAcked: "2024-12-05T09:04:18Z/3889678ca1-9e60-4c11-973e-c7fdbc338d92",
+		},
+	}
+	psArr := []*kubernetes.ProxyStatus{&ps}
+	svc.cache.SetPodProxyStatus(psArr)
+
+	// Get waypoint proxy
+	criteria := WorkloadCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", WorkloadName: "waypoint", WorkloadGVK: schema.GroupVersionKind{}, IncludeServices: false}
+	workload, err := svc.GetWorkload(context.TODO(), criteria)
+
+	require.NoError(err)
+	require.NotNil(workload)
+
+	assert.Equal(1, len(workload.Pods))
+	assert.False(workload.IsGateway())
+	assert.True(workload.IsWaypoint())
+
+	pod := workload.Pods[0]
+	assert.NotNil(pod.ProxyStatus)
+	assert.Equal(pod.ProxyStatus.CDS, "Synced")
+	assert.Equal(pod.ProxyStatus.EDS, "Synced")
+	assert.Equal(pod.ProxyStatus.LDS, "Synced")
+	assert.Equal(pod.ProxyStatus.RDS, "IGNORED")
 }
 
 func TestGetWorkloadSetsIsGateway(t *testing.T) {

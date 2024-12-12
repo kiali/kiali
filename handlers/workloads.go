@@ -320,3 +320,25 @@ func PodLogs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
+
+func ConfigDumpZtunnel(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+
+	business, err := getBusiness(r)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
+		return
+	}
+
+	cluster := clusterNameFromQuery(r.URL.Query())
+	namespace := params["namespace"]
+	pod := params["pod"]
+
+	dump := business.Workload.GetZtunnelConfig(cluster, namespace, pod)
+	if err != nil {
+		handleErrorResponse(w, err)
+		return
+	}
+
+	RespondWithJSON(w, http.StatusOK, dump)
+}

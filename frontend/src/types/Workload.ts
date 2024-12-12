@@ -9,6 +9,7 @@ export type WorkloadId = {
 
 export interface Workload {
   additionalDetails: AdditionalItem[];
+  ambient?: string;
   annotations: { [key: string]: string };
   appLabel: boolean;
   availableReplicas: Number;
@@ -59,6 +60,7 @@ export const emptyWorkload: Workload = {
 
 export interface WorkloadListItem {
   additionalDetailSample?: AdditionalItem;
+  ambient?: string;
   appLabel: boolean;
   cluster?: string;
   gvk: GroupVersionKind;
