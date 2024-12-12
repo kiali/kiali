@@ -20,7 +20,7 @@ func (in *ProxyStatusService) GetPodProxyStatus(cluster, ns, pod string, isSubsc
 	return castProxyStatus(kialiCache.GetPodProxyStatus(cluster, ns, pod), isSubscribed)
 }
 
-// castProxyStatus allows to use Ignored when sent is not set.
+// castProxyStatus returns a status string depending on the proxyStatus and whether the proxy is subscribed
 // See https://github.com/istio/istio/pull/51638/files#diff-fded610aca2639111f0d6b42e18dfc1ce047126340a2d36bb976cfa4c575b984R8
 func castProxyStatus(ps *kubernetes.ProxyStatus, isSubscribed bool) *models.ProxyStatus {
 	if ps == nil {
