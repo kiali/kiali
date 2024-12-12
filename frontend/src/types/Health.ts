@@ -239,7 +239,8 @@ export const hasProxyStatusInfoSeverity = (status: ProxyStatus): boolean => {
     isProxyStatusComponentSyncedOrIgnored(status.CDS) &&
     isProxyStatusComponentSyncedOrIgnored(status.EDS) &&
     isProxyStatusComponentSyncedOrIgnored(status.LDS) &&
-    isProxyStatusComponentSyncedOrIgnored(status.RDS)
+    isProxyStatusComponentSyncedOrIgnored(status.RDS) &&
+    !isProxyStatusSynced(status)
   );
 };
 
