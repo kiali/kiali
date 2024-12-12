@@ -26,6 +26,7 @@ import (
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus/prometheustest"
+	"github.com/kiali/kiali/tests/data"
 )
 
 func setupWorkloadService(k8s kubernetes.ClientInterface, conf *config.Config) WorkloadService {
@@ -104,15 +105,15 @@ func TestGetWorkloadListFromWorkloadGroups(t *testing.T) {
 	kubeObjs := []runtime.Object{
 		&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}},
 	}
-	for _, obj := range FakeWorkloadGroups(*conf) {
+	for _, obj := range data.CreateWorkloadGroups(*conf) {
 		o := obj
 		kubeObjs = append(kubeObjs, o)
 	}
-	for _, obj := range FakeWorkloadEntries(*conf) {
+	for _, obj := range data.CreateWorkloadEntries(*conf) {
 		o := obj
 		kubeObjs = append(kubeObjs, o)
 	}
-	for _, obj := range FakeWorkloadGroupSidecars(*conf) {
+	for _, obj := range data.CreateWorkloadGroupSidecars(*conf) {
 		o := obj
 		kubeObjs = append(kubeObjs, o)
 	}
@@ -501,15 +502,15 @@ func TestGetWorkloadFromWorkloadGroup(t *testing.T) {
 	kubeObjs := []runtime.Object{
 		&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}},
 	}
-	for _, obj := range FakeWorkloadGroups(*conf) {
+	for _, obj := range data.CreateWorkloadGroups(*conf) {
 		o := obj
 		kubeObjs = append(kubeObjs, o)
 	}
-	for _, obj := range FakeWorkloadEntries(*conf) {
+	for _, obj := range data.CreateWorkloadEntries(*conf) {
 		o := obj
 		kubeObjs = append(kubeObjs, o)
 	}
-	for _, obj := range FakeWorkloadGroupSidecars(*conf) {
+	for _, obj := range data.CreateWorkloadGroupSidecars(*conf) {
 		o := obj
 		kubeObjs = append(kubeObjs, o)
 	}
