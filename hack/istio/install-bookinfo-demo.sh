@@ -401,19 +401,22 @@ if [ "${TRAFFIC_GENERATOR_ENABLED}" == "true" ]; then
   echo "Installing Traffic Generator"
   if [ "${IS_OPENSHIFT}" == "true" ]; then
     echo "Determining the route to send traffic to, trying istio-ingressgateway route in ${INGRESS_NAMESPACE} namespace"
-    # first, try istio-ingressgateway in istio-system, wait for a while the host is populated
+
+    # first, try route for gateway in bookinfo namespace created by gateway-api
     # make sure you have latest kubectl/oc which support JSONPath condition without value
-    ${CLIENT_EXE} wait --for=jsonpath='{.status.ingress[].host}' --timeout=10s route istio-ingressgateway -n ${INGRESS_NAMESPACE}
-    INGRESS_ROUTE=$(${CLIENT_EXE} get route istio-ingressgateway -o jsonpath='{.spec.host}{"\n"}' -n ${INGRESS_NAMESPACE})
+    ${CLIENT_EXE} wait --for=jsonpath='{.status.ingress[].host}' --timeout=10s route bookinfo-gateway-istio -n ${NAMESPACE}
+    INGRESS_ROUTE=$(${CLIENT_EXE} get route bookinfo-gateway-istio -o jsonpath='{.spec.host}{"\n"}' -n ${NAMESPACE})
     if [ -z "${INGRESS_ROUTE}" ]; then
       sleep 1
-      echo "No istio-ingressgateway route in ${INGRESS_NAMESPACE} namespace, next, trying bookinfo-gateway-istio route in ${NAMESPACE} namespace"
-      # next, try route for gateway in bookinfo namespace created by gateway-api
-      ${CLIENT_EXE} wait --for=jsonpath='{.status.ingress[].host}' --timeout=10s route bookinfo-gateway-istio -n ${NAMESPACE}
-      INGRESS_ROUTE=$(${CLIENT_EXE} get route bookinfo-gateway-istio -o jsonpath='{.spec.host}{"\n"}' -n ${NAMESPACE})
+      echo "No bookinfo-gateway-istio route in ${NAMESPACE} namespace, next, trying istio-ingressgateway route in ${INGRESS_NAMESPACE} namespace"
+
+      # next, try istio-ingressgateway in istio-system, wait for a while the host is populated
+      ${CLIENT_EXE} wait --for=jsonpath='{.status.ingress[].host}' --timeout=10s route istio-ingressgateway -n ${INGRESS_NAMESPACE}
+      INGRESS_ROUTE=$(${CLIENT_EXE} get route istio-ingressgateway -o jsonpath='{.spec.host}{"\n"}' -n ${INGRESS_NAMESPACE})
       if [ -z "${INGRESS_ROUTE}" ]; then
         sleep 1
-        echo "No bookinfo-gateway-istio route in ${NAMESPACE} namespace, the route for productpage app will be used dirrectly"
+        echo "No istio-ingressgateway route in ${INGRESS_NAMESPACE} namespace, the route for productpage app will be used dirrectly"
+
         # nevermind, use productpage route directly
         ${CLIENT_EXE} wait --for=jsonpath='{.status.ingress[].host}' --timeout=10s route productpage -n ${NAMESPACE}
         INGRESS_ROUTE=$(${CLIENT_EXE} get route productpage -o jsonpath='{.spec.host}{"\n"}' -n ${NAMESPACE})
