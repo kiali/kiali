@@ -320,8 +320,10 @@ func (in *IstioValidationsService) GetIstioObjectValidations(ctx context.Context
 		referenceChecker = references.PeerAuthReferences{MTLSDetails: mtlsDetails, WorkloadsPerNamespace: workloadsPerNamespace}
 	case kubernetes.WorkloadEntries:
 		// Validation on WorkloadEntries are not yet in place
+		referenceChecker = references.WorkloadEntryReferences{WorkloadGroups: istioConfigList.WorkloadGroups, WorkloadEntries: istioConfigList.WorkloadEntries}
 	case kubernetes.WorkloadGroups:
 		// Validation on WorkloadGroups are not yet in place
+		referenceChecker = references.WorkloadGroupReferences{WorkloadGroups: istioConfigList.WorkloadGroups, WorkloadEntries: istioConfigList.WorkloadEntries, WorkloadsPerNamespace: workloadsPerNamespace}
 	case kubernetes.RequestAuthentications:
 		// Validation on RequestAuthentications are not yet in place
 		requestAuthnChecker := checkers.RequestAuthenticationChecker{Cluster: cluster, RequestAuthentications: istioConfigList.RequestAuthentications, WorkloadsPerNamespace: workloadsPerNamespace}
@@ -495,6 +497,7 @@ func (in *IstioValidationsService) fetchIstioConfigList(
 		IncludeVirtualServices:        true,
 		IncludeSidecars:               true,
 		IncludeRequestAuthentications: true,
+		IncludeWorkloadGroups:         true,
 		IncludeWorkloadEntries:        true,
 		IncludeAuthorizationPolicies:  true,
 		IncludePeerAuthentications:    true,
@@ -550,6 +553,9 @@ func (in *IstioValidationsService) fetchIstioConfigList(
 
 	// All WorkloadEntries
 	rValue.WorkloadEntries = append(rValue.WorkloadEntries, istioConfigList.WorkloadEntries...)
+
+	// All WorkloadGroups
+	rValue.WorkloadGroups = append(rValue.WorkloadGroups, istioConfigList.WorkloadGroups...)
 
 	in.filterPeerAuths(namespace, mtlsDetails, istioConfigList.PeerAuthentications)
 	in.filterAuthPolicies(namespace, rbacDetails, istioConfigList.AuthorizationPolicies)
