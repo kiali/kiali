@@ -1,4 +1,4 @@
-import { DEGRADED, FAILURE, HEALTHY, NA, ServiceHealth, Status } from './Health';
+import { DEGRADED, FAILURE, HEALTHY, INFO, NA, ServiceHealth, Status } from './Health';
 import {
   DestinationRule,
   getWizardUpdateLabel,
@@ -189,6 +189,8 @@ export const validationToHealth = (severity: ValidationTypes): Status => {
 
   if (severity === ValidationTypes.Correct) {
     status = HEALTHY;
+  } else if (severity === ValidationTypes.Info) {
+    status = INFO;
   } else if (severity === ValidationTypes.Warning) {
     status = DEGRADED;
   } else if (severity === ValidationTypes.Error) {
