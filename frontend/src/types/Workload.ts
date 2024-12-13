@@ -1,5 +1,5 @@
 import { WorkloadHealth, WorkloadHealthResponse } from './Health';
-import { GroupVersionKind, ObjectReference, Pod, Service, Validations } from './IstioObjects';
+import { GroupVersionKind, ObjectReference, Pod, Service, Validations, WorkloadGroupEntry } from './IstioObjects';
 import { InstanceType } from 'types/Common';
 
 export type WorkloadId = {
@@ -32,6 +32,7 @@ export interface Workload {
   validations?: Validations;
   versionLabel: boolean;
   waypointWorkloads: Workload[];
+  workloadEntries: WorkloadGroupEntry[];
 }
 
 export const emptyWorkload: Workload = {
@@ -54,7 +55,8 @@ export const emptyWorkload: Workload = {
   runtimes: [],
   services: [],
   versionLabel: false,
-  waypointWorkloads: []
+  waypointWorkloads: [],
+  workloadEntries: []
 };
 
 export interface WorkloadListItem {

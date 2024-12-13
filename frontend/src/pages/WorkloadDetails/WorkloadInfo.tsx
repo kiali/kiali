@@ -20,6 +20,7 @@ import { MiniGraphCard } from '../../components/CytoscapeGraph/MiniGraphCard';
 import { IstioConfigCard } from '../../components/IstioConfigCard/IstioConfigCard';
 import { MiniGraphCardPF } from 'pages/GraphPF/MiniGraphCardPF';
 import { getGVKTypeString, stringToGVK } from '../../utils/IstioConfigUtils';
+import { WorkloadEntries } from './WorkloadEntries';
 
 type WorkloadInfoProps = {
   duration: DurationInSeconds;
@@ -271,6 +272,7 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
   render(): React.ReactNode {
     const workload = this.props.workload;
     const pods = workload?.pods ?? [];
+    const workloadEntries = workload?.workloadEntries ?? [];
 
     const istioConfigItems = this.state.workloadIstioConfig
       ? toIstioItems(this.state.workloadIstioConfig, workload?.cluster || '')
@@ -300,12 +302,20 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
                 </StackItem>
 
                 <StackItem>
-                  <WorkloadPods
-                    namespace={this.props.namespace}
-                    workload={this.props.workload?.name || ''}
-                    pods={pods}
-                    validations={this.state.validations?.pod || {}}
-                  />
+                  {this.props.workload?.gvk.Kind === gvkType.WorkloadGroup ? (
+                    <WorkloadEntries
+                      namespace={this.props.namespace}
+                      workload={this.props.workload?.name || ''}
+                      entries={workloadEntries}
+                    />
+                  ) : (
+                    <WorkloadPods
+                      namespace={this.props.namespace}
+                      workload={this.props.workload?.name || ''}
+                      pods={pods}
+                      validations={this.state.validations?.pod || {}}
+                    />
+                  )}
                 </StackItem>
 
                 <StackItem style={{ paddingBottom: '20px' }}>
