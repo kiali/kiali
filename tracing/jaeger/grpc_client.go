@@ -222,7 +222,6 @@ func includeClusterTag(tracesMap map[model.TraceID]*model.Trace) bool {
 			for _, tags := range span.Tags {
 				if tags.Key == models.IstioClusterTag {
 					return true
-					break
 				}
 			}
 		}

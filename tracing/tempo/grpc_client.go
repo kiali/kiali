@@ -37,15 +37,15 @@ func NewgRPCClient(client http.Client, baseURL *url.URL, clientConn *grpc.Client
 	tags := false
 	r, status, _ := makeRequest(client, url.String(), nil)
 	if status != 200 {
-		log.Debugf("Error getting Tempo tags for tracing. Tags will be disabled.")
+		log.Debugf("[gRPC Tempo] Error getting Tempo tags for tracing. Tags will be disabled.")
 	} else {
 		var response otel.TagsResponse
 		if errMarshal := json.Unmarshal(r, &response); errMarshal != nil {
-			log.Errorf("Error unmarshalling Tempo API response: %s [URL: %v]", errMarshal, url)
+			log.Errorf("[gRPC Tempo] Error unmarshalling Tempo API response: %s [URL: %v]", errMarshal, url)
 			return nil, errMarshal
 		}
 
-		if util.InSlice(response.TagNames, "cluster") {
+		if util.InSlice(response.TagNames, models.IstioClusterTag) {
 			tags = true
 		}
 	}
@@ -90,7 +90,7 @@ func (jc TempoGRPCClient) FindTraces(ctx context.Context, serviceName string, q 
 	stream, err := jc.StreamingClient.Search(ctx, sr)
 
 	if err != nil {
-		err = fmt.Errorf("GetAppTraces, Tracing GRPC client error: %v", err)
+		err = fmt.Errorf("[gRPC Tempo] GetAppTraces, Tracing gRPC client error: %v", err)
 		log.Error(err.Error())
 		return nil, err
 	}
@@ -111,7 +111,7 @@ func (jc TempoGRPCClient) FindTraces(ctx context.Context, serviceName string, q 
 // GetTrace is not implemented by the streaming client
 func (jc TempoGRPCClient) GetTrace(ctx context.Context, strTraceID string) (*model.TracingSingleTrace, error) {
 
-	log.Errorf("GetTrace is not implemented by the Tempo streaming client")
+	log.Errorf("[gRPC Tempo] GetTrace is not implemented by the Tempo streaming client")
 	return nil, nil
 
 }
@@ -137,13 +137,13 @@ func processStream(stream tempopb.StreamingQuerier_SearchClient, serviceName str
 				log.Trace("Tracing GRPC client timeout")
 				break
 			}
-			log.Errorf("tempo GRPC client, stream error: %v", err)
-			return nil, fmt.Errorf("Tracing GRPC client, stream error: %v", err)
+			log.Errorf("[gRPC Tempo] stream error: %v", err)
+			return nil, fmt.Errorf("[gRPC Tempo] Tracing gRPC client, stream error: %v", err)
 		}
 		for _, trace := range received.Traces {
 			batchTrace, err := converter.ConvertTraceMetadata(*trace, serviceName)
 			if err != nil {
-				log.Errorf("Error getting trace detail for %s: %s", trace.TraceID, err.Error())
+				log.Errorf("[gRPC Tempo] Error getting trace detail for %s: %s", trace.TraceID, err.Error())
 			} else {
 				tracesMap = append(tracesMap, *batchTrace)
 			}
