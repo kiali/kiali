@@ -528,6 +528,9 @@ func TestGetWorkloadFromWorkloadGroup(t *testing.T) {
 	assert.Equal(true, workload.AppLabel)
 	assert.Equal(true, workload.VersionLabel)
 	assert.Equal(true, workload.IstioSidecar)
+	assert.NotNil(workload.WorkloadEntries)
+	assert.Equal(1, len(workload.WorkloadEntries))
+	assert.Equal("ratings-vm", workload.WorkloadEntries[0].Name)
 
 	criteria = WorkloadCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", WorkloadName: "ratings-vm-no-entry", WorkloadGVK: schema.GroupVersionKind{}, IncludeServices: false}
 	workload, err = svc.GetWorkload(context.TODO(), criteria)
@@ -539,6 +542,7 @@ func TestGetWorkloadFromWorkloadGroup(t *testing.T) {
 	assert.Equal(true, workload.AppLabel)
 	assert.Equal(false, workload.VersionLabel)
 	assert.Equal(false, workload.IstioSidecar)
+	assert.Nil(workload.WorkloadEntries)
 }
 
 func TestGetWorkloadWithInvalidWorkloadType(t *testing.T) {
