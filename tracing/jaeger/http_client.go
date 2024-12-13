@@ -11,10 +11,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tracing/jaeger/model"
+	jaegerModels "github.com/kiali/kiali/tracing/jaeger/model/json"
 	"github.com/kiali/kiali/util"
 )
 
@@ -26,7 +26,6 @@ type JaegerHTTPClient struct {
 func NewJaegerClient(client http.Client, baseURL *url.URL) (jaegerClient *JaegerHTTPClient, err error) {
 
 	url := *baseURL
-	conf := config.Get()
 	var ignoreCluster bool
 	var jaegerService string
 	services := model.Services{}
@@ -34,13 +33,13 @@ func NewJaegerClient(client http.Client, baseURL *url.URL) (jaegerClient *Jaeger
 	url.Path = path.Join(url.Path, "/api/services")
 	resp, code, reqError := makeRequest(client, url.String(), nil)
 	if code != 200 || reqError != nil {
-		log.Debugf("Error getting query for tracing. cluster tags will be disabled.")
+		log.Debugf("[HTTP Jaeger] Error getting query for tracing. cluster tags will be disabled. %s", reqError.Error())
 		ignoreCluster = true
 		return &JaegerHTTPClient{IgnoreCluster: ignoreCluster}, nil
 	}
 	errUnmarshall := json.Unmarshal(resp, &services)
 	if errUnmarshall != nil {
-		log.Debugf("Error getting query for tracing. cluster tags will be disabled.")
+		log.Debugf("[HTTP Jaeger] Error getting query for tracing. cluster tags will be disabled. %s", errUnmarshall.Error())
 		ignoreCluster = true
 		return &JaegerHTTPClient{IgnoreCluster: ignoreCluster}, nil
 	}
@@ -55,21 +54,24 @@ func NewJaegerClient(client http.Client, baseURL *url.URL) (jaegerClient *Jaeger
 
 	// if cluster exists in tags, use it
 	query := models.TracingQuery{}
-	tags := map[string]string{
-		models.IstioClusterTag: conf.KubernetesConfig.ClusterName,
-	}
-	query.Tags = tags
 	query.End = time.Now()
 	query.Start = query.End.Add(-10 * time.Minute)
 	query.Limit = 100
 	prepareQuery(&urlTraces, jaegerService, query, false)
 	r, err := queryTracesHTTP(client, &urlTraces)
 
-	if r != nil && err == nil && len(r.Data) == 0 || err != nil {
-		log.Debugf("Error getting query for tracing. cluster tags will be disabled.")
+	if err != nil {
+		log.Debugf("[HTTP Jaeger] Error getting query for tracing. cluster tags will be disabled. %s", err.Error())
 		ignoreCluster = true
 	} else {
-		ignoreCluster = false
+		if r != nil && len(r.Data) == 0 {
+			log.Debugf("[HTTP Jaeger] Error getting query for tracing. cluster tags will be disabled. No data returned for: %s", urlTraces.String())
+			ignoreCluster = true
+		} else {
+			if includeJaegerClusterTag(r.Data) {
+				ignoreCluster = false
+			}
+		}
 	}
 
 	return &JaegerHTTPClient{IgnoreCluster: ignoreCluster}, nil
@@ -199,4 +201,18 @@ func makeRequest(client http.Client, endpoint string, body io.Reader) (response 
 	response, err = io.ReadAll(resp.Body)
 	status = resp.StatusCode
 	return
+}
+
+func includeJaegerClusterTag(traces []jaegerModels.Trace) bool {
+	for _, trace := range traces {
+		for _, span := range trace.Spans {
+			for _, tags := range span.Tags {
+				if tags.Key == models.IstioClusterTag {
+					return true
+					break
+				}
+			}
+		}
+	}
+	return false
 }

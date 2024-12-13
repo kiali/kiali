@@ -29,7 +29,6 @@ type JaegerGRPCClient struct {
 
 func NewGRPCJaegerClient(ctx context.Context, cc model.QueryServiceClient) (jaegerClient *JaegerGRPCClient, err error) {
 
-	conf := config.Get()
 	if ctx == nil {
 		ctx = context.Background()
 	}
@@ -40,7 +39,7 @@ func NewGRPCJaegerClient(ctx context.Context, cc model.QueryServiceClient) (jaeg
 	var services *model.GetServicesResponse
 	services, err = cc.GetServices(ctx, &model.GetServicesRequest{})
 	if err != nil {
-		log.Errorf("Error getting services")
+		log.Errorf("[GRPC Jaeger] Error getting services %s", err.Error())
 	} else {
 		for _, service := range services.Services {
 			if !strings.Contains(service, "istio") && !strings.Contains(service, "jaeger") {
@@ -49,31 +48,34 @@ func NewGRPCJaegerClient(ctx context.Context, cc model.QueryServiceClient) (jaeg
 			}
 		}
 		end := time.Now()
-		tags := map[string]string{
-			"cluster": conf.KubernetesConfig.ClusterName,
-		}
 		findTracesRQ := &model.FindTracesRequest{
 			Query: &model.TraceQueryParameters{
 				ServiceName:  jaegerService,
 				StartTimeMin: timestamppb.New(end.Add(-10 * time.Minute)),
 				StartTimeMax: timestamppb.New(end),
-				Tags:         tags,
 				DurationMin:  durationpb.New(0),
 				SearchDepth:  int32(10),
 			},
 		}
 		stream, err := cc.FindTraces(context.TODO(), findTracesRQ)
 		if err != nil {
-			err = fmt.Errorf("GetAppTraces, Tracing GRPC client error: %v", err)
+			err = fmt.Errorf("[GRPC Jaeger] GetAppTraces, Tracing GRPC client error: %v", err)
 			return nil, err
 		}
 
 		tracesMap, err := readSpansStream(stream)
-		if tracesMap != nil && err == nil && len(tracesMap) == 0 || err != nil {
-			log.Debugf("Error getting query for tracing. cluster tags will be disabled.")
+		if err != nil {
+			log.Debugf("[GRPC Jaeger] Error getting query for tracing. cluster tags will be disabled. %s", err.Error())
 			ignoreCluster = true
 		} else {
-			ignoreCluster = false
+			if tracesMap != nil && len(tracesMap) == 0 {
+				log.Debugf("[GRPC Jaeger] Error getting query for tracing. cluster tags will be disabled. No traces found using query: %s.", findTracesRQ.Query.String())
+				ignoreCluster = true
+			} else {
+				if includeClusterTag(tracesMap) {
+					ignoreCluster = false
+				}
+			}
 		}
 		return &JaegerGRPCClient{JaegergRPCClient: cc, IgnoreCluster: ignoreCluster}, nil
 	}
@@ -90,7 +92,7 @@ func (jc JaegerGRPCClient) FindTraces(ctx context.Context, serviceName string, q
 
 	var tags = util.CopyStringMap(q.Tags)
 	if jc.IgnoreCluster {
-		delete(tags, "cluster")
+		delete(tags, models.IstioClusterTag)
 	}
 
 	findTracesRQ := &model.FindTracesRequest{
@@ -212,4 +214,18 @@ func readSpansStream(stream SpansStreamer) (map[model.TraceID]*model.Trace, erro
 		}
 	}
 	return tracesMap, nil
+}
+
+func includeClusterTag(tracesMap map[model.TraceID]*model.Trace) bool {
+	for _, trace := range tracesMap {
+		for _, span := range trace.Spans {
+			for _, tags := range span.Tags {
+				if tags.Key == models.IstioClusterTag {
+					return true
+					break
+				}
+			}
+		}
+	}
+	return false
 }
