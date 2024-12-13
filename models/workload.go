@@ -240,11 +240,29 @@ type Workload struct {
 	// Ambient waypoint workloads
 	WaypointWorkloads []WorkloadReferenceInfo `json:"waypointWorkloads"`
 
+	// WorkloadEntries bound to the workload
+	WorkloadEntries WorkloadEntries `json:"workloadEntries"`
+
 	// Health
 	Health WorkloadHealth `json:"health"`
 }
 
+// WorkloadEntry describes networking_v1.WorkloadEntry for Kiali, used in WorkloadGroups
+type WorkloadEntry struct {
+	Name               string            `json:"name"`
+	Labels             map[string]string `json:"labels"`
+	CreatedAt          string            `json:"createdAt"`
+	Status             string            `json:"status"`
+	StatusReason       string            `json:"statusReason"`
+	AppLabel           bool              `json:"appLabel"`
+	VersionLabel       bool              `json:"versionLabel"`
+	Annotations        map[string]string `json:"annotations"`
+	ServiceAccountName string            `json:"serviceAccountName"`
+}
+
 type Workloads []*Workload
+
+type WorkloadEntries []*WorkloadEntry
 
 func (workload *WorkloadListItem) ParseWorkload(w *Workload) {
 	conf := config.Get()
@@ -504,7 +522,7 @@ func (workload *Workload) ParseWorkloadGroup(wg *networking_v1.WorkloadGroup, we
 			podStatus = core_v1.PodRunning
 			workload.AvailableReplicas = workload.AvailableReplicas + 1
 		}
-		workload.Pods = append(workload.Pods, &Pod{
+		workload.WorkloadEntries = append(workload.WorkloadEntries, &WorkloadEntry{
 			Name:               entry.Name,
 			Labels:             entry.Spec.Labels,
 			CreatedAt:          formatTime(entry.CreationTimestamp.Time),
