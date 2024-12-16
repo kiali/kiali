@@ -30,7 +30,7 @@ describe('Language switch', () => {
 
     // select English option
     wrapper
-      .findWhere(node => node.key() === 'English')
+      .findWhere(node => node.key() === 'english')
       .findWhere(node => node.type() === 'button')
       .simulate('click');
 
@@ -38,6 +38,24 @@ describe('Language switch', () => {
     await delay(100);
 
     expect(store.getState().globalState.language).toBe(Language.ENGLISH);
+  });
+
+  it('changes to spanish language', async () => {
+    const wrapper = mount(<LanguageSwitchComponent language={Language.ENGLISH} />);
+
+    // click menu toggle
+    wrapper.find(MenuToggle).simulate('click');
+
+    // select Chinese option
+    wrapper
+      .findWhere(node => node.key() === 'spanish')
+      .findWhere(node => node.type() === 'button')
+      .simulate('click');
+
+    // wait a few ms for the language to be modified
+    await delay(100);
+
+    expect(store.getState().globalState.language).toBe(Language.SPANISH);
   });
 
   it('changes to chinese language', async () => {
@@ -48,7 +66,7 @@ describe('Language switch', () => {
 
     // select Chinese option
     wrapper
-      .findWhere(node => node.key() === 'Chinese')
+      .findWhere(node => node.key() === 'chinese')
       .findWhere(node => node.type() === 'button')
       .simulate('click');
 
