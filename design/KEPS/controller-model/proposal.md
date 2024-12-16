@@ -32,7 +32,7 @@ Notably Kiali does most processing within the lifecyle of a request meaning befo
 
 # Solution
 
-A "Kiali model" has been [previously discussed](https://github.com/kiali/kiali/discussions/4080) which is an in memory cache of data that Kiali computes like Validations, Health, TLS. Kiali would compute this data outside of a request and then cache it for some period of time. This KEP expands on that idea by providing a specific framework for how to compute and cache that data. This framework is henceforth called the "controller model" and it follows the same pattern that most kube controllers use.
+A "Kiali model" has been [previously discussed](https://github.com/kiali/kiali/discussions/4080), and is an in-memory, pre-computed cache of data for things like Validations, Health, and TLS. Kiali would compute this data outside of a request and then cache it for some period of time. This KEP expands on that idea by providing a specific framework for how to compute and cache that data. This framework is henceforth called the "controller model" and it follows the same pattern as most Kube controllers.
 
 A typical Kubernetes controller continually watches some objects for changes and when an object does change, it will read the current state, do some work to get things to the desired state, then update the status of the object. For example, a deployment controllor might watch for deployments to be created and when one is: the deployment controller reads the deployment spec --> creates pods according to the spec --> updates the deployment status with the pods it created. When someone reads that deployment from the kube API server, the API server does not compute the deployment status, it simply serves up what is saved in etcd.
 
