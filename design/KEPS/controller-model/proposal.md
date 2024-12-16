@@ -46,7 +46,7 @@ The controller watches each source and when one changes, it validates the object
 
 An advantage to building controllers using the controller model, is being able to re-use Kubernetes libraries and patterns to handle setting up watches, parallel process, retry on failures, etc. Most of the sources will come from Kubernetes. Non-Kubernetes sources can be implemented with Polling if they do not have some kind of "watch" mechanism. Kubernetes sources will be updated almost instantaneously, making this a "near real time" solution. Non-Kubernetes sources will be limited by how often they poll the source but probably not more than 15-30s. This amount of lag is acceptable for Kiali's use cases and is a reasonable trade-off for better performance.
 
-There's a few downsides to this approach.
+There are a few downsides to this approach:
 
 1. Caching more objects in memory will require greater memory usage. The Kiali cache is an in-memory cache and storing more objects in memory will lead to an increase in memory consumption. This can be mitigated somewhat by only storing the results of computations in the Kiali cache, for example storing the trafficmap rather than all of the individual metrics that were used to generate it. There's also some optimizations to be made by reducing the amount of memory consumed by the kubernetes cache that Kiali uses: https://github.com/kiali/kiali/issues/7017. This could offset increased memory consumption by the Kiali cache. Ultimately though there's no free lunch and storing more objects in memory will require more memory. Kiali will need to keep the size of this cache reasonably small.
 
