@@ -88,7 +88,8 @@ func (route RouteChecker) checkTcpRoutes() ([]*models.IstioCheck, bool) {
 				continue
 			}
 			weight := destinationWeights[0].Weight
-			if weight < 100 {
+			// We can't rely on nil value as Weight is an integer that will be always present
+			if weight > 0 && weight < 100 {
 				valid = true
 				path := fmt.Sprintf("spec/tcp[%d]/route[%d]/weight", routeIdx, 0)
 				validation := models.Build("virtualservices.route.singleweight", path)
@@ -119,7 +120,8 @@ func (route RouteChecker) checkTlsRoutes() ([]*models.IstioCheck, bool) {
 				continue
 			}
 			weight := destinationWeights[0].Weight
-			if weight < 100 {
+			// We can't rely on nil value as Weight is an integer that will be always present
+			if weight > 0 && weight < 100 {
 				valid = true
 				path := fmt.Sprintf("spec/tls[%d]/route[%d]/weight", routeIdx, 0)
 				validation := models.Build("virtualservices.route.singleweight", path)
