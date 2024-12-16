@@ -14,7 +14,7 @@ Improve response times of the Kiali API by moving time consuming operations out 
 
 # Motivation
 
-Kiali currently has acceptible performance below a certain threshold of scale. That "scale" could be number of pods, services, Istio resources, namespaces, etc. but in general Kiali reaches a certain threshold of one or more of these factors and it becomes noticably slow. Typically this manifests itself in very long page load times (30s+) and very slow (30s+) API responses. Kiali should remain performant even at larger scale.
+Kiali currently has acceptable performance below a certain threshold of scale. That "scale" could be number of pods, services, Istio resources, namespaces, etc. but in general Kiali reaches a certain threshold of one or more of these factors and it becomes noticeably slow. Typically this manifests itself in very long page load times (30s+) and very slow (30s+) API responses. Kiali should remain performant even at larger scale.
 
 Notably Kiali does most processing within the lifecyle of a request meaning before the api responds to a request, it fetches data from external dependencies (prometheus, jaeger), performs some processing (graph generation, validations), and then transforms the results into an api response. If any one of those tasks takes a long time or fails entirely, the response can be extremely slow or fail altogether.
 
