@@ -18,7 +18,7 @@ import { GraphRoutePF } from 'routes/GraphRoutePF';
 import { GraphPagePF } from 'pages/GraphPF/GraphPagePF';
 import { t } from 'utils/I18nUtils';
 import { Navigate, RouteObject } from 'react-router-dom-v5-compat';
-import { TrafficShiftingForm } from 'pages/Services/TrafficShiftingForm';
+import { ServiceWizardRoute } from 'routes/ServiceWizardRoute';
 
 /**
  * Return array of objects that describe vertical menu
@@ -137,8 +137,8 @@ const pathRoutes: RouteObject[] = [
     element: <ServiceDetailsRoute />
   },
   {
-    path: `/namespaces/:namespace/${Paths.SERVICES}/service/new`,
-    element: <TrafficShiftingForm />
+    path: `/namespaces/:namespace/${Paths.SERVICES}/:service/wizard/:wizard`,
+    element: <ServiceWizardRoute />
   },
   {
     path: `/namespaces/:namespace/${Paths.ISTIO}/:objectGroup/:objectVersion/:objectKind/:objectName`,
@@ -180,7 +180,7 @@ const pathRoutes: RouteObject[] = [
     path: `/${Paths.MESH}`,
     element: <MeshPage />
   },
-  { path: '*', element: <Navigate to={'/overview'} replace /> },
+  { path: '*', element: <Navigate to={'/overview'} replace /> }
 ];
 
 export { navMenuItems, pathRoutes };

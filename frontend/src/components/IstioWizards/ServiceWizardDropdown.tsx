@@ -37,7 +37,7 @@ import { KialiAppState } from '../../store/Store';
 import { connect } from 'react-redux';
 import { renderDisabledDropdownOption } from 'utils/DropdownUtils';
 import { t } from 'utils/I18nUtils';
-import { NavigateFunction, useNavigate } from 'react-router-dom-v5-compat';
+import { useNavigate } from 'react-router-dom-v5-compat';
 
 type ReduxProps = {
   istioAPIEnabled: boolean;
@@ -108,24 +108,16 @@ const ServiceWizardDropdownComponent: React.FC<Props> = (props: Props) => {
     });
   };
   const navigate = useNavigate();
-  const navigateNewPage = (navigate: NavigateFunction, newUrl: string): void => {
-    navigate(newUrl);
-  };
 
   const newServiceWizard = (serviceWizard: string): void => {
-    const newUrl = `/namespaces/${props.namespace}/services/service/new`;
-    const updateLabel = getWizardUpdateLabel(
-      props.virtualServices, 
-      props.k8sHTTPRoutes, 
-      props.k8sGRPCRoutes
-    );
-    navigateNewPage(navigate, newUrl)
+    const wizardUrl = `/namespaces/${props.namespace}/services/${props.serviceName}/wizard/${serviceWizard}`;
+    const updateLabel = getWizardUpdateLabel(props.virtualServices, props.k8sHTTPRoutes, props.k8sGRPCRoutes);
 
     switch (serviceWizard) {
       case WIZARD_TRAFFIC_SHIFTING: {
-        navigateNewPage(navigate, newUrl);
+        navigate(wizardUrl);
         break;
-    }
+      }
       case WIZARD_REQUEST_ROUTING:
       case WIZARD_FAULT_INJECTION:
       case WIZARD_TCP_TRAFFIC_SHIFTING:
@@ -305,4 +297,3 @@ const mapStateToProps = (state: KialiAppState): ReduxProps => ({
 });
 
 export const ServiceWizardDropdown = connect(mapStateToProps)(ServiceWizardDropdownComponent);
-
