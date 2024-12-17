@@ -85,6 +85,11 @@ Then('an info message {string} is displayed', (message: string) => {
   cy.contains(message).should('be.visible');
 });
 
+Then('an info message {string} is not displayed', (message: string) => {
+  ensureKialiFinishedLoading();
+  cy.contains(message).should('not.exist');
+});
+
 Given(
   'the {string} {string} from the {string} cluster is visible in the minigraph',
   (name: string, type: string, cluster: string) => {
