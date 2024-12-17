@@ -247,8 +247,12 @@ config_metallb() {
         subnet=""
       fi
     done
+    if [ -z "$subnet" ]; then
+      infomsg "No subnets found in the expected docker network list. Maybe this is a podman network - let's check"
+      subnet=$(docker network inspect kind | jq -r '.[0].subnets[] | select(.subnet | test("^[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+/")) | .subnet' 2>/dev/null)
+    fi
   else
-    subnet=$(podman network inspect kind --format '{{ (index (index (index .plugins 0).ipam.ranges 1) 1).subnet }}' 2>/dev/null)
+    subnet=$(podman network inspect kind | jq -r '.[0].subnets[] | select(.subnet | test("^[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+/")) | .subnet' 2>/dev/null)
   fi
 
   if [ -z "$subnet" ]; then
