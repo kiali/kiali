@@ -57,11 +57,9 @@ export const WaypointWorkloadsTable: React.FC<WaypointWorkloadsProps> = (props: 
   const [sortDirection, setSortDirection] = React.useState(SortByDirection.asc);
 
   const compare = columns[sortBy].compare;
-  // @ts-ignore
-  const sorted =
-    props.workloads && props.workloads.length > 0
-      ? props.workloads.sort(sortDirection === SortByDirection.asc ? compare : (a, b) => compare(b, a))
-      : [];
+  const sorted = compare
+    ? props.workloads?.sort(sortDirection === SortByDirection.asc ? compare : (a, b) => compare(b, a))
+    : props.workloads;
 
   const renderItem = (namespace, name, type: string, cluster?: string): React.ReactNode => {
     let href = `/namespaces/${namespace}/${type}s/${name}`;
