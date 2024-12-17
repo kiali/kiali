@@ -2105,13 +2105,18 @@ func (in *WorkloadService) listWaypointWorkloads(ctx context.Context, name, clus
 	}
 
 	// Get annotated workloads
-	wlist, err := in.fetchWorkloadsFromCluster(ctx, cluster, meta_v1.NamespaceAll, labelSelector)
-	if err != nil {
-		log.Debugf("listWaypointWorkloads: Error fetching workloads for namespace label selector %s", labelSelector)
-	}
-	for _, workload := range wlist {
-		// Is there any annotation that disables?
-		workloadslist = append(workloadslist, *workload)
+	namespaces, found := in.cache.GetNamespaces(cluster, in.userClients[cluster].GetToken())
+	if found {
+		for _, ns := range namespaces {
+			wlist, err := in.fetchWorkloadsFromCluster(ctx, cluster, ns.Name, labelSelector)
+			if err != nil {
+				log.Debugf("listWaypointWorkloads: Error fetching workloads for namespace label selector %s", labelSelector)
+			}
+			for _, workload := range wlist {
+				// Is there any annotation that disables?
+				workloadslist = append(workloadslist, *workload)
+			}
+		}
 	}
 
 	return workloadslist
