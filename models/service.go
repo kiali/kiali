@@ -106,20 +106,22 @@ type ServiceDetails struct {
 type (
 	Services []*Service
 	Service  struct {
-		AdditionalDetails []AdditionalItem  `json:"additionalDetails"`
-		Annotations       map[string]string `json:"annotations"`
-		Cluster           string            `json:"cluster"`
-		CreatedAt         string            `json:"createdAt"`
-		ExternalName      string            `json:"externalName"`
-		HealthAnnotations map[string]string `json:"healthAnnotations"`
-		Ip                string            `json:"ip"`
-		Labels            map[string]string `json:"labels"`
-		Name              string            `json:"name"`
-		Namespace         string            `json:"namespace"`
-		Ports             Ports             `json:"ports"`
-		ResourceVersion   string            `json:"resourceVersion"`
-		Selectors         map[string]string `json:"selectors"`
-		Type              string            `json:"type"`
+		AdditionalDetails []AdditionalItem   `json:"additionalDetails"`
+		Annotations       map[string]string  `json:"annotations"`
+		Cluster           string             `json:"cluster"`
+		CreatedAt         string             `json:"createdAt"`
+		ExternalName      string             `json:"externalName"`
+		HealthAnnotations map[string]string  `json:"healthAnnotations"`
+		Ip                string             `json:"ip"`
+		Ips               []string           `json:"ips,omitempty"`
+		IpFamilies        []core_v1.IPFamily `json:"ipFamilies,omitempty"`
+		Labels            map[string]string  `json:"labels"`
+		Name              string             `json:"name"`
+		Namespace         string             `json:"namespace"`
+		Ports             Ports              `json:"ports"`
+		ResourceVersion   string             `json:"resourceVersion"`
+		Selectors         map[string]string  `json:"selectors"`
+		Type              string             `json:"type"`
 	}
 )
 
@@ -157,6 +159,8 @@ func (s *Service) Parse(cluster string, service *core_v1.Service) {
 		s.ExternalName = service.Spec.ExternalName
 		s.HealthAnnotations = GetHealthAnnotation(service.Annotations, GetHealthConfigAnnotation())
 		s.Ip = service.Spec.ClusterIP
+		s.Ips = service.Spec.ClusterIPs
+		s.IpFamilies = service.Spec.IPFamilies
 		s.Labels = service.Labels
 		s.Name = service.Name
 		s.Namespace = service.Namespace

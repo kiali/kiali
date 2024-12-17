@@ -77,6 +77,8 @@ export const ServiceNetwork: React.FC<ServiceNetworkProps> = (props: ServiceNetw
     return hostnames;
   };
 
+  const service = props.serviceDetails.service;
+  let ips = service.type !== 'External' ? (service.ips ? service.ips : [service.ip]) : [];
   return (
     <Card isCompact={true} id="ServiceNetworkCard">
       <CardHeader>
@@ -89,21 +91,19 @@ export const ServiceNetwork: React.FC<ServiceNetworkProps> = (props: ServiceNetw
           <ul style={{ listStyleType: 'none' }}>
             <li>
               <span>Type</span>
-              {props.serviceDetails.service.type}
+              {service.type}
             </li>
 
-            {props.serviceDetails.service.type !== 'External' && (
+            {ips.map((ip, i) => (
               <li>
-                <span>{props.serviceDetails.service.type !== 'ExternalName' ? 'Service IP' : 'ExternalName'}</span>
-                {props.serviceDetails.service.type !== 'ExternalName'
-                  ? props.serviceDetails.service.ip
-                    ? props.serviceDetails.service.ip
-                    : ''
-                  : props.serviceDetails.service.externalName
-                  ? props.serviceDetails.service.externalName
-                  : ''}
+                <span>
+                  {service.type !== 'ExternalName'
+                    ? `Service ${service.ipFamilies ? service.ipFamilies[i] : 'IP'}`
+                    : 'ExternalName'}
+                </span>
+                {service.type !== 'ExternalName' ? ip : service.externalName ? service.externalName : ''}
               </li>
-            )}
+            ))}
 
             {props.serviceDetails.endpoints && props.serviceDetails.endpoints.length > 0 && (
               <li>
@@ -135,11 +135,11 @@ export const ServiceNetwork: React.FC<ServiceNetworkProps> = (props: ServiceNetw
               </li>
             )}
 
-            {props.serviceDetails.service.ports && props.serviceDetails.service.ports.length > 0 && (
+            {service.ports && service.ports.length > 0 && (
               <li>
                 <span>Ports</span>
                 <div style={{ display: 'inline-block' }}>
-                  {(props.serviceDetails.service.ports ?? []).map((port, i) => {
+                  {(service.ports ?? []).map((port, i) => {
                     return (
                       <div key={`port_${i}`}>
                         <div>

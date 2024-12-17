@@ -58,6 +58,7 @@ export interface WorkloadOverview {
   type: string;
 }
 
+export type IPFamily = 'IPv4' | 'IPv6';
 export interface Service {
   additionalDetails: AdditionalItem[];
   annotations: { [key: string]: string };
@@ -65,6 +66,8 @@ export interface Service {
   createdAt: string;
   externalName: string;
   ip: string;
+  ips?: string[]; // present in dual stack. ip === ips[0]
+  ipFamilies?: IPFamily[]; // ipFamilies[0] represents ip, ipFamilies[i] represents ips[i]
   labels?: { [key: string]: string };
   name: string;
   namespace: string;
