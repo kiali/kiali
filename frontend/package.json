@@ -163,9 +163,9 @@
     "postcss": "^8.4.31",
     "workbox-webpack-plugin": "^7.1.0"
   },
+  "packageManager": "yarn@1.22.22",
   "engines": {
-    "node": ">=20.0.0",
-    "yarn": ">=1.0.0"
+    "node": ">=20.0.0"
   },
   "browserslist": [
     ">10%",
