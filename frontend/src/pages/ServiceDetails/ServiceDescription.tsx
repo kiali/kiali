@@ -198,6 +198,7 @@ export const ServiceDescription: React.FC<ServiceInfoDescriptionProps> = (props:
           workloads={workloads}
           health={props.serviceDetails?.health}
           cluster={props.serviceDetails?.service.cluster}
+          waypointWorkloads={props.serviceDetails?.waypointWorkloads}
         />
       </CardBody>
     </Card>
