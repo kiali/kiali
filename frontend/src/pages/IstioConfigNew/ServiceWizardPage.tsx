@@ -8,6 +8,14 @@ import { activeClustersSelector, activeNamespacesSelector, namespacesPerClusterS
 import { connect } from 'react-redux';
 import { Namespace } from 'types/Namespace';
 import { ServiceId } from 'types/ServiceInfo';
+import { kialiStyle } from 'styles/StyleUtils';
+import { Form } from '@patternfly/react-core';
+import { getInitWeights, WIZARD_TCP_TRAFFIC_SHIFTING, WIZARD_TRAFFIC_SHIFTING } from 'components/IstioWizards/WizardActions';
+import { initTrafficShifting, TrafficShifting, WorkloadWeight } from 'components/IstioWizards/TrafficShifting';
+import { DestinationRule, GroupVersionKind, VirtualService } from 'types/IstioObjects';
+import { getGVKTypeString } from 'utils/IstioConfigUtils';
+import { gvkType } from 'types/IstioConfigList';
+import { TrafficShiftingState } from 'components/IstioWizards/TrafficShifting';
 
 type ReduxProps = {
   activeClusters: MeshCluster[];
@@ -19,7 +27,14 @@ type ReduxProps = {
 type Props = ReduxProps & {
   serviceId: ServiceId;
   wizardType: string;
+  workloads: any[];
+  virtualServices: VirtualService[];
+  destinationRules: DestinationRule[];
+  objectGVK: GroupVersionKind;
 };
+
+const formPadding = kialiStyle({ padding: '2rem 1.25rem' });
+
 
 // const editIcon = kialiStyle({
 //   marginLeft: '0.25rem',
@@ -40,6 +55,28 @@ type Props = ReduxProps & {
 const ServiceWizardPageComponent: React.FC<Props> = (props: Props) => {
   console.log(props); // TODO temporary to avoid unused warning
 
+  const [trafficShifting, setTrafficShifting] = React.useState<TrafficShiftingState>(
+    initTrafficShifting()
+  );
+
+  const onChangeTrafficShifting = (trafficShiftingValue: TrafficShiftingState): void => {
+    const newTrafficShifting = { ...trafficShifting };
+    Object.keys(newTrafficShifting).forEach(key => (newTrafficShifting[key] = trafficShiftingValue[key]));
+
+    setTrafficShifting(newTrafficShifting);
+  };
+
+  function onWeightsChange(this: any, _valid: boolean, _workloads: WorkloadWeight[], _reset: boolean): void {
+    this.setState(prevState => {
+      prevState.valid.mainWizard = _valid;
+
+      return {
+        valid: prevState.valid,
+        workloads: _workloads
+      };
+    });  
+  };
+
   return (
     <>
       <div>
@@ -47,8 +84,21 @@ const ServiceWizardPageComponent: React.FC<Props> = (props: Props) => {
       </div>
 
       <RenderContent>
-        {/* <Form className={formPadding} isHorizontal={true}>
-          <FormGroup label={t('Namespaces')} isRequired={true} fieldId="namespaces">
+        <Form className={formPadding} isHorizontal={true}>
+        {(props.wizardType === WIZARD_TRAFFIC_SHIFTING || props.wizardType === WIZARD_TCP_TRAFFIC_SHIFTING) && (
+            <TrafficShifting
+              showValid={true}
+              workloads={props.workloads}
+              initWeights={getInitWeights(
+              props.workloads,
+              props.virtualServices,
+              props.destinationRules
+              )}
+              showMirror={props.wizardType === WIZARD_TRAFFIC_SHIFTING}
+              onChange={onWeightsChange}
+            />
+          )}
+          {/* <FormGroup label={t('Namespaces')} isRequired={true} fieldId="namespaces">
             <NamespaceDropdown disabled={false} />
 
             {!isValid(isNamespacesValid) && (
@@ -58,9 +108,9 @@ const ServiceWizardPageComponent: React.FC<Props> = (props: Props) => {
                 </HelperText>
               </FormHelperText>
             )}
-          </FormGroup>
+          </FormGroup> */}
 
-          {isMultiCluster && (
+          {/* {isMultiCluster && (
             <FormGroup label={t('Clusters')} isRequired={true} fieldId="clusters">
               <ClusterDropdown />
 
@@ -95,10 +145,7 @@ const ServiceWizardPageComponent: React.FC<Props> = (props: Props) => {
             )}
           </FormGroup> */}
 
-        {/* {getGVKTypeString(props.objectGVK) === getGVKTypeString(gvkType.AuthorizationPolicy) && (
-            <AuthorizationPolicyForm authorizationPolicy={authorizationPolicy} onChange={onChangeAuthorizationPolicy} />
-          )}
-
+        { /*
           {getGVKTypeString(props.objectGVK) === getGVKTypeString(gvkType.Gateway) && (
             <GatewayForm gateway={gateway} onChange={onChangeGateway} />
           )}
@@ -210,11 +257,18 @@ const ServiceWizardPageComponent: React.FC<Props> = (props: Props) => {
           ns={props.activeNamespaces.map(n => n.name).join(',')}
           onConfirm={items => onPreviewConfirm(items)}
           onClose={() => setShowPreview(false)}
-        /> */}
-      </RenderContent>
+        />
+      </RenderContent> */}
+    {/* </> */}
+    {getGVKTypeString(props.objectGVK) === getGVKTypeString(gvkType.TrafficShifting) && (
+            <TrafficShifting trafficShifting={trafficShifting} onChange={onChangeTrafficShifting} />
+          )}
+    </Form>
+    </RenderContent>
     </>
-  );
+  )    
 };
+
 
 const mapStateToProps = (state: KialiAppState): ReduxProps => {
   return {

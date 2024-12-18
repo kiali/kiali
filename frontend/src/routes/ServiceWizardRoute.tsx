@@ -19,5 +19,5 @@ export const ServiceWizardRoute: React.FC = () => {
 
   const serviceId: ServiceId = { namespace: namespace!, service: service! };
 
-  return <ServiceWizardPage serviceId={serviceId} wizardType={wizardType!}></ServiceWizardPage>;
+  return <ServiceWizardPage serviceId={serviceId} wizardType={wizardType!} workloads={[]} virtualServices={[]} destinationRules={[]} ></ServiceWizardPage>;
 };
