@@ -578,6 +578,7 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, cluster, namespace,
 
 	wo := models.WorkloadOverviews{}
 	isAmbient := len(ws) > 0
+	waypointWk := []models.Workload{}
 	for _, w := range ws {
 		wi := &models.WorkloadListItem{}
 		wi.ParseWorkload(w)
@@ -585,6 +586,13 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, cluster, namespace,
 		// The service is not marked as Ambient if any of the workloads is Ambient
 		if !w.IsAmbient {
 			isAmbient = false
+		} else {
+			waypointWorkloads := in.businessLayer.Workload.GetWaypointsForWorkload(ctx, w.Namespace, *w)
+			for _, ww := range waypointWorkloads {
+				if ww.WaypointFor() == config.WaypointForService {
+					waypointWk = append(waypointWk, ww)
+				}
+			}
 		}
 	}
 
@@ -643,6 +651,9 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, cluster, namespace,
 		s.ServiceEntries = kubernetes.FilterServiceEntriesByHostname(istioConfigList.ServiceEntries, s.Service.Name)
 	}
 	s.IsAmbient = isAmbient
+	if s.IsAmbient && len(waypointWk) > 0 {
+		s.WaypointWorkloads = waypointWk
+	}
 
 	return &s, nil
 }
