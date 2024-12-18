@@ -1,9 +1,9 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { KialiAppState } from 'store/Store';
-import { ISortBy } from '@patternfly/react-table';
+import { IRow, ISortBy, ThProps } from '@patternfly/react-table';
 import { Workload } from 'types/Workload';
-import { Card, CardBody, Grid, GridItem, Tab, Tabs } from '@patternfly/react-core';
+import { Card, CardBody, Grid, GridItem, Tab, Tabs, Title, TitleSizes } from '@patternfly/react-core';
 import { activeTab } from '../../components/Tab/Tabs';
 import { RenderComponentScroll } from 'components/Nav/Page';
 import { location, router } from '../../app/History';
@@ -15,7 +15,7 @@ import { TimeInMilliseconds } from '../../types/Common';
 import { subTabStyle } from 'styles/TabStyles';
 import { kialiStyle } from '../../styles/StyleUtils';
 import { t } from 'i18next';
-import { SortableTh } from '../Table/SimpleTable';
+import { SimpleTable } from '../Table/SimpleTable';
 import { WaypointWorkloadsTable } from './WaypointWorkloadsTable';
 
 const resources: string[] = ['services', 'workloads'];
@@ -52,10 +52,6 @@ const fullHeightStyle = kialiStyle({
   height: '100%'
 });
 
-export interface SortableCompareTh<T> extends SortableTh {
-  compare?: (a: T, b: T) => number;
-}
-
 export const isWaypointFor = (wk: Workload): string => {
   if (wk.labels['istio.io/waypoint-for'] === WaypointType.Workload) {
     return WaypointType.Workload;
@@ -63,8 +59,27 @@ export const isWaypointFor = (wk: Workload): string => {
   return WaypointType.Service;
 };
 
+const showProxyStatus = (workload: Workload): React.ReactNode => {
+  const cols: ThProps[] = [
+    { title: 'Pod Name' },
+    { title: 'CDS' },
+    { title: 'LDS' },
+    { title: 'EDS' },
+    { title: 'RDS' }
+  ];
+
+  const rows: IRow[] = workload.pods.map(pod => {
+    return {
+      cells: [pod.name, pod.proxyStatus?.CDS, pod.proxyStatus?.LDS, pod.proxyStatus?.EDS, pod.proxyStatus?.RDS]
+    };
+  });
+
+  return <SimpleTable label={'Proxy Status'} columns={cols} rows={rows} />;
+};
+
 class WaypointConfigComponent extends React.Component<WaypointConfigProps, WaypointConfigState> {
   private waypointFor = isWaypointFor(this.props.workload);
+
   constructor(props: WaypointConfigProps) {
     super(props);
 
@@ -108,9 +123,27 @@ class WaypointConfigComponent extends React.Component<WaypointConfigProps, Waypo
   render(): React.ReactNode {
     const tabs: JSX.Element[] = [];
 
+    const infoTab = (
+      <Tab title={t('Info')} eventKey={0} key={'information'}>
+        <Card className={fullHeightStyle}>
+          <CardBody>
+            <div className={fullHeightStyle}>
+              <div style={{ marginBottom: '1.25rem' }}>
+                <Title headingLevel="h5" size={TitleSizes.md} style={{ marginBottom: '1em' }}>
+                  Waypoint for: {this.waypointFor}
+                </Title>
+                {showProxyStatus(this.props.workload)}
+              </div>
+            </div>
+          </CardBody>
+        </Card>
+      </Tab>
+    );
+    tabs.push(infoTab);
+
     const title = this.waypointFor === WaypointType.Service ? t('Services') : t('Workloads');
     const servicesTab = (
-      <Tab title={title} eventKey={0} key={this.waypointFor}>
+      <Tab title={title} eventKey={1} key={this.waypointFor}>
         <Card className={fullHeightStyle}>
           <CardBody>
             <div className={fullHeightStyle}>
