@@ -9,6 +9,8 @@ import { RefreshComponent } from '../Refresh/Refresh';
 import { TimeRangeComp } from './TimeRangeComponent';
 import { kioskDurationAction, kioskTimeRangeAction } from '../Kiosk/KioskActions';
 import { useKialiTranslation } from 'utils/I18nUtils';
+import { toValidDuration } from '../../config/ServerConfig';
+import { config } from '../../config';
 
 interface Props {
   customDuration: boolean;
@@ -35,14 +37,17 @@ export const TimeDurationModal: React.FC<Props> = (props: Props) => {
 
   const getInitDuration = (): number => {
     if (!props.customDuration && urlDuration) {
-      return urlDuration;
+      return toValidDuration(urlDuration);
     }
     return reduxDuration;
   };
 
   const getInitRefresh = (): number => {
     if (urlRefresh) {
-      return urlRefresh;
+      // Validate value
+      if (urlRefresh === 0 || config.toolbar.refreshInterval[urlRefresh]) {
+        return urlRefresh;
+      }
     }
     return reduxRefreshInterval;
   };
@@ -63,15 +68,20 @@ export const TimeDurationModal: React.FC<Props> = (props: Props) => {
     return tm;
   };
 
-  const [duration, setDuration] = React.useState(getInitDuration());
-  const [refreshInterval, setRefreshInterval] = React.useState(getInitRefresh());
-  const [timeRange, setTimeRange] = React.useState(getInitTimeRange());
+  const [duration, setDuration] = React.useState(0);
+  const [refreshInterval, setRefreshInterval] = React.useState(0);
+  const [timeRange, setTimeRange] = React.useState<TimeRange>({});
 
   React.useEffect(() => {
+    setDuration(getInitDuration());
+    setRefreshInterval(getInitRefresh());
+    setTimeRange(getInitTimeRange());
+
     if (urlDuration !== undefined) {
       dispatch(UserSettingsActions.setDuration(urlDuration));
     }
-    if (urlRefresh !== undefined) {
+    // Update just when valid
+    if (urlRefresh !== undefined && (urlRefresh === 0 || config.toolbar.refreshInterval[urlRefresh])) {
       dispatch(UserSettingsActions.setRefreshInterval(urlRefresh));
     }
     if (getUrlTimeRange() !== undefined) {
