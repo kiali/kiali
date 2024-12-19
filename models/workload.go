@@ -234,7 +234,6 @@ func (workload *WorkloadListItem) ParseWorkload(w *Workload) {
 	if w.IsWaypoint() {
 		workload.Ambient = "waypoint"
 	}
-
 	/** Check the labels app and version required by Istio in template Pods*/
 	_, workload.AppLabel = w.Labels[conf.IstioLabels.AppLabelName]
 	_, workload.VersionLabel = w.Labels[conf.IstioLabels.VersionLabelName]
@@ -563,8 +562,19 @@ func (workload *Workload) IsGateway() bool {
 
 // IsWaypoint return true if the workload is a waypoint proxy (Based in labels)
 func (workload *Workload) IsWaypoint() bool {
+	return workload.Labels[config.WaypointLabel] == config.WaypointLabelValue
+}
 
-	return workload.Labels["gateway.istio.io/managed"] == "istio.io-mesh-controller"
+// WaypointFor returns the waypoint type (workload/service)
+func (workload *Workload) WaypointFor() string {
+	if !workload.IsWaypoint() {
+		return ""
+	}
+	if workload.Labels[config.WaypointFor] == config.WaypointForWorkload {
+		return config.WaypointForWorkload
+	} else {
+		return config.WaypointForService
+	}
 }
 
 // IsWaypoint return true if the workload is a ztunnel (Based in labels)
