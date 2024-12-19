@@ -1,12 +1,12 @@
 package tests
 
 import (
+	"context"
 	"path"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/require"
-	"golang.org/x/net/context"
 	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/kiali/kiali/log"
