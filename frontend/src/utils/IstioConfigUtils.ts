@@ -48,7 +48,7 @@ export const isK8sGatewayHostValid = (k8sGatewayHost: string): boolean => {
     return false;
   }
 
-  // K8s gateway host must be fqdn but not ip address
+  // K8s gateway host must be fqdn but not ip address (ipv4 or ipv6)
   if (k8sGatewayHost.split('.').length < 2 || k8sGatewayHost.search(ipRegexp) === 0) {
     return false;
   }

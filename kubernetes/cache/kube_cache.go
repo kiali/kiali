@@ -532,6 +532,8 @@ func (c *kubeCache) createKubernetesInformers(namespace string) informers.Shared
 						Type:         obj.Spec.Type,
 						ExternalName: obj.Spec.ExternalName,
 						ClusterIP:    obj.Spec.ClusterIP,
+						ClusterIPs:   obj.Spec.ClusterIPs,
+						IPFamilies:   obj.Spec.IPFamilies,
 					},
 				}
 				return trimmedService, nil
