@@ -107,7 +107,7 @@ start_image_registry_daemon() {
   # see: https://kind.sigs.k8s.io/docs/user/local-registry/
   if [ "${ENABLE_IMAGE_REGISTRY}" == "true" ]; then
     if [ "$(${DORP} inspect -f '{{.State.Running}}' ${KIND_IMAGE_REGISTRY_NAME} 2>/dev/null || true)" != "true" ]; then
-      ${DORP} run --sysctl=net.ipv6.conf.all.disable_ipv6=1 -d --restart=always -p "127.0.0.1:${KIND_IMAGE_REGISTRY_PORT}:5000" --name "${KIND_IMAGE_REGISTRY_NAME}" --network bridge registry:2
+      ${DORP} run --sysctl=net.ipv6.conf.all.disable_ipv6=0 -d --restart=always -p "127.0.0.1:${KIND_IMAGE_REGISTRY_PORT}:5000" --name "${KIND_IMAGE_REGISTRY_NAME}" --network bridge registry:2
       infomsg "An image registry daemon has started."
     else
       infomsg "An image registry daemon appears to already be running; this existing daemon will be used."
