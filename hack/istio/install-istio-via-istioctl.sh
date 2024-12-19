@@ -73,7 +73,12 @@ while [[ $# -gt 0 ]]; do
       shift;shift
       ;;
     -d6|--disable-ipv6)
-      DISABLE_IPV6="$2"
+      if [ "${2}" == "true" ] || [ "${2}" == "false" ]; then
+        DISABLE_IPV6="$2"
+      else
+        echo "ERROR: The --disable-ipv6 flag must be 'true' or 'false'"
+        exit 1
+      fi
       shift;shift
       ;;
     -pu|--purge-uninstall)
@@ -376,6 +381,15 @@ if [ "${CONFIG_PROFILE}" == "ambient" ] && [ "${DISABLE_IPV6}" == "true" ]; then
   echo "Disabling Ambient CNI IPv6"
 fi
 
+if [ "${DISABLE_IPV6}" == "false" ]; then
+  DUALSTACK_OPTIONS=" \
+    --set meshConfig.defaultConfig.proxyMetadata.ISTIO_DUAL_STACK=true \
+    --set values.pilot.env.ISTIO_DUAL_STACK=true \
+    --set values.pilot.ipFamilyPolicy=RequireDualStack \
+    --set values.gateways.istio-ingressgateway.ipFamilyPolicy=RequireDualStack \
+    --set values.gateways.istio-egressgateway.ipFamilyPolicy=RequireDualStack"
+fi
+
 MTLS_OPTIONS="--set values.meshConfig.enableAutoMtls=${MTLS}"
 
 NATIVE_SIDECARS_OPTIONS="--set values.pilot.env.ENABLE_NATIVE_SIDECARS=${ENABLE_NATIVE_SIDECARS}"
@@ -491,6 +505,7 @@ for s in \
    "${MESH_ID_OPTION}" \
    "${NETWORK_OPTION}" \
    "${REDUCE_RESOURCES_OPTIONS}" \
+   "${DUALSTACK_OPTIONS}" \
    "${CUSTOM_INSTALL_SETTINGS}"
 do
   MANIFEST_CONFIG_SETTINGS_TO_APPLY="${MANIFEST_CONFIG_SETTINGS_TO_APPLY} ${s}"
