@@ -79,7 +79,7 @@ export const PFBadges: { [key: string]: PFBadgeType } = Object.freeze({
   ServiceEntry: { badge: 'SE', tt: 'Service Entry' } as PFBadgeType,
   ServiceRole: { badge: 'SR', tt: 'Service Role' } as PFBadgeType,
   ServiceRoleBinding: { badge: 'SRB', tt: 'Service Role Binding' } as PFBadgeType,
-  Sidecar: { badge: 'SC', tt: 'Istio Sidecar Proxy' } as PFBadgeType,
+  Sidecar: { badge: 'SC', tt: 'Sidecar' } as PFBadgeType,
   WasmPlugin: { badge: 'WP', tt: 'Istio Wasm Plugin' } as PFBadgeType,
   Telemetry: { badge: 'TM', tt: 'Istio Telemetry' } as PFBadgeType,
   Template: { badge: 'T', tt: 'Template' } as PFBadgeType,
