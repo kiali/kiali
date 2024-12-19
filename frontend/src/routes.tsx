@@ -18,6 +18,7 @@ import { GraphRoutePF } from 'routes/GraphRoutePF';
 import { GraphPagePF } from 'pages/GraphPF/GraphPagePF';
 import { t } from 'utils/I18nUtils';
 import { Navigate, RouteObject } from 'react-router-dom-v5-compat';
+import { ServiceWizardRoute } from 'routes/ServiceWizardRoute';
 
 /**
  * Return array of objects that describe vertical menu
@@ -134,6 +135,10 @@ const pathRoutes: RouteObject[] = [
   {
     path: `/namespaces/:namespace/${Paths.SERVICES}/:service`,
     element: <ServiceDetailsRoute />
+  },
+  {
+    path: `/namespaces/:namespace/${Paths.SERVICES}/:service/wizard/:wizard`,
+    element: <ServiceWizardRoute />
   },
   {
     path: `/namespaces/:namespace/${Paths.ISTIO}/:objectGroup/:objectVersion/:objectKind/:objectName`,

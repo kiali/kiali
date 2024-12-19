@@ -7,8 +7,9 @@ import { KialiAppState } from '../../store/Store';
 import { connect } from 'react-redux';
 import { PFColors } from 'components/Pf/PfColors';
 import { kindToStringIncludeK8s } from '../../utils/IstioConfigUtils';
+import { WIZARD_TITLES } from 'components/IstioWizards/WizardActions';
 
-const titles = ['applications', 'istio', 'istio/new', 'mesh', 'services', 'workloads'];
+const titles = ['applications', 'istio', 'istio/new', 'namespaces', 'mesh', 'services', 'workloads'];
 
 type ReduxProps = {
   istioAPIEnabled: boolean;
@@ -53,15 +54,17 @@ const DefaultSecondaryMastheadComponent: React.FC<Props> = (props: Props) => {
       let disabled = false;
 
       if (path.startsWith('istio/new/')) {
-        // 'istio/new/'.length() == 10
-        // istio/new/gateway.networking.k8s.io/v1/Gateway should be K8sGateway
         const objectType = kindToStringIncludeK8s(path.substring(10), path.substring(path.lastIndexOf('/') + 1));
+        title = `Create ${objectType}`;
+      } else if (path.includes('wizard')) {
+        const objectType = WIZARD_TITLES[path.substring(path.lastIndexOf('/') + 1)];
         title = `Create ${objectType}`;
       } else if (path === 'istio') {
         title = 'Istio Config';
       } else if (path === 'mesh') {
         title = 'Clusters';
       }
+
       return {
         title: (
           <>

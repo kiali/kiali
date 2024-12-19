@@ -37,6 +37,7 @@ import { KialiAppState } from '../../store/Store';
 import { connect } from 'react-redux';
 import { renderDisabledDropdownOption } from 'utils/DropdownUtils';
 import { t } from 'utils/I18nUtils';
+import { useNavigate } from 'react-router-dom-v5-compat';
 
 type ReduxProps = {
   istioAPIEnabled: boolean;
@@ -106,21 +107,26 @@ const ServiceWizardDropdownComponent: React.FC<Props> = (props: Props) => {
       );
     });
   };
+  const navigate = useNavigate();
 
-  const onAction = (key: string): void => {
+  const newServiceWizard = (serviceWizard: string): void => {
+    const wizardUrl = `/namespaces/${props.namespace}/services/${props.serviceName}/wizard/${serviceWizard}`;
     const updateLabel = getWizardUpdateLabel(props.virtualServices, props.k8sHTTPRoutes, props.k8sGRPCRoutes);
 
-    switch (key) {
+    switch (serviceWizard) {
+      case WIZARD_TRAFFIC_SHIFTING: {
+        navigate(wizardUrl);
+        break;
+      }
       case WIZARD_REQUEST_ROUTING:
       case WIZARD_FAULT_INJECTION:
-      case WIZARD_TRAFFIC_SHIFTING:
       case WIZARD_TCP_TRAFFIC_SHIFTING:
       case WIZARD_K8S_REQUEST_ROUTING:
       case WIZARD_K8S_GRPC_REQUEST_ROUTING:
       case WIZARD_REQUEST_TIMEOUTS: {
         setShowWizard(true);
-        setWizardType(key);
-        setUpdateWizard(key === updateLabel);
+        setWizardType(serviceWizard);
+        setUpdateWizard(serviceWizard === updateLabel);
         break;
       }
       case DELETE_TRAFFIC_ROUTING: {
@@ -230,8 +236,8 @@ const ServiceWizardDropdownComponent: React.FC<Props> = (props: Props) => {
           k8sGRPCRoutes={props.k8sGRPCRoutes ?? []}
           annotations={props.annotations}
           istioPermissions={props.istioPermissions}
-          onAction={onAction}
-          onDelete={onAction}
+          onAction={(action: string) => newServiceWizard(action)}
+          onDelete={newServiceWizard}
         />
       </DropdownList>
     </Dropdown>
