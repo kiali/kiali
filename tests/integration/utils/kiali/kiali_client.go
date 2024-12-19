@@ -87,9 +87,11 @@ type MetricsJson struct {
 var client = *NewKialiClient()
 
 const (
-	BOOKINFO = "bookinfo"
-	ASSETS   = "tests/integration/assets"
-	TIMEOUT  = 10 * time.Second
+	BOOKINFO        = "bookinfo"
+	ASSETS          = "tests/integration/assets"
+	TIMEOUT         = 10 * time.Second
+	TIMEOUT_MEDIUM  = 20 * time.Second
+	TIMEOUT_TRACING = 60 * time.Second
 )
 
 func NewKialiClient() (c *KialiClient) {
@@ -268,7 +270,7 @@ func Traces(objectType, name, namespace string) (*model.TracingResponse, int, er
 	url := fmt.Sprintf("%s/api/namespaces/%s/%s/%s/traces?startMicros=%d&tags=&limit=100", client.kialiURL, namespace, objectType, name, TimeSince())
 	traces := new(model.TracingResponse)
 
-	code, err := getRequestAndUnmarshalInto(url, traces)
+	code, err := getRequestAndUnmarshalIntoWithCustomTimeout(url, TIMEOUT_TRACING, traces)
 	if err == nil {
 		return traces, code, nil
 	} else {
@@ -280,7 +282,7 @@ func Spans(objectType, name, namespace string) ([]model.TracingSpan, int, error)
 	url := fmt.Sprintf("%s/api/namespaces/%s/%s/%s/spans?startMicros=%d&tags=&limit=100", client.kialiURL, namespace, objectType, name, TimeSince())
 	spans := new([]model.TracingSpan)
 
-	code, err := getRequestAndUnmarshalInto(url, spans)
+	code, err := getRequestAndUnmarshalIntoWithCustomTimeout(url, TIMEOUT_TRACING, spans)
 	if err == nil {
 		return *spans, code, nil
 	} else {
@@ -504,7 +506,11 @@ func Grafana() (*models.GrafanaInfo, int, error) {
 }
 
 func getRequestAndUnmarshalInto[T any](url string, response *T) (int, error) {
-	body, code, _, err := httpGETWithRetry(url, client.GetAuth(), TIMEOUT, nil, nil)
+	return getRequestAndUnmarshalIntoWithCustomTimeout(url, TIMEOUT, response)
+}
+
+func getRequestAndUnmarshalIntoWithCustomTimeout[T any](url string, timeout time.Duration, response *T) (int, error) {
+	body, code, _, err := httpGETWithRetry(url, client.GetAuth(), timeout, nil, nil)
 	if err != nil {
 		return code, err
 	}
@@ -536,7 +542,7 @@ func IstioApiEnabled() (bool, error) {
 	url := fmt.Sprintf("%s/api/status", client.kialiURL)
 	status := new(status.StatusInfo)
 
-	_, err := getRequestAndUnmarshalInto(url, status)
+	_, err := getRequestAndUnmarshalIntoWithCustomTimeout(url, TIMEOUT_MEDIUM, status)
 	if err == nil {
 		return status.IstioEnvironment.IstioAPIEnabled, nil
 	} else {

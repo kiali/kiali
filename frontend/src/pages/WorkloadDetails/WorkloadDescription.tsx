@@ -17,12 +17,12 @@ import { MissingLabel } from '../../components/MissingLabel/MissingLabel';
 import { MissingAuthPolicy } from 'components/MissingAuthPolicy/MissingAuthPolicy';
 import { getGVKTypeString, hasMissingAuthPolicy, isGVKSupported } from 'utils/IstioConfigUtils';
 import { DetailDescription } from '../../components/DetailDescription/DetailDescription';
-import { isWaypoint } from '../../helpers/LabelFilterHelper';
 import { AmbientLabel, tooltipMsgType } from '../../components/Ambient/AmbientLabel';
 import { gvkType, validationKey } from '../../types/IstioConfigList';
 import { infoStyle } from 'styles/IconStyle';
 import { addInfo } from 'utils/AlertUtils';
 import { classes } from 'typestyle';
+import { renderWaypointSimpleLabel } from '../../components/Ambient/WaypointLabel';
 
 type WorkloadDescriptionProps = {
   health?: H.Health;
@@ -197,7 +197,7 @@ export const WorkloadDescription: React.FC<WorkloadDescriptionProps> = (props: W
             />
           )}
 
-          {workload.isAmbient && !isWaypoint(workload.labels) && (
+          {workload.isAmbient && workload.ambient !== 'waypoint' && (
             <AmbientLabel
               tooltip={tooltipMsgType.workload}
               waypoint={workload.waypointWorkloads?.length > 0 ? true : false}
@@ -213,7 +213,7 @@ export const WorkloadDescription: React.FC<WorkloadDescriptionProps> = (props: W
             />
           )}
 
-          {(!workload.appLabel || !workload.versionLabel) && !isWaypoint(workload.labels) && (
+          {(!workload.appLabel || !workload.versionLabel) && workload.ambient !== 'waypoint' && (
             <MissingLabel
               missingApp={!workload.appLabel}
               missingVersion={!workload.versionLabel}
@@ -221,6 +221,8 @@ export const WorkloadDescription: React.FC<WorkloadDescriptionProps> = (props: W
               tooltip={true}
             />
           )}
+
+          {workload.ambient === 'waypoint' && renderWaypointSimpleLabel()}
         </Title>
 
         {workload.cluster && isMultiCluster && (
@@ -244,7 +246,8 @@ export const WorkloadDescription: React.FC<WorkloadDescriptionProps> = (props: W
           services={services}
           health={props.health}
           cluster={props.workload?.cluster}
-          waypointWorkloads={isWaypoint(workload.labels) ? workload.waypointWorkloads : undefined}
+          isWaypoint={workload.ambient === 'waypoint'}
+          waypointWorkloads={workload.ambient !== 'waypoint' ? workload.waypointWorkloads : []}
         />
       </CardBody>
     </Card>

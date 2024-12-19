@@ -62,10 +62,11 @@ func (a ResponseTimeAppender) AppendGraph(trafficMap graph.TrafficMap, globalInf
 		graph.CheckError(err)
 	}
 
-	a.appendGraph(trafficMap, namespaceInfo.Namespace, globalInfo.PromClient)
+	a.appendGraph(trafficMap, a.Namespaces[namespaceInfo.Namespace], globalInfo.PromClient)
 }
 
-func (a ResponseTimeAppender) appendGraph(trafficMap graph.TrafficMap, namespace string, client *prometheus.Client) {
+func (a ResponseTimeAppender) appendGraph(trafficMap graph.TrafficMap, namespaceInfo graph.NamespaceInfo, client *prometheus.Client) {
+	namespace := namespaceInfo.Name
 	// create map to quickly look up responseTime
 	responseTimeMap := make(map[string]float64)
 	duration := a.Namespaces[namespace].Duration
@@ -77,8 +78,25 @@ func (a ResponseTimeAppender) appendGraph(trafficMap graph.TrafficMap, namespace
 		// query prometheus for the responseTime info in two queries:
 		groupBy := "source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,request_protocol"
 
+		// 0) Incoming: Ambient only: query source telemetry, typically from a non-waypoint ingress gateway, that will likely not have overlapping dest or waypoint telem for the traffic (that traffic will be picked up in query #2)
+		if namespaceInfo.IsAmbient {
+			query := fmt.Sprintf(`sum(rate(%s{reporter="source",source_workload_namespace!="%s",destination_service_namespace="%s"}[%vs])) by (%s) / sum(rate(%s{reporter="source",source_workload_namespace!="%s",destination_service_namespace="%s"}[%vs])) by (%s) > 0`,
+				"istio_request_duration_milliseconds_sum",
+				namespace,
+				namespace,
+				int(duration.Seconds()), // range duration for the query
+				groupBy,
+				"istio_request_duration_milliseconds_count",
+				namespace,
+				namespace,
+				int(duration.Seconds()), // range duration for the query
+				groupBy)
+			incomingVector := promQuery(query, time.Unix(a.QueryTime, 0), client.GetContext(), client.API(), a)
+			a.populateResponseTimeMap(responseTimeMap, &incomingVector)
+		}
+
 		// 1) Incoming: query destination telemetry to capture namespace services' incoming traffic
-		// note - the query order is important as both queries may have overlapping results for edges within
+		// note - the order of the next two queries is important as both queries may have overlapping results for edges within
 		//        the namespace.  This query uses destination proxy and so must come first.
 		query := fmt.Sprintf(`sum(rate(%s{%s,destination_service_namespace="%s"}[%vs])) by (%s) / sum(rate(%s{%s,destination_service_namespace="%s"}[%vs])) by (%s) > 0`,
 			"istio_request_duration_milliseconds_sum",
@@ -114,6 +132,19 @@ func (a ResponseTimeAppender) appendGraph(trafficMap graph.TrafficMap, namespace
 
 		// query prometheus for the responseTime info in two queries:
 		groupBy := "le,source_cluster,source_workload_namespace,source_workload,source_canonical_service,source_canonical_revision,destination_cluster,destination_service_namespace,destination_service,destination_service_name,destination_workload_namespace,destination_workload,destination_canonical_service,destination_canonical_revision,request_protocol"
+
+		// 0) Incoming: Ambient only: query source telemetry, typically from a non-waypoint ingress gateway, that will likely not have overlapping dest or waypoint telem for the traffic (that traffic will be picked up in query #2)
+		if namespaceInfo.IsAmbient {
+			query := fmt.Sprintf(`histogram_quantile(%.2f, sum(rate(%s{reporter="source",source_workload_namespace!="%s",destination_service_namespace="%s"}[%vs])) by (%s)) > 0`,
+				quantile,
+				"istio_request_duration_milliseconds_bucket",
+				namespace,
+				namespace,
+				int(duration.Seconds()), // range duration for the query
+				groupBy)
+			incomingVector := promQuery(query, time.Unix(a.QueryTime, 0), client.GetContext(), client.API(), a)
+			a.populateResponseTimeMap(responseTimeMap, &incomingVector)
+		}
 
 		// 1) Incoming: query destination telemetry to capture namespace services' incoming traffic
 		// note - the query order is important as both queries may have overlapping results for edges within

@@ -46,9 +46,10 @@ type Edge struct {
 }
 
 type NamespaceInfo struct {
-	Name     string
-	Duration time.Duration
-	IsIstio  bool
+	Name      string
+	Duration  time.Duration
+	IsAmbient bool
+	IsIstio   bool
 }
 
 type NamespaceInfoMap map[string]NamespaceInfo

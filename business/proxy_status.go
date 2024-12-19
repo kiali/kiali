@@ -15,26 +15,32 @@ type ProxyStatusService struct {
 	businessLayer  *Layer
 }
 
-func (in *ProxyStatusService) GetPodProxyStatus(cluster, ns, pod string) *models.ProxyStatus {
-	return castProxyStatus(kialiCache.GetPodProxyStatus(cluster, ns, pod))
+// GetPodProxyStatus isSubscribed is used to return IGNORED if sent is empty, instead of NOT_SENT
+func (in *ProxyStatusService) GetPodProxyStatus(cluster, ns, pod string, isSubscribed bool) *models.ProxyStatus {
+	return castProxyStatus(kialiCache.GetPodProxyStatus(cluster, ns, pod), isSubscribed)
 }
 
-func castProxyStatus(ps *kubernetes.ProxyStatus) *models.ProxyStatus {
+// castProxyStatus returns a status string depending on the proxyStatus and whether the proxy is subscribed
+// See https://github.com/istio/istio/pull/51638/files#diff-fded610aca2639111f0d6b42e18dfc1ce047126340a2d36bb976cfa4c575b984R8
+func castProxyStatus(ps *kubernetes.ProxyStatus, isSubscribed bool) *models.ProxyStatus {
 	if ps == nil {
 		return nil
 	}
 
 	return &models.ProxyStatus{
-		CDS: xdsStatus(ps.ClusterSent, ps.ClusterAcked),
-		EDS: xdsStatus(ps.EndpointSent, ps.EndpointAcked),
-		LDS: xdsStatus(ps.ListenerSent, ps.ListenerAcked),
-		RDS: xdsStatus(ps.RouteSent, ps.RouteAcked),
+		CDS: xdsStatus(ps.ClusterSent, ps.ClusterAcked, isSubscribed),
+		EDS: xdsStatus(ps.EndpointSent, ps.EndpointAcked, isSubscribed),
+		LDS: xdsStatus(ps.ListenerSent, ps.ListenerAcked, isSubscribed),
+		RDS: xdsStatus(ps.RouteSent, ps.RouteAcked, isSubscribed),
 	}
 }
 
-func xdsStatus(sent, acked string) string {
+func xdsStatus(sent, acked string, isSubscribed bool) string {
 	if sent == "" {
-		return "NOT_SENT"
+		if isSubscribed {
+			return "NOT_SENT"
+		}
+		return "IGNORED"
 	}
 	if sent == acked {
 		return "Synced"

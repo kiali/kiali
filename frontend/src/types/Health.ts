@@ -2,6 +2,7 @@ import {
   CheckCircleIcon,
   ExclamationCircleIcon,
   ExclamationTriangleIcon,
+  InfoCircleIcon,
   MinusCircleIcon,
   UnknownIcon
 } from '@patternfly/react-icons';
@@ -115,6 +116,14 @@ export const DEGRADED: Status = {
   priority: 3
 };
 
+export const INFO: Status = {
+  className: 'icon-info',
+  color: PFColors.Info,
+  icon: InfoCircleIcon,
+  name: t('Info'),
+  priority: 2
+};
+
 export const NOT_READY: Status = {
   className: 'icon-idle',
   color: PFColors.Info,
@@ -225,6 +234,16 @@ export const proxyStatusMessage = (syncedProxies: number, desiredReplicas: numbe
   return msg;
 };
 
+export const hasProxyStatusInfoSeverity = (status: ProxyStatus): boolean => {
+  return (
+    isProxyStatusComponentSyncedOrIgnored(status.CDS) &&
+    isProxyStatusComponentSyncedOrIgnored(status.EDS) &&
+    isProxyStatusComponentSyncedOrIgnored(status.LDS) &&
+    isProxyStatusComponentSyncedOrIgnored(status.RDS) &&
+    !isProxyStatusSynced(status)
+  );
+};
+
 export const isProxyStatusSynced = (status: ProxyStatus): boolean => {
   return (
     isProxyStatusComponentSynced(status.CDS) &&
@@ -235,7 +254,11 @@ export const isProxyStatusSynced = (status: ProxyStatus): boolean => {
 };
 
 export const isProxyStatusComponentSynced = (componentStatus: string): boolean => {
-  return componentStatus === 'Synced';
+  return componentStatus.toLowerCase() === 'synced';
+};
+
+export const isProxyStatusComponentSyncedOrIgnored = (componentStatus: string): boolean => {
+  return componentStatus.toLowerCase() === 'synced' || componentStatus.toLowerCase() === 'ignored';
 };
 
 export const mergeStatus = (s1: Status, s2: Status): Status => {

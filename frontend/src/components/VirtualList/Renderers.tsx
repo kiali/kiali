@@ -39,7 +39,6 @@ import { Label } from 'components/Label/Label';
 import { isMultiCluster, serverConfig } from 'config/ServerConfig';
 import { ControlPlaneBadge } from 'pages/Overview/ControlPlaneBadge';
 import { NamespaceStatuses } from 'pages/Overview/NamespaceStatuses';
-import { isWaypoint } from '../../helpers/LabelFilterHelper';
 import { KialiIcon } from '../../config/KialiIcon';
 import { Td } from '@patternfly/react-table';
 import { kialiStyle } from 'styles/StyleUtils';
@@ -100,9 +99,9 @@ export const details: Renderer<AppListItem | WorkloadListItem | ServiceListItem>
   item: AppListItem | WorkloadListItem | ServiceListItem
 ) => {
   const isWorkload = item.instanceType === InstanceType.Workload;
-  const isAmbientWaypoint = isWaypoint(item.labels);
-  const hasMissingApp = isWorkload && !item['appLabel'] && !isWaypoint(item.labels);
-  const hasMissingVersion = isWorkload && !item['versionLabel'] && !isWaypoint(item.labels);
+  const isAmbientWaypoint = item.ambient === 'waypoint';
+  const hasMissingApp = isWorkload && !item['appLabel'] && item.ambient !== 'waypoint';
+  const hasMissingVersion = isWorkload && !item['versionLabel'] && item.ambient !== 'waypoint';
   const additionalDetails = (item as WorkloadListItem | ServiceListItem).additionalDetailSample;
   const spacer = isWorkload && hasMissingSidecar(item) && additionalDetails && additionalDetails.icon;
   const hasMissingAP = isWorkload && (item as WorkloadListItem).notCoveredAuthPolicy;

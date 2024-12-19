@@ -1,6 +1,15 @@
 import * as React from 'react';
 import { ObjectCheck, ValidationTypes } from '../../types/IstioObjects';
-import { DEGRADED, HEALTHY, isProxyStatusSynced, mergeStatus, ProxyStatus, Status } from '../../types/Health';
+import {
+  DEGRADED,
+  hasProxyStatusInfoSeverity,
+  HEALTHY,
+  INFO,
+  isProxyStatusSynced,
+  mergeStatus,
+  ProxyStatus,
+  Status
+} from '../../types/Health';
 import { Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { ProxyStatusList } from './ProxyStatusList';
 import { highestSeverity, validationToHealth } from '../../types/ServiceInfo';
@@ -13,7 +22,12 @@ type PodStatusProps = {
 };
 
 export const PodStatus: React.FC<PodStatusProps> = (props: PodStatusProps) => {
-  const proxyStatusSeverity: Status = props.proxyStatus && !isProxyStatusSynced(props.proxyStatus) ? DEGRADED : HEALTHY;
+  const proxyStatusSeverity: Status =
+    props.proxyStatus && hasProxyStatusInfoSeverity(props.proxyStatus)
+      ? INFO
+      : props.proxyStatus && !isProxyStatusSynced(props.proxyStatus)
+      ? DEGRADED
+      : HEALTHY;
 
   const showTooltip = (): boolean => {
     const validationSeverity: ValidationTypes = highestSeverity(props.checks || []);

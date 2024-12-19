@@ -72,7 +72,7 @@ kind: Istio
 metadata:
   name: default
 spec:
-  version: v1.23.0
+  version: v1.24.1
   namespace: istio-system
   updateStrategy:
     type: InPlace

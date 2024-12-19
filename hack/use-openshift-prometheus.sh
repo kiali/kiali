@@ -16,6 +16,7 @@ KIALI_CR_NAMESPACE=""
 MESH_LABEL="mymesh"
 NAMESPACES=""
 NETWORK_POLICIES="false"
+PROM_INSECURE="false"
 OC="oc"
 
 # process command line args
@@ -29,6 +30,7 @@ while [[ $# -gt 0 ]]; do
     -n|--namespaces)            NAMESPACES="$2"        ; shift;shift ;;
     -np|--network-policies)     NETWORK_POLICIES="$2"  ; shift;shift ;;
     -oc|--oc)                   OC="$2"                ; shift;shift ;;
+    -pi|--prometheus-insecure)  PROM_INSECURE="$2"     ; shift;shift ;;
     -h|--help)
       cat <<HELPMSG
 Valid command line arguments:
@@ -39,6 +41,7 @@ Valid command line arguments:
   -n|--namespaces <names>: Space-separated names of namespaces in the mesh (Default: empty)
   -np|--network-policies (true|false) If true, NetworkPolicies will be created (or deleted if --delete is true) to allow for all ingress traffic, including from OpenShift monitoring namespaces labeled with network.openshift.io/policy-group: monitoring (where Prometheus lives) (Default: false)
   -oc|--oc <path>: Cluster client executable name of 'oc' (Default: oc)
+  -pi|--prometheus-insecure (true|false): If Prometheus server certificate is self-signed, you need to set this to "true" to tell Kiali to connect to Prometheus insecurely. (Default: false)
   -h|--help : this message
 HELPMSG
       exit 1
@@ -336,6 +339,7 @@ spec:
   external_services:
     prometheus:
       auth:
+        insecure_skip_verify: ${PROM_INSECURE}
         type: bearer
         use_kiali_token: true
       query_scope:
@@ -345,7 +349,7 @@ spec:
       url: https://thanos-querier.openshift-monitoring.svc.cluster.local:9091
 EOM
   echo "..."
-  ${OC} patch kiali ${KIALI_CR_NAME} -n ${KIALI_CR_NAMESPACE} --type=merge --patch '{"spec":{"external_services":{"prometheus":{"auth":{"type":"bearer","use_kiali_token": true},"query_scope":{"mesh_id": "'${MESH_LABEL}'"},"thanos_proxy":{"enabled": true},"url":"https://thanos-querier.openshift-monitoring.svc.cluster.local:9091"}}}}'
+  ${OC} patch kiali ${KIALI_CR_NAME} -n ${KIALI_CR_NAMESPACE} --type=merge --patch '{"spec":{"external_services":{"prometheus":{"auth":{"insecure_skip_verify": '${PROM_INSECURE}',"type":"bearer","use_kiali_token": true},"query_scope":{"mesh_id": "'${MESH_LABEL}'"},"thanos_proxy":{"enabled": true},"url":"https://thanos-querier.openshift-monitoring.svc.cluster.local:9091"}}}}'
 }
 
 ########## MAIN
