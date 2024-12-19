@@ -18,6 +18,7 @@ IMAGE=""
 LOAD_BALANCER_RANGE="255.70-255.84"
 KEYCLOAK_ISSUER_URI=""
 KEYCLOAK_CERTS_DIR=""
+IP_FAMILY="ipv4" # or "dual"
 
 # for now these are fixed unless you override with env vars (no cmdline opts)
 KIND_IMAGE_REGISTRY_NAME="${KIND_IMAGE_REGISTRY_NAME:-kind-registry}"
@@ -45,6 +46,8 @@ Options:
     Default: false
 -i|--image
     Image of the kind cluster. Defaults to latest kind image if not specified.
+-if|--ip-family
+    Can be "ipv4" if only IPv4 network is enabled, or "dual" if dual-stack is supported. Default: ipv4
 -kcd|--keycloak-certs-dir
     Directory where the keycloak certs are stored.
 -kiu|--keycloak-issuer-uri
@@ -66,6 +69,7 @@ while [[ $# -gt 0 ]]; do
     -ek|--enable-keycloak)        ENABLE_KEYCLOAK="$2";       shift;shift; ;;
     -eir|--enable-image-registry) ENABLE_IMAGE_REGISTRY="$2"; shift;shift; ;;
     -i|--image)                   IMAGE="$2";                 shift;shift; ;;
+    -if|--ip-family)              IP_FAMILY="$2";             shift;shift; ;;
     -kcd|--keycloak-certs-dir)    KEYCLOAK_CERTS_DIR="$2";    shift;shift; ;;
     -kiu|--keycloak-issuer-uri)   KEYCLOAK_ISSUER_URI="$2";   shift;shift; ;;
     -lbr|--load-balancer-range)   LOAD_BALANCER_RANGE="$2";   shift;shift; ;;
@@ -107,7 +111,11 @@ start_image_registry_daemon() {
   # see: https://kind.sigs.k8s.io/docs/user/local-registry/
   if [ "${ENABLE_IMAGE_REGISTRY}" == "true" ]; then
     if [ "$(${DORP} inspect -f '{{.State.Running}}' ${KIND_IMAGE_REGISTRY_NAME} 2>/dev/null || true)" != "true" ]; then
-      ${DORP} run --sysctl=net.ipv6.conf.all.disable_ipv6=0 -d --restart=always -p "127.0.0.1:${KIND_IMAGE_REGISTRY_PORT}:5000" --name "${KIND_IMAGE_REGISTRY_NAME}" --network bridge registry:2
+      _disable_ipv6="0"
+      if [ "${IP_FAMILY}" == "ipv4" ]; then
+        _disable_ipv6="1"
+      fi
+      ${DORP} run --sysctl=net.ipv6.conf.all.disable_ipv6=${_disable_ipv6} -d --restart=always -p "127.0.0.1:${KIND_IMAGE_REGISTRY_PORT}:5000" --name "${KIND_IMAGE_REGISTRY_NAME}" --network bridge registry:2
       infomsg "An image registry daemon has started."
     else
       infomsg "An image registry daemon appears to already be running; this existing daemon will be used."
@@ -209,12 +217,13 @@ fi
 start_kind() {
   # Due to: https://github.com/kubernetes-sigs/kind/issues/1449#issuecomment-1612648982 we need two nodes.
   infomsg "Kind cluster to be created with name [${NAME}]"
+  infomsg "networking.ipFamily will be set to [${IP_FAMILY}]"
   KIND_NODE_IMAGE=${IMAGE:+image: ${IMAGE}}
   cat <<EOF | ${KIND_EXE} create cluster --name "${NAME}" --config -
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
 networking:
-  ipFamily: ipv4
+  ipFamily: ${IP_FAMILY}
 $(echo_keycloak_kubeadm_config)
 nodes:
   - role: control-plane
