@@ -45,6 +45,10 @@ Feature: Kiali Service Details page for remote cluster
     When user selects a trace
     Then user sees span details
 
+  Scenario: Don't see tracing info after selecting a trace
+    And user is at the details page for the "service" "bookinfo/ratings" located in the "east" cluster
+    Then user see no traces
+
   Scenario: See details for a service, which is not present in the specific cluster.
     And user is at the details page for the "service" "bookinfo/ratings" located in the "east" cluster
     And links in the "Service" description card should contain a reference to a "east" cluster

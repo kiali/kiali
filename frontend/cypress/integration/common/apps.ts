@@ -38,7 +38,7 @@ Then('user see no traces', () => {
   cy.getBySel('tracing-scatterplot').should('not.exist');
 
   // Ensures traces have loaded.
-  cy.getBySel('pf-tab-section-5-basic-tabs').contains('No trace results');
+  cy.getBySel('empty-traces').contains('No trace results');
 });
 
 Then('user sees trace details', () => {

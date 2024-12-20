@@ -84,7 +84,7 @@ class TracingScatterComponent extends React.Component<TracingScatterProps> {
   renderFetchEmpty = (title, msg): JSX.Element => {
     return (
       <div className={emptyStyle}>
-        <EmptyState variant={EmptyStateVariant.sm}>
+        <EmptyState variant={EmptyStateVariant.sm} data-test="empty-traces">
           <EmptyStateHeader titleText={<>{title}</>} headingLevel="h5" />
           <EmptyStateBody>{msg}</EmptyStateBody>
         </EmptyState>

@@ -33,6 +33,10 @@ Feature: Kiali Workload Details page
     And user sees span details
     And user can filter spans by workload
 
+  Scenario: Don't see tracing info after selecting a trace
+    And user is at the details page for the "workload" "bookinfo/reviews-v3" located in the "west" cluster
+    Then user see no traces
+
   Scenario: See Envoy clusters configuration for a workload
     When the user filters by "Port" with value "9080" on the "Clusters" tab
     Then the user sees clusters expected information
