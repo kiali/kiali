@@ -29,10 +29,13 @@ Feature: Kiali Workload Details page
 
   Scenario: See workload span info after selecting a span
     And user sees trace information
-    And an info message "Loading traces for all clusters. Tracing is not configured to store traces per cluster." is displayed
     When user selects a trace
     And user sees span details
     And user can filter spans by workload
+
+  Scenario: Don't see tracing info after selecting a trace
+    And user is at the details page for the "workload" "bookinfo/reviews-v3" located in the "west" cluster
+    Then user see no traces
 
   Scenario: See Envoy clusters configuration for a workload
     When the user filters by "Port" with value "9080" on the "Clusters" tab
@@ -66,11 +69,11 @@ Feature: Kiali Workload Details page
     And user is at the details page for the "workload" "bookinfo/ratings-v1" located in the "east" cluster
     Then user does not see any inbound and outbound traffic information
 
-  Scenario: See no Inbound Metrics for a workload, which is not present in the specific cluster. 
+  Scenario: See no Inbound Metrics for a workload, which is not present in the specific cluster.
     And user is at the details page for the "workload" "bookinfo/ratings-v1" located in the "east" cluster
     Then user does not see "Inbound" metrics information for the "east" "ratings-v1" "workload"
 
-  Scenario: See no Outbound Metrics for a workload, which is not present in the specific cluster. 
+  Scenario: See no Outbound Metrics for a workload, which is not present in the specific cluster.
     And user is at the details page for the "workload" "bookinfo/ratings-v1" located in the "east" cluster
     Then user does not see "Outbound" metrics information for the "east" "ratings-v1" "workload"
 

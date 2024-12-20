@@ -5,7 +5,6 @@ import { TracingQuery } from 'types/Tracing';
 import { TargetKind } from 'types/Common';
 import { getTimeRangeMicros } from 'utils/tracing/TracingHelper';
 import { transformTraceData } from 'utils/tracing/TraceTransform';
-import { isMultiCluster } from '../../config';
 
 export type FetchOptions = {
   cluster?: string;
@@ -67,11 +66,6 @@ export class TracesFetcher {
         this.onChange(traces, response.data.tracingServiceName);
         if (response.data.errors && response.data.errors.length > 0) {
           this.onErrors(response.data.errors);
-        }
-        if (response.data.fromAllClusters && isMultiCluster) {
-          AlertUtils.addWarning(
-            'Loading traces for all clusters. Tracing is not configured to store traces per cluster.'
-          );
         }
         const firstTraceTimestamp = Math.min(...traces.map(s => s.startTime));
         // If the traces cover less than 90% of the selected period, show an info message

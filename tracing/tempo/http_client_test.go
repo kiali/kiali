@@ -51,7 +51,7 @@ func TestGetTraces(t *testing.T) {
 		}
 	})}
 
-	tempoClient, err := NewOtelClient(context.TODO(), httpClient, baseUrl)
+	tempoClient, err := NewOtelClient(context.TODO())
 	assert.Nil(t, err)
 	assert.NotNil(t, tempoClient)
 
@@ -68,7 +68,6 @@ func TestGetTraces(t *testing.T) {
 	assert.NotNil(t, response)
 	assert.Equal(t, response.TracingServiceName, serviceName)
 	assert.Nil(t, response.Errors)
-	assert.False(t, response.FromAllClusters)
 	assert.NotNil(t, response.Data)
 	assert.Equal(t, response.Data[0].TraceID, json.TraceID("100cb753c787ed5657c8d88dafc176ed"))
 	assert.Equal(t, len(response.Data[0].Spans), 3)
@@ -90,7 +89,7 @@ func TestGetTrace(t *testing.T) {
 		}
 	})}
 
-	tempoClient, err := NewOtelClient(context.TODO(), httpClient, baseUrl)
+	tempoClient, err := NewOtelClient(context.TODO())
 	assert.Nil(t, err)
 	assert.NotNil(t, tempoClient)
 
@@ -114,7 +113,7 @@ func TestErrorResponse(t *testing.T) {
 		}
 	})}
 
-	tempoClient, err := NewOtelClient(context.TODO(), httpClient, baseUrl)
+	tempoClient, err := NewOtelClient(context.TODO())
 	assert.Nil(t, err)
 	assert.NotNil(t, tempoClient)
 
@@ -137,14 +136,7 @@ func TestErrorResponse(t *testing.T) {
 func TestQuery(t *testing.T) {
 	baseUrl := getBaseUrl()
 
-	httpClient := http.Client{Transport: RoundTripFunc(func(req *http.Request) *http.Response {
-		return &http.Response{
-			StatusCode: http.StatusInternalServerError,
-			Body:       io.NopCloser(strings.NewReader(`invalid TraceQL query: parse error at line 1, col 99: syntax error: unexpected IDENTIFIER`)),
-		}
-	})}
-
-	tempoClient, err := NewOtelClient(context.TODO(), httpClient, baseUrl)
+	tempoClient, err := NewOtelClient(context.TODO())
 	assert.Nil(t, err)
 	assert.NotNil(t, tempoClient)
 
@@ -192,11 +184,9 @@ func TestQuery(t *testing.T) {
 	assert.Contains(t, rawQuery2, fmt.Sprintf(".service.name = \"%s\"", serviceName))
 	assert.Contains(t, rawQuery2, ".istio.mesh_id = \"mesh_hack\"")
 	assert.Contains(t, rawQuery2, ".custom = \"value\"")
-	// Cluster tag is disabled
-	assert.NotContains(t, rawQuery2, ".istio.cluster_id = \"east\"")
+	// Should contain Cluster tag
+	assert.Contains(t, rawQuery2, ".istio.cluster_id = \"east\"")
 
-	// Force enable cluster tag
-	tempoClient.ClusterTag = true
 	query3 := tempoClient.GetTraceQLQuery(baseUrl, serviceName, q2)
 	assert.NotNil(t, query3)
 	rawQuery3, err3 := url.QueryUnescape(query3)
