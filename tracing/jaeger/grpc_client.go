@@ -157,16 +157,3 @@ func readSpansStream(stream SpansStreamer) (map[model.TraceID]*model.Trace, erro
 	}
 	return tracesMap, nil
 }
-
-func includeClusterTag(tracesMap map[model.TraceID]*model.Trace) bool {
-	for _, trace := range tracesMap {
-		for _, span := range trace.Spans {
-			for _, tags := range span.Tags {
-				if tags.Key == models.IstioClusterTag {
-					return true
-				}
-			}
-		}
-	}
-	return false
-}

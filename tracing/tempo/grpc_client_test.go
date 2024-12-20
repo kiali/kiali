@@ -3,7 +3,6 @@ package tempo
 import (
 	"context"
 	"net"
-	"net/url"
 	"os"
 	"testing"
 
@@ -15,11 +14,6 @@ import (
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/tracing/tempo/tempopb"
 )
-
-func getgRPCBaseUrl() *url.URL {
-	baseUrl, _ := url.Parse(tracingUrl)
-	return baseUrl
-}
 
 type mockgRPCServer struct {
 	streamingClient tempopb.UnimplementedStreamingQuerierServer

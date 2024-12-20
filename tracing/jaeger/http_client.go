@@ -14,7 +14,6 @@ import (
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tracing/jaeger/model"
-	jaegerModels "github.com/kiali/kiali/tracing/jaeger/model/json"
 	"github.com/kiali/kiali/util"
 )
 
@@ -144,17 +143,4 @@ func makeRequest(client http.Client, endpoint string, body io.Reader) (response 
 	response, err = io.ReadAll(resp.Body)
 	status = resp.StatusCode
 	return
-}
-
-func includeJaegerClusterTag(traces []jaegerModels.Trace) bool {
-	for _, trace := range traces {
-		for _, span := range trace.Spans {
-			for _, tags := range span.Tags {
-				if tags.Key == models.IstioClusterTag {
-					return true
-				}
-			}
-		}
-	}
-	return false
 }

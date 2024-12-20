@@ -37,7 +37,6 @@ Feature: Kiali Service Details page for remote cluster
 
   Scenario: See graph traces for ratings service details
     And user sees trace information
-    And an info message "Loading traces for all clusters. Tracing is not configured to store traces per cluster." is not displayed
     When user selects a trace
     Then user sees trace details
 

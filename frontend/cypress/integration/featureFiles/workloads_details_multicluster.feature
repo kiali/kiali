@@ -29,7 +29,6 @@ Feature: Kiali Workload Details page
 
   Scenario: See workload span info after selecting a span
     And user sees trace information
-    And an info message "Loading traces for all clusters. Tracing is not configured to store traces per cluster." is not displayed
     When user selects a trace
     And user sees span details
     And user can filter spans by workload
