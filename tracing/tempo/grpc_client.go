@@ -2,12 +2,8 @@ package tempo
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
-	"net/http"
-	"net/url"
-	"path"
 	"time"
 
 	"google.golang.org/grpc"
@@ -19,39 +15,18 @@ import (
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tracing/jaeger/model"
 	jaegerModels "github.com/kiali/kiali/tracing/jaeger/model/json"
-	otel "github.com/kiali/kiali/tracing/otel/model"
 	"github.com/kiali/kiali/tracing/otel/model/converter"
 	"github.com/kiali/kiali/tracing/tempo/tempopb"
-	"github.com/kiali/kiali/util"
 )
 
 type TempoGRPCClient struct {
 	StreamingClient tempopb.StreamingQuerierClient
-	ClusterTag      bool
 }
 
 // New client
-func NewgRPCClient(client http.Client, baseURL *url.URL, clientConn *grpc.ClientConn) (otelClient *TempoGRPCClient, err error) {
-	url := *baseURL
-	url.Path = path.Join(url.Path, "/api/search/tags")
-	tags := false
-	r, status, _ := makeRequest(client, url.String(), nil)
-	if status != 200 {
-		log.Debugf("[gRPC Tempo] Error getting Tempo tags for tracing. Tags will be disabled.")
-	} else {
-		var response otel.TagsResponse
-		if errMarshal := json.Unmarshal(r, &response); errMarshal != nil {
-			log.Errorf("[gRPC Tempo] Error unmarshalling Tempo API response: %s [URL: %v]", errMarshal, url)
-			return nil, errMarshal
-		}
-
-		if util.InSlice(response.TagNames, models.IstioClusterTag) {
-			tags = true
-		}
-	}
-
+func NewgRPCClient(clientConn *grpc.ClientConn) (otelClient *TempoGRPCClient, err error) {
 	clientStreamTempo := tempopb.NewStreamingQuerierClient(clientConn)
-	streamClient := TempoGRPCClient{StreamingClient: clientStreamTempo, ClusterTag: tags}
+	streamClient := TempoGRPCClient{StreamingClient: clientStreamTempo}
 	return &streamClient, nil
 }
 
@@ -70,10 +45,8 @@ func (jc TempoGRPCClient) FindTraces(ctx context.Context, serviceName string, q 
 
 	if len(q.Tags) > 0 {
 		for k, v := range q.Tags {
-			if k != "cluster" && jc.ClusterTag {
-				tag := TraceQL{operator1: "." + k, operand: EQUAL, operator2: v}
-				queryPart = TraceQL{operator1: queryPart, operand: AND, operator2: tag}
-			}
+			tag := TraceQL{operator1: "." + k, operand: EQUAL, operator2: v}
+			queryPart = TraceQL{operator1: queryPart, operand: AND, operator2: tag}
 		}
 	}
 

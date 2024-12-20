@@ -157,7 +157,7 @@ func newClient(ctx context.Context, cfg *config.Config, token string) (*Client, 
 		conn, err := grpc.NewClient(address, opts...)
 		if err == nil {
 			cc := model.NewQueryServiceClient(conn)
-			client, err = jaeger.NewGRPCJaegerClient(ctx, cc)
+			client, err = jaeger.NewGRPCJaegerClient(cc)
 			if err != nil {
 				return nil, err
 			}
@@ -180,7 +180,7 @@ func newClient(ctx context.Context, cfg *config.Config, token string) (*Client, 
 		log.Infof("Create Tracing HTTP client %s", u)
 
 		if cfgTracing.Provider == config.TempoProvider {
-			httpTracingClient, err = tempo.NewOtelClient(ctx, client, u)
+			httpTracingClient, err = tempo.NewOtelClient(ctx)
 			if err != nil {
 				log.Errorf("Error creating HTTP client %s", err.Error())
 				return nil, err
@@ -200,7 +200,7 @@ func newClient(ctx context.Context, cfg *config.Config, token string) (*Client, 
 				}
 				grpcAddress := fmt.Sprintf("%s:%d", u.Hostname(), cfg.ExternalServices.Tracing.GrpcPort)
 				clientConn, _ := grpc.NewClient(grpcAddress, dialOps...)
-				streamClient, err := tempo.NewgRPCClient(client, u, clientConn)
+				streamClient, err := tempo.NewgRPCClient(clientConn)
 				if err != nil {
 					log.Errorf("Error creating gRPC Tempo Client %s", err.Error())
 					return nil, nil

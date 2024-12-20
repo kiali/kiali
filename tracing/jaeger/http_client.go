@@ -19,62 +19,11 @@ import (
 )
 
 type JaegerHTTPClient struct {
-	IgnoreCluster bool
 }
 
 // New client
 func NewJaegerClient(client http.Client, baseURL *url.URL) (jaegerClient *JaegerHTTPClient, err error) {
-
-	url := *baseURL
-	var ignoreCluster bool
-	var jaegerService string
-	services := model.Services{}
-
-	url.Path = path.Join(url.Path, "/api/services")
-	resp, code, reqError := makeRequest(client, url.String(), nil)
-	if code != 200 || reqError != nil {
-		log.Debugf("[HTTP Jaeger] Error getting query for tracing. cluster tags will be disabled. %s", reqError.Error())
-		ignoreCluster = true
-		return &JaegerHTTPClient{IgnoreCluster: ignoreCluster}, nil
-	}
-	errUnmarshall := json.Unmarshal(resp, &services)
-	if errUnmarshall != nil {
-		log.Debugf("[HTTP Jaeger] Error getting query for tracing. cluster tags will be disabled. %s", errUnmarshall.Error())
-		ignoreCluster = true
-		return &JaegerHTTPClient{IgnoreCluster: ignoreCluster}, nil
-	}
-	for _, service := range services.Data {
-		if !strings.Contains(service, "istio") && !strings.Contains(service, "jaeger") {
-			jaegerService = service
-			break
-		}
-	}
-	urlTraces := *baseURL
-	urlTraces.Path = path.Join(urlTraces.Path, "/api/traces")
-
-	// if cluster exists in tags, use it
-	query := models.TracingQuery{}
-	query.End = time.Now()
-	query.Start = query.End.Add(-10 * time.Minute)
-	query.Limit = 100
-	prepareQuery(&urlTraces, jaegerService, query, false)
-	r, err := queryTracesHTTP(client, &urlTraces)
-
-	if err != nil {
-		log.Debugf("[HTTP Jaeger] Error getting query for tracing. cluster tags will be disabled. %s", err.Error())
-		ignoreCluster = true
-	} else {
-		if r != nil && len(r.Data) == 0 {
-			log.Debugf("[HTTP Jaeger] Error getting query for tracing. cluster tags will be disabled. No data returned for: %s", urlTraces.String())
-			ignoreCluster = true
-		} else {
-			if includeJaegerClusterTag(r.Data) {
-				ignoreCluster = false
-			}
-		}
-	}
-
-	return &JaegerHTTPClient{IgnoreCluster: ignoreCluster}, nil
+	return &JaegerHTTPClient{}, nil
 }
 
 func (jc JaegerHTTPClient) GetAppTracesHTTP(client http.Client, baseURL *url.URL, serviceName string, q models.TracingQuery) (response *model.TracingResponse, err error) {
@@ -82,14 +31,11 @@ func (jc JaegerHTTPClient) GetAppTracesHTTP(client http.Client, baseURL *url.URL
 	url.Path = path.Join(url.Path, "/api/traces")
 
 	// if cluster exists in tags, use it
-	prepareQuery(&url, serviceName, q, jc.IgnoreCluster)
+	prepareQuery(&url, serviceName, q)
 	r, err := queryTracesHTTP(client, &url)
 
 	if r != nil {
 		r.TracingServiceName = serviceName
-		if jc.IgnoreCluster {
-			r.FromAllClusters = true
-		}
 
 	}
 
@@ -155,16 +101,13 @@ func unmarshal(r []byte, u *url.URL) (*model.TracingResponse, error) {
 	return &response, nil
 }
 
-func prepareQuery(u *url.URL, jaegerServiceName string, query models.TracingQuery, ignoreCluster bool) {
+func prepareQuery(u *url.URL, jaegerServiceName string, query models.TracingQuery) {
 	q := url.Values{}
 	q.Set("service", jaegerServiceName)
 	q.Set("start", fmt.Sprintf("%d", query.Start.Unix()*time.Second.Microseconds()))
 	q.Set("end", fmt.Sprintf("%d", query.End.Unix()*time.Second.Microseconds()))
 	var tags = util.CopyStringMap(query.Tags)
 
-	if ignoreCluster {
-		delete(tags, models.IstioClusterTag)
-	}
 	if len(tags) > 0 {
 		// Tags must be json encoded
 		tagsJson, err := json.Marshal(tags)
@@ -180,7 +123,7 @@ func prepareQuery(u *url.URL, jaegerServiceName string, query models.TracingQuer
 		q.Set("limit", strconv.Itoa(query.Limit))
 	}
 	u.RawQuery = q.Encode()
-	log.Debugf("Prepared Jaeger query: %v", u)
+	log.Infof("Prepared Jaeger query: %v", u)
 }
 
 func makeRequest(client http.Client, endpoint string, body io.Reader) (response []byte, status int, err error) {

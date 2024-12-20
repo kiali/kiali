@@ -31,36 +31,13 @@ const (
 )
 
 type OtelHTTPClient struct {
-	ClusterTag bool
 	TempoCache store.Store[string, *model.TracingSingleTrace]
 }
 
 // New client
-func NewOtelClient(ctx context.Context, client http.Client, baseURL *url.URL) (otelClient *OtelHTTPClient, err error) {
-	url := *baseURL
+func NewOtelClient(ctx context.Context) (otelClient *OtelHTTPClient, err error) {
 
-	// Istio adds the istio.cluster_id tag
-	// That allows to filter traces by cluster in MC environments
-	// This is a check to validate that this tag exists before use it
-	// To prevent empty tags results
-	url.Path = path.Join(url.Path, "/api/search/tags")
-	tags := false
-	r, status, _ := makeRequest(client, url.String(), nil)
-	if status != 200 {
-		log.Debugf("Error getting Tempo tags for tracing. Tags will be disabled. %s", r)
-	} else {
-		var response otel.TagsResponse
-		if errMarshal := json.Unmarshal(r, &response); errMarshal != nil {
-			log.Errorf("[HTTP Tempo] Error unmarshalling Tempo API response: %s [URL: %v]", errMarshal, url)
-			return nil, errMarshal
-		}
-
-		if util.InSlice(response.TagNames, models.IstioClusterTag) {
-			tags = true
-		}
-	}
-
-	otelHTTPClient := &OtelHTTPClient{ClusterTag: tags}
+	otelHTTPClient := &OtelHTTPClient{}
 	if config.Get().ExternalServices.Tracing.TempoConfig.CacheEnabled {
 		s := store.New[string, *model.TracingSingleTrace]()
 		fifoStore := store.NewFIFOStore(s, config.Get().ExternalServices.Tracing.TempoConfig.CacheCapacity, "tempo")
@@ -284,12 +261,8 @@ func (oc *OtelHTTPClient) prepareTraceQL(u *url.URL, tracingServiceName string, 
 
 	if len(query.Tags) > 0 {
 		for k, v := range query.Tags {
-			if k == models.IstioClusterTag && !oc.ClusterTag {
-				log.Tracef("Cluster tag is disabled")
-			} else {
-				tag := TraceQL{operator1: "." + k, operand: EQUAL, operator2: v}
-				queryPart = TraceQL{operator1: queryPart, operand: AND, operator2: tag}
-			}
+			tag := TraceQL{operator1: "." + k, operand: EQUAL, operator2: v}
+			queryPart = TraceQL{operator1: queryPart, operand: AND, operator2: tag}
 		}
 	}
 
