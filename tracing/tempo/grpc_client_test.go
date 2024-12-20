@@ -2,12 +2,9 @@ package tempo
 
 import (
 	"context"
-	"io"
 	"net"
-	"net/http"
 	"net/url"
 	"os"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -56,20 +53,11 @@ func TestCreateGRPCClient(t *testing.T) {
 	assert.Nil(t, err)
 	defer resp.Close()
 
-	byteValue, _ := io.ReadAll(resp)
-
-	httpClient := http.Client{Transport: RoundTripFunc(func(req *http.Request) *http.Response {
-		return &http.Response{
-			StatusCode: http.StatusOK,
-			Body:       io.NopCloser(strings.NewReader(string(byteValue))),
-		}
-	})}
-
 	clientConn, err := grpc.NewClient("", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithContextDialer(dialer()))
 	assert.Nil(t, err)
 	assert.NotNil(t, clientConn)
 
-	streamClient, err := NewgRPCClient(httpClient, getgRPCBaseUrl(), clientConn)
+	streamClient, err := NewgRPCClient(clientConn)
 
 	assert.Nil(t, err)
 	assert.NotNil(t, streamClient)
