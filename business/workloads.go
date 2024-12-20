@@ -1931,7 +1931,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 				ztunnelPods := in.cache.GetZtunnelPods(criteria.Cluster)
 				for _, zPod := range ztunnelPods {
 					// There should be a ztunnel pod per node
-					// TODO: Maybe we should check if some of the config differs for one pod?
+					// The information should be the same, but choosing the pod could help to verify the information is synchronized
 					zPodConfig := in.cache.GetZtunnelDump(criteria.Cluster, zPod.Namespace, zPod.Name)
 					if zPodConfig != nil {
 						w.AddPodsProtocol(*zPodConfig)
@@ -2002,9 +2002,15 @@ func (in *WorkloadService) isWorkloadCaptured(ctx context.Context, workload mode
 	// Is the pod labeled?
 	for _, pod := range workload.Pods {
 		waypointName, ok := pod.Labels[config.WaypointUseLabel]
+		waypointNamespace, okNs := pod.Labels[config.WaypointUseNamespaceLabel]
 		if ok {
 			found = true
-			waypointNames = append(waypointNames, models.Waypoint{Name: waypointName, Type: "pod"})
+			// If there is no specific waypoint Namespace label, it is supposed to be the same
+			if !okNs {
+				waypointNamespace = workload.Namespace
+			}
+			// Ambient doesn't support multicluster (For now), cluster is the same as the workload
+			waypointNames = append(waypointNames, models.Waypoint{Name: waypointName, Type: "pod", Namespace: waypointNamespace, Cluster: workload.Cluster})
 		}
 	}
 
@@ -2013,10 +2019,15 @@ func (in *WorkloadService) isWorkloadCaptured(ctx context.Context, workload mode
 
 	if foundNS {
 		waypointName, ok := ns.Labels[config.WaypointUseLabel]
-
+		waypointNamespace, okNs := ns.Labels[config.WaypointUseNamespaceLabel]
+		// If there is no specific waypoint Namespace label, it is supposed to be the same
+		if !okNs {
+			waypointNamespace = workload.Namespace
+		}
 		if ok {
 			found = true
-			waypointNames = append(waypointNames, models.Waypoint{Name: waypointName, Type: "namespace"})
+			// Ambient doesn't support multicluster (For now), cluster is the same as the workload
+			waypointNames = append(waypointNames, models.Waypoint{Name: waypointName, Type: "namespace", Namespace: waypointNamespace, Cluster: workload.Cluster})
 		}
 	}
 
@@ -2041,9 +2052,14 @@ func (in *WorkloadService) isWorkloadCaptured(ctx context.Context, workload mode
 	if len(services) > 0 {
 		for _, svc := range services {
 			waypointName, ok := svc.Labels[config.WaypointUseLabel]
+			waypointNamespace, okNs := ns.Labels[config.WaypointUseNamespaceLabel]
+			// If there is no specific waypoint Namespace label, it is supposed to be the same
+			if !okNs {
+				waypointNamespace = workload.Namespace
+			}
 			if ok {
 				found = true
-				waypointNames = append(waypointNames, models.Waypoint{Name: waypointName, Type: "service"})
+				waypointNames = append(waypointNames, models.Waypoint{Name: waypointName, Type: "service", Namespace: waypointNamespace, Cluster: workload.Cluster})
 			}
 		}
 	}
@@ -2053,8 +2069,8 @@ func (in *WorkloadService) isWorkloadCaptured(ctx context.Context, workload mode
 
 // GetWaypointsForWorkload Returns a list of waypoint proxies that capture a workload
 // It should be related with just one waypoint, but this is up to the user, it can help to detect issues in the Ambient Mesh
-func (in *WorkloadService) GetWaypointsForWorkload(ctx context.Context, namespace string, workload models.Workload) []models.Workload {
-	var workloadslist []models.Workload
+func (in *WorkloadService) GetWaypointsForWorkload(ctx context.Context, namespace string, workload models.Workload) []models.WorkloadInfo {
+	var workloadslist []models.WorkloadInfo
 
 	// Get Waypoint list names
 	waypoints, found := in.isWorkloadCaptured(ctx, workload)
@@ -2063,15 +2079,13 @@ func (in *WorkloadService) GetWaypointsForWorkload(ctx context.Context, namespac
 	}
 
 	for _, waypoint := range waypoints {
-		// At the moment, it is not possible to have the waypoint in a different namespace
-		// This is expected to change in future releases
 		wkd, err := in.fetchWorkload(ctx, WorkloadCriteria{Cluster: workload.Cluster, Namespace: namespace, WorkloadName: waypoint.Name, WorkloadGVK: schema.GroupVersionKind{}})
 		if err != nil {
 			log.Debugf("GetWaypointsForWorkload: Error fetching workloads %s", err.Error())
 			return nil
 		}
 		if wkd != nil {
-			workloadslist = append(workloadslist, *wkd)
+			workloadslist = append(workloadslist, models.WorkloadInfo{Name: waypoint.Name, Namespace: waypoint.Namespace, Cluster: waypoint.Cluster, Type: wkd.WaypointFor()})
 		}
 	}
 
@@ -2080,7 +2094,7 @@ func (in *WorkloadService) GetWaypointsForWorkload(ctx context.Context, namespac
 
 // listWaypointWorkloads returns the list of workloads when the waypoint proxy is applied per namespace
 // Maybe use some cache?
-func (in *WorkloadService) listWaypointWorkloads(ctx context.Context, name, cluster string) []models.Workload {
+func (in *WorkloadService) listWaypointWorkloads(ctx context.Context, name, cluster string) []models.WorkloadInfo {
 	// Get all the workloads for a namespaces labeled
 	labelSelector := fmt.Sprintf("%s=%s", config.WaypointUseLabel, name)
 	nslist, errNs := in.userClients[cluster].GetNamespaces(labelSelector)
@@ -2089,7 +2103,7 @@ func (in *WorkloadService) listWaypointWorkloads(ctx context.Context, name, clus
 	}
 
 	// Get all the workloads for that namespace
-	var workloadslist []models.Workload
+	var workloadslist []models.WorkloadInfo
 	for _, ns := range nslist {
 		workloadList, err := in.fetchWorkloadsFromCluster(ctx, cluster, ns.Name, "")
 		if err != nil {
@@ -2098,7 +2112,7 @@ func (in *WorkloadService) listWaypointWorkloads(ctx context.Context, name, clus
 		for _, wk := range workloadList {
 			// This annotation disables other labels (Like the ns one)
 			if wk.Labels[in.config.IstioLabels.AmbientNamespaceLabel] != "none" {
-				workloadslist = append(workloadslist, *wk)
+				workloadslist = append(workloadslist, models.WorkloadInfo{Name: wk.Name, Namespace: wk.Namespace, Cluster: wk.Cluster})
 			}
 		}
 
@@ -2114,7 +2128,7 @@ func (in *WorkloadService) listWaypointWorkloads(ctx context.Context, name, clus
 			}
 			for _, workload := range wlist {
 				// Is there any annotation that disables?
-				workloadslist = append(workloadslist, *workload)
+				workloadslist = append(workloadslist, models.WorkloadInfo{Name: workload.Name, Namespace: workload.Namespace, Cluster: workload.Cluster})
 			}
 		}
 	}

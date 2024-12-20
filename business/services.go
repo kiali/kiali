@@ -578,7 +578,7 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, cluster, namespace,
 
 	wo := models.WorkloadOverviews{}
 	isAmbient := len(ws) > 0
-	waypointWk := []models.Workload{}
+	waypointWk := []models.WorkloadInfo{}
 	for _, w := range ws {
 		wi := &models.WorkloadListItem{}
 		wi.ParseWorkload(w)
@@ -589,7 +589,7 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, cluster, namespace,
 		} else {
 			waypointWorkloads := in.businessLayer.Workload.GetWaypointsForWorkload(ctx, w.Namespace, *w)
 			for _, ww := range waypointWorkloads {
-				if ww.WaypointFor() == config.WaypointForService {
+				if ww.Type == config.WaypointForService {
 					waypointWk = append(waypointWk, ww)
 				}
 			}
