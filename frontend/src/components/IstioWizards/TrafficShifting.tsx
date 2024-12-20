@@ -13,11 +13,25 @@ import { t } from 'utils/I18nUtils';
 
 type Props = {
   initWeights: WorkloadWeight[];
-  onChange: (valid: boolean, workloads: WorkloadWeight[], reset: boolean) => void;
   showMirror: boolean;
-  showValid: boolean;
+  showVaild: boolean;
   workloads: WorkloadOverview[];
+  onChange: (trafficShifting: TrafficShiftingState, workloads: any[], value: true) => void;
+  trafficShifting: TrafficShiftingState;
 };
+
+export type TrafficShiftingState = {
+  addWorkloadSelector: boolean;
+  workloadSelector: string;
+  workloadSelectorValid: boolean;
+  
+};
+
+export const initTrafficShifting = (): TrafficShiftingState => ({
+  workloadSelector: '',
+  addWorkloadSelector: false,
+  workloadSelectorValid: false,
+});
 
 export type WorkloadWeight = {
   locked: boolean;
@@ -30,6 +44,7 @@ export type WorkloadWeight = {
 type State = {
   workloads: WorkloadWeight[];
 };
+
 
 const validationStyle = kialiStyle({
   marginBottom: '0.5rem',
@@ -316,7 +331,7 @@ export class TrafficShifting extends React.Component<Props, State> {
           </div>
         )}
 
-        {this.props.showValid && !isValid && <div className={validationStyle}>{MSG_WEIGHTS_NOT_VALID}</div>}
+        {this.props.showVaild && !isValid && <div className={validationStyle}>{MSG_WEIGHTS_NOT_VALID}</div>}
       </>
     );
   }
