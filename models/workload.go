@@ -42,6 +42,28 @@ type WorkloadList struct {
 	Validations IstioValidations `json:"validations"`
 }
 
+// Reduced information for a workload
+// To create links to another workloads
+// Used by Ambient, to indicate the waypoint proxies
+type WorkloadInfo struct {
+	// Cluster
+	Cluster string `json:"cluster"`
+
+	// Name for the workload
+	// required: true
+	Name string `json:"name"`
+
+	// Namespace where the workload live in
+	// required: true
+	// example: bookinfo
+	Namespace string `json:"namespace"`
+
+	// In case of waypoints it can be service/workload
+	// required: false
+	// example: workload/service
+	Type string `json:"type"`
+}
+
 type LogType string
 
 const (
@@ -202,7 +224,7 @@ type Workload struct {
 	Validations IstioValidations `json:"validations"`
 
 	// Ambient waypoint workloads
-	WaypointWorkloads []Workload `json:"waypointWorkloads"`
+	WaypointWorkloads []WorkloadInfo `json:"waypointWorkloads"`
 
 	// Health
 	Health WorkloadHealth `json:"health"`
@@ -234,7 +256,6 @@ func (workload *WorkloadListItem) ParseWorkload(w *Workload) {
 	if w.IsWaypoint() {
 		workload.Ambient = "waypoint"
 	}
-
 	/** Check the labels app and version required by Istio in template Pods*/
 	_, workload.AppLabel = w.Labels[conf.IstioLabels.AppLabelName]
 	_, workload.VersionLabel = w.Labels[conf.IstioLabels.VersionLabelName]
@@ -563,8 +584,19 @@ func (workload *Workload) IsGateway() bool {
 
 // IsWaypoint return true if the workload is a waypoint proxy (Based in labels)
 func (workload *Workload) IsWaypoint() bool {
+	return workload.Labels[config.WaypointLabel] == config.WaypointLabelValue
+}
 
-	return workload.Labels["gateway.istio.io/managed"] == "istio.io-mesh-controller"
+// WaypointFor returns the waypoint type (workload/service)
+func (workload *Workload) WaypointFor() string {
+	if !workload.IsWaypoint() {
+		return ""
+	}
+	if workload.Labels[config.WaypointFor] == config.WaypointForWorkload {
+		return config.WaypointForWorkload
+	} else {
+		return config.WaypointForService
+	}
 }
 
 // IsWaypoint return true if the workload is a ztunnel (Based in labels)

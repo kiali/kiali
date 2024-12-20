@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { Label, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { PFBadge, PFBadges } from '../Pf/PfBadges';
+import { AmbientComponent } from '../../types/Ambient';
 
 type AmbientLabelProps = {
   style?: React.CSSProperties;
@@ -59,8 +60,6 @@ export const tooltipMsgType = {
 };
 
 type tooltipMsg = typeof tooltipMsgType[keyof typeof tooltipMsgType];
-
-const AmbientComponent = 'ambient';
 
 export const AmbientLabel: React.FC<AmbientLabelProps> = (props: AmbientLabelProps) => {
   const msg = props.tooltip

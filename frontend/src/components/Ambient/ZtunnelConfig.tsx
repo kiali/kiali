@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { KialiAppState } from 'store/Store';
-import { ISortBy } from '@patternfly/react-table';
 import { Workload } from 'types/Workload';
 import { Pod, ZtunnelConfigDump } from 'types/IstioObjects';
 import * as API from '../../services/Api';
@@ -29,8 +28,6 @@ const resources: string[] = ['services', 'workloads'];
 const ztunnelTabs = ['services', 'workloads'];
 const tabName = 'ztunnelTab';
 const defaultTab = 'services';
-
-export type ResourceSorts = { [resource: string]: ISortBy };
 
 type ReduxProps = {
   kiosk: string;
