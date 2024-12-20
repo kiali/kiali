@@ -26,6 +26,7 @@ import (
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus/prometheustest"
+	"github.com/kiali/kiali/tests/data"
 )
 
 func setupWorkloadService(k8s kubernetes.ClientInterface, conf *config.Config) WorkloadService {
@@ -90,6 +91,68 @@ func TestGetWorkloadListFromDeployments(t *testing.T) {
 	assert.Equal(false, workloads[2].AppLabel)
 	assert.Equal(false, workloads[2].VersionLabel)
 	assert.Equal("Deployment", workloads[2].WorkloadGVK.Kind)
+}
+
+func TestGetWorkloadListFromWorkloadGroups(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+
+	conf := config.NewConfig()
+	conf.ExternalServices.Istio.IstioAPIEnabled = false
+	config.Set(conf)
+
+	// Setup mocks
+	kubeObjs := []runtime.Object{
+		&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}},
+	}
+	for _, obj := range data.CreateWorkloadGroups(*conf) {
+		o := obj
+		kubeObjs = append(kubeObjs, o)
+	}
+	for _, obj := range data.CreateWorkloadEntries(*conf) {
+		o := obj
+		kubeObjs = append(kubeObjs, o)
+	}
+	for _, obj := range data.CreateWorkloadGroupSidecars(*conf) {
+		o := obj
+		kubeObjs = append(kubeObjs, o)
+	}
+
+	k8s := kubetest.NewFakeK8sClient(kubeObjs...)
+	k8s.OpenShift = true
+	SetupBusinessLayer(t, k8s, *conf)
+	svc := setupWorkloadService(k8s, config.NewConfig())
+
+	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: true, IncludeHealth: false, Cluster: conf.KubernetesConfig.ClusterName}
+	workloadList, _ := svc.GetWorkloadList(context.TODO(), criteria)
+	workloads := workloadList.Workloads
+
+	assert.Equal("Namespace", workloadList.Namespace)
+
+	require.Equal(4, len(workloads))
+	assert.Equal("ratings-vm", workloads[0].Name)
+	assert.Equal(true, workloads[0].AppLabel)
+	assert.Equal(true, workloads[0].VersionLabel)
+	assert.Equal(true, workloads[0].IstioSidecar)
+	assert.Equal("WorkloadGroup", workloads[0].WorkloadGVK.Kind)
+
+	assert.Equal("ratings-vm-no-entry", workloads[1].Name)
+	assert.Equal(true, workloads[1].AppLabel)
+	assert.Equal(false, workloads[1].VersionLabel)
+	assert.Equal(false, workloads[1].IstioSidecar)
+	assert.Equal("WorkloadGroup", workloads[1].WorkloadGVK.Kind)
+
+	assert.Equal("ratings-vm-no-labels", workloads[2].Name)
+	assert.Equal(false, workloads[2].AppLabel)
+	assert.Equal(false, workloads[2].VersionLabel)
+	assert.Equal(false, workloads[2].IstioSidecar)
+	assert.Equal("WorkloadGroup", workloads[2].WorkloadGVK.Kind)
+
+	assert.Equal("ratings-vm2", workloads[3].Name)
+	assert.Equal(true, workloads[3].AppLabel)
+	assert.Equal(true, workloads[3].VersionLabel)
+	assert.Equal(true, workloads[3].IstioSidecar)
+	assert.Equal("WorkloadGroup", workloads[3].WorkloadGVK.Kind)
 }
 
 func TestGetWorkloadListFromReplicaSets(t *testing.T) {
@@ -424,6 +487,62 @@ func TestGetWorkloadFromDeployment(t *testing.T) {
 	assert.Equal("Deployment", workload.WorkloadGVK.Kind)
 	assert.Equal(true, workload.AppLabel)
 	assert.Equal(true, workload.VersionLabel)
+}
+
+func TestGetWorkloadFromWorkloadGroup(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+
+	// Disabling CustomDashboards on Workload details testing
+	conf := config.NewConfig()
+	conf.ExternalServices.CustomDashboards.Enabled = false
+	kubernetes.SetConfig(t, *conf)
+
+	// Setup mocks
+	kubeObjs := []runtime.Object{
+		&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}},
+	}
+	for _, obj := range data.CreateWorkloadGroups(*conf) {
+		o := obj
+		kubeObjs = append(kubeObjs, o)
+	}
+	for _, obj := range data.CreateWorkloadEntries(*conf) {
+		o := obj
+		kubeObjs = append(kubeObjs, o)
+	}
+	for _, obj := range data.CreateWorkloadGroupSidecars(*conf) {
+		o := obj
+		kubeObjs = append(kubeObjs, o)
+	}
+	k8s := kubetest.NewFakeK8sClient(kubeObjs...)
+	k8s.OpenShift = true
+	SetupBusinessLayer(t, k8s, *conf)
+	svc := setupWorkloadService(k8s, conf)
+
+	criteria := WorkloadCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", WorkloadName: "ratings-vm", WorkloadGVK: schema.GroupVersionKind{}, IncludeServices: false}
+	workload, err := svc.GetWorkload(context.TODO(), criteria)
+	require.NoError(err)
+
+	assert.Equal("ratings-vm", workload.Name)
+	assert.Equal("WorkloadGroup", workload.WorkloadGVK.Kind)
+	assert.Equal(true, workload.AppLabel)
+	assert.Equal(true, workload.VersionLabel)
+	assert.Equal(true, workload.IstioSidecar)
+	assert.NotNil(workload.WorkloadEntries)
+	assert.Equal(1, len(workload.WorkloadEntries))
+	assert.Equal("ratings-vm", workload.WorkloadEntries[0].Name)
+
+	criteria = WorkloadCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", WorkloadName: "ratings-vm-no-entry", WorkloadGVK: schema.GroupVersionKind{}, IncludeServices: false}
+	workload, err = svc.GetWorkload(context.TODO(), criteria)
+	require.NoError(err)
+
+	assert.Equal("ratings-vm-no-entry", workload.Name)
+	assert.Equal("WorkloadGroup", workload.WorkloadGVK.Kind)
+	// AppLabel comes from WorkloadGroup when WorkloadEntry is missing
+	assert.Equal(true, workload.AppLabel)
+	assert.Equal(false, workload.VersionLabel)
+	assert.Equal(false, workload.IstioSidecar)
+	assert.Nil(workload.WorkloadEntries)
 }
 
 func TestGetWorkloadWithInvalidWorkloadType(t *testing.T) {

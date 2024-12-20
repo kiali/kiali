@@ -90,7 +90,8 @@ export const WorkloadDescription: React.FC<WorkloadDescriptionProps> = (props: W
       getGVKTypeString(gvkType.ReplicaSet),
       getGVKTypeString(gvkType.ReplicationController),
       getGVKTypeString(gvkType.DeploymentConfig),
-      getGVKTypeString(gvkType.StatefulSet)
+      getGVKTypeString(gvkType.StatefulSet),
+      getGVKTypeString(gvkType.WorkloadGroup)
     ].indexOf(getGVKTypeString(workload.gvk)) >= 0;
 
   const runtimes = (workload.runtimes ?? []).map(r => r.name).filter(name => name !== '');

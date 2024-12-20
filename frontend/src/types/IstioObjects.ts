@@ -186,6 +186,16 @@ export interface Pod {
   versionLabel: boolean;
 }
 
+export interface WorkloadGroupEntry {
+  annotations?: { [key: string]: string };
+  appLabel: boolean;
+  createdAt: string;
+  labels?: { [key: string]: string };
+  name: string;
+  serviceAccountName: string;
+  versionLabel: boolean;
+}
+
 // models Engarde Istio proxy AccessLog
 export type AccessLog = {
   // Authority is the request authority header %REQ(:AUTHORITY)%
