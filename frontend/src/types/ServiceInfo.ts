@@ -12,7 +12,7 @@ import {
   VirtualService
 } from './IstioObjects';
 import { TLSStatus } from './TLSStatus';
-import { AdditionalItem, Workload } from './Workload';
+import { AdditionalItem, WorkloadInfo } from './Workload';
 import { ResourcePermissions } from './Permissions';
 import { KIALI_WIZARD_LABEL } from '../components/IstioWizards/WizardActions';
 import { ServiceOverview } from './ServiceList';
@@ -92,7 +92,7 @@ export interface ServiceDetailsInfo {
   subServices?: ServiceOverview[];
   validations: Validations;
   virtualServices: VirtualService[];
-  waypointWorkloads?: Workload[];
+  waypointWorkloads?: WorkloadInfo[];
   workloads?: WorkloadOverview[];
 }
 

@@ -12,15 +12,15 @@ import {
 import { kialiStyle } from '../../styles/StyleUtils';
 import { t } from 'i18next';
 import { SortableCompareTh } from './ZtunnelConfig';
-import { Workload } from '../../types/Workload';
+import { WorkloadInfo } from '../../types/Workload';
 import { isMultiCluster } from '../../config';
 import { Link } from 'react-router-dom-v5-compat';
 import { PFBadge, PFBadges } from '../Pf/PfBadges';
-import { WaypointType } from './WaypointConfig';
+import { WaypointType } from '../../types/Ambient';
 
 type WaypointWorkloadsProps = {
   type: string;
-  workloads: Workload[];
+  workloads: WorkloadInfo[];
 };
 
 export const emptyStyle = kialiStyle({
@@ -39,7 +39,7 @@ const itemStyle = kialiStyle({
   listStyle: 'none'
 });
 
-const columns: SortableCompareTh<Workload>[] = [
+const columns: SortableCompareTh<WorkloadInfo>[] = [
   {
     title: t('Name'),
     sortable: true,
@@ -108,7 +108,7 @@ export const WaypointWorkloadsTable: React.FC<WaypointWorkloadsProps> = (props: 
     <>
       <div>
         <Title headingLevel="h5" size={TitleSizes.lg}>
-          List of enrolled {props.type}s
+          {t('List of enrolled')} {props.type}s
         </Title>
       </div>
       <SimpleTable

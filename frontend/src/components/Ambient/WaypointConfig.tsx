@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { KialiAppState } from 'store/Store';
-import { IRow, ISortBy, ThProps } from '@patternfly/react-table';
+import { IRow, ThProps } from '@patternfly/react-table';
 import { Workload } from 'types/Workload';
 import { Card, CardBody, Grid, GridItem, Tab, Tabs, Title, TitleSizes } from '@patternfly/react-core';
 import { activeTab } from '../../components/Tab/Tabs';
@@ -17,14 +17,13 @@ import { kialiStyle } from '../../styles/StyleUtils';
 import { t } from 'i18next';
 import { SimpleTable } from '../Table/SimpleTable';
 import { WaypointWorkloadsTable } from './WaypointWorkloadsTable';
+import { waypintForLabel, WaypointType } from '../../types/Ambient';
 
 const resources: string[] = ['services', 'workloads'];
 
 const waypointTabs = ['services', 'workloads'];
 const tabName = 'waypointTab';
 const defaultTab = 'services';
-
-export type ResourceSorts = { [resource: string]: ISortBy };
 
 type ReduxProps = {
   kiosk: string;
@@ -43,17 +42,12 @@ type WaypointConfigState = {
   tabHeight: number;
 };
 
-export enum WaypointType {
-  Workload = 'workload',
-  Service = 'service'
-}
-
 const fullHeightStyle = kialiStyle({
   height: '100%'
 });
 
 export const isWaypointFor = (wk: Workload): string => {
-  if (wk.labels['istio.io/waypoint-for'] === WaypointType.Workload) {
+  if (wk.labels[waypintForLabel] === WaypointType.Workload) {
     return WaypointType.Workload;
   }
   return WaypointType.Service;

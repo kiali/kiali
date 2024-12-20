@@ -7,6 +7,13 @@ export type WorkloadId = {
   workload: string;
 };
 
+export type WorkloadInfo = {
+  cluster: string;
+  name: string;
+  namespace: string;
+  type?: string;
+};
+
 export interface Workload {
   additionalDetails: AdditionalItem[];
   ambient?: string;
@@ -32,7 +39,7 @@ export interface Workload {
   services: Service[];
   validations?: Validations;
   versionLabel: boolean;
-  waypointWorkloads: Workload[];
+  waypointWorkloads: WorkloadInfo[];
 }
 
 export const emptyWorkload: Workload = {
