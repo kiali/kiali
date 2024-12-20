@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Button, Form, FormGroup, Modal, ModalVariant, TooltipPosition } from '@patternfly/react-core';
 import { UserSettingsActions } from '../../actions/UserSettingsActions';
-import { HistoryManager, URLParam } from '../../app/History';
+import { HistoryManager, location, URLParam } from '../../app/History';
 import { useKialiDispatch, useKialiSelector } from '../../hooks/redux';
 import { DurationInSeconds, IntervalInMilliseconds, TimeRange } from '../../types/Common';
 import { DurationDropdownComponent } from '../Dropdown/DurationDropdown';
@@ -9,6 +9,8 @@ import { RefreshComponent } from '../Refresh/Refresh';
 import { TimeRangeComp } from './TimeRangeComponent';
 import { kioskDurationAction, kioskTimeRangeAction } from '../Kiosk/KioskActions';
 import { useKialiTranslation } from 'utils/I18nUtils';
+import { toValidDuration } from '../../config/ServerConfig';
+import { config } from '../../config';
 
 interface Props {
   customDuration: boolean;
@@ -26,9 +28,69 @@ export const TimeDurationModal: React.FC<Props> = (props: Props) => {
   const reduxRefreshInterval = useKialiSelector(state => state.userSettings.refreshInterval);
   const reduxTimeRange = useKialiSelector(state => state.userSettings.timeRange);
 
-  const [duration, setDuration] = React.useState(reduxDuration);
-  const [refreshInterval, setRefreshInterval] = React.useState(reduxRefreshInterval);
-  const [timeRange, setTimeRange] = React.useState(reduxTimeRange);
+  const [duration, setDuration] = React.useState<number>(0);
+  const [refreshInterval, setRefreshInterval] = React.useState<number>(0);
+  const [timeRange, setTimeRange] = React.useState<TimeRange>({});
+
+  React.useEffect(() => {
+    const urlParams = new URLSearchParams(location.getSearch());
+    const urlDuration = HistoryManager.getDuration(urlParams);
+    const urlRefresh = HistoryManager.getNumericParam(URLParam.REFRESH_INTERVAL, urlParams);
+    const urlTimeRange = HistoryManager.getNumericParam(URLParam.RANGE_DURATION, urlParams);
+    const urlFrom = HistoryManager.getNumericParam(URLParam.FROM, urlParams);
+    const urlTo = HistoryManager.getNumericParam(URLParam.TO, urlParams);
+
+    const getInitDuration = (): number => {
+      if (!props.customDuration && urlDuration) {
+        return toValidDuration(urlDuration);
+      }
+      return reduxDuration;
+    };
+
+    const getInitRefresh = (): number => {
+      if (urlRefresh) {
+        // Validate value
+        if (urlRefresh === 0 || config.toolbar.refreshInterval[urlRefresh]) {
+          return urlRefresh;
+        }
+      }
+      return reduxRefreshInterval;
+    };
+
+    const getUrlTimeRange = (): TimeRange => ({
+      ...(urlTimeRange != null && { rangeDuration: urlTimeRange }),
+      ...(urlFrom != null && { from: urlFrom }),
+      ...(urlTo != null && { to: urlTo })
+    });
+
+    const getInitTimeRange = (): TimeRange => {
+      const tm = getUrlTimeRange();
+
+      if (!tm.rangeDuration && !tm.from && !tm.to && props.customDuration) {
+        return reduxTimeRange;
+      }
+
+      return tm;
+    };
+
+    setDuration(getInitDuration());
+    setRefreshInterval(getInitRefresh());
+    setTimeRange(getInitTimeRange());
+
+    if (urlDuration !== undefined) {
+      dispatch(UserSettingsActions.setDuration(urlDuration));
+    }
+
+    // Update just when valid
+    if (urlRefresh !== undefined && (urlRefresh === 0 || config.toolbar.refreshInterval[urlRefresh])) {
+      dispatch(UserSettingsActions.setRefreshInterval(urlRefresh));
+    }
+
+    if (getUrlTimeRange() !== undefined) {
+      dispatch(UserSettingsActions.setTimeRange(getUrlTimeRange()));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleCancel = (): void => {
     // reset the dialog
@@ -44,11 +106,23 @@ export const TimeDurationModal: React.FC<Props> = (props: Props) => {
 
   const handleConfirm = (): void => {
     dispatch(UserSettingsActions.setRefreshInterval(refreshInterval));
+    HistoryManager.setParam(URLParam.REFRESH_INTERVAL, String(refreshInterval));
 
     if (!props.customDuration) {
       dispatch(UserSettingsActions.setDuration(duration));
+      HistoryManager.setParam(URLParam.DURATION, String(duration));
       kioskDurationAction(duration);
     } else {
+      timeRange.rangeDuration
+        ? HistoryManager.setParam(URLParam.RANGE_DURATION, String(timeRange.rangeDuration))
+        : HistoryManager.deleteParam(URLParam.RANGE_DURATION);
+      timeRange.from
+        ? HistoryManager.setParam(URLParam.FROM, String(timeRange.from))
+        : HistoryManager.deleteParam(URLParam.FROM);
+      timeRange.to
+        ? HistoryManager.setParam(URLParam.TO, String(timeRange.to))
+        : HistoryManager.deleteParam(URLParam.TO);
+
       dispatch(UserSettingsActions.setTimeRange(timeRange));
       kioskTimeRangeAction(timeRange);
     }
