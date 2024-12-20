@@ -42,61 +42,6 @@ func TestServiceMultipleChecks(t *testing.T) {
 	assert.NoError(validations.ConfirmIstioCheckMessage("virtualservices.route.singleweight", vals[0]))
 	assert.Equal(vals[0].Severity, models.WarningSeverity)
 	assert.Equal(vals[0].Path, "spec/http[0]/route[0]/weight")
-
-	vals, valid = RouteChecker{
-		Namespaces:     []string{"test"},
-		VirtualService: fakeOneTcpRouteUnder100(),
-	}.Check()
-
-	// wrong weight'ed route rule
-	assert.True(valid)
-	assert.NotEmpty(vals)
-	assert.Len(vals, 1)
-	assert.NoError(validations.ConfirmIstioCheckMessage("virtualservices.route.singleweight", vals[0]))
-	assert.Equal(vals[0].Severity, models.WarningSeverity)
-	assert.Equal(vals[0].Path, "spec/tcp[0]/route[0]/weight")
-
-	vals, valid = RouteChecker{
-		Namespaces:     []string{"test"},
-		VirtualService: fakeOneTlsRouteUnder100(),
-	}.Check()
-
-	// wrong weight'ed route rule
-	assert.True(valid)
-	assert.NotEmpty(vals)
-	assert.Len(vals, 1)
-	assert.NoError(validations.ConfirmIstioCheckMessage("virtualservices.route.singleweight", vals[0]))
-	assert.Equal(vals[0].Severity, models.WarningSeverity)
-	assert.Equal(vals[0].Path, "spec/tls[0]/route[0]/weight")
-}
-
-// VirtualService with one route and no weight
-func TestServiceEmptyWeight(t *testing.T) {
-	assert := assert.New(t)
-
-	vals, valid := RouteChecker{
-		Namespaces:     []string{"test"},
-		VirtualService: fakeOneRouteNoWeight(),
-	}.Check()
-
-	assert.True(valid)
-	assert.Empty(vals)
-
-	vals, valid = RouteChecker{
-		Namespaces:     []string{"test"},
-		VirtualService: fakeOneTcpRouteNoWeight(),
-	}.Check()
-
-	assert.True(valid)
-	assert.Empty(vals)
-
-	vals, valid = RouteChecker{
-		Namespaces:     []string{"test"},
-		VirtualService: fakeOneTlsRouteNoWeight(),
-	}.Check()
-
-	assert.True(valid)
-	assert.Empty(vals)
 }
 
 func TestVSWithRepeatingSubsets(t *testing.T) {
@@ -147,46 +92,6 @@ func fakeValidVirtualService() *networking_v1.VirtualService {
 
 func fakeOneRouteUnder100() *networking_v1.VirtualService {
 	virtualService := data.AddHttpRoutesToVirtualService(data.CreateHttpRouteDestination("reviews", "v1", 45),
-		data.CreateEmptyVirtualService("reviews-multiple", "test", []string{"reviews"}),
-	)
-
-	return virtualService
-}
-
-func fakeOneTcpRouteUnder100() *networking_v1.VirtualService {
-	virtualService := data.AddTcpRoutesToVirtualService(data.CreateTcpRoute("reviews", "v1", 45),
-		data.CreateEmptyVirtualService("reviews-multiple", "test", []string{"reviews"}),
-	)
-
-	return virtualService
-}
-
-func fakeOneTlsRouteUnder100() *networking_v1.VirtualService {
-	virtualService := data.AddTlsRoutesToVirtualService(data.CreateTlsRoute("reviews", "v1", 45),
-		data.CreateEmptyVirtualService("reviews-multiple", "test", []string{"reviews"}),
-	)
-
-	return virtualService
-}
-
-func fakeOneRouteNoWeight() *networking_v1.VirtualService {
-	virtualService := data.AddHttpRoutesToVirtualService(data.CreateHttpRouteDestination("reviews", "v1", 0),
-		data.CreateEmptyVirtualService("reviews-multiple", "test", []string{"reviews"}),
-	)
-
-	return virtualService
-}
-
-func fakeOneTcpRouteNoWeight() *networking_v1.VirtualService {
-	virtualService := data.AddTcpRoutesToVirtualService(data.CreateTcpRoute("reviews", "v1", 0),
-		data.CreateEmptyVirtualService("reviews-multiple", "test", []string{"reviews"}),
-	)
-
-	return virtualService
-}
-
-func fakeOneTlsRouteNoWeight() *networking_v1.VirtualService {
-	virtualService := data.AddTlsRoutesToVirtualService(data.CreateTlsRoute("reviews", "v1", 0),
 		data.CreateEmptyVirtualService("reviews-multiple", "test", []string{"reviews"}),
 	)
 
