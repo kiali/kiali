@@ -70,14 +70,15 @@ const (
 )
 
 const (
-	AmbientAnnotation        = "ambient.istio.io/redirection"
-	AmbientAnnotationEnabled = "enabled"
-	WaypointFor              = "istio.io/waypoint-for"
-	WaypointForService       = "service"
-	WaypointForWorkload      = "workload"
-	WaypointLabel            = "gateway.istio.io/managed"
-	WaypointLabelValue       = "istio.io-mesh-controller"
-	WaypointUseLabel         = "istio.io/use-waypoint"
+	AmbientAnnotation         = "ambient.istio.io/redirection"
+	AmbientAnnotationEnabled  = "enabled"
+	WaypointFor               = "istio.io/waypoint-for"
+	WaypointForService        = "service"
+	WaypointForWorkload       = "workload"
+	WaypointLabel             = "gateway.istio.io/managed"
+	WaypointLabelValue        = "istio.io-mesh-controller"
+	WaypointUseLabel          = "istio.io/use-waypoint"
+	WaypointUseNamespaceLabel = "istio.io/use-waypoint-namespace"
 )
 
 // TracingProvider is the type of tracing provider that Kiali will connect to.

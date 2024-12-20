@@ -42,6 +42,28 @@ type WorkloadList struct {
 	Validations IstioValidations `json:"validations"`
 }
 
+// Reduced information for a workload
+// To create links to another workloads
+// Used by Ambient, to indicate the waypoint proxies
+type WorkloadInfo struct {
+	// Cluster
+	Cluster string `json:"cluster"`
+
+	// Name for the workload
+	// required: true
+	Name string `json:"name"`
+
+	// Namespace where the workload live in
+	// required: true
+	// example: bookinfo
+	Namespace string `json:"namespace"`
+
+	// In case of waypoints it can be service/workload
+	// required: false
+	// example: workload/service
+	Type string `json:"type"`
+}
+
 type LogType string
 
 const (
@@ -202,7 +224,7 @@ type Workload struct {
 	Validations IstioValidations `json:"validations"`
 
 	// Ambient waypoint workloads
-	WaypointWorkloads []Workload `json:"waypointWorkloads"`
+	WaypointWorkloads []WorkloadInfo `json:"waypointWorkloads"`
 
 	// Health
 	Health WorkloadHealth `json:"health"`

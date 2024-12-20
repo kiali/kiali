@@ -101,7 +101,7 @@ type ServiceDetails struct {
 	NamespaceMTLS     MTLSStatus         `json:"namespaceMTLS"`
 	SubServices       []*ServiceOverview `json:"subServices"`
 	Validations       IstioValidations   `json:"validations"`
-	WaypointWorkloads []Workload         `json:"waypointWorkloads"`
+	WaypointWorkloads []WorkloadInfo     `json:"waypointWorkloads"`
 }
 
 type (
