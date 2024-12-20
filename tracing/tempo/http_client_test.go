@@ -184,8 +184,8 @@ func TestQuery(t *testing.T) {
 	assert.Contains(t, rawQuery2, fmt.Sprintf(".service.name = \"%s\"", serviceName))
 	assert.Contains(t, rawQuery2, ".istio.mesh_id = \"mesh_hack\"")
 	assert.Contains(t, rawQuery2, ".custom = \"value\"")
-	// Cluster tag is disabled
-	assert.NotContains(t, rawQuery2, ".istio.cluster_id = \"east\"")
+	// Should contain Cluster tag
+	assert.Contains(t, rawQuery2, ".istio.cluster_id = \"east\"")
 
 	query3 := tempoClient.GetTraceQLQuery(baseUrl, serviceName, q2)
 	assert.NotNil(t, query3)
