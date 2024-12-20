@@ -28,51 +28,51 @@ export const TimeDurationModal: React.FC<Props> = (props: Props) => {
   const reduxRefreshInterval = useKialiSelector(state => state.userSettings.refreshInterval);
   const reduxTimeRange = useKialiSelector(state => state.userSettings.timeRange);
 
-  const urlParams = new URLSearchParams(location.getSearch());
-  const urlDuration = HistoryManager.getDuration(urlParams);
-  const urlRefresh = HistoryManager.getNumericParam(URLParam.REFRESH_INTERVAL, urlParams);
-  const urlTimeRange = HistoryManager.getNumericParam(URLParam.RANGE_DURATION, urlParams);
-  const urlFrom = HistoryManager.getNumericParam(URLParam.FROM, urlParams);
-  const urlTo = HistoryManager.getNumericParam(URLParam.TO, urlParams);
-
-  const getInitDuration = (): number => {
-    if (!props.customDuration && urlDuration) {
-      return toValidDuration(urlDuration);
-    }
-    return reduxDuration;
-  };
-
-  const getInitRefresh = (): number => {
-    if (urlRefresh) {
-      // Validate value
-      if (urlRefresh === 0 || config.toolbar.refreshInterval[urlRefresh]) {
-        return urlRefresh;
-      }
-    }
-    return reduxRefreshInterval;
-  };
-
-  const getUrlTimeRange = (): TimeRange => ({
-    ...(urlTimeRange != null && { rangeDuration: urlTimeRange }),
-    ...(urlFrom != null && { from: urlFrom }),
-    ...(urlTo != null && { to: urlTo })
-  });
-
-  const getInitTimeRange = (): TimeRange => {
-    const tm = getUrlTimeRange();
-
-    if (!tm.rangeDuration && !tm.from && !tm.to && props.customDuration) {
-      return reduxTimeRange;
-    }
-
-    return tm;
-  };
-
-  const [duration, setDuration] = React.useState(0);
-  const [refreshInterval, setRefreshInterval] = React.useState(0);
+  const [duration, setDuration] = React.useState<number>(0);
+  const [refreshInterval, setRefreshInterval] = React.useState<number>(0);
   const [timeRange, setTimeRange] = React.useState<TimeRange>({});
 
   React.useEffect(() => {
+    const urlParams = new URLSearchParams(location.getSearch());
+    const urlDuration = HistoryManager.getDuration(urlParams);
+    const urlRefresh = HistoryManager.getNumericParam(URLParam.REFRESH_INTERVAL, urlParams);
+    const urlTimeRange = HistoryManager.getNumericParam(URLParam.RANGE_DURATION, urlParams);
+    const urlFrom = HistoryManager.getNumericParam(URLParam.FROM, urlParams);
+    const urlTo = HistoryManager.getNumericParam(URLParam.TO, urlParams);
+
+    const getInitDuration = (): number => {
+      if (!props.customDuration && urlDuration) {
+        return toValidDuration(urlDuration);
+      }
+      return reduxDuration;
+    };
+
+    const getInitRefresh = (): number => {
+      if (urlRefresh) {
+        // Validate value
+        if (urlRefresh === 0 || config.toolbar.refreshInterval[urlRefresh]) {
+          return urlRefresh;
+        }
+      }
+      return reduxRefreshInterval;
+    };
+
+    const getUrlTimeRange = (): TimeRange => ({
+      ...(urlTimeRange != null && { rangeDuration: urlTimeRange }),
+      ...(urlFrom != null && { from: urlFrom }),
+      ...(urlTo != null && { to: urlTo })
+    });
+
+    const getInitTimeRange = (): TimeRange => {
+      const tm = getUrlTimeRange();
+
+      if (!tm.rangeDuration && !tm.from && !tm.to && props.customDuration) {
+        return reduxTimeRange;
+      }
+
+      return tm;
+    };
+
     setDuration(getInitDuration());
     setRefreshInterval(getInitRefresh());
     setTimeRange(getInitTimeRange());
@@ -80,10 +80,12 @@ export const TimeDurationModal: React.FC<Props> = (props: Props) => {
     if (urlDuration !== undefined) {
       dispatch(UserSettingsActions.setDuration(urlDuration));
     }
+
     // Update just when valid
     if (urlRefresh !== undefined && (urlRefresh === 0 || config.toolbar.refreshInterval[urlRefresh])) {
       dispatch(UserSettingsActions.setRefreshInterval(urlRefresh));
     }
+
     if (getUrlTimeRange() !== undefined) {
       dispatch(UserSettingsActions.setTimeRange(getUrlTimeRange()));
     }
