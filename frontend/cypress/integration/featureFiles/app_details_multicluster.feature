@@ -42,6 +42,10 @@ Feature: Kiali App Details page for multicluster
     Then user sees span details
     And user can filter spans by app
 
+  Scenario: Don't see tracing info after selecting a trace
+    And user is at the details page for the "app" "bookinfo/reviews" located in the "east" cluster
+    Then user see no traces
+
   Scenario: See details for an app, which is not deployed in the specific cluster.
     And user is at the details page for the "app" "bookinfo/ratings" located in the "east" cluster
     Then links in the "App" description card should contain a reference to a "east" cluster
