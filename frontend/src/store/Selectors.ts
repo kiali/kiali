@@ -111,6 +111,14 @@ const minTLSVersion = (state: KialiAppState): string => state.meshTLSStatus.minT
 
 export const minTLSVersionSelector = createIdentitySelector(minTLSVersion);
 
+// const destinationRules = (state: KialiAppState): string => state.destinationRules;
+
+// export const DestinationRuleSelector = createIdentitySelector(destinationRules);
+
+// const virtualservice = (state: KialiAppState): string => state.virtualServices;
+
+// export const virtualserviceSelector = createIdentitySelector(virtualservice);
+
 const meshwideMTLSEnabled = (state: KialiAppState): boolean => state.meshTLSStatus.autoMTLSEnabled;
 
 export const meshWideMTLSEnabledSelector = createIdentitySelector(meshwideMTLSEnabled);

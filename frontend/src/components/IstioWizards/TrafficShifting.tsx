@@ -14,10 +14,10 @@ import { t } from 'utils/I18nUtils';
 type Props = {
   initWeights: WorkloadWeight[];
   showMirror: boolean;
-  showVaild: boolean;
+  showValid: boolean;
   workloads: WorkloadOverview[];
-  onChange: (trafficShifting: TrafficShiftingState, workloads: any[], value: true) => void;
   trafficShifting: TrafficShiftingState;
+  onChange: (checkTotalWeight: boolean, workloads: any[], showValid: boolean) => void;
 };
 
 export type TrafficShiftingState = {
@@ -31,6 +31,7 @@ export const initTrafficShifting = (): TrafficShiftingState => ({
   workloadSelector: '',
   addWorkloadSelector: false,
   workloadSelectorValid: false,
+
 });
 
 export type WorkloadWeight = {
@@ -331,7 +332,7 @@ export class TrafficShifting extends React.Component<Props, State> {
           </div>
         )}
 
-        {this.props.showVaild && !isValid && <div className={validationStyle}>{MSG_WEIGHTS_NOT_VALID}</div>}
+        {this.props.showValid && !isValid && <div className={validationStyle}>{MSG_WEIGHTS_NOT_VALID}</div>}
       </>
     );
   }

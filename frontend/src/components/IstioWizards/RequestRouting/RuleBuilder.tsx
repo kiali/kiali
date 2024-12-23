@@ -100,7 +100,11 @@ export class RuleBuilder extends React.Component<Props, State> {
                 workloads={this.props.workloads}
                 initWeights={this.props.weights}
                 showMirror={true}
-                onChange={this.props.onSelectWeights}
+                onChange={this.props.onSelectWeights} trafficShifting={{
+                  addWorkloadSelector: false,
+                  workloadSelector: '',
+                  workloadSelectorValid: false
+                }}      
               />
             </div>
           </Tab>

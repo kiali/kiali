@@ -28,6 +28,9 @@ import { TracingState } from 'reducers/TracingState';
 import { MetricsStatsState } from 'reducers/MetricsStatsState';
 import { CertsInfo } from 'types/CertsInfo';
 import { MeshCluster, MeshDefinition, MeshTarget } from '../types/Mesh';
+// import { DestinationRule, VirtualService } from 'types/IstioObjects';
+// import { ServiceWizardValid } from 'components/IstioWizards/WizardActions';
+// import { ServiceDetailsInfo } from 'types/ServiceInfo';
 
 // Store is the Redux Data store
 
@@ -194,4 +197,6 @@ export interface KialiAppState {
   tracingState: TracingState;
   /** User Settings */
   userSettings: UserSettings;
+  // destinationRules: ServiceDetailsInfo[];
+  // virtualServices: VirtualService[];
 }
