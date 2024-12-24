@@ -2,12 +2,8 @@ package tempo
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
-	"net/http"
-	"net/url"
-	"path"
 	"time"
 
 	"google.golang.org/grpc"
@@ -19,39 +15,18 @@ import (
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tracing/jaeger/model"
 	jaegerModels "github.com/kiali/kiali/tracing/jaeger/model/json"
-	otel "github.com/kiali/kiali/tracing/otel/model"
 	"github.com/kiali/kiali/tracing/otel/model/converter"
 	"github.com/kiali/kiali/tracing/tempo/tempopb"
-	"github.com/kiali/kiali/util"
 )
 
 type TempoGRPCClient struct {
 	StreamingClient tempopb.StreamingQuerierClient
-	ClusterTag      bool
 }
 
 // New client
-func NewgRPCClient(client http.Client, baseURL *url.URL, clientConn *grpc.ClientConn) (otelClient *TempoGRPCClient, err error) {
-	url := *baseURL
-	url.Path = path.Join(url.Path, "/api/search/tags")
-	tags := false
-	r, status, _ := makeRequest(client, url.String(), nil)
-	if status != 200 {
-		log.Debugf("Error getting Tempo tags for tracing. Tags will be disabled.")
-	} else {
-		var response otel.TagsResponse
-		if errMarshal := json.Unmarshal(r, &response); errMarshal != nil {
-			log.Errorf("Error unmarshalling Tempo API response: %s [URL: %v]", errMarshal, url)
-			return nil, errMarshal
-		}
-
-		if util.InSlice(response.TagNames, "cluster") {
-			tags = true
-		}
-	}
-
+func NewgRPCClient(clientConn *grpc.ClientConn) (otelClient *TempoGRPCClient, err error) {
 	clientStreamTempo := tempopb.NewStreamingQuerierClient(clientConn)
-	streamClient := TempoGRPCClient{StreamingClient: clientStreamTempo, ClusterTag: tags}
+	streamClient := TempoGRPCClient{StreamingClient: clientStreamTempo}
 	return &streamClient, nil
 }
 
@@ -70,10 +45,8 @@ func (jc TempoGRPCClient) FindTraces(ctx context.Context, serviceName string, q 
 
 	if len(q.Tags) > 0 {
 		for k, v := range q.Tags {
-			if k != "cluster" && jc.ClusterTag {
-				tag := TraceQL{operator1: "." + k, operand: EQUAL, operator2: v}
-				queryPart = TraceQL{operator1: queryPart, operand: AND, operator2: tag}
-			}
+			tag := TraceQL{operator1: "." + k, operand: EQUAL, operator2: v}
+			queryPart = TraceQL{operator1: queryPart, operand: AND, operator2: tag}
 		}
 	}
 
@@ -90,7 +63,7 @@ func (jc TempoGRPCClient) FindTraces(ctx context.Context, serviceName string, q 
 	stream, err := jc.StreamingClient.Search(ctx, sr)
 
 	if err != nil {
-		err = fmt.Errorf("GetAppTraces, Tracing GRPC client error: %v", err)
+		err = fmt.Errorf("[gRPC Tempo] GetAppTraces, Tracing gRPC client error: %v", err)
 		log.Error(err.Error())
 		return nil, err
 	}
@@ -111,7 +84,7 @@ func (jc TempoGRPCClient) FindTraces(ctx context.Context, serviceName string, q 
 // GetTrace is not implemented by the streaming client
 func (jc TempoGRPCClient) GetTrace(ctx context.Context, strTraceID string) (*model.TracingSingleTrace, error) {
 
-	log.Errorf("GetTrace is not implemented by the Tempo streaming client")
+	log.Errorf("[gRPC Tempo] GetTrace is not implemented by the Tempo streaming client")
 	return nil, nil
 
 }
@@ -137,13 +110,13 @@ func processStream(stream tempopb.StreamingQuerier_SearchClient, serviceName str
 				log.Trace("Tracing GRPC client timeout")
 				break
 			}
-			log.Errorf("tempo GRPC client, stream error: %v", err)
-			return nil, fmt.Errorf("Tracing GRPC client, stream error: %v", err)
+			log.Errorf("[gRPC Tempo] stream error: %v", err)
+			return nil, fmt.Errorf("[gRPC Tempo] Tracing gRPC client, stream error: %v", err)
 		}
 		for _, trace := range received.Traces {
 			batchTrace, err := converter.ConvertTraceMetadata(*trace, serviceName)
 			if err != nil {
-				log.Errorf("Error getting trace detail for %s: %s", trace.TraceID, err.Error())
+				log.Errorf("[gRPC Tempo] Error getting trace detail for %s: %s", trace.TraceID, err.Error())
 			} else {
 				tracesMap = append(tracesMap, *batchTrace)
 			}

@@ -32,7 +32,6 @@ Feature: Kiali App Details page for multicluster
   Scenario: See tracing info after selecting a trace
     And user is at the details page for the "app" "bookinfo/reviews" located in the "west" cluster
     And user sees trace information
-    And an info message "Loading traces for all clusters. Tracing is not configured to store traces per cluster." is displayed
     When user selects a trace
     Then user sees trace details
 
@@ -42,6 +41,10 @@ Feature: Kiali App Details page for multicluster
     When user selects a trace
     Then user sees span details
     And user can filter spans by app
+
+  Scenario: Don't see tracing info after selecting a trace
+    And user is at the details page for the "app" "bookinfo/details" located in the "east" cluster
+    Then user see no traces
 
   Scenario: See details for an app, which is not deployed in the specific cluster.
     And user is at the details page for the "app" "bookinfo/ratings" located in the "east" cluster

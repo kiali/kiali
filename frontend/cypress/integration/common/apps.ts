@@ -32,6 +32,15 @@ Then('user sees trace information', () => {
   cy.getBySel('tracing-scatterplot').contains('Traces');
 });
 
+Then('user see no traces', () => {
+  openTab('Traces');
+
+  cy.getBySel('tracing-scatterplot').should('not.exist');
+
+  // Ensures traces have loaded.
+  cy.getBySel('empty-traces').contains('No trace results');
+});
+
 Then('user sees trace details', () => {
   cy.getBySel('trace-details-tabs').should('be.visible');
   cy.getBySel('trace-details-kebab').click();

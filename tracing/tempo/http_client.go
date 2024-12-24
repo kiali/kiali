@@ -31,36 +31,13 @@ const (
 )
 
 type OtelHTTPClient struct {
-	ClusterTag bool
 	TempoCache store.Store[string, *model.TracingSingleTrace]
 }
 
 // New client
-func NewOtelClient(ctx context.Context, client http.Client, baseURL *url.URL) (otelClient *OtelHTTPClient, err error) {
-	url := *baseURL
+func NewOtelClient(ctx context.Context) (otelClient *OtelHTTPClient, err error) {
 
-	// Istio adds the istio.cluster_id tag
-	// That allows to filter traces by cluster in MC environments
-	// This is a check to validate that this tag exists before use it
-	// To prevent empty tags results
-	url.Path = path.Join(url.Path, "/api/search/tags")
-	tags := false
-	r, status, _ := makeRequest(client, url.String(), nil)
-	if status != 200 {
-		log.Debugf("Error getting Tempo tags for tracing. Tags will be disabled. %s", r)
-	} else {
-		var response otel.TagsResponse
-		if errMarshal := json.Unmarshal(r, &response); errMarshal != nil {
-			log.Errorf("Error unmarshalling Tempo API response: %s [URL: %v]", errMarshal, url)
-			return nil, errMarshal
-		}
-
-		if util.InSlice(response.TagNames, models.IstioClusterTag) {
-			tags = true
-		}
-	}
-
-	otelHTTPClient := &OtelHTTPClient{ClusterTag: tags}
+	otelHTTPClient := &OtelHTTPClient{}
 	if config.Get().ExternalServices.Tracing.TempoConfig.CacheEnabled {
 		s := store.New[string, *model.TracingSingleTrace]()
 		fifoStore := store.NewFIFOStore(s, config.Get().ExternalServices.Tracing.TempoConfig.CacheCapacity, "tempo")
@@ -98,11 +75,11 @@ func (oc *OtelHTTPClient) GetTraceDetailHTTP(client http.Client, endpoint *url.U
 	u.Path = path.Join(u.Path, "/api/traces/", traceID)
 	resp, code, reqError := makeRequest(client, u.String(), nil)
 	if reqError != nil {
-		log.Errorf("API Tempo query error: %s [code: %d, URL: %v]", reqError, code, u)
+		log.Errorf("[HTTP Tempo] API Tempo query error: %s [code: %d, URL: %v]", reqError, code, u)
 		return nil, reqError
 	}
 	if code != 200 {
-		errorMsg := fmt.Sprintf("Error returning traces: %s", resp)
+		errorMsg := fmt.Sprintf("[HTTP Tempo] Error returning traces: %s", resp)
 		log.Errorf("%s", errorMsg)
 		var errorTrace []model.StructuredError
 		errorTrace = append(errorTrace, model.StructuredError{TraceID: traceID, Code: code, Msg: errorMsg})
@@ -110,7 +87,7 @@ func (oc *OtelHTTPClient) GetTraceDetailHTTP(client http.Client, endpoint *url.U
 	}
 
 	if len(resp) == 0 {
-		return nil, errors.New("empty body response")
+		return nil, errors.New("[HTTP Tempo] empty body response")
 	}
 
 	responseOtel, _ := unmarshalSingleTrace(resp, &u)
@@ -141,7 +118,7 @@ func (oc *OtelHTTPClient) GetServiceStatusHTTP(client http.Client, baseURL *url.
 	if healthCheckUrl != "" {
 		url, err := u.Parse(healthCheckUrl)
 		if err != nil {
-			return false, fmt.Errorf("Error %s incorrect healthCheckUrl", err)
+			return false, fmt.Errorf("[HTTP Tempo] Error %s incorrect healthCheckUrl", err)
 		}
 		u = *url
 	} else {
@@ -151,7 +128,7 @@ func (oc *OtelHTTPClient) GetServiceStatusHTTP(client http.Client, baseURL *url.
 
 	_, status, reqError := makeRequest(client, u.String(), nil)
 	if status != 200 {
-		return false, fmt.Errorf("Error %d getting status services", status)
+		return false, fmt.Errorf("[HTTP Tempo] Error %d getting status services", status)
 	}
 	return reqError == nil, reqError
 }
@@ -172,7 +149,7 @@ func (oc *OtelHTTPClient) queryTracesHTTP(client http.Client, u *url.URL, error 
 		return &model.TracingResponse{}, reqError
 	}
 	if code != 200 {
-		errorMsg := fmt.Sprintf("Tempo API query error: %s [code: %d, URL: %v]", resp, code, u)
+		errorMsg := fmt.Sprintf("[HTTP Tempo] Tempo API query error: %s [code: %d, URL: %v]", resp, code, u)
 		log.Errorf("%s", errorMsg)
 		return &model.TracingResponse{}, errors.New(errorMsg)
 	}
@@ -203,7 +180,7 @@ func (oc *OtelHTTPClient) transformTrace(traces *otel.Traces, error string, limi
 			}
 			batchTrace, err := convertBatchTrace(trace, serviceName)
 			if err != nil {
-				log.Errorf("Error getting trace detail for %s: %s", trace.TraceID, err.Error())
+				log.Errorf("[HTTP Tempo] Error getting trace detail for %s: %s", trace.TraceID, err.Error())
 			} else {
 				response.Data = append(response.Data, batchTrace)
 			}
@@ -217,7 +194,7 @@ func (oc *OtelHTTPClient) transformTrace(traces *otel.Traces, error string, limi
 func unmarshal(r []byte, u *url.URL) (*otel.Traces, error) {
 	var response otel.Traces
 	if errMarshal := json.Unmarshal(r, &response); errMarshal != nil {
-		log.Errorf("Error unmarshalling Tempo API response: %s [URL: %v]", errMarshal, u)
+		log.Errorf("[HTTP Tempo] Error unmarshalling Tempo API response: %s [URL: %v]", errMarshal, u)
 		return nil, errMarshal
 	}
 
@@ -227,7 +204,7 @@ func unmarshal(r []byte, u *url.URL) (*otel.Traces, error) {
 func unmarshalSingleTrace(r []byte, u *url.URL) (*otelModels.Data, error) {
 	var response otelModels.Data
 	if errMarshal := json.Unmarshal(r, &response); errMarshal != nil {
-		log.Errorf("Error unmarshalling Tempo API Single trace response: %s [URL: %v]", errMarshal, u)
+		log.Errorf("[HTTP Tempo] Error unmarshalling Tempo API Single trace response: %s [URL: %v]", errMarshal, u)
 		return nil, errMarshal
 	}
 
@@ -284,12 +261,8 @@ func (oc *OtelHTTPClient) prepareTraceQL(u *url.URL, tracingServiceName string, 
 
 	if len(query.Tags) > 0 {
 		for k, v := range query.Tags {
-			if k == models.IstioClusterTag && !oc.ClusterTag {
-				log.Tracef("Cluster tag is disabled")
-			} else {
-				tag := TraceQL{operator1: "." + k, operand: EQUAL, operator2: v}
-				queryPart = TraceQL{operator1: queryPart, operand: AND, operator2: tag}
-			}
+			tag := TraceQL{operator1: "." + k, operand: EQUAL, operator2: v}
+			queryPart = TraceQL{operator1: queryPart, operand: AND, operator2: tag}
 		}
 	}
 
@@ -307,7 +280,7 @@ func (oc *OtelHTTPClient) prepareTraceQL(u *url.URL, tracingServiceName string, 
 		q.Set("limit", strconv.Itoa(query.Limit))
 	}
 	u.RawQuery = q.Encode()
-	log.Debugf("Prepared Tempo API query: %v", u)
+	log.Debugf("[HTTP Tempo] Prepared Tempo API query: %v", u)
 }
 
 // GetTraceQLQuery returns the raw query in TraceQL format
