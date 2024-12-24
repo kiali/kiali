@@ -72,6 +72,8 @@ const (
 const (
 	AmbientAnnotation         = "ambient.istio.io/redirection"
 	AmbientAnnotationEnabled  = "enabled"
+	Ztunnel                   = "ztunnel"
+	Waypoint                  = "waypoint"
 	WaypointFor               = "istio.io/waypoint-for"
 	WaypointForService        = "service"
 	WaypointForWorkload       = "workload"

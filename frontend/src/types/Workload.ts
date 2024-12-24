@@ -1,6 +1,7 @@
 import { WorkloadHealth, WorkloadHealthResponse } from './Health';
 import { GroupVersionKind, ObjectReference, Pod, Service, Validations } from './IstioObjects';
 import { InstanceType } from 'types/Common';
+import { ServiceInfo } from './ServiceInfo';
 
 export type WorkloadId = {
   namespace: string;
@@ -13,6 +14,8 @@ export type WorkloadInfo = {
   namespace: string;
   type?: string;
 };
+
+export type ElementInfo = WorkloadInfo | ServiceInfo;
 
 export interface Workload {
   additionalDetails: AdditionalItem[];
@@ -39,7 +42,8 @@ export interface Workload {
   services: Service[];
   validations?: Validations;
   versionLabel: boolean;
-  waypointWorkloads: WorkloadInfo[];
+  waypointServices?: ElementInfo[];
+  waypointWorkloads?: ElementInfo[];
 }
 
 export const emptyWorkload: Workload = {

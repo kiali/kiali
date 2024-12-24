@@ -49,6 +49,9 @@ type WorkloadInfo struct {
 	// Cluster
 	Cluster string `json:"cluster"`
 
+	// Workload labels
+	Labels map[string]string `json:"labels"`
+
 	// Name for the workload
 	// required: true
 	Name string `json:"name"`
@@ -222,6 +225,9 @@ type Workload struct {
 	AdditionalDetails []AdditionalItem `json:"additionalDetails"`
 
 	Validations IstioValidations `json:"validations"`
+
+	// Ambient waypoint services
+	WaypointServices []ServiceInfo `json:"waypointServices"`
 
 	// Ambient waypoint workloads
 	WaypointWorkloads []WorkloadInfo `json:"waypointWorkloads"`

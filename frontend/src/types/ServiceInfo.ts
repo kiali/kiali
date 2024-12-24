@@ -22,6 +22,13 @@ export type ServiceId = {
   service: string;
 };
 
+export type ServiceInfo = {
+  cluster: string;
+  name: string;
+  namespace: string;
+  type?: string;
+};
+
 export interface ServicePort {
   appProtocol?: string;
   istioProtocol: string;
@@ -66,8 +73,8 @@ export interface Service {
   createdAt: string;
   externalName: string;
   ip: string;
-  ips?: string[]; // present in dual stack. ip === ips[0]
   ipFamilies?: IPFamily[]; // ipFamilies[0] represents ip, ipFamilies[i] represents ips[i]
+  ips?: string[]; // present in dual stack. ip === ips[0]
   labels?: { [key: string]: string };
   name: string;
   namespace: string;

@@ -126,6 +126,23 @@ type (
 	}
 )
 
+// Reduced information for a service
+// To create links to another service
+// Used by Ambient, to indicate the waypoint proxies
+type ServiceInfo struct {
+	// Cluster
+	Cluster string `json:"cluster"`
+
+	// Name for the service
+	// required: true
+	Name string `json:"name"`
+
+	// Namespace where the workload live in
+	// required: true
+	// example: bookinfo
+	Namespace string `json:"namespace"`
+}
+
 func (so *ServiceOverview) ParseToService() *Service {
 	svc := Service{
 		Name:              so.Name,

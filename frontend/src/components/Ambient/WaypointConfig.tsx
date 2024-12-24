@@ -117,6 +117,33 @@ class WaypointConfigComponent extends React.Component<WaypointConfigProps, Waypo
   render(): React.ReactNode {
     const tabs: JSX.Element[] = [];
 
+    const title = this.waypointFor === WaypointType.Service ? t('Services') : t('Workloads');
+    const servicesTab = (
+      <Tab title={title} eventKey={1} key={this.waypointFor}>
+        <Card className={fullHeightStyle}>
+          <CardBody>
+            <div className={fullHeightStyle}>
+              <div style={{ marginBottom: '1.25rem' }}>
+                <WaypointWorkloadsTable
+                  workloads={
+                    this.waypointFor === WaypointType.Service
+                      ? this.props.workload.waypointServices
+                        ? this.props.workload.waypointServices
+                        : []
+                      : this.props.workload.waypointWorkloads
+                      ? this.props.workload.waypointWorkloads
+                      : []
+                  }
+                  type={this.waypointFor}
+                />
+              </div>
+            </div>
+          </CardBody>
+        </Card>
+      </Tab>
+    );
+    tabs.push(servicesTab);
+
     const infoTab = (
       <Tab title={t('Info')} eventKey={0} key={'information'}>
         <Card className={fullHeightStyle}>
@@ -134,22 +161,6 @@ class WaypointConfigComponent extends React.Component<WaypointConfigProps, Waypo
       </Tab>
     );
     tabs.push(infoTab);
-
-    const title = this.waypointFor === WaypointType.Service ? t('Services') : t('Workloads');
-    const servicesTab = (
-      <Tab title={title} eventKey={1} key={this.waypointFor}>
-        <Card className={fullHeightStyle}>
-          <CardBody>
-            <div className={fullHeightStyle}>
-              <div style={{ marginBottom: '1.25rem' }}>
-                <WaypointWorkloadsTable workloads={this.props.workload.waypointWorkloads} type={this.waypointFor} />
-              </div>
-            </div>
-          </CardBody>
-        </Card>
-      </Tab>
-    );
-    tabs.push(servicesTab);
 
     return (
       <RenderComponentScroll onResize={height => this.setState({ tabHeight: height })}>
