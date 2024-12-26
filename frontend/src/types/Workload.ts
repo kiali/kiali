@@ -10,6 +10,7 @@ export type WorkloadId = {
 
 export type WorkloadInfo = {
   cluster: string;
+  labelType?: string;
   name: string;
   namespace: string;
   type?: string;

@@ -653,7 +653,7 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, cluster, namespace,
 	return &s, nil
 }
 
-// isServiceCaptured Check if the pod is captured by a waypoint
+// isServiceCaptured Check if the pod is captured by any waypoint proxy
 func (in *SvcService) isServiceCaptured(svc *models.Service) ([]models.Waypoint, bool) {
 	found := false
 	waypointNames := make([]models.Waypoint, 0)
@@ -689,6 +689,8 @@ func (in *SvcService) isServiceCaptured(svc *models.Service) ([]models.Waypoint,
 	return waypointNames, found
 }
 
+// GetWaypointsForService returns a list of waypoint workloads that captured traffic for a specific service
+// It should be just one
 func (in *SvcService) GetWaypointsForService(ctx context.Context, svc *models.Service) []models.WorkloadInfo {
 	var workloadsList []models.WorkloadInfo
 	waypoints, _ := in.isServiceCaptured(svc)
@@ -704,6 +706,38 @@ func (in *SvcService) GetWaypointsForService(ctx context.Context, svc *models.Se
 		}
 	}
 	return workloadsList
+}
+
+// ListWaypointServices returns a list of services which traffic is handled by a specific waypoint
+// It should be just one
+func (in *SvcService) ListWaypointServices(ctx context.Context, name, namespace, cluster string, namespaces []models.Namespace) []models.ServiceInfo {
+	var serviceInfoList []models.ServiceInfo
+	// This is to verify there is no duplicated services
+	servicesMap := make(map[string]bool)
+
+	labelSelector := fmt.Sprintf("%s=%s", config.WaypointUseLabel, name)
+	kubeCache, err := in.kialiCache.GetKubeCache(cluster)
+	if err != nil {
+		log.Infof("ListWaypointServices: error getting kube cache: %s", err.Error())
+		return serviceInfoList
+	}
+
+	for _, ns := range namespaces {
+		svcs, err := kubeCache.GetServices(ns.Name, labelSelector)
+		if err != nil {
+			log.Infof("Error getting services %s", err.Error())
+		} else {
+			for _, service := range svcs {
+				key := fmt.Sprintf("%s_%s_%s", service.Name, service.Namespace, cluster)
+				if !servicesMap[key] && (service.Namespace == namespace || service.Labels[config.WaypointUseNamespaceLabel] == namespace) {
+					serviceInfoList = append(serviceInfoList, models.ServiceInfo{Name: service.Name, Namespace: service.Namespace, LabelType: "service", Cluster: cluster})
+					servicesMap[key] = true
+				}
+			}
+		}
+	}
+
+	return serviceInfoList
 }
 
 func (in *SvcService) UpdateService(ctx context.Context, cluster, namespace, service string, interval string, queryTime time.Time, jsonPatch string, patchType string) (*models.ServiceDetails, error) {

@@ -133,6 +133,12 @@ type ServiceInfo struct {
 	// Cluster
 	Cluster string `json:"cluster"`
 
+	// LabelType in case of waypoint workloads,
+	// Where the label comes from (namespace, workload or service)
+	// required: false
+	// example: namespace
+	LabelType string `json:"labelType"`
+
 	// Name for the service
 	// required: true
 	Name string `json:"name"`

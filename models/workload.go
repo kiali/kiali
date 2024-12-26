@@ -14,6 +14,7 @@ import (
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/log"
 )
 
 type ClusterWorkloads struct {
@@ -51,6 +52,12 @@ type WorkloadInfo struct {
 
 	// Workload labels
 	Labels map[string]string `json:"labels"`
+
+	// LabelType in case of waypoint workloads,
+	// Where the label comes from (namespace, workload or service)
+	// required: false
+	// example: namespace
+	LabelType string `json:"labelType"`
 
 	// Name for the workload
 	// required: true
@@ -598,11 +605,25 @@ func (workload *Workload) WaypointFor() string {
 	if !workload.IsWaypoint() {
 		return ""
 	}
-	if workload.Labels[config.WaypointFor] == config.WaypointForWorkload {
-		return config.WaypointForWorkload
-	} else {
+	wpLabel, found := workload.Labels[config.WaypointFor]
+	if !found {
 		return config.WaypointForService
 	}
+
+	switch wpLabel {
+	case config.WaypointForWorkload:
+		return config.WaypointForWorkload
+	case config.WaypointForService:
+		return config.WaypointForService
+	case config.WaypointForAll:
+		return config.WaypointForAll
+	case config.WaypointForNone:
+		return config.WaypointForNone
+	default:
+		log.Errorf("Invalid waypoint for label: %s", workload.Labels[config.WaypointFor])
+		return ""
+	}
+
 }
 
 // IsWaypoint return true if the workload is a ztunnel (Based in labels)

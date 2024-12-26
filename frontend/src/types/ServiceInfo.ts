@@ -24,6 +24,7 @@ export type ServiceId = {
 
 export type ServiceInfo = {
   cluster: string;
+  labelType?: string;
   name: string;
   namespace: string;
   type?: string;

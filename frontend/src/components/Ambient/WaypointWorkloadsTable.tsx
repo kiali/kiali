@@ -5,8 +5,10 @@ import {
   EmptyState,
   EmptyStateBody,
   EmptyStateVariant,
+  Label,
   Title,
   TitleSizes,
+  Tooltip,
   TooltipPosition
 } from '@patternfly/react-core';
 import { kialiStyle } from '../../styles/StyleUtils';
@@ -17,6 +19,8 @@ import { isMultiCluster } from '../../config';
 import { Link } from 'react-router-dom-v5-compat';
 import { PFBadge, PFBadges } from '../Pf/PfBadges';
 import { WaypointType } from '../../types/Ambient';
+import { KialiIcon } from '../../config/KialiIcon';
+import { infoStyle } from '../../styles/IconStyle';
 
 type WaypointWorkloadsProps = {
   type: string;
@@ -39,6 +43,26 @@ const itemStyle = kialiStyle({
   listStyle: 'none'
 });
 
+const labeledBy = (
+  <Tooltip
+    key="tooltip_waypoint_workloads"
+    position={TooltipPosition.right}
+    content={
+      <div style={{ textAlign: 'left' }}>
+        <div>
+          Indicates workloads/services with the <Label>istio.io/use-waypoint</Label> label for this waypoint. The
+          'Labeled by' column indicates the source of the label—whether it comes from the namespace, service, or
+          workload. In cases where multiple labels exist, it shows which one takes precedence.
+        </div>
+      </div>
+    }
+  >
+    <>
+      <KialiIcon.Info className={infoStyle} />
+    </>
+  </Tooltip>
+);
+
 const columns: SortableCompareTh<WorkloadInfo>[] = [
   {
     title: t('Name'),
@@ -49,6 +73,10 @@ const columns: SortableCompareTh<WorkloadInfo>[] = [
     title: t('namespace'),
     sortable: true,
     compare: (a, b) => a.namespace.localeCompare(b.namespace)
+  },
+  {
+    title: t('Labeled by'),
+    sortable: false
   }
 ];
 
@@ -83,9 +111,13 @@ export const WaypointWorkloadsTable: React.FC<WaypointWorkloadsProps> = (props: 
   };
 
   const rows: IRow[] = sorted
-    ? sorted.map(workload => {
+    ? sorted.map(element => {
         return {
-          cells: [renderItem(workload.namespace, workload.name, props.type, workload.cluster), workload.namespace]
+          cells: [
+            renderItem(element.namespace, element.name, props.type, element.cluster),
+            element.namespace,
+            element.labelType
+          ]
         };
       })
     : [];
@@ -108,7 +140,7 @@ export const WaypointWorkloadsTable: React.FC<WaypointWorkloadsProps> = (props: 
     <>
       <div>
         <Title headingLevel="h5" size={TitleSizes.lg}>
-          {t('List of enrolled')} {props.type}s
+          {t('List of enrolled')} {props.type}s {labeledBy}
         </Title>
       </div>
       <SimpleTable
