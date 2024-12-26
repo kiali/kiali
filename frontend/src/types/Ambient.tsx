@@ -1,6 +1,8 @@
 export enum WaypointType {
-  Workload = 'workload',
-  Service = 'service'
+  All = 'all',
+  None = 'none',
+  Service = 'service',
+  Workload = 'workload'
 }
 
 export const waypintForLabel = 'istio.io/waypoint-for';

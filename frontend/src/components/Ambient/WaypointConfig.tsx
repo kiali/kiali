@@ -20,11 +20,10 @@ import { WaypointWorkloadsTable } from './WaypointWorkloadsTable';
 import { waypintForLabel, WaypointType } from '../../types/Ambient';
 import { PodStatus } from '../../pages/WorkloadDetails/PodStatus';
 
-const resources: string[] = ['services', 'workloads'];
+const resources: string[] = ['service', 'workload', 'information'];
 
-const waypointTabs = ['services', 'workloads'];
+const waypointTabs = ['service', 'workload', 'information'];
 const tabName = 'waypointTab';
-const defaultTab = 'services';
 
 type ReduxProps = {
   kiosk: string;
@@ -79,20 +78,20 @@ const showProxyStatus = (workload: Workload): React.ReactNode => {
 
 class WaypointConfigComponent extends React.Component<WaypointConfigProps, WaypointConfigState> {
   private waypointFor = isWaypointFor(this.props.workload);
+  private defaultTab = this.waypointFor === WaypointType.Workload ? WaypointType.Workload : WaypointType.Service;
 
   constructor(props: WaypointConfigProps) {
     super(props);
-
     this.state = {
       tabHeight: 300,
       fetch: true,
-      activeKey: waypointTabs.indexOf(activeTab(tabName, defaultTab)),
-      resource: activeTab(tabName, defaultTab)
+      activeKey: waypointTabs.indexOf(activeTab(tabName, this.defaultTab)),
+      resource: activeTab(tabName, this.defaultTab)
     };
   }
 
   componentDidUpdate(_prevProps: WaypointConfigProps, prevState: WaypointConfigState): void {
-    const currentTabIndex = waypointTabs.indexOf(activeTab(tabName, defaultTab));
+    const currentTabIndex = waypointTabs.indexOf(activeTab(tabName, this.defaultTab));
 
     if (this.state.resource !== prevState.resource) {
       if (currentTabIndex !== this.state.activeKey) {
@@ -123,35 +122,48 @@ class WaypointConfigComponent extends React.Component<WaypointConfigProps, Waypo
   render(): React.ReactNode {
     const tabs: JSX.Element[] = [];
 
-    const title = this.waypointFor === WaypointType.Service ? t('Services') : t('Workloads');
-    const servicesTab = (
-      <Tab title={title} eventKey={0} key={this.waypointFor}>
-        <Card className={fullHeightStyle}>
-          <CardBody>
-            <div className={fullHeightStyle}>
-              <div style={{ marginBottom: '1.25rem' }}>
-                <WaypointWorkloadsTable
-                  workloads={
-                    this.waypointFor === WaypointType.Service
-                      ? this.props.workload.waypointServices
-                        ? this.props.workload.waypointServices
-                        : []
-                      : this.props.workload.waypointWorkloads
-                      ? this.props.workload.waypointWorkloads
-                      : []
-                  }
-                  type={this.waypointFor}
-                />
+    if (this.waypointFor === WaypointType.Service || this.waypointFor === WaypointType.All) {
+      const servicesTab = (
+        <Tab title={t('Services')} eventKey={0} key={this.waypointFor}>
+          <Card className={fullHeightStyle}>
+            <CardBody>
+              <div className={fullHeightStyle}>
+                <div style={{ marginBottom: '1.25rem' }}>
+                  <WaypointWorkloadsTable
+                    workloads={this.props.workload.waypointServices ? this.props.workload.waypointServices : []}
+                    type={this.waypointFor}
+                  />
+                </div>
               </div>
-            </div>
-          </CardBody>
-        </Card>
-      </Tab>
-    );
-    tabs.push(servicesTab);
+            </CardBody>
+          </Card>
+        </Tab>
+      );
+      tabs.push(servicesTab);
+    }
+
+    if (this.waypointFor === WaypointType.Workload || this.waypointFor === WaypointType.All) {
+      const workloadsTab = (
+        <Tab title={t('Workloads')} eventKey={1} key={this.waypointFor}>
+          <Card className={fullHeightStyle}>
+            <CardBody>
+              <div className={fullHeightStyle}>
+                <div style={{ marginBottom: '1.25rem' }}>
+                  <WaypointWorkloadsTable
+                    workloads={this.props.workload.waypointWorkloads ? this.props.workload.waypointWorkloads : []}
+                    type={this.waypointFor}
+                  />
+                </div>
+              </div>
+            </CardBody>
+          </Card>
+        </Tab>
+      );
+      tabs.push(workloadsTab);
+    }
 
     const infoTab = (
-      <Tab title={t('Info')} eventKey={1} key={t('information')}>
+      <Tab title={t('Info')} eventKey={2} key={t('information')}>
         <Card className={fullHeightStyle}>
           <CardBody>
             <div className={fullHeightStyle}>
