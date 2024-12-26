@@ -190,6 +190,7 @@
   "Inbound": "入站",
   "Include mesh gateway": "包含mesh网关",
   "Info": "Info",
+  "information": "information",
   "Infra node": "Infra node",
   "Istio {{type}} created": "Istio {{type}} created",
   "Istio Ambient ztunnel detected in the Control plane": "在Istio的控制平面中检测到环境ztunnel",

@@ -11,6 +11,7 @@ import (
 	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/kiali/kiali/business/checkers"
 	"github.com/kiali/kiali/config"
@@ -578,7 +579,6 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, cluster, namespace,
 
 	wo := models.WorkloadOverviews{}
 	isAmbient := len(ws) > 0
-	waypointWk := []models.WorkloadInfo{}
 	for _, w := range ws {
 		wi := &models.WorkloadListItem{}
 		wi.ParseWorkload(w)
@@ -586,15 +586,10 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, cluster, namespace,
 		// The service is not marked as Ambient if any of the workloads is Ambient
 		if !w.IsAmbient {
 			isAmbient = false
-		} else {
-			waypointWorkloads := in.businessLayer.Workload.GetWaypointsForWorkload(ctx, w.Namespace, *w)
-			for _, ww := range waypointWorkloads {
-				if ww.Type == config.WaypointForService {
-					waypointWk = append(waypointWk, ww)
-				}
-			}
 		}
 	}
+
+	waypointWk := in.GetWaypointsForService(ctx, &svc)
 
 	serviceOverviews := make([]*models.ServiceOverview, 0)
 	// Convert filtered k8sClients services into ServiceOverview, only several attributes are needed
@@ -656,6 +651,59 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, cluster, namespace,
 	}
 
 	return &s, nil
+}
+
+// isServiceCaptured Check if the pod is captured by a waypoint
+func (in *SvcService) isServiceCaptured(svc *models.Service) ([]models.Waypoint, bool) {
+	found := false
+	waypointNames := make([]models.Waypoint, 0)
+
+	// Is the service labeled?
+	// the service waypoint takes precedence over the namespace waypoint as long as the service waypoint can handle service or all traffic
+	waypointName, isLabeled := svc.Labels[config.WaypointUseLabel]
+	if isLabeled {
+		waypointNamespace, okNs := svc.Labels[config.WaypointUseNamespaceLabel]
+		if !okNs {
+			waypointNamespace = svc.Namespace
+		}
+		waypointNames = append(waypointNames, models.Waypoint{Name: waypointName, Type: "service", Namespace: waypointNamespace, Cluster: svc.Cluster})
+	}
+
+	// Is the namespace labeled?
+	ns, foundNS := in.businessLayer.Workload.cache.GetNamespace(svc.Cluster, in.userClients[svc.Cluster].GetToken(), svc.Namespace)
+
+	if foundNS {
+		waypointNsName, ok := ns.Labels[config.WaypointUseLabel]
+		waypointNamespace, okNs := ns.Labels[config.WaypointUseNamespaceLabel]
+		// If there is no specific waypoint Namespace label, it is supposed to be the same
+		if !okNs {
+			waypointNamespace = svc.Namespace
+		}
+		if ok {
+			found = true
+			// Ambient doesn't support multicluster (For now), cluster is the same as the workload
+			waypointNames = append(waypointNames, models.Waypoint{Name: waypointNsName, Type: "namespace", Namespace: waypointNamespace, Cluster: svc.Cluster})
+		}
+	}
+
+	return waypointNames, found
+}
+
+func (in *SvcService) GetWaypointsForService(ctx context.Context, svc *models.Service) []models.WorkloadInfo {
+	var workloadsList []models.WorkloadInfo
+	waypoints, _ := in.isServiceCaptured(svc)
+
+	for _, waypoint := range waypoints {
+		wkd, err := in.businessLayer.Workload.fetchWorkload(ctx, WorkloadCriteria{Cluster: svc.Cluster, Namespace: waypoint.Namespace, WorkloadName: waypoint.Name, WorkloadGVK: schema.GroupVersionKind{}})
+		if err != nil {
+			log.Debugf("GetWaypointsForService: Error fetching workloads %s", err.Error())
+			return nil
+		}
+		if wkd != nil {
+			workloadsList = append(workloadsList, models.WorkloadInfo{Name: waypoint.Name, Namespace: waypoint.Namespace, Cluster: waypoint.Cluster, Type: wkd.WaypointFor()})
+		}
+	}
+	return workloadsList
 }
 
 func (in *SvcService) UpdateService(ctx context.Context, cluster, namespace, service string, interval string, queryTime time.Time, jsonPatch string, patchType string) (*models.ServiceDetails, error) {

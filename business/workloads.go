@@ -1926,7 +1926,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 			}
 			// If Ambient is enabled for pod, check if has any Waypoint proxy
 			if pod.AmbientEnabled() {
-				w.WaypointWorkloads = in.GetWaypointsForWorkload(ctx, criteria.Namespace, w)
+				w.WaypointWorkloads = in.GetWaypointsForWorkload(ctx, w)
 				// TODO: Maybe user doesn't have permissions
 				ztunnelPods := in.cache.GetZtunnelPods(criteria.Cluster)
 				for _, zPod := range ztunnelPods {
@@ -2077,7 +2077,7 @@ func (in *WorkloadService) isWorkloadCaptured(ctx context.Context, workload mode
 
 // GetWaypointsForWorkload Returns a list of waypoint proxies that capture a workload
 // It should be related with just one waypoint, but this is up to the user, it can help to detect issues in the Ambient Mesh
-func (in *WorkloadService) GetWaypointsForWorkload(ctx context.Context, namespace string, workload models.Workload) []models.WorkloadInfo {
+func (in *WorkloadService) GetWaypointsForWorkload(ctx context.Context, workload models.Workload) []models.WorkloadInfo {
 	var workloadslist []models.WorkloadInfo
 
 	// Get Waypoint list names
@@ -2087,7 +2087,7 @@ func (in *WorkloadService) GetWaypointsForWorkload(ctx context.Context, namespac
 	}
 
 	for _, waypoint := range waypoints {
-		wkd, err := in.fetchWorkload(ctx, WorkloadCriteria{Cluster: workload.Cluster, Namespace: namespace, WorkloadName: waypoint.Name, WorkloadGVK: schema.GroupVersionKind{}})
+		wkd, err := in.fetchWorkload(ctx, WorkloadCriteria{Cluster: workload.Cluster, Namespace: waypoint.Namespace, WorkloadName: waypoint.Name, WorkloadGVK: schema.GroupVersionKind{}})
 		if err != nil {
 			log.Debugf("GetWaypointsForWorkload: Error fetching workloads %s", err.Error())
 			return nil

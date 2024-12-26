@@ -119,7 +119,7 @@ class WaypointConfigComponent extends React.Component<WaypointConfigProps, Waypo
 
     const title = this.waypointFor === WaypointType.Service ? t('Services') : t('Workloads');
     const servicesTab = (
-      <Tab title={title} eventKey={1} key={this.waypointFor}>
+      <Tab title={title} eventKey={0} key={this.waypointFor}>
         <Card className={fullHeightStyle}>
           <CardBody>
             <div className={fullHeightStyle}>
@@ -145,7 +145,7 @@ class WaypointConfigComponent extends React.Component<WaypointConfigProps, Waypo
     tabs.push(servicesTab);
 
     const infoTab = (
-      <Tab title={t('Info')} eventKey={0} key={'information'}>
+      <Tab title={t('Info')} eventKey={1} key={t('information')}>
         <Card className={fullHeightStyle}>
           <CardBody>
             <div className={fullHeightStyle}>
