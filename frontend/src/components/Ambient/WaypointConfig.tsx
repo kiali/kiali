@@ -18,6 +18,7 @@ import { t } from 'i18next';
 import { SimpleTable } from '../Table/SimpleTable';
 import { WaypointWorkloadsTable } from './WaypointWorkloadsTable';
 import { waypintForLabel, WaypointType } from '../../types/Ambient';
+import { PodStatus } from '../../pages/WorkloadDetails/PodStatus';
 
 const resources: string[] = ['services', 'workloads'];
 
@@ -63,8 +64,13 @@ const showProxyStatus = (workload: Workload): React.ReactNode => {
   ];
 
   const rows: IRow[] = workload.pods.map(pod => {
+    const podDetails = (
+      <>
+        <span style={{ marginRight: '1em' }}>{pod.name}</span> <PodStatus proxyStatus={pod.proxyStatus} />
+      </>
+    );
     return {
-      cells: [pod.name, pod.proxyStatus?.CDS, pod.proxyStatus?.LDS, pod.proxyStatus?.EDS, pod.proxyStatus?.RDS]
+      cells: [podDetails, pod.proxyStatus?.CDS, pod.proxyStatus?.LDS, pod.proxyStatus?.EDS, pod.proxyStatus?.RDS]
     };
   });
 
