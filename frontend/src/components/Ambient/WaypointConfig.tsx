@@ -50,6 +50,9 @@ export const isWaypointFor = (wk: Workload): string => {
   if (wk.labels[waypintForLabel] === WaypointType.Workload) {
     return WaypointType.Workload;
   }
+  if (wk.labels[waypintForLabel] === WaypointType.All) {
+    return WaypointType.All;
+  }
   return WaypointType.Service;
 };
 
@@ -131,7 +134,7 @@ class WaypointConfigComponent extends React.Component<WaypointConfigProps, Waypo
                 <div style={{ marginBottom: '1.25rem' }}>
                   <WaypointWorkloadsTable
                     workloads={this.props.workload.waypointServices ? this.props.workload.waypointServices : []}
-                    type={this.waypointFor}
+                    type={WaypointType.Service}
                   />
                 </div>
               </div>
@@ -151,7 +154,7 @@ class WaypointConfigComponent extends React.Component<WaypointConfigProps, Waypo
                 <div style={{ marginBottom: '1.25rem' }}>
                   <WaypointWorkloadsTable
                     workloads={this.props.workload.waypointWorkloads ? this.props.workload.waypointWorkloads : []}
-                    type={this.waypointFor}
+                    type={WaypointType.Workload}
                   />
                 </div>
               </div>
