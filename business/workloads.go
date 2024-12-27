@@ -2079,6 +2079,7 @@ func (in *WorkloadService) isWorkloadCaptured(ctx context.Context, workload mode
 // It should be related with just one waypoint, but this is up to the user, it can help to detect issues in the Ambient Mesh
 func (in *WorkloadService) GetWaypointsForWorkload(ctx context.Context, workload models.Workload) []models.WorkloadInfo {
 	var workloadslist []models.WorkloadInfo
+	workloadsMap := map[string]bool{} // Ensure unique
 
 	// Get Waypoint list names
 	waypoints, found := in.isWorkloadCaptured(ctx, workload)
@@ -2092,8 +2093,10 @@ func (in *WorkloadService) GetWaypointsForWorkload(ctx context.Context, workload
 			log.Debugf("GetWaypointsForWorkload: Error fetching workloads %s", err.Error())
 			return nil
 		}
-		if wkd != nil {
+		key := fmt.Sprintf("%s_%s_%s", workload.Cluster, waypoint.Namespace, waypoint.Name)
+		if wkd != nil && !workloadsMap[key] {
 			workloadslist = append(workloadslist, models.WorkloadInfo{Name: waypoint.Name, Namespace: waypoint.Namespace, Cluster: waypoint.Cluster, Type: wkd.WaypointFor()})
+			workloadsMap[key] = true
 		}
 	}
 
