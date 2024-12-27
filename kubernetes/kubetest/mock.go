@@ -295,3 +295,33 @@ func FakeNamespaceWithLabels(name string, labels map[string]string) *core_v1.Nam
 		},
 	}
 }
+
+func FakeWaypointAndEnrolledClients(name, cluster, namespace string) map[string]kubernetes.ClientInterface {
+	return map[string]kubernetes.ClientInterface{
+		cluster: NewFakeK8sClient(
+			FakeNamespaceWithLabels(namespace, map[string]string{}),
+			&core_v1.Service{ObjectMeta: meta_v1.ObjectMeta{Name: name, Namespace: namespace, Labels: map[string]string{
+				"istio.io/use-waypoint": "waypoint",
+			}}},
+			&core_v1.Service{ObjectMeta: meta_v1.ObjectMeta{Name: "productpage", Namespace: namespace}},
+			&apps_v1.Deployment{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "ratings-v1",
+					Namespace: namespace,
+					Annotations: map[string]string{
+						"not-relevant": "true",
+					},
+				},
+			},
+			&apps_v1.Deployment{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "waypoint",
+					Namespace: namespace,
+					Annotations: map[string]string{
+						"gateway.istio.io/managed": "istio.io-mesh-controller",
+					},
+				},
+			},
+		),
+	}
+}

@@ -709,8 +709,8 @@ func (in *SvcService) GetWaypointsForService(ctx context.Context, svc *models.Se
 }
 
 // ListWaypointServices returns a list of services which traffic is handled by a specific waypoint
-// It should be just one
-func (in *SvcService) ListWaypointServices(ctx context.Context, name, namespace, cluster string, namespaces []models.Namespace) []models.ServiceInfo {
+// It should return just one (If there are more, that might be a validation error)
+func (in *SvcService) ListWaypointServices(ctx context.Context, name, namespace, cluster string) []models.ServiceInfo {
 	var serviceInfoList []models.ServiceInfo
 	// This is to verify there is no duplicated services
 	servicesMap := make(map[string]bool)
@@ -721,17 +721,19 @@ func (in *SvcService) ListWaypointServices(ctx context.Context, name, namespace,
 		log.Infof("ListWaypointServices: error getting kube cache: %s", err.Error())
 		return serviceInfoList
 	}
-
-	for _, ns := range namespaces {
-		svcs, err := kubeCache.GetServices(ns.Name, labelSelector)
-		if err != nil {
-			log.Infof("Error getting services %s", err.Error())
-		} else {
-			for _, service := range svcs {
-				key := fmt.Sprintf("%s_%s_%s", service.Name, service.Namespace, cluster)
-				if !servicesMap[key] && (service.Namespace == namespace || service.Labels[config.WaypointUseNamespaceLabel] == namespace) {
-					serviceInfoList = append(serviceInfoList, models.ServiceInfo{Name: service.Name, Namespace: service.Namespace, LabelType: "service", Cluster: cluster})
-					servicesMap[key] = true
+	namespaces, err := in.businessLayer.Namespace.GetClusterNamespaces(ctx, cluster)
+	if err == nil {
+		for _, ns := range namespaces {
+			svcs, err := kubeCache.GetServices(ns.Name, labelSelector)
+			if err != nil {
+				log.Infof("Error getting services %s", err.Error())
+			} else {
+				for _, service := range svcs {
+					key := fmt.Sprintf("%s_%s_%s", service.Name, service.Namespace, cluster)
+					if !servicesMap[key] && (service.Namespace == namespace || service.Labels[config.WaypointUseNamespaceLabel] == namespace) {
+						serviceInfoList = append(serviceInfoList, models.ServiceInfo{Name: service.Name, Namespace: service.Namespace, LabelType: "service", Cluster: cluster})
+						servicesMap[key] = true
+					}
 				}
 			}
 		}
