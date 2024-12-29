@@ -1,12 +1,5 @@
 import * as React from 'react';
-import {
-  Button,
-  EmptyState,
-  EmptyStateIcon,
-  EmptyStateBody,
-  ButtonVariant,
-  EmptyStateVariant
-} from '@patternfly/react-core';
+import { Button, EmptyState, EmptyStateBody, ButtonVariant, EmptyStateVariant } from '@patternfly/react-core';
 import { ChartArea, ChartBar, ChartScatter, ChartLine } from '@patternfly/react-charts';
 import { CubesIcon, ErrorCircleOIcon } from '@patternfly/react-icons';
 
@@ -229,7 +222,7 @@ export class KChart<T extends LineInfo> extends React.Component<KChartProps<T>, 
         }}
       >
         <EmptyState variant={EmptyStateVariant.sm} className={emptyStyle}>
-          {this.props.isMaximized && <EmptyStateIcon icon={CubesIcon} />}
+          {this.props.isMaximized && <CubesIcon />}
           <EmptyStateBody className={emptyStyle}>No data available</EmptyStateBody>
         </EmptyState>
       </div>
@@ -249,11 +242,7 @@ export class KChart<T extends LineInfo> extends React.Component<KChartProps<T>, 
         }}
       >
         <EmptyState variant={EmptyStateVariant.sm} className={emptyStyle}>
-          {this.props.isMaximized && (
-            <EmptyStateIcon
-              icon={() => <ErrorCircleOIcon style={{ color: PFColors.Danger }} width={32} height={32} />}
-            />
-          )}
+          {this.props.isMaximized && <ErrorCircleOIcon style={{ color: PFColors.Danger }} width={32} height={32} />}
           <EmptyStateBody className={emptyStyle}>
             An error occured while fetching this metric:
             <p>

@@ -106,87 +106,90 @@ class CytoscapeToolbarComponent extends React.PureComponent<CytoscapeToolbarProp
         <div>
           <Tooltip content={this.state.allowGrab ? 'Disable Drag' : 'Enable Drag'} position={TooltipPosition.right}>
             <Button
+              icon={<KialiIcon.DragDrop className={this.state.allowGrab ? activeButtonStyle : undefined} />}
               id="toolbar_grab"
               aria-label="Toggle Drag"
-              isActive={this.state.allowGrab}
+              isClicked={this.state.allowGrab}
               onClick={() => this.toggleDrag()}
               className={buttonStyle}
               variant={ButtonVariant.plain}
-            >
-              <KialiIcon.DragDrop className={this.state.allowGrab ? activeButtonStyle : undefined} />
-            </Button>
+            />
           </Tooltip>
         </div>
 
         <div>
           <Tooltip content="Zoom to Fit" position={TooltipPosition.right}>
             <Button
+              icon={<KialiIcon.ExpandArrows />}
               id="toolbar_graph_fit"
               aria-label="Zoom to Fit"
               onClick={() => this.fit()}
               className={buttonStyle}
               variant={ButtonVariant.plain}
-            >
-              <KialiIcon.ExpandArrows />
-            </Button>
+            />
           </Tooltip>
         </div>
 
         <div>
           <Tooltip content="Hide healthy edges" position={TooltipPosition.right}>
             <Button
+              icon={
+                <KialiIcon.LongArrowRight
+                  className={this.props.edgeMode === EdgeMode.UNHEALTHY ? activeButtonStyle : undefined}
+                />
+              }
               id="toolbar_edge_mode_unhealthy"
               aria-label="Hide Healthy Edges"
-              isActive={this.props.edgeMode === EdgeMode.UNHEALTHY}
+              isClicked={this.props.edgeMode === EdgeMode.UNHEALTHY}
               onClick={() => {
                 this.handleEdgeModeClick(EdgeMode.UNHEALTHY);
               }}
               className={buttonStyle}
               variant={ButtonVariant.plain}
-            >
-              <KialiIcon.LongArrowRight
-                className={this.props.edgeMode === EdgeMode.UNHEALTHY ? activeButtonStyle : undefined}
-              />
-            </Button>
+            />
           </Tooltip>
         </div>
 
         <div>
           <Tooltip content="Hide all edges" position={TooltipPosition.right}>
             <Button
+              icon={
+                <KialiIcon.LongArrowRight
+                  className={this.props.edgeMode === EdgeMode.NONE ? activeButtonStyle : undefined}
+                />
+              }
               id="toolbar_edge_mode_none"
               aria-label="Hide All Edges"
-              isActive={this.props.edgeMode === EdgeMode.NONE}
+              isClicked={this.props.edgeMode === EdgeMode.NONE}
               onClick={() => {
                 this.handleEdgeModeClick(EdgeMode.NONE);
               }}
               className={buttonStyle}
               variant={ButtonVariant.plain}
-            >
-              <KialiIcon.LongArrowRight
-                className={this.props.edgeMode === EdgeMode.NONE ? activeButtonStyle : undefined}
-              />
-            </Button>
+            />
           </Tooltip>
         </div>
 
         <div>
           <Tooltip content={`Layout default ${KialiDagreGraph.getLayout().name}`} position={TooltipPosition.right}>
             <Button
+              icon={
+                <KialiIcon.Topology
+                  className={
+                    this.props.layout.name === KialiDagreGraph.getLayout().name ? activeButtonStyle : undefined
+                  }
+                />
+              }
               id="toolbar_layout_default"
               aria-label="Graph Layout Default Style"
-              isActive={this.props.layout.name === KialiDagreGraph.getLayout().name}
+              isClicked={this.props.layout.name === KialiDagreGraph.getLayout().name}
               isDisabled={this.props.disabled}
               onClick={() => {
                 this.setLayout(KialiDagreGraph.getLayout());
               }}
               className={buttonStyle}
               variant={ButtonVariant.plain}
-            >
-              <KialiIcon.Topology
-                className={this.props.layout.name === KialiDagreGraph.getLayout().name ? activeButtonStyle : undefined}
-              />
-            </Button>
+            />
           </Tooltip>
         </div>
 
@@ -194,20 +197,23 @@ class CytoscapeToolbarComponent extends React.PureComponent<CytoscapeToolbarProp
           <div>
             <Tooltip content={`Layout 1 ${KialiGridGraph.getLayout().name}`} position={TooltipPosition.right}>
               <Button
+                icon={
+                  <KialiIcon.Topology
+                    className={
+                      this.props.layout.name === KialiGridGraph.getLayout().name ? activeButtonStyle : undefined
+                    }
+                  />
+                }
                 id="toolbar_layout1"
                 aria-label="Graph Layout Style 1"
-                isActive={this.props.layout.name === KialiGridGraph.getLayout().name}
+                isClicked={this.props.layout.name === KialiGridGraph.getLayout().name}
                 isDisabled={this.props.disabled}
                 onClick={() => {
                   this.setLayout(KialiGridGraph.getLayout());
                 }}
                 className={buttonStyle}
                 variant={ButtonVariant.plain}
-              >
-                <KialiIcon.Topology
-                  className={this.props.layout.name === KialiGridGraph.getLayout().name ? activeButtonStyle : undefined}
-                />
-              </Button>
+              />
             </Tooltip>
           </div>
         </TourStop>
@@ -215,44 +221,46 @@ class CytoscapeToolbarComponent extends React.PureComponent<CytoscapeToolbarProp
         <div>
           <Tooltip content={`Layout 2 ${KialiConcentricGraph.getLayout().name}`} position={TooltipPosition.right}>
             <Button
+              icon={
+                <KialiIcon.Topology
+                  className={
+                    this.props.layout.name === KialiConcentricGraph.getLayout().name ? activeButtonStyle : undefined
+                  }
+                />
+              }
               id="toolbar_layout2"
               aria-label="Graph Layout Style 2"
-              isActive={this.props.layout.name === KialiConcentricGraph.getLayout().name}
+              isClicked={this.props.layout.name === KialiConcentricGraph.getLayout().name}
               isDisabled={this.props.disabled}
               onClick={() => {
                 this.setLayout(KialiConcentricGraph.getLayout());
               }}
               className={buttonStyle}
               variant={ButtonVariant.plain}
-            >
-              <KialiIcon.Topology
-                className={
-                  this.props.layout.name === KialiConcentricGraph.getLayout().name ? activeButtonStyle : undefined
-                }
-              />
-            </Button>
+            />
           </Tooltip>
         </div>
 
         <div>
           <Tooltip content={`Layout 3 ${KialiBreadthFirstGraph.getLayout().name}`} position={TooltipPosition.right}>
             <Button
+              icon={
+                <KialiIcon.Topology
+                  className={
+                    this.props.layout.name === KialiBreadthFirstGraph.getLayout().name ? activeButtonStyle : undefined
+                  }
+                />
+              }
               id="toolbar_layout3"
               aria-label="Graph Layout Style 3"
-              isActive={this.props.layout.name === KialiBreadthFirstGraph.getLayout().name}
+              isClicked={this.props.layout.name === KialiBreadthFirstGraph.getLayout().name}
               isDisabled={this.props.disabled}
               onClick={() => {
                 this.setLayout(KialiBreadthFirstGraph.getLayout());
               }}
               className={buttonStyle}
               variant={ButtonVariant.plain}
-            >
-              <KialiIcon.Topology
-                className={
-                  this.props.layout.name === KialiBreadthFirstGraph.getLayout().name ? activeButtonStyle : undefined
-                }
-              />
-            </Button>
+            />
           </Tooltip>
         </div>
 
@@ -263,22 +271,25 @@ class CytoscapeToolbarComponent extends React.PureComponent<CytoscapeToolbarProp
               position={TooltipPosition.right}
             >
               <Button
+                icon={
+                  <KialiIcon.Tenant
+                    className={
+                      this.props.namespaceLayout.name === KialiDagreGraph.getLayout().name
+                        ? activeButtonStyle
+                        : undefined
+                    }
+                  />
+                }
                 id="toolbar_namespace_layout1"
                 aria-label="Namespace Layout Style 1"
-                isActive={this.props.namespaceLayout.name === KialiDagreGraph.getLayout().name}
+                isClicked={this.props.namespaceLayout.name === KialiDagreGraph.getLayout().name}
                 isDisabled={this.props.disabled}
                 onClick={() => {
                   this.setNamespaceLayout(KialiDagreGraph.getLayout());
                 }}
                 className={buttonStyle}
                 variant={ButtonVariant.plain}
-              >
-                <KialiIcon.Tenant
-                  className={
-                    this.props.namespaceLayout.name === KialiDagreGraph.getLayout().name ? activeButtonStyle : undefined
-                  }
-                />
-              </Button>
+              />
             </Tooltip>
           </div>
         )}
@@ -290,24 +301,25 @@ class CytoscapeToolbarComponent extends React.PureComponent<CytoscapeToolbarProp
               position={TooltipPosition.right}
             >
               <Button
+                icon={
+                  <KialiIcon.Tenant
+                    className={
+                      this.props.namespaceLayout.name === KialiBreadthFirstGraph.getLayout().name
+                        ? activeButtonStyle
+                        : undefined
+                    }
+                  />
+                }
                 id="toolbar_namespace_layout2"
                 aria-label="Namespace Layout Style 2"
-                isActive={this.props.namespaceLayout.name === KialiBreadthFirstGraph.getLayout().name}
+                isClicked={this.props.namespaceLayout.name === KialiBreadthFirstGraph.getLayout().name}
                 isDisabled={this.props.disabled}
                 onClick={() => {
                   this.setNamespaceLayout(KialiBreadthFirstGraph.getLayout());
                 }}
                 className={buttonStyle}
                 variant={ButtonVariant.plain}
-              >
-                <KialiIcon.Tenant
-                  className={
-                    this.props.namespaceLayout.name === KialiBreadthFirstGraph.getLayout().name
-                      ? activeButtonStyle
-                      : undefined
-                  }
-                />
-              </Button>
+              />
             </Tooltip>
           </div>
         )}
@@ -316,15 +328,14 @@ class CytoscapeToolbarComponent extends React.PureComponent<CytoscapeToolbarProp
           <div>
             <Tooltip content="Show Legend" position={TooltipPosition.right}>
               <Button
+                icon={<KialiIcon.Map className={this.props.showLegend ? activeButtonStyle : undefined} size="sm" />}
                 id="toolbar_toggle_legend"
                 aria-label="Show Legend"
-                isActive={this.props.showLegend}
+                isClicked={this.props.showLegend}
                 onClick={this.props.toggleLegend}
                 className={buttonStyle}
                 variant={ButtonVariant.plain}
-              >
-                <KialiIcon.Map className={this.props.showLegend ? activeButtonStyle : undefined} size="sm" />
-              </Button>
+              />
             </Tooltip>
           </div>
         </TourStop>

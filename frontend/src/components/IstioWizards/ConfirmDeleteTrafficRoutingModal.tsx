@@ -1,5 +1,6 @@
 import * as React from 'react';
-import { Button, ButtonVariant, Modal, ModalVariant } from '@patternfly/react-core';
+import { Button, ButtonVariant } from '@patternfly/react-core';
+import { Modal, ModalVariant } from '@patternfly/react-core/deprecated';
 import { DestinationRuleC, K8sGRPCRoute, K8sHTTPRoute, VirtualService } from '../../types/IstioObjects';
 import { t } from 'utils/I18nUtils';
 
@@ -82,10 +83,10 @@ export const ConfirmDeleteTrafficRoutingModal: React.FunctionComponent<Props> = 
       data-test="delete-traffic-routing-modal"
       actions={[
         <Button key="confirm" variant={ButtonVariant.danger} onClick={props.onConfirm} data-test={'confirm-delete'}>
-            {t('Delete')}
+          {t('Delete')}
         </Button>,
         <Button key="cancel" variant={ButtonVariant.secondary} isInline onClick={props.onCancel}>
-            {t('Cancel')}
+          {t('Cancel')}
         </Button>
       ]}
     >

@@ -495,7 +495,6 @@ class TrafficPolicyComponent extends React.Component<Props, TrafficPolicyState> 
           <Switch
             id="advanced-paSwitch"
             label={' '}
-            labelOff={' '}
             isChecked={this.state.peerAuthnSelector.addPeerAuthentication}
             onChange={() => this.onFormChange(TrafficPolicyForm.PA_SWITCH, '')}
           />
@@ -519,7 +518,6 @@ class TrafficPolicyComponent extends React.Component<Props, TrafficPolicyState> 
           <Switch
             id="advanced-lbSwitch"
             label={' '}
-            labelOff={' '}
             isChecked={this.state.addLoadBalancer}
             onChange={() => this.onFormChange(TrafficPolicyForm.LB_SWITCH, '')}
           />
@@ -646,8 +644,12 @@ class TrafficPolicyComponent extends React.Component<Props, TrafficPolicyState> 
                     <HelperText>
                       <HelperTextItem>
                         {isValid(isValidLB)
-                          ? t('TTL is expressed in nanoseconds (i.e. 1000, 2000, etc) or seconds (i.e. 10s, 1.5s, etc).')
-                          : t('HTTP Cookie Name must be non empty and TTL must be expressed in in nanoseconds (i.e. 1000, 2000, etc) or seconds (i.e. 10s, 1.5s, etc).')}
+                          ? t(
+                              'TTL is expressed in nanoseconds (i.e. 1000, 2000, etc) or seconds (i.e. 10s, 1.5s, etc).'
+                            )
+                          : t(
+                              'HTTP Cookie Name must be non empty and TTL must be expressed in in nanoseconds (i.e. 1000, 2000, etc) or seconds (i.e. 10s, 1.5s, etc).'
+                            )}
                       </HelperTextItem>
                     </HelperText>
                   </FormHelperText>

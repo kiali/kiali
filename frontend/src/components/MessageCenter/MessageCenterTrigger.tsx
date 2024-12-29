@@ -40,21 +40,24 @@ const MessageCenterTriggerComponent: React.FC<MessageCenterTriggerProps> = (prop
 
     return (
       <Button
+        icon={
+          <>
+            <KialiIcon.Warning />
+
+            <span className={systemErrorCountStyle}>
+              {t('{{count}} Open Issue', {
+                count: props.systemErrorsCount,
+                defaultValue_one: '{{count}} Open Issue',
+                defaultValue_other: '{{count}} Open Issues'
+              })}
+            </span>
+          </>
+        }
         id={'icon_warning'}
         aria-label={t('System Error')}
         onClick={props.toggleSystemErrorsCenter}
         variant={ButtonVariant.plain}
-      >
-        <KialiIcon.Warning />
-
-        <span className={systemErrorCountStyle}>
-          {t('{{count}} Open Issue', {
-            count: props.systemErrorsCount,
-            defaultValue_one: '{{count}} Open Issue',
-            defaultValue_other: '{{count}} Open Issues'
-          })}
-        </span>
-      </Button>
+      />
     );
   };
 

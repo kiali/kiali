@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { List, Text, TextContent, TextVariants } from '@patternfly/react-core';
+import { List, Content, ContentVariants } from '@patternfly/react-core';
 import { ComponentStatus, Status } from '../../types/IstioStatus';
 import { IstioComponentStatus } from './IstioComponentStatus';
 import { PFColors } from '../Pf/PfColors';
@@ -49,12 +49,12 @@ export const IstioStatusList: React.FC<Props> = (props: Props) => {
   };
 
   return (
-    <TextContent style={{ color: PFColors.White }}>
-      <Text component={TextVariants.h4}>{t('Istio Components Status')}</Text>
+    <Content style={{ color: PFColors.White }}>
+      <Content component={ContentVariants.h4}>{t('Istio Components Status')}</Content>
 
       <List id="istio-status" aria-label={t('Istio Component List')} className={listStyle}>
         {renderComponentList()}
       </List>
-    </TextContent>
+    </Content>
   );
 };

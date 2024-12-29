@@ -304,7 +304,6 @@ export class PeerAuthenticationForm extends React.Component<Props, PeerAuthentic
           <Switch
             id="workloadSelectorSwitch"
             label={' '}
-            labelOff={' '}
             isChecked={this.state.addWorkloadSelector}
             onChange={this.onChangeWorkloadSelector}
           />
@@ -342,13 +341,7 @@ export class PeerAuthenticationForm extends React.Component<Props, PeerAuthentic
         </FormGroup>
 
         <FormGroup label="Port Mutual TLS" fieldId="addPortMtls">
-          <Switch
-            id="addPortMtls"
-            label={' '}
-            labelOff={' '}
-            isChecked={this.state.addPortMtls}
-            onChange={this.onChangeAddPortMtls}
-          />
+          <Switch id="addPortMtls" label={' '} isChecked={this.state.addPortMtls} onChange={this.onChangeAddPortMtls} />
         </FormGroup>
 
         {this.state.addPortMtls && (

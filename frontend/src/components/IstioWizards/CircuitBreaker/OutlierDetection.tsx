@@ -18,7 +18,6 @@ export class OutlierDetection extends React.Component<Props> {
           <Switch
             id="odSwitch"
             label={' '}
-            labelOff={' '}
             isChecked={this.props.isOutlierDetection}
             onChange={() => this.props.onOutlierDetection(!this.props.isOutlierDetection, this.props.outlierDetection)}
           />
@@ -40,7 +39,9 @@ export class OutlierDetection extends React.Component<Props> {
             />
             <FormHelperText>
               <HelperText>
-                <HelperTextItem>{t('Number of errors before a host is ejected from the connection pool.')}</HelperTextItem>
+                <HelperTextItem>
+                  {t('Number of errors before a host is ejected from the connection pool.')}
+                </HelperTextItem>
               </HelperText>
             </FormHelperText>
           </FormGroup>

@@ -1,15 +1,5 @@
 import * as React from 'react';
-import {
-  AboutModal,
-  TextContent,
-  TextList,
-  TextListItem,
-  Title,
-  Button,
-  TitleSizes,
-  ButtonVariant,
-  Alert
-} from '@patternfly/react-core';
+import { AboutModal, Content, Title, Button, TitleSizes, ButtonVariant, Alert } from '@patternfly/react-core';
 import kialiIconAbout from '../../assets/img/kiali/icon-aboutbkg.svg';
 import { Status, StatusKey } from '../../types/StatusState';
 import { config, kialiLogoDark } from '../../config';
@@ -121,28 +111,28 @@ export const AboutUIModal: React.FC<AboutUIModalProps> = (props: AboutUIModalPro
       onClose={props.onClose}
       productName="Kiali"
     >
-      <TextContent className={textContentStyle}>
-        <TextList component="dl">
-          <TextListItem key="kiali-name" component="dt">
+      <Content className={textContentStyle}>
+        <Content component="dl">
+          <Content key="kiali-name" component="dt">
             Kiali
-          </TextListItem>
-          <TextListItem key="kiali-version" component="dd">
+          </Content>
+          <Content key="kiali-version" component="dd">
             {coreVersion!}
-          </TextListItem>
-          <TextListItem key="kiali-container-name" component="dt">
+          </Content>
+          <Content key="kiali-container-name" component="dt">
             Kiali Container
-          </TextListItem>
-          <TextListItem key="kiali-container-version" component="dd">
+          </Content>
+          <Content key="kiali-container-version" component="dd">
             {containerVersion!}
-          </TextListItem>
-        </TextList>
-      </TextContent>
+          </Content>
+        </Content>
+      </Content>
 
       {props.warningMessages.length > 0 && (
         <Alert variant="warning" title={props.warningMessages[0]} style={{ marginTop: '1rem' }} />
       )}
 
-      <TextContent className={textContentStyle}>
+      <Content className={textContentStyle}>
         {isControlPlaneAccessible() && (
           <>
             <Title headingLevel="h3" size={TitleSizes.xl} style={{ padding: '2.5rem 0 0 0', marginBottom: '0' }}>
@@ -156,7 +146,7 @@ export const AboutUIModal: React.FC<AboutUIModalProps> = (props: AboutUIModalPro
         </Title>
         {renderWebsiteLink()}
         {renderProjectLink()}
-      </TextContent>
+      </Content>
     </AboutModal>
   );
 };

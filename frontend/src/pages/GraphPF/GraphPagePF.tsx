@@ -48,7 +48,8 @@ import { PFColors } from 'components/Pf/PfColors';
 import { TourActions } from 'actions/TourActions';
 import { arrayEquals } from 'utils/Common';
 import { isKioskMode, getFocusSelector, getTraceId, getClusterName, unsetFocusSelector } from 'utils/SearchParamUtils';
-import { Badge, Chip } from '@patternfly/react-core';
+import { Label, Badge } from '@patternfly/react-core';
+
 import { toRangeString } from 'components/Time/Utils';
 import { replayBorder } from 'components/Time/Replay';
 import { GraphDataSource, FetchParams, EMPTY_GRAPH_DATA } from '../../services/GraphDataSource';
@@ -462,15 +463,15 @@ class GraphPagePFComponent extends React.Component<GraphPagePropsPF, GraphPageSt
             >
               {this.props.showLegend && <GraphLegendPF closeLegend={this.props.toggleLegend} />}
               {isReady && (
-                <Chip
+                <Label
+                  variant="outline"
                   className={`${graphTimeRange} ${this.props.replayActive ? replayBackground : graphBackground}`}
-                  isReadOnly={true}
                 >
                   {this.props.replayActive && <Badge style={{ marginRight: '4px' }} isRead={true}>{`Replay`}</Badge>}
                   {!isReplayReady && this.props.replayActive && `click Play to start`}
                   {!isReplayReady && !this.props.replayActive && `${this.displayTimeRange()}`}
                   {isReplayReady && `${this.displayTimeRange()}`}
-                </Chip>
+                </Label>
               )}
               {(!this.props.replayActive || isReplayReady) && (
                 <div id="pft-graph" className={graphContainerStyle}>

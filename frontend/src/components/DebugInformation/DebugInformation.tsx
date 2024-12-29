@@ -10,9 +10,9 @@ import {
   AlertVariant,
   Button,
   ButtonVariant,
+  Tab,
   Modal,
-  ModalVariant,
-  Tab
+  ModalVariant
 } from '@patternfly/react-core';
 import { aceOptions, yamlDumpOptions } from '../../types/IstioConfigDetails';
 import AceEditor from 'react-ace';
@@ -84,7 +84,7 @@ const tabIndex: { [tab: string]: number } = {
 const modalStyle = kialiStyle({
   overflowY: 'hidden',
   $nest: {
-    '& .pf-v5-c-tab-content': {
+    '& .pf-v6-c-tab-content': {
       height: '525px',
       overflowY: 'auto'
     }
@@ -93,7 +93,7 @@ const modalStyle = kialiStyle({
 
 const tabStyle = kialiStyle({
   $nest: {
-    '&& .pf-v5-c-tabs__list': {
+    '&& .pf-v6-c-tabs__list': {
       marginLeft: 0
     }
   }

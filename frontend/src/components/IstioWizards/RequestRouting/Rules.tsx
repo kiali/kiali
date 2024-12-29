@@ -2,13 +2,7 @@ import * as React from 'react';
 import { IRow, IAction, ThProps, IRowData } from '@patternfly/react-table';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from '../../Pf/PfColors';
-import {
-  EmptyState,
-  EmptyStateBody,
-  EmptyStateVariant,
-  TooltipPosition,
-  EmptyStateHeader
-} from '@patternfly/react-core';
+import { EmptyState, EmptyStateBody, EmptyStateVariant, TooltipPosition } from '@patternfly/react-core';
 import { WorkloadWeight } from '../TrafficShifting';
 import { Abort, Delay, HTTPRetry } from '../../../types/IstioObjects';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
@@ -115,9 +109,10 @@ export const Rules: React.FC<RulesProps> = (props: RulesProps) => {
   const matchAll: number = matchAllIndex(props.rules);
 
   const noRules: React.ReactNode = (
-    <EmptyState variant={EmptyStateVariant.full}>
-      <EmptyStateHeader titleText={t('No Route Rules defined')} headingLevel="h5" />
-      <EmptyStateBody className={noRulesStyle}>{t('A Request Routing scenario needs at least a Route Rule')}</EmptyStateBody>
+    <EmptyState headingLevel="h5" titleText={t('No Route Rules defined')} variant={EmptyStateVariant.full}>
+      <EmptyStateBody className={noRulesStyle}>
+        {t('A Request Routing scenario needs at least a Route Rule')}
+      </EmptyStateBody>
     </EmptyState>
   );
 
@@ -133,7 +128,7 @@ export const Rules: React.FC<RulesProps> = (props: RulesProps) => {
             : rule.matches.map((match, i) => <div key={`match_${i}`}>{match}</div>)}
           {!isValid && (
             <div className={validationStyle}>
-              {t('Match \'Any request\' is defined in a previous rule.')}
+              {t("Match 'Any request' is defined in a previous rule.")}
               <br />
               {t('This rule is not accessible.')}
             </div>
