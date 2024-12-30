@@ -275,10 +275,6 @@ func (in *NamespaceService) GetClusterNamespace(ctx context.Context, namespace s
 		return &ns, nil
 	}
 
-	if !in.isAccessibleNamespace(models.Namespace{Name: namespace, Cluster: cluster}) {
-		return nil, &AccessibleNamespaceError{msg: "Namespace [" + namespace + "] in cluster [" + cluster + "] is not accessible to Kiali"}
-	}
-
 	var result models.Namespace
 	if in.clusterIsOpenShift(cluster) {
 		project, err := client.GetProject(ctx, namespace)
@@ -292,6 +288,10 @@ func (in *NamespaceService) GetClusterNamespace(ctx context.Context, namespace s
 			return nil, err
 		}
 		result = models.CastNamespace(*ns, cluster)
+	}
+
+	if !in.isAccessibleNamespace(result) {
+		return nil, &AccessibleNamespaceError{msg: "Namespace [" + namespace + "] in cluster [" + cluster + "] is not accessible to Kiali"}
 	}
 
 	// Refresh namespace in cache since we've just fetched it from the API.
