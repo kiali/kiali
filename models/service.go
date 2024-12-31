@@ -97,10 +97,11 @@ type ServiceDetails struct {
 	VirtualServices    []*networking_v1.VirtualService          `json:"virtualServices"`
 	Workloads          WorkloadOverviews                        `json:"workloads"`
 	// Services with same app labels (different versions or a single version)
-	Health        ServiceHealth      `json:"health"`
-	NamespaceMTLS MTLSStatus         `json:"namespaceMTLS"`
-	SubServices   []*ServiceOverview `json:"subServices"`
-	Validations   IstioValidations   `json:"validations"`
+	Health            ServiceHealth      `json:"health"`
+	NamespaceMTLS     MTLSStatus         `json:"namespaceMTLS"`
+	SubServices       []*ServiceOverview `json:"subServices"`
+	Validations       IstioValidations   `json:"validations"`
+	WaypointWorkloads []WorkloadInfo     `json:"waypointWorkloads"`
 }
 
 type (
@@ -124,6 +125,29 @@ type (
 		Type              string             `json:"type"`
 	}
 )
+
+// Reduced information for a service
+// To create links to another service
+// Used by Ambient, to indicate the waypoint proxies
+type ServiceInfo struct {
+	// Cluster
+	Cluster string `json:"cluster"`
+
+	// LabelType in case of waypoint workloads,
+	// Where the label comes from (namespace, workload or service)
+	// required: false
+	// example: namespace
+	LabelType string `json:"labelType"`
+
+	// Name for the service
+	// required: true
+	Name string `json:"name"`
+
+	// Namespace where the workload live in
+	// required: true
+	// example: bookinfo
+	Namespace string `json:"namespace"`
+}
 
 func (so *ServiceOverview) ParseToService() *Service {
 	svc := Service{

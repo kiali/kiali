@@ -200,7 +200,7 @@ export const WorkloadDescription: React.FC<WorkloadDescriptionProps> = (props: W
           {workload.isAmbient && workload.ambient !== 'waypoint' && (
             <AmbientLabel
               tooltip={tooltipMsgType.workload}
-              waypoint={workload.waypointWorkloads?.length > 0 ? true : false}
+              waypoint={workload.waypointWorkloads && workload.waypointWorkloads.length > 0 ? true : false}
             />
           )}
 
