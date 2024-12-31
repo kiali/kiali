@@ -111,7 +111,7 @@ EOF
   echo "Creating keycloak deployment"
   helm upgrade --install --wait --timeout 15m \
   --namespace keycloak \
-   keycloak oci://registry-1.docker.io/bitnamicharts/keycloak \
+   keycloak oci://registry-1.docker.io/bitnamicharts/keycloak --version 24.3.1 \
   --reuse-values --values - <<EOF
 auth:
   createAdminUser: true
