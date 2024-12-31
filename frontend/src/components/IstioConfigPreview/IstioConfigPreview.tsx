@@ -2,7 +2,6 @@ import * as React from 'react';
 import {
   Button,
   ButtonVariant,
-  Modal,
   Tab,
   TabProps,
   Tabs,
@@ -11,6 +10,7 @@ import {
   ToolbarItem,
   Tooltip
 } from '@patternfly/react-core';
+import { Modal } from '@patternfly/react-core/deprecated';
 import {
   AuthorizationPolicy,
   DestinationRule,

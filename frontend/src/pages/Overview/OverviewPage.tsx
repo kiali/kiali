@@ -12,8 +12,7 @@ import {
   Title,
   TitleSizes,
   Tooltip,
-  TooltipPosition,
-  EmptyStateHeader
+  TooltipPosition
 } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
 import { FilterSelected, StatefulFiltersRef } from '../../components/Filters/StatefulFilters';
@@ -108,7 +107,7 @@ const emptyStateStyle = kialiStyle({
 
 const namespaceHeaderStyle = kialiStyle({
   $nest: {
-    '& .pf-v5-c-card__header-main': {
+    '& .pf-v6-c-card__header-main': {
       width: '85%'
     }
   }
@@ -1080,8 +1079,12 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
             )}
           </RenderComponentScroll>
         ) : (
-          <EmptyState className={emptyStateStyle} variant={EmptyStateVariant.full}>
-            <EmptyStateHeader titleText="No unfiltered namespaces" headingLevel="h5" />
+          <EmptyState
+            headingLevel="h5"
+            titleText="No unfiltered namespaces"
+            className={emptyStateStyle}
+            variant={EmptyStateVariant.full}
+          >
             <EmptyStateBody>
               Either all namespaces are being filtered or the user has no permission to access namespaces.
             </EmptyStateBody>

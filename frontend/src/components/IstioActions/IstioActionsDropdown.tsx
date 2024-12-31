@@ -7,12 +7,11 @@ import {
   DropdownList,
   MenuToggle,
   MenuToggleElement,
-  Modal,
-  ModalVariant,
-  Text,
-  TextVariants,
+  Content,
+  ContentVariants,
   TooltipPosition
 } from '@patternfly/react-core';
+import { Modal, ModalVariant } from '@patternfly/react-core/deprecated';
 import { serverConfig } from '../../config';
 import { renderDisabledDropdownOption } from 'utils/DropdownUtils';
 
@@ -96,10 +95,10 @@ export const IstioActionDropdown: React.FC<IstioActionDropdownProps> = (props: I
           </Button>
         ]}
       >
-        <Text component={TextVariants.p}>
+        <Content component={ContentVariants.p}>
           Are you sure you want to delete the {objectName} '{props.objectName}'? It cannot be undone. Make sure this is
           something you really want to do!
-        </Text>
+        </Content>
       </Modal>
     </>
   );

@@ -73,11 +73,12 @@
     "test": "tsc -p . && TEST_RUNNER=1 react-scripts test --env=jsdom __tests__ --transformIgnorePatterns='node_modules/(?!my-library-dir)/'"
   },
   "dependencies": {
-    "@patternfly/patternfly": "^5.4.0",
+    "@patternfly/patternfly": "^6.0.0",
     "@patternfly/react-charts": "^7.4.0",
-    "@patternfly/react-core": "^5.4.0",
+    "@patternfly/react-core": "^6.0.0",
     "@patternfly/react-table": "^5.4.0",
-    "@patternfly/react-topology": "^5.4.1",
+    "@patternfly/react-tokens": "^6.0.0",
+    "@patternfly/react-topology": "^6.0.0",
     "axios": "^1.7.4",
     "bootstrap-slider-without-jquery": "10.0.0",
     "cy-node-html-label": "2.0.0",

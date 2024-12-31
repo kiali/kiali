@@ -22,7 +22,6 @@ export class AbortFault extends React.Component<Props> {
           <Switch
             id="abortSwitch"
             label={' '}
-            labelOff={' '}
             isChecked={this.props.aborted}
             onChange={() => this.props.onAbort(!this.props.aborted, this.props.abort)}
           />
@@ -48,7 +47,9 @@ export class AbortFault extends React.Component<Props> {
             />
             <FormHelperText>
               <HelperText>
-                <HelperTextItem>{t('Percentage of requests to be aborted with the error code provided.')}</HelperTextItem>
+                <HelperTextItem>
+                  {t('Percentage of requests to be aborted with the error code provided.')}
+                </HelperTextItem>
               </HelperText>
             </FormHelperText>
           </FormGroup>

@@ -4,9 +4,7 @@ import {
   ButtonVariant,
   EmptyState,
   EmptyStateBody,
-  EmptyStateIcon,
   EmptyStateVariant,
-  EmptyStateHeader,
   EmptyStateFooter
 } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
@@ -81,28 +79,39 @@ export class EmptyGraphLayout extends React.Component<EmptyGraphLayoutProps, Emp
   render(): React.ReactNode {
     if (this.props.isError) {
       return (
-        <EmptyState id="empty-graph-error" variant={EmptyStateVariant.lg} className={emptyStateStyle}>
-          <EmptyStateHeader
-            titleText="Error loading Graph"
-            icon={<EmptyStateIcon icon={KialiIcon.Error} />}
-            headingLevel="h5"
-          />
+        <EmptyState
+          headingLevel="h5"
+          icon={KialiIcon.Error}
+          titleText="Error loading Graph"
+          id="empty-graph-error"
+          variant={EmptyStateVariant.lg}
+          className={emptyStateStyle}
+        >
           <EmptyStateBody>{this.props.error}</EmptyStateBody>
         </EmptyState>
       );
     }
     if (this.props.isLoading) {
       return (
-        <EmptyState id="empty-graph-is-loading" variant={EmptyStateVariant.lg} className={emptyStateStyle}>
-          <EmptyStateHeader titleText="Loading Graph" headingLevel="h5" />
-        </EmptyState>
+        <EmptyState
+          headingLevel="h5"
+          titleText="Loading Graph"
+          id="empty-graph-is-loading"
+          variant={EmptyStateVariant.lg}
+          className={emptyStateStyle}
+        ></EmptyState>
       );
     }
 
     if (this.props.namespaces?.length === 0) {
       return (
-        <EmptyState id="empty-graph-no-namespace" variant={EmptyStateVariant.lg} className={emptyStateStyle}>
-          <EmptyStateHeader titleText="No namespace is selected" headingLevel="h5" />
+        <EmptyState
+          headingLevel="h5"
+          titleText="No namespace is selected"
+          id="empty-graph-no-namespace"
+          variant={EmptyStateVariant.lg}
+          className={emptyStateStyle}
+        >
           <EmptyStateBody>
             There is currently no namespace selected, please select one using the Namespace selector.
           </EmptyStateBody>
@@ -114,8 +123,13 @@ export class EmptyGraphLayout extends React.Component<EmptyGraphLayoutProps, Emp
 
     if (isGraphEmpty && !this.props.isMiniGraph) {
       return (
-        <EmptyState id="empty-graph" variant={EmptyStateVariant.lg} className={emptyStateStyle}>
-          <EmptyStateHeader titleText="Empty Graph" headingLevel="h5" />
+        <EmptyState
+          headingLevel="h5"
+          titleText="Empty Graph"
+          id="empty-graph"
+          variant={EmptyStateVariant.lg}
+          className={emptyStateStyle}
+        >
           <EmptyStateBody>
             There is currently no graph available for {this.namespacesText()}. This could either mean there is no
             service mesh available for {this.props.namespaces?.length === 1 ? 'this namespace' : 'these namespaces'} or
@@ -148,8 +162,13 @@ export class EmptyGraphLayout extends React.Component<EmptyGraphLayoutProps, Emp
 
     if (isGraphEmpty && this.props.isMiniGraph) {
       return (
-        <EmptyState id="empty-mini-graph" variant={EmptyStateVariant.lg} className={emptyStateStyle}>
-          <EmptyStateHeader titleText="Empty Graph" headingLevel="h5" />
+        <EmptyState
+          headingLevel="h5"
+          titleText="Empty Graph"
+          id="empty-mini-graph"
+          variant={EmptyStateVariant.lg}
+          className={emptyStateStyle}
+        >
           <EmptyStateBody>No graph traffic for the time period.</EmptyStateBody>
         </EmptyState>
       );

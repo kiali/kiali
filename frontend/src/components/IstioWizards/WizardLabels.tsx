@@ -1,16 +1,6 @@
 import * as React from 'react';
-import {
-  ActionGroup,
-  Alert,
-  Button,
-  List,
-  ListItem,
-  Modal,
-  ModalVariant,
-  TextInput,
-  Title,
-  TitleSizes
-} from '@patternfly/react-core';
+import { ActionGroup, Alert, Button, List, ListItem, TextInput, Title, TitleSizes } from '@patternfly/react-core';
+import { Modal, ModalVariant } from '@patternfly/react-core/deprecated';
 import { IRow, Table, TableVariant, Tbody, Th, Thead, Tr } from '@patternfly/react-table';
 import { KialiIcon } from 'config/KialiIcon';
 import { kialiStyle } from 'styles/StyleUtils';

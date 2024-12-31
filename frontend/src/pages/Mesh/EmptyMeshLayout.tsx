@@ -1,12 +1,5 @@
 import * as React from 'react';
-import {
-  EmptyState,
-  EmptyStateBody,
-  EmptyStateIcon,
-  EmptyStateVariant,
-  EmptyStateHeader,
-  EmptyStateFooter
-} from '@patternfly/react-core';
+import { EmptyState, EmptyStateBody, EmptyStateVariant, EmptyStateFooter } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
 import * as _ from 'lodash';
 import { KialiIcon } from '../../config/KialiIcon';
@@ -53,21 +46,27 @@ export class EmptyMeshLayout extends React.Component<EmptyMeshLayoutProps, Empty
   render() {
     if (this.props.isError) {
       return (
-        <EmptyState id="empty-mesh-error" variant={EmptyStateVariant.lg} className={emptyStateStyle}>
-          <EmptyStateHeader
-            titleText="Error loading Mesh"
-            icon={<EmptyStateIcon icon={KialiIcon.Error} />}
-            headingLevel="h5"
-          />
+        <EmptyState
+          headingLevel="h5"
+          icon={KialiIcon.Error}
+          titleText="Error loading Mesh"
+          id="empty-mesh-error"
+          variant={EmptyStateVariant.lg}
+          className={emptyStateStyle}
+        >
           <EmptyStateBody>{this.props.error}</EmptyStateBody>
         </EmptyState>
       );
     }
     if (this.props.isLoading) {
       return (
-        <EmptyState id="empty-mesh-is-loading" variant={EmptyStateVariant.lg} className={emptyStateStyle}>
-          <EmptyStateHeader titleText="Loading Mesh" headingLevel="h5" />
-        </EmptyState>
+        <EmptyState
+          headingLevel="h5"
+          titleText="Loading Mesh"
+          id="empty-mesh-is-loading"
+          variant={EmptyStateVariant.lg}
+          className={emptyStateStyle}
+        ></EmptyState>
       );
     }
 
@@ -75,8 +74,13 @@ export class EmptyMeshLayout extends React.Component<EmptyMeshLayoutProps, Empty
 
     if (isMeshEmpty && !this.props.isMiniMesh) {
       return (
-        <EmptyState id="empty-mesh" variant={EmptyStateVariant.lg} className={emptyStateStyle}>
-          <EmptyStateHeader titleText="Empty Mesh" headingLevel="h5" />
+        <EmptyState
+          headingLevel="h5"
+          titleText="Empty Mesh"
+          id="empty-mesh"
+          variant={EmptyStateVariant.lg}
+          className={emptyStateStyle}
+        >
           <EmptyStateBody>
             There is currently no mesh information available. This may mean you do not have permission to see any mesh
             information or have no access to any of the mesh namespaces.
@@ -88,8 +92,13 @@ export class EmptyMeshLayout extends React.Component<EmptyMeshLayoutProps, Empty
 
     if (isMeshEmpty && this.props.isMiniMesh) {
       return (
-        <EmptyState id="empty-mini-mesh" variant={EmptyStateVariant.lg} className={emptyStateStyle}>
-          <EmptyStateHeader titleText="Empty Mesh" headingLevel="h5" />
+        <EmptyState
+          headingLevel="h5"
+          titleText="Empty Mesh"
+          id="empty-mini-mesh"
+          variant={EmptyStateVariant.lg}
+          className={emptyStateStyle}
+        >
           <EmptyStateBody>No mesh information available.</EmptyStateBody>
         </EmptyState>
       );

@@ -6,7 +6,7 @@ import {
   InfoCircleIcon
 } from '@patternfly/react-icons';
 import { ValidationTypes } from '../../types/IstioObjects';
-import { Text, TextVariants } from '@patternfly/react-core';
+import { Content, ContentVariants } from '@patternfly/react-core';
 import { PFColors } from 'components/Pf/PfColors';
 import { kialiStyle } from 'styles/StyleUtils';
 import { IconProps, createIcon } from 'config/KialiIcon';
@@ -74,9 +74,9 @@ export const Validation: React.FC<ValidationProps> = (props: ValidationProps) =>
   if (hasMessage) {
     return (
       <div className={validationStyle}>
-        <Text component={TextVariants.p} style={textStyle}>
+        <Content component={ContentVariants.p} style={textStyle}>
           {createIcon(iconProps)} {props.message}
-        </Text>
+        </Content>
       </div>
     );
   } else {
