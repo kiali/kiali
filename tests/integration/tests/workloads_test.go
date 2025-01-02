@@ -121,3 +121,37 @@ func TestDiscoverWorkload(t *testing.T) {
 	})
 	require.Nil(pollErr)
 }
+
+func TestDiscoverWorkloadGroups(t *testing.T) {
+	require := require.New(t)
+	workloadsPath := path.Join(cmd.KialiProjectRoot, kiali.ASSETS+"/bookinfo-workload-groups.yaml")
+	extraWorkloads := map[string]string{
+		"ratings-vm":           "WorkloadGroup",
+		"ratings-vm2":          "WorkloadGroup",
+		"ratings-vm-no-entry":  "WorkloadGroup",
+		"ratings-vm-no-entry2": "WorkloadGroup",
+	}
+
+	defer utils.DeleteFile(workloadsPath, kiali.BOOKINFO)
+	require.True(utils.ApplyFile(workloadsPath, kiali.BOOKINFO))
+	ctx := context.TODO()
+
+	pollErr := wait.PollUntilContextTimeout(ctx, time.Second, time.Minute, false, func(ctx context.Context) (bool, error) {
+		wlList, err := kiali.WorkloadsList(kiali.BOOKINFO)
+		require.NoError(err)
+		require.NotNil(wlList)
+		foundWorkloads := 0
+		for _, wl := range wlList.Workloads {
+			for k, v := range extraWorkloads {
+				if k == wl.Name && v == wl.WorkloadGVK.Kind {
+					foundWorkloads++
+				}
+			}
+		}
+		if len(extraWorkloads) == foundWorkloads {
+			return true, nil
+		}
+		return false, nil
+	})
+	require.Nil(pollErr)
+}

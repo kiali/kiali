@@ -16,6 +16,7 @@ import (
 
 	"github.com/nitishm/engarde/pkg/parser"
 	osapps_v1 "github.com/openshift/api/apps/v1"
+	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 	apps_v1 "k8s.io/api/apps/v1"
 	batch_v1 "k8s.io/api/batch/v1"
@@ -432,7 +433,8 @@ func (in *WorkloadService) GetWorkload(ctx context.Context, criteria WorkloadCri
 		runtimes = NewDashboardsService(in.config, in.grafana, ns, workload).GetCustomDashboardRefs(criteria.Namespace, app, version, workload.Pods)
 	}()
 
-	if criteria.IncludeServices {
+	// WorkloadGroup.Labels can be empty
+	if criteria.IncludeServices && len(workload.Labels) > 0 {
 		var services *models.ServiceList
 		var err error
 
@@ -774,6 +776,9 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 	var jbs []batch_v1.Job
 	var conjbs []batch_v1.CronJob
 	var daeset []apps_v1.DaemonSet
+	var wgroups []*networking_v1.WorkloadGroup
+	var wentries []*networking_v1.WorkloadEntry
+	var sidecars []*networking_v1.Sidecar
 
 	ws := models.Workloads{}
 
@@ -794,8 +799,8 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 	}
 
 	wg := sync.WaitGroup{}
-	wg.Add(9)
-	errChan := make(chan error, 9)
+	wg.Add(12)
+	errChan := make(chan error, 12)
 
 	// Pods are always fetched
 	go func() {
@@ -917,6 +922,45 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 		}
 	}()
 
+	// WorkloadGroups are fetched only when included
+	go func() {
+		defer wg.Done()
+		var err error
+		if in.isWorkloadIncluded(kubernetes.WorkloadGroupType) {
+			wgroups, err = kubeCache.GetWorkloadGroups(namespace, labelSelector)
+			if err != nil {
+				log.Errorf("Error fetching WorkloadGroups per namespace %s: %s", namespace, err)
+				errChan <- err
+			}
+		}
+	}()
+
+	// WorkloadEntries are fetched only when included
+	go func() {
+		defer wg.Done()
+		var err error
+		if in.isWorkloadIncluded(kubernetes.WorkloadEntryType) {
+			wentries, err = kubeCache.GetWorkloadEntries(namespace, "")
+			if err != nil {
+				log.Errorf("Error fetching WorkloadEntries per namespace %s: %s", namespace, err)
+				errChan <- err
+			}
+		}
+	}()
+
+	// Sidecars are fetched only when included
+	go func() {
+		defer wg.Done()
+		var err error
+		if in.isWorkloadIncluded(kubernetes.SidecarType) {
+			sidecars, err = kubeCache.GetSidecars(namespace, "")
+			if err != nil {
+				log.Errorf("Error fetching Sidecars per namespace %s: %s", namespace, err)
+				errChan <- err
+			}
+		}
+	}()
+
 	wg.Wait()
 	if len(errChan) != 0 {
 		err := <-errChan
@@ -950,6 +994,13 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 				// Pod without controller
 				controllers[pod.Name] = kubernetes.Pods
 			}
+		}
+	}
+
+	// Find controllers from WorkloadGroups
+	for _, wgroup := range wgroups {
+		if _, exist := controllers[wgroup.Name]; !exist {
+			controllers[wgroup.Name] = kubernetes.WorkloadGroups
 		}
 	}
 
@@ -1311,6 +1362,23 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 				log.Errorf("Workload %s is not found as DaemonSet", controllerName)
 				cnFound = false
 			}
+		case kubernetes.WorkloadGroups:
+			found := false
+			iFound := -1
+			for i, wgroup := range wgroups {
+				if wgroup.Name == controllerName {
+					found = true
+					iFound = i
+					break
+				}
+			}
+			if found {
+				selector := labels.Set(wgroups[iFound].Spec.Template.Labels).AsSelector()
+				w.ParseWorkloadGroup(wgroups[iFound], kubernetes.FilterWorkloadEntriesBySelector(selector, wentries), kubernetes.FilterSidecarsBySelector(selector.String(), sidecars))
+			} else {
+				log.Errorf("Workload %s is not found as WorkloadGroup", controllerName)
+				cnFound = false
+			}
 		default:
 			// This covers the scenario of a custom controller without replicaset, controlling pods directly.
 			// Note that a custom controller with replicaset(s) will return the replicaset(s) as the workloads.
@@ -1347,6 +1415,9 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 	var jbs []batch_v1.Job
 	var conjbs []batch_v1.CronJob
 	var ds *apps_v1.DaemonSet
+	var wgroup *networking_v1.WorkloadGroup
+	var wentries []*networking_v1.WorkloadEntry
+	var sidecars []*networking_v1.Sidecar
 
 	wl := &models.Workload{
 		WorkloadListItem: models.WorkloadListItem{
@@ -1372,8 +1443,8 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 	_, knownWorkloadType := controllerOrder[criteria.WorkloadGVK.Kind]
 
 	wg := sync.WaitGroup{}
-	wg.Add(9)
-	errChan := make(chan error, 9)
+	wg.Add(12)
+	errChan := make(chan error, 12)
 
 	kialiCache, err := in.cache.GetKubeCache(criteria.Cluster)
 	if err != nil {
@@ -1393,6 +1464,63 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 		if err != nil {
 			log.Errorf("Error fetching Pods per namespace %s: %s", criteria.Namespace, err)
 			errChan <- err
+		}
+	}()
+
+	// fetch as WorkloadGroup when workloadType is WorkloadGroups or unspecified
+	go func() {
+		defer wg.Done()
+		var err error
+
+		if criteria.WorkloadGVK.Kind != "" && criteria.WorkloadGVK != kubernetes.WorkloadGroups {
+			return
+		}
+		wgroup, err = kialiCache.GetWorkloadGroup(criteria.Namespace, criteria.WorkloadName)
+		if err != nil {
+			if errors.IsNotFound(err) {
+				wgroup = nil
+			} else {
+				log.Errorf("Error fetching WorkloadGroup per namespace %s and name %s: %s", criteria.Namespace, criteria.WorkloadName, err)
+				errChan <- err
+			}
+		}
+	}()
+
+	// fetch as WorkloadEntries when workloadType is WorkloadGroups or unspecified
+	go func() {
+		defer wg.Done()
+		var err error
+
+		if criteria.WorkloadGVK.Kind != "" && criteria.WorkloadGVK != kubernetes.WorkloadGroups {
+			return
+		}
+		wentries, err = kialiCache.GetWorkloadEntries(criteria.Namespace, "")
+		if err != nil {
+			if errors.IsNotFound(err) {
+				wentries = nil
+			} else {
+				log.Errorf("Error fetching WorkloadEntry per namespace %s: %s", criteria.Namespace, err)
+				errChan <- err
+			}
+		}
+	}()
+
+	// fetch as Sidecars when workloadType is WorkloadGroups or unspecified
+	go func() {
+		defer wg.Done()
+		var err error
+
+		if criteria.WorkloadGVK.Kind != "" && criteria.WorkloadGVK != kubernetes.WorkloadGroups {
+			return
+		}
+		sidecars, err = kialiCache.GetSidecars(criteria.Namespace, "")
+		if err != nil {
+			if errors.IsNotFound(err) {
+				sidecars = nil
+			} else {
+				log.Errorf("Error fetching Sidecars per namespace %s: %s", criteria.Namespace, err)
+				errChan <- err
+			}
 		}
 	}()
 
@@ -1572,6 +1700,13 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 				// Pod without controller
 				controllers[pod.Name] = kubernetes.Pods
 			}
+		}
+	}
+
+	// Find controllers from WorkloadGroups
+	if wgroup != nil {
+		if _, exist := controllers[wgroup.Name]; !exist {
+			controllers[wgroup.Name] = kubernetes.WorkloadGroups
 		}
 	}
 
@@ -1876,6 +2011,14 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 				w.ParseDaemonSet(ds)
 			} else {
 				log.Errorf("Workload %s is not found as DaemonSet", criteria.WorkloadName)
+				cnFound = false
+			}
+		case kubernetes.WorkloadGroups:
+			if wgroup != nil && wgroup.Name == criteria.WorkloadName {
+				selector := labels.Set(wgroup.Spec.Template.Labels).AsSelector()
+				w.ParseWorkloadGroup(wgroup, kubernetes.FilterWorkloadEntriesBySelector(selector, wentries), kubernetes.FilterSidecarsBySelector(selector.String(), sidecars))
+			} else {
+				log.Errorf("Workload %s is not found as WorkloadGroup", criteria.WorkloadName)
 				cnFound = false
 			}
 		default:
