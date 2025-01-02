@@ -33,6 +33,8 @@ Feature: Kiali Waypoint related features
     Then the user cannot see the "missing-sidecar" badge for "product-v1" workload in "bookinfo" namespace
     And the user hovers in the "ambient" label and sees "L4" in the tooltip
     And the user hovers in the "ambient" label and sees "L7" in the tooltip
+    And the user sees the L7 "waypoint" link
+    And the link for the waypoint "waypoint" should redirect to a valid workload details
 
   @waypoint
   Scenario: User sees ztunnel traffic

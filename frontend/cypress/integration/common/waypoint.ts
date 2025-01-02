@@ -71,4 +71,15 @@ Then('the graph page has enough data', () => {
 Then('the user hovers in the {string} label and sees {string} in the tooltip', (label: string, text: string) => {
   cy.get(`[data-test=workload-description-card]`).contains('span', label).trigger('mouseenter');
   cy.get('[role="tooltip"]').should('be.visible').and('contain', text);
+  cy.get(`[data-test=workload-description-card]`).contains('span', label).trigger('mouseleave');
+});
+
+Then('the user sees the L7 {string} link', (waypoint: string) => {
+  cy.get(`[data-test=waypoint-list]`).contains('span', 'L7');
+  cy.get(`[data-test=waypoint-link]`).contains('a', waypoint);
+});
+
+Then('the link for the waypoint {string} should redirect to a valid workload details', (waypoint: string) => {
+  cy.get(`[data-test=waypoint-link]`).contains('a', waypoint).click();
+  cy.get(`[data-test=workload-description-card]`).contains('h5', waypoint);
 });
