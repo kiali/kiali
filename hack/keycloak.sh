@@ -111,7 +111,7 @@ EOF
   echo "Creating keycloak deployment"
   helm upgrade --install --wait --timeout 15m \
   --namespace keycloak \
-   keycloak oci://registry-1.docker.io/bitnamicharts/keycloak --version 24.3.1 \
+   keycloak oci://registry-1.docker.io/bitnamicharts/keycloak --version 24.3.2 \
   --reuse-values --values - <<EOF
 auth:
   createAdminUser: true
@@ -119,8 +119,6 @@ auth:
   adminPassword: admin
   managementUser: manager
   managementPassword: manager
-image:
-  tag: 21.1.2-debian-11-r4
 proxyAddressForwarding: true
 postgresql:
   enabled: true
