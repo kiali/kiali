@@ -106,8 +106,10 @@ export const WorkloadPods: React.FC<WorkloadPodsProps> = (props: WorkloadPodsPro
             </li>
 
             <li>
-              <span>Protocol</span>
-              <div style={{ display: 'inline-block' }}>{pod.protocol ? pod.protocol : 'TCP'}</div>
+              <span data-test="protocol">Protocol</span>
+              <div style={{ display: 'inline-block' }} data-test="protocol-value">
+                {pod.protocol ? pod.protocol : ''}
+              </div>
             </li>
 
             <li>
@@ -133,7 +135,9 @@ export const WorkloadPods: React.FC<WorkloadPodsProps> = (props: WorkloadPodsPro
               position={TooltipPosition.right}
               content={<div style={{ textAlign: 'left' }}>{podProperties}</div>}
             >
-              <KialiIcon.Info className={infoStyle} />
+              <span data-test="pod-info">
+                <KialiIcon.Info className={infoStyle} />
+              </span>
             </Tooltip>
           </span>,
 

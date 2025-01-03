@@ -74,7 +74,9 @@ const DetailDescriptionComponent: React.FC<Props> = (props: Props) => {
           {waypoint.name}
         </Link>
       ) : (
-        <Link to={href}>{waypoint.name}</Link>
+        <Link to={href} data-test="waypoint-link">
+          {waypoint.name}
+        </Link>
       );
       return (
         <li key={`App_${waypoint.namespace}_${waypoint.name}`} className={itemStyle}>
@@ -88,7 +90,7 @@ const DetailDescriptionComponent: React.FC<Props> = (props: Props) => {
     });
     return [
       <div key="waypoint-list" className={resourceListStyle}>
-        <ul id="waypoint-list" style={{ listStyleType: 'none' }}>
+        <ul id="waypoint-list" data-test="waypoint-list" style={{ listStyleType: 'none' }}>
           {waypointList}
         </ul>
       </div>

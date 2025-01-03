@@ -1,4 +1,5 @@
-import { Then } from '@badeball/cypress-cucumber-preprocessor';
+import { Then, When } from '@badeball/cypress-cucumber-preprocessor';
+import { openTab } from './transition';
 
 // waitForWorkloadEnrolled waits until Kiali returns the namespace labels updated
 // Adding the waypoint label into the bookinfo namespace
@@ -71,4 +72,49 @@ Then('the graph page has enough data', () => {
 Then('the user hovers in the {string} label and sees {string} in the tooltip', (label: string, text: string) => {
   cy.get(`[data-test=workload-description-card]`).contains('span', label).trigger('mouseenter');
   cy.get('[role="tooltip"]').should('be.visible').and('contain', text);
+  cy.get(`[data-test=workload-description-card]`).contains('span', label).trigger('mouseleave');
+});
+
+Then('the user sees the L7 {string} link', (waypoint: string) => {
+  cy.get(`[data-test=waypoint-list]`).contains('span', 'L7');
+  cy.get(`[data-test=waypoint-link]`).contains('a', waypoint);
+});
+
+Then('the link for the waypoint {string} should redirect to a valid workload details', (waypoint: string) => {
+  cy.get(`[data-test=waypoint-link]`).contains('a', waypoint).click();
+  cy.get(`[data-test=workload-description-card]`).contains('h5', waypoint);
+});
+
+Then('the user sees the {string} option in the pod tooltip, and is {string}', (option: string, value: string) => {
+  cy.get(`[data-test=pod-info]`).trigger('mouseenter');
+  cy.get('[role="tooltip"]').should('be.visible').and('contain', option);
+  cy.get('[role="tooltip"]').should('be.visible').and('contain', value);
+  cy.get(`[data-test=pod-info]`).trigger('mouseleave');
+});
+
+Then('the user sees the {string} badge', (name: string) => {
+  cy.get(`#pfbadge-${name}`).should('exist').contains(name);
+});
+
+Then('the proxy status is {string}', (status: string) => {
+  cy.get('[data-label=Status]').get(`.icon-${status}`).should('exist');
+});
+
+Then('the proxy status is {string} with {string} details', (status: string, detail: string) => {
+  cy.get('[test-data=proxy-status]').get(`.icon-${status}`).should('exist');
+  cy.get('[test-data=proxy-status]').trigger('mouseenter');
+  cy.get('[role="tooltip"]').should('be.visible').and('contain', detail);
+  cy.get(`[data-test=pod-info]`).trigger('mouseleave');
+});
+
+When('the user validates the Ztunnel tab', () => {
+  openTab('Ztunnel');
+  cy.get('#ztunnel-details').should('be.visible').contains('Services').click();
+  cy.get('[role="grid"]').should('be.visible').get('[data-label="Service VIP"]');
+  cy.get('[role="grid"]').should('be.visible').get('[data-label=Waypoint]');
+  cy.get('[role="grid"]').should('be.visible').get('[data-label=Namespace]').and('contain', 'bookinfo');
+  cy.get('#ztunnel-details').should('be.visible').contains('Workloads').click();
+  cy.get('[role="grid"]').should('be.visible').get('[data-label="Pod Name"]');
+  cy.get('[role="grid"]').should('be.visible').get('[data-label=Node]');
+  cy.get('[role="grid"]').should('be.visible').get('[data-label=Namespace]').and('contain', 'bookinfo');
 });
