@@ -83,3 +83,10 @@ Then('the link for the waypoint {string} should redirect to a valid workload det
   cy.get(`[data-test=waypoint-link]`).contains('a', waypoint).click();
   cy.get(`[data-test=workload-description-card]`).contains('h5', waypoint);
 });
+
+Then('the user sees the {string} option in the pod tooltip, and is {string}', (option: string, value: string) => {
+  cy.get(`[data-test=pod-info`).trigger('mouseenter');
+  cy.get('[role="tooltip"]').should('be.visible').and('contain', option);
+  cy.get('[role="tooltip"]').should('be.visible').and('contain', value);
+  cy.get(`[data-test=pod-info`).trigger('mouseleave');
+});
