@@ -90,3 +90,14 @@ Then('the user sees the {string} option in the pod tooltip, and is {string}', (o
   cy.get('[role="tooltip"]').should('be.visible').and('contain', value);
   cy.get(`[data-test=pod-info`).trigger('mouseleave');
 });
+
+Then('the user sees the {string} badge', (name: string) => {
+  cy.get(`#pfbadge-${name}`).should('exist').contains(name);
+});
+
+Then('the proxy status is {string} with {string} details', (status: string, detail: string) => {
+  cy.get('[test-data=proxy-status').get(`.icon-${status}`).should('exist');
+  cy.get('[test-data=proxy-status').trigger('mouseenter');
+  cy.get('[role="tooltip"]').should('be.visible').and('contain', detail);
+  cy.get(`[data-test=pod-info`).trigger('mouseleave');
+});

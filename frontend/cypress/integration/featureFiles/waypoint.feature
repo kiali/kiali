@@ -38,6 +38,18 @@ Feature: Kiali Waypoint related features
     And the link for the waypoint "waypoint" should redirect to a valid workload details
 
   @waypoint
+    Scenario: [Workload details] The workload details for a waypoint are valid
+    Given user is at the details page for the "workload" "bookinfo/waypoint" located in the "" cluster
+    Then the user sees the "L7" badge
+    Then the user cannot see the "missing-sidecar" badge for "waypoint" workload in "bookinfo" namespace
+    And the proxy status is "info" with "RDS: IGNORED" details
+    And user sees trace information
+    When user selects a trace
+    Then user sees trace details
+    When the user looks for the bootstrap tab
+    Then the user sees bootstrap expected information
+
+  @waypoint
   Scenario: [Traffic Graph] User sees ztunnel traffic
     Given user is at the "graphpf" page
     When user graphs "bookinfo" namespaces
