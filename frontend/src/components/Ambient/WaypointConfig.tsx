@@ -70,18 +70,26 @@ export const WaypointConfig: React.FC<WaypointConfigProps> = (props: WaypointCon
   const [resource, setResource] = React.useState(activeTab(tabName, defaultTab));
 
   const currentTabIndexRef = React.useRef();
+  const resourceRef = React.useRef();
 
   React.useEffect(() => {
     const currentTabIndex = waypointTabs.indexOf(activeTab(tabName, defaultTab));
 
-    if (currentTabIndexRef.current !== undefined && resource !== currentTabIndexRef.current) {
+    if (
+      resourceRef.current !== undefined &&
+      resource !== resourceRef.current &&
+      currentTabIndexRef.current !== undefined &&
+      currentTabIndexRef.current !== currentTabIndex
+    ) {
       if (currentTabIndex !== activeKey) {
         setActiveKey(currentTabIndex);
       }
       // @ts-ignore
       currentTabIndexRef.current = currentTabIndex;
+      // @ts-ignore
+      resourceRef.current = resource;
     }
-  }, [resource]);
+  }, [resource, activeKey, defaultTab]);
 
   const waypointHandleTabClick = (_event: React.MouseEvent, tabIndex: string | number): void => {
     const resourceIdx: number = +tabIndex;
