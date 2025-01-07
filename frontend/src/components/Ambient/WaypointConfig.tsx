@@ -26,13 +26,6 @@ type WaypointConfigProps = {
   workload: Workload;
 };
 
-type WaypointConfigState = {
-  activeKey: number;
-  fetch: boolean;
-  resource: string;
-  tabHeight: number;
-};
-
 const fullHeightStyle = kialiStyle({
   height: '100%'
 });
@@ -70,40 +63,33 @@ const showProxyStatus = (workload: Workload): React.ReactNode => {
   return <SimpleTable label={'Proxy Status'} columns={cols} rows={rows} />;
 };
 
-export class WaypointConfig extends React.Component<WaypointConfigProps, WaypointConfigState> {
-  private waypointFor = isWaypointFor(this.props.workload);
-  private defaultTab = this.waypointFor === WaypointType.Workload ? WaypointType.Workload : WaypointType.Service;
+export const WaypointConfig: React.FC<WaypointConfigProps> = (props: WaypointConfigProps) => {
+  const waypointFor = isWaypointFor(props.workload);
+  const defaultTab = waypointFor === WaypointType.Workload ? WaypointType.Workload : WaypointType.Service;
+  const [activeKey, setActiveKey] = React.useState(waypointTabs.indexOf(activeTab(tabName, defaultTab)));
+  const [resource, setResource] = React.useState(activeTab(tabName, defaultTab));
 
-  constructor(props: WaypointConfigProps) {
-    super(props);
-    this.state = {
-      tabHeight: 300,
-      fetch: true,
-      activeKey: waypointTabs.indexOf(activeTab(tabName, this.defaultTab)),
-      resource: activeTab(tabName, this.defaultTab)
-    };
-  }
+  const currentTabIndexRef = React.useRef();
 
-  componentDidUpdate(_prevProps: WaypointConfigProps, prevState: WaypointConfigState): void {
-    const currentTabIndex = waypointTabs.indexOf(activeTab(tabName, this.defaultTab));
+  React.useEffect(() => {
+    const currentTabIndex = waypointTabs.indexOf(activeTab(tabName, defaultTab));
 
-    if (this.state.resource !== prevState.resource) {
-      if (currentTabIndex !== this.state.activeKey) {
-        this.setState({ activeKey: currentTabIndex });
+    if (currentTabIndexRef.current !== undefined && resource !== currentTabIndexRef.current) {
+      if (currentTabIndex !== activeKey) {
+        setActiveKey(currentTabIndex);
       }
+      // @ts-ignore
+      currentTabIndexRef.current = currentTabIndex;
     }
-  }
+  }, [resource]);
 
-  waypointHandleTabClick = (_event: React.MouseEvent, tabIndex: string | number): void => {
+  const waypointHandleTabClick = (_event: React.MouseEvent, tabIndex: string | number): void => {
     const resourceIdx: number = +tabIndex;
     const targetResource: string = resources[resourceIdx];
 
-    if (targetResource !== this.state.resource) {
-      this.setState({
-        fetch: true,
-        resource: targetResource,
-        activeKey: resourceIdx
-      });
+    if (targetResource !== resource) {
+      setResource(targetResource);
+      setActiveKey(resourceIdx);
 
       const mainTab = new URLSearchParams(location.getSearch()).get(workloadTabName) ?? workloadDefaultTab;
       const urlParams = new URLSearchParams(location.getSearch());
@@ -113,84 +99,82 @@ export class WaypointConfig extends React.Component<WaypointConfigProps, Waypoin
     }
   };
 
-  render(): React.ReactNode {
-    const tabs: JSX.Element[] = [];
+  const tabs: JSX.Element[] = [];
 
-    if (this.waypointFor === WaypointType.Service || this.waypointFor === WaypointType.All) {
-      const servicesTab = (
-        <Tab title={t('Services')} eventKey={0} key={this.waypointFor}>
-          <Card className={fullHeightStyle}>
-            <CardBody>
-              <div className={fullHeightStyle}>
-                <div style={{ marginBottom: '1.25rem' }}>
-                  <WaypointWorkloadsTable
-                    workloads={this.props.workload.waypointServices ? this.props.workload.waypointServices : []}
-                    type={WaypointType.Service}
-                  />
-                </div>
-              </div>
-            </CardBody>
-          </Card>
-        </Tab>
-      );
-      tabs.push(servicesTab);
-    }
-
-    if (this.waypointFor === WaypointType.Workload || this.waypointFor === WaypointType.All) {
-      const workloadsTab = (
-        <Tab title={t('Workloads')} eventKey={1} key={this.waypointFor}>
-          <Card className={fullHeightStyle}>
-            <CardBody>
-              <div className={fullHeightStyle}>
-                <div style={{ marginBottom: '1.25rem' }}>
-                  <WaypointWorkloadsTable
-                    workloads={this.props.workload.waypointWorkloads ? this.props.workload.waypointWorkloads : []}
-                    type={WaypointType.Workload}
-                  />
-                </div>
-              </div>
-            </CardBody>
-          </Card>
-        </Tab>
-      );
-      tabs.push(workloadsTab);
-    }
-
-    const infoTab = (
-      <Tab title={t('Info')} eventKey={2} key={t('information')}>
+  if (waypointFor === WaypointType.Service || waypointFor === WaypointType.All) {
+    const servicesTab = (
+      <Tab title={t('Services')} eventKey={0} key={waypointFor}>
         <Card className={fullHeightStyle}>
           <CardBody>
             <div className={fullHeightStyle}>
               <div style={{ marginBottom: '1.25rem' }}>
-                <Title headingLevel="h5" size={TitleSizes.md} style={{ marginBottom: '1em' }}>
-                  Waypoint for: {this.waypointFor}
-                </Title>
-                {showProxyStatus(this.props.workload)}
+                <WaypointWorkloadsTable
+                  workloads={props.workload.waypointServices ? props.workload.waypointServices : []}
+                  type={WaypointType.Service}
+                />
               </div>
             </div>
           </CardBody>
         </Card>
       </Tab>
     );
-    tabs.push(infoTab);
-
-    return (
-      <RenderComponentScroll onResize={height => this.setState({ tabHeight: height })}>
-        <Grid>
-          <GridItem span={12}>
-            <Tabs
-              id="waypoint-details"
-              className={subTabStyle}
-              activeKey={this.state.activeKey}
-              onSelect={this.waypointHandleTabClick}
-              mountOnEnter={true}
-              unmountOnExit={true}
-            >
-              {tabs}
-            </Tabs>
-          </GridItem>
-        </Grid>
-      </RenderComponentScroll>
-    );
+    tabs.push(servicesTab);
   }
-}
+
+  if (waypointFor === WaypointType.Workload || waypointFor === WaypointType.All) {
+    const workloadsTab = (
+      <Tab title={t('Workloads')} eventKey={1} key={waypointFor}>
+        <Card className={fullHeightStyle}>
+          <CardBody>
+            <div className={fullHeightStyle}>
+              <div style={{ marginBottom: '1.25rem' }}>
+                <WaypointWorkloadsTable
+                  workloads={props.workload.waypointWorkloads ? props.workload.waypointWorkloads : []}
+                  type={WaypointType.Workload}
+                />
+              </div>
+            </div>
+          </CardBody>
+        </Card>
+      </Tab>
+    );
+    tabs.push(workloadsTab);
+  }
+
+  const infoTab = (
+    <Tab title={t('Info')} eventKey={2} key={t('information')}>
+      <Card className={fullHeightStyle}>
+        <CardBody>
+          <div className={fullHeightStyle}>
+            <div style={{ marginBottom: '1.25rem' }}>
+              <Title headingLevel="h5" size={TitleSizes.md} style={{ marginBottom: '1em' }}>
+                Waypoint for: {waypointFor}
+              </Title>
+              {showProxyStatus(props.workload)}
+            </div>
+          </div>
+        </CardBody>
+      </Card>
+    </Tab>
+  );
+  tabs.push(infoTab);
+
+  return (
+    <RenderComponentScroll>
+      <Grid>
+        <GridItem span={12}>
+          <Tabs
+            id="waypoint-details"
+            className={subTabStyle}
+            activeKey={activeKey}
+            onSelect={waypointHandleTabClick}
+            mountOnEnter={true}
+            unmountOnExit={true}
+          >
+            {tabs}
+          </Tabs>
+        </GridItem>
+      </Grid>
+    </RenderComponentScroll>
+  );
+};
