@@ -79,7 +79,7 @@ export const ZtunnelConfig: React.FC<ZtunnelConfigProps> = (props: ZtunnelConfig
 
   React.useEffect(() => {
     fetchContent();
-  }, []);
+  }, [fetchContent]);
 
   React.useEffect(() => {
     const currentTabIndex = ztunnelTabs.indexOf(activeTab(tabName, defaultTab));
@@ -94,7 +94,7 @@ export const ZtunnelConfig: React.FC<ZtunnelConfigProps> = (props: ZtunnelConfig
         setActiveKey(currentTabIndex);
       }
     }
-  }, [resource, pod, activeKey, prevPod, prevResource]);
+  }, [resource, pod, activeKey, prevPod, prevResource, fetchContent]);
 
   const ztunnelHandleTabClick = (_event: React.MouseEvent, tabIndex: string | number): void => {
     const resourceIdx: number = +tabIndex;
