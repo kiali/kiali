@@ -74,7 +74,7 @@ const (
 	AmbientAnnotationEnabled  = "enabled"
 	Waypoint                  = "waypoint"
 	WaypointFor               = "istio.io/waypoint-for"
-	WaypointForAll            = "all"	
+	WaypointForAll            = "all"
 	WaypointForNone           = "none"
 	WaypointForService        = "service"
 	WaypointForWorkload       = "workload"
