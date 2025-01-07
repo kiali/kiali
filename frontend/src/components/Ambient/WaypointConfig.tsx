@@ -1,6 +1,4 @@
 import * as React from 'react';
-import { connect } from 'react-redux';
-import { KialiAppState } from 'store/Store';
 import { IRow, ThProps } from '@patternfly/react-table';
 import { Workload } from 'types/Workload';
 import { Card, CardBody, Grid, GridItem, Tab, Tabs, Title, TitleSizes } from '@patternfly/react-core';
@@ -11,7 +9,6 @@ import {
   tabName as workloadTabName,
   defaultTab as workloadDefaultTab
 } from '../../pages/WorkloadDetails/WorkloadDetailsPage';
-import { TimeInMilliseconds } from '../../types/Common';
 import { subTabStyle } from 'styles/TabStyles';
 import { kialiStyle } from '../../styles/StyleUtils';
 import { t } from 'i18next';
@@ -25,13 +22,7 @@ const resources: string[] = ['service', 'workload', 'information'];
 const waypointTabs = ['service', 'workload', 'information'];
 const tabName = 'waypointTab';
 
-type ReduxProps = {
-  kiosk: string;
-};
-
-type WaypointConfigProps = ReduxProps & {
-  lastRefreshAt: TimeInMilliseconds;
-  namespace: string;
+type WaypointConfigProps = {
   workload: Workload;
 };
 
@@ -79,7 +70,7 @@ const showProxyStatus = (workload: Workload): React.ReactNode => {
   return <SimpleTable label={'Proxy Status'} columns={cols} rows={rows} />;
 };
 
-class WaypointConfigComponent extends React.Component<WaypointConfigProps, WaypointConfigState> {
+export class WaypointConfig extends React.Component<WaypointConfigProps, WaypointConfigState> {
   private waypointFor = isWaypointFor(this.props.workload);
   private defaultTab = this.waypointFor === WaypointType.Workload ? WaypointType.Workload : WaypointType.Service;
 
@@ -203,9 +194,3 @@ class WaypointConfigComponent extends React.Component<WaypointConfigProps, Waypo
     );
   }
 }
-
-const mapStateToProps = (state: KialiAppState): ReduxProps => ({
-  kiosk: state.globalState.kiosk
-});
-
-export const WaypointConfig = connect(mapStateToProps)(WaypointConfigComponent);

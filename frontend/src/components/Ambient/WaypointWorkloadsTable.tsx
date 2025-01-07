@@ -27,7 +27,7 @@ type WaypointWorkloadsProps = {
   workloads: ElementInfo[];
 };
 
-export const emptyStyle = kialiStyle({
+const emptyStyle = kialiStyle({
   padding: 0,
   margin: 0
 });

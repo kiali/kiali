@@ -287,13 +287,7 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
     if (this.state.workload && this.state.workload.ambient === 'waypoint') {
       const waypointTab = (
         <Tab title="Waypoint" eventKey={12} key="Waypoint">
-          {this.state.workload && (
-            <WaypointConfig
-              lastRefreshAt={this.props.lastRefreshAt}
-              namespace={this.props.workloadId.namespace}
-              workload={this.state.workload}
-            />
-          )}
+          {this.state.workload && <WaypointConfig workload={this.state.workload} />}
         </Tab>
       );
       tabsArray.push(waypointTab);
