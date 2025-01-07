@@ -48,7 +48,7 @@ export interface SortableCompareTh<T> extends SortableTh {
 
 export const ZtunnelConfig: React.FC<ZtunnelConfigProps> = (props: ZtunnelConfigProps) => {
   const sortedPods = (): Pod[] => {
-    return props.workload.pods.sort((p1: Pod, p2: Pod) => (p1.name >= p2.name ? 1 : -1));
+    return props.workload?.pods.sort((p1: Pod, p2: Pod) => (p1.name >= p2.name ? 1 : -1));
   };
 
   const [pod, setPod] = React.useState(sortedPods()[0]);
@@ -60,14 +60,15 @@ export const ZtunnelConfig: React.FC<ZtunnelConfigProps> = (props: ZtunnelConfig
   const prevResource = React.createRef();
   const prevPod = React.createRef();
 
-  const fetchZtunnelConfig = React.useCallback(async () => {
-    await API.getPodZtunnelConfig(props.namespace, pod.name, props.workload.cluster)
+  const fetchZtunnelConfig = React.useCallback(async (ns, name, cluster: string) => {
+    await API.getPodZtunnelConfig(ns, name, cluster)
       .then(resultConfig => {
         setConfig(resultConfig.data);
         setFetch(false);
+        console.log(resultConfig.data);
       })
       .catch(error => {
-        AlertUtils.addError(`Could not fetch ztunnel config for ${pod.name}.`, error);
+        AlertUtils.addError(`Could not fetch ztunnel config for ${name}.`, error);
       });
   }, []);
 
@@ -81,7 +82,7 @@ export const ZtunnelConfig: React.FC<ZtunnelConfigProps> = (props: ZtunnelConfig
       fetch === true
     ) {
       setFetch(false);
-      fetchZtunnelConfig();
+      fetchZtunnelConfig(props.namespace, pod.name, props.workload.cluster ? props.workload.cluster : '');
       if (currentTabIndex !== activeKey) {
         setActiveKey(currentTabIndex);
       }
@@ -137,7 +138,7 @@ export const ZtunnelConfig: React.FC<ZtunnelConfigProps> = (props: ZtunnelConfig
                 options={props.workload.pods.map((pod: Pod) => pod.name).sort()}
               />
             </div>
-            <ZtunnelServicesTable config={config.services} />
+            <ZtunnelServicesTable config={config?.services} />
           </div>
         </CardBody>
       </Card>
@@ -163,7 +164,7 @@ export const ZtunnelConfig: React.FC<ZtunnelConfigProps> = (props: ZtunnelConfig
                 options={props.workload.pods.map((pod: Pod) => pod.name).sort()}
               />
             </div>
-            <ZtunnelWorkloadsTable config={config.workloads} />
+            <ZtunnelWorkloadsTable config={config?.workloads} />
           </div>
         </CardBody>
       </Card>
