@@ -2077,8 +2077,8 @@ func (in *WorkloadService) isWorkloadCaptured(ctx context.Context, workload mode
 
 // GetWaypointsForWorkload Returns a list of waypoint proxies that capture a workload
 // It should be related with just one waypoint, but this is up to the user, it can help to detect issues in the Ambient Mesh
-func (in *WorkloadService) GetWaypointsForWorkload(ctx context.Context, workload models.Workload) []models.WorkloadInfo {
-	var workloadslist []models.WorkloadInfo
+func (in *WorkloadService) GetWaypointsForWorkload(ctx context.Context, workload models.Workload) []models.WorkloadReferenceInfo {
+	var workloadslist []models.WorkloadReferenceInfo
 	workloadsMap := map[string]bool{} // Ensure unique
 
 	// Get Waypoint list names
@@ -2095,7 +2095,7 @@ func (in *WorkloadService) GetWaypointsForWorkload(ctx context.Context, workload
 		}
 		key := fmt.Sprintf("%s_%s_%s", workload.Cluster, waypoint.Namespace, waypoint.Name)
 		if wkd != nil && !workloadsMap[key] {
-			workloadslist = append(workloadslist, models.WorkloadInfo{Name: waypoint.Name, Namespace: waypoint.Namespace, Cluster: waypoint.Cluster, Type: wkd.WaypointFor()})
+			workloadslist = append(workloadslist, models.WorkloadReferenceInfo{Name: waypoint.Name, Namespace: waypoint.Namespace, Cluster: waypoint.Cluster, Type: wkd.WaypointFor()})
 			workloadsMap[key] = true
 		}
 	}
@@ -2105,7 +2105,7 @@ func (in *WorkloadService) GetWaypointsForWorkload(ctx context.Context, workload
 
 // listWaypointWorkloads returns the list of workloads when the waypoint proxy is applied per namespace
 // Maybe use some cache?
-func (in *WorkloadService) listWaypointWorkloads(ctx context.Context, name, namespace, cluster string, includeServices bool) ([]models.WorkloadInfo, []models.ServiceInfo) {
+func (in *WorkloadService) listWaypointWorkloads(ctx context.Context, name, namespace, cluster string, includeServices bool) ([]models.WorkloadReferenceInfo, []models.ServiceReferenceInfo) {
 	// Get all the workloads for a namespaces labeled
 	labelSelector := fmt.Sprintf("%s=%s", config.WaypointUseLabel, name)
 	nslist, errNs := in.userClients[cluster].GetNamespaces(labelSelector)
@@ -2113,8 +2113,8 @@ func (in *WorkloadService) listWaypointWorkloads(ctx context.Context, name, name
 		log.Errorf("listWaypointWorkloads: Error fetching namespaces by selector %s", labelSelector)
 	}
 
-	var workloadslist []models.WorkloadInfo
-	var servicesList []models.ServiceInfo
+	var workloadslist []models.WorkloadReferenceInfo
+	var servicesList []models.ServiceReferenceInfo
 	// This is to verify there is no duplicated services
 	servicesMap := make(map[string]bool)
 
@@ -2129,7 +2129,7 @@ func (in *WorkloadService) listWaypointWorkloads(ctx context.Context, name, name
 			for _, wk := range workloadList {
 				// This annotation disables other labels (Like the ns one)
 				if wk.Labels[in.config.IstioLabels.AmbientNamespaceLabel] != "none" {
-					workloadslist = append(workloadslist, models.WorkloadInfo{Name: wk.Name, Namespace: wk.Namespace, Labels: wk.Labels, LabelType: labelType, Cluster: wk.Cluster})
+					workloadslist = append(workloadslist, models.WorkloadReferenceInfo{Name: wk.Name, Namespace: wk.Namespace, Labels: wk.Labels, LabelType: labelType, Cluster: wk.Cluster})
 				}
 			}
 		}
@@ -2148,7 +2148,7 @@ func (in *WorkloadService) listWaypointWorkloads(ctx context.Context, name, name
 			}
 			for _, workload := range wlist {
 				// Is there any annotation that disables?
-				workloadslist = append(workloadslist, models.WorkloadInfo{Name: workload.Name, Namespace: workload.Namespace, LabelType: labelType, Labels: workload.Labels, Cluster: workload.Cluster})
+				workloadslist = append(workloadslist, models.WorkloadReferenceInfo{Name: workload.Name, Namespace: workload.Namespace, LabelType: labelType, Labels: workload.Labels, Cluster: workload.Cluster})
 			}
 		}
 	}
@@ -2174,7 +2174,7 @@ func (in *WorkloadService) listWaypointWorkloads(ctx context.Context, name, name
 				for _, service := range services.Services {
 					key := fmt.Sprintf("%s_%s_%s", service.Name, service.Namespace, service.Cluster)
 					if !servicesMap[key] {
-						servicesList = append(servicesList, models.ServiceInfo{Name: service.Name, Namespace: service.Namespace, LabelType: labelType, Cluster: service.Cluster})
+						servicesList = append(servicesList, models.ServiceReferenceInfo{Name: service.Name, Namespace: service.Namespace, LabelType: labelType, Cluster: service.Cluster})
 						servicesMap[key] = true
 					}
 				}

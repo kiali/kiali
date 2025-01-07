@@ -691,8 +691,8 @@ func (in *SvcService) isServiceCaptured(svc *models.Service) ([]models.Waypoint,
 
 // GetWaypointsForService returns a list of waypoint workloads that captured traffic for a specific service
 // It should be just one
-func (in *SvcService) GetWaypointsForService(ctx context.Context, svc *models.Service) []models.WorkloadInfo {
-	var workloadsList []models.WorkloadInfo
+func (in *SvcService) GetWaypointsForService(ctx context.Context, svc *models.Service) []models.WorkloadReferenceInfo {
+	var workloadsList []models.WorkloadReferenceInfo
 	waypoints, _ := in.isServiceCaptured(svc)
 
 	for _, waypoint := range waypoints {
@@ -702,7 +702,7 @@ func (in *SvcService) GetWaypointsForService(ctx context.Context, svc *models.Se
 			return nil
 		}
 		if wkd != nil {
-			workloadsList = append(workloadsList, models.WorkloadInfo{Name: waypoint.Name, Namespace: waypoint.Namespace, Cluster: waypoint.Cluster, Type: wkd.WaypointFor()})
+			workloadsList = append(workloadsList, models.WorkloadReferenceInfo{Name: waypoint.Name, Namespace: waypoint.Namespace, Cluster: waypoint.Cluster, Type: wkd.WaypointFor()})
 		}
 	}
 	return workloadsList
@@ -710,8 +710,8 @@ func (in *SvcService) GetWaypointsForService(ctx context.Context, svc *models.Se
 
 // ListWaypointServices returns a list of services which traffic is handled by a specific waypoint
 // It should return just one (If there are more, that might be a validation error)
-func (in *SvcService) ListWaypointServices(ctx context.Context, name, namespace, cluster string) []models.ServiceInfo {
-	var serviceInfoList []models.ServiceInfo
+func (in *SvcService) ListWaypointServices(ctx context.Context, name, namespace, cluster string) []models.ServiceReferenceInfo {
+	var serviceInfoList []models.ServiceReferenceInfo
 	// This is to verify there is no duplicated services
 	servicesMap := make(map[string]bool)
 
@@ -731,7 +731,7 @@ func (in *SvcService) ListWaypointServices(ctx context.Context, name, namespace,
 				for _, service := range svcs {
 					key := fmt.Sprintf("%s_%s_%s", service.Name, service.Namespace, cluster)
 					if !servicesMap[key] && (service.Namespace == namespace || service.Labels[config.WaypointUseNamespaceLabel] == namespace) {
-						serviceInfoList = append(serviceInfoList, models.ServiceInfo{Name: service.Name, Namespace: service.Namespace, LabelType: "service", Cluster: cluster})
+						serviceInfoList = append(serviceInfoList, models.ServiceReferenceInfo{Name: service.Name, Namespace: service.Namespace, LabelType: "service", Cluster: cluster})
 						servicesMap[key] = true
 					}
 				}

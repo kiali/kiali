@@ -14,7 +14,7 @@ import {
 import { kialiStyle } from '../../styles/StyleUtils';
 import { t } from 'i18next';
 import { SortableCompareTh } from './ZtunnelConfig';
-import { ElementInfo, WorkloadInfo } from '../../types/Workload';
+import { WaypointInfo, WorkloadInfo } from '../../types/Workload';
 import { isMultiCluster } from '../../config';
 import { Link } from 'react-router-dom-v5-compat';
 import { PFBadge, PFBadges } from '../Pf/PfBadges';
@@ -24,7 +24,7 @@ import { infoStyle } from '../../styles/IconStyle';
 
 type WaypointWorkloadsProps = {
   type: string;
-  workloads: ElementInfo[];
+  workloads: WaypointInfo[];
 };
 
 const emptyStyle = kialiStyle({

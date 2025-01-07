@@ -43,37 +43,6 @@ type WorkloadList struct {
 	Validations IstioValidations `json:"validations"`
 }
 
-// Reduced information for a workload
-// To create links to another workloads
-// Used by Ambient, to indicate the waypoint proxies
-type WorkloadInfo struct {
-	// Cluster
-	Cluster string `json:"cluster"`
-
-	// Workload labels
-	Labels map[string]string `json:"labels"`
-
-	// LabelType in case of waypoint workloads,
-	// Where the label comes from (namespace, workload or service)
-	// required: false
-	// example: namespace
-	LabelType string `json:"labelType"`
-
-	// Name for the workload
-	// required: true
-	Name string `json:"name"`
-
-	// Namespace where the workload live in
-	// required: true
-	// example: bookinfo
-	Namespace string `json:"namespace"`
-
-	// In case of waypoints it can be service/workload
-	// required: false
-	// example: workload/service
-	Type string `json:"type"`
-}
-
 type LogType string
 
 const (
@@ -200,6 +169,36 @@ type WorkloadListItem struct {
 
 type WorkloadOverviews []*WorkloadListItem
 
+// WorkloadReferenceInfo holds the service information needed to create links to another workload.
+// Used, for example, to link services to Ambient waypoint proxies
+type WorkloadReferenceInfo struct {
+	// Cluster
+	Cluster string `json:"cluster"`
+
+	// Workload labels
+	Labels map[string]string `json:"labels"`
+
+	// LabelType in case of waypoint workloads,
+	// Where the label comes from (namespace, workload or service)
+	// required: false
+	// example: namespace
+	LabelType string `json:"labelType"`
+
+	// Name for the workload
+	// required: true
+	Name string `json:"name"`
+
+	// Namespace where the workload live in
+	// required: true
+	// example: bookinfo
+	Namespace string `json:"namespace"`
+
+	// In case of waypoints it can be service/workload
+	// required: false
+	// example: workload/service
+	Type string `json:"type"`
+}
+
 // Workload has the details of a workload
 type Workload struct {
 	WorkloadListItem
@@ -234,10 +233,10 @@ type Workload struct {
 	Validations IstioValidations `json:"validations"`
 
 	// Ambient waypoint services
-	WaypointServices []ServiceInfo `json:"waypointServices"`
+	WaypointServices []ServiceReferenceInfo `json:"waypointServices"`
 
 	// Ambient waypoint workloads
-	WaypointWorkloads []WorkloadInfo `json:"waypointWorkloads"`
+	WaypointWorkloads []WorkloadReferenceInfo `json:"waypointWorkloads"`
 
 	// Health
 	Health WorkloadHealth `json:"health"`

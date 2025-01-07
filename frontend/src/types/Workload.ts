@@ -16,7 +16,7 @@ export type WorkloadInfo = {
   type?: string;
 };
 
-export type ElementInfo = WorkloadInfo | ServiceInfo;
+export type WaypointInfo = WorkloadInfo | ServiceInfo;
 
 export interface Workload {
   additionalDetails: AdditionalItem[];
@@ -43,8 +43,8 @@ export interface Workload {
   services: Service[];
   validations?: Validations;
   versionLabel: boolean;
-  waypointServices?: ElementInfo[];
-  waypointWorkloads?: ElementInfo[];
+  waypointServices?: WaypointInfo[];
+  waypointWorkloads?: WaypointInfo[];
 }
 
 export const emptyWorkload: Workload = {

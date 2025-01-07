@@ -97,11 +97,11 @@ type ServiceDetails struct {
 	VirtualServices    []*networking_v1.VirtualService          `json:"virtualServices"`
 	Workloads          WorkloadOverviews                        `json:"workloads"`
 	// Services with same app labels (different versions or a single version)
-	Health            ServiceHealth      `json:"health"`
-	NamespaceMTLS     MTLSStatus         `json:"namespaceMTLS"`
-	SubServices       []*ServiceOverview `json:"subServices"`
-	Validations       IstioValidations   `json:"validations"`
-	WaypointWorkloads []WorkloadInfo     `json:"waypointWorkloads"`
+	Health            ServiceHealth           `json:"health"`
+	NamespaceMTLS     MTLSStatus              `json:"namespaceMTLS"`
+	SubServices       []*ServiceOverview      `json:"subServices"`
+	Validations       IstioValidations        `json:"validations"`
+	WaypointWorkloads []WorkloadReferenceInfo `json:"waypointWorkloads"`
 }
 
 type (
@@ -126,8 +126,9 @@ type (
 	}
 )
 
-// ServiceInfo holds the service information needed to create links to another service. Used, for example, to link services to Ambient waypoint waypoint proxies
-type ServiceInfo struct {
+// ServiceReferenceInfo holds the service information needed to create links to another service.
+// Used, for example, to link services to Ambient waypoint proxies
+type ServiceReferenceInfo struct {
 	// Cluster
 	Cluster string `json:"cluster"`
 
