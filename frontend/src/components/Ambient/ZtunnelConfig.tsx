@@ -77,24 +77,31 @@ export const ZtunnelConfig: React.FC<ZtunnelConfigProps> = (props: ZtunnelConfig
     }
   };
 
-  React.useEffect(() => {
-    fetchContent();
-  }, []);
-
-  React.useEffect(() => {
-    const currentTabIndex = ztunnelTabs.indexOf(activeTab(tabName, defaultTab));
-    if (
-      prevPod.current !== undefined &&
-      prevPod.current !== pod &&
-      prevResource.current !== undefined &&
-      prevResource.current !== resource
-    ) {
+  React.useEffect(
+    () => {
       fetchContent();
-      if (currentTabIndex !== activeKey) {
-        setActiveKey(currentTabIndex);
+    },
+    // @ts-ignore
+    []
+  );
+
+  React.useEffect(
+    () => {
+      const currentTabIndex = ztunnelTabs.indexOf(activeTab(tabName, defaultTab));
+      if (
+        prevPod.current !== undefined &&
+        prevPod.current !== pod &&
+        prevResource.current !== undefined &&
+        prevResource.current !== resource
+      ) {
+        fetchContent();
+        if (currentTabIndex !== activeKey) {
+          setActiveKey(currentTabIndex);
+        }
       }
-    }
-  }, [resource, pod, activeKey]);
+    }, // @ts-ignore
+    [resource, pod, activeKey]
+  );
 
   const ztunnelHandleTabClick = (_event: React.MouseEvent, tabIndex: string | number): void => {
     const resourceIdx: number = +tabIndex;
