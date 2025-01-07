@@ -126,9 +126,7 @@ type (
 	}
 )
 
-// Reduced information for a service
-// To create links to another service
-// Used by Ambient, to indicate the waypoint proxies
+// ServiceInfo holds the service information needed to create links to another service. Used, for example, to link services to Ambient waypoint waypoint proxies
 type ServiceInfo struct {
 	// Cluster
 	Cluster string `json:"cluster"`
