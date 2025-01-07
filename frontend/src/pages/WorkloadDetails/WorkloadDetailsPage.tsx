@@ -58,8 +58,8 @@ const paramToTab: { [key: string]: number } = {
   in_metrics: 3,
   out_metrics: 4,
   traces: 5,
-  ztunnel: 7,
-  waypoint: 8
+  waypoint: 7,
+  ztunnel: 8
 };
 
 let nextTabIndex = 6;
