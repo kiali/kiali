@@ -87,7 +87,17 @@ export const ZtunnelConfig: React.FC<ZtunnelConfigProps> = (props: ZtunnelConfig
         setActiveKey(currentTabIndex);
       }
     }
-  }, [resource, pod, activeKey, prevPod, prevResource, fetchZtunnelConfig, fetch]);
+  }, [
+    resource,
+    pod,
+    activeKey,
+    prevPod,
+    prevResource,
+    fetchZtunnelConfig,
+    fetch,
+    props.namespace,
+    props.workload.cluster
+  ]);
 
   const ztunnelHandleTabClick = (_event: React.MouseEvent, tabIndex: string | number): void => {
     const resourceIdx: number = +tabIndex;
