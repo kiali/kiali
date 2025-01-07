@@ -60,26 +60,18 @@ export const ZtunnelConfig: React.FC<ZtunnelConfigProps> = (props: ZtunnelConfig
   const prevResource = React.createRef();
   const prevPod = React.createRef();
 
-  const fetchZtunnelConfig = (): void => {
-    API.getPodZtunnelConfig(props.namespace, pod.name, props.workload.cluster)
-      .then(resultConfig => {
-        setConfig(resultConfig.data);
-        setFetch(false);
-      })
-      .catch(error => {
-        AlertUtils.addError(`Could not fetch ztunnel config for ${pod.name}.`, error);
-      });
-  };
-
-  const fetchContent = (): void => {
+  const fetchZtunnelConfig = React.useCallback(async () => {
     if (fetch === true) {
-      fetchZtunnelConfig();
+      await API.getPodZtunnelConfig(props.namespace, pod.name, props.workload.cluster)
+        .then(resultConfig => {
+          setConfig(resultConfig.data);
+          setFetch(false);
+        })
+        .catch(error => {
+          AlertUtils.addError(`Could not fetch ztunnel config for ${pod.name}.`, error);
+        });
     }
-  };
-
-  React.useEffect(() => {
-    fetchContent();
-  }, [fetchContent]);
+  }, []);
 
   React.useEffect(() => {
     const currentTabIndex = ztunnelTabs.indexOf(activeTab(tabName, defaultTab));
@@ -87,14 +79,16 @@ export const ZtunnelConfig: React.FC<ZtunnelConfigProps> = (props: ZtunnelConfig
       prevPod.current !== undefined &&
       prevPod.current !== pod &&
       prevResource.current !== undefined &&
-      prevResource.current !== resource
+      prevResource.current !== resource &&
+      fetch === true
     ) {
-      fetchContent();
+      setFetch(false);
+      fetchZtunnelConfig();
       if (currentTabIndex !== activeKey) {
         setActiveKey(currentTabIndex);
       }
     }
-  }, [resource, pod, activeKey, prevPod, prevResource, fetchContent]);
+  }, [resource, pod, activeKey, prevPod, prevResource, fetchZtunnelConfig]);
 
   const ztunnelHandleTabClick = (_event: React.MouseEvent, tabIndex: string | number): void => {
     const resourceIdx: number = +tabIndex;
