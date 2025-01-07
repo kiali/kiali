@@ -47,8 +47,8 @@ export interface SortableCompareTh<T> extends SortableTh {
 }
 
 export const ZtunnelConfig: React.FC<ZtunnelConfigProps> = (props: ZtunnelConfigProps) => {
-  const sortedPods = (): void => {
-    props.workload.pods.sort((p1: Pod, p2: Pod) => (p1.name >= p2.name ? 1 : -1));
+  const sortedPods = (): Pod[] => {
+    return props.workload.pods.sort((p1: Pod, p2: Pod) => (p1.name >= p2.name ? 1 : -1));
   };
 
   const [pod, setPod] = React.useState(sortedPods()[0]);
@@ -77,31 +77,24 @@ export const ZtunnelConfig: React.FC<ZtunnelConfigProps> = (props: ZtunnelConfig
     }
   };
 
-  React.useEffect(
-    () => {
-      fetchContent();
-    },
-    // @ts-ignore
-    []
-  );
+  React.useEffect(() => {
+    fetchContent();
+  }, [fetchContent]);
 
-  React.useEffect(
-    () => {
-      const currentTabIndex = ztunnelTabs.indexOf(activeTab(tabName, defaultTab));
-      if (
-        prevPod.current !== undefined &&
-        prevPod.current !== pod &&
-        prevResource.current !== undefined &&
-        prevResource.current !== resource
-      ) {
-        fetchContent();
-        if (currentTabIndex !== activeKey) {
-          setActiveKey(currentTabIndex);
-        }
+  React.useEffect(() => {
+    const currentTabIndex = ztunnelTabs.indexOf(activeTab(tabName, defaultTab));
+    if (
+      prevPod.current !== undefined &&
+      prevPod.current !== pod &&
+      prevResource.current !== undefined &&
+      prevResource.current !== resource
+    ) {
+      fetchContent();
+      if (currentTabIndex !== activeKey) {
+        setActiveKey(currentTabIndex);
       }
-    }, // @ts-ignore
-    [resource, pod, activeKey]
-  );
+    }
+  }, [resource, pod, activeKey, fetchContent, prevPod, prevResource]);
 
   const ztunnelHandleTabClick = (_event: React.MouseEvent, tabIndex: string | number): void => {
     const resourceIdx: number = +tabIndex;
@@ -146,7 +139,7 @@ export const ZtunnelConfig: React.FC<ZtunnelConfigProps> = (props: ZtunnelConfig
               <ToolbarDropdown
                 id="ztunnel_pods_list"
                 tooltip={t('Display ztunnel config for the selected pod')}
-                handleSelect={key => setPod(key)}
+                handleSelect={key => setPodByKey(key)}
                 value={pod.name}
                 label={pod.name}
                 options={props.workload.pods.map((pod: Pod) => pod.name).sort()}
