@@ -61,16 +61,14 @@ export const ZtunnelConfig: React.FC<ZtunnelConfigProps> = (props: ZtunnelConfig
   const prevPod = React.createRef();
 
   const fetchZtunnelConfig = React.useCallback(async () => {
-    if (fetch === true) {
-      await API.getPodZtunnelConfig(props.namespace, pod.name, props.workload.cluster)
-        .then(resultConfig => {
-          setConfig(resultConfig.data);
-          setFetch(false);
-        })
-        .catch(error => {
-          AlertUtils.addError(`Could not fetch ztunnel config for ${pod.name}.`, error);
-        });
-    }
+    await API.getPodZtunnelConfig(props.namespace, pod.name, props.workload.cluster)
+      .then(resultConfig => {
+        setConfig(resultConfig.data);
+        setFetch(false);
+      })
+      .catch(error => {
+        AlertUtils.addError(`Could not fetch ztunnel config for ${pod.name}.`, error);
+      });
   }, []);
 
   React.useEffect(() => {
@@ -88,7 +86,7 @@ export const ZtunnelConfig: React.FC<ZtunnelConfigProps> = (props: ZtunnelConfig
         setActiveKey(currentTabIndex);
       }
     }
-  }, [resource, pod, activeKey, prevPod, prevResource, fetchZtunnelConfig]);
+  }, [resource, pod, activeKey, prevPod, prevResource, fetchZtunnelConfig, fetch]);
 
   const ztunnelHandleTabClick = (_event: React.MouseEvent, tabIndex: string | number): void => {
     const resourceIdx: number = +tabIndex;
