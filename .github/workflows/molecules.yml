@@ -15,6 +15,11 @@ on:
         required: false
         default: "latest"
         type: string
+      last_n_istio_versions:
+        description: "The last N minor versions of Istio to test. Default is 3 meaning test with the latest version of Istio, along with the previous two minor version releases."
+        required: false
+        default: 3
+        type: number
 
 jobs:
   molecules:
@@ -34,6 +39,14 @@ jobs:
           echo "tests=${{ inputs.all_tests }}"
         fi
     - name: Run molecule tests using helm
-      run: ./hack/ci-kind-molecule-tests.sh --client-exe $(which kubectl) --kind-exe $(which kind) --all-tests "${{ inputs.all_tests }}" --git-clone-protocol https --irc-room "" --upload-logs false --rebuild-cluster true -ci true --operator-installer helm --olm-enabled false
-    - name: Run molecule tests using OLM
-      run: ./hack/ci-kind-molecule-tests.sh --client-exe $(which kubectl) --kind-exe $(which kind) --all-tests "${{ inputs.all_tests }}" --git-clone-protocol https --irc-room "" --upload-logs false --rebuild-cluster true -ci true --operator-installer skip --olm-enabled true --olm-version "${{ inputs.olm_version }}"
+      run: |
+        NUMBER_ISTIO_VERSIONS_TO_TEST="${{ inputs.last_n_istio_versions }}"
+        LATEST_ISTIO_VERSIONS="$(curl -s https://api.github.com/repos/istio/istio/releases | jq -r '.[].tag_name' | sort -rV | awk -F. '!seen[$1"."$2]++' | head -n "${NUMBER_ISTIO_VERSIONS_TO_TEST}")"
+        echo "Testing with the following versions of Istio:"
+        echo "${LATEST_ISTIO_VERSIONS}"
+        for iv in ${LATEST_ISTIO_VERSIONS}; do
+          echo "Testing with Istio version ${iv} using Helm install"
+          ./hack/ci-kind-molecule-tests.sh --istio-version ${iv} --client-exe $(which kubectl) --kind-exe $(which kind) --all-tests "${{ inputs.all_tests }}" --git-clone-protocol https --irc-room "" --upload-logs false --rebuild-cluster true -ci true --operator-installer helm --olm-enabled false
+          echo "Testing with Istio version ${iv} using OLM install"
+          ./hack/ci-kind-molecule-tests.sh --istio-version ${iv} --client-exe $(which kubectl) --kind-exe $(which kind) --all-tests "${{ inputs.all_tests }}" --git-clone-protocol https --irc-room "" --upload-logs false --rebuild-cluster false -ci true --operator-installer skip --olm-enabled true --olm-version "${{ inputs.olm_version }}"
+        done
