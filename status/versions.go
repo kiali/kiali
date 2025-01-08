@@ -4,8 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
 	"net/url"
 	"strings"
 	"time"
@@ -131,30 +129,15 @@ func tracingVersion(conf *config.Config, homeClusterSAClient kubernetes.ClientIn
 			}
 		} else {
 			// Tempo
-			auth := tracingConfig.Auth
-			if auth.UseKialiToken {
-				auth.Token = homeClusterSAClient.GetToken()
-			}
-			transport, err := httputil.CreateTransport(&auth, &http.Transport{}, 10*time.Second, tracingConfig.CustomHeaders)
-			if err != nil {
-				return nil, err
-			}
-			client := http.Client{Transport: transport, Timeout: 10 * time.Second}
 			if tracingConfig.Provider == config.TempoProvider {
-				response, err := client.Get(fmt.Sprintf("%s/api/status/buildinfo", versionUrl))
-
-				if err != nil || response.StatusCode > 399 {
-					log.Infof("tempo version check failed: url=[%v], code=[%v], err=[%v]", versionUrl, response.StatusCode, err)
+				body, statusCode, _, err := httputil.HttpGet(fmt.Sprintf("%s/api/status/buildinfo", versionUrl), &tracingConfig.Auth, 10*time.Second, nil, nil)
+				if err != nil || statusCode > 399 {
+					log.Infof("tempo version check failed: url=[%v], code=[%v], err=[%v]", versionUrl, statusCode, err)
 				} else {
 					tempoV := new(tempoResponseVersion)
-					body, err := io.ReadAll(response.Body)
-					if err != nil {
-						log.Infof("Error decoding tempo version response: [%s]", err.Error())
-					} else {
-						err = json.Unmarshal(body, &tempoV)
-						if err == nil {
-							product.Version = tempoV.Version
-						}
+					err = json.Unmarshal(body, &tempoV)
+					if err == nil {
+						product.Version = tempoV.Version
 					}
 				}
 			}
