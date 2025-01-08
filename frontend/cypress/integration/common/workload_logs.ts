@@ -11,7 +11,7 @@ Given(
 
     const changeIntervalDuration = (): void => {
       cy.get('#metrics_filter_interval_duration-toggle').click();
-      cy.get('#3600').click();
+      cy.get('#10800').click();
     };
 
     // In OSSMC, the duration interval is configured using the time duration modal component
