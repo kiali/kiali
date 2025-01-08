@@ -38,7 +38,7 @@ jobs:
         else
           echo "tests=${{ inputs.all_tests }}"
         fi
-    - name: Run molecule tests using helm
+    - name: Run molecule tests
       run: |
         NUMBER_ISTIO_VERSIONS_TO_TEST="${{ inputs.last_n_istio_versions }}"
         LATEST_ISTIO_VERSIONS="$(curl -s https://api.github.com/repos/istio/istio/releases | jq -r '.[].tag_name' | sort -rV | awk -F. '!seen[$1"."$2]++' | head -n "${NUMBER_ISTIO_VERSIONS_TO_TEST}")"
