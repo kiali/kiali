@@ -16,7 +16,7 @@
 package cytoscape
 
 import (
-	"crypto/md5"
+	"crypto/sha256"
 	"fmt"
 	"sort"
 	"strings"
@@ -168,11 +168,11 @@ type Config struct {
 }
 
 func nodeHash(id string) string {
-	return fmt.Sprintf("%x", md5.Sum([]byte(id)))
+	return fmt.Sprintf("%x", sha256.Sum256([]byte(id)))
 }
 
 func edgeHash(from, to, protocol string) string {
-	return fmt.Sprintf("%x", md5.Sum([]byte(fmt.Sprintf("%s.%s.%s", from, to, protocol))))
+	return fmt.Sprintf("%x", sha256.Sum256([]byte(fmt.Sprintf("%s.%s.%s", from, to, protocol))))
 }
 
 // NewConfig is required by the graph/ConfigVendor interface

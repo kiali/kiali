@@ -6,7 +6,7 @@
     "nodes": [
       {
         "data": {
-          "id": "e33863bda999d21bfea986c66eb0ae39",
+          "id": "4905b312ed2c58a1b998959b7e84419866823ec42b48e8f98e6849a0820db7a0",
           "nodeType": "workload",
           "cluster": "east",
           "namespace": "bookinfo",
@@ -36,7 +36,7 @@
       },
       {
         "data": {
-          "id": "6fb400654f51831b495b454c7d54839b",
+          "id": "75e6bff154aefcf8a8dcf46396a6d897afb9ad7b256b70d7e2ea5a5e8ed98242",
           "nodeType": "workload",
           "cluster": "east",
           "namespace": "bookinfo",
@@ -70,7 +70,7 @@
       },
       {
         "data": {
-          "id": "0035515c06eccff13560ea31cc928733",
+          "id": "69e059b60e571922ac6b355ec83f5de62ab0986910199a02de919dc81e278f93",
           "nodeType": "workload",
           "cluster": "east",
           "namespace": "bookinfo",
@@ -97,7 +97,7 @@
       },
       {
         "data": {
-          "id": "a6432aeee664b7c8edf3872fcc89d2de",
+          "id": "71d57c12e4f1e17aef33a5849d89ee165ea3f51cc50fa5d15a6bce61ef74ae8b",
           "nodeType": "workload",
           "cluster": "east",
           "namespace": "bookinfo",
@@ -124,7 +124,7 @@
       },
       {
         "data": {
-          "id": "57450de070195502d438ad71abdf35a1",
+          "id": "1e4148c5bef0363ad2d1768561fee88cbb32472c458cea990374e23224998811",
           "nodeType": "workload",
           "cluster": "east",
           "namespace": "bookinfo",
@@ -151,7 +151,7 @@
       },
       {
         "data": {
-          "id": "25c659622371eeab9ed18ffa7cfd8559",
+          "id": "4b4c0547ac843fd48ba81b7c72d5602d8e32ab580d3184f68d5a64825c7cb5e6",
           "nodeType": "workload",
           "cluster": "east",
           "namespace": "bookinfo",
@@ -178,7 +178,7 @@
       },
       {
         "data": {
-          "id": "d572c98471e1586ae94397b094892b6b",
+          "id": "294cc51c6a37db5f2f644f7b121233dadc9cccf5686b31c9722c1fa72e8caa30",
           "nodeType": "workload",
           "cluster": "east",
           "namespace": "istio-system",
@@ -201,7 +201,7 @@
       },
       {
         "data": {
-          "id": "c806ddbb86ea4bb8a9c7c8b6be3ce196",
+          "id": "a57b9b85f07813dbe6d8120f62aaa97e27046bebfd9f431c66a6262ab36d5dbb",
           "nodeType": "service",
           "cluster": "unknown",
           "namespace": "unknown",
@@ -221,7 +221,7 @@
       },
       {
         "data": {
-          "id": "375ab940b56ae7bcf0f89cb1a7af5d44",
+          "id": "65be8a76856b9d3ef07a3348abcf6476fc80408bd342dd7882a5f4274542a1e0",
           "nodeType": "unknown",
           "cluster": "unknown",
           "namespace": "unknown",
@@ -245,9 +245,33 @@
     "edges": [
       {
         "data": {
-          "id": "61028a967055b02bacee418073ce3e43",
-          "source": "375ab940b56ae7bcf0f89cb1a7af5d44",
-          "target": "6fb400654f51831b495b454c7d54839b",
+          "id": "5b98e5e02cdc06281e4e45c971e9fd38df4419275511d5f42771531b1c2b4a08",
+          "source": "294cc51c6a37db5f2f644f7b121233dadc9cccf5686b31c9722c1fa72e8caa30",
+          "target": "75e6bff154aefcf8a8dcf46396a6d897afb9ad7b256b70d7e2ea5a5e8ed98242",
+          "traffic": {
+            "protocol": "http",
+            "rates": {
+              "http": "100.00",
+              "httpPercentReq": "100.0"
+            },
+            "responses": {
+              "200": {
+                "flags": {
+                  "-": "100.0"
+                },
+                "hosts": {
+                  "productpage:9080": "100.0"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "0dca3c4439bd563dd8ceed9700588a49e86308ad29c85cc515d828d9aecee33a",
+          "source": "65be8a76856b9d3ef07a3348abcf6476fc80408bd342dd7882a5f4274542a1e0",
+          "target": "75e6bff154aefcf8a8dcf46396a6d897afb9ad7b256b70d7e2ea5a5e8ed98242",
           "traffic": {
             "protocol": "http",
             "rates": {
@@ -269,9 +293,9 @@
       },
       {
         "data": {
-          "id": "d36794db8fe678f42751820b857db9fd",
-          "source": "6fb400654f51831b495b454c7d54839b",
-          "target": "0035515c06eccff13560ea31cc928733",
+          "id": "87c6da1966144a799266bcf3d7e987712209e2383d9d169f52defbfa88ba24c7",
+          "source": "75e6bff154aefcf8a8dcf46396a6d897afb9ad7b256b70d7e2ea5a5e8ed98242",
+          "target": "1e4148c5bef0363ad2d1768561fee88cbb32472c458cea990374e23224998811",
           "traffic": {
             "protocol": "http",
             "rates": {
@@ -293,130 +317,9 @@
       },
       {
         "data": {
-          "id": "5755b8a53c856a29e8dc11f4c4287f80",
-          "source": "6fb400654f51831b495b454c7d54839b",
-          "target": "25c659622371eeab9ed18ffa7cfd8559",
-          "traffic": {
-            "protocol": "tcp",
-            "rates": {
-              "tcp": "31.00"
-            },
-            "responses": {
-              "-": {
-                "flags": {
-                  "-": "100.0"
-                },
-                "hosts": {
-                  "tcp:9080": "100.0"
-                }
-              }
-            }
-          }
-        }
-      },
-      {
-        "data": {
-          "id": "d59c1e68e3912e78563a72150db7dd59",
-          "source": "6fb400654f51831b495b454c7d54839b",
-          "target": "57450de070195502d438ad71abdf35a1",
-          "traffic": {
-            "protocol": "http",
-            "rates": {
-              "http": "20.00",
-              "httpPercentReq": "12.2"
-            },
-            "responses": {
-              "200": {
-                "flags": {
-                  "-": "100.0"
-                },
-                "hosts": {
-                  "reviews:9080": "100.0"
-                }
-              }
-            }
-          }
-        }
-      },
-      {
-        "data": {
-          "id": "5c668ff2ed646da1536d83cf2fadbc57",
-          "source": "6fb400654f51831b495b454c7d54839b",
-          "target": "6fb400654f51831b495b454c7d54839b",
-          "traffic": {
-            "protocol": "http",
-            "rates": {
-              "http": "20.00",
-              "httpPercentReq": "12.2"
-            },
-            "responses": {
-              "200": {
-                "flags": {
-                  "-": "100.0"
-                },
-                "hosts": {
-                  "productpage:9080": "100.0"
-                }
-              }
-            }
-          }
-        }
-      },
-      {
-        "data": {
-          "id": "d0d2f3c83f96bb135a622e71fe86d68d",
-          "source": "6fb400654f51831b495b454c7d54839b",
-          "target": "a6432aeee664b7c8edf3872fcc89d2de",
-          "traffic": {
-            "protocol": "http",
-            "rates": {
-              "http": "20.00",
-              "httpPercentReq": "12.2"
-            },
-            "responses": {
-              "200": {
-                "flags": {
-                  "-": "100.0"
-                },
-                "hosts": {
-                  "reviews:9080": "100.0"
-                }
-              }
-            }
-          }
-        }
-      },
-      {
-        "data": {
-          "id": "b41bde098985920aaa13c547a7ee5065",
-          "source": "6fb400654f51831b495b454c7d54839b",
-          "target": "c806ddbb86ea4bb8a9c7c8b6be3ce196",
-          "traffic": {
-            "protocol": "http",
-            "rates": {
-              "http": "4.00",
-              "http4xx": "4.00",
-              "httpPercentErr": "100.0",
-              "httpPercentReq": "2.4"
-            },
-            "responses": {
-              "404": {
-                "flags": {
-                  "NR": "100.0"
-                },
-                "hosts": {
-                  "unknown": "100.0"
-                }
-              }
-            }
-          }
-        }
-      },
-      {
-        "data": {
-          "id": "fc4d065839655ec68aaffbd2881c7380",
-          "source": "6fb400654f51831b495b454c7d54839b",
-          "target": "e33863bda999d21bfea986c66eb0ae39",
+          "id": "319d74c3e9cbcd77fa2616736d2348cc6818cf6d3c3dac44f4e2054325359480",
+          "source": "75e6bff154aefcf8a8dcf46396a6d897afb9ad7b256b70d7e2ea5a5e8ed98242",
+          "target": "4905b312ed2c58a1b998959b7e84419866823ec42b48e8f98e6849a0820db7a0",
           "traffic": {
             "protocol": "http",
             "rates": {
@@ -466,14 +369,85 @@
       },
       {
         "data": {
-          "id": "67b56dc45daf5831ba2dec84d8e00717",
-          "source": "d572c98471e1586ae94397b094892b6b",
-          "target": "6fb400654f51831b495b454c7d54839b",
+          "id": "a1ec7f03f76bddadc061a3f1a93a5e7abf5b5077fe7cf3e3942f6d8a53c7731b",
+          "source": "75e6bff154aefcf8a8dcf46396a6d897afb9ad7b256b70d7e2ea5a5e8ed98242",
+          "target": "4b4c0547ac843fd48ba81b7c72d5602d8e32ab580d3184f68d5a64825c7cb5e6",
+          "traffic": {
+            "protocol": "tcp",
+            "rates": {
+              "tcp": "31.00"
+            },
+            "responses": {
+              "-": {
+                "flags": {
+                  "-": "100.0"
+                },
+                "hosts": {
+                  "tcp:9080": "100.0"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "22cc7a87734820f83ab19513479c96c5d846df738df5494c6d45be5d85664c77",
+          "source": "75e6bff154aefcf8a8dcf46396a6d897afb9ad7b256b70d7e2ea5a5e8ed98242",
+          "target": "69e059b60e571922ac6b355ec83f5de62ab0986910199a02de919dc81e278f93",
           "traffic": {
             "protocol": "http",
             "rates": {
-              "http": "100.00",
-              "httpPercentReq": "100.0"
+              "http": "20.00",
+              "httpPercentReq": "12.2"
+            },
+            "responses": {
+              "200": {
+                "flags": {
+                  "-": "100.0"
+                },
+                "hosts": {
+                  "reviews:9080": "100.0"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "99ddbec3b26bdc593fe37f16802d05ce3db4dd4983f091724529975d8b7b1d1d",
+          "source": "75e6bff154aefcf8a8dcf46396a6d897afb9ad7b256b70d7e2ea5a5e8ed98242",
+          "target": "71d57c12e4f1e17aef33a5849d89ee165ea3f51cc50fa5d15a6bce61ef74ae8b",
+          "traffic": {
+            "protocol": "http",
+            "rates": {
+              "http": "20.00",
+              "httpPercentReq": "12.2"
+            },
+            "responses": {
+              "200": {
+                "flags": {
+                  "-": "100.0"
+                },
+                "hosts": {
+                  "reviews:9080": "100.0"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "2797fd518c691056c5dfd842208cfa3a1128ebd7357018e030a75faf222e55c0",
+          "source": "75e6bff154aefcf8a8dcf46396a6d897afb9ad7b256b70d7e2ea5a5e8ed98242",
+          "target": "75e6bff154aefcf8a8dcf46396a6d897afb9ad7b256b70d7e2ea5a5e8ed98242",
+          "traffic": {
+            "protocol": "http",
+            "rates": {
+              "http": "20.00",
+              "httpPercentReq": "12.2"
             },
             "responses": {
               "200": {
@@ -482,6 +456,32 @@
                 },
                 "hosts": {
                   "productpage:9080": "100.0"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "016bbd51ae10b7988b573592328a4b98fd4226eaa765cf03f86df28d959cc379",
+          "source": "75e6bff154aefcf8a8dcf46396a6d897afb9ad7b256b70d7e2ea5a5e8ed98242",
+          "target": "a57b9b85f07813dbe6d8120f62aaa97e27046bebfd9f431c66a6262ab36d5dbb",
+          "traffic": {
+            "protocol": "http",
+            "rates": {
+              "http": "4.00",
+              "http4xx": "4.00",
+              "httpPercentErr": "100.0",
+              "httpPercentReq": "2.4"
+            },
+            "responses": {
+              "404": {
+                "flags": {
+                  "NR": "100.0"
+                },
+                "hosts": {
+                  "unknown": "100.0"
                 }
               }
             }

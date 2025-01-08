@@ -6,7 +6,7 @@
     "nodes": [
       {
         "data": {
-          "id": "759ea777f30ebc268ef182543a865ea4",
+          "id": "da7f601fed0a2c78f1741449e71b1ac4e15412f253001a87397b2ce5a0521fa8",
           "nodeType": "workload",
           "cluster": "Kubernetes",
           "namespace": "bookinfo",
@@ -39,7 +39,7 @@
       },
       {
         "data": {
-          "id": "e37e8a43eb2b1196c888957b6f4b7e1c",
+          "id": "6af9524cff591d364361fdca83edc6a4d00d64718ea7920e1edb4998d8970704",
           "nodeType": "workload",
           "cluster": "Kubernetes",
           "namespace": "bookinfo",
@@ -72,7 +72,7 @@
       },
       {
         "data": {
-          "id": "1c14fb66e53814f9aada912a2fae5fad",
+          "id": "d53e0d1d33c7e8e49550455e8b0aba282d977167c0c9be049cb351da06a95f11",
           "nodeType": "workload",
           "cluster": "Kubernetes",
           "namespace": "bookinfo",
@@ -107,7 +107,7 @@
       },
       {
         "data": {
-          "id": "689c88683346fc919da3ef7fd2b05435",
+          "id": "dcf792ef4a06df4510c80c7b828599c7b153fd2f2ec7b4e5600a2b437d8d4111",
           "nodeType": "workload",
           "cluster": "Kubernetes",
           "namespace": "bookinfo",
@@ -142,9 +142,9 @@
     "edges": [
       {
         "data": {
-          "id": "7516be3dddea88acf0dc274a11510964",
-          "source": "1c14fb66e53814f9aada912a2fae5fad",
-          "target": "689c88683346fc919da3ef7fd2b05435",
+          "id": "fc7e327b415978dbdc0c7b21848571cfe1fdbe6d361a40b52389631a45fa9158",
+          "source": "d53e0d1d33c7e8e49550455e8b0aba282d977167c0c9be049cb351da06a95f11",
+          "target": "6af9524cff591d364361fdca83edc6a4d00d64718ea7920e1edb4998d8970704",
           "traffic": {
             "protocol": "http",
             "rates": {
@@ -157,7 +157,7 @@
                   "-": "100.0"
                 },
                 "hosts": {
-                  "reviews:9080": "100.0"
+                  "details:9080": "100.0"
                 }
               }
             }
@@ -166,9 +166,9 @@
       },
       {
         "data": {
-          "id": "1bd0160d76e993db9e821ca2dfb66242",
-          "source": "1c14fb66e53814f9aada912a2fae5fad",
-          "target": "759ea777f30ebc268ef182543a865ea4",
+          "id": "784d7813dd7a786b647fa4c78226f5493906686b74aeafcf4e8ee1e33d606f2d",
+          "source": "d53e0d1d33c7e8e49550455e8b0aba282d977167c0c9be049cb351da06a95f11",
+          "target": "da7f601fed0a2c78f1741449e71b1ac4e15412f253001a87397b2ce5a0521fa8",
           "traffic": {
             "protocol": "tcp",
             "rates": {
@@ -189,9 +189,9 @@
           "waypoint": {
             "direction": "to",
             "fromEdge": {
-              "id": "e05fed112f9dbe986861ef94a04cce13",
-              "source": "1c14fb66e53814f9aada912a2fae5fad",
-              "target": "1c14fb66e53814f9aada912a2fae5fad",
+              "id": "a46a8f633b2770bf4fd3638b987b1bc58661c21c05ce18eba4e60d5e64e37594",
+              "source": "d53e0d1d33c7e8e49550455e8b0aba282d977167c0c9be049cb351da06a95f11",
+              "target": "d53e0d1d33c7e8e49550455e8b0aba282d977167c0c9be049cb351da06a95f11",
               "traffic": {
                 "protocol": "tcp",
                 "rates": {
@@ -217,9 +217,9 @@
       },
       {
         "data": {
-          "id": "8cba8d4624976b47a323ba1d55426624",
-          "source": "1c14fb66e53814f9aada912a2fae5fad",
-          "target": "e37e8a43eb2b1196c888957b6f4b7e1c",
+          "id": "0d9362799842fbc075db9e0633ba756b97877f0ce6606d0c2245939d2c49fc5a",
+          "source": "d53e0d1d33c7e8e49550455e8b0aba282d977167c0c9be049cb351da06a95f11",
+          "target": "dcf792ef4a06df4510c80c7b828599c7b153fd2f2ec7b4e5600a2b437d8d4111",
           "traffic": {
             "protocol": "http",
             "rates": {
@@ -232,7 +232,7 @@
                   "-": "100.0"
                 },
                 "hosts": {
-                  "details:9080": "100.0"
+                  "reviews:9080": "100.0"
                 }
               }
             }
@@ -241,35 +241,9 @@
       },
       {
         "data": {
-          "id": "e7f959973987d7b7e8fa18cae0b69c45",
-          "source": "759ea777f30ebc268ef182543a865ea4",
-          "target": "689c88683346fc919da3ef7fd2b05435",
-          "traffic": {
-            "protocol": "tcp",
-            "rates": {
-              "tcp": "50.00"
-            },
-            "responses": {
-              "-": {
-                "flags": {
-                  "-": "100.0"
-                },
-                "hosts": {
-                  "reviews.bookinfo.svc.cluster.local": "100.0"
-                }
-              }
-            }
-          },
-          "waypoint": {
-            "direction": "from"
-          }
-        }
-      },
-      {
-        "data": {
-          "id": "7334ac26b2d2cfd53640a99cf11861ff",
-          "source": "759ea777f30ebc268ef182543a865ea4",
-          "target": "e37e8a43eb2b1196c888957b6f4b7e1c",
+          "id": "d5ca8e75971eceeee45eae039f2cffbae88fd97cb12a758b63be49041e1fee6f",
+          "source": "da7f601fed0a2c78f1741449e71b1ac4e15412f253001a87397b2ce5a0521fa8",
+          "target": "6af9524cff591d364361fdca83edc6a4d00d64718ea7920e1edb4998d8970704",
           "traffic": {
             "protocol": "tcp",
             "rates": {
@@ -282,6 +256,32 @@
                 },
                 "hosts": {
                   "details.bookinfo.svc.cluster.local": "100.0"
+                }
+              }
+            }
+          },
+          "waypoint": {
+            "direction": "from"
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "5f73ad9675d0b8896c9309977d683408244eff14ceaacdc95661bf6739723520",
+          "source": "da7f601fed0a2c78f1741449e71b1ac4e15412f253001a87397b2ce5a0521fa8",
+          "target": "dcf792ef4a06df4510c80c7b828599c7b153fd2f2ec7b4e5600a2b437d8d4111",
+          "traffic": {
+            "protocol": "tcp",
+            "rates": {
+              "tcp": "50.00"
+            },
+            "responses": {
+              "-": {
+                "flags": {
+                  "-": "100.0"
+                },
+                "hosts": {
+                  "reviews.bookinfo.svc.cluster.local": "100.0"
                 }
               }
             }

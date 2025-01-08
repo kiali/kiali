@@ -6,7 +6,7 @@
     "nodes": [
       {
         "data": {
-          "id": "a4179cc3fbeb12c5e705434e5f96a550",
+          "id": "f9ca906edbc3cea21a0f7bfbd4cef7281d30f1682bd8f9c8ffa21a87b2b21fe8",
           "nodeType": "box",
           "cluster": "kukulcan",
           "namespace": "bookinfo",
@@ -17,7 +17,7 @@
       },
       {
         "data": {
-          "id": "26638d48fa3b0c6e020ba3adab8a6346",
+          "id": "557875eb29497c25b47688bf2d2ebb2b844713bbc0be5063fb565358803a9ccf",
           "nodeType": "box",
           "cluster": "tzotz",
           "namespace": "bookinfo",
@@ -28,7 +28,7 @@
       },
       {
         "data": {
-          "id": "8223c9ff82446480bb923ba2eb1830ad",
+          "id": "d0ce2e38efd24f6a6fa7ede838800893b25b562f998c74500ba6e7bc9b9f6584",
           "nodeType": "service",
           "cluster": "kukulcan",
           "namespace": "bookinfo",
@@ -54,7 +54,7 @@
       },
       {
         "data": {
-          "id": "35dd7d7d00b0158c382259db7e215f85",
+          "id": "57d55a9fe0060ee6200e9a09b8d74e494eb55ddb1eb2992c81e42c6af8d228b1",
           "nodeType": "service",
           "cluster": "kukulcan",
           "namespace": "bookinfo",
@@ -80,7 +80,7 @@
       },
       {
         "data": {
-          "id": "2e9987e0bf83fd259fb7835269a0f15a",
+          "id": "febb8cd924567504c9ba1c6645183dd0ff51e2e67f49970ffbc5c09403e09f10",
           "nodeType": "service",
           "cluster": "kukulcan",
           "namespace": "bookinfo",
@@ -106,7 +106,7 @@
       },
       {
         "data": {
-          "id": "7e7afce01d748d344657e44ac8276565",
+          "id": "f3e07c94fb6b90351f9fd34682ca0c05c53922195930d33c0f52749a112c7090",
           "nodeType": "app",
           "cluster": "kukulcan",
           "namespace": "bookinfo",
@@ -133,7 +133,7 @@
       },
       {
         "data": {
-          "id": "f4f1d699434797658bb18c22ecbedfe8",
+          "id": "0cd808f5f1f0d5263bd298739b7612e0fe3316bde596adb9e850832788f1e5f0",
           "nodeType": "app",
           "cluster": "kukulcan",
           "namespace": "bookinfo",
@@ -161,8 +161,8 @@
       },
       {
         "data": {
-          "id": "ac68063b9119896dc912d46037f2d1f7",
-          "parent": "a4179cc3fbeb12c5e705434e5f96a550",
+          "id": "6a6afb8ad7aa82c9d39791fb7cdaeb6e305c49ebfdc753feb1ef1f84891a2bd3",
+          "parent": "f9ca906edbc3cea21a0f7bfbd4cef7281d30f1682bd8f9c8ffa21a87b2b21fe8",
           "nodeType": "app",
           "cluster": "kukulcan",
           "namespace": "bookinfo",
@@ -189,8 +189,8 @@
       },
       {
         "data": {
-          "id": "adf68fbdb1d9e10652d1e92f36644024",
-          "parent": "a4179cc3fbeb12c5e705434e5f96a550",
+          "id": "4f5bf6d1268f82631a09186c5c3487fd8430435ac461c13ee65f2d8d214ca632",
+          "parent": "f9ca906edbc3cea21a0f7bfbd4cef7281d30f1682bd8f9c8ffa21a87b2b21fe8",
           "nodeType": "app",
           "cluster": "kukulcan",
           "namespace": "bookinfo",
@@ -218,7 +218,7 @@
       },
       {
         "data": {
-          "id": "c0c869b3eaf19cfb79d08e71ad2e9289",
+          "id": "428e798425fce8aac7e70cb7267d66738abc4c15a14ee63ceac977746726d9fb",
           "nodeType": "app",
           "cluster": "kukulcan",
           "namespace": "istio-system",
@@ -240,7 +240,7 @@
       },
       {
         "data": {
-          "id": "162ab92d639b69c8898dd076bac1269d",
+          "id": "de669518f42d73b3bf10ac56acdcea2f86b81af18b994a2a0a38ff2aaf452a89",
           "nodeType": "service",
           "cluster": "tzotz",
           "namespace": "bookinfo",
@@ -266,7 +266,7 @@
       },
       {
         "data": {
-          "id": "3524cbbde5cdda22fea787ada9231879",
+          "id": "2320a03b98e3583d0761424cbe85b1a4812a88a17f7d668e8dc4db6581eab854",
           "nodeType": "service",
           "cluster": "tzotz",
           "namespace": "bookinfo",
@@ -292,7 +292,7 @@
       },
       {
         "data": {
-          "id": "a4dbaf34b838d0ade625d37c4a8b990e",
+          "id": "1e01748047943952e19811328497f7718a4cb14253780cff979cd9d46f4f500f",
           "nodeType": "app",
           "cluster": "tzotz",
           "namespace": "bookinfo",
@@ -319,7 +319,7 @@
       },
       {
         "data": {
-          "id": "a246ad10e3abcc5b72f1d1b7f7ce735b",
+          "id": "22720131d36632da1f23b7eb7e137a05d475d506db2803e185873edc99a0b45f",
           "nodeType": "app",
           "cluster": "tzotz",
           "namespace": "bookinfo",
@@ -340,7 +340,7 @@
       },
       {
         "data": {
-          "id": "91e5b39a176fbba2e97a8fcccb474095",
+          "id": "857835eb720f6b16996e512499c8e8b9334c6ac5eff9a067efcc06fb9d2ce699",
           "nodeType": "app",
           "cluster": "tzotz",
           "namespace": "bookinfo",
@@ -367,8 +367,8 @@
       },
       {
         "data": {
-          "id": "a531df39c60aee58e01aa6923d4d3cbf",
-          "parent": "26638d48fa3b0c6e020ba3adab8a6346",
+          "id": "d2f50fb2cfe7b500f90b358c98cb4e32b70fd8cc3ff12de1944800a4831b69f2",
+          "parent": "557875eb29497c25b47688bf2d2ebb2b844713bbc0be5063fb565358803a9ccf",
           "nodeType": "app",
           "cluster": "tzotz",
           "namespace": "bookinfo",
@@ -395,8 +395,8 @@
       },
       {
         "data": {
-          "id": "4ae40c1b16dedc9cf5f45a9e7e689c07",
-          "parent": "26638d48fa3b0c6e020ba3adab8a6346",
+          "id": "fc4d725a31ae540f44d072cfc2e5623630d4fa41edecde03c0e5f8ef15d97f00",
+          "parent": "557875eb29497c25b47688bf2d2ebb2b844713bbc0be5063fb565358803a9ccf",
           "nodeType": "app",
           "cluster": "tzotz",
           "namespace": "bookinfo",
@@ -425,38 +425,14 @@
     "edges": [
       {
         "data": {
-          "id": "d796121f0e73c1299dd673168916ebf1",
-          "source": "162ab92d639b69c8898dd076bac1269d",
-          "target": "91e5b39a176fbba2e97a8fcccb474095",
+          "id": "873a96d0b3fd964b4735ccd4db687d3899e82471a7f39ea2fac90678cdd45606",
+          "source": "0cd808f5f1f0d5263bd298739b7612e0fe3316bde596adb9e850832788f1e5f0",
+          "target": "2320a03b98e3583d0761424cbe85b1a4812a88a17f7d668e8dc4db6581eab854",
           "traffic": {
             "protocol": "http",
             "rates": {
-              "http": "100.00",
-              "httpPercentReq": "100.0"
-            },
-            "responses": {
-              "200": {
-                "flags": {
-                  "-": "100.0"
-                },
-                "hosts": {
-                  "ratings.bookinfo.svc.cluster.local": "100.0"
-                }
-              }
-            }
-          }
-        }
-      },
-      {
-        "data": {
-          "id": "9b732519781ecc74313910599368f8a8",
-          "source": "2e9987e0bf83fd259fb7835269a0f15a",
-          "target": "ac68063b9119896dc912d46037f2d1f7",
-          "traffic": {
-            "protocol": "http",
-            "rates": {
-              "http": "100.00",
-              "httpPercentReq": "50.0"
+              "http": "200.00",
+              "httpPercentReq": "40.0"
             },
             "responses": {
               "200": {
@@ -473,110 +449,14 @@
       },
       {
         "data": {
-          "id": "e25097388c2689ffc285c1cc86b80357",
-          "source": "2e9987e0bf83fd259fb7835269a0f15a",
-          "target": "adf68fbdb1d9e10652d1e92f36644024",
+          "id": "2beb70a43c6e9e78d0613c7c70385dd188cb1a511e23127c4190f7c86f3c3063",
+          "source": "0cd808f5f1f0d5263bd298739b7612e0fe3316bde596adb9e850832788f1e5f0",
+          "target": "d0ce2e38efd24f6a6fa7ede838800893b25b562f998c74500ba6e7bc9b9f6584",
           "traffic": {
             "protocol": "http",
             "rates": {
               "http": "100.00",
-              "httpPercentReq": "50.0"
-            },
-            "responses": {
-              "200": {
-                "flags": {
-                  "-": "100.0"
-                },
-                "hosts": {
-                  "reviews.bookinfo.svc.cluster.local": "100.0"
-                }
-              }
-            }
-          }
-        }
-      },
-      {
-        "data": {
-          "id": "00279f7c0730fa0b8c304765e5b037fd",
-          "source": "3524cbbde5cdda22fea787ada9231879",
-          "target": "4ae40c1b16dedc9cf5f45a9e7e689c07",
-          "traffic": {
-            "protocol": "http",
-            "rates": {
-              "http": "100.00",
-              "httpPercentReq": "50.0"
-            },
-            "responses": {
-              "200": {
-                "flags": {
-                  "-": "100.0"
-                },
-                "hosts": {
-                  "reviews.bookinfo.svc.cluster.local": "100.0"
-                }
-              }
-            }
-          }
-        }
-      },
-      {
-        "data": {
-          "id": "6634c678a9bc3f31a4bb19f8b89bc60a",
-          "source": "3524cbbde5cdda22fea787ada9231879",
-          "target": "a531df39c60aee58e01aa6923d4d3cbf",
-          "traffic": {
-            "protocol": "http",
-            "rates": {
-              "http": "100.00",
-              "httpPercentReq": "50.0"
-            },
-            "responses": {
-              "200": {
-                "flags": {
-                  "-": "100.0"
-                },
-                "hosts": {
-                  "reviews.bookinfo.svc.cluster.local": "100.0"
-                }
-              }
-            }
-          }
-        }
-      },
-      {
-        "data": {
-          "id": "57afdece2136843371121c02ef75eb1e",
-          "source": "35dd7d7d00b0158c382259db7e215f85",
-          "target": "f4f1d699434797658bb18c22ecbedfe8",
-          "traffic": {
-            "protocol": "http",
-            "rates": {
-              "http": "100.00",
-              "httpPercentReq": "100.0"
-            },
-            "responses": {
-              "200": {
-                "flags": {
-                  "-": "100.0"
-                },
-                "hosts": {
-                  "productpage.bookinfo.svc.cluster.local": "100.0"
-                }
-              }
-            }
-          }
-        }
-      },
-      {
-        "data": {
-          "id": "91dcf4c4f8fa99855f814081779e59e9",
-          "source": "8223c9ff82446480bb923ba2eb1830ad",
-          "target": "7e7afce01d748d344657e44ac8276565",
-          "traffic": {
-            "protocol": "http",
-            "rates": {
-              "http": "100.00",
-              "httpPercentReq": "100.0"
+              "httpPercentReq": "20.0"
             },
             "responses": {
               "200": {
@@ -593,9 +473,33 @@
       },
       {
         "data": {
-          "id": "cff7f5ca632018a2a8cc8df280d40d3e",
-          "source": "a246ad10e3abcc5b72f1d1b7f7ce735b",
-          "target": "a4dbaf34b838d0ade625d37c4a8b990e",
+          "id": "f7016cbd2dd71d032347a87eda7ccd2a016d2821b8815922ff4fbd8b11d0b000",
+          "source": "0cd808f5f1f0d5263bd298739b7612e0fe3316bde596adb9e850832788f1e5f0",
+          "target": "febb8cd924567504c9ba1c6645183dd0ff51e2e67f49970ffbc5c09403e09f10",
+          "traffic": {
+            "protocol": "http",
+            "rates": {
+              "http": "200.00",
+              "httpPercentReq": "40.0"
+            },
+            "responses": {
+              "200": {
+                "flags": {
+                  "-": "100.0"
+                },
+                "hosts": {
+                  "reviews.bookinfo.svc.cluster.local": "100.0"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "f45e443d558dd92c1425cbd06c1247c50ab704bef6f755a3d026b6a2211317bf",
+          "source": "22720131d36632da1f23b7eb7e137a05d475d506db2803e185873edc99a0b45f",
+          "target": "1e01748047943952e19811328497f7718a4cb14253780cff979cd9d46f4f500f",
           "traffic": {
             "protocol": "http",
             "rates": {
@@ -617,14 +521,14 @@
       },
       {
         "data": {
-          "id": "fa99f34cb5e1a7850f4846e593d77b45",
-          "source": "adf68fbdb1d9e10652d1e92f36644024",
-          "target": "162ab92d639b69c8898dd076bac1269d",
+          "id": "97f40e60b5dd574f103bbe50b51319b2f00d4c987e0ce070eb21f5c546148ff3",
+          "source": "2320a03b98e3583d0761424cbe85b1a4812a88a17f7d668e8dc4db6581eab854",
+          "target": "d2f50fb2cfe7b500f90b358c98cb4e32b70fd8cc3ff12de1944800a4831b69f2",
           "traffic": {
             "protocol": "http",
             "rates": {
               "http": "100.00",
-              "httpPercentReq": "100.0"
+              "httpPercentReq": "50.0"
             },
             "responses": {
               "200": {
@@ -632,7 +536,7 @@
                   "-": "100.0"
                 },
                 "hosts": {
-                  "ratings.bookinfo.svc.cluster.local": "100.0"
+                  "reviews.bookinfo.svc.cluster.local": "100.0"
                 }
               }
             }
@@ -641,9 +545,33 @@
       },
       {
         "data": {
-          "id": "588e0855da5ef90ae9a12578fb88b69f",
-          "source": "c0c869b3eaf19cfb79d08e71ad2e9289",
-          "target": "35dd7d7d00b0158c382259db7e215f85",
+          "id": "e4ef20fd2625d23423dac80c243343a5b6f782bf35c98e294f4369305b5838a4",
+          "source": "2320a03b98e3583d0761424cbe85b1a4812a88a17f7d668e8dc4db6581eab854",
+          "target": "fc4d725a31ae540f44d072cfc2e5623630d4fa41edecde03c0e5f8ef15d97f00",
+          "traffic": {
+            "protocol": "http",
+            "rates": {
+              "http": "100.00",
+              "httpPercentReq": "50.0"
+            },
+            "responses": {
+              "200": {
+                "flags": {
+                  "-": "100.0"
+                },
+                "hosts": {
+                  "reviews.bookinfo.svc.cluster.local": "100.0"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "13096add59b7bf4d8b12eb7cdf4848d4836e3518dd4eff05b286d64cf8f56d9e",
+          "source": "428e798425fce8aac7e70cb7267d66738abc4c15a14ee63ceac977746726d9fb",
+          "target": "57d55a9fe0060ee6200e9a09b8d74e494eb55ddb1eb2992c81e42c6af8d228b1",
           "traffic": {
             "protocol": "http",
             "rates": {
@@ -665,62 +593,62 @@
       },
       {
         "data": {
-          "id": "a98ac89eb35c90065ec52a3e471822e8",
-          "source": "f4f1d699434797658bb18c22ecbedfe8",
-          "target": "2e9987e0bf83fd259fb7835269a0f15a",
-          "traffic": {
-            "protocol": "http",
-            "rates": {
-              "http": "200.00",
-              "httpPercentReq": "40.0"
-            },
-            "responses": {
-              "200": {
-                "flags": {
-                  "-": "100.0"
-                },
-                "hosts": {
-                  "reviews.bookinfo.svc.cluster.local": "100.0"
-                }
-              }
-            }
-          }
-        }
-      },
-      {
-        "data": {
-          "id": "6fc30e17f130a94bfe54c14d6901e5c4",
-          "source": "f4f1d699434797658bb18c22ecbedfe8",
-          "target": "3524cbbde5cdda22fea787ada9231879",
-          "traffic": {
-            "protocol": "http",
-            "rates": {
-              "http": "200.00",
-              "httpPercentReq": "40.0"
-            },
-            "responses": {
-              "200": {
-                "flags": {
-                  "-": "100.0"
-                },
-                "hosts": {
-                  "reviews.bookinfo.svc.cluster.local": "100.0"
-                }
-              }
-            }
-          }
-        }
-      },
-      {
-        "data": {
-          "id": "684d306adf36b5363220fe0bbe7a4762",
-          "source": "f4f1d699434797658bb18c22ecbedfe8",
-          "target": "8223c9ff82446480bb923ba2eb1830ad",
+          "id": "8a3cb79a7c0d227eb814f1d69b9c6c0e9b68c3c9f013f08bf69d0b6290a19104",
+          "source": "4f5bf6d1268f82631a09186c5c3487fd8430435ac461c13ee65f2d8d214ca632",
+          "target": "de669518f42d73b3bf10ac56acdcea2f86b81af18b994a2a0a38ff2aaf452a89",
           "traffic": {
             "protocol": "http",
             "rates": {
               "http": "100.00",
-              "httpPercentReq": "20.0"
+              "httpPercentReq": "100.0"
+            },
+            "responses": {
+              "200": {
+                "flags": {
+                  "-": "100.0"
+                },
+                "hosts": {
+                  "ratings.bookinfo.svc.cluster.local": "100.0"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "50faab78a4243222f573b5dfa5eeba3fbd12bdc02e0f8ad9b8d4c2316cb7eb28",
+          "source": "57d55a9fe0060ee6200e9a09b8d74e494eb55ddb1eb2992c81e42c6af8d228b1",
+          "target": "0cd808f5f1f0d5263bd298739b7612e0fe3316bde596adb9e850832788f1e5f0",
+          "traffic": {
+            "protocol": "http",
+            "rates": {
+              "http": "100.00",
+              "httpPercentReq": "100.0"
+            },
+            "responses": {
+              "200": {
+                "flags": {
+                  "-": "100.0"
+                },
+                "hosts": {
+                  "productpage.bookinfo.svc.cluster.local": "100.0"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "f486e57694cc6c20749d0a7ff51e29e6de7eb013117bafdd8d971b9fb147415c",
+          "source": "d0ce2e38efd24f6a6fa7ede838800893b25b562f998c74500ba6e7bc9b9f6584",
+          "target": "f3e07c94fb6b90351f9fd34682ca0c05c53922195930d33c0f52749a112c7090",
+          "traffic": {
+            "protocol": "http",
+            "rates": {
+              "http": "100.00",
+              "httpPercentReq": "100.0"
             },
             "responses": {
               "200": {
@@ -729,6 +657,78 @@
                 },
                 "hosts": {
                   "details.bookinfo.svc.cluster.local": "100.0"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "f0c34619c6cfac9e37ad9031c6d92492ee9df704d6394d2b43296430517f17b4",
+          "source": "de669518f42d73b3bf10ac56acdcea2f86b81af18b994a2a0a38ff2aaf452a89",
+          "target": "857835eb720f6b16996e512499c8e8b9334c6ac5eff9a067efcc06fb9d2ce699",
+          "traffic": {
+            "protocol": "http",
+            "rates": {
+              "http": "100.00",
+              "httpPercentReq": "100.0"
+            },
+            "responses": {
+              "200": {
+                "flags": {
+                  "-": "100.0"
+                },
+                "hosts": {
+                  "ratings.bookinfo.svc.cluster.local": "100.0"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "05598650678339dd2588121808fe578b0c4ec6ce2993984576b91a661f753b1f",
+          "source": "febb8cd924567504c9ba1c6645183dd0ff51e2e67f49970ffbc5c09403e09f10",
+          "target": "4f5bf6d1268f82631a09186c5c3487fd8430435ac461c13ee65f2d8d214ca632",
+          "traffic": {
+            "protocol": "http",
+            "rates": {
+              "http": "100.00",
+              "httpPercentReq": "50.0"
+            },
+            "responses": {
+              "200": {
+                "flags": {
+                  "-": "100.0"
+                },
+                "hosts": {
+                  "reviews.bookinfo.svc.cluster.local": "100.0"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "b0b16c4e0f866188651776f9d57f9e2e1fb52d66fc02bd95f9db4c45d1995dda",
+          "source": "febb8cd924567504c9ba1c6645183dd0ff51e2e67f49970ffbc5c09403e09f10",
+          "target": "6a6afb8ad7aa82c9d39791fb7cdaeb6e305c49ebfdc753feb1ef1f84891a2bd3",
+          "traffic": {
+            "protocol": "http",
+            "rates": {
+              "http": "100.00",
+              "httpPercentReq": "50.0"
+            },
+            "responses": {
+              "200": {
+                "flags": {
+                  "-": "100.0"
+                },
+                "hosts": {
+                  "reviews.bookinfo.svc.cluster.local": "100.0"
                 }
               }
             }
