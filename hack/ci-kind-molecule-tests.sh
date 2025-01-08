@@ -384,76 +384,7 @@ if ${KIND_EXE} get kubeconfig --name ${KIND_NAME} > /dev/null 2>&1; then
   infomsg "Kind cluster named [${KIND_NAME}] already exists - it will be used as-is"
 else
   infomsg "Kind cluster to be created with name [${KIND_NAME}]"
-  # if you want a specific version of kind, put the image here. Setting to empty string pulls the latest.
-  KIND_NODE_IMAGE="" #"image: kindest/node:v1.24.15@sha256:24473777a1eef985dc405c23ab9f4daddb1352ca23db60b75de9e7c408096491"
-  cat <<EOF | ${KIND_EXE} create cluster --name ${KIND_NAME} --config -
-kind: Cluster
-apiVersion: kind.x-k8s.io/v1alpha4
-networking:
-  ipFamily: ipv4
-nodes:
-  - role: control-plane
-    ${KIND_NODE_IMAGE}
-  - role: worker
-    ${KIND_NODE_IMAGE}
-EOF
-
-  infomsg "Create Kind LoadBalancer via MetalLB"
-  lb_addr_range="255.70-255.84"
-
-  ${CLIENT_EXE} apply -f https://raw.githubusercontent.com/metallb/metallb/v0.13.5/config/manifests/metallb-native.yaml
-
-  #if [ "${DORP}" == "docker" ]; then
-  #  subnet=$(docker network inspect kind --format '{{(index .IPAM.Config 0).Subnet}}')
-  #else
-  #  subnet=$(podman network inspect kind --format '{{ (index (index (index .plugins 0).ipam.ranges 1) 0).subnet }}')
-  #fi
-  # TODO the above if-stmt assumes podman works with KinD which it doesn't - we always use docker for KinD, so use docker to inspect network
-  # loop through all known subnets in the kind network and pick out the IPv4 subnet, ignoring any IPv6 that might be in the list
-  subnets_count="$(docker network inspect kind | jq '.[0].IPAM.Config | length')"
-  infomsg "There are [$subnets_count] subnets in the kind network"
-  for ((i=0; i<subnets_count; i++)); do
-    subnet=$(docker network inspect kind --format '{{(index .IPAM.Config '$i').Subnet}}' 2> /dev/null)
-    if [[ -n $subnet && $subnet != *:* && $subnet == *\.* ]]; then
-      infomsg "Using subnet [$subnet]"
-      break
-    else
-      infomsg "Ignoring subnet [$subnet]"
-      subnet=""
-    fi
-  done
-  if [ -z "$subnet" ]; then
-    infomsg "There does not appear to be any IPv4 subnets configured"
-    exit 1
-  fi
-
-  infomsg "Wait for MetalLB controller to be ready"
-  ${CLIENT_EXE} rollout status deployment controller -n metallb-system
-
-  subnet_trimmed=$(echo ${subnet} | sed -E 's/([0-9]+\.[0-9]+)\.[0-9]+\..*/\1/')
-  first_ip="${subnet_trimmed}.$(echo "${lb_addr_range}" | cut -d '-' -f 1)"
-  last_ip="${subnet_trimmed}.$(echo "${lb_addr_range}" | cut -d '-' -f 2)"
-  infomsg "LoadBalancer IP Address pool: ${first_ip}-${last_ip}"
-  cat <<LB1 | ${CLIENT_EXE} apply -f -
-apiVersion: metallb.io/v1beta1
-kind: IPAddressPool
-metadata:
-  namespace: metallb-system
-  name: config
-spec:
-  addresses:
-  - ${first_ip}-${last_ip}
-LB1
-  cat <<LB2 | ${CLIENT_EXE} apply -f -
-apiVersion: metallb.io/v1beta1
-kind: L2Advertisement
-metadata:
-  namespace: metallb-system
-  name: l2config
-spec:
-  ipAddressPools:
-  - config
-LB2
+  hack/start-kind.sh --name ${KIND_NAME} --enable-image-registry true --enable-keycloak false
 fi
 
 if [ "${USE_DEV_IMAGES}" == "true" ]; then
