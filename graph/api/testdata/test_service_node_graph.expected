@@ -6,7 +6,7 @@
     "nodes": [
       {
         "data": {
-          "id": "6fb400654f51831b495b454c7d54839b",
+          "id": "75e6bff154aefcf8a8dcf46396a6d897afb9ad7b256b70d7e2ea5a5e8ed98242",
           "nodeType": "workload",
           "cluster": "east",
           "namespace": "bookinfo",
@@ -39,7 +39,7 @@
       },
       {
         "data": {
-          "id": "d572c98471e1586ae94397b094892b6b",
+          "id": "294cc51c6a37db5f2f644f7b121233dadc9cccf5686b31c9722c1fa72e8caa30",
           "nodeType": "workload",
           "cluster": "east",
           "namespace": "istio-system",
@@ -70,9 +70,9 @@
     "edges": [
       {
         "data": {
-          "id": "67b56dc45daf5831ba2dec84d8e00717",
-          "source": "d572c98471e1586ae94397b094892b6b",
-          "target": "6fb400654f51831b495b454c7d54839b",
+          "id": "5b98e5e02cdc06281e4e45c971e9fd38df4419275511d5f42771531b1c2b4a08",
+          "source": "294cc51c6a37db5f2f644f7b121233dadc9cccf5686b31c9722c1fa72e8caa30",
+          "target": "75e6bff154aefcf8a8dcf46396a6d897afb9ad7b256b70d7e2ea5a5e8ed98242",
           "traffic": {
             "protocol": "http",
             "rates": {
@@ -94,9 +94,9 @@
       },
       {
         "data": {
-          "id": "135198f4764d6763a58885cefbb792ec",
-          "source": "d572c98471e1586ae94397b094892b6b",
-          "target": "6fb400654f51831b495b454c7d54839b",
+          "id": "27562d77b99e79d151f2e42fccbf69957c91c183199a3b35600f53e3f2870810",
+          "source": "294cc51c6a37db5f2f644f7b121233dadc9cccf5686b31c9722c1fa72e8caa30",
+          "target": "75e6bff154aefcf8a8dcf46396a6d897afb9ad7b256b70d7e2ea5a5e8ed98242",
           "traffic": {
             "protocol": "tcp",
             "rates": {

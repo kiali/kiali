@@ -282,12 +282,12 @@ func TestMeshGraph(t *testing.T) {
 	}
 	actual, _ := io.ReadAll(resp.Body)
 	t.Logf("Actual response body: %s", string(actual)) // Print the actual variable
+	expectedFilename := "testdata/test_mesh_graph.expected"
+	expected, _ := os.ReadFile(expectedFilename)
 
-	expected, _ := os.ReadFile("testdata/test_mesh_graph.expected")
 	if runtime.GOOS == "windows" {
 		expected = bytes.Replace(expected, []byte("\r\n"), []byte("\n"), -1)
 	}
-	expected = expected[:len(expected)-1] // remove EOF byte
 
 	if !assert.JSONEq(t, string(expected), string(actual)) {
 		// The diff is more readable using cmp

@@ -3,7 +3,7 @@
     "nodes": [
       {
         "data": {
-          "id": "107648411a3f61763d45f8433b787970",
+          "id": "85774128be9f0db40aeb4c610e9436f63cb0945838e6db0c05ae36b62c6c6c10",
           "cluster": "_external_",
           "infraName": "External Deployments",
           "infraType": "cluster",
@@ -17,7 +17,7 @@
       },
       {
         "data": {
-          "id": "21aa3cd669c2462251e58d3b19149ace",
+          "id": "52e2139bb2622c3156273a148bb95c794e674e820ffcf433a3e530e31e5fcd36",
           "cluster": "cluster-primary",
           "infraName": "cluster-primary",
           "infraType": "cluster",
@@ -46,7 +46,7 @@
       },
       {
         "data": {
-          "id": "1aabe556f7e14438273ef43c7bce6148",
+          "id": "421c6926a61f0f21f1fe0babb48ea9fac6454c1d9a448dea2c559402723ec4da",
           "cluster": "cluster-remote",
           "infraName": "cluster-remote",
           "infraType": "cluster",
@@ -66,8 +66,8 @@
       },
       {
         "data": {
-          "id": "d1c7a41aefa12a640ebeb0e57c079e8e",
-          "parent": "21aa3cd669c2462251e58d3b19149ace",
+          "id": "d267c54a08bd79c4a07c88b2e0d93b5c93962da0703c7bfd70d1ead571b067f0",
+          "parent": "52e2139bb2622c3156273a148bb95c794e674e820ffcf433a3e530e31e5fcd36",
           "cluster": "cluster-primary",
           "infraName": "istio-system",
           "infraType": "namespace",
@@ -79,8 +79,39 @@
       },
       {
         "data": {
-          "id": "82397758134f81118fb9935477d6f598",
-          "parent": "107648411a3f61763d45f8433b787970",
+          "id": "33493098cdd63801f773396da680159d0bb57b482ef38a4b208899a2e477e1f0",
+          "parent": "85774128be9f0db40aeb4c610e9436f63cb0945838e6db0c05ae36b62c6c6c10",
+          "cluster": "_external_",
+          "infraName": "Grafana",
+          "infraType": "grafana",
+          "namespace": "",
+          "nodeType": "infra",
+          "healthData": "Healthy",
+          "infraData": {
+            "Auth": {
+              "CAFile": "xxx",
+              "InsecureSkipVerify": false,
+              "Password": "xxx",
+              "Token": "xxx",
+              "Type": "none",
+              "UseKialiToken": false,
+              "Username": "xxx"
+            },
+            "Dashboards": null,
+            "Enabled": true,
+            "ExternalURL": "",
+            "HealthCheckUrl": "",
+            "InternalURL": "http://grafana.istio-system:3000",
+            "IsCore": false
+          },
+          "isExternal": true,
+          "isInaccessible": true
+        }
+      },
+      {
+        "data": {
+          "id": "41b50563edf837e2e828b50492b24356bf392be6e0a7a7f21d90eabe551dd686",
+          "parent": "85774128be9f0db40aeb4c610e9436f63cb0945838e6db0c05ae36b62c6c6c10",
           "cluster": "_external_",
           "infraName": "Prometheus",
           "infraType": "metricStore",
@@ -117,8 +148,8 @@
       },
       {
         "data": {
-          "id": "9c46b0cb8c955460035427187706cfbc",
-          "parent": "107648411a3f61763d45f8433b787970",
+          "id": "e0733a58436c292ece7cbcf37db7b77510545c027d03c1798c3d6d8202b93f6f",
+          "parent": "85774128be9f0db40aeb4c610e9436f63cb0945838e6db0c05ae36b62c6c6c10",
           "cluster": "_external_",
           "infraName": "jaeger",
           "infraType": "traceStore",
@@ -162,39 +193,8 @@
       },
       {
         "data": {
-          "id": "fb536b180952008dd29b4319593ef044",
-          "parent": "107648411a3f61763d45f8433b787970",
-          "cluster": "_external_",
-          "infraName": "Grafana",
-          "infraType": "grafana",
-          "namespace": "",
-          "nodeType": "infra",
-          "healthData": "Healthy",
-          "infraData": {
-            "Auth": {
-              "CAFile": "xxx",
-              "InsecureSkipVerify": false,
-              "Password": "xxx",
-              "Token": "xxx",
-              "Type": "none",
-              "UseKialiToken": false,
-              "Username": "xxx"
-            },
-            "Dashboards": null,
-            "Enabled": true,
-            "ExternalURL": "",
-            "HealthCheckUrl": "",
-            "InternalURL": "http://grafana.istio-system:3000",
-            "IsCore": false
-          },
-          "isExternal": true,
-          "isInaccessible": true
-        }
-      },
-      {
-        "data": {
-          "id": "dcde5f73ea6b0522e798ae9ba99a98c8",
-          "parent": "21aa3cd669c2462251e58d3b19149ace",
+          "id": "0bb699228f65bc52ec82ed3c72726df27b56e7518b38b7e2021196ea0065233c",
+          "parent": "52e2139bb2622c3156273a148bb95c794e674e820ffcf433a3e530e31e5fcd36",
           "cluster": "cluster-primary",
           "infraName": "Data Plane",
           "infraType": "dataplane",
@@ -230,8 +230,8 @@
       },
       {
         "data": {
-          "id": "cdf7185cca90872db8b743e7a5b36ef0",
-          "parent": "d1c7a41aefa12a640ebeb0e57c079e8e",
+          "id": "29c05b5dfa30d15d450e54f0651c03c68a25a78ae4dc8f292c6ceb5ce6be7e6d",
+          "parent": "d267c54a08bd79c4a07c88b2e0d93b5c93962da0703c7bfd70d1ead571b067f0",
           "cluster": "cluster-primary",
           "infraName": "kiali",
           "infraType": "kiali",
@@ -262,8 +262,8 @@
       },
       {
         "data": {
-          "id": "e99df577d74ca59cfb453ccbaa84c3c1",
-          "parent": "d1c7a41aefa12a640ebeb0e57c079e8e",
+          "id": "9b5c974b8b5c42157a685413c86f2ff15ee4266f307f0c519d9acc50b6c97bc2",
+          "parent": "d267c54a08bd79c4a07c88b2e0d93b5c93962da0703c7bfd70d1ead571b067f0",
           "cluster": "cluster-primary",
           "infraName": "istiod",
           "infraType": "istiod",
@@ -411,8 +411,8 @@
       },
       {
         "data": {
-          "id": "3281222bbd167f16bcc4206ff60f37e8",
-          "parent": "1aabe556f7e14438273ef43c7bce6148",
+          "id": "5ff0f691c850d727e75813fb484e06f5bad835b005b08caf2a62c0cff7cd5405",
+          "parent": "421c6926a61f0f21f1fe0babb48ea9fac6454c1d9a448dea2c559402723ec4da",
           "cluster": "cluster-remote",
           "infraName": "Data Plane",
           "infraType": "dataplane",
@@ -450,44 +450,44 @@
     "edges": [
       {
         "data": {
-          "id": "1425e29b8977c19c906115f31a1f8a6b",
-          "source": "cdf7185cca90872db8b743e7a5b36ef0",
-          "target": "82397758134f81118fb9935477d6f598"
+          "id": "3c1e5459c5b6268c2f2452f3e6b620fd1ae0297b4621175c97e376558bea9d58",
+          "source": "29c05b5dfa30d15d450e54f0651c03c68a25a78ae4dc8f292c6ceb5ce6be7e6d",
+          "target": "33493098cdd63801f773396da680159d0bb57b482ef38a4b208899a2e477e1f0"
         }
       },
       {
         "data": {
-          "id": "d1d2a29141584c3aebd0c2940e951030",
-          "source": "cdf7185cca90872db8b743e7a5b36ef0",
-          "target": "9c46b0cb8c955460035427187706cfbc"
+          "id": "3800bf57dd84bfc7bb159fc26de3fd964dc4faa7274b6250dcde483edeba542d",
+          "source": "29c05b5dfa30d15d450e54f0651c03c68a25a78ae4dc8f292c6ceb5ce6be7e6d",
+          "target": "41b50563edf837e2e828b50492b24356bf392be6e0a7a7f21d90eabe551dd686"
         }
       },
       {
         "data": {
-          "id": "a5c68927026a2e26f3a320eb35bed889",
-          "source": "cdf7185cca90872db8b743e7a5b36ef0",
-          "target": "e99df577d74ca59cfb453ccbaa84c3c1"
+          "id": "3444b8aee4ed1e0a9d9388de97152e089e723e1efae8db5658d9558b12346ac4",
+          "source": "29c05b5dfa30d15d450e54f0651c03c68a25a78ae4dc8f292c6ceb5ce6be7e6d",
+          "target": "9b5c974b8b5c42157a685413c86f2ff15ee4266f307f0c519d9acc50b6c97bc2"
         }
       },
       {
         "data": {
-          "id": "e44f9ff10bbd28f2c0c2b3f9d6b442f1",
-          "source": "cdf7185cca90872db8b743e7a5b36ef0",
-          "target": "fb536b180952008dd29b4319593ef044"
+          "id": "6fb152c8305cf91514cbb0d86796cc62eb47e275cf803af3fbb26224c9ddf600",
+          "source": "29c05b5dfa30d15d450e54f0651c03c68a25a78ae4dc8f292c6ceb5ce6be7e6d",
+          "target": "e0733a58436c292ece7cbcf37db7b77510545c027d03c1798c3d6d8202b93f6f"
         }
       },
       {
         "data": {
-          "id": "b9e434f3ed6a9cbc6c1be531769476c3",
-          "source": "e99df577d74ca59cfb453ccbaa84c3c1",
-          "target": "3281222bbd167f16bcc4206ff60f37e8"
+          "id": "8213394da06023363e2d5747d26db6f7e23d0beeacc84fcf97119768822e6dc8",
+          "source": "9b5c974b8b5c42157a685413c86f2ff15ee4266f307f0c519d9acc50b6c97bc2",
+          "target": "0bb699228f65bc52ec82ed3c72726df27b56e7518b38b7e2021196ea0065233c"
         }
       },
       {
         "data": {
-          "id": "05fa6313fb424577ab82fe41e762ade8",
-          "source": "e99df577d74ca59cfb453ccbaa84c3c1",
-          "target": "dcde5f73ea6b0522e798ae9ba99a98c8"
+          "id": "1622664f016a337006cce1427c522c2e24c1b1b39548109f49ad478594f7d8ca",
+          "source": "9b5c974b8b5c42157a685413c86f2ff15ee4266f307f0c519d9acc50b6c97bc2",
+          "target": "5ff0f691c850d727e75813fb484e06f5bad835b005b08caf2a62c0cff7cd5405"
         }
       }
     ]

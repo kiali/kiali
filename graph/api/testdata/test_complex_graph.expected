@@ -6,7 +6,7 @@
     "nodes": [
       {
         "data": {
-          "id": "c2fbd34235fb33d25809469e43f19344",
+          "id": "891624108785d1bebc7a99cf1544cf74cb1b1a4ffede470bceb8c94e4262e178",
           "nodeType": "service",
           "cluster": "cluster-bookinfo",
           "namespace": "bookinfo",
@@ -31,7 +31,7 @@
       },
       {
         "data": {
-          "id": "d4f8c4953121af1b02155b494ebb6063",
+          "id": "ff037557793b1a179b44a4bdb98f06a53f9144394c2c0311c77a787e4e422365",
           "nodeType": "app",
           "cluster": "cluster-bookinfo",
           "namespace": "bookinfo",
@@ -58,7 +58,7 @@
       },
       {
         "data": {
-          "id": "ddedb716cef6d38da883fcb5ca8797e9",
+          "id": "38b9ada47c71f8ec7f19d80915670e8aed770a48c947b22ed1485bda65379e6f",
           "nodeType": "app",
           "cluster": "cluster-cp",
           "namespace": "istio-system",
@@ -79,7 +79,7 @@
       },
       {
         "data": {
-          "id": "8bbc8f3d471e91e447a9a2ff5033ba3c",
+          "id": "6957b003b3080c8730448e7592d579abe50d644804a15d2f36e415abd26361e1",
           "nodeType": "app",
           "cluster": "cluster-tutorial",
           "namespace": "bookinfo",
@@ -106,7 +106,7 @@
       },
       {
         "data": {
-          "id": "624e46d76d5b71881ff3ce37f3c8774b",
+          "id": "9bfb92040ea6c4415f200b1c5aba3ff09a381bec095ca5d1d67cfc0c6f0ee570",
           "nodeType": "app",
           "cluster": "cluster-tutorial",
           "namespace": "istio-system",
@@ -141,7 +141,7 @@
       },
       {
         "data": {
-          "id": "c86e8ec8a41fcdafe296a22f7d55491b",
+          "id": "7cc28c7f579336dc60fee944e0ac251b745f3834f30ff2ca8dce0e09556fd289",
           "nodeType": "app",
           "cluster": "cluster-tutorial",
           "namespace": "outsider",
@@ -164,7 +164,7 @@
       },
       {
         "data": {
-          "id": "11de61605e36ab80a0b85d03f8d48a48",
+          "id": "558736a813aae0549f168dd685733a97c2c4bfce5da1203be6cef19c6b9c2a8a",
           "nodeType": "app",
           "cluster": "cluster-tutorial",
           "namespace": "tutorial",
@@ -198,7 +198,7 @@
       },
       {
         "data": {
-          "id": "7f92c6688ae60c2f8095fff466a1a7fa",
+          "id": "9d307eef588ed3489da406c60b0214b062141b962c36b71f62c2fd1101990f0a",
           "nodeType": "service",
           "cluster": "unknown",
           "namespace": "unknown",
@@ -224,7 +224,7 @@
       },
       {
         "data": {
-          "id": "c800c2f5f6e1100ae3ebd8b63c91a0ed",
+          "id": "3e0a27576ac41ee46d0e519a5aaea8b7fa946173da2cf315d3821083b8e4b7fe",
           "nodeType": "service",
           "cluster": "unknown",
           "namespace": "unknown",
@@ -251,7 +251,7 @@
       },
       {
         "data": {
-          "id": "375ab940b56ae7bcf0f89cb1a7af5d44",
+          "id": "65be8a76856b9d3ef07a3348abcf6476fc80408bd342dd7882a5f4274542a1e0",
           "nodeType": "unknown",
           "cluster": "unknown",
           "namespace": "unknown",
@@ -281,9 +281,81 @@
     "edges": [
       {
         "data": {
-          "id": "99179012a3b0b2c25ac81320ca4c32b2",
-          "source": "11de61605e36ab80a0b85d03f8d48a48",
-          "target": "624e46d76d5b71881ff3ce37f3c8774b",
+          "id": "4ef5f805e5d4955deb24ea0b5f98edba31a65895c6e466096d8013c3e8defecb",
+          "source": "38b9ada47c71f8ec7f19d80915670e8aed770a48c947b22ed1485bda65379e6f",
+          "target": "9d307eef588ed3489da406c60b0214b062141b962c36b71f62c2fd1101990f0a",
+          "traffic": {
+            "protocol": "http",
+            "rates": {
+              "http": "400.00",
+              "httpPercentReq": "100.0"
+            },
+            "responses": {
+              "200": {
+                "flags": {
+                  "-": "100.0"
+                },
+                "hosts": {
+                  "app.example-2.com": "100.0"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "9ef575ab6833aa2ce8d30d43035be644f3e00b96482b2af5262fa26c6056b00e",
+          "source": "558736a813aae0549f168dd685733a97c2c4bfce5da1203be6cef19c6b9c2a8a",
+          "target": "6957b003b3080c8730448e7592d579abe50d644804a15d2f36e415abd26361e1",
+          "traffic": {
+            "protocol": "http",
+            "rates": {
+              "http": "700.00",
+              "httpPercentReq": "35.9"
+            },
+            "responses": {
+              "200": {
+                "flags": {
+                  "-": "100.0"
+                },
+                "hosts": {
+                  "reviews": "100.0"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "a5fb93d2ef400fe948d4e0eaba9629a519f9b774741200c057a0cb8a11db16ce",
+          "source": "558736a813aae0549f168dd685733a97c2c4bfce5da1203be6cef19c6b9c2a8a",
+          "target": "891624108785d1bebc7a99cf1544cf74cb1b1a4ffede470bceb8c94e4262e178",
+          "traffic": {
+            "protocol": "http",
+            "rates": {
+              "http": "300.00",
+              "httpPercentReq": "15.4"
+            },
+            "responses": {
+              "200": {
+                "flags": {
+                  "-": "100.0"
+                },
+                "hosts": {
+                  "app.example.com": "100.0"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "e052b76d1609c6445556f832d5f3bc495053106315e83b9b0f8682cb8543c478",
+          "source": "558736a813aae0549f168dd685733a97c2c4bfce5da1203be6cef19c6b9c2a8a",
+          "target": "9bfb92040ea6c4415f200b1c5aba3ff09a381bec095ca5d1d67cfc0c6f0ee570",
           "traffic": {
             "protocol": "grpc",
             "rates": {
@@ -307,9 +379,9 @@
       },
       {
         "data": {
-          "id": "17d932b883781f1dbafee8176601e953",
-          "source": "11de61605e36ab80a0b85d03f8d48a48",
-          "target": "624e46d76d5b71881ff3ce37f3c8774b",
+          "id": "5a514e1cc42a469f9ba88f02e0b0c2d7f7762beef2b19884c68604b736198e59",
+          "source": "558736a813aae0549f168dd685733a97c2c4bfce5da1203be6cef19c6b9c2a8a",
+          "target": "9bfb92040ea6c4415f200b1c5aba3ff09a381bec095ca5d1d67cfc0c6f0ee570",
           "traffic": {
             "protocol": "http",
             "rates": {
@@ -341,57 +413,9 @@
       },
       {
         "data": {
-          "id": "8c8f6139911ba272dc8c4b654d09c747",
-          "source": "11de61605e36ab80a0b85d03f8d48a48",
-          "target": "8bbc8f3d471e91e447a9a2ff5033ba3c",
-          "traffic": {
-            "protocol": "http",
-            "rates": {
-              "http": "700.00",
-              "httpPercentReq": "35.9"
-            },
-            "responses": {
-              "200": {
-                "flags": {
-                  "-": "100.0"
-                },
-                "hosts": {
-                  "reviews": "100.0"
-                }
-              }
-            }
-          }
-        }
-      },
-      {
-        "data": {
-          "id": "94e90d3a3a2fa9f92042e6c4bac9a584",
-          "source": "11de61605e36ab80a0b85d03f8d48a48",
-          "target": "c2fbd34235fb33d25809469e43f19344",
-          "traffic": {
-            "protocol": "http",
-            "rates": {
-              "http": "300.00",
-              "httpPercentReq": "15.4"
-            },
-            "responses": {
-              "200": {
-                "flags": {
-                  "-": "100.0"
-                },
-                "hosts": {
-                  "app.example.com": "100.0"
-                }
-              }
-            }
-          }
-        }
-      },
-      {
-        "data": {
-          "id": "0d2c42e0ce8e8657642ea70e2d9f2e4d",
-          "source": "11de61605e36ab80a0b85d03f8d48a48",
-          "target": "d4f8c4953121af1b02155b494ebb6063",
+          "id": "b3f33780e96820811c4364d930a679a049bf9983ce92e3165d96800d7ae1fabe",
+          "source": "558736a813aae0549f168dd685733a97c2c4bfce5da1203be6cef19c6b9c2a8a",
+          "target": "ff037557793b1a179b44a4bdb98f06a53f9144394c2c0311c77a787e4e422365",
           "traffic": {
             "protocol": "http",
             "rates": {
@@ -413,9 +437,9 @@
       },
       {
         "data": {
-          "id": "7538d228a4a583d292019bfc8c4ce6d6",
-          "source": "375ab940b56ae7bcf0f89cb1a7af5d44",
-          "target": "11de61605e36ab80a0b85d03f8d48a48",
+          "id": "0dd75e02c8345a74138edf6e086af22fb9dd0e4b542505d3bba67fd865a1b674",
+          "source": "65be8a76856b9d3ef07a3348abcf6476fc80408bd342dd7882a5f4274542a1e0",
+          "target": "558736a813aae0549f168dd685733a97c2c4bfce5da1203be6cef19c6b9c2a8a",
           "traffic": {
             "protocol": "grpc",
             "rates": {
@@ -437,9 +461,9 @@
       },
       {
         "data": {
-          "id": "a7a647415970806452ba65adfe29f7e0",
-          "source": "375ab940b56ae7bcf0f89cb1a7af5d44",
-          "target": "d4f8c4953121af1b02155b494ebb6063",
+          "id": "9aeed12a238cb05412f96a4ca681a605ce94a937e2041a9026637fbd1c19c7ea",
+          "source": "65be8a76856b9d3ef07a3348abcf6476fc80408bd342dd7882a5f4274542a1e0",
+          "target": "ff037557793b1a179b44a4bdb98f06a53f9144394c2c0311c77a787e4e422365",
           "traffic": {
             "protocol": "http",
             "rates": {
@@ -461,9 +485,9 @@
       },
       {
         "data": {
-          "id": "37cfe4a58ce96755179559c08fdda7d9",
-          "source": "c86e8ec8a41fcdafe296a22f7d55491b",
-          "target": "c800c2f5f6e1100ae3ebd8b63c91a0ed",
+          "id": "22376d8ea3e879bfbbf5b1d02abb20de95e242050949393c211d911e586900f5",
+          "source": "7cc28c7f579336dc60fee944e0ac251b745f3834f30ff2ca8dce0e09556fd289",
+          "target": "3e0a27576ac41ee46d0e519a5aaea8b7fa946173da2cf315d3821083b8e4b7fe",
           "traffic": {
             "protocol": "http",
             "rates": {
@@ -479,30 +503,6 @@
                 },
                 "hosts": {
                   "reviews.bookinfo.svc.cluster.local": "100.0"
-                }
-              }
-            }
-          }
-        }
-      },
-      {
-        "data": {
-          "id": "4fc5a84e4417d16fe352d3b5d749dcc4",
-          "source": "ddedb716cef6d38da883fcb5ca8797e9",
-          "target": "7f92c6688ae60c2f8095fff466a1a7fa",
-          "traffic": {
-            "protocol": "http",
-            "rates": {
-              "http": "400.00",
-              "httpPercentReq": "100.0"
-            },
-            "responses": {
-              "200": {
-                "flags": {
-                  "-": "100.0"
-                },
-                "hosts": {
-                  "app.example-2.com": "100.0"
                 }
               }
             }
