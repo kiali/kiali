@@ -3,24 +3,23 @@ name: Test Istio Version
 on:
   schedule:
   # These are in UTC time.
-  # If you change any of these, you must also change the switch statment in the determine-istio-version-to-use task.
+  # If you change any of these, you must also change the case statment in the determine-istio-version-to-use task.
   - cron: '0 2 * * *'
   - cron: '0 4 * * *'
-  - cron: '0 6 * * *'
   workflow_dispatch:
     inputs:
       istio_version:
-        description: "The version of Istio to test with. Format is either #.#.# or #.#-dev. If specified, this overrides istio_minor_version_offset."
+        description: "istio_version: The version of Istio to test with. Format is either #.#.# or #.#-dev. If specified, this overrides istio_minor_version_offset."
         required: false
         default: ""
         type: string
       istio_minor_version_offset:
-        description: "If istio_version is not set, the latest Istio minor version is tested. To test the previous minor version, set offset to 1 (i.e. 1 minor version prior to the latest minor version). This setting is ignored if istio_version is set."
+        description: "istio_minor_version_offset: If istio_version is not set, by default the latest Istio minor version is tested. To test the previous minor version, set this offset to 1 (i.e. 1 minor version prior to the latest minor version). Set it to 2 for two minor versions previous to the latest. This setting is ignored if istio_version is set."
         required: false
         default: 0
         type: number
       branch_to_test:
-        description: "The branch to build and test."
+        description: "branch_to_test: The branch to build and test."
         required: true
         default: "master"
         type: string
@@ -45,9 +44,8 @@ jobs:
             OFFSET=$(( OFFSET < 0 ? -OFFSET : OFFSET ))
           else
             case "${{ github.event.schedule }}" in
-              "0 2 * * *") OFFSET=0 ;;
-              "0 4 * * *") OFFSET=1 ;;
-              "0 6 * * *") OFFSET=2 ;;
+              "0 2 * * *") OFFSET=1 ;;
+              "0 4 * * *") OFFSET=2 ;;
               *) echo "Invalid schedule or unknown trigger! Cannot determine Istio version." && exit 1 ;;
             esac
           fi
