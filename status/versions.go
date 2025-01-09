@@ -130,7 +130,7 @@ func tracingVersion(conf *config.Config, homeClusterSAClient kubernetes.ClientIn
 		} else {
 			// Tempo
 			if tracingConfig.Provider == config.TempoProvider {
-				body, statusCode, _, err := httputil.HttpGet(fmt.Sprintf("%s/api/status/buildinfo", versionUrl), nil, 10*time.Second, nil, nil)
+				body, statusCode, _, err := httputil.HttpGet(fmt.Sprintf("%s/api/status/buildinfo", versionUrl), &tracingConfig.Auth, 10*time.Second, nil, nil)
 				if err != nil || statusCode > 399 {
 					log.Infof("tempo version check failed: url=[%v], code=[%v], err=[%v]", versionUrl, statusCode, err)
 				} else {
