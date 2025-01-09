@@ -348,3 +348,55 @@ func TestGetServiceRouteURL(t *testing.T) {
 	require.NoError(err)
 	assert.Equal("", url)
 }
+
+func TestGetServicesFromWaypoint(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+
+	conf := config.NewConfig()
+	conf.ExternalServices.Istio.IstioAPIEnabled = false
+	config.Set(conf)
+
+	clientFactory := kubetest.NewK8SClientFactoryMock(nil)
+	clients := kubetest.FakeWaypointAndEnrolledClients("ratings", conf.KubernetesConfig.ClusterName, "bookinfo")
+	clientFactory.SetClients(clients)
+	cache := cache.NewTestingCacheWithFactory(t, clientFactory, *conf)
+	kialiCache = cache
+
+	svc := NewWithBackends(clients, clients, nil, nil).Svc
+
+	svcList := svc.ListWaypointServices(context.TODO(), "waypoint", "bookinfo", conf.KubernetesConfig.ClusterName)
+	require.NotNil(svcList)
+	assert.Equal("ratings", svcList[0].Name)
+	assert.Equal("service", svcList[0].LabelType)
+	assert.Equal("bookinfo", svcList[0].Namespace)
+	assert.Equal(conf.KubernetesConfig.ClusterName, svcList[0].Cluster)
+	assert.Len(svcList, 1)
+}
+
+func TestGetWaypointServices(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+
+	conf := config.NewConfig()
+	conf.ExternalServices.Istio.IstioAPIEnabled = false
+	config.Set(conf)
+
+	clientFactory := kubetest.NewK8SClientFactoryMock(nil)
+	clients := kubetest.FakeWaypointAndEnrolledClients("ratings", conf.KubernetesConfig.ClusterName, "bookinfo")
+	clientFactory.SetClients(clients)
+	cache := cache.NewTestingCacheWithFactory(t, clientFactory, *conf)
+	kialiCache = cache
+
+	svc := NewWithBackends(clients, clients, nil, nil).Svc
+
+	service, _ := svc.GetService(context.TODO(), conf.KubernetesConfig.ClusterName, "bookinfo", "ratings")
+
+	waypointsList := svc.GetWaypointsForService(context.TODO(), &service)
+	require.NotNil(waypointsList)
+	assert.Equal("waypoint", waypointsList[0].Name)
+	assert.Equal("", waypointsList[0].LabelType)
+	assert.Equal("bookinfo", waypointsList[0].Namespace)
+	assert.Equal(conf.KubernetesConfig.ClusterName, waypointsList[0].Cluster)
+	assert.Len(waypointsList, 1)
+}

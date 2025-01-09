@@ -12,7 +12,7 @@ import {
   VirtualService
 } from './IstioObjects';
 import { TLSStatus } from './TLSStatus';
-import { AdditionalItem } from './Workload';
+import { AdditionalItem, WorkloadInfo } from './Workload';
 import { ResourcePermissions } from './Permissions';
 import { KIALI_WIZARD_LABEL } from '../components/IstioWizards/WizardActions';
 import { ServiceOverview } from './ServiceList';
@@ -20,6 +20,14 @@ import { ServiceOverview } from './ServiceList';
 export type ServiceId = {
   namespace: string;
   service: string;
+};
+
+export type ServiceInfo = {
+  cluster: string;
+  labelType?: string;
+  name: string;
+  namespace: string;
+  type?: string;
 };
 
 export interface ServicePort {
@@ -66,8 +74,8 @@ export interface Service {
   createdAt: string;
   externalName: string;
   ip: string;
-  ips?: string[]; // present in dual stack. ip === ips[0]
   ipFamilies?: IPFamily[]; // ipFamilies[0] represents ip, ipFamilies[i] represents ips[i]
+  ips?: string[]; // present in dual stack. ip === ips[0]
   labels?: { [key: string]: string };
   name: string;
   namespace: string;
@@ -92,6 +100,7 @@ export interface ServiceDetailsInfo {
   subServices?: ServiceOverview[];
   validations: Validations;
   virtualServices: VirtualService[];
+  waypointWorkloads?: WorkloadInfo[];
   workloads?: WorkloadOverview[];
 }
 

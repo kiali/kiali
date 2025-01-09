@@ -13,7 +13,7 @@ import { KialiAppState } from '../../store/Store';
 import { connect } from 'react-redux';
 import { isParentKiosk, kioskContextMenuAction } from '../Kiosk/KioskActions';
 import { isMultiCluster } from '../../config';
-import { Workload } from '../../types/Workload';
+import { WorkloadInfo } from '../../types/Workload';
 import { hasMissingSidecar } from 'components/VirtualList/Config';
 import { healthIndicatorStyle } from 'styles/HealthStyle';
 import { infoStyle } from 'styles/IconStyle';
@@ -29,7 +29,7 @@ type Props = ReduxProps & {
   isWaypoint?: boolean;
   namespace: string;
   services?: string[];
-  waypointWorkloads?: Workload[];
+  waypointWorkloads?: WorkloadInfo[];
   workloads?: AppWorkload[];
 };
 

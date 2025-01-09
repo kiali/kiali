@@ -11,6 +11,7 @@ import (
 	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/kiali/kiali/business/checkers"
 	"github.com/kiali/kiali/config"
@@ -588,6 +589,8 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, cluster, namespace,
 		}
 	}
 
+	waypointWk := in.GetWaypointsForService(ctx, &svc)
+
 	serviceOverviews := make([]*models.ServiceOverview, 0)
 	// Convert filtered k8sClients services into ServiceOverview, only several attributes are needed
 	for _, item := range rSvcs {
@@ -643,8 +646,100 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, cluster, namespace,
 		s.ServiceEntries = kubernetes.FilterServiceEntriesByHostname(istioConfigList.ServiceEntries, s.Service.Name)
 	}
 	s.IsAmbient = isAmbient
+	if s.IsAmbient && len(waypointWk) > 0 {
+		s.WaypointWorkloads = waypointWk
+	}
 
 	return &s, nil
+}
+
+// isServiceCaptured Check if the pod is captured by any waypoint proxy
+func (in *SvcService) isServiceCaptured(svc *models.Service) ([]models.Waypoint, bool) {
+	found := false
+	waypointNames := make([]models.Waypoint, 0)
+
+	// Is the service labeled?
+	// the service waypoint takes precedence over the namespace waypoint as long as the service waypoint can handle service or all traffic
+	waypointName, isLabeled := svc.Labels[config.WaypointUseLabel]
+	if isLabeled {
+		waypointNamespace, okNs := svc.Labels[config.WaypointUseNamespaceLabel]
+		if !okNs {
+			waypointNamespace = svc.Namespace
+		}
+		waypointNames = append(waypointNames, models.Waypoint{Name: waypointName, Type: "service", Namespace: waypointNamespace, Cluster: svc.Cluster})
+	}
+
+	// Is the namespace labeled?
+	ns, foundNS := in.businessLayer.Workload.cache.GetNamespace(svc.Cluster, in.userClients[svc.Cluster].GetToken(), svc.Namespace)
+
+	if foundNS {
+		waypointNsName, ok := ns.Labels[config.WaypointUseLabel]
+		waypointNamespace, okNs := ns.Labels[config.WaypointUseNamespaceLabel]
+		// If there is no specific waypoint Namespace label, it is supposed to be the same
+		if !okNs {
+			waypointNamespace = svc.Namespace
+		}
+		if ok {
+			found = true
+			// Ambient doesn't support multicluster (For now), cluster is the same as the workload
+			waypointNames = append(waypointNames, models.Waypoint{Name: waypointNsName, Type: "namespace", Namespace: waypointNamespace, Cluster: svc.Cluster})
+		}
+	}
+
+	return waypointNames, found
+}
+
+// GetWaypointsForService returns a list of waypoint workloads that captured traffic for a specific service
+// It should be just one
+func (in *SvcService) GetWaypointsForService(ctx context.Context, svc *models.Service) []models.WorkloadReferenceInfo {
+	var workloadsList []models.WorkloadReferenceInfo
+	waypoints, _ := in.isServiceCaptured(svc)
+
+	for _, waypoint := range waypoints {
+		wkd, err := in.businessLayer.Workload.fetchWorkload(ctx, WorkloadCriteria{Cluster: svc.Cluster, Namespace: waypoint.Namespace, WorkloadName: waypoint.Name, WorkloadGVK: schema.GroupVersionKind{}})
+		if err != nil {
+			log.Debugf("GetWaypointsForService: Error fetching workloads %s", err.Error())
+			return nil
+		}
+		if wkd != nil {
+			workloadsList = append(workloadsList, models.WorkloadReferenceInfo{Name: waypoint.Name, Namespace: waypoint.Namespace, Cluster: waypoint.Cluster, Type: wkd.WaypointFor()})
+		}
+	}
+	return workloadsList
+}
+
+// ListWaypointServices returns a list of services which traffic is handled by a specific waypoint
+// It should return just one (If there are more, that might be a validation error)
+func (in *SvcService) ListWaypointServices(ctx context.Context, name, namespace, cluster string) []models.ServiceReferenceInfo {
+	var serviceInfoList []models.ServiceReferenceInfo
+	// This is to verify there is no duplicated services
+	servicesMap := make(map[string]bool)
+
+	labelSelector := fmt.Sprintf("%s=%s", config.WaypointUseLabel, name)
+	kubeCache, err := in.kialiCache.GetKubeCache(cluster)
+	if err != nil {
+		log.Infof("ListWaypointServices: error getting kube cache: %s", err.Error())
+		return serviceInfoList
+	}
+	namespaces, err := in.businessLayer.Namespace.GetClusterNamespaces(ctx, cluster)
+	if err == nil {
+		for _, ns := range namespaces {
+			svcs, err := kubeCache.GetServices(ns.Name, labelSelector)
+			if err != nil {
+				log.Infof("Error getting services %s", err.Error())
+			} else {
+				for _, service := range svcs {
+					key := fmt.Sprintf("%s_%s_%s", service.Name, service.Namespace, cluster)
+					if !servicesMap[key] && (service.Namespace == namespace || service.Labels[config.WaypointUseNamespaceLabel] == namespace) {
+						serviceInfoList = append(serviceInfoList, models.ServiceReferenceInfo{Name: service.Name, Namespace: service.Namespace, LabelType: "service", Cluster: cluster})
+						servicesMap[key] = true
+					}
+				}
+			}
+		}
+	}
+
+	return serviceInfoList
 }
 
 func (in *SvcService) UpdateService(ctx context.Context, cluster, namespace, service string, interval string, queryTime time.Time, jsonPatch string, patchType string) (*models.ServiceDetails, error) {

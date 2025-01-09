@@ -14,6 +14,7 @@ import (
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/log"
 )
 
 type ClusterWorkloads struct {
@@ -168,6 +169,36 @@ type WorkloadListItem struct {
 
 type WorkloadOverviews []*WorkloadListItem
 
+// WorkloadReferenceInfo holds the service information needed to create links to another workload.
+// Used, for example, to link services to Ambient waypoint proxies
+type WorkloadReferenceInfo struct {
+	// Cluster
+	Cluster string `json:"cluster"`
+
+	// Workload labels
+	Labels map[string]string `json:"labels"`
+
+	// LabelType in case of waypoint workloads,
+	// Where the label comes from (namespace, workload or service)
+	// required: false
+	// example: namespace
+	LabelType string `json:"labelType"`
+
+	// Name for the workload
+	// required: true
+	Name string `json:"name"`
+
+	// Namespace where the workload live in
+	// required: true
+	// example: bookinfo
+	Namespace string `json:"namespace"`
+
+	// In case of waypoints it can be service/workload
+	// required: false
+	// example: workload/service
+	Type string `json:"type"`
+}
+
 // Workload has the details of a workload
 type Workload struct {
 	WorkloadListItem
@@ -201,8 +232,11 @@ type Workload struct {
 
 	Validations IstioValidations `json:"validations"`
 
+	// Ambient waypoint services
+	WaypointServices []ServiceReferenceInfo `json:"waypointServices"`
+
 	// Ambient waypoint workloads
-	WaypointWorkloads []Workload `json:"waypointWorkloads"`
+	WaypointWorkloads []WorkloadReferenceInfo `json:"waypointWorkloads"`
 
 	// Health
 	Health WorkloadHealth `json:"health"`
@@ -234,7 +268,6 @@ func (workload *WorkloadListItem) ParseWorkload(w *Workload) {
 	if w.IsWaypoint() {
 		workload.Ambient = "waypoint"
 	}
-
 	/** Check the labels app and version required by Istio in template Pods*/
 	_, workload.AppLabel = w.Labels[conf.IstioLabels.AppLabelName]
 	_, workload.VersionLabel = w.Labels[conf.IstioLabels.VersionLabelName]
@@ -563,8 +596,33 @@ func (workload *Workload) IsGateway() bool {
 
 // IsWaypoint return true if the workload is a waypoint proxy (Based in labels)
 func (workload *Workload) IsWaypoint() bool {
+	return workload.Labels[config.WaypointLabel] == config.WaypointLabelValue
+}
 
-	return workload.Labels["gateway.istio.io/managed"] == "istio.io-mesh-controller"
+// WaypointFor returns the waypoint type (workload/service)
+func (workload *Workload) WaypointFor() string {
+	if !workload.IsWaypoint() {
+		return ""
+	}
+	wpLabel, found := workload.Labels[config.WaypointFor]
+	if !found {
+		return config.WaypointForService
+	}
+
+	switch wpLabel {
+	case config.WaypointForWorkload:
+		return config.WaypointForWorkload
+	case config.WaypointForService:
+		return config.WaypointForService
+	case config.WaypointForAll:
+		return config.WaypointForAll
+	case config.WaypointForNone:
+		return config.WaypointForNone
+	default:
+		log.Errorf("Invalid waypoint for label: %s", workload.Labels[config.WaypointFor])
+		return ""
+	}
+
 }
 
 // IsWaypoint return true if the workload is a ztunnel (Based in labels)

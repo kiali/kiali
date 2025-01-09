@@ -28,6 +28,7 @@ import { connectRefresh } from '../../components/Refresh/connectRefresh';
 import { HistoryManager } from 'app/History';
 import { basicTabStyle } from 'styles/TabStyles';
 import { ZtunnelConfig } from '../../components/Ambient/ZtunnelConfig';
+import { WaypointConfig } from '../../components/Ambient/WaypointConfig';
 
 type WorkloadDetailsState = {
   cluster?: string;
@@ -57,7 +58,8 @@ const paramToTab: { [key: string]: number } = {
   in_metrics: 3,
   out_metrics: 4,
   traces: 5,
-  waypoint: 7
+  waypoint: 7,
+  ztunnel: 8
 };
 
 let nextTabIndex = 6;
@@ -85,7 +87,13 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
       currentTab !== this.state.currentTab ||
       this.props.duration !== prevProps.duration
     ) {
-      if (currentTab === 'info' || currentTab === 'logs' || currentTab === 'envoy' || currentTab === 'ztunnel') {
+      if (
+        currentTab === 'info' ||
+        currentTab === 'logs' ||
+        currentTab === 'envoy' ||
+        currentTab === 'ztunnel' ||
+        currentTab === 'waypoint'
+      ) {
         this.fetchWorkload(cluster).then(() => {
           if (currentTab !== this.state.currentTab || cluster !== this.state.cluster) {
             this.setState({ currentTab: currentTab, cluster: cluster });
@@ -274,6 +282,16 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
       );
       tabsArray.push(ztunnelTab);
       paramToTab['ztunnel'] = 11;
+    }
+
+    if (this.state.workload && this.state.workload.ambient === 'waypoint') {
+      const waypointTab = (
+        <Tab title="Waypoint" eventKey={12} key="Waypoint">
+          {this.state.workload && <WaypointConfig workload={this.state.workload} />}
+        </Tab>
+      );
+      tabsArray.push(waypointTab);
+      paramToTab['waypoint'] = 12;
     }
 
     // Used by the runtimes tabs

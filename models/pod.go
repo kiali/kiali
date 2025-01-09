@@ -37,8 +37,10 @@ type Pod struct {
 }
 
 type Waypoint struct {
-	Name string
-	Type string
+	Cluster   string `json:"cluster"`
+	Name      string `json:"name"`
+	Namespace string `json:"namespace"`
+	Type      string `json:"type"`
 }
 
 // Reference holds some information on the pod creator

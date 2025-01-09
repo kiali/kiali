@@ -1,7 +1,4 @@
 import * as React from 'react';
-import { connect } from 'react-redux';
-import { KialiAppState } from 'store/Store';
-import { ISortBy } from '@patternfly/react-table';
 import { Workload } from 'types/Workload';
 import { Pod, ZtunnelConfigDump } from 'types/IstioObjects';
 import * as API from '../../services/Api';
@@ -30,25 +27,10 @@ const ztunnelTabs = ['services', 'workloads'];
 const tabName = 'ztunnelTab';
 const defaultTab = 'services';
 
-export type ResourceSorts = { [resource: string]: ISortBy };
-
-type ReduxProps = {
-  kiosk: string;
-};
-
-type ZtunnelConfigProps = ReduxProps & {
+type ZtunnelConfigProps = {
   lastRefreshAt: TimeInMilliseconds;
   namespace: string;
   workload: Workload;
-};
-
-type ZtunnelConfigState = {
-  activeKey: number;
-  config: ZtunnelConfigDump;
-  fetch: boolean;
-  pod: Pod;
-  resource: string;
-  tabHeight: number;
 };
 
 const fullHeightStyle = kialiStyle({
@@ -64,47 +46,68 @@ export interface SortableCompareTh<T> extends SortableTh {
   compare?: (a: T, b: T) => number;
 }
 
-class ZtunnelConfigComponent extends React.Component<ZtunnelConfigProps, ZtunnelConfigState> {
-  constructor(props: ZtunnelConfigProps) {
-    super(props);
+export const ZtunnelConfig: React.FC<ZtunnelConfigProps> = (props: ZtunnelConfigProps) => {
+  const sortedPods = (): Pod[] => {
+    return props.workload?.pods.sort((p1: Pod, p2: Pod) => (p1.name >= p2.name ? 1 : -1));
+  };
 
-    this.state = {
-      pod: this.sortedPods()[0],
-      config: {},
-      tabHeight: 300,
-      fetch: true,
-      activeKey: ztunnelTabs.indexOf(activeTab(tabName, defaultTab)),
-      resource: activeTab(tabName, defaultTab)
-    };
-  }
+  const [pod, setPod] = React.useState(sortedPods()[0]);
+  const [config, setConfig] = React.useState<ZtunnelConfigDump>({});
+  const [fetch, setFetch] = React.useState(true);
+  const [activeKey, setActiveKey] = React.useState(ztunnelTabs.indexOf(activeTab(tabName, defaultTab)));
+  const [resource, setResource] = React.useState(activeTab(tabName, defaultTab));
 
-  componentDidMount(): void {
-    this.fetchContent();
-  }
+  const prevResource = React.createRef();
+  const prevPod = React.createRef();
 
-  componentDidUpdate(_prevProps: ZtunnelConfigProps, prevState: ZtunnelConfigState): void {
+  const fetchZtunnelConfig = React.useCallback(async (ns, name, cluster: string) => {
+    await API.getPodZtunnelConfig(ns, name, cluster)
+      .then(resultConfig => {
+        setConfig(resultConfig.data);
+        setFetch(false);
+        console.log(resultConfig.data);
+      })
+      .catch(error => {
+        AlertUtils.addError(`Could not fetch ztunnel config for ${name}.`, error);
+      });
+  }, []);
+
+  React.useEffect(() => {
     const currentTabIndex = ztunnelTabs.indexOf(activeTab(tabName, defaultTab));
-
-    if (this.state.pod.name !== prevState.pod.name || this.state.resource !== prevState.resource) {
-      this.fetchContent();
-
-      if (currentTabIndex !== this.state.activeKey) {
-        this.setState({ activeKey: currentTabIndex });
+    if (
+      prevPod.current !== undefined &&
+      prevPod.current !== pod &&
+      prevResource.current !== undefined &&
+      prevResource.current !== resource &&
+      fetch === true
+    ) {
+      setFetch(false);
+      fetchZtunnelConfig(props.namespace, pod.name, props.workload.cluster ? props.workload.cluster : '');
+      if (currentTabIndex !== activeKey) {
+        setActiveKey(currentTabIndex);
       }
     }
-  }
+  }, [
+    resource,
+    pod,
+    activeKey,
+    prevPod,
+    prevResource,
+    fetchZtunnelConfig,
+    fetch,
+    props.namespace,
+    props.workload.cluster
+  ]);
 
-  ztunnelHandleTabClick = (_event: React.MouseEvent, tabIndex: string | number): void => {
+  const ztunnelHandleTabClick = (_event: React.MouseEvent, tabIndex: string | number): void => {
     const resourceIdx: number = +tabIndex;
     const targetResource: string = resources[resourceIdx];
 
-    if (targetResource !== this.state.resource) {
-      this.setState({
-        config: {},
-        fetch: true,
-        resource: targetResource,
-        activeKey: resourceIdx
-      });
+    if (targetResource !== resource) {
+      setConfig({});
+      setFetch(true);
+      setResource(targetResource);
+      setActiveKey(resourceIdx);
 
       const mainTab = new URLSearchParams(location.getSearch()).get(workloadTabName) ?? workloadDefaultTab;
       const urlParams = new URLSearchParams(location.getSearch());
@@ -114,120 +117,87 @@ class ZtunnelConfigComponent extends React.Component<ZtunnelConfigProps, Ztunnel
     }
   };
 
-  fetchZtunnelConfig = (): void => {
-    API.getPodZtunnelConfig(this.props.namespace, this.state.pod.name, this.props.workload.cluster)
-      .then(resultConfig => {
-        this.setState({
-          config: resultConfig.data,
-          fetch: false
-        });
-      })
-      .catch(error => {
-        AlertUtils.addError(`Could not fetch ztunnel config for ${this.state.pod.name}.`, error);
-      });
-  };
-
-  fetchContent = (): void => {
-    if (this.state.fetch === true) {
-      this.fetchZtunnelConfig();
-    }
-  };
-
-  setPod = (podName: string): void => {
+  const setPodByKey = (podName: string): void => {
     const podIdx: number = +podName;
-    const targetPod: Pod = this.sortedPods()[podIdx];
+    const targetPod: Pod = sortedPods()[podIdx];
 
-    if (targetPod.name !== this.state.pod.name) {
-      this.setState({
-        config: {},
-        pod: targetPod,
-        fetch: true
-      });
+    if (targetPod.name !== pod.name) {
+      setConfig({});
+      setPod(targetPod);
+      setFetch(true);
     }
   };
 
-  sortedPods = (): Pod[] => {
-    return this.props.workload.pods.sort((p1: Pod, p2: Pod) => (p1.name >= p2.name ? 1 : -1));
-  };
+  const tabs: JSX.Element[] = [];
 
-  render(): React.ReactNode {
-    const tabs: JSX.Element[] = [];
-
-    const servicesTab = (
-      <Tab title={t('Services')} eventKey={0} key="services">
-        <Card className={fullHeightStyle}>
-          <CardBody>
-            <div className={fullHeightStyle}>
-              <div style={{ marginBottom: '1.25rem' }}>
-                <div key="service-icon" className={iconStyle}>
-                  <PFBadge badge={PFBadges.Pod} position={TooltipPosition.top} />
-                </div>
-                <ToolbarDropdown
-                  id="ztunnel_pods_list"
-                  tooltip={t('Display ztunnel config for the selected pod')}
-                  handleSelect={key => this.setPod(key)}
-                  value={this.state.pod.name}
-                  label={this.state.pod.name}
-                  options={this.props.workload.pods.map((pod: Pod) => pod.name).sort()}
-                />
+  const servicesTab = (
+    <Tab title={t('Services')} eventKey={0} key="services">
+      <Card className={fullHeightStyle}>
+        <CardBody>
+          <div className={fullHeightStyle}>
+            <div style={{ marginBottom: '1.25rem' }}>
+              <div key="service-icon" className={iconStyle}>
+                <PFBadge badge={PFBadges.Pod} position={TooltipPosition.top} />
               </div>
-              <ZtunnelServicesTable config={this.state.config.services} />
+              <ToolbarDropdown
+                id="ztunnel_pods_list"
+                tooltip={t('Display ztunnel config for the selected pod')}
+                handleSelect={key => setPodByKey(key)}
+                value={pod.name}
+                label={pod.name}
+                options={props.workload.pods.map((pod: Pod) => pod.name).sort()}
+              />
             </div>
-          </CardBody>
-        </Card>
-      </Tab>
-    );
-    tabs.push(servicesTab);
+            <ZtunnelServicesTable config={config?.services} />
+          </div>
+        </CardBody>
+      </Card>
+    </Tab>
+  );
+  tabs.push(servicesTab);
 
-    const workloadsTab = (
-      <Tab title={t('Workloads')} eventKey={1} key="workloads">
-        <Card className={fullHeightStyle}>
-          <CardBody>
-            <div className={fullHeightStyle}>
-              <div style={{ marginBottom: '1.25rem' }}>
-                <div key="service-icon" className={iconStyle}>
-                  <PFBadge badge={PFBadges.Pod} position={TooltipPosition.top} />
-                </div>
-                <ToolbarDropdown
-                  id="envoy_pods_list"
-                  tooltip={t('Display envoy config for the selected pod')}
-                  handleSelect={key => this.setPod(key)}
-                  value={this.state.pod.name}
-                  label={this.state.pod.name}
-                  options={this.props.workload.pods.map((pod: Pod) => pod.name).sort()}
-                />
+  const workloadsTab = (
+    <Tab title={t('Workloads')} eventKey={1} key="workloads">
+      <Card className={fullHeightStyle}>
+        <CardBody>
+          <div className={fullHeightStyle}>
+            <div style={{ marginBottom: '1.25rem' }}>
+              <div key="service-icon" className={iconStyle}>
+                <PFBadge badge={PFBadges.Pod} position={TooltipPosition.top} />
               </div>
-              <ZtunnelWorkloadsTable config={this.state.config.workloads} />
+              <ToolbarDropdown
+                id="envoy_pods_list"
+                tooltip={t('Display envoy config for the selected pod')}
+                handleSelect={key => setPodByKey(key)}
+                value={pod.name}
+                label={pod.name}
+                options={props.workload.pods.map((pod: Pod) => pod.name).sort()}
+              />
             </div>
-          </CardBody>
-        </Card>
-      </Tab>
-    );
-    tabs.push(workloadsTab);
+            <ZtunnelWorkloadsTable config={config?.workloads} />
+          </div>
+        </CardBody>
+      </Card>
+    </Tab>
+  );
+  tabs.push(workloadsTab);
 
-    return (
-      <RenderComponentScroll onResize={height => this.setState({ tabHeight: height })}>
-        <Grid>
-          <GridItem span={12}>
-            <Tabs
-              id="ztunnel-details"
-              className={subTabStyle}
-              activeKey={this.state.activeKey}
-              onSelect={this.ztunnelHandleTabClick}
-              mountOnEnter={true}
-              unmountOnExit={true}
-            >
-              {tabs}
-            </Tabs>
-          </GridItem>
-        </Grid>
-      </RenderComponentScroll>
-    );
-  }
-}
-
-const mapStateToProps = (state: KialiAppState): ReduxProps => ({
-  kiosk: state.globalState.kiosk
-});
-
-export const ZtunnelConfig = connect(mapStateToProps)(ZtunnelConfigComponent);
+  return (
+    <RenderComponentScroll>
+      <Grid>
+        <GridItem span={12}>
+          <Tabs
+            id="ztunnel-details"
+            className={subTabStyle}
+            activeKey={activeKey}
+            onSelect={ztunnelHandleTabClick}
+            mountOnEnter={true}
+            unmountOnExit={true}
+          >
+            {tabs}
+          </Tabs>
+        </GridItem>
+      </Grid>
+    </RenderComponentScroll>
+  );
+};

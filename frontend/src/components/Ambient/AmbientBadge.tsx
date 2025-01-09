@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { Label, Tooltip, TooltipPosition } from '@patternfly/react-core';
+import { t } from 'i18next';
 
 type AmbientLabelProps = {
   style?: React.CSSProperties;
@@ -11,7 +12,7 @@ export const AmbientBadge: React.FC<AmbientLabelProps> = (props: AmbientLabelPro
 
   const iconComponent = (
     <Label style={{ marginLeft: '0.5rem', ...props.style }} color="blue" isCompact>
-      Ambient
+      {t('Ambient')}
     </Label>
   );
 

@@ -1,11 +1,22 @@
 import { WorkloadHealth, WorkloadHealthResponse } from './Health';
 import { GroupVersionKind, ObjectReference, Pod, Service, Validations } from './IstioObjects';
 import { InstanceType } from 'types/Common';
+import { ServiceInfo } from './ServiceInfo';
 
 export type WorkloadId = {
   namespace: string;
   workload: string;
 };
+
+export type WorkloadInfo = {
+  cluster: string;
+  labelType?: string;
+  name: string;
+  namespace: string;
+  type?: string;
+};
+
+export type WaypointInfo = WorkloadInfo | ServiceInfo;
 
 export interface Workload {
   additionalDetails: AdditionalItem[];
@@ -32,7 +43,8 @@ export interface Workload {
   services: Service[];
   validations?: Validations;
   versionLabel: boolean;
-  waypointWorkloads: Workload[];
+  waypointServices?: WaypointInfo[];
+  waypointWorkloads?: WaypointInfo[];
 }
 
 export const emptyWorkload: Workload = {
