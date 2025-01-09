@@ -116,7 +116,7 @@ func handlePanic(w http.ResponseWriter) {
 		if code == http.StatusInternalServerError {
 			stack := debug.Stack()
 			log.Errorf("%s: %s", message, stack)
-			RespondWithDetailedError(w, code, message, string(stack))
+			RespondWithDetailedError(w, code, message, "Stack trace available in Kiali logs")
 			return
 		}
 		RespondWithError(w, code, message)
