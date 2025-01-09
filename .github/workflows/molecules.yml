@@ -2,7 +2,11 @@ name: Kiali Molecule Tests
 
 on:
   schedule:
-  - cron: '0 6 * * *' # This is UTC time
+  # These are in UTC time.
+  # If you change any of these, you must also change the switch statment in the determine-istio-version-to-use task.
+  - cron: '0 2 * * *'
+  - cron: '0 4 * * *'
+  - cron: '0 6 * * *'
   workflow_dispatch:
     inputs:
       all_tests:
@@ -15,42 +19,61 @@ on:
         required: false
         default: "latest"
         type: string
-      last_n_istio_versions:
-        description: "The last N minor versions of Istio to test. Default is 3 meaning test with the latest version of Istio, along with the previous two minor version releases."
+      istio_minor_version_offset:
+        description: 'By default, the latest Istio minor version is tested. But you can test the previous minor version by asking for an Istio minor version offset of 1 (i.e. 1 minor version prior to the latest minor version)'
         required: false
-        default: 3
+        default: 0
         type: number
-
 jobs:
   molecules:
     name: Molecule tests
     runs-on: ubuntu-20.04
     steps:
     - name: Checkout the hack script that runs the tests
+      id: checkout-source
       uses: actions/checkout@v4
       with:
         sparse-checkout: |
           hack/ci-kind-molecule-tests.sh
     - name: Print the names of the tests that are to be run
+      id: log-test-names
       run: |
         if [ -z "${{ inputs.all_tests }}" ]; then
           echo "all tests"
         else
           echo "tests=${{ inputs.all_tests }}"
         fi
-    - name: Run molecule tests
+    - name: Determine Istio version to use
+      id: determine-istio-version-to-use
       run: |
-        NUMBER_ISTIO_VERSIONS_TO_TEST="${{ inputs.last_n_istio_versions }}"
-        LATEST_ISTIO_VERSIONS="$(curl -s https://api.github.com/repos/istio/istio/releases | jq -r '.[].tag_name' | sort -rV | awk -F. '!seen[$1"."$2]++' | head -n "${NUMBER_ISTIO_VERSIONS_TO_TEST}")"
-        echo "Testing with the following versions of Istio:"
+        if [[ "${{ github.event_name }}" == "workflow_dispatch" && -n "${{ github.event.inputs.istio_minor_version_offset }}" ]]; then
+          OFFSET="${{ github.event.inputs.istio_minor_version_offset }}"
+        else
+          case "${{ github.event.schedule }}" in
+            "0 2 * * *") OFFSET=0 ;;
+            "0 4 * * *") OFFSET=1 ;;
+            "0 6 * * *") OFFSET=2 ;;
+            *) echo "Invalid schedule or unknown trigger! Cannot determine Istio version." && exit 1 ;;
+          esac
+        fi
+        LATEST_ISTIO_VERSIONS="$(curl -s https://api.github.com/repos/istio/istio/releases | jq -r '.[].tag_name' | sort -rV | awk -F. '!seen[$1"."$2]++' | head -n $((OFFSET + 1)))"
+        ISTIO_VERSION=$(echo "${LATEST_ISTIO_VERSIONS}" | tail -n 1)
+        echo "The latest Istio versions are:"
         echo "${LATEST_ISTIO_VERSIONS}"
-        for iv in ${LATEST_ISTIO_VERSIONS}; do
-          echo "Testing with Istio version ${iv} using Helm install"
-          if ! ./hack/ci-kind-molecule-tests.sh --istio-version ${iv} --client-exe $(which kubectl) --kind-exe $(which kind) --all-tests "${{ inputs.all_tests }}" --git-clone-protocol https --irc-room "" --upload-logs false --rebuild-cluster true -ci true --operator-installer helm --olm-enabled false; then
-            exit $?
-          fi
-          echo "Testing with Istio version ${iv} using OLM install"
-          if ! ./hack/ci-kind-molecule-tests.sh --istio-version ${iv} --client-exe $(which kubectl) --kind-exe $(which kind) --all-tests "${{ inputs.all_tests }}" --git-clone-protocol https --irc-room "" --upload-logs false --rebuild-cluster false -ci true --operator-installer skip --olm-enabled true --olm-version "${{ inputs.olm_version }}"; then
-            exit $?
-          fi
-        done
+        echo "The Istio minor version offset is [${OFFSET}], thus the Istio version to be used in the tests will be: ${ISTIO_VERSION}"
+        echo "ISTIO_VERSION=${ISTIO_VERSION}" >> $GITHUB_ENV
+    - name: Run molecule tests
+      id: run-molecule-tests
+      run: |
+        ISTIO_VERSION="${{ env.ISTIO_VERSION }}"
+        if [ -z "${ISTIO_VERSION}" ]; then
+          echo "Could not determine the Istio version to use." && exit 1
+        fi
+        echo "Testing with Istio version [${ISTIO_VERSION}] using helm install"
+        if ! ./hack/ci-kind-molecule-tests.sh --istio-version ${ISTIO_VERSION} --client-exe $(which kubectl) --kind-exe $(which kind) --all-tests "${{ inputs.all_tests }}" --git-clone-protocol https --irc-room "" --upload-logs false --rebuild-cluster true -ci true --operator-installer helm --olm-enabled false; then
+          exit $?
+        fi
+        echo "Testing with Istio version [${ISTIO_VERSION}] using OLM install"
+        if ! ./hack/ci-kind-molecule-tests.sh --istio-version ${ISTIO_VERSION} --client-exe $(which kubectl) --kind-exe $(which kind) --all-tests "${{ inputs.all_tests }}" --git-clone-protocol https --irc-room "" --upload-logs false --rebuild-cluster false -ci true --operator-installer skip --olm-enabled true --olm-version "${{ inputs.olm_version }}"; then
+          exit $?
+        fi
