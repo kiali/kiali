@@ -228,7 +228,8 @@ export const WorkloadDescription: React.FC<WorkloadDescriptionProps> = (props: W
         {!isGVKSupported(workload.gvk) && (
           <Alert
             variant="info"
-            title="This type of workload is not fully supported by Kiali, only limited information is available for display"
+            isInline={true}
+            title="Kiali can only supply limited information for this workload type"
             style={{ marginTop: '0.25rem' }}
           />
         )}
