@@ -94,22 +94,24 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
     // when linking from one cluster's service to another cluster's service, cluster in state should be changed
     const cluster = HistoryManager.getClusterName() || this.state.cluster;
     const currentTab = activeTab(tabName, defaultTab);
-    if (
+
+    const mustFetch =
+      cluster !== this.state.cluster ||
       prevProps.serviceId.namespace !== this.props.serviceId.namespace ||
       prevProps.serviceId.service !== this.props.serviceId.service ||
-      currentTab !== this.state.currentTab ||
-      prevProps.lastRefreshAt !== this.props.lastRefreshAt
-    ) {
-      if (currentTab === 'info') {
-        this.fetchService(cluster);
-      }
-      if (currentTab !== this.state.currentTab || cluster !== this.state.cluster) {
+      prevProps.lastRefreshAt !== this.props.lastRefreshAt;
+    if (mustFetch || currentTab !== this.state.currentTab) {
+      if (mustFetch || currentTab === 'info') {
+        this.fetchService(cluster).then(() => {
+          this.setState({ currentTab: currentTab, cluster: cluster });
+        });
+      } else {
         this.setState({ currentTab: currentTab });
       }
     }
   }
 
-  private fetchService = (cluster?: string): void => {
+  private fetchService = async (cluster?: string): Promise<void> => {
     if (!cluster) {
       cluster = this.state.cluster;
     }
@@ -135,8 +137,7 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
         AlertUtils.addError('Could not fetch Gateways list.', gwError);
       });
 
-    // this.props.
-    API.getServiceDetail(
+    const servicePromise = API.getServiceDetail(
       this.props.serviceId.namespace,
       this.props.serviceId.service,
       true,
@@ -174,6 +175,8 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
       .catch(error => {
         AlertUtils.addError('Could not fetch PeerAuthentications.', error);
       });
+
+    return servicePromise;
   };
 
   private renderTabs(): React.ReactNode[] {

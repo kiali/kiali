@@ -75,29 +75,30 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
     const cluster = HistoryManager.getClusterName() || this.state.cluster;
     const currentTab = activeTab(tabName, defaultTab);
 
-    if (
+    const mustFetch =
+      cluster !== this.state.cluster ||
       this.props.appId.namespace !== prevProps.appId.namespace ||
       this.props.appId.app !== prevProps.appId.app ||
       this.props.lastRefreshAt !== prevProps.lastRefreshAt ||
-      currentTab !== this.state.currentTab ||
-      this.props.duration !== prevProps.duration
-    ) {
-      if (currentTab === 'info') {
-        this.fetchApp(cluster);
-      }
-      if (currentTab !== this.state.currentTab || cluster !== this.state.cluster) {
+      this.props.duration !== prevProps.duration;
+    if (mustFetch || currentTab !== this.state.currentTab) {
+      if (mustFetch || currentTab === 'info') {
+        this.fetchApp(cluster).then(() => {
+          this.setState({ currentTab: currentTab, cluster: cluster });
+        });
+      } else {
         this.setState({ currentTab: currentTab, cluster: cluster });
       }
     }
   }
 
-  private fetchApp = (cluster?: string): void => {
+  private fetchApp = async (cluster?: string): Promise<void> => {
     if (!cluster) {
       cluster = this.state.cluster;
     }
 
     const params: AppQuery = { rateInterval: `${String(this.props.duration)}s`, health: 'true' };
-    API.getApp(this.props.appId.namespace, this.props.appId.app, params, cluster)
+    return API.getApp(this.props.appId.namespace, this.props.appId.app, params, cluster)
       .then(details => {
         this.setState({
           app: details.data,

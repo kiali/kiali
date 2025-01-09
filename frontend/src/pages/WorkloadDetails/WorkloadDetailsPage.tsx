@@ -80,29 +80,27 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
     const cluster = HistoryManager.getClusterName() ?? this.state.cluster;
     const currentTab = activeTab(tabName, defaultTab);
 
-    if (
+    const mustFetch =
+      cluster !== this.state.cluster ||
       this.props.workloadId.namespace !== prevProps.workloadId.namespace ||
       this.props.workloadId.workload !== prevProps.workloadId.workload ||
       this.props.lastRefreshAt !== prevProps.lastRefreshAt ||
-      currentTab !== this.state.currentTab ||
-      this.props.duration !== prevProps.duration
-    ) {
+      this.props.duration !== prevProps.duration;
+
+    if (mustFetch || currentTab !== this.state.currentTab) {
       if (
+        mustFetch ||
+        currentTab === 'envoy' ||
         currentTab === 'info' ||
         currentTab === 'logs' ||
-        currentTab === 'envoy' ||
-        currentTab === 'ztunnel' ||
-        currentTab === 'waypoint'
+        currentTab === 'waypoint' ||
+        currentTab === 'ztunnel'
       ) {
         this.fetchWorkload(cluster).then(() => {
-          if (currentTab !== this.state.currentTab || cluster !== this.state.cluster) {
-            this.setState({ currentTab: currentTab, cluster: cluster });
-          }
+          this.setState({ currentTab: currentTab, cluster: cluster });
         });
       } else {
-        if (currentTab !== this.state.currentTab || cluster !== this.state.cluster) {
-          this.setState({ currentTab: currentTab, cluster: cluster });
-        }
+        this.setState({ currentTab: currentTab, cluster: cluster });
       }
     }
     // @TODO set the cluster in tab url
@@ -120,7 +118,7 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
       health: 'true'
     };
 
-    await API.getWorkload(this.props.workloadId.namespace, this.props.workloadId.workload, params, cluster)
+    return API.getWorkload(this.props.workloadId.namespace, this.props.workloadId.workload, params, cluster)
       .then(details => {
         this.setState({
           workload: details.data,
