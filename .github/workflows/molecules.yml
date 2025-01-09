@@ -48,6 +48,8 @@ jobs:
       run: |
         if [[ "${{ github.event_name }}" == "workflow_dispatch" && -n "${{ github.event.inputs.istio_minor_version_offset }}" ]]; then
           OFFSET="${{ github.event.inputs.istio_minor_version_offset }}"
+          # Convert to absolute value - we want a positive offset, though some people might find it more intuitive to say "-1" offset for the previous version
+          OFFSET=$(( OFFSET < 0 ? -OFFSET : OFFSET ))
         else
           case "${{ github.event.schedule }}" in
             "0 2 * * *") OFFSET=0 ;;
