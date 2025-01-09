@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Workload } from '../../types/Workload';
 import { hasMissingSidecar } from 'components/VirtualList/Config';
-import { Card, CardBody, CardHeader, Title, TitleSizes, Tooltip, TooltipPosition } from '@patternfly/react-core';
+import { Alert, Card, CardBody, CardHeader, Title, TitleSizes, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
 import { Labels } from '../../components/Label/Labels';
 import { LocalTime } from '../../components/Time/LocalTime';
@@ -20,7 +20,6 @@ import { DetailDescription } from '../../components/DetailDescription/DetailDesc
 import { AmbientLabel, tooltipMsgType } from '../../components/Ambient/AmbientLabel';
 import { gvkType, validationKey } from '../../types/IstioConfigList';
 import { infoStyle } from 'styles/IconStyle';
-import { addInfo } from 'utils/AlertUtils';
 import { classes } from 'typestyle';
 import { renderWaypointSimpleLabel } from '../../components/Ambient/WaypointLabel';
 
@@ -95,10 +94,6 @@ export const WorkloadDescription: React.FC<WorkloadDescriptionProps> = (props: W
     ].indexOf(getGVKTypeString(workload.gvk)) >= 0;
 
   const runtimes = (workload.runtimes ?? []).map(r => r.name).filter(name => name !== '');
-
-  if (!isGVKSupported(workload.gvk)) {
-    addInfo('This type of workload is not fully supported by Kiali, only limited information is available for display');
-  }
 
   const workloadProperties = (
     <>
@@ -177,7 +172,6 @@ export const WorkloadDescription: React.FC<WorkloadDescriptionProps> = (props: W
           </div>
 
           {workload.name}
-
           <Tooltip
             position={TooltipPosition.right}
             content={<div style={{ textAlign: 'left' }}>{workloadProperties}</div>}
@@ -230,6 +224,13 @@ export const WorkloadDescription: React.FC<WorkloadDescriptionProps> = (props: W
           <div key="cluster-icon" className={iconStyle}>
             <PFBadge badge={PFBadges.Cluster} position={TooltipPosition.right} /> {workload.cluster}
           </div>
+        )}
+        {!isGVKSupported(workload.gvk) && (
+          <Alert
+            variant="info"
+            title="This type of workload is not fully supported by Kiali, only limited information is available for display"
+            style={{ marginTop: '0.25rem' }}
+          />
         )}
       </CardHeader>
 
