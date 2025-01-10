@@ -40,6 +40,7 @@ import (
 
 func NewWorkloadService(
 	userClients map[string]kubernetes.ClientInterface,
+	kialiSAclients map[string]kubernetes.ClientInterface,
 	prom prometheus.ClientInterface,
 	cache cache.KialiCache,
 	layer *Layer,
@@ -58,6 +59,7 @@ func NewWorkloadService(
 		excludedWorkloads: excludedWorkloads,
 		prom:              prom,
 		userClients:       userClients,
+		kialiSAClients:    kialiSAclients,
 	}
 }
 
@@ -73,6 +75,7 @@ type WorkloadService struct {
 	grafana           *grafana.Service
 	prom              prometheus.ClientInterface
 	userClients       map[string]kubernetes.ClientInterface
+	kialiSAClients    map[string]kubernetes.ClientInterface
 }
 
 type WorkloadCriteria struct {
@@ -2459,7 +2462,14 @@ func (in *WorkloadService) GetWorkloadAppName(ctx context.Context, cluster, name
 // sends the processed lines to the client in JSON format. Results are sent as processing is performed, so in case of any error when
 // doing processing the JSON document will be truncated.
 func (in *WorkloadService) streamParsedLogs(cluster, namespace string, names []string, opts *LogOptions, w http.ResponseWriter) error {
-	userClient, ok := in.userClients[cluster]
+	var userClient kubernetes.ClientInterface
+	var ok bool
+	if opts.LogType == models.LogTypeZtunnel {
+		// Use the SA because the logs will be filtered by the specific workload logs
+		userClient, ok = in.kialiSAClients[cluster]
+	} else {
+		userClient, ok = in.userClients[cluster]
+	}
 	if !ok {
 		return fmt.Errorf("user client for cluster [%s] not found", cluster)
 	}
