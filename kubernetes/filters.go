@@ -304,6 +304,26 @@ func FilterWorkloadEntriesBySelector(selector labels.Selector, allEntries []*net
 	return entries
 }
 
+func FilterWorkloadGroupsBySelector(workloadSelector string, allGroups []*networking_v1.WorkloadGroup) []*networking_v1.WorkloadGroup {
+	var filtered []*networking_v1.WorkloadGroup
+	workloadLabels := mapWorkloadSelector(workloadSelector)
+	for _, wg := range allGroups {
+		wkLabelsS := []string{}
+		if wg.Spec.Template.Labels != nil {
+			apSelector := wg.Spec.Template.Labels
+			for k, v := range apSelector {
+				wkLabelsS = append(wkLabelsS, k+"="+v)
+			}
+		}
+		if resourceSelector, err := labels.Parse(strings.Join(wkLabelsS, ",")); err == nil {
+			if !resourceSelector.Empty() && resourceSelector.Matches(labels.Set(workloadLabels)) {
+				filtered = append(filtered, wg)
+			}
+		}
+	}
+	return filtered
+}
+
 // FilterPodsByService returns a subpart of pod list filtered according service selector
 func FilterPodsByService(s *core_v1.Service, allPods []core_v1.Pod) []core_v1.Pod {
 	if s == nil || allPods == nil {

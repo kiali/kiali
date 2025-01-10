@@ -95,7 +95,7 @@ func (icc IstioConfigCriteria) Include(resource schema.GroupVersionKind) bool {
 	case kubernetes.WorkloadEntries:
 		return icc.IncludeWorkloadEntries && !isWorkloadSelector
 	case kubernetes.WorkloadGroups:
-		return icc.IncludeWorkloadGroups && !isWorkloadSelector
+		return icc.IncludeWorkloadGroups
 	case kubernetes.RequestAuthentications:
 		return icc.IncludeRequestAuthentications
 	case kubernetes.EnvoyFilters:
@@ -337,6 +337,10 @@ func (in *IstioConfigService) getIstioConfigList(ctx context.Context, cluster st
 		istioConfigList.WorkloadGroups, err = kubeCache.GetWorkloadGroups(namespace, criteria.LabelSelector)
 		if err != nil {
 			return nil, err
+		}
+
+		if isWorkloadSelector {
+			istioConfigList.WorkloadGroups = kubernetes.FilterWorkloadGroupsBySelector(workloadSelector, istioConfigList.WorkloadGroups)
 		}
 	}
 

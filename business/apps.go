@@ -116,6 +116,7 @@ func (in *AppService) GetClusterAppList(ctx context.Context, criteria AppCriteri
 		IncludeRequestAuthentications: true,
 		IncludeSidecars:               true,
 		IncludeVirtualServices:        true,
+		IncludeWorkloadGroups:         true,
 	}
 	istioConfigList := &models.IstioConfigList{}
 
