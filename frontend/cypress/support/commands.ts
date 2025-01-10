@@ -223,3 +223,24 @@ Cypress.Commands.add('hasCssVar', { prevSubject: true }, (subject, styleName, cs
       .should('eq', evaluatedStyle);
   });
 });
+
+// Overrides exec to print out the full output in case of failure.
+// This is necessary because cypress truncates the output of stdout/stderr.
+// See https://github.com/cypress-io/cypress/issues/5470 for more details.
+Cypress.Commands.overwrite('exec', (originalFn, command, options) => {
+  // Don't override when failOnNonZeroExit is false because the caller
+  // may be doing something else with the output.
+  if (options && !options.failOnNonZeroExit) {
+    return originalFn(command, options);
+  }
+
+  return originalFn(command, { ...options, failOnNonZeroExit: false }).then(result => {
+    if (result.code) {
+      throw new Error(`Execution of "${command}" failed
+      Exit code: ${result.code}
+      Stdout:\n${result.stdout}
+      Stderr:\n${result.stderr}`);
+    }
+    return result;
+  });
+});
