@@ -139,7 +139,12 @@ export const AboutUIModal: React.FC<AboutUIModalProps> = (props: AboutUIModalPro
       </TextContent>
 
       {props.warningMessages.length > 0 && (
-        <Alert variant="warning" title={props.warningMessages[0]} style={{ marginTop: '1rem' }} />
+        <Alert
+          variant="warning"
+          isInline={true}
+          title={props.warningMessages[0] || 'An error occurred'}
+          style={{ marginTop: '1rem' }}
+        />
       )}
 
       <TextContent className={textContentStyle}>

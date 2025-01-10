@@ -287,6 +287,7 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
                     <ToolbarItem style={{ width: '100%' }}>
                       <Alert
                         style={{ width: '100%' }}
+                        isInline={true}
                         variant={AlertVariant.info}
                         title={this.state.infoMessage}
                         actionClose={<AlertActionCloseButton onClose={() => this.setState({ visibleAlert: false })} />}

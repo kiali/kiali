@@ -247,7 +247,7 @@ export class WizardLabels extends React.Component<Props, State> {
           </Button>
 
           {this.state.validation.length > 0 && (
-            <Alert variant="danger" isInline isExpandable title="An error occurred">
+            <Alert variant="danger" isInline={true} isExpandable title="An error occurred">
               <List isPlain>
                 {this.state.validation.map((message, i) => (
                   <ListItem key={`Message_${i}`}>{message}</ListItem>
