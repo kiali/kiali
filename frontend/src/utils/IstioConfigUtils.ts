@@ -252,5 +252,5 @@ export function istioTypesToGVKString(istioTypes: string[]): string[] {
 }
 
 export function isGVKSupported(gvk: GroupVersionKind): boolean {
-  return getGVKTypeString(gvk) === getGVKTypeString(gvkType[gvk.Kind]);
+  return getGVKTypeString(gvk) === getGVKTypeString(gvkType[gvk.Kind]) && gvk.Kind !== gvkType.WorkloadGroup;
 }

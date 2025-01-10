@@ -2,6 +2,7 @@ package business
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	osproject_v1 "github.com/openshift/api/project/v1"
@@ -14,6 +15,7 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/prometheus/prometheustest"
+	"github.com/kiali/kiali/tests/data"
 )
 
 func setupAppService(clients map[string]kubernetes.ClientInterface) *AppService {
@@ -58,6 +60,55 @@ func TestGetAppListFromDeployments(t *testing.T) {
 	assert.Equal("Namespace", appList.Apps[0].Namespace)
 }
 
+func TestGetAppListFromWorkloadGroups(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+
+	conf := config.NewConfig()
+	config.Set(conf)
+	// Auxiliar fake* tests defined in workload_test.go
+	kubeObjs := []runtime.Object{
+		kubetest.FakeNamespace("Namespace"),
+		&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}},
+	}
+	for _, obj := range data.CreateWorkloadGroups(*conf) {
+		o := obj
+		kubeObjs = append(kubeObjs, o)
+	}
+	for _, obj := range data.CreateWorkloadEntries(*conf) {
+		o := obj
+		kubeObjs = append(kubeObjs, o)
+	}
+	for _, obj := range data.CreateWorkloadGroupSidecars(*conf) {
+		o := obj
+		kubeObjs = append(kubeObjs, o)
+	}
+
+	// Setup mocks
+	k8s := kubetest.NewFakeK8sClient(kubeObjs...)
+	k8s.OpenShift = true
+	k8s.Token = "token" // Not needed a result, just to not send an error to test this usecase
+	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
+	SetWithBackends(mockClientFactory, nil)
+
+	SetupBusinessLayer(t, k8s, *conf)
+
+	svc := setupAppService(mockClientFactory.Clients)
+
+	criteria := AppCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", IncludeIstioResources: true, IncludeHealth: false}
+	appList, err := svc.GetClusterAppList(context.TODO(), criteria)
+	require.NoError(err)
+
+	assert.Equal(3, len(appList.Apps))
+	for _, app := range appList.Apps {
+		require.NotEmpty(app.Name)
+		require.Equal("Namespace", app.Namespace)
+		if !strings.Contains(app.Name, "no") {
+			require.True(app.IstioSidecar)
+		}
+	}
+}
+
 func TestGetAppFromDeployments(t *testing.T) {
 	assert := assert.New(t)
 	require := require.New(t)
@@ -100,6 +151,52 @@ func TestGetAppFromDeployments(t *testing.T) {
 	assert.Equal("httpbin-v2", appDetails.Workloads[1].WorkloadName)
 	assert.Equal(1, len(appDetails.ServiceNames))
 	assert.Equal("httpbin", appDetails.ServiceNames[0])
+}
+
+func TestGetAppFromWorkloadGroups(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+
+	conf := config.NewConfig()
+	conf.ExternalServices.CustomDashboards.Enabled = false
+	config.Set(conf)
+
+	// Setup mocks
+	kubeObjs := []runtime.Object{
+		&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}},
+	}
+	for _, obj := range data.CreateWorkloadGroups(*conf) {
+		o := obj
+		kubeObjs = append(kubeObjs, o)
+	}
+	for _, obj := range data.CreateWorkloadEntries(*conf) {
+		o := obj
+		kubeObjs = append(kubeObjs, o)
+	}
+	for _, obj := range data.CreateWorkloadGroupSidecars(*conf) {
+		o := obj
+		kubeObjs = append(kubeObjs, o)
+	}
+
+	k8s := kubetest.NewFakeK8sClient(kubeObjs...)
+	k8s.OpenShift = true
+	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
+	SetWithBackends(mockClientFactory, nil)
+
+	SetupBusinessLayer(t, k8s, *conf)
+
+	svc := setupAppService(mockClientFactory.Clients)
+
+	criteria := AppCriteria{Namespace: "Namespace", AppName: "ratings-vm", Cluster: conf.KubernetesConfig.ClusterName}
+	appDetails, appDetailsErr := svc.GetAppDetails(context.TODO(), criteria)
+	require.NoError(appDetailsErr)
+
+	assert.Equal("Namespace", appDetails.Namespace.Name)
+	assert.Equal("ratings-vm", appDetails.Name)
+
+	assert.Equal(1, len(appDetails.Workloads))
+	assert.Equal("ratings-vm", appDetails.Workloads[0].WorkloadName)
+	assert.Equal(0, len(appDetails.ServiceNames))
 }
 
 func TestGetAppListFromReplicaSets(t *testing.T) {

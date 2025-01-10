@@ -5,6 +5,7 @@ import (
 	"time"
 
 	osapps_v1 "github.com/openshift/api/apps/v1"
+	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 	apps_v1 "k8s.io/api/apps/v1"
 	batch_v1 "k8s.io/api/batch/v1"
 	core_v1 "k8s.io/api/core/v1"
@@ -15,6 +16,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/util/healthutil"
 )
 
 type ClusterWorkloads struct {
@@ -238,11 +240,29 @@ type Workload struct {
 	// Ambient waypoint workloads
 	WaypointWorkloads []WorkloadReferenceInfo `json:"waypointWorkloads"`
 
+	// WorkloadEntries bound to the workload
+	WorkloadEntries WorkloadEntries `json:"workloadEntries"`
+
 	// Health
 	Health WorkloadHealth `json:"health"`
 }
 
+// WorkloadEntry describes networking_v1.WorkloadEntry for Kiali, used in WorkloadGroups
+type WorkloadEntry struct {
+	Name               string            `json:"name"`
+	Labels             map[string]string `json:"labels"`
+	CreatedAt          string            `json:"createdAt"`
+	Status             string            `json:"status"`
+	StatusReason       string            `json:"statusReason"`
+	AppLabel           bool              `json:"appLabel"`
+	VersionLabel       bool              `json:"versionLabel"`
+	Annotations        map[string]string `json:"annotations"`
+	ServiceAccountName string            `json:"serviceAccountName"`
+}
+
 type Workloads []*Workload
+
+type WorkloadEntries []*WorkloadEntry
 
 func (workload *WorkloadListItem) ParseWorkload(w *Workload) {
 	conf := config.Get()
@@ -251,7 +271,12 @@ func (workload *WorkloadListItem) ParseWorkload(w *Workload) {
 	workload.WorkloadGVK = w.WorkloadGVK
 	workload.CreatedAt = w.CreatedAt
 	workload.ResourceVersion = w.ResourceVersion
-	workload.IstioSidecar = w.HasIstioSidecar()
+	if w.WorkloadGVK == kubernetes.WorkloadGroups {
+		// For WorkloadGroups IstioSidecar is already calculated while fetching
+		workload.IstioSidecar = w.IstioSidecar
+	} else {
+		workload.IstioSidecar = w.HasIstioSidecar()
+	}
 	workload.IsGateway = w.IsGateway()
 	workload.IsAmbient = w.HasIstioAmbient()
 	workload.Labels = w.Labels
@@ -462,6 +487,52 @@ func (workload *Workload) ParseDaemonSet(ds *apps_v1.DaemonSet) {
 	workload.CurrentReplicas = ds.Status.CurrentNumberScheduled
 	workload.AvailableReplicas = ds.Status.NumberAvailable
 	workload.HealthAnnotations = GetHealthAnnotation(ds.Annotations, GetHealthConfigAnnotation())
+}
+
+func (workload *Workload) ParseWorkloadGroup(wg *networking_v1.WorkloadGroup, wentries []*networking_v1.WorkloadEntry, sidecars []*networking_v1.Sidecar) {
+	conf := config.Get()
+	workload.WorkloadGVK = kubernetes.WorkloadGroups
+	workload.parseObjectMeta(&wg.ObjectMeta, &wg.ObjectMeta)
+	workload.DesiredReplicas = int32(len(wentries))
+	workload.CurrentReplicas = int32(len(wentries))
+	workload.Labels = map[string]string{}
+	// when there are Sidecars matching the WorkloadGroup Template Labels
+	if len(sidecars) > 0 {
+		workload.IstioSidecar = true
+	}
+	// We fetch one WorkloadEntry as template, similar to Pods
+	// WorkloadEntry is generated based on Spec.Template
+	if len(wentries) > 0 {
+		workload.CreatedAt = formatTime(wentries[0].CreationTimestamp.Time)
+		workload.ResourceVersion = wentries[0].ResourceVersion
+		workload.Labels = wentries[0].Spec.Labels
+	} else {
+		// Template.Labels can be nillable, this should be handled
+		// when Template does not have labels, the no Applications will be recognised
+		if wg.Spec.Template.Labels != nil {
+			workload.Labels = wg.Spec.Template.Labels
+		}
+	}
+	/** Check the labels app and version required by Istio in template Pods*/
+	_, workload.AppLabel = workload.Labels[conf.IstioLabels.AppLabelName]
+	_, workload.VersionLabel = workload.Labels[conf.IstioLabels.VersionLabelName]
+	for _, entry := range wentries {
+		podStatus := core_v1.PodFailed
+		if healthutil.IsWorkloadEntryHealthy(entry) {
+			podStatus = core_v1.PodRunning
+			workload.AvailableReplicas = workload.AvailableReplicas + 1
+		}
+		workload.WorkloadEntries = append(workload.WorkloadEntries, &WorkloadEntry{
+			Name:               entry.Name,
+			Labels:             entry.Spec.Labels,
+			CreatedAt:          formatTime(entry.CreationTimestamp.Time),
+			Status:             string(podStatus),
+			AppLabel:           workload.AppLabel,
+			VersionLabel:       workload.VersionLabel,
+			Annotations:        entry.Annotations,
+			ServiceAccountName: entry.Spec.ServiceAccount,
+		})
+	}
 }
 
 func (workload *Workload) ParsePods(controllerName string, controllerGVK schema.GroupVersionKind, pods []core_v1.Pod) {

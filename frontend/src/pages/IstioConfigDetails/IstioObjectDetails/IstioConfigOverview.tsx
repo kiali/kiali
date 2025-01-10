@@ -83,6 +83,11 @@ export const IstioConfigOverview: React.FC<IstioConfigOverviewProps> = (props: I
       return check.severity === ValidationTypes.Warning;
     });
   };
+  const hasReferences = (): boolean => {
+    return (
+      props.objectReferences.length > 0 || props.serviceReferences.length > 0 || props.workloadReferences.length > 0
+    );
+  };
 
   const istioObject = getIstioObject(props.istioObjectDetails);
 
@@ -197,13 +202,14 @@ export const IstioConfigOverview: React.FC<IstioConfigOverviewProps> = (props: I
         </StackItem>
       )}
 
-      {props.istioValidations?.valid && !configurationHasWarnings() && (
+      {((!props.istioValidations && hasReferences()) ||
+        (props.istioValidations?.valid && !configurationHasWarnings())) && (
         <StackItem>
           <IstioConfigReferences
             objectReferences={props.objectReferences}
             serviceReferences={props.serviceReferences}
             workloadReferences={props.workloadReferences}
-            isValid={props.istioValidations?.valid}
+            isValid={!props.istioValidations || props.istioValidations?.valid}
             cluster={props.cluster}
           />
         </StackItem>
