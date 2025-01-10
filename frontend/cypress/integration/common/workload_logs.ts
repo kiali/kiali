@@ -19,7 +19,7 @@ Given(
       cy.get('#time_duration').click();
       changeIntervalDuration();
       cy.get('#drform-metrics-refresh-toggle').click();
-      cy.get('#60000').click();
+      cy.get('#0').click();
       cy.get('#time-duration-modal').find('button').contains('Confirm').click();
     } else {
       changeIntervalDuration();
