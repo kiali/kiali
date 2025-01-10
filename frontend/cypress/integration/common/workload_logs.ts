@@ -11,15 +11,13 @@ Given(
 
     const changeIntervalDuration = (): void => {
       cy.get('#metrics_filter_interval_duration-toggle').click();
-      cy.get('#10800').click();
+      cy.get('#1800').click();
     };
 
     // In OSSMC, the duration interval is configured using the time duration modal component
     if (Cypress.env('OSSMC')) {
       cy.get('#time_duration').click();
       changeIntervalDuration();
-      cy.get('#drform-metrics-refresh-toggle').click();
-      cy.get('#0').click();
       cy.get('#time-duration-modal').find('button').contains('Confirm').click();
     } else {
       changeIntervalDuration();
