@@ -81,7 +81,7 @@ func NewRoutes(
 			"GET",
 			"/api",
 			handlers.Root(conf, clientFactory, kialiCache, grafana),
-			false,
+			conf.Server.RequireAuth,
 		},
 		// swagger:route GET /authenticate auth authenticate
 		// ---
