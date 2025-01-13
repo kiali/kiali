@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tracing/jaeger/model"
@@ -102,7 +103,20 @@ func unmarshal(r []byte, u *url.URL) (*model.TracingResponse, error) {
 
 func prepareQuery(u *url.URL, jaegerServiceName string, query models.TracingQuery) {
 	q := url.Values{}
-	q.Set("service", jaegerServiceName)
+
+	c := config.Get()
+	// For Ambient
+	if query.Waypoint.Name != "" {
+		if c.ExternalServices.Tracing.NamespaceSelector {
+			q.Set("service", fmt.Sprintf("%s.%s", query.Waypoint.Name, query.Waypoint.Namespace))
+		} else {
+			q.Set("service", fmt.Sprintf("%s", query.Waypoint.Name))
+		}
+		// TODO: Add span lookup/filter for the jaegerServiceName
+	} else {
+		q.Set("service", jaegerServiceName)
+	}
+
 	q.Set("start", fmt.Sprintf("%d", query.Start.Unix()*time.Second.Microseconds()))
 	q.Set("end", fmt.Sprintf("%d", query.End.Unix()*time.Second.Microseconds()))
 	var tags = util.CopyStringMap(query.Tags)
