@@ -48,6 +48,11 @@ Feature: Kiali Waypoint related features
     Then user sees trace details
     When the user looks for the bootstrap tab
     Then the user sees bootstrap expected information
+    When the user goes to the "Waypoint" tab
+    Then user goes to the waypoint "Services" subtab
+    And validates Services data
+    Then user goes to the waypoint "Info" subtab
+    And validates waypoint Info data
 
   @waypoint
     Scenario: [Workload details - ztunnel] The workload details for a ztunnel are valid
