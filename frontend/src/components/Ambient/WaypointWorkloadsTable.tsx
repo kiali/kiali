@@ -70,7 +70,7 @@ const columns: SortableCompareTh<WorkloadInfo>[] = [
     compare: (a, b) => a.name.localeCompare(b.name)
   },
   {
-    title: t('namespace'),
+    title: t('Namespace'),
     sortable: true,
     compare: (a, b) => a.namespace.localeCompare(b.namespace)
   },
@@ -139,7 +139,7 @@ export const WaypointWorkloadsTable: React.FC<WaypointWorkloadsProps> = (props: 
   return (
     <>
       <div>
-        <Title headingLevel="h5" size={TitleSizes.lg}>
+        <Title headingLevel="h5" size={TitleSizes.lg} data-test="enrolled-data-title">
           {t('List of enrolled')} {props.type}s {labeledBy}
         </Title>
       </div>

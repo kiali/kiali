@@ -155,7 +155,12 @@ export const WaypointConfig: React.FC<WaypointConfigProps> = (props: WaypointCon
         <CardBody>
           <div className={fullHeightStyle}>
             <div style={{ marginBottom: '1.25rem' }}>
-              <Title headingLevel="h5" size={TitleSizes.md} style={{ marginBottom: '1em' }}>
+              <Title
+                headingLevel="h5"
+                size={TitleSizes.md}
+                style={{ marginBottom: '1em' }}
+                data-test="waypointfor-title"
+              >
                 Waypoint for: {waypointFor}
               </Title>
               {showProxyStatus(props.workload)}
