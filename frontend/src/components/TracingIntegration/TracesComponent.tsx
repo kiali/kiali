@@ -44,6 +44,7 @@ import { TracingUrlProvider } from 'types/Tracing';
 import { GetTracingUrlProvider } from 'utils/tracing/UrlProviders';
 import { ExternalServiceInfo } from 'types/StatusState';
 import { retrieveTimeRange } from '../Time/TimeRangeHelper';
+import { WorkloadInfo } from '../../types/Workload';
 
 type ReduxProps = {
   externalServices: ExternalServiceInfo[];
@@ -60,6 +61,7 @@ type TracesProps = ReduxProps & {
   namespace: string;
   target: string;
   targetKind: TargetKind;
+  waypoint?: WorkloadInfo;
 };
 
 interface TracesState {
@@ -161,7 +163,10 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
       target: this.props.target,
       targetKind: this.props.targetKind,
       spanLimit: this.state.querySettings.limit,
-      tags: JSON.stringify(this.getTags())
+      tags: JSON.stringify(this.getTags()),
+      waypoint: this.props.waypoint?.name
+        ? `${this.props.waypoint?.cluster}/${this.props.waypoint?.namespace}/${this.props.waypoint?.name}`
+        : undefined
     };
     // If percentil filter is set fetch only traces above the specified percentile
     // Percentiles (99th, 90th, 75th) are pre-computed from metrics bound to this app/workload/service object.

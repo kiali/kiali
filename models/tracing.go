@@ -27,4 +27,5 @@ type TracingQuery struct {
 	MinDuration time.Duration
 	Limit       int
 	Cluster     string
+	Waypoint    WorkloadReferenceInfo
 }

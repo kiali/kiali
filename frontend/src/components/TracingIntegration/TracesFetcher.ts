@@ -14,6 +14,7 @@ export type FetchOptions = {
   tags: string;
   target: string;
   targetKind: TargetKind;
+  waypoint?: string;
 };
 
 export class TracesFetcher {
@@ -39,7 +40,8 @@ export class TracesFetcher {
       endMicros: range.to,
       tags: o.tags,
       limit: o.spanLimit,
-      minDuration: o.minDuration ? Math.floor(1000 * o.minDuration) : undefined
+      minDuration: o.minDuration ? Math.floor(1000 * o.minDuration) : undefined,
+      waypoint: o.waypoint
     };
     const apiCall =
       o.targetKind === 'app'
