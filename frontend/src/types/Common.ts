@@ -25,7 +25,8 @@ export const enum Theme {
 
 export const enum Language {
   CHINESE = 'zh',
-  ENGLISH = 'en'
+  ENGLISH = 'en',
+  SPANISH = 'es'
 }
 
 export type TargetKind = 'app' | 'service' | 'workload';
