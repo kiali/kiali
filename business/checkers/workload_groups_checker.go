@@ -4,6 +4,7 @@ import (
 	workloadgroups "github.com/kiali/kiali/business/checkers/workloadgroups"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
+
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 )
 

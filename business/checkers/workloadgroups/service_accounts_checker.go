@@ -2,7 +2,9 @@ package authorization
 
 import (
 	"fmt"
+
 	"github.com/kiali/kiali/models"
+
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 )
 
