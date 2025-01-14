@@ -353,6 +353,11 @@ var checkDescriptors = map[string]IstioCheck{
 		Message:  "This workload is not covered by any authorization policy",
 		Severity: WarningSeverity,
 	},
+	"workloadgroup.template.serviceaccount.notfound": {
+		Code:     "KIA1401",
+		Message:  "Service Account not found in this namespace",
+		Severity: ErrorSeverity,
+	},
 }
 
 func Build(checkId string, path string) IstioCheck {

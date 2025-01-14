@@ -56,10 +56,10 @@ func TestRegexPrincipalNotFound(t *testing.T) {
 	assert.NotEmpty(vals)
 	assert.Len(vals, 2)
 	assert.Equal(models.ErrorSeverity, vals[0].Severity)
-	assert.Error(validations.ConfirmIstioCheckMessage("authorizationpolicy.nodest.principalnotfound", vals[0]))
+	assert.NoError(validations.ConfirmIstioCheckMessage("authorizationpolicy.source.principalnotfound", vals[0]))
 	assert.Equal("spec/rules[0]/from[0]/source/principals[0]", vals[0].Path)
 	assert.Equal(models.ErrorSeverity, vals[1].Severity)
-	assert.Error(validations.ConfirmIstioCheckMessage("authorizationpolicy.nodest.principalnotfound", vals[1]))
+	assert.NoError(validations.ConfirmIstioCheckMessage("authorizationpolicy.source.principalnotfound", vals[1]))
 	assert.Equal("spec/rules[0]/from[0]/source/principals[1]", vals[1].Path)
 }
 
@@ -91,10 +91,10 @@ func TestNotPresentServiceAccount(t *testing.T) {
 	assert.NotEmpty(vals)
 	assert.Len(vals, 2)
 	assert.Equal(models.ErrorSeverity, vals[0].Severity)
-	assert.Error(validations.ConfirmIstioCheckMessage("authorizationpolicy.nodest.principalnotfound", vals[0]))
+	assert.NoError(validations.ConfirmIstioCheckMessage("authorizationpolicy.source.principalnotfound", vals[0]))
 	assert.Equal("spec/rules[0]/from[0]/source/principals[0]", vals[0].Path)
 	assert.Equal(models.ErrorSeverity, vals[1].Severity)
-	assert.Error(validations.ConfirmIstioCheckMessage("authorizationpolicy.nodest.principalnotfound", vals[1]))
+	assert.NoError(validations.ConfirmIstioCheckMessage("authorizationpolicy.source.principalnotfound", vals[1]))
 	assert.Equal("spec/rules[0]/from[0]/source/principals[1]", vals[1].Path)
 }
 
@@ -112,7 +112,7 @@ func TestRemoteClusterServiceAccount(t *testing.T) {
 	assert.NotEmpty(vals)
 	assert.Len(vals, 1)
 	assert.Equal(models.WarningSeverity, vals[0].Severity)
-	assert.Error(validations.ConfirmIstioCheckMessage("authorizationpolicy.nodest.principalremote", vals[0]))
+	assert.NoError(validations.ConfirmIstioCheckMessage("authorizationpolicy.source.principalremote", vals[0]))
 	assert.Equal("spec/rules[0]/from[0]/source/principals[0]", vals[0].Path)
 }
 
@@ -129,7 +129,7 @@ func TestEmptyServiceAccount(t *testing.T) {
 	assert.NotEmpty(vals)
 	assert.Len(vals, 1)
 	assert.Equal(models.ErrorSeverity, vals[0].Severity)
-	assert.Error(validations.ConfirmIstioCheckMessage("authorizationpolicy.nodest.principalnotfound", vals[0]))
+	assert.NoError(validations.ConfirmIstioCheckMessage("authorizationpolicy.source.principalnotfound", vals[0]))
 	assert.Equal("spec/rules[0]/from[0]/source/principals[0]", vals[0].Path)
 }
 

@@ -46,7 +46,6 @@ func CreateWorkloadListItem(name string, labels map[string]string) models.Worklo
 
 func CreateWorkloadGroups(conf config.Config) []*networking_v1.WorkloadGroup {
 	appLabel := conf.IstioLabels.AppLabelName
-	classLabel := "class"
 	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
 	return []*networking_v1.WorkloadGroup{
 		{
@@ -62,7 +61,6 @@ func CreateWorkloadGroups(conf config.Config) []*networking_v1.WorkloadGroup {
 			},
 			Spec: networkingv1.WorkloadGroup{
 				Template: &networkingv1.WorkloadEntry{
-					Labels:         map[string]string{appLabel: "ratings-vm", classLabel: "vm"},
 					ServiceAccount: "bookinfo-ratings",
 				},
 			},
@@ -80,7 +78,6 @@ func CreateWorkloadGroups(conf config.Config) []*networking_v1.WorkloadGroup {
 			},
 			Spec: networkingv1.WorkloadGroup{
 				Template: &networkingv1.WorkloadEntry{
-					Labels:         map[string]string{appLabel: "ratings-vm2", classLabel: "vm2"},
 					ServiceAccount: "bookinfo-ratings",
 				},
 			},
@@ -98,7 +95,6 @@ func CreateWorkloadGroups(conf config.Config) []*networking_v1.WorkloadGroup {
 			},
 			Spec: networkingv1.WorkloadGroup{
 				Template: &networkingv1.WorkloadEntry{
-					Labels:         map[string]string{appLabel: "ratings-vm-no-entry", classLabel: "vm3"},
 					ServiceAccount: "bookinfo-ratings",
 				},
 			},
@@ -117,6 +113,27 @@ func CreateWorkloadGroups(conf config.Config) []*networking_v1.WorkloadGroup {
 				Template: &networkingv1.WorkloadEntry{
 					ServiceAccount: "bookinfo-ratings",
 				},
+			},
+		},
+	}
+}
+
+func CreateWorkloadGroupWithSA(sa string) *networking_v1.WorkloadGroup {
+	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
+	return &networking_v1.WorkloadGroup{
+		TypeMeta: meta_v1.TypeMeta{
+			APIVersion: kubernetes.WorkloadGroups.GroupVersion().String(),
+			Kind:       kubernetes.WorkloadGroups.Kind,
+		},
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:              "ratings-vm",
+			Namespace:         "bookinfo",
+			CreationTimestamp: meta_v1.NewTime(t1),
+			Labels:            map[string]string{"app": "ratings-vm"},
+		},
+		Spec: networkingv1.WorkloadGroup{
+			Template: &networkingv1.WorkloadEntry{
+				ServiceAccount: sa,
 			},
 		},
 	}
@@ -179,7 +196,6 @@ func CreateWorkloadEntries(conf config.Config) []*networking_v1.WorkloadEntry {
 				Name:              "ratings-vm",
 				Namespace:         "Namespace",
 				CreationTimestamp: meta_v1.NewTime(t1),
-				Labels:            map[string]string{appLabel: "ratings-vm"},
 			},
 			Spec: networkingv1.WorkloadEntry{
 				Labels:         map[string]string{appLabel: "ratings-vm", classLabel: "vm", versionLabel: "v3"},
@@ -196,7 +212,6 @@ func CreateWorkloadEntries(conf config.Config) []*networking_v1.WorkloadEntry {
 				Name:              "ratings-vm2",
 				Namespace:         "Namespace",
 				CreationTimestamp: meta_v1.NewTime(t1),
-				Labels:            map[string]string{appLabel: "ratings-vm2"},
 			},
 			Spec: networkingv1.WorkloadEntry{
 				Labels:         map[string]string{appLabel: "ratings-vm2", classLabel: "vm2", versionLabel: "v4"},

@@ -507,10 +507,10 @@ func (workload *Workload) ParseWorkloadGroup(wg *networking_v1.WorkloadGroup, we
 		workload.ResourceVersion = wentries[0].ResourceVersion
 		workload.Labels = wentries[0].Spec.Labels
 	} else {
-		// Template.Labels can be nillable, this should be handled
-		// when Template does not have labels, the no Applications will be recognised
-		if wg.Spec.Template.Labels != nil {
-			workload.Labels = wg.Spec.Template.Labels
+		// Labels can be nillable, this should be handled
+		// when Metadata does not have labels, the no Applications will be recognised
+		if wg.Labels != nil {
+			workload.Labels = wg.Labels
 		}
 	}
 	/** Check the labels app and version required by Istio in template Pods*/
