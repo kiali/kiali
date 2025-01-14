@@ -94,6 +94,9 @@ type WorkloadItem struct {
 	// List of service accounts involved in this application
 	// required: true
 	ServiceAccountNames []string `json:"serviceAccountNames"`
+
+	// Ambient waypoint workloads
+	WaypointWorkloads []WorkloadReferenceInfo `json:"waypointWorkloads"`
 }
 
 type App struct {

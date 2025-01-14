@@ -86,6 +86,7 @@ type WorkloadCriteria struct {
 	IncludeIstioResources bool
 	IncludeServices       bool
 	IncludeHealth         bool
+	IncludeWaypoints      bool
 	RateInterval          string
 	QueryTime             time.Time
 }
@@ -443,6 +444,7 @@ func (in *WorkloadService) GetWorkload(ctx context.Context, criteria WorkloadCri
 		return nil, err
 	}
 
+	criteria.IncludeWaypoints = true
 	workload, err2 := in.fetchWorkload(ctx, criteria)
 
 	if err2 != nil {
@@ -1427,6 +1429,10 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 			if config.Get().ExternalServices.Istio.IstioAPIEnabled && (pod.HasIstioSidecar() || w.IsWaypoint()) {
 				pod.ProxyStatus = in.businessLayer.ProxyStatus.GetPodProxyStatus(cluster, namespace, pod.Name, !w.IsWaypoint())
 			}
+			// Add the Proxy Status to the workload
+			if pod.AmbientEnabled() {
+				w.WaypointWorkloads = in.GetWaypointsForWorkload(ctx, *w)
+			}
 		}
 
 		if cnFound {
@@ -2103,7 +2109,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 				pod.ProxyStatus = in.businessLayer.ProxyStatus.GetPodProxyStatus(criteria.Cluster, criteria.Namespace, pod.Name, !w.IsWaypoint())
 			}
 			// If Ambient is enabled for pod, check if has any Waypoint proxy
-			if pod.AmbientEnabled() {
+			if pod.AmbientEnabled() && criteria.IncludeWaypoints == true {
 				w.WaypointWorkloads = in.GetWaypointsForWorkload(ctx, w)
 				// TODO: Maybe user doesn't have permissions
 				ztunnelPods := in.cache.GetZtunnelPods(criteria.Cluster)
@@ -2120,13 +2126,14 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 		}
 
 		// If the pod is a waypoint proxy, check if it is attached to a namespace or to a service account, and get the affected workloads
-		if w.IsWaypoint() {
+		if w.IsWaypoint() && criteria.IncludeWaypoints == true {
 			w.Ambient = config.Waypoint
 			includeServices := false
 			if w.WaypointFor() == config.WaypointForService || w.WaypointFor() == config.WaypointForAll {
 				includeServices = true
 			}
 			// Get waypoint workloads
+			in.cache.GetWaypointList()
 			waypointWorkloads, waypointServices := in.listWaypointWorkloads(ctx, w.Name, w.Namespace, criteria.Cluster, includeServices)
 			w.WaypointWorkloads = waypointWorkloads
 			if includeServices {
@@ -2266,7 +2273,7 @@ func (in *WorkloadService) GetWaypointsForWorkload(ctx context.Context, workload
 	}
 
 	for _, waypoint := range waypoints {
-		wkd, err := in.fetchWorkload(ctx, WorkloadCriteria{Cluster: workload.Cluster, Namespace: waypoint.Namespace, WorkloadName: waypoint.Name, WorkloadGVK: schema.GroupVersionKind{}})
+		wkd, err := in.fetchWorkload(ctx, WorkloadCriteria{Cluster: workload.Cluster, Namespace: waypoint.Namespace, WorkloadName: waypoint.Name, WorkloadGVK: schema.GroupVersionKind{}, IncludeWaypoints: false})
 		if err != nil {
 			log.Debugf("GetWaypointsForWorkload: Error fetching workloads %s", err.Error())
 			return nil

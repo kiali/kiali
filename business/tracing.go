@@ -106,13 +106,14 @@ func (in *TracingService) GetWorkloadSpans(ctx context.Context, ns, workload str
 	if err != nil {
 		return nil, err
 	}
-	return in.getFilteredSpans(ns, app, query, wkdSpanFilter(ns, workload))
+	hasWaypoint := query.Waypoint.Name != ""
+	return in.getFilteredSpans(ns, app, query, wkdSpanFilter(ns, workload, app, hasWaypoint))
 }
 
-func wkdSpanFilter(ns, workload string) SpanFilter {
+func wkdSpanFilter(ns, workload, app string, hasWaypoint bool) SpanFilter {
 	// Filter out app traces based on the node_id tag, that contains workload information.
 	return func(span *jaegerModels.Span) bool {
-		return spanMatchesWorkload(span, ns, workload)
+		return spanMatchesWorkload(span, ns, workload, app, hasWaypoint)
 	}
 }
 
@@ -195,8 +196,9 @@ func (in *TracingService) GetWorkloadTraces(ctx context.Context, ns, workload st
 	// Filter out app traces based on the node_id tag, that contains workload information.
 	if r != nil && err == nil {
 		traces := []jaegerModels.Trace{}
+		hasWaypoints := query.Waypoint.Name != ""
 		for _, trace := range r.Data {
-			if matchesWorkload(&trace, ns, workload) {
+			if matchesWorkload(&trace, ns, workload, app, hasWaypoints) {
 				traces = append(traces, trace)
 			}
 		}
@@ -229,19 +231,29 @@ func (in *TracingService) GetStatus() (accessible bool, err error) {
 	return client.GetServiceStatus()
 }
 
-func matchesWorkload(trace *jaegerModels.Trace, namespace, workload string) bool {
+func matchesWorkload(trace *jaegerModels.Trace, namespace, workload, app string, hasWaypoint bool) bool {
 	for _, span := range trace.Spans {
 		if process, ok := trace.Processes[span.ProcessID]; ok {
 			span.Process = &process
 		}
-		if spanMatchesWorkload(&span, namespace, workload) {
+		if spanMatchesWorkload(&span, namespace, workload, app, hasWaypoint) {
 			return true
 		}
 	}
 	return false
 }
 
-func spanMatchesWorkload(span *jaegerModels.Span, namespace, workload string) bool {
+func spanMatchesWorkload(span *jaegerModels.Span, namespace, workload, app string, hasWaypoint bool) bool {
+	// If the workload has a waypoint, the span won't match, but the operation name can
+	// When the workload has a waypoint, the operation name is filtered by the service
+	if hasWaypoint {
+		op := fmt.Sprintf("%s.%s", app, namespace)
+		log.Tracef("[Tracing] Filtering span trace by service %s", op)
+		if strings.HasPrefix(span.OperationName, op) {
+			return true
+		}
+		return false
+	}
 	// For envoy traces, with a workload named "ai-locals", node_id is like:
 	// sidecar~172.17.0.20~ai-locals-6d8996bff-ztg6z.default~default.svc.cluster.local
 	for _, tag := range span.Tags {
