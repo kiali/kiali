@@ -44,10 +44,10 @@ type EmitEvents = {
   ): void;
 };
 
-// TODO: Actually deal with these options
 export interface MeshFetchParams {
-  includeHealth?: boolean;
-  includeLabels?: boolean;
+  includeLabels?: boolean; // // TODO: Actually deal with this option if we want to do find/hide on labels
+  showGateways?: boolean;
+  showWaypoints?: boolean;
 }
 
 type OnEvents = {
@@ -103,7 +103,10 @@ export class MeshDataSource {
     // Copy fetch parameters to a local attribute
     this._fetchParams = { ...fetchParams };
 
-    const restParams: MeshQuery = {};
+    const restParams: MeshQuery = {
+      includeGateways: fetchParams.showGateways,
+      includeWaypoints: fetchParams.showWaypoints
+    };
 
     // Some appenders are expensive so only specify an appender if needed.
     let appenders: AppenderString = '';
@@ -114,8 +117,9 @@ export class MeshDataSource {
     this._isError = false;
 
     const isPreviousDataInvalid =
-      previousFetchParams.includeHealth !== this.fetchParameters.includeHealth ||
-      previousFetchParams.includeLabels !== this._fetchParams.includeLabels;
+      previousFetchParams.includeLabels !== this._fetchParams.includeLabels ||
+      previousFetchParams.showGateways !== this.fetchParameters.showGateways ||
+      previousFetchParams.showWaypoints !== this.fetchParameters.showWaypoints;
     if (isPreviousDataInvalid) {
       // Reset the mesh data
       this.meshElements = EMPTY_MESH_DATA;

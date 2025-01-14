@@ -145,6 +145,8 @@ export interface MeshElements {
 // TODO: unnecessary?
 export interface MeshQuery {
   appenders?: AppenderString;
+  includeGateways?: boolean;
+  includeWaypoints?: boolean;
 }
 
 export interface MeshDefinition {
