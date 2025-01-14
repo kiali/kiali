@@ -20,6 +20,7 @@ import { MeshTourStops } from '../MeshHelpTour';
 import { MeshReset } from './MeshReset';
 import { TimeDurationComponent } from 'components/Time/TimeDurationComponent';
 import { useKialiTranslation } from 'utils/I18nUtils';
+import { MeshSettings } from './MeshSettings';
 
 type ReduxProps = {
   target: MeshTarget | null;
@@ -44,6 +45,12 @@ export const MeshToolbarComponent: React.FC<MeshToolbarProps> = (props: MeshTool
     <>
       <Toolbar style={{ width: '100%' }}>
         <ToolbarGroup aria-label={t('mesh settings')} style={{ margin: 0, alignItems: 'flex-start' }}>
+          <ToolbarItem style={{ margin: 0 }}>
+            <TourStop info={MeshTourStops.Display}>
+              <MeshSettings disabled={props.disabled} />
+            </TourStop>
+          </ToolbarItem>
+
           <ToolbarItem>
             <MeshFind controller={props.controller} elementsChanged={props.elementsChanged} />
           </ToolbarItem>

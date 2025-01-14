@@ -135,7 +135,9 @@ export interface MeshToolbarState {
   findValue: string;
   hideValue: string;
   showFindHelp: boolean;
+  showGateways: boolean;
   showLegend: boolean;
+  showWaypoints: boolean;
 }
 
 export interface MeshState {

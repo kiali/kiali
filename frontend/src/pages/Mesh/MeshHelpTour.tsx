@@ -63,7 +63,7 @@ export const MeshTour: TourInfo = {
   name: 'MeshTour',
   stops: [
     MeshTourStops.Shortcuts,
-    // MeshTourStops.Display,
+    MeshTourStops.Display,
     MeshTourStops.Find,
     MeshTourStops.TimeRange,
     MeshTourStops.Mesh,
