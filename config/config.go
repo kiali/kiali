@@ -178,6 +178,7 @@ type Server struct {
 	Port                       int           `yaml:",omitempty"`
 	Profiler                   Profiler      `yaml:"profiler,omitempty"`
 	StaticContentRootDirectory string        `yaml:"static_content_root_directory,omitempty"`
+	RequireAuth                bool          `yaml:"require_auth,omitempty"` // when true, unauthenticated access to api/ endpoint is not allowed
 	WebFQDN                    string        `yaml:"web_fqdn,omitempty"`
 	WebPort                    string        `yaml:"web_port,omitempty"`
 	WebRoot                    string        `yaml:"web_root,omitempty"`
@@ -923,6 +924,7 @@ func NewConfig() (c *Config) {
 				},
 			},
 			Port:                       20001,
+			RequireAuth:                false,
 			StaticContentRootDirectory: "/opt/kiali/console",
 			WebFQDN:                    "",
 			WebRoot:                    "/",
