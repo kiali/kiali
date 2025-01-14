@@ -50,7 +50,8 @@ const workloadIstioResources = [
   getGVKTypeString(gvkType.PeerAuthentication),
   getGVKTypeString(gvkType.Sidecar),
   getGVKTypeString(gvkType.RequestAuthentication),
-  getGVKTypeString(gvkType.EnvoyFilter)
+  getGVKTypeString(gvkType.EnvoyFilter),
+  getGVKTypeString(gvkType.WorkloadGroup)
 ];
 
 export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState> {

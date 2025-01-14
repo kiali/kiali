@@ -251,6 +251,7 @@ func (in *WorkloadService) GetWorkloadList(ctx context.Context, criteria Workloa
 		IncludePeerAuthentications:    true,
 		IncludeRequestAuthentications: true,
 		IncludeSidecars:               true,
+		IncludeWorkloadGroups:         true,
 	}
 	var istioConfigMap models.IstioConfigMap
 
@@ -366,6 +367,17 @@ func FilterWorkloadReferences(wSelector string, istioConfigList models.IstioConf
 	efFiltered := kubernetes.FilterEnvoyFiltersBySelector(wSelector, istioConfigList.EnvoyFilters)
 	for _, ef := range efFiltered {
 		ref := models.BuildKey(kubernetes.EnvoyFilters, ef.Name, ef.Namespace, cluster)
+		exist := false
+		for _, r := range wkdReferences {
+			exist = exist || *r == ref
+		}
+		if !exist {
+			wkdReferences = append(wkdReferences, &ref)
+		}
+	}
+	wgFiltered := kubernetes.FilterWorkloadGroupsBySelector(wSelector, istioConfigList.WorkloadGroups)
+	for _, wg := range wgFiltered {
+		ref := models.BuildKey(kubernetes.WorkloadGroups, wg.Name, wg.Namespace, cluster)
 		exist := false
 		for _, r := range wkdReferences {
 			exist = exist || *r == ref
