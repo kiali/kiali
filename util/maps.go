@@ -2,6 +2,7 @@ package util
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -84,4 +85,19 @@ func StringToGVK(gvk string) (schema.GroupVersionKind, error) {
 	}
 
 	return schema.GroupVersionKind{}, fmt.Errorf("Invalid GVK format: %s", gvk)
+}
+
+func LabelsToSortedString(labels map[string]string) string {
+	var keys []string
+	for k := range labels {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	var parts []string
+	for _, k := range keys {
+		parts = append(parts, fmt.Sprintf("%s=%s", k, labels[k]))
+	}
+
+	return strings.Join(parts, ",")
 }

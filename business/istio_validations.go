@@ -192,6 +192,7 @@ func (in *IstioValidationsService) getAllObjectCheckers(istioConfigList models.I
 		checkers.K8sReferenceGrantChecker{K8sReferenceGrants: istioConfigList.K8sReferenceGrants, Namespaces: namespaces, Cluster: cluster},
 		checkers.WasmPluginChecker{WasmPlugins: istioConfigList.WasmPlugins, Namespaces: namespaces},
 		checkers.TelemetryChecker{Telemetries: istioConfigList.Telemetries, Namespaces: namespaces},
+		checkers.WorkloadGroupsChecker{Cluster: cluster, WorkloadGroups: istioConfigList.WorkloadGroups, ServiceAccounts: serviceAccounts},
 	}
 }
 
@@ -322,7 +323,10 @@ func (in *IstioValidationsService) GetIstioObjectValidations(ctx context.Context
 		// Validation on WorkloadEntries are not yet in place
 		referenceChecker = references.WorkloadEntryReferences{WorkloadGroups: istioConfigList.WorkloadGroups, WorkloadEntries: istioConfigList.WorkloadEntries}
 	case kubernetes.WorkloadGroups:
-		// Validation on WorkloadGroups are not yet in place
+		wlGroupsChecker := checkers.WorkloadGroupsChecker{
+			Cluster: cluster, ServiceAccounts: serviceAccounts, WorkloadGroups: istioConfigList.WorkloadGroups,
+		}
+		objectCheckers = []checkers.ObjectChecker{wlGroupsChecker}
 		referenceChecker = references.WorkloadGroupReferences{WorkloadGroups: istioConfigList.WorkloadGroups, WorkloadEntries: istioConfigList.WorkloadEntries, WorkloadsPerNamespace: workloadsPerNamespace}
 	case kubernetes.RequestAuthentications:
 		// Validation on RequestAuthentications are not yet in place
