@@ -112,7 +112,6 @@ func prepareQuery(u *url.URL, jaegerServiceName string, query models.TracingQuer
 		} else {
 			q.Set("service", fmt.Sprintf("%s", query.Waypoint.Name))
 		}
-		// TODO: Add span lookup/filter for the jaegerServiceName
 	} else {
 		q.Set("service", jaegerServiceName)
 	}
