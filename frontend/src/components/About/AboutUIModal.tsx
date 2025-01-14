@@ -142,7 +142,7 @@ export const AboutUIModal: React.FC<AboutUIModalProps> = (props: AboutUIModalPro
         <Alert
           variant="warning"
           isInline={true}
-          title={props.warningMessages[0] || 'An error occurred'}
+          title={props.warningMessages[0]}
           style={{ marginTop: '1rem' }}
         />
       )}

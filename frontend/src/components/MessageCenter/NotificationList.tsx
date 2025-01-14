@@ -31,7 +31,6 @@ export const NotificationList: React.FC<NotificationListProps> = (props: Notific
           <Alert
             key={`toast_${message.id}`}
             variant={variant}
-            isInline={true}
             title={message.content}
             timeout={true}
             actionClose={<AlertActionCloseButton onClose={() => props.onDismiss(message, true)} />}
