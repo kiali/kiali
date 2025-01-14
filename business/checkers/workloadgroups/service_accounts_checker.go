@@ -12,10 +12,6 @@ type ServiceAccountsChecker struct {
 	ServiceAccounts map[string][]string
 }
 
-const (
-	wildCardMatch = "*"
-)
-
 func (sac ServiceAccountsChecker) Check() ([]*models.IstioCheck, bool) {
 	checks, valid := make([]*models.IstioCheck, 0), true
 	if sac.WorkloadGroup.Spec.Template.ServiceAccount != "" {
