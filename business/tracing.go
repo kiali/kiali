@@ -243,6 +243,8 @@ func matchesWorkload(trace *jaegerModels.Trace, namespace, workload, app string,
 	return false
 }
 
+// spanMatchesWorkload matches a span based on a node id or the hostname
+// For Ambient, as the trace is reported by the Waypoint proxy, a match based on the app is done
 func spanMatchesWorkload(span *jaegerModels.Span, namespace, workload, app string, hasWaypoint bool) bool {
 	// If the workload has a waypoint, the span won't match, but the operation name can
 	// When the workload has a waypoint, the operation name is filtered by the service
