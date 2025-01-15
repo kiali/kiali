@@ -39,7 +39,16 @@ func (jc TempoGRPCClient) FindTraces(ctx context.Context, serviceName string, q 
 	sr.Limit = uint32(q.Limit)
 
 	// Create query
-	queryPart1 := TraceQL{operator1: ".service.name", operand: EQUAL, operator2: serviceName}
+	queryServiceName := serviceName
+	if q.Waypoint.Name != "" {
+		c := config.Get()
+		if c.ExternalServices.Tracing.NamespaceSelector {
+			serviceName = fmt.Sprintf("%s.%s", q.Waypoint.Name, q.Waypoint.Namespace)
+		} else {
+			serviceName = q.Waypoint.Name
+		}
+	}
+	queryPart1 := TraceQL{operator1: ".service.name", operand: EQUAL, operator2: queryServiceName}
 	queryPart2 := TraceQL{operator1: ".node_id", operand: REGEX, operator2: ".*"}
 	queryPart := TraceQL{operator1: queryPart1, operand: AND, operator2: queryPart2}
 
@@ -50,7 +59,7 @@ func (jc TempoGRPCClient) FindTraces(ctx context.Context, serviceName string, q 
 		}
 	}
 
-	selects := []string{"status", ".service_name", ".node_id", ".component", ".upstream_cluster", ".http.method", ".response_flags"}
+	selects := []string{"status", ".service_name", ".node_id", ".component", ".upstream_cluster", ".http.method", ".response_flags", "resource.hostname", "name"}
 	trace := TraceQL{operator1: Subquery{queryPart}, operand: AND, operator2: Subquery{}}
 	queryQL := fmt.Sprintf("%s| %s", printOperator(trace), printSelect(selects))
 	log.Debugf("QueryQL %s", queryQL)
