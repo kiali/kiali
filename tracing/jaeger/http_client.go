@@ -104,9 +104,9 @@ func unmarshal(r []byte, u *url.URL) (*model.TracingResponse, error) {
 func prepareQuery(u *url.URL, jaegerServiceName string, query models.TracingQuery) {
 	q := url.Values{}
 
-	c := config.Get()
-	// For Ambient
+	// For Ambient, the service name is the waypoint
 	if query.Waypoint.Name != "" {
+		c := config.Get()
 		if c.ExternalServices.Tracing.NamespaceSelector {
 			q.Set("service", fmt.Sprintf("%s.%s", query.Waypoint.Name, query.Waypoint.Namespace))
 		} else {
