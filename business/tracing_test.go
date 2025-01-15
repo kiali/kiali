@@ -92,9 +92,9 @@ var trace2 = jaegerModels.Trace{
 func TestMatchingWorkload(t *testing.T) {
 	assert := assert.New(t)
 
-	assert.False(matchesWorkload(&trace1, "default", "some-workload"))
-	assert.True(matchesWorkload(&trace1, "default", "reviews"))
-	assert.True(matchesWorkload(&trace1, "default", "my-pod"))
+	assert.False(matchesWorkload(&trace1, "default", "some-workload", "some-workload", false))
+	assert.True(matchesWorkload(&trace1, "default", "reviews", "reviews", false))
+	assert.True(matchesWorkload(&trace1, "default", "my-pod", "my-pod", false))
 }
 
 func TestTracesToSpanWithoutFilter(t *testing.T) {
@@ -147,7 +147,7 @@ func TestTracesToSpanWithWorkloadFilter(t *testing.T) {
 		Data:               []jaegerModels.Trace{trace1, trace2},
 		TracingServiceName: "reviews.default",
 	}
-	spans := tracesToSpans("reviews", &r, wkdSpanFilter("default", "reviews"), config.NewConfig())
+	spans := tracesToSpans("reviews", &r, wkdSpanFilter("default", "reviews", "reviews", false), config.NewConfig())
 	assert.Len(spans, 2)
 	assert.Equal("t1_process_1", string(spans[0].ProcessID))
 	assert.Equal("t2_process_1", string(spans[1].ProcessID))
@@ -156,7 +156,7 @@ func TestTracesToSpanWithWorkloadFilter(t *testing.T) {
 		Data:               []jaegerModels.Trace{trace1, trace2},
 		TracingServiceName: "rating.default",
 	}
-	spans = tracesToSpans("rating", &r, wkdSpanFilter("default", "rating-v2"), config.NewConfig())
+	spans = tracesToSpans("rating", &r, wkdSpanFilter("default", "rating-v2", "rating", false), config.NewConfig())
 	assert.Len(spans, 2)
 	assert.Equal("t2_process_2", string(spans[0].ProcessID))
 	assert.Equal("t2_process_3", string(spans[1].ProcessID))
