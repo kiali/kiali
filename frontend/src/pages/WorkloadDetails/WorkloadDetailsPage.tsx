@@ -178,7 +178,6 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
       );
       tabsArray.push(trafficTab);
 
-
       if (!serverConfig.kialiFeatureFlags.disabledFeatures?.includes('logs-tab')) {
         const logTab = (
           <Tab title="Logs" eventKey={2} key="Logs" data-test="workload-details-logs-tab">

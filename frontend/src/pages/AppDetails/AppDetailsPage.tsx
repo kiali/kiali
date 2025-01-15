@@ -210,13 +210,22 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
     );
 
     // Default tabs
-<<<<<<< HEAD
     const tabsArray: React.ReactNode[] = [overTab];
     if (this.state.isSupported) {
       tabsArray.push(trafficTab, inTab, outTab);
       // Conditional Traces tab
       if (this.props.tracingInfo && this.props.tracingInfo.enabled) {
-        if (this.props.tracingInfo.integration) {
+        let waypointWk;
+              if (this.props.tracingInfo.integration) {
+                  if (this.state.app?.isAmbient) {
+                     for (let i = 0; i < this.state.app.workloads.length; i++) {
+                          const wk = this.state.app.workloads[i].waypointWorkloads;
+                         if (wk && wk.length > 0) {
+                              waypointWk = wk[0];
+                            }
+                        }
+                   }
+
           tabsArray.push(
             <Tab eventKey={4} style={{ textAlign: 'center' }} title={'Traces'} key={tracesTabName}>
               <TracesComponent
@@ -225,6 +234,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
                 cluster={this.state.cluster}
                 target={this.props.appId.app}
                 targetKind={'app'}
+                waypoint={waypointWk}
               />
             </Tab>
           );
@@ -242,32 +252,6 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
                   Traces <ExternalLinkAltIcon />
                 </>
               }
-=======
-    const tabsArray: React.ReactNode[] = [overTab, trafficTab, inTab, outTab];
-
-    // Conditional Traces tab
-    if (this.props.tracingInfo && this.props.tracingInfo.enabled) {
-      let waypointWk;
-      if (this.props.tracingInfo.integration) {
-        if (this.state.app?.isAmbient) {
-          for (let i = 0; i < this.state.app.workloads.length; i++) {
-            const wk = this.state.app.workloads[i].waypointWorkloads;
-            if (wk && wk.length > 0) {
-              waypointWk = wk[0];
-            }
-          }
-        }
-
-        tabsArray.push(
-          <Tab eventKey={4} style={{ textAlign: 'center' }} title={'Traces'} key={tracesTabName}>
-            <TracesComponent
-              lastRefreshAt={this.props.lastRefreshAt}
-              namespace={this.props.appId.namespace}
-              cluster={this.state.cluster}
-              target={this.props.appId.app}
-              targetKind={'app'}
-              waypoint={waypointWk}
->>>>>>> e39c8741f (App traces)
             />
           );
         }
