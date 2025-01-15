@@ -40,9 +40,20 @@ func (jc JaegerGRPCClient) FindTraces(ctx context.Context, serviceName string, q
 
 	var tags = util.CopyStringMap(q.Tags)
 
+	// For Ambient
+	queryServiceName := jaegerServiceName
+	if q.Waypoint.Name != "" {
+		c := config.Get()
+		if c.ExternalServices.Tracing.NamespaceSelector {
+			queryServiceName = fmt.Sprintf("%s.%s", q.Waypoint.Name, q.Waypoint.Namespace)
+		} else {
+			queryServiceName = q.Waypoint.Name
+		}
+	}
+
 	findTracesRQ := &model.FindTracesRequest{
 		Query: &model.TraceQueryParameters{
-			ServiceName:  jaegerServiceName,
+			ServiceName:  queryServiceName,
 			StartTimeMin: timestamppb.New(q.Start),
 			StartTimeMax: timestamppb.New(q.End),
 			Tags:         tags,
