@@ -211,11 +211,11 @@ echo "AMBIENT_ENABLED=${AMBIENT_ENABLED}"
 # check arch values and prepare new bookinfo-arch.yaml with matching images
 if [ "${ARCH}" == "ppc64le" ]; then
   cp ${HACK_SCRIPT_DIR}/kustomization/bookinfo-ppc64le.yaml ${ISTIO_DIR}/samples/bookinfo/platform/kube/kustomization.yaml
-  ${CLIENT_EXE} kustomize ${ISTIO_DIR}/samples/bookinfo/platform/kube --reorder=none > ${ISTIO_DIR}/samples/bookinfo/platform/kube/bookinfo-ppc64le.yaml
+  ${CLIENT_EXE} kustomize ${ISTIO_DIR}/samples/bookinfo/platform/kube > ${ISTIO_DIR}/samples/bookinfo/platform/kube/bookinfo-ppc64le.yaml
   BOOKINFO_YAML="${ISTIO_DIR}/samples/bookinfo/platform/kube/bookinfo-ppc64le.yaml"
 elif [ "${ARCH}" == "s390x" ]; then
   cp ${HACK_SCRIPT_DIR}/kustomization/bookinfo-s390x.yaml ${ISTIO_DIR}/samples/bookinfo/platform/kube/kustomization.yaml
-  ${CLIENT_EXE} kustomize ${ISTIO_DIR}/samples/bookinfo/platform/kube --reorder=none > ${ISTIO_DIR}/samples/bookinfo/platform/kube/bookinfo-s390x.yaml
+  ${CLIENT_EXE} kustomize ${ISTIO_DIR}/samples/bookinfo/platform/kube > ${ISTIO_DIR}/samples/bookinfo/platform/kube/bookinfo-s390x.yaml
   BOOKINFO_YAML="${ISTIO_DIR}/samples/bookinfo/platform/kube/bookinfo-s390x.yaml"
 elif [ "${ARCH}" != "amd64" ] && [ "${ARCH}" != "arm64" ]; then
   echo "${ARCH} is not supported. Exiting."
