@@ -141,7 +141,6 @@ func CreateWorkloadGroupWithSA(sa string) *networking_v1.WorkloadGroup {
 
 func CreateWorkloadGroupSidecars(conf config.Config) []*networking_v1.Sidecar {
 	appLabel := conf.IstioLabels.AppLabelName
-	classLabel := "class"
 	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
 	return []*networking_v1.Sidecar{
 		{
@@ -157,7 +156,7 @@ func CreateWorkloadGroupSidecars(conf config.Config) []*networking_v1.Sidecar {
 			},
 			Spec: networkingv1.Sidecar{
 				WorkloadSelector: &networkingv1.WorkloadSelector{
-					Labels: map[string]string{appLabel: "ratings-vm", classLabel: "vm"},
+					Labels: map[string]string{appLabel: "ratings-vm"},
 				},
 			},
 		},
@@ -174,7 +173,7 @@ func CreateWorkloadGroupSidecars(conf config.Config) []*networking_v1.Sidecar {
 			},
 			Spec: networkingv1.Sidecar{
 				WorkloadSelector: &networkingv1.WorkloadSelector{
-					Labels: map[string]string{appLabel: "ratings-vm2", classLabel: "vm2"},
+					Labels: map[string]string{appLabel: "ratings-vm2"},
 				},
 			},
 		},
