@@ -29,6 +29,7 @@ import { HistoryManager } from 'app/History';
 import { basicTabStyle } from 'styles/TabStyles';
 import { ZtunnelConfig } from '../../components/Ambient/ZtunnelConfig';
 import { WaypointConfig } from '../../components/Ambient/WaypointConfig';
+import { Waypoint } from '../../types/Ambient';
 
 type WorkloadDetailsState = {
   cluster?: string;
@@ -235,7 +236,7 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
 
     if (this.props.tracingInfo && this.props.tracingInfo.enabled && this.props.tracingInfo.integration) {
       const waypoint =
-        this.state.workload?.ambient !== 'waypoint' && this.state.workload?.waypointWorkloads
+        this.state.workload?.ambient !== Waypoint && this.state.workload?.waypointWorkloads
           ? this.state.workload.waypointWorkloads[0]
           : undefined;
 
@@ -255,7 +256,7 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
 
     if (
       this.state.workload &&
-      (this.hasIstioSidecars(this.state.workload) || this.state.workload.ambient === 'waypoint')
+      (this.hasIstioSidecars(this.state.workload) || this.state.workload.ambient === Waypoint)
     ) {
       const envoyTab = (
         <Tab title="Envoy" eventKey={10} key="Envoy">
@@ -288,7 +289,7 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
       paramToTab['ztunnel'] = 11;
     }
 
-    if (this.state.workload && this.state.workload.ambient === 'waypoint') {
+    if (this.state.workload && this.state.workload.ambient === Waypoint) {
       const waypointTab = (
         <Tab title="Waypoint" eventKey={12} key="Waypoint">
           {this.state.workload && <WaypointConfig workload={this.state.workload} />}
