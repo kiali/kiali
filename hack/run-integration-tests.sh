@@ -279,6 +279,7 @@ ensureMulticlusterApplicationsAreHealthy() {
 
     if [ "$elapsed" -ge "$timeout" ]; then
       infomsg "Timeout reached without meeting the condition."
+      infomsg "Response: ${response}"
       exit 1
     fi
 
