@@ -257,7 +257,18 @@ func (oc *OtelHTTPClient) prepareTraceQL(u *url.URL, tracingServiceName string, 
 	q := url.Values{}
 	q.Set("start", fmt.Sprintf("%d", query.Start.Unix()))
 	q.Set("end", fmt.Sprintf("%d", query.End.Unix()))
-	queryPart := TraceQL{operator1: ".service.name", operand: EQUAL, operator2: tracingServiceName}
+
+	// For Ambient, the service name is the waypoint
+	serviceName := tracingServiceName
+	if query.Waypoint.Name != "" {
+		c := config.Get()
+		if c.ExternalServices.Tracing.NamespaceSelector {
+			serviceName = fmt.Sprintf("%s.%s", query.Waypoint.Name, query.Waypoint.Namespace)
+		} else {
+			serviceName = query.Waypoint.Name
+		}
+	}
+	queryPart := TraceQL{operator1: ".service.name", operand: EQUAL, operator2: serviceName}
 
 	if len(query.Tags) > 0 {
 		for k, v := range query.Tags {
@@ -266,7 +277,7 @@ func (oc *OtelHTTPClient) prepareTraceQL(u *url.URL, tracingServiceName string, 
 		}
 	}
 
-	selects := []string{"status", ".service_name", ".node_id", ".component", ".upstream_cluster", ".http.method", ".response_flags", "resource.hostname"}
+	selects := []string{"status", ".service_name", ".node_id", ".component", ".upstream_cluster", ".http.method", ".response_flags", "resource.hostname", "name"}
 	trace := TraceQL{operator1: Subquery{queryPart}, operand: AND, operator2: Subquery{}}
 	queryQL := fmt.Sprintf("%s| %s", printOperator(trace), printSelect(selects))
 

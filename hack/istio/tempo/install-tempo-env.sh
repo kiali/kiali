@@ -9,6 +9,7 @@
 #
 ##############################################################################
 
+AMBIENT="false"
 CLIENT_EXE_NAME="oc"
 DELETE_ALL="false"
 DELETE_TEMPO="false"
@@ -25,6 +26,10 @@ TEMPO_PORT="3200"
 while [[ $# -gt 0 ]]; do
   key="$1"
   case $key in
+    -a|--ambient)
+      AMBIENT="$2"
+      shift;shift
+      ;;
     -c|--client)
       CLIENT_EXE_NAME="$2"
       shift;shift
@@ -68,6 +73,8 @@ while [[ $# -gt 0 ]]; do
     -h|--help)
       cat <<HELPMSG
 Valid command line arguments:
+  -a|--ambient:
+       Install Ambient mesh. false by default.
   -c|--client:
        client exe. kubectl and oc are supported. oc by default.
   -da|--delete-all:
@@ -265,8 +272,13 @@ else
     echo "Script Directory: ${SCRIPT_DIR}"
 
     if [ "${INSTALL_ISTIO}" == "true" ]; then
-      echo -e "Installing istio \n"
-      ${SCRIPT_DIR}/../install-istio-via-istioctl.sh -c ${CLIENT_EXE} -a "prometheus grafana" -s values.meshConfig.defaultConfig.tracing.zipkin.address="tempo-cr-distributor.tempo:9411"
+      if [ "${AMBIENT}" == "true" ]; then
+        echo -e "Installing istio Ambient \n"
+        ${SCRIPT_DIR}/../install-istio-via-istioctl.sh -c ${CLIENT_EXE} -a "prometheus grafana" -cp ambient -s values.meshConfig.defaultConfig.tracing.zipkin.address="tempo-cr-distributor.tempo:9411"
+      else
+        echo -e "Installing istio \n"
+        ${SCRIPT_DIR}/../install-istio-via-istioctl.sh -c ${CLIENT_EXE} -a "prometheus grafana" -s values.meshConfig.defaultConfig.tracing.zipkin.address="tempo-cr-distributor.tempo:9411"
+      fi
     fi
 
     if [ "${INSTALL_KIALI}" == "true" ]; then
@@ -278,7 +290,12 @@ else
 
     if [ "${INSTALL_BOOKINFO}" == "true" ]; then
       echo -e "Installing bookinfo \n"
-      ${SCRIPT_DIR}/../install-bookinfo-demo.sh -c ${CLIENT_EXE} -tg
+      if [ "${AMBIENT}" == "true" ]; then
+         echo -e "Adding bookinfo in Ambient Mesh with a Waypoint proxy \n"
+        ${SCRIPT_DIR}/../install-bookinfo-demo.sh -c ${CLIENT_EXE} -ai false -tg -w true
+      else
+        ${SCRIPT_DIR}/../install-bookinfo-demo.sh -c ${CLIENT_EXE} -tg
+      fi
     fi
 
     # If OpenShift, we need to do some additional things
