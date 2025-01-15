@@ -354,7 +354,7 @@ var checkDescriptors = map[string]IstioCheck{
 		Severity: WarningSeverity,
 	},
 	"workloadgroup.template.serviceaccount.notfound": {
-		Code:     "KIA1401",
+		Code:     "KIA1701",
 		Message:  "Service Account not found in this namespace",
 		Severity: ErrorSeverity,
 	},
