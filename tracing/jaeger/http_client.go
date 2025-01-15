@@ -110,7 +110,7 @@ func prepareQuery(u *url.URL, jaegerServiceName string, query models.TracingQuer
 		if c.ExternalServices.Tracing.NamespaceSelector {
 			q.Set("service", fmt.Sprintf("%s.%s", query.Waypoint.Name, query.Waypoint.Namespace))
 		} else {
-			q.Set("service", fmt.Sprintf("%s", query.Waypoint.Name))
+			q.Set("service", query.Waypoint.Name)
 		}
 	} else {
 		q.Set("service", jaegerServiceName)

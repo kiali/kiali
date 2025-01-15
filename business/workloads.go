@@ -2109,7 +2109,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 				pod.ProxyStatus = in.businessLayer.ProxyStatus.GetPodProxyStatus(criteria.Cluster, criteria.Namespace, pod.Name, !w.IsWaypoint())
 			}
 			// If Ambient is enabled for pod, check if has any Waypoint proxy
-			if pod.AmbientEnabled() && criteria.IncludeWaypoints == true {
+			if pod.AmbientEnabled() && criteria.IncludeWaypoints {
 				w.WaypointWorkloads = in.GetWaypointsForWorkload(ctx, w)
 				// TODO: Maybe user doesn't have permissions
 				ztunnelPods := in.cache.GetZtunnelPods(criteria.Cluster)
@@ -2126,7 +2126,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 		}
 
 		// If the pod is a waypoint proxy, check if it is attached to a namespace or to a service account, and get the affected workloads
-		if w.IsWaypoint() && criteria.IncludeWaypoints == true {
+		if w.IsWaypoint() && criteria.IncludeWaypoints {
 			w.Ambient = config.Waypoint
 			includeServices := false
 			if w.WaypointFor() == config.WaypointForService || w.WaypointFor() == config.WaypointForAll {

@@ -249,10 +249,7 @@ func spanMatchesWorkload(span *jaegerModels.Span, namespace, workload, app strin
 	if hasWaypoint {
 		op := fmt.Sprintf("%s.%s", app, namespace)
 		log.Tracef("[Tracing] Filtering span trace by service %s", op)
-		if strings.HasPrefix(span.OperationName, op) {
-			return true
-		}
-		return false
+		return strings.HasPrefix(span.OperationName, op)
 	}
 	// For envoy traces, with a workload named "ai-locals", node_id is like:
 	// sidecar~172.17.0.20~ai-locals-6d8996bff-ztg6z.default~default.svc.cluster.local
