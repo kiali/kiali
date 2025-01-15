@@ -1,0 +1,474 @@
+{
+  "traces": [
+    {
+      "traceID": "2e299711ce47710289dc6640727404f",
+      "rootServiceName": "waypoint.bookinfo",
+      "rootTraceName": "bookinfo-gateway-istio.bookinfo.svc.cluster.local:80/*",
+      "startTimeUnixNano": "1736952956641922000",
+      "durationMs": 12,
+      "spanSet": {
+        "spans": [
+          {
+            "spanID": "289dc6640727404f",
+            "name": "bookinfo-gateway-istio.bookinfo.svc.cluster.local:80/*",
+            "startTimeUnixNano": "1736952956641922000",
+            "durationNanos": "12902000",
+            "attributes": [
+              {
+                "key": "service.name",
+                "value": {
+                  "stringValue": "waypoint.bookinfo"
+                }
+              },
+              {
+                "key": "node_id",
+                "value": {
+                  "stringValue": "waypoint~10.244.0.28~waypoint-5b7c754ccb-55jwk.bookinfo~bookinfo.svc.cluster.local"
+                }
+              },
+              {
+                "key": "http.method",
+                "value": {
+                  "stringValue": "GET"
+                }
+              },
+              {
+                "key": "istio.cluster_id",
+                "value": {
+                  "stringValue": "Kubernetes"
+                }
+              },
+              {
+                "key": "upstream_cluster",
+                "value": {
+                  "stringValue": "inbound-vip|80|http|bookinfo-gateway-istio.bookinfo.svc.cluster.local"
+                }
+              },
+              {
+                "key": "component",
+                "value": {
+                  "stringValue": "proxy"
+                }
+              },
+              {
+                "key": "response_flags",
+                "value": {
+                  "stringValue": "-"
+                }
+              },
+              {
+                "key": "status",
+                "value": {
+                  "stringValue": "unset"
+                }
+              }
+            ]
+          },
+          {
+            "spanID": "9ac4466ca0202735",
+            "name": "reviews.bookinfo.svc.cluster.local:9080/*",
+            "startTimeUnixNano": "1736952956650458000",
+            "durationNanos": "1472000",
+            "attributes": [
+              {
+                "key": "status",
+                "value": {
+                  "stringValue": "unset"
+                }
+              },
+              {
+                "key": "istio.cluster_id",
+                "value": {
+                  "stringValue": "Kubernetes"
+                }
+              },
+              {
+                "key": "node_id",
+                "value": {
+                  "stringValue": "waypoint~10.244.0.28~waypoint-5b7c754ccb-55jwk.bookinfo~bookinfo.svc.cluster.local"
+                }
+              },
+              {
+                "key": "component",
+                "value": {
+                  "stringValue": "proxy"
+                }
+              },
+              {
+                "key": "upstream_cluster",
+                "value": {
+                  "stringValue": "inbound-vip|9080|http|reviews.bookinfo.svc.cluster.local"
+                }
+              },
+              {
+                "key": "service.name",
+                "value": {
+                  "stringValue": "waypoint.bookinfo"
+                }
+              },
+              {
+                "key": "response_flags",
+                "value": {
+                  "stringValue": "-"
+                }
+              },
+              {
+                "key": "http.method",
+                "value": {
+                  "stringValue": "GET"
+                }
+              }
+            ]
+          },
+          {
+            "spanID": "d28bff40fcb118c5",
+            "name": "details.bookinfo.svc.cluster.local:9080/*",
+            "startTimeUnixNano": "1736952956646318000",
+            "durationNanos": "1032000",
+            "attributes": [
+              {
+                "key": "istio.cluster_id",
+                "value": {
+                  "stringValue": "Kubernetes"
+                }
+              },
+              {
+                "key": "status",
+                "value": {
+                  "stringValue": "unset"
+                }
+              },
+              {
+                "key": "component",
+                "value": {
+                  "stringValue": "proxy"
+                }
+              },
+              {
+                "key": "upstream_cluster",
+                "value": {
+                  "stringValue": "inbound-vip|9080|http|details.bookinfo.svc.cluster.local"
+                }
+              },
+              {
+                "key": "node_id",
+                "value": {
+                  "stringValue": "waypoint~10.244.0.28~waypoint-5b7c754ccb-55jwk.bookinfo~bookinfo.svc.cluster.local"
+                }
+              },
+              {
+                "key": "response_flags",
+                "value": {
+                  "stringValue": "-"
+                }
+              },
+              {
+                "key": "service.name",
+                "value": {
+                  "stringValue": "waypoint.bookinfo"
+                }
+              },
+              {
+                "key": "http.method",
+                "value": {
+                  "stringValue": "GET"
+                }
+              }
+            ]
+          },
+          {
+            "spanID": "aac44fb4f828c727",
+            "name": "productpage.bookinfo.svc.cluster.local:9080/productpage",
+            "startTimeUnixNano": "1736952956642179000",
+            "durationNanos": "11878000",
+            "attributes": [
+              {
+                "key": "status",
+                "value": {
+                  "stringValue": "unset"
+                }
+              },
+              {
+                "key": "istio.cluster_id",
+                "value": {
+                  "stringValue": "Kubernetes"
+                }
+              },
+              {
+                "key": "response_flags",
+                "value": {
+                  "stringValue": "-"
+                }
+              },
+              {
+                "key": "node_id",
+                "value": {
+                  "stringValue": "router~10.244.0.27~bookinfo-gateway-istio-6754756766-pmxnn.bookinfo~bookinfo.svc.cluster.local"
+                }
+              },
+              {
+                "key": "http.method",
+                "value": {
+                  "stringValue": "GET"
+                }
+              },
+              {
+                "key": "component",
+                "value": {
+                  "stringValue": "proxy"
+                }
+              },
+              {
+                "key": "upstream_cluster",
+                "value": {
+                  "stringValue": "outbound|9080||productpage.bookinfo.svc.cluster.local"
+                }
+              }
+            ]
+          }
+        ],
+        "matched": 4
+      },
+      "spanSets": [
+        {
+          "spans": [
+            {
+              "spanID": "289dc6640727404f",
+              "name": "bookinfo-gateway-istio.bookinfo.svc.cluster.local:80/*",
+              "startTimeUnixNano": "1736952956641922000",
+              "durationNanos": "12902000",
+              "attributes": [
+                {
+                  "key": "service.name",
+                  "value": {
+                    "stringValue": "waypoint.bookinfo"
+                  }
+                },
+                {
+                  "key": "node_id",
+                  "value": {
+                    "stringValue": "waypoint~10.244.0.28~waypoint-5b7c754ccb-55jwk.bookinfo~bookinfo.svc.cluster.local"
+                  }
+                },
+                {
+                  "key": "http.method",
+                  "value": {
+                    "stringValue": "GET"
+                  }
+                },
+                {
+                  "key": "istio.cluster_id",
+                  "value": {
+                    "stringValue": "Kubernetes"
+                  }
+                },
+                {
+                  "key": "upstream_cluster",
+                  "value": {
+                    "stringValue": "inbound-vip|80|http|bookinfo-gateway-istio.bookinfo.svc.cluster.local"
+                  }
+                },
+                {
+                  "key": "component",
+                  "value": {
+                    "stringValue": "proxy"
+                  }
+                },
+                {
+                  "key": "response_flags",
+                  "value": {
+                    "stringValue": "-"
+                  }
+                },
+                {
+                  "key": "status",
+                  "value": {
+                    "stringValue": "unset"
+                  }
+                }
+              ]
+            },
+            {
+              "spanID": "9ac4466ca0202735",
+              "name": "reviews.bookinfo.svc.cluster.local:9080/*",
+              "startTimeUnixNano": "1736952956650458000",
+              "durationNanos": "1472000",
+              "attributes": [
+                {
+                  "key": "status",
+                  "value": {
+                    "stringValue": "unset"
+                  }
+                },
+                {
+                  "key": "istio.cluster_id",
+                  "value": {
+                    "stringValue": "Kubernetes"
+                  }
+                },
+                {
+                  "key": "node_id",
+                  "value": {
+                    "stringValue": "waypoint~10.244.0.28~waypoint-5b7c754ccb-55jwk.bookinfo~bookinfo.svc.cluster.local"
+                  }
+                },
+                {
+                  "key": "component",
+                  "value": {
+                    "stringValue": "proxy"
+                  }
+                },
+                {
+                  "key": "upstream_cluster",
+                  "value": {
+                    "stringValue": "inbound-vip|9080|http|reviews.bookinfo.svc.cluster.local"
+                  }
+                },
+                {
+                  "key": "service.name",
+                  "value": {
+                    "stringValue": "waypoint.bookinfo"
+                  }
+                },
+                {
+                  "key": "response_flags",
+                  "value": {
+                    "stringValue": "-"
+                  }
+                },
+                {
+                  "key": "http.method",
+                  "value": {
+                    "stringValue": "GET"
+                  }
+                }
+              ]
+            },
+            {
+              "spanID": "d28bff40fcb118c5",
+              "name": "details.bookinfo.svc.cluster.local:9080/*",
+              "startTimeUnixNano": "1736952956646318000",
+              "durationNanos": "1032000",
+              "attributes": [
+                {
+                  "key": "istio.cluster_id",
+                  "value": {
+                    "stringValue": "Kubernetes"
+                  }
+                },
+                {
+                  "key": "status",
+                  "value": {
+                    "stringValue": "unset"
+                  }
+                },
+                {
+                  "key": "component",
+                  "value": {
+                    "stringValue": "proxy"
+                  }
+                },
+                {
+                  "key": "upstream_cluster",
+                  "value": {
+                    "stringValue": "inbound-vip|9080|http|details.bookinfo.svc.cluster.local"
+                  }
+                },
+                {
+                  "key": "node_id",
+                  "value": {
+                    "stringValue": "waypoint~10.244.0.28~waypoint-5b7c754ccb-55jwk.bookinfo~bookinfo.svc.cluster.local"
+                  }
+                },
+                {
+                  "key": "response_flags",
+                  "value": {
+                    "stringValue": "-"
+                  }
+                },
+                {
+                  "key": "service.name",
+                  "value": {
+                    "stringValue": "waypoint.bookinfo"
+                  }
+                },
+                {
+                  "key": "http.method",
+                  "value": {
+                    "stringValue": "GET"
+                  }
+                }
+              ]
+            },
+            {
+              "spanID": "aac44fb4f828c727",
+              "name": "productpage.bookinfo.svc.cluster.local:9080/productpage",
+              "startTimeUnixNano": "1736952956642179000",
+              "durationNanos": "11878000",
+              "attributes": [
+                {
+                  "key": "status",
+                  "value": {
+                    "stringValue": "unset"
+                  }
+                },
+                {
+                  "key": "istio.cluster_id",
+                  "value": {
+                    "stringValue": "Kubernetes"
+                  }
+                },
+                {
+                  "key": "response_flags",
+                  "value": {
+                    "stringValue": "-"
+                  }
+                },
+                {
+                  "key": "node_id",
+                  "value": {
+                    "stringValue": "router~10.244.0.27~bookinfo-gateway-istio-6754756766-pmxnn.bookinfo~bookinfo.svc.cluster.local"
+                  }
+                },
+                {
+                  "key": "http.method",
+                  "value": {
+                    "stringValue": "GET"
+                  }
+                },
+                {
+                  "key": "component",
+                  "value": {
+                    "stringValue": "proxy"
+                  }
+                },
+                {
+                  "key": "upstream_cluster",
+                  "value": {
+                    "stringValue": "outbound|9080||productpage.bookinfo.svc.cluster.local"
+                  }
+                }
+              ]
+            }
+          ],
+          "matched": 4
+        }
+      ],
+      "serviceStats": {
+        "bookinfo-gateway-istio.bookinfo": {
+          "spanCount": 1
+        },
+        "waypoint.bookinfo": {
+          "spanCount": 3
+        }
+      }
+    }
+  ],
+  "metrics": {
+    "inspectedBytes": "976454",
+    "totalBlocks": 2,
+    "completedJobs": 1,
+    "totalJobs": 2,
+    "totalBlockBytes": "1878462"
+  }
+}
