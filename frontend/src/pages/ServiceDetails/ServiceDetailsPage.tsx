@@ -224,15 +224,10 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
     const tabsArray: React.ReactNode[] = [overTab, trafficTab, inTab];
 
     if (this.props.tracingInfo && this.props.tracingInfo.enabled && this.props.tracingInfo.integration) {
-      let waypointWk;
-      if (this.state.serviceDetails?.isAmbient && this.state.serviceDetails?.workloads) {
-        for (let i = 0; i < this.state.serviceDetails.workloads.length; i++) {
-          const wk = this.state.serviceDetails.workloads[i].waypointWorkloads;
-          if (wk && wk.length > 0) {
-            waypointWk = wk[0];
-          }
-        }
-      }
+      const waypointWk =
+        this.state.serviceDetails?.isAmbient && this.state.serviceDetails?.waypointWorkloads
+          ? this.state.serviceDetails?.waypointWorkloads[0]
+          : undefined;
 
       tabsArray.push(
         <Tab eventKey={3} title="Traces" key="Traces">

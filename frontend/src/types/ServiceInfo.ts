@@ -12,7 +12,7 @@ import {
   VirtualService
 } from './IstioObjects';
 import { TLSStatus } from './TLSStatus';
-import { AdditionalItem, WaypointInfo, WorkloadInfo } from './Workload';
+import { AdditionalItem, WorkloadInfo } from './Workload';
 import { ResourcePermissions } from './Permissions';
 import { KIALI_WIZARD_LABEL } from '../components/IstioWizards/WizardActions';
 import { ServiceOverview } from './ServiceList';
@@ -64,7 +64,6 @@ export interface WorkloadOverview {
   resourceVersion: string;
   serviceAccountNames: string[];
   type: string;
-  waypointWorkloads?: WaypointInfo[];
 }
 
 export type IPFamily = 'IPv4' | 'IPv6';

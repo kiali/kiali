@@ -865,7 +865,9 @@ func (in *SvcService) GetServiceAppName(ctx context.Context, cluster, namespace,
 	if err != nil {
 		return "", fmt.Errorf("Service [cluster: %s] [namespace: %s] [name: %s] doesn't exist.", cluster, namespace, service)
 	}
-
+	if IsWaypoint(svc) {
+		return svc.Name, nil
+	}
 	appLabelName := in.config.IstioLabels.AppLabelName
 	app := svc.Selectors[appLabelName]
 	return app, nil
@@ -901,4 +903,9 @@ func (in *SvcService) GetServiceRouteURL(ctx context.Context, cluster, namespace
 	}
 
 	return
+}
+
+// GetServiceRouteURL returns "" for non-OpenShift, or if the route can not be found
+func IsWaypoint(service models.Service) bool {
+	return service.Labels[config.WaypointLabel] == config.WaypointLabelValue
 }
