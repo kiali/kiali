@@ -238,6 +238,7 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
         this.state.workload?.ambient !== 'waypoint' && this.state.workload?.waypointWorkloads
           ? this.state.workload.waypointWorkloads[0]
           : undefined;
+
       tabsArray.push(
         <Tab eventKey={5} title="Traces" key="Traces">
           <TracesComponent
