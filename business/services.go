@@ -865,6 +865,7 @@ func (in *SvcService) GetServiceAppName(ctx context.Context, cluster, namespace,
 	if err != nil {
 		return "", fmt.Errorf("Service [cluster: %s] [namespace: %s] [name: %s] doesn't exist.", cluster, namespace, service)
 	}
+	// Waypoint proxies doesn't have the label app, but they have traces
 	if IsWaypoint(svc) {
 		return svc.Name, nil
 	}
