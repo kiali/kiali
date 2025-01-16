@@ -41,11 +41,6 @@ const clearButtonStyle = kialiStyle({
 
 const alertStyle = kialiStyle({
   marginTop: '1rem',
-  $nest: {
-    '& .pf-v5-c-alert__title': {
-      marginTop: 0
-    }
-  }
 })
 
 export class WizardLabels extends React.Component<Props, State> {
