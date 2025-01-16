@@ -51,7 +51,7 @@ func (in *TracingService) client() (tracing.ClientInterface, error) {
 }
 
 func (in *TracingService) getFilteredSpans(ns, app string, query models.TracingQuery, filter SpanFilter) ([]model.TracingSpan, error) {
-	r, err := in.GetAppTraces(ns, app, query)
+	r, err := in.GetAppTraces(ns, app, app, query)
 	if err != nil {
 		return []model.TracingSpan{}, err
 	}
@@ -124,12 +124,29 @@ func wkdSpanFilter(ns string, tracingName models.TracingName) SpanFilter {
 	}
 }
 
-func (in *TracingService) GetAppTraces(ns, app string, query models.TracingQuery) (*model.TracingResponse, error) {
+// GetAppTraces returns the traces for an app
+// TracingName is the name to be used to query the tracing backend (Using the waypoint name in Ambient)
+// App name is the name to filter the traces (When different)
+func (in *TracingService) GetAppTraces(ns, tracingName, app string, query models.TracingQuery) (*model.TracingResponse, error) {
 	client, err := in.client()
 	if err != nil {
 		return nil, err
 	}
-	r, err := client.GetAppTraces(ns, app, query)
+	r, err := client.GetAppTraces(ns, tracingName, query)
+	if tracingName != app {
+		// Filter by app
+		filter := operationSpanFilter(ns, app)
+		traces := []jaegerModels.Trace{}
+		for _, trace := range r.Data {
+			for _, span := range trace.Spans {
+				if filter(&span) {
+					traces = append(traces, trace)
+					break
+				}
+			}
+		}
+		r.Data = traces
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -158,10 +175,10 @@ func (in *TracingService) GetServiceTraces(ctx context.Context, ns, service stri
 	}
 	if app == service {
 		// No post-filtering
-		return in.GetAppTraces(ns, app, query)
+		return in.GetAppTraces(ns, service, app, query)
 	}
 
-	r, err := in.GetAppTraces(ns, app, query)
+	r, err := in.GetAppTraces(ns, app, service, query)
 	if r != nil && err == nil {
 		// Filter out app traces based on operation name.
 		// For envoy traces, operation name is like "service-name.namespace.svc.cluster.local:8000/*"
@@ -199,7 +216,7 @@ func (in *TracingService) GetWorkloadTraces(ctx context.Context, ns, workload st
 		return nil, err
 	}
 
-	r, err := in.GetAppTraces(ns, app.Lookup, query)
+	r, err := in.GetAppTraces(ns, app.Lookup, app.App, query)
 	// Filter out app traces based on the node_id tag, that contains workload information.
 	if r != nil && err == nil {
 		traces := []jaegerModels.Trace{}

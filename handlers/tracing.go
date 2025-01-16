@@ -57,7 +57,7 @@ func AppTraces(w http.ResponseWriter, r *http.Request) {
 	}
 	cluster := clusterNameFromQuery(r.URL.Query())
 	tracingName := business.App.GetAppTracingName(r.Context(), cluster, namespace, app)
-	traces, err := business.Tracing.GetAppTraces(namespace, tracingName, q)
+	traces, err := business.Tracing.GetAppTraces(namespace, tracingName, app, q)
 	if err != nil {
 		RespondWithError(w, http.StatusServiceUnavailable, err.Error())
 		return
