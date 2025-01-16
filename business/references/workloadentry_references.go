@@ -34,10 +34,10 @@ func (n WorkloadEntryReferences) getConfigReferences(we *networking_v1.WorkloadE
 	}
 	weLabelSet := labels.Set(we.Spec.Labels)
 	for _, wg := range n.WorkloadGroups {
-		if wg.Spec.Template == nil || wg.Spec.Template.Labels == nil {
+		if wg.Labels == nil {
 			continue
 		}
-		selector := labels.SelectorFromSet(wg.Spec.Template.Labels)
+		selector := labels.SelectorFromSet(wg.Labels)
 		if selector.Matches(weLabelSet) {
 			result = append(result, models.IstioReference{Name: wg.Name, Namespace: wg.Namespace, ObjectGVK: kubernetes.WorkloadGroups})
 		}
