@@ -865,6 +865,14 @@ func (in *SvcService) GetServiceAppName(ctx context.Context, cluster, namespace,
 	if err != nil {
 		return "", fmt.Errorf("Service [cluster: %s] [namespace: %s] [name: %s] doesn't exist.", cluster, namespace, service)
 	}
+	// Waypoint proxies doesn't have the label app, but they have traces
+	if IsWaypoint(svc) {
+		return svc.Name, nil
+	}
+	waypoints := in.GetWaypointsForService(ctx, &svc)
+	if len(waypoints) > 0 {
+		return waypoints[0].Name, nil
+	}
 
 	appLabelName := in.config.IstioLabels.AppLabelName
 	app := svc.Selectors[appLabelName]
@@ -901,4 +909,9 @@ func (in *SvcService) GetServiceRouteURL(ctx context.Context, cluster, namespace
 	}
 
 	return
+}
+
+// IsWaypointm return true if the service is from a Waypoint proxy based on the service labels
+func IsWaypoint(service models.Service) bool {
+	return service.Labels[config.WaypointLabel] == config.WaypointLabelValue
 }

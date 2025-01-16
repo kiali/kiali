@@ -387,7 +387,7 @@ func (in *AppService) GetAppDetails(ctx context.Context, criteria AppCriteria) (
 
 	appInstance.Workloads = make([]models.WorkloadItem, len(appDetails.Workloads))
 	for i, wkd := range appDetails.Workloads {
-		appInstance.Workloads[i] = models.WorkloadItem{WorkloadName: wkd.Name, IstioSidecar: wkd.IstioSidecar, Labels: wkd.Labels, IsAmbient: wkd.IsAmbient, ServiceAccountNames: wkd.Pods.ServiceAccounts()}
+		appInstance.Workloads[i] = models.WorkloadItem{WorkloadName: wkd.Name, IstioSidecar: wkd.IstioSidecar, Labels: wkd.Labels, IsAmbient: wkd.IsAmbient, ServiceAccountNames: wkd.Pods.ServiceAccounts(), WaypointWorkloads: wkd.WaypointWorkloads}
 	}
 
 	appInstance.ServiceNames = make([]string, len(appDetails.Services))
@@ -506,4 +506,24 @@ func (in *AppService) fetchNamespaceApps(ctx context.Context, namespace string, 
 	}
 
 	return allEntities, nil
+}
+
+func (in *AppService) GetAppTracingName(ctx context.Context, cluster, namespace, app string) string {
+	criteria := AppCriteria{
+		Namespace: namespace, AppName: app, IncludeIstioResources: false, IncludeHealth: false, Cluster: cluster}
+
+	// Fetch and build app
+	appDetails, err := in.GetAppDetails(ctx, criteria)
+	if err != nil {
+		log.Errorf("Error for getting tracing name for app %s: %s", app, err)
+		return app
+	}
+	for _, wk := range appDetails.Workloads {
+		if len(wk.WaypointWorkloads) > 0 {
+			// Assuming that all the workloads from the app have the same waypoint
+			// But, could be wrong
+			return wk.WaypointWorkloads[0].Name
+		}
+	}
+	return app
 }

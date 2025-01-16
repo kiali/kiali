@@ -89,12 +89,43 @@ var trace2 = jaegerModels.Trace{
 	},
 }
 
+var waypointTrace = jaegerModels.Trace{
+	Spans: []jaegerModels.Span{{
+		ProcessID:     "t1_process_1",
+		OperationName: "reviews.default.svc.cluster.local:8000/*",
+		Tags: []jaegerModels.KeyValue{{
+			Key:   "dummy",
+			Value: "dummy",
+		}, {
+			Key:   "node_id",
+			Value: "waypoint~10.244.0.19~waypoint-5f89fbb8b5-nxxmj.default~default.svc.cluster.local",
+		}},
+	}, {
+		ProcessID:     "t1_process_2",
+		OperationName: "my-operation",
+		Tags: []jaegerModels.KeyValue{{
+			Key:   "dummy",
+			Value: "dummy",
+		}},
+	}},
+	Processes: map[jaegerModels.ProcessID]jaegerModels.Process{
+		"t1_process_1": {
+			ServiceName: "waypoint.default",
+			Tags:        []jaegerModels.KeyValue{},
+		},
+		"t1_process_2": {
+			ServiceName: "bookinfo-gateway-istio.default",
+			Tags:        []jaegerModels.KeyValue{},
+		},
+	},
+}
+
 func TestMatchingWorkload(t *testing.T) {
 	assert := assert.New(t)
 
-	assert.False(matchesWorkload(&trace1, "default", "some-workload"))
-	assert.True(matchesWorkload(&trace1, "default", "reviews"))
-	assert.True(matchesWorkload(&trace1, "default", "my-pod"))
+	assert.False(matchesWorkload(&trace1, "default", "some-workload", "some-workload", false))
+	assert.True(matchesWorkload(&trace1, "default", "reviews", "reviews", false))
+	assert.True(matchesWorkload(&trace1, "default", "my-pod", "my-pod", false))
 }
 
 func TestTracesToSpanWithoutFilter(t *testing.T) {
@@ -147,7 +178,7 @@ func TestTracesToSpanWithWorkloadFilter(t *testing.T) {
 		Data:               []jaegerModels.Trace{trace1, trace2},
 		TracingServiceName: "reviews.default",
 	}
-	spans := tracesToSpans("reviews", &r, wkdSpanFilter("default", "reviews"), config.NewConfig())
+	spans := tracesToSpans("reviews", &r, wkdSpanFilter("default", "reviews", "reviews", false), config.NewConfig())
 	assert.Len(spans, 2)
 	assert.Equal("t1_process_1", string(spans[0].ProcessID))
 	assert.Equal("t2_process_1", string(spans[1].ProcessID))
@@ -156,8 +187,21 @@ func TestTracesToSpanWithWorkloadFilter(t *testing.T) {
 		Data:               []jaegerModels.Trace{trace1, trace2},
 		TracingServiceName: "rating.default",
 	}
-	spans = tracesToSpans("rating", &r, wkdSpanFilter("default", "rating-v2"), config.NewConfig())
+	spans = tracesToSpans("rating", &r, wkdSpanFilter("default", "rating-v2", "rating", false), config.NewConfig())
 	assert.Len(spans, 2)
 	assert.Equal("t2_process_2", string(spans[0].ProcessID))
 	assert.Equal("t2_process_3", string(spans[1].ProcessID))
+}
+
+func TestTracesToSpanWaypointWithWorkloadFilter(t *testing.T) {
+	assert := assert.New(t)
+
+	r := model.TracingResponse{
+		Data:               []jaegerModels.Trace{waypointTrace},
+		TracingServiceName: "waypoint.default",
+	}
+	spans := tracesToSpans("waypoint", &r, wkdSpanFilter("default", "waypoint", "reviews", true), config.NewConfig())
+	assert.Len(spans, 1)
+	assert.Equal("t1_process_1", string(spans[0].ProcessID))
+	assert.Equal("waypoint.default", string(spans[0].Process.ServiceName))
 }

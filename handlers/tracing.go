@@ -49,12 +49,15 @@ func AppTraces(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	namespace := params["namespace"]
 	app := params["app"]
+
 	q, err := readQuery(r.URL.Query())
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	traces, err := business.Tracing.GetAppTraces(namespace, app, q)
+	cluster := clusterNameFromQuery(r.URL.Query())
+	tracingName := business.App.GetAppTracingName(r.Context(), cluster, namespace, app)
+	traces, err := business.Tracing.GetAppTraces(namespace, tracingName, q)
 	if err != nil {
 		RespondWithError(w, http.StatusServiceUnavailable, err.Error())
 		return

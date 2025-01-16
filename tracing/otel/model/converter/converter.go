@@ -128,6 +128,10 @@ func ConvertSpanSet(span otel.Span, serviceName string, traceId string, rootName
 
 	jaegerTraceId := ConvertId(traceId)
 	jaegerSpanId := convertSpanId(span.SpanID)
+	operationName := rootName
+	if span.Name != "" {
+		operationName = span.Name
+	}
 
 	jaegerSpan := jaegerModels.Span{
 		TraceID:   jaegerTraceId,
@@ -140,7 +144,7 @@ func ConvertSpanSet(span otel.Span, serviceName string, traceId string, rootName
 		References:    []jaegerModels.Reference{},
 		Tags:          convertAttributes(span.Attributes, span.Status),
 		Logs:          []jaegerModels.Log{},
-		OperationName: rootName,
+		OperationName: operationName,
 		ProcessID:     "",
 		Process:       &jaegerModels.Process{Tags: []jaegerModels.KeyValue{}, ServiceName: serviceName},
 		Warnings:      []string{},

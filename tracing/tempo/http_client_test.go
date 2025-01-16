@@ -18,10 +18,12 @@ import (
 )
 
 const (
-	responseFile  = "../tracingtest/response.json"
-	responseTrace = "../tracingtest/responseTrace.json"
-	tracingUrl    = "http://tracing.tempo"
-	serviceName   = "productpage.bookinfo"
+	responseFile        = "../tracingtest/response.json"
+	responseAmbientFile = "../tracingtest/responseAmbient.json"
+	responseTrace       = "../tracingtest/responseTrace.json"
+	tracingUrl          = "http://tracing.tempo"
+	serviceName         = "productpage.bookinfo"
+	ambientServiceName  = "waypoint.bookinfo"
 )
 
 type RoundTripFunc func(req *http.Request) *http.Response
@@ -71,6 +73,50 @@ func TestGetTraces(t *testing.T) {
 	assert.NotNil(t, response.Data)
 	assert.Equal(t, response.Data[0].TraceID, json.TraceID("100cb753c787ed5657c8d88dafc176ed"))
 	assert.Equal(t, len(response.Data[0].Spans), 3)
+	assert.Equal(t, response.Data[0].Spans[0].OperationName, "productpage.bookinfo.svc.cluster.local:9080/productpage")
+	assert.Equal(t, response.Data[0].Spans[0].Tags[0].Key, "node_id")
+	assert.Equal(t, response.Data[0].Spans[0].Tags[0].Value, "sidecar~10.244.0.20~reviews-v1-667b5cc65d-4m24g.bookinfo~bookinfo.svc.cluster.local")
+}
+
+func TestGetAmbientTraces(t *testing.T) {
+	baseUrl := getBaseUrl()
+
+	resp, err := os.Open(responseAmbientFile)
+	assert.Nil(t, err)
+	defer resp.Close()
+
+	byteValue, _ := io.ReadAll(resp)
+
+	httpClient := http.Client{Transport: RoundTripFunc(func(req *http.Request) *http.Response {
+		return &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(strings.NewReader(string(byteValue))),
+		}
+	})}
+
+	tempoClient, err := NewOtelClient(context.TODO())
+	assert.Nil(t, err)
+	assert.NotNil(t, tempoClient)
+
+	q := models.TracingQuery{
+		Start:       time.Time{},
+		End:         time.Time{},
+		Tags:        nil,
+		MinDuration: 0,
+		Limit:       0,
+		Cluster:     "",
+	}
+	response, err := tempoClient.GetAppTracesHTTP(httpClient, baseUrl, ambientServiceName, q)
+	assert.Nil(t, err)
+	assert.NotNil(t, response)
+	assert.Equal(t, response.TracingServiceName, ambientServiceName)
+	assert.Nil(t, response.Errors)
+	assert.NotNil(t, response.Data)
+	assert.Equal(t, response.Data[0].TraceID, json.TraceID("2e299711ce47710289dc6640727404f"))
+	assert.Equal(t, len(response.Data[0].Spans), 4)
+	assert.Equal(t, response.Data[0].Spans[1].OperationName, "reviews.bookinfo.svc.cluster.local:9080/*")
+	assert.Equal(t, response.Data[0].Spans[1].Tags[2].Key, "node_id")
+	assert.Equal(t, response.Data[0].Spans[1].Tags[2].Value, "waypoint~10.244.0.28~waypoint-5b7c754ccb-55jwk.bookinfo~bookinfo.svc.cluster.local")
 }
 
 func TestGetTrace(t *testing.T) {
@@ -154,7 +200,7 @@ func TestQuery(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Contains(t, rawQuery, fmt.Sprintf(".service.name = \"%s\"", serviceName))
 	// Verify it contains all the selects
-	assert.Contains(t, rawQuery, "select(status, .service_name, .node_id, .component, .upstream_cluster, .http.method, .response_flags, resource.hostname)")
+	assert.Contains(t, rawQuery, "select(status, .service_name, .node_id, .component, .upstream_cluster, .http.method, .response_flags, resource.hostname, name)")
 	// Verify it doesn't contain the cluster tag
 	assert.NotContains(t, rawQuery, models.IstioClusterTag)
 	// Verify it contains spans limit
