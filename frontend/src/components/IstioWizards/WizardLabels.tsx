@@ -40,8 +40,8 @@ const clearButtonStyle = kialiStyle({
 });
 
 const alertStyle = kialiStyle({
-  marginTop: '1rem',
-})
+  marginTop: '1rem'
+});
 
 export class WizardLabels extends React.Component<Props, State> {
   constructor(props: Props) {

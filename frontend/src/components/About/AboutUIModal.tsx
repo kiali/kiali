@@ -63,7 +63,7 @@ const alertStyle = kialiStyle({
       marginTop: 0
     }
   }
-})
+});
 
 export const AboutUIModal: React.FC<AboutUIModalProps> = (props: AboutUIModalProps) => {
   const renderMeshLink = (): React.ReactNode => {
@@ -148,12 +148,7 @@ export const AboutUIModal: React.FC<AboutUIModalProps> = (props: AboutUIModalPro
       </TextContent>
 
       {props.warningMessages.length > 0 && (
-        <Alert
-          variant="warning"
-          isInline={true}
-          title={props.warningMessages[0]}
-          className={alertStyle}
-        />
+        <Alert variant="warning" isInline={true} title={props.warningMessages[0]} className={alertStyle} />
       )}
 
       <TextContent className={textContentStyle}>
