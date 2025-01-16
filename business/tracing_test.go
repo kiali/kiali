@@ -1,6 +1,7 @@
 package business
 
 import (
+	"github.com/kiali/kiali/models"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -122,10 +123,12 @@ var waypointTrace = jaegerModels.Trace{
 
 func TestMatchingWorkload(t *testing.T) {
 	assert := assert.New(t)
-
-	assert.False(matchesWorkload(&trace1, "default", "some-workload", "some-workload", false))
-	assert.True(matchesWorkload(&trace1, "default", "reviews", "reviews", false))
-	assert.True(matchesWorkload(&trace1, "default", "my-pod", "my-pod", false))
+	tracingName := models.TracingName{App: "some-workload", Workload: "some-workload", Lookup: "some-workload"}
+	assert.False(matchesWorkload(&trace1, "default", tracingName))
+	tracingNameReviews := models.TracingName{App: "reviews", Workload: "reviews", Lookup: "reviews"}
+	assert.True(matchesWorkload(&trace1, "default", tracingNameReviews))
+	tracingNamePod := models.TracingName{App: "my-pod", Workload: "some-workload", Lookup: "some-workload"}
+	assert.True(matchesWorkload(&trace1, "default", tracingNamePod))
 }
 
 func TestTracesToSpanWithoutFilter(t *testing.T) {
@@ -178,7 +181,8 @@ func TestTracesToSpanWithWorkloadFilter(t *testing.T) {
 		Data:               []jaegerModels.Trace{trace1, trace2},
 		TracingServiceName: "reviews.default",
 	}
-	spans := tracesToSpans("reviews", &r, wkdSpanFilter("default", "reviews", "reviews", false), config.NewConfig())
+	tracingName := models.TracingName{App: "reviews", Workload: "reviews", Lookup: "reviews"}
+	spans := tracesToSpans("reviews", &r, wkdSpanFilter("default", tracingName), config.NewConfig())
 	assert.Len(spans, 2)
 	assert.Equal("t1_process_1", string(spans[0].ProcessID))
 	assert.Equal("t2_process_1", string(spans[1].ProcessID))
@@ -187,7 +191,8 @@ func TestTracesToSpanWithWorkloadFilter(t *testing.T) {
 		Data:               []jaegerModels.Trace{trace1, trace2},
 		TracingServiceName: "rating.default",
 	}
-	spans = tracesToSpans("rating", &r, wkdSpanFilter("default", "rating-v2", "rating", false), config.NewConfig())
+	tracingRatingsName := models.TracingName{App: "rating", Workload: "rating-v2", Lookup: "rating"}
+	spans = tracesToSpans("rating", &r, wkdSpanFilter("default", tracingRatingsName), config.NewConfig())
 	assert.Len(spans, 2)
 	assert.Equal("t2_process_2", string(spans[0].ProcessID))
 	assert.Equal("t2_process_3", string(spans[1].ProcessID))
@@ -200,7 +205,8 @@ func TestTracesToSpanWaypointWithWorkloadFilter(t *testing.T) {
 		Data:               []jaegerModels.Trace{waypointTrace},
 		TracingServiceName: "waypoint.default",
 	}
-	spans := tracesToSpans("waypoint", &r, wkdSpanFilter("default", "waypoint", "reviews", true), config.NewConfig())
+	tracingName := models.TracingName{App: "reviews", Workload: "reviews", Lookup: "waypoint", WaypointName: "waypoint"}
+	spans := tracesToSpans("waypoint", &r, wkdSpanFilter("default", tracingName), config.NewConfig())
 	assert.Len(spans, 1)
 	assert.Equal("t1_process_1", string(spans[0].ProcessID))
 	assert.Equal("waypoint.default", string(spans[0].Process.ServiceName))
