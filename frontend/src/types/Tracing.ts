@@ -7,7 +7,6 @@ export type TracingQuery = {
   minDuration?: number;
   startMicros: number;
   tags?: string;
-  waypoint?: string;
 };
 
 export type Span = {

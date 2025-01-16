@@ -224,11 +224,6 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
     const tabsArray: React.ReactNode[] = [overTab, trafficTab, inTab];
 
     if (this.props.tracingInfo && this.props.tracingInfo.enabled && this.props.tracingInfo.integration) {
-      const waypointWk =
-        this.state.serviceDetails?.isAmbient && this.state.serviceDetails?.waypointWorkloads
-          ? this.state.serviceDetails?.waypointWorkloads[0]
-          : undefined;
-
       tabsArray.push(
         <Tab eventKey={3} title="Traces" key="Traces">
           <TracesComponent
@@ -237,7 +232,6 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
             cluster={this.state.cluster}
             target={this.props.serviceId.service}
             targetKind={'service'}
-            waypoint={waypointWk}
           />
         </Tab>
       );

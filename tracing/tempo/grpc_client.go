@@ -39,16 +39,7 @@ func (jc TempoGRPCClient) FindTraces(ctx context.Context, serviceName string, q 
 	sr.Limit = uint32(q.Limit)
 
 	// Create query
-	queryServiceName := serviceName
-	if q.Waypoint.Name != "" {
-		c := config.Get()
-		if c.ExternalServices.Tracing.NamespaceSelector {
-			serviceName = fmt.Sprintf("%s.%s", q.Waypoint.Name, q.Waypoint.Namespace)
-		} else {
-			serviceName = q.Waypoint.Name
-		}
-	}
-	queryPart1 := TraceQL{operator1: ".service.name", operand: EQUAL, operator2: queryServiceName}
+	queryPart1 := TraceQL{operator1: ".service.name", operand: EQUAL, operator2: serviceName}
 	queryPart2 := TraceQL{operator1: ".node_id", operand: REGEX, operator2: ".*"}
 	queryPart := TraceQL{operator1: queryPart1, operand: AND, operator2: queryPart2}
 

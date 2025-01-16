@@ -869,6 +869,11 @@ func (in *SvcService) GetServiceAppName(ctx context.Context, cluster, namespace,
 	if IsWaypoint(svc) {
 		return svc.Name, nil
 	}
+	waypoints := in.GetWaypointsForService(ctx, &svc)
+	if len(waypoints) > 0 {
+		return waypoints[0].Name, nil
+	}
+
 	appLabelName := in.config.IstioLabels.AppLabelName
 	app := svc.Selectors[appLabelName]
 	return app, nil

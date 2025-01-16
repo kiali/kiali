@@ -6,13 +6,11 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
 
 	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 )
 
@@ -51,12 +49,15 @@ func AppTraces(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	namespace := params["namespace"]
 	app := params["app"]
+
 	q, err := readQuery(r.URL.Query())
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	traces, err := business.Tracing.GetAppTraces(namespace, app, q)
+	cluster := clusterNameFromQuery(r.URL.Query())
+	tracingName := business.App.GetAppTracingName(r.Context(), cluster, namespace, app)
+	traces, err := business.Tracing.GetAppTraces(namespace, tracingName, q)
 	if err != nil {
 		RespondWithError(w, http.StatusServiceUnavailable, err.Error())
 		return
@@ -287,17 +288,6 @@ func readQuery(values url.Values) (models.TracingQuery, error) {
 		q.Tags[models.IstioClusterTag] = values.Get("clusterName")
 	} else {
 		q.Tags[models.IstioClusterTag] = q.Cluster
-	}
-
-	// If there is a waypoint proxy, it will be used for the query
-	if values.Get("waypoint") != "" {
-		w := strings.Split(values.Get("waypoint"), "/")
-		if len(w) != 3 {
-			log.Debugf("Cannot parse parameter 'waypoint': %s", values.Get("waypoint"))
-		} else {
-			workloadRef := models.WorkloadReferenceInfo{Cluster: w[0], Namespace: w[1], Name: w[2]}
-			q.Waypoint = workloadRef
-		}
 	}
 
 	return q, nil

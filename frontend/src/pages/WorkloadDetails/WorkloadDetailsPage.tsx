@@ -235,11 +235,6 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
     tabsArray.push(outTab);
 
     if (this.props.tracingInfo && this.props.tracingInfo.enabled && this.props.tracingInfo.integration) {
-      const waypoint =
-        this.state.workload?.ambient !== Waypoint && this.state.workload?.waypointWorkloads
-          ? this.state.workload.waypointWorkloads[0]
-          : undefined;
-
       tabsArray.push(
         <Tab eventKey={5} title="Traces" key="Traces">
           <TracesComponent
@@ -248,7 +243,6 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
             cluster={this.state.cluster}
             target={this.props.workloadId.workload}
             targetKind="workload"
-            waypoint={waypoint}
           />
         </Tab>
       );
