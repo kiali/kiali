@@ -56,6 +56,15 @@ const websiteStyle = kialiStyle({
   marginRight: '2rem'
 });
 
+const alertStyle = kialiStyle({
+  marginTop: '1rem',
+  $nest: {
+    '& .pf-v5-c-alert__title': {
+      marginTop: 0
+    }
+  }
+});
+
 export const AboutUIModal: React.FC<AboutUIModalProps> = (props: AboutUIModalProps) => {
   const renderMeshLink = (): React.ReactNode => {
     if (config?.about?.mesh) {
@@ -139,7 +148,7 @@ export const AboutUIModal: React.FC<AboutUIModalProps> = (props: AboutUIModalPro
       </TextContent>
 
       {props.warningMessages.length > 0 && (
-        <Alert variant="warning" title={props.warningMessages[0]} style={{ marginTop: '1rem' }} />
+        <Alert variant="warning" isInline={true} title={props.warningMessages[0]} className={alertStyle} />
       )}
 
       <TextContent className={textContentStyle}>
