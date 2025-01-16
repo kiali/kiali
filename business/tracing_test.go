@@ -1,12 +1,12 @@
 package business
 
 import (
-	"github.com/kiali/kiali/models"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tracing/jaeger/model"
 	jaegerModels "github.com/kiali/kiali/tracing/jaeger/model/json"
 )
