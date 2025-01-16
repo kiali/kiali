@@ -52,6 +52,7 @@ Feature: Kiali Service Details page
 
   @bookinfo-app
   @tracing
+  @waypoint
   Scenario: See graph traces for productspage service details
     And user sees trace information
     When user selects a trace

@@ -32,6 +32,7 @@ Feature: Kiali Workload Details page
 
   @bookinfo-app
   @tracing
+  @waypoint
   Scenario: See workload tracing info after selecting a trace
     And user sees trace information
     When user selects a trace
@@ -39,6 +40,7 @@ Feature: Kiali Workload Details page
 
   @bookinfo-app
   @tracing
+  @waypoint
   Scenario: See workload span info after selecting a span
     And user sees trace information
     When user selects a trace
@@ -47,6 +49,7 @@ Feature: Kiali Workload Details page
 
   @bookinfo-app
   @tracing
+  @waypoint
   Scenario: See tracing links
     And user sees trace information
     Then the user can see the "View in Tracing" link
