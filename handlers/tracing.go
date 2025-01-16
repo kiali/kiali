@@ -171,8 +171,8 @@ func AppSpans(w http.ResponseWriter, r *http.Request) {
 		RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-
-	spans, err := business.Tracing.GetAppSpans(namespace, app, q)
+	cluster := clusterNameFromQuery(r.URL.Query())
+	spans, err := business.Tracing.GetAppSpans(r.Context(), cluster, namespace, app, q)
 	if err != nil {
 		RespondWithError(w, http.StatusServiceUnavailable, err.Error())
 		return

@@ -25,14 +25,16 @@ type TracingService struct {
 	svc      *SvcService
 	tracing  tracing.ClientInterface
 	workload *WorkloadService
+	app      *AppService
 }
 
-func NewTracingService(conf *config.Config, tracing tracing.ClientInterface, svcService *SvcService, workloadService *WorkloadService) TracingService {
+func NewTracingService(conf *config.Config, tracing tracing.ClientInterface, svcService *SvcService, workloadService *WorkloadService, appService *AppService) TracingService {
 	return TracingService{
 		conf:     conf,
 		svc:      svcService,
 		tracing:  tracing,
 		workload: workloadService,
+		app:      appService,
 	}
 }
 
@@ -57,8 +59,14 @@ func (in *TracingService) getFilteredSpans(ns, app string, query models.TracingQ
 	return spans, nil
 }
 
-func (in *TracingService) GetAppSpans(ns, app string, query models.TracingQuery) ([]model.TracingSpan, error) {
-	return in.getFilteredSpans(ns, app, query, nil /*no post-filtering for apps*/)
+func (in *TracingService) GetAppSpans(ctx context.Context, cluster, ns, app string, query models.TracingQuery) ([]model.TracingSpan, error) {
+
+	tracingName := in.app.GetAppTracingName(ctx, cluster, ns, app)
+	var waypointFilter SpanFilter
+	if tracingName != app {
+		waypointFilter = operationSpanFilter(ns, app)
+	}
+	return in.getFilteredSpans(ns, tracingName, query, waypointFilter)
 }
 
 func (in *TracingService) GetServiceSpans(ctx context.Context, ns, service string, query models.TracingQuery) ([]model.TracingSpan, error) {
@@ -106,7 +114,7 @@ func (in *TracingService) GetWorkloadSpans(ctx context.Context, ns, workload str
 	if err != nil {
 		return nil, err
 	}
-	return in.getFilteredSpans(ns, tracingName.App, query, wkdSpanFilter(ns, tracingName))
+	return in.getFilteredSpans(ns, tracingName.Lookup, query, wkdSpanFilter(ns, tracingName))
 }
 
 func wkdSpanFilter(ns string, tracingName models.TracingName) SpanFilter {
