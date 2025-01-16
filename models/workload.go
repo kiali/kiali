@@ -260,6 +260,15 @@ type WorkloadEntry struct {
 	ServiceAccountName string            `json:"serviceAccountName"`
 }
 
+// TracingName describes all the needed data for tracing
+type TracingName struct {
+	App               string `json:"app"`
+	Lookup            string `json:"lookup"`
+	WaypointName      string `json:"waypointName"`
+	WaypointNamespace string `json:"waypointNamespace"`
+	Workload          string `json:"workload"`
+}
+
 type Workloads []*Workload
 
 type WorkloadEntries []*WorkloadEntry

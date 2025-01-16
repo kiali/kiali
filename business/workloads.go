@@ -2473,7 +2473,7 @@ func controllerPriority(type1, type2 string) string {
 }
 
 // GetWorkloadAppName returns the "Application" name (app label) that relates to a workload
-func (in *WorkloadService) GetWorkloadAppName(ctx context.Context, cluster, namespace, workload string) (string, error) {
+func (in *WorkloadService) GetWorkloadAppName(ctx context.Context, cluster, namespace, workload string) (models.TracingName, error) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GetWorkloadAppName",
 		observability.Attribute("package", "business"),
@@ -2483,18 +2483,31 @@ func (in *WorkloadService) GetWorkloadAppName(ctx context.Context, cluster, name
 	)
 	defer end()
 
+	tracingName := models.TracingName{Workload: workload}
 	wkd, err := in.fetchWorkload(ctx, WorkloadCriteria{Cluster: cluster, Namespace: namespace, WorkloadName: workload, WorkloadGVK: schema.GroupVersionKind{Group: "", Version: "", Kind: ""}})
 	if err != nil {
-		return "", err
+		return tracingName, err
 	}
 
+	tracingName.App = workload
 	if wkd.IsGateway() || wkd.IsWaypoint() {
 		// Waypoints and Gateways doesn't have an app label, but they have valid traces data
-		return workload, nil
+		tracingName.Lookup = workload
+		return tracingName, nil
 	}
 	appLabelName := in.config.IstioLabels.AppLabelName
 	app := wkd.Labels[appLabelName]
-	return app, nil
+	tracingName.App = app
+	tracingName.Lookup = app
+
+	waypoints := in.GetWaypoints(ctx)
+	if len(waypoints) > 0 {
+		tracingName.WaypointName = waypoints[0].Name
+		tracingName.Lookup = waypoints[0].Name
+		tracingName.WaypointNamespace = waypoints[0].Namespace
+	}
+
+	return tracingName, nil
 }
 
 // streamParsedLogs fetches logs from a container in a pod, parses and decorates each log line with some metadata (if possible) and

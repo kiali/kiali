@@ -102,18 +102,17 @@ func (in *TracingService) GetWorkloadSpans(ctx context.Context, ns, workload str
 	)
 	defer end()
 
-	app, err := in.workload.GetWorkloadAppName(ctx, query.Cluster, ns, workload)
+	tracingName, err := in.workload.GetWorkloadAppName(ctx, query.Cluster, ns, workload)
 	if err != nil {
 		return nil, err
 	}
-	hasWaypoint := query.Waypoint.Name != ""
-	return in.getFilteredSpans(ns, app, query, wkdSpanFilter(ns, workload, app, hasWaypoint))
+	return in.getFilteredSpans(ns, tracingName.App, query, wkdSpanFilter(ns, tracingName))
 }
 
-func wkdSpanFilter(ns, workload, app string, hasWaypoint bool) SpanFilter {
+func wkdSpanFilter(ns string, tracingName models.TracingName) SpanFilter {
 	// Filter out app traces based on the node_id tag, that contains workload information.
 	return func(span *jaegerModels.Span) bool {
-		return spanMatchesWorkload(span, ns, workload, app, hasWaypoint)
+		return spanMatchesWorkload(span, ns, tracingName)
 	}
 }
 
@@ -192,13 +191,12 @@ func (in *TracingService) GetWorkloadTraces(ctx context.Context, ns, workload st
 		return nil, err
 	}
 
-	r, err := in.GetAppTraces(ns, app, query)
+	r, err := in.GetAppTraces(ns, app.Lookup, query)
 	// Filter out app traces based on the node_id tag, that contains workload information.
 	if r != nil && err == nil {
 		traces := []jaegerModels.Trace{}
-		hasWaypoints := query.Waypoint.Name != ""
 		for _, trace := range r.Data {
-			if matchesWorkload(&trace, ns, workload, app, hasWaypoints) {
+			if matchesWorkload(&trace, ns, app) {
 				traces = append(traces, trace)
 			}
 		}
@@ -231,12 +229,12 @@ func (in *TracingService) GetStatus() (accessible bool, err error) {
 	return client.GetServiceStatus()
 }
 
-func matchesWorkload(trace *jaegerModels.Trace, namespace, workload, app string, hasWaypoint bool) bool {
+func matchesWorkload(trace *jaegerModels.Trace, namespace string, tracingName models.TracingName) bool {
 	for _, span := range trace.Spans {
 		if process, ok := trace.Processes[span.ProcessID]; ok {
 			span.Process = &process
 		}
-		if spanMatchesWorkload(&span, namespace, workload, app, hasWaypoint) {
+		if spanMatchesWorkload(&span, namespace, tracingName) {
 			return true
 		}
 	}
@@ -245,11 +243,11 @@ func matchesWorkload(trace *jaegerModels.Trace, namespace, workload, app string,
 
 // spanMatchesWorkload matches a span based on a node id or the hostname
 // For Ambient, as the trace is reported by the Waypoint proxy, a match based on the app is done
-func spanMatchesWorkload(span *jaegerModels.Span, namespace, workload, app string, hasWaypoint bool) bool {
+func spanMatchesWorkload(span *jaegerModels.Span, namespace string, tracingName models.TracingName) bool {
 	// If the workload has a waypoint, the span won't match, but the operation name can
 	// When the workload has a waypoint, the operation name is filtered by the service
-	if hasWaypoint {
-		op := fmt.Sprintf("%s.%s", app, namespace)
+	if tracingName.WaypointName != "" {
+		op := fmt.Sprintf("%s.%s", tracingName.App, namespace)
 		log.Tracef("[Tracing] Filtering span trace by service %s", op)
 		return strings.HasPrefix(span.OperationName, op)
 	}
@@ -259,7 +257,7 @@ func spanMatchesWorkload(span *jaegerModels.Span, namespace, workload, app strin
 		if tag.Key == "node_id" {
 			if v, ok := tag.Value.(string); ok {
 				parts := strings.Split(v, "~")
-				if len(parts) >= 3 && strings.HasPrefix(parts[2], workload) && strings.HasSuffix(parts[2], namespace) {
+				if len(parts) >= 3 && strings.HasPrefix(parts[2], tracingName.App) && strings.HasSuffix(parts[2], namespace) {
 					return true
 				}
 			}
@@ -267,7 +265,7 @@ func spanMatchesWorkload(span *jaegerModels.Span, namespace, workload, app strin
 		// For Tempo Traces
 		if tag.Key == "hostname" {
 			if v, ok := tag.Value.(string); ok {
-				if strings.HasPrefix(v, workload) {
+				if strings.HasPrefix(v, tracingName.App) {
 					return true
 				}
 			}
@@ -278,7 +276,7 @@ func spanMatchesWorkload(span *jaegerModels.Span, namespace, workload, app strin
 		for _, tag := range span.Process.Tags {
 			if tag.Key == "hostname" {
 				if v, ok := tag.Value.(string); ok {
-					if strings.HasPrefix(v, workload) {
+					if strings.HasPrefix(v, tracingName.App) {
 						return true
 					}
 				}

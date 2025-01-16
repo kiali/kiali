@@ -259,17 +259,7 @@ func (oc *OtelHTTPClient) prepareTraceQL(u *url.URL, tracingServiceName string, 
 	q.Set("end", fmt.Sprintf("%d", query.End.Unix()))
 
 	// For Ambient, the service name is the waypoint
-	serviceName := tracingServiceName
-	// The Waypoint reports traces using its name as service name
-	if query.Waypoint.Name != "" {
-		c := config.Get()
-		if c.ExternalServices.Tracing.NamespaceSelector {
-			serviceName = fmt.Sprintf("%s.%s", query.Waypoint.Name, query.Waypoint.Namespace)
-		} else {
-			serviceName = query.Waypoint.Name
-		}
-	}
-	queryPart := TraceQL{operator1: ".service.name", operand: EQUAL, operator2: serviceName}
+	queryPart := TraceQL{operator1: ".service.name", operand: EQUAL, operator2: tracingServiceName}
 
 	if len(query.Tags) > 0 {
 		for k, v := range query.Tags {
