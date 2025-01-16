@@ -93,34 +93,34 @@ func (o *OpenshiftAuthController) OpenshiftAuthCallback(w http.ResponseWriter, r
 	nonceCookie, err := r.Cookie(nonceCookieName(cluster))
 	if err != nil {
 		log.Debugf("Not handling OAuth code flow authentication: could not get the nonce cookie: %v", err)
-		http.Redirect(w, r, fmt.Sprintf("%s?openshift_error=%s", webRootWithSlash, url.QueryEscape(err.Error())), http.StatusFound)
+		http.Redirect(w, r, fmt.Sprintf("%s?openshift_error=%s&cluster=%s", webRootWithSlash, url.QueryEscape(err.Error()), cluster), http.StatusFound)
 		return
 	}
 
 	code := r.FormValue("code")
 	if code == "" {
 		log.Debug("Not handling OAuth code flow authentication: code not present in response from OAuth server")
-		http.Redirect(w, r, fmt.Sprintf("%s?openshift_error=%s", webRootWithSlash, url.QueryEscape("code not present in response from OAuth server")), http.StatusFound)
+		http.Redirect(w, r, fmt.Sprintf("%s?openshift_error=%s&cluster=%s", webRootWithSlash, url.QueryEscape("code not present in response from OAuth server"), cluster), http.StatusFound)
 		return
 	}
 
 	tok, err := o.openshiftOAuth.Exchange(r.Context(), code, nonceCookie.Value, cluster)
 	if err != nil {
 		log.Errorf("Authentication rejected: Unable to exchange the code for a token: %v", err)
-		http.Redirect(w, r, fmt.Sprintf("%s?openshift_error=%s", webRootWithSlash, url.QueryEscape(err.Error())), http.StatusFound)
+		http.Redirect(w, r, fmt.Sprintf("%s?openshift_error=%s&cluster=%s", webRootWithSlash, url.QueryEscape(err.Error()), cluster), http.StatusFound)
 		return
 	}
 
 	sessionData, err := NewSessionData(cluster, config.AuthStrategyOpenshift, tok.Expiry, &openshiftSessionPayload{Token: *tok})
 	if err != nil {
 		log.Errorf("Authentication rejected: Could not create the session data: %v", err)
-		http.Redirect(w, r, fmt.Sprintf("%s?openshift_error=%s", webRootWithSlash, url.QueryEscape(err.Error())), http.StatusFound)
+		http.Redirect(w, r, fmt.Sprintf("%s?openshift_error=%s&cluster=%s", webRootWithSlash, url.QueryEscape(err.Error()), cluster), http.StatusFound)
 		return
 	}
 
 	if err := o.sessionStore.CreateSession(r, w, *sessionData); err != nil {
 		log.Errorf("Authentication rejected: Could not create the session: %v", err)
-		http.Redirect(w, r, fmt.Sprintf("%s?openshift_error=%s", webRootWithSlash, url.QueryEscape(err.Error())), http.StatusFound)
+		http.Redirect(w, r, fmt.Sprintf("%s?openshift_error=%s&cluster=%s", webRootWithSlash, url.QueryEscape(err.Error()), cluster), http.StatusFound)
 		return
 	}
 

@@ -17,7 +17,8 @@ import { IstioConfigNewRoute } from 'routes/IstioConfigNewRoute';
 import { GraphRoutePF } from 'routes/GraphRoutePF';
 import { GraphPagePF } from 'pages/GraphPF/GraphPagePF';
 import { t } from 'utils/I18nUtils';
-import { Navigate, RouteObject } from 'react-router-dom-v5-compat';
+import { RouteObject } from 'react-router-dom-v5-compat';
+import { WildcardRoute } from 'routes/WildcardRoute';
 
 /**
  * Return array of objects that describe vertical menu
@@ -175,7 +176,7 @@ const pathRoutes: RouteObject[] = [
     path: `/${Paths.MESH}`,
     element: <MeshPage />
   },
-  { path: '*', element: <Navigate to={'/overview'} replace /> }
+  { path: '*', element: <WildcardRoute /> }
 ];
 
 export { navMenuItems, pathRoutes };
