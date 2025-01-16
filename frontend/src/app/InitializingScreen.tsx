@@ -70,7 +70,7 @@ export const InitializingScreen: React.FC<initializingScreenProps> = (props: ini
       <img alt="Kiali Logo" src={theme === Theme.DARK ? kialiLogoDark : kialiLogoLight} width="200" />
       {props.errorMsg ? (
         <div ref={errorDiv} className={defaultErrorStyle}>
-          <Alert variant="danger" title={props.errorMsg} />
+          <Alert variant="danger" isInline={true} title={props.errorMsg} />
           {props.errorDetails ? (
             <>
               <p>
