@@ -70,11 +70,11 @@ When('user can filter spans by workload {string}', (workload: string) => {
   cy.get('button#filter_select_type-toggle').click();
   cy.get('button#Workload').click();
 
-  cy.get('input[placeholder="Filter by Workload"]').type('details-v1{enter}');
+  cy.get('input[placeholder="Filter by Workload"]').type(`${workload}{enter}`);
   cy.get(`li[label="${workload}"]`).should('be.visible').find('button').click();
 
   getCellsForCol('App / Workload').each($cell => {
-    cy.wrap($cell).contains('details-v1');
+    cy.wrap($cell).contains(workload);
   });
 
   getCellsForCol(4).first().click();
