@@ -31,7 +31,7 @@ Feature: Kiali Workload Details page
     And user sees trace information
     When user selects a trace
     And user sees span details
-    And user can filter spans by workload
+    And user can filter spans by workload "details-v1"
 
   Scenario: Don't see tracing info after selecting a trace
     And user is at the details page for the "workload" "bookinfo/reviews-v3" located in the "west" cluster
