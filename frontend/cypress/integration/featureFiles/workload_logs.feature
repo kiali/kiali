@@ -47,6 +47,7 @@ Feature: Workload logs tab
 
   @bookinfo-app
   @tracing
+  @waypoint
   Scenario: The log pane of the logs tab should show spans
     Given I am on the logs tab of the "ratings-v1" workload detail page of the "bookinfo" namespace
     When I enable visualization of spans

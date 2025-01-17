@@ -371,6 +371,7 @@ elif [ "${TEST_SUITE}" == "${FRONTEND}" ]; then
   yarn run cypress:run
 elif [ "${TEST_SUITE}" == "${FRONTEND_AMBIENT}" ]; then
   ensureCypressInstalled
+  ensureKialiTracesReady "true"
 
   if [ "${TESTS_ONLY}" == "false" ]; then
     "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy token ${ISTIO_VERSION_ARG} --ambient true ${HELM_CHARTS_DIR_ARG}
