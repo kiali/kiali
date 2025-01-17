@@ -60,7 +60,7 @@ Feature: Kiali Graph page - Side panel menu actions
 
   @bookinfo-app
   @tracing
-  @waypoint
+  @waypoint-tracing
   Scenario: Traces tab contains traces
     Given user graphs "bookinfo" namespaces
     And user clicks the "productpage" "service" node
