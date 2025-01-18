@@ -125,6 +125,7 @@ jobs:
     name: Run Ambient frontend integration tests
     uses: ./.github/workflows/integration-tests-frontend-ambient.yml
     needs: [initialize, build_backend, build_frontend]
+    if: ${{ needs.initialize.outputs.istio-version >= '1.23' }}
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
