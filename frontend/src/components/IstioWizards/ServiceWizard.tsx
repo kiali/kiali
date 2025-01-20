@@ -982,8 +982,12 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
                 this.props.destinationRules
               )}
               showMirror={this.props.type === WIZARD_TRAFFIC_SHIFTING}
-              onChange={this.onWeightsChange}
-            />
+              onChange={this.onWeightsChange} trafficShifting={{
+                addWorkloadSelector: false,
+                workloadSelector: '',
+                workloadSelectorValid: false
+              }}      
+               />
           )}
 
           {this.props.type === WIZARD_REQUEST_TIMEOUTS && (
