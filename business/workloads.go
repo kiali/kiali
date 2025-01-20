@@ -954,7 +954,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 		defer wg.Done()
 		var err error
 		if in.isWorkloadIncluded(kubernetes.WorkloadGroupType) {
-			wgroups, err = kubeCache.GetWorkloadGroups(namespace, labelSelector)
+			wgroups, err = kubeCache.GetWorkloadGroups(namespace, "")
 			if err != nil {
 				log.Errorf("Error fetching WorkloadGroups per namespace %s: %s", namespace, err)
 				errChan <- err
@@ -1403,6 +1403,8 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 				if wgroups[iFound].Spec.Metadata != nil {
 					selector := labels.Set(wgroups[iFound].Spec.Metadata.Labels).AsSelector()
 					w.ParseWorkloadGroup(wgroups[iFound], kubernetes.FilterWorkloadEntriesBySelector(selector, wentries), kubernetes.FilterSidecarsBySelector(selector.String(), sidecars))
+				} else {
+					w.ParseWorkloadGroup(wgroups[iFound], []*networking_v1.WorkloadEntry{}, []*networking_v1.Sidecar{})
 				}
 			} else {
 				log.Errorf("Workload %s is not found as WorkloadGroup", controllerName)
@@ -2047,6 +2049,8 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 				if wgroup.Spec.Metadata != nil {
 					selector := labels.Set(wgroup.Spec.Metadata.Labels).AsSelector()
 					w.ParseWorkloadGroup(wgroup, kubernetes.FilterWorkloadEntriesBySelector(selector, wentries), kubernetes.FilterSidecarsBySelector(selector.String(), sidecars))
+				} else {
+					w.ParseWorkloadGroup(wgroup, []*networking_v1.WorkloadEntry{}, []*networking_v1.Sidecar{})
 				}
 			} else {
 				log.Errorf("Workload %s is not found as WorkloadGroup", criteria.WorkloadName)
