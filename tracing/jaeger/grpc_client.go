@@ -40,12 +40,9 @@ func (jc JaegerGRPCClient) FindTraces(ctx context.Context, serviceName string, q
 
 	var tags = util.CopyStringMap(q.Tags)
 
-	// For Ambient
-	queryServiceName := jaegerServiceName
-
 	findTracesRQ := &model.FindTracesRequest{
 		Query: &model.TraceQueryParameters{
-			ServiceName:  queryServiceName,
+			ServiceName:  jaegerServiceName,
 			StartTimeMin: timestamppb.New(q.Start),
 			StartTimeMax: timestamppb.New(q.End),
 			Tags:         tags,

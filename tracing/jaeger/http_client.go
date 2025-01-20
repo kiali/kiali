@@ -102,7 +102,6 @@ func unmarshal(r []byte, u *url.URL) (*model.TracingResponse, error) {
 
 func prepareQuery(u *url.URL, jaegerServiceName string, query models.TracingQuery) {
 	q := url.Values{}
-
 	q.Set("service", jaegerServiceName)
 	q.Set("start", fmt.Sprintf("%d", query.Start.Unix()*time.Second.Microseconds()))
 	q.Set("end", fmt.Sprintf("%d", query.End.Unix()*time.Second.Microseconds()))
