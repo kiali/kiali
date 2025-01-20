@@ -113,7 +113,7 @@ func NewOptions(r *http.Request, namespacesService *business.NamespaceService) O
 		includeWaypoints = defaultIncludeWaypoints
 	} else {
 		var meshWaypointsErr error
-		includeGateways, meshWaypointsErr = strconv.ParseBool(includeWaypointsString)
+		includeWaypoints, meshWaypointsErr = strconv.ParseBool(includeWaypointsString)
 		if meshWaypointsErr != nil {
 			BadRequest(fmt.Sprintf("Invalid meshWaypoints [%s]", includeWaypointsString))
 		}

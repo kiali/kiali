@@ -187,7 +187,9 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
       prev.duration !== curr.duration ||
       (prev.findValue !== curr.findValue && curr.findValue.includes('label:')) ||
       (prev.hideValue !== curr.hideValue && curr.hideValue.includes('label:')) ||
-      prev.lastRefreshAt !== curr.lastRefreshAt
+      prev.lastRefreshAt !== curr.lastRefreshAt ||
+      prev.showGateways !== curr.showGateways ||
+      prev.showWaypoints !== curr.showWaypoints
     ) {
       this.loadMeshFromBackend();
     }

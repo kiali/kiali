@@ -13,12 +13,14 @@ const (
 	External             string = "_external_" // Special cluster name for external deployment
 	InfraTypeCluster     string = "cluster"    // cluster node (not box) with no other infra (very rare)
 	InfraTypeDataPlane   string = "dataplane"  // single node representing 1 or more dataPlane namespaces
+	InfraTypeGateway     string = "gateway"
 	InfraTypeGrafana     string = "grafana"
 	InfraTypeIstiod      string = "istiod"
 	InfraTypeKiali       string = "kiali"
 	InfraTypeMetricStore string = "metricStore"
 	InfraTypeNamespace   string = "namespace"
 	InfraTypeTraceStore  string = "traceStore"
+	InfraTypeWaypoint    string = "waypoint"
 	NodeTypeBox          string = "box"                 // The special "box" node. isBox will be set to a BoxType
 	NodeTypeInfra        string = "infra"               // Any non-box node of interest
 	TF                   string = "2006-01-02 15:04:05" // TF is the TimeFormat for timestamps

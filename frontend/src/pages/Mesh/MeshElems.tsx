@@ -92,6 +92,9 @@ export const getNodeShape = (data: NodeData): NodeShape => {
   switch (data.infraType) {
     case MeshInfraType.DATAPLANE:
       return NodeShape.rect;
+    case MeshInfraType.GATEWAY:
+    case MeshInfraType.WAYPOINT:
+      return NodeShape.rhombus;
     default:
       return NodeShape.hexagon;
   }

@@ -10,6 +10,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/api/errors"
 
+	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/kubernetes"
@@ -31,7 +32,7 @@ func (c componentHealthKey) String() string {
 	return c.Name + c.Namespace + c.Cluster
 }
 
-// BuildMeshMap is required by the graph/TelemetryVendor interface
+// BuildMeshMap must produce a valid MeshMap. It is recommended to use the mesh/util.go definitions for error handling.
 func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mesh.MeshMap, error) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "BuildMeshMap",
@@ -182,6 +183,88 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 		if hasExternalServices {
 			_, _, err = addInfra(meshMap, mesh.InfraTypeCluster, mesh.External, "", "External Deployments", nil, "", true, "")
 			mesh.CheckError(err)
+		}
+
+		// if included, add any waypoints
+		if o.IncludeWaypoints {
+			for _, wp := range gi.Business.Workload.GetWaypoints(ctx) {
+				// fetch the detail for each waypoint because we need the waypoint workloads and/or services
+				criteria := business.WorkloadCriteria{
+					Cluster: wp.Cluster, Namespace: wp.Namespace, WorkloadName: wp.Name,
+				}
+				wp, err = gi.Business.Workload.GetWorkload(ctx, criteria)
+				mesh.CheckError(err)
+
+				// determine the namespaces interacting with the waypoint
+				wpNamespaces := map[string]bool{}
+				for _, wps := range wp.WaypointServices {
+					wpNamespaces[wps.Namespace] = true
+				}
+				for _, wpw := range wp.WaypointWorkloads {
+					wpNamespaces[wpw.Namespace] = true
+				}
+
+				wpNode, _, err := addInfra(meshMap, mesh.InfraTypeWaypoint, wp.Cluster, wp.Namespace, wp.Name, wpNamespaces, "", false, "")
+				mesh.CheckError(err)
+
+				// add edges to the dataplane nodes containing the namespaces with services or workloads served by the waypoint
+				dataplaneNodes := map[*mesh.Node]bool{}
+				for _, infraNode := range meshMap {
+					if infraNode.InfraType == mesh.InfraTypeDataPlane && infraNode.Cluster == wp.Cluster {
+						for _, dpns := range infraNode.Metadata[mesh.InfraData].([]models.Namespace) {
+							if wpNamespaces[dpns.Name] {
+								dataplaneNodes[infraNode] = true
+								break
+							}
+						}
+					}
+				}
+				for dpNode := range dataplaneNodes {
+					wpNode.AddEdge(dpNode)
+				}
+			}
+		}
+
+		// if included, add gateways
+		if o.IncludeGateways {
+			criteria := business.IstioConfigCriteria{
+				IncludeGateways:    true,
+				IncludeK8sGateways: true,
+			}
+			configMap, err := gi.Business.IstioConfig.GetIstioConfigMap(ctx, "", criteria)
+			mesh.CheckError(err)
+
+			for cluster, config := range configMap {
+				gwNodes := []*mesh.Node{}
+				for _, gw := range config.Gateways {
+					gwNode, _, err := addInfra(meshMap, mesh.InfraTypeGateway, cluster, gw.Namespace, gw.Name, gw.Spec.DeepCopy(), gw.APIVersion, false, "")
+					mesh.CheckError(err)
+					gwNodes = append(gwNodes, gwNode)
+				}
+				for _, gw := range config.K8sGateways {
+					// skip waypoints because they are treated independently
+					if strings.Contains(strings.ToLower(string(gw.Spec.GatewayClassName)), "waypoint") {
+						continue
+					}
+					gwNode, _, err := addInfra(meshMap, mesh.InfraTypeGateway, cluster, gw.Namespace, gw.Name, gw.Spec.DeepCopy(), gw.APIVersion, false, "")
+					mesh.CheckError(err)
+					gwNodes = append(gwNodes, gwNode)
+				}
+
+				// add edge to the dataplane node in which the gaateway is deployed, if any
+				for _, infraNode := range meshMap {
+					if infraNode.InfraType != mesh.InfraTypeDataPlane || infraNode.Cluster != cluster {
+						continue
+					}
+					for _, gwNode := range gwNodes {
+						dpNamespaces := infraNode.Metadata[mesh.InfraData].([]models.Namespace)
+						if sliceutil.Some(dpNamespaces, func(n models.Namespace) bool { return n.Name == gwNode.Namespace }) {
+							gwNode.AddEdge(infraNode)
+							break
+						}
+					}
+				}
+			}
 		}
 	}
 
