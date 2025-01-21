@@ -1,9 +1,11 @@
 import { useKialiSelector } from 'hooks/redux';
 import { store } from 'store/ConfigStore';
-import { Theme } from 'types/Common';
+import { KIALI_THEME, Theme } from 'types/Common';
 
 export const getKialiTheme = (): Theme => {
-  return (store.getState().globalState.theme as Theme) || getDefaultTheme();
+  return (
+    (localStorage.getItem(KIALI_THEME) as Theme) || (store.getState().globalState.theme as Theme) || getDefaultTheme()
+  );
 };
 
 export const useKialiTheme = (): string => {
