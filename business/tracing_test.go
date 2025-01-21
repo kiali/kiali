@@ -127,7 +127,7 @@ func TestMatchingWorkload(t *testing.T) {
 	assert.False(matchesWorkload(&trace1, "default", tracingName))
 	tracingNameReviews := models.TracingName{App: "reviews", Workload: "reviews", Lookup: "reviews"}
 	assert.True(matchesWorkload(&trace1, "default", tracingNameReviews))
-	tracingNamePod := models.TracingName{App: "my-pod", Workload: "some-workload", Lookup: "some-workload"}
+	tracingNamePod := models.TracingName{App: "my-pod", Workload: "my-pod", Lookup: "my-pod"}
 	assert.True(matchesWorkload(&trace1, "default", tracingNamePod))
 }
 
@@ -138,7 +138,8 @@ func TestTracesToSpanWithoutFilter(t *testing.T) {
 		Data:               []jaegerModels.Trace{trace1, trace2},
 		TracingServiceName: "reviews.default",
 	}
-	spans := tracesToSpans("reviews", &r, nil, config.NewConfig())
+	reviewsTracingName := models.TracingName{App: "reviews", Lookup: "reviews"}
+	spans := tracesToSpans(reviewsTracingName, &r, nil, config.NewConfig())
 	assert.Len(spans, 2)
 	assert.Equal("t1_process_1", string(spans[0].ProcessID))
 	assert.Equal("t2_process_1", string(spans[1].ProcessID))
@@ -147,7 +148,8 @@ func TestTracesToSpanWithoutFilter(t *testing.T) {
 		Data:               []jaegerModels.Trace{trace1, trace2},
 		TracingServiceName: "rating.default",
 	}
-	spans = tracesToSpans("rating", &r, nil, config.NewConfig())
+	ratingsTracingName := models.TracingName{App: "rating", Lookup: "rating"}
+	spans = tracesToSpans(ratingsTracingName, &r, nil, config.NewConfig())
 	assert.Len(spans, 2)
 	assert.Equal("t2_process_2", string(spans[0].ProcessID))
 	assert.Equal("t2_process_3", string(spans[1].ProcessID))
@@ -160,7 +162,8 @@ func TestTracesToSpanWithServiceFilter(t *testing.T) {
 		Data:               []jaegerModels.Trace{trace1, trace2},
 		TracingServiceName: "reviews.default",
 	}
-	spans := tracesToSpans("reviews", &r, operationSpanFilter("default", "reviews"), config.NewConfig())
+	reviewsTracingName := models.TracingName{App: "reviews", Lookup: "reviews"}
+	spans := tracesToSpans(reviewsTracingName, &r, operationSpanFilter("default", "reviews"), config.NewConfig())
 	assert.Len(spans, 2)
 	assert.Equal("t1_process_1", string(spans[0].ProcessID))
 	assert.Equal("t2_process_1", string(spans[1].ProcessID))
@@ -169,7 +172,8 @@ func TestTracesToSpanWithServiceFilter(t *testing.T) {
 		Data:               []jaegerModels.Trace{trace1, trace2},
 		TracingServiceName: "rating.default",
 	}
-	spans = tracesToSpans("rating", &r, operationSpanFilter("default", "rating"), config.NewConfig())
+	ratingsTracingName := models.TracingName{App: "rating", Lookup: "rating"}
+	spans = tracesToSpans(ratingsTracingName, &r, operationSpanFilter("default", "rating"), config.NewConfig())
 	assert.Len(spans, 1)
 	assert.Equal("t2_process_2", string(spans[0].ProcessID))
 }
@@ -182,7 +186,7 @@ func TestTracesToSpanWithWorkloadFilter(t *testing.T) {
 		TracingServiceName: "reviews.default",
 	}
 	tracingName := models.TracingName{App: "reviews", Workload: "reviews", Lookup: "reviews"}
-	spans := tracesToSpans("reviews", &r, wkdSpanFilter("default", tracingName), config.NewConfig())
+	spans := tracesToSpans(tracingName, &r, wkdSpanFilter("default", tracingName), config.NewConfig())
 	assert.Len(spans, 2)
 	assert.Equal("t1_process_1", string(spans[0].ProcessID))
 	assert.Equal("t2_process_1", string(spans[1].ProcessID))
@@ -192,7 +196,7 @@ func TestTracesToSpanWithWorkloadFilter(t *testing.T) {
 		TracingServiceName: "rating.default",
 	}
 	tracingRatingsName := models.TracingName{App: "rating", Workload: "rating-v2", Lookup: "rating"}
-	spans = tracesToSpans("rating", &r, wkdSpanFilter("default", tracingRatingsName), config.NewConfig())
+	spans = tracesToSpans(tracingRatingsName, &r, wkdSpanFilter("default", tracingRatingsName), config.NewConfig())
 	assert.Len(spans, 2)
 	assert.Equal("t2_process_2", string(spans[0].ProcessID))
 	assert.Equal("t2_process_3", string(spans[1].ProcessID))
@@ -206,8 +210,7 @@ func TestTracesToSpanWaypointWithWorkloadFilter(t *testing.T) {
 		TracingServiceName: "waypoint.default",
 	}
 	tracingName := models.TracingName{App: "reviews", Workload: "reviews", Lookup: "waypoint", WaypointName: "waypoint"}
-	spans := tracesToSpans("waypoint", &r, wkdSpanFilter("default", tracingName), config.NewConfig())
+	spans := tracesToSpans(tracingName, &r, wkdSpanFilter("default", tracingName), config.NewConfig())
 	assert.Len(spans, 1)
-	assert.Equal("t1_process_1", string(spans[0].ProcessID))
-	assert.Equal("waypoint.default", string(spans[0].Process.ServiceName))
+	// Process is empty here, because the span we are looking for is the service and the process is the waypoint
 }

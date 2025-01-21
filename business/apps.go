@@ -510,22 +510,25 @@ func (in *AppService) fetchNamespaceApps(ctx context.Context, namespace string, 
 	return allEntities, nil
 }
 
-func (in *AppService) GetAppTracingName(ctx context.Context, cluster, namespace, app string) string {
+func (in *AppService) GetAppTracingName(ctx context.Context, cluster, namespace, app string) models.TracingName {
 	criteria := AppCriteria{
 		Namespace: namespace, AppName: app, IncludeIstioResources: false, IncludeHealth: false, Cluster: cluster}
 
+	tracingName := models.TracingName{App: app, Lookup: app}
 	// Fetch and build app
 	appDetails, err := in.GetAppDetails(ctx, criteria)
 	if err != nil {
 		log.Errorf("Error for getting tracing name for app %s: %s", app, err)
-		return app
+		return tracingName
 	}
 	for _, wk := range appDetails.Workloads {
 		if len(wk.WaypointWorkloads) > 0 {
 			// Assuming that all the workloads from the app have the same waypoint
 			// But, could be wrong
-			return wk.WaypointWorkloads[0].Name
+			tracingName.WaypointName = wk.WaypointWorkloads[0].Name
+			tracingName.WaypointNamespace = wk.WaypointWorkloads[0].Namespace
+			tracingName.Lookup = tracingName.WaypointName
 		}
 	}
-	return app
+	return tracingName
 }

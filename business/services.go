@@ -845,7 +845,7 @@ func (in *SvcService) getServiceValidations(services []core_v1.Service, deployme
 
 // GetServiceAppName returns the "Application" name (app label) that relates to a service
 // This label is taken from the service selector, which means it is assumed that pods are selected using that label
-func (in *SvcService) GetServiceAppName(ctx context.Context, cluster, namespace, service string) (string, error) {
+func (in *SvcService) GetServiceAppName(ctx context.Context, cluster, namespace, service string) (models.TracingName, error) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GetServiceAppName",
 		observability.Attribute("package", "business"),
@@ -855,28 +855,35 @@ func (in *SvcService) GetServiceAppName(ctx context.Context, cluster, namespace,
 	)
 	defer end()
 
+	tracingName := models.TracingName{App: service, Lookup: service}
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
 	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
 	if _, err := in.businessLayer.Namespace.GetClusterNamespace(ctx, namespace, cluster); err != nil {
-		return "", err
+		return tracingName, err
 	}
 
 	svc, err := in.GetService(ctx, cluster, namespace, service)
 	if err != nil {
-		return "", fmt.Errorf("Service [cluster: %s] [namespace: %s] [name: %s] doesn't exist.", cluster, namespace, service)
+		return tracingName, fmt.Errorf("Service [cluster: %s] [namespace: %s] [name: %s] doesn't exist.", cluster, namespace, service)
 	}
 	// Waypoint proxies doesn't have the label app, but they have traces
 	if IsWaypoint(svc) {
-		return svc.Name, nil
+		tracingName.Lookup = svc.Name
+		return tracingName, nil
 	}
 	waypoints := in.GetWaypointsForService(ctx, &svc)
 	if len(waypoints) > 0 {
-		return waypoints[0].Name, nil
+		tracingName.WaypointName = waypoints[0].Name
+		tracingName.WaypointNamespace = waypoints[0].Namespace
+		tracingName.Lookup = waypoints[0].Name
+		return tracingName, nil
 	}
 
 	appLabelName := in.config.IstioLabels.AppLabelName
 	app := svc.Selectors[appLabelName]
-	return app, nil
+	tracingName.App = app
+	tracingName.Lookup = app
+	return tracingName, nil
 }
 
 // GetServiceRouteURL returns "" for non-OpenShift, or if the route can not be found
