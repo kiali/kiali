@@ -8,9 +8,10 @@ import { Status, statusMsg } from 'types/IstioStatus';
 import { Validation } from 'components/Validations/Validation';
 import { Title, TitleSizes, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { t } from 'utils/I18nUtils';
-import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
+import { PFBadge, PFBadges, PFBadgeType } from 'components/Pf/PfBadges';
 import { AmbientLabel, tooltipMsgType } from '../../../components/Ambient/AmbientLabel';
 import { serverConfig } from '../../../config';
+import { KialiPageLink } from 'components/Link/KialiPageLink';
 
 export interface TargetPanelCommonProps {
   duration: DurationInSeconds;
@@ -138,6 +139,12 @@ export const renderNodeHeader = (
     case MeshInfraType.DATAPLANE:
       pfBadge = PFBadges.DataPlane;
       break;
+    case MeshInfraType.ISTIOD:
+      pfBadge = PFBadges.Istio;
+      break;
+    case MeshInfraType.GATEWAY:
+      pfBadge = PFBadges.Gateway;
+      break;
     case MeshInfraType.GRAFANA:
       pfBadge = PFBadges.Grafana;
       break;
@@ -150,12 +157,14 @@ export const renderNodeHeader = (
     case MeshInfraType.TRACE_STORE:
       pfBadge = PFBadges.TraceStore;
       break;
-    case MeshInfraType.ISTIOD:
-      pfBadge = PFBadges.Istio;
+    case MeshInfraType.WAYPOINT:
+      pfBadge = PFBadges.Waypoint;
       break;
     default:
       console.warn(`MeshElems: Unexpected infraType [${data.infraType}] `);
   }
+
+  const link = renderNodeLink(data);
 
   return (
     <React.Fragment key={data.infraName}>
@@ -184,6 +193,46 @@ export const renderNodeHeader = (
           </span>
         </>
       )}
+      {link}
     </React.Fragment>
   );
+};
+
+const badgeStyle = kialiStyle({
+  display: 'inline-block',
+  marginRight: '0.25rem',
+  marginBottom: '0.25rem'
+});
+
+export const renderNodeLink = (meshData: MeshNodeData, style?: string): React.ReactNode | undefined => {
+  let displayName, key, link: string;
+  let pfBadge: PFBadgeType;
+
+  switch (meshData.infraType) {
+    case MeshInfraType.WAYPOINT:
+      link = `/namespaces/${encodeURIComponent(meshData.namespace)}/workloads/${encodeURIComponent(
+        meshData.infraName
+      )}`;
+      key = `${meshData.namespace}.wl.${meshData.infraName}`;
+      displayName = meshData.infraName;
+      pfBadge = PFBadges.Workload;
+      break;
+    default:
+      return undefined;
+  }
+
+  if (link) {
+    return (
+      <div key={`badged-${key}}`} className={style}>
+        <span className={badgeStyle}>
+          <PFBadge badge={pfBadge} size="sm" tooltip={PFBadges.Workload.tt} />
+          <KialiPageLink key={key} href={link} cluster={meshData.cluster}>
+            {displayName}
+          </KialiPageLink>
+        </span>
+      </div>
+    );
+  }
+
+  return undefined;
 };

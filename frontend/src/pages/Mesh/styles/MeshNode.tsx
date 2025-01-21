@@ -20,7 +20,7 @@ import { ReactComponent as KialiLogo } from '../../../assets/img/mesh/kiali.svg'
 import { ReactComponent as TempoLogo } from '../../../assets/img/mesh/tempo.svg';
 import { store } from 'store/ConfigStore';
 import { JAEGER, TEMPO } from 'types/Tracing';
-import { LayerGroupIcon } from '@patternfly/react-icons';
+import { GlobeRouteIcon, InfrastructureIcon, LayerGroupIcon } from '@patternfly/react-icons';
 
 // This is the registered Node component override that utilizes our customized Node.tsx component.
 
@@ -36,23 +36,21 @@ const renderIcon = (element: Node): React.ReactNode => {
 
   const data = element.getData() as MeshNodeData;
   const externalServices = store.getState().statusState.externalServices;
+  let iconSizeMultiplier = 0.7;
 
   switch (data.infraType) {
     case MeshInfraType.DATAPLANE:
       Component = LayerGroupIcon;
+      break;
+    case MeshInfraType.GATEWAY:
+      Component = GlobeRouteIcon;
+      iconSizeMultiplier = 0.65;
       break;
     case MeshInfraType.GRAFANA:
       Component = GrafanaLogo;
       break;
     case MeshInfraType.ISTIOD:
       Component = IstioLogo;
-      break;
-    case MeshInfraType.TRACE_STORE:
-      if (externalServices.find(service => service.name.toLowerCase() === TEMPO)) {
-        Component = TempoLogo;
-      } else if (externalServices.find(service => service.name.toLowerCase() === JAEGER)) {
-        Component = JaegerLogo;
-      }
       break;
     case MeshInfraType.KIALI:
       Component = KialiLogo;
@@ -61,10 +59,21 @@ const renderIcon = (element: Node): React.ReactNode => {
       // TODO: don't assume Prometheus
       Component = PrometheusLogo;
       break;
+    case MeshInfraType.TRACE_STORE:
+      if (externalServices.find(service => service.name.toLowerCase() === TEMPO)) {
+        Component = TempoLogo;
+      } else if (externalServices.find(service => service.name.toLowerCase() === JAEGER)) {
+        Component = JaegerLogo;
+      }
+      break;
+    case MeshInfraType.WAYPOINT:
+      Component = InfrastructureIcon;
+      iconSizeMultiplier = 0.5;
+      break;
   }
 
   const { width, height } = element.getDimensions();
-  const iconSize = Math.min(width, height) * 0.7;
+  const iconSize = Math.min(width, height) * iconSizeMultiplier;
 
   return Component ? (
     <g transform={`translate(${(width - iconSize) / 2}, ${(height - iconSize) / 2})`}>
@@ -158,7 +167,7 @@ const MeshNodeComponent: React.FC<MeshNodeProps> = ({ element, ...rest }) => {
         attachments={hover || detailsLevel === ScaleDetailsLevel.high ? data.attachments : undefined}
         scaleLabel={hover && detailsLevel === ScaleDetailsLevel.high}
         scaleNode={hover && detailsLevel !== ScaleDetailsLevel.high}
-        showLabel={hover || detailsLevel === ScaleDetailsLevel.high}
+        showLabel={hover || detailsLevel !== ScaleDetailsLevel.low}
       >
         {renderIcon(element)}
       </DefaultNode>

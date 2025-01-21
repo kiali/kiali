@@ -204,7 +204,7 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 					wpNamespaces[wpw.Namespace] = true
 				}
 
-				wpNode, _, err := addInfra(meshMap, mesh.InfraTypeWaypoint, wp.Cluster, wp.Namespace, wp.Name, wpNamespaces, "", false, "")
+				wpNode, _, err := addInfra(meshMap, mesh.InfraTypeWaypoint, wp.Cluster, wp.Namespace, wp.Name, wp.Labels, wp.ResourceVersion, false, "")
 				mesh.CheckError(err)
 
 				// add edges to the dataplane nodes containing the namespaces with services or workloads served by the waypoint
