@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Button, Tooltip } from '@patternfly/react-core';
 import { KialiAppState } from 'store/Store';
 import { connect } from 'react-redux';
-import { PF_THEME_DARK, Theme } from 'types/Common';
+import { KIALI_THEME, PF_THEME_DARK, Theme } from 'types/Common';
 import { GlobalActions } from 'actions/GlobalActions';
 import { store } from 'store/ConfigStore';
 import { kialiStyle } from 'styles/StyleUtils';
@@ -74,6 +74,7 @@ export const ThemeSwitchComponent: React.FC<ThemeSwitchProps> = (props: ThemeSwi
 
     document.documentElement.classList.toggle(PF_THEME_DARK);
     store.dispatch(GlobalActions.setTheme(theme));
+    localStorage.setItem(KIALI_THEME, theme);
   };
 
   return (
