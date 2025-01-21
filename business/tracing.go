@@ -55,8 +55,7 @@ func (in *TracingService) getFilteredSpans(ns string, app models.TracingName, qu
 	if err != nil {
 		return []model.TracingSpan{}, err
 	}
-	spans := []model.TracingSpan{}
-	spans = tracesToSpans(app, r, filter, in.conf)
+	spans := tracesToSpans(app, r, filter, in.conf)
 
 	return spans, nil
 }
