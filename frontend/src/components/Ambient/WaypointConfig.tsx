@@ -14,7 +14,7 @@ import { kialiStyle } from '../../styles/StyleUtils';
 import { t } from 'i18next';
 import { SimpleTable } from '../Table/SimpleTable';
 import { WaypointWorkloadsTable } from './WaypointWorkloadsTable';
-import { waypintForLabel, WaypointType } from '../../types/Ambient';
+import { WaypointForLabel, WaypointType } from '../../types/Ambient';
 import { PodStatus } from '../../pages/WorkloadDetails/PodStatus';
 
 const resources: string[] = ['service', 'workload', 'information'];
@@ -31,10 +31,10 @@ const fullHeightStyle = kialiStyle({
 });
 
 export const isWaypointFor = (wk: Workload): string => {
-  if (wk.labels[waypintForLabel] === WaypointType.Workload) {
+  if (wk.labels[WaypointForLabel] === WaypointType.Workload) {
     return WaypointType.Workload;
   }
-  if (wk.labels[waypintForLabel] === WaypointType.All) {
+  if (wk.labels[WaypointForLabel] === WaypointType.All) {
     return WaypointType.All;
   }
   return WaypointType.Service;
