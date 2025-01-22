@@ -55,6 +55,7 @@ type ReduxProps = {
 };
 
 type TracesProps = ReduxProps & {
+  app?: string;
   cluster?: string;
   fromWaypoint: boolean;
   lastRefreshAt: TimeInMilliseconds;
@@ -365,6 +366,7 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
                 </Tab>
                 <Tab eventKey={spansDetailsTab} title="Span Details">
                   <SpanDetails
+                    app={this.props.app}
                     namespace={this.props.namespace}
                     target={this.props.target}
                     externalURLProvider={this.urlProvider}

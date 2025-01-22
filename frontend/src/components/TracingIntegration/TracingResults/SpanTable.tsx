@@ -47,6 +47,7 @@ type Props = ReduxProps &
     fromWaypoint: boolean; // If the traces come from a waypoint proxy
     items: RichSpanData[];
     namespace: string;
+    target: string;
     traceID: string;
   };
 
@@ -72,6 +73,10 @@ const selectedErrorStyle = kialiStyle({
 
 const selectedStyle = kialiStyle({
   borderRight: '3px solid var(--pf-v5-global--info-color--100)'
+});
+
+const highlightStyle = kialiStyle({
+  borderLeft: '3px solid var(--pf-v5-global--palette--blue-100)'
 });
 
 const tableStyle = kialiStyle({
@@ -101,8 +106,17 @@ const errorIconStyle = kialiStyle({
   marginRight: '0.25rem'
 });
 
-const getClassName = (isError: boolean, isSpan: boolean): string | undefined => {
-  return isSpan ? (isError ? selectedErrorStyle : selectedStyle) : isError ? dangerErrorStyle : undefined;
+const getClassName = (isError: boolean, isSpan, operationName, item: string): string | undefined => {
+  const highlight = operationName.toLowerCase().includes(item);
+  return isSpan
+    ? isError
+      ? selectedErrorStyle
+      : selectedStyle
+    : isError
+    ? dangerErrorStyle
+    : highlight
+    ? highlightStyle
+    : undefined;
 };
 
 const columns: SortableCompareTh<RichSpanData>[] = [
@@ -212,7 +226,7 @@ class SpanTableComponent extends React.Component<Props, State> {
         this.summaryCell(item),
         this.statsCell(item)
       ],
-      className: getClassName(item.tags.some(isErrorTag), isSpan),
+      className: getClassName(item.tags.some(isErrorTag), isSpan, item.operationName, this.props.target),
       item: item
     };
   };
