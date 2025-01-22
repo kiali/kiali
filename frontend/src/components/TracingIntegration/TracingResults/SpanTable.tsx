@@ -44,6 +44,7 @@ type Props = ReduxProps &
   StateProps & {
     cluster?: string;
     externalURLProvider?: TracingUrlProvider;
+    fromWaypoint: boolean; // If the traces come from a waypoint proxy
     items: RichSpanData[];
     namespace: string;
     traceID: string;
@@ -332,32 +333,34 @@ class SpanTableComponent extends React.Component<Props, State> {
   private originCell = (item: RichSpanData): React.ReactNode => {
     const parentKiosk = isParentKiosk(this.props.kiosk);
     const key = `${item.spanID}-origin`;
-
     return (
       <>
-        <strong key={`${key}-app`}>Application: </strong>
-        {(item.linkToApp &&
-          (parentKiosk ? (
-            <Link
-              key={`${key}-link-app`}
-              to={''}
-              onClick={() => {
-                if (item.linkToApp) {
-                  kioskContextMenuAction(item.linkToApp);
-                }
-              }}
-            >
-              {item.app}
-            </Link>
-          ) : (
-            <Link key={`${key}-link-app`} to={item.linkToApp}>
-              {item.app}
-            </Link>
-          ))) ||
-          item.app}
+        {!this.props.fromWaypoint && (
+          <>
+            <strong key={`${key}-app`}>Application: </strong>
+            {(item.linkToApp &&
+              (parentKiosk ? (
+                <Link
+                  key={`${key}-link-app`}
+                  to={''}
+                  onClick={() => {
+                    if (item.linkToApp) {
+                      kioskContextMenuAction(item.linkToApp);
+                    }
+                  }}
+                >
+                  {item.app}
+                </Link>
+              ) : (
+                <Link key={`${key}-link-app`} to={item.linkToApp}>
+                  {item.app}
+                </Link>
+              ))) ||
+              item.app}
 
-        <br key={`${key}-br`} />
-
+            <br key={`${key}-br`} />
+          </>
+        )}
         <strong key={`${key}-wl`}>Workload: </strong>
         {(item.linkToWorkload &&
           (parentKiosk ? (

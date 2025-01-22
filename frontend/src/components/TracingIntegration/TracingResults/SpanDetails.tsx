@@ -13,6 +13,7 @@ import { TraceLabels } from './TraceLabels';
 interface SpanDetailsProps {
   cluster?: string;
   externalURLProvider?: TracingUrlProvider;
+  fromWaypoint: boolean;
   items: RichSpanData[];
   namespace: string;
   target: string;
@@ -43,6 +44,7 @@ export const SpanDetails: React.FC<SpanDetailsProps> = (props: SpanDetailsProps)
             externalURLProvider={props.externalURLProvider}
             cluster={props.cluster}
             traceID={props.traceID}
+            fromWaypoint={props.fromWaypoint}
           />
         )}
       </CardBody>

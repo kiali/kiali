@@ -56,6 +56,7 @@ type ReduxProps = {
 
 type TracesProps = ReduxProps & {
   cluster?: string;
+  fromWaypoint: boolean;
   lastRefreshAt: TimeInMilliseconds;
   namespace: string;
   target: string;
@@ -370,6 +371,7 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
                     items={this.props.selectedTrace.spans}
                     traceID={this.props.selectedTrace.traceID}
                     cluster={this.props.cluster ? this.props.cluster : ''}
+                    fromWaypoint={this.props.fromWaypoint}
                   />
                 </Tab>
               </Tabs>
