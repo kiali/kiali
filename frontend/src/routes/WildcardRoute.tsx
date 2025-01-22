@@ -11,7 +11,7 @@ export const WildcardRoute = (): JSX.Element => {
   const cluster = searchParams.get('cluster');
 
   if (openshiftError) {
-    const clusterMessage = cluster ? `to cluster ${cluster}` : 'to cluster';
+    const clusterMessage = cluster ? `to cluster "${cluster}"` : 'to cluster';
     AlertUtils.addError(
       `Openshift authentication ${clusterMessage} failed`,
       undefined,
