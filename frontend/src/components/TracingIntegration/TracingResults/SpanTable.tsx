@@ -76,7 +76,12 @@ const selectedStyle = kialiStyle({
 });
 
 const highlightStyle = kialiStyle({
-  borderLeft: '3px solid var(--pf-v5-global--palette--blue-100)'
+  background: 'var(--pf-v5-global--palette--blue-50)'
+});
+
+const highlightErrorStyle = kialiStyle({
+  background: 'var(--pf-v5-global--palette--blue-50)',
+  borderLeft: '3px solid var(--pf-v5-global--danger-color--100)'
 });
 
 const tableStyle = kialiStyle({
@@ -113,7 +118,9 @@ const getClassName = (isError: boolean, isSpan, operationName, item: string): st
       ? selectedErrorStyle
       : selectedStyle
     : isError
-    ? dangerErrorStyle
+    ? highlight
+      ? highlightErrorStyle
+      : dangerErrorStyle
     : highlight
     ? highlightStyle
     : undefined;
