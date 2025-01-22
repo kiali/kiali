@@ -843,11 +843,13 @@ func (in *SvcService) getServiceValidations(services []core_v1.Service, deployme
 	return validations
 }
 
-// GetServiceAppName returns the "Application" name (app label) that relates to a service
+// GetServiceTracingName returns a struct with all the information needed for tracing lookup
+// The "Application" name (app label) that relates to a service
 // This label is taken from the service selector, which means it is assumed that pods are selected using that label
-func (in *SvcService) GetServiceAppName(ctx context.Context, cluster, namespace, service string) (models.TracingName, error) {
+// If the application has any Waypoint, the information is included, as it will be the search name in the tracing backend
+func (in *SvcService) GetServiceTracingName(ctx context.Context, cluster, namespace, service string) (models.TracingName, error) {
 	var end observability.EndFunc
-	ctx, end = observability.StartSpan(ctx, "GetServiceAppName",
+	ctx, end = observability.StartSpan(ctx, "GetServiceTracingName",
 		observability.Attribute("package", "business"),
 		observability.Attribute("cluster", cluster),
 		observability.Attribute("namespace", namespace),

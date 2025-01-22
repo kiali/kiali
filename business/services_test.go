@@ -304,7 +304,7 @@ func TestMultiClusterGetServiceAppName(t *testing.T) {
 	kialiCache = cache
 
 	svc := NewWithBackends(clients, clients, nil, nil).Svc
-	s, err := svc.GetServiceAppName(context.TODO(), "west", "bookinfo", "ratings-west-cluster")
+	s, err := svc.GetServiceTracingName(context.TODO(), "west", "bookinfo", "ratings-west-cluster")
 	require.NoError(err)
 
 	assert.Equal("ratings", s.Lookup)

@@ -2472,10 +2472,12 @@ func controllerPriority(type1, type2 string) string {
 	}
 }
 
-// GetWorkloadAppName returns the "Application" name (app label) that relates to a workload
-func (in *WorkloadService) GetWorkloadAppName(ctx context.Context, cluster, namespace, workload string) (models.TracingName, error) {
+// GetWorkloadTracingName returns a struct with all the information needed for tracing lookup
+// The "Application" name (app label) relates to a workload
+// If the workload has any Waypoint, the information is included, as it will be the search name in the tracing backend
+func (in *WorkloadService) GetWorkloadTracingName(ctx context.Context, cluster, namespace, workload string) (models.TracingName, error) {
 	var end observability.EndFunc
-	ctx, end = observability.StartSpan(ctx, "GetWorkloadAppName",
+	ctx, end = observability.StartSpan(ctx, "GetWorkloadTracingName",
 		observability.Attribute("package", "business"),
 		observability.Attribute("cluster", cluster),
 		observability.Attribute("namespace", namespace),

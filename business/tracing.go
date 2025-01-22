@@ -80,7 +80,7 @@ func (in *TracingService) GetServiceSpans(ctx context.Context, ns, service strin
 	)
 	defer end()
 
-	app, err := in.svc.GetServiceAppName(ctx, query.Cluster, ns, service)
+	app, err := in.svc.GetServiceTracingName(ctx, query.Cluster, ns, service)
 	if err != nil {
 		return nil, err
 	}
@@ -111,7 +111,7 @@ func (in *TracingService) GetWorkloadSpans(ctx context.Context, ns, workload str
 	)
 	defer end()
 
-	tracingName, err := in.workload.GetWorkloadAppName(ctx, query.Cluster, ns, workload)
+	tracingName, err := in.workload.GetWorkloadTracingName(ctx, query.Cluster, ns, workload)
 	if err != nil {
 		return nil, err
 	}
@@ -170,7 +170,7 @@ func (in *TracingService) GetServiceTraces(ctx context.Context, ns, service stri
 	)
 	defer end()
 
-	app, err := in.svc.GetServiceAppName(ctx, query.Cluster, ns, service)
+	app, err := in.svc.GetServiceTracingName(ctx, query.Cluster, ns, service)
 	if err != nil {
 		return nil, err
 	}
@@ -212,7 +212,7 @@ func (in *TracingService) GetWorkloadTraces(ctx context.Context, ns, workload st
 	)
 	defer end()
 
-	app, err := in.workload.GetWorkloadAppName(ctx, query.Cluster, ns, workload)
+	app, err := in.workload.GetWorkloadTracingName(ctx, query.Cluster, ns, workload)
 	if err != nil {
 		return nil, err
 	}

@@ -510,6 +510,8 @@ func (in *AppService) fetchNamespaceApps(ctx context.Context, namespace string, 
 	return allEntities, nil
 }
 
+// GetAppTracingName returns the tracing app name
+// If the app has any Waypoint, the information is included, as it will be the search name used by the tracing backend
 func (in *AppService) GetAppTracingName(ctx context.Context, cluster, namespace, app string) models.TracingName {
 	criteria := AppCriteria{
 		Namespace: namespace, AppName: app, IncludeIstioResources: false, IncludeHealth: false, Cluster: cluster}
