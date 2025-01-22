@@ -6,6 +6,6 @@ export enum WaypointType {
 }
 
 export const Waypoint = 'waypoint';
-export const waypintForLabel = 'istio.io/waypoint-for';
+export const WaypointForLabel = 'istio.io/waypoint-for';
 
 export const AmbientComponent = 'ambient';
