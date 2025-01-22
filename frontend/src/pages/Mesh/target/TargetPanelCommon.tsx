@@ -209,6 +209,14 @@ export const renderNodeLink = (meshData: MeshNodeData, style?: string): React.Re
   let pfBadge: PFBadgeType;
 
   switch (meshData.infraType) {
+    case MeshInfraType.GATEWAY:
+      link = `/namespaces/${encodeURIComponent(
+        meshData.namespace
+      )}/istio/${meshData.version!}/Gateway/${encodeURIComponent(meshData.infraName)}`;
+      key = `${meshData.namespace}.wl.${meshData.infraName}`;
+      displayName = meshData.infraName;
+      pfBadge = PFBadges.Gateway;
+      break;
     case MeshInfraType.WAYPOINT:
       link = `/namespaces/${encodeURIComponent(meshData.namespace)}/workloads/${encodeURIComponent(
         meshData.infraName
