@@ -195,33 +195,63 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 				wp, err = gi.Business.Workload.GetWorkload(ctx, criteria)
 				mesh.CheckError(err)
 
-				// determine the namespaces interacting with the waypoint
-				wpNamespaces := map[string]bool{}
-				for _, wps := range wp.WaypointServices {
-					wpNamespaces[wps.Namespace] = true
-				}
-				for _, wpw := range wp.WaypointWorkloads {
-					wpNamespaces[wpw.Namespace] = true
+				/*
+					// determine the namespaces interacting with the waypoint
+					wpNamespaces := map[string]bool{}
+					for _, wps := range wp.WaypointServices {
+						wpNamespaces[wps.Namespace] = true
+					}
+					for _, wpw := range wp.WaypointWorkloads {
+						wpNamespaces[wpw.Namespace] = true
+					}
+				*/
+				version := models.DefaultRevisionLabel
+				if rev, ok := wp.Labels[models.IstioRevisionLabel]; ok {
+					version = rev
 				}
 
-				wpNode, _, err := addInfra(meshMap, mesh.InfraTypeWaypoint, wp.Cluster, wp.Namespace, wp.Name, wp.Labels, wp.ResourceVersion, false, "")
+				infraData := struct {
+					Annotations         map[string]string
+					Labels              map[string]string
+					TemplateAnnotations map[string]string
+					TemplateLabels      map[string]string
+				}{
+					Annotations:         wp.Annotations,
+					Labels:              wp.Labels,
+					TemplateAnnotations: wp.TemplateAnnotations,
+					TemplateLabels:      wp.TemplateLabels,
+				}
+
+				wpNode, _, err := addInfra(meshMap, mesh.InfraTypeWaypoint, wp.Cluster, wp.Namespace, wp.Name, infraData, version, false, "")
 				mesh.CheckError(err)
 
-				// add edges to the dataplane nodes containing the namespaces with services or workloads served by the waypoint
-				dataplaneNodes := map[*mesh.Node]bool{}
+				// add edge to the managing control plane
 				for _, infraNode := range meshMap {
-					if infraNode.InfraType == mesh.InfraTypeDataPlane && infraNode.Cluster == wp.Cluster {
-						for _, dpns := range infraNode.Metadata[mesh.InfraData].([]models.Namespace) {
-							if wpNamespaces[dpns.Name] {
-								dataplaneNodes[infraNode] = true
-								break
-							}
+					if infraNode.InfraType == mesh.InfraTypeIstiod && infraNode.Cluster == wp.Cluster {
+						rev := infraNode.Metadata[mesh.InfraData].(models.ControlPlane).Revision
+						if rev == wpNode.Metadata[mesh.Version] {
+							infraNode.AddEdge(wpNode)
+							break
 						}
 					}
 				}
-				for dpNode := range dataplaneNodes {
-					wpNode.AddEdge(dpNode)
-				}
+
+				/*
+					dataplaneNodes := map[*mesh.Node]bool{}
+					for _, infraNode := range meshMap {
+						if infraNode.InfraType == mesh.InfraTypeDataPlane && infraNode.Cluster == wp.Cluster {
+							for _, dpns := range infraNode.Metadata[mesh.InfraData].([]models.Namespace) {
+								if wpNamespaces[dpns.Name] {
+									dataplaneNodes[infraNode] = true
+									break
+								}
+							}
+						}
+					}
+					for dpNode := range dataplaneNodes {
+						wpNode.AddEdge(dpNode)
+					}
+				*/
 			}
 		}
 
@@ -237,7 +267,11 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 			for cluster, config := range configMap {
 				gwNodes := []*mesh.Node{}
 				for _, gw := range config.Gateways {
-					gwNode, _, err := addInfra(meshMap, mesh.InfraTypeGateway, cluster, gw.Namespace, gw.Name, gw.Spec.DeepCopy(), gw.APIVersion, false, "")
+					version := models.DefaultRevisionLabel
+					if rev, ok := gw.Labels[models.IstioRevisionLabel]; ok {
+						version = rev
+					}
+					gwNode, _, err := addInfra(meshMap, mesh.InfraTypeGateway, cluster, gw.Namespace, gw.Name, gw, version, false, "")
 					mesh.CheckError(err)
 					gwNodes = append(gwNodes, gwNode)
 				}
@@ -246,21 +280,24 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 					if strings.Contains(strings.ToLower(string(gw.Spec.GatewayClassName)), "waypoint") {
 						continue
 					}
-					gwNode, _, err := addInfra(meshMap, mesh.InfraTypeGateway, cluster, gw.Namespace, gw.Name, gw.Spec.DeepCopy(), gw.APIVersion, false, "")
+					version := models.DefaultRevisionLabel
+					if rev, ok := gw.Labels[models.IstioRevisionLabel]; ok {
+						version = rev
+					}
+					gwNode, _, err := addInfra(meshMap, mesh.InfraTypeGateway, cluster, gw.Namespace, gw.Name, gw, version, false, "")
 					mesh.CheckError(err)
 					gwNodes = append(gwNodes, gwNode)
 				}
 
-				// add edge to the dataplane node in which the gaateway is deployed, if any
+				// add edge to the managing control plane
 				for _, infraNode := range meshMap {
-					if infraNode.InfraType != mesh.InfraTypeDataPlane || infraNode.Cluster != cluster {
+					if infraNode.InfraType != mesh.InfraTypeIstiod || infraNode.Cluster != cluster {
 						continue
 					}
+					rev := infraNode.Metadata[mesh.InfraData].(models.ControlPlane).Revision
 					for _, gwNode := range gwNodes {
-						dpNamespaces := infraNode.Metadata[mesh.InfraData].([]models.Namespace)
-						if sliceutil.Some(dpNamespaces, func(n models.Namespace) bool { return n.Name == gwNode.Namespace }) {
-							gwNode.AddEdge(infraNode)
-							break
+						if rev == gwNode.Metadata[mesh.Version] {
+							infraNode.AddEdge(gwNode)
 						}
 					}
 				}

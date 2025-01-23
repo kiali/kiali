@@ -210,12 +210,11 @@ export const renderNodeLink = (meshData: MeshNodeData, style?: string): React.Re
 
   switch (meshData.infraType) {
     case MeshInfraType.GATEWAY:
-      link = `/namespaces/${encodeURIComponent(
-        meshData.namespace
-      )}/istio/${meshData.version!}/Gateway/${encodeURIComponent(meshData.infraName)}`;
-      key = `${meshData.namespace}.wl.${meshData.infraName}`;
-      displayName = meshData.infraName;
-      pfBadge = PFBadges.Gateway;
+      const name = `${meshData.infraName}-${meshData.infraData?.spec?.gatewayClassName}`;
+      link = `/namespaces/${encodeURIComponent(meshData.namespace)}/workloads/${encodeURIComponent(name)}`;
+      key = `${meshData.namespace}.wl.${name}`;
+      displayName = name;
+      pfBadge = PFBadges.Workload;
       break;
     case MeshInfraType.WAYPOINT:
       link = `/namespaces/${encodeURIComponent(meshData.namespace)}/workloads/${encodeURIComponent(
