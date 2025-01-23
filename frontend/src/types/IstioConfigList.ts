@@ -14,7 +14,7 @@ import {
   K8sResource
 } from './IstioObjects';
 import { ResourcePermissions } from './Permissions';
-import { getGVKTypeString, getIstioObjectGVK } from '../utils/IstioConfigUtils';
+import { getGVKTypeString, getIstioObjectGVK, kindToStringIncludeK8s } from '../utils/IstioConfigUtils';
 import { TypeMeta } from './Kubernetes';
 
 export interface IstioConfigItem extends TypeMeta {
@@ -219,6 +219,23 @@ export const filterByConfigValidation = (unfiltered: IstioConfigItem[], configFi
       filtered.push(item);
     }
     if (filterByWarning && item.validation && item.validation.checks.filter(i => i.severity === 'warning').length > 0) {
+      filtered.push(item);
+    }
+  });
+
+  return filtered;
+};
+
+export const skipUnrelatedK8sGateways = (unfiltered: IstioConfigItem[], gatewayLabel?: string): IstioConfigItem[] => {
+  const filtered: IstioConfigItem[] = [];
+
+  unfiltered.forEach(item => {
+    if (gvkType.K8sGateway === kindToStringIncludeK8s(item.apiVersion, item.kind)) {
+      // keep only those K8 Gateways which name equals to workload's gatewayLabel
+      if (item.name === gatewayLabel) {
+        filtered.push(item);
+      }
+    } else {
       filtered.push(item);
     }
   });
