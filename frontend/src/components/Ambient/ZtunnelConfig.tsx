@@ -3,7 +3,17 @@ import { Workload } from 'types/Workload';
 import { Pod, ZtunnelConfigDump } from 'types/IstioObjects';
 import * as API from '../../services/Api';
 import * as AlertUtils from '../../utils/AlertUtils';
-import { Card, CardBody, Grid, GridItem, Tab, Tabs, TooltipPosition } from '@patternfly/react-core';
+import {
+  Card,
+  CardBody,
+  Grid,
+  GridItem,
+  Tab,
+  Tabs,
+  ToolbarGroup,
+  ToolbarItem,
+  TooltipPosition
+} from '@patternfly/react-core';
 import { activeTab } from '../../components/Tab/Tabs';
 import { RenderComponentScroll } from 'components/Nav/Page';
 import { location, router } from '../../app/History';
@@ -20,6 +30,12 @@ import { ZtunnelServicesTable } from './ZtunnelServicesTable';
 import { ZtunnelWorkloadsTable } from './ZtunnelWorkloadsTable';
 import { t } from 'i18next';
 import { SortableTh } from '../Table/SimpleTable';
+import { FilterSelected, StatefulFilters } from 'components/Filters/StatefulFilters';
+import { spanFilters } from 'components/TracingIntegration/TracingResults/Filters';
+import { RichSpanData } from 'types/TracingInfo';
+import { ActiveFiltersInfo } from 'types/Filters';
+import { runFilters } from 'components/FilterList/FilterHelper';
+import { SpanTable } from 'components/TracingIntegration/TracingResults/SpanTable';
 
 const resources: string[] = ['services', 'workloads'];
 
@@ -28,6 +44,10 @@ const tabName = 'ztunnelTab';
 const defaultTab = 'services';
 
 type ZtunnelConfigProps = {
+  traceID: any;
+  cluster: any;
+  externalURLProvider: any;
+  items: RichSpanData[];
   lastRefreshAt: TimeInMilliseconds;
   namespace: string;
   workload: Workload;
@@ -51,11 +71,16 @@ export const ZtunnelConfig: React.FC<ZtunnelConfigProps> = (props: ZtunnelConfig
     return props.workload?.pods.sort((p1: Pod, p2: Pod) => (p1.name >= p2.name ? 1 : -1));
   };
 
+  const filters = spanFilters(props.items);
+
   const [pod, setPod] = React.useState(sortedPods()[0]);
   const [config, setConfig] = React.useState<ZtunnelConfigDump>({});
   const [fetch, setFetch] = React.useState(true);
   const [activeKey, setActiveKey] = React.useState(ztunnelTabs.indexOf(activeTab(tabName, defaultTab)));
   const [resource, setResource] = React.useState(activeTab(tabName, defaultTab));
+  const [activeFilters, setActiveFilters] = React.useState<ActiveFiltersInfo>(FilterSelected.init(filters));
+
+  const filteredItems = runFilters(props.items, filters, activeFilters);
 
   const prevResource = React.createRef();
   const prevPod = React.createRef();
@@ -139,14 +164,34 @@ export const ZtunnelConfig: React.FC<ZtunnelConfigProps> = (props: ZtunnelConfig
               <div key="service-icon" className={iconStyle}>
                 <PFBadge badge={PFBadges.Pod} position={TooltipPosition.top} />
               </div>
-              <ToolbarDropdown
-                id="ztunnel_pods_list"
-                tooltip={t('Display ztunnel config for the selected pod')}
-                handleSelect={key => setPodByKey(key)}
-                value={pod.name}
-                label={pod.name}
-                options={props.workload.pods.map((pod: Pod) => pod.name).sort()}
-              />
+              <ToolbarGroup>
+                <ToolbarItem>
+                  <ToolbarDropdown
+                    id="ztunnel_pods_list"
+                    tooltip={t('Display ztunnel config for the selected pod')}
+                    handleSelect={key => setPodByKey(key)}
+                    value={pod.name}
+                    label={pod.name}
+                    options={props.workload.pods.map((pod: Pod) => pod.name).sort()}
+                  />
+                </ToolbarItem>
+
+                <span style={{ marginLeft: '10px' }}>{t('Filter by:')}</span>
+                <ToolbarItem>
+                  <StatefulFilters initialFilters={filters} onFilterChange={active => setActiveFilters(active)} />
+
+                  {props.traceID && (
+                    <ToolbarItem style={{ alignSelf: 'center' }}>
+                      <SpanTable
+                        items={filteredItems}
+                        namespace={props.namespace}
+                        externalURLProvider={props.externalURLProvider}
+                        traceID={''}
+                      />
+                    </ToolbarItem>
+                  )}
+                </ToolbarItem>
+              </ToolbarGroup>
             </div>
             <ZtunnelServicesTable config={config?.services} />
           </div>
@@ -173,6 +218,20 @@ export const ZtunnelConfig: React.FC<ZtunnelConfigProps> = (props: ZtunnelConfig
                 label={pod.name}
                 options={props.workload.pods.map((pod: Pod) => pod.name).sort()}
               />
+              <span style={{ marginLeft: '10px' }}>{t('Filter by:')}</span>
+              <StatefulFilters
+                initialFilters={filters}
+                onFilterChange={active => setActiveFilters(active)}
+              ></StatefulFilters>
+              {props.traceID && (
+                <SpanTable
+                  items={filteredItems}
+                  namespace={props.namespace}
+                  externalURLProvider={props.externalURLProvider}
+                  cluster={props.cluster}
+                  traceID={props.traceID}
+                />
+              )}
             </div>
             <ZtunnelWorkloadsTable config={config?.workloads} />
           </div>

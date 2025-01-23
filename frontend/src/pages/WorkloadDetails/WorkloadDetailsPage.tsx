@@ -276,6 +276,10 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
               lastRefreshAt={this.props.lastRefreshAt}
               namespace={this.props.workloadId.namespace}
               workload={this.state.workload}
+              traceID={undefined}
+              cluster={undefined}
+              externalURLProvider={undefined}
+              items={[]}
             />
           )}
         </Tab>
