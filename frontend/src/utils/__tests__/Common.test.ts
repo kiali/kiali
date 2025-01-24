@@ -1,4 +1,5 @@
-import { removeDuplicatesArray, groupBy } from '../Common';
+import { namespacesPerCluster, removeDuplicatesArray, groupBy } from '../Common';
+import { Namespace } from '../../types/Namespace';
 
 const arrayDuplicates = ['bookinfo', 'default', 'bookinfo'];
 const arrayNoDuplicates = ['bookinfo', 'default'];
@@ -12,6 +13,71 @@ describe('Unique elements in Array', () => {
   it('should return the same array', () => {
     expect(removeDuplicatesArray(arrayNoDuplicates)).toEqual(arrayNoDuplicates);
     expect(removeDuplicatesArray(arrayNoDuplicates).length).toEqual(arrayNoDuplicates.length);
+  });
+});
+
+describe('Active namespaces per cluster', () => {
+  test('should return an empty array when activeNss is empty', () => {
+    const activeNss: Namespace[] = [];
+    const allNss: Namespace[] = [
+      { name: 'namespace1', cluster: 'east' },
+      { name: 'namespace2', cluster: 'west' }
+    ];
+    const cluster = 'east';
+
+    const result = namespacesPerCluster(activeNss, allNss, cluster);
+    expect(result).toEqual([]);
+  });
+
+  test('should return matching namespaces by cluster', () => {
+    const activeNss: Namespace[] = [{ name: 'namespace1' }, { name: 'namespace2' }, { name: 'namespace4' }];
+    const allNss: Namespace[] = [
+      { name: 'namespace1', cluster: 'east' },
+      { name: 'namespace2', cluster: 'west' },
+      { name: 'namespace3', cluster: 'east' },
+      { name: 'namespace4', cluster: 'east' }
+    ];
+    const cluster = 'east';
+
+    const result = namespacesPerCluster(activeNss, allNss, cluster);
+    expect(result).toEqual(['namespace1', 'namespace4']);
+  });
+
+  test('should return an empty array if no namespaces match the cluster', () => {
+    const activeNss: Namespace[] = [{ name: 'namespace1' }, { name: 'namespace2' }];
+    const allNss: Namespace[] = [
+      { name: 'namespace1', cluster: 'west' },
+      { name: 'namespace2', cluster: 'west' }
+    ];
+    const cluster = 'east';
+
+    const result = namespacesPerCluster(activeNss, allNss, cluster);
+    expect(result).toEqual([]);
+  });
+
+  test('should handle namespaces with missing cluster properties', () => {
+    const activeNss: Namespace[] = [{ name: 'namespace1' }, { name: 'namespace2' }];
+    const allNss: Namespace[] = [
+      { name: 'namespace1', cluster: undefined },
+      { name: 'namespace2', cluster: undefined },
+      { name: 'namespace3', cluster: undefined }
+    ];
+    const cluster = 'east';
+
+    const result = namespacesPerCluster(activeNss, allNss, cluster);
+    expect(result).toEqual([]);
+  });
+
+  test('should return matching namespaces when labels are present', () => {
+    const activeNss: Namespace[] = [{ name: 'namespace1' }, { name: 'namespace2' }];
+    const allNss: Namespace[] = [
+      { name: 'namespace1', cluster: 'east', annotations: { key: 'value' }, labels: { key: 'value' } },
+      { name: 'namespace2', cluster: 'west', annotations: { key: 'value2' }, labels: { key: 'value2' } }
+    ];
+    const cluster = 'east';
+
+    const result = namespacesPerCluster(activeNss, allNss, cluster);
+    expect(result).toEqual(['namespace1']);
   });
 });
 

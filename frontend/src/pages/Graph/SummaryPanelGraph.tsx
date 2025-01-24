@@ -39,6 +39,8 @@ import { edgesIn, edgesOut, elems, leafNodes, select } from 'helpers/GraphHelper
 import { SimpleTabs } from 'components/Tab/SimpleTabs';
 import { panelHeadingStyle, panelStyle } from './SummaryPanelStyle';
 import { ApiResponse } from 'types/Api';
+import { store } from '../../store/ConfigStore';
+import { namespacesPerCluster } from '../../utils/Common';
 
 type SummaryPanelGraphMetricsState = {
   grpcReceivedIn: Datapoint[];
@@ -782,9 +784,11 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
   };
 
   private updateValidations = (): void => {
-    const namespacesAsString = this.props.namespaces.map(ns => ns.name).join(',');
     const promises = Object.keys(serverConfig.clusters).map(cluster =>
-      API.getConfigValidations(namespacesAsString, cluster)
+      API.getConfigValidations(
+        namespacesPerCluster(this.props.namespaces, store.getState().namespaces.items, cluster).join(','),
+        cluster
+      )
     );
     this.validationSummaryPromises
       .registerAll('validationSummary', promises)
