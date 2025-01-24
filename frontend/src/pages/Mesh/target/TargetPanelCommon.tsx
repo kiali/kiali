@@ -6,12 +6,13 @@ import { DurationInSeconds, IntervalInMilliseconds, TimeInMilliseconds } from 't
 import { ValidationTypes } from 'types/IstioObjects';
 import { Status, statusMsg } from 'types/IstioStatus';
 import { Validation } from 'components/Validations/Validation';
-import { Title, TitleSizes, Tooltip, TooltipPosition } from '@patternfly/react-core';
+import { Title, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { t } from 'utils/I18nUtils';
 import { PFBadge, PFBadges, PFBadgeType } from 'components/Pf/PfBadges';
 import { AmbientLabel, tooltipMsgType } from '../../../components/Ambient/AmbientLabel';
 import { serverConfig } from '../../../config';
 import { KialiPageLink } from 'components/Link/KialiPageLink';
+import { classes } from 'typestyle';
 
 export interface TargetPanelCommonProps {
   duration: DurationInSeconds;
@@ -39,13 +40,6 @@ export const targetPanelFont: React.CSSProperties = {
   fontSize: 'var(--graph-side-panel--font-size)'
 };
 
-export const targetPanelTitle = kialiStyle({
-  fontWeight: 'bolder',
-  marginTop: '0.25rem',
-  marginBottom: '0.25rem',
-  textAlign: 'left'
-});
-
 const healthStatusStyle = kialiStyle({
   marginLeft: '0.5rem'
 });
@@ -57,6 +51,7 @@ const hrStyle = kialiStyle({
 });
 
 export const targetPanelHR = <hr className={hrStyle} />;
+export const targetPanelUnderlineHR = <hr className={hrStyle} style={{ marginTop: 0 }} />;
 
 export const shouldRefreshData = (prevProps: TargetPanelCommonProps, nextProps: TargetPanelCommonProps): boolean => {
   return (
@@ -66,15 +61,6 @@ export const shouldRefreshData = (prevProps: TargetPanelCommonProps, nextProps: 
     (!prevProps.target && nextProps.target) ||
     // Check if the target changed
     prevProps.target.elem !== nextProps.target.elem
-  );
-};
-
-export const getTitle = (title: string): React.ReactNode => {
-  return (
-    <div className={targetPanelTitle}>
-      {title}
-      <br />
-    </div>
   );
 };
 
@@ -128,7 +114,8 @@ interface NodeHeaderOptions {
 
 export const renderNodeHeader = (
   data: MeshNodeData,
-  options: NodeHeaderOptions = { nameOnly: false, smallSize: false, hideBadge: false }
+  options: NodeHeaderOptions = { nameOnly: false, smallSize: false, hideBadge: false },
+  style?: string
 ): React.ReactNode => {
   let pfBadge = PFBadges.Unknown;
 
@@ -164,12 +151,12 @@ export const renderNodeHeader = (
       console.warn(`MeshElems: Unexpected infraType [${data.infraType}] `);
   }
 
-  const link = renderNodeLink(data);
+  const link = options.nameOnly ? undefined : renderNodeLink(data);
 
   return (
     <React.Fragment key={data.infraName}>
-      <Title headingLevel="h5" size={options.smallSize ? TitleSizes.md : TitleSizes.lg}>
-        <span className={nodeStyle}>
+      <Title headingLevel="h5">
+        <span className={classes(nodeStyle, style)}>
           {!options.hideBadge && <PFBadge badge={pfBadge} size={options.smallSize ? 'sm' : 'global'} />}
 
           {data.infraName}

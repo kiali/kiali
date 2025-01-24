@@ -1,99 +1,103 @@
 import * as React from 'react';
-import { Node, NodeModel, Visualization } from '@patternfly/react-topology';
-import { TargetPanelCommonProps, getTitle, renderNodeHeader, targetPanelStyle } from './TargetPanelCommon';
+import { Visualization } from '@patternfly/react-topology';
+import { TargetPanelCommonProps, renderNodeHeader, targetPanelStyle } from './TargetPanelCommon';
 import { classes } from 'typestyle';
 import { panelBodyStyle, panelHeadingStyle, panelStyle } from 'pages/Graph/SummaryPanelStyle';
 import { elems, selectAnd } from 'helpers/GraphHelpers';
-import { DataPlaneNodeData, MeshAttr, MeshInfraType, MeshNodeData } from 'types/Mesh';
+import { MeshAttr, MeshInfraType, MeshNodeData } from 'types/Mesh';
 import { kialiStyle } from 'styles/StyleUtils';
 import { useKialiTranslation } from 'utils/I18nUtils';
 import { UNKNOWN } from 'types/Graph';
 
 type TargetPanelMeshProps = TargetPanelCommonProps;
 
-const infoStyle = kialiStyle({
-  marginLeft: '1.0rem'
+const infraStyle = kialiStyle({
+  marginTop: '0.75rem'
 });
 
 const summaryStyle = kialiStyle({
-  marginTop: '0.25rem'
+  marginBottom: '0.25rem'
+});
+
+const summaryHeaderStyle = kialiStyle({
+  marginLeft: '0.75rem'
+});
+
+const summaryInfoStyle = kialiStyle({
+  marginLeft: '2.0rem'
+});
+
+const targetPanelTitle = kialiStyle({
+  fontWeight: 'bolder',
+  marginTop: '0.25rem',
+  marginBottom: '0.25rem',
+  textAlign: 'left'
 });
 
 export const TargetPanelMesh: React.FC<TargetPanelMeshProps> = (props: TargetPanelMeshProps) => {
   const { t } = useKialiTranslation();
 
-  const renderMeshSummary = (nodes: Node<NodeModel>[], clusterData: MeshNodeData): React.ReactNode => {
-    const dataPlaneNodes = selectAnd(nodes, [{ prop: MeshAttr.infraType, op: '=', val: MeshInfraType.DATAPLANE }]);
-
-    const infraNodes = selectAnd(nodes, [
-      { prop: MeshAttr.infraType, op: '!=', val: MeshInfraType.CLUSTER },
-      { prop: MeshAttr.infraType, op: '!=', val: MeshInfraType.NAMESPACE },
-      { prop: MeshAttr.infraType, op: '!=', val: MeshInfraType.DATAPLANE },
-      { prop: MeshAttr.infraType, op: '!=', val: '' }
-    ]);
-
-    // get cluster data planes to check if we have to show canary info (more than 1 dataplane per cluster)
-    const clusterDataPlanes = dataPlaneNodes.filter(node => node.getData().cluster === clusterData.cluster);
-
+  const renderClusterSummary = (nodeData: MeshNodeData): React.ReactNode => {
     return (
-      <div key={clusterData.id} style={{ marginBottom: '1rem' }}>
-        {renderNodeHeader(clusterData, { nameOnly: true, smallSize: false, hideBadge: clusterData.isExternal })}
-        <div className={infoStyle}>
-          {!clusterData.isExternal && `Kubernetes: ${clusterData.version || t(UNKNOWN)}`}
-
-          {infraNodes
-            .filter(node => node.getData().cluster === clusterData.cluster)
-            .sort((in1, in2) => {
-              const data1 = in1.getData();
-              const data2 = in2.getData();
-
-              if (data1.infraType === MeshInfraType.ISTIOD) {
-                return -1;
-              }
-
-              if (data2.infraType === MeshInfraType.ISTIOD) {
-                return 1;
-              }
-
-              return data1.infraName.toLowerCase() < data2.infraName.toLowerCase() ? -1 : 1;
-            })
-            .map(node => renderInfraNodeSummary(node.getData()))}
-
-          {clusterDataPlanes.map(node => renderDataPlaneSummary(node.getData()))}
+      <div key={nodeData.id} className={summaryStyle}>
+        {renderNodeHeader(
+          nodeData,
+          { nameOnly: true, smallSize: true, hideBadge: nodeData.isExternal },
+          summaryHeaderStyle
+        )}
+        <div className={summaryInfoStyle}>
+          {t('kubernetes version: {{version}}', { version: nodeData.version || t(UNKNOWN) })}
         </div>
       </div>
     );
   };
 
-  const renderInfraNodeSummary = (nodeData: MeshNodeData): React.ReactNode => {
+  const renderControlPlaneSummary = (nodeData: MeshNodeData, dataPlaneNamespaceCount: number): React.ReactNode => {
     return (
       <div key={nodeData.id} className={summaryStyle}>
-        {renderNodeHeader(nodeData, { nameOnly: true, smallSize: true })}
-
-        <div className={infoStyle}>
-          <div>{t('Version: {{version}}', { version: nodeData.version || t(UNKNOWN) })}</div>
-
-          {nodeData.infraType === MeshInfraType.ISTIOD && nodeData.namespace && (
-            <div>{t('Namespace: {{namespace}}', { namespace: nodeData.namespace })}</div>
-          )}
+        {renderNodeHeader(nodeData, { nameOnly: true, smallSize: true }, summaryHeaderStyle)}
+        <div className={summaryInfoStyle}>
+          <div>{t('version: {{version}}', { version: nodeData.version || t(UNKNOWN) })}</div>
+          <div>{t('revision: {{revision}}', { revision: nodeData.infraData.revision || t('default') })}</div>
+          <div>
+            {t('dataplane namespaces: {{count}}', {
+              count: dataPlaneNamespaceCount
+            })}
+          </div>
         </div>
       </div>
     );
   };
 
-  const renderDataPlaneSummary = (nodeData: DataPlaneNodeData): React.ReactNode => {
+  const renderGatewaySummary = (nodeData: MeshNodeData): React.ReactNode => {
     return (
       <div key={nodeData.id} className={summaryStyle}>
-        {renderNodeHeader(nodeData, { nameOnly: true, smallSize: true })}
+        {renderNodeHeader(nodeData, { nameOnly: true, smallSize: true }, summaryHeaderStyle)}
+        <div className={summaryInfoStyle}>
+          <div>{t('api version: {{apiVersion}}', { apiVersion: nodeData.infraData.apiVersion || t(UNKNOWN) })}</div>
+          <div>{t('revision: {{revision}}', { revision: nodeData.infraData.revision || t('default') })}</div>
+        </div>
+      </div>
+    );
+  };
 
-        <div className={infoStyle}>
-          {nodeData.version && <div>{t('Revision: {{revision}}', { revision: nodeData.version })}</div>}
+  const renderKialiSummary = (nodeData: MeshNodeData): React.ReactNode => {
+    return (
+      <div key={nodeData.id} className={summaryStyle}>
+        {renderNodeHeader(nodeData, { nameOnly: true, smallSize: true }, summaryHeaderStyle)}
+        <div className={summaryInfoStyle}>
+          <div>{t('version: {{version}}', { version: nodeData.version })}</div>
+        </div>
+      </div>
+    );
+  };
 
-          {t('{{count}} namespace', {
-            count: nodeData.infraData?.length,
-            defaultValue_one: '{{count}} namespace',
-            defaultValue_other: '{{count}} namespaces'
-          })}
+  const renderObservabilitySummary = (nodeData: MeshNodeData): React.ReactNode => {
+    return (
+      <div key={nodeData.id} className={summaryStyle}>
+        {renderNodeHeader(nodeData, { nameOnly: true, smallSize: true }, summaryHeaderStyle)}
+        <div className={summaryInfoStyle}>
+          <div>{t('version: {{version}}', { version: nodeData.version })}</div>
         </div>
       </div>
     );
@@ -107,17 +111,68 @@ export const TargetPanelMesh: React.FC<TargetPanelMeshProps> = (props: TargetPan
 
   const { nodes } = elems(controller);
 
-  const clusterNodes = selectAnd(nodes, [{ prop: MeshAttr.infraType, op: '=', val: MeshInfraType.CLUSTER }]);
+  const clusterAndExternalNodes = selectAnd(nodes, [{ prop: MeshAttr.infraType, op: '=', val: MeshInfraType.CLUSTER }]);
+  const clusterNodes = clusterAndExternalNodes.filter(rcn => !rcn.getData().isExternal);
+  const controlPlaneNodes = selectAnd(nodes, [{ prop: MeshAttr.infraType, op: '=', val: MeshInfraType.ISTIOD }]);
+  const dataPlaneNodes = selectAnd(nodes, [{ prop: MeshAttr.infraType, op: '=', val: MeshInfraType.DATAPLANE }]);
+  const gatewayNodes = selectAnd(nodes, [{ prop: MeshAttr.infraType, op: '=', val: MeshInfraType.GATEWAY }]);
+  const kialiNodes = selectAnd(nodes, [{ prop: MeshAttr.infraType, op: '=', val: MeshInfraType.KIALI }]);
+  const observeNodes = [
+    ...selectAnd(nodes, [{ prop: MeshAttr.infraType, op: '=', val: MeshInfraType.GRAFANA }]),
+    ...selectAnd(nodes, [{ prop: MeshAttr.infraType, op: '=', val: MeshInfraType.METRIC_STORE }]),
+    ...selectAnd(nodes, [{ prop: MeshAttr.infraType, op: '=', val: MeshInfraType.TRACE_STORE }])
+  ];
+  const waypointNodes = selectAnd(nodes, [{ prop: MeshAttr.infraType, op: '=', val: MeshInfraType.WAYPOINT }]);
 
   return (
     <div id="target-panel-mesh" className={classes(panelStyle, targetPanelStyle)}>
       <div id="target-panel-mesh-heading" className={panelHeadingStyle}>
-        {getTitle(t('Mesh Name: {{meshName}}', { meshName: controller.getGraph().getData().meshData.name }))}
+        <div className={targetPanelTitle}>
+          {t('Mesh: {{name}}', { name: controller.getGraph().getData().meshData.name })}
+          <br />
+        </div>
       </div>
 
       <div id="target-panel-mesh-body" className={panelBodyStyle}>
-        {clusterNodes.map(cluster => renderMeshSummary(nodes, cluster.getData()))}
+        <div className={infraStyle}>
+          {t('Clusters: {{num}}', { num: clusterNodes.length })}
+          {clusterNodes.map(infra => renderClusterSummary(infra.getData()))}
+        </div>
+
+        <div className={infraStyle}>
+          {t('ControlPlanes: {{num}}', { num: controlPlaneNodes.length })}
+          {controlPlaneNodes.map(infra => {
+            const cpRev = infra.getData().infraData.revision ?? 'default';
+            const dataPlaneNode = dataPlaneNodes.find(dpn => {
+              const dpRev = dpn.getData().infraData.revision ?? 'default';
+              return cpRev === dpRev;
+            });
+            const dataPlaneNamespaceCount = dataPlaneNode?.getData().infraData?.length ?? 0;
+            return renderControlPlaneSummary(infra.getData(), dataPlaneNamespaceCount);
+          })}
+        </div>
+
+        <div className={infraStyle}>
+          {gatewayNodes.length > 0 && t('Gateways: {{num}}', { num: gatewayNodes.length })}
+          {gatewayNodes.map(infra => renderGatewaySummary(infra.getData()))}
+        </div>
+
+        <div className={infraStyle}>
+          {waypointNodes.length > 0 && t('Waypoints: {{num}}', { num: waypointNodes.length })}
+          {waypointNodes.map(infra => renderGatewaySummary(infra.getData()))}
+        </div>
+
+        <div className={infraStyle}>
+          {kialiNodes.length > 0 && t('Kiali: {{num}}', { num: kialiNodes.length })}
+          {kialiNodes.map(infra => renderKialiSummary(infra.getData()))}
+        </div>
+
+        <div className={infraStyle}>
+          {observeNodes.length > 0 && t('Observability: {{num}}', { num: observeNodes.length })}
+          {observeNodes.map(infra => renderObservabilitySummary(infra.getData()))}
+        </div>
       </div>
+      <div id="target-panel-mesh-body" className={panelBodyStyle}></div>
     </div>
   );
 };
