@@ -248,6 +248,7 @@ func (in *WorkloadService) GetWorkloadList(ctx context.Context, criteria Workloa
 		IncludeAuthorizationPolicies:  true,
 		IncludeEnvoyFilters:           true,
 		IncludeGateways:               true,
+		IncludeK8sGateways:            true,
 		IncludePeerAuthentications:    true,
 		IncludeRequestAuthentications: true,
 		IncludeSidecars:               true,
@@ -277,8 +278,7 @@ func (in *WorkloadService) GetWorkloadList(ctx context.Context, criteria Workloa
 		wItem := &models.WorkloadListItem{Health: *models.EmptyWorkloadHealth()}
 		wItem.ParseWorkload(w)
 		if istioConfigList, ok := istioConfigMap[cluster]; ok && criteria.IncludeIstioResources {
-			wSelector := labels.Set(wItem.Labels).AsSelector().String()
-			wItem.IstioReferences = FilterUniqueIstioReferences(FilterWorkloadReferences(wSelector, istioConfigList, cluster))
+			wItem.IstioReferences = FilterUniqueIstioReferences(FilterWorkloadReferences(in.config, wItem.Labels, istioConfigList, cluster))
 		}
 		if criteria.IncludeHealth {
 			wItem.Health, err = in.businessLayer.Health.GetWorkloadHealth(ctx, namespace, cluster, wItem.Name, criteria.RateInterval, criteria.QueryTime, w)
@@ -307,11 +307,23 @@ func (in *WorkloadService) GetWorkloadList(ctx context.Context, criteria Workloa
 	return *workloadList, nil
 }
 
-func FilterWorkloadReferences(wSelector string, istioConfigList models.IstioConfigList, cluster string) []*models.IstioValidationKey {
+func FilterWorkloadReferences(config *config.Config, wLabels map[string]string, istioConfigList models.IstioConfigList, cluster string) []*models.IstioValidationKey {
 	wkdReferences := make([]*models.IstioValidationKey, 0)
+	wSelector := labels.Set(wLabels).AsSelector().String()
 	gwFiltered := kubernetes.FilterGatewaysBySelector(wSelector, istioConfigList.Gateways)
 	for _, g := range gwFiltered {
 		ref := models.BuildKey(kubernetes.Gateways, g.Name, g.Namespace, cluster)
+		exist := false
+		for _, r := range wkdReferences {
+			exist = exist || *r == ref
+		}
+		if !exist {
+			wkdReferences = append(wkdReferences, &ref)
+		}
+	}
+	k8sGwFiltered := kubernetes.FilterK8sGatewaysByLabel(istioConfigList.K8sGateways, wLabels[config.IstioLabels.AmbientWaypointGatewayLabel])
+	for _, g := range k8sGwFiltered {
+		ref := models.BuildKey(kubernetes.K8sGateways, g.Name, g.Namespace, cluster)
 		exist := false
 		for _, r := range wkdReferences {
 			exist = exist || *r == ref

@@ -162,8 +162,7 @@ func (in *AppService) GetClusterAppList(ctx context.Context, criteria AppCriteri
 		for _, wrk := range valueApp.Workloads {
 			joinMap(applabels, wrk.Labels)
 			if criteria.IncludeIstioResources {
-				wSelector := labels.Set(wrk.Labels).AsSelector().String()
-				wkdReferences = append(wkdReferences, FilterWorkloadReferences(wSelector, *istioConfigList, cluster)...)
+				wkdReferences = append(wkdReferences, FilterWorkloadReferences(in.conf, wrk.Labels, *istioConfigList, cluster)...)
 			}
 		}
 		appItem.Labels = buildFinalLabels(applabels)
@@ -321,8 +320,7 @@ func (in *AppService) GetAppList(ctx context.Context, criteria AppCriteria) (mod
 			for _, wrk := range valueApp.Workloads {
 				joinMap(applabels, wrk.Labels)
 				if criteria.IncludeIstioResources {
-					wSelector := labels.Set(wrk.Labels).AsSelector().String()
-					wkdReferences = append(wkdReferences, FilterWorkloadReferences(wSelector, istioConfigList, criteria.Cluster)...)
+					wkdReferences = append(wkdReferences, FilterWorkloadReferences(in.conf, wrk.Labels, istioConfigList, criteria.Cluster)...)
 				}
 			}
 			appItem.Labels = buildFinalLabels(applabels)
