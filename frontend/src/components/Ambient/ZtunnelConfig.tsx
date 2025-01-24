@@ -17,13 +17,12 @@ import { ToolbarDropdown } from '../Dropdown/ToolbarDropdown';
 import { PFBadge, PFBadges } from '../Pf/PfBadges';
 import { kialiStyle } from '../../styles/StyleUtils';
 import { ZtunnelServicesTable } from './ZtunnelServicesTable';
-// import { ZtunnelWorkloadsTable } from './ZtunnelWorkloadsTable';
-import { Services, t } from 'i18next';
+import { t } from 'i18next';
 import { SortableTh } from '../Table/SimpleTable';
 import { FilterSelected, StatefulFilters } from 'components/Filters/StatefulFilters';
 import { ActiveFiltersInfo } from 'types/Filters';
 import { runFilters } from 'components/FilterList/FilterHelper';
-import { ztunnelFilters } from './Filters';
+import { ztunnelServiceFilters, ztunnelWorkloadFilters } from './Filters';
 import { ZtunnelWorkloadsTable } from './ZtunnelWorkloadsTable';
 const resources: string[] = ['services', 'workloads'];
 
@@ -32,11 +31,11 @@ const tabName = 'ztunnelTab';
 const defaultTab = 'services';
 
 type ZtunnelConfigProps = {
-  items: ZtunnelService[] | ZtunnelWorkload[];
+  workloadItems: ZtunnelWorkload[];
   lastRefreshAt: TimeInMilliseconds;
   namespace: string;
   workload: Workload;
-  service: Services;
+  serviceItems: ZtunnelService[];
 };
 
 const fullHeightStyle = kialiStyle({
@@ -48,10 +47,6 @@ const iconStyle = kialiStyle({
   alignSelf: 'center'
 });
 
-// const displayStyle = kialiStyle({
-//   display: 'flex'
-// });
-
 export interface SortableCompareTh<T> extends SortableTh {
   compare?: (a: T, b: T) => number;
 }
@@ -61,16 +56,24 @@ export const ZtunnelConfig: React.FC<ZtunnelConfigProps> = (props: ZtunnelConfig
     return props.workload?.pods.sort((p1: Pod, p2: Pod) => (p1.name >= p2.name ? 1 : -1));
   };
 
-  const filters = ztunnelFilters(props.items);
-
   const [pod, setPod] = React.useState(sortedPods()[0]);
-  const [config, setConfig] = React.useState<ZtunnelConfigDump>({});
+  const [config, setConfig] = React.useState<ZtunnelConfigDump>({ services: [], workloads: [] });
   const [fetch, setFetch] = React.useState(true);
   const [activeKey, setActiveKey] = React.useState(ztunnelTabs.indexOf(activeTab(tabName, defaultTab)));
   const [resource, setResource] = React.useState(activeTab(tabName, defaultTab));
-  const [activeFilters, setActiveFilters] = React.useState<ActiveFiltersInfo>(FilterSelected.init(filters));
 
-  const filteredItems = runFilters(props.items, filters, activeFilters);
+  const serviceFilters = ztunnelServiceFilters(config?.services);
+  const workloadFilters = ztunnelWorkloadFilters(config?.workloads);
+
+  const [workloadActiveFilters, workloadSetActiveFilters] = React.useState<ActiveFiltersInfo>(
+    FilterSelected.init(workloadFilters)
+  );
+  const [serviceActiveFilters, serviceSetActiveFilters] = React.useState<ActiveFiltersInfo>(
+    FilterSelected.init(serviceFilters)
+  );
+
+  const workloadFilteredItem = runFilters(props.workloadItems || [], workloadFilters, workloadActiveFilters);
+  const serviceFilteredItem = runFilters(props.serviceItems, serviceFilters, serviceActiveFilters);
 
   const prevResource = React.createRef();
   const prevPod = React.createRef();
@@ -119,7 +122,7 @@ export const ZtunnelConfig: React.FC<ZtunnelConfigProps> = (props: ZtunnelConfig
     const targetResource: string = resources[resourceIdx];
 
     if (targetResource !== resource) {
-      setConfig({});
+      setConfig({ services: [], workloads: [] });
       setFetch(true);
       setResource(targetResource);
       setActiveKey(resourceIdx);
@@ -137,7 +140,7 @@ export const ZtunnelConfig: React.FC<ZtunnelConfigProps> = (props: ZtunnelConfig
     const targetPod: Pod = sortedPods()[podIdx];
 
     if (targetPod.name !== pod.name) {
-      setConfig({});
+      setConfig({ services: [], workloads: [] });
       setPod(targetPod);
       setFetch(true);
     }
@@ -149,10 +152,6 @@ export const ZtunnelConfig: React.FC<ZtunnelConfigProps> = (props: ZtunnelConfig
     <Tab title={t('Services')} eventKey={0} key="services">
       <Card className={fullHeightStyle}>
         <CardBody>
-          <StatefulFilters
-            initialFilters={filters}
-            onFilterChange={active => setActiveFilters(active)}
-          ></StatefulFilters>
           <div className={fullHeightStyle}>
             <div style={{ marginBottom: '1.25rem' }}>
               <div key="service-icon" className={iconStyle}>
@@ -167,9 +166,15 @@ export const ZtunnelConfig: React.FC<ZtunnelConfigProps> = (props: ZtunnelConfig
                 options={props.workload.pods.map((pod: Pod) => pod.name).sort()}
               />
 
-              <span style={{ marginLeft: '10px' }}>{t('Filter by:')}</span>
+              <span style={{ marginLeft: '10px', display: 'inline-flex' }}>
+                <div style={{ padding: '5px' }}>Filter by: </div>
+                <StatefulFilters
+                  initialFilters={serviceFilters}
+                  onFilterChange={active => serviceSetActiveFilters(active)}
+                ></StatefulFilters>
+              </span>
             </div>
-            <ZtunnelServicesTable config={filteredItems} items={{}} />
+            <ZtunnelServicesTable config={serviceFilteredItem} items={{}} />
           </div>
         </CardBody>
       </Card>
@@ -181,10 +186,6 @@ export const ZtunnelConfig: React.FC<ZtunnelConfigProps> = (props: ZtunnelConfig
     <Tab title={t('Workloads')} eventKey={1} key="workloads">
       <Card className={fullHeightStyle}>
         <CardBody>
-          <StatefulFilters
-            initialFilters={filters}
-            onFilterChange={active => setActiveFilters(active)}
-          ></StatefulFilters>
           <div className={fullHeightStyle}>
             <div style={{ marginBottom: '1.25rem' }}>
               <div key="service-icon" className={iconStyle}>
@@ -198,9 +199,15 @@ export const ZtunnelConfig: React.FC<ZtunnelConfigProps> = (props: ZtunnelConfig
                 label={pod.name}
                 options={props.workload.pods.map((pod: Pod) => pod.name).sort()}
               />
-              <span style={{ marginLeft: '10px' }}>{t('Filter by:')}</span>
+              <span style={{ marginLeft: '10px', display: 'inline-flex' }}>
+                <div style={{ padding: '5px' }}>Filter by: </div>
+                <StatefulFilters
+                  initialFilters={workloadFilters}
+                  onFilterChange={active => workloadSetActiveFilters(active)}
+                ></StatefulFilters>
+              </span>
             </div>
-            <ZtunnelWorkloadsTable config={filteredItems} items={{}} />
+            <ZtunnelWorkloadsTable config={workloadFilteredItem} items={{}} />
           </div>
         </CardBody>
       </Card>

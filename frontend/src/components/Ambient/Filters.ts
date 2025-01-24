@@ -23,7 +23,20 @@ const byServices = (services: FilterValue[]): RunnableFilter<ZtunnelService | Zt
   };
 };
 
-export const ztunnelFilters = (spans: ZtunnelService[]): RunnableFilter<ZtunnelService>[] => {
+export const ztunnelServiceFilters = (spans: ZtunnelService[]): RunnableFilter<ZtunnelService>[] => {
+  const namespace = new Set<string>();
+  const services = new Set<string>();
+  spans.forEach(s => {
+    namespace.add(s.namespace);
+    services.add(s.services);
+  });
+  return [
+    byNamespaces(Array.from(namespace).map(w => ({ id: w, title: w }))),
+    byServices(Array.from(services).map(w => ({ id: w, title: w })))
+  ];
+};
+
+export const ztunnelWorkloadFilters = (spans: ZtunnelWorkload[]): RunnableFilter<ZtunnelWorkload>[] => {
   const namespace = new Set<string>();
   const services = new Set<string>();
   spans.forEach(s => {

@@ -29,7 +29,6 @@ import { HistoryManager } from 'app/History';
 import { basicTabStyle } from 'styles/TabStyles';
 import { ZtunnelConfig } from '../../components/Ambient/ZtunnelConfig';
 import { WaypointConfig } from '../../components/Ambient/WaypointConfig';
-import { Services } from 'i18next';
 
 type WorkloadDetailsState = {
   cluster?: string;
@@ -37,7 +36,6 @@ type WorkloadDetailsState = {
   error?: ErrorMsg;
   health?: WorkloadHealth;
   workload?: Workload;
-  services?: Services;
 };
 
 type ReduxProps = {
@@ -278,8 +276,8 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
               lastRefreshAt={this.props.lastRefreshAt}
               namespace={this.props.workloadId.namespace}
               workload={this.state.workload}
-              items={[]}
-              service={this.props.workloadId.service}
+              workloadItems={[]}
+              serviceItems={[]}
             />
           )}
         </Tab>

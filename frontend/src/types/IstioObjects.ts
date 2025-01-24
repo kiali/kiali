@@ -1449,8 +1449,8 @@ export type ZtunnelConfigDump = {
   certificates?: Certificate[];
   config?: ZtunnelConfig;
   policies?: any[];
-  services?: ZtunnelService[];
-  workloads?: ZtunnelWorkload[];
+  services: ZtunnelService[];
+  workloads: ZtunnelWorkload[];
 };
 
 export type Certificate = {
@@ -1577,6 +1577,7 @@ export type ZtunnelService = {
   name: string;
   namespace: string;
   ports: Record<string, number>;
+  service: string;
   subjectAltNames: string[];
   vips: string[];
   waypoint: ZtunnelWaypoint;
@@ -1604,7 +1605,7 @@ export type ZtunnelWorkload = {
   node: string;
   protocol: string;
   serviceAccount: string;
-  services: string[];
+  services: string;
   status: string;
   trustDomain: string;
   uid: string;
