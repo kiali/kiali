@@ -209,7 +209,10 @@ class ServiceInfoComponent extends React.Component<Props, ServiceInfoState> {
             this.props.serviceDetails.k8sHTTPRoutes,
             this.props.serviceDetails.k8sGRPCRoutes,
             this.props.serviceDetails.validations,
-            this.props.cluster
+            this.props.cluster,
+            this.props.serviceDetails?.service?.labels
+              ? this.props.serviceDetails.service.labels[serverConfig.istioLabels.ambientWaypointGatewayLabel]
+              : ''
           )
         : [];
 

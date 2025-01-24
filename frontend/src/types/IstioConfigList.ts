@@ -388,7 +388,8 @@ export const k8sGwToIstioItems = (
   k8srs: K8sHTTPRoute[],
   k8sgrpcrs: K8sGRPCRoute[],
   validations: Validations,
-  cluster?: string
+  cluster?: string,
+  gatewayLabel?: string
 ): IstioConfigItem[] => {
   const istioItems: IstioConfigItem[] = [];
   const hasValidations = (vKey: string): ObjectValidation => validations.k8sgateway && validations.k8sgateway[vKey];
@@ -415,7 +416,9 @@ export const k8sGwToIstioItems = (
   });
 
   gws.forEach(gw => {
-    if (k8sGateways.has(`${gw.metadata.namespace}/${gw.metadata.name}`)) {
+    // K8s Gateways which are listed in HTTP or GRPC Routes
+    // OR those K8 Gateways which name equals to service's gatewayLabel
+    if (k8sGateways.has(`${gw.metadata.namespace}/${gw.metadata.name}`) || gatewayLabel === gw.metadata.name) {
       const vKey = validationKey(gw.metadata.name, gw.metadata.namespace);
 
       const item = {
