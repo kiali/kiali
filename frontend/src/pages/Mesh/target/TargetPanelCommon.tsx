@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from 'components/Pf/PfColors';
-import { MeshInfraType, MeshNodeData, MeshTarget } from 'types/Mesh';
+import { MeshAttr, MeshInfraType, MeshNodeData, MeshTarget } from 'types/Mesh';
 import { DurationInSeconds, IntervalInMilliseconds, TimeInMilliseconds } from 'types/Common';
 import { ValidationTypes } from 'types/IstioObjects';
 import { Status, statusMsg } from 'types/IstioStatus';
@@ -13,6 +13,10 @@ import { AmbientLabel, tooltipMsgType } from '../../../components/Ambient/Ambien
 import { serverConfig } from '../../../config';
 import { KialiPageLink } from 'components/Link/KialiPageLink';
 import { classes } from 'typestyle';
+import { UNKNOWN } from 'types/Graph';
+import { panelBodyStyle } from 'pages/Graph/SummaryPanelStyle';
+import { elems, selectAnd } from 'helpers/GraphHelpers';
+import { Visualization } from '@patternfly/react-topology';
 
 export interface TargetPanelCommonProps {
   duration: DurationInSeconds;
@@ -191,6 +195,22 @@ const badgeStyle = kialiStyle({
   marginBottom: '0.25rem'
 });
 
+const summaryStyle = kialiStyle({
+  marginBottom: '0.25rem'
+});
+
+const summaryHeaderStyle = kialiStyle({
+  marginLeft: '0.75rem'
+});
+
+const summaryInfoStyle = kialiStyle({
+  marginLeft: '2.0rem'
+});
+
+const infraStyle = kialiStyle({
+  marginTop: '0.75rem'
+});
+
 export const renderNodeLink = (meshData: MeshNodeData, style?: string): React.ReactNode | undefined => {
   let displayName, key, link: string;
   let pfBadge: PFBadgeType;
@@ -229,4 +249,144 @@ export const renderNodeLink = (meshData: MeshNodeData, style?: string): React.Re
   }
 
   return undefined;
+};
+
+const renderClusterSummary = (nodeData: MeshNodeData): React.ReactNode => {
+  return (
+    <div key={nodeData.id} className={summaryStyle}>
+      {renderNodeHeader(
+        nodeData,
+        { nameOnly: true, smallSize: true, hideBadge: nodeData.isExternal },
+        summaryHeaderStyle
+      )}
+      <div className={summaryInfoStyle}>
+        {t('kubernetes version: {{version}}', { version: nodeData.version || t(UNKNOWN) })}
+      </div>
+    </div>
+  );
+};
+
+export const renderControlPlaneSummary = (nodeData: MeshNodeData, dataPlaneNamespaceCount: number): React.ReactNode => {
+  return (
+    <div key={nodeData.id} className={summaryStyle}>
+      {renderNodeHeader(nodeData, { nameOnly: true, smallSize: true }, summaryHeaderStyle)}
+      <div className={summaryInfoStyle}>
+        <div>{t('version: {{version}}', { version: nodeData.version || t(UNKNOWN) })}</div>
+        <div>{t('revision: {{revision}}', { revision: nodeData.infraData.revision || t('default') })}</div>
+        <div>
+          {t('dataplane namespaces: {{count}}', {
+            count: dataPlaneNamespaceCount
+          })}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export const renderGatewaySummary = (nodeData: MeshNodeData): React.ReactNode => {
+  return (
+    <div key={nodeData.id} className={summaryStyle}>
+      {renderNodeHeader(nodeData, { nameOnly: true, smallSize: true }, summaryHeaderStyle)}
+      <div className={summaryInfoStyle}>
+        <div>{t('api version: {{apiVersion}}', { apiVersion: nodeData.infraData.apiVersion || t(UNKNOWN) })}</div>
+        <div>{t('revision: {{revision}}', { revision: nodeData.infraData.revision || t('default') })}</div>
+      </div>
+    </div>
+  );
+};
+
+export const renderKialiSummary = (nodeData: MeshNodeData): React.ReactNode => {
+  return (
+    <div key={nodeData.id} className={summaryStyle}>
+      {renderNodeHeader(nodeData, { nameOnly: true, smallSize: true }, summaryHeaderStyle)}
+      <div className={summaryInfoStyle}>
+        <div>{t('version: {{version}}', { version: nodeData.version })}</div>
+      </div>
+    </div>
+  );
+};
+
+export const renderObservabilitySummary = (nodeData: MeshNodeData): React.ReactNode => {
+  return (
+    <div key={nodeData.id} className={summaryStyle}>
+      {renderNodeHeader(nodeData, { nameOnly: true, smallSize: true }, summaryHeaderStyle)}
+      <div className={summaryInfoStyle}>
+        <div>{t('version: {{version}}', { version: nodeData.version })}</div>
+      </div>
+    </div>
+  );
+};
+
+export const renderInfraSummary = (
+  controller: Visualization,
+  forCluster?: string,
+  _forNamespace?: string
+): React.ReactNode => {
+  const { nodes } = elems(controller);
+
+  const clusterAndExternalNodes = selectAnd(nodes, [{ prop: MeshAttr.infraType, op: '=', val: MeshInfraType.CLUSTER }]);
+  const clusterNodes = clusterAndExternalNodes.filter(rcn => !rcn.getData().isExternal);
+  let controlPlaneNodes = selectAnd(nodes, [{ prop: MeshAttr.infraType, op: '=', val: MeshInfraType.ISTIOD }]);
+  let dataPlaneNodes = selectAnd(nodes, [{ prop: MeshAttr.infraType, op: '=', val: MeshInfraType.DATAPLANE }]);
+  let gatewayNodes = selectAnd(nodes, [{ prop: MeshAttr.infraType, op: '=', val: MeshInfraType.GATEWAY }]);
+  let kialiNodes = selectAnd(nodes, [{ prop: MeshAttr.infraType, op: '=', val: MeshInfraType.KIALI }]);
+  let observeNodes = [
+    ...selectAnd(nodes, [{ prop: MeshAttr.infraType, op: '=', val: MeshInfraType.GRAFANA }]),
+    ...selectAnd(nodes, [{ prop: MeshAttr.infraType, op: '=', val: MeshInfraType.METRIC_STORE }]),
+    ...selectAnd(nodes, [{ prop: MeshAttr.infraType, op: '=', val: MeshInfraType.TRACE_STORE }])
+  ];
+  let waypointNodes = selectAnd(nodes, [{ prop: MeshAttr.infraType, op: '=', val: MeshInfraType.WAYPOINT }]);
+
+  if (forCluster) {
+    controlPlaneNodes = controlPlaneNodes.filter(n => n.getData().cluster === forCluster);
+    dataPlaneNodes = dataPlaneNodes.filter(n => n.getData().cluster === forCluster);
+    gatewayNodes = gatewayNodes.filter(n => n.getData().cluster === forCluster);
+    kialiNodes = kialiNodes.filter(n => n.getData().cluster === forCluster);
+    observeNodes = observeNodes.filter(n => n.getData().cluster === forCluster);
+    waypointNodes = waypointNodes.filter(n => n.getData().cluster === forCluster);
+  }
+
+  return (
+    <div id="target-panel-mesh-body" className={panelBodyStyle}>
+      {!forCluster && (
+        <div className={infraStyle}>
+          {t('Clusters: {{num}}', { num: clusterNodes.length })}
+          {clusterNodes.map(infra => renderClusterSummary(infra.getData()))}
+        </div>
+      )}
+
+      <div className={infraStyle}>
+        {controlPlaneNodes.length > 0 && t('ControlPlanes: {{num}}', { num: controlPlaneNodes.length })}
+        {controlPlaneNodes.map(infra => {
+          const cpRev = infra.getData().infraData.revision ?? 'default';
+          const dataPlaneNode = dataPlaneNodes.find(dpn => {
+            const dpRev = dpn.getData().infraData.revision ?? 'default';
+            return cpRev === dpRev;
+          });
+          const dataPlaneNamespaceCount = dataPlaneNode?.getData().infraData?.length ?? 0;
+          return renderControlPlaneSummary(infra.getData(), dataPlaneNamespaceCount);
+        })}
+      </div>
+
+      <div className={infraStyle}>
+        {gatewayNodes.length > 0 && t('Gateways: {{num}}', { num: gatewayNodes.length })}
+        {gatewayNodes.map(infra => renderGatewaySummary(infra.getData()))}
+      </div>
+
+      <div className={infraStyle}>
+        {waypointNodes.length > 0 && t('Waypoints: {{num}}', { num: waypointNodes.length })}
+        {waypointNodes.map(infra => renderGatewaySummary(infra.getData()))}
+      </div>
+
+      <div className={infraStyle}>
+        {kialiNodes.length > 0 && t('Kiali: {{num}}', { num: kialiNodes.length })}
+        {kialiNodes.map(infra => renderKialiSummary(infra.getData()))}
+      </div>
+
+      <div className={infraStyle}>
+        {observeNodes.length > 0 && t('Observability: {{num}}', { num: observeNodes.length })}
+        {observeNodes.map(infra => renderObservabilitySummary(infra.getData()))}
+      </div>
+    </div>
+  );
 };
