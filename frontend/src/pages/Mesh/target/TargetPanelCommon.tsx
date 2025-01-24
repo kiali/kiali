@@ -16,7 +16,7 @@ import { classes } from 'typestyle';
 import { UNKNOWN } from 'types/Graph';
 import { panelBodyStyle } from 'pages/Graph/SummaryPanelStyle';
 import { elems, selectAnd } from 'helpers/GraphHelpers';
-import { Visualization } from '@patternfly/react-topology';
+import { Controller } from '@patternfly/react-topology';
 
 export interface TargetPanelCommonProps {
   duration: DurationInSeconds;
@@ -318,9 +318,9 @@ export const renderObservabilitySummary = (nodeData: MeshNodeData): React.ReactN
 };
 
 export const renderInfraSummary = (
-  controller: Visualization,
+  controller: Controller,
   forCluster?: string,
-  _forNamespace?: string
+  forNamespace?: string
 ): React.ReactNode => {
   const { nodes } = elems(controller);
 
@@ -338,12 +338,24 @@ export const renderInfraSummary = (
   let waypointNodes = selectAnd(nodes, [{ prop: MeshAttr.infraType, op: '=', val: MeshInfraType.WAYPOINT }]);
 
   if (forCluster) {
-    controlPlaneNodes = controlPlaneNodes.filter(n => n.getData().cluster === forCluster);
-    dataPlaneNodes = dataPlaneNodes.filter(n => n.getData().cluster === forCluster);
-    gatewayNodes = gatewayNodes.filter(n => n.getData().cluster === forCluster);
-    kialiNodes = kialiNodes.filter(n => n.getData().cluster === forCluster);
-    observeNodes = observeNodes.filter(n => n.getData().cluster === forCluster);
-    waypointNodes = waypointNodes.filter(n => n.getData().cluster === forCluster);
+    controlPlaneNodes = controlPlaneNodes.filter(
+      n => n.getData().cluster === forCluster && (!forNamespace || n.getData().namespace === forNamespace)
+    );
+    dataPlaneNodes = dataPlaneNodes.filter(
+      n => n.getData().cluster === forCluster && (!forNamespace || n.getData().namespace === forNamespace)
+    );
+    gatewayNodes = gatewayNodes.filter(
+      n => n.getData().cluster === forCluster && (!forNamespace || n.getData().namespace === forNamespace)
+    );
+    kialiNodes = kialiNodes.filter(
+      n => n.getData().cluster === forCluster && (!forNamespace || n.getData().namespace === forNamespace)
+    );
+    observeNodes = observeNodes.filter(
+      n => n.getData().cluster === forCluster && (!forNamespace || n.getData().namespace === forNamespace)
+    );
+    waypointNodes = waypointNodes.filter(
+      n => n.getData().cluster === forCluster && (!forNamespace || n.getData().namespace === forNamespace)
+    );
   }
 
   return (

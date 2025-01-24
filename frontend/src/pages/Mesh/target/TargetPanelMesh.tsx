@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Visualization } from '@patternfly/react-topology';
+import { Controller } from '@patternfly/react-topology';
 import { renderInfraSummary, TargetPanelCommonProps, targetPanelStyle } from './TargetPanelCommon';
 import { classes } from 'typestyle';
 import { panelHeadingStyle, panelStyle } from 'pages/Graph/SummaryPanelStyle';
@@ -18,7 +18,7 @@ const targetPanelTitle = kialiStyle({
 export const TargetPanelMesh: React.FC<TargetPanelMeshProps> = (props: TargetPanelMeshProps) => {
   const { t } = useKialiTranslation();
 
-  const controller = props.target.elem as Visualization;
+  const controller = props.target.elem as Controller;
 
   if (!controller) {
     return null;

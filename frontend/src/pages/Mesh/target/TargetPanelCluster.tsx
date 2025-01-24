@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { Visualization } from '@patternfly/react-topology';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from 'components/Pf/PfColors';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
@@ -52,17 +51,6 @@ export const TargetPanelCluster: React.FC<TargetPanelClusterProps> = (props: Tar
     });
   };
 
-  /*
-  static readonly panelStyle = {
-    backgroundColor: PFColors.BackgroundColor100,
-    height: '100%',
-    margin: 0,
-    minWidth: targetPanelWidth,
-    overflowY: 'auto' as 'auto',
-    width: targetPanelWidth
-  };
-  */
-
   const clusterNode = props.target.elem;
   const controller = clusterNode.getController();
   const data = clusterNode.getData()!;
@@ -107,7 +95,7 @@ export const TargetPanelCluster: React.FC<TargetPanelClusterProps> = (props: Tar
           <br />
         </div>
       )}
-      {renderInfraSummary(controller as Visualization, clusterNode.getData()?.cluster)}
+      {renderInfraSummary(controller, clusterNode.getData()?.cluster)}
     </div>
   );
 };
