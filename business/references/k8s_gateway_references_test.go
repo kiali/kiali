@@ -28,10 +28,20 @@ func TestK8sGatewayReferences(t *testing.T) {
 		K8sGateways:   []*k8s_networking_v1.Gateway{gw},
 		K8sHTTPRoutes: []*k8s_networking_v1.HTTPRoute{r1, r2},
 		K8sGRPCRoutes: []*k8s_networking_v1.GRPCRoute{r3, r4},
+		WorkloadsPerNamespace: map[string]models.WorkloadList{
+			"bookinfo": data.CreateWorkloadList("bookinfo",
+				data.CreateWorkloadListItem("bookinfo", map[string]string{conf.IstioLabels.AmbientWaypointGatewayLabel: "bookinfo"})),
+			"test": data.CreateWorkloadList("test",
+				data.CreateWorkloadListItem("test", map[string]string{conf.IstioLabels.AmbientWaypointGatewayLabel: "bookinfo"})),
+		},
 	}
 
 	references := gatewayReferences.References()
 	gateway := references[models.IstioReferenceKey{ObjectGVK: kubernetes.K8sGateways, Namespace: "bookinfo", Name: "bookinfo"}]
+
+	assert.Len(gateway.WorkloadReferences, 1)
+	assert.Equal(gateway.WorkloadReferences[0].Name, "bookinfo")
+	assert.Equal(gateway.WorkloadReferences[0].Namespace, "bookinfo")
 
 	assert.Len(gateway.ObjectReferences, 2)
 	assert.Equal(gateway.ObjectReferences[0].Name, "details")
@@ -59,5 +69,6 @@ func TestK8sGatewayNoReferences(t *testing.T) {
 	references := gatewayReferences.References()
 	gateway := references[models.IstioReferenceKey{ObjectGVK: kubernetes.K8sGateways, Namespace: "bookinfo", Name: "bookinfo"}]
 
+	assert.Empty(gateway.WorkloadReferences)
 	assert.Empty(gateway.ObjectReferences)
 }

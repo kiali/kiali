@@ -4,6 +4,7 @@ import { MeshCluster } from './Mesh';
 export type IstioLabelKey =
   | 'ambientNamespaceLabel'
   | 'ambientNamespaceLabelValue'
+  | 'ambientWaypointGatewayLabel'
   | 'ambientWaypointLabel'
   | 'ambientWaypointLabelValue'
   | 'appLabelName'

@@ -12,7 +12,7 @@ import { RenderComponentScroll } from '../../components/Nav/Page';
 import { GraphDataSource } from '../../services/GraphDataSource';
 import { DurationInSeconds } from 'types/Common';
 import { isIstioNamespace, serverConfig } from '../../config/ServerConfig';
-import { gvkType, IstioConfigList, toIstioItems } from '../../types/IstioConfigList';
+import { gvkType, IstioConfigList, skipUnrelatedK8sGateways, toIstioItems } from '../../types/IstioConfigList';
 import { WorkloadPods } from './WorkloadPods';
 import { GraphEdgeTapEvent } from '../../components/CytoscapeGraph/CytoscapeGraph';
 import { location, router, URLParam } from '../../app/History';
@@ -46,6 +46,7 @@ const defaultTab = 'pods';
 
 const workloadIstioResources = [
   getGVKTypeString(gvkType.Gateway),
+  getGVKTypeString(gvkType.K8sGateway),
   getGVKTypeString(gvkType.AuthorizationPolicy),
   getGVKTypeString(gvkType.PeerAuthentication),
   getGVKTypeString(gvkType.Sidecar),
@@ -275,9 +276,10 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
     const pods = workload?.pods ?? [];
     const workloadEntries = workload?.workloadEntries ?? [];
 
-    const istioConfigItems = this.state.workloadIstioConfig
-      ? toIstioItems(this.state.workloadIstioConfig, workload?.cluster || '')
-      : [];
+    const istioConfigItems = skipUnrelatedK8sGateways(
+      this.state.workloadIstioConfig ? toIstioItems(this.state.workloadIstioConfig, workload?.cluster || '') : [],
+      this.props.workload?.labels[serverConfig.istioLabels.ambientWaypointGatewayLabel]
+    );
 
     // RenderComponentScroll handles height to provide an inner scroll combined with tabs
     // This height needs to be propagated to minigraph to proper resize in height

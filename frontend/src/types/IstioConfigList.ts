@@ -14,7 +14,7 @@ import {
   K8sResource
 } from './IstioObjects';
 import { ResourcePermissions } from './Permissions';
-import { getGVKTypeString, getIstioObjectGVK } from '../utils/IstioConfigUtils';
+import { getGVKTypeString, getIstioObjectGVK, kindToStringIncludeK8s } from '../utils/IstioConfigUtils';
 import { TypeMeta } from './Kubernetes';
 
 export interface IstioConfigItem extends TypeMeta {
@@ -226,6 +226,23 @@ export const filterByConfigValidation = (unfiltered: IstioConfigItem[], configFi
   return filtered;
 };
 
+export const skipUnrelatedK8sGateways = (unfiltered: IstioConfigItem[], gatewayLabel?: string): IstioConfigItem[] => {
+  const filtered: IstioConfigItem[] = [];
+
+  unfiltered.forEach(item => {
+    if (gvkType.K8sGateway === kindToStringIncludeK8s(item.apiVersion, item.kind)) {
+      // keep only those K8 Gateways which name equals to workload's gatewayLabel
+      if (item.name === gatewayLabel) {
+        filtered.push(item);
+      }
+    } else {
+      filtered.push(item);
+    }
+  });
+
+  return filtered;
+};
+
 export const toIstioItems = (istioConfigList: IstioConfigList, cluster?: string): IstioConfigItem[] => {
   const istioItems: IstioConfigItem[] = [];
 
@@ -371,7 +388,8 @@ export const k8sGwToIstioItems = (
   k8srs: K8sHTTPRoute[],
   k8sgrpcrs: K8sGRPCRoute[],
   validations: Validations,
-  cluster?: string
+  cluster?: string,
+  gatewayLabel?: string
 ): IstioConfigItem[] => {
   const istioItems: IstioConfigItem[] = [];
   const hasValidations = (vKey: string): ObjectValidation => validations.k8sgateway && validations.k8sgateway[vKey];
@@ -398,7 +416,9 @@ export const k8sGwToIstioItems = (
   });
 
   gws.forEach(gw => {
-    if (k8sGateways.has(`${gw.metadata.namespace}/${gw.metadata.name}`)) {
+    // K8s Gateways which are listed in HTTP or GRPC Routes
+    // OR those K8 Gateways which name equals to service's gatewayLabel
+    if (k8sGateways.has(`${gw.metadata.namespace}/${gw.metadata.name}`) || gatewayLabel === gw.metadata.name) {
       const vKey = validationKey(gw.metadata.name, gw.metadata.namespace);
 
       const item = {

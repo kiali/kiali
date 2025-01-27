@@ -88,6 +88,7 @@ export const healthConfig = {
   istioLabels: {
     ambientNamespaceLabel: 'istio.io/dataplane-mode',
     ambientNamespaceLabelValue: 'ambient',
+    ambientWaypointGatewayLabel: 'gateway.networking.k8s.io/gateway-name',
     ambientWaypointLabel: 'gateway.istio.io/managed',
     ambientWaypointLabelValue: 'istio.io-mesh-controller',
     appLabelName: 'app',

@@ -219,6 +219,16 @@ func FilterK8sGatewaysByRoutes(allGws []*k8s_networking_v1.Gateway, httpRoutes [
 	return gateways
 }
 
+func FilterK8sGatewaysByLabel(allGws []*k8s_networking_v1.Gateway, gatewayLabel string) []*k8s_networking_v1.Gateway {
+	gateways := []*k8s_networking_v1.Gateway{}
+	for _, gw := range allGws {
+		if gw.Name == gatewayLabel {
+			gateways = append(gateways, gw)
+		}
+	}
+	return gateways
+}
+
 func FilterPodsByController(controllerName string, controllerGVK schema.GroupVersionKind, allPods []core_v1.Pod) []core_v1.Pod {
 	var pods []core_v1.Pod
 	for _, pod := range allPods {
