@@ -60,7 +60,7 @@ Then('sd::user sees inbound and outbound traffic information', () => {
     cy.contains('No Outbound Traffic').should('not.exist');
 
     cy.get('table.pf-v5-c-table.pf-m-grid-md').should('exist');
-    cy.contains('istio-ingressgateway');
+    cy.contains('bookinfo-gateway-istio');
   });
 });
 
