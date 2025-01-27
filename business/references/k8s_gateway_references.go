@@ -3,14 +3,16 @@ package references
 import (
 	k8s_networking_v1 "sigs.k8s.io/gateway-api/apis/v1"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
 
 type K8sGatewayReferences struct {
-	K8sGateways   []*k8s_networking_v1.Gateway
-	K8sHTTPRoutes []*k8s_networking_v1.HTTPRoute
-	K8sGRPCRoutes []*k8s_networking_v1.GRPCRoute
+	K8sGateways           []*k8s_networking_v1.Gateway
+	K8sHTTPRoutes         []*k8s_networking_v1.HTTPRoute
+	K8sGRPCRoutes         []*k8s_networking_v1.GRPCRoute
+	WorkloadsPerNamespace map[string]models.WorkloadList
 }
 
 func (g K8sGatewayReferences) References() models.IstioReferencesMap {
@@ -19,10 +21,23 @@ func (g K8sGatewayReferences) References() models.IstioReferencesMap {
 	for _, gw := range g.K8sGateways {
 		key := models.IstioReferenceKey{Namespace: gw.Namespace, Name: gw.Name, ObjectGVK: kubernetes.K8sGateways}
 		references := &models.IstioReferences{}
+		references.WorkloadReferences = g.getWorkloadReferences(gw)
 		references.ObjectReferences = g.getConfigReferences(gw)
 		result.MergeReferencesMap(models.IstioReferencesMap{key: references})
 	}
 
+	return result
+}
+
+func (g K8sGatewayReferences) getWorkloadReferences(gw *k8s_networking_v1.Gateway) []models.WorkloadReference {
+	result := make([]models.WorkloadReference, 0)
+
+	// Gateway searches Workloads from own namespace and Gateway Label
+	for _, wl := range g.WorkloadsPerNamespace[gw.Namespace].Workloads {
+		if gw.Name == wl.Labels[config.Get().IstioLabels.AmbientWaypointGatewayLabel] {
+			result = append(result, models.WorkloadReference{Name: wl.Name, Namespace: gw.Namespace})
+		}
+	}
 	return result
 }
 
