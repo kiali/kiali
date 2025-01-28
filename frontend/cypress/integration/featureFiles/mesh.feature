@@ -53,7 +53,6 @@ Feature: Kiali Mesh page
     When user selects mesh node with label "istio-system"
     Then user sees "istio-system" namespace side panel
 
-  @selected
   @bookinfo-app
   Scenario: User enables gateways
     When user opens display menu
@@ -61,7 +60,6 @@ Feature: Kiali Mesh page
     And user selects mesh node with label "bookinfo-gateway"
     Then user sees "bookinfo-gateway" node side panel
 
-  @selected
   @ambient
   @bookinfo-app
   Scenario: User enables waypoints
