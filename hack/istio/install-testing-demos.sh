@@ -125,6 +125,9 @@ if [ "${DELETE_DEMOS}" != "true" ]; then
   if [ "${USE_GATEWAY_API}" == "true" ]; then
     gateway_yaml="${ISTIO_DIR}/samples/bookinfo/gateway-api/bookinfo-gateway.yaml"
   elif ! [ -z "$GATEWAY_HOST" ]; then
+    # TODO: Ideally this wouldn't go in istio-system. It'd either go in the same namespace as the app
+    # or in its own namespace but doing that would require rewriting some tests and this is faster...
+    ${CLIENT_EXE} apply -n ${ISTIO_NAMESPACE} -f "${SCRIPT_DIR}/istio-gateway.yaml"
     gateway_yaml=$(mktemp)
     cat << EOF > "${gateway_yaml}"
 apiVersion: networking.istio.io/v1

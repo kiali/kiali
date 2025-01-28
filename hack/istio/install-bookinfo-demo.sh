@@ -230,6 +230,7 @@ if [ "${GATEWAY_YAML}" == "" ]; then
   if [ "${AMBIENT_ENABLED}" == "true" ]; then
     GATEWAY_YAML="${ISTIO_DIR}/samples/bookinfo/gateway-api/bookinfo-gateway.yaml"
   else
+    ${CLIENT_EXE} apply -n ${ISTIO_NAMESPACE} -f "${HACK_SCRIPT_DIR}/istio-gateway.yaml"
     GATEWAY_YAML="${ISTIO_DIR}/samples/bookinfo/networking/bookinfo-gateway.yaml"
   fi
 fi
