@@ -367,7 +367,7 @@ sleep 4
 # Expose the OpenShift routes
 if [ "${IS_OPENSHIFT}" == "true" ]; then
   $CLIENT_EXE expose svc/productpage -n ${NAMESPACE}
-  $CLIENT_EXE expose svc/istio-ingressgateway --port http2 -n ${INGRESS_NAMESPACE} --name=istio-ingressgateway
+  $CLIENT_EXE expose svc/istio-ingressgateway --port http -n ${INGRESS_NAMESPACE} --name=istio-ingressgateway
   $CLIENT_EXE expose svc/bookinfo-gateway-istio --port=http -n ${NAMESPACE} --name=bookinfo-gateway-istio
 fi
 
@@ -437,7 +437,7 @@ if [ "${TRAFFIC_GENERATOR_ENABLED}" == "true" ]; then
       # for now, we only support minikube k8s environments and maybe a good guess otherwise (e.g. for kind clusters)
       if minikube -p ${MINIKUBE_PROFILE} status > /dev/null 2>&1 ; then
         INGRESS_HOST=$(minikube -p ${MINIKUBE_PROFILE} ip)
-        INGRESS_PORT=$($CLIENT_EXE -n ${INGRESS_NAMESPACE} get service istio-ingressgateway -o jsonpath='{.spec.ports[?(@.name=="http2")].nodePort}')
+        INGRESS_PORT=$($CLIENT_EXE -n ${INGRESS_NAMESPACE} get service istio-ingressgateway -o jsonpath='{.spec.ports[?(@.name=="http")].nodePort}')
         INGRESS_ROUTE=$INGRESS_HOST:$INGRESS_PORT
 
         echo "Wait for productpage to come up to see if it is accessible via minikube ingress"
