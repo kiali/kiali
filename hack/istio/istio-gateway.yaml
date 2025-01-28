@@ -59,9 +59,9 @@ spec:
     protocol: TCP
     targetPort: 15021
   - name: http
-    port: 8080
+    port: 80
     protocol: TCP
-    targetPort: 80
+    targetPort: 8080
   - name: https
     port: 443
     protocol: TCP
