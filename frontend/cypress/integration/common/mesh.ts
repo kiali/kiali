@@ -62,9 +62,26 @@ When('user sees mesh side panel', () => {
         expect(resp.status).to.eq(200);
         expect(resp.body.meshName).to.not.equal(undefined);
         expect(resp.body.meshName).to.not.equal('');
-        cy.contains(`Mesh Name: ${resp.body.meshName}`);
+        cy.contains(`Mesh: ${resp.body.meshName}`);
       });
     });
+});
+
+When('user {string} mesh display option {string}', (action: string, option: string) => {
+  switch (option.toLowerCase()) {
+    case 'gateways':
+      option = 'filterGateways';
+      break;
+    case 'waypoints':
+      option = 'filterWaypoints';
+      break;
+  }
+
+  if (action === 'enables') {
+    cy.get('div#graph-display-menu').find(`input#${option}`).check();
+  } else {
+    cy.get('div#graph-display-menu').find(`input#${option}`).uncheck();
+  }
 });
 
 Then('user sees cluster side panel', () => {
