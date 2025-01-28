@@ -658,10 +658,14 @@ func (in *SvcService) isServiceCaptured(svc *models.Service) ([]models.Waypoint,
 	found := false
 	waypointNames := make([]models.Waypoint, 0)
 
+	if svc.Labels[config.WaypointUseLabel] == "none" {
+		return waypointNames, false
+	}
+
 	// Is the service labeled?
 	// the service waypoint takes precedence over the namespace waypoint as long as the service waypoint can handle service or all traffic
 	waypointName, isLabeled := svc.Labels[config.WaypointUseLabel]
-	if isLabeled {
+	if isLabeled && waypointName != "none" {
 		waypointNamespace, okNs := svc.Labels[config.WaypointUseNamespaceLabel]
 		if !okNs {
 			waypointNamespace = svc.Namespace
@@ -679,7 +683,7 @@ func (in *SvcService) isServiceCaptured(svc *models.Service) ([]models.Waypoint,
 		if !okNs {
 			waypointNamespace = svc.Namespace
 		}
-		if ok {
+		if ok && waypointNsName != "none" {
 			found = true
 			// Ambient doesn't support multicluster (For now), cluster is the same as the workload
 			waypointNames = append(waypointNames, models.Waypoint{Name: waypointNsName, Type: "namespace", Namespace: waypointNamespace, Cluster: svc.Cluster})

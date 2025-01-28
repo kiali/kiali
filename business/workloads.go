@@ -2192,6 +2192,10 @@ func (in *WorkloadService) isWorkloadCaptured(ctx context.Context, workload mode
 	found := false
 	waypointNames := make([]models.Waypoint, 0)
 
+	if workload.Labels[config.WaypointUseLabel] == "none" {
+		return waypointNames, found
+	}
+
 	// Is the pod labeled?
 	for _, pod := range workload.Pods {
 		waypointName, ok := pod.Labels[config.WaypointUseLabel]
@@ -2268,6 +2272,10 @@ func (in *WorkloadService) isWorkloadCaptured(ctx context.Context, workload mode
 func (in *WorkloadService) GetWaypointsForWorkload(ctx context.Context, workload models.Workload) []models.WorkloadReferenceInfo {
 	var workloadslist []models.WorkloadReferenceInfo
 	workloadsMap := map[string]bool{} // Ensure unique
+
+	if workload.Labels[config.WaypointUseLabel] == "none" {
+		return workloadslist
+	}
 
 	// Get Waypoint list names
 	waypoints, found := in.isWorkloadCaptured(ctx, workload)
