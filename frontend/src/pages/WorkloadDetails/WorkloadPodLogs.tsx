@@ -318,7 +318,6 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
   componentDidMount(): void {
     const screenFullAlias = screenfull as Screenfull;
     screenFullAlias.onchange(() => this.setState({ fullscreen: !this.state.fullscreen }));
-
     if (this.state.containerOptions) {
       const pod = this.props.pods[this.state.podValue!];
       this.fetchEntries(
@@ -1211,6 +1210,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
       return getPodLogs(
         namespace,
         podName,
+        this.props.workload,
         c.name,
         maxLines,
         sinceTime,
@@ -1223,7 +1223,19 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
     if (showZtunnel || showWaypoint) {
       extraContainers.forEach(c => {
         const containerType = c.displayName === 'ztunnel' ? LogType.ZTUNNEL : LogType.WAYPOINT;
-        promises.push(getPodLogs(namespace, podName, c.name, maxLines, sinceTime, duration, containerType, cluster));
+        promises.push(
+          getPodLogs(
+            namespace,
+            podName,
+            this.props.workload,
+            c.name,
+            maxLines,
+            sinceTime,
+            duration,
+            containerType,
+            cluster
+          )
+        );
       });
     }
 

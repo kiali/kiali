@@ -126,7 +126,8 @@ type LogOptions struct {
 	LogType  models.LogType
 	MaxLines *int
 	core_v1.PodLogOptions
-	filter filterOpts
+	filter   filterOpts
+	workload string
 }
 
 // Matches an ISO8601 full date
@@ -2707,7 +2708,8 @@ func (in *WorkloadService) streamParsedLogs(cluster, namespace string, names []s
 }
 
 // StreamPodLogs streams pod logs to an HTTP Response given the provided options
-func (in *WorkloadService) StreamPodLogs(cluster, namespace, name string, opts *LogOptions, w http.ResponseWriter) error {
+// The workload name is used to get the waypoint workloads when opts.LogType is "waypoint"
+func (in *WorkloadService) StreamPodLogs(cluster, namespace, workload, name string, opts *LogOptions, w http.ResponseWriter) error {
 	names := []string{}
 	if opts.LogType == models.LogTypeZtunnel {
 		// First, get ztunnel namespace and containers
@@ -2732,6 +2734,26 @@ func (in *WorkloadService) StreamPodLogs(cluster, namespace, name string, opts *
 		}
 		// They should be all in the same ns
 		return in.streamParsedLogs(cluster, pods[0].Namespace, names, opts, w)
+	}
+	if opts.LogType == models.LogTypeWaypoint {
+		wk, err := in.GetWorkload(context.TODO(), WorkloadCriteria{Cluster: cluster, Namespace: namespace, WorkloadName: workload, IncludeServices: false})
+		if err != nil {
+			log.Errorf("Error when getting workload info: %s", err.Error())
+		} else {
+			if wk.WaypointWorkloads != nil && len(wk.WaypointWorkloads) > 0 {
+				// TODO: Get efective one
+				waypoint := wk.WaypointWorkloads[0]
+				waypointWk, errWaypoint := in.GetWorkload(context.TODO(), WorkloadCriteria{Cluster: waypoint.Cluster, Namespace: waypoint.Namespace, WorkloadName: waypoint.Name, IncludeServices: false})
+				if errWaypoint != nil {
+					log.Errorf("Error when getting workload info: %s", err.Error())
+				} else {
+					for _, pod := range waypointWk.Pods {
+						names = append(names, pod.Name)
+					}
+					return in.streamParsedLogs(cluster, waypoint.Namespace, names, opts, w)
+				}
+			}
+		}
 	}
 	names = append(names, name)
 	return in.streamParsedLogs(cluster, namespace, names, opts, w)

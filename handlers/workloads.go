@@ -314,7 +314,7 @@ func PodLogs(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Fetch pod logs
-	err = business.Workload.StreamPodLogs(cluster, namespace, pod, opts, w)
+	err = business.Workload.StreamPodLogs(cluster, namespace, queryParams.Get("workload"), pod, opts, w)
 	if err != nil {
 		handleErrorResponse(w, err)
 		return

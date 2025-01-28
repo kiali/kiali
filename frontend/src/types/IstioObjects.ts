@@ -283,6 +283,7 @@ export interface PodLogsQuery {
   logType?: LogType;
   maxLines?: number;
   sinceTime?: number;
+  workload?: string;
 }
 
 export interface LogLevelQuery {
