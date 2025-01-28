@@ -16,7 +16,7 @@ Feature: Kiali Waypoint related features
     And the graph page has enough data
 
   @waypoint
-  Scenario: [Workload details] See the waypoint workload with the correct info
+  Scenario: [Workload list] See the workload list of bookinfo with the correct info
     Given user is at the "workloads" list page
     When user selects the "bookinfo" namespace
     Then the "waypoint" row is visible
@@ -25,6 +25,7 @@ Feature: Kiali Waypoint related features
     And the "Labels" column on the "waypoint" row has the text "gateway.networking.k8s.io/gateway-name=waypoint"
     And the "Type" column on the "waypoint" row has the text "Deployment"
     And the "Details" column on the "waypoint" row has the text "Waypoint Proxy"
+    And the "Details" column on the "waypoint" row has a link ending in "bookinfo/istio/gateway.networking.k8s.io/v1/Gateway/waypoint"
 
   @waypoint
   Scenario: [Workload details - productpage] The workload productpage is enrolled in waypoint
@@ -43,6 +44,7 @@ Feature: Kiali Waypoint related features
     Then the user sees the "L7" badge
     Then the user cannot see the "missing-sidecar" badge for "waypoint" workload in "bookinfo" namespace
     And the proxy status is "info" with "RDS: IGNORED" details
+    And the user can see the "K8sGateway-bookinfo-waypoint" istio config and badge "pfbadge-G"
     And user sees trace information
     When user selects a trace
     Then user sees trace details
