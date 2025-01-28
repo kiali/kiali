@@ -100,6 +100,11 @@ Then('the proxy status is {string}', (status: string) => {
   cy.get('[data-label=Status]').get(`.icon-${status}`).should('exist');
 });
 
+Then('the user can see the {string} istio config and badge {string}', (config: string, badge: string) => {
+  cy.get('#IstioConfigCard').should('be.visible').get(`[data-test="${config}"]`).should('exist');
+  cy.get('#IstioConfigCard').should('be.visible').get(`#${badge}`).should('exist');
+});
+
 Then('the proxy status is {string} with {string} details', (status: string, detail: string) => {
   cy.get('[test-data=proxy-status]').get(`.icon-${status}`).should('exist');
   cy.get('[test-data=proxy-status]').trigger('mouseenter');
