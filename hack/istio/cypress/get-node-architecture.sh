@@ -11,7 +11,8 @@
 
 set -e
 
-arch=$(kubectl describe nodes --selector='node-role.kubernetes.io/worker' | grep "Architecture:" | awk -F ' ' '{print $2}' | uniq)
+# Selecting != control-plane to get worker node due to this: https://github.com/kubernetes-sigs/kind/issues/3846
+arch=$(kubectl get nodes -l !node-role.kubernetes.io/control-plane -o jsonpath='{.items[0].metadata.labels.kubernetes\.io/arch}')
 multiple=$(echo $arch | wc -l)
 
 echo -n $arch

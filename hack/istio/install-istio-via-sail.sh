@@ -72,11 +72,17 @@ kind: Istio
 metadata:
   name: default
 spec:
-  version: v1.24.1
   namespace: istio-system
   updateStrategy:
     type: InPlace
   values:
+    meshConfig:
+      enableTracing: true
+      extensionProviders:
+      - name: otel-tracing
+        opentelemetry:
+          port: 4317
+          service: jaeger-collector.istio-system.svc.cluster.local
     global:
       proxy:
         resources:
@@ -119,3 +125,17 @@ for addon in "${addons[@]}"; do
   addon_version="${istio_version:1:4}"
   kubectl apply -n istio-system -f "https://raw.githubusercontent.com/istio/istio/refs/heads/release-$addon_version/samples/addons/$addon.yaml"
 done
+
+# Activate the otel tracer.
+kubectl apply -f - <<EOF
+apiVersion: telemetry.istio.io/v1
+kind: Telemetry
+metadata:
+  name: otel-tracing
+  namespace: istio-system
+spec:
+  tracing:
+  - providers:
+      - name: otel-tracing
+    randomSamplingPercentage: 100
+EOF
