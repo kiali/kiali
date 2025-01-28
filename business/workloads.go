@@ -2245,15 +2245,18 @@ func (in *WorkloadService) isWorkloadCaptured(ctx context.Context, workload mode
 	if len(services) > 0 {
 		for _, svc := range services {
 			waypointName, ok := svc.Labels[config.WaypointUseLabel]
-			waypointNamespace, okNs := ns.Labels[config.WaypointUseNamespaceLabel]
-			// If there is no specific waypoint Namespace label, it is supposed to be the same
-			if !okNs {
-				waypointNamespace = workload.Namespace
+			if waypointName != "none" {
+				waypointNamespace, okNs := ns.Labels[config.WaypointUseNamespaceLabel]
+				// If there is no specific waypoint Namespace label, it is supposed to be the same
+				if !okNs {
+					waypointNamespace = workload.Namespace
+				}
+				if ok {
+					found = true
+					waypointNames = append(waypointNames, models.Waypoint{Name: waypointName, Type: "service", Namespace: waypointNamespace, Cluster: workload.Cluster})
+				}
 			}
-			if ok {
-				found = true
-				waypointNames = append(waypointNames, models.Waypoint{Name: waypointName, Type: "service", Namespace: waypointNamespace, Cluster: workload.Cluster})
-			}
+
 		}
 	}
 
