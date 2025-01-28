@@ -240,7 +240,7 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
             {this.renderBadgeSummary(nodeData)}
             {nodeData.isWaypoint && renderWaypointLabel('sm')}
             {shouldRenderDestsList && <div>{destsList}</div>}
-            {shouldRenderSvcList && <div>{servicesList}</div>}
+            {shouldRenderSvcList && <div key={Date.now()}>{servicesList}</div>}
             {shouldRenderService && <div>{renderBadgedLink(nodeData, NodeType.SERVICE)}</div>}
             {shouldRenderApp && <div>{renderBadgedLink(nodeData, NodeType.APP)}</div>}
             {shouldRenderWorkload && this.renderWorkloadSection(nodeData)}
