@@ -127,8 +127,7 @@ type LogOptions struct {
 	LogType  models.LogType
 	MaxLines *int
 	core_v1.PodLogOptions
-	filter   filterOpts
-	workload string
+	filter filterOpts
 }
 
 // Matches an ISO8601 full date
@@ -2745,7 +2744,7 @@ func (in *WorkloadService) StreamPodLogs(cluster, namespace, workload, app, name
 		if err != nil {
 			log.Errorf("Error when getting workload info: %s", err.Error())
 		} else {
-			if wk.WaypointWorkloads != nil && len(wk.WaypointWorkloads) > 0 {
+			if len(wk.WaypointWorkloads) > 0 {
 				// Waypoint filter by the app name
 				fs := filterOpts{
 					app: *regexp.MustCompile(app),
