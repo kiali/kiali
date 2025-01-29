@@ -2627,7 +2627,7 @@ func (in *WorkloadService) streamParsedLogs(cluster, namespace string, names []s
 			if opts.LogType == models.LogTypeZtunnel {
 				entry = parseZtunnelLine(line, name)
 			} else {
-				entry = parseLogLine(line, opts.LogType == models.LogTypeProxy, engardeParser)
+				entry = parseLogLine(line, opts.LogType == models.LogTypeProxy || opts.LogType == models.LogTypeWaypoint, engardeParser)
 			}
 
 			if entry == nil {
@@ -2741,6 +2741,7 @@ func (in *WorkloadService) StreamPodLogs(cluster, namespace, workload, name stri
 			log.Errorf("Error when getting workload info: %s", err.Error())
 		} else {
 			if wk.WaypointWorkloads != nil && len(wk.WaypointWorkloads) > 0 {
+
 				// TODO: Get efective one
 				waypoint := wk.WaypointWorkloads[0]
 				waypointWk, errWaypoint := in.GetWorkload(context.TODO(), WorkloadCriteria{Cluster: waypoint.Cluster, Namespace: waypoint.Namespace, WorkloadName: waypoint.Name, IncludeServices: false})
@@ -2750,6 +2751,8 @@ func (in *WorkloadService) StreamPodLogs(cluster, namespace, workload, name stri
 					for _, pod := range waypointWk.Pods {
 						names = append(names, pod.Name)
 					}
+					// This is needed for the K8S client
+					opts.PodLogOptions.Container = models.IstioProxy
 					return in.streamParsedLogs(cluster, waypoint.Namespace, names, opts, w)
 				}
 			}

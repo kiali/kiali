@@ -915,7 +915,8 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
           accessLog={v}
           accessLogMessage={k}
           onClose={() => this.removeAccessLogModal(k)}
-          isZtunnel={this.state.showZtunnel}
+          isZtunnel={this.state.showZtunnel && v.upstream_cluster.includes('spiffe')}
+          isWaypoint={this.state.showWaypoint && !v.upstream_cluster.includes('spiffe')}
         />
       );
     });
@@ -1134,10 +1135,8 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
       const name = c.name;
 
       const isAmbient = c.isAmbient;
-
       if (c.isProxy) {
         const proxyName = pod.name.includes('ztunnel') ? 'ztunnel' : 'sidecar-proxy';
-
         return {
           color: proxyContainerColor,
           displayName: proxyName,
@@ -1199,7 +1198,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
         if (c.isAmbient) {
           const extracontainer = { ...c };
           extracontainer.isAmbient = false;
-          extracontainer.color = proxyContainerColor;
+          extracontainer.color = waypointContainerColor;
           extracontainer.displayName = 'waypoint';
           extraContainers.push(extracontainer);
         }
