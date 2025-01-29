@@ -17,6 +17,7 @@ type AppInfoProps = {
   app?: App;
   duration: DurationInSeconds;
   health?: AppHealth;
+  isSupported?: boolean;
 };
 
 type AppInfoState = {
@@ -82,7 +83,7 @@ export class AppInfo extends React.Component<AppInfoProps, AppInfoState> {
       <RenderComponentScroll onResize={height => this.setState({ tabHeight: height })}>
         <Grid hasGutter={true} className={fullHeightStyle}>
           <GridItem span={4}>
-            <AppDescription app={this.props.app} health={this.props.health} />
+            <AppDescription app={this.props.app} health={this.props.health} isSupported={this.props.isSupported} />
           </GridItem>
 
           {includeMiniGraphCy && (

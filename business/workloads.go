@@ -954,8 +954,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 		defer wg.Done()
 		var err error
 		if in.isWorkloadIncluded(kubernetes.WorkloadGroupType) {
-			// do not include selector by Label, because for WorkloadGroup it is set in Spec.Metadata.Labels
-			wgroups, err = kubeCache.GetWorkloadGroups(namespace, "")
+			wgroups, err = kubeCache.GetWorkloadGroups(namespace, labelSelector)
 			if err != nil {
 				log.Errorf("Error fetching WorkloadGroups per namespace %s: %s", namespace, err)
 				errChan <- err
@@ -968,8 +967,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 		defer wg.Done()
 		var err error
 		if in.isWorkloadIncluded(kubernetes.WorkloadEntryType) {
-			// fetch all WorkloadEntries to filter later, based on WorkloadGroup.Spec.Metadata.Labels
-			wentries, err = kubeCache.GetWorkloadEntries(namespace, "")
+			wentries, err = kubeCache.GetWorkloadEntries(namespace, labelSelector)
 			if err != nil {
 				log.Errorf("Error fetching WorkloadEntries per namespace %s: %s", namespace, err)
 				errChan <- err

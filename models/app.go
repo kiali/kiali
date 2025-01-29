@@ -1,5 +1,7 @@
 package models
 
+import "k8s.io/apimachinery/pkg/runtime/schema"
+
 type ClusterApps struct {
 	// Applications list for namespaces of a single cluster
 	// required: true
@@ -70,6 +72,11 @@ type WorkloadItem struct {
 	// required: true
 	// example: reviews-v1
 	WorkloadName string `json:"workloadName"`
+
+	// Group Version Kind of the workload
+	// required: true
+	// example: 'apps/v1, Kind=Deployment'
+	WorkloadGVK schema.GroupVersionKind `json:"workloadGVK"`
 
 	// Define if all Pods related to the Workload has an IstioSidecar deployed
 	// required: true

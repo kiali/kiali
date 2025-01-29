@@ -1554,15 +1554,16 @@ func (c *kubeCache) GetWorkloadEntries(namespace, labelSelector string) ([]*netw
 	c.cacheLock.RLock()
 
 	workloadEntries := []*networking_v1.WorkloadEntry{}
+	// fetch all WorkloadEntries to filter later, based on WorkloadEntry.Spec.Labels
 	if namespace == metav1.NamespaceAll {
 		if c.clusterScoped {
-			workloadEntries, err = c.clusterCacheLister.workloadEntryLister.List(selector)
+			workloadEntries, err = c.clusterCacheLister.workloadEntryLister.List(labels.Everything())
 			if err != nil {
 				return nil, err
 			}
 		} else {
 			for _, nsCacheLister := range c.nsCacheLister {
-				workloadEntriesNamespaced, err := nsCacheLister.workloadEntryLister.List(selector)
+				workloadEntriesNamespaced, err := nsCacheLister.workloadEntryLister.List(labels.Everything())
 				if err != nil {
 					return nil, err
 				}
@@ -1570,7 +1571,7 @@ func (c *kubeCache) GetWorkloadEntries(namespace, labelSelector string) ([]*netw
 			}
 		}
 	} else {
-		workloadEntries, err = c.getCacheLister(namespace).workloadEntryLister.WorkloadEntries(namespace).List(selector)
+		workloadEntries, err = c.getCacheLister(namespace).workloadEntryLister.WorkloadEntries(namespace).List(labels.Everything())
 		if err != nil {
 			return nil, err
 		}
@@ -1578,10 +1579,12 @@ func (c *kubeCache) GetWorkloadEntries(namespace, labelSelector string) ([]*netw
 
 	var retWE []*networking_v1.WorkloadEntry
 	for _, w := range workloadEntries {
-		ww := w.DeepCopy()
-		ww.Kind = kubernetes.WorkloadEntries.Kind
-		ww.APIVersion = kubernetes.WorkloadEntries.GroupVersion().String()
-		retWE = append(retWE, ww)
+		if w.Spec.Labels == nil || selector.Matches(labels.Set(w.Spec.Labels)) {
+			ww := w.DeepCopy()
+			ww.Kind = kubernetes.WorkloadEntries.Kind
+			ww.APIVersion = kubernetes.WorkloadEntries.GroupVersion().String()
+			retWE = append(retWE, ww)
+		}
 	}
 	return retWE, nil
 }
@@ -1622,15 +1625,16 @@ func (c *kubeCache) GetWorkloadGroups(namespace, labelSelector string) ([]*netwo
 	c.cacheLock.RLock()
 
 	workloadGroups := []*networking_v1.WorkloadGroup{}
+	// fetch all WorkloadGroups to filter later, based on WorkloadGroup.Spec.Metadata.Labels
 	if namespace == metav1.NamespaceAll {
 		if c.clusterScoped {
-			workloadGroups, err = c.clusterCacheLister.workloadGroupLister.List(selector)
+			workloadGroups, err = c.clusterCacheLister.workloadGroupLister.List(labels.Everything())
 			if err != nil {
 				return nil, err
 			}
 		} else {
 			for _, nsCacheLister := range c.nsCacheLister {
-				workloadGroupsNamespaced, err := nsCacheLister.workloadGroupLister.List(selector)
+				workloadGroupsNamespaced, err := nsCacheLister.workloadGroupLister.List(labels.Everything())
 				if err != nil {
 					return nil, err
 				}
@@ -1638,7 +1642,7 @@ func (c *kubeCache) GetWorkloadGroups(namespace, labelSelector string) ([]*netwo
 			}
 		}
 	} else {
-		workloadGroups, err = c.getCacheLister(namespace).workloadGroupLister.WorkloadGroups(namespace).List(selector)
+		workloadGroups, err = c.getCacheLister(namespace).workloadGroupLister.WorkloadGroups(namespace).List(labels.Everything())
 		if err != nil {
 			return nil, err
 		}
@@ -1646,10 +1650,12 @@ func (c *kubeCache) GetWorkloadGroups(namespace, labelSelector string) ([]*netwo
 
 	var retWG []*networking_v1.WorkloadGroup
 	for _, w := range workloadGroups {
-		ww := w.DeepCopy()
-		ww.Kind = kubernetes.WorkloadGroups.Kind
-		ww.APIVersion = kubernetes.WorkloadGroups.GroupVersion().String()
-		retWG = append(retWG, ww)
+		if w.Spec.Metadata == nil || w.Spec.Metadata.Labels == nil || selector.Matches(labels.Set(w.Spec.Metadata.Labels)) {
+			ww := w.DeepCopy()
+			ww.Kind = kubernetes.WorkloadGroups.Kind
+			ww.APIVersion = kubernetes.WorkloadGroups.GroupVersion().String()
+			retWG = append(retWG, ww)
+		}
 	}
 	return retWG, nil
 }

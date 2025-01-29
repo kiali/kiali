@@ -15,6 +15,7 @@ import { DetailDescription } from '../../components/DetailDescription/DetailDesc
 import { AmbientLabel, tooltipMsgType } from '../../components/Ambient/AmbientLabel';
 import { infoStyle } from 'styles/IconStyle';
 import { classes } from 'typestyle';
+import { getIstioObjectGVK } from '../../utils/IstioConfigUtils';
 
 interface ServiceInfoDescriptionProps {
   namespace: string;
@@ -71,6 +72,7 @@ export const ServiceDescription: React.FC<ServiceInfoDescriptionProps> = (props:
             ambient: wk.ambient,
             namespace: wk.namespace,
             workloadName: wk.name,
+            workloadGVK: getIstioObjectGVK(wk.resourceVersion, wk.type),
             istioSidecar: wk.istioSidecar,
             isAmbient: wk.isAmbient,
             isGateway: wk.isGateway,

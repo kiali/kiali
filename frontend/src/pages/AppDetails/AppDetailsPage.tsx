@@ -25,6 +25,7 @@ import { connectRefresh } from '../../components/Refresh/connectRefresh';
 import { HistoryManager } from 'app/History';
 import { basicTabStyle } from 'styles/TabStyles';
 import { serverConfig } from 'config';
+import { isGVKSupported } from '../../utils/IstioConfigUtils';
 
 type AppDetailsState = {
   app?: App;
@@ -34,6 +35,7 @@ type AppDetailsState = {
   currentTab: string;
   error?: ErrorMsg;
   health?: AppHealth;
+  isSupported?: boolean;
 };
 
 type ReduxProps = {
@@ -106,7 +108,8 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
             rateInterval: this.props.duration,
             hasSidecar: details.data.workloads.some(w => w.istioSidecar),
             hasAmbient: details.data.workloads.some(w => w.isAmbient)
-          })
+          }),
+          isSupported: details.data.workloads.some(w => isGVKSupported(w.workloadGVK))
         });
       })
       .catch(error => {
@@ -155,7 +158,12 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
   private staticTabs(): React.ReactNode[] {
     const overTab = (
       <Tab title="Overview" eventKey={0} key={'Overview'}>
-        <AppInfo app={this.state.app} duration={this.props.duration} health={this.state.health} />
+        <AppInfo
+          app={this.state.app}
+          duration={this.props.duration}
+          health={this.state.health}
+          isSupported={this.state.isSupported}
+        />
       </Tab>
     );
 
@@ -202,38 +210,40 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
     );
 
     // Default tabs
-    const tabsArray: React.ReactNode[] = [overTab, trafficTab, inTab, outTab];
-
-    // Conditional Traces tab
-    if (this.props.tracingInfo && this.props.tracingInfo.enabled) {
-      if (this.props.tracingInfo.integration) {
-        tabsArray.push(
-          <Tab eventKey={4} style={{ textAlign: 'center' }} title={'Traces'} key={tracesTabName}>
-            <TracesComponent
-              lastRefreshAt={this.props.lastRefreshAt}
-              namespace={this.props.appId.namespace}
-              cluster={this.state.cluster}
-              target={this.props.appId.app}
-              targetKind={'app'}
+    const tabsArray: React.ReactNode[] = [overTab];
+    if (this.state.isSupported) {
+      tabsArray.push(trafficTab, inTab, outTab);
+      // Conditional Traces tab
+      if (this.props.tracingInfo && this.props.tracingInfo.enabled) {
+        if (this.props.tracingInfo.integration) {
+          tabsArray.push(
+            <Tab eventKey={4} style={{ textAlign: 'center' }} title={'Traces'} key={tracesTabName}>
+              <TracesComponent
+                lastRefreshAt={this.props.lastRefreshAt}
+                namespace={this.props.appId.namespace}
+                cluster={this.state.cluster}
+                target={this.props.appId.app}
+                targetKind={'app'}
+              />
+            </Tab>
+          );
+        } else {
+          const service = this.props.tracingInfo.namespaceSelector
+            ? `${this.props.appId.app}.${this.props.appId.namespace}`
+            : this.props.appId.app;
+          tabsArray.push(
+            <Tab
+              eventKey={4}
+              href={`${this.props.tracingInfo.url}/search?service=${service}`}
+              target="_blank"
+              title={
+                <>
+                  Traces <ExternalLinkAltIcon />
+                </>
+              }
             />
-          </Tab>
-        );
-      } else {
-        const service = this.props.tracingInfo.namespaceSelector
-          ? `${this.props.appId.app}.${this.props.appId.namespace}`
-          : this.props.appId.app;
-        tabsArray.push(
-          <Tab
-            eventKey={4}
-            href={`${this.props.tracingInfo.url}/search?service=${service}`}
-            target="_blank"
-            title={
-              <>
-                Traces <ExternalLinkAltIcon />
-              </>
-            }
-          />
-        );
+          );
+        }
       }
     }
 
