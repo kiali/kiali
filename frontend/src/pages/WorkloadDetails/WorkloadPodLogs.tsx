@@ -72,6 +72,7 @@ type ReduxProps = {
 };
 
 export type WorkloadPodLogsProps = ReduxProps & {
+  app?: string;
   cluster?: string;
   lastRefreshAt: TimeInMilliseconds;
   namespace: string;
@@ -193,6 +194,11 @@ const expandActionStyle = kialiStyle({
 
 const checkboxStyle = kialiStyle({
   marginLeft: '0.5rem',
+  marginRight: '1rem'
+});
+
+const checkboxMarginStyle = kialiStyle({
+  marginLeft: '1rem',
   marginRight: '1rem'
 });
 
@@ -560,7 +566,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                   }
                   onChange={() => this.toggleSelected(c)}
                 />
-                {c.isAmbient && (
+                {c.isAmbient && i + 1 === this.state.containerOptions?.length && (
                   <>
                     <Checkbox
                       id={`ztunnel-${c.displayName}`}
@@ -593,7 +599,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                         <Checkbox
                           id={`waypoint-${c.displayName}`}
                           key={`waypoint-${i}`}
-                          className={checkboxStyle}
+                          className={checkboxMarginStyle}
                           inputClassName={colorCheck(waypointContainerColor)}
                           isChecked={this.state.showWaypoint}
                           label={
@@ -612,7 +618,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                           key={`al-tt-tl`}
                           position={TooltipPosition.auto}
                           entryDelay={1000}
-                          content="A filtered subset of log entries from the waypoint's (ambient node proxy) pod logs, relevant to the selected workload pod"
+                          content="A filtered - by app name - subset of log entries from the waypoint's (ambient node proxy) pod logs, relevant to the selected workload pod"
                         >
                           <KialiIcon.Info key={`al-i-ki`} className={checkInfoIcon} color={waypointContainerColor} />
                         </Tooltip>
@@ -1210,6 +1216,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
         namespace,
         podName,
         this.props.workload,
+        this.props.app,
         c.name,
         maxLines,
         sinceTime,
@@ -1227,6 +1234,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
             namespace,
             podName,
             this.props.workload,
+            this.props.app,
             c.name,
             maxLines,
             sinceTime,
