@@ -265,16 +265,14 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
             )}
           </CardBody>
         </Card>
-        <Card>
-          <CardBody
-            style={{
-              padding: 0,
-              borderTop: `1px solid ${PFColors.BorderColor100}`
-            }}
-          >
-            {renderInfraSummary(controller, nsInfo.cluster, nsInfo.name)}
-          </CardBody>
-        </Card>
+        <div
+          style={{
+            padding: 0,
+            borderTop: `1px solid ${PFColors.BorderColor100}`
+          }}
+        >
+          {renderInfraSummary(controller, nsInfo.cluster, nsInfo.name)}
+        </div>
       </div>
     );
   }
