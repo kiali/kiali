@@ -2497,7 +2497,7 @@ func (in *WorkloadService) GetWorkloadTracingName(ctx context.Context, cluster, 
 	defer end()
 
 	tracingName := models.TracingName{Workload: workload}
-	wkd, err := in.fetchWorkload(ctx, WorkloadCriteria{Cluster: cluster, Namespace: namespace, WorkloadName: workload, WorkloadGVK: schema.GroupVersionKind{Group: "", Version: "", Kind: ""}})
+	wkd, err := in.fetchWorkload(ctx, WorkloadCriteria{Cluster: cluster, Namespace: namespace, WorkloadName: workload, WorkloadGVK: schema.GroupVersionKind{Group: "", Version: "", Kind: ""}, IncludeWaypoints: true})
 	if err != nil {
 		return tracingName, err
 	}
@@ -2513,7 +2513,7 @@ func (in *WorkloadService) GetWorkloadTracingName(ctx context.Context, cluster, 
 	tracingName.App = app
 	tracingName.Lookup = app
 
-	waypoints := in.GetWaypoints(ctx)
+	waypoints := wkd.WaypointWorkloads
 	if len(waypoints) > 0 {
 		tracingName.WaypointName = waypoints[0].Name
 		tracingName.Lookup = waypoints[0].Name
