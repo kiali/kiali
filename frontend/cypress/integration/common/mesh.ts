@@ -15,6 +15,7 @@ When('user opens mesh tour', () => {
 
 When('user selects cluster mesh node', () => {
   cy.waitForReact();
+  cy.get('#loading_kiali_spinner').should('not.exist');
   cy.getReact('MeshPageComponent', { state: { isReady: true } })
     .should('have.length', 1)
     .then($graph => {
@@ -119,6 +120,7 @@ Then('user sees data plane side panel', () => {
 
 Then('user sees expected mesh infra', () => {
   cy.waitForReact();
+  cy.get('#loading_kiali_spinner').should('not.exist');
   cy.getReact('MeshPageComponent', { state: { isReady: true } })
     .should('have.length', 1)
     .then($graph => {
@@ -146,6 +148,7 @@ Then(
   'user sees {int} {string} nodes on the {string} cluster',
   (numberOfDataplaneNodes: number, infraNodeType: MeshInfraType, cluster: string) => {
     cy.waitForReact();
+    cy.get('#loading_kiali_spinner').should('not.exist');
     cy.getReact('MeshPageComponent', { state: { isReady: true } })
       .should('have.length', 1)
       .then($graph => {
@@ -166,6 +169,7 @@ Then(
 
 Then('user sees the istiod node connected to the dataplane nodes', () => {
   cy.waitForReact();
+  cy.get('#loading_kiali_spinner').should('not.exist');
   cy.getReact('MeshPageComponent', { state: { isReady: true } })
     .should('have.length', 1)
     .then($graph => {
