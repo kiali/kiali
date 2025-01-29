@@ -169,6 +169,7 @@
   "Gateway": "Gateway",
   "Gateway Hosts": "Gateway Hosts",
   "Gateway hosts should be specified using FQDN format or '*' wildcard.": "在配置网关时，网关的主机应该使用完全限定域名FQDN格式或通配符'*'来指定。",
+  "Gateway/Waypoint": "Gateway/Waypoint",
   "Gateways": "网关",
   "Gateways: {{num}}": "Gateways: {{num}}",
   "Graph": "图",
