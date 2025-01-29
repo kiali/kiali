@@ -69,6 +69,25 @@ exports[`GraphLegend test should render correctly 1`] = `
           Data Plane
         </span>
       </div>
+      <div
+        className="kiali_fxx5dxr"
+        key="node-gateway.svg"
+      >
+        <span
+          className="kiali_fzoxfwf"
+        >
+          <img
+            alt="Gateway/Waypoint"
+            className=""
+            src="node-gateway.svg"
+          />
+        </span>
+        <span
+          className="kiali_f7pgfh0"
+        >
+          Gateway/Waypoint
+        </span>
+      </div>
     </div>
     <div
       className="kiali_fqqe0s6"
@@ -184,6 +203,25 @@ exports[`GraphLegend test should render correctly 1`] = `
       </div>
       <div
         className="kiali_fxx5dxr"
+        key="gateway.svg"
+      >
+        <span
+          className="kiali_fzoxfwf"
+        >
+          <img
+            alt="Gateway"
+            className="kiali_fkbfmy6"
+            src="gateway.svg"
+          />
+        </span>
+        <span
+          className="kiali_f7pgfh0"
+        >
+          Gateway
+        </span>
+      </div>
+      <div
+        className="kiali_fxx5dxr"
         key="grafana.svg"
       >
         <span
@@ -294,6 +332,25 @@ exports[`GraphLegend test should render correctly 1`] = `
           className="kiali_f7pgfh0"
         >
           Tempo
+        </span>
+      </div>
+      <div
+        className="kiali_fxx5dxr"
+        key="waypoint.svg"
+      >
+        <span
+          className="kiali_fzoxfwf"
+        >
+          <img
+            alt="Waypoint"
+            className="kiali_fkbfmy6"
+            src="waypoint.svg"
+          />
+        </span>
+        <span
+          className="kiali_f7pgfh0"
+        >
+          Waypoint
         </span>
       </div>
     </div>
