@@ -34,6 +34,7 @@ When('user selects cluster mesh node', () => {
 
 When('user selects mesh node with label {string}', (label: string) => {
   cy.waitForReact();
+  cy.get('#loading_kiali_spinner').should('not.exist');
   cy.getReact('MeshPageComponent', { state: { isReady: true } })
     .should('have.length', 1)
     .then($graph => {
