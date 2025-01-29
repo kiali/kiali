@@ -195,16 +195,6 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 				wp, err = gi.Business.Workload.GetWorkload(ctx, criteria)
 				mesh.CheckError(err)
 
-				/*
-					// determine the namespaces interacting with the waypoint
-					wpNamespaces := map[string]bool{}
-					for _, wps := range wp.WaypointServices {
-						wpNamespaces[wps.Namespace] = true
-					}
-					for _, wpw := range wp.WaypointWorkloads {
-						wpNamespaces[wpw.Namespace] = true
-					}
-				*/
 				version := models.DefaultRevisionLabel
 				if rev, ok := wp.Labels[models.IstioRevisionLabel]; ok {
 					version = rev
@@ -235,23 +225,6 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 						}
 					}
 				}
-
-				/*
-					dataplaneNodes := map[*mesh.Node]bool{}
-					for _, infraNode := range meshMap {
-						if infraNode.InfraType == mesh.InfraTypeDataPlane && infraNode.Cluster == wp.Cluster {
-							for _, dpns := range infraNode.Metadata[mesh.InfraData].([]models.Namespace) {
-								if wpNamespaces[dpns.Name] {
-									dataplaneNodes[infraNode] = true
-									break
-								}
-							}
-						}
-					}
-					for dpNode := range dataplaneNodes {
-						wpNode.AddEdge(dpNode)
-					}
-				*/
 			}
 		}
 
