@@ -215,16 +215,13 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
       tabsArray.push(trafficTab, inTab, outTab);
       // Conditional Traces tab
       if (this.props.tracingInfo && this.props.tracingInfo.enabled) {
-        let waypointWk;
-              if (this.props.tracingInfo.integration) {
-                  if (this.state.app?.isAmbient) {
-                     for (let i = 0; i < this.state.app.workloads.length; i++) {
-                          const wk = this.state.app.workloads[i].waypointWorkloads;
-                         if (wk && wk.length > 0) {
-                              waypointWk = wk[0];
-                            }
-                        }
-                   }
+        if (this.props.tracingInfo.integration) {
+          const fromWaypoint =
+            this.state.app &&
+            this.state.app.workloads &&
+            this.state.app?.workloads?.some(w => w.waypointWorkloads && w.waypointWorkloads.length > 0)
+              ? true
+              : false;
 
           tabsArray.push(
             <Tab eventKey={4} style={{ textAlign: 'center' }} title={'Traces'} key={tracesTabName}>
@@ -234,7 +231,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
                 cluster={this.state.cluster}
                 target={this.props.appId.app}
                 targetKind={'app'}
-                waypoint={waypointWk}
+                fromWaypoint={fromWaypoint}
               />
             </Tab>
           );
