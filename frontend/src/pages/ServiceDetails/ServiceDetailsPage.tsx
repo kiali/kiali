@@ -232,11 +232,7 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
             cluster={this.state.cluster}
             target={this.props.serviceId.service}
             targetKind={'service'}
-            fromWaypoint={
-              this.state.serviceDetails?.waypointWorkloads && this.state.serviceDetails.waypointWorkloads.length > 0
-                ? true
-                : false
-            }
+            fromWaypoint={this.state.serviceDetails?.waypointWorkloads && this.state.serviceDetails.waypointWorkloads.length > 0}
           />
         </Tab>
       );
