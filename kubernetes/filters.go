@@ -303,7 +303,7 @@ func FilterPodsBySelector(selector labels.Selector, allPods []core_v1.Pod) []cor
 
 func FilterWorkloadEntriesBySelector(selector labels.Selector, allEntries []*networking_v1.WorkloadEntry) []*networking_v1.WorkloadEntry {
 	var entries []*networking_v1.WorkloadEntry
-	// WorkloadGroup.Template.Labels is nullable
+	// WorkloadGroup.Metadata.Labels is nullable
 	if !selector.Empty() {
 		for _, entry := range allEntries {
 			if selector.Matches(labels.Set(entry.Spec.Labels)) {
@@ -319,8 +319,8 @@ func FilterWorkloadGroupsBySelector(workloadSelector string, allGroups []*networ
 	workloadLabels := mapWorkloadSelector(workloadSelector)
 	for _, wg := range allGroups {
 		wkLabelsS := []string{}
-		if wg.Spec.Template.Labels != nil {
-			apSelector := wg.Spec.Template.Labels
+		if wg.Spec.Metadata != nil && wg.Spec.Metadata.Labels != nil {
+			apSelector := wg.Spec.Metadata.Labels
 			for k, v := range apSelector {
 				wkLabelsS = append(wkLabelsS, k+"="+v)
 			}

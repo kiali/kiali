@@ -45,13 +45,13 @@ func (n WorkloadGroupReferences) getWorkloadReferences(wg *networking_v1.Workloa
 
 func (n WorkloadGroupReferences) getConfigReferences(wg *networking_v1.WorkloadGroup) []models.IstioReference {
 	result := make([]models.IstioReference, 0)
-	if wg.Spec.Template == nil || wg.Spec.Template.Labels == nil {
+	if wg.Spec.Metadata == nil || wg.Spec.Metadata.Labels == nil {
 		return result
 	}
-	selector := labels.SelectorFromSet(wg.Spec.Template.Labels)
+	selector := labels.SelectorFromSet(wg.Spec.Metadata.Labels)
 	for _, we := range n.WorkloadEntries {
 		weLabelSet := labels.Set(we.Spec.Labels)
-		if selector.Matches(weLabelSet) {
+		if selector.Matches(weLabelSet) && we.Namespace == wg.Namespace {
 			result = append(result, models.IstioReference{Name: we.Name, Namespace: we.Namespace, ObjectGVK: kubernetes.WorkloadEntries})
 		}
 	}

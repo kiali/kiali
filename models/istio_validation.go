@@ -353,6 +353,16 @@ var checkDescriptors = map[string]IstioCheck{
 		Message:  "This workload is not covered by any authorization policy",
 		Severity: WarningSeverity,
 	},
+	"workloadgroup.labels.duplicate": {
+		Code:     "KIA1702",
+		Message:  "More than one Workload Group with duplicate labels found in the same namespace",
+		Severity: WarningSeverity,
+	},
+	"workloadgroup.template.serviceaccount.notfound": {
+		Code:     "KIA1701",
+		Message:  "Service Account not found in this namespace",
+		Severity: WarningSeverity,
+	},
 }
 
 func Build(checkId string, path string) IstioCheck {

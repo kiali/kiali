@@ -967,7 +967,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 		defer wg.Done()
 		var err error
 		if in.isWorkloadIncluded(kubernetes.WorkloadEntryType) {
-			wentries, err = kubeCache.GetWorkloadEntries(namespace, "")
+			wentries, err = kubeCache.GetWorkloadEntries(namespace, labelSelector)
 			if err != nil {
 				log.Errorf("Error fetching WorkloadEntries per namespace %s: %s", namespace, err)
 				errChan <- err
@@ -1400,8 +1400,12 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 				}
 			}
 			if found {
-				selector := labels.Set(wgroups[iFound].Spec.Template.Labels).AsSelector()
-				w.ParseWorkloadGroup(wgroups[iFound], kubernetes.FilterWorkloadEntriesBySelector(selector, wentries), kubernetes.FilterSidecarsBySelector(selector.String(), sidecars))
+				if wgroups[iFound].Spec.Metadata != nil {
+					selector := labels.Set(wgroups[iFound].Spec.Metadata.Labels).AsSelector()
+					w.ParseWorkloadGroup(wgroups[iFound], kubernetes.FilterWorkloadEntriesBySelector(selector, wentries), kubernetes.FilterSidecarsBySelector(selector.String(), sidecars))
+				} else {
+					w.ParseWorkloadGroup(wgroups[iFound], []*networking_v1.WorkloadEntry{}, []*networking_v1.Sidecar{})
+				}
 			} else {
 				log.Errorf("Workload %s is not found as WorkloadGroup", controllerName)
 				cnFound = false
@@ -2042,8 +2046,12 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 			}
 		case kubernetes.WorkloadGroups:
 			if wgroup != nil && wgroup.Name == criteria.WorkloadName {
-				selector := labels.Set(wgroup.Spec.Template.Labels).AsSelector()
-				w.ParseWorkloadGroup(wgroup, kubernetes.FilterWorkloadEntriesBySelector(selector, wentries), kubernetes.FilterSidecarsBySelector(selector.String(), sidecars))
+				if wgroup.Spec.Metadata != nil {
+					selector := labels.Set(wgroup.Spec.Metadata.Labels).AsSelector()
+					w.ParseWorkloadGroup(wgroup, kubernetes.FilterWorkloadEntriesBySelector(selector, wentries), kubernetes.FilterSidecarsBySelector(selector.String(), sidecars))
+				} else {
+					w.ParseWorkloadGroup(wgroup, []*networking_v1.WorkloadEntry{}, []*networking_v1.Sidecar{})
+				}
 			} else {
 				log.Errorf("Workload %s is not found as WorkloadGroup", criteria.WorkloadName)
 				cnFound = false

@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { App } from '../../types/App';
-import { Card, CardBody, CardHeader, Title, TitleSizes, TooltipPosition } from '@patternfly/react-core';
+import { Alert, Card, CardBody, CardHeader, Title, TitleSizes, TooltipPosition } from '@patternfly/react-core';
 import { DetailDescription } from '../../components/DetailDescription/DetailDescription';
 import { isMultiCluster, serverConfig } from '../../config';
 import { Labels } from '../../components/Label/Labels';
@@ -13,6 +13,7 @@ import { AmbientLabel, tooltipMsgType } from '../../components/Ambient/AmbientLa
 type AppDescriptionProps = {
   app?: App;
   health?: H.Health;
+  isSupported?: boolean;
 };
 
 const iconStyle = kialiStyle({
@@ -52,6 +53,14 @@ export const AppDescription: React.FC<AppDescriptionProps> = (props: AppDescript
           <div key="cluster-icon" style={{ paddingBottom: '0.5rem' }}>
             <PFBadge badge={PFBadges.Cluster} position={TooltipPosition.right} /> {props.app.cluster}
           </div>
+        )}
+        {!props.isSupported && (
+          <Alert
+            variant="info"
+            isInline={true}
+            title="Limited info is supplied due to the referenced workload type"
+            style={{ marginTop: '0.25rem' }}
+          />
         )}
       </CardHeader>
       <CardBody>

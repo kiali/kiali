@@ -2,6 +2,7 @@ import { Namespace } from './Namespace';
 import { Runtime } from './Workload';
 import { InstanceType } from 'types/Common';
 import { AppHealthResponse } from '../types/Health';
+import { GroupVersionKind } from './IstioObjects';
 
 export type AppId = {
   app: string;
@@ -17,6 +18,7 @@ export interface AppWorkload {
   labels: { [key: string]: string };
   namespace: string;
   serviceAccountNames: string[];
+  workloadGVK: GroupVersionKind;
   workloadName: string;
 }
 
