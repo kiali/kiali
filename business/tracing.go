@@ -21,20 +21,20 @@ type (
 )
 
 type TracingService struct {
+	app      *AppService
 	conf     *config.Config
 	svc      *SvcService
 	tracing  tracing.ClientInterface
 	workload *WorkloadService
-	app      *AppService
 }
 
 func NewTracingService(conf *config.Config, tracing tracing.ClientInterface, svcService *SvcService, workloadService *WorkloadService, appService *AppService) TracingService {
 	return TracingService{
+		app:      appService,
 		conf:     conf,
 		svc:      svcService,
 		tracing:  tracing,
 		workload: workloadService,
-		app:      appService,
 	}
 }
 
