@@ -128,7 +128,7 @@ else
 endif
 endif
 
-## cluster-add-users: Add two users to an OpenShift cluster - kiali (cluster admin) and johndoe (no additional permissions)
+## cluster-add-users: (OpenShift) Add two users - kiali (cluster admin), johndoe (no additional permissions); (non-OpenShift) Add one SA - testsa - with access to namespace $NAMESPACE
 ifeq ($(CLUSTER_TYPE),openshift)
 define HTPASSWD
 ---
@@ -160,7 +160,7 @@ endef
 export HTPASSWD
 
 cluster-add-users: .ensure-oc-exists
-	@echo "Creating users 'kiali' and 'johndoe'"
+	@echo "Creating users 'kiali' and 'johndoe' in OpenShift"
 	@echo "$${HTPASSWD}" | ${OC} apply -f -
 	@admintoken="$$(${OC} whoami -t)" ;\
    for i in {1..100} ; do \
@@ -175,9 +175,89 @@ cluster-add-users: .ensure-oc-exists
        fi \
      fi \
    done
-else
-cluster-add-users:
-	@echo "This target is only available when working with OpenShift (i.e. CLUSTER_TYPE=openshift)"
+
+else # ELSE ON NON-OPENSHIFT
+
+define TEST_SA_ROLE
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: testsa
+...
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: testsa-namespace-auth
+rules:
+- apiGroups: [""]
+  resources: ["namespaces", "pods/log"]
+  verbs: ["get"]
+- apiGroups: ["project.openshift.io"]
+  resources: ["projects"]
+  verbs: ["get"]
+...
+endef
+export TEST_SA_ROLE
+
+define TEST_ROLEBINDING
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: testsa-namespace-auth
+subjects:
+- kind: ServiceAccount
+  name: testsa
+  namespace: ${NAMESPACE}
+roleRef:
+  kind: ClusterRole
+  name: testsa-namespace-auth
+  apiGroup: rbac.authorization.k8s.io
+...
+endef
+export TEST_ROLEBINDING
+
+define TEST_CLUSTERROLEBINDING
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: testsa-all-namespace-auth
+subjects:
+- kind: ServiceAccount
+  name: testsa
+  namespace: ${NAMESPACE}
+roleRef:
+  kind: ClusterRole
+  name: testsa-namespace-auth
+  apiGroup: rbac.authorization.k8s.io
+...
+endef
+export TEST_CLUSTERROLEBINDING
+
+cluster-add-users: .ensure-oc-exists
+	@echo "Create ServiceAccount 'testsa' and give it permissions for namespace [${NAMESPACE}]"
+	@echo "$${TEST_SA_ROLE}" | ${OC} apply -n ${NAMESPACE} -f -
+	@echo "$${TEST_ROLEBINDING}" | ${OC} apply -n ${NAMESPACE} -f -
+	@echo
+	@echo "If you want to give the SA access to another namespace (e.g. 'foo'), create this object:"
+	@echo
+	@echo "cat <<EOM | ${OC} apply -n foo -f -"
+	@echo "$${TEST_ROLEBINDING}"
+	@echo "EOM"
+	@echo
+	@echo "If you want to give the SA access to all namespaces, create this object:"
+	@echo
+	@echo "cat <<EOM | ${OC} apply -f -"
+	@echo "$${TEST_CLUSTERROLEBINDING}"
+	@echo "EOM"
+	@echo
+	@echo "To create a token that you can use to log into Kiali:"
+	@echo
+	@echo "${OC} -n ${NAMESPACE} create token testsa"
+	@echo
 endif
 
 ## cluster-build-operator: Builds the operator image for development with a remote cluster
