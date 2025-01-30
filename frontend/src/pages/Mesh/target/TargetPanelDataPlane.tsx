@@ -1,8 +1,8 @@
 import * as React from 'react';
-import { TargetPanelCommonProps, nodeStyle, targetPanelStyle } from './TargetPanelCommon';
+import { TargetPanelCommonProps, nodeStyle, targetBodyStyle, targetPanelStyle } from './TargetPanelCommon';
 import { classes } from 'typestyle';
 import { DataPlaneNodeData, MeshNodeData, NodeTarget } from 'types/Mesh';
-import { panelBodyStyle, panelHeadingStyle, panelStyle } from 'pages/Graph/SummaryPanelStyle';
+import { panelHeadingStyle, panelStyle } from 'pages/Graph/SummaryPanelStyle';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { Title, TitleSizes } from '@patternfly/react-core';
 import { ExpandableRowContent, Table, Tbody, Td, Th, Thead, Tr } from '@patternfly/react-table';
@@ -62,7 +62,7 @@ export const TargetPanelDataPlane: React.FC<TargetPanelDataPlaneProps> = props =
   return (
     <div id="target-panel-data-plane" className={classes(panelStyle, targetPanelStyle)}>
       <div className={panelHeadingStyle}>{renderDataPlaneHeader(data)}</div>
-      <div className={panelBodyStyle}>
+      <div className={targetBodyStyle}>
         <Table aria-label={t('Dataplane table')} variant="compact">
           <Thead>
             <Tr>

@@ -1,16 +1,15 @@
 import * as React from 'react';
 import { kialiStyle } from 'styles/StyleUtils';
-import { PFColors } from 'components/Pf/PfColors';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { getKialiTheme } from 'utils/ThemeUtils';
-import { TargetPanelCommonProps, renderInfraSummary, targetPanelStyle } from './TargetPanelCommon';
+import { TargetPanelCommonProps, renderInfraSummary, targetBodyStyle, targetPanelStyle } from './TargetPanelCommon';
 import { kialiIconDark, kialiIconLight } from 'config';
 import { BoxTarget, ClusterNodeData, KialiInstance, isExternal } from 'types/Mesh';
 import { Theme } from 'types/Common';
 import { KialiIcon } from 'config/KialiIcon';
 import { Title, TitleSizes, Tooltip } from '@patternfly/react-core';
 import { classes } from 'typestyle';
-import { panelBodyStyle, panelHeadingStyle, panelStyle } from 'pages/Graph/SummaryPanelStyle';
+import { panelHeadingStyle, panelStyle } from 'pages/Graph/SummaryPanelStyle';
 import { UNKNOWN } from 'types/Graph';
 import { useKialiTranslation } from 'utils/I18nUtils';
 
@@ -78,14 +77,7 @@ export const TargetPanelCluster: React.FC<TargetPanelClusterProps> = (props: Tar
         </Title>
       </div>
       {notExternal && (
-        <div
-          className={panelBodyStyle}
-          style={{
-            paddingBottom: '0.75rem',
-            marginTop: '0.75rem',
-            borderBottom: `1px solid ${PFColors.BorderColor100}`
-          }}
-        >
+        <div className={targetBodyStyle}>
           {clusterData.accessible && renderKialiLinks(clusterData.kialiInstances)}
           {t('Version: {{version}}', { version: version || t(UNKNOWN) })}
           <br />

@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { kialiStyle } from 'styles/StyleUtils';
-import { TargetPanelCommonProps, targetPanelHR } from './TargetPanelCommon';
+import { targetBodyStyle, TargetPanelCommonProps, targetPanelHR } from './TargetPanelCommon';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { Card, CardBody, CardHeader, Title, TitleSizes, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { Paths, serverConfig } from 'config';
@@ -28,7 +28,7 @@ import { OverviewStatus } from 'pages/Overview/OverviewStatus';
 import { switchType } from 'pages/Overview/OverviewHelper';
 import { TLSStatus } from 'types/TLSStatus';
 import * as FilterHelper from '../../../components/FilterList/FilterHelper';
-import { panelBodyStyle, panelHeadingStyle } from 'pages/Graph/SummaryPanelStyle';
+import { panelHeadingStyle } from 'pages/Graph/SummaryPanelStyle';
 import { Metric } from 'types/Metrics';
 import { t } from 'utils/I18nUtils';
 import { TargetPanelEditor } from './TargetPanelEditor';
@@ -147,7 +147,7 @@ export class TargetPanelDataPlaneNamespace extends React.Component<
             {nsInfo.cluster}
           </div>
         </CardHeader>
-        <CardBody className={panelBodyStyle}>
+        <CardBody className={targetBodyStyle}>
           {this.renderLabels(nsInfo)}
 
           <div style={{ textAlign: 'left' }}>

@@ -5,6 +5,7 @@ import {
   nodeStyle,
   renderNodeHeader,
   shouldRefreshData,
+  targetBodyStyle,
   targetPanelHR,
   targetPanelStyle
 } from './TargetPanelCommon';
@@ -23,7 +24,7 @@ import { TLSStatus, nsWideMTLSStatus } from 'types/TLSStatus';
 import * as FilterHelper from '../../../components/FilterList/FilterHelper';
 import { ControlPlaneMetricsMap } from 'types/Metrics';
 import { classes } from 'typestyle';
-import { panelBodyStyle, panelHeadingStyle, panelStyle } from 'pages/Graph/SummaryPanelStyle';
+import { panelHeadingStyle, panelStyle } from 'pages/Graph/SummaryPanelStyle';
 import { MeshMTLSStatus } from 'components/MTls/MeshMTLSStatus';
 import { t } from 'utils/I18nUtils';
 import { UNKNOWN } from 'types/Graph';
@@ -143,7 +144,7 @@ export class TargetPanelControlPlane extends React.Component<
       >
         <div className={panelHeadingStyle}>{renderNodeHeader(data, {})}</div>
 
-        <div className={panelBodyStyle}>
+        <div className={targetBodyStyle}>
           {controlPlane.tag && <div>{t('Tag: {{tag}}', { tag: controlPlane.tag.name })}</div>}
 
           <div>{t('Version: {{version}}', { version: data.version || t(UNKNOWN) })}</div>

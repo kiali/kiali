@@ -14,7 +14,6 @@ import { serverConfig } from '../../../config';
 import { KialiPageLink } from 'components/Link/KialiPageLink';
 import { classes } from 'typestyle';
 import { UNKNOWN } from 'types/Graph';
-import { panelBodyStyle } from 'pages/Graph/SummaryPanelStyle';
 import { elems, selectAnd } from 'helpers/GraphHelpers';
 import { Controller } from '@patternfly/react-topology';
 
@@ -28,6 +27,11 @@ export interface TargetPanelCommonProps {
 }
 
 export const targetPanelWidth = '35rem';
+
+export const targetBodyStyle = kialiStyle({
+  borderBottom: `1px solid ${PFColors.BorderColor100}`,
+  padding: '0.75rem 1rem'
+});
 
 export const targetPanelStyle = kialiStyle({
   fontSize: 'var(--graph-side-panel--font-size)',
@@ -51,7 +55,7 @@ const healthStatusStyle = kialiStyle({
 const hrStyle = kialiStyle({
   border: 0,
   borderTop: `1px solid ${PFColors.BorderColor100}`,
-  margin: '1rem 0'
+  margin: '0.75rem 0'
 });
 
 export const targetPanelHR = <hr className={hrStyle} />;
@@ -217,7 +221,8 @@ export const renderNodeLink = (meshData: MeshNodeData, style?: string): React.Re
 
   switch (meshData.infraType) {
     case MeshInfraType.GATEWAY:
-      const name = `${meshData.infraName}-${meshData.infraData?.spec?.gatewayClassName}`;
+      const gatewayClassName = meshData.infraData?.spec?.gatewayClassName;
+      const name = gatewayClassName ? `${meshData.infraName}-${gatewayClassName}` : meshData.infraName;
       link = `/namespaces/${encodeURIComponent(meshData.namespace)}/workloads/${encodeURIComponent(name)}`;
       key = `${meshData.namespace}.wl.${name}`;
       displayName = name;
@@ -284,11 +289,12 @@ export const renderControlPlaneSummary = (nodeData: MeshNodeData, dataPlaneNames
 };
 
 export const renderGatewaySummary = (nodeData: MeshNodeData): React.ReactNode => {
+  const apiVersion = nodeData.infraData.apiVersion;
   return (
     <div key={nodeData.id} className={summaryStyle}>
       {renderNodeHeader(nodeData, { nameOnly: true, smallSize: true }, summaryHeaderStyle)}
       <div className={summaryInfoStyle}>
-        <div>{t('api version: {{apiVersion}}', { apiVersion: nodeData.infraData.apiVersion || t(UNKNOWN) })}</div>
+        {apiVersion && <div>{t('api version: {{apiVersion}}', { apiVersion: apiVersion })}</div>}
         <div>{t('revision: {{revision}}', { revision: nodeData.infraData.revision || t('default') })}</div>
       </div>
     </div>
@@ -359,7 +365,7 @@ export const renderInfraSummary = (
   }
 
   return (
-    <div id="target-panel-mesh-body" className={panelBodyStyle}>
+    <div id="target-panel-mesh-body" className={targetBodyStyle} style={{ paddingTop: 0 }}>
       {!forCluster && (
         <div className={infraStyle}>
           {t('Clusters: {{num}}', { num: clusterNodes.length })}

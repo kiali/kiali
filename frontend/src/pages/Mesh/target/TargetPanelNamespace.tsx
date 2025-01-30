@@ -5,6 +5,7 @@ import {
   TargetPanelCommonProps,
   renderInfraSummary,
   shouldRefreshData,
+  targetBodyStyle,
   targetPanelHR,
   targetPanelStyle
 } from './TargetPanelCommon';
@@ -41,7 +42,7 @@ import { TLSStatus } from 'types/TLSStatus';
 import * as FilterHelper from '../../../components/FilterList/FilterHelper';
 import { Metric } from 'types/Metrics';
 import { classes } from 'typestyle';
-import { panelBodyStyle, panelHeadingStyle, panelStyle } from 'pages/Graph/SummaryPanelStyle';
+import { panelHeadingStyle, panelStyle } from 'pages/Graph/SummaryPanelStyle';
 import { isRemoteCluster } from './TargetPanelControlPlane';
 import { BoxTarget, ControlPlane, NamespaceNodeData } from 'types/Mesh';
 import { MeshInfraType } from 'types/Mesh';
@@ -192,7 +193,7 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
               {nsInfo.cluster}
             </div>
           </CardHeader>
-          <CardBody className={panelBodyStyle}>
+          <CardBody className={targetBodyStyle}>
             {isControlPlane && !isRemoteCluster(nsInfo.annotations) && (
               <>
                 {this.renderLabels(nsInfo)}
@@ -265,14 +266,7 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
             )}
           </CardBody>
         </Card>
-        <div
-          style={{
-            padding: 0,
-            borderTop: `1px solid ${PFColors.BorderColor100}`
-          }}
-        >
-          {renderInfraSummary(controller, nsInfo.cluster, nsInfo.name)}
-        </div>
+        {renderInfraSummary(controller, nsInfo.cluster, nsInfo.name)}
       </div>
     );
   }
