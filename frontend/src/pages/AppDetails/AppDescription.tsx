@@ -58,7 +58,7 @@ export const AppDescription: React.FC<AppDescriptionProps> = (props: AppDescript
           <Alert
             variant="info"
             isInline={true}
-            title="Kiali can only supply limited information for this application type"
+            title="Limited information supplied due to the referenced workload type"
             style={{ marginTop: '0.25rem' }}
           />
         )}
