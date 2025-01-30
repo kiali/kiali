@@ -21,14 +21,18 @@ const (
 )
 
 const (
-	BoxByCluster   string = "cluster"
-	BoxByNamespace string = "namespace"
+	BoxByCluster            string = "cluster"
+	BoxByNamespace          string = "namespace"
+	defaultIncludeGateways  bool   = false
+	defaultIncludeWaypoints bool   = false
 )
 
 // CommonOptions are those supplied to Vendors
 type CommonOptions struct {
-	Params    url.Values // make available the raw query params for vendor-specific handling
-	QueryTime int64      // unix time in seconds
+	IncludeGateways  bool
+	IncludeWaypoints bool
+	Params           url.Values // make available the raw query params for vendor-specific handling
+	QueryTime        int64      // unix time in seconds
 }
 
 // ConfigOptions are those supplied to Config Vendors
@@ -75,9 +79,13 @@ func NewOptions(r *http.Request, namespacesService *business.NamespaceService) O
 
 	// query params
 	params := r.URL.Query()
+	var includeGateways bool
+	var includeWaypoints bool
 	var queryTime int64
 	appenders := RequestedAppenders{All: true}
 	configVendor := params.Get("configVendor")
+	includeGatewaysString := params.Get("includeGateways")
+	includeWaypointsString := params.Get("includeWaypoints")
 	queryTimeString := params.Get("queryTime")
 
 	if _, ok := params["appenders"]; ok {
@@ -91,6 +99,24 @@ func NewOptions(r *http.Request, namespacesService *business.NamespaceService) O
 		configVendor = defaultConfigVendor
 	} else if configVendor != VendorCytoscape {
 		BadRequest(fmt.Sprintf("Invalid configVendor [%s]", configVendor))
+	}
+	if includeGatewaysString == "" {
+		includeGateways = defaultIncludeGateways
+	} else {
+		var meshGatewaysErr error
+		includeGateways, meshGatewaysErr = strconv.ParseBool(includeGatewaysString)
+		if meshGatewaysErr != nil {
+			BadRequest(fmt.Sprintf("Invalid meshGateways [%s]", includeGatewaysString))
+		}
+	}
+	if includeWaypointsString == "" {
+		includeWaypoints = defaultIncludeWaypoints
+	} else {
+		var meshWaypointsErr error
+		includeWaypoints, meshWaypointsErr = strconv.ParseBool(includeWaypointsString)
+		if meshWaypointsErr != nil {
+			BadRequest(fmt.Sprintf("Invalid meshWaypoints [%s]", includeWaypointsString))
+		}
 	}
 	if queryTimeString == "" {
 		queryTime = time.Now().Unix()
@@ -114,8 +140,10 @@ func NewOptions(r *http.Request, namespacesService *business.NamespaceService) O
 		ConfigVendor:         configVendor,
 		ConfigOptions: ConfigOptions{
 			CommonOptions: CommonOptions{
-				Params:    params,
-				QueryTime: queryTime,
+				IncludeGateways:  includeGateways,
+				IncludeWaypoints: includeWaypoints,
+				Params:           params,
+				QueryTime:        queryTime,
 			},
 		},
 	}

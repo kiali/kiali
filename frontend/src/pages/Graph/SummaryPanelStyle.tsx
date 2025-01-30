@@ -17,7 +17,7 @@ export const panelHeadingStyle = kialiStyle({
 });
 
 export const panelBodyStyle = kialiStyle({
-  padding: '1rem',
+  padding: '0 1rem',
   $nest: {
     '&:after, &:before': {
       display: 'table',

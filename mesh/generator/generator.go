@@ -10,6 +10,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/api/errors"
 
+	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/kubernetes"
@@ -31,7 +32,7 @@ func (c componentHealthKey) String() string {
 	return c.Name + c.Namespace + c.Cluster
 }
 
-// BuildMeshMap is required by the graph/TelemetryVendor interface
+// BuildMeshMap must produce a valid MeshMap. It is recommended to use the mesh/util.go definitions for error handling.
 func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mesh.MeshMap, error) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "BuildMeshMap",
@@ -182,6 +183,106 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 		if hasExternalServices {
 			_, _, err = addInfra(meshMap, mesh.InfraTypeCluster, mesh.External, "", "External Deployments", nil, "", true, "")
 			mesh.CheckError(err)
+		}
+
+		// if included, add any waypoints
+		if o.IncludeWaypoints {
+			for _, wp := range gi.Business.Workload.GetWaypoints(ctx) {
+				// fetch the detail for each waypoint because we need the waypoint workloads and/or services
+				criteria := business.WorkloadCriteria{
+					Cluster: wp.Cluster, Namespace: wp.Namespace, WorkloadName: wp.Name,
+				}
+				wp, err = gi.Business.Workload.GetWorkload(ctx, criteria)
+				mesh.CheckError(err)
+
+				version := models.DefaultRevisionLabel
+				if rev, ok := wp.Labels[models.IstioRevisionLabel]; ok {
+					version = rev
+				}
+
+				infraData := struct {
+					Annotations         map[string]string
+					Labels              map[string]string
+					TemplateAnnotations map[string]string
+					TemplateLabels      map[string]string
+				}{
+					Annotations:         wp.Annotations,
+					Labels:              wp.Labels,
+					TemplateAnnotations: wp.TemplateAnnotations,
+					TemplateLabels:      wp.TemplateLabels,
+				}
+
+				wpNode, _, err := addInfra(meshMap, mesh.InfraTypeWaypoint, wp.Cluster, wp.Namespace, wp.Name, infraData, version, false, "")
+				mesh.CheckError(err)
+
+				// add edge to the managing control plane
+				for _, infraNode := range meshMap {
+					if infraNode.InfraType == mesh.InfraTypeIstiod && infraNode.Cluster == wp.Cluster {
+						cp := infraNode.Metadata[mesh.InfraData].(models.ControlPlane)
+						tag := "default"
+						if cp.Tag != nil {
+							tag = cp.Tag.Name
+						}
+						if tag == wpNode.Metadata[mesh.Version] {
+							infraNode.AddEdge(wpNode)
+							break
+						}
+					}
+				}
+			}
+		}
+
+		// if included, add gateways
+		if o.IncludeGateways {
+			criteria := business.IstioConfigCriteria{
+				IncludeGateways:    true,
+				IncludeK8sGateways: true,
+			}
+			configMap, err := gi.Business.IstioConfig.GetIstioConfigMap(ctx, "", criteria)
+			mesh.CheckError(err)
+
+			for cluster, config := range configMap {
+				gwNodes := []*mesh.Node{}
+				for _, gw := range config.Gateways {
+					version := models.DefaultRevisionLabel
+					if rev, ok := gw.Labels[models.IstioRevisionLabel]; ok {
+						version = rev
+					}
+					gwNode, _, err := addInfra(meshMap, mesh.InfraTypeGateway, cluster, gw.Namespace, gw.Name, gw, version, false, "")
+					mesh.CheckError(err)
+					gwNodes = append(gwNodes, gwNode)
+				}
+				for _, gw := range config.K8sGateways {
+					// skip waypoints because they are treated independently
+					if strings.Contains(strings.ToLower(string(gw.Spec.GatewayClassName)), "waypoint") {
+						continue
+					}
+					version := models.DefaultRevisionLabel
+					if rev, ok := gw.Labels[models.IstioRevisionLabel]; ok {
+						version = rev
+					}
+					gwNode, _, err := addInfra(meshMap, mesh.InfraTypeGateway, cluster, gw.Namespace, gw.Name, gw, version, false, "")
+					mesh.CheckError(err)
+					gwNodes = append(gwNodes, gwNode)
+				}
+
+				// add edge to the managing control plane
+				for _, infraNode := range meshMap {
+					if infraNode.InfraType != mesh.InfraTypeIstiod || infraNode.Cluster != cluster {
+						continue
+					}
+					cp := infraNode.Metadata[mesh.InfraData].(models.ControlPlane)
+					tag := "default"
+					if cp.Tag != nil {
+						tag = cp.Tag.Name
+					}
+					for _, gwNode := range gwNodes {
+						if tag == gwNode.Metadata[mesh.Version] {
+							infraNode.AddEdge(gwNode)
+						}
+					}
+				}
+			}
 		}
 	}
 

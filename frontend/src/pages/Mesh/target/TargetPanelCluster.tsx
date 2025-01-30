@@ -1,43 +1,20 @@
 import * as React from 'react';
-import { Node, NodeModel } from '@patternfly/react-topology';
 import { kialiStyle } from 'styles/StyleUtils';
-import { PFColors } from 'components/Pf/PfColors';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { getKialiTheme } from 'utils/ThemeUtils';
-import {
-  TargetPanelCommonProps,
-  renderNodeHeader,
-  shouldRefreshData,
-  targetPanelStyle,
-  targetPanelWidth
-} from './TargetPanelCommon';
+import { TargetPanelCommonProps, renderInfraSummary, targetBodyStyle, targetPanelStyle } from './TargetPanelCommon';
 import { kialiIconDark, kialiIconLight } from 'config';
 import { BoxTarget, ClusterNodeData, KialiInstance, isExternal } from 'types/Mesh';
 import { Theme } from 'types/Common';
-import { PromisesRegistry } from 'utils/CancelablePromises';
-import * as API from '../../../services/Api';
-import * as FilterHelper from '../../../components/FilterList/FilterHelper';
-import { ApiError } from 'types/Api';
 import { KialiIcon } from 'config/KialiIcon';
 import { Title, TitleSizes, Tooltip } from '@patternfly/react-core';
 import { classes } from 'typestyle';
-import { descendents } from 'helpers/GraphHelpers';
-import { panelBodyStyle, panelHeadingStyle, panelStyle } from 'pages/Graph/SummaryPanelStyle';
-import { t } from 'utils/I18nUtils';
+import { panelHeadingStyle, panelStyle } from 'pages/Graph/SummaryPanelStyle';
 import { UNKNOWN } from 'types/Graph';
+import { useKialiTranslation } from 'utils/I18nUtils';
 
 type TargetPanelClusterProps = TargetPanelCommonProps & {
   target: BoxTarget<ClusterNodeData>;
-};
-
-type TargetPanelClusterState = {
-  clusterNode?: Node<NodeModel, ClusterNodeData>;
-  loading: boolean;
-};
-
-const defaultState: TargetPanelClusterState = {
-  clusterNode: undefined,
-  loading: false
 };
 
 const kialiIconStyle = kialiStyle({
@@ -45,127 +22,10 @@ const kialiIconStyle = kialiStyle({
   marginRight: '0.25rem'
 });
 
-export class TargetPanelCluster extends React.Component<TargetPanelClusterProps, TargetPanelClusterState> {
-  static readonly panelStyle = {
-    backgroundColor: PFColors.BackgroundColor100,
-    height: '100%',
-    margin: 0,
-    minWidth: targetPanelWidth,
-    overflowY: 'auto' as 'auto',
-    width: targetPanelWidth
-  };
+export const TargetPanelCluster: React.FC<TargetPanelClusterProps> = (props: TargetPanelClusterProps) => {
+  const { t } = useKialiTranslation();
 
-  private promises = new PromisesRegistry();
-
-  constructor(props: TargetPanelClusterProps) {
-    super(props);
-
-    const clusterNode = this.props.target.elem;
-    this.state = { ...defaultState, clusterNode: clusterNode };
-  }
-
-  static getDerivedStateFromProps: React.GetDerivedStateFromProps<TargetPanelClusterProps, TargetPanelClusterState> = (
-    props: TargetPanelClusterProps,
-    state: TargetPanelClusterState
-  ) => {
-    // if the target (i.e. clusterBox) has changed, then init the state
-    return props.target.elem !== state.clusterNode ? { clusterNode: props.target.elem, loading: true } : null;
-  };
-
-  componentDidMount(): void {
-    this.load();
-  }
-
-  componentDidUpdate(prevProps: TargetPanelClusterProps): void {
-    if (shouldRefreshData(prevProps, this.props)) {
-      this.load();
-    }
-  }
-
-  componentWillUnmount(): void {
-    this.promises.cancelAll();
-  }
-
-  render(): React.ReactNode {
-    if (this.state.loading || !this.state.clusterNode) {
-      return null;
-    }
-
-    const data = this.state.clusterNode.getData()!;
-    const clusterData = data.infraData ?? {
-      accessible: false,
-      isKialiHome: false,
-      name: data.infraName
-    };
-    const version = data.version;
-
-    return (
-      <div id="target-panel-cluster" className={classes(panelStyle, targetPanelStyle)}>
-        <div id="target-panel-cluster-heading" className={panelHeadingStyle}>
-          <Title headingLevel="h5" size={TitleSizes.lg}>
-            {clusterData.isKialiHome && (
-              <Tooltip content={t('Kiali home cluster')}>
-                <span style={{ marginRight: '0.5rem' }}>
-                  <KialiIcon.Star />
-                </span>
-              </Tooltip>
-            )}
-            {!isExternal(data.cluster) && <PFBadge badge={PFBadges.Cluster} size="global" />}
-            {clusterData.name}
-          </Title>
-        </div>
-        {isExternal(data.cluster) ? (
-          <div className={panelBodyStyle}>
-            {descendents(this.state.clusterNode)
-              .sort((n1, n2) => {
-                const name1 = n1.getData()!.infraName.toLowerCase();
-                const name2 = n2.getData()!.infraName.toLowerCase();
-                return name1 < name2 ? -1 : 1;
-              })
-              .map(n => {
-                return renderNodeHeader(n.getData()!, { nameOnly: true, smallSize: true });
-              })}
-          </div>
-        ) : (
-          <div className={panelBodyStyle}>
-            {clusterData.accessible && this.renderKialiLinks(clusterData.kialiInstances)}
-            {t('Version: {{version}}', { version: version || t(UNKNOWN) })}
-            <br />
-            {t('API Endpoint: {{apiEndpoint}}', { apiEndpoint: clusterData.apiEndpoint || t('n/a') })}
-            <br />
-            {t('Secret Name: {{secretName}}', { secretName: clusterData.secretName || t('n/a') })}
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  private load = (): void => {
-    this.promises.cancelAll();
-
-    // TODO: Do we have anything to load for the cluster side panel?
-    Promise.resolve()
-      .then(_result => {
-        this.setState({ loading: false });
-      })
-      .catch(err => {
-        if (err.isCanceled) {
-          console.debug('TargetPanelCluster: Ignore fetch error (canceled).');
-          return;
-        }
-
-        this.setState({ ...defaultState, loading: false });
-        this.handleApiError('Could not fetch cluster when loading target panel', err);
-      });
-
-    this.setState({ loading: true });
-  };
-
-  private handleApiError(message: string, error: ApiError): void {
-    FilterHelper.handleError(`${message}: ${API.getErrorString(error)}`);
-  }
-
-  private renderKialiLinks = (kialiInstances: KialiInstance[]): React.ReactNode => {
+  const renderKialiLinks = (kialiInstances: KialiInstance[]): React.ReactNode => {
     const kialiIcon = getKialiTheme() === Theme.DARK ? kialiIconDark : kialiIconLight;
     return kialiInstances?.map(instance => {
       if (instance.url.length !== 0) {
@@ -189,4 +49,45 @@ export class TargetPanelCluster extends React.Component<TargetPanelClusterProps,
       }
     });
   };
-}
+
+  const clusterNode = props.target.elem;
+  const controller = clusterNode.getController();
+  const data = clusterNode.getData()!;
+  const clusterData = data.infraData ?? {
+    accessible: false,
+    isKialiHome: false,
+    name: data.infraName
+  };
+  const version = data.version;
+  const notExternal = !isExternal(data.cluster);
+
+  return (
+    <div id="target-panel-cluster" className={classes(panelStyle, targetPanelStyle)}>
+      <div id="target-panel-cluster-heading" className={panelHeadingStyle}>
+        <Title headingLevel="h5" size={TitleSizes.lg}>
+          {clusterData.isKialiHome && (
+            <Tooltip content={t('Kiali home cluster')}>
+              <span style={{ marginRight: '0.5rem' }}>
+                <KialiIcon.Star />
+              </span>
+            </Tooltip>
+          )}
+          {notExternal && <PFBadge badge={PFBadges.Cluster} size="global" />}
+          {clusterData.name}
+        </Title>
+      </div>
+      {notExternal && (
+        <div className={targetBodyStyle}>
+          {clusterData.accessible && renderKialiLinks(clusterData.kialiInstances)}
+          {t('Version: {{version}}', { version: version || t(UNKNOWN) })}
+          <br />
+          {t('API Endpoint: {{apiEndpoint}}', { apiEndpoint: clusterData.apiEndpoint || t('n/a') })}
+          <br />
+          {t('Secret Name: {{secretName}}', { secretName: clusterData.secretName || t('n/a') })}
+          <br />
+        </div>
+      )}
+      {renderInfraSummary(controller, clusterNode.getData()?.cluster)}
+    </div>
+  );
+};

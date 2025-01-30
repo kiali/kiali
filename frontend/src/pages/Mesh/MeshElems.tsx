@@ -92,6 +92,9 @@ export const getNodeShape = (data: NodeData): NodeShape => {
   switch (data.infraType) {
     case MeshInfraType.DATAPLANE:
       return NodeShape.rect;
+    case MeshInfraType.GATEWAY:
+    case MeshInfraType.WAYPOINT:
+      return NodeShape.rhombus;
     default:
       return NodeShape.hexagon;
   }
@@ -139,6 +142,9 @@ export const setNodeLabel = (node: NodeModel, _nodeMap: NodeMap): void => {
         pfBadge = PFBadges.DataPlane;
         content.push(`${(data.infraData as NamespaceInfo[]).length} Namespaces`);
         break;
+      case MeshInfraType.GATEWAY:
+        pfBadge = PFBadges.Gateway;
+        break;
       case MeshInfraType.GRAFANA:
         pfBadge = PFBadges.Grafana;
         break;
@@ -159,6 +165,9 @@ export const setNodeLabel = (node: NodeModel, _nodeMap: NodeMap): void => {
         break;
       case MeshInfraType.TRACE_STORE:
         pfBadge = PFBadges.TraceStore;
+        break;
+      case MeshInfraType.WAYPOINT:
+        pfBadge = PFBadges.Waypoint;
         break;
       default:
         console.warn(`MeshElems: Unexpected infraType [${infraType}] `);

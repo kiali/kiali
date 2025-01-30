@@ -28,12 +28,14 @@ export type MeshClusters = MeshCluster[];
 export enum MeshInfraType {
   CLUSTER = 'cluster',
   DATAPLANE = 'dataplane',
+  GATEWAY = 'gateway',
   GRAFANA = 'grafana',
   ISTIOD = 'istiod',
   KIALI = 'kiali',
   METRIC_STORE = 'metricStore',
   NAMESPACE = 'namespace',
-  TRACE_STORE = 'traceStore'
+  TRACE_STORE = 'traceStore',
+  WAYPOINT = 'waypoint'
 }
 
 export enum MeshNodeType {
@@ -62,6 +64,12 @@ export interface DataPlaneNodeData extends BaseNodeData {
   infraType: MeshInfraType.DATAPLANE;
 }
 
+export interface GatewayNodeData extends BaseNodeData {
+  // Gateway node data is the raw gateway config. We don't actually care about what
+  // each field is since we just display the whole config in the side panel as is.
+  infraType: MeshInfraType.GATEWAY;
+}
+
 export interface GrafanaNodeData extends BaseNodeData {
   // Grafana node data is the raw grafana config. We don't actually care about what
   // each field is since we just display the whole config in the side panel as is.
@@ -84,9 +92,14 @@ export interface MetricStoreNodeData extends BaseNodeData {
 }
 
 export interface TraceStoreNodeData extends BaseNodeData {
-  // TraceStore node data is raw the trace store config. We don't actually care about what
+  // TraceStore node data is the raw trace store config. We don't actually care about what
   // each field is since we just display the whole config in the side panel as is.
   infraType: MeshInfraType.TRACE_STORE;
+}
+
+export interface WaypointNodeData extends BaseNodeData {
+  // Waypoint node data is the list of namespaces that interact with the waypoint.
+  infraType: MeshInfraType.WAYPOINT;
 }
 
 // Node data expected from server. Depending on the infraType,
@@ -97,10 +110,12 @@ export type MeshNodeData =
   | NamespaceNodeData
   | ClusterNodeData
   | DataPlaneNodeData
+  | GatewayNodeData
   | GrafanaNodeData
   | KialiNodeData
   | MetricStoreNodeData
-  | TraceStoreNodeData;
+  | TraceStoreNodeData
+  | WaypointNodeData;
 
 // BaseNodeData has common fields for all MeshNodeData types.
 interface BaseNodeData {
@@ -145,6 +160,8 @@ export interface MeshElements {
 // TODO: unnecessary?
 export interface MeshQuery {
   appenders?: AppenderString;
+  includeGateways?: boolean;
+  includeWaypoints?: boolean;
 }
 
 export interface MeshDefinition {

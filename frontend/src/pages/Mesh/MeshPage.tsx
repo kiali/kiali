@@ -54,8 +54,10 @@ type ReduxStateProps = {
   layout: Layout;
   mtlsEnabled: boolean;
   refreshInterval: IntervalInMilliseconds;
+  showGateways: boolean;
   showLegend: boolean;
   showOutOfMesh: boolean;
+  showWaypoints: boolean;
   target: MeshTarget | null;
 };
 
@@ -185,7 +187,9 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
       prev.duration !== curr.duration ||
       (prev.findValue !== curr.findValue && curr.findValue.includes('label:')) ||
       (prev.hideValue !== curr.hideValue && curr.hideValue.includes('label:')) ||
-      prev.lastRefreshAt !== curr.lastRefreshAt
+      prev.lastRefreshAt !== curr.lastRefreshAt ||
+      prev.showGateways !== curr.showGateways ||
+      prev.showWaypoints !== curr.showWaypoints
     ) {
       this.loadMeshFromBackend();
     }
@@ -339,8 +343,9 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
 
   private loadMeshFromBackend = (): void => {
     this.meshDataSource.fetchMeshData({
-      includeHealth: true,
-      includeLabels: this.props.findValue.includes('label:') || this.props.hideValue.includes('label:')
+      includeLabels: this.props.findValue.includes('label:') || this.props.hideValue.includes('label:'),
+      showGateways: this.props.showGateways,
+      showWaypoints: this.props.showWaypoints
     });
   };
 
@@ -408,8 +413,10 @@ const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
   layout: state.mesh.layout,
   mtlsEnabled: meshWideMTLSEnabledSelector(state),
   refreshInterval: refreshIntervalSelector(state),
+  showGateways: state.mesh.toolbarState.showGateways,
   showLegend: state.mesh.toolbarState.showLegend,
   showOutOfMesh: state.graph.toolbarState.showOutOfMesh,
+  showWaypoints: state.mesh.toolbarState.showWaypoints,
   target: state.mesh.target
 });
 

@@ -1,20 +1,16 @@
 import * as React from 'react';
 import { Node, NodeModel } from '@patternfly/react-topology';
 import { kialiStyle } from 'styles/StyleUtils';
-import { TargetPanelCommonProps, shouldRefreshData, targetPanelHR, targetPanelStyle } from './TargetPanelCommon';
-import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import {
-  Card,
-  CardBody,
-  CardHeader,
-  Label,
-  List,
-  ListItem,
-  Title,
-  TitleSizes,
-  Tooltip,
-  TooltipPosition
-} from '@patternfly/react-core';
+  TargetPanelCommonProps,
+  renderInfraSummary,
+  shouldRefreshData,
+  targetBodyStyle,
+  targetPanelHR,
+  targetPanelStyle
+} from './TargetPanelCommon';
+import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
+import { Card, CardBody, CardHeader, Label, Title, TitleSizes, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { Paths, serverConfig } from 'config';
 import { ValidationStatus } from 'types/IstioObjects';
 import { OverviewNamespaceAction, OverviewNamespaceActions } from 'pages/Overview/OverviewNamespaceActions';
@@ -46,7 +42,7 @@ import { TLSStatus } from 'types/TLSStatus';
 import * as FilterHelper from '../../../components/FilterList/FilterHelper';
 import { Metric } from 'types/Metrics';
 import { classes } from 'typestyle';
-import { panelBodyStyle, panelHeadingStyle, panelStyle } from 'pages/Graph/SummaryPanelStyle';
+import { panelHeadingStyle, panelStyle } from 'pages/Graph/SummaryPanelStyle';
 import { isRemoteCluster } from './TargetPanelControlPlane';
 import { BoxTarget, ControlPlane, NamespaceNodeData } from 'types/Mesh';
 import { MeshInfraType } from 'types/Mesh';
@@ -164,7 +160,8 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
       return this.getLoading();
     }
 
-    const listItemStyle = { marginTop: 0 };
+    const targetNode = this.props.target.elem;
+    const controller = targetNode.getController();
     const isControlPlane = this.isControlPlane();
     const nsInfo = this.state.nsInfo;
     const ns = nsInfo.name;
@@ -196,7 +193,7 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
               {nsInfo.cluster}
             </div>
           </CardHeader>
-          <CardBody className={panelBodyStyle}>
+          <CardBody className={targetBodyStyle}>
             {isControlPlane && !isRemoteCluster(nsInfo.annotations) && (
               <>
                 {this.renderLabels(nsInfo)}
@@ -217,29 +214,6 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
                       <div>
                         {targetPanelHR}
                         <ControlPlaneDonut controlPlanes={this.state.controlPlanes} />
-                      </div>
-                    )}
-
-                    {this.state.controlPlanes && (
-                      <div style={{ textAlign: 'left', alignContent: 'start', alignItems: 'start' }}>
-                        {targetPanelHR}
-                        <Title headingLevel="h3">Control Planes</Title>
-                        <List isPlain isBordered>
-                          {this.state.controlPlanes
-                            .sort((a, b) => a.istiodName.localeCompare(b.istiodName))
-                            .map(cp => (
-                              <ListItem key={cp.istiodName}>
-                                <Title headingLevel="h4">{cp.istiodName}</Title>
-                                <List style={listItemStyle} isPlain>
-                                  <ListItem style={listItemStyle}>
-                                    Version: {cp.version ? cp.version.version : 'Unknown'}
-                                  </ListItem>
-                                  <ListItem style={listItemStyle}>Revision: {cp.revision}</ListItem>
-                                  {cp.tag && <ListItem style={listItemStyle}>Tag: {cp.tag.name}</ListItem>}
-                                </List>
-                              </ListItem>
-                            ))}
-                        </List>
                       </div>
                     )}
                   </>
@@ -292,6 +266,7 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
             )}
           </CardBody>
         </Card>
+        {renderInfraSummary(controller, nsInfo.cluster, nsInfo.name)}
       </div>
     );
   }

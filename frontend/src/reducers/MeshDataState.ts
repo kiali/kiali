@@ -14,7 +14,9 @@ export const INITIAL_MESH_STATE: MeshState = {
     findValue: '',
     hideValue: '',
     showFindHelp: false,
-    showLegend: false
+    showGateways: false,
+    showLegend: false,
+    showWaypoints: false
   },
   updateTime: 0
 };
@@ -61,10 +63,22 @@ export const MeshDataStateReducer = (state: MeshState = INITIAL_MESH_STATE, acti
           showFindHelp: !state.toolbarState.showFindHelp
         })
       });
+    case getType(MeshToolbarActions.toggleGateways):
+      return updateState(state, {
+        toolbarState: updateState(state.toolbarState, {
+          showGateways: !state.toolbarState.showGateways
+        })
+      });
     case getType(MeshToolbarActions.toggleLegend):
       return updateState(state, {
         toolbarState: updateState(state.toolbarState, {
           showLegend: !state.toolbarState.showLegend
+        })
+      });
+    case getType(MeshToolbarActions.toggleWaypoints):
+      return updateState(state, {
+        toolbarState: updateState(state.toolbarState, {
+          showWaypoints: !state.toolbarState.showWaypoints
         })
       });
     default:
