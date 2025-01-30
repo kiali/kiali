@@ -218,7 +218,11 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 				// add edge to the managing control plane
 				for _, infraNode := range meshMap {
 					if infraNode.InfraType == mesh.InfraTypeIstiod && infraNode.Cluster == wp.Cluster {
-						tag := infraNode.Metadata[mesh.InfraData].(models.ControlPlane).Tag.Name
+						cp := infraNode.Metadata[mesh.InfraData].(models.ControlPlane)
+						tag := "default"
+						if cp.Tag != nil {
+							tag = cp.Tag.Name
+						}
 						if tag == wpNode.Metadata[mesh.Version] {
 							infraNode.AddEdge(wpNode)
 							break
@@ -267,7 +271,11 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 					if infraNode.InfraType != mesh.InfraTypeIstiod || infraNode.Cluster != cluster {
 						continue
 					}
-					tag := infraNode.Metadata[mesh.InfraData].(models.ControlPlane).Tag.Name
+					cp := infraNode.Metadata[mesh.InfraData].(models.ControlPlane)
+					tag := "default"
+					if cp.Tag != nil {
+						tag = cp.Tag.Name
+					}
 					for _, gwNode := range gwNodes {
 						if tag == gwNode.Metadata[mesh.Version] {
 							infraNode.AddEdge(gwNode)
