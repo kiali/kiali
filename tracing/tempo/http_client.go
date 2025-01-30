@@ -257,6 +257,8 @@ func (oc *OtelHTTPClient) prepareTraceQL(u *url.URL, tracingServiceName string, 
 	q := url.Values{}
 	q.Set("start", fmt.Sprintf("%d", query.Start.Unix()))
 	q.Set("end", fmt.Sprintf("%d", query.End.Unix()))
+
+	// For Ambient, the service name is the waypoint
 	queryPart := TraceQL{operator1: ".service.name", operand: EQUAL, operator2: tracingServiceName}
 
 	if len(query.Tags) > 0 {
@@ -266,7 +268,7 @@ func (oc *OtelHTTPClient) prepareTraceQL(u *url.URL, tracingServiceName string, 
 		}
 	}
 
-	selects := []string{"status", ".service_name", ".node_id", ".component", ".upstream_cluster", ".http.method", ".response_flags", "resource.hostname"}
+	selects := []string{"status", ".service_name", ".node_id", ".component", ".upstream_cluster", ".http.method", ".response_flags", "resource.hostname", "name"}
 	trace := TraceQL{operator1: Subquery{queryPart}, operand: AND, operator2: Subquery{}}
 	queryQL := fmt.Sprintf("%s| %s", printOperator(trace), printSelect(selects))
 

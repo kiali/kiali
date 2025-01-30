@@ -30,6 +30,7 @@ import { basicTabStyle } from 'styles/TabStyles';
 import { ZtunnelConfig } from '../../components/Ambient/ZtunnelConfig';
 import { WaypointConfig } from '../../components/Ambient/WaypointConfig';
 import { isGVKSupported } from '../../utils/IstioConfigUtils';
+import { Waypoint } from '../../types/Ambient';
 
 type WorkloadDetailsState = {
   cluster?: string;
@@ -236,14 +237,18 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
       tabsArray.push(outTab);
 
       if (this.props.tracingInfo && this.props.tracingInfo.enabled && this.props.tracingInfo.integration) {
+        const fromWaypoint =
+          this.state.workload?.waypointWorkloads && this.state.workload.waypointWorkloads.length > 0 ? true : false;
         tabsArray.push(
           <Tab eventKey={5} title="Traces" key="Traces">
             <TracesComponent
+              app={this.state.workload?.labels['app']}
               lastRefreshAt={this.props.lastRefreshAt}
               namespace={this.props.workloadId.namespace}
               cluster={this.state.cluster}
               target={this.props.workloadId.workload}
               targetKind="workload"
+              fromWaypoint={fromWaypoint}
             />
           </Tab>
         );
@@ -252,7 +257,7 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
 
     if (
       this.state.workload &&
-      (this.hasIstioSidecars(this.state.workload) || this.state.workload.ambient === 'waypoint')
+      (this.hasIstioSidecars(this.state.workload) || this.state.workload.ambient === Waypoint)
     ) {
       const envoyTab = (
         <Tab title="Envoy" eventKey={10} key="Envoy">
@@ -285,7 +290,7 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
       paramToTab['ztunnel'] = 11;
     }
 
-    if (this.state.workload && this.state.workload.ambient === 'waypoint') {
+    if (this.state.workload && this.state.workload.ambient === Waypoint) {
       const waypointTab = (
         <Tab title="Waypoint" eventKey={12} key="Waypoint">
           {this.state.workload && <WaypointConfig workload={this.state.workload} />}

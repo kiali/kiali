@@ -112,7 +112,7 @@ export function getLayoutByName(layoutName: string): Layout {
   }
 }
 
-export function graphLayout(controller: Controller, layoutType: LayoutType, reset: boolean = true): void {
+export function graphLayout(controller: Controller, layoutType: LayoutType, reset = true): void {
   if (!controller?.hasGraph()) {
     console.debug('TG: Skip graphLayout, no graph');
     return;
@@ -298,13 +298,14 @@ const TopologyContent: React.FC<{
     }
 
     if (!!trace) {
-      showTrace(controller, graphData.fetchParams.graphType, trace);
+      const ambient = graphData.fetchParams.trafficRates.some(rate => rate === 'ambient');
+      showTrace(controller, graphData.fetchParams.graphType, ambient, trace);
     }
 
     return () => {
       hideTrace(controller);
     };
-  }, [controller, graphData.fetchParams.graphType, trace]);
+  }, [controller, graphData.fetchParams.graphType, graphData.fetchParams.trafficRates, trace]);
 
   //
   // Layout and resize handling

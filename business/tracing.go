@@ -21,14 +21,16 @@ type (
 )
 
 type TracingService struct {
+	app      *AppService
 	conf     *config.Config
 	svc      *SvcService
 	tracing  tracing.ClientInterface
 	workload *WorkloadService
 }
 
-func NewTracingService(conf *config.Config, tracing tracing.ClientInterface, svcService *SvcService, workloadService *WorkloadService) TracingService {
+func NewTracingService(conf *config.Config, tracing tracing.ClientInterface, svcService *SvcService, workloadService *WorkloadService, appService *AppService) TracingService {
 	return TracingService{
+		app:      appService,
 		conf:     conf,
 		svc:      svcService,
 		tracing:  tracing,
@@ -48,17 +50,24 @@ func (in *TracingService) client() (tracing.ClientInterface, error) {
 	return in.tracing, nil
 }
 
-func (in *TracingService) getFilteredSpans(ns, app string, query models.TracingQuery, filter SpanFilter) ([]model.TracingSpan, error) {
-	r, err := in.GetAppTraces(ns, app, query)
+func (in *TracingService) getFilteredSpans(ns string, app models.TracingName, query models.TracingQuery, filter SpanFilter) ([]model.TracingSpan, error) {
+	r, err := in.GetAppTraces(ns, app.Lookup, app.Lookup, query)
 	if err != nil {
 		return []model.TracingSpan{}, err
 	}
 	spans := tracesToSpans(app, r, filter, in.conf)
+
 	return spans, nil
 }
 
-func (in *TracingService) GetAppSpans(ns, app string, query models.TracingQuery) ([]model.TracingSpan, error) {
-	return in.getFilteredSpans(ns, app, query, nil /*no post-filtering for apps*/)
+func (in *TracingService) GetAppSpans(ctx context.Context, cluster, ns, app string, query models.TracingQuery) ([]model.TracingSpan, error) {
+
+	tracingName := in.app.GetAppTracingName(ctx, cluster, ns, app)
+	var waypointFilter SpanFilter
+	if tracingName.Lookup != app {
+		waypointFilter = operationSpanFilter(ns, app)
+	}
+	return in.getFilteredSpans(ns, tracingName, query, waypointFilter)
 }
 
 func (in *TracingService) GetServiceSpans(ctx context.Context, ns, service string, query models.TracingQuery) ([]model.TracingSpan, error) {
@@ -71,13 +80,13 @@ func (in *TracingService) GetServiceSpans(ctx context.Context, ns, service strin
 	)
 	defer end()
 
-	app, err := in.svc.GetServiceAppName(ctx, query.Cluster, ns, service)
+	app, err := in.svc.GetServiceTracingName(ctx, query.Cluster, ns, service)
 	if err != nil {
 		return nil, err
 	}
 	var postFilter SpanFilter
 	// Run post-filter only for service != app
-	if app != service {
+	if app.Lookup != service {
 		postFilter = operationSpanFilter(ns, service)
 	}
 	return in.getFilteredSpans(ns, app, query, postFilter)
@@ -102,26 +111,43 @@ func (in *TracingService) GetWorkloadSpans(ctx context.Context, ns, workload str
 	)
 	defer end()
 
-	app, err := in.workload.GetWorkloadAppName(ctx, query.Cluster, ns, workload)
+	tracingName, err := in.workload.GetWorkloadTracingName(ctx, query.Cluster, ns, workload)
 	if err != nil {
 		return nil, err
 	}
-	return in.getFilteredSpans(ns, app, query, wkdSpanFilter(ns, workload))
+	return in.getFilteredSpans(ns, tracingName, query, wkdSpanFilter(ns, tracingName))
 }
 
-func wkdSpanFilter(ns, workload string) SpanFilter {
+func wkdSpanFilter(ns string, tracingName models.TracingName) SpanFilter {
 	// Filter out app traces based on the node_id tag, that contains workload information.
 	return func(span *jaegerModels.Span) bool {
-		return spanMatchesWorkload(span, ns, workload)
+		return spanMatchesWorkload(span, ns, tracingName)
 	}
 }
 
-func (in *TracingService) GetAppTraces(ns, app string, query models.TracingQuery) (*model.TracingResponse, error) {
+// GetAppTraces returns the traces for an app
+// TracingName is the name to be used to query the tracing backend (Using the waypoint name in Ambient)
+// App name is the name to filter the traces (When different)
+func (in *TracingService) GetAppTraces(ns, tracingName, app string, query models.TracingQuery) (*model.TracingResponse, error) {
 	client, err := in.client()
 	if err != nil {
 		return nil, err
 	}
-	r, err := client.GetAppTraces(ns, app, query)
+	r, err := client.GetAppTraces(ns, tracingName, query)
+	if tracingName != app {
+		// Filter by app
+		filter := operationSpanFilter(ns, app)
+		traces := []jaegerModels.Trace{}
+		for _, trace := range r.Data {
+			for _, span := range trace.Spans {
+				if filter(&span) {
+					traces = append(traces, trace)
+					break
+				}
+			}
+		}
+		r.Data = traces
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -144,16 +170,16 @@ func (in *TracingService) GetServiceTraces(ctx context.Context, ns, service stri
 	)
 	defer end()
 
-	app, err := in.svc.GetServiceAppName(ctx, query.Cluster, ns, service)
+	app, err := in.svc.GetServiceTracingName(ctx, query.Cluster, ns, service)
 	if err != nil {
 		return nil, err
 	}
-	if app == service {
+	if app.Lookup == service {
 		// No post-filtering
-		return in.GetAppTraces(ns, app, query)
+		return in.GetAppTraces(ns, service, app.Lookup, query)
 	}
 
-	r, err := in.GetAppTraces(ns, app, query)
+	r, err := in.GetAppTraces(ns, app.Lookup, service, query)
 	if r != nil && err == nil {
 		// Filter out app traces based on operation name.
 		// For envoy traces, operation name is like "service-name.namespace.svc.cluster.local:8000/*"
@@ -186,17 +212,17 @@ func (in *TracingService) GetWorkloadTraces(ctx context.Context, ns, workload st
 	)
 	defer end()
 
-	app, err := in.workload.GetWorkloadAppName(ctx, query.Cluster, ns, workload)
+	app, err := in.workload.GetWorkloadTracingName(ctx, query.Cluster, ns, workload)
 	if err != nil {
 		return nil, err
 	}
 
-	r, err := in.GetAppTraces(ns, app, query)
+	r, err := in.GetAppTraces(ns, app.Lookup, app.App, query)
 	// Filter out app traces based on the node_id tag, that contains workload information.
 	if r != nil && err == nil {
 		traces := []jaegerModels.Trace{}
 		for _, trace := range r.Data {
-			if matchesWorkload(&trace, ns, workload) {
+			if matchesWorkload(&trace, ns, app) {
 				traces = append(traces, trace)
 			}
 		}
@@ -229,26 +255,35 @@ func (in *TracingService) GetStatus() (accessible bool, err error) {
 	return client.GetServiceStatus()
 }
 
-func matchesWorkload(trace *jaegerModels.Trace, namespace, workload string) bool {
+func matchesWorkload(trace *jaegerModels.Trace, namespace string, tracingName models.TracingName) bool {
 	for _, span := range trace.Spans {
 		if process, ok := trace.Processes[span.ProcessID]; ok {
 			span.Process = &process
 		}
-		if spanMatchesWorkload(&span, namespace, workload) {
+		if spanMatchesWorkload(&span, namespace, tracingName) {
 			return true
 		}
 	}
 	return false
 }
 
-func spanMatchesWorkload(span *jaegerModels.Span, namespace, workload string) bool {
+// spanMatchesWorkload matches a span based on a node id or the hostname
+// For Ambient, as the trace is reported by the Waypoint proxy, a match based on the app is done
+func spanMatchesWorkload(span *jaegerModels.Span, namespace string, tracingName models.TracingName) bool {
+	// If the workload has a waypoint, the span won't match, but the operation name can
+	// When the workload has a waypoint, the operation name is filtered by the service
+	if tracingName.WaypointName != "" {
+		op := fmt.Sprintf("%s.%s", tracingName.App, namespace)
+		log.Tracef("[Tracing] Filtering span trace by service %s", op)
+		return strings.HasPrefix(span.OperationName, op)
+	}
 	// For envoy traces, with a workload named "ai-locals", node_id is like:
 	// sidecar~172.17.0.20~ai-locals-6d8996bff-ztg6z.default~default.svc.cluster.local
 	for _, tag := range span.Tags {
 		if tag.Key == "node_id" {
 			if v, ok := tag.Value.(string); ok {
 				parts := strings.Split(v, "~")
-				if len(parts) >= 3 && strings.HasPrefix(parts[2], workload) && strings.HasSuffix(parts[2], namespace) {
+				if len(parts) >= 3 && strings.HasPrefix(parts[2], tracingName.Workload) && strings.HasSuffix(parts[2], namespace) {
 					return true
 				}
 			}
@@ -256,7 +291,7 @@ func spanMatchesWorkload(span *jaegerModels.Span, namespace, workload string) bo
 		// For Tempo Traces
 		if tag.Key == "hostname" {
 			if v, ok := tag.Value.(string); ok {
-				if strings.HasPrefix(v, workload) {
+				if strings.HasPrefix(v, tracingName.Workload) {
 					return true
 				}
 			}
@@ -267,7 +302,7 @@ func spanMatchesWorkload(span *jaegerModels.Span, namespace, workload string) bo
 		for _, tag := range span.Process.Tags {
 			if tag.Key == "hostname" {
 				if v, ok := tag.Value.(string); ok {
-					if strings.HasPrefix(v, workload) {
+					if strings.HasPrefix(v, tracingName.Workload) {
 						return true
 					}
 				}
@@ -277,9 +312,20 @@ func spanMatchesWorkload(span *jaegerModels.Span, namespace, workload string) bo
 	return false
 }
 
-func tracesToSpans(app string, r *model.TracingResponse, filter SpanFilter, conf *config.Config) []model.TracingSpan {
+func tracesToSpans(app models.TracingName, r *model.TracingResponse, filter SpanFilter, conf *config.Config) []model.TracingSpan {
 	spans := []model.TracingSpan{}
 	for _, trace := range r.Data {
+		if app.WaypointName != "" {
+			for _, span := range trace.Spans {
+				if filter == nil || filter(&span) {
+					spans = append(spans, model.TracingSpan{
+						Span:      span,
+						TraceSize: len(trace.Spans),
+					})
+				}
+			}
+			continue
+		}
 		// Diferent for Tempo & Jaeger
 		// For Tempo the proccess matched with the service name of the trace batch
 		// So t is already filtered in the query
@@ -299,7 +345,7 @@ func tracesToSpans(app string, r *model.TracingResponse, filter SpanFilter, conf
 			// First, get the desired processes for our service
 			processes := make(map[jaegerModels.ProcessID]jaegerModels.Process)
 			for pId, process := range trace.Processes {
-				if process.ServiceName == app || process.ServiceName == r.TracingServiceName {
+				if process.ServiceName == app.Lookup || process.ServiceName == r.TracingServiceName {
 					processes[pId] = process
 				}
 			}

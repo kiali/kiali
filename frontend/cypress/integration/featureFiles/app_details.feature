@@ -33,6 +33,7 @@ Feature: Kiali App Details page
 
   @bookinfo-app
   @tracing
+  @waypoint-tracing
   Scenario: See tracing info after selecting a trace
     And user sees trace information
     When user selects a trace
@@ -44,4 +45,11 @@ Feature: Kiali App Details page
     And user sees trace information
     When user selects a trace
     Then user sees span details
-    And user can filter spans by app
+    And user can filter spans by app "productpage"
+
+  @waypoint-tracing
+  Scenario: See span info after selecting app span
+    And user sees trace information
+    When user selects a trace
+    Then user sees span details
+    And user can filter spans by app "waypoint"

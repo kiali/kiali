@@ -50,7 +50,7 @@ func (jc TempoGRPCClient) FindTraces(ctx context.Context, serviceName string, q 
 		}
 	}
 
-	selects := []string{"status", ".service_name", ".node_id", ".component", ".upstream_cluster", ".http.method", ".response_flags"}
+	selects := []string{"status", ".service_name", ".node_id", ".component", ".upstream_cluster", ".http.method", ".response_flags", "resource.hostname", "name"}
 	trace := TraceQL{operator1: Subquery{queryPart}, operand: AND, operator2: Subquery{}}
 	queryQL := fmt.Sprintf("%s| %s", printOperator(trace), printSelect(selects))
 	log.Debugf("QueryQL %s", queryQL)

@@ -9,17 +9,28 @@ import {
 } from 'utils/tracing/TracingHelper';
 import { edgesOut, elems, select, SelectAnd, selectAnd, setObserved } from 'helpers/GraphHelpers';
 
-export const showTrace = (controller: Controller, graphType: GraphType, trace: JaegerTrace): void => {
+export const showTrace = (
+  controller: Controller,
+  graphType: GraphType,
+  isAmbient: boolean,
+  trace: JaegerTrace
+): void => {
   if (!controller.hasGraph()) {
     return;
   }
 
   hideTrace(controller);
-  trace.spans.forEach(span => showSpanSubtrace(controller, graphType, span));
+  trace.spans.forEach(span => showSpanSubtrace(controller, graphType, isAmbient, span));
 };
 
-const showSpanSubtrace = (controller: Controller, graphType: GraphType, span: Span): void => {
-  const split = span.process.serviceName.split('.');
+const showSpanSubtrace = (controller: Controller, graphType: GraphType, isAmbient: boolean, span: Span): void => {
+  let split: string[];
+  if (isAmbient) {
+    // For Ambient, the service Name will always be the waypoint or the gateway
+    split = span.operationName.split('.');
+  } else {
+    split = span.process.serviceName.split('.');
+  }
   const app = split[0];
   // From upstream to downstream: Parent app or workload, Inbound Service Entry, Service, App or Workload, Outbound Service Entry
   let lastSelection: Node[] | undefined = undefined;

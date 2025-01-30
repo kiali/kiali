@@ -63,14 +63,14 @@ Then('user sees outbound metrics information', () => {
     });
 });
 
-Then('user can filter spans by app', () => {
+Then('user can filter spans by app {string}', (app: string) => {
   cy.get('button#filter_select_type-toggle').click();
   cy.contains('div#filter_select_type button', 'App').click();
-  cy.get('input[placeholder="Filter by App"]').type('productpage{enter}');
-  cy.get('li[label="productpage"]').should('be.visible').find('button').click();
+  cy.get('input[placeholder="Filter by App"]').type(`${app}{enter}`);
+  cy.get(`li[label="${app}"]`).should('be.visible').find('button').click();
 
   getCellsForCol('App / Workload').each($cell => {
-    cy.wrap($cell).contains('productpage');
+    cy.wrap($cell).contains(app);
   });
 
   getCellsForCol(4).first().click();

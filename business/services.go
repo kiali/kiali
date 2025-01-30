@@ -658,10 +658,14 @@ func (in *SvcService) isServiceCaptured(svc *models.Service) ([]models.Waypoint,
 	found := false
 	waypointNames := make([]models.Waypoint, 0)
 
+	if svc.Labels[config.WaypointUseLabel] == "none" {
+		return waypointNames, false
+	}
+
 	// Is the service labeled?
 	// the service waypoint takes precedence over the namespace waypoint as long as the service waypoint can handle service or all traffic
 	waypointName, isLabeled := svc.Labels[config.WaypointUseLabel]
-	if isLabeled {
+	if isLabeled && waypointName != "none" {
 		waypointNamespace, okNs := svc.Labels[config.WaypointUseNamespaceLabel]
 		if !okNs {
 			waypointNamespace = svc.Namespace
@@ -679,7 +683,7 @@ func (in *SvcService) isServiceCaptured(svc *models.Service) ([]models.Waypoint,
 		if !okNs {
 			waypointNamespace = svc.Namespace
 		}
-		if ok {
+		if ok && waypointNsName != "none" {
 			found = true
 			// Ambient doesn't support multicluster (For now), cluster is the same as the workload
 			waypointNames = append(waypointNames, models.Waypoint{Name: waypointNsName, Type: "namespace", Namespace: waypointNamespace, Cluster: svc.Cluster})
@@ -843,11 +847,13 @@ func (in *SvcService) getServiceValidations(services []core_v1.Service, deployme
 	return validations
 }
 
-// GetServiceAppName returns the "Application" name (app label) that relates to a service
+// GetServiceTracingName returns a struct with all the information needed for tracing lookup
+// The "Application" name (app label) that relates to a service
 // This label is taken from the service selector, which means it is assumed that pods are selected using that label
-func (in *SvcService) GetServiceAppName(ctx context.Context, cluster, namespace, service string) (string, error) {
+// If the application has any Waypoint, the information is included, as it will be the search name in the tracing backend
+func (in *SvcService) GetServiceTracingName(ctx context.Context, cluster, namespace, service string) (models.TracingName, error) {
 	var end observability.EndFunc
-	ctx, end = observability.StartSpan(ctx, "GetServiceAppName",
+	ctx, end = observability.StartSpan(ctx, "GetServiceTracingName",
 		observability.Attribute("package", "business"),
 		observability.Attribute("cluster", cluster),
 		observability.Attribute("namespace", namespace),
@@ -855,20 +861,35 @@ func (in *SvcService) GetServiceAppName(ctx context.Context, cluster, namespace,
 	)
 	defer end()
 
+	tracingName := models.TracingName{App: service, Lookup: service}
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
 	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
 	if _, err := in.businessLayer.Namespace.GetClusterNamespace(ctx, namespace, cluster); err != nil {
-		return "", err
+		return tracingName, err
 	}
 
 	svc, err := in.GetService(ctx, cluster, namespace, service)
 	if err != nil {
-		return "", fmt.Errorf("Service [cluster: %s] [namespace: %s] [name: %s] doesn't exist.", cluster, namespace, service)
+		return tracingName, fmt.Errorf("Service [cluster: %s] [namespace: %s] [name: %s] doesn't exist.", cluster, namespace, service)
+	}
+	// Waypoint proxies don't have the label app, but they do have traces
+	if IsWaypoint(svc) {
+		tracingName.Lookup = svc.Name
+		return tracingName, nil
+	}
+	waypoints := in.GetWaypointsForService(ctx, &svc)
+	if len(waypoints) > 0 {
+		tracingName.WaypointName = waypoints[0].Name
+		tracingName.WaypointNamespace = waypoints[0].Namespace
+		tracingName.Lookup = waypoints[0].Name
+		return tracingName, nil
 	}
 
 	appLabelName := in.config.IstioLabels.AppLabelName
 	app := svc.Selectors[appLabelName]
-	return app, nil
+	tracingName.App = app
+	tracingName.Lookup = app
+	return tracingName, nil
 }
 
 // GetServiceRouteURL returns "" for non-OpenShift, or if the route can not be found
@@ -901,4 +922,9 @@ func (in *SvcService) GetServiceRouteURL(ctx context.Context, cluster, namespace
 	}
 
 	return
+}
+
+// IsWaypoint returns true if the service is from a Waypoint proxy, based on the service labels
+func IsWaypoint(service models.Service) bool {
+	return service.Labels[config.WaypointLabel] == config.WaypointLabelValue
 }

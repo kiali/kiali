@@ -27,6 +27,7 @@ type Span struct {
 	StartTimeUnixNano string           `json:"startTimeUnixNano"`
 	DurationNanos     string           `json:"durationNanos"`
 	Attributes        []json.Attribute `json:"attributes"`
+	Name              string           `json:"name"`
 	Status            json.Status      `json:"status"`
 }
 

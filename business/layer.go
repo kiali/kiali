@@ -126,7 +126,7 @@ func newLayer(
 	temporaryLayer.Workload = *NewWorkloadService(userClients, kialiSAClients, prom, cache, temporaryLayer, conf, grafana)
 	temporaryLayer.Validations = NewValidationsService(&temporaryLayer.IstioConfig, cache, &temporaryLayer.Mesh, &temporaryLayer.Namespace, &temporaryLayer.Svc, userClients, &temporaryLayer.Workload)
 
-	temporaryLayer.Tracing = NewTracingService(conf, traceClient, &temporaryLayer.Svc, &temporaryLayer.Workload)
+	temporaryLayer.Tracing = NewTracingService(conf, traceClient, &temporaryLayer.Svc, &temporaryLayer.Workload, &temporaryLayer.App)
 	temporaryLayer.IstioStatus = NewIstioStatusService(conf, kialiSAClients[homeClusterName], userClients, &temporaryLayer.Tracing, &temporaryLayer.Workload, discovery)
 	return temporaryLayer
 }
