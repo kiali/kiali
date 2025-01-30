@@ -29,6 +29,7 @@ import { isParentKiosk, kioskContextMenuAction } from '../../Kiosk/KioskActions'
 import { TracingUrlProvider } from 'types/Tracing';
 import { KialiIcon } from 'config/KialiIcon';
 import { SimpleTable, SortableTh } from 'components/Table/SimpleTable';
+import { Theme } from '../../../types/Common';
 
 type ReduxProps = {
   loadMetricsStats: (queries: MetricsStatsQuery[], isCompact: boolean) => void;
@@ -38,6 +39,7 @@ type StateProps = {
   kiosk: string;
   metricsStats: Map<string, MetricsStats>;
   provider?: string;
+  theme: string;
 };
 
 type Props = ReduxProps &
@@ -75,15 +77,6 @@ const selectedStyle = kialiStyle({
   borderRight: '3px solid var(--pf-v5-global--info-color--100)'
 });
 
-const highlightStyle = kialiStyle({
-  background: 'var(--pf-v5-global--palette--blue-50)'
-});
-
-const highlightErrorStyle = kialiStyle({
-  background: 'var(--pf-v5-global--palette--blue-50)',
-  borderLeft: '3px solid var(--pf-v5-global--danger-color--100)'
-});
-
 const tableStyle = kialiStyle({
   $nest: {
     '&& tbody > tr > td': {
@@ -111,8 +104,24 @@ const errorIconStyle = kialiStyle({
   marginRight: '0.25rem'
 });
 
-const getClassName = (isError: boolean, isSpan, operationName, item: string): string | undefined => {
+const getClassName = (
+  isError: boolean,
+  isSpan,
+  operationName,
+  item: string,
+  darkTheme: boolean
+): string | undefined => {
   const highlight = operationName.toLowerCase().includes(item);
+
+  const blueColor = darkTheme ? 'var(--pf-v5-global--palette--blue-600)' : 'var(--pf-v5-global--palette--blue-50)';
+  const highlightStyle = kialiStyle({
+    background: blueColor
+  });
+
+  const highlightErrorStyle = kialiStyle({
+    background: blueColor,
+    borderLeft: '3px solid var(--pf-v5-global--danger-color--100)'
+  });
   return isSpan
     ? isError
       ? selectedErrorStyle
@@ -215,7 +224,7 @@ class SpanTableComponent extends React.Component<Props, State> {
   private buildRow = (item: RichSpanData): IRow => {
     const isExpanded = this.isExpanded(item.spanID);
     const isSpan = item.spanID === getSpanId();
-
+    const darkTheme = this.props.theme === Theme.DARK;
     return {
       cells: [
         <>
@@ -233,7 +242,7 @@ class SpanTableComponent extends React.Component<Props, State> {
         this.summaryCell(item),
         this.statsCell(item)
       ],
-      className: getClassName(item.tags.some(isErrorTag), isSpan, item.operationName, this.props.target),
+      className: getClassName(item.tags.some(isErrorTag), isSpan, item.operationName, this.props.target, darkTheme),
       item: item
     };
   };
@@ -605,7 +614,8 @@ class SpanTableComponent extends React.Component<Props, State> {
 const mapStateToProps = (state: KialiAppState): StateProps => ({
   kiosk: state.globalState.kiosk,
   metricsStats: state.metricsStats.data,
-  provider: state.tracingState.info?.provider
+  provider: state.tracingState.info?.provider,
+  theme: state.globalState.theme
 });
 
 const mapDispatchToProps = (dispatch: KialiDispatch): ReduxProps => ({
