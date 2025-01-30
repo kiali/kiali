@@ -1,4 +1,4 @@
-import { namespacesPerCluster, removeDuplicatesArray, groupBy } from '../Common';
+import { removeDuplicatesArray, groupBy, namespacesForCluster } from '../Common';
 import { Namespace } from '../../types/Namespace';
 
 const arrayDuplicates = ['bookinfo', 'default', 'bookinfo'];
@@ -25,7 +25,7 @@ describe('Active namespaces per cluster', () => {
     ];
     const cluster = 'east';
 
-    const result = namespacesPerCluster(activeNss, allNss, cluster);
+    const result = namespacesForCluster(activeNss, allNss, cluster);
     expect(result).toEqual([]);
   });
 
@@ -39,7 +39,7 @@ describe('Active namespaces per cluster', () => {
     ];
     const cluster = 'east';
 
-    const result = namespacesPerCluster(activeNss, allNss, cluster);
+    const result = namespacesForCluster(activeNss, allNss, cluster);
     expect(result).toEqual(['namespace1', 'namespace4']);
   });
 
@@ -51,7 +51,7 @@ describe('Active namespaces per cluster', () => {
     ];
     const cluster = 'east';
 
-    const result = namespacesPerCluster(activeNss, allNss, cluster);
+    const result = namespacesForCluster(activeNss, allNss, cluster);
     expect(result).toEqual([]);
   });
 
@@ -64,7 +64,7 @@ describe('Active namespaces per cluster', () => {
     ];
     const cluster = 'east';
 
-    const result = namespacesPerCluster(activeNss, allNss, cluster);
+    const result = namespacesForCluster(activeNss, allNss, cluster);
     expect(result).toEqual([]);
   });
 
@@ -76,7 +76,7 @@ describe('Active namespaces per cluster', () => {
     ];
     const cluster = 'east';
 
-    const result = namespacesPerCluster(activeNss, allNss, cluster);
+    const result = namespacesForCluster(activeNss, allNss, cluster);
     expect(result).toEqual(['namespace1']);
   });
 });

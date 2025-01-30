@@ -40,7 +40,7 @@ import { SimpleTabs } from 'components/Tab/SimpleTabs';
 import { panelHeadingStyle, panelStyle } from './SummaryPanelStyle';
 import { ApiResponse } from 'types/Api';
 import { store } from '../../store/ConfigStore';
-import { namespacesPerCluster } from '../../utils/Common';
+import { namespacesForCluster } from '../../utils/Common';
 
 type SummaryPanelGraphMetricsState = {
   grpcReceivedIn: Datapoint[];
@@ -786,7 +786,7 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
   private updateValidations = (): void => {
     const promises = Object.keys(serverConfig.clusters).map(cluster =>
       API.getConfigValidations(
-        namespacesPerCluster(this.props.namespaces, store.getState().namespaces.items, cluster).join(','),
+        namespacesForCluster(this.props.namespaces, store.getState().namespaces.items, cluster).join(','),
         cluster
       )
     );

@@ -17,12 +17,21 @@ export const arrayEquals = <T>(a1: T[], a2: T[], comparator: (v1: T, v2: T) => b
 export const namespaceEquals = (ns1: Namespace[], ns2: Namespace[]): boolean =>
   arrayEquals(ns1, ns2, (n1, n2) => n1.name === n2.name);
 
-export const namespacesPerCluster = (
+/**
+ * Returns a list of namespace names that are both active and belong to the specified cluster.
+ * If the full list of namespaces is not provided, return the names of active namespaces directly.
+ *
+ * @param activeNss - List of currently active namespaces.
+ * @param allNss - Full list of namespaces (optional). This is needed to figure out namespaces per cluster.
+ * @param cluster - Target cluster to filter namespaces by.
+ */
+export const namespacesForCluster = (
   activeNss: Namespace[],
   allNss: Namespace[] | undefined,
   cluster: string
 ): string[] => {
   const activeNames = new Set(activeNss.map(ns => ns.name));
+  // If allNss is not provided, return the names of active namespaces directly
   if (!allNss) {
     return activeNss.map(ns => ns.name);
   }
