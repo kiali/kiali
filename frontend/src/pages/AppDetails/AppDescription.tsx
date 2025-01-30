@@ -58,7 +58,7 @@ export const AppDescription: React.FC<AppDescriptionProps> = (props: AppDescript
           <Alert
             variant="info"
             isInline={true}
-            title="Limited information supplied due to the referenced workload type"
+            title="Limited info is supplied due to the referenced workload type"
             style={{ marginTop: '0.25rem' }}
           />
         )}
