@@ -184,11 +184,13 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
           <Tab title="Logs" eventKey={2} key="Logs" data-test="workload-details-logs-tab">
             {hasPods ? (
               <WorkloadPodLogs
+                app={this.state.workload?.labels['app']}
                 lastRefreshAt={this.props.lastRefreshAt}
                 namespace={this.props.workloadId.namespace}
                 workload={this.props.workloadId.workload}
                 pods={this.state.workload!.pods}
                 cluster={this.state.cluster}
+                waypoints={this.state.workload!.waypointWorkloads}
               />
             ) : (
               <EmptyState variant={EmptyStateVariant.full}>
