@@ -40,7 +40,7 @@ func setupWorkloadService(k8s kubernetes.ClientInterface, conf *config.Config) W
 func callStreamPodLogs(svc WorkloadService, namespace, workload, app, podName string, opts *LogOptions) PodLog {
 	w := httptest.NewRecorder()
 
-	_ = svc.StreamPodLogs(svc.config.KubernetesConfig.ClusterName, namespace, workload, app, podName, opts, w)
+	_ = svc.StreamPodLogs(context.TODO(), svc.config.KubernetesConfig.ClusterName, namespace, workload, app, podName, opts, w)
 
 	response := w.Result()
 	body, _ := io.ReadAll(response.Body)
@@ -878,6 +878,60 @@ func TestGetZtunnelPodLogsProxy(t *testing.T) {
 	assert.Equal("spiffe://cluster.local/ns/travel-agency/sa/default", entryQuotes.AccessLog.UpstreamCluster)
 	assert.Equal("mysqldb.travel-agency.svc.cluster.local", entryQuotes.AccessLog.RequestedServer)
 	assert.Equal(int64(1719927663203), entryQuotes.TimestampUnix)
+}
+
+func TestGetWaypointPodLogsProxy(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+	conf := config.NewConfig()
+	// Setup mocks
+	kubeObjs := []runtime.Object{
+		FakePodWithWaypointAndDeployments(),
+		&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}},
+	}
+	for _, obj := range FakeWaypointPod() {
+		o := obj
+		kubeObjs = append(kubeObjs, &o)
+	}
+
+	for _, obj := range FakeWaypointNamespaceEnrolledPods(true) {
+		o := obj
+		kubeObjs = append(kubeObjs, &o)
+	}
+
+	client := kubetest.NewFakeK8sClient(kubeObjs...)
+	client.OpenShift = true
+
+	k8s := &logStreamer{
+		logs:            FakePodLogsWaypoint().Logs,
+		ClientInterface: client,
+	}
+
+	SetupBusinessLayer(t, k8s, *conf)
+	svc := setupWorkloadService(k8s, conf)
+
+	a, v := svc.GetWorkload(context.TODO(), WorkloadCriteria{Cluster: svc.config.KubernetesConfig.ClusterName, Namespace: "Namespace", WorkloadName: "details", IncludeServices: false})
+	assert.Nil(v)
+	assert.NotNil(a)
+	maxLines := 2
+	duration, _ := time.ParseDuration("2h")
+	podLogs := callStreamPodLogs(svc, "Namespace", "details", "details", "details-v1-cf74bb974-wg44w", &LogOptions{Duration: &duration, LogType: models.LogTypeWaypoint, PodLogOptions: core_v1.PodLogOptions{Container: "details"}, MaxLines: &maxLines})
+	require.Equal(2, len(podLogs.Entries))
+	entry := podLogs.Entries[0]
+
+	assert.Equal("[2025-01-30T12:10:13.279Z] \"GET /details/0 HTTP/1.1\" 200 - via_upstream - \"-\" 0 178 0 0 \"-\" \"Go-http-client/1.1\" \"e7d5b6ce-5f7f-9731-8471-ca5bcd650a72\" \"details:9080\" \"envoy://connect_originate/10.244.0.32:9080\" inbound-vip|9080|http|details.bookinfo.svc.cluster.local envoy://internal_client_address/ 10.96.185.196:9080 10.244.0.37:52134 - default", entry.Message)
+	assert.Equal("2025-01-30 12:10:13.279", entry.Timestamp)
+	assert.Equal("INFO", entry.Severity)
+	assert.NotNil(entry.AccessLog)
+	assert.Equal("0", entry.AccessLog.BytesReceived)
+	assert.Equal("178", entry.AccessLog.BytesSent)
+	assert.Equal("0", entry.AccessLog.Duration)
+	assert.Equal("inbound-vip|9080|http|details.bookinfo.svc.cluster.local", entry.AccessLog.UpstreamCluster)
+	assert.Equal("envoy://connect_originate/10.244.0.32:9080", entry.AccessLog.UpstreamService)
+	assert.Equal("10.96.185.196:9080", entry.AccessLog.DownstreamLocal)
+	assert.Equal("/details/0", entry.AccessLog.UriPath)
+	assert.Equal("-", entry.AccessLog.RequestedServer)
+	assert.Equal(int64(1738239013279), entry.TimestampUnix)
 }
 
 func TestDuplicatedControllers(t *testing.T) {

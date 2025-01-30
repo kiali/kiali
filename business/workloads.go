@@ -2713,7 +2713,7 @@ func (in *WorkloadService) streamParsedLogs(cluster, namespace string, names []s
 
 // StreamPodLogs streams pod logs to an HTTP Response given the provided options
 // The workload name is used to get the waypoint workloads when opts.LogType is "waypoint"
-func (in *WorkloadService) StreamPodLogs(cluster, namespace, workload, app, name string, opts *LogOptions, w http.ResponseWriter) error {
+func (in *WorkloadService) StreamPodLogs(ctx context.Context, cluster, namespace, workload, app, name string, opts *LogOptions, w http.ResponseWriter) error {
 	names := []string{}
 	if opts.LogType == models.LogTypeZtunnel {
 		// First, get ztunnel namespace and containers
@@ -2740,7 +2740,7 @@ func (in *WorkloadService) StreamPodLogs(cluster, namespace, workload, app, name
 		return in.streamParsedLogs(cluster, pods[0].Namespace, names, opts, w)
 	}
 	if opts.LogType == models.LogTypeWaypoint {
-		wk, err := in.GetWorkload(context.TODO(), WorkloadCriteria{Cluster: cluster, Namespace: namespace, WorkloadName: workload, IncludeServices: false})
+		wk, err := in.GetWorkload(ctx, WorkloadCriteria{Cluster: cluster, Namespace: namespace, WorkloadName: workload, IncludeServices: false})
 		if err != nil {
 			log.Errorf("Error when getting workload info: %s", err.Error())
 		} else {
@@ -2752,7 +2752,7 @@ func (in *WorkloadService) StreamPodLogs(cluster, namespace, workload, app, name
 				opts.filter = fs
 				// TODO: Get efective one
 				waypoint := wk.WaypointWorkloads[0]
-				waypointWk, errWaypoint := in.GetWorkload(context.TODO(), WorkloadCriteria{Cluster: waypoint.Cluster, Namespace: waypoint.Namespace, WorkloadName: waypoint.Name, IncludeServices: false})
+				waypointWk, errWaypoint := in.GetWorkload(ctx, WorkloadCriteria{Cluster: waypoint.Cluster, Namespace: waypoint.Namespace, WorkloadName: waypoint.Name, IncludeServices: false})
 				if errWaypoint != nil {
 					log.Errorf("Error when getting workload info: %s", err.Error())
 				} else {
