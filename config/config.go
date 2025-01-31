@@ -70,12 +70,37 @@ const (
 )
 
 const (
-	AmbientAnnotation        = "ambient.istio.io/redirection"
-	AmbientAnnotationEnabled = "enabled"
-	WaypointLabel            = "gateway.istio.io/managed"
-	WaypointLabelValue       = "istio.io-mesh-controller"
-	WaypointUseLabel         = "istio.io/use-waypoint"
+	// Ambient Mode Labels
+	AmbientAnnotation         = "ambient.istio.io/redirection"
+	AmbientEnabled            = "enabled"
+	AmbientWaypointLabel      = "gateway.istio.io/managed"
+	AmbientWaypointValue      = "istio.io-mesh-controller"
+	AmbientWaypointUseLabel   = "istio.io/use-waypoint"
+
+	// Waypoint Labels
+	Waypoint                  = "waypoint"
+	WaypointTarget            = "istio.io/waypoint-for"
+	WaypointTargetAll         = "all"
+	WaypointTargetNone        = "none"
+	WaypointTargetService     = "service"
+	WaypointTargetWorkload    = "workload"
+	WaypointGatewayLabel      = "gateway.networking.k8s.io/gateway-name"
+	WaypointUseNamespaceLabel = "istio.io/use-waypoint-namespace"
+
+	// Istio-Specific Labels
+	AppLabelName       = "app.kubernetes.io/name"
+	EgressGatewayLabel = "istio.io/egress-gateway"
+	IngressGatewayLabel = "istio.io/ingress-gateway"
+	InjectionLabelName  = "sidecar.istio.io/inject"
+	InjectionLabelRev   = "istio.io/rev"
+	VersionLabelName    = "app.kubernetes.io/version"
+
+	// ZTunnel
+	Ztunnel = "ztunnel"
 )
+
+
+
 
 // TracingProvider is the type of tracing provider that Kiali will connect to.
 type TracingProvider string
@@ -170,6 +195,7 @@ type Server struct {
 	Port                       int           `yaml:",omitempty"`
 	Profiler                   Profiler      `yaml:"profiler,omitempty"`
 	StaticContentRootDirectory string        `yaml:"static_content_root_directory,omitempty"`
+	RequireAuth                bool          `yaml:"require_auth,omitempty"` // when true, unauthenticated access to api/ endpoint is not allowed
 	WebFQDN                    string        `yaml:"web_fqdn,omitempty"`
 	WebPort                    string        `yaml:"web_port,omitempty"`
 	WebRoot                    string        `yaml:"web_root,omitempty"`
@@ -254,6 +280,8 @@ type GrafanaVariablesConfig struct {
 }
 
 type TempoConfig struct {
+	CacheCapacity int    `yaml:"cache_capacity" json:"cache_capacity,omitempty"`
+	CacheEnabled  bool   `yaml:"cache_enabled" json:"cache_enabled,omitempty"`
 	DatasourceUID string `yaml:"datasource_uid" json:"datasource_uid,omitempty"`
 	OrgID         string `yaml:"org_id" json:"org_id,omitempty"`
 	URLFormat     string `yaml:"url_format" json:"url_format,omitempty"`
@@ -346,22 +374,9 @@ func (lt *LoginToken) Obfuscate() {
 }
 
 // IstioLabels holds configuration about the labels required by Istio
-type IstioLabels struct { 
-    AppLabelName       string `yaml:"app_label_name,omitempty" json:"appLabelName"`
-    InjectionLabelName string `yaml:"injection_label_name,omitempty" json:"injectionLabelName"`
-    InjectionLabelRev  string `yaml:"injection_label_rev,omitempty" json:"injectionLabelRev"`
-    VersionLabelName   string `yaml:"version_label_name,omitempty" json:"versionLabelName"`
+type IstioLabels struct {
+	   // const are created 
 }
-
-// Internal constants for fixed Istio labels 
-const (
-    AmbientNamespaceLabel      = "ambient_namespace_label"
-    AmbientNamespaceLabelValue = "ambient_namespace_label_value"
-    AmbientWaypointLabel       = "ambient_waypoint_label"
-    AmbientWaypointLabelValue  = "ambient_waypoint_label_value"
-    AmbientWaypointUseLabel    = "ambient_waypoint_use_label"
-)
-
 
 // AdditionalDisplayItem holds some display-related configuration, like which annotations are to be displayed
 type AdditionalDisplayItem struct {
@@ -400,7 +415,8 @@ type AuthConfig struct {
 
 // OpenShiftConfig contains specific configuration for authentication when on OpenShift
 type OpenShiftConfig struct {
-	CAFile string `yaml:"ca_file,omitempty"`
+	CAFile                string `yaml:"ca_file,omitempty"`
+	InsecureSkipVerifyTLS bool   `yaml:"insecure_skip_verify_tls,omitempty"`
 }
 
 // OpenIdConfig contains specific configuration for authentication using an OpenID provider
@@ -493,10 +509,12 @@ type GraphFindOption struct {
 }
 
 // GraphSettings affect the graph visualization.
-// FontLabel: font used for node text (edge label font is determined from this value)
-// MinFontBadge: smallest effective font (zoomed font) before removing node badges
-// MinFontLabel: smallest effective node text font (zoomed font) before removing labels
+// Animation: animation type point (default) | dash
+// FontLabel: font used for node text (edge label font is determined from this value) TODO: Cytoscape only - remove when cytoscape is removed
+// MinFontBadge: smallest effective font (zoomed font) before removing node badges TODO: Cytoscape only - remove when cytoscape is removed
+// MinFontLabel: smallest effective node text font (zoomed font) before removing labels TODO: Cytoscape only - remove when cytoscape is removed
 type GraphSettings struct {
+	Animation    string  `yaml:"animation,omitempty" json:"animation,omitempty"`
 	FontLabel    float32 `yaml:"font_label,omitempty" json:"fontLabel,omitempty"`
 	MinFontBadge float32 `yaml:"min_font_badge,omitempty" json:"minFontBadge,omitempty"`
 	MinFontLabel float32 `yaml:"min_font_label,omitempty" json:"minFontLabel,omitempty"`
@@ -518,7 +536,7 @@ type GraphTraffic struct {
 type GraphUIDefaults struct {
 	FindOptions []GraphFindOption `yaml:"find_options,omitempty" json:"findOptions,omitempty"`
 	HideOptions []GraphFindOption `yaml:"hide_options,omitempty" json:"hideOptions,omitempty"`
-	Impl        string            `yaml:"impl,omitempty" json:"impl,omitempty"`
+	Impl        string            `yaml:"impl,omitempty" json:"impl,omitempty"` // TODO: remove when cytoscape is removed
 	Settings    GraphSettings     `yaml:"settings,omitempty" json:"settings,omitempty"`
 	Traffic     GraphTraffic      `yaml:"traffic,omitempty" json:"traffic,omitempty"`
 }
@@ -683,6 +701,9 @@ func NewConfig() (c *Config) {
 				Scopes:                  []string{"openid", "profile", "email"},
 				UsernameClaim:           "sub",
 			},
+			OpenShift: OpenShiftConfig{
+				InsecureSkipVerifyTLS: false,
+			},
 		},
 		CustomDashboards: dashboards.GetBuiltInMonitoringDashboards(),
 		Deployment: DeploymentConfig{
@@ -758,31 +779,35 @@ func NewConfig() (c *Config) {
 				Auth: Auth{
 					Type: AuthTypeNone,
 				},
-				CustomHeaders:        map[string]string{},
-				Enabled:              false,
-				ExternalURL:          "",
-				GrpcPort:             9095,
-				InternalURL:          "http://tracing.istio-system:16685/jaeger",
-				IsCore:               false,
-				Provider:             JaegerProvider,
-				NamespaceSelector:    true,
-				QueryScope:           map[string]string{},
-				QueryTimeout:         5,
-				TempoConfig:          TempoConfig{},
+				CustomHeaders:     map[string]string{},
+				Enabled:           false,
+				ExternalURL:       "",
+				GrpcPort:          9095,
+				InternalURL:       "http://tracing.istio-system:16685/jaeger",
+				IsCore:            false,
+				Provider:          JaegerProvider,
+				NamespaceSelector: true,
+				QueryScope:        map[string]string{},
+				QueryTimeout:      5,
+				TempoConfig: TempoConfig{
+					CacheCapacity: 200,
+					CacheEnabled:  true,
+				},
 				UseGRPC:              true,
 				WhiteListIstioSystem: []string{"jaeger-query", "istio-ingressgateway"},
 			},
 		},
 		IstioLabels: IstioLabels{
-			AmbientNamespaceLabel:      "istio.io/dataplane-mode",
-			AmbientNamespaceLabelValue: "ambient",
-			AmbientWaypointLabel:       WaypointLabel,
-			AmbientWaypointLabelValue:  WaypointLabelValue,
-			AmbientWaypointUseLabel:    WaypointUseLabel,
-			AppLabelName:               "app",
-			InjectionLabelName:         "istio-injection",
-			InjectionLabelRev:          "istio.io/rev",
-			VersionLabelName:           "version",
+			AmbientNamespaceLabel:       "istio.io/dataplane-mode",
+			AmbientNamespaceLabelValue:  "ambient",
+			AmbientWaypointGatewayLabel: WaypointGatewayLabel,
+			AmbientWaypointLabel:        WaypointLabel,
+			AmbientWaypointLabelValue:   WaypointLabelValue,
+			AmbientWaypointUseLabel:     WaypointUseLabel,
+			AppLabelName:                "app",
+			InjectionLabelName:          "istio-injection",
+			InjectionLabelRev:           "istio.io/rev",
+			VersionLabelName:            "version",
 		},
 		KialiFeatureFlags: KialiFeatureFlags{
 			Clustering: FeatureFlagClustering{
@@ -828,6 +853,7 @@ func NewConfig() (c *Config) {
 					},
 					Impl: "pf",
 					Settings: GraphSettings{
+						Animation:    "point",
 						FontLabel:    13,
 						MinFontBadge: 7,
 						MinFontLabel: 10,
@@ -908,6 +934,7 @@ func NewConfig() (c *Config) {
 				},
 			},
 			Port:                       20001,
+			RequireAuth:                false,
 			StaticContentRootDirectory: "/opt/kiali/console",
 			WebFQDN:                    "",
 			WebRoot:                    "/",
@@ -1011,7 +1038,7 @@ func (conf Config) String() (str string) {
 	str, err := Marshal(&obf)
 	if err != nil {
 		str = fmt.Sprintf("Failed to marshal config to string. err=%v", err)
-		log.Debugf(str)
+		log.Debugf("%s", str)
 	}
 
 	return

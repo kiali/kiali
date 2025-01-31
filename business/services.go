@@ -770,7 +770,6 @@ func (in *SvcService) GetServiceAppName(ctx context.Context, cluster, namespace,
 		return "", fmt.Errorf("Service [cluster: %s] [namespace: %s] [name: %s] doesn't exist.", cluster, namespace, service)
 	}
 
-	appLabelName := in.config.IstioLabels.AppLabelName
 	app := svc.Selectors[appLabelName]
 	return app, nil
 }
