@@ -788,7 +788,8 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 		return nil, err
 	}
 
-	userClient, ok := in.userClients[cluster]
+	// we've already established the user has access to the namespace; use SA client to obtain namespace resource info
+	client, ok := in.kialiSAClients[cluster]
 	if !ok {
 		return nil, fmt.Errorf("Cluster [%s] is not found or is not accessible for Kiali", cluster)
 	}
@@ -842,7 +843,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 		var err error
 		if in.isWorkloadIncluded(kubernetes.ReplicationControllerType) {
 			// No Cache for ReplicationControllers
-			repcon, err = userClient.GetReplicationControllers(namespace)
+			repcon, err = client.GetReplicationControllers(namespace)
 			if err != nil {
 				log.Errorf("Error fetching GetReplicationControllers per namespace %s: %s", namespace, err)
 				errChan <- err
@@ -855,9 +856,9 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 		defer wg.Done()
 
 		var err error
-		if userClient.IsOpenShift() && in.isWorkloadIncluded(kubernetes.DeploymentConfigType) {
+		if client.IsOpenShift() && in.isWorkloadIncluded(kubernetes.DeploymentConfigType) {
 			// No cache for DeploymentConfigs
-			depcon, err = userClient.GetDeploymentConfigs(ctx, namespace)
+			depcon, err = client.GetDeploymentConfigs(ctx, namespace)
 			if err != nil {
 				log.Errorf("Error fetching DeploymentConfigs per namespace %s: %s", namespace, err)
 				errChan <- err
@@ -886,7 +887,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 		var err error
 		if in.isWorkloadIncluded(kubernetes.CronJobType) {
 			// No cache for Cronjobs
-			conjbs, err = userClient.GetCronJobs(namespace)
+			conjbs, err = client.GetCronJobs(namespace)
 			if err != nil {
 				log.Errorf("Error fetching CronJobs per namespace %s: %s", namespace, err)
 				errChan <- err
@@ -901,7 +902,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 		var err error
 		if in.isWorkloadIncluded(kubernetes.JobType) {
 			// No cache for Jobs
-			jbs, err = userClient.GetJobs(namespace)
+			jbs, err = client.GetJobs(namespace)
 			if err != nil {
 				log.Errorf("Error fetching Jobs per namespace %s: %s", namespace, err)
 				errChan <- err
@@ -1451,9 +1452,10 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 		return nil, err
 	}
 
-	client, ok := in.userClients[criteria.Cluster]
+	// we've already established the user has access to the namespace; use SA client to obtain namespace resource info
+	client, ok := in.kialiSAClients[criteria.Cluster]
 	if !ok {
-		return nil, fmt.Errorf("no user client for cluster [%s]", criteria.Cluster)
+		return nil, fmt.Errorf("no SA client for cluster [%s]", criteria.Cluster)
 	}
 
 	// Pods are always fetched for all workload types
