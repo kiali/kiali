@@ -1650,7 +1650,12 @@ func (c *kubeCache) GetWorkloadGroups(namespace, labelSelector string) ([]*netwo
 
 	var retWG []*networking_v1.WorkloadGroup
 	for _, w := range workloadGroups {
-		if w.Spec.Metadata == nil || w.Spec.Metadata.Labels == nil || selector.Matches(labels.Set(w.Spec.Metadata.Labels)) {
+		// filter workload group by selector
+		// if selector provided, then WG.Spec.Metadata.Labels should exist and match
+		// if no selector provided, take all
+		// here the logic is a bit complicated as the WG.Spec.Metadata.Labels is allowed to be nil in CRD
+		if selector.Empty() ||
+			(!selector.Empty() && w.Spec.Metadata != nil && w.Spec.Metadata.Labels != nil && selector.Matches(labels.Set(w.Spec.Metadata.Labels))) {
 			ww := w.DeepCopy()
 			ww.Kind = kubernetes.WorkloadGroups.Kind
 			ww.APIVersion = kubernetes.WorkloadGroups.GroupVersion().String()
