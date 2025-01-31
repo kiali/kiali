@@ -463,6 +463,8 @@
   "Waypoints: {{num}}": "Waypoints: {{num}}",
   "Weighted routing": "权重路由",
   "When": "When",
+  "When enabled in an Ambient environment, include waypoints in the mesh topology.": "When enabled in an Ambient environment, include waypoints in the mesh topology.",
+  "When enabled, include gateways in the mesh topology.": "When enabled, include gateways in the mesh topology.",
   "When List": "When List",
   "Workload": "Workload",
   "Workload Entry": "Workload Entry",

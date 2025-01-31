@@ -78,7 +78,7 @@ const MeshSettingsComponent: React.FC<MeshSettingsProps> = (props: MeshSettingsP
         isChecked: showGateways,
         labelText: t('Gateways'),
         onChange: toggleGateways,
-        tooltip: <div style={{ textAlign: 'left' }}>t('When enabled, include gateways in the mesh topology.')</div>
+        tooltip: <div style={{ textAlign: 'left' }}>{t('When enabled, include gateways in the mesh topology.')}</div>
       }
     ];
 
@@ -90,7 +90,7 @@ const MeshSettingsComponent: React.FC<MeshSettingsProps> = (props: MeshSettingsP
         onChange: toggleWaypoints,
         tooltip: (
           <div style={{ textAlign: 'left' }}>
-            <div>t(When enabled in an Ambient environment, include waypoints in the mesh topology.')</div>
+            <div>{t('When enabled in an Ambient environment, include waypoints in the mesh topology.')}</div>
           </div>
         )
       });
