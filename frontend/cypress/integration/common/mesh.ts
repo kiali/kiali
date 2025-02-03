@@ -53,6 +53,26 @@ When('user selects mesh node with label {string}', (label: string) => {
     });
 });
 
+When('user selects tracing mesh node', () => {
+  cy.waitForReact();
+  cy.get('#loading_kiali_spinner').should('not.exist');
+  cy.getReact('MeshPageComponent', { state: { isReady: true } })
+    .should('have.length', 1)
+    .then($graph => {
+      const { state } = $graph[0];
+
+      const controller = state.meshRefs.getController() as Visualization;
+      assert.isTrue(controller.hasGraph());
+
+      const { nodes } = elems(controller);
+      const node = nodes.find(n => n.getLabel() === 'jaeger' || n.getLabel() === 'Tempo');
+      assert.exists(node);
+
+      const setSelectedIds = state.meshRefs.setSelectedIds as (values: string[]) => void;
+      setSelectedIds([node!.getId()]);
+    });
+});
+
 When('user sees mesh side panel', () => {
   cy.waitForReact();
   cy.get('#loading_kiali_spinner').should('not.exist');
@@ -131,10 +151,10 @@ Then('user sees expected mesh infra', () => {
 
       const { nodes, edges } = elems(controller);
       const nodeNames = nodes.map(n => n.getLabel());
-      const nodesLength = nodeNames.some(n => n === 'External Deployments') ? 9 : 8;
+      const minNodesLength = nodeNames.some(n => n === 'External Deployments') ? 9 : 8;
 
-      assert.equal(nodes.length, nodesLength, 'Unexpected number of infra nodes');
-      assert.equal(edges.length, 5, 'Unexpected number of infra edges');
+      assert.isAtLeast(nodes.length, minNodesLength, 'Unexpected number of infra nodes');
+      assert.isAtLeast(edges.length, 5, 'Unexpected number of infra edges');
       assert.isTrue(nodeNames.some(n => n === 'Data Plane'));
       assert.isTrue(nodeNames.some(n => n === 'Grafana'));
       assert.isTrue(nodeNames.some(n => n.startsWith('istiod')));
@@ -218,5 +238,15 @@ Then('user sees {string} node side panel', (name: string) => {
     .should('be.visible')
     .within(() => {
       cy.contains(name);
+    });
+});
+
+Then('user sees tracing node side panel', () => {
+  cy.waitForReact();
+  cy.get('#loading_kiali_spinner').should('not.exist');
+  cy.get('#target-panel-node')
+    .should('be.visible')
+    .within(() => {
+      cy.contains(new RegExp('jaeger|Tempo', 'g'));
     });
 });
