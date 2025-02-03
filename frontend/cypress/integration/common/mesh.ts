@@ -195,6 +195,15 @@ Then('user sees {string} node side panel', (name: string) => {
   cy.get('#target-panel-node')
     .should('be.visible')
     .within(() => {
-      cy.contains(name);
+      if (name === 'jaeger') {
+        cy.exec("kubectl get pods -o=jsonpath='{.items[*].metadata.labels.app}' -n istio-system").then(result => {
+          const jaegerDeployed = JSON.stringify(result.stdout).includes('jaeger');
+          if (jaegerDeployed) {
+            cy.contains(name);
+          }
+        });
+      } else {
+        cy.contains(name);
+      }
     });
 });
