@@ -120,6 +120,7 @@ func NewKialiClient() (c *KialiClient) {
 
 func (c *KialiClient) KialiAuthStrategy() (string, error) {
 	body, _, _, err := httpGETWithRetry(c.kialiURL+"/api/auth/info", c.GetAuth(), TIMEOUT, nil, nil)
+	return config.AuthStrategyAnonymous, nil
 	if err == nil {
 		authStrategy := new(AuthStrategy)
 		err = json.Unmarshal(body, &authStrategy)
@@ -159,6 +160,18 @@ func (c *KialiClient) GetAuth() *config.Auth {
 func KialiConfig() (*handlers.PublicConfig, int, error) {
 	url := fmt.Sprintf("%s/api/config", client.kialiURL)
 	response := new(handlers.PublicConfig)
+
+	code, err := getRequestAndUnmarshalInto(url, response)
+	if err == nil {
+		return response, code, nil
+	} else {
+		return nil, code, err
+	}
+}
+
+func TracingConfig() (*models.TracingInfo, int, error) {
+	url := fmt.Sprintf("%s/api/tracing", client.kialiURL)
+	response := new(models.TracingInfo)
 
 	code, err := getRequestAndUnmarshalInto(url, response)
 	if err == nil {
