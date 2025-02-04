@@ -120,7 +120,6 @@ func NewKialiClient() (c *KialiClient) {
 
 func (c *KialiClient) KialiAuthStrategy() (string, error) {
 	body, _, _, err := httpGETWithRetry(c.kialiURL+"/api/auth/info", c.GetAuth(), TIMEOUT, nil, nil)
-	return config.AuthStrategyAnonymous, nil
 	if err == nil {
 		authStrategy := new(AuthStrategy)
 		err = json.Unmarshal(body, &authStrategy)
