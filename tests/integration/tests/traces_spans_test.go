@@ -104,7 +104,8 @@ func assertTraces(traces *model.TracingResponse, statusCode int, err error, requ
 }
 
 func assertSpans(spans []model.TracingSpan, statusCode int, err error, require *require.Assertions) {
-	tracing, _, err := kiali.TracingConfig()
+	tracing, _, errTracing := kiali.TracingConfig()
+	require.NoError(errTracing)
 
 	if statusCode == 200 {
 		require.NoError(err)
