@@ -114,10 +114,10 @@ func assertSpans(spans []model.TracingSpan, statusCode int, err error, require *
 			require.NotNil(spans[0].TraceID)
 			require.NotNil(spans[0].References[0].TraceID)
 			require.Equal(spans[0].TraceID, spans[0].References[0].TraceID)
-		}
-		// References in Tempo are converted from the SpanTraceId, which is not available from the /api/search in Tempo
-		if tracing.Provider == "jaeger" {
-			require.NotEmpty(spans[0].References)
+			// References in Tempo are converted from the SpanTraceId, which is not available from the /api/search in Tempo
+			if tracing.Provider == "jaeger" {
+				require.NotEmpty(spans[0].References)
+			}
 		}
 	} else {
 		require.Fail(fmt.Sprintf("Status code should be '200' but was: %d and error: %s", statusCode, err))
