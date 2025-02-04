@@ -127,7 +127,7 @@ const GraphTrafficComponent: React.FC<GraphTrafficProps> = (props: GraphTrafficP
       },
       {
         id: TrafficRate.AMBIENT_ZTUNNEL,
-        labelText: 'ZTunnel',
+        labelText: 'Ztunnel',
         isChecked: trafficRates.includes(TrafficRate.AMBIENT_ZTUNNEL),
         tooltip: (
           <div style={{ textAlign: 'left' }}>
