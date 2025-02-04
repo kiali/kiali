@@ -12,6 +12,7 @@ import (
 
 	"gopkg.in/yaml.v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/config/dashboards"
 	"github.com/kiali/kiali/config/security"
@@ -804,10 +805,10 @@ func NewConfig() (c *Config) {
 			AmbientWaypointLabel:        WaypointLabel,
 			AmbientWaypointLabelValue:   WaypointLabelValue,
 			AmbientWaypointUseLabel:     WaypointUseLabel,
-			AppLabelName:                "app",
+			AppLabelName:                "",
 			InjectionLabelName:          "istio-injection",
 			InjectionLabelRev:           "istio.io/rev",
-			VersionLabelName:            "version",
+			VersionLabelName:            "",
 		},
 		KialiFeatureFlags: KialiFeatureFlags{
 			Clustering: FeatureFlagClustering{
@@ -1416,4 +1417,67 @@ func (config *Config) extractAccessibleNamespaceList() ([]string, error) {
 	} else {
 		return namespaceNames, errors.New(strings.Join(errs, "\n"))
 	}
+}
+
+type AppVersionLabelSelector struct {
+	AppLabelName     string
+	LabelSelector    string
+	VersionLabelName string
+}
+
+var appLabelNames, versionLabelNames []string
+
+// GetAppVersionLabelSelectors takes an app and/or version value and returns one or
+// more label selectors to be subsequently tried via label selector fetched. In general,
+// the first label selector that returns data is sufficient, and subsequent selectors
+// can be ignored. Only one selector is returned if config.IstioLabels.AppLabelName and
+// config.IstioLabels.VersionLabelName are set. If they are unset then three selectors will be
+// returned, in this order (the same order of preference used by Istio when setting the
+// canonical values for telemetry, etc):
+//
+// [0]   service.istio.io/canonical-name    service.istio.io/canonical-revision
+// [1]   app.kubernetes.io/name             app.kubernetes.io/version
+// [2]   app                                version
+//
+// It is assumed that the app and version naming scheme will match for any particular entity.
+// If a baseSelector is supplied, it will be appended to each return selector.
+func (config *Config) GetAppVersionLabelSelectors(app, version, baseSelector string) []AppVersionLabelSelector {
+	// init these one time, they don't change
+	if appLabelNames == nil {
+		if config.IstioLabels.AppLabelName != "" && config.IstioLabels.VersionLabelName != "" {
+			appLabelNames = []string{config.IstioLabels.AppLabelName}
+			versionLabelNames = []string{config.IstioLabels.VersionLabelName}
+		} else {
+			appLabelNames = []string{"service.istio.io/canonical-name", "app.kubernetes.io/name", "app"}
+			versionLabelNames = []string{"service.istio.io/canonical-revision", "app.kubernetes.io/version", "version"}
+		}
+	}
+
+	labelSelectors := make([]AppVersionLabelSelector, len(appLabelNames))
+
+	for i := 0; i < len(appLabelNames); i++ {
+		appLabelName := appLabelNames[i]
+		versionLabelName := versionLabelNames[i]
+		requirements := map[string]string{}
+		if app == "" {
+			requirements[appLabelName] = app
+		}
+		if version == "" {
+			requirements[versionLabelName] = app
+		}
+		if baseSelector != "" {
+			labelSelectors[i] = AppVersionLabelSelector{
+				AppLabelName:     appLabelName,
+				LabelSelector:    fmt.Sprintf("%s,%s", labels.Set(requirements).String(), baseSelector),
+				VersionLabelName: versionLabelName,
+			}
+		}
+		labelSelectors[i] = AppVersionLabelSelector{
+			AppLabelName:     appLabelName,
+			LabelSelector:    labels.Set(requirements).String(),
+			VersionLabelName: versionLabelName,
+		}
+	}
+
+	return labelSelectors
 }

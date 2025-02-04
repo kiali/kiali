@@ -462,12 +462,7 @@ func castAppDetails(appLabel string, allEntities namespaceApps, ss *models.Servi
 func (in *AppService) fetchNamespaceApps(ctx context.Context, namespace string, cluster string, appName string) (namespaceApps, error) {
 	var ss *models.ServiceList
 	var ws models.Workloads
-
-	appNameSelector := ""
-	if appName != "" {
-		selector := labels.Set(map[string]string{in.conf.IstioLabels.AppLabelName: appName})
-		appNameSelector = selector.String()
-	}
+	var err error
 
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
 	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
@@ -475,10 +470,16 @@ func (in *AppService) fetchNamespaceApps(ctx context.Context, namespace string, 
 		return nil, err
 	}
 
-	var err error
-	ws, err = in.businessLayer.Workload.fetchWorkloadsFromCluster(ctx, cluster, namespace, appNameSelector)
-	if err != nil {
-		return nil, err
+	appNameSelectors := config.Get().GetAppVersionLabelSelectors(appName, "", "")
+	var appNameSelector config.AppVersionLabelSelector
+	for _, appNameSelector = range appNameSelectors {
+		ws, err = in.businessLayer.Workload.fetchWorkloadsFromCluster(ctx, cluster, namespace, appNameSelector.LabelSelector)
+		if err != nil {
+			return nil, err
+		}
+		if len(ws) > 0 {
+			break
+		}
 	}
 	allEntities := make(namespaceApps)
 	for _, w := range ws {
@@ -500,7 +501,7 @@ func (in *AppService) fetchNamespaceApps(ctx context.Context, namespace string, 
 		} else {
 			ss = nil
 		}
-		castAppDetails(in.conf.IstioLabels.AppLabelName, allEntities, ss, w, cluster)
+		castAppDetails(appNameSelector.AppLabelName, allEntities, ss, w, cluster)
 	}
 
 	return allEntities, nil
