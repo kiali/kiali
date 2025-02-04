@@ -45,7 +45,7 @@ When('user selects mesh node with label {string}', (label: string) => {
       assert.isTrue(controller.hasGraph());
 
       const { nodes } = elems(controller);
-      const node = nodes.find(n => n.getLabel() === label);
+      const node = nodes.find(n => n.getLabel().toLowerCase() === label.toLowerCase());
       assert.exists(node);
 
       const setSelectedIds = state.meshRefs.setSelectedIds as (values: string[]) => void;
@@ -65,7 +65,7 @@ When('user selects tracing mesh node', () => {
       assert.isTrue(controller.hasGraph());
 
       const { nodes } = elems(controller);
-      const node = nodes.find(n => n.getLabel() === 'jaeger' || n.getLabel() === 'Tempo');
+      const node = nodes.find(n => n.getLabel().toLowerCase() === 'jaeger' || n.getLabel().toLowerCase() === 'tempo');
       assert.exists(node);
 
       const setSelectedIds = state.meshRefs.setSelectedIds as (values: string[]) => void;
@@ -150,17 +150,17 @@ Then('user sees expected mesh infra', () => {
       assert.isTrue(controller.hasGraph());
 
       const { nodes, edges } = elems(controller);
-      const nodeNames = nodes.map(n => n.getLabel());
-      const minNodesLength = nodeNames.some(n => n === 'External Deployments') ? 9 : 8;
+      const nodeNames = nodes.map(n => n.getLabel().toLowerCase());
+      const minNodesLength = nodeNames.some(n => n === 'external deployments') ? 9 : 8;
 
       assert.isAtLeast(nodes.length, minNodesLength, 'Unexpected number of infra nodes');
       assert.isAtLeast(edges.length, 5, 'Unexpected number of infra edges');
-      assert.isTrue(nodeNames.some(n => n === 'Data Plane'));
-      assert.isTrue(nodeNames.some(n => n === 'Grafana'));
+      assert.isTrue(nodeNames.some(n => n === 'data plane'));
+      assert.isTrue(nodeNames.some(n => n === 'grafana'));
       assert.isTrue(nodeNames.some(n => n.startsWith('istiod')));
-      assert.isTrue(nodeNames.some(n => n === 'jaeger' || n === 'Tempo'));
+      assert.isTrue(nodeNames.some(n => n === 'jaeger' || n === 'tempo'));
       assert.isTrue(nodeNames.some(n => n === 'kiali'));
-      assert.isTrue(nodeNames.some(n => n === 'Prometheus'));
+      assert.isTrue(nodeNames.some(n => n === 'prometheus'));
     });
 });
 
@@ -247,6 +247,6 @@ Then('user sees tracing node side panel', () => {
   cy.get('#target-panel-node')
     .should('be.visible')
     .within(() => {
-      cy.contains(new RegExp('jaeger|Tempo', 'g'));
+      cy.contains(new RegExp('jaeger|Jaeger|tempo|Tempo', 'g'));
     });
 });
