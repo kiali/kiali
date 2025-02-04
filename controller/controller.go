@@ -20,6 +20,7 @@ import (
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
 	"github.com/kiali/kiali/business"
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/log"
@@ -42,7 +43,7 @@ func NewScheme() (*runtime.Scheme, error) {
 }
 
 // Start creates and starts all the controllers. They'll get cancelled when the context is cancelled.
-func Start(ctx context.Context, cf kubernetes.ClientFactory, kialiCache cache.KialiCache, validationsService *business.IstioValidationsService) error {
+func Start(ctx context.Context, conf *config.Config, cf kubernetes.ClientFactory, kialiCache cache.KialiCache, validationsService *business.IstioValidationsService) error {
 	// TODO: Replace with kiali logging but if this isn't set some errors are thrown.
 	ctrl.SetLogger(zap.New())
 
@@ -72,7 +73,7 @@ func Start(ctx context.Context, cf kubernetes.ClientFactory, kialiCache cache.Ki
 		clusters = append(clusters, client.ClusterInfo().Name)
 	}
 
-	if err := NewValidationsController(ctx, clusters, kialiCache, validationsService, mgr, nil); err != nil {
+	if err := NewValidationsController(ctx, clusters, kialiCache, validationsService, mgr, conf.ExternalServices.Istio.ValidationReconcileInterval); err != nil {
 		return fmt.Errorf("error setting up ValidationsController: %s", err)
 	}
 

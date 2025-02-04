@@ -180,7 +180,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Error creating business layer: %s", err)
 	}
-	if err := controller.Start(ctx, clientFactory, cache, &layer.Validations); err != nil {
+	if err := controller.Start(ctx, cfg, clientFactory, cache, &layer.Validations); err != nil {
 		log.Fatalf("Error creating validations controller: %s", err)
 	}
 

@@ -17,10 +17,7 @@ import (
 	"github.com/kiali/kiali/kubernetes/cache"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
-	"github.com/kiali/kiali/util"
 )
-
-const defaultReconcileInterval = time.Second * 10
 
 // newValidationsController creates and starts a new controller for the validations.
 // It stops when the ctx is cancelled. It creates a single controller for all clusters.
@@ -33,10 +30,6 @@ func NewValidationsController(
 	mgr ctrl.Manager,
 	reconcileInterval *time.Duration,
 ) error {
-	if reconcileInterval == nil {
-		reconcileInterval = util.AsPtr(defaultReconcileInterval)
-	}
-
 	reconciler := NewValidationsReconciler(clusters, kialiCache, validationsService, *reconcileInterval)
 
 	validationsController, err := controller.New("validations-controller", mgr, controller.Options{
