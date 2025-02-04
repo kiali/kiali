@@ -34,13 +34,14 @@ import (
 	"github.com/kiali/kiali/prometheus"
 )
 
-func NewWorkloadService(userClients map[string]kubernetes.ClientInterface, prom prometheus.ClientInterface, cache cache.KialiCache, layer *Layer, config *config.Config) *WorkloadService {
+func NewWorkloadService(userClients map[string]kubernetes.ClientInterface, kialiSAclients map[string]kubernetes.ClientInterface, prom prometheus.ClientInterface, cache cache.KialiCache, layer *Layer, config *config.Config) *WorkloadService {
 	return &WorkloadService{
-		businessLayer: layer,
-		cache:         cache,
-		config:        config,
-		prom:          prom,
-		userClients:   userClients,
+		businessLayer:  layer,
+		cache:          cache,
+		config:         config,
+		prom:           prom,
+		userClients:    userClients,
+		kialiSAClients: kialiSAclients,
 	}
 }
 
@@ -51,9 +52,10 @@ type WorkloadService struct {
 	// The global kiali cache. This should be passed into the workload service rather than created inside of it.
 	cache cache.KialiCache
 	// The global kiali config.
-	config      *config.Config
-	prom        prometheus.ClientInterface
-	userClients map[string]kubernetes.ClientInterface
+	config         *config.Config
+	prom           prometheus.ClientInterface
+	userClients    map[string]kubernetes.ClientInterface
+	kialiSAClients map[string]kubernetes.ClientInterface
 }
 
 type WorkloadCriteria struct {
