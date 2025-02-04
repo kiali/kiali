@@ -270,8 +270,8 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
     const urlParams = new URLSearchParams(location.getSearch());
     const showSpans = urlParams.get(URLParam.SHOW_SPANS);
     const showSpansLimit = urlParams.get(URLParam.TRACING_LIMIT_TRACES);
-    const showZtunnel = urlParams.get(URLParam.SHOW_ZTUNNEL);
     const showWaypoint = urlParams.get(URLParam.SHOW_WAYPOINT);
+    const showZtunnel = urlParams.get(URLParam.SHOW_ZTUNNEL);
 
     const defaultState = {
       accessLogModals: new Map<string, AccessLog>(),
