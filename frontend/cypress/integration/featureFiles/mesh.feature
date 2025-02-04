@@ -33,9 +33,9 @@ Feature: Kiali Mesh page
     When user selects mesh node with label "Grafana"
     Then user sees "Grafana" node side panel
 
-  Scenario: Jaeger Infra
-    When user selects mesh node with label "jaeger"
-    Then user sees "jaeger" node side panel
+  Scenario: Tracing Infra
+    When user selects tracing mesh node
+    Then user sees tracing node side panel
 
   Scenario: Prometheus Infra
     When user selects mesh node with label "Prometheus"
