@@ -36,12 +36,15 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/controller"
+	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/cache"
+	"github.com/kiali/kiali/models"
 	kialicmd "github.com/kiali/kiali/tools/cmd"
 	"github.com/kiali/kiali/util"
 )
@@ -126,7 +129,8 @@ var _ = BeforeSuite(func() {
 	Expect(k8sClient).NotTo(BeNil())
 
 	k8sManager, err := ctrl.NewManager(cfg, ctrl.Options{
-		Scheme: scheme,
+		Scheme:  scheme,
+		Metrics: metricsserver.Options{BindAddress: "0"},
 	})
 	Expect(err).ToNot(HaveOccurred())
 
@@ -138,9 +142,17 @@ var _ = BeforeSuite(func() {
 		conf.KubernetesConfig.ClusterName: kialiKubeClient,
 	}
 	kialiCache, err = cache.NewKialiCache(saClients, *conf)
+	kialiCache.SetMesh(
+		&models.Mesh{
+			ControlPlanes: []models.ControlPlane{{Cluster: &models.KubeCluster{IsKialiHome: true}}},
+		},
+	)
 	Expect(err).ToNot(HaveOccurred())
-	layer, err := business.NewLayerWithSAClients(conf, kialiCache, nil, nil, nil, nil, nil, saClients)
+	discovery := istio.NewDiscovery(saClients, kialiCache, conf)
+	layer, err := business.NewLayerWithSAClients(conf, kialiCache, nil, nil, nil, nil, discovery, saClients)
 	Expect(err).ToNot(HaveOccurred())
+
+	// TODO: Use controller.Start
 	err = controller.NewValidationsController(ctx, []string{conf.KubernetesConfig.ClusterName}, kialiCache, &layer.Validations, k8sManager, util.AsPtr(time.Millisecond*100))
 	Expect(err).ToNot(HaveOccurred())
 

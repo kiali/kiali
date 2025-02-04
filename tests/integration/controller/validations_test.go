@@ -62,8 +62,8 @@ var _ = Describe("Validations controller", func() {
 
 		It("Should update validations in the kiali cache when an existing VirtualService is updated", func() {
 			validationKey := models.IstioValidationKey{Name: "test-vs", Namespace: "default", ObjectGVK: kubernetes.VirtualServices}
-			validation, err := kialiCache.Validations().Get(validationKey)
-			Expect(err).ShouldNot(HaveOccurred())
+			validation, found := kialiCache.Validations().Get(validationKey)
+			Expect(found).To(BeTrue())
 			Expect(validation.Checks).Should(BeEmpty())
 			By("By updating a VirtualService")
 			vs := &networkingv1beta1.VirtualService{}
@@ -90,8 +90,8 @@ var _ = Describe("Validations controller", func() {
 
 			By("By checking that the validations are then updated in the kiali cache")
 			Eventually(func() bool {
-				validation, err := kialiCache.Validations().Get(validationKey)
-				Expect(err).ShouldNot(HaveOccurred())
+				validation, found := kialiCache.Validations().Get(validationKey)
+				Expect(found).To(BeTrue())
 				return len(validation.Checks) > 0
 			}, timeout, interval).Should(BeTrue())
 		})
@@ -106,8 +106,8 @@ var _ = Describe("Validations controller", func() {
 			By("By checking that the validations are then deleted from the kiali cache")
 			Eventually(func() bool {
 				validationKey := models.IstioValidationKey{Name: "test-vs", Namespace: "default", ObjectGVK: kubernetes.VirtualServices}
-				_, result := kialiCache.Validations().Get(validationKey)
-				return result && len(kialiCache.Validations().Items()) == 0
+				_, found := kialiCache.Validations().Get(validationKey)
+				return !found && len(kialiCache.Validations().Items()) == 0
 			}, timeout, interval).Should(BeTrue())
 		})
 	})
