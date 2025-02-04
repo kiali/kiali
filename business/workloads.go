@@ -40,6 +40,7 @@ import (
 
 func NewWorkloadService(
 	userClients map[string]kubernetes.ClientInterface,
+	kialiSAclients map[string]kubernetes.ClientInterface,
 	prom prometheus.ClientInterface,
 	cache cache.KialiCache,
 	layer *Layer,
@@ -58,6 +59,7 @@ func NewWorkloadService(
 		excludedWorkloads: excludedWorkloads,
 		prom:              prom,
 		userClients:       userClients,
+		kialiSAClients:    kialiSAclients,
 	}
 }
 
@@ -73,6 +75,7 @@ type WorkloadService struct {
 	grafana           *grafana.Service
 	prom              prometheus.ClientInterface
 	userClients       map[string]kubernetes.ClientInterface
+	kialiSAClients    map[string]kubernetes.ClientInterface
 }
 
 type WorkloadCriteria struct {
