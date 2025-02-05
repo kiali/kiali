@@ -52,16 +52,20 @@ jobs:
         path: frontend/build
 
     - name: Run backend integration tests
+      id: intTests
       run: hack/run-integration-tests.sh --test-suite backend $(if [ -n "${{ inputs.istio_version }}" ]; then echo "--istio-version ${{ inputs.istio_version }}"; fi)
 
+    - name: Run backend controller integration tests
+      run: make test-integration-controller
+
     - name: Get debug info when integration tests fail
-      if: failure()
+      if: ${{ failure() && steps.intTests.conclusion == 'failure' }}
       run: |
         mkdir debug-output
         hack/ci-get-debug-info.sh --output-directory debug-output
 
     - name: Upload debug info artifact
-      if: failure()
+      if: ${{ failure() && steps.intTests.conclusion == 'failure' }}
       uses: actions/upload-artifact@v4
       with:
         name: debug-info-${{ github.job }}

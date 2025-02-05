@@ -40,9 +40,6 @@ jobs:
     - name: Run backend unit tests
       run: make -e GO_TEST_FLAGS="-race" test
 
-    - name: Run backend controller integration tests
-      run: make test-integration-controller
-
     - name: Upload go binary
       uses: actions/upload-artifact@v4
       with:
