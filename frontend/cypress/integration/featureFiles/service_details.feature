@@ -59,7 +59,8 @@ Feature: Kiali Service Details page
     Then user sees trace details
 
   @bookinfo-app
-  @tracing-tracing
+  @tracing
+  @waypoint-tracing
   Scenario: See span info after selecting service span
     And user sees trace information
     When user selects a trace
