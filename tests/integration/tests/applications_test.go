@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -21,7 +22,7 @@ func TestApplicationsList(t *testing.T) {
 		require.NotNil(app.Labels)
 		require.Equal(kiali.BOOKINFO, app.Namespace)
 		if !strings.Contains(app.Name, "traffic-generator") {
-			require.True(app.IstioSidecar)
+			require.True(app.IstioSidecar, fmt.Sprintf("failed on %s:%s", app.Namespace, app.Name))
 			require.NotNil(app.IstioReferences)
 		}
 	}
