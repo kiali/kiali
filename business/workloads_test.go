@@ -926,6 +926,10 @@ func TestGetWaypointPodLogsProxy(t *testing.T) {
 	assert := assert.New(t)
 	require := require.New(t)
 	conf := config.NewConfig()
+	conf.IstioLabels.AppLabelName = "app"
+	conf.IstioLabels.VersionLabelName = "version"
+	config.Set(conf)
+
 	// Setup mocks
 	kubeObjs := []runtime.Object{
 		FakePodWithWaypointAndDeployments(),
@@ -936,7 +940,7 @@ func TestGetWaypointPodLogsProxy(t *testing.T) {
 		kubeObjs = append(kubeObjs, &o)
 	}
 
-	for _, obj := range FakeWaypointNamespaceEnrolledPods(true) {
+	for _, obj := range FakeWaypointNamespaceEnrolledPods(conf, true) {
 		o := obj
 		kubeObjs = append(kubeObjs, &o)
 	}
