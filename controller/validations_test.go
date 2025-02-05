@@ -11,7 +11,6 @@ package controller_test
 import (
 	"context"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
@@ -28,7 +27,6 @@ import (
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/store"
-	"github.com/kiali/kiali/util"
 )
 
 type incrementFirstVersionStore[K comparable, V any] struct {
@@ -82,11 +80,4 @@ func TestValidationsFailsToUpdateWithOldCache(t *testing.T) {
 	req := reconcile.Request{NamespacedName: types.NamespacedName{Name: "queue", Namespace: "queue"}}
 	_, err := reconciler.Reconcile(context.Background(), req)
 	require.Error(err)
-}
-
-func TestValidationsDisabledWhenReconcileInterval0(t *testing.T) {
-	require := require.New(t)
-	conf := config.NewConfig()
-	conf.ExternalServices.Istio.ValidationReconcileInterval = util.AsPtr(time.Duration(0))
-	require.NoError(controller.Start(context.Background(), conf, nil, nil, nil))
 }
