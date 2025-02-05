@@ -131,12 +131,12 @@ func ParseTwoPartHost(host Host) (string, string) {
 }
 
 func HasMatchingWorkloads(service string, workloadList []labels.Set) bool {
-	appLabel := config.Get().IstioLabels.AppLabelName
-
 	// Check Workloads
 	for _, wl := range workloadList {
-		if service == wl.Get(appLabel) {
-			return true
+		if appLabelName, found := config.Get().GetAppLabelName(wl); found {
+			if service == wl.Get(appLabelName) {
+				return true
+			}
 		}
 	}
 

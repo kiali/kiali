@@ -303,8 +303,12 @@ func (workload *WorkloadListItem) ParseWorkload(w *Workload) {
 		workload.Ambient = "waypoint"
 	}
 	/** Check the labels app and version required by Istio in template Pods*/
-	_, workload.AppLabel = w.Labels[conf.IstioLabels.AppLabelName]
-	_, workload.VersionLabel = w.Labels[conf.IstioLabels.VersionLabelName]
+	if appLabelName, found := conf.GetAppLabelName(w.Labels); found {
+		_, workload.AppLabel = w.Labels[appLabelName]
+	}
+	if verLabelName, found := conf.GetVersionLabelName(w.Labels); found {
+		_, workload.VersionLabel = w.Labels[verLabelName]
+	}
 }
 
 func (workload *Workload) parseObjectMeta(meta *meta_v1.ObjectMeta, tplMeta *meta_v1.ObjectMeta) {
@@ -315,8 +319,12 @@ func (workload *Workload) parseObjectMeta(meta *meta_v1.ObjectMeta, tplMeta *met
 		// TODO: This is not right since the template labels won't match the workload's labels.
 		workload.Labels = tplMeta.Labels
 		/** Check the labels app and version required by Istio in template Pods*/
-		_, workload.AppLabel = tplMeta.Labels[conf.IstioLabels.AppLabelName]
-		_, workload.VersionLabel = tplMeta.Labels[conf.IstioLabels.VersionLabelName]
+		if appLabelName, found := conf.GetAppLabelName(tplMeta.Labels); found {
+			_, workload.AppLabel = tplMeta.Labels[appLabelName]
+		}
+		if verLabelName, found := conf.GetVersionLabelName(tplMeta.Labels); found {
+			_, workload.VersionLabel = tplMeta.Labels[verLabelName]
+		}
 	} else {
 		workload.Labels = map[string]string{}
 	}
@@ -523,8 +531,13 @@ func (workload *Workload) ParseWorkloadGroup(wg *networking_v1.WorkloadGroup, we
 		}
 	}
 	/** Check the labels app and version required by Istio in template Pods*/
-	_, workload.AppLabel = workload.Labels[conf.IstioLabels.AppLabelName]
-	_, workload.VersionLabel = workload.Labels[conf.IstioLabels.VersionLabelName]
+	if appLabelName, found := conf.GetAppLabelName(workload.Labels); found {
+		_, workload.AppLabel = workload.Labels[appLabelName]
+	}
+	if verLabelName, found := conf.GetVersionLabelName(workload.Labels); found {
+		_, workload.VersionLabel = workload.Labels[verLabelName]
+	}
+
 	for _, entry := range wentries {
 		podStatus := core_v1.PodFailed
 		if healthutil.IsWorkloadEntryHealthy(entry) {
@@ -578,8 +591,12 @@ func (workload *Workload) ParsePods(controllerName string, controllerGVK schema.
 	}
 
 	/** Check the labels app and version required by Istio in template Pods*/
-	_, workload.AppLabel = workload.Labels[conf.IstioLabels.AppLabelName]
-	_, workload.VersionLabel = workload.Labels[conf.IstioLabels.VersionLabelName]
+	if appLabelName, found := conf.GetAppLabelName(workload.Labels); found {
+		_, workload.AppLabel = workload.Labels[appLabelName]
+	}
+	if verLabelName, found := conf.GetVersionLabelName(workload.Labels); found {
+		_, workload.VersionLabel = workload.Labels[verLabelName]
+	}
 }
 
 func (workload *Workload) SetPods(pods []core_v1.Pod) {

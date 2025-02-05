@@ -54,9 +54,10 @@ func callStreamPodLogs(svc WorkloadService, namespace, workload, app, podName st
 func TestGetWorkloadListFromDeployments(t *testing.T) {
 	assert := assert.New(t)
 	require := require.New(t)
-
 	conf := config.NewConfig()
 	conf.ExternalServices.Istio.IstioAPIEnabled = false
+	conf.IstioLabels.AppLabelName = "app"
+	conf.IstioLabels.VersionLabelName = "version"
 	config.Set(conf)
 
 	// Setup mocks
@@ -70,7 +71,7 @@ func TestGetWorkloadListFromDeployments(t *testing.T) {
 	k8s := kubetest.NewFakeK8sClient(kubeObjs...)
 	k8s.OpenShift = true
 	SetupBusinessLayer(t, k8s, *conf)
-	svc := setupWorkloadService(k8s, config.NewConfig())
+	svc := setupWorkloadService(k8s, conf)
 
 	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: false, IncludeHealth: false, Cluster: conf.KubernetesConfig.ClusterName}
 	workloadList, _ := svc.GetWorkloadList(context.TODO(), criteria)
@@ -96,9 +97,10 @@ func TestGetWorkloadListFromDeployments(t *testing.T) {
 func TestGetWorkloadListFromWorkloadGroups(t *testing.T) {
 	assert := assert.New(t)
 	require := require.New(t)
-
 	conf := config.NewConfig()
 	conf.ExternalServices.Istio.IstioAPIEnabled = false
+	conf.IstioLabels.AppLabelName = "app"
+	conf.IstioLabels.VersionLabelName = "version"
 	config.Set(conf)
 
 	// Setup mocks
@@ -121,7 +123,7 @@ func TestGetWorkloadListFromWorkloadGroups(t *testing.T) {
 	k8s := kubetest.NewFakeK8sClient(kubeObjs...)
 	k8s.OpenShift = true
 	SetupBusinessLayer(t, k8s, *conf)
-	svc := setupWorkloadService(k8s, config.NewConfig())
+	svc := setupWorkloadService(k8s, conf)
 
 	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: true, IncludeHealth: false, Cluster: conf.KubernetesConfig.ClusterName}
 	workloadList, _ := svc.GetWorkloadList(context.TODO(), criteria)
@@ -158,8 +160,9 @@ func TestGetWorkloadListFromWorkloadGroups(t *testing.T) {
 func TestGetWorkloadListFromReplicaSets(t *testing.T) {
 	assert := assert.New(t)
 	require := require.New(t)
-
 	conf := config.NewConfig()
+	conf.IstioLabels.AppLabelName = "app"
+	conf.IstioLabels.VersionLabelName = "version"
 	config.Set(conf)
 
 	// Setup mocks
@@ -173,7 +176,7 @@ func TestGetWorkloadListFromReplicaSets(t *testing.T) {
 	k8s := kubetest.NewFakeK8sClient(kubeObjs...)
 	k8s.OpenShift = true
 	SetupBusinessLayer(t, k8s, *conf)
-	svc := setupWorkloadService(k8s, config.NewConfig())
+	svc := setupWorkloadService(k8s, conf)
 
 	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: false, IncludeHealth: false}
 	workloadList, _ := svc.GetWorkloadList(context.TODO(), criteria)
@@ -199,19 +202,23 @@ func TestGetWorkloadListFromReplicaSets(t *testing.T) {
 func TestGetWorkloadListFromReplicationControllers(t *testing.T) {
 	assert := assert.New(t)
 	require := require.New(t)
+	conf := config.NewConfig()
+	conf.IstioLabels.AppLabelName = "app"
+	conf.IstioLabels.VersionLabelName = "version"
+	config.Set(conf)
 
 	// Setup mocks
 	kubeObjs := []runtime.Object{
 		&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}},
 	}
-	for _, obj := range FakeReplicationControllers() {
+	for _, obj := range FakeReplicationControllers(conf) {
 		o := obj
 		kubeObjs = append(kubeObjs, &o)
 	}
 	k8s := kubetest.NewFakeK8sClient(kubeObjs...)
 	k8s.OpenShift = true
-	SetupBusinessLayer(t, k8s, *config.NewConfig())
-	svc := setupWorkloadService(k8s, config.NewConfig())
+	SetupBusinessLayer(t, k8s, *conf)
+	svc := setupWorkloadService(k8s, conf)
 	svc.excludedWorkloads = map[string]bool{}
 
 	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: false, IncludeHealth: false}
@@ -238,19 +245,23 @@ func TestGetWorkloadListFromReplicationControllers(t *testing.T) {
 func TestGetWorkloadListFromDeploymentConfigs(t *testing.T) {
 	assert := assert.New(t)
 	require := require.New(t)
+	conf := config.NewConfig()
+	conf.IstioLabels.AppLabelName = "app"
+	conf.IstioLabels.VersionLabelName = "version"
+	config.Set(conf)
 
 	// Setup mocks
 	kubeObjs := []runtime.Object{
 		&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}},
 	}
-	for _, obj := range FakeDeploymentConfigs() {
+	for _, obj := range FakeDeploymentConfigs(conf) {
 		o := obj
 		kubeObjs = append(kubeObjs, &o)
 	}
 	k8s := kubetest.NewFakeK8sClient(kubeObjs...)
 	k8s.OpenShift = true
-	SetupBusinessLayer(t, k8s, *config.NewConfig())
-	svc := setupWorkloadService(k8s, config.NewConfig())
+	SetupBusinessLayer(t, k8s, *conf)
+	svc := setupWorkloadService(k8s, conf)
 	svc.excludedWorkloads = map[string]bool{}
 
 	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: false, IncludeHealth: false}
@@ -277,19 +288,23 @@ func TestGetWorkloadListFromDeploymentConfigs(t *testing.T) {
 func TestGetWorkloadListFromStatefulSets(t *testing.T) {
 	assert := assert.New(t)
 	require := require.New(t)
+	conf := config.NewConfig()
+	conf.IstioLabels.AppLabelName = "app"
+	conf.IstioLabels.VersionLabelName = "version"
+	config.Set(conf)
 
 	// Setup mocks
 	kubeObjs := []runtime.Object{
 		&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}},
 	}
-	for _, obj := range FakeStatefulSets() {
+	for _, obj := range FakeStatefulSets(conf) {
 		o := obj
 		kubeObjs = append(kubeObjs, &o)
 	}
 	k8s := kubetest.NewFakeK8sClient(kubeObjs...)
 	k8s.OpenShift = true
-	SetupBusinessLayer(t, k8s, *config.NewConfig())
-	svc := setupWorkloadService(k8s, config.NewConfig())
+	SetupBusinessLayer(t, k8s, *conf)
+	svc := setupWorkloadService(k8s, conf)
 	svc.excludedWorkloads = map[string]bool{}
 
 	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: false, IncludeHealth: false}
@@ -316,12 +331,16 @@ func TestGetWorkloadListFromStatefulSets(t *testing.T) {
 func TestGetWorkloadListFromDaemonSets(t *testing.T) {
 	assert := assert.New(t)
 	require := require.New(t)
+	conf := config.NewConfig()
+	conf.IstioLabels.AppLabelName = "app"
+	conf.IstioLabels.VersionLabelName = "version"
+	config.Set(conf)
 
 	// Setup mocks
 	kubeObjs := []runtime.Object{
 		&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}},
 	}
-	for _, obj := range FakeDaemonSets() {
+	for _, obj := range FakeDaemonSets(conf) {
 		o := obj
 		kubeObjs = append(kubeObjs, &o)
 	}
@@ -355,27 +374,31 @@ func TestGetWorkloadListFromDaemonSets(t *testing.T) {
 func TestGetWorkloadListFromDepRCPod(t *testing.T) {
 	assert := assert.New(t)
 	require := require.New(t)
+	conf := config.NewConfig()
+	conf.IstioLabels.AppLabelName = "app"
+	conf.IstioLabels.VersionLabelName = "version"
+	config.Set(conf)
 
 	// Setup mocks
 	kubeObjs := []runtime.Object{
 		&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}},
 	}
-	for _, obj := range FakeDepSyncedWithRS() {
+	for _, obj := range FakeDepSyncedWithRS(conf) {
 		o := obj
 		kubeObjs = append(kubeObjs, &o)
 	}
-	for _, obj := range FakeRSSyncedWithPods() {
+	for _, obj := range FakeRSSyncedWithPods(conf) {
 		o := obj
 		kubeObjs = append(kubeObjs, &o)
 	}
-	for _, obj := range FakePodsSyncedWithDeployments() {
+	for _, obj := range FakePodsSyncedWithDeployments(conf) {
 		o := obj
 		kubeObjs = append(kubeObjs, &o)
 	}
 	k8s := kubetest.NewFakeK8sClient(kubeObjs...)
 	k8s.OpenShift = true
-	SetupBusinessLayer(t, k8s, *config.NewConfig())
-	svc := setupWorkloadService(k8s, config.NewConfig())
+	SetupBusinessLayer(t, k8s, *conf)
+	svc := setupWorkloadService(k8s, conf)
 
 	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: false, IncludeHealth: false}
 	workloadList, _ := svc.GetWorkloadList(context.TODO(), criteria)
@@ -393,19 +416,23 @@ func TestGetWorkloadListFromDepRCPod(t *testing.T) {
 func TestGetWorkloadListFromPod(t *testing.T) {
 	assert := assert.New(t)
 	require := require.New(t)
+	conf := config.NewConfig()
+	conf.IstioLabels.AppLabelName = "app"
+	conf.IstioLabels.VersionLabelName = "version"
+	config.Set(conf)
 
 	// Setup mocks
 	kubeObjs := []runtime.Object{
 		&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}},
 	}
-	for _, obj := range FakePodsNoController() {
+	for _, obj := range FakePodsNoController(conf) {
 		o := obj
 		kubeObjs = append(kubeObjs, &o)
 	}
 	k8s := kubetest.NewFakeK8sClient(kubeObjs...)
 	k8s.OpenShift = true
-	SetupBusinessLayer(t, k8s, *config.NewConfig())
-	svc := setupWorkloadService(k8s, config.NewConfig())
+	SetupBusinessLayer(t, k8s, *conf)
+	svc := setupWorkloadService(k8s, conf)
 
 	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: false, IncludeHealth: false}
 	workloadList, _ := svc.GetWorkloadList(context.TODO(), criteria)
@@ -423,23 +450,27 @@ func TestGetWorkloadListFromPod(t *testing.T) {
 func TestGetWorkloadListFromPods(t *testing.T) {
 	assert := assert.New(t)
 	require := require.New(t)
+	conf := config.NewConfig()
+	conf.IstioLabels.AppLabelName = "app"
+	conf.IstioLabels.VersionLabelName = "version"
+	config.Set(conf)
 
 	// Setup mocks
 	kubeObjs := []runtime.Object{
 		&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}},
 	}
-	for _, obj := range FakeCustomControllerRSSyncedWithPods() {
+	for _, obj := range FakeCustomControllerRSSyncedWithPods(conf) {
 		o := obj
 		kubeObjs = append(kubeObjs, &o)
 	}
-	for _, obj := range FakePodsFromCustomController() {
+	for _, obj := range FakePodsFromCustomController(conf) {
 		o := obj
 		kubeObjs = append(kubeObjs, &o)
 	}
 	k8s := kubetest.NewFakeK8sClient(kubeObjs...)
 	k8s.OpenShift = true
-	SetupBusinessLayer(t, k8s, *config.NewConfig())
-	svc := setupWorkloadService(k8s, config.NewConfig())
+	SetupBusinessLayer(t, k8s, *conf)
+	svc := setupWorkloadService(k8s, conf)
 
 	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: false, IncludeHealth: false}
 	workloadList, _ := svc.GetWorkloadList(context.TODO(), criteria)
@@ -461,17 +492,19 @@ func TestGetWorkloadFromDeployment(t *testing.T) {
 	// Disabling CustomDashboards on Workload details testing
 	conf := config.NewConfig()
 	conf.ExternalServices.CustomDashboards.Enabled = false
-	kubernetes.SetConfig(t, *conf)
+	conf.IstioLabels.AppLabelName = "app"
+	conf.IstioLabels.VersionLabelName = "version"
+	config.Set(conf)
 
 	// Setup mocks
 	kubeObjs := []runtime.Object{
 		&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}},
-		&FakeDepSyncedWithRS()[0],
+		&FakeDepSyncedWithRS(conf)[0],
 	}
-	for _, o := range FakeRSSyncedWithPods() {
+	for _, o := range FakeRSSyncedWithPods(conf) {
 		kubeObjs = append(kubeObjs, &o)
 	}
-	for _, o := range FakePodsSyncedWithDeployments() {
+	for _, o := range FakePodsSyncedWithDeployments(conf) {
 		kubeObjs = append(kubeObjs, &o)
 	}
 	k8s := kubetest.NewFakeK8sClient(kubeObjs...)
@@ -496,6 +529,8 @@ func TestGetWorkloadFromWorkloadGroup(t *testing.T) {
 	// Disabling CustomDashboards on Workload details testing
 	conf := config.NewConfig()
 	conf.ExternalServices.CustomDashboards.Enabled = false
+	conf.IstioLabels.AppLabelName = "app"
+	conf.IstioLabels.VersionLabelName = "version"
 	kubernetes.SetConfig(t, *conf)
 
 	// Setup mocks
@@ -553,18 +588,20 @@ func TestGetWorkloadWithInvalidWorkloadType(t *testing.T) {
 	// otherwise this adds 10s to the test due to an http timeout.
 	conf := config.NewConfig()
 	conf.ExternalServices.CustomDashboards.Enabled = false
+	conf.IstioLabels.AppLabelName = "app"
+	conf.IstioLabels.VersionLabelName = "version"
 	kubernetes.SetConfig(t, *conf)
 
 	// Setup mocks
 	kubeObjs := []runtime.Object{
-		&FakeDepSyncedWithRS()[0],
+		&FakeDepSyncedWithRS(conf)[0],
 		&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}},
 	}
-	for _, obj := range FakeRSSyncedWithPods() {
+	for _, obj := range FakeRSSyncedWithPods(conf) {
 		o := obj
 		kubeObjs = append(kubeObjs, &o)
 	}
-	for _, obj := range FakePodsSyncedWithDeployments() {
+	for _, obj := range FakePodsSyncedWithDeployments(conf) {
 		o := obj
 		kubeObjs = append(kubeObjs, &o)
 	}
@@ -591,17 +628,19 @@ func TestGetWorkloadFromPods(t *testing.T) {
 	// otherwise this adds 10s to the test due to an http timeout.
 	conf := config.NewConfig()
 	conf.ExternalServices.CustomDashboards.Enabled = false
+	conf.IstioLabels.AppLabelName = "app"
+	conf.IstioLabels.VersionLabelName = "version"
 	kubernetes.SetConfig(t, *conf)
 
 	// Setup mocks
 	kubeObjs := []runtime.Object{
 		&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}},
 	}
-	for _, obj := range FakeCustomControllerRSSyncedWithPods() {
+	for _, obj := range FakeCustomControllerRSSyncedWithPods(conf) {
 		o := obj
 		kubeObjs = append(kubeObjs, &o)
 	}
-	for _, obj := range FakePodsFromCustomController() {
+	for _, obj := range FakePodsFromCustomController(conf) {
 		o := obj
 		kubeObjs = append(kubeObjs, &o)
 	}
@@ -634,7 +673,7 @@ func TestGetPod(t *testing.T) {
 	require := require.New(t)
 
 	conf := config.NewConfig()
-	k8s := kubetest.NewFakeK8sClient(FakePodSyncedWithDeployments(), &osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}})
+	k8s := kubetest.NewFakeK8sClient(FakePodSyncedWithDeployments(conf), &osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}})
 	SetupBusinessLayer(t, k8s, *conf)
 	svc := setupWorkloadService(k8s, conf)
 
@@ -828,17 +867,20 @@ func TestGetZtunnelPodLogsProxy(t *testing.T) {
 	assert := assert.New(t)
 	require := require.New(t)
 	conf := config.NewConfig()
+	conf.IstioLabels.AppLabelName = "app"
+	conf.IstioLabels.VersionLabelName = "version"
+	kubernetes.SetConfig(t, *conf)
 
 	// Setup mocks
 	kubeObjs := []runtime.Object{
-		FakePodSyncedWithDeployments(),
+		FakePodSyncedWithDeployments(conf),
 		&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "bookinfo"}},
 	}
-	for _, obj := range FakeZtunnelDaemonSet() {
+	for _, obj := range FakeZtunnelDaemonSet(conf) {
 		o := obj
 		kubeObjs = append(kubeObjs, &o)
 	}
-	for _, obj := range FakeZtunnelPods() {
+	for _, obj := range FakeZtunnelPods(conf) {
 		o := obj
 		kubeObjs = append(kubeObjs, &o)
 	}
@@ -846,7 +888,7 @@ func TestGetZtunnelPodLogsProxy(t *testing.T) {
 		logs:            FakePodLogsZtunnel().Logs,
 		ClientInterface: kubetest.NewFakeK8sClient(kubeObjs...),
 	}
-	SetupBusinessLayer(t, k8s, *config.NewConfig())
+	SetupBusinessLayer(t, k8s, *conf)
 	svc := setupWorkloadService(k8s, conf)
 
 	maxLines := 2
@@ -942,11 +984,13 @@ func TestDuplicatedControllers(t *testing.T) {
 	// otherwise this adds 10s to the test due to an http timeout.
 	conf := config.NewConfig()
 	conf.ExternalServices.CustomDashboards.Enabled = false
+	conf.IstioLabels.AppLabelName = "app"
+	conf.IstioLabels.VersionLabelName = "version"
 	kubernetes.SetConfig(t, *conf)
 
 	// Setup mocks
 	kubeObjs := []runtime.Object{
-		FakePodSyncedWithDeployments(),
+		FakePodSyncedWithDeployments(conf),
 		&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}},
 	}
 	for _, obj := range FakeDuplicatedDeployments() {
@@ -957,11 +1001,11 @@ func TestDuplicatedControllers(t *testing.T) {
 		o := obj
 		kubeObjs = append(kubeObjs, &o)
 	}
-	for _, obj := range FakeDuplicatedStatefulSets() {
+	for _, obj := range FakeDuplicatedStatefulSets(conf) {
 		o := obj
 		kubeObjs = append(kubeObjs, &o)
 	}
-	for _, obj := range FakePodsSyncedWithDuplicated() {
+	for _, obj := range FakePodsSyncedWithDuplicated(conf) {
 		o := obj
 		kubeObjs = append(kubeObjs, &o)
 	}
@@ -986,8 +1030,12 @@ func TestDuplicatedControllers(t *testing.T) {
 func TestGetWorkloadListFromGenericPodController(t *testing.T) {
 	assert := assert.New(t)
 	require := require.New(t)
+	conf := config.NewConfig()
+	conf.IstioLabels.AppLabelName = "app"
+	conf.IstioLabels.VersionLabelName = "version"
+	config.Set(conf)
 
-	pods := FakePodsSyncedWithDeployments()
+	pods := FakePodsSyncedWithDeployments(conf)
 
 	// Doesn't matter what the type is as long as kiali doesn't recognize it as a workload.
 	owner := &core_v1.ConfigMap{
@@ -1012,11 +1060,11 @@ func TestGetWorkloadListFromGenericPodController(t *testing.T) {
 	}
 	k8s := kubetest.NewFakeK8sClient(kubeObjs...)
 	k8s.OpenShift = true
-	SetupBusinessLayer(t, k8s, *config.NewConfig())
-	svc := setupWorkloadService(k8s, config.NewConfig())
+	SetupBusinessLayer(t, k8s, *conf)
+	svc := setupWorkloadService(k8s, conf)
 
 	// Disabling CustomDashboards on Workload details testing
-	conf := config.Get()
+	conf = config.Get()
 	conf.ExternalServices.CustomDashboards.Enabled = false
 	config.Set(conf)
 
@@ -1040,9 +1088,12 @@ func TestGetWorkloadListKindsWithSameName(t *testing.T) {
 	// Disabling CustomDashboards on Workload details testing
 	conf := config.NewConfig()
 	conf.ExternalServices.CustomDashboards.Enabled = false
+	conf.IstioLabels.AppLabelName = "app"
+	conf.IstioLabels.VersionLabelName = "version"
+	config.Set(conf)
 
-	rs := FakeRSSyncedWithPods()
-	pods := FakePodsSyncedWithDeployments()
+	rs := FakeRSSyncedWithPods(conf)
+	pods := FakePodsSyncedWithDeployments(conf)
 	pods[0].OwnerReferences[0].APIVersion = kubernetes.ReplicaSets.GroupVersion().String()
 	pods[0].OwnerReferences[0].Kind = kubernetes.ReplicaSets.Kind
 
@@ -1060,7 +1111,7 @@ func TestGetWorkloadListKindsWithSameName(t *testing.T) {
 	}
 	k8s := kubetest.NewFakeK8sClient(kubeObjs...)
 	k8s.OpenShift = true
-	SetupBusinessLayer(t, k8s, *config.NewConfig())
+	SetupBusinessLayer(t, k8s, *conf)
 	svc := setupWorkloadService(k8s, conf)
 
 	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: false, IncludeHealth: false}
@@ -1076,8 +1127,11 @@ func TestGetWorkloadListRSWithoutPrefix(t *testing.T) {
 	// Disabling CustomDashboards on Workload details testing
 	conf := config.NewConfig()
 	conf.ExternalServices.CustomDashboards.Enabled = false
+	conf.IstioLabels.AppLabelName = "app"
+	conf.IstioLabels.VersionLabelName = "version"
+	config.Set(conf)
 
-	rs := FakeRSSyncedWithPods()
+	rs := FakeRSSyncedWithPods(conf)
 	// Doesn't matter what the type is as long as kiali doesn't recognize it as a workload.
 	owner := &core_v1.ConfigMap{
 		ObjectMeta: v1.ObjectMeta{
@@ -1090,7 +1144,7 @@ func TestGetWorkloadListRSWithoutPrefix(t *testing.T) {
 		},
 	}
 	rs[0].OwnerReferences = []v1.OwnerReference{*v1.NewControllerRef(owner, core_v1.SchemeGroupVersion.WithKind(owner.Kind))}
-	pods := FakePodsSyncedWithDeployments()
+	pods := FakePodsSyncedWithDeployments(conf)
 
 	// Setup mocks
 	kubeObjs := []runtime.Object{
@@ -1106,7 +1160,7 @@ func TestGetWorkloadListRSWithoutPrefix(t *testing.T) {
 	}
 	k8s := kubetest.NewFakeK8sClient(kubeObjs...)
 	k8s.OpenShift = true
-	SetupBusinessLayer(t, k8s, *config.NewConfig())
+	SetupBusinessLayer(t, k8s, *conf)
 	svc := setupWorkloadService(k8s, conf)
 
 	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: false, IncludeHealth: false}
@@ -1124,9 +1178,11 @@ func TestGetWorkloadListRSOwnedByCustom(t *testing.T) {
 	conf := config.NewConfig()
 	conf.ExternalServices.CustomDashboards.Enabled = false
 	conf.KubernetesConfig.ClusterName = "east"
+	conf.IstioLabels.AppLabelName = "app"
+	conf.IstioLabels.VersionLabelName = "version"
 	config.Set(conf)
 
-	replicaSets := FakeRSSyncedWithPods()
+	replicaSets := FakeRSSyncedWithPods(conf)
 
 	// Doesn't matter what the type is as long as kiali doesn't recognize it as a workload.
 	owner := &core_v1.ConfigMap{
@@ -1144,7 +1200,7 @@ func TestGetWorkloadListRSOwnedByCustom(t *testing.T) {
 		replicaSets[i].OwnerReferences = []v1.OwnerReference{*ref}
 	}
 
-	pods := FakePodsSyncedWithDeployments()
+	pods := FakePodsSyncedWithDeployments(conf)
 
 	// Setup mocks
 	kubeObjs := []runtime.Object{
@@ -1288,7 +1344,7 @@ func TestValidateWaypoint(t *testing.T) {
 		kubeObjs = append(kubeObjs, &o)
 	}
 
-	for _, obj := range FakeWaypointNamespaceEnrolledPods(true) {
+	for _, obj := range FakeWaypointNamespaceEnrolledPods(conf, true) {
 		o := obj
 		kubeObjs = append(kubeObjs, &o)
 	}
@@ -1349,7 +1405,7 @@ func TestValidateWaypointNS(t *testing.T) {
 		kubeObjs = append(kubeObjs, &o)
 	}
 
-	for _, obj := range FakeWaypointNamespaceEnrolledPods(false) {
+	for _, obj := range FakeWaypointNamespaceEnrolledPods(conf, false) {
 		o := obj
 		kubeObjs = append(kubeObjs, &o)
 	}
@@ -1408,6 +1464,8 @@ func TestValidateWaypointService(t *testing.T) {
 	assert := assert.New(t)
 	require := require.New(t)
 	conf := config.NewConfig()
+	conf.IstioLabels.AppLabelName = "app"
+	conf.IstioLabels.VersionLabelName = "version"
 	config.Set(conf)
 
 	// Setup mocks
@@ -1420,12 +1478,12 @@ func TestValidateWaypointService(t *testing.T) {
 		kubeObjs = append(kubeObjs, &o)
 	}
 
-	for _, obj := range FakeWaypointNamespaceEnrolledPods(false) {
+	for _, obj := range FakeWaypointNamespaceEnrolledPods(conf, false) {
 		o := obj
 		kubeObjs = append(kubeObjs, &o)
 	}
 
-	for _, obj := range FakeWaypointNServiceEnrolledPods() {
+	for _, obj := range FakeWaypointNServiceEnrolledPods(conf) {
 		o := obj
 		kubeObjs = append(kubeObjs, &o)
 	}
@@ -1489,12 +1547,12 @@ func TestGetWaypointWorkloads(t *testing.T) {
 		kubeObjs = append(kubeObjs, &o)
 	}
 
-	for _, obj := range FakeWaypointNamespaceEnrolledPods(true) {
+	for _, obj := range FakeWaypointNamespaceEnrolledPods(conf, true) {
 		o := obj
 		kubeObjs = append(kubeObjs, &o)
 	}
 
-	for _, obj := range FakeWaypointNServiceEnrolledPods() {
+	for _, obj := range FakeWaypointNServiceEnrolledPods(conf) {
 		o := obj
 		kubeObjs = append(kubeObjs, &o)
 	}
@@ -1557,7 +1615,7 @@ func TestValidateWaypointProxyStatus(t *testing.T) {
 		kubeObjs = append(kubeObjs, &o)
 	}
 
-	for _, obj := range FakeWaypointNamespaceEnrolledPods(true) {
+	for _, obj := range FakeWaypointNamespaceEnrolledPods(conf, true) {
 		o := obj
 		kubeObjs = append(kubeObjs, &o)
 	}
@@ -1687,7 +1745,7 @@ func TestGetWorkloadListWithCustomKindThatMatchesCoreKind(t *testing.T) {
 	kubeObjs := []runtime.Object{
 		&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}},
 	}
-	for _, pod := range FakePodsFromCustomController() {
+	for _, pod := range FakePodsFromCustomController(conf) {
 		p := pod
 		// Setting here a custom type whose Kind matches a core Kube type.
 		p.OwnerReferences[0].APIVersion = "customAPI/v1"

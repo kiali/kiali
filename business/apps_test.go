@@ -27,9 +27,11 @@ func setupAppService(clients map[string]kubernetes.ClientInterface) *AppService 
 func TestGetAppListFromDeployments(t *testing.T) {
 	assert := assert.New(t)
 	require := require.New(t)
-
 	conf := config.NewConfig()
+	conf.IstioLabels.AppLabelName = "app"
+	conf.IstioLabels.VersionLabelName = "version"
 	config.Set(conf)
+
 	// Auxiliar fake* tests defined in workload_test.go
 	objects := []runtime.Object{
 		kubetest.FakeNamespace("Namespace"),
@@ -65,7 +67,10 @@ func TestGetAppListFromWorkloadGroups(t *testing.T) {
 	require := require.New(t)
 
 	conf := config.NewConfig()
+	conf.IstioLabels.AppLabelName = "app"
+	conf.IstioLabels.VersionLabelName = "version"
 	config.Set(conf)
+
 	// Auxiliar fake* tests defined in workload_test.go
 	kubeObjs := []runtime.Object{
 		kubetest.FakeNamespace("Namespace"),
@@ -114,6 +119,8 @@ func TestGetAppFromDeployments(t *testing.T) {
 	require := require.New(t)
 
 	conf := config.NewConfig()
+	conf.IstioLabels.AppLabelName = "app"
+	conf.IstioLabels.VersionLabelName = "version"
 	conf.ExternalServices.CustomDashboards.Enabled = false
 	config.Set(conf)
 
@@ -158,6 +165,8 @@ func TestGetAppFromWorkloadGroups(t *testing.T) {
 	require := require.New(t)
 
 	conf := config.NewConfig()
+	conf.IstioLabels.AppLabelName = "app"
+	conf.IstioLabels.VersionLabelName = "version"
 	conf.ExternalServices.CustomDashboards.Enabled = false
 	config.Set(conf)
 
@@ -202,6 +211,9 @@ func TestGetAppFromWorkloadGroups(t *testing.T) {
 func TestGetAppListFromReplicaSets(t *testing.T) {
 	assert := assert.New(t)
 	conf := config.NewConfig()
+	conf.IstioLabels.AppLabelName = "app"
+	conf.IstioLabels.VersionLabelName = "version"
+	config.Set(conf)
 
 	// Setup mocks
 	// Auxiliar fake* tests defined in workload_test.go
@@ -237,6 +249,8 @@ func TestGetAppFromReplicaSets(t *testing.T) {
 	// otherwise this adds 10s to the test due to an http timeout.
 	conf := config.NewConfig()
 	conf.ExternalServices.CustomDashboards.Enabled = false
+	conf.IstioLabels.AppLabelName = "app"
+	conf.IstioLabels.VersionLabelName = "version"
 	kubernetes.SetConfig(t, *conf)
 
 	// Setup mocks

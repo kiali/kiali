@@ -46,7 +46,7 @@ func TestGetValidationsPerf(t *testing.T) {
 		}
 	}
 
-	vs := mockCombinedValidationService(t, fakeIstioConfigListPerf(numNs, numDr, numVs, numGw),
+	vs := mockCombinedValidationService(t, conf, fakeIstioConfigListPerf(numNs, numDr, numVs, numGw),
 		[]string{"details.test.svc.cluster.local", "product.test.svc.cluster.local", "product2.test.svc.cluster.local", "customer.test.svc.cluster.local"})
 
 	now := time.Now()

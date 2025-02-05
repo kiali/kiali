@@ -459,8 +459,10 @@ func (in *WorkloadService) GetWorkload(ctx context.Context, criteria WorkloadCri
 	go func() {
 		defer wg.Done()
 		conf := in.config
-		app := workload.Labels[conf.IstioLabels.AppLabelName]
-		version := workload.Labels[conf.IstioLabels.VersionLabelName]
+		appLabelName, _ := conf.GetAppLabelName(workload.Labels)
+		verLabelName, _ := conf.GetVersionLabelName(workload.Labels)
+		app := workload.Labels[appLabelName]
+		version := workload.Labels[verLabelName]
 		runtimes = NewDashboardsService(in.config, in.grafana, ns, workload).GetCustomDashboardRefs(criteria.Namespace, app, version, workload.Pods)
 	}()
 
@@ -2527,7 +2529,7 @@ func (in *WorkloadService) GetWorkloadTracingName(ctx context.Context, cluster, 
 		tracingName.Lookup = workload
 		return tracingName, nil
 	}
-	appLabelName := in.config.IstioLabels.AppLabelName
+	appLabelName, _ := in.config.GetAppLabelName(wkd.Labels)
 	app := wkd.Labels[appLabelName]
 	tracingName.App = app
 	tracingName.Lookup = app

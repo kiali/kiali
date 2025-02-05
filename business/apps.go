@@ -470,7 +470,7 @@ func (in *AppService) fetchNamespaceApps(ctx context.Context, namespace string, 
 		return nil, err
 	}
 
-	appNameSelectors := config.Get().GetAppVersionLabelSelectors(appName, "", "")
+	appNameSelectors := config.Get().GetAppVersionLabelSelectors(appName, "")
 	var appNameSelector config.AppVersionLabelSelector
 	for _, appNameSelector = range appNameSelectors {
 		ws, err = in.businessLayer.Workload.fetchWorkloadsFromCluster(ctx, cluster, namespace, appNameSelector.LabelSelector)
@@ -501,7 +501,8 @@ func (in *AppService) fetchNamespaceApps(ctx context.Context, namespace string, 
 		} else {
 			ss = nil
 		}
-		castAppDetails(appNameSelector.AppLabelName, allEntities, ss, w, cluster)
+		appLabelName, _ := in.conf.GetAppLabelName(w.Labels)
+		castAppDetails(appLabelName, allEntities, ss, w, cluster)
 	}
 
 	return allEntities, nil

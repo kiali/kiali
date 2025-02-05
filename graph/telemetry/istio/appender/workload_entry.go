@@ -42,9 +42,6 @@ func (a WorkloadEntryAppender) AppendGraph(trafficMap graph.TrafficMap, globalIn
 }
 
 func (a WorkloadEntryAppender) applyWorkloadEntries(trafficMap graph.TrafficMap, globalInfo *graph.GlobalInfo, namespaceInfo *graph.AppenderNamespaceInfo) {
-	appLabel := config.Get().IstioLabels.AppLabelName
-	versionLabel := config.Get().IstioLabels.VersionLabelName
-
 	for _, n := range trafficMap {
 		// Skip the check if this node is outside the requested namespace, we limit badging to the requested namespaces
 		if n.Namespace != namespaceInfo.Namespace {
@@ -69,7 +66,9 @@ func (a WorkloadEntryAppender) applyWorkloadEntries(trafficMap graph.TrafficMap,
 		log.Tracef("WorkloadEntries found: %d", len(istioCfg.WorkloadEntries))
 
 		for _, entry := range istioCfg.WorkloadEntries {
-			if entry.Spec.Labels[appLabel] == n.App && entry.Spec.Labels[versionLabel] == n.Version {
+			appLabelName, appLabelNameFound := config.Get().GetAppLabelName(entry.Spec.Labels)
+			verLabelName, verLabelNameFound := config.Get().GetVersionLabelName(entry.Spec.Labels)
+			if appLabelNameFound && verLabelNameFound && entry.Spec.Labels[appLabelName] == n.App && entry.Spec.Labels[verLabelName] == n.Version {
 				if n.Metadata[graph.HasWorkloadEntry] == nil {
 					n.Metadata[graph.HasWorkloadEntry] = []graph.WEInfo{}
 				}

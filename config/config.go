@@ -1018,6 +1018,17 @@ func Set(conf *Config) {
 	defer rwMutex.Unlock()
 	conf.AddHealthDefault()
 	configuration = *conf
+
+	// init these one time, they don't change
+	if appLabelNames == nil {
+		if conf.IstioLabels.AppLabelName != "" && conf.IstioLabels.VersionLabelName != "" {
+			appLabelNames = []string{conf.IstioLabels.AppLabelName}
+			versionLabelNames = []string{conf.IstioLabels.VersionLabelName}
+		} else {
+			appLabelNames = []string{"service.istio.io/canonical-name", "app.kubernetes.io/name", "app"}
+			versionLabelNames = []string{"service.istio.io/canonical-revision", "app.kubernetes.io/version", "version"}
+		}
+	}
 }
 
 func (conf Config) Obfuscate() (obf Config) {
@@ -1422,6 +1433,7 @@ func (config *Config) extractAccessibleNamespaceList() ([]string, error) {
 type AppVersionLabelSelector struct {
 	AppLabelName     string
 	LabelSelector    string
+	Requirements     map[string]string
 	VersionLabelName string
 }
 
@@ -1440,17 +1452,15 @@ var appLabelNames, versionLabelNames []string
 // [2]   app                                version
 //
 // It is assumed that the app and version naming scheme will match for any particular entity.
-// If a baseSelector is supplied, it will be appended to each return selector.
-func (config *Config) GetAppVersionLabelSelectors(app, version, baseSelector string) []AppVersionLabelSelector {
-	// init these one time, they don't change
-	if appLabelNames == nil {
-		if config.IstioLabels.AppLabelName != "" && config.IstioLabels.VersionLabelName != "" {
-			appLabelNames = []string{config.IstioLabels.AppLabelName}
-			versionLabelNames = []string{config.IstioLabels.VersionLabelName}
-		} else {
-			appLabelNames = []string{"service.istio.io/canonical-name", "app.kubernetes.io/name", "app"}
-			versionLabelNames = []string{"service.istio.io/canonical-revision", "app.kubernetes.io/version", "version"}
-		}
+func (config *Config) GetAppVersionLabelSelectors(app, version string) []AppVersionLabelSelector {
+	// if neither app or version are set, just return a single, empty entry
+	if app == "" && version == "" {
+		return []AppVersionLabelSelector{{
+			AppLabelName:     "",
+			LabelSelector:    "",
+			Requirements:     map[string]string{},
+			VersionLabelName: "",
+		}}
 	}
 
 	labelSelectors := make([]AppVersionLabelSelector, len(appLabelNames))
@@ -1459,25 +1469,41 @@ func (config *Config) GetAppVersionLabelSelectors(app, version, baseSelector str
 		appLabelName := appLabelNames[i]
 		versionLabelName := versionLabelNames[i]
 		requirements := map[string]string{}
-		if app == "" {
+		if app != "" {
 			requirements[appLabelName] = app
 		}
-		if version == "" {
+		if version != "" {
 			requirements[versionLabelName] = app
-		}
-		if baseSelector != "" {
-			labelSelectors[i] = AppVersionLabelSelector{
-				AppLabelName:     appLabelName,
-				LabelSelector:    fmt.Sprintf("%s,%s", labels.Set(requirements).String(), baseSelector),
-				VersionLabelName: versionLabelName,
-			}
 		}
 		labelSelectors[i] = AppVersionLabelSelector{
 			AppLabelName:     appLabelName,
 			LabelSelector:    labels.Set(requirements).String(),
+			Requirements:     requirements,
 			VersionLabelName: versionLabelName,
 		}
 	}
 
 	return labelSelectors
+}
+
+// GetAppLabelName returns the app label name found in the labels, and a "found" bool
+func (config *Config) GetAppLabelName(labels map[string]string) (string, bool) {
+	for i := 0; i < len(appLabelNames); i++ {
+		appLabelName := appLabelNames[i]
+		if _, ok := labels[appLabelName]; ok {
+			return appLabelName, true
+		}
+	}
+	return "", false
+}
+
+// GetVersionLabelName returns the version label name found in the labels, and a "found" bool
+func (config *Config) GetVersionLabelName(labels map[string]string) (string, bool) {
+	for i := 0; i < len(versionLabelNames); i++ {
+		versionLabelName := versionLabelNames[i]
+		if _, ok := labels[versionLabelName]; ok {
+			return versionLabelName, true
+		}
+	}
+	return "", false
 }

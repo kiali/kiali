@@ -306,14 +306,15 @@ func (in *SvcService) buildKubernetesServices(svcs []core_v1.Service, pods []cor
 		}
 
 		/** Check if Service has the label app required by Istio */
-		_, appLabel := item.Spec.Selector[conf.IstioLabels.AppLabelName]
+		_, appLabelNameFound := conf.GetAppLabelName(item.Spec.Selector)
+
 		/** Check if Service has additional item icon */
 		services[i] = models.ServiceOverview{
 			Name:                   item.Name,
 			Namespace:              item.Namespace,
 			IstioSidecar:           hasSidecar,
 			IsAmbient:              hasAmbient,
-			AppLabel:               appLabel,
+			AppLabel:               appLabelNameFound,
 			AdditionalDetailSample: models.GetFirstAdditionalIcon(&conf, item.ObjectMeta.Annotations),
 			Health:                 models.EmptyServiceHealth(),
 			HealthAnnotations:      models.GetHealthAnnotation(item.Annotations, models.GetHealthConfigAnnotation()),
@@ -377,7 +378,9 @@ func (in *SvcService) buildRegistryServices(rSvcs []*kubernetes.RegistryService,
 		if !filterIstioServiceByClusterId(clusterId, item) {
 			continue
 		}
-		_, appLabel := item.Attributes.LabelSelectors[conf.IstioLabels.AppLabelName]
+
+		_, appLabelFound := conf.GetAppLabelName(item.Attributes.LabelSelectors)
+
 		// ServiceEntry/External and Federation will be marked as hasSidecar == true as they will have telemetry
 		hasSidecar := true
 		if item.Attributes.ServiceRegistry != "External" && item.Attributes.ServiceRegistry != "Federation" {
@@ -411,7 +414,7 @@ func (in *SvcService) buildRegistryServices(rSvcs []*kubernetes.RegistryService,
 			Name:              item.Attributes.Name,
 			Namespace:         item.Attributes.Namespace,
 			IstioSidecar:      hasSidecar,
-			AppLabel:          appLabel,
+			AppLabel:          appLabelFound,
 			Health:            models.EmptyServiceHealth(),
 			HealthAnnotations: map[string]string{},
 			Labels:            item.Attributes.Labels,
@@ -885,7 +888,7 @@ func (in *SvcService) GetServiceTracingName(ctx context.Context, cluster, namesp
 		return tracingName, nil
 	}
 
-	appLabelName := in.config.IstioLabels.AppLabelName
+	appLabelName, _ := in.config.GetAppLabelName(svc.Selectors) // Is it OK that this assumes the label is found?
 	app := svc.Selectors[appLabelName]
 	tracingName.App = app
 	tracingName.Lookup = app

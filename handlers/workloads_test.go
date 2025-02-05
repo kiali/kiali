@@ -50,15 +50,15 @@ func TestWorkloadsEndpoint(t *testing.T) {
 	mockClock()
 
 	kubeObjects := []runtime.Object{kubetest.FakeNamespace("ns")}
-	for _, obj := range business.FakeDepSyncedWithRS() {
+	for _, obj := range business.FakeDepSyncedWithRS(cfg) {
 		o := obj
 		kubeObjects = append(kubeObjects, &o)
 	}
-	for _, obj := range business.FakeRSSyncedWithPods() {
+	for _, obj := range business.FakeRSSyncedWithPods(cfg) {
 		o := obj
 		kubeObjects = append(kubeObjects, &o)
 	}
-	for _, obj := range business.FakePodsSyncedWithDeployments() {
+	for _, obj := range business.FakePodsSyncedWithDeployments(cfg) {
 		o := obj
 		kubeObjects = append(kubeObjects, &o)
 	}

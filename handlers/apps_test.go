@@ -273,6 +273,8 @@ func TestAppDetailsEndpoint(t *testing.T) {
 	// Disabling CustomDashboards on testing
 	// otherwise this adds 10s to the test due to an http timeout.
 	conf := config.NewConfig()
+	conf.IstioLabels.AppLabelName = "app"
+	conf.IstioLabels.VersionLabelName = "version"
 	conf.ExternalServices.CustomDashboards.Enabled = false
 	conf.ExternalServices.Istio.IstioAPIEnabled = false
 	kubernetes.SetConfig(t, *conf)

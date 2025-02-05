@@ -75,18 +75,16 @@ func (a IdleNodeAppender) buildIdleNodeTrafficMap(trafficMap graph.TrafficMap, n
 		}
 
 		cfg := config.Get()
-		appLabel := cfg.IstioLabels.AppLabelName
-		versionLabel := cfg.IstioLabels.VersionLabelName
 		if workloadList, ok := workloadLists[cluster]; ok {
 			for _, w := range workloadList.Workloads {
 				labels := w.Labels
 				app := graph.Unknown
 				version := graph.Unknown
-				if v, ok := labels[appLabel]; ok {
-					app = v
+				if appLabelName, found := cfg.GetAppLabelName(labels); found {
+					app = labels[appLabelName]
 				}
-				if v, ok := labels[versionLabel]; ok {
-					version = v
+				if verLabelName, found := cfg.GetVersionLabelName(labels); found {
+					version = labels[verLabelName]
 				}
 				id, nodeType, _ := graph.Id(cluster, "", "", namespace, w.Name, app, version, a.GraphType)
 				if _, found := trafficMap[id]; !found {
