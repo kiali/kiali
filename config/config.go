@@ -751,7 +751,7 @@ func NewConfig() (c *Config) {
 				IstiodPollingIntervalSeconds:      20,
 				RootNamespace:                     "istio-system",
 				UrlServiceVersion:                 "",
-				ValidationReconcileInterval:       util.AsPtr(time.Second * 20),
+				ValidationReconcileInterval:       util.AsPtr(time.Minute),
 				GatewayAPIClasses:                 []GatewayAPIClass{},
 			},
 			Prometheus: PrometheusConfig{

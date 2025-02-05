@@ -248,6 +248,7 @@ EOF
     --set external_services.grafana.dashboards[0].name="Istio Mesh Dashboard" \
     --set external_services.tracing.enabled="true" \
     --set external_services.tracing.external_url="http://tracing.istio-system:16685/jaeger" \
+    --set external_services.istio.validation_reconcile_interval="5s" \
     --set health_config.rate[0].kind="service" \
     --set health_config.rate[0].name="y-server" \
     --set health_config.rate[0].namespace="alpha" \
@@ -325,6 +326,7 @@ setup_kind_tempo() {
     --set external_services.tracing.external_url="http://tempo-cr-query-frontend.tempo:3200" \
     --set external_services.tracing.internal_url="http://tempo-cr-query-frontend.tempo:3200" \
     --set external_services.tracing.use_grpc="false" \
+    --set external_services.istio.validation_reconcile_interval="5s" \
     --set health_config.rate[0].kind="service" \
     --set health_config.rate[0].name="y-server" \
     --set health_config.rate[0].namespace="alpha" \
