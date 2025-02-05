@@ -336,6 +336,10 @@ Feature: Kiali Istio Config wizard
     When user is at the "istio" page
     And viewing the detail for "gatewayapi-2"
     And choosing to delete it
+    When user is at the "istio" page
+    And user selects the "bookinfo" namespace
+    And viewing the detail for "gatewayapi-1"
+    When user is at the "istio" page
     And user selects the "bookinfo" namespace
     Then the "K8sGateway" "gatewayapi-2" should not be listed in "bookinfo" namespace
     And the "gatewayapi-1" "K8sGateway" of the "bookinfo" namespace should have a "success"
