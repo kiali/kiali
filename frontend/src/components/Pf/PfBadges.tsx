@@ -88,11 +88,11 @@ export const PFBadges: { [key: string]: PFBadgeType } = Object.freeze({
   TraceStore: { badge: 'TS', tt: 'Trace Store' } as PFBadgeType,
   Unknown: { badge: 'U', tt: 'Unknown' } as PFBadgeType,
   VirtualService: { badge: 'VS', tt: 'Virtual Service' } as PFBadgeType,
-  Waypoint: { badge: 'L7', tt: 'Waypoint proxy' } as PFBadgeType,
+  Waypoint: { badge: 'L7', tt: 'Waypoint proxy', style: { backgroundColor: PFColors.Gold500 } } as PFBadgeType,
   Workload: { badge: 'W', tt: 'Workload', style: { backgroundColor: PFColors.Blue500 } } as PFBadgeType,
   WorkloadEntry: { badge: 'WE', tt: 'Workload Entry' } as PFBadgeType,
   WorkloadGroup: { badge: 'WG', tt: 'Workload Group' } as PFBadgeType,
-  Ztunnel: { badge: 'L4', tt: 'ztunnel' } as PFBadgeType
+  Ztunnel: { badge: 'L4', tt: 'ztunnel', style: { backgroundColor: PFColors.Gold300 } } as PFBadgeType
 });
 
 // This is styled for consistency with OpenShift Console.  See console: public/components/_resource.scss

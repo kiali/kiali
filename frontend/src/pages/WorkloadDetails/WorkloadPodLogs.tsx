@@ -60,9 +60,9 @@ import { TraceSpansLimit } from 'components/Metrics/TraceSpansLimit';
 import { infoStyle } from 'styles/IconStyle';
 import { WaypointInfo } from '../../types/Workload';
 
-const appContainerColors = [PFColors.Blue200, PFColors.Blue300, PFColors.Blue400, PFColors.Blue500];
-const proxyContainerColor = PFColors.Gold400;
-const waypointContainerColor = PFColors.Orange400;
+const appContainerColors = [PFColors.Blue200, PFColors.Blue300, PFColors.Blue400, PFColors.Blue100];
+const proxyContainerColor = PFColors.Gold300;
+const waypointContainerColor = PFColors.Gold500;
 const spanColor = PFColors.Cyan300;
 
 type ReduxProps = {
