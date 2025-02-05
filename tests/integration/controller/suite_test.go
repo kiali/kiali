@@ -101,8 +101,10 @@ var _ = BeforeSuite(func() {
 
 	By("bootstrapping test environment")
 	testEnv = &envtest.Environment{
-		// e.g. _output/istio-1.20.3/manifests/charts/base/crds/crd-all.gen.yaml
-		CRDDirectoryPaths:     []string{filepath.Join(kialiOutputFolder, istioVersion, "manifests", "charts", "base", "crds")},
+		// TODO: This method of loading in the istio CRDs needs to change. It is too reliant on the structure of the manifests dir
+		// which we don't control. Would be better to embed the CRDs if possible.
+		// e.g. _output/istio-1.24.0/manifests/charts/base/files/crd-all.gen.yaml
+		CRDDirectoryPaths:     []string{filepath.Join(kialiOutputFolder, istioVersion, "manifests", "charts", "base", "files")},
 		ErrorIfCRDPathMissing: true,
 		// e.g. "_output/k8s/1.29.1-linux-amd64"
 		BinaryAssetsDirectory: filepath.Join(kialiOutputFolder, "k8s", kubeVersion),
