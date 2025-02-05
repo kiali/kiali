@@ -168,6 +168,18 @@ func KialiConfig() (*handlers.PublicConfig, int, error) {
 	}
 }
 
+func TracingConfig() (*models.TracingInfo, int, error) {
+	url := fmt.Sprintf("%s/api/tracing", client.kialiURL)
+	response := new(models.TracingInfo)
+
+	code, err := getRequestAndUnmarshalInto(url, response)
+	if err == nil {
+		return response, code, nil
+	} else {
+		return nil, code, err
+	}
+}
+
 func Namespaces() (*models.Namespaces, int, error) {
 	url := fmt.Sprintf("%s/api/namespaces", client.kialiURL)
 	response := new(models.Namespaces)
