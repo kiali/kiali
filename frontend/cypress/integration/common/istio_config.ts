@@ -613,6 +613,14 @@ Then('the AuthorizationPolicy should have a {string}', function (healthStatus: s
   );
 });
 
+const hexToRgb = (hex: string): string => {
+  const rValue = parseInt(hex.substring(0, 2), 16);
+  const gValue = parseInt(hex.substring(2, 4), 16);
+  const bValue = parseInt(hex.substring(4), 16);
+
+  return `rgb(${rValue}, ${gValue}, ${bValue})`;
+};
+
 function waitUntilConfigIsVisible(
   attempt: number,
   crdInstanceName: string,
@@ -626,11 +634,13 @@ function waitUntilConfigIsVisible(
   cy.request({ method: 'GET', url: `${Cypress.config('baseUrl')}/api/istio/config?refresh=0` });
   cy.get('[data-test="refresh-button"]').click();
   ensureKialiFinishedLoading();
+
   let found = false;
   cy.get('tr')
     .each($row => {
       const dataTestAttr = $row[0].attributes.getNamedItem('data-test');
       const hasNA = $row[0].innerText.includes('N/A');
+
       if (dataTestAttr !== null) {
         if (dataTestAttr.value === `VirtualItem_Ns${namespace}_${crdName}_${crdInstanceName}` && !hasNA) {
           // Check if the health status icon is correct
@@ -638,10 +648,16 @@ function waitUntilConfigIsVisible(
             .should('be.visible')
             .then(icon => {
               const colorVar = `--pf-v5-global--${healthStatus}-color--100`;
-              const color = getComputedStyle(icon[0]).getPropertyValue(colorVar);
-              if (color) {
-                found = true;
-              }
+              const statusColor = getComputedStyle(icon[0]).getPropertyValue(colorVar).replace('#', '');
+
+              cy.wrap(icon[0])
+                .invoke('css', 'color')
+                .then(iconColor => {
+                  // Convert the status color to RGB format to compare it with the icon color
+                  if (iconColor.toString() === hexToRgb(statusColor)) {
+                    found = true;
+                  }
+                });
             });
         }
       }
