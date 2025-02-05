@@ -739,6 +739,36 @@ func FakePodSyncedWithDeployments() *core_v1.Pod {
 	}
 }
 
+func FakePodWithWaypointAndDeployments() *core_v1.Pod {
+	conf := config.NewConfig()
+
+	appLabel := conf.IstioLabels.AppLabelName
+	versionLabel := conf.IstioLabels.VersionLabelName
+	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
+	controller := true
+	return &core_v1.Pod{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:              "details-v1-3618568057-dnkjp",
+			Namespace:         "Namespace",
+			CreationTimestamp: meta_v1.NewTime(t1),
+			Labels:            map[string]string{appLabel: "details", versionLabel: "v1"},
+			OwnerReferences: []meta_v1.OwnerReference{{
+				Controller: &controller,
+				APIVersion: kubernetes.ReplicaSets.GroupVersion().String(),
+				Kind:       kubernetes.ReplicaSets.Kind,
+				Name:       "details-v1-3618568057",
+			}},
+			Annotations: kubetest.FakeIstioAnnotations(),
+		},
+		Spec: core_v1.PodSpec{
+			Containers: []core_v1.Container{
+				{Name: "details", Image: "whatever"},
+			},
+			InitContainers: []core_v1.Container{},
+		},
+	}
+}
+
 func FakePodLogsSyncedWithDeployments() *kubernetes.PodLogs {
 	return &kubernetes.PodLogs{
 		Logs: `2018-01-02T03:34:28+00:00 INFO #1 Log Message
@@ -756,6 +786,16 @@ func FakePodLogsProxy() *kubernetes.PodLogs {
 
 func FakePodLogsZtunnel() *kubernetes.PodLogs {
 	content, err := readFile("../tests/data/logs/ztunnel.log")
+	if err != nil {
+		log.Errorf("Error reading logs file: %s", err.Error())
+	}
+	return &kubernetes.PodLogs{
+		Logs: content,
+	}
+}
+
+func FakePodLogsWaypoint() *kubernetes.PodLogs {
+	content, err := readFile("../tests/data/logs/waypoint.log")
 	if err != nil {
 		log.Errorf("Error reading logs file: %s", err.Error())
 	}

@@ -58,9 +58,11 @@ import { isParentKiosk, kioskContextMenuAction } from 'components/Kiosk/KioskAct
 import { TRACE_LIMIT_DEFAULT } from 'components/Metrics/TraceLimit';
 import { TraceSpansLimit } from 'components/Metrics/TraceSpansLimit';
 import { infoStyle } from 'styles/IconStyle';
+import { WaypointInfo } from '../../types/Workload';
 
-const appContainerColors = [PFColors.Blue300, PFColors.Green300, PFColors.Purple300, PFColors.Orange300];
-const proxyContainerColor = PFColors.Gold400;
+const appContainerColors = [PFColors.Blue200, PFColors.Blue300, PFColors.Blue400, PFColors.Blue100];
+const proxyContainerColor = PFColors.Gold300;
+const waypointContainerColor = PFColors.Gold500;
 const spanColor = PFColors.Cyan300;
 
 type ReduxProps = {
@@ -70,10 +72,12 @@ type ReduxProps = {
 };
 
 export type WorkloadPodLogsProps = ReduxProps & {
+  app?: string;
   cluster?: string;
   lastRefreshAt: TimeInMilliseconds;
   namespace: string;
   pods: Pod[];
+  waypoints?: WaypointInfo[];
   workload: string;
 };
 
@@ -116,6 +120,7 @@ interface WorkloadPodLogsState {
   showSpansLimit: number;
   showTimestamps: boolean;
   showToolbar: boolean;
+  showWaypoint: boolean;
   showZtunnel: boolean;
   useRegex: boolean;
 }
@@ -192,6 +197,11 @@ const checkboxStyle = kialiStyle({
   marginRight: '1rem'
 });
 
+const checkboxMarginStyle = kialiStyle({
+  marginLeft: '1rem',
+  marginRight: '1rem'
+});
+
 const logListStyle = kialiStyle({
   overflow: 'auto !important',
   paddingTop: '0.375rem',
@@ -260,6 +270,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
     const urlParams = new URLSearchParams(location.getSearch());
     const showSpans = urlParams.get(URLParam.SHOW_SPANS);
     const showSpansLimit = urlParams.get(URLParam.TRACING_LIMIT_TRACES);
+    const showWaypoint = urlParams.get(URLParam.SHOW_WAYPOINT);
     const showZtunnel = urlParams.get(URLParam.SHOW_ZTUNNEL);
 
     const defaultState = {
@@ -278,6 +289,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
       showLogValue: '',
       showSpans: showSpans === 'true',
       showSpansLimit: showSpansLimit ? parseInt(showSpansLimit) : TRACE_LIMIT_DEFAULT,
+      showWaypoint: showWaypoint === 'true',
       showZtunnel: showZtunnel === 'true',
       showTimestamps: false,
       showToolbar: true,
@@ -312,7 +324,6 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
   componentDidMount(): void {
     const screenFullAlias = screenfull as Screenfull;
     screenFullAlias.onchange(() => this.setState({ fullscreen: !this.state.fullscreen }));
-
     if (this.state.containerOptions) {
       const pod = this.props.pods[this.state.podValue!];
       this.fetchEntries(
@@ -321,6 +332,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
         this.state.containerOptions,
         this.state.showSpans,
         this.state.showSpansLimit,
+        this.state.showWaypoint,
         this.state.showZtunnel,
         this.state.maxLines,
         this.props.timeRange,
@@ -338,6 +350,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
     const showSpansChanged = prevState.showSpans !== this.state.showSpans;
     const showSpansLimitChanged = prevState.showSpansLimit !== this.state.showSpansLimit;
     const timeRangeChanged = !isEqualTimeRange(this.props.timeRange, prevProps.timeRange);
+    const showWaypoint = prevState.showWaypoint !== this.state.showWaypoint;
     const showZtunnel = prevState.showZtunnel !== this.state.showZtunnel;
 
     if (
@@ -347,6 +360,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
       showSpansChanged ||
       showSpansLimitChanged ||
       timeRangeChanged ||
+      showWaypoint ||
       showZtunnel
     ) {
       const pod = this.props.pods[this.state.podValue!];
@@ -356,6 +370,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
         newContainerOptions!,
         this.state.showSpans,
         this.state.showSpansLimit,
+        this.state.showWaypoint,
         this.state.showZtunnel,
         this.state.maxLines,
         this.props.timeRange,
@@ -551,7 +566,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                   }
                   onChange={() => this.toggleSelected(c)}
                 />
-                {c.isAmbient && (
+                {c.isAmbient && i + 1 === this.state.containerOptions?.length && (
                   <>
                     <Checkbox
                       id={`ztunnel-${c.displayName}`}
@@ -579,6 +594,36 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                     >
                       <KialiIcon.Info key={`al-i-ki`} className={checkInfoIcon} color={proxyContainerColor} />
                     </Tooltip>
+                    {this.props.waypoints && (
+                      <>
+                        <Checkbox
+                          id={`waypoint-${c.displayName}`}
+                          key={`waypoint-${i}`}
+                          className={checkboxMarginStyle}
+                          inputClassName={colorCheck(waypointContainerColor)}
+                          isChecked={this.state.showWaypoint}
+                          label={
+                            <span
+                              style={{
+                                color: waypointContainerColor,
+                                fontWeight: 'bold'
+                              }}
+                            >
+                              waypoint
+                            </span>
+                          }
+                          onChange={() => this.toggleWaypoint()}
+                        />
+                        <Tooltip
+                          key={`al-tt-tl`}
+                          position={TooltipPosition.auto}
+                          entryDelay={1000}
+                          content="A filtered - by app name - subset of log entries from the waypoint's (ambient node proxy) pod logs, relevant to the selected workload pod"
+                        >
+                          <KialiIcon.Info key={`al-i-ki`} className={checkInfoIcon} color={waypointContainerColor} />
+                        </Tooltip>
+                      </>
+                    )}
                   </>
                 )}
               </React.Fragment>
@@ -600,6 +645,14 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
     router.navigate(`${location.getPathname()}?${urlParams.toString()}`, { replace: true });
 
     this.setState({ showZtunnel: !this.state.showZtunnel });
+  };
+
+  private toggleWaypoint = (): void => {
+    const urlParams = new URLSearchParams(location.getSearch());
+    urlParams.set(URLParam.SHOW_WAYPOINT, String(!this.state.showWaypoint));
+    router.navigate(`${location.getPathname()}?${urlParams.toString()}`, { replace: true });
+
+    this.setState({ showWaypoint: !this.state.showWaypoint });
   };
 
   private toggleTimeOptionsVisibility = (): void => {
@@ -868,7 +921,8 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
           accessLog={v}
           accessLogMessage={k}
           onClose={() => this.removeAccessLogModal(k)}
-          isZtunnel={this.state.showZtunnel}
+          isZtunnel={this.state.showZtunnel && v.upstream_cluster.includes('spiffe')}
+          isWaypoint={this.state.showWaypoint && !v.upstream_cluster.includes('spiffe')}
         />
       );
     });
@@ -1087,10 +1141,8 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
       const name = c.name;
 
       const isAmbient = c.isAmbient;
-
       if (c.isProxy) {
         const proxyName = pod.name.includes('ztunnel') ? 'ztunnel' : 'sidecar-proxy';
-
         return {
           color: proxyContainerColor,
           displayName: proxyName,
@@ -1114,6 +1166,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
     containerOptions: ContainerOption[],
     showSpans: boolean,
     showSpansLimit: number,
+    showWaypoint: boolean,
     showZtunnel: boolean,
     maxLines: number,
     timeRange: TimeRange,
@@ -1146,10 +1199,24 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
       }
     }
 
+    if (showWaypoint) {
+      for (const c of containerOptions) {
+        if (c.isAmbient) {
+          const extracontainer = { ...c };
+          extracontainer.isAmbient = false;
+          extracontainer.color = waypointContainerColor;
+          extracontainer.displayName = 'waypoint';
+          extraContainers.push(extracontainer);
+        }
+      }
+    }
+
     const promises: Promise<ApiResponse<PodLogs | Span[]>>[] = selectedContainers.map(c => {
       return getPodLogs(
         namespace,
         podName,
+        this.props.workload,
+        this.props.app,
         c.name,
         maxLines,
         sinceTime,
@@ -1159,9 +1226,23 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
       );
     });
 
-    if (showZtunnel) {
+    if (showZtunnel || showWaypoint) {
       extraContainers.forEach(c => {
-        promises.push(getPodLogs(namespace, podName, c.name, maxLines, sinceTime, duration, LogType.ZTUNNEL, cluster));
+        const containerType = c.displayName === 'ztunnel' ? LogType.ZTUNNEL : LogType.WAYPOINT;
+        promises.push(
+          getPodLogs(
+            namespace,
+            podName,
+            this.props.workload,
+            this.props.app,
+            c.name,
+            maxLines,
+            sinceTime,
+            duration,
+            containerType,
+            cluster
+          )
+        );
       });
     }
 

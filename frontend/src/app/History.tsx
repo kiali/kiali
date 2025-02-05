@@ -95,6 +95,7 @@ export enum URLParam {
   SHOW_AVERAGE = 'avg',
   SHOW_SPANS = 'spans',
   SHOW_TRENDLINES = 'trendlines',
+  SHOW_WAYPOINT = 'waypoint',
   SHOW_ZTUNNEL = 'ztunnel',
   SORT = 'sort',
   TO = 'to',

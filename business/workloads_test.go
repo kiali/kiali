@@ -37,10 +37,10 @@ func setupWorkloadService(k8s kubernetes.ClientInterface, conf *config.Config) W
 	return NewWithBackends(k8sclients, k8sclients, prom, nil).Workload
 }
 
-func callStreamPodLogs(svc WorkloadService, namespace, podName string, opts *LogOptions) PodLog {
+func callStreamPodLogs(svc WorkloadService, namespace, workload, app, podName string, opts *LogOptions) PodLog {
 	w := httptest.NewRecorder()
 
-	_ = svc.StreamPodLogs(svc.config.KubernetesConfig.ClusterName, namespace, podName, opts, w)
+	_ = svc.StreamPodLogs(context.TODO(), svc.config.KubernetesConfig.ClusterName, namespace, workload, app, podName, opts, w)
 
 	response := w.Result()
 	body, _ := io.ReadAll(response.Body)
@@ -665,7 +665,7 @@ func TestGetPodLogs(t *testing.T) {
 
 	SetupBusinessLayer(t, k8s, *config.NewConfig())
 	svc := setupWorkloadService(k8s, config.NewConfig())
-	podLogs := callStreamPodLogs(svc, "Namespace", "details-v1-3618568057-dnkjp", &LogOptions{PodLogOptions: core_v1.PodLogOptions{Container: "details"}})
+	podLogs := callStreamPodLogs(svc, "Namespace", "details", "details", "details-v1-3618568057-dnkjp", &LogOptions{PodLogOptions: core_v1.PodLogOptions{Container: "details"}})
 
 	require.Equal(len(podLogs.Entries), 4)
 
@@ -704,7 +704,7 @@ func TestGetPodLogsMaxLines(t *testing.T) {
 
 	maxLines := 2
 	duration, _ := time.ParseDuration("6h")
-	podLogs := callStreamPodLogs(svc, "Namespace", "details-v1-3618568057-dnkjp", &LogOptions{PodLogOptions: core_v1.PodLogOptions{Container: "details"}, MaxLines: &maxLines, Duration: &duration})
+	podLogs := callStreamPodLogs(svc, "Namespace", "details", "details", "details-v1-3618568057-dnkjp", &LogOptions{PodLogOptions: core_v1.PodLogOptions{Container: "details"}, MaxLines: &maxLines, Duration: &duration})
 
 	require.Equal(2, len(podLogs.Entries))
 	assert.Equal("INFO #1 Log Message", podLogs.Entries[0].Message)
@@ -725,7 +725,7 @@ func TestGetPodLogsDuration(t *testing.T) {
 	svc := setupWorkloadService(k8s, config.NewConfig())
 
 	duration, _ := time.ParseDuration("59m")
-	podLogs := callStreamPodLogs(svc, "Namespace", "details-v1-3618568057-dnkjp", &LogOptions{PodLogOptions: core_v1.PodLogOptions{Container: "details"}, Duration: &duration})
+	podLogs := callStreamPodLogs(svc, "Namespace", "details", "details", "details-v1-3618568057-dnkjp", &LogOptions{PodLogOptions: core_v1.PodLogOptions{Container: "details"}, Duration: &duration})
 	require.Equal(1, len(podLogs.Entries))
 	assert.Equal("INFO #1 Log Message", podLogs.Entries[0].Message)
 
@@ -737,7 +737,7 @@ func TestGetPodLogsDuration(t *testing.T) {
 	svc = setupWorkloadService(k8s, conf)
 
 	duration, _ = time.ParseDuration("1h")
-	podLogs = callStreamPodLogs(svc, "Namespace", "details-v1-3618568057-dnkjp", &LogOptions{PodLogOptions: core_v1.PodLogOptions{Container: "details"}, Duration: &duration})
+	podLogs = callStreamPodLogs(svc, "Namespace", "details", "details", "details-v1-3618568057-dnkjp", &LogOptions{PodLogOptions: core_v1.PodLogOptions{Container: "details"}, Duration: &duration})
 	require.Equal(2, len(podLogs.Entries))
 	assert.Equal("INFO #1 Log Message", podLogs.Entries[0].Message)
 	assert.Equal("WARN #2 Log Message", podLogs.Entries[1].Message)
@@ -750,7 +750,7 @@ func TestGetPodLogsDuration(t *testing.T) {
 	svc = setupWorkloadService(k8s, conf)
 
 	duration, _ = time.ParseDuration("2h")
-	podLogs = callStreamPodLogs(svc, "Namespace", "details-v1-3618568057-dnkjp", &LogOptions{PodLogOptions: core_v1.PodLogOptions{Container: "details"}, Duration: &duration})
+	podLogs = callStreamPodLogs(svc, "Namespace", "details", "details", "details-v1-3618568057-dnkjp", &LogOptions{PodLogOptions: core_v1.PodLogOptions{Container: "details"}, Duration: &duration})
 	require.Equal(3, len(podLogs.Entries))
 	assert.Equal("INFO #1 Log Message", podLogs.Entries[0].Message)
 	assert.Equal("WARN #2 Log Message", podLogs.Entries[1].Message)
@@ -773,7 +773,7 @@ func TestGetPodLogsMaxLinesAndDurations(t *testing.T) {
 
 	maxLines := 2
 	duration, _ := time.ParseDuration("2h")
-	podLogs := callStreamPodLogs(svc, "Namespace", "details-v1-3618568057-dnkjp", &LogOptions{Duration: &duration, PodLogOptions: core_v1.PodLogOptions{Container: "details"}, MaxLines: &maxLines})
+	podLogs := callStreamPodLogs(svc, "Namespace", "details", "details", "details-v1-3618568057-dnkjp", &LogOptions{Duration: &duration, PodLogOptions: core_v1.PodLogOptions{Container: "details"}, MaxLines: &maxLines})
 	require.Equal(2, len(podLogs.Entries))
 	assert.Equal("INFO #1 Log Message", podLogs.Entries[0].Message)
 	assert.Equal("WARN #2 Log Message", podLogs.Entries[1].Message)
@@ -788,7 +788,7 @@ func TestGetPodLogsMaxLinesAndDurations(t *testing.T) {
 
 	maxLines = 3
 	duration, _ = time.ParseDuration("3h")
-	podLogs = callStreamPodLogs(svc, "Namespace", "details-v1-3618568057-dnkjp", &LogOptions{Duration: &duration, PodLogOptions: core_v1.PodLogOptions{Container: "details"}, MaxLines: &maxLines})
+	podLogs = callStreamPodLogs(svc, "Namespace", "details", "details", "details-v1-3618568057-dnkjp", &LogOptions{Duration: &duration, PodLogOptions: core_v1.PodLogOptions{Container: "details"}, MaxLines: &maxLines})
 	require.Equal(3, len(podLogs.Entries))
 	assert.Equal("INFO #1 Log Message", podLogs.Entries[0].Message)
 	assert.Equal("WARN #2 Log Message", podLogs.Entries[1].Message)
@@ -812,7 +812,7 @@ func TestGetPodLogsProxy(t *testing.T) {
 
 	maxLines := 2
 	duration, _ := time.ParseDuration("2h")
-	podLogs := callStreamPodLogs(svc, "Namespace", "details-v1-3618568057-dnkjp", &LogOptions{Duration: &duration, LogType: models.LogTypeProxy, PodLogOptions: core_v1.PodLogOptions{Container: "details"}, MaxLines: &maxLines})
+	podLogs := callStreamPodLogs(svc, "Namespace", "details", "details", "details-v1-3618568057-dnkjp", &LogOptions{Duration: &duration, LogType: models.LogTypeProxy, PodLogOptions: core_v1.PodLogOptions{Container: "details"}, MaxLines: &maxLines})
 	require.Equal(1, len(podLogs.Entries))
 	entry := podLogs.Entries[0]
 	assert.Equal(`[2021-02-01T21:34:35.533Z] "GET /hotels/Ljubljana HTTP/1.1" 200 - via_upstream - "-" 0 99 14 14 "-" "Go-http-client/1.1" "7e7e2dd0-0a96-4535-950b-e303805b7e27" "hotels.travel-agency:8000" "127.0.2021-02-01T21:34:38.761055140Z 0.1:8000" inbound|8000|| 127.0.0.1:33704 10.129.0.72:8000 10.128.0.79:39880 outbound_.8000_._.hotels.travel-agency.svc.cluster.local default`, entry.Message)
@@ -851,7 +851,7 @@ func TestGetZtunnelPodLogsProxy(t *testing.T) {
 
 	maxLines := 2
 	duration, _ := time.ParseDuration("2h")
-	podLogs := callStreamPodLogs(svc, "bookinfo", "details-v1-cf74bb974-wg44w", &LogOptions{Duration: &duration, LogType: models.LogTypeZtunnel, PodLogOptions: core_v1.PodLogOptions{Container: "details"}, MaxLines: &maxLines})
+	podLogs := callStreamPodLogs(svc, "bookinfo", "details", "details", "details-v1-cf74bb974-wg44w", &LogOptions{Duration: &duration, LogType: models.LogTypeZtunnel, PodLogOptions: core_v1.PodLogOptions{Container: "details"}, MaxLines: &maxLines})
 	require.Equal(1, len(podLogs.Entries))
 	entry := podLogs.Entries[0]
 
@@ -865,7 +865,7 @@ func TestGetZtunnelPodLogsProxy(t *testing.T) {
 	assert.Equal("details.bookinfo.svc.cluster.local", entry.AccessLog.RequestedServer)
 	assert.Equal(int64(1712917911078), entry.TimestampUnix)
 
-	podLogsQuotes := callStreamPodLogs(svc, "travel-agency", "cars-v1-6c869ff769-4hk27", &LogOptions{Duration: &duration, LogType: models.LogTypeZtunnel, PodLogOptions: core_v1.PodLogOptions{Container: "details"}, MaxLines: &maxLines})
+	podLogsQuotes := callStreamPodLogs(svc, "travel-agency", "cars", "cars", "cars-v1-6c869ff769-4hk27", &LogOptions{Duration: &duration, LogType: models.LogTypeZtunnel, PodLogOptions: core_v1.PodLogOptions{Container: "details"}, MaxLines: &maxLines})
 	require.Equal(2, len(podLogsQuotes.Entries))
 	entryQuotes := podLogsQuotes.Entries[0]
 
@@ -878,6 +878,60 @@ func TestGetZtunnelPodLogsProxy(t *testing.T) {
 	assert.Equal("spiffe://cluster.local/ns/travel-agency/sa/default", entryQuotes.AccessLog.UpstreamCluster)
 	assert.Equal("mysqldb.travel-agency.svc.cluster.local", entryQuotes.AccessLog.RequestedServer)
 	assert.Equal(int64(1719927663203), entryQuotes.TimestampUnix)
+}
+
+func TestGetWaypointPodLogsProxy(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+	conf := config.NewConfig()
+	// Setup mocks
+	kubeObjs := []runtime.Object{
+		FakePodWithWaypointAndDeployments(),
+		&osproject_v1.Project{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}},
+	}
+	for _, obj := range FakeWaypointPod() {
+		o := obj
+		kubeObjs = append(kubeObjs, &o)
+	}
+
+	for _, obj := range FakeWaypointNamespaceEnrolledPods(true) {
+		o := obj
+		kubeObjs = append(kubeObjs, &o)
+	}
+
+	client := kubetest.NewFakeK8sClient(kubeObjs...)
+	client.OpenShift = true
+
+	k8s := &logStreamer{
+		logs:            FakePodLogsWaypoint().Logs,
+		ClientInterface: client,
+	}
+
+	SetupBusinessLayer(t, k8s, *conf)
+	svc := setupWorkloadService(k8s, conf)
+
+	a, v := svc.GetWorkload(context.TODO(), WorkloadCriteria{Cluster: svc.config.KubernetesConfig.ClusterName, Namespace: "Namespace", WorkloadName: "details", IncludeServices: false})
+	assert.Nil(v)
+	assert.NotNil(a)
+	maxLines := 2
+	duration, _ := time.ParseDuration("2h")
+	podLogs := callStreamPodLogs(svc, "Namespace", "details", "details", "details-v1-cf74bb974-wg44w", &LogOptions{Duration: &duration, LogType: models.LogTypeWaypoint, PodLogOptions: core_v1.PodLogOptions{Container: "details"}, MaxLines: &maxLines})
+	require.Equal(2, len(podLogs.Entries))
+	entry := podLogs.Entries[0]
+
+	assert.Equal("[2025-01-30T12:10:13.279Z] \"GET /details/0 HTTP/1.1\" 200 - via_upstream - \"-\" 0 178 0 0 \"-\" \"Go-http-client/1.1\" \"e7d5b6ce-5f7f-9731-8471-ca5bcd650a72\" \"details:9080\" \"envoy://connect_originate/10.244.0.32:9080\" inbound-vip|9080|http|details.bookinfo.svc.cluster.local envoy://internal_client_address/ 10.96.185.196:9080 10.244.0.37:52134 - default", entry.Message)
+	assert.Equal("2025-01-30 12:10:13.279", entry.Timestamp)
+	assert.Equal("INFO", entry.Severity)
+	assert.NotNil(entry.AccessLog)
+	assert.Equal("0", entry.AccessLog.BytesReceived)
+	assert.Equal("178", entry.AccessLog.BytesSent)
+	assert.Equal("0", entry.AccessLog.Duration)
+	assert.Equal("inbound-vip|9080|http|details.bookinfo.svc.cluster.local", entry.AccessLog.UpstreamCluster)
+	assert.Equal("envoy://connect_originate/10.244.0.32:9080", entry.AccessLog.UpstreamService)
+	assert.Equal("10.96.185.196:9080", entry.AccessLog.DownstreamLocal)
+	assert.Equal("/details/0", entry.AccessLog.UriPath)
+	assert.Equal("-", entry.AccessLog.RequestedServer)
+	assert.Equal(int64(1738239013279), entry.TimestampUnix)
 }
 
 func TestDuplicatedControllers(t *testing.T) {
@@ -1146,7 +1200,7 @@ func TestGetPodLogsWithoutAccessLogs(t *testing.T) {
 	SetupBusinessLayer(t, k8s, *conf)
 	svc := setupWorkloadService(k8s, conf)
 
-	podLogs := callStreamPodLogs(svc, "Namespace", "details-v1-3618568057-dnkjp", &LogOptions{LogType: models.LogTypeProxy, PodLogOptions: core_v1.PodLogOptions{Container: "istio-proxy"}})
+	podLogs := callStreamPodLogs(svc, "Namespace", "details", "details", "details-v1-3618568057-dnkjp", &LogOptions{LogType: models.LogTypeProxy, PodLogOptions: core_v1.PodLogOptions{Container: "istio-proxy"}})
 
 	assert.Equal(8, len(podLogs.Entries))
 	for _, entry := range podLogs.Entries {

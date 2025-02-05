@@ -1068,6 +1068,8 @@ export const getPod = (namespace: string, name: string): Promise<ApiResponse<Pod
 export const getPodLogs = (
   namespace: string,
   name: string,
+  workload: string,
+  app?: string,
   container?: string,
   maxLines?: number,
   sinceTime?: number,
@@ -1099,6 +1101,14 @@ export const getPodLogs = (
 
   if (logType) {
     params.logType = logType;
+  }
+
+  if (workload) {
+    params.workload = workload;
+  }
+
+  if (app) {
+    params.app = app;
   }
 
   return newRequest<PodLogs>(HTTP_VERBS.GET, urls.podLogs(namespace, name), params, {});
