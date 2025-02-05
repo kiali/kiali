@@ -44,6 +44,14 @@ func NewScheme() (*runtime.Scheme, error) {
 
 // Start creates and starts all the controllers. They'll get cancelled when the context is cancelled.
 func Start(ctx context.Context, conf *config.Config, cf kubernetes.ClientFactory, kialiCache cache.KialiCache, validationsService *business.IstioValidationsService) error {
+	// TODO: When other controllers are added we shouldn't return early here.
+	// But for now there is only the validations controller so when validation
+	// reconciling is disabled, starting the manager is a waste of resources.
+	if conf.ExternalServices.Istio.ValidationReconcileInterval != nil && *conf.ExternalServices.Istio.ValidationReconcileInterval == 0 {
+		log.Info("Validation reconcile interval is set to 0. Validations are disabled.")
+		return nil
+	}
+
 	// TODO: Replace with kiali logging but if this isn't set some errors are thrown.
 	ctrl.SetLogger(zap.New())
 

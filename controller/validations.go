@@ -30,6 +30,7 @@ func NewValidationsController(
 	mgr ctrl.Manager,
 	reconcileInterval *time.Duration,
 ) error {
+	log.Infof("Kiali will validate Istio configuration every: %s", *reconcileInterval)
 	reconciler := NewValidationsReconciler(clusters, kialiCache, validationsService, *reconcileInterval)
 
 	validationsController, err := controller.New("validations-controller", mgr, controller.Options{
@@ -101,10 +102,11 @@ func (r *ValidationsReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	startTime := time.Now()
 	defer func() {
 		totalReconcileTime := time.Since(startTime)
-		log.Debugf("[ValidationsReconciler] Finished reconciling in %dms", totalReconcileTime.Milliseconds())
+		log.Debugf("[ValidationsReconciler] Finished reconciling in %.2fs", totalReconcileTime.Seconds())
 		if totalReconcileTime > r.reconcileInterval {
 			const warningLog = "[ValidationsReconciler] Reconcile took longer than the reconcile interval of [%s]. " +
-				"If this continues, validations will be increasingly stale. Please ensure your environment is healthy. " +
+				"If this continues, validations will be increasingly stale. You can configure how often Kiali validates " +
+				"istio configuration by setting the 'external_services.istio.validation_reconcile_interval' config option. " +
 				"If the issue still persists, please open an issue at www.github.com/kiali/kiali"
 			log.Warningf(warningLog, r.reconcileInterval)
 		}
