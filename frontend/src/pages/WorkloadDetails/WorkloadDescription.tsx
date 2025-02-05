@@ -10,7 +10,7 @@ import { renderAPILogo, renderRuntimeLogo } from '../../components/Logo/Logos';
 import * as H from '../../types/Health';
 import { KialiIcon } from '../../config/KialiIcon';
 import { HealthIndicator } from '../../components/Health/HealthIndicator';
-import { isMultiCluster, serverConfig } from '../../config';
+import { isMultiCluster } from '../../config';
 import { MissingSidecar } from '../../components/MissingSidecar/MissingSidecar';
 import { PFBadge, PFBadges } from '../../components/Pf/PfBadges';
 import { MissingLabel } from '../../components/MissingLabel/MissingLabel';
@@ -22,6 +22,7 @@ import { gvkType, validationKey } from '../../types/IstioConfigList';
 import { infoStyle } from 'styles/IconStyle';
 import { classes } from 'typestyle';
 import { renderWaypointSimpleLabel } from '../../components/Ambient/WaypointLabel';
+import { getAppLabelName } from 'config/ServerConfig';
 
 type WorkloadDescriptionProps = {
   health?: H.Health;
@@ -77,8 +78,9 @@ export const WorkloadDescription: React.FC<WorkloadDescriptionProps> = (props: W
   const apps: string[] = [];
   const services: string[] = [];
 
-  if (workload.labels[serverConfig.istioLabels.appLabelName]) {
-    apps.push(workload.labels[serverConfig.istioLabels.appLabelName]);
+  const appLabelName = getAppLabelName(workload.labels);
+  if (appLabelName) {
+    apps.push(workload.labels[appLabelName]);
   }
 
   workload.services?.forEach(s => services.push(s.name));

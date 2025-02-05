@@ -8,7 +8,7 @@ import * as AlertUtils from '../../utils/AlertUtils';
 import { IstioMetrics } from '../../components/Metrics/IstioMetrics';
 import { MetricsObjectTypes } from '../../types/Metrics';
 import { CustomMetrics } from '../../components/Metrics/CustomMetrics';
-import { serverConfig } from '../../config/ServerConfig';
+import { getAppLabelName, getVersionLabelName, serverConfig } from '../../config/ServerConfig';
 import { WorkloadPodLogs } from './WorkloadPodLogs';
 import { DurationInSeconds, TimeInMilliseconds } from '../../types/Common';
 import { KialiAppState } from '../../store/Store';
@@ -335,8 +335,10 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
     const tabs: React.ReactNode[] = [];
 
     if (this.state.workload) {
-      const app = this.state.workload.labels[serverConfig.istioLabels.appLabelName];
-      const version = this.state.workload.labels[serverConfig.istioLabels.versionLabelName];
+      const appLabelName = getAppLabelName(this.state.workload.labels);
+      const verLabelName = getVersionLabelName(this.state.workload.labels);
+      const app = appLabelName ? this.state.workload.labels[appLabelName] : undefined;
+      const version = verLabelName ? this.state.workload.labels[verLabelName] : undefined;
       const isLabeled = app && version;
 
       if (isLabeled) {
@@ -350,13 +352,15 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
               const tab = (
                 <Tab key={dashboard.template} title={dashboard.title} eventKey={tabKey}>
                   <CustomMetrics
+                    app={app}
+                    appLabelName={appLabelName}
                     lastRefreshAt={this.props.lastRefreshAt}
                     namespace={this.props.workloadId.namespace}
-                    app={app}
+                    template={dashboard.template}
                     version={version}
+                    versionLabelName={verLabelName}
                     workload={this.state.workload!.name}
                     workloadType={this.state.workload!.gvk.Kind}
-                    template={dashboard.template}
                   />
                 </Tab>
               );

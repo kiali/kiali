@@ -26,6 +26,7 @@ import { HistoryManager } from 'app/History';
 import { basicTabStyle } from 'styles/TabStyles';
 import { serverConfig } from 'config';
 import { isGVKSupported } from '../../utils/IstioConfigUtils';
+import { getAppLabelName } from 'config/ServerConfig';
 
 type AppDetailsState = {
   app?: App;
@@ -128,6 +129,8 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
     const tabs: React.ReactNode[] = [];
 
     if (this.state.app) {
+      const appLabelName =
+        this.state.app.workloads.length > 0 ? getAppLabelName(this.state.app.workloads[0].labels) : undefined;
       this.state.app.runtimes.forEach(runtime => {
         runtime.dashboardRefs.forEach(dashboard => {
           if (dashboard.template !== 'envoy') {
@@ -137,9 +140,10 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
             const tab = (
               <Tab title={dashboard.title} key={`cd-${dashboard.template}`} eventKey={tabKey}>
                 <CustomMetrics
+                  app={this.props.appId.app}
+                  appLabelName={appLabelName}
                   lastRefreshAt={this.props.lastRefreshAt}
                   namespace={this.props.appId.namespace}
-                  app={this.props.appId.app}
                   template={dashboard.template}
                 />
               </Tab>

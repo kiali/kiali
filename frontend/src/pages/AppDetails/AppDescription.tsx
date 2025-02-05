@@ -9,6 +9,7 @@ import * as H from '../../types/Health';
 import { HealthIndicator } from '../../components/Health/HealthIndicator';
 import { PFBadge, PFBadges } from '../../components/Pf/PfBadges';
 import { AmbientLabel, tooltipMsgType } from '../../components/Ambient/AmbientLabel';
+import { getAppLabelName } from 'config/ServerConfig';
 
 type AppDescriptionProps = {
   app?: App;
@@ -28,8 +29,11 @@ const healthIconStyle = kialiStyle({
 export const AppDescription: React.FC<AppDescriptionProps> = (props: AppDescriptionProps) => {
   const appLabels: { [key: string]: string } = {};
 
-  if (props.app) {
-    appLabels[serverConfig.istioLabels.appLabelName] = props.app.name;
+  if (props.app?.workloads && props.app.workloads.length > 0) {
+    const appLabelName = getAppLabelName(props.app.workloads[0].labels);
+    if (appLabelName) {
+      appLabels[appLabelName] = props.app.name;
+    }
   }
 
   return props.app ? (
@@ -66,7 +70,7 @@ export const AppDescription: React.FC<AppDescriptionProps> = (props: AppDescript
       <CardBody>
         <Labels
           labels={appLabels}
-          tooltipMessage={`Workloads and Services grouped by ${serverConfig.istioLabels.appLabelName} label`}
+          tooltipMessage={`Workloads and Services grouped by ${serverConfig.istioLabels.appLabelName ?? 'app'} label`}
         />
 
         <DetailDescription

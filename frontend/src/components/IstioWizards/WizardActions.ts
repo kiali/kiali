@@ -70,6 +70,7 @@ import { ANYTHING, PRESENCE } from './RequestRouting/MatchBuilder';
 import { t } from 'utils/I18nUtils';
 import { defaultGatewayLabel, defaultGatewayLabelValue } from 'config/Constants';
 import { dicTypeToGVK, gvkType } from '../../types/IstioConfigList';
+import { getAppLabelName } from 'config/ServerConfig';
 
 export const WIZARD_TRAFFIC_SHIFTING = 'traffic_shifting';
 export const WIZARD_TCP_TRAFFIC_SHIFTING = 'tcp_traffic_shifting';
@@ -931,9 +932,10 @@ export const buildIstioConfig = (wProps: ServiceWizardProps, wState: ServiceWiza
 
     if (wState.trafficPolicy.peerAuthnSelector.addPeerAuthentication) {
       const peerAuthnLabels: { [key: string]: string } = {};
-      peerAuthnLabels[serverConfig.istioLabels.appLabelName] = wProps.workloads[0].labels![
-        serverConfig.istioLabels.appLabelName
-      ];
+      const appLabelName = getAppLabelName(wProps.workloads[0].labels);
+      if (appLabelName) {
+        peerAuthnLabels[appLabelName] = wProps.workloads[0].labels![appLabelName];
+      }
 
       wizardPA = {
         apiVersion: ISTIO_SECURITY_VERSION,

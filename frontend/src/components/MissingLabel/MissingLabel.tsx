@@ -23,7 +23,8 @@ export const MissingLabel: React.FC<MissingLabelProps> = (props: MissingLabelPro
       {props.missingApp && (
         <>
           <div>
-            <PFBadge badge={{ badge: appLabel }} isRead={true} style={{ marginRight: 0 }} /> label is missing. <br />
+            <PFBadge badge={{ badge: appLabel ?? 'app' }} isRead={true} style={{ marginRight: 0 }} /> label is missing.{' '}
+            <br />
           </div>
           <div>This workload won't be linked with an application.</div>
         </>
@@ -32,8 +33,8 @@ export const MissingLabel: React.FC<MissingLabelProps> = (props: MissingLabelPro
       {props.missingVersion && (
         <>
           <div>
-            <PFBadge badge={{ badge: versionLabel }} isRead={true} style={{ marginRight: 0 }} /> label is missing.{' '}
-            <br />
+            <PFBadge badge={{ badge: versionLabel ?? 'version' }} isRead={true} style={{ marginRight: 0 }} /> label is
+            missing. <br />
           </div>
           <div>The label is recommended as it affects telemetry.</div>
         </>
