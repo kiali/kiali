@@ -104,14 +104,20 @@ func assertTraces(traces *model.TracingResponse, statusCode int, err error, requ
 }
 
 func assertSpans(spans []model.TracingSpan, statusCode int, err error, require *require.Assertions) {
+	tracing, _, errTracing := kiali.TracingConfig()
+	require.NoError(errTracing)
+
 	if statusCode == 200 {
 		require.NoError(err)
 		require.NotNil(spans)
 		if len(spans) > 0 {
 			require.NotNil(spans[0].TraceID)
-			require.NotEmpty(spans[0].References)
-			require.NotNil(spans[0].References[0].TraceID)
-			require.Equal(spans[0].TraceID, spans[0].References[0].TraceID)
+			// References in Tempo are converted from the SpanTraceId, which is not available from the /api/search in Tempo
+			if tracing.Provider == "jaeger" {
+				require.NotEmpty(spans[0].References)
+				require.NotNil(spans[0].References[0].TraceID)
+				require.Equal(spans[0].TraceID, spans[0].References[0].TraceID)
+			}
 		}
 	} else {
 		require.Fail(fmt.Sprintf("Status code should be '200' but was: %d and error: %s", statusCode, err))
