@@ -17,8 +17,8 @@ Feature: Workload logs tab
     When I go to the Logs tab of the workload detail page
     Then I should see the "sidecar-proxy" container listed
     And I should see the "ratings" container listed
-    And the "sidecar-proxy" container should be checked
-    And the "ratings" container should be checked
+    And the "container-sidecar-proxy" container should be checked
+    And the "container-ratings" container should be checked
     And I should see some "ratings-v1" pod selected in the pod selector
 
   @bookinfo-app
@@ -53,8 +53,8 @@ Feature: Workload logs tab
     When I go to the Logs tab of the workload detail page
     Then I should see the "ztunnel" container listed
     And I should see the "ratings" container listed
-    And the "ztunnel" container should be checked
-    And the "ratings" container should be checked
+    And the "ztunnel-ratings" container should be checked
+    And the "container-ratings" container should be checked
     And I should see some "ratings-v1" pod selected in the pod selector
     Then the log pane should show log lines containing "ztunnel"
 
@@ -65,8 +65,8 @@ Feature: Workload logs tab
     When I go to the Logs tab of the workload detail page
     Then I should see the "waypoint" container listed
     And I should see the "ratings" container listed
-    And the "waypoint" container should be checked
-    And the "ratings" container should be checked
+    And the "waypoint-ratings" container should be checked
+    And the "container-ratings" container should be checked
     And I should see some "ratings-v1" pod selected in the pod selector
     Then the log pane should show log lines containing "envoy://internal_client_address/"
 

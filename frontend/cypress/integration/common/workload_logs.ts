@@ -67,7 +67,7 @@ Then('I should see the {string} container listed', (containerName: string) => {
 });
 
 Then('the {string} container should be checked', (containerName: string) => {
-  cy.get('[data-test=workload-logs-pod-containers]').find(`input#container-${containerName}`).should('be.checked');
+  cy.get('[data-test=workload-logs-pod-containers]').find(`input#${containerName}`).should('be.checked');
 });
 
 Then('I should see some {string} pod selected in the pod selector', (podNamePrefix: string) => {
