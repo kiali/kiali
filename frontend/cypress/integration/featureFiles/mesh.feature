@@ -60,7 +60,7 @@ Feature: Kiali Mesh page
     And user selects mesh node with label "bookinfo-gateway"
     Then user sees "bookinfo-gateway" node side panel
 
-  @waypoint
+  @waypoint-tracing
   @bookinfo-app
   Scenario: User enables waypoints
     When user opens display menu
