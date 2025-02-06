@@ -272,17 +272,41 @@ Then(
       cy.get(`[data-test="CardItem_${ns}_${cluster1}"]`).find('[data-test="overview-type-app"]').contains(`5 app`);
       cy.get(`[data-test="CardItem_${ns}_${cluster2}"]`).find('[data-test="overview-type-app"]').contains(`4 app`);
     } else {
+      let appPods = 0;
       cy.exec(`kubectl get pods -n ${ns} -l app --context ${CLUSTER1_CONTEXT} --no-headers | wc -l`).then(result => {
-        cy.get(`[data-test="CardItem_${ns}_${cluster1}"]`)
-          .find('[data-test="overview-type-app"]')
-          .contains(`${result.stdout} app`);
+        appPods = appPods + parseInt(result.stdout);
       });
+      cy.exec(
+        `kubectl get pods -n ${ns} -l service.istio.io/canonical-name --context ${CLUSTER1_CONTEXT} --no-headers | wc -l`
+      ).then(result => {
+        appPods = appPods + parseInt(result.stdout);
+      });
+      cy.exec(
+        `kubectl get pods -n ${ns} -l app.kubernetes.io/name --context ${CLUSTER1_CONTEXT} --no-headers | wc -l`
+      ).then(result => {
+        appPods = appPods + parseInt(result.stdout);
+      });
+      cy.get(`[data-test="CardItem_${ns}_${cluster1}"]`)
+        .find('[data-test="overview-type-app"]')
+        .contains(`${appPods} app`);
 
+      appPods = 0;
       cy.exec(`kubectl get pods -n ${ns} -l app --context ${CLUSTER2_CONTEXT} --no-headers | wc -l`).then(result => {
-        cy.get(`[data-test="CardItem_${ns}_${cluster2}"]`)
-          .find('[data-test="overview-type-app"]')
-          .contains(`${result.stdout} app`);
+        appPods = appPods + parseInt(result.stdout);
       });
+      cy.exec(
+        `kubectl get pods -n ${ns} -l service.istio.io/canonical-name --context ${CLUSTER2_CONTEXT} --no-headers | wc -l`
+      ).then(result => {
+        appPods = appPods + parseInt(result.stdout);
+      });
+      cy.exec(
+        `kubectl get pods -n ${ns} -l app.kubernetes.io/name --context ${CLUSTER2_CONTEXT} --no-headers | wc -l`
+      ).then(result => {
+        appPods = appPods + parseInt(result.stdout);
+      });
+      cy.get(`[data-test="CardItem_${ns}_${cluster2}"]`)
+        .find('[data-test="overview-type-app"]')
+        .contains(`${appPods} app`);
     }
   }
 );
