@@ -50,6 +50,14 @@ When('I select only the {string} container', (containerName: string) => {
   });
 });
 
+When('I select the {string} container', (containerName: string) => {
+  cy.get('[data-test=workload-logs-pod-containers]').within(() => {
+    cy.get('[type=checkbox]').uncheck();
+
+    cy.get(`input#${containerName}`).check();
+  });
+});
+
 When('I enable visualization of spans', () => {
   cy.get('#trace-limit-dropdown-toggle').should('not.exist');
   cy.get('[data-test=workload-logs-pod-containers]').within(() => {

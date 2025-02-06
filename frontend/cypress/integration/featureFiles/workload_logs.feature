@@ -53,6 +53,7 @@ Feature: Workload logs tab
     When I go to the Logs tab of the workload detail page
     Then I should see the "ztunnel" container listed
     And I should see the "ratings" container listed
+    And I select the "ztunnel-ratings" container
     And the "ztunnel-ratings" container should be checked
     And the "container-ratings" container should be checked
     And I should see some "ratings-v1" pod selected in the pod selector
@@ -65,6 +66,7 @@ Feature: Workload logs tab
     When I go to the Logs tab of the workload detail page
     Then I should see the "waypoint" container listed
     And I should see the "ratings" container listed
+    And I select the "waypoint-ratings" container
     And the "waypoint-ratings" container should be checked
     And the "container-ratings" container should be checked
     And I should see some "ratings-v1" pod selected in the pod selector
