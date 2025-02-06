@@ -103,7 +103,7 @@ export const dicTypeToGVK: { [key in gvkType]: GroupVersionKind } = {
   [gvkType.K8sGatewayClass]: { Group: 'gateway.networking.k8s.io', Version: 'v1', Kind: 'GatewayClass' },
   [gvkType.K8sGRPCRoute]: { Group: 'gateway.networking.k8s.io', Version: 'v1', Kind: 'GRPCRoute' },
   [gvkType.K8sHTTPRoute]: { Group: 'gateway.networking.k8s.io', Version: 'v1', Kind: 'HTTPRoute' },
-  [gvkType.K8sReferenceGrant]: { Group: 'gateway.networking.k8s.io', Version: 'v1', Kind: 'ReferenceGrant' },
+  [gvkType.K8sReferenceGrant]: { Group: 'gateway.networking.k8s.io', Version: 'v1beta1', Kind: 'ReferenceGrant' },
   [gvkType.K8sTCPRoute]: { Group: 'gateway.networking.k8s.io', Version: 'v1alpha2', Kind: 'TCPRoute' },
   [gvkType.K8sTLSRoute]: { Group: 'gateway.networking.k8s.io', Version: 'v1alpha2', Kind: 'TLSRoute' },
 
