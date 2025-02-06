@@ -16,6 +16,7 @@ import (
 	"github.com/kiali/kiali/config/dashboards"
 	"github.com/kiali/kiali/config/security"
 	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/util"
 )
 
 // Files found in /kiali-override-secrets that override the ConfigMap yaml values
@@ -318,6 +319,9 @@ type IstioConfig struct {
 	Registry                     *RegistryConfig `yaml:"registry,omitempty"`
 	RootNamespace                string          `yaml:"root_namespace,omitempty"`
 	UrlServiceVersion            string          `yaml:"url_service_version"`
+	// ValidationReconcileInterval sets how often Kiali will validate Istio configuration.
+	// Validations cannot be disabled at the moment but you can set this to a long period of time.
+	ValidationReconcileInterval *time.Duration `yaml:"validation_reconcile_interval,omitempty"`
 }
 
 type ComponentStatuses struct {
@@ -748,6 +752,7 @@ func NewConfig() (c *Config) {
 				IstiodPollingIntervalSeconds:      20,
 				RootNamespace:                     "istio-system",
 				UrlServiceVersion:                 "",
+				ValidationReconcileInterval:       util.AsPtr(time.Minute),
 				GatewayAPIClasses:                 []GatewayAPIClass{},
 			},
 			Prometheus: PrometheusConfig{

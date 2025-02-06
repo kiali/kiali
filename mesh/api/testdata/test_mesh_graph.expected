@@ -256,7 +256,8 @@
             "IstiodPollingIntervalSeconds": 20,
             "Registry": null,
             "RootNamespace": "istio-system",
-            "UrlServiceVersion": ""
+            "UrlServiceVersion": "",
+            "ValidationReconcileInterval": 60000000000
           }
         }
       },

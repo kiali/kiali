@@ -26,7 +26,6 @@ import (
 	"runtime"
 	"strings"
 	"testing"
-	"time"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -36,23 +35,19 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
-	"github.com/kiali/kiali/business"
-	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/controller"
-	"github.com/kiali/kiali/kubernetes"
-	"github.com/kiali/kiali/kubernetes/cache"
 	kialicmd "github.com/kiali/kiali/tools/cmd"
-	"github.com/kiali/kiali/util"
 )
 
 var (
 	cfg        *rest.Config
 	k8sClient  client.Client
+	k8sManager ctrl.Manager
 	testEnv    *envtest.Environment
 	ctx        context.Context
 	cancel     context.CancelFunc
-	kialiCache cache.KialiCache
 )
 
 func TestControllers(t *testing.T) {
@@ -70,7 +65,6 @@ var _ = BeforeSuite(func() {
 	logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true)))
 
 	ctx, cancel = context.WithCancel(context.TODO())
-	var err error
 
 	istioVersion := os.Getenv("ISTIO_VERSION")
 	if istioVersion == "" {
@@ -107,13 +101,16 @@ var _ = BeforeSuite(func() {
 
 	By("bootstrapping test environment")
 	testEnv = &envtest.Environment{
-		// e.g. _output/istio-1.20.3/manifests/charts/base/crds/crd-all.gen.yaml
-		CRDDirectoryPaths:     []string{filepath.Join(kialiOutputFolder, istioVersion, "manifests", "charts", "base", "crds")},
+		// TODO: This method of loading in the istio CRDs needs to change. It is too reliant on the structure of the manifests dir
+		// which we don't control. Would be better to embed the CRDs if possible.
+		// e.g. _output/istio-1.24.0/manifests/charts/base/files/crd-all.gen.yaml
+		CRDDirectoryPaths:     []string{filepath.Join(kialiOutputFolder, istioVersion, "manifests", "charts", "base", "files")},
 		ErrorIfCRDPathMissing: true,
 		// e.g. "_output/k8s/1.29.1-linux-amd64"
 		BinaryAssetsDirectory: filepath.Join(kialiOutputFolder, "k8s", kubeVersion),
 	}
 
+	var err error
 	cfg, err = testEnv.Start()
 	Expect(err).NotTo(HaveOccurred())
 	Expect(cfg).NotTo(BeNil())
@@ -125,23 +122,10 @@ var _ = BeforeSuite(func() {
 	Expect(err).NotTo(HaveOccurred())
 	Expect(k8sClient).NotTo(BeNil())
 
-	k8sManager, err := ctrl.NewManager(cfg, ctrl.Options{
-		Scheme: scheme,
+	k8sManager, err = ctrl.NewManager(cfg, ctrl.Options{
+		Scheme:  scheme,
+		Metrics: metricsserver.Options{BindAddress: "0"},
 	})
-	Expect(err).ToNot(HaveOccurred())
-
-	conf := config.NewConfig()
-	kialiKubeClient, err := kubernetes.NewClientWithRemoteClusterInfo(cfg, nil)
-	Expect(err).ToNot(HaveOccurred())
-
-	saClients := map[string]kubernetes.ClientInterface{
-		conf.KubernetesConfig.ClusterName: kialiKubeClient,
-	}
-	kialiCache, err = cache.NewKialiCache(saClients, *conf)
-	Expect(err).ToNot(HaveOccurred())
-	layer, err := business.NewLayerWithSAClients(conf, kialiCache, nil, nil, nil, nil, nil, saClients)
-	Expect(err).ToNot(HaveOccurred())
-	err = controller.NewValidationsController(ctx, []string{conf.KubernetesConfig.ClusterName}, kialiCache, &layer.Validations, k8sManager, util.AsPtr(time.Millisecond*100))
 	Expect(err).ToNot(HaveOccurred())
 
 	go func() {
@@ -153,7 +137,6 @@ var _ = BeforeSuite(func() {
 
 var _ = AfterSuite(func() {
 	cancel()
-	kialiCache.Stop()
 	By("tearing down the test environment")
 	err := testEnv.Stop()
 	Expect(err).NotTo(HaveOccurred())
