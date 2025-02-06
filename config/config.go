@@ -1473,7 +1473,7 @@ func (config *Config) GetAppVersionLabelSelectors(app, version string) []AppVers
 			requirements[appLabelName] = app
 		}
 		if version != "" {
-			requirements[versionLabelName] = app
+			requirements[versionLabelName] = version
 		}
 		labelSelectors[i] = AppVersionLabelSelector{
 			AppLabelName:     appLabelName,
