@@ -90,7 +90,6 @@ When('user sees mesh side panel', () => {
 });
 
 When('user {string} mesh display option {string}', (action: string, option: string) => {
-  cy.intercept('GET', '**/api/mesh/graph*').as('graphCall');
   switch (option.toLowerCase()) {
     case 'gateways':
       option = 'filterGateways';
@@ -102,7 +101,6 @@ When('user {string} mesh display option {string}', (action: string, option: stri
 
   if (action === 'enables') {
     cy.get('div#graph-display-menu').find(`input#${option}`).check();
-    cy.wait('@graphCall');
   } else {
     cy.get('div#graph-display-menu').find(`input#${option}`).uncheck();
   }
