@@ -90,6 +90,16 @@ Then('the log pane should only show log lines not containing {string}', (filterT
     });
 });
 
+Then('the log pane should show log lines containing {string}', (filterText: string) => {
+  cy.get('#logsText')
+    .find('p')
+    .then(lines => {
+      const linesArray = lines.toArray();
+      const found = linesArray.some(line => line.innerText.includes(filterText));
+      assert.isTrue(found);
+    });
+});
+
 Then(
   'the log pane should show at most {int} lines of logs of each selected container',
   (numberOfLinesPerContainer: number) => {
