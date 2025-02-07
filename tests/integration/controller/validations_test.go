@@ -5,8 +5,8 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	apinetworkingv1beta1 "istio.io/api/networking/v1beta1"
-	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	apinetworkingv1 "istio.io/api/networking/v1"
+	networkingv1 "istio.io/client-go/pkg/apis/networking/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -69,12 +69,12 @@ var _ = Describe("Validations controller", Ordered, func() {
 			}
 			err := k8sClient.Create(ctx, istioSystemNamespace)
 			Expect(client.IgnoreAlreadyExists(err)).ToNot(HaveOccurred())
-			vs := &networkingv1beta1.VirtualService{
+			vs := &networkingv1.VirtualService{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "test-vs",
 					Namespace: "default",
 				},
-				Spec: apinetworkingv1beta1.VirtualService{
+				Spec: apinetworkingv1.VirtualService{
 					Hosts:    []string{"test.com"},
 					Gateways: []string{"test-gateway"},
 				},
@@ -83,7 +83,7 @@ var _ = Describe("Validations controller", Ordered, func() {
 			Expect(client.IgnoreAlreadyExists(err)).ToNot(HaveOccurred())
 
 			vsKey := types.NamespacedName{Name: vs.Name, Namespace: vs.Namespace}
-			createdVS := &networkingv1beta1.VirtualService{}
+			createdVS := &networkingv1.VirtualService{}
 
 			Eventually(func() bool {
 				err := k8sClient.Get(ctx, vsKey, createdVS)
@@ -104,20 +104,20 @@ var _ = Describe("Validations controller", Ordered, func() {
 			Expect(found).To(BeTrue())
 			Expect(validation.Checks).Should(BeEmpty())
 			By("By updating a VirtualService")
-			vs := &networkingv1beta1.VirtualService{}
+			vs := &networkingv1.VirtualService{}
 			vsKey := types.NamespacedName{Name: "test-vs", Namespace: "default"}
 			Expect(k8sClient.Get(ctx, vsKey, vs)).Should(Succeed())
 			// Duplicate routes should be invalid.
-			vs.Spec.Http = []*apinetworkingv1beta1.HTTPRoute{
+			vs.Spec.Http = []*apinetworkingv1.HTTPRoute{
 				{
-					Route: []*apinetworkingv1beta1.HTTPRouteDestination{
+					Route: []*apinetworkingv1.HTTPRouteDestination{
 						{
-							Destination: &apinetworkingv1beta1.Destination{
+							Destination: &apinetworkingv1.Destination{
 								Host: "test.com",
 							},
 						},
 						{
-							Destination: &apinetworkingv1beta1.Destination{
+							Destination: &apinetworkingv1.Destination{
 								Host: "test.com",
 							},
 						},
@@ -136,7 +136,7 @@ var _ = Describe("Validations controller", Ordered, func() {
 
 		It("Should delete validations in the kiali cache when the VirtualService is deleted", func(ctx SpecContext) {
 			By("By deleting a VirtualService")
-			vs := &networkingv1beta1.VirtualService{}
+			vs := &networkingv1.VirtualService{}
 			vsKey := types.NamespacedName{Name: "test-vs", Namespace: "default"}
 			Expect(k8sClient.Get(ctx, vsKey, vs)).Should(Succeed())
 			Expect(k8sClient.Delete(ctx, vs)).Should(Succeed())
