@@ -59,6 +59,7 @@ import { TRACE_LIMIT_DEFAULT } from 'components/Metrics/TraceLimit';
 import { TraceSpansLimit } from 'components/Metrics/TraceSpansLimit';
 import { infoStyle } from 'styles/IconStyle';
 import { WaypointInfo } from '../../types/Workload';
+import { istioProxyName } from './WorkloadDetailsPage';
 
 const appContainerColors = [PFColors.Blue200, PFColors.Blue300, PFColors.Blue400, PFColors.Blue100];
 const proxyContainerColor = PFColors.Gold300;
@@ -1128,6 +1129,8 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
     // sort containers by name, consistently positioning proxy container first.
     let containers = [...(pod.istioContainers ?? [])];
     containers.push(...(pod.containers ?? []));
+    // k8s native sidecars are listed within istioInitContainers
+    containers.push(...(pod.istioInitContainers?.filter(cont => cont.name === istioProxyName) ?? []));
 
     containers = containers.sort((c1, c2) => {
       if (c1.isProxy !== c2.isProxy) {

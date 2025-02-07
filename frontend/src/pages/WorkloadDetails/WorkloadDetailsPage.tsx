@@ -52,6 +52,7 @@ type WorkloadDetailsPageProps = ReduxProps & {
 
 export const tabName = 'tab';
 export const defaultTab = 'info';
+export const istioProxyName = 'istio-proxy';
 
 const paramToTab: { [key: string]: number } = {
   info: 0,
@@ -315,14 +316,14 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
       workload.pods.forEach(pod => {
         if (pod.istioContainers && pod.istioContainers.length > 0) {
           hasIstioSidecars = true;
-        } else if (pod.istioInitContainers && pod.istioInitContainers.some(cont => cont.name === 'istio-proxy')) {
+        } else if (pod.istioInitContainers && pod.istioInitContainers.some(cont => cont.name === istioProxyName)) {
           hasIstioSidecars = true;
         } else {
           // Ztunnel doesn't have Envoy
           hasIstioSidecars =
             hasIstioSidecars ||
             (!!pod.containers &&
-              pod.containers.some(cont => cont.name === 'istio-proxy' && workload.ambient !== 'ztunnel'));
+              pod.containers.some(cont => cont.name === istioProxyName && workload.ambient !== 'ztunnel'));
         }
       });
     }
