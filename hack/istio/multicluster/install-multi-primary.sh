@@ -136,7 +136,37 @@ if [ "${MANAGE_KIND}" == "true" ]; then
     docker network create kind || true
 
     # Given: 172.18.0.0/16 this should return 172.18
-    beginning_subnet_octets=$(docker network inspect kind --format '{{(index .IPAM.Config 0).Subnet}}' | cut -d'.' -f1,2)
+    subnet=""
+
+    # we always use docker today, but we'll leave this here just in case in the future Kind and podman play nice
+    if [ "${DORP}" == "docker" ]; then
+      # loop through all known subnets in the kind network and pick out the IPv4 subnet, ignoring any IPv6 that might be in the list
+      subnets_count="$(docker network inspect kind | jq '.[0].IPAM.Config | length')"
+      infomsg "There are [$subnets_count] subnets in the kind network"
+      for ((i=0; i<subnets_count; i++)); do
+        subnet=$(docker network inspect kind --format '{{(index .IPAM.Config '$i').Subnet}}' 2> /dev/null)
+        if [[ -n $subnet && $subnet != *:* && $subnet == *\.* ]]; then
+          infomsg "Using subnet [$subnet]"
+          break
+        else
+          infomsg "Ignoring subnet [$subnet]"
+          subnet=""
+        fi
+      done
+      if [ -z "$subnet" ]; then
+        infomsg "No subnets found in the expected docker network list. Maybe this is a podman network - let's check"
+        subnet=$(docker network inspect kind | jq -r '.[0].subnets[] | select(.subnet | test("^[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+/")) | .subnet' 2>/dev/null)
+      fi
+    else
+      subnet=$(podman network inspect kind | jq -r '.[0].subnets[] | select(.subnet | test("^[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+/")) | .subnet' 2>/dev/null)
+    fi
+
+    if [ -z "$subnet" ]; then
+      infomsg "There does not appear to be any IPv4 subnets configured"
+      exit 1
+    fi
+
+    beginning_subnet_octets=$(echo $subnet | cut -d'.' -f1,2 2>/dev/null)
     lb_range_start="255.70"
     lb_range_end="255.84"
 
